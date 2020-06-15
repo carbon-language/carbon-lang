@@ -232,6 +232,10 @@ private:
 
   std::unique_ptr<BinaryLoopInfo> BLI;
 
+  /// Set of external addresses in the code that are not a function start
+  /// and are referenced from this function.
+  std::set<uint64_t> InterproceduralReferences;
+
   /// All labels in the function that are referenced via relocations from
   /// data objects. Typically these are jump table destinations and computed
   /// goto labels.
@@ -252,7 +256,17 @@ private:
   bool IsSimple{true};
 
   /// Indication that the function should be ignored for optimization purposes.
+  /// If we can skip emission of some functions, then ignored functions could
+  /// be not fully disassembled and will not be emitted.
   bool IsIgnored{false};
+
+  /// Pseudo functions should not be disassembled or emitted.
+  bool IsPseudo{false};
+
+  /// True if the original function code has all necessary relocations to track
+  /// addresses of functions emitted to new locations. Typically set for
+  /// functions that we are not going to emit.
+  bool HasExternalRefRelocations{false};
 
   /// True if the function has an indirect branch with unknown destination.
   bool HasUnknownControlFlow{false};
@@ -294,6 +308,9 @@ private:
 
   /// Indicate that the function body has SDT marker
   bool HasSDTMarker{false};
+
+  /// True if the original entry point was patched.
+  bool IsPatched{false};
 
   /// The address for the code for this function in codegen memory.
   uint64_t ImageAddress{0};
@@ -637,10 +654,9 @@ private:
 
   /// Creation should be handled by RewriteInstance or BinaryContext
   BinaryFunction(const std::string &Name, BinarySection &Section,
-                 uint64_t Address, uint64_t Size, BinaryContext &BC,
-                 bool IsSimple)
+                 uint64_t Address, uint64_t Size, BinaryContext &BC)
       : InputSection(&Section), Address(Address), Size(Size), BC(BC),
-        IsSimple(IsSimple), CodeSectionName(buildCodeSectionName(Name, BC)),
+        CodeSectionName(buildCodeSectionName(Name, BC)),
         ColdCodeSectionName(buildColdCodeSectionName(Name, BC)),
         FunctionNumber(++Count) {
     Symbols.push_back(BC.Ctx->getOrCreateSymbol(Name));
@@ -654,6 +670,35 @@ private:
         FunctionNumber(++Count) {
     Symbols.push_back(BC.Ctx->getOrCreateSymbol(Name));
     IsInjected = true;
+  }
+
+  /// Clear state of the function that could not be disassembled or if its
+  /// disassembled state was later invalidated.
+  void clearDisasmState();
+
+  /// Release memory allocated for CFG and instructions.
+  /// We still keep basic blocks for address translation/mapping purposes.
+  void releaseCFG() {
+    for (auto *BB : BasicBlocks) {
+      BB->releaseCFG();
+    }
+    for (auto BB : DeletedBasicBlocks) {
+      BB->releaseCFG();
+    }
+
+    clearList(CallSites);
+    clearList(ColdCallSites);
+    clearList(LSDATypeTable);
+
+    clearList(MoveRelocations);
+
+    clearList(LabelToBB);
+
+    if (!isMultiEntry())
+      clearList(Labels);
+
+    clearList(FrameInstructions);
+    clearList(FrameRestoreEquivalents);
   }
 
 public:
@@ -1129,6 +1174,18 @@ public:
     return const_cast<BinaryFunction *>(this)->getSymbolForEntryID(EntryNum);
   }
 
+  using EntryPointCallbackTy = function_ref<bool(uint64_t, const MCSymbol*)>;
+
+  /// Invoke \p Callback function for every entry point in the function starting
+  /// with the main entry and using entries in the ascending address order.
+  /// Stop calling the function after false is returned by the callback.
+  ///
+  /// Pass an offset of the entry point in the input binary and a corresponding
+  /// global symbol to the callback function.
+  ///
+  /// Return true of all callbacks returned true, false otherwise.
+  bool forEachEntryPoint(EntryPointCallbackTy Callback) const;
+
   MCSymbol *getColdSymbol() {
     if (ColdSymbol)
       return ColdSymbol;
@@ -1192,6 +1249,7 @@ public:
   void setPLTSymbol(const MCSymbol *Symbol) {
     assert(Size == 0 && "function size should be 0 for PLT functions");
     PLTSymbol = Symbol;
+    IsPseudo = true;
   }
 
   /// Update output values of the function based on the final \p Layout.
@@ -1316,6 +1374,18 @@ public:
     return IsIgnored;
   }
 
+  /// Return true if the function should not be disassembled, emitted, or
+  /// otherwise processed.
+  bool isPseudo() const {
+    return IsPseudo;
+  }
+
+  /// Return true if the original function code has all necessary relocations
+  /// to track addresses of functions emitted to new locations.
+  bool hasExternalRefRelocations() const {
+    return HasExternalRefRelocations;
+  }
+
   /// Return true if the function has instruction(s) with unknown control flow.
   bool hasUnknownControlFlow() const {
     return HasUnknownControlFlow;
@@ -1331,6 +1401,11 @@ public:
   /// Return true if the function has exception handling tables.
   bool hasEHRanges() const {
     return HasEHRanges;
+  }
+
+  /// Return true if the function has associated debug info.
+  bool hasDebugInfo() const {
+    return !SubprogramDIEs.empty();
   }
 
   /// Return true if the function uses DW_CFA_GNU_args_size CFIs.
@@ -1370,6 +1445,11 @@ public:
 
   /// Return true if the function has SDT marker
   bool hasSDTMarker() const { return HasSDTMarker; }
+
+  /// Return true if the original entry point was patched.
+  bool isPatched() const {
+    return IsPatched;
+  }
 
   const JumpTable *getJumpTable(const MCInst &Inst) const {
     const auto Address = BC.MIB->getJumpTable(Inst);
@@ -1756,6 +1836,10 @@ public:
     return *this;
   }
 
+  void setPseudo(bool Pseudo) {
+    IsPseudo = Pseudo;
+  }
+
   BinaryFunction &setUsesGnuArgsSize(bool Uses = true) {
     UsesGnuArgsSize = Uses;
     return *this;
@@ -1764,6 +1848,13 @@ public:
   BinaryFunction &setHasProfileAvailable(bool V = true) {
     HasProfileAvailable = V;
     return *this;
+  }
+
+  /// Mark function that should not be emitted.
+  void setIgnored();
+
+  void setIsPatched(bool V) {
+    IsPatched = V;
   }
 
   void setFolded(BinaryFunction *BF) {
@@ -2049,10 +2140,13 @@ public:
   /// state to State:Disassembled.
   ///
   /// Returns false if disassembly failed.
-  void disassemble();
+  bool disassemble();
 
-  /// Scan function for references to other functions.
-  void scanExternalRefs();
+  /// Scan function for references to other functions. In relocation mode,
+  /// add relocations for external references.
+  ///
+  /// Return true on success.
+  bool scanExternalRefs();
 
   /// Return the size of a data object located at \p Offset in the function.
   /// Return 0 if there is no data object at the \p Offset.
@@ -2362,29 +2456,6 @@ public:
   FragmentInfo &cold() { return ColdFragment; }
 
   const FragmentInfo &cold() const { return ColdFragment; }
-
-  /// Release memory allocated for CFG and instructions.
-  /// We still keep basic blocks for address translation/mapping purposes.
-  void releaseCFG() {
-    for (auto *BB : BasicBlocks) {
-      BB->releaseCFG();
-    }
-    for (auto BB : DeletedBasicBlocks) {
-      BB->releaseCFG();
-    }
-
-    clearList(CallSites);
-    clearList(ColdCallSites);
-    clearList(LSDATypeTable);
-
-    clearList(MoveRelocations);
-
-    clearList(LabelToBB);
-    clearList(Labels);
-
-    clearList(FrameInstructions);
-    clearList(FrameRestoreEquivalents);
-  }
 };
 
 inline raw_ostream &operator<<(raw_ostream &OS,

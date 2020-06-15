@@ -11,6 +11,7 @@
 
 #include "BinarySection.h"
 #include "BinaryContext.h"
+#include "Utils.h"
 #include "llvm/Support/CommandLine.h"
 
 #undef  DEBUG_TYPE
@@ -89,6 +90,9 @@ void BinarySection::emitAsData(MCStreamer &Streamer, StringRef NewName) const {
     uint64_t SectionOffset = 0;
     for (auto &Relocation : relocations()) {
       assert(Relocation.Offset < SectionContents.size() && "overflow detected");
+      // Skip undefined symbols.
+      if (BC.UndefinedSymbols.count(Relocation.Symbol))
+        continue;
       if (SectionOffset < Relocation.Offset) {
         Streamer.EmitBytes(
             SectionContents.substr(SectionOffset,
@@ -114,21 +118,76 @@ void BinarySection::emitAsData(MCStreamer &Streamer, StringRef NewName) const {
     Streamer.EmitLabel(BC.Ctx->getOrCreateSymbol("__hot_data_end"));
 }
 
-void BinarySection::flushPendingRelocations(raw_pwrite_stream &OS) {
-  DEBUG(dbgs() << "BOLT-DEBUG: flushing pending relocs for section "
-               << getName() << '\n');
+void BinarySection::flushPendingRelocations(raw_pwrite_stream &OS,
+                                            SymbolResolverFuncTy Resolver) {
+  if (PendingRelocations.empty() && Patches.empty())
+    return;
+
+  const uint64_t SectionAddress = getAddress();
+
+  // We apply relocations to original section contents. For allocatable sections
+  // this means using their input file offsets, since the output file offset
+  // could change (e.g. for new instance of .text). For non-allocatable
+  // sections, the output offset should always be a valid one.
+  const uint64_t SectionFileOffset = isAllocatable() ? getInputFileOffset()
+                                                     : getOutputFileOffset();
+  DEBUG(dbgs() << "BOLT-DEBUG: flushing pending relocations for section "
+               << getName() << '\n'
+               << "  address: 0x" << Twine::utohexstr(SectionAddress) << '\n'
+               << "  offset: 0x" << Twine::utohexstr(SectionFileOffset) << '\n'
+  );
+
+  for (auto &Patch : Patches) {
+    OS.pwrite(Patch.Bytes.data(),
+              Patch.Bytes.size(),
+              SectionFileOffset + Patch.Offset);
+  }
+
+
   for (auto &Reloc : PendingRelocations) {
-    DEBUG(dbgs() << "BOLT-DEBUG: writing value 0x"
-                 << Twine::utohexstr(Reloc.Addend)
-                 << " of size " << Relocation::getSizeForType(Reloc.Type)
-                 << " at offset 0x"
-                 << Twine::utohexstr(Reloc.Offset) << '\n');
-    assert(Reloc.Type == ELF::R_X86_64_32 &&
+    uint64_t Value = Reloc.Addend;
+    if (Reloc.Symbol)
+      Value += Resolver(Reloc.Symbol);
+    switch(Reloc.Type) {
+    default:
+      llvm_unreachable(
            "only R_X86_64_32 relocations are supported at the moment");
-    const uint32_t Value = Reloc.Addend;
-    OS.pwrite(reinterpret_cast<const char*>(&Value),
-              Relocation::getSizeForType(Reloc.Type),
-              FileOffset + Reloc.Offset);
+    case ELF::R_X86_64_32: {
+      OS.pwrite(reinterpret_cast<const char*>(&Value),
+                Relocation::getSizeForType(Reloc.Type),
+                SectionFileOffset + Reloc.Offset);
+      break;
+    }
+    case ELF::R_X86_64_PC32: {
+      Value -= SectionAddress + Reloc.Offset;
+      OS.pwrite(reinterpret_cast<const char*>(&Value),
+                Relocation::getSizeForType(Reloc.Type),
+                SectionFileOffset + Reloc.Offset);
+      DEBUG(
+        dbgs() << "BOLT-DEBUG: writing value 0x"
+                     << Twine::utohexstr(Value)
+                     << " of size " << Relocation::getSizeForType(Reloc.Type)
+                     << " at offset 0x"
+                     << Twine::utohexstr(Reloc.Offset)
+                     << " address 0x"
+                     << Twine::utohexstr(SectionAddress + Reloc.Offset)
+                     << " Offset 0x"
+                     << Twine::utohexstr(SectionFileOffset + Reloc.Offset)
+                     << '\n';
+      );
+      break;
+    }
+    }
+    DEBUG(dbgs() << "BOLT-DEBUG: writing value 0x"
+                 << Twine::utohexstr(Value)
+                 << " of size " << Relocation::getSizeForType(Reloc.Type)
+                 << " at section offset 0x"
+                 << Twine::utohexstr(Reloc.Offset)
+                 << " address 0x"
+                 << Twine::utohexstr(SectionAddress + Reloc.Offset)
+                 << " file offset 0x"
+                 << Twine::utohexstr(SectionFileOffset + Reloc.Offset)
+                 << '\n';);
   }
 
   clearList(PendingRelocations);
@@ -145,6 +204,10 @@ BinarySection::~BinarySection() {
        OutputContents.data() != getContents(Section).data())) {
     delete[] getOutputData();
   }
+}
+
+void BinarySection::clearRelocations() {
+  clearList(Relocations);
 }
 
 void BinarySection::print(raw_ostream &OS) const {

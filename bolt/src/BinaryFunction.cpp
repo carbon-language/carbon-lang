@@ -60,6 +60,8 @@ extern cl::opt<bool> StrictMode;
 extern cl::opt<bool> UpdateDebugSections;
 extern cl::opt<unsigned> Verbosity;
 
+extern bool processAllFunctions();
+
 cl::opt<bool>
 CheckEncoding("check-encoding",
   cl::desc("perform verification of LLVM instruction encoding/decoding. "
@@ -876,7 +878,7 @@ BinaryFunction::processIndirectBranch(MCInst &Instruction,
   // in this case.
   auto Value = BC.getPointerAtAddress(ArrayStart);
   if (Value && BC.getSectionForAddress(*Value))
-    BC.InterproceduralReferences.insert(std::make_pair(this, *Value));
+    InterproceduralReferences.insert(*Value);
 
   return IndirectBranchType::POSSIBLE_TAIL_CALL;
 }
@@ -951,7 +953,7 @@ bool BinaryFunction::isZeroPaddingAt(uint64_t Offset) const {
   return true;
 }
 
-void BinaryFunction::disassemble() {
+bool BinaryFunction::disassemble() {
   NamedRegionTimer T("disassemble", "Disassemble function", "buildfuncs",
                      "Build Binary Functions", opts::TimeBuild);
   ErrorOr<ArrayRef<uint8_t>> ErrorOrFunctionData = getData();
@@ -1051,7 +1053,7 @@ void BinaryFunction::disassemble() {
         setTrapOnEntry();
         BC.TrappedFunctions.push_back(this);
       } else {
-        IsSimple = false;
+        setIgnored();
       }
 
       break;
@@ -1078,38 +1080,30 @@ void BinaryFunction::disassemble() {
 
       // Check if our disassembly is correct and matches the assembler output.
       if (!BC.validateEncoding(Instruction, FunctionData.slice(Offset, Size))) {
-        if (BC.HasRelocations) {
-          errs() << "BOLT-ERROR: internal assembler/disassembler error "
+        if (opts::Verbosity >= 1) {
+          errs() << "BOLT-WARNING: internal assembler/disassembler error "
                     "detected for AVX512 instruction:\n";
           BC.printInstruction(errs(), Instruction, AbsoluteInstrAddr);
           errs() << " in function " << *this << '\n';
-          exit(1);
-        } else {
-          setSimple(false);
-          break;
         }
+
+        setIgnored();
+        break;
       }
     }
 
     // Check if there's a relocation associated with this instruction.
     bool UsedReloc{false};
-    for (auto Itr = Relocations.lower_bound(Offset);
-         Itr != Relocations.upper_bound(Offset + Size);
-         ++Itr) {
+    for (auto Itr = Relocations.lower_bound(Offset),
+         ItrE = Relocations.lower_bound(Offset + Size); Itr != ItrE; ++Itr) {
       const auto &Relocation = Itr->second;
-      if (Relocation.Offset >= Offset + Size)
-        continue;
-
-      const MCSymbol *TargetSymbol = Relocation.Symbol;
-      auto Addend = Relocation.Addend;
 
       DEBUG(dbgs() << "BOLT-DEBUG: replacing immediate 0x"
             << Twine::utohexstr(Relocation.Value) << " with relocation"
-            " against " << TargetSymbol->getName()
-            << "+" << Addend << " in function " << *this
+            " against " << Relocation.Symbol
+            << "+" << Relocation.Addend << " in function " << *this
             << " for instruction at offset 0x"
             << Twine::utohexstr(Offset) << '\n');
-      int64_t Value = Relocation.Value;
 
       // Process reference to the primary symbol.
       if (!Relocation.isPCRelative())
@@ -1117,6 +1111,7 @@ void BinaryFunction::disassemble() {
                             *this,
                             /*IsPCRel*/ false);
 
+      int64_t Value = Relocation.Value;
       const auto Result = BC.MIB->replaceImmWithSymbolRef(Instruction,
                                                           Relocation.Symbol,
                                                           Relocation.Addend,
@@ -1197,8 +1192,7 @@ void BinaryFunction::disassemble() {
               }
               goto add_instruction;
             }
-            BC.InterproceduralReferences.insert(
-                std::make_pair(this, TargetAddress));
+            InterproceduralReferences.insert(TargetAddress);
             if (opts::Verbosity >= 2 && !IsCall && Size == 2 &&
                 !BC.HasRelocations) {
               errs() << "BOLT-WARNING: relaxed tail call detected at 0x"
@@ -1303,8 +1297,7 @@ void BinaryFunction::disassemble() {
               HasFixedIndirectBranch = true;
             } else {
               MIB->convertJmpToTailCall(Instruction);
-              BC.InterproceduralReferences.insert(
-                  std::make_pair(this, IndirectTarget));
+              InterproceduralReferences.insert(IndirectTarget);
             }
             break;
           }
@@ -1374,12 +1367,28 @@ add_instruction:
 
   clearList(Relocations);
 
+  if (!IsSimple) {
+    clearList(Instructions);
+    return false;
+  }
+
   updateState(State::Disassembled);
+
+  return true;
 }
 
-void BinaryFunction::scanExternalRefs() {
-  if (isPLTFunction())
-    return;
+bool BinaryFunction::scanExternalRefs() {
+  bool Success = true;
+  bool DisassemblyFailed = false;
+
+  // Ignore pseudo functions.
+  if (isPseudo())
+    return Success;
+
+  // List of external references for this function.
+  std::vector<Relocation> FunctionRelocations;
+
+  static auto Emitter = BC.createIndependentMCCodeEmitter();
 
   ErrorOr<ArrayRef<uint8_t>> ErrorOrFunctionData = getData();
   assert(ErrorOrFunctionData && "function data is not available");
@@ -1409,38 +1418,169 @@ void BinaryFunction::scanExternalRefs() {
                << Twine::utohexstr(AbsoluteInstrAddr) << ") in function "
                << *this << '\n';
       }
+      Success = false;
+      DisassemblyFailed = true;
       break;
     }
 
-    // Detect address reference by an instruction.
+    // Return true if we can skip handling the Target function reference.
+    auto ignoreFunctionRef = [&](const BinaryFunction &Target) {
+      if (&Target == this)
+        return true;
+
+      // Note that later we may decide not to emit Target function. In that
+      // case, we conservatively create references that will be ignored or
+      // resolved to the same function.
+      if (!BC.shouldEmit(Target))
+        return true;
+
+      return false;
+    };
+
+    // Return true if we can ignore reference to the symbol.
+    auto ignoreReference = [&](const MCSymbol *TargetSymbol) {
+      auto *TargetFunction = BC.getFunctionForSymbol(TargetSymbol);
+      if (!TargetFunction)
+        return true;
+
+      return ignoreFunctionRef(*TargetFunction);
+    };
+
+    // Detect if the instruction references an address.
     // Without relocations, we can only trust PC-relative address modes.
-    uint64_t TargetAddress{0};
+    uint64_t TargetAddress = 0;
+    bool IsPCRel = false;
+    bool IsBranch = false;
     if (BC.MIB->hasPCRelOperand(Instruction)) {
-      if (!BC.MIB->evaluateMemOperandTarget(Instruction, TargetAddress,
-                                            AbsoluteInstrAddr, Size)) {
-        continue;
+      if (BC.MIB->evaluateMemOperandTarget(Instruction, TargetAddress,
+                                           AbsoluteInstrAddr, Size)) {
+        IsPCRel = true;
       }
     } else if (BC.MIB->isCall(Instruction) || BC.MIB->isBranch(Instruction)) {
       if (!BC.MIB->evaluateBranch(Instruction, AbsoluteInstrAddr, Size,
                                   TargetAddress)) {
+        IsBranch = true;
+      }
+    }
+
+    MCSymbol *TargetSymbol = nullptr;
+
+    // Create an entry point at reference address if needed.
+    auto *TargetFunction = BC.getBinaryFunctionContainingAddress(TargetAddress);
+    if (TargetFunction && !ignoreFunctionRef(*TargetFunction)) {
+      const uint64_t FunctionOffset =
+        TargetAddress - TargetFunction->getAddress();
+      TargetSymbol = FunctionOffset
+                        ? TargetFunction->addEntryPointAtOffset(FunctionOffset)
+                        : TargetFunction->getSymbol();
+    }
+
+    // Can't find more references and not creating relocations.
+    if (!BC.HasRelocations)
+      continue;
+
+    // Create a relocation against the TargetSymbol as the symbol might get
+    // moved.
+    if (TargetSymbol) {
+      if (IsBranch) {
+        BC.MIB->replaceBranchTarget(Instruction, TargetSymbol,
+                                    Emitter.LocalCtx.get());
+      } else if (IsPCRel) {
+        const MCExpr *Expr = MCSymbolRefExpr::create(TargetSymbol,
+                                                     MCSymbolRefExpr::VK_None,
+                                                     *Emitter.LocalCtx.get());
+        BC.MIB->replaceMemOperandDisp(
+            Instruction, MCOperand::createExpr(BC.MIB->getTargetExprFor(
+                             Instruction,
+                             Expr,
+                             *Emitter.LocalCtx.get(), 0)));
+      }
+    }
+
+    // Create more relocations based on input file relocations.
+    bool HasRel = false;
+    for (auto Itr = Relocations.lower_bound(Offset),
+         ItrE = Relocations.lower_bound(Offset + Size); Itr != ItrE; ++Itr) {
+      auto &Relocation = Itr->second;
+      if (ignoreReference(Relocation.Symbol))
+        continue;
+
+      int64_t Value = Relocation.Value;
+      const auto Result =
+        BC.MIB->replaceImmWithSymbolRef(Instruction,
+                                        Relocation.Symbol,
+                                        Relocation.Addend,
+                                        Emitter.LocalCtx.get(),
+                                        Value,
+                                        Relocation.Type);
+      (void)Result;
+      assert(Result && "cannot replace immediate with relocation");
+
+      HasRel = true;
+    }
+
+    if (!IsBranch && !IsPCRel && !HasRel)
+      continue;
+
+    // Emit the instruction using temp emitter and generate relocations.
+    SmallString<256> Code;
+    SmallVector<MCFixup, 4> Fixups;
+    raw_svector_ostream VecOS(Code);
+    Emitter.MCE->encodeInstruction(Instruction, VecOS, Fixups, *BC.STI);
+
+    // Create relocation for every fixup.
+    for (const auto &Fixup : Fixups) {
+      Optional<Relocation> Rel = BC.MIB->createRelocation(Fixup, *BC.MAB);
+      if (!Rel) {
+        Success = false;
         continue;
       }
-    } else {
-      continue;
+
+      if (Relocation::getSizeForType(Rel->Type) < 4) {
+        // If the instruction uses a short form, then we might not be able
+        // to handle the rewrite without relaxation, and hence cannot reliably
+        // create an external reference relocation.
+        Success = false;
+        continue;
+      }
+      Rel->Offset +=  getAddress() - getSection().getAddress() + Offset;
+      FunctionRelocations.push_back(*Rel);
     }
 
-    if (containsAddress(TargetAddress, /*UseMaxSize=*/true))
-      continue;
+    if (!Success)
+      break;
+  }
 
-    auto *TargetFunction = BC.getBinaryFunctionContainingAddress(TargetAddress);
-    if (!TargetFunction)
-      continue;
-
-    const uint64_t TargetOffset = TargetAddress - TargetFunction->getAddress();
-    if (TargetOffset && TargetFunction->isSimple()) {
-      TargetFunction->addEntryPointAtOffset(TargetOffset);
+  // Add relocations unless disassembly failed for this function.
+  if (!DisassemblyFailed) {
+    for (auto &Rel : FunctionRelocations) {
+      getSection().addPendingRelocation(Rel);
     }
   }
+
+  // Inform BinaryContext that this function symbols will not be defined and
+  // relocations should not be created against them.
+  if (BC.HasRelocations) {
+    for (auto &LI : Labels) {
+      BC.UndefinedSymbols.insert(LI.second);
+    }
+    if (FunctionEndLabel) {
+      BC.UndefinedSymbols.insert(FunctionEndLabel);
+    }
+  }
+
+  clearList(Relocations);
+  clearList(ExternallyReferencedOffsets);
+
+  if (Success && BC.HasRelocations) {
+    HasExternalRefRelocations = true;
+  }
+
+  if (opts::Verbosity >= 1 && !Success) {
+    outs() << "BOLT-INFO: failed to scan refs for  " << *this << '\n';
+  }
+
+  return Success;
 }
 
 void BinaryFunction::postProcessEntryPoints() {
@@ -1451,6 +1591,12 @@ void BinaryFunction::postProcessEntryPoints() {
     auto *Label = KV.second;
     if (!getSecondaryEntryPointSymbol(Label))
       continue;
+
+    // In non-relocation mode there's potentially an external undetectable
+    // reference to the entry point and hence we cannot move this entry
+    // point. Optimizing without moving could be difficult.
+    if (!BC.HasRelocations)
+      setSimple(false);
 
     const auto Offset = KV.first;
 
@@ -1471,8 +1617,7 @@ void BinaryFunction::postProcessEntryPoints() {
               "detected in function " << *this
            << " at offset 0x" << Twine::utohexstr(Offset) << '\n';
     if (BC.HasRelocations) {
-      errs() << "BOLT-ERROR: unable to keep processing in relocation mode\n";
-      exit(1);
+      setIgnored();
     }
     setSimple(false);
   }
@@ -2687,10 +2832,24 @@ uint64_t BinaryFunction::getEditDistance() const {
                                                  BasicBlocksLayout);
 }
 
-void BinaryFunction::setTrapOnEntry() {
+void BinaryFunction::clearDisasmState() {
   clearList(Instructions);
   clearList(IgnoredBranches);
   clearList(TakenBranches);
+  clearList(InterproceduralReferences);
+
+  if (BC.HasRelocations) {
+    for (auto &LI : Labels) {
+      BC.UndefinedSymbols.insert(LI.second);
+    }
+    if (FunctionEndLabel) {
+      BC.UndefinedSymbols.insert(FunctionEndLabel);
+    }
+  }
+}
+
+void BinaryFunction::setTrapOnEntry() {
+  clearDisasmState();
 
   auto addTrapAtOffset = [&](uint64_t Offset) {
     MCInst TrapInstr;
@@ -2706,6 +2865,39 @@ void BinaryFunction::setTrapOnEntry() {
   }
 
   TrapsOnEntry = true;
+}
+
+void BinaryFunction::setIgnored() {
+  if (opts::processAllFunctions()) {
+    // We can accept ignored functions before they've been disassembled.
+    // In that case, they would still get disassembled and emited, but not
+    // optimized.
+    assert(CurrentState == State::Empty &&
+           "cannot ignore non-empty functions in current mode");
+    IsIgnored = true;
+    return;
+  }
+
+  clearDisasmState();
+
+  // Clear CFG state too.
+  if (hasCFG()) {
+    releaseCFG();
+
+    for (auto BB : BasicBlocks) {
+      delete BB;
+    }
+    for (auto BB : DeletedBasicBlocks) {
+      delete BB;
+    }
+    BasicBlocks.clear();
+    BasicBlocksLayout.clear();
+  }
+
+  CurrentState = State::Empty;
+
+  IsIgnored = true;
+  IsSimple = false;
 }
 
 void BinaryFunction::duplicateConstantIslands() {
@@ -3180,18 +3372,6 @@ MCSymbol *BinaryFunction::addEntryPointAtOffset(uint64_t Offset) {
 
   BC.setSymbolToFunctionMap(EntrySymbol, this);
 
-  // In non-relocation mode there's potentially an external undetectable
-  // reference to the entry point and hence we cannot move this entry
-  // point. Optimizing without moving could be difficult.
-  if (!BC.HasRelocations) {
-    if (opts::Verbosity >= 1) {
-      outs() << "BOLT-INFO: function " << *this
-             << " has an internal address that is a potential target of a "
-             << " reference from another function. Skipping the function.\n";
-    }
-    setSimple(false);
-  }
-
   return EntrySymbol;
 }
 
@@ -3276,6 +3456,25 @@ uint64_t BinaryFunction::getEntryIDForSymbol(const MCSymbol *Symbol) const {
   }
 
   llvm_unreachable("symbol not found");
+}
+
+bool BinaryFunction::forEachEntryPoint(EntryPointCallbackTy Callback) const {
+  bool Status = Callback(0, getSymbol());
+  if (!isMultiEntry())
+    return Status;
+
+  for (auto &KV : Labels) {
+    if (!Status)
+      break;
+
+    auto *EntrySymbol = getSecondaryEntryPointSymbol(KV.second);
+    if (!EntrySymbol)
+      continue;
+
+    Status = Callback(KV.first, EntrySymbol);
+  }
+
+  return Status;
 }
 
 BinaryFunction::BasicBlockOrderType BinaryFunction::dfs() const {
@@ -3946,7 +4145,7 @@ DebugAddressRangesVector BinaryFunction::getOutputAddressRanges() const {
 
 uint64_t BinaryFunction::translateInputToOutputAddress(uint64_t Address) const {
   // If the function hasn't changed return the same address.
-  if (!isEmitted() && !BC.HasRelocations)
+  if (!isEmitted())
     return Address;
 
   if (Address < getAddress())
@@ -3980,7 +4179,7 @@ DebugAddressRangesVector BinaryFunction::translateInputToOutputRanges(
   DebugAddressRangesVector OutputRanges;
 
   // If the function hasn't changed return the same ranges.
-  if (!isEmitted() && !BC.HasRelocations) {
+  if (!isEmitted()) {
     OutputRanges.resize(InputRanges.size());
     std::transform(InputRanges.begin(), InputRanges.end(),
                    OutputRanges.begin(),
@@ -4084,7 +4283,7 @@ MCInst *BinaryFunction::getInstructionAtOffset(uint64_t Offset) {
 DWARFDebugLoc::LocationList BinaryFunction::translateInputToOutputLocationList(
     DWARFDebugLoc::LocationList InputLL) const {
   // If the function hasn't changed - there's nothing to update.
-  if (!isEmitted() && !BC.HasRelocations) {
+  if (!isEmitted()) {
     return InputLL;
   }
 

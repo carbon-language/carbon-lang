@@ -1053,8 +1053,15 @@ public:
 
 } // end anonymous namespace
 
+
+namespace llvm {
+namespace bolt {
+
 MCPlusBuilder *createAArch64MCPlusBuilder(const MCInstrAnalysis *Analysis,
                                           const MCInstrInfo *Info,
                                           const MCRegisterInfo *RegInfo) {
   return new AArch64MCPlusBuilder(Analysis, Info, RegInfo);
+}
+
+}
 }

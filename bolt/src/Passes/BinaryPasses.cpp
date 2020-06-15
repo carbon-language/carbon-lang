@@ -437,17 +437,16 @@ void ReorderBasicBlocks::modifyFunctionLayout(BinaryFunction &BF,
 void FixupBranches::runOnFunctions(BinaryContext &BC) {
   for (auto &It : BC.getBinaryFunctions()) {
     auto &Function = It.second;
-    if (BC.HasRelocations || shouldOptimize(Function)) {
-      if (BC.HasRelocations && !Function.isSimple())
-        continue;
-      Function.fixBranches();
-    }
+    if (!BC.shouldEmit(Function) || !Function.isSimple())
+      continue;
+
+    Function.fixBranches();
   }
 }
 
 void FinalizeFunctions::runOnFunctions(BinaryContext &BC) {
   ParallelUtilities::WorkFuncTy WorkFun = [&](BinaryFunction &BF) {
-    if (shouldOptimize(BF) && !BF.finalizeCFIState()) {
+    if (!BF.finalizeCFIState()) {
       if (BC.HasRelocations) {
         errs() << "BOLT-ERROR: unable to fix CFI state for function " << BF
                << ". Exiting.\n";
@@ -464,7 +463,7 @@ void FinalizeFunctions::runOnFunctions(BinaryContext &BC) {
   };
 
   ParallelUtilities::PredicateTy SkipPredicate = [&](const BinaryFunction &BF) {
-    return !BC.HasRelocations && !shouldOptimize(BF);
+    return !BC.shouldEmit(BF);
   };
 
   ParallelUtilities::runOnEachFunction(

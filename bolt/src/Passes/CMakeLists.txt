@@ -20,6 +20,7 @@ add_llvm_library(LLVMBOLTPasses
   LivenessAnalysis.cpp
   LongJmp.cpp
   MCF.cpp
+  PatchEntries.cpp
   PettisAndHansen.cpp
   PLTCall.cpp
   RegAnalysis.cpp

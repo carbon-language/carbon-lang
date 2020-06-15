@@ -15,6 +15,7 @@
 #include "Relocation.h"
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/Triple.h"
+#include "llvm/ADT/STLExtras.h"
 #include "llvm/BinaryFormat/ELF.h"
 #include "llvm/MC/MCSymbol.h"
 #include "llvm/Object/ELFObjectFile.h"
@@ -38,11 +39,12 @@ class BinarySection {
   friend class BinaryContext;
 
   BinaryContext &BC;          // Owning BinaryContext
-  const std::string Name;     // Section name
+  std::string Name;           // Section name
   const SectionRef Section;   // SectionRef (may be null)
-  StringRef Contents;         // input section contents
-  const uint64_t Address;     // address of section in input binary (may be 0)
-  const uint64_t Size;        // input section size
+  StringRef Contents;         // Input section contents
+  const uint64_t Address;     // Address of section in input binary (may be 0)
+  const uint64_t Size;        // Input section size
+  uint64_t InputFileOffset{0};// Offset in the input binary
   unsigned Alignment;         // alignment in bytes (must be > 0)
   unsigned ELFType;           // ELF section type
   unsigned ELFFlags;          // ELF section flags
@@ -52,9 +54,17 @@ class BinarySection {
   using RelocationSetType = std::set<Relocation>;
   RelocationSetType Relocations;
 
-  // Pending relocations for this section.  For the moment, just used by
-  // the .debug_info section.
-  RelocationSetType PendingRelocations;
+  // Pending relocations for this section.
+  std::vector<Relocation> PendingRelocations;
+
+  struct BinaryPatch {
+    uint64_t Offset;
+    SmallString<8> Bytes;
+
+    BinaryPatch(uint64_t Offset, const SmallVectorImpl<char> &Bytes)
+      : Offset(Offset), Bytes(Bytes.begin(), Bytes.end()) {}
+  };
+  std::vector<BinaryPatch> Patches;
 
   // Output info
   bool IsFinalized{false};         // Has this section had output information
@@ -63,7 +73,7 @@ class BinarySection {
                                    // been renamed)
   uint64_t OutputAddress{0};       // Section address for the rewritten binary.
   uint64_t OutputSize{0};          // Section size in the rewritten binary.
-  uint64_t FileOffset{0};          // File offset in the rewritten binary file.
+  uint64_t OutputFileOffset{0};    // File offset in the rewritten binary file.
   StringRef OutputContents;        // Rewritten section contents.
   unsigned SectionID{-1u};         // Unique ID used for address mapping.
                                    // Set by ExecutableFileMemoryManager.
@@ -151,6 +161,7 @@ public:
     if (Section.getObject()->isELF()) {
       ELFType = ELFSectionRef(Section).getType();
       ELFFlags = ELFSectionRef(Section).getFlags();
+      InputFileOffset = ELFSectionRef(Section).getOffset();
     }
   }
 
@@ -228,6 +239,7 @@ public:
   uint64_t getAddress() const { return Address; }
   uint64_t getEndAddress() const { return Address + Size; }
   uint64_t getSize() const { return Size; }
+  uint64_t getInputFileOffset() const { return InputFileOffset; }
   uint64_t getAlignment() const { return Alignment; }
   bool isText() const {
     if (isELF())
@@ -304,11 +316,6 @@ public:
     return !Relocations.empty();
   }
 
-  /// Iterate over all pending relocations in this section.
-  iterator_range<RelocationSetType::const_iterator> pendingRelocations() const {
-    return make_range(PendingRelocations.begin(), PendingRelocations.end());
-  }
-
   /// Does this section have any pending relocations?
   bool hasPendingRelocations() const {
     return !PendingRelocations.empty();
@@ -325,6 +332,8 @@ public:
     return false;
   }
 
+  void clearRelocations();
+
   /// Add a new relocation at the given /p Offset.  Note: pending relocations
   /// are only used by .debug_info and should eventually go away.
   void addRelocation(uint64_t Offset,
@@ -337,9 +346,19 @@ public:
     if (!Pending) {
       Relocations.emplace(Relocation{Offset, Symbol, Type, Addend, Value});
     } else {
-      PendingRelocations.emplace(
+      PendingRelocations.emplace_back(
           Relocation{Offset, Symbol, Type, Addend, Value});
     }
+  }
+
+  /// Add relocation against the original contents of this section.
+  void addPendingRelocation(const Relocation &Rel) {
+    PendingRelocations.push_back(Rel);
+  }
+
+  /// Add patch to the input contents of this section.
+  void addPatch(uint64_t Offset, const SmallVectorImpl<char> &Bytes) {
+    Patches.emplace_back(BinaryPatch(Offset, Bytes));
   }
 
   /// Lookup the relocation (if any) at the given /p Offset.
@@ -373,7 +392,7 @@ public:
     return reinterpret_cast<uint64_t>(getOutputData());
   }
   uint64_t getOutputAddress() const { return OutputAddress; }
-  uint64_t getFileOffset() const { return FileOffset; }
+  uint64_t getOutputFileOffset() const { return OutputFileOffset; }
   unsigned getSectionID() const {
     assert(hasValidSectionID() && "trying to use uninitialized section id");
     return SectionID;
@@ -389,8 +408,8 @@ public:
   void setOutputAddress(uint64_t Address) {
     OutputAddress = Address;
   }
-  void setFileOffset(uint64_t Offset) {
-    FileOffset = Offset;
+  void setOutputFileOffset(uint64_t Offset) {
+    OutputFileOffset = Offset;
   }
   void setSectionID(unsigned ID) {
     assert(!hasValidSectionID() && "trying to set section id twice");
@@ -410,8 +429,12 @@ public:
   //  for the section during emission if non-empty.
   void emitAsData(MCStreamer &Streamer, StringRef NewName = StringRef()) const;
 
-  /// Flush all pending relocations to the emitted section.
-  void flushPendingRelocations(raw_pwrite_stream &OS);
+  using SymbolResolverFuncTy = llvm::function_ref<uint64_t(const MCSymbol *)>;
+
+  /// Flush all pending relocations to patch original contents of sections
+  /// that were not emitted via MCStreamer.
+  void flushPendingRelocations(raw_pwrite_stream &OS,
+                               SymbolResolverFuncTy Resolver);
 
   /// Reorder the contents of this section according to /p Order.  If
   /// /p Inplace is true, the entire contents of the section is reordered,

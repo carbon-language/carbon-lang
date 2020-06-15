@@ -313,9 +313,6 @@ private:
   /// of appending contents to it.
   bool willOverwriteSection(StringRef SectionName);
 
-  /// Return true if the function \p BF should be disassembled.
-  bool shouldDisassemble(const BinaryFunction &BF) const;
-
   /// Parse .note.stapsdt section
   void parseSDTNotes();
 

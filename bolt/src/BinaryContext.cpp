@@ -13,6 +13,7 @@
 #include "BinaryEmitter.h"
 #include "BinaryFunction.h"
 #include "ParallelUtilities.h"
+#include "Utils.h"
 #include "llvm/ADT/Twine.h"
 #include "llvm/DebugInfo/DWARF/DWARFFormValue.h"
 #include "llvm/DebugInfo/DWARF/DWARFUnit.h"
@@ -30,7 +31,6 @@
 #include <iterator>
 
 using namespace llvm;
-using namespace bolt;
 
 #undef  DEBUG_TYPE
 #define DEBUG_TYPE "bolt"
@@ -41,7 +41,10 @@ extern cl::OptionCategory BoltCategory;
 
 extern cl::opt<bool> AggregateOnly;
 extern cl::opt<bool> StrictMode;
+extern cl::opt<bool> UseOldText;
 extern cl::opt<unsigned> Verbosity;
+
+extern bool processAllFunctions();
 
 cl::opt<bool>
 NoHugePages("no-huge-pages",
@@ -72,6 +75,9 @@ PrintMemData("print-mem-data",
   cl::cat(BoltCategory));
 
 } // namespace opts
+
+namespace llvm {
+namespace bolt {
 
 BinaryContext::BinaryContext(std::unique_ptr<MCContext> Ctx,
                              std::unique_ptr<DWARFContext> DwCtx,
@@ -265,6 +271,9 @@ BinaryContext::createBinaryContext(ObjectFile *File,
       std::move(MII), std::move(STI), std::move(InstructionPrinter),
       std::move(MIA), std::move(MIB), std::move(MRI), std::move(DisAsm));
 
+  BC->MAB = std::unique_ptr<MCAsmBackend>(
+      BC->TheTarget->createMCAsmBackend(*BC->STI, *BC->MRI, MCTargetOptions()));
+
   BC->setFilename(File->getFileName());
 
   return BC;
@@ -272,11 +281,6 @@ BinaryContext::createBinaryContext(ObjectFile *File,
 
 std::unique_ptr<MCObjectWriter>
 BinaryContext::createObjectWriter(raw_pwrite_stream &OS) {
-  if (!MAB) {
-    MAB = std::unique_ptr<MCAsmBackend>(
-        TheTarget->createMCAsmBackend(*STI, *MRI, MCTargetOptions()));
-  }
-
   return MAB->createObjectWriter(OS);
 }
 
@@ -428,7 +432,7 @@ BinaryContext::handleAddressRef(uint64_t Address, BinaryFunction &BF,
                   Addend);
       }
     } else {
-      InterproceduralReferences.insert(std::make_pair(&BF, Address));
+      BF.InterproceduralReferences.insert(Address);
     }
   }
 
@@ -639,9 +643,9 @@ MCSymbol *BinaryContext::getOrCreateGlobalSymbol(uint64_t Address,
 
 BinaryFunction *BinaryContext::createBinaryFunction(
     const std::string &Name, BinarySection &Section, uint64_t Address,
-    uint64_t Size, bool IsSimple, uint64_t SymbolSize, uint16_t Alignment) {
+    uint64_t Size, uint64_t SymbolSize, uint16_t Alignment) {
   auto Result = BinaryFunctions.emplace(
-      Address, BinaryFunction(Name, Section, Address, Size, *this, IsSimple));
+      Address, BinaryFunction(Name, Section, Address, Size, *this));
   assert(Result.second == true && "unexpected duplicate function");
   auto *BF = &Result.first->second;
   registerNameAtAddress(Name, Address, SymbolSize ? SymbolSize : Size,
@@ -835,15 +839,21 @@ bool BinaryContext::hasValidCodePadding(const BinaryFunction &BF) {
 }
 
 void BinaryContext::adjustCodePadding() {
-  assert(!HasRelocations && "cannot adjust padding in relocation mode");
-
   for (auto &BFI : BinaryFunctions) {
     auto &BF = BFI.second;
-    if (!BF.isSimple())
+    if (!shouldEmit(BF))
       continue;
 
     if (!hasValidCodePadding(BF)) {
-      BF.setMaxSize(BF.getSize());
+      if (HasRelocations) {
+        if (opts::Verbosity >= 1) {
+          outs() << "BOLT-INFO: function " << BF
+                 << " has invalid padding. Ignoring the function.\n";
+        }
+        BF.setIgnored();
+      } else {
+        BF.setMaxSize(BF.getSize());
+      }
     }
   }
 }
@@ -988,40 +998,38 @@ void BinaryContext::generateSymbolHashes() {
   }
 }
 
-void BinaryContext::processInterproceduralReferences() {
-  for (auto &Pair : InterproceduralReferences) {
-    auto *FromBF = Pair.first;
-    auto Addr = Pair.second;
-    auto *ContainingFunction = getBinaryFunctionContainingAddress(Addr);
-    if (FromBF == ContainingFunction)
+void BinaryContext::processInterproceduralReferences(BinaryFunction &Function) {
+  for (auto Address : Function.InterproceduralReferences) {
+    auto *ContainingFunction = getBinaryFunctionContainingAddress(Address);
+    if (&Function == ContainingFunction)
       continue;
 
     if (ContainingFunction) {
       // Only a parent function (or a sibling) can reach its fragment.
       if (ContainingFunction->IsFragment) {
-        assert(!FromBF->IsFragment &&
+        assert(!Function.IsFragment &&
                "only one cold fragment is supported at this time");
-        ContainingFunction->setParentFunction(FromBF);
-        FromBF->addFragment(ContainingFunction);
+        ContainingFunction->setParentFunction(&Function);
+        Function.addFragment(ContainingFunction);
         if (!HasRelocations) {
           ContainingFunction->setSimple(false);
-          FromBF->setSimple(false);
+          Function.setSimple(false);
         }
         if (opts::Verbosity >= 1) {
           outs() << "BOLT-INFO: marking " << *ContainingFunction
-                 << " as a fragment of " << *FromBF << '\n';
+                 << " as a fragment of " << Function << '\n';
         }
         continue;
       }
 
-      if (ContainingFunction->getAddress() != Addr) {
+      if (ContainingFunction->getAddress() != Address) {
         ContainingFunction->
-          addEntryPointAtOffset(Addr - ContainingFunction->getAddress());
+          addEntryPointAtOffset(Address - ContainingFunction->getAddress());
       }
-    } else if (Addr) {
+    } else if (Address) {
       // Check if address falls in function padding space - this could be
       // unmarked data in code. In this case adjust the padding space size.
-      auto Section = getSectionForAddress(Addr);
+      auto Section = getSectionForAddress(Address);
       assert(Section && "cannot get section for referenced address");
 
       if (!Section->isText())
@@ -1032,16 +1040,16 @@ void BinaryContext::processInterproceduralReferences() {
       if (SectionName == ".plt" || SectionName == ".plt.got")
         continue;
 
-      if (HasRelocations) {
+      if (opts::UseOldText) {
         errs() << "BOLT-ERROR: cannot process binaries with unmarked "
                << "object in code at address 0x"
-               << Twine::utohexstr(Addr) << " belonging to section "
+               << Twine::utohexstr(Address) << " belonging to section "
                << SectionName << " in relocation mode.\n";
         exit(1);
       }
 
       ContainingFunction =
-        getBinaryFunctionContainingAddress(Addr,
+        getBinaryFunctionContainingAddress(Address,
                                            /*CheckPastEnd=*/false,
                                            /*UseMaxSize=*/true);
       // We are not going to overwrite non-simple functions, but for simple
@@ -1049,13 +1057,13 @@ void BinaryContext::processInterproceduralReferences() {
       if (ContainingFunction && ContainingFunction->isSimple()) {
         errs() << "BOLT-WARNING: function " << *ContainingFunction
                << " has an object detected in a padding region at address 0x"
-               << Twine::utohexstr(Addr) << '\n';
+               << Twine::utohexstr(Address) << '\n';
         ContainingFunction->setMaxSize(ContainingFunction->getSize());
       }
     }
   }
 
-  InterproceduralReferences.clear();
+  clearList(Function.InterproceduralReferences);
 }
 
 void BinaryContext::postProcessSymbolTable() {
@@ -1429,6 +1437,18 @@ void BinaryContext::preprocessDebugInfo() {
     }
 
   }
+}
+
+bool BinaryContext::shouldEmit(const BinaryFunction &Function) const {
+  if (opts::processAllFunctions())
+    return true;
+
+  if (Function.isIgnored())
+    return false;
+
+  // In relocation mode we will emit non-simple functions with CFG.
+  // If the function does not have a CFG it should be marked as ignored.
+  return HasRelocations || Function.isSimple();
 }
 
 void BinaryContext::printCFI(raw_ostream &OS, const MCCFIInstruction &Inst) {
@@ -1986,3 +2006,6 @@ DebugAddressRangesVector BinaryContext::translateModuleAddressRanges(
 
   return OutputRanges;
 }
+
+} // namespace bolt
+} // namespace llvm

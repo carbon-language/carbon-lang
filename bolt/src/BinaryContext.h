@@ -74,12 +74,6 @@ enum class MemoryContentsType : char {
   POSSIBLE_PIC_JUMP_TABLE,  /// Possibly a PIC jump table.
 };
 
-/// Free memory allocated for \p List.
-template<typename T> void clearList(T& List) {
-  T TempList;
-  TempList.swap(List);
-}
-
 /// Helper function to truncate a \p Value to given size in \p Bytes.
 inline int64_t truncateToSize(int64_t Value, unsigned Bytes) {
   return Value & ((uint64_t) (int64_t) -1 >> (64 - Bytes * 8));
@@ -190,6 +184,8 @@ class BinaryContext {
   std::unique_ptr<RuntimeLibrary> RtLibrary;
 
 public:
+  std::unordered_set<MCSymbol *> UndefinedSymbols;
+
   static std::unique_ptr<BinaryContext>
   createBinaryContext(ObjectFile *File, std::unique_ptr<DWARFContext> DwCtx);
 
@@ -366,7 +362,6 @@ public:
                                        BinarySection &Section,
                                        uint64_t Address,
                                        uint64_t Size,
-                                       bool IsSimple,
                                        uint64_t SymbolSize = 0,
                                        uint16_t Alignment = 0);
 
@@ -448,11 +443,6 @@ public:
   /// A map from jump table address to insertion order.  Used for generating
   /// jump table names.
   std::map<uint64_t, size_t> JumpTableIds;
-
-  /// Set of addresses in the code that are not a function start, and are
-  /// referenced from outside of containing function. E.g. this could happen
-  /// when a function has more than a single entry point.
-  std::set<std::pair<BinaryFunction *, uint64_t>> InterproceduralReferences;
 
   std::unique_ptr<MCContext> Ctx;
 
@@ -778,8 +768,8 @@ public:
 
   /// @}
 
-  /// Resolve inter-procedural dependencies.
-  void processInterproceduralReferences();
+  /// Resolve inter-procedural dependencies from \p Function.
+  void processInterproceduralReferences(BinaryFunction &Function);
 
   /// Perform any necessary post processing on the symbol table after
   /// function disassembly is complete.  This processing fixes top
@@ -1090,6 +1080,9 @@ public:
     }
     return false;
   }
+
+  /// Return true if the function should be emitted to the output file.
+  bool shouldEmit(const BinaryFunction &Function) const;
 
   /// Print the string name for a CFI operation.
   static void printCFI(raw_ostream &OS, const MCCFIInstruction &Inst);

@@ -216,9 +216,9 @@ void BinaryEmitter::emitFunctions() {
     const auto HasProfile = BC.NumProfiledFuncs > 0;
     const uint32_t OriginalBranchBoundaryAlign = X86AlignBranchBoundary;
     for (auto *Function : Functions) {
-      if (!BC.HasRelocations &&
-          (!Function->isSimple() || Function->isIgnored()))
+      if (!BC.shouldEmit(*Function)) {
         continue;
+      }
 
       DEBUG(dbgs() << "BOLT: generating code for function \""
                    << *Function << "\" : "
@@ -759,7 +759,6 @@ void BinaryEmitter::emitLSDA(BinaryFunction &BF, bool EmitColdPart) {
     return;
   }
 
-
   // Calculate callsite table size. Size of each callsite entry is:
   //
   //  sizeof(start) + sizeof(length) + sizeof(LP) + sizeof(uleb128(action))
@@ -1019,7 +1018,7 @@ void BinaryEmitter::emitFunctionBodyRaw(BinaryFunction &BF) {
 }
 
 void BinaryEmitter::emitDataSections(StringRef OrgSecPrefix) {
-  for (const auto &Section : BC.sections()) {
+  for (auto &Section : BC.sections()) {
     if (!Section.hasRelocations() || !Section.hasSectionRef())
       continue;
 
@@ -1028,6 +1027,7 @@ void BinaryEmitter::emitDataSections(StringRef OrgSecPrefix) {
       ? std::string(Section.getOutputName())
       : OrgSecPrefix.str() + std::string(SectionName);
     Section.emitAsData(Streamer, EmitName);
+    Section.clearRelocations();
   }
 }
 

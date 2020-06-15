@@ -20,6 +20,7 @@
 #include "Passes/JTFootprintReduction.h"
 #include "Passes/LongJmp.h"
 #include "Passes/PLTCall.h"
+#include "Passes/PatchEntries.h"
 #include "Passes/RegReAssign.h"
 #include "Passes/ReorderData.h"
 #include "Passes/ReorderFunctions.h"
@@ -499,6 +500,9 @@ void BinaryFunctionPassManager::runAllPasses(BinaryContext &BC) {
 
   // Assign each function an output section.
   Manager.registerPass(llvm::make_unique<AssignSections>());
+
+  // Patch original function entries
+  Manager.registerPass(llvm::make_unique<PatchEntries>());
 
   // Tighten branches according to offset differences between branch and
   // targets. No extra instructions after this pass, otherwise we may have

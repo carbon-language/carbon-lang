@@ -15,10 +15,12 @@
 #define LLVM_TOOLS_LLVM_BOLT_MCPLUSBUILDER_H
 
 #include "MCPlus.h"
+#include "Relocation.h"
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/BitVector.h"
 #include "llvm/ADT/Optional.h"
 #include "llvm/ADT/StringMap.h"
+#include "llvm/MC/MCAsmBackend.h"
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCInst.h"
@@ -1483,6 +1485,14 @@ public:
   virtual std::vector<MCInst> createInlineMemcpy(bool ReturnEnd) const {
     llvm_unreachable("not implemented");
     return {};
+  }
+
+  /// Create a target-specific relocation out of the \p Fixup.
+  /// Note that not every fixup could be converted into a relocation.
+  virtual Optional<Relocation> createRelocation(const MCFixup &Fixup,
+                                                const MCAsmBackend &MAB) const {
+    llvm_unreachable("not implemented");
+    return Relocation();
   }
 
   /// Returns true if instruction is a call frame pseudo instruction.

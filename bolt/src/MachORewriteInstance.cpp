@@ -152,8 +152,7 @@ void MachORewriteInstance::discoverFileObjects() {
     const auto It = BC->getBinaryFunctions().find(Address);
     if (It == BC->getBinaryFunctions().end())
       BC->createBinaryFunction(std::move(SymbolName), *Section, Address,
-                               SymbolSize,
-                               /* IsSimple */ true);
+                               SymbolSize);
     else
       It->second.addAlternativeName(std::move(SymbolName));
   }

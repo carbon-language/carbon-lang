@@ -15,6 +15,7 @@
 #include "llvm/ADT/Triple.h"
 #include "llvm/DebugInfo/CodeView/CodeView.h"
 #include "llvm/MC/MCContext.h"
+#include "llvm/MC/MCFixupKindInfo.h"
 #include "llvm/MC/MCInstBuilder.h"
 #include "llvm/MC/MCInstrAnalysis.h"
 #include "llvm/MC/MCInstrInfo.h"
@@ -2879,6 +2880,61 @@ public:
     return Code;
   }
 
+  Optional<Relocation>
+  createRelocation(const MCFixup &Fixup,
+                   const MCAsmBackend &MAB) const override {
+    const MCFixupKindInfo &FKI = MAB.getFixupKindInfo(Fixup.getKind());
+
+    assert(FKI.TargetOffset == 0 && "0-bit relocation offset expected");
+    const uint64_t RelOffset = Fixup.getOffset();
+
+    uint64_t RelType;
+    if (FKI.Flags & MCFixupKindInfo::FKF_IsPCRel) {
+      switch (FKI.TargetSize) {
+      default:
+        return NoneType();
+      case  8: RelType = ELF::R_X86_64_PC8; break;
+      case 16: RelType = ELF::R_X86_64_PC16; break;
+      case 32: RelType = ELF::R_X86_64_PC32; break;
+      case 64: RelType = ELF::R_X86_64_PC64; break;
+      }
+    } else {
+      switch (FKI.TargetSize) {
+      default:
+        return NoneType();
+      case  8: RelType = ELF::R_X86_64_8; break;
+      case 16: RelType = ELF::R_X86_64_16; break;
+      case 32: RelType = ELF::R_X86_64_32; break;
+      case 64: RelType = ELF::R_X86_64_64; break;
+      }
+    }
+
+    // Extract a symbol and an addend out of the fixup value expression.
+    //
+    // Only the following limited expression types are supported:
+    //   Symbol + Addend
+    //   Symbol
+    uint64_t Addend = 0;
+    MCSymbol *Symbol = nullptr;
+    const MCExpr *ValueExpr = Fixup.getValue();
+    if (ValueExpr->getKind() == MCExpr::Binary) {
+      const auto *BinaryExpr = cast<MCBinaryExpr>(ValueExpr);
+      assert(BinaryExpr->getOpcode() == MCBinaryExpr::Add &&
+             "unexpected binary expression");
+      const MCExpr *LHS = BinaryExpr->getLHS();
+      assert(LHS->getKind() == MCExpr::SymbolRef && "unexpected LHS");
+      Symbol = const_cast<MCSymbol *>(&LHS->getSymbol());
+      const MCExpr *RHS = BinaryExpr->getRHS();
+      assert(RHS->getKind() == MCExpr::Constant && "unexpected RHS");
+      Addend = cast<MCConstantExpr>(RHS)->getValue();
+    } else {
+      assert(ValueExpr->getKind() == MCExpr::SymbolRef && "unexpected value");
+      Symbol = const_cast<MCSymbol *>(&ValueExpr->getSymbol());
+    }
+
+    return Relocation({RelOffset, Symbol, RelType, Addend, 0});
+  }
+
   bool replaceImmWithSymbolRef(MCInst &Inst, const MCSymbol *Symbol,
                                int64_t Addend, MCContext *Ctx, int64_t &Value,
                                uint64_t RelType) const override {
@@ -3579,8 +3635,14 @@ public:
 
 }
 
+namespace llvm {
+namespace bolt {
+
 MCPlusBuilder *createX86MCPlusBuilder(const MCInstrAnalysis *Analysis,
                                       const MCInstrInfo *Info,
                                       const MCRegisterInfo *RegInfo) {
   return new X86MCPlusBuilder(Analysis, Info, RegInfo);
+}
+
+}
 }

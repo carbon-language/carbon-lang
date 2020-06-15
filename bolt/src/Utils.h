@@ -21,6 +21,12 @@
 namespace llvm {
 namespace bolt {
 
+/// Free memory allocated for \p List.
+template<typename T> void clearList(T& List) {
+  T TempList;
+  TempList.swap(List);
+}
+
 void report_error(StringRef Message, std::error_code EC);
 
 void report_error(StringRef Message, Error E);
