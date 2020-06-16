@@ -71,7 +71,7 @@ Link to the decision request on the topic in
 [Evolution > RFCs](https://forums.carbon-lang.dev/c/evolution/rfcs/6):
 
 ```markdown
-A decision is now [formally requested](LINK) on this proposal. Contributors may
+A decision is now [formally requested](LINK) on this proposal. Community members may
 still comment here, but keep in mind the proposal should not change while the
 reviewing team is considering it.
 ```
