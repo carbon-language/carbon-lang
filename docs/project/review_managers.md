@@ -36,7 +36,7 @@ Post the deadline on the topic in
 COMMENT DEADLINE - YYYY-MM-DD
 
 We’re asking that interested contributors please try to comment on this
-proposal, either in the doc or this topic, by end-of-day DAYOFWEEK, MONTH DD,
+proposal, either in the pull request or this topic, by end-of-day DAYOFWEEK, MONTH DD,
 Pacific Time. We’d like to resolve discussion at that point in order to request
 a decision.
 ```
