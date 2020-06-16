@@ -83,7 +83,7 @@ announce the decision.
 
 Decisions should use the [decision template](/proposals/template-decision.md).
 Accepted proposals should create a pull request for the decision;
-declined/deferred proposals proposals should have the same template used as a
+declined/deferred proposals should have the same template used as a
 comment on the proposal.
 
 Announce the decision on a new topic in
