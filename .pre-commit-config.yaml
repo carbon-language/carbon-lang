@@ -14,6 +14,17 @@ repos:
       - id: mixed-line-ending
         args: ['--fix=lf']
       - id: trailing-whitespace
+  - repo: local
+    hooks:
+      - id: markdown-toc
+        name: markdown-toc
+        description: Runs https://github.com/jonschlinkert/markdown-toc
+        entry: src/scripts/pre-commit-toc.js
+        language: node
+        additional_dependencies: [markdown-toc]
+        files: .*\.md$
+        exclude: ^src/jekyll/theme/
+  # Prettier should be run late so that it can re-format any prior changes.
   - repo: https://github.com/prettier/prettier
     rev: 2.0.5
     hooks:
