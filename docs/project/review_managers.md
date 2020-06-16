@@ -36,9 +36,9 @@ Post the deadline on the topic in
 COMMENT DEADLINE - YYYY-MM-DD
 
 We’re asking that interested contributors please try to comment on this
-proposal, either in the pull request or this topic, by end-of-day DAYOFWEEK, MONTH DD,
-Pacific Time. We’d like to resolve discussion at that point in order to request
-a decision.
+proposal, either in the pull request or this topic, by end-of-day DAYOFWEEK,
+MONTH DD, Pacific Time. We’d like to resolve discussion at that point in order
+to request a decision.
 ```
 
 ### Decision request
@@ -71,9 +71,9 @@ Link to the decision request on the topic in
 [Evolution > RFCs](https://forums.carbon-lang.dev/c/evolution/rfcs/6):
 
 ```markdown
-A decision is now [formally requested](LINK) on this proposal. Community members may
-still comment here, but keep in mind the proposal should not change while the
-reviewing team is considering it.
+A decision is now [formally requested](LINK) on this proposal. Community members
+may still comment here, but keep in mind the proposal should not change while
+the reviewing team is considering it.
 ```
 
 ### Decision announcement
@@ -82,9 +82,9 @@ When a proposal has a decision made, the review manager must publish and
 announce the decision.
 
 Decisions should use the [decision template](/proposals/template-decision.md).
-Accepted proposals should create a pull request for the decision;
-declined/deferred proposals should have the same template used as a
-comment on the proposal.
+Review managers should create a pull request for accepted proposals;
+declined/deferred proposals should have the same template used as a comment on
+the proposal, with no separate pull request.
 
 Announce the decision on a new topic in
 [Evolution > Announcemented](https://forums.carbon-lang.dev/c/evolution/announcements/8),
