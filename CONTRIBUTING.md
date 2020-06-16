@@ -184,6 +184,14 @@ follow the Carbon documentation and coding styles.
   - Keep in mind that code contribution guidelines are incomplete while we start
     work on Carbon, and may change later.
 
+## pre-commit
+
+We use [pre-commit](/docs/project/contribution_tools.md#pre-commit) for
+automated checks, including formatting of documentation. Please see
+[contribution tools](/docs/project/contribution_tools.md) for more information.
+
+Please use pre-commit to simplify reviews.
+
 ## Style
 
 ### Google Docs and Markdown
@@ -191,8 +199,8 @@ follow the Carbon documentation and coding styles.
 Changes to Carbon documentation follow the
 [Google developer documentation style guide](https://developers.google.com/style).
 
-Markdown files should additionally use [Prettier](https://prettier.io/) for
-formatting.
+Markdown files should additionally use
+[Prettier](/docs/project/contribution_tools.md#prettier) for formatting.
 
 Other style points to be aware of are:
 

@@ -38,8 +38,9 @@ const validateIdToken = async (idToken) => {
     gitHubId = user.firebase.identities['github.com'][0];
 
     // The associated secret is attached to the CarbonLangInfra GitHub account.
-    const { SecretManagerServiceClient } =
-        require('@google-cloud/secret-manager');
+    const {
+      SecretManagerServiceClient,
+    } = require('@google-cloud/secret-manager');
     const secrets = new SecretManagerServiceClient();
     const [secret] = await secrets.accessSecretVersion({
       name:
@@ -176,23 +177,23 @@ const serveContent = async (req, res) => {
 
     // Use the extension to determine the MIME type.
     var type = path.extname(file);
-    if (type == "") {
+    if (type == '') {
       // Treat files with no extension (e.g. LICENSE) as plain text.
-      type = "text/plain"; 
+      type = 'text/plain';
     }
     res.type(type);
 
     // Generally allow caching, particularly for css, js, images, etc, but not
     // HTML or extensionless files.
-    if (type != ".html" && type != "text/plain") {
+    if (type != '.html' && type != 'text/plain') {
       res.set('Cache-Control', 'public, max-age=31557600');
     }
 
     // Check cache.
-    var cacheHit = "hit";
+    var cacheHit = 'hit';
     var contents = contentCache.get(file);
     if (!contents) {
-      cacheHit = "miss";
+      cacheHit = 'miss';
       // Serve the requested data from the carbon-lang bucket.
       const bucket = gcs.bucket('gs://www.carbon-lang.dev');
       var contents;
