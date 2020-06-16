@@ -1,10 +1,18 @@
 #!/usr/local/bin/node
 
-// Runs markdown-toc for pre-commits. This is necessary to handle multiple file
-// arguments, which markdown-toc does not.
-//
-// Humans should generally use markdown-toc following the install instructions
-// from https://github.com/jonschlinkert/markdown-toc.
+/*
+Part of the Carbon Language project, under the Apache License v2.0 with LLVM
+Exceptions. See /LICENSE for license information.
+SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+*/
+
+/*
+Runs markdown-toc for pre-commits. This is necessary to handle multiple file
+arguments, which markdown-toc does not.
+
+Humans should generally use markdown-toc following the install instructions
+from https://github.com/jonschlinkert/markdown-toc.
+*/
 
 const mdtoc = require('markdown-toc');
 const fs = require('fs');
