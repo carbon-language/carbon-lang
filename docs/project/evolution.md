@@ -98,10 +98,8 @@ The number of review managers isn't tightly restricted. Community members may
 volunteer their assistance as a way of contributing to Carbon, although the Core
 team will still review participation.
 
-Our current review managers are:
-
-- [jperkins@google.com](mailto:jperkins@google.com)
-- [shummert@google.com](mailto:shummert@google.com)
+For more information, please see the
+[review manager documentation](review_managers.md).
 
 ### Core team
 
