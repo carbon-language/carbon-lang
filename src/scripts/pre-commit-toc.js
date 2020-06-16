@@ -9,7 +9,7 @@
 const mdtoc = require('markdown-toc');
 const fs = require('fs');
 
-files = process.argv.slice(2);
+const files = process.argv.slice(2);
 for (var i = 0; i < files.length; ++i) {
   const oldContent = fs.readFileSync(files[i]).toString();
   const newContent = mdtoc.insert(oldContent, { bullets: '-' });
