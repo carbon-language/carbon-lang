@@ -31,6 +31,7 @@ To set up pre-commit:
 - Follow the [installation instructions](https://pre-commit.com/#installation).
 - Enable per-repo: `pre-commit install`
 
+When modifying or adding pre-commit hooks, please run
 `pre-commit run --all-files` to see what changes.
 
 ## markdown-toc
