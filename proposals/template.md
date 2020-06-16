@@ -12,9 +12,16 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 ## Table of contents
 
-<!-- START doctoc generated TOC please keep comment here to allow auto update -->
-<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
-<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+<!-- toc -->
+
+- [TODO: Initial proposal setup](#todo-initial-proposal-setup)
+- [Problem](#problem)
+- [Background](#background)
+- [Proposal](#proposal)
+- [Details](#details)
+- [Alternatives considered](#alternatives-considered)
+
+<!-- tocstop -->
 
 ## TODO: Initial proposal setup
 

@@ -5,7 +5,7 @@
 repository: carbon-language/carbon-lang
 topnav_title: Carbon
 site_title: Carbon langauge
-url: "https://carbon-lang.dev/"
+url: 'https://carbon-lang.dev/'
 
 source: ./site
 destination: ./.gen-site
@@ -15,17 +15,16 @@ exclude:
   - src/
 
 include:
-  - "*.md"
+  - '*.md'
 
 feedback_disable: true
 
 sidebars:
-- sidebar
+  - sidebar
 
 defaults:
-  -
-    values:
-      layout: "page"
+  - values:
+      layout: 'page'
       search: true
       topnav: topnav
 
