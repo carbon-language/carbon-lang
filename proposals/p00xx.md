@@ -16,6 +16,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
 
 - [Problem](#problem)
+- [Background](#background)
 - [Proposal](#proposal)
 - [Details](#details)
   - [Open Question/Bikeshed](#open-questionbikeshed)
