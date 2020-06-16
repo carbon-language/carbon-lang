@@ -1,4 +1,4 @@
-# Decision for: Carbon: Change comment/decision timelines in proposal process
+# Decision for: Change comment/decision timelines in proposal process
 
 <!--
 Part of the Carbon Language project, under the Apache License v2.0 with LLVM
