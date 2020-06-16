@@ -24,7 +24,15 @@ std::string RuntimeLibrary::getLibPath(StringRef ToolPath,
                                        StringRef LibFileName) {
   auto Dir = llvm::sys::path::parent_path(ToolPath);
   SmallString<128> LibPath = llvm::sys::path::parent_path(Dir);
-  llvm::sys::path::append(LibPath, "lib", LibFileName);
+  llvm::sys::path::append(LibPath, "lib");
+  if (!llvm::sys::fs::exists(LibPath)) {
+    // In some cases we install bolt binary into one level deeper in bin/,
+    // we need to go back one more level to find lib directory.
+    LibPath =
+        llvm::sys::path::parent_path(llvm::sys::path::parent_path(LibPath));
+    llvm::sys::path::append(LibPath, "lib");
+  }
+  llvm::sys::path::append(LibPath, LibFileName);
   if (!llvm::sys::fs::exists(LibPath)) {
     errs() << "BOLT-ERROR: library not found: " << LibPath << "\n";
     exit(1);
