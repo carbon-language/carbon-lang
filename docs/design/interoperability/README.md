@@ -146,18 +146,73 @@ Notable elements are:
 
 ### Name mapping
 
+C/C++ names are mapped into the `Cpp` Carbon package. C++ namespaces work the
+same fundamental way as Carbon namespaces within the `Cpp` package name. Dotted
+names are used when referencing these names from Carbon code, e.g., `std::exit`
+becomes `Cpp.std.exit`.
+
+C++ incomplete types will be mirrored into Carbon's incomplete type behavior.
+Users wanting to avoid differences in incomplete type behaviors should fully
+define the C++ types using repeated imports.
+
+Carbon names which are mapped into C++ will use a top-level namespace of
+`Carbon`, with the package name and namespaces represented as namespaces below
+that. For example, the `Widget` Carbon package with a namespace `Foo` would
+become `::Carbon::Widget::Foo` in C++.
+
 For more details, see [name mapping](name_mapping.md).
 
 ### Type mapping
+
+Carbon and C++ (as well as the C subset of C++) will have a number of types with
+direct mappings between the languages. The existence of these mappings allow
+switching from one type to another across any interface boundary between the
+languages. However, this only works across the interface boundary to avoid any
+aliasing or other concerns. Transitioning in or out of Carbon code is what
+provides special permission for these type aliases to be used.
+
+Also note that the behavior of these types will not always be identical between
+the languages. It is only the values that transparently map from one to the
+other. Mapping operations is significantly different. e.g., Carbon may have
+`Float32` match the C++ `float` storage while making subtle changes to
+arithmetic and/or comparison behaviors. We will prioritize reflecting the intent
+of type choices.
+
+Last but not least, in some cases, there are multiple C or C++ types that can
+map to a single Carbon type. This is generally "fine" but may impose important
+constraints around overload resolution and other C++ features that would
+otherwise "just work" due to these mappings.
 
 For more details, see [type mapping](type_mapping.md).
 
 ### Functions and overload sets
 
+Mapping non-overloaded functions between Carbon and C++ is trivial - if the
+names are made available, they can be called. Because Carbon may use a different
+calling convention, it would need to either emit custom C++ annotations to
+coerce calls to use its calling convention directly, or emit wrapper calls that
+map in source code between the two. Even the latter is likely to be easily
+optimized away. The real difficulty is in mapping the types used on the function
+call, which we described in detail above.
+
+However, both Carbon and C++ support function overloading. This is a much more
+complex surface to translate between languages. Carbon's overloading is designed
+to be largely compatible with C++ so that this can be done reasonably well, but
+it isn't expected to be precisely identical. Carbon formalizes the idea of
+overload resolution into pattern matching. C++ already works in an extremely
+similar way although without the formalization.
+
 For more details, see
 [functions and overload sets](functions_and_overload_sets.md).
 
 ### Other syntax
+
+Beyond the above in-depth discussions, a few key syntax details to be aware of
+are:
+
+- C typedefs are generally mapped to Carbon aliases.
+- C/C++ macros that are defined as constants will be imported as constants.
+  Otherwise, macros will be unavailable in Carbon.
 
 For more details, see [other syntax](other_syntax.md).
 
