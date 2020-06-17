@@ -170,10 +170,7 @@ const serveContent = async (req, res) => {
   var result = 'unknown';
   try {
     // Remove the prefix /, and default to index.html.
-    var file = req.path.replace(/^(\/)/, '');
-    if (file === '') {
-      file = 'index.html';
-    }
+    const file = req.path.replace(/\/$/, '/index.html').replace(/^(\/)/, '');
 
     // Use the extension to determine the MIME type.
     var type = path.extname(file);
