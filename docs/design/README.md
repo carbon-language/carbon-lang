@@ -112,7 +112,9 @@ most basic concepts as we walk through the most basic examples of Carbon code.
 
 ### Code and comments
 
-[Source](lexical_conventions.md) (**TODO**: Source needs to be evolved)
+> [Reference](lexical_conventions.md)
+>
+> **TODO**: Reference needs to be evolved
 
 - All source code is UTF-8 encoded text. For simplicity, no other encoding is
   supported.
@@ -124,7 +126,9 @@ most basic concepts as we walk through the most basic examples of Carbon code.
 
 ### Basic files, libraries, and packages
 
-[Source](files_libraries_and_packages.md) (**TODO**: Source needs to be evolved)
+> [Reference](files_libraries_and_packages.md)
+>
+> **TODO**: Reference needs to be evolved
 
 Carbon code is organized into files, libraries, and packages:
 
@@ -154,7 +158,9 @@ import library Container;
 
 ### Basic names and scopes
 
-[Source](lexical_conventions.md) (**TODO**: Source needs to be evolved)
+> [Reference](lexical_conventions.md)
+>
+> **TODO**: Reference needs to be evolved
 
 Various constructs introduce a named entity in Carbon. These can be functions,
 types, variables, or other kinds of entities that we'll cover. A name in Carbon
