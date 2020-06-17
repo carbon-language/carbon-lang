@@ -11,7 +11,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 <!-- toc -->
 
 - [Context and disclaimer](#context-and-disclaimer)
-  - [Example code warning](#example-code-warning)
+  - [Example code](#example-code)
 - [Basics](#basics)
   - [Code and comments](#code-and-comments)
   - [Basic files, libraries, and packages](#basic-files-libraries-and-packages)
@@ -99,11 +99,12 @@ with a detailed analysis. The context of #1 (directly evolving C++, experience
 building Clang, and experience working on C++ codebases including Clang and LLVM
 themselves) is also important. It is both an important signal but also a bias.
 
-### Example code warning
+### Example code
 
-Where `$` is shown in examples, it is a placeholder: `$` is a well-known bad
-symbol due to international keyboard layouts, and will be cleaned up during
-evolution.
+In order to keep example code consistent, we are making choices that may change
+later. In particular, where `$` is shown in examples, it is a placeholder: `$`
+is a well-known bad symbol due to international keyboard layouts, and will be
+cleaned up during evolution.
 
 ## Basics
 
@@ -114,7 +115,7 @@ most basic concepts as we walk through the most basic examples of Carbon code.
 
 > [Reference](lexical_conventions.md)
 >
-> **TODO**: Reference needs to be evolved
+> **TODO**: Reference needs to be evolved.
 
 - All source code is UTF-8 encoded text. For simplicity, no other encoding is
   supported.
@@ -128,7 +129,7 @@ most basic concepts as we walk through the most basic examples of Carbon code.
 
 > [Reference](files_libraries_and_packages.md)
 >
-> **TODO**: Reference needs to be evolved
+> **TODO**: Reference needs to be evolved.
 
 Carbon code is organized into files, libraries, and packages:
 
@@ -160,7 +161,7 @@ import library Container;
 
 > [Reference](lexical_conventions.md)
 >
-> **TODO**: Reference needs to be evolved
+> **TODO**: Reference needs to be evolved.
 
 Various constructs introduce a named entity in Carbon. These can be functions,
 types, variables, or other kinds of entities that we'll cover. A name in Carbon
@@ -171,63 +172,44 @@ characters as well.
 
 #### Naming conventions
 
-We would like to have widespread and consistent naming conventions across Carbon
-code to the extent possible. This is for the same core reason as naming
-conventions are provided in most major style guides. Even migrating existing C++
-code at-scale presents a significant opportunity to converge even more broadly
-and we're interested in pursuing this if viable.
+> [Reference](naming_conventions.md)
+>
+> **TODO**: Reference needs to be evolved.
 
-Our current proposed naming convention, which we at least are attempting to
-follow within Carbon documentation in order to keep code samples as consistent
-as possible:
+Our current proposed naming convention are:
 
 - `UpperCamelCase` for names of compile-time resolved constants, such that they
   can participate in the type system and type checking of the program.
 - `lower_snake_case` for names of run-time resolved values.
 
-As an example, an integer that is a compile-time constant sufficient to use in
-the construction a compile-time array size might be named `N`, where an integer
-that is not available as part of the type system would be named `n`, even if it
-happened to be immutable or only take on a single value. Functions and most
-types will be in `UpperCamelCase`, but a type where only run-time type
-information queries are available would end up as `lower_snake_case`.
+As a matter of style and consistency, we will follow these conventions where
+possible and encourage convergence.
 
-We only use `UpperCamelCase` and `lower_snake_case` (skipping other variations
-on both snake-case and camel-case naming conventions) because these two have the
-most significant visual separation. For example, the value of adding
-`lowerCamelCase` for another set seems low given the small visual difference
-provided.
+For example:
 
-The rationale for the specific division between the two isn't a huge or
-fundamental concept, but it stems from a convention in Ruby where constants are
-named with a leading capital letter. The idea is that it mirrors the English
-language capitalization of proper nouns: the name of a constant refers to a
-_specific_ value that is precisely resolved at compile time, not just to _some_
-value. For example, there are many different _shires_ in Britain, but Frodo
-comes from the _Shire_ -- a specific fictional region.
-
-> **Note**: We need some consist pattern while writing documentation, but the
-> specific one proposed here still needs to be fully considered.
+- An integer that is a compile-time constant sufficient to use in the
+  construction a compile-time array size might be named `N`.
+- An integer that is not available as part of the type system would be named
+  `n`, even if it happened to be immutable or only take on a single value.
+- Functions and most types will be in `UpperCamelCase`.
+- A type where only run-time type information queries are available would end up
+  as `lower_snake_case`.
 
 #### Aliasing of names
 
-Naming is one of the things that most often requires careful management over
-time -- things tend to get renamed and moved around. Carbon provides a fully
-general name aliasing facility to declare a new name as an alias for a value.
-This is a fully general facility because everything is a value in Carbon,
-including types. For example:
+Carbon provides a fully general name aliasing facility to declare a new name as
+an alias for a value; everything is a value in Carbon. This is a fully general
+facility because everything is a value in Carbon, including types.
+
+For example:
 
 ```
 alias ??? MyInt = Int;
 ```
 
-This creates an alias for whatever `Int` resolves to called `MyInt`. Code
-textually after this can refer to `MyInt` and it will transparently refer to
+This creates an alias called `MyInt` for whatever `Int` resolves to. Code
+textually after this can refer to `MyInt`, and it will transparently refer to
 `Int`.
-
-> **Note**: the syntax here is not at all in a good state yet. We've considered
-> a few alternatives, but they all end up being confusing in some way. We need
-> to figure out a good and clean syntax that can be used here.
 
 #### Scopes and name lookup
 

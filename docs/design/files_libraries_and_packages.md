@@ -18,8 +18,10 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 ## TODO
 
-This is a skeletal design, added to support [the overview](README.md). Please
-feel welcome to rewrite and update as appropriate.
+This is a skeletal design, added to support [the overview](README.md). It should
+not be treated as accepted by the core team; rather, it is a placeholder until
+we have more time to examine this detail. Please feel welcome to rewrite and
+update as appropriate.
 
 ## Alternatives
 
