@@ -1,4 +1,4 @@
-# Carbon: Groups
+# Groups
 
 <!--
 Part of the Carbon Language project, under the Apache License v2.0 with LLVM
@@ -22,6 +22,9 @@ We use a mix of:
 ## All contributors
 
 - [GitHub organization](https://github.com/orgs/carbon-language/people)
+  - [GitHub team: Contributors with label access](https://github.com/orgs/carbon-language/teams/contributors-with-label-access):
+    Mirrors the GitHub organization for write access.
+    [Manually updated](/src/scripts/update-label-access.js).
 - [Discourse Forums account](https://forums.carbon-lang.dev)
 - [Discord Chat access](https://discord.com/app)
 - [Google group](https://groups.google.com/g/carbon-lang-contributors): Grants

@@ -1,4 +1,4 @@
-# Carbon: Contributing
+# Contributing
 
 <!--
 Part of the Carbon Language project, under the Apache License v2.0 with LLVM
@@ -56,7 +56,7 @@ and are very interested in folks joining in to help us with it.
 
 ### Help address bugs
 
-As Carbon's design (and eventually implementation) begin to take shape, we'll
+As Carbon's design and eventually implementation begin to take shape, we'll
 inevitably end up with plenty of bugs. Helping us triage, analyze, and address
 them is always a great way to get involved. When we have the bug tracker(s) set
 up for this, we'll update this section with ideas of how to find these and get
@@ -177,12 +177,20 @@ follow the Carbon documentation and coding styles.
   - Bug fixes also generally include unit tests, because the presence of bugs
     usually indicates insufficient test coverage.
   - Unit tests must pass with the changes.
-  - If some tests fail for unrelated reasons, we wait until they're fixed (it
-    helps to contribute a fix!).
+  - If some tests fail for unrelated reasons, we wait until they're fixed. It
+    helps to contribute a fix!
   - Code changes are made with API compatibility and evolvability in mind.
     Reviewers will comment on any API compatibility issues.
   - Keep in mind that code contribution guidelines are incomplete while we start
     work on Carbon, and may change later.
+
+## pre-commit
+
+We use [pre-commit](/docs/project/contribution_tools.md#pre-commit) for
+automated checks, including formatting of documentation. Please see
+[contribution tools](/docs/project/contribution_tools.md) for more information.
+
+Please use pre-commit to simplify reviews.
 
 ## Style
 
@@ -191,8 +199,8 @@ follow the Carbon documentation and coding styles.
 Changes to Carbon documentation follow the
 [Google developer documentation style guide](https://developers.google.com/style).
 
-Markdown files should additionally use [Prettier](https://prettier.io/) for
-formatting.
+Markdown files should additionally use
+[Prettier](/docs/project/contribution_tools.md#prettier) for formatting.
 
 Other style points to be aware of are:
 

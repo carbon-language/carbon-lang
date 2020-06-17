@@ -1,4 +1,4 @@
-# Carbon: Firebase
+# Firebase
 
 <!--
 Part of the Carbon Language project, under the Apache License v2.0 with LLVM

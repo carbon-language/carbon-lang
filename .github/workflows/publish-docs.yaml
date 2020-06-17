@@ -2,32 +2,32 @@ name: Publish Carbon Documentation
 on:
   push:
     branches:
-    - master
+      - master
 
 jobs:
   build:
     runs-on: [ubuntu-latest]
     steps:
-    - uses: actions/checkout@v2
-    - uses: GoogleCloudPlatform/github-actions/setup-gcloud@master
-      with:
-        version: '285.0.0'
-        project_id: ${{ secrets.GCP_PROJECT_ID }}
-        service_account_email: ${{ secrets.GCP_SA_EMAIL }}
-        service_account_key: ${{ secrets.GCP_SA_KEY }}
-        export_default_credentials: true
-    - uses: actions/setup-ruby@v1
-      with:
-        ruby-version: 2.6
-    - run: gcloud info
-    - name: Install bundler
-      run: gem install bundler
-      working-directory: src/jekyll
-    - name: Install jekyll and dependencies
-      run: bundle install --jobs 4 --retry 3
-      working-directory: src/jekyll
-    - name: Build HTML pages
-      run: make site
-      working-directory: src/jekyll
-    - name: Publish to www.carbon-lang.dev
-      run: gsutil cp -R src/jekyll/.gen-site/* gs://www.carbon-lang.dev/
+      - uses: actions/checkout@v2
+      - uses: GoogleCloudPlatform/github-actions/setup-gcloud@master
+        with:
+          version: '285.0.0'
+          project_id: ${{ secrets.GCP_PROJECT_ID }}
+          service_account_email: ${{ secrets.GCP_SA_EMAIL }}
+          service_account_key: ${{ secrets.GCP_SA_KEY }}
+          export_default_credentials: true
+      - uses: actions/setup-ruby@v1
+        with:
+          ruby-version: 2.6
+      - run: gcloud info
+      - name: Install bundler
+        run: gem install bundler
+        working-directory: src/jekyll
+      - name: Install jekyll and dependencies
+        run: bundle install --jobs 4 --retry 3
+        working-directory: src/jekyll
+      - name: Build HTML pages
+        run: make build
+        working-directory: src/jekyll
+      - name: Publish to www.carbon-lang.dev
+        run: gsutil cp -R src/jekyll/.gen-site/* gs://www.carbon-lang.dev/

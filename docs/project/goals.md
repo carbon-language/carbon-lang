@@ -10,6 +10,31 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 <!-- toc -->
 
+- [Overview](#overview)
+- [Project goals](#project-goals)
+  - [Community and culture](#community-and-culture)
+  - [Language tools and ecosystem](#language-tools-and-ecosystem)
+- [Language goals and priorities](#language-goals-and-priorities)
+  - [Goals in detail](#goals-in-detail)
+    - [Performance-critical software](#performance-critical-software)
+    - [Both software and language evolution](#both-software-and-language-evolution)
+    - [Code that is easy to read, understand, and write](#code-that-is-easy-to-read-understand-and-write)
+    - [Practical safety guarantees and testing mechanisms](#practical-safety-guarantees-and-testing-mechanisms)
+    - [Fast and scalable development](#fast-and-scalable-development)
+    - [Current hardware architectures, OS platforms, and environments as they evolve](#current-hardware-architectures-os-platforms-and-environments-as-they-evolve)
+    - [Interoperability with and migration from existing C++ code](#interoperability-with-and-migration-from-existing-c-code)
+  - [Non-goals](#non-goals)
+    - [Stable language and library ABI](#stable-language-and-library-abi)
+    - [Backwards or forwards compatibility](#backwards-or-forwards-compatibility)
+    - [Legacy compiled libraries without source code or ability to rebuild](#legacy-compiled-libraries-without-source-code-or-ability-to-rebuild)
+    - [Support for existing compilation and linking models](#support-for-existing-compilation-and-linking-models)
+    - [Idiomatic migration of non-modern, non-idiomatic C++ code](#idiomatic-migration-of-non-modern-non-idiomatic-c-code)
+  - [Principles](#principles)
+- [Prioritization beyond goals](#prioritization-beyond-goals)
+- [Acknowledgements](#acknowledgements)
+
+<!-- tocstop -->
+
 ## Overview
 
 Carbon is an experiment to explore a possible, distant future for the C++
