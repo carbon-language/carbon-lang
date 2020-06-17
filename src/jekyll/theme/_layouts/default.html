@@ -7,7 +7,7 @@
         // Initialize navgoco with default options
         $("#mysidebar").navgoco({
           caretHtml: "",
-          accordion: true,
+          accordion: false,
           openClass: "active", // open
           save: false, // leave false or nav highlighting doesn't work right
           cookie: {
@@ -31,13 +31,11 @@
           $("#mysidebar").navgoco("toggle", true);
         });
       });
-    </script>
-    <script>
+
       $(function () {
         $('[data-toggle="tooltip"]').tooltip();
       });
-    </script>
-    <script>
+
       $(document).ready(function () {
         $("#tg-sb-link").click(function () {
           $("#tg-sb-sidebar").toggle();
@@ -48,61 +46,18 @@
         });
       });
     </script>
-    {% if page.datatable == true %}
-    <!-- Include the standard DataTables bits -->
-    <link
-      rel="stylesheet"
-      type="text/css"
-      href="//cdn.datatables.net/1.10.13/css/jquery.dataTables.css"
-    />
-    <script
-      type="text/javascript"
-      charset="utf8"
-      src="//cdn.datatables.net/1.10.13/js/jquery.dataTables.js"
-    ></script>
-    <!-- First, this walks through the tables that occur between ...-begin
-         and ...-end and add the "datatable" class to them.
-         Then it invokes DataTable's standard initializer
-         Credit here: http://www.beardedhacker.com/blog/2015/08/28/add-class-attribute-to-markdown-table/
-      -->
-    <script>
-      $(document).ready(function () {
-        $("div.datatable-begin")
-          .nextUntil("div.datatable-end", "table")
-          .addClass("display");
-        $("table.display").DataTable({
-          paging: true,
-          stateSave: true,
-          searching: true,
-        });
-      });
-    </script>
-    {% endif %}
   </head>
   <body>
     {% include topnav.html %}
     <!-- Page Content -->
-    <div class="container">
-      <div id="main">
-        <!-- Content Row -->
-        <div class="row">
-          {% assign content_col_size = "col-md-12" %} {% unless
-          page.hide_sidebar %}
-          <!-- Sidebar Column -->
-          <div class="col-md-3" id="tg-sb-sidebar">
-            {% include sidebar.html %}
-          </div>
-          {% assign content_col_size = "col-md-9" %} {% endunless %}
-
-          <!-- Content Column -->
-          <div class="{{content_col_size}}" id="tg-sb-content">
-            {{content}}
-          </div>
-          <!-- /.row -->
-        </div>
-        <!-- /.container -->
+    <div class="main-body">
+      <div class="main-sidebar">
+        {% include sidebar.html %}
       </div>
-      <!-- /#main -->
+      <div class="main-content">
+        {{content}}
+      </div>
+      <div id="toc" class="main-toc"></div>
     </div>
   </body>
   {% if site.google_analytics %} {% include google_analytics.html %} {% endif %}
