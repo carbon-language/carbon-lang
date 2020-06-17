@@ -12,16 +12,15 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 - [Context and disclaimer](#context-and-disclaimer)
   - [Example code](#example-code)
-- [Basics](#basics)
-  - [Code and comments](#code-and-comments)
-  - [Basic files, libraries, and packages](#basic-files-libraries-and-packages)
-  - [Basic names and scopes](#basic-names-and-scopes)
-    - [Naming conventions](#naming-conventions)
-    - [Aliasing of names](#aliasing-of-names)
-    - [Scopes and name lookup](#scopes-and-name-lookup)
-  - [Basic expressions](#basic-expressions)
-  - [Basic types and values](#basic-types-and-values)
-  - [Basic functions](#basic-functions)
+- [Code and comments](#code-and-comments)
+- [Files, libraries, and packages](#files-libraries-and-packages)
+- [Names and scopes](#names-and-scopes)
+  - [Naming conventions](#naming-conventions)
+  - [Aliases](#aliases)
+  - [Name lookup](#name-lookup)
+    - [Name lookup for common types](#name-lookup-for-common-types)
+- [Expressions](#expressions)
+  - [Functions](#functions)
   - [Blocks and statements](#blocks-and-statements)
   - [Variables](#variables)
   - [Lifetime and move semantics](#lifetime-and-move-semantics)
@@ -37,6 +36,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
   - [Conditionals](#conditionals)
   - [Looping](#looping)
 - [Types](#types)
+  - [Basic types and values](#basic-types-and-values)
   - [Primitive types](#primitive-types)
   - [Tuples](#tuples)
   - [Variants](#variants)
@@ -106,16 +106,11 @@ later. In particular, where `$` is shown in examples, it is a placeholder: `$`
 is a well-known bad symbol due to international keyboard layouts, and will be
 cleaned up during evolution.
 
-## Basics
+## Code and comments
 
-The goal of this section is not to be comprehensive but to quickly cover the
-most basic concepts as we walk through the most basic examples of Carbon code.
-
-### Code and comments
-
-> [Reference](lexical_conventions.md)
+> References: [Lexical conventions](lexical_conventions.md)
 >
-> **TODO**: Reference needs to be evolved.
+> **TODO**: References needs to be evolved.
 
 - All source code is UTF-8 encoded text. For simplicity, no other encoding is
   supported.
@@ -125,11 +120,11 @@ most basic concepts as we walk through the most basic examples of Carbon code.
   markers must be the only things on their lines.
   - Nested block comments will be supported.
 
-### Basic files, libraries, and packages
+## Files, libraries, and packages
 
-> [Reference](files_libraries_and_packages.md)
+> References: [Files, libraries and packages](files_libraries_and_packages.md)
 >
-> **TODO**: Reference needs to be evolved.
+> **TODO**: References needs to be evolved.
 
 Carbon code is organized into files, libraries, and packages:
 
@@ -157,11 +152,11 @@ import Widget library Wombat;
 import library Container;
 ```
 
-### Basic names and scopes
+## Names and scopes
 
-> [Reference](lexical_conventions.md)
+> References: [Lexical conventions](lexical_conventions.md)
 >
-> **TODO**: Reference needs to be evolved.
+> **TODO**: References needs to be evolved.
 
 Various constructs introduce a named entity in Carbon. These can be functions,
 types, variables, or other kinds of entities that we'll cover. A name in Carbon
@@ -170,11 +165,11 @@ underscores which starts with a letter. As a regular expression, this would be
 `/[a-zA-Z][a-zA-Z0-9_]*/`. Eventually we may add support for further unicode
 characters as well.
 
-#### Naming conventions
+### Naming conventions
 
-> [Reference](naming_conventions.md)
+> References: [Naming conventions](naming_conventions.md)
 >
-> **TODO**: Reference needs to be evolved.
+> **TODO**: References needs to be evolved.
 
 Our current proposed naming convention are:
 
@@ -195,11 +190,11 @@ For example:
 - A type where only run-time type information queries are available would end up
   as `lower_snake_case`.
 
-#### Aliasing of names
+### Aliases
 
-> [Reference](aliasing.md)
+> References: [Aliases](aliases.md)
 >
-> **TODO**: Reference needs to be evolved.
+> **TODO**: References needs to be evolved.
 
 Carbon provides a fully general name aliasing facility to declare a new name as
 an alias for a value; everything is a value in Carbon. This is a fully general
@@ -215,232 +210,97 @@ This creates an alias called `MyInt` for whatever `Int` resolves to. Code
 textually after this can refer to `MyInt`, and it will transparently refer to
 `Int`.
 
-#### Scopes and name lookup
+### Name lookup
+
+> References: [Name lookup](name_lookup.md)
+>
+> **TODO**: References needs to be evolved.
 
 Names are always introduced into some scope which defines where they can be
-referenced. Many of these scopes are themselves named. Carbon has a special
-facility for introducing a dedicated named scope just like C++, but we traverse
-nested names in a uniform way with `.`-separated names:
+referenced. Many of these scopes are themselves named. `namespace` is used to
+introduce a dedicated named scope, and we traverse nested names in a uniform way
+with `.`-separated names. Unqualified name lookup will always find a file-local
+result, including aliases.
+
+For example:
 
 ```
-namespace Foo {
-  namespace Bar {
-    alias ??? MyInt = Int;
+package Koala library Eucalyptus;
+
+namespace Leaf {
+  namespace Vein {
+    var Int: count;
   }
 }
-
-fn F(Foo.Bar.MyInt: x);
 ```
 
-Carbon packages are also namespaces so to get to an imported name from the
-`Abseil` package you would write `Abseil.Foo`. The "top-level" file scope is
-that of the Carbon package containing the file, meaning that there is no
-"global" scope. Dedicated namespaces can be reopened within a package, but there
-is no way to reopen a package without being a library and file _within_ that
+`count` may be referred to as:
+
+- `count` from within the `Vein` namespace.
+- `Vein.count` from within the `Leaf` namespace.
+- `Leaf.Vein.count` from within this file.
+- `Koala.Leaf.Vein.count` from any arbitrary location.
+
+Note that libraries do **not** introduce a scope; they share the scope of their
 package.
 
-Note that libraries (unlike packages) do **not** introduce a scope, they share
-the scope of their package. This is based on the observation that in practice, a
-fairly coarse scoping tends to work best, with some degree of global registry to
-establish a unique package name.
+#### Name lookup for common types
 
-The Carbon standard library is in the `Carbon` package. A very small subset of
-this standard library is provided implicitly in every file's scope as-if it were
-first imported and then every name in it aliased into that file's package scope.
-This makes the names from this part of the standard library nearly the same as
-keywords, and so it is expected to be extremely small but contain the very
-fundamentals that essentially every file of Carbon code will need (`Int`,
-`Bool`, etc.).
+> References: [Name lookup](name_lookup.md)
+>
+> **TODO**: References needs to be evolved.
 
-Unqualified name lookup in Carbon will always find a file-local result, and
-other than the implicit "prelude" of importing and aliasing the fundamentals of
-the standard library, there will be an explicit mention of the name in the file
-that declares it in that scope.
+Common types that we expect to be used universally will be provided for every
+file, including `Int` and `Bool`. These will likely be defined in a `Carbon`
+package, and be treated as if always imported and aliased by every file.
 
-> **Note**: this implies that other names within your own package but not
-> declared within the file must be found via the package name. It isn't clear if
-> this is the desirable end state. We need to consider alternatives where names
-> from the same library or any library in the same package are made immediately
-> visible within the package scope for unqualified name lookup.
+## Expressions
 
-Carbon also disallows the use of shadowed unqualified names, but not the
-_declaration_ of shadowing names in different named scopes:
-
-Because all unqualified name lookup is locally controlled, shadowing isn't
-needed for robustness and is a long and painful source of bugs over time.
-Disallowing it provides simple, predictable rules for name lookup. However, it
-is important that adding names to the standard library or importing a new
-package (both of which bring new names into the current package's scope) doesn't
-force renaming interfaces that may have many users. To accomplish this, we allow
-code to declare shadowing names, but references to that name must be qualified.
-For package-scope names, this can be done with an explicit use of the current
-package name: `PackageName.ShadowingName`.
-
-```
-package Foo library MyLib;
-
-// Consider an exported function named `Shadow`.
-fn Shadow();
-
-// The package might want to import some other package named `Shadow`
-// as part of its implementation, but cannot rename its exported
-// `Shadow` function:
-import Shadow library OtherLib;
-
-// We can reference the imported library:
-alias ??? OtherLibType = Shadow.SomeType;
-
-// We can also reference the exported function and provide a new alias by
-// using our current package name as an explicitly qualified name.
-alias ??? NewShadowFunction = Foo.Shadow;
-```
-
-> **Note:** it may make sense to restrict this further to only allowing
-> shadowing for exported names as internal names should be trivially renamable,
-> and it is only needed when the source is already changing to add a new import.
-> Or we may want to completely revisit the rules around shadowing.
-
-For more details on all of this, see the later
-[section on name organization](#code-and-name-organization).
-
-### Basic expressions
+> References: [Lexical conventions](lexical_conventions.md),
+> [operators](operators.md)
+>
+> **TODO**: Reference needs to be evolved.
 
 The most pervasive part of the Carbon language are "expressions". These describe
-some computed value. The simplest example would be a literal number like `42`.
-This is an expression that computes the integer value 42. Some common
-expressions in Carbon include the following constructs:
+some computed value. The simplest example would be a literal number like `42`:
+an expression that computes the integer value 42.
+
+Some common expressions in Carbon include:
 
 - Literals: `42`, `-13`, `3.1419`, `"Hello World!"`
+- Operators:
 
-  > **TODO(zygoloid)**: Sync this with
-  > [p0016](https://github.com/carbon-language/carbon-lang/pull/17) and link to
-  > its docs when they land.
-
-- Most operators from C++, but some differences:
-
-  - Only one form of increment and decrement, without returning the result:
-    `++i`, `--j`
+  - Increment and decrement: `++i`, `--j`
+    - These do not return any result.
   - Unary negation: `-x`
-  - Arithmetic binary: `1 + 2`, `3 - 4`, `2 * 5`, `6 / 3`
-  - Bitwise: `2 & 3`, `2 | 4`, `3 ^ 1`, `1 <&lt; 3`, `8 >> 1`, `~7`
-    - Note that these are candidates for keywords instead of high-value
-      punctuation.
-  - Relational: `2 == 2`, `3 != 4`, `5 &lt; 6`, `7 > 6`, `8 &lt;= 8`, `8 >= 8`
-  - No short-circuiting operators from C/C++ (`||`, `&&`, `?:`) -- they have
-    custom semantics and are not just operators. We'll get to these later.
-  - See the draft
-    [operator design](https://github.com/carbon-language/carbon-proposals/pull/5)
-    for more details including precedence.
-
-    > **TODO(zygoloid)**: Update this summary to reflect the in-progress
-    > operator design.
+  - Arithmetic: `1 + 2`, `3 - 4`, `2 * 5`, `6 / 3`
+  - Bitwise: `2 & 3`, `2 | 4`, `3 ^ 1`, `~7`
+  - Bit sequence: `1 << 3`, `8 >> 1`
+  - Comparison: `2 == 2`, `3 != 4`, `5 < 6`, `7 > 6`, `8 <= 8`, `8 >= 8`
+  - Logical: `a && b`, `c || d`
 
 - Parenthesized expressions: `(7 + 8) * (3 - 1)`
 
-### Basic types and values
+### Functions
 
-> **TODO:** Need a comprehensive design document to underpin these, and then
-> link to it here.
+> References: [Functions](functions.md)
+>
+> **TODO**: Reference needs to be evolved.
 
-Expressions compute values in Carbon, and these values are always strongly typed
-much like in C++. However, an important difference from C++ is that types are
-themselves modeled as values; specifically, compile-time constant values.
-However, in simple cases this doesn't make much difference.
+A function looks like:
 
-We'll cover more [types] as we go through the language, but the most basic types
-are the following:
-
-- `Int` - a signed 64-bit 2’s-complement integer
-- `Bool` - a boolean type that is either `True` or `False`.
-- `String` - a byte sequence suitable for storing UTF-8 encoded text (and by
-  convention assumed to contain such text)
-
-The [primitive types] section outlines other fundamentals such as other sized
-integers, floating point numbers, unsigned integers, etc.
-
-### Basic functions
-
-> **TODO:** Need a comprehensive design document to underpin these, and then
-> link to it here.
-
-Programs written in Carbon, much like those written in other languages, are
-primarily divided up into "functions" (or "procedures", "subroutines", or
-"subprograms"). These are the core unit of behavior for the programming
-language. Let's look at a simple example to understand how these work:
-
-```
+```carbon
 fn Sum(Int: a, Int: b) -> Int;
 ```
 
-This declares a function called `Sum` which accepts two `Int` parameters, the
-first called `a` and the second called `b`, and returns an `Int` result. C++
-might declare the same thing:
+Breaking this apart:
 
-```
-std::int64_t Sum(std::int64_t a, std::int64_t b);
+- `fn` indicates a function follows.
+- Its name is `Sum`.
+- It accepts two `Int` parameters, `a` and `b`.
+- It returns an `Int` result.
 
-// Or with the new trailing return type syntax:
-auto Sum(std::int64_t a, std::int64_t b) -> std::int64_t;
-```
-
-> **Note**: While we are currently keeping types first matching C++, there is
-> significant uncertainty around the right approach here. While adding the colon
-> improves the grammar by unambiguously marking the transition from type to a
-> declared identifier, in essentially every other language with a colon in a
-> similar position, the identifier is first and the type follows. However, that
-> ordering would be very _inconsistent_ with C++.
->
-> One very important consideration here is the fundamental approach to type
-> inference. Languages which use the syntax `<identifier>: <type>` typically
-> allow completely omitting the colon and the type to signify inference. With
-> C++, inference is achieved with a placeholder keyword `auto`, and Carbon is
-> currently being consistent there as well with `auto: <identifier>`. For
-> languages which simply allow omission, this seems an intentional incentive to
-> encourage inference. On the other hand, there has been strong advocacy in the
-> C++ community to not overly rely on inference and to write the explicit type
-> whenever convenient. Being consistent with the _ordering_ of identifier and
-> type may ultimately be less important than being consistent with the
-> incentives and approach to type inference. What should be the default that we
-> teach? Teaching to avoid inference unless it specifically helps readability by
-> avoiding a confusing or unhelpfully complex type name, and incentivizing that
-> by requiring `auto` or another placeholder, may cause as much or more
-> inconsistency with languages that use `<identifier: <type>` as retaining the
-> C++ ordering.
->
-> That said, all of this is largely unknown. It will require a significant
-> exploration of the trade-offs and consistency differences. It should also
-> factor in further development of pattern matching generally and whether that
-> has an influence on one or another approach. Last but not least, while this
-> may seem like something that people will get used to with time, it may be
-> worthwhile to do some user research to understand the likely reaction
-> distribution, strength of reaction, and any quantifiable impact these options
-> have on measured readability. We have only found one _very_ weak source of
-> research that focused on the _order_ question (rather than type inference vs.
-> explicit types or other questions in this space). That was a very limited PhD
-> student's study of Java programmers that seemed to indicate improved latency
-> for recalling the type of a given variable name with types on the left (as in
-> C++). However, those results are _far_ from conclusive.
->
-> **TODO**: Get a useful link to this PhD research (a few of us got a copy from
-> the professor directly).
-
-Let's look at how some specific parts of this work. The function declaration is
-introduced with a keyword `fn` followed by the name of the function `Sum`. This
-declares that name in the surrounding scope and opens up a new scope for this
-function. We declare the first parameter as `Int: a`. The `Int` part is an
-expression (here referring to a constant) that computes the type of the
-parameter. The `:` marks the end of the type expression and introduces the
-identifier for the parameter, `a`. The parameter names are introduced into the
-function's scope and can be referenced immediately after they are introduced.
-The return type is indicated with `-> Int`, where again `Int` is just an
-expression computing the desired type. The return type can be completely omitted
-in the case of functions which do not return a value.
-
-Calling functions involves a new form of expression: `Sum(1, 2)` for example.
-The first part, `Sum`, is an expression referring to the name of the function.
-The second part, `(1, 2)` is a parenthesized list of arguments to the function.
-The juxtaposition of one expression with parentheses forms the core of call
-expression, similar to a postfix operator.
+Calling functions involves a new form of expression, for example, `Sum(1, 2)`.
 
 ### Blocks and statements
 
@@ -638,6 +498,29 @@ categories: primitive types, composite types, and user defined types. The first
 two are intrinsic and directly built into the language because they don't have
 any reasonable way to be expressed on top of the language. The last aspect of
 types allows for defining new types.
+
+### Basic types and values
+
+(note: snipped from above)
+
+> **TODO:** Need a comprehensive design document to underpin these, and then
+> link to it here.
+
+Expressions compute values in Carbon, and these values are always strongly typed
+much like in C++. However, an important difference from C++ is that types are
+themselves modeled as values; specifically, compile-time constant values.
+However, in simple cases this doesn't make much difference.
+
+We'll cover more [types] as we go through the language, but the most basic types
+are the following:
+
+- `Int` - a signed 64-bit 2’s-complement integer
+- `Bool` - a boolean type that is either `True` or `False`.
+- `String` - a byte sequence suitable for storing UTF-8 encoded text (and by
+  convention assumed to contain such text)
+
+The [primitive types] section outlines other fundamentals such as other sized
+integers, floating point numbers, unsigned integers, etc.
 
 ### Primitive types
 
