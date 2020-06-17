@@ -1,93 +1,20 @@
 <ul id="mysidebar" class="nav">
-  {% for entry in site.data.sidebar.entries %} {% for folder in entry.folders %}
-  <li>
-    <a title="{{folder.title}}" href="#">{{folder.title}}</a>
-    <ul>
-      {% for folderitem in folder.folderitems %} {% if folderitem.external_url
-      %}
-      <li>
-        <a
-          title="{{folderitem.title}}"
-          href="{{folderitem.external_url}}"
-          target="_blank"
-          rel="noopener"
-          >{{folderitem.title}}</a
-        >
-      </li>
-      {% elsif page.url == folderitem.url %}
-      <li class="active">
-        <a title="{{folderitem.title}}" href="{{folderitem.url}}"
-          >{{folderitem.title}}</a
-        >
-      </li>
-      {% elsif folderitem.type == "empty" %}
-      <li>
-        <a title="{{folderitem.title}}" href="{{folderitem.url}}"
-          >{{folderitem.title}}</a
-        >
-      </li>
-
-      {% else %}
-      <li>
-        <a title="{{folderitem.title}}" href="{{folderitem.url}}"
-          >{{folderitem.title}}</a
-        >
-      </li>
-      {% endif %} {% for subfolders in folderitem.subfolders %}
-      <li class="subfolders">
-        <a title="{{subfolders.title}}" href="#">{{ subfolders.title }}</a>
-        <ul>
-          {% for subfolderitem in subfolders.subfolderitems %} {% if
-          subfolderitem.external_url %}
-          <li>
-            <a
-              title="{{subfolderitem.title}}"
-              href="{{subfolderitem.external_url}}"
-              target="_blank"
-              rel="noopener"
-              >{{subfolderitem.title}}</a
-            >
-          </li>
-          {% elsif page.url == subfolderitem.url %}
-          <li class="active">
-            <a title="{{subfolderitem.title}}" href="{{subfolderitem.url}}"
-              >{{subfolderitem.title}}</a
-            >
-          </li>
-          {% else %}
-          <li>
-            <a title="{{subfolderitem.title}}" href="{{subfolderitem.url}}"
-              >{{subfolderitem.title}}</a
-            >
-          </li>
-          {% endif %} {% endfor %}
-        </ul>
-      </li>
-      {% endfor %} {% endfor %}
-      <!-- Add proposals to the proposals folder. -->
-      {% if folder.title == "Proposals" %}
-        {% for proposal in site.pages %}
-          {% assign path = proposal.url | split: "/" %}
-          {% if path[1] == "proposals" %}
-          {% unless path[2] contains "template" %}
-            {% assign active = "" %}
-            {% if page.url == proposal.url %}
-              {% assign active = "active" %}
-            {% endif %}
-            <li class="{{active}}">
-              <a title="{{proposal.title}}"
-                 href="{{proposal.url}}">{{proposal.title}}</a>
-            </li>
-          {% endunless %}
-          {% endif %}
-        {% endfor %}
-      {% endif %}
-    </ul>
-  </li>
-  {% endfor %} {% endfor %}
+  {%- include sidebar_dir.html
+              dir="/"
+              title="Overview"
+              about="Carbon language" -%}
+  {%- include sidebar_subdirs.html dir="/docs/" -%}
+  {%- include sidebar_dir.html
+              dir="/proposals/"
+              title="Proposals"
+              proposals=true -%}
 </ul>
 
-<!-- this highlights the active parent class in the navgoco sidebar. this is critical so that the parent expands when you're viewing a page. This must appear below the sidebar code above. Otherwise, if placed inside customscripts.js, the script runs before the sidebar code runs and the class never gets inserted.-->
+<!-- This highlights the active parent class in the navgoco sidebar. This is
+critical so that the parent expands when you're viewing a page. This must
+appear below the sidebar code above. Otherwise, if placed inside
+customscripts.js, the script runs before the sidebar code runs and the class
+never gets inserted. -->
 <script>
   $("li.active").parents("li").toggleClass("active");
 </script>

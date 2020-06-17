@@ -77,7 +77,7 @@ spaces:
   - Violent threats or language directed against another person.
   - Discriminatory jokes and language.
   - Posting sexually explicit or violent material.
-  - Posting (or threatening to post) other people’s personally identifying
+  - Posting, or threatening to post, other people’s personally identifying
     information ("doxing") without their explicit permission.
   - Personal insults, especially those using racist or sexist terms.
   - Unwelcome sexual attention.
@@ -135,7 +135,7 @@ staff will be prepared to handle the incident and be able to help. If you cannot
 find one of the organizers, the venue staff can locate one for you. Specific
 event information will include detailed contact information for that event. In
 person reports will still be kept confidential exactly as above, but also feel
-free to (anonymously if needed) email the conduct team.
+free to email the conduct team, anonymously if needed.
 
 ### Filing a report
 
@@ -143,12 +143,12 @@ Reports can be as formal or informal as needed for the situation at hand. If
 possible, please include as much information as you can. If you feel
 comfortable, please consider including:
 
-- Your contact info (so we can get in touch with you if we need to follow up).
-- Names (real, nicknames, or pseudonyms) of any individuals involved. If there
-  were other witnesses besides you, please try to include them as well.
+- Your contact info, so we can get in touch with you if we need to follow up.
+- Names -- real, nicknames, or pseudonyms -- of any individuals involved. If
+  there were other witnesses besides you, please try to include them as well.
 - When and where the incident occurred. Please be as specific as possible.
 - Your account of what occurred, including any private chat logs or email.
-- Links for any public records, e.g., Discourse Forum links.
+- Links for any public records, including Discourse Forum links.
 - Any extra context for the incident.
 - If you believe this incident is ongoing.
 - Any other information you believe we should have.
@@ -156,7 +156,7 @@ comfortable, please consider including:
 ### What happens after contacting the conduct team?
 
 You will receive a reply from the conduct team acknowledging receipt within 1
-business day (and we will aim to respond much quicker than that).
+business day, and we will aim to respond much quicker than that.
 
 The conduct team will review the incident as soon as possible and try to
 determine:
@@ -187,19 +187,18 @@ If the situation is not resolved within one week, we’ll respond to the origina
 reporter with an update and explanation.
 
 Once we’ve determined our response, we will separately contact the original
-reporter and other individuals to let them know what actions (if any) we’ll be
+reporter and other individuals to let them know what actions, if any, we’ll be
 taking. We will take into account feedback from the individuals involved on the
 appropriateness of our response, but we don’t guarantee we’ll act on it.
 
 After any incident, the conduct team will make a report on the situation to the
-core team (currently the same team). The core team may choose to make a public
-statement about the incident. If that’s the case, the identities of anyone
-involved will remain confidential unless instructed otherwise by those
-individuals.
+core team. The core team may choose to make a public statement about the
+incident. If that’s the case, the identities of anyone involved will remain
+confidential unless instructed otherwise by those individuals.
 
 ### Appealing
 
-Only permanent resolutions (such as bans) or requests for public actions may be
+Only permanent resolutions, such as bans, or requests for public actions may be
 appealed. To appeal a decision of the conduct team, contact the
 [arbiters](docs/project/evolution.md#arbiters) with your appeal and the arbiters
 will review the case.
@@ -207,7 +206,7 @@ will review the case.
 In general, it is **not** appropriate to appeal a particular decision in public
 areas of Discourse Forums or Discord Chat. Doing so would involve disclosure of
 information which should remain confidential. Disclosing this kind of
-information publicly may be considered a separate and (potentially) more serious
+information publicly may be considered a separate and, potentially, more serious
 violation of the Code of Conduct. This is not meant to limit discussion of the
 Code of Conduct, the conduct team itself, or the appropriateness of responses in
 general, but **please** refrain from mentioning specific facts about cases
@@ -242,7 +241,7 @@ involved:
       sustained inappropriate behavior.
     - **Action:** In addition to the warning action, a temporary ban from use of
       Carbon's community spaces for a specified period of time. External
-      channels (e.g., social media) should not be used to bypass these
+      channels, such as social media, should not be used to bypass these
       restrictions during the temporary ban. Violating these terms may lead to a
       permanent ban.
 1.  **Permanent ban**
