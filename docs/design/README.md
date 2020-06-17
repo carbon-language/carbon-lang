@@ -197,6 +197,10 @@ For example:
 
 #### Aliasing of names
 
+> [Reference](aliasing.md)
+>
+> **TODO**: Reference needs to be evolved.
+
 Carbon provides a fully general name aliasing facility to declare a new name as
 an alias for a value; everything is a value in Carbon. This is a fully general
 facility because everything is a value in Carbon, including types.
