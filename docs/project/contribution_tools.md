@@ -20,6 +20,26 @@ contributions.
 
 <!-- tocstop -->
 
+## GitHub commandline interface
+
+There is a friendly commandline interface for GitHub called
+[`gh`](https://cli.github.com). We use this tool in some of our process
+documentation to create pull requests, query their state, etc.
+
+To set up `gh`:
+
+- [Install the tool](https://cli.github.com/manual/installation)
+- On first use (such as `gh pr view`), a browser will be launched to authorize
+  the tool.
+- If running on a machine without a proper web browser, there is a
+  [workaround](https://github.com/cli/cli/issues/297#issuecomment-587708363).
+  Run the tool locally where a browser is available, and then copy the
+  `~/.config/gh/config.yml` file that results to other machines without a
+  browser.
+  - If even that is not possible, there are some other possible workarounds
+    discussed in the main [issue](https://github.com/cli/cli/issues/297) for the
+    `gh` tool.
+
 ## pre-commit
 
 We use [pre-commit](https://pre-commit.com) to run

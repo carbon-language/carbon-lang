@@ -116,7 +116,9 @@ We suggest a specific workflow to address this:
    > git push origin
    ```
 
-   And create a pull request for it:
+   And create a pull request for it using the
+   [`gh`](/docs/project/contribution_tools.md#github_commandline_interface)
+   tool:
 
    ```
    > gh pr create
