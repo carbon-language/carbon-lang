@@ -6,8 +6,6 @@ Exceptions. See /LICENSE for license information.
 SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -->
 
-**_PLEASE_ DO NOT SHARE OUTSIDE CARBON FORUMS**
-
 [Pull request](https://github.com/carbon-language/carbon-lang/pull/####)
 
 ## Table of contents
