@@ -137,11 +137,14 @@ We suggest a specific workflow to address this:
    > git push upstream HEAD:pull-N-feature-basic
    ```
 
-   This will require you to have access to create this branch in the upstream
-   repository. If you don't already have this access, feel free to ask someone
-   with access to do this step for you (they can). We'll try to make sure anyone
-   routinely developing a stack of pull requests has the access they need for
-   this (but don't worry, it doesn't impact the access to the main branch).
+   Everyone marked as a contributor to Carbon is allowed to push branches if the
+   name matches `pull-*` without pull request or other process. They can be
+   force pushed as necessary and deleted. These branch names should only be used
+   for this ephemeral purpose. All other branch names are protected.
+
+   If you don't (yet) have this permission, feel free to ask anyone who does --
+   anyone can checkout your pull request and push it to a branch with this name
+   pattern for use in a stacked series of commits.
 
 3. Create your stacked branch on your fork:
 
