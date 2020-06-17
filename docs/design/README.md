@@ -12,31 +12,24 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 - [Context and disclaimer](#context-and-disclaimer)
   - [Example code](#example-code)
-- [Code and comments](#code-and-comments)
-- [Files, libraries, and packages](#files-libraries-and-packages)
-- [Names and scopes](#names-and-scopes)
-  - [Naming conventions](#naming-conventions)
-  - [Aliases](#aliases)
-  - [Name lookup](#name-lookup)
-    - [Name lookup for common types](#name-lookup-for-common-types)
-- [Expressions](#expressions)
-- [Functions](#functions)
-- [Blocks and statements](#blocks-and-statements)
-- [Variables](#variables)
+- [Basic syntax](#basic-syntax)
+  - [Code and comments](#code-and-comments)
+  - [Files, libraries, and packages](#files-libraries-and-packages)
+  - [Names and scopes](#names-and-scopes)
+    - [Naming conventions](#naming-conventions)
+    - [Aliases](#aliases)
+    - [Name lookup](#name-lookup)
+      - [Name lookup for common types](#name-lookup-for-common-types)
+  - [Expressions](#expressions)
+  - [Functions](#functions)
+  - [Blocks and statements](#blocks-and-statements)
+  - [Variables](#variables)
   - [Lifetime and move semantics](#lifetime-and-move-semantics)
-  - [Basic control flow](#basic-control-flow)
-  - [Programs and "Hello World!"](#programs-and-hello-world)
-- [Syntax and source code](#syntax-and-source-code)
-  - [Lexical conventions](#lexical-conventions)
-  - [Declarations](#declarations)
-  - [Blocks, statements, expressions, and operators](#blocks-statements-expressions-and-operators)
-  - [Names](#names)
-  - [Code organization](#code-organization)
-- [Control structures](#control-structures)
-  - [Conditionals](#conditionals)
-  - [Looping](#looping)
+  - [Control flow](#control-flow)
+    - [`if`/`else`](#ifelse)
+    - [`loop`, `break`, and `continue`](#loop-break-and-continue)
+    - [`return`](#return)
 - [Types](#types)
-  - [Basic types and values](#basic-types-and-values)
   - [Primitive types](#primitive-types)
   - [Tuples](#tuples)
   - [Variants](#variants)
@@ -106,7 +99,9 @@ later. In particular, where `$` is shown in examples, it is a placeholder: `$`
 is a well-known bad symbol due to international keyboard layouts, and will be
 cleaned up during evolution.
 
-## Code and comments
+## Basic syntax
+
+### Code and comments
 
 > References: [Lexical conventions](lexical_conventions.md)
 >
@@ -120,7 +115,7 @@ cleaned up during evolution.
   markers must be the only things on their lines.
   - Nested block comments will be supported.
 
-## Files, libraries, and packages
+### Files, libraries, and packages
 
 > References: [Files, libraries and packages](files_libraries_and_packages.md)
 >
@@ -152,7 +147,7 @@ import Widget library Wombat;
 import library Container;
 ```
 
-## Names and scopes
+### Names and scopes
 
 > References: [Lexical conventions](lexical_conventions.md)
 >
@@ -165,7 +160,7 @@ underscores which starts with a letter. As a regular expression, this would be
 `/[a-zA-Z][a-zA-Z0-9_]*/`. Eventually we may add support for further unicode
 characters as well.
 
-### Naming conventions
+#### Naming conventions
 
 > References: [Naming conventions](naming_conventions.md)
 >
@@ -190,7 +185,7 @@ For example:
 - A type where only run-time type information queries are available would end up
   as `lower_snake_case`.
 
-### Aliases
+#### Aliases
 
 > References: [Aliases](aliases.md)
 >
@@ -210,7 +205,7 @@ This creates an alias called `MyInt` for whatever `Int` resolves to. Code
 textually after this can refer to `MyInt`, and it will transparently refer to
 `Int`.
 
-### Name lookup
+#### Name lookup
 
 > References: [Name lookup](name_lookup.md)
 >
@@ -244,7 +239,7 @@ namespace Leaf {
 Note that libraries do **not** introduce a scope; they share the scope of their
 package.
 
-#### Name lookup for common types
+##### Name lookup for common types
 
 > References: [Name lookup](name_lookup.md)
 >
@@ -254,7 +249,7 @@ Common types that we expect to be used universally will be provided for every
 file, including `Int` and `Bool`. These will likely be defined in a `Carbon`
 package, and be treated as if always imported and aliased by every file.
 
-## Expressions
+### Expressions
 
 > References: [Lexical conventions](lexical_conventions.md),
 > [operators](operators.md)
@@ -281,7 +276,7 @@ Some common expressions in Carbon include:
 
 - Parenthesized expressions: `(7 + 8) * (3 - 1)`
 
-## Functions
+### Functions
 
 > References: [Functions](functions.md)
 >
@@ -302,7 +297,7 @@ Breaking this apart:
 
 Calling functions involves a new form of expression, for example, `Sum(1, 2)`.
 
-## Blocks and statements
+### Blocks and statements
 
 > References: [Blocks and statements](blocks_and_statements.md)
 >
@@ -327,7 +322,7 @@ fn Foo() {
 }
 ```
 
-## Variables
+### Variables
 
 > References: [Variables](variables.md)
 >
@@ -353,17 +348,29 @@ Breaking this apart:
 
 ### Lifetime and move semantics
 
-> **TODO:** Need a document to explore this fully.
+> References: TODO
+>
+> **TODO**: References need to be evolved.
 
-### Basic control flow
+### Control flow
 
-> **TODO:** Need a comprehensive design document to underpin these, and then
-> link to it here.
+> References: [Control flow](control_flow.md)
+>
+> **TODO**: References need to be evolved.
 
 Blocks of statements are generally executed linearly. However, statements are
-the primary place where this flow of execution can be controlled. Carbon's
-control flow constructs are mostly similar to those in C, C++, and other
-languages.
+the primary place where this flow of execution can be controlled.
+
+#### `if`/`else`
+
+> References: [Control flow](control_flow.md)
+>
+> **TODO**: References need to be evolved.
+
+`if` and `else` are common flow control keywords, which can result in
+conditional execution of statements.
+
+For example:
 
 ```
 fn Foo(Int: x) {
@@ -375,24 +382,58 @@ fn Foo(Int: x) {
 }
 ```
 
-> **Note:** It is an open question whether a block is required or a single
-> statement may be nested in an `if` statement. Similarly, it is an open
-> question whether `else if` is a single keyword versus a nested `if` statement,
-> and if it is a single construct whether it should be spelled `elif` or
-> something else.
+Breaking the `Foo` function apart:
 
-Loops will at least be supported with a low-level primitive `loop` statement
-which loops unconditionally, with `break` and `continue` statements which work
-the same as in C++.
+- `Bar()` is invoked if `x` is less than `42`.
+- `Baz()` is invoked if `x` is greater than `77`.
+- Nothing happens if x is between `42` and `77`.
 
-> **Note:** if and how to support a "labeled break" or "labeled continue" is
-> still a point of open discussion.
+#### `loop`, `break`, and `continue`
 
-Last but not least, for the basics we need to include the `return` statement.
-This statement ends the flow of execution within a function, returning it to the
-caller. If the function returns a value to the caller, that value is provided by
-an expression in the return statement. This allows us to complete the definition
-of our `Sum` function from earlier as:
+> References: [Control flow](control_flow.md)
+>
+> **TODO**: References need to be evolved.
+
+Loops will be supported with a low-level primitive `loop` statement which loops
+unconditionally. `break` will be a way to exit the `loop` directly, while
+`continue` will skip the rest of the `loop`.
+
+For example:
+
+```
+fn Foo() {
+  var Int: x = 0;
+  loop (x < 42) {
+    if (ShouldStop()) break;
+    if (ShouldSkip(x)) {
+      ++x;
+      continue;
+    }
+    Bar(x);
+    ++x;
+  }
+}
+```
+
+Breaking the `Foo` function apart:
+
+- The loop body is normally executed for all values of `x` in [0, 42).
+  - The increment of x at the end causes this.
+- If `ShouldStop()` returns true, the `break` causes the `loop` to exit early.
+- If `ShouldSkip()` returns true, the `continue` causes the `loop` to restart
+  early.
+- Otherwise, `Bar(x)` is called for values of `x` in [0, 42).
+
+#### `return`
+
+> References: [Control flow](control_flow.md)
+>
+> **TODO**: References need to be evolved.
+
+The `return` statement ends the flow of execution within a function, returning
+execution to the caller. If the function returns a value to the caller, that
+value is provided by an expression in the return statement. This allows us to
+complete the definition of our `Sum` function from earlier as:
 
 ```
 fn Sum(Int: a, Int: b) -> Int {
@@ -400,93 +441,22 @@ fn Sum(Int: a, Int: b) -> Int {
 }
 ```
 
-### Programs and "Hello World!"
-
-This is enough for us to describe complete programs in Carbon:
-
-```
-package MyProgram library Entry;
-
-fn Run() -> Bool {
-  return True;
-}
-```
-
-The entry point is the function called `Run` because running the program is
-modeled as calling that function. This function is in the normal package scope,
-and the build system is responsible for selecting the package which will provide
-the entry point. It returns `Bool` to hide the platform specific management of
-error codes as results of programs. The often used "Hello World!" example
-becomes:
-
-```
-package MyProgram library Entry;
-
-fn Run() -> Bool {
-  Print("Hello World!");
-  return True;
-}
-```
-
-The `Print` function here is a hypothetical part of the standard library and
-simply writes to whatever is configured as output for the program when it is
-run. This isn't a concrete suggestion of what the I/O interfaces should look
-like, or which (if any) part of them should be automatically made available
-similar to the `Int` type. That needs to be fleshed out as part of the design of
-the standard I/O library for Carbon.
-
-## Syntax and source code
-
-> **TODO:** Needs a detailed design and a high level summary provided inline.
-> The below organization may not precisely make sense.
-
-### Lexical conventions
-
-### Declarations
-
-### Blocks, statements, expressions, and operators
-
-### Names
-
-> **TODO:** Publish draft design and link to it here. Add relevant summary and
-> examples.
-
-### Code organization
-
-> **TODO:** Publish draft design and link to it here. Add relevant summary and
-> examples.
-
-## Control structures
-
-> **TODO:** Needs a detailed design and a high level summary provided inline.
-> The below organization may not precisely make sense.
-
-### Conditionals
-
-> **TODO:** At least summarize `if` and `else` to cover basics. Especially
-> important to surface the idea of using basic conditionals as both expressions
-> and statements to avoid needing conditional operators.
-
-### Looping
-
-> **TODO:** Looping is an especially interesting topic to explore as there are
-> lots of challenges posed by the C++ loop structure. Even C++ itself has been
-> seeing significant interest and pressure to improve its looping facilities.
-
 ## Types
+
+Carbon's core types are broken down into three categories:
+
+- Primitive types
+- Composite types
+- User-defined types
+
+The first two are intrinsic and directly built in the language. The last aspect
+of types allows for defining new types.
 
 Let's walk through the core types in Carbon. These are broken down into three
 categories: primitive types, composite types, and user defined types. The first
 two are intrinsic and directly built into the language because they don't have
 any reasonable way to be expressed on top of the language. The last aspect of
 types allows for defining new types.
-
-### Basic types and values
-
-(note: snipped from above)
-
-> **TODO:** Need a comprehensive design document to underpin these, and then
-> link to it here.
 
 Expressions compute values in Carbon, and these values are always strongly typed
 much like in C++. However, an important difference from C++ is that types are
