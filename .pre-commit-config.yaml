@@ -1,0 +1,33 @@
+# See https://pre-commit.com for more information
+# See https://pre-commit.com/hooks.html for more hooks
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v2.4.0
+    hooks:
+      - id: check-added-large-files
+      - id: check-case-conflict
+      - id: check-executables-have-shebangs
+      - id: check-merge-conflict
+      - id: check-symlinks
+      - id: check-yaml
+      - id: detect-private-key
+      - id: end-of-file-fixer
+      - id: mixed-line-ending
+        args: ['--fix=lf']
+      - id: trailing-whitespace
+  - repo: local
+    hooks:
+      - id: markdown-toc
+        name: markdown-toc
+        description: Runs https://github.com/jonschlinkert/markdown-toc
+        entry: src/scripts/pre-commit-toc.js
+        language: node
+        additional_dependencies: [markdown-toc]
+        files: .*\.md$
+        exclude: ^src/jekyll/theme/
+  # Prettier should be run late so that it can re-format any prior changes.
+  - repo: https://github.com/prettier/prettier
+    rev: 2.0.5
+    hooks:
+      - id: prettier
+        exclude: ^src/jekyll/theme/
