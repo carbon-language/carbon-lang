@@ -6,6 +6,25 @@ Exceptions. See /LICENSE for license information.
 SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -->
 
+## Table of contents
+
+<!-- toc -->
+
+- [Overview](#overview)
+- [Goals](#goals)
+- [Philosophy of interoperability layer](#philosophy-of-interoperability-layer)
+- [Interoperability Syntax Elements](#interoperability-syntax-elements)
+- [Details](#details)
+  - [Name mapping](#name-mapping)
+  - [Type mapping](#type-mapping)
+  - [Functions and overload sets](#functions-and-overload-sets)
+  - [Other syntax](#other-syntax)
+  - [Migration examples](#migration-examples)
+
+<!-- tocstop -->
+
+## Overview
+
 It's critical that Carbon can both access C++ interfaces and export C++
 interfaces. Supporting C++ interoperability is a
 [key requirement for Carbon's goals](/docs/project/goals.md) and is expected to

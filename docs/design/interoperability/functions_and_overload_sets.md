@@ -6,6 +6,20 @@ Exceptions. See /LICENSE for license information.
 SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -->
 
+## Table of contents
+
+<!-- toc -->
+
+- [Overview](#overview)
+- [Exposing Carbon function patterns as a C++ overload set](#exposing-carbon-function-patterns-as-a-c-overload-set)
+- [Exposing C++ overload sets as Carbon function patterns](#exposing-c-overload-sets-as-carbon-function-patterns)
+  - [Overloaded C++ operators](#overloaded-c-operators)
+  - [Open extension points (ADL-based overload sets)](#open-extension-points-adl-based-overload-sets)
+
+<!-- tocstop -->
+
+## Overview
+
 Mapping non-overloaded functions between Carbon and C++ is trivial - if the
 names are made available, they can be called. Because Carbon may use a different
 calling convention, it would need to either emit custom C++ annotations to

@@ -6,6 +6,22 @@ Exceptions. See /LICENSE for license information.
 SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -->
 
+## Table of contents
+
+<!-- toc -->
+
+- [Methods](#methods)
+  - [C varargs](#c-varargs)
+  - [C Inline functions](#c-inline-functions)
+- [Function pointers and functors](#function-pointers-and-functors)
+  - [C function pointers](#c-function-pointers)
+  - [Member function pointers](#member-function-pointers)
+  - [Functors](#functors)
+- [Typedefs](#typedefs)
+- [Macros](#macros)
+
+<!-- tocstop -->
+
 ## Methods
 
 ### C varargs

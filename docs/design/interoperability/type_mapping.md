@@ -6,6 +6,56 @@ Exceptions. See /LICENSE for license information.
 SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -->
 
+## Table of contents
+
+<!-- toc -->
+
+- [Overview](#overview)
+- [Primitive types](#primitive-types)
+  - [32-bit vs 64-bit and platform compatibility](#32-bit-vs-64-bit-and-platform-compatibility)
+    - [**Alternative: Supplement mappings with platform-compatible conversion APIs**](#alternative-supplement-mappings-with-platform-compatible-conversion-apis)
+    - [**Alternative: Provide variable size types**](#alternative-provide-variable-size-types)
+  - [size_t and signed vs unsigned](#size_t-and-signed-vs-unsigned)
+    - [**Alternative: Map size_t to UInt64**](#alternative-map-size_t-to-uint64)
+  - [char/unsigned char and byte vs character](#charunsigned-char-and-byte-vs-character)
+    - [**Alternative: Support + and - on Byte**](#alternative-support--and---on-byte)
+    - [**Alternative: Create a Char8 type**](#alternative-create-a-char8-type)
+    - [**Alternative: Use Int8**](#alternative-use-int8)
+- [User-defined class types](#user-defined-class-types)
+  - [Inheritance](#inheritance)
+    - [_Using C++ types as mixins for Carbon structs_](#_using-c-types-as-mixins-for-carbon-structs_)
+      - [**Caveat: Abstract methods**](#caveat-abstract-methods)
+    - [_Inheriting from C++ types with Carbon structs_](#_inheriting-from-c-types-with-carbon-structs_)
+      - [**Caveat: Missing or conflicting method declarations**](#caveat-missing-or-conflicting-method-declarations)
+      - [**Caveat: Concrete methods on parents**](#caveat-concrete-methods-on-parents)
+      - [**Alternative: Require bridge code for inheritance**](#alternative-require-bridge-code-for-inheritance)
+    - [_Implementing Carbon interfaces in C++_](#_implementing-carbon-interfaces-in-c_)
+    - [_Public non-virtual inheritance_](#_public-non-virtual-inheritance_)
+      - [**Alternative: Simulate interfaces for C++ types**](#alternative-simulate-interfaces-for-c-types)
+    - [_Virtual and Non-Public Inheritance_](#_virtual-and-non-public-inheritance_)
+  - [Templates](#templates)
+    - [_C++ templates_](#_c-templates_)
+    - [_Using Carbon generics/templates with C++ types in Carbon code_](#_using-carbon-genericstemplates-with-c-types-in-carbon-code_)
+    - [_Using Carbon templates from C++_](#_using-carbon-templates-from-c_)
+      - [**Alternative: Require bridge code**](#alternative-require-bridge-code)
+    - [_Using Carbon generics from C++_](#_using-carbon-generics-from-c_)
+  - [Unions and transparent union members](#unions-and-transparent-union-members)
+- [User-defined enumerations](#user-defined-enumerations)
+  - [C/C++ enums in Carbon](#cc-enums-in-carbon)
+  - [Carbon enums in C/C++](#carbon-enums-in-cc)
+- [Vocabulary types](#vocabulary-types)
+  - [Non-owning value types](#non-owning-value-types)
+  - [Non-owning references and pointers](#non-owning-references-and-pointers)
+    - [_Slice special-casing_](#_slice-special-casing_)
+    - [_Mapping similar built-in types_](#_mapping-similar-built-in-types_)
+  - [Ownership transfer types](#ownership-transfer-types)
+    - [**Alternative: Bind tightly to particular C++ libraries**](#alternative-bind-tightly-to-particular-c-libraries)
+  - [Copying vocabulary types](#copying-vocabulary-types)
+
+<!-- tocstop -->
+
+## Overview
+
 Carbon and C++ (as well as the C subset of C++) will have a number of types with
 direct mappings between the languages. The existence of these mappings allow
 switching from one type to another across any interface boundary between the
@@ -231,7 +281,7 @@ Cons:
   depending on the selected target. Carbon code would have to be written in such
   a way as to compile in all modes.
 
-##### **Alternative: Supplement mappings with platform-compatible conversion APIs**
+#### **Alternative: Supplement mappings with platform-compatible conversion APIs**
 
 Carbon could provide conversion APIs, e.g. `ToCLong`, to improve portability.
 
@@ -264,7 +314,7 @@ Cons:
 - The code uses explicitly-sized types, so users have to compile code for all
   target platforms to see all possible errors.
 
-##### **Alternative: Provide variable size types**
+#### **Alternative: Provide variable size types**
 
 Carbon could provide compatibility types with matching sizes to the C++
 implementation.
@@ -308,7 +358,7 @@ Cons:
 
 - Does not match `size_t` unsigned semantics.
 
-##### **Alternative: Map size_t to UInt64**
+#### **Alternative: Map size_t to UInt64**
 
 We could alternatively use `UInt64` for the mapping.
 
@@ -339,7 +389,7 @@ Cons:
     the value `'P'`.
   - Using `32` to capitalize. e.g., `'a' + 32` as a way to get the value `'A'`.
 
-##### **Alternative: Support + and - on Byte**
+#### **Alternative: Support + and - on Byte**
 
 We could plan on supporting basic `+` and `-` on `Byte`.
 
@@ -352,7 +402,7 @@ Cons:
 - Adds arithmetic operations to the `Byte` type, which may be inappropriate for
   actual memory representation.
 
-##### **Alternative: Create a Char8 type**
+#### **Alternative: Create a Char8 type**
 
 We could add a `Char8` type, specifically limiting it to a single byte,
 mirroring C++. Note this is `Char8` because we'll presumably have `Char32` for
@@ -368,7 +418,7 @@ Cons:
 - Prevents us from representing C++ memory operations as `Byte` without a
   specific type mapping.
 
-##### **Alternative: Use Int8**
+#### **Alternative: Use Int8**
 
 We could convert `char` to `Int8`.
 
@@ -1111,7 +1161,7 @@ custom C++ data structures. And we can still provide explicit (but potentially
 expensive) conversions when ownership transfer is necessary (rather than using
 the non-owning wrappers described previously).
 
-##### **Alternative: Bind tightly to particular C++ libraries**
+#### **Alternative: Bind tightly to particular C++ libraries**
 
 As an alternative, Carbon's language-provided types could precisely match the
 internal representation and implementation of particular C++ libraries. In this

@@ -6,6 +6,28 @@ Exceptions. See /LICENSE for license information.
 SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -->
 
+## Table of contents
+
+<!-- toc -->
+
+- [Overview](#overview)
+- [Incremental migration of APIs](#incremental-migration-of-apis)
+  - [1. Start with a library in C++](#1-start-with-a-library-in-c)
+  - [2. Migrate the API to Carbon](#2-migrate-the-api-to-carbon)
+  - [3. Migrate callers to the Carbon API](#3-migrate-callers-to-the-carbon-api)
+  - [4. Clean up migration support](#4-clean-up-migration-support)
+  - [5. Migration complete](#5-migration-complete)
+- [Framework API](#framework-api)
+  - [1. Start with a library in C++](#1-start-with-a-library-in-c-1)
+  - [2. Move registration to Carbon](#2-move-registration-to-carbon)
+  - [3. Migrate users to Carbon](#3-migrate-users-to-carbon)
+  - [4. Clean up migration support](#4-clean-up-migration-support-1)
+  - [Caveat](#caveat)
+
+<!-- tocstop -->
+
+## Overview
+
 Large-scale migrations need to be done piecemeal, so the goal of migration
 examples is to break down example migrations into small steps which can be
 performed independently, without breaking surrounding code.

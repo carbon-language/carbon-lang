@@ -6,6 +6,20 @@ Exceptions. See /LICENSE for license information.
 SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -->
 
+## Table of contents
+
+<!-- toc -->
+
+- [C/C++ names in Carbon](#cc-names-in-carbon)
+  - [**Alternative: Providing C calls in a separate C package**](#alternative-providing-c-calls-in-a-separate-c-package)
+  - [Defining types across multiple imports](#defining-types-across-multiple-imports)
+- [Incomplete types](#incomplete-types)
+  - [**Alternative: Have incomplete types in the Cpp package behave slightly differently.**](#alternative-have-incomplete-types-in-the-cpp-package-behave-slightly-differently)
+  - [**Alternative: Don't map incomplete types**](#alternative-dont-map-incomplete-types)
+- [Carbon names in C/C++](#carbon-names-in-cc)
+
+<!-- tocstop -->
+
 ## C/C++ names in Carbon
 
 C/C++ names are mapped into the `Cpp` Carbon package. C++ namespaces work the
@@ -58,7 +72,7 @@ fn Call() {
 }
 ```
 
-##### **Alternative: Providing C calls in a separate C package**
+### **Alternative: Providing C calls in a separate C package**
 
 We could provide C APIs in a separate `C` package (either in addition to, or in
 place of, the `Cpp` package). We plan to not do this because it's not clear
@@ -166,7 +180,7 @@ var Cpp.Foo*?: x = CreateFoo();
 DoSomethingWith(x->i);
 ```
 
-##### **Alternative: Have incomplete types in the Cpp package behave slightly differently.**
+### **Alternative: Have incomplete types in the Cpp package behave slightly differently.**
 
 It's possible that the C++ semantics of incomplete types may differ from the
 Carbon semantics. To address this, we could work to offer slightly different
@@ -180,7 +194,7 @@ Cons:
 
 - Creates an inconsistency in how the `Cpp` package functions.
 
-##### **Alternative: Don't map incomplete types**
+### **Alternative: Don't map incomplete types**
 
 If the type is left incomplete, Carbon could instead import pointers to
 incomplete types as `OpaquePointer`.
