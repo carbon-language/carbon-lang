@@ -20,9 +20,9 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
   - [Name lookup](#name-lookup)
     - [Name lookup for common types](#name-lookup-for-common-types)
 - [Expressions](#expressions)
-  - [Functions](#functions)
-  - [Blocks and statements](#blocks-and-statements)
-  - [Variables](#variables)
+- [Functions](#functions)
+- [Blocks and statements](#blocks-and-statements)
+- [Variables](#variables)
   - [Lifetime and move semantics](#lifetime-and-move-semantics)
   - [Basic control flow](#basic-control-flow)
   - [Programs and "Hello World!"](#programs-and-hello-world)
@@ -110,7 +110,7 @@ cleaned up during evolution.
 
 > References: [Lexical conventions](lexical_conventions.md)
 >
-> **TODO**: References needs to be evolved.
+> **TODO**: References need to be evolved.
 
 - All source code is UTF-8 encoded text. For simplicity, no other encoding is
   supported.
@@ -124,7 +124,7 @@ cleaned up during evolution.
 
 > References: [Files, libraries and packages](files_libraries_and_packages.md)
 >
-> **TODO**: References needs to be evolved.
+> **TODO**: References need to be evolved.
 
 Carbon code is organized into files, libraries, and packages:
 
@@ -156,7 +156,7 @@ import library Container;
 
 > References: [Lexical conventions](lexical_conventions.md)
 >
-> **TODO**: References needs to be evolved.
+> **TODO**: References need to be evolved.
 
 Various constructs introduce a named entity in Carbon. These can be functions,
 types, variables, or other kinds of entities that we'll cover. A name in Carbon
@@ -169,7 +169,7 @@ characters as well.
 
 > References: [Naming conventions](naming_conventions.md)
 >
-> **TODO**: References needs to be evolved.
+> **TODO**: References need to be evolved.
 
 Our current proposed naming convention are:
 
@@ -194,7 +194,7 @@ For example:
 
 > References: [Aliases](aliases.md)
 >
-> **TODO**: References needs to be evolved.
+> **TODO**: References need to be evolved.
 
 Carbon provides a fully general name aliasing facility to declare a new name as
 an alias for a value; everything is a value in Carbon. This is a fully general
@@ -214,7 +214,7 @@ textually after this can refer to `MyInt`, and it will transparently refer to
 
 > References: [Name lookup](name_lookup.md)
 >
-> **TODO**: References needs to be evolved.
+> **TODO**: References need to be evolved.
 
 Names are always introduced into some scope which defines where they can be
 referenced. Many of these scopes are themselves named. `namespace` is used to
@@ -229,17 +229,17 @@ package Koala library Eucalyptus;
 
 namespace Leaf {
   namespace Vein {
-    var Int: count;
+    fn Count() -> Int;
   }
 }
 ```
 
-`count` may be referred to as:
+`Count` may be referred to as:
 
-- `count` from within the `Vein` namespace.
-- `Vein.count` from within the `Leaf` namespace.
-- `Leaf.Vein.count` from within this file.
-- `Koala.Leaf.Vein.count` from any arbitrary location.
+- `Count` from within the `Vein` namespace.
+- `Vein.Count` from within the `Leaf` namespace.
+- `Leaf.Vein.Count` from within this file.
+- `Koala.Leaf.Vein.Count` from any arbitrary location.
 
 Note that libraries do **not** introduce a scope; they share the scope of their
 package.
@@ -248,7 +248,7 @@ package.
 
 > References: [Name lookup](name_lookup.md)
 >
-> **TODO**: References needs to be evolved.
+> **TODO**: References need to be evolved.
 
 Common types that we expect to be used universally will be provided for every
 file, including `Int` and `Bool`. These will likely be defined in a `Carbon`
@@ -259,7 +259,7 @@ package, and be treated as if always imported and aliased by every file.
 > References: [Lexical conventions](lexical_conventions.md),
 > [operators](operators.md)
 >
-> **TODO**: Reference needs to be evolved.
+> **TODO**: References need to be evolved.
 
 The most pervasive part of the Carbon language are "expressions". These describe
 some computed value. The simplest example would be a literal number like `42`:
@@ -281,13 +281,13 @@ Some common expressions in Carbon include:
 
 - Parenthesized expressions: `(7 + 8) * (3 - 1)`
 
-### Functions
+## Functions
 
 > References: [Functions](functions.md)
 >
-> **TODO**: Reference needs to be evolved.
+> **TODO**: References need to be evolved.
 
-A function looks like:
+Functions are the core unit of behavior. For example:
 
 ```carbon
 fn Sum(Int: a, Int: b) -> Int;
@@ -295,34 +295,28 @@ fn Sum(Int: a, Int: b) -> Int;
 
 Breaking this apart:
 
-- `fn` indicates a function follows.
+- `fn` is the keyword used to indicate a function.
 - Its name is `Sum`.
 - It accepts two `Int` parameters, `a` and `b`.
 - It returns an `Int` result.
 
 Calling functions involves a new form of expression, for example, `Sum(1, 2)`.
 
-### Blocks and statements
+## Blocks and statements
 
-> **TODO:** Need a comprehensive design document to underpin these, and then
-> link to it here.
+> References: [Blocks and statements](blocks_and_statements.md)
+>
+> **TODO**: References need to be evolved.
 
 The body or definition of a function is provided by a block of code containing
-statements, much like in C or C++. The body of a function is also a new, nested
-scope inside the function's scope (meaning that parameter names are available).
+statements. The body of a function is also a new, nested scope inside the
+function's scope, meaning that parameter names are available.
+
 Statements within a block are terminated by a semicolon. Each statement can,
-among other things, be an expression. Here is a trivial example of a function
-definition using a block of statements:
+among other things, be an expression.
 
-```
-fn Foo() {
-  Bar();
-  Baz();
-}
-```
-
-Statements can also themselves be a block of statements, which provide scopes
-and nesting:
+For example, here is a function definition using a block of statements, one of
+which is nested:
 
 ```
 fn Foo() {
@@ -333,13 +327,16 @@ fn Foo() {
 }
 ```
 
-### Variables
+## Variables
 
-> **TODO:** Need a comprehensive design document to underpin these, and then
-> link to it here.
+> References: [Variables](variables.md)
+>
+> **TODO**: References need to be evolved.
 
 Blocks introduce nested scopes and can contain local variable declarations that
-work similarly to function parameters:
+work similarly to function parameters.
+
+For example:
 
 ```
 fn Foo() {
@@ -347,27 +344,12 @@ fn Foo() {
 }
 ```
 
-This introduces a local variable named `x` into the block's scope. It has the
-type `Int` and is initialized with the value `42`. These variable declarations
-(and function declarations) have a lot more power than what we're covering just
-yet, but this gives you the basic idea.
+Breaking this apart:
 
-> **Note:** an open question is what syntax (and mechanism) to use for declaring
-> constants. There are serious problems with the use of `const` in C++ as part
-> of the type system, so alternatives to pseudo-types (type qualifiers) are
-> being explored. The obvious syntax is `let` from Swift, although there are
-> some questions around how intuitive it is for this to introduce a constant.
-> Another candidate is `val` from Kotlin. Another thing we need to contend with
-> is the surprise of const and reference (semantic) types.
-
-While there can be global constants, there are no global variables.
-
-> **Note:** we are exploring several different ideas for how to design less
-> bug-prone patterns to replace the important use cases programmers still have
-> for global variables. We may be unable to fully address them, at least for
-> migrated code, and be forced to add some limited form of global variables
-> back. We may also discover that their convenience outweighs any improvements
-> afforded.
+- `var` is the keyword used to indicate a variable.
+- Its name is `x`.
+- Its type is `Int`.
+- It is initialized with the value `42`.
 
 ### Lifetime and move semantics
 
