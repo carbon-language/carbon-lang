@@ -1439,6 +1439,12 @@ bool BinaryFunction::scanExternalRefs() {
 
     // Return true if we can ignore reference to the symbol.
     auto ignoreReference = [&](const MCSymbol *TargetSymbol) {
+      if (!TargetSymbol)
+        return true;
+
+      if (BC.forceSymbolRelocations(TargetSymbol->getName()))
+        return false;
+
       auto *TargetFunction = BC.getFunctionForSymbol(TargetSymbol);
       if (!TargetFunction)
         return true;

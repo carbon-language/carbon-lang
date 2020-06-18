@@ -36,7 +36,6 @@ extern cl::opt<JumpTableSupportLevel> JumpTables;
 extern cl::opt<bool> PreserveBlocksAlignment;
 extern cl::opt<bool> PrintCacheMetrics;
 extern cl::opt<bool> UpdateDebugSections;
-extern cl::opt<bool> UpdateEnd;
 extern cl::opt<unsigned> Verbosity;
 
 cl::opt<bool>
@@ -205,10 +204,7 @@ void BinaryEmitter::emitAll(StringRef OrgSecPrefix) {
 
   emitDataSections(OrgSecPrefix);
 
-  // Update _end if needed.
-  if (opts::UpdateEnd) {
-    Streamer.EmitLabel(BC.Ctx->getOrCreateSymbol("_end"));
-  }
+  Streamer.EmitLabel(BC.Ctx->getOrCreateSymbol("_end"));
 }
 
 void BinaryEmitter::emitFunctions() {

@@ -231,6 +231,10 @@ public:
     HasSymbolsWithFileName = true;
   }
 
+  /// Return true if relocations against symbol with a given name
+  /// must be created.
+  bool forceSymbolRelocations(StringRef SymbolName) const;
+
   uint64_t getNumUnusedProfiledObjects() const {
     return NumUnusedProfiledObjects;
   }

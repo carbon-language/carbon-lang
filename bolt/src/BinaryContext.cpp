@@ -40,6 +40,8 @@ namespace opts {
 extern cl::OptionCategory BoltCategory;
 
 extern cl::opt<bool> AggregateOnly;
+extern cl::opt<bool> HotText;
+extern cl::opt<bool> HotData;
 extern cl::opt<bool> StrictMode;
 extern cl::opt<bool> UseOldText;
 extern cl::opt<unsigned> Verbosity;
@@ -277,6 +279,21 @@ BinaryContext::createBinaryContext(ObjectFile *File,
   BC->setFilename(File->getFileName());
 
   return BC;
+}
+
+bool BinaryContext::forceSymbolRelocations(StringRef SymbolName) const {
+  if (opts::HotText && (SymbolName == "__hot_start" ||
+                        SymbolName == "__hot_end"))
+    return true;
+
+  if (opts::HotData && (SymbolName == "__hot_data_start" ||
+                        SymbolName == "__hot_data_end"))
+    return true;
+
+  if (SymbolName == "_end")
+    return true;
+
+  return false;
 }
 
 std::unique_ptr<MCObjectWriter>

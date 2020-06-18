@@ -202,13 +202,6 @@ HotData("hot-data",
   cl::cat(BoltCategory));
 
 cl::opt<bool>
-UpdateEnd("update-end",
-  cl::desc("update the _end symbol to point to the end of all data sections"),
-  cl::init(true),
-  cl::ZeroOrMore,
-  cl::cat(BoltCategory));
-
-cl::opt<bool>
 KeepTmp("keep-tmp",
   cl::desc("preserve intermediate .o file"),
   cl::Hidden,
@@ -2013,20 +2006,7 @@ void RewriteInstance::readRelocations(const SectionRef &Section) {
       continue;
     }
 
-    auto ForceRelocation = [&](StringRef SymbolName) {
-      if (opts::HotText && (SymbolName == "__hot_start" ||
-                            SymbolName == "__hot_end"))
-        return true;
-
-      if (opts::HotData && (SymbolName == "__hot_data_start" ||
-                            SymbolName == "__hot_data_end"))
-        return true;
-
-      if (SymbolName == "_end")
-        return true;
-
-      return false;
-    }(SymbolName);
+    bool ForceRelocation = BC->forceSymbolRelocations(SymbolName);
 
     if (BC->isAArch64() && RType == ELF::R_AARCH64_ADR_GOT_PAGE)
       ForceRelocation = true;
@@ -3907,7 +3887,6 @@ void RewriteInstance::updateELFSymbolTable(
       outs() << "BOLT-INFO: setting " << Name << " to 0x"
              << Twine::utohexstr(NewSymbol.st_value) << '\n';
       ++IsUpdated;
-      return true;
     };
 
     if (opts::HotText && (*SymbolName == "__hot_start" ||
@@ -3918,11 +3897,9 @@ void RewriteInstance::updateELFSymbolTable(
                           *SymbolName == "__hot_data_end"))
       updateSymbolValue(*SymbolName, NumHotDataSymsUpdated);
 
-    if (opts::UpdateEnd && *SymbolName == "_end") {
-      NewSymbol.st_value = getNewValueForSymbol(*SymbolName);
-      NewSymbol.st_shndx = ELF::SHN_ABS;
-      outs() << "BOLT-INFO: setting " << *SymbolName << " to 0x"
-             << Twine::utohexstr(NewSymbol.st_value) << '\n';
+    if (*SymbolName == "_end") {
+      unsigned Ignored;
+      updateSymbolValue(*SymbolName, Ignored);
     }
 
     if (PatchExisting) {
