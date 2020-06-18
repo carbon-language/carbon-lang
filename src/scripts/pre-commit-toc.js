@@ -1,4 +1,4 @@
-#!/usr/local/bin/node
+#!/usr/bin/env node
 
 /*
 Part of the Carbon Language project, under the Apache License v2.0 with LLVM
