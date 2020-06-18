@@ -1,4 +1,4 @@
-# TODO
+# Metaprogramming
 
 <!--
 Part of the Carbon Language project, under the Apache License v2.0 with LLVM
@@ -23,3 +23,7 @@ we have more time to examine this detail. Please feel welcome to rewrite and
 update as appropriate.
 
 ## Overview
+
+Carbon provides metaprogramming facilities that look similar to regular Carbon
+code. These are structured, and do not offer inclusion or arbitrary
+preprocessing of source text such as C/C++ does.

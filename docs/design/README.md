@@ -49,18 +49,19 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
   - [Pattern matching in local variables](#pattern-matching-in-local-variables)
   - [Pattern matching as function overload resolution](#pattern-matching-as-function-overload-resolution)
 - [Type abstractions](#type-abstractions)
-  - [Interfaces and generics](#interfaces-and-generics)
+  - [Interfaces](#interfaces)
+  - [Generics](#generics)
   - [Templates](#templates)
     - [Types with template parameters](#types-with-template-parameters)
     - [Functions with template parameters](#functions-with-template-parameters)
     - [Specialization](#specialization)
     - [Constraining templates with interfaces](#constraining-templates-with-interfaces)
+- [Metaprogramming](#metaprogramming)
 - [Execution abstractions](#execution-abstractions)
-  - [Metaprogramming](#metaprogramming)
   - [Abstract machine and execution model](#abstract-machine-and-execution-model)
   - [Lambdas](#lambdas)
   - [Co-routines](#co-routines)
-- [C/C++ interoperability](#cc-interoperability)
+- [Carbon ↔ C/C++ interoperability](#carbon-%E2%86%94-cc-interoperability)
 
 <!-- tocstop -->
 
@@ -747,36 +748,31 @@ To break this apart:
 
 ## Type abstractions
 
-Carbon's type abstraction systems are centered around a core set of concepts:
-generics, interfaces, and facet types. We extend these with pure templates
-(similar to C++ templates) and inheritance to build a cohesive and powerful set
-of abstractions that both covers existing paradigms in C++ code as well as
-providing a cleaner and stronger model going forward. In fact, we use generics
-and facet types widely in Carbon to provide a unified framework of type
-abstraction.
+### Interfaces
 
-> **TODO:** Update all of this to match the generics proposal when we have a
-> draft published, and link to it.
+> **TODO:** Needs a feature design and a high level summary provided inline.
 
-> **TODO:** Add a minimal introduction to the ideas of parameterized types and
-> implicit/deduced function parameters and how it is these parameters that are
-> potentially generic or templated.
+### Generics
 
-### Interfaces and generics
-
-> **TODO:** Add a (very) high level summary of interfaces and generics.
+> **TODO:** Needs a feature design and a high level summary provided inline.
 
 ### Templates
 
+> References: [Templates](templates.md)
+>
+> **TODO:** References need to be evolved.
+
 Carbon templates follow the same fundamental paradigm as C++ templates: they are
 instantiated, resulting in late type checking, duck typing, and lazy binding.
-They both enable interoperability between Carbon and C++ and address some
-(hopefully limited) use cases where the type checking rigor imposed by generics
-isn't helpful.
-
-> **TODO:** Link these terms into the terminology document when available.
+Although generics are generally preferred, templates enable translation of code
+between C++ and Carbon, and address some cases where the type checking rigor of
+generics are problematic.
 
 #### Types with template parameters
+
+> References: [Templates](templates.md)
+>
+> **TODO:** References need to be evolved.
 
 When parameterizing a user-defined type, the parameters can be marked as
 _template_ parameters. The resulting type-function will instantiate the
@@ -800,6 +796,10 @@ of the places a normal type would be used, and it will only by type checked on
 instantiation.
 
 #### Functions with template parameters
+
+> References: [Templates](templates.md)
+>
+> **TODO:** References need to be evolved.
 
 Both implicit and explicit function parameters in Carbon can be marked as
 _template_ parameters. When called, the arguments to these parameters trigger
@@ -831,6 +831,10 @@ declaration.
 
 #### Specialization
 
+> References: [Templates](templates.md)
+>
+> **TODO:** References need to be evolved.
+
 An important feature of templates in C++ is the ability to customize how they
 end up specialized for specific types. Because template parameters (whether as
 type parameters or function parameters) are pattern matched, we expect to
@@ -842,6 +846,10 @@ specialization, but that is an area that we want to explore cautiously.
 > **TODO:** lots more work to flesh this out needs to be done...
 
 #### Constraining templates with interfaces
+
+> References: [Templates](templates.md)
+>
+> **TODO:** References need to be evolved.
 
 These generic interfaces also provide a mechanism to constrain fully
 instantiated templates to operate in terms of a restricted and explicit API
@@ -861,32 +869,37 @@ this restricted interface to the template function.
 This is designed to maximize the programmer's ability to move between different
 layers of abstraction, from fully generic to a generically constrained template.
 
+## Metaprogramming
+
+> References: [Metaprogramming](metaprogramming.md)
+>
+> **TODO:** References need to be evolved. Needs a detailed design and a high
+> level summary provided inline.
+
+Carbon provides metaprogramming facilities that look similar to regular Carbon
+code. These are structured, and do not offer arbitrary inclusion or
+preprocessing of source text such as C/C++ does.
+
 ## Execution abstractions
 
-Carbon also provides some higher-order abstractions of program execution, as
-well as the critical underpinnings of such abstractions: an execution model,
-abstract machine, etc.
-
-### Metaprogramming
-
-There is no support for textual inclusion or preprocessing of the source text in
-any form. Instead, metaprogramming facilities should be provided to more
-clearly, cleanly, and directly express the real and important use cases
-typically covered by such facilities in C++.
+Carbon provides some higher-order abstractions of program execution, as well as
+the critical underpinnings of such abstractions.
 
 ### Abstract machine and execution model
 
-> **TODO:** Needs a detailed design and a high level summary provided inline.
+> **TODO:** Needs a feature design and a high level summary provided inline.
 
 ### Lambdas
 
-> **TODO:** Needs a detailed design and a high level summary provided inline.
+> **TODO:** Needs a feature design and a high level summary provided inline.
 
 ### Co-routines
 
-> **TODO:** Needs a detailed design and a high level summary provided inline.
+> **TODO:** Needs a feature design and a high level summary provided inline.
 
-## C/C++ interoperability
+## Carbon ↔ C/C++ interoperability
 
-> **TODO:** Publish draft design and link to it here. Add relevant summary and
-> examples.
+> References: [Carbon ↔ C/C++ interoperability](interoperability/README.md)
+>
+> **TODO:** References need to be evolved. Needs a detailed design and a high
+> level summary provided inline.
