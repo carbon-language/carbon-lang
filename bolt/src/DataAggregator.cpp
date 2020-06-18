@@ -1395,6 +1395,11 @@ std::error_code DataAggregator::printLBRHeatMap() {
   }
 
   HM.print(opts::HeatmapFile);
+  if (opts::HeatmapFile == "-") {
+    HM.printCDF(opts::HeatmapFile);
+  } else {
+    HM.printCDF(opts::HeatmapFile + ".csv");
+  }
 
   return std::error_code();
 }

@@ -64,6 +64,10 @@ public:
 
   void print(raw_ostream &OS) const;
 
+  void printCDF(StringRef FileName) const;
+
+  void printCDF(raw_ostream &OS) const;
+
   size_t size() const {
     return Map.size();
   }

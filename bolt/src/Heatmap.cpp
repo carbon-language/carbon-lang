@@ -17,7 +17,9 @@
 #include "llvm/Support/Format.h"
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Support/raw_ostream.h"
+#include <algorithm>
 #include <cmath>
+#include <vector>
 
 #define DEBUG_TYPE "bolt-heatmap"
 
@@ -235,6 +237,44 @@ void Heatmap::print(raw_ostream &OS) const {
     changeColor(DefaultColor);
     finishLine(PrevAddress);
   }
+}
+
+void Heatmap::printCDF(StringRef FileName) const {
+  std::error_code EC;
+  raw_fd_ostream OS(FileName, EC, sys::fs::OpenFlags::F_None);
+  if (EC) {
+    errs() << "error opening output file: " << EC.message() << '\n';
+    exit(1);
+  }
+  printCDF(OS);
+}
+
+void Heatmap::printCDF(raw_ostream &OS) const {
+  uint64_t NumTotalCounts{0};
+  std::vector<uint64_t> Counts;
+
+  for (const auto &KV : Map) {
+    Counts.push_back(KV.second);
+    NumTotalCounts += KV.second;
+  }
+
+  std::sort(Counts.begin(), Counts.end(), std::greater<uint64_t>());
+
+  double RatioLeftInKB = (1.0 * BucketSize) / 1024;
+  assert(NumTotalCounts > 0 &&
+         "total number of heatmap buckets should be greater than 0");
+  double RatioRightInPercent = 100.0 / NumTotalCounts;
+  uint64_t RunningCount{0};
+
+  OS << "Bucket counts, Size (KB), CDF (%)\n";
+  for (uint64_t I = 0; I < Counts.size(); I++) {
+    RunningCount += Counts[I];
+    OS << format("%llu", (I + 1)) << ", "
+       << format("%.4f", RatioLeftInKB * (I + 1)) << ", "
+       << format("%.4f", RatioRightInPercent * (RunningCount)) << "\n";
+  }
+
+  Counts.clear();
 }
 
 } // namespace bolt
