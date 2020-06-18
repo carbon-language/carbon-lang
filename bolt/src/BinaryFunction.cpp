@@ -137,8 +137,8 @@ TimeBuild("time-build",
 cl::opt<bool>
 TrapOnAVX512("trap-avx512",
   cl::desc("in relocation mode trap upon entry to any function that uses "
-            "AVX-512 instructions (on by default)"),
-  cl::init(true),
+            "AVX-512 instructions"),
+  cl::init(false),
   cl::ZeroOrMore,
   cl::Hidden,
   cl::cat(BoltCategory));
