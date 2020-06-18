@@ -34,17 +34,18 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
   - [Composite types](#composite-types)
     - [Tuples](#tuples)
     - [Variants](#variants)
-  - [Pointers and references](#pointers-and-references)
-  - [Arrays and slices](#arrays-and-slices)
-  - [User-defined types, both structs and unions](#user-defined-types-both-structs-and-unions)
-    - [Allocation, construction, and destruction](#allocation-construction-and-destruction)
-    - [Assignment, copying, and moving](#assignment-copying-and-moving)
-    - [Comparison](#comparison)
-    - [Implicit and explicit conversion](#implicit-and-explicit-conversion)
-    - [Inline type composition](#inline-type-composition)
-    - [User-defined unions](#user-defined-unions)
+    - [Pointers and references](#pointers-and-references)
+    - [Arrays and slices](#arrays-and-slices)
+  - [User-defined types](#user-defined-types)
+    - [Structs](#structs)
+      - [Allocation, construction, and destruction](#allocation-construction-and-destruction)
+      - [Assignment, copying, and moving](#assignment-copying-and-moving)
+      - [Comparison](#comparison)
+      - [Implicit and explicit conversion](#implicit-and-explicit-conversion)
+      - [Inline type composition](#inline-type-composition)
+    - [Unions](#unions)
 - [Pattern matching](#pattern-matching)
-  - [Pattern match control flow](#pattern-match-control-flow)
+  - [`match` control flow](#match-control-flow)
   - [Pattern matching in local variables](#pattern-matching-in-local-variables)
   - [Pattern matching as function overload resolution](#pattern-matching-as-function-overload-resolution)
 - [Type abstractions](#type-abstractions)
@@ -106,7 +107,7 @@ cleaned up during evolution.
 
 > References: [Lexical conventions](lexical_conventions.md)
 >
-> **TODO**: References need to be evolved.
+> **TODO:** References need to be evolved.
 
 - All source code is UTF-8 encoded text. For simplicity, no other encoding is
   supported.
@@ -120,7 +121,7 @@ cleaned up during evolution.
 
 > References: [Files, libraries and packages](files_libraries_and_packages.md)
 >
-> **TODO**: References need to be evolved.
+> **TODO:** References need to be evolved.
 
 Carbon code is organized into files, libraries, and packages:
 
@@ -152,7 +153,7 @@ import library Container;
 
 > References: [Lexical conventions](lexical_conventions.md)
 >
-> **TODO**: References need to be evolved.
+> **TODO:** References need to be evolved.
 
 Various constructs introduce a named entity in Carbon. These can be functions,
 types, variables, or other kinds of entities that we'll cover. A name in Carbon
@@ -165,7 +166,7 @@ characters as well.
 
 > References: [Naming conventions](naming_conventions.md)
 >
-> **TODO**: References need to be evolved.
+> **TODO:** References need to be evolved.
 
 Our current proposed naming convention are:
 
@@ -190,7 +191,7 @@ For example:
 
 > References: [Aliases](aliases.md)
 >
-> **TODO**: References need to be evolved.
+> **TODO:** References need to be evolved.
 
 Carbon provides a fully general name aliasing facility to declare a new name as
 an alias for a value; everything is a value in Carbon. This is a fully general
@@ -210,7 +211,7 @@ textually after this can refer to `MyInt`, and it will transparently refer to
 
 > References: [Name lookup](name_lookup.md)
 >
-> **TODO**: References need to be evolved.
+> **TODO:** References need to be evolved.
 
 Names are always introduced into some scope which defines where they can be
 referenced. Many of these scopes are themselves named. `namespace` is used to
@@ -244,7 +245,7 @@ package.
 
 > References: [Name lookup](name_lookup.md)
 >
-> **TODO**: References need to be evolved.
+> **TODO:** References need to be evolved.
 
 Common types that we expect to be used universally will be provided for every
 file, including `Int` and `Bool`. These will likely be defined in a `Carbon`
@@ -255,7 +256,7 @@ package, and be treated as if always imported and aliased by every file.
 > References: [Lexical conventions](lexical_conventions.md),
 > [operators](operators.md)
 >
-> **TODO**: References need to be evolved.
+> **TODO:** References need to be evolved.
 
 The most pervasive part of the Carbon language are "expressions". These describe
 some computed value. The simplest example would be a literal number like `42`:
@@ -281,7 +282,7 @@ Some common expressions in Carbon include:
 
 > References: [Functions](functions.md)
 >
-> **TODO**: References need to be evolved.
+> **TODO:** References need to be evolved.
 
 Functions are the core unit of behavior. For example:
 
@@ -302,7 +303,7 @@ Calling functions involves a new form of expression, for example, `Sum(1, 2)`.
 
 > References: [Blocks and statements](blocks_and_statements.md)
 >
-> **TODO**: References need to be evolved.
+> **TODO:** References need to be evolved.
 
 The body or definition of a function is provided by a block of code containing
 statements. The body of a function is also a new, nested scope inside the
@@ -327,7 +328,7 @@ fn Foo() {
 
 > References: [Variables](variables.md)
 >
-> **TODO**: References need to be evolved.
+> **TODO:** References need to be evolved.
 
 Blocks introduce nested scopes and can contain local variable declarations that
 work similarly to function parameters.
@@ -351,13 +352,13 @@ Breaking this apart:
 
 > References: TODO
 >
-> **TODO**: References need to be evolved.
+> **TODO:** References need to be evolved.
 
 ### Control flow
 
 > References: [Control flow](control_flow.md)
 >
-> **TODO**: References need to be evolved.
+> **TODO:** References need to be evolved.
 
 Blocks of statements are generally executed linearly. However, statements are
 the primary place where this flow of execution can be controlled.
@@ -366,7 +367,7 @@ the primary place where this flow of execution can be controlled.
 
 > References: [Control flow](control_flow.md)
 >
-> **TODO**: References need to be evolved.
+> **TODO:** References need to be evolved.
 
 `if` and `else` are common flow control keywords, which can result in
 conditional execution of statements.
@@ -393,7 +394,7 @@ Breaking the `Foo` function apart:
 
 > References: [Control flow](control_flow.md)
 >
-> **TODO**: References need to be evolved.
+> **TODO:** References need to be evolved.
 
 Loops will be supported with a low-level primitive `loop` statement which loops
 unconditionally. `break` will be a way to exit the `loop` directly, while
@@ -429,7 +430,7 @@ Breaking the `Foo` function apart:
 
 > References: [Control flow](control_flow.md)
 >
-> **TODO**: References need to be evolved.
+> **TODO:** References need to be evolved.
 
 The `return` statement ends the flow of execution within a function, returning
 execution to the caller. If the function returns a value to the caller, that
@@ -443,6 +444,11 @@ fn Sum(Int: a, Int: b) -> Int {
 ```
 
 ## Types
+
+> References: [Primitive types](primitive_types.md), [tuples](tuples.md), and
+> [structs](structs.md)
+>
+> **TODO:** References need to be evolved.
 
 Carbon's core types are broken down into three categories:
 
@@ -462,7 +468,7 @@ However, in simple cases this doesn't make much difference.
 
 > References: [Primitive types](primitive_types.md)
 >
-> **TODO**: References need to be evolved.
+> **TODO:** References need to be evolved.
 
 These types are fundamental to the language as they aren't comprised of, or
 modifying other types. They also have semantics that are defined from first
@@ -492,10 +498,11 @@ Primitive types fall into the following categories:
 
 > References: [Tuples](tuples.md)
 >
-> **TODO**: References need to be evolved.
+> **TODO:** References need to be evolved.
 
 The primary composite type involves simple aggregation of other types as a
-tuple. A tuple of a single value is special and collapses to the single value.
+tuple. In formal type theory, tuples are product types. A tuple of a single
+value is special and collapses to the single value.
 
 An example use of tuples is:
 
@@ -505,7 +512,7 @@ fn DoubleBoth(Int: x, Int: y) -> (Int, Int) {
 }
 ```
 
-Breaking this use of tuples apart:
+Breaking this tuple:
 
 - The return type is a tuple of two `Int` types.
 - The expression uses tuple syntax to build a tuple of two `Int` values.
@@ -538,27 +545,28 @@ fn RemoveLast((Int, Int, Int): x) -> (Int, Int) {
 
 #### Variants
 
-> **TODO:** Needs a detailed design and a high level summary provided inline.
+> **TODO:** Needs a feature design and a high level summary provided inline.
 
-### Pointers and references
+#### Pointers and references
 
-> **TODO:** Needs a detailed design and a high level summary provided inline.
+> **TODO:** Needs a feature design and a high level summary provided inline.
 
-### Arrays and slices
+#### Arrays and slices
 
-> **TODO:** Needs a detailed design and a high level summary provided inline.
+> **TODO:** Needs a feature design and a high level summary provided inline.
 
-### User-defined types, both structs and unions
+### User-defined types
 
-> **TODO(joshl):** Link to tuple and struct design (even in draft) when
-> available, and sync any of this section with it.
+#### Structs
 
-Beyond simple tuples, Carbon of course allows defining named product types. This
-is the primary mechanism for users to extend the Carbon type system and
-fundamentally is deeply rooted in C++ and its history (C and Simula). We simply
-call them `struct`s rather than other terms as it is both familiar to existing
-programmers and accurately captures their essence: they are a mechanism for
-structuring data:
+> References: [Structs](structs.md)
+>
+> **TODO:** References need to be evolved.
+
+`struct`s are a way for users to define their own data strutures or named
+product types.
+
+For example:
 
 ```
 struct Widget {
@@ -570,8 +578,13 @@ struct Widget {
 }
 ```
 
-Most of the core features of structures from C++ remain present in Carbon, but
-often using different syntax:
+Breaking apart `Widget`:
+
+- `Widget` has three `Int` members: `x`, `y`, and `z`.
+- `Widget` has one `String` member: `payload`.
+- Given an instance `dial`, a member can be referenced with `dial.paylod`.
+
+More advanced `struct`s may be created:
 
 ```
 struct AdvancedWidget {
@@ -592,80 +605,70 @@ fn Foo(AdvancedWidget: thing) {
 }
 ```
 
-Here we provide a public object method and two private data members. The method
-explicitly indicates how the object parameter is passed to it, and there is no
-automatic scoping - you have to use `self` here. The `self` name is also a
-keyword, though, that explains how to invoke this method on an object. This
-member function accepts the object _by value_, which is easily expressed here
-along with other constraints on the object parameter. Private members work the
-same as in C++, providing a layer of easy validation of the most basic interface
-constraints.
+Breaking apart `AdvancedWidget`:
 
-> **Note:** requiring the type of `self` makes method declarations quite
-> verbose. Unclear what is the best way to mitigate this, there are many
-> options. One is to have a special `Self` type.
+- `AdvancedWidget` has a public object method `DoSomething`.
+  - `DoSomething` explicitly indicates how the `AdvancedWidget` is passed to it,
+    and there is no automatic scoping - `self` must be specified as an input.
+    The `self` name is also a keywoard that explains how to invoke this method
+    on an object.
+  - `DoSomething` accepts `AdvancedWidget` _by value_, which is easily expressed
+    here along with other constraints on the object parameter.
+- `AdvancedWidget` has two private data members: `x` and `y`.
+  - Private methods and data members are restricted to use by `AdvancedWidget`
+    only, providing a layer of easy validation of the most basic interface
+    constraints.
+- `Subtype` is a nested type, and can be accessed as `AdvancedWidget.Subtype`.
 
-> **Note:** it may be interesting to consider separating the `self` syntax from
-> the rest of the parameter pattern as it doesn't seem necessary to inject all
-> of the special rules (covariance vs. contravariance, special pointer handling)
-> for `self` into the general pattern matching system.
+##### Allocation, construction, and destruction
 
-> **Note:** the default access control level (and the options for access
-> control) are a pretty large open question. Swift and C++ (especially w/
-> modules) provide a lot of options and a pretty wide space to explore here. if
-> the default isn't right most of the time, access control runs the risk of
-> becoming a significant ceremony burden that we may want to alleviate with
-> grouped access regions instead of per-entity specifiers. Grouped access
-> regions have some other advantages in terms of pulling the public interface
-> into a specific area of the type.
+> **TODO:** Needs a feature design and a high level summary provided inline.
 
-The type itself is a compile-time constant value. All name access is done with
-the `.` notation. Constant members (including member types and member functions
-which do not need an implicit object parameter) can be accessed via that
-constant: `AdvancedWidget.Subtype`. Other members and member functions needing
-an implicit object parameter (or "methods") must be accessed from an object of
-the type.
+##### Assignment, copying, and moving
 
-Some things in C++ are notably absent or orthogonally handled:
+> **TODO:** Needs a feature design and a high level summary provided inline.
 
-- No need for `static` functions, they simply don't accept an implicit object
-  parameter.
-- No `static` variables because there are no global variables. Instead, can have
-  scoped constants.
+##### Comparison
 
-#### Allocation, construction, and destruction
+> **TODO:** Needs a feature design and a high level summary provided inline.
 
-#### Assignment, copying, and moving
+##### Implicit and explicit conversion
 
-#### Comparison
+> **TODO:** Needs a feature design and a high level summary provided inline.
 
-#### Implicit and explicit conversion
+##### Inline type composition
 
-#### Inline type composition
+> **TODO:** Needs a feature design and a high level summary provided inline.
 
-#### User-defined unions
+#### Unions
 
 > **TODO:** Needs a detailed design and a high level summary provided inline.
 
 ## Pattern matching
 
-> **TODO:** Publish draft design and link to it here. Update summary to match.
+> References: [Pattern matching](pattern_matching.md)
+>
+> **TODO:** References need to be evolved.
 
 The most prominent mechanism to manipulate and work with types in Carbon is
 pattern matching. This may seem like a deviation from C++, but in fact this is
 largely about building a clear, coherent model for a fundamental part of C++:
 overload resolution.
 
-### Pattern match control flow
+### `match` control flow
 
-The most powerful form and easiest to explain form of pattern matching is a
-dedicated control flow construct that subsumes the `switch` of C and C++ into
-something much more powerful, `match`. This is not a novel construct, and is
-widely used in existing languages (Swift and Rust among others) and is currently
-under active investigation for C++. Carbon's `match` can be used as follows:
+> References: [Pattern matching](pattern_matching.md)
+>
+> **TODO:** References need to be evolved.
+
+`match` is a control flow similar to `switch` of C/C++ and mirrors similar
+constructs in other langauges, such as Swift.
+
+An example `match` is:
 
 ```
 fn Bar() -> (Int, (Float, Float));
+
 fn Foo() -> Float {
   match (Bar()) {
     case (42, (Float: x, Float: y)) => {
@@ -684,44 +687,42 @@ fn Foo() -> Float {
 }
 ```
 
-There is a lot going on here. First, let's break down the core structure of a
-`match` statement. It accepts a value that will be inspected, here the result of
-the call to `Bar()`. It then will find the _first_ `case` that matches this
-value, and execute that block. If none match, then it executes the default
-block.
+Breaking apart this `match`:
 
-Each `case` contains a pattern. The first part is a value pattern
-(`(Int: p, auto: _)` for example) followed by an optional boolean predicate
-introduced by the `if` keyword. The value pattern has to match, and then the
-predicate has to evaluate to true for the overall pattern to match. Value
-patterns can be composed of the following:
+- It accepts a value that will be inspected; in this case, the result of the
+  call to `Bar()`.
+  - It then will find the _first_ `case` that matches this value, and execute
+    that block.
+  - If none match, then it executes the default block.
+- Each `case` pattern contains a value pattern, such as `(Int: p, auto: _)`,
+  followed by an optional boolean predicate introduced by the `if` keyword.
+  - The value pattern must first match, and then the predicate must also
+    evaluate to true for the overall `case` pattern to match.
+  - Using `auto` for a type will always match.
 
-- An expression (`42` for example), whose value must be equal to match.
-- An optional type (`Int` for example), followed by a `:` and either an
-  identifier to bind to the value or the special identifier `_` to discard the
-  value once matched.
-- A destructuring pattern containing a sequence of value patterns
-  (`(Float: x, Float: y)`) which match against tuples and tuple like values by
+Value patterns may be composed of the following:
+
+- An expression, such as `42`, whose value must be equal to match.
+- An optional type, such as `Int`, followed by a `:` and an identifier to bind
+  the value.
+  - The special identifier `_` may be used to discard the value once matched.
+- A destructuring pattern containing a sequence of value patterns, such as
+  `(Float: x, Float: y)`, which match against tuples and tuple-like values by
   recursively matching on their elements.
 - An unwrapping pattern containing a nested value pattern which matches against
   a variant or variant-like value by unwrapping it.
 
-  > **Note:** an open question is how to effectively fit a "slice" or "array"
-  > pattern into this (or whether we shouldn't do so).
-
-> **Note:** an open question is going beyond a simple "type" to things that
-> support generics and/or templates.
-
-In order to match a value, whatever is specified in the pattern must match.
-Using `auto` for a type will always match, making `auto: _` the wildcard
-pattern.
-
 ### Pattern matching in local variables
+
+> References: [Pattern matching](pattern_matching.md)
+>
+> **TODO:** References need to be evolved.
 
 Value patterns may be used when declaring local variables to conveniently
 destructure them and do other type manipulations. However, the patterns must
-match at compile time which is why the boolean predicate cannot be used
-directly.
+match at compile time, so a boolean predicate cannot be used directly.
+
+An example use is:
 
 ```
 fn Bar() -> (Int, (Float, Float));
@@ -731,14 +732,18 @@ fn Foo() -> Int {
 }
 ```
 
-This extracts the first value from the result of calling `Bar()` and binds it to
-a local variable named `p` which is then returned.
+To break this apart:
+
+- The `Int` returned by `Bar()` matches and is bound to `p`, then returned.
+- The `(Float, Float)` returned by `Bar()` matches and is discarded by
+  `auto: _`.
 
 ### Pattern matching as function overload resolution
 
-> **TODO:** Need to flesh out specific details of how overload selection
-> leverages the pattern matching machinery, what (if any) restrictions are
-> imposed, etc.
+> References: [Pattern matching](pattern_matching.md)
+>
+> **TODO:** References need to be evolved. Needs a detailed design and a high
+> level summary provided inline.
 
 ## Type abstractions
 

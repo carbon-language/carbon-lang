@@ -13,6 +13,11 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 - [TODO](#todo)
 - [Overview](#overview)
 - [Open questions](#open-questions)
+  - [Indices as compile-time constants](#indices-as-compile-time-constants)
+  - [Multiple indices](#multiple-indices)
+  - [Slicing ranges](#slicing-ranges)
+  - [Single-value tuples](#single-value-tuples)
+  - [Function pattern match](#function-pattern-match)
 
 <!-- tocstop -->
 
@@ -75,42 +80,58 @@ notation.
 
 ## Open questions
 
-> **Note:** we will likely want to restrict these indices to compile-time
-> constants. Without that, run-time indexing would need to suddenly switch to a
-> variant-style return type to handle heterogeneous tuples. This would both be
-> surprising and complex for little or no value.
+### Indices as compile-time constants
 
-> **Note:** using multiple indices in this way is a bit questionable. If we end
-> up wanting to support multidimensional arrays / slices (a likely selling point
-> for the scientific world), a sequence of indices seems a likely desired
-> facility there. We'd either need to find a different syntax there, change this
-> syntax, or cope with tuples and arrays having different semantics for multiple
-> indices (which seems really bad).
+In the example `t1[2, 1, 0]`, we will likely want to restrict these indices to
+compile-time constants. Without that, run-time indexing would need to suddenly
+switch to a variant-style return type to handle heterogeneous tuples. This would
+both be surprising and complex for little or no value.
 
-> **Note:** the intent of `0 .. 2` is to be syntax for forming a sequence of
-> indices based on the half-open range. There are a bunch of questions we'll
-> need to answer here. Is this valid anywhere? Only some places? What _is_ the
-> sequence? If it is a tuple of indices, maybe that solves the above issue, and
-> unlike function call indexing with multiple indices is different from indexing
-> with a tuple of indexes. Also, do we need syntax for a closed range (`...`
-> perhaps, unclear if that ends up _aligned_ or in _conflict_ with other likely
-> uses of `...` in pattern matching)? All of these syntaxes are also very close
-> to `0.2`, is that similarity of syntax OK? Do we want to require the `..` to
-> be surrounded by whitespace to minimize that collision?
+### Multiple indices
 
-> **Note:** this remains an area of active investigation. There are serious
-> problems with all approaches here. Without the collapse of one-tuples to
-> scalars we need to distinguish between a parenthesized expression (`(42)`) and
-> a one tuple (in Python or Rust, `(42,)`), and if we distinguish them then we
-> cannot model a function call as simply a function name followed by a tuple of
-> arguments; one of `f(0)` and `f(0,)` becomes a special case. With the
-> collapse, we either break genericity by forbidding `(42)[0]` from working, or
-> it isn't clear what it means to access a nested tuple's first element from a
-> parenthesized expression: `((1, 2))[0]`.
+In the exmaple `t1[2, 1, 0]`, using multiple indices in this way is a bit
+questionable. If we end up wanting to support multidimensional arrays / slices
+(a likely selling point for the scientific world), a sequence of indices seems a
+likely desired facility there. We'd either need to find a different syntax
+there, change this syntax, or cope with tuples and arrays having different
+semantics for multiple indices (which seems really bad).
 
-> **Note:** there are some interesting corner cases we need to expand on to
-> fully and more precisely talk about the exact semantic model of function calls
-> and their pattern match here, especially to handle variadic patterns and
-> forwarding of tuples as arguments. We are hoping for a purely type system
-> answer here without needing templates to be directly involved outside the type
-> system as happens in C++ variadics.
+### Slicing ranges
+
+The intent of `0 .. 2` is to be syntax for forming a sequence of indices based
+on the half-open range [0, 2). There are a bunch of questions we'll need to
+answer here:
+
+- Is this valid anywhere? Only some places?
+- What _is_ the sequence?
+  - If it is a tuple of indices, maybe that solves the above issue, and unlike
+    function call indexing with multiple indices is different from indexing with
+    a tuple of indexes.
+- Do we need syntax for a closed range (`...` perhaps, unclear if that ends up
+  _aligned_ or in _conflict_ with other likely uses of `...` in pattern
+  matching)?
+- All of these syntaxes are also very close to `0.2`, is that similarity of
+  syntax OK?
+  - Do we want to require the `..` to be surrounded by whitespace to minimize
+    that collision?
+
+### Single-value tuples
+
+This remains an area of active investigation. There are serious problems with
+all approaches here. Without the collapse of one-tuples to scalars we need to
+distinguish between a parenthesized expression (`(42)`) and a one tuple (in
+Python or Rust, `(42,)`), and if we distinguish them then we cannot model a
+function call as simply a function name followed by a tuple of arguments; one of
+`f(0)` and `f(0,)` becomes a special case. With the collapse, we either break
+genericity by forbidding `(42)[0]` from working, or it isn't clear what it means
+to access a nested tuple's first element from a parenthesized expression:
+`((1, 2))[0]`.
+
+### Function pattern match
+
+There are some interesting corner cases we need to expand on to fully and more
+precisely talk about the exact semantic model of function calls and their
+pattern match here, especially to handle variadic patterns and forwarding of
+tuples as arguments. We are hoping for a purely type system answer here without
+needing templates to be directly involved outside the type system as happens in
+C++ variadics.
