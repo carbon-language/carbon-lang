@@ -21,7 +21,7 @@ to a point that doesn't depend on the discarded state. For example, a function
 that reads data from a file and validates a checksum might avoid modifying any
 nonlocal state until validation is successful, and return early if validation
 fails. This recovery strategy relies on the fact that the likely causes of the
-failure are known and bounded (probably a malformed input file or a hardware I/O
+failure are known and bounded (probably a malformed input file or an I/O
 error), which allows us to put a bound on the state that might have been
 invalidated.
 
@@ -42,7 +42,7 @@ primary goals:
   handling is never free, and a programming error can occur anywhere.
 - Because potential programming errors are pervasive, they would have to
   propagate invisibly, which makes code harder to understand (see
-  [below](http://TODO)).
+  [below](#recoverable-errors-are-explicit-at-the-callsite)).
 - It would inhibit evolution of Carbon libraries, and the Carbon language, by
   preventing them from changing how they respond to incorrect code.
 - Similarly, it would prevent Carbon users from choosing different
