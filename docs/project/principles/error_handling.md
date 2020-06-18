@@ -21,9 +21,8 @@ to a point that doesn't depend on the discarded state. For example, a function
 that reads data from a file and validates a checksum might avoid modifying any
 nonlocal state until validation is successful, and return early if validation
 fails. This recovery strategy relies on the fact that the likely causes of the
-failure are known and bounded (probably a malformed input file or an I/O
-error), which allows us to put a bound on the state that might have been
-invalidated.
+failure are known and bounded (probably a malformed input file or an I/O error),
+which allows us to put a bound on the state that might have been invalidated.
 
 However, when a programming error is detected, the original cause is neither
 known nor bounded. For example, if a function dereferences a dangling pointer,
@@ -38,14 +37,18 @@ Thus, we expect that supporting recovery from programming errors would provide
 little or no benefit. Furthermore, it would be harmful to several of Carbon's
 primary goals:
 
-- It would impose a pervasive performance overhead, because recoverable error
+- [Performance-critical software](https://github.com/jonmeow/carbon-lang/blob/proposal-goals/docs/project/goals.md#performance-critical-software):
+  It would impose a pervasive performance overhead, because recoverable error
   handling is never free, and a programming error can occur anywhere.
-- Because potential programming errors are pervasive, they would have to
+- [Code that is easy to read, understand, and write](https://github.com/jonmeow/carbon-lang/blob/proposal-goals/docs/project/goals.md#code-that-is-easy-to-read-understand-and-write):
+  Because potential programming errors are pervasive, they would have to
   propagate invisibly, which makes code harder to understand (see
   [below](#recoverable-errors-are-explicit-at-the-callsite)).
-- It would inhibit evolution of Carbon libraries, and the Carbon language, by
+- [Software and language evolution](https://github.com/jonmeow/carbon-lang/blob/proposal-goals/docs/project/goals.md#both-software-and-language-evolution):
+  It would inhibit evolution of Carbon libraries, and the Carbon language, by
   preventing them from changing how they respond to incorrect code.
-- Similarly, it would prevent Carbon users from choosing different
+- [Practical safety guarantees and testing mechanisms](https://github.com/jonmeow/carbon-lang/blob/proposal-goals/docs/project/goals.md#practical-safety-guarantees-and-testing-mechanisms):
+  Similarly, it would prevent Carbon users from choosing different
   performance/safety tradeoffs for handling programming errors: if an
   out-of-bounds array access is required to throw an exception, users can't
   disable bounds checks, regardless of their risk tolerance, because code might
@@ -54,7 +57,9 @@ primary goals:
 #### Examples
 
 If Carbon supports assertions and/or contract checking, failed assertions will
-not throw exceptions, even as an optional build mode.
+not throw exceptions, even as an optional build mode. Assertion failures will
+only be presented in ways that don't alter the program state, such as logging,
+terminating the program, or trapping into a debugger.
 
 ### Memory exhaustion is not recoverable
 
@@ -63,7 +68,8 @@ mechanisms to report memory exhaustion, or support user-defined code that does.
 
 Memory exhaustion is not a programming error, and it is feasible to write code
 that can successfully recover from it. However, the available evidence indicates
-that very little C++ code actually does so correctly (TODO: Cite Herb's paper),
+that very little C++ code actually does so correctly (see e.g. section 4.3 of
+[this paper](http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2019/p0709r4.pdf)),
 which suggests that very little C++ code actually needs to do so, and we see no
 reason to expect Carbon's users to differ in this respect.
 
@@ -78,10 +84,11 @@ API.
 
 The `pop` operation on a Carbon queue will return the value removed from the
 queue. This is in contrast to C++'s `std::queue::pop()`, which does not return
-the value popped from the queue, because it is impossible to do so safely if
-copying the popped value can throw an out-of-memory error (TODO: cite GotW about
-this). Instead, the user must first examine the front of the queue, and then pop
-it as a separate operation. Not only is this awkward for users, it means that
+the value popped from the queue, because
+[that would not be exception-safe](https://isocpp.org/blog/2016/06/quick-q-why-doesnt-stdqueuepop-return-value)
+due to the possibility of an out-of-memory error while copying that value.
+Instead, the user must first examine the front of the queue, and then pop it as
+a separate operation. Not only is this awkward for users, it means that
 concurrent queues cannot match the API of non-concurrent queues (because
 separate `front()` and `pop()` calls would create a race condition).
 
@@ -193,6 +200,12 @@ example, if Carbon supports `try`/`catch` statements, they will always have a
 single `catch` block, which will be invoked for any error that escapes the `try`
 block.
 
-## TODO: citations
+## Other resources
 
-Joe Duffy's blog post, Herb's paper, ...?
+Several other groups of language designers have arrived at similar principles.
+See e.g. Swift's
+[error handling rationale](https://github.com/apple/swift/blob/master/docs/ErrorHandlingRationale.rst),
+[Joe Duffy's account](http://joeduffyblog.com/2016/02/07/the-error-model) of
+Midori's error model, and Herb Sutter's
+[pending proposal](http://wg21.link/P0709) for a new approach to exceptions in
+C++.
