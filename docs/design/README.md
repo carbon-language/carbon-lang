@@ -31,8 +31,9 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     - [`return`](#return)
 - [Types](#types)
   - [Primitive types](#primitive-types)
-  - [Tuples](#tuples)
-  - [Variants](#variants)
+  - [Composite types](#composite-types)
+    - [Tuples](#tuples)
+    - [Variants](#variants)
   - [Pointers and references](#pointers-and-references)
   - [Arrays and slices](#arrays-and-slices)
   - [User-defined types, both structs and unions](#user-defined-types-both-structs-and-unions)
@@ -197,7 +198,7 @@ facility because everything is a value in Carbon, including types.
 
 For example:
 
-```
+```carbon
 alias ??? MyInt = Int;
 ```
 
@@ -219,7 +220,7 @@ result, including aliases.
 
 For example:
 
-```
+```carbon
 package Koala library Eucalyptus;
 
 namespace Leaf {
@@ -313,7 +314,7 @@ among other things, be an expression.
 For example, here is a function definition using a block of statements, one of
 which is nested:
 
-```
+```carbon
 fn Foo() {
   Bar();
   {
@@ -333,7 +334,7 @@ work similarly to function parameters.
 
 For example:
 
-```
+```carbon
 fn Foo() {
   var Int: x = 42;
 }
@@ -372,7 +373,7 @@ conditional execution of statements.
 
 For example:
 
-```
+```carbon
 fn Foo(Int: x) {
   if (x < 42) {
     Bar();
@@ -400,7 +401,7 @@ unconditionally. `break` will be a way to exit the `loop` directly, while
 
 For example:
 
-```
+```carbon
 fn Foo() {
   var Int: x = 0;
   loop (x < 42) {
@@ -435,7 +436,7 @@ execution to the caller. If the function returns a value to the caller, that
 value is provided by an expression in the return statement. This allows us to
 complete the definition of our `Sum` function from earlier as:
 
-```
+```carbon
 fn Sum(Int: a, Int: b) -> Int {
   return a + b;
 }
@@ -452,177 +453,90 @@ Carbon's core types are broken down into three categories:
 The first two are intrinsic and directly built in the language. The last aspect
 of types allows for defining new types.
 
-Let's walk through the core types in Carbon. These are broken down into three
-categories: primitive types, composite types, and user defined types. The first
-two are intrinsic and directly built into the language because they don't have
-any reasonable way to be expressed on top of the language. The last aspect of
-types allows for defining new types.
-
 Expressions compute values in Carbon, and these values are always strongly typed
 much like in C++. However, an important difference from C++ is that types are
 themselves modeled as values; specifically, compile-time constant values.
 However, in simple cases this doesn't make much difference.
 
-We'll cover more [types] as we go through the language, but the most basic types
-are the following:
-
-- `Int` - a signed 64-bit 2’s-complement integer
-- `Bool` - a boolean type that is either `True` or `False`.
-- `String` - a byte sequence suitable for storing UTF-8 encoded text (and by
-  convention assumed to contain such text)
-
-The [primitive types] section outlines other fundamentals such as other sized
-integers, floating point numbers, unsigned integers, etc.
-
 ### Primitive types
 
-> **TODO:** Need a comprehensive design document to underpin these, and then
-> link to it here.
+> References: [Primitive types](primitive_types.md)
+>
+> **TODO**: References need to be evolved.
 
-These types are fundamental to the language as they aren't comprised of other
-types (or modifying other types) and have semantics that are defined from first
+These types are fundamental to the language as they aren't comprised of, or
+modifying other types. They also have semantics that are defined from first
 principles rather than in terms of other operations. Even though these are
-special, their names are not keywords or reserved in any sense, they are just
-names in the global scope.
+special, their names are not keywords or reserved; they are just names in the
+global scope.
 
-> **Note:** there are open questions about the extent to which these types
-> should be defined in Carbon code rather than special. Clearly they can't be
-> directly implemented w/o help, but it might still be useful to force the
-> programmer-observed interface to reside in code. However, this can cause
-> difficulty with avoiding the need to import things gratuitously.
+Primitive types fall into the following categories:
 
-They in turn can be decomposed into the following categories:
+- `Void` - a type with only one possible value: empty.
+- `Bool` - a boolean type with two possible values: `True` and `False`.
+- `Int` and `UInt` - signed and unsigned 64-bit integer types.
+  - Standard sizes are available, both signed and unsigned, including `Int8`,
+    `Int16`, `Int32`, `Int128`, and `Int256`.
+  - Overflow in either direction is an error.
+- `Float64` - a floating point type with semantics based on IEEE-754.
+  - Standard sizes are available, including `Float16`, `Float32`, and
+    `Float128`.
+  - [`BFloat16`](primitive_types.md#bfloat16) is also provided.
+- `String` - a byte sequence treated as containing UTF-8 encoded text.
+  - `StringView` - a read-only reference to a byte sequence treated as
+    containing UTF-8 encoded text.
 
-- A monotype `Void` (or possibly `()`, the empty tuple) that has only one
-  possible value (empty).
-- A boolean type `Bool` that has two possible values: `True` and `False`.
-- Integer types
-- Floating point types
-- A string view type which is a read-only reference to a sequence of bytes
-  typically representing (UTF-8 encoded) text.
+### Composite types
 
-  > **Note:** The right model of a string view vs. an owning string is still
-  > very much unsettled.
+#### Tuples
 
-Integer types can be either signed or unsigned, much like in C++. Signed
-integers are represented using 2's complement and notionally modeled as
-unbounded natural numbers. Overflow in either direction is an error. Unsigned
-integer types provide modular arithmetic based on the bit width of the integer,
-again like C++. The default size for both is 64-bits: `Int` and `UInt`. Specific
-sizes are also available, for example: `Int8`, `Int16`, `Int32`, `Int128`,
-`UInt256`. Arbitrary powers of two above `8` are supported for both (although
-perhaps we'll want to avoid _huge_ values for implementation simplicity).
+> References: [Tuples](tuples.md)
+>
+> **TODO**: References need to be evolved.
 
-> **Note:** Open question around allowing special syntax for wrapping operations
-> (even on signed types) and/or requiring such syntax for wrapping operations on
-> unsigned types.
+The primary composite type involves simple aggregation of other types as a
+tuple. A tuple of a single value is special and collapses to the single value.
 
-> **Note:** Supporting non-power-of-two sizes is likely needed to have a clean
-> model for bitfields, but requires more details to be worked out around memory
-> access.
+An example use of tuples is:
 
-Floating point types are based on the binary floating point formats provided by
-IEEE-754. `Float16`, `Float32`, `Float64` and `Float128` correspond exactly to
-those sized IEEE-754 formats, and have the semantics defined by IEEE-754. Carbon
-also supports the
-`[BFloat16](https://en.wikipedia.org/wiki/Bfloat16_floating-point_format)`
-format, a 16-bit truncation of a "binary32" IEEE-754 format floating point
-number.
-
-### Tuples
-
-> **TODO(joshl):** Link to tuple and struct design (even in draft) when
-> available, and sync any of this section with it.
-
-The primary composite type involves simple aggregation of other types as a tuple
-(called a "product type" in formal type theory):
-
-```
+```carbon
 fn DoubleBoth(Int: x, Int: y) -> (Int, Int) {
   return (2 * x, 2 * y);
 }
 ```
 
-This function returns a tuple of two integers represented by the type
-`(Int, Int)`. The expression to return it uses a special tuple syntax to build a
-tuple within an expression: `(<expression>, <expression>)`. This is actually the
-same syntax in both cases. The return type is a tuple expression, and the first
-and second elements are expressions referring to the `Int` type. The only
-difference is the type of these expressions. Both are tuples, but one is a tuple
-of types.
+Breaking this use of tuples apart:
+
+- The return type is a tuple of two `Int` types.
+- The expression uses tuple syntax to build a tuple of two `Int` values.
+
+Both of these are expressions using the tuple syntax
+`(<expression>, <expression>)`. The only difference is the type of the tuple
+expression: one is a tuple of types, the other a tuple of values.
 
 Element access uses subscript syntax:
 
-```
-fn Bar(Int: x, Int: y) -> Int {
-  var (Int, Int): t = (x, y);
-  return t[0] + t[1];
+```carbon
+fn DoubleTuple((Int, Int): x) -> (Int, Int) {
+  return (2 * x[0], 2 * x[1]);
 }
 ```
 
 Tuples also support multiple indices and slicing to restructure tuple elements:
 
-```
-fn Baz(Int: x, Int: y, Int: z) -> (Int, Int) {
-  var (Int, Int, Int): t1 = (x, y, z);
-  var (Int, Int, Int): t2 = t1[2, 1, 0];
-  return t2[0 .. 2];
+```carbon
+// This reverses the tuple using multiple indices.
+fn Reverse((Int, Int, Int): x) -> (Int, Int, Int) {
+  return x[2, 1, 0];
+}
+
+// This slices the tuple by extracting elements [0, 2).
+fn RemoveLast((Int, Int, Int): x) -> (Int, Int) {
+  return x[0 .. 2];
 }
 ```
 
-This code first reverses the tuple, and then extracts a slice using a half-open
-range of indices.
-
-> **Note:** we will likely want to restrict these indices to compile-time
-> constants. Without that, run-time indexing would need to suddenly switch to a
-> variant-style return type to handle heterogeneous tuples. This would both be
-> surprising and complex for little or no value.
-
-> **Note:** using multiple indices in this way is a bit questionable. If we end
-> up wanting to support multidimensional arrays / slices (a likely selling point
-> for the scientific world), a sequence of indices seems a likely desired
-> facility there. We'd either need to find a different syntax there, change this
-> syntax, or cope with tuples and arrays having different semantics for multiple
-> indices (which seems really bad).
-
-> **Note:** the intent of `0 .. 2` is to be syntax for forming a sequence of
-> indices based on the half-open range. There are a bunch of questions we'll
-> need to answer here. Is this valid anywhere? Only some places? What _is_ the
-> sequence? If it is a tuple of indices, maybe that solves the above issue, and
-> unlike function call indexing with multiple indices is different from indexing
-> with a tuple of indexes. Also, do we need syntax for a closed range (`...`
-> perhaps, unclear if that ends up _aligned_ or in _conflict_ with other likely
-> uses of `...` in pattern matching)? All of these syntaxes are also very close
-> to `0.2`, is that similarity of syntax OK? Do we want to require the `..` to
-> be surrounded by whitespace to minimize that collision?
-
-A tuple of a single value is special and simply collapses to the single value.
-
-> **Note:** this remains an area of active investigation. There are serious
-> problems with all approaches here. Without the collapse of one-tuples to
-> scalars we need to distinguish between a parenthesized expression (`(42)`) and
-> a one tuple (in Python or Rust, `(42,)`), and if we distinguish them then we
-> cannot model a function call as simply a function name followed by a tuple of
-> arguments; one of `f(0)` and `f(0,)` becomes a special case. With the
-> collapse, we either break genericity by forbidding `(42)[0]` from working, or
-> it isn't clear what it means to access a nested tuple's first element from a
-> parenthesized expression: `((1, 2))[0]`.
-
-Generally, functions pattern match a single tuple value of the arguments (with
-some important questions above around single-value tuples) in order to bind
-their parameters. However, when _calling_ a function, we insist on using
-explicit parentheses to have clear and distinct syntax that matches common
-conventions in C++ as well as other programming languages around function
-notation.
-
-> **Note:** there are some interesting corner cases we need to expand on to
-> fully and more precisely talk about the exact semantic model of function calls
-> and their pattern match here, especially to handle variadic patterns and
-> forwarding of tuples as arguments. We are hoping for a purely type system
-> answer here without needing templates to be directly involved outside the type
-> system as happens in C++ variadics.
-
-### Variants
+#### Variants
 
 > **TODO:** Needs a detailed design and a high level summary provided inline.
 
