@@ -1,0 +1,18 @@
+# Carbon: Add initial version of "Carbon pattern matching"
+
+<!--
+Part of the Carbon Language, under the Apache License v2.0 with LLVM
+Exceptions. See /LICENSE for license information.
+SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+-->
+
+[Pull request](https://github.com/carbon-language/carbon-lang/pull/TODO)
+
+## Problem
+
+Describe how matching of structured values may work
+
+## Proposal
+
+We propose adding
+(`docs/design/pattern-matching.md`)[/docs/design/pattern-matching.md].
