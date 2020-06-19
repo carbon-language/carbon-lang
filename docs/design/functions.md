@@ -42,7 +42,7 @@ might declare the same thing:
 ```
 std::int64_t Sum(std::int64_t a, std::int64_t b);
 
-// Or with the new trailing return type syntax:
+// Or with trailing return type syntax:
 auto Sum(std::int64_t a, std::int64_t b) -> std::int64_t;
 ```
 

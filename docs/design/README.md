@@ -173,7 +173,7 @@ Our current proposed naming convention are:
 
 - `UpperCamelCase` for names of compile-time resolved constants, such that they
   can participate in the type system and type checking of the program.
-- `lower_snake_case` for names of run-time resolved values.
+- `lower_snake_case` for keywords and names of run-time resolved values.
 
 As a matter of style and consistency, we will follow these conventions where
 possible and encourage convergence.
@@ -187,6 +187,7 @@ For example:
 - Functions and most types will be in `UpperCamelCase`.
 - A type where only run-time type information queries are available would end up
   as `lower_snake_case`.
+- A keyword like `import` uses `lower_snake_case`.
 
 #### Aliases
 
@@ -471,7 +472,7 @@ However, in simple cases this doesn't make much difference.
 >
 > **TODO:** References need to be evolved.
 
-These types are fundamental to the language as they aren't comprised of, or
+These types are fundamental to the language as they aren't either formed from or
 modifying other types. They also have semantics that are defined from first
 principles rather than in terms of other operations. Even though these are
 special, their names are not keywords or reserved; they are just names in the
@@ -569,7 +570,7 @@ product types.
 
 For example:
 
-```
+```carbon
 struct Widget {
   var Int: x;
   var Int: y;
@@ -587,7 +588,7 @@ Breaking apart `Widget`:
 
 More advanced `struct`s may be created:
 
-```
+```carbon
 struct AdvancedWidget {
   // Do a thing!
   fn DoSomething(AdvancedWidget: self, Int: x, Int: y);
@@ -667,7 +668,7 @@ constructs in other langauges, such as Swift.
 
 An example `match` is:
 
-```
+```carbon
 fn Bar() -> (Int, (Float, Float));
 
 fn Foo() -> Float {
@@ -725,7 +726,7 @@ match at compile time, so a boolean predicate cannot be used directly.
 
 An example use is:
 
-```
+```carbon
 fn Bar() -> (Int, (Float, Float));
 fn Foo() -> Int {
   var (Int: p, auto: _) = Bar();
@@ -774,14 +775,11 @@ generics are problematic.
 >
 > **TODO:** References need to be evolved.
 
-When parameterizing a user-defined type, the parameters can be marked as
-_template_ parameters. The resulting type-function will instantiate the
-parameterized definition with the provided arguments to produce a complete type
-when used. Note that only the parameters marked as having this _template_
-behavior are subject to full instantiation -- other parameters will be type
-checked and bound early to the extent possible. For example:
+User-defined types may have _template_ parameters. The resulting type-function
+may be used to instantiate the parameterized definition with the provided
+arguments in order to produce a complete type. For example:
 
-```
+```carbon
 struct Stack(Type:$$ T) {
   var Array(T): storage;
 
@@ -790,10 +788,13 @@ struct Stack(Type:$$ T) {
 }
 ```
 
-This both defines a parameterized type (`Stack`) and uses one (`Array`). Within
-the definition of the type, the _template_ type parameter `T` can be used in all
-of the places a normal type would be used, and it will only by type checked on
-instantiation.
+Breaking apart the template use in `Stack`:
+
+- `Stack` is a paremeterized type accepting a type `T`.
+- `T` may be used within the definition of `Stack` anywhere a normal type would
+  be used, and will only be type checked on instantiation.
+- `var Array(T)` instantiates a parameterized type `Array` when `Stack` is
+  instantiated.
 
 #### Functions with template parameters
 
@@ -808,7 +809,7 @@ definition after substituting in the provided (or computed if implicit)
 arguments. The runtime call then passes the remaining arguments to the resulting
 complete definition.
 
-```
+```carbon
 fn Convert[Type:$$ T](T: source, Type:$$ U) -> U {
   var U: converted = source;
   return converted;
@@ -856,7 +857,7 @@ instantiated templates to operate in terms of a restricted and explicit API
 rather than being fully duck typed. This falls out of the template type produced
 by the interface declaration. A template can simply accept one of those:
 
-```
+```carbon
 template fn TemplateRender[Type: T](Point(T): point) {
   ...
 }

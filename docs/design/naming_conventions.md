@@ -32,7 +32,7 @@ and we're interested in pursuing this if viable.
 
 Our current proposed naming convention, which we at least are attempting to
 follow within Carbon documentation in order to keep code samples as consistent
-as possible:
+as possible, is:
 
 - `UpperCamelCase` for names of compile-time resolved constants, such that they
   can participate in the type system and type checking of the program.
@@ -49,7 +49,7 @@ We only use `UpperCamelCase` and `lower_snake_case` (skipping other variations
 on both snake-case and camel-case naming conventions) because these two have the
 most significant visual separation. For example, the value of adding
 `lowerCamelCase` for another set seems low given the small visual difference
-provided.
+provided; in particular, one-word identifiers would have no difference.
 
 The rationale for the specific division between the two isn't a huge or
 fundamental concept, but it stems from a convention in Ruby where constants are

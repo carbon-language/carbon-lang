@@ -32,11 +32,11 @@ update as appropriate.
 
 ## Overview
 
-These types are fundamental to the language as they aren't comprised of other
-types (or modifying other types) and have semantics that are defined from first
+These types are fundamental to the language as they aren't either formed from or
+modifying other types. They also have semantics that are defined from first
 principles rather than in terms of other operations. Even though these are
-special, their names are not keywords or reserved in any sense, they are just
-names in the global scope.
+special, their names are not keywords or reserved; they are just names in the
+global scope.
 
 They in turn can be decomposed into the following categories:
 
