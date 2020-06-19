@@ -15,6 +15,20 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
   - [Pattern match control flow](#pattern-match-control-flow)
   - [Pattern matching in local variables](#pattern-matching-in-local-variables)
   - [Pattern matching as function overload resolution](#pattern-matching-as-function-overload-resolution)
+  - [Differences](#differences)
+- [Features](#features)
+  - [Positional & keyword arguments](#positional--keyword-arguments)
+  - [Defaults / optional arguments](#defaults--optional-arguments)
+  - [Deduced arguments](#deduced-arguments)
+  - [Variadics (...)](#variadics-)
+  - [Conditions](#conditions)
+- [Specification](#specification)
+  - [Pattern syntax](#pattern-syntax)
+  - [Value specification match rules](#value-specification-match-rules)
+  - [Deduced specification match rules](#deduced-specification-match-rules)
+  - [Destructuring rules](#destructuring-rules)
+  - [Condition](#condition)
+- [Broken links footnote](#broken-links-footnote)
 
 <!-- tocstop -->
 
@@ -284,78 +298,131 @@ meaningful at compile time. [Same is true of any generic/templated function!]
   var auto: g = fn(MySerializableType: x) -> String { return ToString(x); };
 ```
 
-
-**Note:** For functions argument lists, we also support template / generic arguments, but that is detailed in [another document (TODO)](#broken-links-footnote)<!-- T:Carbon templates and generics -->.
-
+**Note:** For functions argument lists, we also support template / generic
+arguments, but that is detailed in
+[another document (TODO)](#broken-links-footnote)<!-- T:Carbon templates and generics -->.
 
 ### Differences
 
 There are a few differences between these uses:
 
-
-
-*   The `match` statement has several patterns and determines which applies at run time.
-*   An assignment statement will have a single pattern, and it will be a compile error unless it can be shown to match at compile time.
-*   Function overloading allows multiple patterns, but at compile time any function call must be resolved to match a single pattern. Right now this is the only case that uses the generic (:$) and template (:$$) syntax.
-
+- The `match` statement has several patterns and determines which applies at run
+  time.
+- An assignment statement will have a single pattern, and it will be a compile
+  error unless it can be shown to match at compile time.
+- Function overloading allows multiple patterns, but at compile time any
+  function call must be resolved to match a single pattern. Right now this is
+  the only case that uses the generic (:$) and template (:$\$) syntax.
 
 ## Features
 
-
 ### Positional & keyword arguments
 
-**Rationale:** In general, positional arguments are great when either there is an obvious order to provide the arguments (e.g. coordinates in x, y, z order) or the order doesn't matter (e.g. `max()` is commutative). Otherwise, keyword arguments can (a) prevent mistakes (mixing up source & destination) and (b) provide documentation (what does this "True" argument mean?).
+**Rationale:** In general, positional arguments are great when either there is
+an obvious order to provide the arguments (e.g. coordinates in x, y, z order) or
+the order doesn't matter (e.g. `max()` is commutative). Otherwise, keyword
+arguments can (a) prevent mistakes (mixing up source & destination) and (b)
+provide documentation (what does this "True" argument mean?).
 
-Context: [Be wary of functions which take several parameters of the same type](https://news.ycombinator.com/item?id=21086666).
+Context:
+[Be wary of functions which take several parameters of the same type](https://news.ycombinator.com/item?id=21086666).
 
-Context: [Google C++ Style Guide](https://google.github.io/styleguide/cppguide.html#Structs_vs._Tuples) says "Prefer to use a struct instead of a pair or a tuple whenever the elements can have meaningful names."
+Context:
+[Google C++ Style Guide](https://google.github.io/styleguide/cppguide.html#Structs_vs._Tuples)
+says "Prefer to use a struct instead of a pair or a tuple whenever the elements
+can have meaningful names."
 
-Named components are also naturally a part of tuples so they can be used to initialize struct variables. When a struct type is changed to use a factory function / constructor for initialization, we should be able to use the same initialization syntax. The tuple with named components used to initialize will become the arguments to the factory function, which the factory function will declare as keyword arguments in order to match. See ["Carbon struct types" (TODO)](#broken-links-footnote)<!-- T:Carbon struct types -->.
+Named components are also naturally a part of tuples so they can be used to
+initialize struct variables. When a struct type is changed to use a factory
+function / constructor for initialization, we should be able to use the same
+initialization syntax. The tuple with named components used to initialize will
+become the arguments to the factory function, which the factory function will
+declare as keyword arguments in order to match. See
+["Carbon struct types" (TODO)](#broken-links-footnote)<!-- T:Carbon struct types -->.
 
-**Proposal:** Furthermore, I believe we should use keywords in overload resolution. Since the keywords are written in both the caller and the function signature, there is no ambiguity about which function should be called (considerably less than using types in overload resolution, which can be much less visible in the source code). Furthermore, there are cases where using the types of the argument to disambiguate is less clear or even ambiguous. For example, let us say we see a `Vector(Int)` being constructed with the arguments `(3, 5)`. Is that creating a vector containing three 5s or the two values `3, 5`? Different names for the arguments would resolve the question of which constructor should be used.
+**Proposal:** Furthermore, I believe we should use keywords in overload
+resolution. Since the keywords are written in both the caller and the function
+signature, there is no ambiguity about which function should be called
+(considerably less than using types in overload resolution, which can be much
+less visible in the source code). Furthermore, there are cases where using the
+types of the argument to disambiguate is less clear or even ambiguous. For
+example, let us say we see a `Vector(Int)` being constructed with the arguments
+`(3, 5)`. Is that creating a vector containing three 5s or the two values
+`3, 5`? Different names for the arguments would resolve the question of which
+constructor should be used.
 
-**Note:** Even when using keyword arguments, we are currently saying that the order still needs to match between the call site and the function signature. This is to simplify our order-of-evaluation story. It is expected that IDEs (and other tooling) will make it easy to update the code whenever there is a mismatch.
-
+**Note:** Even when using keyword arguments, we are currently saying that the
+order still needs to match between the call site and the function signature.
+This is to simplify our order-of-evaluation story. It is expected that IDEs (and
+other tooling) will make it easy to update the code whenever there is a
+mismatch.
 
 ### Defaults / optional arguments
 
-**Rationale:** By providing a facility for specifying defaults for arguments in the function signature and then making those arguments optional at the call site, we provide a number of benefits:
+**Rationale:** By providing a facility for specifying defaults for arguments in
+the function signature and then making those arguments optional at the call
+site, we provide a number of benefits:
 
+- Brevity for common cases where the defaults are what the user wants.
+- Allow many combinations of options to be specified at the caller without a
+  combinatorial explosion of function definitions.
+- Allow evolution of an API. A new argument can be added to an existing function
+  as long as it has a default that preserves the old behavior.
 
-
-*   Brevity for common cases where the defaults are what the user wants.
-*   Allow many combinations of options to be specified at the caller without a combinatorial explosion of function definitions.
-*   Allow evolution of an API. A new argument can be added to an existing function as long as it has a default that preserves the old behavior.
-
-Note that this feature is more powerful when combined with keyword arguments. In C++ which only uses positional arguments, you always have to specify a prefix of the argument list at the call site, and so only the tail of the argument list in the signature is allowed to have defaults. Within the keyword arguments, any may have defaults, and the caller may skip specifying any optional argument and still specify later arguments.
-
+Note that this feature is more powerful when combined with keyword arguments. In
+C++ which only uses positional arguments, you always have to specify a prefix of
+the argument list at the call site, and so only the tail of the argument list in
+the signature is allowed to have defaults. Within the keyword arguments, any may
+have defaults, and the caller may skip specifying any optional argument and
+still specify later arguments.
 
 ### Deduced arguments
 
-**Rationale:** The primary use case for deduced arguments is for type inference, but it could also be used to infer the size of an array argument. This is mainly for brevity, so you don't need to specify redundant information at the call site. It also provides continuity with C++ which has had this feature for a while. TODO: add ways this is used to enhance expressivity.
+**Rationale:** The primary use case for deduced arguments is for type inference,
+but it could also be used to infer the size of an array argument. This is mainly
+for brevity, so you don't need to specify redundant information at the call
+site. It also provides continuity with C++ which has had this feature for a
+while. TODO: add ways this is used to enhance expressivity.
 
-Note that the rules in C++ for deduced type arguments end up complex due to dealing with `const` and references (both `&` and `&&`).
-
+Note that the rules in C++ for deduced type arguments end up complex due to
+dealing with `const` and references (both `&` and `&&`).
 
 ### Variadics (...)
 
-**Rationale:** Variadics are important for expressiveness. Functions like `StrCat` and `max` are significantly more convenient if they work with a variable number of arguments.
+**Rationale:** Variadics are important for expressiveness. Functions like
+`StrCat` and `max` are significantly more convenient if they work with a
+variable number of arguments.
 
-**Question:** Do we want there to be some convenient way to say that all values matched by a variadic have to be the same type?
+**Question:** Do we want there to be some convenient way to say that all values
+matched by a variadic have to be the same type?
 
-Seems like this would be a reasonably common case for variadics. For example, `max` could take a variable number of arguments, as well as a function to create a fixed-sized array from an argument list. In this case, the compiler might be able to coerce the arguments to a common type when that was harmless, or give a clear error when the arguments were incompatible.
+Seems like this would be a reasonably common case for variadics. For example,
+`max` could take a variable number of arguments, as well as a function to create
+a fixed-sized array from an argument list. In this case, the compiler might be
+able to coerce the arguments to a common type when that was harmless, or give a
+clear error when the arguments were incompatible.
 
-This can introduce special cases, though. For example, do we allow a function to take two variadics in a row? This might be okay if the first one was restricted to always be `Int` values and the second to always be `String`s. But less okay if those types were deduced types.
+This can introduce special cases, though. For example, do we allow a function to
+take two variadics in a row? This might be okay if the first one was restricted
+to always be `Int` values and the second to always be `String`s. But less okay
+if those types were deduced types.
 
-**Proposal:** There should be a way to control whether `...` matches positional vs. keyword arguments.
+**Proposal:** There should be a way to control whether `...` matches positional
+vs. keyword arguments.
 
-For example, `max` would only take positional arguments via `...`, and may have a non-variadic keyword argument to provide the comparison function. On the other hand, an [encode_as_json(...)](https://github.com/nlohmann/json) function should only take keyword arguments. Python has two different syntaxes for matching the two different cases, which I think is reasonable. I'm not sure what the two different syntaxes should be, though.
-
+For example, `max` would only take positional arguments via `...`, and may have
+a non-variadic keyword argument to provide the comparison function. On the other
+hand, an [encode_as_json(...)](https://github.com/nlohmann/json) function should
+only take keyword arguments. Python has two different syntaxes for matching the
+two different cases, which I think is reasonable. I'm not sure what the two
+different syntaxes should be, though.
 
 ### Conditions
 
-**Rationale:** Conditions are most helpful when used in a `match` statement. In that context, we are expressing a condition and the condition part is needed for completeness. In a `match` statement the conditions have an order in which they are tested, so something like:
-
+**Rationale:** Conditions are most helpful when used in a `match` statement. In
+that context, we are expressing a condition and the condition part is needed for
+completeness. In a `match` statement the conditions have an order in which they
+are tested, so something like:
 
 ```
 
@@ -363,81 +430,132 @@ match (a) { case P1 if C1 => { ... } case P2 => { ... } case P1 => { ... } }
 
 ```
 
-
 would be hard to rewrite to avoid using conditions.
 
-We still intend to support conditions in function overload resolution for consistency, but the use cases are less clear. Note that in order to satisfy the "overloads must be resolved at compile time" plan, these would have to be conditions that could be evaluated at compile time, and so generally can't use anything about the dynamic values being supplied as arguments. Restricting to generic and template arguments of the function, they could be used as part of the generic constraints story.
+We still intend to support conditions in function overload resolution for
+consistency, but the use cases are less clear. Note that in order to satisfy the
+"overloads must be resolved at compile time" plan, these would have to be
+conditions that could be evaluated at compile time, and so generally can't use
+anything about the dynamic values being supplied as arguments. Restricting to
+generic and template arguments of the function, they could be used as part of
+the generic constraints story.
 
-**Speculation:** For example they may be useful to express a type satisfies multiple constraints. Or to express that different implementations are used for forward and random-access iterators. They may also be needed to make overload resolution less ambiguous in a case where otherwise two signatures would match.
+**Speculation:** For example they may be useful to express a type satisfies
+multiple constraints. Or to express that different implementations are used for
+forward and random-access iterators. They may also be needed to make overload
+resolution less ambiguous in a case where otherwise two signatures would match.
 
-**Proposal:** Conditions will not be used to affect deductions -- since conditions are arbitrary expressions they will be evaluated as a black box returning "true" or "false", not as information that can disambiguate tricky deduction cases.
-
+**Proposal:** Conditions will not be used to affect deductions -- since
+conditions are arbitrary expressions they will be evaluated as a black box
+returning "true" or "false", not as information that can disambiguate tricky
+deduction cases.
 
 ## Specification
-
 
 ### Pattern syntax
 
 A pattern consists of three pieces, in sequence:
 
-
-
-*   Deduced specification
-*   Value specification
-*   Condition specification
+- Deduced specification
+- Value specification
+- Condition specification
 
 Only the value specification is required.
 
-**Deduced specification:** [ `[`&lt;type> `:` [ `$` | `$$` ] &lt;id>`,` ... `]` ]
+**Deduced specification:** [ `[`&lt;type> `:` [ `$` | `$$` ] &lt;id>`,` ... `]`
+]
 
-**Value specification:** `(` &lt;value pattern>`,` ... `,` `.` &lt;id> `=` &lt;value pattern>`,` ... `)`
+**Value specification:** `(` &lt;value pattern>`,` ... `,` `.` &lt;id> `=`
+&lt;value pattern>`,` ... `)`
 
-The initial &lt;value pattern>s are called "positional"; the ones that start with "`.` &lt;id> `=`" are called "keyword". Positional &lt;value pattern>s must always appear before keyword &lt;value pattern>s. Here a &lt;value pattern> can either be:
+The initial &lt;value pattern>s are called "positional"; the ones that start
+with "`.` &lt;id> `=`" are called "keyword". Positional &lt;value pattern>s must
+always appear before keyword &lt;value pattern>s. Here a &lt;value pattern> can
+either be:
 
+- &lt;value>
+- (&lt;type> | `auto`) `:` [ `$` | `$$` ] (&lt;id> | `_`) [ `=` &lt;default
+  value> ]
+- &lt;value specification>
 
-
-*   &lt;value>
-*   (&lt;type> | `auto`) `:` [ `$` | `$$` ] (&lt;id> | `_`) [ `=` &lt;default value> ]
-*   &lt;value specification>
-
-Positional &lt;value pattern>s without defaults (if any) must appear before positional &lt;value pattern>s with defaults. Keywords &lt;value pattern>s can have defaults or not, in any order.
+Positional &lt;value pattern>s without defaults (if any) must appear before
+positional &lt;value pattern>s with defaults. Keywords &lt;value pattern>s can
+have defaults or not, in any order.
 
 **Condition specification:** [ `if` `(` &lt;expression> `)` ]
 
-**TODO:** We need some mechanism for capturing the value of a match and binding it to a name. [zygoloid](https://github.com/zygoloid) has suggested using the `@` symbol.
-
+**TODO:** We need some mechanism for capturing the value of a match and binding
+it to a name. [zygoloid](https://github.com/zygoloid) has suggested using the
+`@` symbol.
 
 ### Value specification match rules
 
-
-
-*   **Positional:** a tuple value `(a, b)` matches value specification `(A, B)` iff `a` matches `A` and `b` matches `B`. It will not match either value specification `(A)` or `(A, B, C)`.
-*   **Positional defaults:** a tuple value `(a, b)` matches value specification `(A, B = C, D = E)` iff `a` matches `A`, `b` matches `B`, and `E` matches `D`. The default value for `B` of `C` is ignored because `b` is present in the input. `D` is not required in the input since it has a default, as long as the default value matches the pattern (see the [deduced specification section below](#deduced-specification-match-rules) for why it might not). The same value specification could match `(a)` or `(a, b, d)` but not `()` or `(a, b, d, g)`.
-*   **Keyword:** a tuple value `(.x = a, .y = b)` matches value specification `(.x = A, .y = B)` iff `a` matches `A` and `b` matches `B`. Order does matter for keywords so `(.y = b, .x = a)` is different from `(.y = B, .x = A)`.
-*   **Positional does not match keyword:** a tuple value `(a, b)` does *not* match value specification `(.x = A, .y = B)` since positional inputs do not match keyword value patterns. Similarly a tuple value `(.x = a, .y = b)` does *not* match value specification `(A, B)`.
-*   **Keyword defaults:** a tuple value `(.x = a, .y = b)` matches value specification `(.x = A, .y = B = C, .z = D = E)` iff `a` matches `A`, `b` matches `B`, and `E` matches `D`. Here `.x` is required and `.y` & `.z` are optional, so the same pattern could match `(.x = a)` or `(.x = a, .z = d)` but not `(.y = b, .z = d)`.
-*   **Positional & keyword combination:** A tuple value `(a, b, .x = f, .y = g)` matches a value specification `(A, B = C, D = E, .x = F, .y = G = H, .z = I = J)` iff `a`, `b`, `f`, `g` match `A`, `B`, `F`, `G`.
-*   **Value:** A tuple value `(7, True)` matches value specification `(7, True)` but not `(7, False)`, `(8, True)`, or `(True, 7)`.
-*   **Type:** A tuple value `(7, True)` matches value specification `(Int: a, Bool: b)` or `(Int: _, Bool: _)`, but not `(Bool: a, Int: b)` or `(Bool: _, Int: _)`.
-*   **Recursive:** A tuple value `((7, .x = True), .y = (8, .z = False))` matches value specification `((Int: _, .x = Bool: _), .y = (Int: _, .z = Bool: _))`.
-*   **Generic** (`:$`) and **Template** (`:$$`): These both require that the value of the argument is available at compile time, and cause the function to be instantiated once for each (combination of) value(s) to generic/template arguments. In the template (`:$$`) case, this body of the function will only be type checked once it is instantiated with this value (ignoring any control branches where that are unreachable as a result of substituting this value), whereas with the generic (`:$`) case the body of the function will be type checked when the body is defined.
-
+- **Positional:** a tuple value `(a, b)` matches value specification `(A, B)`
+  iff `a` matches `A` and `b` matches `B`. It will not match either value
+  specification `(A)` or `(A, B, C)`.
+- **Positional defaults:** a tuple value `(a, b)` matches value specification
+  `(A, B = C, D = E)` iff `a` matches `A`, `b` matches `B`, and `E` matches `D`.
+  The default value for `B` of `C` is ignored because `b` is present in the
+  input. `D` is not required in the input since it has a default, as long as the
+  default value matches the pattern (see the
+  [deduced specification section below](#deduced-specification-match-rules) for
+  why it might not). The same value specification could match `(a)` or
+  `(a, b, d)` but not `()` or `(a, b, d, g)`.
+- **Keyword:** a tuple value `(.x = a, .y = b)` matches value specification
+  `(.x = A, .y = B)` iff `a` matches `A` and `b` matches `B`. Order does matter
+  for keywords so `(.y = b, .x = a)` is different from `(.y = B, .x = A)`.
+- **Positional does not match keyword:** a tuple value `(a, b)` does _not_ match
+  value specification `(.x = A, .y = B)` since positional inputs do not match
+  keyword value patterns. Similarly a tuple value `(.x = a, .y = b)` does _not_
+  match value specification `(A, B)`.
+- **Keyword defaults:** a tuple value `(.x = a, .y = b)` matches value
+  specification `(.x = A, .y = B = C, .z = D = E)` iff `a` matches `A`, `b`
+  matches `B`, and `E` matches `D`. Here `.x` is required and `.y` & `.z` are
+  optional, so the same pattern could match `(.x = a)` or `(.x = a, .z = d)` but
+  not `(.y = b, .z = d)`.
+- **Positional & keyword combination:** A tuple value `(a, b, .x = f, .y = g)`
+  matches a value specification
+  `(A, B = C, D = E, .x = F, .y = G = H, .z = I = J)` iff `a`, `b`, `f`, `g`
+  match `A`, `B`, `F`, `G`.
+- **Value:** A tuple value `(7, True)` matches value specification `(7, True)`
+  but not `(7, False)`, `(8, True)`, or `(True, 7)`.
+- **Type:** A tuple value `(7, True)` matches value specification
+  `(Int: a, Bool: b)` or `(Int: _, Bool: _)`, but not `(Bool: a, Int: b)` or
+  `(Bool: _, Int: _)`.
+- **Recursive:** A tuple value `((7, .x = True), .y = (8, .z = False))` matches
+  value specification `((Int: _, .x = Bool: _), .y = (Int: _, .z = Bool: _))`.
+- **Generic** (`:$`) and **Template** (`:$$`): These both require that the value
+  of the argument is available at compile time, and cause the function to be
+  instantiated once for each (combination of) value(s) to generic/template
+  arguments. In the template (`:$$`) case, this body of the function will only
+  be type checked once it is instantiated with this value (ignoring any control
+  branches where that are unreachable as a result of substituting this value),
+  whereas with the generic (`:$`) case the body of the function will be type
+  checked when the body is defined.
 
 ### Deduced specification match rules
 
-The rule is that a value will match `[A: a, B: b](...)` if there is a unique value of `a` with type `A` and unique value of `b` with type `B` that when substituted into the value specification (the `...` part), there is a match.
+The rule is that a value will match `[A: a, B: b](...)` if there is a unique
+value of `a` with type `A` and unique value of `b` with type `B` that when
+substituted into the value specification (the `...` part), there is a match.
 
+- `(True, True)` and `(False, False)` match `[Bool: b](b, b)`. Neither
+  `(True, False)` nor `(False, True)` match that pattern, though.
+- `(True, False)` and `(7, 8)` match `[Type: T](T: a, T: b)` (with `T = Bool`
+  and `T = Int` respectively). Neither `(True, 8)` nor `(7, False)` match that
+  pattern.
+- `(MakeFixedArray(1, 2, 3))` matches `[Type: T, Int: N](FixedArray(T, N): x)`
+  with `T = Int` and `N = 3`.
+- `(True, False)` and `(7)` matches `[Type: T](T: a, T: b = 3)` with `T = Bool`
+  and `T = Int` respectively. Note that `(True)` does not match the pattern:
+  since no value is provided for `b`, it gets its default value of `3` and there
+  is no consistent assignment of `T` for `(True, 3)`.
 
+**Generic** (`:$`) and **Template** (`:$$`) are handled the same way as in a
+value specification (see above).
 
-*   `(True, True)` and `(False, False)` match `[Bool: b](b, b)`. Neither `(True, False)` nor `(False, True)` match that pattern, though.
-*   `(True, False)` and `(7, 8)` match `[Type: T](T: a, T: b)` (with `T = Bool` and `T = Int` respectively). Neither `(True, 8)` nor `(7, False)` match that pattern.
-*   `(MakeFixedArray(1, 2, 3))` matches `[Type: T, Int: N](FixedArray(T, N): x)` with `T = Int` and `N = 3`.
-*   `(True, False)` and `(7)` matches `[Type: T](T: a, T: b = 3)` with `T = Bool` and `T = Int` respectively. Note that `(True)` does not match the pattern: since no value is provided for `b`, it gets its default value of `3` and there is no consistent assignment of `T` for `(True, 3)`.
-
-**Generic** (`:$`) and **Template** (`:$$`) are handled the same way as in a value specification (see above).
-
-**Question:** Do we want to require that all deductions are resolved at compile time? This would only be relevant to the `match` statement:
-
+**Question:** Do we want to require that all deductions are resolved at compile
+time? This would only be relevant to the `match` statement:
 
 ```
 
@@ -446,9 +564,7 @@ return "same"; } default => { return "different"; } } }
 
 ```
 
-
 This would be equivalent to:
-
 
 ```
 
@@ -457,43 +573,40 @@ fn f(Bool: a, Bool: b) -> String { match (a, b) { case (Bool: c, Bool: d) if (c
 
 ```
 
-
-
 ### Destructuring rules
 
-
-
-*   Once you match `(2, False)` to `(Int: x, Bool: y)`, this will bind `x = 2` and `y = False`.
-*   Matching `(2, False)` to `(2, False)` won't bind any names to values.
-*   Once you match `(2, False)` to `(Int: x, Bool: _)`, will just bind `x = 2`. The pattern `(Int: _, Bool: _)` won't bind any names to values.
-*   Matching `(2)` to `(Int: x = 3, Int: y = 4)` will bind `x = 2` (ignoring the default) and `y = 4` (using the default).
-
+- Once you match `(2, False)` to `(Int: x, Bool: y)`, this will bind `x = 2` and
+  `y = False`.
+- Matching `(2, False)` to `(2, False)` won't bind any names to values.
+- Once you match `(2, False)` to `(Int: x, Bool: _)`, will just bind `x = 2`.
+  The pattern `(Int: _, Bool: _)` won't bind any names to values.
+- Matching `(2)` to `(Int: x = 3, Int: y = 4)` will bind `x = 2` (ignoring the
+  default) and `y = 4` (using the default).
 
 ### Condition
 
 The semantics of `[A: a](B: b, C: c) if (X)` is to
 
-
-
 1. match without considering the `if (X)` clause
 2. tentatively bind `a`, `b`, and `c` as a result of that match
 3. evaluate `X`, which may use the names `a`, `b`, and `c`
-4. if the result is `True`, the match succeeds and those tentative bindings become real bindings
+4. if the result is `True`, the match succeeds and those tentative bindings
+   become real bindings
 5. otherwise the match fails
 
 **Examples:**
 
-
-
-*   `(3, 4)` would match `(Int: x, Int: y) if (x &lt; y)` but `(4, 3)` does not.
-*   `(3, 4)` would match `[Type: T](T: x, T: y) if (T implements ComparableInterface)`.
-
+- `(3, 4)` would match `(Int: x, Int: y) if (x &lt; y)` but `(4, 3)` does not.
+- `(3, 4)` would match
+  `[Type: T](T: x, T: y) if (T implements ComparableInterface)`.
 
 ## Broken links footnote
 
-Some links in this document aren't yet available,
-and so have been directed here until we can do the
-work to make them available.
+Some links in this document aren't yet available, and so have been directed here
+until we can do the work to make them available.
 
 We thank you for your patience.
+
+```
+
 ```
