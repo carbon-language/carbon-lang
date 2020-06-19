@@ -110,11 +110,11 @@ patterns can be composed of the following:
 - An unwrapping pattern containing a nested value pattern which matches against
   a variant or variant-like value by unwrapping it.
 
-  **Note:** an open question is how to effectively fit a "slice" or "array"
-  pattern into this (or whether we shouldn't do so).
+**Open question:** How do we effectively fit a "slice" or "array" pattern into
+this (or whether we shouldn't do so)?
 
-
-    **Note:** an open question is going beyond a simple "type" to things that support generics and/or templates.
+**Open question:** How do we go beyond a simple "type" to things that support
+generics and/or templates?
 
 In order to match a value, whatever is specified in the pattern must match.
 Using `auto` for a type will always match, making `auto: _` the wildcard
@@ -279,13 +279,10 @@ meaningful at compile time. [Same is true of any generic/templated function!]
   `ToString(MySerializableType)`?
 - Maybe you have to use a lambda? Like:
 
-      ```
-
-  var auto: f = fn(Int: x) -> String { return ToString(x); }; var auto: g =
-  fn(MySerializableType: x) -> String { return ToString(x); };
-
 ```
-
+  var auto: f = fn(Int: x) -> String { return ToString(x); };
+  var auto: g = fn(MySerializableType: x) -> String { return ToString(x); };
+```
 
 
 **Note:** For functions argument lists, we also support template / generic arguments, but that is detailed in [another document (TODO)](#broken-links-footnote)<!-- T:Carbon templates and generics -->.
