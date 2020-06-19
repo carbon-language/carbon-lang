@@ -425,9 +425,11 @@ completeness. In a `match` statement the conditions have an order in which they
 are tested, so something like:
 
 ```
-
-match (a) { case P1 if C1 => { ... } case P2 => { ... } case P1 => { ... } }
-
+match (a) {
+  case P1 if C1 => { ... }
+  case P2 => { ... }
+  case P1 => { ... }
+}
 ```
 
 would be hard to rewrite to avoid using conditions.
@@ -558,19 +560,31 @@ value specification (see above).
 time? This would only be relevant to the `match` statement:
 
 ```
-
-fn f(Bool: a, Bool: b) -> String { match (a, b) { case [Bool: c](c, c) => {
-return "same"; } default => { return "different"; } } }
-
+fn f(Bool: a, Bool: b) -> String {
+  match (a, b) {
+    case [Bool: c](c, c) => {
+      return "same";
+    }
+    default => {
+      return "different";
+    }
+  }
+}
 ```
 
 This would be equivalent to:
 
 ```
-
-fn f(Bool: a, Bool: b) -> String { match (a, b) { case (Bool: c, Bool: d) if (c
-== d) => { return "same"; } default => { return "different"; } } }
-
+fn f(Bool: a, Bool: b) -> String {
+  match (a, b) {
+    case (Bool: c, Bool: d) if (c == d) => {
+      return "same";
+    }
+    default => {
+      return "different";
+    }
+  }
+}
 ```
 
 ### Destructuring rules
@@ -606,7 +620,3 @@ Some links in this document aren't yet available, and so have been directed here
 until we can do the work to make them available.
 
 We thank you for your patience.
-
-```
-
-```
