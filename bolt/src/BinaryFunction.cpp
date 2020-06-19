@@ -2893,11 +2893,15 @@ void BinaryFunction::setIgnored() {
     for (auto BB : BasicBlocks) {
       delete BB;
     }
+    clearList(BasicBlocks);
+
     for (auto BB : DeletedBasicBlocks) {
       delete BB;
     }
-    BasicBlocks.clear();
-    BasicBlocksLayout.clear();
+    clearList(DeletedBasicBlocks);
+
+    clearList(BasicBlocksLayout);
+    clearList(BasicBlocksPreviousLayout);
   }
 
   CurrentState = State::Empty;
