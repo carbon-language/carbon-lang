@@ -17,3 +17,9 @@ request:
 - `p####-decision.md` documents the decision and rationale.
 - `p####` may be present as an optional subdirectory for related files (e.g.,
   images).
+
+## Proposal list
+
+<!-- proposals -->
+
+<!-- endproposals -->
