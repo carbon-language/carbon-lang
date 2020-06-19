@@ -312,7 +312,7 @@ There are a few differences between these uses:
   error unless it can be shown to match at compile time.
 - Function overloading allows multiple patterns, but at compile time any
   function call must be resolved to match a single pattern. Right now this is
-  the only case that uses the generic (:$) and template (:$\$) syntax.
+  the only case that uses the generic (`:$`) and template (`:$$`) syntax.
 
 ## Features
 
