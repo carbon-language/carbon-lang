@@ -8,7 +8,8 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 Carbon repositories follow a few basic principles:
 
-- Development directly on the `trunk` branch and revert to green.
+- Development directly on the `trunk` branch and
+  [revert to green](#green-tests).
 - Always use pull requests, rather than pushing directly.
 - Changes should be small, incremental, and review-optimized.
 - Preserve linear history by
@@ -20,10 +21,10 @@ Carbon repositories follow a few basic principles:
 These principles try to optimize for several different uses or activities with
 version control:
 
-- Continuous integration and bisection to identify failures and revert to green
-- Code review both at the time of commit and follow-up review after commit
+- Continuous integration and bisection to identify failures and revert to green.
+- Code review both at the time of commit and follow-up review after commit.
 - Understanding how things evolve over time, which can manifest in different
-  ways
+  ways:
   - When were things introduced?
   - How does the main branch and project evolve over time?
   - How was a bug or surprising thing introduced?
@@ -42,9 +43,11 @@ repository (our default branch). We focus on
 [small, incremental changes](#small_incremental_changes) rather than feature
 branches or the "scaled" variations of this workflow.
 
+### Green tests
+
 The `trunk` branch should always stay "green". That means that if tests fail or
-if we discover bugs or errors, we revert to a "green" state (where the failure
-or bug is no longer present) by default. Fixing forward is fine if that will be
+if we discover bugs or errors, we revert to a "green" state by default, where
+the failure or bug is no longer present. Fixing forward is fine if that will be
 comparably fast and efficient. The goal isn't to dogmatically avoid fixing
 forward, but to prioritize getting back to green quickly. We hope to eventually
 tool this through automatic continuous-integration powered submit queues, but
@@ -235,19 +238,19 @@ you intend to end up on the `trunk` branch needs to follow the same fundamental
 rules as the pull request above: they should each build and pass tests when
 landed in order, and they should have well written, cohesive commit messages.
 
-Prior to landing the pull request, you are expected to rebase it (interactively
-or non-interactively) to produce this final commit sequence. This kind of rebase
-rewrites the history in Git, which can make it hard to track the resolution of
-code review comments. Typically, only do this as a cleanup step when the review
-has finished, or when it won't otherwise disrupt code review. Adding "addressing
-review comments" commits during the review, and then squashing them away before
-the pull request is merged is an expected and healthy pattern.
+Prior to landing the pull request, you are expected to rebase it to produce this
+final commit sequence, either interactively or not. This kind of rebase rewrites
+the history in Git, which can make it hard to track the resolution of code
+review comments. Typically, only do this as a cleanup step when the review has
+finished, or when it won't otherwise disrupt code review. It is healthy and
+expected to add "addressing review comments" commits during the review and then
+squashing them away before the pull request is merged.
 
 ## Linear history
 
 We want the history of the `trunk` branch of each repository to be as simple and
 easy to understand as possible. While Git has strong support for managing
 complex history and merge patterns, we find understanding and reasoning about
-the history (especially for humans) to be at least somewhat simplified by
-sticking to a linear progression. As a consequence we either squash pull
+the history -- especially for humans -- to be at least somewhat simplified by
+sticking to a linear progression. As a consequence, we either squash pull
 requests or rebase them when merging them.

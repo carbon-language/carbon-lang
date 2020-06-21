@@ -105,11 +105,11 @@ the Code of Conduct.
 - [The GitHub carbon-language organization](https://github.com/orgs/carbon-language)
   is used for our repositories. **To join:**
 
-1.  Ask [an admin](docs/project/groups.md#admins) to send an invite, providing
-    your GitHub account.
-2.  Check your email to accept the invite, or try the standard
-    [accept link](https://github.com/orgs/carbon-language/invitation?via_email=1)
-    if you don't see the email.
+  1.  Ask [an admin](docs/project/groups.md#admins) to send an invite, providing
+      your GitHub account.
+  2.  Check your email to accept the invite, or try the standard
+      [accept link](https://github.com/orgs/carbon-language/invitation?via_email=1)
+      if you don't see the email.
 
 - [Discourse Forums](https://forums.carbon-lang.dev) are used for long-form
   discussions. **To join:**

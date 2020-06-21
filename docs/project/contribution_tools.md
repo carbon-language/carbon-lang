@@ -50,13 +50,21 @@ To set up pre-commit:
 
 - Follow the [installation instructions](https://pre-commit.com/#installation).
 - Enable per-repo: `pre-commit install`
+  - We already have `pre-commit` configured for Carbon repos -- do not go
+    through the `Quick start` instructions.
+- pre-commit may be run either automatically with `git commit` or manually with
+  `pre-commit run`.
+  - When files are modified, including by pre-commit failures, `git add` will
+    need to be run to include the modifications in the commit, and the commit
+    re-started.
 
 When modifying or adding pre-commit hooks, please run
 `pre-commit run --all-files` to see what changes.
 
 ## markdown-toc
 
-**pre-commit enabled**: markdown-toc will be run by pre-commit, if installed.
+> **pre-commit enabled**: If you're using pre-commit, it will run this.
+> Installing and running manually is optional, but may be helpful.
 
 We use [markdown-toc](https://github.com/jonschlinkert/markdown-toc) to provide
 GitHub-compatible tables of contents for some documents.
@@ -66,7 +74,8 @@ always run Prettier after markdown-toc.
 
 ## Prettier
 
-**pre-commit enabled**: Prettier will be run by pre-commit, if installed.
+> **pre-commit enabled**: If you're using pre-commit, it will run this.
+> Installing and running manually is optional, but may be helpful.
 
 We use [Prettier](https://prettier.io/) for formatting. There is an
 [rc file](/.prettierrc) for configuration.
