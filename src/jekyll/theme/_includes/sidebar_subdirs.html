@@ -1,0 +1,20 @@
+{%- comment -%}
+  Outputs subdirectories of the given directory for the sidebar.
+
+  dir: The path of the dir to output. Should start and end with /.
+{%- endcomment -%}
+
+{%- for item in site.pages -%}
+  {%- assign dirname = item.url | slice: 0,include.dir.size -%}
+  {%- assign filename_size = item.url.size |
+                             minus: include.dir.size |
+                             minus: 1 -%}
+  {%- assign filename = item.url | slice: include.dir.size,filename_size -%}
+  {%- assign ext = item.url | slice: -1 -%}
+  {%- unless dirname != include.dir or
+             filename contains "/" or
+             filename.size == 0 or
+             ext != "/" -%}
+    {%- include sidebar_dir.html dir=item.url title=item.title recurse=true -%}
+  {%- endunless -%}
+{%- endfor -%}

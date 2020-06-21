@@ -6,15 +6,20 @@ Exceptions. See /LICENSE for license information.
 SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -->
 
-**_PLEASE_ DO NOT SHARE OUTSIDE CARBON FORUMS**
-
 [Pull request](https://github.com/carbon-language/carbon-lang/pull/####)
 
 ## Table of contents
 
-<!-- START doctoc generated TOC please keep comment here to allow auto update -->
-<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
-<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+<!-- toc -->
+
+- [TODO: Initial proposal setup](#todo-initial-proposal-setup)
+- [Problem](#problem)
+- [Background](#background)
+- [Proposal](#proposal)
+- [Details](#details)
+- [Alternatives considered](#alternatives-considered)
+
+<!-- tocstop -->
 
 ## TODO: Initial proposal setup
 
