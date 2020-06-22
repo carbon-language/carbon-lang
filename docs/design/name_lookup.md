@@ -71,7 +71,7 @@ desirable end state. We need to consider alternatives where names from the same
 library or any library in the same package are made immediately visible within
 the package scope for unqualified name lookup.
 
-### Name lookup common, standard types
+### Name lookup for common, standard types
 
 The Carbon standard library is in the `Carbon` package. A very small subset of
 this standard library is provided implicitly in every file's scope as-if it were
