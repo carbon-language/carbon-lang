@@ -68,7 +68,7 @@ expression, similar to a postfix operator.
 
 ### Types before or after name
 
-While we are currently keeping types first matching C++, there is significant
+While we are currently keeping types first, matching C++, there is significant
 uncertainty around the right approach here. While adding the colon improves the
 grammar by unambiguously marking the transition from type to a declared
 identifier, in essentially every other language with a colon in a similar
