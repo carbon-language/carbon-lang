@@ -2098,10 +2098,15 @@ void RewriteInstance::readRelocations(const SectionRef &Section) {
       if (ReferencedBF->containsAddress(Address, /*UseMaxSize = */true)) {
         RefFunctionOffset = Address - ReferencedBF->getAddress();
         if (RefFunctionOffset) {
-          ReferencedSymbol =
-            ReferencedBF->getOrCreateLocalLabel(Address,
-                                                /*CreatePastEnd =*/ true);
-          ReferencedBF->registerReferencedOffset(RefFunctionOffset);
+          if (ContainingBF && ContainingBF != ReferencedBF) {
+            ReferencedSymbol =
+              ReferencedBF->addEntryPointAtOffset(RefFunctionOffset);
+          } else {
+            ReferencedSymbol =
+              ReferencedBF->getOrCreateLocalLabel(Address,
+                                                  /*CreatePastEnd =*/ true);
+            ReferencedBF->registerReferencedOffset(RefFunctionOffset);
+          }
           if (opts::Verbosity > 1 && !RelocatedSection.isReadOnly()) {
             dbgs() << "BOLT-WARNING: writable reference into the middle of "
                    << "the function " << *ReferencedBF
