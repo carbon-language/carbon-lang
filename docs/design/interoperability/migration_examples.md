@@ -44,7 +44,7 @@ TestServer and C++ `main.cc` both invoke APIs from the C++ `start_server.h`.
 
 C++ `start_server.h`:
 
-```
+```cc
 #include "net/util/ports.h"
 
 namespace project {
@@ -62,7 +62,7 @@ void StartServer() {
 
 C++ `main.cc`:
 
-```
+```cc
 #include "project/start_server.h"
 
 int main(int argc, char** argv) {
@@ -74,7 +74,7 @@ int main(int argc, char** argv) {
 
 Carbon TestServer library:
 
-```
+```carbon
 package Project library TestServer;
 
 import Cpp "project/start_server.h";
@@ -103,7 +103,7 @@ uses the `$extern` provided by the Carbon StartServer library.
 
 C++ `start_server.h`:
 
-```
+```cc
 #include "net/util/ports.h"
 
 // Include the Carbon file to make the externed StartServer symbol available.
@@ -122,7 +122,7 @@ void StartServerOnPort(int port) {
 
 Carbon StartServer library:
 
-```
+```carbon
 package Project library StartServer;
 
 import Cpp "net/util/ports.h"
@@ -140,7 +140,7 @@ Both C++ and Carbon callers should be migrated to the Carbon API now.
 
 C++ `main.cc`:
 
-```
+```cc
 // This replaces the include of the C++ startserver.h.
 #include "project/startserver.carbon.h"
 
@@ -153,7 +153,7 @@ int main(int argc, char** argv) {
 
 Carbon TestServer library:
 
-```
+```carbon
 package Project library TestServer;
 
 // This replaces the import of the C++ start_server.h.
@@ -180,7 +180,7 @@ code looks like.
 
 C++ `start_server.h`:
 
-```
+```cc
 #include "net/util/ports.h"
 
 namespace project {
@@ -194,7 +194,7 @@ void StartServerOnPort(int port) {
 
 C++ `main.cc`:
 
-```
+```cc
 #include "project/startserver.carbon.h"
 
 int main(int argc, char** argv) {
@@ -206,7 +206,7 @@ int main(int argc, char** argv) {
 
 Carbon StartServer library:
 
-```
+```carbon
 package Project library StartServer;
 
 import Cpp "net/util/ports.h"
@@ -219,7 +219,7 @@ $extern("Cpp", namespace="project") fn StartServer() {
 
 Carbon TestServer library:
 
-```
+```carbon
 package Project library TestServer;
 
 import Project library StartServer;
@@ -237,7 +237,7 @@ fn TestStartup() {
 
 C++ `framework.h`:
 
-```
+```cc
 class FrameworkBase {
   public:
     virtual void Run() = 0;
@@ -250,7 +250,7 @@ void Register(FrameworkBase* api) {
 
 C++ `user.h`:
 
-```
+```cc
 #include "framework.h"
 
 class UserImpl : public FrameworkBase {
@@ -263,7 +263,7 @@ class UserImpl : public FrameworkBase {
 
 Carbon Framework library:
 
-```
+```carbon
 package Framework;
 
 // Provide an interface for Carbon users.
@@ -292,7 +292,7 @@ fn RegisterForCpp(Cpp.FrameworkBase* api) {
 
 C++ `framework.h`
 
-```
+```cc
 // Include the generated Carbon header for Register.
 #include "framework.carbon.h"
 
