@@ -89,7 +89,7 @@ both be surprising and complex for little or no value.
 
 ### Multiple indices
 
-In the exmaple `t1[2, 1, 0]`, using multiple indices in this way is a bit
+In the example `t1[2, 1, 0]`, using multiple indices in this way is a bit
 questionable. If we end up wanting to support multidimensional arrays / slices
 (a likely selling point for the scientific world), a sequence of indices seems a
 likely desired facility there. We'd either need to find a different syntax
