@@ -106,7 +106,7 @@ the general pattern matching system.
 
 The default access control level, and the options for access control, are
 pretty large open questions. Swift and C++ (especially w/ modules) provide a lot
-of options and a pretty wide space to explore here. if the default isn't right
+of options and a pretty wide space to explore here. If the default isn't right
 most of the time, access control runs the risk of becoming a significant
 ceremony burden that we may want to alleviate with grouped access regions
 instead of per-entity specifiers. Grouped access regions have some other
