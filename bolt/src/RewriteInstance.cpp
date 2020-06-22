@@ -1074,12 +1074,14 @@ void RewriteInstance::discoverFileObjects() {
         PreviousFunction->getAddress() != Address) {
       if (PreviousFunction->isSymbolValidInScope(Symbol, SymbolSize)) {
         if (opts::Verbosity >= 1) {
-          outs() << "BOLT-DEBUG: possibly another entry for function "
+          outs() << "BOLT-DEBUG: skipping possibly another entry for function "
                  << *PreviousFunction << " : " << UniqueName << '\n';
         }
       } else {
         outs() << "BOLT-INFO: using " << UniqueName << " as another entry to "
                << "function " << *PreviousFunction << '\n';
+
+        registerName(0);
 
         PreviousFunction->
           addEntryPointAtOffset(Address - PreviousFunction->getAddress());
@@ -4574,6 +4576,20 @@ void RewriteInstance::writeEHFrameHeader() {
 
   DEBUG(dbgs() << "BOLT-DEBUG: size of .eh_frame after merge is "
                << EHFrameSection->getOutputSize() << '\n');
+}
+
+uint64_t RewriteInstance::getNewValueForSymbol(const StringRef Name) {
+  uint64_t Value =  cantFail(OLT->findSymbol(Name, false).getAddress(),
+                             "findSymbol() failed");
+  if (Value != 0)
+    return Value;
+
+  // Return the original value if we haven't emitted the symbol.
+  auto *BD = BC->getBinaryDataByName(Name);
+  if (!BD)
+    return 0;
+
+  return BD->getAddress();
 }
 
 uint64_t RewriteInstance::getFileOffsetForAddress(uint64_t Address) const {

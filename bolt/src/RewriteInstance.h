@@ -174,10 +174,7 @@ private:
   uint64_t getNewFunctionAddress(uint64_t OldAddress);
 
   /// Return value for the symbol \p Name in the output.
-  uint64_t getNewValueForSymbol(const StringRef Name) {
-    return cantFail(OLT->findSymbol(Name, false).getAddress(),
-                    "findSymbol failed");
-  }
+  uint64_t getNewValueForSymbol(const StringRef Name);
 
   /// Detect addresses and offsets available in the binary for allocating
   /// new sections.
