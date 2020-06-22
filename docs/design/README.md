@@ -55,7 +55,6 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     - [Types with template parameters](#types-with-template-parameters)
     - [Functions with template parameters](#functions-with-template-parameters)
     - [Specialization](#specialization)
-    - [Constraining templates with interfaces](#constraining-templates-with-interfaces)
 - [Metaprogramming](#metaprogramming)
 - [Execution abstractions](#execution-abstractions)
   - [Abstract machine and execution model](#abstract-machine-and-execution-model)
@@ -503,7 +502,7 @@ Primitive types fall into the following categories:
 
 The primary composite type involves simple aggregation of other types as a
 tuple. In formal type theory, tuples are product types. A tuple of a single
-value is special and collapses to the single value.
+value is special and is equivalent to the single value.
 
 An example use of tuples is:
 
@@ -593,7 +592,7 @@ struct AdvancedWidget {
   fn DoSomething(AdvancedWidget: self, Int: x, Int: y);
 
   // A nested type.
-  struct Subtype {
+  struct Nestedtype {
     // ...
   }
 
@@ -619,7 +618,8 @@ Breaking apart `AdvancedWidget`:
   - Private methods and data members are restricted to use by `AdvancedWidget`
     only, providing a layer of easy validation of the most basic interface
     constraints.
-- `Subtype` is a nested type, and can be accessed as `AdvancedWidget.Subtype`.
+- `Nestedtype` is a nested type, and can be accessed as
+  `AdvancedWidget.Nestedtype`.
 
 ##### Allocation, construction, and destruction
 
@@ -774,9 +774,9 @@ generics are problematic.
 >
 > **TODO:** References need to be evolved.
 
-User-defined types may have _template_ parameters. The resulting type-function
-may be used to instantiate the parameterized definition with the provided
-arguments in order to produce a complete type. For example:
+User-defined types may have template parameters. The resulting type-function may
+be used to instantiate the parameterized definition with the provided arguments
+in order to produce a complete type. For example:
 
 ```carbon
 struct Stack(Type:$$ T) {
@@ -844,30 +844,6 @@ through pattern matching, this may enable things beyond just template parameter
 specialization, but that is an area that we want to explore cautiously.
 
 > **TODO:** lots more work to flesh this out needs to be done...
-
-#### Constraining templates with interfaces
-
-> References: [Templates](templates.md)
->
-> **TODO:** References need to be evolved.
-
-These generic interfaces also provide a mechanism to constrain fully
-instantiated templates to operate in terms of a restricted and explicit API
-rather than being fully duck typed. This falls out of the template type produced
-by the interface declaration. A template can simply accept one of those:
-
-```carbon
-template fn TemplateRender[Type: T](Point(T): point) {
-  ...
-}
-```
-
-Here, we accept the specific interface wrapper rather than the underlying `T`.
-This forces the interface of `T` to match that of `Point`. It also provides only
-this restricted interface to the template function.
-
-This is designed to maximize the programmer's ability to move between different
-layers of abstraction, from fully generic to a generically constrained template.
 
 ## Metaprogramming
 
