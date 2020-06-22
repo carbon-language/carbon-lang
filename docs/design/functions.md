@@ -61,7 +61,7 @@ in the case of functions which do not return a value.
 Calling functions involves a new form of expression: `Sum(1, 2)` for example.
 The first part, `Sum`, is an expression referring to the name of the function.
 The second part, `(1, 2)` is a parenthesized list of arguments to the function.
-The juxtaposition of one expression with parentheses forms the core of call
+The juxtaposition of one expression with parentheses forms the core of a call
 expression, similar to a postfix operator.
 
 ## Alternatives
