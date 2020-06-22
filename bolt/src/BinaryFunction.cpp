@@ -427,6 +427,9 @@ void BinaryFunction::print(raw_ostream &OS, std::string Annotation,
   if (HasUnknownControlFlow) {
     OS << "\n  Unknown CF  : true";
   }
+  if (getPersonalityFunction()) {
+    OS << "\n  Personality : " << getPersonalityFunction()->getName();
+  }
   if (IsFragment) {
     OS << "\n  IsFragment  : true";
   }

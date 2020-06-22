@@ -15,7 +15,19 @@
 #include "llvm/Support/Options.h"
 
 namespace opts {
+
+extern llvm::cl::OptionCategory BoltCategory;
+
 extern llvm::cl::opt<unsigned> Verbosity;
+
+static llvm::cl::opt<bool>
+ForcePatch("force-patch",
+  llvm::cl::desc("force patching of original entry points"),
+  llvm::cl::init(false),
+  llvm::cl::Hidden,
+  llvm::cl::ZeroOrMore,
+  llvm::cl::cat(BoltCategory));
+
 }
 
 namespace llvm {
@@ -25,19 +37,21 @@ void PatchEntries::runOnFunctions(BinaryContext &BC) {
   if (!BC.HasRelocations)
     return;
 
-  // Mark the binary for patching if we did not create external references
-  // for original code in any of functions we are not going to emit.
-  bool NeedsPatching = false;
-  for (auto &BFI : BC.getBinaryFunctions()) {
-    BinaryFunction &Function = BFI.second;
-    if (!BC.shouldEmit(Function) && !Function.hasExternalRefRelocations()) {
-      NeedsPatching = true;
-      break;
+  if (!opts::ForcePatch) {
+    // Mark the binary for patching if we did not create external references
+    // for original code in any of functions we are not going to emit.
+    bool NeedsPatching = false;
+    for (auto &BFI : BC.getBinaryFunctions()) {
+      BinaryFunction &Function = BFI.second;
+      if (!BC.shouldEmit(Function) && !Function.hasExternalRefRelocations()) {
+        NeedsPatching = true;
+        break;
+      }
     }
-  }
 
-  if (!NeedsPatching)
-    return;
+    if (!NeedsPatching)
+      return;
+  }
 
   if (opts::Verbosity >= 1) {
     outs() << "BOLT-INFO: patching entries in original code\n";
