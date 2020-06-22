@@ -104,8 +104,8 @@ the general pattern matching system.
 
 ### Default access control level
 
-The default access control level (and the options for access control) are a
-pretty large open question. Swift and C++ (especially w/ modules) provide a lot
+The default access control level, and the options for access control, are
+pretty large open questions. Swift and C++ (especially w/ modules) provide a lot
 of options and a pretty wide space to explore here. if the default isn't right
 most of the time, access control runs the risk of becoming a significant
 ceremony burden that we may want to alleviate with grouped access regions
