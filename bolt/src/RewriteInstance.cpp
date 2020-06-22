@@ -339,6 +339,7 @@ UseGnuStack("use-gnu-stack",
 cl::opt<bool>
 UseOldText("use-old-text",
   cl::desc("re-use space in old .text if possible (relocation mode)"),
+  cl::ZeroOrMore,
   cl::cat(BoltCategory));
 
 // The default verbosity level (0) is pretty terse, level 1 is fairly
