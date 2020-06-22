@@ -271,7 +271,7 @@ Where the proposal makes a decision between multiple options, move them to the
 You may optionally use the
 [Google Docs template](https://docs.google.com/document/d/1sqEnIWWZKTrtMz2XgD7_RqvogwbI0tBQjAZIvOabQsw/template/preview)
 for early proposal versions, which can be transferred to Markdown later. Using
-Google Docs can especially help iterate on a propsal with multiple authors.
+Google Docs can especially help iterate on a proposal with multiple authors.
 
 This template includes things like license headers and standard formatting. If
 you already have a non-templated Doc, please create a new Doc using the template
