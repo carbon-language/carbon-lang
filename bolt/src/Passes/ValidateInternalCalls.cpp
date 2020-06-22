@@ -329,13 +329,12 @@ void ValidateInternalCalls::runOnFunctions(BinaryContext &BC) {
   }
 
   if (!Invalid.empty()) {
-    errs() << "BOLT-ERROR: Unsupported internal calls detected in the "
-              "following functions:\n";
+    errs() << "BOLT-WARNING: will skip the following function(s) as unsupported"
+              " internal calls were detected:\n";
     for (auto *Function : Invalid) {
       errs() << "              " << *Function << "\n";
+      Function->setIgnored();
     }
-    errs() << "BOLT-ERROR: Unable to proceed in relocation mode\n";
-    exit(1);
   }
 }
 
