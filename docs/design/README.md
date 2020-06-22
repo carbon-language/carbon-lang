@@ -61,7 +61,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
   - [Abstract machine and execution model](#abstract-machine-and-execution-model)
   - [Lambdas](#lambdas)
   - [Co-routines](#co-routines)
-- [Carbon ↔ C/C++ interoperability](#carbon-%E2%86%94-cc-interoperability)
+- [Carbon &lt;-> C/C++ interoperability](#carbon-lt--cc-interoperability)
 
 <!-- tocstop -->
 
@@ -898,9 +898,9 @@ the critical underpinnings of such abstractions.
 
 > **TODO:** Needs a feature design and a high level summary provided inline.
 
-## Carbon ↔ C/C++ interoperability
+## Carbon &lt;-> C/C++ interoperability
 
-> References: [Carbon ↔ C/C++ interoperability](interoperability/README.md)
+> References: [Carbon &lt;-> C/C++ interoperability](interoperability/README.md)
 >
 > **TODO:** References need to be evolved. Needs a detailed design and a high
 > level summary provided inline.
