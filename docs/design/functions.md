@@ -61,14 +61,14 @@ in the case of functions which do not return a value.
 Calling functions involves a new form of expression: `Sum(1, 2)` for example.
 The first part, `Sum`, is an expression referring to the name of the function.
 The second part, `(1, 2)` is a parenthesized list of arguments to the function.
-The juxtaposition of one expression with parentheses forms the core of call
+The juxtaposition of one expression with parentheses forms the core of a call
 expression, similar to a postfix operator.
 
 ## Alternatives
 
 ### Types before or after name
 
-While we are currently keeping types first matching C++, there is significant
+While we are currently keeping types first, matching C++, there is significant
 uncertainty around the right approach here. While adding the colon improves the
 grammar by unambiguously marking the transition from type to a declared
 identifier, in essentially every other language with a colon in a similar

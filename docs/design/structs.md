@@ -79,7 +79,7 @@ The type itself is a compile-time constant value. All name access is done with
 the `.` notation. Constant members (including member types and member functions
 which do not need an implicit object parameter) can be accessed via that
 constant: `AdvancedWidget.Subtype`. Other members and member functions needing
-an implicit object parameter (or "methods") must be accessed from an object of
+an object parameter (or "methods") must be accessed from an object of
 the type.
 
 Some things in C++ are notably absent or orthogonally handled:
@@ -104,9 +104,9 @@ the general pattern matching system.
 
 ### Default access control level
 
-The default access control level (and the options for access control) are a
-pretty large open question. Swift and C++ (especially w/ modules) provide a lot
-of options and a pretty wide space to explore here. if the default isn't right
+The default access control level, and the options for access control, are
+pretty large open questions. Swift and C++ (especially w/ modules) provide a lot
+of options and a pretty wide space to explore here. If the default isn't right
 most of the time, access control runs the risk of becoming a significant
 ceremony burden that we may want to alleviate with grouped access regions
 instead of per-entity specifiers. Grouped access regions have some other
