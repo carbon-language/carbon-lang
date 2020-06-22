@@ -1,4 +1,4 @@
-# Carbon ↔ C/C++ interoperability
+# Carbon &lt;-> C/C++ interoperability
 
 <!--
 Part of the Carbon Language project, under the Apache License v2.0 with LLVM
