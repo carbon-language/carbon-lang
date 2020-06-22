@@ -400,7 +400,7 @@ Breaking the `Foo` function apart:
 
 Loops will be supported with a low-level primitive `loop` statement. `break`
 will be a way to exit the `loop` directly, while `continue` will skip the rest
-of the `loop`.
+of the current loop iteration.
 
 For example:
 
