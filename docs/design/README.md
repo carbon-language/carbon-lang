@@ -398,9 +398,9 @@ Breaking the `Foo` function apart:
 >
 > **TODO:** References need to be evolved.
 
-Loops will be supported with a low-level primitive `loop` statement which loops
-unconditionally. `break` will be a way to exit the `loop` directly, while
-`continue` will skip the rest of the `loop`.
+Loops will be supported with a low-level primitive `loop` statement. `break`
+will be a way to exit the `loop` directly, while `continue` will skip the rest
+of the `loop`.
 
 For example:
 

@@ -50,9 +50,8 @@ fn Foo(Int: x) {
 }
 ```
 
-Loops will at least be supported with a low-level primitive `loop` statement
-which loops unconditionally, with `break` and `continue` statements which work
-the same as in C++.
+Loops will at least be supported with a low-level primitive `loop` statement,
+with `break` and `continue` statements which work the same as in C++.
 
 Last but not least, for the basics we need to include the `return` statement.
 This statement ends the flow of execution within a function, returning it to the
