@@ -254,7 +254,7 @@ package, and be treated as if always imported and aliased by every file.
 
 ### Expressions
 
-> References: [Lexical conventions](lexical_conventions.md),
+> References: [Lexical conventions](lexical_conventions.md) and
 > [operators](operators.md)
 >
 > **TODO:** References need to be evolved.
@@ -280,7 +280,8 @@ Some common expressions in Carbon include:
 
 ### Functions
 
-> References: [Functions](functions.md)
+> References: [Functions](functions.md) and
+> [syntactic conventions](syntactic_conventions.md)
 >
 > **TODO:** References need to be evolved.
 
@@ -326,7 +327,8 @@ fn Foo() {
 
 ### Variables
 
-> References: [Variables](variables.md)
+> References: [Variables](variables.md) and
+> [syntactic conventions](syntactic_conventions.md)
 >
 > **TODO:** References need to be evolved.
 
