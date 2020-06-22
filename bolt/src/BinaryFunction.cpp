@@ -1463,8 +1463,8 @@ bool BinaryFunction::scanExternalRefs() {
         IsPCRel = true;
       }
     } else if (BC.MIB->isCall(Instruction) || BC.MIB->isBranch(Instruction)) {
-      if (!BC.MIB->evaluateBranch(Instruction, AbsoluteInstrAddr, Size,
-                                  TargetAddress)) {
+      if (BC.MIB->evaluateBranch(Instruction, AbsoluteInstrAddr, Size,
+                                 TargetAddress)) {
         IsBranch = true;
       }
     }
@@ -1525,7 +1525,7 @@ bool BinaryFunction::scanExternalRefs() {
       HasRel = true;
     }
 
-    if (!IsBranch && !IsPCRel && !HasRel)
+    if (!TargetSymbol && !HasRel)
       continue;
 
     // Emit the instruction using temp emitter and generate relocations.
