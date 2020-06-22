@@ -40,20 +40,20 @@ Goals:
 
 - The majority of simple C/C++ interfaces should be usable from Carbon without
   any custom bridge code and without any runtime overhead.
-- There should be support for most idiomatic usage of advanced C++ features
-  (templates, overload sets, ADL).
+- There should be support for most idiomatic usage of advanced C++ features:
+  templates, overload sets, ADL.
 - It should be possible to map types across languages.
   - Primitive types should have unsurprising mappings.
   - There should be transparent, automatic translation between C++ and Carbon
-    non-owning vocabulary types (e.g., pointers and references) without runtime
-    overhead.
-  - It should be possible to expose other C++ vocabulary types with reasonable
-    (but potentially non-zero-cost) conversions available to map into Carbon
+    non-owning vocabulary types, such as pointers and references, without
+    runtime overhead.
+  - It should be possible to expose other C++ vocabulary types with reasonable,
+    but but potentially non-zero-cost, conversions available to map into Carbon
     vocabulary types.
 - Mappings should be easy to maintain.
   - We should provide a syntax for transparently, automatically exposing a
-    subset of Carbon types and interfaces to C++ code (including instantiating
-    templates) without custom bridge code.
+    subset of Carbon types and interfaces to C++ code without custom bridge
+    code, including instantiating templates.
 
 Non-goals:
 
@@ -65,11 +65,11 @@ Non-goals:
   that support.
   - We may target C++17, and not keep adding interoperability support for later
     C++ features.
-  - e.g., we might not prioritize support for non-idiomatic "modern" code,
-    interfaces, or patterns outside of those in widespread open source libraries
-    and used by key contributors.
-  - e.g., we might not support low-level C ABIs outside of modern 64-bit ABIs
-    (Linux, POSIX, and a small subset of Windows' calling conventions).
+  - For example, we might not prioritize support for non-idiomatic "modern"
+    code, interfaces, or patterns outside of those in widespread open source
+    libraries and used by key contributors.
+  - For example, we might not support low-level C ABIs outside of modern 64-bit
+    ABIs: Linux, POSIX, and a small subset of Windows' calling conventions.
 - We may choose not to use the existing C++ language or standard library ABI.
   - It might be reasonable to eventually support these with added runtime
     overhead.
@@ -105,13 +105,13 @@ implementations. We can expose C++ data structures as another implementation and
 then focus on wrapping it to match whatever idioms Carbon expects of that kind
 of data structure.
 
-The reverse is also true. C++ code will often not care (or can be enhanced to
-not care) what specific data structure is used. Carbon data structures can be
+The reverse is also true. C++ code will often not care, or can be enhanced to
+not care, what specific data structure is used. Carbon data structures can be
 exposed as yet another implementation in C++, and wrapped in C++ code to match
 C++ idioms and be usable within templated contexts.
 
-Another fundamental philosophy of interoperability between Carbon and C++ (and
-generally between any two languages) is that it requires expressing one language
+Another fundamental philosophy of interoperability between Carbon and C++, and
+generally between any two languages, is that it requires expressing one language
 as a subset of another. The approach proposed is to do this in two directions:
 take specific, restricted C++ APIs and make them available using restricted
 Carbon APIs, and also take specific, restricted Carbon APIs and make them
@@ -128,8 +128,8 @@ This document uses currently unique Carbon syntax elements to indicate
 interoperability requirements which have not received any discussion. These
 should be discussed further to determine appropriate syntax.
 
-The current text should be treated as placeholders (`$` is a deliberately bad
-character choice).
+The current text should be treated as placeholders; `$` is a deliberately bad
+character choice.
 
 Notable elements are:
 
@@ -148,8 +148,8 @@ Notable elements are:
 
 C/C++ names are mapped into the `Cpp` Carbon package. C++ namespaces work the
 same fundamental way as Carbon namespaces within the `Cpp` package name. Dotted
-names are used when referencing these names from Carbon code, e.g., `std::exit`
-becomes `Cpp.std.exit`.
+names are used when referencing these names from Carbon code. For example,
+`std::exit` becomes `Cpp.std.exit`.
 
 C++ incomplete types will be mirrored into Carbon's incomplete type behavior.
 Users wanting to avoid differences in incomplete type behaviors should fully
@@ -164,7 +164,7 @@ For more details, see [name mapping](name_mapping.md).
 
 ### Type mapping
 
-Carbon and C++ (as well as the C subset of C++) will have a number of types with
+Carbon and C++, as well as the C subset of C++, will have a number of types with
 direct mappings between the languages. The existence of these mappings allow
 switching from one type to another across any interface boundary between the
 languages. However, this only works across the interface boundary to avoid any
@@ -173,8 +173,8 @@ provides special permission for these type aliases to be used.
 
 Also note that the behavior of these types will not always be identical between
 the languages. It is only the values that transparently map from one to the
-other. Mapping operations is significantly different. e.g., Carbon may have
-`Float32` match the C++ `float` storage while making subtle changes to
+other. Mapping operations is significantly different. For example, Carbon may
+have `Float32` match the C++ `float` storage while making subtle changes to
 arithmetic and/or comparison behaviors. We will prioritize reflecting the intent
 of type choices.
 

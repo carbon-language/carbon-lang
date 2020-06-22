@@ -28,7 +28,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 C varargs can be called from Carbon with compatible types.
 
-e.g., given the C function:
+For example, given the C function:
 
 ```
 int printf(const char* format, ...);

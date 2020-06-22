@@ -24,10 +24,10 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 C/C++ names are mapped into the `Cpp` Carbon package. C++ namespaces work the
 same fundamental way as Carbon namespaces within the `Cpp` package name. Dotted
-names are used when referencing these names from Carbon code, e.g., `std::exit`
-becomes `Cpp.std.exit`.
+names are used when referencing these names from Carbon code. For example,
+`std::exit` becomes `Cpp.std.exit`.
 
-e.g., given the C code `widget/knob.h`:
+For example, given the C code `widget/knob.h`:
 
 ```
 extern void turn_knob(void);
@@ -45,7 +45,7 @@ fn Call() {
 }
 ```
 
-e.g., given the C++ code `widget/knob.h`:
+For example, given the C++ code `widget/knob.h`:
 
 ```
 namespace widget {
@@ -78,7 +78,7 @@ We could provide C APIs in a separate `C` package (either in addition to, or in
 place of, the `Cpp` package). We plan to not do this because it's not clear
 there's a significant advantage to the split.
 
-e.g., given the C++ code `widget/knob.h`:
+For example, given the C++ code `widget/knob.h`:
 
 ```
 namespace widget {
@@ -122,11 +122,11 @@ Carbon will allow C/C++ imports to fill in type definitions of other C/C++
 imports as if they were all #included together. Due to this, the order of C/C++
 imports will matter.
 
-e.g., if one header defines a template and another header defines
+For example, if one header defines a template and another header defines
 specializations of that template, they may both be included in order for Carbon
 code to get a fully correct view of the template.
 
-i.e., this is a meaningful combination of imports:
+In other words, this is a meaningful combination of imports:
 
 ```
 import Cpp "template.h"
@@ -139,7 +139,7 @@ C++ incomplete types will be mirrored into Carbon's incomplete type behavior.
 Users wanting to avoid differences in incomplete type behaviors should fully
 define the C++ types using repeated imports.
 
-i.e., given `factory.h` with a partial definition:
+For example, given `factory.h` with a partial definition:
 
 ```
 struct Foo;
@@ -210,8 +210,8 @@ Cons:
     in ways that's fully compatible with Carbon.
   - May lead to unintended consequences with recursive include problems.
 
-i.e., given the above `factory.h` with a partial definition, a Carbon file
-importing only `factory.h` will see `OpaquePointer`:
+For example, given the above `factory.h` with a partial definition, a Carbon
+file importing only `factory.h` will see `OpaquePointer`:
 
 ```
 package FactoryUser;
@@ -229,7 +229,7 @@ Carbon names which are mapped into C++ will use a top-level namespace of
 that. For example, the `Widget` Carbon package with a namespace `Foo` would
 become `::Carbon::Widget::Foo` in C++.
 
-e.g., given the Carbon code:
+For example, given the Carbon code:
 
 ```
 package Widget library Knob;
@@ -254,7 +254,7 @@ migrate users from C++ to Carbon, without needing to touch all call sites. C++
 has limited support for aliasing, so we prefer to support this from the Carbon
 side.
 
-e.g., given the Carbon code:
+For example, given the Carbon code:
 
 ```
 package Widget library Knob;
@@ -274,7 +274,7 @@ void Call() {
 ```
 
 It should also be easy to extern multiple declarations as long as `name` is not
-specified, e.g.:
+specified. For example:
 
 ```
 package Widget library Knob;

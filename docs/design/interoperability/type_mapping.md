@@ -23,22 +23,22 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     - [Alternative: Use Int8](#alternative-use-int8)
 - [User-defined class types](#user-defined-class-types)
   - [Inheritance](#inheritance)
-    - [_Using C++ types as mixins for Carbon structs_](#_using-c-types-as-mixins-for-carbon-structs_)
+    - [Using C++ types as mixins for Carbon structs](#using-c-types-as-mixins-for-carbon-structs)
       - [Caveat: Abstract methods](#caveat-abstract-methods)
-    - [_Inheriting from C++ types with Carbon structs_](#_inheriting-from-c-types-with-carbon-structs_)
+    - [Inheriting from C++ types with Carbon structs](#inheriting-from-c-types-with-carbon-structs)
       - [Caveat: Missing or conflicting method declarations](#caveat-missing-or-conflicting-method-declarations)
       - [Caveat: Concrete methods on parents](#caveat-concrete-methods-on-parents)
       - [Alternative: Require bridge code for inheritance](#alternative-require-bridge-code-for-inheritance)
-    - [_Implementing Carbon interfaces in C++_](#_implementing-carbon-interfaces-in-c_)
-    - [_Public non-virtual inheritance_](#_public-non-virtual-inheritance_)
+    - [Implementing Carbon interfaces in C++](#implementing-carbon-interfaces-in-c)
+    - [Public non-virtual inheritance](#public-non-virtual-inheritance)
       - [Alternative: Simulate interfaces for C++ types](#alternative-simulate-interfaces-for-c-types)
-    - [_Virtual and Non-Public Inheritance_](#_virtual-and-non-public-inheritance_)
+    - [Virtual and Non-Public Inheritance](#virtual-and-non-public-inheritance)
   - [Templates](#templates)
-    - [_C++ templates_](#_c-templates_)
-    - [_Using Carbon generics/templates with C++ types in Carbon code_](#_using-carbon-genericstemplates-with-c-types-in-carbon-code_)
-    - [_Using Carbon templates from C++_](#_using-carbon-templates-from-c_)
+    - [C++ templates](#c-templates)
+    - [Using Carbon generics/templates with C++ types in Carbon code](#using-carbon-genericstemplates-with-c-types-in-carbon-code)
+    - [Using Carbon templates from C++](#using-carbon-templates-from-c)
       - [Alternative: Require bridge code](#alternative-require-bridge-code)
-    - [_Using Carbon generics from C++_](#_using-carbon-generics-from-c_)
+    - [Using Carbon generics from C++](#using-carbon-generics-from-c)
   - [Unions and transparent union members](#unions-and-transparent-union-members)
 - [User-defined enumerations](#user-defined-enumerations)
   - [C/C++ enums in Carbon](#cc-enums-in-carbon)
@@ -46,8 +46,8 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 - [Vocabulary types](#vocabulary-types)
   - [Non-owning value types](#non-owning-value-types)
   - [Non-owning references and pointers](#non-owning-references-and-pointers)
-    - [_Slice special-casing_](#_slice-special-casing_)
-    - [_Mapping similar built-in types_](#_mapping-similar-built-in-types_)
+    - [Slice special-casing](#slice-special-casing)
+    - [Mapping similar built-in types](#mapping-similar-built-in-types)
   - [Ownership transfer types](#ownership-transfer-types)
     - [Alternative: Bind tightly to particular C++ libraries](#alternative-bind-tightly-to-particular-c-libraries)
   - [Copying vocabulary types](#copying-vocabulary-types)
@@ -56,7 +56,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 ## Overview
 
-Carbon and C++ (as well as the C subset of C++) will have a number of types with
+Carbon and C++, as well as the C subset of C++, will have a number of types with
 direct mappings between the languages. The existence of these mappings allow
 switching from one type to another across any interface boundary between the
 languages. However, this only works across the interface boundary to avoid any
@@ -65,8 +65,8 @@ provides special permission for these type aliases to be used.
 
 Also note that the behavior of these types will not always be identical between
 the languages. It is only the values that transparently map from one to the
-other. Mapping operations is significantly different. e.g., Carbon may have
-`Float32` match the C++ `float` storage while making subtle changes to
+other. Mapping operations is significantly different. For example, Carbon may
+have `Float32` match the C++ `float` storage while making subtle changes to
 arithmetic and/or comparison behaviors. We will prioritize reflecting the intent
 of type choices.
 
@@ -194,7 +194,7 @@ If 62-bit: <code>unsigned long, unsigned long</code>
 ### 32-bit vs 64-bit and platform compatibility
 
 At present, the proposed translation for these types to Carbon is based on the
-corresponding platform-specific size that C++ uses. e.g.:
+corresponding platform-specific size that C++ uses. For example:
 
 <table>
   <tr>
@@ -283,9 +283,9 @@ Cons:
 
 #### Alternative: Supplement mappings with platform-compatible conversion APIs
 
-Carbon could provide conversion APIs, e.g. `ToCLong`, to improve portability.
+Carbon could provide conversion APIs, such as `ToCLong`, to improve portability.
 
-i.e.:
+For example:
 
 ```
 package CppCompat;
@@ -330,7 +330,7 @@ $else
 struct CLong { private var Bytes[4]: data; }
 $endif
 
-// This line will fail to compile if, e.g., Foo returns an Int64 while
+// This line will fail to compile if, for example, Foo returns an Int64 while
 // CLong is 32-bit.
 var CLong: myVal = (CLong)Foo();
 var CLong: retVal = Cpp.ApiUsingLong(val);
@@ -385,9 +385,10 @@ Pros:
 Cons:
 
 - Users may do character arithmetic on `char`.
-  - Using an integer offset to get a letter. e.g., `'A' + 15` as a way to get
-    the value `'P'`.
-  - Using `32` to capitalize. e.g., `'a' + 32` as a way to get the value `'A'`.
+  - Using an integer offset to get a letter. For example, `'A' + 15` as a way to
+    get the value `'P'`.
+  - Using `32` to capitalize. For example, `'a' + 32` as a way to get the value
+    `'A'`.
 
 #### Alternative: Support + and - on Byte
 
@@ -411,7 +412,8 @@ UTF-32, and possibly `Char` to indicate a multi-byte Unicode character.
 Pros:
 
 - Mirrors the C++ semantic.
-- Allows for character-specific behaviors, e.g. when printing values to stdout.
+- Allows for character-specific behaviors, for example when printing values to
+  stdout.
 
 Cons:
 
@@ -480,7 +482,7 @@ code within the Carbon code should be used as the bridge. For an example of
 addressing the lack of cross-language inheritance, see the
 [Framework API](#bookmark=kix.jrmn54jubgcz) migration example.
 
-#### _Using C++ types as mixins for Carbon structs_
+#### Using C++ types as mixins for Carbon structs
 
 Assuming we provide mixins on Carbon structs, we should be able to safely allow
 C++ types as mixins on Carbon structs. This would allow C++ types to provide
@@ -489,7 +491,7 @@ APIs directly, without a Carbon wrapper.
 This assumes there are no other implications for Carbon or C++
 inheritance-related features. If there are, we should reconsider this.
 
-e.g., consider the C++ code:
+For example, consider the C++ code:
 
 ```
 class Shape {
@@ -524,13 +526,13 @@ A C++ class with abstract methods cannot be instantiated, as in a mixin. Users
 should expect a compiler error in such a case, similar to if they attempted to
 instantiate the class in Carbon code in general.
 
-#### _Inheriting from C++ types with Carbon structs_
+#### Inheriting from C++ types with Carbon structs
 
 Inheritance from C++ types cannot be straightforward because Carbon will not
 have matching inheritance concepts. However, we can augment Carbon structs to
 indicate an inheritance chain that works similarly.
 
-e.g., consider the C++ code:
+For example, consider the C++ code:
 
 ```
 class Shape {
@@ -569,22 +571,22 @@ Shape* shape = new Carbon::Circle();
 ```
 
 Note this parent inheritance will _only_ be visible to C++ code, so any attempts
-to call a C++ function that takes the parent class (e.g.,
-`void Draw(Shape* shape)`) will need to be called from a C++ bridge function,
+to call a C++ function that takes the parent class, such as
+`void Draw(Shape* shape)`, will need to be called from a C++ bridge function,
 not Carbon.
 
 ##### Caveat: Missing or conflicting method declarations
 
-Note that, in this example, the Carbon Circle type definition is not natively
-aware of the Shape type inheritance. That means, if the Shape type had
-conflicting method declarations (e.g., GetArea() returned an Int64 on Shape, but
-Float64 on Circle), the conflict only becomes apparent when the Circle type is
-compiled for C++. Similarly, if Shape had an abstract method that Circle did not
-implement, it would only be seen by C++.
+Note that, in this example, the Carbon `Circle` type definition is not natively
+aware of the `Shape` type inheritance. For example, suppose `GetArea()` returned
+an `Int64` on `Shape`, but `Float64` on `Circle`. This would mean the `Shape`
+type had conflicting method declarations, and the conflict only becomes apparent
+when the `Circle` type is compiled for C++. Similarly, if `Shape` had an
+abstract method that `Circle` did not implement, it would only be seen by C++.
 
 Users could address this by declaring the C++ parent as a mixin on the Carbon
 type (and this may generally be desirable, for consistent functionality). That
-would pull C++ Shape method declarations over to Carbon. However, that doesn't
+would pull C++ `Shape` method declarations over to Carbon. However, that doesn't
 work for C++ classes with abstract methods, per
 [the above caveat](#bookmark=kix.2nvh3xt3blqe).
 
@@ -595,16 +597,16 @@ class is given, so it should be able to ensure method declarations match.
 
 If the parent has a concrete method definition, note the \$extern chain does
 _not_ result in that method being present on the Carbon-native version of
-Circle. i.e., `Shape::MakeUnion` is only present on the C++ version of Circle,
-not the Carbon version of Circle. This is a trade-off to allow use of C++
-inheritance for interoperability.
+`Circle`. i.e., `Shape::MakeUnion` is only present on the C++ version of
+`Circle`, not the Carbon version of `Circle`. This is a trade-off to allow use
+of C++ inheritance for interoperability.
 
 ##### Alternative: Require bridge code for inheritance
 
 Instead of providing parent support in \$extern, we could instead require users
 to write bridge code.
 
-In the Shape example, that would require Carbon code:
+In the `Shape` example, that would require Carbon code:
 
 ```
 $extern("Cpp") struct Circle {
@@ -638,7 +640,7 @@ Cons:
   this bridge code frequently.
 - May cause significant friction for inheritance with multiple parent methods.
 
-#### _Implementing Carbon interfaces in C++_
+#### Implementing Carbon interfaces in C++
 
 Carbon interfaces expected to be implemented in C++ should have an explicit C++
 interface to operate as a bridge. Similarly, a layer of wrapping should be used
@@ -675,7 +677,7 @@ struct SquareBridge {
 };
 ```
 
-#### _Public non-virtual inheritance_
+#### Public non-virtual inheritance
 
 C++ type hierarchies formed with public non-virtual inheritance should be
 modeled in the types exposed to Carbon with equivalent behavior where
@@ -794,7 +796,7 @@ Cons:
   valid for C++, but not possible through the Carbon wrapper because of the
   `Circle` vs `Circle_CppInterface` difference.
 
-#### _Virtual and Non-Public Inheritance_
+#### Virtual and Non-Public Inheritance
 
 Virtual inheritance and non-public inheritance from C++ are not made visible in
 Carbon in any way. For virtual inheritance, the type API is flattened into each
@@ -802,7 +804,7 @@ derived type used from Carbon code and conversions are not supported.
 
 ### Templates
 
-#### _C++ templates_
+#### C++ templates
 
 Simple C++ class templates are directly made available as Carbon templates. For
 example, ignoring allocators and their associated complexity,
@@ -831,13 +833,13 @@ bridge C++ code to explicitly provide Carbon types visible within C++ to the
 appropriate C++ template parameters. The key principle is that C++ templates are
 instantiated within C++ against a C++-visible API for a given Carbon type.
 
-#### _Using Carbon generics/templates with C++ types in Carbon code_
+#### Using Carbon generics/templates with C++ types in Carbon code
 
 Any C++ type can be used as a type parameter in Carbon. However, it will be
 interpreted as Carbon code; e.g., if there are any requirements for Carbon
 interfaces, [bridge code will be required](#bookmark=kix.8fx2t4lplthb).
 
-#### _Using Carbon templates from C++_
+#### Using Carbon templates from C++
 
 We plan to modify Clang to allow for extensions that will use Carbon to compile
 the template then insert the results into Clang's AST for expansion.
@@ -859,7 +861,7 @@ Cons:
 - Requires extra code to use templates from C++, making it harder to migrate
   code to Carbon.
 
-#### _Using Carbon generics from C++_
+#### Using Carbon generics from C++
 
 Using Carbon generics from C++ code will require bridge Carbon code that hides
 the generic. Note this could be wrapping the generic with a template.
@@ -1090,7 +1092,7 @@ promote these types to higher-level types in Carbon to make the interface
 boundary cleaner. The currently planned special cases are listed here, and more
 can be added as we discover both a compelling need and an effective strategy.
 
-#### _Slice special-casing_
+#### Slice special-casing
 
 Where possible to convert a reference or pointer (typically to a `const` type)
 to a slice, Carbon will do so automatically. This should cover common patterns
@@ -1101,7 +1103,7 @@ such as `const std::vector&lt;T> &` -> `T[]` and `const std::vector&lt;T> *` ->
 - `std::array&lt;T, N>` (This loses some info, can build a compile-time-length
   slice if needed)
 
-#### _Mapping similar built-in types_
+#### Mapping similar built-in types
 
 When it is not possible to convert a non-owning reference or pointer to a C++
 data structure or vocabulary type into a suitable Carbon type, the actual C++
