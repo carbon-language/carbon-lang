@@ -260,7 +260,7 @@ package, and be treated as if always imported and aliased by every file.
 >
 > **TODO:** References need to be evolved.
 
-The most pervasive part of the Carbon language are "expressions". These describe
+Expressions describe
 some computed value. The simplest example would be a literal number like `42`:
 an expression that computes the integer value 42.
 
@@ -362,7 +362,7 @@ Breaking this apart:
 >
 > **TODO:** References need to be evolved.
 
-Blocks of statements are generally executed linearly. However, statements are
+Blocks of statements are generally executed sequentially. However, statements are
 the primary place where this flow of execution can be controlled.
 
 #### `if`/`else`
@@ -390,7 +390,7 @@ Breaking the `Foo` function apart:
 
 - `Bar()` is invoked if `x` is less than `42`.
 - `Baz()` is invoked if `x` is greater than `77`.
-- Nothing happens if x is between `42` and `77`.
+- Nothing happens if `x` is between `42` and `77`.
 
 #### `loop`, `break`, and `continue`
 
@@ -400,7 +400,7 @@ Breaking the `Foo` function apart:
 
 Loops will be supported with a low-level primitive `loop` statement which loops
 unconditionally. `break` will be a way to exit the `loop` directly, while
-`continue` will skip the rest of the `loop`.
+`continue` will skip the rest of the current loop iteration.
 
 For example:
 
@@ -612,7 +612,7 @@ Breaking apart `AdvancedWidget`:
 - `AdvancedWidget` has a public object method `DoSomething`.
   - `DoSomething` explicitly indicates how the `AdvancedWidget` is passed to it,
     and there is no automatic scoping - `self` must be specified as an input.
-    The `self` name is also a keywoard that explains how to invoke this method
+    The `self` name is also a keyword that explains how to invoke this method
     on an object.
   - `DoSomething` accepts `AdvancedWidget` _by value_, which is easily expressed
     here along with other constraints on the object parameter.
@@ -664,7 +664,7 @@ overload resolution.
 > **TODO:** References need to be evolved.
 
 `match` is a control flow similar to `switch` of C/C++ and mirrors similar
-constructs in other langauges, such as Swift.
+constructs in other languages, such as Swift.
 
 An example `match` is:
 
@@ -823,7 +823,7 @@ fn Foo(Int: i) -> Float {
 ```
 
 Here we deduce one type parameter and explicitly pass another. It is not
-possible to explicitly pass a deduced type parameter, instead the call site
+possible to explicitly pass a deduced type parameter; instead the call site
 should cast or convert the argument to control the deduction. The explicit type
 is passed after a runtime parameter. While this makes that type unavailable to
 the declaration of _that_ runtime parameter, it still is a _template_ parameter
@@ -837,7 +837,7 @@ declaration.
 > **TODO:** References need to be evolved.
 
 An important feature of templates in C++ is the ability to customize how they
-end up specialized for specific types. Because template parameters (whether as
+end up specialized for specific arguments. Because template parameters (whether as
 type parameters or function parameters) are pattern matched, we expect to
 leverage pattern matching techniques to provide "better match" definitions that
 are selected analogously to specializations in C++ templates. When expressed
