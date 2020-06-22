@@ -1201,6 +1201,6 @@ types between the languages. The data is being copied anyways and so any
 necessary changes to the representation and layout are unlikely to be an
 unacceptable overhead.
 
-This strategy should be available for essentially all containers and copyable
+This strategy should be available for essentially all containers and copiable
 vocabulary types in the C++ STL, Abseil, and any other sufficiently widely used
 libraries.
