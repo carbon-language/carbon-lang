@@ -52,7 +52,7 @@ like performance, safety, and Carbon ergonomics.
     "opt-in" mechanism. At an implementation level, this might mean that a
     Carbon ABI has multiple memory layout strategies, one of which is C++'s.
 
-* Many C++ libraries have an API where a client is expected to supply an object
+- Many C++ libraries have an API where a client is expected to supply an object
   that inherits from a specific abstract base class, so it should be possible
   for a Carbon struct to implement a C++ interface.
 
@@ -60,23 +60,33 @@ like performance, safety, and Carbon ergonomics.
     implementation as a first-class feature. We might decide that this applies
     only to pure C++ interface classes, and that C++ "interfaces" with
     implementation must be rewritten for the Carbon migration.
-  - Whether Carbon needs to have "classes" in the C++ sense remains to be seen:
-    we need to make it possible for concrete Carbon types to be usable from C++,
-    and it remains to be seen whether that can be done if Carbon doesn't have
-    classes.
 
-* Carbon doesn't need to have exactly the same set of primitive integer types as
-  C++, so long as it's possible to know which Carbon type(s) a C++ integer type
-  maps to, given a target platform.
+- C++ integer types must have corresponding types in Carbon, and it must be
+  possible for a programmer to know which types they are. For example, it should
+  be possible to write a Carbon library using some integer type and call C++
+  functions with signatures like `f(int)` or `g(long long&)`, or for a Carbon
+  library to provide functions that can be called from C++ with integers or
+  references to integers.
+  - This doesn't mean that all Carbon integer types must have C++ equivalents.
+    Carbon could provide exact-width 128- or 256-bit types, even though C++
+    doesn't.
+  - This doesn't mean that Carbon integer types have to provide exactly the same
+    overflow/wraparound behavior that the C++ equivalents do. We expect Carbon
+    overflow behavior to be determined by considerations of performance, safety,
+    and ergonomics, not by C++ compatibility.
 
-* Carbon doesn't have to support C++ exceptions, still less throwing exceptions
+Carbon doesn't need to have exactly the same set of primitive integer types as
+C++, so long as it's possible to know which Carbon type(s) a C++ integer type
+maps to, given a target platform.
+
+- Carbon doesn't have to support C++ exceptions, still less throwing exceptions
   across the C++/Carbon boundary. Carbon could, for example, take the same
   approach that
   [Swift does](https://github.com/apple/swift/blob/master/docs/CppInteroperabilityManifesto.md#baseline-functionality-import-functions-as-non-throwing-terminate-on-uncaught-c-exceptions):
   if C++ code throws an exception that propagates into a Carbon stack frame, we
   terminate the program.
 
-* Carbon's design for object lifetime and aliasing will be made for the sake of
+- Carbon's design for object lifetime and aliasing will be made for the sake of
   performance and safety, even if that means conflicting with C++ rules. For
   example, Carbon need not adopt C++ rules about lifetimes of temporaries and
   could adopt stricter rules, even though that would require more care in using
@@ -88,7 +98,7 @@ like performance, safety, and Carbon ergonomics.
     different lifetime rules, then it will be harder to use such a C++ function
     safely from Carbon.
 
-* It should be possible to use Carbon's parameterized types with concrete C++
+- It should be possible to use Carbon's parameterized types with concrete C++
   types. For example, there should be some way of putting C++ objects in Carbon
   containers like vectors or hash maps.
 
@@ -99,7 +109,7 @@ like performance, safety, and Carbon ergonomics.
     might imagine requiring some kind of wrapper or declaration, so long as it
     doesn't impose too much boilerplate or performance overhead.
 
-* Since C++ libraries and vocabulary types are frequently written in terms of
+- Since C++ libraries and vocabulary types are frequently written in terms of
   templates, it should be possible to instantiate C++ templates with Carbon
   types.
 
@@ -111,9 +121,9 @@ like performance, safety, and Carbon ergonomics.
     open question. It's a common technique, but supporting it would require
     tight intertwining between C++ and Carbon template instantiation.
 
-* C++ type traits should work correctly on Carbon types.
+- C++ type traits should work correctly on Carbon types.
 
-* Carbon code should be able to use C++ APIs that are defined in terms of
+- Carbon code should be able to use C++ APIs that are defined in terms of
   incomplete types.
   - However, Carbon code will not necessarily be able to define incomplete types
     with exactly the same look and feel as in C++. Carbon might satisfy these
