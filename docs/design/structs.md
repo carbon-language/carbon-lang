@@ -79,7 +79,7 @@ The type itself is a compile-time constant value. All name access is done with
 the `.` notation. Constant members (including member types and member functions
 which do not need an implicit object parameter) can be accessed via that
 constant: `AdvancedWidget.Subtype`. Other members and member functions needing
-an implicit object parameter (or "methods") must be accessed from an object of
+an object parameter (or "methods") must be accessed from an object of
 the type.
 
 Some things in C++ are notably absent or orthogonally handled:
