@@ -195,9 +195,9 @@ For example:
 >
 > **TODO:** References need to be evolved.
 
-Carbon provides a fully general name aliasing facility to declare a new name as
-an alias for a value; everything is a value in Carbon. This is a fully general
-facility because everything is a value in Carbon, including types.
+Carbon provides a facility to declare a new name as an alias for a value. This
+is a fully general facility because everything is a value in Carbon, including
+types.
 
 For example:
 
@@ -260,9 +260,8 @@ package, and be treated as if always imported and aliased by every file.
 >
 > **TODO:** References need to be evolved.
 
-The most pervasive part of the Carbon language are "expressions". These describe
-some computed value. The simplest example would be a literal number like `42`:
-an expression that computes the integer value 42.
+Expressions describe some computed value. The simplest example would be a
+literal number like `42`: an expression that computes the integer value 42.
 
 Some common expressions in Carbon include:
 
@@ -362,8 +361,8 @@ Breaking this apart:
 >
 > **TODO:** References need to be evolved.
 
-Blocks of statements are generally executed linearly. However, statements are
-the primary place where this flow of execution can be controlled.
+Blocks of statements are generally executed sequentially. However, statements
+are the primary place where this flow of execution can be controlled.
 
 #### `if`/`else`
 
@@ -390,7 +389,7 @@ Breaking the `Foo` function apart:
 
 - `Bar()` is invoked if `x` is less than `42`.
 - `Baz()` is invoked if `x` is greater than `77`.
-- Nothing happens if x is between `42` and `77`.
+- Nothing happens if `x` is between `42` and `77`.
 
 #### `loop`, `break`, and `continue`
 
@@ -612,8 +611,8 @@ Breaking apart `AdvancedWidget`:
 - `AdvancedWidget` has a public object method `DoSomething`.
   - `DoSomething` explicitly indicates how the `AdvancedWidget` is passed to it,
     and there is no automatic scoping - `self` must be specified as an input.
-    The `self` name is also a keywoard that explains how to invoke this method
-    on an object.
+    The `self` name is also a keyword that explains how to invoke this method on
+    an object.
   - `DoSomething` accepts `AdvancedWidget` _by value_, which is easily expressed
     here along with other constraints on the object parameter.
 - `AdvancedWidget` has two private data members: `x` and `y`.
@@ -664,7 +663,7 @@ overload resolution.
 > **TODO:** References need to be evolved.
 
 `match` is a control flow similar to `switch` of C/C++ and mirrors similar
-constructs in other langauges, such as Swift.
+constructs in other languages, such as Swift.
 
 An example `match` is:
 
@@ -823,7 +822,7 @@ fn Foo(Int: i) -> Float {
 ```
 
 Here we deduce one type parameter and explicitly pass another. It is not
-possible to explicitly pass a deduced type parameter, instead the call site
+possible to explicitly pass a deduced type parameter; instead the call site
 should cast or convert the argument to control the deduction. The explicit type
 is passed after a runtime parameter. While this makes that type unavailable to
 the declaration of _that_ runtime parameter, it still is a _template_ parameter
@@ -837,8 +836,8 @@ declaration.
 > **TODO:** References need to be evolved.
 
 An important feature of templates in C++ is the ability to customize how they
-end up specialized for specific types. Because template parameters (whether as
-type parameters or function parameters) are pattern matched, we expect to
+end up specialized for specific arguments. Because template parameters (whether
+as type parameters or function parameters) are pattern matched, we expect to
 leverage pattern matching techniques to provide "better match" definitions that
 are selected analogously to specializations in C++ templates. When expressed
 through pattern matching, this may enable things beyond just template parameter
