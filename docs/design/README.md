@@ -202,7 +202,7 @@ facility because everything is a value in Carbon, including types.
 For example:
 
 ```carbon
-alias ??? MyInt = Int;
+alias MyInt = Int;
 ```
 
 This creates an alias called `MyInt` for whatever `Int` resolves to. Code
