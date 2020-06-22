@@ -15,6 +15,11 @@ repos:
       - id: mixed-line-ending
         args: ['--fix=lf']
       - id: trailing-whitespace
+  - repo: https://github.com/codespell-project/codespell
+    rev: v1.17.1
+    hooks:
+      - id: codespell
+        exclude: '^src/jekyll/Gemfile.lock$'
   - repo: local
     hooks:
       - id: markdown-toc

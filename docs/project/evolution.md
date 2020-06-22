@@ -68,7 +68,7 @@ The process is:
 We use several tools to coordinate changes to Carbon:
 
 - **GitHub pull requests** contain the proposals and related discussion.
-  Resolved proposals wil be committed with the associated decision. The pull
+  Resolved proposals will be committed with the associated decision. The pull
   request's description should link all related Discourse Forum topics and other
   references for easy browsing.
 - **Discourse Forum** topics will be used for the early idea discussion, any
