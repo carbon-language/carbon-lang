@@ -3375,8 +3375,9 @@ MCSymbol *BinaryFunction::addEntryPointAtOffset(uint64_t Offset) {
   if (auto *EntryBD = BC.getBinaryDataAtAddress(EntryPointAddress)) {
     EntrySymbol = EntryBD->getSymbol();
   } else {
-    EntrySymbol = BC.Ctx->getOrCreateSymbol(
-        "__ENTRY_0x" + Twine::utohexstr(Offset) + "_" + getOneName());
+    EntrySymbol =
+      BC.getOrCreateGlobalSymbol(EntryPointAddress,
+                                 Twine("__ENTRY_") + getOneName() + "@");
   }
   SecondaryEntryPoints[LocalSymbol] = EntrySymbol;
 
