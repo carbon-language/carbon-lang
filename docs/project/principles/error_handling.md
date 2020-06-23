@@ -171,34 +171,48 @@ Given the ubiquity of this use case, Carbon must provide support for it that can
 be used without altering the structure of the code, or making the non-error-case
 logic less clear.
 
-### Branching based on the kind of error is disfavored
+### No universal error categories
 
-Carbon's design will not prioritize use cases that involve branching based on
-error metadata, and Carbon's standard library typically will not make guarantees
-about the content of the errors it emits.
+Carbon will not establish an error hierarchy or other reusable error vocabulary,
+and will not prioritize use cases that involve branching based on the properties
+of a propagated error.
 
-In our experience, it is rare for functions to document a nontrivial contract
-regarding the content of the errors they emit, and even rarer for them to
-successfully comply with that contract. To a large extent this is a consequence
-of convenient error propagation: if you propagate errors from the functions you
-call, you no longer have control over the errors you emit. To put the point
-another way, propagated errors effectively leak your implementation details.
+Some languages attempt to impose a hierarchy or some other global classification
+scheme for errors, in order to allow code to respond differently to different
+kinds of errors, even after the errors have propagated some distance from the
+function that originally raised them. However, this practice tends to be quite
+brittle, because it almost inevitably requires relying on implementation
+details: if a function's contract gives different meanings to different errors
+it emits, it generally can't satisfy that contract by blindly propagating errors
+from the functions it calls. Conversely, if it doesn't have such a contract, its
+callers normally can't differentiate among the errors it emits without depending
+on its implementation details.
 
-Since we expect error propagation to be common, we expect it to be
-correspondingly rare for functions to have accurate error contracts, and
-correspondingly common for functions to leak their implementation details via
-their errors. This in turn means that branching on the content of an error will
-normally amount to programmatically inspecting the implementation details of the
-function you call, which is inherently brittle, and inhibits code evolution.
+It may make sense to distinguish certain categories of errors, if any layer of
+the stack can in principle respond to those errors, and the appropriate response
+requires only local knowledge. For example, any layer of the stack can respond
+to an out-of-memory error by e.g. releasing any unused caches. Similarly, any
+layer of the stack can respond to thread cancellation by ceasing any new
+computational work and propagating the signal _even if_ it could otherwise
+continue despite a failiure at that point.
 
-It is certainly possible (with sufficient discipline) to structure a codebase so
-that you can reliably branch on certain properties of the error metadata, and
-Carbon will support those use cases. However, it will do so as a byproduct of
-general-purpose programming facilities such as pattern matching; Carbon will not
-provide a separate sugar syntax for pattern-matching error metadata. For
-example, if Carbon supports `try`/`catch` statements, they will always have a
-single `catch` block, which will be invoked for any error that escapes the `try`
-block.
+However, such cases are caught between the horns of a dilemma: any error that's
+universal enough to be meaningful across arbitrary levels of the call stack is
+likely to be too pervasive for explicitly-marked propagation to be tolerable.
+Both of the above examples have that problem; we've already ruled out
+propagating out-of-memory errors because of their pervasiveness, and
+cancellation is likely to pose similar challenges (although cancellation can be
+ignored, which may simplify the problem somewhat).
+
+It is certainly possible to structure a codebase so that you can reliably
+propagate errors across multiple layers of the stack (so long as you control
+those layers), and Carbon will support those use cases. However, it will do so
+as a byproduct of general-purpose programming facilities such as pattern
+matching; Carbon will not provide a separate sugar syntax for pattern-matching
+error metadata, especially if that syntax can encompass multiple
+potentially-failing operations. For example, if Carbon supports `try`/`catch`
+statements, they will always have a single `catch` block, which will be invoked
+for any error that escapes the `try` block.
 
 ## Other resources
 
