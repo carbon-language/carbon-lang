@@ -1763,6 +1763,20 @@ void BinaryContext::addRelocation(uint64_t Address,
                          Value);
 }
 
+void BinaryContext::addDynamicRelocation(uint64_t Address,
+                                         MCSymbol *Symbol,
+                                         uint64_t Type,
+                                         uint64_t Addend,
+                                         uint64_t Value) {
+  auto Section = getSectionForAddress(Address);
+  assert(Section && "cannot find section for address");
+  Section->addDynamicRelocation(Address - Section->getAddress(),
+                                Symbol,
+                                Type,
+                                Addend,
+                                Value);
+}
+
 bool BinaryContext::removeRelocationAt(uint64_t Address) {
   auto Section = getSectionForAddress(Address);
   assert(Section && "cannot find section for address");
@@ -1775,6 +1789,14 @@ const Relocation *BinaryContext::getRelocationAt(uint64_t Address) {
     return nullptr;
 
   return Section->getRelocationAt(Address - Section->getAddress());
+}
+
+const Relocation *BinaryContext::getDynamicRelocationAt(uint64_t Address) {
+  auto Section = getSectionForAddress(Address);
+  if (!Section)
+    return nullptr;
+
+  return Section->getDynamicRelocationAt(Address - Section->getAddress());
 }
 
 void BinaryContext::markAmbiguousRelocations(BinaryData &BD,

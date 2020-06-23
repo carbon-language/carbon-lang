@@ -533,6 +533,9 @@ public:
   /// the execution of the binary is completed.
   Optional<uint64_t> FiniFunctionAddress;
 
+  Optional<uint64_t> DynamicRelocationsAddress;
+  Optional<uint64_t> DynamicRelocationsSize;
+
   /// Page alignment used for code layout.
   uint64_t PageAlign{HugePageSize};
 
@@ -970,17 +973,25 @@ public:
   void addRelocation(uint64_t Address, MCSymbol *Symbol, uint64_t Type,
                      uint64_t Addend = 0, uint64_t Value = 0);
 
+  /// Return a relocation registered at a given \p Address, or nullptr if there
+  /// is no relocation at such address.
+  const Relocation *getRelocationAt(uint64_t Address);
+
   /// Register a presence of PC-relative relocation at the given \p Address.
   void addPCRelativeDataRelocation(uint64_t Address) {
     DataPCRelocations.emplace(Address);
   }
 
+  /// Register dynamic relocation at \p Address.
+  void addDynamicRelocation(uint64_t Address, MCSymbol *Symbol, uint64_t Type,
+                            uint64_t Addend, uint64_t Value = 0);
+
+  /// Return a dynamic relocation registered at a given \p Address, or nullptr
+  /// if there is no dynamic relocation at such address.
+  const Relocation *getDynamicRelocationAt(uint64_t Address);
+
   /// Remove registered relocation at a given \p Address.
   bool removeRelocationAt(uint64_t Address);
-
-  /// Return a relocation registered at a given \p Address, or nullptr if there
-  /// is no relocation at such address.
-  const Relocation *getRelocationAt(uint64_t Address);
 
   /// This function makes sure that symbols referenced by ambiguous relocations
   /// are marked as immovable. For now, if a section relocation points at the

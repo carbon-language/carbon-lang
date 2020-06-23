@@ -1857,9 +1857,70 @@ void RewriteInstance::processRelocations() {
   if (!BC->HasRelocations)
     return;
 
+  // Read dynamic relocation first as their presence affects the way we process
+  // static relocations. E.g. we will ignore a static relocation at an address
+  // that is a subject to dynamic relocation processing.
   for (const auto &Section : InputFile->sections()) {
-    if (Section.getRelocatedSection() != InputFile->section_end())
+    if (Section.relocation_begin() != Section.relocation_end() &&
+        BinarySection(*BC, Section).isAllocatable()) {
+      readDynamicRelocations(Section);
+    }
+  }
+
+  for (const auto &Section : InputFile->sections()) {
+    if (Section.getRelocatedSection() != InputFile->section_end() &&
+        !BinarySection(*BC, Section).isAllocatable()) {
       readRelocations(Section);
+    }
+  }
+}
+
+void RewriteInstance::readDynamicRelocations(const SectionRef &Section) {
+  if (!BC->DynamicRelocationsAddress || !BC->DynamicRelocationsSize)
+    return;
+
+  assert(BinarySection(*BC, Section).isAllocatable() && "allocatable expected");
+
+  if (Section.getAddress() < *BC->DynamicRelocationsAddress ||
+      Section.getAddress() >=
+        *BC->DynamicRelocationsAddress + *BC->DynamicRelocationsSize)
+    return;
+
+  assert(Section.getAddress() + Section.getSize() <=
+           *BC->DynamicRelocationsAddress + *BC->DynamicRelocationsSize &&
+         "dynamic relocations section runs over ELF dynamic boundaries");
+
+  StringRef SectionName;
+  Section.getName(SectionName);
+  DEBUG(dbgs() << "BOLT-DEBUG: reading relocations for section "
+               << SectionName << ":\n");
+
+  for (const auto &Rel : Section.relocations()) {
+    auto SymbolIter = Rel.getSymbol();
+
+    StringRef SymbolName = "<none>";
+    MCSymbol *Symbol = nullptr;
+    uint64_t SymbolAddress = 0;
+    const uint64_t Addend = getRelocationAddend(InputFile, Rel);
+
+    if (SymbolIter != InputFile->symbol_end()) {
+      SymbolName = cantFail(SymbolIter->getName());
+      auto *BD = BC->getBinaryDataByName(SymbolName);
+      Symbol = BD ? BD->getSymbol() : nullptr;
+      SymbolAddress = cantFail(SymbolIter->getAddress());
+      (void)SymbolAddress;
+    }
+
+    DEBUG(
+      SmallString<16> TypeName;
+      Rel.getTypeName(TypeName);
+      dbgs() << "BOLT-DEBUG: dynamic relocation at 0x"
+             << Twine::utohexstr(Rel.getOffset()) << " : " << TypeName
+             << " : " << SymbolName << " : " <<  Twine::utohexstr(SymbolAddress)
+             << " : + 0x" << Twine::utohexstr(Addend) << '\n'
+    );
+
+    BC->addDynamicRelocation(Rel.getOffset(), Symbol, Rel.getType(), Addend);
   }
 }
 
@@ -1942,6 +2003,14 @@ void RewriteInstance::readRelocations(const SectionRef &Section) {
     // No special handling required for TLS relocations.
     if (Relocation::isTLS(RType))
       continue;
+
+    if (BC->getDynamicRelocationAt(Rel.getOffset())) {
+      DEBUG(dbgs() << "BOLT-DEBUG: address 0x"
+                   << Twine::utohexstr(Rel.getOffset())
+                   << " has a dynamic relocation against it. Ignoring static "
+                      "relocation.\n");
+      continue;
+    }
 
     std::string SymbolName;
     uint64_t SymbolAddress;
@@ -3634,7 +3703,8 @@ void RewriteInstance::patchELFSectionHeaderTable(ELFObjectFile<ELFT> *File) {
     } else {
       NewEhdr.e_entry = getNewFunctionAddress(NewEhdr.e_entry);
     }
-    assert(NewEhdr.e_entry && "cannot find new address for entry point");
+    assert((NewEhdr.e_entry || !Obj->getHeader()->e_entry) &&
+           "cannot find new address for entry point");
   }
   NewEhdr.e_phoff = PHDRTableOffset;
   NewEhdr.e_phnum = Phnum;
@@ -4262,9 +4332,17 @@ void RewriteInstance::readELFDynamic(ELFObjectFile<ELFT> *File) {
   const Elf_Dyn *DTE = cantFail(Obj->dynamic_table_end(DynamicPhdr),
                                 "error accessing dynamic table");
   for (auto *DE = DTB; DE != DTE; ++DE) {
-    if (DE->getTag() != ELF::DT_FINI)
-      continue;
-    BC->FiniFunctionAddress = DE->getPtr();
+    switch (DE->getTag()) {
+    case ELF::DT_FINI:
+      BC->FiniFunctionAddress = DE->getPtr();
+      break;
+    case ELF::DT_RELA:
+      BC->DynamicRelocationsAddress = DE->getPtr();
+      break;
+    case ELF::DT_RELASZ:
+      BC->DynamicRelocationsSize = DE->getVal();
+      break;
+    }
   }
 }
 

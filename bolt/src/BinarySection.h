@@ -49,10 +49,14 @@ class BinarySection {
   unsigned ELFType;           // ELF section type
   unsigned ELFFlags;          // ELF section flags
 
-  // Relocations associated with this section.  Relocation offsets are
+  // Relocations associated with this section. Relocation offsets are
   // wrt. to the original section address and size.
   using RelocationSetType = std::set<Relocation>;
   RelocationSetType Relocations;
+
+  // Dynamic relocations associated with this section. Relocation offsets are
+  // from the original section address.
+  RelocationSetType DynamicRelocations;
 
   // Pending relocations for this section.
   std::vector<Relocation> PendingRelocations;
@@ -351,6 +355,16 @@ public:
     }
   }
 
+  /// Add a dynamic relocation at the given /p Offset.
+  void addDynamicRelocation(uint64_t Offset,
+                            MCSymbol *Symbol,
+                            uint64_t Type,
+                            uint64_t Addend,
+                            uint64_t Value = 0) {
+    assert(Offset < getSize() && "offset not within section bounds");
+    DynamicRelocations.emplace(Relocation{Offset, Symbol, Type, Addend, Value});
+  }
+
   /// Add relocation against the original contents of this section.
   void addPendingRelocation(const Relocation &Rel) {
     PendingRelocations.push_back(Rel);
@@ -366,6 +380,13 @@ public:
     Relocation Key{Offset, 0, 0, 0, 0};
     auto Itr = Relocations.find(Key);
     return Itr != Relocations.end() ? &*Itr : nullptr;
+  }
+
+  /// Lookup the relocation (if any) at the given /p Offset.
+  const Relocation *getDynamicRelocationAt(uint64_t Offset) const {
+    Relocation Key{Offset, 0, 0, 0, 0};
+    auto Itr = DynamicRelocations.find(Key);
+    return Itr != DynamicRelocations.end() ? &*Itr : nullptr;
   }
 
   uint64_t hash(const BinaryData &BD) const {

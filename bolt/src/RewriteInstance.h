@@ -108,6 +108,9 @@ private:
   void processRelocations();
 
   /// Read relocations from a given section.
+  void readDynamicRelocations(const object::SectionRef &Section);
+
+  /// Read relocations from a given section.
   void readRelocations(const object::SectionRef &Section);
 
   /// Mark functions that are not meant for processing as ignored.
