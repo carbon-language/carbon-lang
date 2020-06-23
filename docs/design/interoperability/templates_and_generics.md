@@ -21,12 +21,12 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 ## C++ templates
 
 Simple C++ class templates are directly made available as Carbon templates. For
-example, ignoring allocators and their associated complexity,
-`std::vector&lt;T>` in C++ would be available as `Cpp.std.vector(T)` in Carbon.
+example, ignoring allocators and their associated complexity, `std::vector<T>`
+in C++ would be available as `Cpp.std.vector(T)` in Carbon.
 
 Instantiating C++ templates with a Carbon type requires that type to be made
 available to C++ code and the instantiation occurs against the C++ interface to
-that Carbon type. e.g.:
+that Carbon type. For example:
 
 ```
 package Art;
@@ -50,8 +50,8 @@ instantiated within C++ against a C++-visible API for a given Carbon type.
 ## Using Carbon generics/templates with C++ types in Carbon code
 
 Any C++ type can be used as a type parameter in Carbon. However, it will be
-interpreted as Carbon code; e.g., if there are any requirements for Carbon
-interfaces, [bridge code will be required](#bookmark=kix.8fx2t4lplthb).
+interpreted as Carbon code; for example, if there are any requirements for
+Carbon interfaces, [bridge code will be required](#bookmark=kix.8fx2t4lplthb).
 
 ## Using Carbon templates from C++
 

@@ -105,8 +105,8 @@ have been migrated to Carbon.
 ### Caveat
 
 Note that this approach for framework APIs uses double dynamic dispatch for C++
-users (once for `FrameworkInterface`, once for `FrameworkBase`). It's likely the
-added dynamic call cost is going to be negligible for most use-cases, given the
-presumption of one dynamic call being present in the original C++ code. However,
-some frameworks may need to examine their approaches, and consider migrating
-performance-critical code differently.
+users: once for `FrameworkInterface` and once for `FrameworkBase`. It's likely
+the added dynamic call cost is going to be negligible for most use-cases, given
+the presumption of one dynamic call being present in the original C++ code.
+However, some frameworks may need to examine their approaches, and consider
+migrating performance-critical code differently.

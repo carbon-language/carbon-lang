@@ -76,8 +76,8 @@ This change must modify both the C++ and Carbon implementations in one change.
 However, callers should not need to be modified, keeping this change local. By
 including the generated
 
-An extern may optionally be added, to leave a stub call for C++ users (as in
-this example). Carbon imports of C++ will also be able to use this, essentially
+An extern may optionally be added to leave a stub call for C++ users, as in this
+example. Carbon imports of C++ will also be able to use this, essentially
 resulting in Carbon calling through C++ to call the migrated Carbon code. If all
 C++ callers are being migrated to Carbon atomically in this change, it is not
 necessary.

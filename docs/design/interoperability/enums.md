@@ -46,10 +46,10 @@ enum Direction {
 var Direction: x = Direction.East;
 ```
 
-Sometimes enum names may repeat the enum identifier, e.g., `DIRECTION_EAST`
-instead of `East`. To help with this case, we may want to support renaming of
-enum entries. e.g., to rename in a way that results in a match to the above
-Carbon calling convention:
+Sometimes enum names may repeat the enum identifier; for example,
+`DIRECTION_EAST` instead of `East`. To help with this case, we may want to
+support renaming of enum entries. For example, to rename in a way that results
+in a match to the above Carbon calling convention, we add `carbon_enum`:
 
 ```
 enum Direction {

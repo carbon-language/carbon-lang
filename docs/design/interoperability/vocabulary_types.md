@@ -23,11 +23,11 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 There are several cases of vocabulary types that are important to consider and
 offer different degrees of flexibility in support:
 
-- Non-owning types passed by value (`std::string_view`, `std::span`, ...)
-- Non-owning types passed by reference (or pointer) (`std::vector&lt;T> &`, ...)
-- Owning types signaling a move of ownership (`std::unique_ptr`,
-  `std::vector&lt;T> &&`, ...)
-- Owning types signaling a copy of data (`std::vector&lt;T>`, ...)
+- Non-owning types passed by value, such as `std::string_view` or `std::span`.
+- Non-owning types passed by reference or pointer, such as `std::vector<T> &`.
+- Owning types signaling a move of ownership, such as `std::unique_ptr` or
+  `std::vector<T> &&`.
+- Owning types signaling a copy of data, such as `std::vector<T>`.
 
 Each of these lends itself to different strategies of interoperation between
 Carbon and C++.
@@ -42,16 +42,16 @@ at no cost.
 
 The primary idiom from C++ that Carbon attempts to directly support are types
 which represent contiguous data in memory. The dominant case here is
-`std::span&lt;T>`, but there are a wide variety of similar vocabulary types.
-Here, Carbon directly maps these types to a slice type: `T[]`. These types in
-Carbon have the same core semantics and can be trivially built from any
+`std::span<T>`, but there are a wide variety of similar vocabulary types. Here,
+Carbon directly maps these types to a slice type: `T[]`. These types in Carbon
+have the same core semantics and can be trivially built from any
 pointer-and-size formulation.
 
 There is an important special case: `std::string_view` and similar views into
 C++ string data. It is an open question in Carbon whether there is a dedicated
 `StringSlice` type or instead it simply uses a direct slice of the underlying
-`CodeUnit` (or `Char`) type. Whatever is the canonical vocabulary used to convey
-a slice of a Carbon `String` should also be used as the idiomatic mapping for
+`CodeUnit` or `Char` type. Whatever is the canonical vocabulary used to convey a
+slice of a Carbon `String` should also be used as the idiomatic mapping for
 `std::string_view`.
 
 Other non-owning value types will get automatic mappings as a use case is
@@ -63,11 +63,12 @@ performance critical mappings to end up devolving to slices.
 Non-owning references and pointers are perhaps the simplest non-owning types in
 C and C++ and have the same critical performance requirements as value types.
 Mapping them into Carbon is simple because they have limited and well-known
-semantics. By default, these are both mapped to pointers in Carbon, with
-references mapped to non-null pointers (`T*`) and C++ pointers mapped to
-nullable pointers (`T*?`).
+semantics. By default, these are both mapped to pointers in Carbon:
 
-e.g., given a C++ API:
+- References map to non-null pointers, or `T*`.
+- C++ pointers map to nullable pointers, or `T*?`.
+
+For example, given a C++ API:
 
 ```
 Resource* LoadResource(const Location& name);
@@ -93,22 +94,22 @@ can be added as we discover both a compelling need and an effective strategy.
 
 ### Slice special-casing
 
-Where possible to convert a reference or pointer (typically to a `const` type)
-to a slice, Carbon will do so automatically. This should cover common patterns
-such as `const std::vector&lt;T> &` -> `T[]` and `const std::vector&lt;T> *` ->
-`T[]?`. Specific types that should provide this conversion:
+Where possible to convert a reference or pointer to a slice, Carbon will do so
+automatically. This should cover common patterns such as
+`const std::vector<T> &` -> `T[]` and `const std::vector<T> *` -> `T[]?`.
+Specific types that should provide this conversion:
 
-- `const std::vector&lt;T>`
-- `std::array&lt;T, N>` (This loses some info, can build a compile-time-length
-  slice if needed)
+- `const std::vector<T>`
+- `std::array<T, N>`
+  - This loses some info, and may instead build a compile-time-length slice.
 
 ### Mapping similar built-in types
 
 When it is not possible to convert a non-owning reference or pointer to a C++
 data structure or vocabulary type into a suitable Carbon type, the actual C++
 type will be used. However, its API may not match Carbon idioms or patterns, and
-may not integrate with generic Carbon code written against those idioms (or vice
-versa).
+may not integrate with generic Carbon code written against those idioms, or vice
+versa.
 
 For sufficiently widely used C++ types, Carbon will provide non-owning wrappers
 (preferably using generics) that map between the relevant idioms. This will be a
@@ -135,39 +136,39 @@ the C++ heap to be implemented as part of the Carbon heap, allowing allocations
 in one to be deallocated in the other and vice versa. TODO(chandlerc): need to
 spell out how the heap works in Carbon to pin down the details here.
 
-The next case is `std::vector&lt;T> &&`. This should get translated to a
-transfer of ownership with a Carbon `Array(T)`. These types may not have the
-same layout, but it should be easy to migrate data from one to the other, even
-in the presence of a small-size-optimized `Array(T)` by copying the data if
-necessary. NB: that means that when transferring ownership into or out of
-Carbon, there is the possibility of an extra copy. This does not precisely match
-the contract of `std::vector` but should be a documented requirement for using
-Carbon's automatic type mapping as it is expected to be correct in the
-overwhelming majority of cases.
+The next case is `std::vector<T> &&`. This should get translated to a transfer
+of ownership with a Carbon `Array(T)`. These types may not have the same layout,
+but it should be easy to migrate data from one to the other, even in the
+presence of a small-size-optimized `Array(T)` by copying the data if necessary.
+NB: that means that when transferring ownership into or out of Carbon, there is
+the possibility of an extra copy. This does not precisely match the contract of
+`std::vector` but should be a documented requirement for using Carbon's
+automatic type mapping as it is expected to be correct in the overwhelming
+majority of cases.
 
-Other vocabulary types similar to `std::vector&lt;T>`, or more generally where
-the allocation can be transferred or a small copy be performed, should get
-similar automatic mapping with Carbon.
+Other vocabulary types similar to `std::vector<T>`, or more generally where the
+allocation can be transferred or a small copy be performed, should get similar
+automatic mapping with Carbon.
 
 Vocabulary types with significantly more complex data structures are unlikely to
 be efficiently convertible and should remain C++ types for efficient access.
-Some Carbon types can provide explicit conversion routines (which may be
-significantly more expensive such as re-allocating) when useful. A good example
-here is `boost::unordered_map&lt;Key, Value>`. We likely do not want to
-constrain a Carbon language-provided `Map(Key, Value)` type to match a
-particular C++ library's layout and representation to allow trivial translation
-from C++ to Carbon. However, this also likely isn't necessary. As we outline in
-the philosophy above, neither C++ nor Carbon aim to reduce the prevalence of
-custom C++ data structures. And we can still provide explicit (but potentially
-expensive) conversions when ownership transfer is necessary (rather than using
-the non-owning wrappers described previously).
+Some Carbon types can provide explicit conversion routines when useful, which
+may be significantly more expensive, such as re-allocating. A good example here
+is `boost::unordered_map<Key, Value>`. We likely do not want to constrain a
+Carbon language-provided `Map(Key, Value)` type to match a particular C++
+library's layout and representation to allow trivial translation from C++ to
+Carbon. However, this also likely isn't necessary. As we outline in the
+philosophy above, neither C++ nor Carbon aim to reduce the prevalence of custom
+C++ data structures. And we can still provide explicit, but potentially
+expensive, conversions when ownership transfer is necessary, rather than using
+the non-owning wrappers described previously.
 
 ### Alternative: Bind tightly to particular C++ libraries
 
 As an alternative, Carbon's language-provided types could precisely match the
 internal representation and implementation of particular C++ libraries. In this
 scenario, Carbon's `Map(Key, Value)` would need to precisely match
-`boost::unordered_map&lt;Key, Value>`.
+`boost::unordered_map<Key, Value>`.
 
 Note that this doesn't affect the ability of a Carbon program to use
 `boost::unordered_map` independently; it only affects the ability of a Carbon
@@ -184,12 +185,12 @@ Cons:
   unpredictability affecting performance of applications that rely on
   compatibility.
 - Carbon would be restricted when trying to evolve the API unless we could get
-  the particular library (e.g., Boost) to change their implementation in a
+  the particular library, such as Boost, to change their implementation in a
   matching manner.
   - Carbon and C++ should be expected to have slightly different performance
     nuances: a performance improvement for Carbon might be a slowdown for C++.
-- If the particular library (e.g., Boost) changed their implementation, it would
-  either break compiles or corrupt Carbon programs.
+- If the particular library, such as Boost, changed their implementation, it
+  would either break compiles or corrupt Carbon programs.
   - Users would need to bind to specific releases of the library. We would
     become responsible for matching all development.
 

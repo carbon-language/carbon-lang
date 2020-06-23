@@ -129,6 +129,8 @@ of wrappers manageable.
 
 ## Interoperability Syntax Elements
 
+> References: [Name mapping](name_mapping.md).
+
 This document uses currently unique Carbon syntax elements to indicate
 interoperability requirements which have not received any discussion. These
 should be discussed further to determine appropriate syntax.
@@ -151,6 +153,8 @@ Notable elements are:
 
 ### Name mapping
 
+> References: [Name mapping](name_mapping.md).
+
 C/C++ names are mapped into the `Cpp` Carbon package. C++ namespaces work the
 same fundamental way as Carbon namespaces within the `Cpp` package name. Dotted
 names are used when referencing these names from Carbon code. For example,
@@ -165,52 +169,47 @@ Carbon names which are mapped into C++ will use a top-level namespace of
 that. For example, the `Widget` Carbon package with a namespace `Foo` would
 become `::Carbon::Widget::Foo` in C++.
 
-For more details, see [name mapping](name_mapping.md).
-
 ### Type mapping
 
-Carbon and C++, as well as the C subset of C++, will have a number of types with
-direct mappings between the languages. The existence of these mappings allow
-switching from one type to another across any interface boundary between the
-languages. However, this only works across the interface boundary to avoid any
-aliasing or other concerns. Transitioning in or out of Carbon code is what
-provides special permission for these type aliases to be used.
+Carbon and C/C++ will have a number of types with direct mappings between the
+languages.
 
-Also note that the behavior of these types will not always be identical between
-the languages. It is only the values that transparently map from one to the
-other. Mapping operations is significantly different. For example, Carbon may
-have `Float32` match the C++ `float` storage while making subtle changes to
-arithmetic and/or comparison behaviors. We will prioritize reflecting the intent
-of type choices.
+The behavior of mapped types will not always be identical; they need only be
+similar. For example, we expect Carbon's `Int32` to map to C++'s `int`. While
+behavior is mostly equivalent, where C++ would overflow, Carbon will instead
+have trapping behavior.
 
-Last but not least, in some cases, there are multiple C or C++ types that can
-map to a single Carbon type. This is generally "fine" but may impose important
-constraints around overload resolution and other C++ features that would
-otherwise "just work" due to these mappings.
-
-For more details, see [type mapping](type_mapping.md).
+In some cases, there are multiple C/C++ types that map to a single Carbon type.
+This is expected to generally be transparent to users, but may impose important
+constraints around overload resolution and other C++ features that would "just
+work" with 1:1 mappings.
 
 #### Primitive types
 
-For more details, see [primitive types](primitive_types.md).
+> References: [Primitive types](primitive_types.md).
+
+We'll have a simple mapping for C++ primitive types. Conversion methods will
+exist for cross-platform 32-bit/64-bit compatibility.
 
 #### User-defined types
 
-For more details, see [user-defined types](user_defined_types.md).
+> References: [User-defined types](user_defined_types.md).
 
 #### Vocabulary types
 
-For more details, see [vocabulary types](vocabulary_types.md).
+> References: [Vocabulary types](vocabulary_types.md).
 
 ### Enums
 
-For more details, see [enums](enums.md).
+> References: [Enums](enums.md).
 
 ### Templates and generics
 
-For more details, see [templates and generics](templates.md and generics).
+> References: [Templates and generics](templates.md and generics).
 
 ### Functions and overload sets
+
+> References: [Functions and overload sets](functions_and_overload_sets.md).
 
 Mapping non-overloaded functions between Carbon and C++ is trivial - if the
 names are made available, they can be called. Because Carbon may use a different
@@ -227,10 +226,9 @@ it isn't expected to be precisely identical. Carbon formalizes the idea of
 overload resolution into pattern matching. C++ already works in an extremely
 similar way although without the formalization.
 
-For more details, see
-[functions and overload sets](functions_and_overload_sets.md).
-
 ### Other syntax
+
+> References: [Other syntax](other_syntax.md).
 
 Beyond the above in-depth discussions, a few key syntax details to be aware of
 are:
@@ -238,8 +236,6 @@ are:
 - C typedefs are generally mapped to Carbon aliases.
 - C/C++ macros that are defined as constants will be imported as constants.
   Otherwise, macros will be unavailable in Carbon.
-
-For more details, see [other syntax](other_syntax.md).
 
 ### Migration examples
 

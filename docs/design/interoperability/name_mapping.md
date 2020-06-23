@@ -152,8 +152,7 @@ package Widget library Knob;
 $extern("Cpp") fn Turn() { ... }
 ```
 
-This may be callable from C++ with (including a compiler-generated
-`knob.carbon.h`):
+This may be callable from C++ through a compiler-generated `knob.carbon.h`:
 
 ```cc
 #include "widget/knob.carbon.h"
@@ -177,8 +176,7 @@ package Widget library Knob;
 $extern("Cpp", namespace="::widget::knob", name="Twist") fn Turn() { ... }
 ```
 
-This may be callable from C++ with (including a compiler-generated
-`knob.carbon.h`):
+This may be callable from C++ through a compiler-generated `knob.carbon.h`:
 
 ```cc
 #include "widget/knob.carbon.h"
@@ -204,9 +202,9 @@ $extern("Cpp", namespace="::widget::knob") {
 
 ### Alternative: Providing C calls in a separate C package
 
-We could provide C APIs in a separate `C` package (either in addition to, or in
-place of, the `Cpp` package). We plan to not do this because it's not clear
-there's a significant advantage to the split.
+We could provide C APIs in a separate `C` package; this could be either in
+addition to, or in place of, the `Cpp` package. We plan to not do this because
+it's not clear there's a significant advantage to the split.
 
 For example, given the C++ code `widget/knob.h`:
 
