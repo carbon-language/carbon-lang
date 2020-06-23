@@ -137,7 +137,7 @@ pattern.
 ### Pattern matching in local variables
 
 [NOTE: This text also appears in
-["Carbon language design / Pattern matching"](https://github.com/jonmeow/carbon-lang/blob/proposal-design-overview/docs/design/README.md#pattern-matching).]
+["Carbon language design / Pattern matching in local variables"](https://github.com/jonmeow/carbon-lang/blob/proposal-design-overview/docs/design/README.md#pattern-matching-in-local-variables).]
 
 Value patterns may be used when declaring local variables to conveniently
 destructure them and do other type manipulations. However, the patterns must
@@ -153,7 +153,23 @@ fn Foo() -> Int {
 ```
 
 This extracts the first value from the result of calling `Bar()` and binds it to
-a local variable named `p` which is then returned.
+a local variable named `p` which is then returned. The `(Float, Float)` returned
+by `Bar()` matches and is discarded by `auto: _`.
+
+The `:$` and `:$$` forms can be used to defined constants.
+
+```
+fn Foo(Int:$ N, Int: m) -> Int {
+  var Int:$$ Two = 2;
+  var Int:$ TwoN = Two * N;
+  return TwoN + m;
+}
+```
+
+The `:$$` form defines a constant whose value is available during typechecking,
+which would normally be preferred unless you are setting it to an expression
+that depends on a generic input value (`N` in the example above) and so is not
+known when typechecking.
 
 ### Pattern matching as function overload resolution
 
@@ -300,7 +316,7 @@ meaningful at compile time. [Same is true of any generic/templated function!]
 
 **Note:** For functions argument lists, we also support template / generic
 arguments, but that is detailed in
-[another document (TODO)](#broken-links-footnote)<!-- T:Carbon templates and generics -->.
+[another document (TODO)](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/designs/generics-overview.md).
 
 ### Differences
 
@@ -311,8 +327,7 @@ There are a few differences between these uses:
 - An assignment statement will have a single pattern, and it will be a compile
   error unless it can be shown to match at compile time.
 - Function overloading allows multiple patterns, but at compile time any
-  function call must be resolved to match a single pattern. Right now this is
-  the only case that uses the generic (`:$`) and template (`:$$`) syntax.
+  function call must be resolved to match a single pattern.
 
 ## Features
 
