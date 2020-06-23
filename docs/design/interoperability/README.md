@@ -17,6 +17,11 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 - [Details](#details)
   - [Name mapping](#name-mapping)
   - [Type mapping](#type-mapping)
+    - [Primitive types](#primitive-types)
+    - [User-defined types](#user-defined-types)
+    - [Vocabulary types](#vocabulary-types)
+  - [Enums](#enums)
+  - [Templates and generics](#templates-and-generics)
   - [Functions and overload sets](#functions-and-overload-sets)
   - [Other syntax](#other-syntax)
   - [Migration examples](#migration-examples)
@@ -185,6 +190,26 @@ otherwise "just work" due to these mappings.
 
 For more details, see [type mapping](type_mapping.md).
 
+#### Primitive types
+
+For more details, see [primitive types](primitive_types.md).
+
+#### User-defined types
+
+For more details, see [user-defined types](user_defined_types.md).
+
+#### Vocabulary types
+
+For more details, see [vocabulary types](vocabulary_types.md).
+
+### Enums
+
+For more details, see [enums](enums.md).
+
+### Templates and generics
+
+For more details, see [templates and generics](templates.md and generics).
+
 ### Functions and overload sets
 
 Mapping non-overloaded functions between Carbon and C++ is trivial - if the
@@ -218,5 +243,12 @@ For more details, see [other syntax](other_syntax.md).
 
 ### Migration examples
 
-For examples of how this design is intended to function, please see our
-[migration examples](migration_examples.md).
+Large-scale migrations need to be done piecemeal. The goal of migration examples
+is to use interoperability in order to produce small migration steps which can
+be performed independently to a large codebase, without breaking surrounding
+code.
+
+Examples:
+
+- [Incremental migration of APIs](example_incremental.md)
+- [Framework API migration](example_framework.md)

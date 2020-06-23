@@ -10,30 +10,15 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 <!-- toc -->
 
-- [Overview](#overview)
 - [Exposing Carbon function patterns as a C++ overload set](#exposing-carbon-function-patterns-as-a-c-overload-set)
+  - [Carbon template functions and C++ overload sets](#carbon-template-functions-and-c-overload-sets)
 - [Exposing C++ overload sets as Carbon function patterns](#exposing-c-overload-sets-as-carbon-function-patterns)
   - [Overloaded C++ operators](#overloaded-c-operators)
   - [Open extension points (ADL-based overload sets)](#open-extension-points-adl-based-overload-sets)
+- [Open questions](#open-questions)
+  - [Exporting eneric functions](#exporting-eneric-functions)
 
 <!-- tocstop -->
-
-## Overview
-
-Mapping non-overloaded functions between Carbon and C++ is trivial - if the
-names are made available, they can be called. Because Carbon may use a different
-calling convention, it would need to either emit custom C++ annotations to
-coerce calls to use its calling convention directly, or emit wrapper calls that
-map in source code between the two. Even the latter is likely to be easily
-optimized away. The real difficulty is in mapping the types used on the function
-call, which we described in detail above.
-
-However, both Carbon and C++ support function overloading. This is a much more
-complex surface to translate between languages. Carbon's overloading is designed
-to be largely compatible with C++ so that this can be done reasonably well, but
-it isn't expected to be precisely identical. Carbon formalizes the idea of
-overload resolution into pattern matching. C++ already works in an extremely
-similar way although without the formalization.
 
 ## Exposing Carbon function patterns as a C++ overload set
 
@@ -58,18 +43,17 @@ can be generated from the Carbon code, we can simply use a dedicated namespace
 which is re-opened as needed to extend an overload set, and hide this as an
 implementation detail.
 
-**NB:** Carbon template function cannot contribute patterns to a collection
-exposed as a C++ overload set. This would require translating arbitrarily
-complex Carbon template code into C++ template code that could be instantiated
-during C++ compilation and result in identical behavior to a direct Carbon
-instantiation. This seems too great of a complexity burden and constraint to
-realistically support. Instead, when this kind of C++ interface needs to be
-exported from a Carbon library, it must be written directly in C++ as bridge
-code. That bridge code can still factor out and dispatch back into Carbon code
-wherever it can do so in a non-dependent way.
+### Carbon template functions and C++ overload sets
 
-TODO(anyone): We could likely export generic functions. Would be good for
-someone to write out how that should be expected to work.
+Carbon template function cannot contribute patterns to a collection exposed as a
+C++ overload set. This would require translating arbitrarily complex Carbon
+template code into C++ template code that could be instantiated during C++
+compilation and result in identical behavior to a direct Carbon instantiation.
+This seems too great of a complexity burden and constraint to realistically
+support. Instead, when this kind of C++ interface needs to be exported from a
+Carbon library, it must be written directly in C++ as bridge code. That bridge
+code can still factor out and dispatch back into Carbon code wherever it can do
+so in a non-dependent way.
 
 ## Exposing C++ overload sets as Carbon function patterns
 
@@ -121,8 +105,15 @@ up-front.
 
 The technique used for operators doesn't generalize to arbitrary ADL-based
 overload sets and extension points cleanly. Currently, Carbon will only support
-a specific, fixed set of such extension points (operators, swap, etc.) because
-of the need to identify their names up front.
+a specific, fixed set of such extension points because of the need to identify
+their names up front; this includes operators and swap.
 
 If this becomes an untenable restriction, we can investigate ways to more fully
 surface extension points into Carbon code.
+
+## Open questions
+
+### Exporting eneric functions
+
+We could likely export generic functions. More investigation should be done for
+the design.

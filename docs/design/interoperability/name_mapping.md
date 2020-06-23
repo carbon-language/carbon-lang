@@ -11,12 +11,13 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 <!-- toc -->
 
 - [C/C++ names in Carbon](#cc-names-in-carbon)
-  - [Alternative: Providing C calls in a separate C package](#alternative-providing-c-calls-in-a-separate-c-package)
   - [Defining types across multiple imports](#defining-types-across-multiple-imports)
 - [Incomplete types](#incomplete-types)
+- [Carbon names in C/C++](#carbon-names-in-cc)
+- [Alternatives](#alternatives)
+  - [Alternative: Providing C calls in a separate C package](#alternative-providing-c-calls-in-a-separate-c-package)
   - [Alternative: Have incomplete types in the Cpp package behave slightly differently.](#alternative-have-incomplete-types-in-the-cpp-package-behave-slightly-differently)
   - [Alternative: Don't map incomplete types](#alternative-dont-map-incomplete-types)
-- [Carbon names in C/C++](#carbon-names-in-cc)
 
 <!-- tocstop -->
 
@@ -29,13 +30,13 @@ names are used when referencing these names from Carbon code. For example,
 
 For example, given the C code `widget/knob.h`:
 
-```
+```cc
 extern void turn_knob(void);
 ```
 
 We would expect the calling Carbon code:
 
-```
+```carbon
 package Widget library Knob;
 
 import Cpp "widget/knob.h";
@@ -47,7 +48,7 @@ fn Call() {
 
 For example, given the C++ code `widget/knob.h`:
 
-```
+```cc
 namespace widget {
 namespace knob {
 extern "C" {
@@ -59,7 +60,7 @@ void turn_knob();
 
 We would expect the calling Carbon code to work:
 
-```
+```carbon
 package Widget library Knob;
 
 import Cpp "widget/knob.h";
@@ -72,6 +73,135 @@ fn Call() {
 }
 ```
 
+### Defining types across multiple imports
+
+Carbon will allow C/C++ imports to fill in type definitions of other C/C++
+imports as if they were all #included together. Due to this, the order of C/C++
+imports will matter.
+
+For example, if one header defines a template and another header defines
+specializations of that template, they may both be included in order for Carbon
+code to get a fully correct view of the template.
+
+In other words, this is a meaningful combination of imports:
+
+```carbon
+import Cpp "template.h"
+import Cpp "template-specializations.h"
+```
+
+## Incomplete types
+
+C++ incomplete types will be mirrored into Carbon's incomplete type behavior.
+Users wanting to avoid differences in incomplete type behaviors should fully
+define the C++ types using repeated imports.
+
+For example, given `factory.h` with a partial definition:
+
+```cc
+struct Foo;
+Foo* CreateFoo();
+void Process(Foo* foo);
+```
+
+And `foo.h` with a definition of Foo:
+
+```cc
+struct Foo {
+  int i;
+};
+```
+
+A Carbon file importing only `factory.h` will be able to access the incomplete
+type:
+
+```carbon
+package FactoryUser;
+
+import Cpp "factory.h"
+
+var Cpp.Foo*?: x = CreateFoo();
+Process(x);
+```
+
+A Carbon file importing both `factory.h` and `foo.h` will see the full type
+information:
+
+```carbon
+package Factoryuser;
+
+import Cpp "factory.h"
+import Cpp "foo.h"
+
+var Cpp.Foo*?: x = CreateFoo();
+DoSomethingWith(x->i);
+```
+
+## Carbon names in C/C++
+
+Carbon names which are mapped into C++ will use a top-level namespace of
+`Carbon`, with the package name and namespaces represented as namespaces below
+that. For example, the `Widget` Carbon package with a namespace `Foo` would
+become `::Carbon::Widget::Foo` in C++.
+
+For example, given the Carbon code:
+
+```carbon
+package Widget library Knob;
+
+$extern("Cpp") fn Turn() { ... }
+```
+
+This may be callable from C++ with (including a compiler-generated
+`knob.carbon.h`):
+
+```cc
+#include "widget/knob.carbon.h"
+
+void Call() {
+  ::Carbon::Widget::Knob::Turn();
+}
+```
+
+Users will be allowed to override the default namespace and name mapping in
+order to support migration of C++ code. The intent is that it should be easy to
+migrate users from C++ to Carbon, without needing to touch all call sites. C++
+has limited support for aliasing, so we prefer to support this from the Carbon
+side.
+
+For example, given the Carbon code:
+
+```carbon
+package Widget library Knob;
+
+$extern("Cpp", namespace="::widget::knob", name="Twist") fn Turn() { ... }
+```
+
+This may be callable from C++ with (including a compiler-generated
+`knob.carbon.h`):
+
+```cc
+#include "widget/knob.carbon.h"
+
+void Call() {
+  ::widget::knob::Twist();
+}
+```
+
+It should also be easy to extern multiple declarations as long as `name` is not
+specified. For example:
+
+```carbon
+package Widget library Knob;
+
+$extern("Cpp", namespace="::widget::knob") {
+  fn Push() { ... }
+  fn Rotate() { ... }
+}
+```
+
+## Alternatives
+
 ### Alternative: Providing C calls in a separate C package
 
 We could provide C APIs in a separate `C` package (either in addition to, or in
@@ -80,7 +210,7 @@ there's a significant advantage to the split.
 
 For example, given the C++ code `widget/knob.h`:
 
-```
+```cc
 namespace widget {
 namespace knob {
 extern "C" {
@@ -93,7 +223,7 @@ void turn_knob();
 We would expect the calling Carbon code to work, using the `C` package for the C
 extern:
 
-```
+```carbon
 package Widget library Knob;
 
 import Cpp "widget/knob.h";
@@ -115,70 +245,6 @@ Cons:
   coming from.
 - If C APIs are in both `C` and `Cpp` packages, creates a divergent syntax for
   equivalent calls.
-
-### Defining types across multiple imports
-
-Carbon will allow C/C++ imports to fill in type definitions of other C/C++
-imports as if they were all #included together. Due to this, the order of C/C++
-imports will matter.
-
-For example, if one header defines a template and another header defines
-specializations of that template, they may both be included in order for Carbon
-code to get a fully correct view of the template.
-
-In other words, this is a meaningful combination of imports:
-
-```
-import Cpp "template.h"
-import Cpp "template-specializations.h"
-```
-
-## Incomplete types
-
-C++ incomplete types will be mirrored into Carbon's incomplete type behavior.
-Users wanting to avoid differences in incomplete type behaviors should fully
-define the C++ types using repeated imports.
-
-For example, given `factory.h` with a partial definition:
-
-```
-struct Foo;
-Foo* CreateFoo();
-void Process(Foo* foo);
-```
-
-And `foo.h` with a definition of Foo:
-
-```
-struct Foo {
-  int i;
-};
-```
-
-A Carbon file importing only `factory.h` will be able to access the incomplete
-type:
-
-```
-package FactoryUser;
-
-import Cpp "factory.h"
-
-var Cpp.Foo*?: x = CreateFoo();
-Process(x);
-```
-
-A Carbon file importing both `factory.h` and `foo.h` will see the full type
-information:
-
-```
-package Factoryuser;
-
-import Cpp "factory.h"
-import Cpp "foo.h"
-
-var Cpp.Foo*?: x = CreateFoo();
-DoSomethingWith(x->i);
-```
 
 ### Alternative: Have incomplete types in the Cpp package behave slightly differently.
 
@@ -213,74 +279,11 @@ Cons:
 For example, given the above `factory.h` with a partial definition, a Carbon
 file importing only `factory.h` will see `OpaquePointer`:
 
-```
+```carbon
 package FactoryUser;
 
 import Cpp "factory.h"
 
 var Cpp.OpaquePointer*?: x = CreateFoo();
 // It is unsafe for this code to call Process(x) because the type is opaque.
-```
-
-## Carbon names in C/C++
-
-Carbon names which are mapped into C++ will use a top-level namespace of
-`Carbon`, with the package name and namespaces represented as namespaces below
-that. For example, the `Widget` Carbon package with a namespace `Foo` would
-become `::Carbon::Widget::Foo` in C++.
-
-For example, given the Carbon code:
-
-```
-package Widget library Knob;
-
-$extern("Cpp") fn Turn() { ... }
-```
-
-This may be callable from C++ with (including a compiler-generated
-`knob.carbon.h`):
-
-```
-#include "widget/knob.carbon.h"
-
-void Call() {
-  ::Carbon::Widget::Knob::Turn();
-}
-```
-
-Users will be allowed to override the default namespace and name mapping in
-order to support migration of C++ code. The intent is that it should be easy to
-migrate users from C++ to Carbon, without needing to touch all call sites. C++
-has limited support for aliasing, so we prefer to support this from the Carbon
-side.
-
-For example, given the Carbon code:
-
-```
-package Widget library Knob;
-
-$extern("Cpp", namespace="::widget::knob", name="Twist") fn Turn() { ... }
-```
-
-This may be callable from C++ with (including a compiler-generated
-`knob.carbon.h`):
-
-```
-#include "widget/knob.carbon.h"
-
-void Call() {
-  ::widget::knob::Twist();
-}
-```
-
-It should also be easy to extern multiple declarations as long as `name` is not
-specified. For example:
-
-```
-package Widget library Knob;
-
-$extern("Cpp", namespace="::widget::knob") {
-  fn Push() { ... }
-  fn Rotate() { ... }
-}
 ```
