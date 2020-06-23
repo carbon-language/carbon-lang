@@ -21,18 +21,6 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 <!-- tocstop -->
 
-There are several cases of vocabulary types that are important to consider and
-offer different degrees of flexibility in support:
-
-- Non-owning types passed by value, such as `std::string_view` or `std::span`.
-- Non-owning types passed by reference or pointer, such as `std::vector<T> &`.
-- Owning types signaling a move of ownership, such as `std::unique_ptr` or
-  `std::vector<T> &&`.
-- Owning types signaling a copy of data, such as `std::vector<T>`.
-
-Each of these lends itself to different strategies of interoperation between
-Carbon and C++.
-
 ## Non-owning value types
 
 These are some of the most important types to have direct support for in Carbon
@@ -80,7 +68,7 @@ We would expect a Carbon call to look like:
 
 ```carbon
 var Cpp.Location: loc = ...;
-This maps the C++ * to a nullable pointer.
+// This maps the C++ * to a nullable pointer.
 var Cpp.Resource*?: res = Cpp.LoadResource(&loc);
 
 var Cpp.Selector: sel = ...;
@@ -166,18 +154,15 @@ the non-owning wrappers described previously.
 
 ## Copying vocabulary types
 
-When a vocabulary type crosses between C++ and Carbon and a copy is a valid
-option, an extremely good interoperability story can be provided. Here, we can
-in almost all cases completely convert common data structures and vocabulary
-types between the languages. The data is being copied anyways and so any
-necessary changes to the representation and layout are unlikely to be an
+When a vocabulary type crosses between C++ and Carbon and copying is supported,
+we can in almost all cases completely convert common data structures and
+vocabulary types between the languages. The data is being copied anyways and so
+any necessary changes to the representation and layout are unlikely to be an
 unacceptable overhead.
 
 This strategy should be available for essentially all containers and copiable
 vocabulary types in the C++ STL, Abseil, and any other sufficiently widely used
 libraries.
-
-TODO: Need to rewrite this a little, particularly around "valid option".
 
 ## Alternatives
 
