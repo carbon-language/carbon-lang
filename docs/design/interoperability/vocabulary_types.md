@@ -70,14 +70,14 @@ semantics. By default, these are both mapped to pointers in Carbon:
 
 For example, given a C++ API:
 
-```
+```cc
 Resource* LoadResource(const Location& name);
 ResourceEntry& SelectResource(const Selector& sel);
 ```
 
 We would expect a Carbon call to look like:
 
-```
+```carbon
 var Cpp.Location: loc = ...;
 This maps the C++ * to a nullable pointer.
 var Cpp.Resource*?: res = Cpp.LoadResource(&loc);

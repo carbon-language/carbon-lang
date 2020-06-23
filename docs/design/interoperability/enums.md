@@ -21,9 +21,9 @@ enum semantics.
 
 ## C/C++ enums in Carbon
 
-Given an enum:
+Given a C++ enum:
 
-```
+```cc
 enum Direction {
   East,
   West = 20,
@@ -34,7 +34,7 @@ enum Direction {
 
 We would expect to generate equivalent Carbon code:
 
-```
+```carbon
 enum Direction {
   East = 0,
   West = 20,
@@ -51,7 +51,7 @@ Sometimes enum names may repeat the enum identifier; for example,
 support renaming of enum entries. For example, to rename in a way that results
 in a match to the above Carbon calling convention, we add `carbon_enum`:
 
-```
+```cc
 enum Direction {
   DIRECTION_EAST,
   DIRECTION_WEST,
@@ -62,7 +62,7 @@ enum Direction {
 
 If using enum class, we'd expect similar behavior:
 
-```
+```cc
 enum class Direction : char {
   East = 'E',
   West = 'W',
@@ -73,7 +73,7 @@ enum class Direction : char {
 
 With Carbon code:
 
-```
+```carbon
 enum(Byte) Direction {
   East = 'E',
   West = 'W',
@@ -86,7 +86,7 @@ enum(Byte) Direction {
 
 Given an enum:
 
-```
+```carbon
 $extern("Cpp") enum Direction {
   East,
   West = 20,
@@ -98,7 +98,7 @@ $extern("Cpp") enum Direction {
 Because Carbon automatically groups enums, we would expect to generate
 equivalent C++ code:
 
-```
+```cc
 enum class Direction {
   East = 0,
   West = 20,

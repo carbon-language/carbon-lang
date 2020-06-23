@@ -168,7 +168,7 @@ to write bridge code.
 
 In the `Shape` example, that would require Carbon code:
 
-```
+```carbon
 $extern("Cpp") struct Circle {
   fn GetArea() -> Float64 { ... };
 }
@@ -176,7 +176,7 @@ $extern("Cpp") struct Circle {
 
 And bridging C++ code:
 
-```
+```cc
 #include "project/circle.carbon.h"
 
 class CircleWrapper : public Shape {
@@ -209,7 +209,7 @@ other.
 
 For example, given the Carbon code:
 
-```
+```carbon
 package Art;
 
 interface Shape {
@@ -219,7 +219,7 @@ interface Shape {
 
 To implement a Square in C++, write the corresponding C++ implementation:
 
-```
+```cc
 class Square {
  public:
   void Draw() { ... }
@@ -228,7 +228,7 @@ class Square {
 
 Then provide a bridge struct in Carbon:
 
-```
+```carbon
 package Art;
 
 struct SquareBridge {
@@ -249,7 +249,7 @@ bridge code.
 
 For example, consider the C++ code:
 
-```
+```cc
 class Shape {
  public:
   virtual double GetArea() = 0;
@@ -266,7 +266,7 @@ void Draw(Shape* shape);
 
 This will be imported to Carbon, based on references, as:
 
-```
+```carbon
 package Cpp;
 
 struct Shape {
@@ -300,7 +300,7 @@ API.
 
 For example, given the C++ code:
 
-```
+```cc
 class Shape {
  public:
   virtual double GetArea() = 0;
@@ -319,7 +319,7 @@ void Print(Circle circle);
 
 This would mean the imported results would look more like:
 
-```
+```carbon
 package Cpp;
 
 interface Shape_CppInterface {
@@ -374,7 +374,7 @@ API instead of being directly exposed.
 
 For example, `signal.h` has a union API:
 
-```
+```cc
 union sigval {
   int sival_int;
   void *sival_ptr;
@@ -388,7 +388,7 @@ struct sigevent {
 
 This will be accessible in Carbon through wrapper getter/setter APIs:
 
-```
+```carbon
 package C;
 
 struct sigval {

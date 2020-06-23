@@ -28,7 +28,7 @@ Instantiating C++ templates with a Carbon type requires that type to be made
 available to C++ code and the instantiation occurs against the C++ interface to
 that Carbon type. For example:
 
-```
+```carbon
 package Art;
 
 import Cpp "<vector>";
@@ -82,7 +82,7 @@ the generic. Note this could be wrapping the generic with a template.
 
 For example, given the Carbon code:
 
-```
+```carbon
 fn GenericAPI[Foo:$ T](T*: x) { ... }
 
 fn TemplateAPI[Foo:$$ T](T* x) { GenericAPI(x); }
@@ -90,7 +90,7 @@ fn TemplateAPI[Foo:$$ T](T* x) { GenericAPI(x); }
 
 We could have C++ code that uses the template wrapper to use the generic:
 
-```
+```cc
 CppType y;
 ::Carbon::TemplateAPI(&y);
 ```
