@@ -37,11 +37,11 @@ isn't helpful.
 ### Types with template parameters
 
 When parameterizing a user-defined type, the parameters can be marked as
-_template_ parameters. The resulting type-function will instantiate the
+template parameters. The resulting type-function will instantiate the
 parameterized definition with the provided arguments to produce a complete type
-when used. Note that only the parameters marked as having this _template_
-behavior are subject to full instantiation -- other parameters will be type
-checked and bound early to the extent possible. For example:
+when used. Note that only the parameters marked as having this template behavior
+are subject to full instantiation -- other parameters will be type checked and
+bound early to the extent possible. For example:
 
 ```
 struct Stack(Type:$$ T) {
@@ -53,14 +53,14 @@ struct Stack(Type:$$ T) {
 ```
 
 This both defines a parameterized type (`Stack`) and uses one (`Array`). Within
-the definition of the type, the _template_ type parameter `T` can be used in all
+the definition of the type, the template type parameter `T` can be used in all
 of the places a normal type would be used, and it will only by type checked on
 instantiation.
 
 ### Functions with template parameters
 
 Both implicit and explicit function parameters in Carbon can be marked as
-_template_ parameters. When called, the arguments to these parameters trigger
+template parameters. When called, the arguments to these parameters trigger
 instantiation of the function definition, fully type checking and resolving that
 definition after substituting in the provided (or computed if implicit)
 arguments. The runtime call then passes the remaining arguments to the resulting
@@ -83,7 +83,7 @@ Here we deduce one type parameter and explicitly pass another. It is not
 possible to explicitly pass a deduced type parameter, instead the call site
 should cast or convert the argument to control the deduction. The explicit type
 is passed after a runtime parameter. While this makes that type unavailable to
-the declaration of _that_ runtime parameter, it still is a _template_ parameter
+the declaration of _that_ runtime parameter, it still is a template parameter
 and available to use as a type even within the remaining parts of the function
 declaration.
 
