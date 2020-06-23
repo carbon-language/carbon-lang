@@ -15,8 +15,9 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
   - [Slice special-casing](#slice-special-casing)
   - [Mapping similar built-in types](#mapping-similar-built-in-types)
 - [Ownership transfer types](#ownership-transfer-types)
-  - [Alternative: Bind tightly to particular C++ libraries](#alternative-bind-tightly-to-particular-c-libraries)
 - [Copying vocabulary types](#copying-vocabulary-types)
+- [Alternatives](#alternatives)
+  - [Bind tightly to particular C++ libraries](#bind-tightly-to-particular-c-libraries)
 
 <!-- tocstop -->
 
@@ -163,11 +164,31 @@ C++ data structures. And we can still provide explicit, but potentially
 expensive, conversions when ownership transfer is necessary, rather than using
 the non-owning wrappers described previously.
 
-### Alternative: Bind tightly to particular C++ libraries
+## Copying vocabulary types
 
-As an alternative, Carbon's language-provided types could precisely match the
-internal representation and implementation of particular C++ libraries. In this
-scenario, Carbon's `Map(Key, Value)` would need to precisely match
+When a vocabulary type crosses between C++ and Carbon and a copy is a valid
+option, an extremely good interoperability story can be provided. Here, we can
+in almost all cases completely convert common data structures and vocabulary
+types between the languages. The data is being copied anyways and so any
+necessary changes to the representation and layout are unlikely to be an
+unacceptable overhead.
+
+This strategy should be available for essentially all containers and copiable
+vocabulary types in the C++ STL, Abseil, and any other sufficiently widely used
+libraries.
+
+TODO: Need to rewrite this a little, particularly around "valid option".
+
+## Alternatives
+
+### Bind tightly to particular C++ libraries
+
+For complex types like Carbon's `Map(Key, Value)`, the proposal is that we have
+conversion methods with some overhead. Instead, we could bind more tightly.
+
+Carbon's language-provided types could precisely match the internal
+representation and implementation of particular C++ libraries. In this scenario,
+Carbon's `Map(Key, Value)` would need to precisely match
 `boost::unordered_map<Key, Value>`.
 
 Note that this doesn't affect the ability of a Carbon program to use
@@ -193,16 +214,3 @@ Cons:
   would either break compiles or corrupt Carbon programs.
   - Users would need to bind to specific releases of the library. We would
     become responsible for matching all development.
-
-## Copying vocabulary types
-
-When a vocabulary type crosses between C++ and Carbon and a copy is a valid
-option, an extremely good interoperability story can be provided. Here, we can
-in almost all cases completely convert common data structures and vocabulary
-types between the languages. The data is being copied anyways and so any
-necessary changes to the representation and layout are unlikely to be an
-unacceptable overhead.
-
-This strategy should be available for essentially all containers and copiable
-vocabulary types in the C++ STL, Abseil, and any other sufficiently widely used
-libraries.

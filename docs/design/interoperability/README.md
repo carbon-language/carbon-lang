@@ -195,19 +195,54 @@ exist for cross-platform 32-bit/64-bit compatibility.
 
 > References: [User-defined types](user_defined_types.md).
 
+All user-defined, non-template C/C++ class and struct types are directly
+available within Carbon with the exact C++ layout.
+
+For example, given a C/C++ `Circle` class:
+
+```cc
+class Circle {
+ public:
+  double GetArea();
+ private:
+  double radius_;
+};
+```
+
+We expect this to behave as a similar Carbon class:
+
+```carbon
+package Cpp;
+
+struct Circle {
+  fn GetArea() -> Float64;
+  private var Float64: radius_;
+};
+```
+
+TODO: Mention interfaces in overview
+
 #### Vocabulary types
 
 > References: [Vocabulary types](vocabulary_types.md).
+
+TODO: Write overview
 
 ### Enums
 
 > References: [Enums](enums.md).
 
+TODO: Write overview
+
 ### Templates and generics
 
 > References: [Templates and generics](templates.md and generics).
 
+TODO: Write overview
+
 ### Functions and overload sets
+
+TODO: Re-examine this writing
 
 > References: [Functions and overload sets](functions_and_overload_sets.md).
 

@@ -12,16 +12,17 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 - [Inheritance](#inheritance)
   - [Using C++ types as mixins for Carbon structs](#using-c-types-as-mixins-for-carbon-structs)
-    - [Caveat: Abstract methods](#caveat-abstract-methods)
+    - [Abstract methods](#abstract-methods)
   - [Inheriting from C++ types with Carbon structs](#inheriting-from-c-types-with-carbon-structs)
-    - [Caveat: Missing or conflicting method declarations](#caveat-missing-or-conflicting-method-declarations)
-    - [Caveat: Concrete methods on parents](#caveat-concrete-methods-on-parents)
-  - [Alternative: Require bridge code for inheritance](#alternative-require-bridge-code-for-inheritance)
+    - [Missing or conflicting method declarations](#missing-or-conflicting-method-declarations)
+    - [Concrete methods on parents](#concrete-methods-on-parents)
   - [Implementing Carbon interfaces in C++](#implementing-carbon-interfaces-in-c)
   - [Public non-virtual inheritance](#public-non-virtual-inheritance)
-    - [Alternative: Simulate interfaces for C++ types](#alternative-simulate-interfaces-for-c-types)
   - [Virtual and Non-Public Inheritance](#virtual-and-non-public-inheritance)
 - [Unions and transparent union members](#unions-and-transparent-union-members)
+- [Alternatives](#alternatives)
+  - [Require bridge code for inheritance](#require-bridge-code-for-inheritance)
+    - [Simulate interfaces for C++ types](#simulate-interfaces-for-c-types)
 
 <!-- tocstop -->
 
@@ -40,7 +41,7 @@ marked as `final`.
 For use cases like implementing interfaces required by C++ APIs, embedded C++
 code within the Carbon code should be used as the bridge. For an example of
 addressing the lack of cross-language inheritance, see the
-[Framework API](#bookmark=kix.jrmn54jubgcz) migration example.
+[Framework API migration example](example_framework.md).
 
 ### Using C++ types as mixins for Carbon structs
 
@@ -75,7 +76,7 @@ However, this has no interface implications for ShapeWrapper. Also, if used from
 C++, ShapeWrapper would not be considered to inherit from Shape. Additional
 language-specific wrappers would be required to get inheritance functionality.
 
-#### Caveat: Abstract methods
+#### Abstract methods
 
 C++ abstract methods will not have a direct equivalent in Carbon. Although a
 Carbon interface is similar to a C++ class with only abstract methods, it's not
@@ -135,70 +136,30 @@ to call a C++ function that takes the parent class, such as
 `void Draw(Shape* shape)`, will need to be called from a C++ bridge function,
 not Carbon.
 
-#### Caveat: Missing or conflicting method declarations
+#### Missing or conflicting method declarations
 
-Note that, in this example, the Carbon `Circle` type definition is not natively
-aware of the `Shape` type inheritance. For example, suppose `GetArea()` returned
-an `Int64` on `Shape`, but `Float64` on `Circle`. This would mean the `Shape`
-type had conflicting method declarations, and the conflict only becomes apparent
-when the `Circle` type is compiled for C++. Similarly, if `Shape` had an
-abstract method that `Circle` did not implement, it would only be seen by C++.
+In this example, the Carbon `Circle` type definition is not natively aware of
+the `Shape` type inheritance. For example, suppose `GetArea()` returned an
+`Int64` on `Shape`, but `Float64` on `Circle`. This would mean the `Shape` type
+had conflicting method declarations, and the conflict only becomes apparent when
+the `Circle` type is compiled for C++. Similarly, if `Shape` had an abstract
+method that `Circle` did not implement, it would only be seen by C++.
 
 Users could address this by declaring the C++ parent as a mixin on the Carbon
 type, and this may generally be desirable, for consistent functionality. That
 would pull C++ `Shape` method declarations over to Carbon. However, that doesn't
-work for C++ classes with abstract methods, per
-[the above caveat](#bookmark=kix.2nvh3xt3blqe).
+work for C++ classes with [abstract methods](#abstract-methods).
 
 Instead, the Carbon compiler should detect this situation. The indicated parent
 class is given, so it should be able to ensure method declarations match.
 
-#### Caveat: Concrete methods on parents
+#### Concrete methods on parents
 
 If the parent has a concrete method definition, note the \$extern chain does
 _not_ result in that method being present on the Carbon-native version of
 `Circle`. For example, `Shape::MakeUnion` is only present on the C++ version of
 `Circle`, not the Carbon version of `Circle`. This is a trade-off to allow use
 of C++ inheritance for interoperability.
-
-### Alternative: Require bridge code for inheritance
-
-Instead of providing parent support in \$extern, we could instead require users
-to write bridge code.
-
-In the `Shape` example, that would require Carbon code:
-
-```carbon
-$extern("Cpp") struct Circle {
-  fn GetArea() -> Float64 { ... };
-}
-```
-
-And bridging C++ code:
-
-```cc
-#include "project/circle.carbon.h"
-
-class CircleWrapper : public Shape {
- public:
-  double GetArea() override { return circle_.GetArea(); }
-
- private:
-  ::Carbon::Circle circle_;
-};
-```
-
-Pros:
-
-- Reduces complexity of the interop layer.
-- Avoids caveats about missing/conflicting method declaration and concrete
-  parent method.
-
-Cons:
-
-- Inheritance is a common operation in C++, so users should be expected to write
-  this bridge code frequently.
-- May cause significant friction for inheritance with multiple parent methods.
 
 ### Implementing Carbon interfaces in C++
 
@@ -286,7 +247,98 @@ fn Draw(var Circle*?: shape);
 fn Draw(var Square*?: shape);
 ```
 
-#### Alternative: Simulate interfaces for C++ types
+### Virtual and Non-Public Inheritance
+
+Virtual inheritance and non-public inheritance from C++ are not made visible in
+Carbon in any way. For virtual inheritance, the type API is flattened into each
+derived type used from Carbon code and conversions are not supported.
+
+## Unions and transparent union members
+
+C/C++ includes both unions and transparent union members within classes. Carbon
+doesn't have unions, creating an incompatibility.
+
+We will expose C/C++ union structs through method-based APIs. If we add a
+similar Carbon feature, we would expect it to similarly be encapsulated by an
+API instead of being directly exposed.
+
+For example, `signal.h` has a union API:
+
+```cc
+union sigval {
+  int sival_int;
+  void *sival_ptr;
+};
+struct sigevent {
+  ...
+  union sigval sigev_value;
+  ...
+};
+```
+
+This will be accessible in Carbon through wrapper getter/setter APIs:
+
+```carbon
+package C;
+
+struct sigval {
+  fn get_sival_int() -> Int64;
+  fn set_sival_int(var Int64: val);
+  fn get_sival_ptr() -> Void*?;
+  fn set_sival_ptr(Void*?);
+
+  // The size of the struct needs to match, but the actual type shouldn't matter.
+  private var Byte[8]: storage;
+};
+struct sigevent {
+  ...
+  sigval sigev_value;
+  ...
+};
+```
+
+## Alternatives
+
+### Require bridge code for inheritance
+
+Instead of providing parent support in \$extern, we could instead require users
+to write bridge code.
+
+In the `Shape` example, that would require Carbon code:
+
+```carbon
+$extern("Cpp") struct Circle {
+  fn GetArea() -> Float64 { ... };
+}
+```
+
+And bridging C++ code:
+
+```cc
+#include "project/circle.carbon.h"
+
+class CircleWrapper : public Shape {
+ public:
+  double GetArea() override { return circle_.GetArea(); }
+
+ private:
+  ::Carbon::Circle circle_;
+};
+```
+
+Pros:
+
+- Reduces complexity of the interop layer.
+- Avoids caveats about missing/conflicting method declaration and concrete
+  parent method.
+
+Cons:
+
+- Inheritance is a common operation in C++, so users should be expected to write
+  this bridge code frequently.
+- May cause significant friction for inheritance with multiple parent methods.
+
+#### Simulate interfaces for C++ types
 
 We could simulate interfaces for all C++ types; for example, by generating a
 `NAME_CppInterface` interface for all classes and structs. This must be done for
@@ -356,53 +408,3 @@ Cons:
   users and cause problems for APIs. For example, `Print(*MakeCircle(radius))`
   would be valid for C++, but not possible through the Carbon wrapper because of
   the `Circle` vs `Circle_CppInterface` difference.
-
-### Virtual and Non-Public Inheritance
-
-Virtual inheritance and non-public inheritance from C++ are not made visible in
-Carbon in any way. For virtual inheritance, the type API is flattened into each
-derived type used from Carbon code and conversions are not supported.
-
-## Unions and transparent union members
-
-C/C++ includes both unions and transparent union members within classes. Carbon
-doesn't have unions, creating an incompatibility.
-
-We will expose C/C++ union structs through method-based APIs. If we add a
-similar Carbon feature, we would expect it to similarly be encapsulated by an
-API instead of being directly exposed.
-
-For example, `signal.h` has a union API:
-
-```cc
-union sigval {
-  int sival_int;
-  void *sival_ptr;
-};
-struct sigevent {
-  ...
-  union sigval sigev_value;
-  ...
-};
-```
-
-This will be accessible in Carbon through wrapper getter/setter APIs:
-
-```carbon
-package C;
-
-struct sigval {
-  fn get_sival_int() -> Int64;
-  fn set_sival_int(var Int64: val);
-  fn get_sival_ptr() -> Void*?;
-  fn set_sival_ptr(Void*?);
-
-  // The size of the struct needs to match, but the actual type shouldn't matter.
-  private var Byte[8]: storage;
-};
-struct sigevent {
-  ...
-  sigval sigev_value;
-  ...
-};
-```

@@ -16,9 +16,11 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
   - [Overloaded C++ operators](#overloaded-c-operators)
   - [Open extension points (ADL-based overload sets)](#open-extension-points-adl-based-overload-sets)
 - [Open questions](#open-questions)
-  - [Exporting eneric functions](#exporting-eneric-functions)
+  - [Exporting generic functions](#exporting-generic-functions)
 
 <!-- tocstop -->
+
+TODO: Need to examine writing of this section, including README.md.
 
 ## Exposing Carbon function patterns as a C++ overload set
 
@@ -81,6 +83,8 @@ sequences. Any ranking or other C++ overload resolution semantics are modeled by
 filtering the pattern set produced, such that there in a specific Carbon
 function pattern set that fully describes the possible resolved call behavior.
 
+TODO: Override for specifying overload?
+
 Note that C++ template functions are perfectly fine and can be translated into
 Carbon template functions to participate in the pattern set. The reason is that
 Carbon is able to instantiate any necessary C++ templates, whereas an existing
@@ -113,7 +117,7 @@ surface extension points into Carbon code.
 
 ## Open questions
 
-### Exporting eneric functions
+### Exporting generic functions
 
 We could likely export generic functions. More investigation should be done for
 the design.

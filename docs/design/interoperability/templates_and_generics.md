@@ -13,8 +13,10 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 - [C++ templates](#c-templates)
 - [Using Carbon generics/templates with C++ types in Carbon code](#using-carbon-genericstemplates-with-c-types-in-carbon-code)
 - [Using Carbon templates from C++](#using-carbon-templates-from-c)
-  - [Alternative: Require bridge code](#alternative-require-bridge-code)
 - [Using Carbon generics from C++](#using-carbon-generics-from-c)
+  - [Require bridge code](#require-bridge-code)
+- [Alternatives](#alternatives)
+  - [Translate templates to other languages](#translate-templates-to-other-languages)
 
 <!-- tocstop -->
 
@@ -51,7 +53,8 @@ instantiated within C++ against a C++-visible API for a given Carbon type.
 
 Any C++ type can be used as a type parameter in Carbon. However, it will be
 interpreted as Carbon code; for example, if there are any requirements for
-Carbon interfaces, [bridge code will be required](#bookmark=kix.8fx2t4lplthb).
+Carbon interfaces,
+[bridge code will be required](user_defined_types.md#implementing-carbon-interfaces-in-c).
 
 ## Using Carbon templates from C++
 
@@ -60,20 +63,6 @@ the template then insert the results into Clang's AST for expansion.
 
 This assumes low-level modifications to LLVM. We acknowledge this would be
 necessary, and may gate such a feature.
-
-### Alternative: Require bridge code
-
-We could require bridge code that explicitly instantiates versions of the
-template for use with C++ types.
-
-Pros:
-
-- Avoids modifications to Clang.
-
-Cons:
-
-- Requires extra code to use templates from C++, making it harder to migrate
-  code to Carbon.
 
 ## Using Carbon generics from C++
 
@@ -94,3 +83,27 @@ We could have C++ code that uses the template wrapper to use the generic:
 CppType y;
 ::Carbon::TemplateAPI(&y);
 ```
+
+### Require bridge code
+
+We could require bridge code that explicitly instantiates versions of the
+template for use with C++ types.
+
+Pros:
+
+- Avoids modifications to Clang.
+
+Cons:
+
+- Requires extra code to use templates from C++, making it harder to migrate
+  code to Carbon.
+
+## Alternatives
+
+### Translate templates to other languages
+
+Instead of hooking into the compiler to instantiate templates, we could instead
+translate the implementation of a template to the other language, then compile
+it as normal.
+
+TODO: Flesh out alternative
