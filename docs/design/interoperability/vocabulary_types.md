@@ -10,42 +10,16 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 <!-- toc -->
 
-- [Non-owning value types](#non-owning-value-types)
 - [Non-owning references and pointers](#non-owning-references-and-pointers)
   - [Slice special-casing](#slice-special-casing)
   - [Mapping similar built-in types](#mapping-similar-built-in-types)
+- [Non-owning value types](#non-owning-value-types)
 - [Ownership transfer types](#ownership-transfer-types)
 - [Copying vocabulary types](#copying-vocabulary-types)
 - [Alternatives](#alternatives)
   - [Bind tightly to particular C++ libraries](#bind-tightly-to-particular-c-libraries)
 
 <!-- tocstop -->
-
-## Non-owning value types
-
-These are some of the most important types to have direct support for in Carbon
-because they are complex and opaque C++ types that are expected to come at zero
-runtime cost and refer back to data that will remain managed by C/C++ code. As
-such, Carbon prioritizes direct mappings for the most important of these types
-at no cost.
-
-The primary idiom from C++ that Carbon attempts to directly support are types
-which represent contiguous data in memory. The dominant case here is
-`std::span<T>`, but there are a wide variety of similar vocabulary types. Here,
-Carbon directly maps these types to a slice type: `T[]`. These types in Carbon
-have the same core semantics and can be trivially built from any
-pointer-and-size formulation.
-
-There is an important special case: `std::string_view` and similar views into
-C++ string data. It is an open question in Carbon whether there is a dedicated
-`StringSlice` type or instead it simply uses a direct slice of the underlying
-`CodeUnit` or `Char` type. Whatever is the canonical vocabulary used to convey a
-slice of a Carbon `String` should also be used as the idiomatic mapping for
-`std::string_view`.
-
-Other non-owning value types will get automatic mappings as a use case is
-understood to be sufficiently important. We expect the vast majority of
-performance critical mappings to end up devolving to slices.
 
 ## Non-owning references and pointers
 
@@ -54,8 +28,8 @@ C and C++ and have the same critical performance requirements as value types.
 Mapping them into Carbon is simple because they have limited and well-known
 semantics. By default, these are both mapped to pointers in Carbon:
 
-- References map to non-null pointers, or `T*`.
-- C++ pointers map to nullable pointers, or `T*?`.
+- C++ references map to Carbon non-null pointers, or `T*`.
+- C++ pointers map to Carbon nullable pointers, or `T*?`.
 
 For example, given a C++ API:
 
@@ -101,7 +75,7 @@ may not integrate with generic Carbon code written against those idioms, or vice
 versa.
 
 For sufficiently widely used C++ types, Carbon will provide non-owning wrappers
-(preferably using generics) that map between the relevant idioms. This will be a
+that map between the relevant idioms, preferably using generics. This will be a
 Carbon wrapper to map from a C++ data type like `std::map` into a Carbon
 idiomatic interface, or a C++ wrapper to map from a Carbon data type to the C++
 idiomatic interface.
@@ -109,6 +83,32 @@ idiomatic interface.
 The result is that Carbon data structures and vocabulary types should be no more
 foreign in C++ code than Boost or other framework libraries that carefully
 adhere to C++ idioms, and similarly C++ types in Carbon code.
+
+## Non-owning value types
+
+These are some of the most important types to have direct support for in Carbon
+because they are complex and opaque C++ types that are expected to come at zero
+runtime cost and refer back to data that will remain managed by C/C++ code. As
+such, Carbon prioritizes direct mappings for the most important of these types
+at no cost.
+
+The primary idiom from C++ that Carbon attempts to directly support are types
+which represent contiguous data in memory. The dominant case here is
+`std::span<T>`, but there are a wide variety of similar vocabulary types. Here,
+Carbon directly maps these types to a slice type: `T[]`. These types in Carbon
+have the same core semantics and can be trivially built from any
+pointer-and-size formulation.
+
+There is an important special case: `std::string_view` and similar views into
+C++ string data. It is an open question in Carbon whether there is a dedicated
+`StringSlice` type or instead it simply uses a direct slice of the underlying
+`CodeUnit` or `Char` type. Whatever is the canonical vocabulary used to convey a
+slice of a Carbon `String` should also be used as the idiomatic mapping for
+`std::string_view`.
+
+Other non-owning value types will get automatic mappings as a use case is
+understood to be sufficiently important. We expect the vast majority of
+performance critical mappings to end up devolving to slices.
 
 ## Ownership transfer types
 
@@ -155,10 +155,10 @@ the non-owning wrappers described previously.
 ## Copying vocabulary types
 
 When a vocabulary type crosses between C++ and Carbon and copying is supported,
-we can in almost all cases completely convert common data structures and
-vocabulary types between the languages. The data is being copied anyways and so
-any necessary changes to the representation and layout are unlikely to be an
-unacceptable overhead.
+such as `std::vector<T>`, we can in almost all cases completely convert common
+data structures and vocabulary types between the languages. The data is being
+copied anyways and so any necessary changes to the representation and layout are
+unlikely to be an unacceptable overhead.
 
 This strategy should be available for essentially all containers and copiable
 vocabulary types in the C++ STL, Abseil, and any other sufficiently widely used

@@ -226,7 +226,20 @@ TODO: Mention interfaces in overview
 
 > References: [Vocabulary types](vocabulary_types.md).
 
-TODO: Write overview
+There are several cases of vocabulary types that are important to consider:
+
+- Non-owning types passed by reference or pointer, such as `std::vector<T> &`.
+  - C++ references map to Carbon non-null pointers, or `T*`.
+  - C++ pointers map to Carbon nullable pointers, or `T*?`.
+- Non-owning types passed by value, such as `std::string_view` or `std::span`.
+  - We copy these to Carbon types with similar semantics. These should have
+    trivial construction costs.
+- Owning types signaling a move of ownership, such as `std::unique_ptr` or
+  `std::vector<T> &&`.
+  - We will try to transfer ownership to a Carbon type where possible, but may
+    need to copy to the Carbon type in complex cases.
+- Owning types signaling a copy of data, such as `std::vector<T>`.
+  - Copying overhead should be expected and normal, even for a Carbon type.
 
 ### Enums
 
