@@ -3760,16 +3760,34 @@ void RewriteInstance::updateELFSymbolTable(
   std::vector<ELFSymTy> Symbols;
 
   // Add extra symbols for the function.
+  //
+  // Note that addExtraSymbols() could be called multiple times for the same
+  // function with different FunctionSymbol matching the main function entry
+  // point.
   auto addExtraSymbols = [&](const BinaryFunction &Function,
                              const ELFSymTy &FunctionSymbol) {
     if (Function.isPatched()) {
       Function.forEachEntryPoint([&](uint64_t Offset, const MCSymbol *Symbol) {
         ELFSymTy OrgSymbol = FunctionSymbol;
         SmallVector<char, 256> Buf;
-        OrgSymbol.st_name = AddToStrTab(
-            Twine(Symbol->getName()).concat(".org.0").toStringRef(Buf));
+        if (!Offset) {
+          // Use the original function symbol name. This guarantees that the
+          // name will be unique.
+          OrgSymbol.st_name = AddToStrTab(
+              Twine(cantFail(FunctionSymbol.getName(StringSection)))
+                .concat(".org.0").
+                toStringRef(Buf));
+          OrgSymbol.st_size = Function.getSize();
+        } else {
+          // It's unlikely that multiple functions with secondary entries will
+          // get folded/merged. However, in case this happens, we force local
+          // symbol visibility for secondary entries.
+          OrgSymbol.st_name = AddToStrTab(
+              Twine(Symbol->getName()).concat(".org.0").toStringRef(Buf));
+          OrgSymbol.setBindingAndType(ELF::STB_LOCAL, ELF::STT_FUNC);
+          OrgSymbol.st_size = 0;
+        }
         OrgSymbol.st_value = Function.getAddress() + Offset;
-        OrgSymbol.st_size = Offset ? 0 : Function.getSize();
         OrgSymbol.st_shndx =
           NewSectionIndex[Function.getSection().getSectionRef().getIndex()];
         Symbols.emplace_back(OrgSymbol);
