@@ -56,7 +56,7 @@ Every change to Carbon's repositories requires code review. Even formal
 [evolution decisions](evolution.md) which have been approved should have their
 specific changes to the repository reviewed.
 
-The term "code review" in the Carbon project is about more than just "code". We
+The term "code review" in the Carbon project is not only about "code". We
 expect changes to any files to be reviwed, including documentation and any other
 material stored in the repository.
 
@@ -67,7 +67,7 @@ experimental or prototype directions whose design is under active consideration.
 
 ## Who should review?
 
-Anyone should feel free to review Carbon changes. Even providing small or
+Everyone should feel free to review Carbon changes. Even providing small or
 partial review can be a good way to start contributing to Carbon. Contributors
 with specific domain expertise or familiarity should also try to provide review
 on changes touching relevant parts of the project.
@@ -90,7 +90,7 @@ Carbon uses GitHub pull requests for code review, and we recommend some
 mechanical best practices to most effectively navigate them.
 
 - When reviewing, don't just comment in the pull request conversation.
-  - Go te the `Files Changed` tab
+  - Go to the `Files Changed` tab.
   - Make any in-file comments needed, but add them to a pending review rather
     than sending them directly.
   - Finish the review and add any top-level review comments there.
@@ -121,16 +121,15 @@ early on:
    Typically they should at least be a code owner, and may usefully be a member
    of the [core team](groups.md#core-team).
 
-2. Ask the specific question in a broader forum (Discord Chat, Discourse Forums,
-   or during a meeting) in order to get a broad set of perspectives on a
+2. Ask the specific question in a broader forum, such as Discord Chat, in order to get a broad set of perspectives on a
    particular area or issue.
 
-The goal of these steps isn't to override the author or the reviewer but to get
+The goal of these steps isn't to override the author or the reviewer, but to get
 more perspectives and voices involved. Often this will clarify the issue and
-tradeoff and provide a simple resolution that all parties are happy with.
+its tradeoffs, and provide a simple resolution that all parties are happy with.
 However, in some cases, the underlying conflict isn't actually addressed. While
 there is a desire to generally bias towards the direction of the code owners
-during reviews, they should _not_ turn into a voting process. The reason for
+during reviews, reviews should _not_ turn into a voting process. The reason for
 proceeding in a specific direction should always be explained sufficiently that
 all parties on the review are comfortable with that direction.
 
@@ -191,7 +190,7 @@ provide context for the reviewer:
 - Any alternatives considered or attempted
 - Relevant supporting data such as examples or benchmarks
 
-Try to anticipate both what information the reviewer of your change will need to
+Try to anticipate what information the reviewer of your change will need to
 have in order to be effective. Also consider what information someone else will
 need a year in the future when doing archaeology on the codebase and they come
 across your change without any context.
@@ -239,10 +238,10 @@ may be helpful to explain your reasoning to the reviewer so they understand
 better why the optional suggestion didn't make sense to you.
 
 Sometimes optional comments center around slight differences or preferences
-around the code. Consider that the reviewer may be a better proxy for future
-readers than you are. If the suggestion is no better or no worse than your
+around the code. Consider that the reviewer may be a good proxy for future
+readers. If the suggestion is no better or no worse than your
 original code, consider adopting it as it may make the code easier to read for
-your reviewer at least. But if you feel the current choice is _better_ (even if
+others. But if you feel the current choice is _better_ (even if
 minorly), stand up for yourself and keep it. The reviewer can always push for a
 change and justify it if needed.
 
@@ -252,13 +251,13 @@ Some comments in code review will be questions or confusion as the reviewer
 tries to understand the code in question or why a particular approach was used.
 **Don't assume that questions are a request for a change.** Reviewers should be
 explicit if they think a change is needed rather than merely asking questions.
-You should assume a question or confusion is just that -- something which needs
+You should assume a question or confusion is something which only needs
 to be clarified.
 
 When addressing a question or confusion, you should focus your response on
 _changing the code_ in question to provide the necessary comments or clarity.
 The reviewer is unlikely to be the last person to have these questions or to
-become confused. You should use this as signal for what to clarify. Once done,
+become confused. You should use this as a signal for what to clarify. Once done,
 the review response should typically focus on verifying that the clarifications
 made in the code are sufficient for the reviewer.
 
@@ -266,7 +265,7 @@ made in the code are sufficient for the reviewer.
 
 At times, review comments may be confusing or frustrating for you. While this is
 something we always want reviewers to minimize, it will still happen at some
-times and to some degree. When this happens, it helps to remember that the goal
+times and to some degree. It helps to remember that the goal
 of the review is to ensure the change results in the project improving over
 time.
 
@@ -297,21 +296,21 @@ about the issue to arrive at the conclusion. Try not to make assumptions about
 what the reviewer knows or why they made the comment. Instead, focus on
 surfacing explicitly your perspective on the issue.
 
-These part of a review will often be a discussion and may need to iterate a few
+These parts of a review will often be a discussion and may need to iterate a few
 times. That isn't intrinsically bad, but try to make sure that it doesn't result
 in reiterating positions or repeating things. Make sure the discussion is
 _progressing_ towards deeper understanding and recognize when you reach an
 impasse or conflict and shift strategy to
 [resolve that](#resolving-an-impasse-or-conflict). It is also useful to avoid
 long delays between these iterations. Try hopping into a real-time chat or a
-video chat where useful to avoid too mayn multi-hour (or potentially day) round
-trips as that can delay reviews significantly.
+video chat where useful to avoid too many multi-hour -- or multi-day -- round
+trips, as that can delay reviews significantly.
 
 ## Code reviewer guide
 
 The specific goal for a particular review should always be to ensure that the
-overal health of the code, repository, and/or project improves over time. This
-requires that contributions _make progress_ -- otherwise nothing can improve.
+overall health of the code, repository, and/or project improves over time. This
+requires that contributions _make progress_ -- otherwise, nothing can improve.
 However, the review should ensure that quality of changes does not cause the
 health of the project to decrease over time.
 
@@ -333,7 +332,7 @@ to do so in a timely fashion. One of the first things to consider with large
 changes is whether it can be split apart into smaller changes that are easier to
 review promptly.
 
-However, this timeliness guidedance doesn't apply to higher-level review such as
+This timeliness guidance doesn't apply to higher-level review such as
 the [evolution process](evolution.md). Evaluating those types of proposals will
 often require a larger time investment and have their own timelines spelled out
 in the process. Here, we are talking about simply reviewing changes themselves
@@ -396,12 +395,12 @@ the change and are simply helping out with review feedback, make that explicit
 as well. For example, say that "my comments are addressed, but leaving the final
 review to others" to clearly indicate that you're happy but are deferring the
 decision to others. If you are a code owner and deferring to someone else, it is
-essential to suggest specific other reviewers. Otherwise we risk all the code
+essential to suggest specific other reviewers. Otherwise, we risk all the code
 owners assuming another is going to approve the change.
 
 An important technique to make progress, especially with different working hours
 and timezones, is to approve changes even with outstanding comments. For
-example, if the comments you have are straight forward and have unambiguous
+example, if the comments you have are straightforward and have unambiguous
 fixes or suggested edits, you should give an LGTM with those comments addressed.
 The author can always come back to you if they have questions, and we can always
 revert changes if the resolution for some reason diverges wildly from your
