@@ -152,7 +152,7 @@ build time.
 #### Caveats
 
 We cannot prevent errors from being ignored if they are conveyed via a
-nonstandard mechanism (e.g. `errno`).
+custom mechanism (e.g. `errno`).
 
 ### Error propagation must be straightforward
 
@@ -194,7 +194,7 @@ requires only local knowledge. For example, any layer of the stack can respond
 to an out-of-memory error by e.g. releasing any unused caches. Similarly, any
 layer of the stack can respond to thread cancellation by ceasing any new
 computational work and propagating the signal _even if_ it could otherwise
-continue despite a failiure at that point.
+continue despite a failure at that point.
 
 However, such cases are caught between the horns of a dilemma: any error that's
 universal enough to be meaningful across arbitrary levels of the call stack is
