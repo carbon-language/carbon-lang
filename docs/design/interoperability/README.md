@@ -38,7 +38,7 @@ influence the design of Carbon itself.
 ## Goals
 
 The goals of Carbon's interoperability layer are heavily influenced by the
-language-level goals for Carbon and C++ at Google. Notably, we prioritize
+[language-level goals](/docs/project/goals.md). Notably, we prioritize
 performance, and making any performance overhead visible and opt-in.
 
 Goals:
@@ -70,6 +70,8 @@ Non-goals:
   that support.
   - We may target C++17, and not keep adding interoperability support for later
     C++ features.
+    - There may be interest in supporting some C++20 features, particularly
+      modules. However, exhaustive support should not be assumed.
   - For example, we might not prioritize support for non-idiomatic "modern"
     code, interfaces, or patterns outside of those in widespread open source
     libraries and used by key contributors.
@@ -129,7 +131,8 @@ of wrappers manageable.
 
 ## Interoperability Syntax Elements
 
-> References: [Name mapping](name_mapping.md).
+> References: [Name mapping](name_mapping.md) and
+> [user defined types](user_defined_types.md).
 
 This document uses currently unique Carbon syntax elements to indicate
 interoperability requirements which have not received any discussion. These
@@ -145,15 +148,19 @@ Notable elements are:
   some point in the future.
   - This should have `namespace` and `name` parameters, to allow for easy
     migration of C++ APIs to Carbon.
-  - This should have a `parent` parameter, to allow for setting C++ parents on
-    externalized Carbon structs.
+  - This should have a `parent` parameter, to allow for setting C++ parent
+    classes on externalized Carbon structs.
 - `import Cpp "<path>"`: Imports API calls from a C++-style #include path.
+
+We use the name `Cpp` because `import` needs a valid identifier.
 
 ## Details
 
 ### Name mapping
 
 > References: [Name mapping](name_mapping.md).
+>
+> TODO: Add a reference for incomplete types.
 
 C/C++ names are mapped into the `Cpp` Carbon package. C++ namespaces work the
 same fundamental way as Carbon namespaces within the `Cpp` package name. Dotted
@@ -228,7 +235,7 @@ TODO: Mention interfaces in overview
 
 There are several cases of vocabulary types that are important to consider:
 
-- Non-owning types passed by reference or pointer, such as `std::vector<T> &`.
+- Non-owning types passed by reference or pointer, such as `std::vector<T> &&`.
   - C++ references map to Carbon non-null pointers, or `T*`.
   - C++ pointers map to Carbon nullable pointers, or `T*?`.
 - Non-owning types passed by value, such as `std::string_view` or `std::span`.

@@ -73,14 +73,15 @@ fn TestStartup() {
 ### 2. Migrate the API to Carbon
 
 This change must modify both the C++ and Carbon implementations in one change.
-However, callers should not need to be modified, keeping this change local. By
-including the generated
+However, callers should not need to be modified, keeping this change local.
 
 An extern may optionally be added to leave a stub call for C++ users, as in this
 example. Carbon imports of C++ will also be able to use this, essentially
-resulting in Carbon calling through C++ to call the migrated Carbon code. If all
-C++ callers are being migrated to Carbon atomically in this change, it is not
-necessary.
+resulting in Carbon calling through C++ to call the migrated Carbon code. By
+including the generated `startserver.carbon.h`, callers will transparently
+switch to the Carbon-externed `StartServer` symbol without per-caller code
+changes. If all C++ callers are being migrated to Carbon atomically in this
+change, it is not necessary.
 
 In this example, `main.cc` doesn't need to change yet because it transparently
 uses the `$extern` provided by the Carbon StartServer library.

@@ -21,6 +21,10 @@ enum semantics.
 
 ## C/C++ enums in Carbon
 
+C++ enums will generally translate naturally to Carbon, whether using `enum` or
+`enum class`. Attributes may be used if renaming is desired to reach
+conventional Carbon naming.
+
 Given a C++ enum:
 
 ```cc
@@ -84,7 +88,9 @@ enum(Byte) Direction {
 
 ## Carbon enums in C/C++
 
-Given an enum:
+Carbon enums should be expected to translate to `enum class`.
+
+For example, given a C++ enum:
 
 ```carbon
 $extern("Cpp") enum Direction {
@@ -95,8 +101,7 @@ $extern("Cpp") enum Direction {
 }
 ```
 
-Because Carbon automatically groups enums, we would expect to generate
-equivalent C++ code:
+We would expect to generate equivalent C++ code:
 
 ```cc
 enum class Direction {
