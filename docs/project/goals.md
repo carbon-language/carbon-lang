@@ -83,12 +83,12 @@ process, and policy for how we will recognize and correct it.
 
 **An open, inclusive process for Carbon changes.** The community needs to be
 able to effectively engage in the direction and evolution of the project and
-language while the process remains efficient and effective. That means we need
+language, while keeping the process efficient and effective. That means we need
 an open, inclusive process where everyone feels comfortable participating.
 Community members should understand how and why decisions are made, and have the
 ability to both influence them before they occur and give feedback afterward. We
 want to use this process to also ensure we stick to our language priorities and
-have clear rationale for all of our technical designs and decisions.
+have clear rationales for all of our technical designs and decisions.
 
 **Being inclusive is different from including everyone.** We want to avoid
 excluding or marginalizing members of the community. However, we expect to
@@ -102,8 +102,8 @@ rule.
 Programming languages do not succeed in a vacuum. The Carbon project cannot
 merely _design_ a language in order to succeed, it must tackle the full
 ecosystem of tooling that makes programmers effective using the language. This
-includes both necessary tools, such as a compiler and standard library, as well
-as a broad range of other tools that enable programmers to be more effective,
+includes not only a compiler and standard library, but also
+a broad range of other tools that enable programmers to be more effective,
 efficient, or productive. There are several key examples of key tools or
 ecosystem components that we have as concrete goals for the Carbon project.
 
@@ -180,7 +180,7 @@ understanding of both the nature and motivation of these goals.
 All software consumes resources: time, memory, compute, power, binary size, and
 so on. In many cases, raw resource usage is not the biggest concern. Instead,
 algorithmic efficiency or business logic dominates these concerns. However,
-there exists software where the rate of resource consumption—its performance—is
+there exists software where its rate of resource consumption—its performance—is
 critical to its successful operation. Another way to think about when
 performance is critical: would a performance regression be considered a bug for
 users? Would it even be noticed?
@@ -204,9 +204,9 @@ that performance, whether good or bad, is unsurprising to users of the Carbon
 language. Even pleasant surprises, when too frequent, can become a problem due
 to establishing brittle baseline performance that cannot be reliably sustained.
 
-**Leave no room for a lower level language.** Whether to gain control over
-performance problems or to gain access to hardware facilities, programmers
-should not need to leave the rules and structure of Carbon.
+**Leave no room for a lower level language.** Programmers should not need to leave
+the rules and structure of Carbon, whether to gain control over performance problems or
+to gain access to hardware facilities.
 
 #### Both software and language evolution
 
@@ -267,7 +267,7 @@ Carbon design.
 
 While this is perhaps the least unique among programming languages of the goals
 we list here, we feel it is important to state it, explain all of what we mean
-by this, and fit it into our prioritization scheme.
+by it, and fit it into our prioritization scheme.
 
 Software, especially at scale and over time, already imposes a burden on
 engineers due to its complexity. Carbon should strive for simplicity to reduce
@@ -285,7 +285,7 @@ in that order.
 **Excellent ergonomics.** Human capabilities and limitations in the domains of
 perception, memory, reasoning, and decision-making affect interactions between
 humans and systems. Ergonomic language design takes human factors into account
-to increase productivity and comfort, reduces errors and fatigue, making Carbon
+to increase productivity and comfort, and reduce errors and fatigue, making Carbon
 more suitable for humans to use. We can also say that ergonomic designs are
 accessible to humans. "Readability" is a related, but a more focused concept,
 connected to only the process of reading code. "Ergonomics" covers all
@@ -311,10 +311,9 @@ Carbon. A few examples:
   consistently avoid making mistakes for an extended amount of time.
 
 **Support tooling at every layer of the developer experience, including IDEs.**
-The design and implementation of Carbon should facilitate both the ease of
-producing such tools and their effectiveness. Syntax and textual structures that
-are difficult to recognize and mechanically change without losing meaning should
-be avoided.
+The design and implementation of Carbon should make it easy to create such tools and
+make them effective. Carbon should avoid syntax and textual structures that are
+difficult to recognize and mechanically change without losing meaning.
 
 **Support software outside of the primary use cases well.** There are
 surprisingly high costs for engineers to switch languages. Even when the primary
@@ -335,8 +334,8 @@ differently, we will not always be able to prevent engineers from writing bad or
 unnecessarily complex code, and that is okay. We should instead focus on helping
 reduce the rate that this occurs accidentally, and enabling tooling and
 diagnostics that warn about dangerous or surprising patterns. The language
-should stay out of the business of legislating bad code patterns except where it
-affects detecting logic or performance errors.
+should stay out of the business of legislating bad code patterns except where they
+interfere with detecting logic or performance errors.
 
 **The behavior and semantics of code should be clearly and simply specified
 whenever possible.** Leaving behavior undefined in some cases for invalid,
@@ -373,7 +372,7 @@ checking and a strong testing methodology ranging from unit tests through
 integration and system tests all the way to coverage-directed fuzz testing. We
 have specific criteria that are important for this strategy to be successful:
 
-**Make unsafe or risky aspects of an operation, interface, or type explicit and
+**Make unsafe or risky aspects of Carbon code explicit and
 syntactically visible.** This will allow the software to use the precise
 flexibility needed and to minimize its exposure, while still aiding the reader.
 It can also help the reader more by indicating the specific nature of risk faced
@@ -408,7 +407,7 @@ be fast and scalable. Raw speed is essential for small projects and local
 development. Scalability is necessary to address the large software systems we
 currently use.
 
-**Syntax should parse with bounded, small look-ahead.** Using syntax that
+**Syntax should parse with bounded, small look-ahead.** Syntax that
 requires unbounded look-ahead or fully general backtracking adds significant
 complexity to parsing and makes it harder to provide high quality error
 messages. The result is both slower iteration and more iterations, a
@@ -440,8 +439,7 @@ runs. A non-exhaustive list of platforms we believe should be prioritized:
 - macOS, iOS, watchOS, tvOS
 - Fuchsia
 - WebAssembly
-- OS/kernel
-- Bare-metal
+- Bare metal
 
 Similarly, we should prioritize support for 64-bit little-endian hardware,
 including:
@@ -536,7 +534,7 @@ write it naturally in Carbon.
 **Possible to mechanically source-to-source migrate large segments of
 large-scale idiomatic C++ code bases with high fidelity.** We will prioritize
 having very low, under 2%, human interaction to achieve high fidelity migration
-results. It does not require all C++ code to be migratable in this fashion, and
+results. We do not require all C++ code to be migratable in this fashion, and
 the resulting Carbon may be non-idiomatic. We can add reasonable constraints
 here if those constraints are already well established best practices for C++
 development, including design patterns, testing coverage, or usage of
@@ -589,8 +587,8 @@ upgrades require active migrations.
 #### Legacy compiled libraries without source code or ability to rebuild
 
 We consider it a non-goal to support legacy code for which the source code is no
-longer available, though we do sympathize with such use cases and would like to
-see tooling mentioned above allow easier bridging between ABIs in these cases.
+longer available, though we do sympathize with such use cases and would like the
+tooling mentioned above to allow easier bridging between ABIs in these cases.
 Similarly, plugin ABIs aren’t our particular concern, yet we’re interested in
 seeing tooling which can help bridge between programs and plugins which use
 different ABIs.
