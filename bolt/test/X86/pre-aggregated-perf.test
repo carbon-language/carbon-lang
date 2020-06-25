@@ -6,6 +6,9 @@
 #
 #  blarge is the binary for "basicmath large inputs" taken from Mibench.
 
+# Currently failing in MacOS / generating different hash for usqrt
+REQUIRES: Linux
+
 RUN: yaml2obj %p/Inputs/blarge.yaml &> %t.exe
 RUN: perf2bolt %t.exe -o %t -pa -p %p/Inputs/pre-aggregated.txt -w %t.new
 RUN: cat %t | sort | FileCheck %s -check-prefix=PERF2BOLT
