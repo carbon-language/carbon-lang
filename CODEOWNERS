@@ -1,11 +1,11 @@
 # Global owners.
-* @chandlerc @jonmeow @zygoloid
+*           @carbon-language/admin-team
 
-# Owners for the the language and project documentation.
-/docs/ @carbon-language/core-team @jonmeow
+# The core team owns the core language and project documentation.
+/docs/      @carbon-language/core-team
 
-# Owners for the proposals.
+# The review managers own updates to the proposals.
 /proposals/ @carbon-language/review-managers
 
-# Owners for the website and related utilities.
-/src/ @jonmeow
+# This directory contains infrastructure and support scripts
+/src/       @carbon-language/infra-team
