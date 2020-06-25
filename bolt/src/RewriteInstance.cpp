@@ -403,8 +403,11 @@ bool isHotTextMover(const BinaryFunction &Function) {
   return false;
 }
 
-/// Return true if we can process the binary without processing all functions.
+/// Return true if we should process all functions in the binary.
 bool processAllFunctions() {
+  if (opts::AggregateOnly)
+    return false;
+
   if (UseOldText || StrictMode)
     return true;
 
