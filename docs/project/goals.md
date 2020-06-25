@@ -21,7 +21,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     - [Code that is easy to read, understand, and write](#code-that-is-easy-to-read-understand-and-write)
     - [Practical safety guarantees and testing mechanisms](#practical-safety-guarantees-and-testing-mechanisms)
     - [Fast and scalable development](#fast-and-scalable-development)
-    - [Modern hardware architectures, OS platforms, and environments](#modern-hardware-architectures-os-platforms-and-environments)
+    - [Modern OS platforms, hardware architectures, and environments](#modern-os-platforms-hardware-architectures-and-environments)
     - [Interoperability with and migration from existing C++ code](#interoperability-with-and-migration-from-existing-c-code)
   - [Non-goals](#non-goals)
     - [Stable language and library ABI](#stable-language-and-library-abi)
@@ -147,7 +147,7 @@ We believe Carbon must support:
 3.  Code that is easy to read, understand, and write.
 4.  Practical safety guarantees and testing mechanisms.
 5.  Fast and scalable development.
-6.  Modern hardware architectures, OS platforms, and environments.
+6.  Modern OS platforms, hardware architectures, and environments.
 7.  Interoperability with and migration from existing C++ code.
 
 The first six of these represent our fundamental goals for the software we want
@@ -417,53 +417,21 @@ to provide fast programmer iteration as the codebase scales up.
 We cannot assume coarse-grained compilation without blocking fundamental
 scalability options for build systems of large software.
 
-#### Modern hardware architectures, OS platforms, and environments
+#### Modern OS platforms, hardware architectures, and environments
 
 Carbon must have strong support for all of the major, modern platforms, the
 hardware architectures they run on, and the environments in which their software
 runs. This can be expected to evolve over time as which platforms are major and
 modern changes.
 
-A non-exhaustive list of software platforms that we believe should be
-prioritized is:
+Conversely, we do not need to prioritize support for historical platforms. To
+use a hockey metaphor, Carbon should not skate to where the puck is, much less
+where the puck was twenty years ago. We have existing systems to support those
+platforms where necessary. Instead, Carbon should be forward-leaning in its
+platform support.
 
-- Linux
-- Android
-- Windows
-- macOS, iOS, watchOS, tvOS
-- Fuchsia
-- WebAssembly
-- Bare metal
-
-Similarly, we should prioritize support for 64-bit little-endian hardware
-platforms, including:
-
-- x86-64
-- AArch64, also known as ARM 64-bit
-- PPC64LE, also known as ISA, 64-bit, Little Endian
-- RV64I, also known as RISC-V 64-bit
-
-We believe Carbon should strive to support some GPUs, other restricted
-computational hardware and environments, and embedded environments, although
-likely not all historical platforms of this form. While this should absolutely
-include future and emerging hardware and platforms, those shouldn't
-disproportionately shape the fundamental library and language design—they remain
-relatively new and narrow in user base at least initially.
-
-We do not need to prioritize support for historical platforms. To use a hockey
-metaphor, Carbon should not skate to where the puck is, much less where the puck
-was twenty years ago. We have existing systems to support those platforms where
-necessary. Instead, Carbon should be forward-leaning in its platform support. To
-give a non-exhaustive list of example, we should not prioritize support for:
-
-- Byte sizes other than 8-bits, or non-power-of-two word sizes.
-- Source code encodings other than UTF-8.
-- Big- or mixed-endian, at least for computation; accessing encoded data remains
-  useful.
-- Non-2's-complement integer formats.
-- Non-IEEE 754 floating point format as default floating point types.
-- Source code in file systems that don’t support file extensions or nested
-  directories.
+For examples, please see the
+[metrics principle](principles/metrics.md#modern-os-platforms-hardware-architectures-and-environments).
 
 #### Interoperability with and migration from existing C++ code
 
@@ -594,7 +562,8 @@ health.
 
 ### Principles
 
-We have [principles](principles/README.md) that further clarify these goals.
+[Principles](principles/README.md) are provided to clarify these goals.
+Principles clarify, but do not supersede, goals and priorities.
 
 ## Prioritization beyond goals
 
