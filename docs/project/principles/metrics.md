@@ -23,10 +23,10 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 Carbon's goals set a high-level path for where Carbon should head. However,
 given priorities, it's not always clear how specific features or details may end
-up being prioritized.
+up being evaluated.
 
 In order to add some clarity to how we interpret Carbon's goals, we present
-these metrics to define some key outcomes corresponding to the goals.
+these metrics to provide some key outcomes for each goal.
 
 ## Applications of these principles
 
