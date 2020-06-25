@@ -38,38 +38,40 @@ const updateTriageAccess = async () => {
   // Load org members.
   var orgMembers = {};
   try {
-    const ret = await octokit.orgs.listMembers({ org: org });
-    for (var i = 0; i < ret.data.length; ++i) {
-      orgMembers[ret.data[i].id] = ret.data[i].login;
+    const ret = await octokit.paginate(octokit.orgs.listMembers, { org: org });
+    for (var i = 0; i < ret.length; ++i) {
+      if (ignore.indexOf(ret[i].login) >= 0) continue;
+      orgMembers[ret[i].id] = ret[i].login;
     }
   } catch (error) {
     console.log(`org.listMembers failed: ${error}`);
     return;
   }
+  console.log(
+    `${org} has ${Object.keys(orgMembers).length} members, excluding ${
+      ignore.length
+    } ignored.`
+  );
 
   // Load team members.
   var teamMembers = new Set();
   try {
-    const ret = await octokit.teams.listMembersInOrg({
+    const ret = await octokit.paginate(octokit.teams.listMembersInOrg, {
       org: org,
       team_slug: team,
     });
-    for (var i = 0; i < ret.data.length; ++i) {
-      teamMembers[ret.data[i].id] = ret.data[i].login;
+    for (var i = 0; i < ret.length; ++i) {
+      teamMembers[ret[i].id] = ret[i].login;
     }
   } catch (error) {
     console.log(`teams.listMembersInOrg failed: ${error}`);
     return;
   }
+  console.log(`${team} has ${Object.keys(teamMembers).length} members.`);
 
   // Copy members from the org to the team.
   for (const member in orgMembers) {
-    if (
-      teamMembers.hasOwnProperty(member) ||
-      ignore.indexOf(orgMembers[member]) >= 0
-    ) {
-      continue;
-    }
+    if (teamMembers.hasOwnProperty(member)) continue;
     console.log(`Adding ${orgMembers[member]}`);
     octokit.teams.addOrUpdateMembershipForUserInOrg({
       org: org,
