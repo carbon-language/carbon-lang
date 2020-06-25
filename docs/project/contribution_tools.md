@@ -14,6 +14,7 @@ contributions.
 <!-- toc -->
 
 - [pre-commit](#pre-commit)
+- [codespell](#codespell)
 - [markdown-toc](#markdown-toc)
 - [Prettier](#prettier)
   - [vim-prettier](#vim-prettier)
@@ -41,6 +42,15 @@ To set up pre-commit:
 When modifying or adding pre-commit hooks, please run
 `pre-commit run --all-files` to see what changes.
 
+## codespell
+
+> **pre-commit enabled**: If you're using pre-commit, it will run this.
+> Installing and running manually is optional, but may be helpful.
+
+We use [codespell](https://github.com/codespell-project/codespell) to spellcheck
+common errors. This won't catch every error; we're trying to balance true and
+false positives.
+
 ## markdown-toc
 
 > **pre-commit enabled**: If you're using pre-commit, it will run this.
@@ -63,7 +73,7 @@ We use [Prettier](https://prettier.io/) for formatting. There is an
 ### vim-prettier
 
 If you use [vim-prettier](https://github.com/prettier/vim-prettier), it may help
-to add to your `.virmc`:
+to add to your `.vimrc`:
 
 ```
 let g:prettier#config#print_width = '80'
