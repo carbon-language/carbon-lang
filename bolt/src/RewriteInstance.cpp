@@ -533,11 +533,11 @@ void RewriteInstance::discoverStorage() {
       NextAvailableOffset = std::max(NextAvailableOffset,
                                      Phdr.p_offset + Phdr.p_filesz);
 
-      BC->EFMM->SegmentMapInfo[Phdr.p_vaddr] = SegmentInfo{Phdr.p_vaddr,
-                                                           Phdr.p_memsz,
-                                                           Phdr.p_offset,
-                                                           Phdr.p_filesz,
-                                                           Phdr.p_align};
+      BC->SegmentMapInfo[Phdr.p_vaddr] = SegmentInfo{Phdr.p_vaddr,
+                                                     Phdr.p_memsz,
+                                                     Phdr.p_offset,
+                                                     Phdr.p_filesz,
+                                                     Phdr.p_align};
     }
   }
 
@@ -616,6 +616,14 @@ void RewriteInstance::discoverStorage() {
   NewTextSegmentAddress = NextAvailableAddress;
   NewTextSegmentOffset = NextAvailableOffset;
   BC->LayoutStartAddress = NextAvailableAddress;
+
+  // Tools such as objcopy can strip section contents but leave header
+  // entries. Check that at least .text is mapped in the file.
+  if (!getFileOffsetForAddress(BC->OldTextSectionAddress)) {
+    errs() << "BOLT-ERROR: input binary is not a valid ELF executable as its "
+              "text section is not mapped to a valid segment\n";
+    exit(1);
+  }
 }
 
 void RewriteInstance::parseSDTNotes() {
@@ -1590,10 +1598,8 @@ void RewriteInstance::readSpecialSections() {
 
   parseSDTNotes();
 
-  if (!opts::LinuxKernelMode) {
-    // Read .dynamic/PT_DYNAMIC.
-    readELFDynamic();
-  }
+  // Read .dynamic/PT_DYNAMIC.
+  readELFDynamic();
 }
 
 void RewriteInstance::adjustCommandLineOptions() {
@@ -3196,6 +3202,30 @@ void RewriteInstance::patchELFPHDRTable() {
   bool AddedSegment = false;
   (void)AddedSegment;
 
+  auto createNewTextPhdr = [&]() {
+    ELFFile<ELF64LE>::Elf_Phdr NewPhdr;
+    NewPhdr.p_type = ELF::PT_LOAD;
+    if (PHDRTableAddress) {
+      NewPhdr.p_offset = PHDRTableOffset;
+      NewPhdr.p_vaddr = PHDRTableAddress;
+      NewPhdr.p_paddr = PHDRTableAddress;
+    } else {
+      NewPhdr.p_offset = NewTextSegmentOffset;
+      NewPhdr.p_vaddr = NewTextSegmentAddress;
+      NewPhdr.p_paddr = NewTextSegmentAddress;
+    }
+    NewPhdr.p_filesz = NewTextSegmentSize;
+    NewPhdr.p_memsz = NewTextSegmentSize;
+    NewPhdr.p_flags = ELF::PF_X | ELF::PF_R;
+    // FIXME: Currently instrumentation is experimental and the runtime data
+    // is emitted with code, thus everything needs to be writable
+    if (opts::Instrument)
+      NewPhdr.p_flags |= ELF::PF_W;
+    NewPhdr.p_align = BC->PageAlign;
+
+    return NewPhdr;
+  };
+
   // Copy existing program headers with modifications.
   for (auto &Phdr : cantFail(Obj->program_headers())) {
     auto NewPhdr = Phdr;
@@ -3217,33 +3247,11 @@ void RewriteInstance::patchELFPHDRTable() {
         NewPhdr.p_memsz = EHFrameHdrSec->getOutputSize();
       }
     } else if (opts::UseGnuStack && Phdr.p_type == ELF::PT_GNU_STACK) {
-      NewPhdr.p_type = ELF::PT_LOAD;
-      NewPhdr.p_offset = NewTextSegmentOffset;
-      NewPhdr.p_vaddr = NewTextSegmentAddress;
-      NewPhdr.p_paddr = NewTextSegmentAddress;
-      NewPhdr.p_filesz = NewTextSegmentSize;
-      NewPhdr.p_memsz = NewTextSegmentSize;
-      NewPhdr.p_flags = ELF::PF_X | ELF::PF_R;
-      // FIXME: Currently instrumentation is experimental and the runtime data
-      // is emitted with code, thus everything needs to be writable
-      if (opts::Instrument)
-        NewPhdr.p_flags |= ELF::PF_W;
-      NewPhdr.p_align = BC->PageAlign;
+      NewPhdr = createNewTextPhdr();
       ModdedGnuStack = true;
     } else if (!opts::UseGnuStack && Phdr.p_type == ELF::PT_DYNAMIC) {
-      // Insert new pheader
-      ELFFile<ELF64LE>::Elf_Phdr NewTextPhdr;
-      NewTextPhdr.p_type = ELF::PT_LOAD;
-      NewTextPhdr.p_offset = PHDRTableOffset;
-      NewTextPhdr.p_vaddr = PHDRTableAddress;
-      NewTextPhdr.p_paddr = PHDRTableAddress;
-      NewTextPhdr.p_filesz = NewTextSegmentSize;
-      NewTextPhdr.p_memsz = NewTextSegmentSize;
-      // FIXME: experimental instrumentation hack described above
-      NewTextPhdr.p_flags = ELF::PF_X | ELF::PF_R;
-      if (opts::Instrument)
-        NewTextPhdr.p_flags |= ELF::PF_W;
-      NewTextPhdr.p_align = BC->PageAlign;
+      // Insert the new header before DYNAMIC.
+      auto NewTextPhdr = createNewTextPhdr();
       OS.write(reinterpret_cast<const char *>(&NewTextPhdr),
                sizeof(NewTextPhdr));
       AddedSegment = true;
@@ -3251,11 +3259,15 @@ void RewriteInstance::patchELFPHDRTable() {
     OS.write(reinterpret_cast<const char *>(&NewPhdr), sizeof(NewPhdr));
   }
 
+  if (!opts::UseGnuStack && !AddedSegment) {
+    // Append the new header to the end of the table.
+    auto NewTextPhdr = createNewTextPhdr();
+    OS.write(reinterpret_cast<const char *>(&NewTextPhdr),
+             sizeof(NewTextPhdr));
+  }
+
   assert((!opts::UseGnuStack || ModdedGnuStack) &&
          "could not find GNU_STACK program header to modify");
-
-  assert((opts::UseGnuStack || AddedSegment) &&
-         "could not add program header for the new segment");
 }
 
 namespace {
@@ -4091,18 +4103,21 @@ void RewriteInstance::patchELFSymTabs(ELFObjectFile<ELFT> *File) {
       break;
     }
   }
-  assert(DynSymSection && "no dynamic symbol table found");
-  updateELFSymbolTable(
-      File,
-      /*PatchExisting=*/true,
-      *DynSymSection,
-      NewSectionIndex,
-      [&](size_t Offset, const ELFSymTy &Sym) {
-        Out->os().pwrite(reinterpret_cast<const char *>(&Sym),
-                         sizeof(ELFSymTy),
-                         DynSymSection->sh_offset + Offset);
-      },
-      [](StringRef) -> size_t { return 0; });
+  assert((DynSymSection || BC->IsStaticExecutable) &&
+         "dynamic symbol table expected");
+  if (DynSymSection) {
+    updateELFSymbolTable(
+        File,
+        /*PatchExisting=*/true,
+        *DynSymSection,
+        NewSectionIndex,
+        [&](size_t Offset, const ELFSymTy &Sym) {
+          Out->os().pwrite(reinterpret_cast<const char *>(&Sym),
+                           sizeof(ELFSymTy),
+                           DynSymSection->sh_offset + Offset);
+        },
+        [](StringRef) -> size_t { return 0; });
+  }
 
   // (re)create regular symbol table.
   const ELFShdrTy *SymTabSection = nullptr;
@@ -4224,6 +4239,9 @@ void RewriteInstance::patchELFGOT(ELFObjectFile<ELFT> *File) {
 
 template <typename ELFT>
 void RewriteInstance::patchELFDynamic(ELFObjectFile<ELFT> *File) {
+  if (BC->IsStaticExecutable)
+    return;
+
   auto *Obj = File->getELFFile();
   auto &OS = Out->os();
 
@@ -4318,12 +4336,10 @@ void RewriteInstance::readELFDynamic(ELFObjectFile<ELFT> *File) {
     }
   }
 
-  // Tools such as objcopy can strip the section contents but leave the header
-  // entry with zero file size.
-  if (!DynamicPhdr || !DynamicPhdr->p_filesz) {
-    errs() << "BOLT-ERROR: input binary is not a valid ELF executable as it "
-              "lacks a dynamic section or the section is empty\n";
-    exit(1);
+  if (!DynamicPhdr) {
+    outs() << "BOLT-INFO: static input executable detected\n";
+    BC->IsStaticExecutable = true;
+    return;
   }
 
   assert(DynamicPhdr->p_memsz == DynamicPhdr->p_filesz &&
@@ -4680,8 +4696,8 @@ uint64_t RewriteInstance::getFileOffsetForAddress(uint64_t Address) const {
   }
 
   // Find an existing segment that matches the address.
-  const auto SegmentInfoI = BC->EFMM->SegmentMapInfo.upper_bound(Address);
-  if (SegmentInfoI == BC->EFMM->SegmentMapInfo.begin())
+  const auto SegmentInfoI = BC->SegmentMapInfo.upper_bound(Address);
+  if (SegmentInfoI == BC->SegmentMapInfo.begin())
     return 0;
 
   const auto &SegmentInfo = std::prev(SegmentInfoI)->second;

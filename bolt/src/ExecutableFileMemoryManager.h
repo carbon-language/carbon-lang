@@ -22,28 +22,6 @@ namespace llvm {
 
 namespace bolt {
 
-struct SegmentInfo {
-  uint64_t Address;           /// Address of the segment in memory.
-  uint64_t Size;              /// Size of the segment in memory.
-  uint64_t FileOffset;        /// Offset in the file.
-  uint64_t FileSize;          /// Size in file.
-  uint64_t Alignment;         /// Alignment of the segment.
-
-  void print(raw_ostream &OS) const {
-    OS << "SegmentInfo { Address: 0x"
-       << Twine::utohexstr(Address) << ", Size: 0x"
-       << Twine::utohexstr(Size) << ", FileOffset: 0x"
-       << Twine::utohexstr(FileOffset) << ", FileSize: 0x"
-       << Twine::utohexstr(FileSize) << ", Alignment: 0x"
-       << Twine::utohexstr(Alignment) << "}";
-  };
-};
-
-inline raw_ostream &operator<<(raw_ostream &OS, const SegmentInfo &SegInfo) {
-  SegInfo.print(OS);
-  return OS;
-}
-
 /// Class responsible for allocating and managing code and data sections.
 class ExecutableFileMemoryManager : public SectionMemoryManager {
 private:
@@ -64,9 +42,6 @@ public:
   // will not be managed by BinaryContext but only exist to support linking
   // user-supplied objects into the main input executable.
   uint32_t ObjectsLoaded{0};
-
-  /// [start memory address] -> [segment info] mapping.
-  std::map<uint64_t, SegmentInfo> SegmentMapInfo;
 
   ExecutableFileMemoryManager(BinaryContext &BC, bool AllowStubs)
     : BC(BC), AllowStubs(AllowStubs) {}

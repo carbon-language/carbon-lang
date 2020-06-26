@@ -68,6 +68,29 @@ class BinaryFunction;
 class BinaryBasicBlock;
 class ExecutableFileMemoryManager;
 
+/// Information on loadable part of the file.
+struct SegmentInfo {
+  uint64_t Address;           /// Address of the segment in memory.
+  uint64_t Size;              /// Size of the segment in memory.
+  uint64_t FileOffset;        /// Offset in the file.
+  uint64_t FileSize;          /// Size in file.
+  uint64_t Alignment;         /// Alignment of the segment.
+
+  void print(raw_ostream &OS) const {
+    OS << "SegmentInfo { Address: 0x"
+       << Twine::utohexstr(Address) << ", Size: 0x"
+       << Twine::utohexstr(Size) << ", FileOffset: 0x"
+       << Twine::utohexstr(FileOffset) << ", FileSize: 0x"
+       << Twine::utohexstr(FileSize) << ", Alignment: 0x"
+       << Twine::utohexstr(Alignment) << "}";
+  };
+};
+
+inline raw_ostream &operator<<(raw_ostream &OS, const SegmentInfo &SegInfo) {
+  SegInfo.print(OS);
+  return OS;
+}
+
 enum class MemoryContentsType : char {
   UNKNOWN = 0,              /// Unknown contents.
   POSSIBLE_JUMP_TABLE,      /// Possibly a non-PIC jump table.
@@ -184,10 +207,14 @@ class BinaryContext {
   std::unique_ptr<RuntimeLibrary> RtLibrary;
 
 public:
-  std::unordered_set<MCSymbol *> UndefinedSymbols;
-
   static std::unique_ptr<BinaryContext>
   createBinaryContext(ObjectFile *File, std::unique_ptr<DWARFContext> DwCtx);
+
+  /// [start memory address] -> [segment info] mapping.
+  std::map<uint64_t, SegmentInfo> SegmentMapInfo;
+
+  /// Symbols that are expected to be undefined in MCContext during emission.
+  std::unordered_set<MCSymbol *> UndefinedSymbols;
 
   /// [name] -> [BinaryData*] map used for global symbol resolution.
   using SymbolMapType = StringMap<BinaryData *>;
@@ -491,6 +518,10 @@ public:
 
   /// Is the binary always loaded at a fixed address.
   bool HasFixedLoadAddress{true};
+
+  /// True if the binary has no dynamic dependencies, i.e., if it was statically
+  /// linked.
+  bool IsStaticExecutable{false};
 
   /// Indicates if any of local symbols used for functions or data objects
   /// have an origin file name available.

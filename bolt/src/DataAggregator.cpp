@@ -2055,7 +2055,7 @@ std::error_code DataAggregator::parseMMapEvents() {
     if (BC->HasFixedLoadAddress && I->second.BaseAddress) {
       // Check that the binary mapping matches one of the segments.
       bool MatchFound{false};
-      for (auto &KV : BC->EFMM->SegmentMapInfo) {
+      for (auto &KV : BC->SegmentMapInfo) {
         auto &SegInfo = KV.second;
         const auto MapAddress = alignDown(SegInfo.Address, SegInfo.Alignment);
         if (I->second.BaseAddress == MapAddress) {
