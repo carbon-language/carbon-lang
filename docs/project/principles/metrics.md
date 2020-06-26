@@ -73,6 +73,6 @@ Example historical platforms that we will not prioritize support for are:
 - Big- or mixed-endian, at least for computation; accessing encoded data remains
   useful.
 - Non-2's-complement integer formats.
-- Non-IEEE 754 floating point format as default floating point types.
+- Non-IEEE 754 binary floating point format and semantics for default single- and double-precision floating point types.
 - Source code in file systems that don’t support file extensions or nested
   directories.
