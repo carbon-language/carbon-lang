@@ -85,7 +85,7 @@ if __name__ == "__main__":
         sys.exit("ERROR: Missing `gh` CLI.")
     precommit_bin = shutil.which("pre-commit")
     if not precommit_bin:
-        sys.exit("ERROR: Missing `precommit` CLI.")
+        sys.exit("ERROR: Missing `pre-commit` CLI.")
 
     # Ensure a good working directory.
     proposals_dir = os.path.realpath(
