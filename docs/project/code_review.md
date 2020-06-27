@@ -81,8 +81,8 @@ changes to do so, we also suggest not overloading a single review. It can be
 daunting for the author of a change to get feedback from a large number of
 reviewers, and so we suggest keeping the number of reviewers reasonably small.
 
-Any reviews that explicitly request changes should be addressed (either with the
-changes or an explanation of why not) before a pull request is merged. Further,
+Any reviews that explicitly request changes should be addressed, either with the
+changes or an explanation of why not, before a pull request is merged. Further,
 any code owners who have requested changes should explicitly confirm they're
 happy with the resolution before the change is merged.
 
@@ -91,7 +91,7 @@ happy with the resolution before the change is merged.
 Carbon uses GitHub pull requests for code review, and we recommend some
 mechanical best practices to most effectively navigate them.
 
-- When starting a review, if you will wan to comment on files don't comment in
+- When starting a review, if you will want to comment on files, don't comment in
   the pull request conversation.
   - Always go to the `Files Changed` tab.
   - Make any in-file comments needed, but add them to a pending review rather
@@ -258,8 +258,8 @@ in reiterating positions or repeating things. Make sure the discussion is
 _progressing_ towards deeper understanding and recognize when you reach an
 impasse or conflict and shift strategy to
 [resolve that](#resolving-an-impasse-or-conflict). It is also useful to avoid
-long delays between these iterations. Consuder discussing over Discord chat or
-schedule a quick video chat on the specific issue. This can avoid multi-hour --
+long delays between these iterations. Consider discussing over Discord chat or
+scheduling a quick video chat on the specific issue. This can avoid multi-hour --
 or multi-day -- round trips.
 
 ## Code reviewer guide
@@ -302,7 +302,7 @@ Things to consider and evaluate when reviewing changes:
 - Is the code well designed?
   - Is the resulting functionality good for the users of the code?
   - Are any user interface or user experience changes good for the users?
-  - Is the resulting design facilitate long-term maintenance?
+  - Does the resulting design facilitate long-term maintenance?
   - Can the code be simplified? Is there unnecessary complexity?
   - Are things being implemented that aren't yet needed and only _might_ be
     needed in the future?
@@ -348,7 +348,7 @@ review comments. Consider carefully if the author is correct -- they may be
 closer to the technical issues than you are and may have important insight. Also
 consider whether the suggestion is necessary to achieve the overall goal. If the
 suggestion isn't critical to make the change an overall improvement, it may be
-fine for it to move forward as-is.i
+fine for it to move forward as-is.
 
 As with all communication in the Carbon project, it is critical that your
 comments are not unkind, unwelcoming, angry, ad-hominem attacks, or otherwise
@@ -433,5 +433,5 @@ concerns and position.
 
 Note that the formal evolution process is heavyweight and relatively slow. The
 expectation is that this is rarely used and only to resolve serious and severe
-disagreements. If this becomes a more common problem, more light weight
+disagreements. If this becomes a more common problem, lighter weight
 processes may be needed to help ensure a reasonable rate of progress.
