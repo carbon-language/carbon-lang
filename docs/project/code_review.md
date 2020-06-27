@@ -173,7 +173,8 @@ That said, a change should not be so small that its implications cannot easily
 be understood. It is fine to provide the reviewer context or a framework of a
 series of changes so they understand the big picture, but that will only go so
 far. It is still possible to shrink a change so much that it becomes nonsensical
-in isolation.
+in isolation. For example, a change without appropriate tests is not
+self-contained.
 
 You may want to use a set of stacked pull requests rather than a single, larger
 pull request in order to keep changes easy to review.
@@ -259,8 +260,8 @@ _progressing_ towards deeper understanding and recognize when you reach an
 impasse or conflict and shift strategy to
 [resolve that](#resolving-an-impasse-or-conflict). It is also useful to avoid
 long delays between these iterations. Consider discussing over Discord chat or
-scheduling a quick video chat on the specific issue. This can avoid multi-hour --
-or multi-day -- round trips.
+scheduling a quick video chat on the specific issue. This can avoid multi-hour
+-- or multi-day -- round trips.
 
 ## Code reviewer guide
 
@@ -433,5 +434,5 @@ concerns and position.
 
 Note that the formal evolution process is heavyweight and relatively slow. The
 expectation is that this is rarely used and only to resolve serious and severe
-disagreements. If this becomes a more common problem, lighter weight
-processes may be needed to help ensure a reasonable rate of progress.
+disagreements. If this becomes a more common problem, lighter weight processes
+may be needed to help ensure a reasonable rate of progress.
