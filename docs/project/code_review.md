@@ -198,11 +198,11 @@ better why the optional suggestion didn't make sense to you.
 
 Sometimes comments, even optional ones, center around slight differences or
 preferences around the code. Consider that the reviewer may be a good proxy for
-future readers. If the suggestion is no better or no worse than your original
+future readers. If the suggestion is essentially equivalent to your original
 code, consider adopting it as it may make the code easier to read for others.
-But if you feel the current choice is _better_ (even if minorly), stand up for
-yourself and keep it. The reviewer can always push for a change and justify it
-if needed.
+But if you feel the current choice is _better_, even if only slightly, stand up
+for yourself and keep it. The reviewer can always push for a change and justify
+it if needed.
 
 For non-optional comments, this section provides several suggestions on how best
 to make progress. If none of these work, you may need to
@@ -217,12 +217,12 @@ explicit if they think a change is needed rather than merely asking questions.
 You should assume a question or confusion is something which only needs to be
 clarified.
 
-When responding to a question or confusion, consider _making changes_ to improve
-clarity in addition to responding, such as by adding comments or changing code
-structure. The reviewer may not be the last person to need more clarity, and you
-should use their comments as a signal for improvement. Once done, the review
-response should typically focus on verifying that the clarifications made in the
-code are sufficient for the reviewer.
+However, when responding to a question or confusion, consider making changes to
+improve clarity in addition to responding within the review, such as by adding
+comments or changing code structure. The reviewer may not be the last person to
+need more clarity, and you should use their comments as a signal for
+improvement. Once done, the review response should typically focus on verifying
+that the clarifications made in the code are sufficient for the reviewer.
 
 #### Understand the feedback in the comments
 
@@ -290,10 +290,10 @@ to do so in a timely fashion. One of the first things to consider with large
 changes is whether it can be split apart into smaller changes that are easier to
 review promptly.
 
-This timeliness guidance doesn't apply to higher-level review such as the
-[evolution process](evolution.md). Evaluating those types of proposals will
-often require a larger time investment and have their own timelines spelled out
-in the process. Here, we are talking about simply reviewing changes themselves
+This timeliness guidance doesn't apply to the higher-level
+[evolution process](evolution.md) reviews. Evaluating those proposals will often
+require a larger time investment and have their own timelines spelled out in the
+process. Here, we are talking about simply reviewing changes themselves
 orthogonally to any evolutionary discussion and evaluation.
 
 ### What should be covered by a review?
