@@ -59,7 +59,7 @@ in line with accepted designs. It may in some rare cases extend to exploring
 experimental or prototype directions whose design is under active consideration.
 
 The term "code review" in the Carbon project is not only about "code". We expect
-changes to any files to be reviwed, including documentation and any other
+changes to any files to be reviewed, including documentation and any other
 material stored in the repository.
 
 ## Who should review?
@@ -239,7 +239,7 @@ responsibilities.
 
 Once there is a clear and effectively communicated comment that you understand,
 it may still feel wrong or like it is unnecessarily blocking your progress. It
-is important to try to step back in this situation and, no matter how ceratin
+is important to try to step back in this situation and, no matter how certain
 you are, genuinely consider whether there is valuable feedback. You should be
 asking yourself whether the reviewer might be correct, potentially in an
 unexpected or surprising way. If you can't decide this definitively, you may
@@ -274,7 +274,7 @@ health of the project to decrease over time.
 The primary responsibility for ensuring that code review remains constructive,
 productive, and helpful resides in the _reviewer_. As a reviewer, you are in a
 position of power and asked to critique the authors hard work. With this power
-comes responsibliity for conducting the review well.
+comes responsibility for conducting the review well.
 
 ### How quickly should you respond to a review request?
 
@@ -339,9 +339,9 @@ These are general guidelines for writing effective code review comments:
   help clear up misunderstandings, help the suggestion be understood and applied
   more effectively, and allow internalizing improvements for future
   contributions.
-- **Provide a path forward.** The author needs to undersstand what they will
-  need to do to respond to your comments. For example, always provide
-  alternatives when commenting that the current approach won't work.
+- **Provide a path forward.** The author needs to understand what they will need
+  to do to respond to your comments. For example, always provide alternatives
+  when commenting that the current approach won't work.
 
 Keep in mind that the goal is to improve the overall health of the code,
 repository, and/or project over time. Sometimes, there will be pushback on
@@ -398,7 +398,7 @@ early on:
 
 The goal of these steps isn't to override the author or the reviewer, but to get
 more perspectives and voices involved. Often this will clarify the issue and its
-tradeoffs, and provide a simple resolution that all parties are happy with.
+trade-offs, and provide a simple resolution that all parties are happy with.
 However, in some cases, the underlying conflict isn't actually addressed. While
 there is a desire to generally bias towards the direction of the code owners
 during reviews, reviews should _not_ turn into a voting process. The reason for
