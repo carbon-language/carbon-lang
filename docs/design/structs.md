@@ -14,6 +14,12 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 - [Goals](#goals)
 - [Approach](#approach)
   - [Simple data records](#simple-data-records)
+  - [Tuples with named fields](#tuples-with-named-fields)
+  - [Tuples and structs are both "records"](#tuples-and-structs-are-both-records)
+    - [Record type equality](#record-type-equality)
+    - [Type deduction and type functions](#type-deduction-and-type-functions)
+    - [Type immutability](#type-immutability)
+  - [Simple initialization from a tuple](#simple-initialization-from-a-tuple)
   - [Defaults](#defaults)
   - [Constants](#constants)
   - [Member functions](#member-functions)
@@ -41,6 +47,10 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
       - [Option A: "destructor runs if phase 1 succeeds"](#option-a-destructor-runs-if-phase-1-succeeds)
       - [Option B: "destructor runs if phase 2 succeeds"](#option-b-destructor-runs-if-phase-2-succeeds)
     - [Alternative proposal (requested by Chandler): C++ constructor order](#alternative-proposal-requested-by-chandler-c-constructor-order)
+      - [Comparison](#comparison)
+    - [Alternative proposal (suggested by Richard): named factory functions](#alternative-proposal-suggested-by-richard-named-factory-functions)
+    - [Preliminary conclusion](#preliminary-conclusion)
+- [Broken links footnote](#broken-links-footnote)
 
 <!-- tocstop -->
 
@@ -183,343 +193,444 @@ not include weird C++ behavior:
   We will need some other way of addressing the issue of naming types in nested
   parameterized structs.
 
-      ```
-
-  struct List(Type: T) { struct Node(ListPolicy: P) { var T: data; var
-  Ptr(Self): next; // ok, Self is List(T).Node(P) var Ptr(???): list; // how do
-  you write this without repeating the arguments for List? } var
-  Ptr(Node(ComputePolicy())): first; }
-
 ```
-
-
+struct List(Type: T) {
+  struct Node(ListPolicy: P) {
+    var T: data;
+    var Ptr(Self): next; // ok, Self is List(T).Node(P)
+    var Ptr(???): list; // how do you write this without repeating the arguments for List?
+  }
+  var Ptr(Node(ComputePolicy())): first;
+}
+```
 
     One solution, assuming we think this is rare enough, is to require the programmer to add an alias `type ListSelf = Self` to the outer struct.
 
-*   [In C++, if D and B are incomplete, the compiler will assume D* a not a subtype of B*, when in fact the answer should be "don't know"](https://google.github.io/styleguide/cppguide.html#Forward_Declarations).
+- [In C++, if D and B are incomplete, the compiler will assume D* a not a subtype of B*, when in fact the answer should be "don't know"](https://google.github.io/styleguide/cppguide.html#Forward_Declarations).
 
-This is an area we will have to define for Carbon more rigorously, perhaps by restricting forward declarations to things defined in the same library. Note that C++ also uses incomplete types to forbid recursive types that can't be given a finite size, but other languages resolve that problem with independent mechanisms.
+This is an area we will have to define for Carbon more rigorously, perhaps by
+restricting forward declarations to things defined in the same library. Note
+that C++ also uses incomplete types to forbid recursive types that can't be
+given a finite size, but other languages resolve that problem with independent
+mechanisms.
 
-**Concern:** Incomplete types introduce complexity in the language that could possibly be resolved in other ways, such as two-pass parsing of the file to allow declarations to be in any order.
+**Concern:** Incomplete types introduce complexity in the language that could
+possibly be resolved in other ways, such as two-pass parsing of the file to
+allow declarations to be in any order.
 
-**Note:** We should probably allow structs to be created without being named. Maybe the resulting name is essentially a structural description of the fields, as is done with [tuples (TODO)](#broken-links-footnote)<!-- T:Carbon tuples and variadics -->? This would make `struct {...}` an expression whose value is an anonymous type.  Example:
-
+**Note:** We should probably allow structs to be created without being named.
+Maybe the resulting name is essentially a structural description of the fields,
+as is done with
+[tuples (TODO)](#broken-links-footnote)<!-- T:Carbon tuples and variadics -->?
+This would make `struct {...}` an expression whose value is an anonymous type.
+Example:
 
 ```
-
-var struct { var Int: x; var Int: y }: point = ...; point.x = 2; point.y = 3;
-
+var struct { var Int: x; var Int: y }: point = ...;
+point.x = 2;
+point.y = 3;
 ```
-
 
 **Proposal:** All fields of a struct must be named.
 
-This is a difference from tuples. This is something we could potentially change, but as of now we don't have a use case. Another possibility is that names get auto-assigned in tuples (`_0`, `_1`, etc.)?
+This is a difference from tuples. This is something we could potentially change,
+but as of now we don't have a use case. Another possibility is that names get
+auto-assigned in tuples (`_0`, `_1`, etc.)?
 
-**Alternative considered:** We could support [anonymous fields as is done in Go](http://golangtutorials.blogspot.com/2011/06/anonymous-fields-in-structs-like-object.html). This raises issues about name collisions, particularly as types change. The policy Go uses of only promoting field names from anonymous nested struct that don't conflict with any field of the containing struct is reasonable (see [https://play.golang.org/p/b3tp6pgjbKW](https://play.golang.org/p/b3tp6pgjbKW), for example). However, we at this time are avoiding the complexity of including this feature.
-
+**Alternative considered:** We could support
+[anonymous fields as is done in Go](http://golangtutorials.blogspot.com/2011/06/anonymous-fields-in-structs-like-object.html).
+This raises issues about name collisions, particularly as types change. The
+policy Go uses of only promoting field names from anonymous nested struct that
+don't conflict with any field of the containing struct is reasonable (see
+[https://play.golang.org/p/b3tp6pgjbKW](https://play.golang.org/p/b3tp6pgjbKW),
+for example). However, we at this time are avoiding the complexity of including
+this feature.
 
 ### Tuples with named fields
 
-By allowing users to specify the names for fields for tuples, we bring structs and tuples into much greater alignment. This will allow us to [say that they both records](#tuples-and-structs-are-both-records), and [provide a literal syntax for initializing structs](#simple-initialization-from-a-tuple). Also, the [Google C++ style guide](https://google.github.io/styleguide/cppguide.html#Structs_vs._Tuples) recommends structs over C++'s pair & tuple precisely because naming the components is so important.
+By allowing users to specify the names for fields for tuples, we bring structs
+and tuples into much greater alignment. This will allow us to
+[say that they both records](#tuples-and-structs-are-both-records), and
+[provide a literal syntax for initializing structs](#simple-initialization-from-a-tuple).
+Also, the
+[Google C++ style guide](https://google.github.io/styleguide/cppguide.html#Structs_vs._Tuples)
+recommends structs over C++'s pair & tuple precisely because naming the
+components is so important.
 
 **Proposed syntax:**
 
-
 ```
-
-var auto: proposed_value_syntax = (.x = 1, .y = 2); var (.x = Int, .y = Int):
-proposed_type_syntax = (.x = 3, .y = 4); var struct { var Int: x; var Int: y; }:
-equivalent_struct = (.x = 5, .y = 6);
+var auto: proposed_value_syntax = (.x = 1, .y = 2);
+var (.x = Int, .y = Int): proposed_type_syntax = (.x = 3, .y = 4);
+var struct { var Int: x; var Int: y; }: equivalent_struct = (.x = 5, .y = 6);
 
 var (.z = Int): tuple_with_single_named_field = (.z = 7);
-
 ```
 
+The `.` here means "in the tuple's namespace"; so it is clear that `x` and `y`
+in that first line don't refer to anything in the current namespace. The intent
+is that `.x` reminds us of field access, as in `foo.x = 3`.
 
-The `.` here means "in the tuple's namespace"; so it is clear that `x` and `y` in that first line don't refer to anything in the current namespace. The intent is that `.x` reminds us of field access, as in `foo.x = 3`.
+Notice that the type of `(.x = 3, .y = 4)` is represented by another tuple,
+`(.x = Int, .y = Int)`, containing types instead of values. This is to mirror
+the same pattern for tuples with unnamed components: `(Int, Int)` (a tuple
+containing two types) is the type of `(3, 4)`, as seen in
+[the tuple doc (TODO)](#broken-links-footnote)<!-- T:Carbon tuples and variadics -->.
 
-Notice that the type of `(.x = 3, .y = 4)` is represented by another tuple, `(.x = Int, .y = Int)`, containing types instead of values. This is to mirror the same pattern for tuples with unnamed components: `(Int, Int)` (a tuple containing two types) is the type of `(3, 4)`, as seen in [the tuple doc (TODO)](#broken-links-footnote)<!-- T:Carbon tuples and variadics -->.
-
-**Open question:** We could drop the convenience of the type of a tuple being another tuple of types. We would instead make the type of a tuple an anonymous struct with unnamed fields. Alternatively, we could get rid of the anonymous struct syntax, so there is only one way to do things.
+**Open question:** We could drop the convenience of the type of a tuple being
+another tuple of types. We would instead make the type of a tuple an anonymous
+struct with unnamed fields. Alternatively, we could get rid of the anonymous
+struct syntax, so there is only one way to do things.
 
 **Proposal:** Order still matters when using named fields.
 
-Note that my first design was that two tuples with the same (name, type) pairs (as a set) were compatible no matter the order they were listed. In particular, these statements would not be errors:
-
+Note that my first design was that two tuples with the same (name, type) pairs
+(as a set) were compatible no matter the order they were listed. In particular,
+these statements would not be errors:
 
 ```
-
 assert(proposed_type_syntax == (.y = 4, .x = 3)); // Error! Order doesn't match.
 proposed_type_syntax = (.y = 7, .x = 8); // Error! Order doesn't match.
-
 ```
 
+This has a problem though, when the order of fields of the type doesn't match
+the order of the initializer, what order are the components evaluated? A reader
+of the code will expect the evaluation to match the most visible order written
+in the code: the order used for the initializer. But the ordering of the fields
+of the type is what will determine the destruction order -- which really should
+be the opposite of the order that values are constructed.
 
-This has a problem though, when the order of fields of the type doesn't match the order of the initializer, what order are the components evaluated? A reader of the code will expect the evaluation to match the most visible order written in the code: the order used for the initializer. But the ordering of the fields of the type is what will determine the destruction order -- which really should be the opposite of the order that values are constructed.
+**Concern:** Field order affects hidden implementation details like alignment
+and padding, and yet the field order is also API-visible in a way that clients
+almost can't avoid depending on.
 
-**Concern:** Field order affects hidden implementation details like alignment and padding, and yet the field order is also API-visible in a way that clients almost can't avoid depending on.
+We may need to provide a way for users to explicitly specify a struct layout and
+an explicit (different) order of initialization for the rare structs where this
+matters.
 
-We may need to provide a way for users to explicitly specify a struct layout and an explicit (different) order of initialization for the rare structs where this matters.
-
-**Proposal:**  Just as tuples without names are used to provide positional arguments when calling a function, see [Carbon tuples and variadics (TODO)](#broken-links-footnote)<!-- T:Carbon tuples and variadics -->, tuples with names should be used to call functions that take keyword arguments. Tuples may contain a mix of positional and named members; the positional members will always come first (and similarly positional arguments will always come before keyword arguments in functions).
+**Proposal:** Just as tuples without names are used to provide positional
+arguments when calling a function, see
+[Carbon tuples and variadics (TODO)](#broken-links-footnote)<!-- T:Carbon tuples and variadics -->,
+tuples with names should be used to call functions that take keyword arguments.
+Tuples may contain a mix of positional and named members; the positional members
+will always come first (and similarly positional arguments will always come
+before keyword arguments in functions).
 
 Example:
 
+```diff
+  // Define a function that takes keyword arguments.
+  // Keyword arguments must be defined after positional arguments.
+  fn f(Int: p1, Int: p2, .key1 = Int: key1, .key2 = Int: key2) { ... }
 
+  // Call the function.
+  f(positional_1, positional_2, .key1 = keyword_1, .key2 = keyword_2);
+  // Keyword arguments must be provided in the same order.
+  // ERROR! Order mismatch:
+- f(positional_1, positional_2, .key2 = keyword_2, .key1 = keyword_1);
 ```
 
-// Define a function that takes keyword arguments. // Keyword arguments must be
-defined after positional arguments. fn f(Int: p1, Int: p2, .key1 = Int: key1,
-.key2 = Int: key2) { ... }
+We are currently making order always matter for consistency, even though the
+implementation concerns for function calling may not require the same
+constraint.
 
-// Call the function. f(positional_1, positional_2, .key1 = keyword_1, .key2 =
-keyword_2); // Keyword arguments must be provided in the same order. // ERROR!
-Order mismatch: f(positional_1, positional_2, .key2 = keyword_2, .key1 =
-keyword_1);
-
-```
-
-
-We are currently making order always matter for consistency, even though the implementation concerns for function calling may not require the same constraint.
-
-The additional benefit of a tuple with named components is that it provides a natural syntax for literals we can use to initialize structs.
-
+The additional benefit of a tuple with named components is that it provides a
+natural syntax for literals we can use to initialize structs.
 
 ### Tuples and structs are both "records"
 
-**Proposal:** For simplicity, we should make tuples and structs two ways of making record data types, with slightly different restrictions.
-
-
-```
-
-var struct { var Int: a; var Int: b }: as_struct = (.a = 1, .b = 2); var (.a =
-Int, .b = Int): as_tuple = (.a = 3, .b = 4); static_assert(typeof(as_struct) ==
-typeof(as_tuple));
+**Proposal:** For simplicity, we should make tuples and structs two ways of
+making record data types, with slightly different restrictions.
 
 ```
-
+var struct { var Int: a; var Int: b }: as_struct = (.a = 1, .b = 2);
+var (.a = Int, .b = Int): as_tuple = (.a = 3, .b = 4);
+static_assert(typeof(as_struct) == typeof(as_tuple));
+```
 
 Tuples are different from structs in that they:
 
+- can only have data fields (no methods, constructors, or static members), and
+  those data fields can not have default initial values;
+- can not have a name (and therefore tuples use
+  [structural equality](#record-type-equality));
+- have only public members (no access control);
+- may have anonymous fields, indexed by position.
 
-
-*   can only have data fields (no methods, constructors, or static members), and those data fields can not have default initial values;
-*   can not have a name (and therefore tuples use [structural equality](#record-type-equality));
-*   have only public members (no access control);
-*   may have anonymous fields, indexed by position.
-
-Their benefit is that they have a simple literal syntax, and a short-hand for specifying a particular tuple type. These features make them convenient to use as part of the function call protocol, among other places.
+Their benefit is that they have a simple literal syntax, and a short-hand for
+specifying a particular tuple type. These features make them convenient to use
+as part of the function call protocol, among other places.
 
 **Reasoning:**
 
-We should have fewer, more general mechanisms where possible. This means fewer places where we would have to convert between tuples and structs, and fewer "islands" of functionality. For example, by making tuples and structs the same thing, we will only need a single reflection API to handle both.
+We should have fewer, more general mechanisms where possible. This means fewer
+places where we would have to convert between tuples and structs, and fewer
+"islands" of functionality. For example, by making tuples and structs the same
+thing, we will only need a single reflection API to handle both.
 
-**Concern:** It would be even better to say tuples are a kind of struct, and so we might be able to simplify this even further. In particular, it would nice not to have to define a "record" to encompass the union of things that can be expressed using tuple and record syntax.
+**Concern:** It would be even better to say tuples are a kind of struct, and so
+we might be able to simplify this even further. In particular, it would nice not
+to have to define a "record" to encompass the union of things that can be
+expressed using tuple and record syntax.
 
-The only tricky part are positional fields, which are currently only available in tuples not structs. Two possible solutions:
+The only tricky part are positional fields, which are currently only available
+in tuples not structs. Two possible solutions:
 
-
-
-1. The conceptual model of a struct includes fields without names, but we don't provide any syntax for writing such a struct down.
+1. The conceptual model of a struct includes fields without names, but we don't
+   provide any syntax for writing such a struct down.
 2. We add a syntax for positional fields in a struct.
 
 [chandlerc](https://github.com/chandlerc) says:
 
-
     I somewhat like #2 as it means you can define custom, named types that expose the exact same API as a tuple which seems quite useful. I've not thought about it enough to know if there are problems here though.
-
 
 #### Record type equality
 
-For types with names, we say that two types are equal if their fully qualified names are equal. Here fully qualified includes both the namespace and any parameters. For example, let's say we have three types, `A`, `B`, and `C(T)` defined as follows:
-
-
-```
-
-struct A { var Int: x; var Int: y; }
-
-struct B { var Int: x; var Int: y; }
-
-struct C(Type:\$\$ T) { var T: x; var T: y; }
+For types with names, we say that two types are equal if their fully qualified
+names are equal. Here fully qualified includes both the namespace and any
+parameters. For example, let's say we have three types, `A`, `B`, and `C(T)`
+defined as follows:
 
 ```
+struct A {
+  var Int: x;
+  var Int: y;
+}
 
+struct B {
+  var Int: x;
+  var Int: y;
+}
 
-Here `A`, `B`, and `C(Int)` all define different types even though they are the same structurally. Further `C(Int)` is different from `C(Bool)` since their names include any parameters.
-
-This implies that you can't have two types with the same name in the same namespace. In some cases, a struct may be given a name when it is defined, indicating that the user wants to use name-based type equality, but that name may not be visible in some other scope. In this example:
-
-
+struct C(Type:$$ T) {
+  var T: x;
+  var T: y;
+}
 ```
 
-fn ReturnsAType(bool: x, type: T) -> Type { if (x) { struct S(type: U) { ... }
-return S(T); } else { struct S { ... } return S; } }
+Here `A`, `B`, and `C(Int)` all define different types even though they are the
+same structurally. Further `C(Int)` is different from `C(Bool)` since their
+names include any parameters.
+
+This implies that you can't have two types with the same name in the same
+namespace. In some cases, a struct may be given a name when it is defined,
+indicating that the user wants to use name-based type equality, but that name
+may not be visible in some other scope. In this example:
 
 ```
-
-
-there are in fact two types named `S` in different scopes, neither of which is visible outside the function. In this case, the types get names that are sufficient to disambiguate them, like `ReturnsAType(True, Int)` might return `ReturnsAType.S#1(U=Int)`.
-
-For types without names, type equality is structural. Effectively the name of a type like `(Int, Bool, .s = String)` includes all the type-specific information, like `"(Int, Bool, .s = String)"`. If the type includes other things beyond slots (member functions, etc.), those must match exactly.
-
-Types with names are never equal to types without names. So the tuple type `(.x = Int, .y = Int)` does not match the types `A` and `B` above, but is equal to this struct without a name:
-
-
+fn ReturnsAType(bool: x, type: T) -> Type {
+  if (x) {
+    struct S(type: U) { ... }
+    return S(T);
+  } else {
+    struct S { ... }
+    return S;
+  }
+}
 ```
 
-struct { var Int: x; var Int: y; }
+there are in fact two types named `S` in different scopes, neither of which is
+visible outside the function. In this case, the types get names that are
+sufficient to disambiguate them, like `ReturnsAType(True, Int)` might return
+`ReturnsAType.S#1(U=Int)`.
+
+For types without names, type equality is structural. Effectively the name of a
+type like `(Int, Bool, .s = String)` includes all the type-specific information,
+like `"(Int, Bool, .s = String)"`. If the type includes other things beyond
+slots (member functions, etc.), those must match exactly.
+
+Types with names are never equal to types without names. So the tuple type
+`(.x = Int, .y = Int)` does not match the types `A` and `B` above, but is equal
+to this struct without a name:
 
 ```
-
-
+struct {
+  var Int: x;
+  var Int: y;
+}
+```
 
 #### Type deduction and type functions
 
-Context: [Carbon chat Oct 31, 2019: Higher-kinded types, normative types, and type deduction (TODO)](#broken-links-footnote)<!-- T:Carbon chat Oct 31, 2019: Higher-kinded types, normative types, and type deduction --><!-- A:#heading=h.r48w6htktgjf -->
+Context:
+[Carbon chat Oct 31, 2019: Higher-kinded types, normative types, and type deduction (TODO)](#broken-links-footnote)<!-- T:Carbon chat Oct 31, 2019: Higher-kinded types, normative types, and type deduction --><!-- A:#heading=h.r48w6htktgjf -->
 
-TODO: Move this section to [Carbon pattern matching](https://github.com/josh11b/carbon-lang/blob/pattern-matching/docs/design/pattern-matching.md#deduced-specification-match-rules).
+TODO: Move this section to
+[Carbon pattern matching](https://github.com/josh11b/carbon-lang/blob/pattern-matching/docs/design/pattern-matching.md#deduced-specification-match-rules).
 
-Since parameterized types have names that include their parameters, this means that parameter may be deduced when calling a function. For example,
-
+Since parameterized types have names that include their parameters, this means
+that parameter may be deduced when calling a function. For example,
 
 ```
-
 struct Vec(Type: T) { ... }
 
 fn F[Type: T](Vec(T): v) { ... }
 
-var Vec(Int): x; F(x); // `T` is deduced to be `Int`.
-
+var Vec(Int): x;
+F(x);  // `T` is deduced to be `Int`.
 ```
 
-
-In addition, a parameterized type can actually be thought of as a function, which can also be deduced:
-
-
-```
-
-// Continued from above fn G[fn(Type)->Type: V](V(Int): v) { ... } G(x); // `V`
-is deduced to be `Vec`
-
-fn H[Type: T, fn(Type)->Type: V](V(T): v) { ... } H(x); // `T` is deduced to be
-`Int` and `V` is deduced to be `Vec`.
+In addition, a parameterized type can actually be thought of as a function,
+which can also be deduced:
 
 ```
+// Continued from above
+fn G[fn(Type)->Type: V](V(Int): v) { ... }
+G(x);  // `V` is deduced to be `Vec`
 
+fn H[Type: T, fn(Type)->Type: V](V(T): v) { ... }
+H(x);  // `T` is deduced to be `Int` and `V` is deduced to be `Vec`.
+```
 
-This would be used in the same situations as [C++'s template-template parameters](https://stackoverflow.com/questions/213761/what-are-some-uses-of-template-template-parameters).
+This would be used in the same situations as
+[C++'s template-template parameters](https://stackoverflow.com/questions/213761/what-are-some-uses-of-template-template-parameters).
 
-**Proposal:** The above deductions are only available based on a type's name, not arbitrary functions returning types.
+**Proposal:** The above deductions are only available based on a type's name,
+not arbitrary functions returning types.
 
 If we write some other function that returns a type:
 
-
+```
+fn I(Type: T) -> Type {
+  if (T != Bool) {
+    return Vec(T);
+  } else {
+    return BitVec;
+  }
+}
 ```
 
-fn I(Type: T) -> Type { if (T != Bool) { return Vec(T); } else { return BitVec;
-} }
+In theory, since the function is injective, it might be possible to deduce its
+input from a specific output value, as in:
 
 ```
-
-
-In theory, since the function is injective, it might be possible to deduce its input from a specific output value, as in:
-
-
+// Not allowed: `I` is an arbitrary function, can't be involved in deduction:
+fn J[Type: T](I(T): z) { ... }
+var I(Int): y;
+// We do not attempt to figure out that if `T` was `Int`, then `I(T)` is equal
+// to the type of `y`.
+J(y);
 ```
 
-// Not allowed: `I` is an arbitrary function, can't be involved in deduction: fn
-J[Type: T](I(T): z) { ... } var I(Int): y; // We do not attempt to figure out
-that if `T` was `Int`, then `I(T)` is equal // to the type of `y`. J(y);
+If we wanted to support this case, we would require the type function to satisfy
+two conditions:
 
-```
+- It must be _injective_, so different inputs are guaranteed to produce
+  different outputs. For example, `F(T) = Pair(T, T)` is injective but
+  `F(T) = Int` is not.
+- It must not have any conditional logic depending on the input. We could
+  enforce this by requiring it to take arguments generically using the `:$`
+  syntax.
 
-
-If we wanted to support this case, we would require the type function to satisfy two conditions:
-
-
-
-*   It must be _injective_, so different inputs are guaranteed to produce different outputs. For example, `F(T) = Pair(T, T)` is injective but `F(T) = Int` is not.
-*   It must not have any conditional logic depending on the input. We could enforce this by requiring it to take arguments generically using the `:$` syntax.
-
-If both those conditions are met, then in principle the compiler can symbolically evaluate the function. The result should be a type expression we could pattern match with the input type to determine the inputs to the function. In general, this might be difficult so we need to determine if this feature is important and possibly some other restrictions we may want to place. A hard example would be deducing `N` in `F(T, N) = Array(T, N * N * N)` given `Array(Int, 27)`. This makes me think this feature should be deprioritized until there are compelling use cases which can guide what sort of restrictions would make sense.
-
+If both those conditions are met, then in principle the compiler can
+symbolically evaluate the function. The result should be a type expression we
+could pattern match with the input type to determine the inputs to the function.
+In general, this might be difficult so we need to determine if this feature is
+important and possibly some other restrictions we may want to place. A hard
+example would be deducing `N` in `F(T, N) = Array(T, N * N * N)` given
+`Array(Int, 27)`. This makes me think this feature should be deprioritized until
+there are compelling use cases which can guide what sort of restrictions would
+make sense.
 
 #### Type immutability
 
-Types should generally be immutable once they are defined. (Caveat: we do need to support transitioning from a forward-declared incomplete type, to a type in the process of being defined, to defined type that is no longer mutable.) There should not be any operation that adds a field or function to an existing type, or does monkey patching -- unless it does this by creating a new type instead of modifying an existing one. The one exception, which we are still uncertain about, would be if we want to support [slots with static storage, see the section below](#question-static-storage).
-
+Types should generally be immutable once they are defined. (Caveat: we do need
+to support transitioning from a forward-declared incomplete type, to a type in
+the process of being defined, to defined type that is no longer mutable.) There
+should not be any operation that adds a field or function to an existing type,
+or does monkey patching -- unless it does this by creating a new type instead of
+modifying an existing one. The one exception, which we are still uncertain
+about, would be if we want to support
+[slots with static storage, see the section below](#question-static-storage).
 
 ### Simple initialization from a tuple
 
-Let's say we have a struct and we want to initialize a variable of that struct type.
-
+Let's say we have a struct and we want to initialize a variable of that struct
+type.
 
 ```
-
-struct Point { var Int: x; var Int: y; }
+struct Point {
+  var Int: x;
+  var Int: y;
+}
 
 var Point: p = ???;
-
 ```
-
 
 **Goals & Principles:**
 
+- Every field will be initialized unless the `uninit` keyword is used in
+  initialization (or you will get a compiler error).
 
-
-*   Every field will be initialized unless the `uninit` keyword is used in initialization (or you will get a compiler error).
-
-**Proposal:** we allow you to initialize a struct from a tuple with names that match the names of the fields, in the same order ([see above](#bookmark=id.opejfo1k8om9)).
-
-
-```
-
-var Point: p1 = (.x = 1, .y = 2); var Point: p2 = (.y = 4, .x = 3); // Error:
-order matters.
-
-// No need for a trailing comma in tuples with a single named field. struct
-OneMember { var Int: x; } var OneMember : a = (.x = 12);
+**Proposal:** we allow you to initialize a struct from a tuple with names that
+match the names of the fields, in the same order
+([see above](#bookmark=id.opejfo1k8om9)).
 
 ```
+var Point: p1 = (.x = 1, .y = 2);
+var Point: p2 = (.y = 4, .x = 3);  // Error: order matters.
 
-
-**Proposal:** We do not allow positional initialization from a tuple without names:
-
-
+// No need for a trailing comma in tuples with a single named field.
+struct OneMember {
+  var Int: x;
+}
+var OneMember : a = (.x = 12);
 ```
 
-// Error: Tuple missing names: var Point: p = (1, 2); assert(p.x == 1);
+**Proposal:** We do not allow positional initialization from a tuple without
+names:
+
+```
+// Error: Tuple missing names:
+var Point: p = (1, 2);
+assert(p.x == 1);
 assert(p.y == 2);
-
-````
-
+```
 
 The rule here is:
 
+- The tuple to the right of the `=` is passed as the argument to the factory
+  function.
+- The default factory function for a struct has one keyword argument per field,
+  with the same names and order as the field definitions.
 
+So just like we require positional & keyword arguments to match between the call
+and the declaration for functions (see
+["Carbon pattern matching"](https://github.com/josh11b/carbon-lang/blob/pattern-matching/docs/design/pattern-matching.md)),
+the names are required when initializing. If for some reason it makes sense for
+a specific type to support initialization from a tuple with unnamed fields, the
+definition of that type can add a factory function that takes positional
+arguments (see [the section on object creation below](#control-over-creation)).
 
-*   The tuple to the right of the `=` is passed as the argument to the factory function.
-*   The default factory function for a struct has one keyword argument per field, with the same names and order as the field definitions.
+**Proposal:** Every field of the struct will be initialized unless there is a
+visible indication otherwise in the source code.
 
-So just like we require positional & keyword arguments to match between the call and the declaration for functions (see ["Carbon pattern matching"](https://github.com/josh11b/carbon-lang/blob/pattern-matching/docs/design/pattern-matching.md)), the names are required when initializing. If for some reason it makes sense for a specific type to support initialization from a tuple with unnamed fields, the definition of that type can add a factory function that takes positional arguments (see [the section on object creation below](#control-over-creation)).
+For example, what should happen if you say `var Point: p;` without any
+initializer?
 
-**Proposal:** Every field of the struct will be initialized unless there is a visible indication otherwise in the source code.
+- If the `Point` struct defines defaults (see next section) for every field,
+  then \
+  `var Point: p;` just gives you the default values.
+- **Rejected alternative:** We require you to specify a value to indicate that
+  the value is initialized, which could be the empty tuple to get the default
+  values: `var Point: p = ();`.
+- We likely also define default initialization ("default defaults") for some
+  types as part of the language (`Int` defaults to 0, optional values default to
+  not present, etc.) or via a default constructor for that type. If every field
+  has a default (either from the struct definition (preferred) or from the
+  field's type), then `var Point: p;` will initialize `p` with those defaults.
+  Note however, there will be some types for which we have no default value
+  (e.g. a non-nullable pointer, see
+  [Carbon pointers and references (TODO)](#broken-links-footnote)<!-- T:Carbon pointers and references -->).
+- **Question:** Do we want to define default initialization for arrays, or
+  should we require the user to be explicit to avoid hiding a possibly large
+  performance cost?
+- Otherwise we forbid `var Point: p;` with a compile error. If you truly want an
+  uninitialized `Point`, you would have to explicitly say something like:
 
-For example, what should happen if you say `var Point: p;` without any initializer?
-
-
-
-*   If the `Point` struct defines defaults (see next section) for every field, then \
-`var Point: p;` just gives you the default values.
-*   **Rejected alternative:** We require you to specify a value to indicate that the value is initialized, which could be the empty tuple to get the default values: `var Point: p = ();`.
-*   We likely also define default initialization ("default defaults") for some types as part of the language (`Int` defaults to 0, optional values default to not present, etc.) or via a default constructor for that type. If every field has a default (either from the struct definition (preferred) or from the field's type), then `var Point: p;` will initialize `p` with those defaults. Note however, there will be some types for which we have no default value (e.g. a non-nullable pointer, see [Carbon pointers and references (TODO)](#broken-links-footnote)<!-- T:Carbon pointers and references -->).
-*   **Question:** Do we want to define default initialization for arrays, or should we require the user to be explicit to avoid hiding a possibly large performance cost?
-*   Otherwise we forbid `var Point: p;` with a compile error. If you truly want an uninitialized `Point`, you would have to explicitly say something like:
-
-    ```
+```
 var Point: p = uninit;
-````
+```
 
 - The question of how future code should operate on a possibly uninitialized
   value is addressed in a separate document:
@@ -542,20 +653,15 @@ var Point: p = uninit;
 
 - You may specify that specific fields are not initialized, via something like
 
-      ```
-
-  var Point: p = (.x = 2, .y = uninit);
-
-````
-
-
+```
+var Point: p = (.x = 2, .y = uninit);
+```
 
     However, we don't want to silently leave some fields uninitialized, so
 
-
-    ```
+```
 var Point: p = (.x = 2);
-````
+```
 
     should either do some default initialization of the `y` field or trigger a compile error.
 
@@ -563,7 +669,7 @@ var Point: p = (.x = 2);
 default factory function.
 
 ```
-var auto: p = Point(.x = 10, .y = uninit)
+var auto: p = Point(.x = 10, .y = uninit);
 ```
 
 User-written factory functions can opt in to allowing this by accepting some
@@ -582,7 +688,7 @@ discussion in the
 from tuples. Instead you'd have to write something like
 
 ```
-var auto: p = Point(.x = 10, .y = 20)
+var auto: p = Point(.x = 10, .y = 20);
 ```
 
 Here `Point(.x = 10, .y = 20)` would be whatever our syntax is for invoking a
@@ -2727,123 +2833,175 @@ This means that in a descendant you would have two special calls instead of one:
   from the parent).
 - initialize the descendant
 
-      ```
+```
+struct Baz extends Bar {  // Baz descends from Bar
+  var Int: y;
+  fn operator create(Int: value) -> Ptr(Baz) {
+    // This call can fail if the parent's factory function generates an error.
+    // This call must come before construct(...), but unlike C++ doesn't have
+    // to be the first statement in the function.
+    var Ptr(Bar): parent = create_super(value);
 
-  struct Baz extends Bar { // Baz descends from Bar var Int: y; fn operator
-  create(Int: value) -> Ptr(Baz) { // This call can fail if the parent's factory
-  function generates an error. // This call must come before construct(...), but
-  unlike C++ doesn't have // to be the first statement in the function. var
-  Ptr(Bar): parent = create_super(value);
+    // Baz phase 1. Can use `parent` to compute the value of members.
 
-      // Baz phase 1. Can use `parent` to compute the value of members.
+    // Can we say that `construct()` will never fail?
+    var Ptr(Baz): result = construct(.y = parent->f() + 2);
+    // Actually `parent` and `result` store the same address. Should we allow
+    // users to rely on this? Alternatively we can make `construct`
+    // consume `parent` as a move argument so it doesn't remain valid
+    // after this call.
 
-      // Can we say that `construct()` will never fail?
-      var Ptr(Baz): result = construct(.y = parent->f() + 2);
-      // Actually `parent` and `result` store the same address. Should we allow
-      // users to rely on this? Alternatively we can make `construct`
-      // consume `parent` as a move argument so it doesn't remain valid
-      // after this call.
+    // Baz phase 2. Can modify *result, call methods on it, etc.
 
-      // Baz phase 2. Can modify *result, call methods on it, etc.
-
-      return result;
-
-  } }
-
+    return result;
+  }
+}
 ```
 
-
-
-If you wanted to call another factory function in this class, it would have to be instead of *both* of these special calls.
-
+If you wanted to call another factory function in this class, it would have to
+be instead of _both_ of these special calls.
 
 ##### Comparison
 
-
-
-*   Two calls instead of one.
-*   Can't call virtual functions in base constructor, even in phase 2.
-*   Can access base members in descendant's phase 1.
-*   A bit more control over when the base constructor gets called, but it isn't clear what you would use it for.
-*   Ending up with two pointers to the same object (but with different types) seems a bit weird.
-*   A clearer story for invoking a mixin's factory function to initialize its fields.
-*   **Big advantage:** Much clearer story for interop with C++ classes, assuming we have to support Carbon structs inheriting from C++ classes, and vice versa.
-
+- Two calls instead of one.
+- Can't call virtual functions in base constructor, even in phase 2.
+- Can access base members in descendant's phase 1.
+- A bit more control over when the base constructor gets called, but it isn't
+  clear what you would use it for.
+- Ending up with two pointers to the same object (but with different types)
+  seems a bit weird.
+- A clearer story for invoking a mixin's factory function to initialize its
+  fields.
+- **Big advantage:** Much clearer story for interop with C++ classes, assuming
+  we have to support Carbon structs inheriting from C++ classes, and vice versa.
 
 #### Alternative proposal (suggested by Richard): named factory functions
 
-Building on the "C++ constructor order" proposal, imagine that any function returning a value of that type can be used as a factory function. Unfortunately, I haven't figured out how to make this work with mixins, where multiple functions work together to construct the object, each defining the value of a subset of the fields.
+Building on the "C++ constructor order" proposal, imagine that any function
+returning a value of that type can be used as a factory function. Unfortunately,
+I haven't figured out how to make this work with mixins, where multiple
+functions work together to construct the object, each defining the value of a
+subset of the fields.
 
 If we ignore mixins, what we are aiming for is something like:
 
+```
+struct Foo {
+  private var Int: x;
+  // Totally ordinary "static" function. No special meaning to the name "Create".
+  public fn Create(Int: x) -> Foo {
+    // We can call Foo() as a member of Foo.
+    return Foo(.x = x);
+  }
+  public fn CreateInPhases(Int: x) -> Foo {
+    // Phase 1
+    var Foo: ret = (.x = x);
+    // Phase 2, can call methods on `ret`
+    return ret;
+  }
+}
+// Factory functions don't need to be members of the type.
+fn MakeFoo(Int: x) -> Foo {
+  return Foo.CreateInPhases(x);
+}
 
+var Foo: f_illegal = Foo(.x = 3);  // Error, Foo has private fields.
+var Foo: f_allowed = Foo.Create(3);
+
+struct Bar extends Foo {
+  private var Int: y;
+  public fn Create(Int: x, Int: y) -> Bar {
+    // First argument is value for the parent.
+    return Bar(.Foo = Foo.Create(x), .y = y);
+  }
+}
+var Bar: b = Bar.Create(4, 5);
 ```
 
-struct Foo { private var Int: x; // Totally ordinary "static" function. No
-special meaning to the name "Create". public fn Create(Int: x) -> Foo { // We
-can call Foo() as a member of Foo. return Foo(.x = x); } public fn
-CreateInPhases(Int: x) -> Foo { // Phase 1 var Foo: ret = (.x = x); // Phase 2,
-can call methods on `ret` return ret; } } // Factory functions don't need to be
-members of the type. fn MakeFoo(Int: x) -> Foo { return Foo.CreateInPhases(x); }
-
-var Foo: f_illegal = Foo(.x = 3); // Error, Foo has private fields. var Foo:
-f_allowed = Foo.Create(3);
-
-struct Bar extends Foo { private var Int: y; public fn Create(Int: x, Int: y) ->
-Bar { // First argument is value for the parent. return Bar(.Foo =
-Foo.Create(x), .y = y); } } var Bar: b = Bar.Create(4, 5);
-
-```
-
-
-**Nice:** Since the special compiler-generated constructors never fail, the error recovery story is pretty straightforward. The only problem is if the code can't establish invariants that the destructor relies on before a failure in phase 2.
+**Nice:** Since the special compiler-generated constructors never fail, the
+error recovery story is pretty straightforward. The only problem is if the code
+can't establish invariants that the destructor relies on before a failure in
+phase 2.
 
 **Questions:**
 
-
-
-*   Can this be made efficient, e.g. without a lot of copying? Without inheritance, this seems straightforward -- the space for `b` is allocated up front, and a pointer to that space is passed to `Bar.Create` which passes it to the `Bar(...)` constructor. The problem is arranging for the `Foo.Create()` call to construct its value at the beginning of the `Bar` allocation, especially as the factory function code gets more complex. For example, what if `Foo.Create()` can possibly generate an error? It would have to reason about control flow.
-*   In the above proposal, there is a single special constructor function created by the compiler, which user's can't replace. They can only make it private and provide alternatives that are spelled differently. Is this a problem? I'm worried that evolving a type to one that needs logic in its constructor will involve changing all users.
-*   What about parent types, like abstract base classes, that can't be instantiated directly?
-*   How does this fit in with mixins?
-*   Less obvious how to make an API like C++'s `std::vector&lt;T>::emplace_back()` that constructs a value in place.
-*   What about types that don't have value semantics? In particular, what if `Foo.Create()` is in a doubly linked list and saves its `this` pointer?
-
+- Can this be made efficient, e.g. without a lot of copying? Without
+  inheritance, this seems straightforward -- the space for `b` is allocated up
+  front, and a pointer to that space is passed to `Bar.Create` which passes it
+  to the `Bar(...)` constructor. The problem is arranging for the `Foo.Create()`
+  call to construct its value at the beginning of the `Bar` allocation,
+  especially as the factory function code gets more complex. For example, what
+  if `Foo.Create()` can possibly generate an error? It would have to reason
+  about control flow.
+- In the above proposal, there is a single special constructor function created
+  by the compiler, which user's can't replace. They can only make it private and
+  provide alternatives that are spelled differently. Is this a problem? I'm
+  worried that evolving a type to one that needs logic in its constructor will
+  involve changing all users.
+- What about parent types, like abstract base classes, that can't be
+  instantiated directly?
+- How does this fit in with mixins?
+- Less obvious how to make an API like C++'s `std::vector&lt;T>::emplace_back()`
+  that constructs a value in place.
+- What about types that don't have value semantics? In particular, what if
+  `Foo.Create()` is in a doubly linked list and saves its `this` pointer?
 
 #### Preliminary conclusion
 
-Carbon will have some way of defining factory/initializer functions that will most likely follow the [C++-constructor-order version of the thought-experiment model](#alternative-proposal-requested-by-chandler-c-constructor-order), but could follow the Swift model or the Swift-construction-order-thought-experiment model. In any of these cases:
+Carbon will have some way of defining factory/initializer functions that will
+most likely follow the
+[C++-constructor-order version of the thought-experiment model](#alternative-proposal-requested-by-chandler-c-constructor-order),
+but could follow the Swift model or the
+Swift-construction-order-thought-experiment model. In any of these cases:
 
+- Factory functions are not ordinary functions, and will need some special
+  syntax marking them as different. (In Swift they are defined starting with the
+  `init` keyword, in C++ they don't have a return type and have a name matching
+  that of the class.)
+- Factory functions will be allowed to fail. If any factory function in the
+  inheritance hierarchy fails, any member variables and types that finished
+  being constructed will be destroyed (option B above).
+- Eventually we will have some rules for inheriting factory functions from your
+  parent class to avoid boilerplate (both
+  [C++11](https://en.wikipedia.org/wiki/C++11#Object_construction_improvement)
+  and
+  [Swift](https://docs.swift.org/swift-book/LanguageGuide/Initialization.html#ID222)
+  have this).
 
+In the C++ constructor order model (currently preferred due to C++ interop
+concerns):
 
-*   Factory functions are not ordinary functions, and will need some special syntax marking them as different. (In Swift they are defined starting with the `init` keyword, in C++ they don't have a return type and have a name matching that of the class.)
-*   Factory functions will be allowed to fail. If any factory function in the inheritance hierarchy fails, any member variables and types that finished being constructed will be destroyed (option B above).
-*   Eventually we will have some rules for inheriting factory functions from your parent class to avoid boilerplate (both [C++11](https://en.wikipedia.org/wiki/C++11#Object_construction_improvement) and [Swift](https://docs.swift.org/swift-book/LanguageGuide/Initialization.html#ID222) have this).
-
-In the C++ constructor order model (currently preferred due to C++ interop concerns):
-
-
-
-*   Factory functions will have a three-phase structure.
-*   If the type is a descendant, then in phase 0, arguments for the parent's factory function are determined. Phase 0 ends with calling the parent's factory function, giving you a parent instance, or failure. If the type is not in an inheritance hierarchy, phase 0 is skipped.
-*   In phase 1, you may call parent methods on a parent instance (if any) and prepare the values for the data members for the current type. Phase 1 ends by calling a function that transforms the parent instance into the current type. This call will never fail.
+- Factory functions will have a three-phase structure.
+- If the type is a descendant, then in phase 0, arguments for the parent's
+  factory function are determined. Phase 0 ends with calling the parent's
+  factory function, giving you a parent instance, or failure. If the type is not
+  in an inheritance hierarchy, phase 0 is skipped.
+- In phase 1, you may call parent methods on a parent instance (if any) and
+  prepare the values for the data members for the current type. Phase 1 ends by
+  calling a function that transforms the parent instance into the current type.
+  This call will never fail.
 
 In the two Swift-like models (currently disfavored):
 
+- Factory functions will have a two-phase structure.
+- In phase 1, the initial values for the data members in the current class will
+  be determined. If this class has a parent, you will also determine the
+  arguments to a parent's factory function in phase 1.
+- If this class has a parent, the parent's factory function will be called at
+  the boundary between phase 1 and phase 2. This call will probably have its own
+  syntax (e.g. in Swift this is `super.init(...)`, in C++ you use the name of
+  the parent class invoked in the initializer list). If a parent factory
+  function's fails, the error will be reported at this point.
 
-
-*   Factory functions will have a two-phase structure.
-*   In phase 1, the initial values for the data members in the current class will be determined. If this class has a parent, you will also determine the arguments to a parent's factory function in phase 1.
-*   If this class has a parent, the parent's factory function will be called at the boundary between phase 1 and phase 2. This call will probably have its own syntax (e.g. in Swift this is `super.init(...)`, in C++ you use the name of the parent class invoked in the initializer list). If a parent factory function's fails, the error will be reported at this point.
-
-In either case, in phase 2 you can modify any data members (including those from the parent), and call member functions. **Concern:** [chandlerc](https://github.com/chandlerc) has reservations about allowing virtual functions to be called (particularly if they can invoke a descendant's override implementation) and would prefer to disallow it.
-
+In either case, in phase 2 you can modify any data members (including those from
+the parent), and call member functions. **Concern:**
+[chandlerc](https://github.com/chandlerc) has reservations about allowing
+virtual functions to be called (particularly if they can invoke a descendant's
+override implementation) and would prefer to disallow it.
 
 ## Broken links footnote
 
-Some links in this document aren't yet available,
-and so have been directed here until we can do the
-work to make them available.
+Some links in this document aren't yet available, and so have been directed here
+until we can do the work to make them available.
 
 We thank you for your patience.
-```
