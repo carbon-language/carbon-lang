@@ -320,18 +320,17 @@ not be penalized unnecessarily.
 > new tools has a higher cost than many people
 > appreciate."—[John Carmack](https://twitter.com/id_aa_carmack/status/989951283900514304)
 
-**Focus on enabling better code patterns rather than restricting bad ones.**
-Adding restrictions to otherwise general facilities can have a
-disproportionately negative impact in the possibly rare cases when they get in
-the way. Instead, Carbon should focus on enabling better patterns, encouraging
-their use, and creating incentives to ensure people prefer them. The "bad"
-pattern may be critical for some rare user or some future use case. Put
-differently, we will not always be able to prevent engineers from writing bad or
-unnecessarily complex code, and that is okay. We should instead focus on helping
-reduce the rate that this occurs accidentally, and enabling tooling and
-diagnostics that warn about dangerous or surprising patterns. The language
-should stay out of the business of legislating bad code patterns except where
-they interfere with detecting logic or performance errors.
+**Focus on encouraging appropriate usage of features rather than restricting
+misuse.** Adding arbitrary restrictions to prevent misuse of otherwise general
+features of the language can create problems when they end up interfering with
+unexpected or rare but still appropriate usages. Instead, Carbon should focus on
+enabling appropriate and effective usage of features, and creating incentives
+around those. What seems initially like a "misuse" of a feature may be critical
+for some rare user or some future use case. Put differently, we will not always
+be able to prevent engineers from misusing features or writing unnecessarily
+complex code, and that is okay. We should instead focus on helping reduce the
+rate that this occurs accidentally, and enabling tooling and diagnostics that
+warn about dangerous or surprising patterns.
 
 **The behavior and semantics of code should be clearly and simply specified
 whenever possible.** Leaving behavior undefined for some cases of invalid,
