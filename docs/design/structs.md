@@ -292,9 +292,9 @@ Note that my first design was that two tuples with the same (name, type) pairs
 (as a set) were compatible no matter the order they were listed. In particular,
 these statements would not be errors:
 
-```
-assert(proposed_type_syntax == (.y = 4, .x = 3)); // Error! Order doesn't match.
-proposed_type_syntax = (.y = 7, .x = 8); // Error! Order doesn't match.
+```diff
+- assert(proposed_type_syntax == (.y = 4, .x = 3)); // Error! Order doesn't match.
+- proposed_type_syntax = (.y = 7, .x = 8); // Error! Order doesn't match.
 ```
 
 This has a problem though, when the order of fields of the type doesn't match
@@ -1032,8 +1032,9 @@ fn Counter.Increment(Ptr(Counter): this) -> Int {
 All members of a struct would have to be defined in the same library (not
 necessarily the same file) as the struct itself.
 
-**Proposal:** Chandler has proposed that the `self`/`this` argument could be
-passed by value (instead of via a pointer) in the
+**Proposal:** [chandlerc](https://github.com/chandlerc) has proposed that the
+`self`/`this` argument could be passed by value (instead of via a pointer) in
+the
 [Carbon language design doc](https://github.com/jonmeow/carbon-lang/blob/proposal-design-overview/docs/design/README.md#structs).
 This is incompatible with inheritance (due to the
 [slicing problem](https://en.wikipedia.org/wiki/Object_slicing)), so we should
@@ -1047,10 +1048,12 @@ with compile time checks:
   or a subtype" (but
   [we are currently not making that distinction in the type system](#control-over-destruction--raii))
 
-Geoffrey Romer says: "The use cases are the same as the use cases for passing by
-value in any other argument position- you pass by value because it's simpler,
-and it establishes that the object isn't shared with any other code. This makes
-the code much simpler to reason about, both for humans and for the optimizer."
+[geoffromer](https://github.com/geoffromer) says:
+
+> The use cases are the same as the use cases for passing by value in any other
+> argument position- you pass by value because it's simpler, and it establishes
+> that the object isn't shared with any other code. This makes the code much
+> simpler to reason about, both for humans and for the optimizer."
 
 **Question (minor):** You can also have functions as `var` members of a type.
 Should member access with a dot (`.`) falls back to the ordinary field access
@@ -1431,7 +1434,7 @@ This makes it easier for an intermediary (like a container) to construct
 something on your behalf (like C++'s `emplace_back`) by just taking a tuple
 representing the arguments to the factory function (and the tuple's names are
 used to select the factory function overload with the same keyword arguments).
-Note: Chandler disagrees.
+Note: [chandlerc](https://github.com/chandlerc) disagrees.
 
 **Proposal:** Eventually we will support factory functions that call other
 factory functions in place of calling `construct` (like
@@ -1888,7 +1891,7 @@ x", or if just being able to express "scoped to this function call" is enough.
 
 TODO
 
-Chandler says:
+[chandlerc](https://github.com/chandlerc) says:
 
 - What moves are in C++: transfer of resources without copy.
 
@@ -2537,9 +2540,10 @@ get the descendant's version of a virtual function in a base class constructor
 before. However, this may not be viable since we want to allow inheritance
 across the C++/Carbon boundary. This option is considered first.
 
-**Proposal:** Chandler prefers the C++ constructor order, but forbidding calls
-to virtual member functions in constructors to avoid confusion. In particular,
-he thinks it is common to want to access base members in the descendant.
+**Proposal:** [chandlerc](https://github.com/chandlerc) prefers the C++
+constructor order, but forbidding calls to virtual member functions in
+constructors to avoid confusion. In particular, he thinks it is common to want
+to access base members in the descendant.
 [This option is considered in more detail after the Swift model below](#alternative-proposal-requested-by-chandler-c-constructor-order).
 
 **Background:**
