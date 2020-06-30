@@ -1053,7 +1053,7 @@ with compile time checks:
 > The use cases are the same as the use cases for passing by value in any other
 > argument position- you pass by value because it's simpler, and it establishes
 > that the object isn't shared with any other code. This makes the code much
-> simpler to reason about, both for humans and for the optimizer."
+> simpler to reason about, both for humans and for the optimizer.
 
 **Question (minor):** You can also have functions as `var` members of a type.
 Should member access with a dot (`.`) falls back to the ordinary field access
