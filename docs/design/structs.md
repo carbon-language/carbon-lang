@@ -26,6 +26,8 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     - [Using dot to get values from the struct's namespace](#using-dot-to-get-values-from-the-structs-namespace)
   - [Customizing an object's lifecycle](#customizing-an-objects-lifecycle)
     - [Control over creation](#control-over-creation)
+      - [Needing the address of the constructed object](#needing-the-address-of-the-constructed-object)
+      - [Rejected Swift-style model](#rejected-swift-style-model)
     - [Control over allocation](#control-over-allocation)
     - [Control over destruction / RAII](#control-over-destruction--raii)
     - [Reference counting](#reference-counting)
@@ -194,17 +196,19 @@ not include weird C++ behavior:
   parameterized structs.
 
 ```
-struct List(Type: T) {
-  struct Node(ListPolicy: P) {
+struct List(Type:$$ T) {
+  struct Node(ListPolicy:$$ P) {
     var T: data;
     var Ptr(Self): next; // ok, Self is List(T).Node(P)
-    var Ptr(???): list; // how do you write this without repeating the arguments for List?
+    // How do you write this without repeating the arguments for List?
+    var Ptr(???): list;
   }
   var Ptr(Node(ComputePolicy())): first;
 }
 ```
 
-    One solution, assuming we think this is rare enough, is to require the programmer to add an alias `type ListSelf = Self` to the outer struct.
+One solution, assuming we think this is rare enough, is to require the
+programmer to add an alias `Type:$$ ListSelf = Self` to the outer struct.
 
 - [In C++, if D and B are incomplete, the compiler will assume D* a not a subtype of B*, when in fact the answer should be "don't know"](https://google.github.io/styleguide/cppguide.html#Forward_Declarations).
 
@@ -382,7 +386,9 @@ in tuples not structs. Two possible solutions:
 
 [chandlerc](https://github.com/chandlerc) says:
 
-    I somewhat like #2 as it means you can define custom, named types that expose the exact same API as a tuple which seems quite useful. I've not thought about it enough to know if there are problems here though.
+> I somewhat like #2 as it means you can define custom, named types that expose
+> the exact same API as a tuple which seems quite useful. I've not thought about
+> it enough to know if there are problems here though.
 
 #### Record type equality
 
@@ -566,25 +572,25 @@ var Point: p = ???;
 match the names of the fields, in the same order
 ([see above](#bookmark=id.opejfo1k8om9)).
 
-```
-var Point: p1 = (.x = 1, .y = 2);
-var Point: p2 = (.y = 4, .x = 3);  // Error: order matters.
+```diff
+  var Point: p1 = (.x = 1, .y = 2);
+- var Point: p2 = (.y = 4, .x = 3);  // Error: order matters.
 
-// No need for a trailing comma in tuples with a single named field.
-struct OneMember {
-  var Int: x;
-}
-var OneMember : a = (.x = 12);
+  // No need for a trailing comma in tuples with a single named field.
+  struct OneMember {
+    var Int: x;
+  }
+  var OneMember : a = (.x = 12);
 ```
 
 **Proposal:** We do not allow positional initialization from a tuple without
 names:
 
-```
-// Error: Tuple missing names:
-var Point: p = (1, 2);
-assert(p.x == 1);
-assert(p.y == 2);
+```diff
+  // Error: Tuple missing names:
+- var Point: p = (1, 2);
+  assert(p.x == 1);
+  assert(p.y == 2);
 ```
 
 The rule here is:
@@ -1330,11 +1336,14 @@ struct Foo {
 }
 ```
 
-If instead some field needs the address of the constructed object to initialize
-some field. What if instead we wanted to make a node in a circularly linked list
-that when it was first constructed just pointed to itself? In this case we could
-either assign a temporary value that we overwrite or use the `uninit` keyword to
-delay assigning a value to those fields until after construction:
+##### Needing the address of the constructed object
+
+We need some way to handle the situation where some field is to be set to the
+address of the constructed object to initialized. Consider changing our example
+so that each node in a circularly linked list just pointed to itself when it was
+first constructed? In this case we could either assign a temporary value that we
+overwrite or use the `uninit` keyword to delay assigning a value to those fields
+until after construction:
 
 ```
 struct Bar {
@@ -1359,6 +1368,8 @@ More on this issue in
 ["Uninitialized variables and lifetime" (TODO)](#broken-links-footnote)<!-- T:Uninitialized variables and lifetime -->
 or
 [carbon-uninit-v2 (TODO)](#broken-links-footnote)<!-- T:Carbon Uninitialized variables and lifetime v2 -->
+
+##### Rejected Swift-style model
 
 **Rejected alternative:** We also considered the Swift model, where the factory
 function is given a `this` pointer that is set to allocated-but-uninitialized
@@ -2299,23 +2310,23 @@ say that most types can't be extended.
 **Proposal:** By default, types are "final" and you have to mark types as `base`
 to allow structs to descend from them.
 
-```
-struct A base { ... }
-struct B base extends A { ... }
-struct C { ... }
-struct D extends C { ... }  // Compile error: C not a base type.
-struct E extends B { ... }
-struct F extends E { ... }  // Compile error: E not a base type.
+```diff
+  struct A base { ... }
+  struct B base extends A { ... }
+  struct C { ... }
+- struct D extends C { ... }  // Compile error: C not a base type.
+  struct E extends B { ... }
+- struct F extends E { ... }  // Compile error: E not a base type.
 ```
 
 **Rejected alternative:** Allow users to mark types as `final` to indicate that
 you may not descend from them.
 
-```
-struct Foo { ... }
-struct Bar extends Foo final { ... }
-struct Baz final { ... }
-struct Quux extends Baz { ... }  // Compile error: Baz is final.
+```diff
+  struct Foo { ... }
+  struct Bar extends Foo final { ... }
+  struct Baz final { ... }
+- struct Quux extends Baz { ... }  // Compile error: Baz is final.
 ```
 
 **Rationale:** We want to favor coding patterns that don't use inheritance, and
@@ -2580,10 +2591,11 @@ written in the Swift case:
   new object.
 - Code after the `construct` function proceeds as normal.
 
-Strawman syntax:
+Strawman syntax (see
+[`Bar` defined in the "Needing the address of the constructed object" section](#needing-the-address-of-the-constructed-object)):
 
 ```
-struct Bar {  // Same `Bar` as from "Control over creation"
+struct Bar {
   ...
   fn operator create(Int: value) -> Ptr(Bar) { ... }
 }
@@ -2603,10 +2615,11 @@ struct Baz extends Bar {  // Baz descends from Bar
 Once we've made all these changes to the Rust model, the
 Swift-construction-order-thought-experiment model ends up quite similar (in
 spirit) to the Swift model. For reference, here is the same code following a
-Swift model:
+Swift model (see
+[`Bar` defined in in the Swift-style above](#rejected-swift-style-model)):
 
 ```
-struct Bar {  // See Swift-style version above.
+struct Bar {
   ...
   fn operator create(Ptr(Bar): this, Int: value) { ... }
 }
