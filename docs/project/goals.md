@@ -423,8 +423,9 @@ hardware architectures they run on, and the environments in which their software
 runs. Carbon must also continue supporting these over time, even as which ones
 are major or modern evolve and change over time.
 
-Carbon must be able to provide native support for various platforms and
-environments, rather than relying on compile-time indirections which may impair
+Carbon must be able to provide native support for the programming models of
+those platforms and environments, rather than relying on compile-time translations
+which may impair
 performance. This includes addressing SIMD versus SPMD, concurrency versus
 parallelism, and desktop versus mobile versus bare metal.
 
