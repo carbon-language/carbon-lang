@@ -420,8 +420,7 @@ scalability options for build systems of large software.
 
 Carbon must have strong support for all of the major, modern platforms, the
 hardware architectures they run on, and the environments in which their software
-runs. This can be expected to evolve over time as which platforms are major and
-modern changes.
+runs. Carbon must also continue supporting these over time, even as which ones are major or modern evolve and change over time.
 
 Conversely, we do not need to prioritize support for historical platforms. To
 use a hockey metaphor, Carbon should not skate to where the puck is, much less
