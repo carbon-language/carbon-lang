@@ -43,7 +43,7 @@ use cases.
 
 A programming language is a tool, and different tools are good for different
 purposes. We think there is great value in priorities that differentiate Carbon
-from the plethora of programming languages. Stating Carbon’s priorities clearly
+from other programming languages. Stating Carbon’s priorities clearly
 and explicitly helps the entire community effectively evaluate and use the
 language.
 
