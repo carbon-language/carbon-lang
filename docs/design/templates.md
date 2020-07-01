@@ -99,20 +99,6 @@ specialization, but that is an area that we want to explore cautiously.
 
 ### Constraining templates with interfaces
 
-These generic interfaces also provide a mechanism to constrain fully
-instantiated templates to operate in terms of a restricted and explicit API
-rather than being fully duck typed. This falls out of the template type produced
-by the interface declaration. A template can simply accept one of those:
+Because we consider only specific *parameters* to be templated and they could be individually migrated to a constrained interface using the [generics system](README.md#generics), constraining templates themselves may be less critical. Instead, we expect parameterized types and functions may use a mixture of generic parameters and templated parameters based on where they are constrained.
 
-```
-template fn TemplateRender[Type: T](Point(T): point) {
-  ...
-}
-```
-
-Here, we accept the specific interface wrapper rather than the underlying `T`.
-This forces the interface of `T` to match that of `Point`. It also provides only
-this restricted interface to the template function.
-
-This is designed to maximize the programmer's ability to move between different
-layers of abstraction, from fully generic to a generically constrained template.
+However, if there are still use cases, we would like to explore applying the interface constraints of the generics system directly to template parameters rather than create a new constraint system.
