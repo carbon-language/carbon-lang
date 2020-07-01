@@ -68,7 +68,7 @@ The process is:
 We use several tools to coordinate changes to Carbon:
 
 - **GitHub pull requests** contain the proposals and related discussion.
-  Resolved proposals wil be committed with the associated decision. The pull
+  Resolved proposals will be committed with the associated decision. The pull
   request's description should link all related Discourse Forum topics and other
   references for easy browsing.
 - **Discourse Forum** topics will be used for the early idea discussion, any
@@ -271,7 +271,7 @@ Where the proposal makes a decision between multiple options, move them to the
 You may optionally use the
 [Google Docs template](https://docs.google.com/document/d/1sqEnIWWZKTrtMz2XgD7_RqvogwbI0tBQjAZIvOabQsw/template/preview)
 for early proposal versions, which can be transferred to Markdown later. Using
-Google Docs can especially help iterate on a propsal with multiple authors.
+Google Docs can especially help iterate on a proposal with multiple authors.
 
 This template includes things like license headers and standard formatting. If
 you already have a non-templated Doc, please create a new Doc using the template
