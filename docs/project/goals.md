@@ -113,7 +113,17 @@ replacement for a formal specification at any point.
 
 **Carbon will have a formal specification.** Fully specifying the language
 enables other implementations and allows us to clearly document the expected
-behavior of the reference implementation. We also want to include machine
+behavior of the reference implementation. This does not mean the specification
+defines what is "correct". Instead, the specification and reference implementation
+should compliment each other. Any divergence is a bug that *must* be resolved.
+At no point do we expect the specification to diverge meaningfully from the
+reference implementation, they should always converge. Notably, we don't
+expect Carbon to have designs or specifications which do not match the
+practical implementation. Having a specification does not lessen the importance
+of implementation realities, it merely serves as more formal documentation of that
+behavior. Having this will enable better analysis of the language as a whole and
+the production of other patial or full implementations which match the behavior of
+the reference implementation. We also want to include machine
 readable forms of this for many parts of the language, such as a grammar, to
 help enable widespread tooling to reuse a consistent basis and help us check
 invariants and properties of the language.
