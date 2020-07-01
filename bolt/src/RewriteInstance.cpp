@@ -1826,7 +1826,8 @@ bool RewriteInstance::analyzeRelocation(const RelocationRef &Rel,
   } else if (!SymbolAddress) {
     assert(!IsSectionRelocation);
     if (ExtractedValue || Addend == 0 || IsPCRelative) {
-      SymbolAddress = ExtractedValue - Addend + PCRelOffset;
+      SymbolAddress = truncateToSize(ExtractedValue - Addend + PCRelOffset,
+                                     RelSize);
     } else {
       // This is weird case.  The extracted value is zero but the addend is
       // non-zero and the relocation is not pc-rel.  Using the previous logic,
@@ -1851,6 +1852,9 @@ bool RewriteInstance::analyzeRelocation(const RelocationRef &Rel,
       return true;
 
     if (Relocation::isTLS(RType))
+      return true;
+
+    if (RType == ELF::R_X86_64_PLT32)
       return true;
 
     return truncateToSize(ExtractedValue, RelSize) ==
