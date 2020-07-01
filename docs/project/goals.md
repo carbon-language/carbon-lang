@@ -431,19 +431,26 @@ scalability options for build systems of large software.
 Carbon must have strong support for all of the major, modern OS platforms, the
 hardware architectures they run on, and the environments in which their software
 runs. Carbon must also continue supporting these over time, even as which ones
-are major or modern evolve and change over time.
+are major or modern evolve and change. 
 
-Carbon must be able to provide native support for the programming models of
-those platforms and environments, rather than relying on compile-time translations
-which may impair
-performance. This includes addressing SIMD versus SPMD, concurrency versus
-parallelism, and desktop versus mobile versus bare metal.
+**Provide _native_ support for the programming models of
+those platforms and environments.** This goes beyond enabling compile-time
+translations from one abstraction to several implementations. While enabling
+high-level synchronization primitives like mutexes and futures is good, the
+underlying atomic operations provided by the hardware must also be directly
+available. Similarly, lowering parallel constructs into either SIMD or SPMD
+implementations is good but insufficient. Both SIMD and SPMD must be directly
+addressable in Carbon. This pattern repeats across the landscape of hardware,
+platform, and environment, including concurrency versus parallelism more
+generally, and more OS/environment distinctions such as desktop versus mobile
+versus bare metal.
 
-Conversely, we do not need to prioritize support for historical platforms. To
-use a hockey metaphor, Carbon should not skate to where the puck is, much less
+**Conversely, Carbon cannot prioritize support for historical platforms.** To
+use a hockey metaphor, we should not skate to where the puck is, much less
 where the puck was twenty years ago. We have existing systems to support those
 platforms where necessary. Instead, Carbon should be forward-leaning in its
-platform support.
+platform support. As these platforms evolve over time, Carbon will have to evolve
+as well to continue to effectively prioritize the modern and major platforms.
 
 For examples, please see Carbon's
 [success critiera](principles/success_criteria.md#modern-os-platforms-hardware-architectures-and-environments).
