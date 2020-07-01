@@ -245,6 +245,13 @@ Every file type uses a variation on the same license text ("Apache-2.0 WITH
 LLVM-exception") with similar formatting. If you're not sure what text to use,
 please ask on Discourse Forums.
 
+## Workflow
+
+Carbon repositories all follow a common
+[pull-request workflow](docs/project/pull_request_workflow.md) for landing
+changes. It is a trunk-based development model that emphasizes small,
+incremental changes and preserves a simple linear history.
+
 ## Acknowledgements
 
 Carbon's Contributing guidelines are based on

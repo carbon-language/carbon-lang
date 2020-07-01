@@ -23,6 +23,7 @@ request:
 <!-- proposals -->
 <!-- This list is updated by src/scripts/pre-commit-proposal-list.py. -->
 
+- [0029 - Linear, rebase, and pull-request GitHub workflow](p0029.md)
 - [0044 - Proposal tracking](p0044.md)
   - [Decision](p0044-decision.md)
 - [0074 - Change comment/decision timelines in proposal process](p0074.md)
