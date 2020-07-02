@@ -15,16 +15,25 @@
 #ifndef LLVM_TOOLS_LLVM_BOLT_LINKRUNTIME_H
 #define LLVM_TOOLS_LLVM_BOLT_LINKRUNTIME_H
 
-#include "llvm/ExecutionEngine/Orc/RTDyldObjectLinkingLayer.h"
+#include <llvm/ADT/StringRef.h>
+#include <vector>
 
 namespace llvm {
 class MCStreamer;
+
+namespace orc {
+class ExecutionSession;
+class RTDyldObjectLinkingLayer;
+} // namespace orc
 
 namespace bolt {
 
 class BinaryContext;
 
 class RuntimeLibrary {
+  // vtable anchor.
+  virtual void anchor();
+
 public:
   virtual ~RuntimeLibrary() = default;
 

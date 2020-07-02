@@ -11,6 +11,7 @@
 
 #include "RuntimeLibrary.h"
 #include "Utils.h"
+#include "llvm/ExecutionEngine/Orc/RTDyldObjectLinkingLayer.h"
 #include "llvm/Object/Archive.h"
 #include "llvm/Support/Path.h"
 
@@ -19,6 +20,8 @@
 
 using namespace llvm;
 using namespace bolt;
+
+void RuntimeLibrary::anchor() {}
 
 std::string RuntimeLibrary::getLibPath(StringRef ToolPath,
                                        StringRef LibFileName) {

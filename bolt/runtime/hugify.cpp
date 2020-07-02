@@ -24,14 +24,13 @@ extern void (*__bolt_hugify_init_ptr)();
 extern uint64_t __hot_start;
 extern uint64_t __hot_end;
 
-namespace {
 #ifdef MADV_HUGEPAGE
 /// Starting from character at \p buf, find the longest consecutive sequence
 /// of digits (0-9) and convert it to uint32_t. The converted value
 /// is put into \p ret. \p end marks the end of the buffer to avoid buffer
 /// overflow. The function \returns whether a valid uint32_t value is found.
 /// \p buf will be updated to the next character right after the digits.
-bool scanUInt32(const char *&buf, const char *end, uint32_t &ret) {
+static bool scanUInt32(const char *&buf, const char *end, uint32_t &ret) {
   uint64_t result = 0;
   const char *oldBuf = buf;
   while (buf < end && ((*buf) >= '0' && (*buf) <= '9')) {
@@ -47,7 +46,7 @@ bool scanUInt32(const char *&buf, const char *end, uint32_t &ret) {
 
 /// Check whether the kernel supports THP by checking the kernel version.
 /// Only fb kernel 5.2 and latter supports it.
-bool has_pagecache_thp_support() {
+static bool has_pagecache_thp_support() {
   struct utsname u;
   int ret = __uname(&u);
   if (ret) {
@@ -92,7 +91,7 @@ bool has_pagecache_thp_support() {
   return nums[1] > 2 || nums[4] >= 5;
 }
 
-void hugify_for_old_kernel(uint8_t *from, uint8_t *to) {
+static void hugify_for_old_kernel(uint8_t *from, uint8_t *to) {
   size_t size = to - from;
 
   uint8_t *mem = reinterpret_cast<uint8_t *>(
@@ -164,7 +163,6 @@ extern "C" void __bolt_hugify_self_impl() {
   }
 #endif
 }
-} // anonymous namespace
 
 /// This is hooking ELF's entry, it needs to save all machine state.
 extern "C" __attribute((naked)) void __bolt_hugify_self() {

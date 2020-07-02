@@ -9,6 +9,7 @@
 
 #include "HugifyRuntimeLibrary.h"
 #include "BinaryFunction.h"
+#include "llvm/ExecutionEngine/Orc/RTDyldObjectLinkingLayer.h"
 
 using namespace llvm;
 using namespace bolt;
