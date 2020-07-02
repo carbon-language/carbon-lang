@@ -15,7 +15,7 @@ Carbon repositories follow a few basic principles:
 - Preserve linear history by
   [rebasing](https://help.github.com/en/github/collaborating-with-issues-and-pull-requests/about-pull-request-merges#rebase-and-merge-your-pull-request-commits)
   or
-  [squashing](https://help.github.com/en/github/collaborating-with-issues-and-pull-requests/about-pull-request-merges#squash-and-merge-your-pull-request-commits),
+  [squashing](https://help.github.com/en/github/collaborating-with-issues-and-pull-requests/about-pull-request-merges#squash-and-merge-your-pull-request-commits)
   pull requests rather than using unsquashed merge commits.
 
 These principles try to optimize for several different uses or activities with
