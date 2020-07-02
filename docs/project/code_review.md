@@ -142,11 +142,11 @@ The description body may need to explain several important aspects of the change
 to provide context for the reviewer when it isn't obvious from the change
 itself:
 
-- The problem being solved by the change
-- Why the approach taken is the best one
-- Any issues, concerns, or shortcomings of the approach
-- Any alternatives considered or attempted
-- Relevant supporting data such as examples or benchmarks
+- The problem being solved by the change.
+- Why the approach taken is the best one.
+- Any issues, concerns, or shortcomings of the approach.
+- Any alternatives considered or attempted.
+- Relevant supporting data such as examples or benchmarks.
 
 Try to anticipate what information the reviewer of your change will need to have
 in order to be effective. Also consider what information someone else will need
@@ -157,10 +157,10 @@ your change without any context.
 
 Small changes have many benefits:
 
-- Faster review
-- More thorough review
-- Easier to merge
-- Easier to revert if needed
+- Faster review.
+- More thorough review.
+- Easier to merge.
+- Easier to revert if needed.
 
 The ideal size of a change is as small as possible while it remains
 self-contained. It should address only _one thing_. Often, this results in a
