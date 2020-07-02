@@ -86,6 +86,13 @@ changes or an explanation of why not, before a pull request is merged. Further,
 any code owners who have requested changes should explicitly confirm they're
 happy with the resolution before the change is merged.
 
+For [evolution proposals](evolution.md) of any kind, it is the team members'
+responsibility to explicitly note any review comments that block completing the
+code review when making a decision. Otherwise, the consensus decision is assumed
+to mean the prior review comments from the team are addressed, and the author is
+free to ask for whatever subset of _code reviews_ they want and merge when those
+approve.
+
 ## GitHub pull request mechanics
 
 Carbon uses GitHub pull requests for code review, and we recommend some
@@ -301,8 +308,8 @@ orthogonally to any evolutionary discussion and evaluation.
 Things to consider and evaluate when reviewing changes:
 
 - Is the code well designed?
-  - Is the resulting functionality good for the users of the code?
-  - Are any user interface or user experience changes good for the users?
+  - Is the resulting functionality, including its interface, good for the users
+    of the code?
   - Does the resulting design facilitate long-term maintenance?
   - Can the code be simplified? Is there unnecessary complexity?
   - Are things being implemented that aren't yet needed and only _might_ be
