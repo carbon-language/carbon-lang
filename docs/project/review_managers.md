@@ -87,7 +87,7 @@ declined/deferred proposals should have the same template used as a comment on
 the proposal, with no separate pull request.
 
 Announce the decision on a new topic in
-[Evolution > Announcemented](https://forums.carbon-lang.dev/c/evolution/announcements/8),
+[Evolution > Announcements](https://forums.carbon-lang.dev/c/evolution/announcements/8),
 titled "[DECISION] PROPOSAL":
 
 ```markdown
