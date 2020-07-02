@@ -91,11 +91,11 @@ the GitHub squash-and-merge functionality to land things.
 ### Stacking dependent pull requests
 
 Carbon uses pull requests in the common, distributed GitHub model where you
-first fork the repository, typically into your own private GitHub fork, and
-then develop on feature branches in that fork. When a branch is ready for
-review, it is turned into a pull request against the main fork. This flow should
-always be where you start when contributing to Carbon and scales well even with
-many independent changes in flight.
+first fork the repository, typically into your own private GitHub fork, and then
+develop on feature branches in that fork. When a branch is ready for review, it
+is turned into a pull request against the main fork. This flow should always be
+where you start when contributing to Carbon and scales well even with many
+independent changes in flight.
 
 However, a common limitation to hit is when you want to create a _stack_ of
 _dependent_ but small and incremental changes and allow them to be reviewed in
