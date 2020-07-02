@@ -91,7 +91,7 @@ the GitHub squash-and-merge functionality to land things.
 ### Stacking dependent pull requests
 
 Carbon uses pull requests in the common, distributed GitHub model where you
-first fork the repository (typically into your own private GitHub fork), and
+first fork the repository, typically into your own private GitHub fork, and
 then develop on feature branches in that fork. When a branch is ready for
 review, it is turned into a pull request against the main fork. This flow should
 always be where you start when contributing to Carbon and scales well even with
@@ -127,7 +127,7 @@ We suggest a specific workflow to address this:
    > gh pr create
    ```
 
-   And let's imagine this creates a pull request `N` in the upstream repository.
+   Let's imagine this creates a pull request `N` in the upstream repository.
 
 2. _If_ you end up needing to create a subsequent pull request based on the
    first one, we need to create a _branch_ in the upstream repository that
@@ -145,7 +145,7 @@ We suggest a specific workflow to address this:
    force pushed as necessary and deleted. These branch names should only be used
    for this ephemeral purpose. All other branch names are protected.
 
-   If you don't (yet) have this permission, feel free to ask anyone who does --
+   If you don't yet have this permission, feel free to ask anyone who does --
    anyone can checkout your pull request and push it to a branch with this name
    pattern for use in a stacked series of commits.
 

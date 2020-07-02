@@ -31,7 +31,7 @@ documentation to create pull requests, query their state, etc.
 To set up `gh`:
 
 - [Install the tool](https://cli.github.com/manual/installation)
-- On first use (such as `gh pr view`), a browser will be launched to authorize
+- On first use, such as `gh pr view`, a browser will be launched to authorize
   the tool.
 - If running on a machine without a proper web browser, there is a
   [workaround](https://github.com/cli/cli/issues/297#issuecomment-587708363).
