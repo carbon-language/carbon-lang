@@ -32,7 +32,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 5. Delete this section.
 
 TODOs indicate where content should be updated for a proposal. See
-[Carbon Governance and Evolution](https://github.com/carbon-language/carbon-lang/blob/master/docs/project/evolution.md)
+[Carbon Governance and Evolution](/docs/project/evolution.md)
 for more details.
 
 ## Problem

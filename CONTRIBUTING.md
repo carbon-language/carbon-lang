@@ -236,7 +236,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 ```
 
 For example, see the top of
-[CONTRIBUTING.md](https://github.com/carbon-language/carbon-lang/raw/master/CONTRIBUTING.md)'s
+[CONTRIBUTING.md](https://github.com/carbon-language/carbon-lang/raw/trunk/CONTRIBUTING.md)'s
 raw content.
 
 ### Other files
