@@ -1629,8 +1629,9 @@ BinarySection &BinaryContext::registerSection(BinarySection *Section) {
          "can't register sections without a name");
   auto Res = Sections.insert(Section);
   assert(Res.second && "can't register the same section twice.");
-  // Only register sections with addresses in the AddressToSection map.
-  if (Section->getAddress())
+
+  // Only register allocatable sections in the AddressToSection map.
+  if (Section->isAllocatable())
     AddressToSection.insert(std::make_pair(Section->getAddress(), Section));
   NameToSection.insert(std::make_pair(Section->getName(), Section));
   DEBUG(dbgs() << "BOLT-DEBUG: registering " << *Section << "\n");

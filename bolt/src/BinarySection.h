@@ -274,7 +274,12 @@ public:
             ELFType == ELF::SHT_PROGBITS);
   }
   bool isAllocatable() const {
-    return (ELFFlags & ELF::SHF_ALLOC) && !isTBSS();
+    if (isELF()) {
+      return (ELFFlags & ELF::SHF_ALLOC) && !isTBSS();
+    } else {
+      // On non-ELF assume all sections are allocatable.
+      return true;
+    }
   }
   bool isReordered() const { return IsReordered; }
   bool isAnonymous() const { return IsAnonymous; }
