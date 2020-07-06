@@ -25,17 +25,17 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 > TIP: Run `../src/scripts/new-proposal.py "TITLE"` to do new proposal setup.
 
-1. Create a GitHub pull request, to get a pull request number.
+1. Copy this template to `new.md`, and create a commit.
+2. Create a GitHub pull request, to get a pull request number.
    - Add the `proposal` and `WIP` labels to the pull request.
-2. Name this file `/proposals/p####.md`, where `####` should be the pull request
-   number.
-3. Update the title of the proposal (the `TODO` on line 1).
-4. Update the link to the pull request (the `####` on line 11).
-5. Delete this section.
+3. Rename `new.md` to `/proposals/p####.md`, where `####` should be the pull
+   request number.
+4. Update the title of the proposal (the `TODO` on line 1).
+5. Update the link to the pull request (the `####` on line 11).
+6. Delete this section.
 
 TODOs indicate where content should be updated for a proposal. See
-[Carbon Governance and Evolution](https://github.com/carbon-language/carbon-lang/blob/master/docs/project/evolution.md)
-for more details.
+[Carbon Governance and Evolution](/docs/project/evolution.md) for more details.
 
 ## Problem
 
