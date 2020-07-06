@@ -49,9 +49,8 @@ This should not be considered an exhaustive list of important platforms.
 
 Our priority OS platforms are modern versions of:
 
-- Linux
+- Linux, including common distributions, Android and ChromeOS
 - FreeBSD
-- Android
 - Windows
 - macOS and iOS
 - Fuchsia
