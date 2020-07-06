@@ -109,7 +109,7 @@ if __name__ == "__main__":
         sys.exit("ERROR: Cancelled")
 
     # Create a proposal branch.
-    _Run([git_bin, "checkout", "-b", branch, "master"])
+    _Run([git_bin, "checkout", "-b", branch, "trunk"])
     _Run([git_bin, "push", "-u", "origin", branch])
 
     # Copy template.md to a temp file.
