@@ -50,6 +50,7 @@ This should not be considered an exhaustive list of important platforms.
 Our priority OS platforms are modern versions of:
 
 - Linux
+- FreeBSD
 - Android
 - Windows
 - macOS and iOS
@@ -70,7 +71,7 @@ We believe Carbon should strive to support some GPUs, other restricted
 computational hardware and environments, and embedded environments. While this
 should absolutely include future and emerging hardware and platforms, those
 shouldn't disproportionately shape the fundamental library and language design
-while they remain relatively new and narrow in user base.
+while they remain relatively new and rapidly evolving.
 
 #### Historical platforms
 
