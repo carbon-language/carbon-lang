@@ -625,7 +625,7 @@ The semantics of `[A: a](B: b, C: c) if (X)` is to
 
 **Examples:**
 
-- `(3, 4)` would match `(Int: x, Int: y) if (x &lt; y)` but `(4, 3)` does not.
+- `(3, 4)` would match `(Int: x, Int: y) if (x < y)` but `(4, 3)` does not.
 - `(3, 4)` would match
   `[Type: T](T: x, T: y) if (T implements ComparableInterface)`.
 
