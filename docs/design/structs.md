@@ -142,7 +142,7 @@ this document:
   [https://en.wikipedia.org/wiki/Tagged_pointer](https://en.wikipedia.org/wiki/Tagged_pointer)),
   and which SIMD/vectorization instructions you can use.
 - Specification of which bit patterns are illegal for this type, so that we can
-  efficiently implement things like `Optional&lt;T>`.
+  efficiently implement things like `Optional<T>`.
 
 ## Approach
 
@@ -1454,7 +1454,7 @@ always be referring to the type in the context of a factory function with an
 argument of the template type. Note that C++17 added this feature:
 [https://en.cppreference.com/w/cpp/language/class_template_argument_deduction](https://en.cppreference.com/w/cpp/language/class_template_argument_deduction).
 This allows you to write `std::array a = {1, 2, 3};` instead of
-`std::array&lt;int, 3> a = {1, 2, 3};`.
+`std::array<int, 3> a = {1, 2, 3};`.
 
 For now, my assumption is that this not something we want to support,
 particularly not as a first cut.
@@ -1940,18 +1940,18 @@ This has a number of benefits:
   This is both more convenient and provides greater consistency. Examples:
 
   - `!=` should always be the opposite of `==`
-  - all comparison operations could be derived from `&lt;=>`
+  - all comparison operations could be derived from `<=>`
   - perhaps assignment (`=`) could be derived from a destructor and copy
     construction
 
   However, these operations may be individually implemented if desired. For
   example, you might be able to code a cheaper implementation of `==` than
-  `&lt;=>`.
+  `<=>`.
 
 - Conversely, there are consistency requirements between operations. For
   example, any type implementing `==` must also implement `!=`. Similarly for
-  `&lt;` vs. `>`. This is accomplished via the specific choices of what goes
-  into the operator-overloading interfaces Carbon provides.
+  `<` vs. `>`. This is accomplished via the specific choices of what goes into
+  the operator-overloading interfaces Carbon provides.
 - Can implement different interfaces to convey different semantics.
   - Whether operations are associative or commutative.
   - Distinguish between strong vs. weak. vs. partial ordering.
@@ -1977,21 +1977,21 @@ consistency here.
 
 #### Ordering
 
-**Proposal:** Define the ordering operators (`&lt;`, `&lt;=`, `>=`, `>`) and the
-(spaceship) `&lt;=>` from
+**Proposal:** Define the ordering operators (`<`, `<=`, `>=`, `>`) and the
+(spaceship) `<=>` from
 [C++20](https://en.cppreference.com/w/cpp/language/default_comparisons) via
 comparison interfaces. In general we would expect to implement those interfaces
-using a single comparison function that matches the semantics of `&lt;=>`. The
-idea is that `a &lt; b` is defined to be `(a &lt;=> b) &lt; 0`.
+using a single comparison function that matches the semantics of `<=>`. The idea
+is that `a < b` is defined to be `(a <=> b) < 0`.
 
 There are different possible ordering relations:
 
 - 0 only when actually equal (C++ calls this "Strong ordering"). Example:
   lexicographical ordering of a tuple of numerical types.
-- (a &lt;=> b) == 0 defines an equivalence class (C++ calls this "Weak
+- `(a <=> b) == 0` defines an equivalence class (C++ calls this "Weak
   ordering"). Example: case-insensitive string comparison.
-- (a &lt;=> b) == 0 means "unrelated". (C++ calls this "Partial ordering").
-  Example: subtyping relation; if you have three types: `Child &lt; Parent`, but
+- `(a <=> b) == 0` means "unrelated". (C++ calls this "Partial ordering").
+  Example: subtyping relation; if you have three types: `Child < Parent`, but
   neither is related to `Other`. From this you can see "not related" is not
   transitive.
 
@@ -2006,7 +2006,7 @@ types implementing `Carbon.StrongOrdering` may be passed to functions expecting
 values of types implementing `Carbon.WeakOrdering`.
 
 **Alternative considered:** C++ distinguishes these cases by having three
-different return types from `operator&lt;=>`.
+different return types from `operator<=>`.
 
 **Question:** C++ actually defines the equality operators even in the last case
 by having two different return values for "equivalent" vs. "unrelated". Do we
@@ -2037,8 +2037,8 @@ supported. Do we want users to have to say which ordering interface is
 implemented, or do we want to allow that to be inferred?
 
 **Question:** C++ also has two different return types for defining equality via
-`&lt;=>` without defining an ordering. Do we want that? This seems mainly useful
-as part of C++'s story for inferring the comparison supported by the struct from
+`<=>` without defining an ordering. Do we want that? This seems mainly useful as
+part of C++'s story for inferring the comparison supported by the struct from
 the components.
 
 #### Properties
@@ -2178,7 +2178,7 @@ caused grief within C++:
   versions, or would have to become generic in order to preserve constness.
 - Const in C++ introduces incompatibility between things that should logically
   be compatible: like a function that doesn't modify its argument should be able
-  to be passed a `const vector&lt;Foo>&` or a `const vector&lt;const Foo>&`.
+  to be passed a `const vector<Foo>&` or a `const vector<const Foo>&`.
 
 See some discussion here:
 [https://nim-lang.org/araq/writetracking.html](https://nim-lang.org/araq/writetracking.html),
@@ -2958,7 +2958,7 @@ phase 2.
 - What about parent types, like abstract base classes, that can't be
   instantiated directly?
 - How does this fit in with mixins?
-- Less obvious how to make an API like C++'s `std::vector&lt;T>::emplace_back()`
+- Less obvious how to make an API like C++'s `std::vector<T>::emplace_back()`
   that constructs a value in place.
 - What about types that don't have value semantics? In particular, what if
   `Foo.Create()` is in a doubly linked list and saves its `this` pointer?
