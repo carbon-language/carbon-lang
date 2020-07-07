@@ -147,6 +147,10 @@ struct FuncBranchData {
   /// from the entry of this function.
   void appendFrom(const FuncBranchData &FBD, uint64_t Offset);
 
+  /// Returns the total number of executed branches in this function
+  /// by counting the number of executed branches for each BranchInfo
+  uint64_t getNumExecutedBranches() const;
+
   /// Aggregation helpers
   DenseMap<uint64_t, DenseMap<uint64_t, size_t>> IntraIndex;
   DenseMap<uint64_t, DenseMap<Location, size_t>> InterIndex;

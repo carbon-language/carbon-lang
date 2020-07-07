@@ -119,6 +119,16 @@ void FuncBranchData::appendFrom(const FuncBranchData &FBD, uint64_t Offset) {
   }
 }
 
+uint64_t FuncBranchData::getNumExecutedBranches() const {
+  uint64_t ExecutedBranches{0};
+  for (const auto &BI : Data) {
+    auto BranchCount = BI.Branches;
+    assert(BranchCount >= 0 && "branch execution count should not be negative");
+    ExecutedBranches += BranchCount;
+  }
+  return ExecutedBranches;
+}
+
 void SampleInfo::mergeWith(const SampleInfo &SI) {
   Hits += SI.Hits;
 }
@@ -437,10 +447,12 @@ void DataReader::matchProfileData(BinaryFunction &BF) {
   FuncBranchData *FBD = getBranchData(BF);
   if (FBD) {
     BF.ProfileMatchRatio = evaluateProfileData(BF, *FBD);
+    BF.RawBranchCount = FBD->getNumExecutedBranches();
     if (BF.ProfileMatchRatio == 1.0f) {
       if (fetchProfileForOtherEntryPoints(BF)) {
         BF.ProfileMatchRatio = evaluateProfileData(BF, *FBD);
         BF.ExecutionCount = FBD->ExecutionCount;
+        BF.RawBranchCount = FBD->getNumExecutedBranches();
       }
       return;
     }

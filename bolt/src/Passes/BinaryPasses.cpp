@@ -1259,6 +1259,8 @@ PrintProgramStats::runOnFunctions(BinaryContext &BC) {
   uint64_t NumStaleProfileFunctions{0};
   uint64_t NumNonSimpleProfiledFunctions{0};
   uint64_t NumUnknownControlFlowFunctions{0};
+  uint64_t TotalSampleCount{0};
+  uint64_t StaleSampleCount{0};
   std::vector<BinaryFunction *> ProfiledFunctions;
   const char *StaleFuncsHeader = "BOLT-INFO: Functions with stale profile:\n";
   for (auto &BFI : BC.getBinaryFunctions()) {
@@ -1289,6 +1291,9 @@ PrintProgramStats::runOnFunctions(BinaryContext &BC) {
     if (!Function.hasProfile())
       continue;
 
+    auto SampleCount = Function.getRawBranchCount();
+    TotalSampleCount += SampleCount;
+
     if (Function.hasValidProfile()) {
       ProfiledFunctions.push_back(&Function);
     } else {
@@ -1298,6 +1303,7 @@ PrintProgramStats::runOnFunctions(BinaryContext &BC) {
         outs() << "  " << Function << '\n';
       }
       ++NumStaleProfileFunctions;
+      StaleSampleCount += SampleCount;
     }
   }
   BC.NumProfiledFuncs = ProfiledFunctions.size();
@@ -1317,16 +1323,27 @@ PrintProgramStats::runOnFunctions(BinaryContext &BC) {
   if (NumStaleProfileFunctions) {
     const float PctStale =
       NumStaleProfileFunctions / (float) NumAllProfiledFunctions * 100.0f;
-    if (PctStale > opts::StaleThreshold) {
-      errs() << "BOLT-ERROR: ";
-    } else {
-      errs() << "BOLT-WARNING: ";
-    }
+    auto printErrorOrWarning = [&]() {
+      if (PctStale > opts::StaleThreshold) {
+        errs() << "BOLT-ERROR: ";
+      } else {
+        errs() << "BOLT-WARNING: ";
+      }
+    };
+    printErrorOrWarning();
     errs() << NumStaleProfileFunctions
            << format(" (%.1f%% of all profiled)", PctStale)
            << " function" << (NumStaleProfileFunctions == 1 ? "" : "s")
            << " have invalid (possibly stale) profile."
               " Use -report-stale to see the list.\n";
+    if (TotalSampleCount > 0) {
+      printErrorOrWarning();
+      errs() << StaleSampleCount << " out of " << TotalSampleCount
+             << " samples in the binary ("
+             << format("%.1f", ((100.0f * StaleSampleCount) / TotalSampleCount))
+             << "%) belong to functions with invalid"
+                " (possibly stale) profile.\n";
+    }
     if (PctStale > opts::StaleThreshold) {
       errs() << "BOLT-ERROR: stale functions exceed specified threshold of "
              << opts::StaleThreshold << "%. Exiting.\n";

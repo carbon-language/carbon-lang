@@ -340,6 +340,9 @@ private:
   /// Profile match ratio.
   float ProfileMatchRatio{0.0f};
 
+  /// Raw branch count for this function in the profile
+  uint64_t RawBranchCount{0};
+
   /// Indicates the type of profile the function is using.
   uint16_t ProfileFlags{PF_NONE};
 
@@ -1955,6 +1958,10 @@ public:
   uint64_t getExecutionCount() const {
     return ExecutionCount;
   }
+
+  /// Return the raw profile information about the number of branch
+  /// executions corresponding to this function.
+  uint64_t getRawBranchCount() const { return RawBranchCount; }
 
   /// Return the execution count for functions with known profile.
   /// Return 0 if the function has no profile.
