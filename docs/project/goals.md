@@ -566,7 +566,7 @@ necessary. Compilation models and linking models should be designed to suit the
 needs of Carbon and its use cases, tools, and environments, not what happens to
 have been implemented thus far in compilers and linkers.
 
-As a concreate example, Carbon will not support platforms that cannot update
+As a concrete example, Carbon will not support platforms that cannot update
 their compiler and linker alongside the language.
 
 #### Idiomatic migration of non-modern, non-idiomatic C++ code

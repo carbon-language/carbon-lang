@@ -97,12 +97,12 @@ Migrations must be mostly automatic. To that end, given an arbitrary large
 codebase following best practices, we aim to have less than 2% of files require
 human interaction.
 
-This critera includes:
+This criterion includes:
 
 - Addressing performance bugs unique to Carbon, introduced by migration tooling.
 - Converting complex code which migration tooling does not handle.
 
-This criteria does not include:
+This criterion does not include:
 
 - Cleaning up coding style to idiomatic Carbon.
   - For example, heavy use of C++ preprocessor macros may result in expanded
