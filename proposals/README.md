@@ -28,5 +28,6 @@ request:
   - [Decision](p0044-decision.md)
 - [0074 - Change comment/decision timelines in proposal process](p0074.md)
   - [Decision](p0074-decision.md)
+- [0107 - Code and name organization](p0107.md)
 
 <!-- endproposals -->
