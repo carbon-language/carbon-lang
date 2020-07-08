@@ -143,7 +143,7 @@ if __name__ == "__main__":
         final_file.write(content)
     _Run([git_bin, "add", temp_path, final_path])
     _Run([precommit_bin, "run"], check=False)  # Needs a ToC update.
-    _Run([git_bin, "add", final_path])
+    _Run([git_bin, "add", final_path, os.path.join(proposals_dir, "README.md")])
     _Run([git_bin, "commit", "-m", "Filling out template with PR %d" % pr_num])
 
     # Push the PR update.
