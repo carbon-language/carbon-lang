@@ -594,9 +594,9 @@ overarching goals and priorities, or if those don't offer enough clarity, we
 will fall back on rationale such as a required implementation order or a
 cost-benefit analysis.
 
-**Cost-benefit will drive many choices.** We expect the impact on the project
-and language as a whole to influence both the cost, including complexity, and
-benefit, including helping feature users. Benefit increases over time, which
+**Cost-benefit will drive many choices.** We expect to measure both
+cost, including complexity, and benefit using the impact on the project
+and language as a whole. Benefit accumulates over time, which
 means providing incremental solutions earlier will typically increase total
 benefit. It is also reasonable for the rationale of a decision to factor in both
 effort already invested, and effort ready to commit to the feature. This should
@@ -613,5 +613,5 @@ framework.
 ## Acknowledgements
 
 Carbon's goals are heavily based on
-["Goals and priorities for C++"](https://wg21.link/p2137) Many thanks to the
+["Goals and priorities for C++"](https://wg21.link/p2137). Many thanks to the
 authors and contributors for helping us formulate our goals and priorities.
