@@ -355,8 +355,7 @@ explicit syntax should inform the reader about any behavior which might
 otherwise be surprising. The core concepts of implicit vs. explicit syntax are
 well articulated in
 [the Rust community](https://blog.rust-lang.org/2017/03/02/lang-ergonomics.html#implicit-vs-explicit),
-despite some specific examples and conclusions not necessarily adhering to this
-principle.
+although we may come to different conclusions regarding the principles.
 
 **Design features to be simple to implement.** Syntax, structure, and language
 features should be chosen while keeping the complexity of the implementation
@@ -594,14 +593,14 @@ overarching goals and priorities, or if those don't offer enough clarity, we
 will fall back on rationale such as a required implementation order or a
 cost-benefit analysis.
 
-**Cost-benefit will drive many choices.** We expect to measure both
-cost, including complexity, and benefit using the impact on the project
-and language as a whole. Benefit accumulates over time, which
-means providing incremental solutions earlier will typically increase total
-benefit. It is also reasonable for the rationale of a decision to factor in both
-effort already invested, and effort ready to commit to the feature. This should
-not overwhelm any fundamental cost-benefit analysis. However, given two equally
-impactful features, we should focus on the solution that is moving the fastest.
+**Cost-benefit will drive many choices.** We expect to measure both cost,
+including complexity, and benefit using the impact on the project and language
+as a whole. Benefit accumulates over time, which means providing incremental
+solutions earlier will typically increase total benefit. It is also reasonable
+for the rationale of a decision to factor in both effort already invested, and
+effort ready to commit to the feature. This should not overwhelm any fundamental
+cost-benefit analysis. However, given two equally impactful features, we should
+focus on the solution that is moving the fastest.
 
 **Domain-motivated libraries and features are an example.** For these, the cost
 function will typically be the effort required to specify and implement the
