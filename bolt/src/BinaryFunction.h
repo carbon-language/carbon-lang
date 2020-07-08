@@ -884,6 +884,9 @@ public:
   /// CFG after an optimization pass.
   void dumpGraphForPass(std::string Annotation = "") const;
 
+  /// Dump internal CFG representaton in a file with .txt extension
+  void dumpGraphToTextFile() const;
+
   /// Return BinaryContext for the function.
   const BinaryContext &getBinaryContext() const {
     return BC;

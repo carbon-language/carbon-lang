@@ -23,11 +23,11 @@
 #include "llvm/Support/Path.h"
 #include "llvm/Support/PrettyStackTrace.h"
 #include "llvm/Support/Signals.h"
-#include "llvm/Support/TargetSelect.h"
 #include "llvm/Support/TargetRegistry.h"
+#include "llvm/Support/TargetSelect.h"
 #include "llvm/Support/ThreadPool.h"
 
-#undef  DEBUG_TYPE
+#undef DEBUG_TYPE
 #define DEBUG_TYPE "bolt"
 
 using namespace llvm;
@@ -45,11 +45,13 @@ cl::OptionCategory BoltOptCategory("BOLT optimization options");
 cl::OptionCategory BoltRelocCategory("BOLT options in relocation mode");
 cl::OptionCategory BoltOutputCategory("Output options");
 cl::OptionCategory AggregatorCategory("Data aggregation options");
+cl::OptionCategory InferenceCategory("BOLT static profile options");
 
 static cl::OptionCategory *BoltCategories[] = {&BoltCategory,
                                                &BoltOptCategory,
                                                &BoltRelocCategory,
-                                               &BoltOutputCategory};
+                                               &BoltOutputCategory,
+                                               &InferenceCategory};
 
 static cl::OptionCategory *BoltDiffCategories[] = {&BoltDiffCategory};
 
@@ -61,59 +63,40 @@ cl::SubCommand HeatmapCommand("heatmap", "generate heatmap");
 extern cl::opt<std::string> OutputFilename;
 extern cl::opt<bool> AggregateOnly;
 extern cl::opt<bool> DiffOnly;
+extern cl::opt<bool> GenFeatures;
 
-static cl::opt<std::string>
-InputDataFilename("data",
-  cl::desc("<data file>"),
-  cl::Optional,
-  cl::cat(BoltCategory));
+static cl::opt<std::string> InputDataFilename("data", cl::desc("<data file>"),
+                                              cl::Optional,
+                                              cl::cat(BoltCategory));
 
-static cl::alias
-BoltProfile("b",
-  cl::desc("alias for -data"),
-  cl::aliasopt(InputDataFilename),
-  cl::cat(BoltCategory));
+static cl::alias BoltProfile("b", cl::desc("alias for -data"),
+                             cl::aliasopt(InputDataFilename),
+                             cl::cat(BoltCategory));
 
-static cl::opt<std::string>
-InputDataFilename2("data2",
-  cl::desc("<data file>"),
-  cl::Optional,
-  cl::cat(BoltCategory));
+static cl::opt<std::string> InputDataFilename2("data2", cl::desc("<data file>"),
+                                               cl::Optional,
+                                               cl::cat(BoltCategory));
 
-static cl::opt<std::string>
-InputFilename(
-  cl::Positional,
-  cl::desc("<executable>"),
-  cl::Required,
-  cl::cat(BoltCategory),
-  cl::sub(*cl::AllSubCommands));
+static cl::opt<std::string> InputFilename(cl::Positional,
+                                          cl::desc("<executable>"),
+                                          cl::Required, cl::cat(BoltCategory),
+                                          cl::sub(*cl::AllSubCommands));
 
-static cl::opt<std::string>
-InputFilename2(
-  cl::Positional,
-  cl::desc("<executable>"),
-  cl::Optional,
-  cl::cat(BoltDiffCategory));
+static cl::opt<std::string> InputFilename2(cl::Positional,
+                                           cl::desc("<executable>"),
+                                           cl::Optional,
+                                           cl::cat(BoltDiffCategory));
 
-static cl::opt<std::string>
-PerfData("perfdata",
-  cl::desc("<data file>"),
-  cl::Optional,
-  cl::cat(AggregatorCategory),
-  cl::sub(*cl::AllSubCommands));
+static cl::opt<std::string> PerfData("perfdata", cl::desc("<data file>"),
+                                     cl::Optional, cl::cat(AggregatorCategory),
+                                     cl::sub(*cl::AllSubCommands));
 
-static cl::alias
-PerfDataA("p",
-  cl::desc("alias for -perfdata"),
-  cl::aliasopt(PerfData),
-  cl::cat(AggregatorCategory));
+static cl::alias PerfDataA("p", cl::desc("alias for -perfdata"),
+                           cl::aliasopt(PerfData), cl::cat(AggregatorCategory));
 
-cl::opt<bool>
-  PrintSections("print-sections",
-  cl::desc("print all registered sections"),
-  cl::ZeroOrMore,
-  cl::Hidden,
-  cl::cat(BoltCategory));
+cl::opt<bool> PrintSections("print-sections",
+                            cl::desc("print all registered sections"),
+                            cl::ZeroOrMore, cl::Hidden, cl::cat(BoltCategory));
 
 } // namespace opts
 
@@ -136,9 +119,9 @@ namespace llvm {
 namespace bolt {
 const char *BoltRevision =
 #include "BoltRevision.inc"
-;
-}
-}
+    ;
+} // namespace bolt
+} // namespace llvm
 
 static void printBoltRevision(llvm::raw_ostream &OS) {
   OS << "BOLT revision " << BoltRevision << "\n";
@@ -177,7 +160,7 @@ void heatmapMode(int argc, char **argv) {
   std::unique_ptr<char *[]> FakeArgv;
   if (argc == 1 || strcmp(argv[1], "heatmap")) {
     ++argc;
-    FakeArgv.reset(new char *[argc+1]);
+    FakeArgv.reset(new char *[argc + 1]);
     FakeArgv[0] = argv[0];
     FakeArgv[1] = const_cast<char *>("heatmap");
     for (int I = 2; I < argc; ++I)
@@ -234,7 +217,11 @@ void boltMode(int argc, char **argv) {
   cl::ParseCommandLineOptions(argc, argv,
                               "BOLT - Binary Optimization and Layout Tool\n");
 
-  if (opts::OutputFilename.empty()) {
+  if (opts::InputFilename.empty()) {
+    errs() << ToolName << ": expected binary.\n";
+    exit(1);
+  }
+  if (!opts::GenFeatures && opts::OutputFilename.empty()) {
     errs() << ToolName << ": expected -o=<output file> option.\n";
     exit(1);
   }
@@ -255,7 +242,7 @@ int main(int argc, char **argv) {
   sys::PrintStackTraceOnErrorSignal(argv[0]);
   PrettyStackTraceProgram X(argc, argv);
 
-  llvm_shutdown_obj Y;  // Call llvm_shutdown() on exit.
+  llvm_shutdown_obj Y; // Call llvm_shutdown() on exit.
 
   std::string ToolPath = GetExecutablePath(argv[0]);
 
@@ -286,7 +273,6 @@ int main(int argc, char **argv) {
   else
     boltMode(argc, argv);
 
-
   if (!sys::fs::exists(opts::InputFilename))
     report_error(opts::InputFilename, errc::no_such_file_or_directory);
 
@@ -303,8 +289,10 @@ int main(int argc, char **argv) {
       if (!opts::PerfData.empty()) {
         if (!opts::AggregateOnly) {
           errs() << ToolName
-            << ": WARNING: reading perf data directly is unsupported, please use "
-            "-aggregate-only or perf2bolt.\n!!! Proceed on your own risk. !!!\n";
+                 << ": WARNING: reading perf data directly is unsupported, "
+                    "please use "
+                    "-aggregate-only or perf2bolt.\n!!! Proceed on your own "
+                    "risk. !!!\n";
         }
         if (auto E = RI.setProfile(opts::PerfData))
           report_error(opts::PerfData, std::move(E));
