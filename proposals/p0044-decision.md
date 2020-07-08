@@ -10,17 +10,17 @@ Proposal accepted on 2020-06-02
 
 Affirming:
 
-- [Chandler Carruth](https://github.com/chandlerc)
-- [Dmitri Gribenko](https://github.com/gribozavr)
-- [Geoff Romer](https://github.com/geoffromer)
-- [Josh Levenberg](https://github.com/josh11b)
-- [Matt Austern](https://github.com/austern)
-- [Richard Smith](https://github.com/zygoloid)
+- [austern](https://github.com/austern)
+- [chandlerc](https://github.com/chandlerc)
+- [geoffromer](https://github.com/geoffromer)
+- [gribozavr](https://github.com/gribozavr)
+- [josh11b](https://github.com/josh11b)
+- [zygoloid](https://github.com/zygoloid)
 
 Abstaining:
 
-- [Chris Palmer](https://github.com/noncombatant)
-- [Titus Winters](https://github.com/tituswinters)
+- [noncombatant](https://github.com/noncombatant)
+- [tituswinters](https://github.com/tituswinters)
 
 ## Open questions
 

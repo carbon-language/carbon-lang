@@ -100,8 +100,8 @@ team will still review participation.
 
 Our current review managers are:
 
-- [jperkins@google.com](mailto:jperkins@google.com)
-- [shummert@google.com](mailto:shummert@google.com)
+- [jonmeow](https://github.com/jonmeow)
+- [sidney13](https://github.com/sidney13)
 
 ### Core team
 
@@ -116,14 +116,14 @@ may be added when necessary to expand representation.
 
 Our current core team members are:
 
-- austern@google.com
-- chandlerc@google.com
-- dmitrig@google.com
-- gromer@google.com
-- joshl@google.com
-- palmer@google.com
-- richardsmith@google.com
-- titus@google.com
+- [austern](https://github.com/austern)
+- [chandlerc](https://github.com/chandlerc)
+- [geoffromer](https://github.com/geoffromer)
+- [gribozavr](https://github.com/gribozavr)
+- [josh11b](https://github.com/josh11b)
+- [noncombatant](https://github.com/noncombatant)
+- [tituswinters](https://github.com/tituswinters)
+- [zygoloid](https://github.com/zygoloid)
 
 **TODO**: We want this team to eventually include non-Googlers for a broader set
 of perspectives.
@@ -163,9 +163,9 @@ There should always be three arbiters.
 
 Our current arbiters are:
 
-- chandlerc@google.com
-- richardsmith@google.com
-- titus@google.com
+- [chandlerc](https://github.com/chandlerc)
+- [tituswinters](https://github.com/tituswinters)
+- [zygoloid](https://github.com/zygoloid)
 
 ### Painter
 
@@ -187,7 +187,7 @@ aesthetics reasonably consistent.
 
 The current painter is:
 
-- [chandlerc@google.com](mailto:chandlerc@google.com)
+- [chandlerc](https://github.com/chandlerc)
 
 ### Adding and removing governance members
 
