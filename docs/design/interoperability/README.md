@@ -133,8 +133,27 @@ of wrappers manageable.
 
 ## Interoperability syntax elements
 
-> TODO: Proposals pending to fill in; see linked PRs on
-> [#108](https://github.com/carbon-language/carbon-lang/pull/108).
+> References: [Name mapping](name_mapping.md) and
+> [user defined types](user_defined_types.md).
+
+Most C++ code will be automatically exposed to Carbon. However, special
+interoperability syntax elements will be required when exposing Carbon code to
+C++.
+
+Notable elements are:
+
+- `$extern("Cpp")`: Indicates that Carbon code should be exposed for C++.
+  Similarly, `$extern("Swift")` might be used to indicate exposure for Swift at
+  some point in the future.
+  - `namespace` and `name` parameters are provided to override default choices,
+    particularly to assist migration of C++ APIs to Carbon.
+  - A `parent` parameter will be provided to set the C++ parent class on an
+    externalized Carbon struct. This is expected to be generally useful for
+    interoperability.
+  - Externs may be #included using `.6c.h` files.
+- `import Cpp "path"`: Imports API calls from a C++ header file.
+
+We use the name `Cpp` because `import` needs a valid identifier.
 
 ## Details
 
@@ -145,8 +164,25 @@ of wrappers manageable.
 
 ### Name mapping
 
-> TODO: Proposals pending to fill in; see linked PRs on
-> [#108](https://github.com/carbon-language/carbon-lang/pull/108).
+> References: [Name mapping](name_mapping.md).
+>
+> TODO: Add a reference for incomplete types when one is created.
+
+C/C++ names are mapped into the `Cpp` Carbon package. C++ namespaces work the
+same fundamental way as Carbon namespaces within the `Cpp` package name. Dotted
+names are used when referencing these names from Carbon code. For example,
+`std::exit` becomes `Cpp.std.exit`.
+
+C++ incomplete types will be mirrored into Carbon's incomplete type behavior.
+Users wanting to avoid differences in incomplete type behaviors should fully
+define the C++ types using repeated imports.
+
+Carbon names which are mapped into C++ will use a top-level namespace of
+`Carbon` by default, with the package name and namespaces represented as
+namespaces below that. For example, the `Widget` Carbon package with a namespace
+`Foo` would become `::Carbon::Widget::Foo` in C++. This may be renamed for
+backwards compatibility for C++ callers when migrating code, for example
+`$extern("Cpp", namespace="widget")` for `::widget`.
 
 ### Type mapping
 
