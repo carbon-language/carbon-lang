@@ -10,18 +10,15 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 <!-- toc -->
 
-- [Methods](#methods)
-  - [C varargs](#c-varargs)
-  - [C Inline functions](#c-inline-functions)
+- [C varargs](#c-varargs)
+- [C/C++ Inline functions](#cc-inline-functions)
 - [Function pointers and functors](#function-pointers-and-functors)
 - [Typedefs](#typedefs)
 - [Macros](#macros)
 
 <!-- tocstop -->
 
-## Methods
-
-### C varargs
+## C varargs
 
 C varargs can be called from Carbon with compatible types.
 
@@ -39,7 +36,7 @@ import Cpp "<stdio.h>"
 Cpp.printf("%d\n", 2);
 ```
 
-### C Inline functions
+## C/C++ Inline functions
 
 C inline functions will be treated
 [as Swift does](https://github.com/apple/swift/blob/master/docs/HowSwiftImportsCAPIs.md#inline-functions),
@@ -86,7 +83,7 @@ struct Point {
 
 ## Macros
 
-C/C++ macros that are defined as constants will be imported as constants.
+C/C++ macros that are compile-time constant will be imported as constants.
 Otherwise, macros will be unavailable in Carbon.
 
 For example, given the C code:
@@ -94,6 +91,9 @@ For example, given the C code:
 ```cc
 #define BUFFER_SIZE 4096
 #define bswap_16(x) _byteswap_ushort(x)
+
+#define LONGLONG(x) x##LL
+#define INT64_MAX LONGLONG(0x7FFFFFFFFFFFFFFF)
 ```
 
 We will provide equivalent Carbon code:
@@ -102,4 +102,7 @@ We will provide equivalent Carbon code:
 // $const syntax is still under discussion, thus the '$'.
 $const Int64: BUFFER_SIZE = 4096;
 // bswap_16 is lost because it's not a constant.
+
+// Even though there are macro indirections, this is still constant.
+$const Int64: INT64_MAX = 0x7FFFFFFFFFFFFFFF;
 ```

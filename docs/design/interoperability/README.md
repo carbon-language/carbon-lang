@@ -76,9 +76,9 @@ Non-goals:
     C++ features.
     - There may be interest in supporting some C++20 features, particularly
       modules. However, exhaustive support should not be assumed.
-  - For example, we might not prioritize support for non-idiomatic and/or newly
-    standardized code, interfaces, or patterns outside of those in widespread
-    open source libraries and used by key contributors.
+  - For example, we might not prioritize support for non-idiomatic code,
+    interfaces, or patterns outside of those in widespread open source libraries
+    and used by key contributors.
   - For example, we might not support low-level C ABIs outside of modern 64-bit
     ABIs: Linux, POSIX, and a small subset of Windows' calling conventions.
 - We may choose not to use the existing ABI for the C++ language or standard
@@ -152,6 +152,7 @@ Notable elements are:
   - A `parent` parameter will be provided to set the C++ parent class on an
     externalized Carbon struct. This is expected to be generally useful for
     interoperability.
+  - Externs may be #included using `.6c.h` files.
 - `import Cpp "path"`: Imports API calls from a C++ header file.
 
 We use the name `Cpp` because `import` needs a valid identifier.
@@ -179,9 +180,11 @@ Users wanting to avoid differences in incomplete type behaviors should fully
 define the C++ types using repeated imports.
 
 Carbon names which are mapped into C++ will use a top-level namespace of
-`Carbon`, with the package name and namespaces represented as namespaces below
-that. For example, the `Widget` Carbon package with a namespace `Foo` would
-become `::Carbon::Widget::Foo` in C++.
+`Carbon` by default, with the package name and namespaces represented as
+namespaces below that. For example, the `Widget` Carbon package with a namespace
+`Foo` would become `::Carbon::Widget::Foo` in C++. This may be renamed for
+backwards compatibility for C++ callers when migrating code, for example
+`$extern("Cpp", namespace="widget")` for `::widget`.
 
 ### Type mapping
 
@@ -189,9 +192,9 @@ Carbon and C/C++ will have a number of types with direct mappings between the
 languages.
 
 The behavior of mapped types will not always be identical; they need only be
-similar. For example, we expect Carbon's `Int32` to map to C++'s `int`. While
-behavior is mostly equivalent, where C++ would overflow, Carbon will instead
-have trapping behavior.
+similar. For example, we expect Carbon's `UInt32` to map to C++'s `uint32_t`.
+While behavior is mostly equivalent, where C++ would use modulo wrapping, Carbon
+will instead have trapping behavior.
 
 In some cases, there are multiple C/C++ types that map to a single Carbon type.
 This is expected to generally be transparent to users, but may impose important
@@ -315,8 +318,7 @@ templates may need explicit bridge code.
 
 > References: [Templates and generics](templates_and_generics.md).
 
-Carbon templates should be usable from C++: we will add extensions to Clang in
-support of this.
+Carbon templates should be usable from C++.
 
 ### Using Carbon generics from C++
 
@@ -343,14 +345,11 @@ CppType y;
 
 ### Functions and overload sets
 
-TODO: Re-examine this writing
-
 > References: [Functions and overload sets](functions_and_overload_sets.md).
 
-Non-overloaded functions may be trivially mapped between Carbon and C++. If the
-names are made available, then they can be called. Carbon may use a different
-calling convention, which may require wrappers or custom C++ annotations to
-match, but either is likely to be minor and optimized away.
+Non-overloaded functions may be trivially mapped between Carbon and C++, so long
+as their parameter and return types have suitable mappings. If the names are
+made available, then they can be called.
 
 However, function overloading is supported in both languages, and presents a
 much more complex surface to translate. Carbon's overloading is designed to be

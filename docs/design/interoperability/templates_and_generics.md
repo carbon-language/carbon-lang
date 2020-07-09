@@ -58,8 +58,11 @@ Carbon interfaces,
 
 ## Using Carbon templates from C++
 
-We plan to modify Clang to allow for extensions that will use Carbon to compile
-the template then insert the results into Clang's AST for expansion.
+Carbon templates should be usable from C++.
+
+For Carbon's reference toolchain, we plan to modify Clang to allow for
+extensions that will use Carbon to compile the template then insert the results
+into Clang's AST for expansion.
 
 This assumes low-level modifications to LLVM. We acknowledge this would be
 necessary, and may gate such a feature.

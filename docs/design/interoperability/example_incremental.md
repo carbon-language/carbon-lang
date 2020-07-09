@@ -56,7 +56,7 @@ int main(int argc, char** argv) {
 }
 ```
 
-Carbon TestServer library:
+Carbon TestServer client:
 
 ```carbon
 package Project library TestServer;
@@ -75,16 +75,15 @@ fn TestStartup() {
 This change must modify both the C++ and Carbon implementations in one change.
 However, callers should not need to be modified, keeping this change local.
 
-An extern may optionally be added to leave a stub call for C++ users, as in this
-example. Carbon imports of C++ will also be able to use this, essentially
-resulting in Carbon calling through C++ to call the migrated Carbon code. By
-including the generated `startserver.carbon.h`, callers will transparently
-switch to the Carbon-externed `StartServer` symbol without per-caller code
-changes. If all C++ callers are being migrated to Carbon atomically in this
-change, it is not necessary.
+The `$extern` added to the Carbon StartServer library leaves a stub call for C++
+users, which supports incremental migration. Carbon imports of C++ will also be
+able to use this, essentially resulting in Carbon calling through C++ to call
+the migrated Carbon code.
 
-In this example, `main.cc` doesn't need to change yet because it transparently
-uses the `$extern` provided by the Carbon StartServer library.
+By including the generated `startserver.6c.h`, callers will transparently switch
+to the Carbon-externed `StartServer` symbol without per-caller code changes. In
+this example, `main.cc` doesn't need to change yet because it transparently uses
+the `$extern` provided by the Carbon StartServer library.
 
 C++ `start_server.h`:
 
@@ -92,7 +91,7 @@ C++ `start_server.h`:
 #include "net/util/ports.h"
 
 // Include the Carbon file to make the externed StartServer symbol available.
-#include "project/startserver.carbon.h"
+#include "project/startserver.6c.h"
 
 namespace project {
 
@@ -113,7 +112,7 @@ package Project library StartServer;
 import Cpp "net/util/ports.h"
 import Cpp "project/start_server.h";
 
-// This replaces the alias.
+// This replaces the removed C++ call.
 $extern("Cpp", namespace="project") fn StartServer() {
   Cpp.project.StartServerOnPort(Cpp.net_util.PickUnusedPortOrDie());
 }
@@ -127,7 +126,7 @@ C++ `main.cc`:
 
 ```cc
 // This replaces the include of the C++ startserver.h.
-#include "project/startserver.carbon.h"
+#include "project/startserver.6c.h"
 
 int main(int argc, char** argv) {
   ...
@@ -136,7 +135,7 @@ int main(int argc, char** argv) {
 }
 ```
 
-Carbon TestServer library:
+Carbon TestServer client:
 
 ```carbon
 package Project library TestServer;
@@ -180,7 +179,7 @@ void StartServerOnPort(int port) {
 C++ `main.cc`:
 
 ```cc
-#include "project/startserver.carbon.h"
+#include "project/startserver.6c.h"
 
 int main(int argc, char** argv) {
   ...
@@ -202,7 +201,7 @@ $extern("Cpp", namespace="project") fn StartServer() {
 }
 ```
 
-Carbon TestServer library:
+Carbon TestServer client:
 
 ```carbon
 package Project library TestServer;

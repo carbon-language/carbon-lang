@@ -13,11 +13,13 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 - [Non-owning references and pointers](#non-owning-references-and-pointers)
   - [Slice special-casing](#slice-special-casing)
   - [Mapping similar built-in types](#mapping-similar-built-in-types)
-- [Non-owning value types](#non-owning-value-types)
+- [Reference-like types](#reference-like-types)
 - [Ownership transfer types](#ownership-transfer-types)
 - [Copying vocabulary types](#copying-vocabulary-types)
 - [Alternatives](#alternatives)
   - [Bind tightly to particular C++ libraries](#bind-tightly-to-particular-c-libraries)
+- [Open questions](#open-questions)
+  - [const](#const)
 
 <!-- tocstop -->
 
@@ -86,21 +88,19 @@ adhere to C++ idioms, and similarly C++ types in Carbon code.
 
 ## Reference-like types
 
-Reference-like types, such as `std::span` and `std::string_view`, are some of the most important types to have direct support for in Carbon
-because they are complex and opaque C++ types that are expected to come at zero
-runtime cost and refer back to data that will remain managed by C/C++ code. As
-such, Carbon prioritizes direct mappings for the most important of these types
-at no cost.
+Reference-like types, such as `std::span` and `std::string_view`, are some of
+the most important types to have direct support for in Carbon because they are
+C++ types that are expected to come at zero runtime cost and refer back to data
+that will remain managed by C/C++ code. As such, Carbon prioritizes direct
+mappings for the most important of these types at no cost. In particular, we are
+focused on these types that represent contiguous data in memory.
 
-The primary idiom from C++ that Carbon attempts to directly support are types
-which represent contiguous data in memory. The dominant case here is
-`std::span<T>`, but there are a wide variety of similar vocabulary types. Here,
-Carbon directly maps these types to a slice type: `T[]`. These types in Carbon
-have the same core semantics and can be trivially built from any
-pointer-and-size formulation.
+`std::span<T>` and similar vocabulary types can be mapped to a slice type,
+`T[]`. These types in Carbon have the same core semantics and can be trivially
+built from any pointer-and-size formulation.
 
-There is an important special case: `std::string_view` and similar views into
-C++ string data. It is an open question in Carbon whether there is a dedicated
+`std::string_view` and similar views into C++ string data present a special
+case. It is an open question in Carbon whether there is a dedicated
 `StringSlice` type or instead it simply uses a direct slice of the underlying
 `CodeUnit` or `Char` type. Whatever is the canonical vocabulary used to convey a
 slice of a Carbon `String` should also be used as the idiomatic mapping for
@@ -199,3 +199,10 @@ Cons:
   would either break compiles or corrupt Carbon programs.
   - Users would need to bind to specific releases of the library. We would
     become responsible for matching all development.
+
+## Open questions
+
+### const
+
+Right now, we haven't planned enough of how immutability should work in Carbon.
+Once it's clearer, we should decide how `const` should work.

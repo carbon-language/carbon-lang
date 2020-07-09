@@ -11,12 +11,13 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 <!-- toc -->
 
 - [C/C++ names in Carbon](#cc-names-in-carbon)
-  - [Defining types across multiple imports](#defining-types-across-multiple-imports)
 - [Incomplete types](#incomplete-types)
 - [Carbon names in C/C++](#carbon-names-in-cc)
+- [Open questions](#open-questions)
+  - [Syntax for importing C++ code](#syntax-for-importing-c-code)
+  - [Provide flexibility for where C++ APIs are imported to](#provide-flexibility-for-where-c-apis-are-imported-to)
 - [Alternatives](#alternatives)
   - [Providing C calls in a separate C package](#providing-c-calls-in-a-separate-c-package)
-  - [Have incomplete types in the Cpp package behave slightly differently.](#have-incomplete-types-in-the-cpp-package-behave-slightly-differently)
   - [Don't map incomplete types](#dont-map-incomplete-types)
 
 <!-- tocstop -->
@@ -73,23 +74,6 @@ fn Call() {
 }
 ```
 
-### Defining types across multiple imports
-
-Carbon will allow C/C++ imports to fill in type definitions of other C/C++
-imports as if they were all #included together. Due to this, the order of C/C++
-imports will matter.
-
-For example, if one header defines a template and another header defines
-specializations of that template, they may both be included in order for Carbon
-code to get a fully correct view of the template.
-
-In other words, this is a meaningful combination of imports:
-
-```carbon
-import Cpp "template.h"
-import Cpp "template-specializations.h"
-```
-
 ## Incomplete types
 
 C++ incomplete types will be mirrored into Carbon's incomplete type behavior.
@@ -140,9 +124,9 @@ DoSomethingWith(x->i);
 ## Carbon names in C/C++
 
 Carbon names which are mapped into C++ will use a top-level namespace of
-`Carbon`, with the package name and namespaces represented as namespaces below
-that. For example, the `Widget` Carbon package with a namespace `Foo` would
-become `::Carbon::Widget::Foo` in C++.
+`Carbon` by default, with the package name and namespaces represented as
+namespaces below that. For example, the `Widget` Carbon package with a namespace
+`Foo` would become `::Carbon::Widget::Foo` in C++.
 
 For example, given the Carbon code:
 
@@ -152,10 +136,10 @@ package Widget library Knob;
 $extern("Cpp") fn Turn() { ... }
 ```
 
-This may be callable from C++ through a compiler-generated `knob.carbon.h`:
+This may be callable from C++ through a compiler-generated `knob.6c.h`:
 
 ```cc
-#include "widget/knob.carbon.h"
+#include "widget/knob.6c.h"
 
 void Call() {
   ::Carbon::Widget::Knob::Turn();
@@ -176,10 +160,10 @@ package Widget library Knob;
 $extern("Cpp", namespace="::widget::knob", name="Twist") fn Turn() { ... }
 ```
 
-This may be callable from C++ through a compiler-generated `knob.carbon.h`:
+This may be callable from C++ through a compiler-generated `knob.6c.h`:
 
 ```cc
-#include "widget/knob.carbon.h"
+#include "widget/knob.6c.h"
 
 void Call() {
   ::widget::knob::Twist();
@@ -197,6 +181,73 @@ $extern("Cpp", namespace="::widget::knob") {
   fn Rotate() { ... }
 }
 ```
+
+## Open questions
+
+### Syntax for importing C++ code
+
+Right now, these proposals apply, and use in examples,
+`import Cpp "project/file.h"`. This may not be the ideal syntax, particularly as
+it limits us to `Cpp` as the language identifier, versus `C++` or `c++`.
+
+Syntaxes we could consider are:
+
+- `import Cpp "project/file.h"`: Adds `Cpp` to the import to make it clear this
+  is an interop import. The current proposed syntax.
+
+  - Pro: Reuses the `import` keyword for similar functionality.
+  - Con: Limits us to the `Cpp` identifier on imports, and implicitly also on
+    exports for symmetry.
+
+- `import("c++") "project/file.h"`: This moves the name of the language into an
+  argument, allowing for more flexibility.
+
+  - Could also do `import("c++") Cpp "project/file.h"` to make the base import
+    path explicit.
+  - Pro: Allows for use of flexible language identifiers.
+  - Pro: Straightforward way to add more parameters to `import()`.
+  - Con: Makes the `import` keyword more multi-purpose and ambiguous.
+    - Could change `import` syntax to always look like
+      `import("Carbon.Library")`, `import("project/file.h", lang="c++")`.
+
+- `interop("c++", "project/file.h")`: This makes the interop import more
+  function-like.
+  - Pro: Allows for use of flexible language identifiers.
+  - Pro: As syntax drifts further from standard Carbon `import` syntax, switches
+    keywords.
+  - Pro: Straightforward way to add more parameters to `interop()`.
+  - Con: May not be clear that this is doing import-like behavior.
+    - Could adopt instead `import interop("c++", "project/file.h")`, or `import
+      library("project/file.h", lang="c++").
+
+### Provide flexibility for where C++ APIs are imported to
+
+Right now, we plan to always import C++ APIs to the top-level `Cpp` package,
+with C++ namespaces appended, resulting in names like `Cpp.Namespace.API`. Users
+may still `alias` these into Carbon locations.
+
+We could instead add flexibility in where C++ APIs are imported, rewriting
+either `Cpp` or the full `Cpp.Namespace`.
+
+Pros:
+
+- Increased user flexibility for naming.
+  - Mirrors similar flexibility in `extern` syntax.
+
+Cons:
+
+- Users could end up importing a single C++ API under different names.
+  - In other words, `Cpp.Namespace.Type` and `Carbon.RenamedNamespace.Class`
+    would be different types.
+  - To avoid having this be a problem, we could essentially make this be
+    shorthand for an `alias` of the type in `Cpp.Namespace`; however, that would
+    imply the feature is fully redundant with `alias`.
+  - We could also instead use a C++ attribute, so that the remapping is
+    specified with the declaration.
+- While we expect to add support for arbitrary namespaces when externing Carbon
+  code, that's to support migration and backwards compatibility. Doing similar
+  for C++ would stand to encourage continued and new use of C++ code, a
+  different value call.
 
 ## Alternatives
 
@@ -244,20 +295,6 @@ Cons:
 - If C APIs are in both `C` and `Cpp` packages, creates a divergent syntax for
   equivalent calls.
 
-### Have incomplete types in the Cpp package behave slightly differently.
-
-It's possible that the C++ semantics of incomplete types may differ from the
-Carbon semantics. To address this, we could work to offer slightly different
-behavior for incomplete types when dealing with the `Cpp` package.
-
-Pros:
-
-- Maintains consistent use of C++ APIs.
-
-Cons:
-
-- Creates an inconsistency in how the `Cpp` package functions.
-
 ### Don't map incomplete types
 
 If the type is left incomplete, Carbon could instead import pointers to
@@ -275,7 +312,7 @@ Cons:
   - May lead to unintended consequences with recursive include problems.
 
 For example, given the above `factory.h` with a partial definition, a Carbon
-file importing only `factory.h` will see `OpaquePointer`:
+file importing only `factory.h` might see `OpaquePointer`:
 
 ```carbon
 package FactoryUser;
@@ -285,3 +322,6 @@ import Cpp "factory.h"
 var Cpp.OpaquePointer*?: x = CreateFoo();
 // It is unsafe for this code to call Process(x) because the type is opaque.
 ```
+
+This unsafe behavior could be avoided by instead not exposing calls. That would
+shift the cons, as it would also reduce the available C++ APIs further.

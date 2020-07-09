@@ -72,7 +72,7 @@ struct FrameworkBridge {
 }
 
 // Replace the old register method with this bridge call.
-$extern("Cpp", name="Register")
+$extern("Cpp", namespace="", name="Register")
 fn RegisterForCpp(Cpp.FrameworkBase* api) {
   Register(FrameworkBridge(api));
 }
@@ -82,7 +82,7 @@ C++ `framework.h`
 
 ```cc
 // Include the generated Carbon header for Register.
-#include "framework.carbon.h"
+#include "framework.6c.h"
 
 class FrameworkBase {
   public:

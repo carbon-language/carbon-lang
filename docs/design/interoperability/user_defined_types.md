@@ -91,7 +91,8 @@ instantiate the class in Carbon code in general.
 
 Inheritance from C++ types cannot be straightforward because Carbon will not
 have matching inheritance concepts. However, we can augment Carbon structs to
-indicate an inheritance chain that works similarly.
+indicate an inheritance chain that works equivalently when called from C++,
+including adding a vptr.
 
 For example, consider the C++ code:
 
@@ -126,7 +127,7 @@ class Circle : public Shape {
 To use the resulting class, C++ code can write:
 
 ```cc
-#include "project/circle.carbon.h"
+#include "project/circle.6c.h"
 
 Shape* shape = new Carbon::Circle();
 ```
@@ -242,7 +243,7 @@ struct Square {
 }
 
 fn Draw(var Shape*?: shape);
-// Overrides are generated to model the inheritance if they're called.
+// Overloads are generated to model the inheritance.
 fn Draw(var Circle*?: shape);
 fn Draw(var Square*?: shape);
 ```
@@ -255,8 +256,10 @@ derived type used from Carbon code and conversions are not supported.
 
 ## Unions and transparent union members
 
-C/C++ includes both unions and transparent union members within classes. Carbon
-doesn't have unions, creating an incompatibility.
+C/C++ includes both unions and transparent union members within classes. These
+are unlikely to be available directly in Carbon. Even if Carbon provides similar
+functionality, we will avoid tieing the implementation to C++ in order to
+maintain implementation flexibility.
 
 We will expose C/C++ union structs through method-based APIs. If we add a
 similar Carbon feature, we would expect it to similarly be encapsulated by an
@@ -315,7 +318,7 @@ $extern("Cpp") struct Circle {
 And bridging C++ code:
 
 ```cc
-#include "project/circle.carbon.h"
+#include "project/circle.6c.h"
 
 class CircleWrapper : public Shape {
  public:
@@ -350,7 +353,11 @@ non-owning references and pointers. However, that may yield compatibility
 issues, such as when a pointer is dereferenced to create a copy passed into an
 API.
 
-For example, given the C++ code:
+To dive into the interface pointer compatibility problem, consider how
+`Print(*MakeCircle(radius))` would work in C++ versus Carbon in the below
+example.
+
+In this C++ code, the function would work properly:
 
 ```cc
 class Shape {
@@ -369,7 +376,8 @@ Circle* MakeCircle(int radius);
 void Print(Circle circle);
 ```
 
-This would mean the imported results would look more like:
+Simulating interfaces would yield code equivalent to the below, which wouldn't
+work because `Print()` would expect `Circle`, but receive `Circle_CppInterface`:
 
 ```carbon
 package Cpp;
@@ -405,6 +413,4 @@ Pros:
 Cons:
 
 - The separation of the concrete type and the interface used in APIs may confuse
-  users and cause problems for APIs. For example, `Print(*MakeCircle(radius))`
-  would be valid for C++, but not possible through the Carbon wrapper because of
-  the `Circle` vs `Circle_CppInterface` difference.
+  users and cause problems for APIs.

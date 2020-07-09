@@ -99,19 +99,11 @@ platforms.
 
 ### 32-bit vs 64-bit and platform compatibility
 
-At present, we plan to provide conversion methods that provide an
+At present, we plan to provide conversion functions that provide an
 appropriately-sized Carbon type for a given C++ API.
 
-Pros:
-
-- Avoids introducing new interoperability-specific types into Carbon.
-
-Cons:
-
-- Methods introduce conversion overhead.
-- Creates a layer of indirection when calling C++ APIs cross-platform.
-  - Users may forget to convert, resulting in accidentally platform-specific
-    code.
+We may want to consider alternatives because the layer of indirection this
+creates could be forgotten, resulting in accidentally platform-specific code.
 
 #### Provide variable size types
 
@@ -121,41 +113,46 @@ implementation.
 For example:
 
 ```carbon
-package CppCompat;
+package Cpp;
 
 $if platform == LP64
-struct CLong { private var Bytes[8]: data; }
+struct long { private var Bytes[8]: data; }
 $else
-struct CLong { private var Bytes[4]: data; }
+struct long { private var Bytes[4]: data; }
 $endif
 
 // This line will fail to compile if, for example, Foo returns an Int64 while
-// CLong is 32-bit.
-var CppCompat.CLong: myVal = (CppCompat.CLong)Foo();
-var CppCompat.CLong: retVal = Cpp.ApiUsingLong(val);
+// long is 32-bit.
+var Cpp.long: myVal = (Cpp.long)Foo();
+var Cpp.long: retVal = Cpp.ApiUsingLong(val);
 ```
 
 Pros:
 
 - Reduces the amount of platform-specific code that authors need to provide.
 - Variable-size types avoid conversion overhead.
+- Unsafety around size conversions can be avoided by just staying in
+  variable-size types.
 
 Cons:
 
-- Conversion methods are likely still necessary for code to switch between the
-  Variable-size types and Carbon-recommended types.
-- These types are likely to leak beyond C++ compatibility code, through support
-  in APIs, leading to long-term technical debt.
+- Introduces new interoperability-specific types into Carbon.
+  - These types are likely to leak beyond C++ interoperability code, through
+    support in APIs.
+  - Could cause issues if most types in Carbon are assumed to be constant size
+    cross-platform, and API authors don't consider variable sizes correctly.
+- Conversion functions are likely still necessary for code to switch between the
+  variable-size types and Carbon-recommended types.
 
 #### Do nothing
 
-Instead of providing conversion APIs, Carbon could provide nothing. This option
-is likely only feasible if we assume that Carbon would never be used on 32-bit
-platforms.
+Instead of providing conversion APIs, Carbon could provide nothing.
 
 Pros:
 
 - Simplifies the language.
+- Makes unsafety around size conversions more explicit because developers would
+  need to handle platform compatibility everywhere it comes up.
 
 Cons:
 
@@ -164,17 +161,16 @@ Cons:
   depending on the selected target. Carbon code would have to be written in such
   a way as to compile in all modes.
 
+The portability issues would likely lead to this only being feasible if Carbon
+is rarely, if ever, used on platforms with varying sizes. Otherwise, the demand
+for portable code is likely to be high.
+
 ### size_t and signed vs unsigned
 
 At present, the plan is that `size_t` will map to the signed `Int64` type.
 
-Pros:
-
-- Idiomatically represent memory sizes, container lengths, etc as `Int64`.
-
-Cons:
-
-- Does not match `size_t` unsigned semantics.
+We may want to consider alternatives because this loses the `size_t` unsigned
+semantics, which could lead to some compatibility issues.
 
 #### Map size_t to UInt64
 
@@ -188,6 +184,7 @@ Cons:
 
 - Pushes engineers to use unsigned types when talking about lengths, risking
   errors with negative values and/or comparisons.
+  - We consider signed integers more idiomatic than unsigned.
 
 ### char/unsigned char and byte vs character
 
@@ -195,18 +192,12 @@ At present, the plan is that `char`/`unsigned char` should map to `Byte`. `Byte`
 is distinct because, while `Int8`/`UInt8` has arithmetic, `Byte` is intended to
 not have arithmetic.
 
-Pros:
+We may want to consider alternatives because of a couple differences in
+semantics:
 
-- C/C++ use char types in some cases when dealing with memory, because there
-  hasn't historically been a dedicated byte type.
-
-Cons:
-
-- Users may do character arithmetic on `char`.
-  - Using an integer offset to get a letter. For example, `'A' + 15` as a way to
-    get the value `'P'`.
-  - Using `32` to capitalize. For example, `'a' + 32` as a way to get the value
-    `'A'`.
+- Printability of a `Byte` vs `Char8` or similar.
+- Developers may want character arithmetic. For example, `'A' + 15` as a way to
+  get the value `'P'`, or adding `32` to capitalize.
 
 #### Support + and - on Byte
 
@@ -232,11 +223,14 @@ Pros:
 - Mirrors the C++ semantic.
 - Allows for character-specific behaviors, for example when printing values to
   stdout.
+- Could support character arithmetic.
 
 Cons:
 
 - Prevents us from representing C++ memory operations as `Byte` without a
   specific type mapping.
+- Encourages the concept of a single byte as a character of text, which is
+  inconsistent with Unicode.
 
 #### Use Int8
 
