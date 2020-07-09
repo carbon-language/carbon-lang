@@ -18,6 +18,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
   - [Slicing ranges](#slicing-ranges)
   - [Single-value tuples](#single-value-tuples)
   - [Function pattern match](#function-pattern-match)
+  - [Type vs tuple of types](#type-vs-tuple-of-types)
 
 <!-- tocstop -->
 
@@ -135,3 +136,8 @@ pattern match here, especially to handle variadic patterns and forwarding of
 tuples as arguments. We are hoping for a purely type system answer here without
 needing templates to be directly involved outside the type system as happens in
 C++ variadics.
+
+### Type vs tuple of types
+
+Is `(Int, Int)` a type, a tuple of types, or is there even a difference between
+the two? Is different syntax needed for these cases?
