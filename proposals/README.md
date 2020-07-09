@@ -28,6 +28,6 @@ request:
   - [Decision](p0044-decision.md)
 - [0074 - Change comment/decision timelines in proposal process](p0074.md)
   - [Decision](p0074-decision.md)
-- [0108 - Carbon <-> C/C++ interoperability: README](p0108.md)
+- [0108 - Carbon &lt;-> C/C++ interoperability](p0108.md)
 
 <!-- endproposals -->
