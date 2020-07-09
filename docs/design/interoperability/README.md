@@ -26,6 +26,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
   - [Functions and overload sets](#functions-and-overload-sets)
   - [Other syntax](#other-syntax)
   - [Migration examples](#migration-examples)
+- [Acknowledgements](#acknowledgements)
 
 <!-- tocstop -->
 
@@ -201,3 +202,10 @@ work" with 1:1 mappings.
 
 > TODO: Proposals pending to fill in; see linked PRs on
 > [#108](https://github.com/carbon-language/carbon-lang/pull/108).
+
+## Acknowledgements
+
+The thought put into Swift's C/C++ interoperability plan for
+[C](https://github.com/apple/swift/blob/master/docs/HowSwiftImportsCAPIs.md) and
+[C++](https://github.com/apple/swift/blob/master/docs/CppInteroperabilityManifesto.md)
+has helped shape our ideas.
