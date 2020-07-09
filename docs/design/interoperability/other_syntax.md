@@ -36,7 +36,7 @@ It can be called from Carbon:
 ```carbon
 import Cpp "<stdio.h>"
 
-C.printf("%d\n", 2);
+Cpp.printf("%d\n", 2);
 ```
 
 ### C Inline functions

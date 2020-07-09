@@ -100,7 +100,7 @@ void StartServerOnPort(int port) {
   ...
 }
 
-// The StartServer() call that was here is removed.
+// The StartServer() function that was here is removed.
 
 }  // namespace project
 ```

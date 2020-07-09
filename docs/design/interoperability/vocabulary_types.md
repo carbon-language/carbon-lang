@@ -84,9 +84,9 @@ The result is that Carbon data structures and vocabulary types should be no more
 foreign in C++ code than Boost or other framework libraries that carefully
 adhere to C++ idioms, and similarly C++ types in Carbon code.
 
-## Non-owning value types
+## Reference-like types
 
-These are some of the most important types to have direct support for in Carbon
+Reference-like types, such as `std::span` and `std::string_view`, are some of the most important types to have direct support for in Carbon
 because they are complex and opaque C++ types that are expected to come at zero
 runtime cost and refer back to data that will remain managed by C/C++ code. As
 such, Carbon prioritizes direct mappings for the most important of these types

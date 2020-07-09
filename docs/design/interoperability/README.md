@@ -81,7 +81,7 @@ Non-goals:
     libraries and used by key contributors.
   - For example, we might not support low-level C ABIs outside of modern 64-bit
     ABIs: Linux, POSIX, and a small subset of Windows' calling conventions.
-- We may choose not to use the existing C++ language or standard library ABI.
+- We may choose not to use the existing ABI for the C++ language or standard library.
   - It might be reasonable to eventually support these with added runtime
     overhead.
 - We may choose not to provide exact matches between Carbon and C++ vocabulary
@@ -110,9 +110,8 @@ cause divergence.
 
 The result is that it is often reasonable to directly expose a data structure
 from C++ to Carbon without converting it to a "native" or "idiomatic" Carbon
-data structure. For many data structures, while there should always be an
-extremely good default, code will reasonably support multiple different
-implementations. We can expose C++ data structures as another implementation and
+data structure. For many data structures, code will reasonably support multiple different
+implementations, even if there is an extremely good default. We can expose C++ data structures as another implementation and
 then focus on wrapping it to match whatever idioms Carbon expects of that kind
 of data structure.
 
@@ -152,7 +151,7 @@ Notable elements are:
   - A `parent` parameter will be provided to set the C++ parent class on an
     externalized Carbon struct. This is expected to be generally useful for
     interoperability.
-- `import Cpp "<path>"`: Imports API calls from a C++-style #include path.
+- `import Cpp "path"`: Imports API calls from a C++ header file.
 
 We use the name `Cpp` because `import` needs a valid identifier.
 
@@ -331,7 +330,7 @@ For example, given the Carbon code:
 ```carbon
 fn GenericAPI[Foo:$ T](T*: x) { ... }
 
-fn TemplateAPI[Foo:$$ T](T* x) { GenericAPI(x); }
+fn TemplateAPI[Foo:$$ T](T*: x) { GenericAPI(x); }
 ```
 
 We could have C++ code that uses the template wrapper to use the generic:

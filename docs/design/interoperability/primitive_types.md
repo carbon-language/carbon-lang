@@ -38,7 +38,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 | `UInt8`   | `uint8_t`                                                                                             |
 | `UInt16`  | `uint16_t`, `unsigned short`                                                                          |
 | `UInt32`  | `uint32_t`, `unsigned int` <br>If 32-bit: `unsigned long`                                             |
-| `UInt64`  | `uint64_t`, `unsigned long long`, `uintptr_t` <br>If 62-bit: `unsigned long, unsigned long`           |
+| `UInt64`  | `uint64_t`, `unsigned long long`, `uintptr_t` <br>If 64-bit: `unsigned long, unsigned long`           |
 | `Float32` | `float`                                                                                               |
 | `Float64` | `double`                                                                                              |
 

@@ -68,7 +68,7 @@ Overload sets will be translated in a series of steps:
    Carbon types to those C++ types in some fashion.
 
 3. A canonical overload must be selected among cases where the mapping from
-   Carbon type to C++ type could reach multiple different types. A canonical
+   Carbon type to C++ type could reach multiple different types. A representative
    example is mapping a non-null Carbon pointer, which could either match a C++
    pointer or a C++ reference. Here, Carbon will use heuristics to try to find
    the best candidate from any such cluster—if there is a reference overload,
@@ -95,7 +95,7 @@ map into C++ types for which this instantiation can succeed.
 Operators and certain other calls, such as `std::swap`, represent a small, fixed
 set of possible extension points. Conversely, these also represent the largest
 body of overloaded C++ functions. These intrinsically use ADL, and so won't work
-with the above rules. However, we can workaround this limitation in specific
+with the above rules. However, we can work around this limitation in specific
 cases.
 
 Carbon will provide specialized operator template functions for C++ types which

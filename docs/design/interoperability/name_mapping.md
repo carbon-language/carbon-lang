@@ -271,7 +271,7 @@ Cons:
 
 - Forces users to provide the full list of headers for incomplete types.
   - Makes it harder to migrate code that's using C++ incomplete type semantics
-    in ways that's fully compatible with Carbon.
+    in ways that are fully compatible with Carbon.
   - May lead to unintended consequences with recursive include problems.
 
 For example, given the above `factory.h` with a partial definition, a Carbon
