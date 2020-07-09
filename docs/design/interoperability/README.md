@@ -67,8 +67,8 @@ Goals:
 Non-goals:
 
 - We will not make Carbon -> C++ migrations as easy as C++ -> Carbon migrations.
-  - Doing automatic externs for Carbon code would impose language constraints
-    that we want to limit to where users need it.
+  - Automatically exposing all Carbon code would impose language and API
+    constraints; we want to limit these constraints to where users need it.
 - We do not expect to support all C/C++ corner cases: the complexity of
   supporting any given construct must be balanced by the real world need for
   that support.
@@ -76,12 +76,13 @@ Non-goals:
     C++ features.
     - There may be interest in supporting some C++20 features, particularly
       modules. However, exhaustive support should not be assumed.
-  - For example, we might not prioritize support for non-idiomatic "modern"
-    code, interfaces, or patterns outside of those in widespread open source
-    libraries and used by key contributors.
+  - For example, we might not prioritize support for non-idiomatic and/or newly
+    standardized code, interfaces, or patterns outside of those in widespread
+    open source libraries and used by key contributors.
   - For example, we might not support low-level C ABIs outside of modern 64-bit
     ABIs: Linux, POSIX, and a small subset of Windows' calling conventions.
-- We may choose not to use the existing ABI for the C++ language or standard library.
+- We may choose not to use the existing ABI for the C++ language or standard
+  library.
   - It might be reasonable to eventually support these with added runtime
     overhead.
 - We may choose not to provide exact matches between Carbon and C++ vocabulary
@@ -110,10 +111,10 @@ cause divergence.
 
 The result is that it is often reasonable to directly expose a data structure
 from C++ to Carbon without converting it to a "native" or "idiomatic" Carbon
-data structure. For many data structures, code will reasonably support multiple different
-implementations, even if there is an extremely good default. We can expose C++ data structures as another implementation and
-then focus on wrapping it to match whatever idioms Carbon expects of that kind
-of data structure.
+data structure. For many data structures, code will reasonably support multiple
+different implementations, even if there is an extremely good default. We can
+expose C++ data structures as another implementation and then focus on wrapping
+it to match whatever idioms Carbon expects of that kind of data structure.
 
 The reverse is also true. C++ code will often not care, or can be enhanced to
 not care, what specific data structure is used. Carbon data structures can be
