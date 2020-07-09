@@ -29,5 +29,6 @@ request:
 - [0074 - Change comment/decision timelines in proposal process](p0074.md)
   - [Decision](p0074-decision.md)
 - [0108 - Carbon &lt;-> C/C++ interoperability](p0108.md)
+- [0109 - C <-> C++ interoperability: Name mapping and examples](p0109.md)
 
 <!-- endproposals -->
