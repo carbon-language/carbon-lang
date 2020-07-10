@@ -16,7 +16,7 @@ import subprocess
 import sys
 
 _USAGE = """Usage:
-  ./new-proposal.py <title>
+  ./new-proposal.py <title> [<branch>]
 
 Generates a branch and PR for a new proposal with the specified title.
 """
@@ -72,9 +72,13 @@ def _RunPRCreate(argv):
 
 if __name__ == "__main__":
     # Require an argument.
-    if len(sys.argv) != 2:
+    if len(sys.argv) not in (2, 3):
         sys.exit(_USAGE)
     title = sys.argv[1]
+    if len(sys.argv) == 3:
+        branch = sys.argv[2]
+    if not branch:
+        sys.exit(branch)
 
     # Verify git and gh are available.
     git_bin = shutil.which("git")
@@ -99,7 +103,8 @@ if __name__ == "__main__":
         sys.exit("ERROR: There are uncommitted changes in your git repo.")
 
     # Only use the first 20 chars of the title for branch names.
-    branch = "proposal-%s" % (title.lower().replace(" ", "-")[0:20])
+    if not branch:
+        branch = "proposal-%s" % (title.lower().replace(" ", "-")[0:20])
 
     # Prompt before proceeding.
     response = "?"
