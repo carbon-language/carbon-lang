@@ -57,7 +57,7 @@ Goals:
     non-owning vocabulary types, such as pointers and references, without
     runtime overhead.
   - It should be possible to expose other C++ vocabulary types with reasonable,
-    but but potentially non-zero-cost, conversions available to map into Carbon
+    but potentially non-zero-cost, conversions available to map into Carbon
     vocabulary types.
 - Mappings should be easy to maintain.
   - We should provide a syntax for transparently, automatically exposing a

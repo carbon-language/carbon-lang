@@ -99,8 +99,8 @@ For example, given the C code:
 We will provide equivalent Carbon code:
 
 ```carbon
-// $const syntax is still under discussion, thus the '$'.
-$const Int64: BUFFER_SIZE = 4096;
+// :$$ is the current "const" syntax for Carbon
+var Int64:$$ BUFFER_SIZE = 4096;
 // bswap_16 is lost because it's not a constant.
 
 // Even though there are macro indirections, this is still constant.
