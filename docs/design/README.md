@@ -159,7 +159,7 @@ Various constructs introduce a named entity in Carbon. These can be functions,
 types, variables, or other kinds of entities that we'll cover. A name in Carbon
 is always formed out of an "identifier", or a sequence of letters, numbers, and
 underscores which starts with a letter. As a regular expression, this would be
-`/[a-zA-Z][a-zA-Z0-9_]*/`. Eventually we may add support for further unicode
+`/[a-zA-Z][a-zA-Z0-9_]*/`. Eventually we may add support for more unicode
 characters as well.
 
 #### Naming conventions
@@ -264,7 +264,7 @@ literal number like `42`: an expression that computes the integer value 42.
 
 Some common expressions in Carbon include:
 
-- Literals: `42`, `-13`, `3.1419`, `"Hello World!"`
+- Literals: `42`, `3.1419`, `"Hello World!"`
 - Operators:
 
   - Increment and decrement: `++i`, `--j`
@@ -272,7 +272,7 @@ Some common expressions in Carbon include:
   - Unary negation: `-x`
   - Arithmetic: `1 + 2`, `3 - 4`, `2 * 5`, `6 / 3`
   - Bitwise: `2 & 3`, `2 | 4`, `3 ^ 1`, `~7`
-  - Bit sequence: `1 << 3`, `8 >> 1`
+  - Bit shift: `1 << 3`, `8 >> 1`
   - Comparison: `2 == 2`, `3 != 4`, `5 < 6`, `7 > 6`, `8 <= 8`, `8 >= 8`
   - Logical: `a && b`, `c || d`
 
@@ -298,7 +298,7 @@ Breaking this apart:
 - It accepts two `Int` parameters, `a` and `b`.
 - It returns an `Int` result.
 
-Calling functions involves a new form of expression, for example, `Sum(1, 2)`.
+You would call this function like `Sum(1, 2)`.
 
 ### Blocks and statements
 
@@ -514,7 +514,7 @@ fn DoubleBoth(Int: x, Int: y) -> (Int, Int) {
 }
 ```
 
-Breaking this tuple:
+Breaking this example apart:
 
 - The return type is a tuple of two `Int` types.
 - The expression uses tuple syntax to build a tuple of two `Int` values.
@@ -611,7 +611,7 @@ Breaking apart `AdvancedWidget`:
 
 - `AdvancedWidget` has a public object method `DoSomething`.
   - `DoSomething` explicitly indicates how the `AdvancedWidget` is passed to it,
-    and there is no automatic scoping - `self` must be specified as an input.
+    and there is no automatic scoping - `self` must be specified as the first input.
     The `self` name is also a keyword that explains how to invoke this method on
     an object.
   - `DoSomething` accepts `AdvancedWidget` _by value_, which is easily expressed
@@ -765,7 +765,7 @@ To break this apart:
 > **TODO:** References need to be evolved.
 
 Carbon templates follow the same fundamental paradigm as C++ templates: they are
-instantiated, resulting in late type checking, duck typing, and lazy binding.
+instantiated when called, resulting in late type checking, duck typing, and lazy binding.
 Although generics are generally preferred, templates enable translation of code
 between C++ and Carbon, and address some cases where the type checking rigor of
 generics are problematic.
@@ -825,10 +825,10 @@ fn Foo(Int: i) -> Float {
 
 Here we deduce one type parameter and explicitly pass another. It is not
 possible to explicitly pass a deduced type parameter; instead the call site
-should cast or convert the argument to control the deduction. The explicit type
+should cast or convert the argument to control the deduction. In this particular example, the explicit type
 is passed after a runtime parameter. While this makes that type unavailable to
 the declaration of _that_ runtime parameter, it still is a _template_ parameter
-and available to use as a type even within the remaining parts of the function
+and available to use as a type in the remaining parts of the function
 declaration.
 
 #### Specialization

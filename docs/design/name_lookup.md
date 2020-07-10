@@ -108,11 +108,11 @@ fn Shadow();
 import Shadow library OtherLib;
 
 // We can reference the imported library:
-alias ??? OtherLibType = Shadow.SomeType;
+alias OtherLibType = Shadow.SomeType;
 
 // We can also reference the exported function and provide a new alias by
 // using our current package name as an explicitly qualified name.
-alias ??? NewShadowFunction = Foo.Shadow;
+alias NewShadowFunction = Foo.Shadow;
 ```
 
 ### Alternatives

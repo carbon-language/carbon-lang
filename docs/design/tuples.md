@@ -62,7 +62,7 @@ Tuples also support multiple indices and slicing to restructure tuple elements:
 ```
 fn Baz(Int: x, Int: y, Int: z) -> (Int, Int) {
   var (Int, Int, Int): t1 = (x, y, z);
-  var (Int, Int, Int): t2 = t1[2, 1, 0];
+  var (Int, Int, Int): t2 = t1[(2, 1, 0)];
   return t2[0 .. 2];
 }
 ```
@@ -70,7 +70,6 @@ fn Baz(Int: x, Int: y, Int: z) -> (Int, Int) {
 This code first reverses the tuple, and then extracts a slice using a half-open
 range of indices.
 
-A tuple of a single value is special and simply collapses to the single value.
 
 Generally, functions pattern match a single tuple value of the arguments (with
 some important questions above around single-value tuples) in order to bind

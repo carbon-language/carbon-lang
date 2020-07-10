@@ -84,7 +84,7 @@ the type.
 
 Some things in C++ are notably absent or orthogonally handled:
 
-- No need for `static` functions, they simply don't accept an implicit object
+- No need for `static` functions, they simply don't take an initial `self`
   parameter.
 - No `static` variables because there are no global variables. Instead, can have
   scoped constants.
