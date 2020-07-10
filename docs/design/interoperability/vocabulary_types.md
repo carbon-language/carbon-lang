@@ -10,6 +10,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 <!-- toc -->
 
+- [Background](#background)
 - [Non-owning references and pointers](#non-owning-references-and-pointers)
   - [Slice special-casing](#slice-special-casing)
   - [Mapping similar built-in types](#mapping-similar-built-in-types)
@@ -22,6 +23,11 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
   - [const](#const)
 
 <!-- tocstop -->
+
+## Background
+
+[P2125R0: The Ecosystem Expense of Vocabulary Types](http://open-std.org/JTC1/SC22/WG21/docs/papers/2020/p2125r0.pdf)
+delves into costs of vocabulary types in C++.
 
 ## Non-owning references and pointers
 
@@ -112,10 +118,10 @@ performance critical mappings to end up devolving to slices.
 
 ## Ownership transfer types
 
-Another special case that is important to optimize for is when ownership of data
-is being transferred between C++ and Carbon. This can be tricky to recognize due
-to reasonable use of pass-by-value when doing ownership transfer in C++, but
-Carbon should recognize as many idioms as possible.
+It's also import to optimize for the case where pointer ownership is transferred
+between C++ and Carbon. This can be tricky to recognize due to reasonable use of
+pass-by-value when doing ownership transfer in C++, but Carbon should recognize
+as many idioms as possible.
 
 The most fundamental case to handle is `std::unique_ptr`, which fortunately is
 easily recognized. It can only signify a transfer of ownership. Here Carbon
@@ -160,9 +166,9 @@ data structures and vocabulary types between the languages. The data is being
 copied anyways and so any necessary changes to the representation and layout are
 unlikely to be an unacceptable overhead.
 
-This strategy should be available for essentially all containers and copiable
-vocabulary types in the C++ STL, Abseil, and any other sufficiently widely used
-libraries.
+This strategy should be available for essentially all containers and copyable
+vocabulary types in the C++ STL, Abseil, Boost, and any other sufficiently
+widely used libraries.
 
 ## Alternatives
 
