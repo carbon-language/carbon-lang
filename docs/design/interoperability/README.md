@@ -135,8 +135,7 @@ of wrappers manageable.
 
 ## Interoperability syntax elements
 
-> References: [Name mapping](name_mapping.md) and
-> [user defined types](user_defined_types.md).
+> References: [Name mapping](name_mapping.md).
 
 An `import` will be sufficient for Carbon to call most C++ APIs, with no changes
 to the C++ code. However, special interoperability syntax elements will be
@@ -149,9 +148,6 @@ Notable elements are:
   some point in the future.
   - `namespace` and `name` parameters are provided to override default choices,
     particularly to assist migration of C++ APIs to Carbon.
-  - A `parent` parameter will be provided to set the C++ parent class on an
-    externalized Carbon struct. This is expected to be generally useful for
-    interoperability.
   - Externs may be #included using `.6c.h` files.
 - `import Cpp "path"`: Imports API calls from a C++ header file.
 
@@ -210,50 +206,8 @@ exist for cross-platform 32-bit/64-bit compatibility.
 
 #### User-defined types
 
-> References: [User-defined types](user_defined_types.md).
-
-All user-defined, non-template C/C++ class and struct types are directly
-available within Carbon with the exact C++ layout.
-
-For example, given a C/C++ `Circle` class:
-
-```cc
-class Circle {
- public:
-  double GetArea();
- private:
-  double radius_;
-};
-```
-
-We expect this to behave as a similar Carbon class:
-
-```carbon
-package Cpp;
-
-struct Circle {
-  fn GetArea() -> Float64;
-  private var Float64: radius_;
-};
-```
-
-Carbon won't have inheritance in the same way that C++ provides inheritance. For
-compatibility, we provide the option of explicitly setting a parent for the
-externed version of a Carbon struct. This won't affect the Carbon
-implementation, and has
-[edge cases worth considering](user_defined_types.md#inheriting-from-c-types-with-carbon-structs)–however,
-it may often assist in interoperability where C++ inheritance is required.
-
-For example, to declare a Carbon struct `Circle` which, when observed from C++,
-inherits from `Shape`:
-
-```carbon
-import Cpp "project/shape.h"
-
-$extern("Cpp", parent="Cpp.Shape") struct Circle {
-  fn GetArea() -> Float64 { ... };
-}
-```
+> TODO: Handling of user-defined types should be addressed after a design for
+> structs is ready.
 
 #### Vocabulary types
 
