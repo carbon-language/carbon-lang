@@ -36,7 +36,7 @@ These types are fundamental to the language as they aren't either formed from or
 modifying other types. They also have semantics that are defined from first
 principles rather than in terms of other operations. Even though these are
 special, their names are not keywords or reserved; they are just names in the
-global scope.
+implicit "prelude" that is imported and aliased into all files.
 
 They in turn can be decomposed into the following categories:
 
@@ -52,12 +52,12 @@ They in turn can be decomposed into the following categories:
 
 Integer types can be either signed or unsigned, much like in C++. Signed
 integers are represented using 2's complement and notionally modeled as
-unbounded natural numbers. Overflow in either direction is an error. Unsigned
-integer types provide modular arithmetic based on the bit width of the integer,
-again like C++. The default size for both is 64-bits: `Int` and `UInt`. Specific
-sizes are also available, for example: `Int8`, `Int16`, `Int32`, `Int128`,
-`UInt256`. Arbitrary powers of two above `8` are supported for both (although
-perhaps we'll want to avoid _huge_ values for implementation simplicity).
+unbounded natural numbers. Overflow in either direction is an error. That
+includes unsigned integers, differing from C++. The default size for both is
+64-bits: `Int` and `UInt`. Specific sizes are also available, for example:
+`Int8`, `Int16`, `Int32`, `Int128`, `UInt256`. Arbitrary powers of two above `8`
+are supported for both (although perhaps we'll want to avoid _huge_ values for
+implementation simplicity).
 
 ### Floats
 

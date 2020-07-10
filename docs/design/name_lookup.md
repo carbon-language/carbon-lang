@@ -15,8 +15,8 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
   - [Unqualified name lookup](#unqualified-name-lookup)
     - [Alternatives](#alternatives)
   - [Name lookup for common, standard types](#name-lookup-for-common-standard-types)
+- [Open questions](#open-questions)
   - [Shadowing](#shadowing)
-  - [Alternatives](#alternatives-1)
 
 <!-- tocstop -->
 
@@ -58,10 +58,11 @@ establish a unique package name.
 
 ### Unqualified name lookup
 
-Unqualified name lookup in Carbon will always find a file-local result, and
-other than the implicit "prelude" of importing and aliasing the fundamentals of
-the standard library, there will be an explicit mention of the name in the file
-that declares it in that scope.
+Unqualified name lookup in Carbon will always find a file-local result, other
+than the implicit "prelude" of importing and aliasing the fundamentals of the
+standard library. There will be an explicit mention of the name in the file that
+declares the name in the current or enclosing scope, which must also precede the
+reference.
 
 #### Alternatives
 
@@ -81,46 +82,9 @@ keywords, and so it is expected to be extremely small but contain the very
 fundamentals that essentially every file of Carbon code will need (`Int`,
 `Bool`, etc.).
 
+## Open questions
+
 ### Shadowing
 
-Carbon also disallows the use of shadowed unqualified names, but not the
-_declaration_ of shadowing names in different named scopes:
-
-Because all unqualified name lookup is locally controlled, shadowing isn't
-needed for robustness and is a long and painful source of bugs over time.
-Disallowing it provides simple, predictable rules for name lookup. However, it
-is important that adding names to the standard library or importing a new
-package (both of which bring new names into the current package's scope) doesn't
-force renaming interfaces that may have many users. To accomplish this, we allow
-code to declare shadowing names, but references to that name must be qualified.
-For package-scope names, this can be done with an explicit use of the current
-package name: `PackageName.ShadowingName`.
-
-```
-package Foo library MyLib;
-
-// Consider an exported function named `Shadow`.
-fn Shadow();
-
-// The package might want to import some other package named `Shadow`
-// as part of its implementation, but cannot rename its exported
-// `Shadow` function:
-import Shadow library OtherLib;
-
-// We can reference the imported library:
-alias OtherLibType = Shadow.SomeType;
-
-// We can also reference the exported function and provide a new alias by
-// using our current package name as an explicitly qualified name.
-alias NewShadowFunction = Foo.Shadow;
-```
-
-### Alternatives
-
-It may make sense to restrict this further to only allowing shadowing for
-exported names as internal names should be trivially renamable, and it is only
-needed when the source is already changing to add a new import. Or we may want
-to completely revisit the rules around shadowing.
-
-The written approach may also have issues: e.g., is the `alias` referring to the
-`Shadow` function or package? As a result, we may need to work on the approach.
+We can probably disallow the use of shadowed unqualified names, but the actual
+design for such needs to be thought through.

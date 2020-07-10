@@ -14,7 +14,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 - [Overview](#overview)
   - [Types with template parameters](#types-with-template-parameters)
   - [Functions with template parameters](#functions-with-template-parameters)
-  - [Specialization](#specialization)
+  - [Overloading](#overloading)
   - [Constraining templates with interfaces](#constraining-templates-with-interfaces)
 
 <!-- tocstop -->
@@ -87,7 +87,7 @@ the declaration of _that_ runtime parameter, it still is a template parameter
 and available to use as a type even within the remaining parts of the function
 declaration.
 
-### Specialization
+### Overloading
 
 An important feature of templates in C++ is the ability to customize how they
 end up specialized for specific types. Because template parameters (whether as

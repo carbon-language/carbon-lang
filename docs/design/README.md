@@ -54,7 +54,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
   - [Templates](#templates)
     - [Types with template parameters](#types-with-template-parameters)
     - [Functions with template parameters](#functions-with-template-parameters)
-    - [Specialization](#specialization)
+    - [Overloading](#overloading)
 - [Metaprogramming](#metaprogramming)
 - [Execution abstractions](#execution-abstractions)
   - [Abstract machine and execution model](#abstract-machine-and-execution-model)
@@ -113,8 +113,8 @@ cleaned up during evolution.
   supported.
 - Line comments look like `// ...`. However, they are required to be the only
   non-whitespace on the line for readability.
-- Block comments begin with `//\{`, and end with `//\}`. The begin and end
-  markers must be the only things on their lines.
+- Block comments begin with `//\{`, and end with `//\}`. They are always at the
+  start of a line.
   - Nested block comments will be supported.
 
 ### Files, libraries, and packages
@@ -172,6 +172,10 @@ Our current proposed naming convention are:
 
 - `UpperCamelCase` for names of compile-time resolved constants, such that they
   can participate in the type system and type checking of the program.
+  Comple-time constants fall into two categories:
+  - _Template_ constants that can be used in type checking, including literals.
+  - _Generic_ constants whose value is not used in type checking, but will be
+    used as part of code generation.
 - `lower_snake_case` for keywords and names of run-time resolved values.
 
 As a matter of style and consistency, we will follow these conventions where
@@ -249,8 +253,9 @@ package.
 > **TODO:** References need to be evolved.
 
 Common types that we expect to be used universally will be provided for every
-file, including `Int` and `Bool`. These will likely be defined in a `Carbon`
-package, and be treated as if always imported and aliased by every file.
+file, including `Int` and `Bool`. These will likely be defined in a special
+"prelude" package which is treated as if always imported and aliased by every
+file.
 
 ### Expressions
 
@@ -274,7 +279,7 @@ Some common expressions in Carbon include:
   - Bitwise: `2 & 3`, `2 | 4`, `3 ^ 1`, `~7`
   - Bit shift: `1 << 3`, `8 >> 1`
   - Comparison: `2 == 2`, `3 != 4`, `5 < 6`, `7 > 6`, `8 <= 8`, `8 >= 8`
-  - Logical: `a && b`, `c || d`
+  - Logical: `a and b`, `c or d`
 
 - Parenthesized expressions: `(7 + 8) * (3 - 1)`
 
@@ -611,9 +616,9 @@ Breaking apart `AdvancedWidget`:
 
 - `AdvancedWidget` has a public object method `DoSomething`.
   - `DoSomething` explicitly indicates how the `AdvancedWidget` is passed to it,
-    and there is no automatic scoping - `self` must be specified as the first input.
-    The `self` name is also a keyword that explains how to invoke this method on
-    an object.
+    and there is no automatic scoping - `self` must be specified as the first
+    input. The `self` name is also a keyword that explains how to invoke this
+    method on an object.
   - `DoSomething` accepts `AdvancedWidget` _by value_, which is easily expressed
     here along with other constraints on the object parameter.
 - `AdvancedWidget` has two private data members: `x` and `y`.
@@ -765,10 +770,10 @@ To break this apart:
 > **TODO:** References need to be evolved.
 
 Carbon templates follow the same fundamental paradigm as C++ templates: they are
-instantiated when called, resulting in late type checking, duck typing, and lazy binding.
-Although generics are generally preferred, templates enable translation of code
-between C++ and Carbon, and address some cases where the type checking rigor of
-generics are problematic.
+instantiated when called, resulting in late type checking, duck typing, and lazy
+binding. Although generics are generally preferred, templates enable translation
+of code between C++ and Carbon, and address some cases where the type checking
+rigor of generics are problematic.
 
 #### Types with template parameters
 
@@ -825,13 +830,13 @@ fn Foo(Int: i) -> Float {
 
 Here we deduce one type parameter and explicitly pass another. It is not
 possible to explicitly pass a deduced type parameter; instead the call site
-should cast or convert the argument to control the deduction. In this particular example, the explicit type
-is passed after a runtime parameter. While this makes that type unavailable to
-the declaration of _that_ runtime parameter, it still is a _template_ parameter
-and available to use as a type in the remaining parts of the function
-declaration.
+should cast or convert the argument to control the deduction. In this particular
+example, the explicit type is passed after a runtime parameter. While this makes
+that type unavailable to the declaration of _that_ runtime parameter, it still
+is a _template_ parameter and available to use as a type in the remaining parts
+of the function declaration.
 
-#### Specialization
+#### Overloading
 
 > References: [Templates](templates.md)
 >

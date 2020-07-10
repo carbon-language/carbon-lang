@@ -12,9 +12,8 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 - [TODO](#todo)
 - [Overview](#overview)
-- [Open questions](#open-questions)
   - [Indices as compile-time constants](#indices-as-compile-time-constants)
-  - [Multiple indices](#multiple-indices)
+- [Open questions](#open-questions)
   - [Slicing ranges](#slicing-ranges)
   - [Single-value tuples](#single-value-tuples)
   - [Function pattern match](#function-pattern-match)
@@ -70,31 +69,14 @@ fn Baz(Int: x, Int: y, Int: z) -> (Int, Int) {
 This code first reverses the tuple, and then extracts a slice using a half-open
 range of indices.
 
-
-Generally, functions pattern match a single tuple value of the arguments (with
-some important questions above around single-value tuples) in order to bind
-their parameters. However, when _calling_ a function, we insist on using
-explicit parentheses to have clear and distinct syntax that matches common
-conventions in C++ as well as other programming languages around function
-notation.
-
-## Open questions
-
 ### Indices as compile-time constants
 
-In the example `t1[2, 1, 0]`, we will likely want to restrict these indices to
+In the example `t1[(2, 1, 0)]`, we will likely want to restrict these indices to
 compile-time constants. Without that, run-time indexing would need to suddenly
 switch to a variant-style return type to handle heterogeneous tuples. This would
 both be surprising and complex for little or no value.
 
-### Multiple indices
-
-In the example `t1[2, 1, 0]`, using multiple indices in this way is a bit
-questionable. If we end up wanting to support multidimensional arrays / slices
-(a likely selling point for the scientific world), a sequence of indices seems a
-likely desired facility there. We'd either need to find a different syntax
-there, change this syntax, or cope with tuples and arrays having different
-semantics for multiple indices (which seems really bad).
+## Open questions
 
 ### Slicing ranges
 

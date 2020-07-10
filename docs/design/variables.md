@@ -14,6 +14,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 - [Overview](#overview)
   - [Declaring constants](#declaring-constants)
 - [Alternatives](#alternatives)
+  - [Declaring constants](#declaring-constants-1)
   - [Global variables](#global-variables)
 
 <!-- tocstop -->
@@ -47,15 +48,24 @@ While there can be global constants, there are no global variables.
 
 ### Declaring constants
 
-An open question is what syntax (and mechanism) to use for declaring constants.
-There are serious problems with the use of `const` in C++ as part of the type
-system, so alternatives to pseudo-types (type qualifiers) are being explored.
-The obvious syntax is `let` from Swift, although there are some questions around
-how intuitive it is for this to introduce a constant. Another candidate is `val`
-from Kotlin. Another thing we need to contend with is the surprise of const and
-reference (semantic) types.
+Constants will use template-like syntax for declarations. For example, a simple
+integer constant looks like:
+
+```carbon
+var Int:$$ MyVal = 42;
+```
 
 ## Alternatives
+
+### Declaring constants
+
+There is other syntax that could be used for declaring constants. There are
+serious problems with the use of `const` in C++ as part of the type system.
+Another alternative is `let` from Swift, although there are some questions
+around how intuitive it is for this to introduce a constant. Another candidate
+is `val` from Kotlin. Another thing we need to contend with is the surprise of
+const and reference (semantic) types. At present we are leaning towards the
+tempalte-like syntax for consistency within Carbon.
 
 ### Global variables
 
