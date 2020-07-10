@@ -138,9 +138,9 @@ of wrappers manageable.
 > References: [Name mapping](name_mapping.md) and
 > [user defined types](user_defined_types.md).
 
-Most C++ code will be automatically exposed to Carbon. However, special
-interoperability syntax elements will be required when exposing Carbon code to
-C++.
+An `import` will be sufficient for Carbon to call most C++ APIs, with no changes
+to the C++ code. However, special interoperability syntax elements will be
+required when exposing Carbon code to C++.
 
 Notable elements are:
 
@@ -267,8 +267,7 @@ There are several cases of vocabulary types that are important to consider:
 - Non-owning types passed by value, such as `std::string_view` or `std::span`.
   - We copy these to Carbon types with similar semantics. These should have
     trivial construction costs.
-- Owning types signaling a move of ownership, such as `std::unique_ptr` or
-  `std::vector<T> &&`.
+- Owning types signaling a move of ownership, such as `std::unique_ptr`.
   - We will try to transfer ownership to a Carbon type where possible, but may
     need to copy to the Carbon type in complex cases.
 - Owning types signaling a copy of data, such as `std::vector<T>`.
