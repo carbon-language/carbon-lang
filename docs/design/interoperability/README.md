@@ -206,8 +206,7 @@ exist for cross-platform 32-bit/64-bit compatibility.
 
 #### User-defined types
 
-> TODO: Handling of user-defined types should be addressed after a design for
-> structs is ready.
+> TODO: Handling of user-defined types should be addressed.
 
 #### Vocabulary types
 
