@@ -75,10 +75,9 @@ if __name__ == "__main__":
     if len(sys.argv) not in (2, 3):
         sys.exit(_USAGE)
     title = sys.argv[1]
+    branch = None
     if len(sys.argv) == 3:
         branch = sys.argv[2]
-    if not branch:
-        sys.exit(branch)
 
     # Verify git and gh are available.
     git_bin = shutil.which("git")
