@@ -358,7 +358,7 @@ arguments will always come before keyword arguments in functions.
 
 Here is an example showing the syntax:
 
-```
+```diff
   // Define a function that takes keyword arguments.
   // Keyword arguments must be defined after positional arguments.
   fn f(Int: p1, Int: p2, .key1 = Int: key1, .key2 = Int: key2) { ... }
