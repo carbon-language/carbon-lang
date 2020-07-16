@@ -109,7 +109,8 @@ var (|Float64, Int, Bool|): x2 = (|c[|1|], c[|0|], c[|2|]|);
 The basic question here is tuple enough like an array to use the same operator
 to access its elements?
 
-davidstone argues they are indeed similar enough:
+[davidstone](https://github.com/davidstone) argues they are indeed similar
+enough:
 
 > Indexing into a tuple seems fundamentally the same to me as indexing into an
 > array. The operation is just more generic, which means that it is less
@@ -168,11 +169,11 @@ syntax.
 **Rejected alternative:**
 
 > Accessing tuple members uses their index with a dot.
-
-```
-var (|Float64, Int, Bool|): z = (|x.1, x.0, x.2|);
-```
-
+>
+> ```
+> var (|Float64, Int, Bool|): z = (|x.1, x.0, x.2|);
+> ```
+>
 > **Concern:** Visual ambiguity with floating point numbers, as in `I.0` and
 > `l.0` vs. `1.0`.
 >
