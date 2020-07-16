@@ -6,6 +6,24 @@ Exceptions. See /LICENSE for license information.
 SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -->
 
+<!-- toc -->
+
+- [Principles](#principles)
+  - [Programming errors are not recoverable](#programming-errors-are-not-recoverable)
+    - [Examples](#examples)
+  - [Memory exhaustion is not recoverable](#memory-exhaustion-is-not-recoverable)
+    - [Examples](#examples-1)
+    - [Caveats](#caveats)
+  - [Recoverable errors are explicit in function declarations](#recoverable-errors-are-explicit-in-function-declarations)
+    - [Caveats](#caveats-1)
+  - [Recoverable errors are explicit at the callsite](#recoverable-errors-are-explicit-at-the-callsite)
+    - [Caveats](#caveats-2)
+  - [Error propagation must be straightforward](#error-propagation-must-be-straightforward)
+  - [No universal error categories](#no-universal-error-categories)
+- [Other resources](#other-resources)
+
+<!-- tocstop -->
+
 ## Principles
 
 ### Programming errors are not recoverable
@@ -37,17 +55,17 @@ Thus, we expect that supporting recovery from programming errors would provide
 little or no benefit. Furthermore, it would be harmful to several of Carbon's
 primary goals:
 
-- [Performance-critical software](https://github.com/jonmeow/carbon-lang/blob/proposal-goals/docs/project/goals.md#performance-critical-software):
+- [Performance-critical software](docs/project/goals.md#performance-critical-software):
   It would impose a pervasive performance overhead, because recoverable error
   handling is never free, and a programming error can occur anywhere.
-- [Code that is easy to read, understand, and write](https://github.com/jonmeow/carbon-lang/blob/proposal-goals/docs/project/goals.md#code-that-is-easy-to-read-understand-and-write):
+- [Code that is easy to read, understand, and write](docs/project/goals.md#code-that-is-easy-to-read-understand-and-write):
   Because potential programming errors are pervasive, they would have to
   propagate invisibly, which makes code harder to understand (see
   [below](#recoverable-errors-are-explicit-at-the-callsite)).
-- [Software and language evolution](https://github.com/jonmeow/carbon-lang/blob/proposal-goals/docs/project/goals.md#both-software-and-language-evolution):
+- [Software and language evolution](docs/project/goals.md#both-software-and-language-evolution):
   It would inhibit evolution of Carbon libraries, and the Carbon language, by
   preventing them from changing how they respond to incorrect code.
-- [Practical safety guarantees and testing mechanisms](https://github.com/jonmeow/carbon-lang/blob/proposal-goals/docs/project/goals.md#practical-safety-guarantees-and-testing-mechanisms):
+- [Practical safety guarantees and testing mechanisms](docs/project/goals.md#practical-safety-guarantees-and-testing-mechanisms):
   Similarly, it would prevent Carbon users from choosing different
   performance/safety tradeoffs for handling programming errors: if an
   out-of-bounds array access is required to throw an exception, users can't
@@ -151,8 +169,8 @@ build time.
 
 #### Caveats
 
-We cannot prevent errors from being ignored if they are conveyed via a
-custom mechanism (e.g. `errno`).
+We cannot prevent errors from being ignored if they are conveyed via a custom
+mechanism (e.g. `errno`).
 
 ### Error propagation must be straightforward
 
