@@ -111,17 +111,20 @@ to access its elements?
 
 davidstone argues they are indeed similar enough:
 
-    Indexing into a tuple seems fundamentally the same to me as indexing into an array. The operation is just more generic, which means that it is less powerful -- the special case of arrays can promise more about their contents, namely that they are all the same type.
+> Indexing into a tuple seems fundamentally the same to me as indexing into an
+> array. The operation is just more generic, which means that it is less
+> powerful -- the special case of arrays can promise more about their contents,
+> namely that they are all the same type.
+>
+> A tuple has a size that is fixed at compile time, and types can be different.
+> Array is the special case of that where all types must be the same.
+>
+> I would want to just use `tuple[index]`, where `index` is either a
+> compile-time value or, if it can uniquely identify an element, a type.
 
-
-    A tuple has a size that is fixed at compile time, and types can be different. Array is the special case of that where all types must be the same.
-
-
-    I would want to just use `tuple[index]`, where `index` is either a compile-time value or, if it can uniquely identify an element, a type.
-
-Similarly, we can imagine slicing a tuple like you might an array, which
-suggests we would want to use the same syntax, just to avoid a proliferation of
-parallel ways of doing things for tuples vs. arrays.
+Similarly, since we plan on supporting slicing a tuple just like we will for
+arrays, that suggests we would want to use the same syntax, just to avoid a
+proliferation of parallel ways of doing things for tuples vs. arrays.
 
 The argument that they are different has to do with the signature being
 different. In particular, two things:
@@ -164,16 +167,20 @@ syntax.
 
 **Rejected alternative:**
 
-    Accessing tuple members uses their index with a dot.
+> Accessing tuple members uses their index with a dot.
 
 ```
-    var (|Float64, Int, Bool|): z = (|x.1, x.0, x.2|);
+var (|Float64, Int, Bool|): z = (|x.1, x.0, x.2|);
 ```
 
-    **Concern:** Visual ambiguity with floating point numbers, as in `I.0` and `l.0` vs. `1.0`.
-
-
-    **Concern:** This syntax is awkward when supplying a template-constant value that is not a literal. We expect to need this when doing things like iterating through the components of a tuple when meta-programming. We could possibly have a meta-programming-specific operator to substitute the value of an expression to handle this.
+> **Concern:** Visual ambiguity with floating point numbers, as in `I.0` and
+> `l.0` vs. `1.0`.
+>
+> **Concern:** This syntax is awkward when supplying a template-constant value
+> that is not a literal. We expect to need this when doing things like iterating
+> through the components of a tuple when meta-programming. We could possibly
+> have a meta-programming-specific operator to substitute the value of an
+> expression to handle this.
 
 ## Multiple indices
 
@@ -539,14 +546,18 @@ that?
 
 [geoffromer](https://github.com/geoffromer) says:
 
-    It feels weird to use the same syntax [`...`] to turn a sequence into a tuple (in pattern matching), and to turn a tuple into a sequence (in procedural code) \
-
-\
-This means we have two operations that have the same spelling, but exactly opposite
-semantics. That feels confusing, in a way that sticks out because so many other confusing
-aspects of C++ variadics have been cleaned up.
-
-    The pattern-matching syntax seems closer to the natural-language meaning of an ellipsis, so I'd keep that, but I'd prefer something else for the expression syntax. I don't know of any good precedents, unfortunately- `**` seems unworkable because of ambiguity with double-dereferencing.
+> It feels weird to use the same syntax [`...`] to turn a sequence into a tuple
+> (in pattern matching), and to turn a tuple into a sequence (in procedural
+> code)
+>
+> This means we have two operations that have the same spelling, but exactly
+> opposite semantics. That feels confusing, in a way that sticks out because so
+> many other confusing aspects of C++ variadics have been cleaned up.
+>
+> The pattern-matching syntax seems closer to the natural-language meaning of an
+> ellipsis, so I'd keep that, but I'd prefer something else for the expression
+> syntax. I don't know of any good precedents, unfortunately- `**` seems
+> unworkable because of ambiguity with double-dereferencing.
 
 ## Equality
 
@@ -643,4 +654,10 @@ destructuring patterns outside of function calls and parameters is somewhat
 awkward, it is expected to be very rarely used in practice and provides for
 clear, unambiguous, and consistent syntax in the common uses of parentheses.
 
-    **Open question:** should we allow spelling the unit type `()` as well as `Void` outside of a pattern? Should we only allow the spelling of the unit type to be `()`? Doing so is annoying as the idea is that "`,`" is what signifies a tuple. But we basically have to allow a pattern matching the unit type as `()` to make generic things sensible, and it would seem somewhat more orthogonal to allow that to simply *be* the unit type which makes it a normal pattern spelling.
+> **Open question:** should we allow spelling the unit type `()` as well as
+> `Void` outside of a pattern? Should we only allow the spelling of the unit
+> type to be `()`? Doing so is annoying as the idea is that "`,`" is what
+> signifies a tuple. But we basically have to allow a pattern matching the unit
+> type as `()` to make generic things sensible, and it would seem somewhat more
+> orthogonal to allow that to simply _be_ the unit type which makes it a normal
+> pattern spelling.
