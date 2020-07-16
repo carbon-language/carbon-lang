@@ -294,11 +294,11 @@ Note that my first design was that two tuples with the same (name, type) pairs
 (as a set) were compatible no matter the order they were listed. In particular,
 these statements would not be errors:
 
-```
-// Compile error! Order doesn't match.
-Assert(proposed_type_syntax == (|.y = 4, .x = 3|));
-// Compile error! Order doesn't match.
-proposed_type_syntax = (|.y = 7, .x = 8|);
+```diff
+  // Compile error! Order doesn't match.
+- Assert(proposed_type_syntax == (|.y = 4, .x = 3|));
+  // Compile error! Order doesn't match.
+- proposed_type_syntax = (|.y = 7, .x = 8|);
 ```
 
 This has a problem though, when the order of fields of the type doesn't match
