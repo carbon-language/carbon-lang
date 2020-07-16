@@ -3172,7 +3172,10 @@ void BinaryFunction::fixBranches() {
       assert(CondBranch && "conditional branch expected");
       const auto *TSuccessor = BB->getConditionalSuccessor(true);
       const auto *FSuccessor = BB->getConditionalSuccessor(false);
-      if (NextBB && NextBB == TSuccessor) {
+      // Check whether we support reversing this branch direction
+      const auto IsSupported =
+          !MIB->isUnsupportedBranch(CondBranch->getOpcode());
+      if (NextBB && NextBB == TSuccessor && IsSupported) {
         std::swap(TSuccessor, FSuccessor);
         {
           auto L = BC.scopeLock();
@@ -3186,11 +3189,13 @@ void BinaryFunction::fixBranches() {
       if (TSuccessor == FSuccessor) {
         BB->removeDuplicateConditionalSuccessor(CondBranch);
       }
-      if (!NextBB || (NextBB != TSuccessor && NextBB != FSuccessor)) {
+      if (!NextBB ||
+          ((NextBB != TSuccessor || !IsSupported) && NextBB != FSuccessor)) {
         // If one of the branches is guaranteed to be "long" while the other
         // could be "short", then prioritize short for "taken". This will
         // generate a sequence 1 byte shorter on x86.
-        if (BC.isX86() && TSuccessor->isCold() != FSuccessor->isCold() &&
+        if (IsSupported && BC.isX86() &&
+            TSuccessor->isCold() != FSuccessor->isCold() &&
             BB->isCold() != TSuccessor->isCold()) {
           std::swap(TSuccessor, FSuccessor);
           {

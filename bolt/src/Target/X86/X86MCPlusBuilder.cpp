@@ -2253,11 +2253,7 @@ public:
       }
 
       // Handle conditional branches and ignore indirect branches
-      if (I->getOpcode() != X86::LOOP &&
-          I->getOpcode() != X86::LOOPE &&
-          I->getOpcode() != X86::LOOPNE &&
-          I->getOpcode() != X86::JECXZ &&
-          I->getOpcode() != X86::JRCXZ &&
+      if (!isUnsupportedBranch(I->getOpcode()) &&
           getInvertedBranchOpcode(I->getOpcode()) == I->getOpcode()) {
         // Indirect branch
         return false;
