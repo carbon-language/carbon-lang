@@ -51,6 +51,7 @@ ReorderFunctions("reorder-functions",
     clEnumValN(bolt::ReorderFunctions::RT_USER,
       "user",
       "use function order specified by -function-order")),
+  cl::ZeroOrMore,
   cl::cat(BoltOptCategory));
 
 static cl::opt<bool>
