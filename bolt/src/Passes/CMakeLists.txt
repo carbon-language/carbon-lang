@@ -1,7 +1,6 @@
 add_llvm_library(LLVMBOLTPasses
   Aligner.cpp
   AllocCombiner.cpp
-  BranchPredictionInfo.cpp
   BinaryPasses.cpp
   BinaryFunctionCallGraph.cpp
   CallGraph.cpp
@@ -11,7 +10,6 @@ add_llvm_library(LLVMBOLTPasses
   ExtTSPReorderAlgorithm.cpp
   FrameAnalysis.cpp
   FrameOptimizer.cpp
-  FeatureMiner.cpp
   HFSort.cpp
   HFSortPlus.cpp
   IdenticalCodeFolding.cpp
@@ -40,7 +38,6 @@ add_llvm_library(LLVMBOLTPasses
   ValidateInternalCalls.cpp
   VeneerElimination.cpp
   RetpolineInsertion.cpp
-
 
   DEPENDS
   intrinsics_gen

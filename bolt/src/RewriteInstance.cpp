@@ -24,7 +24,6 @@
 #include "ExecutableFileMemoryManager.h"
 #include "MCPlusBuilder.h"
 #include "ParallelUtilities.h"
-#include "Passes/FeatureMiner.h"
 #include "Passes/ReorderFunctions.h"
 #include "Relocation.h"
 #include "RuntimeLibs/HugifyRuntimeLibrary.h"
@@ -91,7 +90,6 @@ extern cl::OptionCategory BoltCategory;
 extern cl::OptionCategory BoltDiffCategory;
 extern cl::OptionCategory BoltOptCategory;
 extern cl::OptionCategory BoltOutputCategory;
-extern cl::OptionCategory InferenceCategory;
 extern cl::OptionCategory AggregatorCategory;
 
 extern cl::opt<MacroFusionType> AlignMacroOpFusion;
@@ -149,17 +147,6 @@ DumpDotAll("dump-dot-all",
   cl::ZeroOrMore,
   cl::Hidden,
   cl::cat(BoltCategory));
-
-cl::opt<bool> DumpAll("dump-all",
-  cl::desc("dump function CFGs to text file format after each stage"),
-  cl::ZeroOrMore, cl::cat(BoltCategory));
-
-cl::opt<bool>
-GenFeatures("gen-features",
-  cl::desc("capture features useful for training an ML model on branch"
-  " behavior and save them in CSV format."),
-  cl::ZeroOrMore,
-  cl::cat(InferenceCategory));
 
 static cl::opt<bool>
 DumpEHFrame("dump-eh-frame",
@@ -567,7 +554,7 @@ void RewriteInstance::discoverStorage() {
         SectionContents.data() - InputFile->getData().data();
     }
 
-    if (!opts::GenFeatures && !opts::HeatmapMode &&
+    if (!opts::HeatmapMode &&
         !(opts::AggregateOnly && BAT->enabledFor(InputFile)) &&
         (SectionName.startswith(getOrgSecPrefix()) ||
          SectionName == getBOLTTextSectionName())) {
@@ -807,13 +794,6 @@ void RewriteInstance::run() {
   buildFunctionsCFG();
 
   processProfileData();
-
-  if (opts::GenFeatures) {
-    std::unique_ptr<FeatureMiner> FM =
-        llvm::make_unique<FeatureMiner>(opts::GenFeatures);
-    FM->runOnFunctions(*BC);
-    return;
-  }
 
   postProcessFunctions();
 
@@ -2644,9 +2624,6 @@ void RewriteInstance::postProcessFunctions() {
 
     if (opts::DumpDotAll)
       Function.dumpGraphForPass("build-cfg");
-
-    if (opts::DumpAll)
-      Function.dumpGraphToTextFile();
 
     if (opts::PrintLoopInfo) {
       Function.calculateLoopInfo();
