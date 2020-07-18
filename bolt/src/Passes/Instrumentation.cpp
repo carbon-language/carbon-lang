@@ -246,7 +246,10 @@ bool Instrumentation::instrumentOneTarget(
 
   BinaryContext &BC = FromFunction.getBinaryContext();
   const MCInst &Inst = *Iter;
-  if (BC.MIB->isCall(Inst) && !TargetBB) {
+  if (BC.MIB->isCall(Inst)) {
+    // This code handles both
+    // - (regular) inter-function calls (cross-function control transfer),
+    // - (rare) intra-function calls (function-local control transfer)
     Iter = insertInstructions(CounterInstrs, FromBB, Iter);
     return true;
   }
@@ -256,6 +259,10 @@ bool Instrumentation::instrumentOneTarget(
 
   // Indirect branch, conditional branches or fall-throughs
   // Regular cond branch, put counter at start of target block
+  //
+  // N.B.: (FromBB != TargetBBs) checks below handle conditional jumps where
+  // we can't put the instrumentation counter in this block because not all
+  // paths that reach it at this point will be taken and going to the target.
   if (TargetBB->pred_size() == 1 && &FromBB != TargetBB &&
       !TargetBB->isEntryPoint()) {
     insertInstructions(CounterInstrs, *TargetBB, TargetBB->begin());
@@ -380,8 +387,7 @@ void Instrumentation::instrumentFunction(BinaryContext &BC,
       uint32_t ToOffset = TargetBB ? TargetBB->getInputOffset() : 0;
       BinaryFunction *TargetFunc =
           TargetBB ? &Function : BC.getFunctionForSymbol(Target);
-      // Should be null for indirect branches/calls
-      if (TargetFunc && !TargetBB) {
+      if (TargetFunc && BC.MIB->isCall(Inst)) {
         if (opts::InstrumentCalls) {
           const auto *ForeignBB = TargetFunc->getBasicBlockForLabel(Target);
           if (ForeignBB)
