@@ -173,6 +173,22 @@ Instrumentation::createInstrumentationSnippet(BinaryContext &BC, bool IsLeaf) {
   return CounterInstrs;
 }
 
+namespace {
+
+// Helper instruction sequence insertion function
+BinaryBasicBlock::iterator
+insertInstructions(std::vector<MCInst>& Instrs,
+                   BinaryBasicBlock &BB,
+                   BinaryBasicBlock::iterator Iter) {
+  for (auto &NewInst : Instrs) {
+    Iter = BB.insertInstruction(Iter, NewInst);
+    ++Iter;
+  }
+  return Iter;
+}
+
+}
+
 void Instrumentation::instrumentLeafNode(BinaryContext &BC,
                                          BinaryBasicBlock &BB,
                                          BinaryBasicBlock::iterator Iter,
@@ -181,11 +197,7 @@ void Instrumentation::instrumentLeafNode(BinaryContext &BC,
                                          uint32_t Node) {
   createLeafNodeDescription(FuncDesc, Node);
   std::vector<MCInst> CounterInstrs = createInstrumentationSnippet(BC, IsLeaf);
-
-  for (auto &NewInst : CounterInstrs) {
-    Iter = BB.insertInstruction(Iter, NewInst);
-    ++Iter;
-  }
+  insertInstructions(CounterInstrs, BB, Iter);
 }
 
 void Instrumentation::instrumentIndirectTarget(BinaryBasicBlock &BB,
@@ -205,10 +217,7 @@ void Instrumentation::instrumentIndirectTarget(BinaryBasicBlock &BB,
       IndCallSiteID, &*BC.Ctx);
 
   Iter = BB.eraseInstruction(Iter);
-  for (auto &NewInst : CounterInstrs) {
-    Iter = BB.insertInstruction(Iter, NewInst);
-    ++Iter;
-  }
+  Iter = insertInstructions(CounterInstrs, BB, Iter);
   --Iter;
 }
 
@@ -238,10 +247,7 @@ bool Instrumentation::instrumentOneTarget(
   BinaryContext &BC = FromFunction.getBinaryContext();
   const MCInst &Inst = *Iter;
   if (BC.MIB->isCall(Inst) && !TargetBB) {
-    for (auto &NewInst : CounterInstrs) {
-      Iter = FromBB.insertInstruction(Iter, NewInst);
-      ++Iter;
-    }
+    Iter = insertInstructions(CounterInstrs, FromBB, Iter);
     return true;
   }
 
@@ -252,18 +258,11 @@ bool Instrumentation::instrumentOneTarget(
   // Regular cond branch, put counter at start of target block
   if (TargetBB->pred_size() == 1 && &FromBB != TargetBB &&
       !TargetBB->isEntryPoint()) {
-    auto RemoteIter = TargetBB->begin();
-    for (auto &NewInst : CounterInstrs) {
-      RemoteIter = TargetBB->insertInstruction(RemoteIter, NewInst);
-      ++RemoteIter;
-    }
+    insertInstructions(CounterInstrs, *TargetBB, TargetBB->begin());
     return true;
   }
   if (FromBB.succ_size() == 1 && &FromBB != TargetBB) {
-    for (auto &NewInst : CounterInstrs) {
-      Iter = FromBB.insertInstruction(Iter, NewInst);
-      ++Iter;
-    }
+    Iter = insertInstructions(CounterInstrs, FromBB, Iter);
     return true;
   }
   // Critical edge, create BB and put counter there
