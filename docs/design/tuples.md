@@ -373,6 +373,22 @@ We are currently making order always matter for [consistency](#order-matters),
 even though the implementation concerns for function calling may not require
 that particular constraint.
 
+**Concern** from [mconst](https://github.com/mconst):
+
+> We may need to allow keyword arguments in any order to allow use cases with
+> unpacking. Hmm, this doesn't seem great for argument forwarding. Say you want
+> to forward all your arguments to another function, along with an extra keyword
+> argument `.foo = bar`. If keyword arguments can be passed in any order, it
+> just works:
+>
+> ```
+> SomeFunction(args..., .foo = bar);
+> ```
+>
+> But if we enforce ordering, that natural-looking code will break any time the
+> user passes a keyword argument that happens to come after `.foo` in
+> `SomeFunction`'s declaration order.
+
 Keyword arguments to functions are covered in more detail in
 [the pattern matching design doc](https://github.com/josh11b/carbon-lang/blob/pattern-matching/docs/design/pattern-matching.md#positional-amp-keyword-arguments).
 
@@ -407,7 +423,6 @@ of a function. For example:
 fn WithKeywordParameters(Int: x, .a = Int: a, .b = Int: b) -> Int {
   return x + a + b;
 }
-fn TupleArgument(
 
 var auto: ab_tuple = (| .a = 2, .b = 3 |);
 Assert(WithKeywordParameters(1, ab_tuple...) == 6);
@@ -424,7 +439,7 @@ var (|Bool, Int, Int|): b = (| true, a... |);
 var (|Int, Int, Bool, Int, Int|): c = (| a..., b... |);
 ```
 
-As a general rule, we should allow unpacking any place that takes a
+As a general rule, we should allow unpacking in any place that takes a
 comma-separated list.
 
 ### Variadic function arguments
