@@ -41,10 +41,10 @@ repos:
         pass_filenames: false
   # Formatters should be run late so that they can re-format any prior changes.
   # black disabled since broken for me (josh11b).
-  # - repo: https://github.com/psf/black
-  #   rev: stable
-  #  hooks:
-  #    - id: black
+  - repo: https://github.com/psf/black
+    rev: stable
+    hooks:
+      - id: black
   #      language_version: python3.6
   - repo: https://github.com/prettier/prettier
     rev: 2.0.5
