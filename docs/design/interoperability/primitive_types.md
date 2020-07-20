@@ -227,8 +227,8 @@ Pros:
 
 Cons:
 
-- Prevents us from representing C++ memory operations as `Byte` without a
-  specific type mapping.
+- Would require special-case mappings for C++ APIs that use `char` to represent
+  arbitrary memory.
 - Encourages the concept of a single byte as a character of text, which is
   inconsistent with Unicode.
 
