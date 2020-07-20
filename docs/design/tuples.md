@@ -373,13 +373,13 @@ We are currently making order always matter for [consistency](#order-matters),
 even though the implementation concerns for function calling may not require
 that particular constraint.
 
-**Concern** from [mconst](https://github.com/mconst):
+**Concern**: We may need to allow keyword arguments in any order to allow use
+cases with unpacking, such as argument forwarding.
+[mconst](https://github.com/mconst) says:
 
-> We may need to allow keyword arguments in any order to allow use cases with
-> unpacking. Hmm, this doesn't seem great for argument forwarding. Say you want
-> to forward all your arguments to another function, along with an extra keyword
-> argument `.foo = bar`. If keyword arguments can be passed in any order, it
-> just works:
+> Say you want to forward all your arguments to another function, along with an
+> extra keyword argument `.foo = bar`. If keyword arguments can be passed in any
+> order, it just works:
 >
 > ```
 > SomeFunction(args..., .foo = bar);
