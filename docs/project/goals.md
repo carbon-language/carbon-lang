@@ -397,7 +397,7 @@ implement bounds checking when desirable.
 
 #### Fast and scalable development
 
-Software development interation has a critical "edit, test, debug" cycle.
+Software development iteration has a critical "edit, test, debug" cycle.
 Developers will use IDEs, editors, compilers, and other tools that need
 different levels of parsing. For small projects, raw parsing speed is essential;
 for large software systems, scalability of parsing is also necessary.
@@ -449,7 +449,7 @@ evolve as well to continue to effectively prioritize the modern and major
 platforms.
 
 For examples, please see Carbon's
-[success critiera](principles/success_criteria.md#modern-os-platforms-hardware-architectures-and-environments).
+[success criteria](principles/success_criteria.md#modern-os-platforms-hardware-architectures-and-environments).
 
 #### Interoperability with and migration from existing C++ code
 
