@@ -22,6 +22,10 @@ not be treated as accepted by the core team; rather, it is a placeholder until
 we have more time to examine this detail. Please feel welcome to rewrite and
 update as appropriate.
 
+See
+[carbon-proposals PR 89](https://github.com/carbon-language/carbon-proposals/pull/89)
+for context -- that proposal may replace this.
+
 ## Overview
 
 Carbon provides metaprogramming facilities that look similar to regular Carbon
