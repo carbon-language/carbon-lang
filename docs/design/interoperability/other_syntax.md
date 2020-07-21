@@ -99,7 +99,7 @@ For example, given the C code:
 We will provide equivalent Carbon code:
 
 ```carbon
-// :$$ is the current "const" syntax for Carbon
+// :$$ is the current syntax for declaring compile-time constants.
 var Int64:$$ BUFFER_SIZE = 4096;
 // bswap_16 is lost because it's not a constant.
 
