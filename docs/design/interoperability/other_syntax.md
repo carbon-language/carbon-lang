@@ -40,7 +40,7 @@ Cpp.printf("%d\n", 2);
 
 ## C/C++ Inline functions
 
-C inline functions will be treated
+Inline functions will be treated
 [as Swift does](https://github.com/apple/swift/blob/master/docs/HowSwiftImportsCAPIs.md#inline-functions),
 because the caller is responsible for emitting a definition of the function:
 
@@ -101,7 +101,7 @@ For example, given the C code:
 We will provide equivalent Carbon code:
 
 ```carbon
-// :$$ is the current "const" syntax for Carbon
+// :$$ is the current syntax for declaring compile-time constants.
 var Int64:$$ BUFFER_SIZE = 4096;
 // bswap_16 is lost because it's not a constant.
 
