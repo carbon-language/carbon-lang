@@ -80,10 +80,11 @@ users, which supports incremental migration. Carbon imports of C++ will also be
 able to use this, essentially resulting in Carbon calling through C++ to call
 the migrated Carbon code.
 
-By including the generated `startserver.6c.h`, callers will transparently switch
-to the Carbon-externed `StartServer` symbol without per-caller code changes. In
-this example, `main.cc` doesn't need to change yet because it transparently uses
-the `$extern` provided by the Carbon StartServer library.
+By having `start_server.h` include the generated `startserver.6c.h`, callers
+will transparently switch to the Carbon-externed `StartServer` symbol without
+per-caller code changes. In this example, `main.cc` doesn't need to change yet
+because it transparently uses the `$extern` provided by the Carbon StartServer
+library.
 
 C++ `start_server.h`:
 

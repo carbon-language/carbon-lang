@@ -15,6 +15,8 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 - [Function pointers and functors](#function-pointers-and-functors)
 - [Typedefs](#typedefs)
 - [Macros](#macros)
+- [Alternatives](#alternatives)
+  - [Don't support varargs](#dont-support-varargs)
 
 <!-- tocstop -->
 
@@ -106,3 +108,12 @@ var Int64:$$ BUFFER_SIZE = 4096;
 // Even though there are macro indirections, this is still constant.
 $const Int64: INT64_MAX = 0x7FFFFFFFFFFFFFFF;
 ```
+
+## Alternatives
+
+### Don't support varargs
+
+It's possible that [C varargs](#c-varargs) may not be common enough to be worth
+supporting. This is a simple trade-off, weighing frequently of use versus
+incremental complexity. At present, we expect that uses will be frequent enough
+that support is valuable.

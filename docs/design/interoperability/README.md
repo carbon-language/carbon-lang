@@ -147,8 +147,10 @@ Notable elements are:
   Similarly, `$extern("Swift")` might be used to indicate exposure for Swift at
   some point in the future.
   - `namespace` and `name` parameters are provided to override default choices,
-    particularly to assist migration of C++ APIs to Carbon.
-  - Externs may be #included using `.6c.h` files.
+    particularly to assist migration of C++ APIs to Carbon. For example,
+    `$extern("Cpp", namespace="myproject")`.
+  - The Carbon toolchain will translate externed declarations to C++, and they
+    will be available to C++ code through `.6c.h` header files.
 - `import Cpp "path"`: Imports API calls from a C++ header file.
 
 We use the name `Cpp` because `import` needs a valid identifier.

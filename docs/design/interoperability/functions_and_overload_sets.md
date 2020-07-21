@@ -44,10 +44,6 @@ compilation in a way that would result in identical behavior to a direct Carbon
 instantiation. This seems too great of a complexity burden and constraint to
 realistically support.
 
-Bridge code will be required when C++ code needs to call into Carbon template
-functions. That bridge code can still factor out and dispatch back into Carbon
-code wherever it can do so in a non-dependent way.
-
 ## Exposing C++ overload sets as Carbon function patterns
 
 Accessing C++ overload sets from Carbon is somewhat more complex than the
