@@ -119,9 +119,6 @@ pattern.
 **Open question:** How do we effectively fit a "slice" or "array" pattern into
 this (or whether we shouldn't do so)?
 
-**Open question:** How do we go beyond a simple "type" to things that support
-generics and/or templates?
-
 **Context**: Similar pattern matching control flow constructs in other
 languages:
 
@@ -686,7 +683,9 @@ it to a name. [zygoloid](https://github.com/zygoloid) has suggested using the
   every combination of values to those arguments. Template arguments prevent
   type checking until the function is instantiated so the value is known.
   Generic arguments allow the function to be type checked once when the body is
-  defined.
+  defined. See the
+  [generics overview (TODO)](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/designs/generics-overview.md)
+  for more details.
 - **Variadic** (`...`): These match multiple arguments which are packed into a
   tuple. So a tuple value `(1, 2, 3, 4)` matches `(... Array(Int): x)` --
   assuming that `Array(Int)` has a constructor that will accept an `Int`
