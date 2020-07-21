@@ -125,7 +125,7 @@ easily recognized. It can only signify a transfer of ownership. Here Carbon
 should completely translate this transfer of ownership from the C++ heap to the
 Carbon heap, including to a heap-owned pointer in Carbon. This in turn requires
 the C++ heap to be implemented as part of the Carbon heap, allowing allocations
-in one to be deallocated in the other and vice versa. TODO(chandlerc): need to
+in one to be deallocated in the other, bidirectionally. TODO(chandlerc): need to
 spell out how the heap works in Carbon to pin down the details here.
 
 The next case is `std::vector<T> &&`. This should get translated to a transfer

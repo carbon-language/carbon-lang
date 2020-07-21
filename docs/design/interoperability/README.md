@@ -104,14 +104,14 @@ Non-goals:
 The design for interoperation between Carbon and C++ hinges on:
 
 1. A focus on types, and simple overload sets built from those types.
-2. A willingness to expose the idioms of C++ into Carbon code, and vice versa,
-   when necessary to maximize performance.
+2. A willingness to expose the idioms of C++ into Carbon code, and the other way
+   around, when necessary to maximize performance.
 3. The use of wrappers, generic programming, and templates to minimize or
    eliminate runtime overhead.
 
 These things come together when looking at how custom data structures in C++ are
-exposed into Carbon or vice versa. In both languages, it is reasonable and even
-common to have customized low-level data structures such as associative
+exposed into Carbon, or Carbon into C++. In both languages, it is reasonable and
+even common to have customized low-level data structures such as associative
 containers. Even today, there are numerous data structures for mapping from a
 key to a value that might be "best": hash table, linked hash table, sorted
 vector, and btree to name a few. Experience with C++ tells us that we should
