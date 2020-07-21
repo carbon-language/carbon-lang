@@ -66,13 +66,19 @@ For example:
 package CppCompat;
 
 $if platform == LP64
+// This API expands the Int32 to Int64.
+fn ToCLong(var Int32: val) -> Int64 { return val; }
 fn ToCLong(var Int64: val) -> Int64 { return val; }
 $else
+fn ToCLong(var Int32: val) -> Int32 { return val; }
+// This API shrinks Int64 to Int32, which can error.
 fn ToCLong(var Int64: val) -> Int32 { return (Int32)val; }
 $endif
 
-var Int64: myVal = Foo();
-// retVal is always safe because an Int32 can always become an Int64.
+var Int32: myVal = Foo();
+// With myVal, the Int32 can safely become an Int64 if needed.
+// With retVal, an Int32 returned by ApiUsingLong() is similarly safe.
+// Using auto for retVal may also improve this code by removing casts.
 var Int64: retVal = Cpp.ApiUsingLong(CppCompat.ToCLong(val));
 ```
 
@@ -129,7 +135,10 @@ var Cpp.long: retVal = Cpp.ApiUsingLong(val);
 
 Pros:
 
-- Reduces the amount of platform-specific code that authors need to provide.
+- For users that needs to write robust cross-platform code, it reduces the
+  amount of platform-specific code that authors need to provide.
+  - Such users may define equivalent types themselves, which could end up
+    incompatible cross-library.
 - Variable-size types avoid conversion overhead.
 - Unsafety around size conversions can be avoided by just staying in
   variable-size types.
@@ -137,12 +146,18 @@ Pros:
 Cons:
 
 - Introduces new interoperability-specific types into Carbon.
-  - These types are likely to leak beyond C++ interoperability code, through
-    support in APIs.
-  - Could cause issues if most types in Carbon are assumed to be constant size
-    cross-platform, and API authors don't consider variable sizes correctly.
-- Conversion functions are likely still necessary for code to switch between the
-  variable-size types and Carbon-recommended types.
+  - These types are likely to leak beyond C++ interoperability code, creating
+    friction in using APIs that are designed either only for variable-size types
+    or for fixed-size types, hindering API reuse. Overlapping implementations
+    and increased maintenance costs are a likely result.
+  - If platform-specific types are added, it may be worth considering whether we
+    should promote these to Carbon primitive types.
+- For users that don't need to write robust cross-platform code, it increases
+  the friction of calling interoperability APIs.
+- Could cause issues if most types in Carbon are assumed to be constant size
+  cross-platform, and API authors don't consider variable sizes correctly.
+  - For example, users may still write platform-specific code like
+    `var Cpp.long: x = ...; var Int32: y = (Int32)x;`.
 
 #### Do nothing
 

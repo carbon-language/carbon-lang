@@ -89,6 +89,15 @@ Non-goals:
   types.
 - We may choose not to provide full support for unwinding exceptions across
   Carbon and C/C++ boundaries.
+- Interoperability features should not be expected to work for arbitrary C++
+  toolchains. While pre-compiled C++ libraries may be callable, the Carbon
+  toolchain should be used to compile both C++ and Carbon in order to achieve
+  full support.
+  - Carbon must be able to compile C++ headers in order to translate names and
+    types.
+  - While arbitrary C++ code may be able to call into Carbon code that has been
+    pre-compiled into a library, a more complex interaction like C++ code
+    calling Carbon templates requires compilation of _both_ languages together.
 
 ## Philosophy of interoperability layer
 

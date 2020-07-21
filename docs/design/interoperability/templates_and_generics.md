@@ -35,9 +35,9 @@ package Art;
 
 import Cpp "<vector>";
 
-// Extern the interface so that template code can see it:
-$extern("Cpp") interface Shape {
-  fn Draw();
+// Extern the struct so that template code can see it:
+$extern("Cpp") struct Shape {
+  fn Draw() { ... }
 }
 
 // Then instantiate the template:
@@ -64,8 +64,8 @@ For Carbon's reference toolchain, we plan to modify Clang to allow for
 extensions that will use Carbon to compile the template then insert the results
 into Clang's AST for expansion.
 
-This assumes low-level modifications to LLVM. We acknowledge this would be
-necessary, and may gate such a feature.
+This assumes low-level modifications to LLVM. Other toolchains trying to compile
+Carbon would need similar features.
 
 ## Using Carbon generics from C++
 

@@ -217,8 +217,8 @@ Syntaxes we could consider are:
     keywords.
   - Pro: Straightforward way to add more parameters to `interop()`.
   - Con: May not be clear that this is doing import-like behavior.
-    - Could adopt instead `import interop("c++", "project/file.h")`, or `import
-      library("project/file.h", lang="c++")`.
+    - Could adopt instead `import interop("c++", "project/file.h")`, or
+      `import library("project/file.h", lang="c++")`.
 
 ### Provide flexibility for where C++ APIs are imported to
 
@@ -320,7 +320,8 @@ package FactoryUser;
 import Cpp "factory.h"
 
 var Cpp.OpaquePointer*?: x = CreateFoo();
-// It is unsafe for this code to call Process(x) because the type is opaque.
+// This works, but is unsafe because there's effectively no type checking.
+Process(x);
 ```
 
 This unsafe behavior could be avoided by instead not exposing calls. That would
