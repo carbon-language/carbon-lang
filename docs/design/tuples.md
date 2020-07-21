@@ -479,25 +479,13 @@ just positional or keyword arguments.
 arguments are matched by the `...`. Is it influenced by &lt;Type>? Or the next
 thing in the parameter list?
 
-We shall also define a type `NTuple(Int:$$ N, Type:$$ T)` which is equivalent to
-the tuple type `(|T, T, ...|)` with `N` components. This lets us declare
-variadic arguments that all have to be the same type, and the `Max` function:
+We shall also define a type `NTuple[Type:$ T](Int:$$ N, T:$ V)` which is
+equivalent to the tuple `(|V, V, ...|)` with `N` components. This lets us
+declare variadic arguments that all have to be the same type, and the `Max`
+function:
 
 ```
-fn Max[Int:$$ N, Comparable:$$ T](... NTuple(N, T): args) -> T {
-  match (args) {
-    case (| T: x |) => return x;
-    // Using the same variadic pattern matching syntax in a `match` statement.
-    case (| T: first, ... NTuple(N-1, T): rest |) => {
-      var T: max_of_rest = Max(rest...);
-      if (first < max_of_rest) {
-        return max_of_rest;
-      } else {
-        return first;
-      }
-    }
-  }
-}
+fn Max[Int:$$ N, Comparable:$$ T](... NTuple(N, T): args) -> T { ... }
 
 // `N` == 3, `T` == Int
 Assert(Max(1, 3, 2) == 3);
@@ -526,9 +514,8 @@ fn Max[Int:$$ N, Comparable:$$ T](T: first, ... NTuple(N, T): rest) -> T {
 Assert(Max(1, 3, 2) == 3);
 ```
 
-Potentially we could allow this to be passed things with dynamic lengths,
-avoiding the need to instantiate a different version of the function for each
-number of arguments:
+We also allow this to be passed things with dynamic lengths, avoiding the need
+to instantiate a different version of the function for each number of arguments:
 
 ```
 fn Max[Comparable:$ T](... DynamicLengthArray(T): args) -> T {
