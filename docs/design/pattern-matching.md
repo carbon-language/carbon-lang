@@ -32,15 +32,11 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 <!-- tocstop -->
 
-NOTE: this doc has a lot of overlap with the
-[tuples (TODO)](#broken-links-footnote)<!-- T:Carbon tuples and variadics -->
-doc; we should do some consolidation!
-
 ## Goals
 
 Pattern matching is a general Carbon mechanism for handling structured values
 like
-[tuples (TODO)](#broken-links-footnote)<!-- T:Carbon tuples and variadics -->.
+[tuples (TODO)](https://github.com/josh11b/carbon-lang/blob/tuples/docs/design/tuples.md).
 Given a value and a pattern, there are two steps:
 
 1. Matching: Does this value match the pattern?
@@ -64,14 +60,6 @@ We have a few places where we would like to use pattern matching in Carbon:
 - To define function arguments, and support function overloading.
 
 ### Pattern match control flow
-
-In other languages:
-[Rust](https://doc.rust-lang.org/book/ch18-03-pattern-syntax.html),
-[Circle](https://github.com/seanbaxter/circle/blob/master/pattern/pattern.md),
-... TODO
-
-[NOTE: This text also appears in
-["Carbon language design / Pattern matching"](https://github.com/jonmeow/carbon-lang/blob/proposal-design-overview/docs/design/README.md#pattern-matching).]
 
 The most powerful form and easiest to explain form of pattern matching is a
 dedicated control flow construct that subsumes the `switch` of C and C++ into
@@ -124,20 +112,24 @@ patterns can be composed of the following:
 - An unwrapping pattern containing a nested value pattern which matches against
   a variant or variant-like value by unwrapping it.
 
+In order to match a value, whatever is specified in the pattern must match.
+Using `auto` for a type will always match, making `auto: _` the wildcard
+pattern.
+
 **Open question:** How do we effectively fit a "slice" or "array" pattern into
 this (or whether we shouldn't do so)?
 
 **Open question:** How do we go beyond a simple "type" to things that support
 generics and/or templates?
 
-In order to match a value, whatever is specified in the pattern must match.
-Using `auto` for a type will always match, making `auto: _` the wildcard
-pattern.
+**Context**: Similar pattern matching control flow constructs in other
+languages:
+
+- [Rust](https://doc.rust-lang.org/book/ch18-03-pattern-syntax.html),
+- [Circle](https://github.com/seanbaxter/circle/blob/master/pattern/pattern.md),
+- ... TODO
 
 ### Pattern matching in local variables
-
-[NOTE: This text also appears in
-["Carbon language design / Pattern matching in local variables"](https://github.com/jonmeow/carbon-lang/blob/proposal-design-overview/docs/design/README.md#pattern-matching-in-local-variables).]
 
 Value patterns may be used when declaring local variables to conveniently
 destructure them and do other type manipulations. However, the patterns must
@@ -180,9 +172,7 @@ Example:
 ```
 fn ToString(Int: x) -> String { return "A" }
 fn ToString(Bool: x) -> String { return "B" }
-fn ToString[Type:$ T](T: x) if (T implements SerializableInterface) -> String {
-  return "C"
-}
+fn ToString[Serializable:$ T](T: x) -> String { return "C" }
 
 var String: result = (
     "3: " + ToString(3) + ", " +
@@ -202,7 +192,7 @@ ambiguities about which pattern / overload to use. This avoids questions about
 what happens when the overload definitions are split across multiple files, or a
 particular overload has a separate forward declaration and implementation.
 
-**Question:** Can the set of overloads associated with a name be different in
+**Problem:** Can the set of overloads associated with a name be different in
 different files or different positions within the same file?
 
 It would be nice if the answer was no. In particular it would be useful to make
@@ -212,8 +202,8 @@ refactorings that move code around safer. However, that is contrary to the goal
 that code later in a file does not affect the interpretation of code earlier in
 the file.
 
-Also, I think this is too strict. A weaker property that we could aim for
-instead is: the overload selected only depends on the arguments, not the
+We should consider if this is too strict. A weaker property that we could aim
+for instead is: the overload selected only depends on the arguments, not the
 location of the call site. In particular if we define the overload of `f` taking
 a `Foo` together with the definition of `Foo`, then any call site that can have
 a value of type `Foo` to pass to `f` would also see the overload of `f` taking
@@ -232,18 +222,18 @@ Some languages (Swift, C++) are much looser than this.
 **Concern:** This could create ambiguity in the presence of generics and
 interfaces. Consider this situation:
 
-- Library `A` defines a function `A.f` taking an `Int`.
+- Library `A` defines a function `A.F` taking an `Int`.
 - Library `B` defines a type `T`.
 - Library `C` defines an interface `Interface1` and an implementation of
   `Interface1` for `B.T`. This is legal since implementations of interface can
   either be defined with the type or the interface (to address dependency issues
-  and the expression problem). Library `C` also defines an overload for `A.f`
+  and the expression problem). Library `C` also defines an overload for `A.F`
   for types implementing `Interface1`.
 - Library `D` defines an interface `Interface2`, an implementation of
-  `Interface2` for `B.T`, and an overload for `A.f` for type implementing
+  `Interface2` for `B.T`, and an overload for `A.F` for type implementing
   `Interface2`. Same deal as with library `C`.
 
-Code importing libraries `A` and `B` will find calling `A.f` with a value of
+Code importing libraries `A` and `B` will find calling `A.F` with a value of
 type `T` generates a compiler error. Code importing `A`, `B`, and `C` will see
 the call as legal, but will see different behavior than code importing `A`, `B`,
 and `D`. And code importing all 4 libraries will see the call as ambiguous. This
@@ -259,7 +249,7 @@ served using interfaces and generics, which allow lookup based on the type being
 operated on. This position is espoused in the
 ["Carbon closed function overloading" proposal (TODO)](#broken-links-footnote)<!-- T:Carbon closed function overloading proposal -->.
 
-**Question:** Is there a rule for selecting an overload if there are multiple
+**Problem:** Is there a rule for selecting an overload if there are multiple
 patterns that match?
 
 Seems like a conservative choice would be to just give a compile error in this
@@ -314,6 +304,9 @@ meaningful at compile time. [Same is true of any generic/templated function!]
   var auto: g = fn(MySerializableType: x) -> String { return ToString(x); };
 ```
 
+We would like a good story here so that adding an overload to an existing
+function name doesn't break existing code.
+
 **Note:** For functions argument lists, we also support template / generic
 arguments, but that is detailed in
 [another document (TODO)](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/designs/generics-overview.md).
@@ -353,7 +346,7 @@ function / constructor for initialization, we should be able to use the same
 initialization syntax. The tuple with named components used to initialize will
 become the arguments to the factory function, which the factory function will
 declare as keyword arguments in order to match. See
-["Carbon struct types" (TODO)](#broken-links-footnote)<!-- T:Carbon struct types -->.
+["Carbon struct types"](https://github.com/josh11b/carbon-lang/blob/structs/docs/design/structs.md).
 
 **Proposal:** Furthermore, I believe we should use keywords in overload
 resolution. Since the keywords are written in both the caller and the function
@@ -361,9 +354,9 @@ signature, there is no ambiguity about which function should be called
 (considerably less than using types in overload resolution, which can be much
 less visible in the source code). Furthermore, there are cases where using the
 types of the argument to disambiguate is less clear or even ambiguous. For
-example, let us say we see a `Vector(Int)` being constructed with the arguments
-`(3, 5)`. Is that creating a vector containing three 5s or the two values
-`3, 5`? Different names for the arguments would resolve the question of which
+example, let us say we see a `Array(Int)` being constructed with the arguments
+`(3, 5)`. Is that creating a array containing three 5s or the two values `3, 5`?
+Different names for the arguments would resolve the question of which
 constructor should be used.
 
 **Note:** Even when using keyword arguments, we are currently saying that the
@@ -404,33 +397,172 @@ dealing with `const` and references (both `&` and `&&`).
 
 ### Variadics (...)
 
-**Rationale:** Variadics are important for expressiveness. Functions like
-`StrCat` and `max` are significantly more convenient if they work with a
-variable number of arguments.
+Variadics are when a pattern can match any number of arguments.
 
-**Question:** Do we want there to be some convenient way to say that all values
-matched by a variadic have to be the same type?
+**Rationale:** Variadics are important for expressiveness. There are a number of
+use cases:
 
-Seems like this would be a reasonably common case for variadics. For example,
-`max` could take a variable number of arguments, as well as a function to create
-a fixed-sized array from an argument list. In this case, the compiler might be
-able to coerce the arguments to a common type when that was harmless, or give a
-clear error when the arguments were incompatible.
+- Functions like `Max` or array constructors take a variable number of
+  positional arguments, as long as they all are of the same type.
+- Functions like `StrCat` take a variable number of positional arguments, and
+  different arguments may have different types as long as they can all be
+  converted to strings.
+- Functions like `EncodeAsJSON`, like
+  [this C++ library](https://github.com/nlohmann/json), would take a variable
+  number of keyword arguments, with different types as long as they can be
+  converted to JSON.
+- Some functions forward to other functions, passing all the positional and
+  keyword arguments after a certain point along.
 
-This can introduce special cases, though. For example, do we allow a function to
-take two variadics in a row? This might be okay if the first one was restricted
-to always be `Int` values and the second to always be `String`s. But less okay
-if those types were deduced types.
+**Proposal:** A variadic element of the pattern follows a "max munch" rule,
+matching the maximum sequence of arguments not matched by other elements of the
+pattern that may be assigned to the type of the variadic.
 
-**Proposal:** There should be a way to control whether `...` matches positional
-vs. keyword arguments.
+In these examples, we define variations on `Max` which take a variable number of
+positional arguments, all of which must have the same type:
 
-For example, `max` would only take positional arguments via `...`, and may have
-a non-variadic keyword argument to provide the comparison function. On the other
-hand, an [encode_as_json(...)](https://github.com/nlohmann/json) function should
-only take keyword arguments. Python has two different syntaxes for matching the
-two different cases, which I think is reasonable. I'm not sure what the two
-different syntaxes should be, though.
+```
+// `Array(Int)` can be constructed by a tuple containing only integers.
+// This only matches positional arguments, not keyword arguments.
+fn MaxV1(... Array(Int): args) -> Int;
+
+// `Array(T)` can be constructed by a tuple containing elements of type `T`.
+// This only matches positional arguments, not keyword arguments.
+// `MaxV2` is instantiated once per distinct type `T`.
+ fn MaxV2[Comparable:$ T](... Array(T): args) -> T;
+
+// Positional arguments are matched by `args`, keyword argument `compare`
+// is separate.
+// `MaxV3` is instantiated once per distinct type `T`.
+fn MaxV3[Type:$ T](
+    ... Array(T): args,
+    .compare = fn(T:_, T:_)->Int: compare) -> T;
+
+// `NTuple(N, T)` is the tuple with `N` components all of which are `T`.
+// This example is similar to `MaxV2`, except `MaxV4` instantiated per number of
+// arguments, in addition to per distinct type. `N` must be at least 1, or there
+// is no way to deduce `T`.
+fn MaxV4[Int:$$ N, Comparable:$ T](... NTuple(N, T): args) -> T;
+
+// In this case, `T` is deduced from the first argument, so `N` can be 0.
+fn MaxV5[Int:$$ N, Comparable:$ T](T: first, ... NTuple(N, T): rest) -> T;
+```
+
+**Concern:**
+
+> The intent of this code is to use the constructor for `Array(T)` that accepts
+> an n-tuple of values of type `T`. But what if `Array(T)` has an alternate
+> constructor that takes a count and a value to repeat using keyword arguments?
+> Naively, this would allow you to call
+> `MaxV1(.count = 3, .repeated_value = 7)`. This is both surprising and exposes
+> an implementation detail that you wouldn't want callers to rely on. Seems like
+> we need this to express our intent more clearly.
+
+The `MaxV3` example demonstrates a case where the variadic should not consume
+all remaining arguments. There are a few cues in this example:
+
+- `Array(T)` can only match positional arguments of type `T`
+- Clearly an argument using the `.compare` keyword belongs to the next
+  parameter.
+
+I think we likely want to support all three of these stopping criteria:
+
+- If the type changes to something the variadic won't accept, it should stop
+  consuming arguments. This would allow you to write something that takes a
+  variable number of integers followed by a variable number of strings.
+- If the arguments switch from positional to keyword and the variadic can only
+  accept positional arguments, it should stop consuming arguments. This is used
+  in the `ForwardAllV1` example below.
+- The variadic should not consume the next argument if it uses a keyword
+  matching a later parameter. Otherwise it is difficult for something that would
+  otherwise consume all keyword arguments to know when to stop.
+
+**Concern:**
+
+> These rules would all become more complicated and less efficient to implement
+> if we don't make keyword arguments ordered. On the other hand, there are
+> forwarding use cases where you want to consume or add a keyword argument when
+> forwarding that are very difficult to do unless keyword arguments can be in
+> any order.
+
+Variadic patterns may also be used with the `match` statement. For example, here
+is an implementation of `MaxV4` from above:
+
+```
+fn MaxV4[Int:$$ N, Comparable:$ T](... NTuple(N, T): args) -> T {
+  match args {
+    case (T: x) => return x;
+    // Using the same variadic pattern matching syntax in a `match` statement.
+    case (T: first, ... NTuple(N-1, T): rest) => {
+      var T: max_of_rest = MaxV4(rest...);
+      if (first < max_of_rest) {
+        return max_of_rest;
+      } else {
+        return first;
+      }
+    }
+  }
+}
+```
+
+To support `StrCat`, we need to say "the type of `args` is a tuple of types that
+are not necessarily all the same but all implement the `ToString` interface." If
+that type is `TupleOfNTypes`, then the type of _that_ is a tuple with elements
+that are all `ToString`:
+
+```
+fn StrCat[Int:$$ N, NTuple(N, ToString):$$ TupleOfNTypes]
+    (... TupleOfNTypes: args) -> String;
+```
+
+For the forwarding use case, we can forward positional arguments using the same
+approach as for `StrCat` above:
+
+```
+fn ForwardPositional[Int:$$ N, NTuple(N, Type):$$ TupleOfNTypes]
+    (... TupleOfNTypes: args);
+```
+
+To forward keyword arguments, we need `NamedTuple(T)`, which is a type whose
+values are tuples with any set of named arguments, whose values are all `T`.
+
+```
+fn ForwardKeyword[NamedTuple(Type):$$ NamedTupleofTypes]
+    (... NamedTupleOfTypes: args);
+```
+
+This construct also allows us to implement `EncodeAsJSON`, assuming we implement
+interface `JSONType` for any supported type:
+
+```
+fn EncodeAsJSON[NamedTuple(JSONType):$$ NamedTupleofJSONTypes]
+    (... NamedTupleOfJSONTypes: args) -> String;
+
+```
+
+We could combine these two approaches to forward all arguments:
+
+```
+fn ForwardAllV1
+    [Int:$$ N, NTuple(N, Type):$$ TupleOfNTypes,
+     NamedTuple(Type):$$ NamedTupleofTypes]
+    (... TupleOfNTypes: positional, ... NamedTupleOfTypes: keyword);
+```
+
+This is an interesting case, where the compiler will have to recognize that
+`positional` can only match positional arguments, much like the `MaxV3` case
+above, and it should leave the remaining arguments to match the second variadic
+argument.
+
+I suspect this will be common enough of a case that I think we should support it
+directly with a `MixedTuple(T)` type whose values are any tuple with positional
+and named members equal to `T`.
+
+```
+// `T` can be any tuple containing types, so both positional and keyword
+// arguments are allowed.
+fn ForwardAllV2[MixedTuple(Type):$$ TupleofTypes](... TupleOfTypes: args);
+```
 
 ### Conditions
 
@@ -482,13 +614,17 @@ Only the value specification is required.
 **Deduced specification:** [ `[`&lt;type> `:` [ `$` | `$$` ] &lt;id>`,` ... `]`
 ]
 
-**Value specification:** `(` &lt;value pattern>`,` ... `,` `.` &lt;id> `=`
-&lt;value pattern>`,` ... `)`
+**Value specification:** `(` &lt;value pattern>`,` ... `,` `...` &lt;value
+pattern> , `.` &lt;id> `=` &lt;value pattern>`,` ... `)`
 
-The initial &lt;value pattern>s are called "positional"; the ones that start
-with "`.` &lt;id> `=`" are called "keyword". Positional &lt;value pattern>s must
-always appear before keyword &lt;value pattern>s. Here a &lt;value pattern> can
-either be:
+The initial &lt;value pattern>s are called "positional"; ones starting with
+`...` are called "variadic"; and the ones that start with "`.` &lt;id> `=`" are
+called "keyword". Positional, variadic, and keyword patterns are optional -- you
+can have zero, one, two, or all three kinds. Positional &lt;value pattern>s must
+always appear before keyword &lt;value pattern>s when both are present. Variadic
+patterns can be mixed in with positional and keyword patterns.
+
+In all three cases, a &lt;value pattern> can either be:
 
 - &lt;value>
 - (&lt;type> | `auto`) `:` [ `$` | `$$` ] (&lt;id> | `_`) [ `=` &lt;default
@@ -542,13 +678,19 @@ it to a name. [zygoloid](https://github.com/zygoloid) has suggested using the
 - **Recursive:** A tuple value `((7, .x = True), .y = (8, .z = False))` matches
   value specification `((Int: _, .x = Bool: _), .y = (Int: _, .z = Bool: _))`.
 - **Generic** (`:$`) and **Template** (`:$$`): These both require that the value
-  of the argument is available at compile time, and cause the function to be
-  instantiated once for each (combination of) value(s) to generic/template
-  arguments. In the template (`:$$`) case, this body of the function will only
-  be type checked once it is instantiated with this value (ignoring any control
-  branches where that are unreachable as a result of substituting this value),
-  whereas with the generic (`:$`) case the body of the function will be type
-  checked when the body is defined.
+  of the argument is available at compile time -- these match compile-time
+  constants. The difference is that in the template (`:$$`) case, the value is
+  available as part of type-checking, whereas the value of generic (`:$`)
+  constants is only known at code generation time. In the case of generic and
+  template arguments to functions, the function body to be instantiated once for
+  every combination of values to those arguments. Template arguments prevent
+  type checking until the function is instantiated so the value is known.
+  Generic arguments allow the function to be type checked once when the body is
+  defined.
+- **Variadic** (`...`): These match multiple arguments which are packed into a
+  tuple. So a tuple value `(1, 2, 3, 4)` matches `(... Array(Int): x)` --
+  assuming that `Array(Int)` has a constructor that will accept an `Int`
+  4-tuple.
 
 ### Deduced specification match rules
 
