@@ -45,6 +45,6 @@ which to experiment with a candidate future for C++ itself. By doing so, it will
 address a specific group of C++ users.
 
 While there may be some uncertainty about resolving conflicts between goals
-(e.g., migratability and C++ interoperability), the core team feels that they
+, particularly migratability and C++ interoperability, the core team feels that they
 are generally in alignment in this regard. The priority among goals can be
 revised as needed based on the experience of using it in practice.
