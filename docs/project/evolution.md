@@ -234,8 +234,8 @@ efficient.
 
 ##### Actions
 
-- **Author**: Create an `Evolution > Ideas` forum topic to discuss the issue
-  before writing the proposal.
+- **Author**: Create an `Evolution > Ideas` topic to discuss the issue before
+  writing the proposal.
 - **Community**: Provide [constructive commentary](commenting_guidelines.md) for
   ideas when feedback is solicited.
 
@@ -288,14 +288,14 @@ request for the RFC.
 
 #### (optional) Elicit early, high-level feedback on the proposal
 
-Authors may continue to use the `Evolution > Ideas` forum topic to advertise the
+Authors may continue to use the `Evolution > Ideas` topic to advertise the
 proposal and elicit early, high-level feedback. Community commenters should
 favor GitHub comments over forum topic replies.
 
 ##### Actions
 
-- **Author**: Update, or create if needed, the `Evolution > Ideas` forum topic
-  to advertise the proposal and elicit early, high-level feedback.
+- **Author**: Update, or create if needed, the `Evolution > Ideas` topic to
+  advertise the proposal and elicit early, high-level feedback.
   - Add the topic's link to the GitHub pull request.
 - **Community**: Provide [constructive commentary](commenting_guidelines.md) for
   ideas when feedback is solicited.
@@ -306,7 +306,7 @@ favor GitHub comments over forum topic replies.
 
 Once authors feel the proposal is in good shape for wider evaluation from the
 reviewing team, they begin the more formal process of evaluation by creating an
-`Evolution > RFCs` forum topic for technical review of the proposal.
+`Evolution > RFCs` topic for technical review of the proposal.
 
 The topic should start off with a brief summary of the proposal and any prior
 discussion, as well as links to prior discussion topics.
@@ -315,7 +315,7 @@ discussion, as well as links to prior discussion topics.
 
 - **Author**:
   - Replace the GitHub pull request's `WIP` label with `RFC`.
-  - Create an `Evolution > RFCs` forum topic.
+  - Create an `Evolution > RFCs` topic.
     - Summarize the discussion points, along with a link to the pull request.
     - Add the topic's link to the pull request's description.
 
@@ -396,7 +396,9 @@ the comment period by posting another message to the "Evolution > RFCs" topic.
 - **Review manager**:
   - Ask reviewing team members to review the proposal when needed.
   - Double-check that comment threads are addressed by the proposal.
-  - Update the `Evolution > RFCs` topic with a last call for comments.
+  - [Update](review_managers.md#comment-deadline) the `Evolution > RFCs` topic
+    with a last call for comments.
+  - Add the `comment deadline` label to the GitHub pull request.
 
 ### Reviewing team makes a proposal decision
 
@@ -415,10 +417,10 @@ making/accepting edits.
 #### Ask the reviewing team for a proposal decision
 
 The review manager should ask the reviewing team for a decision by creating an
-`Evolution > Proposal decisions` forum topic asking for consensus. The proposal
-should also be added as a topic to the team's meeting agenda one week or four
-working days in advance, whichever is longer. The agenda item gives a deadline
-for a decision if no consensus can be reached on the Discourse Forum, and can be
+`Evolution > Proposal decisions` topic asking for consensus. The proposal should
+also be added as a topic to the team's meeting agenda one week or four working
+days in advance, whichever is longer. The agenda item gives a deadline for a
+decision if no consensus can be reached on the Discourse Forum, and can be
 removed if a decision is made before the meeting.
 
 Team members should familiarize themselves with the proposal and related
@@ -448,8 +450,10 @@ make decisions.
 - **Author**:
   - Respond to comments.
 - **Review manager:**
-  - Replace the GitHub pull request's `RFC` label with `needs decision`.
-  - Create an `Evolution > Proposal decisions` topic for pre-meeting discussion.
+  - Replace the GitHub pull request's `RFC` and `comment deadline` labels with
+    `needs decision`.
+  - [Create](review_managers.md#decision-request) an
+    `Evolution > Proposal decisions` topic for pre-meeting discussion.
   - Tentatively add the decision to the meeting one week in advance (or four
     working days, if longer), and use that meeting if necessary to reach
     consensus.
@@ -510,14 +514,15 @@ continue working on it.
       the future. Link to these from the GitHub pull request.
   - If the proposal was accepted:
     - Prepare a GitHub pull request with the decision.
-    - Create an `Evolution > Announcements` forum topic and link to the proposal
-      and decision pull requests.
+    - [Create](review_managers.md#decision-announcement) an
+      `Evolution > Announcements` topic and link to the proposal and decision
+      pull requests.
     - Add the topic's link to the proposal's pull request.
     - Approve the proposal's pull request for commit.
   - If the proposal was deferred or declined:
     - Comment on the proposal's pull request with the decision.
-    - Create an `Evolution > Announcements` forum topic and link to the proposal
-      and decision comment.
+    - Create an `Evolution > Announcements` topic and link to the proposal and
+      decision comment.
 - **Author**:
   - If the proposal is accepted:
     - Replace the GitHub pull request's `needs decision` label with `accepted`.
@@ -577,9 +582,9 @@ should be exceptional.
 
 - **Author**: Roll back the committed proposal and any dependent changes.
 - **Reviewing team member**: State new, non-consensus position on
-  `Evolution > Decisions` forum topic.
+  `Evolution > Decisions` topic.
 - **Review manager**:
-  - Update the `Evolution > Announcements` forum topic to reflect the rollback.
+  - Update the `Evolution > Announcements` topic to reflect the rollback.
   - Return to
     [asking the reviewing team for a proposal decision](#ask-the-reviewing-team-for-a-proposal-decision).
 
@@ -603,7 +608,7 @@ revisit the decision.
 ##### Actions
 
 - **Review manager**:
-  - Update the `Evolution > Announcements` forum topic with the final decision.
+  - Update the `Evolution > Announcements` topic with the final decision.
   - If the proposal was accepted, commit the proposal decision.
 - **Author**: Start making dependent changes to apply the proposal.
 
