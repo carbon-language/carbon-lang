@@ -89,9 +89,8 @@ happy with the resolution before the change is merged.
 For [evolution proposals](evolution.md) of any kind, it is the team members'
 responsibility to explicitly note any review comments that block completing the
 code review when making a decision. Otherwise, the consensus decision is assumed
-to mean the prior review comments from the team are addressed, and the author is
-free to ask for whatever subset of _code reviews_ they want and merge when those
-approve.
+to mean the prior review comments from the team are addressed; the author is
+free to merge once the pull request is approved, possibly with a code review separate from the proposal's review.
 
 ## GitHub pull request mechanics
 
