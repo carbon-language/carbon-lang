@@ -330,8 +330,9 @@ primary goal is to support performance-critical software, other kinds of
 software should not be penalized unnecessarily.
 
 > "The right tool for the job is often the tool you are already using -- adding
-> new tools has a higher cost than many people appreciate." --
-> [John Carmack](https://twitter.com/id_aa_carmack/status/989951283900514304)
+> new tools has a higher cost than many people appreciate."
+>
+> -- [John Carmack](https://twitter.com/id_aa_carmack/status/989951283900514304)
 
 **Focus on encouraging appropriate usage of features rather than restricting
 misuse.** Adding arbitrary restrictions to prevent misuse of otherwise general
