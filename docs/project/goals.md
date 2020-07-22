@@ -200,6 +200,11 @@ concerned with ultimate performance at every moment, but in the most constrained
 scenarios they must be able to "open up the hood" without switching to another
 language.
 
+**Idiomatic code should have good performance.** Code following best practices
+should perform reasonably well. Although some software may still need
+fine-tuning, Carbon's design should aim to provide high performance without such
+investment.
+
 **Code should perform predictably.** The reader and writer of code should be
 able to easily understand its expected performance, given sufficient background
 knowledge of the environment in which it will run. This need not be precise, but
@@ -208,7 +213,7 @@ that performance, whether good or bad, is unsurprising to developers. Even
 pleasant surprises, when too frequent, can become a problem due to establishing
 brittle baseline performance that cannot be reliably sustained.
 
-**Leave no room for a lower level language.** Programmers should not need to
+**Leave no room for a lower level language.** Developers should not need to
 leave the rules and structure of Carbon, whether to gain control over
 performance problems or to gain access to hardware facilities.
 
@@ -419,9 +424,11 @@ Cross-file context has an especially damaging effect on the potential
 distributed build graph options. Without these options, we will again be unable
 to provide fast developer iteration as the codebase scales up.
 
-**Support separate compilation, including parallel and distributed strategies.**
-We cannot assume coarse-grained compilation without blocking fundamental
-scalability options for build systems of large software.
+**Support incremental compilation and linking, including parallel and
+distributed strategies.** Iteration requires frequent builds. Incremental
+compilation and linking should make these builds faster, particularly if
+relatively little has changed. Breaking apart compilation and linking units also
+enables better scalability options for build systems of large software.
 
 #### Modern OS platforms, hardware architectures, and environments
 
@@ -435,11 +442,11 @@ environments.** This goes beyond enabling compile-time translations from one
 abstraction to several implementations. While enabling high-level
 synchronization primitives like mutexes and futures is good, the underlying
 atomic operations provided by the hardware must also be directly available.
-Similarly, lowering parallel constructs into either SIMD or SPMD implementations
-is good but insufficient. Both SIMD and SPMD must be directly addressable in
-Carbon. This pattern repeats across the landscape of hardware, platform, and
-environment, including concurrency versus parallelism more generally, and more
-OS/environment distinctions such as desktop versus mobile versus bare metal.
+Similarly, lowering parallel constructs into a specific implementation, such as
+SIMD or SPMD, is good but insufficient. Multiple parallel implementations must
+be directly addressable in Carbon. This pattern repeats across the landscape of
+OS platform, hardware, and environment distinctions; for example, concurrency
+versus parallelism, and desktop versus mobile.
 
 **Conversely, Carbon cannot prioritize support for historical platforms.** To
 use a hockey metaphor, we should not skate to where the puck is, much less where
@@ -579,7 +586,7 @@ provide a minimally "correct" migration to very unfriendly code, mechanically
 reproducing exact C++ semantics even if bizarre, even this is not guaranteed and
 improving on it is not a goal. Migration support will prioritize code that
 adheres to reasonable C++ best practices, such as avoiding undefined behavior,
-and having reasonable test coverage that passes under sanitizers.
+maintaining good test coverage, and validating tests with sanitizers.
 
 ### Principles
 
