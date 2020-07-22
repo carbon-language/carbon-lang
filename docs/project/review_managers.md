@@ -52,8 +52,9 @@ titled "Request for decision: PROPOSAL":
 >
 > Links:
 >
-> - \[Proposal PR](LINK)
-> - \[RFC topic](LINK)
+> \- \[Proposal PR](LINK)
+>
+> \- \[RFC topic](LINK)
 >
 > Please focus on affirm, object, and stand aside comments in this topic; other
 > things specific to reaching consensus may be included. Affirm and object
@@ -88,9 +89,11 @@ titled "[DECISION] PROPOSAL":
 >
 > Please read the \[formal decision PR](LINK) for details.
 >
-> - \[Proposal PR](LINK)
-> - \[RFC topic](LINK)
-> - \[Decision topic](link)
+> \- \[Proposal PR](LINK)
+>
+> \- \[RFC topic](LINK)
+>
+> \- \[Decision topic](link)
 >
 > This decision is now entering the \[decision comment
 > period](https://carbon-lang.dev/docs/project/evolution.html#community-comments-on-proposal-decision),
