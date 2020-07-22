@@ -919,6 +919,19 @@ index db28fd0fd6d..fbe315b4bd0 100644
    size_t size() const { return Operands.size(); }
    iterator begin() { return Operands.begin(); }
    const_iterator begin() const { return Operands.begin(); }
+diff --git a/include/llvm/MC/MCMachObjectWriter.h b/include/llvm/MC/MCMachObjectWriter.h
+index 594869f7463..b6e9e2d5fcd 100644
+--- a/include/llvm/MC/MCMachObjectWriter.h
++++ b/include/llvm/MC/MCMachObjectWriter.h
+@@ -79,7 +79,7 @@ class MachObjectWriter : public MCObjectWriter {
+   struct MachSymbolData {
+     const MCSymbol *Symbol;
+     uint64_t StringIndex;
+-    uint8_t SectionIndex;
++    uint64_t SectionIndex;
+ 
+     // Support lexicographic sorting.
+     bool operator<(const MachSymbolData &RHS) const;
 diff --git a/include/llvm/MC/MCObjectFileInfo.h b/include/llvm/MC/MCObjectFileInfo.h
 index c99f2521f8f..e6b4a88f469 100644
 --- a/include/llvm/MC/MCObjectFileInfo.h
@@ -3220,6 +3233,33 @@ index 776569894a5..aa130bb2d6a 100644
  void MCStreamer::emitValueToOffset(const MCExpr *Offset, unsigned char Value,
                                     SMLoc Loc) {}
  void MCStreamer::EmitBundleAlignMode(unsigned AlignPow2) {}
+diff --git a/lib/MC/MachObjectWriter.cpp b/lib/MC/MachObjectWriter.cpp
+index 25f451cd4fa..4acc6709192 100644
+--- a/lib/MC/MachObjectWriter.cpp
++++ b/lib/MC/MachObjectWriter.cpp
+@@ -523,12 +523,11 @@ void MachObjectWriter::computeSymbolTable(
+     std::vector<MachSymbolData> &ExternalSymbolData,
+     std::vector<MachSymbolData> &UndefinedSymbolData) {
+   // Build section lookup table.
+-  DenseMap<const MCSection*, uint8_t> SectionIndexMap;
++  DenseMap<const MCSection*, uint64_t> SectionIndexMap;
+   unsigned Index = 1;
+   for (MCAssembler::iterator it = Asm.begin(),
+          ie = Asm.end(); it != ie; ++it, ++Index)
+     SectionIndexMap[&*it] = Index;
+-  assert(Index <= 256 && "Too many sections!");
+ 
+   // Build the string table.
+   for (const MCSymbol &Symbol : Asm.symbols()) {
+@@ -946,7 +945,7 @@ void MachObjectWriter::writeObject(MCAssembler &Asm,
+     const DataRegionData *Data = &(*it);
+     uint64_t Start = getSymbolAddress(*Data->Start, Layout);
+     uint64_t End;
+-    if (Data->End) 
++    if (Data->End)
+       End = getSymbolAddress(*Data->End, Layout);
+     else
+       report_fatal_error("Data region not terminated");
 diff --git a/lib/Object/COFFObjectFile.cpp b/lib/Object/COFFObjectFile.cpp
 index b544fa5c147..c885bf9f037 100644
 --- a/lib/Object/COFFObjectFile.cpp
@@ -3237,10 +3277,39 @@ index b544fa5c147..c885bf9f037 100644
                                         MemoryBufferRef M, const uint8_t *base) {
    // The field for the number of relocations in COFF section table is only
 diff --git a/lib/Object/MachOObjectFile.cpp b/lib/Object/MachOObjectFile.cpp
-index adc54b42eba..2fcc293a14b 100644
+index adc54b42eba..dc6d216b208 100644
 --- a/lib/Object/MachOObjectFile.cpp
 +++ b/lib/Object/MachOObjectFile.cpp
-@@ -1986,6 +1986,11 @@ bool MachOObjectFile::isSectionStripped(DataRefImpl Sec) const {
+@@ -1837,7 +1837,27 @@ uint32_t MachOObjectFile::getSymbolFlags(DataRefImpl DRI) const {
+ Expected<section_iterator>
+ MachOObjectFile::getSymbolSection(DataRefImpl Symb) const {
+   MachO::nlist_base Entry = getSymbolTableEntryBase(*this, Symb);
+-  uint8_t index = Entry.n_sect;
++  uint64_t index = Entry.n_sect;
++
++  if ((Entry.n_type & MachO::N_TYPE) != MachO::N_UNDF) {
++    Expected<uint64_t> Addr = getSymbolAddress(Symb);
++    if (!Addr)
++      return Addr.takeError();
++    auto Section = std::lower_bound(sections().begin(), sections().end(), *Addr,
++                                    [](SectionRef S, uint64_t A) {
++                                      return S.getAddress() + S.getSize() <= A;
++                                    });
++    if (Section != sections().end() && Section->getAddress() <= *Addr) {
++      assert(Section->getAddress() + Section->getSize() > *Addr &&
++             "lower_bound must return an iterator to the first element which "
++             "is not less than the value");
++      // MachO indexes start from 1.
++      const uint64_t TrueIndex = Section->getIndex() + 1;
++      if (TrueIndex <= 255)
++        assert(index == TrueIndex && "unexpected value of index");
++      index = TrueIndex;
++    }
++  }
+ 
+   if (index == 0)
+     return section_end();
+@@ -1986,6 +2006,11 @@ bool MachOObjectFile::isSectionStripped(DataRefImpl Sec) const {
    return getSection(Sec).offset == 0;
  }
  
