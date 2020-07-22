@@ -19,9 +19,8 @@ community members to adhere to:
 - when we disagree, try to understand why, and
 - recognize when progress has stopped, and take a step back.
 
-This list isn't exhaustive. Rather, take it in the spirit in which it’s
-intended—a guide to make it easier to communicate and participate in the
-community.
+This list isn't exhaustive. Rather, take it in the spirit in which it’s intended
+-- a guide to make it easier to communicate and participate in the community.
 
 This code of conduct applies to all spaces managed by the Carbon project. This
 includes chat systems, forums, emails (on lists or between members), issue

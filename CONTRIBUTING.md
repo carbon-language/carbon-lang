@@ -204,6 +204,11 @@ Markdown files should additionally use
 
 Other style points to be aware of are:
 
+- Whereas the Google developer documentation style guide
+  [says to use an em dash](https://developers.google.com/style/dashes)
+  (`text—text`), we are using a double-hyphen with surrounding spaces
+  (`text -- text`). We are doing this because we frequently read Markdown with
+  fixed-width fonts where em dashes are not clearly visible.
 - Always say "Discourse Forum" and "Discord Chat" to avoid confusion between
   systems.
 
