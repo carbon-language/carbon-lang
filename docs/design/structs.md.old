@@ -14,6 +14,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 - [Goals](#goals)
 - [Approach](#approach)
   - [Simple data records](#simple-data-records)
+  - [Tuples with named fields](#tuples-with-named-fields)
   - [Tuples and structs are both "records"](#tuples-and-structs-are-both-records)
     - [Record type equality](#record-type-equality)
     - [Type deduction and type functions](#type-deduction-and-type-functions)
@@ -64,7 +65,7 @@ it says:
     Beyond simple tuples, Carbon of course allows defining named product types. This is the primary mechanism for users to extend the Carbon type system and fundamentally is deeply rooted in C++ and its history (C and Simula). We simply call them structs rather than other terms as it is both familiar to existing programmers and accurately captures their essence: they are a mechanism for structuring data...
 
 This document builds on and extends the definition of tuples found in
-["Carbon tuples and variadics" (TODO)](https://github.com/josh11b/carbon-lang/blob/tuples/docs/design/tuples.md).
+["Carbon tuples and variadics" (TODO)](#broken-links-footnote)<!-- T:Carbon tuples and variadics -->.
 
 For more background, see how other languages tackle this problem:
 
@@ -224,7 +225,7 @@ allow declarations to be in any order.
 **Note:** We should probably allow structs to be created without being named.
 Maybe the resulting name is essentially a structural description of the fields,
 as is done with
-[tuples (TODO)](https://github.com/josh11b/carbon-lang/blob/tuples/docs/design/tuples.md)?
+[tuples (TODO)](#broken-links-footnote)<!-- T:Carbon tuples and variadics -->?
 This would make `struct {...}` an expression whose value is an anonymous type.
 Example:
 
@@ -237,8 +238,8 @@ point.y = 3;
 **Proposal:** All fields of a struct must be named.
 
 This is a difference from tuples. This is something we could potentially change,
-and is discussed more below, but as of now we don't have a use case. Another
-possibility is that names get auto-assigned in tuples (`_0`, `_1`, etc.)?
+but as of now we don't have a use case. Another possibility is that names get
+auto-assigned in tuples (`_0`, `_1`, etc.)?
 
 **Alternative considered:** We could support
 [anonymous fields as is done in Go](http://golangtutorials.blogspot.com/2011/06/anonymous-fields-in-structs-like-object.html).
@@ -249,13 +250,98 @@ don't conflict with any field of the containing struct is reasonable (see
 for example). However, we at this time are avoiding the complexity of including
 this feature.
 
-### Tuples and structs are both "records"
+### Tuples with named fields
 
-By
-[allowing tuples to have named members](https://github.com/josh11b/carbon-lang/blob/tuples/docs/design/tuples.md#named-members),
-we bring structs and tuples into much greater alignment. We complete this
-process by saying that tuples with named members are actually equal to an
-equivalent unnamed struct.
+By allowing users to specify the names for fields for tuples, we bring structs
+and tuples into much greater alignment. This will allow us to
+[say that they both records](#tuples-and-structs-are-both-records), and
+[provide a literal syntax for initializing structs](#simple-initialization-from-a-tuple).
+Also, the
+[Google C++ style guide](https://google.github.io/styleguide/cppguide.html#Structs_vs._Tuples)
+recommends structs over C++'s pair & tuple precisely because naming the
+components is so important.
+
+**Proposed syntax:**
+
+```
+var auto: proposed_value_syntax = (.x = 1, .y = 2);
+var (.x = Int, .y = Int): proposed_type_syntax = (.x = 3, .y = 4);
+var struct { var Int: x; var Int: y; }: equivalent_struct = (.x = 5, .y = 6);
+
+var (.z = Int): tuple_with_single_named_field = (.z = 7);
+```
+
+The `.` here means "in the tuple's namespace"; so it is clear that `x` and `y`
+in that first line don't refer to anything in the current namespace. The intent
+is that `.x` reminds us of field access, as in `foo.x = 3`.
+
+Notice that the type of `(.x = 3, .y = 4)` is represented by another tuple,
+`(.x = Int, .y = Int)`, containing types instead of values. This is to mirror
+the same pattern for tuples with unnamed components: `(Int, Int)` (a tuple
+containing two types) is the type of `(3, 4)`, as seen in
+[the tuple doc (TODO)](#broken-links-footnote)<!-- T:Carbon tuples and variadics -->.
+
+**Open question:** We could drop the convenience of the type of a tuple being
+another tuple of types. We would instead make the type of a tuple an anonymous
+struct with unnamed fields. Alternatively, we could get rid of the anonymous
+struct syntax, so there is only one way to do things.
+
+**Proposal:** Order still matters when using named fields.
+
+Note that my first design was that two tuples with the same (name, type) pairs
+(as a set) were compatible no matter the order they were listed. In particular,
+these statements would not be errors:
+
+```diff
+- assert(proposed_type_syntax == (.y = 4, .x = 3)); // Error! Order doesn't match.
+- proposed_type_syntax = (.y = 7, .x = 8); // Error! Order doesn't match.
+```
+
+This has a problem though, when the order of fields of the type doesn't match
+the order of the initializer, what order are the components evaluated? A reader
+of the code will expect the evaluation to match the most visible order written
+in the code: the order used for the initializer. But the ordering of the fields
+of the type is what will determine the destruction order -- which really should
+be the opposite of the order that values are constructed.
+
+**Concern:** Field order affects hidden implementation details like alignment
+and padding, and yet the field order is also API-visible in a way that clients
+almost can't avoid depending on.
+
+We may need to provide a way for users to explicitly specify a struct layout and
+an explicit (different) order of initialization for the rare structs where this
+matters.
+
+**Proposal:** Just as tuples without names are used to provide positional
+arguments when calling a function, see
+[Carbon tuples and variadics (TODO)](#broken-links-footnote)<!-- T:Carbon tuples and variadics -->,
+tuples with names should be used to call functions that take keyword arguments.
+Tuples may contain a mix of positional and named members; the positional members
+will always come first (and similarly positional arguments will always come
+before keyword arguments in functions).
+
+Example:
+
+```diff
+  // Define a function that takes keyword arguments.
+  // Keyword arguments must be defined after positional arguments.
+  fn f(Int: p1, Int: p2, .key1 = Int: key1, .key2 = Int: key2) { ... }
+
+  // Call the function.
+  f(positional_1, positional_2, .key1 = keyword_1, .key2 = keyword_2);
+  // Keyword arguments must be provided in the same order.
+  // ERROR! Order mismatch:
+- f(positional_1, positional_2, .key2 = keyword_2, .key1 = keyword_1);
+```
+
+We are currently making order always matter for consistency, even though the
+implementation concerns for function calling may not require the same
+constraint.
+
+The additional benefit of a tuple with named components is that it provides a
+natural syntax for literals we can use to initialize structs.
+
+### Tuples and structs are both "records"
 
 **Proposal:** For simplicity, we should make tuples and structs two ways of
 making record data types, with slightly different restrictions.
@@ -263,7 +349,7 @@ making record data types, with slightly different restrictions.
 ```
 var struct { var Int: a; var Int: b }: as_struct = (.a = 1, .b = 2);
 var (.a = Int, .b = Int): as_tuple = (.a = 3, .b = 4);
-StaticAssert(typeof(as_struct) == typeof(as_tuple));
+static_assert(typeof(as_struct) == typeof(as_tuple));
 ```
 
 Tuples are different from structs in that they:
@@ -296,8 +382,7 @@ in tuples not structs. Two possible solutions:
 
 1. The conceptual model of a struct includes fields without names, but we don't
    provide any syntax for writing such a struct down.
-2. We add a syntax for positional fields in a struct. For example, such fields
-   could be named `_`.
+2. We add a syntax for positional fields in a struct.
 
 [chandlerc](https://github.com/chandlerc) says:
 
@@ -498,22 +583,14 @@ match the names of the fields, in the same order
   var OneMember : a = (.x = 12);
 ```
 
-**Concern:**
-
-> Field order affects hidden implementation details like alignment and padding,
-> and yet the field order is also API-visible in a way that clients almost can't
-> avoid depending on.
->
-> We may need to provide a way for users to explicitly specify a struct layout
-> and an explicit (different) order of initialization for the rare structs where
-> this matters.
-
 **Proposal:** We do not allow positional initialization from a tuple without
 names:
 
 ```diff
   // Error: Tuple missing names:
 - var Point: p = (1, 2);
+  assert(p.x == 1);
+  assert(p.y == 2);
 ```
 
 The rule here is:
@@ -586,14 +663,13 @@ var Point: p = uninit;
 var Point: p = (.x = 2, .y = uninit);
 ```
 
-However, we don't want to silently leave some fields uninitialized, so
+    However, we don't want to silently leave some fields uninitialized, so
 
 ```
 var Point: p = (.x = 2);
 ```
 
-should either do some default initialization of the `y` field or trigger a
-compile error.
+    should either do some default initialization of the `y` field or trigger a compile error.
 
 **Proposal:** It is legal to pass `uninit` as an argument to a type using the
 default factory function.
@@ -641,12 +717,12 @@ struct Point {
   var Int: y = 0;
 }
 var Point: p;
-Assert(p.x == 0);
-Assert(p.y == 0);
+assert(p.x == 0);
+assert(p.y == 0);
 
 var Point: p2 = (.x = 1);
-Assert(p2.x == 1);
-Assert(p2.y == 0);
+assert(p2.x == 1);
+assert(p2.y == 0);
 ```
 
 **Proposal:** We should allow initializer expressions that refer to names
@@ -662,11 +738,11 @@ struct Point {
   var Int: y = x + 2;
 }
 var Point: p;
-Assert(p.x == 0);
-Assert(p.y == 2);
+assert(p.x == 0);
+assert(p.y == 2);
 var Point: p2 = (.x = 1);
-Assert(p.x == 1);
-Assert(p.y == 3);
+assert(p.x == 1);
+assert(p.y == 3);
 ```
 
 **Rejected alternative:** We could possibly allow initializers to refer to any
@@ -680,11 +756,11 @@ struct Point {
   var Int: y = x + 2;
 }
 var Point: p = (.x = 0);
-Assert(p.x == 0);
-Assert(p.y == 2);
+assert(p.x == 0);
+assert(p.y == 2);
 var Point: p2 = (.y = 1);
-Assert(p.x == 2);
-Assert(p.y == 1);
+assert(p.x == 2);
+assert(p.y == 1);
 ```
 
 Rationale: We have been consistently only allowing backward references in Carbon
@@ -763,7 +839,7 @@ struct Foo {
 }
 
 var Foo: y;
-Assert(Foo.c == y.c);
+assert(Foo.c == y.c);
 ```
 
 **Concern:** this introduces non-uniformity into the model, and perhaps should
@@ -833,7 +909,7 @@ struct Foo {
   var auto:$$ AddOne = fn(Int : x) -> Int { return x + 1; }
 }
 
-Assert(Foo.AddOne(2) == 3);
+assert(Foo.AddOne(2) == 3);
 ```
 
 This is just like "static" functions in C++. As mentioned above in
@@ -863,8 +939,8 @@ using the dot (`.`) member access operator:
 
 ```
 var Counter: c;
-Assert(c.Increment() == 1);
-Assert(c.Increment() == 2);
+assert(c.Increment() == 1);
+assert(c.Increment() == 2);
 ```
 
 This is equivalent to looking up the `Increment` function in `c`'s type, and
@@ -880,9 +956,9 @@ like `Counter.Increment(&c)`. So the model is:
   definitions of the same symbol if they all define functions. In this case, we
   resolve them into a single function at the call site using pattern matching
   using the same rules. (See:
-  ["Carbon pattern matching" (TODO)](https://github.com/josh11b/carbon-lang/blob/pattern-matching/docs/design/pattern-matching.md)
+  ["Carbon pattern matching"](https://github.com/josh11b/carbon-lang/blob/pattern-matching/docs/design/pattern-matching.md)
   and
-  ["Carbon tuples and variadics" (TODO)](https://github.com/josh11b/carbon-lang/blob/tuples/docs/design/tuples.md).)
+  ["Carbon tuples and variadics" (TODO)](#broken-links-footnote)<!-- T:Carbon tuples and variadics -->.)
 
 **Question:** What is the type of `foo.Bar`? Is it a closure,
 `...: args -> foo.Bar(Args...)`, capturing the value of `foo`? If you don't want
@@ -995,21 +1071,21 @@ struct Foo {
 
 var Foo: f;
 // f.bar is an ordinary function (Int) -> Int.
-Assert(f.bar(3) == 4);
+assert(f.bar(3) == 4);
 // Since f.bar is declared as a `var`, it can be changed from its initial
 // default value.
 f.bar = fn(Int: x) -> Int { return x + 2; };
-Assert(f.bar(3) == 5);
+assert(f.bar(3) == 5);
 // Case 1: No special treatment for functions taking a pointer to the
 // containing struct type as a first argument if they are variables.
-Assert(f.baz(f) == 1);
+assert(f.baz(f) == 1);
 f.a = 2;
-Assert(f.baz(f) == 3);
+assert(f.baz(f) == 3);
 f.a = 0;
 // Case 2: Same special treatment, whether it is a var or not.
-Assert(f.baz() == 1);
+assert(f.baz() == 1);
 f.a = 2;
-Assert(f.baz() == 3);
+assert(f.baz() == 3);
 ```
 
 One issue is this might force us to include whether "the first argument is named
@@ -1186,8 +1262,8 @@ struct Foo {
 }
 
 var Foo: x = (7, 1);
-Assert(x.a == 4);
-Assert(x.b == 3);
+assert(x.a == 4);
+assert(x.b == 3);
 ```
 
 **Bikeshed:** What is a good syntax here? Instead of `create` we could use
@@ -2020,7 +2096,7 @@ struct Foo {
 }
 
 var Foo: f;
-Assert(f.positive);
+assert(f.positive);
 ```
 
 **Future:** The next step would be to support a property with a "setter".
@@ -2410,9 +2486,9 @@ struct Foo {
 
 var Foo: y;
 // &(y.x) is of type Ptr(const Int)
-Assert(y.x == 3);
+assert(y.x == 3);
 y.AddOne();
-Assert(y.x == 4);
+assert(y.x == 4);
 // Would be a compile error: y.x += 1;
 ```
 
