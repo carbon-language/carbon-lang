@@ -94,7 +94,8 @@ have clear rationales for all of our technical designs and decisions.
 excluding or marginalizing members of the community. However, we expect to
 inevitably make choices that benefit some Carbon community members more than
 others. We will provide justification for these decisions, but achieving
-Carbon's goals—including that of a healthy community—will be the guiding rule.
+Carbon's goals -- including that of a healthy community -- will be the guiding
+rule.
 
 ### Language tools and ecosystem
 
@@ -183,8 +184,8 @@ understanding of both the nature and motivation of these goals.
 All software consumes resources: time, memory, compute, power, binary size, and
 so on. In many cases, raw resource usage is not the biggest concern. Instead,
 algorithmic efficiency or business logic dominates these concerns. However,
-there exists software where its rate of resource consumption—its performance—is
-critical to its successful operation. Another way to think about when
+there exists software where its rate of resource consumption -- its performance
+-- is critical to its successful operation. Another way to think about when
 performance is critical: would a performance regression be considered a bug?
 Would it even be noticed?
 
@@ -275,7 +276,7 @@ Software has inherent complexity that burdens developers, especially at scale
 and over time. Carbon will strive to minimize that burden for reading,
 understanding, and writing code. The behavior of code should be easily
 understood, especially by those unfamiliar with the software system. Consider
-developers attempting to diagnose a serious outage under time pressure—every
+developers attempting to diagnose a serious outage under time pressure -- every
 second spent trying to understand the _language_ is one not spent understanding
 the _problem_.
 
@@ -324,8 +325,8 @@ primary goal is to support performance-critical software, other kinds of
 software should not be penalized unnecessarily.
 
 > "The right tool for the job is often the tool you are already using -- adding
-> new tools has a higher cost than many people
-> appreciate."—[John Carmack](https://twitter.com/id_aa_carmack/status/989951283900514304)
+> new tools has a higher cost than many people appreciate." --
+> [John Carmack](https://twitter.com/id_aa_carmack/status/989951283900514304)
 
 **Focus on encouraging appropriate usage of features rather than restricting
 misuse.** Adding arbitrary restrictions to prevent misuse of otherwise general
@@ -460,13 +461,13 @@ stack/ecosystem. This means integrating into the existing C++ ecosystem by
 supporting incremental migration from C++ to Carbon, which in turn requires
 high-quality interoperability with existing C++ code.
 
-We must be able to move existing _large_ C++ codebases—some with hundreds of
-millions of lines of code and tens of thousands of active developers—onto
+We must be able to move existing _large_ C++ codebases -- some with hundreds of
+millions of lines of code and tens of thousands of active developers -- onto
 Carbon. C++ developers must also successfully switch to Carbon development. Any
 migration of this scale will take years, will need to be incremental, and some
-libraries—particularly third-party—may remain in C and C++. It must be possible
-to migrate a C++ library to Carbon without simultaneously migrating all of the
-libraries it depends on or all of the libraries that depend on it.
+libraries -- particularly third-party -- may remain in C and C++. It must be
+possible to migrate a C++ library to Carbon without simultaneously migrating all
+of the libraries it depends on or all of the libraries that depend on it.
 
 We believe incremental migrations require:
 
