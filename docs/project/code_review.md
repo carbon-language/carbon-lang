@@ -86,19 +86,29 @@ changes or an explanation of why not, before a pull request is merged. Further,
 any code owners who have requested changes should explicitly confirm they're
 happy with the resolution before the change is merged.
 
-For [evolution proposals](evolution.md) of any kind, it is the team members'
-responsibility to explicitly note any review comments that block completing the
-code review when making a decision. Otherwise, the consensus decision is assumed
-to mean the prior review comments from the team are addressed; the author is
-free to merge once the pull request is approved, possibly with a code review separate from the proposal's review.
+When a team gives an affirm decision on an [evolution proposal](evolution.md),
+each team member should explicitly note any of their comments on the pull
+request that, while not blocking the _decision_, still need to be resolved as
+part of code review prior to it being merged. These might, for example, be
+trivial or minor wording tweaks or improvements. Otherwise, the decision is
+assumed to mean the prior review comments from members of that team are
+addressed; the author is free to merge once the pull request is approved,
+possibly with a code review separate from the proposal's review.
 
 ## GitHub pull request mechanics
 
 Carbon uses GitHub pull requests for code review, and we recommend some
 mechanical best practices to most effectively navigate them.
 
-- When starting a review, if you will want to comment on files, don't comment in
-  the pull request conversation.
+- Be aware that the main thread of pull request doesn't support threaded
+  discussions or "resolving" a comment.
+  - If either of those would be useful, you'll probably want to comment on a
+    file.
+  - You can quote comments in the main conversation thread in a reply by
+    clicking the three-dot menu on the original comment and selecting "Quote
+    reply".
+- If you will want to comment on files, don't comment in the pull request
+  conversation.
   - Always go to the `Files Changed` tab.
   - Make any in-file comments needed, but add them to a pending review rather
     than sending them directly.
@@ -120,6 +130,16 @@ mechanical best practices to most effectively navigate them.
     listed in the conversation view with the incoming set of in-file comments.
   - This flow ensures an explicit update in the overall pull request that can
     help both the author and other reviewers note that new replies have arrived.
+- Don't reply to an in-file comment and then mark it as resolved. No one will
+  see your reply as the thread will be hidden immediately when marked as
+  resolved.
+  - Generally, the person who started the comment thread should mark it as
+    resolved when their comments are sufficiently addressed. If another reviewer
+    is also on the thread and should also agree, just state that you're happy
+    and the last reviewer can mark it resolved.
+  - Trivially resolved threads can just be marked as "resolved" without further
+    update. Examples: a suggested change that has been successfully applied, or
+    a thread where the relevant reviewers have clearly indicated they're happy.
 
 ## Code author guide
 
