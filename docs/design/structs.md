@@ -371,7 +371,7 @@ struct {
 }
 ```
 
-#### Type deduction
+#### Deducing function type arguments
 
 Structs define types that can be deduced when calling a function.
 For example:
