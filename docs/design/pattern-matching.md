@@ -68,9 +68,53 @@ widely used in existing languages (Swift and Rust among others) and is currently
 under active investigation for C++. Carbon's `match` can be used as follows:
 
 ```
+fn SimpleSwitch(Int: i) -> String {
+  match (i) {
+    case (0) => {
+      return "Zero";
+    }
+    case (1) => {
+      return "One";
+    }
+    default => {
+      return "Negative or more than one";
+    }
+  }
+  return "Unreachable";
+}
+
+fn MultipleArgs(Int: j, Bool: b) -> String {
+  match (j, b) {
+    case (0, True) => {
+      return "j == 0, b == True";
+    }
+    // `Bool: _` means match any value with type `Bool`.
+    // The `_` means throw the value away.
+    case (1, Bool: _) => {
+      return "j == 1, b anything";
+    }
+    // `auto: k` means match any value bind it to the name `k`.
+    // We can then add conditions on the bound value or use `k`
+    // in the body of the case.
+    case (auto: k, True) if (k >= 0) => {
+      // j == 0, b == True already handled above.
+      return "j > 0, b == True";
+    }
+    // This is equivalent to "default", since `...` matches
+    // multiple arguments, as a tuple.
+    case (... auto: _) => {
+
+      return "Nothing else matched";
+    }
+  }
+  return "Unreachable";
+}
+
 fn Bar() -> (Int, (Float, Float));
-fn Foo() -> Float {
-  match (Bar()) {
+fn UnpackTuple() -> Float {
+  // This uses tuple unpacking in the match expression,
+  // so the cases don't need extra parens.
+  match (Bar()...) {
     case (42, (Float: x, Float: y)) => {
       return x - y;
     }
@@ -91,8 +135,8 @@ Note: we may want to say `where` instead of `if`, I've seen both suggested in
 various docs.
 
 There is a lot going on here. First, let's break down the core structure of a
-`match` statement. It accepts a value that will be inspected, here the result of
-the call to `Bar()`. It then will find the _first_ `case` that matches this
+`match` statement. It accepts a value or list of values that will be inspected.
+It then will find the _first_ `case` that matches this
 value, and execute that block. If none match, then it executes the default
 block.
 
@@ -103,9 +147,11 @@ predicate has to evaluate to true for the overall pattern to match. Value
 patterns can be composed of the following:
 
 - An expression (`42` for example), whose value must be equal to match.
-- An optional type (`Int` for example), followed by a `:` and either an
+- A type (`Int` for example), followed by a `:` and either an
   identifier to bind to the value or the special identifier `_` to discard the
   value once matched.
+- Three dots (`...`) followed by a type, `:`, and the identifier (or `_`) to
+  match multiple arguments, as a tuple.
 - A destructuring pattern containing a sequence of value patterns
   (`(Float: x, Float: y)`) which match against tuples and tuple like values by
   recursively matching on their elements.
@@ -114,7 +160,7 @@ patterns can be composed of the following:
 
 In order to match a value, whatever is specified in the pattern must match.
 Using `auto` for a type will always match, making `auto: _` the wildcard
-pattern.
+pattern matching a single value.
 
 **Open question:** How do we effectively fit a "slice" or "array" pattern into
 this (or whether we shouldn't do so)?
@@ -145,10 +191,12 @@ This extracts the first value from the result of calling `Bar()` and binds it to
 a local variable named `p` which is then returned. The `(Float, Float)` returned
 by `Bar()` matches and is discarded by `auto: _`.
 
+#### Constants
+
 The `:$` and `:$$` forms can be used to defined constants.
 
 ```
-fn Foo(Int:$ N, Int: m) -> Int {
+fn Constants(Int:$ N, Int: m) -> Int {
   var Int:$$ Two = 2;
   var Int:$ TwoN = Two * N;
   return TwoN + m;
@@ -313,11 +361,16 @@ arguments, but that is detailed in
 There are a few differences between these uses:
 
 - The `match` statement has several patterns and determines which applies at run
-  time.
+  time. If multiple patterns match, it uses the first match.
 - An assignment statement will have a single pattern, and it will be a compile
   error unless it can be shown to match at compile time.
 - Function overloading allows multiple patterns, but at compile time any
-  function call must be resolved to match a single pattern.
+  function call must be resolved to select a single pattern. If a call matches
+  multiple overloads, there must be a most specific match that wins.
+
+Both the `match` statement and function calls take a comma-separated list of
+values inside parentheses. Similarly, the `case` expressions and functions
+overloads have a comma-separated list of patterns inside parentheses.
 
 ## Features
 
@@ -487,7 +540,7 @@ is an implementation of `MaxV4` from above:
 
 ```
 fn MaxV4[Int:$$ N, Comparable:$ T](... NTuple(N, T): args) -> T {
-  match args {
+  match (args...) {
     case (T: x) => return x;
     // Using the same variadic pattern matching syntax in a `match` statement.
     case (T: first, ... NTuple(N-1, T): rest) => {
@@ -570,9 +623,9 @@ are tested, so something like:
 
 ```
 match (a) {
-  case P1 if C1 => { ... }
-  case P2 => { ... }
-  case P1 => { ... }
+  case (P1) if (C1) => { ... }
+  case (P2) => { ... }
+  case (P1) => { ... }
 }
 ```
 
@@ -636,7 +689,9 @@ have defaults or not, in any order.
 
 **TODO:** We need some mechanism for capturing the value of a match and binding
 it to a name. [zygoloid](https://github.com/zygoloid) has suggested using the
-`@` symbol.
+`@` symbol. Another idea is to define a monotype `Only(v)` that only matches the
+value `v`. Then `Only(F()) : x` would match if the value matches `F()`, in which
+case the value would be bound to the name `x`.
 
 ### Value specification match rules
 
@@ -755,7 +810,7 @@ fn f(Bool: a, Bool: b) -> String {
 
 ### Condition
 
-The semantics of `[A: a](B: b, C: c) if (X)` is to
+The semantics of matching a value to the pattern `[A: a](B: b, C: c) if (X)` is to:
 
 1. match without considering the `if (X)` clause
 2. tentatively bind `a`, `b`, and `c` as a result of that match
