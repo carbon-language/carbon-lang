@@ -445,6 +445,141 @@ while. TODO: add ways this is used to enhance expressivity.
 Note that the rules in C++ for deduced type arguments end up complex due to
 dealing with `const` and references (both `&` and `&&`).
 
+```
+// Templated function that works for any value with an integer `.x` member.
+fn DeducesType[Type:$$ T](T: a) -> Int {
+  // `T`, the type of `a`, is deduced to be the type of whatever value
+  // is passed to this function.
+  return a.x;
+}
+
+struct S {
+  var Int: x;
+};
+var S: named_struct = (.x = 2);
+// Here, `T` is deduced to be the named struct `S`.
+Assert(DeduceType(named_struct) == 2);
+
+fn DeducesSize[Int: size](FixedLenArray(Int, size): a) -> Int {
+  return size;
+}
+var FixedLenArray(Int, 3): array = (1, 2, 3);
+Assert(DeducesSize(array) == 3);
+```
+
+#### Deducing parameters of types
+
+*Context:*
+[Carbon chat Oct 31, 2019: Higher-kinded types, normative types, and type deduction (TODO)](#broken-links-footnote)<!-- T:Carbon chat Oct 31, 2019: Higher-kinded types, normative types, and type deduction --><!-- A:#heading=h.r48w6htktgjf -->
+
+Since parameterized types have names that include their parameters, this means
+that parameter may be deduced when calling a function. For example,
+
+```
+struct Vec(Type: T) { ... }
+
+fn F[Type: T](Vec(T): v) { ... }
+// More commonly, this would be:
+// fn F[Type:$ T](Vec(T): v) { ... }
+
+var Vec(Int): x;
+F(x);  // `T` is deduced to be `Int`.
+```
+
+In addition, a parameterized type can actually be thought of as a function,
+which can also be deduced:
+
+```
+// Continued from above
+fn G[fn(Type)->Type: V](V(Int): v) { ... }
+G(x);  // `V` is deduced to be `Vec`
+
+fn H[Type: T, fn(Type)->Type: V](V(T): v) { ... }
+H(x);  // `T` is deduced to be `Int` and `V` is deduced to be `Vec`.
+```
+
+This would be used in the same situations as
+[C++'s template-template parameters](https://stackoverflow.com/questions/213761/what-are-some-uses-of-template-template-parameters).
+
+**Proposal:** The above deductions are only available based on a type's name,
+not arbitrary functions returning types.
+
+If we write some other function that returns a type:
+
+```
+fn I(Type: T) -> Type {
+  if (T != Bool) {
+    return Vec(T);
+  } else {
+    return BitVec;
+  }
+}
+```
+
+In theory, since the function is injective, it might be possible to deduce its
+input from a specific output value, as in:
+
+```diff
+  // Not allowed: `I` is an arbitrary function, can't be involved in deduction:
+- fn J[Type: T](I(T): z) { ... }
+  var I(Int): y;
+  // We do not attempt to figure out that if `T` was `Int`, then `I(T)` is equal
+  // to the type of `y`.
+  J(y);
+```
+
+If we wanted to support this case, we would require the type function to satisfy
+two conditions:
+
+- It must be _injective_, so different inputs are guaranteed to produce
+  different outputs. For example, `F(T) = Pair(T, T)` is injective but
+  `F(T) = Int` is not.
+- It must not have any conditional logic depending on the input. We could
+  enforce this by requiring it to take arguments generically using the `:$`
+  syntax.
+
+If both those conditions are met, then in principle the compiler can
+symbolically evaluate the function. The result should be a type expression we
+could pattern match with the input type to determine the inputs to the function.
+In general, this might be difficult so we need to determine if this feature is
+important and possibly some other restrictions we may want to place. A hard
+example would be deducing `N` in `F(T, N) = Array(T, N * N * N)` given
+`Array(Int, 27)`. This makes me think this feature should be deprioritized until
+there are compelling use cases which can guide what sort of restrictions would
+make sense.
+
+One use case we do want to support for [variadics (below)](#variadics-), is the
+function `NTuple(N, value)` that returns a tuple with `N` components, all of
+which are equal to `value`. If `value` is a type `T`, since the type of a tuple
+is the tuple of the component types, then `NTuple(N, T)` is a type. For example,
+the type of `(1, 2, 3)` is `(Int, Int, Int) == NTuple(3, Int)`. However, note
+that `NTuple` isn't even injective when `N == 0`!
+
+We are considering theee approaches for representing `NTuple`:
+- It could be something built-in and not writable in user code. This is
+  undesirable because there will likely be variations on `NTuple` that
+  user's will need and won't be provided.
+- We could provide a special "type function that supports deduction" facillity
+  that explicitly provides two functions:
+  - A forward function, in this case taking `N = 3` and `value = Int` to
+    `(Int, Int, Int)`.
+  - A deduction function, taking a resulting type (like `(Int, Int, Int)`)
+    and optional values for the parameters and returns values for the
+    parameters that were not specified. It would return an error if there
+    are no parameters that would cause the forward function to produce that
+    output (like `(Int, Bool)`). It would also return an error if there was
+    no unique way of deducing an argument (you can't deduce `value` from the
+    empty tuple `()`).
+  A flaw with this approach is that even if we support deduction, there is
+  no clear way to tell if a match using one of these is more specific than
+  another for purposes of function overload resolution.
+- We could provide a "tuple comprehension" syntax, that is simple enough for
+  the compiler to analyze to be able to perform deductions and tell when one
+  expression is more specific than another, but expressive enough to cover most
+  use cases. For reference, the Python-like syntax for comprehensions would be
+  something like `NTuple(N, value) = (value for _ in 0..N)`, but we might want
+  to make changes to put uses of names after they are declared.
+
 ### Variadics (...)
 
 Variadics are when a pattern can match any number of arguments.
