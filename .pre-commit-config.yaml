@@ -44,8 +44,6 @@ repos:
     rev: stable
     hooks:
       - id: black
-        # Including this line breaks josh11b's setup:
-        # language_version: python3.6
         language_version: python3
   - repo: https://github.com/prettier/prettier
     rev: 2.0.5
