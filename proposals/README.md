@@ -30,5 +30,6 @@ request:
 - [0051 - Goals](p0051.md)
 - [0074 - Change comment/decision timelines in proposal process](p0074.md)
   - [Decision](p0074-decision.md)
+- [0120 - Be explicit about idiomatic code and developer-facing docs in goals](p0120.md)
 
 <!-- endproposals -->
