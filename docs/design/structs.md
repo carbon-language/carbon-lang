@@ -371,87 +371,34 @@ struct {
 }
 ```
 
-#### Type deduction and type functions
+#### Type deduction
 
-Context:
-[Carbon chat Oct 31, 2019: Higher-kinded types, normative types, and type deduction (TODO)](#broken-links-footnote)<!-- T:Carbon chat Oct 31, 2019: Higher-kinded types, normative types, and type deduction --><!-- A:#heading=h.r48w6htktgjf -->
-
-TODO: Move this section to
-[Carbon pattern matching](https://github.com/josh11b/carbon-lang/blob/pattern-matching/docs/design/pattern-matching.md#deduced-specification-match-rules).
-
-Since parameterized types have names that include their parameters, this means
-that parameter may be deduced when calling a function. For example,
+Structs define types that can be deduced when calling a function.
+For example:
 
 ```
-struct Vec(Type: T) { ... }
-
-fn F[Type: T](Vec(T): v) { ... }
-
-var Vec(Int): x;
-F(x);  // `T` is deduced to be `Int`.
-```
-
-In addition, a parameterized type can actually be thought of as a function,
-which can also be deduced:
-
-```
-// Continued from above
-fn G[fn(Type)->Type: V](V(Int): v) { ... }
-G(x);  // `V` is deduced to be `Vec`
-
-fn H[Type: T, fn(Type)->Type: V](V(T): v) { ... }
-H(x);  // `T` is deduced to be `Int` and `V` is deduced to be `Vec`.
-```
-
-This would be used in the same situations as
-[C++'s template-template parameters](https://stackoverflow.com/questions/213761/what-are-some-uses-of-template-template-parameters).
-
-**Proposal:** The above deductions are only available based on a type's name,
-not arbitrary functions returning types.
-
-If we write some other function that returns a type:
-
-```
-fn I(Type: T) -> Type {
-  if (T != Bool) {
-    return Vec(T);
-  } else {
-    return BitVec;
-  }
+// Templated function that works for any value with an integer `.x` member.
+fn DeducesType[Type:$$ T](T: a) -> Int {
+  // `T`, the type of `a`, is deduced to be the type of whatever value
+  // is passed to this function.
+  return a.x;
 }
+
+var struct { var Int: x; } : anonymous_struct = (.x = 1);
+// Here, `T` is deduced to be the anonymous struct `struct { var Int: x; }`,
+// equivalent to `(.x = Int)`.
+Assert(DeduceType(anonymous_struct) == 1);
+
+struct S {
+  var Int: x;
+};
+var S: named_struct = (.x = 2);
+// Here, `T` is deduced to be the named struct `S`.
+Assert(DeduceType(named_struct) == 2);
 ```
 
-In theory, since the function is injective, it might be possible to deduce its
-input from a specific output value, as in:
-
-```
-// Not allowed: `I` is an arbitrary function, can't be involved in deduction:
-fn J[Type: T](I(T): z) { ... }
-var I(Int): y;
-// We do not attempt to figure out that if `T` was `Int`, then `I(T)` is equal
-// to the type of `y`.
-J(y);
-```
-
-If we wanted to support this case, we would require the type function to satisfy
-two conditions:
-
-- It must be _injective_, so different inputs are guaranteed to produce
-  different outputs. For example, `F(T) = Pair(T, T)` is injective but
-  `F(T) = Int` is not.
-- It must not have any conditional logic depending on the input. We could
-  enforce this by requiring it to take arguments generically using the `:$`
-  syntax.
-
-If both those conditions are met, then in principle the compiler can
-symbolically evaluate the function. The result should be a type expression we
-could pattern match with the input type to determine the inputs to the function.
-In general, this might be difficult so we need to determine if this feature is
-important and possibly some other restrictions we may want to place. A hard
-example would be deducing `N` in `F(T, N) = Array(T, N * N * N)` given
-`Array(Int, 27)`. This makes me think this feature should be deprioritized until
-there are compelling use cases which can guide what sort of restrictions would
-make sense.
+**NOTE:** Further details can be found in the
+[Carbon pattern matching design doc section "Deducing parameters of types"](https://github.com/josh11b/carbon-lang/blob/pattern-matching/docs/design/pattern-matching.md#deducing-parameters-of-types).
 
 #### Type immutability
 
