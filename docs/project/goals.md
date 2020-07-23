@@ -124,6 +124,11 @@ realities. Having the specification will enable better analysis of the language
 as a whole and the production of other partial or full implementations which
 match the behavior of the reference implementation.
 
+**Approachable, developer-facing documentation.** Developers shouldn't be
+expected to read through the specification to ramp up with Carbon. User guides
+and other documentation will be provided to make it easy to learn how to use
+Carbon.
+
 **Compelling adoption tooling.** We want to provide a compelling suite of tools
 out-of-the-box in order to encourage adoption of Carbon at scale where it can
 augment existing C++ codebases. For example, we expect a C++ -> Carbon code
@@ -200,10 +205,10 @@ concerned with ultimate performance at every moment, but in the most constrained
 scenarios they must be able to "open up the hood" without switching to another
 language.
 
-**Idiomatic code should have good performance.** Code following best practices
-should perform reasonably well. Although some software may still need
-fine-tuning, Carbon's design should aim to provide high performance without such
-investment.
+**Idiomatic code should perform reasonably well.** Developers should not
+regularly be required to choose between performance and readability. Although
+some software may still need fine-tuning, Carbon's design should aim to provide
+high performance without such investment.
 
 **Code should perform predictably.** The reader and writer of code should be
 able to easily understand its expected performance, given sufficient background
