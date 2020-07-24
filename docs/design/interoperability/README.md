@@ -34,8 +34,8 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 ## Overview
 
-It's critical that Carbon can both access C++ interfaces and export C++
-interfaces. Supporting C++ interoperability is a
+It's critical that Carbon can both access C++ APIs and export C++
+APIs. Supporting C++ interoperability is a
 [key requirement for Carbon's goals](/docs/project/goals.md) and is expected to
 influence the design of Carbon itself.
 
@@ -160,7 +160,7 @@ Notable elements are:
     `$extern("Cpp", namespace="myproject")`.
   - The Carbon toolchain will translate externed declarations to C++, and they
     will be available to C++ code through `.6c.h` header files.
-- `import Cpp "path"`: Imports API calls from a C++ header file.
+- `import Cpp "path"`: Imports APIs from a C++ header file.
 
 We use the name `Cpp` because `import` needs a valid identifier.
 

@@ -77,7 +77,7 @@ Specific types that should provide this conversion:
 ### Mapping similar built-in types
 
 When it is not possible to convert a non-owning reference or pointer to a C++
-data structure or vocabulary type into a suitable Carbon type, the actual C++
+data structure or vocabulary type into a suitable Carbon type, a pointer to the underlying C++
 type will be used. However, its API may not match Carbon idioms or patterns, and
 may not integrate with generic Carbon code written against those idioms, or vice
 versa.
