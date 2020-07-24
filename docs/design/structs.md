@@ -432,7 +432,7 @@ var Point: p = ???;
 
 **Proposal:** we allow you to initialize a struct from a tuple with names that
 match the names of the fields, in the same order
-([see above](#bookmark=id.opejfo1k8om9)).
+([see above](#tuples-and-structs-are-both-records)).
 
 ```diff
   var Point: p1 = (.x = 1, .y = 2);
@@ -2249,8 +2249,9 @@ them.
 Things get more exciting if the mixin wants to access data fields or functions
 that it doesn't define, and instead requires are defined in the destination
 struct being added to. It seems like we might reuse the `required` keyword
-(mentioned [above](#bookmark=id.a13yodpnvzyd)) to define functions and their
-signatures that must be present.
+(mentioned
+[in the "inheritance" section above](#question-extension--inheritance))
+to define functions and their signatures that must be present.
 
 **Background:** We might want to adopt the concept of a "protocol" that the
 destination has to "match" according to:
