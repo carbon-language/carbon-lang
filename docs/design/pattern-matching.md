@@ -14,12 +14,14 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 - [Uses](#uses)
   - [Pattern match control flow](#pattern-match-control-flow)
   - [Pattern matching in local variables](#pattern-matching-in-local-variables)
+    - [Constants](#constants)
   - [Pattern matching as function overload resolution](#pattern-matching-as-function-overload-resolution)
   - [Differences](#differences)
 - [Features](#features)
-  - [Positional & keyword arguments](#positional--keyword-arguments)
+  - [Positional & keyword parameters](#positional--keyword-parameters)
   - [Defaults / optional arguments](#defaults--optional-arguments)
-  - [Deduced arguments](#deduced-arguments)
+  - [Deduced parameters](#deduced-parameters)
+    - [Deducing parameters of types](#deducing-parameters-of-types)
   - [Variadics (...)](#variadics-)
   - [Conditions](#conditions)
 - [Specification](#specification)
@@ -136,9 +138,8 @@ various docs.
 
 There is a lot going on here. First, let's break down the core structure of a
 `match` statement. It accepts a value or list of values that will be inspected.
-It then will find the _first_ `case` that matches this
-value, and execute that block. If none match, then it executes the default
-block.
+It then will find the _first_ `case` that matches this value, and execute that
+block. If none match, then it executes the default block.
 
 Each `case` contains a pattern. The first part is a value pattern
 (`(Int: p, auto: _)` for example) followed by an optional boolean predicate
@@ -147,9 +148,8 @@ predicate has to evaluate to true for the overall pattern to match. Value
 patterns can be composed of the following:
 
 - An expression (`42` for example), whose value must be equal to match.
-- A type (`Int` for example), followed by a `:` and either an
-  identifier to bind to the value or the special identifier `_` to discard the
-  value once matched.
+- A type (`Int` for example), followed by a `:` and either an identifier to bind
+  to the value or the special identifier `_` to discard the value once matched.
 - Three dots (`...`) followed by a type, `:`, and the identifier (or `_`) to
   match multiple arguments, as a tuple.
 - A destructuring pattern containing a sequence of value patterns
@@ -159,8 +159,8 @@ patterns can be composed of the following:
   a variant or variant-like value by unwrapping it.
 
 In order to match a value, whatever is specified in the pattern must match.
-Using `auto` for a type will always match, making `auto: _` the wildcard
-pattern matching a single value.
+Using `auto` for a type will always match, making `auto: _` the wildcard pattern
+matching a single value.
 
 **Open question:** How do we effectively fit a "slice" or "array" pattern into
 this (or whether we shouldn't do so)?
@@ -226,12 +226,12 @@ var String: result = (
 assert(result == "3: A, False: B, m_s_o: C")
 ```
 
-**Terminology**: An *argument* refers to a value being passed to a function
-as part of the *argument list* at the call site. A *parameter* refers to the
-name given to input values for use in the body of a function as part of the
-*parameter list* part of the function signature. In *this* document I've been
-careful to use the correct term since the argument vs. parameter distinction
-is significant.
+**Terminology**: An _argument_ refers to a value being passed to a function as
+part of the _argument list_ at the call site. A _parameter_ refers to the name
+given to input values for use in the body of a function as part of the
+_parameter list_ part of the function signature. In _this_ document I've been
+careful to use the correct term since the argument vs. parameter distinction is
+significant.
 
 Any given call to `ToString` will take its argument list and try matching it to
 the parameter pattern defined for each overload. Assuming there is a single
@@ -262,7 +262,7 @@ a value of type `Foo` to pass to `f` would also see the overload of `f` taking
 `Foo`. This leads to this possibility...
 
 **Alternative considered:** All overloads for a given function name should be in
-the library defining the name *or* in a library defining a type used in the
+the library defining the name _or_ in a library defining a type used in the
 parameter pattern.
 
 The idea is that you could overload a function in another namespace, but you
@@ -431,23 +431,23 @@ site, we provide a number of benefits:
 - Brevity for common cases where the defaults are what the user wants.
 - Allow many combinations of options to be specified at the caller without a
   combinatorial explosion of function definitions.
-- Allow evolution of an API. A new parameter can be added to an existing function
-  as long as it has a default that preserves the old behavior.
+- Allow evolution of an API. A new parameter can be added to an existing
+  function as long as it has a default that preserves the old behavior.
 
-Note that this feature is more powerful when combined with keyword parameters. In
-C++ which only uses positional parameters, you always have to specify a prefix of
-the argument list at the call site, and so only the tail of the parameter list in
-the signature is allowed to have defaults. Within the keyword parameters, any may
-have defaults, and the caller may skip specifying any optional argument and
-still specify later arguments.
+Note that this feature is more powerful when combined with keyword parameters.
+In C++ which only uses positional parameters, you always have to specify a
+prefix of the argument list at the call site, and so only the tail of the
+parameter list in the signature is allowed to have defaults. Within the keyword
+parameters, any may have defaults, and the caller may skip specifying any
+optional argument and still specify later arguments.
 
 ### Deduced parameters
 
-**Rationale:** The primary use case for deduced parameters is for type inference,
-but it could also be used to infer the size of an array argument. This is mainly
-for brevity, so you don't need to specify redundant information at the call
-site. It also provides continuity with C++ which has had this feature for a
-while.
+**Rationale:** The primary use case for deduced parameters is for type
+inference, but it could also be used to infer the size of an array argument.
+This is mainly for brevity, so you don't need to specify redundant information
+at the call site. It also provides continuity with C++ which has had this
+feature for a while.
 
 TODO: add ways this is used to enhance expressivity.
 
@@ -478,7 +478,7 @@ Assert(DeducesSize(array) == 3);
 
 #### Deducing parameters of types
 
-*Context:*
+_Context:_
 [Carbon chat Oct 31, 2019: Higher-kinded types, normative types, and type deduction (TODO)](#broken-links-footnote)<!-- T:Carbon chat Oct 31, 2019: Higher-kinded types, normative types, and type deduction --><!-- A:#heading=h.r48w6htktgjf -->
 
 Since parameterized types have names that include their parameters, this means
@@ -565,25 +565,25 @@ the type of `(1, 2, 3)` is `(Int, Int, Int) == NTuple(3, Int)`. However, note
 that `NTuple` isn't even injective when `N == 0`!
 
 We are considering theee approaches for representing `NTuple`:
+
 - It could be something built-in and not writable in user code. This is
-  undesirable because there will likely be variations on `NTuple` that
-  user's will need and won't be provided.
+  undesirable because there will likely be variations on `NTuple` that user's
+  will need and won't be provided.
 - We could provide a special "type function that supports deduction" facillity
   that explicitly provides two functions:
   - A forward function, in this case taking `N = 3` and `value = Int` to
     `(Int, Int, Int)`.
-  - A deduction function, taking a resulting type (like `(Int, Int, Int)`)
-    and optional values for the parameters and returns values for the
-    parameters that were not specified. It would return an error if there
-    are no parameters that would cause the forward function to produce that
-    output (like `(Int, Bool)`). It would also return an error if there was
-    no unique way of deducing an parameter (you can't deduce `value` from the
-    empty tuple `()`).
-  A flaw with this approach is that even if we support deduction, there is
-  no clear way to tell if a match using one of these is more specific than
-  another for purposes of function overload resolution.
-- We could provide a "tuple comprehension" syntax, that is simple enough for
-  the compiler to analyze to be able to perform deductions and tell when one
+  - A deduction function, taking a resulting type (like `(Int, Int, Int)`) and
+    optional values for the parameters and returns values for the parameters
+    that were not specified. It would return an error if there are no parameters
+    that would cause the forward function to produce that output (like
+    `(Int, Bool)`). It would also return an error if there was no unique way of
+    deducing an parameter (you can't deduce `value` from the empty tuple `()`).
+    A flaw with this approach is that even if we support deduction, there is no
+    clear way to tell if a match using one of these is more specific than
+    another for purposes of function overload resolution.
+- We could provide a "tuple comprehension" syntax, that is simple enough for the
+  compiler to analyze to be able to perform deductions and tell when one
   expression is more specific than another, but expressive enough to cover most
   use cases. For reference, the Python-like syntax for comprehensions would be
   something like `NTuple(N, value) = (value for _ in 0..N)`, but we might want
@@ -651,8 +651,8 @@ fn MaxV5[Int:$$ N, Comparable:$ T](T: first, ... NTuple(N, T): rest) -> T;
 > `MaxV1(.count = 3, .repeated_value = 7)`. This is both surprising and exposes
 > an implementation detail that you wouldn't want callers to rely on. Seems like
 > we need this to express our intent more clearly. Possible solution: perhaps
-> `Array(T)` will implement an interface that defines what variadic patterns
-> it may be constructed from, instead of implicitly using every constructor.
+> `Array(T)` will implement an interface that defines what variadic patterns it
+> may be constructed from, instead of implicitly using every constructor.
 
 The `MaxV3` example demonstrates a case where the variadic should not consume
 all remaining arguments. There are a few cues in this example:
@@ -760,9 +760,9 @@ and named members equal to `T`.
 fn ForwardAllV2[MixedTuple(Type):$$ TupleofTypes](... TupleOfTypes: args);
 ```
 
-This expresses that `TupleOfTypes` is a tuple and contains only types, but
-this is already what we'd get for any variadic, so in principle we could allow
-this to be written:
+This expresses that `TupleOfTypes` is a tuple and contains only types, but this
+is already what we'd get for any variadic, so in principle we could allow this
+to be written:
 
 ```
 fn ForwardAllV3(... auto: args);
@@ -888,11 +888,11 @@ case the value would be bound to the name `x`.
   constants. The difference is that in the template (`:$$`) case, the value is
   available as part of type-checking, whereas the value of generic (`:$`)
   constants is only known at code generation time. In the case of generic and
-  template parameters to functions, the function body to be instantiated once for
-  every combination of values to those parameters. Template parameters prevent
-  type checking until the function is instantiated so the value is known.
-  Generic parameters allow the function to be type checked once when the body is
-  defined. See the
+  template parameters to functions, the function body to be instantiated once
+  for every combination of values to those parameters. Template parameters
+  prevent type checking until the function is instantiated so the value is
+  known. Generic parameters allow the function to be type checked once when the
+  body is defined. See the
   [generics overview (TODO)](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/designs/generics-overview.md)
   for more details.
 - **Variadic** (`...`): These match multiple arguments which are packed into a
@@ -964,7 +964,8 @@ fn f(Bool: a, Bool: b) -> String {
 
 ### Condition
 
-The semantics of matching a value to the pattern `[A: a](B: b, C: c) if (X)` is to:
+The semantics of matching a value to the pattern `[A: a](B: b, C: c) if (X)` is
+to:
 
 1. match without considering the `if (X)` clause
 2. tentatively bind `a`, `b`, and `c` as a result of that match
