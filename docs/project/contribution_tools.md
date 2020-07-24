@@ -13,12 +13,12 @@ contributions.
 
 <!-- toc -->
 
-- [pre-commit](#pre-commit)
-- [black](#black)
-- [codespell](#codespell)
-- [markdown-toc](#markdown-toc)
-- [Prettier](#prettier)
-  - [vim-prettier](#vim-prettier)
+-   [pre-commit](#pre-commit)
+-   [black](#black)
+-   [codespell](#codespell)
+-   [markdown-toc](#markdown-toc)
+-   [Prettier](#prettier)
+    -   [vim-prettier](#vim-prettier)
 
 <!-- tocstop -->
 
@@ -30,15 +30,16 @@ important checks, including formatting.
 
 To set up pre-commit:
 
-- Follow the [installation instructions](https://pre-commit.com/#installation).
-- Enable per-repo: `pre-commit install`
-  - We already have `pre-commit` configured for Carbon repos -- do not go
-    through the `Quick start` instructions.
-- pre-commit may be run either automatically with `git commit` or manually with
-  `pre-commit run`.
-  - When files are modified, including by pre-commit failures, `git add` will
-    need to be run to include the modifications in the commit, and the commit
-    re-started.
+-   Follow the
+    [installation instructions](https://pre-commit.com/#installation).
+-   Enable per-repo: `pre-commit install`
+    -   We already have `pre-commit` configured for Carbon repos -- do not go
+        through the `Quick start` instructions.
+-   pre-commit may be run either automatically with `git commit` or manually
+    with `pre-commit run`.
+    -   When files are modified, including by pre-commit failures, `git add`
+        will need to be run to include the modifications in the commit, and the
+        commit re-started.
 
 When modifying or adding pre-commit hooks, please run
 `pre-commit run --all-files` to see what changes.
@@ -86,7 +87,8 @@ to add to your `.vimrc`:
 
 ```
 let g:prettier#config#print_width = '80'
-let g:prettier#config#tab_width = '2'
-let g:prettier#config#use_tabs = 'false'
 let g:prettier#config#prose_wrap = 'always'
+let g:prettier#config#single_quote = 'true'
+let g:prettier#config#tab_width = '4'
+let g:prettier#config#use_tabs = 'false'
 ```

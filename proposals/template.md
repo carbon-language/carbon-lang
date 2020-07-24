@@ -12,12 +12,12 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 <!-- toc -->
 
-- [TODO: Initial proposal setup](#todo-initial-proposal-setup)
-- [Problem](#problem)
-- [Background](#background)
-- [Proposal](#proposal)
-- [Details](#details)
-- [Alternatives considered](#alternatives-considered)
+-   [TODO: Initial proposal setup](#todo-initial-proposal-setup)
+-   [Problem](#problem)
+-   [Background](#background)
+-   [Proposal](#proposal)
+-   [Details](#details)
+-   [Alternatives considered](#alternatives-considered)
 
 <!-- tocstop -->
 
@@ -27,7 +27,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 1. Copy this template to `new.md`, and create a commit.
 2. Create a GitHub pull request, to get a pull request number.
-   - Add the `proposal` and `WIP` labels to the pull request.
+    - Add the `proposal` and `WIP` labels to the pull request.
 3. Rename `new.md` to `/proposals/p####.md`, where `####` should be the pull
    request number.
 4. Update the title of the proposal (the `TODO` on line 1).

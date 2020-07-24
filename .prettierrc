@@ -1,5 +1,5 @@
 printWidth: 80
 proseWrap: "always"
 singleQuote: true
-tabWidth: 2
+tabWidth: 4
 useTabs: false
