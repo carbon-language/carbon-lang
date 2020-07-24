@@ -444,15 +444,10 @@ match the names of the fields, in the same order
   var OneMember : a = (.x = 12);
 ```
 
-**Concern:**
-
-> Field order affects hidden implementation details like alignment and padding,
-> and yet the field order is also API-visible in a way that clients almost can't
-> avoid depending on.
->
-> We may need to provide a way for users to explicitly specify a struct layout
-> and an explicit (different) order of initialization for the rare structs where
-> this matters.
+One concern is that field order affects hidden implementation details like
+alignment and padding. If a type needs to change its field order to control
+it struct layout, users will need to provide a constructor that accepts arguments
+in the old field order to avoid an API breakage.
 
 **Proposal:** We do not allow positional initialization from a tuple without
 names:
