@@ -59,7 +59,7 @@ Our priority OS platforms are modern versions of:
 
 #### Hardware architectures
 
-We expect to prioritize 64-bit little endian hadware, including:
+We expect to prioritize 64-bit little endian hardware, including:
 
 - x86-64
 - AArch64, also known as ARM 64-bit
