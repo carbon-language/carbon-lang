@@ -57,7 +57,7 @@ We have a few places where we would like to use pattern matching in Carbon:
 - Carbon's `match` statement, replacing C++'s `switch`.
 - May use a pattern on the left side of a variable initialization, to
   destructure a tuple value on the right.
-- To define function arguments, and support function overloading.
+- To define function parameters, and support function overloading.
 
 ### Pattern match control flow
 
@@ -210,7 +210,7 @@ known when typechecking.
 
 ### Pattern matching as function overload resolution
 
-The argument list to a function in Carbon is a pattern. Functions may be
+The parameter list to a function in Carbon is a pattern. Functions may be
 overloaded by defining functions with the same name but different patterns.
 Example:
 
@@ -226,8 +226,15 @@ var String: result = (
 assert(result == "3: A, False: B, m_s_o: C")
 ```
 
+**Terminology**: An *argument* refers to a value being passed to a function
+as part of the *argument list* at the call site. A *parameter* refers to the
+name given to input values for use in the body of a function as part of the
+*parameter list* part of the function signature. In *this* document I've been
+careful to use the correct term since the argument vs. parameter distinction
+is significant.
+
 Any given call to `ToString` will take its argument list and try matching it to
-the argument pattern defined for each overload. Assuming there is a single
+the parameter pattern defined for each overload. Assuming there is a single
 match, that defines which function implementation is actually called.
 
 **Proposal:** The order of patterns / overloads should not matter.
@@ -255,8 +262,8 @@ a value of type `Foo` to pass to `f` would also see the overload of `f` taking
 `Foo`. This leads to this possibility...
 
 **Alternative considered:** All overloads for a given function name should be in
-the library defining the name or in a library defining a type used in the
-argument pattern.
+the library defining the name *or* in a library defining a type used in the
+parameter pattern.
 
 The idea is that you could overload a function in another namespace, but you
 would only ever allow a call to a function if you could see both the library
@@ -352,8 +359,8 @@ meaningful at compile time. [Same is true of any generic/templated function!]
 We would like a good story here so that adding an overload to an existing
 function name doesn't break existing code.
 
-**Note:** For functions argument lists, we also support template / generic
-arguments, but that is detailed in
+**Note:** For functions parameter lists, we also support template / generic
+parameters, but that is detailed in
 [another document (TODO)](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/designs/generics-overview.md).
 
 ### Differences
@@ -374,12 +381,12 @@ overloads have a comma-separated list of patterns inside parentheses.
 
 ## Features
 
-### Positional & keyword arguments
+### Positional & keyword parameters
 
-**Rationale:** In general, positional arguments are great when either there is
+**Rationale:** In general, positional parameters are great when either there is
 an obvious order to provide the arguments (e.g. coordinates in x, y, z order) or
 the order doesn't matter (e.g. `max()` is commutative). Otherwise, keyword
-arguments can (a) prevent mistakes (mixing up source & destination) and (b)
+paarameters can (a) prevent mistakes (mixing up source & destination) and (b)
 provide documentation (what does this "True" argument mean?).
 
 Context:
@@ -395,7 +402,7 @@ initialize struct variables. When a struct type is changed to use a factory
 function / constructor for initialization, we should be able to use the same
 initialization syntax. The tuple with named components used to initialize will
 become the arguments to the factory function, which the factory function will
-declare as keyword arguments in order to match. See
+declare as keyword parameters in order to match. See
 ["Carbon struct types"](https://github.com/josh11b/carbon-lang/blob/structs/docs/design/structs.md).
 
 **Proposal:** Furthermore, I believe we should use keywords in overload
@@ -417,32 +424,34 @@ mismatch.
 
 ### Defaults / optional arguments
 
-**Rationale:** By providing a facility for specifying defaults for arguments in
+**Rationale:** By providing a facility for specifying defaults for parameters in
 the function signature and then making those arguments optional at the call
 site, we provide a number of benefits:
 
 - Brevity for common cases where the defaults are what the user wants.
 - Allow many combinations of options to be specified at the caller without a
   combinatorial explosion of function definitions.
-- Allow evolution of an API. A new argument can be added to an existing function
+- Allow evolution of an API. A new parameter can be added to an existing function
   as long as it has a default that preserves the old behavior.
 
-Note that this feature is more powerful when combined with keyword arguments. In
-C++ which only uses positional arguments, you always have to specify a prefix of
-the argument list at the call site, and so only the tail of the argument list in
-the signature is allowed to have defaults. Within the keyword arguments, any may
+Note that this feature is more powerful when combined with keyword parameters. In
+C++ which only uses positional parameters, you always have to specify a prefix of
+the argument list at the call site, and so only the tail of the parameter list in
+the signature is allowed to have defaults. Within the keyword parameters, any may
 have defaults, and the caller may skip specifying any optional argument and
 still specify later arguments.
 
-### Deduced arguments
+### Deduced parameters
 
-**Rationale:** The primary use case for deduced arguments is for type inference,
+**Rationale:** The primary use case for deduced parameters is for type inference,
 but it could also be used to infer the size of an array argument. This is mainly
 for brevity, so you don't need to specify redundant information at the call
 site. It also provides continuity with C++ which has had this feature for a
-while. TODO: add ways this is used to enhance expressivity.
+while.
 
-Note that the rules in C++ for deduced type arguments end up complex due to
+TODO: add ways this is used to enhance expressivity.
+
+Note that the rules in C++ for deduced type parameters end up complex due to
 dealing with `const` and references (both `&` and `&&`).
 
 ```
@@ -568,7 +577,7 @@ We are considering theee approaches for representing `NTuple`:
     parameters that were not specified. It would return an error if there
     are no parameters that would cause the forward function to produce that
     output (like `(Int, Bool)`). It would also return an error if there was
-    no unique way of deducing an argument (you can't deduce `value` from the
+    no unique way of deducing an parameter (you can't deduce `value` from the
     empty tuple `()`).
   A flaw with this approach is that even if we support deduction, there is
   no clear way to tell if a match using one of these is more specific than
@@ -641,7 +650,9 @@ fn MaxV5[Int:$$ N, Comparable:$ T](T: first, ... NTuple(N, T): rest) -> T;
 > Naively, this would allow you to call
 > `MaxV1(.count = 3, .repeated_value = 7)`. This is both surprising and exposes
 > an implementation detail that you wouldn't want callers to rely on. Seems like
-> we need this to express our intent more clearly.
+> we need this to express our intent more clearly. Possible solution: perhaps
+> `Array(T)` will implement an interface that defines what variadic patterns
+> it may be constructed from, instead of implicitly using every constructor.
 
 The `MaxV3` example demonstrates a case where the variadic should not consume
 all remaining arguments. There are a few cues in this example:
@@ -737,16 +748,24 @@ fn ForwardAllV1
 This is an interesting case, where the compiler will have to recognize that
 `positional` can only match positional arguments, much like the `MaxV3` case
 above, and it should leave the remaining arguments to match the second variadic
-argument.
+parameter.
 
 I suspect this will be common enough of a case that I think we should support it
 directly with a `MixedTuple(T)` type whose values are any tuple with positional
 and named members equal to `T`.
 
 ```
-// `T` can be any tuple containing types, so both positional and keyword
-// arguments are allowed.
+// `TupleofTypes` can be any tuple containing types, so both positional and
+// keyword arguments are allowed.
 fn ForwardAllV2[MixedTuple(Type):$$ TupleofTypes](... TupleOfTypes: args);
+```
+
+This expresses that `TupleOfTypes` is a tuple and contains only types, but
+this is already what we'd get for any variadic, so in principle we could allow
+this to be written:
+
+```
+fn ForwardAllV3(... auto: args);
 ```
 
 ### Conditions
@@ -771,7 +790,7 @@ consistency, but the use cases are less clear. Note that in order to satisfy the
 "overloads must be resolved at compile time" plan, these would have to be
 conditions that could be evaluated at compile time, and so generally can't use
 anything about the dynamic values being supplied as arguments. Restricting to
-generic and template arguments of the function, they could be used as part of
+generic and template parameters of the function, they could be used as part of
 the generic constraints story.
 
 **Speculation:** For example they may be useful to express a type satisfies
@@ -869,10 +888,10 @@ case the value would be bound to the name `x`.
   constants. The difference is that in the template (`:$$`) case, the value is
   available as part of type-checking, whereas the value of generic (`:$`)
   constants is only known at code generation time. In the case of generic and
-  template arguments to functions, the function body to be instantiated once for
-  every combination of values to those arguments. Template arguments prevent
+  template parameters to functions, the function body to be instantiated once for
+  every combination of values to those parameters. Template parameters prevent
   type checking until the function is instantiated so the value is known.
-  Generic arguments allow the function to be type checked once when the body is
+  Generic parameters allow the function to be type checked once when the body is
   defined. See the
   [generics overview (TODO)](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/designs/generics-overview.md)
   for more details.
