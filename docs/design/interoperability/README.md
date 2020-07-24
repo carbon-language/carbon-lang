@@ -63,7 +63,8 @@ We use the name `Cpp` because `import` needs a valid identifier.
 ## Bridge code in Carbon files
 
 > TODO: We should allow writing bridge C++ code in Carbon files to ease
-> maintenance of compatibility layers. Syntax needs to be proposed.
+> maintenance of compatibility layers. Syntax needs to be proposed, and guard
+> rails to prevent overuse/misuse should be considered.
 
 ## Name mapping
 
@@ -78,7 +79,7 @@ names are used when referencing these names from Carbon code. For example,
 
 C++ incomplete types will be mirrored into Carbon's incomplete type behavior.
 Users wanting to avoid differences in incomplete type behaviors should fully
-define the C++ types using repeated imports.
+define the C++ types using imports.
 
 Carbon names which are mapped into C++ will use a top-level namespace of
 `Carbon` by default, with the package name and namespaces represented as
@@ -91,6 +92,10 @@ backwards compatibility for C++ callers when migrating code, for example
 
 Carbon and C/C++ will have a number of types with direct mappings between the
 languages.
+
+Where performance is critical, such as primitive types, mappings are required to
+have identical memory layout between C++ and Carbon. This is necessary to
+provide inteoperability calls without a conversion cost.
 
 The behavior of mapped types will not always be identical; they need only be
 similar. For example, we expect Carbon's `UInt32` to map to C++'s `uint32_t`.
@@ -166,10 +171,9 @@ $extern("Cpp") enum Direction {
 
 > References: [Templates and generics](templates_and_generics.md).
 
-Simple C++ class templates are directly made available as Carbon templates. For
-example, ignoring allocators and their associated complexity, `std::vector<T>`
-in C++ would be available as `Cpp.std.vector(T)` in Carbon. More complex C++
-templates may need explicit bridge code.
+C++ class templates are directly made available in Carbon. For example, ignoring
+allocators and their associated complexity, `std::vector<T>` in C++ would be
+available as `Cpp.std.vector(T)` in Carbon.
 
 ### Using Carbon templates from C++
 

@@ -14,6 +14,8 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 - [Using Carbon generics/templates with C++ types in Carbon code](#using-carbon-genericstemplates-with-c-types-in-carbon-code)
 - [Using Carbon templates from C++](#using-carbon-templates-from-c)
 - [Using Carbon generics from C++](#using-carbon-generics-from-c)
+- [Open questions](#open-questions)
+  - [Auto-generate templates to use generics](#auto-generate-templates-to-use-generics)
 - [Alternatives](#alternatives)
   - [Require bridge code](#require-bridge-code)
   - [Translate C++ template code to Carbon](#translate-c-template-code-to-carbon)
@@ -21,10 +23,6 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 <!-- tocstop -->
 
 ## C++ templates
-
-Simple C++ class templates are directly made available as Carbon templates. For
-example, ignoring allocators and their associated complexity, `std::vector<T>`
-in C++ would be available as `Cpp.std.vector(T)` in Carbon.
 
 Instantiating C++ templates with a Carbon type requires that type to be made
 available to C++ code and the instantiation occurs against the C++ interface to
@@ -44,10 +42,8 @@ $extern("Cpp") struct Shape {
 var Cpp.std.vector(Shape): shapes;
 ```
 
-More complex C++ class templates may need to be explicitly instantiated using
-bridge C++ code to explicitly provide Carbon types visible within C++ to the
-appropriate C++ template parameters. The key principle is that C++ templates are
-instantiated within C++ against a C++-visible API for a given Carbon type.
+The key principle is that C++ templates are instantiated within C++ against a
+C++-visible API for a given Carbon type.
 
 ## Using Carbon generics/templates with C++ types in Carbon code
 
@@ -87,6 +83,13 @@ We could have C++ code that uses the template wrapper to use the generic:
 CppType y;
 ::Carbon::TemplateAPI(&y);
 ```
+
+## Open questions
+
+### Auto-generate templates to use generics
+
+It may be possible to auto-generate appropriate templates for C++ code to use
+generics. This requires further investigation.
 
 ## Alternatives
 

@@ -14,6 +14,8 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 - [Goals](#goals)
 - [Non-goals](#non-goals)
 - [Philosophy of interoperability layer](#philosophy-of-interoperability-layer)
+- [Alternatives](#alternatives)
+  - [Support full interoperability with non-Carbon-aware C++ toolchains](#support-full-interoperability-with-non-carbon-aware-c-toolchains)
 
 <!-- tocstop -->
 
@@ -44,7 +46,8 @@ performance, and making any performance overhead visible and opt-in.
 
 ## Non-goals
 
-- We will not make Carbon -> C++ migrations as easy as C++ -> Carbon migrations.
+- We prioritize making it easy to call C++ APIs from Carbon. Calling Carbon APIs
+  from C++ must be possible, but need not be as easy.
   - Automatically exposing all Carbon code would impose language and API
     constraints; we want to limit these constraints to where users need it.
 - We do not expect to support all C/C++ corner cases: the complexity of
@@ -72,7 +75,7 @@ performance, and making any performance overhead visible and opt-in.
   toolchain should be used to compile both C++ and Carbon in order to achieve
   full support.
   - Carbon must be able to compile C++ headers in order to translate names and
-    types.
+    types, even if it's not used to compile the C++ object files.
   - While arbitrary C++ code may be able to call into Carbon code that has been
     pre-compiled into a library, a more complex interaction like C++ code
     calling Carbon templates requires compilation of _both_ languages together.
@@ -81,7 +84,8 @@ performance, and making any performance overhead visible and opt-in.
 
 The design for interoperation between Carbon and C++ hinges on:
 
-1. A focus on types, and simple overload sets built from those types.
+1. The ability to interoperate with a wide variety of code, such as
+   classes/structs, not just free functions.
 2. A willingness to expose the idioms of C++ into Carbon code, and the other way
    around, when necessary to maximize performance.
 3. The use of wrappers, generic programming, and templates to minimize or
@@ -119,3 +123,33 @@ intersections define the interoperability layer and constrain the expressivity
 of Carbon/C++ interoperability. Our goal is that these expressivity constraints
 are wide enough to make the amount of bridge code sustainable and the overhead
 of wrappers manageable.
+
+## Alternatives
+
+### Support full interoperability with non-Carbon-aware C++ toolchains
+
+We could try to offer full interoperability with non-Carbon-aware C++
+toolchains. This would particularly include supporting features like templates.
+
+In order to do this, we'd probably need to have Carbon cross-compile to C++
+code. That way, a Carbon toolchain would be used to output a cross-compiled
+template, and then C++ would consume the cross-compiled output.
+
+Pros:
+
+- Avoids tieing users to the Carbon toolchains.
+  - Users could keep using a toolchain like GCC to compile parts of their code,
+    even while they move complex logic to Carbon.
+
+Cons:
+
+- This imposes limitations on Carbon: we must support cross-compilation to C++,
+  instead of being able to take advantage of compile-time abstractions.
+  - Particular feasibility issues may arise around generics.
+  - We can already have Carbon produce C++-compatible ABIs, exposing most APIs
+    through object files; this primarily helps with the most complex features
+    that require compile-time logic, like templates.
+
+As a matter of
+[priorities](/docs/projec/goals.md#language-goals-and-priorities), the evolution
+of Carbon should not be constrained by interoperability.

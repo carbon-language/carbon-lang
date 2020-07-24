@@ -15,6 +15,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
   - [Slice special-casing](#slice-special-casing)
   - [Mapping similar built-in types](#mapping-similar-built-in-types)
 - [Reference-like types](#reference-like-types)
+  - [Missed conversions](#missed-conversions)
 - [Ownership transfer types](#ownership-transfer-types)
 - [Copying vocabulary types](#copying-vocabulary-types)
 - [Alternatives](#alternatives)
@@ -77,10 +78,10 @@ Specific types that should provide this conversion:
 ### Mapping similar built-in types
 
 When it is not possible to convert a non-owning reference or pointer to a C++
-data structure or vocabulary type into a suitable Carbon type, a pointer to the underlying C++
-type will be used. However, its API may not match Carbon idioms or patterns, and
-may not integrate with generic Carbon code written against those idioms, or vice
-versa.
+data structure or vocabulary type into a suitable Carbon type, a pointer to the
+underlying C++ type will be used. However, its API may not match Carbon idioms
+or patterns, and may not integrate with generic Carbon code written against
+those idioms, or vice versa.
 
 For sufficiently widely used C++ types, Carbon will provide non-owning wrappers
 that map between the relevant idioms, preferably using generics. This will be a
@@ -112,6 +113,13 @@ should represent an idiomatic slice of it.
 Other non-owning value types will get automatic mappings as a use case is
 understood to be sufficiently important. We expect the vast majority of
 performance critical mappings to end up devolving to slices.
+
+### Missed conversions
+
+It's possible that the reference-like types may sometimes be wrapped. For
+example, `SomeClass<std::span>`. In this case, we may be unable to convert the
+reference-like type, leaving them exposed in Carbon as the underlying
+`std::span` type in places.
 
 ## Ownership transfer types
 
