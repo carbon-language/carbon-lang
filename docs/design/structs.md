@@ -16,7 +16,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
   - [Simple data records](#simple-data-records)
   - [Tuples and structs are both "records"](#tuples-and-structs-are-both-records)
     - [Record type equality](#record-type-equality)
-    - [Type deduction and type functions](#type-deduction-and-type-functions)
+    - [Deducing function type arguments](#deducing-function-type-arguments)
     - [Type immutability](#type-immutability)
   - [Simple initialization from a tuple](#simple-initialization-from-a-tuple)
   - [Defaults](#defaults)
@@ -373,8 +373,7 @@ struct {
 
 #### Deducing function type arguments
 
-Structs define types that can be deduced when calling a function.
-For example:
+Structs define types that can be deduced when calling a function. For example:
 
 ```
 // Templated function that works for any value with an integer `.x` member.
@@ -2250,8 +2249,8 @@ Things get more exciting if the mixin wants to access data fields or functions
 that it doesn't define, and instead requires are defined in the destination
 struct being added to. It seems like we might reuse the `required` keyword
 (mentioned
-[in the "inheritance" section above](#question-extension--inheritance))
-to define functions and their signatures that must be present.
+[in the "inheritance" section above](#question-extension--inheritance)) to
+define functions and their signatures that must be present.
 
 **Background:** We might want to adopt the concept of a "protocol" that the
 destination has to "match" according to:
