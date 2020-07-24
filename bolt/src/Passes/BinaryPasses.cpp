@@ -13,6 +13,7 @@
 #include "BinaryPasses.h"
 #include "ParallelUtilities.h"
 #include "Passes/ReorderAlgorithm.h"
+#include "Passes/ReorderFunctions.h"
 #include "llvm/Support/Options.h"
 
 #include <numeric>
@@ -60,6 +61,7 @@ extern cl::opt<bolt::MacroFusionType> AlignMacroOpFusion;
 extern cl::opt<unsigned> Verbosity;
 extern cl::opt<bool> EnableBAT;
 extern cl::opt<bool> UpdateDebugSections;
+extern cl::opt<bolt::ReorderFunctions::ReorderType> ReorderFunctions;
 extern bool isHotTextMover(const bolt::BinaryFunction &Function);
 
 enum DynoStatsSortOrder : char {
@@ -1138,7 +1140,9 @@ void AssignSections::runOnFunctions(BinaryContext &BC) {
   if (!BC.HasRelocations)
     return;
 
-  const auto UseColdSection = BC.NumProfiledFuncs > 0;
+  const auto UseColdSection =
+      BC.NumProfiledFuncs > 0 ||
+      opts::ReorderFunctions == ReorderFunctions::RT_USER;
   for (auto &BFI : BC.getBinaryFunctions()) {
     auto &Function = BFI.second;
     if (opts::isHotTextMover(Function)) {
