@@ -208,7 +208,7 @@ language.
 **Idiomatic code should perform reasonably well.** Developers should not
 regularly be required to choose between performance and readability. Although
 some software may still need fine-tuning, Carbon's design should aim to provide
-high performance without such investment.
+high performance for regular code.
 
 **Code should perform predictably.** The reader and writer of code should be
 able to easily understand its expected performance, given sufficient background
