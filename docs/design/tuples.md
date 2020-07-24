@@ -308,13 +308,11 @@ in the code: the order used for the initializer. But the ordering of the fields
 of the type is what will determine the destruction order -- which really should
 be the opposite of the order that values are constructed.
 
-**Concern:** Field order affects hidden implementation details like alignment
-and padding, and yet the field order is also API-visible in a way that clients
-almost can't avoid depending on.
-
-We may need to provide a way for users to explicitly specify a struct layout and
-an explicit (different) order of initialization for the rare structs where this
-matters.
+If a type needs to change the field order to address implementation details like
+alignment and padding, the type can be switchedto a `struct` type that will give
+additional tools and flexibility. In particular the struct can define a
+constructor that takes arguments in the old order, even after the fields of the
+struct are rearranged.
 
 ### Struct conversion
 
