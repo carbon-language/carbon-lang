@@ -205,10 +205,10 @@ concerned with ultimate performance at every moment, but in the most constrained
 scenarios they must be able to "open up the hood" without switching to another
 language.
 
-**Idiomatic code should perform reasonably well.** Developers should not
+**Idiomatic code should be fast.** Developers should not
 regularly be required to choose between performance and readability. Although
-some software may require complex code for performance tuning, Carbon's design
-should aim to provide high performance for regular code.
+performance tuning may in rare cases require complex or surprising code, Carbon's design
+should ensure regular, idiomatic code usually results in high performance.
 
 **Code should perform predictably.** The reader and writer of code should be
 able to easily understand its expected performance, given sufficient background
