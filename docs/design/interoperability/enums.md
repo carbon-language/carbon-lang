@@ -11,7 +11,14 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 <!-- toc -->
 
 - [C/C++ enums in Carbon](#cc-enums-in-carbon)
+  - [Stripping common prefixes](#stripping-common-prefixes)
+  - [Renaming enum values](#renaming-enum-values)
+  - [C++ enum classes](#c-enum-classes)
 - [Carbon enums in C/C++](#carbon-enums-in-cc)
+- [Open questions](#open-questions)
+  - [Enum-to-integer implicit casts](#enum-to-integer-implicit-casts)
+  - [Integer-to-enum casts](#integer-to-enum-casts)
+  - [Enum sizes](#enum-sizes)
 
 <!-- tocstop -->
 
@@ -50,10 +57,39 @@ enum Direction {
 var Direction: x = Direction.East;
 ```
 
+### Stripping common prefixes
+
 Sometimes enum names may repeat the enum identifier; for example,
-`DIRECTION_EAST` instead of `East`. To help with this case, we may want to
-support renaming of enum entries. For example, to rename in a way that results
-in a match to the above Carbon calling convention, we add `carbon_enum`:
+`DIRECTION_EAST` instead of `East`. To help with this case, we strip common
+prefixes by default, with heuristics to handle various naming styles to only
+strip on word boundaries.
+
+For example, this kind of enum would automatically strip `DIRECTION_` when
+renaming:
+
+```cc
+enum Direction {
+  DIRECTION_EAST,
+  DIRECTION_WEST,
+  DIRECTION_NORTH,
+  DIRECTION_SOUTH,
+};
+```
+
+The reason for detecting word boundaries may be seen in this example, where
+`SHAPE_C` is the common prefix but `SHAPE_` is what should be stripped:
+
+```cc
+enum Shape {
+  SHAPE_CIRCLE,
+  SHAPE_CYLINDER,
+};
+```
+
+### Renaming enum values
+
+In order to change names, such as making more idiomatic casing, we can also add
+a `carbon_enum` attribute:
 
 ```cc
 enum Direction {
@@ -63,6 +99,8 @@ enum Direction {
   DIRECTION_SOUTH,
 } __attribute__((carbon_enum("East:West:North:South"));
 ```
+
+### C++ enum classes
 
 If using enum class, we'd expect similar behavior:
 
@@ -111,3 +149,26 @@ enum class Direction {
   South = 22,
 };
 ```
+
+## Open questions
+
+### Enum-to-integer implicit casts
+
+C and C++ APIs sometimes rely on enums being implicitly convertible to integers.
+It might be the case that, either by default or always, Carbon enums will not be
+convertible to integers in order to avoid even a remote possibility of anyone
+relying on numeric values.
+
+Ignoring this issue will lead to some APIs being non-ergonomic. That's okay, but
+we should ensure these APIs are still usable.
+
+### Integer-to-enum casts
+
+C and C++ APIs also sometimes cast arbitrary integers into enum values, which
+Carbon enums may decide to prohibit. Ignoring this issue could lead to
+miscompiles.
+
+### Enum sizes
+
+Carbon enum sizes and C++ enum sizes may end up varying. We may need some kind
+of attribute support in order to ensure sizes work correctly when bridging.
