@@ -107,8 +107,8 @@ focused on these types that represent contiguous data in memory.
 built from any pointer-and-size formulation.
 
 `std::string_view` and similar views into C++ string data present a special
-case. Gven a mapping for `std::string` to a Carbon type, `std::string_view`
-should represent an idiomatic slice of it.
+case. Given a mapping for `std::string` to a Carbon type, the mapping of `std::string_view`
+should be the type that represents an idiomatic slice of it.
 
 Other non-owning value types will get automatic mappings as a use case is
 understood to be sufficiently important. We expect the vast majority of
