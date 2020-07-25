@@ -361,7 +361,8 @@ although we may come to different conclusions regarding the principles.
 **Design features to be simple to implement.** Syntax, structure, and language
 features should be chosen while keeping the complexity of the implementation
 manageable. This reduces bugs, and will in most cases make the features easier
-to understand.
+to understand. For performance features, simplicity of implementation is often
+the best path to ensure predictability of performance.
 
 #### Practical safety guarantees and testing mechanisms
 
