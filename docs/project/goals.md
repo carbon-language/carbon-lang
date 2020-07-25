@@ -205,10 +205,10 @@ concerned with ultimate performance at every moment, but in the most constrained
 scenarios they must be able to "open up the hood" without switching to another
 language.
 
-**Idiomatic code should be fast.** Developers should not
-regularly be required to choose between performance and readability. Although
-performance tuning may in rare cases require complex or surprising code, Carbon's design
-should ensure regular, idiomatic code usually results in high performance.
+**Idiomatic code should be fast.** Developers should not regularly be required
+to choose between performance and readability. Although performance tuning may
+in rare cases require complex or surprising code, Carbon's design should ensure
+regular, idiomatic code usually results in high performance.
 
 **Code should perform predictably.** The reader and writer of code should be
 able to easily understand its expected performance, given sufficient background
@@ -430,11 +430,11 @@ Cross-file context has an especially damaging effect on the potential
 distributed build graph options. Without these options, we will again be unable
 to provide fast developer iteration as the codebase scales up.
 
-**Support incremental compilation and linking, including parallel and
-distributed strategies.** Iteration requires frequent builds. Incremental
-compilation and linking should make these builds faster, particularly if
-relatively little has changed. Breaking apart compilation and linking units also
-enables better scalability options for build systems of large software.
+**Support incremental compilation, including parallel and distributed
+strategies.** Iteration requires frequent builds. Incremental compilation should
+make these builds faster, particularly if relatively little has changed.
+Breaking apart compilation units also enables better scalability options for
+build systems of large software.
 
 #### Modern OS platforms, hardware architectures, and environments
 
