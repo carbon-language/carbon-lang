@@ -612,6 +612,8 @@ use cases:
 matching the maximum sequence of arguments not matched by other elements of the
 pattern that may be assigned to the type of the variadic.
 
+#### Arguments all the same type
+
 In these examples, we define variations on `Max` which take a variable number of
 positional arguments, all of which must have the same type:
 
@@ -640,6 +642,11 @@ fn MaxV4[Int:$$ N, Comparable:$ T](... NTuple(N, T): args) -> T;
 
 // In this case, `T` is deduced from the first argument, so `N` can be 0.
 fn MaxV5[Int:$$ N, Comparable:$ T](T: first, ... NTuple(N, T): rest) -> T;
+
+// In this case, the tuple is used to construct a `DynamicLengthArray`.
+// Since the length is passed at runtime, we only need to instantiate
+// `MaxV6` once per type, independent of the length.
+fn MaxV6[Comparable:$ T](... DynamicLengthArray(T): args) -> T;
 ```
 
 **Concern:**
@@ -701,6 +708,63 @@ fn MaxV4[Int:$$ N, Comparable:$ T](... NTuple(N, T): args) -> T {
 }
 ```
 
+Here we'd probably restrict `N > 0` to avoid problems deducing `T` in the `N==0`
+case. The `V5` way of writing `Max` would allow `N==0`, since `T` is determined
+by another argument:
+
+```
+fn MaxV5[Int:$$ N, Comparable:$$ T](T: first, ... NTuple(N, T): rest) -> T {
+  // Note: This is `@meta if` so the `else` branch is not type-checked
+  // when `N == 0`.
+  @meta if (N == 0) {
+    return first;
+  } else {
+    // The `...` unpacks the tuple `rest`.
+    var T: max_of_rest = Max(rest...);
+    if (first < max_of_rest) {
+      return max_of_rest;
+    } else {
+      return first;
+    }
+  }
+
+// `N` == 2, `T` == Int
+Assert(Max(1, 3, 2) == 3);
+```
+
+We also allow types that support dynamic lengths, avoiding the need
+to instantiate a different version of the function for each number of arguments:
+
+```
+fn MaxV6[Comparable:$ T](... DynamicLengthArray(T): args) -> T {
+  Assert(args.length() > 0);
+  var T: biggest_so_far = args[0];
+  var Int: i = 1;
+  loop {
+    if (i >= length) break;
+    if (args[i] > biggest_so_far) {
+      biggest_so_far = args[i];
+    }
+    ++i;
+  }
+  return biggest_so_far;
+}
+
+// `T` == Int
+Assert(Max(1, 3, 2) == 3);
+// `T` == Int as well, same instantiation of `Max`.
+Assert(Max(1, 2, 4, 8, 16) == 16);
+```
+
+Again, there is an issue with deducing the type `T` if there are no arguments to
+match, in addition to it being an error case for this particular example.
+
+**Question:** Sometimes it seems like `...` matching no arguments is an awkward
+edge case where things break, other times it seems fine. How should we handle
+that?
+
+#### Varying argument types all implementing one interface
+
 To support `StrCat`, we need to say "the type of `args` is a tuple of types that
 are not necessarily all the same but all implement the `ToString` interface." If
 that type is `TupleOfNTypes`, then the type of _that_ is a tuple with elements
@@ -711,29 +775,32 @@ fn StrCat[Int:$$ N, NTuple(N, ToString):$$ TupleOfNTypes]
     (... TupleOfNTypes: args) -> String;
 ```
 
+Similarly, we define `NamedTuple(T)` to be the type whose
+values are tuples with any set of named arguments, whose values are all `T`.
+This construct allows us to implement `EncodeAsJSON`, assuming we implement
+interface `JSONType` for any supported type:
+
+```
+fn EncodeAsJSON[NamedTuple(JSONType):$$ NamedTupleofJSONTypes]
+    (... NamedTupleOfJSONTypes: args) -> String;
+```
+
+#### Forwarding arguments of any type
+
 For the forwarding use case, we can forward positional arguments using the same
-approach as for `StrCat` above:
+approach as for `StrCat` above, using `Type` to allow all types instead of
+restricting to types implementing an interface:
 
 ```
 fn ForwardPositional[Int:$$ N, NTuple(N, Type):$$ TupleOfNTypes]
     (... TupleOfNTypes: args);
 ```
 
-To forward keyword arguments, we need `NamedTuple(T)`, which is a type whose
-values are tuples with any set of named arguments, whose values are all `T`.
+To forward keyword arguments, we passe `Type` to `NamedTuple`: 
 
 ```
 fn ForwardKeyword[NamedTuple(Type):$$ NamedTupleofTypes]
     (... NamedTupleOfTypes: args);
-```
-
-This construct also allows us to implement `EncodeAsJSON`, assuming we implement
-interface `JSONType` for any supported type:
-
-```
-fn EncodeAsJSON[NamedTuple(JSONType):$$ NamedTupleofJSONTypes]
-    (... NamedTupleOfJSONTypes: args) -> String;
-
 ```
 
 We could combine these two approaches to forward all arguments:
