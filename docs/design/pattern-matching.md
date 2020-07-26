@@ -534,7 +534,7 @@ input from a specific output value, as in:
   var I(Int): y;
   // We do not attempt to figure out that if `T` was `Int`, then `I(T)` is equal
   // to the type of `y`.
-  J(y);
+- J(y);
 ```
 
 If we wanted to support this case, we would require the type function to satisfy
@@ -564,7 +564,7 @@ is the tuple of the component types, then `NTuple(N, T)` is a type. For example,
 the type of `(1, 2, 3)` is `(Int, Int, Int) == NTuple(3, Int)`. However, note
 that `NTuple` isn't even injective when `N == 0`!
 
-We are considering theee approaches for representing `NTuple`:
+We are considering three approaches for representing `NTuple`:
 
 - It could be something built-in and not writable in user code. This is
   undesirable because there will likely be variations on `NTuple` that user's
@@ -591,7 +591,7 @@ We are considering theee approaches for representing `NTuple`:
 
 ### Variadics (...)
 
-Variadics are when a pattern can match any number of arguments.
+Variadics are when a single pattern can match a variable number of arguments.
 
 **Rationale:** Variadics are important for expressiveness. There are a number of
 use cases:
@@ -608,9 +608,29 @@ use cases:
 - Some functions forward to other functions, passing all the positional and
   keyword arguments after a certain point along.
 
+Variadic patterns start with `...`. The arguments that match the pattern are
+packaged into a tuple which is then assigned to the named argument. That named
+argument may need to have a template type so it can match an unknown number
+of arguments.
+
 **Proposal:** A variadic element of the pattern follows a "max munch" rule,
 matching the maximum sequence of arguments not matched by other elements of the
 pattern that may be assigned to the type of the variadic.
+
+As a degenerate case, the parameter could have a fixed tuple type, which would
+mean it would only match a fixed number of arguments.
+
+```
+fn TakesThreeIntsV1(Int: x, Int: y, Int: z) -> Int {
+  return x + y + z;
+}
+
+// Equivalent to V1, except in the body of the function you have a single
+// tuple instead of three separate named parameters.
+fn TakesThreeIntsV2(... (Int, Int, Int): t) -> Int {
+  return t[0] + t[1] + t[2];
+}
+```
 
 #### Arguments all the same type
 
