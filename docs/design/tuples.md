@@ -446,7 +446,7 @@ General syntax for pattern matching some number of arguments is "`...`
 &lt;Type>`:` &lt;Name>". The named parameter is set to a tuple containing the
 matched arguments. Since we are using this mechanism to match an unknown number
 of arguments, typically we will need a template type. For this we provide a
-type-type named `TupleType` whose values are the set of all tuple types.
+type-type named `MixedTuple(Type)` whose values are the set of all tuple types.
 
 ```
 fn Overload(Int: s1, Int: s2, Int: s3) -> Int {
@@ -456,11 +456,11 @@ fn Overload((|Int, Int, Int|): tuple) -> Int {
   return 2;
 }
 // T can be any tuple type.
-fn Forward1[TupleType:$$ T](... T: args) -> Int {
+fn Forward1[MixedTuple(Type):$$ T](... T: args) -> Int {
   // Using the unpacking syntax for tuples.
   return Overload(args...);
 }
-fn Forward2[TupleType:$$ T](... T: args) -> Int {
+fn Forward2[MixedTuple(Type):$$ T](... T: args) -> Int {
   // `args` is a tuple so this calls the second `Overload`.
   return Overload(args);
 }
@@ -470,17 +470,22 @@ Assert(Forward1( (| 1, 2, 3 |) ) == 2);
 Assert(Forward2(1, 2, 3) == 2);
 ```
 
-We'll also have type-types `UnnamedTupleType` and `NamedTupleType` for matching
-just positional or keyword arguments.
+For an interface named `Foo`, using `MixedTuple(Foo)` instead of
+`MixedTuple(Type)` would restrict to just types implementing `Foo`.
+
+We define `NTuple(N, V)` to be equivalent to the tuple
+`(|V, V, ...|)` with `N` components. This makes `NTuple(N, Type)` the
+type-type matching just positional arguments. 
+
+Lastly `NamedTuple(Type)` is the type-type for matching just keyword
+arguments.
 
 **Question:** We need to decide on the mechanism for determining how many
 arguments are matched by the `...`. Is it influenced by &lt;Type>? Or the next
 thing in the parameter list?
 
-We shall also define a type `NTuple[Type:$ T](Int:$$ N, T:$ V)` which is
-equivalent to the tuple `(|V, V, ...|)` with `N` components. This lets us
-declare variadic arguments that all have to be the same type, and the `Max`
-function:
+Passing a type into `NTuple` lets us declare variadic arguments
+that all have to be the same type, and the `Max` function:
 
 ```
 fn Max[Int:$$ N, Comparable:$$ T](... NTuple(N, T): args) -> T { ... }
@@ -500,6 +505,7 @@ fn Max[Int:$$ N, Comparable:$$ T](T: first, ... NTuple(N, T): rest) -> T {
   @meta if (N == 0) {
     return first;
   } else {
+    // The `...` unpacks the tuple `rest`.
     var T: max_of_rest = Max(rest...);
     if (first < max_of_rest) {
       return max_of_rest;
@@ -512,7 +518,7 @@ fn Max[Int:$$ N, Comparable:$$ T](T: first, ... NTuple(N, T): rest) -> T {
 Assert(Max(1, 3, 2) == 3);
 ```
 
-We also allow this to be passed things with dynamic lengths, avoiding the need
+We also allow types that support dynamic lengths, avoiding the need
 to instantiate a different version of the function for each number of arguments:
 
 ```
