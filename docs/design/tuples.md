@@ -494,60 +494,12 @@ fn Max[Int:$$ N, Comparable:$$ T](... NTuple(N, T): args) -> T { ... }
 Assert(Max(1, 3, 2) == 3);
 ```
 
-Here we'd probably restrict `N > 0` to avoid problems deducing `T` in the `N==0`
-case. Another way of writing `Max` would allow `N==0`, since `T` is determined
-by another argument:
-
-```
-fn Max[Int:$$ N, Comparable:$$ T](T: first, ... NTuple(N, T): rest) -> T {
-  // Note: This is `@meta if` so the `else` branch is not type-checked
-  // when `N == 0`.
-  @meta if (N == 0) {
-    return first;
-  } else {
-    // The `...` unpacks the tuple `rest`.
-    var T: max_of_rest = Max(rest...);
-    if (first < max_of_rest) {
-      return max_of_rest;
-    } else {
-      return first;
-    }
-  }
-
-// `N` == 2, `T` == Int
-Assert(Max(1, 3, 2) == 3);
-```
-
 We also allow types that support dynamic lengths, avoiding the need
 to instantiate a different version of the function for each number of arguments:
 
 ```
-fn Max[Comparable:$ T](... DynamicLengthArray(T): args) -> T {
-  Assert(args.length() > 0);
-  var T: biggest_so_far = args[0];
-  var Int: i = 1;
-  loop {
-    if (i >= length) break;
-    if (args[i] > biggest_so_far) {
-      biggest_so_far = args[i];
-    }
-    ++i;
-  }
-  return biggest_so_far;
-}
-
-// `T` == Int
-Assert(Max(1, 3, 2) == 3);
-// `T` == Int as well, same instantiation of `Max`.
-Assert(Max(1, 2, 4, 8, 16) == 16);
+fn Max[Comparable:$ T](... DynamicLengthArray(T): args) -> T { ... }
 ```
-
-Again, there is an issue with deducing the type `T` if there are no arguments to
-match, in addition to it being an error case for this particular example.
-
-**Question:** Sometimes it seems like `...` matching no arguments is an awkward
-edge case where things break, other times it seems fine. How should we handle
-that?
 
 ### Concern
 
