@@ -38,11 +38,11 @@ if __name__ == "__main__":
             print("ERROR: %s doesn't have a title on the first line." % file)
             error = True
         proposals.append(
-            "- [%s - %s](%s)" % (file_match[1], title_match[1], file)
+            "-   [%s - %s](%s)" % (file_match[1], title_match[1], file)
         )
         decision_file = "p%s-decision.md" % file_match[1]
         if os.path.exists(os.path.join(proposal_dir, decision_file)):
-            proposals.append("  - [Decision](%s)" % decision_file)
+            proposals.append("    -   [Decision](%s)" % decision_file)
     # We print batched errors for usability, but still need to exit with
     # failure.
     if error:
