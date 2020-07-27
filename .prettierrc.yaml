@@ -2,8 +2,9 @@ printWidth: 80
 proseWrap: 'always'
 singleQuote: true
 tabWidth: 4
+trailingComma: 'es5'
 useTabs: false
 overrides:
-  - files: '*.js'
-    options:
-      tabWidth: 2
+    - files: '*.md'
+      options:
+          tabWidth: 4
