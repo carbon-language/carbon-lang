@@ -1419,8 +1419,8 @@ extern "C" void instrumentIndirectCall(uint64_t Target, uint64_t IndCallID) {
 extern "C" __attribute((naked)) void __bolt_instr_indirect_call()
 {
   __asm__ __volatile__(SAVE_ALL
-                       "mov 0x88(%%rsp), %%rdi\n"
-                       "mov 0x80(%%rsp), %%rsi\n"
+                       "mov 0x90(%%rsp), %%rdi\n"
+                       "mov 0x88(%%rsp), %%rsi\n"
                        "call instrumentIndirectCall\n"
                        RESTORE_ALL
                        "pop %%rdi\n"
@@ -1433,8 +1433,8 @@ extern "C" __attribute((naked)) void __bolt_instr_indirect_call()
 extern "C" __attribute((naked)) void __bolt_instr_indirect_tailcall()
 {
   __asm__ __volatile__(SAVE_ALL
-                       "mov 0x80(%%rsp), %%rdi\n"
-                       "mov 0x78(%%rsp), %%rsi\n"
+                       "mov 0x88(%%rsp), %%rdi\n"
+                       "mov 0x80(%%rsp), %%rsi\n"
                        "call instrumentIndirectCall\n"
                        RESTORE_ALL
                        "add $16, %%rsp\n"

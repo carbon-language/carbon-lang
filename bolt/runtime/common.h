@@ -6,6 +6,7 @@
 #include <elf.h>
 #endif
 
+// Save all registers while keeping 16B stack alignment
 #define SAVE_ALL                                                               \
   "push %%rax\n"                                                               \
   "push %%rbx\n"                                                               \
@@ -21,9 +22,12 @@
   "push %%r12\n"                                                               \
   "push %%r13\n"                                                               \
   "push %%r14\n"                                                               \
-  "push %%r15\n"
+  "push %%r15\n"                                                               \
+  "sub $8, %%rsp\n"
 
+// Mirrors SAVE_ALL
 #define RESTORE_ALL                                                            \
+  "add $8, %%rsp\n"                                                            \
   "pop %%r15\n"                                                                \
   "pop %%r14\n"                                                                \
   "pop %%r13\n"                                                                \
