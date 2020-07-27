@@ -78,17 +78,11 @@ always run Prettier after markdown-toc.
 > Installing and running manually is optional, but may be helpful.
 
 We use [Prettier](https://prettier.io/) for formatting. There is an
-[rc file](/.prettierrc) for configuration.
+[rc file](/.prettierrc.yaml) for configuration.
 
 ### vim-prettier
 
-If you use [vim-prettier](https://github.com/prettier/vim-prettier), it may help
-to add to your `.vimrc`:
-
-```
-let g:prettier#config#print_width = '80'
-let g:prettier#config#prose_wrap = 'always'
-let g:prettier#config#single_quote = 'true'
-let g:prettier#config#tab_width = '4'
-let g:prettier#config#use_tabs = 'false'
-```
+If you use [vim-prettier](https://github.com/prettier/vim-prettier), the
+`.prettierrc.yaml` should still apply as long as `config_precedence` is set to
+the default `file-override`. However, we may need to add additional settings
+where the `vim-prettier` default diverges from `prettier`, as we notice them.

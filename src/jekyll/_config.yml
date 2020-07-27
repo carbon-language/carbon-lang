@@ -12,32 +12,32 @@ destination: ./.gen-site
 markdown: CommonMark
 
 exclude:
-    - src/
+  - src/
 
 include:
-    - '*.md'
+  - '*.md'
 
 feedback_disable: true
 
 sidebars:
-    - sidebar
+  - sidebar
 
 defaults:
-    - values:
-          layout: 'page'
-          search: true
-          topnav: topnav
+  - values:
+      layout: 'page'
+      search: true
+      topnav: topnav
 
 plugins:
-    # https://github.com/benbalter/jekyll-commonmark
-    - jekyll-commonmark
-    # https://github.com/benbalter/jekyll-default-layout
-    - jekyll-default-layout
-    # https://github.com/benbalter/jekyll-optional-front-matter
-    - jekyll-optional-front-matter
-    # https://github.com/benbalter/jekyll-readme-index
-    - jekyll-readme-index
-    # https://github.com/benbalter/jekyll-relative-links
-    - jekyll-relative-links
-    # https://github.com/benbalter/jekyll-titles-from-headings
-    - jekyll-titles-from-headings
+  # https://github.com/benbalter/jekyll-commonmark
+  - jekyll-commonmark
+  # https://github.com/benbalter/jekyll-default-layout
+  - jekyll-default-layout
+  # https://github.com/benbalter/jekyll-optional-front-matter
+  - jekyll-optional-front-matter
+  # https://github.com/benbalter/jekyll-readme-index
+  - jekyll-readme-index
+  # https://github.com/benbalter/jekyll-relative-links
+  - jekyll-relative-links
+  # https://github.com/benbalter/jekyll-titles-from-headings
+  - jekyll-titles-from-headings
