@@ -10,10 +10,10 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 <!-- toc -->
 
-- [TODO](#todo)
-- [Overview](#overview)
-- [Alternatives](#alternatives)
-  - [Types before or after name](#types-before-or-after-name)
+-   [TODO](#todo)
+-   [Overview](#overview)
+-   [Alternatives](#alternatives)
+    -   [Types before or after name](#types-before-or-after-name)
 
 <!-- tocstop -->
 

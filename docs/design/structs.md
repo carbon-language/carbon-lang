@@ -10,11 +10,11 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 <!-- toc -->
 
-- [TODO](#todo)
-- [Overview](#overview)
-- [Open questions](#open-questions)
-  - [`self` type](#self-type)
-  - [Default access control level](#default-access-control-level)
+-   [TODO](#todo)
+-   [Overview](#overview)
+-   [Open questions](#open-questions)
+    -   [`self` type](#self-type)
+    -   [Default access control level](#default-access-control-level)
 
 <!-- tocstop -->
 
@@ -84,10 +84,10 @@ the type.
 
 Some things in C++ are notably absent or orthogonally handled:
 
-- No need for `static` functions, they simply don't take an initial `self`
-  parameter.
-- No `static` variables because there are no global variables. Instead, can have
-  scoped constants.
+-   No need for `static` functions, they simply don't take an initial `self`
+    parameter.
+-   No `static` variables because there are no global variables. Instead, can
+    have scoped constants.
 
 ## Open questions
 

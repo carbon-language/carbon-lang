@@ -10,8 +10,8 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 <!-- toc -->
 
-- [TODO](#todo)
-- [Basic functions](#basic-functions)
+-   [TODO](#todo)
+-   [Basic functions](#basic-functions)
 
 <!-- tocstop -->
 

@@ -10,14 +10,14 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 <!-- toc -->
 
-- [TODO](#todo)
-- [Overview](#overview)
-  - [Pattern match control flow](#pattern-match-control-flow)
-  - [Pattern matching in local variables](#pattern-matching-in-local-variables)
-- [Open questions](#open-questions)
-  - [Slice or array nested value pattern matching](#slice-or-array-nested-value-pattern-matching)
-  - [Generic/template pattern matching](#generictemplate-pattern-matching)
-  - [Pattern matching as function overload resolution](#pattern-matching-as-function-overload-resolution)
+-   [TODO](#todo)
+-   [Overview](#overview)
+    -   [Pattern match control flow](#pattern-match-control-flow)
+    -   [Pattern matching in local variables](#pattern-matching-in-local-variables)
+-   [Open questions](#open-questions)
+    -   [Slice or array nested value pattern matching](#slice-or-array-nested-value-pattern-matching)
+    -   [Generic/template pattern matching](#generictemplate-pattern-matching)
+    -   [Pattern matching as function overload resolution](#pattern-matching-as-function-overload-resolution)
 
 <!-- tocstop -->
 
@@ -75,15 +75,15 @@ introduced by the `if` keyword. The value pattern has to match, and then the
 predicate has to evaluate to true for the overall pattern to match. Value
 patterns can be composed of the following:
 
-- An expression (`42` for example), whose value must be equal to match.
-- An optional type (`Int` for example), followed by a `:` and either an
-  identifier to bind to the value or the special identifier `_` to discard the
-  value once matched.
-- A destructuring pattern containing a sequence of value patterns
-  (`(Float: x, Float: y)`) which match against tuples and tuple like values by
-  recursively matching on their elements.
-- An unwrapping pattern containing a nested value pattern which matches against
-  a variant or variant-like value by unwrapping it.
+-   An expression (`42` for example), whose value must be equal to match.
+-   An optional type (`Int` for example), followed by a `:` and either an
+    identifier to bind to the value or the special identifier `_` to discard the
+    value once matched.
+-   A destructuring pattern containing a sequence of value patterns
+    (`(Float: x, Float: y)`) which match against tuples and tuple like values by
+    recursively matching on their elements.
+-   An unwrapping pattern containing a nested value pattern which matches
+    against a variant or variant-like value by unwrapping it.
 
 In order to match a value, whatever is specified in the pattern must match.
 Using `auto` for a type will always match, making `auto: _` the wildcard

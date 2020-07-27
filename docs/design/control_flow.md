@@ -10,11 +10,11 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 <!-- toc -->
 
-- [TODO](#todo)
-- [Overview](#overview)
-- [Open questions](#open-questions)
-  - [`if` blocks](#if-blocks)
-  - [`break` and `continue`](#break-and-continue)
+-   [TODO](#todo)
+-   [Overview](#overview)
+-   [Open questions](#open-questions)
+    -   [`if` blocks](#if-blocks)
+    -   [`break` and `continue`](#break-and-continue)
 
 <!-- tocstop -->
 

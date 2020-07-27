@@ -10,57 +10,57 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 <!-- toc -->
 
-- [Context and disclaimer](#context-and-disclaimer)
-  - [Example code](#example-code)
-- [Basic syntax](#basic-syntax)
-  - [Code and comments](#code-and-comments)
-  - [Files, libraries, and packages](#files-libraries-and-packages)
-  - [Names and scopes](#names-and-scopes)
-    - [Naming conventions](#naming-conventions)
-    - [Aliases](#aliases)
-    - [Name lookup](#name-lookup)
-      - [Name lookup for common types](#name-lookup-for-common-types)
-  - [Expressions](#expressions)
-  - [Functions](#functions)
-  - [Blocks and statements](#blocks-and-statements)
-  - [Variables](#variables)
-  - [Lifetime and move semantics](#lifetime-and-move-semantics)
-  - [Control flow](#control-flow)
-    - [`if`/`else`](#ifelse)
-    - [`loop`, `break`, and `continue`](#loop-break-and-continue)
-    - [`return`](#return)
-- [Types](#types)
-  - [Primitive types](#primitive-types)
-  - [Composite types](#composite-types)
-    - [Tuples](#tuples)
-    - [Variants](#variants)
-    - [Pointers and references](#pointers-and-references)
-    - [Arrays and slices](#arrays-and-slices)
-  - [User-defined types](#user-defined-types)
-    - [Structs](#structs)
-      - [Allocation, construction, and destruction](#allocation-construction-and-destruction)
-      - [Assignment, copying, and moving](#assignment-copying-and-moving)
-      - [Comparison](#comparison)
-      - [Implicit and explicit conversion](#implicit-and-explicit-conversion)
-      - [Inline type composition](#inline-type-composition)
-    - [Unions](#unions)
-- [Pattern matching](#pattern-matching)
-  - [`match` control flow](#match-control-flow)
-  - [Pattern matching in local variables](#pattern-matching-in-local-variables)
-  - [Pattern matching as function overload resolution](#pattern-matching-as-function-overload-resolution)
-- [Type abstractions](#type-abstractions)
-  - [Interfaces](#interfaces)
-  - [Generics](#generics)
-  - [Templates](#templates)
-    - [Types with template parameters](#types-with-template-parameters)
-    - [Functions with template parameters](#functions-with-template-parameters)
-    - [Overloading](#overloading)
-- [Metaprogramming](#metaprogramming)
-- [Execution abstractions](#execution-abstractions)
-  - [Abstract machine and execution model](#abstract-machine-and-execution-model)
-  - [Lambdas](#lambdas)
-  - [Co-routines](#co-routines)
-- [Carbon &lt;-> C/C++ interoperability](#carbon-lt--cc-interoperability)
+-   [Context and disclaimer](#context-and-disclaimer)
+    -   [Example code](#example-code)
+-   [Basic syntax](#basic-syntax)
+    -   [Code and comments](#code-and-comments)
+    -   [Files, libraries, and packages](#files-libraries-and-packages)
+    -   [Names and scopes](#names-and-scopes)
+        -   [Naming conventions](#naming-conventions)
+        -   [Aliases](#aliases)
+        -   [Name lookup](#name-lookup)
+            -   [Name lookup for common types](#name-lookup-for-common-types)
+    -   [Expressions](#expressions)
+    -   [Functions](#functions)
+    -   [Blocks and statements](#blocks-and-statements)
+    -   [Variables](#variables)
+    -   [Lifetime and move semantics](#lifetime-and-move-semantics)
+    -   [Control flow](#control-flow)
+        -   [`if`/`else`](#ifelse)
+        -   [`loop`, `break`, and `continue`](#loop-break-and-continue)
+        -   [`return`](#return)
+-   [Types](#types)
+    -   [Primitive types](#primitive-types)
+    -   [Composite types](#composite-types)
+        -   [Tuples](#tuples)
+        -   [Variants](#variants)
+        -   [Pointers and references](#pointers-and-references)
+        -   [Arrays and slices](#arrays-and-slices)
+    -   [User-defined types](#user-defined-types)
+        -   [Structs](#structs)
+            -   [Allocation, construction, and destruction](#allocation-construction-and-destruction)
+            -   [Assignment, copying, and moving](#assignment-copying-and-moving)
+            -   [Comparison](#comparison)
+            -   [Implicit and explicit conversion](#implicit-and-explicit-conversion)
+            -   [Inline type composition](#inline-type-composition)
+        -   [Unions](#unions)
+-   [Pattern matching](#pattern-matching)
+    -   [`match` control flow](#match-control-flow)
+    -   [Pattern matching in local variables](#pattern-matching-in-local-variables)
+    -   [Pattern matching as function overload resolution](#pattern-matching-as-function-overload-resolution)
+-   [Type abstractions](#type-abstractions)
+    -   [Interfaces](#interfaces)
+    -   [Generics](#generics)
+    -   [Templates](#templates)
+        -   [Types with template parameters](#types-with-template-parameters)
+        -   [Functions with template parameters](#functions-with-template-parameters)
+        -   [Overloading](#overloading)
+-   [Metaprogramming](#metaprogramming)
+-   [Execution abstractions](#execution-abstractions)
+    -   [Abstract machine and execution model](#abstract-machine-and-execution-model)
+    -   [Lambdas](#lambdas)
+    -   [Co-routines](#co-routines)
+-   [Carbon &lt;-> C/C++ interoperability](#carbon-lt--cc-interoperability)
 
 <!-- tocstop -->
 
@@ -109,13 +109,13 @@ cleaned up during evolution.
 >
 > **TODO:** References need to be evolved.
 
-- All source code is UTF-8 encoded text. For simplicity, no other encoding is
-  supported.
-- Line comments look like `// ...`. However, they are required to be the only
-  non-whitespace on the line for readability.
-- Block comments begin with `//\{`, and end with `//\}`. They are always at the
-  start of a line.
-  - Nested block comments will be supported.
+-   All source code is UTF-8 encoded text. For simplicity, no other encoding is
+    supported.
+-   Line comments look like `// ...`. However, they are required to be the only
+    non-whitespace on the line for readability.
+-   Block comments begin with `//\{`, and end with `//\}`. They are always at
+    the start of a line.
+    -   Nested block comments will be supported.
 
 ### Files, libraries, and packages
 
@@ -125,11 +125,11 @@ cleaned up during evolution.
 
 Carbon code is organized into files, libraries, and packages:
 
-- A **file** is the unit of compilation.
-- A **library** can be made up of multiple files, and is the unit whose public
-  interface can be imported.
-- A **package** is a collection of one or more libraries, typically ones with a
-  single common source and with some close association.
+-   A **file** is the unit of compilation.
+-   A **library** can be made up of multiple files, and is the unit whose public
+    interface can be imported.
+-   A **package** is a collection of one or more libraries, typically ones with
+    a single common source and with some close association.
 
 A file belongs to precisely one library, and a library belongs to precisely one
 package.
@@ -170,27 +170,28 @@ characters as well.
 
 Our current proposed naming convention are:
 
-- `UpperCamelCase` for names of compile-time resolved constants, such that they
-  can participate in the type system and type checking of the program.
-  Comple-time constants fall into two categories:
-  - _Template_ constants that can be used in type checking, including literals.
-  - _Generic_ constants whose value is not used in type checking, but will be
-    used as part of code generation.
-- `lower_snake_case` for keywords and names of run-time resolved values.
+-   `UpperCamelCase` for names of compile-time resolved constants, such that
+    they can participate in the type system and type checking of the program.
+    Comple-time constants fall into two categories:
+    -   _Template_ constants that can be used in type checking, including
+        literals.
+    -   _Generic_ constants whose value is not used in type checking, but will
+        be used as part of code generation.
+-   `lower_snake_case` for keywords and names of run-time resolved values.
 
 As a matter of style and consistency, we will follow these conventions where
 possible and encourage convergence.
 
 For example:
 
-- An integer that is a compile-time constant sufficient to use in the
-  construction a compile-time array size might be named `N`.
-- An integer that is not available as part of the type system would be named
-  `n`, even if it happened to be immutable or only take on a single value.
-- Functions and most types will be in `UpperCamelCase`.
-- A type where only run-time type information queries are available would end up
-  as `lower_snake_case`.
-- A keyword like `import` uses `lower_snake_case`.
+-   An integer that is a compile-time constant sufficient to use in the
+    construction a compile-time array size might be named `N`.
+-   An integer that is not available as part of the type system would be named
+    `n`, even if it happened to be immutable or only take on a single value.
+-   Functions and most types will be in `UpperCamelCase`.
+-   A type where only run-time type information queries are available would end
+    up as `lower_snake_case`.
+-   A keyword like `import` uses `lower_snake_case`.
 
 #### Aliases
 
@@ -238,10 +239,10 @@ namespace Leaf {
 
 `Count` may be referred to as:
 
-- `Count` from within the `Vein` namespace.
-- `Vein.Count` from within the `Leaf` namespace.
-- `Leaf.Vein.Count` from within this file.
-- `Koala.Leaf.Vein.Count` from any arbitrary location.
+-   `Count` from within the `Vein` namespace.
+-   `Vein.Count` from within the `Leaf` namespace.
+-   `Leaf.Vein.Count` from within this file.
+-   `Koala.Leaf.Vein.Count` from any arbitrary location.
 
 Note that libraries do **not** introduce a scope; they share the scope of their
 package.
@@ -269,19 +270,19 @@ literal number like `42`: an expression that computes the integer value 42.
 
 Some common expressions in Carbon include:
 
-- Literals: `42`, `3.1419`, `"Hello World!"`
-- Operators:
+-   Literals: `42`, `3.1419`, `"Hello World!"`
+-   Operators:
 
-  - Increment and decrement: `++i`, `--j`
-    - These do not return any result.
-  - Unary negation: `-x`
-  - Arithmetic: `1 + 2`, `3 - 4`, `2 * 5`, `6 / 3`
-  - Bitwise: `2 & 3`, `2 | 4`, `3 ^ 1`, `~7`
-  - Bit shift: `1 << 3`, `8 >> 1`
-  - Comparison: `2 == 2`, `3 != 4`, `5 < 6`, `7 > 6`, `8 <= 8`, `8 >= 8`
-  - Logical: `a and b`, `c or d`
+    -   Increment and decrement: `++i`, `--j`
+        -   These do not return any result.
+    -   Unary negation: `-x`
+    -   Arithmetic: `1 + 2`, `3 - 4`, `2 * 5`, `6 / 3`
+    -   Bitwise: `2 & 3`, `2 | 4`, `3 ^ 1`, `~7`
+    -   Bit shift: `1 << 3`, `8 >> 1`
+    -   Comparison: `2 == 2`, `3 != 4`, `5 < 6`, `7 > 6`, `8 <= 8`, `8 >= 8`
+    -   Logical: `a and b`, `c or d`
 
-- Parenthesized expressions: `(7 + 8) * (3 - 1)`
+-   Parenthesized expressions: `(7 + 8) * (3 - 1)`
 
 ### Functions
 
@@ -298,10 +299,10 @@ fn Sum(Int: a, Int: b) -> Int;
 
 Breaking this apart:
 
-- `fn` is the keyword used to indicate a function.
-- Its name is `Sum`.
-- It accepts two `Int` parameters, `a` and `b`.
-- It returns an `Int` result.
+-   `fn` is the keyword used to indicate a function.
+-   Its name is `Sum`.
+-   It accepts two `Int` parameters, `a` and `b`.
+-   It returns an `Int` result.
 
 You would call this function like `Sum(1, 2)`.
 
@@ -350,10 +351,10 @@ fn Foo() {
 
 Breaking this apart:
 
-- `var` is the keyword used to indicate a variable.
-- Its name is `x`.
-- Its type is `Int`.
-- It is initialized with the value `42`.
+-   `var` is the keyword used to indicate a variable.
+-   Its name is `x`.
+-   Its type is `Int`.
+-   It is initialized with the value `42`.
 
 ### Lifetime and move semantics
 
@@ -393,9 +394,9 @@ fn Foo(Int: x) {
 
 Breaking the `Foo` function apart:
 
-- `Bar()` is invoked if `x` is less than `42`.
-- `Baz()` is invoked if `x` is greater than `77`.
-- Nothing happens if `x` is between `42` and `77`.
+-   `Bar()` is invoked if `x` is less than `42`.
+-   `Baz()` is invoked if `x` is greater than `77`.
+-   Nothing happens if `x` is between `42` and `77`.
 
 #### `loop`, `break`, and `continue`
 
@@ -426,12 +427,12 @@ fn Foo() {
 
 Breaking the `Foo` function apart:
 
-- The loop body is normally executed for all values of `x` in [0, 42).
-  - The increment of x at the end causes this.
-- If `ShouldStop()` returns true, the `break` causes the `loop` to exit early.
-- If `ShouldSkip()` returns true, the `continue` causes the `loop` to restart
-  early.
-- Otherwise, `Bar(x)` is called for values of `x` in [0, 42).
+-   The loop body is normally executed for all values of `x` in [0, 42).
+    -   The increment of x at the end causes this.
+-   If `ShouldStop()` returns true, the `break` causes the `loop` to exit early.
+-   If `ShouldSkip()` returns true, the `continue` causes the `loop` to restart
+    early.
+-   Otherwise, `Bar(x)` is called for values of `x` in [0, 42).
 
 #### `return`
 
@@ -459,9 +460,9 @@ fn Sum(Int: a, Int: b) -> Int {
 
 Carbon's core types are broken down into three categories:
 
-- Primitive types
-- Composite types
-- User-defined types
+-   Primitive types
+-   Composite types
+-   User-defined types
 
 The first two are intrinsic and directly built in the language. The last aspect
 of types allows for defining new types.
@@ -485,19 +486,19 @@ global scope.
 
 Primitive types fall into the following categories:
 
-- `Void` - a type with only one possible value: empty.
-- `Bool` - a boolean type with two possible values: `True` and `False`.
-- `Int` and `UInt` - signed and unsigned 64-bit integer types.
-  - Standard sizes are available, both signed and unsigned, including `Int8`,
-    `Int16`, `Int32`, `Int128`, and `Int256`.
-  - Overflow in either direction is an error.
-- `Float64` - a floating point type with semantics based on IEEE-754.
-  - Standard sizes are available, including `Float16`, `Float32`, and
-    `Float128`.
-  - [`BFloat16`](primitive_types.md#bfloat16) is also provided.
-- `String` - a byte sequence treated as containing UTF-8 encoded text.
-  - `StringView` - a read-only reference to a byte sequence treated as
-    containing UTF-8 encoded text.
+-   `Void` - a type with only one possible value: empty.
+-   `Bool` - a boolean type with two possible values: `True` and `False`.
+-   `Int` and `UInt` - signed and unsigned 64-bit integer types.
+    -   Standard sizes are available, both signed and unsigned, including
+        `Int8`, `Int16`, `Int32`, `Int128`, and `Int256`.
+    -   Overflow in either direction is an error.
+-   `Float64` - a floating point type with semantics based on IEEE-754.
+    -   Standard sizes are available, including `Float16`, `Float32`, and
+        `Float128`.
+    -   [`BFloat16`](primitive_types.md#bfloat16) is also provided.
+-   `String` - a byte sequence treated as containing UTF-8 encoded text.
+    -   `StringView` - a read-only reference to a byte sequence treated as
+        containing UTF-8 encoded text.
 
 ### Composite types
 
@@ -521,8 +522,8 @@ fn DoubleBoth(Int: x, Int: y) -> (Int, Int) {
 
 Breaking this example apart:
 
-- The return type is a tuple of two `Int` types.
-- The expression uses tuple syntax to build a tuple of two `Int` values.
+-   The return type is a tuple of two `Int` types.
+-   The expression uses tuple syntax to build a tuple of two `Int` values.
 
 Both of these are expressions using the tuple syntax
 `(<expression>, <expression>)`. The only difference is the type of the tuple
@@ -587,9 +588,9 @@ struct Widget {
 
 Breaking apart `Widget`:
 
-- `Widget` has three `Int` members: `x`, `y`, and `z`.
-- `Widget` has one `String` member: `payload`.
-- Given an instance `dial`, a member can be referenced with `dial.paylod`.
+-   `Widget` has three `Int` members: `x`, `y`, and `z`.
+-   `Widget` has one `String` member: `payload`.
+-   Given an instance `dial`, a member can be referenced with `dial.paylod`.
 
 More advanced `struct`s may be created:
 
@@ -614,19 +615,19 @@ fn Foo(AdvancedWidget: thing) {
 
 Breaking apart `AdvancedWidget`:
 
-- `AdvancedWidget` has a public object method `DoSomething`.
-  - `DoSomething` explicitly indicates how the `AdvancedWidget` is passed to it,
-    and there is no automatic scoping - `self` must be specified as the first
-    input. The `self` name is also a keyword that explains how to invoke this
-    method on an object.
-  - `DoSomething` accepts `AdvancedWidget` _by value_, which is easily expressed
-    here along with other constraints on the object parameter.
-- `AdvancedWidget` has two private data members: `x` and `y`.
-  - Private methods and data members are restricted to use by `AdvancedWidget`
-    only, providing a layer of easy validation of the most basic interface
-    constraints.
-- `Nestedtype` is a nested type, and can be accessed as
-  `AdvancedWidget.Nestedtype`.
+-   `AdvancedWidget` has a public object method `DoSomething`.
+    -   `DoSomething` explicitly indicates how the `AdvancedWidget` is passed to
+        it, and there is no automatic scoping - `self` must be specified as the
+        first input. The `self` name is also a keyword that explains how to
+        invoke this method on an object.
+    -   `DoSomething` accepts `AdvancedWidget` _by value_, which is easily
+        expressed here along with other constraints on the object parameter.
+-   `AdvancedWidget` has two private data members: `x` and `y`.
+    -   Private methods and data members are restricted to use by
+        `AdvancedWidget` only, providing a layer of easy validation of the most
+        basic interface constraints.
+-   `Nestedtype` is a nested type, and can be accessed as
+    `AdvancedWidget.Nestedtype`.
 
 ##### Allocation, construction, and destruction
 
@@ -697,28 +698,29 @@ fn Foo() -> Float {
 
 Breaking apart this `match`:
 
-- It accepts a value that will be inspected; in this case, the result of the
-  call to `Bar()`.
-  - It then will find the _first_ `case` that matches this value, and execute
-    that block.
-  - If none match, then it executes the default block.
-- Each `case` pattern contains a value pattern, such as `(Int: p, auto: _)`,
-  followed by an optional boolean predicate introduced by the `if` keyword.
-  - The value pattern must first match, and then the predicate must also
-    evaluate to true for the overall `case` pattern to match.
-  - Using `auto` for a type will always match.
+-   It accepts a value that will be inspected; in this case, the result of the
+    call to `Bar()`.
+    -   It then will find the _first_ `case` that matches this value, and
+        execute that block.
+    -   If none match, then it executes the default block.
+-   Each `case` pattern contains a value pattern, such as `(Int: p, auto: _)`,
+    followed by an optional boolean predicate introduced by the `if` keyword.
+    -   The value pattern must first match, and then the predicate must also
+        evaluate to true for the overall `case` pattern to match.
+    -   Using `auto` for a type will always match.
 
 Value patterns may be composed of the following:
 
-- An expression, such as `42`, whose value must be equal to match.
-- An optional type, such as `Int`, followed by a `:` and an identifier to bind
-  the value.
-  - The special identifier `_` may be used to discard the value once matched.
-- A destructuring pattern containing a sequence of value patterns, such as
-  `(Float: x, Float: y)`, which match against tuples and tuple-like values by
-  recursively matching on their elements.
-- An unwrapping pattern containing a nested value pattern which matches against
-  a variant or variant-like value by unwrapping it.
+-   An expression, such as `42`, whose value must be equal to match.
+-   An optional type, such as `Int`, followed by a `:` and an identifier to bind
+    the value.
+    -   The special identifier `_` may be used to discard the value once
+        matched.
+-   A destructuring pattern containing a sequence of value patterns, such as
+    `(Float: x, Float: y)`, which match against tuples and tuple-like values by
+    recursively matching on their elements.
+-   An unwrapping pattern containing a nested value pattern which matches
+    against a variant or variant-like value by unwrapping it.
 
 ### Pattern matching in local variables
 
@@ -742,9 +744,9 @@ fn Foo() -> Int {
 
 To break this apart:
 
-- The `Int` returned by `Bar()` matches and is bound to `p`, then returned.
-- The `(Float, Float)` returned by `Bar()` matches and is discarded by
-  `auto: _`.
+-   The `Int` returned by `Bar()` matches and is bound to `p`, then returned.
+-   The `(Float, Float)` returned by `Bar()` matches and is discarded by
+    `auto: _`.
 
 ### Pattern matching as function overload resolution
 
@@ -796,11 +798,11 @@ struct Stack(Type:$$ T) {
 
 Breaking apart the template use in `Stack`:
 
-- `Stack` is a paremeterized type accepting a type `T`.
-- `T` may be used within the definition of `Stack` anywhere a normal type would
-  be used, and will only be type checked on instantiation.
-- `var Array(T)` instantiates a parameterized type `Array` when `Stack` is
-  instantiated.
+-   `Stack` is a paremeterized type accepting a type `T`.
+-   `T` may be used within the definition of `Stack` anywhere a normal type
+    would be used, and will only be type checked on instantiation.
+-   `var Array(T)` instantiates a parameterized type `Array` when `Stack` is
+    instantiated.
 
 #### Functions with template parameters
 

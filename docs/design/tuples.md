@@ -10,14 +10,14 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 <!-- toc -->
 
-- [TODO](#todo)
-- [Overview](#overview)
-  - [Indices as compile-time constants](#indices-as-compile-time-constants)
-- [Open questions](#open-questions)
-  - [Slicing ranges](#slicing-ranges)
-  - [Single-value tuples](#single-value-tuples)
-  - [Function pattern match](#function-pattern-match)
-  - [Type vs tuple of types](#type-vs-tuple-of-types)
+-   [TODO](#todo)
+-   [Overview](#overview)
+    -   [Indices as compile-time constants](#indices-as-compile-time-constants)
+-   [Open questions](#open-questions)
+    -   [Slicing ranges](#slicing-ranges)
+    -   [Single-value tuples](#single-value-tuples)
+    -   [Function pattern match](#function-pattern-match)
+    -   [Type vs tuple of types](#type-vs-tuple-of-types)
 
 <!-- tocstop -->
 
@@ -84,18 +84,18 @@ The intent of `0 .. 2` is to be syntax for forming a sequence of indices based
 on the half-open range [0, 2). There are a bunch of questions we'll need to
 answer here:
 
-- Is this valid anywhere? Only some places?
-- What _is_ the sequence?
-  - If it is a tuple of indices, maybe that solves the above issue, and unlike
-    function call indexing with multiple indices is different from indexing with
-    a tuple of indexes.
-- Do we need syntax for a closed range (`...` perhaps, unclear if that ends up
-  _aligned_ or in _conflict_ with other likely uses of `...` in pattern
-  matching)?
-- All of these syntaxes are also very close to `0.2`, is that similarity of
-  syntax OK?
-  - Do we want to require the `..` to be surrounded by whitespace to minimize
-    that collision?
+-   Is this valid anywhere? Only some places?
+-   What _is_ the sequence?
+    -   If it is a tuple of indices, maybe that solves the above issue, and
+        unlike function call indexing with multiple indices is different from
+        indexing with a tuple of indexes.
+-   Do we need syntax for a closed range (`...` perhaps, unclear if that ends up
+    _aligned_ or in _conflict_ with other likely uses of `...` in pattern
+    matching)?
+-   All of these syntaxes are also very close to `0.2`, is that similarity of
+    syntax OK?
+    -   Do we want to require the `..` to be surrounded by whitespace to
+        minimize that collision?
 
 ### Single-value tuples
 

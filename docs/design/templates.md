@@ -10,12 +10,12 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 <!-- toc -->
 
-- [TODO](#todo)
-- [Overview](#overview)
-  - [Types with template parameters](#types-with-template-parameters)
-  - [Functions with template parameters](#functions-with-template-parameters)
-  - [Overloading](#overloading)
-  - [Constraining templates with interfaces](#constraining-templates-with-interfaces)
+-   [TODO](#todo)
+-   [Overview](#overview)
+    -   [Types with template parameters](#types-with-template-parameters)
+    -   [Functions with template parameters](#functions-with-template-parameters)
+    -   [Overloading](#overloading)
+    -   [Constraining templates with interfaces](#constraining-templates-with-interfaces)
 
 <!-- tocstop -->
 

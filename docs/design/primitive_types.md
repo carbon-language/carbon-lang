@@ -10,16 +10,16 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 <!-- toc -->
 
-- [TODO](#todo)
-- [Overview](#overview)
-  - [Integers](#integers)
-  - [Floats](#floats)
-  - [BFloat16](#bfloat16)
-- [Open questions](#open-questions)
-  - [Primitive types as code vs built-in](#primitive-types-as-code-vs-built-in)
-  - [String view vs owning string](#string-view-vs-owning-string)
-  - [Syntax for wrapping operations](#syntax-for-wrapping-operations)
-  - [Non-power-of-two sizes](#non-power-of-two-sizes)
+-   [TODO](#todo)
+-   [Overview](#overview)
+    -   [Integers](#integers)
+    -   [Floats](#floats)
+    -   [BFloat16](#bfloat16)
+-   [Open questions](#open-questions)
+    -   [Primitive types as code vs built-in](#primitive-types-as-code-vs-built-in)
+    -   [String view vs owning string](#string-view-vs-owning-string)
+    -   [Syntax for wrapping operations](#syntax-for-wrapping-operations)
+    -   [Non-power-of-two sizes](#non-power-of-two-sizes)
 
 <!-- tocstop -->
 
@@ -40,13 +40,13 @@ implicit "prelude" that is imported and aliased into all files.
 
 They in turn can be decomposed into the following categories:
 
-- A monotype `Void` (or possibly `()`, the empty tuple) that has only one
-  possible value (empty).
-- A boolean type `Bool` that has two possible values: `True` and `False`.
-- Integer types
-- Floating point types
-- A string view type which is a read-only reference to a sequence of bytes
-  typically representing (UTF-8 encoded) text.
+-   A monotype `Void` (or possibly `()`, the empty tuple) that has only one
+    possible value (empty).
+-   A boolean type `Bool` that has two possible values: `True` and `False`.
+-   Integer types
+-   Floating point types
+-   A string view type which is a read-only reference to a sequence of bytes
+    typically representing (UTF-8 encoded) text.
 
 ### Integers
 

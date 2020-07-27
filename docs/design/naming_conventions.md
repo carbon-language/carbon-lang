@@ -10,8 +10,8 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 <!-- toc -->
 
-- [TODO](#todo)
-- [Overview](#overview)
+-   [TODO](#todo)
+-   [Overview](#overview)
 
 <!-- tocstop -->
 
@@ -34,13 +34,14 @@ Our current proposed naming convention, which we at least are attempting to
 follow within Carbon documentation in order to keep code samples as consistent
 as possible, is:
 
-- `UpperCamelCase` for names of compile-time resolved constants, such that they
-  can participate in the type system and type checking of the program.
-  Comple-time constants fall into two categories:
-  - _Template_ constants that can be used in type checking, including literals.
-  - _Generic_ constants whose value is not used in type checking, but will be
-    used as part of code generation.
-- `lower_snake_case` for names of run-time resolved values.
+-   `UpperCamelCase` for names of compile-time resolved constants, such that
+    they can participate in the type system and type checking of the program.
+    Comple-time constants fall into two categories:
+    -   _Template_ constants that can be used in type checking, including
+        literals.
+    -   _Generic_ constants whose value is not used in type checking, but will
+        be used as part of code generation.
+-   `lower_snake_case` for names of run-time resolved values.
 
 As an example, an integer that is a compile-time constant sufficient to use in
 the construction a compile-time array size might be named `N`, where an integer

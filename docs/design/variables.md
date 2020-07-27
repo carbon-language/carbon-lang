@@ -10,12 +10,12 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 <!-- toc -->
 
-- [TODO](#todo)
-- [Overview](#overview)
-  - [Declaring constants](#declaring-constants)
-- [Alternatives](#alternatives)
-  - [Declaring constants](#declaring-constants-1)
-  - [Global variables](#global-variables)
+-   [TODO](#todo)
+-   [Overview](#overview)
+    -   [Declaring constants](#declaring-constants)
+-   [Alternatives](#alternatives)
+    -   [Declaring constants](#declaring-constants-1)
+    -   [Global variables](#global-variables)
 
 <!-- tocstop -->
 
