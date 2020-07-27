@@ -38,9 +38,7 @@ const updateTriageAccess = async () => {
   // Load org members.
   var orgMembers = {};
   try {
-    const ret = await octokit.paginate(octokit.orgs.listMembers, {
-      org: org,
-    });
+    const ret = await octokit.paginate(octokit.orgs.listMembers, { org: org });
     for (var i = 0; i < ret.length; ++i) {
       if (ignore.indexOf(ret[i].login) >= 0) continue;
       orgMembers[ret[i].id] = ret[i].login;
