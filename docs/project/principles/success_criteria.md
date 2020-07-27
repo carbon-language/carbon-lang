@@ -10,14 +10,14 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 <!-- toc -->
 
-- [Principle](#principle)
-- [Applications of these principles](#applications-of-these-principles)
-  - [Modern OS platforms, hardware architectures, and environments](#modern-os-platforms-hardware-architectures-and-environments)
-    - [OS platforms](#os-platforms)
-    - [Hardware architectures](#hardware-architectures)
-    - [Historical platforms](#historical-platforms)
-  - [Interoperability with and migration from existing C++ code](#interoperability-with-and-migration-from-existing-c-code)
-    - [Migration tooling](#migration-tooling)
+-   [Principle](#principle)
+-   [Applications of these principles](#applications-of-these-principles)
+    -   [Modern OS platforms, hardware architectures, and environments](#modern-os-platforms-hardware-architectures-and-environments)
+        -   [OS platforms](#os-platforms)
+        -   [Hardware architectures](#hardware-architectures)
+        -   [Historical platforms](#historical-platforms)
+    -   [Interoperability with and migration from existing C++ code](#interoperability-with-and-migration-from-existing-c-code)
+        -   [Migration tooling](#migration-tooling)
 
 <!-- tocstop -->
 
@@ -49,22 +49,22 @@ This should not be considered an exhaustive list of important platforms.
 
 Our priority OS platforms are modern versions of:
 
-- Linux, including common distributions, Android and ChromeOS
-- FreeBSD
-- Windows
-- macOS and iOS
-- Fuchsia
-- WebAssembly
-- Bare metal
+-   Linux, including common distributions, Android and ChromeOS
+-   FreeBSD
+-   Windows
+-   macOS and iOS
+-   Fuchsia
+-   WebAssembly
+-   Bare metal
 
 #### Hardware architectures
 
 We expect to prioritize 64-bit little endian hardware, including:
 
-- x86-64
-- AArch64, also known as ARM 64-bit
-- PPC64LE, also known as Power ISA, 64-bit, Little Endian
-- RV64I, also known as RISC-V 64-bit
+-   x86-64
+-   AArch64, also known as ARM 64-bit
+-   PPC64LE, also known as Power ISA, 64-bit, Little Endian
+-   RV64I, also known as RISC-V 64-bit
 
 We believe Carbon should strive to support some GPUs, other restricted
 computational hardware and environments, and embedded environments. While this
@@ -76,15 +76,15 @@ while they remain relatively new and rapidly evolving.
 
 Example historical platforms that we will not prioritize support for are:
 
-- Byte sizes other than 8 bits, or non-power-of-two word sizes.
-- Source code encodings other than UTF-8.
-- Big- or mixed-endian, at least for computation; accessing encoded data remains
-  useful.
-- Non-2's-complement integer formats.
-- Non-IEEE 754 binary floating point format and semantics for default single-
-  and double-precision floating point types.
-- Source code in file systems that don’t support file extensions or nested
-  directories.
+-   Byte sizes other than 8 bits, or non-power-of-two word sizes.
+-   Source code encodings other than UTF-8.
+-   Big- or mixed-endian, at least for computation; accessing encoded data
+    remains useful.
+-   Non-2's-complement integer formats.
+-   Non-IEEE 754 binary floating point format and semantics for default single-
+    and double-precision floating point types.
+-   Source code in file systems that don’t support file extensions or nested
+    directories.
 
 ### Interoperability with and migration from existing C++ code
 
@@ -99,11 +99,12 @@ human interaction.
 
 This criterion includes:
 
-- Addressing performance bugs unique to Carbon, introduced by migration tooling.
-- Converting complex code which migration tooling does not handle.
+-   Addressing performance bugs unique to Carbon, introduced by migration
+    tooling.
+-   Converting complex code which migration tooling does not handle.
 
 This criterion does not include:
 
-- Cleaning up coding style to idiomatic Carbon.
-  - For example, heavy use of C++ preprocessor macros may result in expanded
-    code where there is no equivalent Carbon metaprogramming construct.
+-   Cleaning up coding style to idiomatic Carbon.
+    -   For example, heavy use of C++ preprocessor macros may result in expanded
+        code where there is no equivalent Carbon metaprogramming construct.
