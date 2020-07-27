@@ -46,8 +46,10 @@ for (var i = 0; i < files.length; ++i) {
     continue;
   }
 
-  // Do the toc substitution.
-  newContent = mdtoc.insert(newContent, { bullets: '-' });
+  // Do the toc substitution. Resulting indents will look like:
+  // -   H1
+  //     -    H2
+  newContent = mdtoc.insert(newContent, { indent: '    ', bullets: '-  ' });
 
   if (oldContent != newContent) {
     console.log(`Updating ${file}`);
