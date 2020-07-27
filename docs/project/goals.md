@@ -430,11 +430,14 @@ Cross-file context has an especially damaging effect on the potential
 distributed build graph options. Without these options, we will again be unable
 to provide fast developer iteration as the codebase scales up.
 
-**Support incremental compilation, including parallel and distributed
-strategies.** Iteration requires frequent builds. Incremental compilation should
-make these builds faster, particularly if relatively little has changed.
-Breaking apart compilation units also enables better scalability options for
-build systems of large software.
+**Support separate compilation, including parallel and distributed
+strategies.** Iteration requires frequent rebuilds of software as part
+of the edit/test/debug cycle of development. The language design should
+enable build strategies that optimize these builds, particularly when
+relatively little has changed. At a minimum, this requires separate
+compilation of source files, and potentially other incremental build
+strategies. Smaller and separate compilation units also enables better
+scalability options for build systems of large software.
 
 #### Modern OS platforms, hardware architectures, and environments
 
