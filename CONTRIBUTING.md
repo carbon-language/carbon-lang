@@ -214,6 +214,12 @@ Other style points to be aware of are:
     fixed-width fonts where em dashes are not clearly visible.
 -   Always say "Discourse Forum" and "Discord Chat" to avoid confusion between
     systems.
+-   Prefer the term "developers" when talking about people who would write
+    Carbon code. We expect the Carbon's community to include people who think of
+    themselves using many titles, including software developers, software
+    engineers, systems engineers, reliability engineers, data scientists,
+    computer scientists, programmers, and coders. We're using "developers" to
+    succinctly cover the variety of titles.
 
 ### Other files
 

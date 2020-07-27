@@ -10,14 +10,13 @@ The Carbon Language project is an **_experiment_** to explore a possible,
 distant future for the C++ programming language. It is designed around a
 specific set of goals, priorities, and use cases:
 
-1.  Performance-critical software
-2.  Both software and language evolution
-3.  Code that is easy to read, understand, and write
-4.  Practical safety guarantees and testing mechanisms
-5.  Fast and scalable development
-6.  Current hardware architectures, OS platforms, and environments as they
-    evolve
-7.  Interoperability with and migration from existing C++ code
+1. Performance-critical software
+2. Software and language evolution
+3. Code that is easy to read, understand, and write
+4. Practical safety guarantees and testing mechanisms
+5. Fast and scalable development
+6. Modern OS platforms, hardware architectures, and environments
+7. Interoperability with and migration from existing C++ code
 
 The first six of these represent a set of priorities for C++ shared by a
 significant subset of the C++ community, industry, and ecosystem. However, C++
@@ -145,4 +144,3 @@ Carbon's main repositories are:
 -   **carbon-lang** - Carbon language specification and documentation.
 -   **carbon-toolchain** - Carbon language toolchain and reference
     implementation.
--   **carbon-proposals** - An archive of reviewed Carbon language proposals.
