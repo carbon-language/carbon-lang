@@ -1,0 +1,9 @@
+printWidth: 80
+proseWrap: 'always'
+singleQuote: true
+tabWidth: 4
+useTabs: false
+overrides:
+    - files: '*.js'
+      options:
+          tabWidth: 2

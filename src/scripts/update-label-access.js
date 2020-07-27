@@ -20,69 +20,69 @@ This does not handle removing ex-members from contributors-with-label-access.
 'use strict';
 
 const updateTriageAccess = async () => {
-    // The org and team to mirror.
-    const org = 'carbon-language';
-    const team = 'contributors-with-label-access';
-    // Accounts in the org to skip mirroring.
-    const ignore = ['CarbonLangInfra', 'google-admin', 'googlebot'];
+  // The org and team to mirror.
+  const org = 'carbon-language';
+  const team = 'contributors-with-label-access';
+  // Accounts in the org to skip mirroring.
+  const ignore = ['CarbonLangInfra', 'google-admin', 'googlebot'];
 
-    // Set up the GitHub API.
-    const { Octokit } = require('@octokit/rest');
-    const key = process.env.GITHUB_AUTH_KEY;
-    if (!key) {
-        console.log('Missing GITHUB_AUTH_KEY');
-        return;
+  // Set up the GitHub API.
+  const { Octokit } = require('@octokit/rest');
+  const key = process.env.GITHUB_AUTH_KEY;
+  if (!key) {
+    console.log('Missing GITHUB_AUTH_KEY');
+    return;
+  }
+  const octokit = new Octokit({ auth: key });
+
+  // Load org members.
+  var orgMembers = {};
+  try {
+    const ret = await octokit.paginate(octokit.orgs.listMembers, {
+      org: org,
+    });
+    for (var i = 0; i < ret.length; ++i) {
+      if (ignore.indexOf(ret[i].login) >= 0) continue;
+      orgMembers[ret[i].id] = ret[i].login;
     }
-    const octokit = new Octokit({ auth: key });
+  } catch (error) {
+    console.log(`org.listMembers failed: ${error}`);
+    return;
+  }
+  console.log(
+    `${org} has ${Object.keys(orgMembers).length} members, excluding ${
+      ignore.length
+    } ignored.`
+  );
 
-    // Load org members.
-    var orgMembers = {};
-    try {
-        const ret = await octokit.paginate(octokit.orgs.listMembers, {
-            org: org,
-        });
-        for (var i = 0; i < ret.length; ++i) {
-            if (ignore.indexOf(ret[i].login) >= 0) continue;
-            orgMembers[ret[i].id] = ret[i].login;
-        }
-    } catch (error) {
-        console.log(`org.listMembers failed: ${error}`);
-        return;
+  // Load team members.
+  var teamMembers = new Set();
+  try {
+    const ret = await octokit.paginate(octokit.teams.listMembersInOrg, {
+      org: org,
+      team_slug: team,
+    });
+    for (var i = 0; i < ret.length; ++i) {
+      teamMembers[ret[i].id] = ret[i].login;
     }
-    console.log(
-        `${org} has ${Object.keys(orgMembers).length} members, excluding ${
-            ignore.length
-        } ignored.`
-    );
+  } catch (error) {
+    console.log(`teams.listMembersInOrg failed: ${error}`);
+    return;
+  }
+  console.log(`${team} has ${Object.keys(teamMembers).length} members.`);
 
-    // Load team members.
-    var teamMembers = new Set();
-    try {
-        const ret = await octokit.paginate(octokit.teams.listMembersInOrg, {
-            org: org,
-            team_slug: team,
-        });
-        for (var i = 0; i < ret.length; ++i) {
-            teamMembers[ret[i].id] = ret[i].login;
-        }
-    } catch (error) {
-        console.log(`teams.listMembersInOrg failed: ${error}`);
-        return;
-    }
-    console.log(`${team} has ${Object.keys(teamMembers).length} members.`);
+  // Copy members from the org to the team.
+  for (const member in orgMembers) {
+    if (teamMembers.hasOwnProperty(member)) continue;
+    console.log(`Adding ${orgMembers[member]}`);
+    octokit.teams.addOrUpdateMembershipForUserInOrg({
+      org: org,
+      team_slug: team,
+      username: orgMembers[member],
+    });
+  }
 
-    // Copy members from the org to the team.
-    for (const member in orgMembers) {
-        if (teamMembers.hasOwnProperty(member)) continue;
-        console.log(`Adding ${orgMembers[member]}`);
-        octokit.teams.addOrUpdateMembershipForUserInOrg({
-            org: org,
-            team_slug: team,
-            username: orgMembers[member],
-        });
-    }
-
-    console.log('Done!');
+  console.log('Done!');
 };
 
 updateTriageAccess();
