@@ -32,12 +32,14 @@ When an RFC approaches readiness for a decision, the review manager must post a
 Post the deadline on the topic in
 [Evolution > RFCs](https://forums.carbon-lang.dev/c/evolution/rfcs/6):
 
-> COMMENT DEADLINE - YYYY-MM-DD
->
-> We’re asking that interested contributors please try to comment on this
-> proposal, either in the pull request or this topic, by end-of-day DAYOFWEEK,
-> MONTH DD, Pacific Time. We’d like to resolve discussion at that point in order
-> to request a decision.
+```markdown
+COMMENT DEADLINE - YYYY-MM-DD
+
+We’re asking that interested contributors please try to comment on this
+proposal, either in the pull request or this topic, by end-of-day DAYOFWEEK,
+MONTH DD, Pacific Time. We’d like to resolve discussion at that point in order
+to request a decision.
+```
 
 ### Decision request
 
@@ -48,28 +50,31 @@ Request a decision on a new topic in
 [Evolution > Decisions](https://forums.carbon-lang.dev/c/evolution/decisions/7),
 titled "Request for decision: PROPOSAL":
 
-> @core_team: Please provide a decision on "PROPOSAL".
->
-> Links:
->
-> \- \[Proposal PR](LINK)
->
-> \- \[RFC topic](LINK)
->
-> Please focus on affirm, object, and stand aside comments in this topic; other
-> things specific to reaching consensus may be included. Affirm and object
-> comments should include justification for a decision. If you have proposal
-> questions, please comment on the proposal itself.
->
-> I’ve added this decision as a tentative item for the YYYY-MM-DD core team
-> meeting. If consensus is reached before then, the agenda item will be removed.
+```markdown
+@core_team: Please provide a decision on "PROPOSAL".
+
+Links:
+
+- [Proposal PR](LINK)
+- [RFC topic](LINK)
+
+Please focus on affirm, object, and stand aside comments in this topic; other
+things specific to reaching consensus may be included. Affirm and object
+comments should include justification for a decision. If you have proposal
+questions, please comment on the proposal itself.
+
+I’ve added this decision as a tentative item for the YYYY-MM-DD core team
+meeting. If consensus is reached before then, the agenda item will be removed.
+```
 
 Link to the decision request on the topic in
 [Evolution > RFCs](https://forums.carbon-lang.dev/c/evolution/rfcs/6):
 
-> A decision is now \[formally requested](LINK) on this proposal. Community
-> members may still comment here, but keep in mind the proposal should not
-> change while the reviewing team is considering it.
+```markdown
+A decision is now [formally requested](LINK) on this proposal. Community members
+may still comment here, but keep in mind the proposal should not change while
+the reviewing team is considering it.
+```
 
 ### Decision announcement
 
@@ -85,25 +90,27 @@ Announce the decision on a new topic in
 [Evolution > Announcements](https://forums.carbon-lang.dev/c/evolution/announcements/8),
 titled "[DECISION] PROPOSAL":
 
-> "PROPOSAL" has been DECISION.
->
-> Please read the \[formal decision PR](LINK) for details.
->
-> \- \[Proposal PR](LINK)
->
-> \- \[RFC topic](LINK)
->
-> \- \[Decision topic](link)
->
-> This decision is now entering the \[decision comment
-> period](https://carbon-lang.dev/docs/project/evolution.html#community-comments-on-proposal-decision),
-> and, assuming no substantive issues, will be finalized on YYYY-MM-DD. Please
-> keep in mind that objections may be posted here.
+```markdown
+"PROPOSAL" has been DECISION.
+
+Please read the [formal decision PR](LINK) for details.
+
+- [Proposal PR](LINK)
+- [RFC topic](LINK)
+- [Decision topic](link)
+
+This decision is now entering the
+[decision comment period](https://carbon-lang.dev/docs/project/evolution.html#community-comments-on-proposal-decision),
+and, assuming no substantive issues, will be finalized on YYYY-MM-DD. Please
+keep in mind that objections may be posted here.
+```
 
 Link to the decision announcement on **both** topics in
 [Evolution > RFCs](https://forums.carbon-lang.dev/c/evolution/rfcs/6) and
 [Evolution > Decisions](https://forums.carbon-lang.dev/c/evolution/decisions/7):
 
-> This proposal has been DECISION, and the \[decision announced](LINK). Please
-> keep in mind, objections may still be posted to the decision topic as part of
-> the decision’s comment period.
+```markdown
+This proposal has been DECISION, and the [decision announced](LINK). Please keep
+in mind, objections may still be posted to the decision topic as part of the
+decision’s comment period.
+```
