@@ -116,7 +116,7 @@ cleaned up during evolution.
 -   Block comments look like `//\{ ... //\}`, with each marker on its own line.
     Nested block comments are supported using named regions. For example:
 
-    ```
+    ```carbon
       live code
     //\{
       commented code
