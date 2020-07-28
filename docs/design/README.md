@@ -27,7 +27,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Lifetime and move semantics](#lifetime-and-move-semantics)
     -   [Control flow](#control-flow)
         -   [`if`/`else`](#ifelse)
-        -   [`loop`, `break`, and `continue`](#loop-break-and-continue)
+        -   [`while`, `break`, and `continue`](#while-break-and-continue)
         -   [`return`](#return)
 -   [Types](#types)
     -   [Primitive types](#primitive-types)
@@ -113,9 +113,19 @@ cleaned up during evolution.
     supported.
 -   Line comments look like `// ...`. However, they are required to be the only
     non-whitespace on the line for readability.
--   Block comments begin with `//\{`, and end with `//\}`. They are always at
-    the start of a line.
-    -   Nested block comments will be supported.
+-   Block comments look like `//\{ ... //\}`, with each marker on its own line.
+    Nested block comments are supported using named regions. For example:
+
+    ```
+      live code
+    //\{
+      commented code
+    //\{ nested block
+      commented code in nested block
+    //\} nested block
+    //\}
+      live code
+    ```
 
 ### Files, libraries, and packages
 
@@ -170,13 +180,8 @@ characters as well.
 
 Our current proposed naming convention are:
 
--   `UpperCamelCase` for names of compile-time resolved constants, such that
-    they can participate in the type system and type checking of the program.
-    Comple-time constants fall into two categories:
-    -   _Template_ constants that can be used in type checking, including
-        literals.
-    -   _Generic_ constants whose value is not used in type checking, but will
-        be used as part of code generation.
+-   `UpperCamelCase` for names of compile-time resolved constants, whether they
+    participate in the type system or not.
 -   `lower_snake_case` for keywords and names of run-time resolved values.
 
 As a matter of style and consistency, we will follow these conventions where
@@ -185,9 +190,11 @@ possible and encourage convergence.
 For example:
 
 -   An integer that is a compile-time constant sufficient to use in the
-    construction a compile-time array size might be named `N`.
--   An integer that is not available as part of the type system would be named
-    `n`, even if it happened to be immutable or only take on a single value.
+    construction a compile-time array size, such as a template function
+    parameter, might be named `N`.
+-   A generic function parameter's value can't be used during type-checking, but
+    might still be named `N`, since it will be a constant available to the
+    compiler at code generation time.
 -   Functions and most types will be in `UpperCamelCase`.
 -   A type where only run-time type information queries are available would end
     up as `lower_snake_case`.
@@ -255,8 +262,7 @@ package.
 
 Common types that we expect to be used universally will be provided for every
 file, including `Int` and `Bool`. These will likely be defined in a special
-"prelude" package which is treated as if always imported and aliased by every
-file.
+"prelude" package.
 
 ### Expressions
 
@@ -398,14 +404,14 @@ Breaking the `Foo` function apart:
 -   `Baz()` is invoked if `x` is greater than `77`.
 -   Nothing happens if `x` is between `42` and `77`.
 
-#### `loop`, `break`, and `continue`
+#### `while`, `break`, and `continue`
 
 > References: [Control flow](control_flow.md)
 >
 > **TODO:** References need to be evolved.
 
-Loops will be supported with a low-level primitive `loop` statement. `break`
-will be a way to exit the `loop` directly, while `continue` will skip the rest
+Loops will be supported with a low-level primitive `while` statement. `break`
+will be a way to exit the `while` directly, while `continue` will skip the rest
 of the current loop iteration.
 
 For example:
@@ -413,7 +419,7 @@ For example:
 ```carbon
 fn Foo() {
   var Int: x = 0;
-  loop (x < 42) {
+  while (x < 42) {
     if (ShouldStop()) break;
     if (ShouldSkip(x)) {
       ++x;
@@ -427,10 +433,11 @@ fn Foo() {
 
 Breaking the `Foo` function apart:
 
--   The loop body is normally executed for all values of `x` in [0, 42).
+-   The while body is normally executed for all values of `x` in [0, 42).
     -   The increment of x at the end causes this.
--   If `ShouldStop()` returns true, the `break` causes the `loop` to exit early.
--   If `ShouldSkip()` returns true, the `continue` causes the `loop` to restart
+-   If `ShouldStop()` returns true, the `break` causes the `while` to exit
+    early.
+-   If `ShouldSkip()` returns true, the `continue` causes the `while` to restart
     early.
 -   Otherwise, `Bar(x)` is called for values of `x` in [0, 42).
 
@@ -480,9 +487,8 @@ However, in simple cases this doesn't make much difference.
 
 These types are fundamental to the language as they aren't either formed from or
 modifying other types. They also have semantics that are defined from first
-principles rather than in terms of other operations. Even though these are
-special, their names are not keywords or reserved; they are just names in the
-global scope.
+principles rather than in terms of other operations. These will be made
+available through the [prelude package](#name-lookup-for-common-types).
 
 Primitive types fall into the following categories:
 
@@ -509,8 +515,7 @@ Primitive types fall into the following categories:
 > **TODO:** References need to be evolved.
 
 The primary composite type involves simple aggregation of other types as a
-tuple. In formal type theory, tuples are product types. A tuple of a single
-value is special and is equivalent to the single value.
+tuple. In formal type theory, tuples are product types.
 
 An example use of tuples is:
 
@@ -679,7 +684,7 @@ An example `match` is:
 fn Bar() -> (Int, (Float, Float));
 
 fn Foo() -> Float {
-  match (Bar()) {
+  match (Bar()...) {
     case (42, (Float: x, Float: y)) => {
       return x - y;
     }

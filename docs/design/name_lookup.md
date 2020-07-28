@@ -75,12 +75,13 @@ the package scope for unqualified name lookup.
 ### Name lookup for common, standard types
 
 The Carbon standard library is in the `Carbon` package. A very small subset of
-this standard library is provided implicitly in every file's scope as-if it were
-first imported and then every name in it aliased into that file's package scope.
-This makes the names from this part of the standard library nearly the same as
-keywords, and so it is expected to be extremely small but contain the very
-fundamentals that essentially every file of Carbon code will need (`Int`,
-`Bool`, etc.).
+this standard library is provided implicitly in every file's scope. This is
+called the "prelude" package.
+
+Names in the prelude package will be available without scoping names. For
+example, `Bool` will be the commonly used name in code, even though the
+underlying type may be `Carbon::Bool`. Also, no `import` will be necessary to
+use `Bool`.
 
 ## Open questions
 

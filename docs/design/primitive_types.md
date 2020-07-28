@@ -34,19 +34,22 @@ update as appropriate.
 
 These types are fundamental to the language as they aren't either formed from or
 modifying other types. They also have semantics that are defined from first
-principles rather than in terms of other operations. Even though these are
-special, their names are not keywords or reserved; they are just names in the
-implicit "prelude" that is imported and aliased into all files.
+principles rather than in terms of other operations. These will be made
+available through the [prelude package](README.md#name-lookup-for-common-types).
 
-They in turn can be decomposed into the following categories:
-
--   A monotype `Void` (or possibly `()`, the empty tuple) that has only one
-    possible value (empty).
--   A boolean type `Bool` that has two possible values: `True` and `False`.
--   Integer types
--   Floating point types
--   A string view type which is a read-only reference to a sequence of bytes
-    typically representing (UTF-8 encoded) text.
+-   `Void` - a type with only one possible value: empty.
+-   `Bool` - a boolean type with two possible values: `True` and `False`.
+-   `Int` and `UInt` - signed and unsigned 64-bit integer types.
+    -   Standard sizes are available, both signed and unsigned, including
+        `Int8`, `Int16`, `Int32`, `Int128`, and `Int256`.
+    -   Overflow in either direction is an error.
+-   `Float64` - a floating point type with semantics based on IEEE-754.
+    -   Standard sizes are available, including `Float16`, `Float32`, and
+        `Float128`.
+    -   [`BFloat16`](primitive_types.md#bfloat16) is also provided.
+-   `String` - a byte sequence treated as containing UTF-8 encoded text.
+    -   `StringView` - a read-only reference to a byte sequence treated as
+        containing UTF-8 encoded text.
 
 ### Integers
 

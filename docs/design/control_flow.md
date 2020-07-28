@@ -50,7 +50,7 @@ fn Foo(Int: x) {
 }
 ```
 
-Loops will at least be supported with a low-level primitive `loop` statement,
+Loops will at least be supported with a low-level primitive `while` statement,
 with `break` and `continue` statements which work the same as in C++.
 
 Last but not least, for the basics we need to include the `return` statement.
