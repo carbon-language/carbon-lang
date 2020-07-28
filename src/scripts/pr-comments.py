@@ -3,11 +3,13 @@
 """Figure out comments on a GitHub PR."""
 
 import argparse
-import gql
-import gql.transport.requests
 import os
 import sys
 import textwrap
+
+# https://pypi.org/project/gql/
+import gql
+import gql.transport.requests
 
 # Use https://developer.github.com/v4/explorer/ to help with edits.
 _QUERY = """
