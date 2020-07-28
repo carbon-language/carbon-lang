@@ -52,6 +52,7 @@ _QUERY = """
 def parse_args():
     """Parses command-line arguments and flags."""
     # TODO: Add flag to filter for review threads including a specific user.
+    # TODO: Add repo flag, to allow for use with carbon-toolchain.
     parser = argparse.ArgumentParser(description="Lists comments on a PR.")
     parser.add_argument(
         "pr_num",
