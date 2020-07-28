@@ -109,8 +109,14 @@ def main():
         resolved = thread["isResolved"]
         if resolved and not include_resolved:
             continue
+        # TODO: Print relevant file/line. Possibly LOC.
         print("\nThread (%s)" % ("resolved" if resolved else "unresolved"))
+        # TODO: Try to link to the review thread with an appropriate diff.
+        # Ideally comment-to-present, worst case original-to-comment (to see
+        # comment). Possibly both.
         print("    %s" % thread["comments"]["nodes"][0]["url"])
+        # TODO: Add a short comment mode that does comment-per-line.
+        # TODO: Timestamps would be nice.
         for comment in thread["comments"]["nodes"]:
             print("  %s:" % comment["author"]["login"])
             print(rewrap(comment["body"]))
