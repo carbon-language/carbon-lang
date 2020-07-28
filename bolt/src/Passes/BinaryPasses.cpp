@@ -185,6 +185,15 @@ ReorderBlocks("reorder-blocks",
   cl::ZeroOrMore,
   cl::cat(BoltOptCategory));
 
+cl::opt<unsigned>
+ExecutionCountThreshold("execution-count-threshold",
+  cl::desc("perform profiling accuracy-sensitive optimizations only if "
+           "function execution count >= the threshold (default: 0)"),
+  cl::init(0),
+  cl::ZeroOrMore,
+  cl::Hidden,
+  cl::cat(BoltOptCategory));
+
 static cl::opt<unsigned>
 ReportBadLayout("report-bad-layout",
   cl::desc("print top <uint> functions with suboptimal code layout on input"),
@@ -314,6 +323,14 @@ void EliminateUnreachableBlocks::runOnFunctions(BinaryContext &BC) {
 bool ReorderBasicBlocks::shouldPrint(const BinaryFunction &BF) const {
   return (BinaryFunctionPass::shouldPrint(BF) &&
           opts::ReorderBlocks != ReorderBasicBlocks::LT_NONE);
+}
+
+bool ReorderBasicBlocks::shouldOptimize(const BinaryFunction &BF) const {
+  // Apply execution count threshold
+  if (BF.getKnownExecutionCount() < opts::ExecutionCountThreshold)
+    return false;
+
+  return BinaryFunctionPass::shouldOptimize(BF);
 }
 
 void ReorderBasicBlocks::runOnFunctions(BinaryContext &BC) {

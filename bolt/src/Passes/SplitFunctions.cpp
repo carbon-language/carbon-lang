@@ -27,6 +27,7 @@ namespace opts {
 extern cl::OptionCategory BoltOptCategory;
 
 extern cl::opt<bool> SplitEH;
+extern cl::opt<unsigned> ExecutionCountThreshold;
 
 static cl::opt<bool>
 AggressiveSplitting("split-all-cold",
@@ -80,6 +81,14 @@ void syncOptions(BinaryContext &BC) {
 
 namespace llvm {
 namespace bolt {
+
+bool SplitFunctions::shouldOptimize(const BinaryFunction &BF) const {
+  // Apply execution count threshold
+  if (BF.getKnownExecutionCount() < opts::ExecutionCountThreshold)
+    return false;
+
+  return BinaryFunctionPass::shouldOptimize(BF);
+}
 
 void SplitFunctions::runOnFunctions(BinaryContext &BC) {
   opts::syncOptions(BC);

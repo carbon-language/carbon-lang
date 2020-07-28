@@ -1108,14 +1108,7 @@ public:
   /// Return a function execution count threshold for determining whether
   /// the function is 'hot'. Consider it hot if count is above the average exec
   /// count of profiled functions.
-  uint64_t getHotThreshold() const {
-    static uint64_t Threshold{0};
-    if (Threshold == 0) {
-      Threshold =
-          NumProfiledFuncs ? SumExecutionCount / (2 * NumProfiledFuncs) : 1;
-    }
-    return Threshold;
-  }
+  uint64_t getHotThreshold() const;
 
   /// Return true if instruction \p Inst requires an offset for further
   /// processing (e.g. assigning a profile).

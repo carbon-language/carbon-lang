@@ -25,6 +25,7 @@ namespace opts {
 extern cl::OptionCategory BoltOptCategory;
 
 extern cl::opt<unsigned> Verbosity;
+extern cl::opt<unsigned> ExecutionCountThreshold;
 
 cl::opt<IndirectCallPromotionType>
 IndirectCallPromotion("indirect-call-promotion",
@@ -1003,6 +1004,9 @@ IndirectCallPromotion::canPromoteCallsite(const BinaryBasicBlock *BB,
                                           const MCInst &Inst,
                                           const std::vector<Callsite> &Targets,
                                           uint64_t NumCalls) {
+  if (BB->getKnownExecutionCount() < opts::ExecutionCountThreshold)
+    return 0;
+
   const bool IsJumpTable = BB->getFunction()->getJumpTable(Inst);
 
   auto computeStats = [&](size_t N) {

@@ -45,6 +45,7 @@ extern cl::opt<bool> HotData;
 extern cl::opt<bool> StrictMode;
 extern cl::opt<bool> UseOldText;
 extern cl::opt<unsigned> Verbosity;
+extern cl::opt<unsigned> ExecutionCountThreshold;
 
 extern bool processAllFunctions();
 
@@ -1967,6 +1968,15 @@ bool BinaryContext::validateEncoding(const MCInst &Inst,
   }
 
   return true;
+}
+
+uint64_t BinaryContext::getHotThreshold() const {
+  static uint64_t Threshold{0};
+  if (Threshold == 0) {
+    Threshold = std::max((uint64_t)opts::ExecutionCountThreshold,
+        NumProfiledFuncs ? SumExecutionCount / (2 * NumProfiledFuncs) : 1);
+  }
+  return Threshold;
 }
 
 BinaryFunction *

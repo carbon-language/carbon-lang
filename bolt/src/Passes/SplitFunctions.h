@@ -43,6 +43,8 @@ public:
   explicit SplitFunctions(const cl::opt<bool> &PrintPass)
     : BinaryFunctionPass(PrintPass) { }
 
+  bool shouldOptimize(const BinaryFunction &BF) const override;
+
   const char *getName() const override {
     return "split-functions";
   }
