@@ -30,26 +30,27 @@ The Carbon language and standard library will not use recoverable
 error-reporting mechanisms to report programming errors. Furthermore, Carbon's
 design will not prioritize use cases involving recovery from programming errors.
 
-Recovering from an error generally consists of discarding any state that might
-be invalidated by the original cause of the error, and then transferring control
-to a point that doesn't depend on the discarded state. For example, a function
-that reads data from a file and validates a checksum might avoid modifying any
-nonlocal state until validation is successful, and return early if validation
-fails. This recovery strategy relies on the fact that the likely causes of the
-failure are known and bounded (probably a malformed input file or an I/O error),
-which allows us to put a bound on the state that might have been invalidated.
+Recovering from an error generally consists of discarding or reverting any state
+that might be invalidated by the original cause of the error, and then
+transferring control to a point that doesn't depend on the discarded state. For
+example, a function that reads data from a file and validates a checksum might
+avoid modifying any nonlocal state until validation is successful, and return
+early if validation fails. This recovery strategy relies on the fact that the
+likely causes of the failure are known and bounded (probably a malformed input
+file or an I/O error), which allows us to put a bound on the state that might
+have been invalidated.
 
 A _programming error_ is an error caused by incorrect user code, such as failing
 to satisfy the preconditions of an operation. When such an error is detected,
-the original cause is neither known nor bounded. For example, dereferencing a
-dangling pointer is unambiguously a programming error, but it can have many
-possible causes. The author of the code might have forgotten to check some
-condition before dereferencing, or the caller might have passed a dangling
-pointer into the function, or some other code might have released the memory too
-early, or any number of other possibilities. Without more information, it's
-impossible to know, so the only way to somewhat reliably recover from a
-programming error is to discard the entire address space and terminate the
-program.
+it's not possible for the program to know, or even plausibly guess, what the
+original cause is. For example, dereferencing a dangling pointer is
+unambiguously a programming error, but it can have many possible causes. The
+author of the code might have forgotten to check some condition before
+dereferencing, or the caller might have passed a dangling pointer into the
+function, or some other code might have released the memory too early, or any
+number of other possibilities. Without more information, it's impossible to
+know, so the only way to somewhat reliably recover from a programming error is
+to discard the entire address space and terminate the program.
 
 Thus, we expect that supporting recovery from programming errors would provide
 little or no benefit. Furthermore, it would be harmful to several of Carbon's
