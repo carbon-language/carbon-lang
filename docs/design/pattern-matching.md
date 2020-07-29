@@ -565,29 +565,50 @@ the type of `(1, 2, 3)` is `(Int, Int, Int) == NTuple(3, Int)`. However, note
 that `NTuple` isn't even injective when `N == 0`!
 
 We are considering three approaches for representing `NTuple`:
+1. It could be built in to the language.
+2. We could provide a facility where `NTuple` is defined with both the type
+   function and a user-provided function that is used to perform argument
+   deduction for the type function.
+3. We could provide a restricted "tuple comprehension" facility.
 
-- It could be something built-in and not writable in user code. This is
-  undesirable because there will likely be variations on `NTuple` that user's
-  will need and won't be provided.
-- We could provide a special "type function that supports deduction" facillity
-  that explicitly provides two functions:
-  - A forward function, in this case taking `N = 3` and `value = Int` to
-    `(Int, Int, Int)`.
-  - A deduction function, taking a resulting type (like `(Int, Int, Int)`) and
-    optional values for the parameters and returns values for the parameters
-    that were not specified. It would return an error if there are no parameters
-    that would cause the forward function to produce that output (like
-    `(Int, Bool)`). It would also return an error if there was no unique way of
-    deducing an parameter (you can't deduce `value` from the empty tuple `()`).
-    A flaw with this approach is that even if we support deduction, there is no
-    clear way to tell if a match using one of these is more specific than
-    another for purposes of function overload resolution.
-- We could provide a "tuple comprehension" syntax, that is simple enough for the
-  compiler to analyze to be able to perform deductions and tell when one
-  expression is more specific than another, but expressive enough to cover most
-  use cases. For reference, the Python-like syntax for comprehensions would be
-  something like `NTuple(N, value) = (value for _ in 0..N)`, but we might want
-  to make changes to put uses of names after they are declared.
+The first case, where `NTuple` is built-in and not writable in user code, is
+undesirable because there will likely be variations on `NTuple` that user's
+will need and won't be provided.
+
+The second case we might call a "type function that supports deduction"
+facillity. These would require a bundle of two functions, a forwards and a
+backwards, or "deduction", function. The forward function in this case would
+take `N = 3` and `value = Int` to `(Int, Int, Int)`. The deduction function
+would take a resulting type (like `(Int, Int, Int)`) and optional values for
+the parameters (present if specified by the user). It would return values for
+the parameters that were not specified, if possible. So for `NTuple` the
+deduction function would have a signature like
+
+```
+Type, Optional(Int): N, Optional(Type): T -> Optional((Int, Type))
+```
+
+It would return an error if there are no parameters that would cause the
+forward function to produce that output (like `(Int, Bool)`). It would also
+return an error if there was no unique way of deducing an parameter (you
+can't deduce `value` from the empty tuple `()`).
+
+There would also be some consistency requirements. If `N` or `T` is
+specified in the input of the deduction function, they should appear in the
+output unchanged (assuming no error). Furthermore, calling
+`NTuple.Forward(N, T)` should return a result type that if passed to the
+deduction function will return the original values for `N` and `T`. 
+
+A flaw with this approach is that even if we support deduction, there is no
+clear way to tell if a match using one of these is more specific than
+another for purposes of function overload resolution.
+
+The third option is to provide a "tuple comprehension" syntax, that is simple
+enough for the compiler to analyze to be able to perform deductions and tell
+when one expression is more specific than another, but expressive enough to
+cover most use cases. For reference, the Python-like syntax for comprehensions
+would be something like `NTuple(N, value) = (value for _ in 0..N)`, but we
+might want to make changes to put uses of names after they are declared.
 
 ### Variadics (...)
 
