@@ -228,6 +228,28 @@ Assert(Reverse((10, 20, 30)) == (30, 20, 10)));
 Assert((10, 20, 30)[(1, 1, 0, 0)] == (20, 20, 10, 10));
 ```
 
+**Concern** from [mconst](https://github.com/mconst):
+
+> More generally, are we sure we want `[]` to support multiple indexing at all?
+> Multi-indexing into a tuple is occasionally useful, but it really doesn't feel
+> common enough to need special syntax; personally, I'd rather keep `[]` simple
+> and add a separate `.MultiGet()` method if we want it. In particular, my
+> experience with Python (which doesn't support multi-indexing) is that
+> situations where multi-indexing would have been useful are rarer than
+> situations where someone passed a tuple as an index by mistake.
+>
+> In general, I think we should resist the temptation to assign meaning to
+> things like `tuple[tuple]` just because we can. Restricting `[]` to the
+> simple, common meaning makes the language simpler, easier to learn, and easier
+> to read -- and for code that does want the uncommon meaning, it's actually
+> valuable to have that called out explicitly. Consider a new Carbon user who
+> hasn't heard of multi-indexing, running across it for the first time in
+> someone else's code. If it's spelled `.MultiGet()`, then it's immediately
+> clear that this isn't ordinary indexing, the name gives a pretty decent cue as
+> to what it is, and it's easy to Google if they can't figure it out. If
+> multi-indexing looks just like normal indexing, it's harder to figure out
+> what's going on.
+
 **Rejected alternative:** The problem with passing a comma-separated list
 directly to the indexing operator, as in `x[2, 1, 0]`, is that it doesn't
 generalize to the behavior of one index. That is, it makes it ambiguous whether
