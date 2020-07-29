@@ -238,7 +238,7 @@ support multidimensional arrays / slices (important to the scientific world).
 with a more general structure, like:
 
 ```
-Assert((10, 20, 30)[((1), (0))] == ((20), (10)));
+Assert((10, 20, 30)[((1,), (0,))] == ((20,), (10,)));
 ```
 
 The rule is that the expression inside the `[...]` would determine the structure
