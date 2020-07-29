@@ -3,7 +3,9 @@
 """Figure out comments on a GitHub PR."""
 
 import argparse
+import datetime
 import os
+import re
 import sys
 import textwrap
 
@@ -14,23 +16,25 @@ import gql.transport.requests
 # Use https://developer.github.com/v4/explorer/ to help with edits.
 _QUERY = """
 {
-  repository(owner: "carbon-language", name: "carbon-lang") {
-    pullRequest(number: %d) {
-      reviewThreads(first: 100%s) {
+  repository(owner: "carbon-language", name: "%(repo)s") {
+    pullRequest(number: %(pr_num)d) {
+      reviewThreads(first: 100%(review_threads_cursor)s) {
         nodes {
           comments(first: 100) {
             nodes {
-              body
               author {
                 login
               }
-              path
+              body
+              createdAt
               originalPosition
+              path
               url
             }
           }
           isResolved
           resolvedBy {
+            createdAt
             login
           }
         }
@@ -49,10 +53,8 @@ _QUERY = """
 """
 
 
-def parse_args():
+def _parse_args():
     """Parses command-line arguments and flags."""
-    # TODO: Add flag to filter for review threads including a specific user.
-    # TODO: Add repo flag, to allow for use with carbon-toolchain.
     parser = argparse.ArgumentParser(description="Lists comments on a PR.")
     parser.add_argument(
         "pr_num",
@@ -61,11 +63,26 @@ def parse_args():
         nargs=1,
         help="The pull request to fetch comments from.",
     )
+    env_token = "GITHUB_ACCESS_TOKEN"
     parser.add_argument(
-        "--github-access-token",
+        "--access-token",
         metavar="ACCESS_TOKEN",
+        default=os.environ.get(env_token, default=None),
         help="The access token for use with GitHub. May also be specified in "
-        "the environment as GITHUB_ACCESS_TOKEN.",
+        "the environment as %s." % env_token,
+    )
+    parser.add_argument(
+        "--comments-after",
+        metavar="LOGIN",
+        help="Only print threads where the final comment is not from the given "
+        "user. For example, use when looking for threads that you still need "
+        "to respond to.",
+    )
+    parser.add_argument(
+        "--comments-from",
+        metavar="LOGIN",
+        help="Only print threads with comments from the given user. For "
+        "example, use when looking for threads that you've commented on.",
     )
     parser.add_argument(
         "--include-resolved",
@@ -73,16 +90,75 @@ def parse_args():
         help="Whether to include resolved review threads. By default, only "
         "unresolved threads will be shown.",
     )
-    return parser.parse_args()
+    parser.add_argument(
+        "--repo",
+        choices=["carbon-lang", "carbon-toolchain"],
+        default="carbon-lang",
+        help="The Carbon repo to query. Defaults to carbon-toolchain.",
+    )
+    parser.add_argument(
+        "--long",
+        action="store_true",
+        help="Prints long output, with the full comment.",
+    )
+    parsed_args = parser.parse_args()
+    if not parsed_args.access_token:
+        sys.exit(
+            "Missing github access token. This must be provided through "
+            "either --github-access-token or %s." % env_token
+        )
+    return parsed_args
 
 
-def accumulate_threads(threads_by_path, review_threads, include_resolved):
+def _query(parsed_args, client, review_threads=None):
+    """Queries for comments.
+
+    review_threads may be specified if a cursor is present.
+    """
+    print(".", end="", flush=True)
+    fields = {
+        "repo": parsed_args.repo,
+        "pr_num": parsed_args.pr_num[0],
+        "review_threads_cursor": "",
+    }
+    if review_threads:
+        fields["review_threads_cursor"] = (
+            ', after: "%s"' % review_threads["pageInfo"]["endCursor"]
+        )
+    return client.execute(gql.gql(_QUERY % fields))
+
+
+def _has_comment_from(comments, comments_from):
+    """Returns true if comments has a comment from comments_from."""
+    for comment in comments:
+        if comment["author"]["login"] == comments_from:
+            return True
+    return False
+
+
+def _accumulate_threads(parsed_args, threads_by_path, review_threads):
     """Adds threads to threads_by_path for later sorting."""
     for thread in review_threads["nodes"]:
-        if thread["isResolved"] and not include_resolved:
+        # Optionally skip resolved threads.
+        if not parsed_args.include_resolved and thread["isResolved"]:
             continue
 
-        first_comment = thread["comments"]["nodes"][0]
+        comments = thread["comments"]["nodes"]
+
+        # Optionally skip threads where the given user isn't the last commenter.
+        if (
+            parsed_args.comments_after
+            and comments[-1]["author"]["login"] == parsed_args.comments_after
+        ):
+            continue
+
+        # Optionally skip threads where the given user hasn't commented.
+        if parsed_args.comments_from and not _has_comment_from(
+            comments, parsed_args.comments_from
+        ):
+            continue
+
+        first_comment = comments[0]
         path = first_comment["path"]
         line = first_comment["originalPosition"]
         if path not in threads_by_path:
@@ -90,7 +166,50 @@ def accumulate_threads(threads_by_path, review_threads, include_resolved):
         threads_by_path[path].append((line, thread))
 
 
-def rewrap(content):
+def _fetch_comments(parsed_args):
+    """Fetches comments from GitHub."""
+    # Each _query call will print a '.' for progress.
+    print(
+        "Loading https://github.com/carbon-language/%s/pull/%d ..."
+        % (parsed_args.repo, parsed_args.pr_num[0]),
+        end="",
+        flush=True,
+    )
+
+    # Prepare the GraphQL client.
+    transport = gql.transport.requests.RequestsHTTPTransport(
+        url="https://api.github.com/graphql",
+        headers={"Authorization": "bearer %s" % parsed_args.access_token},
+    )
+    client = gql.Client(transport=transport, fetch_schema_from_transport=True)
+
+    # Get the initial set of review threads, and print the PR summary.
+    threads_result = _query(parsed_args, client)
+    pull_request = threads_result["repository"]["pullRequest"]
+
+    # Paginate through the review threads.
+    threads_by_path = {}
+    while True:
+        # Accumulate the review threads.
+        review_threads = pull_request["reviewThreads"]
+        _accumulate_threads(parsed_args, threads_by_path, review_threads)
+        if not review_threads["pageInfo"]["hasNextPage"]:
+            break
+        # There are more review threads, so fetch them.
+        threads_result = _query(
+            parsed_args, client, review_threads=review_threads
+        )
+        pull_request = threads_result["repository"]["pullRequest"]
+
+    # Now that loading is done (no more progress indicators), print the header.
+    print(
+        "\n'%s' by %s"
+        % (pull_request["title"], pull_request["author"]["login"])
+    )
+    return threads_by_path
+
+
+def _rewrap(content):
     """Rewraps a comment to fit in 80 columns with a 4-space indent."""
     indent = "    "
     lines = []
@@ -102,54 +221,30 @@ def rewrap(content):
     return "\n".join(lines)
 
 
-def main():
-    # Parse command-line flags.
-    parsed_args = parse_args()
-    pr_num = parsed_args.pr_num[0]
-    access_token = parsed_args.github_access_token
-    include_resolved = parsed_args.include_resolved
-    if not access_token:
-        if "GITHUB_ACCESS_TOKEN" not in os.environ:
-            sys.exit(
-                "Missing github access token. This must be provided through "
-                "either --github-access-token or GITHUB_ACCESS_TOKEN."
-            )
-        access_token = os.environ["GITHUB_ACCESS_TOKEN"]
-
-    # Prepare the GraphQL client.
-    transport = gql.transport.requests.RequestsHTTPTransport(
-        url="https://api.github.com/graphql",
-        headers={"Authorization": "bearer %s" % access_token},
-    )
-    client = gql.Client(transport=transport, fetch_schema_from_transport=True)
-
-    # Get the initial set of review threads, and print the PR summary.
-    threads_result = client.execute(gql.gql(_QUERY % (pr_num, "")))
-    pull_request = threads_result["repository"]["pullRequest"]
-    print(
-        "'%s' (%d) by %s"
-        % (pull_request["title"], pr_num, pull_request["author"]["login"])
-    )
-
-    # Paginate through the review threads.
-    threads_by_path = {}
-    while True:
-        # Accumulate the review threads.
-        review_threads = pull_request["reviewThreads"]
-        accumulate_threads(threads_by_path, review_threads, include_resolved)
-        if not review_threads["pageInfo"]["hasNextPage"]:
-            break
-        # There are more review threads, so fetch them.
-        threads_result = client.execute(
-            gql.gql(
-                _QUERY
-                % (
-                    pr_num,
-                    ', after: "%s"' % review_threads["pageInfo"]["endCursor"],
-                )
-            )
+def _print_comment(parsed_args, author, created_at, body):
+    """Prints a given comment."""
+    if parsed_args.long:
+        time = datetime.datetime.strptime(
+            created_at["createdAt"], "%Y-%m-%dT%H:%M:%SZ"
         )
-        pull_request = threads_result["repository"]["pullRequest"]
+        print(
+            "  %s at %s:" % (author["login"], time.strftime("%Y-%m-%d %H:%M"))
+        )
+        print(_rewrap(body))
+    else:
+        # Compact newlines down into pilcrows, leaving a space after.
+        body = body.replace("\r", "").replace("\n", "¶ ")
+        while "¶ ¶" in body:
+            body = body.replace("¶ ¶", "¶¶")
+        line = "  %s: %s" % (author["login"], body)
+        print(line if len(line) <= 80 else line[:77] + "...")
+
+
+def main():
+    parsed_args = _parse_args()
+    threads_by_path = _fetch_comments(parsed_args)
+
+    # TODO: PR-level comments
 
     # Print threads sorted by path and line.
     for path in sorted(threads_by_path.keys()):
@@ -172,13 +267,17 @@ def main():
             # Ideally comment-to-present, worst case original-to-comment (to see
             # comment). Possibly both.
             print("    %s" % thread["comments"]["nodes"][0]["url"])
-            # TODO: Add a short comment mode that does comment-per-line.
-            # TODO: Timestamps would be nice.
             for comment in thread["comments"]["nodes"]:
-                print("  %s:" % comment["author"]["login"])
-                print(rewrap(comment["body"]))
+                _print_comment(
+                    parsed_args, comment["author"], comment, comment["body"]
+                )
             if resolved:
-                print("  %s:\n    RESOLVED" % thread["resolvedBy"]["login"])
+                _print_comment(
+                    parsed_args,
+                    thread["resolvedBy"],
+                    thread["resolvedBy"],
+                    "RESOLVED",
+                )
 
 
 if __name__ == "__main__":
