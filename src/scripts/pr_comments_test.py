@@ -90,7 +90,11 @@ class TestPRComments(unittest.TestCase):
 
     @staticmethod
     def fake_thread(**kwargs):
-        return pr_comments._Thread(TestPRComments.fake_thread_dict(**kwargs))
+        with mock.patch.dict(os.environ, {}):
+            parsed_args = pr_comments._parse_args(["83"])
+        return pr_comments._Thread(
+            parsed_args, TestPRComments.fake_thread_dict(**kwargs)
+        )
 
     @staticmethod
     def fake_thread_dict(
@@ -98,8 +102,9 @@ class TestPRComments(unittest.TestCase):
         path="foo.md",
         line=3,
         created_at="2001-02-03T04:05:06Z",
+        original_commit=None,
     ):
-        return {
+        thread_dict = {
             "isResolved": is_resolved,
             "comments": {
                 "nodes": [
@@ -118,11 +123,17 @@ class TestPRComments(unittest.TestCase):
                     },
                 ],
             },
-            "resolvedBy": {
+        }
+        if is_resolved:
+            thread_dict["resolvedBy"] = {
                 "login": "resolver",
                 "createdAt": "2001-02-03T04:25:26Z",
-            },
-        }
+            }
+        if original_commit:
+            thread_dict["comments"]["nodes"][0]["originalCommit"] = {
+                "abbreviatedOid": original_commit,
+            }
+        return thread_dict
 
     def test_thread_format(self):
         self.assertEqual(
@@ -160,6 +171,14 @@ class TestPRComments(unittest.TestCase):
             "    reply\n"
             "  resolver at 2001-02-03 04:25:\n"
             "    <resolved>",
+        )
+        self.assertEqual(
+            self.fake_thread(original_commit="abcdef").format(False),
+            "line 3; unresolved\n"
+            "    COMMENT: https://github.com/carbon-language/carbon-lang/pull/83/files/abcdef#diff-d8ca3b3d314d8209367af0eea2373b6fR3\n"
+            "    CHANGES: https://github.com/carbon-language/carbon-lang/pull/83/files/abcdef..HEAD#diff-d8ca3b3d314d8209367af0eea2373b6fL3\n"
+            "  author: comment\n"
+            "  other: reply",
         )
 
     def test_thread_lt(self):
