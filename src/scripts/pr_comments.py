@@ -96,7 +96,7 @@ class _Comment(object):
 
     @staticmethod
     def _rewrap(content, indent):
-        """Rewraps a comment to fit in 80 columns with a 4-space indent."""
+        """Rewraps a comment to fit in 80 columns with an optional indent."""
         lines = []
         for line in content.split("\n"):
             lines.extend(
@@ -191,7 +191,6 @@ def _parse_args(args=None):
         "pr_num",
         metavar="PR#",
         type=int,
-        nargs=1,
         help="The pull request to fetch comments from.",
     )
     env_token = "GITHUB_ACCESS_TOKEN"
@@ -244,11 +243,11 @@ def _parse_args(args=None):
 def _query(parsed_args, client, field_name=None, field=None):
     """Queries for comments.
 
-    review_threads may be specified if a cursor is present.
+    field_name and field should be specified for cursor-based queries.
     """
     print(".", end="", flush=True)
-    fields = {
-        "pr_num": parsed_args.pr_num[0],
+    format_inputs = {
+        "pr_num": parsed_args.pr_num,
         "repo": parsed_args.repo,
         "comments": "",
         "review_threads": "",
@@ -257,16 +256,16 @@ def _query(parsed_args, client, field_name=None, field=None):
         # Use a cursor for pagination of the field.
         cursor = ', after: "%s"' % field["pageInfo"]["endCursor"]
         if field_name == "comments":
-            fields["comments"] = _QUERY_COMMENTS % cursor
+            format_inputs["comments"] = _QUERY_COMMENTS % cursor
         elif field_name == "reviewThreads":
-            fields["review_threads"] = _QUERY_REVIEW_THREADS % cursor
+            format_inputs["review_threads"] = _QUERY_REVIEW_THREADS % cursor
         else:
             raise ValueError("Unexpected field_name: %s" % field_name)
     else:
         # Fetch the first page of both fields.
-        fields["comments"] = _QUERY_COMMENTS % ""
-        fields["review_threads"] = _QUERY_REVIEW_THREADS % ""
-    return client.execute(gql.gql(_QUERY % fields))
+        format_inputs["comments"] = _QUERY_COMMENTS % ""
+        format_inputs["review_threads"] = _QUERY_REVIEW_THREADS % ""
+    return client.execute(gql.gql(_QUERY % format_inputs))
 
 
 def _accumulate_comments(parsed_args, comments, raw_comments):
@@ -324,7 +323,7 @@ def _fetch_comments(parsed_args):
     # Each _query call will print a '.' for progress.
     print(
         "Loading https://github.com/carbon-language/%s/pull/%d ..."
-        % (parsed_args.repo, parsed_args.pr_num[0]),
+        % (parsed_args.repo, parsed_args.pr_num),
         end="",
         flush=True,
     )
