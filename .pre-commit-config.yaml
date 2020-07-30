@@ -19,7 +19,7 @@ repos:
     rev: v1.17.1
     hooks:
       - id: codespell
-        args: ['-L', 'copyable,circularly']
+        args: ['-L', 'circularly,copyable,pullrequest']
         exclude: '^src/jekyll/Gemfile.lock$'
   - repo: local
     hooks:
