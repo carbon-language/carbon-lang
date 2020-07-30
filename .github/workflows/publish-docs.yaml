@@ -2,10 +2,11 @@ name: Publish Carbon Documentation
 on:
   push:
     branches:
-      - master
+      - trunk
 
 jobs:
   build:
+    if: github.repository == 'carbon-language/carbon-lang'
     runs-on: [ubuntu-latest]
     steps:
       - uses: actions/checkout@v2
