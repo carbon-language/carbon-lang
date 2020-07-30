@@ -76,6 +76,8 @@ _QUERY_REVIEW_THREADS = """
 
 
 class _Comment(object):
+    """A comment, either on a review thread or top-level on the PR."""
+
     def __init__(self, author, timestamp, body):
         self.author = author
         self.timestamp = datetime.datetime.strptime(
@@ -85,6 +87,7 @@ class _Comment(object):
 
     @staticmethod
     def from_raw_comment(raw_comment):
+        """Creates the comment from a raw comment dict."""
         return _Comment(
             raw_comment["author"]["login"],
             raw_comment["createdAt"],
@@ -110,7 +113,7 @@ class _Comment(object):
         return "\n".join(lines)
 
     def format(self, long, indent):
-        """Prints a given comment."""
+        """Formats the comment."""
         if long:
             return "%s%s at %s:\n%s" % (
                 " " * indent,
@@ -128,6 +131,8 @@ class _Comment(object):
 
 
 class _Thread(object):
+    """A review thread on a line of code."""
+
     def __init__(self, thread):
         self.is_resolved = thread["isResolved"]
 
@@ -150,11 +155,13 @@ class _Thread(object):
             )
 
     def __lt__(self, other):
+        """Sort threads by line then timestamp."""
         if self.line != other.line:
             return self.line < other.line
         return self.comments[0].timestamp < other.comments[0].timestamp
 
     def format(self, long):
+        """Formats the review thread with comments."""
         lines = []
         # TODO: Add flag to fetch/print diffHunk for more context.
         lines.append(
@@ -298,6 +305,7 @@ def _accumulate_threads(parsed_args, threads_by_path, raw_threads):
 def _paginate(
     field_name, accumulator, parsed_args, client, pull_request, output
 ):
+    """Paginates through the given field_name, accumulating results."""
     while True:
         # Accumulate the review threads.
         field = pull_request[field_name]
@@ -312,7 +320,7 @@ def _paginate(
 
 
 def _fetch_comments(parsed_args):
-    """Fetches comments from GitHub."""
+    """Fetches comments and review threads from GitHub."""
     # Each _query call will print a '.' for progress.
     print(
         "Loading https://github.com/carbon-language/%s/pull/%d ..."
