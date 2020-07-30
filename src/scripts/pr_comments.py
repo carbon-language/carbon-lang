@@ -5,7 +5,6 @@
 import argparse
 import datetime
 import os
-import re
 import sys
 import textwrap
 
@@ -18,7 +17,37 @@ _QUERY = """
 {
   repository(owner: "carbon-language", name: "%(repo)s") {
     pullRequest(number: %(pr_num)d) {
-      reviewThreads(first: 100%(review_threads_cursor)s) {
+      author {
+        login
+      }
+      title
+
+      %(comments)s
+      %(review_threads)s
+    }
+  }
+}
+"""
+
+_QUERY_COMMENTS = """
+      comments(first: 100%s) {
+        nodes {
+          author {
+            login
+          }
+          body
+          createdAt
+          url
+        }
+        pageInfo {
+          endCursor
+          hasNextPage
+        }
+      }
+"""
+
+_QUERY_REVIEW_THREADS = """
+      reviewThreads(first: 100%s) {
         nodes {
           comments(first: 100) {
             nodes {
@@ -43,51 +72,58 @@ _QUERY = """
           hasNextPage
         }
       }
-      author {
-        login
-      }
-      title
-    }
-  }
-}
 """
 
 
 class _Comment(object):
-    def __init__(self, author, created_at, body):
+    def __init__(self, author, timestamp, body):
         self.author = author
-        self.created_at = created_at
+        self.timestamp = datetime.datetime.strptime(
+            timestamp, "%Y-%m-%dT%H:%M:%SZ"
+        )
         self.body = body
 
     @staticmethod
-    def _rewrap(content):
+    def from_raw_comment(raw_comment):
+        return _Comment(
+            raw_comment["author"]["login"],
+            raw_comment["createdAt"],
+            raw_comment["body"],
+        )
+
+    @staticmethod
+    def _rewrap(content, indent):
         """Rewraps a comment to fit in 80 columns with a 4-space indent."""
-        indent = "    "
         lines = []
         for line in content.split("\n"):
-            for x in textwrap.wrap(
-                line, width=80, initial_indent=indent, subsequent_indent=indent
-            ):
-                lines.append(x)
+            lines.extend(
+                [
+                    x
+                    for x in textwrap.wrap(
+                        line,
+                        width=80,
+                        initial_indent=" " * indent,
+                        subsequent_indent=" " * indent,
+                    )
+                ]
+            )
         return "\n".join(lines)
 
-    def format(self, parsed_args):
+    def format(self, long, indent):
         """Prints a given comment."""
-        if parsed_args.long:
-            time = datetime.datetime.strptime(
-                self.created_at, "%Y-%m-%dT%H:%M:%SZ"
-            )
-            return "  %s at %s:\n%s" % (
+        if long:
+            return "%s%s at %s:\n%s" % (
+                " " * indent,
                 self.author,
-                time.strftime("%Y-%m-%d %H:%M"),
-                self._rewrap(self.body),
+                self.timestamp.strftime("%Y-%m-%d %H:%M"),
+                self._rewrap(self.body, indent + 2),
             )
         else:
             # Compact newlines down into pilcrows, leaving a space after.
             body = self.body.replace("\r", "").replace("\n", "¶ ")
             while "¶ ¶" in body:
                 body = body.replace("¶ ¶", "¶¶")
-            line = "  %s: %s" % (self.author, body)
+            line = "%s%s: %s" % (" " * indent, self.author, body)
             return line if len(line) <= 80 else line[:77] + "..."
 
 
@@ -101,11 +137,7 @@ class _Thread(object):
         self.url = comments[0]["url"]
 
         self.comments = [
-            _Comment(
-                comment["author"]["login"],
-                comment["createdAt"],
-                comment["body"],
-            )
+            _Comment.from_raw_comment(comment)
             for comment in thread["comments"]["nodes"]
         ]
         if self.is_resolved:
@@ -113,9 +145,29 @@ class _Thread(object):
                 _Comment(
                     thread["resolvedBy"]["login"],
                     thread["resolvedBy"]["createdAt"],
-                    "RESOLVED",
+                    "<resolved>",
                 )
             )
+
+    def __lt__(self, other):
+        if self.line != other.line:
+            return self.line < other.line
+        return self.comments[0].timestamp < other.comments[0].timestamp
+
+    def format(self, long):
+        lines = []
+        # TODO: Add flag to fetch/print diffHunk for more context.
+        lines.append(
+            "line %d; %s"
+            % (self.line, ("resolved" if self.is_resolved else "unresolved"),)
+        )
+        # TODO: Try to link to the review thread with an appropriate diff.
+        # Ideally comment-to-present, worst case original-to-comment (to see
+        # comment). Possibly both.
+        lines.append("    %s" % self.url)
+        for comment in self.comments:
+            lines.append(comment.format(long, 2))
+        return "\n".join(lines)
 
     def has_comment_from(self, comments_from):
         """Returns true if comments has a comment from comments_from."""
@@ -182,27 +234,43 @@ def _parse_args(args=None):
     return parsed_args
 
 
-def _query(parsed_args, client, review_threads=None):
+def _query(parsed_args, client, field_name=None, field=None):
     """Queries for comments.
 
     review_threads may be specified if a cursor is present.
     """
     print(".", end="", flush=True)
     fields = {
-        "repo": parsed_args.repo,
         "pr_num": parsed_args.pr_num[0],
-        "review_threads_cursor": "",
+        "repo": parsed_args.repo,
+        "comments": "",
+        "review_threads": "",
     }
-    if review_threads:
-        fields["review_threads_cursor"] = (
-            ', after: "%s"' % review_threads["pageInfo"]["endCursor"]
-        )
+    if field:
+        # Use a cursor for pagination of the field.
+        cursor = ', after: "%s"' % field["pageInfo"]["endCursor"]
+        if field_name == "comments":
+            fields["comments"] = _QUERY_COMMENTS % cursor
+        elif field_name == "reviewThreads":
+            fields["review_threads"] = _QUERY_REVIEW_THREADS % cursor
+        else:
+            raise ValueError("Unexpected field_name: %s" % field_name)
+    else:
+        # Fetch the first page of both fields.
+        fields["comments"] = _QUERY_COMMENTS % ""
+        fields["review_threads"] = _QUERY_REVIEW_THREADS % ""
     return client.execute(gql.gql(_QUERY % fields))
 
 
-def _accumulate_threads(parsed_args, threads_by_path, review_threads):
+def _accumulate_comments(parsed_args, comments, raw_comments):
+    """Collects top-level comments."""
+    for raw_comment in raw_comments:
+        comments.append(_Comment.from_raw_comment(raw_comment))
+
+
+def _accumulate_threads(parsed_args, threads_by_path, raw_threads):
     """Adds threads to threads_by_path for later sorting."""
-    for raw_thread in review_threads["nodes"]:
+    for raw_thread in raw_threads:
         thread = _Thread(raw_thread)
 
         # Optionally skip resolved threads.
@@ -224,7 +292,23 @@ def _accumulate_threads(parsed_args, threads_by_path, review_threads):
 
         if thread.path not in threads_by_path:
             threads_by_path[thread.path] = []
-        threads_by_path[thread.path].append((thread.line, thread))
+        threads_by_path[thread.path].append(thread)
+
+
+def _paginate(
+    field_name, accumulator, parsed_args, client, pull_request, output
+):
+    while True:
+        # Accumulate the review threads.
+        field = pull_request[field_name]
+        accumulator(parsed_args, output, field["nodes"])
+        if not field["pageInfo"]["hasNextPage"]:
+            break
+        # There are more review threads, so fetch them.
+        next_page = _query(
+            parsed_args, client, field_name=field_name, field=field
+        )
+        pull_request = next_page["repository"]["pullRequest"]
 
 
 def _fetch_comments(parsed_args):
@@ -248,59 +332,52 @@ def _fetch_comments(parsed_args):
     threads_result = _query(parsed_args, client)
     pull_request = threads_result["repository"]["pullRequest"]
 
-    # Paginate through the review threads.
+    # Paginate comments and review threads.
+    comments = []
+    _paginate(
+        "comments",
+        _accumulate_comments,
+        parsed_args,
+        client,
+        pull_request,
+        comments,
+    )
     threads_by_path = {}
-    while True:
-        # Accumulate the review threads.
-        review_threads = pull_request["reviewThreads"]
-        _accumulate_threads(parsed_args, threads_by_path, review_threads)
-        if not review_threads["pageInfo"]["hasNextPage"]:
-            break
-        # There are more review threads, so fetch them.
-        threads_result = _query(
-            parsed_args, client, review_threads=review_threads
-        )
-        pull_request = threads_result["repository"]["pullRequest"]
+    _paginate(
+        "reviewThreads",
+        _accumulate_threads,
+        parsed_args,
+        client,
+        pull_request,
+        threads_by_path,
+    )
 
     # Now that loading is done (no more progress indicators), print the header.
     print(
-        "\n'%s' by %s"
+        "\n  '%s' by %s"
         % (pull_request["title"], pull_request["author"]["login"])
     )
-    return threads_by_path
-
-
-def _print_file_threads(parsed_args, path, threads):
-    # Print a header for each path.
-    print()
-    print("=" * 80)
-    print(path)
-    print("=" * 80)
-
-    for line, thread in sorted(threads, key=lambda x: x[0]):
-        # Print a header for each thread.
-        # TODO: Add flag to fetch/print diffHunk for more context.
-        print()
-        print(
-            "line %d; %s"
-            % (line, ("resolved" if thread.is_resolved else "unresolved"))
-        )
-        # TODO: Try to link to the review thread with an appropriate diff.
-        # Ideally comment-to-present, worst case original-to-comment (to see
-        # comment). Possibly both.
-        print("    %s" % thread.url)
-        for comment in thread.comments:
-            print(comment.format(parsed_args))
+    return comments, threads_by_path
 
 
 def main():
     parsed_args = _parse_args()
-    threads_by_path = _fetch_comments(parsed_args)
+    comments, threads_by_path = _fetch_comments(parsed_args)
 
-    # TODO: PR-level comments
+    print()
+    for comment in comments:
+        print(comment.format(parsed_args.long, 0))
 
     for path, threads in sorted(threads_by_path.items()):
-        _print_file_threads(parsed_args, path, threads)
+        # Print a header for each path.
+        print()
+        print("=" * 80)
+        print(path)
+        print("=" * 80)
+
+        for thread in sorted(threads):
+            print()
+            print(thread.format(parsed_args.long))
 
 
 if __name__ == "__main__":
