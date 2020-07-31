@@ -370,9 +370,11 @@ well articulated in
 although we may come to different conclusions regarding the principles.
 
 **Design features to be simple to implement.** Syntax, structure, and language
-features should be chosen while keeping the complexity of the implementation
-manageable. This reduces bugs, and will in most cases make the features easier
-to understand.
+features should be chosen while keeping the implementation complexity
+manageable. Simplicity of implementation reduces bugs, and will in most cases
+make the features easier to understand. It's also often the best way to ensure
+predictable performance, although supporting peak performance may require
+options for more complex implementation behavior.
 
 #### Practical safety guarantees and testing mechanisms
 
@@ -433,10 +435,10 @@ to provide fast developer iteration as the codebase scales up.
 **Support separate compilation, including parallel and distributed strategies.**
 Iteration requires frequent rebuilds of software as part of the edit/test/debug
 cycle of development. The language design should enable low-latency build
-strategies, particularly when relatively little has changed. This
-minimally requires separate compilation of source files, and potentially other
-incremental build strategies. Separate compilation also
-enables better scalability options for build systems of large software.
+strategies, particularly when relatively little has changed. This minimally
+requires separate compilation of source files, and potentially other incremental
+build strategies. Separate compilation also enables better scalability options
+for build systems of large software.
 
 #### Modern OS platforms, hardware architectures, and environments
 
