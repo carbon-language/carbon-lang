@@ -21,6 +21,7 @@ _QUERY = """
       author {
         login
       }
+      createdAt
       title
 
       %(comments)s
@@ -440,10 +441,13 @@ def _fetch_comments(parsed_args):
     )
 
     # Now that loading is done (no more progress indicators), print the header.
-    print(
-        "\n  '%s' by %s"
-        % (pull_request["title"], pull_request["author"]["login"])
+    print()
+    pr_desc = _Comment(
+        pull_request["author"]["login"],
+        pull_request["createdAt"],
+        pull_request["title"],
     )
+    print(pr_desc.format(parsed_args.long))
     return comments, threads_by_path
 
 
