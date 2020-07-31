@@ -1,4 +1,4 @@
-# Carbon &lt;-> C/C++ interoperability
+# Bidirectional interoperability with C/C++
 
 <!--
 Part of the Carbon Language project, under the Apache License v2.0 with LLVM
@@ -10,22 +10,22 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 <!-- toc -->
 
-- [Overview](#overview)
-- [Interoperability syntax elements](#interoperability-syntax-elements)
-- [Bridge code in Carbon files](#bridge-code-in-carbon-files)
-- [Name mapping](#name-mapping)
-- [Type mapping](#type-mapping)
-  - [Primitive types](#primitive-types)
-  - [User-defined types](#user-defined-types)
-  - [Vocabulary types](#vocabulary-types)
-- [Enums](#enums)
-- [Templates and generics](#templates-and-generics)
-  - [Using C++ templates from Carbon](#using-c-templates-from-carbon)
-  - [Using Carbon templates from C++](#using-carbon-templates-from-c)
-  - [Using Carbon generics from C++](#using-carbon-generics-from-c)
-- [Functions and overload sets](#functions-and-overload-sets)
-- [Other syntax](#other-syntax)
-- [Migration examples](#migration-examples)
+-   [Overview](#overview)
+-   [Interoperability syntax elements](#interoperability-syntax-elements)
+-   [Bridge code in Carbon files](#bridge-code-in-carbon-files)
+-   [Name mapping](#name-mapping)
+-   [Type mapping](#type-mapping)
+    -   [Primitive types](#primitive-types)
+    -   [User-defined types](#user-defined-types)
+    -   [Vocabulary types](#vocabulary-types)
+-   [Enums](#enums)
+-   [Templates and generics](#templates-and-generics)
+    -   [Using C++ templates from Carbon](#using-c-templates-from-carbon)
+    -   [Using Carbon templates from C++](#using-carbon-templates-from-c)
+    -   [Using Carbon generics from C++](#using-carbon-generics-from-c)
+-   [Functions and overload sets](#functions-and-overload-sets)
+-   [Other syntax](#other-syntax)
+-   [Migration examples](#migration-examples)
 
 <!-- tocstop -->
 
@@ -48,15 +48,15 @@ required when exposing Carbon code to C++.
 
 Notable elements are:
 
-- `$extern("Cpp")`: Indicates that Carbon code should be exposed for C++.
-  Similarly, `$extern("Swift")` might be used to indicate exposure for Swift at
-  some point in the future.
-  - `namespace` and `name` parameters are provided to override default choices,
-    particularly to assist migration of C++ APIs to Carbon. For example,
-    `$extern("Cpp", namespace="myproject")`.
-  - The Carbon toolchain will translate externed declarations to C++, and they
-    will be available to C++ code through `.6c.h` header files.
-- `import Cpp "path"`: Imports APIs from a C++ header file.
+-   `$extern("Cpp")`: Indicates that Carbon code should be exposed for C++.
+    Similarly, `$extern("Swift")` might be used to indicate exposure for Swift
+    at some point in the future.
+    -   `namespace` and `name` parameters are provided to override default
+        choices, particularly to assist migration of C++ APIs to Carbon. For
+        example, `$extern("Cpp", namespace="myproject")`.
+    -   The Carbon toolchain will translate externed declarations to C++, and
+        they will be available to C++ code through `.6c.h` header files.
+-   `import Cpp "path"`: Imports APIs from a C++ header file.
 
 We use the name `Cpp` because `import` needs a valid identifier.
 
@@ -124,17 +124,18 @@ exist for cross-platform 32-bit/64-bit compatibility.
 
 There are several cases of vocabulary types that are important to consider:
 
-- Non-owning types passed by reference or pointer, such as `std::vector<T> &&`.
-  - C++ references map to Carbon non-null pointers, or `T*`.
-  - C++ pointers map to Carbon nullable pointers, or `T*?`.
-- Non-owning types passed by value, such as `std::string_view` or `std::span`.
-  - We copy these to Carbon types with similar semantics. These should have
-    trivial construction costs.
-- Owning types signaling a move of ownership, such as `std::unique_ptr`.
-  - We will try to transfer ownership to a Carbon type where possible, but may
-    need to copy to the Carbon type in complex cases.
-- Owning types signaling a copy of data, such as `std::vector<T>`.
-  - Copying overhead should be expected and normal, even for a Carbon type.
+-   Non-owning types passed by reference or pointer, such as
+    `std::vector<T> &&`.
+    -   C++ references map to Carbon non-null pointers, or `T*`.
+    -   C++ pointers map to Carbon nullable pointers, or `T*?`.
+-   Non-owning types passed by value, such as `std::string_view` or `std::span`.
+    -   We copy these to Carbon types with similar semantics. These should have
+        trivial construction costs.
+-   Owning types signaling a move of ownership, such as `std::unique_ptr`.
+    -   We will try to transfer ownership to a Carbon type where possible, but
+        may need to copy to the Carbon type in complex cases.
+-   Owning types signaling a copy of data, such as `std::vector<T>`.
+    -   Copying overhead should be expected and normal, even for a Carbon type.
 
 ## Enums
 
@@ -227,9 +228,9 @@ overloads between the two approaches.
 Beyond the above in-depth discussions, a few key syntax details to be aware of
 are:
 
-- C typedefs are generally mapped to Carbon aliases.
-- C/C++ macros that are defined as constants will be imported as constants.
-  Otherwise, macros will be unavailable in Carbon.
+-   C typedefs are generally mapped to Carbon aliases.
+-   C/C++ macros that are defined as constants will be imported as constants.
+    Otherwise, macros will be unavailable in Carbon.
 
 ## Migration examples
 
@@ -240,5 +241,5 @@ code.
 
 Examples:
 
-- [Incremental migration of APIs](example_incremental.md)
-- [Framework API migration](example_framework.md)
+-   [Incremental migration of APIs](example_incremental.md)
+-   [Framework API migration](example_framework.md)
