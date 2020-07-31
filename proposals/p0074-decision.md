@@ -10,17 +10,17 @@ Proposal accepted on 2020-06-02
 
 Affirming:
 
-- [Chandler Carruth](https://github.com/chandlerc)
-- [Dmitri Gribenko](https://github.com/gribozavr)
-- [Geoff Romer](https://github.com/geoffromer)
-- [Josh Levenberg](https://github.com/josh11b)
-- [Matt Austern](https://github.com/austern)
-- [Richard Smith](https://github.com/zygoloid)
-- [Titus Winters](https://github.com/tituswinters)
+-   [austern](https://github.com/austern)
+-   [chandlerc](https://github.com/chandlerc)
+-   [geoffromer](https://github.com/geoffromer)
+-   [gribozavr](https://github.com/gribozavr)
+-   [josh11b](https://github.com/josh11b)
+-   [tituswinters](https://github.com/tituswinters)
+-   [zygoloid](https://github.com/zygoloid)
 
 Abstaining:
 
-- [Chris Palmer](https://github.com/noncombatant)
+-   [noncombatant](https://github.com/noncombatant)
 
 ## Open questions
 
@@ -31,10 +31,11 @@ that can be resolved by review managers as part of doc changes.
 
 ## Rationale
 
-- This directly supports our community goals: not everybody is in a position to
-  respond to events with less than a day of latency, so longer lead times before
-  deadlines will help enable them to participate.
-  - Longer lead time makes it more likely that we'll get substantive comments.
-- The answer to the open question doesn't strongly matter, and there is a
-  preference for leaving it to the review managers' discretion rather than
-  having the core team decide.
+-   This directly supports our community goals: not everybody is in a position
+    to respond to events with less than a day of latency, so longer lead times
+    before deadlines will help enable them to participate.
+    -   Longer lead time makes it more likely that we'll get substantive
+        comments.
+-   The answer to the open question doesn't strongly matter, and there is a
+    preference for leaving it to the review managers' discretion rather than
+    having the core team decide.

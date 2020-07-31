@@ -19,7 +19,7 @@ repos:
     rev: v1.17.1
     hooks:
       - id: codespell
-        args: ['-L', 'copyable,circularly']
+        args: ['-L', 'circularly,copyable,pullrequest']
         exclude: '^src/jekyll/Gemfile.lock$'
   - repo: local
     hooks:
@@ -44,7 +44,7 @@ repos:
     rev: stable
     hooks:
       - id: black
-        language_version: python3.6
+        language_version: python3
   - repo: https://github.com/prettier/prettier
     rev: 2.0.5
     hooks:
