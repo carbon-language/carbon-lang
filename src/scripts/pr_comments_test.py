@@ -12,27 +12,19 @@ class TestPRComments(unittest.TestCase):
     def test_format_comment_short(self):
         created_at = "2001-02-03T04:05:06Z"
         self.assertEqual(
-            pr_comments._Comment("author", created_at, "brief").format(
-                False, 0
-            ),
-            "author: brief",
-        )
-        self.assertEqual(
-            pr_comments._Comment("author", created_at, "brief").format(
-                False, 2
-            ),
+            pr_comments._Comment("author", created_at, "brief").format(False),
             "  author: brief",
         )
         self.assertEqual(
             pr_comments._Comment("author", created_at, "brief\nwrap").format(
-                False, 2
+                False
             ),
             "  author: brief¶ wrap",
         )
         self.assertEqual(
             pr_comments._Comment(
                 "author", created_at, "brief\n\n\nwrap"
-            ).format(False, 2),
+            ).format(False),
             "  author: brief¶¶¶ wrap",
         )
         self.assertEqual(
@@ -41,7 +33,7 @@ class TestPRComments(unittest.TestCase):
                 created_at,
                 "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed "
                 "do eiusmo",
-            ).format(False, 2),
+            ).format(False),
             "  author: Lorem ipsum dolor sit amet, consectetur adipiscing "
             "elit, sed do eiusmo",
         )
@@ -51,7 +43,7 @@ class TestPRComments(unittest.TestCase):
                 created_at,
                 "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed "
                 "do eiusmod",
-            ).format(False, 2),
+            ).format(False),
             "  author: Lorem ipsum dolor sit amet, consectetur adipiscing "
             "elit, sed do eiu...",
         )
@@ -59,16 +51,12 @@ class TestPRComments(unittest.TestCase):
     def test_format_comment_long(self):
         created_at = "2001-02-03T04:05:06Z"
         self.assertEqual(
-            pr_comments._Comment("author", created_at, "brief").format(True, 0),
-            "author at 2001-02-03 04:05:\n  brief",
-        )
-        self.assertEqual(
-            pr_comments._Comment("author", created_at, "brief").format(True, 2),
+            pr_comments._Comment("author", created_at, "brief").format(True),
             "  author at 2001-02-03 04:05:\n    brief",
         )
         self.assertEqual(
             pr_comments._Comment("author", created_at, "brief\nwrap").format(
-                True, 2
+                True
             ),
             "  author at 2001-02-03 04:05:\n    brief\n    wrap",
         )
@@ -80,7 +68,7 @@ class TestPRComments(unittest.TestCase):
             "Ut enim ad minim veniam,"
         )
         self.assertEqual(
-            pr_comments._Comment("author", created_at, body).format(True, 2),
+            pr_comments._Comment("author", created_at, body).format(True),
             "  author at 2001-02-03 04:05:\n"
             "    Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed "
             "do eiusmod\n"
@@ -102,7 +90,6 @@ class TestPRComments(unittest.TestCase):
         path="foo.md",
         line=3,
         created_at="2001-02-03T04:05:06Z",
-        original_commit=None,
     ):
         thread_dict = {
             "isResolved": is_resolved,
@@ -112,6 +99,7 @@ class TestPRComments(unittest.TestCase):
                         "author": {"login": "author"},
                         "body": "comment",
                         "createdAt": created_at,
+                        "originalCommit": {"abbreviatedOid": "abcdef"},
                         "originalPosition": line,
                         "path": path,
                         "url": "http://xyz",
@@ -129,24 +117,22 @@ class TestPRComments(unittest.TestCase):
                 "login": "resolver",
                 "createdAt": "2001-02-03T04:25:26Z",
             }
-        if original_commit:
-            thread_dict["comments"]["nodes"][0]["originalCommit"] = {
-                "abbreviatedOid": original_commit,
-            }
         return thread_dict
 
     def test_thread_format(self):
         self.assertEqual(
             self.fake_thread().format(False),
-            "line 3; unresolved\n"
-            "    http://xyz\n"
+            "https://github.com/carbon-language/carbon-lang/pull/83/files/abcdef#diff-d8ca3b3d314d8209367af0eea2373b6fR3\n"
+            "  - line 3; unresolved\n"
+            "  - diff: https://github.com/carbon-language/carbon-lang/pull/83/files/abcdef..HEAD#diff-d8ca3b3d314d8209367af0eea2373b6fL3\n"
             "  author: comment\n"
             "  other: reply",
         )
         self.assertEqual(
             self.fake_thread().format(True),
-            "line 3; unresolved\n"
-            "    http://xyz\n"
+            "https://github.com/carbon-language/carbon-lang/pull/83/files/abcdef#diff-d8ca3b3d314d8209367af0eea2373b6fR3\n"
+            "  - line 3; unresolved\n"
+            "  - diff: https://github.com/carbon-language/carbon-lang/pull/83/files/abcdef..HEAD#diff-d8ca3b3d314d8209367af0eea2373b6fL3\n"
             "  author at 2001-02-03 04:05:\n"
             "    comment\n"
             "  other at 2001-02-03 04:15:\n"
@@ -155,30 +141,24 @@ class TestPRComments(unittest.TestCase):
 
         self.assertEqual(
             self.fake_thread(is_resolved=True).format(False),
-            "line 3; resolved\n"
-            "    http://xyz\n"
+            "https://github.com/carbon-language/carbon-lang/pull/83/files/abcdef#diff-d8ca3b3d314d8209367af0eea2373b6fR3\n"
+            "  - line 3; resolved\n"
+            "  - diff: https://github.com/carbon-language/carbon-lang/pull/83/files/abcdef..HEAD#diff-d8ca3b3d314d8209367af0eea2373b6fL3\n"
             "  author: comment\n"
             "  other: reply\n"
             "  resolver: <resolved>",
         )
         self.assertEqual(
             self.fake_thread(is_resolved=True).format(True),
-            "line 3; resolved\n"
-            "    http://xyz\n"
+            "https://github.com/carbon-language/carbon-lang/pull/83/files/abcdef#diff-d8ca3b3d314d8209367af0eea2373b6fR3\n"
+            "  - line 3; resolved\n"
+            "  - diff: https://github.com/carbon-language/carbon-lang/pull/83/files/abcdef..HEAD#diff-d8ca3b3d314d8209367af0eea2373b6fL3\n"
             "  author at 2001-02-03 04:05:\n"
             "    comment\n"
             "  other at 2001-02-03 04:15:\n"
             "    reply\n"
             "  resolver at 2001-02-03 04:25:\n"
             "    <resolved>",
-        )
-        self.assertEqual(
-            self.fake_thread(original_commit="abcdef").format(False),
-            "line 3; unresolved\n"
-            "    COMMENT: https://github.com/carbon-language/carbon-lang/pull/83/files/abcdef#diff-d8ca3b3d314d8209367af0eea2373b6fR3\n"
-            "    CHANGES: https://github.com/carbon-language/carbon-lang/pull/83/files/abcdef..HEAD#diff-d8ca3b3d314d8209367af0eea2373b6fL3\n"
-            "  author: comment\n"
-            "  other: reply",
         )
 
     def test_thread_lt(self):
@@ -214,6 +194,66 @@ class TestPRComments(unittest.TestCase):
         self.assertEqual(threads[1].line, 3)
         self.assertEqual(threads[2].line, 4)
         self.assertEqual(len(threads_by_path["other.md"]), 1)
+
+    @staticmethod
+    def fake_pr_comment(**kwargs):
+        with mock.patch.dict(os.environ, {}):
+            parsed_args = pr_comments._parse_args(["83"])
+        return pr_comments._PRComment(
+            TestPRComments.fake_pr_comment_dict(**kwargs)
+        )
+
+    @staticmethod
+    def fake_pr_comment_dict(
+        body="comment", created_at="2001-02-03T04:05:06Z",
+    ):
+        pr_comment_dict = {
+            "author": {"login": "author"},
+            "body": body,
+            "createdAt": created_at,
+            "url": "http://xyz",
+        }
+        return pr_comment_dict
+
+    def test_pr_comment_format(self):
+        self.assertEqual(
+            self.fake_pr_comment().format(False),
+            "http://xyz\n  author: comment",
+        )
+        self.assertEqual(
+            self.fake_pr_comment().format(True),
+            "http://xyz\n  author at 2001-02-03 04:05:\n    comment",
+        )
+
+    def test_pr_comment_lt(self):
+        pr_comment1 = self.fake_pr_comment()
+        pr_comment2 = self.fake_pr_comment(created_at="2002-02-03T04:05:06Z")
+
+        self.assertTrue(pr_comment1 < pr_comment2)
+        self.assertFalse(pr_comment2 < pr_comment1)
+
+        self.assertFalse(pr_comment2 < pr_comment2)
+
+    def test_accumulate_pr_comments(self):
+        with mock.patch.dict(os.environ, {}):
+            parsed_args = pr_comments._parse_args(["83"])
+        raw_comments = [
+            self.fake_pr_comment_dict(body="x"),
+            self.fake_pr_comment_dict(body=""),
+            self.fake_pr_comment_dict(
+                body="y", created_at="2000-02-03T04:05:06Z"
+            ),
+            self.fake_pr_comment_dict(
+                body="z", created_at="2002-02-03T04:05:06Z"
+            ),
+        ]
+        comments = []
+        pr_comments._accumulate_pr_comments(parsed_args, comments, raw_comments)
+        comments.sort()
+        self.assertEqual(len(comments), 3)
+        self.assertEqual(comments[0].body, "y")
+        self.assertEqual(comments[1].body, "x")
+        self.assertEqual(comments[2].body, "z")
 
 
 if __name__ == "__main__":
