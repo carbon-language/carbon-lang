@@ -432,10 +432,10 @@ to provide fast developer iteration as the codebase scales up.
 
 **Support separate compilation, including parallel and distributed strategies.**
 Iteration requires frequent rebuilds of software as part of the edit/test/debug
-cycle of development. The language design should enable build strategies that
-optimize these builds, particularly when relatively little has changed. This
+cycle of development. The language design should enable low-latency build
+strategies, particularly when relatively little has changed. This
 minimally requires separate compilation of source files, and potentially other
-incremental build strategies. Smaller and separate compilation units also
+incremental build strategies. Separate compilation also
 enables better scalability options for build systems of large software.
 
 #### Modern OS platforms, hardware architectures, and environments
