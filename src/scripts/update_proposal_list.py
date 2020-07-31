@@ -21,7 +21,7 @@ if __name__ == "__main__":
 
     # Identify proposal titles in the file list.
     proposals = [
-        "<!-- This list is updated by src/scripts/pre-commit-proposal-list.py. "
+        "<!-- This list is updated by src/scripts/update_proposal_list.py. "
         "-->",
         "",
     ]
@@ -40,7 +40,7 @@ if __name__ == "__main__":
         proposals.append(
             "-   [%s - %s](%s)" % (file_match[1], title_match[1], file)
         )
-        decision_file = "p%s-decision.md" % file_match[1]
+        decision_file = "p%s_decision.md" % file_match[1]
         if os.path.exists(os.path.join(proposal_dir, decision_file)):
             proposals.append("    -   [Decision](%s)" % decision_file)
     # We print batched errors for usability, but still need to exit with
