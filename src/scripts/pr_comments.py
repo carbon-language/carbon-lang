@@ -4,6 +4,7 @@
 
 import argparse
 import datetime
+import hashlib
 import os
 import sys
 import textwrap
@@ -57,8 +58,10 @@ _QUERY_REVIEW_THREADS = """
               body
               createdAt
               originalPosition
+              originalCommit {
+                abbreviatedOid
+              }
               path
-              url
             }
           }
           isResolved
@@ -133,13 +136,44 @@ class _Comment(object):
 class _Thread(object):
     """A review thread on a line of code."""
 
-    def __init__(self, thread):
+    def __init__(self, parsed_args, thread):
         self.is_resolved = thread["isResolved"]
 
         comments = thread["comments"]["nodes"]
-        self.line = comments[0]["originalPosition"]
-        self.path = comments[0]["path"]
-        self.url = comments[0]["url"]
+        first_comment = comments[0]
+        self.line = first_comment["originalPosition"]
+        self.path = first_comment["path"]
+
+        # Link to the comment in the commit if possible; GitHub features work
+        # better there than in the conversation view. The diff_url allows
+        # viewing changes since the comment, although the comment won't be
+        # visible there.
+        if "originalCommit" in first_comment:
+            template = (
+                "https://github.com/carbon-language/%(repo)s/pull/%(pr_num)s/"
+                "files/%(oid)s%(head)s#diff-%(path_md5)s%(line_side)s%(line)s"
+            )
+            # GitHub uses an md5 of the file's path for the link.
+            path_md5 = hashlib.md5()
+            path_md5.update(bytearray(self.path, "utf-8"))
+            format_dict = {
+                "head": "",
+                "line_side": "R",
+                "line": self.line,
+                "oid": first_comment["originalCommit"]["abbreviatedOid"],
+                "path_md5": path_md5.hexdigest(),
+                "pr_num": parsed_args.pr_num,
+                "repo": parsed_args.repo,
+            }
+            self.comment_url = template % format_dict
+            format_dict["head"] = "..HEAD"
+            format_dict["line_side"] = "L"
+            self.diff_url = template % format_dict
+            self.conversation_url = None
+        else:
+            self.conversation_url = first_comment["url"]
+            self.comment_url = None
+            self.diff_url = None
 
         self.comments = [
             _Comment.from_raw_comment(comment)
@@ -163,15 +197,15 @@ class _Thread(object):
     def format(self, long):
         """Formats the review thread with comments."""
         lines = []
-        # TODO: Add flag to fetch/print diffHunk for more context.
         lines.append(
             "line %d; %s"
             % (self.line, ("resolved" if self.is_resolved else "unresolved"),)
         )
-        # TODO: Try to link to the review thread with an appropriate diff.
-        # Ideally comment-to-present, worst case original-to-comment (to see
-        # comment). Possibly both.
-        lines.append("    %s" % self.url)
+        if self.diff_url:
+            lines.append("    COMMENT: %s" % self.comment_url)
+            lines.append("    CHANGES: %s" % self.diff_url)
+        else:
+            lines.append("    %s" % self.conversation_url)
         for comment in self.comments:
             lines.append(comment.format(long, 2))
         return "\n".join(lines)
@@ -277,7 +311,7 @@ def _accumulate_comments(parsed_args, comments, raw_comments):
 def _accumulate_threads(parsed_args, threads_by_path, raw_threads):
     """Adds threads to threads_by_path for later sorting."""
     for raw_thread in raw_threads:
-        thread = _Thread(raw_thread)
+        thread = _Thread(parsed_args, raw_thread)
 
         # Optionally skip resolved threads.
         if not parsed_args.include_resolved and thread.is_resolved:
