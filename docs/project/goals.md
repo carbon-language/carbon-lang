@@ -454,9 +454,9 @@ synchronization primitives like mutexes and futures is good, the underlying
 atomic operations provided by the hardware must also be directly available.
 Similarly, lowering parallel constructs into a specific implementation, such as
 SIMD or SPMD, is good but insufficient. Multiple parallel implementations must
-be directly addressable in Carbon. This pattern repeats across the landscape of
-OS platform, hardware, and environment distinctions; for example, concurrency
-versus parallelism, and desktop versus mobile.
+be directly addressable in Carbon. The need for native support repeats across
+the landscape of OS platform, hardware, and environment distinctions; for
+example, concurrency versus parallelism, and desktop versus mobile.
 
 **Conversely, Carbon cannot prioritize support for historical platforms.** To
 use a hockey metaphor, we should not skate to where the puck is, much less where
