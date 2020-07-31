@@ -21,9 +21,11 @@ _QUERY = """
       author {
         login
       }
+      createdAt
       title
 
       %(comments)s
+      %(reviews)s
       %(review_threads)s
     }
   }
@@ -32,6 +34,23 @@ _QUERY = """
 
 _QUERY_COMMENTS = """
       comments(first: 100%s) {
+        nodes {
+          author {
+            login
+          }
+          body
+          createdAt
+          url
+        }
+        pageInfo {
+          endCursor
+          hasNextPage
+        }
+      }
+"""
+
+_QUERY_REVIEWS = """
+      reviews(first: 100%s) {
         nodes {
           author {
             login
@@ -98,8 +117,8 @@ class _Comment(object):
         )
 
     @staticmethod
-    def _rewrap(content, indent):
-        """Rewraps a comment to fit in 80 columns with an optional indent."""
+    def _rewrap(content):
+        """Rewraps a comment to fit in 80 columns with an indent."""
         lines = []
         for line in content.split("\n"):
             lines.extend(
@@ -108,29 +127,47 @@ class _Comment(object):
                     for x in textwrap.wrap(
                         line,
                         width=80,
-                        initial_indent=" " * indent,
-                        subsequent_indent=" " * indent,
+                        initial_indent=" " * 4,
+                        subsequent_indent=" " * 4,
                     )
                 ]
             )
         return "\n".join(lines)
 
-    def format(self, long, indent):
+    def format(self, long):
         """Formats the comment."""
         if long:
             return "%s%s at %s:\n%s" % (
-                " " * indent,
+                " " * 2,
                 self.author,
                 self.timestamp.strftime("%Y-%m-%d %H:%M"),
-                self._rewrap(self.body, indent + 2),
+                self._rewrap(self.body),
             )
         else:
             # Compact newlines down into pilcrows, leaving a space after.
             body = self.body.replace("\r", "").replace("\n", "¶ ")
             while "¶ ¶" in body:
                 body = body.replace("¶ ¶", "¶¶")
-            line = "%s%s: %s" % (" " * indent, self.author, body)
+            line = "%s%s: %s" % (" " * 2, self.author, body)
             return line if len(line) <= 80 else line[:77] + "..."
+
+
+class _PRComment(_Comment):
+    """A comment on the top-level PR."""
+
+    def __init__(self, raw_comment):
+        super().__init__(
+            raw_comment["author"]["login"],
+            raw_comment["createdAt"],
+            raw_comment["body"],
+        )
+        self.url = raw_comment["url"]
+
+    def __lt__(self, other):
+        return self.timestamp < other.timestamp
+
+    def format(self, long):
+        return "%s\n%s" % (self.url, super().format(long))
 
 
 class _Thread(object):
@@ -144,36 +181,29 @@ class _Thread(object):
         self.line = first_comment["originalPosition"]
         self.path = first_comment["path"]
 
-        # Link to the comment in the commit if possible; GitHub features work
-        # better there than in the conversation view. The diff_url allows
-        # viewing changes since the comment, although the comment won't be
-        # visible there.
-        if "originalCommit" in first_comment:
-            template = (
-                "https://github.com/carbon-language/%(repo)s/pull/%(pr_num)s/"
-                "files/%(oid)s%(head)s#diff-%(path_md5)s%(line_side)s%(line)s"
-            )
-            # GitHub uses an md5 of the file's path for the link.
-            path_md5 = hashlib.md5()
-            path_md5.update(bytearray(self.path, "utf-8"))
-            format_dict = {
-                "head": "",
-                "line_side": "R",
-                "line": self.line,
-                "oid": first_comment["originalCommit"]["abbreviatedOid"],
-                "path_md5": path_md5.hexdigest(),
-                "pr_num": parsed_args.pr_num,
-                "repo": parsed_args.repo,
-            }
-            self.comment_url = template % format_dict
-            format_dict["head"] = "..HEAD"
-            format_dict["line_side"] = "L"
-            self.diff_url = template % format_dict
-            self.conversation_url = None
-        else:
-            self.conversation_url = first_comment["url"]
-            self.comment_url = None
-            self.diff_url = None
+        # Link to the comment in the commit; GitHub features work better there
+        # than in the conversation view. The diff_url allows viewing changes
+        # since the comment, although the comment won't be visible there.
+        template = (
+            "https://github.com/carbon-language/%(repo)s/pull/%(pr_num)s/"
+            "files/%(oid)s%(head)s#diff-%(path_md5)s%(line_side)s%(line)s"
+        )
+        # GitHub uses an md5 of the file's path for the link.
+        path_md5 = hashlib.md5()
+        path_md5.update(bytearray(self.path, "utf-8"))
+        format_dict = {
+            "head": "",
+            "line_side": "R",
+            "line": self.line,
+            "oid": first_comment["originalCommit"]["abbreviatedOid"],
+            "path_md5": path_md5.hexdigest(),
+            "pr_num": parsed_args.pr_num,
+            "repo": parsed_args.repo,
+        }
+        self.url = template % format_dict
+        format_dict["head"] = "..HEAD"
+        format_dict["line_side"] = "L"
+        self.diff_url = template % format_dict
 
         self.comments = [
             _Comment.from_raw_comment(comment)
@@ -198,16 +228,17 @@ class _Thread(object):
         """Formats the review thread with comments."""
         lines = []
         lines.append(
-            "line %d; %s"
-            % (self.line, ("resolved" if self.is_resolved else "unresolved"),)
+            "%s\n  - line %d; %s"
+            % (
+                self.url,
+                self.line,
+                ("resolved" if self.is_resolved else "unresolved"),
+            )
         )
         if self.diff_url:
-            lines.append("    COMMENT: %s" % self.comment_url)
-            lines.append("    CHANGES: %s" % self.diff_url)
-        else:
-            lines.append("    %s" % self.conversation_url)
+            lines.append("  - diff: %s" % self.diff_url)
         for comment in self.comments:
-            lines.append(comment.format(long, 2))
+            lines.append(comment.format(long))
         return "\n".join(lines)
 
     def has_comment_from(self, comments_from):
@@ -285,6 +316,7 @@ def _query(parsed_args, client, field_name=None, field=None):
         "repo": parsed_args.repo,
         "comments": "",
         "review_threads": "",
+        "reviews": "",
     }
     if field:
         # Use a cursor for pagination of the field.
@@ -293,19 +325,25 @@ def _query(parsed_args, client, field_name=None, field=None):
             format_inputs["comments"] = _QUERY_COMMENTS % cursor
         elif field_name == "reviewThreads":
             format_inputs["review_threads"] = _QUERY_REVIEW_THREADS % cursor
+        elif field_name == "reviews":
+            format_inputs["reviews"] = _QUERY_REVIEWS % cursor
         else:
             raise ValueError("Unexpected field_name: %s" % field_name)
     else:
-        # Fetch the first page of both fields.
+        # Fetch the first page of all fields.
         format_inputs["comments"] = _QUERY_COMMENTS % ""
         format_inputs["review_threads"] = _QUERY_REVIEW_THREADS % ""
+        format_inputs["reviews"] = _QUERY_REVIEWS % ""
     return client.execute(gql.gql(_QUERY % format_inputs))
 
 
-def _accumulate_comments(parsed_args, comments, raw_comments):
-    """Collects top-level comments."""
+def _accumulate_pr_comments(parsed_args, comments, raw_comments):
+    """Collects top-level comments and reviews."""
     for raw_comment in raw_comments:
-        comments.append(_Comment.from_raw_comment(raw_comment))
+        # Elide reviews that have no top-level comment body.
+        if not raw_comment["body"]:
+            continue
+        comments.append(_PRComment(raw_comment))
 
 
 def _accumulate_threads(parsed_args, threads_by_path, raw_threads):
@@ -373,11 +411,20 @@ def _fetch_comments(parsed_args):
     threads_result = _query(parsed_args, client)
     pull_request = threads_result["repository"]["pullRequest"]
 
-    # Paginate comments and review threads.
+    # Paginate comments, reviews, and review threads.
     comments = []
     _paginate(
         "comments",
-        _accumulate_comments,
+        _accumulate_pr_comments,
+        parsed_args,
+        client,
+        pull_request,
+        comments,
+    )
+    # Combine reviews into comments for interleaving.
+    _paginate(
+        "reviews",
+        _accumulate_pr_comments,
         parsed_args,
         client,
         pull_request,
@@ -394,10 +441,13 @@ def _fetch_comments(parsed_args):
     )
 
     # Now that loading is done (no more progress indicators), print the header.
-    print(
-        "\n  '%s' by %s"
-        % (pull_request["title"], pull_request["author"]["login"])
+    print()
+    pr_desc = _Comment(
+        pull_request["author"]["login"],
+        pull_request["createdAt"],
+        pull_request["title"],
     )
+    print(pr_desc.format(parsed_args.long))
     return comments, threads_by_path
 
 
@@ -405,9 +455,9 @@ def main():
     parsed_args = _parse_args()
     comments, threads_by_path = _fetch_comments(parsed_args)
 
-    print()
-    for comment in comments:
-        print(comment.format(parsed_args.long, 0))
+    for comment in sorted(comments):
+        print()
+        print(comment.format(parsed_args.long))
 
     for path, threads in sorted(threads_by_path.items()):
         # Print a header for each path.
