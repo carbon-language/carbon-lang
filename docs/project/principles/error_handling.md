@@ -95,10 +95,10 @@ debugger.
 The Carbon standard library's common-case APIs will not go out of their way to
 support treating memory exhaustion as a recoverable error.
 
-Memory exhaustion is not a programming error, and it is feasible to write code
-that can successfully recover from it. However, the available evidence indicates
-that very little C++ code actually does so correctly (for example, see section
-4.3 of
+Memory exhaustion is not a programming error, and it is sometimes feasible to
+write code that can successfully recover from it. However, the available
+evidence indicates that very little C++ code actually does so correctly (for
+example, see section 4.3 of
 [this paper](http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2019/p0709r4.pdf)),
 which suggests that very little C++ code actually needs to do so, and we see no
 reason to expect Carbon's users to differ in this respect.
@@ -112,9 +112,10 @@ API.
 
 #### Examples
 
-The `pop` operation on a Carbon queue will return the value removed from the
-queue. This is in contrast to C++'s `std::queue::pop()`, which does not return
-the value popped from the queue, because
+If the Carbon standard library includes queues, the `pop` operation on a
+Carbon queue will return the value removed from the queue. This is in contrast
+to C++'s `std::queue::pop()`, which does not return the value popped from the
+queue, because
 [that would not be exception-safe](https://isocpp.org/blog/2016/06/quick-q-why-doesnt-stdqueuepop-return-value)
 due to the possibility of an out-of-memory error while copying that value.
 Instead, the user must first examine the front of the queue, and then pop it as
@@ -124,7 +125,7 @@ separate `front()` and `pop()` calls would create a race condition.
 
 #### Caveats
 
-Carbon will probably provide a low-level way to allocate heap memory that makes
+Carbon may provide a low-level way to allocate heap memory that makes
 allocation failure recoverable, because doing so appears to have few drawbacks.
 However, users may need to build their own libraries on top of it, rather that
 relying on the Carbon standard library, if they want to take advantage of it.
