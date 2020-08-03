@@ -173,7 +173,7 @@ reason correctly about Carbon code.
 
 Either possibility would also allow code to evolve in unsafe ways. Changing a
 function to allow it to emit errors is semantically a breaking change: client
-code must now contend with a previously-impossible failure case. Requiring
+code must now contend with a previously impossible failure case. Requiring
 errors to be marked at the callsite ensures that this breakage manifests at
 build time.
 
