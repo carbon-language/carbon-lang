@@ -36,21 +36,30 @@ transferring control to a point that doesn't depend on the discarded state. For
 example, a function that reads data from a file and validates a checksum might
 avoid modifying any nonlocal state until validation is successful, and return
 early if validation fails. This recovery strategy relies on the fact that the
-likely causes of the failure are known and bounded (probably a malformed input
-file or an I/O error), which allows us to put a bound on the state that might
-have been invalidated.
+programmer writing the recovery code can _anticipate_ the error and its likely
+causes (probably a malformed input file or an I/O error), which allows them to
+put a bound on the state that might have been invalidated.
 
 A _programming error_ is an error caused by incorrect user code, such as failing
-to satisfy the preconditions of an operation. When such an error is detected,
-it's not possible for the program to know, or even plausibly guess, what the
-original cause is. For example, dereferencing a dangling pointer is
-unambiguously a programming error, but it can have many possible causes. The
-author of the code might have forgotten to check some condition before
-dereferencing, or the caller might have passed a dangling pointer into the
-function, or some other code might have released the memory too early, or any
-number of other possibilities. Without more information, it's impossible to
-know, so the only way to somewhat reliably recover from a programming error is
-to discard the entire address space and terminate the program.
+to satisfy the preconditions of an operation. While it is possible to anticipate
+such errors, it is very rare to be able to anticipate the causes of those errors
+with enough specificity to put a bound on the invalidated state. For example,
+dereferencing a dangling pointer is unambiguously a programming error, but it
+can have many possible causes. The author of the code might have forgotten to
+check some condition before dereferencing, which might mean that only a small
+amount of local state is invalid. Or the caller might have passed a dangling
+pointer into the function, which means that some of the caller's state is
+probably invalid. Or some arbitrarily-distant code might have released the
+memory too early, in which case any part of the program that has a copy of the
+pointer is invalid. These possibilities are far from exhaustive, and they would
+need to be broken down much further to identify exactly which state to discard.
+
+A programmer might be able to correctly anticipate some number of possible bugs,
+and given sufficient heroics they might even be able to programmatically
+diagnose them based on their effects in order to invalidate the appropriate
+amount of state. But this will almost always be much more difficult, and
+probably much more brittle, than simply fixing the anticipated bug or verifying
+its absence.
 
 Thus, we expect that supporting recovery from programming errors would provide
 little or no benefit. Furthermore, it would be harmful to several of Carbon's
@@ -186,20 +195,21 @@ non-error-case logic less clear.
 
 ### No universal error categories
 
-Carbon will not establish an error hierarchy or other reusable error vocabulary,
-and will not prioritize use cases that involve classifying and reacting to the
-properties of a propagated error.
+Carbon will not establish an error hierarchy or other reusable error
+classification scheme, and will not prioritize use cases that involve
+classifying and reacting to the properties of a propagated error.
 
 Some languages attempt to impose a hierarchy or some other global classification
-scheme for errors, in order to allow code to respond differently to different
-kinds of errors, even after the errors have propagated some distance from the
-function that originally raised them. However, this practice tends to be quite
-brittle, because it almost inevitably requires relying on implementation
-details: if a function's contract gives different meanings to different errors
-it emits, it generally can't satisfy that contract by blindly propagating errors
-from the functions it calls. Conversely, if it doesn't have such a contract, its
-callers normally can't differentiate among the errors it emits without depending
-on its implementation details.
+scheme for propagatable errors, or encourage libraries to define their own. This
+is intended to allow code to respond differently to different kinds of errors,
+even after the errors have propagated some distance from the function that
+originally raised them. However, this practice tends to be quite brittle,
+because it almost inevitably requires relying on implementation details: if a
+function's contract gives different meanings to different errors it emits, it
+generally can't satisfy that contract by blindly propagating errors from the
+functions it calls. Conversely, if it doesn't have such a contract, its callers
+normally can't differentiate among the errors it emits without depending on its
+implementation details.
 
 It may make sense to distinguish certain categories of errors, if any layer of
 the stack can in principle respond to those errors, and the appropriate response
