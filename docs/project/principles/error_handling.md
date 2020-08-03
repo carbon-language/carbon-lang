@@ -112,10 +112,10 @@ API.
 
 #### Examples
 
-If the Carbon standard library includes queues, the `pop` operation on a
-Carbon queue will return the value removed from the queue. This is in contrast
-to C++'s `std::queue::pop()`, which does not return the value popped from the
-queue, because
+If the Carbon standard library includes queues, the `pop` operation on a Carbon
+queue will return the value removed from the queue. This is in contrast to C++'s
+`std::queue::pop()`, which does not return the value popped from the queue,
+because
 [that would not be exception-safe](https://isocpp.org/blog/2016/06/quick-q-why-doesnt-stdqueuepop-return-value)
 due to the possibility of an out-of-memory error while copying that value.
 Instead, the user must first examine the front of the queue, and then pop it as
@@ -125,14 +125,13 @@ separate `front()` and `pop()` calls would create a race condition.
 
 #### Caveats
 
-Carbon may provide a low-level way to allocate heap memory that makes
-allocation failure recoverable, because doing so appears to have few drawbacks.
-However, users may need to build their own libraries on top of it, rather that
-relying on the Carbon standard library, if they want to take advantage of it.
-There probably will not be a way to recover from _stack_ exhaustion, because
-there is no known way of doing that without major drawbacks, and users who can't
-tolerate crashing due to stack overflow can normally prevent it using static
-analysis.
+Carbon may provide a low-level way to allocate heap memory that makes allocation
+failure recoverable, because doing so appears to have few drawbacks. However,
+users may need to build their own libraries on top of it, rather that relying on
+the Carbon standard library, if they want to take advantage of it. There
+probably will not be a way to recover from _stack_ exhaustion, because there is
+no known way of doing that without major drawbacks, and users who can't tolerate
+crashing due to stack overflow can normally prevent it using static analysis.
 
 ### Recoverable errors are explicit in function declarations
 
