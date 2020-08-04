@@ -579,6 +579,10 @@ public:
   /// Map SDT locations to SDT markers info
   std::unordered_map<uint64_t, SDTMarkerInfo> SDTMarkers;
 
+  /// Map linux kernel program locations/instructions to their pointers in
+  /// special linux kernel sections
+  std::unordered_map<uint64_t, std::vector<LKInstructionMarkerInfo>> LKMarkers;
+
   BinaryContext(std::unique_ptr<MCContext> Ctx,
                 std::unique_ptr<DWARFContext> DwCtx,
                 std::unique_ptr<Triple> TheTriple,

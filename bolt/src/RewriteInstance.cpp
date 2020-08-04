@@ -2820,6 +2820,7 @@ void RewriteInstance::emitAndLink() {
 
 void RewriteInstance::updateMetadata() {
   updateSDTMarkers();
+  updateLKMarkers();
 
   if (opts::UpdateDebugSections) {
     NamedRegionTimer T("updateDebugInfo", "update debug info", TimerGroupName,
@@ -2847,6 +2848,74 @@ void RewriteInstance::updateSDTMarkers() {
       continue;
     const auto NewAddress = F->translateInputToOutputAddress(OriginalAddress);
     SDTNotePatcher->addLE64Patch(SDTInfo.PCOffset, NewAddress);
+  }
+}
+
+void RewriteInstance::updateLKMarkers() {
+  if (BC->LKMarkers.size() == 0) {
+    return;
+  }
+
+  NamedRegionTimer T("updateLKMarkers", "update LK markers", TimerGroupName,
+                     TimerGroupDesc, opts::TimeRewrite);
+
+  std::unordered_map<std::string, uint64_t> PatchCounts;
+  for (auto &LKMarkerInfoKV : BC->LKMarkers) {
+    const auto OriginalAddress = LKMarkerInfoKV.first;
+    const auto *F =
+        BC->getBinaryFunctionContainingAddress(OriginalAddress, false, true);
+    if (!F) {
+      continue;
+    }
+    uint64_t NewAddress = F->translateInputToOutputAddress(OriginalAddress);
+    if (NewAddress == 0) {
+      continue;
+    }
+    // rather than making address range of BBL 64_bit use base for LK BBLs
+    if (OriginalAddress >= 0xffffffff00000000 && NewAddress < 0xffffffff) {
+      NewAddress = NewAddress + 0xffffffff00000000;
+    }
+    if (OriginalAddress == NewAddress) {
+      continue;
+    }
+    uint64_t NumEntries = LKMarkerInfoKV.second.size();
+    if (NumEntries > 1) {
+      DEBUG(dbgs() << "Original linux kernel address 0x"
+                   << Twine::utohexstr(OriginalAddress) << " belongs to "
+                   << NumEntries << " marker entries.\n";);
+    }
+    for (auto &LKMarkerInfo : LKMarkerInfoKV.second) {
+      const auto SectionName = LKMarkerInfo.SectionName;
+      SimpleBinaryPatcher *LKPatcher;
+      if (SectionPatchers.find(SectionName) != SectionPatchers.end()) {
+        LKPatcher = static_cast<SimpleBinaryPatcher *>(
+            SectionPatchers[SectionName].get());
+        PatchCounts[SectionName]++;
+      } else {
+        DEBUG(dbgs() << "Starting the patch for section, " << SectionName
+                     << '\n');
+        PatchCounts[SectionName] = 1;
+        SectionPatchers[SectionName] = llvm::make_unique<SimpleBinaryPatcher>();
+        LKPatcher = static_cast<SimpleBinaryPatcher *>(
+            SectionPatchers[SectionName].get());
+      }
+      DEBUG(dbgs() << "LK patching from address 0x"
+                   << Twine::utohexstr(OriginalAddress) << ','
+                   << " to address 0x" << Twine::utohexstr(NewAddress) << '\n');
+      if (LKMarkerInfo.IsPCRelative) {
+        LKPatcher->addLE32Patch(LKMarkerInfo.SectionOffset,
+                                NewAddress - OriginalAddress +
+                                    LKMarkerInfo.PCRelativeOffset);
+      } else {
+        LKPatcher->addLE64Patch(LKMarkerInfo.SectionOffset, NewAddress);
+      }
+    }
+  }
+  outs() << "BOLT-INFO: patching linux kernel sections. Total patches per "
+            "section are as follows:\n";
+  for (const auto &KV : PatchCounts) {
+    outs() << "  Section: " << KV.first << ", patch-counts: " << KV.second
+           << '\n';
   }
 }
 

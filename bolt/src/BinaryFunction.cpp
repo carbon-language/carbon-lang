@@ -1979,9 +1979,10 @@ bool BinaryFunction::buildCFG(MCPlusBuilder::AllocatorIdTy AllocatorId) {
     const auto InstrInputAddr = I->first + Address;
     bool IsSDTMarker =
         MIB->isNoop(Instr) && BC.SDTMarkers.count(InstrInputAddr);
-    if (IsSDTMarker) {
+    bool IsLKMarker = BC.LKMarkers.count(InstrInputAddr);
+    if (IsSDTMarker || IsLKMarker) {
       HasSDTMarker = true;
-      DEBUG(dbgs() << "SDTMarker detected in the input at : "
+      DEBUG(dbgs() << "SDTMarker or LKMarker detected in the input at : "
                    << utohexstr(InstrInputAddr) << "\n");
       if (!MIB->hasAnnotation(Instr, "Offset")) {
         MIB->addAnnotation(Instr, "Offset", static_cast<uint32_t>(Offset),
@@ -1992,7 +1993,7 @@ bool BinaryFunction::buildCFG(MCPlusBuilder::AllocatorIdTy AllocatorId) {
     // Ignore nops except SDT markers. We use nops to derive alignment of the
     // next basic block. It will not always work, as some blocks are naturally
     // aligned, but it's just part of heuristic for block alignment.
-    if (MIB->isNoop(Instr) && !PreserveNops && !IsSDTMarker) {
+    if (MIB->isNoop(Instr) && !PreserveNops && !IsSDTMarker && !IsLKMarker) {
       IsLastInstrNop = true;
       continue;
     }

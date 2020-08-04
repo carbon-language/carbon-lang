@@ -153,6 +153,9 @@ private:
   /// Update SDTMarkers' locations for the output binary.
   void updateSDTMarkers();
 
+  /// Update LKMarkers' locations for the output binary.
+  void updateLKMarkers();
+
   /// Return the list of code sections in the output order.
   std::vector<BinarySection *> getCodeSections();
 
