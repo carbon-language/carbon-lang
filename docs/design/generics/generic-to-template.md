@@ -12,7 +12,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 -   [Problem statement](#problem-statement)
 -   [Possible approaches](#possible-approaches)
-    -   [Adopting none of the below options](#adopting-none-of-the-below-options)
+    -   [Option #0: forbid passing generics to templates](#option-%230-forbid-passing-generics-to-templates)
     -   [Option #1: instantiate templates immediately on an archetype](#option-%231-instantiate-templates-immediately-on-an-archetype)
         -   [Recommendation: no to option #1](#recommendation-no-to-option-%231)
         -   [Simulating option #1](#simulating-option-%231)
@@ -82,7 +82,7 @@ can’t instantiate and type-check `TemplateFunction` using that type.
 Note that these options are somewhat independent. We could adopt none of these,
 or a combination of multiple options.
 
-### Adopting none of the below options
+### Option #0: forbid passing generics to templates
 
 It is valuable to first consider what happens if we simply forbid the above from
 happening, since this is the simplest approach.
@@ -115,8 +115,10 @@ It does result in some restrictions which may be problematic:
     very significant barrier to interoperability given the prevalence of APIs
     accepting `std::optional`, `std::unique_ptr`, and the like.
 
-As a consequence, we also consider more complex options where the usage is
-allowed.
+Both of these restrictions impact code evolution if you cannot change a generic
+to a template without breaking all generic callers, or change a template to a
+generic if it already calls a template. As a consequence, we also consider more
+complex options where the usage is allowed.
 
 ### Option #1: instantiate templates immediately on an archetype
 
@@ -320,8 +322,9 @@ Cons:
 
 -   Requires writing modular descriptions of templates’ interfaces, potentially
     duplicating a large portion of an API already described in the template.
--   Requires instantiating transitive closure of templates at the root of any
-    used generic.
+-   Requires instantiating the transitive closure of templates at the root of
+    any used generic. This affects the signature of the function parameterized
+    by the generic, and transitively the signatures of any generic callers.
 
 #### Recommendation: support templated impl of interfaces
 
@@ -360,7 +363,9 @@ it in its signature. For example:
 fn UsesOptional[Type:$ T, GenericCppOptional(T):$ OptT](...) { ... };
 ```
 
-This is true even if the use is some function called by `UsesOptional`.
+This is true even if the use is in some function called by `UsesOptional`.
+Furthermore, any function calling `UsesOptional` that has a generic value for
+`T` also needs to include this additional text in their signature.
 
 ### Option #3: generically typecheck template code
 
@@ -477,10 +482,11 @@ trigger compile errors:
   }
 ```
 
-One concern with this approach is if we want to use a dynamic strategy for
-compiling generics that only generates one copy of the function. In this case,
-the dynamic type test will be left in the code at runtime, with the associated
-runtime costs.
+**Concern**: One concern with this approach is if we want to use a dynamic
+strategy for compiling generics that only generates one copy of the function. In
+this case, the dynamic type test will be left in the code at runtime, with the
+associated runtime costs. In addition, this seems likely to cause slow compile
+times, contrary to one of the benefits we are trying to get from generics.
 
 If we allow template code to perform type tests on generic type values, we very
 likely want to allow those tests directly without having to call a separate
