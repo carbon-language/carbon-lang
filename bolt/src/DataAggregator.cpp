@@ -1437,8 +1437,8 @@ std::error_code DataAggregator::parseBranchEvents() {
     }
 
     NumEntries += Sample.LBR.size();
-    if (BAT && NumEntries == 32 && !NeedsSkylakeFix) {
-      outs() << "BOLT-WARNING: Using Intel Skylake bug workaround\n";
+    if (BAT && Sample.LBR.size() == 32 && !NeedsSkylakeFix) {
+      errs() << "PERF2BOLT-WARNING: using Intel Skylake bug workaround\n";
       NeedsSkylakeFix = true;
     }
 
