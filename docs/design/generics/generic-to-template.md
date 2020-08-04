@@ -10,27 +10,27 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 <!-- toc -->
 
--   [Problem statement {#problem-statement}](#problem-statement-%23problem-statement)
--   [Possible approaches {#possible-approaches}](#possible-approaches-%23possible-approaches)
-    -   [Adopting none of the below options {#adopting-none-of-the-below-options}](#adopting-none-of-the-below-options-%23adopting-none-of-the-below-options)
-    -   [Option #1: instantiate templates immediately on an archetype {#option-#1-instantiate-templates-immediately-on-an-archetype}](#option-%231-instantiate-templates-immediately-on-an-archetype-%23option-%231-instantiate-templates-immediately-on-an-archetype)
-        -   [Recommendation: no to option #1 {#recommendation-no-to-option-#1}](#recommendation-no-to-option-%231-%23recommendation-no-to-option-%231)
-        -   [Simulating option #1 {#simulating-option-#1}](#simulating-option-%231-%23simulating-option-%231)
-    -   [Option #2: provide a generic interface for the template {#option-#2-provide-a-generic-interface-for-the-template}](#option-%232-provide-a-generic-interface-for-the-template-%23option-%232-provide-a-generic-interface-for-the-template)
-        -   [Recommendation: support templated impl of interfaces {#recommendation-support-templated-impl-of-interfaces}](#recommendation-support-templated-impl-of-interfaces-%23recommendation-support-templated-impl-of-interfaces)
-    -   [Option #3: generically typecheck template code {#option-#3-generically-typecheck-template-code}](#option-%233-generically-typecheck-template-code-%23option-%233-generically-typecheck-template-code)
-        -   [Allowed {#allowed}](#allowed-%23allowed)
-        -   [Trickier cases {#trickier-cases}](#trickier-cases-%23trickier-cases)
-            -   [Option A: reject comparisons we can't answer {#option-a-reject-comparisons-we-can't-answer}](#option-a-reject-comparisons-we-cant-answer-%23option-a-reject-comparisons-we-cant-answer)
-            -   [Option B: typecheck considering all code paths {#option-b-typecheck-considering-all-code-paths}](#option-b-typecheck-considering-all-code-paths-%23option-b-typecheck-considering-all-code-paths)
-                -   [Applications {#applications}](#applications-%23applications)
-        -   [Recommendation: defer option #3 {#recommendation-defer-option-#3}](#recommendation-defer-option-%233-%23recommendation-defer-option-%233)
--   [Conclusion {#conclusion}](#conclusion-%23conclusion)
+-   [Problem statement](#problem-statement)
+-   [Possible approaches](#possible-approaches)
+    -   [Adopting none of the below options](#adopting-none-of-the-below-options)
+    -   [Option #1: instantiate templates immediately on an archetype](#option-%231-instantiate-templates-immediately-on-an-archetype)
+        -   [Recommendation: no to option #1](#recommendation-no-to-option-%231)
+        -   [Simulating option #1](#simulating-option-%231)
+    -   [Option #2: provide a generic interface for the template](#option-%232-provide-a-generic-interface-for-the-template)
+        -   [Recommendation: support templated impl of interfaces](#recommendation-support-templated-impl-of-interfaces)
+    -   [Option #3: generically typecheck template code](#option-%233-generically-typecheck-template-code)
+        -   [Allowed](#allowed)
+        -   [Trickier cases](#trickier-cases)
+            -   [Option A: reject comparisons we can't answer](#option-a-reject-comparisons-we-cant-answer)
+            -   [Option B: typecheck considering all code paths](#option-b-typecheck-considering-all-code-paths)
+                -   [Applications](#applications)
+        -   [Recommendation: defer option #3](#recommendation-defer-option-%233)
+-   [Conclusion](#conclusion)
 -   [Broken links footnote](#broken-links-footnote)
 
 <!-- tocstop -->
 
-## Problem statement {#problem-statement}
+## Problem statement
 
 Most of the time, templates and generics co-exist simply and without complex
 interactions. They have their own rules and operate accordingly. There is a
@@ -77,12 +77,12 @@ Therefore, we have a contradiction: when we type-check `GenericFunction`, we
 don’t know the specific type that it will be called with, and therefore, we
 can’t instantiate and type-check `TemplateFunction` using that type.
 
-## Possible approaches {#possible-approaches}
+## Possible approaches
 
 Note that these options are somewhat independent. We could adopt none of these,
 or a combination of multiple options.
 
-### Adopting none of the below options {#adopting-none-of-the-below-options}
+### Adopting none of the below options
 
 It is valuable to first consider what happens if we simply forbid the above from
 happening, since this is the simplest approach.
@@ -118,7 +118,7 @@ It does result in some restrictions which may be problematic:
 As a consequence, we also consider more complex options where the usage is
 allowed.
 
-### Option #1: instantiate templates immediately on an archetype {#option-#1-instantiate-templates-immediately-on-an-archetype}
+### Option #1: instantiate templates immediately on an archetype
 
 Here, we use the term _archetype_ to mean a type synthesized to embody the known
 properties of the generic type parameter. To implement this option, our
@@ -166,7 +166,7 @@ Cons:
     the generic context, the C++ template would use some archetype and not the
     desired (and required for interop) actual type.
 
-#### Recommendation: no to option #1 {#recommendation-no-to-option-#1}
+#### Recommendation: no to option #1
 
 I recommend against option #1. Since it hides the type identity from the
 template, it can cause a situation where a refactoring we want to be safe
@@ -191,7 +191,7 @@ itself. If we see users finding important use cases best solved by this option,
 we can revisit -- though likely with an explicit syntax that opts into this
 behavior rather than what you get by default.
 
-#### Simulating option #1 {#simulating-option-#1}
+#### Simulating option #1
 
 Option #1 works by separating the generic parameter from the template argument
 by interposing the archetype between. The archetype can be a single real type
@@ -241,7 +241,7 @@ fn GenericFunction[SomeInterface:$ GenericParameter]
 }
 ```
 
-### Option #2: provide a generic interface for the template {#option-#2-provide-a-generic-interface-for-the-template}
+### Option #2: provide a generic interface for the template
 
 To enable using C++ vocabulary templates in Carbon, we have to instantiate the
 C++ template with the underlying type argument to the generic. This is
@@ -323,7 +323,7 @@ Cons:
 -   Requires instantiating transitive closure of templates at the root of any
     used generic.
 
-#### Recommendation: support templated impl of interfaces {#recommendation-support-templated-impl-of-interfaces}
+#### Recommendation: support templated impl of interfaces
 
 This feature has already been recommended
 [in the current generics proposal](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/designs/generics-interface-type-types.md#templated-impls-for-generic-interfaces),
@@ -362,7 +362,7 @@ fn UsesOptional[Type:$ T, GenericCppOptional(T):$ OptT](...) { ... };
 
 This is true even if the use is some function called by `UsesOptional`.
 
-### Option #3: generically typecheck template code {#option-#3-generically-typecheck-template-code}
+### Option #3: generically typecheck template code
 
 The big problem with
 [option #1](#option-#1-instantiate-templates-immediately-on-an-archetype) is
@@ -378,7 +378,7 @@ assure is that we can do enough checking when the generic caller is defined that
 no new failures will occur when we substitute in actual type arguments from the
 call during code generation.
 
-#### Allowed {#allowed}
+#### Allowed
 
 Some questions can be resolved definitively using just the information known
 from the type information available in the generic caller. consider a templated
@@ -410,7 +410,7 @@ resolving a function call.
 If we adopt option #3, we should definitely allow straightforward cases like
 this.
 
-#### Trickier cases {#trickier-cases}
+#### Trickier cases
 
 The remaining question is whether we should allow code to probe properties about
 the generic type beyond what we can resolve at type checking time. For example,
@@ -434,14 +434,14 @@ What we don't want is the option #1 behavior of instantiating `Vector(T)` using
 some type `T != Bool`. Instead we have two choices: option A rejects this code,
 and option B accepts it.
 
-##### Option A: reject comparisons we can't answer {#option-a-reject-comparisons-we-can't-answer}
+##### Option A: reject comparisons we can't answer
 
 The first option is to reject this code. Since `Vector(T)` is overloaded, it
 introduces a comparison between `T` and `Bool`. Since `T` is unknown, we can't
 answer the question, and so we report an error during type checking time. This
 is a conservative option, but potentially rejects more code than necessary.
 
-##### Option B: typecheck considering all code paths {#option-b-typecheck-considering-all-code-paths}
+##### Option B: typecheck considering all code paths
 
 The second option is to consider both cases of how the type comparison could go.
 Since we can't answer the question of whether `T == Bool` when type checking
@@ -487,7 +487,7 @@ likely want to allow those tests directly without having to call a separate
 templated function. This would allow generic code to include optimizations that
 could be very important to performance.
 
-###### Applications {#applications}
+###### Applications
 
 In C++, `std::vector<T>::resize()` can use a more efficient algorithm if `T` has
 a `noexcept` move constructor. We could allow this optimization from generic
@@ -503,14 +503,14 @@ These all seem like cases that would be allowed and enabled by this option.
 Perhaps slightly less clear is whether this would allow `auto` to be defined as
 `(Type:$$ _)`, even when it is matching a generic type value.
 
-#### Recommendation: defer option #3 {#recommendation-defer-option-#3}
+#### Recommendation: defer option #3
 
 Option #3 definitely introduces complexity and implementation work into the
 compiler, which we aren't sure we need. Once we have greater experience
 implementing with generics, we will be better able to say whether we need the
 capabilities of option #3 and what variation on it.
 
-## Conclusion {#conclusion}
+## Conclusion
 
 After discussing these in depth, we came to a clear realization: there are many
 use cases here and we may well need to support multiple options at the same
