@@ -129,9 +129,7 @@ cleaned up during evolution.
 
 ### Files, libraries, and packages
 
-> References: [Files, libraries and packages](files_libraries_and_packages.md)
->
-> **TODO:** References need to be evolved.
+> References: [Code and name organization](code_and_name_organization.md)
 
 Carbon code is organized into files, libraries, and packages:
 
@@ -222,9 +220,10 @@ textually after this can refer to `MyInt`, and it will transparently refer to
 
 #### Name lookup
 
-> References: [Name lookup](name_lookup.md)
+> References: [Code and name organization](code_and_name_organization.md) and
+> [name lookup](name_lookup.md)
 >
-> **TODO:** References need to be evolved.
+> **TODO:** Name lookup reference need to be evolved.
 
 Names are always introduced into some scope which defines where they can be
 referenced. Many of these scopes are themselves named. `namespace` is used to
