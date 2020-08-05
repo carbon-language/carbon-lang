@@ -33,7 +33,7 @@ our project goals, and the proposal is well-tailored to achieve them.
 Specifically:
 
 -   Ensure high quality of code, documentation, and other artifacts. We consider
-    these all “code reviews” regardless of whether the final artefact is “code”
+    these all "code reviews" regardless of whether the final artifact is "code"
     in a technical sense.
 -   Encourage broad participation and contribution to the community through code
     reviews.
