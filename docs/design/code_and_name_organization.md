@@ -12,18 +12,101 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 -   [Overview](#overview)
 -   [Files](#files)
--   [Libraries](#libraries)
--   [Namespaces](#namespaces)
 -   [Packages](#packages)
+-   [Namespaces](#namespaces)
 -   [Imports](#imports)
+    -   [Identifying the package and file of an import](#identifying-the-package-and-file-of-an-import)
+-   [Files](#files-1)
+-   [Libraries](#libraries)
+-   [Namespaces](#namespaces-1)
+-   [Packages](#packages-1)
+-   [Imports](#imports-1)
 -   [Shadowing of names](#shadowing-of-names)
 -   [Standard library names](#standard-library-names)
 -   [Alternatives](#alternatives)
     -   [File extensions](#file-extensions)
+    -   [Organization in other languages](#organization-in-other-languages)
 
 <!-- tocstop -->
 
 ## Overview
+
+Carbon has four key elements for code and name organization:
+
+-   A **file** is the basic unit of compilation. Each file can be compiled
+    separately, assuming access to its imports. It can also be parsed in
+    isolation, albeit without semantic analysis. Files should have a `.c6n`
+    extension.
+
+-   A **package** is a set of files that form a _link-time_ abstraction
+    boundary. A package is also the basic unit of code that can be imported as a
+    dependency.
+
+-   A **namespace** is the standard unit of organizing Carbon names and form a
+    _name_ abstraction boundary. They introduce named scopes for
+    [name lookup](name_lookup.md), and may be nested.
+
+-   An **import** is the method for pulling in symbols from other namespaces,
+    packages or files.
+
+For example, given a file `shapes.c6n`:
+
+```
+package Geometries.Shapes;
+
+struct Circle { ... };
+struct Square { ... };
+
+namespace Volumes {
+struct Sphere { ... };
+}
+```
+
+And a separate `operations.c6n`:
+
+```
+package Geometries.Shapes;
+
+// The 'from' is optional when importing symbols from the same package.
+import Circle, Sphere;
+
+fn Circumscribe(Square s) -> Circle C { ... }
+```
+
+Another file might use these with `import` statements:
+
+```
+package OtherProject;
+
+// Import multiple symbols from any file in the package:
+from Geometries.Shapes import Circle, Square, Circumscribe;
+
+// Import the 'Volumes' namespace, allowing 'Volumes.Sphere' references:
+from Geometries.Shapes import Volumes
+
+// Import the 'Sphere' symbol directly:
+from Geometries.Shapes import Volumes.Sphere;
+```
+
+## Files
+
+TODO:
+
+-   one package
+-   impl (?)
+-   package on first line
+
+## Packages
+
+## Namespaces
+
+## Imports
+
+### Identifying the package and file of an import
+
+================================================================================
+ORIGINAL
+================================================================================
 
 Carbon code is organized into files, libraries, and packages in increasing
 scope. Names within Carbon code are organized into a hierarchy of named scopes,
@@ -374,3 +457,24 @@ possible extensions / commands:
 This seems fairly easy for us to change as we go along, but we should at some
 point do a formal proposal to gather other options and let the core team try to
 find the set that they feel is close enough to be a bikeshed.
+
+### Organization in other languages
+
+C++:
+
+```
+#include <vector>
+#include "project/path/to/library.h"
+
+... = new ::project_namespace::Message();
+```
+
+Java and Kotlin:
+
+```
+package org.project.path.to.library.Message;
+
+import org.project.path.to.library.Message;
+
+... = new Message();
+```
