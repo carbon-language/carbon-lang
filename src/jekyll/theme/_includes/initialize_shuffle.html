@@ -24,7 +24,7 @@ var shuffleme = (function( $ ) {
     // instantiate the plugin
     $grid.shuffle({
       itemSelector: '[class*="col-"]',
-      sizer: $sizer    
+      sizer: $sizer
     });
   },
 
@@ -83,7 +83,7 @@ var shuffleme = (function( $ ) {
     setTimeout(function() {
       debouncedLayout();
     }, 500);
-  };      
+  };
 
   return {
     init: init
@@ -102,29 +102,27 @@ $(document).ready(function() {
 
     <script>
     $(document).ready(function() {
-     
+
     /* initialize shuffle plugin */
     var $grid = $('#grid');
-         
+
     $grid.shuffle({
         itemSelector: '.item' // the selector for the items in the grid
     });
- 
+
 });</script>
 
 <script>
 $('#filter a').click(function (e) {
     e.preventDefault();
-         
+
     // set active class
     $('#filter a').removeClass('active');
     $(this).addClass('active');
-         
+
     // get group name from clicked item
     var groupName = $(this).attr('data-group');
-         
+
     // reshuffle grid
     $grid.shuffle('shuffle', groupName );
 });</script>
-
-

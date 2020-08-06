@@ -3,14 +3,10 @@
     "public": "public",
     "rewrites": [
       {
-        "source":"**/*",
-        "function":"site"
+        "source": "**/*",
+        "function": "site"
       }
     ],
-    "ignore": [
-      "firebase.json",
-      "**/.*",
-      "**/node_modules/**"
-    ]
+    "ignore": ["firebase.json", "**/.*", "**/node_modules/**"]
   }
 }

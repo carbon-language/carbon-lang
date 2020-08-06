@@ -1,0 +1,46 @@
+{%- comment -%}
+  Outputs a directory for the sidebar.
+
+  dir: The path of the dir to output. Should start and end with /.
+  title: The title of the dropdown.
+  about: (optional) The title of the index.html link; defaults to "About".
+  recurse: (optional) Set to true to recurse into subdirectories.
+  proposals: (optional) Set to true to treat the directory as proposals,
+    fixing files with the proposal number.
+{%- endcomment -%}
+
+<!-- Section for "{{include.dir}}". --!>
+<li>
+  <a href="#">{{include.title}}</a>
+  <ul>
+    {%- assign about = include.about | default: "About" -%}
+    {%- include sidebar_link.html url=include.dir title=about -%}
+    <!-- List "{{include.dir}}" files. --!>
+    {%- for item in site.pages -%}
+      {%- assign dirname = item.url | slice: 0,include.dir.size -%}
+      {%- assign filename = item.url | slice: include.dir.size,item.url.size -%}
+      {%- assign ext = item.url | slice: -5,5 -%}
+      {%- unless include.proposals and filename contains "template" -%}
+        {%- unless filename contains "/" -%}
+          {%- if item.search == true and
+                 dirname == include.dir and
+                 ext == ".html" and
+                 filename != "README.html" -%}
+            {%- assign title = item.title -%}
+            {%- if include.proposals -%}
+              {%- assign title = filename |
+                                 slice: 1,4 |
+                                 append: ": " |
+                                 append: item.title -%}
+            {%- endif -%}
+            {%- include sidebar_link.html url=item.url title=title -%}
+          {%- endif -%}
+        {%- endunless -%}
+      {%- endunless -%}
+    {%- endfor -%}
+    {%- if include.recurse -%}
+      <!-- List "{{include.dir}}" subdirs. --!>
+      {%- include sidebar_subdirs.html dir=include.dir -%}
+    {%- endif -%}
+  </ul>
+</li>
