@@ -14,9 +14,9 @@ and
 [Templates and generics: distinctions (TODO)](#broken-links-footnote)<!-- T:Templates and generics: distinctions -->
 docs for a description of generics in Carbon, specifically the goals and
 differences from templates. Additionally, the "Carbon Generic" doc has
-"[What are generics?](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/designs/generics-overview.md#what-are-generics)"
+"[What are generics?](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/overview.md#what-are-generics)"
 and
-"[Goals: Generics](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/designs/generics-overview.md#goals-generics)"
+"[Goals: Generics](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/overview.md#goals-generics)"
 sections.
 
 TODO: Runtime vs. compile-time trade offs, worry about things like size of value
@@ -195,7 +195,7 @@ function name in a function signature:
 
 Implicit arguments are determined as a result of pattern matching the explicit
 arguments to the values (generally the types of those values). See more
-[here](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/designs/generics-overview.md#implicit-arguments).
+[here](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/overview.md#implicit-arguments).
 
 ### Interface
 
@@ -259,7 +259,7 @@ have the API reflecting the interface defined by `Comparable` rather than the
 API of `T`.
 
 See
-["Interfaces are concrete facet types"](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/designs/generics-overview.md#interfaces-are-concrete-types)
+["Interfaces are concrete facet types"](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/overview.md#interfaces-are-concrete-types)
 in the Generics proposal for more on this programming model.
 
 ##### Interfaces are type-types
@@ -303,7 +303,7 @@ values passed in by the user, since it is unclear which `R` to pick from the set
 of types sharing the same representation.
 
 See
-["Type-types parameterized by reprs"](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/designs/generics-overview.md#type-types-parameterized-by-reprs)
+["Type-types parameterized by reprs"](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/overview.md#type-types-parameterized-by-reprs)
 in the Generics proposal for more on this programming model.
 
 ##### Interfaces are opaque

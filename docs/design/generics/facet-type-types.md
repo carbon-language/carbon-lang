@@ -33,9 +33,9 @@ type-types" model by saying the type of `T` is `ConvertibleToString`.
 
 Since we can figure out `T` from the type of `val`, we don't need the caller to
 pass in `T` explicitly, it can be an
-[implicit argument](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/designs/generics-terminology.md#implicit-argument)
+[implicit argument](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#implicit-argument)
 (also see
-[implicit argument](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/designs/generics-overview.md#implicit-arguments)
+[implicit argument](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/overview.md#implicit-arguments)
 in the Generics V2 doc). Basically, the user passes in a value for `val`, and
 the type of `val` determines `T`. `T` still gets passed into the function
 though, and it plays an important role -- it defines the implementation of the
@@ -60,15 +60,15 @@ implementation as a member:
   the type implementing the interface)
 
 The function can decide whether that type argument is passed in
-[statically](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/designs/generics-terminology.md#static-dispatch-witness-table)
+[statically](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#static-dispatch-witness-table)
 (basically generating a separate function body for every different type passed
 in) by using the "generic argument" syntax (`:$`, see
 [the generics section](#generics) below) or
-[dynamically](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/designs/generics-terminology.md#dynamic-dispatch-witness-table)
+[dynamically](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#dynamic-dispatch-witness-table)
 using the regular argument syntax (just a colon, `:`, see
 [the runtime type parameters section](#runtime-type-parameters) below). Either
 way, the interface contains enough information to
-[type/definition check](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/designs/generics-terminology.md#complete-definition-checking)
+[type/definition check](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#complete-definition-checking)
 the function body -- you can only call functions defined in the interface in the
 function body. Contrast this with making the type a template argument, where you
 could just use `Type` instead of an interface and it will work as long as the
@@ -127,7 +127,7 @@ interface Vector {
 ```
 
 \
-An interface defines a type-type, that is a type whose values are [facet types](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/designs/generics-terminology.md#invoking-interface-methods).
+An interface defines a type-type, that is a type whose values are [facet types](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#invoking-interface-methods).
 By facet types, we mean types that are declared as specifically implementing **exactly**
 this interface, and which provide definitions for all APIs required bythe functions,
 etc. declared in the interface.
@@ -178,11 +178,11 @@ thewith the interface (`Vector`) or in the library that defines with the type
 (`Point`).
 
 In either case, the impl block defines a
-[facet type](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/designs/generics-terminology.md#invoking-interface-methods):
+[facet type](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#invoking-interface-methods):
 `Point as Vector`. While the API offor `Point` includes the two fields `x` and
 `y`, the API offor `Point as Vector` _only_ has the `Add` and `Scale` methods of
 the `Vector` interface. The facet type `Point as Vector` is
-[compatible](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/designs/generics-terminology.md#compatible-types)
+[compatible](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#compatible-types)
 with `Point`, so we allow you to cast between the two implicitly:
 
 ```
@@ -276,7 +276,7 @@ seeing an impl with the definition. This accomplishes a few goals:
 - Every attempt to use an impl will see the exact same impl, making the
   interpretation and semantics of code consistent no matter its context, in
   accordance with the
-  [Refactoring principle (TODO)](#broken-links-footnote)<!-- T:Carbon principle: Refactoring -->.
+  [Refactoring principle](https://github.com/josh11b/carbon-lang/blob/principle-refactoring/docs/project/principles/principle-refactoring.md).
 - Allowing the impl to be defined with either the interface or the type
   addresses the
   [expression problem](https://eli.thegreenplace.net/2016/the-expression-problem-and-its-solutions).
@@ -294,7 +294,7 @@ var Point: v = AddAndScale(a, w, 2.5);
 ```
 
 Here `T` is a type whose type is `Vector`. The `:$` syntax means that `T` is a
-_[generic argument](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/designs/generics-terminology.md#generic-vs-template-arguments)_,
+_[generic argument](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#generic-vs-template-arguments)_,
 that is it must be known to the caller but we will only use the information
 present in the signature of the function to typecheck the body of
 `AddAndScale`'s definition. In this case, we know that any value of type `T` has
@@ -331,14 +331,14 @@ it too could be passed to `AddAndScale`.
 ## Model
 
 The underlying model here is
-[interfaces are type-types](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/designs/generics-terminology.md#interfaces-are-type-types),
+[interfaces are type-types](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#interfaces-are-type-types),
 in particular
-[facet type-types](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/designs/generics-terminology.md#facet-type-types):
+[facet type-types](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#facet-type-types):
 
 - [Interfaces](#interfaces) are types of
-  [witness table](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/designs/generics-terminology.md#witness-tables-eg-swift-and-carbon-generics)s
+  [witness table](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#witness-tables-eg-swift-and-carbon-generics)s
 - Facet types (defined by [Impls](#implementing-interfaces)) are
-  [witness table](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/designs/generics-terminology.md#witness-tables-eg-swift-and-carbon-generics)
+  [witness table](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#witness-tables-eg-swift-and-carbon-generics)
   values
 - The compiler rewrites functions with an implicit type argument
   (`fn Foo[InterfaceName:$ T](...)`) to have an actual argument with type
@@ -391,15 +391,15 @@ var Point: v = AddAndScale(a, w, 2.5, &VectorForPoint);
 The rule is that generic arguments (declared using `:$`) are passed at compile
 time, so the actual value of the `impl` argument here can be used to generate
 the code for `AddAndScale`. So `AddAndScale` is using a
-[static-dispatch witness table](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/designs/generics-terminology.md#static-dispatch-witness-table).
+[static-dispatch witness table](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#static-dispatch-witness-table).
 
 ## Adapting types
 
 We also provide a way to create new types
-[compatible with](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/designs/generics-terminology.md#compatible-types)
+[compatible with](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#compatible-types)
 existing types with different APIs, in particular with different interface
 implementations, by
-[adapting](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/designs/generics-terminology.md#compatible-types)
+[adapting](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#compatible-types)
 them:
 
 ```
@@ -464,7 +464,7 @@ struct MyType {
 ## Associated types
 
 For context, see
-["Interface type parameters vs. associated types" in the Carbon: Generics Terminology doc](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/designs/generics-terminology.md#interface-type-parameters-vs-associated-types).
+["Interface type parameters vs. associated types" in the Carbon: Generics Terminology doc](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#interface-type-parameters-vs-associated-types).
 In some cases, we will want the signatures of methods to vary from
 implementation to implementation. We already have one example of this: the
 `Self` type discussed [above in the "Interfaces" section](#interfaces). For
@@ -644,7 +644,7 @@ convenient way than
 
 Some type constraints would be more conveniently expressed by moving from
 [associated types](#associated-types) to
-[type parameters for interfaces](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/designs/generics-terminology.md#interface-type-parameters-vs-associated-types).
+[type parameters for interfaces](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#interface-type-parameters-vs-associated-types).
 The syntax for type parameters is that we allow a parameter list after the name
 of the interface:
 
@@ -1120,7 +1120,7 @@ present for any value of type `BidirectionalIterator(T)`.
 
 The extended interface just appends on to the end of the existing interface,
 just like as is done
-[with structs (TODO)](#broken-links-footnote)<!-- T:Carbon struct types --><!-- A:#heading=h.uvj0yohs4c10 -->.
+[with structs](https://github.com/josh11b/carbon-lang/blob/structs/docs/design/structs.md#question-extension--inheritance).
 For the above example, this would be represented as:
 
 ```
@@ -1242,7 +1242,7 @@ interface {
 Given a type-type `TT` and a type `U`, define the type-type
 `CompatibleWith(TT, U)` as follows:
 
-    `CompatibleWith(TT, U)` is a type whose values are types `T` with type `TT` that are [compatible with](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/designs/generics-terminology.md#compatible-types) `U`, that is values of types `T` and `U` can be cast back and forth without any change in representation (e.g. `T` is an [adaptor](#adapting-types) for `U`).
+    `CompatibleWith(TT, U)` is a type whose values are types `T` with type `TT` that are [compatible with](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#compatible-types) `U`, that is values of types `T` and `U` can be cast back and forth without any change in representation (e.g. `T` is an [adaptor](#adapting-types) for `U`).
 
 **Note:** We require the user to supply `TT` and `U`, they may not be inferred.
 Specifically, this code would be illegal:
@@ -1367,15 +1367,15 @@ What is the size of a type?
 
 - It could be fully known and fixed at compile time -- this is true of primitive
   types (`Int32`, `Float64`, etc.) most other concrete types (e.g. most
-  [structs (TODO)](#broken-links-footnote)<!-- T:Carbon struct types -->).
+  [structs](https://github.com/josh11b/carbon-lang/blob/structs/docs/design/structs.md)).
 - It could be known generically. This means that it will be known at codegen
   time, but not at type-checking time.
 - It could be dynamic. For example, it could be a
   [dynamic type](#dynamic-pointer-type) such as `Dynamic(TT)`, a
-  [variable-sized type (TODO)](#broken-links-footnote)<!-- T:Carbon struct types --><!-- A:#heading=h.3rz06no43jps -->,
+  [variable-sized type](https://github.com/josh11b/carbon-lang/blob/structs/docs/design/structs.md#control-over-allocation),
   or you could dereference a pointer to a base type that could actually point to
   a
-  [descendant (TODO)](#broken-links-footnote)<!-- T:Carbon struct types --><!-- A:#heading=h.uvj0yohs4c10 -->.
+  [descendant](https://github.com/josh11b/carbon-lang/blob/structs/docs/design/structs.md#question-extension--inheritance).
 - It could be unknown which category the type is in. In practice this will be
   essentially equivalent to having dynamic size.
 
@@ -1437,16 +1437,16 @@ they have in common is using a runtime/dynamic type value (using
 the second case,
 [we use a dynamic type value as a field in a struct](#runtime-type-fields). In
 both cases, we have a name bound to a runtime type value, which is modeled by a
-[dynamic-dispatch witness table](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/designs/generics-terminology.md#dynamic-dispatch-witness-table)
+[dynamic-dispatch witness table](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#dynamic-dispatch-witness-table)
 instead of the
-[static-dispatch witness table](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/designs/generics-terminology.md#static-dispatch-witness-table)
+[static-dispatch witness table](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#static-dispatch-witness-table)
 used with generic type values.
 
 ### Runtime type parameters
 
 If we pass in a type as an ordinary parameter (using `:` instead of `:$`), this
 means passing the witness table as an ordinary parameter -- that is a
-[dynamic-dispatch witness table](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/designs/generics-terminology.md#dynamic-dispatch-witness-table)
+[dynamic-dispatch witness table](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#dynamic-dispatch-witness-table)
 -- to the function. This means that there will be a single copy of the generated
 code for this parameter.
 
@@ -1485,7 +1485,7 @@ this isn't about looking up names dynamically. It could be called
 "[dynamic dispatch](https://en.wikipedia.org/wiki/Dynamic_dispatch)", but that
 does not distinguish it from [runtime type parameter](#runtime-type-parameters)
 (both use
-[dynamic-dispatch witness tables](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/designs/generics-terminology.md#dynamic-dispatch-witness-table))
+[dynamic-dispatch witness tables](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#dynamic-dispatch-witness-table))
 or normal
 [virtual method dispatch](https://en.wikipedia.org/wiki/Virtual_function).
 
@@ -1848,7 +1848,7 @@ the brackets (`[`...`]`) to also allow values without a colon (`:`), to (a)
 assert that an expression evaluates to a legal value and (b) have the caller
 pass whatever information is needed to so that same expression can be used
 inside the function (e.g. a
-[witness table](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/designs/generics-terminology.md#witness-tables-eg-swift-and-carbon-generics)).
+[witness table](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#witness-tables-eg-swift-and-carbon-generics)).
 
 **Argument against this feature:** It is redundant with `TypeImplements()`, and
 the `TypeImplements()` feature is more broadly applicable / more composable.
@@ -1917,36 +1917,36 @@ above so we can make TypeImplements an optional convenience.
 ## Index of examples
 
 Specifically, how does this proposal address
-[the use cases from the "Carbon Generics: Terminology and Problem statement" doc](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/designs/generics-terminology.md#problem-statement)?
+[the use cases from the "Carbon Generics: Terminology and Problem statement" doc](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#problem-statement)?
 
 - Define an
-  [interface](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/designs/generics-terminology.md#interface).
+  [interface](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#interface).
   - [in "Interfaces" section](#interfaces) (and most other sections).
 - Define an interface with
-  [type parameters](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/designs/generics-terminology.md#interface-type-parameters-vs-associated-types)
+  [type parameters](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#interface-type-parameters-vs-associated-types)
   (maybe) and/or
-  [associated types](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/designs/generics-terminology.md#interface-type-parameters-vs-associated-types)
+  [associated types](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#interface-type-parameters-vs-associated-types)
   (almost certainly).
   - [associated types](#associated-types),
   - [type parameters](#parameterized-interfaces-optional-feature).
 - Define an interface with
-  [type constraints](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/designs/generics-terminology.md#type-constraints),
+  [type constraints](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#type-constraints),
   such as associated types or type parameters satisfying some interface. Type
   constraints will also be needed as part of generic function definitions, to
   define relationships between type parameters and associated types.
   - [associated types](#bookmark=id.y76bpmnyjm7k),
   - [type parameters](#bookmark=id.arne8eq43vmm).
 - Optional, but probably straightforward if we want it: Define an interface that
-  [extends/refines](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/designs/generics-terminology.md#extendingrefining-an-interface)
+  [extends/refines](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#extendingrefining-an-interface)
   another interface:
   - [interface extension](#interface-extension-optional-feature).
 - Similarly we probably want a way to say an interface requires an
   implementation of one or more other interfaces:
   - [interface nesting/containment](#interface-nestingcontainment-optional-feature).
 - Define how a type
-  [implements](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/designs/generics-terminology.md#impls-implementations-of-interfaces)
+  [implements](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#impls-implementations-of-interfaces)
   an interface
-  ([semantic conformance](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/designs/generics-terminology.md#semantic-vs-structural-interfaces)).
+  ([semantic conformance](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#semantic-vs-structural-interfaces)).
 
   - [implementing interfaces](#implementing-interfaces)
 
@@ -1960,11 +1960,11 @@ Specifically, how does this proposal address
 
 - Define a parameterized implementation of an interface for a family of types.
   This is both for
-  [structural conformance](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/designs/generics-terminology.md#semantic-vs-structural-interfaces)
+  [structural conformance](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#semantic-vs-structural-interfaces)
   via
-  [templated impls](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/designs/generics-terminology.md#templated-impl),
+  [templated impls](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#templated-impl),
   and
-  [conditional conformance](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/designs/generics-terminology.md#conditional-conformance).
+  [conditional conformance](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#conditional-conformance).
   That family of types may have generic or regular parameters, so that e.g. you
   could implement a `Printable` interface for arrays of `N` elements of
   `Printable` type `T`, generically for `N` (not separately instantiated for
@@ -1979,7 +1979,7 @@ Specifically, how does this proposal address
 - Specify a generic explicit (non-type or type) argument to a function:
   - [Example: Multiple implementations of the same interface](#example-multiple-implementations-of-the-same-interface)..
 - Specify a generic
-  [implicit argument](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/designs/generics-terminology.md#implicit-argument)
+  [implicit argument](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#implicit-argument)
   to a function:
   - ["generics" section](#generics).
 - Specify a generic type argument constrained to conform to an interface. And in
@@ -2013,7 +2013,7 @@ Specifically, how does this proposal address
   generic function may be passed to the function without additional syntax
   beyond passing the same value to a non-generic function expecting the exact
   type of the value
-  ([subsumption](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/designs/generics-terminology.md#subsumption-and-casting)).
+  ([subsumption](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#subsumption-and-casting)).
   This should be true for values with types only known generically, as long as
   it is generically known that the type implements a sufficient set of
   interfaces.
@@ -2039,7 +2039,7 @@ Stretch goals:
   - [Example: Defining an impl for use by other types](#example-defining-an-impl-for-use-by-other-types)
 - Define an interface implementation algorithmically -- possibly via a function
   returning an impl, or by defining an
-  [adapting type](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/designs/generics-terminology.md#adapting-a-type)
+  [adapting type](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#adapting-a-type)
   that implements that interface. This could be a solution to the previous
   bullet. Another use case is when there are few standard implementation
   strategies for an interface, and you want to provide those implementations in
@@ -2074,7 +2074,7 @@ Very stretch goals (these are more difficult, and possibly optional):
   is a little complicated. For example, widening multiplication from an integer
   type to one with more bits, or `Abs: Complex(SomeIntType) -> SomeFloatType`.
   One possible strategy is to have the return type be represented by an
-  [associated type](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/designs/generics-terminology.md#interface-type-parameters-vs-associated-types).
+  [associated type](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#interface-type-parameters-vs-associated-types).
   - [Constraints on associated types in interfaces](#constraints-on-associated-types-in-interfaces)
 - Define an interface that has multiple related types, like Graph/Nodes/Edges.
   TODO: A concrete combination of `Graph`, `Edge`, and `Node` types that we

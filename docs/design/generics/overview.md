@@ -60,7 +60,7 @@ given a function definition, but more checking of the definition is required
 after seeing the call sites (and you know which specializations are needed).
 
 Read more here:
-[Carbon Generics: Terminology and Problem Statement: "Generic vs. template arguments" section](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/designs/generics-terminology.md#generic-vs-template-arguments).
+[Carbon Generics: Terminology and Problem Statement: "Generic vs. template arguments" section](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#generic-vs-template-arguments).
 
 ## Goals: Generics
 
@@ -68,7 +68,7 @@ In general we aim to make Carbon Generics into an alternative to templates for
 writing generic code, with improved software engineering properties at the
 expense of some restrictions. See
 [Carbon principle: Generics](https://github.com/josh11b/carbon-lang/blob/principle-generics/docs/project/principles/principle-generics.md)
-for a detailed discussion of goals. Also see [motivational use cases](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/designs/generics-motivation.md).
+for a detailed discussion of goals. Also see [motivational use cases](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/motivation.md).
 
 In this proposal we try and define a generics system that has these properties
 to allow migration from templates:
@@ -100,7 +100,7 @@ implementation inheritance.
 ## Glossary / Terminology
 
 See
-[Carbon Generics: Terminology and Problem statement](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/designs/generics-terminology.md#terminology)
+[Carbon Generics: Terminology and Problem statement](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#terminology)
 
 ## Non-type generics
 
@@ -173,7 +173,7 @@ since it is not easy to type `$` from non-US keyboards. Instead of `:$`,
 [we are considering (TODO)](#broken-links-footnote)<!-- T:Carbon templates and generics --><!-- A:# -->:
 `:!`, `:@`, `:#`, and `::`. We might use the same character here as we decide
 for
-[Carbon metaprogramming (TODO)](#broken-links-footnote)<!-- T:Carbon metaprogramming -->
+[Carbon metaprogramming](https://github.com/josh11b/carbon-lang/blob/metaprogramming/docs/design/metaprogramming.md)
 constructs.
 
 ### Basic templates
@@ -320,15 +320,15 @@ particular type and name.
 
 If we want to be generic across types, in order to do type checking we may need
 to put some constraints on the type so that a
-[parameterized language construct](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/designs/generics-terminology.md#parameterized-language-constructs)
+[parameterized language construct](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#parameterized-language-constructs)
 like a function can (for example) call methods defined for values of that type.
 A type constraint is called an
-[interface](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/designs/generics-terminology.md#interface).
+[interface](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#interface).
 
 Interfaces can match structurally or you can make there be a separate step to
 explicitly say that there is additional semantic information to say that a type
 conforms to an interface; see
-[Carbon Generics: Terminology and Problem statement: "Semantic vs. structural interfaces"](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/designs/generics-terminology.md#semantic-vs-structural-interfaces).
+[Carbon Generics: Terminology and Problem statement: "Semantic vs. structural interfaces"](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#semantic-vs-structural-interfaces).
 If interfaces are semantic, then interface implementations can be part of a type
 ("facets") or separate, named entities ("witnesses").
 
@@ -339,7 +339,7 @@ interface".
 
 ### Problem statement
 
-[See "Problem statement" section in "Carbon Generics: Terminology and Problem statement"](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/designs/generics-terminology.md#problem-statement).
+[See "Problem statement" section in "Carbon Generics: Terminology and Problem statement"](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#problem-statement).
 
 Generally speaking, we want generics and interfaces to be sufficiently
 expressive and convenient that we can skip open overloading. Open overloading
@@ -504,9 +504,9 @@ In this model, an interface is a type whose values are "types that conform to
 that interface".
 
 This proposal uses
-[named impls](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/designs/generics-terminology.md#named-impl),
+[named impls](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#named-impl),
 but we'd probably prefer to just have
-[default impls](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/designs/generics-terminology.md#default-impl)
+[default impls](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#default-impl)
 like the next iteration described next.
 
 ```
@@ -546,7 +546,7 @@ fn TreeTraversal[Type:$ T, Tree(T):$ TreeType](
 TreeTraversal(&my_int_tree, Stack(Int), fn(Int: x) { Print(x); });
 ```
 
-##### [Carbon deep dive: interfaces as facet type-types](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/designs/generics-interface-type-types.md)
+##### [Carbon deep dive: interfaces as facet type-types](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/facet-type-types.md)
 
 This is JoshL@'s favorite proposal at this time, since it can express things
 like "list of implementations for an interface X for representation T", is
@@ -846,14 +846,11 @@ TODO
 
 ## Proposed programming model
 
-[Carbon deep dive: interfaces as facet type-types](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/designs/generics-interface-type-types.md)
+[Carbon deep dive: interfaces as facet type-types](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/facet-type-types.md)
 
 ### Calling templated code
 
-["How Carbon generics can use templates" (TODO)](#broken-links-footnote)<!-- T:How Carbon generics can use templates -->
-
-(this was the follow up to the conversation started in
-[Carbon discussion re: Generics & Templates Jan 17, 2020 (TODO)](#broken-links-footnote)<!-- T:Carbon discussion re: Generics & Templates Jan 17, 2020 --><!-- A:#heading=h.svuyvyvy6lde -->)
+["Passing generic arguments to template parameter"](https://github.com/josh11b/carbon-lang/blob/generic-to-template/docs/design/generics/generic-to-template.md)
 
 ## Broken links footnote
 
