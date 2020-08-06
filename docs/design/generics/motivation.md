@@ -6,6 +6,11 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 # Carbon generics: motivating use cases
 
+## Table of contents
+
+<!-- toc -->
+<!-- tocstop -->
+
 ## **Intro**
 
 This reflects the use cases we set out to address with Carbon's generics and template systems. These are "things we'd like to represent" and "properties of the result we'd like to achieve" and not about mechanisms or programming models.

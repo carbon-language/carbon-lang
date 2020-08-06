@@ -6,6 +6,11 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 # Carbon deep dive: interfaces as facet type-types
 
+## Table of contents
+
+<!-- toc -->
+<!-- tocstop -->
+
 ## What is this?
 
 This document is a **deep dive**: a detailed exploration of one possible model

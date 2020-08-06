@@ -6,6 +6,11 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 # Carbon Generics
 
+## Table of contents
+
+<!-- toc -->
+<!-- tocstop -->
+
 ## Context
 
 This is version 2 of a proposal for generics, and replaces the description of

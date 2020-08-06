@@ -6,6 +6,11 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 # Carbon: Generics - Terminology and problem statement
 
+## Table of contents
+
+<!-- toc -->
+<!-- tocstop -->
+
 ## Terminology
 
 Please see the
