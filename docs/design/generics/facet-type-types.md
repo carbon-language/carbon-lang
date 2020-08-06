@@ -9,6 +9,65 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 ## Table of contents
 
 <!-- toc -->
+
+-   [What is this?](#what-is-this)
+-   [Overview](#overview)
+-   [Interfaces](#interfaces)
+-   [Implementing interfaces](#implementing-interfaces)
+    -   [Out-of-line impl arguments for parameterized types](#out-of-line-impl-arguments-for-parameterized-types)
+    -   [Impl lookup](#impl-lookup)
+-   [Generics](#generics)
+-   [Model](#model)
+-   [Adapting types](#adapting-types)
+    -   [Example: Defining an impl for use by other types](#example-defining-an-impl-for-use-by-other-types)
+-   [Associated types](#associated-types)
+    -   [Constraints on associated types in interfaces](#constraints-on-associated-types-in-interfaces)
+        -   [Model](#model-1)
+        -   [Requires [optional feature]](#requires-optional-feature)
+-   [Parameterized interfaces [optional feature]](#parameterized-interfaces-optional-feature)
+-   [Conditional conformance](#conditional-conformance)
+-   [Templated impls for generic interfaces](#templated-impls-for-generic-interfaces)
+    -   [Structural conformance](#structural-conformance)
+    -   [Bridge for C++ templates](#bridge-for-c-templates)
+        -   [Calling C++ template code from Carbon](#calling-c-template-code-from-carbon)
+        -   [Moving a C++ template to Carbon](#moving-a-c-template-to-carbon)
+    -   [Subtlety around templated interfaces](#subtlety-around-templated-interfaces)
+    -   [Lookup resolution](#lookup-resolution)
+-   [Composition of type-types](#composition-of-type-types)
+    -   [Interface extension [optional feature]](#interface-extension-optional-feature)
+        -   [Use case: overload resolution](#use-case-overload-resolution)
+        -   [Covariant return type constraints](#covariant-return-type-constraints)
+        -   [Model](#model-2)
+    -   [Type implementing multiple interfaces](#type-implementing-multiple-interfaces)
+        -   [Subsumption](#subsumption)
+        -   [Model](#model-3)
+    -   [Type compatible with another type](#type-compatible-with-another-type)
+        -   [Example: Multiple implementations of the same interface](#example-multiple-implementations-of-the-same-interface)
+        -   [Example: Creating an impl out of other impls](#example-creating-an-impl-out-of-other-impls)
+    -   [Other type constraints](#other-type-constraints)
+    -   [Sized types and type-types](#sized-types-and-type-types)
+        -   [Model](#model-4)
+-   [Dynamic types](#dynamic-types)
+    -   [Runtime type parameters](#runtime-type-parameters)
+    -   [Runtime type fields](#runtime-type-fields)
+        -   [Dynamic pointer type](#dynamic-pointer-type)
+            -   [Model](#model-5)
+        -   [Ptr](#ptr)
+        -   [Boxed](#boxed)
+        -   [DynBoxed](#dynboxed)
+        -   [MaybeBoxed](#maybeboxed)
+-   [Implicit interface arguments [optional feature]](#implicit-interface-arguments-optional-feature)
+-   [Interface nesting/containment [optional feature]](#interface-nestingcontainment-optional-feature)
+-   [Index of examples](#index-of-examples)
+-   [Notes:](#notes) -
+    [Associated types vs. interface parameters: ergonomics](#associated-types-vs-interface-parameters-ergonomics) -
+    [Associated types vs. interface parameters: existential types (dynamic types)](#associated-types-vs-interface-parameters-existential-types-dynamic-types) -
+    [Design advice: use interface parameters (?)](#design-advice-use-interface-parameters-) -
+    [Example: SubSequence in Collection](#example-subsequence-in-collection) -
+    [Example: Index in Collection](#example-index-in-collection) -
+    [joshl@ Reaction: Let's make associated types into "optional keyword parameters"](#joshl-reaction-lets-make-associated-types-into-optional-keyword-parameters)
+-   [Broken links footnote](#broken-links-footnote)
+
 <!-- tocstop -->
 
 ## What is this?
@@ -58,11 +117,11 @@ member of the type) is an optional member of an interface and its
 implementation. There are a few cases why we would include another interface
 implementation as a member:
 
-- [associated types](#associated-types)
-- [type parameters](#parameterized-interfaces-optional-feature)
-- [interface nesting/containment](#interface-nestingcontainment-optional-feature)
-  (unlike the others, these define types with the same data representation as
-  the type implementing the interface)
+-   [associated types](#associated-types)
+-   [type parameters](#parameterized-interfaces-optional-feature)
+-   [interface nesting/containment](#interface-nestingcontainment-optional-feature)
+    (unlike the others, these define types with the same data representation as
+    the type implementing the interface)
 
 The function can decide whether that type argument is passed in
 [statically](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#static-dispatch-witness-table)
@@ -94,16 +153,16 @@ type `ConvertibleToString` but instead that it has a "facet type". This means
 there is another type, called `Widget as ConvertibleToString`, with the
 following properties:
 
-- `Widget as ConvertibleToString` has the same _data representation_ as
-  `Widget`.
-- `Widget as ConvertibleToString` is an implementation of the interface
-  `ConvertibleToString`. The functions of `Widget as ConvertibleToString` are
-  just implementations of the names and signatures defined in the
-  `ConvertibleToString` interface, like `ToString`, and not the functions
-  defined on `Widget` values.
-- Carbon will implicitly cast values from type `Widget` to type
-  `Widget as ConvertibleToString` when calling a function that can only accept
-  types of type `ConvertibleToString`.
+-   `Widget as ConvertibleToString` has the same _data representation_ as
+    `Widget`.
+-   `Widget as ConvertibleToString` is an implementation of the interface
+    `ConvertibleToString`. The functions of `Widget as ConvertibleToString` are
+    just implementations of the names and signatures defined in the
+    `ConvertibleToString` interface, like `ToString`, and not the functions
+    defined on `Widget` values.
+-   Carbon will implicitly cast values from type `Widget` to type
+    `Widget as ConvertibleToString` when calling a function that can only accept
+    types of type `ConvertibleToString`.
 
 We define these facet types (alternatively interface implementations) either
 with the type, with the interface, or somewhere else where Carbon can be
@@ -274,17 +333,17 @@ _definitions_ of all of those names. Seeing a forward declaration of these names
 is insufficient, since you can presumably see forward declarations without
 seeing an impl with the definition. This accomplishes a few goals:
 
-- The compiler can check that there is only one definition of any impl that is
-  actually used, avoiding
-  [One Definition Rule (ODR)](https://en.wikipedia.org/wiki/One_Definition_Rule)
-  problems.
-- Every attempt to use an impl will see the exact same impl, making the
-  interpretation and semantics of code consistent no matter its context, in
-  accordance with the
-  [Refactoring principle](https://github.com/josh11b/carbon-lang/blob/principle-refactoring/docs/project/principles/principle-refactoring.md).
-- Allowing the impl to be defined with either the interface or the type
-  addresses the
-  [expression problem](https://eli.thegreenplace.net/2016/the-expression-problem-and-its-solutions).
+-   The compiler can check that there is only one definition of any impl that is
+    actually used, avoiding
+    [One Definition Rule (ODR)](https://en.wikipedia.org/wiki/One_Definition_Rule)
+    problems.
+-   Every attempt to use an impl will see the exact same impl, making the
+    interpretation and semantics of code consistent no matter its context, in
+    accordance with the
+    [Refactoring principle](https://github.com/josh11b/carbon-lang/blob/principle-refactoring/docs/project/principles/principle-refactoring.md).
+-   Allowing the impl to be defined with either the interface or the type
+    addresses the
+    [expression problem](https://eli.thegreenplace.net/2016/the-expression-problem-and-its-solutions).
 
 ## Generics
 
@@ -340,15 +399,15 @@ The underlying model here is
 in particular
 [facet type-types](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#facet-type-types):
 
-- [Interfaces](#interfaces) are types of
-  [witness table](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#witness-tables-eg-swift-and-carbon-generics)s
-- Facet types (defined by [Impls](#implementing-interfaces)) are
-  [witness table](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#witness-tables-eg-swift-and-carbon-generics)
-  values
-- The compiler rewrites functions with an implicit type argument
-  (`fn Foo[InterfaceName:$ T](...)`) to have an actual argument with type
-  determined by the interface, and supplied at the callsite using a value
-  determined by the impl.
+-   [Interfaces](#interfaces) are types of
+    [witness table](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#witness-tables-eg-swift-and-carbon-generics)s
+-   Facet types (defined by [Impls](#implementing-interfaces)) are
+    [witness table](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#witness-tables-eg-swift-and-carbon-generics)
+    values
+-   The compiler rewrites functions with an implicit type argument
+    (`fn Foo[InterfaceName:$ T](...)`) to have an actual argument with type
+    determined by the interface, and supplied at the callsite using a value
+    determined by the impl.
 
 Context:
 [Carbon: types as function tables, interfaces as type-types (TODO)](#broken-links-footnote)<!-- T:Carbon: types as function tables, interfaces as type-types -->
@@ -429,14 +488,14 @@ This allows us to provide implementations of new interfaces (as in `D`), provide
 different implementations of the same interface (as in `E`), or mix and match
 implementations from other compatible types (as in `F`). The rules are:
 
-- You may only add APIs, not change the representation of the type, unlike
-  extending a type where you may add fields.
-- The adapted type is compatible with the original type, and that relationship
-  is an equivalence class, so all of `C`, `D`, `E`, and `F` end up compatible
-  with each other.
-- Since adapted types are compatible with the original type, you may explicitly
-  cast between them, but there is no implicit casting between these types
-  (unlike between a type and one of its facet types / impls).
+-   You may only add APIs, not change the representation of the type, unlike
+    extending a type where you may add fields.
+-   The adapted type is compatible with the original type, and that relationship
+    is an equivalence class, so all of `C`, `D`, `E`, and `F` end up compatible
+    with each other.
+-   Since adapted types are compatible with the original type, you may
+    explicitly cast between them, but there is no implicit casting between these
+    types (unlike between a type and one of its facet types / impls).
 
 ### Example: Defining an impl for use by other types
 
@@ -778,10 +837,10 @@ some interface for some type, but only if some additional type restrictions are
 met. To do this, we leverage
 [impl arguments](#out-of-line-impl-arguments-for-parameterized-types):
 
-- We can provide the same impl argument in two places to constrain them to be
-  the same.
-- We can declare the impl argument with a more-restrictive type, to e.g. say
-  this impl can only be used if that type satisfies an interface.
+-   We can provide the same impl argument in two places to constrain them to be
+    the same.
+-   We can declare the impl argument with a more-restrictive type, to e.g. say
+    this impl can only be used if that type satisfies an interface.
 
 **Example:** [Interface constraint] Here we implement the `Printable` interface
 for arrays of `N` elements of `Printable` type `T`, generically for `N`.
@@ -839,15 +898,15 @@ struct scope. This was discussed in
 
 Some things going on here:
 
-- Our syntax for out-of-line impls already allows you to have a templated type
-  parameter. This can be used to provide a general impl that depends on
-  templated access to the type, even when the interface itself is defined
-  generically.
-- We very likely will want to restrict the impl in some ways.
-  - Easy case: An impl for a family of parameterized types.
-  - Trickier is "structural conformance": we might want to say "here is an impl
-    for interface `Foo` for any class implementing a method `Bar`". TODO: real
-    use case.
+-   Our syntax for out-of-line impls already allows you to have a templated type
+    parameter. This can be used to provide a general impl that depends on
+    templated access to the type, even when the interface itself is defined
+    generically.
+-   We very likely will want to restrict the impl in some ways.
+    -   Easy case: An impl for a family of parameterized types.
+    -   Trickier is "structural conformance": we might want to say "here is an
+        impl for interface `Foo` for any class implementing a method `Bar`".
+        TODO: real use case.
 
 ### Structural conformance
 
@@ -946,15 +1005,15 @@ G(&x, &y);  // C++::S(Int) implements SInterface(Int) via templated impl
 Imagine we have a C++ templated type with (possibly templated) consumers in C++,
 and we want to migrate that type to Carbon. For example, say we have a template
 `C++::Foo` in C++, and are moving it to Carbon generic `Foo`. Let's say the
-`C++::Foo` template takes optional parameters, `C++::std::optional<T>` for
-any `T`, but of course the way template code is typically written is to make it
-work with anything that has the `C++::std::optional<T>` API. When we move it
-to generic `Foo` in Carbon, we need both the `T` argument, and a
+`C++::Foo` template takes optional parameters, `C++::std::optional<T>` for any
+`T`, but of course the way template code is typically written is to make it work
+with anything that has the `C++::std::optional<T>` API. When we move it to
+generic `Foo` in Carbon, we need both the `T` argument, and a
 [higher-ranked](#bookmark=id.kayz42hh0s7j) type parameter to represent the
 optional type. Some C++ users will continue to use this type with C++'s
-`std::optional<T>`, which by virtue of being a C++ template, can't take
-generic arguments. We still can make a templated implementation of a generic
-interface for it:
+`std::optional<T>`, which by virtue of being a C++ template, can't take generic
+arguments. We still can make a templated implementation of a generic interface
+for it:
 
 ```
 interface Optional(Type:$ T) { ... }
@@ -997,12 +1056,12 @@ types that have been imported / have visible definitions.
 **Rule:** Can have multiple impl definitions that match, as long as there is a
 single best match. Best is defined using the "more specific" partial ordering:
 
-- Matching a descendant type or descendant interface is more specific and
-  therefore a closer match than a parent type or interface.
-- Matching an exact type (`Foo` or `Foo(Bar)`) is more specific than a
-  parameterized family of types (`Foo(T)` for any type `T`) is more specific
-  than a generic type (`T` for any type `T`).
-- TODO: others?
+-   Matching a descendant type or descendant interface is more specific and
+    therefore a closer match than a parent type or interface.
+-   Matching an exact type (`Foo` or `Foo(Bar)`) is more specific than a
+    parameterized family of types (`Foo(T)` for any type `T`) is more specific
+    than a generic type (`T` for any type `T`).
+-   TODO: others?
 
 TODO: Examples
 
@@ -1188,7 +1247,8 @@ K1(y);  K2(y);
 K1(y as (S as A));  K2(y as (S as A));
 ```
 
-Furthermore, there are cases where you must use `TypeImplements(A)` instead of `A`:
+Furthermore, there are cases where you must use `TypeImplements(A)` instead of
+`A`:
 
 ```
 fn GetWithDefault
@@ -1370,19 +1430,20 @@ fn F[ForSome(lambda (Type:$ T) => PairInterface(T, T)):$ MatchedPairType](Matche
 
 What is the size of a type?
 
-- It could be fully known and fixed at compile time -- this is true of primitive
-  types (`Int32`, `Float64`, etc.) most other concrete types (e.g. most
-  [structs](https://github.com/josh11b/carbon-lang/blob/structs/docs/design/structs.md)).
-- It could be known generically. This means that it will be known at codegen
-  time, but not at type-checking time.
-- It could be dynamic. For example, it could be a
-  [dynamic type](#dynamic-pointer-type) such as `Dynamic(TT)`, a
-  [variable-sized type](https://github.com/josh11b/carbon-lang/blob/structs/docs/design/structs.md#control-over-allocation),
-  or you could dereference a pointer to a base type that could actually point to
-  a
-  [descendant](https://github.com/josh11b/carbon-lang/blob/structs/docs/design/structs.md#question-extension--inheritance).
-- It could be unknown which category the type is in. In practice this will be
-  essentially equivalent to having dynamic size.
+-   It could be fully known and fixed at compile time -- this is true of
+    primitive types (`Int32`, `Float64`, etc.) most other concrete types (e.g.
+    most
+    [structs](https://github.com/josh11b/carbon-lang/blob/structs/docs/design/structs.md)).
+-   It could be known generically. This means that it will be known at codegen
+    time, but not at type-checking time.
+-   It could be dynamic. For example, it could be a
+    [dynamic type](#dynamic-pointer-type) such as `Dynamic(TT)`, a
+    [variable-sized type](https://github.com/josh11b/carbon-lang/blob/structs/docs/design/structs.md#control-over-allocation),
+    or you could dereference a pointer to a base type that could actually point
+    to a
+    [descendant](https://github.com/josh11b/carbon-lang/blob/structs/docs/design/structs.md#question-extension--inheritance).
+-   It could be unknown which category the type is in. In practice this will be
+    essentially equivalent to having dynamic size.
 
 I'm going to call a type "sized" if it is in the first two categories, and
 "unsized" otherwise. (Note: something with size 0 is still considered "sized".)
@@ -1430,9 +1491,9 @@ symbolically.
 
 Two different goals here:
 
-- Reducing code size at the expense of more runtime dispatch.
-- Increasing expressivity by allowing types to vary at runtime, AKA
-  "[dynamic dispatch](https://en.wikipedia.org/wiki/Dynamic_dispatch)".
+-   Reducing code size at the expense of more runtime dispatch.
+-   Increasing expressivity by allowing types to vary at runtime, AKA
+    "[dynamic dispatch](https://en.wikipedia.org/wiki/Dynamic_dispatch)".
 
 We address these two different use cases with two different mechanisms. What
 they have in common is using a runtime/dynamic type value (using
@@ -1500,12 +1561,12 @@ Given a type-type `TT` (with some restrictions described below), define
 `DynPtr(TT)` as a type that can hold a pointer to any value `x` with type `T`
 satisfying `TT`. Variables of type `DynPtr(TT)` act like pointers:
 
-- They do not own what they point to.
-- They have an assignment operator which allows them to point to new values
-  (with potentially different types as long as they all satisfy `TT`).
-- They may be copied or moved.
-- They have a fixed size (unlike the values they point to), though that size is
-  larger than a regular pointer.
+-   They do not own what they point to.
+-   They have an assignment operator which allows them to point to new values
+    (with potentially different types as long as they all satisfy `TT`).
+-   They may be copied or moved.
+-   They have a fixed size (unlike the values they point to), though that size
+    is larger than a regular pointer.
 
 Example:
 
@@ -1678,13 +1739,13 @@ One way of dealing with unsized types is via a pointer, as with `T*` and
 to value semantics. For example, the `Ptr` interface and `DynPtr` type captures
 nothing about ownership of the pointed-to value, or how to destroy it.
 
-So we are looking for the equivalent of C++'s `unique_ptr<T>`, that will
-handle unsized types, and then later we will add a variation that supports
-dynamic types. `Boxed(T)` is like `unique_ptr<T>`:
+So we are looking for the equivalent of C++'s `unique_ptr<T>`, that will handle
+unsized types, and then later we will add a variation that supports dynamic
+types. `Boxed(T)` is like `unique_ptr<T>`:
 
-- it has a fixed size
-- is movable even if `T` is not
-- will destroy what it points to when it goes out of scope.
+-   it has a fixed size
+-   is movable even if `T` is not
+-   will destroy what it points to when it goes out of scope.
 
 It differs, though, in that `Boxed(T)` has an allocator and so can support
 copying if `T` does.
@@ -1753,15 +1814,15 @@ just going to focus on making that fast.
 
 We have a few different ways of making types with value semantics:
 
-- `Boxed(T)`: Works with sized and unsized concrete types, `T` need not be
-  movable. Even if `T` is movable, it may be large or expensive to move so you
-  rather used `Boxed(T)` instead.
-- `DynBoxed(TT)`: Can store values of any type satisfying the interface (so
-  definitely unsized). Performs
-  [dynamic dispatch](https://en.wikipedia.org/wiki/Dynamic_dispatch).
-- `T`: Regular values that are sized and movable. The extra indirection/pointer
-  and heap allocation for putting `T` into a box would introduce too much
-  overhead / cost.
+-   `Boxed(T)`: Works with sized and unsized concrete types, `T` need not be
+    movable. Even if `T` is movable, it may be large or expensive to move so you
+    rather used `Boxed(T)` instead.
+-   `DynBoxed(TT)`: Can store values of any type satisfying the interface (so
+    definitely unsized). Performs
+    [dynamic dispatch](https://en.wikipedia.org/wiki/Dynamic_dispatch).
+-   `T`: Regular values that are sized and movable. The extra
+    indirection/pointer and heap allocation for putting `T` into a box would
+    introduce too much overhead / cost.
 
 In all cases we end up with a sized, movable value that is not very large. Just
 like we did with <code>[Ptr(T) above](#ptr)</code>, we can create an interface
@@ -1924,185 +1985,186 @@ above so we can make TypeImplements an optional convenience.
 Specifically, how does this proposal address
 [the use cases from the "Carbon Generics: Terminology and Problem statement" doc](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#problem-statement)?
 
-- Define an
-  [interface](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#interface).
-  - [in "Interfaces" section](#interfaces) (and most other sections).
-- Define an interface with
-  [type parameters](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#interface-type-parameters-vs-associated-types)
-  (maybe) and/or
-  [associated types](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#interface-type-parameters-vs-associated-types)
-  (almost certainly).
-  - [associated types](#associated-types),
-  - [type parameters](#parameterized-interfaces-optional-feature).
-- Define an interface with
-  [type constraints](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#type-constraints),
-  such as associated types or type parameters satisfying some interface. Type
-  constraints will also be needed as part of generic function definitions, to
-  define relationships between type parameters and associated types.
-  - [associated types](#bookmark=id.y76bpmnyjm7k),
-  - [type parameters](#bookmark=id.arne8eq43vmm).
-- Optional, but probably straightforward if we want it: Define an interface that
-  [extends/refines](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#extendingrefining-an-interface)
-  another interface:
-  - [interface extension](#interface-extension-optional-feature).
-- Similarly we probably want a way to say an interface requires an
-  implementation of one or more other interfaces:
-  - [interface nesting/containment](#interface-nestingcontainment-optional-feature).
-- Define how a type
-  [implements](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#impls-implementations-of-interfaces)
-  an interface
-  ([semantic conformance](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#semantic-vs-structural-interfaces)).
+-   Define an
+    [interface](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#interface).
+    -   [in "Interfaces" section](#interfaces) (and most other sections).
+-   Define an interface with
+    [type parameters](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#interface-type-parameters-vs-associated-types)
+    (maybe) and/or
+    [associated types](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#interface-type-parameters-vs-associated-types)
+    (almost certainly).
+    -   [associated types](#associated-types),
+    -   [type parameters](#parameterized-interfaces-optional-feature).
+-   Define an interface with
+    [type constraints](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#type-constraints),
+    such as associated types or type parameters satisfying some interface. Type
+    constraints will also be needed as part of generic function definitions, to
+    define relationships between type parameters and associated types.
+    -   [associated types](#bookmark=id.y76bpmnyjm7k),
+    -   [type parameters](#bookmark=id.arne8eq43vmm).
+-   Optional, but probably straightforward if we want it: Define an interface
+    that
+    [extends/refines](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#extendingrefining-an-interface)
+    another interface:
+    -   [interface extension](#interface-extension-optional-feature).
+-   Similarly we probably want a way to say an interface requires an
+    implementation of one or more other interfaces:
+    -   [interface nesting/containment](#interface-nestingcontainment-optional-feature).
+-   Define how a type
+    [implements](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#impls-implementations-of-interfaces)
+    an interface
+    ([semantic conformance](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#semantic-vs-structural-interfaces)).
 
-  - [implementing interfaces](#implementing-interfaces)
+    -   [implementing interfaces](#implementing-interfaces)
 
-  It should address
-  [the expression problem](https://eli.thegreenplace.net/2016/the-expression-problem-and-its-solutions),
-  e.g. by allowing the impl definition to be completely out of line as long as
-  it is defined with either the type or the interface.
+    It should address
+    [the expression problem](https://eli.thegreenplace.net/2016/the-expression-problem-and-its-solutions),
+    e.g. by allowing the impl definition to be completely out of line as long as
+    it is defined with either the type or the interface.
 
-  - [Out-of-line impl](#out-of-line-impl-arguments-for-parameterized-types)
-  - [Impl lookup](#impl-lookup)
+    -   [Out-of-line impl](#out-of-line-impl-arguments-for-parameterized-types)
+    -   [Impl lookup](#impl-lookup)
 
-- Define a parameterized implementation of an interface for a family of types.
-  This is both for
-  [structural conformance](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#semantic-vs-structural-interfaces)
-  via
-  [templated impls](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#templated-impl),
-  and
-  [conditional conformance](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#conditional-conformance).
-  That family of types may have generic or regular parameters, so that e.g. you
-  could implement a `Printable` interface for arrays of `N` elements of
-  `Printable` type `T`, generically for `N` (not separately instantiated for
-  each `N`).
-  - [Conditional conformance](#conditional-conformance)
-  - [Templated impls for structural conformance](#templated-impls-for-generic-interfaces)
-    (TODO)
-- Control how an interface may be used in order to reserve or abandon rights to
-  evolve the interface. See
-  [the relevant open question in "Carbon closed function overloading proposal" (TODO)](#broken-links-footnote)<!-- T:Carbon closed function overloading proposal --><!-- A:#bookmark=id.hxvlthy3z3g1 -->.
-  - TODO
-- Specify a generic explicit (non-type or type) argument to a function:
-  - [Example: Multiple implementations of the same interface](#example-multiple-implementations-of-the-same-interface)..
-- Specify a generic
-  [implicit argument](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#implicit-argument)
-  to a function:
-  - ["generics" section](#generics).
-- Specify a generic type argument constrained to conform to an interface. And in
-  the function, call methods defined in the the interface on a value of that
-  type.
-  - ["generics" section](#generics),
-  - [Example: Multiple implementations of the same interface](#example-multiple-implementations-of-the-same-interface).
-- Specify a generic type argument constrained to conform to multiple interfaces.
-  And in the function, call methods defined in each interface on a value of that
-  type, and pass the value to functions expecting any subset of those
-  interfaces. Ideally this would be convenient enough that we could favor fewer
-  narrow interfaces and combine them instead of having a large number of wide
-  interfaces.
-  - [Type implementing multiple interfaces](#type-implementing-multiple-interfaces).
-- Define multiple implementations of an interface for a single type, be able to
-  pass those multiple implementations in a single function call, and have the
-  function body be able to control which implementation is used when calling
-  interface methods. This should work for any interface, without requiring
-  cooperation from the interface definition. For example, have a function sort
-  songs by artist, then by album, and then by title given those three orderings
-  separately.
-  - [Example: Multiple implementations of the same interface](#example-multiple-implementations-of-the-same-interface).
-- In general, ways of specifying new combinations of interface implementations
-  for a type. For example, a way to call a generic function with a value of some
-  type, even if the interface and type are defined in different libraries
-  unknown to each other, by providing an implementation for that interface in
-  some way. This problem is described in
-  "[The trouble with typeclasses](https://pchiusano.github.io/2018-02-13/typeclasses.html)".
-  - [Adapting types](#adapting-types).
-- A value with a type implementing a superset of the interfaces required by a
-  generic function may be passed to the function without additional syntax
-  beyond passing the same value to a non-generic function expecting the exact
-  type of the value
-  ([subsumption](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#subsumption-and-casting)).
-  This should be true for values with types only known generically, as long as
-  it is generically known that the type implements a sufficient set of
-  interfaces.
-  - [Subsumption](#subsumption)
-- Define a parameterized entity (such as a function) such that code for it will
-  only be generated once.
-  - [Runtime type parameters](#runtime-type-parameters)
-- Define a parameterized entity such that code for it will be generated
-  separately for each distinct combination of arguments.
-  - [Generics](#generics)
-- Convert values of arbitrary types implementing an interface into values of a
-  single type that implements that same interface, for a sufficiently
-  well-behaved interface.
-  - [Runtime type fields](#runtime-type-fields)
+-   Define a parameterized implementation of an interface for a family of types.
+    This is both for
+    [structural conformance](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#semantic-vs-structural-interfaces)
+    via
+    [templated impls](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#templated-impl),
+    and
+    [conditional conformance](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#conditional-conformance).
+    That family of types may have generic or regular parameters, so that e.g.
+    you could implement a `Printable` interface for arrays of `N` elements of
+    `Printable` type `T`, generically for `N` (not separately instantiated for
+    each `N`).
+    -   [Conditional conformance](#conditional-conformance)
+    -   [Templated impls for structural conformance](#templated-impls-for-generic-interfaces)
+        (TODO)
+-   Control how an interface may be used in order to reserve or abandon rights
+    to evolve the interface. See
+    [the relevant open question in "Carbon closed function overloading proposal" (TODO)](#broken-links-footnote)<!-- T:Carbon closed function overloading proposal --><!-- A:#bookmark=id.hxvlthy3z3g1 -->.
+    -   TODO
+-   Specify a generic explicit (non-type or type) argument to a function:
+    -   [Example: Multiple implementations of the same interface](#example-multiple-implementations-of-the-same-interface)..
+-   Specify a generic
+    [implicit argument](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#implicit-argument)
+    to a function:
+    -   ["generics" section](#generics).
+-   Specify a generic type argument constrained to conform to an interface. And
+    in the function, call methods defined in the the interface on a value of
+    that type.
+    -   ["generics" section](#generics),
+    -   [Example: Multiple implementations of the same interface](#example-multiple-implementations-of-the-same-interface).
+-   Specify a generic type argument constrained to conform to multiple
+    interfaces. And in the function, call methods defined in each interface on a
+    value of that type, and pass the value to functions expecting any subset of
+    those interfaces. Ideally this would be convenient enough that we could
+    favor fewer narrow interfaces and combine them instead of having a large
+    number of wide interfaces.
+    -   [Type implementing multiple interfaces](#type-implementing-multiple-interfaces).
+-   Define multiple implementations of an interface for a single type, be able
+    to pass those multiple implementations in a single function call, and have
+    the function body be able to control which implementation is used when
+    calling interface methods. This should work for any interface, without
+    requiring cooperation from the interface definition. For example, have a
+    function sort songs by artist, then by album, and then by title given those
+    three orderings separately.
+    -   [Example: Multiple implementations of the same interface](#example-multiple-implementations-of-the-same-interface).
+-   In general, ways of specifying new combinations of interface implementations
+    for a type. For example, a way to call a generic function with a value of
+    some type, even if the interface and type are defined in different libraries
+    unknown to each other, by providing an implementation for that interface in
+    some way. This problem is described in
+    "[The trouble with typeclasses](https://pchiusano.github.io/2018-02-13/typeclasses.html)".
+    -   [Adapting types](#adapting-types).
+-   A value with a type implementing a superset of the interfaces required by a
+    generic function may be passed to the function without additional syntax
+    beyond passing the same value to a non-generic function expecting the exact
+    type of the value
+    ([subsumption](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#subsumption-and-casting)).
+    This should be true for values with types only known generically, as long as
+    it is generically known that the type implements a sufficient set of
+    interfaces.
+    -   [Subsumption](#subsumption)
+-   Define a parameterized entity (such as a function) such that code for it
+    will only be generated once.
+    -   [Runtime type parameters](#runtime-type-parameters)
+-   Define a parameterized entity such that code for it will be generated
+    separately for each distinct combination of arguments.
+    -   [Generics](#generics)
+-   Convert values of arbitrary types implementing an interface into values of a
+    single type that implements that same interface, for a sufficiently
+    well-behaved interface.
+    -   [Runtime type fields](#runtime-type-fields)
 
 Stretch goals:
 
-- A way to define one or a few functions and get an implementation for an
-  interface that has more functions (like defining `<`, `>`, `<=`, `>=`,
-  `==`, and `!=` in terms of `<=>`, or `++`, `--`, `+`, `-`, and `-=` from
-  `+=`). Possibly the "one or few functions" won't even be part of the
-  interface.
-  - [Example: Defining an impl for use by other types](#example-defining-an-impl-for-use-by-other-types)
-- Define an interface implementation algorithmically -- possibly via a function
-  returning an impl, or by defining an
-  [adapting type](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#adapting-a-type)
-  that implements that interface. This could be a solution to the previous
-  bullet. Another use case is when there are few standard implementation
-  strategies for an interface, and you want to provide those implementations in
-  a way that makes it easy for new types to adopt one.
-  - [Example: Defining an impl for use by other types](#example-defining-an-impl-for-use-by-other-types)
-- Support a way to switch between algorithms based on the capabilities of a
-  type. For example, we may want to use different algorithms for random-access
-  vs. bidirectional iterators. Similarly, a way to have specialization based on
-  type information in a generic like you might do in a template function for
-  performance but still would allow type checking. Example: In C++,
-  `std::vector<T>::resize()` can use a more efficient algorithm if `T` has a
-  `noexcept` move constructor. Can this optimization be allowed from generic
-  code since it does not affect the signature of `resize()`, and therefore type
-  checking? In a non-release build, it would be semantically equivalent but
-  slower to ignore the optimized implementation.
-  - [Use case: overload resolution](#use-case-overload-resolution)
-- As much as possible, switching a templated function to a generic one should
-  involve minimal changes to the function body. It should primarily just consist
-  of adding constraints to the signature. When changes are needed, the compiler
-  will not accept the code without them. No semantics of any code will change
-  merely as the result of switching from template to generics. See
-  ["Carbon principle: Generics"](https://github.com/josh11b/carbon-lang/blob/principle-generics/docs/project/principles/principle-generics.md).
-  - No semantic changes to code when switching from template -> generic.
-  - Only changes needed are additional casts when there are
-    [multiple interface requirements for a single type](#type-implementing-multiple-interfaces).
-    Code will not compile without those changes.
-  - No change to function body code going from generic -> template.
+-   A way to define one or a few functions and get an implementation for an
+    interface that has more functions (like defining `<`, `>`, `<=`, `>=`, `==`,
+    and `!=` in terms of `<=>`, or `++`, `--`, `+`, `-`, and `-=` from `+=`).
+    Possibly the "one or few functions" won't even be part of the interface.
+    -   [Example: Defining an impl for use by other types](#example-defining-an-impl-for-use-by-other-types)
+-   Define an interface implementation algorithmically -- possibly via a
+    function returning an impl, or by defining an
+    [adapting type](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#adapting-a-type)
+    that implements that interface. This could be a solution to the previous
+    bullet. Another use case is when there are few standard implementation
+    strategies for an interface, and you want to provide those implementations
+    in a way that makes it easy for new types to adopt one.
+    -   [Example: Defining an impl for use by other types](#example-defining-an-impl-for-use-by-other-types)
+-   Support a way to switch between algorithms based on the capabilities of a
+    type. For example, we may want to use different algorithms for random-access
+    vs. bidirectional iterators. Similarly, a way to have specialization based
+    on type information in a generic like you might do in a template function
+    for performance but still would allow type checking. Example: In C++,
+    `std::vector<T>::resize()` can use a more efficient algorithm if `T` has a
+    `noexcept` move constructor. Can this optimization be allowed from generic
+    code since it does not affect the signature of `resize()`, and therefore
+    type checking? In a non-release build, it would be semantically equivalent
+    but slower to ignore the optimized implementation.
+    -   [Use case: overload resolution](#use-case-overload-resolution)
+-   As much as possible, switching a templated function to a generic one should
+    involve minimal changes to the function body. It should primarily just
+    consist of adding constraints to the signature. When changes are needed, the
+    compiler will not accept the code without them. No semantics of any code
+    will change merely as the result of switching from template to generics. See
+    ["Carbon principle: Generics"](https://github.com/josh11b/carbon-lang/blob/principle-generics/docs/project/principles/principle-generics.md).
+    -   No semantic changes to code when switching from template -> generic.
+    -   Only changes needed are additional casts when there are
+        [multiple interface requirements for a single type](#type-implementing-multiple-interfaces).
+        Code will not compile without those changes.
+    -   No change to function body code going from generic -> template.
 
 Very stretch goals (these are more difficult, and possibly optional):
 
-- Define an interface where the relationship between the input and output types
-  is a little complicated. For example, widening multiplication from an integer
-  type to one with more bits, or `Abs: Complex(SomeIntType) -> SomeFloatType`.
-  One possible strategy is to have the return type be represented by an
-  [associated type](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#interface-type-parameters-vs-associated-types).
-  - [Constraints on associated types in interfaces](#constraints-on-associated-types-in-interfaces)
-- Define an interface that has multiple related types, like Graph/Nodes/Edges.
-  TODO: A concrete combination of `Graph`, `Edge`, and `Node` types that we
-  would like to define an interface for. Is the problem when you `Edge` and
-  `Node` refer to each other, so you need a forward declaration to break the
-  cycle?
-  - TODO
-- Impls where the impl itself has state. (from richardsmith@) Use case:
-  implementing interfaces for a flyweight in a Flyweight pattern where the Impl
-  needs a reference to a key -> info map.
-  - TODO: Difficult! Not clear how this would work.
-- "Higher-ranked types": A solution to the problem posed
-  [here (TODO)](#broken-links-footnote)<!-- T:Carbon: types as function tables, interfaces as type-types --><!-- A:#heading=h.qvhzlz54obmt -->,
-  where we need a representation for a way to go from a type to an
-  implementation of an interface parameterized by that type. Examples of things
-  we might want to express: _
-  `struct PriorityQueue( \ Type:$ T, fn (Type:$ U)->QueueInterface(U):$ QueueLike) { \ ... \ }`
-  _ `fn Map[Type:$ T, fn (Type:$ U)->StackInterface(U):$ StackLike,`
+-   Define an interface where the relationship between the input and output
+    types is a little complicated. For example, widening multiplication from an
+    integer type to one with more bits, or
+    `Abs: Complex(SomeIntType) -> SomeFloatType`. One possible strategy is to
+    have the return type be represented by an
+    [associated type](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#interface-type-parameters-vs-associated-types).
+    -   [Constraints on associated types in interfaces](#constraints-on-associated-types-in-interfaces)
+-   Define an interface that has multiple related types, like Graph/Nodes/Edges.
+    TODO: A concrete combination of `Graph`, `Edge`, and `Node` types that we
+    would like to define an interface for. Is the problem when you `Edge` and
+    `Node` refer to each other, so you need a forward declaration to break the
+    cycle?
+    -   TODO
+-   Impls where the impl itself has state. (from richardsmith@) Use case:
+    implementing interfaces for a flyweight in a Flyweight pattern where the
+    Impl needs a reference to a key -> info map.
+    -   TODO: Difficult! Not clear how this would work.
+-   "Higher-ranked types": A solution to the problem posed
+    [here (TODO)](#broken-links-footnote)<!-- T:Carbon: types as function tables, interfaces as type-types --><!-- A:#heading=h.qvhzlz54obmt -->,
+    where we need a representation for a way to go from a type to an
+    implementation of an interface parameterized by that type. Examples of
+    things we might want to express: _
+    `struct PriorityQueue( \ Type:$ T, fn (Type:$ U)->QueueInterface(U):$ QueueLike) { \ ... \ }`
+    _ `fn Map[Type:$ T, fn (Type:$ U)->StackInterface(U):$ StackLike,`
 
-          ```
-                 Type:$ V]
-      (StackLike(T)*: x, fn (T)->V: f) -> StackLike(V) { ... }
-          ```
+            ```
+                   Type:$ V]
+        (StackLike(T)*: x, fn (T)->V: f) -> StackLike(V) { ... }
+            ```
 
 
     *   TODO: Challenging! Probably needs something like [Dependent function types](https://en.wikipedia.org/wiki/Dependent_type#Pi_type)
@@ -2111,47 +2173,47 @@ These mechanisms need to have an underlying programming model that allows users
 to predict how to do these things, how to compose these things, and what
 expressions are legal.
 
-- See the [main "Model" section](#model), in addition to "Model" subsections
-  throughout the doc
+-   See the [main "Model" section](#model), in addition to "Model" subsections
+    throughout the doc
 
 ## Notes:
 
 These are notes from discussions after this document was first written that have
 not yet been incorporated into the main text above.
 
-- Can use IDE tooling to show all available methods, automatically inserting
-  casting to a facet type to get that method
-- "Functional dependencies" in Haskell about the unique/generic vs.
-  non-unique/template arguments distinction for type parameters of interfaces
-- Open question: is it okay for interface definer to decide (a) whether type
-  used in constraints, (b) whether different parameters make different
-  interfaces that a type can implement multiple of.
-- Example: what is the type of the subsequence of a sequence, from Dmitri
-- Imagine I want to define a new interface that has the type implements property
-  but also implements a new method.
-- Static/type fields holding non-type values: Should have these, should not have
-  distinction between types/functions/other types.
-- Instance fields: capabilities include read, write, address-of (implies read &
-  write?). Swift also has a modify capability implemented using coroutines. If
-  we have address-of, it must be a real address.
-- Question: C++ maybe gets wrong that you can take address of any member.
-  Greatly simplifies sanitizers, makes reasoning about what side effects can
-  affect members for correctness easier. Maybe opt-in feature? Similarly for
-  local variables. Maybe can call function taking a pointer from a member
-  function as long as it doesn't capture? Need to firm up design for instance
-  fields before interfaces for instance fields.
-- Concern about interfaces for operator overloading: Point + Vector = Point,
-  Point - Point = Vector
-- Concern about type-type model: adds friction to binary operators -- is left or
-  right type is self? Couple of problems with the idea of interface implemented
-  for the (LeftType, RightType) tuple. How does the impl get passed in? How do
-  you say that an interface is only for pairs?
-- Use case problem: Have interface `MultipliesBy(R)` for Self \* R. Want to
-  write a constraint that a function can take any `R` type such that type `Foo`
-  implements `MultipliesBy(R)`.
-- Want inheritance with virtual functions to be modeled by interface extension.
-  Example showing the interaction between Dynamic pointer types and interface
-  extension.
+-   Can use IDE tooling to show all available methods, automatically inserting
+    casting to a facet type to get that method
+-   "Functional dependencies" in Haskell about the unique/generic vs.
+    non-unique/template arguments distinction for type parameters of interfaces
+-   Open question: is it okay for interface definer to decide (a) whether type
+    used in constraints, (b) whether different parameters make different
+    interfaces that a type can implement multiple of.
+-   Example: what is the type of the subsequence of a sequence, from Dmitri
+-   Imagine I want to define a new interface that has the type implements
+    property but also implements a new method.
+-   Static/type fields holding non-type values: Should have these, should not
+    have distinction between types/functions/other types.
+-   Instance fields: capabilities include read, write, address-of (implies read
+    & write?). Swift also has a modify capability implemented using coroutines.
+    If we have address-of, it must be a real address.
+-   Question: C++ maybe gets wrong that you can take address of any member.
+    Greatly simplifies sanitizers, makes reasoning about what side effects can
+    affect members for correctness easier. Maybe opt-in feature? Similarly for
+    local variables. Maybe can call function taking a pointer from a member
+    function as long as it doesn't capture? Need to firm up design for instance
+    fields before interfaces for instance fields.
+-   Concern about interfaces for operator overloading: Point + Vector = Point,
+    Point - Point = Vector
+-   Concern about type-type model: adds friction to binary operators -- is left
+    or right type is self? Couple of problems with the idea of interface
+    implemented for the (LeftType, RightType) tuple. How does the impl get
+    passed in? How do you say that an interface is only for pairs?
+-   Use case problem: Have interface `MultipliesBy(R)` for Self \* R. Want to
+    write a constraint that a function can take any `R` type such that type
+    `Foo` implements `MultipliesBy(R)`.
+-   Want inheritance with virtual functions to be modeled by interface
+    extension. Example showing the interaction between Dynamic pointer types and
+    interface extension.
 
 How do we represent binary operations like `Addable`? Could the interface be
 defined on the pair of types of the two arguments somehow?
@@ -2199,7 +2261,7 @@ fn Map[Type:$ OrigElement, CollectionParam(OrigElement):$ C, Type:$ NewElement](
 // interface parameters has as much to do with choosing a short name for the
 // collection type and a long name for the element type.
 //
-// DmitriG: Maybe it is not the greatest example. Consider std::vector's iteartor
+// DmitriG: Maybe it is not the greatest example. Consider std::vector's iterator
 // or allocator type instead.
 // Nevertheless, I think having to introduce a name for the generic type parameter
 // (OrigElement) is somewhat of a burden even if it is used. The user already
@@ -2425,20 +2487,21 @@ var DynPtr(CollectionAssoc requires Element = Int) ints3 =
 There definitely seem to be some differences between types that you might
 typically want to parameterize vs. those you would want to be associated types:
 
-- For things like "element type" in a "container" interface, it is going to be
-  more convenient to use interface parameters since every user of the interface
-  is going to want to have a name for it anyway, and many will want to constrain
-  it. You expect to see the element type as parameter of the interface and you
-  want to see it clearly in the code. You would expect most (but not all, e.g.
-  strings) container types to be parameterized by element type anyway.
-  Frequently the interface will not constrain the type at all.
-- For things like "iterator type" or "slice type", you expect that to be
-  determined by the container type rather than a parameter to the container
-  type, and associated types are a more natural fit. Furthermore, we expect to
-  be able to say quite a lot about the API of the "iterator type" or "slice
-  type" as part of the "container" interface contract. You could imagine writing
-  a lot of generic-container algorithms in terms of just the "iterator" API
-  promised by the "container" interface without further constraints.
+-   For things like "element type" in a "container" interface, it is going to be
+    more convenient to use interface parameters since every user of the
+    interface is going to want to have a name for it anyway, and many will want
+    to constrain it. You expect to see the element type as parameter of the
+    interface and you want to see it clearly in the code. You would expect most
+    (but not all, e.g. strings) container types to be parameterized by element
+    type anyway. Frequently the interface will not constrain the type at all.
+-   For things like "iterator type" or "slice type", you expect that to be
+    determined by the container type rather than a parameter to the container
+    type, and associated types are a more natural fit. Furthermore, we expect to
+    be able to say quite a lot about the API of the "iterator type" or "slice
+    type" as part of the "container" interface contract. You could imagine
+    writing a lot of generic-container algorithms in terms of just the
+    "iterator" API promised by the "container" interface without further
+    constraints.
 
 The trick is that we may still want to (relatively rarely) write a function that
 constrains something that might naturally be an associated type, as you have

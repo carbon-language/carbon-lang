@@ -9,6 +9,40 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 ## Table of contents
 
 <!-- toc -->
+
+-   [Context](#context)
+-   [What are generics?](#what-are-generics)
+-   [Goals: Generics](#goals-generics)
+-   [Glossary / Terminology](#glossary--terminology)
+-   [Non-type generics](#non-type-generics)
+    -   [Basic generics](#basic-generics)
+    -   [Basic templates](#basic-templates)
+        -   [Difference between templates and generics](#difference-between-templates-and-generics)
+        -   [Substitution failure is an error](#substitution-failure-is-an-error)
+    -   [Implicit arguments](#implicit-arguments)
+    -   [Mixing](#mixing)
+    -   [Local constants](#local-constants)
+-   [Type generics design space](#type-generics-design-space)
+    -   [Problem statement](#problem-statement)
+    -   [Generic type parameters vs. templated type parameters](#generic-type-parameters-vs-templated-type-parameters)
+    -   [Programming model proposals](#programming-model-proposals)
+        -   [Interfaces are concrete types](#interfaces-are-concrete-types)
+            -   [Carbon templates and generics (TODO)](#carbon-templates-and-generics-todo)
+            -   [Carbon: facet types and interfaces (TODO)](#carbon-facet-types-and-interfaces-todo)
+            -   [Follow-up Jan 23, 2020 (TODO)](#follow-up-jan-23-2020-todo)
+            -   [Deep dive: interfaces as concrete types (TODO)](#deep-dive-interfaces-as-concrete-types-todo)
+        -   [Interfaces are facet type-types](#interfaces-are-facet-type-types)
+            -   [Carbon: types as function tables, interfaces as type-types (TODO)](#carbon-types-as-function-tables-interfaces-as-type-types-todo)
+            -   [Carbon deep dive: interfaces as facet type-types](#carbon-deep-dive-interfaces-as-facet-type-types)
+        -   [Impls are values passed as arguments with defaults](#impls-are-values-passed-as-arguments-with-defaults)
+        -   [Type-types parameterized by reprs](#type-types-parameterized-by-reprs)
+    -   [Comparisons](#comparisons)
+        -   ["Type-types parameterized by reprs" vs "facet types"](#type-types-parameterized-by-reprs-vs-facet-types)
+        -   ["Interfaces are concrete types" vs. "Facet type-types"](#interfaces-are-concrete-types-vs-facet-type-types)
+-   [Proposed programming model](#proposed-programming-model)
+    -   [Calling templated code](#calling-templated-code)
+-   [Broken links footnote](#broken-links-footnote)
+
 <!-- tocstop -->
 
 ## Context
@@ -55,10 +89,10 @@ elements of the passed-in array satisfy the same requirements, without having to
 look at the body of the `SortArray` function. These are in fact the main
 differences between generics and templates:
 
-- We can completely typecheck a generic definition without information from the
-  callsite.
-- We can completely typecheck a call to a generic with just information from the
-  function's signature, not its body.
+-   We can completely typecheck a generic definition without information from
+    the callsite.
+-   We can completely typecheck a call to a generic with just information from
+    the function's signature, not its body.
 
 Contrast with a template function, where you may be able to do some checking
 given a function definition, but more checking of the definition is required
@@ -73,31 +107,33 @@ In general we aim to make Carbon Generics into an alternative to templates for
 writing generic code, with improved software engineering properties at the
 expense of some restrictions. See
 [Carbon principle: Generics](https://github.com/josh11b/carbon-lang/blob/principle-generics/docs/project/principles/principle-generics.md)
-for a detailed discussion of goals. Also see [motivational use cases](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/motivation.md).
+for a detailed discussion of goals. Also see
+[motivational use cases](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/motivation.md).
 
 In this proposal we try and define a generics system that has these properties
 to allow migration from templates:
 
-- Templated code (perhaps migrated from C++) can be converted to generics
-  incrementally, one function or argument at a time. Typically this would
-  involve determining the interfaces that generic types need to implement to
-  call the function, proving the API the function expects.
-- It should be legal to call templated code from generic code when it would have
-  the same semantics as if called from non-generic code, and an error otherwise.
-  This is to allow more templated functions to be converted to generics, instead
-  of requiring them to be converted specifically in bottom-up order.
-- Converting from a template to a generic argument should be safe -- it should
-  either fail to compile or work, never silently change semantics.
-- We should minimize the effort to convert from template code to generic code.
-  Ideally it should just require specifying the type constraints, affecting just
-  the signature of the function, not its body.
+-   Templated code (perhaps migrated from C++) can be converted to generics
+    incrementally, one function or argument at a time. Typically this would
+    involve determining the interfaces that generic types need to implement to
+    call the function, proving the API the function expects.
+-   It should be legal to call templated code from generic code when it would
+    have the same semantics as if called from non-generic code, and an error
+    otherwise. This is to allow more templated functions to be converted to
+    generics, instead of requiring them to be converted specifically in
+    bottom-up order.
+-   Converting from a template to a generic argument should be safe -- it should
+    either fail to compile or work, never silently change semantics.
+-   We should minimize the effort to convert from template code to generic code.
+    Ideally it should just require specifying the type constraints, affecting
+    just the signature of the function, not its body.
 
 Also we would like to support:
 
-- Selecting between a dynamic and a static strategy for the generated code, to
-  give the user control over performance, binary sizes, build speed, etc.
-- Use of generic functions with types defined in different libraries from those
-  defining the interface requirements for those types.
+-   Selecting between a dynamic and a static strategy for the generated code, to
+    give the user control over performance, binary sizes, build speed, etc.
+-   Use of generic functions with types defined in different libraries from
+    those defining the interface requirements for those types.
 
 MAYBE: migration to generics from inheritance, to disentangle subtyping from
 implementation inheritance.
@@ -277,11 +313,11 @@ fn Illegal[Int:$ n](Int: i) -> Bool { return i < n; }
 
 ### Mixing
 
-- A function can have a mix of generic, template, and regular arguments.
-- Can pass a template or generic value to a generic or regular parameter.
-- There are restrictions passing a generic value to a template parameter,
-  discussed in a
-  (dedicated document)[https://github.com/josh11b/carbon-lang/blob/generic-to-template/docs/design/generics/generic-to-template.md].
+-   A function can have a mix of generic, template, and regular arguments.
+-   Can pass a template or generic value to a generic or regular parameter.
+-   There are restrictions passing a generic value to a template parameter,
+    discussed in a (dedicated
+    document)[https://github.com/josh11b/carbon-lang/blob/generic-to-template/docs/design/generics/generic-to-template.md].
 
 ### Local constants
 
@@ -466,24 +502,24 @@ output pairs of the interface function with that facet type.
 
 Observations:
 
-- Rust models interfaces as type-types.
-- Rust has a special `<Type as Interface>` syntax parallel to its
-  `(Value as Type)` syntax.
-- Rust has a special type constraint language for defining traits.
-- With facets, it is hard to say "this interface I1 has an associated type T
-  that satisfies interface I2", because in general in this model it is hard to
-  have a declaration saying that "X names a type that satisfies a particular
-  interface".
-- Saying an interface is "`for T`" means the same thing as "`require Self ~ T`"
-  where `U ~` means "satisfies the `HasSameRepr(U, T)` interface". (Except, we
-  might want to define a slightly different relationship with an impl for the
-  two forms.)
-- Generally speaking, you would make interfaces of the form "`Foo(T) for T`".
-  Instead of additional arguments, you probably want associated types. Instead
-  of something different after "`for`", generally would instead just have that
-  as part of a specific impl (though Josh made an argument that there is at
-  least some utility for putting restrictions into the interface.)
-- There might be a use case for interface / impl separation.
+-   Rust models interfaces as type-types.
+-   Rust has a special `<Type as Interface>` syntax parallel to its
+    `(Value as Type)` syntax.
+-   Rust has a special type constraint language for defining traits.
+-   With facets, it is hard to say "this interface I1 has an associated type T
+    that satisfies interface I2", because in general in this model it is hard to
+    have a declaration saying that "X names a type that satisfies a particular
+    interface".
+-   Saying an interface is "`for T`" means the same thing as
+    "`require Self ~ T`" where `U ~` means "satisfies the `HasSameRepr(U, T)`
+    interface". (Except, we might want to define a slightly different
+    relationship with an impl for the two forms.)
+-   Generally speaking, you would make interfaces of the form "`Foo(T) for T`".
+    Instead of additional arguments, you probably want associated types. Instead
+    of something different after "`for`", generally would instead just have that
+    as part of a specific impl (though Josh made an argument that there is at
+    least some utility for putting restrictions into the interface.)
+-   There might be a use case for interface / impl separation.
 
 ##### [Deep dive: interfaces as concrete types (TODO)](#broken-links-footnote)<!-- T:Deep dive: interfaces as concrete types --><!-- A:# -->
 
@@ -493,13 +529,13 @@ A fairly complete and up-to-date description of this programming model.
 
 **Concerns:**
 
-- Verbosity for simple cases:
-  - Type parameter or associated type must satisfy interface
-  - TODO
-- Arguments to interfaces serve two different functions, one is generally for
-  the representation type, others are for parameterization
-- Can't say things like "list of implementations of this interface compatible
-  with a specific type"
+-   Verbosity for simple cases:
+    -   Type parameter or associated type must satisfy interface
+    -   TODO
+-   Arguments to interfaces serve two different functions, one is generally for
+    the representation type, others are for parameterization
+-   Can't say things like "list of implementations of this interface compatible
+    with a specific type"
 
 #### Interfaces are facet type-types
 
@@ -659,10 +695,10 @@ type.
 Two main concerns (from
 [Carbon Generics meeting Jan 22, 2020 (TODO)](#broken-links-footnote)<!-- T:Carbon Generics meeting Jan 22, 2020 --><!-- A:#heading=h.g0n6klm6qsdz -->):
 
-- In our system, multiple types will have the same representation, so there is
-  ambiguity about what representation type should be inferred. This has led to a
-  lot of confusion when working out edge cases.
-- It ends up verbose even for simple cases.
+-   In our system, multiple types will have the same representation, so there is
+    ambiguity about what representation type should be inferred. This has led to
+    a lot of confusion when working out edge cases.
+-   It ends up verbose even for simple cases.
 
 ### Comparisons
 
