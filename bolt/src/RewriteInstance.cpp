@@ -1710,6 +1710,10 @@ void RewriteInstance::adjustCommandLineOptions() {
     errs() << "BOLT-ERROR: -strict and -lite cannot be used at the same time\n";
     exit(1);
   }
+
+  if (opts::Lite) {
+    outs() << "BOLT-INFO: enabling lite mode\n";
+  }
 }
 
 namespace {
