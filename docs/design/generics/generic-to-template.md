@@ -435,6 +435,11 @@ fn MakeShortVector[Type:$ T](T: x) -> Vector(T) {
 var Vector(Bool): v = MakeShortVector(True);
 ```
 
+Note that this problem occurs here as a result of _overloading_. In general the
+concerns are not restricted to templates, but anything that branches based on
+additional type information than what is captured in the constraints on the
+generic.
+
 What we don't want is the option #1 behavior of instantiating `Vector(T)` using
 some type `T != Bool`. Instead we have two choices: option A rejects this code,
 and option B accepts it.
@@ -512,9 +517,17 @@ Perhaps slightly less clear is whether this would allow `auto` to be defined as
 #### Recommendation: defer option #3
 
 Option #3 definitely introduces complexity and implementation work into the
-compiler, which we aren't sure we need. Once we have greater experience
-implementing with generics, we will be better able to say whether we need the
-capabilities of option #3 and what variation on it.
+compiler, which we aren't sure we need. It also introduces a code evolution
+concern. If a new overload is added to a function, it can break generic callers.
+Generally speaking, modification of a template could introduce breakage, but
+this option definitely adds fragility since all overloads will be considered
+even if the generic is never instantiated for that type. Option A is
+particularly susceptible since adding any overload can cause breakage, even if
+the new overload has a consistent signature.
+
+Once we have greater experience implementing with generics, we will be better
+able to say whether we need the capabilities of option #3 and what variation on
+it.
 
 ## Conclusion
 
