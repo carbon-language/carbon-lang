@@ -1183,6 +1183,23 @@ K1(y);  K2(y);
 K1(y as (S as A));  K2(y as (S as A));
 ```
 
+Furthermore, there are cases where you must use `TypeImplements(A)` instead of `A`:
+
+```
+fn GetWithDefault
+    [Type: K, TypeImplements(HasDefault): V]
+    (HashMap(K, V): map, K: key) -> Ptr(V) {
+  if (not map.has_key(key)) {
+    map.insert(key, (V as HasDefault).default());
+  }
+  return &map[key];
+}
+```
+
+The reason we need `V` to be `TypeImplements(HasDefault)` instead of just
+`HasDefault` is so it can match the parameter to `HashMap(K, V)` which typically
+won't be the `HasDefault` facet of whatever type you are using.
+
 #### Subsumption
 
 We have the following subsumption rule:

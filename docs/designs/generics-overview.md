@@ -274,17 +274,20 @@ fn Illegal[Int:$ n](Int: i) -> Bool { return i < n; }
 
 - A function can have a mix of generic, template, and regular arguments.
 - Can pass a template or generic value to a generic or regular parameter.
+- There are restrictions passing a generic value to a template parameter,
+  discussed in a
+  (dedicated document)[https://github.com/josh11b/carbon-lang/blob/generic-to-template/docs/design/generics/generic-to-template.md].
 
-### Generic members
+### Local constants
 
-You may also have generic members of functions/types. Just like generic
+You may also have local generic constants as members of types. Just like generic
 parameters, they have compile-time, not runtime, storage. You may also have
-template members, with the difference that template members can use the actual
-value of the member. In both cases, these can be initialized with values
-computed from generic/template arguments, or other things that are effectively
-constant and/or available at compile time.
+template constant members, with the difference that template constant members
+can use the actual value of the member in type checking. In both cases, these
+can be initialized with values computed from generic/template arguments, or
+other things that are effectively constant and/or available at compile time.
 
-A generic function member allows you define a local constant:
+We also support local generic constants in functions:
 
 ```
 fn PrintOddNumbers(Int:$ N) {
@@ -298,7 +301,7 @@ fn PrintOddNumbers(Int:$ N) {
 }
 ```
 
-Template function members may be used in type checking:
+Local template constants may be used in type checking:
 
 ```
 fn PrimesLessThan(Int:$$ N) {
@@ -310,8 +313,8 @@ fn PrimesLessThan(Int:$$ N) {
 }
 ```
 
-Similarly, you may also use generic and template members of types, which allows
-you to define constant members of the type.
+Interfaces may include requirements that a type have local constants with a
+particular type and name.
 
 ## Type generics design space
 
