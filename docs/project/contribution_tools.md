@@ -173,6 +173,8 @@ Some packages that may be helpful are:
         [Prettier](#prettier).
 -   [prettier-atom](https://atom.io/packages/prettier-atom): For
     [Prettier](#prettier) integration.
+-   [python-black](https://atom.io/packages/python-black): For [black](#black)
+    integration.
 
 ### pre-commit enabled tools
 
