@@ -450,7 +450,7 @@ cases with unpacking, such as argument forwarding.
 > `SomeFunction`'s declaration order.
 
 Keyword arguments to functions are covered in more detail in
-[the pattern matching design doc](https://github.com/josh11b/carbon-lang/blob/pattern-matching/docs/design/pattern-matching.md#positional-amp-keyword-arguments).
+[the pattern matching design doc](https://github.com/josh11b/carbon-lang/blob/pattern-matching/docs/design/pattern-matching.md#positional--keyword-arguments).
 
 ### Unpacking
 
