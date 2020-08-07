@@ -21,7 +21,7 @@ contributions.
     -   [Carbon-maintained](#carbon-maintained)
         -   [new_proposal.py](#new_proposalpy)
         -   [pr_comments.py](#pr_commentspy)
-    -   [For GitHub](#for-github)
+    -   [GitHub](#github)
         -   [gh CLI](#gh-cli)
         -   [GitHub Desktop](#github-desktop)
     -   [Vim](#vim)
@@ -126,7 +126,7 @@ Flags can be seen with `-h`. A couple key flags to be aware of are:
 pip install gql
 ```
 
-### For GitHub
+### GitHub
 
 #### gh CLI
 
