@@ -24,8 +24,9 @@ contributions.
     -   [For GitHub](#for-github)
         -   [gh CLI](#gh-cli)
         -   [GitHub Desktop](#github-desktop)
-    -   [For vim users](#for-vim-users)
+    -   [Vim](#vim)
         -   [vim-prettier](#vim-prettier)
+    -   [Atom](#atom)
     -   [pre-commit enabled tools](#pre-commit-enabled-tools)
         -   [black](#black)
         -   [codespell](#codespell)
@@ -47,7 +48,7 @@ tools that we recommend. See the [installation instructions](https://brew.sh/).
 ### pyenv and Python
 
 [pyenv](https://github.com/pyenv/pyenv) is the recommended way to install
-Python. Our recommended way of installing both is:
+[Python](python.org). Our recommended way of installing both is:
 
 ```bash
 brew update
@@ -144,7 +145,7 @@ brew install github/gh/gh
 [GitHub Desktop](https://desktop.github.com/) provides a UI for managing git
 repos. See the page for installation instructions.
 
-### For vim users
+### Vim
 
 #### vim-prettier
 
@@ -155,6 +156,23 @@ If you use vim-prettier, the `.prettierrc.yaml` should still apply as long as
 `config_precedence` is set to the default `file-override`. However, we may need
 to add additional settings where the `vim-prettier` default diverges from
 `prettier`, as we notice them.
+
+### Atom
+
+[Atom](https://atom.io/) is an IDE that's mainly mentioned here for its Markdown
+support. See the page for installation instructions.
+
+Some packages that may be helpful are:
+
+-   [markdown-preview-enhanced](https://atom.io/packages/markdown-preview-enhanced):
+    An improvement over the default-installed `markdown-preview` package. If
+    using this:
+    -   Disable `markdown-preview`.
+    -   In the package settings, turn off 'Break On Single New Line' -- this is
+        consistent with [carbon-lang.dev](https://carbon-lang.dev) and
+        [Prettier](#prettier).
+-   [prettier-atom](https://atom.io/packages/prettier-atom): For
+    [Prettier](#prettier) integration.
 
 ### pre-commit enabled tools
 
