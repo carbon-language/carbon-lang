@@ -17,16 +17,20 @@ contributions.
     -   [brew](#brew)
     -   [pyenv and Python](#pyenv-and-python)
     -   [pre-commit](#pre-commit)
--   [Helper tools](#helper-tools)
-    -   [new_proposal.py](#new_proposalpy)
-    -   [pr_comments.py](#pr_commentspy)
 -   [Optional tools](#optional-tools)
-    -   [black](#black)
-    -   [codespell](#codespell)
-    -   [gh](#gh)
-    -   [markdown-toc](#markdown-toc)
-    -   [Prettier](#prettier)
+    -   [Carbon-maintained](#carbon-maintained)
+        -   [new_proposal.py](#new_proposalpy)
+        -   [pr_comments.py](#pr_commentspy)
+    -   [For GitHub](#for-github)
+        -   [gh CLI](#gh-cli)
+        -   [GitHub Desktop](#github-desktop)
+    -   [For vim users](#for-vim-users)
         -   [vim-prettier](#vim-prettier)
+    -   [pre-commit enabled tools](#pre-commit-enabled-tools)
+        -   [black](#black)
+        -   [codespell](#codespell)
+        -   [markdown-toc](#markdown-toc)
+        -   [Prettier](#prettier)
 
 <!-- tocstop -->
 
@@ -88,17 +92,19 @@ git commit
 When modifying or adding pre-commit hooks, please run
 `pre-commit run --all-files` to see what changes.
 
-## Helper tools
+## Optional tools
 
-### new_proposal.py
+### Carbon-maintained
+
+#### new_proposal.py
 
 [new_proposal.py](/src/scripts/new_proposal.py) is a helper for generating the
 PR and proposal file for a new proposal. It's documented in
 [the proposal template](/proposals/template.md).
 
-**NOTE**: This requires installing [the `gh` tool](#gh).
+**NOTE**: This requires installing [the gh CLI](#gh).
 
-### pr_comments.py
+#### pr_comments.py
 
 [pr_comments.py](/src/scripts/pr_comments.py) is a helper for scanning comments
 in GitHub. It's particularly intended to help find threads which need to be
@@ -119,40 +125,54 @@ Flags can be seen with `-h`. A couple key flags to be aware of are:
 pip install gql
 ```
 
-## Optional tools
+### For GitHub
 
-### black
+#### gh CLI
 
-> **pre-commit enabled**: If you're using pre-commit, it will run this.
-> Installing and running manually is optional, but may be helpful.
+[The gh CLI](https://github.com/cli/cli) supports some GitHub queries, and is
+used by some scripts.
 
-We use [Black](https://github.com/psf/black) to format Python code. Although
-[Prettier](#prettier) is used for most languages, it doesn't support Python.
-
-### codespell
-
-> **pre-commit enabled**: If you're using pre-commit, it will run this.
-> Installing and running manually is optional, but may be helpful.
-
-We use [codespell](https://github.com/codespell-project/codespell) to spellcheck
-common errors. This won't catch every error; we're trying to balance true and
-false positives.
-
-### gh
-
-[gh](https://github.com/cli/cli) is GitHub's command line tool.
-
-`gh` can be installed using brew:
+To install gh, run:
 
 ```bash
 brew update
 brew install github/gh/gh
 ```
 
-### markdown-toc
+#### GitHub Desktop
 
-> **pre-commit enabled**: If you're using pre-commit, it will run this.
-> Installing and running manually is optional, but may be helpful.
+[GitHub Desktop](https://desktop.github.com/) provides a UI for managing git
+repos. See the page for installation instructions.
+
+### For vim users
+
+#### vim-prettier
+
+[vim-prettier](https://github.com/prettier/vim-prettier) is a vim integration
+for [Prettier](#prettier).
+
+If you use vim-prettier, the `.prettierrc.yaml` should still apply as long as
+`config_precedence` is set to the default `file-override`. However, we may need
+to add additional settings where the `vim-prettier` default diverges from
+`prettier`, as we notice them.
+
+### pre-commit enabled tools
+
+If you're using pre-commit, it will run these tools. Installing and running them
+manually is optional, but may be helpful.
+
+#### black
+
+We use [Black](https://github.com/psf/black) to format Python code. Although
+[Prettier](#prettier) is used for most languages, it doesn't support Python.
+
+#### codespell
+
+We use [codespell](https://github.com/codespell-project/codespell) to spellcheck
+common errors. This won't catch every error; we're trying to balance true and
+false positives.
+
+#### markdown-toc
 
 We use [markdown-toc](https://github.com/jonschlinkert/markdown-toc) to provide
 GitHub-compatible tables of contents for some documents.
@@ -160,17 +180,7 @@ GitHub-compatible tables of contents for some documents.
 If run manually, specify `--bullets=-` to use Prettier-compatible bullets, or
 always run Prettier after markdown-toc.
 
-### Prettier
-
-> **pre-commit enabled**: If you're using pre-commit, it will run this.
-> Installing and running manually is optional, but may be helpful.
+#### Prettier
 
 We use [Prettier](https://prettier.io/) for formatting. There is an
 [rc file](/.prettierrc.yaml) for configuration.
-
-#### vim-prettier
-
-If you use [vim-prettier](https://github.com/prettier/vim-prettier), the
-`.prettierrc.yaml` should still apply as long as `config_precedence` is set to
-the default `file-override`. However, we may need to add additional settings
-where the `vim-prettier` default diverges from `prettier`, as we notice them.
