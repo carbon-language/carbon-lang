@@ -89,7 +89,7 @@ happening, since this is the simplest approach.
 
 In the case of non-type values, I believe that it is the best we can do. If the
 parameter of `TemplateFunction` could have been a generic instead of a template, it almost certainly
-would be, unless the code is in C++. Attempts to use the template with a generic
+would be, unless the template comes from C++. Attempts to use the template with a generic
 value will invariably trip over some use of the value which we can't compile
 without violating the generic abstraction, requiring knowing the value for type
 checking.
