@@ -116,8 +116,8 @@ It does result in some restrictions which may be problematic:
     accepting `std::optional`, `std::unique_ptr`, and the like.
 
 Both of these restrictions impact code evolution if you cannot change a generic
-to a template without breaking all generic callers, or change a template to a
-generic if it already calls a template. As a consequence, we also consider more
+to a template without breaking all generic users, or change a template to a
+generic if it already uses a template. As a consequence, we also consider more
 complex options where the usage is allowed.
 
 ### Option #1: instantiate templates immediately on an archetype
