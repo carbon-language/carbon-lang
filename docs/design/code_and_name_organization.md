@@ -12,22 +12,30 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 -   [Goals and philosophy](#goals-and-philosophy)
 -   [Overview](#overview)
+    -   [Name paths](#name-paths)
     -   [Named scopes](#named-scopes)
     -   [Imports](#imports)
--   [Details](#details)
-    -   [Package keyword](#package-keyword)
-        -   [File extension](#file-extension)
--   [ORIGINAL Libraries](#original-libraries)
--   [ORIGINAL Namespaces](#original-namespaces)
--   [ORIGINAL Packages](#original-packages)
--   [ORIGINAL Imports](#original-imports)
--   [ORIGINAL Shadowing of names](#original-shadowing-of-names)
--   [ORIGINAL Standard library names](#original-standard-library-names)
--   [Alternatives](#alternatives)
     -   [File extensions](#file-extensions)
-    -   [Implementation vs interface files](#implementation-vs-interface-files)
-    -   [Strict association between the filesystem path and library/namespace](#strict-association-between-the-filesystem-path-and-librarynamespace)
+-   [Details](#details)
+    -   [Name paths](#name-paths-1)
+        -   [Disallowing name path conflicts](#disallowing-name-path-conflicts)
+    -   [Package keyword](#package-keyword)
+    -   [Libraries](#libraries)
+    -   [ORIGINAL libraries](#original-libraries)
+    -   [Namespaces](#namespaces)
+        -   [Using imported namespaces](#using-imported-namespaces)
+        -   [Aliasing](#aliasing)
+    -   [Imports](#imports-1)
+        -   [Name conflicts of imports](#name-conflicts-of-imports)
+-   [Alternatives](#alternatives)
+    -   [Aliasing namespace names](#aliasing-namespace-names)
+    -   [Allow shadowing of names](#allow-shadowing-of-names)
     -   [Broader imports, either all names or arbitrary code](#broader-imports-either-all-names-or-arbitrary-code)
+    -   [Different file extensions](#different-file-extensions)
+    -   [Imports from URLs](#imports-from-urls)
+    -   [Prevent libraries from crossing package boundaries](#prevent-libraries-from-crossing-package-boundaries)
+    -   [Scoped namespaces](#scoped-namespaces)
+    -   [Strict association between the filesystem path and library/namespace](#strict-association-between-the-filesystem-path-and-librarynamespace)
 
 <!-- tocstop -->
 
@@ -39,7 +47,7 @@ Important Carbon goals for code and name organization are:
 
     -   We should support API libraries adding new structs, functions or other
         identifiers without those new identifiers being able to shadow or break
-        existing client identifiers with identical names.
+        existing users that already have identifiers with conflicting names.
 
     -   We should make it as easy as possible to refactor code between files.
 
@@ -53,6 +61,13 @@ Important Carbon goals for code and name organization are:
         projects that don't need it.
 
 ## Overview
+
+### Name paths
+
+A name path is the dot-separated identifier list that indicates the full path of
+a name as it corresponds to any named scope. For example, while both `Geometry`
+and `Shapes` are names of identifiers, `Geometry.Shapes` is a name path
+indicating `Shapes` is an identifier in the `Geometry` named scope.
 
 ### Named scopes
 
@@ -70,11 +85,10 @@ for all APIs that it contains. The names of these scopes may differ. For
 example, `Geometry.TwoDimensional` may be the library scope, while
 `Geometry.Shapes` may be the namespace scope.
 
-A **package** is also required for every file. This contributes a common element
-to both the library and namespace scope. A file may optionally append to the
-package to build the library scope, to separate compilation and dependencies of
-the file within its package. It may also optionally wrap code in one or more
-namespace scopes, to separate names.
+The `package` keyword is required for every file. It contributes a common name
+path to both the library and namespace scope. Additional scoping is optional,
+although a file may only contribute to a single library, even if its names are
+in multiple namespaces.
 
 For example, to set use `Geometry` as both the library scope and namespace
 scope, a file might contain:
@@ -85,119 +99,182 @@ package Geometry;
 struct Point { ... }
 ```
 
-If separate scopes are desired, such as a `Geometry.TwoDimensional` library
-scope and `Geometry.Shapes` namespace scope, a file might contain:
+If distinct scope name paths are desired, such as a `Geometry.TwoDimensional`
+library scope and `Geometry.Shapes` namespace scope, a file might contain:
 
 ```carbon
-package Geometry library TwoDimensional;
+package Geometry library TwoDimensional namespace Shapes;
 
-namespace Shapes {
-  struct Circle { ... }
-}
+struct Circle { ... }
+```
+
+The `namespace` keyword allows specifying additional namespace scopes within a
+file. For example, this is an alternate way to declare `Geometry.Shapes.Circle`:
+
+```carbon
+package Geometry;
+
+namespace Shapes;
+struct Shapes.Circle { ... }
 ```
 
 ### Imports
 
-Imports are the method for importing names from other namespace scopes. Imports
-will always name what they are importing;
+The `import` keyword supports reusing code from other files and libraries.
 
 For example, to import the `Geometry.Shapes` namespace:
 
 ```carbon
 import("Geometry", "Shapes");
+
+fn Area(Shapes.Circle circle) { ... };
 ```
 
-This results in a usable name of `Shapes`, through which members of the
-namespace can be accessed, such as `Shapes.Circle`. Specific identifiers may
-also be imported, for example:
+Specific identifiers may also be imported, for example:
 
 ```carbon
 import("Geometry.Shapes", "Circle");
+
+fn Area(Circle circle) { ... };
 ```
 
-Multiple names may be imported using a single statement:
+### File extensions
 
-```carbon
-import("Geometry.Shapes", ("Circle", "Triangle", "Square"));
-```
-
-In the case of a shadowed name, the imported name may also be
-[aliased](aliases.md):
-
-```carbon
-alias GeometryCircle = import("Geometry.Shapes", "Circle");
-```
-
-When importing from another file or library that is in the current namespace
-scope, the namespace may be omitted from the import. For example, an import
-`Geometry.Point` may look like:
-
-```carbon
-package Geometry;
-
-import("Point");
-```
+Carbon files use the `.6c` extension as a matter of convention. This comes from
+how the atomic number notation for
+[Carbon](https://en.wikipedia.org/wiki/Carbon), "<sub>6</sub>C". In the
+language's case, we need a reasonably unique extension, and this is what we've
+chosen.
 
 ## Details
+
+### Name paths
+
+[Name paths](#name-paths) are defined above as dot-separated identifiers. This
+syntax can be expressed as a rough regular expression:
+
+```regex
+IDENTIFIER(\.IDENTIFIER)*
+```
+
+#### Disallowing name path conflicts
+
+Carbon will disallow name conflicts, even those that may be treated as
+[shadowing](https://en.wikipedia.org/wiki/Variable_shadowing) in other
+languages. In Carbon, a name conflict can be considered as any case where two
+identically named entities can see each other; that is, if they are in either in
+the same scope, or one is at a parent scope of the other.
+
+For example, all cases of `Triangle` shadow each other:
+
+```
+package Example;
+
+import("Geometry.Shapes", "Triangle");
+import("Music.Instrument", "Triangle");
+
+namespace Triangle { ... }
+fn Triangle() { ... }
+struct Triangle { ... }
+
+fn Foo() { var Int: Triangle = 3; }
+fn Bar(var Int: Triangle) { ... }
+
+namespace Baz {
+  fn Triangle() { ... }
+}
+```
+
+Rather than trying to resolve shadowing, Carbon will reject code until there is
+only _one_ possible result for a `Triangle` lookup for any given scope. Renaming
+and [aliasing](aliases.md) are standard solutions to avoid this problem.
+
+Names in scopes that do _not_ have a parent-child relationship will not result
+in a name conflict. In this example, `Foo` is not shadowed because because the
+name paths are distinct:
+
+```
+package Example;
+
+namespace Bar {
+  fn Foo() { ... }
+}
+
+namespace Baz {
+  fn Foo() { ... }
+}
+```
 
 ### Package keyword
 
 The first non-comment, non-whitespace line of a Carbon file will be the
 `package` keyword. The `package` keyword's syntax, combined with the optional
-`library` keyword, may be expressed as a regular expression:
+`library` keyword, may be expressed as a rough regular expression:
 
-```
-package IDENTIFIER(\.IDENTIFIER)* (library IDENTIFIER(\.IDENTIFIER)*)?;
-```
-
-For example, the following are all valid package keyword uses:
-
-```
-package Geometry;
-package Geometry.Shapes;
-package Geometry.Shapes.Flat;
-package Geometry library Shapes;
-package Geometry library Shapes.Flat;
+```regex
+package NAME_PATH (library NAME_PATH)? (namespace NAME_PATH)?;
 ```
 
-The first name passed to the `package` keyword is a prefix that will be used for
-both the file's library and namespace scopes. When the `library` keyword is
-specified, its identifiers are combined with the package to generate the library
-scope.
+For example:
 
-For example, `package Geometry library Shapes.Flat` defines a file that is in
-the library `Geometry.Shapes.Flat`, and uses the `Geometry` namespace.
+```carbon
+package Geometry library Objects.Flat namespace Shapes
+```
+
+Breaking this apart:
+
+-   The first name passed to the `package` keyword, `Geometry`, is a name path
+    prefix that will be used for both the file's library and namespace scopes.
+-   When the optional `library` keyword is specified, its name path is combined
+    with the package to generate the library scope. In this example, the
+    `Geometry.Objects.Flat` library will be used.
+-   When the optional `namespace` keyword is specified, its name path is
+    combined with the package to generate the namespace scope. In this example,
+    the `Geometry.Shapes` namespace will be used.
+
+It's possible that files contributing to the `Geometry.Objects.Flat` may use
+different `package` arguments. These examples vary only on the resulting
+namespace, which will use only the `package` name path:
+
+```carbon
+package Geometry.Objects.Flat;
+package Geometry.Objects library Shapes;
+package Geometry library Objects.Flat;
+```
 
 Because the `package` keyword must be specified in all files, there are a couple
 important and deliberate side-effects:
 
--   Every name in Carbon will be in a namespace corresponding to the `package`.
-    There is no "global" namespace.
 -   Every file will be in precisely one library.
+-   Every name in Carbon will be in a namespace due to the `package`. There is
+    no "global" namespace.
+    -   Names within a file may have additional namespaces specified,
+        [as detailed below](#namespaces).
 
-#### File extension
+### Libraries
 
-We use the `.6c` extension as a matter of convention. This comes from how the
-element Carbon may be written as "<sub>6</sub>C". In the language's case, we
-need a reasonably unique extension, and this is what we've chosen.
+Every Carbon library consists of one or more files.
 
-## ORIGINAL Libraries
+### ORIGINAL libraries
 
-Carbon's libraries are based very directly on the design of C++ modules.
+This approach for libraries would be more inspired by C++ modules.
 
 Every Carbon library has a primary file that defines its exported interface.
 This file must start off with the canonical form of the top-level declaration:
 
 ```
-package Abseil library Container;
+package Geometry library Shapes;
 ```
 
 The library may contain additional files as part of its implementation. These
 all must start with a special top-level declaration:
 
 ```
-package Abseil library Container impl;
+package Geometry library Shapes impl;
 ```
+
+In C++, this approach is taken to address the problems of recursive includes.
+Separating the interface and implementation allows for less evaluation of
 
 Within a library, files can import other files from that library using a special
 syntax (see below). Every file in a library which exports an interface to users
@@ -214,238 +291,218 @@ The result is that the set of files which must be examined to find the complete
 exported interface of a library is the transitive closure of imported files
 starting from the primary interface file.
 
-## ORIGINAL Namespaces
+### Namespaces
 
-Carbon namespaces work essentially the same way as C++ namespaces. They form
-named scopes for names. They can nest and be reopened and aren't restricted to
-library boundaries. A good example in practice will be things like `testing` or
-`internal` namespaces below a package. These often will have names that benefit
-from an isolated space but are spread across several libraries.
+Namespaces offer named scopes for names. Namespaces may be nested. Multiple
+libraries may contribute to the same namespace. In practice, packages may have
+namespaces such as `Testing` containing names that benefit from an isolated
+space but are present in many libraries.
 
-Namespaces are navigated using dot notation just like names in other scopes in
-Carbon:
+Syntax for the `namespace` keyword may loosely be expressed as a regular
+expression:
 
-```
-namespace Foo {
-  namespace Bar {
-    namespace Baz {
-      alias ??? MyInt = Int;
-    }
-  }
-}
-
-fn F(Foo.Bar.Baz.MyInt x);
+```regex
+namespace NAME_PATH;
 ```
 
-    **Note**: the syntax for aliases is not at all in a good state yet. We've considered a few alternatives, but they all end up being confusing in some way. We need to figure out a good and clean syntax that can be used here.
-
-There are no wildcard aliases (or complex partial wildcard aliases like
-`using namespace foo;` in C++). Alias declarations can alias namespace names, so
-there is no need for custom namespace alias support.
-
-**Possible extension**: If it proves to be a common case, we could support
-aliasing a set of names in one namespace into another and provide special syntax
-for it. However, it would force us to have syntax introducing many (top-level)
-names in a single declaration, and presents other syntactic challenges. Unclear
-this will be worth it or how best to design it. Very vague syntax sketch:
+A namespace is used by first declaring it, then using it when declaring a name.
+For example:
 
 ```
-// Normal alias of a namespace.
-alias Foo.Bar.Baz: FBB;
+namespace Foo.Bar;
+struct Foo.Bar.Baz { ... }
 
-namespace FBB {
-  alias Int: OtherInt;
-}
-
-fn G(Foo.Bar.Baz.OtherInt y);
-
-namespace Elsewhere {
-  // Quickly create aliases in this namespace for two names
-  // (`MyInt`, and `OtherInt`) in some other namespace.
-  alias ??? from Foo.Bar.Baz ??? MyInt, OtherInt;
-}
+fn Wiz(Foo.Bar.Baz x);
 ```
 
-## ORIGINAL Packages
-
-Carbon's packages are specialized top-level namespaces. All code in Carbon is
-written within a package and thus within a top-level namespace (and thus
-inherently not in the global namespace). Libraries cannot span packages. This
-restricts our library abstraction boundary to fit within the top-level name
-abstraction boundary. This is the only place where we intersect our name
-abstractions and our library abstractions.
-
-All names introduced in a Carbon file are fundamentally within that file's
-package. When they are accessed from outside of that package, they have to be
-qualified with the package name. From inside the package, however, names from
-that package can be used without qualification, as a matter of convenience.
-Conceptually, we consider all code within one package to belong together.
-
-## ORIGINAL Imports
-
-Carbon files access interfaces declared in other files by importing them. All
-imports for a file must be immediately after the package declaration and in a
-contiguous block. No other code can be interleaved with the imports. There are
-also three forms of import based on the distance between the files:
+Namespaces declared and added to within a file must always be children of the
+file-level namespace. For example, this declares `Geometry.Shapes.Triangle`:
 
 ```
-package Abseil library Time;
+package Geometry;
 
-// Importing a library from some other package.
-import Widget library Wombat;
+namespace Shapes;
 
-// Importing another library from the same package.
-import library Container;
-
-// Importing another file from the same library.
-import file "internal/Duration.cb";
-
-...
+struct Shapes.Triangle { ... }
 ```
 
-Two of these imports, the one from a file and the one from another library in
-the same package, are fundamentally importing _local_ code -- all of this code
-resides in a single package. As such, they directly import names into the
-package's namespace and those names are visible with unqualified name lookup.
+#### Using imported namespaces
 
-    **Open question:** The importing of a file using a quoted string to name it is an interesting but potentially risky approach. We suggested similar techniques for C++ modules and so have done some work to understand the implications and it at least looks reasonable to implement and use. But it may be too surprising for programmers, so this may be an area we revisit. Certainly, the C++ committee was quite unhappy with taking advantage of the fact that some of the organization and naming has already been done with filenames, requiring "module partitions" which have a custom name syntax.
+If a namespace is imported, it may also be used to declare new items, so long as
+it's a child of the file-level namespace.
 
-The more general form of import is importing external code into the package. As
-a consequence, the only name that becomes visible is the name of that package,
-and everything else is found under it using the standard namespace dotted
-traversal (`Widget.Stuff`).
-
-Each import brings in a specific library (or file), not the entire package. When
-importing an unnamed library from a package (which must be the only library in
-the package), these are indistinguishable and so the library component can be
-simply omitted:
+For example, this code declares `Geometry.Shapes.Triangle`:
 
 ```
-import SimplePackage;
+package Geometry;
+
+import("Geometry", "Shapes");
+
+struct Shapes.Triangle { ... }
 ```
 
-This imports the entire package because that consists of a single library.
-
-A single import can name multiple libraries within the package to import:
-
-```
-import Abseil libraries: Container, Time;
-```
-
-    **Open question:** We might investigate some different syntax alternatives for multi-import. Automatic formatting should be able to make the above at least somewhat cleaner for long lists:
+On the other hand, this is invalid code because the `Instruments` namespace is
+not under `Geometry`, and so `Triangle` cannot be added to it from this file:
 
 ```
-import Abseil libraries:
-    ModuleNumber1,
-    ModuleNumber2,
-    ModuleNumber3,
-    ModuleNumber4,
-    ModuleNumber5,
-    ModuleNumber6,
-    ModuleNumber7,
-    ModuleNumber8,
-    ModuleNumber9,
-    ModuleNumber10;
+package Geometry;
+
+import("Music", "Instruments");
+
+struct Instruments.Triangle { ... }
 ```
 
-    But maybe people would prefer other more structured syntaxes like `(a, b, c, ...)`. We can investigate these and see what sticks.
-
-When importing a named package, the imported name must exactly match that
-package's declared package name -- no renaming is permitted. Aliases plus a
-wrapping package can be used to incrementally migrate uses of a package to a new
-name, then to a wrapping package using the new name, and finally remove the old
-package, but this will remain a non-trivial refactoring. The reason this is
-important is that the name of the package essentially forms the identity of
-every exported interface component and in the face of templates must be stable
-for the purpose of linking together code.
-
-    **Future work:** Carbon should also support importing packages from a URL that identifies the repository where that package can be found. This can be used to help drive package management tooling and to support providing a non-name identity for a package that is used to enable handling conflicted package names.
-
-## ORIGINAL Shadowing of names
-
-Carbon completely forbids shadowing of names. Because there is no global
-namespace and no using directive, unqualified names are entirely within local
-control and so should not require shadowing for maintenance or development.
-Allowing shadowing has a long history of bugs and confusion. While it is used in
-some clear and readable places in C++, those situations are likely better
-addressed with language facilities than cleverly shadowed names.
-
-    **Open question:** This is an extremely restrictive stance. It has many advantages, but may end up being too costly. We can easily relax it if needed, potentially with special syntax to handle specific edge cases or as an interim measure to aid migration. Or if data emerges, we can simply revisit it entirely.
-
-## ORIGINAL Standard library names
-
-When discussing standard library names, we mean the core of the standard library
-that is generically useful and applicable to code and application in nearly
-every domain, such as the STL in C++. More domain-specific libraries, while we
-may choose to standardize them for Carbon, don't need any special consideration
-and should be organized into domain-relevant packages like any other libraries.
-We also don't think this core part of the standard library would meaningfully be
-represented as a single Carbon library -- Carbon's libraries are more fine
-grained.
-
-The package named "Carbon" will provide this core part of the standard "library"
-as a collection of Carbon libraries providing similar facilities to what is
-found in the C++ STL. Other than the package name, it would work just like any
-other package of libraries.
-
-However, there are some specific wrinkles with some things provided by this
-package that motivate some special facilities.
-
-The first interesting aspect is that we would like to make even fundamental and
-primitive types in Carbon use interfaces that are no more special than user
-defined types. This means `Int32` should be a "normal" type rather than a
-keyword, and be provided by the standard library.
-
-This raises the second interesting aspect: it doesn't seem reasonable for Carbon
-code to need to import some library in order to access `Int` or `Bool` types,
-despite wanting those interfaces to be defined using normal Carbon syntax and
-facilities. Further, they would be imported as the `Carbon` package requiring
-them to be qualified with a package name: `Carbon.Int`, etc. This seems
-significantly too onerous.
-
-To address these issues, all Carbon files have an implicit import of the
-`Fundamentals` library from the `Carbon` package as if the file contained the
-line:
+This is also invalid code because the `Geometry.Volumes` namespace is a sibling
+of the `Geometry.Areas` namespace used for this file, and so `Sphere` cannot be
+added to it from this file:
 
 ```
-import Carbon library Fundamentals;
+package Geometry namespace Areas;
+
+import("Geometry", "Volumes");
+
+struct Circle { ... }
+
+struct Volumes.Sphere { ... }
 ```
 
-Further, all Carbon files have an implicit alias of every exported name in this
-library into their file's scope.
-
-    **Open question:** We could add an automatic syntax for creating aliases while importing, and reduce this to a single implicit import using that facility:
+However, with a higher-level file namespace of `Geometry`, a single file could
+still add to both `Volumes` and `Areas`:
 
 ```
-import Carbon library Fundamentals with aliases: Int32, Int64, Bool, ...;
+package Geometry;
+
+import("Geometry", "Volumes");
+
+namespace Areas;
+struct Areas.Circle { ... }
+
+struct Volumes.Sphere { ... }
 ```
 
-    It isn't clear whether this is an important convenience to expose outside of the implicit case so we've simply used an implicit alias for now, but we can revisit this if needed.
+#### Aliasing
 
-This makes the `Fundamentals` library extremely special in one final way: adding
-new exported names to this library is a potentially globally breaking change and
-would require shipping some update tooling to users. Because of the lack of
-shadowing, every name in this library is nearly as disruptive as a keyword.
-Fortunately, we expect this library to be both fairly small and extremely
-unlikely to change. The kinds of names exported from it often _are_ keywords in
-other languages (including C++).
+Carbon's [alias keyword](aliases.md) will support aliasing namespaces. For
+example, this would be valid code to complement the above example:
 
-However, this does mean that a collection of standard library names (those from
-the `Fundamentals` library) will be used unqualified in essentially all cases in
-Carbon code. For consistency, we should recommend that names from standard
-libraries in the Carbon package are typically aliased and used unqualified for
-consistency. Skipping this and using the qualified form is always available to
-work around collisions. The fact that the package name isn't extra short may
-help incentivise consistent use of aliases here. Because each aliased name is
-explicitly introduced in the code, these don't cause any evolution problems for
-Carbon libraries -- newly added names won't be implicitly aliased for any
-library outside of `Fundamentals`.
+```
+alias FB = Foo.Bar;
 
-    **Open question:** If we use an embedded alias-in-the-import syntax, we could additionally require using that for any imports of standard libraries, and make the `Carbon` package an unnamed and unnamable package where every usable name must be aliased into the importer's scope. This would ensure consistency, remove the visible name `Carbon` but would make it more complicated to handle name collisions and add yet more special syntax usage.
+fn WizAlias(FB.Baz x);
+```
+
+### Imports
+
+The `import` keyword supports reusing code from other files and libraries. All
+imports for a file must have only whitespace and comments between the `package`
+declaration and them. No other code can be interleaved.
+
+One or more names may be imported with a single statement. When multiple names
+are being imported, they should be specified using a [tuple](tuples.md). For
+example:
+
+```carbon
+import("Geometry.Shapes", "Circle");
+import("Geometry.Shapes", ("Circle", "Triangle", "Square"));
+```
+
+When importing from another file or library that is in the current namespace
+scope, the namespace may be omitted from the import. For example, an import
+`Geometry.Point` may look like:
+
+```carbon
+package Geometry;
+
+import("Point");
+```
+
+#### Name conflicts of imports
+
+It's expected that multiple libraries will end up exporting identical names.
+Importing them would result in
+[shadowing](https://en.wikipedia.org/wiki/Variable_shadowing), which Carbon
+treats as a conflict. For example, this would be a rejected name conflict
+because it redefines `Triangle`:
+
+```carbon
+import("Geometry.Shapes", "Triangle");
+import("Music.Instruments", "Triangle");
+```
+
+In cases such as this, one or more of the conflicting names must be
+[aliased](aliases.md) such that the resulting names are unique. This only works
+when importing one symbol in the `import`. For example, this would be allowed:
+
+```carbon
+import("Geometry.Shapes", "Triangle");
+alias MusicTriangle = import("Music.Instruments", "Triangle");
+```
 
 ## Alternatives
 
-### File extensions
+### Aliasing namespace names
+
+It's been proposed that we could alias a namespace _name_, allowing code like:
+
+```
+$namespace_alias FBB = Foo.Bar.Baz
+
+namespace FBB {
+  struct Wiz { ... };
+}
+```
+
+This is distinct from normal aliasing of the namespace itself, which would look
+like:
+
+```
+alias FBB = Foo.Bar.Baz;
+
+fn Fez(FBB.Wiz x);
+```
+
+In the latter example, although `FBB` can be referenced in code, `namespace FBB`
+wouldn't be valid because `FBB` would be treated as the namespace name in that
+context.
+
+It's not clear that this is worthwhile; no evidence has been gathered to support
+or contradict the use-case. Until and unless there is supporting evidence for a
+real need for this, we should decline the feature due to its inherent complexity
+and potential overlap with metaprogramming features.
+
+### Allow shadowing of names
+
+Disallowing shadowing of names may turn out to be costly, even for its
+advantages of reducing bugs and confusion. While we could relax it later,
+potentially with special syntax to handle edge cases, we don't have evidence at
+present that it's necessary. As a result, we prefer the simplicity in reading of
+disallowing shadowing.
+
+### Broader imports, either all names or arbitrary code
+
+Carbon imports require specifying individual names to import. We could support
+broader imports, for example by pulling in all names from a library. In C++, the
+`#include` preprocessor directive even supports inclusion of arbitrary code.
+
+Pros:
+
+-   Reduces boilerplate code specifying individual names.
+
+Cons:
+
+-   Loses out on parser benefits of knowing which identifiers are being
+    imported.
+-   Increases the risk of adding new features to APIs, as they may immediately
+    get imported by a user and conflict with a pre-existing name, breaking code.
+-   Readability problems arise because it's not clear where a given name may be
+    coming from.
+-   Arbitrary code inclusion can result in unexpected code execution, a way to
+    create obfuscated code and a potential security risk.
+
+We particularly value the parser benefits of knowing which identifiers are being
+imported, and so we require individual names for imports.
+
+### Different file extensions
 
 The use of `.6c` as a short file extension or CLI has some drawbacks for
 typability. There are several other possible extensions / commands:
@@ -461,30 +518,105 @@ This seems fairly easy for us to change as we go along, but we should at some
 point do a formal proposal to gather other options and let the core team try to
 find the set that they feel is close enough to be a bikeshed.
 
-### Implementation vs interface files
+### Imports from URLs
 
-We could separate implementation and interface at the file level. The idea would
-be that an implementation file could not export any interface from the library.
+In the future, we may want to support importing from a URL that identifies the
+repository where that package can be found. This can be used to help drive
+package management tooling and to support providing a non-name identity for a
+package that is used to enable handling conflicted package names.
+
+Although we're not designing this right now, it could easily fit into the
+proposed syntax. For example:
+
+```carbon
+import("Foo.Bar", "Baz", .url = "https://foo.com")
+```
+
+### Prevent libraries from crossing package boundaries
+
+Carbon's packages as proposed are effectively shorthand for a combination of:
+
+```carbon
+library PACKAGE
+namespace PACKAGE { ... }
+```
+
+We could instead enforce package boundaries, preventing libraries from spanning
+packages. Pragmatically, this would mean that `package Geometry library Shapes`
+and `package Geometry.Shapes` would be different libraries, or perhaps packages
+could only be a single identifier to prevent overlap.
+
+This had been the original proposal, combined with package-granularity imports;
+in other words, `import Geometry library Shapes` would be distinct from
+`import Geometry.Shapes`. This approach didn't address name-level imports, which
+would presumably become an additional argument for the `import` keyword, such as
+`import Geometry library Shapes { Circle, Square }`.
 
 Pros:
 
--   Increases the ability for parallel compilation, as we would be able to skip
-    parsing of implementation-only files when compiling a different library that
-    depends on the former.
+-   Finer-grained imports reduce the chance of conflicts between packages.
 
 Cons:
 
--   Parallel compilation may end up expecting the full, compiled library, not
-    just an interface. Separating out the interface may not yield significant
-    benefit.
--   This functionality is redundant and adds syntax complexity. We will want
-    similar "implementation" marking at the namespace and possibly individual
-    function/struct level, and that should suffice.
--   We plan on per-file parsing to be fast, so marking a file as
-    implementation-only versus marking every possibly exported name in that file
-    as implementation-only may end up having negligible performance benefit.
+-   Adds an extra layer of boundaries that isn't clearly necessary.
+-   Increased complexity for users who must explicitly address libraries in more
+    cases.
 
-This isn't clearly a large enough benefit to add the complexity.
+By avoiding creation of a package boundary separate from library and namespace
+boundaries, we hope to simplify use of Carbon. It should still be possible for
+name lookup to determine which dependency a name comes from without issue
+because two distinct dependencies using an identical library name can still be
+treated as a conflict.
+
+### Scoped namespaces
+
+Instead of including additional namespace information per-name, we could have
+scoped namespaces, similar to C++. For example:
+
+```carbon
+namespace Foo {
+  namespace Bar.Baz {
+    struct Wiz { ... }
+  }
+}
+
+fn Fez(Foo.Bar.Baz.Wiz x);
+```
+
+Pros:
+
+-   Makes it easy to write many things in the same namespace.
+
+Cons:
+
+-   Can be hard to find the end of a namespace. For examples addressing this,
+    end-of-namespace comments are called for by both the
+    [Google](https://google.github.io/styleguide/cppguide.html#Namespaces) and
+    [Boost](https://github.com/boostorg/geometry/wiki/Guidelines-for-Developers)
+    style guides.
+    -   Carbon may disallow the same-line-as-code comment style used for this.
+        Even if not, if we acknowledge it's a problem, we should address it
+        structurally for
+        [readability](/docs/projects/goals.md#code-that-is-easy-to-read-understand-and-write).
+    -   This is less of a problem for other scopes because they can often be
+        broken apart.
+
+There are other ways to address the con, such as adding syntax to indicate the
+end of a namespace:
+
+```carbon
+namespace Foo {
+  namespace Bar.Baz {
+    struct Wiz { ... }
+  } namespace Bar.Baz
+} namespace Foo
+
+fn Fez(Foo.Bar.Baz.Wiz x);
+```
+
+While we could consider such alternative approaches, we believe the proposed
+contextless namespace approach is better, as it reduces information that
+developers will need to remember when reading/writing code.
 
 ### Strict association between the filesystem path and library/namespace
 
@@ -513,27 +645,3 @@ Cons:
 We are choosing to avoid the strict association with filesystem paths in order
 to ease refactoring. With this approach, more refactorings will not need changes
 to API users.
-
-### Broader imports, either all names or arbitrary code
-
-Carbon imports require specifying individual names to import. We could support
-broader imports, for example by pulling in all names from a library. In C++, the
-`#include` preprocessor directive even supports inclusion of arbitrary code.
-
-Pros:
-
--   Reduces boilerplate code specifying individual names.
-
-Cons:
-
--   Loses out on parser benefits of knowing which identifiers are being
-    imported.
--   Increases the risk of adding new features to APIs, as they may immediately
-    get imported by a user and conflict with a pre-existing name, breaking code.
--   Readability problems arise because it's not clear where a given name may be
-    coming from.
--   Arbitrary code inclusion can result in unexpected code execution, a way to
-    create obfuscated code and a potential security risk.
-
-We particularly value the parser benefits of knowing which identifiers are being
-imported, and so we require individual names for imports.
