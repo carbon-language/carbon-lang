@@ -154,7 +154,7 @@ Pros:
 
 Cons:
 
--   Generics can fail to use template specializations intended for the actual
+-   Generics will not use template specializations intended for the actual
     type used with the generic. This may cause surprising semantic issues where
     the primary template is not valid for the specific type (for which a
     specialization is defined), memory layout issues where the specialization of
