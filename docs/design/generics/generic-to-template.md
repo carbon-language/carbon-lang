@@ -59,7 +59,7 @@ fn GenericFunction[SomeInterface:$ GenericParameter]
 }
 ```
 
-Here the `pointer` has a type that has some generic component, it could be that
+Here the `pointer` has a type that has some generic component. It could also happen that
 the type is a generic value, is parameterized by a value only known generically,
 or as in the above example it could be a pointer-to-generic type. When `pointer`
 is passed to `TemplateFunction`, we need to assign some type to
