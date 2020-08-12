@@ -26,6 +26,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
         -   [Aliasing](#aliasing)
     -   [Imports](#imports-1)
         -   [Name conflicts of imports](#name-conflicts-of-imports)
+    -   [Moving APIs between between files](#moving-apis-between-between-files)
 -   [Open questions](#open-questions)
     -   [Managing interface versus implementation in libraries](#managing-interface-versus-implementation-in-libraries)
     -   [Require files in a library be imported by filename](#require-files-in-a-library-be-imported-by-filename)
@@ -438,6 +439,46 @@ when importing one symbol in the `import`. For example, this would be allowed:
 import("Geometry.Shapes", "Triangle");
 alias MusicTriangle = import("Music.Instruments", "Triangle");
 ```
+
+### Moving APIs between between files
+
+When moving APIs between two files, the design of `package`, `namespace`, and
+`import` is intended to minimize the amount of additional work needed. The
+expected work depends on which library and namespace scopes the files are in:
+
+-   If both files are part of the same library and namespace scopes:
+
+    -   If the source was an interface, the destination file must not be an
+        interface because there is only one interface file per library. Some
+        declaration must remain in the interface file in order to keep the APIs
+        exposed.
+
+    -   If the source was not an interface, then no further changes are needed.
+
+-   If the library scope differs:
+
+    -   If the destination is an interface, then no further code changes need to
+        be made. However, build dependencies may need to be updated to ensure
+        library dependencies are correct for callers.
+
+    -   If the source was an interface, the destination must have an interface
+        provided to support callers unless the destination library is the _only_
+        caller.
+
+    -   If the source was not an interface, and the source library still has
+        calls to the API, the destination must have an interface added. If the
+        source library has no remaining calls to the API, then no further
+        changes are needed.
+
+-   If the namespace scope differs:
+
+    -   The `namespace` keyword might be useable to expose the moved APIs at the
+        same name path.
+
+    -   Otherwise, callers need to be updated to the new name path.
+
+-   If both the library and namespace scopes differ, then both above sections
+    apply for fixes.
 
 ## Open questions
 
