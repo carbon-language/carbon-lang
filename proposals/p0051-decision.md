@@ -10,17 +10,17 @@ Proposal accepted on 2020-07-14
 
 Affirming:
 
-- [austern](https://github.com/austern)
-- [chandlerc](https://github.com/chandlerc)
-- [geoffromer](https://github.com/geoffromer)
-- [gribozavr](https://github.com/gribozavr)
-- [josh11b](https://github.com/josh11b)
-- [tituswinters](https://github.com/tituswinters)
-- [zygoloid](https://github.com/zygoloid)
+-   [austern](https://github.com/austern)
+-   [chandlerc](https://github.com/chandlerc)
+-   [geoffromer](https://github.com/geoffromer)
+-   [gribozavr](https://github.com/gribozavr)
+-   [josh11b](https://github.com/josh11b)
+-   [tituswinters](https://github.com/tituswinters)
+-   [zygoloid](https://github.com/zygoloid)
 
 Abstaining:
 
-- [noncombatant](https://github.com/noncombatant)
+-   [noncombatant](https://github.com/noncombatant)
 
 ## Open questions
 
@@ -44,7 +44,7 @@ consequence, this particular set of goals seems like an important direction in
 which to experiment with a candidate future for C++ itself. By doing so, it will
 address a specific group of C++ users.
 
-While there may be some uncertainty about resolving conflicts between goals
-, particularly migratability and C++ interoperability, the core team feels that they
-are generally in alignment in this regard. The priority among goals can be
+While there may be some uncertainty about resolving conflicts between goals,
+particularly migratability and C++ interoperability, the core team feels that
+they are generally in alignment in this regard. The priority among goals can be
 revised as needed based on the experience of using it in practice.
