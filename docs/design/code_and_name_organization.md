@@ -32,7 +32,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Function-like `package` and `import` syntax](#function-like-package-and-import-syntax)
     -   [Quoting names in imports](#quoting-names-in-imports)
     -   [Reducing arguments for single name imports](#reducing-arguments-for-single-name-imports)
-    -   [Rename packages](#rename-packages)
+    -   [Rename package concept](#rename-package-concept)
 -   [Alternatives](#alternatives)
     -   [Allow shadowing of names](#allow-shadowing-of-names)
     -   [Broader imports, either all names or arbitrary code](#broader-imports-either-all-names-or-arbitrary-code)
@@ -659,7 +659,7 @@ Currently, I'm wary of `this` syntax.
 
 Thoughts on pros/cons of approaches would be helpful.
 
-### Rename packages
+### Rename package concept
 
 > **NOTE:** This open question will be resolved before asking for a comment
 > deadline. Either this will be adopted or not, possibly partially, and
