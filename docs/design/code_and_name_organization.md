@@ -27,7 +27,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Imports](#imports-1)
         -   [Name conflicts of imports](#name-conflicts-of-imports)
     -   [Moving APIs between between files](#moving-apis-between-between-files)
--   [Open questions](#open-questions)
+-   [Open questions to resolve](#open-questions-to-resolve)
     -   [Managing interface versus implementation in libraries](#managing-interface-versus-implementation-in-libraries)
     -   [Require files in a library be imported by filename](#require-files-in-a-library-be-imported-by-filename)
     -   [Function-like `package` and `import` syntax](#function-like-package-and-import-syntax)
@@ -480,13 +480,19 @@ expected work depends on which library and namespace scopes the files are in:
 -   If both the library and namespace scopes differ, then both above sections
     apply for fixes.
 
-## Open questions
+## Open questions to resolve
+
+On all of these open questions, thoughts on pros/cons would be helpful to come
+to a tentative resolution. Essentially, I have thoughts on each, but I'd like
+more feedback before coming to a conclusion.
+
+> **NOTE:** Each of these open questions will be resolved before asking for a
+> comment deadline; they will not be presented as "open questions" to the core
+> team, or for later resolution, unless replies head in that direction. Either
+> they will be adopted or not, possibly partially, and "Alternatives" will be
+> updated accordingly.
 
 ### Managing interface versus implementation in libraries
-
-> **NOTE:** This open question will be resolved before asking for a comment
-> deadline. Either this will be adopted or not, possibly partially, and
-> "Alternatives" will be updated accordingly.
 
 The proposal currently suggests having an `impl` flag in the `package` marker to
 separate implementation from interface. Is this the right way to manage the
@@ -554,13 +560,7 @@ A few alternatives:
         -   Creates language complexity with two different approaches for
             similar issues.
 
-Thoughts on pros/cons of approaches would be helpful.
-
 ### Require files in a library be imported by filename
-
-> **NOTE:** This open question will be resolved before asking for a comment
-> deadline. Either this will be adopted or not, possibly partially, and
-> "Alternatives" will be updated accordingly.
 
 We could add a syntax for importing symbols from other files in the same
 library, such as:
@@ -599,10 +599,6 @@ although it may actually be distinct.
 
 ### Function-like `package` and `import` syntax
 
-> **NOTE:** This open question will be resolved before asking for a comment
-> deadline. Either this will be adopted or not, possibly partially, and
-> "Alternatives" will be updated accordingly.
-
 The proposal currently suggests function-like syntax for `import()`, and more
 specialized syntax for `package`.
 
@@ -628,13 +624,7 @@ We could:
     import Foo.Bar names Baz url "https://foo.com";
     ```
 
-Thoughts on pros/cons of approaches would be helpful.
-
 ### Quoting names in imports
-
-> **NOTE:** This open question will be resolved before asking for a comment
-> deadline. Either this will be adopted or not, possibly partially, and
-> "Alternatives" will be updated accordingly.
 
 Note the use of quotes may be optional here. Given constraints on inputs, maybe
 we can already switch `import("Geometry.Shapes", "Triangle");` to
@@ -657,13 +647,7 @@ Cons:
 -   Other languages, such as Java or Python, prefer the specialized syntax for
     equivalent keywords.
 
-Thoughts on pros/cons of approaches would be helpful.
-
 ### Reducing arguments for single name imports
-
-> **NOTE:** This open question will be resolved before asking for a comment
-> deadline. Either this will be adopted or not, possibly partially, and
-> "Alternatives" will be updated accordingly.
 
 The three basic forms of `import` are:
 
@@ -703,13 +687,7 @@ Cons:
 
 Currently, I'm wary of `this` syntax.
 
-Thoughts on pros/cons of approaches would be helpful.
-
 ### Rename package concept
-
-> **NOTE:** This open question will be resolved before asking for a comment
-> deadline. Either this will be adopted or not, possibly partially, and
-> "Alternatives" will be updated accordingly.
 
 In other languages, a "package" is equivalent to what we call the name path
 here, which includes the `namespace`. This includes Java and Go. We may want to
@@ -726,8 +704,6 @@ Cons:
 
 -   The meaning of `package` also overlaps a fair amount, and we would lose that
     context.
-
-Thoughts on pros/cons of approaches would be helpful.
 
 ## Alternatives
 
