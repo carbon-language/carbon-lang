@@ -11,13 +11,14 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 <!-- toc -->
 
 -   [Overview](#overview)
--   [Safety](#safety)
--   [C++ interoperability and migration](#c-interoperability-and-migration)
+    -   [Union members](#union-members)
+    -   [Changing the active member](#changing-the-active-member)
+    -   [Field groups](#field-groups)
+    -   [Layout](#layout)
+    -   [Safety](#safety)
+    -   [C++ interoperability and migration](#c-interoperability-and-migration)
 
 <!-- tocstop -->
-
-FIXME: add a proposal doc with rationales for these decisions (including general
-discussion of the fact that this is a low-level facility)
 
 ## Overview
 
@@ -30,8 +31,9 @@ struct Number {
     var Double: double_value;
   }
 
-  // 0 if int_value is active, 1 if double_value is active.
-  var Int1: discriminator;
+  // 0 if no active member, 1 if int_value is active, 2 if double_value is
+  // active.
+  var Int2: discriminator;
 }
 ```
 
@@ -41,6 +43,8 @@ active, even if it has the same type as the active member. There is no intrinsic
 way to determine which member of the union is active; user code is responsible
 for tracking that information, as with the `discriminator` field in the above
 example.
+
+### Union members
 
 **TODO:** Carbon should have a separate facility for more user-friendly
 discriminated unions. It will also need a separate facility for "type punning",
@@ -52,6 +56,41 @@ have types; they are a means of controlling the layout of fields in a struct.
 Consequently, it is not possible to form a pointer to a union. You can form a
 pointer to a member field of a union, even if it is not active, but you cannot
 cast it to a pointer to the type of a different member.
+
+Union fields are referenced and initialized just like ordinary members of the
+enclosing struct. However, union fields can be omitted from the initializer,
+unlike ordinary fields. Obviously the initializer cannot initialize more than
+one member of a union, but it can specify either zero or one. If no member of
+the union is specified, no member of the union is initially active:
+
+```
+// n1.int_value and n1.double_value are both inactive
+Number: n1 = ( .discriminator = 0 );
+
+// n2.int_value is active and holds 0
+Number: n2 = ( .int_value = 0, .discriminator = 1 );
+
+// n3.int_value is active, but not initialized
+Number: n3 = ( .int_value = uninit, .discriminator = 1 );
+
+// Error: cannot initialize multiple members of a single union
+Number: n4 = ( .int_value = 0, .double_value = uninit, .discriminator = 1 );
+```
+
+Unions follow similar rules in pattern matching: a pattern can mention either
+zero or one member of a given union. If no member is mentioned, the union is not
+accessed during pattern matching, and has no effect on whether the pattern
+matches. If the pattern mentions a union member, that member is accessed (which
+is an error if that member is not active), and matched against the corresponding
+subpattern, unless the pattern is refuted before reaching that point. Note that
+this applies even if the subpattern is a wildcard that is guaranteed to match.
+
+**TODO:** Ensure the above remains consistent with the overall design for struct
+initialization and pattern matching, and ensure pattern matching gives enough
+control over evaluation order to make it possible to safely mention union
+members in patterns.
+
+### Changing the active member
 
 The active member can only be changed by destroying the current active member
 (if any), and then constructing the new active member, using the `destroy` and
@@ -71,10 +110,12 @@ fn SetDoubleValue(Ptr(Number): n, Double: value) {
 
 `create` and `destroy` correspond to placement-`new` and pseudo-destructor calls
 in C++, but they can only be applied to union members; the lifetimes of ordinary
-struct fields and variables are always tied to their scope. `destroy` can be
-thought of as a unary operator, but a `create` statement has the syntax and
-semantics of a variable declaration, with `create` taking the place of `var`,
-and the field expression taking the place of the variable name.
+struct fields and variables are always tied to their scope. It is an error to
+apply `create` to a union that already has an active member, or apply `destroy`
+to a union that does not have an active member. `destroy` can be thought of as a
+unary operator, but a `create` statement has the syntax and semantics of a
+variable declaration, with `create` taking the place of `var`, and the field
+expression taking the place of the variable name.
 
 **FIXME**: Does the `create` syntax make it sufficiently clear that the `=`
 represents initialization, not assignment? Can we do better?
@@ -83,6 +124,8 @@ represents initialization, not assignment? Can we do better?
 `operator create` and `operator destroy`, the spelling of constructor and
 destructor declarations in the currently-pending structs proposal. They should
 be updated as necessary to stay consistent.
+
+### Field groups
 
 A union member can be either a field or a _group_ of fields:
 
@@ -129,6 +172,8 @@ example, if `large` and `small` were structs, the bitfields would not save any
 space, and `is_small` would have to be followed by 63 bytes of padding in order
 to ensure proper alignment of `large`.
 
+### Layout
+
 The layout of a union is determined as follows: we express the layout of a field
 in terms of its starting and ending offsets, which are measured in bits in order
 to handle bitfields. The starting and ending offsets of each field in a field
@@ -157,23 +202,30 @@ logically valid, but are forbidden because they are useless or nearly useless.
 
 Unions and field groups cannot contain constructors, destructors, or methods.
 
-## Safety
+### Safety
 
-The rules described above are designed to permit unambiguous and logically
-straightforward dynamic checking: it is always an error to access or destroy a
-union member that is not active, and the operations that can change the active
-member are always explicit and unambiguous. It should be quite straightforward
-for a sanitizer to check direct accesses to union members, by tracking the
-active member in shadow memory, and verifying that the member being accessed is
-active.
+The safety rules for Carbon unions are easily summarized: it is always an error
+to access or destroy a union member that is not active, and the operations that
+can change the active member are always explicit and unambiguous. It should be
+quite straightforward for a sanitizer to check direct accesses to union members,
+by tracking the active member in shadow memory, and verifying that the member
+being accessed is active.
 
-**FIXME:** How do we sanitize accesses via pointers? Naively, it seems like it
-would require a pointers to a union member to carry additional metadata to
-indicate which member it points to. Pointers to subobjects create further
-challenges: that metadata would need to be propagated into subobject pointers,
-and nested unions would require multiple layers of metadata.
+However, union members can also be accessed via pointers (including pointers to
+nested subobjects), and such pointers are indistinguishable from pointers to any
+other object. Reliably sanitizing accesses via such pointers would require
+dynamically tracking which union member (if any) each pointer points to,
+propagating that information to subobject accesses, and instrumenting every
+pointer access in the program to determine whether it is accessing a union, and
+if so whether the currently active member matches the one the pointer value was
+created with. This would definitely be too costly for a hardened production
+build mode, and might even be too costly (relative to its benefit) to be useful
+as a sanitizer.
 
-## C++ interoperability and migration
+**TODO:** Figure out whether and how to sanitize invalid union accesses,
+probably in the context of an overall design for temporal memory safety.
+
+### C++ interoperability and migration
 
 Carbon unions are more restrictive than C++ unions in several respects:
 
