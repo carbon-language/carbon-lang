@@ -28,8 +28,10 @@ request:
 -   [0044 - Proposal tracking](p0044.md)
     -   [Decision](p0044-decision.md)
 -   [0051 - Goals](p0051.md)
+    -   [Decision](p0051-decision.md)
 -   [0074 - Change comment/decision timelines in proposal process](p0074.md)
     -   [Decision](p0074-decision.md)
+-   [0083 - In-progress design overview](p0083.md)
 -   [0130 - Language-level safety strategy](p0130.md)
 
 <!-- endproposals -->
