@@ -8,26 +8,27 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 Carbon repositories follow a few basic principles:
 
-- Development directly on the `trunk` branch and
-  [revert to green](#green-tests).
-- Always use pull requests, rather than pushing directly.
-- Changes should be small, incremental, and review-optimized.
-- Preserve linear history by
-  [rebasing](https://help.github.com/en/github/collaborating-with-issues-and-pull-requests/about-pull-request-merges#rebase-and-merge-your-pull-request-commits)
-  or
-  [squashing](https://help.github.com/en/github/collaborating-with-issues-and-pull-requests/about-pull-request-merges#squash-and-merge-your-pull-request-commits)
-  pull requests rather than using unsquashed merge commits.
+-   Development directly on the `trunk` branch and
+    [revert to green](#green-tests).
+-   Always use pull requests, rather than pushing directly.
+-   Changes should be small, incremental, and review-optimized.
+-   Preserve linear history by
+    [rebasing](https://help.github.com/en/github/collaborating-with-issues-and-pull-requests/about-pull-request-merges#rebase-and-merge-your-pull-request-commits)
+    or
+    [squashing](https://help.github.com/en/github/collaborating-with-issues-and-pull-requests/about-pull-request-merges#squash-and-merge-your-pull-request-commits)
+    pull requests rather than using unsquashed merge commits.
 
 These principles try to optimize for several different uses or activities with
 version control:
 
-- Continuous integration and bisection to identify failures and revert to green.
-- Code review both at the time of commit and follow-up review after commit.
-- Understanding how things evolve over time, which can manifest in different
-  ways:
-  - When were things introduced?
-  - How does the main branch and project evolve over time?
-  - How was a bug or surprising thing introduced?
+-   Continuous integration and bisection to identify failures and revert to
+    green.
+-   Code review both at the time of commit and follow-up review after commit.
+-   Understanding how things evolve over time, which can manifest in different
+    ways:
+    -   When were things introduced?
+    -   How does the main branch and project evolve over time?
+    -   How was a bug or surprising thing introduced?
 
 Note that this isn't a complete guide to doing code reviews, and just focuses on
 the mechanical workflow and branch management. TODO: Add an explicit link to
