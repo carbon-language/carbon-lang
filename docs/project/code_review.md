@@ -10,25 +10,25 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 <!-- toc -->
 
-- [High level goals of code review](#high-level-goals-of-code-review)
-- [What requires review?](#what-requires-review)
-- [Who should review?](#who-should-review)
-- [GitHub pull request mechanics](#github-pull-request-mechanics)
-- [Code author guide](#code-author-guide)
-  - [Write good change descriptions](#write-good-change-descriptions)
-    - [First line](#first-line)
-    - [Body](#body)
-  - [Make small changes](#make-small-changes)
-  - [Responding to review comments](#responding-to-review-comments)
-    - [Responding to questions or confusion](#responding-to-questions-or-confusion)
-    - [Understand the feedback in the comments](#understand-the-feedback-in-the-comments)
-- [Code reviewer guide](#code-reviewer-guide)
-  - [How quickly should you respond to a review request?](#how-quickly-should-you-respond-to-a-review-request)
-  - [What should be covered by a review?](#what-should-be-covered-by-a-review)
-  - [Writing review comments](#writing-review-comments)
-  - [Approving the change](#approving-the-change)
-- [Resolving an impasse or conflict](#resolving-an-impasse-or-conflict)
-- [Escalation](#escalation)
+-   [High level goals of code review](#high-level-goals-of-code-review)
+-   [What requires review?](#what-requires-review)
+-   [Who should review?](#who-should-review)
+-   [GitHub pull request mechanics](#github-pull-request-mechanics)
+-   [Code author guide](#code-author-guide)
+    -   [Write good change descriptions](#write-good-change-descriptions)
+        -   [First line](#first-line)
+        -   [Body](#body)
+    -   [Make small changes](#make-small-changes)
+    -   [Responding to review comments](#responding-to-review-comments)
+        -   [Responding to questions or confusion](#responding-to-questions-or-confusion)
+        -   [Understand the feedback in the comments](#understand-the-feedback-in-the-comments)
+-   [Code reviewer guide](#code-reviewer-guide)
+    -   [How quickly should you respond to a review request?](#how-quickly-should-you-respond-to-a-review-request)
+    -   [What should be covered by a review?](#what-should-be-covered-by-a-review)
+    -   [Writing review comments](#writing-review-comments)
+    -   [Approving the change](#approving-the-change)
+-   [Resolving an impasse or conflict](#resolving-an-impasse-or-conflict)
+-   [Escalation](#escalation)
 
 <!-- tocstop -->
 
@@ -100,46 +100,50 @@ possibly with a code review separate from the proposal's review.
 Carbon uses GitHub pull requests for code review, and we recommend some
 mechanical best practices to most effectively navigate them.
 
-- Be aware that the main thread of pull request doesn't support threaded
-  discussions or "resolving" a comment.
-  - If either of those would be useful, you'll probably want to comment on a
-    file.
-  - You can quote comments in the main conversation thread in a reply by
-    clicking the three-dot menu on the original comment and selecting "Quote
-    reply".
-- If you will want to comment on files, don't comment in the pull request
-  conversation.
-  - Always go to the `Files Changed` tab.
-  - Make any in-file comments needed, but add them to a pending review rather
-    than sending them directly.
-  - Finish the review and add any top-level review comments there.
-- If you are a code owner who will be providing approval for the change, then
-  make sure to mark a review as requesting changes when you want the author to
-  begin addressing your comment. Only use the "comment" review state if you are
-  still in the process of reviewing and don't expect the author to begin working
-  on further changes.
-  - If you are not a code owner asked to approve, use the difference between a
-    comment and requesting a change to help the author know whether to circle
-    back with you before landing the pull request if the relevant owner(s)
-    approve it.
-- Don't reply to in-file comment threads in the conversation view, or with
-  direct single reply comments.
-  - Add all replies to in-file comment threads using the `Files Changed` tab and
-    by adding each reply to a new review, and posting them as a batch when done.
-  - You can get to the appropriate `Files Changed` tab by clicking on the change
-    listed in the conversation view with the incoming set of in-file comments.
-  - This flow ensures an explicit update in the overall pull request that can
-    help both the author and other reviewers note that new replies have arrived.
-- Don't reply to an in-file comment and then mark it as resolved. No one will
-  see your reply as the thread will be hidden immediately when marked as
-  resolved.
-  - Generally, the person who started the comment thread should mark it as
-    resolved when their comments are sufficiently addressed. If another reviewer
-    is also on the thread and should also agree, just state that you're happy
-    and the last reviewer can mark it resolved.
-  - Trivially resolved threads can just be marked as "resolved" without further
-    update. Examples: a suggested change that has been successfully applied, or
-    a thread where the relevant reviewers have clearly indicated they're happy.
+-   Be aware that the main thread of pull request doesn't support threaded
+    discussions or "resolving" a comment.
+    -   If either of those would be useful, you'll probably want to comment on a
+        file.
+    -   You can quote comments in the main conversation thread in a reply by
+        clicking the three-dot menu on the original comment and selecting "Quote
+        reply".
+-   If you will want to comment on files, don't comment in the pull request
+    conversation.
+    -   Always go to the `Files Changed` tab.
+    -   Make any in-file comments needed, but add them to a pending review
+        rather than sending them directly.
+    -   Finish the review and add any top-level review comments there.
+-   If you are a code owner who will be providing approval for the change, then
+    make sure to mark a review as requesting changes when you want the author to
+    begin addressing your comment. Only use the "comment" review state if you
+    are still in the process of reviewing and don't expect the author to begin
+    working on further changes.
+    -   If you are not a code owner asked to approve, use the difference between
+        a comment and requesting a change to help the author know whether to
+        circle back with you before landing the pull request if the relevant
+        owner(s) approve it.
+-   Don't reply to in-file comment threads in the conversation view, or with
+    direct single reply comments.
+    -   Add all replies to in-file comment threads using the `Files Changed` tab
+        and by adding each reply to a new review, and posting them as a batch
+        when done.
+    -   You can get to the appropriate `Files Changed` tab by clicking on the
+        change listed in the conversation view with the incoming set of in-file
+        comments.
+    -   This flow ensures an explicit update in the overall pull request that
+        can help both the author and other reviewers note that new replies have
+        arrived.
+-   Don't reply to an in-file comment and then mark it as resolved. No one will
+    see your reply as the thread will be hidden immediately when marked as
+    resolved.
+    -   Generally, the person who started the comment thread should mark it as
+        resolved when their comments are sufficiently addressed. If another
+        reviewer is also on the thread and should also agree, just state that
+        you're happy and the last reviewer can mark it resolved.
+    -   Trivially resolved threads can just be marked as "resolved" without
+        further update. Examples: a suggested change that has been successfully
+        applied, or a thread where the relevant reviewers have clearly indicated
+        they're happy.
 
 ## Code author guide
 
@@ -168,11 +172,11 @@ The description body may need to explain several important aspects of the change
 to provide context for the reviewer when it isn't obvious from the change
 itself:
 
-- The problem being solved by the change.
-- Why the approach taken is the best one.
-- Any issues, concerns, or shortcomings of the approach.
-- Any alternatives considered or attempted.
-- Relevant supporting data such as examples or benchmarks.
+-   The problem being solved by the change.
+-   Why the approach taken is the best one.
+-   Any issues, concerns, or shortcomings of the approach.
+-   Any alternatives considered or attempted.
+-   Relevant supporting data such as examples or benchmarks.
 
 Try to anticipate what information the reviewer of your change will need to have
 in order to be effective. Also consider what information someone else will need
@@ -183,10 +187,10 @@ your change without any context.
 
 Small changes have many benefits:
 
-- Faster review.
-- More thorough review.
-- Easier to merge.
-- Easier to revert if needed.
+-   Faster review.
+-   More thorough review.
+-   Easier to merge.
+-   Easier to revert if needed.
 
 The ideal size of a change is as small as possible while it remains
 self-contained. It should address only _one thing_. Often, this results in a
@@ -326,48 +330,49 @@ orthogonally to any evolutionary discussion and evaluation.
 
 Things to consider and evaluate when reviewing changes:
 
-- Is the code well designed?
-  - Is the resulting functionality, including its interface, good for the users
-    of the code?
-  - Does the resulting design facilitate long-term maintenance?
-  - Can the code be simplified? Is there unnecessary complexity?
-  - Are things being implemented that aren't yet needed and only _might_ be
-    needed in the future?
-- Is the code free of bugs and well tested?
-  - Is memory safely managed?
-  - Is any parallel or concurrent programming done safely?
-  - Do unit tests cover relevant behaviors and edge cases?
-  - Do any integration tests need to be extended or added?
-  - Do any fuzz tests need to be extended or added?
-  - Are any tests well designed to be both thorough but also maintainable over
-    time?
-- Is the code easy to read?
-  - Are the names used in the code clear?
-  - Are all important or non-obvious aspects of the code well commented? Do the
-    comments focus on _why_ instead of _what_?
-  - Is there appropriate high level documentation for the change?
-  - Does the change adhere to all relevant style guides?
-  - Is the change consistent with other parts of the project?
+-   Is the code well designed?
+    -   Is the resulting functionality, including its interface, good for the
+        users of the code?
+    -   Does the resulting design facilitate long-term maintenance?
+    -   Can the code be simplified? Is there unnecessary complexity?
+    -   Are things being implemented that aren't yet needed and only _might_ be
+        needed in the future?
+-   Is the code free of bugs and well tested?
+    -   Is memory safely managed?
+    -   Is any parallel or concurrent programming done safely?
+    -   Do unit tests cover relevant behaviors and edge cases?
+    -   Do any integration tests need to be extended or added?
+    -   Do any fuzz tests need to be extended or added?
+    -   Are any tests well designed to be both thorough but also maintainable
+        over time?
+-   Is the code easy to read?
+    -   Are the names used in the code clear?
+    -   Are all important or non-obvious aspects of the code well commented? Do
+        the comments focus on _why_ instead of _what_?
+    -   Is there appropriate high level documentation for the change?
+    -   Does the change adhere to all relevant style guides?
+    -   Is the change consistent with other parts of the project?
 
 ### Writing review comments
 
 These are general guidelines for writing effective code review comments:
 
-- **Be kind.** Detailed review, especially in an open source project, can be
-  stressful and difficult for the author. As a reviewer, part of the job is to
-  ensure the review experience ends up positive and constructive for the author.
-- **Stay constructive.** Focus your comments on suggesting specific ways to
-  improve the change. If you need to explain why an improvement is necessary,
-  focus on objective ways the improvement helps and avoid both subjective
-  assessments and anchoring on problems with the current state.
-- **Explain why.** It is important for the author to understand not merely the
-  mechanical suggested change but what motivates it and why it matters. This may
-  help clear up misunderstandings, help the suggestion be understood and applied
-  more effectively, and allow internalizing improvements for future
-  contributions.
-- **Provide a path forward.** The author needs to understand what they will need
-  to do to respond to your comments. For example, always provide alternatives
-  when commenting that the current approach won't work.
+-   **Be kind.** Detailed review, especially in an open source project, can be
+    stressful and difficult for the author. As a reviewer, part of the job is to
+    ensure the review experience ends up positive and constructive for the
+    author.
+-   **Stay constructive.** Focus your comments on suggesting specific ways to
+    improve the change. If you need to explain why an improvement is necessary,
+    focus on objective ways the improvement helps and avoid both subjective
+    assessments and anchoring on problems with the current state.
+-   **Explain why.** It is important for the author to understand not merely the
+    mechanical suggested change but what motivates it and why it matters. This
+    may help clear up misunderstandings, help the suggestion be understood and
+    applied more effectively, and allow internalizing improvements for future
+    contributions.
+-   **Provide a path forward.** The author needs to understand what they will
+    need to do to respond to your comments. For example, always provide
+    alternatives when commenting that the current approach won't work.
 
 Keep in mind that the goal is to improve the overall health of the code,
 repository, and/or project over time. Sometimes, there will be pushback on
