@@ -157,12 +157,12 @@ have the same types, names, and order, and their names are part of the names of
 their fields:
 
 ```
-var SsoString: str = {.is_small = True,
-                      .small = {.size = 0, .buffer = uninitialized}
-                     };
+var SsoString: str = (.is_small = True,
+                      .small = (.size = 0, .buffer = uninitialized)
+                     );
 Assert(str.small.size == 0);
 destroy str.small;
-create: str.large = {.size = 0, .capacity = 100, .buffer = MakeBuffer(100)};
+create: str.large = (.size = 0, .capacity = 100, .buffer = MakeBuffer(100));
 Assert(str.large.capacity == 100);
 ```
 
