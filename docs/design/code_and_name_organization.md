@@ -30,6 +30,8 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Managing interface versus implementation in libraries](#managing-interface-versus-implementation-in-libraries)
     -   [Require files in a library be imported by filename](#require-files-in-a-library-be-imported-by-filename)
     -   [Function-like `package` and `import` syntax](#function-like-package-and-import-syntax)
+    -   [Reducing arguments for single name imports](#reducing-arguments-for-single-name-imports)
+    -   [Rename packages](#rename-packages)
 -   [Alternatives](#alternatives)
     -   [Allow shadowing of names](#allow-shadowing-of-names)
     -   [Broader imports, either all names or arbitrary code](#broader-imports-either-all-names-or-arbitrary-code)
@@ -75,24 +77,19 @@ indicating `Shapes` is an identifier in the `Geometry` named scope.
 
 ### Named scopes
 
-Carbon has two categories of named scopes used by code and name organization:
+Carbon code is organized into two kinds of named scopes:
 
--   **Library** scopes, used at compile-time to determine which library
+-   **Library** scopes, which are a collection of one or files with a public
+    interface. They are used at compile-time to determine which library
     dependencies to include. These scopes enable separate compilation of
     dependencies.
 
 -   **Namespace** scopes, used by [name lookup](name_lookup.md) to choose which
-    entity to use for a given piece of code.
+    name to use for a given piece of code.
 
-Every **file** must specify both library and namespace scopes that will be used
-for all APIs that it contains. The names of these scopes may differ. For
-example, `Geometry.TwoDimensional` may be the library scope, while
-`Geometry.Shapes` may be the namespace scope.
-
-The `package` keyword is required for every file. It contributes a common name
-path to both the library and namespace scope. Additional scoping is optional,
-although a file may only contribute to a single library, even if its names are
-in multiple namespaces.
+**Files** must start with a `package` declaration that sets the library and
+namespace scopes for all names declared by the file. Files belong to one
+library, but may add to child namespaces.
 
 For example, to set use `Geometry` as both the library scope and namespace
 scope, a file might contain:
@@ -112,8 +109,9 @@ package Geometry library TwoDimensional namespace Shapes;
 struct Circle { ... }
 ```
 
-The `namespace` keyword allows specifying additional namespace scopes within a
-file. For example, this is an alternate way to declare `Geometry.Shapes.Circle`:
+The `namespace` keyword allows specifying additional, child namespace scopes
+within a file. For example, this is an alternate way to declare
+`Geometry.Shapes.Circle`:
 
 ```carbon
 package Geometry;
@@ -395,7 +393,9 @@ fn WizAlias(FB.Baz x);
 
 The `import` keyword supports reusing code from other files and libraries. All
 imports for a file must have only whitespace and comments between the `package`
-declaration and them. No other code can be interleaved.
+declaration and them. If [metaprogramming](metaprogramming.md) code generates
+`import`s, it must only generate imports and immediately follow the explicit
+`import`s. No other code can be interleaved.
 
 One or more names may be imported with a single statement. When multiple names
 are being imported, they should be specified using a [tuple](tuples.md). For
@@ -454,6 +454,11 @@ A few alternatives:
 
 -   Add `interface` instead of, or in addition to, `impl`.
 
+    -   This could also take the form of `package Geometry library Shapes` for
+        interfaces and `package Geometry impl Shapes` for implementation. If
+        there's no additional library name path, `package Geometry library`
+        versus `package Geometry impl`.
+
     -   Pros:
         -   Increases explicitness of an interface file, which is important
             because it becomes the API.
@@ -486,10 +491,16 @@ A few alternatives:
 
     -   Pros:
         -   Avoids forcing users to separate their interface into one file.
+            -   This may be considered a manual maintenance problem.
         -   May help users who have issues with cyclical code references.
+        -   Improves compiler inlining of implementations, because the compiler
+            can decide how much to actually put in the generated interface.
     -   Cons:
         -   May be slower to compile, as each file must be parsed once to
             determine interfaces.
+        -   For users that want to see _only_ interfaces in a file, they would
+            need to use tooling to generate the interface file.
+            -   Auto-generated documentation may help solve this problem.
 
 -   Use a hybrid solution with `$interface` recommended, but allow interface
     files to be specified optionally to improve compilation performance.
@@ -595,6 +606,71 @@ Cons:
 
 -   Other languages, such as Java or Python, prefer the specialized syntax for
     equivalent keywords.
+
+Thoughts on pros/cons of approaches would be helpful.
+
+### Reducing arguments for single name imports
+
+> **NOTE:** This open question will be resolved before asking for a comment
+> deadline. Either this will be adopted or not, possibly partially, and
+> "Alternatives" will be updated accordingly.
+
+The three basic forms of `import` are:
+
+-   `import("Foo")`: imports `Foo` from the current namespace.
+-   `import("Bar", "Baz")`: imports `Bar.Baz`.
+-   `import(("Foo", "Fob"))`: imports `Foo` and `Fob` from the current
+    namespace.
+-   `import("Bar", ("Baz", "Wiz"))`: imports `Bar.Baz` and `Bar.Wiz`.
+
+We could allow syntax like `import("Bar.Baz")`, but that creates ambiguity with
+`import("Foo")`, which could then mean either a top-level `Foo` or the current
+namespace's `Foo`. That suggests at a distinctly separate syntax approach:
+
+-   `import("this.Foo")`: imports `Foo` from the current namespace.
+-   `import("Bar.Baz")`: imports `Bar.Baz`.
+-   `import("this", .names=("Foo", "Fob"))`: imports `Foo` and `Fob` from the
+    current namespace.
+-   `import("Bar", .names=("Baz", "Wiz"))`: imports `Bar.Baz` and `Bar.Wiz`.
+
+Pros:
+
+-   Eliminates an argument in the common case of importing a single name.
+-   Increases syntax consistency for single name imports.
+-   Reduces potential confusion between importing multiple names and importing a
+    single name from a different namespace.
+
+Cons:
+
+-   Adds a `this` namespace alias, which may cause issues.
+-   Increases verbosity and decreases syntax consistency for multiple name
+    imports.
+
+Currently, I'm wary of `this` syntax.
+
+Thoughts on pros/cons of approaches would be helpful.
+
+### Rename packages
+
+> **NOTE:** This open question will be resolved before asking for a comment
+> deadline. Either this will be adopted or not, possibly partially, and
+> "Alternatives" will be updated accordingly.
+
+In other languages, a "package" is equivalent to what we call the name path
+here, which includes the `namespace`. This includes Java and Go. We may want to
+rename the `package` keyword to avoid conflicts in meaning.
+
+Alternative names could be 'bundle', 'universe', or something similar to Rust's
+'crates'; perhaps 'compound' or 'molecule'.
+
+Pros:
+
+-   Avoids conflicts in meaning with other languages.
+
+Cons:
+
+-   The meaning of `package` also overlaps a fair amount, and we would lose that
+    context.
 
 Thoughts on pros/cons of approaches would be helpful.
 

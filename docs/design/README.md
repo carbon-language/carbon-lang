@@ -14,7 +14,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Example code](#example-code)
 -   [Basic syntax](#basic-syntax)
     -   [Code and comments](#code-and-comments)
-    -   [Files, libraries, and packages](#files-libraries-and-packages)
+    -   [Libraries and namespaces](#libraries-and-namespaces)
     -   [Names and scopes](#names-and-scopes)
         -   [Naming conventions](#naming-conventions)
         -   [Aliases](#aliases)
@@ -127,34 +127,47 @@ cleaned up during evolution.
       live code
     ```
 
-### Files, libraries, and packages
+### Libraries and namespaces
 
 > References: [Code and name organization](code_and_name_organization.md)
 
-Carbon code is organized into files, libraries, and packages:
+Carbon code is organized into two kinds of named scopes:
 
--   A **file** is the unit of compilation.
--   A **library** can be made up of multiple files, and is the unit whose public
-    interface can be imported.
--   A **package** is a collection of one or more libraries, typically ones with
-    a single common source and with some close association.
+-   **Library** scopes, which are a collection of one or files with a public
+    interface.
 
-A file belongs to precisely one library, and a library belongs to precisely one
-package.
+-   **Namespace** scopes, used by [name lookup](name_lookup.md) to choose which
+    name to use for a given piece of code.
 
-Files have a `.6c` extension. They must start with a declaration of their
-package and library. They may import both other libraries from within their
-package, as well as libraries from other packages. For example:
+**Files** have a `.6c` extension and must start with a `package` declaration
+that sets the library and namespace scopes for all names declared by the file.
+Files belong to one library, but may add to child namespaces. For example:
 
 ```carbon
-// This is a file in the "Eucalyptus" library of the "Koala" package.
-package Koala library Eucalyptus;
+package Geometry;
+```
 
-// Import the "Wombat" library from the "Widget" package.
-import Widget library Wombat;
+The `namespace` keyword allows specifying additional, child namespace scopes
+within a file. For example, this declares `Geometry.Shapes.Flat.Circle`:
 
-// Import the "Container" library from the "Koala" package.
-import library Container;
+```carbon
+package Geometry namespace Shapes;
+
+namespace Flat;
+struct Flat.Circle { ... }
+```
+
+Files may import names from any library, and must do so by name. There is short
+syntax for importing from the same namespace. For example:
+
+```carbon
+package Geometry;
+
+// Standard syntax for importing Geometry.Triangle.
+import("Geometry", "Triangle");
+
+// Same-namespace syntax for importing Geometry.Circle.
+import("Circle");
 ```
 
 ### Names and scopes
@@ -220,38 +233,11 @@ textually after this can refer to `MyInt`, and it will transparently refer to
 
 #### Name lookup
 
-> References: [Code and name organization](code_and_name_organization.md) and
-> [name lookup](name_lookup.md)
+> References: [name lookup](name_lookup.md)
 >
-> **TODO:** Name lookup reference need to be evolved.
+> **TODO:** References need to be evolved.
 
-Names are always introduced into some scope which defines where they can be
-referenced. Many of these scopes are themselves named. `namespace` is used to
-introduce a dedicated named scope, and we traverse nested names in a uniform way
-with `.`-separated names. Unqualified name lookup will always find a file-local
-result, including aliases.
-
-For example:
-
-```carbon
-package Koala library Eucalyptus;
-
-namespace Leaf {
-  namespace Vein {
-    fn Count() -> Int;
-  }
-}
-```
-
-`Count` may be referred to as:
-
--   `Count` from within the `Vein` namespace.
--   `Vein.Count` from within the `Leaf` namespace.
--   `Leaf.Vein.Count` from within this file.
--   `Koala.Leaf.Vein.Count` from any arbitrary location.
-
-Note that libraries do **not** introduce a scope; they share the scope of their
-package.
+Unqualified name lookup will always find a file-local result, including aliases.
 
 ##### Name lookup for common types
 
