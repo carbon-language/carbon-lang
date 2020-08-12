@@ -21,18 +21,22 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
         -   [Disallowing name path conflicts](#disallowing-name-path-conflicts)
     -   [Package keyword](#package-keyword)
     -   [Libraries](#libraries)
-    -   [ORIGINAL libraries](#original-libraries)
     -   [Namespaces](#namespaces)
         -   [Using imported namespaces](#using-imported-namespaces)
         -   [Aliasing](#aliasing)
     -   [Imports](#imports-1)
         -   [Name conflicts of imports](#name-conflicts-of-imports)
+-   [Open questions](#open-questions)
+    -   [Managing interface versus implementation in libraries](#managing-interface-versus-implementation-in-libraries)
+    -   [Require files in a library be imported by filename](#require-files-in-a-library-be-imported-by-filename)
+    -   [Function-like `package` and `import` syntax](#function-like-package-and-import-syntax)
 -   [Alternatives](#alternatives)
-    -   [Aliasing namespace names](#aliasing-namespace-names)
     -   [Allow shadowing of names](#allow-shadowing-of-names)
     -   [Broader imports, either all names or arbitrary code](#broader-imports-either-all-names-or-arbitrary-code)
+    -   [Coarser namespace granularity](#coarser-namespace-granularity)
     -   [Different file extensions](#different-file-extensions)
     -   [Imports from URLs](#imports-from-urls)
+    -   [Namespace syntax](#namespace-syntax)
     -   [Prevent libraries from crossing package boundaries](#prevent-libraries-from-crossing-package-boundaries)
     -   [Scoped namespaces](#scoped-namespaces)
     -   [Strict association between the filesystem path and library/namespace](#strict-association-between-the-filesystem-path-and-librarynamespace)
@@ -173,16 +177,15 @@ package Example;
 import("Geometry.Shapes", "Triangle");
 import("Music.Instrument", "Triangle");
 
-namespace Triangle { ... }
+namespace Triangle;
 fn Triangle() { ... }
 struct Triangle { ... }
 
 fn Foo() { var Int: Triangle = 3; }
 fn Bar(var Int: Triangle) { ... }
 
-namespace Baz {
-  fn Triangle() { ... }
-}
+namespace Baz;
+fn Baz.Triangle() { ... }
 ```
 
 Rather than trying to resolve shadowing, Carbon will reject code until there is
@@ -191,18 +194,16 @@ and [aliasing](aliases.md) are standard solutions to avoid this problem.
 
 Names in scopes that do _not_ have a parent-child relationship will not result
 in a name conflict. In this example, `Foo` is not shadowed because because the
-name paths are distinct:
+name paths are in sibling namespaces:
 
 ```
 package Example;
 
-namespace Bar {
-  fn Foo() { ... }
-}
+namespace Bar;
+fn Bar.Foo() { ... }
 
-namespace Baz {
-  fn Foo() { ... }
-}
+namespace Baz;
+fn Baz.Foo() { ... }
 ```
 
 ### Package keyword
@@ -212,7 +213,7 @@ The first non-comment, non-whitespace line of a Carbon file will be the
 `library` keyword, may be expressed as a rough regular expression:
 
 ```regex
-package NAME_PATH (library NAME_PATH)? (namespace NAME_PATH)?;
+package NAME_PATH (library NAME_PATH)? (namespace NAME_PATH)? (impl)?;
 ```
 
 For example:
@@ -231,6 +232,8 @@ Breaking this apart:
 -   When the optional `namespace` keyword is specified, its name path is
     combined with the package to generate the namespace scope. In this example,
     the `Geometry.Shapes` namespace will be used.
+-   The optional `impl` keyword, which is not present in this example, would
+    make this an implementation file as described under [libraries](#libraries).
 
 It's possible that files contributing to the `Geometry.Objects.Flat` may use
 different `package` arguments. These examples vary only on the resulting
@@ -253,43 +256,32 @@ important and deliberate side-effects:
 
 ### Libraries
 
-Every Carbon library consists of one or more files.
+Every Carbon library consists of one or more files. Each Carbon library has a
+primary file that defines its interface, and may optionally contain additional
+files that are implementation.
 
-### ORIGINAL libraries
+-   An implementation file will have `impl` in the `package` declaration. For
+    example:
+    ```
+    package Geometry library Shapes impl;
+    ```
+-   An interface file will not have `impl`. For example:
+    ```
+    package Geometry library Shapes;
+    ```
 
-This approach for libraries would be more inspired by C++ modules.
+The difference between interface and implementation will act as a form of access
+control. Files inside the library may consume from either interface or
+implementation. Files outside the library may only consume the interface.
 
-Every Carbon library has a primary file that defines its exported interface.
-This file must start off with the canonical form of the top-level declaration:
+When importing a library's interface, it should be expected that the transitive
+closure of imported files from the primary interface file will be used. The size
+of that transitive closure will affect compilation time, so libraries with
+complex implementations should endeavor to minimize the interface imports.
 
-```
-package Geometry library Shapes;
-```
-
-The library may contain additional files as part of its implementation. These
-all must start with a special top-level declaration:
-
-```
-package Geometry library Shapes impl;
-```
-
-In C++, this approach is taken to address the problems of recursive includes.
-Separating the interface and implementation allows for less evaluation of
-
-Within a library, files can import other files from that library using a special
-syntax (see below). Every file in a library which exports an interface to users
-of the library must be transitively imported into the primary interface file and
-only those files transitively imported are allowed to export an interface. Files
-which are not transitively imported into the primary interface file (and thus
-also do not export any interfaces) are allowed to import the primary file of the
-library in addition to importing other implementation files. Imports must always
-form a directed acyclic graph (DAG), including these file-based imports.
-
-    **Open question:** We may find that it is too burdensome to insist on the imports within a library forming a DAG and/or allow cyclic references within files and libraries. Relaxing this would add complexity to the compilation (no trivial parallel or incremental compiles between files within a library) but allow a simpler intra-library import model where we simply list the files providing exported interfaces in the main file. Then the interface is just the concatenation of those files, and the implementation is the further concatenation of the rest of the files. We're starting with the more restrictive model in part because it seems easier to relax this later if desired.
-
-The result is that the set of files which must be examined to find the complete
-exported interface of a library is the transitive closure of imported files
-starting from the primary interface file.
+Libraries also serve as a critical unit of compilation. Dependencies between
+libraries must be clearly marked, and the resulting dependency graph will allow
+for separate compilation.
 
 ### Namespaces
 
@@ -314,6 +306,12 @@ struct Foo.Bar.Baz { ... }
 
 fn Wiz(Foo.Bar.Baz x);
 ```
+
+Only the first identifier in the name path becomes available for direct use;
+other identifiers in the name path must be accessed through that identifier. In
+other words, after declaring `namespace Foo.Bar;` in the above example, `Foo` is
+available as an identifier and `Bar` must be reached through `Foo`; `Bar.Baz` is
+invalid code because `Bar` would be unknown.
 
 Namespaces declared and added to within a file must always be children of the
 file-level namespace. For example, this declares `Geometry.Shapes.Triangle`:
@@ -383,11 +381,13 @@ struct Volumes.Sphere { ... }
 #### Aliasing
 
 Carbon's [alias keyword](aliases.md) will support aliasing namespaces. For
-example, this would be valid code to complement the above example:
+example, this would be valid code:
 
 ```
+namespace Foo.Bar;
 alias FB = Foo.Bar;
 
+struct FB.Baz { ... }
 fn WizAlias(FB.Baz x);
 ```
 
@@ -438,37 +438,167 @@ import("Geometry.Shapes", "Triangle");
 alias MusicTriangle = import("Music.Instruments", "Triangle");
 ```
 
+## Open questions
+
+### Managing interface versus implementation in libraries
+
+> **NOTE:** This open question will be resolved before asking for a comment
+> deadline. Either this will be adopted or not, possibly partially, and
+> "Alternatives" will be updated accordingly.
+
+The proposal currently suggests having an `impl` flag in the `package` marker to
+separate implementation from interface. Is this the right way to manage the
+split?
+
+A few alternatives:
+
+-   Add `interface` instead of, or in addition to, `impl`.
+
+    -   Pros:
+        -   Increases explicitness of an interface file, which is important
+            because it becomes the API.
+        -   If libraries typically consist of two or more files, `impl` would
+            come up more frequently, and so the less frequent syntax should be
+            emphasized.
+    -   Cons:
+        -   This may end up being the more verbose syntax. An interface is
+            _always_ required, whereas `impl` files are optional.
+
+-   Use a different file extension. For example, `.6c` for implementation and
+    `.6ch` for interface.
+
+    -   Pros:
+        -   Increases explicitness of an interface file, which is important
+            because it becomes the API.
+            -   Can find the interface without opening files.
+    -   Cons:
+        -   Adds another file extension; adds some overhead to switching which
+            file in a library is the interface.
+
+-   Instead of having special files, add a markup to names to indicate whether
+    they should be treated as an interface. Have tooling determine what the
+    interface is. For example, to make `Foo` an interface:
+
+    ```carbon
+    $interface
+    struct Foo { ... }
+    ```
+
+    -   Pros:
+        -   Avoids forcing users to separate their interface into one file.
+        -   May help users who have issues with cyclical code references.
+    -   Cons:
+        -   May be slower to compile, as each file must be parsed once to
+            determine interfaces.
+
+-   Use a hybrid solution with `$interface` recommended, but allow interface
+    files to be specified optionally to improve compilation performance.
+
+    -   Pros:
+        -   Allows users to use `$interface` when they find it easier, without
+            giving up performance options.
+    -   Cons:
+        -   Creates language complexity with two different approaches for
+            similar issues.
+
+Thoughts on pros/cons of approaches would be helpful.
+
+### Require files in a library be imported by filename
+
+> **NOTE:** This open question will be resolved before asking for a comment
+> deadline. Either this will be adopted or not, possibly partially, and
+> "Alternatives" will be updated accordingly.
+
+We could add a syntax for importing symbols from other files in the same
+library, such as:
+
+```carbon
+package Geometry;
+
+import("point.6c", "Point");
+```
+
+This would be instead of other possible syntaxes:
+
+```carbon
+package Geometry;
+
+import("Geometry", "Point");
+import("Point");
+```
+
+Pros:
+
+-   Eases enforcement of a DAG (directed acyclic graph) between files in a
+    library.
+    -   Do we need this to have the option of a DAG, versus using parsing to
+        find which file to import from?
+
+Cons:
+
+-   Creates a common case where filenames _must_ be used, breaking away from
+    namespace names on imports.
+-   Loses some of the ease-of-use that some other languages have around imports,
+    such as Go.
+
+The choice here feels related to how we manage interface versus implementation,
+although it may actually be distinct.
+
+### Function-like `package` and `import` syntax
+
+> **NOTE:** This open question will be resolved before asking for a comment
+> deadline. Either this will be adopted or not, possibly partially, and
+> "Alternatives" will be updated accordingly.
+
+The proposal currently suggests function-like syntax for `import()`, and more
+specialized syntax for `package`.
+
+We could:
+
+-   Keep this approach.
+-   Make both function-like. That is, adopt `package` syntax like:
+    ```carbon
+    package("Foo.Bar");
+    package("Foo.Bar", .library = "Bar", .namespace = "Wiz");
+    ```
+-   Make both specialized syntax. That is, adopt `import` syntax like:
+
+    ```carbon
+    import Geometry.Shapes names Triangle;
+    import Geometry.Shapes names Triangle, Square;
+    alias MusicTriangle = import MusicalInstruments names Triangle;
+
+    // For possible interop:
+    import Cpp.mynamespace names MyClass lang C++ file "myproject.h";
+
+    // For possible URLs:
+    import Foo.Bar names Baz url "https://foo.com";
+    ```
+
+Note the use of quotes may be optional here. Given constraints on inputs, maybe
+we can already switch `import("Geometry.Shapes", "Triangle");` to
+`import(Geometry.Shapes, Triangle);`. We could additionally prepend an `@` for
+`@import`, assuming [metaprogramming](metaprogramming.md) keeps that syntax.
+
+Pros:
+
+-   Creates a consistent structure for optional arguments, aligning with
+    [pattern matching](pattern_matching.md).
+
+-   Avoids creating new keywords for new optional arguments.
+
+Cons:
+
+-   May require that we quote strings for consistency, adding incremental burden
+    when writing imports and making them look visually inconsistent with code
+    using the import.
+
+-   Other languages, such as Java or Python, prefer the specialized syntax for
+    equivalent keywords.
+
+Thoughts on pros/cons of approaches would be helpful.
+
 ## Alternatives
-
-### Aliasing namespace names
-
-It's been proposed that we could alias a namespace _name_, allowing code like:
-
-```
-$namespace_alias FBB = Foo.Bar.Baz
-
-namespace FBB {
-  struct Wiz { ... };
-}
-```
-
-This is distinct from normal aliasing of the namespace itself, which would look
-like:
-
-```
-alias FBB = Foo.Bar.Baz;
-
-fn Fez(FBB.Wiz x);
-```
-
-In the latter example, although `FBB` can be referenced in code, `namespace FBB`
-wouldn't be valid because `FBB` would be treated as the namespace name in that
-context.
-
-It's not clear that this is worthwhile; no evidence has been gathered to support
-or contradict the use-case. Until and unless there is supporting evidence for a
-real need for this, we should decline the feature due to its inherent complexity
-and potential overlap with metaprogramming features.
 
 ### Allow shadowing of names
 
@@ -502,6 +632,42 @@ Cons:
 We particularly value the parser benefits of knowing which identifiers are being
 imported, and so we require individual names for imports.
 
+### Coarser namespace granularity
+
+It's been discussed whether we need to provide namespaces outside of
+package/file granularity. In other words, if a file is required to only add to
+one namespace, then there's no need for a `namespace` keyword or similar.
+
+Pros:
+
+-   Requiring files to contribute to only one namespace offers a language
+    simplification.
+
+-   Library interface vs implementation separation may be used to address some
+    problems that namespaces have been used for in C++.
+
+Cons:
+
+-   One point made was the difficulty in C++ of doing `friend` declarations for
+    template functions, making ACL controls difficult. Putting template
+    functions in a namespace such as `internal` allows for an implicit warning
+    about access misuse. It's preferable that both the template and the
+    functions it calls be in the same file.
+
+-   It's not clear that file-granularity namespaces would make it easy to
+    address potential circular references in code.
+
+-   `internal` namespaces and similar may also be used to hide certain calls
+    from IDEs.
+
+-   Makes it more difficult to migrate C++ code, which should be expected to
+    frequently have multiple namespaces within a file.
+
+We believe that while we may find better solutions for _some_ use-cases of
+fine-grained namespaces, but not all. The proposed `namespace` syntax is a
+conservative solution to the problem which we should be careful doesn't add too
+much complexity.
+
 ### Different file extensions
 
 The use of `.6c` as a short file extension or CLI has some drawbacks for
@@ -531,6 +697,64 @@ proposed syntax. For example:
 ```carbon
 import("Foo.Bar", "Baz", .url = "https://foo.com")
 ```
+
+### Namespace syntax
+
+The proposed `namespace` syntax had a few alternatives considered.
+
+-   C++-style, such as:
+
+    ```carbon
+    namespace foo {
+      struct Bar { ... }
+    }
+    ```
+
+    -   Pros:
+
+        -   Supports clusters of items in the same namespace.
+
+        -   Consistent with C++.
+
+    -   Cons:
+
+        -   Given a file with a long namespace, it can be difficult to identify
+            which namespace names are in. This is exacerbated because the
+            end-of-namespace `}` may easily be misinterpreted for the end of a
+            different scope.
+
+            -   Some style guides recommend end-of-namespace comments.
+                `} // namespace foo`. This includes
+                [Google](https://google.github.io/styleguide/cppguide.html#Namespaces)
+                and
+                [Boost](https://github.com/boostorg/geometry/wiki/Guidelines-for-Developers).
+                The use of comments indicates a syntax problem. Additionally,
+                Carbon may disallow comments on the same line as code.
+
+-   Alternative syntax with clearer start and end markers, such as:
+
+    ```carbon
+    namespace foo {
+      struct Bar { ... }
+    } namespace foo
+    ```
+
+    -   Pros:
+
+        -   Supports clusters of items in the same namespace.
+
+        -   Makes it easy to identify the start and end.
+
+    -   Cons:
+
+        -   Given a piece of code with a long namespace, it's still difficult to
+            identify which namespace names are in.
+
+        -   Introduces unusual markup around `}`.
+
+Overall, we expect the proposed `namespace` syntax offers equivalent
+expressiveness with improved readability and a reasonable amount of extra
+typing.
 
 ### Prevent libraries from crossing package boundaries
 
