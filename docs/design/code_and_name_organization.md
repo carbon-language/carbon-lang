@@ -648,12 +648,17 @@ Pros:
 -   Increases syntax consistency for single name imports.
 -   Reduces potential confusion between importing multiple names and importing a
     single name from a different namespace.
+-   Considering cross-language consistency, Java is closer to the latter syntax
+    using a full name path, including resulting in being able to use only the
+    last identifier for calls.
 
 Cons:
 
 -   Adds a `this` namespace alias, which may cause issues.
 -   Increases verbosity and decreases syntax consistency for multiple name
     imports.
+-   The resulting name of an import is simply the last element; the former
+    syntax is clearer about this, the latter less so.
 
 Currently, I'm wary of `this` syntax.
 
