@@ -30,6 +30,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Managing interface versus implementation in libraries](#managing-interface-versus-implementation-in-libraries)
     -   [Require files in a library be imported by filename](#require-files-in-a-library-be-imported-by-filename)
     -   [Function-like `package` and `import` syntax](#function-like-package-and-import-syntax)
+    -   [Quoting names in imports](#quoting-names-in-imports)
     -   [Reducing arguments for single name imports](#reducing-arguments-for-single-name-imports)
     -   [Rename packages](#rename-packages)
 -   [Alternatives](#alternatives)
@@ -585,6 +586,14 @@ We could:
     // For possible URLs:
     import Foo.Bar names Baz url "https://foo.com";
     ```
+
+Thoughts on pros/cons of approaches would be helpful.
+
+### Quoting names in imports
+
+> **NOTE:** This open question will be resolved before asking for a comment
+> deadline. Either this will be adopted or not, possibly partially, and
+> "Alternatives" will be updated accordingly.
 
 Note the use of quotes may be optional here. Given constraints on inputs, maybe
 we can already switch `import("Geometry.Shapes", "Triangle");` to
