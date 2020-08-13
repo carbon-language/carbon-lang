@@ -65,8 +65,8 @@ Important Carbon goals for code and name organization are:
         needing to parse imports for context.
 
     -   Structure should be provided for large projects to opt into features
-        which will help scale features, while not adding burdens to small
-        projects that don't need it.
+        which will help maintain scaling of their codebase, while not adding
+        burdens to small projects that don't need it.
 
 ## Overview
 
@@ -90,7 +90,7 @@ Carbon code is organized into two kinds of named scopes:
     name to use for a given piece of code.
 
 **Files** must start with a `package` declaration that sets the library and
-namespace scopes for all names declared by the file. Files belong to one
+namespace scopes for all entities declared by the file. Files belong to one
 library, but may add to child namespaces.
 
 For example, to set use `Geometry` as both the library scope and namespace
@@ -249,9 +249,9 @@ Because the `package` keyword must be specified in all files, there are a couple
 important and deliberate side-effects:
 
 -   Every file will be in precisely one library.
--   Every name in Carbon will be in a namespace due to the `package`. There is
+-   Every entity in Carbon will be in a namespace due to the `package`. There is
     no "global" namespace.
-    -   Names within a file may have additional namespaces specified,
+    -   Entities within a file may have additional namespaces specified,
         [as detailed below](#namespaces).
 
 ### Libraries
@@ -285,9 +285,9 @@ for separate compilation.
 
 ### Namespaces
 
-Namespaces offer named scopes for names. Namespaces may be nested. Multiple
+Namespaces offer named scopes for entities. Namespaces may be nested. Multiple
 libraries may contribute to the same namespace. In practice, packages may have
-namespaces such as `Testing` containing names that benefit from an isolated
+namespaces such as `Testing` containing entities that benefit from an isolated
 space but are present in many libraries.
 
 Syntax for the `namespace` keyword may loosely be expressed as a regular
@@ -399,9 +399,9 @@ declaration and them. If [metaprogramming](metaprogramming.md) code generates
 `import`s, it must only generate imports and immediately follow the explicit
 `import`s. No other code can be interleaved.
 
-One or more names may be imported with a single statement. When multiple names
-are being imported, they should be specified using a [tuple](tuples.md). For
-example:
+One or more entities may be imported with a single statement. When multiple
+entities are being imported, they should be specified using a
+[tuple](tuples.md). For example:
 
 ```carbon
 import("Geometry.Shapes", "Circle");
