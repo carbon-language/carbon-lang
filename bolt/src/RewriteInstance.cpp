@@ -1714,6 +1714,13 @@ void RewriteInstance::adjustCommandLineOptions() {
   if (opts::Lite) {
     outs() << "BOLT-INFO: enabling lite mode\n";
   }
+
+  if (!opts::SaveProfile.empty() && BAT->enabledFor(InputFile)) {
+    errs() << "BOLT-ERROR: unable to save profile in YAML format for input "
+              "file processed by BOLT. Please remove -w option and use branch "
+              "profile.\n";
+    exit(1);
+  }
 }
 
 namespace {
