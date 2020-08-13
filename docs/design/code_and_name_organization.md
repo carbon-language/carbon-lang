@@ -18,17 +18,19 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [File extensions](#file-extensions)
 -   [Details](#details)
     -   [Name paths](#name-paths-1)
-        -   [Disallowing name path conflicts](#disallowing-name-path-conflicts)
+        -   [Disallowing name conflicts](#disallowing-name-conflicts)
     -   [Package keyword](#package-keyword)
     -   [Libraries](#libraries)
     -   [Namespaces](#namespaces)
         -   [Using imported namespaces](#using-imported-namespaces)
         -   [Aliasing](#aliasing)
     -   [Imports](#imports-1)
-        -   [Name conflicts of imports](#name-conflicts-of-imports)
+        -   [Imported name conflicts](#imported-name-conflicts)
+    -   [Library name conflicts](#library-name-conflicts)
     -   [Moving APIs between between files](#moving-apis-between-between-files)
 -   [Open questions to resolve](#open-questions-to-resolve)
     -   [Managing interface versus implementation in libraries](#managing-interface-versus-implementation-in-libraries)
+        -   [Multiple interface files](#multiple-interface-files)
     -   [Require files in a library be imported by filename](#require-files-in-a-library-be-imported-by-filename)
     -   [Function-like `package` and `import` syntax](#function-like-package-and-import-syntax)
     -   [Quoting names in imports](#quoting-names-in-imports)
@@ -102,13 +104,13 @@ package Geometry;
 struct Point { ... }
 ```
 
-If distinct scope name paths are desired, such as a `Geometry.TwoDimensional`
-library scope and `Geometry.Shapes` namespace scope, a file might contain:
+If distinct scope name paths are desired, such as a `Geometry.Intersect` library
+scope and `Geometry.Helpers` namespace scope, a file might contain:
 
 ```carbon
-package Geometry library TwoDimensional namespace Shapes;
+package Geometry library Intersect namespace Helpers;
 
-struct Circle { ... }
+fn GetIntersection(...) { ... }
 ```
 
 The `namespace` keyword allows specifying additional, child namespace scopes
@@ -134,12 +136,18 @@ import("Geometry", "Shapes");
 fn Area(Shapes.Circle circle) { ... };
 ```
 
-Specific identifiers may also be imported, for example:
+Specific identifiers may also be imported. For example:
 
 ```carbon
 import("Geometry.Shapes", "Circle");
 
 fn Area(Circle circle) { ... };
+```
+
+Imports may also be [aliased](#name-conflicts-of-imports). For example:
+
+```carbon
+alias C = import("Geometry.Shapes", "Circle");
 ```
 
 ### File extensions
@@ -161,17 +169,18 @@ syntax can be expressed as a rough regular expression:
 IDENTIFIER(\.IDENTIFIER)*
 ```
 
-#### Disallowing name path conflicts
+#### Disallowing name conflicts
 
-Carbon will disallow name conflicts, even those that may be treated as
-[shadowing](https://en.wikipedia.org/wiki/Variable_shadowing) in other
-languages. In Carbon, a name conflict can be considered as any case where two
-identically named entities can see each other; that is, if they are in either in
-the same scope, or one is at a parent scope of the other.
+Carbon will disallow name conflicts when two identical names are declared within
+the same scope. Identical names in different namespaces will be allowed,
+although [name lookup](name_lookup.md) will produce an error if there is
+ambiguous shadowing; that is to say, a name is used that could match two
+different entities. [Aliasing](aliases.md) may be used to avoid name conflicts,
+[as described below](#import-name-conflicts).
 
-For example, all cases of `Triangle` shadow each other:
+For example, all cases of `Triangle` conflict because they're in the same scope:
 
-```
+```carbon
 package Example;
 
 import("Geometry.Shapes", "Triangle");
@@ -180,31 +189,26 @@ import("Music.Instrument", "Triangle");
 namespace Triangle;
 fn Triangle() { ... }
 struct Triangle { ... }
-
-fn Foo() { var Int: Triangle = 3; }
-fn Bar(var Int: Triangle) { ... }
-
-namespace Baz;
-fn Baz.Triangle() { ... }
 ```
 
-Rather than trying to resolve shadowing, Carbon will reject code until there is
-only _one_ possible result for a `Triangle` lookup for any given scope. Renaming
-and [aliasing](aliases.md) are standard solutions to avoid this problem.
+In this below example, the declaration of `Foo.Triangle` shadows `Triangle`, but
+is not inherently a conflict. A conflict arises when trying to use it from
+`Foo.GetArea` because the `Triangle` lookup from within `Foo` shadows the
+imported `Triangle`, and so produces a name lookup error.
 
-Names in scopes that do _not_ have a parent-child relationship will not result
-in a name conflict. In this example, `Foo` is not shadowed because because the
-name paths are in sibling namespaces:
-
-```
+```carbon
 package Example;
 
-namespace Bar;
-fn Bar.Foo() { ... }
+import("Geometry.Shapes", "Triangle");
 
-namespace Baz;
-fn Baz.Foo() { ... }
+namespace Foo;
+struct Foo.Triangle { ... }
+fn Foo.GetArea(var Triangle: t) { ... }
 ```
+
+We expect some shadowing like this to occur, particularly during refactoring.
+However, it remains important that code uniquely refer to which entity it uses
+when shadowing is an issue.
 
 ### Package keyword
 
@@ -261,18 +265,15 @@ primary file that defines its interface, and may optionally contain additional
 files that are implementation.
 
 -   An implementation file will have `impl` in the `package` declaration. For
-    example:
-    ```
-    package Geometry library Shapes impl;
-    ```
--   An interface file will not have `impl`. For example:
-    ```
-    package Geometry library Shapes;
-    ```
+    example, `package Geometry library Shapes impl;`.
+-   An interface file will not have `impl`. For example,
+    `package Geometry library Shapes;`
 
 The difference between interface and implementation will act as a form of access
-control. Files inside the library may consume from either interface or
-implementation. Files outside the library may only consume the interface.
+control. Interface files must compile independently of implementation, only
+importing from external libraries. Implementation files inside the library may
+consume from either interface or implementation. Files outside the library may
+only consume the interface.
 
 When importing a library's interface, it should be expected that the transitive
 closure of imported files from the primary interface file will be used. The size
@@ -300,7 +301,7 @@ namespace NAME_PATH;
 A namespace is used by first declaring it, then using it when declaring a name.
 For example:
 
-```
+```carbon
 namespace Foo.Bar;
 struct Foo.Bar.Baz { ... }
 
@@ -316,7 +317,7 @@ invalid code because `Bar` would be unknown.
 Namespaces declared and added to within a file must always be children of the
 file-level namespace. For example, this declares `Geometry.Shapes.Triangle`:
 
-```
+```carbon
 package Geometry;
 
 namespace Shapes;
@@ -331,7 +332,7 @@ it's a child of the file-level namespace.
 
 For example, this code declares `Geometry.Shapes.Triangle`:
 
-```
+```carbon
 package Geometry;
 
 import("Geometry", "Shapes");
@@ -342,7 +343,7 @@ struct Shapes.Triangle { ... }
 On the other hand, this is invalid code because the `Instruments` namespace is
 not under `Geometry`, and so `Triangle` cannot be added to it from this file:
 
-```
+```carbon
 package Geometry;
 
 import("Music", "Instruments");
@@ -354,7 +355,7 @@ This is also invalid code because the `Geometry.Volumes` namespace is a sibling
 of the `Geometry.Areas` namespace used for this file, and so `Sphere` cannot be
 added to it from this file:
 
-```
+```carbon
 package Geometry namespace Areas;
 
 import("Geometry", "Volumes");
@@ -367,7 +368,7 @@ struct Volumes.Sphere { ... }
 However, with a higher-level file namespace of `Geometry`, a single file could
 still add to both `Volumes` and `Areas`:
 
-```
+```carbon
 package Geometry;
 
 import("Geometry", "Volumes");
@@ -383,7 +384,7 @@ struct Volumes.Sphere { ... }
 Carbon's [alias keyword](aliases.md) will support aliasing namespaces. For
 example, this would be valid code:
 
-```
+```carbon
 namespace Foo.Bar;
 alias FB = Foo.Bar;
 
@@ -418,7 +419,7 @@ package Geometry;
 import("Point");
 ```
 
-#### Name conflicts of imports
+#### Imported name conflicts
 
 It's expected that multiple libraries will end up exporting identical names.
 Importing them would result in
@@ -438,6 +439,21 @@ when importing one symbol in the `import`. For example, this would be allowed:
 ```carbon
 import("Geometry.Shapes", "Triangle");
 alias MusicTriangle = import("Music.Instruments", "Triangle");
+```
+
+### Library name conflicts
+
+It's possible that two libraries will use the same namespace scopes, and have
+overlapping entity names. For example, someone may want to use two separate
+geometry-related packages that both use the `Geometry` namespace and have
+`Geometry.Point`.
+
+To cover this case, we can allow users to specify which interface library a
+given import should read from. For example:
+
+```carbon
+alias FooPoint = import("Geometry", "Point", .library_path = "path/to/foo.lib");
+alias BarPoint = import("Geometry", "Point", .library_path = "path/to/bar.lib");
 ```
 
 ### Moving APIs between between files
@@ -559,6 +575,23 @@ A few alternatives:
     -   Cons:
         -   Creates language complexity with two different approaches for
             similar issues.
+
+#### Multiple interface files
+
+The proposal also presently suggests a single interface file. Under an explicit
+interface file approach, we could still allow multiple interface files.
+
+Pros:
+
+-   More flexibility when writing interfaces; could otherwise end up with one
+    gigantic interface file.
+
+Cons:
+
+-   Removes some of the advantages of having an interface file as a "single
+    place" to look, suggesting more towards the markup approach.
+-   Not clear if interface files should be allowed to depend on each other, as
+    they were intended to help resolve cyclical dependency issues.
 
 ### Require files in a library be imported by filename
 
@@ -719,7 +752,15 @@ disallowing shadowing.
 
 Carbon imports require specifying individual names to import. We could support
 broader imports, for example by pulling in all names from a library. In C++, the
-`#include` preprocessor directive even supports inclusion of arbitrary code.
+`#include` preprocessor directive even supports inclusion of arbitrary code. For
+example:
+
+```carbon
+import("Geometry.Shapes", "*");
+
+// Triangle was imported as part of "*".
+fn Draw(var Triangle: x) { ... }
+```
 
 Pros:
 
@@ -731,8 +772,8 @@ Cons:
     imported.
 -   Increases the risk of adding new features to APIs, as they may immediately
     get imported by a user and conflict with a pre-existing name, breaking code.
--   Readability problems arise because it's not clear where a given name may be
-    coming from.
+-   As the number of imports increases, it can become difficult to tell which
+    import a particular symbol comes from, or how imports are being used.
 -   Arbitrary code inclusion can result in unexpected code execution, a way to
     create obfuscated code and a potential security risk.
 
@@ -780,10 +821,12 @@ much complexity.
 The use of `.6c` as a short file extension or CLI has some drawbacks for
 typability. There are several other possible extensions / commands:
 
+-   `.6c`: Sounds a little like 'sexy' when read aloud.
 -   `.cb` or `.cbn`: These collide with several acronyms and may not be
     especially memorable as referring to Carbon.
 -   `.c6`: This seems a weird incorrect ordering of the atomic number and has a
     bad and NSFW, if _extremely_ obscure, Internet slang association.
+-   `.crb`: Bad slang association.
 -   `.carbon`: This is an obvious and unsurprising choice, but also quite long
     for a file extension.
 
