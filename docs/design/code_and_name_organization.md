@@ -53,7 +53,7 @@ Important Carbon goals for code and name organization are:
 
 -   [Software and language evolution](/docs/project/goals.md#software-and-language-evolution):
 
-    -   We should support API libraries adding new structs, functions or other
+    -   We should support libraries adding new structs, functions or other
         identifiers without those new identifiers being able to shadow or break
         existing users that already have identifiers with conflicting names.
 
@@ -241,7 +241,7 @@ namespace, which will use only the `package` name path:
 
 ```carbon
 package Geometry.Objects.Flat;
-package Geometry.Objects library Shapes;
+package Geometry.Objects library Flat;
 package Geometry library Objects.Flat;
 ```
 
