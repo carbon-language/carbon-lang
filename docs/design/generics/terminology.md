@@ -84,21 +84,21 @@ This parameter broadens the scope of the language construct on an axis defined
 by that parameter, effectively defining a family of functions (or whatever)
 instead of a single one.
 
-### Generic vs. template arguments
+### Generic vs. template parameters
 
 When we are distinguishing between generics and templates in Carbon, it is on an
-argument by argument basis. A single function can take a mix of regular,
-generic, and template arguments.
+parameter by parameter basis. A single function can take a mix of regular,
+generic, and template paramater.
 
--   **Regular arguments** are designated using "&lt;type>`:` &lt;name>" syntax
+-   **Regular parameters** are designated using "&lt;type>`:` &lt;name>" syntax
     (or "&lt;value>").
--   **Generic arguments** are temporarily designated using an additional `$`
+-   **Generic parameters** are temporarily designated using an additional `$`
     after the `:` (so it is "&lt;type>`:$` &lt;name>"). However, the `$` symbol
     is not easily typed on non-US keyboards, so we will definitely switch to
     some other syntax. Some possibilities that
     [have been suggested (TODO)](#broken-links-footnote)<!-- T:Carbon templates and generics --><!-- A:# -->
     are: `:!`, `:@`, `:#`, and `::`.
--   **Template arguments** are temporarily designated using "&lt;type> `:$$`
+-   **Template parameters** are temporarily designated using "&lt;type> `:$$`
     &lt;name>", for similar reasons.
 
 Expected difference between generics and templates:
@@ -235,16 +235,26 @@ Late type checking is where expressions and statements may only be fully
 typechecked once calling information is known. Late type checking delays
 complete definition checking. This occurs for template dependent values.
 
-### Implicit argument
+### Implicit parameter
 
-An implicit argument is listed in the optional `[` `]` section right after the
+An implicit parameter is listed in the optional `[` `]` section right after the
 function name in a function signature:
 
-`fn` &lt;name> `[` &lt;implicit arguments> `](` &lt;explicit arguments `) ->`
+`fn` &lt;name> `[` &lt;implicit parameters> `](` &lt;explicit parameters `) ->`
 &lt;return type>
 
 Implicit arguments are determined as a result of pattern matching the explicit
-arguments to the values (generally the types of those values). See more
+argument values (usually the types of those values) to the explicit parameters.
+Note that function signatures can typically be rewritten to avoid using implicit
+parameters:
+
+```
+fn F[Type:$$ T](T: value);
+// is equivalent to:
+fn F((Type:$$ T): value);
+```
+
+See more
 [here](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/overview.md#implicit-arguments).
 
 ### Interface
@@ -389,7 +399,7 @@ The main benefit of default impls is that it allows
 [subsumption](#subsumption-and-casting) to work. That is, by allowing the
 compiler to look up the impl for a (type, interface) combination automatically,
 you allow passing of values to generic functions transparently, without any
-explicit statement of how to satisfy the argument's interface requirements. This
+explicit statement of how to satisfy the parameter's interface requirements. This
 of course means that any given type can have at most one default impl for any
 given interface.
 
@@ -425,7 +435,7 @@ details.
 
 ### Invoking interface methods
 
-Given a function with a generic argument whose type is known to satisfy some
+Given a function with a generic parameter whose type is known to satisfy some
 number of interfaces, how do you actually call methods defined in one of those
 interfaces in the body of the function?
 
@@ -588,7 +598,7 @@ how generics perform operations on the type provided by a caller.
 
 #### Witness tables (e.g., Swift and Carbon Generics)
 
-For witness tables, calls made on the generic's argument are compiled into a
+For witness tables, values passed to a generic parameter are compiled into a
 table of required functionality. That table is then filled in for a given
 passed-in type with references to the implementation on the original type. The
 generic is implemented using calls into entries in the witness table, which turn
@@ -671,7 +681,7 @@ instantiations.
 
 Specialization is essentially overloads for templates/generics. Specialization
 is when a template or generic has an overloaded definition for some subset of
-concrete parameters used with it.
+concrete arguments used with it.
 
 The key distinction between specialization and normal instantiation is that the
 resulting code (and potentially interface!) is customized beyond what can be
@@ -681,7 +691,7 @@ step achieved through **selection**.
 With templates, specialization is powerful because it can observe arbitrarily
 precise information about the concrete type. In C++, this can be used to bypass
 instantiation by creating fully specialized versions that are no longer
-dependent in any way and are simply selected when the parameters match.
+dependent in any way and are simply selected when the arguments match.
 
 With generics, this could potentially be used to select between different
 implementations and potentially interfaces of the generic code. However, it can
@@ -705,7 +715,7 @@ reflected by the interface properties used to select the specialization.
 
 Conditional conformance is when you have a parameterized type that has one API
 that it always supports, but satisfies additional interfaces under some
-conditions about the type parameter.
+conditions on the type argument.
 
 For example: `Array(T)` might implement `Comparable` if `T` itself implements
 `Comparable`, using lexicographical order. This might be supported via a
@@ -748,7 +758,7 @@ interface to specify.
 ```
 interface Iterator { ... }
 interface Container {
-  // This does not make sense as an argument to the container interface,
+  // This does not make sense as an parameter to the container interface,
   // since this type is determined from the container type.
   var Iterator:$ IteratorType;
   ...
@@ -802,7 +812,7 @@ We want to be able to say things like:
 In general there are a number of different type relationships we would like to
 express, and multiple mechanisms we could use to express those constraints:
 
--   Passing the same name as a type parameter to multiple interfaces to ensure
+-   Passing the same name as a type argument to multiple interfaces to ensure
     they agree.
 -   Have ways of creating new [type-types](#interfaces-are-type-types) from old
     ones by adding restrictions.
@@ -885,12 +895,12 @@ We want ways of accomplishing the following tasks:
 -   Control how an interface may be used in order to reserve or abandon rights
     to evolve the interface. See
     [the relevant open question in "Carbon closed function overloading proposal" (TODO)](#broken-links-footnote)<!-- T:Carbon closed function overloading proposal --><!-- A:#bookmark=id.hxvlthy3z3g1 -->.
--   Specify a generic explicit (non-type or type) argument to a function.
--   Specify a generic [implicit argument](#implicit-argument) to a function.
--   Specify a generic type argument constrained to conform to an interface. And
+-   Specify a generic explicit (non-type or type) parameter to a function.
+-   Specify a generic [implicit parameter](#implicit-parameter) to a function.
+-   Specify a generic type parameter constrained to conform to an interface. And
     in the function, call methods defined in the the interface on a value of
     that type.
--   Specify a generic type argument constrained to conform to multiple
+-   Specify a generic type parameter constrained to conform to multiple
     interfaces. And in the function, call methods defined in each interface on a
     value of that type, and pass the value to functions expecting any subset of
     those interfaces. Ideally this would be convenient enough that we could
