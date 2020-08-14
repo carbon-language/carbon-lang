@@ -32,6 +32,7 @@ request:
 -   [0083 - In-progress design overview](p0083.md)
 -   [0107 - Code and name organization](p0107.md)
 -   [0113 - Add a C++ style guide](p0113.md)
+-   [0144 - Numeric literal semantics](p0144.md)
 -   [0120 - Add idiomatic code performance and developer-facing docs to goals](p0120.md)
 -   [0142 - Unicode source files](p0142.md)
 -   [0143 - Numeric literals](p0143.md)
