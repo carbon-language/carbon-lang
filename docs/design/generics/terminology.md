@@ -12,13 +12,13 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 -   [Terminology](#terminology)
     -   [Parameterized language constructs](#parameterized-language-constructs)
-    -   [Generic vs. template arguments](#generic-vs-template-arguments)
+    -   [Generic vs. template parameters](#generic-vs-template-parameters)
         -   [Parametric vs. Ad Hoc polymorphism](#parametric-vs-ad-hoc-polymorphism)
         -   [Constrained/bounded vs. Unconstrained/unbounded genericity](#constrainedbounded-vs-unconstrainedunbounded-genericity)
         -   [Definition checking](#definition-checking)
             -   [Complete definition checking](#complete-definition-checking)
             -   [Early vs. late type checking](#early-vs-late-type-checking)
-    -   [Implicit argument](#implicit-argument)
+    -   [Implicit parameter](#implicit-parameter)
     -   [Interface](#interface)
         -   [Semantic vs. structural interfaces](#semantic-vs-structural-interfaces)
         -   [What kind of values are interfaces?](#what-kind-of-values-are-interfaces)
@@ -88,7 +88,7 @@ instead of a single one.
 
 When we are distinguishing between generics and templates in Carbon, it is on an
 parameter by parameter basis. A single function can take a mix of regular,
-generic, and template paramater.
+generic, and template parameter.
 
 -   **Regular parameters** are designated using "&lt;type>`:` &lt;name>" syntax
     (or "&lt;value>").
@@ -399,9 +399,9 @@ The main benefit of default impls is that it allows
 [subsumption](#subsumption-and-casting) to work. That is, by allowing the
 compiler to look up the impl for a (type, interface) combination automatically,
 you allow passing of values to generic functions transparently, without any
-explicit statement of how to satisfy the parameter's interface requirements. This
-of course means that any given type can have at most one default impl for any
-given interface.
+explicit statement of how to satisfy the parameter's interface requirements.
+This of course means that any given type can have at most one default impl for
+any given interface.
 
 #### Named impl
 
