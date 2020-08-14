@@ -733,11 +733,17 @@ Alternative names could be 'bundle', 'universe', or something similar to Rust's
 Pros:
 
 -   Avoids conflicts in meaning with other languages.
+    -   [Java](https://www.oracle.com/java/technologies/glossary.html)
+    -   [Go](https://golang.org/doc/effective_go.html#package-names)
 
 Cons:
 
 -   The meaning of `package` also overlaps a fair amount, and we would lose that
     context.
+    -   [Python](https://packaging.python.org/tutorials/installing-packages/),
+        as a distributable unit.
+    -   [Rust](https://doc.rust-lang.org/book/ch07-01-packages-and-crates.html),
+        as a collection of crates.
 
 ## Alternatives
 
