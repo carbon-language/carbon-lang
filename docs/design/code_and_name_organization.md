@@ -13,7 +13,6 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [Goals and philosophy](#goals-and-philosophy)
 -   [Overview](#overview)
     -   [Name paths](#name-paths)
-    -   [Named scopes](#named-scopes)
     -   [Imports](#imports)
     -   [File extensions](#file-extensions)
 -   [Details](#details)
@@ -75,28 +74,30 @@ Important Carbon goals for code and name organization are:
 ### Name paths
 
 A name path is the dot-separated identifier list that indicates the full path of
-a name as it corresponds to any named scope. For example, while both `Geometry`
-and `Shapes` are names of identifiers, `Geometry.Shapes` is a name path
-indicating `Shapes` is an identifier in the `Geometry` named scope.
+a name. For example, while both `Geometry`, `Shapes`, and `Circle` are all
+identifiers, `Geometry.Shapes.Circle` is a name path indicating `Circle` is an
+identifier in the `Geometry.Shapes` name path.
 
-### Named scopes
+Carbon code is organized using three kinds of name paths:
 
-Carbon code is organized into two kinds of named scopes:
-
--   **Library** scopes, which are a collection of one or files with a public
+-   **Library** paths, which are a collection of one or files with a public
     interface. They are used at compile-time to determine which library
-    dependencies to include. These scopes enable separate compilation of
+    dependencies to include. These paths enable separate compilation of
     dependencies.
 
--   **Namespace** scopes, used by [name lookup](name_lookup.md) to choose which
+-   **Namespace** paths, used by [name lookup](name_lookup.md) to choose which
     name to use for a given piece of code.
 
-**Files** must start with a `package` declaration that sets the library and
-namespace scopes for all entities declared by the file. Files belong to one
-library, but may add to child namespaces.
+-   **Package** paths, which serve as a shared prefix for both the library and
+    namespace paths. Other than the shared prefix, Carbon doesn't enforce
+    package naming.
 
-For example, to set use `Geometry` as both the library scope and namespace
-scope, a file might contain:
+Each **file** starts with a `package` declarations that specifies the package,
+library and namespace paths. Files belong to one library, but may add to child
+namespaces.
+
+For example, to set use `Geometry` as all three of the library, namespace, and
+package paths, a file might contain:
 
 ```carbon
 package Geometry;
@@ -104,8 +105,8 @@ package Geometry;
 struct Point { ... }
 ```
 
-If distinct scope name paths are desired, such as a `Geometry.Intersect` library
-scope and `Geometry.Helpers` namespace scope, a file might contain:
+If distinct name paths are desired, such as a `Geometry.Intersect` library path
+and `Geometry.Helpers` namespace path, a file might contain:
 
 ```carbon
 package Geometry library Intersect namespace Helpers;
@@ -113,7 +114,7 @@ package Geometry library Intersect namespace Helpers;
 fn GetIntersection(...) { ... }
 ```
 
-The `namespace` keyword allows specifying additional, child namespace scopes
+The `namespace` keyword allows specifying additional, child namespace paths
 within a file. For example, this is an alternate way to declare
 `Geometry.Shapes.Circle`:
 
@@ -172,7 +173,7 @@ IDENTIFIER(\.IDENTIFIER)*
 #### Disallowing name conflicts
 
 Carbon will disallow name conflicts when two identical names are declared within
-the same scope. Identical names in different namespaces will be allowed,
+the same name path. Identical names in different namespaces will be allowed,
 although [name lookup](name_lookup.md) will produce an error if there is
 ambiguous shadowing; that is to say, a name is used that could match two
 different entities. [Aliasing](aliases.md) may be used to avoid name conflicts,
@@ -229,12 +230,12 @@ package Geometry library Objects.Flat namespace Shapes
 Breaking this apart:
 
 -   The first name passed to the `package` keyword, `Geometry`, is a name path
-    prefix that will be used for both the file's library and namespace scopes.
+    prefix that will be used for both the file's library and namespace paths.
 -   When the optional `library` keyword is specified, its name path is combined
-    with the package to generate the library scope. In this example, the
+    with the package to generate the library path. In this example, the
     `Geometry.Objects.Flat` library will be used.
 -   When the optional `namespace` keyword is specified, its name path is
-    combined with the package to generate the namespace scope. In this example,
+    combined with the package to generate the namespace path. In this example,
     the `Geometry.Shapes` namespace will be used.
 -   The optional `impl` keyword, which is not present in this example, would
     make this an implementation file as described under [libraries](#libraries).
@@ -286,7 +287,7 @@ for separate compilation.
 
 ### Namespaces
 
-Namespaces offer named scopes for entities. Namespaces may be nested. Multiple
+Namespaces offer named paths for entities. Namespaces may be nested. Multiple
 libraries may contribute to the same namespace. In practice, packages may have
 namespaces such as `Testing` containing entities that benefit from an isolated
 space but are present in many libraries.
@@ -410,7 +411,7 @@ import("Geometry.Shapes", ("Circle", "Triangle", "Square"));
 ```
 
 When importing from another file or library that is in the current namespace
-scope, the namespace may be omitted from the import. For example, an import
+path, the namespace may be omitted from the import. For example, an import of
 `Geometry.Point` may look like:
 
 ```carbon
@@ -443,7 +444,7 @@ alias MusicTriangle = import("Music.Instruments", "Triangle");
 
 ### Library name conflicts
 
-It's possible that two libraries will use the same namespace scopes, and have
+It's possible that two libraries will use the same namespace paths, and have
 overlapping entity names. For example, someone may want to use two separate
 geometry-related packages that both use the `Geometry` namespace and have
 `Geometry.Point`.
@@ -460,9 +461,9 @@ alias BarPoint = import("Geometry", "Point", .library_path = "path/to/bar.lib");
 
 When moving APIs between two files, the design of `package`, `namespace`, and
 `import` is intended to minimize the amount of additional work needed. The
-expected work depends on which library and namespace scopes the files are in:
+expected work depends on which library and namespace paths the files are in:
 
--   If both files are part of the same library and namespace scopes:
+-   If both files are part of the same library and namespace paths:
 
     -   If the source was an interface, the destination file must not be an
         interface because there is only one interface file per library. Some
@@ -471,7 +472,7 @@ expected work depends on which library and namespace scopes the files are in:
 
     -   If the source was not an interface, then no further changes are needed.
 
--   If the library scope differs:
+-   If the library path differs:
 
     -   If the destination is an interface, then no further code changes need to
         be made. However, build dependencies may need to be updated to ensure
@@ -486,14 +487,14 @@ expected work depends on which library and namespace scopes the files are in:
         source library has no remaining calls to the API, then no further
         changes are needed.
 
--   If the namespace scope differs:
+-   If the namespace path differs:
 
     -   The `namespace` keyword might be useable to expose the moved APIs at the
         same name path.
 
     -   Otherwise, callers need to be updated to the new name path.
 
--   If both the library and namespace scopes differ, then both above sections
+-   If both the library and namespace paths differ, then both above sections
     apply for fixes.
 
 ## Open questions to resolve
@@ -871,7 +872,7 @@ The proposed `namespace` syntax had a few alternatives considered.
         -   Given a file with a long namespace, it can be difficult to identify
             which namespace names are in. This is exacerbated because the
             end-of-namespace `}` may easily be misinterpreted for the end of a
-            different scope.
+            different namespace.
 
             -   Some style guides recommend end-of-namespace comments.
                 `} // namespace foo`. This includes
