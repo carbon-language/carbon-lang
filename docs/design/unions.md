@@ -70,7 +70,7 @@ one member of a union, but it can initialize either one member or none. If no
 member of the union is initialized, no member of the union is initially active:
 
 ```
-// n1.int_value and n1.double_value are both inactive
+// n1.int_value and n1.float_value are both inactive
 Number: n1 = ( .discriminator = 0 );
 
 // n2.int_value is active and holds 0
@@ -80,7 +80,7 @@ Number: n2 = ( .int_value = 0, .discriminator = 1 );
 Number: n3 = ( .int_value = uninit, .discriminator = 1 );
 
 // Error: cannot initialize multiple members of a single union
-Number: n4 = ( .int_value = 0, .double_value = uninit, .discriminator = 1 );
+Number: n4 = ( .int_value = 0, .float_value = uninit, .discriminator = 1 );
 ```
 
 Unions follow similar rules in pattern matching: a pattern can mention either
@@ -103,13 +103,13 @@ The active member can only be changed by destroying the current active member
 `create` keywords:
 
 ```
-fn SetDoubleValue(Ptr(Number): n, Double: value) {
+fn SetFloatValue(Ptr(Number): n, Float64: value) {
   if (n->discriminator == 0) {
     destroy n->int_value;
-    create: n->double_value = value;
+    create: n->float_value = value;
     n->discriminator = 1;
   } else {
-    n->double_value = value;
+    n->float_value = value;
   }
 }
 ```
