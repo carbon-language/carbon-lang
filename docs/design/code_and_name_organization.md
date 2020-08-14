@@ -724,8 +724,8 @@ Currently, I'm wary of `this` syntax.
 ### Rename package concept
 
 In other languages, a "package" is equivalent to what we call the name path
-here, which includes the `namespace`. This includes Java and Go. We may want to
-rename the `package` keyword to avoid conflicts in meaning.
+here, which includes the `namespace`. We may want to rename the `package`
+keyword to avoid conflicts in meaning.
 
 Alternative names could be 'bundle', 'universe', or something similar to Rust's
 'crates'; perhaps 'compound' or 'molecule'.
@@ -733,17 +733,22 @@ Alternative names could be 'bundle', 'universe', or something similar to Rust's
 Pros:
 
 -   Avoids conflicts in meaning with other languages.
-    -   [Java](https://www.oracle.com/java/technologies/glossary.html)
-    -   [Go](https://golang.org/doc/effective_go.html#package-names)
+    -   [Java](https://www.oracle.com/java/technologies/glossary.html), similar
+        to a namespace path.
+    -   [Go](https://golang.org/doc/effective_go.html#package-names), similar to
+        a namespace path.
 
 Cons:
 
 -   The meaning of `package` also overlaps a fair amount, and we would lose that
     context.
+    -   [NPM/Node.js](https://www.npmjs.com/), as a distributable unit.
     -   [Python](https://packaging.python.org/tutorials/installing-packages/),
         as a distributable unit.
     -   [Rust](https://doc.rust-lang.org/book/ch07-01-packages-and-crates.html),
         as a collection of crates.
+    -   [Swift](https://developer.apple.com/documentation/swift_packages), as a
+        distributable unit.
 
 ## Alternatives
 
