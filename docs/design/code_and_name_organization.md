@@ -12,11 +12,9 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 -   [Goals and philosophy](#goals-and-philosophy)
 -   [Overview](#overview)
-    -   [Name paths](#name-paths)
     -   [Imports](#imports)
-    -   [File extensions](#file-extensions)
 -   [Details](#details)
-    -   [Name paths](#name-paths-1)
+    -   [Name paths](#name-paths)
         -   [Disallowing name conflicts](#disallowing-name-conflicts)
     -   [Package keyword](#package-keyword)
     -   [Libraries](#libraries)
@@ -52,13 +50,18 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 Important Carbon goals for code and name organization are:
 
+-   [Language tools and ecosystem](#language-tools-and-ecosystem)
+
+    -   Tooling support is important for Carbon, including the possibility of a
+        package manager.
+
 -   [Software and language evolution](/docs/project/goals.md#software-and-language-evolution):
 
     -   We should support libraries adding new structs, functions or other
         identifiers without those new identifiers being able to shadow or break
         existing users that already have identifiers with conflicting names.
 
-    -   We should make it as easy as possible to refactor code between files.
+    -   We should make it easy to refactor code between files.
 
 -   [Fast and scalable development](/docs/project/goals.md#fast-and-scalable-development):
 
@@ -71,59 +74,46 @@ Important Carbon goals for code and name organization are:
 
 ## Overview
 
-### Name paths
+When Carbon code is placed in files, we need to have some way of organizing that
+code for reuse.
 
-A name path is the dot-separated identifier list that indicates the full path of
-a name. For example, while both `Geometry`, `Shapes`, and `Circle` are all
-identifiers, `Geometry.Shapes.Circle` is a name path indicating `Circle` is an
-identifier in the `Geometry.Shapes` name path.
+When creating a new file, files will choose a name with a `.carbon` extension,
+such as `geometry.carbon`.
 
-Carbon code is organized using three kinds of name paths:
+Each file begins with a declaration of which
+_package_<sup><small>[[define](/docs/guides/glossary.md#package)]</small></sup>
+it belongs in. The package will be a single identifier, such as `Geometry`. An
+example file in the `Geometry` package would start with `package Geometry;`.
 
--   **Library** paths, which are a collection of one or files with a public
-    interface. They are used at compile-time to determine which library
-    dependencies to include. These paths enable separate compilation of
-    dependencies.
+A tiny package may consist of a single file, and not use any further features of
+the `package` keyword.
 
--   **Namespace** paths, used by [name lookup](name_lookup.md) to choose which
-    name to use for a given piece of code.
+However, as a package adds more files, it will probably want to separate out
+into multiple
+_libaries_<sup><small>[[define](/docs/guides/glossary.md#library)]</small></sup>.
+A library is the basic unit of both compilation and code reuse; separating files
+into multiple libraries can speed up compilation while also making it clear
+which code is being reused. An example library of `Shapes` in the `Geometry`
+package would look like `package Geometry library Shapes;`
 
--   **Package** paths, which serve as a shared prefix for both the library and
-    namespace paths. Other than the shared prefix, Carbon doesn't enforce
-    package naming.
+When a library becomes too large for a single file to easily contain, it may be
+useful to separate the API from the implementation instead of splitting
+libraries. Implementation files allow for code to be extracted out from the API
+file, while only being callable from other files within the library, including
+both API and implementation files. Implementation files are marked by both
+naming the file to use an extension of `.impl.carbon` and changing the package
+to `package Geometry library Shapes impl`.
 
-Each **file** starts with a `package` declarations that specifies the package,
-library and namespace paths. Files belong to one library, but may add to child
-namespaces.
-
-For example, to set use `Geometry` as all three of the library, namespace, and
-package paths, a file might contain:
-
-```carbon
-package Geometry;
-
-struct Point { ... }
-```
-
-If distinct name paths are desired, such as a `Geometry.Intersect` library path
-and `Geometry.Helpers` namespace path, a file might contain:
-
-```carbon
-package Geometry library Intersect namespace Helpers;
-
-fn GetIntersection(...) { ... }
-```
-
-The `namespace` keyword allows specifying additional, child namespace paths
-within a file. For example, this is an alternate way to declare
-`Geometry.Shapes.Circle`:
-
-```carbon
-package Geometry;
-
-namespace Shapes;
-struct Shapes.Circle { ... }
-```
+As code becomes more complex, and users pull in more code, it may also be
+helpful to add
+_namespaces_<sup><small>[[define](/docs/guides/glossary.md#namespace)]</small></sup>
+to group related entities. A namespace affects the _name
+path_<sup><small>[[define](/docs/guides/glossary.md#name-path)]</small></sup>
+used when calling code. For example, with no namespace, if a `Geometry` library
+defines `Circle` then the name path will be `Geometry.Circle`. However, an
+example namespace of `TwoDimensional` in the `Geometry` package would look like
+`package Geometry library Shapes namespace TwoDimensional;`, and result in a
+name path of `Geometry.TwoDimensional.Shapes`.
 
 ### Imports
 
@@ -150,14 +140,6 @@ Imports may also be [aliased](#name-conflicts-of-imports). For example:
 ```carbon
 alias C = import("Geometry.Shapes", "Circle");
 ```
-
-### File extensions
-
-Carbon files use the `.6c` extension as a matter of convention. This comes from
-how the atomic number notation for
-[Carbon](https://en.wikipedia.org/wiki/Carbon), "<sub>6</sub>C". In the
-language's case, we need a reasonably unique extension, and this is what we've
-chosen.
 
 ## Details
 
