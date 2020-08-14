@@ -115,6 +115,9 @@ example namespace of `TwoDimensional` in the `Geometry` package would look like
 `package Geometry library Shapes namespace TwoDimensional;`, and result in a
 name path of `Geometry.TwoDimensional.Shapes`.
 
+This scaling of packages into libraries and namespaces is how Carbon supports
+both small and large codebases.
+
 ### Imports
 
 The `import` keyword supports reusing code from other files and libraries.
