@@ -93,23 +93,25 @@ the `package` keyword.
 However, as a package adds more files, it will probably want to separate out
 into multiple
 _libaries_<sup><small>[[define](/docs/guides/glossary.md#library)]</small></sup>.
-A library is the basic unit of *code reuse*. Separating code
-into multiple libraries can speed up the overall build while also making it clear
-which code is being reused. An example library of `Shapes` in the `Geometry`
-package would look like `package Geometry library Shapes api;`
+A library is the basic unit of _code reuse_. Separating code into multiple
+libraries can speed up the overall build while also making it clear which code
+is being reused. An example library of `Shapes` in the `Geometry` package would
+look like `package Geometry library Shapes api;`
 
-It is often useful to have a physical separation the API of a library from its implementation.
-This may help organize code as the library becomes larger, or to let the build system distinguish between the dependencies of the API itself and its underlying implementation.
-Implementation files allow for code to be extracted out from the API
-file, while only being callable from other files within the library, including
-both API and implementation files. Implementation files are marked by both
-naming the file to use an extension of `.impl.carbon` and changing the package
-to `package Geometry library Shapes impl`.
+It is often useful to have a physical separation the API of a library from its
+implementation. This may help organize code as the library becomes larger, or to
+let the build system distinguish between the dependencies of the API itself and
+its underlying implementation. Implementation files allow for code to be
+extracted out from the API file, while only being callable from other files
+within the library, including both API and implementation files. Implementation
+files are marked by both naming the file to use an extension of `.impl.carbon`
+and changing the package to `package Geometry library Shapes impl`.
 
 As code becomes more complex, and users pull in more code, it may also be
 helpful to add
 _namespaces_<sup><small>[[define](/docs/guides/glossary.md#namespace)]</small></sup>
-to give related entities consistently structured names. A namespace affects the _name
+to give related entities consistently structured names. A namespace affects the
+_name
 path_<sup><small>[[define](/docs/guides/glossary.md#name-path)]</small></sup>
 used when calling code. For example, with no namespace, if a `Geometry` library
 defines `Circle` then the name path will be `Geometry.Circle`. However, an
