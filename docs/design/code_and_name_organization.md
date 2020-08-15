@@ -18,13 +18,15 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
         -   [Disallowing name conflicts](#disallowing-name-conflicts)
     -   [Package keyword](#package-keyword)
     -   [Libraries](#libraries)
+        -   [Exporting entities from an API file](#exporting-entities-from-an-api-file)
     -   [Namespaces](#namespaces)
-        -   [Using imported namespaces](#using-imported-namespaces)
+        -   [Re-declaring imported namespaces](#re-declaring-imported-namespaces)
         -   [Aliasing](#aliasing)
     -   [Imports](#imports-1)
         -   [Imported name conflicts](#imported-name-conflicts)
-    -   [Library name conflicts](#library-name-conflicts)
-    -   [Moving APIs between between files](#moving-apis-between-between-files)
+-   [Caveats](#caveats)
+    -   [Package and library name conflicts](#package-and-library-name-conflicts)
+    -   [Moving code between between files](#moving-code-between-between-files)
 -   [Open questions to resolve](#open-questions-to-resolve)
     -   [Managing interface versus implementation in libraries](#managing-interface-versus-implementation-in-libraries)
         -   [Multiple interface files](#multiple-interface-files)
@@ -83,7 +85,7 @@ such as `geometry.carbon`.
 Each file begins with a declaration of which
 _package_<sup><small>[[define](/docs/guides/glossary.md#package)]</small></sup>
 it belongs in. The package will be a single identifier, such as `Geometry`. An
-example file in the `Geometry` package would start with `package Geometry;`.
+example file in the `Geometry` package would start with `package Geometry api;`.
 
 A tiny package may consist of a single file, and not use any further features of
 the `package` keyword.
@@ -94,7 +96,7 @@ _libaries_<sup><small>[[define](/docs/guides/glossary.md#library)]</small></sup>
 A library is the basic unit of both compilation and code reuse; separating files
 into multiple libraries can speed up compilation while also making it clear
 which code is being reused. An example library of `Shapes` in the `Geometry`
-package would look like `package Geometry library Shapes;`
+package would look like `package Geometry library Shapes api;`
 
 When a library becomes too large for a single file to easily contain, it may be
 useful to separate the API from the implementation instead of splitting
@@ -112,8 +114,8 @@ path_<sup><small>[[define](/docs/guides/glossary.md#name-path)]</small></sup>
 used when calling code. For example, with no namespace, if a `Geometry` library
 defines `Circle` then the name path will be `Geometry.Circle`. However, an
 example namespace of `TwoDimensional` in the `Geometry` package would look like
-`package Geometry library Shapes namespace TwoDimensional;`, and result in a
-name path of `Geometry.TwoDimensional.Shapes`.
+`package Geometry library Shapes namespace TwoDimensional api;`, and result in a
+name path of `Geometry.TwoDimensional.Circle`.
 
 This scaling of packages into libraries and namespaces is how Carbon supports
 both small and large codebases.
@@ -122,26 +124,24 @@ both small and large codebases.
 
 The `import` keyword supports reusing code from other files and libraries.
 
-For example, to import the `Geometry.Shapes` namespace:
+For example, to use `Geometry.Circle` from the `Geometry.Shapes` library:
 
 ```carbon
-import("Geometry", "Shapes");
+import Geometry library Shapes;
 
-fn Area(Shapes.Circle circle) { ... };
+fn Area(Geometry.Circle circle) { ... };
 ```
 
-Specific identifiers may also be imported. For example:
+The `library` keyword is optional for `import`, and its use should parallel that
+of `library` on the `package` of the code being imported.
+
+Imports may also be
+[renamed to prevent name conflicts](#name-conflicts-of-imports). For example:
 
 ```carbon
-import("Geometry.Shapes", "Circle");
+import Geometry library Shapes as Geo;
 
-fn Area(Circle circle) { ... };
-```
-
-Imports may also be [aliased](#name-conflicts-of-imports). For example:
-
-```carbon
-alias C = import("Geometry.Shapes", "Circle");
+fn Area(Geo.Circle circle) { ... };
 ```
 
 ## Details
@@ -164,32 +164,31 @@ ambiguous shadowing; that is to say, a name is used that could match two
 different entities. [Aliasing](aliases.md) may be used to avoid name conflicts,
 [as described below](#import-name-conflicts).
 
-For example, all cases of `Triangle` conflict because they're in the same scope:
+For example, all cases of `Geometry` conflict because they're in the same scope:
 
 ```carbon
-package Example;
+package Example api;
 
-import("Geometry.Shapes", "Triangle");
-import("Music.Instrument", "Triangle");
+import Geometry;
 
-namespace Triangle;
-fn Triangle() { ... }
-struct Triangle { ... }
+namespace Geometry;
+fn Geometry() { ... }
+struct Geometry { ... }
 ```
 
-In this below example, the declaration of `Foo.Triangle` shadows `Triangle`, but
+In this below example, the declaration of `Foo.Geometry` shadows `Geometry`, but
 is not inherently a conflict. A conflict arises when trying to use it from
-`Foo.GetArea` because the `Triangle` lookup from within `Foo` shadows the
-imported `Triangle`, and so produces a name lookup error.
+`Foo.Geometry` because the `Geometry` lookup from within `Foo` shadows the
+imported `Geometry`, and so produces a name lookup error.
 
 ```carbon
-package Example;
+package Example api;
 
-import("Geometry.Shapes", "Triangle");
+import Geometry;
 
 namespace Foo;
-struct Foo.Triangle { ... }
-fn Foo.GetArea(var Triangle: t) { ... }
+struct Foo.Geometry { ... }
+fn Foo.GetArea(var Geometry.Circle: t) { ... }
 ```
 
 We expect some shadowing like this to occur, particularly during refactoring.
@@ -199,76 +198,114 @@ when shadowing is an issue.
 ### Package keyword
 
 The first non-comment, non-whitespace line of a Carbon file will be the
-`package` keyword. The `package` keyword's syntax, combined with the optional
-`library` keyword, may be expressed as a rough regular expression:
+`package` keyword. The `package` keyword's syntax may be expressed as a rough
+regular expression:
 
 ```regex
-package NAME_PATH (library NAME_PATH)? (namespace NAME_PATH)? (impl)?;
+package IDENTIFIER (library NAME_PATH)? (namespace NAME_PATH)? (api|impl);
 ```
 
 For example:
 
 ```carbon
-package Geometry library Objects.Flat namespace Shapes
+package Geometry library Objects.FourSides namespace TwoDimensional api;
 ```
 
 Breaking this apart:
 
--   The first name passed to the `package` keyword, `Geometry`, is a name path
-    prefix that will be used for both the file's library and namespace paths.
--   When the optional `library` keyword is specified, its name path is combined
-    with the package to generate the library path. In this example, the
-    `Geometry.Objects.Flat` library will be used.
--   When the optional `namespace` keyword is specified, its name path is
-    combined with the package to generate the namespace path. In this example,
-    the `Geometry.Shapes` namespace will be used.
--   The optional `impl` keyword, which is not present in this example, would
-    make this an implementation file as described under [libraries](#libraries).
+-   The identifier passed to the `package` keyword, `Geometry`, is the package
+    name and will prefix both library and namespace paths.
+-   When the optional `library` keyword is specified, its name path argument is
+    combined with the package to generate the library path. In this example, the
+    `Geometry.Objects.FourSides` library path will be used.
+-   When the optional `namespace` keyword is specified, its name path argument
+    is combined with the package to generate the namespace path. In this
+    example, the `Geometry.TwoDimensional` namespace will be used.
+-   The use of the `api` keyword indicates this is an API files as described
+    under [libraries](#libraries). If it instead had `impl`, this would be an
+    implementation file.
 
-It's possible that files contributing to the `Geometry.Objects.Flat` may use
-different `package` arguments. These examples vary only on the resulting
-namespace, which will use only the `package` name path:
-
-```carbon
-package Geometry.Objects.Flat;
-package Geometry.Objects library Flat;
-package Geometry library Objects.Flat;
-```
+It's possible that files contributing to the `Geometry.TwoDimensional` namespace
+may use different `library` arguments. Similarly, files contributing to the
+`Geometry.Objects.FourSides` library may use different `namespace` arguments.
+However, they will all be in the `Geometry` package.
 
 Because the `package` keyword must be specified in all files, there are a couple
 important and deliberate side-effects:
 
--   Every file will be in precisely one library.
--   Every entity in Carbon will be in a namespace due to the `package`. There is
-    no "global" namespace.
+-   Every file will be in precisely one library, even if it's a library path
+    that consists of only the package name.
+-   Every entity in Carbon will be in a namespace, even if it's a namespace path
+    that consists of only the package name. There is no "global" namespace.
     -   Entities within a file may have additional namespaces specified,
         [as detailed below](#namespaces).
 
 ### Libraries
 
 Every Carbon library consists of one or more files. Each Carbon library has a
-primary file that defines its interface, and may optionally contain additional
-files that are implementation.
+primary file that defines its API, and may optionally contain additional files
+that are implementation.
 
--   An implementation file will have `impl` in the `package` declaration. For
-    example, `package Geometry library Shapes impl;`.
--   An interface file will not have `impl`. For example,
-    `package Geometry library Shapes;`
+-   An API file's `package` will have `api`. For example,
+    `package Geometry library Shapes api;`
+    -   API filenames must have the `.carbon` extension. They must not have a
+        `.impl.carbon` extension.
+-   An implementation file's `package` will have `impl`. For example,
+    `package Geometry library Shapes impl;`.
+    -   Implementation filenames must have the `.impl.carbon` extension.
 
-The difference between interface and implementation will act as a form of access
-control. Interface files must compile independently of implementation, only
-importing from external libraries. Implementation files inside the library may
-consume from either interface or implementation. Files outside the library may
-only consume the interface.
+The difference between API and implementation will act as a form of access
+control. API files must compile independently of implementation, only importing
+from external libraries. Implementation files inside the library may consume
+from either API or implementation. Files outside the library may only consume
+the API.
 
-When importing a library's interface, it should be expected that the transitive
-closure of imported files from the primary interface file will be used. The size
-of that transitive closure will affect compilation time, so libraries with
-complex implementations should endeavor to minimize the interface imports.
+When importing a library's API, it should be expected that the transitive
+closure of imported files from the primary API file will be used. The size of
+that transitive closure will affect compilation time, so libraries with complex
+implementations should endeavor to minimize the API imports.
 
 Libraries also serve as a critical unit of compilation. Dependencies between
 libraries must be clearly marked, and the resulting dependency graph will allow
 for separate compilation.
+
+#### Exporting entities from an API file
+
+In order to actually be part of a library's API, entities must both be in the
+API file and explicitly marked as an API. This is done using the `api` keyword,
+which is only allowed in the API file. For example:
+
+```carbon
+package Geometry library Shapes api;
+
+// Circle is marked as an API, and will be available to other libraries.
+api struct Circle { ... }
+
+// CircleHelper is not marked as an API, and so will not be available to other
+// libraries.
+fn CircleHelper(Circle circle) { ... }
+
+// Only entities in namespaces should be marked as an API, not the namespace
+// itself.
+namespace Operations;
+
+// Operations.GetCircumference is marked as an API, and will be available to
+// other libraries as Geometry.Operations.GetCircumference.
+api fn Operations.GetCircumference(Circle circle) { ... }
+```
+
+This means that an API file can contain all implementation code for a library.
+However, separate implementation files are still desirable for a few reasons:
+
+-   It will be easier for readers to quickly scan an API-only file for API
+    documentation.
+-   Reducing the amount of code in an API file can speed up compilation,
+    especially if fewer imports are needed. This can result in transitive
+    compilation performance improvements for files using the library.
+-   From a code maintenance perspective, having smaller files can make a library
+    more maintainable.
+
+Use of the `api` keyword is not allowed within files marked as `impl`.
 
 ### Namespaces
 
@@ -301,68 +338,36 @@ available as an identifier and `Bar` must be reached through `Foo`; `Bar.Baz` is
 invalid code because `Bar` would be unknown.
 
 Namespaces declared and added to within a file must always be children of the
-file-level namespace. For example, this declares `Geometry.Shapes.Triangle`:
+file-level namespace. For example, this declares
+`Geometry.Shapes.ThreeSides.Triangle`:
 
 ```carbon
-package Geometry;
+package Geometry namespace Shapes api;
 
+namespace ThreeSides;
+
+struct ThreeSides.Triangle { ... }
+```
+
+#### Re-declaring imported namespaces
+
+Namespaces may be imported, in addition to being declared. However, the
+namespace must still be declared locally in order to add symbols to it.
+
+For example, if the `Geometry.Shapes.ThreeSides` library provides the
+`Geometry.Shapes` namespace, this code is still valid:
+
+```carbon
+package Geometry library Shapes.FourSides;
+
+import Geometry library Shapes.ThreeSides;
+
+// This does not conflict with the existence of `Geometry.Shapes` from
+// `Geometry.Shapes.ThreeSides`, even though the name path is identical.
 namespace Shapes;
 
-struct Shapes.Triangle { ... }
-```
-
-#### Using imported namespaces
-
-If a namespace is imported, it may also be used to declare new items, so long as
-it's a child of the file-level namespace.
-
-For example, this code declares `Geometry.Shapes.Triangle`:
-
-```carbon
-package Geometry;
-
-import("Geometry", "Shapes");
-
-struct Shapes.Triangle { ... }
-```
-
-On the other hand, this is invalid code because the `Instruments` namespace is
-not under `Geometry`, and so `Triangle` cannot be added to it from this file:
-
-```carbon
-package Geometry;
-
-import("Music", "Instruments");
-
-struct Instruments.Triangle { ... }
-```
-
-This is also invalid code because the `Geometry.Volumes` namespace is a sibling
-of the `Geometry.Areas` namespace used for this file, and so `Sphere` cannot be
-added to it from this file:
-
-```carbon
-package Geometry namespace Areas;
-
-import("Geometry", "Volumes");
-
-struct Circle { ... }
-
-struct Volumes.Sphere { ... }
-```
-
-However, with a higher-level file namespace of `Geometry`, a single file could
-still add to both `Volumes` and `Areas`:
-
-```carbon
-package Geometry;
-
-import("Geometry", "Volumes");
-
-namespace Areas;
-struct Areas.Circle { ... }
-
-struct Volumes.Sphere { ... }
+// This requires the above 'namespace Shapes' declaration.
+struct Shapes.Square { ... };
 ```
 
 #### Aliasing
@@ -380,109 +385,100 @@ fn WizAlias(FB.Baz x);
 
 ### Imports
 
-The `import` keyword supports reusing code from other files and libraries. All
-imports for a file must have only whitespace and comments between the `package`
-declaration and them. If [metaprogramming](metaprogramming.md) code generates
-`import`s, it must only generate imports and immediately follow the explicit
-`import`s. No other code can be interleaved.
+The `import` keyword supports reusing code from other files and libraries. The
+`import` keyword's syntax may be expressed as a rough regular expression:
 
-One or more entities may be imported with a single statement. When multiple
-entities are being imported, they should be specified using a
-[tuple](tuples.md). For example:
-
-```carbon
-import("Geometry.Shapes", "Circle");
-import("Geometry.Shapes", ("Circle", "Triangle", "Square"));
+```regex
+import (IDENTIFIER)? (library NAME_PATH)? (as IDENTIFIER)?;
 ```
 
-When importing from another file or library that is in the current namespace
-path, the namespace may be omitted from the import. For example, an import of
-`Geometry.Point` may look like:
+All imports for a file must have only whitespace and comments between the
+`package` declaration and them. If [metaprogramming](metaprogramming.md) code
+generates imports, it must only generate imports following the
+non-metaprogramming imports. No other code can be interleaved.
+
+All imports are done at the library level. They provide the package's namespace
+path for use. Child namespaces or entities must separately be
+[aliased](aliases.md) if desired.
+
+For example:
 
 ```carbon
 package Geometry;
 
-import("Point");
+// This imports Math's default library, and provides a `
+import Math;
+import Math library Trigonometrics;
+
+// This imports Geometry.Shapes. This reuses the
+import library Shapes;
+
 ```
 
 #### Imported name conflicts
 
-It's expected that multiple libraries will end up exporting identical names.
-Importing them would result in
+It's possible that an imported package will have the same name as an entity
+within the file doing the import. Importing them would result in
 [shadowing](https://en.wikipedia.org/wiki/Variable_shadowing), which Carbon
 treats as a conflict. For example, this would be a rejected name conflict
-because it redefines `Triangle`:
+because it redefines `Geometry`:
 
 ```carbon
-import("Geometry.Shapes", "Triangle");
-import("Music.Instruments", "Triangle");
+import Geometry;
+
+fn Geometry(var Geometry.Circle: circle) { ... }
 ```
 
-In cases such as this, one or more of the conflicting names must be
-[aliased](aliases.md) such that the resulting names are unique. This only works
-when importing one symbol in the `import`. For example, this would be allowed:
+In cases such as this, `as` can be used to rename the import. For example, this
+would be allowed:
 
 ```carbon
-import("Geometry.Shapes", "Triangle");
-alias MusicTriangle = import("Music.Instruments", "Triangle");
+import Geometry as Geo;
+
+fn Geometry(var Geo.Circle: circle) { ... }
 ```
 
-### Library name conflicts
+## Caveats
 
-It's possible that two libraries will use the same namespace paths, and have
-overlapping entity names. For example, someone may want to use two separate
-geometry-related packages that both use the `Geometry` namespace and have
-`Geometry.Point`.
+### Package and library name conflicts
 
-To cover this case, we can allow users to specify which interface library a
-given import should read from. For example:
+Library name conflicts should not occur, because it's expected that a given
+package is maintained by a single organization. It's the responsibility of that
+orgnaization to maintain unique library names within their package.
 
-```carbon
-alias FooPoint = import("Geometry", "Point", .library_path = "path/to/foo.lib");
-alias BarPoint = import("Geometry", "Point", .library_path = "path/to/bar.lib");
-```
+There is a greater risk of package name conflicts where two organizations use
+the same package name. We will encourage a unique package naming scheme, such as
+maintaining a name server for open source packages. Conflicts can also be
+addressed by renaming one of the packages, either at the source, or as a local
+modification.
 
-### Moving APIs between between files
+The `as` keyword of `import` does not address package name conflicts because,
+while it supports renaming a package to avoid intra-file name conflicts, it
+would not be able to differentiate between two identically named packages.
 
-When moving APIs between two files, the design of `package`, `namespace`, and
-`import` is intended to minimize the amount of additional work needed. The
-expected work depends on which library and namespace paths the files are in:
+### Moving code between between files
 
--   If both files are part of the same library and namespace paths:
+Moving code between two files in the same library is a local change that will
+not affect calling code, so long as appropriate API endpoints remain.
 
-    -   If the source was an interface, the destination file must not be an
-        interface because there is only one interface file per library. Some
-        declaration must remain in the interface file in order to keep the APIs
-        exposed.
+Moving code between two libraries requires that imports be updated accordingly.
+However, the namespace should remain the same, and so call sites would not need
+to change.
 
-    -   If the source was not an interface, then no further changes are needed.
-
--   If the library path differs:
-
-    -   If the destination is an interface, then no further code changes need to
-        be made. However, build dependencies may need to be updated to ensure
-        library dependencies are correct for callers.
-
-    -   If the source was an interface, the destination must have an interface
-        provided to support callers unless the destination library is the _only_
-        caller.
-
-    -   If the source was not an interface, and the source library still has
-        calls to the API, the destination must have an interface added. If the
-        source library has no remaining calls to the API, then no further
-        changes are needed.
-
--   If the namespace path differs:
-
-    -   The `namespace` keyword might be useable to expose the moved APIs at the
-        same name path.
-
-    -   Otherwise, callers need to be updated to the new name path.
-
--   If both the library and namespace paths differ, then both above sections
-    apply for fixes.
+Moving code between two namespaces always requires call sites be updated,
+although it will not affect the actual import statement.
 
 ## Open questions to resolve
+
+TODO: Update all open questions and alternatives. Finish cleaning up 'interface'
+in notes. New open questions:
+
+-   Remove the `library` keyword (weird interaction with namespaces, non-obvious
+    package)
+-   Allow multiple library imports from one keyword (goes against grep desire)
+-   interface vs api vs whatever else
+
+TODO: Note 'test' keyword for alternatives
 
 On all of these open questions, thoughts on pros/cons would be helpful to come
 to a tentative resolution. Essentially, I have thoughts on each, but I'd like
