@@ -78,7 +78,7 @@ When Carbon code is placed in files, we need to have some way of organizing that
 code for reuse.
 
 When creating a new file, files will choose a name with a `.carbon` extension,
-such as `geometry.carbon`.
+such as `geometry.carbon`. Carbon files are the basic unit of compilation.
 
 Each file begins with a declaration of which
 _package_<sup><small>[[define](/docs/guides/glossary.md#package)]</small></sup>
@@ -91,14 +91,14 @@ the `package` keyword.
 However, as a package adds more files, it will probably want to separate out
 into multiple
 _libaries_<sup><small>[[define](/docs/guides/glossary.md#library)]</small></sup>.
-A library is the basic unit of both compilation and code reuse; separating files
-into multiple libraries can speed up compilation while also making it clear
+A library is the basic unit of *code reuse*. Separating code
+into multiple libraries can speed up the overall build while also making it clear
 which code is being reused. An example library of `Shapes` in the `Geometry`
 package would look like `package Geometry library Shapes;`
 
-When a library becomes too large for a single file to easily contain, it may be
-useful to separate the API from the implementation instead of splitting
-libraries. Implementation files allow for code to be extracted out from the API
+It is often useful to have a physical separation the API of a library from its implementation.
+This may help organize code as the library becomes larger, or to let the build system distinguish between the dependencies of the API itself and its underlying implementation.
+Implementation files allow for code to be extracted out from the API
 file, while only being callable from other files within the library, including
 both API and implementation files. Implementation files are marked by both
 naming the file to use an extension of `.impl.carbon` and changing the package
@@ -107,7 +107,7 @@ to `package Geometry library Shapes impl`.
 As code becomes more complex, and users pull in more code, it may also be
 helpful to add
 _namespaces_<sup><small>[[define](/docs/guides/glossary.md#namespace)]</small></sup>
-to group related entities. A namespace affects the _name
+to give related entities consistently structured names. A namespace affects the _name
 path_<sup><small>[[define](/docs/guides/glossary.md#name-path)]</small></sup>
 used when calling code. For example, with no namespace, if a `Geometry` library
 defines `Circle` then the name path will be `Geometry.Circle`. However, an
