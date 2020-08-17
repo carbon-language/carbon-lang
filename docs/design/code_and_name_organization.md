@@ -16,7 +16,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [Details](#details)
     -   [Name paths](#name-paths)
         -   [Disallowing name conflicts](#disallowing-name-conflicts)
-    -   [Package keyword](#package-keyword)
+    -   [Packages](#packages)
     -   [Libraries](#libraries)
         -   [Exporting entities from an API file](#exporting-entities-from-an-api-file)
     -   [Namespaces](#namespaces)
@@ -36,7 +36,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [Alternatives](#alternatives)
     -   [Name paths](#name-paths-1)
         -   [Allow shadowing of names](#allow-shadowing-of-names)
-    -   [Package keyword](#package-keyword-1)
+    -   [Packages](#packages-1)
         -   [Remove the `library` keyword from `package` and `import`](#remove-the-library-keyword-from-package-and-import)
         -   [Rename package concept](#rename-package-concept)
         -   [Strict association between the filesystem path and library/namespace](#strict-association-between-the-filesystem-path-and-librarynamespace)
@@ -207,7 +207,7 @@ We expect some shadowing like this to occur, particularly during refactoring.
 However, it remains important that code uniquely refer to which entity it uses
 when shadowing is an issue.
 
-### Package keyword
+### Packages
 
 The first non-comment, non-whitespace line of a Carbon file will be the
 `package` keyword. The `package` keyword's syntax may be expressed as a rough
@@ -583,7 +583,7 @@ potentially with special syntax to handle edge cases, we don't have evidence at
 present that it's necessary. As a result, we prefer the simplicity in reading of
 disallowing shadowing.
 
-### Package keyword
+### Packages
 
 #### Remove the `library` keyword from `package` and `import`
 
