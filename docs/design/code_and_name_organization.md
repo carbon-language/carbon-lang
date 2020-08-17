@@ -19,6 +19,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Packages](#packages)
     -   [Libraries](#libraries)
         -   [Exporting entities from an API file](#exporting-entities-from-an-api-file)
+        -   [Granularity of libraries](#granularity-of-libraries)
     -   [Namespaces](#namespaces)
         -   [Re-declaring imported namespaces](#re-declaring-imported-namespaces)
         -   [Aliasing](#aliasing)
@@ -44,8 +45,8 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
         -   [Different file type labels](#different-file-type-labels)
         -   [Allow importing implementation files from within the same library](#allow-importing-implementation-files-from-within-the-same-library)
     -   [Function-like syntax](#function-like-syntax)
-        -   [Managing interface versus implementation in libraries](#managing-interface-versus-implementation-in-libraries)
-        -   [Multiple interface files](#multiple-interface-files)
+        -   [Managing API versus implementation in libraries](#managing-api-versus-implementation-in-libraries)
+        -   [Multiple API files](#multiple-api-files)
     -   [Namespaces](#namespaces-1)
         -   [Coarser namespace granularity](#coarser-namespace-granularity)
         -   [Scoped namespaces](#scoped-namespaces)
@@ -320,6 +321,13 @@ However, separate implementation files are still desirable for a few reasons:
     more maintainable.
 
 Use of the `api` keyword is not allowed within files marked as `impl`.
+
+#### Granularity of libraries
+
+Conceptually, we expect libraries to be very small, possibly containing only a
+single class. This will be pressured because of the limitation of a single API
+file per library. We expect that keeping libraries small will enable better
+parallelism of compilation.
 
 ### Namespaces
 
@@ -690,7 +698,7 @@ for ease of typing. We also don't think it's an unclear abbreviation.
 #### Allow importing implementation files from within the same library
 
 The current proposal is that implementation files in a library implicitly import
-their interface, and cannot import other implementation files in the same
+their API, and that they cannot import other implementation files in the same
 library.
 
 We could instead allow importing implementation files from within the same
@@ -726,17 +734,15 @@ Cons:
         breaking away from name paths.
     -   Detecting where symbols exist may cause separate parsing, compilation
         debugging, and compilation parallelism problems.
--   Libraries are supposed to be small, and we've chosen to only allow one
-    interface file per library to promote that concept. Encouraging
-    implementation files to be inter-dependent appears to support a more complex
-    library design again, and may be better addressed through inter-library
-    ACLs.
+-   Libraries are supposed to be small, and we've chosen to only allow one API
+    file per library to promote that concept. Encouraging implementation files
+    to be inter-dependent appears to support a more complex library design
+    again, and may be better addressed through inter-library ACLs.
 -   Loses some of the ease-of-use that some other languages have around imports,
     such as Go.
 
 The problems with these approaches, and encouragement towards small libraries,
-is how we reach the current approach of only importing interfaces, and
-automatically.
+is how we reach the current approach of only importing APIs, and automatically.
 
 ### Function-like syntax
 
@@ -777,90 +783,55 @@ Cons:
 
 The preference is for keywords.
 
-#### Managing interface versus implementation in libraries
+#### Managing API versus implementation in libraries
 
-A few alternatives:
+At present, we plan to have `api` versus `impl` as a file type, and also
+`.carbon` versus `.impl.carbon` as the file extension. We chose to use both
+together, rather than one or the other, because we expect some parties to
+strongly want file content to be sufficient for compilation, while others will
+want file extensions to be meaningful for the syntax split.
 
--   Add `interface` instead of, or in addition to, `impl`.
+Instead of the file type split, we could drift further and instead have APIs in
+any file in a library, using the same kind of
+[API markup](#exporting-entities-from-an-api-file).
 
-    -   This could also take the form of `package Geometry library Shapes` for
-        interfaces and `package Geometry impl Shapes` for implementation. If
-        there's no additional library name path, `package Geometry library`
-        versus `package Geometry impl`.
+-   Pros:
 
-    -   Pros:
-        -   Increases explicitness of an interface file, which is important
-            because it becomes the API.
-        -   If libraries typically consist of two or more files, `impl` would
-            come up more frequently, and so the less frequent syntax should be
-            emphasized.
-    -   Cons:
-        -   This may end up being the more verbose syntax. An interface is
-            _always_ required, whereas `impl` files are optional.
+    -   May help users who have issues with cyclical code references.
+    -   Improves compiler inlining of implementations, because the compiler can
+        decide how much to actually put in the generated API.
 
--   Use a different file extension. For example, `.6c` for implementation and
-    `.6ch` for interface.
+-   Cons:
 
-    -   Pros:
-        -   Increases explicitness of an interface file, which is important
-            because it becomes the API.
-            -   Can find the interface without opening files.
-    -   Cons:
-        -   Adds another file extension; adds some overhead to switching which
-            file in a library is the interface.
+    -   While allowing users to spread a library across multiple files can be
+        considered an advantage, we see the single API file as a way to pressure
+        users towards smaller libraries, which we prefer.
+    -   May be slower to compile because each file must be parsed once to
+        determine APIs.
+    -   For users that want to see _only_ APIs in a file, they would need to use
+        tooling to generate the API file.
+        -   Auto-generated documentation may help solve this problem.
 
--   Instead of having special files, add a markup to names to indicate whether
-    they should be treated as an interface. Have tooling determine what the
-    interface is. For example, to make `Foo` an interface:
+#### Multiple API files
 
-    ```carbon
-    $interface
-    struct Foo { ... }
-    ```
-
-    -   Pros:
-        -   Avoids forcing users to separate their interface into one file.
-            -   This may be considered a manual maintenance problem.
-        -   May help users who have issues with cyclical code references.
-        -   Improves compiler inlining of implementations, because the compiler
-            can decide how much to actually put in the generated interface.
-    -   Cons:
-        -   May be slower to compile, as each file must be parsed once to
-            determine interfaces.
-        -   For users that want to see _only_ interfaces in a file, they would
-            need to use tooling to generate the interface file.
-            -   Auto-generated documentation may help solve this problem.
-
--   Use a hybrid solution with `$interface` recommended, but allow interface
-    files to be specified optionally to improve compilation performance.
-
-    -   Pros:
-        -   Allows users to use `$interface` when they find it easier, without
-            giving up performance options.
-    -   Cons:
-        -   Creates language complexity with two different approaches for
-            similar issues.
-
-#### Multiple interface files
-
-The proposal also presently suggests a single interface file. Under an explicit
-interface file approach, we could still allow multiple interface files.
+The proposal also presently suggests a single API file. Under an explicit API
+file approach, we could still allow multiple API files.
 
 Pros:
 
--   More flexibility when writing interfaces; could otherwise end up with one
-    gigantic interface file.
+-   More flexibility when writing APIs; could otherwise end up with one gigantic
+    API file.
 
 Cons:
 
--   Encourages larger libraries by making it easier to provide large interfaces.
--   Removes some of the advantages of having an interface file as a "single
-    place" to look, suggesting more towards the markup approach.
--   Not clear if interface files should be allowed to depend on each other, as
-    they were intended to help resolve cyclical dependency issues.
+-   Encourages larger libraries by making it easier to provide large APIs.
+-   Removes some of the advantages of having an API file as a "single place" to
+    look, suggesting more towards the markup approach.
+-   Not clear if API files should be allowed to depend on each other, as they
+    were intended to help resolve cyclical dependency issues.
 
 We particularly want to discourage large libraries, and so we're likely to
-retain the single interface file limit.
+retain the single API file limit.
 
 ### Namespaces
 
