@@ -51,8 +51,8 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
         -   [Scoped namespaces](#scoped-namespaces)
     -   [Imports](#imports-2)
         -   [Block imports](#block-imports)
-        -   [Broader imports, either all names or arbitrary code](#broader-imports-either-all-names-or-arbitrary-code)
         -   [Block imports of libraries of a single package](#block-imports-of-libraries-of-a-single-package)
+        -   [Broader imports, either all names or arbitrary code](#broader-imports-either-all-names-or-arbitrary-code)
         -   [Direct name imports](#direct-name-imports)
 
 <!-- tocstop -->
@@ -987,6 +987,22 @@ confusing to users: we should only allow one.
 In the end, most of the decision for `import` leans on the ease of retyping the
 keyword, as well as `grep`-ability.
 
+#### Block imports of libraries of a single package
+
+We could allow block imports of librarys from the same package. For example:
+
+```carbon
+import Foo libraries {
+  Bar,
+  Baz,
+}
+```
+
+This is similar to [block imports](#block-imports), and should be handled the
+same. It has the additional problem that if we allow both `library` and
+`libraries` syntaxes, it's a divergence that could be even more difficult to
+handle.
+
 #### Broader imports, either all names or arbitrary code
 
 Carbon imports require specifying individual names to import. We could support
@@ -1018,22 +1034,6 @@ Cons:
 
 We particularly value the parser benefits of knowing which identifiers are being
 imported, and so we require individual names for imports.
-
-#### Block imports of libraries of a single package
-
-We could allow block imports of librarys from the same package. For example:
-
-```carbon
-import Foo libraries {
-  Bar,
-  Baz,
-}
-```
-
-This is similar to [block imports](#block-imports), and should be handled the
-same. It has the additional problem that if we allow both `library` and
-`libraries` syntaxes, it's a divergence that could be even more difficult to
-handle.
 
 #### Direct name imports
 
