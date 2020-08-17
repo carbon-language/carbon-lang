@@ -753,8 +753,8 @@ import Baz as B;
 We could do:
 
 ```carbon
-import("Foo", "Bar");
-alias B = import("Baz");
+import("Foo", "Bar").Foo;
+alias B = import("Baz").Baz;
 ```
 
 Pros:
@@ -768,8 +768,12 @@ Pros:
 
 Cons:
 
--   It's unusual for a function-like syntax to produce identifiers.
+-   It's unusual for a function-like syntax to produce identifiers for name
+    lookup.
     -   This could be addressed by _requiring_ alias, but that becomes verbose.
+    -   There's a desire to explicitly note the identifier being imported some
+        way, as with `.Foo` and `.Baz` above. However, this complicates the
+        resulting syntax.
 
 The preference is for keywords.
 
