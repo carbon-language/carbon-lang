@@ -24,27 +24,36 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
         -   [Aliasing](#aliasing)
     -   [Imports](#imports-1)
         -   [Imported name conflicts](#imported-name-conflicts)
+        -   [Imports from the current package](#imports-from-the-current-package)
 -   [Caveats](#caveats)
-    -   [Package and library name conflicts](#package-and-library-name-conflicts)
     -   [Moving code between between files](#moving-code-between-between-files)
--   [Open questions to resolve](#open-questions-to-resolve)
-    -   [Managing interface versus implementation in libraries](#managing-interface-versus-implementation-in-libraries)
-        -   [Multiple interface files](#multiple-interface-files)
-    -   [Require files in a library be imported by filename](#require-files-in-a-library-be-imported-by-filename)
-    -   [Function-like `package` and `import` syntax](#function-like-package-and-import-syntax)
-    -   [Quoting names in imports](#quoting-names-in-imports)
-    -   [Reducing arguments for single name imports](#reducing-arguments-for-single-name-imports)
-    -   [Rename package concept](#rename-package-concept)
--   [Alternatives](#alternatives)
-    -   [Allow shadowing of names](#allow-shadowing-of-names)
-    -   [Broader imports, either all names or arbitrary code](#broader-imports-either-all-names-or-arbitrary-code)
-    -   [Coarser namespace granularity](#coarser-namespace-granularity)
+    -   [Package and library name conflicts](#package-and-library-name-conflicts)
+-   [Open questions](#open-questions)
     -   [Different file extensions](#different-file-extensions)
+    -   [Imports from other languages](#imports-from-other-languages)
     -   [Imports from URLs](#imports-from-urls)
-    -   [Namespace syntax](#namespace-syntax)
-    -   [Prevent libraries from crossing package boundaries](#prevent-libraries-from-crossing-package-boundaries)
-    -   [Scoped namespaces](#scoped-namespaces)
-    -   [Strict association between the filesystem path and library/namespace](#strict-association-between-the-filesystem-path-and-librarynamespace)
+    -   [Test file type](#test-file-type)
+-   [Alternatives](#alternatives)
+    -   [Name paths](#name-paths-1)
+        -   [Allow shadowing of names](#allow-shadowing-of-names)
+    -   [Package keyword](#package-keyword-1)
+        -   [Remove the `library` keyword from `package` and `import`](#remove-the-library-keyword-from-package-and-import)
+        -   [Rename package concept](#rename-package-concept)
+        -   [Strict association between the filesystem path and library/namespace](#strict-association-between-the-filesystem-path-and-librarynamespace)
+    -   [Libraries](#libraries-1)
+        -   [Different file type labels](#different-file-type-labels)
+        -   [Allow importing implementation files from within the same library](#allow-importing-implementation-files-from-within-the-same-library)
+    -   [Function-like syntax](#function-like-syntax)
+        -   [Managing interface versus implementation in libraries](#managing-interface-versus-implementation-in-libraries)
+        -   [Multiple interface files](#multiple-interface-files)
+    -   [Namespaces](#namespaces-1)
+        -   [Coarser namespace granularity](#coarser-namespace-granularity)
+        -   [Scoped namespaces](#scoped-namespaces)
+    -   [Imports](#imports-2)
+        -   [Block imports](#block-imports)
+        -   [Broader imports, either all names or arbitrary code](#broader-imports-either-all-names-or-arbitrary-code)
+        -   [Block imports of libraries of a single package](#block-imports-of-libraries-of-a-single-package)
+        -   [Direct name imports](#direct-name-imports)
 
 <!-- tocstop -->
 
@@ -163,8 +172,9 @@ Carbon will disallow name conflicts when two identical names are declared within
 the same name path. Identical names in different namespaces will be allowed,
 although [name lookup](name_lookup.md) will produce an error if there is
 ambiguous shadowing; that is to say, a name is used that could match two
-different entities. [Aliasing](aliases.md) may be used to avoid name conflicts,
-[as described below](#import-name-conflicts).
+different entities. [`as`](#import-name-conflicts) may be used to address name
+conflicts caused by imports, and developers will be expected to avoid name
+conflicts in other entities that they define.
 
 For example, all cases of `Geometry` conflict because they're in the same scope:
 
@@ -255,6 +265,8 @@ that are implementation.
 -   An implementation file's `package` will have `impl`. For example,
     `package Geometry library Shapes impl;`.
     -   Implementation filenames must have the `.impl.carbon` extension.
+    -   Implementation files automatically import the library's API, and may not
+        import each other.
 
 The difference between API and implementation will act as a form of access
 control. API files must compile independently of implementation, only importing
@@ -262,7 +274,7 @@ from external libraries. Implementation files inside the library may consume
 from either API or implementation. Files outside the library may only consume
 the API.
 
-When importing a library's API, it should be expected that the transitive
+When any file imports a library's API, it should be expected that the transitive
 closure of imported files from the primary API file will be used. The size of
 that transitive closure will affect compilation time, so libraries with complex
 implementations should endeavor to minimize the API imports.
@@ -408,13 +420,18 @@ For example:
 ```carbon
 package Geometry;
 
-// This imports Math's default library, and provides a `
+// This imports Math's default library, and provides a Math namespace
+// identifier for use.
 import Math;
-import Math library Trigonometrics;
+// This imports Math's Trigonometry library, and resuses the Math namespace.
+import Math library Trigonometry;
 
-// This imports Geometry.Shapes. This reuses the
-import library Shapes;
-
+fn Foo() {
+  ...
+  // The compiler will determine which Math library Sin comes from.
+  Math.Sin(...);
+  ...
+}
 ```
 
 #### Imported name conflicts
@@ -440,7 +457,47 @@ import Geometry as Geo;
 fn Geometry(var Geo.Circle: circle) { ... }
 ```
 
+#### Imports from the current package
+
+The package identifier is optional when the package is intended to be the same
+as the current file. However, the import will still define a namespace
+identifier of the same name as the package for lookup of members, as usual. This
+is so that it's unambiguous where names in the file are coming from; otherwise,
+it would require compilation of imported files to determine during parsing
+whether a name was undefined or imported.
+
+For example:
+
+```carbon
+package Geometry;
+
+// This imports Geometry's Shapes library, and provides a Geometry namespace
+// identifier for use.
+import library Shapes;
+
+// Circle must be referenced using the Geometry namespace of the import.
+fn GetArea(var Geometry.Circle: c) { ... }
+```
+
+Note this means the `import library Shapes` does still declare a `Geometry`
+namespace that wasn't there previously.
+[Imported name conflicts](#imported-name-conflicts) may still occur if
+`Geometry.Geometry` is defined in the current file, and would still be fixed by
+`as`.
+
 ## Caveats
+
+### Moving code between between files
+
+Moving code between two files in the same library is a local change that will
+not affect calling code, so long as appropriate API endpoints remain.
+
+Moving code between two libraries requires that imports be updated accordingly.
+However, the namespace should remain the same, and so call sites would not need
+to change.
+
+Moving code between two namespaces always requires call sites be updated,
+although it will not affect the actual import statement.
 
 ### Package and library name conflicts
 
@@ -458,45 +515,265 @@ The `as` keyword of `import` does not address package name conflicts because,
 while it supports renaming a package to avoid intra-file name conflicts, it
 would not be able to differentiate between two identically named packages.
 
-### Moving code between between files
+## Open questions
 
-Moving code between two files in the same library is a local change that will
-not affect calling code, so long as appropriate API endpoints remain.
+These open questions are expected to be revisited by future proposals.
 
-Moving code between two libraries requires that imports be updated accordingly.
-However, the namespace should remain the same, and so call sites would not need
-to change.
+### Different file extensions
 
-Moving code between two namespaces always requires call sites be updated,
-although it will not affect the actual import statement.
+Currently, we're using `.carbon` and `.impl.carbon`. In the future, we may want
+to change the extension, particularly because Carbon may be renamed.
 
-## Open questions to resolve
+There are several other possible extensions / commands that we've considered in
+coming to the current extension:
 
-TODO: Update all open questions and alternatives. Finish cleaning up 'interface'
-in notes. New open questions:
+-   `.carbon`: This is an obvious and unsurprising choice, but also quite long
+    for a file extension.
+-   `.6c`: This sounds a little like 'sexy' when read aloud.
+-   `.c6`: This seems a weird incorrect ordering of the atomic number and has a
+    bad, if obscure, Internet slang association.
+-   `.cb` or `.cbn`: These collide with several acronyms and may not be
+    especially memorable as referring to Carbon.
+-   `.crb`: This has a bad Internet slang association.
 
--   Remove the `library` keyword (weird interaction with namespaces, non-obvious
-    package)
--   Allow multiple library imports from one keyword (goes against grep desire)
--   interface vs api vs whatever else
+### Imports from other languages
 
-TODO: Note 'test' keyword for alternatives
+Currently, we do not support cross-language imports. In the future, we will
+likely want to support imports from other languages, particularly for C++
+interoperability.
 
-On all of these open questions, thoughts on pros/cons would be helpful to come
-to a tentative resolution. Essentially, I have thoughts on each, but I'd like
-more feedback before coming to a conclusion.
+Although we're not designing this right now, it could fit into the proposed
+syntax. For example:
 
-> **NOTE:** Each of these open questions will be resolved before asking for a
-> comment deadline; they will not be presented as "open questions" to the core
-> team, or for later resolution, unless replies head in that direction. Either
-> they will be adopted or not, possibly partially, and "Alternatives" will be
-> updated accordingly.
+```carbon
+import Cpp file("myproject/myclass.h");
 
-### Managing interface versus implementation in libraries
+fn MyCarbonCall(var Cpp.MyProject.MyClass: x);
+```
 
-The proposal currently suggests having an `impl` flag in the `package` marker to
-separate implementation from interface. Is this the right way to manage the
-split?
+### Imports from URLs
+
+Currently, we don't support any kind of package management with imports. In the
+future, we may want to support tagging imports with a URL that identifies the
+repository where that package can be found. This can be used to help drive
+package management tooling and to support providing a non-name identity for a
+package that is used to enable handling conflicted package names.
+
+Although we're not designing this right now, it could fit into the proposed
+syntax. For example:
+
+```carbon
+import Foo library Baz url("https://foo.com")
+```
+
+### Test file type
+
+Similar to `api` and `impl`, we may eventually want a type like `test`. This
+should be part of a larger testing plan.
+
+## Alternatives
+
+### Name paths
+
+#### Allow shadowing of names
+
+Disallowing shadowing of names may turn out to be costly, even for its
+advantages of reducing bugs and confusion. While we could relax it later,
+potentially with special syntax to handle edge cases, we don't have evidence at
+present that it's necessary. As a result, we prefer the simplicity in reading of
+disallowing shadowing.
+
+### Package keyword
+
+#### Remove the `library` keyword from `package` and `import`
+
+Right now, we have syntax like:
+
+```carbon
+package Foo library Bar;
+package Foo library Bar namespace Baz;
+import Foo library Bar;
+```
+
+We could remove `library`, resulting in:
+
+```carbon
+package Foo.Bar;
+package Foo.Bar namespace Foo.Baz;
+import Foo.Bar;
+```
+
+Pros:
+
+-   Reduces redundant syntax in library declarations.
+    -   We expect libraries to be vcommon, so this may add up.
+
+Cons:
+
+-   Reduces explicitness of package vs library concepts.
+-   Creates redundancy of the package name in the namespace declaration.
+    -   Instead of `package Foo.Bar namespace Foo.Baz`, could instead use `Baz`,
+        or `this.Baz` to elide the package name.
+
+#### Rename package concept
+
+In other languages, a "package" is equivalent to what we call the name path
+here, which includes the `namespace`. We may want to rename the `package`
+keyword to avoid conflicts in meaning.
+
+Alternative names could be 'bundle', 'universe', or something similar to Rust's
+'crates'; perhaps 'compound' or 'molecule'.
+
+Pros:
+
+-   Avoids conflicts in meaning with other languages.
+    -   [Java](https://www.oracle.com/java/technologies/glossary.html), similar
+        to a namespace path.
+    -   [Go](https://golang.org/doc/effective_go.html#package-names), similar to
+        a namespace path.
+
+Cons:
+
+-   The meaning of `package` also overlaps a fair amount, and we would lose that
+    context.
+    -   [NPM/Node.js](https://www.npmjs.com/), as a distributable unit.
+    -   [Python](https://packaging.python.org/tutorials/installing-packages/),
+        as a distributable unit.
+    -   [Rust](https://doc.rust-lang.org/book/ch07-01-packages-and-crates.html),
+        as a collection of crates.
+    -   [Swift](https://developer.apple.com/documentation/swift_packages), as a
+        distributable unit.
+
+#### Strict association between the filesystem path and library/namespace
+
+Several languages create a strict association between the filesystem path, and
+the method for pulling in an API. For example:
+
+-   In C++, `#include` refers to specific files.
+-   In Java, `package` and `import` both reflect filesystem structure.
+-   In Python, `import` requires matching filesystem structure.
+-   In TypeScript, `import` refers to specific files.
+
+For contrast:
+
+-   In Go, `package` uses an arbitrary name.
+
+Pros:
+
+-   A strict association between filesystem path and import path makes it easier
+    to find source files. This is used by some languages for compilation.
+
+Cons:
+
+-   The strict association makes it harder to move names between files without
+    updating callers.
+
+We are choosing to avoid the strict association with filesystem paths in order
+to ease refactoring. With this approach, more refactorings will not need changes
+to API users.
+
+### Libraries
+
+#### Different file type labels
+
+We're using `api` and `impl` for file types.
+
+We've considered using `interface` instead of `api`, but that introduces a
+terminology collision with interfaces in the type system.
+
+We've considered dropping `api` from naming, but that creates a definition from
+absence of a keyword. We prefer the more explicit name.
+
+We could spell out `impl` as `implementation`, but are choosing the abbreviation
+for ease of typing. We also don't think it's an unclear abbreviation.
+
+#### Allow importing implementation files from within the same library
+
+The current proposal is that implementation files in a library implicitly import
+their interface, and cannot import other implementation files in the same
+library.
+
+We could instead allow importing implementation files from within the same
+library. There are two ways this could be done:
+
+-   We could add a syntax for importing symbols from other files in the same
+    library. This would make it easy to identify a directed acyclic graph
+    between files in the library. For example:
+
+    ```carbon
+    package Geometry;
+
+    import file("point.6c");
+    ```
+
+-   We could automatically detect when symbols from elsewhere in the library are
+    referenced, given an import of the same library. For example:
+
+    ```carbon
+    package Geometry;
+
+    import this;
+    ```
+
+Pros:
+
+-   Allows more separation of implementation between files within a library.
+
+Cons:
+
+-   Neither approach is quite clean:
+    -   Using filenames creates a common case where filenames _must_ be used,
+        breaking away from name paths.
+    -   Detecting where symbols exist may cause separate parsing, compilation
+        debugging, and compilation parallelism problems.
+-   Libraries are supposed to be small, and we've chosen to only allow one
+    interface file per library to promote that concept. Encouraging
+    implementation files to be inter-dependent appears to support a more complex
+    library design again, and may be better addressed through inter-library
+    ACLs.
+-   Loses some of the ease-of-use that some other languages have around imports,
+    such as Go.
+
+The problems with these approaches, and encouragement towards small libraries,
+is how we reach the current approach of only importing interfaces, and
+automatically.
+
+### Function-like syntax
+
+We could consider more function-like syntax for `import`, and possibly also
+`package`.
+
+For example, instead of:
+
+```carbon
+import Foo library Bar;
+import Baz as B;
+```
+
+We could do:
+
+```carbon
+import("Foo", "Bar");
+alias B = import("Baz");
+```
+
+Pros:
+
+-   Allows straightforward reuse of `alias` for language consistency.
+-   Easier to add more optional arguments, which we expect to need for
+    [interoperability](#imports-from-other-languages) and
+    [URLs](#interop-from-urls).
+-   Avoids defining keywords for optional fields: `library`, `as`, and possibly
+    more long-term.
+
+Cons:
+
+-   It's unusual for a function-like syntax to produce identifiers.
+    -   This could be addressed by _requiring_ alias, but that becomes verbose.
+
+The preference is for keywords.
+
+#### Managing interface versus implementation in libraries
 
 A few alternatives:
 
@@ -572,210 +849,18 @@ Pros:
 
 Cons:
 
+-   Encourages larger libraries by making it easier to provide large interfaces.
 -   Removes some of the advantages of having an interface file as a "single
     place" to look, suggesting more towards the markup approach.
 -   Not clear if interface files should be allowed to depend on each other, as
     they were intended to help resolve cyclical dependency issues.
 
-### Require files in a library be imported by filename
+We particularly want to discourage large libraries, and so we're likely to
+retain the single interface file limit.
 
-We could add a syntax for importing symbols from other files in the same
-library, such as:
+### Namespaces
 
-```carbon
-package Geometry;
-
-import("point.6c", "Point");
-```
-
-This would be instead of other possible syntaxes:
-
-```carbon
-package Geometry;
-
-import("Geometry", "Point");
-import("Point");
-```
-
-Pros:
-
--   Eases enforcement of a DAG (directed acyclic graph) between files in a
-    library.
-    -   Do we need this to have the option of a DAG, versus using parsing to
-        find which file to import from?
-
-Cons:
-
--   Creates a common case where filenames _must_ be used, breaking away from
-    namespace names on imports.
--   Loses some of the ease-of-use that some other languages have around imports,
-    such as Go.
-
-The choice here feels related to how we manage interface versus implementation,
-although it may actually be distinct.
-
-### Function-like `package` and `import` syntax
-
-The proposal currently suggests function-like syntax for `import()`, and more
-specialized syntax for `package`.
-
-We could:
-
--   Keep this approach.
--   Make both function-like. That is, adopt `package` syntax like:
-    ```carbon
-    package("Foo.Bar");
-    package("Foo.Bar", .library = "Bar", .namespace = "Wiz");
-    ```
--   Make both specialized syntax. That is, adopt `import` syntax like:
-
-    ```carbon
-    import Geometry.Shapes names Triangle;
-    import Geometry.Shapes names Triangle, Square;
-    alias MusicTriangle = import MusicalInstruments names Triangle;
-
-    // For possible interop:
-    import Cpp.mynamespace names MyClass lang C++ file "myproject.h";
-
-    // For possible URLs:
-    import Foo.Bar names Baz url "https://foo.com";
-    ```
-
-### Quoting names in imports
-
-Note the use of quotes may be optional here. Given constraints on inputs, maybe
-we can already switch `import("Geometry.Shapes", "Triangle");` to
-`import(Geometry.Shapes, Triangle);`. We could additionally prepend an `@` for
-`@import`, assuming [metaprogramming](metaprogramming.md) keeps that syntax.
-
-Pros:
-
--   Creates a consistent structure for optional arguments, aligning with
-    [pattern matching](pattern_matching.md).
-
--   Avoids creating new keywords for new optional arguments.
-
-Cons:
-
--   May require that we quote strings for consistency, adding incremental burden
-    when writing imports and making them look visually inconsistent with code
-    using the import.
-
--   Other languages, such as Java or Python, prefer the specialized syntax for
-    equivalent keywords.
-
-### Reducing arguments for single name imports
-
-The three basic forms of `import` are:
-
--   `import("Foo")`: imports `Foo` from the current namespace.
--   `import("Bar", "Baz")`: imports `Bar.Baz`.
--   `import(("Foo", "Fob"))`: imports `Foo` and `Fob` from the current
-    namespace.
--   `import("Bar", ("Baz", "Wiz"))`: imports `Bar.Baz` and `Bar.Wiz`.
-
-We could allow syntax like `import("Bar.Baz")`, but that creates ambiguity with
-`import("Foo")`, which could then mean either a top-level `Foo` or the current
-namespace's `Foo`. That suggests at a distinctly separate syntax approach:
-
--   `import("this.Foo")`: imports `Foo` from the current namespace.
--   `import("Bar.Baz")`: imports `Bar.Baz`.
--   `import("this", .names=("Foo", "Fob"))`: imports `Foo` and `Fob` from the
-    current namespace.
--   `import("Bar", .names=("Baz", "Wiz"))`: imports `Bar.Baz` and `Bar.Wiz`.
-
-Pros:
-
--   Eliminates an argument in the common case of importing a single name.
--   Increases syntax consistency for single name imports.
--   Reduces potential confusion between importing multiple names and importing a
-    single name from a different namespace.
--   Considering cross-language consistency, Java is closer to the latter syntax
-    using a full name path, including resulting in being able to use only the
-    last identifier for calls.
-
-Cons:
-
--   Adds a `this` namespace alias, which may cause issues.
--   Increases verbosity and decreases syntax consistency for multiple name
-    imports.
--   The resulting name of an import is simply the last element; the former
-    syntax is clearer about this, the latter less so.
-
-Currently, I'm wary of `this` syntax.
-
-### Rename package concept
-
-In other languages, a "package" is equivalent to what we call the name path
-here, which includes the `namespace`. We may want to rename the `package`
-keyword to avoid conflicts in meaning.
-
-Alternative names could be 'bundle', 'universe', or something similar to Rust's
-'crates'; perhaps 'compound' or 'molecule'.
-
-Pros:
-
--   Avoids conflicts in meaning with other languages.
-    -   [Java](https://www.oracle.com/java/technologies/glossary.html), similar
-        to a namespace path.
-    -   [Go](https://golang.org/doc/effective_go.html#package-names), similar to
-        a namespace path.
-
-Cons:
-
--   The meaning of `package` also overlaps a fair amount, and we would lose that
-    context.
-    -   [NPM/Node.js](https://www.npmjs.com/), as a distributable unit.
-    -   [Python](https://packaging.python.org/tutorials/installing-packages/),
-        as a distributable unit.
-    -   [Rust](https://doc.rust-lang.org/book/ch07-01-packages-and-crates.html),
-        as a collection of crates.
-    -   [Swift](https://developer.apple.com/documentation/swift_packages), as a
-        distributable unit.
-
-## Alternatives
-
-### Allow shadowing of names
-
-Disallowing shadowing of names may turn out to be costly, even for its
-advantages of reducing bugs and confusion. While we could relax it later,
-potentially with special syntax to handle edge cases, we don't have evidence at
-present that it's necessary. As a result, we prefer the simplicity in reading of
-disallowing shadowing.
-
-### Broader imports, either all names or arbitrary code
-
-Carbon imports require specifying individual names to import. We could support
-broader imports, for example by pulling in all names from a library. In C++, the
-`#include` preprocessor directive even supports inclusion of arbitrary code. For
-example:
-
-```carbon
-import("Geometry.Shapes", "*");
-
-// Triangle was imported as part of "*".
-fn Draw(var Triangle: x) { ... }
-```
-
-Pros:
-
--   Reduces boilerplate code specifying individual names.
-
-Cons:
-
--   Loses out on parser benefits of knowing which identifiers are being
-    imported.
--   Increases the risk of adding new features to APIs, as they may immediately
-    get imported by a user and conflict with a pre-existing name, breaking code.
--   As the number of imports increases, it can become difficult to tell which
-    import a particular symbol comes from, or how imports are being used.
--   Arbitrary code inclusion can result in unexpected code execution, a way to
-    create obfuscated code and a potential security risk.
-
-We particularly value the parser benefits of knowing which identifiers are being
-imported, and so we require individual names for imports.
-
-### Coarser namespace granularity
+#### Coarser namespace granularity
 
 It's been discussed whether we need to provide namespaces outside of
 package/file granularity. In other words, if a file is required to only add to
@@ -811,133 +896,7 @@ fine-grained namespaces, but not all. The proposed `namespace` syntax is a
 conservative solution to the problem which we should be careful doesn't add too
 much complexity.
 
-### Different file extensions
-
-The use of `.6c` as a short file extension or CLI has some drawbacks for
-typability. There are several other possible extensions / commands:
-
--   `.6c`: Sounds a little like 'sexy' when read aloud.
--   `.cb` or `.cbn`: These collide with several acronyms and may not be
-    especially memorable as referring to Carbon.
--   `.c6`: This seems a weird incorrect ordering of the atomic number and has a
-    bad and NSFW, if _extremely_ obscure, Internet slang association.
--   `.crb`: Bad slang association.
--   `.carbon`: This is an obvious and unsurprising choice, but also quite long
-    for a file extension.
-
-This seems fairly easy for us to change as we go along, but we should at some
-point do a formal proposal to gather other options and let the core team try to
-find the set that they feel is close enough to be a bikeshed.
-
-### Imports from URLs
-
-In the future, we may want to support importing from a URL that identifies the
-repository where that package can be found. This can be used to help drive
-package management tooling and to support providing a non-name identity for a
-package that is used to enable handling conflicted package names.
-
-Although we're not designing this right now, it could easily fit into the
-proposed syntax. For example:
-
-```carbon
-import("Foo.Bar", "Baz", .url = "https://foo.com")
-```
-
-### Namespace syntax
-
-The proposed `namespace` syntax had a few alternatives considered.
-
--   C++-style, such as:
-
-    ```carbon
-    namespace foo {
-      struct Bar { ... }
-    }
-    ```
-
-    -   Pros:
-
-        -   Supports clusters of items in the same namespace.
-
-        -   Consistent with C++.
-
-    -   Cons:
-
-        -   Given a file with a long namespace, it can be difficult to identify
-            which namespace names are in. This is exacerbated because the
-            end-of-namespace `}` may easily be misinterpreted for the end of a
-            different namespace.
-
-            -   Some style guides recommend end-of-namespace comments.
-                `} // namespace foo`. This includes
-                [Google](https://google.github.io/styleguide/cppguide.html#Namespaces)
-                and
-                [Boost](https://github.com/boostorg/geometry/wiki/Guidelines-for-Developers).
-                The use of comments indicates a syntax problem. Additionally,
-                Carbon may disallow comments on the same line as code.
-
--   Alternative syntax with clearer start and end markers, such as:
-
-    ```carbon
-    namespace foo {
-      struct Bar { ... }
-    } namespace foo
-    ```
-
-    -   Pros:
-
-        -   Supports clusters of items in the same namespace.
-
-        -   Makes it easy to identify the start and end.
-
-    -   Cons:
-
-        -   Given a piece of code with a long namespace, it's still difficult to
-            identify which namespace names are in.
-
-        -   Introduces unusual markup around `}`.
-
-Overall, we expect the proposed `namespace` syntax offers equivalent
-expressiveness with improved readability and a reasonable amount of extra
-typing.
-
-### Prevent libraries from crossing package boundaries
-
-Carbon's packages as proposed are effectively shorthand for a combination of:
-
-```carbon
-library PACKAGE
-namespace PACKAGE { ... }
-```
-
-We could instead enforce package boundaries, preventing libraries from spanning
-packages. Pragmatically, this would mean that `package Geometry library Shapes`
-and `package Geometry.Shapes` would be different libraries, or perhaps packages
-could only be a single identifier to prevent overlap.
-
-This had been the original proposal, combined with package-granularity imports;
-in other words, `import Geometry library Shapes` would be distinct from
-`import Geometry.Shapes`. This approach didn't address name-level imports, which
-would presumably become an additional argument for the `import` keyword, such as
-`import Geometry library Shapes { Circle, Square }`.
-
-Pros:
-
--   Finer-grained imports reduce the chance of conflicts between packages.
-
-Cons:
-
--   Adds an extra layer of boundaries that isn't clearly necessary.
--   Increased complexity for users who must explicitly address libraries in more
-    cases.
-
-By avoiding creation of a package boundary separate from library and namespace
-boundaries, we hope to simplify use of Carbon. It should still be possible for
-name lookup to determine which dependency a name comes from without issue
-because two distinct dependencies using an identical library name can still be
-treated as a conflict.
-
-### Scoped namespaces
+#### Scoped namespaces
 
 Instead of including additional namespace information per-name, we could have
 scoped namespaces, similar to C++. For example:
@@ -987,30 +946,124 @@ While we could consider such alternative approaches, we believe the proposed
 contextless namespace approach is better, as it reduces information that
 developers will need to remember when reading/writing code.
 
-### Strict association between the filesystem path and library/namespace
+### Imports
 
-Several languages create a strict association between the filesystem path, and
-the method for pulling in an API. For example:
+#### Block imports
 
--   In C++, `#include` refers to specific files.
--   In Java, `package` and `import` both reflect filesystem structure.
--   In Python, `import` requires matching filesystem structure.
--   In TypeScript, `import` refers to specific files.
+Rather than requiring an `import` keyword per line, we could support block
+imports, as can be found in languages like Go.
 
-For contrast:
+In other words, instead of:
 
--   In Go, `package` uses an arbitrary name.
+```carbon
+import Bar;
+import Foo;
+```
+
+We could have:
+
+```carbon
+imports {
+  Bar,
+  Foo,
+}
+```
 
 Pros:
 
--   A strict association between filesystem path and import path makes it easier
-    to find source files. This is used by some languages for compilation.
+-   Allows repeated imports with less typing.
 
 Cons:
 
--   The strict association makes it harder to move names between files without
-    updating callers.
+-   Makes it harder to list imports using tools like `grep`.
 
-We are choosing to avoid the strict association with filesystem paths in order
-to ease refactoring. With this approach, more refactorings will not need changes
-to API users.
+One concern has been that a mix of `import` and `imports` syntax would be
+confusing to users: we should only allow one.
+
+In the end, most of the decision for `import` leans on the ease of retyping the
+keyword, as well as `grep`-ability.
+
+#### Broader imports, either all names or arbitrary code
+
+Carbon imports require specifying individual names to import. We could support
+broader imports, for example by pulling in all names from a library. In C++, the
+`#include` preprocessor directive even supports inclusion of arbitrary code. For
+example:
+
+```carbon
+import Geometry library Shapes names *;
+
+// Triangle was imported as part of "*".
+fn Draw(var Triangle: x) { ... }
+```
+
+Pros:
+
+-   Reduces boilerplate code specifying individual names.
+
+Cons:
+
+-   Loses out on parser benefits of knowing which identifiers are being
+    imported.
+-   Increases the risk of adding new features to APIs, as they may immediately
+    get imported by a user and conflict with a pre-existing name, breaking code.
+-   As the number of imports increases, it can become difficult to tell which
+    import a particular symbol comes from, or how imports are being used.
+-   Arbitrary code inclusion can result in unexpected code execution, a way to
+    create obfuscated code and a potential security risk.
+
+We particularly value the parser benefits of knowing which identifiers are being
+imported, and so we require individual names for imports.
+
+#### Block imports of libraries of a single package
+
+We could allow block imports of librarys from the same package. For example:
+
+```carbon
+import Foo libraries {
+  Bar,
+  Baz,
+}
+```
+
+This is similar to [block imports](#block-imports), and should be handled the
+same. It has the additional problem that if we allow both `library` and
+`libraries` syntaxes, it's a divergence that could be even more difficult to
+handle.
+
+#### Direct name imports
+
+We could allow direct imports of names from libraries. For example, under the
+current setup we might see:
+
+```carbon
+import Foo library Bar;
+alias Baz = Foo.Baz;
+alias Wiz = Foo.Wiz;
+```
+
+We could simplify this syntax by augmenting `import`:
+
+```carbon
+import Foo library Bar name Baz;
+import Foo library Bar name Wiz;
+```
+
+Or more succinctly with block imports of names:
+
+```carbon
+import Foo library Bar names {
+  Baz,
+  Wiz,
+}
+```
+
+Pros:
+
+-   Avoids an additional `alias` step.
+
+Cons:
+
+-   With a single name, this isn't a significant improvement in syntax.
+-   With multiple names, this runs into similar issues as
+    [block imports](#block-imports).

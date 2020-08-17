@@ -34,10 +34,13 @@ only one identifier needed.
 
 ## namespace
 
-A _namespace_ is TODO
+A _namespace_ groups entities for use in code, and may be nested. For example,
+given a name path of `Geometry.Circle`, `Geometry` is a namespace for `Circle`.
 
 ## package
 
-A _package_ is a group of libraries, and a standard unit for distribution. The
-package name should be a single, globally-unique identifier. For example, given
-`package Geometry;` in a file, `Geometry` is the package.
+A _package_ is a group of libraries in Carbon, and is the standard unit for
+distribution. The package name also serves as the root namespace for all name
+paths in its libraries. The package name should be a single, globally-unique
+identifier. For example, given `package Geometry;` in a file, `Geometry` is the
+package.
