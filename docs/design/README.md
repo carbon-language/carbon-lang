@@ -14,7 +14,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Example code](#example-code)
 -   [Basic syntax](#basic-syntax)
     -   [Code and comments](#code-and-comments)
-    -   [Packages, libraries and namespaces](#packages-libraries-and-namespaces)
+    -   [Packages, libraries, and namespaces](#packages-libraries-and-namespaces)
     -   [Names and scopes](#names-and-scopes)
         -   [Naming conventions](#naming-conventions)
         -   [Aliases](#aliases)
@@ -127,7 +127,7 @@ cleaned up during evolution.
       live code
     ```
 
-### Packages, libraries and namespaces
+### Packages, libraries, and namespaces
 
 > References: [Code and name organization](code_and_name_organization.md)
 
