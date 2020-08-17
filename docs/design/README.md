@@ -14,7 +14,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Example code](#example-code)
 -   [Basic syntax](#basic-syntax)
     -   [Code and comments](#code-and-comments)
-    -   [Libraries and namespaces](#libraries-and-namespaces)
+    -   [Packages, libraries and namespaces](#packages-libraries-and-namespaces)
     -   [Names and scopes](#names-and-scopes)
         -   [Naming conventions](#naming-conventions)
         -   [Aliases](#aliases)
@@ -127,47 +127,34 @@ cleaned up during evolution.
       live code
     ```
 
-### Libraries and namespaces
+### Packages, libraries and namespaces
 
 > References: [Code and name organization](code_and_name_organization.md)
 
-Carbon code is organized into two kinds of named scopes:
+Carbon files are grouped into libraries, which are in turn grouped into
+packages. Libraries are the granularity of code reuse through imports.
 
--   **Library** scopes, which are a collection of one or files with a public
-    interface.
+Name paths in Carbon will always start with the package name. Additional
+namespaces may be specified as desired.
 
--   **Namespace** scopes, used by [name lookup](name_lookup.md) to choose which
-    name to use for a given piece of code.
-
-**Files** have a `.6c` extension and must start with a `package` declaration
-that sets the library and namespace scopes for all names declared by the file.
-Files belong to one library, but may add to child namespaces. For example:
+For example, this declares a struct `Geometry.Shapes.Flat.Circle` in a
+`Geometry.OneSide` library:
 
 ```carbon
-package Geometry;
-```
-
-The `namespace` keyword allows specifying additional, child namespace scopes
-within a file. For example, this declares `Geometry.Shapes.Flat.Circle`:
-
-```carbon
-package Geometry namespace Shapes;
+package Geometry library OneSide namespace Shapes;
 
 namespace Flat;
 struct Flat.Circle { ... }
 ```
 
-Files may import names from any library, and must do so by name. There is short
-syntax for importing from the same namespace. For example:
+This may be reused from another package:
 
 ```carbon
-package Geometry;
+package ExampleUser;
 
-// Standard syntax for importing Geometry.Triangle.
-import("Geometry", "Triangle");
+import Geometry library Triangle;
 
-// Same-namespace syntax for importing Geometry.Circle.
-import("Circle");
+fn Foo(var Geometry.Shapes.Flat.Circle: circle) { ... }
 ```
 
 ### Names and scopes
