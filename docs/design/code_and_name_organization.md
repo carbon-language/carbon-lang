@@ -38,6 +38,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Name paths](#name-paths-1)
         -   [Allow shadowing of names](#allow-shadowing-of-names)
     -   [Packages](#packages-1)
+        -   [Name paths for package names](#name-paths-for-package-names)
         -   [Remove the `library` keyword from `package` and `import`](#remove-the-library-keyword-from-package-and-import)
         -   [Rename package concept](#rename-package-concept)
         -   [Strict association between the filesystem path and library/namespace](#strict-association-between-the-filesystem-path-and-librarynamespace)
@@ -592,6 +593,35 @@ present that it's necessary. As a result, we prefer the simplicity in reading of
 disallowing shadowing.
 
 ### Packages
+
+#### Name paths for package names
+
+Right now, we only allow a single identifier for the package name. We could
+allow a full name path without changing syntax.
+
+Pros:
+
+-   Allow greater flexibility and hierarchy for related packages, such as
+    `Database.Client` and `Database.Server`.
+-   Would allow using GitHub repo names as package names. For example,
+    `carbon-language/carbon-toolchain` could become
+    `carbon_language.carbon_toolchain`.
+
+Cons:
+
+-   Multiple identifiers is more complex.
+-   Other languages with similar distribution packages don't have a hierarchy,
+    and so it may be unnecessary for us.
+    -   In other languages that use packages for distribution, they apply
+        similar restrictions. For example,
+        [Node.JS/NPM](https://www.npmjs.com/), [Python PyPi](https://pypi.org/),
+        or [Rust Crates](https://crates.io/).
+    -   In [Rust Crates](https://crates.io/), we can observe an example
+        `winapi-build` and `winapi-util`.
+-   We can build a custom system for reserving package names in Carbon.
+
+At present, we are choosing to use single-identifier package names because of
+the lack of clear advantage towards a more complex name path.
 
 #### Remove the `library` keyword from `package` and `import`
 
