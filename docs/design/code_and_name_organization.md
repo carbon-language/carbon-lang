@@ -87,11 +87,8 @@ Important Carbon goals for code and name organization are:
 
 ## Overview
 
-When Carbon code is placed in files, we need to have some way of organizing that
-code for reuse.
-
-When creating a new file, files will choose a name with a `.carbon` extension,
-such as `geometry.carbon`. Carbon files are the basic unit of compilation.
+Carbon files have a `.carbon` extension, such as `geometry.carbon`. Carbon files
+are the basic unit of compilation.
 
 Each file begins with a declaration of which
 _package_<sup><small>[[define](/docs/guides/glossary.md#package)]</small></sup>
