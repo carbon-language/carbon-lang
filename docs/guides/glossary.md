@@ -14,9 +14,9 @@ which is a function.
 
 ## identifier
 
-An _identifier_ is the name of an entity, and is also used in code to refer to
-the entity. For example, in `fn GetTime()`, `GetTime` is the identifier for the
-function.
+An _identifier_ is the token which names an entity, and is also used in code to
+refer to the entity. For example, in `fn GetTime()`, `GetTime` is the identifier
+for the function.
 
 ## library
 
@@ -34,8 +34,9 @@ only one identifier needed.
 
 ## namespace
 
-A _namespace_ is a named entity that contains entities, and may be nested. For example,
-given a name path of `Geometry.Circle`, `Geometry` is a namespace containing `Circle`.
+A _namespace_ is a named entity that contains entities, and may be nested. For
+example, given a name path of `Geometry.Circle`, `Geometry` is a namespace
+containing `Circle`.
 
 ## package
 
