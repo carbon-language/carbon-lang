@@ -244,10 +244,10 @@ However, they will all be in the `Geometry` package.
 Because the `package` keyword must be specified in all files, there are a couple
 important and deliberate side-effects:
 
--   Every file will be in precisely one library, even if it's a library path
-    that consists of only the package name.
--   Every entity in Carbon will be in a namespace, even if it's a namespace path
-    that consists of only the package name. There is no "global" namespace.
+-   Every file will be in precisely one library, even if its library path
+    consists of only the package name.
+-   Every entity in Carbon will be in a namespace, even if its namespace path
+    consists of only the package name. There is no "global" namespace.
     -   Entities within a file may have additional namespaces specified,
         [as detailed below](#namespaces).
 
@@ -451,7 +451,7 @@ because it redefines `Geometry`:
 ```carbon
 import Geometry;
 
-fn Geometry(var Geometry.Circle: circle) { ... }
+fn Geometry(Geometry.Circle: circle) { ... }
 ```
 
 In cases such as this, `as` can be used to rename the import. For example, this
@@ -460,17 +460,19 @@ would be allowed:
 ```carbon
 import Geometry as Geo;
 
-fn Geometry(var Geo.Circle: circle) { ... }
+fn Geometry(Geo.Circle: circle) { ... }
 ```
 
 #### Imports from the current package
 
-The package identifier is optional when the package is intended to be the same
-as the current file. However, the import will still define a namespace
-identifier of the same name as the package for lookup of members, as usual. This
-is so that it's unambiguous where names in the file are coming from; otherwise,
-it would require compilation of imported files to determine during parsing
-whether a name was undefined or imported.
+You may refer to symbols defined in the current file without mentioning the
+package prefix. However, other symbols from the packages must be imported
+and accessed through the package namespace just like symbols from any
+other package. The only difference is that the package name is optional in
+the `import` statement, since it defaults to the current package.
+This means every symbol is accessed unambiguously via a name that is first
+introduced within the same file, without having to look at any other file to
+determine during parsing whether a name was undefined or imported.
 
 For example:
 
@@ -482,7 +484,7 @@ package Geometry;
 import library Shapes;
 
 // Circle must be referenced using the Geometry namespace of the import.
-fn GetArea(var Geometry.Circle: c) { ... }
+fn GetArea(Geometry.Circle: c) { ... }
 ```
 
 Note this means the `import library Shapes` does still declare a `Geometry`
@@ -569,7 +571,7 @@ Although we're not designing this right now, it could fit into the proposed
 syntax. For example:
 
 ```carbon
-import Foo library Baz url("https://foo.com")
+import Foo library Baz url("https://foo.com");
 ```
 
 ### Test file type
@@ -641,7 +643,7 @@ import Foo.Bar;
 Pros:
 
 -   Reduces redundant syntax in library declarations.
-    -   We expect libraries to be vcommon, so this may add up.
+    -   We expect libraries to be common, so this may add up.
 
 Cons:
 
@@ -977,7 +979,7 @@ Pros:
 
 Cons:
 
--   Makes it harder to list imports using tools like `grep`.
+-   Makes it harder to find files importing a package or library using tools like `grep`.
 
 One concern has been that a mix of `import` and `imports` syntax would be
 confusing to users: we should only allow one.

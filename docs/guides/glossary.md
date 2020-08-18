@@ -34,8 +34,8 @@ only one identifier needed.
 
 ## namespace
 
-A _namespace_ groups entities for use in code, and may be nested. For example,
-given a name path of `Geometry.Circle`, `Geometry` is a namespace for `Circle`.
+A _namespace_ is a named entity that contains entities, and may be nested. For example,
+given a name path of `Geometry.Circle`, `Geometry` is a namespace containing `Circle`.
 
 ## package
 
