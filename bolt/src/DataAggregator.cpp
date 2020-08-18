@@ -737,7 +737,7 @@ StringRef DataAggregator::getLocationName(BinaryFunction &Func,
       continue;
     return AlternativeName;
   }
-  return Func.getOneName();
+  return OrigFunc->getOneName();
 }
 
 bool DataAggregator::doSample(BinaryFunction &Func, uint64_t Address,
