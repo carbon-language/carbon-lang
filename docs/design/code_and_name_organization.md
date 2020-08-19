@@ -805,13 +805,16 @@ on optimizations by the compiler.
 
 #### Different file type labels
 
-We're using `api` and `impl` for file types.
+We're using `api` and `impl` for file types, and have `test` as an open
+question.
 
 We've considered using `interface` instead of `api`, but that introduces a
 terminology collision with interfaces in the type system.
 
 We've considered dropping `api` from naming, but that creates a definition from
-absence of a keyword. We prefer the more explicit name.
+absence of a keyword. It also would be more unusual if both `impl` and `test`
+must be specified, that `api` would be special-cased as not specified. We prefer
+the more explicit name.
 
 We could spell out `impl` as `implementation`, but are choosing the abbreviation
 for ease of typing. We also don't think it's an unclear abbreviation.
