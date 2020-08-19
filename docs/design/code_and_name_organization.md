@@ -395,7 +395,7 @@ For example, if the `Geometry.Shapes.ThreeSides` library provides the
 `Geometry.Shapes` namespace, this code is still valid:
 
 ```carbon
-package Geometry library Shapes.FourSides;
+package Geometry library Shapes.FourSides api;
 
 import Geometry library Shapes.ThreeSides;
 
@@ -441,7 +441,7 @@ path for use. Child namespaces or entities must separately be
 For example:
 
 ```carbon
-package Geometry;
+package Geometry api;
 
 // This imports Math's default library, and provides a Math namespace
 // identifier for use.
@@ -493,7 +493,7 @@ undefined or imported.
 For example:
 
 ```carbon
-package Geometry;
+package Geometry api;
 
 // This imports Geometry's Shapes library, and provides a Geometry namespace
 // identifier for use.
@@ -643,16 +643,16 @@ the lack of clear advantage towards a more complex name path.
 Right now, we have syntax like:
 
 ```carbon
-package Foo library Bar;
-package Foo library Bar namespace Baz;
+package Foo library Bar api;
+package Foo library Bar namespace Baz api;
 import Foo library Bar;
 ```
 
 We could remove `library`, resulting in:
 
 ```carbon
-package Foo.Bar;
-package Foo.Bar namespace Foo.Baz;
+package Foo.Bar api;
+package Foo.Bar namespace Foo.Baz api;
 import Foo.Bar;
 ```
 
@@ -1137,7 +1137,7 @@ We could allow a short syntax for imports from the current library. For example,
 this code imports `Geometry.Shapes`:
 
 ```carbon
-package Geometry library Operations;
+package Geometry library Operations api;
 
 import library Shapes;
 ```
