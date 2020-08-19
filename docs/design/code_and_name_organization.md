@@ -813,8 +813,8 @@ terminology collision with interfaces in the type system.
 
 We've considered dropping `api` from naming, but that creates a definition from
 absence of a keyword. It also would be more unusual if both `impl` and `test`
-must be specified, that `api` would be special-cased as not specified. We prefer
-the more explicit name.
+must be required, that `api` would be excluded. We prefer the more explicit
+name.
 
 We could spell out `impl` as `implementation`, but are choosing the abbreviation
 for ease of typing. We also don't think it's an unclear abbreviation.
