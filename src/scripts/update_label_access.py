@@ -5,8 +5,6 @@
 This team exists because we need a team to manage triage access to repos;
 GitHub doesn't allow the org to be set to triage access, only read/write. It
 will be updated to include all members of the carbon-language organization.
-
-This does not handle removing ex-members from contributors-with-label-access.
 """
 
 __copyright__ = """
