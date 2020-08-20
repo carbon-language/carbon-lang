@@ -2,6 +2,12 @@
 
 """Tests for pr-comments.py."""
 
+__copyright__ = """
+Part of the Carbon Language project, under the Apache License v2.0 with LLVM
+Exceptions. See /LICENSE for license information.
+SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+"""
+
 import os
 import pr_comments
 import unittest
