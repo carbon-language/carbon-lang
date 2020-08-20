@@ -1,5 +1,42 @@
 # Code and name organization
 
+-   TODO: Don't have libraries (Node.JS as example)
+    -   Versioning granularity overhead
+    -   Scaling problems for large codebases
+-   TODO: Libraries as strings or identifiers or name paths
+    -   Probably switch to strings
+    -   Arbitrary values, not a name path
+    -   Some concern about strings as syntax; maybe `library("string")`?
+-   TODO: Not sure what size a package should be; add comparison example.
+    -   Boost as package with Boost.Geometry as a set of libraries
+-   TODO: Does `package X` always declare an identifier `X`?
+    -   Yes, to make for unambiguous results if we have implicit imports
+    -   Seems to be support for implicit imports
+-   TODO: Full namespace on every identifier, even just declarations
+    -   Pervasive aliasing by users to avoid typing
+    -   Could make extremely verbose imported code
+-   TODO: Remove commentary on name conflicts, leave it to name lookup
+    -   Too many nuances here, probably better to get the proposal out of it
+    -   May need some scope-based lookup for shadows, may require full
+        specification instead.
+-   TODO: Rename the section about automatic API generation
+-   TODO: Redundant information to support tooling
+    -   i.e., cover why we have both a package keyword saying api/impl and
+        preferences for filenames
+    -   Ability to generate build setup from information in files
+    -   May be difficult for files in different directories, but can minimally
+        validate
+-   TODO: Caveat for non-directory-based filesystems (filenames are convenience)
+    -   Maybe tied to above
+-   TODO: Library-private facilities in the API file?
+    -   This is essentially the non-exported functions
+    -   Still have issues with deps
+-   TODO: Inlining from impl file
+    -   Advantage is moving code out of the main api file for easier reading
+    -   Problem is that it requires transitive dependencies, which is what impl
+        is intended to avoid
+    -   Probably not, probably not through an inline-specific file either
+
 <!--
 Part of the Carbon Language project, under the Apache License v2.0 with LLVM
 Exceptions. See /LICENSE for license information.
@@ -44,11 +81,12 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
         -   [Strict association between the filesystem path and library/namespace](#strict-association-between-the-filesystem-path-and-librarynamespace)
     -   [Libraries](#libraries-1)
         -   [Allow importing implementation files from within the same library](#allow-importing-implementation-files-from-within-the-same-library)
-        -   [Automatically separate implementation out from API](#automatically-separate-implementation-out-from-api)
         -   [Different file type labels](#different-file-type-labels)
+        -   [Don't have libraries, only packages](#dont-have-libraries-only-packages)
         -   [Function-like syntax](#function-like-syntax)
         -   [Managing API versus implementation in libraries](#managing-api-versus-implementation-in-libraries)
         -   [Multiple API files](#multiple-api-files)
+        -   [Remove the distinction between API and implementation files](#remove-the-distinction-between-api-and-implementation-files)
     -   [Namespaces](#namespaces-1)
         -   [Coarser namespace granularity](#coarser-namespace-granularity)
         -   [Scoped namespaces](#scoped-namespaces)
@@ -780,29 +818,6 @@ Cons:
 The problems with these approaches, and encouragement towards small libraries,
 is how we reach the current approach of only importing APIs, and automatically.
 
-#### Automatically separate implementation out from API
-
-Carbon compilation may automatically streamline or otherwise optimize files. For
-example, it may preprocess `api` files to split out implementation for better
-parallelism of compilation, and reduce the number of imports propagated for
-_actual_ APIs. For example:
-
-1. Extract `api` declarations within the `api` file.
-2. Remove all implementation bodies.
-3. Add only the imports that are referenced.
-
-This is quite possible, and maybe compilation will work this way as an
-optimization. However, determining which imports are referenced requires
-compilation of all imports that _may_ be referenced. When multiple libraries are
-imported from a single package, it will be ambiguous which imports are used
-until all have been compiled. This will cause serialization of compilation that
-can be avoided by _manually_ splitting out the `impl`.
-
-The `impl` files may make it easier to read code, but they will also allow for
-better parallelism than `api` files alone can. This does not mean the compiler
-will or will not add optimizations -- it only means that we cannot wholly rely
-on optimizations by the compiler.
-
 #### Different file type labels
 
 We're using `api` and `impl` for file types, and have `test` as an open
@@ -825,6 +840,39 @@ syntax on entities, such as `api fn Foo()`, which could create ambiguities as
 `interface fn Foo()`. It may still confuse people to see an `interface impl` in
 an `api` file. However, we're touching on related concepts and don't see a great
 alternative.
+
+#### Don't have libraries, only packages
+
+We could only have packages, with no libraries. Some other languages do this;
+for example, in Node.JS, a package is often similar in size to what we currently
+call a library.
+
+If packages became larger, that would lead to compile-time bottlenecks. Thus, if
+Carbon allowed large packages without library separation, we would undermine our
+goals for fast compilation. Even if we combined the concepts, we should expect
+it's by turning the "package with many small libraries" concept into "many small
+packages".
+
+Pros:
+
+-   Simplification of organizational hierarchy.
+    -   Less complexity for users to think about on imports.
+
+Cons:
+
+-   Coming up with unique package names may become an issue, leading to longer
+    packages.
+    -   We expect that at least some large organizations will have more
+        libraries than Node.JS has packages.
+-   While a package manager will need a way to specify cross-package version
+    compatibility, encouraging a high number of packages puts more weight and
+    maintenance cost on the configuration.
+    -   We expect libraries to be versioned at the package-level.
+
+It's still possible for people to create small Carbon packages, without breaking
+it into multiple libraries, and so we would rather keep the library separation
+to enable better hierarchy for large codebases, plus encouraging small units of
+compilation.
 
 #### Function-like syntax
 
@@ -914,6 +962,29 @@ Cons:
 
 We particularly want to discourage large libraries, and so we're likely to
 retain the single API file limit.
+
+#### Remove the distinction between API and implementation files
+
+Carbon compilation may automatically streamline or otherwise optimize files. For
+example, it may preprocess `api` files to split out implementation for better
+parallelism of compilation, and reduce the number of imports propagated for
+_actual_ APIs. For example:
+
+1. Extract `api` declarations within the `api` file.
+2. Remove all implementation bodies.
+3. Add only the imports that are referenced.
+
+This is quite possible, and maybe compilation will work this way as an
+optimization. However, determining which imports are referenced requires
+compilation of all imports that _may_ be referenced. When multiple libraries are
+imported from a single package, it will be ambiguous which imports are used
+until all have been compiled. This will cause serialization of compilation that
+can be avoided by _manually_ splitting out the `impl`.
+
+The `impl` files may make it easier to read code, but they will also allow for
+better parallelism than `api` files alone can. This does not mean the compiler
+will or will not add optimizations -- it only means that we cannot wholly rely
+on optimizations by the compiler.
 
 ### Namespaces
 
