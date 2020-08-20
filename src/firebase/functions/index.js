@@ -169,6 +169,12 @@ const serveContent = async (req, res) => {
   const startTime = new Date();
   var result = 'unknown';
   try {
+    // If a md file is requested, redirect to html.
+    if (req.path.match(/\.md$/)) {
+      res.redirect(302, req.path.replace(/\.md$/, '.html'));
+      return;
+    }
+
     // Remove the prefix /, and default to index.html.
     const file = req.path.replace(/\/$/, '/index.html').replace(/^(\/)/, '');
 
