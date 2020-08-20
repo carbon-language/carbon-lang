@@ -131,14 +131,14 @@ cleaned up during evolution.
 
 > References: [Code and name organization](code_and_name_organization.md)
 
-Carbon files are grouped into libraries, which are in turn grouped into
+Carbon source files are grouped into libraries, which are in turn grouped into
 packages. Libraries are the granularity of code reuse through imports.
 
-Name paths in Carbon will always start with the package name. Additional
+Name paths in Carbon always start with the package name. Additional
 namespaces may be specified as desired.
 
-For example, this declares a struct `Geometry.Shapes.Flat.Circle` in a
-`Geometry.OneSide` library:
+For example, this code declares a struct `Geometry.Shapes.Flat.Circle` in a
+library `Geometry.OneSide`:
 
 ```carbon
 package Geometry library OneSide namespace Shapes;
@@ -147,7 +147,7 @@ namespace Flat;
 struct Flat.Circle { ... }
 ```
 
-This may be reused from another package:
+This type can be used from another package:
 
 ```carbon
 package ExampleUser;

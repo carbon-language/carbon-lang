@@ -127,12 +127,12 @@ Important Carbon goals for code and name organization are:
 
 ## Overview
 
-Carbon files have a `.carbon` extension, such as `geometry.carbon`. Carbon files
+Carbon files have a `.carbon` extension, such as `geometry.carbon`. These files
 are the basic unit of compilation.
 
 Each file begins with a declaration of which
 _package_<sup><small>[[define](/docs/guides/glossary.md#package)]</small></sup>
-it belongs in. The package will be a single identifier, such as `Geometry`. An
+it belongs in. The package is a single identifier, such as `Geometry`. An
 example file in the `Geometry` package would start with `package Geometry api;`.
 
 A tiny package may consist of a single file, and not use any further features of
@@ -198,7 +198,7 @@ fn Area(Geo.Circle circle) { ... };
 
 ### Name paths
 
-[Name paths](#name-paths) are defined above as dot-separated identifiers. This
+[Name paths](#name-paths) are defined above as sequences of identifiers separated by dots. This
 syntax can be expressed as a rough regular expression:
 
 ```regex
@@ -294,14 +294,16 @@ may use different `library` arguments. Similarly, files contributing to the
 `Geometry.Objects.FourSides` library may use different `namespace` arguments.
 However, they will all be in the `Geometry` package.
 
-Because the `package` keyword must be specified in all files, there are a couple
+Because the `package` keyword must be specified exactly once in all files, there are a couple
 important and deliberate side-effects:
 
 -   Every file will be in precisely one library, even if its library path
     consists of only the package name.
 -   Every entity in Carbon will be in a namespace, even if its namespace path
     consists of only the package name. There is no "global" namespace.
-    -   Entities within a file [may use child namespaces](#namespaces).
+    -   Every entity in a file will be defined within the namespace described in the
+        `package` statement.
+    -   Entities within a file may be defined in [child namespaces](#namespaces).
 
 ### Libraries
 
@@ -328,7 +330,7 @@ other implementation files.
 When any file imports a library's API, it should be expected that the transitive
 closure of imported files from the primary API file will be a compilation
 dependency. The size of that transitive closure affects compilation time, so
-libraries with complex implementations should endeavor to minimize the API
+libraries with complex implementations should endeavor to minimize their API
 imports.
 
 Libraries also serve as a critical unit of compilation. Dependencies between
@@ -396,7 +398,7 @@ Its syntax may loosely be expressed as a regular expression:
 namespace NAME_PATH;
 ```
 
-A namespace is used by first declaring it, then using it when declaring a name.
+A namespace is used by first declaring it, then including it as a prefix when declaring a name.
 For example:
 
 ```carbon
@@ -406,11 +408,9 @@ struct Foo.Bar.Baz { ... }
 fn Wiz(Foo.Bar.Baz x);
 ```
 
-Only the first identifier in the name path becomes available for direct use;
-other identifiers in the name path must be accessed through that identifier. In
-other words, after declaring `namespace Foo.Bar;` in the above example, `Foo` is
-available as an identifier and `Bar` must be reached through `Foo`; `Bar.Baz` is
-invalid code because `Bar` would be unknown.
+A namespace declaration adds the first identifier in the name path as a name in
+the file's namespace. In the above example, after declaring `namespace Foo.Bar;`,
+`Foo` is available as an identifier and `Bar` is reached through `Foo`.
 
 Namespaces declared and added to within a file must always be children of the
 file-level namespace. For example, this declares
