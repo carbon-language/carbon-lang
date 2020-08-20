@@ -1983,7 +1983,7 @@ above so we can make TypeImplements an optional convenience.
 ## Index of examples
 
 Specifically, how does this proposal address
-[the use cases from the "Carbon Generics: Terminology and Problem statement" doc](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#problem-statement)?
+[the use cases from the "problem statement" doc](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/use-cases.md)?
 
 -   Define an
     [interface](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#interface).

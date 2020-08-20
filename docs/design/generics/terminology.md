@@ -10,53 +10,52 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 <!-- toc -->
 
--   [Terminology](#terminology)
-    -   [Parameterized language constructs](#parameterized-language-constructs)
-    -   [Generic vs. template parameters](#generic-vs-template-parameters)
-        -   [Parametric vs. Ad Hoc polymorphism](#parametric-vs-ad-hoc-polymorphism)
-        -   [Constrained/bounded vs. Unconstrained/unbounded genericity](#constrainedbounded-vs-unconstrainedunbounded-genericity)
-        -   [Definition checking](#definition-checking)
-            -   [Complete definition checking](#complete-definition-checking)
-            -   [Early vs. late type checking](#early-vs-late-type-checking)
-    -   [Implicit parameter](#implicit-parameter)
-    -   [Interface](#interface)
-        -   [Semantic vs. structural interfaces](#semantic-vs-structural-interfaces)
-        -   [What kind of values are interfaces?](#what-kind-of-values-are-interfaces)
-            -   [Interfaces are concrete types](#interfaces-are-concrete-types)
-            -   [Interfaces are type-types](#interfaces-are-type-types)
-                -   [Facet type-types](#facet-type-types)
-                -   [Type-types parameterized by reprs](#type-types-parameterized-by-reprs)
-            -   [Interfaces are opaque](#interfaces-are-opaque)
-    -   [Impls: Implementations of interfaces](#impls-implementations-of-interfaces)
-        -   [Default impl](#default-impl)
-        -   [Named impl](#named-impl)
-        -   [Templated impl](#templated-impl)
-    -   [Compatible types](#compatible-types)
-    -   [Invoking interface methods](#invoking-interface-methods)
-        -   [Facet types](#facet-types)
-        -   [Union Types](#union-types)
-        -   [Separate Impls](#separate-impls)
-    -   [Subsumption and casting](#subsumption-and-casting)
-    -   [Adapting a type](#adapting-a-type)
-    -   [Extending/refining an interface](#extendingrefining-an-interface)
-    -   [Implementation strategies for generics](#implementation-strategies-for-generics)
-        -   [Witness tables (e.g., Swift and Carbon Generics)](#witness-tables-eg-swift-and-carbon-generics)
-            -   [Dynamic-dispatch witness table](#dynamic-dispatch-witness-table)
-            -   [Static-dispatch witness table](#static-dispatch-witness-table)
-        -   [Type erasure (e.g., Java)](#type-erasure-eg-java)
-        -   [Monomorphization (e.g., Rust)](#monomorphization-eg-rust)
-        -   [Instantiation (e.g., C++ and Carbon Templates)](#instantiation-eg-c-and-carbon-templates)
-    -   [Specialization](#specialization)
-    -   [Conditional conformance](#conditional-conformance)
-    -   [Interface type parameters vs. associated types](#interface-type-parameters-vs-associated-types)
-    -   [Type constraints](#type-constraints)
-    -   [Dependent types (or more generally, values)](#dependent-types-or-more-generally-values)
--   [Problem statement](#problem-statement)
+-   [Basics](#basics)
+-   [Parameterized language constructs](#parameterized-language-constructs)
+-   [Generic vs. template parameters](#generic-vs-template-parameters)
+    -   [Parametric vs. Ad Hoc polymorphism](#parametric-vs-ad-hoc-polymorphism)
+    -   [Constrained/bounded vs. Unconstrained/unbounded genericity](#constrainedbounded-vs-unconstrainedunbounded-genericity)
+    -   [Definition checking](#definition-checking)
+        -   [Complete definition checking](#complete-definition-checking)
+        -   [Early vs. late type checking](#early-vs-late-type-checking)
+-   [Implicit parameter](#implicit-parameter)
+-   [Interface](#interface)
+    -   [Semantic vs. structural interfaces](#semantic-vs-structural-interfaces)
+    -   [What kind of values are interfaces?](#what-kind-of-values-are-interfaces)
+        -   [Interfaces are concrete types](#interfaces-are-concrete-types)
+        -   [Interfaces are type-types](#interfaces-are-type-types)
+            -   [Facet type-types](#facet-type-types)
+            -   [Type-types parameterized by reprs](#type-types-parameterized-by-reprs)
+        -   [Interfaces are opaque](#interfaces-are-opaque)
+-   [Impls: Implementations of interfaces](#impls-implementations-of-interfaces)
+    -   [Default impl](#default-impl)
+    -   [Named impl](#named-impl)
+    -   [Templated impl](#templated-impl)
+-   [Compatible types](#compatible-types)
+-   [Invoking interface methods](#invoking-interface-methods)
+    -   [Facet types](#facet-types)
+    -   [Union Types](#union-types)
+    -   [Separate Impls](#separate-impls)
+-   [Subsumption and casting](#subsumption-and-casting)
+-   [Adapting a type](#adapting-a-type)
+-   [Extending/refining an interface](#extendingrefining-an-interface)
+-   [Implementation strategies for generics](#implementation-strategies-for-generics)
+    -   [Witness tables (e.g., Swift and Carbon Generics)](#witness-tables-eg-swift-and-carbon-generics)
+        -   [Dynamic-dispatch witness table](#dynamic-dispatch-witness-table)
+        -   [Static-dispatch witness table](#static-dispatch-witness-table)
+    -   [Type erasure (e.g., Java)](#type-erasure-eg-java)
+    -   [Monomorphization (e.g., Rust)](#monomorphization-eg-rust)
+    -   [Instantiation (e.g., C++ and Carbon Templates)](#instantiation-eg-c-and-carbon-templates)
+-   [Specialization](#specialization)
+-   [Conditional conformance](#conditional-conformance)
+-   [Interface type parameters vs. associated types](#interface-type-parameters-vs-associated-types)
+-   [Type constraints](#type-constraints)
+-   [Dependent types (or more generally, values)](#dependent-types-or-more-generally-values)
 -   [Broken links footnote](#broken-links-footnote)
 
 <!-- tocstop -->
 
-## Terminology
+## Basics
 
 Please see the
 [Carbon principle: Generics](https://github.com/josh11b/carbon-lang/blob/principle-generics/docs/project/principles/principle-generics.md)
@@ -72,7 +71,7 @@ sections.
 TODO: Runtime vs. compile-time trade offs, worry about things like size of value
 unknown producing much slower code -- needs guardrails, explicit opt-in?
 
-### Parameterized language constructs
+## Parameterized language constructs
 
 Generally speaking, when we talk about either templates or a generics system, we
 are talking about generalizing some language construct by adding a parameter to
@@ -84,7 +83,7 @@ This parameter broadens the scope of the language construct on an axis defined
 by that parameter, effectively defining a family of functions (or whatever)
 instead of a single one.
 
-### Generic vs. template parameters
+## Generic vs. template parameters
 
 When we are distinguishing between generics and templates in Carbon, it is on an
 parameter by parameter basis. A single function can take a mix of regular,
@@ -148,7 +147,7 @@ Expected difference between generics and templates:
   </tr>
 </table>
 
-#### Parametric vs. Ad Hoc polymorphism
+### Parametric vs. Ad Hoc polymorphism
 
 From [Wikipedia](https://en.wikipedia.org/wiki/Parametric_polymorphism): Using
 parametric polymorphism, a function or a data type can be written generically so
@@ -183,7 +182,7 @@ either overload. (I think it is undecided what to do in the situation where `F`
 is overloaded, but the signatures are consistent and so callers could still
 typecheck calls to `F`.)
 
-#### Constrained/bounded vs. Unconstrained/unbounded genericity
+### Constrained/bounded vs. Unconstrained/unbounded genericity
 
 We will allow some way of specifying constraints as part of a function (or type
 or other parameterized language construct). These constraints are a limit on
@@ -203,7 +202,7 @@ perfectly permissible to have no constraints on a type; that just means that you
 can only perform operations that work for all types (such as manipulate pointers
 to values of that type) in the body of the function.
 
-#### Definition checking
+### Definition checking
 
 Definition checking is the process of semantically checking the definition of
 parameterized code for correctness _independently_ of any particular arguments.
@@ -215,7 +214,7 @@ implementation it requires instantiation (that may fail) is required in order to
 check its correctness once specific arguments can be substituted into the
 parameters.
 
-##### Complete definition checking
+#### Complete definition checking
 
 Complete definition checking is when the definition can be _fully_ semantically
 checked, including type checking. It is an especially useful property because it
@@ -225,7 +224,7 @@ instantiate the implementation (for example,
 [type erasure](#type-erasure-eg-java) or
 [dynamic-dispatch witness tables](#dynamic-dispatch-witness-table)).
 
-##### Early vs. late type checking
+#### Early vs. late type checking
 
 Early type checking is where expressions and statements are type checked when
 the definition of the function body is compiled, as part of definition checking.
@@ -235,7 +234,7 @@ Late type checking is where expressions and statements may only be fully
 typechecked once calling information is known. Late type checking delays
 complete definition checking. This occurs for template dependent values.
 
-### Implicit parameter
+## Implicit parameter
 
 An implicit parameter is listed in the optional `[` `]` section right after the
 function name in a function signature:
@@ -257,7 +256,7 @@ fn F((Type:$$ T): value);
 See more
 [here](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/overview.md#implicit-arguments).
 
-### Interface
+## Interface
 
 An interface is an API constraint used in a function signature to provide
 encapsulation. Encapsulation here means that callers of the function only need
@@ -269,7 +268,7 @@ the function may then use that API (and nothing else).
 
 There are a few different possible interface programming models.
 
-#### Semantic vs. structural interfaces
+### Semantic vs. structural interfaces
 
 A "structural" interface is one where we say a type satisfies the interface as
 long as it has members with a specific list of names, and for each name it must
@@ -285,12 +284,12 @@ by the compiler. For example, knowing whether the "Draw" function means "render
 an image to the screen" or "take a card from the top of a deck of cards"; or
 that a `+` operator is commutative (and not, say, string concatenation).
 
-#### What kind of values are interfaces?
+### What kind of values are interfaces?
 
 If you use the name of an interface after it has been defined, what role does it
 play grammatically? What kind of value is it?
 
-##### Interfaces are concrete types
+#### Interfaces are concrete types
 
 In one programming model, an interface is thought of as a forward declaration of
 a concrete type. For example, "`interface Comparable(Type:$ T) for T`" means
@@ -322,7 +321,7 @@ See
 ["Interfaces are concrete facet types"](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/overview.md#interfaces-are-concrete-types)
 in the Generics proposal for more on this programming model.
 
-##### Interfaces are type-types
+#### Interfaces are type-types
 
 In other programming models, an interface is a type-type, i.e., an interface is
 a type whose values are also types (satisfying some properties). For example, we
@@ -341,7 +340,7 @@ be used in type checking the body of the function.
 There are different variations of type-types; below are ones that have been
 actively proposed.
 
-###### Facet type-types
+##### Facet type-types
 
 Type `T` satisfies `InterfaceName` if it is a
 [facet type](#invoking-interface-methods) of `InterfaceName` for some
@@ -352,7 +351,7 @@ of `NativeType`. TODO: deep dive describing this programming model; currently
 the best we have is
 [Carbon: types as function tables, interfaces as type-types (TODO)](#broken-links-footnote)<!-- T:Carbon: types as function tables, interfaces as type-types --><!-- A:#heading=h.3kqiirqlj97f -->.
 
-###### Type-types parameterized by reprs
+##### Type-types parameterized by reprs
 
 Type `T` satisfies `InterfaceName(R)` if it is a facet type (as above) of
 `InterfaceName` that is compatible with (shares a representation with) type `R`.
@@ -366,7 +365,7 @@ See
 ["Type-types parameterized by reprs"](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/overview.md#type-types-parameterized-by-reprs)
 in the Generics proposal for more on this programming model.
 
-##### Interfaces are opaque
+#### Interfaces are opaque
 
 Another possibility is that an interface is an opaque key. This has the
 advantage that it doesn't privilege any one use of an interface. Any use of an
@@ -377,7 +376,7 @@ what role the interface is playing.
 An example of a programming model like this is presented in
 [Carbon closed function overloading proposal (TODO)](#broken-links-footnote)<!-- T:Carbon closed function overloading proposal --><!-- A:#heading=h.qkop7hrup3jx -->.
 
-### Impls: Implementations of interfaces
+## Impls: Implementations of interfaces
 
 An _impl_ is an implementation of an interface for a specific type. It is the
 place where the function bodies are defined, values for associated types, etc.
@@ -386,7 +385,7 @@ impls, or both. Impls are mostly associated with semantic interfaces; structural
 interfaces define conformance implicitly instead of by requiring an impl to be
 defined.
 
-#### Default impl
+### Default impl
 
 A default impl is an implementation associated with a (type, interface) pair
 without a separate name.
@@ -403,14 +402,14 @@ explicit statement of how to satisfy the parameter's interface requirements.
 This of course means that any given type can have at most one default impl for
 any given interface.
 
-#### Named impl
+### Named impl
 
 A named impl is an implementation of a (type, interface) pair that is given its
 own name. The impl won't be used by default/implicitly; it will only be used as
 a result of looking up its name, which means it can be defined anywhere. There
 is no restriction that a (type, interface) pair be limited to one named impl.
 
-#### Templated impl
+### Templated impl
 
 This is where there is a templated definition of an impl, defined along with an
 interface, that specifies a common implementation for an interface for a variety
@@ -418,7 +417,7 @@ of types. For example, it could be used to say that any type implementing these
 other two interfaces automatically gets an implementation for this interface, or
 to say that you can satisfy this interface structurally.
 
-### Compatible types
+## Compatible types
 
 Two types are compatible if they have the same representation, even if they
 expose different APIs. The representation of a type includes a bunch of facts
@@ -433,7 +432,7 @@ invariants, such as implementing the API of the new type by calling (public)
 methods of the original API, instead of accessing any private implementation
 details.
 
-### Invoking interface methods
+## Invoking interface methods
 
 Given a function with a generic parameter whose type is known to satisfy some
 number of interfaces, how do you actually call methods defined in one of those
@@ -460,7 +459,7 @@ struct S {
 Note: There are other possibilities in this space, but these are the ones that
 have come up so far.
 
-#### Facet types
+### Facet types
 
 One approach is to cast values to a facet type. A facet type is a
 [compatible type](#compatible-types) to the original type written by the user,
@@ -503,7 +502,7 @@ this case, the facet type would be a projection of a type's API onto the subset
 defined by the interface. However, in this situation you would have no need to
 maintain separate namespaces, and so union types would make more sense.
 
-#### Union Types
+### Union Types
 
 A union type would concatenate the APIs of multiple interfaces together. For our
 example, you might write a function that takes values with a type implementing
@@ -524,7 +523,7 @@ would need some mechanisms for picking some subset of the functions, renaming
 functions, and marking new additions to an interface as "upcoming" to create a
 transition time where conflicts can be dealt with before they become errors.
 
-#### Separate Impls
+### Separate Impls
 
 Separate impls use non-type objects that can be passed around as values. The
 type of an impl value is parameterized by both an interface and a compatible
@@ -552,7 +551,7 @@ These were proposed in
 [Carbon: Impls are values passed as arguments with defaults (TODO)](#broken-links-footnote)<!-- T:Carbon: Impls are values passed as arguments with defaults -->,
 but so far have not proven popular.
 
-### Subsumption and casting
+## Subsumption and casting
 
 Both subsumption and casting are different names for changing the type of a
 value to a compatible type.
@@ -570,7 +569,7 @@ Note that subsumption is a bit like coercion, except we want to make it clear
 that the representation of the value is not changing, just its type as reflected
 in the API available to manipulate the value.
 
-### Adapting a type
+## Adapting a type
 
 A type can be adapted by creating a new type that is
 [compatible](#compatible-types) with an existing type, but has a different API.
@@ -583,20 +582,20 @@ the API. This means that it is safe to [cast](#subsumption-and-casting) a value
 between those two types without any dynamic checks or danger of
 [object slicing](https://en.wikipedia.org/wiki/Object_slicing).
 
-### Extending/refining an interface
+## Extending/refining an interface
 
 An interface can be extended by defining an interface that includes the full API
 of another interface, plus some additional API. Types implementing the extended
 interface should automatically be considered to have implemented the narrower
 interface.
 
-### Implementation strategies for generics
+## Implementation strategies for generics
 
 Witness tables, type erasure, monomorphization and instantiation all describe
 methods under which we could implement generics. They are each trying to address
 how generics perform operations on the type provided by a caller.
 
-#### Witness tables (e.g., Swift and Carbon Generics)
+### Witness tables (e.g., Swift and Carbon Generics)
 
 For witness tables, values passed to a generic parameter are compiled into a
 table of required functionality. That table is then filled in for a given
@@ -616,13 +615,13 @@ a [vtable](https://en.wikipedia.org/wiki/Virtual_method_table) is a witness
 table that witnesses that a class is a descendant of an abstract base class, and
 is passed as part of the object instead of separately.
 
-##### Dynamic-dispatch witness table
+#### Dynamic-dispatch witness table
 
 For dynamic-dispatch witness tables, actual function pointers are formed and
 used as a dynamic, runtime indirection. As a result, the generic code **will
 not** be duplicated for different witness tables.
 
-##### Static-dispatch witness table
+#### Static-dispatch witness table
 
 For static-dispatch witness tables, the implementation is required to collapse
 the table indirections at compile time. As a result, the generic code **will**
@@ -632,7 +631,7 @@ Static-dispatch may be implemented as a performance optimization for
 dynamic-dispatch that increases generated code size. The final compiled output
 may not retain the witness table.
 
-#### Type erasure (e.g., Java)
+### Type erasure (e.g., Java)
 
 Type erasure is similar to dynamic-dispatch witness tables, but it goes further
 and pushes the abstraction all the way to runtime. The actual type is completely
@@ -645,7 +644,7 @@ the actual type through some dynamic system rather than ensuring it is fully
 opaque. Type erasure removes that option, which can
 [cause problems](https://en.wikipedia.org/wiki/Generics_in_Java#Problems_with_type_erasure).
 
-#### Monomorphization (e.g., Rust)
+### Monomorphization (e.g., Rust)
 
 Monomorphization explicitly creates a copy of the generic code and replaces the
 generic components with the concrete type and its implementation operations.
@@ -660,7 +659,7 @@ However, monomorphization does not require a witness table. The risk is that by
 conceptualizing the implementation as monomorphization we may unintentionally
 introduce cases that cannot be represented as dynamic-dispatch witness tables.
 
-#### Instantiation (e.g., C++ and Carbon Templates)
+### Instantiation (e.g., C++ and Carbon Templates)
 
 Instantiation, like monomorphization, explicitly creates a copy of the template
 code and replaces the template components with the concrete type and its
@@ -677,7 +676,7 @@ errors in the template implementation may not produce errors until the
 instantiation occurs, and other errors may only happen for **some**
 instantiations.
 
-### Specialization
+## Specialization
 
 Specialization is essentially overloads for templates/generics. Specialization
 is when a template or generic has an overloaded definition for some subset of
@@ -711,7 +710,7 @@ Again, because it occurs prior to selecting the type erased generic, at least
 some aspects of the type will not have been erased -- specifically those parts
 reflected by the interface properties used to select the specialization.
 
-### Conditional conformance
+## Conditional conformance
 
 Conditional conformance is when you have a parameterized type that has one API
 that it always supports, but satisfies additional interfaces under some
@@ -722,7 +721,7 @@ For example: `Array(T)` might implement `Comparable` if `T` itself implements
 specific "conditionally implements" syntax, or as a special case of a
 [templated impls](#templated-impl) facility.
 
-### Interface type parameters vs. associated types
+## Interface type parameters vs. associated types
 
 Let's say you have an interface defining a container. Different containers will
 contain different types of values, and the container API will have to refer to
@@ -792,7 +791,7 @@ you can only have a single default impl (in which case you can directly infer
 the type parameters given just a type implementing the interface). You can
 always infer associated types.
 
-### Type constraints
+## Type constraints
 
 Type constraints restrict type information about template or generic parameters.
 They help define semantics under which they should be called, and prevent
@@ -820,7 +819,7 @@ express, and multiple mechanisms we could use to express those constraints:
     restrictions we want.
 -   others...
 
-### Dependent types (or more generally, values)
+## Dependent types (or more generally, values)
 
 A dependent type (or value) is a portion of a generic or template which has
 aspects that depend on the particulars of an invocation to the generic or
@@ -860,142 +859,6 @@ fn Call[Callable:$ T](T: val) -> Int {
 Here, the type of `val` is still a dependent type specified by the caller.
 However, the value of `Call` is no longer dependent because its type is defined
 by the `Callable` interface.
-
-## Problem statement
-
-We want ways of accomplishing the following tasks:
-
--   Define an [interface](#interface).
--   Define an interface with
-    [type parameters](#interface-type-parameters-vs-associated-types) (maybe)
-    and/or [associated types](#interface-type-parameters-vs-associated-types)
-    (almost certainly).
--   Define an interface with [type constraints](#type-constraints), such as
-    associated types or type parameters satisfying some interface. Type
-    constraints will also be needed as part of generic function definitions, to
-    define relationships between type parameters and associated types.
--   Optional, but probably straightforward if we want it: Define an interface
-    that [extends/refines](#extendingrefining-an-interface) another interface.
-    Similarly we probably want a way to say an interface requires an
-    implementation of one or more other interfaces.
--   Define how a type [implements](#impls-implementations-of-interfaces) an
-    interface ([semantic conformance](#semantic-vs-structural-interfaces)). It
-    should address
-    [the expression problem](https://eli.thegreenplace.net/2016/the-expression-problem-and-its-solutions),
-    e.g. by allowing the impl definition to be completely out of line as long as
-    it is defined with either the type or the interface.
--   Define a parameterized implementation of an interface for a family of types.
-    This is both for
-    [structural conformance](#semantic-vs-structural-interfaces) via
-    [templated impls](#templated-impl), and
-    [conditional conformance](#conditional-conformance). That family of types
-    may have generic or regular parameters, so that e.g. you could implement a
-    `Printable` interface for arrays of `N` elements of `Printable` type `T`,
-    generically for `N` (not separately instantiated for each `N`).
--   Control how an interface may be used in order to reserve or abandon rights
-    to evolve the interface. See
-    [the relevant open question in "Carbon closed function overloading proposal" (TODO)](#broken-links-footnote)<!-- T:Carbon closed function overloading proposal --><!-- A:#bookmark=id.hxvlthy3z3g1 -->.
--   Specify a generic explicit (non-type or type) parameter to a function.
--   Specify a generic [implicit parameter](#implicit-parameter) to a function.
--   Specify a generic type parameter constrained to conform to an interface. And
-    in the function, call methods defined in the the interface on a value of
-    that type.
--   Specify a generic type parameter constrained to conform to multiple
-    interfaces. And in the function, call methods defined in each interface on a
-    value of that type, and pass the value to functions expecting any subset of
-    those interfaces. Ideally this would be convenient enough that we could
-    favor fewer narrow interfaces and combine them instead of having a large
-    number of wide interfaces.
--   Define multiple implementations of an interface for a single type, be able
-    to pass those multiple implementations in a single function call, and have
-    the function body be able to control which implementation is used when
-    calling interface methods. This should work for any interface, without
-    requiring cooperation from the interface definition. For example, have a
-    function sort songs by artist, then by album, and then by title given those
-    three orderings separately.
--   In general, ways of specifying new combinations of interface implementations
-    for a type. For example, a way to call a generic function with a value of
-    some type, even if the interface and type are defined in different libraries
-    unknown to each other, by providing an implementation for that interface in
-    some way. This problem is described in
-    "[The trouble with typeclasses](https://pchiusano.github.io/2018-02-13/typeclasses.html)".
--   A value with a type implementing a superset of the interfaces required by a
-    generic function may be passed to the function without additional syntax
-    beyond passing the same value to a non-generic function expecting the exact
-    type of the value ([subsumption](#subsumption-and-casting)). This should be
-    true for values with types only known generically, as long as it is
-    generically known that the type implements a sufficient set of interfaces.
--   Define a parameterized entity (such as a function) such that code for it
-    will only be generated once.
--   Define a parameterized entity such that code for it will be generated
-    separately for each distinct combination of arguments.
--   Convert values of arbitrary types implementing an interface into values of a
-    single type that implements that same interface, for a sufficiently
-    well-behaved interface.
-
-Stretch goals:
-
--   A way to define one or a few functions and get an implementation for an
-    interface that has more functions (like defining `<`, `>`, `<=`, `>=`, `==`,
-    and `!=` in terms of `<=>`, or `++`, `--`, `+`, `-`, and `-=` from `+=`).
-    Possibly the "one or few functions" won't even be part of the interface.
--   Define an interface implementation algorithmically -- possibly via a
-    function returning an impl, or by defining an
-    [adapting type](#adapting-a-type) that implements that interface. This could
-    be a solution to the previous bullet. Another use case is when there are few
-    standard implementation strategies for an interface, and you want to provide
-    those implementations in a way that makes it easy for new types to adopt
-    one.
--   Support a way to switch between algorithms based on the capabilities of a
-    type. For example, we may want to use different algorithms for random-access
-    vs. bidirectional iterators. Similarly, a way to have specialization based
-    on type information in a generic like you might do in a template function
-    for performance but still would allow type checking. Example: In C++,
-    `std::vector<T>::resize()` can use a more efficient algorithm if `T` has a
-    `noexcept` move constructor. Can this optimization be allowed from generic
-    code since it does not affect the signature of `resize()`, and therefore
-    type checking? In a non-release build, it would be semantically equivalent
-    but slower to ignore the optimized implementation.
--   As much as possible, switching a templated function to a generic one should
-    involve minimal changes to the function body. It should primarily just
-    consist of adding constraints to the signature. When changes are needed, the
-    compiler will not accept the code without them. No semantics of any code
-    will change merely as the result of switching from template to generics. See
-    ["Carbon principle: Generics"](https://github.com/josh11b/carbon-lang/blob/principle-generics/docs/project/principles/principle-generics.md).
-
-Very stretch goals (these are more difficult, and possibly optional):
-
--   Define an interface where the relationship between the input and output
-    types is a little complicated. For example, widening multiplication from an
-    integer type to one with more bits, or
-    `Abs: Complex(SomeIntType) -> SomeFloatType`. One possible strategy is to
-    have the return type be represented by an
-    [associated type](#interface-type-parameters-vs-associated-types).
--   Define an interface that has multiple related types, like Graph/Nodes/Edges.
-    TODO: A concrete combination of `Graph`, `Edge`, and `Node` types that we
-    would like to define an interface for. Is the problem when you `Edge` and
-    `Node` refer to each other, so you need a forward declaration to break the
-    cycle?
--   Impls where the impl itself has state. (from richardsmith@) Use case:
-    implementing interfaces for a flyweight in a Flyweight pattern where the
-    Impl needs a reference to a key -> info map.
--   "Higher-ranked types": A solution to the problem posed
-    [here (TODO)](#broken-links-footnote)<!-- T:Carbon: types as function tables, interfaces as type-types --><!-- A:#heading=h.qvhzlz54obmt -->,
-    where we need a representation for a way to go from a type to an
-    implementation of an interface parameterized by that type. Examples of
-    things we might want to express: _
-    `struct PriorityQueue( \ Type:$ T, fn (Type:$ U)->QueueInterface(U):$ QueueLike) { \ ... \ }`
-    _ `fn Map[Type:$ T, fn (Type:$ U)->StackInterface(U):$ StackLike,`
-
-            ```
-                   Type:$ V]
-        (StackLike(T)*: x, fn (T)->V: f) -> StackLike(V) { ... }
-
-            ```
-
-These mechanisms need to have an underlying programming model that allows users
-to predict how to do these things, how to compose these things, and what
-expressions are legal.
 
 ## Broken links footnote
 

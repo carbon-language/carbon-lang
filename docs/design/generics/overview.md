@@ -380,7 +380,7 @@ interface".
 
 ### Problem statement
 
-[See "Problem statement" section in "Carbon Generics: Terminology and Problem statement"](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#problem-statement).
+[See the "use cases and problem statement" document about Carbon Generics](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/use-cases.md).
 
 Generally speaking, we want generics and interfaces to be sufficiently
 expressive and convenient that we can skip open overloading. Open overloading
