@@ -1,6 +1,7 @@
-#!/usr/bin/env python3
+"""Tests for pr-comments.py.
 
-"""Tests for pr-comments.py."""
+Please use pytest for testing (pip install pytest).
+"""
 
 import os
 import pr_comments
@@ -174,7 +175,7 @@ class TestPRComments(unittest.TestCase):
         self.assertTrue(thread2 < thread3)
         self.assertFalse(thread3 < thread2)
 
-    def test_accumulate_threads(self):
+    def test_accumulate_thread(self):
         with mock.patch.dict(os.environ, {}):
             parsed_args = pr_comments._parse_args(["83"])
         threads_by_path = {}
@@ -184,9 +185,10 @@ class TestPRComments(unittest.TestCase):
             self.fake_thread_dict(path="other.md"),
             self.fake_thread_dict(),
         ]
-        pr_comments._accumulate_threads(
-            parsed_args, threads_by_path, review_threads
-        )
+        for thread in review_threads:
+            pr_comments._accumulate_thread(
+                parsed_args, threads_by_path, thread,
+            )
         self.assertEqual(sorted(threads_by_path.keys()), ["foo.md", "other.md"])
         threads = sorted(threads_by_path["foo.md"])
         self.assertEqual(len(threads), 3)
@@ -234,7 +236,7 @@ class TestPRComments(unittest.TestCase):
 
         self.assertFalse(pr_comment2 < pr_comment2)
 
-    def test_accumulate_pr_comments(self):
+    def test_accumulate_pr_comment(self):
         with mock.patch.dict(os.environ, {}):
             parsed_args = pr_comments._parse_args(["83"])
         raw_comments = [
@@ -248,7 +250,10 @@ class TestPRComments(unittest.TestCase):
             ),
         ]
         comments = []
-        pr_comments._accumulate_pr_comments(parsed_args, comments, raw_comments)
+        for raw_comment in raw_comments:
+            pr_comments._accumulate_pr_comment(
+                parsed_args, comments, raw_comment
+            )
         comments.sort()
         self.assertEqual(len(comments), 3)
         self.assertEqual(comments[0].body, "y")
