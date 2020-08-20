@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-
 """GitHub GraphQL helpers.
 
 https://developer.github.com/v4/explorer/ is very useful for building queries.

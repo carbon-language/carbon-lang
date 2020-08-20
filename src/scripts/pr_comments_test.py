@@ -1,7 +1,4 @@
-"""Tests for pr-comments.py.
-
-Please use pytest for testing (pip install pytest).
-"""
+"""Tests for pr_comments.py."""
 
 __copyright__ = """
 Part of the Carbon Language project, under the Apache License v2.0 with LLVM
@@ -10,9 +7,10 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 """
 
 import os
-import pr_comments
 import unittest
 from unittest import mock
+
+import pr_comments
 
 
 class TestPRComments(unittest.TestCase):

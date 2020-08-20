@@ -19,7 +19,6 @@ import argparse
 # GraphQL is preferred, but falling back to pygithub for unsupported mutations.
 import github
 
-# GitHub GraphQL helpers.
 import github_helpers
 
 # The organization to mirror members from.
@@ -29,7 +28,7 @@ _ORG = "carbon-language"
 _TEAM = "contributors-with-label-access"
 
 # Accounts in the org to skip mirroring.
-_IGNORE_ACCOUNTS = ["CarbonLangInfra", "google-admin", "googlebot"]
+_IGNORE_ACCOUNTS = ("CarbonLangInfra", "google-admin", "googlebot")
 
 # Queries organization members.
 _ORG_MEMBER_QUERY = """
@@ -75,12 +74,8 @@ def _parse_args(args=None):
     return parser.parse_args(args=args)
 
 
-def main():
-    parsed_args = _parse_args()
-    print("Connecting...")
-    client = github_helpers.Client(parsed_args)
-
-    # Load org members.
+def _load_org_members(client):
+    """Loads org members."""
     print("Loading %s..." % _ORG)
     org_members = set()
     ignored = set()
@@ -98,8 +93,11 @@ def main():
     )
     unignored = set(_IGNORE_ACCOUNTS) - ignored
     assert not unignored, "Missing ignored accounts: %s" % unignored
+    return org_members
 
-    # Load team members.
+
+def _load_team_members(client):
+    """Load team members."""
     print("Loading %s..." % _TEAM)
     team_members = set()
     for node in client.execute_and_paginate(
@@ -107,22 +105,38 @@ def main():
     ):
         team_members.add(node["login"])
     print("%s has %d members." % (_ORG, len(team_members)))
+    return team_members
 
-    # Update the team. This switches to pygithub because GraphQL doesn't have
-    # equivalent mutation support.
+
+def _update_team(gh, org_members, team_members):
+    """Updates the team if needed.
+
+    This switches to pygithub because GraphQL lacks equivalent mutation support.
+    """
+    gh_team = gh.get_organization(_ORG).get_team_by_slug(_TEAM)
     add_members = org_members - team_members
+    if add_members:
+        print("Adding members: %s" % ", ".join(add_members))
+        for member in add_members:
+            gh_team.add_membership(gh.get_user(member))
+
     remove_members = team_members - org_members
-    if add_members or remove_members:
+    if remove_members:
+        print("Removing members: %s" % ", ".join(remove_members))
+        for member in remove_members:
+            gh_team.remove_membership(gh.get_user(member))
+
+
+def main():
+    parsed_args = _parse_args()
+    print("Connecting...")
+    client = github_helpers.Client(parsed_args)
+
+    org_members = _load_org_members(client)
+    team_members = _load_team_members(client)
+    if org_members != team_members:
         gh = github.Github(parsed_args.access_token)
-        team = gh.get_organization(_ORG).get_team_by_slug(_TEAM)
-        if add_members:
-            print("Adding members: %s" % ", ".join(add_members))
-            for member in add_members:
-                team.add_membership(gh.get_user(member))
-        if remove_members:
-            print("Removing members: %s" % ", ".join(remove_members))
-            for member in remove_members:
-                team.add_membership(gh.get_user(member))
+        _update_team(gh, gh_team, org_members, team_members)
     print("Done!")
 
 

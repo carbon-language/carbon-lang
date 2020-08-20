@@ -14,7 +14,6 @@ import hashlib
 import sys
 import textwrap
 
-# GitHub GraphQL helpers.
 import github_helpers
 
 # The main query, into which other queries are composed.
