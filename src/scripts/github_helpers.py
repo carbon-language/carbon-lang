@@ -27,7 +27,7 @@ totalCount
 """
 
 
-def add_access_token_arg(parser):
+def add_access_token_arg(parser, permissions):
     """Adds a flag to set the access token."""
     access_token = os.environ.get(_ENV_TOKEN, default=None)
     parser.add_argument(
@@ -36,7 +36,8 @@ def add_access_token_arg(parser):
         default=access_token,
         required=not access_token,
         help="The access token for use with GitHub. May also be specified in "
-        "the environment as %s." % _ENV_TOKEN,
+        "the environment as %s. The access token should have permissions: %s"
+        % (_ENV_TOKEN, permissions),
     )
 
 

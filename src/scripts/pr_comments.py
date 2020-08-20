@@ -257,7 +257,7 @@ def _parse_args(args=None):
         type=int,
         help="The pull request to fetch comments from.",
     )
-    github_helpers.add_access_token_arg(parser)
+    github_helpers.add_access_token_arg(parser, "repo")
     parser.add_argument(
         "--comments-after",
         metavar="LOGIN",

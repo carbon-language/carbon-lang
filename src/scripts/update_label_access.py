@@ -70,7 +70,7 @@ _TEAM_MEMBER_PATH = ("organization", "team", "members")
 def _parse_args(args=None):
     """Parses command-line arguments and flags."""
     parser = argparse.ArgumentParser(description=__doc__)
-    github_helpers.add_access_token_arg(parser)
+    github_helpers.add_access_token_arg(parser, "admin:org, repo")
     return parser.parse_args(args=args)
 
 
