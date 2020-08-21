@@ -924,14 +924,20 @@ void ShrinkWrapping::splitFrontierCritEdges(
     const SmallVector<SmallVector<BinaryBasicBlock *, 4>, 4> &To) {
   DEBUG(dbgs() << "splitFrontierCritEdges: Now handling func "
                << BF.getPrintName() << "\n");
-  for (size_t I = 0; I < Frontier.size(); ++I) {
+  // For every FromBB, there might be one or more critical edges, with
+  // To[I] containing destination BBs. It's important to memorize
+  // the original size of the Frontier as we may append to it while splitting
+  // critical edges originating with blocks with multiple destinations.
+  for (size_t I = 0, IE = Frontier.size(); I < IE; ++I) {
     if (!IsCritEdge[I])
       continue;
     if (To[I].empty())
       continue;
     auto FromBB = From[I];
     DEBUG(dbgs() << " - Now handling FrontierBB " << FromBB->getName() << "\n");
-    for (auto DestinationBB : To[I]) {
+    // Split edge for every DestinationBBs
+    for (size_t DI = 0, DIE = To[I].size(); DI < DIE; ++DI) {
+      auto DestinationBB = To[I][DI];
       DEBUG(dbgs() << "   - Dest : " << DestinationBB->getName() << "\n");
       auto *NewBB = Func->splitEdge(FromBB, DestinationBB);
       // Insert dummy instruction so this BB is never empty (we need this for
@@ -945,7 +951,16 @@ void ShrinkWrapping::splitFrontierCritEdges(
       }
 
       // Update frontier
-      Frontier[I] = ProgramPoint::getLastPointAt(*NewBB);
+      auto NewFrontierPP = ProgramPoint::getLastPointAt(*NewBB);
+      if (DI == 0) {
+        // Update frontier inplace
+        Frontier[I] = NewFrontierPP;
+        DEBUG(dbgs() << "   - Update frontier with " << NewBB->getName() << '\n');
+      } else {
+        // Append new frontier to the end of the list
+        Frontier.push_back(NewFrontierPP);
+        DEBUG(dbgs() << "   - Append frontier " << NewBB->getName() << '\n');
+      }
     }
   }
 }
