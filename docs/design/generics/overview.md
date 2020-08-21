@@ -210,10 +210,9 @@ dispatch harder to observe, enabling the compiler to switch between those
 strategies without danger of accidentally changing the semantics of the program.
 
 **NOTE:** The `$` syntax is temporary and won't be the final syntax we use,
-since it is not easy to type `$` from non-US keyboards. Instead of `:$`,
-[we are considering (TODO)](#broken-links-footnote)<!-- T:Carbon templates and generics --><!-- A:# -->:
-`:!`, `:@`, `:#`, and `::`. We might use the same character here as we decide
-for
+since it is not easy to type `$` from non-US keyboards. Instead of `:$`, we are
+considering: `:!`, `:@`, `:#`, and `::`. We might use the same character here as
+we decide for
 [Carbon metaprogramming](https://github.com/josh11b/carbon-lang/blob/metaprogramming/docs/design/metaprogramming.md)
 constructs.
 
