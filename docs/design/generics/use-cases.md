@@ -10,38 +10,49 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 We want ways of accomplishing the following tasks:
 
--   Define an [interface](#interface).
+-   Define an
+    [interface](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#interface).
 -   Define an interface with
-    [type parameters](#interface-type-parameters-vs-associated-types) (maybe)
-    and/or [associated types](#interface-type-parameters-vs-associated-types)
+    [type parameters](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#interface-type-parameters-vs-associated-types)
+    (maybe) and/or
+    [associated types](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#interface-type-parameters-vs-associated-types)
     (almost certainly).
--   Define an interface with [type constraints](#type-constraints), such as
-    associated types or type parameters satisfying some interface. Type
+-   Define an interface with
+    [type constraints](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#type-constraints),
+    such as associated types or type parameters satisfying some interface. Type
     constraints will also be needed as part of generic function definitions, to
     define relationships between type parameters and associated types.
 -   Optional, but probably straightforward if we want it: Define an interface
-    that [extends/refines](#extendingrefining-an-interface) another interface.
-    Similarly we probably want a way to say an interface requires an
-    implementation of one or more other interfaces.
--   Define how a type [implements](#impls-implementations-of-interfaces) an
-    interface ([semantic conformance](#semantic-vs-structural-interfaces)). It
-    should address
+    that
+    [extends/refines](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#extendingrefining-an-interface)
+    another interface. Similarly we probably want a way to say an interface
+    requires an implementation of one or more other interfaces.
+-   Define how a type
+    [implements](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#impls-implementations-of-interfaces)
+    an interface
+    ([semantic conformance](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#semantic-vs-structural-interfaces)).
+    It should address
     [the expression problem](https://eli.thegreenplace.net/2016/the-expression-problem-and-its-solutions),
     e.g. by allowing the impl definition to be completely out of line as long as
     it is defined with either the type or the interface.
 -   Define a parameterized implementation of an interface for a family of types.
     This is both for
-    [structural conformance](#semantic-vs-structural-interfaces) via
-    [templated impls](#templated-impl), and
-    [conditional conformance](#conditional-conformance). That family of types
-    may have generic or regular parameters, so that e.g. you could implement a
-    `Printable` interface for arrays of `N` elements of `Printable` type `T`,
-    generically for `N` (not separately instantiated for each `N`).
+    [structural conformance](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#semantic-vs-structural-interfaces)
+    via
+    [templated impls](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#templated-impl),
+    and
+    [conditional conformance](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#conditional-conformance).
+    That family of types may have generic or regular parameters, so that e.g.
+    you could implement a `Printable` interface for arrays of `N` elements of
+    `Printable` type `T`, generically for `N` (not separately instantiated for
+    each `N`).
 -   Control how an interface may be used in order to reserve or abandon rights
     to evolve the interface. See
     [the relevant open question in "Carbon closed function overloading proposal" (TODO)](#broken-links-footnote)<!-- T:Carbon closed function overloading proposal --><!-- A:#bookmark=id.hxvlthy3z3g1 -->.
 -   Specify a generic explicit (non-type or type) parameter to a function.
--   Specify a generic [implicit parameter](#implicit-parameter) to a function.
+-   Specify a generic
+    [implicit parameter](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#implicit-parameter)
+    to a function.
 -   Specify a generic type parameter constrained to conform to an interface. And
     in the function, call methods defined in the the interface on a value of
     that type.
@@ -67,9 +78,11 @@ We want ways of accomplishing the following tasks:
 -   A value with a type implementing a superset of the interfaces required by a
     generic function may be passed to the function without additional syntax
     beyond passing the same value to a non-generic function expecting the exact
-    type of the value ([subsumption](#subsumption-and-casting)). This should be
-    true for values with types only known generically, as long as it is
-    generically known that the type implements a sufficient set of interfaces.
+    type of the value
+    ([subsumption](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#subsumption-and-casting)).
+    This should be true for values with types only known generically, as long as
+    it is generically known that the type implements a sufficient set of
+    interfaces.
 -   Define a parameterized entity (such as a function) such that code for it
     will only be generated once.
 -   Define a parameterized entity such that code for it will be generated
@@ -86,11 +99,11 @@ We want ways of accomplishing the following tasks:
     Possibly the "one or few functions" won't even be part of the interface.
 -   Define an interface implementation algorithmically -- possibly via a
     function returning an impl, or by defining an
-    [adapting type](#adapting-a-type) that implements that interface. This could
-    be a solution to the previous bullet. Another use case is when there are few
-    standard implementation strategies for an interface, and you want to provide
-    those implementations in a way that makes it easy for new types to adopt
-    one.
+    [adapting type](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#adapting-a-type)
+    that implements that interface. This could be a solution to the previous
+    bullet. Another use case is when there are few standard implementation
+    strategies for an interface, and you want to provide those implementations
+    in a way that makes it easy for new types to adopt one.
 -   Support a way to switch between algorithms based on the capabilities of a
     type. For example, we may want to use different algorithms for random-access
     vs. bidirectional iterators. Similarly, a way to have specialization based
@@ -117,7 +130,7 @@ These are more difficult, and possibly optional:
     integer type to one with more bits, or
     `Abs: Complex(SomeIntType) -> SomeFloatType`. One possible strategy is to
     have the return type be represented by an
-    [associated type](#interface-type-parameters-vs-associated-types).
+    [associated type](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#interface-type-parameters-vs-associated-types).
 -   Define an interface that has multiple related types, like Graph/Nodes/Edges.
     TODO: A concrete combination of `Graph`, `Edge`, and `Node` types that we
     would like to define an interface for. Is the problem when you `Edge` and
@@ -157,3 +170,10 @@ fn Map[Type:$ T,
 These mechanisms need to have an underlying programming model that allows users
 to predict how to do these things, how to compose these things, and what
 expressions are legal.
+
+## Broken links footnote
+
+Some links in this document aren't yet available, and so have been directed here
+until we can do the work to make them available.
+
+We thank you for your patience.
