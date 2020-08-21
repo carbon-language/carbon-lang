@@ -134,8 +134,8 @@ cleaned up during evolution.
 Carbon source files are grouped into libraries, which are in turn grouped into
 packages. Libraries are the granularity of code reuse through imports.
 
-Name paths in Carbon always start with the package name. Additional
-namespaces may be specified as desired.
+Name paths in Carbon always start with the package name. Additional namespaces
+may be specified as desired.
 
 For example, this code declares a struct `Geometry.Shapes.Flat.Circle` in a
 library `Geometry.OneSide`:
@@ -152,7 +152,7 @@ This type can be used from another package:
 ```carbon
 package ExampleUser;
 
-import Geometry library Triangle;
+import Geometry library OneSide;
 
 fn Foo(var Geometry.Shapes.Flat.Circle: circle) { ... }
 ```

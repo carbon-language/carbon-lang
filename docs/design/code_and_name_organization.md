@@ -15,10 +15,6 @@
 -   TODO: Full namespace on every identifier, even just declarations
     -   Pervasive aliasing by users to avoid typing
     -   Could make extremely verbose imported code
--   TODO: Remove commentary on name conflicts, leave it to name lookup
-    -   Too many nuances here, probably better to get the proposal out of it
-    -   May need some scope-based lookup for shadows, may require full
-        specification instead.
 -   TODO: Rename the section about automatic API generation
 -   TODO: Redundant information to support tooling
     -   i.e., cover why we have both a package keyword saying api/impl and
@@ -52,7 +48,6 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Imports](#imports)
 -   [Details](#details)
     -   [Name paths](#name-paths)
-        -   [Disallowing name conflicts](#disallowing-name-conflicts)
     -   [Packages](#packages)
     -   [Libraries](#libraries)
         -   [Exporting entities from an API file](#exporting-entities-from-an-api-file)
@@ -77,6 +72,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Packages](#packages-1)
         -   [Name paths for package names](#name-paths-for-package-names)
         -   [Remove the `library` keyword from `package` and `import`](#remove-the-library-keyword-from-package-and-import)
+        -   [Remove the `namespace` keyword from `package`](#remove-the-namespace-keyword-from-package)
         -   [Rename package concept](#rename-package-concept)
         -   [Strict association between the filesystem path and library/namespace](#strict-association-between-the-filesystem-path-and-librarynamespace)
     -   [Libraries](#libraries-1)
@@ -198,66 +194,14 @@ fn Area(Geo.Circle circle) { ... };
 
 ### Name paths
 
-[Name paths](#name-paths) are defined above as sequences of identifiers separated by dots. This
-syntax can be expressed as a rough regular expression:
+[Name paths](#name-paths) are defined above as sequences of identifiers
+separated by dots. This syntax can be expressed as a rough regular expression:
 
 ```regex
 IDENTIFIER(\.IDENTIFIER)*
 ```
 
-#### Disallowing name conflicts
-
-Carbon will disallow name conflicts when two identical names are declared within
-the same name path. Identical names in different namespaces will be allowed,
-although [name lookup](name_lookup.md) will produce an error if there is
-ambiguous shadowing; that is to say, a name is used that could match two
-different entities. [`as`](#import-name-conflicts) may be used to address name
-conflicts caused by imports, and developers will be expected to avoid name
-conflicts in other entities that they define.
-
-For example, all cases of `Geometry` conflict because they're in the same scope:
-
-```carbon
-package Example api;
-
-import Geometry;
-
-namespace Geometry;
-fn Geometry() { ... }
-struct Geometry { ... }
-```
-
-In this below example, the declaration of `Foo.Geometry` shadows `Geometry`, but
-is not inherently a conflict. A conflict arises when trying to use it from
-`Foo.Geometry` because the `Geometry` lookup from within `Foo` shadows the
-imported `Geometry`, and so produces a name lookup error.
-
-```carbon
-package Example api;
-
-import Geometry;
-
-namespace Foo;
-struct Foo.Geometry { ... }
-fn Foo.GetArea(var Geometry.Circle: t) { ... }
-```
-
-We expect some shadowing like this to occur, particularly during refactoring.
-However, it remains important that code unambiguously refer to which entity it
-uses when shadowing is an issue.
-
-In this case, an `as` can be used to fix the issue by renaming the `Geometry`
-import:
-
-```carbon
-package Example api;
-
-import Geometry as Geo;
-
-namespace Foo;
-struct Foo.Geometry { ... }
-fn Foo.GetArea(var Geo.Circle: t) { ... }
-```
+Name conflicts are handled per [name lookup](name_lookup.md).
 
 ### Packages
 
@@ -294,16 +238,17 @@ may use different `library` arguments. Similarly, files contributing to the
 `Geometry.Objects.FourSides` library may use different `namespace` arguments.
 However, they will all be in the `Geometry` package.
 
-Because the `package` keyword must be specified exactly once in all files, there are a couple
-important and deliberate side-effects:
+Because the `package` keyword must be specified exactly once in all files, there
+are a couple important and deliberate side-effects:
 
 -   Every file will be in precisely one library, even if its library path
     consists of only the package name.
 -   Every entity in Carbon will be in a namespace, even if its namespace path
     consists of only the package name. There is no "global" namespace.
-    -   Every entity in a file will be defined within the namespace described in the
-        `package` statement.
-    -   Entities within a file may be defined in [child namespaces](#namespaces).
+    -   Every entity in a file will be defined within the namespace described in
+        the `package` statement.
+    -   Entities within a file may be defined in
+        [child namespaces](#namespaces).
 
 ### Libraries
 
@@ -398,8 +343,8 @@ Its syntax may loosely be expressed as a regular expression:
 namespace NAME_PATH;
 ```
 
-A namespace is used by first declaring it, then including it as a prefix when declaring a name.
-For example:
+A namespace is used by first declaring it, then including it as a prefix when
+declaring a name. For example:
 
 ```carbon
 namespace Foo.Bar;
@@ -409,8 +354,9 @@ fn Wiz(Foo.Bar.Baz x);
 ```
 
 A namespace declaration adds the first identifier in the name path as a name in
-the file's namespace. In the above example, after declaring `namespace Foo.Bar;`,
-`Foo` is available as an identifier and `Bar` is reached through `Foo`.
+the file's namespace. In the above example, after declaring
+`namespace Foo.Bar;`, `Foo` is available as an identifier and `Bar` is reached
+through `Foo`.
 
 Namespaces declared and added to within a file must always be children of the
 file-level namespace. For example, this declares
@@ -519,33 +465,21 @@ fn Geometry(Geo.Circle: circle) { ... }
 
 #### Imports from the current package
 
-Entities defined in the current file without mentioning the package prefix.
-However, other symbols from the packages must be imported and accessed through
-the package namespace just like symbols from any other package. The only
-difference is that the package name is optional in the `import` statement, since
-it defaults to the current package. This means every symbol is accessed
-unambiguously via a name that is first introduced within the same file, without
-having to look at any other file to determine during parsing whether a name was
-undefined or imported.
+Entities defined in the current file may be used without mentioning the package
+prefix. However, other symbols from the package must be imported and accessed
+through the package namespace just like symbols from any other package.
 
 For example:
 
 ```carbon
 package Geometry api;
 
-// This imports Geometry's Shapes library, and provides a Geometry namespace
-// identifier for use.
-import library Shapes;
+// This is required even though it's still in the Geometry package.
+import Geometry library Shapes;
 
 // Circle must be referenced using the Geometry namespace of the import.
 fn GetArea(Geometry.Circle: c) { ... }
 ```
-
-Note this means the `import library Shapes` does still declare a `Geometry`
-namespace that wasn't there previously.
-[Imported name conflicts](#imported-name-conflicts) may still occur if
-`Geometry.Geometry` is defined in the current file, and would still be fixed by
-`as`.
 
 ## Caveats
 
@@ -705,6 +639,38 @@ Cons:
 -   Creates redundancy of the package name in the namespace declaration.
     -   Instead of `package Foo.Bar namespace Foo.Baz`, could instead use `Baz`,
         or `this.Baz` to elide the package name.
+
+#### Remove the `namespace` keyword from `package`
+
+Right now, we allow syntax like:
+
+```carbon
+package Foo namespace Bar.Baz;
+fn Wiz() { ... }
+```
+
+We could remove `namespace` from the `package` keyword, requiring syntax like:
+
+```carbon
+package Foo;
+
+namespace Bar.Baz;
+fn Bar.Baz.Wiz() { ... }
+```
+
+Pros:
+
+-   Reduces complexity of the `package` keyword.
+
+Cons:
+
+-   Increases verbosity for libraries which use namespaces, as every identifier
+    must have the namespace specified.
+    -   Omitting the namespace is likely to lead to name collisions for large
+        packages.
+
+Overall, the desire to make it easy to avoid name collisions means we should
+allow `namespace` at the file level.
 
 #### Rename package concept
 
@@ -1062,15 +1028,15 @@ Cons:
         Even if not, if we acknowledge it's a problem, we should address it
         structurally for
         [readability](/docs/projects/goals.md#code-that-is-easy-to-read-understand-and-write).
-    -   This is less of a problem for other scopes because they can often be
-        broken apart.
+    -   This is less of a problem for other scopes, such as functions, because
+        they can often be broken apart until they fit on a single screen.
 
 There are other ways to address the con, such as adding syntax to indicate the
-end of a namespace:
+end of a namespace, similar to block comments. For example:
 
 ```carbon
-namespace Foo {
-  namespace Bar.Baz {
+{ namespace Foo
+  { namespace Bar.Baz
     struct Wiz { ... }
   } namespace Bar.Baz
 } namespace Foo

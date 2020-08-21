@@ -27,14 +27,14 @@ package.
 
 ## name path
 
-A _name path_ is the dot-separated identifier list that indicates the full path
-of a name. For example, given `fn GetArea(var Geometry.Circle: x)`,
+A _name path_ is the dot-separated identifier list that indicates a relative or
+full path of a name. For example, given `fn GetArea(var Geometry.Circle: x)`,
 `Geometry.Circle` is a name path. `GetArea` is also a name path, albeit with
 only one identifier needed.
 
 ## namespace
 
-A _namespace_ is a named entity that contains entities, and may be nested. For
+A _namespace_ is a entity that contains entities, and may be nested. For
 example, given a name path of `Geometry.Circle`, `Geometry` is a namespace
 containing `Circle`.
 
@@ -44,4 +44,4 @@ A _package_ is a group of libraries in Carbon, and is the standard unit for
 distribution. The package name also serves as the root namespace for all name
 paths in its libraries. The package name should be a single, globally-unique
 identifier. For example, given `package Geometry;` in a file, `Geometry` is the
-package.
+package and root namespace.
