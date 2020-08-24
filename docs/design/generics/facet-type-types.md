@@ -59,13 +59,13 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [Implicit interface arguments [optional feature]](#implicit-interface-arguments-optional-feature)
 -   [Interface nesting/containment [optional feature]](#interface-nestingcontainment-optional-feature)
 -   [Index of examples](#index-of-examples)
--   [Notes:](#notes) -
-    [Associated types vs. interface parameters: ergonomics](#associated-types-vs-interface-parameters-ergonomics) -
-    [Associated types vs. interface parameters: existential types (dynamic types)](#associated-types-vs-interface-parameters-existential-types-dynamic-types) -
-    [Design advice: use interface parameters (?)](#design-advice-use-interface-parameters-) -
-    [Example: SubSequence in Collection](#example-subsequence-in-collection) -
-    [Example: Index in Collection](#example-index-in-collection) -
-    [joshl@ Reaction: Let's make associated types into "optional keyword parameters"](#joshl-reaction-lets-make-associated-types-into-optional-keyword-parameters)
+-   [Notes](#notes)
+    -   [Associated types vs. interface parameters: ergonomics](#associated-types-vs-interface-parameters-ergonomics)
+    -   [Associated types vs. interface parameters: existential types (dynamic types)](#associated-types-vs-interface-parameters-existential-types-dynamic-types)
+    -   [Design advice: use interface parameters (?)](#design-advice-use-interface-parameters-)
+    -   [Example: SubSequence in Collection](#example-subsequence-in-collection)
+    -   [Example: Index in Collection](#example-index-in-collection)
+    -   [joshl@ Reaction: Let's make associated types into "optional keyword parameters"](#joshl-reaction-lets-make-associated-types-into-optional-keyword-parameters)
 -   [Broken links footnote](#broken-links-footnote)
 
 <!-- tocstop -->
@@ -2176,7 +2176,7 @@ expressions are legal.
 -   See the [main "Model" section](#model), in addition to "Model" subsections
     throughout the doc
 
-## Notes:
+## Notes
 
 These are notes from discussions after this document was first written that have
 not yet been incorporated into the main text above.
@@ -2224,7 +2224,7 @@ fn F(A: a, B: b, ..., Addable(A, B):$ T) requires (A,B) : Addable(A, B) {
 }
 ```
 
-#### Associated types vs. interface parameters: ergonomics
+### Associated types vs. interface parameters: ergonomics
 
 Associated types provide an advantage in ergonomics because constraints in
 generic types and functions don’t need to specify associated types that they
@@ -2282,7 +2282,7 @@ fn Map[CollectionAssoc:$ C, Type:$ NewElement](
   C: collection, fn (C.Element) -> NewElement: mapper) -> Array<NewElement> { ... }
 ```
 
-#### Associated types vs. interface parameters: existential types (dynamic types)
+### Associated types vs. interface parameters: existential types (dynamic types)
 
 Interface parameters make us create separate types for different
 “instantiations” of interfaces. Because of that, those instantiations can act as
@@ -2318,7 +2318,7 @@ completely opaque type, which would not be very useful.
 Calling `ints3.size()` is perfectly fine though, because the signature of
 `size()` does not mention any associated types.
 
-#### Design advice: use interface parameters (?)
+### Design advice: use interface parameters (?)
 
 An obvious reaction to difficulties above is to recommend API designers to use
 interface parameters for type variables that users might want to constrain.
@@ -2339,7 +2339,7 @@ Finally, making some type variables into interface parameters and then having
 users constrain them is harmful for genericity (see both the
 Collection.SubSequence and Index examples below).
 
-#### Example: SubSequence in Collection
+### Example: SubSequence in Collection
 
 A subsequence of a collection is a view into the elements of this collection. We
 can define it as either an interface parameter or as an associated type:
@@ -2406,7 +2406,7 @@ not be desirable to constrain it to something specific in existential types.
 Maybe we should type erase associated types in existentials? See the example
 below to see where that fails.
 
-#### Example: Index in Collection
+### Example: Index in Collection
 
 In the examples above, a simplified `Collection` interface was presented that
 assumed that every collection can be efficiently indexed by an `Int`. However,
@@ -2482,7 +2482,7 @@ var DynPtr(CollectionAssoc requires Element = Int) ints3 =
     &Array<Int>::make(...); // ok!
 ```
 
-#### joshl@ Reaction: Let's make associated types into "optional keyword parameters"
+### joshl@ Reaction: Let's make associated types into "optional keyword parameters"
 
 There definitely seem to be some differences between types that you might
 typically want to parameterize vs. those you would want to be associated types:
