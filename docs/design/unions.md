@@ -125,13 +125,14 @@ ordinary struct fields and variables are always tied to their scope. It is out
 of contract to apply `create` to a member of a union that already has a live
 member, or apply `destroy` to a member that is not live. `destroy` can be
 thought of as a unary operator, but a `create` statement has the syntax and
-semantics of a variable declaration, with `create` taking the place of `var`,
-and the field expression taking the place of the variable name. `destroy`
-permanently invalidates any pointers to the destroyed object; they do not become
-valid again if that member is re-created.
+semantics of a variable declaration, with `create` taking the place of `var` and
+the field type, and the field expression taking the place of the variable name.
+`destroy` permanently invalidates any pointers to the destroyed object; they do
+not become valid again if that member is re-created.
 
 > **FIXME**: Does the `create` syntax make it sufficiently clear that the `=`
-> represents initialization, not assignment? Can we do better?
+> represents initialization, not assignment? Is it OK that the `create` syntax
+> omits the type? Can we do better?
 
 > **TODO:** The spelling of `create` and `destroy` are chosen for consistency
 > with `operator create` and `operator destroy`, which are how constructor and
@@ -166,8 +167,8 @@ struct SsoString {
 
 Field groups are sets of fields (and/or unions) that can be created and
 destroyed as a unit. They are initialized from anonymous structs whose fields
-have the same types, names, and order, and their names are part of the names of
-their fields:
+have the same types, names, and order. The name of a field group is part of the
+name of each field in the group:
 
 ```
 var SsoString: str = (.is_small = True,
@@ -187,15 +188,15 @@ to ensure proper alignment of `large`.
 
 ## Layout
 
-The layout of a union is determined as follows: we express the layout of a field
-in terms of its starting and ending offsets, which are measured in bits in order
-to handle bitfields. The starting and ending offsets of each field in a field
-group are the same as if the fields were all direct members of the enclosing
-struct. A union member that is not a field group is laid out as if it were a
-field group containing a single field. The ending offset of a union is the
-maximum ending offset of any field in any of its field groups, rounded up to the
-next whole byte. Note that this means that bitfields after the union are not
-"packed" together with any bitfields at the end of the union.
+We express the layout of a field in terms of its starting and ending offsets,
+which are measured in bits in order to handle bitfields. The starting and ending
+offsets of each field in a field group are the same as if the fields were all
+direct members of the enclosing struct. A union member that is not a field group
+is laid out as if it were a field group containing a single field. The ending
+offset of a union is the maximum ending offset of any field in any of its field
+groups, rounded up to the next whole byte. Note that this means that bitfields
+after the union are not "packed" together with any bitfields at the end of the
+union.
 
 > **TODO:** This presupposes that struct fields are laid out sequentially; if
 > that is not the case, this algorithm will need to be revised accordingly.
