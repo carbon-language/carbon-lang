@@ -12,7 +12,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 -   [Overview](#overview)
 -   [Union members](#union-members)
--   [Changing the active member](#changing-the-active-member)
+-   [Changing the live member](#changing-the-live-member)
 -   [Field groups](#field-groups)
 -   [Layout](#layout)
 -   [Safety](#safety)
@@ -31,23 +31,28 @@ struct Number {
     var Float64: float_value;
   }
 
-  // 0 if no active member, 1 if int_value is active, 2 if double_value is
-  // active.
+  // 0 if no live member, 1 if int_value is live, 2 if double_value is live.
   var Int2: discriminator;
 }
 ```
 
 A union consists of zero or more _members_, at most one of which can be live at
-a time. All members of a union share the same storage, so `Number` as a whole is
-9 bytes, not 17. When a member of the union is live, we say it is the _active_
-member. It is out of contract to access a member that is not live, even if it
-has the same type as the active member. There is no intrinsic way to determine
-which member of the union is active, and in fact that information will probably
-not be tracked in production builds. Instead, user code is responsible for doing
-whatever bookkeeping is necessary to ensure that only the active member is
-accessed. This typically takes the form of an associated discriminator field, as
-in `Number`, but this is not required. For example, some user code may be able
-to satisfy that requirement statically, with no run-time tracking at all.
+a time. A member can be either a field of any type, or a
+[field group](#field-groups). All members of a union share the same storage, so
+`Number` as a whole is 9 bytes, not 17. It is out of contract to access a member
+that is not live, even if it has the same type as the live member. There is no
+intrinsic way to determine which member of the union is live, and in fact that
+information will probably not be tracked in production builds. Instead, user
+code is responsible for doing whatever bookkeeping is necessary to ensure that
+only the live member is accessed. This typically takes the form of an associated
+discriminator field, as in `Number`, but this is not required. For example, some
+user code may be able to satisfy that requirement statically, with no run-time
+tracking at all.
+
+> **TODO:** If Carbon supports auto-generating struct operations such as
+> copying, assignment, or destruction, we will need to specify that it does not
+> support structs that contain unions, since the generated code won't know which
+> field is live.
 
 > **TODO:** Carbon should also permit users to easily define "algebraic data
 > types", which are type-safe union-like constructs with compiler-provided
@@ -67,16 +72,16 @@ Union fields are referenced and initialized exactly like ordinary members of the
 enclosing struct. However, union fields can be omitted from the initializer,
 unlike ordinary fields. Obviously the initializer cannot initialize more than
 one member of a union, but it can initialize either one member or none. If no
-member of the union is initialized, no member of the union is initially active:
+member of the union is initialized, no member of the union is initially live:
 
 ```
-// n1.int_value and n1.float_value are both inactive
+// Neither n1.int_value nor n1.float_value are live
 Number: n1 = ( .discriminator = 0 );
 
-// n2.int_value is active and holds 0
+// n2.int_value is live and holds 0
 Number: n2 = ( .int_value = 0, .discriminator = 1 );
 
-// n3.int_value is active, but not initialized
+// n3.int_value is live, but not initialized
 Number: n3 = ( .int_value = uninit, .discriminator = 1 );
 
 // Error: cannot initialize multiple members of a single union
@@ -88,7 +93,7 @@ zero or one member of a given union. If no member is mentioned, the union is not
 accessed during pattern matching, and has no effect on whether the pattern
 matches. If the pattern mentions a union member, the corresponding subpattern is
 matched against that member, which means that user code must ensure that pattern
-matching does not reach that point unless that member is active. Note that this
+matching does not reach that point unless that member is live. Note that this
 applies even if the subpattern is a wildcard that is guaranteed to match.
 
 > **TODO:** Ensure the above remains consistent with the overall design for
@@ -96,10 +101,10 @@ applies even if the subpattern is a wildcard that is guaranteed to match.
 > enough control over evaluation order to make it possible to safely mention
 > union members in patterns.
 
-## Changing the active member
+## Changing the live member
 
-The active member can only be changed by destroying the current active member
-(if any), and then constructing the new active member, using the `destroy` and
+The live member can only be changed by destroying the current live member (if
+any), and then constructing the new live member, using the `destroy` and
 `create` keywords:
 
 ```
@@ -117,8 +122,8 @@ fn SetFloatValue(Ptr(Number): n, Float64: value) {
 `create` and `destroy` can only be applied to union members (unlike their C++
 counterparts, placement `new` and pseudo-destructor calls); the lifetimes of
 ordinary struct fields and variables are always tied to their scope. It is out
-of contract to apply `create` to a member of a union that already has an active
-member, or apply `destroy` to a member that is not active. `destroy` can be
+of contract to apply `create` to a member of a union that already has a live
+member, or apply `destroy` to a member that is not live. `destroy` can be
 thought of as a unary operator, but a `create` statement has the syntax and
 semantics of a variable declaration, with `create` taking the place of `var`,
 and the field expression taking the place of the variable name. `destroy`
@@ -159,8 +164,8 @@ struct SsoString {
 > example is speculative, and should be updated to reflect the eventual design
 > of those features.
 
-Field groups are sets of fields (and/or unions) that can be made active or
-inactive as a unit. They are initialized from anonymous structs whose fields
+Field groups are sets of fields (and/or unions) that can be created and
+destroyed as a unit. They are initialized from anonymous structs whose fields
 have the same types, names, and order, and their names are part of the names of
 their fields:
 
@@ -200,10 +205,10 @@ contiguous sequence of bitfields as a single memory location, but C/C++ do not
 allow bitfields to be split across the beginning of a union. Introducing that
 ability in Carbon implies that the size of a memory location can change, which
 the memory model doesn't seem to countenance. In order to fix that
-inconsistency, we model the creation or destruction of an active union member as
-also destroying any immediately preceding bitfields, and then recreating them
-with the same contents. This implies that you cannot access the preceding
-bitfields concurrently with creating or destroying the active union member.
+inconsistency, we model the creation or destruction of union member as also
+destroying any immediately preceding bitfields, and then recreating them with
+the same contents. This implies that you cannot access the preceding bitfields
+concurrently with creating or destroying a union member.
 
 A union cannot be nested directly within a union, and a field group cannot be
 nested directly within a struct or a field group. Unions and field groups cannot
@@ -212,11 +217,11 @@ contain constructors, destructors, or methods.
 ## Safety
 
 The safety rules for Carbon unions are easily summarized: it is always out of
-contract to access or destroy a union member that is not active, and the
-operations that can change the active member are always explicit and
-unambiguous. It should be quite straightforward for a sanitizer to check direct
-accesses to union members, by tracking the active member in shadow memory, and
-verifying that the member being accessed is active.
+contract to access or destroy a union member that is not live, and the
+operations that can change the live member are always explicit and unambiguous.
+It should be quite straightforward for a sanitizer to check direct accesses to
+union members, by tracking the live member in shadow memory, and verifying that
+the member being accessed is live.
 
 However, union members can also be accessed through pointers (including pointers
 to nested subobjects), and such pointers are indistinguishable from pointers to
@@ -224,7 +229,7 @@ any other object. Reliably sanitizing accesses through such pointers would
 require dynamically tracking which union member (if any) each pointer points to,
 propagating that information to subobject accesses, and instrumenting every
 pointer access in the program to determine whether it is accessing a union, and
-if so whether the currently active member matches the one the pointer value was
+if so whether the currently live member matches the one the pointer value was
 created with. This would definitely be too costly for a hardened production
 build mode, and might even be too costly (relative to its benefit) to be useful
 as a sanitizer.
@@ -324,9 +329,9 @@ references, so that `s.g1.a` becomes `s.g1().a()`.
 > members, methods or both.
 
 Note that this mapping doesn't quite preserve concurrency semantics: Carbon code
-can safely access the first union while concurrently changing the active member
-of the second union, but in C++ the corresponding operation would be undefined
-behavior.
+can safely access the first union while concurrently creating or destroying a
+member of the second union, but in C++ the corresponding operation would be
+undefined behavior.
 
 > **FIXME:** Does this matter in practice, and can we do anything to avoid the
 > undefined behavior?
