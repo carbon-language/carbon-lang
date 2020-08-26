@@ -56,6 +56,14 @@ existing types like `Int32` of `Baz` with `Baz`. See
 [the generics proposal](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/facet-type-types.md#implementing-interfaces)
 for details.
 
+A [unit type](https://en.wikipedia.org/wiki/Unit_type) is a type with a single
+value. Not to be confused with a
+[monotype](https://en.wikipedia.org/wiki/Hindley%E2%80%93Milner_type_system#Monotypes)
+(as opposed to
+[polytypes](https://en.wikipedia.org/wiki/Hindley%E2%80%93Milner_type_system#Polytypes))
+or the [bottom type](https://en.wikipedia.org/wiki/Bottom_type) (which has no
+values).
+
 ## Resolution
 
 Let us call the type of `Int32` `X`. What set of types have `X` as their type?
@@ -76,4 +84,5 @@ compiler won't see every interface definition, it will have to conservatively
 assume that there are interfaces out there that separate any pair of types.
 
 We conclude that every type that can have interface implementations can't share
-its type with any other type.
+its type with any other type. However note that there are other type-types, for
+example interfaces like `Comparable`, that are not unit.
