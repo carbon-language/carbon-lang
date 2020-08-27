@@ -630,7 +630,7 @@ should be part of a larger testing plan.
 Right now, we only allow a single identifier for the package name. We could
 allow a full name path without changing syntax.
 
-Pros:
+Advantages:
 
 -   Allow greater flexibility and hierarchy for related packages, such as
     `Database.Client` and `Database.Server`.
@@ -638,7 +638,7 @@ Pros:
     `carbon-language/carbon-toolchain` could become
     `carbon_language.carbon_toolchain`.
 
-Cons:
+Disadvantages:
 
 -   Multiple identifiers is more complex.
 -   Other languages with similar distribution packages don't have a hierarchy,
@@ -672,12 +672,12 @@ package Foo.Bar namespace Foo.Baz api;
 import Foo.Bar;
 ```
 
-Pros:
+Advantages:
 
 -   Reduces redundant syntax in library declarations.
     -   We expect libraries to be common, so this may add up.
 
-Cons:
+Disadvantages:
 
 -   Reduces explicitness of package vs library concepts.
 -   Creates redundancy of the package name in the namespace declaration.
@@ -702,11 +702,11 @@ namespace Bar.Baz;
 fn Bar.Baz.Wiz() { ... }
 ```
 
-Pros:
+Advantages:
 
 -   Reduces complexity of the `package` keyword.
 
-Cons:
+Disadvantages:
 
 -   Increases verbosity for libraries which use namespaces, as every identifier
     must have the namespace specified.
@@ -725,7 +725,7 @@ keyword to avoid conflicts in meaning.
 Alternative names could be 'bundle', 'universe', or something similar to Rust's
 'crates'; perhaps 'compound' or 'molecule'.
 
-Pros:
+Advantages:
 
 -   Avoids conflicts in meaning with other languages.
     -   [Java](https://www.oracle.com/java/technologies/glossary.html), similar
@@ -733,7 +733,7 @@ Pros:
     -   [Go](https://golang.org/doc/effective_go.html#package-names), similar to
         a namespace path.
 
-Cons:
+Disadvantages:
 
 -   The meaning of `package` also overlaps a fair amount, and we would lose that
     context.
@@ -759,12 +759,12 @@ For contrast:
 
 -   In Go, `package` uses an arbitrary name.
 
-Pros:
+Advantages:
 
 -   A strict association between filesystem path and import path makes it easier
     to find source files. This is used by some languages for compilation.
 
-Cons:
+Disadvantages:
 
 -   The strict association makes it harder to move names between files without
     updating callers.
@@ -803,11 +803,11 @@ library. There are two ways this could be done:
     import this;
     ```
 
-Pros:
+Advantages:
 
 -   Allows more separation of implementation between files within a library.
 
-Cons:
+Disadvantages:
 
 -   Neither approach is quite clean:
     -   Using filenames creates a common case where filenames _must_ be used,
@@ -863,12 +863,12 @@ goals for fast compilation. Even if we combined the concepts, we should expect
 it's by turning the "package with many small libraries" concept into "many small
 packages".
 
-Pros:
+Advantages:
 
 -   Simplification of organizational hierarchy.
     -   Less complexity for users to think about on imports.
 
-Cons:
+Disadvantages:
 
 -   Coming up with unique package names may become an issue, leading to longer
     package names that overlap with the intent of libraries.
@@ -912,7 +912,7 @@ import("Foo", "Bar").Foo;
 alias B = import("Baz").Baz;
 ```
 
-Pros:
+Advantages:
 
 -   Allows straightforward reuse of `alias` for language consistency.
 -   Easier to add more optional arguments, which we expect to need for
@@ -921,7 +921,7 @@ Pros:
 -   Avoids defining keywords for optional fields: `library`, `as`, and possibly
     more long-term.
 
-Cons:
+Disadvantages:
 
 -   It's unusual for a function-like syntax to produce identifiers for name
     lookup.
@@ -992,13 +992,13 @@ Instead of the file type split, we could drift further and instead have APIs in
 any file in a library, using the same kind of
 [API markup](#exporting-entities-from-an-api-file).
 
--   Pros:
+-   Advantages:
 
     -   May help users who have issues with cyclical code references.
     -   Improves compiler inlining of implementations, because the compiler can
         decide how much to actually put in the generated API.
 
--   Cons:
+-   Disadvantages:
 
     -   While allowing users to spread a library across multiple files can be
         considered an advantage, we see the single API file as a way to pressure
@@ -1014,12 +1014,12 @@ any file in a library, using the same kind of
 The proposal also presently suggests a single API file. Under an explicit API
 file approach, we could still allow multiple API files.
 
-Pros:
+Advantages:
 
 -   More flexibility when writing APIs; could otherwise end up with one gigantic
     API file.
 
-Cons:
+Disadvantages:
 
 -   Encourages larger libraries by making it easier to provide large APIs.
 -   Removes some of the advantages of having an API file as a "single place" to
@@ -1082,7 +1082,7 @@ It's been discussed whether we need to provide namespaces outside of
 package/file granularity. In other words, if a file is required to only add to
 one namespace, then there's no need for a `namespace` keyword or similar.
 
-Pros:
+Advantages:
 
 -   Requiring files to contribute to only one namespace offers a language
     simplification.
@@ -1090,7 +1090,7 @@ Pros:
 -   Library interface vs implementation separation may be used to address some
     problems that namespaces have been used for in C++.
 
-Cons:
+Disadvantages:
 
 -   One point made was the difficulty in C++ of doing `friend` declarations for
     template functions, making ACL controls difficult. Putting template
@@ -1133,11 +1133,11 @@ namespace Foo {
 fn Fez(Foo.Bar.Baz.Wiz x);
 ```
 
-Pros:
+Advantages:
 
 -   Makes it easy to write many things in the same namespace.
 
-Cons:
+Disadvantages:
 
 -   It's not clear which namespace an identifier is in without scanning to the
     start of the file.
@@ -1193,11 +1193,11 @@ imports {
 }
 ```
 
-Pros:
+Advantages:
 
 -   Allows repeated imports with less typing.
 
-Cons:
+Disadvantages:
 
 -   Makes it harder to find files importing a package or library using tools
     like `grep`.
@@ -1238,11 +1238,11 @@ import Geometry library("Shapes") names *;
 fn Draw(var Triangle: x) { ... }
 ```
 
-Pros:
+Advantages:
 
 -   Reduces boilerplate code specifying individual names.
 
-Cons:
+Disadvantages:
 
 -   Loses out on parser benefits of knowing which identifiers are being
     imported.
@@ -1283,11 +1283,11 @@ import Foo library("Bar") names {
 }
 ```
 
-Pros:
+Advantages:
 
 -   Avoids an additional `alias` step.
 
-Cons:
+Disadvantages:
 
 -   With a single name, this isn't a significant improvement in syntax.
 -   With multiple names, this runs into similar issues as
@@ -1304,11 +1304,11 @@ package Geometry library("Operations") api;
 import library("Shapes");
 ```
 
-Pros:
+Advantages:
 
 -   Reduces typing.
 
-Cons:
+Disadvantages:
 
 -   Makes it harder to find files importing a package or library using tools
     like `grep`.
