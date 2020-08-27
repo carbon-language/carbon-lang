@@ -1,38 +1,5 @@
 # Code and name organization
 
--   TODO: Don't have libraries (Node.JS as example)
-    -   Versioning granularity overhead
-    -   Scaling problems for large codebases
--   TODO: Libraries as strings or identifiers or name paths
-    -   Probably switch to strings
-    -   Arbitrary values, not a name path
-    -   Some concern about strings as syntax; maybe `library("string")`?
--   TODO: Not sure what size a package should be; add comparison example.
-    -   Boost as package with Boost.Geometry as a set of libraries
--   TODO: Does `package X` always declare an identifier `X`?
-    -   Yes, to make for unambiguous results if we have implicit imports
-    -   Seems to be support for implicit imports
--   TODO: Full namespace on every identifier, even just declarations
-    -   Pervasive aliasing by users to avoid typing
-    -   Could make extremely verbose imported code
--   TODO: Rename the section about automatic API generation
--   TODO: Redundant information to support tooling
-    -   i.e., cover why we have both a package keyword saying api/impl and
-        preferences for filenames
-    -   Ability to generate build setup from information in files
-    -   May be difficult for files in different directories, but can minimally
-        validate
--   TODO: Caveat for non-directory-based filesystems (filenames are convenience)
-    -   Maybe tied to above
--   TODO: Library-private facilities in the API file?
-    -   This is essentially the non-exported functions
-    -   Still have issues with deps
--   TODO: Inlining from impl file
-    -   Advantage is moving code out of the main api file for easier reading
-    -   Problem is that it requires transitive dependencies, which is what impl
-        is intended to avoid
-    -   Probably not, probably not through an inline-specific file either
-
 <!--
 Part of the Carbon Language project, under the Apache License v2.0 with LLVM
 Exceptions. See /LICENSE for license information.
@@ -45,10 +12,13 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 -   [Goals and philosophy](#goals-and-philosophy)
 -   [Overview](#overview)
+    -   [Sizing packages and libraries](#sizing-packages-and-libraries)
     -   [Imports](#imports)
 -   [Details](#details)
     -   [Name paths](#name-paths)
     -   [Packages](#packages)
+        -   [Shorthand notation for libraries in packages](#shorthand-notation-for-libraries-in-packages)
+        -   [Package name conflicts](#package-name-conflicts)
     -   [Libraries](#libraries)
         -   [Exporting entities from an API file](#exporting-entities-from-an-api-file)
         -   [Granularity of libraries](#granularity-of-libraries)
@@ -61,6 +31,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [Caveats](#caveats)
     -   [Moving code between between files](#moving-code-between-between-files)
     -   [Package and library name conflicts](#package-and-library-name-conflicts)
+    -   [Redundant markers](#redundant-markers)
 -   [Open questions](#open-questions)
     -   [Different file extensions](#different-file-extensions)
     -   [Imports from other languages](#imports-from-other-languages)
@@ -80,8 +51,11 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
         -   [Different file type labels](#different-file-type-labels)
         -   [Don't have libraries, only packages](#dont-have-libraries-only-packages)
         -   [Function-like syntax](#function-like-syntax)
+        -   [Inlining from implementation files](#inlining-from-implementation-files)
+        -   [Library-private access controls](#library-private-access-controls)
         -   [Managing API versus implementation in libraries](#managing-api-versus-implementation-in-libraries)
         -   [Multiple API files](#multiple-api-files)
+        -   [Name paths as library names](#name-paths-as-library-names)
         -   [Remove the distinction between API and implementation files](#remove-the-distinction-between-api-and-implementation-files)
     -   [Namespaces](#namespaces-1)
         -   [Coarser namespace granularity](#coarser-namespace-granularity)
@@ -140,7 +114,8 @@ _libaries_<sup><small>[[define](/docs/guides/glossary.md#library)]</small></sup>
 A library is the basic unit of _code reuse_. Separating code into multiple
 libraries can speed up the overall build while also making it clear which code
 is being reused. An example library of `Shapes` in the `Geometry` package would
-look like `package Geometry library Shapes api;`
+look like `package Geometry library("Shapes") api;`. This library can also be
+referred to as `Geometry/Shapes` as shorthand in text.
 
 It is often useful to have a physical separation the API of a library from its
 implementation. This may help organize code as the library becomes larger, or to
@@ -149,7 +124,7 @@ its underlying implementation. Implementation files allow for code to be
 extracted out from the API file, while only being callable from other files
 within the library, including both API and implementation files. Implementation
 files are marked by both naming the file to use an extension of `.impl.carbon`
-and changing the package to `package Geometry library Shapes impl`.
+and changing the package to `package Geometry library("Shapes") impl`.
 
 As code becomes more complex, and users pull in more code, it may also be
 helpful to add
@@ -160,20 +135,47 @@ path_<sup><small>[[define](/docs/guides/glossary.md#name-path)]</small></sup>
 used when calling code. For example, with no namespace, if a `Geometry` library
 defines `Circle` then the name path will be `Geometry.Circle`. However, an
 example namespace of `TwoDimensional` in the `Geometry` package would look like
-`package Geometry library Shapes namespace TwoDimensional api;`, and result in a
-name path of `Geometry.TwoDimensional.Circle`.
+`package Geometry library("Shapes") namespace TwoDimensional api;`, and result
+in a name path of `Geometry.TwoDimensional.Circle`.
 
 This scaling of packages into libraries and namespaces is how Carbon supports
 both small and large codebases.
+
+### Sizing packages and libraries
+
+A different way to think of the sizing of packages and libraries is:
+
+-   A package is a GitHub repository.
+    -   Small and medium projects that fit in a single repository will typically
+        have a single package. For example, a medium-sized project like
+        [Abseil](https://github.com/abseil/abseil-cpp/tree/master/absl) could
+        still use a single `Abseil` package.
+    -   Large projects will have multiple packages. For example,
+        [Boost.Geometry](https://github.com/boostorg/geometry) might be a
+        `BoostGeometry` package, with other packages for other Boost
+        repositories.
+-   A library is a few files that provide an interface and implementation, and
+    should remain small.
+    -   Small projects will have a single library when it's easy to maintain all
+        code in a few files.
+    -   Medium and large projects will have multiple libraries. For example,
+        [Boost.Geometry's Distance](https://github.com/boostorg/geometry/blob/develop/include/boost/geometry/algorithms/detail/distance/interface.hpp)
+        interface and implementation might be its own library within
+        `BoostGeometry`, with dependencies on other libraries in `BoostGeometry`
+        and potentially other packages from Boost.
+
+Packages may choose to expose libraries that expose unions of interfaces from
+other libraries within the package. However, doing so would also provide the
+transitive closure of build-time dependencies, and is likely to be discouraged.
 
 ### Imports
 
 The `import` keyword supports reusing code from other files and libraries.
 
-For example, to use `Geometry.Circle` from the `Geometry.Shapes` library:
+For example, to use `Geometry.Circle` from the `Geometry/Shapes` library:
 
 ```carbon
-import Geometry library Shapes;
+import Geometry library("Shapes");
 
 fn Area(Geometry.Circle circle) { ... };
 ```
@@ -185,7 +187,7 @@ Imports may also be
 [renamed to prevent name conflicts](#name-conflicts-of-imports). For example:
 
 ```carbon
-import Geometry library Shapes as Geo;
+import Geometry library("Shapes") as Geo;
 
 fn Area(Geo.Circle circle) { ... };
 ```
@@ -210,22 +212,27 @@ The first non-comment, non-whitespace line of a Carbon file will be the
 regular expression:
 
 ```regex
-package IDENTIFIER (library NAME_PATH)? (namespace NAME_PATH)? (api|impl);
+package IDENTIFIER (library\(STRING\))? (namespace NAME_PATH)? (api|impl);
 ```
 
 For example:
 
 ```carbon
-package Geometry library Objects.FourSides namespace TwoDimensional api;
+package Geometry library("Objects.FourSides") namespace TwoDimensional api;
 ```
 
 Breaking this apart:
 
 -   The identifier passed to the `package` keyword, `Geometry`, is the package
     name and will prefix both library and namespace paths.
+    -   The `package` keyword also declares a namespace entity matching the
+        package name. In other words, if the file declares `struct Line`, that
+        may be referred to from within the file as both `Line` directly and
+        `Geometry.TwoDimensional.Triangle` through the `package` keyword
+        declaration.
 -   When the optional `library` keyword is specified, its name path argument is
     combined with the package to generate the library path. In this example, the
-    `Geometry.Objects.FourSides` library path will be used.
+    `Geometry/Objects.FourSides` library path will be used.
 -   When the optional `namespace` keyword is specified, its name path argument
     is combined with the package to generate the namespace path. In this
     example, the `Geometry.TwoDimensional` namespace will be used.
@@ -235,7 +242,7 @@ Breaking this apart:
 
 It's possible that files contributing to the `Geometry.TwoDimensional` namespace
 may use different `library` arguments. Similarly, files contributing to the
-`Geometry.Objects.FourSides` library may use different `namespace` arguments.
+`Geometry/Objects.FourSides` library may use different `namespace` arguments.
 However, they will all be in the `Geometry` package.
 
 Because the `package` keyword must be specified exactly once in all files, there
@@ -250,6 +257,35 @@ are a couple important and deliberate side-effects:
     -   Entities within a file may be defined in
         [child namespaces](#namespaces).
 
+#### Shorthand notation for libraries in packages
+
+Library names may also be referred to as `PACKAGE/LIBRARY` as shorthand in text.
+`PACKAGE/default` will refer to the name of the library used when no `library`
+argument is specified, although `PACKAGE` may also be used in situations where
+it is unambiguous that it still refers to the default library.
+
+The `/` character is used as a separator because it is not a valid character for
+identifiers, even though the library name may contain `/`. It also suggests
+towards the hierarchy of packages and libraries.
+
+#### Package name conflicts
+
+Because the package also declares a namespace entity with the same name,
+conflicts with the package name are possible. We do not support packages
+providing entities with the same name as the package.
+
+For example, this is a conflict for `DateTime`:
+
+```carbon
+package DateTime api;
+
+struct DateTime { ... };
+```
+
+This declaration is important for [implementation files](#libraries), which
+implicitly import the API file, because it keeps the package name as an explicit
+entity in source files.
+
 ### Libraries
 
 Every Carbon library consists of one or more files. Each Carbon library has a
@@ -257,13 +293,13 @@ primary file that defines its API, and may optionally contain additional files
 that are implementation.
 
 -   An API file's `package` will have `api`. For example,
-    `package Geometry library Shapes api;`
+    `package Geometry library("Shapes") api;`
     -   API filenames must have the `.carbon` extension. They must not have a
         `.impl.carbon` extension.
 -   An implementation file's `package` will have `impl`. For example,
-    `package Geometry library Shapes impl;`.
+    `package Geometry library("Shapes") impl;`.
     -   Implementation filenames must have the `.impl.carbon` extension.
-    -   Implementation files automatically import the library's API, and may not
+    -   Implementation files implicitly import the library's API, and may not
         import each other.
 
 The difference between API and implementation will act as a form of access
@@ -289,7 +325,7 @@ API file and explicitly marked as an API. This is done using the `api` keyword,
 which is only allowed in the API file. For example:
 
 ```carbon
-package Geometry library Shapes api;
+package Geometry library("Shapes") api;
 
 // Circle is marked as an API, and will be available to other libraries as
 // Geometry.Circle.
@@ -360,14 +396,14 @@ through `Foo`.
 
 Namespaces declared and added to within a file must always be children of the
 file-level namespace. For example, this declares
-`Geometry.Shapes.ThreeSides.Triangle`:
+`Geometry.Shapes.Flat.Triangle`:
 
 ```carbon
 package Geometry namespace Shapes api;
 
-namespace ThreeSides;
+namespace Flat;
 
-struct ThreeSides.Triangle { ... }
+struct Flat.Triangle { ... }
 ```
 
 #### Re-declaring imported namespaces
@@ -375,16 +411,16 @@ struct ThreeSides.Triangle { ... }
 Namespaces may be imported, in addition to being declared. However, the
 namespace must still be declared locally in order to add symbols to it.
 
-For example, if the `Geometry.Shapes.ThreeSides` library provides the
+For example, if the `Geometry/Shapes.ThreeSides` library provides the
 `Geometry.Shapes` namespace, this code is still valid:
 
 ```carbon
-package Geometry library Shapes.FourSides api;
+package Geometry library("Shapes.FourSides") api;
 
-import Geometry library Shapes.ThreeSides;
+import Geometry library("Shapes.ThreeSides");
 
 // This does not conflict with the existence of `Geometry.Shapes` from
-// `Geometry.Shapes.ThreeSides`, even though the name path is identical.
+// `Geometry/Shapes.ThreeSides`, even though the name path is identical.
 namespace Shapes;
 
 // This requires the above 'namespace Shapes' declaration.
@@ -427,11 +463,11 @@ For example:
 ```carbon
 package Geometry api;
 
-// This imports Math's default library, and provides a Math namespace
+// This imports the Math/default library, and provides a Math namespace
 // identifier for use.
 import Math;
-// This imports Math's Trigonometry library, and resuses the Math namespace.
-import Math library Trigonometry;
+// This imports the Math/Trigonometry library, and resuses the Math namespace.
+import Math library("Trigonometry");
 
 fn Foo() {
   ...
@@ -475,7 +511,7 @@ For example:
 package Geometry api;
 
 // This is required even though it's still in the Geometry package.
-import Geometry library Shapes;
+import Geometry library("Shapes");
 
 // Circle must be referenced using the Geometry namespace of the import.
 fn GetArea(Geometry.Circle: c) { ... }
@@ -510,6 +546,26 @@ modification.
 The `as` keyword of `import` does not address package name conflicts because,
 while it supports renaming a package to avoid intra-file name conflicts, it
 would not be able to differentiate between two identically named packages.
+
+### Redundant markers
+
+We use a few possibly redundant markers for packages and libraries:
+
+-   The `package` keyword requires one of `api` and `impl`, rather than
+    excluding either or both.
+-   The filename repeats the `api` versus `impl` choice.
+-   The `import` keyword requires the full library.
+
+These choices are made to assist human readability and tooling:
+
+-   Being explicit about imports creates the opportunity to generate build
+    dependencies from files, rather than having them maintained separately.
+-   Being explicit about `api` versus `impl` makes it easier for both humans and
+    tooling to determine what to expect.
+-   Repeating the type in the filename makes it possible to check the type
+    without reading file content.
+-   Repeating the type in the file content makes non-filesystem-based builds
+    possible.
 
 ## Open questions
 
@@ -559,7 +615,7 @@ Although we're not designing this right now, it could fit into the proposed
 syntax. For example:
 
 ```carbon
-import Foo library Baz url("https://foo.com");
+import Foo library("Baz") url("https://foo.com");
 ```
 
 ### Test file type
@@ -615,9 +671,9 @@ the lack of clear advantage towards a more complex name path.
 Right now, we have syntax like:
 
 ```carbon
-package Foo library Bar api;
-package Foo library Bar namespace Baz api;
-import Foo library Bar;
+package Foo library("Bar") api;
+package Foo library("Bar") namespace Baz api;
+import Foo library("Bar");
 ```
 
 We could remove `library`, resulting in:
@@ -827,18 +883,27 @@ Pros:
 Cons:
 
 -   Coming up with unique package names may become an issue, leading to longer
-    packages.
-    -   We expect that at least some large organizations will have more
-        libraries than Node.JS has packages.
+    package names that overlap with the intent of libraries.
+    -   These longer package names would need to be used to refer to contained
+        entities in code, affecting brevity of Carbon code. The alternative
+        would be to expect users to always alias packages on import using `as`;
+        some organizations anecdotally see equivalent happen for C++ once names
+        get longer than six characters.
+    -   For example, [boost](https://github.com/boostorg) could use
+        per-repository packages like `BoostGeometry` and child libraries like
+        `algorithms-distance` under the proposed approach. Under the alternative
+        approach, it would use either a monolithic package that could create
+        compile-time bottlenecks, or packages like
+        `BoostGeometryAlgorithmsDistance` for uniqueness.
 -   While a package manager will need a way to specify cross-package version
     compatibility, encouraging a high number of packages puts more weight and
     maintenance cost on the configuration.
     -   We expect libraries to be versioned at the package-level.
 
-It's still possible for people to create small Carbon packages, without breaking
-it into multiple libraries, and so we would rather keep the library separation
-to enable better hierarchy for large codebases, plus encouraging small units of
-compilation.
+We prefer to keep the library separation to enable better hierarchy for large
+codebases, plus encouraging small units of compilation. It's still possible for
+people to create small Carbon packages, without breaking it into multiple
+libraries.
 
 #### Function-like syntax
 
@@ -848,7 +913,7 @@ We could consider more function-like syntax for `import`, and possibly also
 For example, instead of:
 
 ```carbon
-import Foo library Bar;
+import Foo library("Bar");
 import Baz as B;
 ```
 
@@ -878,6 +943,54 @@ Cons:
         resulting syntax.
 
 The preference is for keywords.
+
+#### Inlining from implementation files
+
+An implicit reason for keeping code in an `api` file is that it makes it
+straightforward to inline code from there into callers.
+
+We could explicitly encourage inlining from `impl` files as well, making the
+location of code unimportant during compilation. Alternately, we could add an
+`inline` file type which explicitly supports separation of inline code from the
+`api` file.
+
+Advantages:
+
+-   Allows moving code out of the main API file for easier reading.
+
+Disadvantages:
+
+-   Requires compilation of `impl` files to determine what can be inlined from
+    the `api` file, leading to the transitive closure dependency problems which
+    `impl` files are intended to avoid.
+
+We expect to only support inlining from `api` files in order to avoid confusion
+about dependency problems.
+
+#### Library-private access controls
+
+We currently have no special syntax for library-private APIs. However,
+non-exported APIs are essentially library-private, and may be in the `api` file.
+It's been suggested that we could either provide a special syntax or a new file
+type, such as `shared_impl`, to support library-private APIs.
+
+Advantages:
+
+-   Allows for better separation of library-private APIs.
+
+Disadvantages:
+
+-   Increases language complexity.
+-   Dependencies are still an issue for library-private APIs.
+    -   If used from the `api` file, the dependencies are still in the
+        transitive closure of client libraries, and any separation may confuse
+        users about the downsides of the extra dependencies.
+    -   If only used from `impl` files, then they could be in the `impl` file if
+        there's only one, or shared from a separate library.
+-   Generalized access controls may provide overlapping functionality.
+
+At this point in time, we prefer not to provide specialized access controls for
+library-private APIs.
 
 #### Managing API versus implementation in libraries
 
@@ -928,6 +1041,27 @@ Cons:
 
 We particularly want to discourage large libraries, and so we're likely to
 retain the single API file limit.
+
+#### Name paths as library names
+
+We're proposing strings for library names. We've discussed also using name paths
+(`My.Library`) and also restricting to single identifiers (`Library`).
+
+Advantages:
+
+-   Shares the form between packages (identifiers) and namespaces (name paths).
+-   Enforces a constrained set of names for libraries for cross-package
+    consistency of naming.
+
+Disadvantages:
+
+-   Indicates that a library may be referred to in code, when only the package
+    and namespace are used for name paths of entities.
+-   The constrained set of names may also get in the way for some packages that
+    can make use of more flexibility in naming.
+
+We've decided to use strings primarily because we want to draw the distinction
+that a library is not something that's used when referring to an entity in code.
 
 #### Remove the distinction between API and implementation files
 
@@ -1110,7 +1244,7 @@ broader imports, for example by pulling in all names from a library. In C++, the
 example:
 
 ```carbon
-import Geometry library Shapes names *;
+import Geometry library("Shapes") names *;
 
 // Triangle was imported as part of "*".
 fn Draw(var Triangle: x) { ... }
@@ -1140,7 +1274,7 @@ We could allow direct imports of names from libraries. For example, under the
 current setup we might see:
 
 ```carbon
-import Foo library Bar;
+import Foo library("Bar");
 alias Baz = Foo.Baz;
 alias Wiz = Foo.Wiz;
 ```
@@ -1148,14 +1282,14 @@ alias Wiz = Foo.Wiz;
 We could simplify this syntax by augmenting `import`:
 
 ```carbon
-import Foo library Bar name Baz;
-import Foo library Bar name Wiz;
+import Foo library("Bar") name Baz;
+import Foo library("Bar") name Wiz;
 ```
 
 Or more succinctly with block imports of names:
 
 ```carbon
-import Foo library Bar names {
+import Foo library("Bar") names {
   Baz,
   Wiz,
 }
@@ -1177,9 +1311,9 @@ We could allow a short syntax for imports from the current library. For example,
 this code imports `Geometry.Shapes`:
 
 ```carbon
-package Geometry library Operations api;
+package Geometry library("Operations") api;
 
-import library Shapes;
+import library("Shapes");
 ```
 
 Pros:
@@ -1191,7 +1325,7 @@ Cons:
 -   Makes it harder to find files importing a package or library using tools
     like `grep`.
 -   Creates two syntaxes for importing libraries from the current package.
-    -   If we instead disallow `import Geometry library Shapes` from within
+    -   If we instead disallow `import Geometry library("Shapes")` from within
         `Geometry`, then we end up with a different inconsistency.
 
 Overall, consistent with the decision to disallow
