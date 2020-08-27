@@ -138,10 +138,10 @@ Name paths in Carbon always start with the package name. Additional namespaces
 may be specified as desired.
 
 For example, this code declares a struct `Geometry.Shapes.Flat.Circle` in a
-library `Geometry.OneSide`:
+library `Geometry/OneSide`:
 
 ```carbon
-package Geometry library OneSide namespace Shapes;
+package Geometry library("OneSide") namespace Shapes;
 
 namespace Flat;
 struct Flat.Circle { ... }
@@ -152,7 +152,7 @@ This type can be used from another package:
 ```carbon
 package ExampleUser;
 
-import Geometry library OneSide;
+import Geometry library("OneSide");
 
 fn Foo(var Geometry.Shapes.Flat.Circle: circle) { ... }
 ```
