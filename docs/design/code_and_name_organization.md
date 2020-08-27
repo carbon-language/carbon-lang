@@ -29,8 +29,11 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
         -   [Imported name conflicts](#imported-name-conflicts)
         -   [Imports from the current package](#imports-from-the-current-package)
 -   [Caveats](#caveats)
-    -   [Moving code between between files](#moving-code-between-between-files)
     -   [Package and library name conflicts](#package-and-library-name-conflicts)
+    -   [Potential refactorings](#potential-refactorings)
+        -   [Update imports](#update-imports)
+        -   [Between `api` and `impl` files](#between-api-and-impl-files)
+        -   [Other refactorings](#other-refactorings)
     -   [Redundant markers](#redundant-markers)
 -   [Open questions](#open-questions)
     -   [Different file extensions](#different-file-extensions)
@@ -46,15 +49,17 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
         -   [Strict association between the filesystem path and library/namespace](#strict-association-between-the-filesystem-path-and-librarynamespace)
     -   [Libraries](#libraries-1)
         -   [Allow importing implementation files from within the same library](#allow-importing-implementation-files-from-within-the-same-library)
+        -   [Collapse API and implementation file concepts](#collapse-api-and-implementation-file-concepts)
+            -   [Automatically generating the API separation](#automatically-generating-the-api-separation)
+        -   [Collapse file and library concepts](#collapse-file-and-library-concepts)
+        -   [Collapse package and library concepts](#collapse-package-and-library-concepts)
         -   [Different file type labels](#different-file-type-labels)
-        -   [Don't have libraries, only packages](#dont-have-libraries-only-packages)
         -   [Function-like syntax](#function-like-syntax)
         -   [Inlining from implementation files](#inlining-from-implementation-files)
         -   [Library-private access controls](#library-private-access-controls)
         -   [Managing API versus implementation in libraries](#managing-api-versus-implementation-in-libraries)
         -   [Multiple API files](#multiple-api-files)
         -   [Name paths as library names](#name-paths-as-library-names)
-        -   [Remove the distinction between API and implementation files](#remove-the-distinction-between-api-and-implementation-files)
     -   [Namespaces](#namespaces-1)
         -   [Coarser namespace granularity](#coarser-namespace-granularity)
         -   [Scoped namespaces](#scoped-namespaces)
@@ -76,18 +81,23 @@ Important Carbon goals for code and name organization are:
     -   Tooling support is important for Carbon, including the possibility of a
         package manager.
 
+    -   Developer tooling, including both IDEs and refactoring tools, are
+        expected to exist and be well-supported.
+
 -   [Software and language evolution](/docs/project/goals.md#software-and-language-evolution):
 
     -   We should support libraries adding new structs, functions or other
         identifiers without those new identifiers being able to shadow or break
         existing users that already have identifiers with conflicting names.
 
-    -   We should make it easy to refactor code between files.
+    -   We should make it easy to refactor code, including moving code between
+        files. This includes refactoring both by humans and by developer
+        tooling.
 
 -   [Fast and scalable development](/docs/project/goals.md#fast-and-scalable-development):
 
-    -   It should be easy for IDEs and other tooling to parse code, without
-        needing to parse imports for context.
+    -   It should be easy for developer tooling to parse code, without needing
+        to parse imports for context.
 
     -   Structure should be provided for large projects to opt into features
         which will help maintain scaling of their codebase, while not adding
@@ -101,28 +111,29 @@ are the basic unit of compilation.
 Each file begins with a declaration of which
 _package_<sup><small>[[define](/docs/guides/glossary.md#package)]</small></sup>
 it belongs in. The package is a single identifier, such as `Geometry`. An
-example file in the `Geometry` package would start with `package Geometry api;`.
+example API file in the `Geometry` package would start with
+`package Geometry api;`.
 
-A tiny package may consist of a single file, and not use any further features of
-the `package` keyword.
+A tiny package may consist of a single library with a single file, and not use
+any further features of the `package` keyword.
+
+It is often useful to have a physical separation the API from its
+implementation. This may help organize code as a library grows, or to let the
+build system distinguish between the dependencies of the API itself and its
+underlying implementation. Implementation files allow for code to be extracted
+out from the API file, while only being callable from other files within the
+library, including both API and implementation files. Implementation files are
+marked by both naming the file to use an extension of `.impl.carbon` and
+changing the package to `package Geometry impl`.
 
 However, as a package adds more files, it will probably want to separate out
 into multiple
-_libaries_<sup><small>[[define](/docs/guides/glossary.md#library)]</small></sup>.
+_libraries_<sup><small>[[define](/docs/guides/glossary.md#library)]</small></sup>.
 A library is the basic unit of _code reuse_. Separating code into multiple
 libraries can speed up the overall build while also making it clear which code
-is being reused. An example library of `Shapes` in the `Geometry` package would
-look like `package Geometry library("Shapes") api;`. This library can also be
-referred to as `Geometry/Shapes` as shorthand in text.
-
-It is often useful to have a physical separation the API of a library from its
-implementation. This may help organize code as the library becomes larger, or to
-let the build system distinguish between the dependencies of the API itself and
-its underlying implementation. Implementation files allow for code to be
-extracted out from the API file, while only being callable from other files
-within the library, including both API and implementation files. Implementation
-files are marked by both naming the file to use an extension of `.impl.carbon`
-and changing the package to `package Geometry library("Shapes") impl`.
+is being reused. An example API file in the library of `Shapes` in the
+`Geometry` package would look like `package Geometry library("Shapes") api;`.
+This library can also be referred to as `Geometry/Shapes` as shorthand in text.
 
 As code becomes more complex, and users pull in more code, it may also be
 helpful to add
@@ -161,10 +172,14 @@ A different way to think of the sizing of packages and libraries is:
         interface and implementation might be its own library within
         `BoostGeometry`, with dependencies on other libraries in `BoostGeometry`
         and potentially other packages from Boost.
+        -   Library names could be named after the feature, such as
+            `library("Distance")`, or include part of the path to reduce the
+            chance of name collisions, such as `library("Algorithms.Distance")`.
 
 Packages may choose to expose libraries that expose unions of interfaces from
 other libraries within the package. However, doing so would also provide the
-transitive closure of build-time dependencies, and is likely to be discouraged.
+transitive closure of build-time dependencies, and is likely to be discouraged
+in many cases.
 
 ### Imports
 
@@ -188,6 +203,15 @@ Imports may also be
 import Geometry library("Shapes") as Geo;
 
 fn Area(Geo.Circle circle) { ... };
+```
+
+If multiple imports are made from the same package, each import may be named
+differently. This allows code to be explicit about which library is being used.
+For example:
+
+```carbon
+import Geometry library("Shapes") as Geo;
+import Geometry library("Algorithms") as GeoAlgo;
 ```
 
 ## Details
@@ -517,18 +541,6 @@ fn GetArea(Geometry.Circle: c) { ... }
 
 ## Caveats
 
-### Moving code between between files
-
-Moving code between two files in the same library is a local change that will
-not affect calling code, so long as appropriate API endpoints remain.
-
-Moving code between two libraries requires that imports be updated accordingly.
-However, the namespace should remain the same, and so call sites would not need
-to change.
-
-Moving code between two namespaces always requires call sites be updated,
-although it will not affect the actual import statement.
-
 ### Package and library name conflicts
 
 Library name conflicts should not occur, because it's expected that a given
@@ -544,6 +556,105 @@ modification.
 The `as` keyword of `import` does not address package name conflicts because,
 while it supports renaming a package to avoid intra-file name conflicts, it
 would not be able to differentiate between two identically named packages.
+
+### Potential refactorings
+
+These are potential refactorings that we consider important to make it easy to
+automate.
+
+#### Update imports
+
+Imports will frequently need to be updated as part of refactorings.
+
+When code is deleted, it should be possible to parse the remaining code, parse
+the imports, and determine which entities in imports are referred to. Unused
+imports can then be removed.
+
+When code is moved, it's similar to deletion in the originating file. For the
+destination file, the moved code should be parsed to determine which entities it
+referred to from the originating file's imports, and these will need to be
+included in the destination file: either reused if already present, or added.
+
+When new code is added, existing imports can be checked to see if they provide
+the symbol in question. There may also be heuristics which can be implemented to
+check build dependencies for where imports should be added from, such as a
+database of possible entities and their libraries. However, adding references
+may require manually adding imports.
+
+#### Between `api` and `impl` files
+
+-   Move an implementation of an API from an `api` file to an `impl` file, while
+    leaving a declaration behind.
+
+    -   This should be a local change that will not affect any calling code.
+    -   Inlining will be affected because the implementation won't be visible to
+        callers.
+    -   [Update imports](#update-imports).
+
+-   Split an `api` and `impl` file.
+
+    -   This is a repeated operation of individual API moves, as noted above.
+
+-   Move an implementation of an API from an `impl` file to an `api` file.
+
+    -   This should be a local change that will not affect any calling code.
+    -   Inlining will be affected because the implementation becomes visible to
+        callers.
+    -   [Update imports](#update-imports).
+
+-   Combine an `api` and `impl` file.
+
+    -   This is a repeated operation of individual API moves, as noted above.
+
+-   Remove the `api` label from a declaration.
+
+    -   Search for library-external callers, and fix them first.
+
+-   Add the `api` label to a declaration.
+
+    -   This should be a local change that will not affect any calling code.
+
+-   Move a non-`api`-labelled declaration from an `api` file to an `impl` file.
+
+    -   The declaration must be moved to the same file as the implementation of
+        the declaration.
+    -   The declaration can only be used by the `impl` file that now contains
+        it. Search for other callers within the library, and fix them first.
+    -   [Update imports](#update-imports).
+
+-   Move a non-`api`-labelled declaration from an `impl` file to an `api` file.
+
+    -   This should be a local change that will not affect any calling code.
+    -   [Update imports](#update-imports).
+
+-   Move a declaration and implementation from one `impl` file to another.
+
+    -   Search for any callers within the source `impl` file, and either move
+        them too, or fix them first.
+    -   [Update imports](#update-imports).
+
+#### Other refactorings
+
+-   Move an `api`-labelled declaration and implementation between libraries in
+    the same package.
+
+    -   The imports of all calling files must be updated accordingly.
+    -   As long as the namespaces remain the same, no call sites will need to be
+        changed.
+    -   [Update imports](#update-imports).
+
+-   Move a declaration and implementation from one namespace to another.
+
+    -   Ensure the new namespace is declared for the declaration and
+        implementation.
+    -   Update the namespace used by call sites.
+    -   The imports of all calling files may remain the same.
+
+-   Rename a file, or move a file between directories.
+
+    -   Build configuration will need to be updated.
+    -   Carbon code will not change. The `package` keyword determines how a file
+        is imported, so the library is unaffected by filesystem location.
 
 ### Redundant markers
 
@@ -770,8 +881,9 @@ Disadvantages:
     updating callers.
 
 We are choosing to avoid the strict association with filesystem paths in order
-to ease refactoring. With this approach, more refactorings will not need changes
-to API users.
+to ease refactoring. With this approach,
+[more refactorings](#potential-refactorings) will not need changes to imports of
+callers.
 
 ### Libraries
 
@@ -828,30 +940,111 @@ Disadvantages:
 The problems with these approaches, and encouragement towards small libraries,
 is how we reach the current approach of only importing APIs, and automatically.
 
-#### Different file type labels
+#### Collapse API and implementation file concepts
 
-We're using `api` and `impl` for file types, and have `test` as an open
-question.
+We could remove the distinction between API and implementation files.
 
-We've considered using `interface` instead of `api`, but that introduces a
-terminology collision with interfaces in the type system.
+Advantages:
 
-We've considered dropping `api` from naming, but that creates a definition from
-absence of a keyword. It also would be more unusual if both `impl` and `test`
-must be required, that `api` would be excluded. We prefer the more explicit
-name.
+-   Removing the distinction between API and implementation would be a language
+    simplification.
+-   Developers will not need to consider build performance impacts of how they
+    are distributing code between files.
 
-We could spell out `impl` as `implementation`, but are choosing the abbreviation
-for ease of typing. We also don't think it's an unclear abbreviation.
+Disadvantages:
 
-We expect `impl` to be used for implementations of `interface`. This isn't quite
-as bad as if we used `interface` instead of `api` because of the `api` export
-syntax on entities, such as `api fn Foo()`, which could create ambiguities as
-`interface fn Foo()`. It may still confuse people to see an `interface impl` in
-an `api` file. However, we're touching on related concepts and don't see a great
-alternative.
+-   Serializes compilation across dependencies.
+    -   May be exacerbated because developers won't be aware of when they are
+        adding a dependency that affects imports.
+    -   In large codebases, it's been necessary to abstract out API from
+        implementation in languages that similarly consolidate files, such as
+        Java. However, the lack of language-level support constrains potential
+        benefit and increases friction for a split.
+-   Whereas an `api`/`impl` hierarchy gives a structure for compilation, if
+    there are multiple files we will likely need to provide a different
+    structure, perhaps explicit file imports, to indicate intra-library
+    compilation dependencies.
+    -   We could also effectively concatenate and compile a library together,
+        reducing build parallelism options differently.
+-   Makes it harder for users to determine what the API is, as they must read
+    all the files.
 
-#### Don't have libraries, only packages
+Requiring users to manage the `api`/`impl` split allows us to speed up
+compilation for large codebases. This is important for large codebases, and
+shouldn't directly affect small codebases that choose to only use `api` files.
+
+##### Automatically generating the API separation
+
+We could try to address the problems with collapsing API and implementation
+files by automatically generating an API file from the input files for a
+library.
+
+For example, it may preprocess files to split out an API, reducing the number of
+imports propagated for _actual_ APIs. For example:
+
+1. Extract `api` declarations within the `api` file.
+2. Remove all implementation bodies.
+3. Add only the imports that are referenced.
+
+Even under the proposed model, compilation will do some of this work as an
+optimization. However, determining which imports are referenced requires
+compilation of all imports that _may_ be referenced. When multiple libraries are
+imported from a single package, it will be ambiguous which imports are used
+until all have been compiled. This will cause serialization of compilation that
+can be avoided by having a developer split out the `impl`, either manually or
+with developer tooling.
+
+The `impl` files may make it easier to read code, but they will also allow for
+better parallelism than `api` files alone can. This does not mean the compiler
+will or will not add optimizations -- it only means that we cannot wholly rely
+on optimizations by the compiler.
+
+Automatically generating the API separation would only partly mitigate the
+serialization of compilation caused by collapsing file and library concepts.
+Most of the build performance impact would still be felt by large codebases, and
+so the mitigation does not significantly improve
+[the alternative](#collapse-api-and-implementation-file-concepts).
+
+#### Collapse file and library concepts
+
+We could collapse the file and library concepts. What this implies is:
+
+-   [Collapse API and implementation file concepts](#collapse-api-and-implementation-file-concepts).
+    -   As described there, this approach significantly reduces the ability to
+        separate compilation.
+-   Only support having one file per library.
+    -   The file would need to contain both API and implementation together.
+
+This has similar advantages and disadvantages to
+[collapse API and implementation file concepts](#collapse-api-and-implementation-file-concepts).
+Differences follow.
+
+Advantages:
+
+-   Offers a uniformity of language usage.
+    -   Otherwise, some developers will use only `api` files, while others will
+        always use `impl` files.
+-   The structure of putting API and implementation in a single file mimics
+    other modern languages, such as Java.
+-   Simplifies IDEs and refactoring tools.
+    -   Otherwise, these systems will need to understand the potential for
+        separation of interface from implementation between multiple files.
+    -   For example, see [potential refactorings](#potential-refactorings).
+
+Disadvantages:
+
+-   Avoids the need to establish a hierarchy between files in a library, at the
+    cost of reducing build parallelism options further.
+-   While both API and implementation is in the same file, it can be difficult
+    to visually identify the API when it's mixed with a lengthy implementation.
+
+As with
+[collapse API and implementation file concepts](#collapse-api-and-implementation-file-concepts),
+we consider the split to be important for large codebases. The additional
+advantages of a single-file restriction do not outweigh the disadvantages
+surrounding build performance.
+
+#### Collapse package and library concepts
 
 We could only have packages, with no libraries. Some other languages do this;
 for example, in Node.JS, a package is often similar in size to what we currently
@@ -892,6 +1085,29 @@ We prefer to keep the library separation to enable better hierarchy for large
 codebases, plus encouraging small units of compilation. It's still possible for
 people to create small Carbon packages, without breaking it into multiple
 libraries.
+
+#### Different file type labels
+
+We're using `api` and `impl` for file types, and have `test` as an open
+question.
+
+We've considered using `interface` instead of `api`, but that introduces a
+terminology collision with interfaces in the type system.
+
+We've considered dropping `api` from naming, but that creates a definition from
+absence of a keyword. It also would be more unusual if both `impl` and `test`
+must be required, that `api` would be excluded. We prefer the more explicit
+name.
+
+We could spell out `impl` as `implementation`, but are choosing the abbreviation
+for ease of typing. We also don't think it's an unclear abbreviation.
+
+We expect `impl` to be used for implementations of `interface`. This isn't quite
+as bad as if we used `interface` instead of `api` because of the `api` export
+syntax on entities, such as `api fn Foo()`, which could create ambiguities as
+`interface fn Foo()`. It may still confuse people to see an `interface impl` in
+an `api` file. However, we're touching on related concepts and don't see a great
+alternative.
 
 #### Function-like syntax
 
@@ -992,22 +1208,22 @@ Instead of the file type split, we could drift further and instead have APIs in
 any file in a library, using the same kind of
 [API markup](#exporting-entities-from-an-api-file).
 
--   Advantages:
+Advantages:
 
-    -   May help users who have issues with cyclical code references.
-    -   Improves compiler inlining of implementations, because the compiler can
-        decide how much to actually put in the generated API.
+-   May help users who have issues with cyclical code references.
+-   Improves compiler inlining of implementations, because the compiler can
+    decide how much to actually put in the generated API.
 
--   Disadvantages:
+Disadvantages:
 
-    -   While allowing users to spread a library across multiple files can be
-        considered an advantage, we see the single API file as a way to pressure
-        users towards smaller libraries, which we prefer.
-    -   May be slower to compile because each file must be parsed once to
-        determine APIs.
-    -   For users that want to see _only_ APIs in a file, they would need to use
-        tooling to generate the API file.
-        -   Auto-generated documentation may help solve this problem.
+-   While allowing users to spread a library across multiple files can be
+    considered an advantage, we see the single API file as a way to pressure
+    users towards smaller libraries, which we prefer.
+-   May be slower to compile because each file must be parsed once to determine
+    APIs.
+-   For users that want to see _only_ APIs in a file, they would need to use
+    tooling to generate the API file.
+    -   Auto-generated documentation may help solve this problem.
 
 #### Multiple API files
 
@@ -1050,29 +1266,6 @@ Disadvantages:
 
 We've decided to use strings primarily because we want to draw the distinction
 that a library is not something that's used when referring to an entity in code.
-
-#### Remove the distinction between API and implementation files
-
-Carbon compilation may automatically streamline or otherwise optimize files. For
-example, it may preprocess `api` files to split out implementation for better
-parallelism of compilation, and reduce the number of imports propagated for
-_actual_ APIs. For example:
-
-1. Extract `api` declarations within the `api` file.
-2. Remove all implementation bodies.
-3. Add only the imports that are referenced.
-
-This is quite possible, and maybe compilation will work this way as an
-optimization. However, determining which imports are referenced requires
-compilation of all imports that _may_ be referenced. When multiple libraries are
-imported from a single package, it will be ambiguous which imports are used
-until all have been compiled. This will cause serialization of compilation that
-can be avoided by _manually_ splitting out the `impl`.
-
-The `impl` files may make it easier to read code, but they will also allow for
-better parallelism than `api` files alone can. This does not mean the compiler
-will or will not add optimizations -- it only means that we cannot wholly rely
-on optimizations by the compiler.
 
 ### Namespaces
 
@@ -1205,24 +1398,37 @@ Disadvantages:
 One concern has been that a mix of `import` and `imports` syntax would be
 confusing to users: we should only allow one.
 
-In the end, most of the decision for `import` leans on the ease of retyping the
-keyword, as well as `grep`-ability.
+This alternative has been declined because retyping `import` statements is
+low-cost, and `grep` is useful.
 
 #### Block imports of libraries of a single package
 
 We could allow block imports of librarys from the same package. For example:
 
 ```carbon
-import Foo libraries {
-  Bar,
-  Baz,
-}
+import Foo libraries({
+  "Bar",
+  "Baz",
+})
 ```
 
-This is similar to [block imports](#block-imports), and should be handled the
-same. It has the additional problem that if we allow both `library` and
-`libraries` syntaxes, it's a divergence that could be even more difficult to
-handle.
+The advantages/disadvantages are similar to [block imports](#block-imports).
+Additional advantages/disadvantages are:
+
+Advantages:
+
+-   Avoids repeating `as` for a package.
+
+Disadvantages:
+
+-   If we allow both `library` and `libraries` syntax, it's two was of doing the
+    same thing.
+    -   Can be addressed by _always_ requiring `libraries`, removing `library`,
+        but that diverges from `package`'s `library` syntax.
+
+This alternative has been declined for similar reasons to block imports; the
+additional advantages/disadvantages don't substantially shift the cost-benefit
+argument.
 
 #### Broader imports, either all names or arbitrary code
 

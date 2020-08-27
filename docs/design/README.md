@@ -131,8 +131,10 @@ cleaned up during evolution.
 
 > References: [Code and name organization](code_and_name_organization.md)
 
-Carbon source files are grouped into libraries, which are in turn grouped into
-packages. Libraries are the granularity of code reuse through imports.
+-   **Files** are grouped into libraries, which are in turn grouped into
+    packages.
+-   **Libraries** are the granularity of code reuse through imports.
+-   **Packages** are the unit of distribution.
 
 Name paths in Carbon always start with the package name. Additional namespaces
 may be specified as desired.
