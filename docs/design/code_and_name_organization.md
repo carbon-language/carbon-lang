@@ -38,8 +38,6 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Imports from URLs](#imports-from-urls)
     -   [Test file type](#test-file-type)
 -   [Alternatives](#alternatives)
-    -   [Name paths](#name-paths-1)
-        -   [Allow shadowing of names](#allow-shadowing-of-names)
     -   [Packages](#packages-1)
         -   [Name paths for package names](#name-paths-for-package-names)
         -   [Remove the `library` keyword from `package` and `import`](#remove-the-library-keyword-from-package-and-import)
@@ -624,16 +622,6 @@ Similar to `api` and `impl`, we may eventually want a type like `test`. This
 should be part of a larger testing plan.
 
 ## Alternatives
-
-### Name paths
-
-#### Allow shadowing of names
-
-Disallowing shadowing of names may turn out to be costly, even for its
-advantages of reducing bugs and confusion. While we could relax it later,
-potentially with special syntax to handle edge cases, we don't have evidence at
-present that it's necessary. As a result, we prefer the simplicity in reading of
-disallowing shadowing.
 
 ### Packages
 
