@@ -37,14 +37,14 @@ values of the same type, as long as that type implements the `Comparable`
 interface:
 
 ```
-fn Max[Comparable:$ T](T: x, T: y) -> T;
+fn Max[TypeImplements(Comparable):$ T](T: x, T: y) -> T;
 ```
 
 In this example, `T` is the type of the inputs and outputs, and we constrain
 that type to just be types that implement `Comparable` by writing that `T` has
-type `Comparable`. `Int32` would be an example of a type that implements
-`Comparable`, so you should be able to call `Max` with arguments of type
-`Int32`.
+type `TypeImplements(Comparable)`. `Int32` would be an example of a type that
+has an implementation for `Comparable`, so you should be able to call `Max` with
+arguments of type `Int32`.
 
 To address
 [the expression problem](https://eli.thegreenplace.net/2016/the-expression-problem-and-its-solutions),
@@ -67,10 +67,11 @@ values).
 ## Resolution
 
 Let us call the type of `Int32` `X`. What set of types have `X` as their type?
-Well, we know `X` is a subtype of `Comparable` since `Int32` implements
-`Comparable`. This allows `T` to be `Int32` in the definition of `Max` above. In
-fact, `X` is a subtype of _every_ interface `Int32` implements and _none_ of the
-interfaces `Int32` doesn't implement. The problem is that we never have a
+Well, we know `X` is a subtype of `TypeImplements(Comparable)` since `Int32`
+implements `Comparable`. This allows `T` to be `Int32` in the definition of
+`Max` above. In fact, `X` has a supertype for _every_ interface `Int32`
+implements. But if `Int32` doesn't implement an interface `Quux`, then `X` won't
+be a subtype of `TypeImplements(Quux)`. The problem is that we never have a
 comprehensive list of all the interfaces that `Int32` implements, just which of
 the interfaces that are imported into any particular file.
 
