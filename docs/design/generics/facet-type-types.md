@@ -179,8 +179,8 @@ those alternate implementations. For more on this, see
 
 ## Interfaces
 
-An interface defines a set of an API requirements that some types can satisfy by
-implementing the interface. For example, a vector might have two methods:
+An interface defines an API that a given type can implement. For example, an
+interface capturing a vector API might have two methods:
 
 ```
 interface Vector {
@@ -190,11 +190,12 @@ interface Vector {
 }
 ```
 
-\
-An interface defines a type-type, that is a type whose values are [facet types](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#invoking-interface-methods).
-By facet types, we mean types that are declared as specifically implementing **exactly**
-this interface, and which provide definitions for all APIs required bythe functions,
-etc. declared in the interface.
+An interface defines a type-type, that is a type whose values are types. The
+values of an interface are specifically
+[facet types](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#invoking-interface-methods),
+by which we mean types that are declared as specifically implementing
+**exactly** this interface, and which provide definitions for all the functions
+(and other members) declared in the interface.
 
 ## Implementing interfaces
 
@@ -238,14 +239,13 @@ impl Vector for Point {
 To address concerns re:
 [the expression problem](https://eli.thegreenplace.net/2016/the-expression-problem-and-its-solutions),
 we should allow out-of-line impl definitions either in the library that defines
-thewith the interface (`Vector`) or in the library that defines with the type
-(`Point`).
+the interface (`Vector`) or in the library that defines the type (`Point`).
 
 In either case, the impl block defines a
 [facet type](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#invoking-interface-methods):
-`Point as Vector`. While the API offor `Point` includes the two fields `x` and
-`y`, the API offor `Point as Vector` _only_ has the `Add` and `Scale` methods of
-the `Vector` interface. The facet type `Point as Vector` is
+`Point as Vector`. While the API of `Point` includes the two fields `x` and `y`,
+the API of `Point as Vector` _only_ has the `Add` and `Scale` methods of the
+`Vector` interface. The facet type `Point as Vector` is
 [compatible](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#compatible-types)
 with `Point`, so we allow you to cast between the two implicitly:
 
@@ -286,8 +286,8 @@ the whole program, so e.g. `Point as Vector` is clearly defined.
 ### Out-of-line impl arguments for parameterized types
 
 What if our `Point` type was parameterized? If the `impl` is defined inline, the
-definition of the impl block is already inside the scope with the
-parameterization, so there is no difficulty in using the type variables, as in:
+impl block is already inside the scope with the parameterization, so there is no
+difficulty in using the type variables, as in:
 
 ```
 struct PointT(Type:$$ T) {
@@ -325,10 +325,10 @@ explicit caller providing these arguments.
 ### Impl lookup
 
 Let's say you have some interface `I(T, U(V))` being implemented for some type
-`A(B(C(D), E))`. That impl must be defined in the same library that defineswith
-one of the names needed by either the type or interface expression. That is, the
-impl must be defined with (exactly) one of `I`, `T`, `U`, `V`, `A`, `B`, `C`,
-`D`, or `E`. We further require anything looking up this impl to import the
+`A(B(C(D), E))`. That impl must be defined in the same library (or file?) that
+defines one of the names needed by either the type or interface expression. That
+is, the impl must be defined with (exactly) one of `I`, `T`, `U`, `V`, `A`, `B`,
+`C`, `D`, or `E`. We further require anything looking up this impl to import the
 _definitions_ of all of those names. Seeing a forward declaration of these names
 is insufficient, since you can presumably see forward declarations without
 seeing an impl with the definition. This accomplishes a few goals:
@@ -661,9 +661,9 @@ interface Container {
 }
 ```
 
-\
-Functions accepting a generic type might also want to constrain an associated type.
-For example, we might want to have a function only accept stacks containing integers:
+Functions accepting a generic type might also want to constrain an associated
+type. For example, we might want to have a function only accept stacks
+containing integers:
 
 ```
 fn SumIntStack[Stack:$ T](T*: s) -> Int requires T.ElementType == Int {
@@ -685,7 +685,6 @@ fn EqualContainers[HasEquality:$ ET, Container:$ CT1, Container:$ CT2]
   requires T1.ElementType as HasEquality { ... }
 ```
 
-\
 **Question:** Is there a way to express these type constraints in a more concise
 way?
 
@@ -768,12 +767,11 @@ fn PeekAtTopOfStack[Type:$ ElementType, Stack(ElementType):$ StackType]
     (StackType*: s) -> ElementType { ... }
 ```
 
-\
 The alternative of one implementation per interface & type parameter combination
-is perhaps more natural. It seems useful for something like a `ComparableTo(T)` interface,
-where a type might be comparable with multiple other types. It does have a problem
-where you need to be certain that every impl of an interface for a parameterized
-type can be distinguished:
+is perhaps more natural. It seems useful for something like a `ComparableTo(T)`
+interface, where a type might be comparable with multiple other types. It does
+have a problem where you need to be certain that every impl of an interface for
+a parameterized type can be distinguished:
 
 ```
 interface Map(Type:$ FromType, Type:$ ToType) {
@@ -1202,7 +1200,8 @@ Let's define a type-type constructor called `TypeImplements`. Given a list
 `(TT1, ..., TTn)` of type-types (typically interfaces), we define a new
 type-type `TypeImplements(TT1, ..., TTn)` according to this rule:
 
-    `TypeImplements(TT1, ..., TTn)` is a type whose values are types `T` such that `T as TT1`, ..., `T as TTn` are all legal expressions.
+> `TypeImplements(TT1, ..., TTn)` is a type whose values are types `T` such that
+> `T as TT1`, ..., `T as TTn` are all legal expressions.
 
 Note that the order of the arguments does not matter (so `TypeImplements(A, B)`
 is the same as `TypeImplements(B, A)`).
@@ -1269,7 +1268,10 @@ won't be the `HasDefault` facet of whatever type you are using.
 
 We have the following subsumption rule:
 
-    If `T` has type `TypeImplements(A1, ..., Am)`, it may be implicitly cast to `TypeImplements(B1, ..., Bn)` if for every `Bi` there is a `Aj` such that `Bi == Aj` or `Aj` extends `Bi`, or `T` may be implicitly cast to `T as Aj` for any `Aj` in `(A1, ..., Am)`.
+> If `T` has type `TypeImplements(A1, ..., Am)`, it may be implicitly cast to
+> `TypeImplements(B1, ..., Bn)` if for every `Bi` there is a `Aj` such that
+> `Bi == Aj` or `Aj` extends `Bi`, or `T` may be implicitly cast to `T as Aj`
+> for any `Aj` in `(A1, ..., Am)`.
 
 This subsumption rule allows generic functions to call other generic functions
 with equal or less-strict requirements.
@@ -1307,7 +1309,12 @@ interface {
 Given a type-type `TT` and a type `U`, define the type-type
 `CompatibleWith(TT, U)` as follows:
 
-    `CompatibleWith(TT, U)` is a type whose values are types `T` with type `TT` that are [compatible with](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#compatible-types) `U`, that is values of types `T` and `U` can be cast back and forth without any change in representation (e.g. `T` is an [adaptor](#adapting-types) for `U`).
+> `CompatibleWith(TT, U)` is a type whose values are types `T` with type `TT`
+> that are
+> [compatible with](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#compatible-types)
+> `U`, that is values of types `T` and `U` can be cast back and forth without
+> any change in representation (e.g. `T` is an [adaptor](#adapting-types) for
+> `U`).
 
 **Note:** We require the user to supply `TT` and `U`, they may not be inferred.
 Specifically, this code would be illegal:
@@ -1356,7 +1363,6 @@ adaptor SongByTitle for Song { impl Comparable { ... } }
 assert(CombinedLess(Song(...), Song(...), SongByArtist, SongByTitle) == True);
 ```
 
-\
 We might generalize this to a list of implementations:
 
 ```
@@ -1417,13 +1423,22 @@ defining a `DynPtr(TT)` (as
 we could maybe have a `ForSome(F)` construct, where `F` is a function from types
 to type-types.
 
-    `ForSome(F)`,  where `F` is a function from type `T` to type-type `TT`, is a type whose values are types `U` with type `TT=F(T)` for some type `T`.
+> `ForSome(F)`, where `F` is a function from type `T` to type-type `TT`, is a
+> type whose values are types `U` with type `TT=F(T)` for some type `T`.
 
 **Example:** Pairs of values where both values have the same type might be
 written as
 
 ```
-fn F[ForSome(lambda (Type:$ T) => PairInterface(T, T)):$ MatchedPairType](MatchedPairType*: x) { ... }
+fn F[ForSome(lambda (Type:$ T) => PairInterface(T, T)):$ MatchedPairType]
+    (MatchedPairType*: x) { ... }
+```
+
+This would be equivalent to:
+
+```
+fn F[Type:$ T, PairInterface(T, T):$ MatchedPairType]
+    (MatchedPairType*: x) { ... }
 ```
 
 ### Sized types and type-types
@@ -1977,8 +1992,10 @@ interfaces is now well captured in a compositional way. If `S` directly
 implements `Inner1` or `Inner2`, it could use that as the default in the impl of
 `Outer`.
 
-TODO This is a generalization of the TypeImplements thing above. TODO: move this
-above so we can make TypeImplements an optional convenience.
+TODO This is related to `TypeImplements` above.
+
+TODO: Can we implement `TypeImplements` in terms of this? If so we could make
+`TypeImplements` an optional convenience.
 
 ## Index of examples
 
@@ -2157,17 +2174,29 @@ Very stretch goals (these are more difficult, and possibly optional):
     [here (TODO)](#broken-links-footnote)<!-- T:Carbon: types as function tables, interfaces as type-types --><!-- A:#heading=h.qvhzlz54obmt -->,
     where we need a representation for a way to go from a type to an
     implementation of an interface parameterized by that type. Examples of
-    things we might want to express: _
-    `struct PriorityQueue( \ Type:$ T, fn (Type:$ U)->QueueInterface(U):$ QueueLike) { \ ... \ }`
-    _ `fn Map[Type:$ T, fn (Type:$ U)->StackInterface(U):$ StackLike,`
+    things we might want to express:
 
-            ```
-                   Type:$ V]
-        (StackLike(T)*: x, fn (T)->V: f) -> StackLike(V) { ... }
-            ```
+    -   This priority queue's second argument (`QueueLike`) is a function that
+        takes a type `U` and returns a type that implements `QueueInterface(U)`:
 
+```
+struct PriorityQueue(
+    Type:$ T, fn (Type:$ U)->QueueInterface(U):$ QueueLike) {
+  ...
+}
+```
 
-    *   TODO: Challenging! Probably needs something like [Dependent function types](https://en.wikipedia.org/wiki/Dependent_type#Pi_type)
+    -  Map takes a container of type `T` and function from `T` to `V` into
+       a container of type `V`:
+
+```
+fn Map[Type:$ T,
+       fn (Type:$ U)->StackInterface(U):$ StackLike,
+       Type:$ V]
+    (StackLike(T)*: x, fn (T)->V: f) -> StackLike(V) { ... }
+```
+
+    -   TODO: Challenging! Probably needs something like [Dependent function types](https://en.wikipedia.org/wiki/Dependent_type#Pi_type)
 
 These mechanisms need to have an underlying programming model that allows users
 to predict how to do these things, how to compose these things, and what
