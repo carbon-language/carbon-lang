@@ -2259,8 +2259,8 @@ fn F(A: a, B: b, ..., Addable(A, B):$ T) requires (A,B) : Addable(A, B) {
 ### Associated types vs. interface parameters: ergonomics
 
 Associated types provide an advantage in ergonomics because constraints in
-generic types and functions don’t need to specify associated types that they
-don’t care about.
+generic types and functions don't need to specify associated types that they
+don't care about.
 
 ```
 interface CollectionParam(Type:$ Element) { ... }
@@ -2317,7 +2317,7 @@ fn Map[CollectionAssoc:$ C, Type:$ NewElement](
 ### Associated types vs. interface parameters: existential types (dynamic types)
 
 Interface parameters make us create separate types for different
-“instantiations” of interfaces. Because of that, those instantiations can act as
+"instantiations" of interfaces. Because of that, those instantiations can act as
 existential types on their own.
 
 ```
@@ -2334,13 +2334,14 @@ ints1.GetByIndex(123); // ok!
 interface CollectionAssoc {
   var Type:$ Element;
   fn GetByIndex(Int: i) -> Element;
+  fn size() -> Int;
 }
 var DynPtr(CollectionAssoc): ints3 = &Array<Int>::make(...); // ok?
 ints3.size() // ok -- returns an Int
 ints3.GetByIndex(123) // what is the return type?
 ```
 
-If we make `CollectionAssoc` into an existential, we don’t bind the `Element` to
+If we make `CollectionAssoc` into an existential, we don't bind the `Element` to
 a concrete type. Therefore, we have a problem retrieving elements. How does the
 compiler know that when we get an element out of `ints3` that it is an `Int`?
 With the information provided in the type of `ints3`, it does not. Therefore,
@@ -2356,7 +2357,7 @@ An obvious reaction to difficulties above is to recommend API designers to use
 interface parameters for type variables that users might want to constrain.
 However, this recommendation has drawbacks.
 
-First of all, users who don’t want to constrain interface parameters have to
+First of all, users who don't want to constrain interface parameters have to
 introduce useless type variables in their generic signatures. (Examples -- see
 above.)
 
@@ -2387,11 +2388,11 @@ interface CollectionAssoc {
 }
 ```
 
-Generally, users don’t care about a specific type of the SubSequence. So then it
+Generally, users don't care about a specific type of the SubSequence. So then it
 should be an associated type, according to the design advice? Well, but some
 users care about the SubSequence and want to constrain it. For example, a
 DropFirst API can be efficiently implemented for collections that are a
-subsequence of themselves (“efficiently sliceable”). For example, we can
+subsequence of themselves ("efficiently sliceable"). For example, we can
 efficiently DropFirst from a `std::span` (whose SubSequence is `std::span`), but
 not from a `std::vector` (whose subsequence is `std::span`).
 
@@ -2411,7 +2412,7 @@ fn DropFirstAssoc[CollectionAssoc:$ SliceableCollection](SliceableCollection *: 
 Notice how the `DropFirstParam` function has to thread the `Element` through
 constraints even though it does not care about the specific element type. Notice
 how it also has to declare all type variables before it can finally specify the
-equality constraint. It can’t even specify that `SliceableCollection` is a
+equality constraint. It can't even specify that `SliceableCollection` is a
 `CollectionParam` within square brackets because not all type variables are
 visible yet.
 
@@ -2429,8 +2430,8 @@ var DynPtr(CollectionParam<Int, ???>): ints2 = &Set<Int>::make(...);
 ```
 
 What do we put in place of the question marks? For `ints1` the subsequence would
-be some equivalent of C++’s `std::span`. But `ints2` is backed by a set, it
-won’t be able to expose a `std::span` subsequence because it is organized
+be some equivalent of C++'s `std::span`. But `ints2` is backed by a set, it
+won't be able to expose a `std::span` subsequence because it is organized
 differently internally!
 
 So, `SubSequence` will often expose some implementation details, and it would
@@ -2442,8 +2443,8 @@ below to see where that fails.
 
 In the examples above, a simplified `Collection` interface was presented that
 assumed that every collection can be efficiently indexed by an `Int`. However,
-that is not true in practice. So Collection’s index, just like in C++
-collection’s iterator, has to be an opaque type that is potentially different in
+that is not true in practice. So Collection's index, just like in C++
+collection's iterator, has to be an opaque type that is potentially different in
 every collection.
 
 Only very rarely users would want to constrain the Index of a collection. Every
@@ -2462,7 +2463,7 @@ interface Collection[Type:$ Element] {
 }
 ```
 
-Alright, let’s make an existential out of this collection:
+Alright, let's make an existential out of this collection:
 
 ```
 var DynPtr(Collection<Int>): ints1 = &Array<Int>::make(...); // ok!
@@ -2483,7 +2484,7 @@ ints1.GetByIndex(j) // Incorrect: j is an index of a Set, not an index of an Arr
 ```
 
 Indeed, ints1.Index and ints2.Index can be completely different types. So we
-can’t just pass any existential into GetByIndex(), it has to be an existential
+can't just pass any existential into GetByIndex(), it has to be an existential
 that internally contains the correct type.
 
 The only way to model it in a sound way is to say that the type of
@@ -2504,8 +2505,8 @@ therefore allowing to constrain it in an existential. However, this does not
 solve harder issues where the API designer does not _want_ to make a type
 variable into an interface parameter.
 
-Swift’s solution to constraining associated types in existentials is a feature
-called “generalized existentials” (which is not implemented yet):
+Swift's solution to constraining associated types in existentials is a feature
+called "generalized existentials" (which is not implemented yet):
 
 ```
 var DynPtr(CollectionAssoc): ints3 =
