@@ -1309,12 +1309,14 @@ interface {
 Given a type-type `TT` and a type `U`, define the type-type
 `CompatibleWith(TT, U)` as follows:
 
-> `CompatibleWith(TT, U)` is a type whose values are types `T` with type `TT`
-> that are
-> [compatible with](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#compatible-types)
-> `U`, that is values of types `T` and `U` can be cast back and forth without
-> any change in representation (e.g. `T` is an [adaptor](#adapting-types) for
-> `U`).
+> `CompatibleWith(TT, U)` is a type whose values are types `T` such that:
+>
+> -   `T` has type `TT`.
+> -   `T` and `U` are
+>     [compatible](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#compatible-types).
+>     That is values of types `T` and `U` can be cast back and forth without any
+>     change in representation (e.g. `T` is an [adaptor](#adapting-types) for
+>     `U`).
 
 **Note:** We require the user to supply `TT` and `U`, they may not be inferred.
 Specifically, this code would be illegal:
