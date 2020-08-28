@@ -207,7 +207,7 @@ struct Point {
   var Double: x;
   var Double: y;
   impl Vector {
-    // In this impl block,Here "Self" is an alias for "Point".
+    // In this scope, "Self" is an alias for "Point".
     fn Add(Self: a, Self: b) -> Self {
       return Point(.x = a.x + b.x, .y = a.y + b.y);
     }
@@ -241,7 +241,7 @@ To address concerns re:
 we should allow out-of-line impl definitions either in the library that defines
 the interface (`Vector`) or in the library that defines the type (`Point`).
 
-In either case, the impl block defines a
+In either case, the impl definition defines a
 [facet type](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#invoking-interface-methods):
 `Point as Vector`. While the API of `Point` includes the two fields `x` and `y`,
 the API of `Point as Vector` _only_ has the `Add` and `Scale` methods of the
@@ -273,10 +273,11 @@ var Point: w = z as Point;
 type, or a "type-type".
 
 **Note:** If `Point` defines a method required by the interface, say `Scale`,
-with the correct signature, then defining `Scale` in the impl block becomes
-optional, defaulting to the definition in `Point`. `Scale` can still have its
-own definition (which can have completely different semantics) in the impl block
-since `Point` and `Point as Vector` are different types.
+with the correct signature, then defining `Scale` in the impl definition becomes
+optional, defaulting to the definition in `Point`. `Scale` is allowed to have
+its own definition (which can have completely different semantics) in the
+`Vector` impl definition since `Point` and `Point as Vector` are different
+types.
 
 **Note:** A type may implement any number of different interfaces, but may
 provide at most one implementation of any single interface. This makes the act
@@ -286,8 +287,8 @@ the whole program, so e.g. `Point as Vector` is clearly defined.
 ### Out-of-line impl arguments for parameterized types
 
 What if our `Point` type was parameterized? If the `impl` is defined inline, the
-impl block is already inside the scope with the parameterization, so there is no
-difficulty in using the type variables, as in:
+impl definition is already inside the scope with the parameterization, so there
+is no difficulty in using the type variables, as in:
 
 ```
 struct PointT(Type:$$ T) {
@@ -325,10 +326,10 @@ explicit caller providing these arguments.
 ### Impl lookup
 
 Let's say you have some interface `I(T, U(V))` being implemented for some type
-`A(B(C(D), E))`. That impl must be defined in the same library (or file?) that
-defines one of the names needed by either the type or interface expression. That
-is, the impl must be defined with (exactly) one of `I`, `T`, `U`, `V`, `A`, `B`,
-`C`, `D`, or `E`. We further require anything looking up this impl to import the
+`A(B(C(D), E))`. That impl must be defined in the same library that defines one
+of the names needed by either the type or interface expression. That is, the
+impl must be defined with (exactly) one of `I`, `T`, `U`, `V`, `A`, `B`, `C`,
+`D`, or `E`. We further require anything looking up this impl to import the
 _definitions_ of all of those names. Seeing a forward declaration of these names
 is insufficient, since you can presumably see forward declarations without
 seeing an impl with the definition. This accomplishes a few goals:
@@ -679,10 +680,10 @@ There are a lot of constraints you might want to express, such as that two
 associated types are equal or that an associated type satisfies an interface.
 
 ```
-fn EqualContainers[HasEquality:$ ET, Container:$ CT1, Container:$ CT2]
+fn EqualContainers[Container:$ CT1, Container:$ CT2]
     (CT1*: c1, CT2*: c2) -> Bool
-  requires T1.ElementType == ET && T2.ElementType == ETT2.ElementType
-  requires T1.ElementType as HasEquality { ... }
+  requires T1.ElementType == T2.ElementType &&
+           T1.ElementType as HasEquality { ... }
 ```
 
 **Question:** Is there a way to express these type constraints in a more concise
