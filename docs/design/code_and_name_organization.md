@@ -870,8 +870,17 @@ namespace Bar.Baz;
 fn Bar.Baz.Wiz() { ... }
 ```
 
+Regarding short names, there is agreement that brevity of code is useful. If
+this alternative were adopted, it may encourage avoidance of the namespace
+feature due to the resulting length of declarations, which would yield desirable
+short names for library callers. However, larger libraries and packages are more
+likely to run into issues with name collisions on internal names if everything
+is in the same namespace, and this alternative would make it more verbose to
+write code that avoids name collisions.
+
 Advantages:
 
+-   Encourages short names.
 -   Reduces complexity of the `package` keyword.
 -   Provides a single mechanism for declaring namespaces in a package.
     -   Eliminates the file-level namespace context, leaving only the package.
