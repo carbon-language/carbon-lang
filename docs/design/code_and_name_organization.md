@@ -43,6 +43,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [Alternatives](#alternatives)
     -   [Packages](#packages-1)
         -   [Name paths for package names](#name-paths-for-package-names)
+        -   [Referring to the package as `package`](#referring-to-the-package-as-package)
         -   [Remove the `library` keyword from `package` and `import`](#remove-the-library-keyword-from-package-and-import)
         -   [Remove the `namespace` keyword from `package`](#remove-the-namespace-keyword-from-package)
         -   [Rename package concept](#rename-package-concept)
@@ -249,9 +250,9 @@ Breaking this apart:
     name and will prefix both library and namespace paths.
     -   The `package` keyword also declares a namespace entity matching the
         package name. In other words, if the file declares `struct Line`, that
-        may be referred to from within the file as both `Line` directly and
-        `Geometry.TwoDimensional.Triangle` through the `package` keyword
-        declaration.
+        may be used from within the file as both `Line` directly and
+        `Geometry.TwoDimensional.Line` using the `Geometry` declaration created
+        by the `package` keyword.
 -   When the optional `library` keyword is specified, its name path argument is
     combined with the package to generate the library path. In this example, the
     `Geometry/Objects.FourSides` library path will be used.
@@ -262,22 +263,28 @@ Breaking this apart:
     under [libraries](#libraries). If it instead had `impl`, this would be an
     implementation file.
 
-It's possible that files contributing to the `Geometry.TwoDimensional` namespace
-may use different `library` arguments. Similarly, files contributing to the
-`Geometry/Objects.FourSides` library may use different `namespace` arguments.
-However, they will all be in the `Geometry` package.
-
 Because the `package` keyword must be specified exactly once in all files, there
 are a couple important and deliberate side-effects:
 
--   Every file will be in precisely one library, even if its library path
-    consists of only the package name.
+-   Every file will be in precisely one library.
+    -   A library still exists even when there is no explicit library argument,
+        such as `package Geometry api;`. This could be considered equivalent to
+        `package Geometry library("") api;`, although we should not allow that
+        specific syntax as error-prone.
 -   Every entity in Carbon will be in a namespace, even if its namespace path
     consists of only the package name. There is no "global" namespace.
     -   Every entity in a file will be defined within the namespace described in
         the `package` statement.
     -   Entities within a file may be defined in
         [child namespaces](#namespaces).
+
+Files contributing to `Geometry/Objects.FourSides` must all start with
+`package Geometry library("Object.FourSides")`, but will differ on `api`/`impl`
+types, and may have differing `namespace` arguments.
+
+There is no restriction that a namespace only come from one library in a
+package. It's possible that files contributing to the `Geometry.TwoDimensional`
+namespace may use different `library` arguments.
 
 #### Shorthand notation for libraries in packages
 
@@ -287,8 +294,8 @@ argument is specified, although `PACKAGE` may also be used in situations where
 it is unambiguous that it still refers to the default library.
 
 The `/` character is used as a separator because it is not a valid character for
-identifiers, even though the library name may contain `/`. It also suggests
-towards the hierarchy of packages and libraries.
+identifiers, particularly the package name. Note that library names are strings
+and may include any character, including `/` if desired.
 
 #### Package name conflicts
 
@@ -765,6 +772,56 @@ Disadvantages:
 At present, we are choosing to use single-identifier package names because of
 the lack of clear advantage towards a more complex name path.
 
+#### Referring to the package as `package`
+
+Right now, we plan to refer to the package containing the current file by name.
+For example, given `package Geometry api;`, `Geometry` is used to refer to the
+package. We could instead use `package` as an identifier within the file to
+refer to the package.
+
+It's important to consider that we want `impl` files to do an implicit import of
+the `api`, without a line from the user. In the proposed setup, the package name
+could then be used to refer to entities in the `api`, whereas the alternative
+would use `package` for the import. For `impl` files, this would behave as an
+implicit `import Geometry as package;`. However, this implicit import prevents
+`as` from being easily provided on package lines as an alternative solution.
+
+Advantages:
+
+-   Gives a stable name to refer to the current library's package.
+    -   This reduces the amount of work necessary if the current library's
+        package is renamed, although imports and library consumers may still
+        need to be updated. If the library can also refer to the package by the
+        package name, even with imports from other libraries within the package,
+        work may not be significantly reduced.
+-   Allows packages to declare entities with the same name as the package.
+    -   For example, `struct Geometry { ... }` becomes legal, whereas otherwise
+        it declares a second entity with the same name in the file. This would
+        then be referred to by library imports as `Geometry.Geometry`.
+
+Disadvantages:
+
+-   If `Geometry` is an identifier, it discourages name paths like
+    `Geometry.Geometry`, which could be considered obtuse for library consumers.
+-   Reuses the `package` keyword with a significantly different meaning,
+    changing from a prefix for the required declaration at the top of the file,
+    to an identifier within the file.
+-   Creates inconsistencies as compared to imports from other packages, such as
+    `import Math`, and imports from the current package, such as
+    `import Geometry library("Objects")`.
+    -   Option 1: Require `package` to be used to refer to all imports from
+        `Geometry`, including the current file. This gives consistent treatment
+        for the `Geometry` package, but not for other imports.
+    -   Option 2: Require `package` be used for the current library's entities,
+        but not other imports. This gives consistent treatment for imports, but
+        not for the `Geometry` package as a whole.
+    -   Option 3: Allow either `package` or the full package name to refer to
+        the current package. This allows code to say either `package` or
+        `Geometry`, with no enforcement for consistency.
+
+As part of pushing library authors to consider how their package will be used,
+we require them to specify the package by name where desired.
+
 #### Remove the `library` keyword from `package` and `import`
 
 Right now, we have syntax like:
@@ -816,16 +873,46 @@ fn Bar.Baz.Wiz() { ... }
 Advantages:
 
 -   Reduces complexity of the `package` keyword.
+-   Provides a single mechanism for declaring namespaces in a package.
+    -   Eliminates the file-level namespace context, leaving only the package.
+-   Requires that the code as written by the library maintainer more closely
+    match how it would be called.
+    -   In other words, an `import` will always need some reference, even an
+        alias, rooted at the package name. This places a similar requirement on
+        the library itself.
+    -   This alignment is not a precise match: where `Bar.Baz.Wiz` is declared
+        in package `Foo`, the package isn't part of the name path. Library
+        consumers would need to use the full `Foo.Bar.Baz.Wiz`.
+        -   We could change this, and require package `Foo` always include `Foo`
+            in declarations too, including `namespace Foo.Bar.Baz;` instead of
+            `namespace Bar.Baz;`.
 
 Disadvantages:
 
 -   Increases verbosity for libraries which use namespaces, as every identifier
     must have the namespace specified.
-    -   Omitting the namespace is likely to lead to name collisions for large
-        packages.
+    -   While this verbosity is partially aligned with what library consumers
+        would see, large libraries and packages may be more highly
+        self-referential.
+        -   Additionally, the package author may want to make some functionality
+            accessible but distinctly separate and/or discouraged through a
+            namespace. This may improve library usability, but at a verbosity
+            cost to the library author.
+    -   Although library authors could address this by omitting the namespace,
+        that may in turn lead to more name collisions for large packages.
+    -   This includes entities declared in `impl` files and package-internal
+        libraries that aren't part of the package's API, but may still lead to
+        name collisions within the package.
+-   May cause significant amounts of aliasing in order to reduce verbosity,
+    hindering readability.
+    -   Users are known to alias long names, where "long" may be considered
+        anything over six characters.
+    -   This is a risk for any package that uses namespaces, as importers may
+        also need to address it.
 
 Overall, the desire to make it easy to avoid name collisions means we should
-allow `namespace` at the file level.
+allow `namespace` at the file level. We also want to avoid the potential
+readability problems of users frequently aliasing name paths.
 
 #### Rename package concept
 
