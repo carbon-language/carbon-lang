@@ -775,16 +775,28 @@ the lack of clear advantage towards a more complex name path.
 #### Referring to the package as `package`
 
 Right now, we plan to refer to the package containing the current file by name.
-For example, given `package Geometry api;`, `Geometry` is used to refer to the
-package. We could instead use `package` as an identifier within the file to
-refer to the package.
+What's important in the below example is the use of `Foo.Bar`:
 
-It's important to consider that we want `impl` files to do an implicit import of
-the `api`, without a line from the user. In the proposed setup, the package name
-could then be used to refer to entities in the `api`, whereas the alternative
-would use `package` for the import. For `impl` files, this would behave as an
-implicit `import Geometry as package;`. However, this implicit import prevents
-`as` from being easily provided on package lines as an alternative solution.
+```carbon
+package Foo api;
+api struct Bar { ... }
+struct Baz {
+  fn Bar();
+  fn F() {
+    var Foo.Bar: b;
+  }
+}
+```
+
+We could instead use `package` as an identifier within the file to refer to the
+package, giving `package.Bar`.
+
+It's important to consider how this behaves for `impl` files, which expect an
+implicit import of the API. In other words, for `impl` files, this can be
+compared to an implicit `import Foo;` versus an implicit
+`import Foo as package;`. However, there may also be _explicit_ imports from the
+package, such as `import Foo library("Wiz");`, which may or may not be
+referrable to using `package`, depending on the precise option used.
 
 Advantages:
 
@@ -794,30 +806,31 @@ Advantages:
         need to be updated. If the library can also refer to the package by the
         package name, even with imports from other libraries within the package,
         work may not be significantly reduced.
--   Allows packages to declare entities with the same name as the package.
-    -   For example, `struct Geometry { ... }` becomes legal, whereas otherwise
-        it declares a second entity with the same name in the file. This would
-        then be referred to by library imports as `Geometry.Geometry`.
+-   The same syntax can be used to refer to entities with the same name as the
+    package.
+    -   For example, `package.Foo` is unambiguous, whereas `Foo.Foo` could be
+        ambiguous.
 
 Disadvantages:
 
--   If `Geometry` is an identifier, it discourages name paths like
-    `Geometry.Geometry`, which could be considered obtuse for library consumers.
 -   Reuses the `package` keyword with a significantly different meaning,
     changing from a prefix for the required declaration at the top of the file,
     to an identifier within the file.
+    -   There is likely to be other syntax for referring to an entity `Foo` in
+        the package `Foo`, and we don't need a decision to reuse `package` to
+        solve this.
 -   Creates inconsistencies as compared to imports from other packages, such as
-    `import Math`, and imports from the current package, such as
-    `import Geometry library("Objects")`.
+    `import Widget;`, and imports from the current package, such as
+    `import Foo library("Wiz");`.
     -   Option 1: Require `package` to be used to refer to all imports from
-        `Geometry`, including the current file. This gives consistent treatment
-        for the `Geometry` package, but not for other imports.
+        `Foo`, including the current file. This gives consistent treatment for
+        the `Foo` package, but not for other imports.
     -   Option 2: Require `package` be used for the current library's entities,
         but not other imports. This gives consistent treatment for imports, but
-        not for the `Geometry` package as a whole.
+        not for the `Foo` package as a whole.
     -   Option 3: Allow either `package` or the full package name to refer to
-        the current package. This allows code to say either `package` or
-        `Geometry`, with no enforcement for consistency.
+        the current package. This allows code to say either `package` or `Foo`,
+        with no enforcement for consistency.
 
 As part of pushing library authors to consider how their package will be used,
 we require them to specify the package by name where desired.
