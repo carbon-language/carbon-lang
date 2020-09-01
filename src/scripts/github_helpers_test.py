@@ -1,4 +1,4 @@
-"""Tests for github_helpers_access.py."""
+"""Tests for github_helpers.py."""
 
 __copyright__ = """
 Part of the Carbon Language project, under the Apache License v2.0 with LLVM
