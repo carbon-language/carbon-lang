@@ -203,8 +203,6 @@ class TestPRComments(unittest.TestCase):
 
     @staticmethod
     def fake_pr_comment(**kwargs):
-        with mock.patch.dict(os.environ, {}):
-            parsed_args = pr_comments._parse_args(["83"])
         return pr_comments._PRComment(
             TestPRComments.fake_pr_comment_dict(**kwargs)
         )
