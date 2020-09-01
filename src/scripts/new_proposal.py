@@ -8,6 +8,7 @@ Exceptions. See /LICENSE for license information.
 SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 """
 
+import argparse
 import os
 import re
 import shlex
@@ -15,18 +16,44 @@ import shutil
 import subprocess
 import sys
 
-_USAGE = """Usage:
-  ./new-proposal.py <title> [<branch>]
-
-Generates a branch and PR for a new proposal with the specified title.
-"""
-
 _PROMPT = """This will:
   - Create and switch to a new branch named '%s'.
   - Create a new proposal titled '%s'.
   - Create a PR for the proposal.
 
 Continue? (Y/n) """
+
+
+def _parse_args(args=None):
+    """Parses command-line arguments and flags."""
+    parser = argparse.ArgumentParser(
+        description="Generates a branch and PR for a new proposal with the specified title."
+    )
+    parser.add_argument(
+        "title", metavar="TITLE", help="The title of the proposal.",
+    )
+    parser.add_argument(
+        "--branch",
+        metavar="BRANCH",
+        help="The name of the branch. Automatically generated from the title by default.",
+    )
+    return parser.parse_args(args=args)
+
+
+def _calculate_branch(parsed_args):
+    """Returns the branch name."""
+    if parsed_args.branch:
+        return parsed_args.branch
+    # Only use the first 20 chars of the title for branch names.
+    return "proposal-%s" % (parsed_args.title.lower().replace(" ", "-")[0:20])
+
+
+def _find_tool(tool):
+    """Checks if a tool is present."""
+    tool_path = shutil.which(tool)
+    if not tool_path:
+        sys.exit("ERROR: Missing the '%s' command-line tool." % tool)
+    return tool_path
 
 
 def _FillTemplate(template_path, title, pr_num):
@@ -70,25 +97,15 @@ def _RunPRCreate(argv):
     return int(match[1])
 
 
-if __name__ == "__main__":
-    # Require an argument.
-    if len(sys.argv) not in (2, 3):
-        sys.exit(_USAGE)
-    title = sys.argv[1]
-    branch = None
-    if len(sys.argv) == 3:
-        branch = sys.argv[2]
+def main():
+    parsed_args = _parse_args()
+    title = parsed_args.title
+    branch = _calculate_branch(parsed_args)
 
-    # Verify git and gh are available.
-    git_bin = shutil.which("git")
-    if not git_bin:
-        sys.exit("ERROR: Missing `git` CLI.")
-    gh_bin = shutil.which("gh")
-    if not gh_bin:
-        sys.exit("ERROR: Missing `gh` CLI.")
-    precommit_bin = shutil.which("pre-commit")
-    if not precommit_bin:
-        sys.exit("ERROR: Missing `pre-commit` CLI.")
+    # Verify tools are available.
+    git_bin = _find_tool("git")
+    gh_bin = _find_tool("gh")
+    precommit_bin = _find_tool("pre-commit")
 
     # Ensure a good working directory.
     proposals_dir = os.path.realpath(
@@ -100,10 +117,6 @@ if __name__ == "__main__":
     p = subprocess.run([git_bin, "diff-index", "--quiet", "HEAD", "--"])
     if p.returncode != 0:
         sys.exit("ERROR: There are uncommitted changes in your git repo.")
-
-    # Only use the first 20 chars of the title for branch names.
-    if not branch:
-        branch = "proposal-%s" % (title.lower().replace(" ", "-")[0:20])
 
     # Prompt before proceeding.
     response = "?"
@@ -157,3 +170,7 @@ if __name__ == "__main__":
         "\nCreated PR %d for %s. Make changes to:\n  %s"
         % (pr_num, title, final_path)
     )
+
+
+if __name__ == "__main__":
+    main()

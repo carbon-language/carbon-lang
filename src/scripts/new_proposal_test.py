@@ -13,3 +13,22 @@ import unittest
 from unittest import mock
 
 import new_proposal
+
+
+class TestNewProposal(unittest.TestCase):
+    def test_calculate_branch(self):
+        parsed_args = new_proposal._parse_args(["foo bar"])
+        self.assertEqual(
+            new_proposal._calculate_branch(parsed_args), "proposal-foo-bar"
+        )
+
+        parsed_args = new_proposal._parse_args(
+            ["A really long long long title"]
+        )
+        self.assertEqual(
+            new_proposal._calculate_branch(parsed_args),
+            "proposal-a-really-long-long-l",
+        )
+
+        parsed_args = new_proposal._parse_args(["--branch=wiz", "foo"])
+        self.assertEqual(new_proposal._calculate_branch(parsed_args), "wiz")
