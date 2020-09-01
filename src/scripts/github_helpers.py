@@ -18,13 +18,11 @@ import gql.transport.requests
 _ENV_TOKEN = "GITHUB_ACCESS_TOKEN"
 
 # Query elements for pagination.
-PAGINATION = """
-pageInfo {
+PAGINATION = """pageInfo {
   hasNextPage
   endCursor
 }
-totalCount
-"""
+totalCount"""
 
 
 def add_access_token_arg(parser, permissions):
