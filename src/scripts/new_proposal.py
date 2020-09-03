@@ -32,7 +32,8 @@ def _exit(error):
 def _parse_args(args=None):
     """Parses command-line arguments and flags."""
     parser = argparse.ArgumentParser(
-        description="Generates a branch and PR for a new proposal with the specified title."
+        description="Generates a branch and PR for a new proposal with the "
+        "specified title."
     )
     parser.add_argument(
         "title", metavar="TITLE", help="The title of the proposal.",
@@ -40,7 +41,8 @@ def _parse_args(args=None):
     parser.add_argument(
         "--branch",
         metavar="BRANCH",
-        help="The name of the branch. Automatically generated from the title by default.",
+        help="The name of the branch. Automatically generated from the title "
+        "by default.",
     )
     return parser.parse_args(args=args)
 
