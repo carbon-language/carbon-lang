@@ -36,8 +36,6 @@ const validateIdToken = async (idToken) => {
       return false;
     }
     gitHubId = user.firebase.identities['github.com'][0];
-    console.log(`Identity: ${user.firebase.identities['github.com'][0]}`);
-    console.log(`Identity: ${user.firebase.identities['github.com'][1]}`);
 
     // The associated secret is attached to the CarbonLangInfra GitHub account.
     const {
