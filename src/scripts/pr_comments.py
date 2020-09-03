@@ -11,15 +11,12 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 import argparse
 import datetime
 import hashlib
-import os
 import sys
 import textwrap
 
-# https://pypi.org/project/gql/
-import gql
-import gql.transport.requests
+import github_helpers
 
-# Use https://developer.github.com/v4/explorer/ to help with edits.
+# The main query, into which other queries are composed.
 _QUERY = """
 {
   repository(owner: "carbon-language", name: "%(repo)s") {
@@ -38,8 +35,10 @@ _QUERY = """
 }
 """
 
+# Queries for comments on the PR. These are direct, non-review comments on the
+# PR.
 _QUERY_COMMENTS = """
-      comments(first: 100%s) {
+      comments(first: 100%(cursor)s) {
         nodes {
           author {
             login
@@ -48,15 +47,14 @@ _QUERY_COMMENTS = """
           createdAt
           url
         }
-        pageInfo {
-          endCursor
-          hasNextPage
-        }
+        %(pagination)s
       }
 """
 
+# Queries for reviews on the PR, which have a non-empty body if a review has
+# a summary comment.
 _QUERY_REVIEWS = """
-      reviews(first: 100%s) {
+      reviews(first: 100%(cursor)s) {
         nodes {
           author {
             login
@@ -65,15 +63,13 @@ _QUERY_REVIEWS = """
           createdAt
           url
         }
-        pageInfo {
-          endCursor
-          hasNextPage
-        }
+        %(pagination)s
       }
 """
 
+# Queries for review threads on the PR.
 _QUERY_REVIEW_THREADS = """
-      reviewThreads(first: 100%s) {
+      reviewThreads(first: 100%(cursor)s) {
         nodes {
           comments(first: 100) {
             nodes {
@@ -95,10 +91,7 @@ _QUERY_REVIEW_THREADS = """
             login
           }
         }
-        pageInfo {
-          endCursor
-          hasNextPage
-        }
+        %(pagination)s
       }
 """
 
@@ -264,14 +257,7 @@ def _parse_args(args=None):
         type=int,
         help="The pull request to fetch comments from.",
     )
-    env_token = "GITHUB_ACCESS_TOKEN"
-    parser.add_argument(
-        "--access-token",
-        metavar="ACCESS_TOKEN",
-        default=os.environ.get(env_token, default=None),
-        help="The access token for use with GitHub. May also be specified in "
-        "the environment as %s." % env_token,
-    )
+    github_helpers.add_access_token_arg(parser, "repo")
     parser.add_argument(
         "--comments-after",
         metavar="LOGIN",
@@ -302,98 +288,82 @@ def _parse_args(args=None):
         action="store_true",
         help="Prints long output, with the full comment.",
     )
-    parsed_args = parser.parse_args(args=args)
-    if not parsed_args.access_token:
-        sys.exit(
-            "Missing github access token. This must be provided through "
-            "either --github-access-token or %s." % env_token
-        )
-    return parsed_args
+    return parser.parse_args(args=args)
 
 
-def _query(parsed_args, client, field_name=None, field=None):
-    """Queries for comments.
-
-    field_name and field should be specified for cursor-based queries.
+def _query(parsed_args, field_name=None):
+    """Returns a query for the given field, or all fields if none are specified.
     """
     print(".", end="", flush=True)
-    format_inputs = {
+    format = {
         "pr_num": parsed_args.pr_num,
         "repo": parsed_args.repo,
         "comments": "",
         "review_threads": "",
         "reviews": "",
     }
-    if field:
+    if field_name:
         # Use a cursor for pagination of the field.
-        cursor = ', after: "%s"' % field["pageInfo"]["endCursor"]
         if field_name == "comments":
-            format_inputs["comments"] = _QUERY_COMMENTS % cursor
+            format["comments"] = _QUERY_COMMENTS
         elif field_name == "reviewThreads":
-            format_inputs["review_threads"] = _QUERY_REVIEW_THREADS % cursor
+            format["review_threads"] = _QUERY_REVIEW_THREADS
         elif field_name == "reviews":
-            format_inputs["reviews"] = _QUERY_REVIEWS % cursor
+            format["reviews"] = _QUERY_REVIEWS
         else:
             raise ValueError("Unexpected field_name: %s" % field_name)
     else:
         # Fetch the first page of all fields.
-        format_inputs["comments"] = _QUERY_COMMENTS % ""
-        format_inputs["review_threads"] = _QUERY_REVIEW_THREADS % ""
-        format_inputs["reviews"] = _QUERY_REVIEWS % ""
-    return client.execute(gql.gql(_QUERY % format_inputs))
+        subformat = {"cursor": "", "pagination": github_helpers.PAGINATION}
+        format["comments"] = _QUERY_COMMENTS % subformat
+        format["review_threads"] = _QUERY_REVIEW_THREADS % subformat
+        format["reviews"] = _QUERY_REVIEWS % subformat
+    return _QUERY % format
 
 
-def _accumulate_pr_comments(parsed_args, comments, raw_comments):
+def _accumulate_pr_comment(parsed_args, comments, raw_comment):
     """Collects top-level comments and reviews."""
-    for raw_comment in raw_comments:
-        # Elide reviews that have no top-level comment body.
-        if not raw_comment["body"]:
-            continue
+    # Elide reviews that have no top-level comment body.
+    if raw_comment["body"]:
         comments.append(_PRComment(raw_comment))
 
 
-def _accumulate_threads(parsed_args, threads_by_path, raw_threads):
+def _accumulate_thread(parsed_args, threads_by_path, raw_thread):
     """Adds threads to threads_by_path for later sorting."""
-    for raw_thread in raw_threads:
-        thread = _Thread(parsed_args, raw_thread)
+    thread = _Thread(parsed_args, raw_thread)
 
-        # Optionally skip resolved threads.
-        if not parsed_args.include_resolved and thread.is_resolved:
-            continue
+    # Optionally skip resolved threads.
+    if not parsed_args.include_resolved and thread.is_resolved:
+        return
 
-        # Optionally skip threads where the given user isn't the last commenter.
-        if (
-            parsed_args.comments_after
-            and thread.comments[-1].author == parsed_args.comments_after
-        ):
-            continue
+    # Optionally skip threads where the given user isn't the last commenter.
+    if (
+        parsed_args.comments_after
+        and thread.comments[-1].author == parsed_args.comments_after
+    ):
+        return
 
-        # Optionally skip threads where the given user hasn't commented.
-        if parsed_args.comments_from and not thread.has_comment_from(
-            parsed_args.comments_from
-        ):
-            continue
+    # Optionally skip threads where the given user hasn't commented.
+    if parsed_args.comments_from and not thread.has_comment_from(
+        parsed_args.comments_from
+    ):
+        return
 
-        if thread.path not in threads_by_path:
-            threads_by_path[thread.path] = []
-        threads_by_path[thread.path].append(thread)
+    if thread.path not in threads_by_path:
+        threads_by_path[thread.path] = []
+    threads_by_path[thread.path].append(thread)
 
 
 def _paginate(
-    field_name, accumulator, parsed_args, client, pull_request, output
+    field_name, accumulator, parsed_args, client, main_result, output
 ):
     """Paginates through the given field_name, accumulating results."""
-    while True:
-        # Accumulate the review threads.
-        field = pull_request[field_name]
-        accumulator(parsed_args, output, field["nodes"])
-        if not field["pageInfo"]["hasNextPage"]:
-            break
-        # There are more review threads, so fetch them.
-        next_page = _query(
-            parsed_args, client, field_name=field_name, field=field
-        )
-        pull_request = next_page["repository"]["pullRequest"]
+    query = _query(parsed_args, field_name=field_name)
+    path = ("repository", "pullRequest", field_name)
+    for node in client.execute_and_paginate(
+        query, path, first_page=main_result
+    ):
+        accumulator(parsed_args, output, node)
 
 
 def _fetch_comments(parsed_args):
@@ -406,43 +376,38 @@ def _fetch_comments(parsed_args):
         flush=True,
     )
 
-    # Prepare the GraphQL client.
-    transport = gql.transport.requests.RequestsHTTPTransport(
-        url="https://api.github.com/graphql",
-        headers={"Authorization": "bearer %s" % parsed_args.access_token},
-    )
-    client = gql.Client(transport=transport, fetch_schema_from_transport=True)
+    client = github_helpers.Client(parsed_args)
 
     # Get the initial set of review threads, and print the PR summary.
-    threads_result = _query(parsed_args, client)
-    pull_request = threads_result["repository"]["pullRequest"]
+    main_result = client.execute(_query(parsed_args))
+    pull_request = main_result["repository"]["pullRequest"]
 
     # Paginate comments, reviews, and review threads.
     comments = []
     _paginate(
         "comments",
-        _accumulate_pr_comments,
+        _accumulate_pr_comment,
         parsed_args,
         client,
-        pull_request,
+        main_result,
         comments,
     )
     # Combine reviews into comments for interleaving.
     _paginate(
         "reviews",
-        _accumulate_pr_comments,
+        _accumulate_pr_comment,
         parsed_args,
         client,
-        pull_request,
+        main_result,
         comments,
     )
     threads_by_path = {}
     _paginate(
         "reviewThreads",
-        _accumulate_threads,
+        _accumulate_thread,
         parsed_args,
         client,
-        pull_request,
+        main_result,
         threads_by_path,
     )
 
