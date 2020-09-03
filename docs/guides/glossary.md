@@ -8,9 +8,9 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 ## entity
 
-An _entity_ is a named instance of a function, type, interface, namespace, or
-other named item. For example, in `fn GetTime()`, `GetTime` refers to an entity
-which is a function.
+An _entity_ is a named item with an associated name path, such as a function,
+type, interface, or namespace. For example, in `fn GetTime()`, `GetTime` refers
+to an entity which is a function.
 
 ## identifier
 
@@ -20,10 +20,10 @@ for the function.
 
 ## library
 
-A _library_ is a group of files that form a compilation unit. Carbon encourages
-small libraries, bundled into larger packages. For example, given
-`package Geometry library Shapes;`, `Shapes` is a library in the `Geometry`
-package.
+A _library_ is a group of files that form an importable API and its
+implementation. Carbon encourages small libraries, bundled into larger packages.
+For example, given `package Geometry library Shapes;`, `Shapes` is a library in
+the `Geometry` package.
 
 ## name path
 

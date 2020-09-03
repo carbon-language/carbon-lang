@@ -51,6 +51,9 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
         -   [Strict association between the filesystem path and library/namespace](#strict-association-between-the-filesystem-path-and-librarynamespace)
     -   [Libraries](#libraries-1)
         -   [Allow importing implementation files from within the same library](#allow-importing-implementation-files-from-within-the-same-library)
+        -   [Alternative library separators and shorthand](#alternative-library-separators-and-shorthand)
+            -   [`/` separators](#-separators)
+            -   [Single-word libraries](#single-word-libraries)
         -   [Collapse API and implementation file concepts](#collapse-api-and-implementation-file-concepts)
             -   [Automatically generating the API separation](#automatically-generating-the-api-separation)
         -   [Collapse file and library concepts](#collapse-file-and-library-concepts)
@@ -113,9 +116,9 @@ are the basic unit of compilation.
 
 Each file begins with a declaration of which
 _package_<sup><small>[[define](/docs/guides/glossary.md#package)]</small></sup>
-it belongs in. The package is a single identifier, such as `Geometry`. An
-example API file in the `Geometry` package would start with
-`package Geometry api;`.
+it belongs in. The package is the unit of _distribution_. The package name is a
+single identifier, such as `Geometry`. An example API file in the `Geometry`
+package would start with `package Geometry api;`.
 
 A tiny package may consist of a single library with a single file, and not use
 any further features of the `package` keyword.
@@ -132,7 +135,7 @@ changing the package to `package Geometry impl`.
 However, as a package adds more files, it will probably want to separate out
 into multiple
 _libraries_<sup><small>[[define](/docs/guides/glossary.md#library)]</small></sup>.
-A library is the basic unit of _code reuse_. Separating code into multiple
+A library is the basic unit of _dependency_. Separating code into multiple
 libraries can speed up the overall build while also making it clear which code
 is being reused. An example API file in the library of `Shapes` in the
 `Geometry` package would look like `package Geometry library("Shapes") api;`.
@@ -209,12 +212,22 @@ fn Area(Geo.Circle circle) { ... };
 ```
 
 If multiple imports are made from the same package, each import may be named
-differently. This allows code to be explicit about which library is being used.
+differently. This allows code to be explicit about which library is being used,
+which some engineers may prefer for readability. Also, if a `api` file wants to
+re-export portions of a package, it may be helpful to be cautious about what is
+being exported.
+
 For example:
 
 ```carbon
-import Geometry library("Shapes") as Geo;
-import Geometry library("Algorithms") as GeoAlgo;
+package Math library("Interface") api;
+
+import Math library("Statistics");
+import Math library("Internal") as MathInternal;
+
+// This would export the `Functions` namespace in "Math/Statistics", and not
+// "Math/Internal".
+api alias Functions = Math.Functions;
 ```
 
 ## Details
@@ -228,7 +241,7 @@ separated by dots. This syntax can be expressed as a rough regular expression:
 IDENTIFIER(\.IDENTIFIER)*
 ```
 
-Name conflicts are handled per [name lookup](name_lookup.md).
+Name conflicts are addressed by [name lookup](name_lookup.md).
 
 ### Packages
 
@@ -530,6 +543,9 @@ import Geometry as Geo;
 fn Geometry(Geo.Circle: circle) { ... }
 ```
 
+The `as` keyword only renames the imported package identifier; it does not
+rename namespaces within the package.
+
 #### Imports from the current package
 
 Entities defined in the current file may be used without mentioning the package
@@ -644,6 +660,13 @@ may require manually adding imports.
 
 #### Other refactorings
 
+-   Rename a package.
+
+    -   The imports of all calling files must be updated accordingly.
+    -   Either `as` can be used on the import to keep the old name in order to
+        avoid changing call sites, or call sites will need to be changed.
+    -   [Update imports](#update-imports).
+
 -   Move an `api`-labelled declaration and implementation between libraries in
     the same package.
 
@@ -652,12 +675,22 @@ may require manually adding imports.
         changed.
     -   [Update imports](#update-imports).
 
+-   Rename a library.
+
+    -   This is equivalent to a repeated operation of moving an `api`-labelled
+        declaration and implementation between libraries in the same package.
+
 -   Move a declaration and implementation from one namespace to another.
 
     -   Ensure the new namespace is declared for the declaration and
         implementation.
     -   Update the namespace used by call sites.
     -   The imports of all calling files may remain the same.
+
+-   Rename a namespace.
+
+    -   This is equivalent to a repeated operation of moving a declaration and
+        implementation from one namespace to another.
 
 -   Rename a file, or move a file between directories.
 
@@ -894,7 +927,9 @@ package Foo namespace Bar.Baz;
 fn Wiz() { ... }
 ```
 
-We could remove `namespace` from the `package` keyword, requiring syntax like:
+We could remove `namespace` from the `package` keyword, which would mean there
+would no longer be file-scoped namespaces. Specifying child namespaces would
+always be required, for example:
 
 ```carbon
 package Foo;
@@ -915,7 +950,8 @@ Advantages:
 
 -   Encourages short names.
 -   Reduces complexity of the `package` keyword.
--   Provides a single mechanism for declaring namespaces in a package.
+-   Provides a single mechanism for declaring namespaces in a package, with only
+    one meaning for the `namespace` keyword.
     -   Eliminates the file-level namespace context, leaving only the package.
 -   Requires that the code as written by the library maintainer more closely
     match how it would be called.
@@ -1068,6 +1104,56 @@ Disadvantages:
 
 The problems with these approaches, and encouragement towards small libraries,
 is how we reach the current approach of only importing APIs, and automatically.
+
+#### Alternative library separators and shorthand
+
+Examples are using `.` to separator significant terms in library names, and `/`
+to separate the package name in shorthand. For example,
+`package Foo library("Bar.Baz");` with shorthand `Foo/Bar.Baz`.
+
+Note that, because the library is an arbitrary string and shorthand is not a
+language semantic, this won't affect much. However, users should be expected to
+treat examples as best practice.
+
+##### `/` separators
+
+We could instead use `/` for both separators. For example,
+`package Foo library("Bar/Baz");` with shorthand `Foo/Bar/Baz`.
+
+Advantages:
+
+-   Only uses one separator, so users don't need to switch.
+-   Creates an intuition that libraries are like filesystem paths.
+
+Disadvantages:
+
+-   Eliminates distinction between the package and library, reducing
+    readability.
+-   We have chosen not to
+    [enforce filesystem paths](#strict-association-between-the-filesystem-path-and-librarynamespace)
+    in order to ease refactoring, and encouraging a mental model where they may
+    match could confuse users.
+
+In this case, the understandability advantages of distinct separators outweighs
+the benefit of any singular separator.
+
+##### Single-word libraries
+
+We could stick to single word libraries in examples, such as replacing
+`library("Algorithms.Distance")` with `library("Distance")`.
+
+Advantages:
+
+-   Encourages short library names.
+
+Disadvantages:
+
+-   Users are likely to end up doing some hierarchy, and we should address it.
+    -   Consistency will improve code understandability.
+
+We might list this as a best practice, and have Carbon only expose libraries
+following it. However, some hierarchy from users can be expected, and so it's
+worthwhile to include a couple examples to nudge users towards consistency.
 
 #### Collapse API and implementation file concepts
 
