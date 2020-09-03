@@ -8,7 +8,6 @@ Exceptions. See /LICENSE for license information.
 SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 """
 
-import os
 import unittest
 from unittest import mock
 
@@ -49,7 +48,7 @@ class TestNewProposal(unittest.TestCase):
     def test_run_success(self):
         new_proposal._run(["true"])
 
-    def test_run_success(self):
+    def test_run_failure(self):
         with mock.patch("new_proposal._exit") as mock_exit:
             new_proposal._run(["false"])
             mock_exit.assert_called_once_with("ERROR: Command failed: false")
