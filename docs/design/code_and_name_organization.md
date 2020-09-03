@@ -34,6 +34,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
         -   [Update imports](#update-imports)
         -   [Between `api` and `impl` files](#between-api-and-impl-files)
         -   [Other refactorings](#other-refactorings)
+    -   [Preference for few child namespaces](#preference-for-few-child-namespaces)
     -   [Redundant markers](#redundant-markers)
 -   [Open questions](#open-questions)
     -   [Different file extensions](#different-file-extensions)
@@ -53,7 +54,8 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
         -   [Collapse API and implementation file concepts](#collapse-api-and-implementation-file-concepts)
             -   [Automatically generating the API separation](#automatically-generating-the-api-separation)
         -   [Collapse file and library concepts](#collapse-file-and-library-concepts)
-        -   [Collapse package and library concepts](#collapse-package-and-library-concepts)
+        -   [Collapse the library concept into packages](#collapse-the-library-concept-into-packages)
+        -   [Collapse the package concept into libraries](#collapse-the-package-concept-into-libraries)
         -   [Different file type labels](#different-file-type-labels)
         -   [Function-like syntax](#function-like-syntax)
         -   [Inlining from implementation files](#inlining-from-implementation-files)
@@ -663,6 +665,24 @@ may require manually adding imports.
     -   Carbon code will not change. The `package` keyword determines how a file
         is imported, so the library is unaffected by filesystem location.
 
+### Preference for few child namespaces
+
+We expect that most code should use a package and library, but avoid specifying
+namespaces beneath the package. The package name itself should typically be
+sufficient distinction for names.
+
+Child namespaces create longer names, which engineers will dislike typing. Based
+on experience, we expect to start seeing aliasing even at name lengths around
+six characters long. With longer names, we should expect more aliasing, which in
+turn will reduce code readability because more types will have local names.
+
+We believe it's feasible for even large projects to collapse namespaces down to
+a top level, avoiding internal tiers of namespaces.
+
+We understand that child namespaces are sometimes helpful, and will robustly
+support them for that. However, we will model code organization to encourage
+fewer namespaces.
+
 ### Redundant markers
 
 We use a few possibly redundant markers for packages and libraries:
@@ -1153,7 +1173,7 @@ we consider the split to be important for large codebases. The additional
 advantages of a single-file restriction do not outweigh the disadvantages
 surrounding build performance.
 
-#### Collapse package and library concepts
+#### Collapse the library concept into packages
 
 We could only have packages, with no libraries. Some other languages do this;
 for example, in Node.JS, a package is often similar in size to what we currently
@@ -1172,8 +1192,8 @@ Advantages:
 
 Disadvantages:
 
--   Coming up with unique package names may become an issue, leading to longer
-    package names that overlap with the intent of libraries.
+-   Coming up with short, unique package names may become an issue, leading to
+    longer package names that overlap with the intent of libraries.
     -   These longer package names would need to be used to refer to contained
         entities in code, affecting brevity of Carbon code. The alternative
         would be to expect users to always alias packages on import using `as`;
@@ -1194,6 +1214,108 @@ We prefer to keep the library separation to enable better hierarchy for large
 codebases, plus encouraging small units of compilation. It's still possible for
 people to create small Carbon packages, without breaking it into multiple
 libraries.
+
+#### Collapse the package concept into libraries
+
+Versus
+[collapse the library concept into packages](#collapse-the-library-concept-into-packages),
+we could have libraries without packages. Under this model, we still have
+libraries of similar granularity as what's proposed. However, there is no
+package grouping to them: there are only libraries which happen to share a
+namespace.
+
+For example:
+
+-   `package` vs `library`:
+    -   Trivial:
+        -   Proposal: `package Foo;`
+        -   Alternative: `library "Foo" namespace Foo;`
+    -   Multi-layer library:
+        -   Proposal: `package Foo library "Bar";`
+        -   Alternative: `library "Foo/Bar" namespace Foo;`
+    -   Specifying namespaces:
+        -   Proposal: `package Foo namespace Baz;`
+        -   Alternative: `library "Foo" namespace Foo.Baz;`
+    -   Combined:
+        -   Proposal: `package Foo library("Bar") namespace Baz;`
+        -   Alternative: `library "Foo/Bar" namespace Foo.Baz;`
+-   `import` changes:
+    -   Trivial:
+        -   Proposal: `import Foo;`
+        -   Alternative: `import "Foo";`
+    -   Multi-layer library:
+        -   Proposal: `import Foo library("Bar");`
+        -   Alternative: `import "Foo/Bar";`
+    -   Namespaces have no effect on `import` under both approaches.
+
+References to imports would all need to be prefixed with a '`.`' in order to
+make it clear which symbols were from imports. For example:
+
+```carbon
+library "Foo" namespace Foo;
+
+import "Bar";
+
+fn DoSomething(.Bar.Baz x) { ... }
+```
+
+This `.` is required because it is the only signal that we have something
+imported. Otherwise, this gains both the advantages and disadvantages of the
+[broader imports alternative](broader-imports-either-all-names-or-arbitrary-code),
+except for issues relating to arbitrary code.
+
+We assume that the compiler will enforce that the root namespace must either
+match or be a prefix of the library name, followed by a `/`. For example, `Foo`
+in `Foo.Baz` must either match a `library "Foo"` or prefix as
+`library "Foo/..."`; `library "FooBar"` does not match because it's missing the
+`/`.
+
+While we could have `library "Foo";` imply `namespace Foo`, we want name paths
+to be built in things listed as identifiers in files. We specifically do not
+want to use strings to generate identifiers in order to maintain readability.
+
+Advantages:
+
+-   Avoids introducing the "package" concept to code and name organization.
+    -   Retains the key property that library and namespace names have a prefix
+        that is intended to be globally unique.
+    -   Avoids coupling package management to namespace structure. For example,
+        it would permit a library collection like Boost to be split into
+        multiple repositories and multiple distribution packages, while
+        retaining a single top-level namespace.
+-   The library and namespace are pushed to be more orthogonal concepts.
+    -   Although some commonality must still be compiler-enforced.
+-   For the common case where packages have multiple libraries, removing the
+    need to specify both a package and library collapses two keywords into one
+    for both `import` and `package`.
+-   It makes it easier to draw on C++ intuitions, because all the concepts have
+    strong counterparts in C++.
+-   The prefix `.` on imported name paths can help increase readability by
+    making it clear they're from imports.
+
+Disadvantages:
+
+-   Declines an opportunity to align code and name organization with package
+    distribution.
+    -   Package distribution is a
+        [project goal](/docs/project/goals.md#language-tools-and-ecosystem), and
+        cannot be avoided indefinitely.
+    -   This also means multiple packages may contribute to the same top-level
+        namespace, which would prevent things like tab-completion in IDEs from
+        optimizing based on the knowledge that modified code cannot add to a
+        given top-level namespace.
+-   The string prefix enforcement between `library` and `namespace` forces
+    duplication between both, which would otherwise be handled by `package`.
+-   For the common case of packages with a matching namespace name, increases
+    verbosity by requiring the `namespace` keyword.
+-   The prefix `.` on imported name paths will be repeated frequently through
+    code, increasing overall verbosity, versus the package approach which only
+    affects import verbosity.
+
+We are declining this approach because we desire package separation, and because
+of concerns that this will lead to an overall increase in verbosity due to the
+[preference for few child namespaces](#preference-for-few-child-namespaces),
+whereas this alternative benefits when `namespace` is specified more often.
 
 #### Different file type labels
 
@@ -1242,7 +1364,7 @@ Advantages:
 -   Allows straightforward reuse of `alias` for language consistency.
 -   Easier to add more optional arguments, which we expect to need for
     [interoperability](#imports-from-other-languages) and
-    [URLs](#interop-from-urls).
+    [URLs](#imports-from-urls).
 -   Avoids defining keywords for optional fields: `library`, `as`, and possibly
     more long-term.
 
@@ -1521,12 +1643,41 @@ import Foo libraries({
 })
 ```
 
+This may help readability of code around `alias`. In particular, consider a
+package trying to alias the API of another package:
+
+-   Package X:
+
+    ```carbon
+    package X;
+    import Foo library "blah1";
+    import Foo library "blah2";
+    api alias Bar = Foo;
+    ```
+
+-   Package Y:
+
+    ```carbon
+    package Y;
+    import X;
+    fn Run() { X.Bar.Baz(); }
+    ```
+
+The result of this `api alias` allowing `X.Bar.Baz()` to work regardless of
+whether `Baz` is in `"blah1"` or `"blah2"` may be clearer if both `import Foo`
+statements were a combined `import Foo libraries({"blah1", "blah2"});`. Note
+that this is also a case where allowing different `as` values for different
+libraries of the same package may be helpful, as it would allow `alias` to
+provide `"blah1"` while allowing private, local use of `"blah2"`.
+
 The advantages/disadvantages are similar to [block imports](#block-imports).
 Additional advantages/disadvantages are:
 
 Advantages:
 
 -   Avoids repeating `as` for a package.
+-   If we limit to one import per library, then any `alias` of the package `Foo`
+    is easier to understand as affecting all libraries.
 
 Disadvantages:
 
