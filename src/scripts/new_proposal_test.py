@@ -35,11 +35,24 @@ class TestNewProposal(unittest.TestCase):
         parsed_args = new_proposal._parse_args(["--branch=wiz", "foo"])
         self.assertEqual(new_proposal._calculate_branch(parsed_args), "wiz")
 
+    def test_fill_template(self):
+        content = new_proposal._fill_template(
+            "../../proposals/template.md", "TITLE", 123
+        )
+        self.assertTrue(content.startswith("# TITLE\n\n"), content)
+        self.assertTrue(
+            "[Pull request](https://github.com/carbon-language/carbon-lang/"
+            "pull/123)" in content,
+            content,
+        )
+
     def test_run_success(self):
         new_proposal._run(["true"])
 
     def test_run_success(self):
-        new_proposal._run(["false"])
+        with mock.patch("new_proposal._exit") as mock_exit:
+            new_proposal._run(["false"])
+            mock_exit.assert_called_once_with("ERROR: Command failed: false")
 
 
 if __name__ == "__main__":

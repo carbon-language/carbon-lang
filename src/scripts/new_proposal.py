@@ -26,7 +26,7 @@ Continue? (Y/n) """
 
 def _exit(error):
     """Wraps sys.exit for testing."""
-    sys.exit(_exit)
+    sys.exit(error)
 
 
 def _parse_args(args=None):
@@ -166,10 +166,18 @@ def main():
     _run([git_bin, "add", temp_path, final_path])
     _run([precommit_bin, "run"], check=False)  # Needs a ToC update.
     _run([git_bin, "add", final_path, os.path.join(proposals_dir, "README.md")])
-    _run([git_bin, "commit", "-m", "Filling out template with PR %d" % pr_num])
+    _run(
+        [
+            git_bin,
+            "commit",
+            "--amend",
+            "-m",
+            "Filling out template with PR %d" % pr_num,
+        ]
+    )
 
     # Push the PR update.
-    _run([git_bin, "push"])
+    _run([git_bin, "push", "--force-with-lease"])
 
     print(
         "\nCreated PR %d for %s. Make changes to:\n  %s"
