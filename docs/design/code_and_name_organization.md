@@ -213,9 +213,9 @@ fn Area(Geo.Circle circle) { ... };
 
 If multiple imports are made from the same package, each import may be named
 differently. This allows code to be explicit about which library is being used,
-which some engineers may prefer for readability. Also, if a `api` file wants to
-re-export portions of a package, it may be helpful to be cautious about what is
-being exported.
+which some engineers may prefer to make it explicit which library an API comes
+from. Also, if a `api` file wants to re-export portions of a package, it may be
+helpful to be cautious about what is being exported.
 
 For example:
 
@@ -327,8 +327,8 @@ struct DateTime { ... };
 ```
 
 This declaration is important for [implementation files](#libraries), which
-implicitly import the library's API, because it keeps the package name as an explicit
-entity in source files.
+implicitly import the library's API, because it keeps the package name as an
+explicit entity in source files.
 
 ### Libraries
 
@@ -343,8 +343,9 @@ that are implementation.
 -   An implementation file's `package` will have `impl`. For example,
     `package Geometry library("Shapes") impl;`.
     -   Implementation filenames must have the `.impl.carbon` extension.
-    -   Implementation files implicitly import the library's API, and may not
-        import each other.
+    -   Implementation files implicitly import the library's API. Implementation
+        files cannot import each other. There is no facility for file or
+        non-`api` imports.
 
 The difference between API and implementation will act as a form of access
 control. API files must compile independently of implementation, only importing
@@ -423,8 +424,10 @@ Its syntax may loosely be expressed as a regular expression:
 namespace NAME_PATH;
 ```
 
-A namespace is used by first declaring it, then including it as a prefix when
-declaring a name. For example:
+Whereas a `package`-line `namespace` changes the namespace for the entire file,
+the separate `namespace` keyword only declares a namespace. It is then applied
+to specified entities by including it as a prefix when declaring a name. For
+example:
 
 ```carbon
 namespace Foo.Bar;
@@ -521,6 +524,28 @@ fn Foo() {
 }
 ```
 
+Imports do not elide child namespaces; they are always referenced from the
+package. For example, given this library:
+
+```carbon
+package Foo library("Bar") namespace Baz;
+
+fn Wiz() { ... }
+```
+
+Calling could should still be rooted at the package being imported:
+
+```carbon
+// The namespace here is ignored when addressing imported APIs.
+package Foo library("Caller") namespace Baz;
+
+import Foo library("Bar");
+
+fn Call() {
+  Foo.Baz.Wiz();
+}
+```
+
 #### Imported name conflicts
 
 It's possible that an imported package will have the same name as an entity
@@ -534,8 +559,8 @@ import Geometry;
 fn Geometry(Geometry.Circle: circle) { ... }
 ```
 
-In cases such as this, `as` can be used to rename the import. For example, this
-would be allowed:
+In cases such as this, `as` can be used to rename the entity used to access the
+imported package. For example, this would be allowed:
 
 ```carbon
 import Geometry as Geo;
@@ -673,6 +698,10 @@ may require manually adding imports.
     -   The imports of all calling files must be updated accordingly.
     -   As long as the namespaces remain the same, no call sites will need to be
         changed.
+        -   There is an exception to this if the new library is already imported
+            in the calling file using a different value for `as` than the old
+            library's import. In that case, the named entity for the import will
+            change and needs to be updated when the imports are updated.
     -   [Update imports](#update-imports).
 
 -   Rename a library.
@@ -1127,8 +1156,7 @@ Advantages:
 
 Disadvantages:
 
--   Eliminates distinction between the package and library, reducing
-    readability.
+-   Obscures distinction between the package and library, reducing readability.
 -   We have chosen not to
     [enforce filesystem paths](#strict-association-between-the-filesystem-path-and-librarynamespace)
     in order to ease refactoring, and encouraging a mental model where they may
@@ -1334,8 +1362,9 @@ For example:
         -   Alternative: `import "Foo/Bar";`
     -   Namespaces have no effect on `import` under both approaches.
 
-References to imports from other top-level namespaces would need to be prefixed with a '`.`' in order to
-make it clear which symbols were from imports. For example:
+References to imports from other top-level namespaces would need to be prefixed
+with a '`.`' in order to make it clear which symbols were from imports. For
+example:
 
 ```carbon
 library "Foo" namespace Foo;
@@ -1345,10 +1374,21 @@ import "Bar";
 fn DoSomething(.Bar.Baz x) { ... }
 ```
 
-This `.` is required because it is the only signal that we have something
-imported. Otherwise, this gains both the advantages and disadvantages of the
-[broader imports alternative](broader-imports-either-all-names-or-arbitrary-code),
-except for issues relating to arbitrary code.
+This `.` is required because it indicates the symbol comes from a different
+top-level namespace. Imports from the same top-level namespace do not need the
+dot. For example:
+
+```carbon
+library "Foo/Bar" namespace Foo.Child;
+
+import "Foo/Wiz";
+
+// Only valid if Baz is declared in Foo/Bar.
+fn DoSomething(Baz x) { ... }
+
+// May come from either Foo/Bar or Foo/Wiz.
+fn DoSomething(Foo.Child.Baz x) { ... }
+```
 
 We assume that the compiler will enforce that the root namespace must either
 match or be a prefix of the library name, followed by a `/`. For example, `Foo`
@@ -1356,9 +1396,30 @@ in `Foo.Baz` must either match a `library "Foo"` or prefix as
 `library "Foo/..."`; `library "FooBar"` does not match because it's missing the
 `/`.
 
-While we could have `library "Foo";` imply `namespace Foo`, we want name paths
-to be built in things listed as identifiers in files. We specifically do not
-want to use strings to generate identifiers in order to maintain readability.
+There are several approaches which might remove this duplication, but each has
+been declined due to flaws:
+
+-   We could have `library "Foo";` imply `namespace Foo`. However, we want name
+    paths to use things listed as identifiers in files. We specifically do not
+    want to use strings to generate identifiers in order to maintain
+    readability.
+-   We could alternately have `namespace Foo;` syntax imply
+    `library "Foo" namespace Foo;`.
+    -   This approach only helps with single-library namespaces. While this
+        would be common enough that a special syntax would help some developers,
+        we are likely to encourage multiple libraries per namespace as part of
+        best practices. We would then expect that the quantity of libraries in
+        multi-library namespaces would dominate cost-benefit, leaving this to
+        address only an edge-case of duplication issues.
+    -   This would create an ambiguity between the file-level `namespace` and
+        other `namespace` keyword use. We could then rename the `namespace`
+        argument for `library` to something like `file-namespace`.
+    -   It may be confusing as to what `namespace Foo.Bar;` does. It may create
+        `library "Foo/Bar"` because `library "Foo.Bar"` would not be legal, but
+        the change in characters may in turn lead to developer confusion.
+        -   We could change the library specification to use `.` instead of `/`
+            as a separator, but that may lead to broader confusion about the
+            difference between libraries and namespaces.
 
 Advantages:
 
@@ -1369,7 +1430,8 @@ Advantages:
         it would permit a library collection like Boost to be split into
         multiple repositories and multiple distribution packages, while
         retaining a single top-level namespace.
--   The library and namespace are pushed to be more orthogonal concepts.
+-   The library and namespace are pushed to be more orthogonal concepts than
+    packages and namespaces.
     -   Although some commonality must still be compiler-enforced.
 -   For the common case where packages have multiple libraries, removing the
     need to specify both a package and library collapses two keywords into one
@@ -1377,21 +1439,36 @@ Advantages:
 -   It makes it easier to draw on C++ intuitions, because all the concepts have
     strong counterparts in C++.
 -   The prefix `.` on imported name paths can help increase readability by
-    making it clear they're from imports.
+    making it clear they're from imports, so long as those imports aren't from
+    the current top-level namespace.
+-   Making the `.` optional for imports from the current top-level namespace
+    eliminates the boilerplate character when calling within the same library.
 
 Disadvantages:
 
--  The use of a leading `.` to mark absolute paths may conflict with other
-   important uses, such as designated initializers and named parameters.
+-   The use of a leading `.` to mark absolute paths may conflict with other
+    important uses, such as designated initializers and named parameters.
 -   Declines an opportunity to align code and name organization with package
     distribution.
+    -   Alignment means that if a developer sees `package Foo library("Bar");`,
+        they know installing a package `Foo` will give them the library.
+        Declining this means that users seeing `library "Foo/Bar"`, they will
+        still need to do research as to what package contains `Foo/Bar` to
+        figure out how to install it because that package may not be named
+        `Foo`.
     -   Package distribution is a
         [project goal](/docs/project/goals.md#language-tools-and-ecosystem), and
         cannot be avoided indefinitely.
     -   This also means multiple packages may contribute to the same top-level
         namespace, which would prevent things like tab-completion in IDEs from
-        optimizing based on the knowledge that modified code cannot add to a
+        optimizing based on the knowledge that modified packages cannot add to a
         given top-level namespace.
+        -   For example, if a user is editing a package `Foo`, package
+            boundaries would mean they could not add to namespace `Bar`. Under
+            this alternative, that guarantee only exists at library granularity,
+            meaning that IDEs will need to be able to combine information from
+            multiple packages to determine which libraries contribute to
+            namespace `Bar`.
 -   The string prefix enforcement between `library` and `namespace` forces
     duplication between both, which would otherwise be handled by `package`.
 -   For the common case of packages with a matching namespace name, increases
@@ -1399,6 +1476,8 @@ Disadvantages:
 -   The prefix `.` on imported name paths will be repeated frequently through
     code, increasing overall verbosity, versus the package approach which only
     affects import verbosity.
+-   Making the `.` optional for imports from the current top-level namespace
+    hides whether an API comes from the current library or an import.
 
 We are declining this approach because we desire package separation, and because
 of concerns that this will lead to an overall increase in verbosity due to the
