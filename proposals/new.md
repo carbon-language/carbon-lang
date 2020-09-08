@@ -1,0 +1,471 @@
+# Design direction for sum types
+
+<!--
+Part of the Carbon Language project, under the Apache License v2.0 with LLVM
+Exceptions. See /LICENSE for license information.
+SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+-->
+
+[Pull request](https://github.com/carbon-language/carbon-lang/pull/####)
+
+## Table of contents
+
+<!-- toc -->
+
+-   [Problem](#problem)
+-   [Background](#background)
+-   [Proposal](#proposal)
+-   [Pattern matching](#pattern-matching)
+-   [Pattern functions](#pattern-functions)
+    -   [Alternatives considered](#alternatives-considered)
+-   [`StorageArray`](#storagearray)
+-   [`choice`](#choice)
+    -   [Alternatives considered](#alternatives-considered-1)
+        -   [Separate support for enumerated types](#separate-support-for-enumerated-types)
+        -   [Different spelling for `choice`](#different-spelling-for-choice)
+        -   [Different syntax for `closed`](#different-syntax-for-closed)
+
+<!-- tocstop -->
+
+## Problem
+
+Many important programming use cases involve values that are most naturally
+represented as having one of several alternative forms (called _alternatives_
+for short). For example,
+
+-   Optional values, which are pervasive in computing, take the form of either
+    values of some underlying type, or a special "not present" value.
+-   Functions that cannot throw exceptions often use a return type that can
+    represent either a successfully computed result, or some description of how
+    the computation failed.
+-   Nodes of a parse tree often take different forms depending on the grammar
+    production that generated them. For example, a node of a parse tree for
+    simple arithmetic expressions might represent either a sum or product
+    expression with two child nodes representing the operands, or a
+    parenthesized expression with a single child node representing the contents
+    of the parentheses.
+-   Boolean values take the form of either a "true" value or a "false" value.
+
+What unites these use cases is that the set of alternatives is fixed by the API,
+it is possible for user code to determine which alternative is present, and
+there is little or nothing you can usefully do with such a value without first
+making that determination.
+
+Carbon needs to support defining and working with types representing such
+values. Following Carbon's principles, these types need to be easy to define,
+understand, and use, and they need to be safe -- in ordinary usage, the type
+system should ensure that user code cannot accidentally access the wrong
+alternative. Furthermore, these types need to be efficient enough that type
+designers are not tempted to switch to an API that is less safe or less
+user-friendly.
+
+## Background
+
+The terminology in this space is quite fragmented and inconsistent. This
+proposal will use the term _sum types_ to refer to types of the kind described
+in the problem statement. Note that "sum type" is not being proposed as a
+specific Carbon feature, or even as a precisely defined term of art; it is
+merely an informal way for this proposal to refer to its motivating use cases,
+in much the same way that a structs proposal might refer to "value types".
+
+Carbon as currently envisioned is already capable of approximating support for
+sum types. In particular, [pattern matching](/docs/design/pattern_matching.html)
+gives us a natural way to express querying which alternative is active, and then
+performing computations on that active alternative, which as discussed above is
+the primary way of interacting with a sum type. For example, a value-or-error
+type `Result(T, Error)` could be implemented and used like so:
+
+```
+struct Result(Type:$$ T, Type:$$ Error) {
+  // 0 if this represents a value, 1 if this represents an error
+  var Int: discriminator;
+  var T: value;
+  var E: error;
+
+  fn Success(T: value) -> Result(T, Error) {
+    return (.discriminator = 0, .value = value, .error = E());
+  }
+
+  fn Failure(Error: error) -> Result(T, Error) {
+    return (.discriminator = 1, .value = T(), .error = error);
+  }
+}
+
+fn DoTheThing() -> Result(Int, String);
+
+var Result(Int, String): r = DoTheThing();
+match (r) {
+  case (.discriminator = 0, .value = Int: value, .error = _) => {
+    // Do something with `value`
+  }
+  case (.discriminator = 1, .value = _, .error = String: error) => {
+    // Do something with `error`
+  }
+  default => { Assert(False); }
+}
+```
+
+However, this code suffers from a number of serious deficiencies:
+
+-   The implementation details of `Result` are not encapsulated. This makes the
+    `Result` API unsafe: nothing prevents client code from accessing `.value`
+    even when `.discriminator` is not 0. This also makes the patterns extremely
+    verbose.
+-   `.value` and `.error` must both be live throughout the `Result`'s lifetime,
+    even when they are not meaningful. Consequently, `Success` must populate
+    `.error` with a default-constructed dummy value (and so it won't work if
+    `Error` is not default-constructible), and `Failure` must do the same for
+    `.value`. Furthermore, `Result` is bloated by the fact that the two must
+    have separately-allocated storage, even though only one at a time actually
+    stores any data.
+-   `.discriminator` should never have any value other than 0 or 1, but the
+    compiler can't enforce that property when `Result`s are created, or exploit
+    it when `Result`s are used. So, for example, the `match` must have a
+    `default` case in order for the compiler and other tools to consider it
+    exhaustive, even though that default case should never be entered. If Carbon
+    supports integer types with arbitrary bit-widths, we could use `Int1` in
+    this specific case, but that won't work when the number of alternatives
+    isn't a power of 2. Furthermore, the type of `.discriminator` is somewhat
+    misleading: its values are not numbers, but only symbolic tags. It will
+    never make sense to perform arithmetic on it, for example.
+-   The definition of `Result` is largely boilerplate. Conceptually, the only
+    information needed to specify this type is the names and parameter types of
+    the two factory functions, plus the fact that every possible value of
+    `Result` is uniquely described by the name and parameter values of a call to
+    one of those two functions. Given that information, the compiler could
+    easily generate the rest of the struct definition. This generated
+    implementation may not always be as efficient as a hand-coded one could be,
+    but in a lot of cases that may not matter.
+
+## Proposal
+
+To summarize, the previous section identified four deficiencies in Carbon, which
+together prevent it from adequately supporting sum types:
+
+-   There is no way for pattern matching to operate through an encapsulation
+    boundary.
+-   There is no way to manually control the lifetimes of subobjects, or enable
+    them to share storage.
+-   There is no way to define an enumerated type.
+-   There is no way to define a sum type without micromanaging the details of
+    its representation.
+
+I propose supporting sum types by introducing three separate language features
+to supply the missing functionality. These features are largely independent and
+orthogonal, so their detailed design will be addressed in separate proposals.
+This proposal merely establishes the overall design direction for sum types, in
+the same way that [p0083](p0083.md) established the overall design direction for
+the language as a whole.
+
+To address the lack of encapsulation support in pattern matching, I propose
+introducing the concept of a _pattern function_, which is a function that can be
+invoked as part of a pattern, even with arguments that contain placeholders.
+Pattern functions can only contain the sort of code that could appear directly
+in a pattern, but they let us define reusable pattern syntaxes that can do
+things like encapsulate hidden implementation details of the object they're
+matching.
+
+To address the lack of manual lifetime control and storage sharing, I propose
+introducing a new fundamental type `Storage`, which is the type of a byte of raw
+memory, and `create` and `destroy` operations which create and destroy objects
+within a span of `Storage`. FIXME: `StorageArray`, which adds init support
+
+To address the last two deficiencies, I propose introducing `choice` as a
+convenient syntax for defining a sum type by specifying the names and parameter
+types of any factory functions, and the names of any static constant instances
+of the type. These are understood to be exhaustive and mutually exclusive, and
+so choice types that have no factory functions behave as enumerated types. A
+`choice` type can be marked `closed`, which indicates that client code can
+assume no new alternatives will be added in the future.
+
+Using these features, the `Result(T, Error)` example can be rewritten as
+follows:
+
+```
+struct Result(Type:$$ T, Type:$$ Error) {
+  closed choice Discriminator {
+    var _:$$ IsValue;
+    var _:$$ IsError;
+  }
+  var Discriminator: discriminator;
+  Array(Storage, Max(Sizeof(T), Sizeof(E))) storage;
+
+  pattern Success(T: value) -> Result(T, Error) {
+    return (.discriminator = Discriminator.IsValue, .storage = value);
+  }
+
+  pattern Failure(Error: error) -> Result(T, Error) {
+    return (.discriminator = Discriminator.IsError, .storage = error);
+  }
+}
+
+fn DoTheThing() -> Result(Int, String);
+
+var Result(Int, String): r = DoTheThing();
+match (r) {
+  case .Success(T: value) => {
+    // Do something with `value`
+  }
+  case .Error(T: error) => {
+    // Do something with `error`
+  }
+}
+```
+
+Or, more concisely,
+
+```
+closed choice Result(Type:$$ T, Type:$$ Error) {
+  pattern Success(T: value) -> _;
+  pattern Failure(Error: error) -> _;
+}
+```
+
+Similarly, `Optional(T)` could be defined as
+
+```
+closed choice Optional(Type:$$ T) {
+  pattern Some(T: value) -> _;
+  var _:$$ None;
+}
+```
+
+## Pattern matching
+
+This proposal presupposes that pattern matching will be built around the
+following basic intuition, which I will call the "substitution principle":
+
+> A pattern is an expression in which zero or more terms have been replaced with
+> variable binding declarations (`_` can be considered an anonymous binding
+> declaration). If the pattern matches a given value, evaluating that expression
+> by substituting the bound values back into the pattern will yield that value.
+
+In particular, this implies that any operation that can be used in the body of a
+pattern can also be used in an expression. This is not strictly a requirement of
+this proposal, but to the extent that Carbon deviates from this principle, this
+proposal may fit less well. In particular, if we want to support user-defined
+operations that can appear only in patterns, we would need a customization
+mechanism that's separate from pattern functions as described in this proposal,
+and we may not want to have two separate customization mechanisms.
+
+This proposal requires us to impose some sort of evaluation-order constraint on
+pattern matching. For example, when matching `r` with the pattern
+`.Success(T: value)` in the example above, we must be able to guarantee that we
+do not recursively attempt to match the contents of `.storage` with `value`
+until after we have successfully matched `.discriminator` with
+`Discriminator.IsValue`. Otherwise, we risk trying to access a `T` object that
+isn't actually present in `.storage`.
+
+FIXME: How do we constrain evaluation to accomplish this? We've discussed
+requiring that any subpatterns without placeholders be evaluated before any
+subpatterns with placeholders, but that seems ad-hoc; it wouldn't protect a
+pattern like `(.discriminator = Discriminator.IsValue, .storage = 1)`.
+
+It's also worth noting some pre-existing requirements for pattern matching,
+which will inform the design of pattern functions. These requirements are highly
+desirable in any pattern matching system, but they are hard requirements if we
+want to treat C++-like overload resolution as a form of pattern matching.
+
+Carbon pattern matching must not only be able to determine whether a pattern
+matches a value, and bind values to its variables, but also be able to select
+the _best_ pattern when more than one matches. Patterns are ranked by
+specificity, so for example `(Int: x, 1)` is a better match than
+`(Int: x, Int: y)` in the cases where they both match. This is not a total
+order, or even a weak order (intuitively, a total order with "ties"); for
+example, there is no ordering between `(Int: x, 1, 1)` and either
+`(1, Int: y, Int: z)` or `(1, 1, Int:z)`, but we can't just say that all three
+are "tied", because `(1, 1, Int: z)` is more specialized than
+`(1, Int: y, Int: z)`.
+
+Carbon must be able to determine whether a given set of patterns is
+_exhaustive_, meaning that for any possible value at least one of them will
+match. It must also be able to determine whether a set of patterns is
+_ambiguous_, meaning that the set contains two or more patterns that are not
+ordered with respect to each other, and that can match the same value.
+
+## Pattern functions
+
+Pattern functions have the same declaration syntax as ordinary functions, except
+that they are introduced with `pattern` rather than `fn`. However, the function
+body is required to be a single `return` statement whose operand expression is a
+valid pattern, with the function parameters acting as variable bindings.
+
+It seems likely that pattern functions will be required to be inline, because
+they will probably need to generate very different code depending on the
+structure of their arguments, particularly if the arguments contain
+placeholders.
+
+FIXME: anything else to say about pattern functions?
+
+### Alternatives considered
+
+The substitution principle implies that pattern matching can be thought of as
+the inverse of expression evaluation: given the purported value of an
+expression, we are trying to work backwards to determine the values for
+variables in the expression. This proposal allows users to define custom
+patterns in terms of expressions, by restricting their definitions to a narrow
+subset of the language that we know how to invert automatically. As an
+alternative, we could allow developers to define custom patterns by directly
+specifying the code that should be executed during pattern matching. This
+obliges them to determine the correct inverse computation themselves, but
+permits them to express it in terms of the full Carbon language.
+
+However, this approach creates the risk that user-defined patterns will not
+satisfy the substitution principle, either due to bugs or because developers
+want to use pattern matching syntax to express logic that has no counterpart in
+expression evaluation. Furthermore, it requires the developer to write code for
+both the forward and reverse computations, unless we choose to embrace the
+possibility of syntaxes that can only occur in patterns, and so don't satisfy
+the substitution principle.
+
+Furthermore, as discussed above, Carbon pattern matching needs to be able to not
+only determine whether a pattern matches, but also rank patterns, and determine
+whether a set of patterns is exhaustive and/or ambiguous. Defining a custom
+pattern in terms of arbitrary forward and reverse functions doesn't give the
+compiler enough information to do those things, so the developer would need to
+supply additional information in some way, and it's not at all clear how that
+would work.
+
+## `StorageArray`
+
+This approach to sum types imposes relatively few requirements on the type used
+to implement shared storage. I'm proposing an untyped byte buffer here because
+it's more general, but union types along the lines of proposal
+[0139](https://github.com/carbon-language/carbon-lang/pull/139) would work just
+as well.
+
+However, the one major requirement we do have is a tricky one: it must be
+possible to initialize an instance of the shared storage type from an instance
+of any of the values that it can represent, and to do so inside a pattern or
+pattern function. This proposal uses the obvious assignment-style syntax for
+that, so in the above example we use `.storage = value` to initialize `.storage`
+to hold the value `value`. However, this implies that there is something like an
+implicit conversion to `StorageArray(N)` from _any_ type whose size is at most
+`N`, and such broad implicit conversions often cause substantial maintenance and
+readability problems, at least in C++.
+
+As an alternative, we could require the conversion to be explicit, making the
+syntax something like
+`.storage = StorageArray(Max(Sizeof(T), Sizeof(E)))(value)`. However, this
+requires repeating the size parameter, which is logically redundant and
+syntactically somewhat annoying (although an alias could help). We could split
+the difference and define a factory function whose return type implicitly
+converts to `StorageArray(N)` for any sufficiently large `N`, making the example
+look like `.storage = MakeStorageArray(value)`, but that only works if Carbon
+provides something equivalent to C++'s "guaranteed RVO", because `T` may not be
+movable and `StorageArray(N)` definitely won't (and that guaranteed RVO needs to
+work even though the right and left sides of the initialization have different
+types).
+
+Either of those alternatives would also be fairly misleading from a readability
+perspective, because they look like function or constructor calls, but they
+can't actually _be_ function or constructor calls. Recall that this syntax needs
+to be usable inside patterns, so these functions would need to be pattern
+functions, which means they would need to consist of a single expression that
+initializes the `StorageArray(N)`, and the whole problem we're trying to solve
+here is to make it possible to write such an expression.
+
+At a deeper level, the problem is that the whole notion of allowing multiple
+objects to successively share the same storage is inherently procedural (because
+it involves changes in state over time), but pattern matching is fundamentally
+descriptive, and hence functional.
+
+A design in which user-defined patterns can be expressed in terms of procedural
+forward and reverse functions would avoid this whole problem, by allowing us to
+express storing the alternative in terms of procedural code (such as some
+equivalent of C++'s placement `new`) rather than initialization.
+
+## `choice`
+
+A `choice` type definition has the same general form as a `struct` definition,
+but a `choice` type can only contain declarations of pattern functions and
+compile-time constants (in other words, variables declared with `$$`). The
+definitions of those members will be provided by the compiler; they cannot be
+defined in user code. The return type of the pattern functions, and the type of
+the constants, must be the `choice` type being declared, and so to avoid
+redundancy we allow that type to be deduced from the compiler-provided
+definitions. The examples in this proposal use `_` as the placeholder, but
+something like `auto` would work too, if we don't want to model type deduction
+as a form of pattern matching.
+
+Carbon will probably have some mechanism for allowing a struct to have
+compiler-generated default implementations of operations such as copy, move,
+hashing, and equality comparison, so long as the struct's members support those
+operations. Assuming that mechanism exists, `choice` types will support it as
+well, with the parameter types of the pattern functions taking the place of the
+member types. However, `choice` types cannot be default constructible. A future
+proposal for this mechanism will need to consider whether to require an explicit
+opt-in to generate these operations.
+
+The compiler-generated definitions of a choice type's members are unspecified,
+except that they will satisfy the following two properties:
+
+-   The alternatives are _mutually exclusive_: an enumerator can only compare
+    equal to copies of itself, and the result of calling a factory function can
+    only compare equal to the result of calling the same factory function with
+    the same arguments.
+-   The alternatives are _exhaustive_: every possible value of the type is equal
+    to one of the enumerators, or to the result of invoking one of the factory
+    functions with some set of arguments.
+
+Although choice types are always exhaustive as far as the language semantics are
+concerned, by default user code will be required to treat them as
+non-exhaustive. For example, a `match` statement that operates on a value of a
+choice type will be required to have a `defaut` case, even if it also has
+patterns that match all of the declared alternatives. This ensures that choice
+types can be extended with new alternatives without breaking any existing code.
+Declaring a type with `closed choice` rather than `choice` allows client code to
+treat the type as exhaustive.
+
+### Alternatives considered
+
+#### Separate support for enumerated types
+
+This proposal supports enumerated types as a special case of choice types.
+However, there may be some benefit to providing special-case support for
+enumerated types, similar to C++'s `enum`. In particular:
+
+-   We could more easily avoid the `var _:$$` boilerplate in enumerator
+    declarations.
+-   We could allow the developer to specify an underlying type, associate a
+    specific value of the underlying type with each enumerator, and convert
+    between the enum and the underlying type, which are fairly common practices
+    in C++ code. When using choice types, these practices can be emulated by
+    defining functions that map between the choice type and the underlying type,
+    but that requires a substantial amount of error-prone boilerplate.
+    Furthermore, those functions can't reliably be no-ops at the hardware level,
+    the way they can be with C++ enums.
+-   It would allow us to treat choice types as purely syntactic sugar for struct
+    definitions. We can't quite do that at present because the desugared form
+    would itself contain a `choice` type, as with the long version of `Result`
+    above.
+
+I am omitting that from this proposal for simplicity, since it's purely
+additive, and not necessary for the goals of this proposal.
+
+#### Different spelling for `choice`
+
+The Rust and Swift counterparts of `choice` are spelled `enum`. I have avoided
+this because these types are not really "enumerated types" in the sense that all
+values are explicitly enumerated in the code, except in the special case where
+there are no factory functions. I chose the spelling `choice` because "choice
+type" is one of the only available synonyms for "sum type" that doesn't have any
+potentially-misleading associations.
+
+#### Different syntax for `closed`
+
+The `closed` syntax should be considered little more than a placeholder. It's
+somewhat unconventional for a modifier to come before an introducer, as with
+`closed choice`. Reversing the order would fix that problem, but `choice closed`
+reads quite awkwardly as English. Making `closed` a keyword would prevent
+developers from using `closed` as an identifier, which may be too high a cost
+for such a niche use case. We could fix that by making it an attribute rather
+than a keyword, but it's not clear that Carbon will have attributes, much less
+what the syntax would be.
+
+It may be surprising that there is no corresponding `open choice` syntax, but
+`open` would be meaningless syntactic noise unless we made it mandatory, and
+making it mandatory would be poor ergonomics, because developers would be forced
+to make an up-front decision between the two, rather than relying on a safe
+default. Furthermore, reserving `open` as a keyword seems even more problematic
+than reserving `closed`.
