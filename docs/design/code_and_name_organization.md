@@ -327,7 +327,7 @@ struct DateTime { ... };
 ```
 
 This declaration is important for [implementation files](#libraries), which
-implicitly import the API file, because it keeps the package name as an explicit
+implicitly import the library's API, because it keeps the package name as an explicit
 entity in source files.
 
 ### Libraries
@@ -1334,7 +1334,7 @@ For example:
         -   Alternative: `import "Foo/Bar";`
     -   Namespaces have no effect on `import` under both approaches.
 
-References to imports would all need to be prefixed with a '`.`' in order to
+References to imports from other top-level namespaces would need to be prefixed with a '`.`' in order to
 make it clear which symbols were from imports. For example:
 
 ```carbon
@@ -1381,6 +1381,8 @@ Advantages:
 
 Disadvantages:
 
+-  The use of a leading `.` to mark absolute paths may conflict with other
+   important uses, such as designated initializers and named parameters.
 -   Declines an opportunity to align code and name organization with package
     distribution.
     -   Package distribution is a
