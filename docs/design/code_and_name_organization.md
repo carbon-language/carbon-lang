@@ -914,37 +914,43 @@ Disadvantages:
         other syntax for referring to an entity `DateTime` in the package
         `DateTime`.
 -   Creates inconsistencies as compared to imports from other packages, such as
-    `import Widget;`, and imports from the current package, such as
-    `import Foo library("Wiz");`.
+    `package Math; import Geometry;`, and imports from the current package, such
+    as `package Math; import Math library("Stats");`.
     -   Option 1: Require `package` to be used to refer to all imports from
-        `Foo`, including the current file. This gives consistent treatment for
-        the `Foo` package, but not for other imports.
+        `Math`, including the current file. This gives consistent treatment for
+        the `Math` package, but not for other imports. In other words,
+        developers will always write `package.Stats` from within `Math`, and
+        `Math.Stats` will only be written in _other_ packages.
     -   Option 2: Require `package` be used for the current library's entities,
         but not other imports. This gives consistent treatment for imports, but
-        not for the `Foo` package as a whole.
+        not for the `Math` package as a whole. In other words, developers will
+        only write `package.Stats` when referring to the current library,
+        whether in `api` or `impl` files. `Math.Stats` will be used elsewhere,
+        including from within the `Math` package.
     -   Option 3: Allow either `package` or the full package name to refer to
-        the current package. This allows code to say either `package` or `Foo`,
-        with no enforcement for consistency.
+        the current package. This allows code to say either `package` or `Math`,
+        with no enforcement for consistency. In other words, both
+        `package.Stats` and `Math.Stats` are valid within the `Math` package.
 
 As part of pushing library authors to consider how their package will be used,
 we require them to specify the package by name where desired.
 
 #### Remove the `library` keyword from `package` and `import`
 
-Right now, we have syntax like:
+Right now, we have syntax such as:
 
 ```carbon
-package Foo library("Bar") api;
-package Foo library("Bar") namespace Baz api;
-import Foo library("Bar");
+package Math library("Median") api;
+package Math library("Median") namespace Stats api;
+import Math library("Median");
 ```
 
 We could remove `library`, resulting in:
 
 ```carbon
-package Foo.Bar api;
-package Foo.Bar namespace Foo.Baz api;
-import Foo.Bar;
+package Math.Median api;
+package Math.Median namespace Math.Stats api;
+import Math.Median;
 ```
 
 Advantages:
@@ -956,16 +962,31 @@ Disadvantages:
 
 -   Reduces explicitness of package vs library concepts.
 -   Creates redundancy of the package name in the namespace declaration.
-    -   Instead of `package Foo.Bar namespace Foo.Baz`, could instead use `Baz`,
-        or `this.Baz` to elide the package name.
+    -   Instead of `package Math.Median namespace Math.Stats`, could instead use
+        `Stats`, or `this.Stats` to elide the package name.
+-   Potentially confuses the library names, such as `Math.Median`, with
+    namespace names, such as `Math.Stats`.
+-   Either obfuscates or makes it difficult to put multiple libraries in the
+    top-level namespace.
+    -   This is important because we are interested in encouraging such
+        behavior.
+    -   For example, if `package Math.Median api;` uses the `Math` namespace,
+        the presence of `Median` with the same namespace syntax obfuscates the
+        actual namespace.
+    -   For example, if `package Math.Median namespace Math api` is necessary to
+        use the `Math` namespace, requiring the `namespace` keyword makes it
+        difficult to put multiple libraries in the top-level namespace.
+
+As part of avoiding confusion between libraries and namespaces, we are declining
+this alternative.
 
 #### Remove the `namespace` keyword from `package`
 
 Right now, we allow syntax like:
 
 ```carbon
-package Foo namespace Bar.Baz;
-fn Wiz() { ... }
+package Math namespace Stats.Internal;
+fn Linear(...) { ... }
 ```
 
 We could remove `namespace` from the `package` keyword, which would mean there
@@ -973,10 +994,10 @@ would no longer be file-scoped namespaces. Specifying child namespaces would
 always be required, for example:
 
 ```carbon
-package Foo;
+package Math;
 
-namespace Bar.Baz;
-fn Bar.Baz.Wiz() { ... }
+namespace Stats.Internal;
+fn Stats.Internal.Linear(...) { ... }
 ```
 
 Regarding short names, there is agreement that brevity of code is useful. If
@@ -999,12 +1020,16 @@ Advantages:
     -   In other words, an `import` will always need some reference, even an
         alias, rooted at the package name. This places a similar requirement on
         the library itself.
-    -   This alignment is not a precise match: where `Bar.Baz.Wiz` is declared
-        in package `Foo`, the package isn't part of the name path. Library
-        consumers would need to use the full `Foo.Bar.Baz.Wiz`.
-        -   We could change this, and require package `Foo` always include `Foo`
-            in declarations too, including `namespace Foo.Bar.Baz;` instead of
-            `namespace Bar.Baz;`.
+    -   This alignment is not a precise match: where `Stats.Internal.Linear` is
+        declared in package `Math`, the package isn't part of the name path.
+        Library consumers would need to use the full
+        `Math.Stats.Internal.Linear`.
+        -   We could change this, and require package `Math` always include
+            `Math` in declarations too, including
+            `namespace Math.Stats.Internal;` instead of
+            `namespace Stats.Internal;`. However, this would imply increased
+            repetition in code, particularly as libraries can be expected to
+            frequently refer to other parts of the same library.
 
 Disadvantages:
 
@@ -1166,7 +1191,7 @@ treat examples as best practice.
 ##### `/` separators
 
 We could instead use `/` for both separators. For example,
-`package Foo library("Bar/Baz");` with shorthand `Foo/Bar/Baz`.
+`package Math library("Stats/Internal");` with shorthand `Math/Stats/Internal`.
 
 Advantages:
 
@@ -1357,73 +1382,61 @@ libraries of similar granularity as what's proposed. However, there is no
 package grouping to them: there are only libraries which happen to share a
 namespace.
 
-For example:
+References to imports from other top-level namespaces would need to be prefixed
+with a '`.`' in order to make it clear which symbols were from imports.
+
+For example, suppose `Boost` is a large system that cannot be distributed to
+users in a single package. As a result, `Random` functionality is in its own
+distribution package, with multiple libraries contained. The difference between
+approaches looks like:
 
 -   `package` vs `library`:
     -   Trivial:
-        -   Proposal: `package Foo;`
-        -   Alternative: `library "Foo" namespace Foo;`
+        -   Proposal: `package BoostRandom;`
+        -   Alternative: `library "Boost/Random" namespace Boost;`
     -   Multi-layer library:
-        -   Proposal: `package Foo library "Bar";`
-        -   Alternative: `library "Foo/Bar" namespace Foo;`
+        -   Proposal: `package BoostRandom library "Uniform";`
+        -   Alternative: `library "Boost/Random.Uniform" namespace Boost;`
     -   Specifying namespaces:
-        -   Proposal: `package Foo namespace Baz;`
-        -   Alternative: `library "Foo" namespace Foo.Baz;`
+        -   Proposal: `package BoostRandom namespace Distributions;`
+        -   Alternative:
+            `library "Boost/Random.Uniform" namespace Boost.Random.Distributions;`
     -   Combined:
-        -   Proposal: `package Foo library("Bar") namespace Baz;`
-        -   Alternative: `library "Foo/Bar" namespace Foo.Baz;`
+        -   Proposal:
+            `package BoostRandom library("Uniform") namespace Distributions;`
+        -   Alternative:
+            `library "Boost/Random.Uniform" namespace Boost.Random.Distributions;`
 -   `import` changes:
     -   Trivial:
-        -   Proposal: `import Foo;`
-        -   Alternative: `import "Foo";`
+        -   Proposal: `import BoostRandom;`
+        -   Alternative: `import "Boost/Random";`
     -   Multi-layer library:
-        -   Proposal: `import Foo library("Bar");`
-        -   Alternative: `import "Foo/Bar";`
+        -   Proposal: `import BoostRandom library("Uniform");`
+    -   Alternative: `import "Boost/Random.Uniform";`
     -   Namespaces have no effect on `import` under both approaches.
-
-References to imports from other top-level namespaces would need to be prefixed
-with a '`.`' in order to make it clear which symbols were from imports. For
-example:
-
-```carbon
-library "Foo" namespace Foo;
-
-import "Bar";
-
-fn DoSomething(.Bar.Baz x) { ... }
-```
-
-This `.` is required because it indicates the symbol comes from a different
-top-level namespace. Imports from the same top-level namespace do not need the
-dot. For example:
-
-```carbon
-library "Foo/Bar" namespace Foo.Child;
-
-import "Foo/Wiz";
-
-// Only valid if Baz is declared in Foo/Bar.
-fn DoSomething(Baz x) { ... }
-
-// May come from either Foo/Bar or Foo/Wiz.
-fn DoSomething(Foo.Child.Baz x) { ... }
-```
+-   Changes to use an imported entity:
+    -   Proposal: `BoostRandom.UniformDistribution`
+    -   Alternative:
+        -   If the code is in the `Boost.Random` namespace: `Uniform`
+        -   If the code is in the `Boost` package but a different namespace:
+            `Random.Uniform`
+        -   If the code is outside the `Boost` package: `.Boost.Random.Uniform`
 
 We assume that the compiler will enforce that the root namespace must either
-match or be a prefix of the library name, followed by a `/`. For example, `Foo`
-in `Foo.Baz` must either match a `library "Foo"` or prefix as
-`library "Foo/..."`; `library "FooBar"` does not match because it's missing the
-`/`.
+match or be a prefix of the library name, followed by a `/` separator. For
+example, `Boost` in the namespace `Boost.Random.Uniform` must either match a
+`library "Boost"` or prefix as `library "Boost/..."`; `library "BoostRandom"`
+does not match because it's missing the `/` separator.
 
 There are several approaches which might remove this duplication, but each has
 been declined due to flaws:
 
--   We could have `library "Foo";` imply `namespace Foo`. However, we want name
-    paths to use things listed as identifiers in files. We specifically do not
-    want to use strings to generate identifiers in order to maintain
-    readability.
--   We could alternately have `namespace Foo;` syntax imply
-    `library "Foo" namespace Foo;`.
+-   We could have `library "Boost/Random.Uniform";` imply `namespace Boost`.
+    However, we want name paths to use things listed as identifiers in files. We
+    specifically do not want to use strings to generate identifiers in order to
+    support understandability of code.
+-   We could alternately have `namespace Boost;` syntax imply
+    `library "Boost" namespace Boost;`.
     -   This approach only helps with single-library namespaces. While this
         would be common enough that a special syntax would help some developers,
         we are likely to encourage multiple libraries per namespace as part of
@@ -1433,9 +1446,10 @@ been declined due to flaws:
     -   This would create an ambiguity between the file-level `namespace` and
         other `namespace` keyword use. We could then rename the `namespace`
         argument for `library` to something like `file-namespace`.
-    -   It may be confusing as to what `namespace Foo.Bar;` does. It may create
-        `library "Foo/Bar"` because `library "Foo.Bar"` would not be legal, but
-        the change in characters may in turn lead to developer confusion.
+    -   It may be confusing as to what `namespace Boost.Random;` does. It may
+        create `library "Boost/Random"` because `library "Boost.Random"` would
+        not be legal, but the change in characters may in turn lead to developer
+        confusion.
         -   We could change the library specification to use `.` instead of `/`
             as a separator, but that may lead to broader confusion about the
             difference between libraries and namespaces.
@@ -1469,12 +1483,13 @@ Disadvantages:
     important uses, such as designated initializers and named parameters.
 -   Declines an opportunity to align code and name organization with package
     distribution.
-    -   Alignment means that if a developer sees `package Foo library("Bar");`,
-        they know installing a package `Foo` will give them the library.
-        Declining this means that users seeing `library "Foo/Bar"`, they will
-        still need to do research as to what package contains `Foo/Bar` to
+    -   Alignment means that if a developer sees
+        `package BoostRandom library("Uniform");`, they know installing a
+        package `BoostRandom` will give them the library. Declining this means
+        that users seeing `library "Boost/Random.Uniform"`, they will still need
+        to do research as to what package contains `Boost/Random.Uniform` to
         figure out how to install it because that package may not be named
-        `Foo`.
+        `Boost`.
     -   Package distribution is a
         [project goal](/docs/project/goals.md#language-tools-and-ecosystem), and
         cannot be avoided indefinitely.
@@ -1482,12 +1497,14 @@ Disadvantages:
         namespace, which would prevent things like tab-completion in IDEs from
         optimizing based on the knowledge that modified packages cannot add to a
         given top-level namespace.
-        -   For example, if a user is editing a package `Foo`, package
-            boundaries would mean they could not add to namespace `Bar`. Under
-            this alternative, that guarantee only exists at library granularity,
-            meaning that IDEs will need to be able to combine information from
-            multiple packages to determine which libraries contribute to
-            namespace `Bar`.
+        -   For example, if a user is editing a package `BoostRandom`, package
+            boundaries would mean they could not add to namespace `BoostRandom`.
+            Under this alternative, that guarantee only exists at library
+            granularity, and there is no guaranteed association between package
+            names and the namespace they contribute to. As a result, IDEs will
+            need to be able to combine information from multiple packages to
+            determine which libraries contribute to namespace `Boost`, which may
+            include packages like `ProprietaryBoostAdditions`.
 -   The string prefix enforcement between `library` and `namespace` forces
     duplication between both, which would otherwise be handled by `package`.
 -   For the common case of packages with a matching namespace name, increases
@@ -1521,10 +1538,10 @@ for ease of typing. We also don't think it's an unclear abbreviation.
 
 We expect `impl` to be used for implementations of `interface`. This isn't quite
 as bad as if we used `interface` instead of `api` because of the `api` export
-syntax on entities, such as `api fn Foo()`, which could create ambiguities as
-`interface fn Foo()`. It may still confuse people to see an `interface impl` in
-an `api` file. However, we're touching on related concepts and don't see a great
-alternative.
+syntax on entities, such as `api fn DoSomething()`, which could create
+ambiguities as `interface fn DoSomething()`. It may still confuse people to see
+an `interface impl` in an `api` file. However, we're touching on related
+concepts and don't see a great alternative.
 
 #### Function-like syntax
 
@@ -1534,16 +1551,18 @@ We could consider more function-like syntax for `import`, and possibly also
 For example, instead of:
 
 ```carbon
-import Foo library("Bar");
-import Baz as B;
+import Math library("Stats");
+import Algebra as A;
 ```
 
 We could do:
 
 ```carbon
-import("Foo", "Bar").Foo;
-alias B = import("Baz").Baz;
+import("Math", "Stats").Math;
+alias A = import("Algebra").Algebra;
 ```
+
+Or some related variation.
 
 Advantages:
 
@@ -1560,7 +1579,7 @@ Disadvantages:
     lookup.
     -   This could be addressed by _requiring_ alias, but that becomes verbose.
     -   There's a desire to explicitly note the identifier being imported some
-        way, as with `.Foo` and `.Baz` above. However, this complicates the
+        way, as with `.Math` and `.Algebra` above. However, this complicates the
         resulting syntax.
 
 The preference is for keywords.
@@ -1734,13 +1753,17 @@ Instead of including additional namespace information per-name, we could have
 scoped namespaces, similar to C++. For example:
 
 ```carbon
-namespace Foo {
-  namespace Bar.Baz {
-    struct Wiz { ... }
+namespace absl {
+  namespace numbers_internal {
+    fn SafeStrto32Base(...) { ... }
+  }
+
+  fn SimpleAtoi(...) {
+    ...
+    return numbers_internal.SafeStrto32Base(...);
+    ...
   }
 }
-
-fn Fez(Foo.Bar.Baz.Wiz x);
 ```
 
 Advantages:
@@ -1767,13 +1790,17 @@ There are other ways to address the con, such as adding syntax to indicate the
 end of a namespace, similar to block comments. For example:
 
 ```carbon
-{ namespace Foo
-  { namespace Bar.Baz
-    struct Wiz { ... }
-  } namespace Bar.Baz
-} namespace Foo
+{ namespace absl
+  { namespace numbers_internal
+    fn SafeStrto32Base(...) { ... }
+  } namespace numbers_internal
 
-fn Fez(Foo.Bar.Baz.Wiz x);
+  fn SimpleAtoi(...) {
+    ...
+    return numbers_internal.SafeStrto32Base(...);
+    ...
+  }
+} namespace absl
 ```
 
 While we could consider such alternative approaches, we believe the proposed
@@ -1790,16 +1817,16 @@ imports, as can be found in languages like Go.
 In other words, instead of:
 
 ```carbon
-import Bar;
-import Foo;
+import Math;
+import Geometry;
 ```
 
 We could have:
 
 ```carbon
 imports {
-  Bar,
-  Foo,
+  Math,
+  Geometry,
 }
 ```
 
@@ -1823,38 +1850,39 @@ low-cost, and `grep` is useful.
 We could allow block imports of librarys from the same package. For example:
 
 ```carbon
-import Foo libraries({
-  "Bar",
-  "Baz",
+import Containers libraries({
+  "FlatHashMap",
+  "FlatHashSet",
 })
 ```
 
 This may help readability of code around `alias`. In particular, consider a
 package trying to alias the API of another package:
 
--   Package X:
+-   API:
 
     ```carbon
-    package X;
-    import Foo library "blah1";
-    import Foo library "blah2";
-    api alias Bar = Foo;
+    package Containers api;
+    import Containers library "HashContainers";
+    import Containers library "Internal";
+    api alias HashSet = Containers.HashSet;
     ```
 
--   Package Y:
+-   Caller:
 
     ```carbon
-    package Y;
-    import X;
-    fn Run() { X.Bar.Baz(); }
+    package MyProject impl;
+    import Containers;
+    fn Run() { Containers.HashSet(); }
     ```
 
-The result of this `api alias` allowing `X.Bar.Baz()` to work regardless of
-whether `Baz` is in `"blah1"` or `"blah2"` may be clearer if both `import Foo`
-statements were a combined `import Foo libraries({"blah1", "blah2"});`. Note
-that this is also a case where allowing different `as` values for different
-libraries of the same package may be helpful, as it would allow `alias` to
-provide `"blah1"` while allowing private, local use of `"blah2"`.
+The result of this `api alias` allowing `Containers.HashSet()` to work
+regardless of whether `HashSet` is in `"HashContainers"` or `"Internal"` may be
+clearer if both `import Containers` statements were a combined
+`import Containers libraries({"HashContainers", "Internal"});`. Note that this
+is also a case where allowing different `as` values for different libraries of
+the same package may be helpful, as it would allow `alias` to provide
+`"HashContainers"` while allowing private, local use of `"Internal"`.
 
 The advantages/disadvantages are similar to [block imports](#block-imports).
 Additional advantages/disadvantages are:
@@ -1862,8 +1890,8 @@ Additional advantages/disadvantages are:
 Advantages:
 
 -   Avoids repeating `as` for a package.
--   If we limit to one import per library, then any `alias` of the package `Foo`
-    is easier to understand as affecting all libraries.
+-   If we limit to one import per library, then any `alias` of the package
+    `Containers` is easier to understand as affecting all libraries.
 
 Disadvantages:
 
@@ -1914,24 +1942,24 @@ We could allow direct imports of names from libraries. For example, under the
 current setup we might see:
 
 ```carbon
-import Foo library("Bar");
-alias Baz = Foo.Baz;
-alias Wiz = Foo.Wiz;
+import Math library("Stats");
+alias Median = Stats.Median;
+alias Mean = Stats.Mean;
 ```
 
 We could simplify this syntax by augmenting `import`:
 
 ```carbon
-import Foo library("Bar") name Baz;
-import Foo library("Bar") name Wiz;
+import Math library("Stats") name Median;
+import Math library("Stats") name Mean;
 ```
 
 Or more succinctly with block imports of names:
 
 ```carbon
-import Foo library("Bar") names {
-  Baz,
-  Wiz,
+import Math library("Stats") names {
+  Median,
+  Mean,
 }
 ```
 

@@ -35,5 +35,6 @@ request:
 -   [0083 - In-progress design overview](p0083.md)
 -   [0107 - Code and name organization](p0107.md)
 -   [0120 - Add idiomatic code performance and developer-facing docs to goals](p0120.md)
+    -   [Decision](p0120_decision.md)
 
 <!-- endproposals -->
