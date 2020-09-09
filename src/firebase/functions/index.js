@@ -46,12 +46,11 @@ const validateIdToken = async (idToken) => {
       name:
         'projects/985662022432/secrets/github-org-lookup-token-for-www/versions/latest',
     });
+    const authToken = secret.payload.data.toString('utf8');
 
+    // Use octokit rest support to change the GitHub user ID to a username.
     const { Octokit } = require('@octokit/rest');
-    const octokit = new Octokit({
-      auth: secret.payload.data.toString('utf8'),
-    });
-
+    const octokit = new Octokit({ auth: authToken });
     const { data: ghUser } = await octokit.users.list({
       since: gitHubId - 1,
       per_page: 1,
@@ -62,19 +61,35 @@ const validateIdToken = async (idToken) => {
     }
     username = ghUser[0].login;
 
+    // Use octokit graphql support to check if the username is a member of
+    // carbon-language.
+    const { graphql } = require('@octokit/graphql');
+    const graphqlWithAuth = graphql.defaults({
+      headers: { authorization: `token ${authToken}` },
+    });
     try {
-      const { data: member } = await octokit.orgs.getMembership({
-        org: 'carbon-language',
-        username: username,
-      });
-      if (member && member.state == 'active' && member.user.id == gitHubId) {
+      const userQuery = `{
+                           user(login: "${username}") {
+                             databaseId
+                             organization(login: "carbon-language") {
+                               databaseId
+                             }
+                           }
+                         }`;
+      const { user } = await graphqlWithAuth(userQuery);
+      const carbonOrgDatabaseId = 63681715;
+      if (
+        user.databaseId == gitHubId &&
+        user.organization != null &&
+        user.organization.databaseId == carbonOrgDatabaseId
+      ) {
         result = 'Pass';
         return true;
       }
-      result = 'Not an active member';
+      result = 'Not a member';
       return false;
     } catch (err) {
-      result = 'Not a member';
+      result = `Member check failure: ${err.message}`;
       return false;
     }
 
