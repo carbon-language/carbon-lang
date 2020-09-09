@@ -14,6 +14,14 @@ from unittest import mock
 import new_proposal
 
 
+class FakeExitError(Exception):
+    pass
+
+
+def _fake_exit(message):
+    raise FakeExitError(message)
+
+
 class TestNewProposal(unittest.TestCase):
     def test_calculate_branch_short(self):
         parsed_args = new_proposal._parse_args(["foo bar"])
@@ -49,9 +57,10 @@ class TestNewProposal(unittest.TestCase):
         new_proposal._run(["true"])
 
     def test_run_failure(self):
-        with mock.patch("new_proposal._exit") as mock_exit:
-            new_proposal._run(["false"])
-            mock_exit.assert_called_once_with("ERROR: Command failed: false")
+        with mock.patch(
+            "new_proposal._exit", side_effect=_fake_exit
+        ) as mock_exit:
+            self.assertRaises(FakeExitError, new_proposal._run, ["false"])
 
 
 if __name__ == "__main__":
