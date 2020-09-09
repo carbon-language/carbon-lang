@@ -430,16 +430,18 @@ to specified entities by including it as a prefix when declaring a name. For
 example:
 
 ```carbon
-namespace Foo.Bar;
-struct Foo.Bar.Baz { ... }
+package Time;
 
-fn Wiz(Foo.Bar.Baz x);
+namespace Timezones.Internal;
+struct Timezones.Internal.RawData { ... }
+
+fn ParseData(Timezones.Internal.RawData data);
 ```
 
 A namespace declaration adds the first identifier in the name path as a name in
 the file's namespace. In the above example, after declaring
-`namespace Foo.Bar;`, `Foo` is available as an identifier and `Bar` is reached
-through `Foo`.
+`namespace Timezones.Internal;`, `Timezones` is available as an identifier and
+`Internal` is reached through `Timezones`.
 
 Namespaces declared and added to within a file must always be children of the
 file-level namespace. For example, this declares
@@ -480,11 +482,11 @@ Carbon's [alias keyword](aliases.md) will support aliasing namespaces. For
 example, this would be valid code:
 
 ```carbon
-namespace Foo.Bar;
-alias FB = Foo.Bar;
+namespace Timezones.Internal;
+alias TI = Timezones.internal;
 
-struct FB.Baz { ... }
-fn WizAlias(FB.Baz x);
+struct TI.RawData { ... }
+fn ParseData(TI.RawData data);
 ```
 
 ### Imports
@@ -516,7 +518,7 @@ import Math;
 // This imports the Math/Trigonometry library, and resuses the Math namespace.
 import Math library("Trigonometry");
 
-fn Foo() {
+fn DoSomething() {
   ...
   // The compiler will determine which Math library Sin comes from.
   Math.Sin(...);
@@ -528,21 +530,25 @@ Imports do not elide child namespaces; they are always referenced from the
 package. For example, given this library:
 
 ```carbon
-package Foo library("Bar") namespace Baz;
+package Unicode library("conversions.utf32") namespace Conversions;
 
-fn Wiz() { ... }
+api fn ToUtf32(String str) -> Bytes { ... }
 ```
 
 Calling could should still be rooted at the package being imported:
 
 ```carbon
 // The namespace here is ignored when addressing imported APIs.
-package Foo library("Caller") namespace Baz;
+package Unicode library("conversions") namespace Conversions;
 
-import Foo library("Bar");
+import Unicode library("utf32");
 
-fn Call() {
-  Foo.Baz.Wiz();
+fn ToUnicode(String str, Int size) -> Bytes {
+  ...
+  if (size == 32) {
+    return Unicode.Conversions.Utf32(str);
+  }
+  ...
 }
 ```
 
@@ -813,7 +819,8 @@ Although we're not designing this right now, it could fit into the proposed
 syntax. For example:
 
 ```carbon
-import Foo library("Baz") url("https://foo.com");
+import Carbon library("Utilities")
+    url("https://github.com/carbon-language/carbon-libraries");
 ```
 
 ### Test file type
@@ -857,28 +864,30 @@ the lack of clear advantage towards a more complex name path.
 #### Referring to the package as `package`
 
 Right now, we plan to refer to the package containing the current file by name.
-What's important in the below example is the use of `Foo.Bar`:
+What's important in the below example is the use of `Math.Stats`:
 
 ```carbon
-package Foo api;
-api struct Bar { ... }
-struct Baz {
-  fn Bar();
-  fn F() {
-    var Foo.Bar: b;
+package Math library("Stats") api;
+api struct Stats { ... }
+struct Quantiles {
+  fn Stats();
+  fn Build() {
+    ...
+    var Math.Stats: b;
+    ...
   }
 }
 ```
 
 We could instead use `package` as an identifier within the file to refer to the
-package, giving `package.Bar`.
+package, giving `package.Stats`.
 
 It's important to consider how this behaves for `impl` files, which expect an
 implicit import of the API. In other words, for `impl` files, this can be
-compared to an implicit `import Foo;` versus an implicit
-`import Foo as package;`. However, there may also be _explicit_ imports from the
-package, such as `import Foo library("Wiz");`, which may or may not be
-referrable to using `package`, depending on the precise option used.
+compared to an implicit `import Math;` versus an implicit
+`import Math as package;`. However, there may also be _explicit_ imports from
+the package, such as `import Math library("Trigonometry");`, which may or may
+not be referrable to using `package`, depending on the precise option used.
 
 Advantages:
 
@@ -890,17 +899,20 @@ Advantages:
         work may not be significantly reduced.
 -   The same syntax can be used to refer to entities with the same name as the
     package.
-    -   For example, `package.Foo` is unambiguous, whereas `Foo.Foo` could be
-        ambiguous.
+    -   For example, in a
+        [package named `DateTime`](https://docs.python.org/3/library/datetime.html#datetime-objects),
+        `package.DateTime` is unambiguous, whereas `DateTime.DateTime` could be
+        confusing.
 
 Disadvantages:
 
 -   Reuses the `package` keyword with a significantly different meaning,
     changing from a prefix for the required declaration at the top of the file,
     to an identifier within the file.
-    -   There is likely to be other syntax for referring to an entity `Foo` in
-        the package `Foo`, and we don't need a decision to reuse `package` to
-        solve this.
+    -   We don't need to have a special way to refer to the package to
+        disambiguate duplicate names. In other words, there is likely to be
+        other syntax for referring to an entity `DateTime` in the package
+        `DateTime`.
 -   Creates inconsistencies as compared to imports from other packages, such as
     `import Widget;`, and imports from the current package, such as
     `import Foo library("Wiz");`.
@@ -1073,6 +1085,12 @@ Disadvantages:
 
 -   The strict association makes it harder to move names between files without
     updating callers.
+-   If there were a strict association of paths, it would also need to handle
+    filesystem-dependent casing behaviors.
+    -   For example, on Windows, `project.carbon` and `Project.carbon` are
+        conflicting filenames. This is exacerbated by paths, wherein a file
+        `config` and a directory `Config/` would conflict, even though this
+        would be a valid structure on Unix-based filesystems.
 
 We are choosing to avoid the strict association with filesystem paths in order
 to ease refactoring. With this approach,
@@ -1138,7 +1156,8 @@ is how we reach the current approach of only importing APIs, and automatically.
 
 Examples are using `.` to separator significant terms in library names, and `/`
 to separate the package name in shorthand. For example,
-`package Foo library("Bar.Baz");` with shorthand `Foo/Bar.Baz`.
+`package Time library("Timezones.Internal");` with shorthand
+`Time/Timezones.Internal`.
 
 Note that, because the library is an arbitrary string and shorthand is not a
 language semantic, this won't affect much. However, users should be expected to
