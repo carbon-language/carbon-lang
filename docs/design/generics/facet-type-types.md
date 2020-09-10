@@ -45,6 +45,8 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
         -   [Example: Multiple implementations of the same interface](#example-multiple-implementations-of-the-same-interface)
         -   [Example: Creating an impl out of other impls](#example-creating-an-impl-out-of-other-impls)
     -   [Other type constraints](#other-type-constraints)
+        -   [Recommendation: interface adapter](#recommendation-interface-adapter)
+        -   [Rejected alternative: `ForSome(F)`](#rejected-alternative-forsomef)
     -   [Sized types and type-types](#sized-types-and-type-types)
         -   [Model](#model-4)
 -   [Dynamic types](#dynamic-types)
@@ -56,7 +58,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
         -   [Boxed](#boxed)
         -   [DynBoxed](#dynboxed)
         -   [MaybeBoxed](#maybeboxed)
--   [Implicit interface arguments [optional feature]](#implicit-interface-arguments-optional-feature)
+-   [Implicit interface arguments [rejected optional feature]](#implicit-interface-arguments-rejected-optional-feature)
 -   [Interface nesting/containment [optional feature]](#interface-nestingcontainment-optional-feature)
 -   [Index of examples](#index-of-examples)
 -   [Notes](#notes)
@@ -912,6 +914,9 @@ Some things going on here:
 **Question:** How do you say: "restrict this impl to types that have a member
 function with a specific name & signature"?
 
+An important use case is to restrict templated definitions to an appropriate set
+of types.
+
 **Decision:** We don't want to support the
 [SFINAE rule](https://en.wikipedia.org/wiki/Substitution_failure_is_not_an_error)
 of C++ because it does not let the user clearly express the intent of which
@@ -947,12 +952,89 @@ impl[Type:$$ T, Type:$$ U] if (LegalExpression(T.operator create(???)))
 This is a problem for the `LegalExpression(...)` model, another reason to avoid
 it.
 
-**Answer:** likely we will write constraints using the reflection API, though it
-isn't written at this time.
+**Possible answer:** likely we will write constraints using the reflection API,
+though it isn't written at this time. The advantage of this approach is that we
+likely will want a reflection API anyway for use in metaprogramming, so reusing
+that instead of introducing another mechanism reduces complexity.
 
 TODO: Go interface structural matching -- do we really want that? Could really
 help with decoupling dependencies, breaking cycles, cleaning up layering.
 Example: two libraries can be combined without knowing about each other.
+
+**Possible answer:** Another approach would be define a function that returns a
+type-type that matches types satisfying a structural constraint. This structural
+constraint might be represented by a list of name, signature pairs encoded as
+keyword arguments, as in:
+
+> `HasFunction(.Name1 = FnType1, .Name2 = FnType2)` defines a type-type whose
+> values are types with at least a method named `Name1` with signature matching
+> the function type `FnType1` and a method name `Name2` with signature matching
+> the function type `FnType2`.
+
+Example:
+
+```
+fn CallsFooAndBar[HasFunction(.Foo = fn(Int:_)->String,
+                              .Bar = fn(String:_)->Bool):$$ T]
+    (T: x, Int: y) -> Bool {
+  return x.Bar(x.Foo(y));
+}
+```
+
+One downside of this approach is that it does not provide a way to write down
+signatures that involve `Self`. Supporting that may require something a bit more
+cumbersome:
+
+```
+HasMethod(fn(Type:$$ Self)->(.Foo = fn(Self:_, Int:_)->String,
+                             .Bar = fn(Self:_, String:_)->Bool))
+```
+
+**Possible answer:** A last possibility: anonymous interfaces would match
+structurally. Just as types with names use nominative typing and types without
+names are compared structurally, we could say that an interface defined without
+a name is automatically implemented for any type that structurally matches the
+API defined in the interface.
+
+```
+interface {
+  fn Foo(Int: _) -> String;
+  fn Bar(String: _) -> Bool;
+}
+```
+
+This has the benefit that signatures involving `Self` are much more natural to
+write using the machinery and syntax already associated with defining
+interfaces.
+
+```
+interface {
+  fn Foo(Self: _, Int: _) -> String;
+  fn Bar(Self: _, String: _) -> Bool;
+}
+```
+
+To give a name to this type-type while staying with structural conformance, use
+the `alias` facility:
+
+```
+alias HasFooAndBar = interface {
+  fn Foo(Int: _) -> String;
+  fn Bar(String: _) -> Bool;
+}
+fn CallsFooAndBar[HasFooAndBar:$$ T](T: x, Int: y) -> Bool { ... }
+```
+
+Unfortunately, the difference between `alias Foo = interface { ... }` and
+`interface Foo { ... }` is pretty subtle but important. It might be better to
+instead have a keyword to draw attention to this difference, like:
+
+```
+structural interface HasFooAndBar {
+  fn Foo(Int: _) -> String;
+  fn Bar(String: _) -> Bool;
+}
+```
 
 ### Bridge for C++ templates
 
@@ -1419,12 +1501,29 @@ constraints mentioned in the
 [associated types section](#requires-optional-feature) as type-types, but I'm
 not sure what syntax would work well. For now, I'm assuming that we will express
 type constraints using
-[parameterized interfaces](#parameterized-interfaces-optional-feature). If we
-want to form a type-type from an interface and a constraint, perhaps for
-defining a `DynPtr(TT)` (as
-[described below in the dynamic pointer type section](#dynamic-pointer-type)),
-we could maybe have a `ForSome(F)` construct, where `F` is a function from types
-to type-types.
+[parameterized interfaces](#parameterized-interfaces-optional-feature). We do
+have use cases where we want to form a type-type from an interface and a
+constraint, perhaps for defining a `DynPtr(TT)` (as
+[described below in the dynamic pointer type section](#dynamic-pointer-type)) or
+for variadics.
+
+#### Recommendation: interface adapter
+
+Imagine a construct for naming a new type-type that captures a set of
+constraints on a type. For example, the type could be restricted to implementing
+an interface with particular constraints on its type parameters. Analogous to
+[adapting a type](#adapting-types), this could be called "adapting an
+interface".
+
+TODO
+
+**Alternative approach:** unnamed interfaces, using structural conformance, may
+also be able to express this. TODO
+
+#### Rejected alternative: `ForSome(F)`
+
+Another way to solve this problem would be to have a `ForSome(F)` construct,
+where `F` is a function from types to type-types.
 
 > `ForSome(F)`, where `F` is a function from type `T` to type-type `TT`, is a
 > type whose values are types `U` with type `TT=F(T)` for some type `T`.
@@ -1692,7 +1791,7 @@ TODO
 struct DynPtr(InterfaceType:$$ TT) {  // TT is any interface
   struct DynPtrImpl {
     private TT: t;
-    private Void*: p;  // Really t* instead of void*.
+    private Void*: p;  // Really t* instead of Void*.
     impl TT {
       // Defined using meta-programming.
       // Forwards this->F(...) to (this->p as (this->t)*)->F(...)
@@ -1910,7 +2009,7 @@ UseBoxed(y);
 UseBoxed(DontBox(Bar()));
 ```
 
-## Implicit interface arguments [optional feature]
+## Implicit interface arguments [rejected optional feature]
 
 (Right now I'm leaning against the extra complexity of this feature.)
 
@@ -1953,7 +2052,9 @@ fn CombinedCompare[Type:$ T]
     (..., List(CompatibleWith(TypeImplements(Foo, Bar), T)):$ CompareList) ...
 ```
 
-I don't see how to represent the same thing with extra implicit arguments.
+This construction comes up with the type of variadic arguments, when their type
+can vary but they all need to implement some interfaces. I don't see how to
+represent the same thing with extra implicit arguments.
 
 ## Interface nesting/containment [optional feature]
 
@@ -1995,10 +2096,9 @@ interfaces is now well captured in a compositional way. If `S` directly
 implements `Inner1` or `Inner2`, it could use that as the default in the impl of
 `Outer`.
 
-TODO This is related to `TypeImplements` above.
-
-TODO: Can we implement `TypeImplements` in terms of this? If so we could make
-`TypeImplements` an optional convenience.
+This, combined with unnamed/structural interfaces, would be a building block for
+the
+[`TypeImplements` construction above](#type-implementing-multiple-interfaces).
 
 ## Index of examples
 
@@ -2598,7 +2698,3 @@ Some links in this document aren't yet available, and so have been directed here
 until we can do the work to make them available.
 
 We thank you for your patience.
-
-```
-
-```
