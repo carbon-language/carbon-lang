@@ -601,7 +601,7 @@ fn GetArea(Geometry.Circle: c) { ... }
 
 Library name conflicts should not occur, because it's expected that a given
 package is maintained by a single organization. It's the responsibility of that
-organization to maintain unique library names within their package.
+orgnaization to maintain unique library names within their package.
 
 There is a greater risk of package name conflicts where two organizations use
 the same package name. We will encourage a unique package naming scheme, such as
@@ -670,7 +670,7 @@ may require manually adding imports.
 
     -   This should be a local change that will not affect any calling code.
 
--   Move a non-`api`-labeled declaration from an `api` file to an `impl` file.
+-   Move a non-`api`-labelled declaration from an `api` file to an `impl` file.
 
     -   The declaration must be moved to the same file as the implementation of
         the declaration.
@@ -678,7 +678,7 @@ may require manually adding imports.
         it. Search for other callers within the library, and fix them first.
     -   [Update imports](#update-imports).
 
--   Move a non-`api`-labeled declaration from an `impl` file to an `api` file.
+-   Move a non-`api`-labelled declaration from an `impl` file to an `api` file.
 
     -   This should be a local change that will not affect any calling code.
     -   [Update imports](#update-imports).
@@ -698,7 +698,7 @@ may require manually adding imports.
         avoid changing call sites, or call sites will need to be changed.
     -   [Update imports](#update-imports).
 
--   Move an `api`-labeled declaration and implementation between libraries in
+-   Move an `api`-labelled declaration and implementation between libraries in
     the same package.
 
     -   The imports of all calling files must be updated accordingly.
@@ -712,7 +712,7 @@ may require manually adding imports.
 
 -   Rename a library.
 
-    -   This is equivalent to a repeated operation of moving an `api`-labeled
+    -   This is equivalent to a repeated operation of moving an `api`-labelled
         declaration and implementation between libraries in the same package.
 
 -   Move a declaration and implementation from one namespace to another.
@@ -841,7 +841,7 @@ Advantages:
 
 -   Allow greater flexibility and hierarchy for related packages, such as
     `Database.Client` and `Database.Server`.
--   Would allow using GitHub repository names as package names. For example,
+-   Would allow using GitHub repo names as package names. For example,
     `carbon-language/carbon-toolchain` could become
     `carbon_language.carbon_toolchain`.
 
@@ -887,7 +887,7 @@ implicit import of the API. In other words, for `impl` files, this can be
 compared to an implicit `import Math;` versus an implicit
 `import Math as package;`. However, there may also be _explicit_ imports from
 the package, such as `import Math library("Trigonometry");`, which may or may
-not be referable to using `package`, depending on the precise option used.
+not be referrable to using `package`, depending on the precise option used.
 
 Advantages:
 
@@ -1847,7 +1847,7 @@ low-cost, and `grep` is useful.
 
 #### Block imports of libraries of a single package
 
-We could allow block imports of libraries from the same package. For example:
+We could allow block imports of librarys from the same package. For example:
 
 ```carbon
 import Containers libraries({

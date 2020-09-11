@@ -18,7 +18,6 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [Open questions for the decision](#open-questions-for-the-decision)
     -   [Should we remove one of the `namespace` keywords?](#should-we-remove-one-of-the-namespace-keywords)
     -   [Should we use the package name or the `package` keyword to refer to the current package?](#should-we-use-the-package-name-or-the-package-keyword-to-refer-to-the-current-package)
-    -   [Should we switch to a library-oriented structure that's package-agnostic?](#should-we-switch-to-a-library-oriented-structure-thats-package-agnostic)
 -   [Justification](#justification)
 
 <!-- tocstop -->
@@ -165,4 +164,4 @@ proposal, or is some other approach preferred?
 -   [Interoperability with and migration from existing C++ code](/docs/project/goals.md#interoperability-with-and-migration-from-existing-c-code):
 
     -   The syntax of `import` should enable extending imports for use in
-        interoperability code.
+        interop code.
