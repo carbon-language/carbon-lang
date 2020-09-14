@@ -704,14 +704,8 @@ DataAggregator::getBinaryFunctionContainingAddress(uint64_t Address) const {
   if (!BC->containsAddress(Address))
     return nullptr;
 
-  // Use shallow search to avoid fetching the parent function, in case
-  // BinaryContext linked two functions. When aggregating data and writing the
-  // profile, we want to write offsets relative to the closest symbol in the
-  // symbol table, not relative to the parent function, to avoid creating
-  // profile that is too fragile and depends on the layout of other functions.
   return BC->getBinaryFunctionContainingAddress(Address, /*CheckPastEnd=*/false,
-                                                /*UseMaxSize=*/true,
-                                                /*Shallow=*/true);
+                                                /*UseMaxSize=*/true);
 }
 
 StringRef DataAggregator::getLocationName(BinaryFunction &Func,

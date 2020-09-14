@@ -112,7 +112,10 @@ inline raw_ostream &operator<<(raw_ostream &OS,
 
 /// BinaryFunction is a representation of machine-level function.
 ///
-/// We use the term "Binary" as "Machine" was already taken.
+/// In the input binary, an instance of BinaryFunction can represent a fragment
+/// of a function if the higher-level function was split, e.g. into hot and cold
+/// parts. The fragment containing the main entry point is called a parent
+/// or the main fragment.
 class BinaryFunction {
 public:
   enum class State : char {
@@ -324,8 +327,8 @@ private:
   /// Name for the corresponding cold code section.
   std::string ColdCodeSectionName;
 
-  /// Parent function for split function fragments.
-  BinaryFunction *ParentFunction{nullptr};
+  /// Parent function fragment for split function fragments.
+  BinaryFunction *ParentFragment{nullptr};
 
   /// Indicate if the function body was folded into another function.
   /// Used by ICF optimization.
@@ -614,14 +617,18 @@ private:
   /// instead of calling this function directly.
   uint64_t getEntryIDForSymbol(const MCSymbol *EntrySymbol) const;
 
-  void setParentFunction(BinaryFunction *BF) {
-    assert((!ParentFunction || ParentFunction == BF) &&
+  /// If the function represents a secondary split function fragment, set its
+  /// parent fragment to \p BF.
+  void setParentFragment(BinaryFunction &BF) {
+    assert(IsFragment && "function must be a fragment to have a parent");
+    assert((!ParentFragment || ParentFragment == &BF) &&
            "cannot have more than one parent function");
-    ParentFunction = BF;
+    ParentFragment = &BF;
   }
 
-  void addFragment(BinaryFunction *BF) {
-    Fragments.insert(BF);
+  /// Register a child fragment for the main fragment of a split function.
+  void addFragment(BinaryFunction &BF) {
+    Fragments.insert(&BF);
   }
 
   void addInstruction(uint64_t Offset, MCInst &&Instruction) {
@@ -1922,8 +1929,25 @@ public:
     return ImageSize;
   }
 
-  BinaryFunction *getParentFunction() const {
-    return ParentFunction;
+  /// Return true if the function is a secondary fragment of another function.
+  bool isFragment() const {
+    return IsFragment;
+  }
+
+  /// Return parent function fragment if this function is a secondary (child)
+  /// fragment of another function.
+  BinaryFunction *getParentFragment() const {
+    return ParentFragment;
+  }
+
+  /// If the function is a nested child fragment of another function, return its
+  /// topmost parent fragment.
+  const BinaryFunction *getTopmostFragment() const {
+    const BinaryFunction *BF = this;
+    while (BF->getParentFragment())
+      BF = BF->getParentFragment();
+
+    return BF;
   }
 
   /// Set the profile data for the number of times the function was called.

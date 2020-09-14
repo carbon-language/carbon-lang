@@ -1018,66 +1018,72 @@ void BinaryContext::generateSymbolHashes() {
 
 void BinaryContext::processInterproceduralReferences(BinaryFunction &Function) {
   for (auto Address : Function.InterproceduralReferences) {
-    auto *ContainingFunction = getBinaryFunctionContainingAddress(Address);
-    if (&Function == ContainingFunction)
+    if (!Address)
       continue;
 
-    if (ContainingFunction) {
-      // Only a parent function (or a sibling) can reach its fragment.
-      if (ContainingFunction->IsFragment) {
+    auto *TargetFunction = getBinaryFunctionContainingAddress(Address);
+    if (&Function == TargetFunction)
+      continue;
+
+    if (TargetFunction) {
+      if (TargetFunction->IsFragment) {
+        // Only a parent function (or a sibling) can reach its fragment.
         assert(!Function.IsFragment &&
                "only one cold fragment is supported at this time");
-        ContainingFunction->setParentFunction(&Function);
-        Function.addFragment(ContainingFunction);
+        if (auto *TargetParent = TargetFunction->getParentFragment()) {
+          assert(TargetParent == &Function && "mismatching parent function");
+          continue;
+        }
+        TargetFunction->setParentFragment(Function);
+        Function.addFragment(*TargetFunction);
         if (!HasRelocations) {
-          ContainingFunction->setSimple(false);
+          TargetFunction->setSimple(false);
           Function.setSimple(false);
         }
         if (opts::Verbosity >= 1) {
-          outs() << "BOLT-INFO: marking " << *ContainingFunction
+          outs() << "BOLT-INFO: marking " << *TargetFunction
                  << " as a fragment of " << Function << '\n';
         }
-        continue;
+      } else if (TargetFunction->getAddress() != Address) {
+        TargetFunction->
+          addEntryPointAtOffset(Address - TargetFunction->getAddress());
       }
 
-      if (ContainingFunction->getAddress() != Address) {
-        ContainingFunction->
-          addEntryPointAtOffset(Address - ContainingFunction->getAddress());
-      }
-    } else if (Address) {
-      // Check if address falls in function padding space - this could be
-      // unmarked data in code. In this case adjust the padding space size.
-      auto Section = getSectionForAddress(Address);
-      assert(Section && "cannot get section for referenced address");
+      continue;
+    }
 
-      if (!Section->isText())
-        continue;
+    // Check if address falls in function padding space - this could be
+    // unmarked data in code. In this case adjust the padding space size.
+    auto Section = getSectionForAddress(Address);
+    assert(Section && "cannot get section for referenced address");
 
-      // PLT requires special handling and could be ignored in this context.
-      StringRef SectionName = Section->getName();
-      if (SectionName == ".plt" || SectionName == ".plt.got")
-        continue;
+    if (!Section->isText())
+      continue;
 
-      if (opts::UseOldText) {
-        errs() << "BOLT-ERROR: cannot process binaries with unmarked "
-               << "object in code at address 0x"
-               << Twine::utohexstr(Address) << " belonging to section "
-               << SectionName << " in relocation mode.\n";
-        exit(1);
-      }
+    // PLT requires special handling and could be ignored in this context.
+    StringRef SectionName = Section->getName();
+    if (SectionName == ".plt" || SectionName == ".plt.got")
+      continue;
 
-      ContainingFunction =
-        getBinaryFunctionContainingAddress(Address,
-                                           /*CheckPastEnd=*/false,
-                                           /*UseMaxSize=*/true);
-      // We are not going to overwrite non-simple functions, but for simple
-      // ones - adjust the padding size.
-      if (ContainingFunction && ContainingFunction->isSimple()) {
-        errs() << "BOLT-WARNING: function " << *ContainingFunction
-               << " has an object detected in a padding region at address 0x"
-               << Twine::utohexstr(Address) << '\n';
-        ContainingFunction->setMaxSize(ContainingFunction->getSize());
-      }
+    if (opts::processAllFunctions()) {
+      errs() << "BOLT-ERROR: cannot process binaries with unmarked "
+             << "object in code at address 0x"
+             << Twine::utohexstr(Address) << " belonging to section "
+             << SectionName << " in current mode\n";
+      exit(1);
+    }
+
+    TargetFunction =
+      getBinaryFunctionContainingAddress(Address,
+                                         /*CheckPastEnd=*/false,
+                                         /*UseMaxSize=*/true);
+    // We are not going to overwrite non-simple functions, but for simple
+    // ones - adjust the padding size.
+    if (TargetFunction && TargetFunction->isSimple()) {
+      errs() << "BOLT-WARNING: function " << *TargetFunction
+             << " has an object detected in a padding region at address 0x"
+             << Twine::utohexstr(Address) << '\n';
+      TargetFunction->setMaxSize(TargetFunction->getSize());
     }
   }
 
@@ -1982,8 +1988,7 @@ uint64_t BinaryContext::getHotThreshold() const {
 BinaryFunction *
 BinaryContext::getBinaryFunctionContainingAddress(uint64_t Address,
                                                   bool CheckPastEnd,
-                                                  bool UseMaxSize,
-                                                  bool Shallow) {
+                                                  bool UseMaxSize) {
   auto FI = BinaryFunctions.upper_bound(Address);
   if (FI == BinaryFunctions.begin())
     return nullptr;
@@ -1995,28 +2000,17 @@ BinaryContext::getBinaryFunctionContainingAddress(uint64_t Address,
   if (Address >= FI->first + UsedSize + (CheckPastEnd ? 1 : 0))
     return nullptr;
 
-  auto *BF = &FI->second;
-  if (Shallow)
-    return BF;
-
-  while (BF->getParentFunction())
-    BF = BF->getParentFunction();
-
-  return BF;
+  return &FI->second;
 }
 
 BinaryFunction *
-BinaryContext::getBinaryFunctionAtAddress(uint64_t Address, bool Shallow) {
+BinaryContext::getBinaryFunctionAtAddress(uint64_t Address) {
   // First, try to find a function starting at the given address. If the
   // function was folded, this will get us the original folded function if it
   // wasn't removed from the list, e.g. in non-relocation mode.
   auto BFI = BinaryFunctions.find(Address);
   if (BFI != BinaryFunctions.end()) {
-    auto *BF = &BFI->second;
-    while (!Shallow && BF->getParentFunction() && !Shallow) {
-      BF = BF->getParentFunction();
-    }
-    return BF;
+    return &BFI->second;
   }
 
   // We might have folded the function matching the object at the given
@@ -2026,12 +2020,8 @@ BinaryContext::getBinaryFunctionAtAddress(uint64_t Address, bool Shallow) {
   if (const auto *BD = getBinaryDataAtAddress(Address)) {
     uint64_t EntryID{0};
     auto *BF = getFunctionForSymbol(BD->getSymbol(), &EntryID);
-    if (BF && EntryID == 0) {
-      while (BF->getParentFunction() && !Shallow) {
-        BF = BF->getParentFunction();
-      }
+    if (BF && EntryID == 0)
       return BF;
-    }
   }
   return nullptr;
 }

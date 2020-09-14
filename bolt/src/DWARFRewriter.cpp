@@ -157,6 +157,9 @@ void DWARFRewriter::updateUnitDebugInfo(
 
       IsFunctionDef = true;
       const auto *Function = BC.getBinaryFunctionAtAddress(Address);
+      if (Function && Function->isFragment())
+        Function = Function->getTopmostFragment();
+
       if (Function && Function->isFolded())
         Function = nullptr;
       FunctionStack.push_back(Function);

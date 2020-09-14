@@ -57,6 +57,7 @@ void HugifyRuntimeLibrary::adjustCommandLineOptions(
 void HugifyRuntimeLibrary::emitBinary(BinaryContext &BC, MCStreamer &Streamer) {
   const auto *StartFunction =
       BC.getBinaryFunctionAtAddress(*(BC.StartFunctionAddress));
+  assert(!StartFunction->isFragment() && "expected main function fragment");
   if (!StartFunction) {
     errs() << "BOLT-ERROR: failed to locate function at binary start address\n";
     exit(1);

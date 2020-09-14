@@ -276,7 +276,7 @@ public:
   }
 
   /// Return BinaryFunction containing a given \p Address or nullptr if
-  /// no registered function has it.
+  /// no registered function contains the \p Address.
   ///
   /// In a binary a function has somewhat vague  boundaries. E.g. a function can
   /// refer to the first byte past the end of the function, and it will still be
@@ -294,19 +294,14 @@ public:
   /// body and the next object in address ranges that we check.
   BinaryFunction *getBinaryFunctionContainingAddress(uint64_t Address,
                                                      bool CheckPastEnd = false,
-                                                     bool UseMaxSize = false,
-                                                     bool Shallow = false);
+                                                     bool UseMaxSize = false);
 
-  /// Return BinaryFunction which has a fragment that starts at a given
-  /// \p Address. If the BinaryFunction is a child fragment, then return its
-  /// parent unless \p Shallow parameter is set to true.
-  BinaryFunction *getBinaryFunctionAtAddress(uint64_t Address,
-                                             bool Shallow = false);
+  /// Return a BinaryFunction that starts at a given \p Address.
+  BinaryFunction *getBinaryFunctionAtAddress(uint64_t Address);
 
-  const BinaryFunction *getBinaryFunctionAtAddress(uint64_t Address,
-                                                   bool Shallow = false) const {
+  const BinaryFunction *getBinaryFunctionAtAddress(uint64_t Address) const {
     return const_cast<BinaryContext *>(this)->
-        getBinaryFunctionAtAddress(Address, Shallow);
+        getBinaryFunctionAtAddress(Address);
   }
 
   /// Return size of an entry for the given jump table \p Type.

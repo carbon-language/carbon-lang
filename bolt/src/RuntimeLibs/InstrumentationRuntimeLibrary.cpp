@@ -61,12 +61,14 @@ void InstrumentationRuntimeLibrary::emitBinary(BinaryContext &BC,
                                                MCStreamer &Streamer) {
   const auto *StartFunction =
       BC.getBinaryFunctionAtAddress(*BC.StartFunctionAddress);
+  assert(!StartFunction->isFragment() && "expected main function fragment");
   if (!StartFunction) {
     errs() << "BOLT-ERROR: failed to locate function at binary start address\n";
     exit(1);
   }
   const auto *FiniFunction =
       BC.getBinaryFunctionAtAddress(*BC.FiniFunctionAddress);
+  assert(!FiniFunction->isFragment() && "expected main function fragment");
   if (!FiniFunction) {
     errs() << "BOLT-ERROR: failed to locate function at binary fini address\n";
     exit(1);
