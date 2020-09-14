@@ -22,6 +22,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Libraries](#libraries)
         -   [Exporting entities from an API file](#exporting-entities-from-an-api-file)
         -   [Granularity of libraries](#granularity-of-libraries)
+        -   [Exporting namespces](#exporting-namespces)
     -   [Namespaces](#namespaces)
         -   [Re-declaring imported namespaces](#re-declaring-imported-namespaces)
         -   [Aliasing](#aliasing)
@@ -50,6 +51,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
         -   [Rename package concept](#rename-package-concept)
         -   [Strict association between the filesystem path and library/namespace](#strict-association-between-the-filesystem-path-and-librarynamespace)
     -   [Libraries](#libraries-1)
+        -   [Allow exporting namespaces](#allow-exporting-namespaces)
         -   [Allow importing implementation files from within the same library](#allow-importing-implementation-files-from-within-the-same-library)
         -   [Alternative library separators and shorthand](#alternative-library-separators-and-shorthand)
             -   [`/` separators](#-separators)
@@ -225,9 +227,9 @@ package Math library("Interface") api;
 import Math library("Statistics");
 import Math library("Internal") as MathInternal;
 
-// This would export the `Functions` namespace in "Math/Statistics", and not
-// "Math/Internal".
-api alias Functions = Math.Functions;
+// This would export the Sin function in Math/Statistics, with a guarantee that
+// it is not coming from the Math/Internal import.
+api alias Sin = Math.Sin;
 ```
 
 ## Details
@@ -409,6 +411,38 @@ single class. This will be pressured because of the limitation of a single API
 file per library. We expect that keeping libraries small will enable better
 parallelism of compilation.
 
+#### Exporting namespces
+
+Any entity may be marked with `api` except for namespaces. Instead, namespaces
+are implicitly exported based on the name paths of other entities marked as
+`api`.
+
+For example, given this code:
+
+```carbon
+package Checksums library("Sha") api;
+
+namespaces Sha256;
+
+api fn Sha256.HexDigest(Bytes: data) -> String { ... }
+```
+
+Calling code may look like:
+
+```carbon
+package Caller api;
+
+import Checksums library("Sha");
+
+fn Process(Bytes: data) {
+  ...
+  var String: digest = Checksums.Sha256.HexDigest(data);
+  ...
+}
+```
+
+In this example, the `Sha256` digest is exported as part of the API implicitly.
+
 ### Namespaces
 
 Namespaces offer named paths for entities. Namespaces may be nested. Multiple
@@ -498,14 +532,16 @@ The `import` keyword supports reusing code from other files and libraries. The
 import IDENTIFIER (library NAME_PATH)? (as IDENTIFIER)?;
 ```
 
+An import declares an entity named after the package, and makes `api`-tagged
+entities from the imported library through it. For example, `import Math;`
+declares a `Math` entity and makes entities from `Math/default` accessible
+through it, such as `Math.Sin`. Child namespaces or entities must separately be
+[aliased](aliases.md) if desired.
+
 All imports for a file must have only whitespace and comments between the
 `package` declaration and them. If [metaprogramming](metaprogramming.md) code
 generates imports, it must only generate imports following the
 non-metaprogramming imports. No other code can be interleaved.
-
-All imports are done at the library level. They provide the package's namespace
-path for use. Child namespaces or entities must separately be
-[aliased](aliases.md) if desired.
 
 For example:
 
@@ -1124,6 +1160,51 @@ callers.
 
 ### Libraries
 
+#### Allow exporting namespaces
+
+We propose to not allow exporting namespaces as part of library APIs. We could
+either allow or require exporting namespaces. For example:
+
+```carbon
+package Checksums;
+
+api namespace Sha256;
+```
+
+While this approach would mainly be syntactic, a more pragmatic use of this
+would be in refactoring. It implies that an aliased namespace could be marked as
+an `api`. For example, the below could be used to share an import's full
+contents:
+
+```carbon
+package Translator library("Interface") api;
+
+import Translator library("Functions") as TranslatorFunctions;
+
+api alias Functions = TranslatorFunctions;
+```
+
+Advantages:
+
+-   Avoids any inconsistency in how entities are handled.
+-   Reinforces whether a namespace may contain `api` entities.
+-   Enables new kinds of refactorings.
+
+Disadvantages:
+
+-   Creates extra syntax for users to remember, and possibly forget, when
+    declaring `api` entities.
+    -   Makes it possible to have a namespace marked as `api` that doesn't
+        contain any `api` entities.
+-   Allowing aliasing of entire imports makes it ambiguous which entities are
+    being passed on through the namespace.
+    -   This may impair refactoring.
+    -   This can be considered related to
+        [broader imports, either all names or arbitrary code](#broader-imports-either-all-names-or-arbitrary-code).
+
+This alternative is declined because it's not sufficiently clear it'll be
+helpful, versus impairment of refactoring.
+
 #### Allow importing implementation files from within the same library
 
 The current proposal is that implementation files in a library implicitly import
@@ -1495,16 +1576,28 @@ Disadvantages:
         cannot be avoided indefinitely.
     -   This also means multiple packages may contribute to the same top-level
         namespace, which would prevent things like tab-completion in IDEs from
-        optimizing based on the knowledge that modified packages cannot add to a
-        given top-level namespace.
-        -   For example, if a user is editing a package `BoostRandom`, package
-            boundaries would mean they could not add to namespace `BoostRandom`.
-            Under this alternative, that guarantee only exists at library
-            granularity, and there is no guaranteed association between package
-            names and the namespace they contribute to. As a result, IDEs will
-            need to be able to combine information from multiple packages to
-            determine which libraries contribute to namespace `Boost`, which may
-            include packages like `ProprietaryBoostAdditions`.
+        producing cache optimizations based on the knowledge that modified
+        packages cannot add to a given top-level namespace. For example, the
+        ability to load less may improve performance:
+        -   As proposed, a package `BoostRandom` only adds to a namespace of the
+            same name. If a user is editing libraries in a package
+            `BoostCustom`, then `BoostRandom` may be treated as unmodifiable. An
+            IDE could optimize cache invalidation of `BoostRandom` at the
+            package level. As a result, if a user types `BoostRandom.` and
+            requests a tab completion, the system need only ensure that
+            libraries from the `BoostRandom.` package are loaded for an accurate
+            result.
+        -   Under this alternative, a library `Boost.Random` similarly adds to
+            the namespace `Boost`. However, if a user is editing libraries, the
+            IDE needs to support them adding to both `Boost` and `MyProject`
+            simultaneously. As a result, if a user types `Boost.` and requests a
+            tab completion, the system must have all libraries from all packages
+            loaded for an accurate result.
+        -   Although many features can restricted to _current_ imports, some
+            features, such as
+            [auto-imports](https://www.jetbrains.com/help/idea/creating-and-optimizing-imports.html),
+            examine _possible_ imports. Large codebases may have a
+            memory-constrained quantity of possible imports.
 -   The string prefix enforcement between `library` and `namespace` forces
     duplication between both, which would otherwise be handled by `package`.
 -   For the common case of packages with a matching namespace name, increases
