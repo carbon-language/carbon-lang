@@ -1,4 +1,4 @@
-# Decision for: TODO
+# Decision for: Add idiomatic code performance and developer-facing docs to goals
 
 <!--
 Part of the Carbon Language project, under the Apache License v2.0 with LLVM
