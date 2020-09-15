@@ -149,7 +149,7 @@ _namespaces_<sup><small>[[define](/docs/guides/glossary.md#namespace)]</small></
 to give related entities consistently structured names. A namespace affects the
 _name
 path_<sup><small>[[define](/docs/guides/glossary.md#name-path)]</small></sup>
-used when calling code. For example, with no namespace, if a `Geometry` library
+used when calling code. For example, with no namespace, if a `Geometry` package
 defines `Circle` then the name path will be `Geometry.Circle`. However, an
 example namespace of `TwoDimensional` in the `Geometry` package would look like
 `package Geometry library("Shapes") namespace TwoDimensional api;`, and result
@@ -270,7 +270,7 @@ Breaking this apart:
         may be used from within the file as both `Line` directly and
         `Geometry.TwoDimensional.Line` using the `Geometry` declaration created
         by the `package` keyword.
--   When the optional `library` keyword is specified, its name path argument is
+-   When the optional `library` keyword is specified, its string argument is
     combined with the package to generate the library path. In this example, the
     `Geometry/Objects.FourSides` library path will be used.
 -   When the optional `namespace` keyword is specified, its name path argument
