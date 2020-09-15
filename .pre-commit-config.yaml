@@ -1,30 +1,22 @@
 # See https://pre-commit.com for more information
 # See https://pre-commit.com/hooks.html for more hooks
+default_language_version:
+  python: python3
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v3.2.0
     hooks:
       - id: check-added-large-files
-        language_version: python3
       - id: check-case-conflict
-        language_version: python3
       - id: check-executables-have-shebangs
-        language_version: python3
       - id: check-merge-conflict
-        language_version: python3
       - id: check-symlinks
-        language_version: python3
       - id: check-yaml
-        language_version: python3
       - id: detect-private-key
-        language_version: python3
       - id: end-of-file-fixer
-        language_version: python3
       - id: mixed-line-ending
         args: ['--fix=lf']
-        language_version: python3
       - id: trailing-whitespace
-        language_version: python3
   - repo: https://github.com/codespell-project/codespell
     rev: v1.17.1
     hooks:
@@ -46,7 +38,6 @@ repos:
         description: Updates the list of proposals in proposals/README.md
         entry: src/scripts/update_proposal_list.py
         language: python
-        language_version: python3
         files: ^proposals/(README|p.*)\.md$
         pass_filenames: false
   # Formatters should be run late so that they can re-format any prior changes.
@@ -54,7 +45,6 @@ repos:
     rev: 20.8b1
     hooks:
       - id: black
-        language_version: python3
   - repo: https://github.com/prettier/prettier
     rev: 2.1.1
     hooks:
