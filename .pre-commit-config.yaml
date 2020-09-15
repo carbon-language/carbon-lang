@@ -2,19 +2,29 @@
 # See https://pre-commit.com/hooks.html for more hooks
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v2.4.0
+    rev: v3.2.0
     hooks:
       - id: check-added-large-files
+        language_version: python3
       - id: check-case-conflict
+        language_version: python3
       - id: check-executables-have-shebangs
+        language_version: python3
       - id: check-merge-conflict
+        language_version: python3
       - id: check-symlinks
+        language_version: python3
       - id: check-yaml
+        language_version: python3
       - id: detect-private-key
+        language_version: python3
       - id: end-of-file-fixer
+        language_version: python3
       - id: mixed-line-ending
         args: ['--fix=lf']
+        language_version: python3
       - id: trailing-whitespace
+        language_version: python3
   - repo: https://github.com/codespell-project/codespell
     rev: v1.17.1
     hooks:
