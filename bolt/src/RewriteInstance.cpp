@@ -806,6 +806,11 @@ void RewriteInstance::run() {
 
   updateMetadata();
 
+  if (opts::LinuxKernelMode) {
+    errs() << "BOLT-WARNING: not writing the output file for Linux Kernel\n";
+    return;
+  }
+
   // Rewrite allocatable contents and copy non-allocatable parts with mods.
   rewriteFile();
 }
@@ -1257,8 +1262,13 @@ void RewriteInstance::discoverFileObjects() {
     llvm_unreachable("Unknown marker");
   }
 
-  // Read all relocations now that we have binary functions mapped.
-  processRelocations();
+  if (opts::LinuxKernelMode) {
+    // Read all special linux kernel sections and their relocations
+    processLKSections();
+  } else {
+    // Read all relocations now that we have binary functions mapped.
+    processRelocations();
+  }
 }
 
 void RewriteInstance::disassemblePLT() {
@@ -1521,13 +1531,6 @@ void RewriteInstance::readSpecialSections() {
       if (isKSymtabSection(SectionName))
         opts::LinuxKernelMode = true;
     }
-  }
-
-  if (opts::LinuxKernelMode && !opts::HeatmapMode) {
-    errs() << "BOLT-ERROR: input binary seems like the vmlinux binary"
-           << " as it has linux kernel symbol information, for which we"
-           << " only support heatmap generation right now!!!\n";
-    exit(1);
   }
 
   if (HasDebugInfo && !opts::UpdateDebugSections && !opts::AggregateOnly) {
@@ -1896,6 +1899,206 @@ void RewriteInstance::processRelocations() {
         !BinarySection(*BC, Section).isAllocatable()) {
       readRelocations(Section);
     }
+  }
+}
+
+void RewriteInstance::insertLKMarker(uint64_t PC, uint64_t SectionOffset,
+                                     int32_t PCRelativeOffset,
+                                     bool IsPCRelative, StringRef SectionName) {
+  BC->LKMarkers[PC].emplace_back(
+      LKInstructionMarkerInfo{SectionOffset, PCRelativeOffset, IsPCRelative,
+                              SectionName});
+}
+
+void RewriteInstance::processLKSections() {
+  assert(opts::LinuxKernelMode &&
+         "process Linux Kernel special sections and their relocations only in "
+         "linux kernel mode.\n");
+
+  processLKExTable();
+  processLKPCIFixup();
+  processLKKSymtab();
+  processLKKSymtab(true);
+  processLKBugTable();
+  processLKSMPLocks();
+}
+
+/// Process __ex_table section of Linux Kernel.
+/// This section contains information regarding kernel level exception
+/// handling (https://www.kernel.org/doc/html/latest/x86/exception-tables.html).
+/// More documentation is in arch/x86/include/asm/extable.h.
+///
+/// The section is the list of the following structures:
+///
+///   struct exception_table_entry {
+///     int insn;
+///     int fixup;
+///     int handler;
+///   };
+///
+void RewriteInstance::processLKExTable() {
+  auto SectionOrError = BC->getUniqueSectionByName("__ex_table");
+  if (!SectionOrError)
+    return;
+
+  const uint64_t SectionSize = SectionOrError->getSize();
+  const uint64_t SectionAddress = SectionOrError->getAddress();
+  assert((SectionSize % 12) == 0 &&
+         "The size of the __ex_table section should be a multiple of 12");
+  for (uint64_t I = 0; I < SectionSize; I += 4) {
+    const uint64_t EntryAddress = SectionAddress + I;
+    auto Offset = BC->getSignedValueAtAddress(EntryAddress, 4);
+    assert(Offset && "failed reading PC-relative offset for __ex_table");
+    int32_t SignedOffset = *Offset;
+    const uint64_t RefAddress = EntryAddress + SignedOffset;
+
+    auto *ContainingBF = BC->getBinaryFunctionContainingAddress(RefAddress);
+    if (!ContainingBF)
+      continue;
+
+    MCSymbol *ReferencedSymbol = ContainingBF->getSymbol();
+    const uint64_t FunctionOffset = RefAddress - ContainingBF->getAddress();
+    switch (I % 12) {
+    default:
+      llvm_unreachable("bad alignment of __ex_table");
+      break;
+    case 0:
+      // insn
+      insertLKMarker(RefAddress, I, SignedOffset, true, "__ex_table");
+      break;
+    case 4:
+      // fixup
+      if (FunctionOffset)
+        ReferencedSymbol = ContainingBF->addEntryPointAtOffset(FunctionOffset);
+      BC->addRelocation(EntryAddress, ReferencedSymbol, ELF::R_X86_64_PC32, 0,
+                        *Offset);
+      break;
+    case 8:
+      // handler
+      assert(!FunctionOffset &&
+             "__ex_table handler entry should point to function start");
+      BC->addRelocation(EntryAddress, ReferencedSymbol, ELF::R_X86_64_PC32, 0,
+                        *Offset);
+      break;
+    }
+  }
+}
+
+/// Process .pci_fixup section of Linux Kernel.
+/// This section contains a list of entries for different PCI devices and their
+/// corresponding hook handler (code pointer where the fixup
+/// code resides, usually on x86_64 it is an entry PC relative 32 bit offset).
+/// Documentation is in include/linux/pci.h.
+void RewriteInstance::processLKPCIFixup() {
+  auto SectionOrError = BC->getUniqueSectionByName(".pci_fixup");
+  assert(SectionOrError &&
+         ".pci_fixup section not found in Linux Kernel binary");
+  const uint64_t SectionSize = SectionOrError->getSize();
+  const uint64_t SectionAddress = SectionOrError->getAddress();
+  assert((SectionSize % 16) == 0 && ".pci_fixup size is not a multiple of 16");
+
+  for (uint64_t I = 12; I + 4 <= SectionSize; I += 16) {
+    const uint64_t PC = SectionAddress + I;
+    auto Offset = BC->getSignedValueAtAddress(PC, 4);
+    assert(Offset && "cannot read value from .pci_fixup");
+    const int32_t SignedOffset = *Offset;
+    const uint64_t HookupAddress = PC + SignedOffset;
+    auto *HookupFunction = BC->getBinaryFunctionAtAddress(HookupAddress);
+    assert(HookupFunction && "expected function for entry in .pci_fixup");
+    BC->addRelocation(PC, HookupFunction->getSymbol(),
+                      ELF::R_X86_64_PC32, 0, *Offset);
+  }
+}
+
+/// Process __ksymtab[_gpl] sections of Linux Kernel.
+/// This section lists all the vmlinux symbols that kernel modules can access.
+///
+/// All the entries are 4 bytes each and hence we can read them by one by one
+/// and ignore the ones that are not pointing to the .text section. All pointers
+/// are PC relative offsets. Always, points to the beginning of the function.
+void RewriteInstance::processLKKSymtab(bool IsGPL) {
+  StringRef SectionName = "__ksymtab";
+  if (IsGPL) {
+    SectionName = "__ksymtab_gpl";
+  }
+  auto SectionOrError = BC->getUniqueSectionByName(SectionName);
+  assert(SectionOrError &&
+         "__ksymtab[_gpl] section not found in Linux Kernel binary");
+  const uint64_t SectionSize = SectionOrError->getSize();
+  const uint64_t SectionAddress = SectionOrError->getAddress();
+  assert((SectionSize % 4) == 0 &&
+         "The size of the __ksymtab[_gpl] section should be a multiple of 4");
+
+  for (uint64_t I = 0; I < SectionSize; I += 4) {
+    const uint64_t EntryAddress = SectionAddress + I;
+    auto Offset = BC->getSignedValueAtAddress(EntryAddress, 4);
+    assert(Offset && "Reading valid PC-relative offset for a ksymtab entry");
+    const int32_t SignedOffset = *Offset;
+    const uint64_t RefAddress = EntryAddress + SignedOffset;
+    auto *BF = BC->getBinaryFunctionAtAddress(RefAddress);
+    if (!BF)
+      continue;
+
+    BC->addRelocation(EntryAddress, BF->getSymbol(), ELF::R_X86_64_PC32, 0,
+                      *Offset);
+  }
+}
+
+/// Process __bug_table section.
+/// This section contains information useful for kernel debugging.
+/// Each entry in the section is a struct bug_entry that contains a pointer to
+/// the ud2 instruction corresponding to the bug, corresponding file name (both
+/// pointers use PC relative offset addressing), line number, and flags.
+/// The definition of the struct bug_entry can be found in
+/// `include/asm-generic/bug.h`
+void RewriteInstance::processLKBugTable() {
+  auto SectionOrError = BC->getUniqueSectionByName("__bug_table");
+  if (!SectionOrError)
+    return;
+
+  const uint64_t SectionSize = SectionOrError->getSize();
+  const uint64_t SectionAddress = SectionOrError->getAddress();
+  assert((SectionSize % 12) == 0 &&
+         "The size of the __bug_table section should be a multiple of 12");
+  for (uint64_t I = 0; I < SectionSize; I += 12) {
+    const uint64_t EntryAddress = SectionAddress + I;
+    auto Offset = BC->getSignedValueAtAddress(EntryAddress, 4);
+    assert(Offset &&
+           "Reading valid PC-relative offset for a __bug_table entry");
+    const int32_t SignedOffset = *Offset;
+    const uint64_t RefAddress = EntryAddress + SignedOffset;
+    auto *ContainingBF = BC->getBinaryFunctionContainingAddress(RefAddress);
+    assert(ContainingBF && "__bug_table entries should point to a function");
+
+    insertLKMarker(RefAddress, I, SignedOffset, true, "__bug_table");
+  }
+}
+
+
+/// .smp_locks section contains PC-relative references to instructions with LOCK
+/// prefix. The prefix can be converted to NOP at boot time on non-SMP systems.
+void RewriteInstance::processLKSMPLocks() {
+  auto SectionOrError = BC->getUniqueSectionByName(".smp_locks");
+  if (!SectionOrError)
+    return;
+
+  uint64_t SectionSize = SectionOrError->getSize();
+  const uint64_t SectionAddress = SectionOrError->getAddress();
+  assert((SectionSize % 4) == 0 &&
+         "The size of the .smp_locks section should be a multiple of 4");
+
+  for (uint64_t I = 0; I < SectionSize; I += 4) {
+    const uint64_t EntryAddress = SectionAddress + I;
+    auto Offset = BC->getSignedValueAtAddress(EntryAddress, 4);
+    assert(Offset && "Reading valid PC-relative offset for a .smp_locks entry");
+    int32_t SignedOffset = *Offset;
+    uint64_t RefAddress = EntryAddress + SignedOffset;
+
+    auto *ContainingBF = BC->getBinaryFunctionContainingAddress(RefAddress);
+    if (!ContainingBF)
+      continue;
+
+    insertLKMarker(RefAddress, I, SignedOffset, true, ".smp_locks");
   }
 }
 
@@ -2872,47 +3075,35 @@ void RewriteInstance::updateLKMarkers() {
 
   std::unordered_map<std::string, uint64_t> PatchCounts;
   for (auto &LKMarkerInfoKV : BC->LKMarkers) {
-    const auto OriginalAddress = LKMarkerInfoKV.first;
-    const auto *F =
+    const uint64_t OriginalAddress = LKMarkerInfoKV.first;
+    const auto *BF =
         BC->getBinaryFunctionContainingAddress(OriginalAddress, false, true);
-    if (!F) {
+    if (!BF)
       continue;
-    }
-    uint64_t NewAddress = F->translateInputToOutputAddress(OriginalAddress);
-    if (NewAddress == 0) {
+
+    uint64_t NewAddress = BF->translateInputToOutputAddress(OriginalAddress);
+    if (NewAddress == 0)
       continue;
-    }
-    // rather than making address range of BBL 64_bit use base for LK BBLs
-    if (OriginalAddress >= 0xffffffff00000000 && NewAddress < 0xffffffff) {
+
+    // Apply base address.
+    if (OriginalAddress >= 0xffffffff00000000 && NewAddress < 0xffffffff)
       NewAddress = NewAddress + 0xffffffff00000000;
-    }
-    if (OriginalAddress == NewAddress) {
+
+    if (OriginalAddress == NewAddress)
       continue;
-    }
-    uint64_t NumEntries = LKMarkerInfoKV.second.size();
-    if (NumEntries > 1) {
-      DEBUG(dbgs() << "Original linux kernel address 0x"
-                   << Twine::utohexstr(OriginalAddress) << " belongs to "
-                   << NumEntries << " marker entries.\n";);
-    }
+
     for (auto &LKMarkerInfo : LKMarkerInfoKV.second) {
-      const auto SectionName = LKMarkerInfo.SectionName;
+      StringRef SectionName = LKMarkerInfo.SectionName;
       SimpleBinaryPatcher *LKPatcher;
       if (SectionPatchers.find(SectionName) != SectionPatchers.end()) {
         LKPatcher = static_cast<SimpleBinaryPatcher *>(
             SectionPatchers[SectionName].get());
-        PatchCounts[SectionName]++;
       } else {
-        DEBUG(dbgs() << "Starting the patch for section, " << SectionName
-                     << '\n');
-        PatchCounts[SectionName] = 1;
         SectionPatchers[SectionName] = llvm::make_unique<SimpleBinaryPatcher>();
         LKPatcher = static_cast<SimpleBinaryPatcher *>(
             SectionPatchers[SectionName].get());
       }
-      DEBUG(dbgs() << "LK patching from address 0x"
-                   << Twine::utohexstr(OriginalAddress) << ','
-                   << " to address 0x" << Twine::utohexstr(NewAddress) << '\n');
+      PatchCounts[SectionName]++;
       if (LKMarkerInfo.IsPCRelative) {
         LKPatcher->addLE32Patch(LKMarkerInfo.SectionOffset,
                                 NewAddress - OriginalAddress +

@@ -102,7 +102,8 @@ class BinarySection {
   }
   static StringRef getContents(SectionRef Section) {
     StringRef Contents;
-    if (Section.getObject()->isELF() && ELFSectionRef(Section).getType() == ELF::SHT_NOBITS)
+    if (Section.getObject()->isELF() &&
+        ELFSectionRef(Section).getType() == ELF::SHT_NOBITS)
       return Contents;
 
     if (auto EC = Section.getContents(Contents)) {
