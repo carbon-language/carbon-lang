@@ -125,14 +125,14 @@ package would start with `package Geometry api;`.
 A tiny package may consist of a single library with a single file, and not use
 any further features of the `package` keyword.
 
-It is often useful to have a physical separation the API from its
-implementation. This may help organize code as a library grows, or to let the
-build system distinguish between the dependencies of the API itself and its
-underlying implementation. Implementation files allow for code to be extracted
-out from the API file, while only being callable from other files within the
-library, including both API and implementation files. Implementation files are
-marked by both naming the file to use an extension of `.impl.carbon` and
-changing the package to `package Geometry impl`.
+It is often useful to use separate files for the API and its implementation.
+This may help organize code as a library grows, or to let the build system
+distinguish between the dependencies of the API itself and its underlying
+implementation. Implementation files allow for code to be extracted out from the
+API file, while only being callable from other files within the library,
+including both API and implementation files. Implementation files are marked by
+both naming the file to use an extension of `.impl.carbon` and changing the
+package to `package Geometry impl`.
 
 However, as a package adds more files, it will probably want to separate out
 into multiple
@@ -167,10 +167,8 @@ A different way to think of the sizing of packages and libraries is:
         have a single package. For example, a medium-sized project like
         [Abseil](https://github.com/abseil/abseil-cpp/tree/master/absl) could
         still use a single `Abseil` package.
-    -   Large projects will have multiple packages. For example,
-        [Boost.Geometry](https://github.com/boostorg/geometry) might be a
-        `BoostGeometry` package, with other packages for other Boost
-        repositories.
+    -   Large projects will have multiple packages. For example, Mozilla may
+        have multiple packages for Firefox and other efforts.
 -   A library is a few files that provide an interface and implementation, and
     should remain small.
     -   Small projects will have a single library when it's easy to maintain all
@@ -1115,6 +1113,8 @@ Disadvantages:
 
 -   The meaning of `package` also overlaps a fair amount, and we would lose that
     context.
+    -   [Package management systems](https://en.wikipedia.org/wiki/List_of_software_package_management_systems)
+        in general.
     -   [NPM/Node.js](https://www.npmjs.com/), as a distributable unit.
     -   [Python](https://packaging.python.org/tutorials/installing-packages/),
         as a distributable unit.
@@ -1128,9 +1128,15 @@ Disadvantages:
 Several languages create a strict association between the filesystem path, and
 the method for pulling in an API. For example:
 
--   In C++, `#include` refers to specific files.
+-   In C++, `#include` refers to specific files without any abstraction.
+    -   For example, `#include "path/to/file.h"` means there's a file
+        `path/to/file.h`.
 -   In Java, `package` and `import` both reflect filesystem structure.
+    -   For example, `import path.to.file` means there's a file
+        `path/to/file.java`.
 -   In Python, `import` requires matching filesystem structure.
+    -   For example, `import path.to.file` means there's a file
+        `path/to/file.py`
 -   In TypeScript, `import` refers to specific files.
 
 For contrast:
