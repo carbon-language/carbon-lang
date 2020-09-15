@@ -191,7 +191,9 @@ class TestPRComments(unittest.TestCase):
         ]
         for thread in review_threads:
             pr_comments._accumulate_thread(
-                parsed_args, threads_by_path, thread,
+                parsed_args,
+                threads_by_path,
+                thread,
             )
         self.assertEqual(sorted(threads_by_path.keys()), ["foo.md", "other.md"])
         threads = sorted(threads_by_path["foo.md"])
@@ -209,7 +211,8 @@ class TestPRComments(unittest.TestCase):
 
     @staticmethod
     def fake_pr_comment_dict(
-        body="comment", created_at="2001-02-03T04:05:06Z",
+        body="comment",
+        created_at="2001-02-03T04:05:06Z",
     ):
         pr_comment_dict = {
             "author": {"login": "author"},
