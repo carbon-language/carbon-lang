@@ -36,7 +36,9 @@ def _parse_args(args=None):
         "specified title."
     )
     parser.add_argument(
-        "title", metavar="TITLE", help="The title of the proposal.",
+        "title",
+        metavar="TITLE",
+        help="The title of the proposal.",
     )
     parser.add_argument(
         "--branch",

@@ -41,12 +41,12 @@ repos:
         pass_filenames: false
   # Formatters should be run late so that they can re-format any prior changes.
   - repo: https://github.com/psf/black
-    rev: stable
+    rev: 20.8b1
     hooks:
       - id: black
         language_version: python3
   - repo: https://github.com/prettier/prettier
-    rev: 2.0.5
+    rev: 2.1.1
     hooks:
       - id: prettier
         exclude: ^src/jekyll/theme/

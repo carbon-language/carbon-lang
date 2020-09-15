@@ -292,8 +292,7 @@ def _parse_args(args=None):
 
 
 def _query(parsed_args, field_name=None):
-    """Returns a query for the given field, or all fields if none are specified.
-    """
+    """Returns a query for the given field, or all fields if none are specified."""
     print(".", end="", flush=True)
     format = {
         "pr_num": parsed_args.pr_num,
