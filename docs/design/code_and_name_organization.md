@@ -212,10 +212,9 @@ fn Area(Geo.Circle circle) { ... };
 ```
 
 If multiple imports are made from the same package, each import may be named
-differently. This allows code to be explicit about which library is being used,
-which some engineers may prefer to make it explicit which library an API comes
-from. Also, if a `api` file wants to re-export portions of a package, it may be
-helpful to be cautious about what is being exported.
+differently. This allows code to be explicit about which library is being used.
+Although it's recommended that a consistent name be used, it may be helpful to
+use distinct names when using `api` to re-export a library.
 
 For example:
 
