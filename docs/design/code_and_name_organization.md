@@ -439,7 +439,8 @@ fn Process(Bytes: data) {
 }
 ```
 
-In this example, the `Sha256` digest is exported as part of the API implicitly.
+In this example, the `Sha256` namespace is exported as part of the API
+implicitly.
 
 ### Namespaces
 
@@ -730,6 +731,13 @@ may require manually adding imports.
     -   The imports of all calling files must be updated accordingly.
     -   Either `as` can be used on the import to keep the old name in order to
         avoid changing call sites, or call sites will need to be changed.
+    -   [Update imports](#update-imports).
+
+-   Move an `api`-labeled declaration and implementation between different
+    packages.
+
+    -   The imports of all calling files must be updated accordingly.
+    -   All call sites must be changed, as the package name changes.
     -   [Update imports](#update-imports).
 
 -   Move an `api`-labeled declaration and implementation between libraries in
@@ -1125,23 +1133,30 @@ Disadvantages:
 
 #### Strict association between the filesystem path and library/namespace
 
-Several languages create a strict association between the filesystem path, and
-the method for pulling in an API. For example:
+Several languages create a strict association between the method for pulling in
+an API and the path to the file that provides it. For example:
 
 -   In C++, `#include` refers to specific files without any abstraction.
-    -   For example, `#include "path/to/file.h"` means there's a file
-        `path/to/file.h`.
+    -   For example, `#include "PATH/TO/FILE.h"` means there's a file
+        `PATH/TO/FILE.h`.
 -   In Java, `package` and `import` both reflect filesystem structure.
-    -   For example, `import path.to.file` means there's a file
-        `path/to/file.java`.
+    -   For example, `import PATH.TO.FILE;` means there's a file
+        `PATH/TO/FILE.java`.
 -   In Python, `import` requires matching filesystem structure.
-    -   For example, `import path.to.file` means there's a file
-        `path/to/file.py`
+    -   For example, `import PATH.TO.FILE` means there's a file
+        `PATH/TO/FILE.py`.
 -   In TypeScript, `import` refers to specific files.
+    -   For example, `import {...} from 'PATH/TO/FILE';` means there's a file
+        `PATH/TO/FILE.ts`.
 
 For contrast:
 
 -   In Go, `package` uses an arbitrary name.
+    -   For example, `import "PATH/TO/NAME"` means there is a directory
+        `PATH/TO` that contains one or more files starting with `package NAME`.
+
+In Carbon, we could say that `import PACKAGE library("PATH/TO/LIBRARY")` means
+there are one more more files `PACKAGE/PATH/TO/LIBRARY(.impl)?.carbon`.
 
 Advantages:
 
