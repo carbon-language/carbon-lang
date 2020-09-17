@@ -48,7 +48,6 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
         -   [Name paths for package names](#name-paths-for-package-names)
         -   [Referring to the package as `package`](#referring-to-the-package-as-package)
         -   [Remove the `library` keyword from `package` and `import`](#remove-the-library-keyword-from-package-and-import)
-        -   [Remove the `namespace` keyword from `package`](#remove-the-namespace-keyword-from-package)
         -   [Rename package concept](#rename-package-concept)
         -   [Strict association between the filesystem path and library/namespace](#strict-association-between-the-filesystem-path-and-librarynamespace)
     -   [Libraries](#libraries-1)
@@ -985,84 +984,6 @@ Disadvantages:
 As part of avoiding confusion between libraries and namespaces, we are declining
 this alternative.
 
-#### Remove the `namespace` keyword from `package`
-
-Right now, we allow syntax like:
-
-```carbon
-package Math namespace Stats.Internal;
-fn Linear(...) { ... }
-```
-
-We could remove `namespace` from the `package` keyword, which would mean there
-would no longer be file-scoped namespaces. Specifying child namespaces would
-always be required, for example:
-
-```carbon
-package Math;
-
-namespace Stats.Internal;
-fn Stats.Internal.Linear(...) { ... }
-```
-
-Regarding short names, there is agreement that brevity of code is useful. If
-this alternative were adopted, it may encourage avoidance of the namespace
-feature due to the resulting length of declarations, which would yield desirable
-short names for library callers. However, larger libraries and packages are more
-likely to run into issues with name collisions on internal names if everything
-is in the same namespace, and this alternative would make it more verbose to
-write code that avoids name collisions.
-
-Advantages:
-
--   Encourages short names.
--   Reduces complexity of the `package` keyword.
--   Provides a single mechanism for declaring namespaces in a package, with only
-    one meaning for the `namespace` keyword.
-    -   Eliminates the file-level namespace context, leaving only the package.
--   Requires that the code as written by the library maintainer more closely
-    match how it would be called.
-    -   In other words, an `import` will always need some reference, even an
-        alias, rooted at the package name. This places a similar requirement on
-        the library itself.
-    -   This alignment is not a precise match: where `Stats.Internal.Linear` is
-        declared in package `Math`, the package isn't part of the name path.
-        Library consumers would need to use the full
-        `Math.Stats.Internal.Linear`.
-        -   We could change this, and require package `Math` always include
-            `Math` in declarations too, including
-            `namespace Math.Stats.Internal;` instead of
-            `namespace Stats.Internal;`. However, this would imply increased
-            repetition in code, particularly as libraries can be expected to
-            frequently refer to other parts of the same library.
-
-Disadvantages:
-
--   Increases verbosity for libraries which use namespaces, as every identifier
-    must have the namespace specified.
-    -   While this verbosity is partially aligned with what library consumers
-        would see, large libraries and packages may be more highly
-        self-referential.
-        -   Additionally, the package author may want to make some functionality
-            accessible but distinctly separate and/or discouraged through a
-            namespace. This may improve library usability, but at a verbosity
-            cost to the library author.
-    -   Although library authors could address this by omitting the namespace,
-        that may in turn lead to more name collisions for large packages.
-    -   This includes entities declared in `impl` files and package-internal
-        libraries that aren't part of the package's API, but may still lead to
-        name collisions within the package.
--   May cause significant amounts of aliasing in order to reduce verbosity,
-    hindering readability.
-    -   Users are known to alias long names, where "long" may be considered
-        anything over six characters.
-    -   This is a risk for any package that uses namespaces, as importers may
-        also need to address it.
-
-Overall, the desire to make it easy to avoid name collisions means we should
-allow `namespace` at the file level. We also want to avoid the potential
-readability problems of users frequently aliasing name paths.
-
 #### Rename package concept
 
 In other languages, a "package" is equivalent to what we call the name path
@@ -1977,16 +1898,36 @@ Advantages:
 
 -   Reduces repetitive syntax in the file when every entity should be in the
     same, child namespace.
+    -   Large libraries and packages are more likely to be self-referential, and
+        may pay a disproportionate ergonomics tax that others wouldn't see.
+    -   Although library authors could also avoid this repetitive syntax by
+        omitting the namespace, that may in turn lead to more name collisions
+        for large packages.
     -   Note that syntax can already be reduced with a shorter namespace alias,
         but the redundancy cannot be _eliminated_.
+-   Reduces the temptation of aliasing in order to reduce verbosity, wherein
+    it's generally agreed that aliasing creates inconsistent names which hinder
+    readability.
+    -   Users are known to alias long names, where "long" may be considered
+        anything over six characters.
+    -   This is a risk for any package that uses namespaces, as importers may
+        also need to address it.
 
 Disadvantages:
 
+-   Encourages longer namespace names, as they won't need to be retyped.
+-   Increases complexity of the `package` keyword.
 -   Creates two ways of defining namespaces, and reuses the `namespace` keyword
     in multiple different ways.
     -   We generally prefer to provide one canonical way of doing things.
--   Does not add functionality which cannot be achieved with entity-level
-    namespaces.
+    -   Does not add functionality which cannot be achieved with entity-level
+        namespaces. However, the converse is not true: entity-level control
+        allows a single file to put entities into multiple namespaces.
+-   Creates a divergence between code as written by the library maintainer and
+    code as called.
+    -   Calling code would need to specify the namespace, even if aliased to a
+        shorter name. Library code gets to omit this, essentially getting a free
+        alias.
 
 We are choosing not to provide this for now because we want to provide the
 minimum necessary support, and then see if it works out. It may be added later,
