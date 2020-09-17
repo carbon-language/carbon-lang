@@ -27,8 +27,6 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
         -   [Exporting namespces](#exporting-namespces)
     -   [Imports](#imports-1)
         -   [Imports from the current package](#imports-from-the-current-package)
-        -   [Imported name conflicts](#imported-name-conflicts)
-            -   [Unsupported renames](#unsupported-renames)
     -   [Namespaces](#namespaces)
         -   [Re-declaring imported namespaces](#re-declaring-imported-namespaces)
         -   [Aliasing](#aliasing)
@@ -71,15 +69,15 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
         -   [Managing API versus implementation in libraries](#managing-api-versus-implementation-in-libraries)
         -   [Multiple API files](#multiple-api-files)
         -   [Name paths as library names](#name-paths-as-library-names)
-    -   [Namespaces](#namespaces-1)
-        -   [Coarser namespace granularity](#coarser-namespace-granularity)
-        -   [Scoped namespaces](#scoped-namespaces)
     -   [Imports](#imports-2)
         -   [Block imports](#block-imports)
         -   [Block imports of libraries of a single package](#block-imports-of-libraries-of-a-single-package)
         -   [Broader imports, either all names or arbitrary code](#broader-imports-either-all-names-or-arbitrary-code)
         -   [Direct name imports](#direct-name-imports)
         -   [Optional package names](#optional-package-names)
+    -   [Namespaces](#namespaces-1)
+        -   [File-level namespaces](#file-level-namespaces)
+        -   [Scoped namespaces](#scoped-namespaces)
 
 <!-- tocstop -->
 
@@ -221,18 +219,6 @@ fn Area(Geometry.Circle circle) { ... };
 The `library` keyword is optional for `import`, and its use should parallel that
 of `library` on the `package` of the code being imported.
 
-Imports may also be
-[renamed to prevent name conflicts](#imported-name-conflicts). For example:
-
-```carbon
-package Math api;
-
-import Geometry library "Shapes";
-rename_package Geometry to Geo;
-
-fn Area(Geo.Circle circle) { ... };
-```
-
 ## Details
 
 ### Source file introduction
@@ -241,8 +227,7 @@ Every source file will consist of, in order:
 
 1. One `package` statement.
 2. A section of zero or more `import` statements.
-3. A section of zero or more `rename_package` statements.
-4. Source file body, with other code.
+3. Source file body, with other code.
 
 Comments and blank lines may be intermingled with these sections.
 [Metaprogramming](metaprogramming.md) code may also be intermingled, so long as
@@ -528,89 +513,6 @@ import Geometry library "Shapes";
 fn GetArea(Geometry.Circle: c) { ... }
 ```
 
-#### Imported name conflicts
-
-It's possible that an imported package will have the same name as an entity
-within the file doing the import. Importing them would result in name conflicts,
-and it may be infeasible to rename entities that form APIs. For example, this
-would be a name conflict because it redefines `Geometry`:
-
-```carbon
-package Trigonometry api;
-
-import Geometry;
-
-api fn Geometry(...);
-
-fn DoSomething(Geometry.Circle c);
-```
-
-In cases such as this, the `rename_package` keyword can be used to rename the
-entity used to access the imported package. The `rename_package` keyword's
-syntax may be loosely expressed as a regular expression:
-
-```regex
-rename_package IDENTIFIER to IDENTIFIER;
-```
-
-For example, this use of `rename_package` fixes the name conflict:
-
-```carbon
-package Trigonometry api;
-
-import Geometry;
-
-rename_package Geometry to Geo;
-
-api fn Geometry(...);
-
-fn DoSomething(Geo.Circle c);
-```
-
-The `rename_package` keyword only renames the imported package entity; it does
-not rename any library contents.
-
-##### Unsupported renames
-
-The intent of `rename_package` is to address cases where legacy APIs conflict
-with new imports, or idiomatically-named APIs conflict with an import. As a
-result, we disallow using `rename_package` to rename the current package, or to
-reuse the name of a package.
-
-For example, this is an invalid rename of the current `Trigonometry` package:
-
-```carbon
-package Trigonometry api;
-
-import Trigonometry library "Functions";
-
-rename_package Trigonometry to Trig;
-```
-
-As another example, this is an invalid attempt to reuse the `Math` package name:
-
-```carbon
-package Trigonometry api;
-
-import Math;
-import Stats;
-
-rename_package Math to M;
-rename_package Stats to Math;
-```
-
-Similarly, a package may only be renamed once. This is an invalid repetition of
-`rename_package` on `Math`:
-
-```carbon
-package Trigonometry api;
-
-import Math;
-
-rename_package Math to M;
-rename_package M to M2;
-```
-
 ### Namespaces
 
 Namespaces offer named paths for entities. Namespaces may be nested. Multiple
@@ -694,11 +596,13 @@ We will encourage a unique package naming scheme, such as maintaining a name
 server for open source packages. Conflicts can also be addressed by renaming one
 of the packages, either at the source, or as a local modification.
 
-The `rename_package` keyword of `import` does not address package name conflicts
-because, while it supports renaming a package to avoid intra-file name
-conflicts, it's more difficult to differentiate between two identically named
-packages. We believe package name conflicts are best addressed before writing
-dependent source code.
+We do need to address the case of package names conflicting with other entity
+names. It's possible that a pre-existing `api` entity will conflict with a new
+import, and that the `api` is infeasible to rename due to existing callers.
+Alternately, the `api` entity may be using an idiomatic name that it would
+contradict naming conventions to rename. In either case, this conflict may exist
+in a single file without otherwise affecting users of the API. This will be
+addressed by [name lookup](name_lookup.md).
 
 ### Potential refactorings
 
@@ -781,9 +685,7 @@ may require manually adding imports.
 -   Rename a package.
 
     -   The imports of all calling files must be updated accordingly.
-    -   Either `rename_package` can be used on the import to keep the old name
-        in order to avoid changing call sites, or call sites will need to be
-        changed.
+    -   All call sites must be changed, as the package name changes.
     -   [Update imports](#update-imports).
 
 -   Move an `api`-labeled declaration and implementation between different
@@ -1877,110 +1779,6 @@ Disadvantages:
 We've decided to use strings primarily because we want to draw the distinction
 that a library is not something that's used when referring to an entity in code.
 
-### Namespaces
-
-#### Coarser namespace granularity
-
-It's been discussed whether we need to provide namespaces outside of
-package/file granularity. In other words, if a file is required to only add to
-one namespace, then there's no need for a `namespace` keyword or similar.
-
-Advantages:
-
--   Requiring files to contribute to only one namespace offers a language
-    simplification.
-
--   Library interface vs implementation separation may be used to address some
-    problems that namespaces have been used for in C++.
-
-Disadvantages:
-
--   One point made was the difficulty in C++ of doing `friend` declarations for
-    template functions, making ACL controls difficult. Putting template
-    functions in a namespace such as `internal` allows for an implicit warning
-    about access misuse. We may end up with similar problems and solutions in
-    Carbon. It's preferable that both the template and the functions it calls be
-    allowed to be in the same file, and we don't want to prevent that.
-
-    -   Namespaces named `internal` or similar may also be used to hide certain
-        calls from IDEs.
-
--   It's not clear that file-granularity namespaces would make it easy to
-    address potential circular references in code.
-
--   Makes it more difficult to migrate C++ code, which should be expected to
-    sometimes have multiple namespaces within a file.
-
--   Combined with the restriction that a library only provides a single API
-    file, it means APIs will only be able to add to a single namespace. For
-    example, a library adding to `Geometry.Shapes` could not also add to
-    `Geometry.Shapes.Flat`.
-
-We believe that while we may find better solutions for _some_ use-cases of
-fine-grained namespaces, but not all. The proposed `namespace` syntax is a
-conservative solution to the problem which we should be careful doesn't add too
-much complexity.
-
-#### Scoped namespaces
-
-Instead of including additional namespace information per-name, we could have
-scoped namespaces, similar to C++. For example:
-
-```carbon
-namespace absl {
-  namespace numbers_internal {
-    fn SafeStrto32Base(...) { ... }
-  }
-
-  fn SimpleAtoi(...) {
-    ...
-    return numbers_internal.SafeStrto32Base(...);
-    ...
-  }
-}
-```
-
-Advantages:
-
--   Makes it easy to write many things in the same namespace.
-
-Disadvantages:
-
--   It's not clear which namespace an identifier is in without scanning to the
-    start of the file.
--   It can be hard to find the end of a namespace. For examples addressing this,
-    end-of-namespace comments are called for by both the
-    [Google](https://google.github.io/styleguide/cppguide.html#Namespaces) and
-    [Boost](https://github.com/boostorg/geometry/wiki/Guidelines-for-Developers)
-    style guides.
-    -   Carbon may disallow the same-line-as-code comment style used for this.
-        Even if not, if we acknowledge it's a problem, we should address it
-        structurally for
-        [readability](/docs/projects/goals.md#code-that-is-easy-to-read-understand-and-write).
-    -   This is less of a problem for other scopes, such as functions, because
-        they can often be broken apart until they fit on a single screen.
-
-There are other ways to address the con, such as adding syntax to indicate the
-end of a namespace, similar to block comments. For example:
-
-```carbon
-{ namespace absl
-  { namespace numbers_internal
-    fn SafeStrto32Base(...) { ... }
-  } namespace numbers_internal
-
-  fn SimpleAtoi(...) {
-    ...
-    return numbers_internal.SafeStrto32Base(...);
-    ...
-  }
-} namespace absl
-```
-
-While we could consider such alternative approaches, we believe the proposed
-contextless namespace approach is better, as it reduces information that
-developers will need to remember when reading/writing code.
-
 ### Imports
 
 #### Block imports
@@ -2148,3 +1946,108 @@ Disadvantages:
 
 Overall, consistent with the decision to disallow
 [block imports](#block-imports), we are choosing to require the package name.
+
+### Namespaces
+
+#### File-level namespaces
+
+We are providing entity-level namespaces. This is likely necessary to support
+migrating C++ code, at a minimum. It's been discussed whether we should _also_
+support file-level namespaces.
+
+For example, this is the current syntax for defining `Geometry.Shapes.Circle`:
+
+```carbon
+package Geometry library "Shapes" api;
+
+namespace Shapes;
+struct Shapes.Circle;
+```
+
+This is the proposed alternative syntax for defining `Geometry.Shapes.Circle`,
+and would put all entities in the file under the `Shapes` namespace:
+
+```carbon
+package Geometry library "Shapes" namespace Shapes api;
+
+struct Circle;
+```
+
+Advantages:
+
+-   Reduces repetitive syntax in the file when every entity should be in the
+    same, child namespace.
+    -   Note that syntax can already be reduced with a shorter namespace alias,
+        but the redundancy cannot be _eliminated_.
+
+Disadvantages:
+
+-   Creates two ways of defining namespaces, and reuses the `namespace` keyword
+    in multiple different ways.
+    -   We generally prefer to provide one canonical way of doing things.
+-   Does not add functionality which cannot be achieved with entity-level
+    namespaces.
+
+We are choosing not to provide this for now because we want to provide the
+minimum necessary support, and then see if it works out. It may be added later,
+but it's easier to add features than to remove them.
+
+#### Scoped namespaces
+
+Instead of including additional namespace information per-name, we could have
+scoped namespaces, similar to C++. For example:
+
+```carbon
+namespace absl {
+  namespace numbers_internal {
+    fn SafeStrto32Base(...) { ... }
+  }
+
+  fn SimpleAtoi(...) {
+    ...
+    return numbers_internal.SafeStrto32Base(...);
+    ...
+  }
+}
+```
+
+Advantages:
+
+-   Makes it easy to write many things in the same namespace.
+
+Disadvantages:
+
+-   It's not clear which namespace an identifier is in without scanning to the
+    start of the file.
+-   It can be hard to find the end of a namespace. For examples addressing this,
+    end-of-namespace comments are called for by both the
+    [Google](https://google.github.io/styleguide/cppguide.html#Namespaces) and
+    [Boost](https://github.com/boostorg/geometry/wiki/Guidelines-for-Developers)
+    style guides.
+    -   Carbon may disallow the same-line-as-code comment style used for this.
+        Even if not, if we acknowledge it's a problem, we should address it
+        structurally for
+        [readability](/docs/projects/goals.md#code-that-is-easy-to-read-understand-and-write).
+    -   This is less of a problem for other scopes, such as functions, because
+        they can often be broken apart until they fit on a single screen.
+
+There are other ways to address the con, such as adding syntax to indicate the
+end of a namespace, similar to block comments. For example:
+
+```carbon
+{ namespace absl
+  { namespace numbers_internal
+    fn SafeStrto32Base(...) { ... }
+  } namespace numbers_internal
+
+  fn SimpleAtoi(...) {
+    ...
+    return numbers_internal.SafeStrto32Base(...);
+    ...
+  }
+} namespace absl
+```
+
+While we could consider such alternative approaches, we believe the proposed
+contextless namespace approach is better, as it reduces information that
+developers will need to remember when reading/writing code.
