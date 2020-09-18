@@ -54,7 +54,6 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
         -   [Allow exporting namespaces](#allow-exporting-namespaces)
         -   [Allow importing implementation files from within the same library](#allow-importing-implementation-files-from-within-the-same-library)
         -   [Alternative library separators and shorthand](#alternative-library-separators-and-shorthand)
-            -   [`/` separators](#-separators)
             -   [Single-word libraries](#single-word-libraries)
         -   [Collapse API and implementation file concepts](#collapse-api-and-implementation-file-concepts)
             -   [Automatically generating the API separation](#automatically-generating-the-api-separation)
@@ -1165,40 +1164,38 @@ is how we reach the current approach of only importing APIs, and automatically.
 
 #### Alternative library separators and shorthand
 
-Examples are using `.` to separator significant terms in library names, and `/`
+Examples are using `/` to separator significant terms in library names, and `//`
 to separate the package name in shorthand. For example,
-`package Time library "Timezones.Internal";` with shorthand
-`Time/Timezones.Internal`.
+`package Time library "Timezones/Internal";` with shorthand
+`Time//Timezones/Internal`.
 
 Note that, because the library is an arbitrary string and shorthand is not a
 language semantic, this won't affect much. However, users should be expected to
 treat examples as best practice.
 
-##### `/` separators
-
-We could instead use `/` for both separators. For example,
-`package Math library "Stats/Internal";` with shorthand `Math/Stats/Internal`.
+We could instead use `.` for library names and `/` for packages, such as
+`Time/Timezones.Internal`.
 
 Advantages:
 
--   Only uses one separator, so users don't need to switch.
--   Creates an intuition that libraries are like filesystem paths.
-
-Disadvantages:
-
--   Obscures distinction between the package and library, reducing readability.
+-   Clearer distinction between the package and library, increasing readability.
 -   We have chosen not to
     [enforce filesystem paths](#strict-association-between-the-filesystem-path-and-librarynamespace)
     in order to ease refactoring, and encouraging a mental model where they may
     match could confuse users.
 
-In this case, the understandability advantages of distinct separators outweighs
-the benefit of any singular separator.
+Disadvantages:
+
+-   Uses multiple separators, so people need to type different characters.
+-   There is a preference for thinking of libraries like filesystem paths, even
+    if they don't actually correspond.
+
+People like `/`, so we're going with `/`.
 
 ##### Single-word libraries
 
 We could stick to single word libraries in examples, such as replacing
-`library "Algorithms.Distance")` with `library("Distance"`.
+`library "Algorithms/Distance"` with `library "Distance"`.
 
 Advantages:
 
