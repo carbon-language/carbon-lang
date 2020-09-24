@@ -602,6 +602,10 @@ public:
     return TheTriple->isOSBinFormatELF();
   }
 
+  bool isMachO() const {
+    return TheTriple->isOSBinFormatMachO();
+  }
+
   bool isAArch64() const {
     return TheTriple->getArch() == llvm::Triple::aarch64;
   }

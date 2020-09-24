@@ -19,6 +19,7 @@
 #include "llvm/BinaryFormat/ELF.h"
 #include "llvm/MC/MCSymbol.h"
 #include "llvm/Object/ELFObjectFile.h"
+#include "llvm/Object/MachO.h"
 #include "llvm/Object/ObjectFile.h"
 #include "llvm/Support/ErrorOr.h"
 #include "llvm/Support/raw_ostream.h"
@@ -163,10 +164,15 @@ public:
       Size(Section.getSize()),
       Alignment(Section.getAlignment()),
       OutputName(Name) {
-    if (Section.getObject()->isELF()) {
+    if (isELF()) {
       ELFType = ELFSectionRef(Section).getType();
       ELFFlags = ELFSectionRef(Section).getFlags();
       InputFileOffset = ELFSectionRef(Section).getOffset();
+    } else if (isMachO()) {
+      auto *O = cast<MachOObjectFile>(Section.getObject());
+      InputFileOffset =
+          O->is64Bit() ? O->getSection64(Section.getRawDataRefImpl()).offset
+                       : O->getSection(Section.getRawDataRefImpl()).offset;
     }
   }
 
@@ -240,6 +246,7 @@ public:
   /// Basic proprety access.
   ///
   bool isELF() const;
+  bool isMachO() const;
   StringRef getName() const { return Name; }
   uint64_t getAddress() const { return Address; }
   uint64_t getEndAddress() const { return Address + Size; }

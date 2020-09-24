@@ -29,6 +29,10 @@ bool BinarySection::isELF() const {
   return BC.isELF();
 }
 
+bool BinarySection::isMachO() const {
+  return BC.isMachO();
+}
+
 uint64_t
 BinarySection::hash(const BinaryData &BD,
                     std::map<const BinaryData *, uint64_t> &Cache) const {
