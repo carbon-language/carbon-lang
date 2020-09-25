@@ -142,5 +142,7 @@ very high.
 Carbon's main repositories are:
 
 -   **carbon-lang** - Carbon language specification and documentation.
+-   **carbon-project-tools** - Tools for contributors to the Carbon language
+    project.
 -   **carbon-toolchain** - Carbon language toolchain and reference
     implementation.
