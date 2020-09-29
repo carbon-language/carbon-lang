@@ -1045,6 +1045,8 @@ Advantages:
 
 -   A strict association between filesystem path and import path makes it easier
     to find source files. This is used by some languages for compilation.
+-   Allows getting rid of the `package` keyword by inferring related information
+    from the filesystem path.
 
 Disadvantages:
 
