@@ -1629,6 +1629,7 @@ void BinaryFunction::postProcessEntryPoints() {
       setIgnored();
     }
     setSimple(false);
+    return;
   }
 }
 
