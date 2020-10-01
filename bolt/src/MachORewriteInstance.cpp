@@ -103,6 +103,41 @@ std::vector<DataInCodeRegion> readDataInCode(const MachOObjectFile &O) {
   return DataInCode;
 }
 
+Optional<uint64_t> readStartAddress(const MachOObjectFile &O) {
+  Optional<uint64_t> StartOffset;
+  Optional<uint64_t> TextVMAddr;
+  for (const auto &LC : O.load_commands()) {
+    switch (LC.C.cmd) {
+    case MachO::LC_MAIN: {
+      MachO::entry_point_command LCMain = O.getEntryPointCommand(LC);
+      StartOffset = LCMain.entryoff;
+      break;
+    }
+    case MachO::LC_SEGMENT: {
+      MachO::segment_command LCSeg = O.getSegmentLoadCommand(LC);
+      StringRef SegmentName(LCSeg.segname,
+                            strnlen(LCSeg.segname, sizeof(LCSeg.segname)));
+      if (SegmentName == "__TEXT")
+        TextVMAddr = LCSeg.vmaddr;
+      break;
+    }
+    case MachO::LC_SEGMENT_64: {
+      MachO::segment_command_64 LCSeg = O.getSegment64LoadCommand(LC);
+      StringRef SegmentName(LCSeg.segname,
+                            strnlen(LCSeg.segname, sizeof(LCSeg.segname)));
+      if (SegmentName == "__TEXT")
+        TextVMAddr = LCSeg.vmaddr;
+      break;
+    }
+    default:
+      continue;
+    }
+  }
+  return (TextVMAddr && StartOffset)
+             ? Optional<uint64_t>(*TextVMAddr + *StartOffset)
+             : llvm::None;
+}
+
 } // anonymous namespace
 
 void MachORewriteInstance::discoverFileObjects() {
@@ -190,6 +225,8 @@ void MachORewriteInstance::discoverFileObjects() {
             Function.getFileOffset() + Function.getMaxSize())
       Function.setSimple(false);
   }
+
+  BC->StartFunctionAddress = readStartAddress(*InputFile);
 }
 
 void MachORewriteInstance::disassembleFunctions() {
