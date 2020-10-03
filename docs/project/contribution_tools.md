@@ -35,27 +35,34 @@ contributions.
 
 <!-- tocstop -->
 
-## GitHub commandline interface
+## Main tools
 
-There is a friendly commandline interface for GitHub called
-[`gh`](https://cli.github.com). We use this tool in some of our process
-documentation to create pull requests, query their state, etc.
+These tools are key for contributions, primarily focused on validating
+contributions.
 
-To set up `gh`:
+### brew
 
-- [Install the tool](https://cli.github.com/manual/installation)
-- On first use, such as `gh pr view`, a browser will be launched to authorize
-  the tool.
-- If running on a machine without a proper web browser, there is a
-  [workaround](https://github.com/cli/cli/issues/297#issuecomment-587708363).
-  Run the tool locally where a browser is available, and then copy the
-  `~/.config/gh/config.yml` file that results to other machines without a
-  browser.
-  - If even that is not possible, there are some other possible workarounds
-    discussed in the main [issue](https://github.com/cli/cli/issues/297) for the
-    `gh` tool.
+[brew](https://brew.sh/) is a package manager, and can help install several
+tools that we recommend. See the [installation instructions](https://brew.sh/).
 
-## pre-commit
+### pyenv and Python
+
+[pyenv](https://github.com/pyenv/pyenv) is the recommended way to install
+[Python](python.org). Our recommended way of installing both is:
+
+```bash
+brew update
+brew install pyenv
+pyenv install python3.8.5
+pyenv global python3.8.5
+
+# Add 'eval "$(pyenv init -)"' to your shell rc file.
+echo 'eval "$(pyenv init -)"' >> ~/.zshrc
+# Load the shell rc file changes.
+exec $SHELL
+```
+
+### pre-commit
 
 We use [pre-commit](https://pre-commit.com) to run
 [various checks](/.pre-commit-config.yaml). This will automatically run
