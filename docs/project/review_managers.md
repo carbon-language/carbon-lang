@@ -11,12 +11,12 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 As part of [assisting in the evolution process](evolution.md#review-managers),
 review managers are expected to:
 
-- Monitor and respond to topics in
-  [Evolution > Review manager requests](https://forums.carbon-lang.dev/c/evolution/review-manager-requests/15).
-- Announce when RFCs are approaching
-  [readiness for a decision](evolution.md#request-a-review-manager).
-- [Escort the proposal to a decision.](evolution.md#ask-the-reviewing-team-for-a-proposal-decision)
-- [Author and publish proposal decisions.](evolution.md#finalize-the-proposal-decision)
+-   Monitor and respond to topics in
+    [Evolution > Review manager requests](https://forums.carbon-lang.dev/c/evolution/review-manager-requests/15).
+-   Announce when RFCs are approaching
+    [readiness for a decision](evolution.md#request-a-review-manager).
+-   [Escort the proposal to a decision.](evolution.md#ask-the-reviewing-team-for-a-proposal-decision)
+-   [Author and publish proposal decisions.](evolution.md#finalize-the-proposal-decision)
 
 Review managers should additionally provide advice and assistance to proposal
 authors where appropriate, to help ensure the smooth operation of the evolution
@@ -55,8 +55,8 @@ titled "Request for decision: PROPOSAL":
 
 Links:
 
-- [Proposal PR](LINK)
-- [RFC topic](LINK)
+-   [Proposal PR](LINK)
+-   [RFC topic](LINK)
 
 Please focus on affirm, object, and stand aside comments in this topic; other
 things specific to reaching consensus may be included. Affirm and object
@@ -95,9 +95,9 @@ titled "[DECISION] PROPOSAL":
 
 Please read the [formal decision PR](LINK) for details.
 
-- [Proposal PR](LINK)
-- [RFC topic](LINK)
-- [Decision topic](link)
+-   [Proposal PR](LINK)
+-   [RFC topic](LINK)
+-   [Decision topic](link)
 
 This decision is now entering the
 [decision comment period](https://carbon-lang.dev/docs/project/evolution.html#community-comments-on-proposal-decision),
