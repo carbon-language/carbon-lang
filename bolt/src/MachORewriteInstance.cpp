@@ -15,6 +15,7 @@
 #include "BinaryFunction.h"
 #include "BinaryPassManager.h"
 #include "ExecutableFileMemoryManager.h"
+#include "Passes/PatchEntries.h"
 #include "Utils.h"
 #include "llvm/ExecutionEngine/Orc/RTDyldObjectLinkingLayer.h"
 #include "llvm/MC/MCAsmBackend.h"
@@ -29,6 +30,8 @@ namespace opts {
 using namespace llvm;
 extern cl::opt<unsigned> AlignText;
 extern cl::opt<bool> CheckOverlappingElements;
+extern cl::opt<bool> ForcePatch;
+extern cl::opt<bool> Instrument;
 extern cl::opt<bool> KeepTmp;
 extern cl::opt<bool> NeverPrint;
 extern cl::opt<std::string> OutputFilename;
@@ -187,11 +190,15 @@ void MachORewriteInstance::discoverFileObjects() {
 
     const uint64_t SymbolSize = EndAddress - Address;
     const auto It = BC->getBinaryFunctions().find(Address);
-    if (It == BC->getBinaryFunctions().end())
-      BC->createBinaryFunction(std::move(SymbolName), *Section, Address,
-                               SymbolSize);
-    else
+    if (It == BC->getBinaryFunctions().end()) {
+      BinaryFunction *Function = BC->createBinaryFunction(
+          std::move(SymbolName), *Section, Address, SymbolSize);
+      if (!opts::Instrument)
+        Function->setOutputAddress(Function->getAddress());
+
+    } else {
       It->second.addAlternativeName(std::move(SymbolName));
+    }
   }
 
   const std::vector<DataInCodeRegion> DataInCode = readDataInCode(*InputFile);
@@ -259,6 +266,8 @@ void MachORewriteInstance::postProcessFunctions() {
 
 void MachORewriteInstance::runOptimizationPasses() {
   BinaryFunctionPassManager Manager(*BC);
+  if (opts::Instrument)
+    Manager.registerPass(llvm::make_unique<PatchEntries>());
   Manager.registerPass(
       llvm::make_unique<ReorderBasicBlocks>(opts::PrintReordered));
   Manager.registerPass(
@@ -271,22 +280,51 @@ void MachORewriteInstance::runOptimizationPasses() {
 }
 
 void MachORewriteInstance::mapCodeSections(orc::VModuleKey Key) {
-  for (auto &BFI : BC->getBinaryFunctions()) {
-    BinaryFunction &Function = BFI.second;
-    if (!Function.isSimple())
+  for (BinaryFunction *Function : BC->getAllBinaryFunctions()) {
+    if (!Function->isEmitted())
       continue;
-    assert(Function.isEmitted() && "Simple function has not been emitted");
-    ErrorOr<BinarySection &> FuncSection = Function.getCodeSection();
-    assert(FuncSection && "cannot find section for function");
+    if (Function->getOutputAddress() == 0)
+      continue;
+    ErrorOr<BinarySection &> FuncSection = Function->getCodeSection();
+    if (!FuncSection)
+      report_error(
+          (Twine("Cannot find section for function ") + Function->getOneName())
+              .str(),
+          FuncSection.getError());
 
-    FuncSection->setOutputAddress(Function.getAddress());
+    FuncSection->setOutputAddress(Function->getOutputAddress());
     DEBUG(dbgs() << "BOLT: mapping 0x"
                  << Twine::utohexstr(FuncSection->getAllocAddress()) << " to 0x"
-                 << Twine::utohexstr(Function.getAddress()) << '\n');
+                 << Twine::utohexstr(Function->getOutputAddress()) << '\n');
     OLT->mapSectionAddress(Key, FuncSection->getSectionID(),
-                           Function.getAddress());
-    Function.setImageAddress(FuncSection->getAllocAddress());
-    Function.setImageSize(FuncSection->getOutputSize());
+                           Function->getOutputAddress());
+    Function->setImageAddress(FuncSection->getAllocAddress());
+    Function->setImageSize(FuncSection->getOutputSize());
+  }
+
+  if (opts::Instrument) {
+    ErrorOr<BinarySection &> BOLT = BC->getUniqueSectionByName("__bolt");
+    if (!BOLT) {
+      llvm::errs() << "Cannot find __bolt section\n";
+      exit(1);
+    }
+    uint64_t Addr = BOLT->getAddress();
+    for (BinaryFunction *Function : BC->getAllBinaryFunctions()) {
+      if (!Function->isEmitted())
+        continue;
+      if (Function->getOutputAddress() != 0)
+        continue;
+      ErrorOr<BinarySection &> FuncSection = Function->getCodeSection();
+      assert(FuncSection && "cannot find section for function");
+      Addr = llvm::alignTo(Addr, 4);
+      FuncSection->setOutputAddress(Addr);
+      OLT->mapSectionAddress(Key, FuncSection->getSectionID(), Addr);
+      Function->setFileOffset(Addr - BOLT->getAddress() +
+                              BOLT->getInputFileOffset());
+      Function->setImageAddress(FuncSection->getAllocAddress());
+      Function->setImageSize(FuncSection->getOutputSize());
+      Addr += FuncSection->getOutputSize();
+    }
   }
 }
 
@@ -389,13 +427,19 @@ void MachORewriteInstance::rewriteFile() {
     if (!Function.isSimple())
       continue;
     assert(Function.isEmitted() && "Simple function has not been emitted");
-    if (Function.getImageSize() > Function.getMaxSize())
+    if (!opts::Instrument && (Function.getImageSize() > Function.getMaxSize()))
       continue;
     if (opts::Verbosity >= 2)
       outs() << "BOLT: rewriting function \"" << Function << "\"\n";
     OS.pwrite(reinterpret_cast<char *>(Function.getImageAddress()),
               Function.getImageSize(), Function.getFileOffset());
   }
+
+  for (const BinaryFunction *Function : BC->getInjectedBinaryFunctions()) {
+    OS.pwrite(reinterpret_cast<char *>(Function->getImageAddress()),
+              Function->getImageSize(), Function->getFileOffset());
+  }
+
   Out->keep();
 }
 
@@ -403,6 +447,8 @@ void MachORewriteInstance::adjustCommandLineOptions() {
   opts::CheckOverlappingElements = false;
   if (!opts::AlignText.getNumOccurrences())
     opts::AlignText = BC->PageAlign;
+  if (opts::Instrument.getNumOccurrences())
+    opts::ForcePatch = true;
 }
 
 void MachORewriteInstance::run() {

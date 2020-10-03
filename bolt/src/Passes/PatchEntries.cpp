@@ -21,7 +21,7 @@ extern llvm::cl::OptionCategory BoltCategory;
 
 extern llvm::cl::opt<unsigned> Verbosity;
 
-static llvm::cl::opt<bool>
+llvm::cl::opt<bool>
 ForcePatch("force-patch",
   llvm::cl::desc("force patching of original entry points"),
   llvm::cl::init(false),
