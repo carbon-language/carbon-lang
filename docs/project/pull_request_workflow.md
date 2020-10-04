@@ -109,123 +109,123 @@ requests in the stack.
 
 We suggest a specific workflow to address this:
 
-1. Create your initial pull request from a branch of your fork, nothing special
-   is needed at this step. Let's say you have a branch `feature-basic` in your
-   clone of your fork, and that the `origin` remote is your fork.
+1.  Create your initial pull request from a branch of your fork, nothing special
+    is needed at this step. Let's say you have a branch `feature-basic` in your
+    clone of your fork, and that the `origin` remote is your fork.
 
-   Push the branch to your fork:
+    Push the branch to your fork:
 
-   ```shell
-   $ git checkout feature-basic
-   $ git push origin
-   ```
+    ```shell
+    $ git checkout feature-basic
+    $ git push origin
+    ```
 
-   And create a pull request for it using the
-   [`gh`](/docs/project/contribution_tools.md#github_commandline_interface)
-   tool:
+    And create a pull request for it using the
+    [`gh`](/docs/project/contribution_tools.md#github_commandline_interface)
+    tool:
 
-   ```shell
-   $ gh pr create
-   ```
+    ```shell
+    $ gh pr create
+    ```
 
-   Let's imagine this creates a pull request `N` in the upstream repository.
+    Let's imagine this creates a pull request `N` in the upstream repository.
 
-2. _If_ you end up needing to create a subsequent pull request based on the
-   first one, we need to create a _branch_ in the upstream repository that
-   tracks the first pull request and serves as the base for the subsequent pull
-   request. Assuming your fork `$USER/carbon-lang` is remote `origin` and
-   `carbon-language/carbon-lang` is remote `upstream` in your repository:
+2.  _If_ you end up needing to create a subsequent pull request based on the
+    first one, we need to create a _branch_ in the upstream repository that
+    tracks the first pull request and serves as the base for the subsequent pull
+    request. Assuming your fork `$USER/carbon-lang` is remote `origin` and
+    `carbon-language/carbon-lang` is remote `upstream` in your repository:
 
-   ```shell
-   $ git checkout feature-basic
-   $ git push upstream HEAD:pull-N-feature-basic
-   ```
+    ```shell
+    $ git checkout feature-basic
+    $ git push upstream HEAD:pull-N-feature-basic
+    ```
 
-   Everyone marked as a contributor to Carbon is allowed to push branches if the
-   name matches `pull-*` without pull request or other process. They can be
-   force pushed as necessary and deleted. These branch names should only be used
-   for this ephemeral purpose. All other branch names are protected.
+    Everyone marked as a contributor to Carbon is allowed to push branches if
+    the name matches `pull-*` without pull request or other process. They can be
+    force pushed as necessary and deleted. These branch names should only be
+    used for this ephemeral purpose. All other branch names are protected.
 
-   If you don't yet have this permission, feel free to ask anyone who does --
-   anyone can checkout your pull request and push it to a branch with this name
-   pattern for use in a stacked series of commits.
+    If you don't yet have this permission, feel free to ask anyone who does --
+    anyone can checkout your pull request and push it to a branch with this name
+    pattern for use in a stacked series of commits.
 
-3. Create your stacked branch on your fork:
+3.  Create your stacked branch on your fork:
 
-   ```shell
-   $ git checkout -b next-feature-extension
-   $ git commit -a -m 'Some initial work on the next feature.'
-   $ git push origin
-   ```
+    ```shell
+    $ git checkout -b next-feature-extension
+    $ git commit -a -m 'Some initial work on the next feature.'
+    $ git push origin
+    ```
 
-4. Create the pull request using the upstream branch tracking your prior pull
-   request as the base:
+4.  Create the pull request using the upstream branch tracking your prior pull
+    request as the base:
 
-   ```shell
-   $ gh pr create --base pull-N-feature-basic
-   ```
+    ```shell
+    $ gh pr create --base pull-N-feature-basic
+    ```
 
-   This creates a baseline for the new, stacked pull request that you have
-   manually synced to your prior pull request.
+    This creates a baseline for the new, stacked pull request that you have
+    manually synced to your prior pull request.
 
-5. Each time you update the original pull request by pushing more commits to the
-   `feature-basic` branch on your `origin`, you'll want to re-push to the
-   upstream tracking branch as well:
+5.  Each time you update the original pull request by pushing more commits to
+    the `feature-basic` branch on your `origin`, you'll want to re-push to the
+    upstream tracking branch as well:
 
-   ```shell
-   $ git checkout feature-basic
-   $ git commit -a -m 'Address some code review feedback...'
-   $ git push
-   $ git push upstream HEAD:pull-N-feature-basic
-   ```
+    ```shell
+    $ git checkout feature-basic
+    $ git commit -a -m 'Address some code review feedback...'
+    $ git push
+    $ git push upstream HEAD:pull-N-feature-basic
+    ```
 
-   Then _merge_ those changes into your subsequent pull request:
+    Then _merge_ those changes into your subsequent pull request:
 
-   ```shell
-   $ git checkout next-feature-extension
-   $ git merge feature-basic
-   $ git push
-   ```
+    ```shell
+    $ git checkout next-feature-extension
+    $ git merge feature-basic
+    $ git push
+    ```
 
-   The merge will prevent disrupting the history of `next-feature-extension`
-   where you may have code review comments on specific commits, while still
-   allowing the pull request diff view to show the new delta after incorporating
-   the new baseline.
+    The merge will prevent disrupting the history of `next-feature-extension`
+    where you may have code review comments on specific commits, while still
+    allowing the pull request diff view to show the new delta after
+    incorporating the new baseline.
 
-6. Follow a similar process as in 5 above for merging updates from the main
-   branch of `upstream`:
+6.  Follow a similar process as in 5 above for merging updates from the main
+    branch of `upstream`:
 
-   ```shell
-   $ git checkout trunk
-   $ git pull --rebase upstream
-   $ git push                                    # update your fork (optional)
-   $ git checkout feature-basic
-   $ git merge trunk                             # merge w/o disrupting history
-   $ git push                                    # push to first PR on fork
-   $ git push upstream HEAD:pull-N-feature-basic # sync upstream tracking branch
-   $ git checkout next-feature-extension
-   $ git merge feature-basic                     # merge w/o disrupting history
-   $ git push                                    # push to second PR on fork
-   ```
+    ```shell
+    $ git checkout trunk
+    $ git pull --rebase upstream
+    $ git push                                    # update your fork (optional)
+    $ git checkout feature-basic
+    $ git merge trunk                             # merge w/o disrupting history
+    $ git push                                    # push to first PR on fork
+    $ git push upstream HEAD:pull-N-feature-basic # sync upstream tracking branch
+    $ git checkout next-feature-extension
+    $ git merge feature-basic                     # merge w/o disrupting history
+    $ git push                                    # push to second PR on fork
+    ```
 
-7. When the first pull request lands in the main upstream branch, delete the
-   upstream tracking branch for it:
+7.  When the first pull request lands in the main upstream branch, delete the
+    upstream tracking branch for it:
 
-   ```shell
-   $ git push upstream --delete pull-N-feature-basic
-   ```
+    ```shell
+    $ git push upstream --delete pull-N-feature-basic
+    ```
 
-   The second pull request should automatically switch its baseline to the
-   `trunk` branch of the upstream repository. Merge commits into your fork's
-   branch for the second pull request can now be done directly from your `trunk`
-   branch after pulling upstream.
+    The second pull request should automatically switch its baseline to the
+    `trunk` branch of the upstream repository. Merge commits into your fork's
+    branch for the second pull request can now be done directly from your
+    `trunk` branch after pulling upstream.
 
-8. When landing a stacked pull request, it will require actively rebasing or
-   squashing due to the complex merge history used while updating.
+8.  When landing a stacked pull request, it will require actively rebasing or
+    squashing due to the complex merge history used while updating.
 
-9. If you need to create a third or more stacked pull requests, simply repeat
-   the steps starting from #2 above for each pull request in the stack, but
-   starting from the prior pull request's branch.
+9.  If you need to create a third or more stacked pull requests, simply repeat
+    the steps starting from #2 above for each pull request in the stack, but
+    starting from the prior pull request's branch.
 
 10. If you want to split the two pull requests so they become independent, you
     can explicitly edit the base branch of a pull request in the GitHub UI.
