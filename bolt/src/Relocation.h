@@ -57,7 +57,8 @@ struct Relocation {
 
   /// Extract current relocated value from binary contents. This is used for
   /// RISC architectures where values are encoded in specific bits depending
-  /// on the relocation value.
+  /// on the relocation value. For X86, we limit to sign extending the value
+  /// if necessary.
   static uint64_t extractValue(uint64_t Type, uint64_t Contents, uint64_t PC);
 
   /// Return true if relocation type is PC-relative. Return false otherwise.

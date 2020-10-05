@@ -111,9 +111,9 @@ uint64_t Relocation::extractValue(uint64_t Type, uint64_t Contents,
                                   uint64_t PC) {
   switch (Type) {
   default:
-    llvm_unreachable("unsupported relocation type");
-  case ELF::R_AARCH64_ABS64:
     return Contents;
+  case ELF::R_X86_64_32S:
+    return SignExtend64<32>(Contents & 0xffffffff);
   case ELF::R_AARCH64_PREL32:
     return static_cast<int64_t>(PC) + SignExtend64<32>(Contents & 0xffffffff);
   case ELF::R_AARCH64_TLSDESC_CALL:

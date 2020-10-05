@@ -767,6 +767,7 @@ void RewriteInstance::run() {
          << Triple::getArchTypeName(
                 (llvm::Triple::ArchType)InputFile->getArch())
          << "\n";
+  outs() << "BOLT-INFO: BOLT version: " << BoltRevision << "\n";
 
   discoverStorage();
   readSpecialSections();
@@ -1777,13 +1778,9 @@ bool RewriteInstance::analyzeRelocation(const RelocationRef &Rel,
 
   auto Value = BC->getUnsignedValueAtAddress(Rel.getOffset(), RelSize);
   assert(Value && "failed to extract relocated value");
-  ExtractedValue = *Value;
-  if (IsAArch64) {
-    ExtractedValue = Relocation::extractValue(RType,
-                                              ExtractedValue,
-                                              Rel.getOffset());
-  }
-
+  ExtractedValue = Relocation::extractValue(RType,
+                                            *Value,
+                                            Rel.getOffset());
   Addend = getRelocationAddend(InputFile, Rel);
 
   const auto IsPCRelative = Relocation::isPCRelative(RType);
