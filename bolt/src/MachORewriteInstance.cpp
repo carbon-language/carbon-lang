@@ -28,6 +28,7 @@ namespace opts {
 
 using namespace llvm;
 extern cl::opt<unsigned> AlignText;
+extern cl::opt<bool> CheckOverlappingElements;
 extern cl::opt<bool> KeepTmp;
 extern cl::opt<bool> NeverPrint;
 extern cl::opt<std::string> OutputFilename;
@@ -398,6 +399,7 @@ void MachORewriteInstance::rewriteFile() {
 }
 
 void MachORewriteInstance::adjustCommandLineOptions() {
+  opts::CheckOverlappingElements = false;
   if (!opts::AlignText.getNumOccurrences())
     opts::AlignText = BC->PageAlign;
 }

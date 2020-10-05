@@ -3277,10 +3277,42 @@ index b544fa5c147..c885bf9f037 100644
                                         MemoryBufferRef M, const uint8_t *base) {
    // The field for the number of relocations in COFF section table is only
 diff --git a/lib/Object/MachOObjectFile.cpp b/lib/Object/MachOObjectFile.cpp
-index adc54b42eba..dc6d216b208 100644
+index adc54b42eba..4cc7d419929 100644
 --- a/lib/Object/MachOObjectFile.cpp
 +++ b/lib/Object/MachOObjectFile.cpp
-@@ -1837,7 +1837,27 @@ uint32_t MachOObjectFile::getSymbolFlags(DataRefImpl DRI) const {
+@@ -25,6 +25,7 @@
+ #include "llvm/Object/MachO.h"
+ #include "llvm/Object/ObjectFile.h"
+ #include "llvm/Object/SymbolicFile.h"
++#include "llvm/Support/CommandLine.h"
+ #include "llvm/Support/DataExtractor.h"
+ #include "llvm/Support/Debug.h"
+ #include "llvm/Support/Error.h"
+@@ -49,6 +50,14 @@
+ using namespace llvm;
+ using namespace object;
+ 
++namespace opts {
++
++cl::opt<bool> CheckOverlappingElements(
++    "check-overlapping-elements", cl::init(true), cl::Hidden,
++    cl::desc("Check overlapping elements while parsing Mach-O object files"));
++
++} // namespace opts
++
+ namespace {
+ 
+   struct section_base {
+@@ -240,7 +249,7 @@ struct MachOElement {
+ static Error checkOverlappingElement(std::list<MachOElement> &Elements,
+                                      uint64_t Offset, uint64_t Size,
+                                      const char *Name) {
+-  if (Size == 0)
++  if (!opts::CheckOverlappingElements || (Size == 0))
+     return Error::success();
+ 
+   for (auto it=Elements.begin() ; it != Elements.end(); ++it) {
+@@ -1837,7 +1846,27 @@ uint32_t MachOObjectFile::getSymbolFlags(DataRefImpl DRI) const {
  Expected<section_iterator>
  MachOObjectFile::getSymbolSection(DataRefImpl Symb) const {
    MachO::nlist_base Entry = getSymbolTableEntryBase(*this, Symb);
@@ -3309,7 +3341,7 @@ index adc54b42eba..dc6d216b208 100644
  
    if (index == 0)
      return section_end();
-@@ -1986,6 +2006,11 @@ bool MachOObjectFile::isSectionStripped(DataRefImpl Sec) const {
+@@ -1986,6 +2015,11 @@ bool MachOObjectFile::isSectionStripped(DataRefImpl Sec) const {
    return getSection(Sec).offset == 0;
  }
  
