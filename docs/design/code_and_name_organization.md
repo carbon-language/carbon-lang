@@ -346,10 +346,10 @@ that are implementation.
 -   An implementation file's `package` will have `impl`. For example,
     `package Geometry library "Shapes" impl;`.
     -   Implementation filenames must have the `.impl.carbon` extension.
+    -   Implementation file paths need not correspond to the library name.
     -   Implementation files implicitly import the library's API. Implementation
         files cannot import each other. There is no facility for file or
         non-`api` imports.
-    -   Implementation file paths need not correspond to the library name.
 
 The difference between API and implementation will act as a form of access
 control. API files must compile independently of implementation, only importing
