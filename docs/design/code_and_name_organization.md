@@ -49,7 +49,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
         -   [Referring to the package as `package`](#referring-to-the-package-as-package)
         -   [Remove the `library` keyword from `package` and `import`](#remove-the-library-keyword-from-package-and-import)
         -   [Rename package concept](#rename-package-concept)
-        -   [Strict association between the filesystem path and library/namespace](#strict-association-between-the-filesystem-path-and-librarynamespace)
+        -   [No association between the filesystem path and library/namespace](#no-association-between-the-filesystem-path-and-librarynamespace)
     -   [Libraries](#libraries-1)
         -   [Allow exporting namespaces](#allow-exporting-namespaces)
         -   [Allow importing implementation files from within the same library](#allow-importing-implementation-files-from-within-the-same-library)
@@ -338,12 +338,18 @@ that are implementation.
     `package Geometry library "Shapes" api;`
     -   API filenames must have the `.carbon` extension. They must not have a
         `.impl.carbon` extension.
+    -   API file paths will correspond to the library name.
+        -   The precise form of this correspondence is undetermined, but should
+            be expected to be similar to a "Math/Algebra" library being in a
+            "Math/Algebra.carbon" file path.
+        -   The package will not be used when considering the file path.
 -   An implementation file's `package` will have `impl`. For example,
     `package Geometry library "Shapes" impl;`.
     -   Implementation filenames must have the `.impl.carbon` extension.
     -   Implementation files implicitly import the library's API. Implementation
         files cannot import each other. There is no facility for file or
         non-`api` imports.
+    -   Implementation file paths need not correspond to the library name.
 
 The difference between API and implementation will act as a form of access
 control. API files must compile independently of implementation, only importing
@@ -721,8 +727,8 @@ may require manually adding imports.
 -   Rename a file, or move a file between directories.
 
     -   Build configuration will need to be updated.
-    -   Carbon code will not change. The `package` keyword determines how a file
-        is imported, so the library is unaffected by filesystem location.
+    -   This additionally requires the steps to rename a library, because
+        library names must correspond to the renamed paths.
 
 ### Preference for few child namespaces
 
@@ -1014,7 +1020,7 @@ Disadvantages:
     -   [Swift](https://developer.apple.com/documentation/swift_packages), as a
         distributable unit.
 
-#### Strict association between the filesystem path and library/namespace
+#### No association between the filesystem path and library/namespace
 
 Several languages create a strict association between the method for pulling in
 an API and the path to the file that provides it. For example:
@@ -1038,17 +1044,11 @@ For contrast:
     -   For example, `import "PATH/TO/NAME"` means there is a directory
         `PATH/TO` that contains one or more files starting with `package NAME`.
 
-In Carbon, we could say that `import PACKAGE library "PATH/TO/LIBRARY"` means
-there are one more more files `PACKAGE/PATH/TO/LIBRARY(.impl)?.carbon`.
+In Carbon, we are using a strict association to say that
+`import PACKAGE library "PATH/TO/LIBRARY"` means there is a file
+`PATH/TO/LIBRARY.carbon` under some package root.
 
 Advantages:
-
--   A strict association between filesystem path and import path makes it easier
-    to find source files. This is used by some languages for compilation.
--   Allows getting rid of the `package` keyword by inferring related information
-    from the filesystem path.
-
-Disadvantages:
 
 -   The strict association makes it harder to move names between files without
     updating callers.
@@ -1059,10 +1059,18 @@ Disadvantages:
         `config` and a directory `Config/` would conflict, even though this
         would be a valid structure on Unix-based filesystems.
 
-We are choosing to avoid the strict association with filesystem paths in order
-to ease refactoring. With this approach,
-[more refactorings](#potential-refactorings) will not need changes to imports of
-callers.
+Disadvantages:
+
+-   A strict association between filesystem path and import path makes it easier
+    to find source files. This is used by some languages for compilation.
+-   Allows getting rid of the `package` keyword by inferring related information
+    from the filesystem path.
+
+We are choosing to have some association between the filesystem path and library
+for API files to make it easier to find a library's files. We are not getting
+rid of the `package` keyword because we don't want to become dependent on
+filesystem structures, particularly as it would increase the complexity of
+distributed builds.
 
 ### Libraries
 
