@@ -1397,7 +1397,7 @@ approaches looks like:
         -   Alternative: `import "Boost/Random";`
     -   Multi-layer library:
         -   Proposal: `import BoostRandom library "Uniform";`
-    -   Alternative: `import "Boost/Random.Uniform";`
+        -   Alternative: `import "Boost/Random.Uniform";`
     -   Namespaces have no effect on `import` under both approaches.
 -   Changes to use an imported entity:
     -   Proposal: `BoostRandom.UniformDistribution`
