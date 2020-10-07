@@ -18,7 +18,9 @@ using namespace bolt;
 
 Triple::ArchType Relocation::Arch;
 
-bool Relocation::isSupported(uint64_t Type) {
+namespace {
+
+bool isSupportedX86(uint64_t Type) {
   switch (Type) {
   default:
     return false;
@@ -36,6 +38,14 @@ bool Relocation::isSupported(uint64_t Type) {
   case ELF::R_X86_64_TPOFF32:
   case ELF::R_X86_64_GOTPCRELX:
   case ELF::R_X86_64_REX_GOTPCRELX:
+    return true;
+  }
+}
+
+bool isSupportedAArch64(uint64_t Type) {
+  switch (Type) {
+  default:
+    return false;
   case ELF::R_AARCH64_CALL26:
   case ELF::R_AARCH64_ADR_PREL_PG_HI21:
   case ELF::R_AARCH64_LDST64_ABS_LO12_NC:
@@ -61,7 +71,7 @@ bool Relocation::isSupported(uint64_t Type) {
   }
 }
 
-size_t Relocation::getSizeForType(uint64_t Type) {
+size_t getSizeForTypeX86(uint64_t Type) {
   switch (Type) {
   default:
     llvm_unreachable("unsupported relocation type");
@@ -79,6 +89,18 @@ size_t Relocation::getSizeForType(uint64_t Type) {
   case ELF::R_X86_64_TPOFF32:
   case ELF::R_X86_64_GOTPCRELX:
   case ELF::R_X86_64_REX_GOTPCRELX:
+    return 4;
+  case ELF::R_X86_64_PC64:
+  case ELF::R_X86_64_64:
+    return 8;
+  }
+}
+
+size_t getSizeForTypeAArch64(uint64_t Type) {
+  switch (Type) {
+  default:
+    dbgs() << "Reloc num: " << Type << "\n";
+    llvm_unreachable("unsupported relocation type");
   case ELF::R_AARCH64_CALL26:
   case ELF::R_AARCH64_ADR_PREL_PG_HI21:
   case ELF::R_AARCH64_LDST64_ABS_LO12_NC:
@@ -100,20 +122,23 @@ size_t Relocation::getSizeForType(uint64_t Type) {
   case ELF::R_AARCH64_JUMP26:
   case ELF::R_AARCH64_PREL32:
     return 4;
-  case ELF::R_X86_64_PC64:
-  case ELF::R_X86_64_64:
   case ELF::R_AARCH64_ABS64:
     return 8;
   }
 }
 
-uint64_t Relocation::extractValue(uint64_t Type, uint64_t Contents,
-                                  uint64_t PC) {
+uint64_t extractValueX86(uint64_t Type, uint64_t Contents, uint64_t PC) {
+  if (Type == ELF::R_X86_64_32S)
+    return SignExtend64<32>(Contents & 0xffffffff);
+  return Contents;
+}
+
+uint64_t extractValueAArch64(uint64_t Type, uint64_t Contents, uint64_t PC) {
   switch (Type) {
   default:
+    llvm_unreachable("unsupported relocation type");
+  case ELF::R_AARCH64_ABS64:
     return Contents;
-  case ELF::R_X86_64_32S:
-    return SignExtend64<32>(Contents & 0xffffffff);
   case ELF::R_AARCH64_PREL32:
     return static_cast<int64_t>(PC) + SignExtend64<32>(Contents & 0xffffffff);
   case ELF::R_AARCH64_TLSDESC_CALL:
@@ -180,7 +205,7 @@ uint64_t Relocation::extractValue(uint64_t Type, uint64_t Contents,
   }
 }
 
-bool Relocation::isGOT(uint64_t Type) {
+bool isGOTX86(uint64_t Type) {
   switch (Type) {
   default:
     return false;
@@ -196,6 +221,14 @@ bool Relocation::isGOT(uint64_t Type) {
   case ELF::R_X86_64_GOTPC32_TLSDESC:
   case ELF::R_X86_64_GOTPCRELX:
   case ELF::R_X86_64_REX_GOTPCRELX:
+    return true;
+  }
+}
+
+bool isGOTAArch64(uint64_t Type) {
+  switch (Type) {
+  default:
+    return false;
   case ELF::R_AARCH64_ADR_GOT_PAGE:
   case ELF::R_AARCH64_TLSIE_LD64_GOTTPREL_LO12_NC:
   case ELF::R_AARCH64_LD64_GOT_LO12_NC:
@@ -210,13 +243,21 @@ bool Relocation::isGOT(uint64_t Type) {
   }
 }
 
-bool Relocation::isTLS(uint64_t Type) {
+bool isTLSX86(uint64_t Type) {
   switch (Type) {
   default:
     return false;
   case ELF::R_X86_64_TPOFF32:
   case ELF::R_X86_64_TPOFF64:
   case ELF::R_X86_64_GOTTPOFF:
+    return true;
+  }
+}
+
+bool isTLSAArch64(uint64_t Type) {
+  switch (Type) {
+  default:
+    return false;
   case ELF::R_AARCH64_TLSDESC_ADR_PAGE21:
   case ELF::R_AARCH64_TLSIE_LD64_GOTTPREL_LO12_NC:
   case ELF::R_AARCH64_TLSLE_ADD_TPREL_HI12:
@@ -229,17 +270,33 @@ bool Relocation::isTLS(uint64_t Type) {
   }
 }
 
-bool Relocation::isPCRelative(uint64_t Type) {
+bool isPCRelativeX86(uint64_t Type) {
   switch (Type) {
   default:
     llvm_unreachable("Unknown relocation type");
-
   case ELF::R_X86_64_64:
   case ELF::R_X86_64_32:
   case ELF::R_X86_64_32S:
   case ELF::R_X86_64_16:
   case ELF::R_X86_64_8:
   case ELF::R_X86_64_TPOFF32:
+    return false;
+  case ELF::R_X86_64_PC8:
+  case ELF::R_X86_64_PC32:
+  case ELF::R_X86_64_PC64:
+  case ELF::R_X86_64_GOTPCREL:
+  case ELF::R_X86_64_PLT32:
+  case ELF::R_X86_64_GOTTPOFF:
+  case ELF::R_X86_64_GOTPCRELX:
+  case ELF::R_X86_64_REX_GOTPCRELX:
+    return true;
+  }
+}
+
+bool isPCRelativeAArch64(uint64_t Type) {
+  switch (Type) {
+  default:
+    llvm_unreachable("Unknown relocation type");
   case ELF::R_AARCH64_ABS64:
   case ELF::R_AARCH64_LDST64_ABS_LO12_NC:
   case ELF::R_AARCH64_ADD_ABS_LO12_NC:
@@ -254,15 +311,6 @@ bool Relocation::isPCRelative(uint64_t Type) {
   case ELF::R_AARCH64_TLSDESC_LD64_LO12:
   case ELF::R_AARCH64_TLSDESC_ADD_LO12:
     return false;
-
-  case ELF::R_X86_64_PC8:
-  case ELF::R_X86_64_PC32:
-  case ELF::R_X86_64_PC64:
-  case ELF::R_X86_64_GOTPCREL:
-  case ELF::R_X86_64_PLT32:
-  case ELF::R_X86_64_GOTTPOFF:
-  case ELF::R_X86_64_GOTPCRELX:
-  case ELF::R_X86_64_REX_GOTPCRELX:
   case ELF::R_AARCH64_TLSDESC_CALL:
   case ELF::R_AARCH64_CALL26:
   case ELF::R_AARCH64_ADR_PREL_PG_HI21:
@@ -273,6 +321,57 @@ bool Relocation::isPCRelative(uint64_t Type) {
   case ELF::R_AARCH64_PREL32:
     return true;
   }
+}
+
+} // end anonymous namespace
+
+bool Relocation::isSupported(uint64_t Type) {
+  if (Arch == Triple::aarch64)
+    return isSupportedAArch64(Type);
+  return isSupportedX86(Type);
+}
+
+size_t Relocation::getSizeForType(uint64_t Type) {
+  if (Arch == Triple::aarch64)
+    return getSizeForTypeAArch64(Type);
+  return getSizeForTypeX86(Type);
+}
+
+uint64_t Relocation::extractValue(uint64_t Type, uint64_t Contents,
+                                  uint64_t PC) {
+  if (Arch == Triple::aarch64)
+    return extractValueAArch64(Type, Contents, PC);
+  return extractValueX86(Type, Contents, PC);
+}
+
+bool Relocation::isGOT(uint64_t Type) {
+  if (Arch == Triple::aarch64)
+    return isGOTAArch64(Type);
+  return isGOTX86(Type);
+}
+
+bool Relocation::isTLS(uint64_t Type) {
+  if (Arch == Triple::aarch64)
+    return isTLSAArch64(Type);
+  return isTLSX86(Type);
+}
+
+bool Relocation::isPCRelative(uint64_t Type) {
+  if (Arch == Triple::aarch64)
+    return isPCRelativeAArch64(Type);
+  return isPCRelativeX86(Type);
+}
+
+uint64_t Relocation::getPC32() {
+  if (Arch == Triple::aarch64)
+    return ELF::R_AARCH64_PREL32;
+  return ELF::R_X86_64_PC32;
+}
+
+uint64_t Relocation::getPC64() {
+  if (Arch == Triple::aarch64)
+    return ELF::R_AARCH64_PREL64;
+  return ELF::R_X86_64_PC64;
 }
 
 size_t Relocation::emit(MCStreamer *Streamer) const {

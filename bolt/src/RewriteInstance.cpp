@@ -1480,12 +1480,12 @@ void RewriteInstance::relocateEHFrameSection() {
       llvm_unreachable("unsupported DWARF encoding type");
     case dwarf::DW_EH_PE_sdata4:
     case dwarf::DW_EH_PE_udata4:
-      RelType = ELF::R_X86_64_PC32;
+      RelType = Relocation::getPC32();
       Offset -= 4;
       break;
     case dwarf::DW_EH_PE_sdata8:
     case dwarf::DW_EH_PE_udata8:
-      RelType = ELF::R_X86_64_PC64;
+      RelType = Relocation::getPC64();
       Offset -= 8;
       break;
     }
@@ -1967,15 +1967,15 @@ void RewriteInstance::processLKExTable() {
       // fixup
       if (FunctionOffset)
         ReferencedSymbol = ContainingBF->addEntryPointAtOffset(FunctionOffset);
-      BC->addRelocation(EntryAddress, ReferencedSymbol, ELF::R_X86_64_PC32, 0,
-                        *Offset);
+      BC->addRelocation(EntryAddress, ReferencedSymbol, Relocation::getPC32(),
+                        0, *Offset);
       break;
     case 8:
       // handler
       assert(!FunctionOffset &&
              "__ex_table handler entry should point to function start");
-      BC->addRelocation(EntryAddress, ReferencedSymbol, ELF::R_X86_64_PC32, 0,
-                        *Offset);
+      BC->addRelocation(EntryAddress, ReferencedSymbol, Relocation::getPC32(),
+                        0, *Offset);
       break;
     }
   }
@@ -2003,7 +2003,7 @@ void RewriteInstance::processLKPCIFixup() {
     auto *HookupFunction = BC->getBinaryFunctionAtAddress(HookupAddress);
     assert(HookupFunction && "expected function for entry in .pci_fixup");
     BC->addRelocation(PC, HookupFunction->getSymbol(),
-                      ELF::R_X86_64_PC32, 0, *Offset);
+                      Relocation::getPC32(), 0, *Offset);
   }
 }
 
@@ -2036,7 +2036,7 @@ void RewriteInstance::processLKKSymtab(bool IsGPL) {
     if (!BF)
       continue;
 
-    BC->addRelocation(EntryAddress, BF->getSymbol(), ELF::R_X86_64_PC32, 0,
+    BC->addRelocation(EntryAddress, BF->getSymbol(), Relocation::getPC32(), 0,
                       *Offset);
   }
 }
@@ -4465,6 +4465,8 @@ template <typename ELFT>
 void
 RewriteInstance::patchELFAllocatableRelaSections(ELFObjectFile<ELFT> *File) {
   auto &OS = Out->os();
+  if (!BC->isX86())
+    return;
 
   for (auto &RelaSection : BC->allocatableRelaSections()) {
     for (const auto &Rel : RelaSection.getSectionRef().relocations()) {

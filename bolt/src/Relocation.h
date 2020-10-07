@@ -30,7 +30,7 @@ namespace bolt {
 
 /// Relocation class.
 struct Relocation {
-  static Triple::ArchType Arch; /// for printing, set by BinaryContext ctor.
+  static Triple::ArchType Arch; /// set by BinaryContext ctor.
 
   /// The offset of this relocation in the object it is contained in.
   uint64_t Offset;
@@ -72,6 +72,12 @@ struct Relocation {
 
   /// Return true if relocation type is for thread local storage.
   static bool isTLS(uint64_t Type);
+
+  /// Return code for a PC-relative 4-byte relocation
+  static uint64_t getPC32();
+
+  /// Return code for a PC-relative 8-byte relocation
+  static uint64_t getPC64();
 
   /// Return true if this relocation is PC-relative. Return false otherwise.
   bool isPCRelative() const {
