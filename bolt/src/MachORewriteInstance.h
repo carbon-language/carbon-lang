@@ -37,6 +37,7 @@ class BinaryContext;
 
 class MachORewriteInstance {
   object::MachOObjectFile *InputFile;
+  StringRef ToolPath;
   std::unique_ptr<BinaryContext> BC;
 
   NameResolver NR;
@@ -61,7 +62,7 @@ class MachORewriteInstance {
   void rewriteFile();
 
 public:
-  explicit MachORewriteInstance(object::MachOObjectFile *InputFile);
+  MachORewriteInstance(object::MachOObjectFile *InputFile, StringRef ToolPath);
   ~MachORewriteInstance();
 
   /// Run all the necessary steps to read, optimize and rewrite the binary.

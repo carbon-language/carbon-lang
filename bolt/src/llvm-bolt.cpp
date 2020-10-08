@@ -320,7 +320,7 @@ int main(int argc, char **argv) {
 
       RI.run();
     } else if (auto *O = dyn_cast<MachOObjectFile>(&Binary)) {
-      MachORewriteInstance MachORI(O);
+      MachORewriteInstance MachORI(O, ToolPath);
       MachORI.run();
     } else {
       report_error(opts::InputFilename, object_error::invalid_file_type);

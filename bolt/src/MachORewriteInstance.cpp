@@ -47,8 +47,9 @@ namespace bolt {
 #undef DEBUG_TYPE
 #define DEBUG_TYPE "bolt"
 
-MachORewriteInstance::MachORewriteInstance(object::MachOObjectFile *InputFile)
-    : InputFile(InputFile),
+MachORewriteInstance::MachORewriteInstance(object::MachOObjectFile *InputFile,
+                                           StringRef ToolPath)
+    : InputFile(InputFile), ToolPath(ToolPath),
       BC(BinaryContext::createBinaryContext(
           InputFile, DWARFContext::create(*InputFile, nullptr,
                                           DWARFContext::defaultErrorHandler, "",
