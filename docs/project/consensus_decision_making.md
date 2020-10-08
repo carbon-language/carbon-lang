@@ -29,15 +29,15 @@ that may only be noticed by a minority.
 Team members have a fundamentally different role while working towards consensus
 on a decision than at other times on the project. They are expected to:
 
-- Set aside personal advocacy and preferences, and focus on the best decision
-  for the project and community.
-- Critically evaluate whether their concerns are severe enough to warrant
-  blocking.
-- Focus on the information presented in a proposal, rather than adding new
-  information. If new information is needed, the request for it should be the
-  decision.
-- Recognize their own biases and stand aside when unable to form an objective
-  position.
+-   Set aside personal advocacy and preferences, and focus on the best decision
+    for the project and community.
+-   Critically evaluate whether their concerns are severe enough to warrant
+    blocking.
+-   Focus on the information presented in a proposal, rather than adding new
+    information. If new information is needed, the request for it should be the
+    decision.
+-   Recognize their own biases and stand aside when unable to form an objective
+    position.
 
 More about consensus decision making may be found from
 "[On Conflict and Consensus](https://web.archive.org/web/20111026234752/http://www.ic.org/pnp/ocac/)",
@@ -47,24 +47,24 @@ and https://www.consensusdecisionmaking.org/.
 
 A formal decision consists of:
 
-- The decision itself.
-- A summary of the decision rationale.
-- A summary of important discussion points.
+-   The decision itself.
+-   A summary of the decision rationale.
+-   A summary of important discussion points.
 
 Here are some possible decisions with their meanings:
 
-- **accepted**: Yes, we want this now.
-- **declined**: No, we don't think this is the right direction for Carbon.
-- **needs work**:
-  - We need more information or data before we can decide if this is the right
-    direction.
-  - We like the direction, but the proposal needs significant changes before
-    being accepted.
-- **deferred**:
-  - We like the direction, but it isn't our priority right now, so bring the
-    proposal back later.
-  - We aren't sure about the direction, but it isn't our priority right now, so
-    bring it back later.
+-   **accepted**: Yes, we want this now.
+-   **declined**: No, we don't think this is the right direction for Carbon.
+-   **needs work**:
+    -   We need more information or data before we can decide if this is the
+        right direction.
+    -   We like the direction, but the proposal needs significant changes before
+        being accepted.
+-   **deferred**:
+    -   We like the direction, but it isn't our priority right now, so bring the
+        proposal back later.
+    -   We aren't sure about the direction, but it isn't our priority right now,
+        so bring it back later.
 
 When a proposal has open questions, the formal decision must include a decision
 for each open question. That may include filing GitHub issues to revisit the
@@ -100,12 +100,12 @@ only hold meetings when decisions cannot be resolved before the meeting.
 An agenda will be maintained for upcoming meetings. If there are no agenda
 items, meetings will not be held.
 
-Agenda items (e.g., proposals) should be added at least one week in advance (or
-four working days, if longer), so that members have time to review items added
-to the agenda. Sub-items (e.g., proposal discussion points) should be added at
-least one day before the meeting. Please feel free to add items to the agenda
-and remove them later if the agenda item is resolved over other communication
-forums.
+Agenda items, such as proposals, should be added at least one week or four
+working days in advance, whichever is longer, so that members have time to
+review items added to the agenda. Sub-items, such as proposal discussion points,
+should be added at least one day before the meeting. Please feel free to add
+items to the agenda and remove them later if the agenda item is resolved over
+other communication forums.
 
 Team members are expected to prepare for the meeting by ensuring they're
 familiar with the proposal and related discussion. The meeting will not include
@@ -116,8 +116,8 @@ and sub-items, with each agenda item resolving with a decision.
 
 As part of organizing a meeting, we will have two roles:
 
-- A **moderator** who is responsible for ensuring discussion stays on track.
-- A **note taker** who will record minutes for each meeting.
+-   A **moderator** who is responsible for ensuring discussion stays on track.
+-   A **note taker** who will record minutes for each meeting.
 
 Roles should be known before each meeting. These may or may not be staffed by
 reviewing team members; anybody taking a role should plan to be less involved in
@@ -149,8 +149,9 @@ for the proposal they're managing when the meeting ends.
 
 While community members outside of the team may attend meetings, they are
 expected to be passive observers. They should only speak if prompted by a member
-of the team (e.g., asking a question to a proposal author). Community discussion
-belongs on forums, and the meetings are for team discussions and decisions.
+of the team, such as when a team member asks a question to a proposal author.
+Community discussion belongs on forums, and the meetings are for team
+discussions and decisions.
 
 ## Unavailable team members
 

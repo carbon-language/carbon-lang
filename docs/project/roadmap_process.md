@@ -11,11 +11,15 @@ community. Teams will need to defer work on Carbon that may be good and make
 sense but doesn't align with the current focus and plan of the project.
 
 The core team will draft proposed roadmaps each year, going through the standard
-proposal review process. It is expected that the core team will provide a draft
-decision and enter decision review first thing at the beginning of the year,
-concluding in an accepted plan of record for the overarching direction of the
-project for that year. Subteams may optionally follow a similar practice as
-needed for their area of Carbon.
+proposal review process. Objectives and key results will be based on
+[goals](goals.md), [success criteria](principles/success_criteria.md), and
+tactical features.
+
+It is expected that the core team will provide a draft decision and enter
+decision review first thing at the beginning of the year, concluding in an
+accepted plan of record for the overarching direction of the project for that
+year. Subteams may optionally follow a similar practice as needed for their area
+of Carbon.
 
 This roadmap is not strictly binding and does not need to cover everything that
 will happen. However, it can and should be used by teams to defer some proposals
