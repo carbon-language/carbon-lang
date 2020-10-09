@@ -107,9 +107,9 @@ PR and proposal file for a new proposal. It's documented in
 
 #### pr_comments.py
 
-[pr_comments.py](/src/scripts/pr_comments.py) is a helper for scanning comments
-in GitHub. It's particularly intended to help find threads which need to be
-resolved.
+[pr_comments.py](https://github.com/carbon-language/carbon-project-tools/blob/trunk/github/pr_comments.py)
+is a helper for scanning comments in GitHub. It's particularly intended to help
+find threads which need to be resolved.
 
 Flags can be seen with `-h`. A couple key flags to be aware of are:
 
