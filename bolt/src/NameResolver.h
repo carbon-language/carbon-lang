@@ -24,11 +24,30 @@ class NameResolver {
   /// Track the number of duplicate names.
   StringMap<uint64_t> Counters;
 
+  /// Character guaranteed not to be used by any "native" name passed to
+  /// uniquify() function.
+  static constexpr char Sep = '/';
+
 public:
-  /// Return unique version of a symbol name in the form "<name>/<number>".
+  /// Return unique version of the \p Name in the form "Name<Sep><Number>".
   std::string uniquify(StringRef Name) {
     const auto ID = ++Counters[Name];
-    return (Name + "/" + Twine(ID)).str();
+    return (Name + Twine(Sep) + Twine(ID)).str();
+  }
+
+  /// For uniquified \p Name, return the original form (that may no longer be
+  /// unique).
+  static StringRef restore(StringRef Name) {
+    return Name.substr(0, Name.find_first_of(Sep));
+  }
+
+  /// Append \p Suffix to the original string in \p UniqueName  preserving the
+  /// deduplication form. E.g. append("Name<Sep>42", "Suffix") will return
+  /// "NameSuffix<Sep>42".
+  static std::string append(StringRef UniqueName, StringRef Suffix) {
+    StringRef LHS, RHS;
+    std::tie(LHS, RHS) = UniqueName.split(Sep);
+    return (LHS + Suffix + Twine(Sep) + RHS).str();
   }
 };
 

@@ -409,6 +409,10 @@ public:
     return InjectedBinaryFunctions;
   }
 
+  /// Return vector with all functions, i.e. include functions from the input
+  /// binary and functions created by BOLT.
+  std::vector<BinaryFunction *> getAllBinaryFunctions();
+
   /// Construct a jump table for \p Function at \p Address or return an existing
   /// one at that location.
   ///

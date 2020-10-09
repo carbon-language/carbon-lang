@@ -269,7 +269,7 @@ bool BinaryEmitter::emitFunction(BinaryFunction &Function, bool EmitColdPart) {
   if (Function.getState() == BinaryFunction::State::Empty)
     return false;
 
-  auto *Section =
+  MCSection *Section =
       BC.getCodeSection(EmitColdPart ? Function.getColdCodeSectionName()
                                      : Function.getCodeSectionName());
   Streamer.SwitchSection(Section);
@@ -479,12 +479,12 @@ void BinaryEmitter::emitConstantIslands(BinaryFunction &BF, bool EmitColdPart,
   assert(!BF.isInjected() &&
          "injected functions should not have constant islands");
   // Raw contents of the function.
-  StringRef SectionContents = BF.getSection().getContents();
+  StringRef SectionContents = BF.getOriginSection()->getContents();
 
   // Raw contents of the function.
   StringRef FunctionContents =
       SectionContents.substr(
-          BF.getAddress() - BF.getSection().getAddress(),
+          BF.getAddress() - BF.getOriginSection()->getAddress(),
           BF.getMaxSize());
 
   if (opts::Verbosity && !OnBehalfOf)
@@ -964,11 +964,11 @@ void BinaryEmitter::emitFunctionBodyRaw(BinaryFunction &BF) {
   assert(!BF.isInjected() && "cannot emit raw body of injected function");
 
   // Raw contents of the function.
-  StringRef SectionContents = BF.getSection().getContents();
+  StringRef SectionContents = BF.getOriginSection()->getContents();
 
   // Raw contents of the function.
   StringRef FunctionContents = SectionContents.substr(
-      BF.getAddress() - BF.getSection().getAddress(), BF.getSize());
+      BF.getAddress() - BF.getOriginSection()->getAddress(), BF.getSize());
 
   if (opts::Verbosity)
     outs() << "BOLT-INFO: emitting function " << BF << " in raw ("

@@ -14,6 +14,7 @@
 #include "BinaryFunction.h"
 #include "DynoStats.h"
 #include "MCPlusBuilder.h"
+#include "NameResolver.h"
 #include "NameShortener.h"
 #include "llvm/ADT/edit_distance.h"
 #include "llvm/ADT/SmallSet.h"
@@ -246,8 +247,7 @@ BinaryFunction::hasNameRegex(const StringRef Name) const {
 }
 
 std::string BinaryFunction::getDemangledName() const {
-  StringRef MangledName = getOneName();
-  MangledName = MangledName.substr(0, MangledName.find_first_of('/'));
+  StringRef MangledName = NameResolver::restore(getOneName());
   int Status = 0;
   char *const Name =
       abi::__cxa_demangle(MangledName.str().c_str(), 0, 0, &Status);
@@ -396,7 +396,7 @@ void BinaryFunction::print(raw_ostream &OS, std::string Annotation,
     return;
 
   StringRef SectionName =
-      IsInjected ? "<no input section>" : InputSection->getName();
+      OriginSection ? OriginSection->getName() : "<no origin section>";
   OS << "Binary Function \"" << *this << "\" " << Annotation << " {";
   auto AllNames = getNames();
   if (AllNames.size() > 1) {
@@ -911,7 +911,7 @@ MCSymbol *BinaryFunction::getOrCreateLocalLabel(uint64_t Address,
 }
 
 ErrorOr<ArrayRef<uint8_t>> BinaryFunction::getData() const {
-  auto &Section = getSection();
+  BinarySection &Section = *getOriginSection();
   assert(Section.containsRange(getAddress(), getMaxSize()) &&
          "wrong section for function");
 
@@ -1552,7 +1552,7 @@ bool BinaryFunction::scanExternalRefs() {
         Success = false;
         continue;
       }
-      Rel->Offset +=  getAddress() - getSection().getAddress() + Offset;
+      Rel->Offset +=  getAddress() - getOriginSection()->getAddress() + Offset;
       FunctionRelocations.push_back(*Rel);
     }
 
@@ -1563,7 +1563,7 @@ bool BinaryFunction::scanExternalRefs() {
   // Add relocations unless disassembly failed for this function.
   if (!DisassemblyFailed) {
     for (auto &Rel : FunctionRelocations) {
-      getSection().addPendingRelocation(Rel);
+      getOriginSection()->addPendingRelocation(Rel);
     }
   }
 
@@ -3924,7 +3924,7 @@ bool BinaryFunction::isSymbolValidInScope(const SymbolRef &Symbol,
                                           uint64_t SymbolSize) const {
   // If this symbol is in a different section from the one where the
   // function symbol is, don't consider it as valid.
-  if (!getSection().containsAddress(
+  if (!getOriginSection()->containsAddress(
           cantFail(Symbol.getAddress(), "cannot get symbol address")))
     return false;
 

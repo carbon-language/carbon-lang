@@ -197,8 +197,8 @@ private:
   /// the function to its name in a profile, command line, etc.
   std::vector<std::string> Aliases;
 
-  /// Containing section
-  BinarySection *InputSection = nullptr;
+  /// Containing section in the input file.
+  BinarySection *OriginSection = nullptr;
 
   /// Address of the function in memory. Also could be an offset from
   /// base address for position independent binaries.
@@ -316,6 +316,8 @@ private:
   bool IsPatched{false};
 
   /// The address for the code for this function in codegen memory.
+  /// Used for functions that are emitted in a dedicated section with a fixed
+  /// address. E.g. for functions that are overwritten in-place.
   uint64_t ImageAddress{0};
 
   /// The size of the code in memory.
@@ -665,7 +667,7 @@ private:
   /// Creation should be handled by RewriteInstance or BinaryContext
   BinaryFunction(const std::string &Name, BinarySection &Section,
                  uint64_t Address, uint64_t Size, BinaryContext &BC)
-      : InputSection(&Section), Address(Address), Size(Size), BC(BC),
+      : OriginSection(&Section), Address(Address), Size(Size), BC(BC),
         CodeSectionName(buildCodeSectionName(Name, BC)),
         ColdCodeSectionName(buildColdCodeSectionName(Name, BC)),
         FunctionNumber(++Count) {
@@ -1068,11 +1070,17 @@ public:
            getState() == State::Emitted;
   }
 
-  BinarySection &getSection() const {
-    assert(InputSection);
-    return *InputSection;
+  /// Return the section in the input binary this function originated from or
+  /// nullptr if the function did not originate from the file.
+  BinarySection *getOriginSection() const {
+    return OriginSection;
   }
 
+  void setOriginSection(BinarySection *Section) {
+    OriginSection = Section;
+  }
+
+  /// Return true if the function did not originate from the primary input file.
   bool isInjected() const {
     return IsInjected;
   }
@@ -1330,9 +1338,11 @@ public:
     //      Relocation{Offset, Symbol, RelType, Addend, Value};
   }
 
-  /// Return then name of the section this function originated from.
-  StringRef getOriginSectionName() const {
-    return getSection().getName();
+  /// Return the name of the section this function originated from.
+  Optional<StringRef> getOriginSectionName() const {
+    if (!OriginSection)
+      return NoneType();
+    return OriginSection->getName();
   }
 
   /// Return internal section name for this function.

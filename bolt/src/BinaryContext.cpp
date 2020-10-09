@@ -1341,6 +1341,20 @@ std::vector<BinaryFunction *> BinaryContext::getSortedFunctions() {
   return SortedFunctions;
 }
 
+std::vector<BinaryFunction *> BinaryContext::getAllBinaryFunctions() {
+  std::vector<BinaryFunction *> AllFunctions;
+  AllFunctions.reserve(BinaryFunctions.size() + InjectedBinaryFunctions.size());
+  std::transform(BinaryFunctions.begin(), BinaryFunctions.end(),
+                 std::back_inserter(AllFunctions),
+                 [](std::pair<const uint64_t, BinaryFunction> &BFI) {
+                   return &BFI.second;
+                 });
+  std::copy(InjectedBinaryFunctions.begin(), InjectedBinaryFunctions.end(),
+            std::back_inserter(AllFunctions));
+
+  return AllFunctions;
+}
+
 void BinaryContext::preprocessDebugInfo() {
   // Populate MCContext with DWARF files.
   for (const auto &CU : DwCtx->compile_units()) {

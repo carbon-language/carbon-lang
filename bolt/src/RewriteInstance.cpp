@@ -396,7 +396,8 @@ WriteBoltInfoSection("bolt-info",
 
 bool isHotTextMover(const BinaryFunction &Function) {
   for (auto &SectionName : opts::HotTextMoveSections) {
-    if (Function.getOriginSectionName() == SectionName)
+    if (Function.getOriginSectionName() &&
+        *Function.getOriginSectionName() == SectionName)
       return true;
   }
 
@@ -1420,7 +1421,7 @@ void RewriteInstance::adjustFunctionBoundaries() {
     }
 
     // Function runs at most till the end of the containing section.
-    uint64_t NextObjectAddress = Function.getSection().getEndAddress();
+    uint64_t NextObjectAddress = Function.getOriginSection()->getEndAddress();
     // Or till the next object marked by a symbol.
     if (NextSymRefI != FileSymRefs.end()) {
       NextObjectAddress = std::min(NextSymRefI->first, NextObjectAddress);
@@ -2344,7 +2345,7 @@ void RewriteInstance::readRelocations(const SectionRef &Section) {
       }
     } else if (ReferencedBF) {
       assert(RefSection && "section expected for section relocation");
-      if (ReferencedBF->getSection() != *RefSection) {
+      if (*ReferencedBF->getOriginSection() != *RefSection) {
         DEBUG(dbgs() << "BOLT-DEBUG: ignoring false function reference\n");
         ReferencedBF = nullptr;
       }
@@ -3006,17 +3007,23 @@ void RewriteInstance::emitAndLink() {
 
   // Once the code is emitted, we can rename function sections to actual
   // output sections and de-register sections used for emission.
-  if (!BC->HasRelocations) {
-    for (auto &BFI : BC->getBinaryFunctions()) {
-      auto &Function = BFI.second;
-      if (auto Section = Function.getCodeSection())
-        BC->deregisterSection(*Section);
-      Function.CodeSectionName = Function.getOriginSectionName();
-      if (Function.isSplit()) {
-        if (auto ColdSection = Function.getColdCodeSection())
-          BC->deregisterSection(*ColdSection);
-        Function.ColdCodeSectionName = ".bolt.text";
-      }
+  for (BinaryFunction *Function : BC->getAllBinaryFunctions()) {
+    ErrorOr<BinarySection &> Section = Function->getCodeSection();
+    if (Section && (Function->getImageAddress() == 0 ||
+                    Function->getImageSize() == 0)) {
+      continue;
+    }
+
+    // Restore origin section for functions that were emitted or supposed to
+    // be emitted to patch sections.
+    if (Section)
+      BC->deregisterSection(*Section);
+    assert(Function->getOriginSectionName() && "expected origin section");
+    Function->CodeSectionName = *Function->getOriginSectionName();
+    if (Function->isSplit()) {
+      if (auto ColdSection = Function->getColdCodeSection())
+        BC->deregisterSection(*ColdSection);
+      Function->ColdCodeSectionName = ".bolt.text";
     }
   }
 
@@ -3159,8 +3166,32 @@ void RewriteInstance::mapCodeSections(orc::VModuleKey Key) {
   if (BC->HasRelocations) {
     assert(TextSection->hasValidSectionID() && ".text section should be valid");
 
+    // Map sections for functions with pre-assigned addresses.
+    for (auto *InjectedFunction : BC->getInjectedBinaryFunctions()) {
+      const uint64_t OutputAddress = InjectedFunction->getOutputAddress();
+      if (!OutputAddress)
+        continue;
+
+      ErrorOr<BinarySection &> FunctionSection =
+          InjectedFunction->getCodeSection();
+      assert(FunctionSection && "function should have section");
+      FunctionSection->setOutputAddress(OutputAddress);
+      OLT->mapSectionAddress(Key, FunctionSection->getSectionID(),
+                             OutputAddress);
+      InjectedFunction->setImageAddress(FunctionSection->getAllocAddress());
+      InjectedFunction->setImageSize(FunctionSection->getOutputSize());
+    }
+
     // Populate the list of sections to be allocated.
-    auto CodeSections = getCodeSections();
+    std::vector<BinarySection *> CodeSections = getCodeSections();
+
+    // Remove sections that were pre-allocated (patch sections).
+    CodeSections.erase(
+        std::remove_if(CodeSections.begin(), CodeSections.end(),
+                       [](BinarySection *Section) {
+                         return Section->getOutputAddress();
+                       }),
+        CodeSections.end());
     DEBUG(dbgs() << "Code sections in the order of output:\n";
       for (const auto *Section : CodeSections) {
         dbgs() << Section->getName() << '\n';
@@ -3435,13 +3466,8 @@ void RewriteInstance::mapExtraSections(orc::VModuleKey Key) {
 }
 
 void RewriteInstance::updateOutputValues(const MCAsmLayout &Layout) {
-  for (auto &BFI : BC->getBinaryFunctions()) {
-    auto &Function = BFI.second;
-    Function.updateOutputValues(Layout);
-  }
-
-  for (auto *InjectedFunction : BC->getInjectedBinaryFunctions()) {
-    InjectedFunction->updateOutputValues(Layout);
+  for (BinaryFunction *Function : BC->getAllBinaryFunctions()) {
+    Function->updateOutputValues(Layout);
   }
 }
 
@@ -4038,34 +4064,6 @@ void RewriteInstance::updateELFSymbolTable(
   // point.
   auto addExtraSymbols = [&](const BinaryFunction &Function,
                              const ELFSymTy &FunctionSymbol) {
-    if (Function.isPatched()) {
-      Function.forEachEntryPoint([&](uint64_t Offset, const MCSymbol *Symbol) {
-        ELFSymTy OrgSymbol = FunctionSymbol;
-        SmallVector<char, 256> Buf;
-        if (!Offset) {
-          // Use the original function symbol name. This guarantees that the
-          // name will be unique.
-          OrgSymbol.st_name = AddToStrTab(
-              Twine(cantFail(FunctionSymbol.getName(StringSection)))
-                .concat(".org.0").
-                toStringRef(Buf));
-          OrgSymbol.st_size = Function.getSize();
-        } else {
-          // It's unlikely that multiple functions with secondary entries will
-          // get folded/merged. However, in case this happens, we force local
-          // symbol visibility for secondary entries.
-          OrgSymbol.st_name = AddToStrTab(
-              Twine(Symbol->getName()).concat(".org.0").toStringRef(Buf));
-          OrgSymbol.setBindingAndType(ELF::STB_LOCAL, ELF::STT_FUNC);
-          OrgSymbol.st_size = 0;
-        }
-        OrgSymbol.st_value = Function.getAddress() + Offset;
-        OrgSymbol.st_shndx =
-          NewSectionIndex[Function.getSection().getSectionRef().getIndex()];
-        Symbols.emplace_back(OrgSymbol);
-        return true;
-      });
-    }
     if (Function.isFolded()) {
       auto *ICFParent = Function.getFoldedIntoFunction();
       while (ICFParent->isFolded())
@@ -4173,7 +4171,8 @@ void RewriteInstance::updateELFSymbolTable(
     // and its value is ignored by the runtime if it's different from
     // SHN_UNDEF and SHN_ABS.
     if (!PatchExisting && Function &&
-        Symbol.st_shndx != Function->getSection().getSectionRef().getIndex())
+        Symbol.st_shndx !=
+                      Function->getOriginSection()->getSectionRef().getIndex())
       Function = nullptr;
 
     // Create a new symbol based on the existing symbol.
@@ -4299,7 +4298,10 @@ void RewriteInstance::updateELFSymbolTable(
   // Add symbols of injected functions
   for (BinaryFunction *Function : BC->getInjectedBinaryFunctions()) {
     ELFSymTy NewSymbol;
-    NewSymbol.st_shndx = Function->getCodeSection()->getIndex();
+    BinarySection *OriginSection = Function->getOriginSection();
+    NewSymbol.st_shndx = OriginSection ?
+          NewSectionIndex[OriginSection->getSectionRef().getIndex()] :
+          Function->getCodeSection()->getIndex();
     NewSymbol.st_value = Function->getOutputAddress();
     NewSymbol.st_name = AddToStrTab(Function->getOneName());
     NewSymbol.st_size = Function->getOutputSize();
@@ -4441,7 +4443,7 @@ void RewriteInstance::patchELFSymTabs(ELFObjectFile<ELFT> *File) {
       },
       [&](StringRef Str) {
         size_t Idx = NewStrTab.size();
-        NewStrTab.append(Str.data(), Str.size());
+        NewStrTab.append(NameResolver::restore(Str).str());
         NewStrTab.append(1, '\0');
         return Idx;
       });
@@ -4699,92 +4701,91 @@ void RewriteInstance::rewriteFile() {
   assert(Offset == getFileOffsetForAddress(NextAvailableAddress) &&
          "error resizing output file");
 
-  if (!BC->HasRelocations) {
-    // Overwrite functions in the output file.
-    uint64_t CountOverwrittenFunctions = 0;
-    uint64_t OverwrittenScore = 0;
-    for (auto &BFI : BC->getBinaryFunctions()) {
-      auto &Function = BFI.second;
+  // Overwrite functions with fixed output address.
+  uint64_t CountOverwrittenFunctions = 0;
+  uint64_t OverwrittenScore = 0;
+  for (BinaryFunction *Function : BC->getAllBinaryFunctions()) {
 
-      if (Function.getImageAddress() == 0 || Function.getImageSize() == 0)
-        continue;
+    if (Function->getImageAddress() == 0 || Function->getImageSize() == 0)
+      continue;
 
-      if (Function.getImageSize() > Function.getMaxSize()) {
-        if (opts::Verbosity >= 1) {
-          errs() << "BOLT-WARNING: new function size (0x"
-                 << Twine::utohexstr(Function.getImageSize())
-                 << ") is larger than maximum allowed size (0x"
-                 << Twine::utohexstr(Function.getMaxSize())
-                 << ") for function " << Function << '\n';
-        }
-        FailedAddresses.emplace_back(Function.getAddress());
-        continue;
+    if (Function->getImageSize() > Function->getMaxSize()) {
+      if (opts::Verbosity >= 1) {
+        errs() << "BOLT-WARNING: new function size (0x"
+               << Twine::utohexstr(Function->getImageSize())
+               << ") is larger than maximum allowed size (0x"
+               << Twine::utohexstr(Function->getMaxSize())
+               << ") for function " << *Function << '\n';
       }
+      FailedAddresses.emplace_back(Function->getAddress());
+      continue;
+    }
 
-      if (Function.isSplit() && (Function.cold().getImageAddress() == 0 ||
-                                 Function.cold().getImageSize() == 0))
-        continue;
+    if (Function->isSplit() && (Function->cold().getImageAddress() == 0 ||
+                                Function->cold().getImageSize() == 0))
+      continue;
 
-      OverwrittenScore += Function.getFunctionScore();
-      // Overwrite function in the output file.
-      if (opts::Verbosity >= 2) {
-        outs() << "BOLT: rewriting function \"" << Function << "\"\n";
-      }
-      OS.pwrite(reinterpret_cast<char *>(Function.getImageAddress()),
-                Function.getImageSize(),
-                Function.getFileOffset());
+    OverwrittenScore += Function->getFunctionScore();
+    // Overwrite function in the output file.
+    if (opts::Verbosity >= 2) {
+      outs() << "BOLT: rewriting function \"" << *Function << "\"\n";
+    }
+    OS.pwrite(reinterpret_cast<char *>(Function->getImageAddress()),
+              Function->getImageSize(),
+              Function->getFileOffset());
 
-      // Write nops at the end of the function.
+    // Write nops at the end of the function.
+    if (Function->getMaxSize() != std::numeric_limits<uint64_t>::max()) {
       auto Pos = OS.tell();
-      OS.seek(Function.getFileOffset() + Function.getImageSize());
-      MAB->writeNopData(Function.getMaxSize() - Function.getImageSize(),
+      OS.seek(Function->getFileOffset() + Function->getImageSize());
+      MAB->writeNopData(Function->getMaxSize() - Function->getImageSize(),
                         &Writer);
       OS.seek(Pos);
+    }
 
-      // Write jump tables if updating in-place.
-      if (opts::JumpTables == JTS_BASIC) {
-        for (auto &JTI : Function.JumpTables) {
-          auto *JT = JTI.second;
-          auto &Section = JT->getOutputSection();
-          Section.setOutputFileOffset(
-              getFileOffsetForAddress(JT->getAddress()));
-          assert(Section.getOutputFileOffset() && "no matching offset in file");
-          OS.pwrite(reinterpret_cast<const char*>(Section.getOutputData()),
-                    Section.getOutputSize(),
-                    Section.getOutputFileOffset());
-        }
+    // Write jump tables if updating in-place.
+    if (opts::JumpTables == JTS_BASIC) {
+      for (auto &JTI : Function->JumpTables) {
+        auto *JT = JTI.second;
+        auto &Section = JT->getOutputSection();
+        Section.setOutputFileOffset(
+            getFileOffsetForAddress(JT->getAddress()));
+        assert(Section.getOutputFileOffset() && "no matching offset in file");
+        OS.pwrite(reinterpret_cast<const char*>(Section.getOutputData()),
+                  Section.getOutputSize(),
+                  Section.getOutputFileOffset());
       }
+    }
 
-      if (!Function.isSplit()) {
-        ++CountOverwrittenFunctions;
-        if (opts::MaxFunctions &&
-            CountOverwrittenFunctions == opts::MaxFunctions) {
-          outs() << "BOLT: maximum number of functions reached\n";
-          break;
-        }
-        continue;
-      }
-
-      // Write cold part
-      if (opts::Verbosity >= 2) {
-        outs() << "BOLT: rewriting function \"" << Function
-               << "\" (cold part)\n";
-      }
-      OS.pwrite(reinterpret_cast<char*>(Function.cold().getImageAddress()),
-                Function.cold().getImageSize(),
-                Function.cold().getFileOffset());
-
-      // FIXME: write nops after cold part too.
-
+    if (!Function->isSplit()) {
       ++CountOverwrittenFunctions;
       if (opts::MaxFunctions &&
           CountOverwrittenFunctions == opts::MaxFunctions) {
         outs() << "BOLT: maximum number of functions reached\n";
         break;
       }
+      continue;
     }
 
-    // Print function statistics.
+    // Write cold part
+    if (opts::Verbosity >= 2) {
+      outs() << "BOLT: rewriting function \"" << *Function
+             << "\" (cold part)\n";
+    }
+    OS.pwrite(reinterpret_cast<char*>(Function->cold().getImageAddress()),
+              Function->cold().getImageSize(),
+              Function->cold().getFileOffset());
+
+    ++CountOverwrittenFunctions;
+    if (opts::MaxFunctions &&
+        CountOverwrittenFunctions == opts::MaxFunctions) {
+      outs() << "BOLT: maximum number of functions reached\n";
+      break;
+    }
+  }
+
+  // Print function statistics for non-relocation mode.
+  if (!BC->HasRelocations) {
     outs() << "BOLT: " << CountOverwrittenFunctions
            << " out of " << BC->getBinaryFunctions().size()
            << " functions were overwritten.\n";
