@@ -21,6 +21,11 @@ repos:
       - id: mixed-line-ending
         args: ['--fix=lf']
       - id: trailing-whitespace
+  - repo: https://github.com/carbon-language/carbon-project-tools
+    rev: v1.0.0
+    hooks:
+      - id: check-copyright
+        exclude: '^src/jekyll/(Gemfile.lock|theme/.*)$'
   - repo: https://github.com/codespell-project/codespell
     rev: v1.17.1
     hooks:
