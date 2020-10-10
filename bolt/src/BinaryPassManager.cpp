@@ -502,7 +502,8 @@ void BinaryFunctionPassManager::runAllPasses(BinaryContext &BC) {
   Manager.registerPass(llvm::make_unique<AssignSections>());
 
   // Patch original function entries
-  Manager.registerPass(llvm::make_unique<PatchEntries>());
+  if (BC.HasRelocations)
+    Manager.registerPass(llvm::make_unique<PatchEntries>());
 
   // Tighten branches according to offset differences between branch and
   // targets. No extra instructions after this pass, otherwise we may have

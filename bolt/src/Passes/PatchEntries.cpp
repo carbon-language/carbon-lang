@@ -35,9 +35,6 @@ namespace llvm {
 namespace bolt {
 
 void PatchEntries::runOnFunctions(BinaryContext &BC) {
-  if (!BC.HasRelocations)
-    return;
-
   if (!opts::ForcePatch) {
     // Mark the binary for patching if we did not create external references
     // for original code in any of functions we are not going to emit.
