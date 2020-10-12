@@ -22,6 +22,7 @@
 #include "DebugData.h"
 #include "JumpTable.h"
 #include "MCPlus.h"
+#include "NameResolver.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/ilist.h"
 #include "llvm/ADT/iterator.h"
@@ -1209,7 +1210,7 @@ public:
       return ColdSymbol;
 
     ColdSymbol = BC.Ctx->getOrCreateSymbol(
-        Twine(getSymbol()->getName()).concat(".cold"));
+        NameResolver::append(getSymbol()->getName(), ".cold.0"));
 
     return ColdSymbol;
   }

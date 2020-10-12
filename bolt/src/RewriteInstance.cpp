@@ -3023,7 +3023,7 @@ void RewriteInstance::emitAndLink() {
     if (Function->isSplit()) {
       if (auto ColdSection = Function->getColdCodeSection())
         BC->deregisterSection(*ColdSection);
-      Function->ColdCodeSectionName = ".bolt.text";
+      Function->ColdCodeSectionName = getBOLTTextSectionName();
     }
   }
 
