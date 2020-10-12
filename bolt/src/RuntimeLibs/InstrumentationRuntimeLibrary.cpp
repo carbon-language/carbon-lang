@@ -66,19 +66,31 @@ void InstrumentationRuntimeLibrary::emitBinary(BinaryContext &BC,
     errs() << "BOLT-ERROR: failed to locate function at binary start address\n";
     exit(1);
   }
+
   const auto *FiniFunction =
-      BC.getBinaryFunctionAtAddress(*BC.FiniFunctionAddress);
-  assert(!FiniFunction->isFragment() && "expected main function fragment");
-  if (!FiniFunction) {
-    errs() << "BOLT-ERROR: failed to locate function at binary fini address\n";
-    exit(1);
+      BC.FiniFunctionAddress
+          ? BC.getBinaryFunctionAtAddress(*BC.FiniFunctionAddress)
+          : nullptr;
+  if (BC.isELF()) {
+    assert(!FiniFunction->isFragment() && "expected main function fragment");
+    if (!FiniFunction) {
+      errs()
+          << "BOLT-ERROR: failed to locate function at binary fini address\n";
+      exit(1);
+    }
   }
 
-  const auto Flags = BinarySection::getFlags(/*IsReadOnly=*/false,
-                                             /*IsText=*/false,
-                                             /*IsAllocatable=*/true);
-  auto *Section =
-      BC.Ctx->getELFSection(".bolt.instr.counters", ELF::SHT_PROGBITS, Flags);
+  MCSection *Section = BC.isELF()
+                           ? static_cast<MCSection *>(BC.Ctx->getELFSection(
+                                 ".bolt.instr.counters", ELF::SHT_PROGBITS,
+                                 BinarySection::getFlags(/*IsReadOnly=*/false,
+                                                         /*IsText=*/false,
+                                                         /*IsAllocatable=*/true)
+
+                                     ))
+                           : static_cast<MCSection *>(BC.Ctx->getMachOSection(
+                                 "__INSTR", "__counters", MachO::S_REGULAR,
+                                 SectionKind::getData()));
 
   // All of the following symbols will be exported as globals to be used by the
   // instrumentation runtime library to dump the instrumentation data to disk.
@@ -151,10 +163,12 @@ void InstrumentationRuntimeLibrary::emitBinary(BinaryContext &BC,
   Streamer.EmitSymbolAttribute(InitPtr, MCSymbolAttr::MCSA_Global);
   Streamer.EmitValue(
       MCSymbolRefExpr::create(StartFunction->getSymbol(), *BC.Ctx), /*Size=*/8);
-  Streamer.EmitLabel(FiniPtr);
-  Streamer.EmitSymbolAttribute(FiniPtr, MCSymbolAttr::MCSA_Global);
-  Streamer.EmitValue(
+  if (FiniFunction) {
+    Streamer.EmitLabel(FiniPtr);
+    Streamer.EmitSymbolAttribute(FiniPtr, MCSymbolAttr::MCSA_Global);
+    Streamer.EmitValue(
       MCSymbolRefExpr::create(FiniFunction->getSymbol(), *BC.Ctx), /*Size=*/8);
+  }
 }
 
 void InstrumentationRuntimeLibrary::link(BinaryContext &BC, StringRef ToolPath,

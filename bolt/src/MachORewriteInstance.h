@@ -50,6 +50,7 @@ class MachORewriteInstance {
 
   static StringRef getOrgSecPrefix() { return ".bolt.org"; }
 
+  void mapExtraSections(orc::VModuleKey Key);
   void mapCodeSections(orc::VModuleKey Key);
 
   void adjustCommandLineOptions();

@@ -15,6 +15,8 @@
 #include "BinaryFunction.h"
 #include "BinaryPassManager.h"
 #include "ExecutableFileMemoryManager.h"
+#include "JumpTable.h"
+#include "Passes/Instrumentation.h"
 #include "Passes/PatchEntries.h"
 #include "Utils.h"
 #include "llvm/ExecutionEngine/Orc/RTDyldObjectLinkingLayer.h"
@@ -32,6 +34,8 @@ extern cl::opt<unsigned> AlignText;
 extern cl::opt<bool> CheckOverlappingElements;
 extern cl::opt<bool> ForcePatch;
 extern cl::opt<bool> Instrument;
+extern cl::opt<bool> InstrumentCalls;
+extern cl::opt<bolt::JumpTableSupportLevel> JumpTables;
 extern cl::opt<bool> KeepTmp;
 extern cl::opt<bool> NeverPrint;
 extern cl::opt<std::string> OutputFilename;
@@ -266,8 +270,10 @@ void MachORewriteInstance::postProcessFunctions() {
 
 void MachORewriteInstance::runOptimizationPasses() {
   BinaryFunctionPassManager Manager(*BC);
-  if (opts::Instrument)
+  if (opts::Instrument) {
     Manager.registerPass(llvm::make_unique<PatchEntries>());
+    Manager.registerPass(llvm::make_unique<Instrumentation>(opts::NeverPrint));
+  }
   Manager.registerPass(
       llvm::make_unique<ReorderBasicBlocks>(opts::PrintReordered));
   Manager.registerPass(
@@ -277,6 +283,17 @@ void MachORewriteInstance::runOptimizationPasses() {
       llvm::make_unique<FinalizeFunctions>(opts::PrintFinalized));
 
   Manager.runPasses();
+}
+
+void MachORewriteInstance::mapExtraSections(orc::VModuleKey Key) {
+  if (!opts::Instrument)
+    return;
+  ErrorOr<BinarySection &> Counters = BC->getUniqueSectionByName("__counters");
+  if (!Counters) {
+    llvm::errs() << "Cannot find __counters section\n";
+    exit(1);
+  }
+  OLT->mapSectionAddress(Key, Counters->getSectionID(), Counters->getAddress());
 }
 
 void MachORewriteInstance::mapCodeSections(orc::VModuleKey Key) {
@@ -403,6 +420,7 @@ void MachORewriteInstance::emitAndLink() {
           const RuntimeDyld::LoadedObjectInfo &) {
         assert(Key == K && "Linking multiple objects is unsupported");
         mapCodeSections(Key);
+        mapExtraSections(Key);
       },
       [&](orc::VModuleKey Key) {
         assert(Key == K && "Linking multiple objects is unsupported");
@@ -449,6 +467,8 @@ void MachORewriteInstance::adjustCommandLineOptions() {
     opts::AlignText = BC->PageAlign;
   if (opts::Instrument.getNumOccurrences())
     opts::ForcePatch = true;
+  opts::JumpTables = JTS_MOVE;
+  opts::InstrumentCalls = false;
 }
 
 void MachORewriteInstance::run() {
