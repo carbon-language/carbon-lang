@@ -290,16 +290,19 @@ bool BinaryEmitter::emitFunction(BinaryFunction &Function, bool EmitColdPart) {
   MCContext &Context = Streamer.getContext();
   const MCAsmInfo *MAI = Context.getAsmInfo();
 
+  MCSymbol *StartSymbol = nullptr;
+
   // Emit all symbols associated with the main function entry.
   if (!EmitColdPart) {
-    for (auto *Symbol : Function.getSymbols()) {
+    StartSymbol = Function.getSymbol();
+    for (MCSymbol *Symbol : Function.getSymbols()) {
       Streamer.EmitSymbolAttribute(Symbol, MCSA_ELF_TypeFunction);
       Streamer.EmitLabel(Symbol);
     }
   } else {
-    auto *Symbol = Function.getColdSymbol();
-    Streamer.EmitSymbolAttribute(Symbol, MCSA_ELF_TypeFunction);
-    Streamer.EmitLabel(Symbol);
+    StartSymbol = Function.getColdSymbol();
+    Streamer.EmitSymbolAttribute(StartSymbol, MCSA_ELF_TypeFunction);
+    Streamer.EmitLabel(StartSymbol);
   }
 
   // Emit CFI start
@@ -358,8 +361,16 @@ bool BinaryEmitter::emitFunction(BinaryFunction &Function, bool EmitColdPart) {
   if (Function.hasCFI())
     Streamer.EmitCFIEndProc();
 
-  Streamer.EmitLabel(EmitColdPart ? Function.getFunctionColdEndLabel()
-                                  : Function.getFunctionEndLabel());
+  MCSymbol *EndSymbol = EmitColdPart ? Function.getFunctionColdEndLabel()
+                                     : Function.getFunctionEndLabel();
+  Streamer.EmitLabel(EndSymbol);
+
+  if (MAI->hasDotTypeDotSizeDirective()) {
+    const MCExpr *SizeExpr = MCBinaryExpr::createSub(
+        MCSymbolRefExpr::create(EndSymbol, Context),
+        MCSymbolRefExpr::create(StartSymbol, Context), Context);
+    Streamer.emitELFSize(StartSymbol, SizeExpr);
+  }
 
   // Exception handling info for the function.
   emitLSDA(Function, EmitColdPart);
