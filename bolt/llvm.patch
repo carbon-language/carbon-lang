@@ -3295,7 +3295,7 @@ index b544fa5c147..c885bf9f037 100644
                                         MemoryBufferRef M, const uint8_t *base) {
    // The field for the number of relocations in COFF section table is only
 diff --git a/lib/Object/MachOObjectFile.cpp b/lib/Object/MachOObjectFile.cpp
-index adc54b42eba..d03598e5b0e 100644
+index adc54b42eba..e144264d7e9 100644
 --- a/lib/Object/MachOObjectFile.cpp
 +++ b/lib/Object/MachOObjectFile.cpp
 @@ -25,6 +25,7 @@
@@ -3330,7 +3330,7 @@ index adc54b42eba..d03598e5b0e 100644
      return Error::success();
  
    for (auto it=Elements.begin() ; it != Elements.end(); ++it) {
-@@ -1626,6 +1635,60 @@ MachOObjectFile::MachOObjectFile(MemoryBufferRef Object, bool IsLittleEndian,
+@@ -1626,6 +1635,66 @@ MachOObjectFile::MachOObjectFile(MemoryBufferRef Object, bool IsLittleEndian,
    }
    assert(LoadCommands.size() == LoadCommandCount);
  
@@ -3377,6 +3377,12 @@ index adc54b42eba..d03598e5b0e 100644
 +    Expected<uint64_t> Addr = S.getAddress();
 +    if (!Addr)
 +      llvm_unreachable("Defined symbols without address");
++    Expected<StringRef> Name = getSymbolName(DRI);
++    if (Name && *Name == "_end")
++      continue;
++    else
++      consumeError(Name.takeError());
++
 +    if (Sec != End && Sec->getAddress() <= *Addr) {
 +      while ((Sec != End) && (Sec->getAddress() + Sec->getSize() <= *Addr))
 +        ++Sec;
@@ -3391,7 +3397,25 @@ index adc54b42eba..d03598e5b0e 100644
    Err = Error::success();
  }
  
-@@ -1836,9 +1899,7 @@ uint32_t MachOObjectFile::getSymbolFlags(DataRefImpl DRI) const {
+@@ -1784,10 +1853,17 @@ MachOObjectFile::getSymbolType(DataRefImpl Symb) const {
+     case MachO::N_UNDF :
+       return SymbolRef::ST_Unknown;
+     case MachO::N_SECT :
++      Expected<StringRef> Name = getSymbolName(Symb);
++      if (Name && *Name == "_end")
++        return SymbolRef::ST_Data;
++      else
++        consumeError(Name.takeError());
++
+       Expected<section_iterator> SecOrError = getSymbolSection(Symb);
+       if (!SecOrError)
+         return SecOrError.takeError();
+       section_iterator Sec = *SecOrError;
++      assert((Sec != sections().end()) && "unexpected sections end iterator");
+       if (Sec->isData() || Sec->isBSS())
+         return SymbolRef::ST_Data;
+       return SymbolRef::ST_Function;
+@@ -1836,9 +1912,7 @@ uint32_t MachOObjectFile::getSymbolFlags(DataRefImpl DRI) const {
  
  Expected<section_iterator>
  MachOObjectFile::getSymbolSection(DataRefImpl Symb) const {
@@ -3402,7 +3426,7 @@ index adc54b42eba..d03598e5b0e 100644
    if (index == 0)
      return section_end();
    DataRefImpl DRI;
-@@ -1986,6 +2047,11 @@ bool MachOObjectFile::isSectionStripped(DataRefImpl Sec) const {
+@@ -1986,6 +2060,11 @@ bool MachOObjectFile::isSectionStripped(DataRefImpl Sec) const {
    return getSection(Sec).offset == 0;
  }
  
