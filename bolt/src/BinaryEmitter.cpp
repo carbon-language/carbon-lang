@@ -177,7 +177,7 @@ private:
                      bool FirstInstr);
 
   /// Emit debug line information for functions that were not emitted.
-  void emitDebugLineInfoForNonSimpleFunctions();
+  void emitDebugLineInfoForOriginalFunctions();
 
   /// Emit function as a blob with relocations and labels for relocations.
   void emitFunctionBodyRaw(BinaryFunction &BF) LLVM_ATTRIBUTE_UNUSED;
@@ -199,8 +199,8 @@ void BinaryEmitter::emitAll(StringRef OrgSecPrefix) {
 
   emitFunctions();
 
-  if (!BC.HasRelocations && opts::UpdateDebugSections)
-    emitDebugLineInfoForNonSimpleFunctions();
+  if (opts::UpdateDebugSections)
+    emitDebugLineInfoForOriginalFunctions();
 
   emitDataSections(OrgSecPrefix);
 
@@ -911,11 +911,12 @@ void BinaryEmitter::emitLSDA(BinaryFunction &BF, bool EmitColdPart) {
   }
 }
 
-void BinaryEmitter::emitDebugLineInfoForNonSimpleFunctions() {
+void BinaryEmitter::emitDebugLineInfoForOriginalFunctions() {
   for (auto &It : BC.getBinaryFunctions()) {
     const auto &Function = It.second;
 
-    if (Function.isSimple())
+    // If the function was emitted, its line info was emitted with it.
+    if (Function.isEmitted())
       continue;
 
     auto ULT = Function.getDWARFUnitLineTable();
