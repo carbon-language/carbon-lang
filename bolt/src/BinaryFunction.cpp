@@ -179,9 +179,8 @@ bool emptyRange(const R &Range) {
 /// to point to this information, which is represented by a
 /// DebugLineTableRowRef. The returned pointer is null if no debug line
 /// information for this instruction was found.
-SMLoc findDebugLineInformationForInstructionAt(
-    uint64_t Address,
-    DWARFUnitLineTable &ULT) {
+SMLoc findDebugLineInformationForInstructionAt(uint64_t Address,
+    DWARFUnit *Unit, const DWARFDebugLine::LineTable *LineTable) {
   // We use the pointer in SMLoc to store an instance of DebugLineTableRowRef,
   // which occupies 64 bits. Thus, we can only proceed if the struct fits into
   // the pointer itself.
@@ -190,11 +189,6 @@ SMLoc findDebugLineInformationForInstructionAt(
       "Cannot fit instruction debug line information into SMLoc's pointer");
 
   SMLoc NullResult = DebugLineTableRowRef::NULL_ROW.toSMLoc();
-
-  auto &LineTable = ULT.second;
-  if (!LineTable)
-    return NullResult;
-
   uint32_t RowIndex = LineTable->lookupAddress(Address);
   if (RowIndex == LineTable->UnknownRowIndex)
     return NullResult;
@@ -206,7 +200,7 @@ SMLoc findDebugLineInformationForInstructionAt(
   DebugLineTableRowRef *InstructionLocation =
     reinterpret_cast<DebugLineTableRowRef *>(&Ptr);
 
-  InstructionLocation->DwCompileUnitIndex = ULT.first->getOffset();
+  InstructionLocation->DwCompileUnitIndex = Unit->getOffset();
   InstructionLocation->RowIndex = RowIndex + 1;
 
   return SMLoc::getFromPointer(Ptr);
@@ -968,8 +962,6 @@ bool BinaryFunction::disassemble() {
   auto &Ctx = BC.Ctx;
   auto &MIB = BC.MIB;
 
-  DWARFUnitLineTable ULT = getDWARFUnitLineTable();
-
   // Insert a label at the beginning of the function. This will be our first
   // basic block.
   Labels[0] = Ctx->createTempSymbol("BB0", false);
@@ -1355,9 +1347,11 @@ bool BinaryFunction::disassemble() {
     }
 
 add_instruction:
-    if (ULT.first && ULT.second) {
+    if (getDWARFLineTable()) {
       Instruction.setLoc(
-          findDebugLineInformationForInstructionAt(AbsoluteInstrAddr, ULT));
+          findDebugLineInformationForInstructionAt(AbsoluteInstrAddr,
+                                                   getDWARFUnit(),
+                                                   getDWARFLineTable()));
     }
 
     // Record offset of the instruction for profile matching.

@@ -58,8 +58,6 @@
 
 namespace llvm {
 
-class DWARFDebugInfoEntryMinimal;
-
 using namespace object;
 
 namespace bolt {

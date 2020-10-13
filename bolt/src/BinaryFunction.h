@@ -53,9 +53,6 @@ class DWARFDebugInfoEntryMinimal;
 
 namespace bolt {
 
-using DWARFUnitLineTable = std::pair<DWARFUnit *,
-                                     const DWARFDebugLine::LineTable *>;
-
 /// Types of macro-fusion alignment corrections.
 enum MacroFusionType {
   MFT_NONE,
@@ -364,15 +361,8 @@ private:
   /// Original LSDA address for the function.
   uint64_t LSDAAddress{0};
 
-  /// Associated DIEs in the .debug_info section with their respective CUs.
-  /// There can be multiple because of identical code folding.
-  std::vector<DWARFDie> SubprogramDIEs;
-
-  /// Line table for the function with containing compilation unit.
-  /// Because of identical code folding the function could have multiple
-  /// associated compilation units. The first of them with line number info
-  /// is referenced by UnitLineTable.
-  DWARFUnitLineTable UnitLineTable{nullptr, nullptr};
+  /// Containing compilation unit for the function.
+  DWARFUnit *DwarfUnit{nullptr};
 
   /// Last computed hash value. Note that the value could be recomputed using
   /// different parameters by every pass.
@@ -1424,11 +1414,6 @@ public:
     return HasEHRanges;
   }
 
-  /// Return true if the function has associated debug info.
-  bool hasDebugInfo() const {
-    return !SubprogramDIEs.empty();
-  }
-
   /// Return true if the function uses DW_CFA_GNU_args_size CFIs.
   bool usesGnuArgsSize() const {
     return UsesGnuArgsSize;
@@ -2368,35 +2353,19 @@ public:
                      OperandHashFuncTy OperandHashFunc =
                        [](const MCOperand&) { return std::string(); }) const;
 
-  /// Sets the associated .debug_info entry.
-  void addSubprogramDIE(const DWARFDie DIE) {
-    static std::mutex CriticalSectionMutex;
-    std::lock_guard<std::mutex> Lock(CriticalSectionMutex);
-    SubprogramDIEs.emplace_back(DIE);
+  void setDWARFUnit(DWARFUnit *Unit) {
+    DwarfUnit = Unit;
   }
 
-  void setDWARFUnitLineTable(DWARFUnit *Unit,
-                             const DWARFDebugLine::LineTable *Table) {
-    UnitLineTable = std::make_pair(Unit, Table);
+  /// Return DWARF compile unit for this function.
+  DWARFUnit *getDWARFUnit() const {
+    return DwarfUnit;
   }
 
-  /// Return all compilation units with entry for this function.
-  /// Because of identical code folding there could be multiple of these.
-  decltype(SubprogramDIEs) &getSubprogramDIEs() {
-    return SubprogramDIEs;
-  }
-
-  const decltype(SubprogramDIEs) &getSubprogramDIEs() const {
-    return SubprogramDIEs;
-  }
-
-  /// Return DWARF compile unit with line info for this function.
-  DWARFUnitLineTable &getDWARFUnitLineTable() {
-    return UnitLineTable;
-  }
-
-  const DWARFUnitLineTable &getDWARFUnitLineTable() const {
-    return UnitLineTable;
+  /// Return line info table for this function.
+  const DWARFDebugLine::LineTable *getDWARFLineTable() const {
+    return getDWARFUnit() ? BC.DwCtx->getLineTableForUnit(getDWARFUnit())
+                          : nullptr;
   }
 
   /// Finalize profile for the function.

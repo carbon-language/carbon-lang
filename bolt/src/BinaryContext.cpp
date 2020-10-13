@@ -1263,40 +1263,6 @@ void BinaryContext::printGlobalSymbols(raw_ostream& OS) const {
   }
 }
 
-namespace {
-
-/// Recursively finds DWARF DW_TAG_subprogram DIEs and match them with
-/// BinaryFunctions.
-void findSubprograms(const DWARFDie DIE,
-                     std::map<uint64_t, BinaryFunction> &BinaryFunctions) {
-  if (DIE.isSubprogramDIE()) {
-    uint64_t LowPC, HighPC, SectionIndex;
-    if (DIE.getLowAndHighPC(LowPC, HighPC, SectionIndex)) {
-      auto It = BinaryFunctions.find(LowPC);
-      if (It != BinaryFunctions.end()) {
-          It->second.addSubprogramDIE(DIE);
-      } else {
-        // The function must have been optimized away by GC.
-      }
-    } else {
-      const auto RangesVector = DIE.getAddressRanges();
-      for (const auto Range : DIE.getAddressRanges()) {
-        auto It = BinaryFunctions.find(Range.LowPC);
-        if (It != BinaryFunctions.end()) {
-            It->second.addSubprogramDIE(DIE);
-        }
-      }
-    }
-  }
-
-  for (auto ChildDIE = DIE.getFirstChild(); ChildDIE && !ChildDIE.isNULL();
-       ChildDIE = ChildDIE.getSibling()) {
-    findSubprograms(ChildDIE, BinaryFunctions);
-  }
-}
-
-} // namespace
-
 unsigned BinaryContext::addDebugFilenameToUnit(const uint32_t DestCUID,
                                                const uint32_t SrcCUID,
                                                unsigned FileIndex) {
@@ -1356,10 +1322,46 @@ std::vector<BinaryFunction *> BinaryContext::getAllBinaryFunctions() {
 }
 
 void BinaryContext::preprocessDebugInfo() {
-  // Populate MCContext with DWARF files.
+  struct CURange {
+    uint64_t LowPC;
+    uint64_t HighPC;
+    DWARFUnit *Unit;
+
+    bool operator<(const CURange &Other) const {
+      return LowPC < Other.LowPC;
+    }
+  };
+
+  // Building a map of address ranges to CUs similar to .debug_aranges and use
+  // it to assign CU to functions.
+  std::vector<CURange> AllRanges;
   for (const auto &CU : DwCtx->compile_units()) {
-    const auto CUID = CU->getOffset();
-    auto *LineTable = DwCtx->getLineTableForUnit(CU.get());
+    for (auto &Range : CU->getUnitDIE().getAddressRanges()) {
+      // Parts of the debug info could be invalidated due to corresponding code
+      // being removed from the binary by the linker. Hence we check if the
+      // address is a valid one.
+      if (containsAddress(Range.LowPC))
+        AllRanges.emplace_back(CURange{Range.LowPC, Range.HighPC, CU.get()});
+    }
+  }
+
+  std::sort(AllRanges.begin(), AllRanges.end());
+  for (auto &KV : BinaryFunctions) {
+    const uint64_t FunctionAddress = KV.first;
+    BinaryFunction &Function = KV.second;
+
+    auto It = std::partition_point(AllRanges.begin(), AllRanges.end(),
+        [=](CURange R) { return R.HighPC <= FunctionAddress; });
+    if (It != AllRanges.end() && It->LowPC <= FunctionAddress) {
+      Function.setDWARFUnit(It->Unit);
+    }
+  }
+
+  // Populate MCContext with DWARF files from all units.
+  for (const auto &CU : DwCtx->compile_units()) {
+    const uint32_t CUID = CU->getOffset();
+    const DWARFDebugLine::LineTable *LineTable =
+      DwCtx->getLineTableForUnit(CU.get());
     const auto &FileNames = LineTable->Prologue.FileNames;
     // Make sure empty debug line tables are registered too.
     if (FileNames.empty()) {
@@ -1381,99 +1383,6 @@ void BinaryContext::preprocessDebugInfo() {
       assert(FileName != "");
       cantFail(Ctx->getDwarfFile(Dir, FileName, 0, nullptr, None, CUID));
     }
-  }
-
-  // For each CU, iterate over its children DIEs and match subprogram DIEs to
-  // BinaryFunctions.
-
-  // Run findSubprograms on a range of compilation units
-  auto processBlock = [&](auto BlockBegin, auto BlockEnd) {
-    for (auto It = BlockBegin; It != BlockEnd; ++It) {
-      findSubprograms((*It)->getUnitDIE(false), BinaryFunctions);
-    }
-  };
-
-  if (opts::NoThreads) {
-    processBlock(DwCtx->compile_units().begin(), DwCtx->compile_units().end());
-  } else {
-    auto &ThreadPool = ParallelUtilities::getThreadPool();
-
-    // Divide compilation units uniformally into tasks.
-    unsigned BlockCost =
-        DwCtx->getNumCompileUnits() / (opts::TaskCount * opts::ThreadCount);
-    if (BlockCost == 0)
-      BlockCost = 1;
-
-    auto BlockBegin = DwCtx->compile_units().begin();
-    unsigned CurrentCost = 0;
-    for (auto It = DwCtx->compile_units().begin();
-         It != DwCtx->compile_units().end(); It++) {
-      CurrentCost++;
-      if (CurrentCost >= BlockCost) {
-        ThreadPool.async(processBlock, BlockBegin, std::next(It));
-        BlockBegin = std::next(It);
-        CurrentCost = 0;
-      }
-    }
-
-    ThreadPool.async(processBlock, BlockBegin, DwCtx->compile_units().end());
-    ThreadPool.wait();
-  }
-
-  for (auto &KV : BinaryFunctions) {
-    const auto FunctionAddress = KV.first;
-    auto &Function = KV.second;
-
-    // Sort associated CUs for deterministic update.
-    std::sort(Function.getSubprogramDIEs().begin(),
-              Function.getSubprogramDIEs().end(),
-              [](const DWARFDie &A, const DWARFDie &B) {
-                return A.getDwarfUnit()->getOffset() <
-                       B.getDwarfUnit()->getOffset();
-              });
-
-    // Some functions may not have a corresponding subprogram DIE
-    // yet they will be included in some CU and will have line number
-    // information. Hence we need to associate them with the CU and include
-    // in CU ranges.
-    if (Function.getSubprogramDIEs().empty()) {
-      if (auto DebugAranges = DwCtx->getDebugAranges()) {
-        auto CUOffset = DebugAranges->findAddress(FunctionAddress);
-        if (CUOffset != -1U) {
-          Function.addSubprogramDIE(
-              DWARFDie(DwCtx->getCompileUnitForOffset(CUOffset), nullptr));
-        }
-      }
-    }
-
-#ifdef DWARF_LOOKUP_ALL_RANGES
-    if (Function.getSubprogramDIEs().empty()) {
-      // Last resort - iterate over all compile units. This should not happen
-      // very often. If it does, we need to create a separate lookup table
-      // similar to .debug_aranges internally. This slows down processing
-      // considerably.
-      for (const auto &CU : DwCtx->compile_units()) {
-        const auto *CUDie = CU->getUnitDIE();
-        for (const auto &Range : CUDie->getAddressRanges(CU.get())) {
-          if (FunctionAddress >= Range.first &&
-              FunctionAddress < Range.second) {
-            Function.addSubprogramDIE(DWARFDie(CU.get(), nullptr));
-            break;
-          }
-        }
-      }
-    }
-#endif
-
-    // Set line table for function to the first CU with such table.
-    for (const auto &DIE : Function.getSubprogramDIEs()) {
-      if (const auto *LineTable =
-              DwCtx->getLineTableForUnit(DIE.getDwarfUnit())) {
-        Function.setDWARFUnitLineTable(DIE.getDwarfUnit(), LineTable);
-        break;
-      }
-    }
-
   }
 }
 
@@ -1591,7 +1500,7 @@ void BinaryContext::printInstruction(raw_ostream &OS,
   MIB->printAnnotations(Instruction, OS);
 
   const DWARFDebugLine::LineTable *LineTable =
-    Function && opts::PrintDebugInfo ? Function->getDWARFUnitLineTable().second
+    Function && opts::PrintDebugInfo ? Function->getDWARFLineTable()
                                      : nullptr;
 
   if (LineTable) {

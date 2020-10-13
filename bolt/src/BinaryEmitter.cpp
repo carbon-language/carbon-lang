@@ -446,8 +446,7 @@ void BinaryEmitter::emitFunctionBody(BinaryFunction &BF, bool EmitColdPart,
         Streamer.EmitNeverAlignCodeAtEnd(/*Alignment to avoid=*/64);
       }
 
-      if (!EmitCodeOnly && opts::UpdateDebugSections &&
-          BF.getDWARFUnitLineTable().first) {
+      if (!EmitCodeOnly && opts::UpdateDebugSections && BF.getDWARFUnit()) {
         LastLocSeen = emitLineInfo(BF, Instr.getLoc(), LastLocSeen, FirstInstr);
         FirstInstr = false;
       }
@@ -604,11 +603,11 @@ void BinaryEmitter::emitConstantIslands(BinaryFunction &BF, bool EmitColdPart,
 
 SMLoc BinaryEmitter::emitLineInfo(const BinaryFunction &BF, SMLoc NewLoc,
                                   SMLoc PrevLoc, bool FirstInstr) {
-  auto *FunctionCU = BF.getDWARFUnitLineTable().first;
-  const auto *FunctionLineTable = BF.getDWARFUnitLineTable().second;
+  DWARFUnit *FunctionCU = BF.getDWARFUnit();
+  const DWARFDebugLine::LineTable *FunctionLineTable = BF.getDWARFLineTable();
   assert(FunctionCU && "cannot emit line info for function without CU");
 
-  auto RowReference = DebugLineTableRowRef::fromSMLoc(NewLoc);
+  DebugLineTableRowRef RowReference = DebugLineTableRowRef::fromSMLoc(NewLoc);
 
   // Check if no new line info needs to be emitted.
   if (RowReference == DebugLineTableRowRef::NULL_ROW ||
@@ -616,7 +615,7 @@ SMLoc BinaryEmitter::emitLineInfo(const BinaryFunction &BF, SMLoc NewLoc,
     return PrevLoc;
 
   unsigned CurrentFilenum = 0;
-  const auto *CurrentLineTable = FunctionLineTable;
+  const DWARFDebugLine::LineTable *CurrentLineTable = FunctionLineTable;
 
   // If the CU id from the current instruction location does not
   // match the CU id from the current function, it means that we
@@ -919,9 +918,8 @@ void BinaryEmitter::emitDebugLineInfoForOriginalFunctions() {
     if (Function.isEmitted())
       continue;
 
-    auto ULT = Function.getDWARFUnitLineTable();
-    auto Unit = ULT.first;
-    auto LineTable = ULT.second;
+    DWARFUnit *Unit = Function.getDWARFUnit();
+    const DWARFDebugLine::LineTable *LineTable = Function.getDWARFLineTable();
 
     if (!LineTable)
       continue; // nothing to update for this function
