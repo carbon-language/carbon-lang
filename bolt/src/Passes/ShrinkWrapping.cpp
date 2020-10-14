@@ -1246,7 +1246,16 @@ void ShrinkWrapping::scheduleSaveRestoreInsertions(
         FrontierBB->getTerminatorBefore(PP.isInst() ? PP.getInst() : nullptr);
     if (Term)
       PP = Term;
-    if (PP.isInst() && doesInstUsesCSR(*PP.getInst(), CSR)) {
+    bool PrecededByPrefix{false};
+    if (PP.isInst()) {
+      auto Iter = FrontierBB->findInstruction(PP.getInst());
+      if (Iter != FrontierBB->end() && Iter != FrontierBB->begin()) {
+        --Iter;
+        PrecededByPrefix = BC.MIB->isPrefix(*Iter);
+      }
+    }
+    if (PP.isInst() && (doesInstUsesCSR(*PP.getInst(), CSR) ||
+                        PrecededByPrefix)) {
       assert(!InsnToBB[PP.getInst()]->hasTerminatorAfter(PP.getInst()) &&
              "cannot move to end of bb");
       scheduleChange(InsnToBB[PP.getInst()],
