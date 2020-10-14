@@ -1,4 +1,4 @@
-# Decision for: TODO
+# Decision for: Unicode source files
 
 <!--
 Part of the Carbon Language project, under the Apache License v2.0 with LLVM
@@ -6,7 +6,7 @@ Exceptions. See /LICENSE for license information.
 SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -->
 
-Proposal accepted on 2020-MM-DD
+Proposal accepted on 2020-10-13
 
 Affirming:
 
