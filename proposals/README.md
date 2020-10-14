@@ -33,8 +33,10 @@ request:
 -   [0074 - Change comment/decision timelines in proposal process](p0074.md)
     -   [Decision](p0074_decision.md)
 -   [0083 - In-progress design overview](p0083.md)
+-   [0107 - Code and name organization](p0107.md)
 -   [0120 - Add idiomatic code performance and developer-facing docs to goals](p0120.md)
     -   [Decision](p0120_decision.md)
+-   [0143 - Numeric literals](p0143.md)
 -   [0149 - Change documentation style guide](p0149.md)
 
 <!-- endproposals -->

@@ -1,8 +1,14 @@
+# Part of the Carbon Language project, under the Apache License v2.0 with LLVM
+# Exceptions. See /LICENSE for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+
 # See https://pre-commit.com for more information
 # See https://pre-commit.com/hooks.html for more hooks
+default_language_version:
+  python: python3 # Defaults to python2, so override it.
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v2.4.0
+    rev: v3.2.0
     hooks:
       - id: check-added-large-files
       - id: check-case-conflict
@@ -36,7 +42,6 @@ repos:
         description: Updates the list of proposals in proposals/README.md
         entry: src/scripts/update_proposal_list.py
         language: python
-        language_version: python3
         files: ^proposals/(README|p.*)\.md$
         pass_filenames: false
   # Formatters should be run late so that they can re-format any prior changes.
@@ -44,7 +49,6 @@ repos:
     rev: 20.8b1
     hooks:
       - id: black
-        language_version: python3
   - repo: https://github.com/prettier/prettier
     rev: 2.1.1
     hooks:
