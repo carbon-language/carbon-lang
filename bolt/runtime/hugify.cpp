@@ -9,6 +9,8 @@
 //
 //===----------------------------------------------------------------------===//
 
+#if !defined(__APPLE__)
+
 #include "common.h"
 #include <sys/mman.h>
 
@@ -172,3 +174,5 @@ extern "C" __attribute((naked)) void __bolt_hugify_self() {
                        "jmp *__bolt_hugify_init_ptr(%%rip)\n"
                        :::);
 }
+
+#endif

@@ -57,6 +57,8 @@
   {}
 #endif
 
+#if !defined(__APPLE__)
+
 // Main counters inserted by instrumentation, incremented during runtime when
 // points of interest (locations) in the program are reached. Those are direct
 // calls and direct and indirect branches (local ones). There are also counters
@@ -1460,3 +1462,11 @@ extern "C" void __bolt_instr_fini() {
     __bolt_instr_data_dump();
   DEBUG(report("Finished.\n"));
 }
+
+#else
+
+// On OSX/iOS the final symbol name of an extern "C" function/variable contains
+// one extra leading underscore: _bolt_instr_setup -> __bolt_instr_setup.
+extern "C" __attribute((section("__TEXT,__setup"))) void _bolt_instr_setup() {}
+
+#endif

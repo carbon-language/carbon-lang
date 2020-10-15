@@ -30,3 +30,16 @@ target_include_directories(bolt_rt_hugify PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
 install(TARGETS bolt_rt_instr DESTINATION lib)
 install(TARGETS bolt_rt_hugify DESTINATION lib)
 
+if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+  add_library(bolt_rt_instr_osx STATIC
+    instr.cpp
+    ${CMAKE_CURRENT_BINARY_DIR}/config.h
+  )
+  target_include_directories(bolt_rt_instr_osx PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
+  target_compile_options(bolt_rt_instr_osx PRIVATE
+    -target x86_64-apple-darwin19.6.0
+    -ffreestanding
+    -fno-exceptions
+    -fno-rtti)
+  install(TARGETS bolt_rt_instr_osx DESTINATION lib)
+endif()

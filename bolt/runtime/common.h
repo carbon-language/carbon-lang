@@ -1,5 +1,7 @@
+#if !defined(__APPLE__)
 #include <cstddef>
 #include <cstdint>
+#endif
 
 #include "config.h"
 #ifdef HAVE_ELF_H
@@ -43,6 +45,8 @@
   "pop %%rcx\n"                                                                \
   "pop %%rbx\n"                                                                \
   "pop %%rax\n"
+
+#if !defined(__APPLE__)
 
 // Anonymous namespace covering everything but our library entry point
 namespace {
@@ -327,3 +331,5 @@ inline uint64_t alignTo(uint64_t Value, uint64_t Align) {
   return (Value + Align - 1) / Align * Align;
 }
 } // anonymous namespace
+
+#endif
