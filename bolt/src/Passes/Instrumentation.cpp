@@ -534,6 +534,25 @@ void Instrumentation::runOnFunctions(BinaryContext &BC) {
 
   createAuxiliaryFunctions(BC);
 
+  if (BC.isMachO() && BC.StartFunctionAddress) {
+    BinaryFunction *Main =
+        BC.getBinaryFunctionAtAddress(*BC.StartFunctionAddress);
+    assert(Main && "Entry point function not found");
+    BinaryBasicBlock &BB = Main->front();
+
+    ErrorOr<BinarySection &> SetupSection =
+        BC.getUniqueSectionByName("I__setup");
+    if (!SetupSection) {
+      llvm::errs() << "Cannot find I__setup section\n";
+      exit(1);
+    }
+    MCSymbol *Target = BC.registerNameAtAddress(
+        "__bolt_instr_setup", SetupSection->getAddress(), 0, 0);
+    MCInst NewInst;
+    BC.MIB->createCall(NewInst, Target, BC.Ctx.get());
+    BB.insertInstruction(BB.begin(), std::move(NewInst));
+  }
+
   setupRuntimeLibrary(BC);
 }
 
@@ -561,6 +580,25 @@ void Instrumentation::createAuxiliaryFunctions(BinaryContext &BC) {
   Summary->InitialIndTailCallHandlerFunction =
       createSimpleFunction("__bolt_instr_default_ind_tailcall_handler",
                            BC.MIB->createInstrumentedNoopIndTailCallHandler());
+
+  // TODO: Remove this code once we start loading the runtime library for OSX.
+  if (BC.isMachO()) {
+    std::vector<MCInst> Instrs(8);
+    for (MCInst &Instruction : Instrs)
+      BC.MIB->createNoop(Instruction);
+    BC.MIB->createReturn(Instrs.back());
+    BinaryFunction *Placeholder = createSimpleFunction(
+        "__bolt_instr_setup_placeholder", std::move(Instrs));
+    ErrorOr<BinarySection &> SetupSection =
+        BC.getUniqueSectionByName("I__setup");
+    if (!SetupSection) {
+      llvm::errs() << "Cannot find I__setup section\n";
+      exit(1);
+    }
+    Placeholder->setOutputAddress(SetupSection->getAddress());
+    Placeholder->setFileOffset(SetupSection->getInputFileOffset());
+    Placeholder->setOriginSection(&*SetupSection);
+  }
 }
 
 void Instrumentation::setupRuntimeLibrary(BinaryContext &BC) {
