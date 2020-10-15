@@ -37,3 +37,7 @@ Google-centric, which could contribute somewhat to our community goal. Given the
 level of experience of the core team members with these style guides, it is not
 clear that a well-informed decision could be made. As such, the core team
 decided to leave the decision of the specific style guide up to the Painter.
+
+### Painter rationale
+
+Given the lack of a high level reason to pick one over the other, the painter looked at the available tooling for linting against the two options and spoke with people who have written substantial developer documentation against both style guides. There was no persuasive reason to change from the Google documentation style guide at this time. Specific ambiguities or problems with that style guide should instead be addressed, if necessary at all, with Carbon-specific local rule.
