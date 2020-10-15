@@ -38,5 +38,6 @@ request:
     -   [Decision](p0120_decision.md)
 -   [0143 - Numeric literals](p0143.md)
 -   [0149 - Change documentation style guide](p0149.md)
+-   [0175 - C++ interoperability goals](p0175.md)
 
 <!-- endproposals -->
