@@ -26,7 +26,7 @@ Abstaining:
 
 ### Which style guide?
 
-The core team decided to let the Painter choose the style guide to be used.
+The core team decided to let the Painter choose the style guide to be used. The painter selected to continue using the Google documentation markdown style guide.
 
 ## Rationale
 
