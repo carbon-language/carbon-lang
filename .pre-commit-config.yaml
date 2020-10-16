@@ -21,10 +21,16 @@ repos:
       - id: mixed-line-ending
         args: ['--fix=lf']
       - id: trailing-whitespace
-  - repo: https://github.com/carbon-language/carbon-project-tools
-    rev: v1.0.0
+  - repo: https://github.com/google/pre-commit-tool-hooks
+    rev: v1.0.2
     hooks:
       - id: check-copyright
+        args:
+          - --copyright
+          - |+
+            Part of the Carbon Language project, under the Apache License v2.0 with LLVM
+            Exceptions. See /LICENSE for license information.
+            SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
         exclude: '^src/jekyll/(Gemfile.lock|theme/.*)$'
   - repo: https://github.com/codespell-project/codespell
     rev: v1.17.1

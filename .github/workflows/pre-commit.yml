@@ -13,9 +13,6 @@ jobs:
   pre-commit:
     runs-on: ubuntu-latest
     steps:
-      - uses: fusion-engineering/setup-git-credentials@v2
-        with:
-          credentials: ${{secrets.GIT_CREDENTIALS}}
       - uses: actions/checkout@v1
       - uses: actions/setup-python@v1
       - uses: pre-commit/action@v2.0.0
