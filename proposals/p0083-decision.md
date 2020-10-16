@@ -42,8 +42,8 @@ is a shared understanding that we are not committing to any of those decisions,
 only to the broad picture painted by the combination of those decisions, and
 that all such decisions need to be revisited by another proposal before we
 consider them to be agreed on. There is a substantial risk of anchoring how we
-think about Carbon -- we’ll just have to do our best to avoid taking this doc as a
-given when evaluating subsequent proposals. Those propopsals must justify a
+think about Carbon -- we’ll just have to do our best to avoid taking this doc as
+a given when evaluating subsequent proposals. Those propopsals must justify a
 direction that agrees with this doc as much as one that does not agree with it.
 
 This doc sets the stage for increasingly incremental steps towards a complete
