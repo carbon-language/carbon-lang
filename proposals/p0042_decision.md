@@ -44,4 +44,3 @@ Specifically:
 We want pre-commit rather than post-commit review, and we want all changes to go
 through review. These guidelines are consistent with standard code review best
 practice, including what’s described in the cited sources.
-
