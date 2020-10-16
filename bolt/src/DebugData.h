@@ -101,10 +101,9 @@ class DebugRangesSectionWriter {
 public:
   DebugRangesSectionWriter(BinaryContext *BC);
 
-  /// Add ranges with caching for \p Function.
+  /// Add ranges with caching.
   uint64_t
-  addRanges(const BinaryFunction *Function, DebugAddressRangesVector &&Ranges,
-            const BinaryFunction *&CachedFunction,
+  addRanges(DebugAddressRangesVector &&Ranges,
             std::map<DebugAddressRangesVector, uint64_t> &CachedRanges);
 
   /// Add ranges and return offset into section.

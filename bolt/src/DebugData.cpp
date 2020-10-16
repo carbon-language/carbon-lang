@@ -66,22 +66,16 @@ DebugRangesSectionWriter::DebugRangesSectionWriter(BinaryContext *BC) {
 }
 
 uint64_t DebugRangesSectionWriter::addRanges(
-    const BinaryFunction *Function, DebugAddressRangesVector &&Ranges,
-    const BinaryFunction *&CachedFunction,
+    DebugAddressRangesVector &&Ranges,
     std::map<DebugAddressRangesVector, uint64_t> &CachedRanges) {
   if (Ranges.empty())
     return getEmptyRangesOffset();
 
-  if (Function == CachedFunction) {
-    const auto RI = CachedRanges.find(Ranges);
-    if (RI != CachedRanges.end())
-      return RI->second;
-  } else {
-    CachedRanges.clear();
-    CachedFunction = Function;
-  }
+  const auto RI = CachedRanges.find(Ranges);
+  if (RI != CachedRanges.end())
+    return RI->second;
 
-  const auto EntryOffset = addRanges(Ranges);
+  const uint64_t EntryOffset = addRanges(Ranges);
   CachedRanges.emplace(std::move(Ranges), EntryOffset);
 
   return EntryOffset;
@@ -101,9 +95,8 @@ DebugRangesSectionWriter::addRanges(const DebugAddressRangesVector &Ranges) {
   return EntryOffset;
 }
 
-void
-DebugARangesSectionWriter::addCURanges(uint64_t CUOffset,
-                                        DebugAddressRangesVector &&Ranges) {
+void DebugARangesSectionWriter::addCURanges(uint64_t CUOffset,
+                                            DebugAddressRangesVector &&Ranges) {
   std::lock_guard<std::mutex> Lock(CUAddressRangesMutex);
   CUAddressRanges.emplace(CUOffset, std::move(Ranges));
 }

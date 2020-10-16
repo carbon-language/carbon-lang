@@ -4133,6 +4133,9 @@ void BinaryFunction::updateOutputValues(const MCAsmLayout &Layout) {
 DebugAddressRangesVector BinaryFunction::getOutputAddressRanges() const {
   DebugAddressRangesVector OutputRanges;
 
+  if (isFolded())
+    return OutputRanges;
+
   if (IsFragment)
     return OutputRanges;
 
@@ -4158,6 +4161,9 @@ DebugAddressRangesVector BinaryFunction::getOutputAddressRanges() const {
 }
 
 uint64_t BinaryFunction::translateInputToOutputAddress(uint64_t Address) const {
+  if (isFolded())
+    return 0;
+
   // If the function hasn't changed return the same address.
   if (!isEmitted())
     return Address;
@@ -4191,6 +4197,9 @@ uint64_t BinaryFunction::translateInputToOutputAddress(uint64_t Address) const {
 DebugAddressRangesVector BinaryFunction::translateInputToOutputRanges(
     const DWARFAddressRangesVector &InputRanges) const {
   DebugAddressRangesVector OutputRanges;
+
+  if (isFolded())
+    return OutputRanges;
 
   // If the function hasn't changed return the same ranges.
   if (!isEmitted()) {
@@ -4296,6 +4305,12 @@ MCInst *BinaryFunction::getInstructionAtOffset(uint64_t Offset) {
 
 DWARFDebugLoc::LocationList BinaryFunction::translateInputToOutputLocationList(
     DWARFDebugLoc::LocationList InputLL) const {
+  DWARFDebugLoc::LocationList OutputLL;
+
+  if (isFolded()) {
+    return OutputLL;
+  }
+
   // If the function hasn't changed - there's nothing to update.
   if (!isEmitted()) {
     return InputLL;
@@ -4303,7 +4318,6 @@ DWARFDebugLoc::LocationList BinaryFunction::translateInputToOutputLocationList(
 
   uint64_t PrevEndAddress = 0;
   SmallVectorImpl<char> *PrevLoc = nullptr;
-  DWARFDebugLoc::LocationList OutputLL;
   for (const auto &Entry : InputLL.Entries) {
     const auto Start = Entry.Begin;
     const auto End = Entry.End;

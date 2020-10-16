@@ -64,14 +64,8 @@ class DWARFRewriter {
 
   std::mutex LocListDebugInfoPatchesMutex;
 
-  /// Recursively update debug info for all DIEs in \p Unit.
-  /// If \p Function is not empty, it points to a function corresponding
-  /// to a parent DW_TAG_subprogram node of the current \p DIE.
-  void updateUnitDebugInfo(
-      size_t CUIndex,
-      const DWARFDie DIE, std::vector<const BinaryFunction *> FunctionStack,
-      const BinaryFunction *&CachedFunction,
-      std::map<DebugAddressRangesVector, uint64_t> &CachedRanges);
+  /// Update debug info for all DIEs in \p Unit.
+  void updateUnitDebugInfo(size_t CUIndex, DWARFUnit *Unit);
 
   /// Patches the binary for an object's address ranges to be updated.
   /// The object can be a anything that has associated address ranges via either
@@ -98,11 +92,35 @@ class DWARFRewriter {
   /// Abbreviations that were converted to use DW_AT_ranges.
   std::set<const DWARFAbbreviationDeclaration *> ConvertedRangesAbbrevs;
 
+  /// DWARFDie contains a pointer to a DIE and hence gets invalidated once the
+  /// embedded DIE is destroyed. This wrapper class stores a DIE internally and
+  /// could be cast to a DWARFDie that is valid even after the initial DIE is
+  /// destroyed.
+  struct DWARFDieWrapper {
+    DWARFUnit *Unit;
+    DWARFDebugInfoEntry DIE;
+
+    DWARFDieWrapper(DWARFUnit *Unit, DWARFDebugInfoEntry DIE) :
+      Unit(Unit),
+      DIE(DIE) {}
+
+    DWARFDieWrapper(DWARFDie &Die) :
+      Unit(Die.getDwarfUnit()),
+      DIE(*Die.getDebugInfoEntry()) {}
+
+    operator DWARFDie() {
+      return DWARFDie(Unit, &DIE);
+    }
+  };
+
   /// DIEs with abbrevs that were not converted to DW_AT_ranges.
   /// We only update those when all DIEs have been processed to guarantee that
   /// the abbrev (which is shared) is intact.
-  std::map<const DWARFAbbreviationDeclaration *,
-           std::vector<std::pair<DWARFDie, DebugAddressRange>>> PendingRanges;
+  using PendingRangesType = std::unordered_map<
+    const DWARFAbbreviationDeclaration *,
+    std::vector<std::pair<DWARFDieWrapper, DebugAddressRange>>>;
+
+  PendingRangesType PendingRanges;
 
   /// Convert \p Abbrev from using a simple DW_AT_(low|high)_pc range to
   /// DW_AT_ranges.
