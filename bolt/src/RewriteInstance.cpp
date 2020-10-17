@@ -1706,7 +1706,8 @@ void RewriteInstance::adjustCommandLineOptions() {
     opts::AlignText = BC->PageAlign;
   }
 
-  if (opts::Lite.getNumOccurrences() == 0 && !BC->HasRelocations) {
+  if (BC->isX86() && opts::Lite.getNumOccurrences() == 0 &&
+      !opts::StrictMode && !opts::UseOldText) {
     opts::Lite = true;
   }
 
@@ -1716,7 +1717,7 @@ void RewriteInstance::adjustCommandLineOptions() {
     opts::UseOldText = false;
   }
 
-  if (opts::StrictMode && opts::Lite) {
+  if (opts::Lite && opts::StrictMode) {
     errs() << "BOLT-ERROR: -strict and -lite cannot be used at the same time\n";
     exit(1);
   }
