@@ -971,6 +971,11 @@ void RewriteInstance::discoverFileObjects() {
       continue;
     }
 
+    // Ignore input hot markers
+    if (SymName == "__hot_start" || SymName == "__hot_end") {
+      continue;
+    }
+
     FileSymRefs[Address] = Symbol;
 
     /// It is possible we are seeing a globalized local. LLVM might treat it as
