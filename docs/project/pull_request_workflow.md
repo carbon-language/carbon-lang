@@ -6,6 +6,19 @@ Exceptions. See /LICENSE for license information.
 SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -->
 
+## Table of contents
+
+<!-- toc -->
+
+-   [Trunk based development](#trunk-based-development)
+    -   [Green tests](#green-tests)
+-   [Always use pull requests (with review) rather than pushing directly](#always-use-pull-requests-with-review-rather-than-pushing-directly)
+-   [Small, incremental changes](#small-incremental-changes)
+    -   [Managing pull requests with multiple commits](#managing-pull-requests-with-multiple-commits)
+-   [Linear history](#linear-history)
+
+<!-- tocstop -->
+
 Carbon repositories follow a few basic principles:
 
 -   Development directly on the `trunk` branch and
@@ -30,10 +43,9 @@ version control:
     -   How does the main branch and project evolve over time?
     -   How was a bug or surprising thing introduced?
 
-Note that this isn't a complete guide to doing code reviews, and just focuses on
-the mechanical workflow and branch management. TODO: Add an explicit link to
-more detailed guidance on managing pull request based code reviews when it is
-developed.
+Note that this document focuses on the mechanical workflow and branch
+management. Details of the code review process are in their own
+[document](code_review.md).
 
 ## Trunk based development
 
