@@ -146,9 +146,8 @@ We suggest a specific workflow to address this:
     be force pushed as necessary and deleted. These branch names should only be
     used for this ephemeral purpose. All other branch names are protected.
 
-    If you don't yet have this permission, feel free to ask anyone who does --
-    anyone can checkout your pull request and push it to a branch with this name
-    pattern for use in a stacked series of commits.
+    If you don't yet have this permission, just ask an [admin](groups.md#admins)
+    for help.
 
 3.  Create your stacked branch on your fork:
 
