@@ -21,17 +21,26 @@ request:
 ## Proposal list
 
 <!-- proposals -->
-<!-- This list is updated by src/scripts/pre-commit-proposal-list.py. -->
+<!-- This list is updated by src/scripts/update_proposal_list.py. -->
 
 -   [0029 - Linear, rebase, and pull-request GitHub workflow](p0029.md)
-    -   [Decision](p0029-decision.md)
+    -   [Decision](p0029_decision.md)
 -   [0036 - Carbon: Add initial version of "Carbon Generics"](p0036.md)
+-   [0042 - Create code review guidelines](p0042.md)
+    -   [Decision](p0042_decision.md)
 -   [0044 - Proposal tracking](p0044.md)
-    -   [Decision](p0044-decision.md)
+    -   [Decision](p0044_decision.md)
 -   [0051 - Goals](p0051.md)
-    -   [Decision](p0051-decision.md)
+    -   [Decision](p0051_decision.md)
 -   [0074 - Change comment/decision timelines in proposal process](p0074.md)
-    -   [Decision](p0074-decision.md)
+    -   [Decision](p0074_decision.md)
 -   [0083 - In-progress design overview](p0083.md)
+    -   [Decision](p0083_decision.md)
+-   [0107 - Code and name organization](p0107.md)
+-   [0120 - Add idiomatic code performance and developer-facing docs to goals](p0120.md)
+    -   [Decision](p0120_decision.md)
+-   [0143 - Numeric literals](p0143.md)
+    -   [Decision](p0143_decision.md)
+-   [0149 - Change documentation style guide](p0149.md)
 
 <!-- endproposals -->
