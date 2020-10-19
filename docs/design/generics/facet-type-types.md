@@ -326,13 +326,15 @@ explicit caller providing these arguments.
 ### Impl lookup
 
 Let's say you have some interface `I(T, U(V))` being implemented for some type
-`A(B(C(D), E))`. That impl must be defined in the same library that defines one
-of the names needed by either the type or interface expression. That is, the
-impl must be defined with (exactly) one of `I`, `T`, `U`, `V`, `A`, `B`, `C`,
-`D`, or `E`. We further require anything looking up this impl to import the
-_definitions_ of all of those names. Seeing a forward declaration of these names
-is insufficient, since you can presumably see forward declarations without
-seeing an impl with the definition. This accomplishes a few goals:
+`A(B(C(D), E))`. That impl must be defined in the same library that defines the
+interface or one of the names needed by the type. That is, the impl must be
+defined with (exactly) one of `I`, `A`, `B`, `C`, `D`, or `E`. Note that you
+can't define the impl with `T`, `U`, `V`, or any other library unless it also
+defines one of `I`, `A`, ..., or `E`. We further require anything looking up
+this impl to import the _definitions_ of all of those names. Seeing a forward
+declaration of these names is insufficient, since you can presumably see forward
+declarations without seeing an impl with the definition. This accomplishes a few
+goals:
 
 -   The compiler can check that there is only one definition of any impl that is
     actually used, avoiding
@@ -345,6 +347,10 @@ seeing an impl with the definition. This accomplishes a few goals:
 -   Allowing the impl to be defined with either the interface or the type
     addresses the
     [expression problem](https://eli.thegreenplace.net/2016/the-expression-problem-and-its-solutions).
+
+Note that interface parameters are treated differently because they can be
+inferred as part of calling a function call, as described in
+[this appendix](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/appendix-interface-param-impl.md).
 
 ## Generics
 
