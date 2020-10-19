@@ -179,8 +179,8 @@ those alternate implementations. For more on this, see
 
 ## Interfaces
 
-An interface defines a set of an API requirements that some types can satisfy by
-implementing the interface. For example, a vector might have two methods:
+An interface defines an API that a given type can implement. For example, an
+interface capturing a vector API might have two methods:
 
 ```
 interface Vector {
@@ -190,11 +190,12 @@ interface Vector {
 }
 ```
 
-\
-An interface defines a type-type, that is a type whose values are [facet types](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#invoking-interface-methods).
-By facet types, we mean types that are declared as specifically implementing **exactly**
-this interface, and which provide definitions for all APIs required bythe functions,
-etc. declared in the interface.
+An interface defines a type-type, that is a type whose values are types. The
+values of an interface are specifically
+[facet types](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#invoking-interface-methods),
+by which we mean types that are declared as specifically implementing
+**exactly** this interface, and which provide definitions for all the functions
+(and other members) declared in the interface.
 
 ## Implementing interfaces
 
@@ -206,7 +207,7 @@ struct Point {
   var Double: x;
   var Double: y;
   impl Vector {
-    // In this impl block,Here "Self" is an alias for "Point".
+    // In this scope, "Self" is an alias for "Point".
     fn Add(Self: a, Self: b) -> Self {
       return Point(.x = a.x + b.x, .y = a.y + b.y);
     }
@@ -238,14 +239,13 @@ impl Vector for Point {
 To address concerns re:
 [the expression problem](https://eli.thegreenplace.net/2016/the-expression-problem-and-its-solutions),
 we should allow out-of-line impl definitions either in the library that defines
-thewith the interface (`Vector`) or in the library that defines with the type
-(`Point`).
+the interface (`Vector`) or in the library that defines the type (`Point`).
 
-In either case, the impl block defines a
+In either case, the impl definition defines a
 [facet type](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#invoking-interface-methods):
-`Point as Vector`. While the API offor `Point` includes the two fields `x` and
-`y`, the API offor `Point as Vector` _only_ has the `Add` and `Scale` methods of
-the `Vector` interface. The facet type `Point as Vector` is
+`Point as Vector`. While the API of `Point` includes the two fields `x` and `y`,
+the API of `Point as Vector` _only_ has the `Add` and `Scale` methods of the
+`Vector` interface. The facet type `Point as Vector` is
 [compatible](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#compatible-types)
 with `Point`, so we allow you to cast between the two implicitly:
 
@@ -273,10 +273,11 @@ var Point: w = z as Point;
 type, or a "type-type".
 
 **Note:** If `Point` defines a method required by the interface, say `Scale`,
-with the correct signature, then defining `Scale` in the impl block becomes
-optional, defaulting to the definition in `Point`. `Scale` can still have its
-own definition (which can have completely different semantics) in the impl block
-since `Point` and `Point as Vector` are different types.
+with the correct signature, then defining `Scale` in the impl definition becomes
+optional, defaulting to the definition in `Point`. `Scale` is allowed to have
+its own definition (which can have completely different semantics) in the
+`Vector` impl definition since `Point` and `Point as Vector` are different
+types.
 
 **Note:** A type may implement any number of different interfaces, but may
 provide at most one implementation of any single interface. This makes the act
@@ -286,8 +287,8 @@ the whole program, so e.g. `Point as Vector` is clearly defined.
 ### Out-of-line impl arguments for parameterized types
 
 What if our `Point` type was parameterized? If the `impl` is defined inline, the
-definition of the impl block is already inside the scope with the
-parameterization, so there is no difficulty in using the type variables, as in:
+impl definition is already inside the scope with the parameterization, so there
+is no difficulty in using the type variables, as in:
 
 ```
 struct PointT(Type:$$ T) {
@@ -325,8 +326,8 @@ explicit caller providing these arguments.
 ### Impl lookup
 
 Let's say you have some interface `I(T, U(V))` being implemented for some type
-`A(B(C(D), E))`. That impl must be defined in the same library that defineswith
-one of the names needed by either the type or interface expression. That is, the
+`A(B(C(D), E))`. That impl must be defined in the same library that defines one
+of the names needed by either the type or interface expression. That is, the
 impl must be defined with (exactly) one of `I`, `T`, `U`, `V`, `A`, `B`, `C`,
 `D`, or `E`. We further require anything looking up this impl to import the
 _definitions_ of all of those names. Seeing a forward declaration of these names
@@ -661,9 +662,9 @@ interface Container {
 }
 ```
 
-\
-Functions accepting a generic type might also want to constrain an associated type.
-For example, we might want to have a function only accept stacks containing integers:
+Functions accepting a generic type might also want to constrain an associated
+type. For example, we might want to have a function only accept stacks
+containing integers:
 
 ```
 fn SumIntStack[Stack:$ T](T*: s) -> Int requires T.ElementType == Int {
@@ -679,13 +680,12 @@ There are a lot of constraints you might want to express, such as that two
 associated types are equal or that an associated type satisfies an interface.
 
 ```
-fn EqualContainers[HasEquality:$ ET, Container:$ CT1, Container:$ CT2]
+fn EqualContainers[Container:$ CT1, Container:$ CT2]
     (CT1*: c1, CT2*: c2) -> Bool
-  requires T1.ElementType == ET && T2.ElementType == ETT2.ElementType
-  requires T1.ElementType as HasEquality { ... }
+  requires T1.ElementType == T2.ElementType &&
+           T1.ElementType as HasEquality { ... }
 ```
 
-\
 **Question:** Is there a way to express these type constraints in a more concise
 way?
 
@@ -768,12 +768,11 @@ fn PeekAtTopOfStack[Type:$ ElementType, Stack(ElementType):$ StackType]
     (StackType*: s) -> ElementType { ... }
 ```
 
-\
 The alternative of one implementation per interface & type parameter combination
-is perhaps more natural. It seems useful for something like a `ComparableTo(T)` interface,
-where a type might be comparable with multiple other types. It does have a problem
-where you need to be certain that every impl of an interface for a parameterized
-type can be distinguished:
+is perhaps more natural. It seems useful for something like a `ComparableTo(T)`
+interface, where a type might be comparable with multiple other types. It does
+have a problem where you need to be certain that every impl of an interface for
+a parameterized type can be distinguished:
 
 ```
 interface Map(Type:$ FromType, Type:$ ToType) {
@@ -1202,7 +1201,8 @@ Let's define a type-type constructor called `TypeImplements`. Given a list
 `(TT1, ..., TTn)` of type-types (typically interfaces), we define a new
 type-type `TypeImplements(TT1, ..., TTn)` according to this rule:
 
-    `TypeImplements(TT1, ..., TTn)` is a type whose values are types `T` such that `T as TT1`, ..., `T as TTn` are all legal expressions.
+> `TypeImplements(TT1, ..., TTn)` is a type whose values are types `T` such that
+> `T as TT1`, ..., `T as TTn` are all legal expressions.
 
 Note that the order of the arguments does not matter (so `TypeImplements(A, B)`
 is the same as `TypeImplements(B, A)`).
@@ -1269,7 +1269,10 @@ won't be the `HasDefault` facet of whatever type you are using.
 
 We have the following subsumption rule:
 
-    If `T` has type `TypeImplements(A1, ..., Am)`, it may be implicitly cast to `TypeImplements(B1, ..., Bn)` if for every `Bi` there is a `Aj` such that `Bi == Aj` or `Aj` extends `Bi`, or `T` may be implicitly cast to `T as Aj` for any `Aj` in `(A1, ..., Am)`.
+> If `T` has type `TypeImplements(A1, ..., Am)`, it may be implicitly cast to
+> `TypeImplements(B1, ..., Bn)` if for every `Bi` there is a `Aj` such that
+> `Bi == Aj` or `Aj` extends `Bi`, or `T` may be implicitly cast to `T as Aj`
+> for any `Aj` in `(A1, ..., Am)`.
 
 This subsumption rule allows generic functions to call other generic functions
 with equal or less-strict requirements.
@@ -1307,7 +1310,14 @@ interface {
 Given a type-type `TT` and a type `U`, define the type-type
 `CompatibleWith(TT, U)` as follows:
 
-    `CompatibleWith(TT, U)` is a type whose values are types `T` with type `TT` that are [compatible with](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#compatible-types) `U`, that is values of types `T` and `U` can be cast back and forth without any change in representation (e.g. `T` is an [adaptor](#adapting-types) for `U`).
+> `CompatibleWith(TT, U)` is a type whose values are types `T` such that:
+>
+> -   `T` has type `TT`.
+> -   `T` and `U` are
+>     [compatible](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#compatible-types).
+>     That is values of types `T` and `U` can be cast back and forth without any
+>     change in representation (e.g. `T` is an [adaptor](#adapting-types) for
+>     `U`).
 
 **Note:** We require the user to supply `TT` and `U`, they may not be inferred.
 Specifically, this code would be illegal:
@@ -1356,7 +1366,6 @@ adaptor SongByTitle for Song { impl Comparable { ... } }
 assert(CombinedLess(Song(...), Song(...), SongByArtist, SongByTitle) == True);
 ```
 
-\
 We might generalize this to a list of implementations:
 
 ```
@@ -1417,13 +1426,22 @@ defining a `DynPtr(TT)` (as
 we could maybe have a `ForSome(F)` construct, where `F` is a function from types
 to type-types.
 
-    `ForSome(F)`,  where `F` is a function from type `T` to type-type `TT`, is a type whose values are types `U` with type `TT=F(T)` for some type `T`.
+> `ForSome(F)`, where `F` is a function from type `T` to type-type `TT`, is a
+> type whose values are types `U` with type `TT=F(T)` for some type `T`.
 
 **Example:** Pairs of values where both values have the same type might be
 written as
 
 ```
-fn F[ForSome(lambda (Type:$ T) => PairInterface(T, T)):$ MatchedPairType](MatchedPairType*: x) { ... }
+fn F[ForSome(lambda (Type:$ T) => PairInterface(T, T)):$ MatchedPairType]
+    (MatchedPairType*: x) { ... }
+```
+
+This would be equivalent to:
+
+```
+fn F[Type:$ T, PairInterface(T, T):$ MatchedPairType]
+    (MatchedPairType*: x) { ... }
 ```
 
 ### Sized types and type-types
@@ -1977,8 +1995,10 @@ interfaces is now well captured in a compositional way. If `S` directly
 implements `Inner1` or `Inner2`, it could use that as the default in the impl of
 `Outer`.
 
-TODO This is a generalization of the TypeImplements thing above. TODO: move this
-above so we can make TypeImplements an optional convenience.
+TODO This is related to `TypeImplements` above.
+
+TODO: Can we implement `TypeImplements` in terms of this? If so we could make
+`TypeImplements` an optional convenience.
 
 ## Index of examples
 
@@ -2157,17 +2177,29 @@ Very stretch goals (these are more difficult, and possibly optional):
     [here (TODO)](#broken-links-footnote)<!-- T:Carbon: types as function tables, interfaces as type-types --><!-- A:#heading=h.qvhzlz54obmt -->,
     where we need a representation for a way to go from a type to an
     implementation of an interface parameterized by that type. Examples of
-    things we might want to express: _
-    `struct PriorityQueue( \ Type:$ T, fn (Type:$ U)->QueueInterface(U):$ QueueLike) { \ ... \ }`
-    _ `fn Map[Type:$ T, fn (Type:$ U)->StackInterface(U):$ StackLike,`
+    things we might want to express:
 
-            ```
-                   Type:$ V]
-        (StackLike(T)*: x, fn (T)->V: f) -> StackLike(V) { ... }
-            ```
+    -   This priority queue's second argument (`QueueLike`) is a function that
+        takes a type `U` and returns a type that implements `QueueInterface(U)`:
 
+```
+struct PriorityQueue(
+    Type:$ T, fn (Type:$ U)->QueueInterface(U):$ QueueLike) {
+  ...
+}
+```
 
-    *   TODO: Challenging! Probably needs something like [Dependent function types](https://en.wikipedia.org/wiki/Dependent_type#Pi_type)
+    -  Map takes a container of type `T` and function from `T` to `V` into
+       a container of type `V`:
+
+```
+fn Map[Type:$ T,
+       fn (Type:$ U)->StackInterface(U):$ StackLike,
+       Type:$ V]
+    (StackLike(T)*: x, fn (T)->V: f) -> StackLike(V) { ... }
+```
+
+    -   TODO: Challenging! Probably needs something like [Dependent function types](https://en.wikipedia.org/wiki/Dependent_type#Pi_type)
 
 These mechanisms need to have an underlying programming model that allows users
 to predict how to do these things, how to compose these things, and what
@@ -2227,8 +2259,8 @@ fn F(A: a, B: b, ..., Addable(A, B):$ T) requires (A,B) : Addable(A, B) {
 ### Associated types vs. interface parameters: ergonomics
 
 Associated types provide an advantage in ergonomics because constraints in
-generic types and functions don’t need to specify associated types that they
-don’t care about.
+generic types and functions don't need to specify associated types that they
+don't care about.
 
 ```
 interface CollectionParam(Type:$ Element) { ... }
@@ -2285,7 +2317,7 @@ fn Map[CollectionAssoc:$ C, Type:$ NewElement](
 ### Associated types vs. interface parameters: existential types (dynamic types)
 
 Interface parameters make us create separate types for different
-“instantiations” of interfaces. Because of that, those instantiations can act as
+"instantiations" of interfaces. Because of that, those instantiations can act as
 existential types on their own.
 
 ```
@@ -2302,13 +2334,14 @@ ints1.GetByIndex(123); // ok!
 interface CollectionAssoc {
   var Type:$ Element;
   fn GetByIndex(Int: i) -> Element;
+  fn size() -> Int;
 }
 var DynPtr(CollectionAssoc): ints3 = &Array<Int>::make(...); // ok?
 ints3.size() // ok -- returns an Int
 ints3.GetByIndex(123) // what is the return type?
 ```
 
-If we make `CollectionAssoc` into an existential, we don’t bind the `Element` to
+If we make `CollectionAssoc` into an existential, we don't bind the `Element` to
 a concrete type. Therefore, we have a problem retrieving elements. How does the
 compiler know that when we get an element out of `ints3` that it is an `Int`?
 With the information provided in the type of `ints3`, it does not. Therefore,
@@ -2324,7 +2357,7 @@ An obvious reaction to difficulties above is to recommend API designers to use
 interface parameters for type variables that users might want to constrain.
 However, this recommendation has drawbacks.
 
-First of all, users who don’t want to constrain interface parameters have to
+First of all, users who don't want to constrain interface parameters have to
 introduce useless type variables in their generic signatures. (Examples -- see
 above.)
 
@@ -2355,11 +2388,11 @@ interface CollectionAssoc {
 }
 ```
 
-Generally, users don’t care about a specific type of the SubSequence. So then it
+Generally, users don't care about a specific type of the SubSequence. So then it
 should be an associated type, according to the design advice? Well, but some
 users care about the SubSequence and want to constrain it. For example, a
 DropFirst API can be efficiently implemented for collections that are a
-subsequence of themselves (“efficiently sliceable”). For example, we can
+subsequence of themselves ("efficiently sliceable"). For example, we can
 efficiently DropFirst from a `std::span` (whose SubSequence is `std::span`), but
 not from a `std::vector` (whose subsequence is `std::span`).
 
@@ -2379,7 +2412,7 @@ fn DropFirstAssoc[CollectionAssoc:$ SliceableCollection](SliceableCollection *: 
 Notice how the `DropFirstParam` function has to thread the `Element` through
 constraints even though it does not care about the specific element type. Notice
 how it also has to declare all type variables before it can finally specify the
-equality constraint. It can’t even specify that `SliceableCollection` is a
+equality constraint. It can't even specify that `SliceableCollection` is a
 `CollectionParam` within square brackets because not all type variables are
 visible yet.
 
@@ -2397,8 +2430,8 @@ var DynPtr(CollectionParam<Int, ???>): ints2 = &Set<Int>::make(...);
 ```
 
 What do we put in place of the question marks? For `ints1` the subsequence would
-be some equivalent of C++’s `std::span`. But `ints2` is backed by a set, it
-won’t be able to expose a `std::span` subsequence because it is organized
+be some equivalent of C++'s `std::span`. But `ints2` is backed by a set, it
+won't be able to expose a `std::span` subsequence because it is organized
 differently internally!
 
 So, `SubSequence` will often expose some implementation details, and it would
@@ -2410,8 +2443,8 @@ below to see where that fails.
 
 In the examples above, a simplified `Collection` interface was presented that
 assumed that every collection can be efficiently indexed by an `Int`. However,
-that is not true in practice. So Collection’s index, just like in C++
-collection’s iterator, has to be an opaque type that is potentially different in
+that is not true in practice. So Collection's index, just like in C++
+collection's iterator, has to be an opaque type that is potentially different in
 every collection.
 
 Only very rarely users would want to constrain the Index of a collection. Every
@@ -2430,7 +2463,7 @@ interface Collection[Type:$ Element] {
 }
 ```
 
-Alright, let’s make an existential out of this collection:
+Alright, let's make an existential out of this collection:
 
 ```
 var DynPtr(Collection<Int>): ints1 = &Array<Int>::make(...); // ok!
@@ -2451,7 +2484,7 @@ ints1.GetByIndex(j) // Incorrect: j is an index of a Set, not an index of an Arr
 ```
 
 Indeed, ints1.Index and ints2.Index can be completely different types. So we
-can’t just pass any existential into GetByIndex(), it has to be an existential
+can't just pass any existential into GetByIndex(), it has to be an existential
 that internally contains the correct type.
 
 The only way to model it in a sound way is to say that the type of
@@ -2472,8 +2505,8 @@ therefore allowing to constrain it in an existential. However, this does not
 solve harder issues where the API designer does not _want_ to make a type
 variable into an interface parameter.
 
-Swift’s solution to constraining associated types in existentials is a feature
-called “generalized existentials” (which is not implemented yet):
+Swift's solution to constraining associated types in existentials is a feature
+called "generalized existentials" (which is not implemented yet):
 
 ```
 var DynPtr(CollectionAssoc): ints3 =

@@ -6,7 +6,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 # Carbon: Generics - use cases and problem statement
 
-## Basis use cases
+## Basic use cases
 
 We want ways of accomplishing the following tasks:
 
