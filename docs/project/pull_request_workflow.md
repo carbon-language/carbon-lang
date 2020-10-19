@@ -94,14 +94,14 @@ the GitHub squash-and-merge functionality to land things.
 Carbon uses pull requests in the common, distributed GitHub model where you
 first fork the repository, typically into your own private GitHub fork, and then
 develop on feature branches in that fork. When a branch is ready for review, it
-is turned into a pull request against the main fork. This flow should always be
-where you start when contributing to Carbon and scales well even with many
+is turned into a pull request against the official repository. This flow should always be
+where you start when contributing to Carbon, and it scales well even with many
 independent changes in flight.
 
 However, a common limitation to hit is when you want to create a _stack_ of
-_dependent_ but small and incremental changes and allow them to be reviewed in
+_dependent_, small, and incremental changes and allow them to be reviewed in
 parallel. Each of these should be its own pull request to facilitate our desire
-for small and incremental changes and review. Unfortunately GitHub has very poor
+for small and incremental changes and review. Unfortunately, GitHub has very poor
 support for managing the _review_ of these stacked pull requests. Specifically,
 one pull request cannot serve as the _base_ for another pull request, so each
 pull request will include all of the commits and diffs of the preceding pull
@@ -142,7 +142,7 @@ We suggest a specific workflow to address this:
     ```
 
     Everyone marked as a contributor to Carbon is allowed to push branches if
-    the name matches `pull-*` without pull request or other process. They can be
+    the name matches `pull-*`, skipping pull request review processes. They can be
     force pushed as necessary and deleted. These branch names should only be
     used for this ephemeral purpose. All other branch names are protected.
 
@@ -220,7 +220,7 @@ We suggest a specific workflow to address this:
     branch for the second pull request can now be done directly from your
     `trunk` branch after pulling upstream.
 
-8.  When landing a stacked pull request, it will require actively rebasing or
+8.  When landing the second, stacked pull request, it will require actively rebasing or
     squashing due to the complex merge history used while updating.
 
 9.  If you need to create a third or more stacked pull requests, simply repeat
