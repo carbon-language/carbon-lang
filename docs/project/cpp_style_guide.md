@@ -39,7 +39,7 @@ existing best practices and guidelines.
 The baseline style guidance is the
 [Google C++ style guide](https://google.github.io/styleguide/cppguide.html).
 
-## Changes
+## Carbon-local guidance
 
 Carbon tries to minimize active changes and deviations from the baseline as that
 makes it harder for both humans and tooling to work with the code. However, in a
@@ -97,7 +97,9 @@ these.
     confusing repetition of part of the type).
 -   Write `const` before the type when at the outer level: `const int N = 42;`.
 -   Only use line comments (with `//`, not `/* ... */`) except for
-    [argument name comments](https://clang.llvm.org/extra/clang-tidy/checks/bugprone-argument-comment.html#bugprone-argument-comment).
+    [argument name comments](https://clang.llvm.org/extra/clang-tidy/checks/bugprone-argument-comment.html#bugprone-argument-comment),
+    [closing namespace comments](https://google.github.io/styleguide/cppguide.html#Namespaces),
+    and similar structural comments.
     Don't append comments about a line of code to the end of its line:
 
     ```
@@ -116,9 +118,7 @@ these.
     imprecise, are at least less confusing over the course of such refactorings.
 
 -   Use the `using`-based type alias syntax instead of `typedef`.
--   Follow the rules for initialization outlined in https://abseil.io/tips/88. A
-    summarized version is below, but this does omit some details provided in the
-    article:
+-   Follow the rules for initialization outlined in https://abseil.io/tips/88. To summarize, omitting some details from the article:
     -   Use assignment syntax (`=`) when initializing directly with the intended
         value.
     -   Use the traditional constructor syntax (with parentheses) when the
@@ -134,9 +134,8 @@ these.
 
 -   Types should have value semantics and support both move and copy where
     possible.
-    -   Types should not rely on copying to implement moves if there is a more
-        efficient implementation.
 -   Types that cannot be copied should still be movable where possible.
+-   If supported, moving should be as efficient as possible.
 -   Non-copyable types should be rare.
 
 ### Foundational libraries and data types
