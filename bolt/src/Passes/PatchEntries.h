@@ -26,10 +26,11 @@ class PatchEntries : public BinaryFunctionPass {
   // If the function size is below the threshold, attempt to skip patching it.
   static constexpr uint64_t PatchThreshold = 128;
 
-  struct InstructionPatch {
-    uint64_t Offset;
-    SmallString<8> Code;
-    Relocation Rel;
+  struct Patch {
+    const MCSymbol *Symbol;
+    uint64_t Address;
+    uint64_t FileOffset;
+    BinarySection *Section;
   };
 
 public:
