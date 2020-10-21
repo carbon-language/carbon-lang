@@ -28,7 +28,7 @@ It can only be provided with `I` or `A`.
 
 Consider this collection of libraries, where there are implementations for an
 interface `I(T)` for a type `A`, and those implementations are in the libraries
-defining the type parameter: \
+defining the type parameter:
 
 ```
 package X library "I and A" api;

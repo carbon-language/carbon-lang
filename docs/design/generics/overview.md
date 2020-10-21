@@ -300,10 +300,9 @@ fn PrintStringArray[Int:$ n](FixedArray(String, n)*: array) {
 }
 ```
 
-\
-Implicit arguments are always determined from the explicit arguments. It is illegal
-not to mention implicit arguments in the explicit argument list and there is no syntax
-for specifying implicit arguments directly at the call site.
+Implicit arguments are always determined from the explicit arguments. It is
+illegal not to mention implicit arguments in the explicit argument list and
+there is no syntax for specifying implicit arguments directly at the call site.
 
 ```
 // ERROR: can't determine `n` from explicit arguments
@@ -639,9 +638,8 @@ fn EqualContainers[HasEquality:$ ElementType,
                    Container(ElementType):$ T2](T1*: c1, T2*: c2) -> Bool { ... }
 ```
 
-\
-**Concern:** Does not represent binary relationships between two types like "A is
-comparable to B (and therefore B is comparable to A)".
+**Concern:** Does not represent binary relationships between two types like "A
+is comparable to B (and therefore B is comparable to A)".
 
 #### Impls are values passed as arguments with defaults
 
@@ -717,7 +715,6 @@ interface Foo(Type:$ T) for T {
 }
 ```
 
-\
 Interface with associated type conforming to an interface
 
 ```
@@ -728,7 +725,6 @@ interface Bar(Type:$ T) for T {
 }
 ```
 
-\
 Type that implements an interface
 
 ```
@@ -742,7 +738,6 @@ impl Bar(Baz) { ... }
 var Baz: x;
 ```
 
-\
 Function taking a value with type conforming to an interface
 
 ```
@@ -757,7 +752,6 @@ fn H3[Type:$ T, Foo(T)]
 H1(&x); H2(&x); H3(&x);
 ```
 
-\
 Function taking a value with type conforming to two different interfaces
 
 ```
@@ -770,9 +764,8 @@ fn Ha[Type:$ T, Foo(T), Bar(T)]
 Ha(&x);
 ```
 
-\
-Function taking a value with a list of implementations for a single interface, all
-compatible with a single representation type
+Function taking a value with a list of implementations for a single interface,
+all compatible with a single representation type
 
 ```
 ???
@@ -780,7 +773,6 @@ compatible with a single representation type
 
 ```
 
-\
 **Facet type-types**
 
 Interface definition
@@ -791,7 +783,6 @@ interface Foo {
 }
 ```
 
-\
 Interface with associated type conforming to an interface
 
 ```
@@ -802,7 +793,6 @@ interface Bar {
 }
 ```
 
-\
 Type that implements an interface
 
 ```
@@ -816,7 +806,6 @@ impl Bar for Baz { ... }
 var Baz: x;
 ```
 
-\
 Function taking a value with type conforming to an interface
 
 ```
@@ -831,7 +820,6 @@ fn H3[TypeImplements(Foo):$ T]
 H1(&x); H2(&x); H3(&x);
 ```
 
-\
 Function taking a value with type conforming to two different interfaces
 
 ```
@@ -844,9 +832,8 @@ fn Ha[TypeImplements(Foo, Bar):$ T]
 Ha(&x);
 ```
 
-\
-Function taking a value with a list of implementations for a single interface, all
-compatible with a single representation type
+Function taking a value with a list of implementations for a single interface,
+all compatible with a single representation type
 
 ```
 fn IsGreater[Type:$ T](T*: a, T*: b,
@@ -874,7 +861,6 @@ var S: y = ...;
 (y as ((S as Outer) as Inner)).K();
 ```
 
-\
 TODO: Interface structurally consisting of other interfaces
 
 TODO: Subsumption

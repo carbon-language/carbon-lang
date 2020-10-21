@@ -738,7 +738,6 @@ interface Stack(Type:$ ElementType) {
 }
 ```
 
-\
 Associated type example:
 
 ```
