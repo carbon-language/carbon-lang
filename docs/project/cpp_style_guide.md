@@ -41,19 +41,11 @@ The baseline style guidance is the
 
 ## Carbon-local guidance
 
-Carbon tries to minimize active changes and deviations from the baseline as that
-makes it harder for both humans and tooling to work with the code. However, in a
-few places, we believe that the project gains specific utility from fairly minor
-changes.
+We provide some local guidance beyond the baseline. This are typically motived
+either by specific value provided to the project, or to give simpler and more
+strict guidance for Carbon's narrow use of C++.
 
-### File names
-
--   Always use `snake_case` for files, directories, and build system rules.
-    Avoid `-`s in these as well.
--   Use `.cpp` for source files, which is the most common open source extension
-    and matches other places where "C++" is written without punctuation.
-
-### Naming conventions
+### General naming rules
 
 Carbon's C++ code tries to match the proposed Carbon naming convention as
 closely as is reasonable in C++ in order to better understand and familiarize
@@ -63,8 +55,8 @@ serves to simplify it.
 
 -   Known, compile-time constants use `UpperCamelCase`, referencing Proper
     Nouns.
-    -   This includes type names, functions, member functions, template
-        parameters, `constexpr` variables, enumerators, etc.
+    -   This includes namespaces, type names, functions, member functions,
+        template parameters, `constexpr` variables, enumerators, etc.
     -   Note that virtual member functions should be named with
         `UpperCamelCase`. The distinction between a virtual function and a
         non-virtual function should be invisible, especially at the call site,
@@ -74,20 +66,17 @@ serves to simplify it.
     non-constant local and member variables.
     -   Notably, don't use the `_` suffix for member variable names.
 
-## Refinements, extensions, and clarifications
+### File names
 
-There are several places where the Google C++ style guide either doesn't provide
-specific advice, or allows different options. In some cases this is motivated by
-a large existing legacy codebase, but that is not a concern for Carbon's C++
-code. Other topics simply are not covered due to the wide range of code and use
-cases. Carbon's use of C++ is more narrow and focused and so we can give precise
-guidance here. The goal is to refine, extend, and clarify the style guide.
-Everything here should be at some level compatible or acceptable.
+-   Always use `snake_case` for files, directories, and build system rules.
+    Avoid `-`s in these as well.
+-   Use `.cpp` for source files, which is the most common open source extension
+    and matches other places where "C++" is written without punctuation.
 
-### Syntax and formatting adjustments
+### Syntax and formatting
 
-These are largely bikeshed issues where any of the options would be fine and we
-simply need to pick a consistent option. Where possible,
+These are minor issues where any of the options would be fine and we simply need
+to pick a consistent option. Where possible,
 [`clang-format`](#suggested-clang-format-contents) should be used to enforce
 these.
 
@@ -99,8 +88,8 @@ these.
 -   Only use line comments (with `//`, not `/* ... */`) except for
     [argument name comments](https://clang.llvm.org/extra/clang-tidy/checks/bugprone-argument-comment.html#bugprone-argument-comment),
     [closing namespace comments](https://google.github.io/styleguide/cppguide.html#Namespaces),
-    and similar structural comments.
-    Don't append comments about a line of code to the end of its line:
+    and similar structural comments. Don't append comments about a line of code
+    to the end of its line:
 
     ```
     int bad = 42;  // Don't comment here.
@@ -118,7 +107,9 @@ these.
     imprecise, are at least less confusing over the course of such refactorings.
 
 -   Use the `using`-based type alias syntax instead of `typedef`.
--   Follow the rules for initialization outlined in https://abseil.io/tips/88. To summarize, omitting some details from the article:
+-   Follow the rules for initialization outlined in
+    [Abseil's tip #88](https://abseil.io/tips/88#best-practices-for-initialization).
+    To summarize, omitting some details from the article:
     -   Use assignment syntax (`=`) when initializing directly with the intended
         value.
     -   Use the traditional constructor syntax (with parentheses) when the
@@ -130,13 +121,21 @@ these.
 -   Don't put both the `if`-condition and subsequent statement onto a single
     line.
 
-### Type adjustments
+### Copyable and movable types
 
 -   Types should have value semantics and support both move and copy where
     possible.
 -   Types that cannot be copied should still be movable where possible.
 -   If supported, moving should be as efficient as possible.
 -   Non-copyable types should be rare.
+
+### Static and global variables
+
+-   Global variables should be declared `constexpr`.
+-   If necessary to have global state, prefer functions which return a pointer
+    to a function-local static variable.
+-   Ensure function-local static variables do not run a destructor on program
+    shutdown.
 
 ### Foundational libraries and data types
 
@@ -152,13 +151,6 @@ these.
         licensing. For simplicity, we want all transitive dependencies of these
         layers to be under the LLVM license that the Carbon project as a whole
         uses (as well as LLVM itself).
-
-### High-level design
-
--   Global variables should be declared `constexpr`. If necessary to have global
-    state, prefer functions which return a pointer to a function-local static
-    variable. Ensure function-local static variables do not run a destructor on
-    program shutdown.
 
 ## Suggested `.clang-format` contents
 
