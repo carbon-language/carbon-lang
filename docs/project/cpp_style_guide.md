@@ -12,14 +12,13 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 -   [Background](#background)
 -   [Baseline](#baseline)
--   [Changes](#changes)
+-   [Carbon-local guidance](#carbon-local-guidance)
+    -   [General naming rules](#general-naming-rules)
     -   [File names](#file-names)
-    -   [Naming conventions](#naming-conventions)
--   [Refinements, extensions, and clarifications](#refinements-extensions-and-clarifications)
-    -   [Syntax and formatting adjustments](#syntax-and-formatting-adjustments)
-    -   [Type adjustments](#type-adjustments)
+    -   [Syntax and formatting](#syntax-and-formatting)
+    -   [Copyable and movable types](#copyable-and-movable-types)
+    -   [Static and global variables](#static-and-global-variables)
     -   [Foundational libraries and data types](#foundational-libraries-and-data-types)
-    -   [High-level design](#high-level-design)
 -   [Suggested `.clang-format` contents](#suggested-clang-format-contents)
 
 <!-- tocstop -->
