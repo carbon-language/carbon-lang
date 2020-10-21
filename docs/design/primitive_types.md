@@ -71,7 +71,7 @@ those sized IEEE-754 formats, and have the semantics defined by IEEE-754.
 ### BFloat16
 
 Carbon also supports the
-`[BFloat16](https://en.wikipedia.org/wiki/Bfloat16_floating-point_format)`
+[`BFloat16`](https://en.wikipedia.org/wiki/Bfloat16_floating-point_format)
 format, a 16-bit truncation of a "binary32" IEEE-754 format floating point
 number.
 
