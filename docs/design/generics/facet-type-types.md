@@ -24,6 +24,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Constraints on associated types in interfaces](#constraints-on-associated-types-in-interfaces)
         -   [Model](#model-1)
         -   [External constraints via optional parameters](#external-constraints-via-optional-parameters)
+    -   [Constraints that are hard to express](#constraints-that-are-hard-to-express)
 -   [Parameterized interfaces [optional feature]](#parameterized-interfaces-optional-feature)
 -   [Conditional conformance](#conditional-conformance)
 -   [Templated impls for generic interfaces](#templated-impls-for-generic-interfaces)
@@ -724,6 +725,28 @@ This approach has a few advantages:
 constraints, as discussed in
 [this appendix](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/appendix-requires-constraints.md).
 
+### Constraints that are hard to express
+
+**Concern:** It is difficult to express some kinds of constraints in this
+framework: mathematical constraints on values (for example, "`NTuple` where `N`
+is at least 2"), and inequality type constraints (for example "type is not
+`Bool`").
+
+You might need an inequality type constraint, for example, to control overload
+resolution:
+
+```
+fn F[Type:$ T](T: x) -> T { return x; }
+fn F(Bool: x) -> String {
+  if (x) return "True"; else return "False";
+}
+
+fn G[Type:$ T](T: x) -> T {
+  // We need a T != Bool constraint for this to type check.
+  return F(x);
+}
+```
+
 ## Parameterized interfaces [optional feature]
 
 (This feature is optional: we may not want this extra complexity. I do recommend
@@ -760,8 +783,8 @@ struct DynamicArray(Type:$ T) {
 impl[Type:$ T] Stack(T) for DynamicArray(T) { ... }
 ```
 
-It is more convenient to express type constraints on type parameters than
-associated types:
+It is a little more convenient to express type constraints on type parameters
+than associated types, since you don't need to specify the name:
 
 ```
 // Stack.ElementType constrained to be Int.
@@ -778,10 +801,13 @@ interface Container(Type:$ ElementType) {
 // ElementType of the two containers constrained to match and
 // implement HasEquality interface.
 fn EqualContainers[HasEquality:$ ElementType,
-                   Container(ElementType):$ T1,
-                   Container(ElementType):$ T2]
-    (Ptr(T1): c1, Ptr(T2): c2) -> Bool { ... }
+                   Container(ElementType):$ CT1,
+                   Container(ElementType):$ CT2]
+    (Ptr(CT1): c1, Ptr(CT2): c2) -> Bool { ... }
 ```
+
+Note that the way to express constraints on type parameters is consistent with
+treating associated types as optional parameters.
 
 But it is more awkward in the unconstrained case, since you still need to pass
 something in that position. That is both more ceremony for something you didn't
@@ -885,6 +911,8 @@ struct FixedArray(Type:$ T, Int:$ N) { ... }
 
 // By saying "Printable:$ T" instead of "Type:$ T" here, we constrain
 // T to be Printable for this impl.
+// Note: this should probably be "TypeImplements(Printable):$ T", but
+// "TypeImplements" is described later in this document.
 impl[Printable:$ T, Int:$ N] Printable for FixedArray(T, N) {
   method (Ptr(Self): this) Print() -> String {
     var Bool: first = False;
@@ -916,6 +944,12 @@ also allow them when defining an impl:
 ```
 impl[Type:$$ T] if (sizeof(T) <= 16) Foo for T { ... }
 ```
+
+**Concern:** The conditional conformance feature makes the question "is this
+interface implemented for this type" undecidable in general.
+[This feature in Rust has been shown to allow implementing a Turing machine](https://sdleffler.github.io/RustTypeSystemTuringComplete/).
+This means we will likely need some heuristic like a limit on how many steps of
+recursion are allowed.
 
 **Rejected alternative:** We could also have a syntax for defining these impls
 inline in the struct definition, but I haven't found a satisfactory solution
