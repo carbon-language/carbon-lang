@@ -348,6 +348,8 @@ goals:
 Note that interface parameters are treated differently because they can be
 inferred as part of calling a function call, as described in
 [this appendix](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/appendix-interface-param-impl.md).
+We could allow implementations to be defined with arguments that can't be
+inferred, if we were willing to use a more complicated rule.
 
 ## Generics
 

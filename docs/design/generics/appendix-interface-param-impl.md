@@ -22,7 +22,14 @@ Can we allow an implementation of a parameterized interface `I(T)` for a type
 
 ## Answer
 
-It can only be provided with `I` or `A`.
+It can only be provided with `I` or `A`, unless `T` can not be deduced, and then
+it could be provided with `T` as well. Recall for interfaces where we want to
+allow the same interface to be implemented for a type with two different
+parameters, we can't deduce `T`. For example, we may want to support
+`ComparableTo(Float32)` and `ComparableTo(Complex128)` for type `Complex64`. So
+the argument to `ComparableTo` can't be deduced and it wouldn't break anything
+to allow those implementations to be defined with the argument (`Float32` or
+`Complex128`).
 
 ## Problem
 
@@ -99,12 +106,14 @@ for some `T`. There exists such implementations in both libraries `Y.T1` and
     would prevent the call to `F` from being ambiguous.
 
 Basically, there is nothing guaranteeing that we import libraries defining the
-types that are used as interface parameters if we allow this construction, and
-we can see that condition is necessary.
+types that are used as interface parameters if we allow the interface parameters
+to be deduced. For cases where we do _not_ allow interface parameters to be
+deduced, because we want to allow multiple implementations of that interface for
+a single type (such as `ComparableTo(T)`), this problem doesn't arise.
 
 ## Conclusion
 
 It appears we need to require all implementations of interface `I(...)` for type
 `A(...)` to live in the same library as either the definition of `I`, `A`, or a
 parameter of `A`. Being in the same library as a parameter of `I` is
-insufficient.
+insufficient, unless it can't be deduced.
