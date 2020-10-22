@@ -29,6 +29,7 @@
 #include "Passes/StokeInfo.h"
 #include "Passes/ValidateInternalCalls.h"
 #include "Passes/VeneerElimination.h"
+#include "llvm/Support/FormatVariadic.h"
 #include "llvm/Support/Timer.h"
 #include "llvm/Support/raw_ostream.h"
 #include <numeric>
@@ -319,11 +320,13 @@ const char BinaryFunctionPassManager::TimerGroupDesc[] =
 
 void BinaryFunctionPassManager::runPasses() {
   auto &BFs = BC.getBinaryFunctions();
-  for (const auto &OptPassPair : Passes) {
+  for (size_t PassIdx = 0; PassIdx < Passes.size(); PassIdx++) {
+    const auto &OptPassPair = Passes[PassIdx];
     if (!OptPassPair.first)
       continue;
 
     auto &Pass = OptPassPair.second;
+    auto PassIdName = formatv("{0:2}_{1}", PassIdx, Pass->getName()).str();
 
     if (opts::Verbosity > 0) {
       outs() << "BOLT-INFO: Starting pass: " << Pass->getName() << "\n";
@@ -372,7 +375,7 @@ void BinaryFunctionPassManager::runPasses() {
       Function.print(outs(), Message, true);
 
       if (opts::DumpDotAll)
-        Function.dumpGraphForPass(Pass->getName());
+        Function.dumpGraphForPass(PassIdName);
     }
   }
 }

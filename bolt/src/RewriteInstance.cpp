@@ -2841,7 +2841,7 @@ void RewriteInstance::postProcessFunctions() {
       Function.print(outs(), "after building cfg", true);
 
     if (opts::DumpDotAll)
-      Function.dumpGraphForPass("build-cfg");
+      Function.dumpGraphForPass("00_build-cfg");
 
     if (opts::PrintLoopInfo) {
       Function.calculateLoopInfo();
