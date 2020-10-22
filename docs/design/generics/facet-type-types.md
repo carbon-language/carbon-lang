@@ -749,6 +749,10 @@ fn G[Type:$ T](T: x) -> T {
 }
 ```
 
+Another use case for inequality type constraints would be to say something like
+"define `ComparableTo(T1)` for `T2` if `ComparableTo(T2)` is defined for `T1`
+and `T1 != T2`".
+
 ## Parameterized interfaces [optional feature]
 
 (This feature is optional: we may not want this extra complexity. I do recommend
