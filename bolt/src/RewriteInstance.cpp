@@ -4039,7 +4039,7 @@ template <typename ELFT,
           typename StrTabFuncTy>
 void RewriteInstance::updateELFSymbolTable(
     ELFObjectFile<ELFT> *File,
-    bool PatchExisting,
+    bool IsDynSym,
     const ELFShdrTy &SymTabSection,
     const std::vector<uint32_t> &NewSectionIndex,
     WriteFuncTy Write,
@@ -4062,6 +4062,18 @@ void RewriteInstance::updateELFSymbolTable(
 
   // Symbols for the new symbol table.
   std::vector<ELFSymTy> Symbols;
+
+  auto getNewSectionIndex = [&](uint32_t OldIndex) {
+    assert(OldIndex < NewSectionIndex.size() && "section index out of bounds");
+    const uint32_t NewIndex = NewSectionIndex[OldIndex];
+
+    // We may have stripped the section that dynsym was referencing due to
+    // the linker bug. In that case return the old index avoiding marking
+    // the symbol as undefined.
+    if (IsDynSym && NewIndex != OldIndex && NewIndex == ELF::SHN_UNDEF)
+      return OldIndex;
+    return NewIndex;
+  };
 
   // Add extra symbols for the function.
   //
@@ -4145,7 +4157,7 @@ void RewriteInstance::updateELFSymbolTable(
 
     // Remove the section symbol iif the corresponding section was stripped.
     if (Symbol.getType() == ELF::STT_SECTION) {
-      if (!NewSectionIndex[Symbol.st_shndx])
+      if (!getNewSectionIndex(Symbol.st_shndx))
         return true;
       return false;
     }
@@ -4161,7 +4173,7 @@ void RewriteInstance::updateELFSymbolTable(
 
   for (const ELFSymTy &Symbol : cantFail(Obj->symbols(&SymTabSection))) {
     // For regular (non-dynamic) symbol table strip unneeded symbols.
-    if (!PatchExisting && shouldStrip(Symbol))
+    if (!IsDynSym && shouldStrip(Symbol))
       continue;
 
     const auto *Function = BC->getBinaryFunctionAtAddress(Symbol.st_value);
@@ -4176,7 +4188,7 @@ void RewriteInstance::updateELFSymbolTable(
     // For dynamic symbol table, the section index could be wrong on the input,
     // and its value is ignored by the runtime if it's different from
     // SHN_UNDEF and SHN_ABS.
-    if (!PatchExisting && Function &&
+    if (!IsDynSym && Function &&
         Symbol.st_shndx !=
                       Function->getOriginSection()->getSectionRef().getIndex())
       Function = nullptr;
@@ -4192,11 +4204,11 @@ void RewriteInstance::updateELFSymbolTable(
         NewSymbol.st_size = Function->getOutputSize();
         NewSymbol.st_shndx = Function->getCodeSection()->getIndex();
       } else if (Symbol.st_shndx < ELF::SHN_LORESERVE) {
-        NewSymbol.st_shndx = NewSectionIndex[Symbol.st_shndx];
+        NewSymbol.st_shndx = getNewSectionIndex(Symbol.st_shndx);
       }
 
       // Add new symbols to the symbol table if necessary.
-      if (!PatchExisting)
+      if (!IsDynSym)
         addExtraSymbols(*Function, NewSymbol);
     } else {
       // Check if the function symbol matches address inside a function, i.e.
@@ -4240,7 +4252,7 @@ void RewriteInstance::updateELFSymbolTable(
         } else {
           // Otherwise just update the section for the symbol.
           if (Symbol.st_shndx < ELF::SHN_LORESERVE) {
-            NewSymbol.st_shndx = NewSectionIndex[Symbol.st_shndx];
+            NewSymbol.st_shndx = getNewSectionIndex(Symbol.st_shndx);
           }
         }
 
@@ -4255,7 +4267,7 @@ void RewriteInstance::updateELFSymbolTable(
                                                      /*UseMaxSize=*/true)) {
             // Can only delete the symbol if not patching. Such symbols should
             // not exist in the dynamic symbol table.
-            assert(!PatchExisting && "cannot delete symbol");
+            assert(!IsDynSym && "cannot delete symbol");
             continue;
           }
         }
@@ -4287,7 +4299,7 @@ void RewriteInstance::updateELFSymbolTable(
       updateSymbolValue(*SymbolName, Ignored);
     }
 
-    if (PatchExisting) {
+    if (IsDynSym) {
       Write((&Symbol - cantFail(Obj->symbols(&SymTabSection)).begin()) *
                 sizeof(ELFSymTy),
             NewSymbol);
@@ -4296,7 +4308,7 @@ void RewriteInstance::updateELFSymbolTable(
     }
   }
 
-  if (PatchExisting) {
+  if (IsDynSym) {
     assert(Symbols.empty());
     return;
   }
@@ -4306,7 +4318,7 @@ void RewriteInstance::updateELFSymbolTable(
     ELFSymTy NewSymbol;
     BinarySection *OriginSection = Function->getOriginSection();
     NewSymbol.st_shndx = OriginSection ?
-          NewSectionIndex[OriginSection->getSectionRef().getIndex()] :
+          getNewSectionIndex(OriginSection->getSectionRef().getIndex()) :
           Function->getCodeSection()->getIndex();
     NewSymbol.st_value = Function->getOutputAddress();
     NewSymbol.st_name = AddToStrTab(Function->getOneName());
@@ -4403,7 +4415,7 @@ void RewriteInstance::patchELFSymTabs(ELFObjectFile<ELFT> *File) {
   if (DynSymSection) {
     updateELFSymbolTable(
         File,
-        /*PatchExisting=*/true,
+        /*IsDynSym=*/true,
         *DynSymSection,
         NewSectionIndex,
         [&](size_t Offset, const ELFSymTy &Sym) {
@@ -4438,7 +4450,7 @@ void RewriteInstance::patchELFSymTabs(ELFObjectFile<ELFT> *File) {
   NumLocalSymbols = 0;
   updateELFSymbolTable(
       File,
-      /*PatchExisting=*/false,
+      /*IsDynSym=*/false,
       *SymTabSection,
       NewSectionIndex,
       [&](size_t Offset, const ELFSymTy &Sym) {

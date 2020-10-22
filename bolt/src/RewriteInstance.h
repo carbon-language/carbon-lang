@@ -294,7 +294,7 @@ private:
 
   /// Write ELF symbol table using \p Write and \p AddToStrTab functions
   /// based on the input file symbol table passed in \p SymTabSection.
-  /// \p PatchExisting is set to true for dynamic symbol table since we
+  /// \p IsDynSym is set to true for dynamic symbol table since we
   /// are updating it in-place with minimal modifications.
   template <typename ELFT,
             typename ELFShdrTy = typename ELFObjectFile<ELFT>::Elf_Shdr,
@@ -302,7 +302,7 @@ private:
             typename StrTabFuncTy>
   void updateELFSymbolTable(
       ELFObjectFile<ELFT> *File,
-      bool PatchExisting,
+      bool IsDynSym,
       const ELFShdrTy &SymTabSection,
       const std::vector<uint32_t> &NewSectionIndex,
       WriteFuncTy Write,
