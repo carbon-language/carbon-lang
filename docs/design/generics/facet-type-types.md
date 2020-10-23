@@ -2186,6 +2186,41 @@ This, combined with unnamed/structural interfaces, would be a building block for
 the
 [`TypeImplements` construction above](#type-implementing-multiple-interfaces).
 
+**Question:** A similar feature that is perhaps a bit simpler would be to say
+that interfaces can require other interfaces, but there is no containment.
+Instead, types would contain a flat list of implementations.
+
+For the example above, we could leave the definitions of the interfaces alone,
+but the interpretation would be different. Instead of `Outer` containing
+`Inner1` and `Inner2`, it would simply have a requirement that the type
+implement them separately.
+
+```
+interface Inner1 {
+  method (Self: this) K();
+}
+interface Inner2 {
+  method (Self: this) L();
+}
+interface Outer {
+  impl Inner1;
+  impl Inner2;
+}
+struct S {
+  impl Inner1 {
+    method (S: this) K() { ... }
+  }
+  impl Inner2 {
+    method (S: this) L() { ... }
+  }
+  impl Outer {
+    // Requirements satisfied by impl of Inner1 and Inner2 above.
+  }
+}
+var S: y = ...;
+(y as (S as Inner1)).K();
+```
+
 ## Index of examples
 
 Specifically, how does this proposal address
