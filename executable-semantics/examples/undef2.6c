@@ -1,0 +1,9 @@
+// Use-after-free.
+
+fun main() -> Int {
+  var Ptr(int): p;
+  p = malloc(Int);
+  *p = 0;
+  free(p);
+  return *p;
+}

@@ -1,0 +1,11 @@
+fn main() -> Int {
+  var auto: t = 5;
+  match (t) {
+    case 3 =>
+      return -1;
+    case 4 =>
+      return -1;
+    default =>
+      return 0;
+  }
+}

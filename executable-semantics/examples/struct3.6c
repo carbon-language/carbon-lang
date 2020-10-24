@@ -1,0 +1,8 @@
+struct Point {
+  var Int: x;
+  var Int: y;
+}
+
+fn main() -> Int {
+  return Point(.x = 1, .y = 2).x - 1;
+}

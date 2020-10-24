@@ -1,0 +1,10 @@
+fn f(Int: x) -> Int {
+  if (x == 0)
+    return x;
+  else
+    return f(x - 1);
+}
+
+fn main() -> Int {
+  return f(2);
+}

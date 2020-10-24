@@ -1,0 +1,8 @@
+fn add1(Int: x) -> Int {
+  return x + 1;
+}
+
+fn main() -> Int {
+  var fnty(Int)->Int: f = add1;
+  return f(-1);
+}

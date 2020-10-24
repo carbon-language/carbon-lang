@@ -1,0 +1,4 @@
+fn main() -> Int {
+  var (auto: x, auto: y) = (2, 3);
+  return y - x - 1;
+}

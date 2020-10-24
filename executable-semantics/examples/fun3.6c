@@ -1,0 +1,8 @@
+// Test multiple arguments
+fn f(Int: x, Int: y) -> Int {
+  return x + y;
+}
+
+fn main() -> Int {
+  return f(2,3) - 5;
+}

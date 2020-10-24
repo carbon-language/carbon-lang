@@ -1,0 +1,4 @@
+fn main() -> Int {
+  var (Int,): t = (5,);
+  return t[0] - 5;
+}

@@ -1,0 +1,7 @@
+fn main() -> Int {
+  var Int: x = 0;
+  {
+    var Int: x = 1;
+  }
+  return x;
+}

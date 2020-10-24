@@ -1,0 +1,10 @@
+fn main() -> Int {
+  var Int: x = 2;
+  while (true) {
+    if (x == 0)
+      break;
+    else
+      x = x - 1;
+  }
+  return x;
+}
