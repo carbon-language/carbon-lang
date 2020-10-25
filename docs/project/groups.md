@@ -61,3 +61,9 @@ For most purposes, the Core team should be contacted about conduct issues.
 -   Discord Chat role: review-managers
 -   [Google group](https://groups.google.com/g/carbon-lang-review-managers):
     Grants Google Drive access.
+
+### Toolchain team
+
+-   [Github team](https://github.com/orgs/carbon-language/teams/toolchain-team)
+-   [Discourse Forum group](https://forums.carbon-lang.dev/g/toolchain-team)
+-   Discord Chat role: toolchain-team

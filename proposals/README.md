@@ -41,5 +41,6 @@ request:
 -   [0143 - Numeric literals](p0143.md)
     -   [Decision](p0143_decision.md)
 -   [0149 - Change documentation style guide](p0149.md)
+-   [0179 - Create a toolchain team.](p0179.md)
 
 <!-- endproposals -->
