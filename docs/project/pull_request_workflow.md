@@ -14,6 +14,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Green tests](#green-tests)
 -   [Always use pull requests (with review) rather than pushing directly](#always-use-pull-requests-with-review-rather-than-pushing-directly)
 -   [Small, incremental changes](#small-incremental-changes)
+    -   [Stacking dependent pull requests](#stacking-dependent-pull-requests)
     -   [Managing pull requests with multiple commits](#managing-pull-requests-with-multiple-commits)
 -   [Linear history](#linear-history)
 
