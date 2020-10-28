@@ -60,8 +60,8 @@ repos:
     rev: 20.8b1
     hooks:
       - id: black
-  - repo: https://github.com/prettier/prettier
-    rev: 2.1.1
+  - repo: https://github.com/prettier/pre-commit
+    rev: v2.1.2
     hooks:
       - id: prettier
         exclude: ^src/jekyll/theme/
