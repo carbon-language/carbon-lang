@@ -167,7 +167,8 @@ we aim to support metaprogramming in Carbon without macros.
 
 This bucket includes anything that shows up in the language's grammar. Examples:
 
-- C++ template metaprogramming;
+- C++ template metaprogramming and `constexpr`, including
+  [proposed extensions](http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2020/p2237r0.pdf)
 - [Circle](https://github.com/seanbaxter/circle/blob/master/examples/README.md) -
   features using @ minus the macro stuff.
 - ["inline for"](https://ziglang.org/documentation/master/#inline-for),
