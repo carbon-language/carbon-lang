@@ -81,7 +81,7 @@ often spawns other actions that needs to be completed first and afterwards uses
 their results to complete its action. To keep track of this process, each action
 includes a position field `pos` that stores an integer that starts at `-1` and
 increments as the action makes progress. For example, suppose the action
-associated with an addition expression `e1 + e2` as at the top of the to-do
+associated with an addition expression `e1 + e2` is at the top of the to-do
 list:
 
     (e1 + e2) [-1] :: ...
