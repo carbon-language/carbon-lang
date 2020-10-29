@@ -17,10 +17,10 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 ## TODO
 
-This is a skeletal design, added to support [the overview](/README.md). It
-should not be treated as accepted by the core team; rather, it is a placeholder
-until we have more time to examine this detail. Please feel welcome to rewrite
-and update as appropriate.
+This is a skeletal design, added to support
+[the overview](/docs/design/README.md). It should not be treated as accepted by
+the core team; rather, it is a placeholder until we have more time to examine
+this detail. Please feel welcome to rewrite and update as appropriate.
 
 See [PR 17](https://github.com/carbon-language/carbon-lang/pull/17) for context
 -- that proposal may replace this.
@@ -28,8 +28,8 @@ See [PR 17](https://github.com/carbon-language/carbon-lang/pull/17) for context
 ## Lexical elements
 
 The first stage of processing a
-[source file](/code_and_name_organization/source_files.md) is the division of
-the source file into lexical elements.
+[source file](/docs/design/code_and_name_organization/source_files.md) is the
+division of the source file into lexical elements.
 
 A _lexical element_ is one of the following:
 
