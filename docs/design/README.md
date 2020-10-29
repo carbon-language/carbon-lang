@@ -105,7 +105,8 @@ cleaned up during evolution.
 
 ### Code and comments
 
-> References: [Lexical conventions](lexical_conventions.md)
+> References: [Source files](code_and_name_organization/source_files) and
+> [lexical conventions](lexical_conventions)
 >
 > **TODO:** References need to be evolved.
 
@@ -127,9 +128,16 @@ cleaned up during evolution.
       live code
     ```
 
+-   Decimal, hexadecimal, and binary integer literals and decimal and
+    hexadecimal floating-point literals are supported, with `_` as a digit
+    separator. For example, `0b1011_1101` and `0x1.EEFp+5`. Numeric literals are
+    case-sensitive: `0x`, `0b`, `e+`, and `p+` must be lowercase, whereas
+    hexadecimal digits must be uppercase. A digit is required on both sides of a
+    period.
+
 ### Packages, libraries, and namespaces
 
-> References: [Code and name organization](code_and_name_organization.md)
+> References: [Code and name organization](code_and_name_organization)
 
 -   **Files** are grouped into libraries, which are in turn grouped into
     packages.
@@ -161,16 +169,16 @@ fn Foo(var Geometry.Shapes.Flat.Circle: circle) { ... }
 
 ### Names and scopes
 
-> References: [Lexical conventions](lexical_conventions.md)
+> References: [Lexical conventions](lexical_conventions)
 >
 > **TODO:** References need to be evolved.
 
 Various constructs introduce a named entity in Carbon. These can be functions,
 types, variables, or other kinds of entities that we'll cover. A name in Carbon
-is always formed out of an "identifier", or a sequence of letters, numbers, and
-underscores which starts with a letter. As a regular expression, this would be
-`/[a-zA-Z][a-zA-Z0-9_]*/`. Eventually we may add support for more unicode
-characters as well.
+is formed from a word, which is a sequence of letters, numbers, and underscores,
+and which starts with a letter. We intend to follow Unicode's Annex 31 in
+selecting valid identifier characters, but a concrete set of valid characters
+has not been selected yet.
 
 #### Naming conventions
 
@@ -240,7 +248,7 @@ file, including `Int` and `Bool`. These will likely be defined in a special
 
 ### Expressions
 
-> References: [Lexical conventions](lexical_conventions.md) and
+> References: [Lexical conventions](lexical_conventions) and
 > [operators](operators.md)
 >
 > **TODO:** References need to be evolved.
