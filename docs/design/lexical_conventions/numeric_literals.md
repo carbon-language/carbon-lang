@@ -163,23 +163,23 @@ permissions, was negligible. We considered the following alternatives:
 
 **Alternative 1:** Follow C and C++, and use `0` as the base prefix for octal.
 
-Pro:
+Advantages:
 
 -   More similar to C++ and other languages.
 
-Con:
+Disadvantages:
 
 -   Subtle and error-prone rule: for example, left-padding with zeroes for
     alignment changes the meaning of literals.
 
 **Alternative 2:** Use `0o` as the base prefix for octal.
 
-Pro:
+Advantages:
 
 -   Unlikely to be misinterpreted as decimal.
 -   Follows several other languages (for example, Python).
 
-Con:
+Disadvantages:
 
 -   Additional language complexity.
 
@@ -191,34 +191,34 @@ alternative 2 is suggested.
 **We could permit leading `0`s in decimal integers (and in floating-point
 numbers).**
 
-Pro:
+Advantages:
 
 -   We would allow leading `0`s to be used to align columns of numbers.
 
-Con:
+Disadvantages:
 
 -   The same literal could be valid but have a different value in C++ and
     Carbon.
 
 **We could add an (optional) base specifier `0d` for decimal integers.**
 
-Pro:
+Advantages:
 
 -   Uniform treatment of all bases. Left-padding with `0` could be achieved by
     using `0d000123`.
 
-Con:
+Disadvantages:
 
 -   No evidence of need for this functionality.
 
 **We could permit an `e` in decimal literals to express large powers of 10.**
 
-Pro:
+Advantages:
 
 -   Many uses of (eg) `1e6` in our sample C++ corpus intend to form an integer
     literal instead of a floating-point literal.
 
-Con:
+Disadvantages:
 
 -   Would violate the expectations of many C++ programmers used to `e`
     indicating a floating-point constant.
@@ -227,11 +227,11 @@ Con:
 
 **We could make base specifiers case-insensitive.**
 
-Pro:
+Advantages:
 
 -   More similar to C++.
 
-Con:
+Disadvantages:
 
 -   `0B1` is easily mistaken for `081`
 -   `0B1` can be confused with `0xB1`
@@ -240,13 +240,13 @@ Con:
 
 **We could make the digit sequence in hexadecimal integers case-insensitive.**
 
-Pro:
+Advantages:
 
 -   More similar to C++.
 -   Some developers will be more comfortable writing hexadecimal digits in
     lowercase. Some tools, such as `md5`, will print lowercase.
 
-Con:
+Disadvantages:
 
 -   Allowing more than one way to write literals will lead to style divergence.
 -   Lowercase hexadecimal digits are less visually distinct from the `x` base
@@ -256,14 +256,14 @@ Con:
 **We could require the digit sequence in hexadecimal integers to be written
 using lowercase letters `a`..`f`.**
 
-Pro:
+Advantages:
 
 -   Some developers will be more comfortable writing hexadecimal digits in
     lowercase. Some tools, such as `md5`, will print lowercase.
 -   `B` and `D` are more likely to be confused with `8` and `0` than `b` and `d`
     are.
 
-Con:
+Disadvantages:
 
 -   Some developers will be more comfortable writing hexadecimal digits in
     uppercase. Some tools will print uppercase.
@@ -276,12 +276,12 @@ Con:
 **We could allow real numbers with no digits on one side of the period (`3.` or
 `.5`).**
 
-Pro:
+Advantages:
 
 -   More similar to C++.
 -   Allows numbers to be expressed more tersely.
 
-Con:
+Disadvantages:
 
 -   Gives meaning to `tup.0` syntax that may be useful for indexing tuples.
 -   Gives meaning to `0.ToString()` syntax that may be useful for performing
@@ -296,37 +296,37 @@ in the Google style guide, which argues for the same rule.
 
 **We could allow a real number with no `e` or `p` to omit a period (`1e100`).**
 
-Pro:
+Advantages:
 
 -   More similar to C++.
 -   Allows numbers to be expressed more tersely.
 
-Con:
+Disadvantages:
 
 -   Assuming that such numbers are integers rather than real numbers is a common
     error in C++.
 
 **We could allow the `e` or `p` to be written in uppercase.**
 
-Pro:
+Advantages:
 
 -   More similar to C++.
 -   Most calculators use `E`, to avoid confusion with the constant `e`.
 
-Con:
+Disadvantages:
 
 -   Allowing more than one way to write literals will lead to style divergence.
 -   `E` may be confused with a hexadecimal digit.
 
 **We could require a `p` in a hexadecimal real number literal.**
 
-Pro:
+Advantages:
 
 -   More similar to C++.
 -   When explicitly writing a bit-pattern for a floating-point type, it's
     reasonable to always include the exponent value.
 
-Con:
+Disadvantages:
 
 -   Less consistent.
 -   Makes hexadecimal floating-point values even more expert-only.
@@ -334,13 +334,13 @@ Con:
 **We could arbitrarily pick one of the two values when a real number is exactly
 half-way between two representable values.**
 
-Pro:
+Advantages:
 
 -   More similar to C++.
 -   Would accept more cases, and it's likely that either of the two possible
     values would be acceptable in practice.
 
-Con:
+Disadvantages:
 
 -   Would either need to specify which option is chosen or, following C++,
     accept that programs using such literals have non-portable semantics.
@@ -353,37 +353,37 @@ We considered the following characters as digit separators:
 
 **Status quo:** `_` as a digit separator.
 
-Pro:
+Advantages:
 
 -   Follows convention of C#, Java, JavaScript, Python, D, Ruby, Rust, Swift,
     ...
 -   Culturally agnostic, because it doesn't match any common human writing
     convention.
 
-Con:
+Disadvantages:
 
 -   Underscore is not used as a digit grouping separator in any common human
     writing convention.
 
 **Alternative 1:** `'` as a digit separator.
 
-Pro:
+Advantages:
 
 -   Follows C++ syntax.
 -   Used in several (mostly European) writing conventions.
 
-Con:
+Disadvantages:
 
 -   `'` is also likely to be used to introduce character literals.
 
 **Alternative 2:** `,` as a digit separator.
 
-Pro:
+Advantages:
 
 -   More similar to how numbers are written in English text and many other
     cultures.
 
-Con:
+Disadvantages:
 
 -   Commas are expected to widely be used in Carbon programs for other purposes,
     where there may be digits on both sides of the comma. For example, there
@@ -394,13 +394,13 @@ Con:
 
 **Alternative 3:** whitespace as a digit separator.
 
-Pro:
+Advantages:
 
 -   Used and understood by many cultures.
 -   Never interpreted as a decimal point instead of a grouping separator.
 -   Also usable to the right of a decimal point.
 
-Con:
+Disadvantages:
 
 -   Omitted separators in lists of numbers may result in distinct numbers being
     spliced together. For example, `f(1, 23, 4 567)` may be interpreted as three
@@ -409,11 +409,11 @@ Con:
 
 **Alternative 4:** `.` as digit separator, `,` as decimal point.
 
-Pro:
+Advantages:
 
 -   More familiar to cultures that write numbers this way.
 
-Con:
+Disadvantages:
 
 -   As with `,` as a digit separator, `,` as a decimal point is problematic.
 -   This usage is unfamiliar and would be surprising to programmers; programmers
@@ -423,13 +423,13 @@ Con:
 
 **Alternative 5:** No digit separator syntax.
 
-Pro:
+Advantages:
 
 -   Simpler language rules.
 -   More consistent source syntax, as there is no choice as to whether to use
     digit separators or not.
 
-Con:
+Disadvantages:
 
 -   Harms the readability of long literals.
 
@@ -437,7 +437,7 @@ Con:
 
 **Alternative 1:** allow any digit groupings (for example, `123_4567_89`).
 
-Pro:
+Advantages:
 
 -   Simpler, more flexible rule, that may allow some groupings that are
     conventional in a specific domain. For example, `var Date: d = 01_12_1983;`,
@@ -446,7 +446,7 @@ Pro:
     would group the last three digits, and then every two digits before that
     (1,23,45,678 could be written `1_23_45_678`).
 
-Con:
+Disadvantages:
 
 -   Less self-checking that numeric literals are interpreted the way that the
     author intends.
@@ -454,11 +454,11 @@ Con:
 **Alternative 2:** as above, but additionally require binary digits to be
 grouped in 4s.
 
-Pro:
+Advantages:
 
 -   More enforcement that digit grouping is conventional.
 
-Con:
+Disadvantages:
 
 -   No clear, established rule for how to group binary digits. In some cases, 8
     digit groups may be more conventional.
@@ -472,11 +472,11 @@ Con:
 
 **Alternative 3:** allow any regular grouping.
 
-Pro:
+Advantages:
 
 -   Can be applied uniformly to all bases.
 
-Con:
+Disadvantages:
 
 -   Provides no assistance for decimal numbers with a single digit separator.
 -   Does not allow binary literals to express an intent to initialize irregular

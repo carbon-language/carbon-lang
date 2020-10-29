@@ -104,9 +104,9 @@ The choice to require NFC is really four choices:
 
 ### Character encoding
 
-We could restrict programs to ASCII.
+**We could restrict programs to ASCII.**
 
-Pro:
+Advantages:
 
 -   Reduced implementation complexity.
 -   Avoids all problems relating to normalization, homoglyphs, text
@@ -117,7 +117,7 @@ Pro:
     developers -- we already require that keywords, and thus all ASCII letters,
     can be typed.
 
-Con:
+Disadvantages:
 
 -   An overarching goal of the Carbon project is to provide a language that is
     inclusive and welcoming. A language that does not permit names and comments
@@ -128,22 +128,22 @@ Con:
 
 ### Byte order marks
 
-We could disallow byte order marks.
+**We could disallow byte order marks.**
 
-Pro:
+Advantages:
 
 -   Marginal implementation simplicity.
 
-Con:
+Disadvantages:
 
 -   Several major editors, particularly on the Windows platform, insert UTF-8
     BOMs and use them to identify file encoding.
 
 ### Normalization forms
 
-We could require a different normalization form.
+**We could require a different normalization form.**
 
-Pro:
+Advantages:
 
 -   Some environments might more naturally produce a different normalization
     form.
@@ -153,7 +153,7 @@ Pro:
     -   NFD may be more suitable for certain uses such as typo correction,
         homoglyph detection, or code completion.
 
-Con:
+Disadvantages:
 
 -   The C++ standard and community is moving towards using NFC:
 
@@ -170,29 +170,30 @@ Con:
 
 -   NFC produces smaller encodings than NFD in all cases where they differ.
 
-We could require no normalization form and compare identifiers by code point
-sequence.
+**We could require no normalization form and compare identifiers by code point
+sequence.**
 
-Pro:
+Advantages:
 
 -   This is the rule in use in C++20 and before.
 
-Con:
+Disadvantages:
 
 -   This is not the rule planned for the near future of C++.
 -   Different representations of the same character may result in different
     identifiers, in a way that is likely to be invisible in most programming
     environments.
 
-We could require no normalization form, and normalize the source code ourselves:
+**We could require no normalization form, and normalize the source code
+ourselves.**
 
-Pro:
+Advantages:
 
 -   We would treat source text identically regardless of the normalization form.
 -   Developers would not be responsible for ensuring that their editing
     environment produces and preserves the proper normalization form.
 
-Con:
+Disadvantages:
 
 -   There is substantially more implementation cost involved in normalizing
     identifiers than in detecting whether they are in normal form. While this
@@ -220,16 +221,16 @@ Con:
 -   Normalizing the contents of string literals, rather than using their
     contents unaltered, will introduce a risk of user surprise.
 
-We could require only identifiers, or only identifiers and comments, to be
-normalized, rather than the entire input file.
+**We could require only identifiers, or only identifiers and comments, to be
+normalized, rather than the entire input file.**
 
-Pro:
+Advantages:
 
 -   This would provide more freedom in comments to use arbitrary text.
 -   String literals could contain intentionally non-normalized text in order to
     represent non-normalized strings.
 
-Con:
+Disadvantages:
 
 -   Within string literals, this would result in invisible semantic differences:
     strings that render identically can have different meanings.

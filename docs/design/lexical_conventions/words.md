@@ -27,9 +27,9 @@ follow lexical conventions for identifiers based on
 
 ## Alternatives
 
-We could restrict words to ASCII.
+**We could restrict words to ASCII.**
 
-Pro:
+Advantages:
 
 -   Reduced implementation complexity.
 -   Avoids all problems relating to normalization, homoglyphs, text
@@ -40,7 +40,7 @@ Pro:
     developers -- we already require that keywords, and thus all ASCII letters,
     can be typed.
 
-Con:
+Disadvantages:
 
 -   An overarching goal of the Carbon project is to provide a language that is
     inclusive and welcoming. A language that does not permit names in programs
