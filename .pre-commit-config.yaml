@@ -4,11 +4,13 @@
 
 # See https://pre-commit.com for more information
 # See https://pre-commit.com/hooks.html for more hooks
+
 default_language_version:
   python: python3 # Defaults to python2, so override it.
+
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v3.2.0
+    rev: v3.3.0
     hooks:
       - id: check-added-large-files
       - id: check-case-conflict
@@ -22,7 +24,7 @@ repos:
         args: ['--fix=lf']
       - id: trailing-whitespace
   - repo: https://github.com/google/pre-commit-tool-hooks
-    rev: v1.0.3
+    rev: v1.0.4
     hooks:
       - id: check-copyright
         args:
