@@ -30,7 +30,7 @@ using std::pair;
 using std::make_pair;
 using std::cout;
 using std::endl;
-  
+
 static list<FunctionDefinition*> program;
 %}
 %union
@@ -56,6 +56,7 @@ static list<FunctionDefinition*> program;
 
 %token <num> integer_literal
 %token <str> identifier
+%type <str> designator
 %type <declaration> declaration
 %type <function_definition> function_declaration
 %type <function_definition> function_definition
@@ -104,13 +105,13 @@ static list<FunctionDefinition*> program;
 %token DBLARROW
 %token DEFAULT
 %token AUTO
-%nonassoc '{' '}' 
+%nonassoc '{' '}'
 %nonassoc ':' ',' DBLARROW
 %left OR AND
 %nonassoc EQUAL NOT
 %left '+' '-'
-%left '.' ARROW 
-%nonassoc '(' ')' '[' ']' 
+%left '.' ARROW
+%nonassoc '(' ')' '[' ']'
 %start input
 %locations
 %%
@@ -142,8 +143,8 @@ pattern:
 expression:
   identifier
     { $$ = make_var(yylineno, $1); }
-| expression '.' identifier
-    { $$ = make_get_field(yylineno, $1, $3); }
+| expression designator
+    { $$ = make_get_field(yylineno, $1, $2); }
 | expression '[' expression ']'
     { $$ = make_index(yylineno, $1, $3); }
 | expression ':' identifier
@@ -181,6 +182,8 @@ expression:
 | FNTY tuple return_type
     { $$ = make_fun_type(yylineno, $2, $3); }
 ;
+designator: '.' identifier { $$ = $2; }
+;
 tuple: '(' field_list ')'
     {
       switch ($2->tag) {
@@ -198,9 +201,9 @@ tuple: '(' field_list ')'
 field:
   pattern
     { $$ = make_exp($1); }
-| '.' identifier '=' pattern
+| designator '=' pattern
     { auto fields = new list<pair<string,Expression*> >();
-      fields->push_back(make_pair($2, $4));
+      fields->push_back(make_pair($1, $3));
       $$ = make_field_list(fields); }
 ;
 field_list:
@@ -214,8 +217,8 @@ field_list:
 clause:
   CASE pattern DBLARROW statement
     { $$ = new pair<Expression*,Statement*>($2, $4); }
-| DEFAULT DBLARROW statement 
-    { 
+| DEFAULT DBLARROW statement
+    {
       auto vp = make_var_pat(yylineno, "_", make_auto_type(yylineno));
       $$ = new pair<Expression*,Statement*>(vp, $3);
     }
@@ -308,7 +311,7 @@ declaration_list:
     { $$ = $2; $$->push_front($1); }
 ;
 %%
-int main(int argc, char* argv[])  { 
+int main(int argc, char* argv[])  {
   /*yydebug = 1;*/
 
   if (argc > 1) {
@@ -319,6 +322,6 @@ int main(int argc, char* argv[])  {
     FILE* program = fopen(argv[2], "r");
     input = read_file(program);
   }
-  yyparse(); 
+  yyparse();
   return 0;
 }
