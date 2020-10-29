@@ -178,7 +178,16 @@ expression:
     { $$ = make_unop(yylineno, Not, $2); }
 | '-' expression
     { $$ = make_unop(yylineno, Neg, $2); }
-| expression tuple { $$ = make_call(yylineno, $1, $2); }
+| expression tuple
+    {
+      if ($2->tag == Tuple) {
+        $$ = make_call(yylineno, $1, $2);
+      } else {
+        auto vec = new vector<pair<string,Expression*> >();
+        vec->push_back(make_pair("", $2));
+        $$ = make_call(yylineno, $1, make_tuple(yylineno, vec));
+      }
+    }
 | FNTY tuple return_type
     { $$ = make_fun_type(yylineno, $2, $3); }
 ;

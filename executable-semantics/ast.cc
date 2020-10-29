@@ -224,7 +224,7 @@ void print_exp(Expression* e) {
     cout << e->u.integer;
     break;
   case Boolean:
-    cout << std::boolalpha;   
+    cout << std::boolalpha;
     cout << e->u.boolean;
     break;
   case PrimitiveOp:
@@ -327,6 +327,16 @@ ExpOrFieldList* cons_field(ExpOrFieldList* e1, ExpOrFieldList* e2) {
   return make_field_list(fields);
 }
 
+Expression* ensure_tuple(int lineno, Expression* e) {
+  if (e->tag == Tuple) {
+    return e;
+  } else {
+    auto vec = new vector<pair<string,Expression*> >();
+    vec->push_back(make_pair("", e));
+    return make_tuple(lineno, vec);
+  }
+}
+
 /***** Statements *****/
 
 Statement* make_exp_stmt(int lineno, Expression* exp) {
@@ -355,13 +365,13 @@ Statement* make_var_def(int lineno, Expression* pat, Expression* init) {
   return s;
 }
 
-Statement* make_if(int lineno, Expression* cond, Statement* thn, Statement* els)  {
+Statement* make_if(int lineno, Expression* cond, Statement* then_, Statement* else_)  {
   Statement* s = new Statement();
   s->lineno = lineno;
   s->tag = If;
   s->u.if_stmt.cond = cond;
-  s->u.if_stmt.thn = thn;
-  s->u.if_stmt.els = els;
+  s->u.if_stmt.then_ = then_;
+  s->u.if_stmt.else_ = else_;
   return s;
 }
 
@@ -483,9 +493,9 @@ void print_stmt(Statement* s, int depth) {
     cout << "if (";
     print_exp(s->u.if_stmt.cond);
     cout << ")" << endl;
-    print_stmt(s->u.if_stmt.thn, depth - 1);
+    print_stmt(s->u.if_stmt.then_, depth - 1);
     cout << endl << "else" << endl;
-    print_stmt(s->u.if_stmt.els, depth - 1);
+    print_stmt(s->u.if_stmt.else_, depth - 1);
     break;
   case Return:
     cout << "return ";
@@ -494,7 +504,7 @@ void print_stmt(Statement* s, int depth) {
     break;
   case Sequence:
     print_stmt(s->u.sequence.stmt, depth);
-    if (depth < 0 || depth > 1)    
+    if (depth < 0 || depth > 1)
       cout << endl;
     print_stmt(s->u.sequence.next, depth - 1);
     break;

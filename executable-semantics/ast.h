@@ -50,7 +50,7 @@ typedef list< pair<string, Expression*> > VarTypes;
 /***** Expressions *****/
 
 enum ExpressionKind { Variable, PatternVariable, Integer, Boolean,
-                      PrimitiveOp, Call, Tuple, Index, GetField, 
+                      PrimitiveOp, Call, Tuple, Index, GetField,
                       IntT, BoolT, TypeT, FunctionT, AutoT };
 enum Operator { Neg, Add, Sub, Not, And, Or, Eq };
 
@@ -113,7 +113,7 @@ ExpOrFieldList* cons_field(ExpOrFieldList* e1, ExpOrFieldList* e2);
 
 /***** Statements *****/
 
-enum StatementKind { ExpressionStatement, Assign, VariableDefinition, 
+enum StatementKind { ExpressionStatement, Assign, VariableDefinition,
                      If, Return, Sequence, Block, While, Break, Continue,
                      Match };
 
@@ -124,7 +124,7 @@ struct Statement {
     Expression* exp;
     struct { Expression* lhs; Expression* rhs; } assign;
     struct { Expression* pat; Expression* init; } variable_definition;
-    struct { Expression* cond; Statement* thn; Statement* els; } if_stmt;
+    struct { Expression* cond; Statement* then_; Statement* else_; } if_stmt;
     Expression* return_stmt;
     struct { Statement* stmt; Statement* next; } sequence;
     struct { Statement* stmt; } block;
@@ -139,8 +139,8 @@ struct Statement {
 Statement* make_exp_stmt(int lineno, Expression* exp);
 Statement* make_assign(int lineno, Expression* lhs, Expression* rhs);
 Statement* make_var_def(int lineno, Expression* pat, Expression* init);
-Statement* make_if(int lineno, Expression* cond, Statement* thn,
-                   Statement* els);
+Statement* make_if(int lineno, Expression* cond, Statement* then_,
+                   Statement* else_);
 Statement* make_return(int lineno, Expression* e);
 Statement* make_seq(int lineno, Statement* s1, Statement* s2);
 Statement* make_block(int lineno, Statement* s);
@@ -181,7 +181,7 @@ Member* make_field(int lineno, string name, Expression* type);
 struct StructDefinition {
   int lineno;
   string* name;
-  list<Member*>* members; 
+  list<Member*>* members;
 };
 
 enum DeclarationKind { FunctionDeclaration, StructDeclaration,

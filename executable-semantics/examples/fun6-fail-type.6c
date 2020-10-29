@@ -1,0 +1,7 @@
+fn f(Int: x, Int: y) -> Int { return x + y; }
+
+fn main() -> Int {
+  var (Int, Int): xy = (1, 2);
+  // should fail to type-check
+  return f(xy);
+}
