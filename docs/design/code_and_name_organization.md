@@ -112,8 +112,9 @@ Important Carbon goals for code and name organization are:
 
 ## Overview
 
-Carbon files have a `.carbon` extension, such as `geometry.carbon`. These files
-are the basic unit of compilation.
+Carbon [source files](/code_and_name_organization/source_files.md) have a
+`.carbon` extension, such as `geometry.carbon`. These files are the basic unit
+of compilation.
 
 Each file begins with a declaration of which
 _package_<sup><small>[[define](/docs/guides/glossary.md#package)]</small></sup>

@@ -11,6 +11,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 <!-- toc -->
 
 -   [TODO](#todo)
+-   [Lexical elements](#lexical-elements)
 
 <!-- tocstop -->
 
@@ -23,3 +24,22 @@ update as appropriate.
 
 See [PR 17](https://github.com/carbon-language/carbon-lang/pull/17) for context
 -- that proposal may replace this.
+
+## Lexical elements
+
+The first stage of processing a
+[source file](/code_and_name_organization/source_files.md) is the division of
+the source file into lexical elements.
+
+A _lexical element_ is one of the following:
+
+-   a maxiaml sequence of [whitespace](lexical_conventions/whitespace.md)
+    characters
+-   a [word](lexical_conventions/words.md)
+-   a literal:
+    -   a [numeric literal](lexical_conventions/numeric_literals.md)
+    -   ...
+-   ...
+
+The sequence of lexical elements is formed by repeatedly removing the longest
+initial sequence of characters that forms a valid lexical element.
