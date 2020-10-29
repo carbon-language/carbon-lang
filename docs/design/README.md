@@ -130,10 +130,10 @@ cleaned up during evolution.
 
 -   Decimal, hexadecimal, and binary integer literals and decimal and
     hexadecimal floating-point literals are supported, with `_` as a digit
-    separator. For example, `0b1011_1101` and `0x1.EEFp+5`. Numeric literals are
-    case-sensitive: `0x`, `0b`, `e+`, and `p+` must be lowercase, whereas
-    hexadecimal digits must be uppercase. A digit is required on both sides of a
-    period.
+    separator. For example, `42`, `0b1011_1101` and `0x1.EEFp+5`. Numeric
+    literals are case-sensitive: `0x`, `0b`, `e+`, and `p+` must be lowercase,
+    whereas hexadecimal digits must be uppercase. A digit is required on both
+    sides of a period.
 
 ### Packages, libraries, and namespaces
 
