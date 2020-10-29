@@ -242,7 +242,7 @@ separated by dots. This syntax may be loosely expressed as a regular expression:
 IDENTIFIER(\.IDENTIFIER)*
 ```
 
-Name conflicts are addressed by [name lookup](name_lookup.md).
+Name conflicts are addressed by [name lookup](/name_lookup.md).
 
 #### `package` syntax
 
@@ -468,7 +468,7 @@ An import declares a package entity named after the imported package, and makes
 `api`-tagged entities from the imported library through it. The full name path
 is a concatenation of the names of the package entity, any namespace entities
 applied, and the final entity addressed. Child namespaces or entities may be
-[aliased](aliases.md) if desired.
+[aliased](/aliases.md) if desired.
 
 For example, given a library:
 
@@ -575,7 +575,7 @@ struct Shapes.Square { ... };
 
 #### Aliasing
 
-Carbon's [alias keyword](aliases.md) will support aliasing namespaces. For
+Carbon's [alias keyword](/aliases.md) will support aliasing namespaces. For
 example, this would be valid code:
 
 ```carbon
@@ -607,7 +607,7 @@ import, and that the `api` is infeasible to rename due to existing callers.
 Alternately, the `api` entity may be using an idiomatic name that it would
 contradict naming conventions to rename. In either case, this conflict may exist
 in a single file without otherwise affecting users of the API. This will be
-addressed by [name lookup](name_lookup.md).
+addressed by [name lookup](/name_lookup.md).
 
 ### Potential refactorings
 
@@ -905,7 +905,7 @@ Advantages:
 Disadvantages:
 
 -   We are likely to want a more fine-grained, file-level approach proposed by
-    [name lookup](name_lookup.md).
+    [name lookup](/name_lookup.md).
 -   Allows package owners to name their packages things that they rarely type,
     but that importers end up typing frequently.
     -   The existence of a short `package` keyword shifts the balance for long

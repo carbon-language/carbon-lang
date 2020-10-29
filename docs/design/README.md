@@ -105,7 +105,7 @@ cleaned up during evolution.
 
 ### Code and comments
 
-> References: [Source files](code_and_name_organization/source_files) and
+> References: [Source files](code_and_name_organization/source_files.md) and
 > [lexical conventions](lexical_conventions)
 >
 > **TODO:** References need to be evolved.
