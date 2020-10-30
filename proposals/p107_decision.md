@@ -24,7 +24,7 @@ Abstaining:
 
 ## Open questions
 
-Should we switch to a library-oriented structure that's package-agnostic?
+### Should we switch to a library-oriented structure that's package-agnostic?
 
 -   **Decision:** No.
 -   **Rationale:** While this would simplify the overall set of constructs
