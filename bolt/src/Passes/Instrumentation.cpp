@@ -19,49 +19,48 @@
 using namespace llvm;
 
 namespace opts {
-extern cl::OptionCategory BoltCategory;
+extern cl::OptionCategory BoltInstrCategory;
 
 cl::opt<std::string> InstrumentationFilename(
     "instrumentation-file",
-    cl::desc("file name where instrumented profile will be saved"),
-    cl::init("/tmp/prof.fdata"),
-    cl::Optional,
-    cl::cat(BoltCategory));
+    cl::desc("file name where instrumented profile will be saved (default: "
+             "/tmp/prof.fdata)"),
+    cl::init("/tmp/prof.fdata"), cl::Optional, cl::cat(BoltInstrCategory));
 
 cl::opt<bool> InstrumentationFileAppendPID(
     "instrumentation-file-append-pid",
     cl::desc("append PID to saved profile file name (default: false)"),
     cl::init(false),
     cl::Optional,
-    cl::cat(BoltCategory));
+    cl::cat(BoltInstrCategory));
 
 cl::opt<bool> ConservativeInstrumentation(
     "conservative-instrumentation",
     cl::desc(
         "don't trust our CFG and disable spanning trees and any counter "
         "inference, put a counter everywhere (for debugging, default: false)"),
-    cl::init(false), cl::Optional, cl::cat(BoltCategory));
+    cl::init(false), cl::Optional, cl::cat(BoltInstrCategory));
 
-cl::opt<uint32_t>
-    InstrumentationSleepTime("instrumentation-sleep-time",
-                             cl::desc("interval between profile writes, "
-                                      "default: 0 = write only at program end"),
-                             cl::init(0), cl::Optional,
-                             cl::cat(BoltCategory));
+cl::opt<uint32_t> InstrumentationSleepTime(
+    "instrumentation-sleep-time",
+    cl::desc("interval between profile writes (default: 0 = write only at "
+             "program end).  This is useful for service workloads when you "
+             "want to dump profile every X minutes or if you are killing the "
+             "program and the profile is not being dumped at the end."),
+    cl::init(0), cl::Optional, cl::cat(BoltInstrCategory));
 
-cl::opt<bool> InstrumentHotOnly(
-    "instrument-hot-only",
-    cl::desc("only insert instrumentation on hot functions (need profile)"),
-    cl::init(false),
-    cl::Optional,
-    cl::cat(BoltCategory));
+cl::opt<bool>
+    InstrumentHotOnly("instrument-hot-only",
+                      cl::desc("only insert instrumentation on hot functions "
+                               "(needs profile, default: false)"),
+                      cl::init(false), cl::Optional,
+                      cl::cat(BoltInstrCategory));
 
-cl::opt<bool> InstrumentCalls(
-    "instrument-calls",
-    cl::desc("record profile for inter-function control flow activity"),
-    cl::init(true),
-    cl::Optional,
-    cl::cat(BoltCategory));
+cl::opt<bool> InstrumentCalls("instrument-calls",
+                              cl::desc("record profile for inter-function "
+                                       "control flow activity (default: true)"),
+                              cl::init(true), cl::Optional,
+                              cl::cat(BoltInstrCategory));
 }
 
 namespace llvm {

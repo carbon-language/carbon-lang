@@ -45,10 +45,12 @@ cl::OptionCategory BoltOptCategory("BOLT optimization options");
 cl::OptionCategory BoltRelocCategory("BOLT options in relocation mode");
 cl::OptionCategory BoltOutputCategory("Output options");
 cl::OptionCategory AggregatorCategory("Data aggregation options");
+cl::OptionCategory BoltInstrCategory("BOLT instrumentation options");
 
 static cl::OptionCategory *BoltCategories[] = {&BoltCategory,
                                                &BoltOptCategory,
                                                &BoltRelocCategory,
+                                               &BoltInstrCategory,
                                                &BoltOutputCategory};
 
 static cl::OptionCategory *BoltDiffCategories[] = {&BoltDiffCategory};
