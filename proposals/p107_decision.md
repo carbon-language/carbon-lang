@@ -54,7 +54,7 @@ Should there be a tight association between file paths and packages/libraries?
 This proposal provides an organizational structure that seems both workable and
 aligns well with Carbon's goals:
 
--   Distinct and required top-level namespace--"package"s from the proposal--
+-   Distinct and required top-level namespace -- "package"s from the proposal --
     both matches software best practices for long-term evolution, and avoids
     complex and user-confusing corner cases.
 -   Providing a fine-grained import structure as provided by the "library"
