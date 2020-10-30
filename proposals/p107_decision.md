@@ -24,8 +24,6 @@ Abstaining:
 
 ## Open questions
 
-### TODO question?
-
 Should we switch to a library-oriented structure that's package-agnostic?
 
 -   **Decision:** No.
