@@ -39,7 +39,7 @@ Should there be a tight association between file paths and packages/libraries?
 
 -   **Decision:** Yes, for the API files in libraries. Specifically, the library
     name should still be written in the source, but it should be checked to
-    match--after some platform-specific translation--against the path.
+    match -- after some platform-specific translation -- against the path.
 -   **Note:** Sufficient restrictions to result in a portable and simple
     translation on different filesystems should be imposed, but the Core team
     was happy for these restrictions to be developed as part of implementation
