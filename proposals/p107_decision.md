@@ -33,7 +33,7 @@ Abstaining:
     namespaces. Overall, the simplification trade-off didn't seem significantly
     better.
 
-Should there be a tight association between file paths and packages/libraries?
+## Should there be a tight association between file paths and packages/libraries?
 
 -   **Decision:** Yes, for the API files in libraries. Specifically, the library
     name should still be written in the source, but it should be checked to
