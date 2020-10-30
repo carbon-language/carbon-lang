@@ -93,6 +93,7 @@ private:
 
   /// Extract annotation value from immediate operand value.
   static int64_t extractAnnotationValue(int64_t ImmValue) {
+    ImmValue &= 0xffffffffffffff;
     return (ImmValue << 8) >> 8;
   }
 

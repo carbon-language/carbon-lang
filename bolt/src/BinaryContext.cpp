@@ -180,7 +180,7 @@ BinaryContext::createBinaryContext(ObjectFile *File,
   }
 
   auto TheTriple = llvm::make_unique<Triple>(File->makeTriple());
-  const llvm::StringRef TripleName = TheTriple->str();
+  const std::string TripleName = TheTriple->str();
 
   std::string Error;
   const Target *TheTarget =

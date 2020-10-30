@@ -23,15 +23,16 @@
 
 namespace {
 
-inline size_t hash_int64_fallback(int64_t key) {
+inline size_t hash_int64_fallback(int64_t k) {
+  uint64_t key = (unsigned long long)k;
   // "64 bit Mix Functions", from Thomas Wang's "Integer Hash Function."
   // http://www.concentric.net/~ttwang/tech/inthash.htm
   key = (~key) + (key << 21); // key = (key << 21) - key - 1;
-  key = key ^ ((unsigned long long)key >> 24);
+  key = key ^ (key >> 24);
   key = (key + (key << 3)) + (key << 8); // key * 265
-  key = key ^ ((unsigned long long)key >> 14);
+  key = key ^ (key >> 14);
   key = (key + (key << 2)) + (key << 4); // key * 21
-  key = key ^ ((unsigned long long)key >> 28);
+  key = key ^ (key >> 28);
   return static_cast<size_t>(static_cast<uint32_t>(key));
 }
 
