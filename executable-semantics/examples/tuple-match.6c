@@ -1,7 +1,0 @@
-fn main() -> Int {
-  var auto: t = (5, 2);
-  match (t) {
-    case (auto: a, auto: b) =>
-      return a + b - 7;
-  }
-}

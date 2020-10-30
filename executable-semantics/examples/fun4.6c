@@ -1,7 +1,0 @@
-// Test empty parameters and return type
-fn f() { }
-
-fn main() -> Int {
-  f();
-  return 0;
-}
