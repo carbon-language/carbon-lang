@@ -53,8 +53,8 @@ tools that we recommend. See the [installation instructions](https://brew.sh/).
 ```bash
 brew update
 brew install pyenv
-pyenv install python3.8.5
-pyenv global python3.8.5
+pyenv install 3.8.5
+pyenv global 3.8.5
 
 # Add 'eval "$(pyenv init -)"' to your shell rc file.
 echo 'eval "$(pyenv init -)"' >> ~/.zshrc
@@ -107,9 +107,9 @@ PR and proposal file for a new proposal. It's documented in
 
 #### pr_comments.py
 
-[pr_comments.py](/src/scripts/pr_comments.py) is a helper for scanning comments
-in GitHub. It's particularly intended to help find threads which need to be
-resolved.
+[pr_comments.py](https://github.com/carbon-language/carbon-project-tools/blob/trunk/github/pr_comments.py)
+is a helper for scanning comments in GitHub. It's particularly intended to help
+find threads which need to be resolved.
 
 Flags can be seen with `-h`. A couple key flags to be aware of are:
 

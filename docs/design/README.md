@@ -14,7 +14,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Example code](#example-code)
 -   [Basic syntax](#basic-syntax)
     -   [Code and comments](#code-and-comments)
-    -   [Files, libraries, and packages](#files-libraries-and-packages)
+    -   [Packages, libraries, and namespaces](#packages-libraries-and-namespaces)
     -   [Names and scopes](#names-and-scopes)
         -   [Naming conventions](#naming-conventions)
         -   [Aliases](#aliases)
@@ -127,36 +127,36 @@ cleaned up during evolution.
       live code
     ```
 
-### Files, libraries, and packages
+### Packages, libraries, and namespaces
 
-> References: [Files, libraries and packages](files_libraries_and_packages.md)
->
-> **TODO:** References need to be evolved.
+> References: [Code and name organization](code_and_name_organization.md)
 
-Carbon code is organized into files, libraries, and packages:
+-   **Files** are grouped into libraries, which are in turn grouped into
+    packages.
+-   **Libraries** are the granularity of code reuse through imports.
+-   **Packages** are the unit of distribution.
 
--   A **file** is the unit of compilation.
--   A **library** can be made up of multiple files, and is the unit whose public
-    interface can be imported.
--   A **package** is a collection of one or more libraries, typically ones with
-    a single common source and with some close association.
+Name paths in Carbon always start with the package name. Additional namespaces
+may be specified as desired.
 
-A file belongs to precisely one library, and a library belongs to precisely one
-package.
-
-Files have a `.6c` extension. They must start with a declaration of their
-package and library. They may import both other libraries from within their
-package, as well as libraries from other packages. For example:
+For example, this code declares a struct `Geometry.Shapes.Flat.Circle` in a
+library `Geometry/OneSide`:
 
 ```carbon
-// This is a file in the "Eucalyptus" library of the "Koala" package.
-package Koala library Eucalyptus;
+package Geometry library("OneSide") namespace Shapes;
 
-// Import the "Wombat" library from the "Widget" package.
-import Widget library Wombat;
+namespace Flat;
+struct Flat.Circle { ... }
+```
 
-// Import the "Container" library from the "Koala" package.
-import library Container;
+This type can be used from another package:
+
+```carbon
+package ExampleUser;
+
+import Geometry library("OneSide");
+
+fn Foo(var Geometry.Shapes.Flat.Circle: circle) { ... }
 ```
 
 ### Names and scopes
@@ -222,37 +222,11 @@ textually after this can refer to `MyInt`, and it will transparently refer to
 
 #### Name lookup
 
-> References: [Name lookup](name_lookup.md)
+> References: [name lookup](name_lookup.md)
 >
 > **TODO:** References need to be evolved.
 
-Names are always introduced into some scope which defines where they can be
-referenced. Many of these scopes are themselves named. `namespace` is used to
-introduce a dedicated named scope, and we traverse nested names in a uniform way
-with `.`-separated names. Unqualified name lookup will always find a file-local
-result, including aliases.
-
-For example:
-
-```carbon
-package Koala library Eucalyptus;
-
-namespace Leaf {
-  namespace Vein {
-    fn Count() -> Int;
-  }
-}
-```
-
-`Count` may be referred to as:
-
--   `Count` from within the `Vein` namespace.
--   `Vein.Count` from within the `Leaf` namespace.
--   `Leaf.Vein.Count` from within this file.
--   `Koala.Leaf.Vein.Count` from any arbitrary location.
-
-Note that libraries do **not** introduce a scope; they share the scope of their
-package.
+Unqualified name lookup will always find a file-local result, including aliases.
 
 ##### Name lookup for common types
 

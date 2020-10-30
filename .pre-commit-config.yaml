@@ -1,8 +1,16 @@
+# Part of the Carbon Language project, under the Apache License v2.0 with LLVM
+# Exceptions. See /LICENSE for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+
 # See https://pre-commit.com for more information
 # See https://pre-commit.com/hooks.html for more hooks
+
+default_language_version:
+  python: python3 # Defaults to python2, so override it.
+
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v2.4.0
+    rev: v3.3.0
     hooks:
       - id: check-added-large-files
       - id: check-case-conflict
@@ -15,6 +23,17 @@ repos:
       - id: mixed-line-ending
         args: ['--fix=lf']
       - id: trailing-whitespace
+  - repo: https://github.com/google/pre-commit-tool-hooks
+    rev: v1.0.4
+    hooks:
+      - id: check-copyright
+        args:
+          - --copyright
+          - |+
+            Part of the Carbon Language project, under the Apache License v2.0 with LLVM
+            Exceptions. See /LICENSE for license information.
+            SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+        exclude: '^src/jekyll/(Gemfile.lock|theme/.*)$'
   - repo: https://github.com/codespell-project/codespell
     rev: v1.17.1
     hooks:
@@ -36,7 +55,6 @@ repos:
         description: Updates the list of proposals in proposals/README.md
         entry: src/scripts/update_proposal_list.py
         language: python
-        language_version: python3
         files: ^proposals/(README|p.*)\.md$
         pass_filenames: false
   # Formatters should be run late so that they can re-format any prior changes.
@@ -44,9 +62,8 @@ repos:
     rev: 20.8b1
     hooks:
       - id: black
-        language_version: python3
-  - repo: https://github.com/prettier/prettier
-    rev: 2.1.1
+  - repo: https://github.com/prettier/pre-commit
+    rev: v2.1.2
     hooks:
       - id: prettier
         exclude: ^src/jekyll/theme/
