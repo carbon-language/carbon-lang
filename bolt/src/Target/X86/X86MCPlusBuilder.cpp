@@ -2152,7 +2152,7 @@ public:
       Inst.insert(Inst.begin(), MCOperand::createReg(Reg));
       return;
     }
-    Inst.dump();
+    DEBUG(Inst.dump());
     llvm_unreachable("not implemented");
   }
 
