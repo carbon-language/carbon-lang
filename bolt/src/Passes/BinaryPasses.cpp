@@ -290,10 +290,7 @@ void EliminateUnreachableBlocks::runOnFunction(BinaryFunction& Function) {
     DeletedBlocks += Count;
     DeletedBytes += Bytes;
     if (Count) {
-      {
-        std::unique_lock<std::shared_timed_mutex> Lock(ModifiedMtx);
-        Modified.insert(&Function);
-      }
+      Modified.insert(&Function);
       if (opts::Verbosity > 0) {
         outs() << "BOLT-INFO: Removed " << Count
                << " dead basic block(s) accounting for " << Bytes
@@ -304,17 +301,12 @@ void EliminateUnreachableBlocks::runOnFunction(BinaryFunction& Function) {
 }
 
 void EliminateUnreachableBlocks::runOnFunctions(BinaryContext &BC) {
-  ParallelUtilities::WorkFuncTy WorkFun = [&](BinaryFunction &BF) {
-    runOnFunction(BF);
-  };
-
-  ParallelUtilities::PredicateTy SkipFunc = [&](const BinaryFunction &BF) {
-    return !shouldOptimize(BF);
-  };
-
-  ParallelUtilities::runOnEachFunction(
-      BC, ParallelUtilities::SchedulingPolicy::SP_TRIVIAL, WorkFun, SkipFunc,
-      "EliminateUnreachableBlocks");
+  for (auto &It : BC.getBinaryFunctions()) {
+    auto &Function = It.second;
+    if (shouldOptimize(Function)) {
+      runOnFunction(Function);
+    }
+  }
 
   outs() << "BOLT-INFO: UCE removed " << DeletedBlocks << " blocks and "
          << DeletedBytes << " bytes of code.\n";
