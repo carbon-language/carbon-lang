@@ -53,8 +53,8 @@ tools that we recommend. See the [installation instructions](https://brew.sh/).
 ```bash
 brew update
 brew install pyenv
-pyenv install python3.8.5
-pyenv global python3.8.5
+pyenv install 3.8.5
+pyenv global 3.8.5
 
 # Add 'eval "$(pyenv init -)"' to your shell rc file.
 echo 'eval "$(pyenv init -)"' >> ~/.zshrc
