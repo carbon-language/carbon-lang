@@ -6,8 +6,6 @@ Exceptions. See /LICENSE for license information.
 SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -->
 
-[Pull request](https://github.com/carbon-language/carbon-lang/pull/142)
-
 ## Table of contents
 
 <!-- toc -->
@@ -20,7 +18,8 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 The exact lexical form of Carbon whitespace has not yet been settled. However,
 Carbon will follow lexical conventions for whitespace based on
-[Unicode Annex #31](https://unicode.org/reports/tr31/). See the
+[Unicode Annex #31](https://unicode.org/reports/tr31/). TODO: Update this once
+the precise rules are decided; see the
 [Unicode source files](/proposals/p0142.md#characters-in-identifiers) proposal.
 
 Unicode Annex #31 suggests selecting whitespace characters based on the
