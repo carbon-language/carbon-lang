@@ -206,7 +206,8 @@ class BinaryContext {
 
 public:
   static std::unique_ptr<BinaryContext>
-  createBinaryContext(ObjectFile *File, std::unique_ptr<DWARFContext> DwCtx);
+  createBinaryContext(ObjectFile *File, bool IsPIC,
+                      std::unique_ptr<DWARFContext> DwCtx);
 
   /// [start memory address] -> [segment info] mapping.
   std::map<uint64_t, SegmentInfo> SegmentMapInfo;
@@ -513,7 +514,9 @@ public:
   /// Indicates if relocations are available for usage.
   bool HasRelocations{false};
 
-  /// Is the binary always loaded at a fixed address.
+  /// Is the binary always loaded at a fixed address. Shared objects and
+  /// position-independent executables (PIEs) are examples of binaries that
+  /// will have HasFixedLoadAddress set to false.
   bool HasFixedLoadAddress{true};
 
   /// True if the binary has no dynamic dependencies, i.e., if it was statically

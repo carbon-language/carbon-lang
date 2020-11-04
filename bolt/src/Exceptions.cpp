@@ -170,11 +170,11 @@ void BinaryFunction::parseLSDA(ArrayRef<uint8_t> LSDASectionData,
     outs() << '\n';
   }
 
-  HasEHRanges = CallSitePtr < CallSiteTableEnd;
-  uint64_t RangeBase = getAddress();
+  this->HasEHRanges = CallSitePtr < CallSiteTableEnd;
+  const uint64_t RangeBase = getAddress();
   while (CallSitePtr < CallSiteTableEnd) {
     uint64_t Start = *Data.getEncodedPointer(&CallSitePtr, CallSiteEncoding,
-                                              CallSitePtr + LSDASectionAddress);
+                                             CallSitePtr + LSDASectionAddress);
     uint64_t Length = *Data.getEncodedPointer(
         &CallSitePtr, CallSiteEncoding, CallSitePtr + LSDASectionAddress);
     uint64_t LandingPad = *Data.getEncodedPointer(
@@ -229,14 +229,13 @@ void BinaryFunction::parseLSDA(ArrayRef<uint8_t> LSDASectionData,
     } while (II != IE && II->first < Start + Length);
 
     if (ActionEntry != 0) {
-      auto printType = [&] (int Index, raw_ostream &OS) {
+      auto printType = [&](int Index, raw_ostream &OS) {
         assert(Index > 0 && "only positive indices are valid");
         uint32_t TTEntry = TypeTableStart - Index * TTypeEncodingSize;
-        const auto TTEntryAddress = TTEntry + LSDASectionAddress;
-        uint32_t TypeAddress =
+        const uint64_t TTEntryAddress = TTEntry + LSDASectionAddress;
+        uint64_t TypeAddress =
             *Data.getEncodedPointer(&TTEntry, TTypeEncoding, TTEntryAddress);
-        if ((TTypeEncoding & DW_EH_PE_pcrel) &&
-            (TypeAddress == TTEntryAddress)) {
+        if ((TTypeEncoding & DW_EH_PE_pcrel) && TypeAddress == TTEntryAddress) {
           TypeAddress = 0;
         }
         if (TypeAddress == 0) {
@@ -257,12 +256,12 @@ void BinaryFunction::parseLSDA(ArrayRef<uint8_t> LSDASectionData,
       if (opts::PrintExceptions)
         outs() << "    actions: ";
       uint32_t ActionPtr = ActionTableStart + ActionEntry - 1;
-      long long ActionType;
-      long long ActionNext;
+      int64_t ActionType;
+      int64_t ActionNext;
       auto Sep = "";
       do {
         ActionType = Data.getSLEB128(&ActionPtr);
-        auto Self = ActionPtr;
+        const uint32_t Self = ActionPtr;
         ActionNext = Data.getSLEB128(&ActionPtr);
         if (opts::PrintExceptions)
           outs() << Sep << "(" << ActionType << ", " << ActionNext << ") ";
@@ -324,13 +323,15 @@ void BinaryFunction::parseLSDA(ArrayRef<uint8_t> LSDASectionData,
       const auto TTEntryAddress = TTEntry + LSDASectionAddress;
       uint64_t TypeAddress =
           *Data.getEncodedPointer(&TTEntry, TTypeEncoding, TTEntryAddress);
-      if ((TTypeEncoding & DW_EH_PE_pcrel) && (TypeAddress == TTEntryAddress)) {
+      if ((TTypeEncoding & DW_EH_PE_pcrel) && (TypeAddress == TTEntryAddress))
         TypeAddress = 0;
-      }
-      if (TypeAddress && (TTypeEncoding & DW_EH_PE_indirect)) {
-        auto PointerOrErr = BC.getPointerAtAddress(TypeAddress);
-        assert(PointerOrErr && "failed to decode indirect address");
-        TypeAddress = *PointerOrErr;
+      if (TTypeEncoding & DW_EH_PE_indirect) {
+        LSDATypeAddressTable.emplace_back(TypeAddress);
+        if (TypeAddress) {
+          auto PointerOrErr = BC.getPointerAtAddress(TypeAddress);
+          assert(PointerOrErr && "failed to decode indirect address");
+          TypeAddress = *PointerOrErr;
+        }
       }
       LSDATypeTable.emplace_back(TypeAddress);
     }

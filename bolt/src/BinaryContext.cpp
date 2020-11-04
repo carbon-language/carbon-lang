@@ -160,7 +160,7 @@ MCPlusBuilder *createMCPlusBuilder(const Triple::ArchType Arch,
 /// Create BinaryContext for a given architecture \p ArchName and
 /// triple \p TripleName.
 std::unique_ptr<BinaryContext>
-BinaryContext::createBinaryContext(ObjectFile *File,
+BinaryContext::createBinaryContext(ObjectFile *File, bool IsPIC,
                                    std::unique_ptr<DWARFContext> DwCtx) {
   StringRef ArchName = "";
   StringRef FeaturesStr = "";
@@ -223,7 +223,7 @@ BinaryContext::createBinaryContext(ObjectFile *File,
       llvm::make_unique<MCObjectFileInfo>();
   std::unique_ptr<MCContext> Ctx =
       llvm::make_unique<MCContext>(AsmInfo.get(), MRI.get(), MOFI.get());
-  MOFI->InitMCObjectFileInfo(*TheTriple, /*PIC=*/false, *Ctx);
+  MOFI->InitMCObjectFileInfo(*TheTriple, IsPIC, *Ctx);
 
   std::unique_ptr<MCDisassembler> DisAsm(
       TheTarget->createMCDisassembler(*STI, *Ctx));
@@ -278,6 +278,8 @@ BinaryContext::createBinaryContext(ObjectFile *File,
       BC->TheTarget->createMCAsmBackend(*BC->STI, *BC->MRI, MCTargetOptions()));
 
   BC->setFilename(File->getFileName());
+
+  BC->HasFixedLoadAddress = !IsPIC;
 
   return BC;
 }

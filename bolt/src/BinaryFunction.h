@@ -481,11 +481,19 @@ private:
   std::vector<CallSite> CallSites;
   std::vector<CallSite> ColdCallSites;
 
-  /// Binary blobs reprsenting action, type, and type index tables for this
+  /// Binary blobs representing action, type, and type index tables for this
   /// function' LSDA (exception handling).
   ArrayRef<uint8_t> LSDAActionTable;
-  std::vector<uint64_t> LSDATypeTable;
   ArrayRef<uint8_t> LSDATypeIndexTable;
+
+  using LSDATypeTableTy = std::vector<uint64_t>;
+
+  /// Vector of addresses of types referenced by LSDA.
+  LSDATypeTableTy LSDATypeTable;
+
+  /// Vector of addresses of entries in LSDATypeTable used for indirect
+  /// addressing.
+  LSDATypeTableTy LSDATypeAddressTable;
 
   /// Marking for the beginning of language-specific data area for the function.
   MCSymbol *LSDASymbol{nullptr};
@@ -692,6 +700,7 @@ private:
     clearList(CallSites);
     clearList(ColdCallSites);
     clearList(LSDATypeTable);
+    clearList(LSDATypeAddressTable);
 
     clearList(MoveRelocations);
 
@@ -1487,8 +1496,12 @@ public:
     return LSDAActionTable;
   }
 
-  const std::vector<uint64_t> &getLSDATypeTable() const {
+  const LSDATypeTableTy &getLSDATypeTable() const {
     return LSDATypeTable;
+  }
+
+  const LSDATypeTableTy &getLSDATypeAddressTable() const {
+    return LSDATypeAddressTable;
   }
 
   const ArrayRef<uint8_t> getLSDATypeIndexTable() const {

@@ -448,18 +448,32 @@ bool refersToReorderedSection(ErrorOr<BinarySection &> Section) {
 RewriteInstance::RewriteInstance(ELFObjectFileBase *File, const int Argc,
                                  const char *const *Argv, StringRef ToolPath)
     : InputFile(File), Argc(Argc), Argv(Argv), ToolPath(ToolPath),
-      BC(BinaryContext::createBinaryContext(
-          File,
-          DWARFContext::create(*File, nullptr,
-                               DWARFContext::defaultErrorHandler, "", false))),
-      BAT(llvm::make_unique<BoltAddressTranslation>(*BC)),
       SHStrTab(StringTableBuilder::ELF) {
-  if (opts::UpdateDebugSections) {
+  auto ELF64LEFile = dyn_cast<ELF64LEObjectFile>(InputFile);
+  if (!ELF64LEFile) {
+    errs() << "BOLT-ERROR: only 64-bit LE ELF binaries are supported\n";
+    exit(1);
+  }
+
+  bool IsPIC = false;
+  const ELFFile<ELF64LE> *Obj = ELF64LEFile->getELFFile();
+  if (Obj->getHeader()->e_type != ELF::ET_EXEC) {
+    outs() << "BOLT-INFO: shared object or position-independent executable "
+              "detected\n";
+    IsPIC = true;
+  }
+
+  BC = BinaryContext::createBinaryContext(File,IsPIC,
+      DWARFContext::create(*File, nullptr,
+                           DWARFContext::defaultErrorHandler, "", false));
+
+  BAT = llvm::make_unique<BoltAddressTranslation>(*BC);
+
+  if (opts::UpdateDebugSections)
     DebugInfoRewriter = llvm::make_unique<DWARFRewriter>(*BC, SectionPatchers);
-  }
-  if (opts::Hugify) {
+
+  if (opts::Hugify)
     BC->setRuntimeLibrary(llvm::make_unique<HugifyRuntimeLibrary>());
-  }
 }
 
 RewriteInstance::~RewriteInstance() {}
@@ -509,16 +523,7 @@ void RewriteInstance::discoverStorage() {
   BC->EFMM.reset(new ExecutableFileMemoryManager(*BC, /*AllowStubs*/ false));
 
   auto ELF64LEFile = dyn_cast<ELF64LEObjectFile>(InputFile);
-  if (!ELF64LEFile) {
-    errs() << "BOLT-ERROR: only 64-bit LE ELF binaries are supported\n";
-    exit(1);
-  }
-  auto Obj = ELF64LEFile->getELFFile();
-  if (Obj->getHeader()->e_type != ELF::ET_EXEC) {
-    outs() << "BOLT-INFO: shared object or position-independent executable "
-              "detected\n";
-    BC->HasFixedLoadAddress = false;
-  }
+  const auto *Obj = ELF64LEFile->getELFFile();
 
   BC->StartFunctionAddress = Obj->getHeader()->e_entry;
 
@@ -1647,6 +1652,11 @@ void RewriteInstance::adjustCommandLineOptions() {
 
   if (opts::SplitEH && !BC->HasRelocations) {
     errs() << "BOLT-WARNING: disabling -split-eh in non-relocation mode\n";
+    opts::SplitEH = false;
+  }
+
+  if (opts::SplitEH && !BC->HasFixedLoadAddress) {
+    errs() << "BOLT-WARNING: disabling -split-eh for shared object\n";
     opts::SplitEH = false;
   }
 

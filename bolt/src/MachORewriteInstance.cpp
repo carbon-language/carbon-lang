@@ -58,9 +58,10 @@ MachORewriteInstance::MachORewriteInstance(object::MachOObjectFile *InputFile,
                                            StringRef ToolPath)
     : InputFile(InputFile), ToolPath(ToolPath),
       BC(BinaryContext::createBinaryContext(
-          InputFile, DWARFContext::create(*InputFile, nullptr,
-                                          DWARFContext::defaultErrorHandler, "",
-                                          false))) {}
+          InputFile, /* IsPIC */ true,
+          DWARFContext::create(*InputFile, nullptr,
+                               DWARFContext::defaultErrorHandler, "",
+                               false))) {}
 
 void MachORewriteInstance::readSpecialSections() {
   for (const auto &Section : InputFile->sections()) {
