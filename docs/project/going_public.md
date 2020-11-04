@@ -22,7 +22,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [Risks](#risks)
     -   [Relationship to C++](#relationship-to-c)
     -   [Perception of ownership by a single organization](#perception-of-ownership-by-a-single-organization)
-    -   [Over-evangelizing](#over-evangelizing)
+    -   [Over-promising](#over-promising)
 -   [Leak contingencies](#leak-contingencies)
     -   [Minor leaks](#minor-leaks)
     -   [Major leaks](#major-leaks)
@@ -179,7 +179,9 @@ launch, we must work hard to address and minimize these risks.
 
 ### Relationship to C++
 
-It's important for the Carbon and C++ communities to work together effectively, given that Carbon is trying to provide a path forward for some (although not all) users of C++.
+It's important for the Carbon and C++ communities to work together effectively,
+given that Carbon is trying to provide a path forward for some (although not
+all) users of C++.
 
 We must take steps during the development of Carbon to ensure that multiple
 organizations are involved. We will ensure that launch announcements clearly
@@ -196,11 +198,11 @@ during its private development.
 
 ### Over-promising
 
-While Carbon is private, it's easy to have discussions with everyone
-involved to explain its experimental nature, and avoid having anybody become
-overly reliant while the future is still in doubt. Once Carbon goes public, it's
-likely that regardless of what we say, some developers will expect that the
-experiment won't be abandoned.
+While Carbon is private, it's easy to have discussions with everyone involved to
+explain its experimental nature, and avoid having anybody become overly reliant
+while the future is still in doubt. Once Carbon goes public, it's likely that
+regardless of what we say, some developers will expect that the experiment won't
+be abandoned.
 
 It's important that the launch plans and communications clearly and accurately
 communicate the experimental nature of Carbon, and discourage viewing it as a
