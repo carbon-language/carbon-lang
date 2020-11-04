@@ -104,18 +104,12 @@ going public.
 
 ### Declared intent to use Carbon from multiple organizations and individuals
 
-While Carbon is private, it's feasible to have discussions with everyone
-involved to explain its experimental nature, and avoid having anybody become
-overly reliant while the future is still in doubt. Once Carbon goes public,
-there will be a higher assumption from users that the experiment won't be
-abandoned. As a result, when going public, we should ensure there is at least an
-_intent_ to continue with Carbon, even if circumstances later shift.
-
-This intent should come from multiple organizations and individuals. It's
-important that Carbon be a collaboration in order to ensure its longevity and
-broad applicability. Even if most of Carbon's early contributions come from one
-organization, it's still crucial that others have sufficient interest to
-contribute to its ecosystem.
+We should ensure there is at least an _intent_ to continue with Carbon, even if
+circumstances later shift. This intent should come from multiple organizations
+and individuals. It's important that Carbon be a collaboration in order to
+ensure its longevity and broad applicability. Even if most of Carbon's early
+contributions come from one organization, it's still crucial that others have
+sufficient interest to contribute to its ecosystem.
 
 ### Prototype implementation
 
@@ -201,15 +195,18 @@ during its private development.
 
 ### Over-evangelizing
 
-It's expected that Carbon will still be incomplete when launched. Even with the
-_intent_ to expand use of Carbon, communications should be mindful that it may
-be cancelled, such as if data arrives that C++ can better address Carbon's
-goals.
+While Carbon is private, it's feasible to have discussions with everyone
+involved to explain its experimental nature, and avoid having anybody become
+overly reliant while the future is still in doubt. Once Carbon goes public, it's
+likely that regardless of what we say, some users will expect that the
+experiment won't be abandoned.
 
-Communications during and after going public will need to keep an experimental
-tone about Carbon. We should not do things that may be misinterpreted as
-encouraging its use disproportionately with its maturity, such as setting up
-training classes too early.
+It's important that the launch plans and communications clearly and accurately
+communicate the experimental nature of Carbon, and discourage viewing it as a
+"ready-to-go" system. There are things we might do later, such as training
+classes, which may mislead users at an early stage and thus should be approached
+with caution. The degree to which we encourage users to use Carbon should be
+commensurate with risks of Carbon being abandoned.
 
 ## Leak contingencies
 
