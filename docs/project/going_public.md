@@ -44,7 +44,7 @@ language, we must also tell the right narrative about Carbon.
 Additionally, there are costs associated with going public. Greater
 participation brings greater administrative and logistical overheads.
 
-Carbon will go public when most or all criteria are satisfied:
+Carbon can be expected to go public when most or all criteria are satisfied:
 
 -   A critical mass of Carbon evolutionary decisions need broader field
     experience to determine the right choice.
@@ -57,7 +57,9 @@ Carbon will go public when most or all criteria are satisfied:
     and feedback.
 -   The community is ready to run a launch event.
 
-Any proposal to go public will be reviewed as with other evolution proposals.
+These criteria are guidelines. Any proposal to go public with Carbon, including
+whether criteria are sufficiently met, will be reviewed as with other evolution
+proposals.
 
 ## Criteria
 
