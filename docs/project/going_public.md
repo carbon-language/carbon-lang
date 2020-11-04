@@ -162,7 +162,7 @@ time to assist new contributors in the days and weeks after the launch.
 
 ### Launch event
 
-We should have a compelling launch event when we go public. For example:
+We should have a compelling launch event plan when we go public. For example:
 
 -   Technical talks from multiple speakers and organizations. This could be at a
     conference or in our own remote or physical event.
