@@ -179,9 +179,7 @@ launch, we must work hard to address and minimize these risks.
 
 ### Relationship to C++
 
-It's important to maintain a friendly relationship between the Carbon and C++
-communities. However, it is possible that Carbon will be perceived as a
-competitor to C++.
+It's important for the Carbon and C++ communities to work together effectively, given that Carbon is trying to provide a path forward for some (although not all) users of C++.
 
 We should ensure that launch announcements clearly acknowledge and thank the C++
 community and language designers. After all, much of the experience that is
@@ -196,9 +194,9 @@ organizations are involved. We will ensure that launch announcements clearly
 acknowledge and thank the individuals and organizations which have been involved
 during its private development.
 
-### Over-evangelizing
+### Over-promising
 
-While Carbon is private, it's feasible to have discussions with everyone
+While Carbon is private, it's easy to have discussions with everyone
 involved to explain its experimental nature, and avoid having anybody become
 overly reliant while the future is still in doubt. Once Carbon goes public, it's
 likely that regardless of what we say, some developers will expect that the
