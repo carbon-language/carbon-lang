@@ -198,15 +198,15 @@ during its private development.
 While Carbon is private, it's feasible to have discussions with everyone
 involved to explain its experimental nature, and avoid having anybody become
 overly reliant while the future is still in doubt. Once Carbon goes public, it's
-likely that regardless of what we say, some users will expect that the
+likely that regardless of what we say, some developers will expect that the
 experiment won't be abandoned.
 
 It's important that the launch plans and communications clearly and accurately
 communicate the experimental nature of Carbon, and discourage viewing it as a
 "ready-to-go" system. There are things we might do later, such as training
-classes, which may mislead users at an early stage and thus should be approached
-with caution. The degree to which we encourage users to use Carbon should be
-commensurate with risks of Carbon being abandoned.
+classes, which may mislead developers at an early stage and thus should be
+approached with caution. The degree to which we encourage developers to use
+Carbon should be commensurate with risks of Carbon being abandoned.
 
 ## Leak contingencies
 
