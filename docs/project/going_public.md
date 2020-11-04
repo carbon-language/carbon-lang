@@ -183,10 +183,10 @@ It's important to maintain a friendly relationship between the Carbon and C++
 communities. However, it is possible that Carbon will be perceived as a
 competitor to C++.
 
-We should ensure that launch announcements clearly acknowledge and thank the C++
-community and language designers. After all, much of the experience that is
-driving the creation of Carbon comes from C++ and an appreciation of its
-advantages over other programming languages.
+We must take steps during the development of Carbon to ensure that multiple
+organizations are involved. We will ensure that launch announcements clearly
+acknowledge and thank the individuals and organizations which have been involved
+during its private development.
 
 ### Perception of ownership by a single organization
 
