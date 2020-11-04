@@ -13,7 +13,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [Overview](#overview)
 -   [Criteria](#criteria)
     -   [Broader field experience required](#broader-field-experience-required)
-    -   [Declared intent to use Carbon from multiple organizations and individuals](#declared-intent-to-use-carbon-from-multiple-organizations-and-individuals)
+    -   [Sustained interest to use Carbon from multiple organizations and individuals](#sustained-interest-to-use-carbon-from-multiple-organizations-and-individuals)
     -   [Prototype implementation](#prototype-implementation)
     -   [Demonstration of potential](#demonstration-of-potential)
     -   [Learning material](#learning-material)
@@ -48,7 +48,8 @@ Carbon will go public when most or all criteria are satisfied:
 
 -   A critical mass of Carbon evolutionary decisions need broader field
     experience to determine the right choice.
--   Declared intent to use Carbon from multiple organizations and individuals.
+-   Sustained interest to use Carbon from multiple organizations and
+    individuals.
 -   Carbon has a prototype implementation.
 -   Carbon's potential can be demonstrated.
 -   Learning material is available for Carbon.
@@ -102,10 +103,10 @@ point, the value of addressing this set of open questions via public field
 experience will become significant enough to warrant the costs associated with
 going public.
 
-### Declared intent to use Carbon from multiple organizations and individuals
+### Sustained interest to use Carbon from multiple organizations and individuals
 
-We should ensure there is at least an _intent_ to continue with Carbon, even if
-circumstances later shift. This intent should come from multiple organizations
+We should ensure there is sustained interest to continue with Carbon, even if
+circumstances later shift. This interest should come from multiple organizations
 and individuals. It's important that Carbon be a collaboration in order to
 ensure its longevity and broad applicability. Even if most of Carbon's early
 contributions come from one organization, it's still crucial that others have
