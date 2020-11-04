@@ -13,8 +13,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [Overview](#overview)
 -   [Criteria](#criteria)
     -   [Broader field experience required](#broader-field-experience-required)
-    -   [Ready to make long-term commitments](#ready-to-make-long-term-commitments)
-    -   [Long-term commitments from multiple organizations and individuals](#long-term-commitments-from-multiple-organizations-and-individuals)
+    -   [Declared intent to use Carbon from multiple organizations and individuals](#declared-intent-to-use-carbon-from-multiple-organizations-and-individuals)
     -   [Prototype implementation](#prototype-implementation)
     -   [Demonstration of potential](#demonstration-of-potential)
     -   [Learning material](#learning-material)
@@ -23,6 +22,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [Risks](#risks)
     -   [Relationship to C++](#relationship-to-c)
     -   [Perception of ownership by a single organization](#perception-of-ownership-by-a-single-organization)
+    -   [Over-evangelizing](#over-evangelizing)
 -   [Leak contingencies](#leak-contingencies)
     -   [Minor leaks](#minor-leaks)
     -   [Major leaks](#major-leaks)
@@ -48,8 +48,7 @@ Carbon will go public when most or all criteria are satisfied:
 
 -   A critical mass of Carbon evolutionary decisions need broader field
     experience to determine the right choice.
--   Community members are ready to make a long-term commitment to Carbon.
--   Carbon has support from multiple organizations and individuals.
+-   Declared intent to use Carbon from multiple organizations and individuals.
 -   Carbon has a prototype implementation.
 -   Carbon's potential can be demonstrated.
 -   Learning material is available for Carbon.
@@ -103,40 +102,20 @@ point, the value of addressing this set of open questions via public field
 experience will become significant enough to warrant the costs associated with
 going public.
 
-### Ready to make long-term commitments
+### Declared intent to use Carbon from multiple organizations and individuals
 
-Once Carbon goes public, it will be infeasible to guarantee that everyone
-understands Carbon to be an idea for an experiment, rather than a promise with a
-long-term commitment. If we end up abandoning the Carbon experiment, some users
-will inevitably view the experience in a highly negative manner. Even with a
-private community, we must consider the balance of where the experiment needs
-long-term commitments to continue advancing.
+While Carbon is private, it's feasible to have discussions with everyone
+involved to explain its experimental nature, and avoid having anybody become
+overly reliant while the future is still in doubt. Once Carbon goes public,
+there will be a higher assumption from users that the experiment won't be
+abandoned. As a result, when going public, we should ensure there is at least an
+_intent_ to continue with Carbon, even if circumstances later shift.
 
-Carbon should only go public when the core team is fully confident that there
-are sufficient community members ready to make a long-term commitment to Carbon.
-To gain such confidence, community members will need evidence for themselves and
-their organizations that Carbon delivers on its goals.
-
-### Long-term commitments from multiple organizations and individuals
-
-We have a desire to make Carbon a collaboration of multiple organizations and
-individuals to ensure the longevity and broad applicability of Carbon. However,
-Carbon initially began as a project within a single organization. Thus, we can
-expect that in Carbon's infancy the vast majority of contributions will come
-from the initial contributing organization.
-
-When Carbon goes public, we do not want it to be perceived as an initiative of a
-single organization. Therefore, we should consider the diversity of
-participation and the number of organizations willing to make long-term
-commitments in Carbon before going public.
-
-Some individuals must be ready to contribute to Carbon's design and
-implementation, but that's not the only kind of long-term commitment that we
-need. Adoption of Carbon also offers a way to build crucial field experience and
-generate feedback.
-
-If the diversity is insufficient, then we will work to increase it by inviting
-additional parties to participate.
+This intent should come from multiple organizations and individuals. It's
+important that Carbon be a collaboration in order to ensure its longevity and
+broad applicability. Even if most of Carbon's early contributions come from one
+organization, it's still crucial that others have sufficient interest to
+contribute to its ecosystem.
 
 ### Prototype implementation
 
@@ -151,7 +130,7 @@ requirements is outside of the scope of this document.
 
 ### Demonstration of potential
 
-Carbon should only go public once it can be proven that it can deliver on its
+Carbon should only go public if it's showing promise towards delivering on its
 goals. That means that we need to have a set of demonstrations of Carbon's
 potential.
 
@@ -163,15 +142,12 @@ and libraries implemented in Carbon.
 
 Learning material is critical for making it easy for newcomers to understand
 Carbon, how it is differentiated from other programming languages, and our plans
-for the future. We should have:
+for the future. For example:
 
 -   Documentation, including a specification.
 -   User guides, including an introduction targeting new engineers.
 -   Example code.
 -   Blog posts.
-
-We don't expect to offer training courses at this point, as the Carbon prototype
-is still expected to be relatively immature.
 
 ### Prepare for new contributions and feedback
 
@@ -186,8 +162,7 @@ time to assist new contributors in the days and weeks after the launch.
 
 ### Launch event
 
-We should have a compelling launch event when we go public. We should be ready
-with:
+We should have a compelling launch event when we go public. For example:
 
 -   Technical talks from multiple speakers and organizations. This could be at a
     conference or in our own remote or physical event.
@@ -207,29 +182,34 @@ launch, we must work hard to address and minimize these risks.
 
 ### Relationship to C++
 
-It is possible that Carbon will be perceived as a competitor to C++. Some may
-view Carbon as an indictment of C++ and those who have dedicated their career to
-developing C++. Those who work on Carbon, especially those who also currently or
-previously work on C++, may be perceived in a negative light by the C++
-community.
+It's important to maintain a friendly relationship between the Carbon and C++
+communities. However, it is possible that Carbon will be perceived as a
+competitor to C++.
 
-We must make every effort to not create a hostile relationship between the
-Carbon and C++ communities. One step that we will take to avoid that is to
-ensure that launch announcements clearly acknowledge and thank the C++ community
-and language designers. After all, much of the experience that is driving the
-creation of Carbon comes from C++ and an appreciation of its advantages over
-other programming languages.
+We should ensure that launch announcements clearly acknowledge and thank the C++
+community and language designers. After all, much of the experience that is
+driving the creation of Carbon comes from C++ and an appreciation of its
+advantages over other programming languages.
 
 ### Perception of ownership by a single organization
 
-Carbon may be perceived as being owned and pushed by a single organization. This
-may lead to a variety of different claims of nefarious intent in the development
-of Carbon.
-
-We must take steps during the development of Carbon to ensure that multiple
+Carbon may be perceived as being owned and pushed by a single organization. We
+must take steps during the development of Carbon to ensure that multiple
 organizations are involved. We will ensure that launch announcements clearly
 acknowledge and thank the individuals and organizations which have been involved
 during its private development.
+
+### Over-evangelizing
+
+It's expected that Carbon will still be incomplete when launched. Even with the
+_intent_ to expand use of Carbon, communications should be mindful that it may
+be cancelled, such as if data arrives that C++ can better address Carbon's
+goals.
+
+Communications during and after going public will need to keep an experimental
+tone about Carbon. We should not do things that may be misinterpreted as
+encouraging its use disproportionately with its maturity, such as setting up
+training classes too early.
 
 ## Leak contingencies
 
@@ -265,16 +245,7 @@ Minor leaks should be avoided, but will generally be ignored.
 A major leak is a disclosure of Carbon which has the potential to exponentially
 grow the number of people aware of Carbon. Major leaks will typically involve
 either substantial social media or tech press exposure outside of our control.
-
-For example:
-
--   A tech press site learns about Carbon and decides to publish a news article
-    about it.
-    -   If a reporter has rumors, email leaks, or documentation leaks, community
-        members should not offer comments. We want to avoid having comments
-        accidentally substantiate rumors and result in an article.
--   Someone aware of Carbon discloses information about it on social media and
-    draws substantial attention.
+For example, if a tech press site publishes an article about Carbon.
 
 In the event of a major leak, the core team will critically evaluate possible
 next steps:
