@@ -112,8 +112,8 @@ Important Carbon goals for code and name organization are:
 
 ## Overview
 
-Carbon files have a `.carbon` extension, such as `geometry.carbon`. These files
-are the basic unit of compilation.
+Carbon [source files](source_files.md) have a `.carbon` extension, such as
+`geometry.carbon`. These files are the basic unit of compilation.
 
 Each file begins with a declaration of which
 _package_<sup><small>[[define](/docs/guides/glossary.md#package)]</small></sup>
@@ -228,9 +228,9 @@ Every source file will consist of, in order:
 3. Source file body, with other code.
 
 Comments and blank lines may be intermingled with these sections.
-[Metaprogramming](metaprogramming.md) code may also be intermingled, so long as
-the outputted code is consistent with the enforced ordering. Other types of code
-must be in the source file body.
+[Metaprogramming](/docs/design/metaprogramming.md) code may also be
+intermingled, so long as the outputted code is consistent with the enforced
+ordering. Other types of code must be in the source file body.
 
 ### Name paths
 
@@ -241,7 +241,7 @@ separated by dots. This syntax may be loosely expressed as a regular expression:
 IDENTIFIER(\.IDENTIFIER)*
 ```
 
-Name conflicts are addressed by [name lookup](name_lookup.md).
+Name conflicts are addressed by [name lookup](/docs/design/name_lookup.md).
 
 #### `package` syntax
 
@@ -467,7 +467,7 @@ An import declares a package entity named after the imported package, and makes
 `api`-tagged entities from the imported library through it. The full name path
 is a concatenation of the names of the package entity, any namespace entities
 applied, and the final entity addressed. Child namespaces or entities may be
-[aliased](aliases.md) if desired.
+[aliased](/docs/design/aliases.md) if desired.
 
 For example, given a library:
 
@@ -574,8 +574,8 @@ struct Shapes.Square { ... };
 
 #### Aliasing
 
-Carbon's [alias keyword](aliases.md) will support aliasing namespaces. For
-example, this would be valid code:
+Carbon's [alias keyword](/docs/design/aliases.md) will support aliasing
+namespaces. For example, this would be valid code:
 
 ```carbon
 namespace Timezones.Internal;
@@ -606,7 +606,7 @@ import, and that the `api` is infeasible to rename due to existing callers.
 Alternately, the `api` entity may be using an idiomatic name that it would
 contradict naming conventions to rename. In either case, this conflict may exist
 in a single file without otherwise affecting users of the API. This will be
-addressed by [name lookup](name_lookup.md).
+addressed by [name lookup](/docs/design/name_lookup.md).
 
 ### Potential refactorings
 
@@ -904,7 +904,7 @@ Advantages:
 Disadvantages:
 
 -   We are likely to want a more fine-grained, file-level approach proposed by
-    [name lookup](name_lookup.md).
+    [name lookup](/docs/design/name_lookup.md).
 -   Allows package owners to name their packages things that they rarely type,
     but that importers end up typing frequently.
     -   The existence of a short `package` keyword shifts the balance for long
