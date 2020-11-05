@@ -2241,8 +2241,8 @@ void RewriteInstance::readRelocations(const SectionRef &Section) {
       RType &= ~ELF::R_X86_64_converted_reloc_bit;
     }
 
-    // No special handling required for TLS relocations.
-    if (Relocation::isTLS(RType))
+    // No special handling required for TLS relocations on X86.
+    if (Relocation::isTLS(RType) && BC->isX86())
       continue;
 
     if (BC->getDynamicRelocationAt(Rel.getOffset())) {
