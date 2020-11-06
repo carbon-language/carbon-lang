@@ -433,7 +433,7 @@ public:
   /// could be partially populated if the jump table detection fails.
   bool analyzeJumpTable(const uint64_t Address,
                         const JumpTable::JumpTableType Type,
-                        const BinaryFunction &BF,
+                        BinaryFunction &BF,
                         const uint64_t NextJTAddress = 0,
                         JumpTable::OffsetsType *Offsets = nullptr);
 

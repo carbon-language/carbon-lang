@@ -313,6 +313,10 @@ private:
   /// True if the original entry point was patched.
   bool IsPatched{false};
 
+  /// True if the function contains jump table with entries pointing to
+  /// locations in fragments.
+  bool HasSplitJumpTable{false};
+
   /// The address for the code for this function in codegen memory.
   /// Used for functions that are emitted in a dedicated section with a fixed
   /// address. E.g. for functions that are overwritten in-place.
@@ -1400,6 +1404,12 @@ public:
     return IsPseudo;
   }
 
+  /// Return true if the function contains a jump table with entries pointing
+  /// to split fragments.
+  bool hasSplitJumpTable() const {
+    return HasSplitJumpTable;
+  }
+
   /// Return true if the original function code has all necessary relocations
   /// to track addresses of functions emitted to new locations.
   bool hasExternalRefRelocations() const {
@@ -1874,6 +1884,10 @@ public:
 
   void setIsPatched(bool V) {
     IsPatched = V;
+  }
+
+  void setHasSplitJumpTable(bool V) {
+    HasSplitJumpTable = V;
   }
 
   void setFolded(BinaryFunction *BF) {
@@ -2480,6 +2494,12 @@ public:
   FragmentInfo &cold() { return ColdFragment; }
 
   const FragmentInfo &cold() const { return ColdFragment; }
+
+  /// Mark child fragments as ignored.
+  void ignoreFragments() {
+    for (auto *Fragment : Fragments)
+      Fragment->setIgnored();
+  }
 };
 
 inline raw_ostream &operator<<(raw_ostream &OS,

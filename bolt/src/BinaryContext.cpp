@@ -12,6 +12,7 @@
 #include "BinaryContext.h"
 #include "BinaryEmitter.h"
 #include "BinaryFunction.h"
+#include "NameResolver.h"
 #include "ParallelUtilities.h"
 #include "Utils.h"
 #include "llvm/ADT/Twine.h"
@@ -27,6 +28,7 @@
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/MC/MCSymbol.h"
 #include "llvm/Support/CommandLine.h"
+#include "llvm/Support/Regex.h"
 #include <functional>
 #include <iterator>
 
@@ -518,7 +520,7 @@ BinaryContext::analyzeMemoryAt(uint64_t Address, BinaryFunction &BF) {
 
 bool BinaryContext::analyzeJumpTable(const uint64_t Address,
                                      const JumpTable::JumpTableType Type,
-                                     const BinaryFunction &BF,
+                                     BinaryFunction &BF,
                                      const uint64_t NextJTAddress,
                                      JumpTable::OffsetsType *Offsets) {
   // Is one of the targets __builtin_unreachable?
@@ -530,6 +532,29 @@ bool BinaryContext::analyzeJumpTable(const uint64_t Address,
   auto addOffset = [&](uint64_t Offset) {
     if (Offsets)
       Offsets->emplace_back(Offset);
+  };
+
+  auto doesBelongToFunction = [&](const uint64_t Addr,
+                                  BinaryFunction *TargetBF) -> bool {
+    if (BF.containsAddress(Addr))
+      return true;
+    if (!TargetBF || !TargetBF->isFragment())
+      return false;
+    if (!TargetBF->getParentFragment()) {
+      // TargetBF is a fragment, but parent function is not registered.
+      // This means there's no direct jump between parent and fragment.
+      // Set parent link here in jump table analysis, based on function name
+      // matching heuristic:
+      // <fragment restored name> == <base restored name>.cold(.\d+)?
+      auto TgtName = TargetBF->getOneName();
+      auto BFName = BF.getOneName();
+      auto TgtNamePrefix = NameResolver::restore(TgtName);
+      auto BFNamePrefix = Regex::escape(NameResolver::restore(BFName));
+      auto BFNameRegex = Twine(BFNamePrefix, "\\.cold(\\.\\d+)?").str();
+      if (Regex(BFNameRegex).match(TgtNamePrefix))
+        registerFragment(TargetBF, BF);
+    }
+    return TargetBF->getParentFragment() == &BF;
   };
 
   auto Section = getSectionForAddress(Address);
@@ -571,17 +596,28 @@ bool BinaryContext::analyzeJumpTable(const uint64_t Address,
       continue;
     }
 
+    // Function or one of its fragments.
+    auto TargetBF = getBinaryFunctionContainingAddress(Value);
+
     // We assume that a jump table cannot have function start as an entry.
-    if (!BF.containsAddress(Value) || Value == BF.getAddress())
+    if (!doesBelongToFunction(Value, TargetBF) || Value == BF.getAddress())
       break;
 
     // Check there's an instruction at this offset.
-    if (BF.getState() == BinaryFunction::State::Disassembled &&
-        !BF.getInstructionAtOffset(Value - BF.getAddress()))
+    if (TargetBF->getState() == BinaryFunction::State::Disassembled &&
+        !TargetBF->getInstructionAtOffset(Value - TargetBF->getAddress())) {
       break;
+    }
 
-    addOffset(Value - BF.getAddress());
     ++NumRealEntries;
+
+    if (TargetBF == &BF) {
+      // Address inside the function.
+      addOffset(Value - TargetBF->getAddress());
+    } else {
+      // Address in split fragment.
+      BF.setHasSplitJumpTable(true);
+    }
   }
 
   // It's a jump table if the number of real entries is more than 1, or there's
@@ -591,6 +627,7 @@ bool BinaryContext::analyzeJumpTable(const uint64_t Address,
 }
 
 void BinaryContext::populateJumpTables() {
+  std::vector<BinaryFunction *> FuncsToSkip;
   for (auto JTI = JumpTables.begin(), JTE = JumpTables.end(); JTI != JTE;
        ++JTI) {
     auto *JT = JTI->second;
@@ -638,11 +675,21 @@ void BinaryContext::populateJumpTables() {
         DataPCRelocations.erase(DataPCRelocations.find(Address));
       }
     }
+
+    // Mark to skip the function and all its fragments.
+    if (BF.hasSplitJumpTable())
+      FuncsToSkip.push_back(&BF);
   }
 
   assert((!opts::StrictMode || !DataPCRelocations.size()) &&
          "unclaimed PC-relative relocations left in data\n");
   clearList(DataPCRelocations);
+  // Functions containing split jump tables need to be skipped with all
+  // fragments.
+  for (auto BF : FuncsToSkip) {
+    BF->setIgnored();
+    BF->ignoreFragments();
+  }
 }
 
 MCSymbol *BinaryContext::getOrCreateGlobalSymbol(uint64_t Address,
