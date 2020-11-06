@@ -552,7 +552,7 @@ bool BinaryContext::analyzeJumpTable(const uint64_t Address,
       auto BFNamePrefix = Regex::escape(NameResolver::restore(BFName));
       auto BFNameRegex = Twine(BFNamePrefix, "\\.cold(\\.\\d+)?").str();
       if (Regex(BFNameRegex).match(TgtNamePrefix))
-        registerFragment(TargetBF, BF);
+        registerFragment(*TargetBF, BF);
     }
     return TargetBF->getParentFragment() == &BF;
   };
