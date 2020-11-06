@@ -814,6 +814,10 @@ public:
 
   /// @}
 
+  /// Register \p TargetFunction as fragment of \p Function.
+  void registerFragment(BinaryFunction &TargetFunction,
+                        BinaryFunction &Function) const;
+
   /// Resolve inter-procedural dependencies from \p Function.
   void processInterproceduralReferences(BinaryFunction &Function);
 

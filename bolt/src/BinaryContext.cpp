@@ -1018,6 +1018,27 @@ void BinaryContext::generateSymbolHashes() {
   }
 }
 
+void BinaryContext::registerFragment(BinaryFunction &TargetFunction,
+                                     BinaryFunction &Function) const {
+  // Only a parent function (or a sibling) can reach its fragment.
+  assert(!Function.IsFragment &&
+         "only one cold fragment is supported at this time");
+  if (auto *TargetParent = TargetFunction.getParentFragment()) {
+    assert(TargetParent == &Function && "mismatching parent function");
+    return;
+  }
+  TargetFunction.setParentFragment(Function);
+  Function.addFragment(TargetFunction);
+  if (!HasRelocations) {
+    TargetFunction.setSimple(false);
+    Function.setSimple(false);
+  }
+  if (opts::Verbosity >= 1) {
+    outs() << "BOLT-INFO: marking " << TargetFunction
+           << " as a fragment of " << Function << '\n';
+  }
+}
+
 void BinaryContext::processInterproceduralReferences(BinaryFunction &Function) {
   for (auto Address : Function.InterproceduralReferences) {
     if (!Address)
@@ -1029,23 +1050,7 @@ void BinaryContext::processInterproceduralReferences(BinaryFunction &Function) {
 
     if (TargetFunction) {
       if (TargetFunction->IsFragment) {
-        // Only a parent function (or a sibling) can reach its fragment.
-        assert(!Function.IsFragment &&
-               "only one cold fragment is supported at this time");
-        if (auto *TargetParent = TargetFunction->getParentFragment()) {
-          assert(TargetParent == &Function && "mismatching parent function");
-          continue;
-        }
-        TargetFunction->setParentFragment(Function);
-        Function.addFragment(*TargetFunction);
-        if (!HasRelocations) {
-          TargetFunction->setSimple(false);
-          Function.setSimple(false);
-        }
-        if (opts::Verbosity >= 1) {
-          outs() << "BOLT-INFO: marking " << *TargetFunction
-                 << " as a fragment of " << Function << '\n';
-        }
+        registerFragment(*TargetFunction, Function);
       } else if (TargetFunction->getAddress() != Address) {
         TargetFunction->
           addEntryPointAtOffset(Address - TargetFunction->getAddress());
