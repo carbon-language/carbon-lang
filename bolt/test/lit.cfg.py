@@ -42,6 +42,7 @@ config.test_exec_root = os.path.join(config.bolt_obj_root, 'test')
 llvm_config.use_default_substitutions()
 
 config.substitutions.append(('%host_cc', config.host_cc))
+config.substitutions.append(('%host_cxx', config.host_cxx))
 
 tool_dirs = [config.llvm_tools_dir,
              config.test_source_root]

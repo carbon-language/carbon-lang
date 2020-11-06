@@ -1049,12 +1049,10 @@ void BinaryContext::processInterproceduralReferences(BinaryFunction &Function) {
       continue;
 
     if (TargetFunction) {
-      if (TargetFunction->IsFragment) {
+      if (TargetFunction->IsFragment)
         registerFragment(*TargetFunction, Function);
-      } else if (TargetFunction->getAddress() != Address) {
-        TargetFunction->
-          addEntryPointAtOffset(Address - TargetFunction->getAddress());
-      }
+      if (auto Offset = Address - TargetFunction->getAddress())
+        TargetFunction->addEntryPointAtOffset(Offset);
 
       continue;
     }
