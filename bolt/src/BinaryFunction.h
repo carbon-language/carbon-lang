@@ -1036,8 +1036,12 @@ public:
     return Res.hasValue();
   }
 
-  /// Check if of function names matches the given regex.
+  /// Check if any of function names matches the given regex.
   Optional<StringRef> hasNameRegex(const StringRef NameRegex) const;
+
+  /// Check if any of restored function names matches the given regex.
+  /// Restored name means stripping BOLT-added suffixes like "/1",
+  Optional<StringRef> hasRestoredNameRegex(const StringRef NameRegex) const;
 
   /// Return a vector of all possible names for the function.
   const std::vector<StringRef> getNames() const {

@@ -546,13 +546,14 @@ bool BinaryContext::analyzeJumpTable(const uint64_t Address,
       // Set parent link here in jump table analysis, based on function name
       // matching heuristic:
       // <fragment restored name> == <base restored name>.cold(.\d+)?
-      auto TgtName = TargetBF->getOneName();
-      auto BFName = BF.getOneName();
-      auto TgtNamePrefix = NameResolver::restore(TgtName);
-      auto BFNamePrefix = Regex::escape(NameResolver::restore(BFName));
-      auto BFNameRegex = Twine(BFNamePrefix, "\\.cold(\\.\\d+)?").str();
-      if (Regex(BFNameRegex).match(TgtNamePrefix))
-        registerFragment(*TargetBF, BF);
+      for (auto BFName : BF.getNames()) {
+        auto BFNamePrefix = Regex::escape(NameResolver::restore(BFName));
+        auto BFNameRegex = Twine(BFNamePrefix, "\\.cold(\\.[0-9]+)?").str();
+        if (TargetBF->hasRestoredNameRegex(BFNameRegex)) {
+          registerFragment(*TargetBF, BF);
+          break;
+        }
+      }
     }
     return TargetBF->getParentFragment() == &BF;
   };

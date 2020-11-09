@@ -240,6 +240,17 @@ BinaryFunction::hasNameRegex(const StringRef Name) const {
   return Match;
 }
 
+Optional<StringRef>
+BinaryFunction::hasRestoredNameRegex(const StringRef Name) const {
+  const auto RegexName = (Twine("^") + StringRef(Name) + "$").str();
+  Regex MatchName(RegexName);
+  auto Match = forEachName([&MatchName](StringRef Name) {
+      return MatchName.match(NameResolver::restore(Name));
+  });
+
+  return Match;
+}
+
 std::string BinaryFunction::getDemangledName() const {
   StringRef MangledName = NameResolver::restore(getOneName());
   int Status = 0;

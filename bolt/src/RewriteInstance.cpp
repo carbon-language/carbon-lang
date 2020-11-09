@@ -1389,9 +1389,7 @@ void RewriteInstance::adjustFunctionBoundaries() {
       NextFunction = &std::next(BFI)->second;
 
     // Check if it's a fragment of a function.
-    auto FragName = Function.hasNameRegex(".*\\.cold\\..*");
-    if (!FragName)
-      FragName = Function.hasNameRegex(".*\\.cold");
+    auto FragName = Function.hasRestoredNameRegex(".*\\.cold(\\.[0-9]+)?");
     if (FragName) {
       static bool PrintedWarning = false;
       if (BC->HasRelocations && !PrintedWarning) {
