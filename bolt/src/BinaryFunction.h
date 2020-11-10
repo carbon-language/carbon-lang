@@ -317,6 +317,13 @@ private:
   /// locations in fragments.
   bool HasSplitJumpTable{false};
 
+  /// True if there are no control-flow edges with successors in other functions
+  /// (i.e. if tail calls have edges to function-local basic blocks).
+  /// Set to false by SCTC. Dynostats can't be reliably computed for
+  /// functions with non-canonical CFG.
+  /// This attribute is only valid when hasCFG() == true.
+  bool HasCanonicalCFG{true};
+
   /// The address for the code for this function in codegen memory.
   /// Used for functions that are emitted in a dedicated section with a fixed
   /// address. E.g. for functions that are overwritten in-place.
@@ -1414,6 +1421,11 @@ public:
     return HasSplitJumpTable;
   }
 
+  /// Return true if all CFG edges have local successors.
+  bool hasCanonicalCFG() const {
+    return HasCanonicalCFG;
+  }
+
   /// Return true if the original function code has all necessary relocations
   /// to track addresses of functions emitted to new locations.
   bool hasExternalRefRelocations() const {
@@ -1892,6 +1904,10 @@ public:
 
   void setHasSplitJumpTable(bool V) {
     HasSplitJumpTable = V;
+  }
+
+  void setHasCanonicalCFG(bool V) {
+    HasCanonicalCFG = V;
   }
 
   void setFolded(BinaryFunction *BF) {

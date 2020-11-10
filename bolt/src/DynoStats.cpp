@@ -114,7 +114,7 @@ DynoStats getDynoStats(const BinaryFunction &BF) {
   DynoStats Stats(/*PrintAArch64Stats*/ BC.isAArch64());
 
   // Return empty-stats about the function we don't completely understand.
-  if (!BF.isSimple() || !BF.hasValidProfile())
+  if (!BF.isSimple() || !BF.hasValidProfile() || !BF.hasCanonicalCFG())
     return Stats;
 
   // Update enumeration of basic blocks for correct detection of branch'

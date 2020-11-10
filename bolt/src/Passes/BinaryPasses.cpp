@@ -929,6 +929,7 @@ void SimplifyConditionalTailCalls::runOnFunctions(BinaryContext &BC) {
 
     if (fixTailCalls(BC, Function)) {
       Modified.insert(&Function);
+      Function.setHasCanonicalCFG(false);
     }
   }
 
