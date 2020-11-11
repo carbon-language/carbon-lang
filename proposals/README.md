@@ -36,11 +36,16 @@ request:
 -   [0083 - In-progress design overview](p0083.md)
     -   [Decision](p0083_decision.md)
 -   [0107 - Code and name organization](p0107.md)
+    -   [Decision](p0107_decision.md)
 -   [0113 - Add a C++ style guide](p0113.md)
+    -   [Decision](p0113_decision.md)
 -   [0120 - Add idiomatic code performance and developer-facing docs to goals](p0120.md)
     -   [Decision](p0120_decision.md)
+-   [0142 - Unicode source files](p0142.md)
+    -   [Decision](p0142_decision.md)
 -   [0143 - Numeric literals](p0143.md)
     -   [Decision](p0143_decision.md)
 -   [0149 - Change documentation style guide](p0149.md)
+    -   [Decision](p0149_decision.md)
 
 <!-- endproposals -->
