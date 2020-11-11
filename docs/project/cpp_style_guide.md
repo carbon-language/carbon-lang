@@ -84,18 +84,19 @@ these.
 -   Only declare one variable at a time (declaring multiple variables requires
     confusing repetition of part of the type).
 -   Write `const` before the type when at the outer level: `const int N = 42;`.
--   Only use line comments (with `//`, not `/* ... */`), on a line by themselves, except for
+-   Only use line comments (with `//`, not `/* ... */`), on a line by
+    themselves, except for
     [argument name comments](https://clang.llvm.org/extra/clang-tidy/checks/bugprone-argument-comment.html#bugprone-argument-comment),
     [closing namespace comments](https://google.github.io/styleguide/cppguide.html#Namespaces),
-    and similar structural comments. In particular, don't append comments about a line of code
-    to the end of its line:
+    and similar structural comments. In particular, don't append comments about
+    a line of code to the end of its line:
 
     ```
     int bad = 42;  // Don't comment here.
 
     // Instead comment here.
     int good = 42;
-    
+
     // Closing namespace comments are structural, and both okay and expected.
     }  // namespace MyNamespace
     ```
@@ -129,15 +130,11 @@ these.
     possible.
 -   Types that cannot be copied should still be movable where possible.
 -   If supported, moving should be as efficient as possible.
--   Non-copyable types should be rare.
 
 ### Static and global variables
 
--   Global variables should be declared `constexpr`.
--   If necessary to have global state, prefer functions that return a pointer
-    to a function-local static variable.
--   Ensure function-local static variables do not run a destructor on program
-    shutdown.
+-   Global variables, including function-local and class static variables,
+    should be declared `constexpr`.
 
 ### Foundational libraries and data types
 
