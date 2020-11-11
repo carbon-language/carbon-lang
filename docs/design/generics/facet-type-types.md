@@ -1405,7 +1405,7 @@ Furthermore, there are cases where you must use `TypeImplements(A)` instead of
 
 ```
 fn GetWithDefault
-    [Type: K, TypeImplements(HasDefault): V]
+    [Type:$ K, TypeImplements(HasDefault):$ V]
     (HashMap(K, V): map, K: key) -> Ptr(V) {
   if (not map.has_key(key)) {
     map.insert(key, (V as HasDefault).default());
