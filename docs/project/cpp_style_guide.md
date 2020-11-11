@@ -133,7 +133,7 @@ these.
 
 ### Static and global variables
 
--   Global variables, including function-local and class static variables,
+-   Global and static variables, whether at file, class, or function scope,
     should be declared `constexpr`.
 
 ### Foundational libraries and data types
