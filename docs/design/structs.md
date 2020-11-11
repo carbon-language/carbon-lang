@@ -77,7 +77,7 @@ constraints.
 
 The type itself is a compile-time constant value. All name access is done with
 the `.` notation. Constant members (including member types and member functions
-which do not need an implicit object parameter) can be accessed via that
+which do not need an implicit object parameter) can be accessed by way of that
 constant: `AdvancedWidget.NestedType`. Other members and member functions
 needing an object parameter (or "methods") must be accessed from an object of
 the type.
@@ -99,8 +99,8 @@ special `Self` type.
 
 It may be interesting to consider separating the `self` syntax from the rest of
 the parameter pattern as it doesn't seem necessary to inject all of the special
-rules (covariance vs. contravariance, special pointer handling) for `self` into
-the general pattern matching system.
+rules (covariance versus contravariance, special pointer handling) for `self`
+into the general pattern matching system.
 
 ### Default access control level
 

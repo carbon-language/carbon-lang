@@ -74,7 +74,7 @@ To set up pre-commit, see the
 ```bash
 pip install pre-commit
 
-# From within each carbon-language git repo:
+# From within each carbon-language git repository:
 pre-commit install
 ```
 
@@ -143,7 +143,7 @@ brew install github/gh/gh
 #### GitHub Desktop
 
 [GitHub Desktop](https://desktop.github.com/) provides a UI for managing git
-repos. See the page for installation instructions.
+repositories. See the page for installation instructions.
 
 ### Vim
 

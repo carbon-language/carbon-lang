@@ -87,7 +87,7 @@ the need to import things gratuitously.
 
 ### String view vs owning string
 
-The right model of a string view vs. an owning string is still very much
+The right model of a string view versus an owning string is still very much
 unsettled.
 
 ### Syntax for wrapping operations
