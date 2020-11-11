@@ -1420,12 +1420,14 @@ won't be the `HasDefault` facet of whatever type you are using.
 
 #### Subsumption
 
-We have the following subsumption rule:
+We have the following two subsumption rules:
 
 > If `T` has type `TypeImplements(A1, ..., Am)`, it may be implicitly cast to
 > `TypeImplements(B1, ..., Bn)` if for every `Bi` there is a `Aj` such that
-> `Bi == Aj` or `Aj` extends `Bi`, or `T` may be implicitly cast to `T as Aj`
-> for any `Aj` in `(A1, ..., Am)`.
+> `Bi == Aj` or `Aj` extends `Bi`.
+
+> If `T` has type `TypeImplements(A1, ..., Am)`, `T` may be implicitly cast to
+> `T as Aj` for any `Aj` in `(A1, ..., Am)`.
 
 This subsumption rule allows generic functions to call other generic functions
 with equal or less-strict requirements.
