@@ -111,7 +111,7 @@ PR and proposal file for a new proposal. It's documented in
 is a helper for scanning comments in GitHub. It's particularly intended to help
 find threads which need to be resolved.
 
-Flags can be seen with `-h`. A couple key flags to be aware of are:
+Options can be seen with `-h`. A couple key options to be aware of are:
 
 -   `--long`: Prints long output, with the full comment.
 -   `--comments-after LOGIN`: Only print threads where the final comment is not
