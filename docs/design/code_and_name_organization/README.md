@@ -1189,10 +1189,10 @@ We could instead use `.` for library names and `/` for packages, such as
 Advantages:
 
 -   Clearer distinction between the package and library, increasing readability.
--   We have chosen not to [enforce file system
-    paths](#strict-association-between-the-file
-    system-path-and-librarynamespace) in order to ease refactoring, and
-    encouraging a mental model where they may match could confuse users.
+-   We have chosen not to
+    [enforce file system paths](#strict-association-between-the-file-system-path-and-librarynamespace)
+    in order to ease refactoring, and encouraging a mental model where they may
+    match could confuse users.
 
 Disadvantages:
 
