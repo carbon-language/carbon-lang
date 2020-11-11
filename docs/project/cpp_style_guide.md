@@ -84,10 +84,10 @@ these.
 -   Only declare one variable at a time (declaring multiple variables requires
     confusing repetition of part of the type).
 -   Write `const` before the type when at the outer level: `const int N = 42;`.
--   Only use line comments (with `//`, not `/* ... */`) except for
+-   Only use line comments (with `//`, not `/* ... */`), on a line by themselves, except for
     [argument name comments](https://clang.llvm.org/extra/clang-tidy/checks/bugprone-argument-comment.html#bugprone-argument-comment),
     [closing namespace comments](https://google.github.io/styleguide/cppguide.html#Namespaces),
-    and similar structural comments. Don't append comments about a line of code
+    and similar structural comments. In particular, don't append comments about a line of code
     to the end of its line:
 
     ```
@@ -95,6 +95,9 @@ these.
 
     // Instead comment here.
     int good = 42;
+    
+    // Closing namespace comments are structural, and both okay and expected.
+    }  // namespace MyNamespace
     ```
 
     This dogfoods our planned commenting syntax for Carbon. It also provides a
@@ -110,7 +113,7 @@ these.
     [Abseil's tip #88](https://abseil.io/tips/88#best-practices-for-initialization).
     To summarize, omitting some details from the article:
     -   Use assignment syntax (`=`) when initializing directly with the intended
-        value.
+        value (or with a braced initializer directly specifying that value).
     -   Use the traditional constructor syntax (with parentheses) when the
         initialization is performing some active logic, rather than simply
         composing values together.
@@ -131,7 +134,7 @@ these.
 ### Static and global variables
 
 -   Global variables should be declared `constexpr`.
--   If necessary to have global state, prefer functions which return a pointer
+-   If necessary to have global state, prefer functions that return a pointer
     to a function-local static variable.
 -   Ensure function-local static variables do not run a destructor on program
     shutdown.
