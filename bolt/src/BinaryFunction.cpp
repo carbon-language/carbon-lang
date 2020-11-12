@@ -2918,6 +2918,7 @@ void BinaryFunction::setIgnored() {
 
   IsIgnored = true;
   IsSimple = false;
+  DEBUG(dbgs() << "Ignoring " << getPrintName() << '\n');
 }
 
 void BinaryFunction::duplicateConstantIslands() {

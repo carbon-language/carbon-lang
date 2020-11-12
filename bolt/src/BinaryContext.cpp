@@ -575,15 +575,26 @@ bool BinaryContext::analyzeJumpTable(const uint64_t Address,
     UpperBound = std::min(NextJTAddress, UpperBound);
   }
 
+  DEBUG(dbgs() << "BOLT-DEBUG: analyzeJumpTable in " << BF.getPrintName()
+               << '\n');
   const auto EntrySize = getJumpTableEntrySize(Type);
   for (auto EntryAddress = Address; EntryAddress <= UpperBound - EntrySize;
        EntryAddress += EntrySize) {
+    DEBUG(dbgs() << "  * Checking 0x" << Twine::utohexstr(EntryAddress)
+                 << " -> ");
     // Check if there's a proper relocation against the jump table entry.
     if (HasRelocations) {
-      if (Type == JumpTable::JTT_PIC && !DataPCRelocations.count(EntryAddress))
+      if (Type == JumpTable::JTT_PIC &&
+          !DataPCRelocations.count(EntryAddress)) {
+        DEBUG(
+            dbgs() << "FAIL: JTT_PIC table, no relocation for this address\n");
         break;
-      if (Type == JumpTable::JTT_NORMAL && !getRelocationAt(EntryAddress))
+      }
+      if (Type == JumpTable::JTT_NORMAL && !getRelocationAt(EntryAddress)) {
+        DEBUG(dbgs()
+              << "FAIL: JTT_NORMAL table, no relocation for this address\n");
         break;
+      }
     }
 
     const uint64_t Value = (Type == JumpTable::JTT_PIC)
@@ -594,6 +605,7 @@ bool BinaryContext::analyzeJumpTable(const uint64_t Address,
     if (Value == BF.getAddress() + BF.getSize()) {
       addOffset(Value - BF.getAddress());
       HasUnreachable = true;
+      DEBUG(dbgs() << "OK: __builtin_unreachable\n");
       continue;
     }
 
@@ -601,12 +613,31 @@ bool BinaryContext::analyzeJumpTable(const uint64_t Address,
     auto TargetBF = getBinaryFunctionContainingAddress(Value);
 
     // We assume that a jump table cannot have function start as an entry.
-    if (!doesBelongToFunction(Value, TargetBF) || Value == BF.getAddress())
+    if (!doesBelongToFunction(Value, TargetBF) || Value == BF.getAddress()) {
+      DEBUG({
+        if (!BF.containsAddress(Value)) {
+          dbgs() << "FAIL: function doesn't contain this address\n";
+          if (TargetBF) {
+            dbgs() << "  ! function containing this address: "
+                   << TargetBF->getPrintName() << '\n';
+            if (TargetBF->isFragment())
+              dbgs() << "  ! is a fragment\n";
+            auto TargetParent = TargetBF->getParentFragment();
+            dbgs() << "  ! its parent is "
+                   << (TargetParent ? TargetParent->getPrintName() : "(none)")
+                   << '\n';
+          }
+        }
+        if (Value == BF.getAddress())
+          dbgs() << "FAIL: jump table cannot have function start as an entry\n";
+      });
       break;
+    }
 
     // Check there's an instruction at this offset.
     if (TargetBF->getState() == BinaryFunction::State::Disassembled &&
         !TargetBF->getInstructionAtOffset(Value - TargetBF->getAddress())) {
+      DEBUG(dbgs() << "FAIL: no instruction at this offset\n");
       break;
     }
 
@@ -615,9 +646,11 @@ bool BinaryContext::analyzeJumpTable(const uint64_t Address,
     if (TargetBF == &BF) {
       // Address inside the function.
       addOffset(Value - TargetBF->getAddress());
+      DEBUG(dbgs() << "OK: real entry\n");
     } else {
       // Address in split fragment.
       BF.setHasSplitJumpTable(true);
+      DEBUG(dbgs() << "OK: address in split fragment\n");
     }
   }
 
@@ -629,6 +662,7 @@ bool BinaryContext::analyzeJumpTable(const uint64_t Address,
 
 void BinaryContext::populateJumpTables() {
   std::vector<BinaryFunction *> FuncsToSkip;
+  DEBUG(dbgs() << "DataPCRelocations: " << DataPCRelocations.size() << '\n');
   for (auto JTI = JumpTables.begin(), JTE = JumpTables.end(); JTI != JTE;
        ++JTI) {
     auto *JT = JTI->second;
@@ -682,12 +716,20 @@ void BinaryContext::populateJumpTables() {
       FuncsToSkip.push_back(&BF);
   }
 
-  assert((!opts::StrictMode || !DataPCRelocations.size()) &&
-         "unclaimed PC-relative relocations left in data\n");
+  if (opts::StrictMode && DataPCRelocations.size()) {
+    DEBUG({
+      dbgs() << DataPCRelocations.size()
+             << " unclaimed PC-relative relocations left in data:\n";
+      for (auto Reloc : DataPCRelocations)
+        dbgs() << Twine::utohexstr(Reloc) << '\n';
+    });
+    assert(0 && "unclaimed PC-relative relocations left in data\n");
+  }
   clearList(DataPCRelocations);
   // Functions containing split jump tables need to be skipped with all
   // fragments.
   for (auto BF : FuncsToSkip) {
+    DEBUG(dbgs() << "Skipping " << BF->getPrintName() << " family\n");
     BF->setIgnored();
     BF->ignoreFragments();
   }
