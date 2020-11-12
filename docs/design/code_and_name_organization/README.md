@@ -765,7 +765,7 @@ These choices are made to assist human readability and tooling:
     tooling to determine what to expect.
 -   Repeating the type in the filename makes it possible to check the type
     without reading file content.
--   Repeating the type in the file content makes non-file system-based builds
+-   Repeating the type in the file content makes non-file-system-based builds
     possible.
 
 ## Open questions
