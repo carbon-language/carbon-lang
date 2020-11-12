@@ -529,6 +529,7 @@ bool BinaryContext::analyzeJumpTable(const uint64_t Address,
   // Number of targets other than __builtin_unreachable.
   uint64_t NumRealEntries{0};
 
+  constexpr uint64_t INVALID_OFFSET = std::numeric_limits<uint64_t>::max();
   auto addOffset = [&](uint64_t Offset) {
     if (Offsets)
       Offsets->emplace_back(Offset);
@@ -650,6 +651,8 @@ bool BinaryContext::analyzeJumpTable(const uint64_t Address,
     } else {
       // Address in split fragment.
       BF.setHasSplitJumpTable(true);
+      // Add invalid offset for proper identification of jump table size.
+      addOffset(INVALID_OFFSET);
       DEBUG(dbgs() << "OK: address in split fragment\n");
     }
   }
