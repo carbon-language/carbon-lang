@@ -233,7 +233,7 @@ Titus Winters writes in "Non-Atomic Refactoring and Software Sustainability":
 > compatibility over time, dealing with changes to underlying infrastructure and
 > dependencies, and working with legacy code or data. Fundamentally, it is a
 > different task to produce a programming solution to a problem (that solves the
-> current [instance] of the problem) vs. an engineering solution (that solves
+> current [instance] of the problem) versus an engineering solution (that solves
 > current instances, future instances that we can predict, and - through
 > flexibility - allows updates to solve future instances we may not be able to
 > predict).
@@ -364,8 +364,8 @@ cost.
 **Adhere to the principle of least surprise.** Defaults should match typical
 usage patterns. Implicit features should be unsurprising and expected, while
 explicit syntax should inform the reader about any behavior which might
-otherwise be surprising. The core concepts of implicit vs. explicit syntax are
-well articulated in
+otherwise be surprising. The core concepts of implicit versus explicit syntax
+are well articulated in
 [the Rust community](https://blog.rust-lang.org/2017/03/02/lang-ergonomics.html#implicit-vs-explicit),
 although we may come to different conclusions regarding the principles.
 

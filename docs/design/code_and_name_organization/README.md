@@ -49,7 +49,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
         -   [Referring to the package as `package`](#referring-to-the-package-as-package)
         -   [Remove the `library` keyword from `package` and `import`](#remove-the-library-keyword-from-package-and-import)
         -   [Rename package concept](#rename-package-concept)
-        -   [No association between the filesystem path and library/namespace](#no-association-between-the-filesystem-path-and-librarynamespace)
+        -   [No association between the file system path and library/namespace](#no-association-between-the-file-system-path-and-librarynamespace)
     -   [Libraries](#libraries-1)
         -   [Allow exporting namespaces](#allow-exporting-namespaces)
         -   [Allow importing implementation files from within the same library](#allow-importing-implementation-files-from-within-the-same-library)
@@ -765,7 +765,7 @@ These choices are made to assist human readability and tooling:
     tooling to determine what to expect.
 -   Repeating the type in the filename makes it possible to check the type
     without reading file content.
--   Repeating the type in the file content makes non-filesystem-based builds
+-   Repeating the type in the file content makes non-file-system-based builds
     possible.
 
 ## Open questions
@@ -1020,7 +1020,7 @@ Disadvantages:
     -   [Swift](https://developer.apple.com/documentation/swift_packages), as a
         distributable unit.
 
-#### No association between the filesystem path and library/namespace
+#### No association between the file system path and library/namespace
 
 Several languages create a strict association between the method for pulling in
 an API and the path to the file that provides it. For example:
@@ -1028,10 +1028,10 @@ an API and the path to the file that provides it. For example:
 -   In C++, `#include` refers to specific files without any abstraction.
     -   For example, `#include "PATH/TO/FILE.h"` means there's a file
         `PATH/TO/FILE.h`.
--   In Java, `package` and `import` both reflect filesystem structure.
+-   In Java, `package` and `import` both reflect file system structure.
     -   For example, `import PATH.TO.FILE;` means there's a file
         `PATH/TO/FILE.java`.
--   In Python, `import` requires matching filesystem structure.
+-   In Python, `import` requires matching file system structure.
     -   For example, `import PATH.TO.FILE` means there's a file
         `PATH/TO/FILE.py`.
 -   In TypeScript, `import` refers to specific files.
@@ -1053,7 +1053,7 @@ Advantages:
 -   The strict association makes it harder to move names between files without
     updating callers.
 -   If there were a strict association of paths, it would also need to handle
-    filesystem-dependent casing behaviors.
+    file system dependent casing behaviors.
     -   For example, on Windows, `project.carbon` and `Project.carbon` are
         conflicting filenames. This is exacerbated by paths, wherein a file
         `config` and a directory `Config/` would conflict, even though this
@@ -1061,15 +1061,15 @@ Advantages:
 
 Disadvantages:
 
--   A strict association between filesystem path and import path makes it easier
-    to find source files. This is used by some languages for compilation.
+-   A strict association between file system path and import path makes it
+    easier to find source files. This is used by some languages for compilation.
 -   Allows getting rid of the `package` keyword by inferring related information
-    from the filesystem path.
+    from the file system path.
 
-We are choosing to have some association between the filesystem path and library
-for API files to make it easier to find a library's files. We are not getting
-rid of the `package` keyword because we don't want to become dependent on
-filesystem structures, particularly as it would increase the complexity of
+We are choosing to have some association between the file system path and
+library for API files to make it easier to find a library's files. We are not
+getting rid of the `package` keyword because we don't want to become dependent
+on file system structures, particularly as it would increase the complexity of
 distributed builds.
 
 ### Libraries
@@ -1190,14 +1190,14 @@ Advantages:
 
 -   Clearer distinction between the package and library, increasing readability.
 -   We have chosen not to
-    [enforce filesystem paths](#strict-association-between-the-filesystem-path-and-librarynamespace)
+    [enforce file system paths](#strict-association-between-the-file-system-path-and-librarynamespace)
     in order to ease refactoring, and encouraging a mental model where they may
     match could confuse users.
 
 Disadvantages:
 
 -   Uses multiple separators, so people need to type different characters.
--   There is a preference for thinking of libraries like filesystem paths, even
+-   There is a preference for thinking of libraries like file system paths, even
     if they don't actually correspond.
 
 People like `/`, so we're going with `/`.
