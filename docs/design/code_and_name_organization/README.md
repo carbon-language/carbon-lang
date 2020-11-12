@@ -1053,7 +1053,7 @@ Advantages:
 -   The strict association makes it harder to move names between files without
     updating callers.
 -   If there were a strict association of paths, it would also need to handle
-    file system-dependent casing behaviors.
+    file system dependent casing behaviors.
     -   For example, on Windows, `project.carbon` and `Project.carbon` are
         conflicting filenames. This is exacerbated by paths, wherein a file
         `config` and a directory `Config/` would conflict, even though this
