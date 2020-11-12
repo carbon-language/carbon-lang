@@ -535,28 +535,46 @@ bool BinaryContext::analyzeJumpTable(const uint64_t Address,
       Offsets->emplace_back(Offset);
   };
 
+  auto isFragment = [](BinaryFunction &Fragment,
+                       BinaryFunction &Parent) -> bool {
+    // Check if <fragment restored name> == <parent restored name>.cold(.\d+)?
+    for (auto BFName : Parent.getNames()) {
+      auto BFNamePrefix = Regex::escape(NameResolver::restore(BFName));
+      auto BFNameRegex = Twine(BFNamePrefix, "\\.cold(\\.[0-9]+)?").str();
+      if (Fragment.hasRestoredNameRegex(BFNameRegex))
+        return true;
+    }
+    return false;
+  };
+
   auto doesBelongToFunction = [&](const uint64_t Addr,
                                   BinaryFunction *TargetBF) -> bool {
     if (BF.containsAddress(Addr))
       return true;
-    if (!TargetBF || !TargetBF->isFragment())
+    // Nothing to do if we failed to identify the containing function.
+    if (!TargetBF)
       return false;
-    if (!TargetBF->getParentFragment()) {
+    // Case 1: check if BF is a fragment and TargetBF is its parent.
+    if (BF.isFragment()) {
+      // BF is a fragment, but parent function is not registered.
+      // This means there's no direct jump between parent and fragment.
+      // Set parent link here in jump table analysis, based on function name
+      // matching heuristic.
+      if (!BF.getParentFragment() && isFragment(BF, *TargetBF))
+        registerFragment(BF, *TargetBF);
+      return BF.getParentFragment() == TargetBF;
+    }
+    // Case 2: check if TargetBF is a fragment and BF is its parent.
+    if (TargetBF->isFragment()) {
       // TargetBF is a fragment, but parent function is not registered.
       // This means there's no direct jump between parent and fragment.
       // Set parent link here in jump table analysis, based on function name
-      // matching heuristic:
-      // <fragment restored name> == <base restored name>.cold(.\d+)?
-      for (auto BFName : BF.getNames()) {
-        auto BFNamePrefix = Regex::escape(NameResolver::restore(BFName));
-        auto BFNameRegex = Twine(BFNamePrefix, "\\.cold(\\.[0-9]+)?").str();
-        if (TargetBF->hasRestoredNameRegex(BFNameRegex)) {
-          registerFragment(*TargetBF, BF);
-          break;
-        }
-      }
+      // matching heuristic.
+      if (!TargetBF->getParentFragment() && isFragment(*TargetBF, BF))
+        registerFragment(*TargetBF, BF);
+      return TargetBF->getParentFragment() == &BF;
     }
-    return TargetBF->getParentFragment() == &BF;
+    return false;
   };
 
   auto Section = getSectionForAddress(Address);
@@ -732,9 +750,11 @@ void BinaryContext::populateJumpTables() {
   // Functions containing split jump tables need to be skipped with all
   // fragments.
   for (auto BF : FuncsToSkip) {
-    DEBUG(dbgs() << "Skipping " << BF->getPrintName() << " family\n");
-    BF->setIgnored();
-    BF->ignoreFragments();
+    BinaryFunction *ParentBF =
+        const_cast<BinaryFunction *>(BF->getTopmostFragment());
+    DEBUG(dbgs() << "Skipping " << ParentBF->getPrintName() << " family\n");
+    ParentBF->setIgnored();
+    ParentBF->ignoreFragments();
   }
 }
 
