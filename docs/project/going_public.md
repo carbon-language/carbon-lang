@@ -98,7 +98,7 @@ we will start to find that we cannot make progress or build confidence in
 certain things without wider usage and deployment experience.
 
 As Carbon evolves, we should consider and document where we would benefit from
-or be blocked by field experience that requires going public. We should record
+or be blocked on field experience that requires going public. We should record
 these needs in terms of concrete open questions that need to be addressed by
 field experience. We should regularly review this set of open questions. At some
 point, the value of addressing this set of open questions via public field
