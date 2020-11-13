@@ -24,7 +24,7 @@ repos:
         args: ['--fix=lf']
       - id: trailing-whitespace
   - repo: https://github.com/google/pre-commit-tool-hooks
-    rev: v1.0.4
+    rev: v1.1.0
     hooks:
       - id: check-copyright
         args:
@@ -34,6 +34,8 @@ repos:
             Exceptions. See /LICENSE for license information.
             SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
         exclude: '^src/jekyll/(Gemfile.lock|theme/.*)$'
+      - id: check-google-doc-style
+      - id: markdown-toc
   - repo: https://github.com/codespell-project/codespell
     rev: v1.17.1
     hooks:
@@ -42,14 +44,6 @@ repos:
         exclude: '^src/jekyll/Gemfile.lock$'
   - repo: local
     hooks:
-      - id: markdown-toc
-        name: Update table of contents
-        description: Runs https://github.com/jonschlinkert/markdown-toc
-        entry: src/scripts/pre_commit_toc.js
-        language: node
-        additional_dependencies: [markdown-toc]
-        files: .*\.md$
-        exclude: ^src/jekyll/theme/
       - id: proposal-list
         name: Update list of proposals
         description: Updates the list of proposals in proposals/README.md
@@ -67,3 +61,8 @@ repos:
     hooks:
       - id: prettier
         exclude: ^src/jekyll/theme/
+  # Run linters last, as formatters and other checks may fix issues.
+  - repo: https://gitlab.com/PyCQA/flake8
+    rev: 3.8.4
+    hooks:
+      - id: flake8

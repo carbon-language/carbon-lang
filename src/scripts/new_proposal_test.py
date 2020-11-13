@@ -57,9 +57,7 @@ class TestNewProposal(unittest.TestCase):
         new_proposal._run(["true"])
 
     def test_run_failure(self):
-        with mock.patch(
-            "new_proposal._exit", side_effect=_fake_exit
-        ) as mock_exit:
+        with mock.patch("new_proposal._exit", side_effect=_fake_exit):
             self.assertRaises(FakeExitError, new_proposal._run, ["false"])
 
 
