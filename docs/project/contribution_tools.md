@@ -9,9 +9,9 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 The Carbon language project has a number of tools used to assist in preparing
 contributions.
 
-## Table of contents
-
 <!-- toc -->
+
+## Table of contents
 
 -   [Main tools](#main-tools)
     -   [brew](#brew)
