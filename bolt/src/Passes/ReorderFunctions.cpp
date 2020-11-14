@@ -109,14 +109,6 @@ CgUseSplitHotSize("cg-use-split-hot-size",
   cl::ZeroOrMore,
   cl::cat(BoltOptCategory));
 
-static llvm::cl::opt<bool>
-UseGainCache("hfsort+-use-cache",
-  llvm::cl::desc("Use a cache for mergeGain results when computing hfsort+."),
-  llvm::cl::ZeroOrMore,
-  llvm::cl::init(true),
-  llvm::cl::Hidden,
-  llvm::cl::cat(BoltOptCategory));
-
 } // namespace opts
 
 namespace llvm {
@@ -339,7 +331,7 @@ void ReorderFunctions::runOnFunctions(BinaryContext &BC) {
     Clusters = clusterize(Cg);
     break;
   case RT_HFSORT_PLUS:
-    Clusters = hfsortPlus(Cg, opts::UseGainCache);
+    Clusters = hfsortPlus(Cg);
     break;
   case RT_PETTIS_HANSEN:
     Clusters = pettisAndHansen(Cg);

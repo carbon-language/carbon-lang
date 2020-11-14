@@ -48,6 +48,7 @@ namespace bolt {
 class Cluster {
 public:
   Cluster(CallGraph::NodeId Id, const CallGraph::Node &F);
+  Cluster(const std::vector<CallGraph::NodeId> &Nodes, const CallGraph &Cg);
 
   std::string toString() const;
   double density() const { return Density; }
@@ -56,6 +57,7 @@ public:
   bool frozen() const { return Frozen; }
   void freeze() { Frozen = true; }
   void merge(const Cluster &Other, const double Aw = 0);
+  void merge(const Cluster &Other, const std::vector<CallGraph::NodeId>& Targets_);
   void clear();
   size_t numTargets() const {
     return Targets.size();
@@ -101,9 +103,9 @@ inline bool compareClustersDensity(const Cluster &C1, const Cluster &C2) {
 std::vector<Cluster> clusterize(const CallGraph &Cg);
 
 /*
- * Optimize function placement for iTLB cache and i-cache.
+ * Optimize function placement prioritizing i-TLB and i-cache performance.
  */
-std::vector<Cluster> hfsortPlus(CallGraph &Cg, bool UseGainCache = true);
+std::vector<Cluster> hfsortPlus(CallGraph &Cg);
 
 /*
  * Pettis-Hansen code layout algorithm

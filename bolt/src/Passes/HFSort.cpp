@@ -74,6 +74,17 @@ Cluster::Cluster(NodeId Id, const Node &Func)
   Targets.push_back(Id);
 }
 
+Cluster::Cluster(const std::vector<NodeId> &Nodes, const CallGraph &Cg) {
+  Samples = 0;
+  Size = 0;
+  for (auto TargetId : Nodes) {
+    Targets.push_back(TargetId);
+    Samples += Cg.samples(TargetId);
+    Size += Cg.size(TargetId);
+  }
+  Density = (double)Samples / Size;
+}
+
 std::string Cluster::toString() const {
   std::string Str;
   raw_string_ostream CS(Str);
@@ -112,10 +123,17 @@ void Cluster::reverseTargets() {
   std::reverse(Targets.begin(), Targets.end());
 }
 
-void Cluster::merge(const Cluster& Other, const double Aw) {
+void Cluster::merge(const Cluster &Other, const double Aw) {
   Targets.insert(Targets.end(),
                  Other.Targets.begin(),
                  Other.Targets.end());
+  Size += Other.Size;
+  Samples += Other.Samples;
+  Density = (double)Samples / Size;
+}
+
+void Cluster::merge(const Cluster &Other, const std::vector<CallGraph::NodeId> &Targets_) {
+  Targets = Targets_;
   Size += Other.Size;
   Samples += Other.Samples;
   Density = (double)Samples / Size;

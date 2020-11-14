@@ -113,6 +113,9 @@ public:
   size_t numNodes() const {
     return Nodes.size();
   }
+  size_t numArcs() const {
+    return Arcs.size();
+  }
   const Node &getNode(const NodeId Id) const {
     assert(Id < Nodes.size());
     return Nodes[Id];
