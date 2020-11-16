@@ -161,11 +161,10 @@ time to assist new contributors in the days and weeks after the launch.
 
 We should have a compelling launch event plan when we go public. For example:
 
+-   A website.
 -   Technical talks from multiple speakers and organizations. This could be at a
     conference or in our own remote or physical event.
--   A website.
--   A social media game plan.
--   Tech press lined up.
+-   A game plan for social media and tech press.
 
 ## Risks
 
