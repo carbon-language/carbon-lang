@@ -398,8 +398,10 @@ void BinaryEmitter::emitFunctionBody(BinaryFunction &BF, bool EmitColdPart,
                                  BB->getAlignmentMaxBytes());
     }
     Streamer.EmitLabel(BB->getLabel());
-    if (auto *EntrySymbol = BF.getSecondaryEntryPointSymbol(*BB)) {
-      Streamer.EmitLabel(EntrySymbol);
+    if (!EmitCodeOnly) {
+      if (auto *EntrySymbol = BF.getSecondaryEntryPointSymbol(*BB)) {
+        Streamer.EmitLabel(EntrySymbol);
+      }
     }
 
     // Check if special alignment for macro-fusion is needed.

@@ -1190,7 +1190,8 @@ public:
     MCEInstance.LocalMOFI = llvm::make_unique<MCObjectFileInfo>();
     MCEInstance.LocalCtx = llvm::make_unique<MCContext>(
         AsmInfo.get(), MRI.get(), MCEInstance.LocalMOFI.get());
-    MCEInstance.LocalMOFI->InitMCObjectFileInfo(*TheTriple, /*PIC=*/false,
+    MCEInstance.LocalMOFI->InitMCObjectFileInfo(*TheTriple,
+                                                /*PIC=*/!HasFixedLoadAddress,
                                                 *MCEInstance.LocalCtx);
     MCEInstance.MCE.reset(
         TheTarget->createMCCodeEmitter(*MII, *MRI, *MCEInstance.LocalCtx));

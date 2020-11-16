@@ -1948,10 +1948,11 @@ BinaryContext::calculateEmittedSize(BinaryFunction &BF, bool FixBranches) {
   auto *Section = MCEInstance.LocalMOFI->getTextSection();
   Section->setHasInstructions(true);
 
-  auto *StartLabel = LocalCtx->getOrCreateSymbol("__hstart");
-  auto *EndLabel = LocalCtx->getOrCreateSymbol("__hend");
-  auto *ColdStartLabel = LocalCtx->getOrCreateSymbol("__cstart");
-  auto *ColdEndLabel = LocalCtx->getOrCreateSymbol("__cend");
+  // Create symbols in the LocalCtx so that they get destroyed with it.
+  MCSymbol *StartLabel = LocalCtx->createTempSymbol();
+  MCSymbol *EndLabel = LocalCtx->createTempSymbol();
+  MCSymbol *ColdStartLabel = LocalCtx->createTempSymbol();
+  MCSymbol *ColdEndLabel = LocalCtx->createTempSymbol();
 
   Streamer->SwitchSection(Section);
   Streamer->EmitLabel(StartLabel);
