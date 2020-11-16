@@ -6,9 +6,9 @@ Exceptions. See /LICENSE for license information.
 SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -->
 
-## Table of contents
-
 <!-- toc -->
+
+## Table of contents
 
 -   [Overview](#overview)
 -   [Criteria](#criteria)
@@ -101,7 +101,7 @@ As Carbon evolves, we should consider and document where we would benefit from
 or be blocked on field experience that requires going public. We should record
 these needs in terms of concrete open questions that need to be addressed by
 field experience. We should regularly review this set of open questions. At some
-point, the value of addressing this set of open questions via public field
+point, the value of addressing this set of open questions by way of public field
 experience will become significant enough to warrant the costs associated with
 going public.
 
