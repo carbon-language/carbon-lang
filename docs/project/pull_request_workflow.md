@@ -6,9 +6,9 @@ Exceptions. See /LICENSE for license information.
 SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -->
 
-## Table of contents
-
 <!-- toc -->
+
+## Table of contents
 
 -   [Trunk based development](#trunk-based-development)
     -   [Green tests](#green-tests)
@@ -75,8 +75,8 @@ change seems trivial, still go through a pull request -- it'll likely be trivial
 to review. Always wait for someone else to review your pull request rather than
 just merging it, even if you have permission to do so.
 
-Our GitHub repos are configured to require pull requests and review before they
-are merged, so this rule is enforced automatically.
+Our GitHub repositories are configured to require pull requests and review
+before they are merged, so this rule is enforced automatically.
 
 ## Small, incremental changes
 

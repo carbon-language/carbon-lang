@@ -6,9 +6,9 @@ Exceptions. See /LICENSE for license information.
 SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -->
 
-## Table of contents
-
 <!-- toc -->
+
+## Table of contents
 
 -   [TODO](#todo)
 -   [Overview](#overview)
@@ -65,11 +65,11 @@ like something that people will get used to with time, it may be worthwhile to
 do some user research to understand the likely reaction distribution, strength
 of reaction, and any quantifiable impact these options have on measured
 readability. We have only found one _very_ weak source of research that focused
-on the _order_ question (rather than type inference vs. explicit types or other
-questions in this space). That was a very limited PhD student's study of Java
-programmers that seemed to indicate improved latency for recalling the type of a
-given variable name with types on the left (as in C++). However, those results
-are _far_ from conclusive.
+on the _order_ question (rather than type inference versus explicit types or
+other questions in this space). That was a very limited PhD student's study of
+Java programmers that seemed to indicate improved latency for recalling the type
+of a given variable name with types on the left (as in C++). However, those
+results are _far_ from conclusive.
 
 **TODO**: Get a useful link to this PhD research (a few of us got a copy from
 the professor directly).

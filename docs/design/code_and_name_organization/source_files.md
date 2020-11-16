@@ -1,4 +1,4 @@
-# Unicode source files
+# Source files
 
 <!--
 Part of the Carbon Language project, under the Apache License v2.0 with LLVM
@@ -6,96 +6,63 @@ Exceptions. See /LICENSE for license information.
 SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -->
 
-[Pull request](https://github.com/carbon-language/carbon-lang/pull/142)
-
 <!-- toc -->
 
 ## Table of contents
 
--   [Problem](#problem)
--   [Background](#background)
--   [Proposal](#proposal)
--   [Details](#details)
+-   [Overview](#overview)
+-   [Encoding](#encoding)
+-   [References](#references)
+-   [Alternatives](#alternatives)
     -   [Character encoding](#character-encoding)
-    -   [Source files](#source-files)
-    -   [Normalization](#normalization)
-    -   [Characters in identifiers and whitespace](#characters-in-identifiers-and-whitespace)
-        -   [Homoglyphs](#homoglyphs)
--   [Alternatives considered](#alternatives-considered)
-    -   [Character encoding](#character-encoding-1)
     -   [Byte order marks](#byte-order-marks)
     -   [Normalization forms](#normalization-forms)
 
 <!-- tocstop -->
 
-## Problem
+## Overview
 
-Portable use and maintenance of Carbon source files requires a common
-understanding of how they are encoded on disk. Further, the decision as to what
-characters are valid in names and what constitutes whitespace are a complex area
-in which we do not expect to have local expertise.
-
-## Background
-
-[Unicode](https://www.unicode.org/versions/latest/) is a universal character
-encoding, maintained by the
-[Unicode Consortium](https://home.unicode.org/basic-info/overview/). It is the
-canonical encoding used for textual information interchange across all modern
-technology.
-
-The [Unicode Standard Annex 31](https://www.unicode.org/reports/tr31/), "Unicode
-Identifier and Pattern Syntax", provides recommendations for the use of Unicode
-in the definitions of general-purpose identifiers.
-
-## Proposal
-
-Carbon programs are represented as a sequence of Unicode code points. Carbon
-source files are encoded in UTF-8.
-
-Carbon will follow lexical conventions for identifiers and whitespace based on
-Unicode Annex 31.
-
-## Details
-
-### Character encoding
-
-Before being divided into tokens, a program starts as a sequence of Unicode code
-points -- integer values between 0 and 10FFFF<sub>16</sub> -- whose meaning as
-characters or non-characters is defined by the Unicode standard.
-
-Carbon is based on Unicode 13.0, which is currently the latest version of the
-Unicode standard. Newer versions should be considered for adoption as they are
-released.
-
-### Source files
+A Carbon _source file_ is a sequence of Unicode code points in Unicode
+Normalization Form C ("NFC"), and represents a portion of the complete text of a
+program.
 
 Program text can come from a variety of sources, such as an interactive
 programming environment (a so-called "Read-Evaluate-Print-Loop" or REPL), a
 database, a memory buffer of an IDE, or a command-line argument.
 
 The canonical representation for Carbon programs is in files stored as a
-sequence of bytes in a file system on disk, and such files are expected to be
-encoded in UTF-8. Such files may begin with an optional UTF-8 BOM, that is, the
-byte sequence EF<sub>16</sub>,BB<sub>16</sub>,BF<sub>16</sub>. This prefix, if
-present, is ignored.
+sequence of bytes in a file system on disk. Such files have a `.carbon`
+extension.
 
-Regardless of how program text is concretely stored, the first step in
-processing any such text is to convert it to a sequence of Unicode code points
--- although such conversion may be purely notional. The result of this
-conversion is a Carbon _source file_. Depending on the needs of the language, we
-may require each such source file to have an associated filename, even if the
-source file does not originate in anything resembling a file system.
+## Encoding
 
-### Normalization
+The on-disk representation of a Carbon source file is encoded in UTF-8. Such
+files may begin with an optional UTF-8 BOM, that is, the byte sequence
+EF<sub>16</sub>,BB<sub>16</sub>,BF<sub>16</sub>. This prefix, if present, is
+ignored.
 
-Background:
+No Unicode normalization is performed when reading an on-disk representation of
+a Carbon source file, so the byte representation is required to be normalized in
+Normalization Form C. The Carbon source formatting tool will convert source
+files to NFC as necessary.
 
--   [wikipedia article on Unicode normal forms](https://en.wikipedia.org/wiki/Unicode_equivalence#Normal_forms)
+## References
+
+-   [Unicode](https://www.unicode.org/versions/latest/) is a universal character
+    encoding, maintained by the
+    [Unicode Consortium](https://home.unicode.org/basic-info/overview/). It is
+    the canonical encoding used for textual information interchange across all
+    modern technology.
+
+    Carbon is based on Unicode 13.0, which is currently the latest version of
+    the Unicode standard. Newer versions will be considered for adoption as they
+    are released.
+
 -   [Unicode Standard Annex #15: Unicode Normalization Forms](https://www.unicode.org/reports/tr15/tr15-50.html)
 
-Carbon source files, including comments and string literals, are required to be
-in Unicode Normalization Form C ("NFC"). The Carbon source formatting tool will
-convert source files to NFC as necessary to satisfy this constraint.
+-   [wikipedia article on Unicode normal forms](https://en.wikipedia.org/wiki/Unicode_equivalence#Normal_forms)
+
+## Alternatives
 
 The choice to require NFC is really four choices:
 
@@ -120,8 +87,6 @@ The choice to require NFC is really four choices:
     both recommend the use of Normalization Form C for case-sensitive
     identifiers in programming languages.
 
-    See also the discussion of [homoglyphs](#homoglyphs) below.
-
 2. Composition: we use a composed normalization form rather than a decomposed
    normalization form. For example, `ō` is encooded as U+014D (LATIN SMALL
    LETTER O WITH MACRON) in a composed form and as U+006F (LATIN SMALL LETTER
@@ -137,66 +102,11 @@ The choice to require NFC is really four choices:
    restricting our attention to only identifiers, or only identifiers and string
    literals.
 
-### Characters in identifiers and whitespace
-
-We will largely follow [Unicode Annex 31](https://www.unicode.org/reports/tr31/)
-in our selection of identifier and whitespace characters. This Annex does not
-provide specific rules on lexical syntax, instead providing a framework that
-permits a selection of choices of concrete rules.
-
-The framework provided by Annex 31 includes suggested sets of characters that
-may appear in identifier, including uppercase and lowercase ASCII letters, along
-with reasonable extensions to many non-ASCII letters, with some characters
-restricted to not appear as the first character. For example, this list includes
-U+30EA (KATAKANA LETTER RI), but not U+2603 (SNOWMAN), both of which are
-permitted in identifiers in C++20. Similarly, it indicates which characters
-should be classified as whitespace, including all the ASCII whitespace
-characters plus some non-ASCII whitespace characters. It also supports
-language-specific "profiles" to alter these baseline character sets for the
-needs of a particular language -- for example, to permit underscores in
-identifiers, or to include non-breaking spaces as whitespace characters.
-
-This proposal does not specify concrete choices for lexical rules, nor that we
-will not deviate from conformance to Annex 31 in any concrete area. We may find
-cases where we wish to take a different direction than that of the Annex.
-However, we should use Annex 31 as a basis for our decisions, and should expect
-strong justification for deviations from it.
-
-Note that this aligns with the current direction for C++, as described in WG21
-paper [P1949R6](http://wg21.link/P1949R6).
-
-#### Homoglyphs
-
-The sets of identifier characters suggested by Annex 31's `ID_Start` /
-`XID_Start` / `ID_Continue` / `XID_Continue` characters include many pairs of
-homoglyphs and near-homoglyphs -- characters that would be interpreted
-differently but may render identically or very similarly. This problem would
-also be present if we restricted the character set to ASCII -- for example,
-`kBa11Offset` and `kBall0ffset` may be very hard to distinguish in some fonts --
-but there are many more ways to introduce such problems with the broader
-identifier character set suggested by Annex 31.
-
-One way to handle this problem would be by adding a restriction to name lookup:
-if a lookup for a name is performed in a scope and that lookup would have found
-nothing, but there is a confusable identifier, as defined by
-[UAX#39](http://www.unicode.org/reports/tr39/#Confusable_Detection), in the same
-scope, the program is ill-formed. However, this idea is only provided as weak
-guidance to future proposals and to demonstrate that UAX#31's approach is
-compatible with at least one possible solution for the homoglyph problem. The
-concrete rules for handling homoglyphs are considered out of scope for this
-proposal.
-
-## Alternatives considered
-
-There are a number of different design choices we could make, as divergences
-from the above proposal. Those choices, along with the arguments that led to
-choosing the proposed design rather than each alternative, are presented below.
-
 ### Character encoding
 
-We could restrict programs to ASCII.
+**We could restrict programs to ASCII.**
 
-Pro:
+Advantages:
 
 -   Reduced implementation complexity.
 -   Avoids all problems relating to normalization, homoglyphs, text
@@ -207,7 +117,7 @@ Pro:
     developers -- we already require that keywords, and thus all ASCII letters,
     can be typed.
 
-Con:
+Disadvantages:
 
 -   An overarching goal of the Carbon project is to provide a language that is
     inclusive and welcoming. A language that does not permit names and comments
@@ -218,22 +128,22 @@ Con:
 
 ### Byte order marks
 
-We could disallow byte order marks.
+**We could disallow byte order marks.**
 
-Pro:
+Advantages:
 
 -   Marginal implementation simplicity.
 
-Con:
+Disadvantages:
 
 -   Several major editors, particularly on the Windows platform, insert UTF-8
     BOMs and use them to identify file encoding.
 
 ### Normalization forms
 
-We could require a different normalization form.
+**We could require a different normalization form.**
 
-Pro:
+Advantages:
 
 -   Some environments might more naturally produce a different normalization
     form.
@@ -243,7 +153,7 @@ Pro:
     -   NFD may be more suitable for certain uses such as typo correction,
         homoglyph detection, or code completion.
 
-Con:
+Disadvantages:
 
 -   The C++ standard and community is moving towards using NFC:
 
@@ -260,29 +170,30 @@ Con:
 
 -   NFC produces smaller encodings than NFD in all cases where they differ.
 
-We could require no normalization form and compare identifiers by code point
-sequence.
+**We could require no normalization form and compare identifiers by code point
+sequence.**
 
-Pro:
+Advantages:
 
 -   This is the rule in use in C++20 and before.
 
-Con:
+Disadvantages:
 
 -   This is not the rule planned for the near future of C++.
 -   Different representations of the same character may result in different
     identifiers, in a way that is likely to be invisible in most programming
     environments.
 
-We could require no normalization form, and normalize the source code ourselves:
+**We could require no normalization form, and normalize the source code
+ourselves.**
 
-Pro:
+Advantages:
 
 -   We would treat source text identically regardless of the normalization form.
 -   Developers would not be responsible for ensuring that their editing
     environment produces and preserves the proper normalization form.
 
-Con:
+Disadvantages:
 
 -   There is substantially more implementation cost involved in normalizing
     identifiers than in detecting whether they are in normal form. While this
@@ -310,16 +221,16 @@ Con:
 -   Normalizing the contents of string literals, rather than using their
     contents unaltered, will introduce a risk of user surprise.
 
-We could require only identifiers, or only identifiers and comments, to be
-normalized, rather than the entire input file.
+**We could require only identifiers, or only identifiers and comments, to be
+normalized, rather than the entire input file.**
 
-Pro:
+Advantages:
 
 -   This would provide more freedom in comments to use arbitrary text.
 -   String literals could contain intentionally non-normalized text in order to
     represent non-normalized strings.
 
-Con:
+Disadvantages:
 
 -   Within string literals, this would result in invisible semantic differences:
     strings that render identically can have different meanings.
