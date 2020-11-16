@@ -109,9 +109,9 @@ going public.
 
 We should ensure there is sustained interest to continue with Carbon, even if
 circumstances later shift. This interest should come from multiple organizations
-and individuals. It's important that Carbon be a collaboration in order to
+and individuals. It is important that Carbon be a collaboration in order to
 ensure its longevity and broad applicability. Even if most of Carbon's early
-contributions come from one organization, it's still crucial that others have
+contributions come from one organization, it remains crucial that others have
 sufficient interest to contribute to its ecosystem.
 
 ### Prototype implementation
