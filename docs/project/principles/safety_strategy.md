@@ -1,4 +1,4 @@
-# Language-level safety strategy
+# Safety strategy
 
 <!--
 Part of the Carbon Language project, under the Apache License v2.0 with LLVM
@@ -10,107 +10,122 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 <!-- toc -->
 
--   [High-level overview of safety principles](#high-level-overview-of-safety-principles)
--   [Detailed discussion of safety](#detailed-discussion-of-safety)
-    -   [What do we mean by "safety"?](#what-do-we-mean-by-safety)
-    -   [Guaranteed safety != hardened or mitigated](#guaranteed-safety--hardened-or-mitigated)
+-   [Overview](#overview)
+-   [Details](#details)
+    -   [What does "safety" mean in Carbon?](#what-does-safety-mean-in-carbon)
+    -   [Guaranteed safety is different from hardening and mitigation](#guaranteed-safety-is-different-from-hardening-and-mitigation)
     -   [Ideal model for handling safety violations](#ideal-model-for-handling-safety-violations)
     -   [Practical reality for unsafe operations](#practical-reality-for-unsafe-operations)
     -   [Managing bugs without language-guaranteed safety](#managing-bugs-without-language-guaranteed-safety)
 
 <!-- tocstop -->
 
-## High-level overview of safety principles
+## Overview
 
--   Where there is a choice between safe and unsafe, incentivize the safe option
-    by making it equally or more easy to use. If there is a default, it should
-    be the safe option. Idiomatic and unremarkable code should be safe. Unsafe
-    code should be identifiable.
+Carbon's safety strategy is based on the goal to provide
+[practical safety guarantees and testing mechanisms](../goals.md#practical-safety-guarantees-and-testing-mechanisms),
+and its priority relative to other goals, particularly performance and
+usability. Carbon's safety strategy will be built on several key features:
+
+-   Where there is a choice between safe and unsafe, the safe option should be
+    incentivized by making it equally or more easy to use. If there is a
+    default, it should be the safe option. Idiomatic and unremarkable code
+    should be safe. Unsafe code should be identifiable.
+
 -   The rules for determining whether code will pass compile time safety
     checking should be articulable, documented, and possible to understand by
     local reasoning.
+
 -   The default development build will diagnose the most common safety
     violations either at compile time or at runtime with high probability, and
     additional modes will cover any other safety violations in the same way.
--   The default optimized build will mitigate any safety violations (that are
-    not rejected statically) whenever the performance is below the noise of hot
-    path application code.
--   There will be a build option for the optimized build to select a point in
-    the performance (speed, binary size, memory size) vs hardening/mitigation
-    space for the remaining safety violations.
+
+-   The default optimized build will provide runtime mitigations for safety
+    violations whenever the performance is below the noise of hot path
+    application code.
+
+-   There will be a build option for the optimized build to select a trade-off
+    point between performance (speed, binary size, memory size) and hardening or
+    mitigation for the remaining safety violations.
+
 -   Developers need a strong testing methodology to engineer correct software.
     We will encourage this and then leverage it with the checking build modes to
     find and fix bugs and vulnerabilities.
--   The language makes design choices that allow more efficient implementations
-    of the hardening/testing build modes and better automation of
-    testing/fuzzing.
+
+-   Language design choices should allow more efficient implementations of the
+    hardening and testing build modes. They should also allow better automation
+    of testing and fuzzing.
 
 Taken together, these principles imply that the language must use both compile
-time and runtime checks for safety. It should use simple rules and programmer
-annotations to prove safety at compile time when possible (e.g. a subset of what
-can be proved safe using Rust's lifetime-parameters and borrowing rules). And it
-should provide build modes which check the remaining safety, with high
-probability, at runtime. Over time, with more experience, the set of things
+time and runtime checks for safety. It should use simple rules and code
+annotations to prove safety at compile time when possible; for example, a subset
+of what can be proved safe using Rust's lifetime-parameters and borrowing rules.
+It should also provide build modes which check the remaining safety at runtime
+with high probability. Over time and with more experience, the set of things
 checked at compile time can incrementally increase and, if desired, arrive at
 similar levels of static safety as a language like Rust.
 
-## Detailed discussion of safety
+## Details
 
-### What do we mean by "safety"?
+### What does "safety" mean in Carbon?
 
-We define the term safety in the context of programming languages as protection
-from software bugs, whether required by the language or merely an implementation
-option. Specifically, certain operations that are known components of security
-vulnerabilities are entirely precluded, even in the face of an incorrect program
-that violates language rules. These operations are called safety violations.
-Based on the nature of the prevented safety violation, safety is often
-decomposed into the categories of memory, type, and data race safety.
+In Carbon, safety is protection from software bugs, whether the protection is
+required by the language or merely an implementation option. Certain operations
+are known components of security vulnerabilities; these operations are called
+safety violations. Safety can be decomposed into categories of memory, type, and
+data race safety, based on the safety violation prevented:
 
--   Memory safety protects against invalid memory accesses, both spatially when
-    accessing out of bounds and temporally where the access occurs outside the
-    lifetime of the intended object.
--   Type safety protects against accessing objects with an incorrect type. These
-    issues are sometimes called "type confusion".
--   Data race safety protects against racing (concurrent and unsynchronized)
-    memory accesses (reads and writes).
+-   **Memory safety** protects against invalid memory accesses.
 
-### Guaranteed safety != hardened or mitigated
+    -   _Spatial_ memory safety protects against accessing out of bounds, such
+        as for an array.
 
-We need to distinguish between giving a safety guarantee from hardening against
-or mitigating a vulnerability. A safety guarantee is an especially strong
-requirement: we must enforce those properties in a clearly defined way even for
-programs that contain bugs due to violating the language rules. As a
-consequence, the behavior intended to catch bugs remains observable by
-intentional code.
+    -   _Temporal_ memory safety protects against access to memory outside the
+        lifetime of the intended object.
+
+-   **Type safety** protects against accessing objects with an incorrect type.
+    These issues are sometimes called "type confusion".
+
+-   **Data race safety** protects against racing memory accesses, whether
+    concurrent or unsynchronized.
+
+### Guaranteed safety is different from hardening and mitigation
+
+A safety guarantee must be distinguished from hardening against or mitigating a
+vulnerability. A safety guarantee is an especially strong requirement: the
+properties must be enforced in a clearly defined way even for programs that
+contain bugs due to violating the language rules. As a consequence, the behavior
+intended to catch bugs remains observable by intentional code.
 
 Hardening and mitigations are importantly different from safety guarantees. They
 address the feasibility of exploiting a vulnerability, but may not provide the
 strict guarantee in order to provide better performance in some dimension or
-better scaling. Let's consider an example:
-[memory tagging](https://llvm.org/devmtg/2018-10/slides/Serebryany-Stepanov-Tsyrklevich-Memory-Tagging-Slides-LLVM-2018.pdf)
-for details). It provides a very strong mitigation of memory unsafety by making
-each attempt at an invalid read or write have a high probability of trapping but
-not be guaranteed to trap in every case. Because realistic attacks require many
-such operations, this mitigation can make the attack itself infeasible.
-Alternatively, the trap might be asynchronous, leaving only a tiny window of
-time prior to the attack being detected and program terminated. Both of these
-mitigation strategies are sufficiently strong (the difficulty of the attack
-becomes dramatically higher and potentially infeasible) but neither provides any
-clear or strong semantic guarantee that would lead us to claim it provides
-memory safety.
+better scaling.
 
-Regardless of the semantic guarantee, in a development build we will produce
-precise and easy to understand diagnostics of any safety violations, enabling
-programmers to effectively understand and fix the bugs in their code leading to
-that violation.
+For example,
+[memory tagging](https://llvm.org/devmtg/2018-10/slides/Serebryany-Stepanov-Tsyrklevich-Memory-Tagging-Slides-LLVM-2018.pdf)
+provides a very strong mitigation for memory safety violations by making each
+attempt at an invalid read or write have a high probability of trapping, while
+still not guaranteeing to trap in every case. Realistic attacks require many
+such operations, so memory tagging will likely stop attacks. Alternatively, the
+trap might be asynchronous, leaving only a tiny window of time prior to the
+attack being detected and program terminated. Both of these mitigation
+strategies reduce the feasibility attacks, but neither provides any clear or
+strong semantic memory safety guarantee.
+
+Regardless of whether a safety violation is found through guaranteed safety,
+hardening, or mitigation, development builds will provide precise and easy to
+understand diagnostics of discovered safety violations, enabling programmers to
+effectively understand and fix the bugs in their code leading to that violation.
 
 ### Ideal model for handling safety violations
 
-Our goal for every safety violation is:
+Our goal for every safety violation relies on separate build modes:
 
--   In the development build mode, it is checked and diagnosed with a detailed
-    report of the error, statically or dynamically with high probability per
-    single occurrence of the bug.
+-   In the development build mode, safety violations are checked and diagnosed
+    with a detailed report of the error, either statically or dynamically, with
+    high probability per single occurrence of the bug.
+
 -   In the optimized release build mode, it is hardened or mitigated from any
     exploit by an attacker.
 
