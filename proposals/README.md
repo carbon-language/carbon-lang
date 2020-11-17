@@ -6,7 +6,7 @@ Exceptions. See /LICENSE for license information.
 SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -->
 
-This directory contains accepted proposals for the carbon-lang repo. For
+This directory contains accepted proposals for the carbon-lang repository. For
 information about declined/deferred proposals, please view the proposal's
 original pull request.
 
@@ -15,8 +15,8 @@ request:
 
 -   `p####.md` will contain the main proposal text.
 -   `p####-decision.md` documents the decision and rationale.
--   `p####` may be present as an optional subdirectory for related files (e.g.,
-    images).
+-   `p####` may be present as an optional subdirectory for related files (for
+    example, images).
 
 ## Proposal list
 
@@ -37,6 +37,8 @@ request:
     -   [Decision](p0083_decision.md)
 -   [0107 - Code and name organization](p0107.md)
     -   [Decision](p0107_decision.md)
+-   [0113 - Add a C++ style guide](p0113.md)
+    -   [Decision](p0113_decision.md)
 -   [0120 - Add idiomatic code performance and developer-facing docs to goals](p0120.md)
     -   [Decision](p0120_decision.md)
 -   [0142 - Unicode source files](p0142.md)
