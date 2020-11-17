@@ -45,6 +45,7 @@ extern cl::opt<bool> PrintReordered;
 extern cl::opt<bool> PrintSections;
 extern cl::opt<bool> PrintDisasm;
 extern cl::opt<bool> PrintCFG;
+extern cl::opt<std::string> RuntimeInstrumentationLib;
 extern cl::opt<unsigned> Verbosity;
 } // namespace opts
 
@@ -286,15 +287,17 @@ void MachORewriteInstance::runOptimizationPasses() {
   Manager.runPasses();
 }
 
-void MachORewriteInstance::mapExtraSections(orc::VModuleKey Key) {
+void MachORewriteInstance::mapInstrumentationSection(orc::VModuleKey Key, StringRef SectionName) {
   if (!opts::Instrument)
     return;
-  ErrorOr<BinarySection &> Counters = BC->getUniqueSectionByName("__counters");
-  if (!Counters) {
-    llvm::errs() << "Cannot find __counters section\n";
+  ErrorOr<BinarySection &> Section = BC->getUniqueSectionByName(SectionName);
+  if (!Section) {
+    llvm::errs() << "Cannot find " + SectionName + " section\n";
     exit(1);
   }
-  OLT->mapSectionAddress(Key, Counters->getSectionID(), Counters->getAddress());
+  if (!Section->hasValidSectionID())
+    return;
+  OLT->mapSectionAddress(Key, Section->getSectionID(), Section->getAddress());
 }
 
 void MachORewriteInstance::mapCodeSections(orc::VModuleKey Key) {
@@ -419,17 +422,47 @@ void MachORewriteInstance::emitAndLink() {
       },
       [&](orc::VModuleKey Key, const object::ObjectFile &Obj,
           const RuntimeDyld::LoadedObjectInfo &) {
-        assert(Key == K && "Linking multiple objects is unsupported");
-        mapCodeSections(Key);
-        mapExtraSections(Key);
+        if (Key == K) {
+          mapCodeSections(Key);
+          mapInstrumentationSection(Key, "__counters");
+        } else {
+          // TODO: Refactor addRuntimeLibSections to work properly on Mach-O
+          // and use it here.
+          mapInstrumentationSection(Key, "I__setup");
+          mapInstrumentationSection(Key, "I__data");
+          mapInstrumentationSection(Key, "I__text");
+          mapInstrumentationSection(Key, "I__cstring");
+        }
       },
       [&](orc::VModuleKey Key) {
-        assert(Key == K && "Linking multiple objects is unsupported");
       }));
 
   OLT->setProcessAllSections(true);
   cantFail(OLT->addObject(K, std::move(ObjectMemBuffer)));
   cantFail(OLT->emitAndFinalize(K));
+
+  if (auto *RtLibrary = BC->getRuntimeLibrary()) {
+    RtLibrary->link(*BC, ToolPath, *ES, *OLT);
+  }
+}
+
+void MachORewriteInstance::writeInstrumentationSection(StringRef SectionName,
+                                                       raw_pwrite_stream &OS) {
+  if (!opts::Instrument)
+    return;
+  ErrorOr<BinarySection &> Section = BC->getUniqueSectionByName(SectionName);
+  if (!Section) {
+    llvm::errs() << "Cannot find " + SectionName + " section\n";
+    exit(1);
+  }
+  if (!Section->hasValidSectionID())
+    return;
+  assert(Section->getInputFileOffset() &&
+         "Section input offset cannot be zero");
+  assert(Section->getAllocAddress() && "Section alloc address cannot be zero");
+  assert(Section->getOutputSize() && "Section output size cannot be zero");
+  OS.pwrite(reinterpret_cast<char *>(Section->getAllocAddress()),
+            Section->getOutputSize(), Section->getInputFileOffset());
 }
 
 void MachORewriteInstance::rewriteFile() {
@@ -459,6 +492,13 @@ void MachORewriteInstance::rewriteFile() {
               Function->getImageSize(), Function->getFileOffset());
   }
 
+  // TODO: Refactor addRuntimeLibSections to work properly on Mach-O and
+  // use it here.
+  writeInstrumentationSection("I__setup", OS);
+  writeInstrumentationSection("I__data", OS);
+  writeInstrumentationSection("I__text", OS);
+  writeInstrumentationSection("I__cstring", OS);
+
   Out->keep();
 }
 
@@ -470,6 +510,7 @@ void MachORewriteInstance::adjustCommandLineOptions() {
     opts::ForcePatch = true;
   opts::JumpTables = JTS_MOVE;
   opts::InstrumentCalls = false;
+  opts::RuntimeInstrumentationLib = "libbolt_rt_instr_osx.a";
 }
 
 void MachORewriteInstance::run() {

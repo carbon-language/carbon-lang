@@ -29,7 +29,7 @@ cl::opt<bool>
                cl::desc("instrument code to generate accurate profile data"),
                cl::ZeroOrMore, cl::cat(BoltOptCategory));
 
-static cl::opt<std::string> RuntimeInstrumentationLib(
+cl::opt<std::string> RuntimeInstrumentationLib(
     "runtime-instrumentation-lib",
     cl::desc("specify file name of the runtime instrumentation library"),
     cl::ZeroOrMore, cl::init("libbolt_rt_instr.a"), cl::cat(BoltOptCategory));
@@ -176,6 +176,9 @@ void InstrumentationRuntimeLibrary::link(BinaryContext &BC, StringRef ToolPath,
                                          orc::RTDyldObjectLinkingLayer &OLT) {
   auto LibPath = getLibPath(ToolPath, opts::RuntimeInstrumentationLib);
   loadLibraryToOLT(LibPath, ES, OLT);
+
+  if (BC.isMachO())
+    return;
 
   RuntimeFiniAddress =
       cantFail(OLT.findSymbol("__bolt_instr_fini", false).getAddress());

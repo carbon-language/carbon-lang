@@ -1,9 +1,26 @@
 #if !defined(__APPLE__)
+
 #include <cstddef>
 #include <cstdint>
+
+#else
+
+typedef __SIZE_TYPE__ size_t;
+#define __SSIZE_TYPE__                                                         \
+  __typeof__(_Generic((__SIZE_TYPE__)0, unsigned long long int                 \
+                      : (long long int)0, unsigned long int                    \
+                      : (long int)0, unsigned int                              \
+                      : (int)0, unsigned short                                 \
+                      : (short)0, unsigned char                                \
+                      : (signed char)0))
+typedef __SSIZE_TYPE__ ssize_t;
+
+typedef unsigned long long uint64_t;
+
 #endif
 
 #include "config.h"
+
 #ifdef HAVE_ELF_H
 #include <elf.h>
 #endif
@@ -46,10 +63,24 @@
   "pop %%rbx\n"                                                                \
   "pop %%rax\n"
 
-#if !defined(__APPLE__)
-
 // Anonymous namespace covering everything but our library entry point
 namespace {
+
+#if defined(__APPLE__)
+
+uint64_t __write(uint64_t fd, const void *buf, uint64_t count) {
+  uint64_t ret;
+  const long write = 0x2000004;
+  __asm__ __volatile__("syscall;\n"
+                       "movq %%rax, %0;\n"
+                       : "=g"(ret)
+                       : /* rax */ "a"(write), /* rdi */ "D"(fd),
+                         /* rsi */ "S"(buf), /* rdx */ "d"(count)
+                       : "memory");
+  return ret;
+}
+
+#else
 
 // We use a stack-allocated buffer for string manipulation in many pieces of
 // this code, including the code that prints each line of the fdata file. This
@@ -330,6 +361,7 @@ public:
 inline uint64_t alignTo(uint64_t Value, uint64_t Align) {
   return (Value + Align - 1) / Align * Align;
 }
-} // anonymous namespace
 
 #endif
+
+} // anonymous namespace

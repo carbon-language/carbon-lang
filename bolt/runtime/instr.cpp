@@ -1467,6 +1467,9 @@ extern "C" void __bolt_instr_fini() {
 
 // On OSX/iOS the final symbol name of an extern "C" function/variable contains
 // one extra leading underscore: _bolt_instr_setup -> __bolt_instr_setup.
-extern "C" __attribute((section("__TEXT,__setup"))) void _bolt_instr_setup() {}
+extern "C" __attribute((section("__TEXT,__setup"))) void _bolt_instr_setup() {
+  const char* Message = "Hello!\n";
+  __write(2, Message, 7);
+}
 
 #endif

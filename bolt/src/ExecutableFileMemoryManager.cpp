@@ -46,23 +46,26 @@ uint8_t *ExecutableFileMemoryManager::allocateSection(intptr_t Size,
     Ret = SectionMemoryManager::allocateCodeSection(Size, Alignment,
                                                     SectionID, SectionName);
   } else {
-    Ret = SectionMemoryManager::allocateDataSection(Size, Alignment,
-                                                    SectionID, SectionName,
-                                                    IsReadOnly);
+    Ret = SectionMemoryManager::allocateDataSection(Size, Alignment, SectionID,
+                                                    SectionName, IsReadOnly);
   }
 
-  const auto Flags = BinarySection::getFlags(IsReadOnly, IsCode, true);
   SmallVector<char, 256> Buf;
-  if (ObjectsLoaded > 0)
-    SectionName = (Twine(SectionName) + ".bolt.extra." + Twine(ObjectsLoaded))
-                      .toStringRef(Buf);
+  if (ObjectsLoaded > 0) {
+    if (BC.isELF()) {
+      SectionName = (Twine(SectionName) + ".bolt.extra." + Twine(ObjectsLoaded))
+                        .toStringRef(Buf);
+    } else if (BC.isMachO()) {
+      assert((SectionName == "__text" || SectionName == "__data" ||
+              SectionName == "__setup" || SectionName == "__cstring") &&
+             "Unexpected section in the instrumentation library");
+      SectionName = ("I" + Twine(SectionName)).toStringRef(Buf);
+    }
+  }
 
-  auto &Section = BC.registerOrUpdateSection(SectionName,
-                                             ELF::SHT_PROGBITS,
-                                             Flags,
-                                             Ret,
-                                             Size,
-                                             Alignment);
+  auto &Section = BC.registerOrUpdateSection(
+      SectionName, ELF::SHT_PROGBITS,
+      BinarySection::getFlags(IsReadOnly, IsCode, true), Ret, Size, Alignment);
   Section.setSectionID(SectionID);
   assert(Section.isAllocatable() &&
          "verify that allocatable is marked as allocatable");
@@ -72,7 +75,6 @@ uint8_t *ExecutableFileMemoryManager::allocateSection(intptr_t Size,
                << " section : " << SectionName
                << " with size " << Size << ", alignment " << Alignment
                << " at 0x" << Ret << ", ID = " << SectionID << "\n");
-
   return Ret;
 }
 

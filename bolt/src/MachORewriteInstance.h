@@ -50,7 +50,7 @@ class MachORewriteInstance {
 
   static StringRef getOrgSecPrefix() { return ".bolt.org"; }
 
-  void mapExtraSections(orc::VModuleKey Key);
+  void mapInstrumentationSection(orc::VModuleKey Key, StringRef SectionName);
   void mapCodeSections(orc::VModuleKey Key);
 
   void adjustCommandLineOptions();
@@ -60,6 +60,8 @@ class MachORewriteInstance {
   void postProcessFunctions();
   void runOptimizationPasses();
   void emitAndLink();
+
+  void writeInstrumentationSection(StringRef SectionName, raw_pwrite_stream &OS);
   void rewriteFile();
 
 public:

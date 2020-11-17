@@ -30,7 +30,7 @@ target_include_directories(bolt_rt_hugify PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
 install(TARGETS bolt_rt_instr DESTINATION lib)
 install(TARGETS bolt_rt_hugify DESTINATION lib)
 
-if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+if (CMAKE_CXX_COMPILER_ID MATCHES ".*Clang.*")
   add_library(bolt_rt_instr_osx STATIC
     instr.cpp
     ${CMAKE_CURRENT_BINARY_DIR}/config.h
