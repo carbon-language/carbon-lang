@@ -16,7 +16,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Guaranteed safety is different from hardening and mitigation](#guaranteed-safety-is-different-from-hardening-and-mitigation)
     -   [Ideal model for handling safety violations](#ideal-model-for-handling-safety-violations)
     -   [Practical reality for unsafe operations](#practical-reality-for-unsafe-operations)
-    -   [Managing bugs without language-guaranteed safety](#managing-bugs-without-language-guaranteed-safety)
+    -   [Managing bugs without guaranteed safety](#managing-bugs-without-guaranteed-safety)
 
 <!-- tocstop -->
 
@@ -45,12 +45,12 @@ usability. Carbon's safety strategy will be built on several key features:
     application code.
 
 -   There will be a build option for the optimized build to select a trade-off
-    point between performance (speed, binary size, memory size) and hardening or
-    mitigation for the remaining safety violations.
+    between performance (including speed, binary size, and memory size) and
+    hardening or mitigation for the remaining safety violations.
 
 -   Developers need a strong testing methodology to engineer correct software.
-    We will encourage this and then leverage it with the checking build modes to
-    find and fix bugs and vulnerabilities.
+    Carbon will encourage testing and then leverage it with the checking build
+    modes to find and fix bugs and vulnerabilities.
 
 -   Language design choices should allow more efficient implementations of the
     hardening and testing build modes. They should also allow better automation
@@ -83,8 +83,8 @@ data race safety, based on the safety violation prevented:
     -   _Temporal_ memory safety protects against access to memory outside the
         lifetime of the intended object.
 
--   **Type safety** protects against accessing objects with an incorrect type.
-    These issues are sometimes called "type confusion".
+-   **Type safety** protects against accessing objects with an incorrect type,
+    also known as "type confusion".
 
 -   **Data race safety** protects against racing memory accesses, whether
     concurrent or unsynchronized.
@@ -107,8 +107,8 @@ For example,
 provides a very strong mitigation for memory safety violations by making each
 attempt at an invalid read or write have a high probability of trapping, while
 still not guaranteeing to trap in every case. Realistic attacks require many
-such operations, so memory tagging will likely stop attacks. Alternatively, the
-trap might be asynchronous, leaving only a tiny window of time prior to the
+such operations, so memory tagging will probably stop attacks. Alternatively,
+the trap might be asynchronous, leaving only a tiny window of time prior to the
 attack being detected and program terminated. Both of these mitigation
 strategies reduce the feasibility attacks, but neither provides any clear or
 strong semantic memory safety guarantee.
@@ -120,18 +120,22 @@ effectively understand and fix the bugs in their code leading to that violation.
 
 ### Ideal model for handling safety violations
 
-Our goal for every safety violation relies on separate build modes:
+As many safety violations as possible should be statically checked. However,
+developers should expect that at least some safety violations will only be
+detected dynamically, where behavior relies on separate build modes:
 
--   In the development build mode, safety violations are checked and diagnosed
-    with a detailed report of the error, either statically or dynamically, with
-    high probability per single occurrence of the bug.
+-   In the _development_ build mode, dynamic checks detect safety violations
+    with a high probability per single occurrence of the bug. Detected
+    violations are accompanied by a detailed diagnostic report to ease developer
+    bug-finding.
 
--   In the optimized release build mode, it is hardened or mitigated from any
-    exploit by an attacker.
+-   In the _optimized release_ build mode, safety violations are harded or
+    mitigated from any exploit by an attacker.
 
-While it is convenient to use the same strategy in both build modes, this isn't
-even the ideal we strive toward because many diagnostic techniques may be
-ineffective as hardening techniques.
+While it might appear convenient to use the same strategy in both build modes,
+this isn't even the ideal we strive toward because particular diagnostic
+techniques may be ineffective as hardening techniques or may have substantial
+performance overhead.
 
 ### Practical reality for unsafe operations
 
@@ -171,26 +175,31 @@ as [implemented in Clang](http://clang.llvm.org/docs/ControlFlowIntegrity.html),
 trapping overflow, and automatic bounds checking, probabilistic use-after-free
 and race detection.
 
-### Managing bugs without language-guaranteed safety
+### Managing bugs without guaranteed safety
 
-We can offer users of a language security mitigations to manage their risk, but
-we still need a way for developers to reliably find and fix the bugs that will
-inevitably be written. We believe that the cornerstone of this is the use of
-strong testing methodologies. This doesn't just mean good test coverage. It
-means the combination of:
+Carbon can offer safety mitigations to manage their security risk, but it still
+needs to provide developers a way to reliably find and fix the inevitable bugs.
+The cornerstone of this is the application of strong testing methodologies.
+Strong testing is more than good test coverage; it means the combination of:
 
 -   Ensuring unsafe or risky operations and interfaces can easily be recognized
     by humans.
--   Static analysis tooling to detect common bugs integrated into the build
-    and/or code review developer workflow. Think of these as static testing of
+
+-   Static analysis tooling to detect common bugs integrated into the build and
+    code review developer workflows. These could be viewed as static testing of
     code.
+
 -   Good test coverage, including unit, integration, and system tests.
+
 -   Continuous integration, including automatic and continuous running of these
-    tests, in the development, checked build mode as well as any additional
-    build modes necessary to cover different forms of behavior checking.
+    tests. The checked development build mode should be validated, as well as
+    any additional build modes necessary to cover different forms of behavior
+    checking.
+
 -   Coverage-directed fuzz testing in combination with checking build modes to
     discover bugs outside of human-authored test coverage, especially for
     interfaces handling untrusted data.
+
 -   Language features that make automated testing and fuzzing easier. For
     example, if the language encourages value types and pure functions of some
     sort, they can be automatically fuzzed.
@@ -199,15 +208,15 @@ These practices are necessary for reliable, large-scale software engineering.
 Maintaining correctness of business logic over time requires continuous and
 thorough testing. Without it, such software systems cannot be changed and
 evolved over time reliably. We can then re-use these practices in conjunction
-with checking build modes to mitigate the absence of language-guaranteed safety
-without imposing overhead on production systems.
+with checking build modes to mitigate the limitations of Carbon's safety
+guarantees without imposing overhead on production systems.
 
-When the practical realities outlined previously preclude language-guaranteed
-safety, we believe adhering to this kind of testing methodology is essential. As
-a consequence, the language ecosystem (from the language itself to the libraries
-and tooling around it) need to directly work to remove barriers and encourage
-the development of these methodologies.
+When the practical realities outlined previously preclude guaranteed safety, we
+believe adhering to this kind of testing methodology is essential. As a
+consequence, Carbon's ecosystem, including the language, tools, and libraries,
+will need to directly work to remove barriers and encourage the development of
+these methodologies.
 
 On the other hand, if the practical realities of a domain preclude this degree
 of testing rigor, we suggest that it becomes imperative to accept the overhead
-of a language that gives true safety guarantees.
+of a language that gives comprehensive safety guarantees.
