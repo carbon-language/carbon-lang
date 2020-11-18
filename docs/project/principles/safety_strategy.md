@@ -17,6 +17,11 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Ideal model for handling safety violations](#ideal-model-for-handling-safety-violations)
     -   [Practical reality for unsafe operations](#practical-reality-for-unsafe-operations)
     -   [Managing bugs without guaranteed safety](#managing-bugs-without-guaranteed-safety)
+-   [Alternatives considered](#alternatives-considered)
+    -   [Full compile-time enforced safety by default (Rust's model)](#full-compile-time-enforced-safety-by-default-rusts-model)
+    -   [Rust's model but without preventing data races](#rusts-model-but-without-preventing-data-races)
+    -   [Dynamic lifetime safety and compile-time enforced safety otherwise (Swift's model)](#dynamic-lifetime-safety-and-compile-time-enforced-safety-otherwise-swifts-model)
+    -   [Dynamic lifetime safety and defined behavior (Java's model)](#dynamic-lifetime-safety-and-defined-behavior-javas-model)
 
 <!-- tocstop -->
 
@@ -70,10 +75,9 @@ similar levels of static safety as a language like Rust.
 ### What does "safety" mean in Carbon?
 
 In Carbon, safety is protection from software bugs, whether the protection is
-required by the language or merely an implementation option. Certain operations
-are known components of security vulnerabilities; these operations are called
-safety violations. Safety can be decomposed into categories of memory, type, and
-data race safety, based on the safety violation prevented:
+required by the language or merely an implementation option. Safety can be
+decomposed into categories of memory, type, and data race safety, based on the
+related security vulnerability:
 
 -   **Memory safety** protects against invalid memory accesses.
 
@@ -129,51 +133,43 @@ detected dynamically, where behavior relies on separate build modes:
     violations are accompanied by a detailed diagnostic report to ease developer
     bug-finding.
 
--   In the _optimized release_ build mode, safety violations are harded or
+-   In the _optimized release_ build mode, safety violations are hardened or
     mitigated from any exploit by an attacker.
 
 While it might appear convenient to use the same strategy in both build modes,
-this isn't even the ideal we strive toward because particular diagnostic
-techniques may be ineffective as hardening techniques or may have substantial
-performance overhead.
+divergence may occur where particular diagnostic techniques are ineffective as
+hardening techniques or have substantial performance overhead.
 
 ### Practical reality for unsafe operations
 
-The ideal model should be both our goal and our starting point, but we expect to
-make at least two primary concessions for practical reasons: the development
-build may need to be augmented by specialized checking build modes to cover all
-safety violations, and the optimized build may not be able to mitigate all
-safety violations due to performance overhead. Unfortunately, the current
-best-in-class techniques for preventing data races at compile time cannot handle
-any "unsafe" code (including existing C and C++ code) and still have unanswered
-questions around ease of adoption and compilation scalability. As a consequence,
-some safety violations must be detected at runtime.
+Carbon will likely make two concessions to the ideal model for practical
+reasons:
 
-Currently, detecting data races at runtime is also too expensive to do in the
-development build mode. As a consequence, we expect responsibility for
-exhaustive checking for safety violations to be split among a small number of
-additional build modes that diagnose different kinds of safety violations at
-runtime. These should be kept to the smallest number that permits all such modes
-to have acceptable overhead.
+-   The development build may need to be augmented by additional, specialized
+    checking build modes to cover all safety violations. Currently, detecting
+    data races at runtime is too expensive to do in a single, comprehensively
+    checked development build mode. Each specialized build development build
+    mode will be less expensive by splitting different dynamic safety violation
+    checks to different build modes. These should be kept to the smallest number
+    that permits all such modes to have acceptable overhead.
 
-The optimized build mode should harden against any safety violations by default,
-but current hardening techniques are still too expensive to enable in every case
-due to memory or performance overhead. Our criteria for the overhead being
-acceptable is that it falls below the noise on the hot path of application code.
-This is a very high bar, but we think it is critical to hold that high bar so
-that we can migrate existing C++ systems that currently expect that degree of
-performance.
+-   The optimized build may not be able to harden or mitigate all safety
+    violations. Although it should harden against any safety violations by
+    default, current hardening techniques are still too expensive to enable in
+    every case due to memory or performance overhead. Carbon's criteria for
+    acceptable overhead is that it falls below the noise on the hot path of
+    application code. This is a very high bar, but will likely be critical for
+    allowing migration of existing C++ systems which require high performance.
 
-Beyond these two concessions, we think it is important to allow users of the
-language to adjust the balance between hardening and the various axes of
-performance, at a reasonably coarse level. Different users and different
-applications will have different tolerances for such performance overhead, and
-we should provide as much flexibility here as we reasonably can. Specific
-examples here include
+Beyond these two concessions, it's important to allow users of the language to
+adjust the balance between hardening and the various axes of performance, at
+least at a coarse level. Different users and different applications will have
+different tolerances for such performance overhead, and Carbon should provide
+flexibility where feasible. Specific examples here include
 [Control Flow Integrity](https://en.wikipedia.org/wiki/Control-flow_integrity)
 as [implemented in Clang](http://clang.llvm.org/docs/ControlFlowIntegrity.html),
-trapping overflow, and automatic bounds checking, probabilistic use-after-free
-and race detection.
+trapping overflow, bounds checking, and probabilistic use-after-free and race
+detection.
 
 ### Managing bugs without guaranteed safety
 
@@ -207,16 +203,121 @@ Strong testing is more than good test coverage; it means the combination of:
 These practices are necessary for reliable, large-scale software engineering.
 Maintaining correctness of business logic over time requires continuous and
 thorough testing. Without it, such software systems cannot be changed and
-evolved over time reliably. We can then re-use these practices in conjunction
+evolved over time reliably. Carbon will re-use these practices in conjunction
 with checking build modes to mitigate the limitations of Carbon's safety
 guarantees without imposing overhead on production systems.
 
-When the practical realities outlined previously preclude guaranteed safety, we
-believe adhering to this kind of testing methodology is essential. As a
-consequence, Carbon's ecosystem, including the language, tools, and libraries,
-will need to directly work to remove barriers and encourage the development of
-these methodologies.
+Where the practical realities outlined previously preclude guaranteed safety,
+adhering to this kind of testing methodology is essential. As a consequence,
+Carbon's ecosystem, including the language, tools, and libraries, will need to
+directly work to remove barriers and encourage the development of these
+methodologies.
 
 On the other hand, if the practical realities of a domain preclude this degree
-of testing rigor, we suggest that it becomes imperative to accept the overhead
-of a language that gives comprehensive safety guarantees.
+of testing rigor, developers should evaluate whether a language with more
+comprehensive safety guarantees would be better suited.
+
+## Alternatives considered
+
+### Full compile-time enforced safety by default (Rust's model)
+
+We could commit to the same level of compile-time enforced safety as Rust does.
+This still allows for `unsafe` blocks as in Rust, and library types that provide
+_dynamic_ safety enforcement but are implemented with some `unsafe` internals.
+Note that our intent is to leave the door _open_ to this model despite not
+pursuing it initially.
+
+Pros:
+
+-   Full safety (even against data races) provided at compile time.
+-   Early evidence shows _significant_ impact in reducing bugs generally.
+-   Unsafe operations can effectively be treated as bugs rather than becoming
+    "valid", but surprising and often unintended, behaviors.
+-   Can likely leverage the huge work of the Rust community to understand what
+    is necessary.
+-   Careful use of narrow `unsafe` escape hatches can be effectively
+    encapsulated behind otherwise safe APIs.
+
+Cons:
+
+-   Effectively requires widespread different design patterns and idioms from
+    C++.
+    -   Designing data structures to avoid sharing mutable state.
+    -   Fully modeling lifetime and exclusivity in the type system.
+    -   Increased complexity of node/pointer based data structures like linked
+        lists.
+-   Many techniques currently used by Rust have unsolved compilation scaling
+    challenges due to interprocedural inference and increases in the set of
+    types with generic code.
+-   Complexity of type system proofs of safety may incentivize unnecessary
+    dynamic checking of safety properties. For example, an unnecessary `RefCell`
+    or `Rc`.
+-   Some of the most essential dynamic safety tools that ease the ergonomic
+    burden of the Rust-style lifetime model (`Rc`) introduce _semantic_
+    differences that cannot then be eliminated in a context where performance is
+    the dominant priority.
+-   Remains an open (if fairly difficult) evolution path for the language even
+    if we don't eagerly pursue.
+
+### Rust's model but without preventing data races
+
+We could replicate the Rust model as above but additionally not trying to
+statically preclude data races.
+
+Pros:
+
+-   Outside of data races provides same benefits as above.
+
+Cons:
+
+-   Unclear that removing the data race prevention aspect (law of exclusivity)
+    is sufficient to meaningfully address the cons above. Most of the lifetime
+    complexity remains unchanged.
+    -   Would no longer need `RefCell`, but would still need `Rc` and `ARc`.
+
+### Dynamic lifetime safety and compile-time enforced safety otherwise (Swift's model)
+
+Swift defaults to dynamically enforced lifetime safety and no data race
+prevention, and only requires compile time enforcement of the remaining spatial
+safety properties. This _does_ remove the majority of the type system complexity
+needed to support the safety in Rust's model.
+
+Pros:
+
+-   Significantly simpler model than Rust's.
+-   Safe for all of the most common and important classes of memory safety bugs.
+
+Cons:
+
+-   Results in significant design differences as the distinction between value
+    types and "class types" (that are held by a reference counted pointer and
+    thus lifetime safe) becomes extremely important.
+-   Reference counting based safety introduces significant performance costs
+    with very difficult tools for controlling them. This puts the option in
+    tension with the performance goal of Carbon.
+-   Garbage collection based safety has less direct performance overhead but has
+    a greater unpredictability of performance.
+
+### Dynamic lifetime safety and defined behavior (Java's model)
+
+Another approach to safety is to largely provide defined and predictable
+behavior for all potential safety violations, which is what Java does (at the
+highest level). This, combined with some form of dynamic lifetime management,
+otherwise known as garbage collection, forms the basis of Java's safety.
+
+Pros:
+
+-   Among the most robust and well studied models with decades of practical
+    usage and analysis for security properties.
+-   Extremely suitable for efficient implementation on top of a virtual machine
+    like the JVM.
+
+Cons:
+
+-   Extremely high complexity to fully understand the implications of complex
+    cases like data races.
+-   Tends to require _significant_ performance overhead without the aid of a
+    very powerful VM-based execution environment with highly dynamic
+    optimizations.
+    -   The complexity of the implementation in turn creates difficult to
+        _predict_ performance.
