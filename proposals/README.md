@@ -48,5 +48,6 @@ request:
     -   [Decision](p0143_decision.md)
 -   [0149 - Change documentation style guide](p0149.md)
     -   [Decision](p0149_decision.md)
+-   [0198 - comments](p0198.md)
 
 <!-- endproposals -->
