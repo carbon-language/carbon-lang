@@ -6,9 +6,9 @@ Exceptions. See /LICENSE for license information.
 SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -->
 
-## Table of contents
-
 <!-- toc -->
+
+## Table of contents
 
 -   [Overview](#overview)
 -   [Details](#details)
@@ -227,7 +227,7 @@ _dynamic_ safety enforcement but are implemented with some `unsafe` internals.
 Note that our intent is to leave the door _open_ to this model despite not
 pursuing it initially.
 
-Pros:
+Advantages:
 
 -   Full safety (even against data races) provided at compile time.
 -   Early evidence shows _significant_ impact in reducing bugs generally.
@@ -238,7 +238,7 @@ Pros:
 -   Careful use of narrow `unsafe` escape hatches can be effectively
     encapsulated behind otherwise safe APIs.
 
-Cons:
+Disadvantages:
 
 -   Effectively requires widespread different design patterns and idioms from
     C++.
@@ -264,15 +264,15 @@ Cons:
 We could replicate the Rust model as above but additionally not trying to
 statically preclude data races.
 
-Pros:
+Advantages:
 
 -   Outside of data races provides same benefits as above.
 
-Cons:
+Disadvantages:
 
 -   Unclear that removing the data race prevention aspect (law of exclusivity)
-    is sufficient to meaningfully address the cons above. Most of the lifetime
-    complexity remains unchanged.
+    is sufficient to meaningfully address the disadvantages above. Most of the
+    lifetime complexity remains unchanged.
     -   Would no longer need `RefCell`, but would still need `Rc` and `ARc`.
 
 ### Dynamic lifetime safety and compile-time enforced safety otherwise (Swift's model)
@@ -282,12 +282,12 @@ prevention, and only requires compile time enforcement of the remaining spatial
 safety properties. This _does_ remove the majority of the type system complexity
 needed to support the safety in Rust's model.
 
-Pros:
+Advantages:
 
 -   Significantly simpler model than Rust's.
 -   Safe for all of the most common and important classes of memory safety bugs.
 
-Cons:
+Disadvantages:
 
 -   Results in significant design differences as the distinction between value
     types and "class types" (that are held by a reference counted pointer and
@@ -305,14 +305,14 @@ behavior for all potential safety violations, which is what Java does (at the
 highest level). This, combined with some form of dynamic lifetime management,
 otherwise known as garbage collection, forms the basis of Java's safety.
 
-Pros:
+Advantages:
 
 -   Among the most robust and well studied models with decades of practical
     usage and analysis for security properties.
 -   Extremely suitable for efficient implementation on top of a virtual machine
     like the JVM.
 
-Cons:
+Disadvantages:
 
 -   Extremely high complexity to fully understand the implications of complex
     cases like data races.
