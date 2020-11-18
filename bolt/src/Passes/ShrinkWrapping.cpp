@@ -1576,8 +1576,8 @@ void ShrinkWrapping::insertUpdatedCFI(unsigned CSR, int SPValPush,
         }
       }
     }
-    // Are we at the hot-cold split point?
-    if (BF.isSplit() && PrevBB && BB->isCold() != PrevBB->isCold()) {
+    // Are we at the first basic block or hot-cold split point?
+    if (!PrevBB || (BF.isSplit() && BB->isCold() != PrevBB->isCold())) {
       if (InAffectedZoneAtBegin) {
         insertCFIsForPushOrPop(*BB, BB->begin(), CSR, true, 0, SPValPush);
       }
