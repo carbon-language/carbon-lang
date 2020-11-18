@@ -14,11 +14,10 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [Details](#details)
     -   [What does "safety" mean in Carbon?](#what-does-safety-mean-in-carbon)
     -   [Guaranteed safety is different from hardening and mitigation](#guaranteed-safety-is-different-from-hardening-and-mitigation)
-    -   [Ideal model for handling safety violations](#ideal-model-for-handling-safety-violations)
-    -   [Practical reality for unsafe operations](#practical-reality-for-unsafe-operations)
+    -   [Model for handling safety violations](#model-for-handling-safety-violations)
     -   [Managing bugs without guaranteed safety](#managing-bugs-without-guaranteed-safety)
 -   [Alternatives considered](#alternatives-considered)
-    -   [Full compile-time enforced safety by default (Rust's model)](#full-compile-time-enforced-safety-by-default-rusts-model)
+    -   [Guaranteed safety by default (Rust's model)](#guaranteed-safety-by-default-rusts-model)
     -   [Rust's model but without preventing data races](#rusts-model-but-without-preventing-data-races)
     -   [Dynamic lifetime safety and compile-time enforced safety otherwise (Swift's model)](#dynamic-lifetime-safety-and-compile-time-enforced-safety-otherwise-swifts-model)
     -   [Dynamic lifetime safety and defined behavior (Java's model)](#dynamic-lifetime-safety-and-defined-behavior-javas-model)
@@ -122,54 +121,50 @@ hardening, or mitigation, development builds will provide precise and easy to
 understand diagnostics of discovered safety violations, enabling programmers to
 effectively understand and fix the bugs in their code leading to that violation.
 
-### Ideal model for handling safety violations
+### Model for handling safety violations
 
-As many safety violations as possible should be statically checked. However,
-developers should expect that at least some safety violations will only be
-detected dynamically, where behavior relies on separate build modes:
+Developers should expect that safety violations will largely be detected
+dynamically, where behavior relies on separate build modes:
 
 -   In the _development_ build mode, dynamic checks detect safety violations
     with a high probability per single occurrence of the bug. Detected
     violations are accompanied by a detailed diagnostic report to ease developer
     bug-finding.
 
+    -   The main development build mode is expected to be augmented by multiple,
+        specialized build modes. Dynamic detection of safety violations remains
+        expensive, and splitting up checks into different build modes should
+        make it more manageable to test code for more types of safety
+        violations. The goal will to keep this number as small as possible while
+        maintaining acceptable overhead.
+
 -   In the _optimized release_ build mode, safety violations are hardened or
     mitigated from any exploit by an attacker.
+
+    -   Only hardening techniques which don't measurably impact application hot
+        path performance will be enabled by default. This is a very high bar,
+        but will likely be critical for allowing migration of existing C++
+        systems.
+
+    -   Developers need to be able to choose where they want the balance to be
+        between hardening and the various axes of performance. Different
+        applications will have different tolerances for performance overhead.
+        Specific examples here include
+        [Control Flow Integrity](https://en.wikipedia.org/wiki/Control-flow_integrity)
+        as
+        [implemented in Clang](http://clang.llvm.org/docs/ControlFlowIntegrity.html),
+        trapping overflow, bounds checking, and probabilistic use-after-free and
+        race detection.
 
 While it might appear convenient to use the same strategy in both build modes,
 divergence may occur where particular diagnostic techniques are ineffective as
 hardening techniques or have substantial performance overhead.
 
-### Practical reality for unsafe operations
-
-Carbon will likely make two concessions to the ideal model for practical
-reasons:
-
--   The development build may need to be augmented by additional, specialized
-    checking build modes to cover all safety violations. Currently, detecting
-    data races at runtime is too expensive to do in a single, comprehensively
-    checked development build mode. Each specialized build development build
-    mode will be less expensive by splitting different dynamic safety violation
-    checks to different build modes. These should be kept to the smallest number
-    that permits all such modes to have acceptable overhead.
-
--   The optimized build may not be able to harden or mitigate all safety
-    violations. Although it should harden against any safety violations by
-    default, current hardening techniques are still too expensive to enable in
-    every case due to memory or performance overhead. Carbon's criteria for
-    acceptable overhead is that it falls below the noise on the hot path of
-    application code. This is a very high bar, but will likely be critical for
-    allowing migration of existing C++ systems which require high performance.
-
-Beyond these two concessions, it's important to allow users of the language to
-adjust the balance between hardening and the various axes of performance, at
-least at a coarse level. Different users and different applications will have
-different tolerances for such performance overhead, and Carbon should provide
-flexibility where feasible. Specific examples here include
-[Control Flow Integrity](https://en.wikipedia.org/wiki/Control-flow_integrity)
-as [implemented in Clang](http://clang.llvm.org/docs/ControlFlowIntegrity.html),
-trapping overflow, bounds checking, and probabilistic use-after-free and race
-detection.
+Carbon's design will still endeavor to provide static detection of safety
+violations. However, dynamic detection will remain a priority to ease the
+transition of C++ developers and codebases to Carbon. It's important that Carbon
+provides improved safety for migrated codebases without creating substantial
+costs for migration.
 
 ### Managing bugs without guaranteed safety
 
@@ -219,61 +214,73 @@ comprehensive safety guarantees would be better suited.
 
 ## Alternatives considered
 
-### Full compile-time enforced safety by default (Rust's model)
+### Guaranteed safety by default (Rust's model)
 
-We could commit to the same level of compile-time enforced safety as Rust does.
-This still allows for `unsafe` blocks as in Rust, and library types that provide
-_dynamic_ safety enforcement but are implemented with some `unsafe` internals.
-Note that our intent is to leave the door _open_ to this model despite not
-pursuing it initially.
+Carbon could provide guaranteed safety by default, with compile-time validation
+equivalent to Rust. This approach still allows for
+[`unsafe` blocks](https://doc.rust-lang.org/rust-by-example/unsafe.html) and
+library types that provide _dynamic_ safety enforcement while using some
+`unsafe` internals.
 
 Advantages:
 
--   Full safety (even against data races) provided at compile time.
--   Early evidence shows _significant_ impact in reducing bugs generally.
--   Unsafe operations can effectively be treated as bugs rather than becoming
-    "valid", but surprising and often unintended, behaviors.
--   Can likely leverage the huge work of the Rust community to understand what
-    is necessary.
+-   Guaranteed safety, including against data races, is provided at compile
+    time.
+-   With Rust, there is early evidence that there's a significant impact in
+    reducing bugs generally.
+-   Could build upon the huge work of the Rust community, reducing the risks of
+    implementing similar in Carbon.
 -   Careful use of narrow `unsafe` escape hatches can be effectively
     encapsulated behind otherwise safe APIs.
 
 Disadvantages:
 
--   Effectively requires widespread different design patterns and idioms from
-    C++.
-    -   Designing data structures to avoid sharing mutable state.
-    -   Fully modeling lifetime and exclusivity in the type system.
-    -   Increased complexity of node/pointer based data structures like linked
-        lists.
+-   Creates widespread divergence from the design patterns and idioms of C++.
+    -   Data structures must be redesigned to avoid sharing mutable state.
+    -   Requires fully modeling lifetime and exclusivity in the type system.
+    -   Increases complexity of node and pointer based data structures, such as
+        linked lists.
 -   Many techniques currently used by Rust have unsolved compilation scaling
     challenges due to interprocedural inference and increases in the set of
     types with generic code.
 -   Complexity of type system proofs of safety may incentivize unnecessary
-    dynamic checking of safety properties. For example, an unnecessary `RefCell`
-    or `Rc`.
+    dynamic checking of safety properties. For example, an unnecessary
+    [`RefCell`](https://doc.rust-lang.org/std/cell/struct.RefCell.html) or
+    [`Rc`](https://doc.rust-lang.org/std/rc/struct.Rc.html).
 -   Some of the most essential dynamic safety tools that ease the ergonomic
     burden of the Rust-style lifetime model (`Rc`) introduce _semantic_
     differences that cannot then be eliminated in a context where performance is
     the dominant priority.
--   Remains an open (if fairly difficult) evolution path for the language even
-    if we don't eagerly pursue.
+
+While guaranteed safety is desirable, and Carbon should support it as much as
+possible, Carbon's priorities include migration of large C++ codebases. These
+codebases and developers are crucial to Carbon's success, and as such is
+considered infeasible to require in Carbon at this time. While a migration tool
+could in theory mark all migrated code as `unsafe`, that is considered to
+undermine the spirit of guaranteed safety by default.
+
+That does not mean Carbon will never adopt guaranteed safety by default, only
+that it will not be an initial goal of Carbon. It should still be possible to
+adopt later, although at higher cost than if Carbon start with it.
 
 ### Rust's model but without preventing data races
 
-We could replicate the Rust model as above but additionally not trying to
-statically preclude data races.
+Carbon could replicate most of the Rust model as previously described, only
+excluding safety guarantees for data races.
 
 Advantages:
 
--   Outside of data races provides same benefits as above.
+-   Provides the same benefits as the Rust model, excluding safety guarantees
+    for data races.
 
 Disadvantages:
 
--   Unclear that removing the data race prevention aspect (law of exclusivity)
-    is sufficient to meaningfully address the disadvantages above. Most of the
-    lifetime complexity remains unchanged.
-    -   Would no longer need `RefCell`, but would still need `Rc` and `ARc`.
+-   It's unclear whether removing the data race prevention feature is sufficient
+    to meaningfully address the disadvantages above. Most of the lifetime
+    complexity remains unchanged.
+    -   Although this would avoid the need for `RefCell`, it's likely that `Rc`
+        and [`Arc`](https://doc.rust-lang.org/std/sync/struct.Arc.html) would
+        still be needed.
 
 ### Dynamic lifetime safety and compile-time enforced safety otherwise (Swift's model)
 
@@ -289,28 +296,29 @@ Advantages:
 
 Disadvantages:
 
--   Results in significant design differences as the distinction between value
-    types and "class types" (that are held by a reference counted pointer and
-    thus lifetime safe) becomes extremely important.
--   Reference counting based safety introduces significant performance costs
-    with very difficult tools for controlling them. This puts the option in
+-   Safety based on reference counting introduces significant performance costs,
+    and tools for controlling these costs are difficult. This puts the option in
     tension with the performance goal of Carbon.
--   Garbage collection based safety has less direct performance overhead but has
-    a greater unpredictability of performance.
+    -   Safety based on garbage collection has less direct performance overhead,
+        but has a greater unpredictability of performance.
+-   Significant design differences versus C++ still result, as the distinction
+    between value types and "class types" becomes extremely important.
+    -   Class types are held by a reference counted pointer and are thus
+        lifetime safe.
 
 ### Dynamic lifetime safety and defined behavior (Java's model)
 
 Another approach to safety is to largely provide defined and predictable
 behavior for all potential safety violations, which is what Java does (at the
-highest level). This, combined with some form of dynamic lifetime management,
-otherwise known as garbage collection, forms the basis of Java's safety.
+highest level). This forms the basis of Java's safety, combined with dynamic
+lifetime management in the form of garbage collection.
 
 Advantages:
 
--   Among the most robust and well studied models with decades of practical
-    usage and analysis for security properties.
--   Extremely suitable for efficient implementation on top of a virtual machine
-    like the JVM.
+-   This approach is among the most robust and well studied models, with decades
+    of practical usage and analysis for security properties.
+-   Extremely suitable for efficient implementation on top of a virtual machine,
+    such as the JVM.
 
 Disadvantages:
 
@@ -319,5 +327,7 @@ Disadvantages:
 -   Tends to require _significant_ performance overhead without the aid of a
     very powerful VM-based execution environment with highly dynamic
     optimizations.
-    -   The complexity of the implementation in turn creates difficult to
-        _predict_ performance.
+    -   The complexity of the implementation makes it difficult to _predict_
+        performance; for example, Java applications experience latency spikes
+        when garbage collection runs. Predictable performance is a key Carbon
+        goal.
