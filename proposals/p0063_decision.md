@@ -56,5 +56,5 @@ as code reviews. The core team members chandlerc and zygloid will both approve
 each code review.
 
 An example change that would be covered by a code review: there will be no
-automatic going public just because the criteria are met--it will be a decision
+automatic going public just because the criteria are met -- it will be a decision
 of the core team.
