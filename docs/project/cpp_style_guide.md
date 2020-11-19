@@ -121,7 +121,8 @@ these.
     -   Use `{}` initialization without the `=` only if the above options don't
         compile.
     -   Never mix `{}` initialization and `auto`.
--   Always use braces for conditional and loop statements, even single staments.
+-   Always use braces for conditional and loop statements, even when the body
+    is a single statement.
     -   Always break the line immediately after an open brace except for empty
         loop bodies.
 -   Always use braces for switch statements.
