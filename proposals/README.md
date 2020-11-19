@@ -32,6 +32,7 @@ request:
 -   [0051 - Goals](p0051.md)
     -   [Decision](p0051_decision.md)
 -   [0063 - Criteria for Carbon to go public](p0063.md)
+    -   [Decision](p0063_decision.md)
 -   [0074 - Change comment/decision timelines in proposal process](p0074.md)
     -   [Decision](p0074_decision.md)
 -   [0083 - In-progress design overview](p0083.md)
