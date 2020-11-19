@@ -91,9 +91,10 @@ weekly meeting slot, which observers may attend. Members are expected to do
 their best to keep the slot available. Meetings will be held using Google
 Hangouts Meet.
 
-Each time a team needs to make a decision, e.g., about a change to Carbon, it is
-expected that we'll try to make a decision without using a live meeting. We will
-only hold meetings when decisions cannot be resolved before the meeting.
+Each time a team needs to make a decision, for example, about a change to
+Carbon, it is expected that we'll try to make a decision without using a live
+meeting. We will only hold meetings when decisions cannot be resolved before the
+meeting.
 
 ### Agenda
 

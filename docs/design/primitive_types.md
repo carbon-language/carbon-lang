@@ -6,9 +6,9 @@ Exceptions. See /LICENSE for license information.
 SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -->
 
-## Table of contents
-
 <!-- toc -->
+
+## Table of contents
 
 -   [TODO](#todo)
 -   [Overview](#overview)
@@ -87,7 +87,7 @@ the need to import things gratuitously.
 
 ### String view vs owning string
 
-The right model of a string view vs. an owning string is still very much
+The right model of a string view versus an owning string is still very much
 unsettled.
 
 ### Syntax for wrapping operations
