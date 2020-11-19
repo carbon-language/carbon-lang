@@ -66,22 +66,62 @@ typedef unsigned long long uint64_t;
 // Anonymous namespace covering everything but our library entry point
 namespace {
 
-#if defined(__APPLE__)
+#define _STRINGIFY(x) #x
+#define STRINGIFY(x) _STRINGIFY(x)
+
 
 uint64_t __write(uint64_t fd, const void *buf, uint64_t count) {
   uint64_t ret;
-  const long write = 0x2000004;
-  __asm__ __volatile__("syscall;\n"
-                       "movq %%rax, %0;\n"
-                       : "=g"(ret)
-                       : /* rax */ "a"(write), /* rdi */ "D"(fd),
-                         /* rsi */ "S"(buf), /* rdx */ "d"(count)
-                       : "memory");
+#if defined(__APPLE__)
+#define WRITE_SYSCALL 0x2000004
+#else
+#define WRITE_SYSCALL 1
+#endif
+  __asm__ __volatile__("movq $" STRINGIFY(WRITE_SYSCALL) ", %%rax\n"
+                       "syscall\n"
+                       : "=a"(ret)
+                       : "D"(fd), "S"(buf), "d"(count)
+                       : "cc", "rcx", "r11", "memory");
   return ret;
 }
 
-#else
 
+void *__mmap(uint64_t addr, uint64_t size, uint64_t prot, uint64_t flags,
+             uint64_t fd, uint64_t offset) {
+#if defined(__APPLE__)
+#define MMAP_SYSCALL 0x20000c5
+#else
+#define MMAP_SYSCALL 9
+#endif
+  void *ret;
+  register uint64_t r8 asm("r8") = fd;
+  register uint64_t r9 asm("r9") = offset;
+  register uint64_t r10 asm("r10") = flags;
+  __asm__ __volatile__("movq $" STRINGIFY(MMAP_SYSCALL) ", %%rax\n"
+                       "syscall\n"
+                       : "=a"(ret)
+                       : "D"(addr), "S"(size), "d"(prot), "r"(r10), "r"(r8),
+                         "r"(r9)
+                       : "cc", "rcx", "r11", "memory");
+  return ret;
+}
+
+uint64_t __munmap(void *addr, uint64_t size) {
+#if defined(__APPLE__)
+#define MUNMAP_SYSCALL 0x2000049
+#else
+#define MUNMAP_SYSCALL 11
+#endif
+  uint64_t ret;
+  __asm__ __volatile__("movq $" STRINGIFY(MUNMAP_SYSCALL) ", %%rax\n"
+                       "syscall\n"
+                       : "=a"(ret)
+                       : "D"(addr), "S"(size)
+                       : "cc", "rcx", "r11", "memory");
+  return ret;
+}
+
+#if !defined(__APPLE__)
 // We use a stack-allocated buffer for string manipulation in many pieces of
 // this code, including the code that prints each line of the fdata file. This
 // buffer needs to accomodate large function names, but shouldn't be arbitrarily
@@ -96,16 +136,6 @@ uint64_t __open(const char *pathname, uint64_t flags, uint64_t mode) {
                        "syscall"
                        : "=a"(ret)
                        : "D"(pathname), "S"(flags), "d"(mode)
-                       : "cc", "rcx", "r11", "memory");
-  return ret;
-}
-
-uint64_t __write(uint64_t fd, const void *buf, uint64_t count) {
-  uint64_t ret;
-  __asm__ __volatile__("movq $1, %%rax\n"
-                       "syscall\n"
-                       : "=a"(ret)
-                       : "D"(fd), "S"(buf), "d"(count)
                        : "cc", "rcx", "r11", "memory");
   return ret;
 }
@@ -188,37 +218,12 @@ int64_t __fork() {
   return ret;
 }
 
-void *__mmap(uint64_t addr, uint64_t size, uint64_t prot, uint64_t flags,
-             uint64_t fd, uint64_t offset) {
-  void *ret;
-  register uint64_t r8 asm("r8") = fd;
-  register uint64_t r9 asm("r9") = offset;
-  register uint64_t r10 asm("r10") = flags;
-  __asm__ __volatile__("movq $9, %%rax\n"
-                       "syscall\n"
-                       : "=a"(ret)
-                       : "D"(addr), "S"(size), "d"(prot), "r"(r10), "r"(r8),
-                         "r"(r9)
-                       : "cc", "rcx", "r11", "memory");
-  return ret;
-}
-
 int __mprotect(void *addr, size_t len, int prot) {
   int ret;
   __asm__ __volatile__("movq $10, %%rax\n"
                        "syscall\n"
                        : "=a"(ret)
                        : "D"(addr), "S"(len), "d"(prot)
-                       : "cc", "rcx", "r11", "memory");
-  return ret;
-}
-
-uint64_t __munmap(void *addr, uint64_t size) {
-  uint64_t ret;
-  __asm__ __volatile__("movq $11, %%rax\n"
-                       "syscall\n"
-                       : "=a"(ret)
-                       : "D"(addr), "S"(size)
                        : "cc", "rcx", "r11", "memory");
   return ret;
 }
