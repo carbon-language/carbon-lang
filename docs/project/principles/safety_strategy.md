@@ -17,8 +17,9 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [Philosophy](#philosophy)
 -   [Principles](#principles)
 -   [Details](#details)
-    -   [Model for handling safety violations](#model-for-handling-safety-violations)
-    -   [Managing bugs without guaranteed safety](#managing-bugs-without-guaranteed-safety)
+    -   [Incremental adoption of safety](#incremental-adoption-of-safety)
+    -   [Using build modes to manage safety checks](#using-build-modes-to-manage-safety-checks)
+    -   [Managing bugs without compile-time safety](#managing-bugs-without-compile-time-safety)
 -   [Alternatives considered](#alternatives-considered)
     -   [Guaranteed safety by default (Rust's model)](#guaranteed-safety-by-default-rusts-model)
     -   [Rust's model but without preventing data races](#rusts-model-but-without-preventing-data-races)
@@ -85,8 +86,8 @@ better performance in some dimension or better scaling.
 
 Compile-time or static checking is, by definition, a safety guarantee. Runtime
 or dynamic checking may be either; it must always run and check every potential
-safety violation, even in an optimized production build mode, to be a safety
-guarantee. If it is probabilistic or does not run in optimized production build
+safety violation, even in an optimized release build mode, to be a safety
+guarantee. If it is probabilistic or does not run in optimized release build
 modes, it is hardening.
 
 For example,
@@ -113,21 +114,22 @@ explicit safety annotations. However, safety annotations are expected to support
 opting in to additional safety checks, tuning safety behaviors, and adjusting
 edge-case performance characteristics.
 
-Carbon will favor compile-time safety checks are especially favorable because
-they will make applications more reliable. Runtime checks will be enabled where
-safety cannot be proven at compile-time. Performance concerns make it likely
-that runtime checks will be probabilistic and thus hardening rather than
-guaranteed safety.
+Carbon will favor compile-time safety checks because catching issues early will
+make applications more reliable. Runtime checks will be enabled where safety
+cannot be proven at compile-time. Performance concerns make it likely that
+runtime checks will be probabilistic and thus hardening rather than guaranteed
+safety. Over time, this hybrid approach to safety checks should evolve to
+provide a similar level of safety to a statically checked language such as Rust.
 
 Performance (including speed, binary size, and memory size) concerns will lead
 to multiple build modes:
 
--   A development build mode with safety enabled to provide a balance with
+-   A main development build mode with safety enabled to provide a balance with
     performance for fast development.
     -   Additional development testing build modes that can be used with tests
         and fuzzing to run more performance-intensive safety checks.
--   An optimized production build mode with some safety by default, but can also
-    be tuned for application-specific hardening and performance trade-offs.
+-   An optimized release build mode with some safety by default, but can also be
+    tuned for application-specific hardening and performance trade-offs.
 
 Carbon will _encourage_ developers to enable more safety checks in their code,
 and be ready to support them if they do, but will also improve safety for code
@@ -171,11 +173,11 @@ for developers who cannot make the same investment.
         some safety features will be Carbon-specific, safety should not stop at
         the language boundary.
 
--   Development and production (optimized) builds have different performance and
+-   Development and optimized release builds have different performance and
     safety needs. Some safety guarantees will be too expensive to run in a
     production system. As a result, developers should be given separate build
     modes wherein the development build mode prioritizes detection of safety
-    issues over performance, whereas production builds put
+    issues over performance, whereas optimized release builds put
     [performance first](../goals.md#performance-critical-software).
 
     -   Development builds should diagnose the most common safety violations
@@ -183,11 +185,11 @@ for developers who cannot make the same investment.
         build modes may be offered to cover safety violations which are too
         expensive to detect by default, even for a development build.
 
-    -   The default production build will provide runtime mitigations for safety
-        violations whenever the performance is below the noise of hot path
-        application code.
+    -   The default optimized release build will provide runtime mitigations for
+        safety violations whenever the performance is below the noise of hot
+        path application code.
 
-    -   There will be a build option for the production build to select a
+    -   There will be a build option for the optimized release build to select a
         trade-off between performance (including speed, binary size, and memory
         size) and hardening or mitigation for the remaining safety violations.
 
@@ -199,90 +201,109 @@ for developers who cannot make the same investment.
     Carbon will encourage testing and then leverage it with the checking build
     modes to find and fix bugs and vulnerabilities.
 
-Taken together, these principles imply that the language must use both compile
-time and runtime checks for safety. It should use simple rules and code
-annotations to prove safety at compile time when possible; for example, a subset
-of what can be proved safe using Rust's lifetime-parameters and borrowing rules.
-It should also provide build modes which check the remaining safety at runtime
-with high probability. Over time and with more experience, the set of things
-checked at compile time can incrementally increase and, if desired, arrive at
-similar levels of static safety as a language like Rust.
-
 ## Details
 
-### Model for handling safety violations
+### Incremental adoption of safety
 
-Developers should expect that safety violations will largely be detected
-dynamically, where behavior relies on separate build modes:
+Carbon is prioritizing usability of the language, particularly minimizing
+retraining of C++ developers and easing migration of C++ codebases, over the
+kind of provable safety that some other languages pursue, particularly Rust.
 
--   In the _development_ build mode, dynamic checks detect safety violations
-    with a high probability per single occurrence of the bug. Detected
-    violations are accompanied by a detailed diagnostic report to ease developer
-    bug-finding.
+A key motivation of Carbon is to move C++ developers to a better, safer
+language. However, if Carbon requires manually rewriting or redesigning C++ code
+in order to maintain performance, it creates additional pressure on C++
+developers to learn and spend time on safety. Safety will often not be the top
+priority for developers; as a result, Carbon must be thoughtful about how and
+when it forces developers to think about safety.
 
-    -   The main development build mode is expected to be augmented by multiple,
-        specialized build modes. Dynamic detection of safety violations remains
-        expensive, and splitting up checks into different build modes should
-        make it more manageable to test code for more types of safety
-        violations. The goal will to keep this number as small as possible while
-        maintaining acceptable overhead.
+Relying on multiple build modes to provide safety should fit into normal
+development workflows. Carbon can also have features to enable additional
+safety, so long as developers can start using Carbon in their applications
+_without_ leaning new paradigms.
 
--   In the _optimized release_ build mode, safety violations are hardened or
-    mitigated from any exploit by an attacker.
+Carbon should enable developers to incrementally adopt of safety features, and
+also work to incrementally improve safety without requiring code or design
+alterations. This does not mean that _every_ feature needs to be
 
-    -   Only hardening techniques which don't measurably impact application hot
-        path performance will be enabled by default. This is a very high bar,
-        but will likely be critical for allowing migration of existing C++
-        systems.
+### Using build modes to manage safety checks
 
-    -   Developers need to be able to choose where they want the balance to be
-        between hardening and the various axes of performance. Different
-        applications will have different tolerances for performance overhead.
-        Specific examples here include
-        [Control Flow Integrity](https://en.wikipedia.org/wiki/Control-flow_integrity)
-        as
-        [implemented in Clang](http://clang.llvm.org/docs/ControlFlowIntegrity.html),
-        trapping overflow, bounds checking, and probabilistic use-after-free and
-        race detection.
+Carbon will likely start in a state where most safety checks are dynamic.
+However, dynamic detection of safety violations remains expensive. In order to
+make as many safety checks as possible available to developers, Carbon will
+adopt a strategy based on multiple build modes that separate out expensive
+dynamic checks to where they're feasible to run from a performance perspective.
 
-While it might appear convenient to use the same strategy in both build modes,
-divergence may occur where particular diagnostic techniques are ineffective as
-hardening techniques or have substantial performance overhead.
+The main development build mode will emphasize debugability of both bugs and
+safety issues. This means it needs to perform well enough to be run as part of
+the normal developer workflow, but does not need to have the performance of an
+optimized release build. This mode should run dynamic checks for the most common
+safety issues. Developers should do most of their testing in this build mode.
 
-Carbon's design will still endeavor to provide static detection of safety
-violations. However, dynamic detection will remain a priority to ease the
-transition of C++ developers and codebases to Carbon. It's important that Carbon
-provides improved safety for migrated codebases without creating substantial
-costs for migration.
+Some safety checks will still be considered too expensive to run in the main
+development build mode, particularly in combination with each other. These
+checks will be placed into supplemental development build modes that will
+collectively provide more comprehensive safety checks for the codebase as a
+whole.
 
-### Managing bugs without guaranteed safety
+All development build modes will place a premium on the debugability of safety
+violations. Where safety checks rely on hardening instead of guaranteed safety,
+violations should be detected with a high probability per single occurrence of
+the bug. Detected bugs will be accompanied by a detailed diagnostic report to
+ease developer bug-finding.
 
-Carbon can offer safety mitigations to manage their security risk, but it still
-needs to provide developers a way to reliably find and fix the inevitable bugs.
-The cornerstone of this is the application of strong testing methodologies.
-Strong testing is more than good test coverage; it means the combination of:
+The optimized release build mode will emphasize performance; as a consequence,
+fewer safety checks will be run, and those that are can be expected to provide
+less diagnostic information. Only safety techniques which don't measurably
+impact application hot path performance will be enabled by default. This is a
+very high bar, but is crucial for meeting Carbon's performance goals, as well as
+allowing migration of existing C++ systems which may not have been designed with
+Carbon's safety semantics in mind.
+
+Different applications will have different tolerances for performance overhead,
+so build modes will also allow developers to choose the balance that meets their
+application's hardening versus performance needs.
+
+For example, a possible approach to integer overflow might:
+
+-   Check and trap in the development build mode.
+-   Be unchecked and wrap in the optimized release mode, for performance.
+-   Have an option to enable trapping in the optimized release mode, for
+    safety-critical applications.
+-   Provide integer types that either always wrap, for libraries requiring that
+    behavior, or always trap, for safety-critical libraries.
+
+### Managing bugs without compile-time safety
+
+Carbon's reliance on dynamic checks will allow developers to manage their
+security risk. Developers will still need to reliably find and fix the
+inevitable bugs, including both safety violations and regular business logic
+bugs. The cornerstone of managing bugs will be strong testing methodologies,
+with built-in support from Carbon.
+
+Strong testing is more than good test coverage. It means a combination of:
 
 -   Ensuring unsafe or risky operations and interfaces can easily be recognized
-    by humans.
+    by developers.
 
--   Static analysis tooling to detect common bugs integrated into the build and
-    code review developer workflows. These could be viewed as static testing of
-    code.
+-   Using static analysis tools to detect common bugs, and ensuring they're
+    integrated into build and code review workflows. These could be viewed as
+    static testing of code.
 
--   Good test coverage, including unit, integration, and system tests.
+-   Writing good test coverage, including unit, integration, and system tests.
 
--   Continuous integration, including automatic and continuous running of these
-    tests. The checked development build mode should be validated, as well as
-    any additional build modes necessary to cover different forms of behavior
-    checking.
+-   Generating coverage-directed fuzz testing to discover bugs outside of
+    manually authored test coverage, especially for interfaces handling
+    untrusted data. Fuzz testing is a robust way to catch bugs when APIs may be
+    used in ways developers don't consider.
 
--   Coverage-directed fuzz testing in combination with checking build modes to
-    discover bugs outside of human-authored test coverage, especially for
-    interfaces handling untrusted data.
+-   Running continuous integration, including automatic and continuous running
+    of these tests. The checked development build mode should be validated, as
+    well as any additional build modes necessary to cover different forms of
+    behavior checking.
 
--   Language features that make automated testing and fuzzing easier. For
-    example, if the language encourages value types and pure functions of some
-    sort, they can be automatically fuzzed.
+-   Easing automated testing and fuzzing through language features. For example,
+    if the language encourages value types and pure functions of some sort, they
+    can be automatically fuzzed.
 
 These practices are necessary for reliable, large-scale software engineering.
 Maintaining correctness of business logic over time requires continuous and
@@ -291,17 +312,26 @@ evolved over time reliably. Carbon will re-use these practices in conjunction
 with checking build modes to mitigate the limitations of Carbon's safety
 guarantees without imposing overhead on production systems.
 
-Where the practical realities outlined previously preclude guaranteed safety,
-adhering to this kind of testing methodology is essential. As a consequence,
-Carbon's ecosystem, including the language, tools, and libraries, will need to
-directly work to remove barriers and encourage the development of these
-methodologies.
+When a developer chooses to use Carbon, adhering to this kind of testing
+methodology is essential for maintaining safety. As a consequence, Carbon's
+ecosystem, including the language, tools, and libraries, will need to directly
+work to remove barriers and encourage the development of these methodologies.
 
-On the other hand, if the practical realities of a domain preclude this degree
-of testing rigor, developers should evaluate whether a language with more
-comprehensive safety guarantees would be better suited.
+The reliance on testing may make Carbon a poor choice in some environments; in
+environments where such testing rigor is infeasible, a language with a greater
+degree of static checking may be better suited.
 
 ## Alternatives considered
+
+When considering alternatives, they are evaluated against what can secure the
+optimized release build mode. Some techniques may have performance implications
+which are too expensive to use in the optimized release build, while still
+offering useful techniques for catching safety violations in development build
+modes. For example, reference counting is an infeasible expense for an optimized
+release build, but may be used for dynamic safety checks in development build
+modes as part of TODO TECHNIQUE.
+
+TODO finish example
 
 ### Guaranteed safety by default (Rust's model)
 
