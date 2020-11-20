@@ -13,8 +13,9 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [TODO (rewriting)](#todo-rewriting)
 -   [Background](#background)
     -   [What are we talking about when we discuss safety?](#what-are-we-talking-about-when-we-discuss-safety)
-    -   [Guaranteed safety versus hardening and mitigation](#guaranteed-safety-versus-hardening-and-mitigation)
--   [Principle](#principle)
+    -   [Guaranteed safety versus safety hardening](#guaranteed-safety-versus-safety-hardening)
+-   [Philosophy](#philosophy)
+-   [Principles](#principles)
 -   [Details](#details)
     -   [Model for handling safety violations](#model-for-handling-safety-violations)
     -   [Managing bugs without guaranteed safety](#managing-bugs-without-guaranteed-safety)
@@ -27,12 +28,6 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 <!-- tocstop -->
 
 ## TODO (rewriting)
-
--   Improving safety over C++ is a key carrot
-
--   Ability to migrate C++ code would be hindered if it needed to be marked
-    unsafe
--   Incremental improvements in safety that's easy to adopt
 
 -   Integer overflow
     -   C++ defines wrapping
@@ -77,16 +72,22 @@ vulnerability:
 -   **Data race safety** protects against racing memory accesses, whether
     concurrent or unsynchronized.
 
-### Guaranteed safety versus hardening and mitigation
+### Guaranteed safety versus safety hardening
 
 A safety guarantee is an especially strong requirement: the properties must be
 enforced in a clearly defined way even for programs that contain bugs due to
 violating the language rules. As a consequence, the behavior intended to catch
 bugs remains observable by intentional code.
 
-Hardening and mitigations address the feasibility of exploiting a vulnerability,
-but may not provide the strict guarantee in order to provide better performance
-in some dimension or better scaling.
+Safety hardening, or mitigations, address the feasibility of exploiting a
+vulnerability, but may not provide the strict guarantee in order to provide
+better performance in some dimension or better scaling.
+
+Compile-time or static checking is, by definition, a safety guarantee. Runtime
+or dynamic checking may be either; it must always run and check every potential
+safety violation, even in an optimized production build mode, to be a safety
+guarantee. If it is probabilistic or does not run in optimized production build
+modes, it is hardening.
 
 For example,
 [memory tagging](https://llvm.org/devmtg/2018-10/slides/Serebryany-Stepanov-Tsyrklevich-Memory-Tagging-Slides-LLVM-2018.pdf)
@@ -95,52 +96,87 @@ attempt at an invalid read or write have a high probability of trapping, while
 still not guaranteeing to trap in every case. Realistic attacks require many
 such operations, so memory tagging will probably stop attacks. Alternatively,
 the trap might be asynchronous, leaving only a tiny window of time prior to the
-attack being detected and program terminated. Both of these mitigation
-strategies reduce the feasibility attacks, but neither provides any clear or
-strong semantic memory safety guarantee.
+attack being detected and program terminated. Both of these are hardening
+because they reduce the feasibility of attacks, rather than guaranteeing attacks
+are impossible.
 
-## Principle
+## Philosophy
 
 In order to provide
 [practical safety guarantees and testing mechanisms](../goals.md#practical-safety-guarantees-and-testing-mechanisms),
-Carbon will use a hybrid approach combining guaranteed safety, hardening, and
-mitigation of security vulnerabilities. The language's design should be expected
-to incentivize safe programming, although it will not be required.
+Carbon will use a hybrid approach combining guaranteed safety and hardening. The
+language's design should incentivize safe programming, although it will not be
+required.
 
-Guiding principles are:
+When writing code, Carbon developers should expect to receive safety without
+explicit safety annotations. However, safety annotations are expected to support
+opting in to additional safety checks, tuning safety behaviors, and adjusting
+edge-case performance characteristics.
 
--   Safety in Carbon must keep in mind the
-    [C++ lineage](../goals.md#interoperability-with-and-migration-from-existing-c-code).
-    The resulting safety mechanisms may look different as a result.
+Carbon will favor compile-time safety checks are especially favorable because
+they will make applications more reliable. Runtime checks will be enabled where
+safety cannot be proven at compile-time. Performance concerns make it likely
+that runtime checks will be probabilistic and thus hardening rather than
+guaranteed safety.
 
-    -   Safety mechanisms should consider whether they can apply to
-        automatically migrated C++ code. Providing immediate safety improvements
-        to Carbon adopters will help motivate adoption.
+Performance (including speed, binary size, and memory size) concerns will lead
+to multiple build modes:
 
-    -   Carbon's safety should degrade gracefully when Carbon code calls C++
-        code. Safety should not stop at the language boundary.
+-   A development build mode with safety enabled to provide a balance with
+    performance for fast development.
+    -   Additional development testing build modes that can be used with tests
+        and fuzzing to run more performance-intensive safety checks.
+-   An optimized production build mode with some safety by default, but can also
+    be tuned for application-specific hardening and performance trade-offs.
 
-    -   Carbon's safety features should not force the retraining of C++
-        developers or manual rewriting of C++ code. In other words, while it may
-        take extra work to adopt some safety features of Carbon, that extra work
-        must not be forced. Automated migration of C++ code must generally work.
-        Safety features must not cause significant friction for Carbon adoption.
+Carbon will _encourage_ developers to enable more safety checks in their code,
+and be ready to support them if they do, but will also improve safety for code
+for developers who cannot make the same investment.
 
--   Language design choices should allow more efficient implementations of
-    safety checks. They should also allow better automation of testing and
-    fuzzing.
+## Principles
+
+-   Safety must not become a barrier to the
+    [usability](../goals.md#code-that-is-easy-to-read-understand-and-write) of
+    Carbon. Carbon must remain easy to ramp-up with, even if it means new
+    developers may only get some extra safety. Extra work to adopt opt-in safety
+    eatures is acceptable, as is needing to do extra work for edge-case
+    performance-tuning.
 
     -   Where there is a choice between safe and unsafe, the safe option should
         be incentivized by making it equally or more easy to use. If there is a
-        default, it should be the safe option. There should be extra effort
-        invested to make idiomatic code safe. Unsafe code should be
-        identifiable.
+        default, it should be the safe option. It should be identifiable when
+        the unsafe option is used.
+
+    -   Language design choices should allow more efficient implementations of
+        safety checks. They should also allow better automation of testing and
+        fuzzing.
+
+-   It's critical that Carbon provide better safety for C++ developers. In doing
+    so, Carbon must avoid creating barriers for
+    [interoperable or migrated C++ code](../goals.md#interoperability-with-and-migration-from-existing-c-code),
+    so that C++ developers can take advantage of Carbon's improvements.
+
+    -   Safety mechanisms will ideally be designed to apply to automatically
+        migrated C++ code. Providing immediate safety improvements to Carbon
+        adopters will help motivate adoption.
+
+    -   In the other direction, safety mechansims must not force manual
+        rewriting of C++ code in order to migrate, either by creating design
+        incompatibilities or performance degradations. Automated migration of
+        C++ code to Carbon must work for most developers, even if it means that
+        Carbon's safety design takes a different approach.
+
+    -   Carbon's safety should degrade gracefully when Carbon code calls C++
+        code. Applications should be expected to use interoperability. Although
+        some safety features will be Carbon-specific, safety should not stop at
+        the language boundary.
 
 -   Development and production (optimized) builds have different performance and
     safety needs. Some safety guarantees will be too expensive to run in a
     production system. As a result, developers should be given separate build
     modes wherein the development build mode prioritizes detection of safety
-    issues over performance, whereas production builds put performance first.
+    issues over performance, whereas production builds put
+    [performance first](../goals.md#performance-critical-software).
 
     -   Development builds should diagnose the most common safety violations
         either at compile time or runtime with high probability. Supplemental
@@ -155,14 +191,9 @@ Guiding principles are:
         trade-off between performance (including speed, binary size, and memory
         size) and hardening or mitigation for the remaining safety violations.
 
--   Compile-time safety checks should be used to provide guaranteed safety so
-    long as it does not impact the underlying understandability of Carbon. This
-    may mean that more complex compile-time safety checks are opt-in, rather
-    than opt-out.
-
-    -   The rules for determining whether code will pass compile-time safety
-        checking should be articulable, documented, and possible to understand
-        by local reasoning.
+-   The rules for determining whether code will pass compile-time safety
+    checking should be articulable, documented, and possible to understand by
+    local reasoning.
 
 -   Developers need a strong testing methodology to engineer correct software.
     Carbon will encourage testing and then leverage it with the checking build
