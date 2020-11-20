@@ -1472,4 +1472,9 @@ extern "C" __attribute((section("__TEXT,__setup"))) void _bolt_instr_setup() {
   __write(2, Message, 7);
 }
 
+extern "C" __attribute((section("__TEXT,__fini"))) void _bolt_instr_fini() {
+  const char* Message = "Bye!\n";
+  __write(2, Message, 5);
+}
+
 #endif

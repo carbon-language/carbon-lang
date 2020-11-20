@@ -429,6 +429,7 @@ void MachORewriteInstance::emitAndLink() {
           // TODO: Refactor addRuntimeLibSections to work properly on Mach-O
           // and use it here.
           mapInstrumentationSection(Key, "I__setup");
+          mapInstrumentationSection(Key, "I__fini");
           mapInstrumentationSection(Key, "I__data");
           mapInstrumentationSection(Key, "I__text");
           mapInstrumentationSection(Key, "I__cstring");
@@ -495,6 +496,7 @@ void MachORewriteInstance::rewriteFile() {
   // TODO: Refactor addRuntimeLibSections to work properly on Mach-O and
   // use it here.
   writeInstrumentationSection("I__setup", OS);
+  writeInstrumentationSection("I__fini", OS);
   writeInstrumentationSection("I__data", OS);
   writeInstrumentationSection("I__text", OS);
   writeInstrumentationSection("I__cstring", OS);

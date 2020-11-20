@@ -283,6 +283,9 @@ void Instrumentation::instrumentFunction(BinaryContext &BC,
   if (Function.hasUnknownControlFlow())
     return;
 
+  if (BC.isMachO() && Function.hasName("___GLOBAL_init_65535/1"))
+    return;
+
   SplitWorklistTy SplitWorklist;
   SplitInstrsTy SplitInstrs;
 
@@ -533,23 +536,48 @@ void Instrumentation::runOnFunctions(BinaryContext &BC) {
 
   createAuxiliaryFunctions(BC);
 
-  if (BC.isMachO() && BC.StartFunctionAddress) {
-    BinaryFunction *Main =
-        BC.getBinaryFunctionAtAddress(*BC.StartFunctionAddress);
-    assert(Main && "Entry point function not found");
-    BinaryBasicBlock &BB = Main->front();
+  if (BC.isMachO()) {
+    if (BC.StartFunctionAddress) {
+      BinaryFunction *Main =
+          BC.getBinaryFunctionAtAddress(*BC.StartFunctionAddress);
+      assert(Main && "Entry point function not found");
+      BinaryBasicBlock &BB = Main->front();
 
-    ErrorOr<BinarySection &> SetupSection =
-        BC.getUniqueSectionByName("I__setup");
-    if (!SetupSection) {
-      llvm::errs() << "Cannot find I__setup section\n";
-      exit(1);
+      ErrorOr<BinarySection &> SetupSection =
+          BC.getUniqueSectionByName("I__setup");
+      if (!SetupSection) {
+        llvm::errs() << "Cannot find I__setup section\n";
+        exit(1);
+      }
+      MCSymbol *Target = BC.registerNameAtAddress(
+          "__bolt_instr_setup", SetupSection->getAddress(), 0, 0);
+      MCInst NewInst;
+      BC.MIB->createCall(NewInst, Target, BC.Ctx.get());
+      BB.insertInstruction(BB.begin(), std::move(NewInst));
+    } else {
+      llvm::errs() << "BOLT-WARNING: Entry point not found\n";
     }
-    MCSymbol *Target = BC.registerNameAtAddress(
-        "__bolt_instr_setup", SetupSection->getAddress(), 0, 0);
-    MCInst NewInst;
-    BC.MIB->createCall(NewInst, Target, BC.Ctx.get());
-    BB.insertInstruction(BB.begin(), std::move(NewInst));
+
+    if (BinaryData *BD = BC.getBinaryDataByName("___GLOBAL_init_65535/1")) {
+      BinaryFunction *Ctor = BC.getBinaryFunctionAtAddress(BD->getAddress());
+      assert(Ctor && "___GLOBAL_init_65535 function not found");
+      BinaryBasicBlock &BB = Ctor->front();
+      ErrorOr<BinarySection &> FiniSection =
+          BC.getUniqueSectionByName("I__fini");
+      if (!FiniSection) {
+        llvm::errs() << "Cannot find I__fini section\n";
+        exit(1);
+      }
+      MCSymbol *Target = BC.registerNameAtAddress(
+          "__bolt_instr_fini", FiniSection->getAddress(), 0, 0);
+      auto IsLEA = [&BC](const MCInst &Inst) { return BC.MIB->isLEA64r(Inst); };
+      const auto LEA = std::find_if(std::next(std::find_if(
+          BB.rbegin(), BB.rend(), IsLEA)), BB.rend(), IsLEA);
+      LEA->getOperand(4).setExpr(
+          MCSymbolRefExpr::create(Target, MCSymbolRefExpr::VK_None, *BC.Ctx));
+    } else {
+      llvm::errs() << "BOLT-WARNING: ___GLOBAL_init_65535 not found\n";
+    }
   }
 
   setupRuntimeLibrary(BC);
@@ -579,7 +607,6 @@ void Instrumentation::createAuxiliaryFunctions(BinaryContext &BC) {
   Summary->InitialIndTailCallHandlerFunction =
       createSimpleFunction("__bolt_instr_default_ind_tailcall_handler",
                            BC.MIB->createInstrumentedNoopIndTailCallHandler());
-
 }
 
 void Instrumentation::setupRuntimeLibrary(BinaryContext &BC) {
