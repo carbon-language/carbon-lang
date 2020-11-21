@@ -6,9 +6,9 @@ Exceptions. See /LICENSE for license information.
 SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -->
 
-## Table of contents
-
 <!-- toc -->
+
+## Table of contents
 
 -   [Goals and philosophy](#goals-and-philosophy)
 -   [Overview](#overview)
@@ -49,7 +49,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
         -   [Referring to the package as `package`](#referring-to-the-package-as-package)
         -   [Remove the `library` keyword from `package` and `import`](#remove-the-library-keyword-from-package-and-import)
         -   [Rename package concept](#rename-package-concept)
-        -   [No association between the filesystem path and library/namespace](#no-association-between-the-filesystem-path-and-librarynamespace)
+        -   [No association between the file system path and library/namespace](#no-association-between-the-file-system-path-and-librarynamespace)
     -   [Libraries](#libraries-1)
         -   [Allow exporting namespaces](#allow-exporting-namespaces)
         -   [Allow importing implementation files from within the same library](#allow-importing-implementation-files-from-within-the-same-library)
@@ -112,8 +112,8 @@ Important Carbon goals for code and name organization are:
 
 ## Overview
 
-Carbon files have a `.carbon` extension, such as `geometry.carbon`. These files
-are the basic unit of compilation.
+Carbon [source files](source_files.md) have a `.carbon` extension, such as
+`geometry.carbon`. These files are the basic unit of compilation.
 
 Each file begins with a declaration of which
 _package_<sup><small>[[define](/docs/guides/glossary.md#package)]</small></sup>
@@ -228,9 +228,9 @@ Every source file will consist of, in order:
 3. Source file body, with other code.
 
 Comments and blank lines may be intermingled with these sections.
-[Metaprogramming](metaprogramming.md) code may also be intermingled, so long as
-the outputted code is consistent with the enforced ordering. Other types of code
-must be in the source file body.
+[Metaprogramming](/docs/design/metaprogramming.md) code may also be
+intermingled, so long as the outputted code is consistent with the enforced
+ordering. Other types of code must be in the source file body.
 
 ### Name paths
 
@@ -241,7 +241,7 @@ separated by dots. This syntax may be loosely expressed as a regular expression:
 IDENTIFIER(\.IDENTIFIER)*
 ```
 
-Name conflicts are addressed by [name lookup](name_lookup.md).
+Name conflicts are addressed by [name lookup](/docs/design/name_lookup.md).
 
 #### `package` syntax
 
@@ -467,7 +467,7 @@ An import declares a package entity named after the imported package, and makes
 `api`-tagged entities from the imported library through it. The full name path
 is a concatenation of the names of the package entity, any namespace entities
 applied, and the final entity addressed. Child namespaces or entities may be
-[aliased](aliases.md) if desired.
+[aliased](/docs/design/aliases.md) if desired.
 
 For example, given a library:
 
@@ -574,8 +574,8 @@ struct Shapes.Square { ... };
 
 #### Aliasing
 
-Carbon's [alias keyword](aliases.md) will support aliasing namespaces. For
-example, this would be valid code:
+Carbon's [alias keyword](/docs/design/aliases.md) will support aliasing
+namespaces. For example, this would be valid code:
 
 ```carbon
 namespace Timezones.Internal;
@@ -606,7 +606,7 @@ import, and that the `api` is infeasible to rename due to existing callers.
 Alternately, the `api` entity may be using an idiomatic name that it would
 contradict naming conventions to rename. In either case, this conflict may exist
 in a single file without otherwise affecting users of the API. This will be
-addressed by [name lookup](name_lookup.md).
+addressed by [name lookup](/docs/design/name_lookup.md).
 
 ### Potential refactorings
 
@@ -765,7 +765,7 @@ These choices are made to assist human readability and tooling:
     tooling to determine what to expect.
 -   Repeating the type in the filename makes it possible to check the type
     without reading file content.
--   Repeating the type in the file content makes non-filesystem-based builds
+-   Repeating the type in the file content makes non-file-system-based builds
     possible.
 
 ## Open questions
@@ -904,7 +904,7 @@ Advantages:
 Disadvantages:
 
 -   We are likely to want a more fine-grained, file-level approach proposed by
-    [name lookup](name_lookup.md).
+    [name lookup](/docs/design/name_lookup.md).
 -   Allows package owners to name their packages things that they rarely type,
     but that importers end up typing frequently.
     -   The existence of a short `package` keyword shifts the balance for long
@@ -1020,7 +1020,7 @@ Disadvantages:
     -   [Swift](https://developer.apple.com/documentation/swift_packages), as a
         distributable unit.
 
-#### No association between the filesystem path and library/namespace
+#### No association between the file system path and library/namespace
 
 Several languages create a strict association between the method for pulling in
 an API and the path to the file that provides it. For example:
@@ -1028,10 +1028,10 @@ an API and the path to the file that provides it. For example:
 -   In C++, `#include` refers to specific files without any abstraction.
     -   For example, `#include "PATH/TO/FILE.h"` means there's a file
         `PATH/TO/FILE.h`.
--   In Java, `package` and `import` both reflect filesystem structure.
+-   In Java, `package` and `import` both reflect file system structure.
     -   For example, `import PATH.TO.FILE;` means there's a file
         `PATH/TO/FILE.java`.
--   In Python, `import` requires matching filesystem structure.
+-   In Python, `import` requires matching file system structure.
     -   For example, `import PATH.TO.FILE` means there's a file
         `PATH/TO/FILE.py`.
 -   In TypeScript, `import` refers to specific files.
@@ -1053,7 +1053,7 @@ Advantages:
 -   The strict association makes it harder to move names between files without
     updating callers.
 -   If there were a strict association of paths, it would also need to handle
-    filesystem-dependent casing behaviors.
+    file system dependent casing behaviors.
     -   For example, on Windows, `project.carbon` and `Project.carbon` are
         conflicting filenames. This is exacerbated by paths, wherein a file
         `config` and a directory `Config/` would conflict, even though this
@@ -1061,15 +1061,15 @@ Advantages:
 
 Disadvantages:
 
--   A strict association between filesystem path and import path makes it easier
-    to find source files. This is used by some languages for compilation.
+-   A strict association between file system path and import path makes it
+    easier to find source files. This is used by some languages for compilation.
 -   Allows getting rid of the `package` keyword by inferring related information
-    from the filesystem path.
+    from the file system path.
 
-We are choosing to have some association between the filesystem path and library
-for API files to make it easier to find a library's files. We are not getting
-rid of the `package` keyword because we don't want to become dependent on
-filesystem structures, particularly as it would increase the complexity of
+We are choosing to have some association between the file system path and
+library for API files to make it easier to find a library's files. We are not
+getting rid of the `package` keyword because we don't want to become dependent
+on file system structures, particularly as it would increase the complexity of
 distributed builds.
 
 ### Libraries
@@ -1190,14 +1190,14 @@ Advantages:
 
 -   Clearer distinction between the package and library, increasing readability.
 -   We have chosen not to
-    [enforce filesystem paths](#strict-association-between-the-filesystem-path-and-librarynamespace)
+    [enforce file system paths](#strict-association-between-the-file-system-path-and-librarynamespace)
     in order to ease refactoring, and encouraging a mental model where they may
     match could confuse users.
 
 Disadvantages:
 
 -   Uses multiple separators, so people need to type different characters.
--   There is a preference for thinking of libraries like filesystem paths, even
+-   There is a preference for thinking of libraries like file system paths, even
     if they don't actually correspond.
 
 People like `/`, so we're going with `/`.
