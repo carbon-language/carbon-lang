@@ -41,7 +41,7 @@ vulnerability:
 -   **Memory safety** protects against invalid memory accesses.
 
     -   _Spatial_ memory safety protects against accessing an address that's out
-        of bounds for the source. This includes out array boundaries as well as
+        of bounds for the source. This includes array boundaries, as well as
         dereferencing invalid pointers such as uninitialized pointers, `NULL` in
         C++, or manufactured pointer addresses.
 
