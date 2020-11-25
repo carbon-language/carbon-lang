@@ -50,5 +50,6 @@ request:
 -   [0149 - Change documentation style guide](p0149.md)
     -   [Decision](p0149_decision.md)
 -   [0175 - C++ interoperability goals](p0175.md)
+-   [0201 - Values and variables](p0201.md)
 
 <!-- endproposals -->
