@@ -108,17 +108,18 @@ feasible, guaranteed safety will be offered in a way that removes the need for
 other mitigations. The language's design should incentivize safe programming,
 although it will not be required.
 
-When writing code, Carbon developers should expect to receive safety without
-explicit safety annotations. However, safety annotations are expected to support
-opting in to additional safety checks, tuning safety behaviors, and adjusting
-edge-case performance characteristics.
+When writing code, Carbon developers should expect to receive some safety
+without explicit safety annotations. However, safety annotations are expected to
+support opting in to additional safety checks, tuning safety behaviors, and
+adjusting edge-case performance characteristics.
 
 Carbon will favor compile-time safety checks because catching issues early will
-make applications more reliable. Runtime checks will be enabled where safety
-cannot be proven at compile-time. Performance concerns make it likely that
-runtime checks will be probabilistic and thus hardening rather than guaranteed
-safety. Over time, this hybrid approach to safety checks should evolve to
-provide a similar level of safety to a statically checked language such as Rust.
+make applications more reliable. However, the comprehensiveness of compile-time
+safety will be limited because Carbon won't require redesigning code to take
+advantage of them. Runtime checks, either error detection or safety hardening,
+will be enabled where safety cannot be proven at compile-time. Over time, this
+hybrid approach to safety checks should evolve to provide a similar level of
+safety to a statically checked language such as Rust.
 
 Performance (including speed, binary size, and memory size) concerns will lead
 to multiple build modes:
@@ -128,7 +129,8 @@ to multiple build modes:
     -   Additional development testing build modes that can be used with tests
         and fuzzing to run more performance-intensive safety checks.
 -   An optimized release build mode with some safety by default, but can also be
-    tuned for application-specific hardening and performance trade-offs.
+    tuned for application-specific trade-offs between performance, error
+    detection, and safety hardening.
 
 Carbon will _encourage_ developers to enable more safety checks in their code,
 and be ready to support them if they do, but will also improve safety for code
@@ -137,14 +139,14 @@ for developers who cannot make the same investment.
 ## Principles
 
 -   Safety must be
-    [usable](../goals.md#code-that-is-easy-to-read-understand-and-write) enough
-    that it's easy to ramp-up with, even if it means new developers may only get
-    some extra safety.
+    [easy to ramp-up with](../goals.md#code-that-is-easy-to-read-understand-and-write),
+    even if it means new developers may only get some extra safety.
 
-    -   The common case should be that developers don't feel routinely burdened
-        by Carbon's safety model. Extra work to opt-in to certain safety
-        features is acceptable, as is needing to do extra work on edge-cases
-        where the default safety choices may get in the way.
+    -   The common case should be that developers don't need to rewrite their
+        code to take advantage of Carbon's safety model. Some should be enabled
+        by default, and some safety will require work to opt-in. Developers
+        concerned with performance should only need to work to disable safety in
+        rare edge-cases.
 
     -   Where there is a choice between safe and unsafe, the safe option should
         be incentivized by making it equally or more easy to use. If there is a
@@ -155,8 +157,7 @@ for developers who cannot make the same investment.
         safety checks. They should also allow better automation of testing and
         fuzzing.
 
--   It's critical that Carbon provide better safety for C++ developers. Safety
-    in Carbon must work with
+-   Safety in Carbon must work with
     [interoperable or migrated C++ code](../goals.md#interoperability-with-and-migration-from-existing-c-code),
     so that C++ developers can readily take advantage of Carbon's improvements.
 
@@ -179,18 +180,21 @@ for developers who cannot make the same investment.
     performance, whereas optimized release builds put
     [performance first](../goals.md#performance-critical-software).
 
+    -   Compile-time checks should occur regardless of build mode.
+
     -   Development builds should diagnose the most common safety violations
-        either at compile time or runtime with high probability. Supplemental
-        build modes may be offered to cover safety violations which are too
-        expensive to detect by default, even for a development build.
+        either at runtime with high probability. Supplemental build modes may be
+        offered to cover safety violations which are too expensive to detect by
+        default, even for a development build.
 
     -   The default optimized release build will provide runtime mitigations for
         safety violations whenever the performance is below the noise of hot
         path application code.
 
-    -   There will be a build option for the optimized release build to select a
-        trade-off between performance (including speed, binary size, and memory
-        size) and hardening or mitigation for the remaining safety violations.
+    -   There will be a build option for the optimized release build to choose
+        whether to make non-default choices about the trade-off between
+        performance (including speed, binary size, and memory size) and
+        measurably expensive error detection and safety hardening.
 
 -   The rules for determining whether code will pass compile-time safety
     checking should be articulable, documented, and possible to understand by
@@ -325,11 +329,8 @@ degree of static checking may be better suited.
 When considering alternatives, they are evaluated against what can secure the
 optimized release build mode. Some techniques may have performance implications
 which are too expensive to use in the optimized release build, while still
-offering useful techniques for catching safety violations in development build
-modes. For example, dynamic memory management is an infeasible expense for an
-optimized release build, but may offer a basis for runtime safety checks in
-development build modes, such as
-[MarkUs](https://www.cl.cam.ac.uk/~tmj32/papers/docs/ainsworth20-sp.pdf).
+offering inspiring techniques for catching safety violations in development
+build modes.
 
 ### Guaranteed safety by default (Rust's model)
 
@@ -386,7 +387,7 @@ burden on C++ developers:
 -   Require manual destruction of `Rc`, allowing safety guarantees to be
     disabled in optimized release builds for better performance.
     -   This is closer to a decision to _not_ provide guaranteed safety, but
-        would still require redesign of C++ code around Rust design patterns.
+        would still require redesign of C++ code.
 
 Overall, Carbon is making a compromise around safety in order to give a path for
 C++ to evolve. C++ developers must be comfortable migrating their codebases, and
