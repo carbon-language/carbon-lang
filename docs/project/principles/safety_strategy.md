@@ -116,12 +116,15 @@ for developers who cannot make the same investment.
 
 ## Principles
 
--   Safety must not become a barrier to the
-    [usability](../goals.md#code-that-is-easy-to-read-understand-and-write) of
-    Carbon. Carbon must remain easy to ramp-up with, even if it means new
-    developers may only get some extra safety. Extra work to adopt opt-in safety
-    features is acceptable, as is needing to do extra work for edge-case
-    performance-tuning.
+-   Safety must be
+    [usable](../goals.md#code-that-is-easy-to-read-understand-and-write) enough
+    that it's easy to ramp-up with, even if it means new developers may only get
+    some extra safety.
+
+    -   The common case should be that developers don't feel routinely burdened
+        by Carbon's safety model. Extra work to opt-in to certain safety
+        features is acceptable, as is needing to do extra work on edge-cases
+        where the default safety choices may get in the way.
 
     -   Where there is a choice between safe and unsafe, the safe option should
         be incentivized by making it equally or more easy to use. If there is a
@@ -132,10 +135,10 @@ for developers who cannot make the same investment.
         safety checks. They should also allow better automation of testing and
         fuzzing.
 
--   It's critical that Carbon provide better safety for C++ developers. In doing
-    so, Carbon must avoid creating barriers for
+-   It's critical that Carbon provide better safety for C++ developers. Safety
+    in Carbon must work with
     [interoperable or migrated C++ code](../goals.md#interoperability-with-and-migration-from-existing-c-code),
-    so that C++ developers can take advantage of Carbon's improvements.
+    so that C++ developers can readily take advantage of Carbon's improvements.
 
     -   Safety mechanisms will ideally be designed to apply to automatically
         migrated C++ code. Providing immediate safety improvements to Carbon
