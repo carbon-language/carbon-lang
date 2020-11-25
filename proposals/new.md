@@ -1,0 +1,693 @@
+# Values and Variables
+
+> Definition: A value is what the logicians call an "individual constant," such
+> as the integer 3. A value has no location in time or space. However, values
+> can be represented in memory by means of some encoding, and those
+> representations or encodings do have location in time and space. Indeed,
+> distinct representations of the same value can appear at any number of
+> distinct locations in time and space—meaning, loosely, that any number of
+> different variables (see the next definition) can have the same value, at the
+> same time or different times. Observe in particular that, by definition, a
+> value can’t be updated; for if it could, then after such an update it
+> wouldn’t be that value any longer.
+>
+> Definition: A variable is a holder for a representation of a value. A variable
+> does have location in time and space. Also, variables, unlike values, can be
+> updated; that is, the current value of the variable can be replaced by another
+> value. (After all, that’s what "variable" means — to be a variable is to be
+> updatable and to be updatable is to be a variable; equivalently, to be a
+> variable is to be assignable to, to be assignable to is to be a variable.)
+>
+> - SQL and Relational Theory, 2nd Edition by C.J. Date
+
+> The trouble here is that substitution is based ultimately on the notion that the
+> symbols in our language are essentially names for values. But as soon as we
+> introduce set! and the idea that the value of a variable can change, a variable
+> can no longer be simply a name. Now a variable somehow refers to a place where a
+> value can be stored, and the value stored at this place can change.
+>
+> - Structure and Interpretation of Computer Programs: 3.1.3 The Costs of
+> Introducing Assignment, Page 314.
+
+Most programming languages use one of the following two models:
+
+## The Mutability Model
+
+In this model, you have named entities that represent a location that contains
+  a datum.
+These named entities may be either mutable or immutable.
+The key feature of this model is that names which represent a particular
+  datum are not first-class entities; they are immutable variants of another
+  class of entity and have (possibly theoretical and/or nonexistent in practice)
+  storage.
+Put simply, in this model you have variables which can be constant or
+  non-constant.
+Often, in this model, the terms "value" and "variable" become conflated.
+Examples of languages that follow this model:
+
+* C++.
+    The named entities are called variables, and they may either be `const`
+      or `mutable` (e.g. non-`const`).
+* [Kotlin][KotlinVarVal].
+    "The terminology is that var declares a mutable variable, and that val
+        declares a readable or assign-once variable - so both kinds are
+        called variables."
+* [Swift][SwiftConstantDecl].
+     "A constant declaration introduces a constant named value into your
+         program. Constant declarations are declared using the let keyword.”
+     "That said, if a constant is initialized with a class object, the object
+         itself can change, but the binding between the constant name and the
+         object it refers to can’t."
+* [Nim][NimVarLetConst].
+     "A let statement declares new local and global single assignment variables and
+         binds a value to them."
+     "Let variables are not l-values and can thus not be passed to var parameters nor
+         can their address be taken. They cannot be assigned new values."
+
+## The Value/Variable Model
+
+In this model, which we argue is the correct model, you have two classes of
+  named entities:
+* Values, which are names which represent a particular datum.
+* Variables, which are names which represent a location that contains a datum.
+
+A key feature of this model is that values are substitutable; the name can be replaced
+  with the datum that it names without changing the meaning of the program.
+Values are not associated with a storage location and thus represent a specific datum
+  that can never change.
+
+### Values
+
+A value is a name that represents a particular datum.
+
+A value has no location in time or space, but it has some representation that can
+  be stored in memory.
+
+Because a value has no associated storage, taking the address of a value may have
+  unexpected results.
+For example, two different values may have the same address.
+
+### Variables
+
+A variable is a name that represents a location that contains a datum.
+It has storage and a unique address.
+
+## Declaring Values and Variables at Block and Global Scope
+
+There are two different syntactic approaches for declaring values and variables at
+  block scope that we believe are worth considering:
+
+```
+// Forced-Choice.
+let Int: x = y; // This is a value.
+var Int: x = y; // This is a variable.
+```
+
+Forced-Choice leads programmers to think about whether each named entity should
+  be a value or a variable as they are declaring it.
+That might sound like a good thing, but it's actually not.
+By default, you shouldn't think about this; you should assume things are values,
+  until and unless you have a very good reason for it to be a variable.
+
+Forced-Choice does not discourage you from declaring variables instead of
+  values.
+We believe that discouraging programmers from declaring variables when all
+  they needed was values is beneficial; we want to limit the amount of code
+  that contains variables which could have been values.
+We believe variability is something you must explicitly opt into, preferably
+  with a more verbose syntax.
+
+```
+// Value-by-Default.
+let     Int: x = y; // This is immutable.
+let var Int: x = y; // This is mutable.
+```
+
+In this model, it is natural for programmers to start off with the assumption
+  that everything is a value, and only make things variable when they actually
+  have a reason to do so.
+This model discourages programmers from preemptively making things variable.
+
+We are not particularly attached to the specific syntax selected, but we believe
+  that it should have the following properties to stay true to the
+  Value-by-Default model:
+
+* The syntax for declaring a variable should be a superset of the syntax
+      you would use to declare a value.
+    E.g. `let var Int: x = foo;` is a superset of `let Int: x = foo;`, whereas
+      `var Int: x = foo;` is NOT a superset of `let Int: x = foo`.
+* The syntax for declaring a variable should be somewhat verbose or "ugly"
+      to discourage its use in places where it is unnecessary.
+
+We believe Value-by-Default is the best option for Carbon.
+
+```
+fn Bar() {
+  // Block scope:
+  let Int: x = 42; // x is a value (and is NOT mutable).
+  let var Int: y;  // y is a variable (and is mutable).
+  var Int: x = 42; // ILL-FORMED.
+}
+
+// Global scope:
+let Int: forty_two = 42; // forty_two is a value.
+```
+
+```
+// Side note (when using type inference)
+let var auto: x = foo; // I (Conor) really do not want this I want ↓↓
+let var: x = foo;      // :)
+```
+
+## Values and Variables in Function Signatures
+
+We believe that values are the natural default for function parameters.
+
+A variable parameter does not represent an output parameter (that would be represented
+  with a pointer/reference parameter would).
+A variable parameter is still copied from the caller; modifying a variable parameter
+  does not change the object that was passed as an argument by the caller.
+
+```
+fn F(Int: x, Int: y, var Int: z) {
+  x = 42;   // FAIL: Assigning to a value.
+  &x == &y; // May be true.
+  z = 17;
+}
+// `x` is a value.
+// `y` is a variable.
+
+let (Int: x, var Int: y) = ...;
+
+fn ComplexAPI(Int: x, var (Int: a, Int: b)) {
+  // ...
+}
+```
+
+## Values, Variables, and Pointers
+
+Thus far, we've talked about whether a single isolated object is a value or variable.
+But what about pointers, which are objects that refer to other objects?
+
+For pointers, we have to consider:
+
+* Whether the pointer is a value or variable.
+* Whether the pointed-to object is a value or variable.
+* Regardless of whether the pointed-to object is a value or variable, does the pointer
+  allow it to be modified?
+
+Should you be able to modify the object that a "value" pointer points to?
+
+```
+let Int*: x = y0.Data();
+x = y1.Data(); // `x` is a value, we can't change it.
+*x = 42; // But can we change what `x` points to?
+```
+
+What about a value that has a pointer member?
+
+```
+struct Holder(Type:$$ T) {
+  var T*: data;
+
+  fn Add(Holder: self, T v) -> Holder { // `self` is taken by value, not pointer.
+    *new.holder = *new.holder + v;
+  }
+}
+
+let var v = 17;
+let Holder(Int): x = &v;
+x.Add(42); // We're modifying a value... kinda?
+```
+
+In languages like Rust, `const` is deep; so the answer in Rust would be that
+  you cannot call `Add` on such a `Holder`.
+This would be one possible approach we could take, but that would set us down the road
+  of conflating mutability with value/variableness, because you would have to make a
+  pointer a variable to allow modification of the thing it points to.
+Having a value pointer which allows modification of the object it points to seems like
+  an important thing to preserve.
+
+All of this suggests that we really need two kinds of pointers:
+* A "readable" pointer: The object pointed to cannot be modified.
+    The object pointed to can be a value or a variable.
+* A "writeable" pointer: The object pointed to can be modified.
+    The object pointed to must be a variable.
+
+A writeable pointer is implicitly convertible to a readable pointer.
+A readable pointer is not convertible to a writeable pointer.
+
+There is an important distinction between a readable pointer that refers to
+  a value and a readable pointer that refers to a variable.
+If the pointed-to object is value, then we know it will never change
+  (modulo C++ `const_cast` like shenanigans) and thus it can be safely accessed
+  from multiple threads.
+If the pointed-to object is a variable, we have no such guarantee.
+
+With this model, we have four different kinds of pointer objects:
+
+```
+// 0.) Value readable pointers that point to values or variables.
+// You can't modify the pointer or the object it points to.
+// E.g. `T const* const` in C++.
+
+let T: TVal;
+let ReadPtr(T): PtrToVal = &TVal;
+let T: t0 = *PtrToVal; // OK.
+PtrToVal = OtherPtr;   // FAIL: `PtrToVal` is a value and cannot be modified.
+*PtrToVal = OtherVal;  // FAIL: `PtrToVal` is a `ReadPtr`, we can't modify
+                       // the object it points to.
+
+let T*: PtrToValConcise = &TVal; // `T*` is equivalent to `ReadPtr(T)`.
+
+let: PtrToValAuto = &TVal; // `&TVal` is `ReadPtr(T)`.
+
+
+let var T: TVar;
+let ReadPtr(T): PtrToVar = &TVar; // `&TVar` is `WritePtr(T)`.
+let T: t1 = *PtrToVal; // OK.
+PtrToVar = OtherPtr;   // FAIL: `PtrToVar` is a value and cannot be modified.
+*PtrToVar = OtherVal;  // FAIL: `PtrToVar` is a `ReadPtr`, we can't modify
+                       // the object it points to.
+
+let T*: PtrToVarConcise = &TVar; // `T*` is equivalent to `ReadPtr(T)`.
+
+// No `auto` example here, because `&TVar` will be deduced as a `WritePtr(T)`.
+```
+
+```
+// 1.) Value writeable pointers that point to variables:
+// You can't modify the pointer but you can modify the object it points to.
+// E.g. `T* const` in C++.
+
+let T: TVal;
+let WritePtr(T): PtrToVal = &TVal; // FAIL: `&TVal` is a `ReadPtr(T)` &
+                                          // doesn't convert to `WritePtr(T)`.
+
+let var T: TVar;
+let WritePtr(T): PtrToVar = &TVar; // `&TVar` is WritePtr(T).
+let T: t = *PtrToVar; // OK.
+PtrToVar = OtherPtr;  // FAIL: `PtrToVar` is a value and cannot be modified.
+*PtrToVar = OtherVal; // OK: `PtrToVar` is a WritePtr`.
+
+let: PtrToVarAuto = &TVar; // `&TVar` is `WritePtr(T)`.
+```
+
+```
+// 2.) Variable readable pointers that point to values or variables.
+// You can modify the pointer but not the object it points to.
+// E.g. `T const*` in C++.
+
+let T: TVal;
+let var ReadPtr(T): PtrToVal = &TVal;
+let T: t0 = *PtrToVal; // OK.
+PtrToVal = OtherPtr;   // OK: `PtrToVal` is a variable.
+*PtrToVal = OtherVal;  // FAIL: `PtrToVal` is a `ReadPtr`, we can't modify
+                       // the object it points to.
+
+let var T*: PtrToValConcise = &TVal; // `T*` is equivalent to `ReadPtr(T)`.
+
+let var: PtrToValAuto = &TVal; // `&TVal` is `ReadPtr(T)`.
+
+
+let var T: TVar;
+let var ReadPtr(T): PtrToVar = &TVar; // `&TVar` is `WritePtr(T)`.
+let T: t1 = *PtrToVal; // OK.
+PtrToVar = OtherPtr;   // OK: `PtrToVar` is a variable.
+*PtrToVar = OtherVal;  // FAIL: `PtrToVar` is a `ReadPtr`, we can't modify
+                       // the object it points to.
+
+let var T*: PtrToVarConcise = &TVar; // `T*` is equivalent to `ReadPtr(T)`.
+
+// No `auto` example here, because `&TVar` will be deduced as a `WritePtr(T)`.
+```
+
+```
+// 3.) Variable writeable pointers that point to variables:
+// You can modify the pointer and the object it points to.
+// E.g. `T* const` in C++.
+
+let T: TVal;
+let var WritePtr(T): PtrToVal = &TVal; // FAIL: `&TVal` is a
+                                       // `ReadPtr(T)` & doesn't
+                                       // convert to `WritePtr(T)`.
+
+let var T: TVar;
+let var WritePtr(T): PtrToVar = &TVar; // `&TVar` is WritePtr(T).
+let T: t = *PtrToVar; // OK.
+PtrToVar = OtherPtr;  // OK: `PtrToVar` is a variable.
+*PtrToVar = OtherVal; // OK: `PtrToVar` is a WritePtr`.
+
+let var: PtrToVarAuto = &TVar; // `&TVar` is `WritePtr(T)`.
+```
+
+The `ReadPtr(T)` and `WritePtr(T)` syntax proposed above is merely
+  a placeholder.
+Continuing our theme of immutable by default, we believe the the simpler and less
+  verbose syntax (`T*`) is used for readable pointers.
+A syntax simpler than `WritePtr(T)` is desirable for writeable pointers.
+However, when considering potential syntax around pointers, we must keep in mind the
+  problem of nested pointers. We don't want to repeat the syntactic challenges of
+  parsing C++ pointers such as `T const**`, `T** const`, and `T* const*`.
+
+## Values and Variables in Structs
+
+Typically, one wants members of a struct to be variables, not values; i.e. you want
+  those members to have storage.
+Declaring a value within a struct may still be useful to introduce a named alias for
+  some result, but that value will not have storage in the struct.
+
+The members of a value should not be modifiable, even though they are declared as
+  variable, because the object they are a part of is a value.
+
+```
+struct S {
+  var Int: x;
+  var Int: y;
+  let Int: z = x + y;
+}
+
+fn Buzz() {
+  let S: a = (42, 17); // a is a value.
+  a.x = 34; // FAIL: `a.x` is a member of a value.
+  a.y = 84; // FAIL: `b.x` is a member of a value.
+
+  let var S: b = (42, 17); // b is a variable.
+  b.x = 34; // OK.
+  b.y = 84; // OK.
+}
+```
+
+`z` is not actually stored in `S`, because it's a value.
+So, it is not evaluated once on construction; instead, it is evaluated on use.
+
+## Modifying and Non-Modifying Member Functions
+
+We need a way to distinguish member functions that potentially modify the state of
+  struct and those which do not.
+
+For now, let's assume that non-modifying member functions take a "self" parameter by
+  value and modifying member functions take a "self" parameter by writable pointer.
+It would not make sense for non-modifying member functions to be distinguished by
+  taking a variable "self" parameter, because a variable parameter does not represent
+  an output; only a writable pointer parameter does.
+
+Non-modifying member functions should naturally be callable on values with that struct
+  type:
+
+```
+struct S {
+  var Int: x;
+  fn Value(S: self) -> Int {
+    return self.x;
+  }
+}
+
+fn F() {
+  let S: a = (42);
+  a.Value(); // OK.
+}
+```
+
+```
+struct S {
+  var Int: x;
+  fn Value(ReadPtr(S): self) -> Int {
+    return self.x;
+  }
+}
+
+fn F() {
+  let S: a = (42);
+  a.Value(); // OK.
+}
+```
+
+
+We propose that calling a modifying member function on a value should be ill-formed:
+
+```
+struct S {
+  var Int: x;
+  fn Increment(WritePtr(S): self) {
+    self->x += 1;
+  }
+}
+
+fn F() {
+  let S: a = (42);
+  a.Increment(); // FAIL: Calling modifying member function `Increment` on a value.
+}
+```
+
+Taking the address of a member in a non-modifying member function is allowed, but,
+  as explained before, that address may not refer to a unique location.
+
+```
+struct X {
+  // ...
+}
+
+struct Y {
+  var X: x;
+
+  fn Data(Y: self) -> ReadPtr(X) { return &self.x; }
+}
+
+fn F(Y: y0, Y: y1) {
+  let ReadPtr(X): x0 = y0.Data();
+  let ReadPtr(X): x1 = y1.Data();
+  &x == &y; // May be true.
+}
+```
+
+Taking the address of a value produces a readable pointer, which is not convertible
+  to a writable pointer:
+
+```
+struct X {
+  // ...
+}
+
+struct Y {
+  var X: x;
+
+  fn Data(Y: self) -> WritePtr(X) { return &self.x; } // FAIL: `ReadPtr(x)` cannot be
+                                                      // converted to `WritePtr(x)`.
+}
+```
+
+## Pointers in Structs
+
+Combining the notion of values, variables, readable pointers, writeable pointers, and
+  modifying member functions gives us what we believe to be a fairly flexible model
+  which supports both "deep const" and "shallow const".
+Our current stance is that this is desirable, but this is an open question.
+
+```
+struct S {
+  var Int: x;
+
+  // Non-modifying member function: `self` is taken by readable pointer.
+  fn Increment(ReadPtr(S): self) {
+    self->x += 1; // FAIL: `self` is a `ReadPtr`.
+  }
+}
+
+fn F() {
+  let S: a = (17);
+  a.Increment(); // FAIL: `Increment` tries to assign to a readable pointer.
+}
+```
+
+```
+struct S {
+  var Int: x;
+
+  // Modifying member function: `self` is taken by writeable pointer.
+  fn Increment(WritePtr(S): self) {
+    self->x += 1;
+  }
+}
+
+fn F() {
+  let S: a = (17);
+  a.Increment(); // FAIL: Calling modifying member function `Increment` on a value.
+}
+```
+
+```
+struct Holder(Type:$$ T) {
+  var ReadPtr(T): data;
+
+  // Non-modifying member function: `self` is taken by value.
+  fn Add(Holder: self, T v) {
+    *self.data = *self.data + v; // FAIL: `data` is a readable pointer.
+  }
+}
+
+let var v = 17;
+let Holder(Int): x = &v; // `x` is a value.
+x.Add(42); // FAIL: `Add` tries to assign to a readable pointer.
+
+let var Holder(Int): y = &v; // `y` is a variable.
+y.Add(42); // FAIL: `Add` tries to assign to a readable pointer.
+```
+
+```
+struct Holder(Type:$$ T) {
+  var WritePtr(T): data;
+
+  // Non-modifying member function: `self` is taken by value.
+  fn Add(Holder: self, T v) {
+    *self.data = *self.data + v; // OK: `data` is a writeable pointer.
+  }
+}
+
+let var v = 17;
+let Holder(Int): x = &v; // `x` is a value.
+x.Add(42); // OK.
+
+let var Holder(Int): y = &v; // `y` is a variable.
+y.Add(42); // OK.
+```
+
+```
+struct Holder(Type:$$ T) {
+  var ReadPtr(T): data;
+
+  // Non-modifying member function: `self` is taken by readable pointer.
+  fn Add(ReadPtr(Holder): self, T v) {
+    *self->data = *self->data + v; // FAIL: `data` is a readable pointer.
+  }
+}
+
+let var v = 17;
+let Holder(Int): x = &v; // `x` is a value.
+x.Add(42); // FAIL: `Add` tries to assign to a readable pointer.
+
+let var Holder(Int): y = &v; // `x` is a value.
+y.Add(42); // FAIL: `Add` tries to assign to a readable pointer.
+```
+
+```
+struct Holder(Type:$$ T) {
+  var ReadPtr(T): data;
+
+  // Modifying member function: `self` is taken by writeable pointer.
+  fn Add(WritePtr(Holder): self, T v) {
+    *self->data = *self->data + v; // FAIL: `data` is a readable pointer.
+  }
+}
+
+let var v = 17;
+let Holder(Int): x = &v; // `x` is a value.
+x.Add(42); // FAIL: Calling modifying member function `Add` on a value.
+
+let var Holder(Int): y = &v; // `y` is a variable.
+y.Add(42); // FAIL: `Add` tries to assign to a readable pointer.
+```
+
+```
+struct Holder(Type:$$ T) {
+  var WritePtr(T): data;
+
+  // Non-modifying member function: `self` is taken by readable pointer.
+  fn Add(ReadPtr(Holder): self, T v) {
+    *self->data = *self->data + v; // OK: `data` is a writeable pointer.
+  }
+}
+
+let var v = 17;
+let Holder(Int): x = &v; // `x` is a value.
+x.Add(42); // OK: `Add` is not a modifying member function.
+
+let var Holder(Int): y = &v; // `y` is a variable.
+y.Add(42); // OK.
+```
+
+```
+struct Holder(Type:$$ T) {
+  var WritePtr(T): data;
+
+  // Modifying member function: `self` is taken by writeable pointer.
+  fn Add(WritePtr(Holder): self, T v) {
+    *self->data = *self->data + v; // OK: `data` is a writeable pointer.
+  }
+}
+
+let var v = 17;
+let Holder(Int): x = &v; // `x` is a value.
+x.Add(42); // FAIL: Calling a modifying function on a value.
+
+let var Holder(Int): y = &v; // `y` is a variable.
+y.Add(42); // OK.
+```
+
+## Addresses of Values and Variables
+
+Taking the address of a variable is a natural operation, and should produce a
+  writeable pointer.
+Recall that a writeable pointer can convert to a readable pointer.
+
+Taking the address of a value is a potentially hazard thing to do, however, we may
+  want to support this.
+There are many cases when we have a value and we need to pass it to an interface that
+  expects to take the value by pointer/reference.
+For example, consider the case of passing a value to a C function that takes a
+  constant pointer or to a C++ function that takes a constant reference.
+
+Therefore, we suggest that taking the address of a value should be allowed.
+Taking the address of a value will always produce a readable pointer.
+Recall that a readable pointer cannot convert to a writeable pointer.
+
+The address of a value refers to a location in memory that contains that value, but
+  not necessarily a unique location.
+
+```
+fn F(Int: x, Int: y, var Int: z) {
+  let ReadPtr(Int):  xPtr = &x;      // `x` is a value, `&x` is a `ReadPtr(Int)`.
+  let WritePtr(Int): zWritePtr = &z; // `z` is a variable, `&z` is a `WritePtr(Int)`.
+  let ReadPtr(Int):  zReadPtr = &z;  // `WritePtr(int)` converts to `ReadPtr(Int)`.
+  &x == &y;       // May be true.
+}
+```
+
+However, there are downsides to allowing values to have non-unique addresses.
+Sometimes, the address of an object is used to obtain a unique identifier for the
+  object.
+This pattern will fail if values do not always have a unique address.
+
+One alternative would be to disallow taking the address of a value.
+If someone needed to pass a value by pointer, they would then be required to create a
+  variable which has that value and take the address of that variable.
+The runtime and space overhead of this may be optimized away in many cases when the
+  compiler can determine that the synthesized variable can be elided.
+
+## Thread Safety of Values and Variables
+
+Values and pointers to values can be used concurrently by multiple threads.
+However, those values may contain writeable pointers and the object pointed to by a
+  writeable pointer is not thread safe.
+
+A readable pointer is not necessarily a pointer to a value, and thus may not be
+  thread safe.
+This suggests that perhaps we should have distinct types for readable pointers to
+  values and readable pointers to variables.
+
+## Lifetime Analysis and Optimization
+
+TODO
+
+
+
+
+[KotlinVarVal]: https://kotlinlang.org/docs/tutorials/kotlin-for-py/declaring-variables.html
+
+[SwiftConstantDecl]: https://docs.swift.org/swift-book/ReferenceManual/Declarations.html
+
+[NimVarLetConst]: https://nim-lang.org/docs/manual.html#statements-and-expressions-var-statement
+
+[NimFuncPurity]: https://www.reddit.com/r/nim/comments/fuoiw1/nim_functions_are_not_pure
+
+
