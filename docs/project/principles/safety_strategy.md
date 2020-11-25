@@ -56,11 +56,9 @@ vulnerability:
 
 A safety guarantee is an especially strong requirement: the properties must be
 enforced in a clearly defined way even for programs that contain bugs due to
-violating the language rules. As a consequence, the behavior intended to catch
-bugs remains observable by intentional code.
+violating the language rules. This makes it significantly harder, and in some cases impossible, to distinguish between code with bugs vs. code which intentionally observes the same set of defined behaviors as the code with bugs.
 
-Safety hardening, or mitigation, address the feasibility of exploiting a
-vulnerability, but may not provide the strict guarantee in order to provide
+Safety hardening, or mitigation, minimizes the feasibility of turning a _bug_ into a _security vulnerability_, but may not provide strict safety guarantees or bug detection in order to provide
 better performance in some dimension or better scaling.
 
 Compile-time or static checking is, by definition, a safety guarantee. Runtime
@@ -155,10 +153,7 @@ for developers who cannot make the same investment.
         some safety features will be Carbon-specific, safety should not stop at
         the language boundary.
 
--   Development and optimized release builds have different performance and
-    safety needs. Some safety guarantees will be too expensive to run in a
-    production system. As a result, developers should be given separate build
-    modes wherein the development build mode prioritizes detection of safety
+-   The development build mode should prioritize detection of safety
     issues over performance, whereas optimized release builds put
     [performance first](../goals.md#performance-critical-software).
 
