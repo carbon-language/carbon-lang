@@ -19,7 +19,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
         -   [Performance-critical software](#performance-critical-software)
         -   [Software and language evolution](#software-and-language-evolution)
         -   [Code that is easy to read, understand, and write](#code-that-is-easy-to-read-understand-and-write)
-        -   [Practical safety guarantees and testing mechanisms](#practical-safety-guarantees-and-testing-mechanisms)
+        -   [Practical safety and testing mechanisms](#practical-safety-and-testing-mechanisms)
         -   [Fast and scalable development](#fast-and-scalable-development)
         -   [Modern OS platforms, hardware architectures, and environments](#modern-os-platforms-hardware-architectures-and-environments)
         -   [Interoperability with and migration from existing C++ code](#interoperability-with-and-migration-from-existing-c-code)
@@ -157,7 +157,7 @@ We believe Carbon must support:
 1.  Performance-critical software.
 2.  Software and language evolution.
 3.  Code that is easy to read, understand, and write.
-4.  Practical safety guarantees and testing mechanisms.
+4.  Practical safety and testing mechanisms.
 5.  Fast and scalable development.
 6.  Modern OS platforms, hardware architectures, and environments.
 7.  Interoperability with and migration from existing C++ code.
@@ -376,7 +376,7 @@ make the features easier to understand. It's also often the best way to ensure
 predictable performance, although supporting peak performance may require
 options for more complex implementation behavior.
 
-#### Practical safety guarantees and testing mechanisms
+#### Practical safety and testing mechanisms
 
 Our goal is to add as much language-level safety and security to Carbon as
 possible, using a hybrid strategy to balance other goals. We will do as many

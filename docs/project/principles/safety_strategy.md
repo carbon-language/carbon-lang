@@ -12,7 +12,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 -   [Background](#background)
     -   [What are we talking about when we discuss safety?](#what-are-we-talking-about-when-we-discuss-safety)
-    -   [Guaranteed safety versus safety hardening](#guaranteed-safety-versus-safety-hardening)
+    -   [Safety guarantees versus hardening](#safety-guarantees-versus-hardening)
 -   [Philosophy](#philosophy)
 -   [Principles](#principles)
 -   [Details](#details)
@@ -40,51 +40,73 @@ vulnerability:
 
 -   **Memory safety** protects against invalid memory accesses.
 
-    -   _Spatial_ memory safety protects against accessing out of bounds, such
-        as for an array.
+    -   _Spatial_ memory safety protects against accessing an address that's out
+        of bounds for the source. This includes out array boundaries as well as
+        dereferencing invalid pointers such as uninitialized pointers, `NULL` in
+        C++, or manufactured pointer addresses.
 
-    -   _Temporal_ memory safety protects against access to memory outside the
-        lifetime of the intended object.
+    -   _Temporal_ memory safety protects against use-after-free access. This
+        typically involves dereferencing pointers to dynamically allocated
+        objects, but can also include pointers that are given the address of
+        stack objects.
 
 -   **Type safety** protects against accessing objects with an incorrect type,
     also known as "type confusion".
 
--   **Data race safety** protects against racing memory accesses, whether
-    concurrent or unsynchronized.
+-   **Data race safety** protects against racing memory access: when a thread
+    accesses (read or write) a memory location concurrently with a different
+    writing thread and without synchronizing.
 
-### Guaranteed safety versus safety hardening
+### Safety guarantees versus hardening
 
-A safety guarantee is an especially strong requirement: the properties must be
-enforced in a clearly defined way even for programs that contain bugs due to
-violating the language rules. This makes it significantly harder, and in some cases impossible, to distinguish between code with bugs vs. code which intentionally observes the same set of defined behaviors as the code with bugs.
+The underlying goal of safety is to prevent attacks from turning a _logic error_
+into a _security vulnerability_. The three ways of doing this can be thought of
+how to prevent attacks:
 
-Safety hardening, or mitigation, minimizes the feasibility of turning a _bug_ into a _security vulnerability_, but may not provide strict safety guarantees or bug detection in order to provide
-better performance in some dimension or better scaling.
+-   **Safety guarantees** prevent bugs. They offer a strong requirement that a
+    particular security vulnerability cannot exist. Compile-time safety checks
+    are always a safety guarantee, but safety guarantees may also be done at
+    runtime. For example:
 
-Compile-time or static checking is, by definition, a safety guarantee. Runtime
-or dynamic checking may be either; it must always run and check every potential
-safety violation, even in an optimized release build mode, to be a safety
-guarantee. If it is probabilistic or does not run in optimized release build
-modes, it is hardening.
+    -   At compile-time, range-based for loops offer a spatial safety guarantee
+        that out-of-bounds issues cannot exist.
 
-For example,
-[memory tagging](https://llvm.org/devmtg/2018-10/slides/Serebryany-Stepanov-Tsyrklevich-Memory-Tagging-Slides-LLVM-2018.pdf)
-provides a very strong mitigation for memory safety violations by making each
-attempt at an invalid read or write have a high probability of trapping, while
-still not guaranteeing to trap in every case. Realistic attacks require many
-such operations, so memory tagging will probably stop attacks. Alternatively,
-the trap might be asynchronous, leaving only a tiny window of time prior to the
-attack being detected and program terminated. Both of these are hardening
-because they reduce the feasibility of attacks, rather than guaranteeing attacks
-are impossible.
+    -   At runtime, garbage collected languages offer a temporal safety
+        guarantee because objects cannot be freed while there's still a
+        reference.
+
+-   **Error detection** checks for common logic errors at runtime. For example:
+
+    -   An array lookup function might offer spatial memory error detection by
+        verifying that the passed index is in-bounds.
+
+    -   A program can implement reference counting to detect a temporal memory
+        error by ensuring that no references remain when memory is freed.
+
+-   **Safety hardening** mitigates bugs, minimizing the feasibility of an
+    attack. For example:
+
+    -   [Memory tagging](https://llvm.org/devmtg/2018-10/slides/Serebryany-Stepanov-Tsyrklevich-Memory-Tagging-Slides-LLVM-2018.pdf)
+        makes each attempt at an invalid read or write operation have a high
+        probability of trapping, while still not detecting the underlying bug in
+        every case. Realistic attacks require many such operations, so memory
+        tagging will probably stop attacks. Alternatively, the trap might be
+        asynchronous, leaving only a tiny window of time prior to the attack
+        being detected and program terminated. These are probabilistic hardening
+        and reduces the feasibility of both spatial and temporal memory attacks.
+
+Under both error detection and safety hardening, even if a safety is protected,
+the underlying bugs will still exist and will need to be fixed. For example,
+program termination could be used for a denial-of-service attack.
 
 ## Philosophy
 
-In order to provide
-[practical safety guarantees and testing mechanisms](../goals.md#practical-safety-guarantees-and-testing-mechanisms),
-Carbon will use a hybrid approach combining guaranteed safety and hardening. The
-language's design should incentivize safe programming, although it will not be
-required.
+When providing
+[practical safety and testing mechanisms](../goals.md#practical-safety-and-testing-mechanisms),
+Carbon will put the most emphasis on error detection and safety hardening. Where
+feasible, guaranteed safety will be offered in a way that removes the need for
+other mitigations. The language's design should incentivize safe programming,
+although it will not be required.
 
 When writing code, Carbon developers should expect to receive safety without
 explicit safety annotations. However, safety annotations are expected to support
@@ -153,8 +175,8 @@ for developers who cannot make the same investment.
         some safety features will be Carbon-specific, safety should not stop at
         the language boundary.
 
--   The development build mode should prioritize detection of safety
-    issues over performance, whereas optimized release builds put
+-   The development build mode should prioritize detection of safety issues over
+    performance, whereas optimized release builds put
     [performance first](../goals.md#performance-critical-software).
 
     -   Development builds should diagnose the most common safety violations
