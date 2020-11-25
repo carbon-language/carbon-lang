@@ -31,6 +31,8 @@ request:
     -   [Decision](p0044_decision.md)
 -   [0051 - Goals](p0051.md)
     -   [Decision](p0051_decision.md)
+-   [0063 - Criteria for Carbon to go public](p0063.md)
+    -   [Decision](p0063_decision.md)
 -   [0074 - Change comment/decision timelines in proposal process](p0074.md)
     -   [Decision](p0074_decision.md)
 -   [0083 - In-progress design overview](p0083.md)
@@ -47,6 +49,7 @@ request:
     -   [Decision](p0143_decision.md)
 -   [0149 - Change documentation style guide](p0149.md)
     -   [Decision](p0149_decision.md)
+-   [0175 - C++ interoperability goals](p0175.md)
 -   [0196 - Language-level safety strategy](p0196.md)
 
 <!-- endproposals -->
