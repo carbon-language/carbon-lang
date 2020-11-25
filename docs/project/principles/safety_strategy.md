@@ -180,7 +180,7 @@ for developers who cannot make the same investment.
     performance, whereas optimized release builds put
     [performance first](../goals.md#performance-critical-software).
 
-    -   Compile-time safety checks should occur regardless of build mode.
+    -   Compile-time checks should occur regardless of build mode.
 
     -   Development builds should diagnose the most common safety violations
         either at runtime with high probability. Supplemental build modes may be
