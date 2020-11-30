@@ -23,7 +23,8 @@ Carbon, and similar for calling Carbon from C++. This requires expressing one
 language as a subset of the other. The constraint of expressivity should be
 loose enough that the resulting amount of bridge code is sustainable.
 
-The [interoperability goals](goals.md) provide more detail.
+The [interoperability philosophy and goals](philosophy_and_goals.md) provide
+more detail.
 
 ## Overview
 
