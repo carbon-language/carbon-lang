@@ -16,6 +16,8 @@ exclude:
 
 include:
   - '*.md'
+  - '.pre-commit-config.yaml'
+  - '.prettierrc.yaml'
 
 feedback_disable: true
 
