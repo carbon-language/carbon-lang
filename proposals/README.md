@@ -49,6 +49,7 @@ request:
     -   [Decision](p0143_decision.md)
 -   [0149 - Change documentation style guide](p0149.md)
     -   [Decision](p0149_decision.md)
+-   [0162 - Basic Syntax](p0162.md)
 -   [0175 - C++ interoperability goals](p0175.md)
 
 <!-- endproposals -->
