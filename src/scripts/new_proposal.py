@@ -79,6 +79,13 @@ def _fill_template(template_path, title, pr_num):
     return content
 
 
+def _get_proposals_dir():
+    """Returns the path to the proposals directory."""
+    return os.path.realpath(
+        os.path.join(os.path.dirname(__file__), "../../proposals")
+    )
+
+
 def _run(argv, check=True):
     """Runs a command."""
     cmd = " ".join([shlex.quote(x) for x in argv])
@@ -117,9 +124,7 @@ def main():
     precommit_bin = _find_tool("pre-commit")
 
     # Ensure a good working directory.
-    proposals_dir = os.path.realpath(
-        os.path.join(os.path.dirname(__file__), "../../proposals")
-    )
+    proposals_dir = _get_proposals_dir()
     os.chdir(proposals_dir)
 
     # Verify there are no uncommitted changes.
@@ -140,7 +145,7 @@ def main():
 
     # Copy template.md to a temp file.
     template_path = os.path.join(proposals_dir, "template.md")
-    temp_path = os.path.join(proposals_dir, "new-proposal.tmp")
+    temp_path = os.path.join(proposals_dir, "new-proposal.tmp.md")
     shutil.copyfile(template_path, temp_path)
     _run([git_bin, "add", temp_path])
     _run([git_bin, "commit", "-m", "Creating new proposal: %s" % title])

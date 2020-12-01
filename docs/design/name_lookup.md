@@ -6,9 +6,9 @@ Exceptions. See /LICENSE for license information.
 SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -->
 
-## Table of contents
-
 <!-- toc -->
+
+## Table of contents
 
 -   [TODO](#todo)
 -   [Overview](#overview)
@@ -67,7 +67,7 @@ reference.
 #### Alternatives
 
 This implies that other names within your own package but not declared within
-the file must be found via the package name. It isn't clear if this is the
+the file must be found by way of the package name. It isn't clear if this is the
 desirable end state. We need to consider alternatives where names from the same
 library or any library in the same package are made immediately visible within
 the package scope for unqualified name lookup.
