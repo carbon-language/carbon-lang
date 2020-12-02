@@ -1,4 +1,4 @@
-# Doc Tooling
+# GitHub
 
 <!--
 Part of the Carbon Language project, under the Apache License v2.0 with LLVM
@@ -6,6 +6,12 @@ Exceptions. See /LICENSE for license information.
 SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -->
 
-This directory contains tooling related to managing Carbon's documentation.
+Scripts for use with GitHub.
 
-If you're looking for language tooling, see the `carbon-toolchains` repository.
+See individual scripts for more details.
+
+Please use `pytest` for testing:
+
+```
+$ pip install pytest
+```

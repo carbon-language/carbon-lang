@@ -6,7 +6,7 @@ Exceptions. See /LICENSE for license information.
 SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -->
 
-Self-contained scripts used as part of maintaining Carbon infrastructure.
+Scripts for use with proposals.
 
 See individual scripts for more details.
 

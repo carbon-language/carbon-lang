@@ -2,4 +2,5 @@
 # Exceptions. See /LICENSE for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-__pycache__
+# Firebase API key
+AIzaSyDyAAcQeReDNXVUd_ZdkSzYgqIDJe-kPK8
