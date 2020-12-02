@@ -12,7 +12,7 @@
 #include "BinaryFunction.h"
 #include "ParallelUtilities.h"
 #include "SplitFunctions.h"
-#include "llvm/Support/Options.h"
+#include "llvm/Support/CommandLine.h"
 
 #include <numeric>
 #include <vector>
@@ -143,9 +143,10 @@ void SplitFunctions::splitFunction(BinaryFunction &BF) {
   size_t ColdSize;
   if (BC.isX86()) {
     std::tie(OriginalHotSize, ColdSize) = BC.calculateEmittedSize(BF);
-    DEBUG(dbgs() << "Estimated size for function " << BF << " pre-split is <0x"
-                 << Twine::utohexstr(OriginalHotSize) << ", 0x"
-                 << Twine::utohexstr(ColdSize) << ">\n");
+    LLVM_DEBUG(dbgs() << "Estimated size for function " << BF
+                      << " pre-split is <0x"
+                      << Twine::utohexstr(OriginalHotSize) << ", 0x"
+                      << Twine::utohexstr(ColdSize) << ">\n");
   }
 
   if (opts::SplitFunctions == SplitFunctions::ST_LARGE && !BC.HasRelocations) {
@@ -224,15 +225,15 @@ void SplitFunctions::splitFunction(BinaryFunction &BF) {
   // Check the new size to see if it's worth splitting the function.
   if (BC.isX86() && BF.isSplit()) {
     std::tie(HotSize, ColdSize) = BC.calculateEmittedSize(BF);
-    DEBUG(dbgs() << "Estimated size for function " << BF << " post-split is <0x"
-                 << Twine::utohexstr(HotSize) << ", 0x"
-                 << Twine::utohexstr(ColdSize) << ">\n");
+    LLVM_DEBUG(dbgs() << "Estimated size for function " << BF
+                      << " post-split is <0x" << Twine::utohexstr(HotSize)
+                      << ", 0x" << Twine::utohexstr(ColdSize) << ">\n");
     if (alignTo(OriginalHotSize, opts::SplitAlignThreshold) <=
         alignTo(HotSize, opts::SplitAlignThreshold) + opts::SplitThreshold) {
-      DEBUG(dbgs() << "Reversing splitting of function " << BF << ":\n  0x"
-                   << Twine::utohexstr(HotSize) << ", 0x"
-                   << Twine::utohexstr(ColdSize) << " -> 0x"
-                   << Twine::utohexstr(OriginalHotSize) << '\n');
+      LLVM_DEBUG(dbgs() << "Reversing splitting of function " << BF << ":\n  0x"
+                        << Twine::utohexstr(HotSize) << ", 0x"
+                        << Twine::utohexstr(ColdSize) << " -> 0x"
+                        << Twine::utohexstr(OriginalHotSize) << '\n');
 
       BF.updateBasicBlockLayout(PreSplitLayout);
       for (auto &BB : BF) {

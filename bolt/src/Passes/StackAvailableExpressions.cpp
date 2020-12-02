@@ -24,8 +24,8 @@ StackAvailableExpressions::StackAvailableExpressions(const RegAnalysis &RA,
     : InstrsDataflowAnalysis(BC, BF), RA(RA), FA(FA) {}
 
 void StackAvailableExpressions::preflight() {
-  DEBUG(dbgs() << "Starting StackAvailableExpressions on \""
-               << Func.getPrintName() << "\"\n");
+  LLVM_DEBUG(dbgs() << "Starting StackAvailableExpressions on \""
+                    << Func.getPrintName() << "\"\n");
 
   // Populate our universe of tracked expressions. We are interested in
   // tracking available stores to frame position at any given point of the
@@ -113,11 +113,11 @@ BitVector StackAvailableExpressions::computeNext(const MCInst &Point,
   // Kill
   for (auto I = expr_begin(Next), E = expr_end(); I != E; ++I) {
     assert(*I != nullptr && "Lost pointers");
-    DEBUG(dbgs() << "\t\t\tDoes it kill ");
-    DEBUG((*I)->dump());
+    LLVM_DEBUG(dbgs() << "\t\t\tDoes it kill ");
+    LLVM_DEBUG((*I)->dump());
     if (doesXKillsY(&Point, *I)) {
-      DEBUG(dbgs() << "\t\t\t\tKilling ");
-      DEBUG((*I)->dump());
+      LLVM_DEBUG(dbgs() << "\t\t\t\tKilling ");
+      LLVM_DEBUG((*I)->dump());
       Next.reset(I.getBitVectorIndex());
     }
   }

@@ -25,7 +25,7 @@
 
 #include "BinaryFunction.h"
 #include "HFSort.h"
-#include "llvm/Support/Options.h"
+#include "llvm/Support/CommandLine.h"
 
 #include <set>
 #include <vector>

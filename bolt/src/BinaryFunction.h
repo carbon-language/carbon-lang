@@ -1234,7 +1234,7 @@ public:
     assert(BC.Ctx && "cannot be called with empty context");
     if (!FunctionEndLabel) {
       std::unique_lock<std::shared_timed_mutex> Lock(BC.CtxMutex);
-      FunctionEndLabel = BC.Ctx->createTempSymbol("func_end", true);
+      FunctionEndLabel = BC.Ctx->createNamedTempSymbol("func_end");
     }
     return FunctionEndLabel;
   }
@@ -1243,7 +1243,7 @@ public:
   MCSymbol *getFunctionColdEndLabel() const {
     if (!FunctionColdEndLabel) {
       std::unique_lock<std::shared_timed_mutex> Lock(BC.CtxMutex);
-      FunctionColdEndLabel = BC.Ctx->createTempSymbol("func_cold_end", true);
+      FunctionColdEndLabel = BC.Ctx->createNamedTempSymbol("func_cold_end");
     }
     return FunctionColdEndLabel;
   }
@@ -1254,7 +1254,7 @@ public:
   MCSymbol *getFunctionConstantIslandLabel() const {
     if (!FunctionConstantIslandLabel) {
       FunctionConstantIslandLabel =
-          BC.Ctx->createTempSymbol("func_const_island", true);
+          BC.Ctx->createNamedTempSymbol("func_const_island");
     }
     return FunctionConstantIslandLabel;
   }
@@ -1262,7 +1262,7 @@ public:
   MCSymbol *getFunctionColdConstantIslandLabel() const {
     if (!FunctionColdConstantIslandLabel) {
       FunctionColdConstantIslandLabel =
-          BC.Ctx->createTempSymbol("func_cold_const_island", true);
+          BC.Ctx->createNamedTempSymbol("func_cold_const_island");
     }
     return FunctionColdConstantIslandLabel;
   }
@@ -1367,7 +1367,7 @@ public:
 
   /// Assign a code section name to the function.
   void setCodeSectionName(StringRef Name) {
-    CodeSectionName = Name;
+    CodeSectionName = std::string(Name);
   }
 
   /// Get output code section.
@@ -1382,7 +1382,7 @@ public:
 
   /// Assign a section name for the cold part of the function.
   void setColdCodeSectionName(StringRef Name) {
-    ColdCodeSectionName = Name;
+    ColdCodeSectionName = std::string(Name);
   }
 
   /// Get output code section for cold code of this function.
@@ -1580,7 +1580,7 @@ public:
     assert(BC.Ctx && "cannot be called with empty context");
     if (!Label) {
       std::unique_lock<std::shared_timed_mutex> Lock(BC.CtxMutex);
-      Label = BC.Ctx->createTempSymbol("BB", true);
+      Label = BC.Ctx->createNamedTempSymbol("BB");
     }
     auto BB = std::unique_ptr<BinaryBasicBlock>(
       new BinaryBasicBlock(this, Label, Offset));
@@ -1608,7 +1608,7 @@ public:
 
     if (!Label) {
       std::unique_lock<std::shared_timed_mutex> Lock(BC.CtxMutex);
-      Label = BC.Ctx->createTempSymbol("BB", true);
+      Label = BC.Ctx->createNamedTempSymbol("BB");
     }
     auto BBPtr = createBasicBlock(Offset, Label, DeriveAlignment);
     BasicBlocks.emplace_back(BBPtr.release());
@@ -1835,7 +1835,7 @@ public:
   }
 
   /// Retrieve the MCCFIInstruction object associated with a CFI pseudo.
-  MCCFIInstruction* getCFIFor(const MCInst &Instr) {
+  const MCCFIInstruction *getCFIFor(const MCInst &Instr) const {
     if (!BC.MIB->isCFI(Instr))
       return nullptr;
     uint32_t Offset = Instr.getOperand(0).getImm();
@@ -1843,13 +1843,18 @@ public:
     return &FrameInstructions[Offset];
   }
 
-  const MCCFIInstruction* getCFIFor(const MCInst &Instr) const {
-    if (!BC.MIB->isCFI(Instr))
-      return nullptr;
+  void setCFIFor(const MCInst &Instr, MCCFIInstruction &&CFIInst) {
+    assert(BC.MIB->isCFI(Instr) &&
+           "attempting to change CFI in a non-CFI inst");
     uint32_t Offset = Instr.getOperand(0).getImm();
     assert(Offset < FrameInstructions.size() && "Invalid CFI offset");
-    return &FrameInstructions[Offset];
+    FrameInstructions[Offset] = std::move(CFIInst);
   }
+
+  void mutateCFIRegisterFor(const MCInst &Instr, MCPhysReg NewReg);
+
+  const MCCFIInstruction *mutateCFIOffsetFor(const MCInst &Instr,
+                                             int64_t NewOffset);
 
   BinaryFunction &setFileOffset(uint64_t Offset) {
     FileOffset = Offset;
@@ -2479,10 +2484,8 @@ public:
 
   /// Similar to translateInputToOutputRanges() but operates on location lists
   /// and moves associated data to output location lists.
-  ///
-  /// \p BaseAddress is applied to all addresses in \pInputLL.
-  DWARFDebugLoc::LocationList translateInputToOutputLocationList(
-      DWARFDebugLoc::LocationList InputLL) const;
+  DebugLocationsVector translateInputToOutputLocationList(
+      const DebugLocationsVector &InputLL) const;
 
   /// Return true if the function is an AArch64 linker inserted veneer
   bool isAArch64Veneer() const;

@@ -85,14 +85,14 @@ BinaryFunction *createNewRetpoline(BinaryContext &BC,
                                    bool R11Available) {
   auto &MIB = *BC.MIB;
   auto &Ctx = *BC.Ctx.get();
-  DEBUG(dbgs() << "BOLT-DEBUG: Creating a new retpoline function["
-               << RetpolineTag << "]\n");
+  LLVM_DEBUG(dbgs() << "BOLT-DEBUG: Creating a new retpoline function["
+                    << RetpolineTag << "]\n");
 
   auto *NewRetpoline = BC.createInjectedBinaryFunction(RetpolineTag, true);
   std::vector<std::unique_ptr<BinaryBasicBlock>> NewBlocks(3);
   for (int I = 0; I < 3; I++) {
     auto Symbol =
-        Ctx.createTempSymbol(Twine(RetpolineTag + "_BB" + to_string(I)), true);
+        Ctx.createNamedTempSymbol(Twine(RetpolineTag + "_BB" + to_string(I)));
     NewBlocks[I] = NewRetpoline->createBasicBlock(
         BinaryBasicBlock::INVALID_OFFSET, Symbol);
     NewBlocks[I].get()->setCFIState(0);

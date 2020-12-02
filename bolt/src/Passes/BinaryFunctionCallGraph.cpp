@@ -12,8 +12,9 @@
 #include "BinaryFunctionCallGraph.h"
 #include "BinaryFunction.h"
 #include "BinaryContext.h"
-#include "llvm/Support/Options.h"
+#include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Timer.h"
+#include <stack>
 
 #define DEBUG_TYPE "callgraph"
 
@@ -140,8 +141,8 @@ BinaryFunctionCallGraph buildCallGraph(BinaryContext &BC,
       if (auto *DstFunc =
           DestSymbol ? BC.getFunctionForSymbol(DestSymbol) : nullptr) {
         if (DstFunc == Function) {
-          DEBUG(dbgs() << "BOLT-INFO: recursive call detected in "
-                       << *DstFunc << "\n");
+          LLVM_DEBUG(dbgs() << "BOLT-INFO: recursive call detected in "
+                            << *DstFunc << "\n");
           ++RecursiveCallsites;
           if (IgnoreRecursiveCalls)
             return false;
@@ -155,7 +156,7 @@ BinaryFunctionCallGraph buildCallGraph(BinaryContext &BC,
         if (!IsValidCount)
           ++NoProfileCallsites;
         Cg.incArcWeight(SrcId, DstId, AdjCount, Offset);
-        DEBUG(
+        LLVM_DEBUG(
           if (opts::Verbosity > 1) {
             dbgs() << "BOLT-DEBUG: buildCallGraph: call " << *Function
                    << " -> " << *DstFunc << " @ " << Offset << "\n";
@@ -194,8 +195,9 @@ BinaryFunctionCallGraph buildCallGraph(BinaryContext &BC,
     // fall back to the CFG walker which attempts to handle missing data.
     if (!Function->hasValidProfile() && CgFromPerfData &&
         !Function->getAllCallSites().empty()) {
-      DEBUG(dbgs() << "BOLT-DEBUG: buildCallGraph: Falling back to perf data"
-                   << " for " << *Function << "\n");
+      LLVM_DEBUG(
+          dbgs() << "BOLT-DEBUG: buildCallGraph: Falling back to perf data"
+                 << " for " << *Function << "\n");
       ++NumFallbacks;
       const auto Size = functionSize(Function);
       for (const auto &CSI : Function->getAllCallSites()) {

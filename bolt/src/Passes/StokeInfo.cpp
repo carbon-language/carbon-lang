@@ -1,5 +1,5 @@
 #include "StokeInfo.h"
-#include "llvm/Support/Options.h"
+#include "llvm/Support/CommandLine.h"
 
 #undef DEBUG_TYPE
 #define DEBUG_TYPE "stoke"
@@ -25,13 +25,13 @@ void getRegNameFromBitVec(const BinaryContext &BC, const BitVector &RegV,
     std::set<std::string> *NameVec = nullptr) {
   int RegIdx = RegV.find_first();
   while (RegIdx != -1) {
-    DEBUG(dbgs() << BC.MRI->getName(RegIdx) << " ");
+    LLVM_DEBUG(dbgs() << BC.MRI->getName(RegIdx) << " ");
     if (NameVec) {
       NameVec->insert(std::string(BC.MRI->getName(RegIdx)));
     }
     RegIdx = RegV.find_next(RegIdx);
   }
-  DEBUG(dbgs() << "\n");
+  LLVM_DEBUG(dbgs() << "\n");
 }
 
 void StokeInfo::checkInstr(const BinaryContext &BC, const BinaryFunction &BF,
@@ -123,12 +123,12 @@ bool StokeInfo::checkFunction(const BinaryContext &BC, BinaryFunction &BF,
     return false;
   }
 
-  DEBUG(dbgs() << "\t [DefIn]\n\t ");
+  LLVM_DEBUG(dbgs() << "\t [DefIn]\n\t ");
   auto LiveInBV = *(DInfo.getLivenessAnalysis().getStateAt(FirstNonPseudo));
   LiveInBV &= DefaultDefInMask;
   getRegNameFromBitVec(BC, LiveInBV, &FuncInfo.DefIn);
 
-  DEBUG(dbgs() << "\t [LiveOut]\n\t ");
+  LLVM_DEBUG(dbgs() << "\t [LiveOut]\n\t ");
   auto LiveOutBV = RA.getFunctionClobberList(&BF);
   LiveOutBV &= DefaultLiveOutMask;
   getRegNameFromBitVec(BC, LiveOutBV, &FuncInfo.LiveOut);
@@ -149,9 +149,9 @@ void StokeInfo::runOnFunctions(BinaryContext &BC) {
   }
 
   // check some context meta data
-  DEBUG(dbgs() << "\tTarget: " << BC.TheTarget->getName() << "\n");
-  DEBUG(dbgs() << "\tTripleName " << BC.TripleName << "\n");
-  DEBUG(dbgs() << "\tgetNumRegs " << BC.MRI->getNumRegs() << "\n");
+  LLVM_DEBUG(dbgs() << "\tTarget: " << BC.TheTarget->getName() << "\n");
+  LLVM_DEBUG(dbgs() << "\tTripleName " << BC.TripleName << "\n");
+  LLVM_DEBUG(dbgs() << "\tgetNumRegs " << BC.MRI->getNumRegs() << "\n");
 
   auto CG = buildCallGraph(BC);
   RegAnalysis RA(BC, &BC.getBinaryFunctions(), &CG);

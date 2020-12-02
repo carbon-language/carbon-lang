@@ -53,7 +53,7 @@ class DWARFRewriter {
   std::vector<std::unique_ptr<DebugLocWriter>> LocListWritersByCU;
 
   struct LocListDebugInfoPatchType {
-    uint32_t DebugInfoOffset;
+    uint64_t DebugInfoOffset;
     size_t CUIndex;
     uint64_t CUWriterOffset;
   };

@@ -153,7 +153,7 @@ void AlignerPass::alignBlocks(BinaryFunction &Function,
     BB->setAlignmentMaxBytes(BytesToUse);
 
     // Update stats.
-    DEBUG(
+    LLVM_DEBUG(
       std::unique_lock<std::shared_timed_mutex> Lock(AlignHistogramMtx);
       AlignHistogram[BytesToUse]++;
       AlignedBlocksCount += BB->getKnownExecutionCount();
@@ -184,7 +184,7 @@ void AlignerPass::runOnFunctions(BinaryContext &BC) {
       BC, ParallelUtilities::SchedulingPolicy::SP_TRIVIAL, WorkFun,
       ParallelUtilities::PredicateTy(nullptr), "AlignerPass");
 
-  DEBUG(
+  LLVM_DEBUG(
     dbgs() << "BOLT-DEBUG: max bytes per basic block alignment distribution:\n";
     for (unsigned I = 1; I < AlignHistogram.size(); ++I) {
       dbgs() << "  " << I << " : " << AlignHistogram[I] << '\n';

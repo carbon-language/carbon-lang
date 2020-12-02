@@ -13,6 +13,7 @@
 #include "ParallelUtilities.h"
 #include "llvm/Support/ThreadPool.h"
 #include <fstream>
+#include <stack>
 
 #define DEBUG_TYPE "fa"
 
@@ -119,16 +120,16 @@ class FrameAccessAnalysis {
     MCPhysReg Reg{0};
     int64_t StackOffset{0};
     bool IsIndexed{false};
-    if (!BC.MIB->isStackAccess(Inst, FIE.IsLoad, FIE.IsStore, FIE.IsStoreFromReg,
-                               Reg, SrcImm, FIE.StackPtrReg, StackOffset, FIE.Size,
-                               FIE.IsSimple, IsIndexed)) {
+    if (!BC.MIB->isStackAccess(
+            Inst, FIE.IsLoad, FIE.IsStore, FIE.IsStoreFromReg, Reg, SrcImm,
+            FIE.StackPtrReg, StackOffset, FIE.Size, FIE.IsSimple, IsIndexed)) {
       return true;
     }
 
     if (IsIndexed || FIE.Size == 0) {
-      DEBUG(dbgs() << "Giving up on indexed memory access/unknown size\n");
-      DEBUG(dbgs() << "Blame insn: ");
-      DEBUG(Inst.dump());
+      LLVM_DEBUG(dbgs() << "Giving up on indexed memory access/unknown size\n");
+      LLVM_DEBUG(dbgs() << "Blame insn: ");
+      LLVM_DEBUG(Inst.dump());
       return false;
     }
 
@@ -140,21 +141,24 @@ class FrameAccessAnalysis {
 
     if (FIE.StackPtrReg == BC.MIB->getStackPointer() && SPOffset != SPT.EMPTY &&
         SPOffset != SPT.SUPERPOSITION) {
-      DEBUG(dbgs() << "Adding access via SP while CFA reg is another one\n");
+      LLVM_DEBUG(
+          dbgs() << "Adding access via SP while CFA reg is another one\n");
       FIE.StackOffset = SPOffset + StackOffset;
     } else if (FIE.StackPtrReg == BC.MIB->getFramePointer() &&
                FPOffset != SPT.EMPTY && FPOffset != SPT.SUPERPOSITION) {
-      DEBUG(dbgs() << "Adding access via FP while CFA reg is another one\n");
+      LLVM_DEBUG(
+          dbgs() << "Adding access via FP while CFA reg is another one\n");
       FIE.StackOffset = FPOffset + StackOffset;
     } else if (FIE.StackPtrReg ==
-               BC.MRI->getLLVMRegNum(CfaReg, /*isEH=*/false)) {
+               *BC.MRI->getLLVMRegNum(CfaReg, /*isEH=*/false)) {
       FIE.StackOffset = CfaOffset + StackOffset;
     } else {
-      DEBUG(dbgs() << "Found stack access with reg different than cfa reg.\n");
-      DEBUG(dbgs() << "\tCurrent CFA reg: " << CfaReg
-                   << "\n\tStack access reg: " << FIE.StackPtrReg << "\n");
-      DEBUG(dbgs() << "Blame insn: ");
-      DEBUG(Inst.dump());
+      LLVM_DEBUG(
+          dbgs() << "Found stack access with reg different than cfa reg.\n");
+      LLVM_DEBUG(dbgs() << "\tCurrent CFA reg: " << CfaReg
+                        << "\n\tStack access reg: " << FIE.StackPtrReg << "\n");
+      LLVM_DEBUG(dbgs() << "Blame insn: ");
+      LLVM_DEBUG(Inst.dump());
       return false;
     }
     IsValidAccess = true;
@@ -183,7 +187,7 @@ public:
       switch (CFI->getOperation()) {
       case MCCFIInstruction::OpDefCfa:
         CfaOffset = CFI->getOffset();
-      // Fall-through
+        LLVM_FALLTHROUGH;
       case MCCFIInstruction::OpDefCfaRegister:
         CfaReg = CFI->getRegister();
         break;
@@ -214,9 +218,10 @@ public:
     }
 
     if (BC.MIB->escapesVariable(Inst, SPT.HasFramePointer)) {
-      DEBUG(dbgs() << "Leaked stack address, giving up on this function.\n");
-      DEBUG(dbgs() << "Blame insn: ");
-      DEBUG(Inst.dump());
+      LLVM_DEBUG(
+          dbgs() << "Leaked stack address, giving up on this function.\n");
+      LLVM_DEBUG(dbgs() << "Blame insn: ");
+      LLVM_DEBUG(Inst.dump());
       return false;
     }
 
@@ -376,8 +381,8 @@ bool FrameAnalysis::updateArgsTouchedFor(const BinaryFunction &BF, MCInst &Inst,
       addArgAccessesFor(Inst, ArgAccesses(/*AssumeEverything=*/true));
       break;
     }
-    DEBUG(dbgs() << "Added arg in stack access annotation "
-                 << CurOffset + Elem.first << "\n");
+    LLVM_DEBUG(dbgs() << "Added arg in stack access annotation "
+                      << CurOffset + Elem.first << "\n");
     addArgInStackAccessFor(
         Inst, ArgInStackAccess{/*StackOffset=*/CurOffset + Elem.first,
                                /*Size=*/Elem.second});
@@ -387,7 +392,8 @@ bool FrameAnalysis::updateArgsTouchedFor(const BinaryFunction &BF, MCInst &Inst,
 
 bool FrameAnalysis::computeArgsAccessed(BinaryFunction &BF) {
   if (!BF.isSimple() || !BF.hasCFG()) {
-    DEBUG(dbgs() << "Treating " << BF.getPrintName() << " conservatively.\n");
+    LLVM_DEBUG(dbgs() << "Treating " << BF.getPrintName()
+                      << " conservatively.\n");
     ArgsTouchedMap[&BF].emplace(std::make_pair(-1, 0));
     if (!FunctionsRequireAlignment.count(&BF)) {
       FunctionsRequireAlignment.insert(&BF);
@@ -396,8 +402,8 @@ bool FrameAnalysis::computeArgsAccessed(BinaryFunction &BF) {
     return false;
   }
 
-  DEBUG(dbgs() << "Now computing args accessed for: " << BF.getPrintName()
-               << "\n");
+  LLVM_DEBUG(dbgs() << "Now computing args accessed for: " << BF.getPrintName()
+                    << "\n");
   bool UpdatedArgsTouched = false;
   bool NoInfo = false;
   FrameAccessAnalysis FAA(BC, BF, getSPT(BF));
@@ -431,7 +437,7 @@ bool FrameAnalysis::computeArgsAccessed(BinaryFunction &BF) {
       // Record accesses to the previous stack frame
       ArgsTouchedMap[&BF].emplace(std::make_pair(FIE.StackOffset, FIE.Size));
       UpdatedArgsTouched = true;
-      DEBUG({
+      LLVM_DEBUG({
         dbgs() << "Arg access offset " << FIE.StackOffset << " added to:\n";
         BC.printInstruction(dbgs(), Inst, 0, &BF, true);
       });
@@ -461,16 +467,16 @@ bool FrameAnalysis::computeArgsAccessed(BinaryFunction &BF) {
 bool FrameAnalysis::restoreFrameIndex(BinaryFunction &BF) {
   FrameAccessAnalysis FAA(BC, BF, getSPT(BF));
 
-  DEBUG(dbgs() << "Restoring frame indices for \"" << BF.getPrintName()
-               << "\"\n");
+  LLVM_DEBUG(dbgs() << "Restoring frame indices for \"" << BF.getPrintName()
+                    << "\"\n");
   for (auto BB : BF.layout()) {
-    DEBUG(dbgs() << "\tNow at BB " << BB->getName() << "\n");
+    LLVM_DEBUG(dbgs() << "\tNow at BB " << BB->getName() << "\n");
     FAA.enterNewBB();
 
     for (auto &Inst : *BB) {
       if (!FAA.doNext(*BB, Inst))
         return false;
-      DEBUG({
+      LLVM_DEBUG({
         dbgs() << "\t\tNow at ";
         Inst.dump();
         dbgs() << "\t\t\tSP offset is " << FAA.getSPOffset() << "\n";
@@ -482,7 +488,7 @@ bool FrameAnalysis::restoreFrameIndex(BinaryFunction &BF) {
       const FrameIndexEntry &FIE = FAA.getFIE();
 
       addFIEFor(Inst, FIE);
-      DEBUG({
+      LLVM_DEBUG({
         dbgs() << "Frame index annotation " << FIE << " added to:\n";
         BC.printInstruction(dbgs(), Inst, 0, &BF, true);
       });

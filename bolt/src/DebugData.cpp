@@ -15,6 +15,7 @@
 #include "llvm/MC/MCSymbol.h"
 #include "llvm/MC/MCObjectWriter.h"
 #include "llvm/Support/CommandLine.h"
+#include "llvm/Support/EndianStream.h"
 #include "llvm/Support/LEB128.h"
 #include <algorithm>
 #include <cassert>
@@ -39,30 +40,30 @@ namespace {
 // Terminates the list by writing a pair of two zeroes.
 // Returns the number of written bytes.
 uint64_t writeAddressRanges(
-    MCObjectWriter *Writer,
+    raw_svector_ostream &Stream,
     const DebugAddressRangesVector &AddressRanges,
     const bool WriteRelativeRanges = false) {
   for (auto &Range : AddressRanges) {
-    Writer->writeLE64(Range.LowPC);
-    Writer->writeLE64(WriteRelativeRanges ? Range.HighPC - Range.LowPC
-                                          : Range.HighPC);
+    support::endian::write(Stream, Range.LowPC, support::little);
+    support::endian::write(
+        Stream, WriteRelativeRanges ? Range.HighPC - Range.LowPC : Range.HighPC,
+        support::little);
   }
   // Finish with 0 entries.
-  Writer->writeLE64(0);
-  Writer->writeLE64(0);
+  support::endian::write(Stream, 0ULL, support::little);
+  support::endian::write(Stream, 0ULL, support::little);
   return AddressRanges.size() * 16 + 16;
 }
 
 } // namespace
 
 DebugRangesSectionWriter::DebugRangesSectionWriter(BinaryContext *BC) {
-  RangesBuffer = llvm::make_unique<RangesBufferVector>();
-  RangesStream = llvm::make_unique<raw_svector_ostream>(*RangesBuffer);
-  Writer =
-    std::unique_ptr<MCObjectWriter>(BC->createObjectWriter(*RangesStream));
+  RangesBuffer = std::make_unique<RangesBufferVector>();
+  RangesStream = std::make_unique<raw_svector_ostream>(*RangesBuffer);
 
   // Add an empty range as the first entry;
-  SectionOffset += writeAddressRanges(Writer.get(), DebugAddressRangesVector{});
+  SectionOffset +=
+      writeAddressRanges(*RangesStream.get(), DebugAddressRangesVector{});
 }
 
 uint64_t DebugRangesSectionWriter::addRanges(
@@ -90,7 +91,7 @@ DebugRangesSectionWriter::addRanges(const DebugAddressRangesVector &Ranges) {
   // unique and correct offsets in patches.
   std::lock_guard<std::mutex> Lock(WriterMutex);
   const auto EntryOffset = SectionOffset;
-  SectionOffset += writeAddressRanges(Writer.get(), Ranges);
+  SectionOffset += writeAddressRanges(*RangesStream.get(), Ranges);
 
   return EntryOffset;
 }
@@ -101,8 +102,8 @@ void DebugARangesSectionWriter::addCURanges(uint64_t CUOffset,
   CUAddressRanges.emplace(CUOffset, std::move(Ranges));
 }
 
-void
-DebugARangesSectionWriter::writeARangesSection(MCObjectWriter *Writer) const {
+void DebugARangesSectionWriter::writeARangesSection(
+    raw_svector_ostream &RangesStream) const {
   // For reference on the format of the .debug_aranges section, see the DWARF4
   // specification, section 6.1.4 Lookup by Address
   // http://www.dwarfstd.org/doc/DWARF4.pdf
@@ -116,58 +117,62 @@ DebugARangesSectionWriter::writeARangesSection(MCObjectWriter *Writer) const {
     // + 2*sizeof(uint64_t) bytes for each of the ranges, plus an extra
     // pair of uint64_t's for the terminating, zero-length range.
     // Does not include size field itself.
-    uint64_t Size = 8 + 4 + 2*sizeof(uint64_t) * (AddressRanges.size() + 1);
+    uint32_t Size = 8 + 4 + 2*sizeof(uint64_t) * (AddressRanges.size() + 1);
 
     // Header field #1: set size.
-    Writer->writeLE32(Size);
+    support::endian::write(RangesStream, Size, support::little);
 
     // Header field #2: version number, 2 as per the specification.
-    Writer->writeLE16(2);
+    support::endian::write(RangesStream, static_cast<uint16_t>(2),
+                           support::little);
 
     // Header field #3: debug info offset of the correspondent compile unit.
-    Writer->writeLE32(Offset);
+    support::endian::write(RangesStream, static_cast<uint32_t>(Offset),
+                           support::little);
 
     // Header field #4: address size.
     // 8 since we only write ELF64 binaries for now.
-    Writer->write8(8);
+    RangesStream << char(8);
 
     // Header field #5: segment size of target architecture.
-    Writer->write8(0);
+    RangesStream << char(0);
 
     // Padding before address table - 4 bytes in the 64-bit-pointer case.
-    Writer->writeLE32(0);
+    support::endian::write(RangesStream, static_cast<uint32_t>(0),
+                           support::little);
 
-    writeAddressRanges(Writer, AddressRanges, true);
+    writeAddressRanges(RangesStream, AddressRanges, true);
   }
 }
 
 DebugLocWriter::DebugLocWriter(BinaryContext *BC) {
-  LocBuffer = llvm::make_unique<LocBufferVector>();
-  LocStream = llvm::make_unique<raw_svector_ostream>(*LocBuffer);
-  Writer =
-    std::unique_ptr<MCObjectWriter>(BC->createObjectWriter(*LocStream));
+  LocBuffer = std::make_unique<LocBufferVector>();
+  LocStream = std::make_unique<raw_svector_ostream>(*LocBuffer);
 }
 
 // DWARF 4: 2.6.2
-uint64_t DebugLocWriter::addList(const DWARFDebugLoc::LocationList &LocList) {
-  if (LocList.Entries.empty())
+uint64_t
+DebugLocWriter::addList(const DebugLocationsVector &LocList) {
+  if (LocList.empty())
     return EmptyListTag;
 
   // Since there is a separate DebugLocWriter for each thread,
   // we don't need a lock to read the SectionOffset and update it.
   const auto EntryOffset = SectionOffset;
 
-  for (const auto &Entry : LocList.Entries) {
-    Writer->writeLE64(Entry.Begin);
-    Writer->writeLE64(Entry.End);
-    Writer->writeLE16(Entry.Loc.size());
-    Writer->writeBytes(StringRef(
-        reinterpret_cast<const char *>(Entry.Loc.data()), Entry.Loc.size()));
-    SectionOffset += 2 * 8 + 2 + Entry.Loc.size();
+  for (const DebugLocationEntry &Entry : LocList) {
+    support::endian::write(*LocStream, static_cast<uint64_t>(Entry.LowPC),
+                           support::little);
+    support::endian::write(*LocStream, static_cast<uint64_t>(Entry.HighPC),
+                           support::little);
+    support::endian::write(*LocStream, static_cast<uint16_t>(Entry.Expr.size()),
+                           support::little);
+    *LocStream << StringRef(reinterpret_cast<const char *>(Entry.Expr.data()),
+                            Entry.Expr.size());
+    SectionOffset += 2 * 8 + 2 + Entry.Expr.size();
   }
-  Writer->writeLE64(0);
-  Writer->writeLE64(0);
-  SectionOffset += 2 * 8;
+  LocStream->write_zeros(16);
+  SectionOffset += 16;
 
   return EntryOffset;
 }

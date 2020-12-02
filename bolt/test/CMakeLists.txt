@@ -1,6 +1,3 @@
-llvm_canonicalize_cmake_booleans(
-  ENABLE_BACKTRACES)
-
 configure_lit_site_cfg(
   ${CMAKE_CURRENT_SOURCE_DIR}/lit.site.cfg.py.in
   ${CMAKE_CURRENT_BINARY_DIR}/lit.site.cfg.py
@@ -29,7 +26,6 @@ set_target_properties(bolt-test-depends PROPERTIES FOLDER "BOLT tests")
 
 add_lit_testsuite(check-bolt "Running the BOLT regression tests"
   ${CMAKE_CURRENT_BINARY_DIR}
-  #LIT ${LLVM_LIT}
   PARAMS ${BOLT_TEST_PARAMS}
   DEPENDS ${BOLT_TEST_DEPS}
   ARGS ${BOLT_TEST_EXTRA_ARGS}

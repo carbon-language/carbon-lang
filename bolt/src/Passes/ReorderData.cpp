@@ -358,8 +358,8 @@ void ReorderData::setSectionOrder(BinaryContext &BC,
     TotalCount += Itr->second;
   }
 
-  DEBUG(dbgs() << "BOLT-DEBUG: setSectionOrder for "
-               << OutputSection.getName() << "\n");
+  LLVM_DEBUG(dbgs() << "BOLT-DEBUG: setSectionOrder for "
+                    << OutputSection.getName() << "\n");
 
   for (; Begin != End; ++Begin) {
     auto *BD = Begin->first;
@@ -371,8 +371,8 @@ void ReorderData::setSectionOrder(BinaryContext &BC,
     ++NumReordered;
     if (NumReordered > opts::ReorderDataMaxSymbols) {
       if (!NewOrder.empty()) {
-        dbgs() << "BOLT-DEBUG: processing ending on symbol "
-               << *NewOrder.back() << "\n";
+        LLVM_DEBUG(dbgs() << "BOLT-DEBUG: processing ending on symbol "
+                          << *NewOrder.back() << "\n");
       }
       break;
     }
@@ -382,14 +382,14 @@ void ReorderData::setSectionOrder(BinaryContext &BC,
 
     if ((Offset + BD->getSize()) > opts::ReorderDataMaxBytes) {
       if (!NewOrder.empty()) {
-        dbgs() << "BOLT-DEBUG: processing ending on symbol "
-               << *NewOrder.back() << "\n";
+        LLVM_DEBUG(dbgs() << "BOLT-DEBUG: processing ending on symbol "
+                          << *NewOrder.back() << "\n");
       }
       break;
     }
 
-    DEBUG(dbgs() << "BOLT-DEBUG: " << BD->getName() << " @ 0x"
-                 << Twine::utohexstr(Offset) << "\n");
+    LLVM_DEBUG(dbgs() << "BOLT-DEBUG: " << BD->getName() << " @ 0x"
+                      << Twine::utohexstr(Offset) << "\n");
 
     BD->setOutputLocation(OutputSection, Offset);
 
@@ -397,8 +397,8 @@ void ReorderData::setSectionOrder(BinaryContext &BC,
     for (auto &SubBD : BC.getSubBinaryData(BD)) {
       if (!SubBD.second->isJumpTable()) {
         auto SubOffset = Offset + SubBD.second->getAddress() - BD->getAddress();
-        DEBUG(dbgs() << "BOLT-DEBUG: SubBD " << SubBD.second->getName()
-                     << " @ " << SubOffset << "\n");
+        LLVM_DEBUG(dbgs() << "BOLT-DEBUG: SubBD " << SubBD.second->getName()
+                          << " @ " << SubOffset << "\n");
         SubBD.second->setOutputLocation(OutputSection, SubOffset);
       }
     }

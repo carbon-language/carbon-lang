@@ -14,8 +14,11 @@
 
 #include "BinaryContext.h"
 #include "llvm/ADT/ArrayRef.h"
+#include "llvm/ADT/DenseMap.h"
+#include "llvm/DebugInfo/DWARF/DWARFDataExtractor.h"
 #include "llvm/DebugInfo/DWARF/DWARFDebugFrame.h"
 #include "llvm/Support/Casting.h"
+#include "llvm/Support/Error.h"
 #include <map>
 
 namespace llvm {
@@ -60,6 +63,51 @@ public:
 
 private:
   FDEsMap FDEs;
+};
+
+/// Parse an existing .eh_frame and invoke the callback for each
+/// address that needs to be fixed if we want to preserve the original
+/// .eh_frame while changing code location.
+/// This code is based on DWARFDebugFrame::parse(), but trimmed down to
+/// parse only the structures that have address references.
+class EHFrameParser {
+public:
+  using PatcherCallbackTy = std::function<void(uint64_t, uint64_t, uint64_t)>;
+
+  /// Call PatcherCallback for every encountered external reference in frame
+  /// data. The expected signature is:
+  ///
+  ///   void PatcherCallback(uint64_t Value, uint64_t Offset, uint64_t Type);
+  ///
+  /// where Value is a value of the reference, Offset - is an offset into the
+  /// frame data at which the reference occured, and Type is a DWARF encoding
+  /// type of the reference.
+  static Error parse(DWARFDataExtractor Data, uint64_t EHFrameAddress,
+                     PatcherCallbackTy PatcherCallback);
+
+private:
+  EHFrameParser(DWARFDataExtractor D, uint64_t E, PatcherCallbackTy P)
+      : Data(D), EHFrameAddress(E), PatcherCallback(P), Offset(0) {}
+
+  struct CIEInfo {
+    uint64_t FDEPtrEncoding;
+    uint64_t LSDAPtrEncoding;
+    StringRef AugmentationString;
+
+    CIEInfo(uint64_t F, uint64_t L, StringRef A)
+        : FDEPtrEncoding(F), LSDAPtrEncoding(L), AugmentationString(A) {}
+  };
+
+  Error parseCIE(uint64_t StartOffset);
+  Error parseFDE(uint64_t CIEPointer, uint64_t StartStructureOffset);
+  Error parse();
+
+  DWARFDataExtractor Data;
+  uint64_t EHFrameAddress;
+  PatcherCallbackTy PatcherCallback;
+  uint64_t Offset;
+  DenseMap<uint64_t, CIEInfo *> CIEs;
+  std::vector<std::unique_ptr<CIEInfo>> Entries;
 };
 
 } // namespace bolt

@@ -14,7 +14,7 @@
 #include "ParallelUtilities.h"
 #include "Passes/ReorderAlgorithm.h"
 #include "Passes/ReorderFunctions.h"
-#include "llvm/Support/Options.h"
+#include "llvm/Support/CommandLine.h"
 
 #include <numeric>
 #include <vector>
@@ -277,7 +277,7 @@ void EliminateUnreachableBlocks::runOnFunction(BinaryFunction& Function) {
     unsigned Count;
     uint64_t Bytes;
     Function.markUnreachableBlocks();
-    DEBUG({
+    LLVM_DEBUG({
       for (auto *BB : Function.layout()) {
         if (!BB->isValid()) {
           dbgs() << "BOLT-INFO: UCE found unreachable block " << BB->getName()
@@ -403,10 +403,10 @@ void ReorderBasicBlocks::modifyFunctionLayout(BinaryFunction &BF,
     Algo.reset(new ReverseReorderAlgorithm());
   } else if (BF.size() <= opts::TSPThreshold && Type != LT_OPTIMIZE_SHUFFLE) {
     // Work on optimal solution if problem is small enough
-    DEBUG(dbgs() << "finding optimal block layout for " << BF << "\n");
+    LLVM_DEBUG(dbgs() << "finding optimal block layout for " << BF << "\n");
     Algo.reset(new TSPReorderAlgorithm());
   } else {
-    DEBUG(dbgs() << "running block layout heuristics on " << BF << "\n");
+    LLVM_DEBUG(dbgs() << "running block layout heuristics on " << BF << "\n");
 
     std::unique_ptr<ClusterAlgorithm> CAlgo;
     if (MinBranchClusters)
@@ -557,6 +557,13 @@ void LowerAnnotations::runOnFunctions(BinaryContext &BC) {
       }
     }
   }
+  for (BinaryFunction *BF : BC.getInjectedBinaryFunctions()) {
+    for (BinaryBasicBlock &BB : *BF) {
+      for (MCInst &Instruction : BB) {
+        BC.MIB->stripAnnotations(Instruction);
+      }
+    }
+  }
 
   // Release all memory taken by annotations
   BC.MIB->freeAnnotations();
@@ -601,8 +608,8 @@ uint64_t fixDoubleJumps(BinaryContext &BC,
         MCInst *UncondBranch = nullptr;
         auto Res = Pred->analyzeBranch(TBB, FBB, CondBranch, UncondBranch);
         if(!Res) {
-          DEBUG(dbgs() << "analyzeBranch failed in peepholes in block:\n";
-                Pred->dump());
+          LLVM_DEBUG(dbgs() << "analyzeBranch failed in peepholes in block:\n";
+                     Pred->dump());
           return false;
         }
         Pred->replaceSuccessor(&BB, Succ);
@@ -638,10 +645,10 @@ uint64_t fixDoubleJumps(BinaryContext &BC,
       }
 
       ++NumDoubleJumps;
-      DEBUG(dbgs() << "Removed double jump in " << Function << " from "
-                   << Pred->getName() << " -> " << BB.getName() << " to "
-                   << Pred->getName() << " -> " << SuccSym->getName()
-                   << (!Succ ? " (tail)\n" : "\n"));
+      LLVM_DEBUG(dbgs() << "Removed double jump in " << Function << " from "
+                        << Pred->getName() << " -> " << BB.getName() << " to "
+                        << Pred->getName() << " -> " << SuccSym->getName()
+                        << (!Succ ? " (tail)\n" : "\n"));
 
       return true;
     };
@@ -781,8 +788,8 @@ uint64_t SimplifyConditionalTailCalls::fixTailCalls(BinaryContext &BC,
 
       // analyzeBranch() can fail due to unusual branch instructions, e.g. jrcxz
       if (!Result) {
-        DEBUG(dbgs() << "analyzeBranch failed in SCTC in block:\n";
-              PredBB->dump());
+        LLVM_DEBUG(dbgs() << "analyzeBranch failed in SCTC in block:\n";
+                   PredBB->dump());
         continue;
       }
 
@@ -902,12 +909,12 @@ uint64_t SimplifyConditionalTailCalls::fixTailCalls(BinaryContext &BC,
     assert(BF.validateCFG());
   }
 
-  DEBUG(dbgs() << "BOLT: created " << NumLocalCTCs
-               << " conditional tail calls from a total of "
-               << NumLocalCTCCandidates << " candidates in function " << BF
-               << ". CTCs execution count for this function is "
-               << LocalCTCExecCount << " and CTC taken count is "
-               << LocalCTCTakenCount << "\n";);
+  LLVM_DEBUG(dbgs() << "BOLT: created " << NumLocalCTCs
+                    << " conditional tail calls from a total of "
+                    << NumLocalCTCCandidates << " candidates in function " << BF
+                    << ". CTCs execution count for this function is "
+                    << LocalCTCExecCount << " and CTC taken count is "
+                    << LocalCTCTakenCount << "\n";);
 
   NumTailCallsPatched += NumLocalCTCs;
   NumCandidateTailCalls += NumLocalCTCCandidates;
@@ -1263,7 +1270,7 @@ void PrintProfileStats::runOnFunctions(BinaryContext &BC) {
   if (WorstBiasFunc && opts::Verbosity >= 1) {
     outs() << "Worst average bias observed in " << WorstBiasFunc->getPrintName()
            << "\n";
-    DEBUG(WorstBiasFunc->dump());
+    LLVM_DEBUG(WorstBiasFunc->dump());
   }
 }
 

@@ -19,6 +19,7 @@
 #include "BinaryContext.h"
 #include "BinaryFunction.h"
 #include "MCPlusBuilder.h"
+#include "llvm/Support/CommandLine.h"
 #include "llvm/Support/ThreadPool.h"
 
 using namespace llvm;

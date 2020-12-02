@@ -249,7 +249,7 @@ std::string GetExecutablePath(const char *Argv0) {
     if (llvm::ErrorOr<std::string> P =
             llvm::sys::findProgramByName(ExecutablePath))
       ExecutablePath = *P;
-  return ExecutablePath.str();
+  return std::string(ExecutablePath.str());
 }
 
 int main(int argc, char **argv) {

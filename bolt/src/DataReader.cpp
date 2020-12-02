@@ -427,8 +427,8 @@ void DataReader::readProfile(BinaryFunction &BF) {
 
     if (!recordBranch(BF, BI.From.Offset, BI.To.Offset,
                       BI.Branches, BI.Mispreds)) {
-      DEBUG(dbgs() << "bad branch : " << BI.From.Offset << " -> "
-                   << BI.To.Offset << '\n');
+      LLVM_DEBUG(dbgs() << "bad branch : " << BI.From.Offset << " -> "
+                        << BI.To.Offset << '\n');
       ++MismatchedBranches;
     }
   }
@@ -579,14 +579,11 @@ float DataReader::evaluateProfileData(BinaryFunction &BF,
       continue;
     }
 
-    DEBUG(dbgs()
-        << "\tinvalid branch in " << BF << " : 0x"
-        << Twine::utohexstr(BI.From.Offset) << " -> ";
-        if (BI.From.Name == BI.To.Name)
-          dbgs() << "0x" << Twine::utohexstr(BI.To.Offset) << '\n';
-        else
-          dbgs() << "<outbounds>\n";
-    );
+    LLVM_DEBUG(dbgs() << "\tinvalid branch in " << BF << " : 0x"
+                      << Twine::utohexstr(BI.From.Offset) << " -> ";
+               if (BI.From.Name == BI.To.Name) dbgs()
+               << "0x" << Twine::utohexstr(BI.To.Offset) << '\n';
+               else dbgs() << "<outbounds>\n";);
   }
 
   const auto MatchRatio = (float) NumMatchedBranches / BranchData.Data.size();
@@ -716,7 +713,7 @@ bool DataReader::recordBranch(BinaryFunction &BF,
   auto *ToBB = BF.getBasicBlockContainingOffset(To);
 
   if (!FromBB || !ToBB) {
-    DEBUG(dbgs() << "failed to get block for recorded branch\n");
+    LLVM_DEBUG(dbgs() << "failed to get block for recorded branch\n");
     return false;
   }
 
@@ -757,8 +754,9 @@ bool DataReader::recordBranch(BinaryFunction &BF,
       }
 
       if (To <= LastInstrOffset) {
-        DEBUG(dbgs() << "branch recorded into the middle of the block" << " in "
-                     << BF << " : " << From << " -> " << To << '\n');
+        LLVM_DEBUG(dbgs() << "branch recorded into the middle of the block"
+                          << " in " << BF << " : " << From << " -> " << To
+                          << '\n');
         return false;
       }
     }
@@ -783,14 +781,14 @@ bool DataReader::recordBranch(BinaryFunction &BF,
     // evaluate to true if the first instr is not a branch (call/jmp/ret/etc)
     if (collectedInBoltedBinary()) {
       if (FromBB->getInputOffset() != From) {
-        DEBUG(dbgs() << "offset " << From << " does not match a BB in " << BF
-                     << '\n');
+        LLVM_DEBUG(dbgs() << "offset " << From << " does not match a BB in "
+                          << BF << '\n');
         return false;
       }
       FromInstruction = nullptr;
     } else {
-      DEBUG(dbgs() << "no instruction for offset " << From << " in " << BF
-                   << '\n');
+      LLVM_DEBUG(dbgs() << "no instruction for offset " << From << " in " << BF
+                        << '\n');
       return false;
     }
   }
@@ -810,9 +808,9 @@ bool DataReader::recordBranch(BinaryFunction &BF,
     if (collectedInBoltedBinary() && FromBB == ToBB)
       return true;
 
-    DEBUG(dbgs() << "invalid branch in " << BF << '\n'
-                 << Twine::utohexstr(From) << " -> "
-                 << Twine::utohexstr(To) << '\n');
+    LLVM_DEBUG(dbgs() << "invalid branch in " << BF << '\n'
+                      << Twine::utohexstr(From) << " -> "
+                      << Twine::utohexstr(To) << '\n');
     return false;
   }
 

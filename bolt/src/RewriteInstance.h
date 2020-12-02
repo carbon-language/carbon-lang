@@ -20,12 +20,12 @@
 #include "Passes/Instrumentation.h"
 #include "ProfileReaderBase.h"
 #include "llvm/ADT/ArrayRef.h"
+#include "llvm/ADT/StringSet.h"
 #include "llvm/ExecutionEngine/Orc/RTDyldObjectLinkingLayer.h"
 #include "llvm/MC/StringTableBuilder.h"
 #include "llvm/Object/ELFObjectFile.h"
 #include "llvm/Object/ObjectFile.h"
 #include "llvm/Support/Error.h"
-#include "llvm/Support/StringPool.h"
 #include <map>
 #include <set>
 
@@ -184,10 +184,10 @@ private:
   std::vector<BinarySection *> getCodeSections();
 
   /// Map all sections to their final addresses.
-  void mapCodeSections(orc::VModuleKey ObjectsHandle);
-  void mapDataSections(orc::VModuleKey ObjectsHandle);
-  void mapFileSections(orc::VModuleKey ObjectsHandle);
-  void mapExtraSections(orc::VModuleKey ObjectsHandle);
+  void mapCodeSections(RuntimeDyld &RTDyld);
+  void mapDataSections(RuntimeDyld &RTDyld);
+  void mapFileSections(RuntimeDyld &RTDyld);
+  void mapExtraSections(RuntimeDyld &RTDyld);
 
   /// Update output object's values based on the final \p Layout.
   void updateOutputValues(const MCAsmLayout &Layout);
@@ -278,7 +278,7 @@ private:
 
   /// Return a name of the input file section in the output file.
   template<typename ELFObjType, typename ELFShdrTy>
-  std::string getOutputSectionName(const ELFObjType *Obj,
+  std::string getOutputSectionName(const ELFObjType &Obj,
                                    const ELFShdrTy &Section);
 
   /// Return a list of all sections to include in the output binary.
@@ -413,11 +413,8 @@ private:
   std::unique_ptr<BinaryContext> BC;
   std::unique_ptr<CFIReaderWriter> CFIRdWrt;
 
-  std::unique_ptr<orc::SymbolStringPool> SSP;
-  std::unique_ptr<orc::ExecutionSession> ES;
-
-  // Run ObjectLinkingLayer() with custom memory manager and symbol resolver.
-  std::unique_ptr<orc::RTDyldObjectLinkingLayer> OLT;
+  // Run ExecutionEngine linker with custom memory manager and symbol resolver.
+  std::unique_ptr<RuntimeDyld> RTDyld;
 
   /// Output file where we mix original code from the input binary and
   /// optimized code for selected functions.
@@ -498,8 +495,7 @@ private:
 
   /// Section header string table.
   StringTableBuilder SHStrTab;
-  StringPool SHStrTabPool;
-  std::vector<PooledStringPtr> AllSHStrTabStrings;
+  std::vector<std::string> SHStrTabPool;
 
   /// A rewrite of strtab
   std::string NewStrTab;

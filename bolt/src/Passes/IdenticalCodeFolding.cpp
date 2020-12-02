@@ -11,7 +11,7 @@
 
 #include "Passes/IdenticalCodeFolding.h"
 #include "ParallelUtilities.h"
-#include "llvm/Support/Options.h"
+#include "llvm/Support/CommandLine.h"
 #include "llvm/Support/ThreadPool.h"
 #include "llvm/Support/Timer.h"
 #include <atomic>
@@ -461,7 +461,7 @@ void IdenticalCodeFolding::runOnFunctions(BinaryContext &BC) {
                                         "ICF breakdown", "ICF breakdown",
                                         opts::TimeICF);
     Timer SinglePass("single fold pass", "single fold pass");
-    DEBUG(SinglePass.startTimer());
+    LLVM_DEBUG(SinglePass.startTimer());
 
     ThreadPool *ThPool;
     if (!opts::NoThreads)
@@ -470,7 +470,7 @@ void IdenticalCodeFolding::runOnFunctions(BinaryContext &BC) {
     // Fold identical functions within a single congruent bucket
     auto processSingleBucket = [&](std::set<BinaryFunction *> &Candidates) {
       Timer T("folding single congruent list", "folding single congruent list");
-      DEBUG(T.startTimer());
+      LLVM_DEBUG(T.startTimer());
 
       // Identical functions go into the same bucket.
       IdenticalBucketsMap IdenticalBuckets;
@@ -495,8 +495,8 @@ void IdenticalCodeFolding::runOnFunctions(BinaryContext &BC) {
         BinaryFunction *ParentBF = Twins[0];
         for (unsigned i = 1; i < Twins.size(); ++i) {
           auto *ChildBF = Twins[i];
-          DEBUG(dbgs() << "BOLT-DEBUG: folding " << *ChildBF << " into "
-                       << *ParentBF << '\n');
+          LLVM_DEBUG(dbgs() << "BOLT-DEBUG: folding " << *ChildBF << " into "
+                            << *ParentBF << '\n');
 
           // Remove child function from the list of candidates.
           auto FI = Candidates.find(ChildBF);
@@ -517,7 +517,7 @@ void IdenticalCodeFolding::runOnFunctions(BinaryContext &BC) {
         }
       }
 
-      DEBUG(T.stopTimer());
+      LLVM_DEBUG(T.stopTimer());
     };
 
     // Create a task for each congruent bucket
@@ -535,7 +535,7 @@ void IdenticalCodeFolding::runOnFunctions(BinaryContext &BC) {
     if (!opts::NoThreads)
       ThPool->wait();
 
-    DEBUG(SinglePass.stopTimer());
+    LLVM_DEBUG(SinglePass.stopTimer());
   };
 
   hashFunctions();
@@ -545,7 +545,7 @@ void IdenticalCodeFolding::runOnFunctions(BinaryContext &BC) {
   // We repeat the pass until no new modifications happen.
   do {
     NumFoldedLastIteration = 0;
-    DEBUG(dbgs() << "BOLT-DEBUG: ICF iteration " << Iteration << "...\n");
+    LLVM_DEBUG(dbgs() << "BOLT-DEBUG: ICF iteration " << Iteration << "...\n");
 
     performFoldingPass();
 
@@ -554,7 +554,7 @@ void IdenticalCodeFolding::runOnFunctions(BinaryContext &BC) {
 
   } while (NumFoldedLastIteration > 0);
 
-   DEBUG(
+   LLVM_DEBUG(
     // Print functions that are congruent but not identical.
     for (auto &CBI : CongruentBuckets) {
       auto &Candidates = CBI.second;

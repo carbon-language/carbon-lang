@@ -22,7 +22,7 @@ extern cl::OptionCategory BoltCategory;
 cl::opt<unsigned>
 ThreadCount("thread-count",
   cl::desc("number of threads"),
-  cl::init(hardware_concurrency()),
+  cl::init(hardware_concurrency().compute_thread_count()),
   cl::cat(BoltCategory));
 
 cl::opt<bool>
@@ -101,7 +101,8 @@ ThreadPool &getThreadPool() {
   if (ThreadPoolPtr.get())
     return *ThreadPoolPtr;
 
-  ThreadPoolPtr = std::make_unique<ThreadPool>(opts::ThreadCount);
+  ThreadPoolPtr = std::make_unique<ThreadPool>(
+      llvm::hardware_concurrency(opts::ThreadCount));
   return *ThreadPoolPtr;
 }
 
@@ -115,7 +116,7 @@ void runOnEachFunction(BinaryContext &BC, SchedulingPolicy SchedPolicy,
   auto runBlock = [&](std::map<uint64_t, BinaryFunction>::iterator BlockBegin,
                       std::map<uint64_t, BinaryFunction>::iterator BlockEnd) {
     Timer T(LogName, LogName);
-    DEBUG(T.startTimer());
+    LLVM_DEBUG(T.startTimer());
 
     for (auto It = BlockBegin; It != BlockEnd; ++It) {
       auto &BF = It->second;
@@ -124,7 +125,7 @@ void runOnEachFunction(BinaryContext &BC, SchedulingPolicy SchedPolicy,
 
       WorkFunction(BF);
     }
-    DEBUG(T.stopTimer());
+    LLVM_DEBUG(T.stopTimer());
   };
 
   if (opts::NoThreads || ForceSequential) {
@@ -170,7 +171,7 @@ void runOnEachFunctionWithUniqueAllocId(
                       std::map<uint64_t, BinaryFunction>::iterator BlockEnd,
                       MCPlusBuilder::AllocatorIdTy AllocId) {
     Timer T(LogName, LogName);
-    DEBUG(T.startTimer());
+    LLVM_DEBUG(T.startTimer());
     std::shared_lock<std::shared_timed_mutex> Lock(MainLock);
     for (auto It = BlockBegin; It != BlockEnd; ++It) {
       auto &BF = It->second;
@@ -179,7 +180,7 @@ void runOnEachFunctionWithUniqueAllocId(
 
       WorkFunction(BF, AllocId);
     }
-    DEBUG(T.stopTimer());
+    LLVM_DEBUG(T.stopTimer());
   };
 
   if (opts::NoThreads || ForceSequential) {

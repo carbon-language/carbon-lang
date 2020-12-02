@@ -21,17 +21,16 @@ public:
   InstrumentationRuntimeLibrary(std::unique_ptr<InstrumentationSummary> Summary)
       : Summary(std::move(Summary)) {}
 
-  void
-  addRuntimeLibSections(std::vector<std::string> &SecNames) const override {
+  void addRuntimeLibSections(std::vector<std::string> &SecNames) const final {
     SecNames.push_back(".bolt.instr.counters");
   }
 
-  void adjustCommandLineOptions(const BinaryContext &BC) const override;
+  void adjustCommandLineOptions(const BinaryContext &BC) const final;
 
-  void emitBinary(BinaryContext &BC, MCStreamer &Streamer) override;
+  void emitBinary(BinaryContext &BC, MCStreamer &Streamer) final;
 
-  void link(BinaryContext &BC, StringRef ToolPath, orc::ExecutionSession &ES,
-            orc::RTDyldObjectLinkingLayer &OLT) override;
+  void link(BinaryContext &BC, StringRef ToolPath, RuntimeDyld &RTDyld,
+            std::function<void(RuntimeDyld &)> OnLoad) final;
 
 private:
   std::string buildTables(BinaryContext &BC);

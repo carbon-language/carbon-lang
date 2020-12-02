@@ -73,7 +73,7 @@ void AllocCombinerPass::combineAdjustments(BinaryContext &BC,
         continue;
       }
 
-      DEBUG({
+      LLVM_DEBUG({
         dbgs() << "At \"" << BF.getPrintName() << "\", combining: \n";
         Inst.dump();
         Prev->dump();
@@ -85,7 +85,7 @@ void AllocCombinerPass::combineAdjustments(BinaryContext &BC,
 
       BC.MIB->addToImm(Inst, Adjustment, BC.Ctx.get());
 
-      DEBUG({
+      LLVM_DEBUG({
         dbgs() << "After adjustment:\n";
         Inst.dump();
       });

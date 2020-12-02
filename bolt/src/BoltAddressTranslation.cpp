@@ -31,9 +31,9 @@ void BoltAddressTranslation::writeEntriesForBB(MapTy &Map,
          "Every output BB must track back to an input BB for profile "
          "collection in bolted binaries");
 
-  DEBUG(dbgs() << "BB " << BB.getName() <<"\n");
-  DEBUG(dbgs() << "  Key: " << Twine::utohexstr(BBOutputOffset)
-               << " Val: " << Twine::utohexstr(BBInputOffset) << "\n");
+  LLVM_DEBUG(dbgs() << "BB " << BB.getName() << "\n");
+  LLVM_DEBUG(dbgs() << "  Key: " << Twine::utohexstr(BBOutputOffset)
+                    << " Val: " << Twine::utohexstr(BBInputOffset) << "\n");
   // In case of conflicts (same Key mapping to different Vals), the last
   // update takes precedence. Of course it is not ideal to have conflicts and
   // those happen when we have an empty BB that either contained only
@@ -51,16 +51,15 @@ void BoltAddressTranslation::writeEntriesForBB(MapTy &Map,
     if (OutputOffset == BBOutputOffset)
       continue;
 
-    DEBUG(dbgs() << "  Key: " << Twine::utohexstr(OutputOffset)
-                 << " Val: " << Twine::utohexstr(InputOffset)
-                 << " (branch)\n");
+    LLVM_DEBUG(dbgs() << "  Key: " << Twine::utohexstr(OutputOffset) << " Val: "
+                      << Twine::utohexstr(InputOffset) << " (branch)\n");
     Map.insert(
         std::pair<uint32_t, uint32_t>(OutputOffset, InputOffset | BRANCHENTRY));
   }
 }
 
 void BoltAddressTranslation::write(raw_ostream &OS) {
-  DEBUG(dbgs() << "BOLT-DEBUG: Writing BOLT Address Translation Tables\n");
+  LLVM_DEBUG(dbgs() << "BOLT-DEBUG: Writing BOLT Address Translation Tables\n");
   for (auto &BFI : BC.getBinaryFunctions()) {
     auto &Function = BFI.second;
     // We don't need a translation table if the body of the function hasn't
@@ -68,9 +67,9 @@ void BoltAddressTranslation::write(raw_ostream &OS) {
     if (!BC.HasRelocations && !Function.isSimple())
       continue;
 
-    DEBUG(dbgs() << "Function name: " << Function.getPrintName() << "\n");
-    DEBUG(dbgs() << " Address reference: 0x"
-                 << Twine::utohexstr(Function.getOutputAddress()) << "\n");
+    LLVM_DEBUG(dbgs() << "Function name: " << Function.getPrintName() << "\n");
+    LLVM_DEBUG(dbgs() << " Address reference: 0x"
+                      << Twine::utohexstr(Function.getOutputAddress()) << "\n");
     MapTy Map;
     const bool IsSplit = Function.isSplit();
     for (const auto &BB : Function.layout()) {
@@ -85,7 +84,7 @@ void BoltAddressTranslation::write(raw_ostream &OS) {
 
     // Cold map
     Map.clear();
-    DEBUG(dbgs() << " Cold part\n");
+    LLVM_DEBUG(dbgs() << " Cold part\n");
     for (const auto &BB : Function.layout()) {
       if (!BB->isCold())
         continue;
@@ -98,13 +97,13 @@ void BoltAddressTranslation::write(raw_ostream &OS) {
 
   const uint32_t NumFuncs = Maps.size();
   OS.write(reinterpret_cast<const char *>(&NumFuncs), 4);
-  DEBUG(dbgs() << "Writing " << NumFuncs << " functions for BAT.\n");
+  LLVM_DEBUG(dbgs() << "Writing " << NumFuncs << " functions for BAT.\n");
   for (auto &MapEntry : Maps) {
     const uint64_t Address = MapEntry.first;
     MapTy &Map = MapEntry.second;
     const uint32_t NumEntries = Map.size();
-    DEBUG(dbgs() << "Writing " << NumEntries << " entries for 0x"
-                 << Twine::utohexstr(Address) << ".\n");
+    LLVM_DEBUG(dbgs() << "Writing " << NumEntries << " entries for 0x"
+                      << Twine::utohexstr(Address) << ".\n");
     OS.write(reinterpret_cast<const char *>(&Address), 8);
     OS.write(reinterpret_cast<const char *>(&NumEntries), 4);
     for (auto &KeyVal : Map) {
@@ -113,13 +112,14 @@ void BoltAddressTranslation::write(raw_ostream &OS) {
     }
   }
   const uint32_t NumColdEntries = ColdPartSource.size();
-  DEBUG(dbgs() << "Writing " << NumColdEntries << " cold part mappings.\n");
+  LLVM_DEBUG(dbgs() << "Writing " << NumColdEntries
+                    << " cold part mappings.\n");
   OS.write(reinterpret_cast<const char *>(&NumColdEntries), 4);
   for (auto &ColdEntry : ColdPartSource) {
     OS.write(reinterpret_cast<const char *>(&ColdEntry.first), 8);
     OS.write(reinterpret_cast<const char *>(&ColdEntry.second), 8);
-    DEBUG(dbgs() << " " << Twine::utohexstr(ColdEntry.first) << " -> "
-          << Twine::utohexstr(ColdEntry.second) << "\n");
+    LLVM_DEBUG(dbgs() << " " << Twine::utohexstr(ColdEntry.first) << " -> "
+                      << Twine::utohexstr(ColdEntry.second) << "\n");
   }
 
   outs() << "BOLT-INFO: Wrote " << Maps.size() << " BAT maps\n";
@@ -129,7 +129,7 @@ void BoltAddressTranslation::write(raw_ostream &OS) {
 
 std::error_code BoltAddressTranslation::parse(StringRef Buf) {
   DataExtractor DE = DataExtractor(Buf, true, 8);
-  uint32_t Offset = 0;
+  uint64_t Offset = 0;
   if (Buf.size() < 12)
     return make_error_code(llvm::errc::io_error);
 
@@ -150,7 +150,7 @@ std::error_code BoltAddressTranslation::parse(StringRef Buf) {
     return make_error_code(llvm::errc::io_error);
 
   const uint32_t NumFunctions = DE.getU32(&Offset);
-  DEBUG(dbgs() << "Parsing " << NumFunctions << " functions\n");
+  LLVM_DEBUG(dbgs() << "Parsing " << NumFunctions << " functions\n");
   for (uint32_t I = 0; I < NumFunctions; ++I) {
     if (Buf.size() - Offset < 12)
       return make_error_code(llvm::errc::io_error);
@@ -159,16 +159,16 @@ std::error_code BoltAddressTranslation::parse(StringRef Buf) {
     const uint32_t NumEntries = DE.getU32(&Offset);
     MapTy Map;
 
-    DEBUG(dbgs() << "Parsing " << NumEntries << " entries for 0x"
-                 << Twine::utohexstr(Address) << "\n");
+    LLVM_DEBUG(dbgs() << "Parsing " << NumEntries << " entries for 0x"
+                      << Twine::utohexstr(Address) << "\n");
     if (Buf.size() - Offset < 8 * NumEntries)
       return make_error_code(llvm::errc::io_error);
     for (uint32_t J = 0; J < NumEntries; ++J) {
       const uint32_t OutputAddr = DE.getU32(&Offset);
       const uint32_t InputAddr = DE.getU32(&Offset);
       Map.insert(std::pair<uint32_t, uint32_t>(OutputAddr, InputAddr));
-      DEBUG(dbgs() << Twine::utohexstr(OutputAddr) << " -> "
-                   << Twine::utohexstr(InputAddr) << "\n");
+      LLVM_DEBUG(dbgs() << Twine::utohexstr(OutputAddr) << " -> "
+                        << Twine::utohexstr(InputAddr) << "\n");
     }
     Maps.insert(std::pair<uint64_t, MapTy>(Address, Map));
   }
@@ -177,7 +177,7 @@ std::error_code BoltAddressTranslation::parse(StringRef Buf) {
     return make_error_code(llvm::errc::io_error);
 
   const uint32_t NumColdEntries = DE.getU32(&Offset);
-  DEBUG(dbgs() << "Parsing " << NumColdEntries << " cold part mappings\n");
+  LLVM_DEBUG(dbgs() << "Parsing " << NumColdEntries << " cold part mappings\n");
   for (uint32_t I = 0; I < NumColdEntries; ++I) {
     if (Buf.size() - Offset < 16)
       return make_error_code(llvm::errc::io_error);
@@ -185,8 +185,8 @@ std::error_code BoltAddressTranslation::parse(StringRef Buf) {
     const uint32_t HotAddress = DE.getU64(&Offset);
     ColdPartSource.insert(
         std::pair<uint64_t, uint64_t>(ColdAddress, HotAddress));
-    DEBUG(dbgs() << Twine::utohexstr(ColdAddress) << " -> "
-                 << Twine::utohexstr(HotAddress) << "\n");
+    LLVM_DEBUG(dbgs() << Twine::utohexstr(ColdAddress) << " -> "
+                      << Twine::utohexstr(HotAddress) << "\n");
   }
   outs() << "BOLT-INFO: Parsed " << Maps.size() << " BAT entries\n";
   outs() << "BOLT-INFO: Parsed " << NumColdEntries
@@ -283,11 +283,11 @@ uint64_t BoltAddressTranslation::fetchParentAddress(uint64_t Address) const {
 bool BoltAddressTranslation::enabledFor(
     llvm::object::ELFObjectFileBase *InputFile) const {
   for (const auto &Section : InputFile->sections()) {
-    StringRef SectionName;
-    if (std::error_code EC = Section.getName(SectionName))
+    auto SectionNameOrErr = Section.getName();
+    if (auto E = SectionNameOrErr.takeError())
       continue;
 
-    if (SectionName == SECTION_NAME)
+    if (SectionNameOrErr.get() == SECTION_NAME)
       return true;
   }
   return false;

@@ -44,7 +44,7 @@ public:
   uint32_t ObjectsLoaded{0};
 
   ExecutableFileMemoryManager(BinaryContext &BC, bool AllowStubs)
-    : BC(BC), AllowStubs(AllowStubs) {}
+      : BC(BC), AllowStubs(AllowStubs) {}
 
   ~ExecutableFileMemoryManager();
 
@@ -60,6 +60,17 @@ public:
                                bool IsReadOnly) override {
     return allocateSection(Size, Alignment, SectionID, SectionName,
                            /*IsCode=*/false, IsReadOnly);
+  }
+
+  // Ignore TLS sections by treating them as a regular data section
+  TLSSection allocateTLSSection(uintptr_t Size, unsigned Alignment,
+                                unsigned SectionID,
+                                StringRef SectionName) override {
+    TLSSection Res;
+    Res.Offset = 0;
+    Res.InitializationImage = allocateDataSection(
+        Size, Alignment, SectionID, SectionName, /*IsReadOnly=*/false);
+    return Res;
   }
 
   bool allowStubAllocation() const override { return AllowStubs; }

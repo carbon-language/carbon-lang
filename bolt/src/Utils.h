@@ -19,6 +19,7 @@
 #include "llvm/Support/Error.h"
 
 namespace llvm {
+class MCCFIInstruction;
 namespace bolt {
 
 /// Free memory allocated for \p List.
@@ -35,7 +36,15 @@ void check_error(std::error_code EC, StringRef Message);
 
 void check_error(Error E, Twine Message);
 
+// Determines which register a given DWARF expression is being assigned to.
+// If the expression is defining the CFA, return NoneType.
+Optional<uint8_t> readDWARFExpressionTargetReg(StringRef ExprBytes);
+
 } // namespace bolt
+
+bool operator==(const llvm::MCCFIInstruction &L,
+                const llvm::MCCFIInstruction &R);
+
 } // namespace llvm
 
 #endif

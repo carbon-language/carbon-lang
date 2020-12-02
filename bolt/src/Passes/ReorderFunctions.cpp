@@ -11,7 +11,7 @@
 
 #include "ReorderFunctions.h"
 #include "HFSort.h"
-#include "llvm/Support/Options.h"
+#include "llvm/Support/CommandLine.h"
 #include <fstream>
 
 #define DEBUG_TYPE "hfsort"
@@ -396,7 +396,7 @@ void ReorderFunctions::runOnFunctions(BinaryContext &BC) {
   std::unique_ptr<std::ofstream> FuncsFile;
   if (!opts::GenerateFunctionOrderFile.empty()) {
     FuncsFile =
-      llvm::make_unique<std::ofstream>(opts::GenerateFunctionOrderFile,
+      std::make_unique<std::ofstream>(opts::GenerateFunctionOrderFile,
                                        std::ios::out);
     if (!FuncsFile) {
       errs() << "BOLT-ERROR: ordered functions file "
@@ -408,7 +408,7 @@ void ReorderFunctions::runOnFunctions(BinaryContext &BC) {
   std::unique_ptr<std::ofstream> LinkSectionsFile;
   if (!opts::LinkSectionsFile.empty()) {
     LinkSectionsFile =
-      llvm::make_unique<std::ofstream>(opts::LinkSectionsFile,
+      std::make_unique<std::ofstream>(opts::LinkSectionsFile,
                                        std::ios::out);
     if (!LinkSectionsFile) {
       errs() << "BOLT-ERROR: link sections file "

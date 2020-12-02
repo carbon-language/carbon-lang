@@ -25,7 +25,7 @@
 
 #include "Inliner.h"
 #include "MCPlus.h"
-#include "llvm/Support/Options.h"
+#include "llvm/Support/CommandLine.h"
 #include <map>
 
 #define DEBUG_TYPE "bolt-inliner"
@@ -152,7 +152,7 @@ uint64_t Inliner::getSizeOfCallInst(const BinaryContext &BC) {
     return SizeOfCallInst;
 
   MCInst Inst;
-  BC.MIB->createCall(Inst, BC.Ctx->createTempSymbol(), BC.Ctx.get());
+  BC.MIB->createCall(Inst, BC.Ctx->createNamedTempSymbol(), BC.Ctx.get());
   SizeOfCallInst = BC.computeInstructionSize(Inst);
 
   return SizeOfCallInst;
@@ -163,7 +163,7 @@ uint64_t Inliner::getSizeOfTailCallInst(const BinaryContext &BC) {
     return SizeOfTailCallInst;
 
   MCInst Inst;
-  BC.MIB->createTailCall(Inst, BC.Ctx->createTempSymbol(), BC.Ctx.get());
+  BC.MIB->createTailCall(Inst, BC.Ctx->createNamedTempSymbol(), BC.Ctx.get());
   SizeOfTailCallInst = BC.computeInstructionSize(Inst);
 
   return SizeOfTailCallInst;
@@ -341,7 +341,7 @@ Inliner::inlineCall(BinaryBasicBlock &CallerBB,
       if (MIB.isPseudo(Inst))
         continue;
 
-      MIB.stripAnnotations(Inst);
+      MIB.stripAnnotations(Inst, /*KeepTC=*/BC.isX86());
 
       // Fix branch target. Strictly speaking, we don't have to do this as
       // targets of direct branches will be fixed later and don't matter
@@ -499,10 +499,11 @@ bool Inliner::inlineCallsInFunction(BinaryFunction &Function) {
         }
       }
 
-      DEBUG(dbgs() << "BOLT-DEBUG: inlining call to " << *TargetFunction
-                   << " in " << Function << " : " << BB->getName()
-                   << ". Count: " << BB->getKnownExecutionCount()
-                   << ". Size change: " << SizeAfterInlining << " bytes.\n");
+      LLVM_DEBUG(dbgs() << "BOLT-DEBUG: inlining call to " << *TargetFunction
+                        << " in " << Function << " : " << BB->getName()
+                        << ". Count: " << BB->getKnownExecutionCount()
+                        << ". Size change: " << SizeAfterInlining
+                        << " bytes.\n");
 
       std::tie(BB, InstIt) = inlineCall(*BB, InstIt, *TargetFunction);
 
@@ -522,8 +523,8 @@ bool Inliner::inlineCallsInFunction(BinaryFunction &Function) {
         auto CallerIInfo = InliningCandidates.find(&Function);
         if (CallerIInfo != InliningCandidates.end() &&
             CallerIInfo->second.Type == INL_ANY) {
-          DEBUG(dbgs() << "adjusting inlining status for function " << Function
-                       << '\n');
+          LLVM_DEBUG(dbgs() << "adjusting inlining status for function "
+                            << Function << '\n');
           CallerIInfo->second.Type = INL_TAILCALL;
         }
       }

@@ -1,8 +1,31 @@
 #include "DataflowAnalysis.h"
 
+#define DEBUG_TYPE "dataflow"
+
 namespace llvm {
 
-raw_ostream &operator<<(raw_ostream &OS, const BitVector &Val) {
+raw_ostream &operator<<(raw_ostream &OS, const BitVector &State) {
+  LLVM_DEBUG({
+    OS << "BitVector(";
+    auto Sep = "";
+    if (State.count() > (State.size() >> 1)) {
+      OS << "all, except: ";
+      auto BV = State;
+      BV.flip();
+      for (auto I = BV.find_first(); I != -1; I = BV.find_next(I)) {
+        OS << Sep << I;
+        Sep = " ";
+      }
+      OS << ")";
+      return OS;
+    }
+    for (auto I = State.find_first(); I != -1; I = State.find_next(I)) {
+      OS << Sep << I;
+      Sep = " ";
+    }
+    OS << ")";
+    return OS;
+  });
   OS << "BitVector";
   return OS;
 }

@@ -12,6 +12,7 @@
 #include "MCPlus.h"
 #include "ShrinkWrapping.h"
 #include <numeric>
+#include <stack>
 
 #define DEBUG_TYPE "shrinkwrapping"
 
@@ -39,9 +40,9 @@ void CalleeSavedAnalysis::analyzeSaves() {
   auto &InsnToBB = Info.getInsnToBBMap();
   BitVector BlacklistedRegs(BC.MRI->getNumRegs(), false);
 
-  DEBUG(dbgs() << "Checking spill locations\n");
+  LLVM_DEBUG(dbgs() << "Checking spill locations\n");
   for (auto &BB : BF) {
-    DEBUG(dbgs() << "\tNow at BB " << BB.getName() << "\n");
+    LLVM_DEBUG(dbgs() << "\tNow at BB " << BB.getName() << "\n");
     const MCInst *Prev = nullptr;
     for (auto &Inst : BB) {
       if (auto FIE = FA.getFIEFor(Inst)) {
@@ -104,8 +105,8 @@ void CalleeSavedAnalysis::analyzeSaves() {
         SavingCost[FIE->RegOrImm] += InsnToBB[&Inst]->getKnownExecutionCount();
         BC.MIB->addAnnotation(Inst, getSaveTag(), FIE->RegOrImm, AllocatorId);
         OffsetsByReg[FIE->RegOrImm] = FIE->StackOffset;
-        DEBUG(dbgs() << "Logging new candidate for Callee-Saved Reg: "
-                     << FIE->RegOrImm << "\n");
+        LLVM_DEBUG(dbgs() << "Logging new candidate for Callee-Saved Reg: "
+                          << FIE->RegOrImm << "\n");
       }
       Prev = &Inst;
     }
@@ -142,15 +143,15 @@ void CalleeSavedAnalysis::analyzeRestores() {
         // we don't completely understand what's happening here
         if (FIE->StackOffset != OffsetsByReg[FIE->RegOrImm]) {
           CalleeSaved.reset(FIE->RegOrImm);
-          DEBUG(dbgs() << "Dismissing Callee-Saved Reg because we found a "
-                          "mismatching restore: "
-                       << FIE->RegOrImm << "\n");
+          LLVM_DEBUG(dbgs() << "Dismissing Callee-Saved Reg because we found a "
+                               "mismatching restore: "
+                            << FIE->RegOrImm << "\n");
           Prev = &Inst;
           continue;
         }
 
-        DEBUG(dbgs() << "Adding matching restore for: " << FIE->RegOrImm
-                     << "\n");
+        LLVM_DEBUG(dbgs() << "Adding matching restore for: " << FIE->RegOrImm
+                          << "\n");
         if (LoadFIEByReg[FIE->RegOrImm] == nullptr)
           LoadFIEByReg[FIE->RegOrImm] = &*FIE;
         BC.MIB->addAnnotation(Inst, getRestoreTag(), FIE->RegOrImm,
@@ -358,8 +359,8 @@ void StackLayoutModifier::classifyStackAccesses() {
       BC.MIB->addAnnotation(Inst, getSlotTag(), FIEX->StackOffset, AllocatorId);
       RegionToRegMap[FIEX->StackOffset].insert(FIEX->RegOrImm);
       RegToRegionMap[FIEX->RegOrImm].insert(FIEX->StackOffset);
-      DEBUG(dbgs() << "Adding region " << FIEX->StackOffset << " size "
-                   << (int)FIEX->Size << "\n");
+      LLVM_DEBUG(dbgs() << "Adding region " << FIEX->StackOffset << " size "
+                        << (int)FIEX->Size << "\n");
     }
   }
 }
@@ -370,10 +371,10 @@ void StackLayoutModifier::classifyCFIs() {
   uint16_t CfaReg{7};
 
   auto recordAccess = [&](MCInst *Inst, int64_t Offset) {
-    const uint16_t Reg = BC.MRI->getLLVMRegNum(CfaReg, /*isEH=*/false);
+    const uint16_t Reg = *BC.MRI->getLLVMRegNum(CfaReg, /*isEH=*/false);
     if (Reg == BC.MIB->getStackPointer() || Reg == BC.MIB->getFramePointer()) {
       BC.MIB->addAnnotation(*Inst, getSlotTag(), Offset, AllocatorId);
-      DEBUG(dbgs() << "Recording CFI " << Offset << "\n");
+      LLVM_DEBUG(dbgs() << "Recording CFI " << Offset << "\n");
     } else {
       IsSimple = false;
       return;
@@ -384,17 +385,17 @@ void StackLayoutModifier::classifyCFIs() {
     for (auto &Inst : *BB) {
       if (!BC.MIB->isCFI(Inst))
         continue;
-      auto *CFI = BF.getCFIFor(Inst);
+      const MCCFIInstruction *CFI = BF.getCFIFor(Inst);
       switch (CFI->getOperation()) {
       case MCCFIInstruction::OpDefCfa:
-        CfaOffset = CFI->getOffset();
+        CfaOffset = -CFI->getOffset();
         recordAccess(&Inst, CfaOffset);
-      // Fall-through
+        LLVM_FALLTHROUGH;
       case MCCFIInstruction::OpDefCfaRegister:
         CfaReg = CFI->getRegister();
         break;
       case MCCFIInstruction::OpDefCfaOffset:
-        CfaOffset = CFI->getOffset();
+        CfaOffset = -CFI->getOffset();
         recordAccess(&Inst, CfaOffset);
         break;
       case MCCFIInstruction::OpOffset:
@@ -661,10 +662,15 @@ void StackLayoutModifier::performChanges() {
         if (ModifiedCFIIndices.count(CFINum))
           continue;
         ModifiedCFIIndices.insert(CFINum);
-        MCCFIInstruction *CFI = BF.getCFIFor(Inst);
-        DEBUG(dbgs() << "Changing CFI offset from " << CFI->getOffset()
-                     << " to " << (CFI->getOffset() + Adjustment) << "\n");
-        CFI->setOffset(CFI->getOffset() + Adjustment);
+        const MCCFIInstruction *CFI = BF.getCFIFor(Inst);
+        const MCCFIInstruction::OpType Operation = CFI->getOperation();
+        if (Operation == MCCFIInstruction::OpDefCfa ||
+            Operation == MCCFIInstruction::OpDefCfaOffset) {
+          Adjustment = 0 - Adjustment;
+        }
+        LLVM_DEBUG(dbgs() << "Changing CFI offset from " << CFI->getOffset()
+                          << " to " << (CFI->getOffset() + Adjustment) << "\n");
+        BF.mutateCFIOffsetFor(Inst, CFI->getOffset() + Adjustment);
         continue;
       }
       int32_t SrcImm{0};
@@ -696,7 +702,7 @@ void StackLayoutModifier::performChanges() {
       else if (IsStore)
         Success = BC.MIB->createSaveToStack(
             Inst, StackPtrReg, StackOffset + Adjustment, Reg, Size);
-      DEBUG({
+      LLVM_DEBUG({
         dbgs() << "Adjusted instruction: ";
         Inst.dump();
       });
@@ -758,16 +764,18 @@ void ShrinkWrapping::pruneUnwantedCSRs() {
       continue;
     }
     if (UsesByReg[I].empty()) {
-      DEBUG(dbgs()
-            << "Dismissing Callee-Saved Reg because we found no uses of it:"
-            << I << "\n");
+      LLVM_DEBUG(
+          dbgs()
+          << "Dismissing Callee-Saved Reg because we found no uses of it:" << I
+          << "\n");
       CSA.CalleeSaved.reset(I);
       continue;
     }
     if (!CSA.HasRestores[I]) {
-      DEBUG(dbgs() << "Dismissing Callee-Saved Reg because it does not have "
-                      "restores:"
-                   << I << "\n");
+      LLVM_DEBUG(
+          dbgs() << "Dismissing Callee-Saved Reg because it does not have "
+                    "restores:"
+                 << I << "\n");
       CSA.CalleeSaved.reset(I);
     }
   }
@@ -779,9 +787,9 @@ void ShrinkWrapping::computeSaveLocations() {
   auto &DA = Info.getDominatorAnalysis();
   auto &SPT = Info.getStackPointerTracking();
 
-  DEBUG(dbgs() << "Checking save/restore possibilities\n");
+  LLVM_DEBUG(dbgs() << "Checking save/restore possibilities\n");
   for (auto &BB : BF) {
-    DEBUG(dbgs() << "\tNow at BB " << BB.getName() << "\n");
+    LLVM_DEBUG(dbgs() << "\tNow at BB " << BB.getName() << "\n");
 
     MCInst *First = BB.begin() != BB.end() ? &*BB.begin() : nullptr;
     if (!First)
@@ -808,16 +816,16 @@ void ShrinkWrapping::computeSaveLocations() {
         if (DA.doesADominateB(*First, J))
           BBDominatedUses.set(J);
       }
-      DEBUG(dbgs() << "\t\tBB " << BB.getName() << " dominates "
-                   << BBDominatedUses.count() << " uses for reg " << I
-                   << ". Total uses for reg is " << UsesByReg[I].count()
-                   << "\n");
+      LLVM_DEBUG(dbgs() << "\t\tBB " << BB.getName() << " dominates "
+                        << BBDominatedUses.count() << " uses for reg " << I
+                        << ". Total uses for reg is " << UsesByReg[I].count()
+                        << "\n");
       BBDominatedUses &= UsesByReg[I];
       if (BBDominatedUses == UsesByReg[I]) {
-        DEBUG(dbgs() << "\t\t\tAdded " << BB.getName() << " as a save pos for "
-                     << I << "\n");
+        LLVM_DEBUG(dbgs() << "\t\t\tAdded " << BB.getName()
+                          << " as a save pos for " << I << "\n");
         SavePos[I].insert(First);
-        DEBUG({
+        LLVM_DEBUG({
           dbgs() << "Dominated uses are:\n";
           for (auto J = UsesByReg[I].find_first(); J > 0;
                J = UsesByReg[I].find_next(J)) {
@@ -890,7 +898,7 @@ bool ShrinkWrapping::isBestSavePosCold(unsigned CSR, MCInst *&BestPosSave,
   bool ShouldMove{false};
   if (BestCount != std::numeric_limits<uint64_t>::max() &&
       BestCount < (opts::ShrinkWrappingThreshold / 100.0) * CurSavingCost) {
-    DEBUG({
+    LLVM_DEBUG({
       auto &InsnToBB = Info.getInsnToBBMap();
       dbgs() << "Better position for saves found in func " << BF.getPrintName()
              << " count << " << BF.getKnownExecutionCount() << "\n";
@@ -905,7 +913,7 @@ bool ShrinkWrapping::isBestSavePosCold(unsigned CSR, MCInst *&BestPosSave,
   if (!ShouldMove)
     return false;
   if (!BestPosSave) {
-    DEBUG({
+    LLVM_DEBUG({
       dbgs() << "Dropping opportunity because we don't know where to put "
                 "stores -- total est. freq reduc: "
              << TotalEstimatedWin << "\n";
@@ -922,8 +930,8 @@ void ShrinkWrapping::splitFrontierCritEdges(
     const SmallVector<bool, 4> &IsCritEdge,
     const SmallVector<BinaryBasicBlock *, 4> &From,
     const SmallVector<SmallVector<BinaryBasicBlock *, 4>, 4> &To) {
-  DEBUG(dbgs() << "splitFrontierCritEdges: Now handling func "
-               << BF.getPrintName() << "\n");
+  LLVM_DEBUG(dbgs() << "splitFrontierCritEdges: Now handling func "
+                    << BF.getPrintName() << "\n");
   // For every FromBB, there might be one or more critical edges, with
   // To[I] containing destination BBs. It's important to memorize
   // the original size of the Frontier as we may append to it while splitting
@@ -934,11 +942,12 @@ void ShrinkWrapping::splitFrontierCritEdges(
     if (To[I].empty())
       continue;
     auto FromBB = From[I];
-    DEBUG(dbgs() << " - Now handling FrontierBB " << FromBB->getName() << "\n");
+    LLVM_DEBUG(dbgs() << " - Now handling FrontierBB " << FromBB->getName()
+                      << "\n");
     // Split edge for every DestinationBBs
     for (size_t DI = 0, DIE = To[I].size(); DI < DIE; ++DI) {
       auto DestinationBB = To[I][DI];
-      DEBUG(dbgs() << "   - Dest : " << DestinationBB->getName() << "\n");
+      LLVM_DEBUG(dbgs() << "   - Dest : " << DestinationBB->getName() << "\n");
       auto *NewBB = Func->splitEdge(FromBB, DestinationBB);
       // Insert dummy instruction so this BB is never empty (we need this for
       // PredictiveStackPointerTracking to work, since it annotates instructions
@@ -955,11 +964,13 @@ void ShrinkWrapping::splitFrontierCritEdges(
       if (DI == 0) {
         // Update frontier inplace
         Frontier[I] = NewFrontierPP;
-        DEBUG(dbgs() << "   - Update frontier with " << NewBB->getName() << '\n');
+        LLVM_DEBUG(dbgs() << "   - Update frontier with " << NewBB->getName()
+                          << '\n');
       } else {
         // Append new frontier to the end of the list
         Frontier.push_back(NewFrontierPP);
-        DEBUG(dbgs() << "   - Append frontier " << NewBB->getName() << '\n');
+        LLVM_DEBUG(dbgs() << "   - Append frontier " << NewBB->getName()
+                          << '\n');
       }
     }
   }
@@ -979,7 +990,7 @@ ShrinkWrapping::doRestorePlacement(MCInst *BestPosSave, unsigned CSR,
   // into edges transitioning to the dominance frontier, otherwise we pull these
   // restores to inside the dominated area.
   Frontier = DA.getDominanceFrontierFor(*BestPosSave).takeVector();
-  DEBUG({
+  LLVM_DEBUG({
     dbgs() << "Dumping dominance frontier for ";
     BC.printInstruction(dbgs(), *BestPosSave);
     for (auto &PP : Frontier) {
@@ -1003,7 +1014,8 @@ ShrinkWrapping::doRestorePlacement(MCInst *BestPosSave, unsigned CSR,
     // Check for invoke instructions at the dominance frontier, which indicates
     // the landing pad is not dominated.
     if (PP.isInst() && BC.MIB->isInvoke(*PP.getInst())) {
-      DEBUG(dbgs() << "Bailing on restore placement to avoid LP splitting\n");
+      LLVM_DEBUG(
+          dbgs() << "Bailing on restore placement to avoid LP splitting\n");
       Frontier.clear();
       return Frontier;
     }
@@ -1031,7 +1043,7 @@ ShrinkWrapping::doRestorePlacement(MCInst *BestPosSave, unsigned CSR,
     InvalidateRequired = true;
   }
   if (std::accumulate(IsCritEdge.begin(), IsCritEdge.end(), 0)) {
-    DEBUG({
+    LLVM_DEBUG({
       dbgs() << "Now detected critical edges in the following frontier:\n";
       for (auto &PP : Frontier) {
         if (PP.isBB())
@@ -1054,7 +1066,7 @@ ShrinkWrapping::doRestorePlacement(MCInst *BestPosSave, unsigned CSR,
     classifyCSRUses();
   }
   if (CannotPlace) {
-    DEBUG({
+    LLVM_DEBUG({
       dbgs() << "Dropping opportunity because restore placement failed"
                 " -- total est. freq reduc: "
              << TotalEstimatedWin << "\n";
@@ -1068,7 +1080,7 @@ ShrinkWrapping::doRestorePlacement(MCInst *BestPosSave, unsigned CSR,
 bool ShrinkWrapping::validatePushPopsMode(unsigned CSR, MCInst *BestPosSave,
                                           int64_t SaveOffset) {
   if (FA.requiresAlignment(BF)) {
-    DEBUG({
+    LLVM_DEBUG({
       dbgs() << "Reg " << CSR << " is not using push/pops due to function "
                                  "alignment requirements.\n";
     });
@@ -1076,14 +1088,14 @@ bool ShrinkWrapping::validatePushPopsMode(unsigned CSR, MCInst *BestPosSave,
   }
   for (MCInst *Save : CSA.getSavesByReg(CSR)) {
     if (!SLM.canCollapseRegion(Save)) {
-      DEBUG(dbgs() << "Reg " << CSR << " cannot collapse region.\n");
+      LLVM_DEBUG(dbgs() << "Reg " << CSR << " cannot collapse region.\n");
       return false;
     }
   }
   // Abort if one of the restores for this CSR is not a POP.
   for (MCInst *Load : CSA.getRestoresByReg(CSR)) {
     if (!BC.MIB->isPop(*Load)) {
-      DEBUG(dbgs() << "Reg " << CSR << " has a mismatching restore.\n");
+      LLVM_DEBUG(dbgs() << "Reg " << CSR << " has a mismatching restore.\n");
       return false;
     }
   }
@@ -1094,7 +1106,7 @@ bool ShrinkWrapping::validatePushPopsMode(unsigned CSR, MCInst *BestPosSave,
   if (!SLM.canInsertRegion(BestPosSave) ||
       SaveOffset == SPT.SUPERPOSITION || SaveOffset == SPT.EMPTY ||
       (SaveOffset == -8 && SPT.HasFramePointer)) {
-    DEBUG({
+    LLVM_DEBUG({
       dbgs() << "Reg " << CSR << " cannot insert region or we are "
                                  "trying to insert a push into entry bb.\n";
     });
@@ -1135,7 +1147,7 @@ SmallVector<ProgramPoint, 4> ShrinkWrapping::fixPopsPlacements(
       }
     }
     if (!Found) {
-      DEBUG({
+      LLVM_DEBUG({
         dbgs() << "Could not find restore insertion point for " << CSR
                << ", falling back to load/store mode\n";
       });
@@ -1182,7 +1194,7 @@ void ShrinkWrapping::scheduleOldSaveRestoresRemoval(unsigned CSR,
       const bool RecordDeletedPopCFIs =
           RestoredReg == CSR && DeletedPopCFIs[CSR].empty();
       for (MCInst *CFI : CFIs) {
-        auto *MCCFI = BF.getCFIFor(*CFI);
+        const MCCFIInstruction *MCCFI = BF.getCFIFor(*CFI);
         // Do not touch these...
         if (MCCFI->getOperation() == MCCFIInstruction::OpRestoreState ||
             MCCFI->getOperation() == MCCFIInstruction::OpRememberState)
@@ -1223,7 +1235,7 @@ void ShrinkWrapping::scheduleSaveRestoreInsertions(
   auto FIELoad = CSA.LoadFIEByReg[CSR];
   assert(FIESave && FIELoad && "Invalid CSR");
 
-  DEBUG({
+  LLVM_DEBUG({
     dbgs() << "Scheduling save insertion at: ";
     BestPosSave->dump();
   });
@@ -1234,7 +1246,7 @@ void ShrinkWrapping::scheduleSaveRestoreInsertions(
 
   for (auto &PP : RestorePoints) {
     BinaryBasicBlock *FrontierBB = Info.getParentBB(PP);
-    DEBUG({
+    LLVM_DEBUG({
       dbgs() << "Scheduling restore insertion at: ";
       if (PP.isInst())
         PP.getInst()->dump();
@@ -1547,7 +1559,7 @@ void ShrinkWrapping::insertUpdatedCFI(unsigned CSR, int SPValPush,
       break;
   }
   assert(SavePoint);
-  DEBUG({
+  LLVM_DEBUG({
     dbgs() << "Now using as save point for reg " << CSR << " :";
     SavePoint->dump();
   });
@@ -1602,7 +1614,7 @@ void ShrinkWrapping::rebuildCFIForSP() {
     for (auto &Inst : BB) {
       if (!BC.MIB->isCFI(Inst))
         continue;
-      auto *CFI = BF.getCFIFor(Inst);
+      const MCCFIInstruction *CFI = BF.getCFIFor(Inst);
       if (CFI->getOperation() == MCCFIInstruction::OpDefCfaOffset)
         BC.MIB->addAnnotation(Inst, "DeleteMe", 0U, AllocatorId);
     }
@@ -1624,19 +1636,19 @@ void ShrinkWrapping::rebuildCFIForSP() {
         ++InsertionIter;
         Iter = BF.addCFIInstruction(
             BB, InsertionIter,
-            MCCFIInstruction::createDefCfaOffset(nullptr, -CurVal));
+            MCCFIInstruction::cfiDefCfaOffset(nullptr, -CurVal));
         SPVal = CurVal;
       }
     }
     if (BF.isSplit() && PrevBB && BB->isCold() != PrevBB->isCold()) {
       BF.addCFIInstruction(
           BB, BB->begin(),
-          MCCFIInstruction::createDefCfaOffset(nullptr, -SPValAtBegin));
+          MCCFIInstruction::cfiDefCfaOffset(nullptr, -SPValAtBegin));
     } else {
       if (SPValAtBegin != PrevSPVal) {
         BF.addCFIInstruction(
             PrevBB, PrevBB->end(),
-            MCCFIInstruction::createDefCfaOffset(nullptr, -SPValAtBegin));
+            MCCFIInstruction::cfiDefCfaOffset(nullptr, -SPValAtBegin));
       }
     }
     PrevSPVal = SPValAtEnd;
@@ -1700,7 +1712,7 @@ MCInst ShrinkWrapping::createStackAccess(int SPVal, int FPVal,
 }
 
 void ShrinkWrapping::updateCFIInstOffset(MCInst &Inst, int64_t NewOffset) {
-  auto *CFI = BF.getCFIFor(Inst);
+  const MCCFIInstruction *CFI = BF.getCFIFor(Inst);
   if (UpdatedCFIs.count(CFI))
     return;
 
@@ -1708,7 +1720,7 @@ void ShrinkWrapping::updateCFIInstOffset(MCInst &Inst, int64_t NewOffset) {
   case MCCFIInstruction::OpDefCfa:
   case MCCFIInstruction::OpDefCfaRegister:
   case MCCFIInstruction::OpDefCfaOffset:
-    CFI->setOffset(NewOffset);
+    CFI = BF.mutateCFIOffsetFor(Inst, -NewOffset);
     break;
   case MCCFIInstruction::OpOffset:
   default:
@@ -1771,7 +1783,7 @@ BBIterTy ShrinkWrapping::processInsertion(BBIterTy InsertionPoint,
     }
   }
 
-  DEBUG({
+  LLVM_DEBUG({
     dbgs() << "Creating stack access with SPVal = " << SPVal
            << "; stack offset = " << Item.FIEToInsert.StackOffset
            << " Is push = " << (Item.Action == WorklistItem::InsertPushOrPop)
@@ -1781,7 +1793,7 @@ BBIterTy ShrinkWrapping::processInsertion(BBIterTy InsertionPoint,
       createStackAccess(SPVal, FPVal, Item.FIEToInsert,
                         Item.Action == WorklistItem::InsertPushOrPop);
   if (InsertionPoint != CurBB->end()) {
-    DEBUG({
+    LLVM_DEBUG({
       dbgs() << "Adding before Inst: ";
       InsertionPoint->dump();
       dbgs() << "the following inst: ";
@@ -1790,7 +1802,7 @@ BBIterTy ShrinkWrapping::processInsertion(BBIterTy InsertionPoint,
     return ++CurBB->insertInstruction(InsertionPoint, std::move(NewInst));
   }
   CurBB->addInstruction(std::move(NewInst));
-  DEBUG(dbgs() << "Adding to BB!\n");
+  LLVM_DEBUG(dbgs() << "Adding to BB!\n");
   return CurBB->end();
 }
 
@@ -1877,7 +1889,7 @@ bool ShrinkWrapping::processInsertions() {
         continue;
       Changes = true;
       auto List = *TodoList;
-      DEBUG({
+      LLVM_DEBUG({
         dbgs() << "Now processing insertions in " << BB.getName()
                << " before inst: ";
         Inst.dump();
@@ -1927,7 +1939,7 @@ void ShrinkWrapping::processDeletions() {
           }
         }
 
-        DEBUG({
+        LLVM_DEBUG({
           dbgs() << "Erasing: ";
           BC.printInstruction(dbgs(), Inst);
         });
@@ -1962,8 +1974,8 @@ bool ShrinkWrapping::perform() {
   DomOrder = std::vector<MCPhysReg>(BC.MRI->getNumRegs(), 0);
 
   if (BF.checkForAmbiguousJumpTables()) {
-    DEBUG(dbgs() << "BOLT-DEBUG: ambiguous JTs in " << BF.getPrintName()
-                 << ".\n");
+    LLVM_DEBUG(dbgs() << "BOLT-DEBUG: ambiguous JTs in " << BF.getPrintName()
+                      << ".\n");
     // We could call disambiguateJumpTables here, but it is probably not worth
     // the cost (of duplicating potentially large jump tables that could regress
     // dcache misses). Moreover, ambiguous JTs are rare and coming from code
@@ -1977,7 +1989,7 @@ bool ShrinkWrapping::perform() {
   computeSaveLocations();
   computeDomOrder();
   moveSaveRestores();
-  DEBUG({
+  LLVM_DEBUG({
     dbgs() << "Func before shrink-wrapping: \n";
     BF.dump();
   });
@@ -1988,14 +2000,14 @@ bool ShrinkWrapping::perform() {
   processDeletions();
   if (foldIdenticalSplitEdges()) {
     const auto Stats = BF.eraseInvalidBBs();
-    DEBUG(dbgs() << "Deleted " << Stats.first << " redundant split edge BBs ("
-                 << Stats.second << " bytes) for " << BF.getPrintName()
-                 << "\n");
+    LLVM_DEBUG(dbgs() << "Deleted " << Stats.first
+                      << " redundant split edge BBs (" << Stats.second
+                      << " bytes) for " << BF.getPrintName() << "\n");
   }
   rebuildCFI();
   // We may have split edges, creating BBs that need correct branching
   BF.fixBranches();
-  DEBUG({
+  LLVM_DEBUG({
     dbgs() << "Func after shrink-wrapping: \n";
     BF.dump();
   });

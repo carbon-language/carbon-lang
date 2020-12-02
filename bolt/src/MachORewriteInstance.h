@@ -43,9 +43,7 @@ class MachORewriteInstance {
 
   NameResolver NR;
 
-  std::unique_ptr<orc::SymbolStringPool> SSP;
-  std::unique_ptr<orc::ExecutionSession> ES;
-  std::unique_ptr<orc::RTDyldObjectLinkingLayer> OLT;
+  std::unique_ptr<RuntimeDyld> RTDyld;
 
   std::unique_ptr<ToolOutputFile> Out;
 
@@ -56,8 +54,8 @@ class MachORewriteInstance {
 
   static StringRef getOrgSecPrefix() { return ".bolt.org"; }
 
-  void mapInstrumentationSection(orc::VModuleKey Key, StringRef SectionName);
-  void mapCodeSections(orc::VModuleKey Key);
+  void mapInstrumentationSection(StringRef SectionName);
+  void mapCodeSections();
 
   void adjustCommandLineOptions();
   void readSpecialSections();

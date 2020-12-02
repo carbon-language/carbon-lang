@@ -44,7 +44,6 @@ Sections:
     AddressAlign:    0x0000000000000001
     Size:            0x0000000000000008
 Symbols:
-  Local:
     - Name:            completed.6650
       Type:            STT_OBJECT
       Section:         .bss
@@ -70,67 +69,69 @@ Symbols:
       Type:            STT_OBJECT
       Section:         .dynamic
       Value:           0x00000000006016B0
-  Global:
     - Name:            usqrt
       Type:            STT_FUNC
       Section:         .text
       Value:           0x0000000000401170
       Size:            0x0000000000000043
+      Binding:         STB_GLOBAL
     - Name:            deg2rad
       Type:            STT_FUNC
       Section:         .text
       Value:           0x0000000000400DE0
       Size:            0x0000000000000011
+      Binding:         STB_GLOBAL
     - Name:            SolveCubic
       Type:            STT_FUNC
       Section:         .text
       Value:           0x0000000000400E00
       Size:            0x0000000000000368
+      Binding:         STB_GLOBAL
     - Name:            _start
       Type:            STT_FUNC
       Section:         .text
       Value:           0x0000000000400CC0
       Size:            0x000000000000002A
+      Binding:         STB_GLOBAL
     - Name:            rad2deg
       Type:            STT_FUNC
       Section:         .text
       Value:           0x0000000000400DC0
       Size:            0x0000000000000011
+      Binding:         STB_GLOBAL
     - Name:            main
       Type:            STT_FUNC
       Section:         .text
       Value:           0x0000000000400680
       Size:            0x0000000000000640
+      Binding:         STB_GLOBAL
 DynamicSymbols:
-  Global:
     - Name:            sqrt
       Type:            STT_FUNC
+      Binding:         STB_GLOBAL
 ProgramHeaders:
   - Type: PT_PHDR
     Flags: [ PF_X, PF_R ]
-    VAddr: 0x0000000000400000
-    PAddr: 0x0000000000400000
-    Sections:
-      - Section: .noplt
+    VAddr: 0x00000000004005E0
+    PAddr: 0x00000000004005E0
+    FirstSec: .noplt
+    LastSec: .noplt
   - Type: PT_LOAD
     Flags: [ PF_X, PF_R ]
-    VAddr: 0x0000000000400000
-    PAddr: 0x0000000000400000
-    Sections:
-      - Section: .noplt
-      - Section: .text
-      - Section: .rodata
+    VAddr: 0x00000000004005E0
+    PAddr: 0x00000000004005E0
+    FirstSec: .noplt
+    LastSec: .rodata
   - Type: PT_LOAD
     Flags: [ PF_R, PF_W ]
-    VAddr: 0x0000000000601698
-    PAddr: 0x0000000000601698
-    Sections:
-      - Section: .data
-      - Section: .bss
+    VAddr: 0x00000000006018F8
+    PAddr: 0x00000000006018F8
+    FirstSec: .data
+    LastSec: .bss
   - Type: PT_DYNAMIC
     Flags: [ PF_R, PF_W ]
     VAddr: 0x00000000006016B0
     PAddr: 0x00000000006016B0
-    Sections:
-      - Section: .dynamic
+    FirstSec: .dynamic
+    LastSec: .dynamic
 ...

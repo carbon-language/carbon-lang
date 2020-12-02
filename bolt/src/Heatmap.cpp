@@ -50,8 +50,8 @@ void Heatmap::registerAddressRange(uint64_t StartAddress, uint64_t EndAddress,
 
   if (StartAddress > EndAddress ||
       EndAddress - StartAddress > 64 * 1024) {
-    DEBUG(dbgs() << "invalid range : 0x" << Twine::utohexstr(StartAddress)
-                 << " -> 0x" << Twine::utohexstr(EndAddress) << '\n');
+    LLVM_DEBUG(dbgs() << "invalid range : 0x" << Twine::utohexstr(StartAddress)
+                      << " -> 0x" << Twine::utohexstr(EndAddress) << '\n');
     ++NumSkippedRanges;
     return;
   }
@@ -64,7 +64,7 @@ void Heatmap::registerAddressRange(uint64_t StartAddress, uint64_t EndAddress,
 
 void Heatmap::print(StringRef FileName) const {
   std::error_code EC;
-  raw_fd_ostream OS(FileName, EC, sys::fs::OpenFlags::F_None);
+  raw_fd_ostream OS(FileName, EC, sys::fs::OpenFlags::OF_None);
   if (EC) {
     errs() << "error opening output file: " << EC.message() << '\n';
     exit(1);
@@ -241,7 +241,7 @@ void Heatmap::print(raw_ostream &OS) const {
 
 void Heatmap::printCDF(StringRef FileName) const {
   std::error_code EC;
-  raw_fd_ostream OS(FileName, EC, sys::fs::OpenFlags::F_None);
+  raw_fd_ostream OS(FileName, EC, sys::fs::OpenFlags::OF_None);
   if (EC) {
     errs() << "error opening output file: " << EC.message() << '\n';
     exit(1);

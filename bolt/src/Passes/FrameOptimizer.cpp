@@ -60,15 +60,15 @@ void FrameOptimizerPass::removeUnnecessaryLoads(const RegAnalysis &RA,
   StackAvailableExpressions SAE(RA, FA, BC, BF);
   SAE.run();
 
-  DEBUG(dbgs() << "Performing unnecessary loads removal\n");
+  LLVM_DEBUG(dbgs() << "Performing unnecessary loads removal\n");
   std::deque<std::pair<BinaryBasicBlock *, MCInst *>> ToErase;
   bool Changed = false;
   const auto ExprEnd = SAE.expr_end();
   for (auto &BB : BF) {
-    DEBUG(dbgs() <<"\tNow at BB " << BB.getName() << "\n");
+    LLVM_DEBUG(dbgs() <<"\tNow at BB " << BB.getName() << "\n");
     const MCInst *Prev = nullptr;
     for (auto &Inst : BB) {
-      DEBUG({
+      LLVM_DEBUG({
         dbgs() << "\t\tNow at ";
         Inst.dump();
         for (auto I = Prev ? SAE.expr_begin(*Prev) : SAE.expr_begin(BB);
@@ -109,47 +109,47 @@ void FrameOptimizerPass::removeUnnecessaryLoads(const RegAnalysis &RA,
 
         ++NumRedundantLoads;
         Changed = true;
-        DEBUG(dbgs() << "Redundant load instruction: ");
-        DEBUG(Inst.dump());
-        DEBUG(dbgs() << "Related store instruction: ");
-        DEBUG(AvailableInst->dump());
-        DEBUG(dbgs() << "@BB: " << BB.getName() << "\n");
+        LLVM_DEBUG(dbgs() << "Redundant load instruction: ");
+        LLVM_DEBUG(Inst.dump());
+        LLVM_DEBUG(dbgs() << "Related store instruction: ");
+        LLVM_DEBUG(AvailableInst->dump());
+        LLVM_DEBUG(dbgs() << "@BB: " << BB.getName() << "\n");
         // Replace load
         if (FIEY->IsStoreFromReg) {
           if (!BC.MIB->replaceMemOperandWithReg(Inst, FIEY->RegOrImm)) {
-            DEBUG(dbgs() << "FAILED to change operand to a reg\n");
+            LLVM_DEBUG(dbgs() << "FAILED to change operand to a reg\n");
             break;
           }
           ++NumLoadsChangedToReg;
           BC.MIB->removeAnnotation(Inst, "FrameAccessEntry");
-          DEBUG(dbgs() << "Changed operand to a reg\n");
+          LLVM_DEBUG(dbgs() << "Changed operand to a reg\n");
           if (BC.MIB->isRedundantMove(Inst)) {
             ++NumLoadsDeleted;
-            DEBUG(dbgs() << "Created a redundant move\n");
+            LLVM_DEBUG(dbgs() << "Created a redundant move\n");
             // Delete it!
             ToErase.push_front(std::make_pair(&BB, &Inst));
           }
         } else {
           char Buf[8] = {0, 0, 0, 0, 0, 0, 0, 0};
           support::ulittle64_t::ref(Buf + 0) = FIEY->RegOrImm;
-          DEBUG(dbgs() << "Changing operand to an imm... ");
+          LLVM_DEBUG(dbgs() << "Changing operand to an imm... ");
           if (!BC.MIB->replaceMemOperandWithImm(Inst, StringRef(Buf, 8), 0)) {
-            DEBUG(dbgs() << "FAILED\n");
+            LLVM_DEBUG(dbgs() << "FAILED\n");
           } else {
             ++NumLoadsChangedToImm;
             BC.MIB->removeAnnotation(Inst, "FrameAccessEntry");
-            DEBUG(dbgs() << "Ok\n");
+            LLVM_DEBUG(dbgs() << "Ok\n");
           }
         }
-        DEBUG(dbgs() << "Changed to: ");
-        DEBUG(Inst.dump());
+        LLVM_DEBUG(dbgs() << "Changed to: ");
+        LLVM_DEBUG(Inst.dump());
         break;
       }
       Prev = &Inst;
     }
   }
   if (Changed) {
-    DEBUG(dbgs() << "FOP modified \"" << BF.getPrintName() << "\"\n");
+    LLVM_DEBUG(dbgs() << "FOP modified \"" << BF.getPrintName() << "\"\n");
   }
   // TODO: Implement an interface of eraseInstruction that works out the
   // complete list of elements to remove.
@@ -164,15 +164,15 @@ void FrameOptimizerPass::removeUnusedStores(const FrameAnalysis &FA,
   StackReachingUses SRU(FA, BC, BF);
   SRU.run();
 
-  DEBUG(dbgs() << "Performing unused stores removal\n");
+  LLVM_DEBUG(dbgs() << "Performing unused stores removal\n");
   std::vector<std::pair<BinaryBasicBlock *, MCInst *>> ToErase;
   bool Changed = false;
   for (auto &BB : BF) {
-    DEBUG(dbgs() <<"\tNow at BB " << BB.getName() << "\n");
+    LLVM_DEBUG(dbgs() <<"\tNow at BB " << BB.getName() << "\n");
     const MCInst *Prev = nullptr;
     for (auto I = BB.rbegin(), E = BB.rend(); I != E; ++I) {
       auto &Inst = *I;
-      DEBUG({
+      LLVM_DEBUG({
         dbgs() << "\t\tNow at ";
         Inst.dump();
         for (auto I = Prev ? SRU.expr_begin(*Prev) : SRU.expr_begin(BB);
@@ -202,10 +202,10 @@ void FrameOptimizerPass::removeUnusedStores(const FrameAnalysis &FA,
 
       ++NumRedundantStores;
       Changed = true;
-      DEBUG(dbgs() << "Unused store instruction: ");
-      DEBUG(Inst.dump());
-      DEBUG(dbgs() << "@BB: " << BB.getName() << "\n");
-      DEBUG(dbgs() << "FIE offset = " << FIEX->StackOffset
+      LLVM_DEBUG(dbgs() << "Unused store instruction: ");
+      LLVM_DEBUG(Inst.dump());
+      LLVM_DEBUG(dbgs() << "@BB: " << BB.getName() << "\n");
+      LLVM_DEBUG(dbgs() << "FIE offset = " << FIEX->StackOffset
                    << " size = " << (int)FIEX->Size << "\n");
       // Delete it!
       ToErase.push_back(std::make_pair(&BB, &Inst));
@@ -217,7 +217,7 @@ void FrameOptimizerPass::removeUnusedStores(const FrameAnalysis &FA,
     I.first->eraseInstruction(I.first->findInstruction(I.second));
   }
   if (Changed) {
-    DEBUG(dbgs() << "FOP modified \"" << BF.getPrintName() << "\"\n");
+    LLVM_DEBUG(dbgs() << "FOP modified \"" << BF.getPrintName() << "\"\n");
   }
 }
 
@@ -256,11 +256,12 @@ void FrameOptimizerPass::runOnFunctions(BinaryContext &BC) {
     if (opts::FrameOptimization == FOP_HOT) {
       if (I.second.getKnownExecutionCount() < BC.getHotThreshold())
         continue;
-      DEBUG(dbgs() << "Considering " << I.second.getPrintName()
-                   << " for frame optimizations because its execution count ( "
-                   << I.second.getKnownExecutionCount()
-                   << " ) exceeds our hotness threshold ( "
-                   << BC.getHotThreshold() << " )\n");
+      LLVM_DEBUG(
+          dbgs() << "Considering " << I.second.getPrintName()
+                 << " for frame optimizations because its execution count ( "
+                 << I.second.getKnownExecutionCount()
+                 << " ) exceeds our hotness threshold ( "
+                 << BC.getHotThreshold() << " )\n");
     }
 
     {

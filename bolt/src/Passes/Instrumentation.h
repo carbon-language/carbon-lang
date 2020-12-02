@@ -30,7 +30,7 @@ class Instrumentation : public BinaryFunctionPass {
 public:
   Instrumentation(const cl::opt<bool> &PrintPass)
       : BinaryFunctionPass(PrintPass),
-        Summary(llvm::make_unique<InstrumentationSummary>()) {}
+        Summary(std::make_unique<InstrumentationSummary>()) {}
 
   /// Modifies all functions by inserting instrumentation code (first step)
   void runOnFunctions(BinaryContext &BC) override;

@@ -18,6 +18,7 @@
 #include <functional>
 #include <queue>
 #include <random>
+#include <stack>
 
 #undef  DEBUG_TYPE
 #define DEBUG_TYPE "bolt"
@@ -177,13 +178,11 @@ void GreedyClusterAlgorithm::clusterBasicBlocks(const BinaryFunction &BF,
     const auto *SrcBB = E.Src;
     const auto *DstBB = E.Dst;
 
-    DEBUG(dbgs() << "Popped edge ";
-          E.print(dbgs());
-          dbgs() << "\n");
+    LLVM_DEBUG(dbgs() << "Popped edge "; E.print(dbgs()); dbgs() << "\n");
 
     // Case 1: BBSrc and BBDst are the same. Ignore this edge
     if (SrcBB == DstBB || DstBB == *BF.layout_begin()) {
-      DEBUG(dbgs() << "\tIgnored (same src, dst)\n");
+      LLVM_DEBUG(dbgs() << "\tIgnored (same src, dst)\n");
       continue;
     }
 
@@ -195,7 +194,7 @@ void GreedyClusterAlgorithm::clusterBasicBlocks(const BinaryFunction &BF,
     if (I == J) {
       if (ComputeEdges)
         ClusterEdges[I][I] += E.Count;
-      DEBUG(dbgs() << "\tIgnored (src, dst belong to the same cluster)\n");
+      LLVM_DEBUG(dbgs() << "\tIgnored (src, dst belong to the same cluster)\n");
       continue;
     }
 
@@ -221,7 +220,7 @@ void GreedyClusterAlgorithm::clusterBasicBlocks(const BinaryFunction &BF,
       }
       // Adjust the weights of the remaining edges and re-sort the queue.
       adjustQueue(Queue, BF);
-      DEBUG(dbgs() << "\tMerged clusters of src, dst\n");
+      LLVM_DEBUG(dbgs() << "\tMerged clusters of src, dst\n");
     } else {
       // Case 4: Both SrcBB and DstBB are allocated in positions we cannot
       // merge them. Add the count of this edge to the inter-cluster edge count
@@ -229,7 +228,8 @@ void GreedyClusterAlgorithm::clusterBasicBlocks(const BinaryFunction &BF,
       // clusters.
       if (ComputeEdges)
         ClusterEdges[I][J] += E.Count;
-      DEBUG(dbgs() << "\tIgnored (src, dst belong to incompatible clusters)\n");
+      LLVM_DEBUG(
+          dbgs() << "\tIgnored (src, dst belong to incompatible clusters)\n");
     }
   }
 }
@@ -352,9 +352,8 @@ void MinBranchGreedyClusterAlgorithm::adjustQueue(
     // Case 1: SrcBB and DstBB are the same or DstBB is the entry block. Ignore
     // this edge.
     if (SrcBB == DstBB || DstBB == *BF.layout_begin()) {
-      DEBUG(dbgs() << "\tAdjustment: Ignored edge ";
-            E.print(dbgs());
-            dbgs() << " (same src, dst)\n");
+      LLVM_DEBUG(dbgs() << "\tAdjustment: Ignored edge "; E.print(dbgs());
+                 dbgs() << " (same src, dst)\n");
       continue;
     }
 
@@ -370,10 +369,9 @@ void MinBranchGreedyClusterAlgorithm::adjustQueue(
     if (I == J || !areClustersCompatible(ClusterA, ClusterB, E)) {
       if (!ClusterEdges.empty())
         ClusterEdges[I][J] += E.Count;
-      DEBUG(dbgs() << "\tAdjustment: Ignored edge ";
-            E.print(dbgs());
-            dbgs() << " (src, dst belong to same cluster or incompatible "
-                      "clusters)\n");
+      LLVM_DEBUG(dbgs() << "\tAdjustment: Ignored edge "; E.print(dbgs());
+                 dbgs() << " (src, dst belong to same cluster or incompatible "
+                           "clusters)\n");
       for (const auto *SuccBB : SrcBB->successors()) {
         if (SuccBB == DstBB)
           continue;

@@ -115,7 +115,7 @@ void BinaryFunction::parseLSDA(ArrayRef<uint8_t> LSDASectionData,
       StringRef(reinterpret_cast<const char *>(LSDASectionData.data()),
                 LSDASectionData.size()),
       BC.DwCtx->getDWARFObj().isLittleEndian(), 8);
-  uint32_t Offset = getLSDAAddress() - LSDASectionAddress;
+  uint64_t Offset = getLSDAAddress() - LSDASectionAddress;
   assert(Data.isValidOffset(Offset) && "wrong LSDA address");
 
   uint8_t LPStartEncoding = Data.getU8(&Offset);
@@ -145,10 +145,10 @@ void BinaryFunction::parseLSDA(ArrayRef<uint8_t> LSDASectionData,
   }
 
   // Table to store list of indices in type table. Entries are uleb128 values.
-  const uint32_t TypeIndexTableStart = Offset + TTypeEnd;
+  const uint64_t TypeIndexTableStart = Offset + TTypeEnd;
 
   // Offset past the last decoded index.
-  uint32_t MaxTypeIndexTableOffset = 0;
+  uint64_t MaxTypeIndexTableOffset = 0;
 
   // Max positive index used in type table.
   unsigned MaxTypeIndex = 0;
@@ -204,7 +204,7 @@ void BinaryFunction::parseLSDA(ArrayRef<uint8_t> LSDASectionData,
         if (Label != Labels.end()) {
           LPSymbol = Label->second;
         } else {
-          LPSymbol = BC.Ctx->createTempSymbol("LP", true);
+          LPSymbol = BC.Ctx->createNamedTempSymbol("LP");
           Labels[LandingPad] = LPSymbol;
         }
       }
@@ -231,7 +231,7 @@ void BinaryFunction::parseLSDA(ArrayRef<uint8_t> LSDASectionData,
     if (ActionEntry != 0) {
       auto printType = [&](int Index, raw_ostream &OS) {
         assert(Index > 0 && "only positive indices are valid");
-        uint32_t TTEntry = TypeTableStart - Index * TTypeEncodingSize;
+        uint64_t TTEntry = TypeTableStart - Index * TTypeEncodingSize;
         const uint64_t TTEntryAddress = TTEntry + LSDASectionAddress;
         uint64_t TypeAddress =
             *Data.getEncodedPointer(&TTEntry, TTypeEncoding, TTEntryAddress);
@@ -255,7 +255,7 @@ void BinaryFunction::parseLSDA(ArrayRef<uint8_t> LSDASectionData,
       };
       if (opts::PrintExceptions)
         outs() << "    actions: ";
-      uint32_t ActionPtr = ActionTableStart + ActionEntry - 1;
+      uint64_t ActionPtr = ActionTableStart + ActionEntry - 1;
       int64_t ActionType;
       int64_t ActionNext;
       auto Sep = "";
@@ -284,7 +284,7 @@ void BinaryFunction::parseLSDA(ArrayRef<uint8_t> LSDASectionData,
           // of indices with base 1.
           // E.g. -1 means offset 0, -2 is offset 1, etc. The indices are
           // encoded using uleb128 thus we cannot directly dereference them.
-          uint32_t TypeIndexTablePtr = TypeIndexTableStart - ActionType - 1;
+          uint64_t TypeIndexTablePtr = TypeIndexTableStart - ActionType - 1;
           while (auto Index = Data.getULEB128(&TypeIndexTablePtr)) {
             MaxTypeIndex = std::max(MaxTypeIndex, static_cast<unsigned>(Index));
             if (opts::PrintExceptions) {
@@ -319,7 +319,7 @@ void BinaryFunction::parseLSDA(ArrayRef<uint8_t> LSDASectionData,
                               MaxTypeIndex * TTypeEncodingSize -
                               ActionTableStart);
     for (unsigned Index = 1; Index <= MaxTypeIndex; ++Index) {
-      uint32_t TTEntry = TypeTableStart - Index * TTypeEncodingSize;
+      uint64_t TTEntry = TypeTableStart - Index * TTypeEncodingSize;
       const auto TTEntryAddress = TTEntry + LSDASectionAddress;
       uint64_t TypeAddress =
           *Data.getEncodedPointer(&TTEntry, TTypeEncoding, TTEntryAddress);
@@ -413,7 +413,7 @@ void BinaryFunction::updateEHRanges() {
       MCInst EHLabel;
       {
         std::unique_lock<std::shared_timed_mutex> Lock(BC.CtxMutex);
-        EHSymbol = BC.Ctx->createTempSymbol("EH", true);
+        EHSymbol = BC.Ctx->createNamedTempSymbol("EH");
         BC.MIB->createEHLabel(EHLabel, EHSymbol, BC.Ctx.get());
       }
 
@@ -579,12 +579,12 @@ bool CFIReaderWriter::fillCFIInfoFor(BinaryFunction &Function) const {
           break;
         case DW_CFA_def_cfa:
           Function.addCFIInstruction(
-              Offset, MCCFIInstruction::createDefCfa(nullptr, Instr.Ops[0],
-                                                     Instr.Ops[1]));
+              Offset, MCCFIInstruction::cfiDefCfa(nullptr, Instr.Ops[0],
+                                                  Instr.Ops[1]));
           break;
         case DW_CFA_def_cfa_sf:
           Function.addCFIInstruction(
-              Offset, MCCFIInstruction::createDefCfa(
+              Offset, MCCFIInstruction::cfiDefCfa(
                           nullptr, Instr.Ops[0],
                           DataAlignment * int64_t(Instr.Ops[1])));
           break;
@@ -596,11 +596,11 @@ bool CFIReaderWriter::fillCFIInfoFor(BinaryFunction &Function) const {
         case DW_CFA_def_cfa_offset:
           Function.addCFIInstruction(
               Offset,
-              MCCFIInstruction::createDefCfaOffset(nullptr, Instr.Ops[0]));
+              MCCFIInstruction::cfiDefCfaOffset(nullptr, Instr.Ops[0]));
           break;
         case DW_CFA_def_cfa_offset_sf:
           Function.addCFIInstruction(
-              Offset, MCCFIInstruction::createDefCfaOffset(
+              Offset, MCCFIInstruction::cfiDefCfaOffset(
                           nullptr, DataAlignment * int64_t(Instr.Ops[0])));
           break;
         case DW_CFA_GNU_args_size:
@@ -615,37 +615,21 @@ bool CFIReaderWriter::fillCFIInfoFor(BinaryFunction &Function) const {
             errs() << "BOLT-WARNING: DWARF val_offset() unimplemented\n";
           }
           return false;
-        case DW_CFA_expression:
         case DW_CFA_def_cfa_expression:
-        case DW_CFA_val_expression: {
-          MCDwarfExprBuilder Builder;
-          for (auto &ExprOp : *Instr.Expression) {
-            const DWARFExpression::Operation::Description &Desc =
-                ExprOp.getDescription();
-            if (Desc.Op[0] == DWARFExpression::Operation::SizeNA) {
-              Builder.appendOperation(ExprOp.getCode());
-            } else if (Desc.Op[1] == DWARFExpression::Operation::SizeNA) {
-              Builder.appendOperation(ExprOp.getCode(),
-                                      ExprOp.getRawOperand(0));
-            } else {
-              Builder.appendOperation(ExprOp.getCode(), ExprOp.getRawOperand(0),
-                                      ExprOp.getRawOperand(1));
-            }
+        case DW_CFA_val_expression:
+        case DW_CFA_expression: {
+          StringRef ExprBytes = Instr.Expression->getData();
+          std::string Str;
+          raw_string_ostream OS(Str);
+          // Manually encode this instruction using CFI escape
+          OS << Opcode;
+          if (Opcode != DW_CFA_def_cfa_expression) {
+            encodeULEB128(Instr.Ops[0], OS);
           }
-          if (Opcode == DW_CFA_expression) {
-            Function.addCFIInstruction(
-                Offset, MCCFIInstruction::createExpression(
-                            nullptr, Instr.Ops[0], Builder.take()));
-          } else if (Opcode == DW_CFA_def_cfa_expression) {
-            Function.addCFIInstruction(Offset,
-                                       MCCFIInstruction::createDefCfaExpression(
-                                           nullptr, Builder.take()));
-          } else {
-            assert(Opcode == DW_CFA_val_expression && "Unexpected opcode");
-            Function.addCFIInstruction(
-                Offset, MCCFIInstruction::createValExpression(
-                            nullptr, Instr.Ops[0], Builder.take()));
-          }
+          encodeULEB128(ExprBytes.size(), OS);
+          OS << ExprBytes;
+          Function.addCFIInstruction(
+              Offset, MCCFIInstruction::createEscape(nullptr, OS.str()));
           break;
         }
         case DW_CFA_MIPS_advance_loc8:
@@ -697,48 +681,54 @@ std::vector<char> CFIReaderWriter::generateEHFrameHeader(
   std::sort(FailedAddresses.begin(), FailedAddresses.end());
 
   // Initialize PCToFDE using NewEHFrame.
-  NewEHFrame.for_each_FDE([&](const dwarf::FDE *FDE) {
+  for (dwarf::FrameEntry &Entry : NewEHFrame.entries()) {
+    const dwarf::FDE *FDE = dyn_cast<dwarf::FDE>(&Entry);
+    if (FDE == nullptr)
+      continue;
     const auto FuncAddress = FDE->getInitialLocation();
     const auto FDEAddress = NewEHFrame.getEHFrameAddress() + FDE->getOffset();
 
     // Ignore unused FDEs.
     if (FuncAddress == 0)
-      return;
+      continue;
 
     // Add the address to the map unless we failed to write it.
     if (!std::binary_search(FailedAddresses.begin(), FailedAddresses.end(),
                             FuncAddress)) {
-      DEBUG(dbgs() << "BOLT-DEBUG: FDE for function at 0x"
-                   << Twine::utohexstr(FuncAddress) << " is at 0x"
-                   << Twine::utohexstr(FDEAddress) << '\n');
+      LLVM_DEBUG(dbgs() << "BOLT-DEBUG: FDE for function at 0x"
+                        << Twine::utohexstr(FuncAddress) << " is at 0x"
+                        << Twine::utohexstr(FDEAddress) << '\n');
       PCToFDE[FuncAddress] = FDEAddress;
     }
-  });
+  };
 
-  DEBUG(dbgs() << "BOLT-DEBUG: new .eh_frame contains "
-               << std::distance(NewEHFrame.entries().begin(),
-                                NewEHFrame.entries().end())
-               << " entries\n");
+  LLVM_DEBUG(dbgs() << "BOLT-DEBUG: new .eh_frame contains "
+                    << std::distance(NewEHFrame.entries().begin(),
+                                     NewEHFrame.entries().end())
+                    << " entries\n");
 
   // Add entries from the original .eh_frame corresponding to the functions
   // that we did not update.
-  OldEHFrame.for_each_FDE([&](const dwarf::FDE *FDE) {
+  for (const dwarf::FrameEntry &Entry : OldEHFrame) {
+    const dwarf::FDE *FDE = dyn_cast<dwarf::FDE>(&Entry);
+    if (FDE == nullptr)
+      continue;
     const auto FuncAddress = FDE->getInitialLocation();
     const auto FDEAddress = OldEHFrame.getEHFrameAddress() + FDE->getOffset();
 
     // Add the address if we failed to write it.
     if (PCToFDE.count(FuncAddress) == 0) {
-      DEBUG(dbgs() << "BOLT-DEBUG: old FDE for function at 0x"
-                   << Twine::utohexstr(FuncAddress) << " is at 0x"
-                   << Twine::utohexstr(FDEAddress) << '\n');
+      LLVM_DEBUG(dbgs() << "BOLT-DEBUG: old FDE for function at 0x"
+                        << Twine::utohexstr(FuncAddress) << " is at 0x"
+                        << Twine::utohexstr(FDEAddress) << '\n');
       PCToFDE[FuncAddress] = FDEAddress;
     }
-  });
+  };
 
-  DEBUG(dbgs() << "BOLT-DEBUG: old .eh_frame contains "
-               << std::distance(OldEHFrame.entries().begin(),
-                                OldEHFrame.entries().end())
-               << " entries\n");
+  LLVM_DEBUG(dbgs() << "BOLT-DEBUG: old .eh_frame contains "
+                    << std::distance(OldEHFrame.entries().begin(),
+                                     OldEHFrame.entries().end())
+                    << " entries\n");
 
   // Generate a new .eh_frame_hdr based on the new map.
 
@@ -776,6 +766,144 @@ std::vector<char> CFIReaderWriter::generateEHFrameHeader(
   }
 
   return EHFrameHeader;
+}
+
+Error EHFrameParser::parseCIE(uint64_t StartOffset) {
+  uint8_t Version = Data.getU8(&Offset);
+  const char *Augmentation = Data.getCStr(&Offset);
+  StringRef AugmentationString(Augmentation ? Augmentation : "");
+  uint8_t AddressSize =
+      Version < 4 ? Data.getAddressSize() : Data.getU8(&Offset);
+  Data.setAddressSize(AddressSize);
+  // Skip segment descriptor size
+  if (Version >= 4)
+    Offset += 1;
+  // Skip code alignment factor
+  Data.getULEB128(&Offset);
+  // Skip data alignment
+  Data.getSLEB128(&Offset);
+  // Skip return address register
+  if (Version == 1) {
+    Offset += 1;
+  } else {
+    Data.getULEB128(&Offset);
+  }
+
+  uint32_t FDEPointerEncoding = DW_EH_PE_absptr;
+  uint32_t LSDAPointerEncoding = DW_EH_PE_omit;
+  // Walk the augmentation string to get all the augmentation data.
+  for (unsigned i = 0, e = AugmentationString.size(); i != e; ++i) {
+    switch (AugmentationString[i]) {
+    default:
+      return createStringError(
+          errc::invalid_argument,
+          "unknown augmentation character in entry at 0x%" PRIx64, StartOffset);
+    case 'L':
+      LSDAPointerEncoding = Data.getU8(&Offset);
+      break;
+    case 'P': {
+      uint32_t PersonalityEncoding = Data.getU8(&Offset);
+      Optional<uint64_t> Personality =
+          Data.getEncodedPointer(&Offset, PersonalityEncoding,
+                                 EHFrameAddress ? EHFrameAddress + Offset : 0);
+      // Patch personality address
+      if (Personality)
+        PatcherCallback(*Personality, Offset, PersonalityEncoding);
+      break;
+    }
+    case 'R':
+      FDEPointerEncoding = Data.getU8(&Offset);
+      break;
+    case 'z':
+      if (i)
+        return createStringError(
+            errc::invalid_argument,
+            "'z' must be the first character at 0x%" PRIx64, StartOffset);
+      // Skip augmentation length
+      Data.getULEB128(&Offset);
+      break;
+    case 'S':
+    case 'B':
+      break;
+    }
+  }
+  Entries.emplace_back(std::make_unique<CIEInfo>(
+      FDEPointerEncoding, LSDAPointerEncoding, AugmentationString));
+  CIEs[StartOffset] = &*Entries.back();
+  return Error::success();
+}
+
+Error EHFrameParser::parseFDE(uint64_t CIEPointer,
+                               uint64_t StartStructureOffset) {
+  Optional<uint64_t> LSDAAddress;
+  CIEInfo *Cie = CIEs[StartStructureOffset - CIEPointer];
+
+  // The address size is encoded in the CIE we reference.
+  if (!Cie)
+    return createStringError(errc::invalid_argument,
+                             "parsing FDE data at 0x%" PRIx64
+                             " failed due to missing CIE",
+                             StartStructureOffset);
+  // Patch initial location
+  if (auto Val = Data.getEncodedPointer(&Offset, Cie->FDEPtrEncoding,
+                                        EHFrameAddress + Offset)) {
+    PatcherCallback(*Val, Offset, Cie->FDEPtrEncoding);
+  }
+  // Skip address range
+  Data.getEncodedPointer(&Offset, Cie->FDEPtrEncoding, 0);
+
+  // Process augmentation data for this FDE.
+  StringRef AugmentationString = Cie->AugmentationString;
+  if (!AugmentationString.empty() && Cie->LSDAPtrEncoding != DW_EH_PE_omit) {
+    // Skip augmentation length
+    Data.getULEB128(&Offset);
+    LSDAAddress =
+        Data.getEncodedPointer(&Offset, Cie->LSDAPtrEncoding,
+                               EHFrameAddress ? Offset + EHFrameAddress : 0);
+    // Patch LSDA address
+    PatcherCallback(*LSDAAddress, Offset, Cie->LSDAPtrEncoding);
+  }
+  return Error::success();
+}
+
+Error EHFrameParser::parse() {
+  while (Data.isValidOffset(Offset)) {
+    const uint64_t StartOffset = Offset;
+
+    uint64_t Length;
+    DwarfFormat Format;
+    std::tie(Length, Format) = Data.getInitialLength(&Offset);
+
+    // If the Length is 0, then this CIE is a terminator
+    if (Length == 0)
+      break;
+
+    const uint64_t StartStructureOffset = Offset;
+    const uint64_t EndStructureOffset = Offset + Length;
+
+    Error Err = Error::success();
+    const uint64_t Id = Data.getRelocatedValue(4, &Offset,
+                                               /*SectionIndex=*/nullptr, &Err);
+    if (Err)
+      return Err;
+
+    if (!Id) {
+      if (Error Err = parseCIE(StartOffset))
+        return Err;
+    } else {
+      if (Error Err = parseFDE(Id, StartStructureOffset))
+        return Err;
+    }
+    Offset = EndStructureOffset;
+  }
+
+  return Error::success();
+}
+
+Error EHFrameParser::parse(DWARFDataExtractor Data, uint64_t EHFrameAddress,
+                            PatcherCallbackTy PatcherCallback) {
+  EHFrameParser Parser(Data, EHFrameAddress, PatcherCallback);
+  return Parser.parse();
 }
 
 } // namespace bolt

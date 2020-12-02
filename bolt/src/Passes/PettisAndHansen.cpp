@@ -155,8 +155,9 @@ std::vector<Cluster> pettisAndHansen(const CallGraph &Cg) {
 
     orderFuncs(Cg, C1, C2);
 
-    DEBUG(dbgs() << format("merging %s -> %s: %.1f\n", C2->toString().c_str(),
-          C1->toString().c_str(), Max.Weight););
+    LLVM_DEBUG(dbgs() << format("merging %s -> %s: %.1f\n",
+                                C2->toString().c_str(), C1->toString().c_str(),
+                                Max.Weight));
 
     // update carcs: merge C1arcs to C2arcs
 

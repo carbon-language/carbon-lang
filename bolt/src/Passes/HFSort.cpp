@@ -28,9 +28,9 @@
 */
 
 #include "HFSort.h"
+#include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/Format.h"
-#include "llvm/Support/Options.h"
 #include "llvm/Support/raw_ostream.h"
 #include <unordered_set>
 
@@ -109,7 +109,7 @@ void freezeClusters(const CallGraph &Cg, std::vector<Cluster> &Clusters) {
     if (NewSize > FrozenPages * HugePageSize) break;
     C.freeze();
     TotalSize = NewSize;
-    DEBUG(
+    LLVM_DEBUG(
       auto Fid = C.target(0);
       dbgs() <<
           format("freezing cluster for func %d, size = %u, samples = %lu)\n",
@@ -229,7 +229,7 @@ std::vector<Cluster> clusterize(const CallGraph &Cg) {
       continue;
     }
 
-    DEBUG(
+    LLVM_DEBUG(
       if (opts::Verbosity > 1) {
         dbgs() << format("merging %s -> %s: %u\n",
                          PredCluster->toString().c_str(),

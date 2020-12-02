@@ -16,15 +16,13 @@
 #define LLVM_TOOLS_LLVM_BOLT_LINKRUNTIME_H
 
 #include <llvm/ADT/StringRef.h>
+#include <functional>
 #include <vector>
 
 namespace llvm {
-class MCStreamer;
 
-namespace orc {
-class ExecutionSession;
-class RTDyldObjectLinkingLayer;
-} // namespace orc
+class MCStreamer;
+class RuntimeDyld;
 
 namespace bolt {
 
@@ -53,9 +51,8 @@ public:
   virtual void emitBinary(BinaryContext &BC, MCStreamer &Streamer) = 0;
 
   /// Link with the library code.
-  virtual void link(BinaryContext &BC, StringRef ToolPath,
-                    orc::ExecutionSession &ES,
-                    orc::RTDyldObjectLinkingLayer &OLT) = 0;
+  virtual void link(BinaryContext &BC, StringRef ToolPath, RuntimeDyld &RTDyld,
+                    std::function<void(RuntimeDyld &)> OnLoad) = 0;
 
 protected:
   /// The fini and init address set by the runtime library.
@@ -65,9 +62,8 @@ protected:
   /// Get the full path to a runtime library specified by \p LibFileName.
   static std::string getLibPath(StringRef ToolPath, StringRef LibFileName);
 
-  /// Load a static runtime library specified by \p LibPath to OLT.
-  static void loadLibraryToOLT(StringRef LibPath, orc::ExecutionSession &ES,
-                               orc::RTDyldObjectLinkingLayer &OLT);
+  /// Load a static runtime library specified by \p LibPath.
+  static void loadLibrary(StringRef LibPath, RuntimeDyld &RTDyld);
 };
 
 } // namespace bolt

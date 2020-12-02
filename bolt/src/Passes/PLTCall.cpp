@@ -12,7 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "PLTCall.h"
-#include "llvm/Support/Options.h"
+#include "llvm/Support/CommandLine.h"
 
 #define DEBUG_TYPE "bolt-plt"
 

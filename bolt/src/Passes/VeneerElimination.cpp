@@ -63,8 +63,8 @@ void VeneerElimination::runOnFunctions(BinaryContext &BC) {
     }
   }
 
-  DEBUG(dbgs() << "BOLT-INFO: number of removed linker-inserted veneers :" << VeneersCount
-               << "\n");
+  LLVM_DEBUG(dbgs() << "BOLT-INFO: number of removed linker-inserted veneers :"
+                    << VeneersCount << "\n");
 
   // Handle veneers to veneers in case they occur
   for (auto entry : VeneerDestinations) {
@@ -97,8 +97,9 @@ void VeneerElimination::runOnFunctions(BinaryContext &BC) {
     }
   }
 
-  DEBUG(dbgs() << "BOLT-INFO: number of linker-inserted veneers call sites :" << VeneerCallers
-               << "\n");
+  LLVM_DEBUG(
+      dbgs() << "BOLT-INFO: number of linker-inserted veneers call sites :"
+             << VeneerCallers << "\n");
 }
 
 } // namespace bolt

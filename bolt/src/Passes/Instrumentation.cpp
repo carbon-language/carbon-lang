@@ -12,7 +12,8 @@
 #include "Instrumentation.h"
 #include "ParallelUtilities.h"
 #include "Passes/DataflowInfoManager.h"
-#include "llvm/Support/Options.h"
+#include "llvm/Support/CommandLine.h"
+#include <stack>
 
 #define DEBUG_TYPE "bolt-instrumentation"
 
@@ -72,7 +73,7 @@ uint32_t Instrumentation::getFunctionNameIndex(const BinaryFunction &Function) {
     return Iter->second;
   auto Idx = Summary->StringTable.size();
   FuncToStringIdx.emplace(std::make_pair(&Function, Idx));
-  Summary->StringTable.append(Function.getOneName());
+  Summary->StringTable.append(std::string(Function.getOneName()));
   Summary->StringTable.append(1, '\0');
   return Idx;
 }
@@ -156,7 +157,7 @@ std::vector<MCInst>
 Instrumentation::createInstrumentationSnippet(BinaryContext &BC, bool IsLeaf) {
   auto L = BC.scopeLock();
   MCSymbol *Label;
-  Label = BC.Ctx->createTempSymbol("InstrEntry", true);
+  Label = BC.Ctx->createNamedTempSymbol("InstrEntry");
   Summary->Counters.emplace_back(Label);
   std::vector<MCInst> CounterInstrs(5);
   // Don't clobber application red zone (ABI dependent)
@@ -586,7 +587,7 @@ void Instrumentation::runOnFunctions(BinaryContext &BC) {
 void Instrumentation::createAuxiliaryFunctions(BinaryContext &BC) {
   auto createSimpleFunction =
       [&](StringRef Title, std::vector<MCInst> Instrs) -> BinaryFunction * {
-    BinaryFunction *Func = BC.createInjectedBinaryFunction(Title);
+    BinaryFunction *Func = BC.createInjectedBinaryFunction(std::string(Title));
 
     std::vector<std::unique_ptr<BinaryBasicBlock>> BBs;
     BBs.emplace_back(
@@ -649,7 +650,7 @@ void Instrumentation::setupRuntimeLibrary(BinaryContext &BC) {
          << opts::InstrumentationFilename << "\n";
 
   BC.setRuntimeLibrary(
-      llvm::make_unique<InstrumentationRuntimeLibrary>(std::move(Summary)));
+      std::make_unique<InstrumentationRuntimeLibrary>(std::move(Summary)));
 }
 }
 }

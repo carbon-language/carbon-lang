@@ -210,7 +210,8 @@ bool ValidateInternalCalls::analyzeFunction(BinaryFunction &Function) const {
         continue;
 
       if (HasTailCalls) {
-        DEBUG(dbgs() << Function << " has tail calls and internal calls.\n");
+        LLVM_DEBUG(dbgs() << Function
+                          << " has tail calls and internal calls.\n");
         return false;
       }
 
@@ -224,7 +225,7 @@ bool ValidateInternalCalls::analyzeFunction(BinaryFunction &Function) const {
                                  FIE.IsStoreFromReg, Reg, SrcImm,
                                  FIE.StackPtrReg, StackOffset, FIE.Size,
                                  FIE.IsSimple, IsIndexed)) {
-        DEBUG({
+        LLVM_DEBUG({
           dbgs() << "Frame analysis failed - not simple: " << Function << "\n";
           Function.dump();
         });
@@ -232,7 +233,7 @@ bool ValidateInternalCalls::analyzeFunction(BinaryFunction &Function) const {
       }
       if (!FIE.IsLoad || FIE.StackPtrReg != BC.MIB->getStackPointer() ||
           StackOffset != 0) {
-        DEBUG({
+        LLVM_DEBUG({
           dbgs() << "Target instruction does not fetch return address - not "
                     "simple: "
                  << Function << "\n";
@@ -260,30 +261,30 @@ bool ValidateInternalCalls::analyzeFunction(BinaryFunction &Function) const {
         std::pair<MCPhysReg, int64_t> Input1 = std::make_pair(Reg, 0);
         std::pair<MCPhysReg, int64_t> Input2 = std::make_pair(0, 0);
         if (!BC.MIB->evaluateSimple(Use, Output, Input1, Input2)) {
-          DEBUG(dbgs() << "Evaluate simple failed.\n");
+          LLVM_DEBUG(dbgs() << "Evaluate simple failed.\n");
           return false;
         }
         if (Offset + Output < 0 ||
             Offset + Output > static_cast<int64_t>(Function.getSize())) {
-          DEBUG({
+          LLVM_DEBUG({
             dbgs() << "Detected out-of-range PIC reference in " << Function
                    << "\nReturn address load: ";
-            BC.InstPrinter->printInst(TargetInst, dbgs(), "", *BC.STI);
+            BC.InstPrinter->printInst(TargetInst, 0, "", *BC.STI, dbgs());
             dbgs() << "\nUse: ";
-            BC.InstPrinter->printInst(&Use, dbgs(), "", *BC.STI);
+            BC.InstPrinter->printInst(&Use, 0, "", *BC.STI, dbgs());
             dbgs() << "\n";
             Function.dump();
           });
           return false;
         }
-        DEBUG({
+        LLVM_DEBUG({
           dbgs() << "Validated access: ";
-          BC.InstPrinter->printInst(&Use, dbgs(), "", *BC.STI);
+          BC.InstPrinter->printInst(&Use, 0, "", *BC.STI, dbgs());
           dbgs() << "\n";
         });
       }
       if (!UseDetected) {
-        DEBUG(dbgs() << "No use detected.\n");
+        LLVM_DEBUG(dbgs() << "No use detected.\n");
         return false;
       }
     }
@@ -321,7 +322,7 @@ void ValidateInternalCalls::runOnFunctions(BinaryContext &BC) {
   // case, we mark this function as non-simple and stop processing it.
   std::set<BinaryFunction *> Invalid;
   for (auto *Function : NeedsValidation) {
-    DEBUG(dbgs() << "Validating " << *Function << "\n");
+    LLVM_DEBUG(dbgs() << "Validating " << *Function << "\n");
     if (!analyzeFunction(*Function)) {
       Invalid.insert(Function);
     }

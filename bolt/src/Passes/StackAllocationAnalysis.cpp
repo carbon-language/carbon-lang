@@ -18,8 +18,8 @@ namespace llvm {
 namespace bolt {
 
 void StackAllocationAnalysis::preflight() {
-  DEBUG(dbgs() << "Starting StackAllocationAnalysis on \""
-                << Func.getPrintName() << "\"\n");
+  LLVM_DEBUG(dbgs() << "Starting StackAllocationAnalysis on \""
+                    << Func.getPrintName() << "\"\n");
 
   for (auto &BB : this->Func) {
     for (auto &Inst : BB) {
@@ -65,7 +65,7 @@ BitVector StackAllocationAnalysis::doKill(const MCInst &Point,
       continue;
     if (InstrOffset < SPOffset) {
       Next.reset(I.getBitVectorIndex());
-      DEBUG({
+      LLVM_DEBUG({
         dbgs() << "SAA FYI: Killed: ";
         Instr->dump();
         dbgs() << "by: ";

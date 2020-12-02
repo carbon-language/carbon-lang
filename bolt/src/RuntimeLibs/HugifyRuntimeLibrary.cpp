@@ -10,6 +10,8 @@
 #include "HugifyRuntimeLibrary.h"
 #include "BinaryFunction.h"
 #include "llvm/ExecutionEngine/Orc/RTDyldObjectLinkingLayer.h"
+#include "llvm/Support/Alignment.h"
+#include "llvm/Support/CommandLine.h"
 
 using namespace llvm;
 using namespace bolt;
@@ -73,26 +75,31 @@ void HugifyRuntimeLibrary::emitBinary(BinaryContext &BC, MCStreamer &Streamer) {
   // jump to after finishing the init code.
   MCSymbol *InitPtr = BC.Ctx->getOrCreateSymbol("__bolt_hugify_init_ptr");
 
-  Section->setAlignment(BC.RegularPageSize);
+  Section->setAlignment(llvm::Align(BC.RegularPageSize));
   Streamer.SwitchSection(Section);
 
-  Streamer.EmitLabel(InitPtr);
-  Streamer.EmitSymbolAttribute(InitPtr, MCSymbolAttr::MCSA_Global);
-  Streamer.EmitValue(
+  Streamer.emitLabel(InitPtr);
+  Streamer.emitSymbolAttribute(InitPtr, MCSymbolAttr::MCSA_Global);
+  Streamer.emitValue(
       MCSymbolRefExpr::create(StartFunction->getSymbol(), *(BC.Ctx)),
       /*Size=*/8);
 }
 
 void HugifyRuntimeLibrary::link(BinaryContext &BC, StringRef ToolPath,
-                                orc::ExecutionSession &ES,
-                                orc::RTDyldObjectLinkingLayer &OLT) {
+                                RuntimeDyld &RTDyld,
+                                std::function<void(RuntimeDyld &)> OnLoad) {
   auto LibPath = getLibPath(ToolPath, opts::RuntimeHugifyLib);
-  loadLibraryToOLT(LibPath, ES, OLT);
+  loadLibrary(LibPath, RTDyld);
+  OnLoad(RTDyld);
+  RTDyld.finalizeWithMemoryManagerLocking();
+  if (RTDyld.hasError()) {
+    outs() << "BOLT-ERROR: RTDyld failed: " << RTDyld.getErrorString() << "\n";
+    exit(1);
+  }
 
   assert(!RuntimeStartAddress &&
          "We don't currently support linking multiple runtime libraries");
-  RuntimeStartAddress =
-      cantFail(OLT.findSymbol("__bolt_hugify_self", false).getAddress());
+  RuntimeStartAddress = RTDyld.getSymbol("__bolt_hugify_self").getAddress();
   if (!RuntimeStartAddress) {
     errs() << "BOLT-ERROR: instrumentation library does not define "
               "__bolt_hugify_self: "

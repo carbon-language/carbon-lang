@@ -378,8 +378,8 @@ size_t Relocation::emit(MCStreamer *Streamer) const {
   const auto Size = getSizeForType(Type);
   auto &Ctx = Streamer->getContext();
   if (isPCRelative(Type)) {
-    auto *TempLabel = Ctx.createTempSymbol();
-    Streamer->EmitLabel(TempLabel);
+    auto *TempLabel = Ctx.createNamedTempSymbol();
+    Streamer->emitLabel(TempLabel);
     const MCExpr *Value{nullptr};
     if (Symbol) {
       Value = MCSymbolRefExpr::create(Symbol, Ctx);
@@ -394,7 +394,7 @@ size_t Relocation::emit(MCStreamer *Streamer) const {
     Value = MCBinaryExpr::createSub(Value,
                                     MCSymbolRefExpr::create(TempLabel, Ctx),
                                     Ctx);
-    Streamer->EmitValue(Value, Size);
+    Streamer->emitValue(Value, Size);
 
     return Size;
   }
@@ -403,11 +403,11 @@ size_t Relocation::emit(MCStreamer *Streamer) const {
     auto Value = MCBinaryExpr::createAdd(MCSymbolRefExpr::create(Symbol, Ctx),
                                          MCConstantExpr::create(Addend, Ctx),
                                          Ctx);
-    Streamer->EmitValue(Value, Size);
+    Streamer->emitValue(Value, Size);
   } else if (Symbol) {
-    Streamer->EmitSymbolValue(Symbol, Size);
+    Streamer->emitSymbolValue(Symbol, Size);
   } else {
-    Streamer->EmitIntValue(Addend, Size);
+    Streamer->emitIntValue(Addend, Size);
   }
 
   return Size;

@@ -54,10 +54,14 @@ bool MCPlusBuilder::equals(const MCOperand &A, const MCOperand &B,
     if (!B.isImm())
       return false;
     return A.getImm() == B.getImm();
-  } else if (A.isFPImm()) {
-    if (!B.isFPImm())
+  } else if (A.isSFPImm()) {
+    if (!B.isSFPImm())
       return false;
-    return A.getFPImm() == B.getFPImm();
+    return A.getSFPImm() == B.getSFPImm();
+  } else if (A.isDFPImm()) {
+    if (!B.isDFPImm())
+      return false;
+    return A.getDFPImm() == B.getDFPImm();
   } else if (A.isExpr()) {
     if (!B.isExpr())
       return false;
@@ -232,12 +236,16 @@ bool MCPlusBuilder::removeAnnotation(MCInst &Inst, unsigned Index) {
   return false;
 }
 
-void MCPlusBuilder::stripAnnotations(MCInst &Inst) {
+void MCPlusBuilder::stripAnnotations(MCInst &Inst, bool KeepTC) {
   auto *AnnotationInst = getAnnotationInst(Inst);
   if (!AnnotationInst)
     return;
+  // Preserve TailCall annotation.
+  auto IsTCOrErr = tryGetAnnotationAs<bool>(Inst, "TC");
 
   Inst.erase(std::prev(Inst.end()));
+  if (KeepTC && IsTCOrErr)
+    addAnnotation(Inst, "TC", *IsTCOrErr);
 }
 
 void
@@ -383,8 +391,8 @@ MCPlusBuilder::getAliases(MCPhysReg Reg,
     SuperReg.emplace_back(I);
   }
   std::queue<MCPhysReg> Worklist;
-  // Propagate alias info upwards
-  for (MCPhysReg I = 0, E = RegInfo->getNumRegs(); I != E; ++I) {
+  // Propagate alias info upwards. Skip reg 0 (mapped to NoRegister)
+  for (MCPhysReg I = 1, E = RegInfo->getNumRegs(); I < E; ++I) {
     Worklist.push(I);
   }
   while (!Worklist.empty()) {
@@ -398,7 +406,7 @@ MCPlusBuilder::getAliases(MCPhysReg Reg,
     }
   }
   // Propagate parent reg downwards
-  for (MCPhysReg I = 0, E = RegInfo->getNumRegs(); I != E; ++I) {
+  for (MCPhysReg I = 1, E = RegInfo->getNumRegs(); I < E; ++I) {
     Worklist.push(I);
   }
   while (!Worklist.empty()) {
@@ -410,7 +418,7 @@ MCPlusBuilder::getAliases(MCPhysReg Reg,
     }
   }
 
-  DEBUG({
+  LLVM_DEBUG({
     dbgs() << "Dumping reg alias table:\n";
     for (MCPhysReg I = 0, E = RegInfo->getNumRegs(); I != E; ++I) {
       dbgs() << "Reg " << I << ": ";
@@ -442,7 +450,7 @@ MCPlusBuilder::getRegSize(MCPhysReg Reg) const {
   for (auto I = RegInfo->regclass_begin(), E = RegInfo->regclass_end(); I != E;
        ++I) {
     for (MCPhysReg Reg : *I) {
-      SizeMap[Reg] = I->getSize();
+      SizeMap[Reg] = I->getSizeInBits() / 8;
     }
   }
 

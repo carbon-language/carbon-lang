@@ -33,7 +33,6 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/ErrorOr.h"
-#include "llvm/Support/StringPool.h"
 #include <cassert>
 #include <cstdint>
 #include <map>
@@ -153,14 +152,6 @@ protected:
   const MCInstrAnalysis *Analysis;
   const MCInstrInfo *Info;
   const MCRegisterInfo *RegInfo;
-
-  /// Hash a PooledStringPtr.  It's ok to use the address since all these
-  /// strings are interned.
-  struct HashPooledStringPtr {
-    size_t operator()(const PooledStringPtr &Str) const {
-      return reinterpret_cast<size_t>(Str.begin());
-    }
-  };
 
   /// Map annotation name into an annotation index.
   StringMap<uint64_t> AnnotationNameIndexMap;
@@ -568,6 +559,10 @@ public:
     llvm_unreachable("not implemented");
     return false;
   }
+
+  /// If non-zero, this is used to fill the executable space with instructions
+  /// that will trap. Defaults to 0.
+  virtual unsigned getTrapFillValue() const { return 0; }
 
   /// Interface and basic functionality of a MCInstMatcher. The idea is to make
   /// it easy to match one or more MCInsts against a tree-like pattern and
@@ -983,7 +978,7 @@ public:
   /// ConstantData array starting from \p offset and assuming little-endianess.
   /// Return true on success. The given instruction is modified in place.
   virtual bool replaceMemOperandWithImm(MCInst &Inst, StringRef ConstantData,
-                                        uint32_t Offset) const {
+                                        uint64_t Offset) const {
     llvm_unreachable("not implemented");
     return false;
   }
@@ -1068,7 +1063,7 @@ public:
 
   /// Return MCSymbol extracted from a target expression
   virtual const MCSymbol *getTargetSymbol(const MCExpr *Expr) const {
-    return &Expr->getSymbol();
+    return &cast<const MCSymbolRefExpr>(Expr)->getSymbol();
   }
 
   /// Return MCSymbol/offset extracted from a target expression
@@ -1218,7 +1213,7 @@ public:
   }
 
   /// Replace instruction opcode to be a regural call instead of tail call.
-  virtual bool convertTailCallToCall(MCInst &Inst) const {
+  virtual bool convertTailCallToCall(MCInst &Inst) {
     llvm_unreachable("not implemented");
     return false;
   }
@@ -1227,13 +1222,13 @@ public:
   /// a destination from a memory location pointed by \p TargetLocation symbol.
   virtual bool convertCallToIndirectCall(MCInst &Inst,
                                          const MCSymbol *TargetLocation,
-                                         MCContext *Ctx) const {
+                                         MCContext *Ctx) {
     llvm_unreachable("not implemented");
     return false;
   }
 
   /// Morph an indirect call into a load where \p Reg holds the call target.
-  virtual void convertIndirectCallToLoad(MCInst &Inst, MCPhysReg Reg) const {
+  virtual void convertIndirectCallToLoad(MCInst &Inst, MCPhysReg Reg) {
     llvm_unreachable("not implemented");
   }
 
@@ -1369,7 +1364,7 @@ public:
   }
 
   virtual bool createIndirectCall(MCInst &Inst, const MCSymbol *TargetLocation,
-                                  MCContext *Ctx, bool IsTailCall) const {
+                                  MCContext *Ctx, bool IsTailCall) {
     llvm_unreachable("not implemented");
     return false;
   }
@@ -1510,10 +1505,17 @@ public:
     return false;
   }
 
+  /// Return the conditional code used in a conditional jump instruction.
+  /// Returns invalid code if not conditional jump.
+  virtual unsigned getCondCode(const MCInst &Inst) const {
+    llvm_unreachable("not implemented");
+    return false;
+  }
+
   /// Return canonical branch opcode for a reversible branch opcode. For every
   /// opposite branch opcode pair Op <-> OpR this function returns one of the
   /// opcodes which is considered a canonical.
-  virtual unsigned getCanonicalBranchOpcode(unsigned BranchOpcode) const {
+  virtual unsigned getCanonicalBranchCondCode(unsigned CC) const {
     llvm_unreachable("not implemented");
     return false;
   }
@@ -1554,7 +1556,7 @@ public:
     const auto Index =
         AnnotationNameIndexMap.size() + MCPlus::MCAnnotation::kGeneric;
     AnnotationNameIndexMap.insert(std::make_pair(Name, Index));
-    AnnotationNames.push_back(Name);
+    AnnotationNames.emplace_back(std::string(Name));
     return Index;
   }
 
@@ -1718,12 +1720,12 @@ public:
   }
 
   /// Remove meta-data, but don't destroy it.
-  void stripAnnotations(MCInst &Inst);
+  void stripAnnotations(MCInst &Inst, bool KeepTC = false);
 
   virtual std::vector<MCInst>
   createInstrumentedIndirectCall(const MCInst &CallInst, bool TailCall,
                                  MCSymbol *HandlerFuncAddr, int CallSiteID,
-                                 MCContext *Ctx) const {
+                                 MCContext *Ctx) {
     llvm_unreachable("not implemented");
     return std::vector<MCInst>();
   }

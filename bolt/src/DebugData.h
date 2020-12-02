@@ -55,6 +55,16 @@ static inline bool operator<(const DebugAddressRange &LHS,
 /// DebugAddressRangesVector - represents a set of absolute address ranges.
 using DebugAddressRangesVector = SmallVector<DebugAddressRange, 2>;
 
+/// Address range with location used by .debug_loc section.
+/// More compact than DWARFLocationEntry and uses absolute addresses.
+struct DebugLocationEntry {
+  uint64_t LowPC;
+  uint64_t HighPC;
+  SmallVector<uint8_t, 4> Expr;
+};
+
+using DebugLocationsVector = SmallVector<DebugLocationEntry, 4>;
+
 /// References a row in a DWARFDebugLine::LineTable by the DWARF
 /// Context index of the DWARF Compile Unit that owns the Line Table and the row
 /// index. This is tied to our IR during disassembly so that we can later update
@@ -122,8 +132,6 @@ private:
 
   std::unique_ptr<raw_svector_ostream> RangesStream;
 
-  std::unique_ptr<MCObjectWriter> Writer;
-
   std::mutex WriterMutex;
 
   /// Current offset in the section (updated as new entries are written).
@@ -141,7 +149,7 @@ public:
   void addCURanges(uint64_t CUOffset, DebugAddressRangesVector &&Ranges);
 
   /// Writes .debug_aranges with the added ranges to the MCObjectWriter.
-  void writeARangesSection(MCObjectWriter *Writer) const;
+  void writeARangesSection(raw_svector_ostream &RangesStream) const;
 
   /// Resets the writer to a clear state.
   void reset() {
@@ -172,7 +180,7 @@ class DebugLocWriter {
 public:
   DebugLocWriter(BinaryContext *BC);
 
-  uint64_t addList(const DWARFDebugLoc::LocationList &LocList);
+  uint64_t addList(const DebugLocationsVector &LocList);
 
   std::unique_ptr<LocBufferVector> finalize() {
     return std::move(LocBuffer);
@@ -190,8 +198,6 @@ private:
   std::unique_ptr<LocBufferVector> LocBuffer;
 
   std::unique_ptr<raw_svector_ostream> LocStream;
-
-  std::unique_ptr<MCObjectWriter> Writer;
 
   /// Current offset in the section (updated as new entries are written).
   /// Starts with 0 here since this only writes part of a full location lists

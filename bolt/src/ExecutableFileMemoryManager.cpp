@@ -41,6 +41,15 @@ uint8_t *ExecutableFileMemoryManager::allocateSection(intptr_t Size,
     return DataCopy;
   }
 
+  if (!IsCode &&
+      (SectionName == ".strtab" ||
+       SectionName == ".symtab" ||
+       SectionName == "" ||
+       SectionName.startswith(".rela."))) {
+    return SectionMemoryManager::allocateDataSection(Size, Alignment, SectionID,
+                                                     SectionName, IsReadOnly);
+  }
+
   uint8_t *Ret;
   if (IsCode) {
     Ret = SectionMemoryManager::allocateCodeSection(Size, Alignment,
@@ -72,16 +81,17 @@ uint8_t *ExecutableFileMemoryManager::allocateSection(intptr_t Size,
   assert(Section.isAllocatable() &&
          "verify that allocatable is marked as allocatable");
 
-  DEBUG(dbgs() << "BOLT: allocating "
-               << (IsCode ? "code" : (IsReadOnly ? "read-only data" : "data"))
-               << " section : " << SectionName
-               << " with size " << Size << ", alignment " << Alignment
-               << " at 0x" << Ret << ", ID = " << SectionID << "\n");
+  LLVM_DEBUG(
+      dbgs() << "BOLT: allocating "
+             << (IsCode ? "code" : (IsReadOnly ? "read-only data" : "data"))
+             << " section : " << SectionName << " with size " << Size
+             << ", alignment " << Alignment << " at 0x" << Ret
+             << ", ID = " << SectionID << "\n");
   return Ret;
 }
 
 bool ExecutableFileMemoryManager::finalizeMemory(std::string *ErrMsg) {
-  DEBUG(dbgs() << "BOLT: finalizeMemory()\n");
+  LLVM_DEBUG(dbgs() << "BOLT: finalizeMemory()\n");
   ++ObjectsLoaded;
   return SectionMemoryManager::finalizeMemory(ErrMsg);
 }

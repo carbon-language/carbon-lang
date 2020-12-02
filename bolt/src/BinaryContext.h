@@ -239,7 +239,7 @@ public:
   std::shared_ptr<ExecutableFileMemoryManager> EFMM;
 
   StringRef getFilename() const { return Filename; }
-  void setFilename(StringRef Name) { Filename = Name; }
+  void setFilename(StringRef Name) { Filename = std::string(Name); }
 
   Optional<StringRef> getFileBuildID() const {
     if (FileBuildID) {
@@ -248,7 +248,7 @@ public:
 
     return NoneType();
   }
-  void setFileBuildID(StringRef ID) { FileBuildID = ID; }
+  void setFileBuildID(StringRef ID) { FileBuildID = std::string(ID); }
 
   bool hasSymbolsWithFileName() const {
     return HasSymbolsWithFileName;
@@ -582,6 +582,11 @@ public:
   /// Map linux kernel program locations/instructions to their pointers in
   /// special linux kernel sections
   std::unordered_map<uint64_t, std::vector<LKInstructionMarkerInfo>> LKMarkers;
+
+  /// DWARF encoding. Available encoding types defined in BinaryFormat/Dwarf.h
+  /// enum Constants, e.g. DW_EH_PE_omit.
+  unsigned TTypeEncoding = dwarf::DW_EH_PE_omit;
+  unsigned LSDAEncoding = dwarf::DW_EH_PE_omit;
 
   BinaryContext(std::unique_ptr<MCContext> Ctx,
                 std::unique_ptr<DWARFContext> DwCtx,
@@ -974,11 +979,11 @@ public:
   /// Return section(s) associated with given \p Name.
   iterator_range<NameToSectionMapType::iterator>
   getSectionByName(StringRef Name) {
-    return make_range(NameToSection.equal_range(Name));
+    return make_range(NameToSection.equal_range(std::string(Name)));
   }
   iterator_range<NameToSectionMapType::const_iterator>
   getSectionByName(StringRef Name) const {
-    return make_range(NameToSection.equal_range(Name));
+    return make_range(NameToSection.equal_range(std::string(Name)));
   }
 
   /// Return the unique section associated with given \p Name.
@@ -1187,12 +1192,12 @@ public:
   /// won't be used in the main code emitter.
   IndependentCodeEmitter createIndependentMCCodeEmitter() const {
     IndependentCodeEmitter MCEInstance;
-    MCEInstance.LocalMOFI = llvm::make_unique<MCObjectFileInfo>();
-    MCEInstance.LocalCtx = llvm::make_unique<MCContext>(
-        AsmInfo.get(), MRI.get(), MCEInstance.LocalMOFI.get());
-    MCEInstance.LocalMOFI->InitMCObjectFileInfo(*TheTriple,
-                                                /*PIC=*/!HasFixedLoadAddress,
-                                                *MCEInstance.LocalCtx);
+    MCEInstance.LocalCtx.reset(
+        new MCContext(*TheTriple, AsmInfo.get(), MRI.get(), STI.get()));
+    MCEInstance.LocalMOFI.reset(
+        TheTarget->createMCObjectFileInfo(*MCEInstance.LocalCtx.get(),
+                                          /*PIC=*/!HasFixedLoadAddress));
+    MCEInstance.LocalCtx->setObjectFileInfo(MCEInstance.LocalMOFI.get());
     MCEInstance.MCE.reset(
         TheTarget->createMCCodeEmitter(*MII, *MRI, *MCEInstance.LocalCtx));
     return MCEInstance;

@@ -11,7 +11,8 @@
 
 #include "RuntimeLibrary.h"
 #include "Utils.h"
-#include "llvm/ExecutionEngine/Orc/RTDyldObjectLinkingLayer.h"
+#include "llvm/BinaryFormat/Magic.h"
+#include "llvm/ExecutionEngine/RuntimeDyld.h"
 #include "llvm/Object/Archive.h"
 #include "llvm/Support/Path.h"
 
@@ -40,13 +41,10 @@ std::string RuntimeLibrary::getLibPath(StringRef ToolPath,
     errs() << "BOLT-ERROR: library not found: " << LibPath << "\n";
     exit(1);
   }
-  return LibPath.str();
+  return std::string(LibPath.str());
 }
 
-void RuntimeLibrary::loadLibraryToOLT(StringRef LibPath,
-                                      orc::ExecutionSession &ES,
-                                      orc::RTDyldObjectLinkingLayer &OLT) {
-  OLT.setProcessAllSections(false);
+void RuntimeLibrary::loadLibrary(StringRef LibPath, RuntimeDyld &RTDyld) {
   ErrorOr<std::unique_ptr<MemoryBuffer>> MaybeBuf =
       MemoryBuffer::getFile(LibPath, -1, false);
   check_error(MaybeBuf.getError(), LibPath);
@@ -57,18 +55,18 @@ void RuntimeLibrary::loadLibraryToOLT(StringRef LibPath,
     Error Err = Error::success();
     object::Archive Archive(B.get()->getMemBufferRef(), Err);
     for (auto &C : Archive.children(Err)) {
-      auto ChildKey = ES.allocateVModule();
-      auto ChildBuf =
-          MemoryBuffer::getMemBuffer(cantFail(C.getMemoryBufferRef()));
-      cantFail(OLT.addObject(ChildKey, std::move(ChildBuf)));
-      cantFail(OLT.emitAndFinalize(ChildKey));
+      std::unique_ptr<object::Binary> Bin = cantFail(C.getAsBinary());
+      if (auto *Obj = dyn_cast<object::ObjectFile>(&*Bin)) {
+        RTDyld.loadObject(*Obj);
+      }
     }
     check_error(std::move(Err), B->getBufferIdentifier());
   } else if (Magic == file_magic::elf_relocatable ||
              Magic == file_magic::elf_shared_object) {
-    auto K2 = ES.allocateVModule();
-    cantFail(OLT.addObject(K2, std::move(B)));
-    cantFail(OLT.emitAndFinalize(K2));
+    std::unique_ptr<object::ObjectFile> Obj = cantFail(
+      object::ObjectFile::createObjectFile(B.get()->getMemBufferRef()),
+      "error creating in-memory object");
+    RTDyld.loadObject(*Obj);
   } else {
     errs() << "BOLT-ERROR: unrecognized library format: " << LibPath << "\n";
     exit(1);

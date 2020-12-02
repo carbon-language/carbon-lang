@@ -7,4 +7,4 @@ add_llvm_library(LLVMBOLTRuntimeLibs
   intrinsics_gen
   )
 
-include_directories( ${LLVM_MAIN_SRC_DIR}/tools/llvm-bolt/src )
+include_directories( ${BOLT_SOURCE_DIR}/src )

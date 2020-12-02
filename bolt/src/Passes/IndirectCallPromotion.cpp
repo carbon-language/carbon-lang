@@ -11,7 +11,7 @@
 
 #include "IndirectCallPromotion.h"
 #include "DataflowInfoManager.h"
-#include "llvm/Support/Options.h"
+#include "llvm/Support/CommandLine.h"
 #include <numeric>
 
 #define DEBUG_TYPE "ICP"
@@ -316,7 +316,7 @@ IndirectCallPromotion::getCallTargets(
     }
     ++Result;
 
-    DEBUG(if (Targets.end() - Result > 0) {
+    LLVM_DEBUG(if (Targets.end() - Result > 0) {
       dbgs() << "BOLT-INFO: ICP: " << (Targets.end() - Result)
              << " duplicate targets removed\n";
     });
@@ -360,7 +360,7 @@ IndirectCallPromotion::getCallTargets(
                              });
   Targets.erase(Last, Targets.end());
 
-  DEBUG(
+  LLVM_DEBUG(
     if (BF.getJumpTable(Inst)) {
       uint64_t TotalCount = 0;
       uint64_t TotalMispreds = 0;
@@ -418,7 +418,7 @@ IndirectCallPromotion::maybeGetHotJumpTableTargets(
   if (!MemLocInstr)
     return JumpTableInfoType();
 
-  DEBUG({
+  LLVM_DEBUG({
       dbgs() << "BOLT-INFO: ICP attempting to find memory profiling data for "
              << "jump table in " << Function << " at @ "
              << (&CallInst - &BB->front()) << "\n"
@@ -453,7 +453,8 @@ IndirectCallPromotion::maybeGetHotJumpTableTargets(
 
   uint64_t ArrayStart;
   if (DispExpr) {
-    auto DispValueOrError = BC.getSymbolValue(DispExpr->getSymbol());
+    auto DispValueOrError =
+        BC.getSymbolValue(*BC.MIB->getTargetSymbol(DispExpr));
     assert(DispValueOrError && "global symbol needs a value");
     ArrayStart = *DispValueOrError;
   } else {
@@ -493,15 +494,15 @@ IndirectCallPromotion::maybeGetHotJumpTableTargets(
     // If Index is out of range it probably means the memory profiling data is
     // wrong for this instruction, bail out.
     if (Index >= Range.second) {
-      DEBUG(dbgs() << "BOLT-INFO: Index out of range of " << Range.first
-                   << ", " << Range.second << "\n");
+      LLVM_DEBUG(dbgs() << "BOLT-INFO: Index out of range of " << Range.first
+                        << ", " << Range.second << "\n");
       return JumpTableInfoType();
     }
 
     // Make sure the hot index points at a legal label corresponding to a BB,
     // e.g. not the end of function (unreachable) label.
     if (!Function.getBasicBlockForLabel(JT->Entries[Index + Range.first])) {
-      DEBUG({
+      LLVM_DEBUG({
           dbgs() << "BOLT-INFO: hot index " << Index << " pointing at bogus "
                  << "label " << JT->Entries[Index + Range.first]->getName()
                  << " in jump table:\n";
@@ -532,7 +533,7 @@ IndirectCallPromotion::maybeGetHotJumpTableTargets(
   // Sort with highest counts first.
   std::sort(HotTargets.rbegin(), HotTargets.rend());
 
-  DEBUG({
+  LLVM_DEBUG({
       dbgs() << "BOLT-INFO: ICP jump table hot targets:\n";
       for (const auto &Target : HotTargets) {
         dbgs() << "BOLT-INFO:  Idx = " << Target.second << ", "
@@ -575,8 +576,9 @@ IndirectCallPromotion::findCallTargetSymbols(
           if (std::find(JTIs.begin(), JTIs.end(), JTIndex) != JTIs.end())
             return I;
         }
-        DEBUG(dbgs() << "BOLT-ERROR: Unable to find target index for hot jump "
-                     << " table entry in " << Function << "\n");
+        LLVM_DEBUG(
+            dbgs() << "BOLT-ERROR: Unable to find target index for hot jump "
+                   << " table entry in " << Function << "\n");
         llvm_unreachable("Hot indices must be referred to by at least one "
                          "callsite");
       };
@@ -1179,7 +1181,7 @@ IndirectCallPromotion::printCallsiteInfo(const BinaryBasicBlock *BB,
     outs() << "\n";
   }
 
-  DEBUG({
+  LLVM_DEBUG({
     dbgs() << "BOLT-INFO: ICP original call instruction:";
     BC.printInstruction(dbgs(), Inst, Targets[0].From.Addr, nullptr, true);
   });
@@ -1397,7 +1399,7 @@ void IndirectCallPromotion::runOnFunctions(BinaryContext &BC) {
         if (!N)
           continue;
 
-        DEBUG(printDecision(dbgs(), Targets, N));
+        LLVM_DEBUG(printDecision(dbgs(), Targets, N));
 
         // If we can't resolve any of the target symbols, punt on this callsite.
         // TODO: can this ever happen?
@@ -1422,9 +1424,10 @@ void IndirectCallPromotion::runOnFunctions(BinaryContext &BC) {
                                           Inst,
                                           SymTargets);
           TotalMethodLoadsEliminated += MethodInfo.first.empty() ? 0 : 1;
-          DEBUG(dbgs() << "BOLT-INFO: ICP "
-                       << (!MethodInfo.first.empty() ? "found" : "did not find")
-                       << " vtables for all methods.\n");
+          LLVM_DEBUG(dbgs()
+                     << "BOLT-INFO: ICP "
+                     << (!MethodInfo.first.empty() ? "found" : "did not find")
+                     << " vtables for all methods.\n");
         } else if (TargetFetchInst) {
           ++TotalIndexBasedJumps;
           MethodInfo.second.push_back(TargetFetchInst);
@@ -1451,7 +1454,7 @@ void IndirectCallPromotion::runOnFunctions(BinaryContext &BC) {
           continue;
         }
 
-        DEBUG({
+        LLVM_DEBUG({
           auto Offset = Targets[0].From.Addr;
           dbgs() << "BOLT-INFO: ICP indirect call code:\n";
           for (const auto &entry : ICPcode) {

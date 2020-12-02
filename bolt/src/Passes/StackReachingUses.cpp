@@ -63,8 +63,8 @@ bool StackReachingUses::isStoreUsed(const FrameIndexEntry &StoreFIE,
 }
 
 void StackReachingUses::preflight() {
-  DEBUG(dbgs() << "Starting StackReachingUses on \"" << Func.getPrintName()
-               << "\"\n");
+  LLVM_DEBUG(dbgs() << "Starting StackReachingUses on \"" << Func.getPrintName()
+                    << "\"\n");
 
   // Populate our universe of tracked expressions. We are interested in
   // tracking reaching loads from frame position at any given point of the
@@ -109,8 +109,8 @@ BitVector StackReachingUses::computeNext(const MCInst &Point,
   for (auto I = expr_begin(Next), E = expr_end(); I != E; ++I) {
     assert(*I != nullptr && "Lost pointers");
     if (doesXKillsY(&Point, *I)) {
-      DEBUG(dbgs() << "\t\t\tKilling ");
-      DEBUG((*I)->dump());
+      LLVM_DEBUG(dbgs() << "\t\t\tKilling ");
+      LLVM_DEBUG((*I)->dump());
       Next.reset(I.getBitVectorIndex());
     }
   };

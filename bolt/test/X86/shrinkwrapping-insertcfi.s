@@ -15,7 +15,7 @@
 
 # Check that CFI is successfully inserted into the first basic block:
 # CHECK:      Binary Function "_start" after frame-optimizer
-# CHECK:      .LBB0 (2 instructions, align : 1)
+# CHECK:      .LBB00 (2 instructions, align : 1)
 # CHECK-NEXT: Entry Point
 # CHECK:      00000000:   !CFI {{.*}}
 # CHECK-NEXT: 00000000:   je  .Ltmp{{.*}}

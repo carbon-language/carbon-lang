@@ -181,7 +181,7 @@ DynoStats getDynoStats(const BinaryFunction &BF) {
     const auto *LastInstr = BB->getLastNonPseudoInstr();
     if (BC.MIB->getJumpTable(*LastInstr)) {
       Stats[DynoStats::JUMP_TABLE_BRANCHES] += BBExecutionCount;
-      DEBUG(
+      LLVM_DEBUG(
         static uint64_t MostFrequentJT;
         if (BBExecutionCount > MostFrequentJT) {
           MostFrequentJT = BBExecutionCount;

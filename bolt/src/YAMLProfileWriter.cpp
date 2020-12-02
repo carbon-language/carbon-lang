@@ -151,7 +151,7 @@ YAMLProfileWriter::writeProfile(const RewriteInstance &RI) {
   const auto &Functions = BC.getBinaryFunctions();
 
   std::error_code EC;
-  OS = llvm::make_unique<raw_fd_ostream>(Filename, EC, sys::fs::F_None);
+  OS = std::make_unique<raw_fd_ostream>(Filename, EC, sys::fs::OF_None);
   if (EC) {
     errs() << "BOLT-WARNING: " << EC.message() << " : unable to open "
            << Filename << " for output.\n";
@@ -162,10 +162,10 @@ YAMLProfileWriter::writeProfile(const RewriteInstance &RI) {
 
   // Fill out the header info.
   BP.Header.Version = 1;
-  BP.Header.FileName = BC.getFilename();
+  BP.Header.FileName = std::string(BC.getFilename());
   auto BuildID = BC.getFileBuildID();
-  BP.Header.Id = BuildID ? *BuildID : "<unknown>";
-  BP.Header.Origin = RI.getProfileReader()->getReaderName();
+  BP.Header.Id = BuildID ? std::string(*BuildID) : "<unknown>";
+  BP.Header.Origin = std::string(RI.getProfileReader()->getReaderName());
 
   auto EventNames = RI.getProfileReader()->getEventNames();
   if (!EventNames.empty()) {

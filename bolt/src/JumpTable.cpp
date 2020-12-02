@@ -100,11 +100,11 @@ void JumpTable::updateOriginal() {
     const auto RelType =
       Type == JTT_NORMAL ? ELF::R_X86_64_64 : ELF::R_X86_64_PC32;
     const uint64_t RelAddend = (Type == JTT_NORMAL ? 0 : Offset - BaseOffset);
-    DEBUG(dbgs() << "BOLT-DEBUG: adding relocation to section "
-                 << getSectionName() << " at offset 0x"
-                 << Twine::utohexstr(Offset) << " for symbol "
-                 << Entry->getName() << " with addend "
-                 << Twine::utohexstr(RelAddend) << '\n');
+    LLVM_DEBUG(dbgs() << "BOLT-DEBUG: adding relocation to section "
+                      << getSectionName() << " at offset 0x"
+                      << Twine::utohexstr(Offset) << " for symbol "
+                      << Entry->getName() << " with addend "
+                      << Twine::utohexstr(RelAddend) << '\n');
     getOutputSection().addRelocation(Offset, Entry, RelType, RelAddend);
     Offset += EntrySize;
   }

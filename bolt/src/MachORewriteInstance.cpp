@@ -25,6 +25,8 @@
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCAsmLayout.h"
 #include "llvm/MC/MCObjectStreamer.h"
+#include "llvm/MC/MCObjectWriter.h"
+#include "llvm/Support/FileSystem.h"
 #include "llvm/Support/Timer.h"
 #include "llvm/Support/ToolOutputFile.h"
 
@@ -32,7 +34,8 @@ namespace opts {
 
 using namespace llvm;
 extern cl::opt<unsigned> AlignText;
-extern cl::opt<bool> CheckOverlappingElements;
+//FIXME! Upstream change
+//extern cl::opt<bool> CheckOverlappingElements;
 extern cl::opt<bool> ForcePatch;
 extern cl::opt<bool> Instrument;
 extern cl::opt<bool> InstrumentCalls;
@@ -61,9 +64,7 @@ MachORewriteInstance::MachORewriteInstance(object::MachOObjectFile *InputFile,
     : InputFile(InputFile), ToolPath(ToolPath),
       BC(BinaryContext::createBinaryContext(
           InputFile, /* IsPIC */ true,
-          DWARFContext::create(*InputFile, nullptr,
-                               DWARFContext::defaultErrorHandler, "",
-                               false))) {}
+          DWARFContext::create(*InputFile))) {}
 
 Error MachORewriteInstance::setProfile(StringRef Filename) {
   if (!sys::fs::exists(Filename))
@@ -76,7 +77,7 @@ Error MachORewriteInstance::setProfile(StringRef Filename) {
         " and " + Filename, inconvertibleErrorCode());
   }
 
-  ProfileReader = llvm::make_unique<DataReader>(Filename);
+  ProfileReader = std::make_unique<DataReader>(Filename);
   return Error::success();
 }
 
@@ -103,15 +104,16 @@ void MachORewriteInstance::processProfileData() {
 
 void MachORewriteInstance::readSpecialSections() {
   for (const auto &Section : InputFile->sections()) {
-    StringRef SectionName;
-    check_error(Section.getName(SectionName), "cannot get section name");
+    Expected<StringRef> SectionName = Section.getName();;
+    check_error(SectionName.takeError(), "cannot get section name");
     // Only register sections with names.
-    if (!SectionName.empty()) {
+    if (!SectionName->empty()) {
       BC->registerSection(Section);
-      DEBUG(dbgs() << "BOLT-DEBUG: registering section " << SectionName
-                   << " @ 0x" << Twine::utohexstr(Section.getAddress()) << ":0x"
-                   << Twine::utohexstr(Section.getAddress() + Section.getSize())
-                   << "\n");
+      LLVM_DEBUG(
+          dbgs() << "BOLT-DEBUG: registering section " << *SectionName
+                 << " @ 0x" << Twine::utohexstr(Section.getAddress()) << ":0x"
+                 << Twine::utohexstr(Section.getAddress() + Section.getSize())
+                 << "\n");
     }
   }
 
@@ -199,10 +201,10 @@ void MachORewriteInstance::discoverFileObjects() {
     return;
   std::stable_sort(FunctionSymbols.begin(), FunctionSymbols.end(),
                    [](const SymbolRef &LHS, const SymbolRef &RHS) {
-                     return LHS.getValue() < RHS.getValue();
+                     return cantFail(LHS.getValue()) < cantFail(RHS.getValue());
                    });
   for (size_t Index = 0; Index < FunctionSymbols.size(); ++Index) {
-    const uint64_t Address = FunctionSymbols[Index].getValue();
+    const uint64_t Address = cantFail(FunctionSymbols[Index].getValue());
     auto Section = BC->getSectionForAddress(Address);
     // TODO: It happens for some symbols (e.g. __mh_execute_header).
     // Add proper logic to handle them correctly.
@@ -216,7 +218,7 @@ void MachORewriteInstance::discoverFileObjects() {
         cantFail(FunctionSymbols[Index].getName(), "cannot get symbol name")
             .str();
     // Uniquify names of local symbols.
-    if (!(FunctionSymbols[Index].getFlags() & SymbolRef::SF_Global))
+    if (!(cantFail(FunctionSymbols[Index].getFlags()) & SymbolRef::SF_Global))
       SymbolName = NR.uniquify(SymbolName);
 
     section_iterator S = cantFail(FunctionSymbols[Index].getSection());
@@ -225,11 +227,11 @@ void MachORewriteInstance::discoverFileObjects() {
     size_t NFIndex = Index + 1;
     // Skip aliases.
     while (NFIndex < FunctionSymbols.size() &&
-           FunctionSymbols[NFIndex].getValue() == Address)
+           cantFail(FunctionSymbols[NFIndex].getValue()) == Address)
       ++NFIndex;
     if (NFIndex < FunctionSymbols.size() &&
         S == cantFail(FunctionSymbols[NFIndex].getSection()))
-      EndAddress = FunctionSymbols[NFIndex].getValue();
+      EndAddress = cantFail(FunctionSymbols[NFIndex].getValue());
 
     const uint64_t SymbolSize = EndAddress - Address;
     const auto It = BC->getBinaryFunctions().find(Address);
@@ -318,21 +320,21 @@ void MachORewriteInstance::postProcessFunctions() {
 void MachORewriteInstance::runOptimizationPasses() {
   BinaryFunctionPassManager Manager(*BC);
   if (opts::Instrument) {
-    Manager.registerPass(llvm::make_unique<PatchEntries>());
-    Manager.registerPass(llvm::make_unique<Instrumentation>(opts::NeverPrint));
+    Manager.registerPass(std::make_unique<PatchEntries>());
+    Manager.registerPass(std::make_unique<Instrumentation>(opts::NeverPrint));
   }
   Manager.registerPass(
-      llvm::make_unique<ReorderBasicBlocks>(opts::PrintReordered));
+      std::make_unique<ReorderBasicBlocks>(opts::PrintReordered));
   Manager.registerPass(
-      llvm::make_unique<FixupBranches>(opts::PrintAfterBranchFixup));
+      std::make_unique<FixupBranches>(opts::PrintAfterBranchFixup));
   // This pass should always run last.*
   Manager.registerPass(
-      llvm::make_unique<FinalizeFunctions>(opts::PrintFinalized));
+      std::make_unique<FinalizeFunctions>(opts::PrintFinalized));
 
   Manager.runPasses();
 }
 
-void MachORewriteInstance::mapInstrumentationSection(orc::VModuleKey Key, StringRef SectionName) {
+void MachORewriteInstance::mapInstrumentationSection(StringRef SectionName) {
   if (!opts::Instrument)
     return;
   ErrorOr<BinarySection &> Section = BC->getUniqueSectionByName(SectionName);
@@ -342,10 +344,11 @@ void MachORewriteInstance::mapInstrumentationSection(orc::VModuleKey Key, String
   }
   if (!Section->hasValidSectionID())
     return;
-  OLT->mapSectionAddress(Key, Section->getSectionID(), Section->getAddress());
+  RTDyld->reassignSectionAddress(Section->getSectionID(),
+                                 Section->getAddress());
 }
 
-void MachORewriteInstance::mapCodeSections(orc::VModuleKey Key) {
+void MachORewriteInstance::mapCodeSections() {
   for (BinaryFunction *Function : BC->getAllBinaryFunctions()) {
     if (!Function->isEmitted())
       continue;
@@ -359,11 +362,11 @@ void MachORewriteInstance::mapCodeSections(orc::VModuleKey Key) {
           FuncSection.getError());
 
     FuncSection->setOutputAddress(Function->getOutputAddress());
-    DEBUG(dbgs() << "BOLT: mapping 0x"
+    LLVM_DEBUG(dbgs() << "BOLT: mapping 0x"
                  << Twine::utohexstr(FuncSection->getAllocAddress()) << " to 0x"
                  << Twine::utohexstr(Function->getOutputAddress()) << '\n');
-    OLT->mapSectionAddress(Key, FuncSection->getSectionID(),
-                           Function->getOutputAddress());
+    RTDyld->reassignSectionAddress(FuncSection->getSectionID(),
+                                   Function->getOutputAddress());
     Function->setImageAddress(FuncSection->getAllocAddress());
     Function->setImageSize(FuncSection->getOutputSize());
   }
@@ -384,7 +387,7 @@ void MachORewriteInstance::mapCodeSections(orc::VModuleKey Key) {
       assert(FuncSection && "cannot find section for function");
       Addr = llvm::alignTo(Addr, 4);
       FuncSection->setOutputAddress(Addr);
-      OLT->mapSectionAddress(Key, FuncSection->getSectionID(), Addr);
+      RTDyld->reassignSectionAddress(FuncSection->getSectionID(), Addr);
       Function->setFileOffset(Addr - BOLT->getAddress() +
                               BOLT->getInputFileOffset());
       Function->setImageAddress(FuncSection->getAllocAddress());
@@ -395,27 +398,56 @@ void MachORewriteInstance::mapCodeSections(orc::VModuleKey Key) {
   }
 }
 
+namespace {
+
+class BOLTSymbolResolver : public LegacyJITSymbolResolver {
+  BinaryContext &BC;
+public:
+  BOLTSymbolResolver(BinaryContext &BC) : BC(BC) {}
+
+  JITSymbol findSymbolInLogicalDylib(const std::string &Name) override {
+    return JITSymbol(nullptr);
+  }
+
+  JITSymbol findSymbol(const std::string &Name) override {
+    LLVM_DEBUG(dbgs() << "BOLT: looking for " << Name << "\n");
+    if (auto *I = BC.getBinaryDataByName(Name)) {
+      const uint64_t Address = I->isMoved() && !I->isJumpTable()
+                                   ? I->getOutputAddress()
+                                   : I->getAddress();
+      LLVM_DEBUG(dbgs() << "Resolved to address 0x" << Twine::utohexstr(Address)
+                        << "\n");
+      return JITSymbol(Address, JITSymbolFlags());
+    }
+    LLVM_DEBUG(dbgs() << "Resolved to address 0x0\n");
+    return JITSymbol(nullptr);
+  }
+};
+
+} // end anonymous namespace
+
 void MachORewriteInstance::emitAndLink() {
   std::error_code EC;
   std::unique_ptr<::llvm::ToolOutputFile> TempOut =
-      llvm::make_unique<::llvm::ToolOutputFile>(
-          opts::OutputFilename + ".bolt.o", EC, sys::fs::F_None);
+      std::make_unique<::llvm::ToolOutputFile>(
+          opts::OutputFilename + ".bolt.o", EC, sys::fs::OF_None);
   check_error(EC, "cannot create output object file");
 
   if (opts::KeepTmp)
     TempOut->keep();
 
   std::unique_ptr<buffer_ostream> BOS =
-      make_unique<buffer_ostream>(TempOut->os());
+      std::make_unique<buffer_ostream>(TempOut->os());
   raw_pwrite_stream *OS = BOS.get();
 
   MCCodeEmitter *MCE =
       BC->TheTarget->createMCCodeEmitter(*BC->MII, *BC->MRI, *BC->Ctx);
   MCAsmBackend *MAB =
       BC->TheTarget->createMCAsmBackend(*BC->STI, *BC->MRI, MCTargetOptions());
+  std::unique_ptr<MCObjectWriter> OW = MAB->createObjectWriter(*OS);
   std::unique_ptr<MCStreamer> Streamer(BC->TheTarget->createMCObjectStreamer(
-      *BC->TheTriple, *BC->Ctx, std::unique_ptr<MCAsmBackend>(MAB), *OS,
-      std::unique_ptr<MCCodeEmitter>(MCE), *BC->STI,
+      *BC->TheTriple, *BC->Ctx, std::unique_ptr<MCAsmBackend>(MAB),
+      std::move(OW), std::unique_ptr<MCCodeEmitter>(MCE), *BC->STI,
       /* RelaxAll */ false,
       /* IncrementalLinkerCompatible */ false,
       /* DWARFMustBeAtTheEnd */ false));
@@ -429,68 +461,42 @@ void MachORewriteInstance::emitAndLink() {
       "error creating in-memory object");
   assert(Obj && "createObjectFile cannot return nullptr");
 
-  auto Resolver = orc::createLegacyLookupResolver(
-      [&](const std::string &Name) -> JITSymbol {
-        llvm::errs() << "looking for " << Name << "\n";
-        DEBUG(dbgs() << "BOLT: looking for " << Name << "\n");
-        if (auto *I = BC->getBinaryDataByName(Name)) {
-          const uint64_t Address = I->isMoved() && !I->isJumpTable()
-                                       ? I->getOutputAddress()
-                                       : I->getAddress();
-          DEBUG(dbgs() << "Resolved to address 0x" << Twine::utohexstr(Address)
-                       << "\n");
-          return JITSymbol(Address, JITSymbolFlags());
-        }
-        DEBUG(dbgs() << "Resolved to address 0x0\n");
-        return JITSymbol(nullptr);
-      },
-      [](Error Err) { cantFail(std::move(Err), "lookup failed"); });
-
-  Resolver->setAllowsZeroSymbols(true);
+  auto Resolver = BOLTSymbolResolver(*BC);
 
   MCAsmLayout FinalLayout(
       static_cast<MCObjectStreamer *>(Streamer.get())->getAssembler());
 
-  SSP.reset(new decltype(SSP)::element_type());
-  ES.reset(new decltype(ES)::element_type(*SSP));
   BC->EFMM.reset(new ExecutableFileMemoryManager(*BC, /*AllowStubs*/ false));
 
-  const orc::VModuleKey K = ES->allocateVModule();
-  OLT.reset(new decltype(OLT)::element_type(
-      *ES,
-      [this, &Resolver](orc::VModuleKey Key) {
-        orc::RTDyldObjectLinkingLayer::Resources R;
-        R.MemMgr = BC->EFMM;
-        R.Resolver = Resolver;
-        return R;
-      },
-      [&](orc::VModuleKey Key, const object::ObjectFile &Obj,
-          const RuntimeDyld::LoadedObjectInfo &) {
-        if (Key == K) {
-          mapCodeSections(Key);
-          mapInstrumentationSection(Key, "__counters");
-          mapInstrumentationSection(Key, "__tables");
-        } else {
+  RTDyld.reset(new decltype(RTDyld)::element_type(*BC->EFMM, Resolver));
+  RTDyld->setProcessAllSections(true);
+  RTDyld->loadObject(*Obj);
+  if (RTDyld->hasError()) {
+    outs() << "BOLT-ERROR: RTDyld failed.\n";
+    exit(1);
+  }
+
+  // Assign addresses to all sections. If key corresponds to the object
+  // created by ourselves, call our regular mapping function. If we are
+  // loading additional objects as part of runtime libraries for
+  // instrumentation, treat them as extra sections.
+  mapCodeSections();
+  mapInstrumentationSection("__counters");
+  mapInstrumentationSection("__tables");
+
           // TODO: Refactor addRuntimeLibSections to work properly on Mach-O
           // and use it here.
-          mapInstrumentationSection(Key, "I__setup");
-          mapInstrumentationSection(Key, "I__fini");
-          mapInstrumentationSection(Key, "I__data");
-          mapInstrumentationSection(Key, "I__text");
-          mapInstrumentationSection(Key, "I__cstring");
-          mapInstrumentationSection(Key, "I__literal16");
-        }
-      },
-      [&](orc::VModuleKey Key) {
-      }));
+  //FIXME! Put this in RtLibrary->link
+//          mapInstrumentationSection("I__setup");
+//          mapInstrumentationSection("I__fini");
+//          mapInstrumentationSection("I__data");
+//          mapInstrumentationSection("I__text");
+//          mapInstrumentationSection("I__cstring");
+//          mapInstrumentationSection("I__literal16");
 
-  OLT->setProcessAllSections(true);
-  cantFail(OLT->addObject(K, std::move(ObjectMemBuffer)));
-  cantFail(OLT->emitAndFinalize(K));
-
-  if (auto *RtLibrary = BC->getRuntimeLibrary()) {
-    RtLibrary->link(*BC, ToolPath, *ES, *OLT);
-  }
+//  if (auto *RtLibrary = BC->getRuntimeLibrary()) {
+//    RtLibrary->link(*BC, ToolPath, *ES, *OLT);
+//  }
 }
 
 void MachORewriteInstance::writeInstrumentationSection(StringRef SectionName,
@@ -514,9 +520,8 @@ void MachORewriteInstance::writeInstrumentationSection(StringRef SectionName,
 
 void MachORewriteInstance::rewriteFile() {
   std::error_code EC;
-  Out = llvm::make_unique<ToolOutputFile>(
-      opts::OutputFilename, EC, sys::fs::F_None,
-      sys::fs::all_read | sys::fs::all_write | sys::fs::all_exe);
+  Out = std::make_unique<ToolOutputFile>(opts::OutputFilename, EC,
+                                         sys::fs::OF_None);
   check_error(EC, "cannot create output executable file");
   raw_fd_ostream &OS = Out->os();
   OS << InputFile->getData();
@@ -552,10 +557,14 @@ void MachORewriteInstance::rewriteFile() {
   writeInstrumentationSection("I__literal16", OS);
 
   Out->keep();
+  EC = sys::fs::setPermissions(opts::OutputFilename,
+                               sys::fs::perms::all_all);
+  check_error(EC, "cannot set permissions of output file");
 }
 
 void MachORewriteInstance::adjustCommandLineOptions() {
-  opts::CheckOverlappingElements = false;
+//FIXME! Upstream change
+//  opts::CheckOverlappingElements = false;
   if (!opts::AlignText.getNumOccurrences())
     opts::AlignText = BC->PageAlign;
   if (opts::Instrument.getNumOccurrences())

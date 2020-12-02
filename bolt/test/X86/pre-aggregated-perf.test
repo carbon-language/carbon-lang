@@ -27,7 +27,6 @@ PERF2BOLT: 1 usqrt 8 1 usqrt 10 0 22
 
 NEWFORMAT:  - name:            usqrt
 NEWFORMAT:    fid:             7
-NEWFORMAT:    hash:            0x7EA5C50FA9564489
 NEWFORMAT:    exec:            0
 NEWFORMAT:    nblocks:         5
 NEWFORMAT:    blocks:

@@ -10,6 +10,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "LongJmp.h"
+#include "llvm/Support/Alignment.h"
 
 #define DEBUG_TYPE "longjmp"
 
@@ -79,7 +80,7 @@ LongJmpPass::createNewStub(BinaryBasicBlock &SourceBB, const MCSymbol *TgtSym,
   BinaryFunction &Func = *SourceBB.getFunction();
   const BinaryContext &BC = Func.getBinaryContext();
   const bool IsCold = SourceBB.isCold();
-  auto *StubSym = BC.Ctx->createTempSymbol("Stub", true);
+  auto *StubSym = BC.Ctx->createNamedTempSymbol("Stub");
   auto StubBB = Func.createBasicBlock(0, StubSym);
   MCInst Inst;
   BC.MIB->createUncondBranch(Inst, TgtSym, BC.Ctx.get());
@@ -147,7 +148,7 @@ BinaryBasicBlock *LongJmpPass::lookupStubFromGroup(
   uint64_t PCRelTgtAddress = Cand->first;
   PCRelTgtAddress = DotAddress > PCRelTgtAddress ? DotAddress - PCRelTgtAddress
                                                  : PCRelTgtAddress - DotAddress;
-  DEBUG({
+  LLVM_DEBUG({
     if (Candidates.size() > 1)
       dbgs() << "Considering stub group with " << Candidates.size()
              << " candidates. DotAddress is " << Twine::utohexstr(DotAddress)
@@ -301,12 +302,12 @@ uint64_t LongJmpPass::tentativeLayoutRelocColdPart(
     if (!Func->isSplit())
       continue;
     DotAddress = alignTo(DotAddress, BinaryFunction::MinAlign);
-    auto Pad = OffsetToAlignment(DotAddress, opts::AlignFunctions);
+    auto Pad = offsetToAlignment(DotAddress, llvm::Align(opts::AlignFunctions));
     if (Pad <= opts::AlignFunctionsMaxBytes)
       DotAddress += Pad;
     ColdAddresses[Func] = DotAddress;
-    DEBUG(dbgs() << Func->getPrintName() << " cold tentative: "
-                 << Twine::utohexstr(DotAddress) << "\n");
+    LLVM_DEBUG(dbgs() << Func->getPrintName() << " cold tentative: "
+                      << Twine::utohexstr(DotAddress) << "\n");
     DotAddress += Func->estimateColdSize();
     DotAddress += Func->estimateConstantIslandSize();
   }
@@ -349,12 +350,12 @@ uint64_t LongJmpPass::tentativeLayoutRelocMode(
     }
 
     DotAddress = alignTo(DotAddress, BinaryFunction::MinAlign);
-    auto Pad = OffsetToAlignment(DotAddress, opts::AlignFunctions);
+    auto Pad = offsetToAlignment(DotAddress, llvm::Align(opts::AlignFunctions));
     if (Pad <= opts::AlignFunctionsMaxBytes)
       DotAddress += Pad;
     HotAddresses[Func] = DotAddress;
-    DEBUG(dbgs() << Func->getPrintName()
-                 << " tentative: " << Twine::utohexstr(DotAddress) << "\n");
+    LLVM_DEBUG(dbgs() << Func->getPrintName() << " tentative: "
+                      << Twine::utohexstr(DotAddress) << "\n");
     if (!Func->isSplit())
       DotAddress += Func->estimateSize();
     else
@@ -393,7 +394,7 @@ void LongJmpPass::tentativeLayout(
   // Initial padding
   if (opts::UseOldText && EstimatedTextSize <= BC.OldTextSectionSize) {
     DotAddress = BC.OldTextSectionAddress;
-    auto Pad = OffsetToAlignment(DotAddress, BC.PageAlign);
+    auto Pad = offsetToAlignment(DotAddress, llvm::Align(BC.PageAlign));
     if (Pad + EstimatedTextSize <= BC.OldTextSectionSize) {
       DotAddress += Pad;
     }
@@ -464,9 +465,10 @@ bool LongJmpPass::relaxStub(BinaryBasicBlock &StubBB) {
     if (Bits >= RangeShortJmp)
       return false;
 
-    DEBUG(dbgs() << "Relaxing stub to short jump. PCRelTgtAddress = "
-                 << Twine::utohexstr(PCRelTgtAddress)
-                 << " RealTargetSym = " << RealTargetSym->getName() << "\n");
+    LLVM_DEBUG(dbgs() << "Relaxing stub to short jump. PCRelTgtAddress = "
+                      << Twine::utohexstr(PCRelTgtAddress)
+                      << " RealTargetSym = " << RealTargetSym->getName()
+                      << "\n");
     relaxStubToShortJmp(StubBB, RealTargetSym);
     StubBits[&StubBB] = RangeShortJmp;
     return true;
@@ -476,9 +478,9 @@ bool LongJmpPass::relaxStub(BinaryBasicBlock &StubBB) {
   if (Bits > RangeShortJmp)
     return false;
 
-  DEBUG(dbgs() << "Relaxing stub to long jump. PCRelTgtAddress = "
-               << Twine::utohexstr(PCRelTgtAddress)
-               << " RealTargetSym = " << RealTargetSym->getName() << "\n");
+  LLVM_DEBUG(dbgs() << "Relaxing stub to long jump. PCRelTgtAddress = "
+                    << Twine::utohexstr(PCRelTgtAddress)
+                    << " RealTargetSym = " << RealTargetSym->getName() << "\n");
   relaxStubToLongJmp(StubBB, RealTargetSym);
   StubBits[&StubBB] = static_cast<int>(BC.AsmInfo->getCodePointerSize() * 8);
   return true;

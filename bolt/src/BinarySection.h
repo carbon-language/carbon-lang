@@ -97,22 +97,21 @@ class BinarySection {
   BinarySection &operator=(BinarySection &&) = delete;
 
   static StringRef getName(SectionRef Section) {
-    StringRef Name;
-    Section.getName(Name);
-    return Name;
+    return cantFail(Section.getName());
   }
   static StringRef getContents(SectionRef Section) {
-    StringRef Contents;
     if (Section.getObject()->isELF() &&
         ELFSectionRef(Section).getType() == ELF::SHT_NOBITS)
-      return Contents;
+      return StringRef();
 
-    if (auto EC = Section.getContents(Contents)) {
+    auto ContentsOrErr = Section.getContents();
+    if (!ContentsOrErr) {
+      auto E = ContentsOrErr.takeError();
       errs() << "BOLT-ERROR: cannot get section contents for "
-             << getName(Section) << ": " << EC.message() << ".\n";
+             << getName(Section) << ": " << E << ".\n";
       exit(1);
     }
-    return Contents;
+    return *ContentsOrErr;
   }
 
   /// Get the set of relocations refering to data in this section that
@@ -453,7 +452,7 @@ public:
     Index = I;
   }
   void setOutputName(StringRef Name) {
-    OutputName = Name;
+    OutputName = std::string(Name);
   }
   void setAnonymous(bool Flag) {
     IsAnonymous = Flag;

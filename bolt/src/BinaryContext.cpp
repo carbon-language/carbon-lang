@@ -181,12 +181,12 @@ BinaryContext::createBinaryContext(ObjectFile *File, bool IsPIC,
     return nullptr;
   }
 
-  auto TheTriple = llvm::make_unique<Triple>(File->makeTriple());
+  auto TheTriple = std::make_unique<Triple>(File->makeTriple());
   const std::string TripleName = TheTriple->str();
 
   std::string Error;
   const Target *TheTarget =
-      TargetRegistry::lookupTarget(ArchName, *TheTriple, Error);
+      TargetRegistry::lookupTarget(std::string(ArchName), *TheTriple, Error);
   if (!TheTarget) {
     errs() << "BOLT-ERROR: " << Error;
     return nullptr;
@@ -201,7 +201,7 @@ BinaryContext::createBinaryContext(ObjectFile *File, bool IsPIC,
 
   // Set up disassembler.
   std::unique_ptr<const MCAsmInfo> AsmInfo(
-      TheTarget->createMCAsmInfo(*MRI, TripleName));
+      TheTarget->createMCAsmInfo(*MRI, TripleName, MCTargetOptions()));
   if (!AsmInfo) {
     errs() << "BOLT-ERROR: no assembly info for target " << TripleName << "\n";
     return nullptr;
@@ -221,11 +221,25 @@ BinaryContext::createBinaryContext(ObjectFile *File, bool IsPIC,
     return nullptr;
   }
 
-  std::unique_ptr<MCObjectFileInfo> MOFI =
-      llvm::make_unique<MCObjectFileInfo>();
-  std::unique_ptr<MCContext> Ctx =
-      llvm::make_unique<MCContext>(AsmInfo.get(), MRI.get(), MOFI.get());
-  MOFI->InitMCObjectFileInfo(*TheTriple, IsPIC, *Ctx);
+  std::unique_ptr<MCContext> Ctx(
+      new MCContext(*TheTriple, AsmInfo.get(), MRI.get(), STI.get()));
+  std::unique_ptr<MCObjectFileInfo> MOFI(
+      TheTarget->createMCObjectFileInfo(*Ctx, IsPIC));
+  Ctx->setObjectFileInfo(MOFI.get());
+  // We do not support X86 Large code model. Change this in the future.
+  bool Large = false;
+  if (TheTriple->getArch() == llvm::Triple::aarch64)
+    Large = true;
+  unsigned LSDAEncoding =
+      Large ? dwarf::DW_EH_PE_absptr : dwarf::DW_EH_PE_udata4;
+  unsigned TTypeEncoding =
+      Large ? dwarf::DW_EH_PE_absptr : dwarf::DW_EH_PE_udata4;
+  if (IsPIC) {
+    LSDAEncoding = dwarf::DW_EH_PE_pcrel |
+                   (Large ? dwarf::DW_EH_PE_sdata8 : dwarf::DW_EH_PE_sdata4);
+    TTypeEncoding = dwarf::DW_EH_PE_indirect | dwarf::DW_EH_PE_pcrel |
+                    (Large ? dwarf::DW_EH_PE_sdata8 : dwarf::DW_EH_PE_sdata4);
+  }
 
   std::unique_ptr<MCDisassembler> DisAsm(
       TheTarget->createMCDisassembler(*STI, *Ctx));
@@ -270,11 +284,15 @@ BinaryContext::createBinaryContext(ObjectFile *File, bool IsPIC,
   errs().SetUnbuffered();
   dbgs().SetUnbuffered();
 
-  auto BC = llvm::make_unique<BinaryContext>(
+  auto BC = std::make_unique<BinaryContext>(
       std::move(Ctx), std::move(DwCtx), std::move(TheTriple), TheTarget,
-      TripleName, std::move(MCE), std::move(MOFI), std::move(AsmInfo),
-      std::move(MII), std::move(STI), std::move(InstructionPrinter),
-      std::move(MIA), std::move(MIB), std::move(MRI), std::move(DisAsm));
+      std::string(TripleName), std::move(MCE), std::move(MOFI),
+      std::move(AsmInfo), std::move(MII), std::move(STI),
+      std::move(InstructionPrinter), std::move(MIA), std::move(MIB),
+      std::move(MRI), std::move(DisAsm));
+
+  BC->TTypeEncoding = TTypeEncoding;
+  BC->LSDAEncoding = LSDAEncoding;
 
   BC->MAB = std::unique_ptr<MCAsmBackend>(
       BC->TheTarget->createMCAsmBackend(*BC->STI, *BC->MRI, MCTargetOptions()));
@@ -476,7 +494,7 @@ BinaryContext::handleAddressRef(uint64_t Address, BinaryFunction &BF,
 
   // TODO: use DWARF info to get size/alignment here?
   auto *TargetSymbol = getOrCreateGlobalSymbol(Address, "DATAat");
-  DEBUG(dbgs() << "Created symbol " << TargetSymbol->getName() << '\n');
+  LLVM_DEBUG(dbgs() << "Created symbol " << TargetSymbol->getName() << '\n');
   return std::make_pair(TargetSymbol, Addend);
 }
 
@@ -594,24 +612,25 @@ bool BinaryContext::analyzeJumpTable(const uint64_t Address,
     UpperBound = std::min(NextJTAddress, UpperBound);
   }
 
-  DEBUG(dbgs() << "BOLT-DEBUG: analyzeJumpTable in " << BF.getPrintName()
-               << '\n');
+  LLVM_DEBUG(dbgs() << "BOLT-DEBUG: analyzeJumpTable in " << BF.getPrintName()
+                    << '\n');
   const auto EntrySize = getJumpTableEntrySize(Type);
   for (auto EntryAddress = Address; EntryAddress <= UpperBound - EntrySize;
        EntryAddress += EntrySize) {
-    DEBUG(dbgs() << "  * Checking 0x" << Twine::utohexstr(EntryAddress)
-                 << " -> ");
+    LLVM_DEBUG(dbgs() << "  * Checking 0x" << Twine::utohexstr(EntryAddress)
+                      << " -> ");
     // Check if there's a proper relocation against the jump table entry.
     if (HasRelocations) {
       if (Type == JumpTable::JTT_PIC &&
           !DataPCRelocations.count(EntryAddress)) {
-        DEBUG(
+        LLVM_DEBUG(
             dbgs() << "FAIL: JTT_PIC table, no relocation for this address\n");
         break;
       }
       if (Type == JumpTable::JTT_NORMAL && !getRelocationAt(EntryAddress)) {
-        DEBUG(dbgs()
-              << "FAIL: JTT_NORMAL table, no relocation for this address\n");
+        LLVM_DEBUG(
+            dbgs()
+            << "FAIL: JTT_NORMAL table, no relocation for this address\n");
         break;
       }
     }
@@ -624,7 +643,7 @@ bool BinaryContext::analyzeJumpTable(const uint64_t Address,
     if (Value == BF.getAddress() + BF.getSize()) {
       addOffset(Value - BF.getAddress());
       HasUnreachable = true;
-      DEBUG(dbgs() << "OK: __builtin_unreachable\n");
+      LLVM_DEBUG(dbgs() << "OK: __builtin_unreachable\n");
       continue;
     }
 
@@ -633,7 +652,7 @@ bool BinaryContext::analyzeJumpTable(const uint64_t Address,
 
     // We assume that a jump table cannot have function start as an entry.
     if (!doesBelongToFunction(Value, TargetBF) || Value == BF.getAddress()) {
-      DEBUG({
+      LLVM_DEBUG({
         if (!BF.containsAddress(Value)) {
           dbgs() << "FAIL: function doesn't contain this address\n";
           if (TargetBF) {
@@ -656,7 +675,7 @@ bool BinaryContext::analyzeJumpTable(const uint64_t Address,
     // Check there's an instruction at this offset.
     if (TargetBF->getState() == BinaryFunction::State::Disassembled &&
         !TargetBF->getInstructionAtOffset(Value - TargetBF->getAddress())) {
-      DEBUG(dbgs() << "FAIL: no instruction at this offset\n");
+      LLVM_DEBUG(dbgs() << "FAIL: no instruction at this offset\n");
       break;
     }
 
@@ -665,13 +684,13 @@ bool BinaryContext::analyzeJumpTable(const uint64_t Address,
     if (TargetBF == &BF) {
       // Address inside the function.
       addOffset(Value - TargetBF->getAddress());
-      DEBUG(dbgs() << "OK: real entry\n");
+      LLVM_DEBUG(dbgs() << "OK: real entry\n");
     } else {
       // Address in split fragment.
       BF.setHasSplitJumpTable(true);
       // Add invalid offset for proper identification of jump table size.
       addOffset(INVALID_OFFSET);
-      DEBUG(dbgs() << "OK: address in split fragment\n");
+      LLVM_DEBUG(dbgs() << "OK: address in split fragment\n");
     }
   }
 
@@ -683,7 +702,8 @@ bool BinaryContext::analyzeJumpTable(const uint64_t Address,
 
 void BinaryContext::populateJumpTables() {
   std::vector<BinaryFunction *> FuncsToSkip;
-  DEBUG(dbgs() << "DataPCRelocations: " << DataPCRelocations.size() << '\n');
+  LLVM_DEBUG(dbgs() << "DataPCRelocations: " << DataPCRelocations.size()
+                    << '\n');
   for (auto JTI = JumpTables.begin(), JTE = JumpTables.end(); JTI != JTE;
        ++JTI) {
     auto *JT = JTI->second;
@@ -738,7 +758,7 @@ void BinaryContext::populateJumpTables() {
   }
 
   if (opts::StrictMode && DataPCRelocations.size()) {
-    DEBUG({
+    LLVM_DEBUG({
       dbgs() << DataPCRelocations.size()
              << " unclaimed PC-relative relocations left in data:\n";
       for (auto Reloc : DataPCRelocations)
@@ -752,7 +772,8 @@ void BinaryContext::populateJumpTables() {
   for (auto BF : FuncsToSkip) {
     BinaryFunction *ParentBF =
         const_cast<BinaryFunction *>(BF->getTopmostFragment());
-    DEBUG(dbgs() << "Skipping " << ParentBF->getPrintName() << " family\n");
+    LLVM_DEBUG(dbgs() << "Skipping " << ParentBF->getPrintName()
+                      << " family\n");
     ParentBF->setIgnored();
     ParentBF->ignoreFragments();
   }
@@ -812,9 +833,8 @@ BinaryContext::getOrCreateJumpTable(BinaryFunction &Function, uint64_t Address,
     JTLabel = registerNameAtAddress(JumpTableName, Address, 0, EntrySize);
   }
 
-  DEBUG(dbgs() << "BOLT-DEBUG: creating jump table "
-               << JTLabel->getName()
-               << " in function " << Function << '\n');
+  LLVM_DEBUG(dbgs() << "BOLT-DEBUG: creating jump table " << JTLabel->getName()
+                    << " in function " << Function << '\n');
 
   auto *JT = new JumpTable(*JTLabel,
                            Address,
@@ -845,7 +865,7 @@ BinaryContext::duplicateJumpTable(BinaryFunction &Function, JumpTable *JT,
     break;
   }
   assert(Found && "Label not found");
-  auto *NewLabel = Ctx->createTempSymbol("duplicatedJT", true);
+  auto *NewLabel = Ctx->createNamedTempSymbol("duplicatedJT");
   auto *NewJT = new JumpTable(*NewLabel,
                               JT->getAddress(),
                               JT->EntrySize,
@@ -872,7 +892,7 @@ std::string BinaryContext::generateJumpTableName(const BinaryFunction &BF,
     Offset = Address - JT->getAddress();
     auto Itr = JT->Labels.find(Offset);
     if (Itr != JT->Labels.end()) {
-      return Itr->second->getName();
+      return std::string(Itr->second->getName());
     }
     Id = JumpTableIds.at(JT->getAddress());
   } else {
@@ -908,7 +928,6 @@ bool BinaryContext::hasValidCodePadding(const BinaryFunction &BF) {
                                   InstrSize,
                                   FunctionData->slice(Offset),
                                   InstrAddress,
-                                  nulls(),
                                   nulls()))
         break;
       if (!Predicate(Instr))
@@ -1393,18 +1412,17 @@ unsigned BinaryContext::addDebugFilenameToUnit(const uint32_t DestCUID,
          "FileIndex out of range for the compilation unit.");
   StringRef Dir = "";
   if (FileNames[FileIndex - 1].DirIdx != 0) {
-    if (auto DirName =
+    if (auto DirName = dwarf::toString(
             LineTable->Prologue
-                .IncludeDirectories[FileNames[FileIndex - 1].DirIdx - 1]
-                .getAsCString()) {
+                .IncludeDirectories[FileNames[FileIndex - 1].DirIdx - 1])) {
       Dir = *DirName;
     }
   }
   StringRef FileName = "";
-  if (auto FName = FileNames[FileIndex - 1].Name.getAsCString())
+  if (auto FName = dwarf::toString(FileNames[FileIndex - 1].Name))
     FileName = *FName;
   assert(FileName != "");
-  return cantFail(Ctx->getDwarfFile(Dir, FileName, 0, nullptr, None, DestCUID));
+  return cantFail(Ctx->getDwarfFile(Dir, FileName, 0, None, None, DestCUID));
 }
 
 std::vector<BinaryFunction *> BinaryContext::getSortedFunctions() {
@@ -1453,8 +1471,9 @@ void BinaryContext::preprocessDebugInfo() {
   // Building a map of address ranges to CUs similar to .debug_aranges and use
   // it to assign CU to functions.
   std::vector<CURange> AllRanges;
+  AllRanges.reserve(DwCtx->getNumCompileUnits());
   for (const auto &CU : DwCtx->compile_units()) {
-    for (auto &Range : CU->getUnitDIE().getAddressRanges()) {
+    for (auto &Range : cantFail(CU->getUnitDIE().getAddressRanges())) {
       // Parts of the debug info could be invalidated due to corresponding code
       // being removed from the binary by the linker. Hence we check if the
       // address is a valid one.
@@ -1476,14 +1495,20 @@ void BinaryContext::preprocessDebugInfo() {
   }
 
   // Populate MCContext with DWARF files from all units.
+  StringRef GlobalPrefix = AsmInfo->getPrivateGlobalPrefix();
   for (const auto &CU : DwCtx->compile_units()) {
-    const uint32_t CUID = CU->getOffset();
+    const uint64_t CUID = CU->getOffset();
     const DWARFDebugLine::LineTable *LineTable =
       DwCtx->getLineTableForUnit(CU.get());
     const auto &FileNames = LineTable->Prologue.FileNames;
+
+    // Assign a unique label to every line table, one per CU.
+    Ctx->getMCDwarfLineTable(CUID).setLabel(
+      Ctx->getOrCreateSymbol(GlobalPrefix + "line_table_start" + Twine(CUID)));
+
     // Make sure empty debug line tables are registered too.
     if (FileNames.empty()) {
-      cantFail(Ctx->getDwarfFile("", "<unknown>", 0, nullptr, None, CUID));
+      cantFail(Ctx->getDwarfFile("", "<unknown>", 0, None, None, CUID));
       continue;
     }
     for (size_t I = 0, Size = FileNames.size(); I != Size; ++I) {
@@ -1491,15 +1516,15 @@ void BinaryContext::preprocessDebugInfo() {
       // means empty dir.
       StringRef Dir = "";
       if (FileNames[I].DirIdx != 0)
-        if (auto DirName =
-                LineTable->Prologue.IncludeDirectories[FileNames[I].DirIdx - 1]
-                    .getAsCString())
+        if (auto DirName = dwarf::toString(
+                LineTable->Prologue
+                    .IncludeDirectories[FileNames[I].DirIdx - 1]))
           Dir = *DirName;
       StringRef FileName = "";
-      if (auto FName = FileNames[I].Name.getAsCString())
+      if (auto FName = dwarf::toString(FileNames[I].Name))
         FileName = *FName;
       assert(FileName != "");
-      cantFail(Ctx->getDwarfFile(Dir, FileName, 0, nullptr, None, CUID));
+      cantFail(Ctx->getDwarfFile(Dir, FileName, 0, None, None, CUID));
     }
   }
 }
@@ -1591,7 +1616,7 @@ void BinaryContext::printInstruction(raw_ostream &OS,
     OS << "\n";
     return;
   }
-  InstPrinter->printInst(&Instruction, OS, "", *STI);
+  InstPrinter->printInst(&Instruction, 0, "", *STI, OS);
   if (MIB->isCall(Instruction)) {
     if (MIB->isTailCall(Instruction))
       OS << " # TAILCALL ";
@@ -1628,7 +1653,7 @@ void BinaryContext::printInstruction(raw_ostream &OS,
       const auto &Row = LineTable->Rows[RowRef.RowIndex - 1];
       StringRef FileName = "";
       if (auto FName =
-              LineTable->Prologue.FileNames[Row.File - 1].Name.getAsCString())
+              dwarf::toString(LineTable->Prologue.FileNames[Row.File - 1].Name))
         FileName = *FName;
       OS << " # debug line " << FileName << ":" << Row.Line;
 
@@ -1673,16 +1698,15 @@ BinaryContext::getSectionNameForAddress(uint64_t Address) const {
 }
 
 BinarySection &BinaryContext::registerSection(BinarySection *Section) {
-  assert(!Section->getName().empty() &&
-         "can't register sections without a name");
   auto Res = Sections.insert(Section);
   assert(Res.second && "can't register the same section twice.");
 
   // Only register allocatable sections in the AddressToSection map.
   if (Section->isAllocatable() && Section->getAddress())
     AddressToSection.insert(std::make_pair(Section->getAddress(), Section));
-  NameToSection.insert(std::make_pair(Section->getName(), Section));
-  DEBUG(dbgs() << "BOLT-DEBUG: registering " << *Section << "\n");
+  NameToSection.insert(
+      std::make_pair(std::string(Section->getName()), Section));
+  LLVM_DEBUG(dbgs() << "BOLT-DEBUG: registering " << *Section << "\n");
   return *Section;
 }
 
@@ -1710,10 +1734,10 @@ BinarySection &BinaryContext::registerOrUpdateSection(StringRef Name,
            "can only update unique sections");
     auto *Section = NamedSections.begin()->second;
 
-    DEBUG(dbgs() << "BOLT-DEBUG: updating " << *Section << " -> ");
+    LLVM_DEBUG(dbgs() << "BOLT-DEBUG: updating " << *Section << " -> ");
     const auto Flag = Section->isAllocatable();
     Section->update(Data, Size, Alignment, ELFType, ELFFlags);
-    DEBUG(dbgs() << *Section << "\n");
+    LLVM_DEBUG(dbgs() << *Section << "\n");
     // FIXME: Fix section flags/attributes for MachO.
     if (isELF())
       assert(Flag == Section->isAllocatable() &&
@@ -1738,7 +1762,8 @@ bool BinaryContext::deregisterSection(BinarySection &Section) {
       ++Range.first;
     }
 
-    auto NameRange = NameToSection.equal_range(SectionPtr->getName());
+    auto NameRange =
+        NameToSection.equal_range(std::string(SectionPtr->getName()));
     while (NameRange.first != NameRange.second) {
       if (NameRange.first->second == SectionPtr) {
         NameToSection.erase(NameRange.first);
@@ -1778,7 +1803,7 @@ BinaryContext::getUnsignedValueAtAddress(uint64_t Address,
 
   DataExtractor DE(Section->getContents(), AsmInfo->isLittleEndian(),
                    AsmInfo->getCodePointerSize());
-  auto ValueOffset = static_cast<uint32_t>(Address - Section->getAddress());
+  auto ValueOffset = static_cast<uint64_t>(Address - Section->getAddress());
   return DE.getUnsigned(&ValueOffset, Size);
 }
 
@@ -1794,7 +1819,7 @@ BinaryContext::getSignedValueAtAddress(uint64_t Address,
 
   DataExtractor DE(Section->getContents(), AsmInfo->isLittleEndian(),
                    AsmInfo->getCodePointerSize());
-  auto ValueOffset = static_cast<uint32_t>(Address - Section->getAddress());
+  auto ValueOffset = static_cast<uint64_t>(Address - Section->getAddress());
   return DE.getSigned(&ValueOffset, Size);
 }
 
@@ -1852,7 +1877,7 @@ void BinaryContext::markAmbiguousRelocations(BinaryData &BD,
                                              const uint64_t Address) {
   auto setImmovable = [&](BinaryData &BD) {
     auto *Root = BD.getAtomicRoot();
-    DEBUG(if (Root->isMoveable()) {
+    LLVM_DEBUG(if (Root->isMoveable()) {
       dbgs() << "BOLT-DEBUG: setting " << *Root << " as immovable "
              << "due to ambiguous relocation referencing 0x"
              << Twine::utohexstr(Address) << '\n';
@@ -1936,14 +1961,15 @@ BinaryContext::calculateEmittedSize(BinaryFunction &BF, bool FixBranches) {
   SmallString<256> Code;
   raw_svector_ostream VecOS(Code);
 
+  std::unique_ptr<MCObjectWriter> OW = MAB->createObjectWriter(VecOS);
   std::unique_ptr<MCStreamer> Streamer(TheTarget->createMCObjectStreamer(
-      *TheTriple, *LocalCtx, std::unique_ptr<MCAsmBackend>(MAB), VecOS,
+      *TheTriple, *LocalCtx, std::unique_ptr<MCAsmBackend>(MAB), std::move(OW),
       std::unique_ptr<MCCodeEmitter>(MCEInstance.MCE.release()), *STI,
       /*RelaxAll=*/false,
       /*IncrementalLinkerCompatible=*/false,
       /*DWARFMustBeAtTheEnd=*/false));
 
-  Streamer->InitSections(false);
+  Streamer->initSections(false, *STI);
 
   auto *Section = MCEInstance.LocalMOFI->getTextSection();
   Section->setHasInstructions(true);
@@ -1955,10 +1981,10 @@ BinaryContext::calculateEmittedSize(BinaryFunction &BF, bool FixBranches) {
   MCSymbol *ColdEndLabel = LocalCtx->createTempSymbol();
 
   Streamer->SwitchSection(Section);
-  Streamer->EmitLabel(StartLabel);
+  Streamer->emitLabel(StartLabel);
   emitFunctionBody(*Streamer, BF, /*EmitColdPart=*/false,
                    /*EmitCodeOnly=*/true);
-  Streamer->EmitLabel(EndLabel);
+  Streamer->emitLabel(EndLabel);
 
   if (BF.isSplit()) {
     auto *ColdSection =
@@ -1968,14 +1994,18 @@ BinaryContext::calculateEmittedSize(BinaryFunction &BF, bool FixBranches) {
     ColdSection->setHasInstructions(true);
 
     Streamer->SwitchSection(ColdSection);
-    Streamer->EmitLabel(ColdStartLabel);
+    Streamer->emitLabel(ColdStartLabel);
     emitFunctionBody(*Streamer, BF, /*EmitColdPart=*/true,
                      /*EmitCodeOnly=*/true);
-    Streamer->EmitLabel(ColdEndLabel);
+    Streamer->emitLabel(ColdEndLabel);
+    // To avoid calling MCObjectStreamer::flushPendingLabels() which is private
+    Streamer->emitBytes(StringRef(""));
+    Streamer->SwitchSection(Section);
   }
 
-  // To avoid calling MCObjectStreamer::flushPendingLabels() which is private.
-  Streamer->EmitBytes(StringRef(""));
+  // To avoid calling MCObjectStreamer::flushPendingLabels() which is private or
+  // MCStreamer::Finish(), which does more than we want
+  Streamer->emitBytes(StringRef(""));
 
   auto &Assembler =
       static_cast<MCObjectStreamer *>(Streamer.get())->getAssembler();

@@ -15,6 +15,7 @@
 #define LLVM_TOOLS_LLVM_BOLT_PASSES_INSTRUMENTATION_SUMMARY_H
 
 #include "llvm/ADT/DenseSet.h"
+#include <vector>
 
 namespace llvm {
 

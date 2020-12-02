@@ -13,7 +13,7 @@
 
 #include "PatchEntries.h"
 #include "NameResolver.h"
-#include "llvm/Support/Options.h"
+#include "llvm/Support/CommandLine.h"
 
 namespace opts {
 

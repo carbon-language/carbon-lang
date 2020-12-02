@@ -425,7 +425,7 @@ Error YAMLProfileReader::readProfile(BinaryContext &BC) {
 }
 
 bool YAMLProfileReader::usesEvent(StringRef Name) const {
-  return YamlBP.Header.EventNames.find(Name) != StringRef::npos;
+  return YamlBP.Header.EventNames.find(std::string(Name)) != StringRef::npos;
 }
 
 } // end namespace bolt

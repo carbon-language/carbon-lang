@@ -79,17 +79,17 @@ void BinarySection::emitAsData(MCStreamer &Streamer, StringRef NewName) const {
                                            getELFFlags());
 
   Streamer.SwitchSection(ELFSection);
-  Streamer.EmitValueToAlignment(getAlignment());
+  Streamer.emitValueToAlignment(getAlignment());
 
   if (BC.HasRelocations && opts::HotData && isReordered())
-    Streamer.EmitLabel(BC.Ctx->getOrCreateSymbol("__hot_data_start"));
+    Streamer.emitLabel(BC.Ctx->getOrCreateSymbol("__hot_data_start"));
 
-  DEBUG(dbgs() << "BOLT-DEBUG: emitting "
-               << (isAllocatable() ? "" : "non-")
-               << "allocatable data section " << SectionName << '\n');
+  LLVM_DEBUG(dbgs() << "BOLT-DEBUG: emitting "
+                    << (isAllocatable() ? "" : "non-")
+                    << "allocatable data section " << SectionName << '\n');
 
   if (!hasRelocations()) {
-    Streamer.EmitBytes(SectionContents);
+    Streamer.emitBytes(SectionContents);
   } else {
     uint64_t SectionOffset = 0;
     for (auto &Relocation : relocations()) {
@@ -98,28 +98,28 @@ void BinarySection::emitAsData(MCStreamer &Streamer, StringRef NewName) const {
       if (BC.UndefinedSymbols.count(Relocation.Symbol))
         continue;
       if (SectionOffset < Relocation.Offset) {
-        Streamer.EmitBytes(
+        Streamer.emitBytes(
             SectionContents.substr(SectionOffset,
                                    Relocation.Offset - SectionOffset));
         SectionOffset = Relocation.Offset;
       }
-      DEBUG(dbgs() << "BOLT-DEBUG: emitting relocation for symbol "
-            << (Relocation.Symbol ? Relocation.Symbol->getName()
-                                  : StringRef("<none>"))
-            << " at offset 0x" << Twine::utohexstr(Relocation.Offset)
-            << " with size "
-            << Relocation::getSizeForType(Relocation.Type) << '\n');
+      LLVM_DEBUG(dbgs() << "BOLT-DEBUG: emitting relocation for symbol "
+                        << (Relocation.Symbol ? Relocation.Symbol->getName()
+                                              : StringRef("<none>"))
+                        << " at offset 0x"
+                        << Twine::utohexstr(Relocation.Offset) << " with size "
+                        << Relocation::getSizeForType(Relocation.Type) << '\n');
       auto RelocationSize = Relocation.emit(&Streamer);
       SectionOffset += RelocationSize;
     }
     assert(SectionOffset <= SectionContents.size() && "overflow error");
     if (SectionOffset < SectionContents.size()) {
-      Streamer.EmitBytes(SectionContents.substr(SectionOffset));
+      Streamer.emitBytes(SectionContents.substr(SectionOffset));
     }
   }
 
   if (BC.HasRelocations && opts::HotData && isReordered())
-    Streamer.EmitLabel(BC.Ctx->getOrCreateSymbol("__hot_data_end"));
+    Streamer.emitLabel(BC.Ctx->getOrCreateSymbol("__hot_data_end"));
 }
 
 void BinarySection::flushPendingRelocations(raw_pwrite_stream &OS,
@@ -135,11 +135,11 @@ void BinarySection::flushPendingRelocations(raw_pwrite_stream &OS,
   // sections, the output offset should always be a valid one.
   const uint64_t SectionFileOffset = isAllocatable() ? getInputFileOffset()
                                                      : getOutputFileOffset();
-  DEBUG(dbgs() << "BOLT-DEBUG: flushing pending relocations for section "
-               << getName() << '\n'
-               << "  address: 0x" << Twine::utohexstr(SectionAddress) << '\n'
-               << "  offset: 0x" << Twine::utohexstr(SectionFileOffset) << '\n'
-  );
+  LLVM_DEBUG(
+      dbgs() << "BOLT-DEBUG: flushing pending relocations for section "
+             << getName() << '\n'
+             << "  address: 0x" << Twine::utohexstr(SectionAddress) << '\n'
+             << "  offset: 0x" << Twine::utohexstr(SectionFileOffset) << '\n');
 
   for (auto &Patch : Patches) {
     OS.pwrite(Patch.Bytes.data(),
@@ -167,31 +167,26 @@ void BinarySection::flushPendingRelocations(raw_pwrite_stream &OS,
       OS.pwrite(reinterpret_cast<const char*>(&Value),
                 Relocation::getSizeForType(Reloc.Type),
                 SectionFileOffset + Reloc.Offset);
-      DEBUG(
-        dbgs() << "BOLT-DEBUG: writing value 0x"
-                     << Twine::utohexstr(Value)
-                     << " of size " << Relocation::getSizeForType(Reloc.Type)
-                     << " at offset 0x"
-                     << Twine::utohexstr(Reloc.Offset)
-                     << " address 0x"
-                     << Twine::utohexstr(SectionAddress + Reloc.Offset)
-                     << " Offset 0x"
-                     << Twine::utohexstr(SectionFileOffset + Reloc.Offset)
-                     << '\n';
-      );
+      LLVM_DEBUG(dbgs() << "BOLT-DEBUG: writing value 0x"
+                        << Twine::utohexstr(Value) << " of size "
+                        << Relocation::getSizeForType(Reloc.Type)
+                        << " at offset 0x" << Twine::utohexstr(Reloc.Offset)
+                        << " address 0x"
+                        << Twine::utohexstr(SectionAddress + Reloc.Offset)
+                        << " Offset 0x"
+                        << Twine::utohexstr(SectionFileOffset + Reloc.Offset)
+                        << '\n';);
       break;
     }
     }
-    DEBUG(dbgs() << "BOLT-DEBUG: writing value 0x"
-                 << Twine::utohexstr(Value)
-                 << " of size " << Relocation::getSizeForType(Reloc.Type)
-                 << " at section offset 0x"
-                 << Twine::utohexstr(Reloc.Offset)
-                 << " address 0x"
-                 << Twine::utohexstr(SectionAddress + Reloc.Offset)
-                 << " file offset 0x"
-                 << Twine::utohexstr(SectionFileOffset + Reloc.Offset)
-                 << '\n';);
+    LLVM_DEBUG(
+        dbgs() << "BOLT-DEBUG: writing value 0x" << Twine::utohexstr(Value)
+               << " of size " << Relocation::getSizeForType(Reloc.Type)
+               << " at section offset 0x" << Twine::utohexstr(Reloc.Offset)
+               << " address 0x"
+               << Twine::utohexstr(SectionAddress + Reloc.Offset)
+               << " file offset 0x"
+               << Twine::utohexstr(SectionFileOffset + Reloc.Offset) << '\n';);
   }
 
   clearList(PendingRelocations);
@@ -255,7 +250,8 @@ std::set<Relocation> BinarySection::reorderRelocations(bool Inplace) const {
     auto RelOffset = RelAddr - BD->getAddress();
     NewRel.Offset = BD->getOutputOffset() + RelOffset;
     assert(NewRel.Offset < getSize());
-    DEBUG(dbgs() << "BOLT-DEBUG: moving " << Rel << " -> " << NewRel << "\n");
+    LLVM_DEBUG(dbgs() << "BOLT-DEBUG: moving " << Rel << " -> " << NewRel
+                      << "\n");
     auto Res = NewRelocations.emplace(std::move(NewRel));
     (void)Res;
     assert(Res.second && "Can't overwrite existing relocation");
@@ -272,7 +268,7 @@ void BinarySection::reorderContents(const std::vector<BinaryData *> &Order,
   std::string Str;
   raw_string_ostream OS(Str);
   auto *Src = Contents.data();
-  DEBUG(dbgs() << "BOLT-DEBUG: reorderContents for " << Name << "\n");
+  LLVM_DEBUG(dbgs() << "BOLT-DEBUG: reorderContents for " << Name << "\n");
   for (auto *BD : Order) {
     assert((BD->isMoved() || !Inplace) && !BD->isJumpTable());
     assert(BD->isAtomic() && BD->isMoveable());
@@ -282,8 +278,8 @@ void BinarySection::reorderContents(const std::vector<BinaryData *> &Order,
     while (OS.tell() < BD->getOutputOffset()) {
       OS.write((unsigned char)0);
     }
-    DEBUG(dbgs() << "BOLT-DEBUG: " << BD->getName()
-                 << " @ " << OS.tell() << "\n");
+    LLVM_DEBUG(dbgs() << "BOLT-DEBUG: " << BD->getName() << " @ " << OS.tell()
+                      << "\n");
     OS.write(&Src[SrcOffset], BD->getOutputSize());
   }
   if (Relocations.empty()) {

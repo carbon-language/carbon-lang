@@ -12,6 +12,8 @@
 #include "InstrumentationRuntimeLibrary.h"
 #include "BinaryFunction.h"
 #include "llvm/ExecutionEngine/Orc/RTDyldObjectLinkingLayer.h"
+#include "llvm/Support/Alignment.h"
+#include "llvm/Support/CommandLine.h"
 
 using namespace llvm;
 using namespace bolt;
@@ -111,12 +113,12 @@ void InstrumentationRuntimeLibrary::emitBinary(BinaryContext &BC,
   MCSymbol *FiniPtr = BC.Ctx->getOrCreateSymbol("__bolt_instr_fini_ptr");
   MCSymbol *SleepSym = BC.Ctx->getOrCreateSymbol("__bolt_instr_sleep_time");
 
-  Section->setAlignment(BC.RegularPageSize);
+  Section->setAlignment(llvm::Align(BC.RegularPageSize));
   Streamer.SwitchSection(Section);
-  Streamer.EmitLabel(Locs);
-  Streamer.EmitSymbolAttribute(Locs, MCSymbolAttr::MCSA_Global);
+  Streamer.emitLabel(Locs);
+  Streamer.emitSymbolAttribute(Locs, MCSymbolAttr::MCSA_Global);
   for (const auto &Label : Summary->Counters) {
-    Streamer.EmitLabel(Label);
+    Streamer.emitLabel(Label);
     Streamer.emitFill(8, 0);
   }
   const uint64_t Padding =
@@ -124,50 +126,50 @@ void InstrumentationRuntimeLibrary::emitBinary(BinaryContext &BC,
       8 * Summary->Counters.size();
   if (Padding)
     Streamer.emitFill(Padding, 0);
-  Streamer.EmitLabel(SleepSym);
-  Streamer.EmitSymbolAttribute(SleepSym, MCSymbolAttr::MCSA_Global);
-  Streamer.EmitIntValue(opts::InstrumentationSleepTime, /*Size=*/4);
-  Streamer.EmitLabel(NumLocs);
-  Streamer.EmitSymbolAttribute(NumLocs, MCSymbolAttr::MCSA_Global);
-  Streamer.EmitIntValue(Summary->Counters.size(), /*Size=*/4);
-  Streamer.EmitLabel(Summary->IndCallHandlerFunc);
-  Streamer.EmitSymbolAttribute(Summary->IndCallHandlerFunc,
+  Streamer.emitLabel(SleepSym);
+  Streamer.emitSymbolAttribute(SleepSym, MCSymbolAttr::MCSA_Global);
+  Streamer.emitIntValue(opts::InstrumentationSleepTime, /*Size=*/4);
+  Streamer.emitLabel(NumLocs);
+  Streamer.emitSymbolAttribute(NumLocs, MCSymbolAttr::MCSA_Global);
+  Streamer.emitIntValue(Summary->Counters.size(), /*Size=*/4);
+  Streamer.emitLabel(Summary->IndCallHandlerFunc);
+  Streamer.emitSymbolAttribute(Summary->IndCallHandlerFunc,
                                MCSymbolAttr::MCSA_Global);
-  Streamer.EmitValue(
+  Streamer.emitValue(
       MCSymbolRefExpr::create(
           Summary->InitialIndCallHandlerFunction->getSymbol(), *BC.Ctx),
       /*Size=*/8);
-  Streamer.EmitLabel(Summary->IndTailCallHandlerFunc);
-  Streamer.EmitSymbolAttribute(Summary->IndTailCallHandlerFunc,
+  Streamer.emitLabel(Summary->IndTailCallHandlerFunc);
+  Streamer.emitSymbolAttribute(Summary->IndTailCallHandlerFunc,
                                MCSymbolAttr::MCSA_Global);
-  Streamer.EmitValue(
+  Streamer.emitValue(
       MCSymbolRefExpr::create(
           Summary->InitialIndTailCallHandlerFunction->getSymbol(), *BC.Ctx),
       /*Size=*/8);
-  Streamer.EmitLabel(NumIndCalls);
-  Streamer.EmitSymbolAttribute(NumIndCalls, MCSymbolAttr::MCSA_Global);
-  Streamer.EmitIntValue(Summary->IndCallDescriptions.size(), /*Size=*/4);
-  Streamer.EmitLabel(NumIndCallTargets);
-  Streamer.EmitSymbolAttribute(NumIndCallTargets, MCSymbolAttr::MCSA_Global);
-  Streamer.EmitIntValue(Summary->IndCallTargetDescriptions.size(), /*Size=*/4);
-  Streamer.EmitLabel(NumFuncs);
-  Streamer.EmitSymbolAttribute(NumFuncs, MCSymbolAttr::MCSA_Global);
+  Streamer.emitLabel(NumIndCalls);
+  Streamer.emitSymbolAttribute(NumIndCalls, MCSymbolAttr::MCSA_Global);
+  Streamer.emitIntValue(Summary->IndCallDescriptions.size(), /*Size=*/4);
+  Streamer.emitLabel(NumIndCallTargets);
+  Streamer.emitSymbolAttribute(NumIndCallTargets, MCSymbolAttr::MCSA_Global);
+  Streamer.emitIntValue(Summary->IndCallTargetDescriptions.size(), /*Size=*/4);
+  Streamer.emitLabel(NumFuncs);
+  Streamer.emitSymbolAttribute(NumFuncs, MCSymbolAttr::MCSA_Global);
 
-  Streamer.EmitIntValue(Summary->FunctionDescriptions.size(), /*Size=*/4);
-  Streamer.EmitLabel(FilenameSym);
-  Streamer.EmitBytes(opts::InstrumentationFilename);
+  Streamer.emitIntValue(Summary->FunctionDescriptions.size(), /*Size=*/4);
+  Streamer.emitLabel(FilenameSym);
+  Streamer.emitBytes(opts::InstrumentationFilename);
   Streamer.emitFill(1, 0);
-  Streamer.EmitLabel(UsePIDSym);
-  Streamer.EmitIntValue(opts::InstrumentationFileAppendPID ? 1 : 0, /*Size=*/1);
+  Streamer.emitLabel(UsePIDSym);
+  Streamer.emitIntValue(opts::InstrumentationFileAppendPID ? 1 : 0, /*Size=*/1);
 
-  Streamer.EmitLabel(InitPtr);
-  Streamer.EmitSymbolAttribute(InitPtr, MCSymbolAttr::MCSA_Global);
-  Streamer.EmitValue(
+  Streamer.emitLabel(InitPtr);
+  Streamer.emitSymbolAttribute(InitPtr, MCSymbolAttr::MCSA_Global);
+  Streamer.emitValue(
       MCSymbolRefExpr::create(StartFunction->getSymbol(), *BC.Ctx), /*Size=*/8);
   if (FiniFunction) {
-    Streamer.EmitLabel(FiniPtr);
-    Streamer.EmitSymbolAttribute(FiniPtr, MCSymbolAttr::MCSA_Global);
-    Streamer.EmitValue(
+    Streamer.emitLabel(FiniPtr);
+    Streamer.emitSymbolAttribute(FiniPtr, MCSymbolAttr::MCSA_Global);
+    Streamer.emitValue(
       MCSymbolRefExpr::create(FiniFunction->getSymbol(), *BC.Ctx), /*Size=*/8);
   }
 
@@ -176,33 +178,37 @@ void InstrumentationRuntimeLibrary::emitBinary(BinaryContext &BC,
                                  "__BOLT", "__tables", MachO::S_REGULAR,
                                  SectionKind::getData());
     MCSymbol *Tables = BC.Ctx->getOrCreateSymbol("__bolt_instr_tables");
-    TablesSection->setAlignment(BC.RegularPageSize);
+    TablesSection->setAlignment(llvm::Align(BC.RegularPageSize));
     Streamer.SwitchSection(TablesSection);
-    Streamer.EmitLabel(Tables);
-    Streamer.EmitSymbolAttribute(Tables, MCSymbolAttr::MCSA_Global);
-    Streamer.EmitBytes(buildTables(BC));
+    Streamer.emitLabel(Tables);
+    Streamer.emitSymbolAttribute(Tables, MCSymbolAttr::MCSA_Global);
+    Streamer.emitBytes(buildTables(BC));
   }
 }
 
-void InstrumentationRuntimeLibrary::link(BinaryContext &BC, StringRef ToolPath,
-                                         orc::ExecutionSession &ES,
-                                         orc::RTDyldObjectLinkingLayer &OLT) {
+void InstrumentationRuntimeLibrary::link(
+    BinaryContext &BC, StringRef ToolPath, RuntimeDyld &RTDyld,
+    std::function<void(RuntimeDyld &)> OnLoad) {
   auto LibPath = getLibPath(ToolPath, opts::RuntimeInstrumentationLib);
-  loadLibraryToOLT(LibPath, ES, OLT);
+  loadLibrary(LibPath, RTDyld);
+  OnLoad(RTDyld);
+  RTDyld.finalizeWithMemoryManagerLocking();
+  if (RTDyld.hasError()) {
+    outs() << "BOLT-ERROR: RTDyld failed: " << RTDyld.getErrorString() << "\n";
+    exit(1);
+  }
 
   if (BC.isMachO())
     return;
 
-  RuntimeFiniAddress =
-      cantFail(OLT.findSymbol("__bolt_instr_fini", false).getAddress());
+  RuntimeFiniAddress = RTDyld.getSymbol("__bolt_instr_fini").getAddress();
   if (!RuntimeFiniAddress) {
     errs() << "BOLT-ERROR: instrumentation library does not define "
               "__bolt_instr_fini: "
            << LibPath << "\n";
     exit(1);
   }
-  RuntimeStartAddress =
-      cantFail(OLT.findSymbol("__bolt_instr_start", false).getAddress());
+  RuntimeStartAddress = RTDyld.getSymbol("__bolt_instr_start").getAddress();
   if (!RuntimeStartAddress) {
     errs() << "BOLT-ERROR: instrumentation library does not define "
               "__bolt_instr_start: "
@@ -212,11 +218,10 @@ void InstrumentationRuntimeLibrary::link(BinaryContext &BC, StringRef ToolPath,
   outs() << "BOLT-INFO: output linked against instrumentation runtime "
             "library, lib entry point is 0x"
          << Twine::utohexstr(RuntimeFiniAddress) << "\n";
-  outs()
-      << "BOLT-INFO: clear procedure is 0x"
-      << Twine::utohexstr(cantFail(
-             OLT.findSymbol("__bolt_instr_clear_counters", false).getAddress()))
-      << "\n";
+  outs() << "BOLT-INFO: clear procedure is 0x"
+         << Twine::utohexstr(
+                RTDyld.getSymbol("__bolt_instr_clear_counters").getAddress())
+         << "\n";
 
   emitTablesAsELFNote(BC);
 }

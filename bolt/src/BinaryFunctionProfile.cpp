@@ -136,7 +136,7 @@ void BinaryFunction::postProcessProfile() {
       // function calls from the block.
       for (auto &Inst : *BB) {
         // Ignore non-call instruction
-        if (!BC.MIA->isCall(Inst))
+        if (!BC.MIB->isCall(Inst))
           continue;
 
         auto CountAnnt = BC.MIB->tryGetAnnotationAs<uint64_t>(Inst, "Count");
@@ -325,7 +325,7 @@ void BinaryFunction::inferFallThroughCounts() {
     if (BBExecCount > TotalReportedJumps)
       Inferred = BBExecCount - TotalReportedJumps;
 
-    DEBUG(
+    LLVM_DEBUG(
       if (BBExecCount < TotalReportedJumps)
         dbgs()
             << "Fall-through inference is slightly inconsistent. "
