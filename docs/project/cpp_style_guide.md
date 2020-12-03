@@ -121,8 +121,12 @@ these.
     -   Use `{}` initialization without the `=` only if the above options don't
         compile.
     -   Never mix `{}` initialization and `auto`.
--   Don't put both the `if`-condition and subsequent statement onto a single
-    line.
+-   Always use braces for conditional, `switch`, and loop statements, even when
+    the body is a single statement.
+    -   Within a `switch` statement, use braces after a `case` label when
+        necessary to create a scope for a variable.
+    -   Always break the line immediately after an open brace except for empty
+        loop bodies.
 
 ### Copyable and movable types
 
