@@ -28,12 +28,12 @@ jobs:
       - run: gcloud info
       - name: Install bundler
         run: gem install bundler
-        working-directory: src/jekyll
+        working-directory: website/jekyll
       - name: Install jekyll and dependencies
         run: bundle install --jobs 4 --retry 3
-        working-directory: src/jekyll
+        working-directory: website/jekyll
       - name: Build HTML pages
         run: make build
-        working-directory: src/jekyll
+        working-directory: website/jekyll
       - name: Publish to www.carbon-lang.dev
-        run: gsutil cp -R src/jekyll/.gen-site/* gs://www.carbon-lang.dev/
+        run: gsutil cp -R website/jekyll/build/site/* gs://www.carbon-lang.dev/
