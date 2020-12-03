@@ -65,7 +65,7 @@ For most purposes, the Core team should be contacted about conduct issues.
 ### Toolchain team
 
 This team is responsible for development of Carbon's primary, reference
-toolcahin. It also oversees other related implementation work within the Carbon
+toolchain. It also oversees other related implementation work within the Carbon
 project, from tooling to test suites. There may be some overlap with
 [admins](#admins) -- any issue can be resolved by escalating to the
 [core team](#core-team). Notably, this team is _not_ responsible for the
