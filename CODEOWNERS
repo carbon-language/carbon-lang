@@ -24,6 +24,9 @@
 CODEOWNERS          @carbon-language/admin-team
 
 # Directories that contain infrastructure and support scripts.
-/.github/           @carbon-language/infra-team
+/.* @carbon-language/infra-team
+/*.cfg @carbon-language/infra-team
+/*.py @carbon-language/infra-team
+/*.toml @carbon-language/infra-team
 /github/            @carbon-language/infra-team
 /website/           @carbon-language/infra-team
