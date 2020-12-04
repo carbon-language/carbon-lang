@@ -34,6 +34,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
         -   [Interfaces are facet type-types](#interfaces-are-facet-type-types)
             -   [Carbon: types as function tables, interfaces as type-types (TODO)](#carbon-types-as-function-tables-interfaces-as-type-types-todo)
             -   [Carbon deep dive: interfaces as facet type-types](#carbon-deep-dive-interfaces-as-facet-type-types)
+            -   [Carbon deep dive: combined interfaces](#carbon-deep-dive-combined-interfaces)
         -   [Impls are values passed as arguments with defaults](#impls-are-values-passed-as-arguments-with-defaults)
         -   [Type-types parameterized by reprs](#type-types-parameterized-by-reprs)
     -   [Comparisons](#comparisons)
@@ -64,15 +65,15 @@ like templates. For example, instead of having one function per
 type-you-can-sort:
 
 ```
-fn SortInt32Array(Array(Int32)*: a) { ... }
-fn SortStringArray(Array(String)*: a) { ... }
+fn SortInt32Array(Ptr(Array(Int32)): a) { ... }
+fn SortStringArray(Ptr(Array(String)): a) { ... }
 ...
 ```
 
 you might have one function that could sort any array with comparable elements:
 
 ```
-fn SortArray[Comparable:$ T](Array(T)*: a) { ... }
+fn SortArray[Comparable:$ T](Ptr(Array(T)): a) { ... }
 ```
 
 Where the `SortArray` function applied to an `Array(Int32)*` input is
@@ -275,7 +276,7 @@ arguments are passed using square brackets before the usual parameter list, as
 in:
 
 ```
-fn PrintArraySize[Int: n](FixedArray(String, n)*: array) {
+fn PrintArraySize[Int: n](Ptr(FixedArray(String, n)): array) {
   Print(n);
 }
 
@@ -293,7 +294,7 @@ type of `array` inside the `PrintArraySize` function body) that are only fully
 known with dynamic information. For example:
 
 ```
-fn PrintStringArray[Int:$ n](FixedArray(String, n)*: array) {
+fn PrintStringArray[Int:$ n](Ptr(FixedArray(String, n)): array) {
   for (var Int: i = 0; i < n; ++i) {
     Print(array->get(i));
   }
@@ -450,11 +451,12 @@ with that type, but has distinct interface behavior (typically implementing some
 interface for the type)."
 
 ```
-interface Cmp(Type: T) where Self = T {  // shorthand: interface Cmp(Type: Self) {
-  public fn compare(Self*: this, Self*: that) -> Ordering;
+// shorthand: interface Cmp(Type: Self) {
+interface Cmp(Type: T) where Self = T {
+  public fn compare(Ptr(Self): this, Ptr(Self): that) -> Ordering;
 }
 impl Cmp(A) {
-  fn compare(A*: this, A*: that) -> Ordering { /*...*/ }
+  fn compare(Ptr(A): this, Ptr(A): that) -> Ordering { /*...*/ }
 }
 ```
 
@@ -575,8 +577,8 @@ interface I2 extends I {  ... }  // Supports interface inheritance
 // Supports interfaces with type arguments
 interface Tree(Type: T) { ... }
 interface PushPopContainer(Type: T) {
-  fn Push(Ptr(Self): this, T: x);
-  fn Pop(Ptr(Self): this) -> T;
+  method (Ptr(Self): this) Push(T: x);
+  method (Ptr(Self): this) Pop() -> T;
 }
 fn TreeTraversal[Type:$ T, Tree(T):$ TreeType](
     Ptr(TreeType): to_traverse,
@@ -587,16 +589,20 @@ TreeTraversal(&my_int_tree, Stack(Int), fn(Int: x) { Print(x); });
 
 ##### [Carbon deep dive: interfaces as facet type-types](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/facet-type-types.md)
 
-This is JoshL@'s favorite proposal at this time, since it can express things
-like "list of implementations for an interface X for representation T", is
-reasonably concise for simple tasks, and has no major objections.
+JoshL@ prefers this proposal over
+[interfaces as concrete types](#deep-dive-interfaces-as-concrete-types-todo),
+since it can express things like "list of implementations for an interface X for
+representation T", is reasonably concise for simple tasks, and has no major
+objections. However, it is cumbersome to access methods defined as part of the
+implementation of an interface outside of a generic, or to operate on types
+implementing multiple interfaces inside a generic.
 
 ```
 // Define an interface
 interface Vector {
     // Here "Self" means "the type implementing this interface"
-  fn Add(Self: a, Self: b) -> Self;
-  fn Scale(Self: a, Double: v) -> Self;
+  method (Self: a) Add(Self: b) -> Self;
+  method (Self: a) Scale(Double: s) -> Self;
 }
 
 // Type that implements an interface
@@ -605,11 +611,11 @@ struct Point {
   var Double: y;
   impl Vector {  // may also impl out of line
     // Here "Self" is an alias for "Point"
-    fn Add(Self: a, Self: b) -> Self {
+    method (Self: a) Add(Self: b) -> Self {
       return Point(.x = a.x + b.x, .y = a.y + b.y);
     }
-    fn Scale(Self: a, Double: v) -> Self {
-      return Point(.x = a.x * v, .y = a.y * v);
+    method (Self: a) Scale(Double: s) -> Self {
+      return Point(.x = a.x * s, .y = a.y * s);
     }
   }
 }
@@ -624,22 +630,38 @@ var Point: v = AddAndScale(a, b, 2.5);
 
 // Interfaces can be parameterized
 interface Stack(Type:$ ElementType) {
-  fn Push(Self*: this, ElementType: value);
-  fn Pop(Self*: this) -> ElementType;
-  fn IsEmpty(Self*: this) -> Bool;
+  method (Ptr(Self): this) Push(ElementType: value);
+  method (Ptr(Self): this) Pop() -> ElementType;
+  method (Ptr(Self): this) IsEmpty() -> Bool;
 }
 
 // Type parameters for interfaces can be constrained
-fn SumIntStack[Stack(Int):$ T](T*: s) -> Int { ... }
+fn SumIntStack[Stack(Int):$ T](Ptr(T): s) -> Int { ... }
 // More complicated example: two containers constrained to have the same element
 // type, which itself is constrained to implement the HasEquality interface.
 fn EqualContainers[HasEquality:$ ElementType,
                    Container(ElementType):$ T1,
-                   Container(ElementType):$ T2](T1*: c1, T2*: c2) -> Bool { ... }
+                   Container(ElementType):$ T2]
+                  (Ptr(T1): c1, Ptr(T2): c2) -> Bool { ... }
 ```
 
 **Concern:** Does not represent binary relationships between two types like "A
 is comparable to B (and therefore B is comparable to A)".
+
+##### [Carbon deep dive: combined interfaces](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/combined-interfaces.md)
+
+This is a modification of
+[interfaces as facet type-types](#carbon-deep-dive-interfaces-as-facet-type-types)
+that attempts to improve usability:
+
+-   Methods for interfaces implemented with the type are generally available
+    without qualification.
+-   A function can be parameterized by a generic type implementing multiple
+    interfaces, and methods from all interfaces may be called without
+    qualification as long as there are no conflicts.
+-   We provide a more concise qualification syntax for when that is needed.
+
+TODO
 
 #### Impls are values passed as arguments with defaults
 
@@ -651,7 +673,7 @@ Main idea: default implementation of interface for a type, available as
 signature:
 
 ```
-fn Sort[Type: T](Array(T)*: to_sort,
+fn Sort[Type: T](Ptr(Array(T)): to_sort,
                  Impl(Comparable, T): compare = T.DefaultImpl(Comparable));
 ```
 
@@ -670,13 +692,15 @@ Also see
 
 **Proposal:** Let us define an interface as follows:
 
-    **Interface:** A interface such as `Foo(T)` is a type whose values are themselves types that have the same representation as `T` and provides the functions defined by `Foo` operating on [`T`s | that type].
+> **Interface:** A interface such as `Foo(T)` is a type whose values are
+> themselves types that have the same representation as `T` and provides the
+> functions defined by `Foo` operating on [`T`s | that type].
 
 So we might define the interface `Comparable` like so:
 
 ```
 struct Comparable(Type: T) {
-  var fn(T, T) -> Bool : Compare;
+  var fntype(T, T) -> Bool : Compare;
 }
 ```
 
@@ -711,7 +735,7 @@ Interface definition
 
 ```
 interface Foo(Type:$ T) for T {
-  fn F(Self*: this);
+  method (Ptr(Self): this) F();
 }
 ```
 
@@ -721,7 +745,7 @@ Interface with associated type conforming to an interface
 interface Bar(Type:$ T) for T {
   var Type:$ U;
   require Foo(U);
-  fn G(Self*: this) -> Foo(U);
+  method (Ptr(Self): this) G() -> Foo(U);
 }
 ```
 
@@ -730,7 +754,7 @@ Type that implements an interface
 ```
 struct Baz {
   impl Foo(Baz) {
-    fn F(Baz*: this) { ... }
+    method (Ptr(Baz): this) F() { ... }
   }
 }
 impl Bar(Baz) { ... }
@@ -741,13 +765,12 @@ var Baz: x;
 Function taking a value with type conforming to an interface
 
 ```
-fn H1(Foo(Type:$ T)*: y) { y->F(); }
-fn H2[Type:$ T](Foo(T)*: y) {
+fn H1(Ptr(Foo(Type:$ T)): y) { y->F(); }
+fn H2[Type:$ T](Ptr(Foo(T)): y) {
   y->F();
 }
-fn H3[Type:$ T, Foo(T)]
-    (T*: y) {
-  (y as Foo(T)*)->F();
+fn H3[Type:$ T, Foo(T)](Ptr(T): y) {
+  (y as Ptr(Foo(T)))->F();
 }
 H1(&x); H2(&x); H3(&x);
 ```
@@ -755,10 +778,9 @@ H1(&x); H2(&x); H3(&x);
 Function taking a value with type conforming to two different interfaces
 
 ```
-fn Ha[Type:$ T, Foo(T), Bar(T)]
-    (T*: y) {
-  (y as Foo(T)*)->F();
-  var Bar(T)*: z = y;
+fn Ha[Type:$ T, Foo(T), Bar(T)](Ptr(T): y) {
+  (y as Ptr(Foo(T)))->F();
+  var Ptr(Bar(T)): z = y;
   z->G();
 }
 Ha(&x);
@@ -769,8 +791,6 @@ all compatible with a single representation type
 
 ```
 ???
-
-
 ```
 
 **Facet type-types**
@@ -779,7 +799,7 @@ Interface definition
 
 ```
 interface Foo {
-  fn F(Self*: this);
+  method (Ptr(Self): this) F();
 }
 ```
 
@@ -789,7 +809,7 @@ Interface with associated type conforming to an interface
 interface Bar {
   var Foo:$ U;
 
-  fn G(Self*: this) -> U;
+  method (Ptr(Self): this) G() -> U;
 }
 ```
 
@@ -798,7 +818,7 @@ Type that implements an interface
 ```
 struct Baz {
   impl Foo {
-    fn F(Baz*: this) { ... }
+    method (Ptr(Baz): this) F() { ... }
   }
 }
 impl Bar for Baz { ... }
@@ -809,13 +829,12 @@ var Baz: x;
 Function taking a value with type conforming to an interface
 
 ```
-fn H1((Foo:$ T)*: y) { y->F(); }
-fn H2[Foo:$ T](T*: y) {
+fn H1(Ptr(Foo:$ T): y) { y->F(); }
+fn H2[Foo:$ T](Ptr(T): y) {
   y->F();
 }
-fn H3[TypeImplements(Foo):$ T]
-    (T*: y) {
-  (y as (T as Foo)*)->F();
+fn H3[TypeImplements(Foo):$ T](Ptr(T): y) {
+  (y as Ptr(T as Foo))->F();
 }
 H1(&x); H2(&x); H3(&x);
 ```
@@ -823,10 +842,9 @@ H1(&x); H2(&x); H3(&x);
 Function taking a value with type conforming to two different interfaces
 
 ```
-fn Ha[TypeImplements(Foo, Bar):$ T]
-    (T*: y) {
-  (y as (T as Foo)*)->F();
-  var (T as Bar)*: z = y;
+fn Ha[TypeImplements(Foo, Bar):$ T](Ptr(T): y) {
+  (y as Ptr(T as Foo))->F();
+  var Ptr(T as Bar): z = y;
   z->G();
 }
 Ha(&x);
@@ -836,16 +854,17 @@ Function taking a value with a list of implementations for a single interface,
 all compatible with a single representation type
 
 ```
-fn IsGreater[Type:$ T](T*: a, T*: b,
- List(CompatibleWith(Comparable, T)):$
- compare) -> Bool { ... }
+fn IsGreater[Type:$ T]
+    (Ptr(T): a, Ptr(T): b,
+     List(CompatibleWith(Comparable, T)):$ compare)
+    -> Bool { ... }
 ```
 
 Interface semantically containing other interfaces
 
 ```
 interface Inner {
-  fn K(Self: this);
+  method (Self: this) K();
 }
 interface Outer {
   impl Inner;
@@ -853,7 +872,7 @@ interface Outer {
 struct S {
   impl Outer {
     impl Inner {
-      fn K(S: this) { ... }
+      method (S: this) K() { ... }
     }
   }
 }
@@ -872,7 +891,7 @@ TODO
 
 ## Proposed programming model
 
-[Carbon deep dive: interfaces as facet type-types](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/facet-type-types.md)
+TODO: Carbon deep dive: combined interfaces.
 
 ### Calling templated code
 
