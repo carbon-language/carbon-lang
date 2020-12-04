@@ -363,7 +363,7 @@ bool FrameAnalysis::updateArgsTouchedFor(const BinaryFunction &BF, MCInst &Inst,
     FunctionsRequireAlignment.insert(&BF);
   }
   if (Iter == ArgsTouchedMap.end())
-    return false;
+    return Changed;
 
   if (CurOffset == StackPointerTracking::EMPTY ||
       CurOffset == StackPointerTracking::SUPERPOSITION) {
