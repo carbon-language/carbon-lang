@@ -10,14 +10,12 @@ build/_includes: gen_sidebar.py theme/_includes
 	cp theme/_includes/* build/_includes
 	./gen_sidebar.py > build/_includes/sidebar_generated.html
 
-build/site: build/_includes site theme
-	rm -rf build/site
+build-site: build/_includes site theme
 	bundle exec jekyll build
 
-build: build/site
+build: build-site
 
 run: build/_includes site theme
-	rm -rf build/site
 	bundle exec jekyll server --watch
 
 clean:
