@@ -8,10 +8,7 @@
 *                   @carbon-language/toolchain-team
 
 # The core team owns the core language and project documentation.
-/CODE_OF_CONDUCT.md @carbon-language/core-team
-/CONTRIBUTING.md    @carbon-language/core-team
-/LICENSE            @carbon-language/core-team
-/README.md          @carbon-language/core-team
+/*.md               @carbon-language/core-team
 /docs/design/       @carbon-language/core-team
 /docs/guides/       @carbon-language/core-team
 /docs/project/      @carbon-language/core-team
