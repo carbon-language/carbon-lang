@@ -36,4 +36,4 @@ jobs:
         run: make build
         working-directory: website/jekyll
       - name: Publish to www.carbon-lang.dev
-        run: gsutil cp -R website/jekyll/build/site/* gs://www.carbon-lang.dev/
+        run: gsutil cp -R website/jekyll/build-site/* gs://www.carbon-lang.dev/
