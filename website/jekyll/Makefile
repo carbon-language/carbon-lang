@@ -4,13 +4,21 @@
 
 all: build
 
-.gen-site: site theme
+build/_includes: gen_sidebar.py theme/_includes
+	rm -rf build/_includes
+	mkdir -p build/_includes
+	cp theme/_includes/* build/_includes
+	./gen_sidebar.py > build/_includes/sidebar_generated.html
+
+build/site: build/_includes site theme
+	rm -rf build/site
 	bundle exec jekyll build
 
-build: .gen-site
+build: build/site
 
-run: site theme
+run: build/_includes site theme
+	rm -rf build/site
 	bundle exec jekyll server --watch
 
 clean:
-	rm -rf .gen-site
+	rm -rf build
