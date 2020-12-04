@@ -55,7 +55,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Runtime type fields](#runtime-type-fields)
         -   [Dynamic pointer type](#dynamic-pointer-type)
             -   [Model](#model-5)
-        -   [Pointer](#pointer)
+        -   [Deref](#deref)
         -   [Boxed](#boxed)
         -   [DynBoxed](#dynboxed)
         -   [MaybeBoxed](#maybeboxed)
@@ -1893,28 +1893,28 @@ struct DynPtr(InterfaceType:$$ TT) {  // TT is any interface
 }
 ```
 
-#### Pointer
+#### Deref
 
 To make a function work on either regular or dynamic pointers, we define an
-interface `Pointer(T)` that both `DynPtr` and `Ptr(T)` implement:
+interface `Deref(T)` that both `DynPtr` and `Ptr(T)` implement:
 
 ```
-interface Pointer(Type:$ T) {
-  fn operator->(Self) -> Ptr(T);
-  ...  // other pointer operations
+// Types implementing `Deref(T)` act like a pointer to `T`.
+interface Deref(Type:$ T) {
+  // This is used for the `->` and `*` dereferencing operators.
+  method (Self: this) Deref() -> Ptr(T);
   impl Copyable;
   impl Movable;
 }
 
-// Implementation of Pointer() for DynPtr(TT).
-impl[InterfaceType:$$ TT] Pointer(DynPtr(TT).DynPtrImpl as TT) for DynPtr(TT);
+// Implementation of Deref() for DynPtr(TT).
+impl[InterfaceType:$$ TT] Deref(DynPtr(TT).DynPtrImpl as TT) for DynPtr(TT);
 // or equivalently:
-impl[InterfaceType:$$ TT] Pointer(DynPtr(TT).T) for DynPtr(TT);
+impl[InterfaceType:$$ TT] Deref(DynPtr(TT).T) for DynPtr(TT);
 
-// Implementation of Pointer(T) for Ptr(T).
-impl[Type:$ T] Pointer(T) for Ptr(T) {
-  fn operator->(Ptr(T): this) -> Ptr(T) { return this; }
-  ...
+// Implementation of Deref(T) for Ptr(T).
+impl[Type:$ T] Deref(T) for Ptr(T) {
+  method (Ptr(T): this) Deref() -> Ptr(T) { return this; }
 }
 ```
 
@@ -1924,7 +1924,7 @@ implementing `Printable` or a `DynPtr(Printable)`:
 ```
 // This is equivalent to `fn PrintIt[Printable:$ T](T*: x) ...`,
 // except it also accepts `DynPtr(Printable)` arguments.
-fn PrintIt[Printable:$ T, Sized(Pointer(T)): PtrT](PtrT: x) {
+fn PrintIt[Printable:$ T, Sized(Deref(T)): PtrT](PtrT: x) {
   x->Print();
 }
 PrintIt(&i); // T == (AnInt as Printable), PtrT == T*
@@ -1941,7 +1941,7 @@ PrintIt(dynamic[1]);  // T == DynPtr(Printable).T, PtrT == DynPtr(Printable)
 
 One way of dealing with unsized types is via a pointer, as with `T*` and
 `DynPtr` above. Sometimes, though, you would like to work with something closer
-to value semantics. For example, the `Pointer` interface and `DynPtr` type
+to value semantics. For example, the `Deref` interface and `DynPtr` type
 captures nothing about ownership of the pointed-to value, or how to destroy it.
 
 So we are looking for the equivalent of C++'s `unique_ptr<T>`, that will handle
@@ -2030,7 +2030,7 @@ We have a few different ways of making types with value semantics:
     introduce too much overhead / cost.
 
 In all cases we end up with a sized, movable value that is not very large. Just
-like we did with <code>[Pointer(T) above](#pointer)</code>, we can create an
+like we did with <code>[Deref(T) above](#deref)</code>, we can create an
 interface to abstract over the differences, called <code>MaybeBoxed(T)</code>:
 
 ```
