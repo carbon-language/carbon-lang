@@ -34,7 +34,7 @@ repos:
             Part of the Carbon Language project, under the Apache License v2.0 with LLVM
             Exceptions. See /LICENSE for license information.
             SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
-        exclude: '^website/(firebase/.firebaserc|jekyll/(Gemfile.lock|theme/.*))$'
+        exclude: '^(website/(firebase/.firebaserc|jekyll/(Gemfile.lock|theme/.*))|.bazelversion|compile_flags.txt|.*\.def)$'
       - id: check-google-doc-style
       - id: markdown-toc
   - repo: https://github.com/codespell-project/codespell
@@ -67,3 +67,6 @@ repos:
     rev: 3.8.4
     hooks:
       - id: flake8
+
+# We fully exclude fuzzer corpus directories as they are generated binary data.
+exclude: '^(.*/fuzzer_corpus/.*)$'
