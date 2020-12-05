@@ -2,5 +2,5 @@
 # Exceptions. See /LICENSE for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-**/__pycache__/
-/bazel-*
+# Empty `BUILD` file as this package just provides repository rule inputs to
+# configure a Clang toolchain.
