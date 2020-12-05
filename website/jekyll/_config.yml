@@ -8,7 +8,7 @@ site_title: Carbon language
 url: 'https://carbon-lang.dev/'
 
 source: ./site
-destination: ./.gen-site
+destination: ./build-site
 markdown: CommonMark
 
 exclude:
