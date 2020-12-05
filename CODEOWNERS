@@ -4,11 +4,15 @@
 
 # Most of the repository consists of implementation code or other supporting
 # material for the implementation of Carbon. Rather than enumerate these, we
-# cover them with a global rule first that will be overridden below.
+# default them to toolchain team ownership, which will be overridden by later lines.
 *                   @carbon-language/toolchain-team
+
+# Co-own top-level config files. Ownership is actually mixed, but low value to separate. Top-level docs will be overriden as core-team-owned files.
+/*         @carbon-language/toolchain-team @carbon-language/infra-team-team
 
 # The core team owns the core language and project documentation.
 /*.md               @carbon-language/core-team
+/LICENSE               @carbon-language/core-team
 /docs/design/       @carbon-language/core-team
 /docs/guides/       @carbon-language/core-team
 /docs/project/      @carbon-language/core-team
@@ -21,9 +25,6 @@
 CODEOWNERS          @carbon-language/admin-team
 
 # Directories that contain infrastructure and support scripts.
-/.* @carbon-language/infra-team
-/*.cfg @carbon-language/infra-team
-/*.py @carbon-language/infra-team
-/*.toml @carbon-language/infra-team
+/.github/           @carbon-language/infra-team
 /github/            @carbon-language/infra-team
 /website/           @carbon-language/infra-team
