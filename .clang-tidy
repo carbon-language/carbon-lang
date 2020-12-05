@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 ---
-Checks: '-*,readability-identifier-naming'
+Checks: '-*,readability-braces-around-statements,readability-identifier-naming'
 WarningsAsErrors: true
 CheckOptions:
   - { key: readability-identifier-naming.ClassCase, value: CamelCase }

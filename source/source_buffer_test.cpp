@@ -21,7 +21,8 @@ TEST(SourceBufferTest, StringRep) {
   EXPECT_EQ("Hello World", buffer.Text());
 
   // Give a custom filename.
-  auto buffer2 = SourceBuffer::CreateFromText("Hello World Again!", "/custom/text");
+  auto buffer2 =
+      SourceBuffer::CreateFromText("Hello World Again!", "/custom/text");
   EXPECT_EQ("/custom/text", buffer2.Filename());
   EXPECT_EQ("Hello World Again!", buffer2.Text());
 }
@@ -29,7 +30,8 @@ TEST(SourceBufferTest, StringRep) {
 auto CreateTestFile(llvm::StringRef text) -> std::string {
   int fd = -1;
   llvm::SmallString<1024> path;
-  auto error_code = llvm::sys::fs::createTemporaryFile("test_file", ".txt", fd, path);
+  auto error_code =
+      llvm::sys::fs::createTemporaryFile("test_file", ".txt", fd, path);
   if (error_code) {
     llvm::report_fatal_error(llvm::Twine("Failed to create temporary file: ") +
                              error_code.message());

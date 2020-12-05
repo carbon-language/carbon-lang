@@ -12,8 +12,9 @@ namespace Carbon {
 
 extern "C" int LLVMFuzzerTestOneInput(const unsigned char* data, size_t size) {
   // We need two bytes of data to compute a file name length.
-  if (size < 2)
+  if (size < 2) {
     return 0;
+  }
   unsigned short raw_filename_length;
   std::memcpy(&raw_filename_length, data, 2);
   data += 2;
@@ -21,8 +22,9 @@ extern "C" int LLVMFuzzerTestOneInput(const unsigned char* data, size_t size) {
   size_t filename_length = raw_filename_length;
 
   // We need enough data to populate this filename length.
-  if (size < filename_length)
+  if (size < filename_length) {
     return 0;
+  }
   llvm::StringRef filename(reinterpret_cast<const char*>(data),
                            filename_length);
   data += filename_length;
@@ -36,8 +38,9 @@ extern "C" int LLVMFuzzerTestOneInput(const unsigned char* data, size_t size) {
   DiagnosticEmitter emitter = NullDiagnosticEmitter();
 
   auto buffer = TokenizedBuffer::Lex(source, emitter);
-  if (buffer.HasErrors())
+  if (buffer.HasErrors()) {
     return 0;
+  }
 
   // Walk the lexed and tokenized buffer to ensure it isn't corrupt in some way.
   //

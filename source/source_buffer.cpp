@@ -3,7 +3,6 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 #include "source/source_buffer.h"
-#include "llvm/ADT/ScopeExit.h"
 
 #include <errno.h>
 #include <fcntl.h>
@@ -13,6 +12,8 @@
 #include <unistd.h>
 
 #include <system_error>
+
+#include "llvm/ADT/ScopeExit.h"
 
 namespace Carbon {
 
@@ -32,16 +33,19 @@ auto SourceBuffer::CreateFromFile(llvm::StringRef filename)
 
   errno = 0;
   int file_descriptor = open(buffer.filename_.c_str(), O_RDONLY);
-  if (file_descriptor == -1)
+  if (file_descriptor == -1) {
     return ErrnoToError(errno);
+  }
 
   // Now that we have an open file, we need to close it on any error.
-  auto closer = llvm::make_scope_exit([file_descriptor] { close(file_descriptor); });
+  auto closer =
+      llvm::make_scope_exit([file_descriptor] { close(file_descriptor); });
 
   struct stat stat_buffer = {};
   errno = 0;
-  if (fstat(file_descriptor, &stat_buffer) == -1)
+  if (fstat(file_descriptor, &stat_buffer) == -1) {
     return ErrnoToError(errno);
+  }
 
   int64_t size = stat_buffer.st_size;
   if (size == 0) {
@@ -51,9 +55,10 @@ auto SourceBuffer::CreateFromFile(llvm::StringRef filename)
 
   errno = 0;
   void* mapped_text = mmap(nullptr, size, PROT_READ, MAP_PRIVATE | MAP_POPULATE,
-                          file_descriptor, /*offset=*/0);
-  if (mapped_text == MAP_FAILED)
+                           file_descriptor, /*offset=*/0);
+  if (mapped_text == MAP_FAILED) {
     return ErrnoToError(errno);
+  }
 
   errno = 0;
   closer.release();

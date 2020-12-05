@@ -105,8 +105,9 @@ class TokenizedBuffer::Lexer {
           ++current_column;
           source_text = source_text.drop_front();
         }
-        if (source_text.empty())
+        if (source_text.empty()) {
           break;
+        }
       }
 
       switch (source_text.front()) {
@@ -121,8 +122,9 @@ class TokenizedBuffer::Lexer {
           // If this is the last character in the source, directly return here
           // to avoid creating an empty line.
           source_text = source_text.drop_front();
-          if (source_text.empty())
+          if (source_text.empty()) {
             return false;
+          }
 
           // Otherwise, add a line and set up to continue lexing.
           current_line = buffer.AddLine(
@@ -153,11 +155,13 @@ class TokenizedBuffer::Lexer {
 
   auto LexIntegerLiteral(llvm::StringRef& source_text) -> bool {
     llvm::StringRef int_text = TakeLeadingIntegerLiteral(source_text);
-    if (int_text.empty())
+    if (int_text.empty()) {
       return false;
+    }
     llvm::APInt int_value;
-    if (int_text.getAsInteger(/*Radix=*/0, int_value))
+    if (int_text.getAsInteger(/*Radix=*/0, int_value)) {
       return false;
+    }
 
     int int_column = current_column;
     current_column += int_text.size();
@@ -181,8 +185,9 @@ class TokenizedBuffer::Lexer {
   .StartsWith(Spelling, TokenKind::Name())
 #include "lexer/token_registry.def"
                          .Default(TokenKind::Error());
-    if (kind == TokenKind::Error())
+    if (kind == TokenKind::Error()) {
       return false;
+    }
 
     if (!set_indent) {
       current_line_info->indent = current_column;
@@ -203,8 +208,9 @@ class TokenizedBuffer::Lexer {
     }
 
     // Only closing symbols need further special handling.
-    if (!kind.IsClosingSymbol())
+    if (!kind.IsClosingSymbol()) {
       return true;
+    }
 
     TokenInfo& closing_token_info = buffer.GetTokenInfo(token);
 
@@ -232,14 +238,16 @@ class TokenizedBuffer::Lexer {
   // Closes all open groups that cannot remain open across the symbol `K`.
   // Users may pass `Error` to close all open groups.
   auto CloseInvalidOpenGroups(TokenKind kind) -> void {
-    if (!kind.IsClosingSymbol() && kind != TokenKind::Error())
+    if (!kind.IsClosingSymbol() && kind != TokenKind::Error()) {
       return;
+    }
 
     while (!open_groups.empty()) {
       Token opening_token = open_groups.back();
       TokenKind opening_kind = buffer.GetTokenInfo(opening_token).kind;
-      if (kind == opening_kind.GetClosingSymbol())
+      if (kind == opening_kind.GetClosingSymbol()) {
         return;
+      }
 
       open_groups.pop_back();
       buffer.has_errors = true;
@@ -263,14 +271,16 @@ class TokenizedBuffer::Lexer {
   auto GetOrCreateIdentifier(llvm::StringRef text) -> Identifier {
     auto insert_result = buffer.identifier_map.insert(
         {text, Identifier(buffer.identifier_infos.size())});
-    if (insert_result.second)
+    if (insert_result.second) {
       buffer.identifier_infos.push_back({text});
+    }
     return insert_result.first->second;
   }
 
   auto LexKeywordOrIdentifier(llvm::StringRef& source_text) -> bool {
-    if (!llvm::isAlpha(source_text.front()) && source_text.front() != '_')
+    if (!llvm::isAlpha(source_text.front()) && source_text.front() != '_') {
       return false;
+    }
 
     if (!set_indent) {
       current_line_info->indent = current_column;
@@ -307,8 +317,9 @@ class TokenizedBuffer::Lexer {
 
   auto LexError(llvm::StringRef& source_text) -> void {
     llvm::StringRef error_text = source_text.take_while([](char c) {
-      if (llvm::isAlnum(c))
+      if (llvm::isAlnum(c)) {
         return false;
+      }
       switch (c) {
         case '_':
           return false;
@@ -355,12 +366,15 @@ auto TokenizedBuffer::Lex(SourceBuffer& source, DiagnosticEmitter& emitter)
   while (lexer.SkipWhitespace(source_text)) {
     // Each time we find non-whitespace characters, try each kind of token we
     // support lexing, from simplest to most complex.
-    if (lexer.LexSymbolToken(source_text))
+    if (lexer.LexSymbolToken(source_text)) {
       continue;
-    if (lexer.LexKeywordOrIdentifier(source_text))
+    }
+    if (lexer.LexKeywordOrIdentifier(source_text)) {
       continue;
-    if (lexer.LexIntegerLiteral(source_text))
+    }
+    if (lexer.LexIntegerLiteral(source_text)) {
       continue;
+    }
     lexer.LexError(source_text);
   }
 
@@ -387,8 +401,9 @@ auto TokenizedBuffer::GetColumnNumber(Token token) const -> int {
 auto TokenizedBuffer::GetTokenText(Token token) const -> llvm::StringRef {
   auto& token_info = GetTokenInfo(token);
   llvm::StringRef fixed_spelling = token_info.kind.GetFixedSpelling();
-  if (!fixed_spelling.empty())
+  if (!fixed_spelling.empty()) {
     return fixed_spelling;
+  }
 
   if (token_info.kind == TokenKind::Error()) {
     auto& line_info = GetLineInfo(token_info.token_line);
@@ -475,8 +490,8 @@ auto TokenizedBuffer::PrintWidths::Widen(const PrintWidths& widths) -> void {
 auto TokenizedBuffer::GetTokenPrintWidths(Token token) const -> PrintWidths {
   PrintWidths widths = {};
   // Compute the printed width of the various token information. When numbers
-  // here are printed in decimal, the number of digits needed is is one more than
-  // the log-base-10 of the value.
+  // here are printed in decimal, the number of digits needed is is one more
+  // than the log-base-10 of the value.
   widths.index = std::log10(token_infos.size()) + 1;
   widths.kind = GetKind(token).Name().size();
   widths.line = std::log10(GetLineNumber(token)) + 1;
@@ -486,13 +501,15 @@ auto TokenizedBuffer::GetTokenPrintWidths(Token token) const -> PrintWidths {
 }
 
 auto TokenizedBuffer::Print(llvm::raw_ostream& output_stream) const -> void {
-  if (Tokens().begin() == Tokens().end())
+  if (Tokens().begin() == Tokens().end()) {
     return;
+  }
 
   PrintWidths widths = {};
   widths.index = std::log10(token_infos.size()) + 1;
-  for (Token token : Tokens())
+  for (Token token : Tokens()) {
     widths.Widen(GetTokenPrintWidths(token));
+  }
 
   for (Token token : Tokens()) {
     PrintToken(output_stream, token, widths);
@@ -528,15 +545,17 @@ auto TokenizedBuffer::PrintToken(llvm::raw_ostream& output_stream, Token token,
                            widths.indent),
       token_text);
 
-  if (token_info.kind == TokenKind::Identifier())
+  if (token_info.kind == TokenKind::Identifier()) {
     output_stream << ", identifier: " << GetIdentifier(token).index;
-  else if (token_info.kind.IsOpeningSymbol())
+  } else if (token_info.kind.IsOpeningSymbol()) {
     output_stream << ", closing_token: " << GetMatchedClosingToken(token).index;
-  else if (token_info.kind.IsClosingSymbol())
+  } else if (token_info.kind.IsClosingSymbol()) {
     output_stream << ", opening_token: " << GetMatchedOpeningToken(token).index;
+  }
 
-  if (token_info.is_recovery)
+  if (token_info.is_recovery) {
     output_stream << ", recovery: true";
+  }
 
   output_stream << " }";
 }
