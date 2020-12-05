@@ -7,13 +7,13 @@
 cd "$(dirname "$0")"
 
 # Update the `llvm-bazel` project first by just pulling from its HEAD.
-git submodule update --remote third_party/llvm-bazel/
+git submodule update --remote llvm-bazel
 
 # Find the current LLVM commit in the `llvm-bazel` project.
-llvm_commit=$(cd third_party/llvm-bazel; git submodule status third_party/llvm-project | awk '/-[0-9a-f]+ / { print substr($1, 2) }')
+llvm_commit=$(cd llvm-bazel; git submodule status third_party/llvm-project | awk '/-[0-9a-f]+ / { print substr($1, 2) }')
 
 # Fetch and checkout this commit of LLVM
-cd third_party/llvm-project
+cd llvm-project
 git fetch
 git checkout $llvm_commit
-cd ../..
+cd ..
