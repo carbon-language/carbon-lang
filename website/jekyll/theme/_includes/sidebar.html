@@ -1,13 +1,5 @@
 <ul id="mysidebar" class="nav">
-  {%- include sidebar_dir.html
-              dir="/"
-              title="Overview"
-              about="Carbon language" -%}
-  {%- include sidebar_subdirs.html dir="/docs/" -%}
-  {%- include sidebar_dir.html
-              dir="/proposals/"
-              title="Proposals"
-              proposals=true -%}
+{%- include sidebar_generated.html -%}
 </ul>
 
 <!-- This highlights the active parent class in the navgoco sidebar. This is
