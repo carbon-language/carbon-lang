@@ -16,7 +16,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [Philosophy](#philosophy)
 -   [Principles](#principles)
 -   [Details](#details)
-    -   [Incremental adoption of safety](#incremental-adoption-of-safety)
+    -   [Incremental work when safety requires work](#incremental-work-when-safety-requires-work)
     -   [Using build modes to manage safety checks](#using-build-modes-to-manage-safety-checks)
     -   [Managing bugs without compile-time safety](#managing-bugs-without-compile-time-safety)
 -   [Alternatives considered](#alternatives-considered)
@@ -83,8 +83,16 @@ how to prevent attacks:
     -   A program can implement reference counting to detect a temporal memory
         error by ensuring that no references remain when memory is freed.
 
--   **Safety hardening** mitigates bugs, minimizing the feasibility of an
-    attack. For example:
+-   **Safety hardening** mitigates bugs, typically by minimizing the feasibility
+    of an attack. For example:
+
+    -   [Control Flow Integrity (CFI)](https://en.wikipedia.org/wiki/Control-flow_integrity)
+        monitors for behavior which can subvert the program's control flow. In
+        [Clang](http://clang.llvm.org/docs/ControlFlowIntegrity.html), it is
+        optimized for use in release builds. Typically CFI analysis will only
+        detect a subset of attacks because it can't track each possible code
+        path separately. It should still reduce the feasibility of both spatial
+        memory, temporal memory, and type attacks.
 
     -   [Memory tagging](https://llvm.org/devmtg/2018-10/slides/Serebryany-Stepanov-Tsyrklevich-Memory-Tagging-Slides-LLVM-2018.pdf)
         makes each attempt at an invalid read or write operation have a high
@@ -114,12 +122,11 @@ support opting in to additional safety checks, tuning safety behaviors, and
 adjusting edge-case performance characteristics.
 
 Carbon will favor compile-time safety checks because catching issues early will
-make applications more reliable. However, the comprehensiveness of compile-time
-safety will be limited because Carbon won't require redesigning code to take
-advantage of them. Runtime checks, either error detection or safety hardening,
-will be enabled where safety cannot be proven at compile-time. Over time, this
-hybrid approach to safety checks should evolve to provide a similar level of
-safety to a statically checked language such as Rust.
+make applications more reliable. Runtime checks, either error detection or
+safety hardening, will be enabled where safety cannot be proven at compile-time.
+Over time, [Carbon's evolution](../goals.md#software-and-language-evolution)
+should use this hybrid safety check approach to provide a similar level of
+safety to a statically checked language, such as Rust.
 
 Performance (including speed, binary size, and memory size) concerns will lead
 to multiple build modes:
@@ -142,11 +149,11 @@ for developers who cannot make the same investment.
     [easy to ramp-up with](../goals.md#code-that-is-easy-to-read-understand-and-write),
     even if it means new developers may only get some extra safety.
 
-    -   The common case should be that developers don't need to rewrite their
-        code to take advantage of Carbon's safety model. Some should be enabled
-        by default, and some safety will require work to opt-in. Developers
-        concerned with performance should only need to work to disable safety in
-        rare edge-cases.
+    -   Developers should benefit from Carbon's safety without needing to learn
+        and apply Carbon-specific design patterns. Some safety should be enabled
+        by default, without safety-specific work, although some safety will
+        require work to opt-in. Developers concerned with performance should
+        only need to work to disable safety in rare edge-cases.
 
     -   Where there is a choice between safe and unsafe, the safe option should
         be incentivized by making it equally or more easy to use. If there is a
@@ -180,16 +187,16 @@ for developers who cannot make the same investment.
     performance, whereas optimized release builds put
     [performance first](../goals.md#performance-critical-software).
 
-    -   Compile-time safety checks should occur regardless of build mode.
+    -   Compile-time safety checks should be the same across build modes.
 
-    -   Development builds should diagnose the most common safety violations
-        either at runtime with high probability. Supplemental build modes may be
+    -   Development builds should provide high-probability runtime diagnostics
+        for the most common safety violations. Supplemental build modes may be
         offered to cover safety violations which are too expensive to detect by
         default, even for a development build.
 
     -   The default optimized release build will provide runtime mitigations for
-        safety violations whenever the performance is below the noise of hot
-        path application code.
+        safety violations when they don't have measurable performance impact for
+        hot path application code.
 
     -   There will be a build option for the optimized release build to choose
         whether to make non-default choices about the trade-off between
@@ -197,8 +204,7 @@ for developers who cannot make the same investment.
         measurably expensive error detection and safety hardening.
 
 -   The rules for determining whether code will pass compile-time safety
-    checking should be articulable, documented, and possible to understand by
-    local reasoning.
+    checking should be articulable, documented, and easy to understand.
 
 -   Developers need a strong testing methodology to engineer correct software.
     Carbon will encourage testing and then leverage it with the checking build
@@ -206,7 +212,7 @@ for developers who cannot make the same investment.
 
 ## Details
 
-### Incremental adoption of safety
+### Incremental work when safety requires work
 
 Carbon is prioritizing usability of the language, particularly minimizing
 retraining of C++ developers and easing migration of C++ codebases, over the
@@ -224,9 +230,13 @@ development workflows. Carbon can also have features to enable additional
 safety, so long as developers can start using Carbon in their applications
 _without_ leaning new paradigms.
 
-Carbon should enable developers to incrementally adopt of safety features, and
-also work to incrementally improve safety without requiring code or design
-alterations. This does not mean that _every_ feature needs to be
+Where possible, safety checks shouldn't require work on the part of Carbon
+developers. A safety check that requires no code edits or can be handled by
+automated migration may be opt-out, as there is negligible cost to developers.
+One which requires local code changes should be opt-in because costs will scale
+with codebase size. Safety check approaches which would require substantial
+redesign by developers will be disfavored based on adoption cost, even if the
+alternative is a less-comprehensive approach.
 
 ### Using build modes to manage safety checks
 
@@ -387,7 +397,7 @@ burden on C++ developers:
 -   Require manual destruction of `Rc`, allowing safety guarantees to be
     disabled in optimized release builds for better performance.
     -   This is closer to a decision to _not_ provide guaranteed safety, but
-        would still require redesign of C++ code.
+        would still require redesigning C++ code.
 
 Overall, Carbon is making a compromise around safety in order to give a path for
 C++ to evolve. C++ developers must be comfortable migrating their codebases, and
@@ -421,6 +431,12 @@ Disadvantages:
     and tools for controlling these costs are difficult.
     -   Safety based on garbage collection has less direct performance overhead,
         but has a greater unpredictability of performance.
+    -   Swift may add an option for unique ownership, although it's not yet
+        designed. It's unlikely that such an approach would make the model
+        better for Carbon: writing code to use unique ownership likely becomes a
+        redesign/migration cost for developers, and reference counting
+        performance overhead would likely remain where unique ownership can't be
+        shown.
 -   Significant design differences versus C++ still result, as the distinction
     between value types and "class types" becomes extremely important.
     -   Class types are held by a reference counted pointer and are thus
