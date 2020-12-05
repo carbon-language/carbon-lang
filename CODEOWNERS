@@ -4,27 +4,27 @@
 
 # Most of the repository consists of implementation code or other supporting
 # material for the implementation of Carbon. Rather than enumerate these, we
-# default them to toolchain team ownership, which will be overridden by later lines.
+# default them to toolchain team ownership, which will be overridden by later
+# lines.
 *                   @carbon-language/toolchain-team
 
-# Co-own top-level config files. Ownership is actually mixed, but low value to separate. Top-level docs will be overriden as core-team-owned files.
-/*         @carbon-language/toolchain-team @carbon-language/infra-team-team
-
-# The core team owns the core language and project documentation.
-/*.md               @carbon-language/core-team
-/LICENSE               @carbon-language/core-team
-/docs/design/       @carbon-language/core-team
-/docs/guides/       @carbon-language/core-team
-/docs/project/      @carbon-language/core-team
-/docs/spec/         @carbon-language/core-team
-
-# The review managers own updates to the proposals.
-/proposals/         @carbon-language/review-managers
-
-# ACLs are owned by the admin team.
-CODEOWNERS          @carbon-language/admin-team
+# Co-own top-level config files. Ownership is actually mixed, but low value to
+# separate. Top-level docs will be overridden as core-team-owned files.
+/*                  @carbon-language/toolchain-team @carbon-language/infra-team
 
 # Directories that contain infrastructure and support scripts.
 /.github/           @carbon-language/infra-team
 /github/            @carbon-language/infra-team
 /website/           @carbon-language/infra-team
+
+# The core team owns the core language and project documentation.
+/*.md               @carbon-language/core-team
+/LICENSE            @carbon-language/core-team
+/docs/              @carbon-language/core-team
+
+# The review managers own updates to the proposals.
+/proposals/         @carbon-language/review-managers
+
+# ACLs are owned by the admin team and handled last to avoid accidentally being
+# overridden by later patterns.
+CODEOWNERS          @carbon-language/admin-team
