@@ -44,11 +44,11 @@ class ParseNodeKind {
   // constructed using the above factory functions for each unique kind.
   ParseNodeKind() = delete;
 
-  auto operator==(const ParseNodeKind& rhs) const -> bool {
-    return kind == rhs.kind;
+  friend auto operator==(ParseNodeKind lhs, ParseNodeKind rhs) -> bool {
+    return lhs.kind == rhs.kind;
   }
-  auto operator!=(const ParseNodeKind& rhs) const -> bool {
-    return kind != rhs.kind;
+  friend auto operator!=(ParseNodeKind lhs, ParseNodeKind rhs) -> bool {
+    return lhs.kind != rhs.kind;
   }
 
   // Gets a friendly name for the token for logging or debugging.
