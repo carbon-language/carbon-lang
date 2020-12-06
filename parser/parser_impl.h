@@ -25,12 +25,6 @@ class ParseTree::Parser {
  private:
   struct SubtreeStart;
 
-  ParseTree& tree;
-  TokenizedBuffer& tokens;
-
-  TokenizedBuffer::TokenIterator position;
-  TokenizedBuffer::TokenIterator end;
-
   explicit Parser(ParseTree& tree_arg, TokenizedBuffer& tokens_arg)
       : tree(tree_arg),
         tokens(tokens_arg),
@@ -127,6 +121,12 @@ class ParseTree::Parser {
   // skipping errors, can be parsed, it is returned. There may be parse errors
   // even when a node is returned.
   auto ParseDeclaration() -> llvm::Optional<Node>;
+
+  ParseTree& tree;
+  TokenizedBuffer& tokens;
+
+  TokenizedBuffer::TokenIterator position;
+  TokenizedBuffer::TokenIterator end;
 };
 
 }  // namespace Carbon

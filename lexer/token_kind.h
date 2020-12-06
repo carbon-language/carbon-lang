@@ -13,6 +13,8 @@
 namespace Carbon {
 
 class TokenKind {
+  // Note that this must be declared earlier in the class so that its type can
+  // be used, for example in the conversion operator.
   enum class KindEnum : int8_t {
 #define CARBON_TOKEN(TokenName) TokenName,
 #include "lexer/token_registry.def"
