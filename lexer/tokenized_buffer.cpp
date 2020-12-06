@@ -322,9 +322,7 @@ class TokenizedBuffer::Lexer {
       }
       switch (c) {
         case '_':
-          return false;
         case '\t':
-          return false;
         case '\n':
           return false;
       }
@@ -487,16 +485,20 @@ auto TokenizedBuffer::PrintWidths::Widen(const PrintWidths& widths) -> void {
   indent = std::max(widths.indent, indent);
 }
 
+// Compute the printed width of a number. When numbers are printed in decimal,
+// the number of digits needed is is one more than the log-base-10 of the value.
+static auto ComputeDecimalPrintedWidth(int number) -> int {
+  return static_cast<int>(std::log10(number)) + 1;
+}
+
 auto TokenizedBuffer::GetTokenPrintWidths(Token token) const -> PrintWidths {
   PrintWidths widths = {};
-  // Compute the printed width of the various token information. When numbers
-  // here are printed in decimal, the number of digits needed is is one more
-  // than the log-base-10 of the value.
-  widths.index = std::log10(token_infos.size()) + 1;
+  widths.index = ComputeDecimalPrintedWidth(token_infos.size());
   widths.kind = GetKind(token).Name().size();
-  widths.line = std::log10(GetLineNumber(token)) + 1;
-  widths.column = std::log10(GetColumnNumber(token)) + 1;
-  widths.indent = std::log10(GetIndentColumnNumber(GetLine(token))) + 1;
+  widths.line = ComputeDecimalPrintedWidth(GetLineNumber(token));
+  widths.column = ComputeDecimalPrintedWidth(GetColumnNumber(token));
+  widths.indent =
+      ComputeDecimalPrintedWidth(GetIndentColumnNumber(GetLine(token)));
   return widths;
 }
 
@@ -506,7 +508,7 @@ auto TokenizedBuffer::Print(llvm::raw_ostream& output_stream) const -> void {
   }
 
   PrintWidths widths = {};
-  widths.index = std::log10(token_infos.size()) + 1;
+  widths.index = ComputeDecimalPrintedWidth((token_infos.size()));
   for (Token token : Tokens()) {
     widths.Widen(GetTokenPrintWidths(token));
   }
@@ -570,7 +572,7 @@ auto TokenizedBuffer::GetLineInfo(Line line) const -> const LineInfo& {
 
 auto TokenizedBuffer::AddLine(LineInfo info) -> Line {
   line_infos.push_back(info);
-  return Line(line_infos.size() - 1);
+  return Line(static_cast<int>(line_infos.size()) - 1);
 }
 
 auto TokenizedBuffer::GetTokenInfo(Token token) -> TokenInfo& {
@@ -583,7 +585,7 @@ auto TokenizedBuffer::GetTokenInfo(Token token) const -> const TokenInfo& {
 
 auto TokenizedBuffer::AddToken(TokenInfo info) -> Token {
   token_infos.push_back(info);
-  return Token(token_infos.size() - 1);
+  return Token(static_cast<int>(token_infos.size()) - 1);
 }
 
 }  // namespace Carbon

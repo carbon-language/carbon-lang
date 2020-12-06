@@ -4,7 +4,7 @@
 
 #include "lexer/token_kind.h"
 
-#include <string.h>
+#include <cstring>
 
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"

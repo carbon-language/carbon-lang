@@ -50,7 +50,8 @@ struct ExpectedNode {
 class ExpectedNodesMatcher
     : public ::testing::MatcherInterface<const ParseTree&> {
  public:
-  ExpectedNodesMatcher(llvm::SmallVector<ExpectedNode, 0> expected_nodess)
+  explicit ExpectedNodesMatcher(
+      llvm::SmallVector<ExpectedNode, 0> expected_nodess)
       : expected_nodes(std::move(expected_nodess)) {}
 
   auto MatchAndExplain(const ParseTree& tree,
@@ -60,7 +61,7 @@ class ExpectedNodesMatcher
 
  private:
   auto MatchExpectedNode(const ParseTree& tree, ParseTree::Node n,
-                         int postorder_index, ExpectedNode expected_node,
+                         int postorder_index, const ExpectedNode& expected_node,
                          ::testing::MatchResultListener& output) const -> bool;
 
   llvm::SmallVector<ExpectedNode, 0> expected_nodes;
@@ -221,8 +222,8 @@ inline auto ExpectedNodesMatcher::DescribeTo(std::ostream* output_ptr) const
 
 inline auto ExpectedNodesMatcher::MatchExpectedNode(
     const ParseTree& tree, ParseTree::Node n, int postorder_index,
-    ExpectedNode expected_node, ::testing::MatchResultListener& output) const
-    -> bool {
+    const ExpectedNode& expected_node,
+    ::testing::MatchResultListener& output) const -> bool {
   bool matches = true;
 
   ParseNodeKind kind = tree.GetNodeKind(n);

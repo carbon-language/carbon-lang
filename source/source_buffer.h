@@ -46,7 +46,7 @@ class SourceBuffer {
   // comment for details.
   SourceBuffer(const SourceBuffer& arg) = delete;
 
-  SourceBuffer(SourceBuffer&& arg)
+  SourceBuffer(SourceBuffer&& arg) noexcept
       : filename_(std::move(arg.filename_)),
         text_(arg.text_),
         is_string_rep_(arg.is_string_rep_) {
@@ -66,9 +66,9 @@ class SourceBuffer {
 
   ~SourceBuffer();
 
-  llvm::StringRef Filename() const { return filename_; }
+  [[nodiscard]] auto Filename() const -> llvm::StringRef { return filename_; }
 
-  llvm::StringRef Text() const { return text_; }
+  [[nodiscard]] auto Text() const -> llvm::StringRef { return text_; }
 
  private:
   std::string filename_;
@@ -87,7 +87,7 @@ class SourceBuffer {
   explicit SourceBuffer(llvm::StringRef fake_filename, std::string buffer_text)
       : filename_(fake_filename.str()),
         is_string_rep_(true),
-        string_storage_(buffer_text) {
+        string_storage_(std::move(buffer_text)) {
     text_ = string_storage_;
   }
 

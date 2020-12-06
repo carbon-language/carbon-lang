@@ -12,7 +12,8 @@
 namespace Carbon {
 namespace {
 
-using namespace ::testing;
+using ::testing::ElementsAre;
+using ::testing::Eq;
 
 struct FakeDiagnostic {
   static constexpr llvm::StringLiteral ShortName = "fake-diagnostic";
