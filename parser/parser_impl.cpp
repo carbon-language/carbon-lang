@@ -347,7 +347,8 @@ auto ParseTree::Parser::ParseDeclaration() -> llvm::Optional<Node> {
     case TokenKind::Semi():
       return ParseEmptyDeclaration();
     default:
-      // Break to handle any unexpected tokens.
+      // Break out of the switch to the code that handles diagnosing any
+      // unexpected tokens.
       break;
   }
 
