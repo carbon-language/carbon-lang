@@ -39,7 +39,9 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
         -   [Type-types parameterized by reprs](#type-types-parameterized-by-reprs)
     -   [Comparisons](#comparisons)
         -   ["Type-types parameterized by reprs" vs "facet types"](#type-types-parameterized-by-reprs-vs-facet-types)
-        -   ["Interfaces are concrete types" vs. "Facet type-types"](#interfaces-are-concrete-types-vs-facet-type-types)
+        -   [Interfaces are concrete types](#interfaces-are-concrete-types-1)
+        -   [Facet type-types](#facet-type-types)
+        -   [Combined interfaces](#combined-interfaces)
 -   [Proposed programming model](#proposed-programming-model)
     -   [Calling templated code](#calling-templated-code)
 -   [Broken links footnote](#broken-links-footnote)
@@ -727,9 +729,7 @@ Two main concerns (from
 
 [Carbon Generics meeting Jan 22, 2020 (TODO)](#broken-links-footnote)<!-- T:Carbon Generics meeting Jan 22, 2020 -->
 
-#### "Interfaces are concrete types" vs. "Facet type-types"
-
-**Interfaces are concrete types**
+#### Interfaces are concrete types
 
 Interface definition
 
@@ -765,7 +765,9 @@ var Baz: x;
 Function taking a value with type conforming to an interface
 
 ```
-fn H1(Ptr(Foo(Type:$ T)): y) { y->F(); }
+fn H1(Ptr(Foo(Type:$ T)): y) {
+  y->F();
+}
 fn H2[Type:$ T](Ptr(Foo(T)): y) {
   y->F();
 }
@@ -793,7 +795,7 @@ all compatible with a single representation type
 ???
 ```
 
-**Facet type-types**
+#### Facet type-types
 
 Interface definition
 
@@ -829,7 +831,9 @@ var Baz: x;
 Function taking a value with type conforming to an interface
 
 ```
-fn H1(Ptr(Foo:$ T): y) { y->F(); }
+fn H1(Ptr(Foo:$ T): y) {
+  y->F();
+}
 fn H2[Foo:$ T](Ptr(T): y) {
   y->F();
 }
@@ -854,9 +858,8 @@ Function taking a value with a list of implementations for a single interface,
 all compatible with a single representation type
 
 ```
-fn IsGreater[Type:$ T]
-    (Ptr(T): a, Ptr(T): b,
-     List(CompatibleWith(Comparable, T)):$ compare)
+fn IsGreater[Type:$ T](Ptr(T): a, Ptr(T): b,
+                       List(CompatibleWith(Comparable, T)):$ compare)
     -> Bool { ... }
 ```
 
@@ -882,12 +885,137 @@ var S: y = ...;
 
 TODO: Interface structurally consisting of other interfaces
 
-TODO: Subsumption
+#### Combined interfaces
 
-TODO: Intersection of constraints: two interfaces, interface and representation
-constraint
+Interface definition
 
-TODO
+```
+interface Foo {
+  method (Ptr(Self): this) F();
+}
+```
+
+Interface with associated type conforming to an interface
+
+```
+interface Bar {
+  var Foo:$ U;
+
+  method (Ptr(Self): this) G() -> U;
+}
+```
+
+Type that implements an interface
+
+```
+struct Baz { ... }
+impl Foo for Baz {
+  method (Ptr(Baz): this) F() { ... }
+}
+impl Bar for Baz { ... }
+
+var Baz: x;
+```
+
+Function taking a value with type conforming to an interface
+
+```
+fn H1(Ptr(Foo:$ T): y) {
+  y->F();
+}
+fn H2[Foo:$ T](Ptr(T): y) {
+  y->F();
+}
+H1(&x); H2(&x);
+```
+
+Function taking a value with type conforming to two different interfaces
+
+```
+fn Ha[Foo + Bar:$ T](Ptr(T): y) {
+  y->F();
+  // Qualified syntax works even if there is a name conflict between
+  // Foo and Bar.
+  y->(Bar.G)();
+}
+Ha(&x);
+```
+
+Function taking a value with a list of implementations for a single interface,
+all compatible with a single representation type
+
+```
+fn IsGreater[Type:$ T](Ptr(T): a, Ptr(T): b,
+                       List(CompatibleWith(Comparable, T)):$ compare)
+    -> Bool { ... }
+```
+
+Interface semantically containing other interfaces
+
+```
+interface Inner {
+  method (Self: this) K();
+}
+
+// `Outer1` requires that `Inner` is implemented.
+interface Outer1 {
+  impl Inner;
+}
+struct S { ... }
+impl Inner for S {
+  method (S: this) K() { ... }
+}
+impl Outer1 for S;
+var S: y = ...;
+y.K();
+
+// `Outer2` refines `Inner`.
+interface Outer2 extends Inner { }
+// `Outer2` is equivalent to:
+interface Outer2 {
+  impl Inner;
+  alias K = Inner.K;
+}
+
+struct T { ... }
+impl Outer2 for T {
+  method (T: this) K() { ... }
+}
+var S: z = ...;
+z.K();
+```
+
+Interface structurally consisting of other interfaces
+
+```
+interface A { ... }
+interface B { ... }
+
+// Combined1 has all names from A and B, must not conflict.
+// Can use qualification (`x.(A.F)()`), but not required.
+structural interface Combined1 extends A, B { }
+// Combined2 has all names from A and B that do not conflict.
+// Can use qualification (`x.(A.F)()`) to get any names from
+// `A` or `B` even if there is a conflict.
+structural interface Combined2 extends A + B { }
+// Combined3 only has names mentioned explicitly.
+// Can use qualification (`x.(A.F)()`) to get any names from
+// `A` or `B` even if they are not mentioned in `Combined3`.
+structural interface Combined3 {
+  impl A;
+  impl B;
+  alias F = A.F;
+  alias G_A = A.G;
+  alias G_B = B.G;
+}
+
+// All of these functions accept the same values, namely anything
+// with a type implementing both `A` and `B`.
+fn F1[Combined1:$ T](T: x) { ... }
+fn F2[Combined2:$ T](T: x) { ... }
+fn F3[Combined3:$ T](T: x) { ... }
+fn FPlus[A + B:$ T](T: x) { ... }
+```
 
 ## Proposed programming model
 
