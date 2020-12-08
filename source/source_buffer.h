@@ -85,7 +85,9 @@ class SourceBuffer {
   };
 
   explicit SourceBuffer(llvm::StringRef fake_filename, std::string buffer_text)
-      : filename_(fake_filename.str()), is_string_rep_(true), string_storage_(buffer_text) {
+      : filename_(fake_filename.str()),
+        is_string_rep_(true),
+        string_storage_(buffer_text) {
     text_ = string_storage_;
   }
 

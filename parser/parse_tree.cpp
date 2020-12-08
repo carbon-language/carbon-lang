@@ -79,8 +79,9 @@ auto ParseTree::Print(llvm::raw_ostream& output) const -> void {
   // The roots, like siblings, are in RPO (so reversed), but we add them in
   // order here because we'll pop off the stack effectively reversing then.
   llvm::SmallVector<std::pair<Node, int>, 16> node_stack;
-  for (Node n : Roots())
+  for (Node n : Roots()) {
     node_stack.push_back({n, 0});
+  }
 
   while (!node_stack.empty()) {
     Node n;
@@ -96,8 +97,9 @@ auto ParseTree::Print(llvm::raw_ostream& output) const -> void {
     output << "{node_index: " << n.index << ", kind: '" << n_impl.kind.GetName()
            << "', text: '" << tokens->GetTokenText(n_impl.token) << "'";
 
-    if (n_impl.has_error)
+    if (n_impl.has_error) {
       output << ", has_error: yes";
+    }
 
     if (n_impl.subtree_size > 1) {
       output << ", subtree_size: " << n_impl.subtree_size;
@@ -105,8 +107,9 @@ auto ParseTree::Print(llvm::raw_ostream& output) const -> void {
       output << ", children: [\n";
       // We append the children in order here as well because they will get
       // reversed when popped off the stack.
-      for (Node sibling_n : Children(n))
+      for (Node sibling_n : Children(n)) {
         node_stack.push_back({sibling_n, depth + 1});
+      }
       continue;
     }
 
@@ -175,16 +178,18 @@ auto ParseTree::Verify() const -> bool {
     while (!ancestors.empty()) {
       ParseTree::Node parent_n = ancestors.back();
       if ((parent_n.GetIndex() -
-           node_impls[parent_n.GetIndex()].subtree_size) != next_index)
+           node_impls[parent_n.GetIndex()].subtree_size) != next_index) {
         break;
+      }
       ancestors.pop_back();
     }
   }
   if (!ancestors.empty()) {
     llvm::errs()
         << "Finished walking the parse tree and there are still ancestors:\n";
-    for (Node ancestor_n : ancestors)
+    for (Node ancestor_n : ancestors) {
       llvm::errs() << "  Node #" << ancestor_n.GetIndex() << "\n";
+    }
     return false;
   }
 

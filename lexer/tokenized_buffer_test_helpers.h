@@ -34,16 +34,21 @@ struct ExpectedToken {
   friend std::ostream& operator<<(std::ostream& output,
                                   const ExpectedToken& expected) {
     output << "\ntoken: { kind: '" << expected.kind.Name().str();
-    if (expected.line != -1)
+    if (expected.line != -1) {
       output << "', line: " << expected.line;
-    if (expected.column != -1)
+    }
+    if (expected.column != -1) {
       output << ", column " << expected.column;
-    if (expected.indent_column != -1)
+    }
+    if (expected.indent_column != -1) {
       output << ", indent: " << expected.indent_column;
-    if (!expected.text.empty())
+    }
+    if (!expected.text.empty()) {
       output << ", spelling: '" << expected.text.str() << "'";
-    if (expected.recovery)
+    }
+    if (expected.recovery) {
       output << ", recovery: true";
+    }
     output << " }";
     return output;
   }
@@ -166,7 +171,7 @@ MATCHER_P2(IsKeyValueScalars, key, value, "") {
   return true;
 }
 
-}  // namespace testing
+}  // namespace Testing
 }  // namespace Carbon
 
 #endif  // LEXER_TOKENIZED_BUFFER_TEST_HELPERS_H_

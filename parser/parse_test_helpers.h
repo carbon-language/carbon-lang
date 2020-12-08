@@ -78,20 +78,23 @@ inline auto ExpectedNodesMatcher::MatchAndExplain(
   const auto nodes_end = rpo.end();
   auto nodes_it = nodes_begin;
   llvm::SmallVector<const ExpectedNode*, 16> expected_node_stack;
-  for (const ExpectedNode& en : expected_nodes)
+  for (const ExpectedNode& en : expected_nodes) {
     expected_node_stack.push_back(&en);
+  }
   while (!expected_node_stack.empty()) {
-    if (nodes_it == nodes_end)
+    if (nodes_it == nodes_end) {
       // We'll check the size outside the loop.
       break;
+    }
 
     ParseTree::Node n = *nodes_it++;
     int postorder_index = n.GetIndex();
 
     const ExpectedNode& expected_node = *expected_node_stack.pop_back_val();
 
-    if (!MatchExpectedNode(tree, n, postorder_index, expected_node, output))
+    if (!MatchExpectedNode(tree, n, postorder_index, expected_node, output)) {
       matches = false;
+    }
 
     if (expected_node.skip_subtree) {
       assert(expected_node.children.empty() &&
@@ -122,8 +125,9 @@ inline auto ExpectedNodesMatcher::MatchAndExplain(
     // causes the siblings to be visited in reverse order from the expected
     // list. However, we use a stack which inherently does this reverse for us
     // so we simply append to the stack here.
-    for (const ExpectedNode& child_expected_node : expected_node.children)
+    for (const ExpectedNode& child_expected_node : expected_node.children) {
       expected_node_stack.push_back(&child_expected_node);
+    }
   }
 
   // We don't directly check the size because we allow expectations to skip
@@ -162,30 +166,36 @@ inline auto ExpectedNodesMatcher::DescribeTo(std::ostream* output_ptr) const
   // of the actual parse tree.
   llvm::SmallVector<std::pair<const ExpectedNode*, int>, 16>
       expected_node_stack;
-  for (const ExpectedNode& expected_node : llvm::reverse(expected_nodes))
+  for (const ExpectedNode& expected_node : llvm::reverse(expected_nodes)) {
     expected_node_stack.push_back({&expected_node, 0});
+  }
 
   while (!expected_node_stack.empty()) {
     const ExpectedNode& expected_node = *expected_node_stack.back().first;
     int depth = expected_node_stack.back().second;
     expected_node_stack.pop_back();
-    for (int indent_count = 0; indent_count < depth; ++indent_count)
+    for (int indent_count = 0; indent_count < depth; ++indent_count) {
       output << "  ";
+    }
     output << "{kind: '" << expected_node.kind.GetName().str() << "'";
-    if (!expected_node.text.empty())
+    if (!expected_node.text.empty()) {
       output << ", text: '" << expected_node.text << "'";
-    if (expected_node.has_error)
+    }
+    if (expected_node.has_error) {
       output << ", has_error: yes";
-    if (expected_node.skip_subtree)
+    }
+    if (expected_node.skip_subtree) {
       output << ", skip_subtree: yes";
+    }
 
     if (!expected_node.children.empty()) {
       assert(!expected_node.skip_subtree &&
              "Must not have children and skip a subtree!");
       output << ", children: [\n";
       for (const ExpectedNode& child_expected_node :
-           llvm::reverse(expected_node.children))
+           llvm::reverse(expected_node.children)) {
         expected_node_stack.push_back({&child_expected_node, depth + 1});
+      }
       // If we have children, we know we're not popping off.
       continue;
     }
@@ -199,9 +209,10 @@ inline auto ExpectedNodesMatcher::DescribeTo(std::ostream* output_ptr) const
              "Cannot have an increase in depth on a leaf node!");
       // The distance we need to pop is the difference in depth.
       int pop_depth = depth - expected_node_stack.back().second;
-      for (int pop_count = 0; pop_count < pop_depth; ++pop_count)
+      for (int pop_count = 0; pop_count < pop_depth; ++pop_count) {
         // Close both the children array and the node mapping.
         output << "]}";
+      }
     }
     output << "\n";
   }

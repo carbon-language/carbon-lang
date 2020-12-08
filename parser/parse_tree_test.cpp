@@ -376,10 +376,11 @@ auto GetAndDropLine(llvm::StringRef& s) -> std::string {
   auto newline_offset = s.find_first_of('\n');
   llvm::StringRef line = s.slice(0, newline_offset);
 
-  if (newline_offset != llvm::StringRef::npos)
+  if (newline_offset != llvm::StringRef::npos) {
     s = s.substr(newline_offset + 1);
-  else
+  } else {
     s = "";
+  }
 
   return line.str();
 }
