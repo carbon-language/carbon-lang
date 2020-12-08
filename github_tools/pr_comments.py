@@ -11,9 +11,16 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 import argparse
 import datetime
 import hashlib
+import os
+import sys
 import textwrap
 
-import github_helpers
+# To support direct runs, ensure the pythonpath has the repo root.
+_PYTHONPATH = os.path.realpath(os.path.join(os.path.dirname(__file__), ".."))
+if _PYTHONPATH not in sys.path:
+    sys.path.insert(0, _PYTHONPATH)
+
+from github_tools import github_helpers
 
 # The main query, into which other queries are composed.
 _QUERY = """

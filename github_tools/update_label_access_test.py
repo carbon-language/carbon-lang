@@ -10,8 +10,8 @@ import github
 import unittest
 from unittest import mock
 
-import github_helpers
-import update_label_access
+from github_tools import github_helpers
+from github_tools import update_label_access
 
 
 class TestUpdateLabelAccess(unittest.TestCase):
