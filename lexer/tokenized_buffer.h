@@ -47,19 +47,23 @@ class TokenizedBuffer {
    public:
     Token() = default;
 
-    auto operator==(const Token& rhs) const -> bool {
-      return index == rhs.index;
+    friend auto operator==(Token lhs, Token rhs) -> bool {
+      return lhs.index == rhs.index;
     }
-    auto operator!=(const Token& rhs) const -> bool {
-      return index != rhs.index;
+    friend auto operator!=(Token lhs, Token rhs) -> bool {
+      return lhs.index != rhs.index;
     }
-    auto operator<(const Token& rhs) const -> bool { return index < rhs.index; }
-    auto operator<=(const Token& rhs) const -> bool {
-      return index <= rhs.index;
+    friend auto operator<(Token lhs, Token rhs) -> bool {
+      return lhs.index < rhs.index;
     }
-    auto operator>(const Token& rhs) const -> bool { return index > rhs.index; }
-    auto operator>=(const Token& rhs) const -> bool {
-      return index >= rhs.index;
+    friend auto operator<=(Token lhs, Token rhs) -> bool {
+      return lhs.index <= rhs.index;
+    }
+    friend auto operator>(Token lhs, Token rhs) -> bool {
+      return lhs.index > rhs.index;
+    }
+    friend auto operator>=(Token lhs, Token rhs) -> bool {
+      return lhs.index >= rhs.index;
     }
 
    private:
@@ -85,19 +89,23 @@ class TokenizedBuffer {
    public:
     Line() = default;
 
-    auto operator==(const Line& rhs) const -> bool {
-      return index == rhs.index;
+    friend auto operator==(Line lhs, Line rhs) -> bool {
+      return lhs.index == rhs.index;
     }
-    auto operator!=(const Line& rhs) const -> bool {
-      return index != rhs.index;
+    friend auto operator!=(Line lhs, Line rhs) -> bool {
+      return lhs.index != rhs.index;
     }
-    auto operator<(const Line& rhs) const -> bool { return index < rhs.index; }
-    auto operator<=(const Line& rhs) const -> bool {
-      return index <= rhs.index;
+    friend auto operator<(Line lhs, Line rhs) -> bool {
+      return lhs.index < rhs.index;
     }
-    auto operator>(const Line& rhs) const -> bool { return index > rhs.index; }
-    auto operator>=(const Line& rhs) const -> bool {
-      return index >= rhs.index;
+    friend auto operator<=(Line lhs, Line rhs) -> bool {
+      return lhs.index <= rhs.index;
+    }
+    friend auto operator>(Line lhs, Line rhs) -> bool {
+      return lhs.index > rhs.index;
+    }
+    friend auto operator>=(Line lhs, Line rhs) -> bool {
+      return lhs.index >= rhs.index;
     }
 
    private:
@@ -125,11 +133,11 @@ class TokenizedBuffer {
 
     // Most normal APIs are provided by the `TokenizedBuffer`, we just support
     // basic comparison operations.
-    auto operator==(const Identifier& rhs) const -> bool {
-      return index == rhs.index;
+    friend auto operator==(Identifier lhs, Identifier rhs) -> bool {
+      return lhs.index == rhs.index;
     }
-    auto operator!=(const Identifier& rhs) const -> bool {
-      return index != rhs.index;
+    friend auto operator!=(Identifier lhs, Identifier rhs) -> bool {
+      return lhs.index != rhs.index;
     }
 
    private:
