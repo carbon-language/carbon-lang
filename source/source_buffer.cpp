@@ -4,13 +4,13 @@
 
 #include "source/source_buffer.h"
 
-#include <errno.h>
 #include <fcntl.h>
-#include <stdint.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
 #include <unistd.h>
 
+#include <cerrno>
+#include <cstdint>
 #include <system_error>
 
 #include "llvm/ADT/ScopeExit.h"
@@ -84,7 +84,8 @@ SourceBuffer::~SourceBuffer() {
   if (!text_.empty()) {
     errno = 0;
     int result =
-        munmap(const_cast<void*>((const void*)text_.data()), text_.size());
+        munmap(const_cast<void*>(static_cast<const void*>(text_.data())),
+               text_.size());
     (void)result;
     assert(result != -1 && "Unmapping text failed!");
   }

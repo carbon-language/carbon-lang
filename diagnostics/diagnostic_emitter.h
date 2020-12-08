@@ -34,7 +34,7 @@ class DiagnosticEmitter {
 
   explicit DiagnosticEmitter(Callback callback)
       : callback_(std::move(callback)) {}
-  ~DiagnosticEmitter() {}
+  ~DiagnosticEmitter() = default;
 
   // Emits an error unconditionally.  `F` is guaranteed to be called.
   template <typename DiagnosticT>

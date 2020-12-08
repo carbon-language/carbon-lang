@@ -2,6 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
+#include <cstdint>
 #include <cstring>
 
 #include "diagnostics/diagnostic_emitter.h"
@@ -10,12 +11,14 @@
 
 namespace Carbon {
 
-extern "C" int LLVMFuzzerTestOneInput(const unsigned char* data, size_t size) {
+// NOLINTNEXTLINE: Match the documented fuzzer entry point declaration style.
+extern "C" int LLVMFuzzerTestOneInput(const unsigned char* data,
+                                      std::size_t size) {
   // We need two bytes of data to compute a file name length.
   if (size < 2) {
     return 0;
   }
-  unsigned short raw_filename_length;
+  uint16_t raw_filename_length;
   std::memcpy(&raw_filename_length, data, 2);
   data += 2;
   size -= 2;
