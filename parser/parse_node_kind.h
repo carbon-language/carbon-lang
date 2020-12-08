@@ -24,6 +24,13 @@ namespace Carbon {
 // member functions. These instances are designed specifically to be usable in
 // `case` labels of `switch` statements just like an enumerator would.
 class ParseNodeKind {
+  // Note that this must be declared earlier in the class so that its type can
+  // be used, for example in the conversion operator.
+  enum class KindEnum : uint8_t {
+#define CARBON_PARSE_NODE_KIND(Name) Name,
+#include "parser/parse_node_kind.def"
+  };
+
  public:
   // The formatting for this macro is weird due to a `clang-format` bug. See
   // https://bugs.llvm.org/show_bug.cgi?id=48320 for details.
@@ -47,19 +54,14 @@ class ParseNodeKind {
   // Gets a friendly name for the token for logging or debugging.
   [[nodiscard]] auto GetName() const -> llvm::StringRef;
 
- private:
-  enum class KindEnum : uint8_t {
-#define CARBON_PARSE_NODE_KIND(Name) Name,
-#include "parser/parse_node_kind.def"
-  };
-
-  constexpr explicit ParseNodeKind(KindEnum k) : kind(k) {}
-
   // Enable conversion to our private enum, including in a `constexpr` context,
   // to enable usage in `switch` and `case`. The enum remains private and
   // nothing else should be using this.
   // NOLINTNEXTLINE(google-explicit-constructor)
   constexpr operator KindEnum() const { return kind; }
+
+ private:
+  constexpr explicit ParseNodeKind(KindEnum k) : kind(k) {}
 
   KindEnum kind;
 };

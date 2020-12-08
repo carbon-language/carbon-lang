@@ -24,13 +24,6 @@ inline void PrintTo(const TokenizedBuffer& buffer, std::ostream* output) {
 namespace Testing {
 
 struct ExpectedToken {
-  TokenKind kind;
-  int line = -1;
-  int column = -1;
-  int indent_column = -1;
-  bool recovery = false;
-  llvm::StringRef text = "";
-
   friend auto operator<<(std::ostream& output, const ExpectedToken& expected)
       -> std::ostream& {
     output << "\ntoken: { kind: '" << expected.kind.Name().str();
@@ -52,6 +45,13 @@ struct ExpectedToken {
     output << " }";
     return output;
   }
+
+  TokenKind kind;
+  int line = -1;
+  int column = -1;
+  int indent_column = -1;
+  bool recovery = false;
+  llvm::StringRef text = "";
 };
 
 // TODO: Consider rewriting this into a `TokenEq` matcher which is used inside

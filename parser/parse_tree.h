@@ -140,6 +140,10 @@ class ParseTree {
   // The in-memory representation of data used for a particular node in the
   // tree.
   struct NodeImpl {
+    explicit NodeImpl(ParseNodeKind k, TokenizedBuffer::Token t,
+                      int subtree_size_arg)
+        : kind(k), token(t), subtree_size(subtree_size_arg) {}
+
     // The kind of this node. Note that this is only a single byte.
     ParseNodeKind kind;
 
@@ -179,10 +183,6 @@ class ParseTree {
     // This field should always be a positive integer as at least this node is
     // part of its subtree.
     int32_t subtree_size;
-
-    explicit NodeImpl(ParseNodeKind k, TokenizedBuffer::Token t,
-                      int subtree_size_arg)
-        : kind(k), token(t), subtree_size(subtree_size_arg) {}
   };
 
   static_assert(sizeof(NodeImpl) == 12,
@@ -301,9 +301,9 @@ class ParseTree::PostorderIterator
  private:
   friend class ParseTree;
 
-  Node node;
-
   explicit PostorderIterator(Node n) : node(n) {}
+
+  Node node;
 };
 
 // A forward iterator across the silbings at a particular level in the parse
@@ -343,12 +343,12 @@ class ParseTree::SiblingIterator
  private:
   friend class ParseTree;
 
+  explicit SiblingIterator(const ParseTree& tree_arg, Node n)
+      : tree(&tree_arg), node(n) {}
+
   const ParseTree* tree;
 
   Node node;
-
-  explicit SiblingIterator(const ParseTree& tree_arg, Node n)
-      : tree(&tree_arg), node(n) {}
 };
 
 }  // namespace Carbon
