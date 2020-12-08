@@ -116,7 +116,7 @@ TEST_F(LexerTest, HandlesIntegerLiteral) {
 }
 
 TEST_F(LexerTest, HandlesGarbageCharacters) {
-  const char GarbageText[] = "$$💩-$\n$\0$12$";
+  constexpr char GarbageText[] = "$$💩-$\n$\0$12$";
   auto buffer = Lex(llvm::StringRef(GarbageText, sizeof(GarbageText) - 1));
   EXPECT_TRUE(buffer.HasErrors());
   EXPECT_THAT(
