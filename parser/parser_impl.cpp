@@ -25,8 +25,9 @@ auto ParseTree::Parser::Parse(TokenizedBuffer& tokens,
   tree.node_impls.reserve(tokens.Size());
 
   Parser parser(tree, tokens);
-  while (parser.position != parser.end)
+  while (parser.position != parser.end) {
     parser.ParseDeclaration();
+  }
 
   assert(tree.Verify() && "Parse tree built but does not verify!");
   return tree;
@@ -41,8 +42,9 @@ auto ParseTree::Parser::Consume(TokenKind kind) -> TokenizedBuffer::Token {
 
 auto ParseTree::Parser::ConsumeIf(TokenKind kind)
     -> llvm::Optional<TokenizedBuffer::Token> {
-  if (tokens.GetKind(*position) != kind)
+  if (tokens.GetKind(*position) != kind) {
     return {};
+  }
 
   return *position++;
 }
@@ -58,8 +60,9 @@ auto ParseTree::Parser::ConsumeAndAddLeafNodeIf(TokenKind t_kind,
                                                 ParseNodeKind n_kind)
     -> llvm::Optional<Node> {
   auto t = ConsumeIf(t_kind);
-  if (!t)
+  if (!t) {
     return {};
+  }
 
   return AddLeafNode(n_kind, *t);
 }
@@ -96,8 +99,9 @@ auto ParseTree::Parser::AddNode(ParseNodeKind n_kind, TokenizedBuffer::Token t,
 
   Node n(tree.node_impls.size());
   tree.node_impls.push_back(NodeImpl(n_kind, t, subtree_size));
-  if (has_error)
+  if (has_error) {
     MarkNodeError(n);
+  }
 
   start.node_added = true;
   return n;
@@ -107,8 +111,9 @@ auto ParseTree::Parser::SkipMatchingGroup() -> bool {
   assert(position != end && "Cannot skip at the end!");
   TokenizedBuffer::Token t = *position;
   TokenKind t_kind = tokens.GetKind(t);
-  if (!t_kind.IsOpeningSymbol())
+  if (!t_kind.IsOpeningSymbol()) {
     return false;
+  }
 
   position = std::next(
       TokenizedBuffer::TokenIterator(tokens.GetMatchedClosingToken(t)));
@@ -118,8 +123,9 @@ auto ParseTree::Parser::SkipMatchingGroup() -> bool {
 auto ParseTree::Parser::SkipPastLikelyDeclarationEnd(
     TokenizedBuffer::Token skip_root, bool is_inside_declaration)
     -> llvm::Optional<Node> {
-  if (position == end)
+  if (position == end) {
     return {};
+  }
 
   TokenizedBuffer::Line root_line = tokens.GetLine(skip_root);
   int root_line_indent = tokens.GetIndentColumnNumber(root_line);
@@ -129,18 +135,20 @@ auto ParseTree::Parser::SkipPastLikelyDeclarationEnd(
   auto is_same_line_or_indent_greater_than_root =
       [&](TokenizedBuffer::Token t) {
         TokenizedBuffer::Line l = tokens.GetLine(t);
-        if (l == root_line)
+        if (l == root_line) {
           return true;
+        }
 
         return tokens.GetIndentColumnNumber(l) > root_line_indent;
       };
 
   do {
     TokenKind current_kind = tokens.GetKind(*position);
-    if (current_kind == TokenKind::CloseCurlyBrace())
+    if (current_kind == TokenKind::CloseCurlyBrace()) {
       // Immediately bail out if we hit an unmatched close curly, this will
       // pop us up a level of the syntax grouping.
       return {};
+    }
 
     // If we find a semicolon, we want to parse it to end the declaration.
     if (current_kind == TokenKind::Semi()) {
@@ -156,8 +164,9 @@ auto ParseTree::Parser::SkipPastLikelyDeclarationEnd(
     }
 
     // Skip over any matching group of tokens.
-    if (SkipMatchingGroup())
+    if (SkipMatchingGroup()) {
       continue;
+    }
 
     // Otherwise just step forward one token.
     ++position;
@@ -311,9 +320,10 @@ auto ParseTree::Parser::ParseFunctionDeclaration() -> Node {
     llvm::errs() << "ERROR: Function declaration not terminated by a "
                     "semicolon on line "
                  << tokens.GetLineNumber(close_paren) << "!\n";
-    if (tokens.GetLine(*position) == tokens.GetLine(close_paren))
+    if (tokens.GetLine(*position) == tokens.GetLine(close_paren)) {
       // Only need to skip if we've not already found a new line.
       SkipPastLikelyDeclarationEnd(function_intro_token);
+    }
     return add_error_function_node();
   }
 
