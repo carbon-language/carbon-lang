@@ -10,7 +10,7 @@ import os
 import unittest
 from unittest import mock
 
-import pr_comments
+from github_tools import pr_comments
 
 
 class TestPRComments(unittest.TestCase):
