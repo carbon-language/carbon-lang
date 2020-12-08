@@ -175,7 +175,7 @@ def _impl(ctx):
                 ],
                 flag_groups = [
                     flag_group(
-                        flags = ["-gsplit-dwarf"],
+                        flags = ["-gsplit-dwarf", "-g"],
                         expand_if_available = "per_object_debug_info_file",
                     ),
                 ],
