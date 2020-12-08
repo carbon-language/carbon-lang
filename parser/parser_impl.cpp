@@ -52,7 +52,7 @@ auto ParseTree::Parser::ConsumeIf(TokenKind kind)
 auto ParseTree::Parser::AddLeafNode(ParseNodeKind kind,
                                     TokenizedBuffer::Token token) -> Node {
   Node n(tree.node_impls.size());
-  tree.node_impls.push_back(NodeImpl(kind, token, /*SubtreeSize=*/1));
+  tree.node_impls.push_back(NodeImpl(kind, token, /*subtree_size_arg=*/1));
   return n;
 }
 
@@ -94,7 +94,7 @@ auto ParseTree::Parser::AddNode(ParseNodeKind n_kind, TokenizedBuffer::Token t,
                                 SubtreeStart& start, bool has_error) -> Node {
   // The size of the subtree is the change in size from when we started this
   // subtree to now, but including the node we're about to add.
-  int tree_stop_size = tree.node_impls.size() + 1;
+  int tree_stop_size = static_cast<int>(tree.node_impls.size()) + 1;
   int subtree_size = tree_stop_size - start.tree_size;
 
   Node n(tree.node_impls.size());
@@ -346,6 +346,9 @@ auto ParseTree::Parser::ParseDeclaration() -> llvm::Optional<Node> {
       return ParseFunctionDeclaration();
     case TokenKind::Semi():
       return ParseEmptyDeclaration();
+    default:
+      // Errors are handled outside the switch.
+      break;
   }
 
   // We didn't recognize an introducer for a valid declaration.

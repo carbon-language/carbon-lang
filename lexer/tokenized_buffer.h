@@ -5,8 +5,7 @@
 #ifndef LEXER_TOKENIZED_BUFFER_H_
 #define LEXER_TOKENIZED_BUFFER_H_
 
-#include <stdint.h>
-
+#include <cstdint>
 #include <iterator>
 
 #include "diagnostics/diagnostic_emitter.h"
@@ -48,12 +47,20 @@ class TokenizedBuffer {
    public:
     Token() = default;
 
-    bool operator==(const Token& rhs) const { return index == rhs.index; }
-    bool operator!=(const Token& rhs) const { return index != rhs.index; }
-    bool operator<(const Token& rhs) const { return index < rhs.index; }
-    bool operator<=(const Token& rhs) const { return index <= rhs.index; }
-    bool operator>(const Token& rhs) const { return index > rhs.index; }
-    bool operator>=(const Token& rhs) const { return index >= rhs.index; }
+    auto operator==(const Token& rhs) const -> bool {
+      return index == rhs.index;
+    }
+    auto operator!=(const Token& rhs) const -> bool {
+      return index != rhs.index;
+    }
+    auto operator<(const Token& rhs) const -> bool { return index < rhs.index; }
+    auto operator<=(const Token& rhs) const -> bool {
+      return index <= rhs.index;
+    }
+    auto operator>(const Token& rhs) const -> bool { return index > rhs.index; }
+    auto operator>=(const Token& rhs) const -> bool {
+      return index >= rhs.index;
+    }
 
    private:
     friend class TokenizedBuffer;
@@ -78,12 +85,20 @@ class TokenizedBuffer {
    public:
     Line() = default;
 
-    bool operator==(const Line& rhs) const { return index == rhs.index; }
-    bool operator!=(const Line& rhs) const { return index != rhs.index; }
-    bool operator<(const Line& rhs) const { return index < rhs.index; }
-    bool operator<=(const Line& rhs) const { return index <= rhs.index; }
-    bool operator>(const Line& rhs) const { return index > rhs.index; }
-    bool operator>=(const Line& rhs) const { return index >= rhs.index; }
+    auto operator==(const Line& rhs) const -> bool {
+      return index == rhs.index;
+    }
+    auto operator!=(const Line& rhs) const -> bool {
+      return index != rhs.index;
+    }
+    auto operator<(const Line& rhs) const -> bool { return index < rhs.index; }
+    auto operator<=(const Line& rhs) const -> bool {
+      return index <= rhs.index;
+    }
+    auto operator>(const Line& rhs) const -> bool { return index > rhs.index; }
+    auto operator>=(const Line& rhs) const -> bool {
+      return index >= rhs.index;
+    }
 
    private:
     friend class TokenizedBuffer;
@@ -110,8 +125,12 @@ class TokenizedBuffer {
 
     // Most normal APIs are provided by the `TokenizedBuffer`, we just support
     // basic comparison operations.
-    bool operator==(const Identifier& rhs) const { return index == rhs.index; }
-    bool operator!=(const Identifier& rhs) const { return index != rhs.index; }
+    auto operator==(const Identifier& rhs) const -> bool {
+      return index == rhs.index;
+    }
+    auto operator!=(const Identifier& rhs) const -> bool {
+      return index != rhs.index;
+    }
 
    private:
     friend class TokenizedBuffer;
@@ -130,23 +149,25 @@ class TokenizedBuffer {
 
     explicit TokenIterator(Token token) : token(token) {}
 
-    bool operator==(const TokenIterator& rhs) const {
+    auto operator==(const TokenIterator& rhs) const -> bool {
       return token == rhs.token;
     }
-    bool operator<(const TokenIterator& rhs) const { return token < rhs.token; }
+    auto operator<(const TokenIterator& rhs) const -> bool {
+      return token < rhs.token;
+    }
 
-    const Token& operator*() const { return token; }
-    Token& operator*() { return token; }
+    auto operator*() const -> const Token& { return token; }
+    auto operator*() -> Token& { return token; }
 
-    int operator-(const TokenIterator& rhs) const {
+    auto operator-(const TokenIterator& rhs) const -> int {
       return token.index - rhs.token.index;
     }
 
-    TokenIterator& operator+=(int n) {
+    auto operator+=(int n) -> TokenIterator& {
       token.index += n;
       return *this;
     }
-    TokenIterator& operator-=(int n) {
+    auto operator-=(int n) -> TokenIterator& {
       token.index -= n;
       return *this;
     }
@@ -164,33 +185,34 @@ class TokenizedBuffer {
   //
   // FIXME: Need to pass in some diagnostic machinery to report the details of
   // the error! Right now it prints to stderr.
-  static TokenizedBuffer Lex(SourceBuffer& source, DiagnosticEmitter& emitter);
+  static auto Lex(SourceBuffer& source, DiagnosticEmitter& emitter)
+      -> TokenizedBuffer;
 
   // Returns true if the buffer has errors that are detectable at lexing time.
-  auto HasErrors() const -> bool { return has_errors; }
+  [[nodiscard]] auto HasErrors() const -> bool { return has_errors; }
 
-  llvm::iterator_range<TokenIterator> Tokens() const {
+  [[nodiscard]] auto Tokens() const -> llvm::iterator_range<TokenIterator> {
     return llvm::make_range(TokenIterator(Token(0)),
                             TokenIterator(Token(token_infos.size())));
   }
 
-  auto Size() const -> int { return token_infos.size(); }
+  [[nodiscard]] auto Size() const -> int { return token_infos.size(); }
 
-  auto GetKind(Token token) const -> TokenKind;
-  auto GetLine(Token token) const -> Line;
+  [[nodiscard]] auto GetKind(Token token) const -> TokenKind;
+  [[nodiscard]] auto GetLine(Token token) const -> Line;
 
   // Returns the 1-based line number.
-  auto GetLineNumber(Token token) const -> int;
+  [[nodiscard]] auto GetLineNumber(Token token) const -> int;
 
   // Returns the 1-based column number.
-  auto GetColumnNumber(Token token) const -> int;
+  [[nodiscard]] auto GetColumnNumber(Token token) const -> int;
 
   // Returns the source text lexed into this token.
-  auto GetTokenText(Token token) const -> llvm::StringRef;
+  [[nodiscard]] auto GetTokenText(Token token) const -> llvm::StringRef;
 
   // Returns the identifier associated with this token. The token kind must be
   // an `Identifier`.
-  auto GetIdentifier(Token token) const -> Identifier;
+  [[nodiscard]] auto GetIdentifier(Token token) const -> Identifier;
 
   // Returns the value of an `IntegerLiteral()` token.
   auto GetIntegerLiteral(Token token) const -> llvm::APInt;
@@ -198,26 +220,26 @@ class TokenizedBuffer {
   // Returns the closing token matched with the given opening token.
   //
   // The given token must be an opening token kind.
-  auto GetMatchedClosingToken(Token opening_token) const -> Token;
+  [[nodiscard]] auto GetMatchedClosingToken(Token opening_token) const -> Token;
 
   // Returns the opening token matched with the given closing token.
   //
   // The given token must be a closing token kind.
-  auto GetMatchedOpeningToken(Token closing_token) const -> Token;
+  [[nodiscard]] auto GetMatchedOpeningToken(Token closing_token) const -> Token;
 
   // Returns whether the token was created as part of an error recovery effort.
   //
   // For example, a closing paren inserted to match an unmatched paren.
-  auto IsRecoveryToken(Token token) const -> bool;
+  [[nodiscard]] auto IsRecoveryToken(Token token) const -> bool;
 
   // Returns the 1-based line number.
-  auto GetLineNumber(Line line) const -> int;
+  [[nodiscard]] auto GetLineNumber(Line line) const -> int;
 
   // Returns the 1-based indentation column number.
-  auto GetIndentColumnNumber(Line line) const -> int;
+  [[nodiscard]] auto GetIndentColumnNumber(Line line) const -> int;
 
   // Returns the text for an identifier.
-  auto GetIdentifierText(Identifier id) const -> llvm::StringRef;
+  [[nodiscard]] auto GetIdentifierText(Identifier id) const -> llvm::StringRef;
 
   // Prints a description of the tokenized stream to the provided `raw_ostream`.
   //
@@ -314,12 +336,12 @@ class TokenizedBuffer {
   explicit TokenizedBuffer(SourceBuffer& source) : source(&source) {}
 
   auto GetLineInfo(Line line) -> LineInfo&;
-  auto GetLineInfo(Line line) const -> const LineInfo&;
+  [[nodiscard]] auto GetLineInfo(Line line) const -> const LineInfo&;
   auto AddLine(LineInfo info) -> Line;
   auto GetTokenInfo(Token token) -> TokenInfo&;
-  auto GetTokenInfo(Token token) const -> const TokenInfo&;
+  [[nodiscard]] auto GetTokenInfo(Token token) const -> const TokenInfo&;
   auto AddToken(TokenInfo info) -> Token;
-  auto GetTokenPrintWidths(Token token) const -> PrintWidths;
+  [[nodiscard]] auto GetTokenPrintWidths(Token token) const -> PrintWidths;
   auto PrintToken(llvm::raw_ostream& output_stream, Token token,
                   PrintWidths widths) const -> void;
 

@@ -5,8 +5,7 @@
 #ifndef LEXER_TOKEN_KIND_H_
 #define LEXER_TOKEN_KIND_H_
 
-#include <stdint.h>
-
+#include <cstdint>
 #include <iterator>
 
 #include "llvm/ADT/StringRef.h"
@@ -20,8 +19,12 @@ class TokenKind {
   };
 
  public:
-#define CARBON_TOKEN(TokenName) \
-  static constexpr auto TokenName()->TokenKind { return KindEnum::TokenName; }
+  // The formatting for this macro is weird due to a `clang-format` bug. See
+  // https://bugs.llvm.org/show_bug.cgi?id=48320 for details.
+#define CARBON_TOKEN(TokenName)                  \
+  static constexpr auto TokenName()->TokenKind { \
+    return TokenKind(KindEnum::TokenName);       \
+  }
 #include "lexer/token_registry.def"
 
   // The default constructor is deleted as objects of this type should always be
@@ -36,7 +39,7 @@ class TokenKind {
   }
 
   // Get a friendly name for the token for logging or debugging.
-  auto Name() const -> llvm::StringRef;
+  [[nodiscard]] auto Name() const -> llvm::StringRef;
 
   // Test whether this kind of token is a simple symbol sequence (punctuation,
   // not letters) that appears directly in the source text and can be
@@ -44,41 +47,43 @@ class TokenKind {
   // inside of other tokens, outside of the contents of other tokens they
   // don't require any specific characters before or after to distinguish them
   // in the source. Returns false otherwise.
-  auto IsSymbol() const -> bool;
+  [[nodiscard]] auto IsSymbol() const -> bool;
 
   // Test whether this kind of token is a grouping symbol (part of an opening
   // and closing pair that must always be matched in the token stream).
-  auto IsGroupingSymbol() const -> bool;
+  [[nodiscard]] auto IsGroupingSymbol() const -> bool;
 
   // Test whether this kind of token is an opening symbol for a group.
-  auto IsOpeningSymbol() const -> bool;
+  [[nodiscard]] auto IsOpeningSymbol() const -> bool;
 
   // Returns the associated closing symbol for an opening symbol.
   //
   // The token kind must be an opening symbol.
-  auto GetClosingSymbol() const -> TokenKind;
+  [[nodiscard]] auto GetClosingSymbol() const -> TokenKind;
 
   // Test whether this kind of token is an closing symbol for a group.
-  auto IsClosingSymbol() const -> bool;
+  [[nodiscard]] auto IsClosingSymbol() const -> bool;
 
   // Returns the associated opening symbol for a closing symbol.
   //
   // The token kind must be an closing symbol.
-  auto GetOpeningSymbol() const -> TokenKind;
+  [[nodiscard]] auto GetOpeningSymbol() const -> TokenKind;
 
   // Test whether this kind of token is a keyword.
-  auto IsKeyword() const -> bool;
+  [[nodiscard]] auto IsKeyword() const -> bool;
 
   // If this token kind has a fixed spelling when in source code, returns it.
   // Otherwise returns an empty string.
-  auto GetFixedSpelling() const -> llvm::StringRef;
+  [[nodiscard]] auto GetFixedSpelling() const -> llvm::StringRef;
 
-  // Enable implicit conversion to an int, including in a `constexpr` context,
-  // to enable usage in `switch` and `case`.
-  constexpr operator int() const { return static_cast<int>(kind_value); }
+  // Enable conversion to our private enum, including in a `constexpr` context,
+  // to enable usage in `switch` and `case`. The enum remains private and
+  // nothing else should be using this.
+  // NOLINTNEXTLINE(google-explicit-constructor)
+  constexpr operator KindEnum() const { return kind_value; }
 
  private:
-  constexpr TokenKind(KindEnum kind_value) : kind_value(kind_value) {}
+  constexpr explicit TokenKind(KindEnum kind_value) : kind_value(kind_value) {}
 
   KindEnum kind_value;
 };
