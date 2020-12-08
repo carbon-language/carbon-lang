@@ -33,11 +33,11 @@ class TokenKind {
   // constructed using the above factory functions for each unique kind.
   TokenKind() = delete;
 
-  auto operator==(const TokenKind& rhs) const -> bool {
-    return kind_value == rhs.kind_value;
+  friend auto operator==(TokenKind lhs, TokenKind rhs) -> bool {
+    return lhs.kind_value == rhs.kind_value;
   }
-  auto operator!=(const TokenKind& rhs) const -> bool {
-    return kind_value != rhs.kind_value;
+  friend auto operator!=(TokenKind lhs, TokenKind rhs) -> bool {
+    return lhs.kind_value != rhs.kind_value;
   }
 
   // Get a friendly name for the token for logging or debugging.
