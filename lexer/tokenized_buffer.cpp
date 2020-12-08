@@ -487,7 +487,10 @@ auto TokenizedBuffer::PrintWidths::Widen(const PrintWidths& widths) -> void {
 
 // Compute the printed width of a number. When numbers are printed in decimal,
 // the number of digits needed is is one more than the log-base-10 of the value.
+//
+// This routine requires its argument to be *non-negative*.
 static auto ComputeDecimalPrintedWidth(int number) -> int {
+  assert(number >= 0 && "Negative numbers are not supported.");
   return static_cast<int>(std::log10(number)) + 1;
 }
 
