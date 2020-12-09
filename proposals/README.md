@@ -52,5 +52,6 @@ request:
 -   [0162 - Basic Syntax](p0162.md)
     -   [0162 - Decision](p0162_decision.md)
 -   [0175 - C++ interoperability goals](p0175.md)
+    -   [0175 - Decision](p0175_decision.md)
 
 <!-- endproposals -->
