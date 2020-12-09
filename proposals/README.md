@@ -49,10 +49,10 @@ request:
     -   [0143 - Decision](p0143_decision.md)
 -   [0149 - Change documentation style guide](p0149.md)
     -   [0149 - Decision](p0149_decision.md)
--   [0179 - Create a toolchain team.](p0179.md)
 -   [0162 - Basic Syntax](p0162.md)
     -   [0162 - Decision](p0162_decision.md)
 -   [0175 - C++ interoperability goals](p0175.md)
     -   [0175 - Decision](p0175_decision.md)
+-   [0179 - Create a toolchain team.](p0179.md)
 
 <!-- endproposals -->
