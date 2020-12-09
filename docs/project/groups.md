@@ -65,11 +65,11 @@ For most purposes, the Core team should be contacted about conduct issues.
 ### Implementation team
 
 This team is responsible for development of Carbon's primary, reference
-implementation and toolchain. It also oversees other related implementation
-work within the Carbon project, from tooling of the language spec to test
-suites. There may be some overlap with [admins](#admins) -- any issue can be
-resolved by escalating to the [core team](#core-team). Notably, this team is
-_not_ responsible for the _design_ of the language itself, only for its
+implementation and toolchain. It also oversees other related implementation work
+within the Carbon project, from tooling of the language spec to test suites.
+There may be some overlap with [admins](#admins) -- any issue can be resolved by
+escalating to the [core team](#core-team). Notably, this team is _not_
+responsible for the _design_ of the language itself, only for its
 implementation.
 
 -   [Github team](https://github.com/orgs/carbon-language/teams/implementation-team)
