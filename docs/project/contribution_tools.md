@@ -99,17 +99,17 @@ When modifying or adding pre-commit hooks, please run
 
 #### new_proposal.py
 
-[new_proposal.py](/src/scripts/new_proposal.py) is a helper for generating the
-PR and proposal file for a new proposal. It's documented in
+[new_proposal.py](/proposals/scripts/new_proposal.py) is a helper for generating
+the PR and proposal file for a new proposal. It's documented in
 [the proposal template](/proposals/template.md).
 
 **NOTE**: This requires installing [the gh CLI](#gh).
 
 #### pr_comments.py
 
-[pr_comments.py](https://github.com/carbon-language/carbon-project-tools/blob/trunk/github/pr_comments.py)
-is a helper for scanning comments in GitHub. It's particularly intended to help
-find threads which need to be resolved.
+[pr_comments.py](/github/pr_comments.py) is a helper for scanning comments in
+GitHub. It's particularly intended to help find threads which need to be
+resolved.
 
 Options can be seen with `-h`. A couple key options to be aware of are:
 
