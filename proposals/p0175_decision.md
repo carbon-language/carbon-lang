@@ -32,11 +32,12 @@ have more experience.
 The core team agrees with the mapping of the proposed interoperability goals to
 the overall Carbon goals as rationale.
 
-Embedding of C++ bridge code inside Carbon code is inspired in part by experience with CUDA and SYCL, where users
-provided feedback that these were preferred over alternatives such as OpenCL due
-to the ability to embed bridge code and device kernels in the same source file as host C++ code. It also matches the
-approach of bridging between C++ and C where bridge code is often embedded as
-`extern "C"` within C++ source files.
+Embedding of C++ bridge code inside Carbon code is inspired in part by
+experience with CUDA and SYCL, where users provided feedback that these were
+preferred over alternatives such as OpenCL due to the ability to embed bridge
+code and device kernels in the same source file as host C++ code. It also
+matches the approach of bridging between C++ and C where bridge code is often
+embedded as `extern "C"` within C++ source files.
 
 The non-goals seem appropriately motivated by the non-interoperability
 priorities, without undermining the effectiveness of the interoperability as a
