@@ -9,15 +9,8 @@
 # RUN: strip --strip-unneeded %t.o
 # RUN: %host_cc %t.o -o %t.exe -Wl,-q -nostdlib
 # RUN: llvm-bolt %t.exe -relocs -o %t.out -data %t.fdata \
-# RUN:     -frame-opt=all -debug-only=shrinkwrapping \
-# RUN:     -simplify-conditional-tail-calls=false -eliminate-unreachable=false \
-# RUN:    2>&1 | FileCheck %s
-
-# CHECK: - Now handling FrontierBB .LFT{{.*}}
-# CHECK-NEXT: - Dest : .Ltmp{{.*}}
-# CHECK-NEXT: - Update frontier with .LSplitEdge{{.*}}
-# CHECK-NEXT: - Dest : .Ltmp{{.*}}
-# CHECK-NEXT: - Append frontier .LSplitEdge{{.*}}
+# RUN:     -frame-opt=all -simplify-conditional-tail-calls=false \
+# RUN:     -eliminate-unreachable=false
 
   .globl _start
 _start:
