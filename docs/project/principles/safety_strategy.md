@@ -374,10 +374,25 @@ Disadvantages:
     -   Data structures must be redesigned to avoid sharing mutable state.
     -   Increases complexity of node and pointer based data structures, such as
         linked lists.
--   Rust's compiler has been a long-standing target of performance improvements,
-    but is still considered slow. A lot of this comes from how borrow checking
-    is implemented, and the compile-time validation necessary for that. It's
-    likely that approaches imitating Rust would have the same issues.
+-   Imitating Rust's techniques may prove insufficient for achieving Carbon's
+    [compiler performance goals](../goals.md#fast-and-scalable-development).
+    Rust performance suggests its borrow checking performance is slow, although
+    it's difficult to determine how significant this is or whether it could be
+    improved.
+    -   The Rust compiler
+        [is slow](https://pingcap.com/blog/rust-compilation-model-calamity),
+        although
+        [much has been done to improve it](https://blog.mozilla.org/nnethercote/2020/09/08/how-to-speed-up-the-rust-compiler-one-last-time/).
+    -   Details of type checking, particularly requiring parsing of function
+        bodies to type check signatures, as well as wide use of
+        [monomorphization](https://doc.rust-lang.org/book/ch10-01-syntax.html)
+        are likely significant contributors to Rust compilation performance.
+    -   LLVM codegen is also a significant cost for Rust compilation
+        performance.
+    -   Contributor feedback suggests borrow checking and type checking
+        currently accounts for around 10% of Rust compile CPU time, or 25% of
+        end-to-end compile time without parallelization. It's difficult to
+        separate borrow checking and type checking performance.
 -   The complexity of using Rust's compile-time safety may incentivize
     unnecessary runtime checking of safety properties. For example, using
     [`RefCell`](https://doc.rust-lang.org/std/cell/struct.RefCell.html) or
