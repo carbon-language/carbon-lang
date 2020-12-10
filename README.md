@@ -139,8 +139,14 @@ very high.
 
 ## Repository structure overview
 
-Carbon's main repositories are:
+Carbon uses a monorepo structure. Some useful jumping off points into our
+documentation:
 
--   **carbon-lang** - Carbon language specification and documentation.
--   **carbon-toolchain** - Carbon language toolchain and reference
-    implementation.
+-   [Code of conduct](CODE_OF_CONDUCT.md)
+-   [Contributing guidelines](CONTRIBUTING.md)
+-   [License](LICENSE)
+-   [Guides](/docs/guides/README.md)
+-   [Language design](/docs/design/README.md)
+-   [Project](/docs/project/README.md)
+-   [Spec](/docs/spec/README.md)
+-   [Proposals](/proposals/README.md)
