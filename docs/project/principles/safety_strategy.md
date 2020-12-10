@@ -389,10 +389,12 @@ Disadvantages:
         are likely significant contributors to Rust compilation performance.
     -   LLVM codegen is also a significant cost for Rust compilation
         performance.
-    -   Contributor feedback suggests borrow checking and type checking
-        currently accounts for around 10% of Rust compile CPU time, or 25% of
-        end-to-end compile time without parallelization. It's difficult to
-        separate borrow checking and type checking performance.
+    -   With
+        [Fuchsia](https://fuchsia.dev/fuchsia-src/development/languages/rust) as
+        an example, in December 2020, borrow checking and type checking accounts
+        for around 10% of Rust compile CPU time, or 25% of end-to-end compile
+        time without parallelization. It's difficult to separate borrow checking
+        and type checking performance.
 -   The complexity of using Rust's compile-time safety may incentivize
     unnecessary runtime checking of safety properties. For example, using
     [`RefCell`](https://doc.rust-lang.org/std/cell/struct.RefCell.html) or
