@@ -839,8 +839,7 @@ Advantages:
 -   Allow greater flexibility and hierarchy for related packages, such as
     `Database.Client` and `Database.Server`.
 -   Would allow using GitHub repository names as package names. For example,
-    `carbon-language/carbon-lang` could become
-    `carbon_language.carbon_lang`.
+    `carbon-language/carbon-lang` could become `carbon_language.carbon_lang`.
 
 Disadvantages:
 
