@@ -34,11 +34,16 @@ Carbon's goal is to provide
 ### What are we talking about when we discuss safety?
 
 Safety is protection from software bugs, whether the protection is required by
-the language or merely an implementation option. Safety can be decomposed into
-categories of memory, type, and data race safety, based on the related security
-vulnerability:
+the language or merely an implementation option. Application-specific logic
+errors can be prevented by testing, but can lead to security vulnerabilities in
+production; these vulnerabilities are something Carbon will protect against. The
+protections are named based on the kind of security vulnerability they protect
+against:
 
--   **Memory safety** protects against invalid memory accesses.
+-   [**Memory safety**](https://en.wikipedia.org/wiki/Memory_safety) protects
+    against invalid memory accesses. We use
+    [two main subcategories](https://onlinelibrary.wiley.com/doi/full/10.1002/spe.2105)
+    for memory safety:
 
     -   _Spatial_ memory safety protects against accessing an address that's out
         of bounds for the source. This includes array boundaries, as well as
@@ -50,12 +55,14 @@ vulnerability:
         objects, but can also include pointers that are given the address of
         stack objects.
 
--   **Type safety** protects against accessing objects with an incorrect type,
-    also known as "type confusion".
+-   [**Type safety**](https://en.wikipedia.org/wiki/Type_safety) protects
+    against accessing objects with an incorrect type, also known as "type
+    confusion".
 
--   **Data race safety** protects against racing memory access: when a thread
-    accesses (read or write) a memory location concurrently with a different
-    writing thread and without synchronizing.
+-   [**Data race safety**](https://en.wikipedia.org/wiki/Race_condition#Data_race)
+    protects against racing memory access: when a thread accesses (read or
+    write) a memory location concurrently with a different writing thread and
+    without synchronizing.
 
 ### Safety guarantees versus hardening
 
@@ -391,11 +398,12 @@ Disadvantages:
         performance.
     -   With
         [Fuchsia](https://fuchsia.dev/fuchsia-src/development/languages/rust) as
-        an example, in December 2020, borrow checking and type checking accounts
-        for around 10% of Rust compile CPU time, or 25% of end-to-end compile
-        time without parallelization. It's difficult to separate borrow checking
-        and type checking performance, or how other design choices factor into
-        costs.
+        an example, in December 2020, borrow checking and type checking combined
+        account for around 10% of Rust compile CPU time, or 25% of end-to-end
+        compile time. The current cost of borrow checking is obscured both
+        because of the combination with type checking, and because Fuchsia
+        disables some compiler parallelization due to build system
+        incompatibility.
 -   The complexity of using Rust's compile-time safety may incentivize
     unnecessary runtime checking of safety properties. For example, using
     [`RefCell`](https://doc.rust-lang.org/std/cell/struct.RefCell.html) or
@@ -449,12 +457,11 @@ Disadvantages:
     and tools for controlling these costs are difficult.
     -   Safety based on garbage collection has less direct performance overhead,
         but has a greater unpredictability of performance.
-    -   Swift may add an option for unique ownership, although it's not yet
-        designed. It's unlikely that such an approach would make the model
-        better for Carbon: writing code to use unique ownership likely becomes a
-        redesign/migration cost for developers, and reference counting
-        performance overhead would likely remain where unique ownership can't be
-        shown.
+    -   Swift is planning to add an option for unique ownership, although the
+        specifics are not designed yet. Unique ownership by itself does not
+        address performance issues because it also needs unowned/unsafe access
+        for "borrowing". Swift provides these unsafe features, but they are not
+        idiomatic. Also, requiring unsafe access will constrain safety checks.
 -   Significant design differences versus C++ still result, as the distinction
     between value types and "class types" becomes extremely important.
     -   Class types are held by a reference counted pointer and are thus
