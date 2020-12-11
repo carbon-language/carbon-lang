@@ -136,17 +136,3 @@ compatibility and interoperability with C++:
 the language as well as large-scale migration for users.** This is extremely
 expensive, and so the bar for Carbon to be a compelling direction for C++ is
 very high.
-
-## Repository structure overview
-
-Carbon uses a monorepo structure. Some useful jumping off points into our
-documentation:
-
--   [Code of conduct](CODE_OF_CONDUCT.md)
--   [Contributing guidelines](CONTRIBUTING.md)
--   [License](LICENSE)
--   [Guides](/docs/guides/README.md)
--   [Language design](/docs/design/README.md)
--   [Project](/docs/project/README.md)
--   [Spec](/docs/spec/README.md)
--   [Proposals](/proposals/README.md)
