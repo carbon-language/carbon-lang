@@ -142,9 +142,10 @@ to multiple build modes:
     performance for fast development.
     -   Additional development testing build modes that can be used with tests
         and fuzzing to run more performance-intensive safety checks.
--   An optimized release build mode with some safety by default, but can also be
-    tuned for application-specific trade-offs between performance, error
-    detection, and safety hardening.
+-   An optimized release build mode with non-performance-impacting safety
+    enabled by default.
+    -   Options will be available to tune for application-specific trade-offs
+        between performance, error detection, and safety hardening.
 
 Carbon will _encourage_ developers to enable more safety checks in their code,
 and be ready to support them if they do, but will also improve safety for code
