@@ -140,10 +140,13 @@ to multiple build modes:
 
 -   A main development build mode with safety enabled to provide a balance with
     performance for fast development.
+
     -   Additional development testing build modes that can be used with tests
         and fuzzing to run more performance-intensive safety checks.
+
 -   An optimized release build mode with non-performance-impacting runtime
     safety enabled by default.
+
     -   Safety tuning options will be available for application-specific
         trade-offs between performance, error detection, and hardening.
 
@@ -206,10 +209,11 @@ for developers who cannot make the same investment.
         safety violations when they don't have measurable performance impact for
         hot path application code.
 
-    -   There will be a build option for the optimized release build to choose
-        whether to make non-default choices about the trade-off between
-        performance (including speed, binary size, and memory size) and
-        measurably expensive error detection and safety hardening.
+    -   Safety options for the optimized release build will support non-default
+        choices about the trade-off between performance (including speed, binary
+        size, and memory size) and measurably expensive error detection and
+        safety hardening. For example, some techniques may double CPU costs,
+        which would be acceptable in limited situations.
 
 -   The rules for determining whether code will pass compile-time safety
     checking should be articulable, documented, and easy to understand.
