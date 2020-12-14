@@ -17,6 +17,7 @@ repos:
       - id: check-executables-have-shebangs
       - id: check-merge-conflict
       - id: check-symlinks
+        exclude: '^website/jekyll/site/_includes$'
       - id: check-yaml
       - id: detect-private-key
       - id: end-of-file-fixer
@@ -33,7 +34,7 @@ repos:
             Part of the Carbon Language project, under the Apache License v2.0 with LLVM
             Exceptions. See /LICENSE for license information.
             SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
-        exclude: '^src/jekyll/(Gemfile.lock|theme/.*)$'
+        exclude: '^(website/(firebase/.firebaserc|jekyll/(Gemfile.lock|theme/.*))|.bazelversion|compile_flags.txt|.*\.def)$'
       - id: check-google-doc-style
       - id: markdown-toc
   - repo: https://github.com/codespell-project/codespell
@@ -41,13 +42,13 @@ repos:
     hooks:
       - id: codespell
         args: ['-I', '.codespell_ignore']
-        exclude: '^src/jekyll/Gemfile.lock$'
+        exclude: '^website/jekyll/Gemfile.lock$'
   - repo: local
     hooks:
       - id: proposal-list
         name: Update list of proposals
         description: Updates the list of proposals in proposals/README.md
-        entry: src/scripts/update_proposal_list.py
+        entry: proposals/scripts/update_proposal_list.py
         language: python
         files: ^proposals/(README|p.*)\.md$
         pass_filenames: false
@@ -60,9 +61,12 @@ repos:
     rev: v2.1.2
     hooks:
       - id: prettier
-        exclude: ^src/jekyll/theme/
+        exclude: ^website/jekyll/theme/
   # Run linters last, as formatters and other checks may fix issues.
   - repo: https://gitlab.com/PyCQA/flake8
     rev: 3.8.4
     hooks:
       - id: flake8
+
+# We fully exclude fuzzer corpus directories as they are generated binary data.
+exclude: '^(.*/fuzzer_corpus/.*)$'
