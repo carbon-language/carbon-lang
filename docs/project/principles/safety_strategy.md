@@ -212,8 +212,8 @@ for developers who cannot make the same investment.
     -   Safety options for the optimized release build will support non-default
         choices about the trade-off between performance (including speed, binary
         size, and memory size) and measurably expensive error detection and
-        safety hardening. For example, some techniques may double CPU costs,
-        which would be acceptable in limited situations.
+        safety hardening. For example, some techniques may double CPU
+        consumption, which would be acceptable in limited situations.
 
 -   The rules for determining whether code will pass compile-time safety
     checking should be articulable, documented, and easy to understand.
