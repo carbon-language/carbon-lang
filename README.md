@@ -136,11 +136,3 @@ compatibility and interoperability with C++:
 the language as well as large-scale migration for users.** This is extremely
 expensive, and so the bar for Carbon to be a compelling direction for C++ is
 very high.
-
-## Repository structure overview
-
-Carbon's main repositories are:
-
--   **carbon-lang** - Carbon language specification and documentation.
--   **carbon-toolchain** - Carbon language toolchain and reference
-    implementation.

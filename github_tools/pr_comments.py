@@ -285,7 +285,7 @@ def _parse_args(args=None):
     )
     parser.add_argument(
         "--repo",
-        choices=["carbon-lang", "carbon-toolchain"],
+        choices=["carbon-lang"],
         default="carbon-lang",
         help="The Carbon repo to query. Defaults to %(default)s.",
     )
