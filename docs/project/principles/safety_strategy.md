@@ -149,8 +149,8 @@ wherein each has a specific focus and will be treated as its own ABI:
     measurably affect performance.
 
 -   A **hardened** build mode for security-sensitive appliations. This will
-    prioritize catching _all_ safety issues, which requires significant
-    performance sacrifices.
+    prioritize providing hardening for _all_ safety issues, which requires
+    significant performance sacrifices.
 
 The addition of further safety-oriented build modes may occur based on safety
 versus performance trade-offs, but three is considered the likely long-term
@@ -213,16 +213,14 @@ developers who cannot invest into safety-specific code modifications.
 
 -   Each build mode will treat safety differently based on its priority.
 
-    -   The debug build mode should provide high-probability runtime diagnostics
-        for the most common safety violations. Supplemental build modes may be
-        offered to cover safety violations which are too expensive to detect by
-        default, even for a development build.
+    -   The debug build mode will provide high-probability runtime diagnostics
+        for the most common safety violations.
 
     -   The performance build mode will provide runtime mitigations for safety
         violations when they don't have measurable performance impact for hot
         path application code.
 
-    -   The hardened build mode will detect safety issues consistently. It is
+    -   The hardened build mode will mitigate safety issues consistently. It is
         acceptable for this to have techniques that dramatically reduce
         performance.
 
@@ -246,6 +244,11 @@ developers who cannot invest into safety-specific code modifications.
     -   Standard cross-ABI interfaces will exist in Carbon, and will need to be
         used by developers interested in combining libraries built under
         different build modes.
+
+-   Runtime safety hardening and mitigations will typically terminate the
+    program in response to safety issues, because they indicate a logic error
+    and recovery would leave a program in an unpredictable state. Safety issues
+    will still be bugs, even if they're prevented from becoming a security hole.
 
 -   Developers need a strong testing methodology to engineer correct software.
     Carbon will encourage testing and then leverage it with the checking build
@@ -567,9 +570,11 @@ and are ultimately similar, are:
     -   "Fast" would be okay, but "performance" aligns better with the language
         goals.
 
--   "Hardened" is our best choice for succinctly describing the additional
-    hardening, even though it could be incorrectly inferred that "performance"
-    has no hardening.
+-   "Hardened" is the choice for succinctly describing the additional safety
+    measures that will be taken, and is a well-known term in the safety space.
+    It could be incorrectly inferred that "performance" has no hardening, but
+    the preference is to clearly indicate the priority of the "hardened" build
+    mode.
 
     -   "Safe" implies something closer to guaranteed safety. However, safety
         bugs should be expected to result in program termination, which can
@@ -578,7 +583,17 @@ and are ultimately similar, are:
     -   "Mitigated" is an overloaded, and it may not be succinctly clear that
         it's about security mitigations.
 
--   Overall avoided are:
+-   Some terms which were considered and don't fit well into the above groups
+    are:
 
     -   "Release" is avoided because both "performance" and "hardened" could be
         considered to be "release" build modes.
+
+The names "performance" and "hardened" may lead to misinterpretations, with some
+developers which should use "hardened" using "performance" because they are
+worried about giving up too much performance, and the other way around. The
+terms try to balance the utility of well-known terminology with the succinctness
+of a short phrase for build modes, and that limits the expressivity. Some
+confusion is expected, and documentation as well as real-world experience (for
+example, a developer whom cares about latency benchmarking both builds) should
+be expected to help mitigate mix-ups.
