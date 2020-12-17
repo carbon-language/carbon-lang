@@ -18,11 +18,16 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [Details](#details)
     -   [Incremental work when safety requires work](#incremental-work-when-safety-requires-work)
     -   [Using build modes to manage safety checks](#using-build-modes-to-manage-safety-checks)
+        -   [Debug](#debug)
+        -   [Performance](#performance)
+        -   [Hardened](#hardened)
     -   [Managing bugs without compile-time safety](#managing-bugs-without-compile-time-safety)
 -   [Alternatives considered](#alternatives-considered)
-    -   [Guaranteed safety by default (Rust's model)](#guaranteed-safety-by-default-rusts-model)
-    -   [Runtime lifetime safety and compile-time enforced safety otherwise (Swift's model)](#runtime-lifetime-safety-and-compile-time-enforced-safety-otherwise-swifts-model)
-    -   [Runtime lifetime safety and defined behavior (Java's model)](#runtime-lifetime-safety-and-defined-behavior-javas-model)
+    -   [Alternative models](#alternative-models)
+        -   [Guaranteed safety by default (Rust's model)](#guaranteed-safety-by-default-rusts-model)
+        -   [Runtime lifetime safety and compile-time enforced safety otherwise (Swift's model)](#runtime-lifetime-safety-and-compile-time-enforced-safety-otherwise-swifts-model)
+        -   [Runtime lifetime safety and defined behavior (Java's model)](#runtime-lifetime-safety-and-defined-behavior-javas-model)
+    -   [Build mode names](#build-mode-names)
 
 <!-- tocstop -->
 
@@ -131,28 +136,32 @@ adjusting edge-case performance characteristics.
 Carbon will favor compile-time safety checks because catching issues early will
 make applications more reliable. Runtime checks, either error detection or
 safety hardening, will be enabled where safety cannot be proven at compile-time.
-Over time, [Carbon's evolution](../goals.md#software-and-language-evolution)
-should use this hybrid safety check approach to provide a similar level of
-safety to a statically checked language, such as Rust.
 
-Performance (including speed, binary size, and memory size) concerns will lead
-to multiple build modes:
+There will be a split of build modes driven by runtime safety approaches,
+wherein each has a specific focus and will be treated as its own ABI:
 
--   A main development build mode with safety enabled to provide a balance with
-    performance for fast development.
+-   A **debug** build mode for routine development. This will balance fast
+    development and testing with the need for reliable detection and easy
+    debugging of safety issues.
 
-    -   Additional development testing build modes that can be used with tests
-        and fuzzing to run more performance-intensive safety checks.
+-   A **performance** build mode for most application releases. This will focus
+    on maintaining high performance. It will enable hardening where it does not
+    measurably affect performance.
 
--   An optimized release build mode with non-performance-impacting runtime
-    safety enabled by default.
+-   A **hardened** build mode for security-sensitive appliations. This will
+    prioritize catching _all_ safety issues, which requires significant
+    performance sacrifices.
 
-    -   Safety tuning options will be available for application-specific
-        trade-offs between performance, error detection, and hardening.
+The addition of further safety-oriented build modes may occur based on safety
+versus performance trade-offs, but three is considered the likely long-term
+stable outcome.
 
-Carbon will _encourage_ developers to enable more safety checks in their code,
-and be ready to support them if they do, but will also improve safety for code
-for developers who cannot make the same investment.
+Over time, safety should [evolve](../goals.md#software-and-language-evolution)
+using a hybrid compile-time and runtime safety approach to provide a similar
+level of safety to a statically checked language, such as Rust. However, while
+Carbon may _encourage_ developers to modify code in support of more efficient
+safety checks, it will remain important to improve the safety of code for
+developers who cannot invest into safety-specific code modifications.
 
 ## Principles
 
@@ -190,33 +199,53 @@ for developers who cannot make the same investment.
         Carbon's safety design takes a different approach.
 
     -   Carbon's safety should degrade gracefully when Carbon code calls C++
-        code. Applications should be expected to use interoperability. Although
-        some safety features will be Carbon-specific, safety should not stop at
-        the language boundary.
+        code, although this may require use of the Carbon toolchain to compile
+        the C++ code. Applications should be expected to use interoperability.
+        Although some safety features will be Carbon-specific, safety should not
+        stop at the language boundary.
 
--   The development build mode should prioritize detection of safety issues over
-    performance, whereas optimized release builds put
-    [performance first](../goals.md#performance-critical-software).
+-   The rules for determining whether code will pass compile-time safety
+    checking should be articulable, documented, and easy to understand.
 
-    -   Compile-time safety checks should be the same across build modes.
+    -   Compile-time safety checks should be not change significant across
+        different build modes. The purpose of the build modes are to determine
+        code generation.
 
-    -   Development builds should provide high-probability runtime diagnostics
+-   Each build mode will treat safety differently based on its priority.
+
+    -   The debug build mode should provide high-probability runtime diagnostics
         for the most common safety violations. Supplemental build modes may be
         offered to cover safety violations which are too expensive to detect by
         default, even for a development build.
 
-    -   The default optimized release build will provide runtime mitigations for
-        safety violations when they don't have measurable performance impact for
-        hot path application code.
+    -   The performance build mode will provide runtime mitigations for safety
+        violations when they don't have measurable performance impact for hot
+        path application code.
 
-    -   Safety options for the optimized release build will support non-default
-        choices about the trade-off between performance (including speed, binary
-        size, and memory size) and measurably expensive error detection and
-        safety hardening. For example, some techniques may double CPU
-        consumption, which would be acceptable in limited situations.
+    -   The hardened build mode will detect safety issues consistently. It is
+        acceptable for this to have techniques that dramatically reduce
+        performance.
 
--   The rules for determining whether code will pass compile-time safety
-    checking should be articulable, documented, and easy to understand.
+    -   Although tuning options may be supported, first-class support will be on
+        the primary three build modes.
+
+-   Any further build modes beyond the noted three will need to be carefully
+    evaluated for merging into one of the the primary three.
+
+    -   For example, Carbon may add build modes for particularly expensive
+        sanitizers, to improve error detection in tests. However, making an
+        additional sanitizer build mode useful would require developers test
+        under both debug and sanitizer build modes; that is expected to be
+        easily forgotten by developers, and less-effective sanitizers that can
+        be integrated into the debug build mode are expected to catch issues
+        more frequently, and will be preferred.
+
+-   Each distinct safety-related build mode (debug, performance, and hardening)
+    should be treated as its own ABI.
+
+    -   Standard cross-ABI interfaces will exist in Carbon, and will need to be
+        used by developers interested in combining libraries built under
+        different build modes.
 
 -   Developers need a strong testing methodology to engineer correct software.
     Carbon will encourage testing and then leverage it with the checking build
@@ -255,47 +284,56 @@ alternative is a less-comprehensive approach.
 Carbon will likely start in a state where most safety checks are done at
 runtime. However, runtime detection of safety violations remains expensive. In
 order to make as many safety checks as possible available to developers, Carbon
-will adopt a strategy based on multiple build modes that separate out expensive
-runtime checks to where they're feasible to run from a performance perspective.
+will adopt a strategy based on multiple build modes that target key use-cases.
 
-The main development build mode will emphasize debugability of both bugs and
-safety issues. This means it needs to perform well enough to be run as part of
-the normal developer workflow, but does not need to have the performance of an
-optimized release build. This mode should run runtime checks for the most common
-safety issues. Developers should do most of their testing in this build mode.
+#### Debug
 
-Some safety checks will still be considered too expensive to run in the main
-development build mode, particularly in combination with each other. These
-checks will be placed into supplemental development build modes that will
-collectively provide more comprehensive safety checks for the codebase as a
-whole.
+The debug build mode targets develoeprs who are iterating on code and running
+tests. It will emphasize debugability of both bugs and safety issues.
 
-All development build modes will place a premium on the debugability of safety
+It needs to perform well enough to be run frequently by developers, but will
+make performance sacrifices to catch more safety issues. This mode should have
+runtime checks for the most common safety issues, but it can make trade-offs
+that improve performance in exchange for less frequent, but still reliability,
+detection. Developers should do most of their testing in this build mode.
+
+The debug build mode will place a premium on the debugability of safety
 violations. Where safety checks rely on hardening instead of guaranteed safety,
 violations should be detected with a high probability per single occurrence of
 the bug. Detected bugs will be accompanied by a detailed diagnostic report to
 ease developer bug-finding.
 
-The optimized release build mode will emphasize performance; as a consequence,
-fewer safety checks will be run, and those that are can be expected to provide
-less diagnostic information. Only safety techniques which don't measurably
-impact application hot path performance will be enabled by default. This is a
-very high bar, but is crucial for meeting Carbon's performance goals, as well as
-allowing migration of existing C++ systems which may not have been designed with
-Carbon's safety semantics in mind.
+#### Performance
 
-Different applications will have different tolerances for performance overhead,
-so build modes will also allow developers to choose the balance that meets their
-application's hardening versus performance needs.
+The performance build mode targets the average developer who wants high
+performance from Carbon code, where performance considers processing time,
+memory, and disk space. Trade-offs will be made that maximize the performance.
 
-For example, a possible approach to integer overflow might:
+Only safety techniques which don't measurably impact application hot path
+performance will be enabled by default. This is a very high bar, but is crucial
+for meeting Carbon's performance goals, as well as allowing migration of
+existing C++ systems which may not have been designed with Carbon's safety
+semantics in mind.
 
--   Check and trap in the development build mode.
--   Be unchecked and wrap in the optimized release mode, for performance.
--   Have an option to enable trapping in the optimized release mode, for
-    safety-critical applications.
--   Provide integer types that either always wrap, for libraries requiring that
-    behavior, or always trap, for safety-critical libraries.
+#### Hardened
+
+The hardened build mode targets developers who are ready to sacrifice
+performance in order to improve safety. It will run as many safety checks as it
+can, even with significant performance overheads. It should be expected to
+detect safety issues _consistently_, in ways that attackers cannot work around.
+
+The hardened build mode will prefer non-probabilistic techniques because it's
+assumed that attackers can manipulate probabilities. For example, a detection
+technique may be able to detect safety issues with a 95% chance per memory
+operation assuming random memory locations. However, an attacker may be able to
+cause memory allocations that result in non-random memory locations, which may
+be usable to reliably evade the probabilistic detection.
+
+Consequently, probabilistic techniques will only be used where either it can be
+proven conclusively that attackers cannot manipulate the probabilities (which is
+typically infeasible to prove), or where performance overheads of
+non-probabilistic detection are infeasible, even given the assumed lower
+performance of the hardened build mode.
 
 ### Managing bugs without compile-time safety
 
@@ -348,13 +386,12 @@ degree of static checking may be better suited.
 
 ## Alternatives considered
 
-When considering alternatives, they are evaluated against what can secure the
-optimized release build mode. Some techniques may have performance implications
-which are too expensive to use in the optimized release build, while still
-offering inspiring techniques for catching safety violations in development
-build modes.
+### Alternative models
 
-### Guaranteed safety by default (Rust's model)
+When considering models, they must be adoptable without hindering performance
+builds. Carbon will not create build mode-specific programming models.
+
+#### Guaranteed safety by default (Rust's model)
 
 Carbon could provide guaranteed safety by default. With Rust as an example, this
 would require a combination of compile-time and runtime memory safety
@@ -425,10 +462,15 @@ burden on C++ developers:
 -   Don't offer safety guarantees for data races, eliminating `RefCell`.
     -   This would likely not avoid the need for `Rc` or `Arc`, and wouldn't
         substantially reduce the complexity.
--   Require manual destruction of `Rc`, allowing safety guarantees to be
-    disabled in optimized release builds for better performance.
-    -   This is closer to a decision to _not_ provide guaranteed safety, but
-        would still require redesigning C++ code.
+-   Require manual destruction of `Rc`, allowing safety checks to be disabled in
+    the performance build mode to eliminate overhead.
+    -   This still requires redesigning C++ code to take advantage of `Rc`.
+    -   The possibility of incorrect manual destruction means that the safety
+        issue is being turned into a bug, which means it is hardening and no
+        longer a safety guarantee.
+    -   Carbon can provide equivalent hardening through techniques such as
+        [MarkUs](https://www.cl.cam.ac.uk/~tmj32/papers/docs/ainsworth20-sp.pdf),
+        which does not require redesigning C++ code.
 
 Overall, Carbon is making a compromise around safety in order to give a path for
 C++ to evolve. C++ developers must be comfortable migrating their codebases, and
@@ -444,7 +486,7 @@ need to be considered in the context of other goals. It should still be possible
 to adopt guaranteed safety later, although it will require identifying a
 migration path.
 
-### Runtime lifetime safety and compile-time enforced safety otherwise (Swift's model)
+#### Runtime lifetime safety and compile-time enforced safety otherwise (Swift's model)
 
 Carbon could provide runtime lifetime safety with no data race prevention,
 mirroring Swift's model. This only requires compile-time enforcement of the
@@ -477,7 +519,7 @@ versus performance trade-offs that it makes fit Apple's priorities. Carbon's
 performance goals should lead to different trade-off decisions with a higher
 priority on peak performance.
 
-### Runtime lifetime safety and defined behavior (Java's model)
+#### Runtime lifetime safety and defined behavior (Java's model)
 
 Another approach to safety is to largely provide defined and predictable
 behavior for all potential safety violations, which is what Java does (at the
@@ -504,3 +546,39 @@ Disadvantages:
 Carbon's performance goals prioritize reliability of performance. The
 unpredictable performance impacts of a garbage collector make it a less
 desirable choice.
+
+### Build mode names
+
+The build mode concepts are difficult to name. Other names that were evaluated,
+and are ultimately similar, are:
+
+-   "Debug" is a common term for the intended use of this build mode. Also,
+    tooling including Visual Studio frequently uses the debug term for
+    describing similar.
+
+    -   "Development" was also considered, but could be less focused on the
+        primary goal.
+
+-   "Performance" aligns with the phrasing of the language performance goal.
+
+    -   "Optimized" implies that other modes would not be fully optimized, but
+        hardened should be optimized.
+
+    -   "Fast" would be okay, but "performance" aligns better with the language
+        goals.
+
+-   "Hardened" is our best choice for succinctly describing the additional
+    hardening, even though it could be incorrectly inferred that "performance"
+    has no hardening.
+
+    -   "Safe" implies something closer to guaranteed safety. However, safety
+        bugs should be expected to result in program termination, which can
+        still be used in other attacks, such as Denial-of-Service.
+
+    -   "Mitigated" is an overloaded, and it may not be succinctly clear that
+        it's about security mitigations.
+
+-   Overall avoided are:
+
+    -   "Release" is avoided because both "performance" and "hardened" could be
+        considered to be "release" build modes.
