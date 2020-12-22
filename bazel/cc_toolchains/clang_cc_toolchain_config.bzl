@@ -80,6 +80,7 @@ def _impl(ctx):
         tool_path(name = "objcopy", path = llvm_bindir + "/llvm-objcopy"),
         tool_path(name = "objdump", path = llvm_bindir + "/llvm-objdump"),
         tool_path(name = "strip", path = llvm_bindir + "/llvm-strip"),
+        tool_path(name = "format", path = llvm_bindir + "/clang-format"),
     ]
 
     action_configs = [
