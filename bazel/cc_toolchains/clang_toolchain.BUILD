@@ -20,8 +20,24 @@ filegroup(
 cc_toolchain_suite(
     name = "bazel_cc_toolchain",
     toolchains = {
+        "darwin": ":cc-compiler-darwin",
         "k8": ":cc-compiler-k8",
     },
+)
+
+cc_toolchain(
+    name = "cc-compiler-darwin",
+    all_files = ":empty",
+    ar_files = ":empty",
+    as_files = ":empty",
+    compiler_files = ":empty",
+    dwp_files = ":empty",
+    linker_files = ":empty",
+    objcopy_files = ":empty",
+    strip_files = ":empty",
+    supports_param_files = 1,
+    toolchain_config = ":local",
+    toolchain_identifier = "local",
 )
 
 cc_toolchain(
