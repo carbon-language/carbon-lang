@@ -2,4 +2,8 @@
 # Exceptions. See /LICENSE for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-exports_files(["template.md"])
+filegroup(
+    name = "md_files",
+    srcs = glob(["*.md"]),
+    visibility = ["//proposals/scripts:__pkg__", "//website/jekyll:__pkg__"],
+)
