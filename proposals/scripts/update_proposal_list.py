@@ -10,15 +10,19 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 import io
 import os
+import importlib.util
 import re
 import sys
 
-# To support direct runs, ensure the pythonpath has the repo root.
-_PYTHONPATH = os.path.realpath(os.path.join(os.path.dirname(__file__), "../.."))
-if _PYTHONPATH not in sys.path:
-    sys.path.insert(0, _PYTHONPATH)
-
-from proposals.scripts import proposals
+# Do some extra work to support direct runs.
+try:
+    from carbon.proposals.scripts import proposals
+except ImportError:
+    proposals_spec = importlib.util.spec_from_file_location(
+        "proposals", os.path.join(os.path.dirname(__file__), "proposals.py")
+    )
+    proposals = importlib.util.module_from_spec(proposals_spec)
+    proposals_spec.loader.exec_module(proposals)
 
 if __name__ == "__main__":
     proposals_path = proposals.get_path()

@@ -9,9 +9,3 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 Scripts for use with GitHub.
 
 See individual scripts for more details.
-
-Please use `pytest` for testing:
-
-```
-$ pip install pytest
-```

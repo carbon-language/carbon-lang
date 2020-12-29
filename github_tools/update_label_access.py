@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-
 """Updates the contributors-with-label-access team.
 
 This team exists because we need a team to manage triage access to repos;
@@ -14,25 +12,18 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 """
 
 import argparse
-import os
-import sys
 
 # https://github.com/PyGithub/PyGithub
 # GraphQL is preferred, but falling back to pygithub for unsupported mutations.
 import github
 
-# To support direct runs, ensure the pythonpath has the repo root.
-_PYTHONPATH = os.path.realpath(os.path.join(os.path.dirname(__file__), ".."))
-if _PYTHONPATH not in sys.path:
-    sys.path.insert(0, _PYTHONPATH)
-
-from github_tools import github_helpers
+from carbon.github_tools import github_helpers
 
 # The organization to mirror members from.
 _ORG = "carbon-language"
 
 # The team to mirror to.
-_TEAM = "contributors-with-label-access"
+_TEAM = "contributors"
 
 # Accounts in the org to skip mirroring.
 _IGNORE_ACCOUNTS = ("CarbonLangInfra", "google-admin", "googlebot")
