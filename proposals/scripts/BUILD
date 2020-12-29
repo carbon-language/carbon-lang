@@ -7,23 +7,28 @@ load("@rules_python//python:defs.bzl", "py_binary", "py_library", "py_test")
 py_library(
     name = "proposals",
     srcs = ["proposals.py"],
+    visibility = ["//website/jekyll:__pkg__"],
 )
 
 py_test(
     name = "proposals_test",
     srcs = ["proposals_test.py"],
+    data = ["//proposals:md_files"],
+    python_version = "PY3",
     deps = [":proposals"],
 )
 
 py_binary(
     name = "new_proposal",
     srcs = ["new_proposal.py"],
+    python_version = "PY3",
 )
 
 py_test(
     name = "new_proposal_test",
     srcs = ["new_proposal_test.py"],
-    data = ["//proposals:template.md"],
+    data = ["//proposals:md_files"],
+    python_version = "PY3",
     deps = [":new_proposal"],
 )
 

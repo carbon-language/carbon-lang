@@ -6,10 +6,9 @@ Exceptions. See /LICENSE for license information.
 SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 """
 
-import os
 import unittest
 
-from website.jekyll import gen_sidebar
+from carbon.website.jekyll import gen_sidebar
 
 
 class TestGenSidebar(unittest.TestCase):
@@ -18,13 +17,9 @@ class TestGenSidebar(unittest.TestCase):
 
     def test_get_title(self):
         self.assertEqual(
-            gen_sidebar._get_title(os.path.dirname(__file__), "README.md"),
-            "Jekyll",
+            gen_sidebar._get_title(gen_sidebar._TOP_DIR, "README.md"),
+            "Carbon language",
         )
-
-    def test_get_top(self):
-        top = gen_sidebar.get_top()
-        self.assertGreater(len(top), 3)
 
     def _assert_and_get_subdir(self, dirs, rel_dir, title, readme_path):
         """Validates a subdir entry and returns it for further checks."""
@@ -39,7 +34,7 @@ class TestGenSidebar(unittest.TestCase):
         return subdir
 
     def test_crawl(self):
-        dirs = gen_sidebar.crawl(gen_sidebar.get_top())
+        dirs = gen_sidebar.crawl(gen_sidebar._TOP_DIR)
 
         # Essential ordering.
         self.assertEqual(dirs[0].rel_dir, ".")
@@ -139,3 +134,7 @@ class TestGenSidebar(unittest.TestCase):
             "\n    </ul>"
             "\n  </li>" % format_args,
         )
+
+
+if __name__ == "__main__":
+    unittest.main()
