@@ -5,5 +5,9 @@
 filegroup(
     name = "md_files",
     srcs = glob(["*.md"]),
-    visibility = ["//proposals/scripts:__pkg__", "//website/jekyll:__pkg__"],
+    visibility = [
+        "//proposals/scripts:__pkg__",
+        "//website/jekyll:__pkg__",
+        "//website/jekyll/site/proposals/scripts:__pkg__",
+    ],
 )
