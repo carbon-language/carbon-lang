@@ -10,10 +10,15 @@ import os
 import unittest
 from unittest import mock
 
-from github_tools import pr_comments
+from carbon.github_tools import github_helpers
+from carbon.github_tools import pr_comments
 
 
 class TestPRComments(unittest.TestCase):
+    def setUp(self):
+        # Stub out the access token.
+        os.environ[github_helpers._ENV_TOKEN] = "unused"
+
     def test_format_comment_short(self):
         created_at = "2001-02-03T04:05:06Z"
         self.assertEqual(
