@@ -6,16 +6,21 @@ Exceptions. See /LICENSE for license information.
 SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 """
 
-import github
+import os
 import unittest
 from unittest import mock
 
-from github_tools import github_helpers
-from github_tools import update_label_access
+import github
+
+from carbon.github_tools import github_helpers
+from carbon.github_tools import update_label_access
 
 
 class TestUpdateLabelAccess(unittest.TestCase):
     def setUp(self):
+        # Stub out the access token.
+        os.environ[github_helpers._ENV_TOKEN] = "unused"
+
         self.client = mock.create_autospec(github_helpers.Client, instance=True)
         self.gh = mock.create_autospec(github.Github, instance=True)
         self.gh_org = mock.create_autospec(github.Organization, instance=True)

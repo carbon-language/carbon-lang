@@ -8,7 +8,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 import unittest
 
-from proposals.scripts import proposals
+from carbon.proposals.scripts import proposals
 
 
 class TestProposal(unittest.TestCase):
