@@ -21,8 +21,13 @@ See [Jekyll install instructions](https://jekyllrb.com/docs/installation/)
 
 ## Testing changes
 
-Run `make run` and go to `localhost:4000`.
+Manual testing of the site can be done two ways:
+
+-   `bazel build :jekyll_site.tgz` can be used to view file contents.
+-   `bazel run :serve` can be used to run a server.
 
 ## Pushing changes
 
-Jekyll changes are autopushed by `/.github/workflows/publish-docs.yaml`.
+`bazel run :publish`
+
+Note this updates the live site.
