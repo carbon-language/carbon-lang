@@ -2,7 +2,6 @@
 # Exceptions. See /LICENSE for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-# Top-level content for the website.
 filegroup(
     name = "website_content",
     srcs = glob(["**/*.md"]),
