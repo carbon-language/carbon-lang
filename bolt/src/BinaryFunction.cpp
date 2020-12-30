@@ -101,6 +101,15 @@ JumpTables("jump-tables",
   cl::ZeroOrMore,
   cl::cat(BoltOptCategory));
 
+static cl::opt<bool>
+NoScan("no-scan",
+  cl::desc("do not scan cold functions for external references (may result in "
+           "slower binary)"),
+  cl::init(false),
+  cl::ZeroOrMore,
+  cl::Hidden,
+  cl::cat(BoltOptCategory));
+
 cl::opt<bool>
 PreserveBlocksAlignment("preserve-blocks-alignment",
   cl::desc("try to preserve basic block alignment"),
@@ -1392,6 +1401,13 @@ bool BinaryFunction::scanExternalRefs() {
   // Ignore pseudo functions.
   if (isPseudo())
     return Success;
+
+  if (opts::NoScan) {
+    clearList(Relocations);
+    clearList(ExternallyReferencedOffsets);
+
+    return false;
+  }
 
   // List of external references for this function.
   std::vector<Relocation> FunctionRelocations;

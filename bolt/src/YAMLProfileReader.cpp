@@ -278,6 +278,19 @@ Error YAMLProfileReader::preprocessProfile(BinaryContext &BC) {
   // Match profile to function based on a function name.
   buildNameMaps(BC.getBinaryFunctions());
 
+  // Preliminary assign function execution count.
+  for (auto &KV : BC.getBinaryFunctions()) {
+    BinaryFunction &BF = KV.second;
+    for (StringRef Name : BF.getNames()) {
+      auto PI = ProfileNameToProfile.find(Name);
+      if (PI != ProfileNameToProfile.end()) {
+        yaml::bolt::BinaryFunctionProfile &YamlBF = *PI->getValue();
+        BF.setExecutionCount(YamlBF.ExecCount);
+        break;
+      }
+    }
+  }
+
   return Error::success();
 }
 
@@ -313,6 +326,10 @@ Error YAMLProfileReader::readProfile(BinaryContext &BC) {
   // by hash. The second pass allows name ambiguity for LTO private functions.
   for (auto &BFI : BC.getBinaryFunctions()) {
     auto &Function = BFI.second;
+
+    // Clear function call count that may have been set while pre-processing
+    // the profile.
+    Function.setExecutionCount(BinaryFunction::COUNT_NO_PROFILE);
 
     // Recompute hash once per function.
     if (!opts::IgnoreHash)
@@ -378,9 +395,9 @@ Error YAMLProfileReader::readProfile(BinaryContext &BC) {
   }
 
   for (auto &YamlBF : YamlBP.Functions) {
-    if (!YamlBF.Used) {
-      errs() << "BOLT-WARNING: profile ignored for function "
-             << YamlBF.Name << '\n';
+    if (!YamlBF.Used && opts::Verbosity >= 1) {
+      errs() << "BOLT-WARNING: profile ignored for function " << YamlBF.Name
+             << '\n';
     }
   }
 
