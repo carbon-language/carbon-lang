@@ -53,5 +53,6 @@ request:
     -   [0162 - Decision](p0162_decision.md)
 -   [0175 - C++ interoperability goals](p0175.md)
     -   [0175 - Decision](p0175_decision.md)
+-   [0235 - Design guidance for safety checking syntax](p0235.md)
 
 <!-- endproposals -->
