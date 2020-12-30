@@ -19,7 +19,7 @@ from carbon.proposals.scripts import proposals
 
 
 # The top directory for the crawl.
-_TOP_DIR = "website/jekyll/site/"
+_TOP_DIR = "./"
 # Directories which will be completely ignored, including children.
 _IGNORE_DIRS = ["github", "third_party", "website"]
 # Directories which will be ignored, but children will be crawled.

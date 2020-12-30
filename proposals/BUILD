@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 filegroup(
-    name = "md_files",
+    name = "website_content",
     srcs = glob(["*.md"]),
     visibility = ["//proposals/scripts:__pkg__", "//website/jekyll:__pkg__"],
 )

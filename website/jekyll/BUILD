@@ -5,14 +5,13 @@
 load("@rules_python//python:defs.bzl", "py_binary", "py_library", "py_test")
 
 filegroup(
-    name = "site",
-    srcs = glob(["site/**"]) +
-    # Use the website alias of the target.
-    # TODO: This may be a good reason to get rid of the site/ symlinks, but that
-    # may be difficult to do with jekyll.
-    [
-        "//website/jekyll/site/proposals:md_files",
-    ],
+    name = "website_content",
+    srcs = [
+        "licenses.md",
+        "//:website_content",
+        "//docs:website_content",
+        "//proposals:website_content",
+    ] + glob(["theme/**"]),
 )
 
 filegroup(
@@ -34,13 +33,13 @@ py_binary(
 py_test(
     name = "gen_sidebar_test",
     srcs = ["gen_sidebar_test.py"],
-    data = [":site"],
+    data = [":website_content"],
     deps = [":gen_sidebar"],
 )
 
 genrule(
     name = "gen_sidebar_html",
-    srcs = [":site"],
+    srcs = [":website_content"],
     outs = ["gen_sidebar.html"],
     cmd = "$(location :gen_sidebar) > $@",
     tools = [":gen_sidebar"],
@@ -50,7 +49,7 @@ genrule(
     name = "jekyll_site_tgz",
     srcs = [
         ":configs",
-        ":site",
+        ":website_content",
         ":gen_sidebar.html",
     ],
     outs = ["jekyll_site.tgz"],
