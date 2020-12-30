@@ -19,7 +19,7 @@ fi
 export TMP_SITE="$(mktemp -d)"
 function cleanup {
   echo "Removing ${TMP_SITE}"
-  #rm -rf "${TMP_SITE}"
+  rm -rf "${TMP_SITE}"
 }
 trap cleanup EXIT
 
