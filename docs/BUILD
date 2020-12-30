@@ -2,8 +2,9 @@
 # Exceptions. See /LICENSE for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
+# Top-level content for the website.
 filegroup(
     name = "website_content",
-    srcs = glob(["*.md"]),
-    visibility = ["//proposals/scripts:__pkg__", "//website/jekyll:__pkg__"],
+    srcs = glob(["**/*.md"]),
+    visibility = ["//website/jekyll:__pkg__"],
 )
