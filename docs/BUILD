@@ -4,6 +4,6 @@
 
 filegroup(
     name = "website_content",
-    srcs = glob(["*"]),
+    srcs = glob(["**/*.md"]),
     visibility = ["//website/jekyll:__pkg__"],
 )

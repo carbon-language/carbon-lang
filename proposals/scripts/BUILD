@@ -13,7 +13,7 @@ py_library(
 py_test(
     name = "proposals_test",
     srcs = ["proposals_test.py"],
-    data = ["//proposals:md_files"],
+    data = ["//proposals:website_content"],
     python_version = "PY3",
     deps = [":proposals"],
 )
@@ -27,7 +27,7 @@ py_binary(
 py_test(
     name = "new_proposal_test",
     srcs = ["new_proposal_test.py"],
-    data = ["//proposals:md_files"],
+    data = ["//proposals:website_content"],
     python_version = "PY3",
     deps = [":new_proposal"],
 )
