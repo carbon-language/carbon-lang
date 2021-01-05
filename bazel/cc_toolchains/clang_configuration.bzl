@@ -9,6 +9,21 @@ configured values into a `clang_detected_variables.bzl` file that can be used
 by the actual toolchain configuration.
 """
 
+# Tools that we verify are present as part of the detected Clang & LLVM toolchain.
+_CLANG_LLVM_TOOLS = [
+    "llvm-ar",
+    "ld.lld",
+    "clang-cpp",
+    "clang",
+    "clang++",
+    "llvm-dwp",
+    "llvm-cov",
+    "llvm-nm",
+    "llvm-objcopy",
+    "llvm-strip",
+    "clang-format",
+]
+
 def _run(repository_ctx, cmd):
     """Runs the provided `cmd`, checks for failure, and returns the result."""
     exec_result = repository_ctx.execute(cmd)
@@ -87,6 +102,7 @@ def _configure_clang_toolchain_impl(repository_ctx):
         repository_ctx.attr._clang_cc_toolchain_config,
         "cc_toolchain_config.bzl",
     )
+    repository_ctx.symlink(repository_ctx.attr._extra_action_names, "extra_action_names.bzl")
 
     # Run the bootstrapped clang to detect relevant features for the toolchain.
     clang = repository_ctx.path(repository_ctx.attr.clang)
@@ -146,6 +162,10 @@ configure_clang_toolchain = repository_rule(
         "clang": attr.label(
             allow_single_file = True,
             mandatory = True,
+        ),
+        "_extra_action_names": attr.label(
+            default = Label("//bazel/cc_toolchains:extra_action_names.bzl"),
+            allow_single_file = True,
         ),
     },
 )

@@ -7,3 +7,9 @@ filegroup(
     srcs = glob(["*"]),
     visibility = ["//website/jekyll:__pkg__"],
 )
+
+filegroup(
+    name = "clang_format_config",
+    srcs = [".clang-format"],
+    visibility = ["//visibility:public"],
+)

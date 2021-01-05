@@ -24,6 +24,7 @@ load(
     "llvm_bindir",
     "sysroot_dir",
 )
+load("@bazel_cc_toolchain//:extra_action_names.bzl", "EXTRA_ACTION_NAMES")
 
 all_compile_actions = [
     ACTION_NAMES.c_compile,
@@ -98,6 +99,9 @@ def _impl(ctx):
     ] + [
         action_config(action_name = name, enabled = True, tools = [tool(path = llvm_bindir + "/llvm-strip")])
         for name in [ACTION_NAMES.strip]
+    ] + [
+        action_config(action_name = name, enabled = True, tools = [tool(path = llvm_bindir + "/clang-format")])
+        for name in [EXTRA_ACTION_NAMES.clang_format]
     ]
 
     default_compile_flags_feature = feature(
