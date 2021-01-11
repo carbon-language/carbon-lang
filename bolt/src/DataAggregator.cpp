@@ -2057,7 +2057,8 @@ std::error_code DataAggregator::parseMMapEvents() {
       for (auto &KV : BC->SegmentMapInfo) {
         auto &SegInfo = KV.second;
         const auto MapAddress = alignDown(SegInfo.Address, SegInfo.Alignment);
-        if (I->second.BaseAddress == MapAddress) {
+        if (I->second.BaseAddress == MapAddress ||
+            I->second.BaseAddress == SegInfo.Address) {
           MatchFound = true;
           break;
         }
