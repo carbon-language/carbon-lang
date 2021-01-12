@@ -172,7 +172,8 @@ developers who cannot invest into safety-specific code modifications.
 
 -   Safety must be
     [easy to ramp-up with](../goals.md#code-that-is-easy-to-read-understand-and-write),
-    even if it means new developers may only get some extra safety.
+    even if it means new developers don't receive the full safety that Carbon
+    can offer.
 
     -   Developers should benefit from Carbon's safety without needing to learn
         and apply Carbon-specific design patterns. Some safety should be enabled
@@ -180,10 +181,16 @@ developers who cannot invest into safety-specific code modifications.
         require work to opt in. Developers concerned with performance should
         only need to work to disable safety in rare edge-cases.
 
-    -   Where there is a choice between safe and unsafe, the safe option should
-        be incentivized by making it equally or more easy to use. If there is a
-        default, it should be the safe option. It should be identifiable when
-        the unsafe option is used.
+    -   Where there is a choice between safety approaches, the safe option
+        should be incentivized by making it equally or more easy to use. If
+        there is a default, it should be the safe option. It should be
+        identifiable when the unsafe option is used. Incentives will prioritize,
+        in order:
+
+        1.  Guaranteed safety.
+        2.  Error detection.
+        3.  Safety hardening.
+        4.  Unsafe and unmitigated code.
 
     -   Language design choices should allow more efficient implementations of
         safety checks. They should also allow better automation of testing and
@@ -309,7 +316,7 @@ The debug build mode will place a premium on the debugability of safety
 violations. Where safety checks rely on hardening instead of guaranteed safety,
 violations should be detected with a high probability per single occurrence of
 the bug. Detected bugs will be accompanied by a detailed diagnostic report to
-ease developer bug-finding.
+ease bug finding and classification.
 
 #### Performance
 
