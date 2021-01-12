@@ -81,7 +81,8 @@ in terms of how they prevent attacks:
     runtime. For example:
 
     -   At compile-time, range-based for loops offer a spatial safety guarantee
-        that out-of-bounds issues cannot exist in the absence of concurrent modification of the sequence.
+        that out-of-bounds issues cannot exist in the absence of concurrent
+        modification of the sequence.
 
     -   At runtime, garbage collected languages offer a temporal safety
         guarantee because objects cannot be freed while there's still a
@@ -428,9 +429,9 @@ Disadvantages:
         linked lists.
 -   Imitating Rust's techniques may prove insufficient for achieving Carbon's
     [compiler performance goals](../goals.md#fast-and-scalable-development).
-    Rust compilation performance suggests its borrow checking performance is slow, although
-    it's difficult to determine how significant this is or whether it could be
-    improved.
+    Rust compilation performance suggests its borrow checking performance is
+    slow, although it's difficult to determine how significant this is or
+    whether it could be improved.
     -   The Rust compiler
         [is slow](https://pingcap.com/blog/rust-compilation-model-calamity),
         although
@@ -580,8 +581,8 @@ and are ultimately similar, are:
         bugs should be expected to result in program termination, which can
         still be used in other attacks, such as Denial-of-Service.
 
-    -   "Mitigated" is an overloaded term, and it may not be succinctly clear that
-        it's about security mitigations.
+    -   "Mitigated" is an overloaded term, and it may not be succinctly clear
+        that it's about security mitigations.
 
 -   Some terms which were considered and don't fit well into the above groups
     are:
@@ -595,5 +596,5 @@ worried about giving up too much performance, and the other way around. The
 terms try to balance the utility of well-known terminology with the succinctness
 of a short phrase for build modes, and that limits the expressivity. Some
 confusion is expected, and documentation as well as real-world experience (for
-example, a developer who cares about latency benchmarking both builds) should
-be expected to help mitigate mix-ups.
+example, a developer who cares about latency benchmarking both builds) should be
+expected to help mitigate mix-ups.
