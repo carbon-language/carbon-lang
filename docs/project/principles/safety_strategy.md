@@ -41,9 +41,12 @@ Carbon's goal is to provide
 Safety is protection from software bugs, whether the protection is required by
 the language or merely an implementation option. Application-specific logic
 errors can be prevented by testing, but can lead to security vulnerabilities in
-production; these vulnerabilities are something Carbon will protect against. The
-protections are named based on the kind of security vulnerability they protect
-against:
+production. Safety categories will be referred to using names based on the type
+of
+[security vulnerability](<https://en.wikipedia.org/wiki/Vulnerability_(computing)#Software_vulnerabilities>)
+they protect against.
+
+A key subset of safety categories Carbon should address are:
 
 -   [**Memory safety**](https://en.wikipedia.org/wiki/Memory_safety) protects
     against invalid memory accesses. We use
@@ -71,9 +74,9 @@ against:
 
 ### Safety guarantees versus hardening
 
-The underlying goal of safety is to prevent attacks from turning a _logic error_
-into a _security vulnerability_. The three ways of doing this can be thought of
-in terms of how they prevent attacks:
+In providing safety, the underlying goal is to prevent attacks from turning a
+_logic error_ into a _security vulnerability_. The three ways of doing this can
+be thought of in terms of how they prevent attacks:
 
 -   **Safety guarantees** prevent bugs. They offer a strong requirement that a
     particular security vulnerability cannot exist. Compile-time safety checks
@@ -139,7 +142,8 @@ make applications more reliable. Runtime checks, either error detection or
 safety hardening, will be enabled where safety cannot be proven at compile-time.
 
 There will be a split of build modes driven by runtime safety approaches,
-wherein each has a specific focus and will be treated as its own ABI:
+wherein each has a specific focus and cannot be combined with others in the same
+binary:
 
 -   A **debug** build mode for routine development. This will balance fast
     development and testing with the need for reliable detection and easy
@@ -214,16 +218,16 @@ developers who cannot invest into safety-specific code modifications.
 
 -   Each build mode will treat safety differently based on its priority.
 
-    -   The debug build mode will provide high-probability runtime diagnostics
-        for the most common safety violations.
+    -   The [debug build mode](#debug) will provide high-probability runtime
+        diagnostics for the most common safety violations.
 
-    -   The performance build mode will provide runtime mitigations for safety
-        violations when they don't have measurable performance impact for hot
-        path application code.
+    -   The [performance build mode](#performance) will provide runtime
+        mitigations for safety violations when they don't have measurable
+        performance impact for hot path application code.
 
-    -   The hardened build mode will mitigate safety issues consistently. It is
-        acceptable for this to have techniques that dramatically reduce
-        performance.
+    -   The [hardened build mode](#hardened) will mitigate safety issues
+        consistently, not probabilistically. It is acceptable for this to have
+        techniques that dramatically reduce performance.
 
     -   Although tuning options may be supported, first-class support will be on
         the primary three build modes.
@@ -240,10 +244,10 @@ developers who cannot invest into safety-specific code modifications.
         more frequently, and will be preferred.
 
 -   Each distinct safety-related build mode (debug, performance, and hardened)
-    should be treated as its own ABI.
+    cannot be combined with others in the same binary.
 
-    -   Standard cross-ABI interfaces will exist in Carbon, and will need to be
-        used by developers interested in combining libraries built under
+    -   Standard cross-binary interfaces will exist in Carbon, and will need to
+        be used by developers interested in combining libraries built under
         different build modes.
 
 -   Runtime safety hardening and mitigations will typically terminate the
@@ -568,8 +572,9 @@ and are ultimately similar, are:
     -   "Optimized" implies that other modes would not be fully optimized, but
         hardened should be optimized.
 
-    -   "Fast" would be okay, but "performance" aligns better with the language
-        goals.
+    -   "Fast" would suggest that speed is the only aspect of performance that
+        we are optimizing for, but "performance" also optimizes for memory usage
+        and binary size.
 
 -   "Hardened" is the choice for succinctly describing the additional safety
     measures that will be taken, and is a well-known term in the safety space.
