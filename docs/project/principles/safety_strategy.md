@@ -34,7 +34,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 ## Background
 
 Carbon's goal is to provide
-[practical safety guarantees and testing mechanisms](../goals.md#practical-safety-guarantees-and-testing-mechanisms).
+[practical safety and testing mechanisms](../goals.md#practical-safety-and-testing-mechanisms).
 
 ### What are we talking about when we discuss safety?
 
@@ -61,7 +61,7 @@ against:
         stack objects.
 
 -   [**Type safety**](https://en.wikipedia.org/wiki/Type_safety) protects
-    against accessing objects with an incorrect type, also known as "type
+    against accessing valid memory with an incorrect type, also known as "type
     confusion".
 
 -   [**Data race safety**](https://en.wikipedia.org/wiki/Race_condition#Data_race)
@@ -73,7 +73,7 @@ against:
 
 The underlying goal of safety is to prevent attacks from turning a _logic error_
 into a _security vulnerability_. The three ways of doing this can be thought of
-how to prevent attacks:
+in terms of how they prevent attacks:
 
 -   **Safety guarantees** prevent bugs. They offer a strong requirement that a
     particular security vulnerability cannot exist. Compile-time safety checks
@@ -81,7 +81,7 @@ how to prevent attacks:
     runtime. For example:
 
     -   At compile-time, range-based for loops offer a spatial safety guarantee
-        that out-of-bounds issues cannot exist.
+        that out-of-bounds issues cannot exist in the absence of concurrent modification of the sequence.
 
     -   At runtime, garbage collected languages offer a temporal safety
         guarantee because objects cannot be freed while there's still a
@@ -172,7 +172,7 @@ developers who cannot invest into safety-specific code modifications.
     -   Developers should benefit from Carbon's safety without needing to learn
         and apply Carbon-specific design patterns. Some safety should be enabled
         by default, without safety-specific work, although some safety will
-        require work to opt-in. Developers concerned with performance should
+        require work to opt in. Developers concerned with performance should
         only need to work to disable safety in rare edge-cases.
 
     -   Where there is a choice between safe and unsafe, the safe option should
@@ -207,8 +207,8 @@ developers who cannot invest into safety-specific code modifications.
 -   The rules for determining whether code will pass compile-time safety
     checking should be articulable, documented, and easy to understand.
 
-    -   Compile-time safety checks should be not change significant across
-        different build modes. The purpose of the build modes are to determine
+    -   Compile-time safety checks should not change significantly across
+        different build modes. The purpose of the build modes is to determine
         code generation.
 
 -   Each build mode will treat safety differently based on its priority.
@@ -238,7 +238,7 @@ developers who cannot invest into safety-specific code modifications.
         be integrated into the debug build mode are expected to catch issues
         more frequently, and will be preferred.
 
--   Each distinct safety-related build mode (debug, performance, and hardening)
+-   Each distinct safety-related build mode (debug, performance, and hardened)
     should be treated as its own ABI.
 
     -   Standard cross-ABI interfaces will exist in Carbon, and will need to be
@@ -272,7 +272,7 @@ when it forces developers to think about safety.
 Relying on multiple build modes to provide safety should fit into normal
 development workflows. Carbon can also have features to enable additional
 safety, so long as developers can start using Carbon in their applications
-_without_ leaning new paradigms.
+_without_ learning new paradigms.
 
 Where possible, safety checks shouldn't require work on the part of Carbon
 developers. A safety check that requires no code edits or can be handled by
@@ -291,8 +291,8 @@ will adopt a strategy based on multiple build modes that target key use-cases.
 
 #### Debug
 
-The debug build mode targets develoeprs who are iterating on code and running
-tests. It will emphasize debugability of both bugs and safety issues.
+The debug build mode targets developers who are iterating on code and running
+tests. It will emphasize debugability, especially for safety issues.
 
 It needs to perform well enough to be run frequently by developers, but will
 make performance sacrifices to catch more safety issues. This mode should have
@@ -392,7 +392,7 @@ degree of static checking may be better suited.
 ### Alternative models
 
 When considering models, they must be adoptable without hindering performance
-builds. Carbon will not create build mode-specific programming models.
+builds. Carbon will not create build-mode-specific programming models.
 
 #### Guaranteed safety by default (Rust's model)
 
@@ -428,7 +428,7 @@ Disadvantages:
         linked lists.
 -   Imitating Rust's techniques may prove insufficient for achieving Carbon's
     [compiler performance goals](../goals.md#fast-and-scalable-development).
-    Rust performance suggests its borrow checking performance is slow, although
+    Rust compilation performance suggests its borrow checking performance is slow, although
     it's difficult to determine how significant this is or whether it could be
     improved.
     -   The Rust compiler
@@ -580,7 +580,7 @@ and are ultimately similar, are:
         bugs should be expected to result in program termination, which can
         still be used in other attacks, such as Denial-of-Service.
 
-    -   "Mitigated" is an overloaded, and it may not be succinctly clear that
+    -   "Mitigated" is an overloaded term, and it may not be succinctly clear that
         it's about security mitigations.
 
 -   Some terms which were considered and don't fit well into the above groups
@@ -590,10 +590,10 @@ and are ultimately similar, are:
         considered to be "release" build modes.
 
 The names "performance" and "hardened" may lead to misinterpretations, with some
-developers which should use "hardened" using "performance" because they are
+developers who should use "hardened" using "performance" because they are
 worried about giving up too much performance, and the other way around. The
 terms try to balance the utility of well-known terminology with the succinctness
 of a short phrase for build modes, and that limits the expressivity. Some
 confusion is expected, and documentation as well as real-world experience (for
-example, a developer whom cares about latency benchmarking both builds) should
+example, a developer who cares about latency benchmarking both builds) should
 be expected to help mitigate mix-ups.
