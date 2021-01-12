@@ -313,7 +313,7 @@ The performance build mode targets the average developer who wants high
 performance from Carbon code, where performance considers processing time,
 memory, and disk space. Trade-offs will be made that maximize the performance.
 
-Only safety techniques which don't measurably impact application hot path
+Only safety techniques that don't measurably impact application hot path
 performance will be enabled by default. This is a very high bar, but is crucial
 for meeting Carbon's performance goals, as well as allowing migration of
 existing C++ systems which may not have been designed with Carbon's safety
