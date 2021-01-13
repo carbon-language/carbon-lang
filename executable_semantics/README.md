@@ -31,13 +31,13 @@ The parser translates program text into an abstract syntax tree (AST).
 
 -   [`ast.h`](./ast.h) includes structure definitions for the AST and function
     declarations for creating and printing ASTs.
--   [`ast.cc`](./ast.cc) contains the function definitions.
+-   [`ast.cpp`](./ast.cpp) contains the function definitions.
 
 The type checker defines what it means for an AST to be a valid program. The
 type checker prints an error and exits if the AST is invalid.
 
 -   [`typecheck.h`](./typecheck.h)
--   [`typecheck.cc`](./typecheck.cc)
+-   [`typecheck.cpp`](./typecheck.cpp)
 
 The parser and type checker together specify the static (compile-time)
 semantics.
@@ -60,7 +60,7 @@ it is more difficult to handle complex control flow in a definitional
 interpreter.
 
 -   [`interp.h`](./interp.h) declares the `interp_program` function.
--   [`interp.cc`](./interp.cc) implements `interp_program` function using an
+-   [`interp.cpp`](./interp.cpp) implements `interp_program` function using an
     abstract machine, as described below.
 
 The abstract machine implements a state-transition system. The state is defined
