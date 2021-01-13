@@ -1,0 +1,18 @@
+// Part of the Carbon Language project, under the Apache License v2.0 with LLVM
+// Exceptions. See /LICENSE for license information.
+// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+
+// The behavior of this program is undefined because it tries to
+// access a local variable after its lifetime is over.
+
+fn f() -> Int* {
+  var int: x;
+  x = 0;
+  return &x;
+}
+
+fn main() -> int {
+  var Ptr(int): p;
+  p = f();
+  return *p;
+}
