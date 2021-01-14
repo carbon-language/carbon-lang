@@ -162,7 +162,7 @@ versus performance trade-offs, but three is considered the likely long-term
 stable outcome.
 
 Over time, safety should [evolve](../goals.md#software-and-language-evolution)
-using a hybrid compile-time and runtime safety approach to provide a similar
+using a hybrid compile-time and runtime safety approach to eventually provide a similar
 level of safety to a statically checked language, such as Rust. However, while
 Carbon may _encourage_ developers to modify code in support of more efficient
 safety checks, it will remain important to improve the safety of code for
@@ -179,10 +179,10 @@ developers who cannot invest into safety-specific code modifications.
         and apply Carbon-specific design patterns. Some safety should be enabled
         by default, without safety-specific work, although some safety will
         require work to opt in. Developers concerned with performance should
-        only need to work to disable safety in rare edge-cases.
+        only need to disable safety in rare edge-cases.
 
     -   Where there is a choice between safety approaches, the safe option
-        should be incentivized by making it equally or more easy to use. If
+        should be incentivized by making it equally easy or easier to use. If
         there is a default, it should be the safe option. It should be
         identifiable when the unsafe option is used. Incentives will prioritize,
         in order:
@@ -192,8 +192,8 @@ developers who cannot invest into safety-specific code modifications.
         3.  Safety hardening.
         4.  Unsafe and unmitigated code.
 
-    -   Language design choices should allow more efficient implementations of
-        safety checks. They should also allow better automation of testing and
+    -   Language design choices should favor more efficient implementations of
+        safety checks. They should also allow favor automation of testing and
         fuzzing.
 
 -   Safety in Carbon must work with
@@ -207,8 +207,8 @@ developers who cannot invest into safety-specific code modifications.
     -   In the other direction, safety mechanisms must not force manual
         rewriting of C++ code in order to migrate, either by creating design
         incompatibilities or performance degradations. Automated migration of
-        C++ code to Carbon must work for most developers, even if it means that
-        Carbon's safety design takes a different approach.
+        C++ code to Carbon must work for most developers, even if it forces
+        Carbon's safety design to take a different approach.
 
     -   Carbon's safety should degrade gracefully when Carbon code calls C++
         code, although this may require use of the Carbon toolchain to compile
@@ -304,19 +304,19 @@ will adopt a strategy based on multiple build modes that target key use-cases.
 #### Debug
 
 The debug build mode targets developers who are iterating on code and running
-tests. It will emphasize debugability, especially for safety issues.
+tests. It will emphasize detection and debugability, especially for safety issues.
 
 It needs to perform well enough to be run frequently by developers, but will
 make performance sacrifices to catch more safety issues. This mode should have
 runtime checks for the most common safety issues, but it can make trade-offs
-that improve performance in exchange for less frequent, but still reliability,
+that improve performance in exchange for less frequent, but still reliable,
 detection. Developers should do most of their testing in this build mode.
 
 The debug build mode will place a premium on the debugability of safety
 violations. Where safety checks rely on hardening instead of guaranteed safety,
 violations should be detected with a high probability per single occurrence of
 the bug. Detected bugs will be accompanied by a detailed diagnostic report to
-ease bug finding and classification.
+ease classification and identifying the root cause.
 
 #### Performance
 
@@ -501,7 +501,7 @@ need to be considered in the context of other goals. It should still be possible
 to adopt guaranteed safety later, although it will require identifying a
 migration path.
 
-#### Runtime lifetime safety and compile-time enforced safety otherwise (Swift's model)
+#### Runtime lifetime safety without data race prevention (Swift's model)
 
 Carbon could provide runtime lifetime safety with no data race prevention,
 mirroring Swift's model. This only requires compile-time enforcement of the
