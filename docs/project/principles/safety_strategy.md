@@ -389,9 +389,10 @@ degree of static checking may be better suited.
 
 ### Probabilistic techniques will not stop attacks
 
-It's expected that probabilistic techniques are attackable. However, more than
-just saying that attacks will get through a probabilistic attack, it's possible
-for skilled attackers to manipulate probabilities and avoid detection entirely.
+It's expected that probabilistic techniques that can be applied at the language
+level are attackable. However, more than just saying that attacks will get
+through a probabilistic attack, it's possible for skilled attackers to
+manipulate probabilities and avoid detection entirely.
 
 For example:
 
@@ -403,6 +404,12 @@ For example:
 
 Hardware vulnerabilities may make these attacks easier than they might otherwise
 appear. Future hardware vulnerabilities are difficult to predict.
+
+Note this statement focuses on what can be applied to the language level. Using
+a secure hash algorithm, such as SHA256, may be used to offer probabilistic
+defense in other situations. However, the overhead of a secure hash algorithm's
+calculation is significant in the context of most things that Carbon may do at
+the language level.
 
 Combining these issues, although it may seem like a probabilistic safety check
 could be proven to reliably detect attackers, it's likely infeasible to do so.
@@ -591,7 +598,8 @@ and are ultimately similar, are:
     describing similar.
 
     -   "Development" was also considered, but could be less focused on the
-        primary goal.
+        primary goal. It may also confuse developers familiar with C++'s
+        `NDEBUG`, making them assume debug-related checks are disabled.
 
 -   "Performance" aligns with the phrasing of the language performance goal.
 
