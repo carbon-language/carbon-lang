@@ -23,7 +23,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
         -   [Hardened](#hardened)
     -   [Managing bugs without compile-time safety](#managing-bugs-without-compile-time-safety)
 -   [Caveats](#caveats)
-    -   [Probabilistic techniques will not stop attacks](#probabilistic-techniques-will-not-stop-attacks)
+    -   [Probabilistic techniques likely cannot stop attacks](#probabilistic-techniques-likely-cannot-stop-attacks)
 -   [Alternatives considered](#alternatives-considered)
     -   [Alternative models](#alternative-models)
         -   [Guaranteed safety by default (Rust's model)](#guaranteed-safety-by-default-rusts-model)
@@ -128,12 +128,14 @@ program termination could be used for a denial-of-service attack.
 
 ## Philosophy
 
-When providing
-[practical safety and testing mechanisms](../goals.md#practical-safety-and-testing-mechanisms),
-Carbon will put the most emphasis on error detection and safety hardening. Where
-feasible, guaranteed safety will be offered in a way that removes the need for
-other mitigations. The language's design should incentivize safe programming,
-although it will not be required.
+Carbon's
+[practical safety and testing mechanisms](../goals.md#practical-safety-and-testing-mechanisms)
+will emphasize guaranteed safety where feasible without creating barriers to
+Carbon's [other goals](../goals.md), particularly performance and
+interoperability. In several major safety categories, we don't expect guaranteed
+safety to be feasible without such compromises, so we will need to focus on
+error detection and safety hardening. The language's design should incentivize
+safe programming, although it will not be required.
 
 When writing code, Carbon developers should expect to receive safety without
 needing to add safety annotations. Carbon will have optional safety annotations
@@ -317,7 +319,7 @@ ease classification and root cause identification.
 
 #### Performance
 
-The performance build mode targets the average developer who wants high
+The performance build mode targets the typical application who wants high
 performance from Carbon code, where performance considers processing time,
 memory, and disk space. Trade-offs will be made that maximize the performance.
 
@@ -329,12 +331,11 @@ semantics in mind.
 
 #### Hardened
 
-The hardened build mode targets developers who are ready to sacrifice
-performance in order to improve safety. It will run as many safety checks as it
-can, even with significant performance overheads. It should be expected to
-detect safety issues _consistently_, in ways that
-[attackers cannot work around](#probabilistic-techniques-will-not-stop-attacks);
-this means non-probabilistic techniques will be preferred.
+The hardened build mode targets applications where developers want strong safety
+against attacks in exchange for worse performance. It will work to prevent
+attacks in ways that
+[attackers cannot work around](#probabilistic-techniques-likely-cannot-stop-attacks),
+even if it means using techniques that create significant performance costs.
 
 ### Managing bugs without compile-time safety
 
@@ -355,7 +356,7 @@ Strong testing is more than good test coverage. It means a combination of:
 
 -   Writing good test coverage, including unit, integration, and system tests.
 
--   Generating coverage-directed fuzz testing to discover bugs outside of
+-   Implementing coverage-directed fuzz testing to discover bugs outside of
     manually authored test coverage, especially for interfaces handling
     untrusted data. Fuzz testing is a robust way to catch bugs when APIs may be
     used in ways developers don't consider.
@@ -387,7 +388,7 @@ degree of static checking may be better suited.
 
 ## Caveats
 
-### Probabilistic techniques will not stop attacks
+### Probabilistic techniques likely cannot stop attacks
 
 It's expected that probabilistic techniques that can be applied at the language
 level are attackable. However, more than just saying that attacks will get
@@ -674,7 +675,7 @@ Advantages:
 
 Disadvantages:
 
--   [Probabilistic techniques will not stop attacks](#probabilistic-techniques-will-not-stop-attacks).
+-   [Probabilistic techniques likely cannot stop attacks](#probabilistic-techniques-likely-cannot-stop-attacks).
     -   Attackers may be able to repeat attacks until they succeed.
     -   The variables upon which the probability is based, such as memory
         addresses, may be manipulable by the attacker. As a consequence, a
