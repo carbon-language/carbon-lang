@@ -22,12 +22,15 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
         -   [Performance](#performance)
         -   [Hardened](#hardened)
     -   [Managing bugs without compile-time safety](#managing-bugs-without-compile-time-safety)
+-   [Caveats](#caveats)
+    -   [Probabilistic techniques will not stop attacks](#probabilistic-techniques-will-not-stop-attacks)
 -   [Alternatives considered](#alternatives-considered)
     -   [Alternative models](#alternative-models)
         -   [Guaranteed safety by default (Rust's model)](#guaranteed-safety-by-default-rusts-model)
-        -   [Runtime lifetime safety and compile-time enforced safety otherwise (Swift's model)](#runtime-lifetime-safety-and-compile-time-enforced-safety-otherwise-swifts-model)
+        -   [Runtime lifetime safety without data race prevention (Swift's model)](#runtime-lifetime-safety-without-data-race-prevention-swifts-model)
         -   [Runtime lifetime safety and defined behavior (Java's model)](#runtime-lifetime-safety-and-defined-behavior-javas-model)
     -   [Build mode names](#build-mode-names)
+    -   [Performance versus safety in the hardened build mode](#performance-versus-safety-in-the-hardened-build-mode)
 
 <!-- tocstop -->
 
@@ -132,41 +135,34 @@ feasible, guaranteed safety will be offered in a way that removes the need for
 other mitigations. The language's design should incentivize safe programming,
 although it will not be required.
 
-When writing code, Carbon developers should expect to receive some safety
-without explicit safety annotations. However, safety annotations are expected to
-support opting in to additional safety checks, tuning safety behaviors, and
-adjusting edge-case performance characteristics.
+When writing code, Carbon developers should expect to receive safety without
+needing to add safety annotations. Carbon will have optional safety annotations
+for purposes such as optimizing safety checks or providing information that
+improves coverage of safety checks.
 
 Carbon will favor compile-time safety checks because catching issues early will
 make applications more reliable. Runtime checks, either error detection or
 safety hardening, will be enabled where safety cannot be proven at compile-time.
 
-There will be a split of build modes driven by runtime safety approaches,
-wherein each has a specific focus and cannot be combined with others in the same
-binary:
+There will be three build modes driven by runtime safety approaches, wherein
+each has a specific safety-related focus: [debug](#debug),
+[performance](#performance), and [hardened](#hardened). A given binary must
+choose a single build mode.
 
--   A **debug** build mode for routine development. This will balance fast
-    development and testing with the need for reliable detection and easy
-    debugging of safety issues.
-
--   A **performance** build mode for most application releases. This will focus
-    on maintaining high performance. It will enable hardening where it does not
-    measurably affect performance.
-
--   A **hardened** build mode for security-sensitive appliations. This will
-    prioritize providing hardening for _all_ safety issues, which requires
-    significant performance sacrifices.
-
-The addition of further safety-oriented build modes may occur based on safety
-versus performance trade-offs, but three is considered the likely long-term
-stable outcome.
+Although expensive safety checks could be provided through additional build
+modes, Carbon will favor safety checks that can be combined into these three
+build modes rather than adding more. A separate build mode may allow a safety
+check with no false negatives, but it's likely few developers would run it;
+providing a similar safety check with some false negatives in the standard debug
+build mode will offer more overall value to developers.
 
 Over time, safety should [evolve](../goals.md#software-and-language-evolution)
-using a hybrid compile-time and runtime safety approach to eventually provide a similar
-level of safety to a statically checked language, such as Rust. However, while
-Carbon may _encourage_ developers to modify code in support of more efficient
-safety checks, it will remain important to improve the safety of code for
-developers who cannot invest into safety-specific code modifications.
+using a hybrid compile-time and runtime safety approach to eventually provide a
+similar level of safety to a language that puts more emphasis on guaranteed
+safety, such as [Rust](#guaranteed-safety-by-default-rusts-model). However,
+while Carbon may _encourage_ developers to modify code in support of more
+efficient safety checks, it will remain important to improve the safety of code
+for developers who cannot invest into safety-specific code modifications.
 
 ## Principles
 
@@ -223,21 +219,21 @@ developers who cannot invest into safety-specific code modifications.
         different build modes. The purpose of the build modes is to determine
         code generation.
 
--   Each build mode will treat safety differently based on its priority.
+-   Each build mode will prioritize performance and safety differently:
 
-    -   The [debug build mode](#debug) will provide high-probability runtime
-        diagnostics for the most common safety violations.
+    -   The [debug build mode](#debug) will prioritize easing development and
+        safety checks that assist in identification and debugging of errors.
 
-    -   The [performance build mode](#performance) will provide runtime
-        mitigations for safety violations when they don't have measurable
-        performance impact for hot path application code.
+    -   The [performance build mode](#performance) will prioritize performance
+        over safety.
 
-    -   The [hardened build mode](#hardened) will mitigate safety issues
-        consistently, not probabilistically. It is acceptable for this to have
-        techniques that dramatically reduce performance.
+    -   The [hardened build mode](#hardened) will prioritize safety that is
+        resistant to attacks at the cost of performance.
 
-    -   Although tuning options may be supported, first-class support will be on
-        the primary three build modes.
+-   Safety checks should try to be identical across build modes.
+
+    -   It's expected that many safety checks will be disabled in the
+        performance build mode.
 
 -   Any further build modes beyond the noted three will need to be carefully
     evaluated for merging into one of the the primary three.
@@ -253,14 +249,14 @@ developers who cannot invest into safety-specific code modifications.
 -   Each distinct safety-related build mode (debug, performance, and hardened)
     cannot be combined with others in the same binary.
 
-    -   Standard cross-binary interfaces will exist in Carbon, and will need to
-        be used by developers interested in combining libraries built under
-        different build modes.
+    -   Cross-binary interfaces will exist in Carbon, and will need to be used
+        by developers interested in combining libraries built under different
+        build modes.
 
--   Runtime safety hardening and mitigations will typically terminate the
-    program in response to safety issues, because they indicate a logic error
-    and recovery would leave a program in an unpredictable state. Safety issues
-    will still be bugs, even if they're prevented from becoming a security hole.
+-   Although runtime safety checks should prevent logic errors from turning into
+    security vulnerabilities, the underlying logic errors will still be bugs.
+    For example, some safety checks would result in application termination;
+    this prevents execution of unexpected code and still needs to be fixed.
 
 -   Developers need a strong testing methodology to engineer correct software.
     Carbon will encourage testing and then leverage it with the checking build
@@ -299,12 +295,13 @@ alternative is a less-comprehensive approach.
 Carbon will likely start in a state where most safety checks are done at
 runtime. However, runtime detection of safety violations remains expensive. In
 order to make as many safety checks as possible available to developers, Carbon
-will adopt a strategy based on multiple build modes that target key use-cases.
+will adopt a strategy based on three build modes that target key use-cases.
 
 #### Debug
 
 The debug build mode targets developers who are iterating on code and running
-tests. It will emphasize detection and debugability, especially for safety issues.
+tests. It will emphasize detection and debugability, especially for safety
+issues.
 
 It needs to perform well enough to be run frequently by developers, but will
 make performance sacrifices to catch more safety issues. This mode should have
@@ -316,7 +313,7 @@ The debug build mode will place a premium on the debugability of safety
 violations. Where safety checks rely on hardening instead of guaranteed safety,
 violations should be detected with a high probability per single occurrence of
 the bug. Detected bugs will be accompanied by a detailed diagnostic report to
-ease classification and identifying the root cause.
+ease classification and root cause identification.
 
 #### Performance
 
@@ -335,20 +332,9 @@ semantics in mind.
 The hardened build mode targets developers who are ready to sacrifice
 performance in order to improve safety. It will run as many safety checks as it
 can, even with significant performance overheads. It should be expected to
-detect safety issues _consistently_, in ways that attackers cannot work around.
-
-The hardened build mode will prefer non-probabilistic techniques because it's
-assumed that attackers can manipulate probabilities. For example, a detection
-technique may be able to detect safety issues with a 95% chance per memory
-operation assuming random memory locations. However, an attacker may be able to
-cause memory allocations that result in non-random memory locations, which may
-be usable to reliably evade the probabilistic detection.
-
-Consequently, probabilistic techniques will only be used where either it can be
-proven conclusively that attackers cannot manipulate the probabilities (which is
-typically infeasible to prove), or where performance overheads of
-non-probabilistic detection are infeasible, even given the assumed lower
-performance of the hardened build mode.
+detect safety issues _consistently_, in ways that
+[attackers cannot work around](#probabilistic-techniques-will-not-stop-attacks);
+this means non-probabilistic techniques will be preferred.
 
 ### Managing bugs without compile-time safety
 
@@ -398,6 +384,39 @@ work to remove barriers and encourage the development of these methodologies.
 The reliance on testing may make Carbon a poor choice in some environments; in
 environments where such testing rigor is infeasible, a language with a greater
 degree of static checking may be better suited.
+
+## Caveats
+
+### Probabilistic techniques will not stop attacks
+
+It's expected that probabilistic techniques are attackable. However, more than
+just saying that attacks will get through a probabilistic attack, it's possible
+for skilled attackers to manipulate probabilities and avoid detection entirely.
+
+For example:
+
+-   If a security vulnerability is detected 99% of the time, an attacker could
+    run the attack the 1% of the time it would not be attacked.
+-   If security vulnerabilities are detected based on the last 4 bits of a
+    memory address, an attacker can generate collisions by triggering other
+    memory allocations.
+
+Hardware vulnerabilities may make these attacks easier than they might otherwise
+appear. Future hardware vulnerabilities are difficult to predict.
+
+Combining these issues, although it may seem like a probabilistic safety check
+could be proven to reliably detect attackers, it's likely infeasible to do so.
+For the various build modes, this means:
+
+-   The debug build mode will not typically be accessible to attackers, so where
+    a probabilistic technique provides a better developer experience, it will be
+    preferred.
+-   The performance build mode will often avoid safety checks in order to reach
+    peak performance. As a consequence, even the weak protection of a
+    probabilistic safety check may be used in order to provide _some_
+    protection.
+-   The hardened build mode will prefer non-probabilistic techniques that
+    _cannot_ be attacked.
 
 ## Alternatives considered
 
@@ -610,3 +629,53 @@ of a short phrase for build modes, and that limits the expressivity. Some
 confusion is expected, and documentation as well as real-world experience (for
 example, a developer who cares about latency benchmarking both builds) should be
 expected to help mitigate mix-ups.
+
+### Performance versus safety in the hardened build mode
+
+The performance cost of safety techniques are expected to be non-linear with
+respect to detection rates. For example, a particular vulnerability such as heap
+use-after-free may be detectable with 99% accuracy at 20% performance cost, but
+100% accuracy at 50% performance cost. At present, build modes should be
+expected to evaluate such a scenario as:
+
+-   The debug build mode would choose the 99% accurate approach.
+    -   Detecting safety issues is valuable for debugging.
+    -   The probabilistic detection rate won't meaningfully affect accuracy of
+        tests.
+    -   The lower performance cost improves developer velocity.
+-   The performance build mode would decline detection.
+    -   Safety checks with a measurable performance cost should be declined.
+-   The hardened build mode would choose the 100% accurate approach.
+    -   Safety must be non-probabilistic in order to reliably prevent attacks.
+    -   Significant performance hits are acceptable.
+    -   This means the hardened build mode may be slower than the debug build
+        mode.
+
+In order to achieve better performance, the hardened build mode could make
+trade-offs closer to the debug build mode. Rather than relying on
+non-probabilistic techniques, it could instead offer a probability-based chance
+of detecting a given attack.
+
+Advantages:
+
+-   Probabilistic safety should come at lower performance cost (including CPU,
+    memory, and disk space).
+    -   This will sometimes be significant, and as a result of multiple checks,
+        could be the difference between the hardened build mode being 50% slower
+        than the performance build mode and being 200% slower.
+
+Disadvantages:
+
+-   [Probabilistic techniques will not stop attacks](#probabilistic-techniques-will-not-stop-attacks).
+    -   Attackers may be able to repeat attacks until they succeed.
+    -   The variables upon which the probability is based, such as memory
+        addresses, may be manipulable by the attacker. As a consequence, a
+        determined attacker may be able to manipulate probabilities and not even
+        be detected.
+
+Although performance is
+[Carbon's top goal](../goals.md#language-goals-and-priorities), the hardened
+build mode exists to satisfy developers and environments that value safety more
+than performance. The hardened build mode will rely on non-probabilistic safety
+at significant performance cost because other approaches will be insufficient to
+guard against determined attackers.
