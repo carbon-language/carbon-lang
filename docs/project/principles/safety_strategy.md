@@ -91,8 +91,8 @@ be thought of in terms of how they prevent attacks:
         modification of the sequence.
 
     -   At runtime, garbage collected languages offer a temporal safety
-        guarantee because objects cannot be freed while there's still a
-        reference.
+        guarantee because objects cannot be freed while they're still
+        accessible.
 
 -   **Error detection** checks for common logic errors at runtime. For example:
 
@@ -100,7 +100,7 @@ be thought of in terms of how they prevent attacks:
         verifying that the passed index is in-bounds.
 
     -   A program can implement reference counting to detect a temporal memory
-        error by ensuring that no references remain when memory is freed.
+        error by checking whether any references remain when memory is freed.
 
 -   **Safety hardening** mitigates bugs, typically by minimizing the feasibility
     of an attack. For example:
