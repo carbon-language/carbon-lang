@@ -12,15 +12,21 @@ import argparse
 import datetime
 import hashlib
 import os
-import sys
+import importlib.util
 import textwrap
 
-# To support direct runs, ensure the pythonpath has the repo root.
-_PYTHONPATH = os.path.realpath(os.path.join(os.path.dirname(__file__), ".."))
-if _PYTHONPATH not in sys.path:
-    sys.path.insert(0, _PYTHONPATH)
 
-from github_tools import github_helpers
+# Do some extra work to support direct runs.
+try:
+    from carbon.github_tools import github_helpers
+except ImportError:
+    github_helpers_spec = importlib.util.spec_from_file_location(
+        "github_helpers",
+        os.path.join(os.path.dirname(__file__), "github_helpers.py"),
+    )
+    github_helpers = importlib.util.module_from_spec(github_helpers_spec)
+    github_helpers_spec.loader.exec_module(github_helpers)
+
 
 # The main query, into which other queries are composed.
 _QUERY = """
@@ -285,7 +291,7 @@ def _parse_args(args=None):
     )
     parser.add_argument(
         "--repo",
-        choices=["carbon-lang", "carbon-toolchain"],
+        choices=["carbon-lang"],
         default="carbon-lang",
         help="The Carbon repo to query. Defaults to %(default)s.",
     )

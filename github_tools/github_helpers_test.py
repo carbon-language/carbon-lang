@@ -9,7 +9,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 import unittest
 from unittest import mock
 
-from github_tools import github_helpers
+from carbon.github_tools import github_helpers
 
 
 _TEST_QUERY = """

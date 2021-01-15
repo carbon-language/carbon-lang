@@ -12,7 +12,7 @@ import os
 import unittest
 from unittest import mock
 
-from proposals.scripts import new_proposal
+from carbon.proposals.scripts import new_proposal
 
 
 class FakeExitError(Exception):
@@ -61,7 +61,8 @@ class TestNewProposal(unittest.TestCase):
 
     def test_run_failure(self):
         with mock.patch(
-            "proposals.scripts.new_proposal._exit", side_effect=_fake_exit
+            "carbon.proposals.scripts.new_proposal._exit",
+            side_effect=_fake_exit,
         ):
             self.assertRaises(FakeExitError, new_proposal._run, ["false"])
 

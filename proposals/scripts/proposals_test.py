@@ -8,7 +8,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 import unittest
 
-from proposals.scripts import proposals
+from carbon.proposals.scripts import proposals
 
 
 class TestProposal(unittest.TestCase):
@@ -23,3 +23,7 @@ class TestProposal(unittest.TestCase):
             ),
         )
         self.assertEqual(p[1], ("0029 - Decision", "p0029_decision.md"))
+
+
+if __name__ == "__main__":
+    unittest.main()

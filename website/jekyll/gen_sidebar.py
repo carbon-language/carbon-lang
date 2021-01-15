@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-
 """Prints the sidebar structure to stdout.
 
 Also provides get_top() and crawl() as module functions for other, custom
@@ -17,18 +15,17 @@ import io
 import os
 import sys
 
-# To support direct runs, ensure the pythonpath has the repo root.
-_PYTHONPATH = os.path.realpath(os.path.join(os.path.dirname(__file__), "../.."))
-if _PYTHONPATH not in sys.path:
-    sys.path.insert(0, _PYTHONPATH)
-
-from proposals.scripts import proposals
+from carbon.proposals.scripts import proposals
 
 
+# The top directory for the crawl.
+_TOP_DIR = "./"
 # Directories which will be completely ignored, including children.
-_IGNORE_DIRS = ["github", "website"]
+_IGNORE_DIRS = ["github", "third_party", "website"]
 # Directories which will be ignored, but children will be crawled.
 _IGNORE_DIR_STEPS = ["docs"]
+# Files which will be completely ignored.
+_IGNORE_FILES = ["404.md"]
 
 # All md files are included, with the LICENSE file special-cased for inclusion.
 _MD_EXT = ".md"
@@ -52,15 +49,6 @@ _LINK_TEMPLATE = """
 %(indent)s<li{%% if page.url == "%(url)s" %%} class="active"{%% endif %%}>
 %(indent)s  <a href="%(url)s">%(title)s</a>
 %(indent)s</li>"""
-
-
-def get_top():
-    """Returns the top repo directory."""
-    # Set top to the root of the repo.
-    top = os.path.realpath(__file__)
-    for _ in range(3):
-        top = os.path.dirname(top)
-    return top
 
 
 class _Dir(object):
@@ -139,7 +127,9 @@ def _filter_files(parent_dir, rel_dir, raw_files):
     readme = None
     files = []
     for f in raw_files:
-        if f.endswith(_MD_EXT) or os.path.basename(f) == _LICENSE:
+        if (
+            f.endswith(_MD_EXT) or os.path.basename(f) == _LICENSE
+        ) and f not in _IGNORE_FILES:
             entry = _file_entry(parent_dir, rel_dir, f)
             if f == _README:
                 readme = entry
@@ -197,7 +187,7 @@ def crawl(top):
         dirs.append(_Dir(_get_title(parent_dir, _README), rel_dir, files))
 
     # Do proposals, special-casing its file format.
-    proposals_path = proposals.get_path()
+    proposals_path = os.path.join(top, _PROPOSALS)
     proposal_files = [
         (title, "/%s/%s" % (_PROPOSALS, filename))
         for title, filename in proposals.get_list(proposals_path)
@@ -253,8 +243,7 @@ def _format(dirs):
 
 def main():
     """Crawl all files, then generate the sidebar to stdout."""
-    top = get_top()
-    dirs = crawl(top)
+    dirs = crawl(_TOP_DIR)
     out = _format(dirs)
     print(out)
 
