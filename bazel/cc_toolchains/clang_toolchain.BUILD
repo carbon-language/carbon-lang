@@ -26,21 +26,6 @@ cc_toolchain_suite(
 )
 
 cc_toolchain(
-    name = "cc-compiler-darwin",
-    all_files = ":empty",
-    ar_files = ":empty",
-    as_files = ":empty",
-    compiler_files = ":empty",
-    dwp_files = ":empty",
-    linker_files = ":empty",
-    objcopy_files = ":empty",
-    strip_files = ":empty",
-    supports_param_files = 1,
-    toolchain_config = ":local",
-    toolchain_identifier = "local",
-)
-
-cc_toolchain(
     name = "cc-compiler-k8",
     all_files = ":empty",
     ar_files = ":empty",
@@ -51,10 +36,31 @@ cc_toolchain(
     objcopy_files = ":empty",
     strip_files = ":empty",
     supports_param_files = 1,
-    toolchain_config = ":local",
-    toolchain_identifier = "local",
+    toolchain_config = ":local-k8",
+    toolchain_identifier = "local-k8",
 )
 
 cc_toolchain_config(
-    name = "local",
+    name = "local-k8",
+    target_cpu = "k8",
+)
+
+cc_toolchain(
+    name = "cc-compiler-darwin",
+    all_files = ":empty",
+    ar_files = ":empty",
+    as_files = ":empty",
+    compiler_files = ":empty",
+    dwp_files = ":empty",
+    linker_files = ":empty",
+    objcopy_files = ":empty",
+    strip_files = ":empty",
+    supports_param_files = 1,
+    toolchain_config = ":local-darwin",
+    toolchain_identifier = "local-darwin",
+)
+
+cc_toolchain_config(
+    name = "local-darwin",
+    target_cpu = "darwin",
 )

@@ -323,6 +323,36 @@ def _impl(ctx):
         ],
     )
 
+    linux_link_flags_feature = feature(
+        name = "linux_link_flags",
+        enabled = True,
+        flag_sets = [
+            flag_set(
+                actions = all_link_actions,
+                flag_groups = ([
+                    flag_group(
+                        flags = [
+                            "-fuse-ld=lld",
+                            "-Wl,-no-as-needed",
+                            # Force the C++ standard library to be statically
+                            # linked. This works even with libc++ despite the
+                            # name, however we have to manually link the ABI
+                            # library and libunwind.
+                            "-static-libstdc++",
+                            # Link with libc++.
+                            "-stdlib=libc++",
+                            # Force static linking with libc++abi as well.
+                            "-l:libc++abi.a",
+                            # Link with Clang's runtime library. This is always
+                            # linked statically.
+                            #"-rtlib=compiler-rt",
+                        ],
+                    ),
+                ]),
+            ),
+        ],
+    )
+
     default_link_flags_feature = feature(
         name = "default_link_flags",
         enabled = True,
@@ -363,29 +393,6 @@ def _impl(ctx):
                         expand_if_available = "force_pic",
                     ),
                 ],
-            ),
-            flag_set(
-                actions = all_link_actions,
-                flag_groups = ([
-                    flag_group(
-                        flags = [
-                            "-fuse-ld=lld",
-                            "-Wl,-no-as-needed",
-                            # Force the C++ standard library to be statically
-                            # linked. This works even with libc++ despite the
-                            # name, however we have to manually link the ABI
-                            # library and libunwind.
-                            "-static-libstdc++",
-                            # Link with libc++.
-                            "-stdlib=libc++",
-                            # Force static linking with libc++abi as well.
-                            "-l:libc++abi.a",
-                            # Link with Clang's runtime library. This is always
-                            # linked statically.
-                            #"-rtlib=compiler-rt",
-                        ],
-                    ),
-                ]),
             ),
             flag_set(
                 actions = all_link_actions,
@@ -675,22 +682,12 @@ def _impl(ctx):
         ],
     )
 
-    features = [
-        feature(
-            name = "no_legacy_features",
-        ),
-        feature(
-            name = "supports_pic",
-            enabled = True,
-        ),
-        feature(
-            name = "supports_start_end_lib",
-            enabled = True,
-        ),
+    common_features = [
+        feature(name = "no_legacy_features"),
+        feature(name = "supports_pic", enabled = True),
         default_compile_flags_feature,
         default_archiver_flags_feature,
         default_link_flags_feature,
-        feature(name = "supports_dynamic_linker", enabled = True),
         feature(name = "dbg"),
         feature(name = "opt"),
         sysroot_feature,
@@ -700,6 +697,21 @@ def _impl(ctx):
         use_module_maps,
     ]
 
+    # Select the features based on the target platform. Currently, this is
+    # configured with the "cpu" attribute for legacy reasons. Further, for
+    # legacy reasons the default is a Linux OS target and the x88-64 CPU name
+    # is "k8".
+    if (ctx.attr.target_cpu == "k8"):
+        features = common_features + [
+            linux_link_flags_feature,
+            feature(name = "supports_start_end_lib", enabled = True),
+            feature(name = "supports_dynamic_linker", enabled = True),
+        ]
+    elif (ctx.attr.target_cpu == "darwin"):
+        features = common_features
+    else:
+        fail("Unsupported target platform!")
+
     return cc_common.create_cc_toolchain_config_info(
         ctx = ctx,
         features = features,
@@ -708,18 +720,29 @@ def _impl(ctx):
             # Append the share directory for sanitizer data files.
             clang_resource_dir + "/share",
         ],
-        toolchain_identifier = "local",
-        host_system_name = "local",
-        target_system_name = "local",
-        target_cpu = "k8",
+
+        # This configuration only supports local non-cross builds so derive
+        # everything from the target CPU selected.
+        toolchain_identifier = "local-" + ctx.attr.target_cpu,
+        host_system_name = "local-" + ctx.attr.target_cpu,
+        target_system_name = "local-" + ctx.attr.target_cpu,
+        target_cpu = ctx.attr.target_cpu,
+
+        # These attributes aren't meaningful at all so just use placeholder
+        # values.
         target_libc = "local",
         compiler = "local",
         abi_version = "local",
         abi_libc_version = "local",
+
+        # We do have to pass in our tool paths.
         tool_paths = tool_paths,
     )
 
 cc_toolchain_config = rule(
     implementation = _impl,
+    attrs = {
+        "target_cpu": attr.string(mandatory = True),
+    },
     provides = [CcToolchainConfigInfo],
 )
