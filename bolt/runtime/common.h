@@ -282,6 +282,35 @@ uint64_t __open(const char *pathname, uint64_t flags, uint64_t mode) {
   return ret;
 }
 
+struct dirent {
+  unsigned long d_ino;     /* Inode number */
+  unsigned long d_off;     /* Offset to next linux_dirent */
+  unsigned short d_reclen; /* Length of this linux_dirent */
+  char d_name[];           /* Filename (null-terminated) */
+                           /* length is actually (d_reclen - 2 -
+                             offsetof(struct linux_dirent, d_name)) */
+};
+
+long __getdents(unsigned int fd, dirent *dirp, size_t count) {
+  long ret;
+  __asm__ __volatile__("movq $78, %%rax\n"
+                       "syscall"
+                       : "=a"(ret)
+                       : "D"(fd), "S"(dirp), "d"(count)
+                       : "cc", "rcx", "r11", "memory");
+  return ret;
+}
+
+uint64_t __readlink(const char *pathname, char *buf, size_t bufsize) {
+  uint64_t ret;
+  __asm__ __volatile__("movq $89, %%rax\n"
+                       "syscall"
+                       : "=a"(ret)
+                       : "D"(pathname), "S"(buf), "d"(bufsize)
+                       : "cc", "rcx", "r11", "memory");
+  return ret;
+}
+
 uint64_t __lseek(uint64_t fd, uint64_t pos, uint64_t whence) {
   uint64_t ret;
   __asm__ __volatile__("movq $8, %%rax\n"
