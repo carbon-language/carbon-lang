@@ -264,6 +264,23 @@ void reportNumber(const char *Msg, uint64_t Num, uint32_t Base) {
 
 void report(const char *Msg) { __write(2, Msg, strLen(Msg)); }
 
+unsigned long hexToLong(const char *Str, char Terminator = '\0') {
+  unsigned long Res = 0;
+  while (*Str != Terminator) {
+    Res <<= 4;
+    if ('0' <= *Str && *Str <= '9')
+      Res += *Str++ - '0';
+    else if ('a' <= *Str && *Str <= 'f')
+      Res += *Str++ - 'a' + 10;
+    else if ('A' <= *Str && *Str <= 'F')
+      Res += *Str++ - 'A' + 10;
+    else {
+      return 0;
+    }
+  }
+  return Res;
+}
+
 #if !defined(__APPLE__)
 // We use a stack-allocated buffer for string manipulation in many pieces of
 // this code, including the code that prints each line of the fdata file. This
