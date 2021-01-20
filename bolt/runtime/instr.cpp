@@ -113,7 +113,7 @@ class BumpPtrAllocator {
   };
 
 public:
-  void *allocate(uintptr_t Size) {
+  void *allocate(size_t Size) {
     Lock L(M);
     if (StackBase == nullptr) {
       StackBase = reinterpret_cast<uint8_t *>(
@@ -197,16 +197,16 @@ BumpPtrAllocator GlobalAlloc;
 // User-defined placement new operators. We only use those (as opposed to
 // overriding the regular operator new) so we can keep our allocator in the
 // stack instead of in a data section (global).
-void *operator new(uintptr_t Sz, BumpPtrAllocator &A) { return A.allocate(Sz); }
-void *operator new(uintptr_t Sz, BumpPtrAllocator &A, char C) {
+void *operator new(size_t Sz, BumpPtrAllocator &A) { return A.allocate(Sz); }
+void *operator new(size_t Sz, BumpPtrAllocator &A, char C) {
   auto *Ptr = reinterpret_cast<char *>(A.allocate(Sz));
   memSet(Ptr, C, Sz);
   return Ptr;
 }
-void *operator new[](uintptr_t Sz, BumpPtrAllocator &A) {
+void *operator new[](size_t Sz, BumpPtrAllocator &A) {
   return A.allocate(Sz);
 }
-void *operator new[](uintptr_t Sz, BumpPtrAllocator &A, char C) {
+void *operator new[](size_t Sz, BumpPtrAllocator &A, char C) {
   auto *Ptr = reinterpret_cast<char *>(A.allocate(Sz));
   memSet(Ptr, C, Sz);
   return Ptr;
