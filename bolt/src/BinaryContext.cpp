@@ -476,7 +476,7 @@ BinaryContext::handleAddressRef(uint64_t Address, BinaryFunction &BF,
 
   // TODO: use DWARF info to get size/alignment here?
   auto *TargetSymbol = getOrCreateGlobalSymbol(Address, "DATAat");
-  DEBUG(dbgs() << "Created symbol " << TargetSymbol->getName());
+  DEBUG(dbgs() << "Created symbol " << TargetSymbol->getName() << '\n');
   return std::make_pair(TargetSymbol, Addend);
 }
 
@@ -814,7 +814,7 @@ BinaryContext::getOrCreateJumpTable(BinaryFunction &Function, uint64_t Address,
 
   DEBUG(dbgs() << "BOLT-DEBUG: creating jump table "
                << JTLabel->getName()
-               << " in function " << Function << 'n');
+               << " in function " << Function << '\n');
 
   auto *JT = new JumpTable(*JTLabel,
                            Address,
