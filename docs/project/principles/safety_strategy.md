@@ -319,7 +319,7 @@ ease classification and root cause identification.
 
 #### Performance
 
-The performance build mode targets the typical application who wants high
+The performance build mode targets the typical application that wants high
 performance from Carbon code, where performance considers processing time,
 memory, and disk space. Trade-offs will be made that maximize the performance.
 
@@ -391,17 +391,15 @@ degree of static checking may be better suited.
 ### Probabilistic techniques likely cannot stop attacks
 
 It's expected that probabilistic techniques that can be applied at the language
-level are attackable. However, more than just saying that attacks will get
-through a probabilistic attack, it's possible for skilled attackers to
-manipulate probabilities and avoid detection entirely.
+level are attackable through a variety of techniques:
 
-For example:
-
--   If a security vulnerability is detected 99% of the time, an attacker could
-    run the attack the 1% of the time it would not be attacked.
--   If security vulnerabilities are detected based on the last 4 bits of a
-    memory address, an attacker can generate collisions by triggering other
-    memory allocations.
+-   The attacker might be able to attack repeatedly until it gets through.
+-   The attacker may be able to determine when the attack would be detected
+    and only run the attack when it would not be.
+-   The attacker might be able control the test condition to make detection
+    much less likely or avoid detection completely. For example, if detection
+    is based on the last 4 bits of a memory address, an attacker may be able
+    control those bits or generate collisions by triggering memory allocations.
 
 Hardware vulnerabilities may make these attacks easier than they might otherwise
 appear. Future hardware vulnerabilities are difficult to predict.
@@ -598,9 +596,10 @@ and are ultimately similar, are:
     tooling including Visual Studio frequently uses the debug term for
     describing similar.
 
-    -   "Development" was also considered, but could be less focused on the
-        primary goal. It may also confuse developers familiar with C++'s
-        `NDEBUG`, making them assume debug-related checks are disabled.
+    -   "Development" was also considered, but this term is less specific and would
+        be better for describing all non-release builds together. For example, we might
+        later introduce a "fast build" mode that disables safety checks to improve
+        iteration time, like might be controlled via C++'s `NDEBUG` flag.
 
 -   "Performance" aligns with the phrasing of the language performance goal.
 
