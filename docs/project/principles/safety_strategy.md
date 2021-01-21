@@ -223,14 +223,16 @@ for developers who cannot invest into safety-specific code modifications.
 
 -   Each build mode will prioritize performance and safety differently:
 
-    -   The [debug build mode](#debug) will prioritize easing development and
-        safety checks that assist in identification and debugging of errors.
+    -   The [debug build mode](#debug) will produce development-focused binaries
+        that prioritize fast iteration on code with safety checks that assist in
+        identification and debugging of errors.
 
-    -   The [performance build mode](#performance) will prioritize performance
-        over safety.
+    -   The [performance build mode](#performance) will produce release-focused
+        binaries that prioritize performance over safety.
 
-    -   The [hardened build mode](#hardened) will prioritize safety that is
-        resistant to attacks at the cost of performance.
+    -   The [hardened build mode](#hardened) will produce release-focused
+        binaries that prioritize safety that is resistant to attacks at the cost
+        of performance.
 
 -   Safety checks should try to be identical across build modes.
 
@@ -240,13 +242,14 @@ for developers who cannot invest into safety-specific code modifications.
 -   Any further build modes beyond the noted three will need to be carefully
     evaluated for merging into one of the the primary three.
 
-    -   For example, Carbon may add build modes for particularly expensive
-        sanitizers, to improve error detection in tests. However, making an
-        additional sanitizer build mode useful would require developers test
-        under both debug and sanitizer build modes; that is expected to be
-        easily forgotten by developers, and less-effective sanitizers that can
-        be integrated into the debug build mode are expected to catch issues
-        more frequently, and will be preferred.
+    -   We expect that most developers will use two build modes in their work:
+        debug for development, and either performance or hardened for releases.
+        We expect that minimizing build modes will make choosing modes simple
+        for developers.
+
+    -   There will be trade-offs where design compromises are made in order to
+        fit into the limited set of build modes: this is accepted, and preferred
+        over adding more.
 
 -   Each distinct safety-related build mode (debug, performance, and hardened)
     cannot be combined with others in the same binary.
