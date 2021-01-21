@@ -153,10 +153,7 @@ choose a single build mode.
 
 Although expensive safety checks could be provided through additional build
 modes, Carbon will favor safety checks that can be combined into these three
-build modes rather than adding more. A separate build mode may allow a safety
-check with no false negatives, but it's likely few developers would run it;
-providing a similar safety check with some false negatives in the standard debug
-build mode will offer more overall value to developers.
+build modes rather than adding more.
 
 Over time, safety should [evolve](../goals.md#software-and-language-evolution)
 using a hybrid compile-time and runtime safety approach to eventually provide a
@@ -397,11 +394,11 @@ It's expected that probabilistic techniques that can be applied at the language
 level are attackable through a variety of techniques:
 
 -   The attacker might be able to attack repeatedly until it gets through.
--   The attacker may be able to determine when the attack would be detected
-    and only run the attack when it would not be.
--   The attacker might be able control the test condition to make detection
-    much less likely or avoid detection completely. For example, if detection
-    is based on the last 4 bits of a memory address, an attacker may be able
+-   The attacker may be able to determine when the attack would be detected and
+    only run the attack when it would not be.
+-   The attacker might be able control the test condition to make detection much
+    less likely or avoid detection completely. For example, if detection is
+    based on the last 4 bits of a memory address, an attacker may be able
     control those bits or generate collisions by triggering memory allocations.
 
 Hardware vulnerabilities may make these attacks easier than they might otherwise
@@ -599,10 +596,11 @@ and are ultimately similar, are:
     tooling including Visual Studio frequently uses the debug term for
     describing similar.
 
-    -   "Development" was also considered, but this term is less specific and would
-        be better for describing all non-release builds together. For example, we might
-        later introduce a "fast build" mode that disables safety checks to improve
-        iteration time, like might be controlled via C++'s `NDEBUG` flag.
+    -   "Development" was also considered, but this term is less specific and
+        would be better for describing all non-release builds together. For
+        example, we might later introduce a "fast build" mode that disables
+        safety checks to improve iteration time, like might be controlled by way
+        of C++'s `NDEBUG` option.
 
 -   "Performance" aligns with the phrasing of the language performance goal.
 
