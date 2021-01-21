@@ -16,6 +16,10 @@ typedef __SIZE_TYPE__ size_t;
 typedef __SSIZE_TYPE__ ssize_t;
 
 typedef unsigned long long uint64_t;
+typedef unsigned uint32_t;
+
+typedef long long int64_t;
+typedef int int32_t;
 
 #endif
 
@@ -65,6 +69,8 @@ typedef unsigned long long uint64_t;
 
 // Anonymous namespace covering everything but our library entry point
 namespace {
+
+constexpr uint32_t BufSize = 10240;
 
 #define _STRINGIFY(x) #x
 #define STRINGIFY(x) _STRINGIFY(x)
@@ -121,12 +127,64 @@ uint64_t __munmap(void *addr, uint64_t size) {
   return ret;
 }
 
+// Helper functions for writing strings to the .fdata file. We intentionally
+// avoid using libc names (lowercase memset) to make it clear it is our impl.
+
+/// Write number Num using Base to the buffer in OutBuf, returns a pointer to
+/// the end of the string.
+char *intToStr(char *OutBuf, uint64_t Num, uint32_t Base) {
+  const char *Chars = "0123456789abcdef";
+  char Buf[21];
+  char *Ptr = Buf;
+  while (Num) {
+    *Ptr++ = *(Chars + (Num % Base));
+    Num /= Base;
+  }
+  if (Ptr == Buf) {
+    *OutBuf++ = '0';
+    return OutBuf;
+  }
+  while (Ptr != Buf) {
+    *OutBuf++ = *--Ptr;
+  }
+  return OutBuf;
+}
+
+/// Copy Str to OutBuf, returns a pointer to the end of the copied string
+char *strCopy(char *OutBuf, const char *Str, int32_t Size = BufSize) {
+  while (*Str) {
+    *OutBuf++ = *Str++;
+    if (--Size <= 0)
+      return OutBuf;
+  }
+  return OutBuf;
+}
+
+void memSet(char *Buf, char C, uint32_t Size) {
+  for (int I = 0; I < Size; ++I)
+    *Buf++ = C;
+}
+
+void *memCpy(void *Dest, const void *Src, size_t Len) {
+  char *d = static_cast<char *>(Dest);
+  const char *s = static_cast<const char *>(Src);
+  while (Len--)
+    *d++ = *s++;
+  return Dest;
+}
+
+uint32_t strLen(const char *Str) {
+  uint32_t Size = 0;
+  while (*Str++)
+    ++Size;
+  return Size;
+}
+
 #if !defined(__APPLE__)
 // We use a stack-allocated buffer for string manipulation in many pieces of
 // this code, including the code that prints each line of the fdata file. This
 // buffer needs to accomodate large function names, but shouldn't be arbitrarily
 // large (dynamically allocated) for simplicity of our memory space usage.
-constexpr uint32_t BufSize = 10240;
 
 // Declare some syscall wrappers we use throughout this code to avoid linking
 // against system libc.
@@ -256,59 +314,6 @@ uint64_t __exit(uint64_t code) {
                        : "D"(code)
                        : "cc", "rcx", "r11", "memory");
   return ret;
-}
-
-// Helper functions for writing strings to the .fdata file. We intentionally
-// avoid using libc names (lowercase memset) to make it clear it is our impl.
-
-/// Write number Num using Base to the buffer in OutBuf, returns a pointer to
-/// the end of the string.
-char *intToStr(char *OutBuf, uint64_t Num, uint32_t Base) {
-  const char *Chars = "0123456789abcdef";
-  char Buf[21];
-  char *Ptr = Buf;
-  while (Num) {
-    *Ptr++ = *(Chars + (Num % Base));
-    Num /= Base;
-  }
-  if (Ptr == Buf) {
-    *OutBuf++ = '0';
-    return OutBuf;
-  }
-  while (Ptr != Buf) {
-    *OutBuf++ = *--Ptr;
-  }
-  return OutBuf;
-}
-
-/// Copy Str to OutBuf, returns a pointer to the end of the copied string
-char *strCopy(char *OutBuf, const char *Str, int32_t Size = BufSize) {
-  while (*Str) {
-    *OutBuf++ = *Str++;
-    if (--Size <= 0)
-      return OutBuf;
-  }
-  return OutBuf;
-}
-
-void memSet(char *Buf, char C, uint32_t Size) {
-  for (int I = 0; I < Size; ++I)
-    *Buf++ = C;
-}
-
-void *memCpy(void *Dest, const void *Src, size_t Len) {
-  char *d = static_cast<char *>(Dest);
-  const char *s = static_cast<const char *>(Src);
-  while (Len--)
-    *d++ = *s++;
-  return Dest;
-}
-
-uint32_t strLen(const char *Str) {
-  uint32_t Size = 0;
-  while (*Str++)
-    ++Size;
-  return Size;
 }
 
 void reportError(const char *Msg, uint64_t Size) {

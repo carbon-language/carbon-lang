@@ -40,6 +40,7 @@ if (CMAKE_CXX_COMPILER_ID MATCHES ".*Clang.*")
     -target x86_64-apple-darwin19.6.0
     -ffreestanding
     -fno-exceptions
-    -fno-rtti)
+    -fno-rtti
+    -fno-stack-protector)
   install(TARGETS bolt_rt_instr_osx DESTINATION lib)
 endif()
