@@ -428,10 +428,10 @@ For the various build modes, this means:
 
 ### Guaranteed memory safety programming models
 
-Multiple approaches that would offer guaranteed safety have been considered,
-mainly based on other languages which offer related approaches. Carbon will
-likely rely more on error detection and hardening because of what the models
-would mean for Carbon's performance and C++ migration language goals.
+Multiple approaches that would offer guaranteed memory safety have been
+considered, mainly based on other languages which offer related approaches.
+Carbon will likely rely more on error detection and hardening because of what
+the models would mean for Carbon's performance and C++ migration language goals.
 
 #### Guaranteed compile-time memory safety using borrow checking
 
@@ -533,7 +533,8 @@ migration path.
 
 #### Guaranteed run-time memory safety using reference counting
 
-Swift offers a good example of run-time safety using reference counting.
+[Reference counting](https://en.wikipedia.org/wiki/Reference_counting) is a
+common memory safety model, with Swift as a popular example.
 
 Advantages:
 
@@ -564,7 +565,8 @@ counting.
 
 #### Guaranteed run-time memory safety using garbage collection
 
-Java offers a good example of run-time safety using garbage collection.
+[Garbage collection](<https://en.wikipedia.org/wiki/Garbage_collection_(computer_science)>)
+is a common memory safety model, with Java as a popular example.
 
 Advantages:
 
