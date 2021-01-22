@@ -2,10 +2,10 @@
 # Exceptions. See /LICENSE for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-a.out: syntax.l syntax.y ast.h typecheck.h interp.h ast.cpp typecheck.cpp interp.cpp cons_list.h assoc_list.h
-	bison -d syntax.y
+a.out: syntax.l syntax.ypp ast.h typecheck.h interp.h ast.cpp typecheck.cpp interp.cpp cons_list.h assoc_list.h
+	bison -d syntax.ypp
 	flex syntax.l
-	bison -v --debug syntax.y  -o syntax.tab.cpp
+	bison -v --debug syntax.ypp  -o syntax.tab.cpp
 	g++ -std=c++11 -Wno-deprecated-register -c -g lex.yy.c
 	g++ -std=c++11 -c -g ast.cpp
 	g++ -std=c++11 -c -g typecheck.cpp

@@ -6,8 +6,8 @@
 
 %{
 #include <stdlib.h>
-#include "ast.h"
-#include "syntax.tab.h"
+#include "executable_semantics/ast.h"
+#include "executable_semantics/syntax.tab.h"
 %}
 %option yylineno
 

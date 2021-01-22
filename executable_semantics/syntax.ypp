@@ -10,9 +10,9 @@
 #include <iostream>
 #include <stdarg.h>
 #include <algorithm>
-#include "ast.h"
-#include "typecheck.h"
-#include "interp.h"
+#include "executable_semantics/ast.h"
+#include "executable_semantics/typecheck.h"
+#include "executable_semantics/interp.h"
 
 extern FILE* yyin;
 extern int yylineno;
@@ -30,7 +30,7 @@ extern int yywrap();
 //#include "typecheck.h"
 //#include "eval.h"
 #include <list>
-#include "ast.h"
+#include "executable_semantics/ast.h"
 using std::list;
 using std::pair;
 using std::make_pair;
@@ -144,7 +144,7 @@ input: declaration_list
 ;
 pattern:
   expression
-    { $$ = $1 }
+    { $$ = $1; }
 ;
 expression:
   identifier

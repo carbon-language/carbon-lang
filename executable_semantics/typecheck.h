@@ -6,11 +6,11 @@
 #define TYPECHECK_H
 
 #include <set>
-using std::set;
 using std::pair;
-#include "ast.h"
-#include "assoc_list.h"
-#include "interp.h"
+using std::set;
+#include "executable_semantics/assoc_list.h"
+#include "executable_semantics/ast.h"
+#include "executable_semantics/interp.h"
 
 typedef AList<string, Value*> TypeEnv;
 
@@ -19,15 +19,14 @@ void print_type_env(TypeEnv* env);
 enum TCContext { ValueContext, PatternContext, TypeContext };
 
 struct TCResult {
-  TCResult(Expression* e, Value* t, TypeEnv* env)
-    : exp(e), type(t), env(env) { }
+  TCResult(Expression* e, Value* t, TypeEnv* env) : exp(e), type(t), env(env) {}
   Expression* exp;
   Value* type;
   TypeEnv* env;
 };
 
 struct TCStatement {
-  TCStatement(Statement* s, TypeEnv* e) : stmt(s), env(e) { }
+  TCStatement(Statement* s, TypeEnv* e) : stmt(s), env(e) {}
   Statement* stmt;
   TypeEnv* env;
 };
@@ -42,12 +41,12 @@ TCResult typecheck_exp(Expression* e, TypeEnv* env, Env* ct_env,
 
 TCStatement typecheck_stmt(Statement*, TypeEnv*, Env*, Value*);
 
-struct FunctionDefinition*
-typecheck_fun_def(struct FunctionDefinition*, TypeEnv*);
+struct FunctionDefinition* typecheck_fun_def(struct FunctionDefinition*,
+                                             TypeEnv*);
 
 Declaration* typecheck_decl(Declaration* d, TypeEnv* env, Env* ct_env);
 
-pair<TypeEnv*,Env*> top_level(list<struct Declaration*>* fs);
+pair<TypeEnv*, Env*> top_level(list<struct Declaration*>* fs);
 
 void print_error_string(string s);
 

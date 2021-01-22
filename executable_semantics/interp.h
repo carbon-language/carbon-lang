@@ -5,26 +5,45 @@
 #ifndef INTERP_H
 #define INTERP_H
 
-#include "ast.h"
-#include "assoc_list.h"
-#include "cons_list.h"
-#include <vector>
 #include <list>
-using std::vector;
+#include <vector>
+
+#include "executable_semantics/assoc_list.h"
+#include "executable_semantics/ast.h"
+#include "executable_semantics/cons_list.h"
+
 using std::list;
+using std::vector;
 
 struct Value;
 
 typedef unsigned int address;
-typedef list< pair<string, Value*> > VarValues;
+typedef list<pair<string, Value*> > VarValues;
 typedef AList<string, address> Env;
 
 /***** Values *****/
 
-enum ValKind { IntV, FunV, PtrV, BoolV, StructV, AltV, TupleV,
-               VarTV, IntTV, BoolTV, TypeTV, FunctionTV, PointerTV, AutoTV,
-               TupleTV, StructTV, ChoiceTV, VarPatV,
-               AltConsV };
+enum ValKind {
+  IntV,
+  FunV,
+  PtrV,
+  BoolV,
+  StructV,
+  AltV,
+  TupleV,
+  VarTV,
+  IntTV,
+  BoolTV,
+  TypeTV,
+  FunctionTV,
+  PointerTV,
+  AutoTV,
+  TupleTV,
+  StructTV,
+  ChoiceTV,
+  VarPatV,
+  AltConsV
+};
 
 struct Value {
   ValKind tag;
@@ -32,23 +51,57 @@ struct Value {
   union {
     int integer;
     bool boolean;
-    struct { string* name;
+    struct {
+      string* name;
       Value* param;
       Statement* body;
     } fun;
-    struct { Value* type; Value* inits; } struct_val;
-    struct { string* alt_name; string* choice_name; } alt_cons;
-    struct { string* alt_name; string* choice_name; Value* arg; } alt;
-    struct { vector<pair<string,address> >* elts; } tuple;
+    struct {
+      Value* type;
+      Value* inits;
+    } struct_val;
+    struct {
+      string* alt_name;
+      string* choice_name;
+    } alt_cons;
+    struct {
+      string* alt_name;
+      string* choice_name;
+      Value* arg;
+    } alt;
+    struct {
+      vector<pair<string, address> >* elts;
+    } tuple;
     address ptr;
     string* var_type;
-    struct { string* name; Value* type; } var_pat;
-    struct { Value* param; Value* ret; } fun_type;
-    struct { Value* type; } ptr_type;
-    struct { string* name; VarValues* fields; VarValues* methods; } struct_type;
-    struct { string* name; VarValues* fields; } tuple_type;
-    struct { string* name; VarValues* alternatives; } choice_type;
-    struct { list<string*>* params; Value* type; } implicit;
+    struct {
+      string* name;
+      Value* type;
+    } var_pat;
+    struct {
+      Value* param;
+      Value* ret;
+    } fun_type;
+    struct {
+      Value* type;
+    } ptr_type;
+    struct {
+      string* name;
+      VarValues* fields;
+      VarValues* methods;
+    } struct_type;
+    struct {
+      string* name;
+      VarValues* fields;
+    } tuple_type;
+    struct {
+      string* name;
+      VarValues* alternatives;
+    } choice_type;
+    struct {
+      list<string*>* params;
+      Value* type;
+    } implicit;
   } u;
 };
 
@@ -57,8 +110,8 @@ Value* make_bool_val(bool b);
 Value* make_fun_val(string name, VarValues* implicit_params, Value* param,
                     Statement* body, vector<Value*>* implicit_args);
 Value* make_ptr_val(address addr);
-Value* make_struct_val(Value* type, vector<pair<string,address> >* inits);
-Value* make_tuple_val(vector<pair<string,address> >* elts);
+Value* make_struct_val(Value* type, vector<pair<string, address> >* inits);
+Value* make_tuple_val(vector<pair<string, address> >* elts);
 Value* make_alt_val(string alt_name, string choice_name, Value* arg);
 Value* make_alt_cons(string alt_name, string choice_name);
 
@@ -80,26 +133,32 @@ bool value_equal(Value* v1, Value* v2, int lineno);
 
 /***** Actions *****/
 
-enum ActionKind { LValAction, ExpressionAction, StatementAction, ValAction,
-                  ExpToLValAction, DeleteTmpAction };
+enum ActionKind {
+  LValAction,
+  ExpressionAction,
+  StatementAction,
+  ValAction,
+  ExpToLValAction,
+  DeleteTmpAction
+};
 
 struct Action {
   ActionKind tag;
   union {
-    Expression* exp;      // for LValAction and ExpressionAction
+    Expression* exp;  // for LValAction and ExpressionAction
     Statement* stmt;
-    Value* val;           // for finished actions with a value (ValAction)
+    Value* val;  // for finished actions with a value (ValAction)
     address delete_;
   } u;
-  int pos;                // position or state of the action
-  vector<Value*> results; // results from subexpression
+  int pos;                 // position or state of the action
+  vector<Value*> results;  // results from subexpression
 };
 typedef Cons<Action*>* ActionList;
 
 /***** Scopes *****/
 
 struct Scope {
-  Scope(Env* e, const list<string>& l) : env(e), locals(l) { }
+  Scope(Env* e, const list<string>& l) : env(e), locals(l) {}
   Env* env;
   list<string> locals;
 };
@@ -111,7 +170,7 @@ struct Frame {
   Cons<Scope*>* scopes;
   string name;
   Frame(string n, Cons<Scope*>* s, Cons<Action*>* c)
-    : name(n), scopes(s), todo(c) { }
+      : name(n), scopes(s), todo(c) {}
 };
 
 struct State {
