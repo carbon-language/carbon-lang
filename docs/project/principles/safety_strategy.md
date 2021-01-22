@@ -25,10 +25,10 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [Caveats](#caveats)
     -   [Probabilistic techniques likely cannot stop attacks](#probabilistic-techniques-likely-cannot-stop-attacks)
 -   [Alternatives considered](#alternatives-considered)
-    -   [Guaranteed safety programming models](#guaranteed-safety-programming-models)
-        -   [Guaranteed safety at compile-time using borrow checking](#guaranteed-safety-at-compile-time-using-borrow-checking)
-        -   [Guaranteed safety at run-time using reference counting](#guaranteed-safety-at-run-time-using-reference-counting)
-        -   [Guaranteed safety at run-time using garbage collection](#guaranteed-safety-at-run-time-using-garbage-collection)
+    -   [Guaranteed memory safety programming models](#guaranteed-memory-safety-programming-models)
+        -   [Guaranteed compile-time memory safety using borrow checking](#guaranteed-compile-time-memory-safety-using-borrow-checking)
+        -   [Guaranteed run-time memory safety using reference counting](#guaranteed-run-time-memory-safety-using-reference-counting)
+        -   [Guaranteed run-time memory safety using garbage collection](#guaranteed-run-time-memory-safety-using-garbage-collection)
     -   [Build mode names](#build-mode-names)
     -   [Performance versus safety in the hardened build mode](#performance-versus-safety-in-the-hardened-build-mode)
 
@@ -426,14 +426,14 @@ For the various build modes, this means:
 
 ## Alternatives considered
 
-### Guaranteed safety programming models
+### Guaranteed memory safety programming models
 
 Multiple approaches that would offer guaranteed safety have been considered,
 mainly based on other languages which offer related approaches. Carbon will
 likely rely more on error detection and hardening because of what the models
 would mean for Carbon's performance and C++ migration language goals.
 
-#### Guaranteed safety at compile-time using borrow checking
+#### Guaranteed compile-time memory safety using borrow checking
 
 Rust offers a good example of an approach for compile-time safety based on
 borrow checking, which provides guaranteed safety. For code which can't
@@ -531,7 +531,7 @@ need to be considered in the context of other goals. It should still be possible
 to adopt guaranteed safety later, although it will require identifying a
 migration path.
 
-#### Guaranteed safety at run-time using reference counting
+#### Guaranteed run-time memory safety using reference counting
 
 Swift offers a good example of run-time safety using reference counting.
 
@@ -562,7 +562,7 @@ performance goals should lead to different trade-off decisions with a higher
 priority on peak performance, which effectively rules out broad use of reference
 counting.
 
-#### Guaranteed safety at run-time using garbage collection
+#### Guaranteed run-time memory safety using garbage collection
 
 Java offers a good example of run-time safety using garbage collection.
 
@@ -579,8 +579,8 @@ Disadvantages:
     cases like data races.
 -   Performance overhead is significant in terms of what Carbon would like to
     consider.
-    -   Even with the JVM and its extensive optimizations, garbage collection
-        remains a difficult performance problem.
+    -   Garbage collection remains a difficult performance problem, even for the
+        JVM and its extensive optimizations.
     -   The complexity of the implementation makes it difficult to _predict_
         performance; for example, Java applications experience latency spikes
         when garbage collection runs.
