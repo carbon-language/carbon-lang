@@ -25,10 +25,10 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [Caveats](#caveats)
     -   [Probabilistic techniques likely cannot stop attacks](#probabilistic-techniques-likely-cannot-stop-attacks)
 -   [Alternatives considered](#alternatives-considered)
-    -   [Alternative models](#alternative-models)
-        -   [Guaranteed safety by default (Rust's model)](#guaranteed-safety-by-default-rusts-model)
-        -   [Runtime lifetime safety without data race prevention (Swift's model)](#runtime-lifetime-safety-without-data-race-prevention-swifts-model)
-        -   [Runtime lifetime safety and defined behavior (Java's model)](#runtime-lifetime-safety-and-defined-behavior-javas-model)
+    -   [Guaranteed safety programming models](#guaranteed-safety-programming-models)
+        -   [Guaranteed safety at compile-time using borrow checking](#guaranteed-safety-at-compile-time-using-borrow-checking)
+        -   [Guaranteed safety at run-time using reference counting](#guaranteed-safety-at-run-time-using-reference-counting)
+        -   [Guaranteed safety at run-time using garbage collection](#guaranteed-safety-at-run-time-using-garbage-collection)
     -   [Build mode names](#build-mode-names)
     -   [Performance versus safety in the hardened build mode](#performance-versus-safety-in-the-hardened-build-mode)
 
@@ -426,18 +426,23 @@ For the various build modes, this means:
 
 ## Alternatives considered
 
-### Alternative models
+### Guaranteed safety programming models
 
-When considering models, they must be adoptable without hindering performance
-builds. Carbon will not create build-mode-specific programming models.
+Multiple approaches that would offer guaranteed safety have been considered,
+mainly based on other languages which offer related approaches. Carbon will
+likely rely more on error detection and hardening because of what the models
+would mean for Carbon's performance and C++ migration language goals.
 
-#### Guaranteed safety by default (Rust's model)
+#### Guaranteed safety at compile-time using borrow checking
 
-Carbon could provide guaranteed safety by default. With Rust as an example, this
-would require a combination of compile-time and runtime memory safety
-techniques. This approach still allows for
+Rust offers a good example of an approach for compile-time safety based on
+borrow checking, which provides guaranteed safety. For code which can't
+implement borrow checking, runtime safety using reference counting is available
+and provides reliable error detection. This approach still allows for
 [`unsafe` blocks](https://doc.rust-lang.org/rust-by-example/unsafe.html), as
 well as types that offer runtime safety while wrapping `unsafe` interfaces.
+
+Carbon could use a similar approach for guaranteed safety by default.
 
 Advantages:
 
@@ -526,16 +531,13 @@ need to be considered in the context of other goals. It should still be possible
 to adopt guaranteed safety later, although it will require identifying a
 migration path.
 
-#### Runtime lifetime safety without data race prevention (Swift's model)
+#### Guaranteed safety at run-time using reference counting
 
-Carbon could provide runtime lifetime safety with no data race prevention,
-mirroring Swift's model. This only requires compile-time enforcement of the
-remaining spatial safety properties. This _does_ remove the majority of the type
-system complexity needed to support the safety in Rust's model.
+Swift offers a good example of run-time safety using reference counting.
 
 Advantages:
 
--   Significantly simpler model than Rust's.
+-   Simple model for safety, particularly as compared with Rust.
 -   Safe for all of the most common and important classes of memory safety bugs.
 
 Disadvantages:
@@ -544,27 +546,25 @@ Disadvantages:
     and tools for controlling these costs are difficult.
     -   Safety based on garbage collection has less direct performance overhead,
         but has a greater unpredictability of performance.
-    -   Swift is planning to add an option for unique ownership, although the
-        specifics are not designed yet. Unique ownership by itself does not
-        address performance issues because it also needs unowned/unsafe access
-        for "borrowing". Swift provides these unsafe features, but they are not
-        idiomatic. Also, requiring unsafe access will constrain safety checks.
 -   Significant design differences versus C++ still result, as the distinction
     between value types and "class types" becomes extremely important.
     -   Class types are held by a reference counted pointer and are thus
         lifetime safe.
 
+In order to mitigate the performance overhead, Swift does have a proposal to add
+an option for unique ownership, although the specifics are not designed yet. The
+unique ownership approach is expected to require unowned and unsafe access, so
+it would not considered to improve the safety trade-offs.
+
 Swift was designated by Apple as the replacement for Objective-C. The safety
 versus performance trade-offs that it makes fit Apple's priorities. Carbon's
 performance goals should lead to different trade-off decisions with a higher
-priority on peak performance.
+priority on peak performance, which effectively rules out broad use of reference
+counting.
 
-#### Runtime lifetime safety and defined behavior (Java's model)
+#### Guaranteed safety at run-time using garbage collection
 
-Another approach to safety is to largely provide defined and predictable
-behavior for all potential safety violations, which is what Java does (at the
-highest level). This forms the basis of Java's safety, combined with dynamic
-memory management in the form of garbage collection.
+Java offers a good example of run-time safety using garbage collection.
 
 Advantages:
 
@@ -577,15 +577,17 @@ Disadvantages:
 
 -   Extremely high complexity to fully understand the implications of complex
     cases like data races.
--   Tends to require _significant_ performance overhead without the aid of a
-    very powerful VM-based execution environment with extensive optimizations.
+-   Performance overhead is significant in terms of what Carbon would like to
+    consider.
+    -   Even with the JVM and its extensive optimizations, garbage collection
+        remains a difficult performance problem.
     -   The complexity of the implementation makes it difficult to _predict_
         performance; for example, Java applications experience latency spikes
         when garbage collection runs.
 
-Carbon's performance goals prioritize reliability of performance. The
-unpredictable performance impacts of a garbage collector make it a less
-desirable choice.
+Java is a good choice for many applications, but Carbon is working to focus on a
+set of performance priorities that would be difficult to achieve with a garbage
+collector.
 
 ### Build mode names
 
