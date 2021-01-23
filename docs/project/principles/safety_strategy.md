@@ -31,6 +31,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
         -   [Guaranteed run-time memory safety using garbage collection](#guaranteed-run-time-memory-safety-using-garbage-collection)
     -   [Build mode names](#build-mode-names)
     -   [Performance versus safety in the hardened build mode](#performance-versus-safety-in-the-hardened-build-mode)
+    -   [Add more build modes](#add-more-build-modes)
 
 <!-- tocstop -->
 
@@ -233,20 +234,23 @@ for developers who cannot invest into safety-specific code modifications.
 
 -   Safety checks should try to be identical across build modes.
 
-    -   It's expected that many safety checks will be disabled in the
-        performance build mode.
+    -   There will be differences, typically due to performance overhead and
+        detection rate trade-offs of safety check algorithms.
 
--   Any further build modes beyond the noted three will need to be carefully
-    evaluated for merging into one of the the primary three.
+-   The number of build modes will be limited, and should be expected to remain
+    at the named three.
 
-    -   We expect that most developers will use two build modes in their work:
-        debug for development, and either performance or hardened for releases.
-        We expect that minimizing build modes will make choosing modes simple
-        for developers.
+    -   Most developers will use two build modes in their work: debug for
+        development, and either performance or hardened for releases.
 
-    -   There will be trade-offs where design compromises are made in order to
-        fit into the limited set of build modes: this is accepted, and preferred
-        over adding more.
+    -   It's important to focus on checks that are cheap enough to run as part
+        of normal development. Users are not expected to want to run additional
+        development build modes for additional sanitizers.
+
+    -   Limiting the number of build modes simplifies support for both Carbon
+        maintainers, who can focus on a more limited set of configurations, and
+        Carbon developers, who can easily choose which is better for their
+        use-case.
 
 -   Each distinct safety-related build mode (debug, performance, and hardened)
     cannot be combined with others in the same binary.
@@ -692,3 +696,56 @@ build mode exists to satisfy developers and environments that value safety more
 than performance. The hardened build mode will rely on non-probabilistic safety
 at significant performance cost because other approaches will be insufficient to
 guard against determined attackers.
+
+### Add more build modes
+
+More build modes could be added to this principle, or the principle could
+encourage the idea that specific designs may add more.
+
+To explain why three build modes:
+
+-   The concept of debug and release (sometimes called opt) are common. For
+    example, in
+    [Visual Studio](https://docs.microsoft.com/en-us/visualstudio/debugger/how-to-set-debug-and-release-configurations?view=vs-2019).
+    In Carbon, this could be considered to translate to the "debug" and
+    "performance" build modes by default.
+
+-   The hardened build mode is added in order to emphasize security. Although
+    hardened could be implemented as a set of options passed to the standard
+    release build mode, the preference is to focus on it as an important
+    feature.
+
+An example of why another build mode may be needed is
+[ThreadSanitizer](https://clang.llvm.org/docs/ThreadSanitizer.html), which is
+noted as having 5-15x slowdown and 5-10x memory overhead. This is infeasible for
+normal use, but could be useful for some users in a separate build mode. A
+trade-off that's possible for Carbon is instead using an approach similar to
+[KCSAN](https://github.com/google/ktsan/wiki/KCSAN) which offers relatively
+inexpensive but lower-probability race detection.
+
+Although options to these build modes may be supported to customize deployments,
+the preference is to focus on a small set and make them behave well. For
+example, if a separate build mode is added for ThreadSanitizer, it should be
+considered a temporary solution until it can be merged into the debug build
+mode.
+
+Advantages:
+
+-   Grants more flexibility for using build modes as a solution to problems.
+    -   With safety checks, this would allow providing safety checks that are
+        high overhead but also high detection rate as separate build modes.
+    -   With other systems, there could be non-safety performance versus
+        behavior trade-offs.
+
+Disadvantages:
+
+-   Safety is the only reason that's been considered for adding build modes.
+    -   Having standard modes simplifies validation of interactions between
+        various safety checks.
+-   As more build modes are added, the chance of developers being confused and
+    choosing the wrong build mode for their application increases.
+
+Any long-term additions to the set of build modes will need to update this
+principle, raising the visibility and requiring more consideration of such an
+addition. If build modes are added for non-safety-related reasons, this may lead
+to moving build modes out of the safety strategy.
