@@ -739,9 +739,9 @@ Advantages:
 
 Disadvantages:
 
--   Safety is the only reason that's been considered for adding build modes.
-    -   Having standard modes simplifies validation of interactions between
-        various safety checks.
+-   Having standard modes simplifies validation of interactions between various
+    safety checks.
+    -   Safety is the only reason that's been considered for adding build modes.
 -   As more build modes are added, the chance of developers being confused and
     choosing the wrong build mode for their application increases.
 
