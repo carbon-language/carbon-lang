@@ -3,9 +3,13 @@
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 load("@rules_cc//cc:defs.bzl", "cc_binary", "cc_library")
+load("//bazel/testing:golden_test.bzl", "golden_test")
 
 cc_binary(
     name = "executable_semantics",
+    linkopts = [
+        "-lpthread",
+    ],
     deps = [":syntax"],
 )
 
@@ -52,6 +56,12 @@ cc_library(
         ":syntax.yy.cpp",
     ],
     hdrs = [":syntax.tab.h"],
+    # Disable warnings for generated code.
+    copts = [
+        "-Wno-unneeded-internal-declaration",
+        "-Wno-unused-function",
+        "-Wno-writable-strings",
+    ],
     deps = [":lib"],
 )
 
@@ -69,3 +79,50 @@ genrule(
         "@rules_m4//m4:current_m4_toolchain",
     ],
 )
+
+EXAMPLES = [
+    "block1",
+    "break1",
+    "choice1",
+    "continue1",
+    "fun_recur",
+    "fun1",
+    "fun2",
+    "fun3",
+    "fun4",
+    "fun5",
+    "fun6_fail_type",
+    "funptr1",
+    "match_int_default",
+    "match_int",
+    "match_type",
+    "next",
+    "pattern_init",
+    "record1",
+    "struct1",
+    "struct2",
+    "struct3",
+    "tuple_assign",
+    "tuple_match",
+    "tuple1",
+    "tuple2",
+    "undef1",
+    "undef2",
+    "while1",
+    "zero",
+]
+
+[genrule(
+    name = "%s_out" % e,
+    srcs = ["testdata/%s.6c" % e],
+    outs = ["testdata/%s.out" % e],
+    # Suppress command errors.
+    cmd = "$(location executable_semantics) $< > $@ 2>&1 || true",
+    tools = [":executable_semantics"],
+) for e in EXAMPLES]
+
+[golden_test(
+    name = "%s_test" % e,
+    golden = "testdata/%s.golden" % e,
+    subject = "testdata/%s.out" % e,
+) for e in EXAMPLES]

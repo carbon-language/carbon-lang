@@ -380,6 +380,8 @@ def _impl(ctx):
                             "-stdlib=libc++",
                             # Force static linking with libc++abi as well.
                             "-l:libc++abi.a",
+                            # Expect pthreads.
+                            "-lpthread",
                             # Link with Clang's runtime library. This is always
                             # linked statically.
                             #"-rtlib=compiler-rt",

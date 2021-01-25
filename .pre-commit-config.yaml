@@ -24,6 +24,8 @@ repos:
       - id: mixed-line-ending
         args: ['--fix=lf']
       - id: trailing-whitespace
+        exclude: '^(.*/testdata/.*\.golden)$'
+
   - repo: https://github.com/google/pre-commit-tool-hooks
     rev: v1.1.1
     hooks:
@@ -39,7 +41,7 @@ repos:
           - ''
           - '// '
           - ''
-        exclude: '^(website/(firebase/.firebaserc|jekyll/(Gemfile.lock|theme/.*))|.bazelversion|compile_flags.txt|.*\.def)$'
+        exclude: '^(website/(firebase/.firebaserc|jekyll/(Gemfile.lock|theme/.*))|.bazelversion|compile_flags.txt|.*\.def|.*/testdata/.*\.golden)$'
       - id: check-google-doc-style
       - id: markdown-toc
   - repo: https://github.com/codespell-project/codespell

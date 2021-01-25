@@ -457,7 +457,7 @@ TCResult typecheck_exp(
     }
     case Variable: {
       auto t =
-          lookup(e->lineno, env, *(e->u.variable.name), print_error_string);
+          Lookup(e->lineno, env, *(e->u.variable.name), print_error_string);
       return TCResult(e, t, env);
     }
     case Integer:
@@ -785,7 +785,6 @@ string name_of_decl(Declaration* d) {
 Declaration* typecheck_decl(Declaration* d, TypeEnv* env, Env* ct_env) {
   switch (d->tag) {
     case StructDeclaration: {
-      auto struct_type = type_of_struct_def(d->u.struct_def, env, ct_env);
       auto members = new list<Member*>();
       for (auto m = d->u.struct_def->members->begin();
            m != d->u.struct_def->members->end(); ++m) {

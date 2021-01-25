@@ -752,7 +752,7 @@ void call_function(int lineno, vector<Value*> operas, State* state) {
 
 void kill_scope(int lineno, Scope* scope) {
   for (auto l = scope->locals.begin(); l != scope->locals.end(); ++l) {
-    address a = lookup(lineno, scope->env, *l, print_error_string);
+    address a = Lookup(lineno, scope->env, *l, print_error_string);
     kill_value(state->heap[a]);
   }
 }
@@ -937,7 +937,7 @@ void step_lvalue() {
   case Variable: {
     //    { {x :: C, E, F} :: S, H}
     // -> { {E(x) :: C, E, F} :: S, H}
-    address a = lookup(exp->lineno, current_env(state), *(exp->u.variable.name),
+    address a = Lookup(exp->lineno, current_env(state), *(exp->u.variable.name),
                        print_error_string);
     Value* v = make_ptr_val(a);
     check_alive(v, exp->lineno);
@@ -1017,7 +1017,7 @@ void step_exp() {
   }
   case Variable: {
     // { {x :: C, E, F} :: S, H} -> { {H(E(x)) :: C, E, F} :: S, H}
-    address a = lookup(exp->lineno, current_env(state), *(exp->u.variable.name),
+    address a = Lookup(exp->lineno, current_env(state), *(exp->u.variable.name),
                        print_error_string);
     Value* v = state->heap[a];
     frame->todo = cons(make_val_act(v), frame->todo->next);

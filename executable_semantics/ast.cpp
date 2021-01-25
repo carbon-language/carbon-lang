@@ -2,11 +2,14 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#include <stdio.h>
-#include <string>
-#include <iostream>
-#include <iomanip>
 #include "ast.h"
+
+#include <stdio.h>
+
+#include <iomanip>
+#include <iostream>
+#include <string>
+
 #include "interp.h"
 
 using std::cout;
@@ -56,9 +59,7 @@ Expression* make_fun_type(int lineno, Expression* param, Expression* ret) {
   return t;
 }
 
-void print_string(string* s) {
-  cout << *s;
-}
+void print_string(string* s) { cout << *s; }
 
 /***** Expressions *****/
 
@@ -115,7 +116,8 @@ Expression* make_unop(int lineno, enum Operator op, Expression* arg) {
   return e;
 }
 
-Expression* make_binop(int lineno, enum Operator op, Expression* arg1, Expression* arg2) {
+Expression* make_binop(int lineno, enum Operator op, Expression* arg1,
+                       Expression* arg2) {
   Expression* e = new Expression();
   e->lineno = lineno;
   e->tag = PrimitiveOp;
@@ -145,7 +147,7 @@ Expression* make_get_field(int lineno, Expression* exp, string field) {
   return e;
 }
 
-Expression* make_tuple(int lineno, vector<pair<string,Expression*> >* args) {
+Expression* make_tuple(int lineno, vector<pair<string, Expression*> >* args) {
   Expression* e = new Expression();
   e->lineno = lineno;
   e->tag = Tuple;
@@ -171,31 +173,31 @@ Expression* make_index(int lineno, Expression* exp, Expression* i) {
 
 void print_op(Operator op) {
   switch (op) {
-  case Neg:
-    cout << "-";
-    break;
-  case Add:
-    cout << "+";
-    break;
-  case Sub:
-    cout << "-";
-    break;
-  case Not:
-    cout << "!";
-    break;
-  case And:
-    cout << "&&";
-    break;
-  case Or:
-    cout << "||";
-    break;
-  case Eq:
-    cout << "==";
-    break;
+    case Neg:
+      cout << "-";
+      break;
+    case Add:
+      cout << "+";
+      break;
+    case Sub:
+      cout << "-";
+      break;
+    case Not:
+      cout << "!";
+      break;
+    case And:
+      cout << "&&";
+      break;
+    case Or:
+      cout << "||";
+      break;
+    case Eq:
+      cout << "==";
+      break;
   }
 }
 
-void print_fields(vector<pair<string,Expression*> >* fields) {
+void print_fields(vector<pair<string, Expression*> >* fields) {
   int i = 0;
   for (auto iter = fields->begin(); iter != fields->end(); ++iter, ++i) {
     if (i != 0)
@@ -208,85 +210,85 @@ void print_fields(vector<pair<string,Expression*> >* fields) {
 
 void print_exp(Expression* e) {
   switch (e->tag) {
-  case Index:
-    print_exp(e->u.index.aggregate);
-    cout << "[";
-    print_exp(e->u.index.offset);
-    cout << "]";
-    break;
-  case GetField:
-    print_exp(e->u.get_field.aggregate);
-    cout << ".";
-    cout << * e->u.get_field.field;
-    break;
-  case Tuple:
-    cout << "(";
-    print_fields(e->u.tuple.fields);
-    cout << ")";
-    break;
-  case Integer:
-    cout << e->u.integer;
-    break;
-  case Boolean:
-    cout << std::boolalpha;
-    cout << e->u.boolean;
-    break;
-  case PrimitiveOp:
-    cout << "(";
-    if (e->u.primitive_op.arguments->size() == 0) {
-      print_op(e->u.primitive_op.operator_);
-    } else if (e->u.primitive_op.arguments->size() == 1) {
-      print_op(e->u.primitive_op.operator_);
-      cout << " ";
-      auto iter = e->u.primitive_op.arguments->begin();
-      print_exp(*iter);
-    } else if (e->u.primitive_op.arguments->size() == 2) {
-      auto iter = e->u.primitive_op.arguments->begin();
-      print_exp(*iter);
-      cout << " ";
-      print_op(e->u.primitive_op.operator_);
-      cout << " ";
-      ++iter;
-      print_exp(*iter);
-    }
-    cout << ")";
-    break;
-  case Variable:
-    cout << * e->u.variable.name;
-    break;
-  case PatternVariable:
-    print_exp(e->u.pattern_variable.type);
-    cout << ": ";
-    cout << * e->u.pattern_variable.name;
-    break;
-  case Call:
-    print_exp(e->u.call.function);
-    if (e->u.call.argument->tag == Tuple) {
-      print_exp(e->u.call.argument);
-    } else {
+    case Index:
+      print_exp(e->u.index.aggregate);
+      cout << "[";
+      print_exp(e->u.index.offset);
+      cout << "]";
+      break;
+    case GetField:
+      print_exp(e->u.get_field.aggregate);
+      cout << ".";
+      cout << *e->u.get_field.field;
+      break;
+    case Tuple:
       cout << "(";
-      print_exp(e->u.call.argument);
+      print_fields(e->u.tuple.fields);
       cout << ")";
-    }
-    break;
-  case BoolT:
-    cout << "Bool";
-    break;
-  case IntT:
-    cout << "Int";
-    break;
-  case TypeT:
-    cout << "Type";
-    break;
-  case AutoT:
-    cout << "auto";
-    break;
-  case FunctionT:
-    cout << "fn ";
-    print_exp(e->u.function_type.parameter);
-    cout << " -> ";
-    print_exp(e->u.function_type.return_type);
-    break;
+      break;
+    case Integer:
+      cout << e->u.integer;
+      break;
+    case Boolean:
+      cout << std::boolalpha;
+      cout << e->u.boolean;
+      break;
+    case PrimitiveOp:
+      cout << "(";
+      if (e->u.primitive_op.arguments->size() == 0) {
+        print_op(e->u.primitive_op.operator_);
+      } else if (e->u.primitive_op.arguments->size() == 1) {
+        print_op(e->u.primitive_op.operator_);
+        cout << " ";
+        auto iter = e->u.primitive_op.arguments->begin();
+        print_exp(*iter);
+      } else if (e->u.primitive_op.arguments->size() == 2) {
+        auto iter = e->u.primitive_op.arguments->begin();
+        print_exp(*iter);
+        cout << " ";
+        print_op(e->u.primitive_op.operator_);
+        cout << " ";
+        ++iter;
+        print_exp(*iter);
+      }
+      cout << ")";
+      break;
+    case Variable:
+      cout << *e->u.variable.name;
+      break;
+    case PatternVariable:
+      print_exp(e->u.pattern_variable.type);
+      cout << ": ";
+      cout << *e->u.pattern_variable.name;
+      break;
+    case Call:
+      print_exp(e->u.call.function);
+      if (e->u.call.argument->tag == Tuple) {
+        print_exp(e->u.call.argument);
+      } else {
+        cout << "(";
+        print_exp(e->u.call.argument);
+        cout << ")";
+      }
+      break;
+    case BoolT:
+      cout << "Bool";
+      break;
+    case IntT:
+      cout << "Int";
+      break;
+    case TypeT:
+      cout << "Type";
+      break;
+    case AutoT:
+      cout << "auto";
+      break;
+    case FunctionT:
+      cout << "fn ";
+      print_exp(e->u.function_type.parameter);
+      cout << " -> ";
+      print_exp(e->u.function_type.return_type);
+      break;
   }
 }
 
@@ -299,7 +301,7 @@ ExpOrFieldList* make_exp(Expression* exp) {
   return e;
 }
 
-ExpOrFieldList* make_field_list(list<pair<string,Expression*> >* fields) {
+ExpOrFieldList* make_field_list(list<pair<string, Expression*> >* fields) {
   auto e = new ExpOrFieldList();
   e->tag = FieldList;
   e->u.fields = fields;
@@ -307,26 +309,26 @@ ExpOrFieldList* make_field_list(list<pair<string,Expression*> >* fields) {
 }
 
 ExpOrFieldList* cons_field(ExpOrFieldList* e1, ExpOrFieldList* e2) {
-  auto fields = new list<pair<string,Expression*> >();
+  auto fields = new list<pair<string, Expression*> >();
   switch (e1->tag) {
-  case Exp:
-    fields->push_back(make_pair("", e1->u.exp));
-    break;
-  case FieldList:
-    for (auto i = e1->u.fields->begin(); i != e1->u.fields->end(); ++i) {
-      fields->push_back(*i);
-    }
-    break;
+    case Exp:
+      fields->push_back(make_pair("", e1->u.exp));
+      break;
+    case FieldList:
+      for (auto i = e1->u.fields->begin(); i != e1->u.fields->end(); ++i) {
+        fields->push_back(*i);
+      }
+      break;
   }
   switch (e2->tag) {
-  case Exp:
-    fields->push_back(make_pair("", e2->u.exp));
-    break;
-  case FieldList:
-    for (auto i = e2->u.fields->begin(); i != e2->u.fields->end(); ++i) {
-      fields->push_back(*i);
-    }
-    break;
+    case Exp:
+      fields->push_back(make_pair("", e2->u.exp));
+      break;
+    case FieldList:
+      for (auto i = e2->u.fields->begin(); i != e2->u.fields->end(); ++i) {
+        fields->push_back(*i);
+      }
+      break;
   }
   return make_field_list(fields);
 }
@@ -335,7 +337,7 @@ Expression* ensure_tuple(int lineno, Expression* e) {
   if (e->tag == Tuple) {
     return e;
   } else {
-    auto vec = new vector<pair<string,Expression*> >();
+    auto vec = new vector<pair<string, Expression*> >();
     vec->push_back(make_pair("", e));
     return make_tuple(lineno, vec);
   }
@@ -369,7 +371,8 @@ Statement* make_var_def(int lineno, Expression* pat, Expression* init) {
   return s;
 }
 
-Statement* make_if(int lineno, Expression* cond, Statement* then_, Statement* else_)  {
+Statement* make_if(int lineno, Expression* cond, Statement* then_,
+                   Statement* else_) {
   Statement* s = new Statement();
   s->lineno = lineno;
   s->tag = If;
@@ -428,7 +431,8 @@ Statement* make_block(int lineno, Statement* stmt) {
   return s;
 }
 
-Statement* make_match(int lineno, Expression* exp, list< pair<Expression*,Statement*> >* clauses) {
+Statement* make_match(int lineno, Expression* exp,
+                      list<pair<Expression*, Statement*> >* clauses) {
   Statement* s = new Statement();
   s->lineno = lineno;
   s->tag = Match;
@@ -438,84 +442,84 @@ Statement* make_match(int lineno, Expression* exp, list< pair<Expression*,Statem
 }
 
 void print_stmt(Statement* s, int depth) {
-  if (! s)
+  if (!s)
     return;
   if (depth == 0) {
     cout << " ... ";
     return;
   }
   switch (s->tag) {
-  case Match:
-    cout << "match (";
-    print_exp(s->u.match_stmt.exp);
-    cout << ") {";
-    if (depth < 0 || depth > 1) {
-      cout << endl;
-      for (auto c = s->u.match_stmt.clauses->begin();
-           c != s->u.match_stmt.clauses->end(); ++c) {
-        cout << "case ";
-        print_exp(c->first);
-        cout << " =>" << endl;
-        print_stmt(c->second, depth - 1);
+    case Match:
+      cout << "match (";
+      print_exp(s->u.match_stmt.exp);
+      cout << ") {";
+      if (depth < 0 || depth > 1) {
         cout << endl;
+        for (auto c = s->u.match_stmt.clauses->begin();
+             c != s->u.match_stmt.clauses->end(); ++c) {
+          cout << "case ";
+          print_exp(c->first);
+          cout << " =>" << endl;
+          print_stmt(c->second, depth - 1);
+          cout << endl;
+        }
+      } else {
+        cout << "...";
       }
-    } else {
-      cout << "...";
-    }
-    cout << "}";
-    break;
-  case While:
-    cout << "while (";
-    print_exp(s->u.while_stmt.cond);
-    cout << ")" << endl;
-    print_stmt(s->u.while_stmt.body, depth - 1);
-    break;
-  case Break:
-    cout << "break;";
-    break;
-  case Continue:
-    cout << "continue;";
-    break;
-  case VariableDefinition:
-    cout << "var ";
-    print_exp(s->u.variable_definition.pat);
-    cout << " = ";
-    print_exp(s->u.variable_definition.init);
-    cout << ";";
-    break;
-  case ExpressionStatement:
-    print_exp(s->u.exp);
-    cout << ";";
-    break;
-  case Assign:
-    print_exp(s->u.assign.lhs);
-    cout << " = ";
-    print_exp(s->u.assign.rhs);
-    cout << ";";
-    break;
-  case If:
-    cout << "if (";
-    print_exp(s->u.if_stmt.cond);
-    cout << ")" << endl;
-    print_stmt(s->u.if_stmt.then_, depth - 1);
-    cout << endl << "else" << endl;
-    print_stmt(s->u.if_stmt.else_, depth - 1);
-    break;
-  case Return:
-    cout << "return ";
-    print_exp(s->u.return_stmt);
-    cout << ";";
-    break;
-  case Sequence:
-    print_stmt(s->u.sequence.stmt, depth);
-    if (depth < 0 || depth > 1)
-      cout << endl;
-    print_stmt(s->u.sequence.next, depth - 1);
-    break;
-  case Block:
-    cout << "{" << endl;
-    print_stmt(s->u.block.stmt, depth - 1);
-    cout << endl << "}" << endl;
+      cout << "}";
+      break;
+    case While:
+      cout << "while (";
+      print_exp(s->u.while_stmt.cond);
+      cout << ")" << endl;
+      print_stmt(s->u.while_stmt.body, depth - 1);
+      break;
+    case Break:
+      cout << "break;";
+      break;
+    case Continue:
+      cout << "continue;";
+      break;
+    case VariableDefinition:
+      cout << "var ";
+      print_exp(s->u.variable_definition.pat);
+      cout << " = ";
+      print_exp(s->u.variable_definition.init);
+      cout << ";";
+      break;
+    case ExpressionStatement:
+      print_exp(s->u.exp);
+      cout << ";";
+      break;
+    case Assign:
+      print_exp(s->u.assign.lhs);
+      cout << " = ";
+      print_exp(s->u.assign.rhs);
+      cout << ";";
+      break;
+    case If:
+      cout << "if (";
+      print_exp(s->u.if_stmt.cond);
+      cout << ")" << endl;
+      print_stmt(s->u.if_stmt.then_, depth - 1);
+      cout << endl << "else" << endl;
+      print_stmt(s->u.if_stmt.else_, depth - 1);
+      break;
+    case Return:
+      cout << "return ";
+      print_exp(s->u.return_stmt);
+      cout << ";";
+      break;
+    case Sequence:
+      print_stmt(s->u.sequence.stmt, depth);
+      if (depth < 0 || depth > 1)
+        cout << endl;
+      print_stmt(s->u.sequence.next, depth - 1);
+      break;
+    case Block:
+      cout << "{" << endl;
+      print_stmt(s->u.block.stmt, depth - 1);
+      cout << endl << "}" << endl;
   }
 }
 
@@ -532,9 +536,10 @@ Member* make_field(int lineno, string name, Expression* type) {
 
 /***** Declarations *****/
 
-struct FunctionDefinition*
-make_fun_def(int lineno, string name, Expression* ret_type,
-             Expression* param_pattern, Statement* body) {
+struct FunctionDefinition* make_fun_def(int lineno, string name,
+                                        Expression* ret_type,
+                                        Expression* param_pattern,
+                                        Statement* body) {
   struct FunctionDefinition* f = new struct FunctionDefinition();
   f->lineno = lineno;
   f->name = name;
@@ -562,7 +567,7 @@ Declaration* make_struct_decl(int lineno, string name, list<Member*>* members) {
 }
 
 Declaration* make_choice_decl(int lineno, string name,
-                       list<pair<string, Expression*> >* alts) {
+                              list<pair<string, Expression*> >* alts) {
   Declaration* d = new Declaration();
   d->tag = ChoiceDeclaration;
   d->u.choice_def.lineno = lineno;
@@ -607,61 +612,57 @@ void print_fun_def_depth(struct FunctionDefinition* f, int depth) {
   }
 }
 
-void print_fun_def(struct FunctionDefinition* f) {
-  print_fun_def_depth(f, -1);
-}
+void print_fun_def(struct FunctionDefinition* f) { print_fun_def_depth(f, -1); }
 
 void print_member(Member* m) {
   switch (m->tag) {
-  case FieldMember:
-    cout << "var " << * m->u.field.name << " : ";
-    print_exp(m->u.field.type);
-    cout << ";" << endl;
-    break;
+    case FieldMember:
+      cout << "var " << *m->u.field.name << " : ";
+      print_exp(m->u.field.type);
+      cout << ";" << endl;
+      break;
   }
 }
 
 void print_decl(Declaration* d) {
   switch (d->tag) {
-  case FunctionDeclaration:
-    print_fun_def(d->u.fun_def);
-    break;
-  case StructDeclaration:
-    cout << "struct " << * d->u.struct_def->name << " {" << endl;
-    for (auto m = d->u.struct_def->members->begin();
-         m != d->u.struct_def->members->end(); ++m) {
-      print_member(*m);
-    }
-    cout << "}" << endl;
-    break;
-  case ChoiceDeclaration:
-    cout << "choice " << * d->u.choice_def.name << " {" << endl;
-    for (auto a = d->u.choice_def.alternatives->begin();
-         a != d->u.choice_def.alternatives->end(); ++a) {
-      cout << "alt " << a->first << " ";
-      print_exp(a->second);
-      cout << ";" << endl;
-    }
-    cout << "}" << endl;
-    break;
+    case FunctionDeclaration:
+      print_fun_def(d->u.fun_def);
+      break;
+    case StructDeclaration:
+      cout << "struct " << *d->u.struct_def->name << " {" << endl;
+      for (auto m = d->u.struct_def->members->begin();
+           m != d->u.struct_def->members->end(); ++m) {
+        print_member(*m);
+      }
+      cout << "}" << endl;
+      break;
+    case ChoiceDeclaration:
+      cout << "choice " << *d->u.choice_def.name << " {" << endl;
+      for (auto a = d->u.choice_def.alternatives->begin();
+           a != d->u.choice_def.alternatives->end(); ++a) {
+        cout << "alt " << a->first << " ";
+        print_exp(a->second);
+        cout << ";" << endl;
+      }
+      cout << "}" << endl;
+      break;
   }
 }
 
+char* ReadFile(FILE* fp) {
+  char* fcontent = NULL;
+  int fsize = 0;
 
-char *read_file(FILE* fp)
-{
-    char *fcontent = NULL;
-    int fsize = 0;
+  if (fp) {
+    fseek(fp, 0, SEEK_END);
+    fsize = ftell(fp);
+    rewind(fp);
 
-    if(fp) {
-        fseek(fp, 0, SEEK_END);
-        fsize = ftell(fp);
-        rewind(fp);
+    fcontent = (char*)malloc(sizeof(char) * fsize);
+    fread(fcontent, 1, fsize, fp);
 
-        fcontent = (char*) malloc(sizeof(char) * fsize);
-        fread(fcontent, 1, fsize, fp);
-
-        fclose(fp);
-    }
-    return fcontent;
+    fclose(fp);
+  }
+  return fcontent;
 }

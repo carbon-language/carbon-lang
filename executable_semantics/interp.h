@@ -166,9 +166,10 @@ struct Scope {
 /***** Frames and State *****/
 
 struct Frame {
-  Cons<Action*>* todo;
-  Cons<Scope*>* scopes;
   string name;
+  Cons<Scope*>* scopes;
+  Cons<Action*>* todo;
+
   Frame(string n, Cons<Scope*>* s, Cons<Action*>* c)
       : name(n), scopes(s), todo(c) {}
 };

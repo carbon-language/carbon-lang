@@ -124,7 +124,7 @@ static list<FunctionDefinition*> program;
 input: declaration_list
     {
       printf("********** source program **********\n");
-      print_list($1, print_decl, "");
+      PrintList($1, print_decl, "");
       printf("********** type checking **********\n");
       state = new State(); // compile-time state
       pair<TypeEnv*,Env*> p = top_level($1);
@@ -136,7 +136,7 @@ input: declaration_list
       }
       printf("\n");
       printf("********** type checking complete **********\n");
-      print_list(&new_decls, print_decl, "");
+      PrintList(&new_decls, print_decl, "");
       printf("********** starting execution **********\n");
       int result = interp_program(&new_decls);
       cout << "result: " << result << endl;
@@ -335,7 +335,7 @@ int main(int argc, char* argv[])  {
   }
   if (argc > 2) {
     FILE* program = fopen(argv[2], "r");
-    input = read_file(program);
+    input = ReadFile(program);
   }
   yyparse();
   return 0;
