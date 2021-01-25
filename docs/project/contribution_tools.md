@@ -13,8 +13,14 @@ contributions.
 
 ## Table of contents
 
--   [Main tools](#main-tools)
+-   [Package managers](#package-managers)
     -   [brew](#brew)
+    -   [go get](#go-get)
+    -   [pip](#pip)
+-   [Main tools](#main-tools)
+    -   [Bazel and Bazelisk](#bazel-and-bazelisk)
+    -   [buildifier](#buildifier)
+    -   [Clang and LLVM](#clang-and-llvm)
     -   [pyenv and Python](#pyenv-and-python)
     -   [pre-commit](#pre-commit)
 -   [Optional tools](#optional-tools)
@@ -35,15 +41,101 @@ contributions.
 
 <!-- tocstop -->
 
-## Main tools
+## Package managers
 
-These tools are key for contributions, primarily focused on validating
-contributions.
+Instructions for installing tools can be helpful for installing tooling. These
+instructions will try to rely on a minimum of managers.
 
 ### brew
 
 [brew](https://brew.sh/) is a package manager, and can help install several
 tools that we recommend. See the [installation instructions](https://brew.sh/).
+
+### go get
+
+[go get](https://golang.org/pkg/cmd/go/internal/get/) is Go's package manager.
+It will mainly be used for Linux, where [brew](#brew) doesn't work as well.
+
+To install on Linux:
+
+```bash
+apt install golang
+```
+
+### pip
+
+`pip` is Python's package manager, and installed as part of
+[pyenv and Python](#pyenv-and-python).
+
+## Main tools
+
+These tools are key for contributions, primarily focused on validating
+contributions.
+
+### Bazel and Bazelisk
+
+[Bazel](https://www.bazel.build/) is Carbon's standard build system.
+[Bazelisk](https://docs.bazel.build/versions/master/install-bazelisk.html) is
+recommended for installing Bazel.
+
+Our recommended way of installing is:
+
+-   Linux:
+
+    ```bash
+    go get github.com/bazelbuild/bazelisk
+    ```
+
+-   MacOS:
+
+    ```bash
+    brew update
+    brew install bazelisk
+    ```
+
+### buildifier
+
+[Buildifier](https://github.com/bazelbuild/buildtools/tree/master/buildifier) is
+a tool for formatting Bazel BUILD files, and is distributing separately from
+Bazel.
+
+Our recommended way of installing is:
+
+-   Linux:
+
+    ```bash
+    go get github.com/bazelbuild/buildtools/buildifier
+    ```
+
+-   MacOS:
+
+    ```bash
+    brew update
+    brew install buildifier
+    ```
+
+### Clang and LLVM
+
+[Clang](https://clang.llvm.org/), [LLVM](https://llvm.org/), and
+[libc++](https://libcxx.llvm.org/) are used to compile and link Carbon.
+
+Due to compatibility issues in recent versions of LLVM, it's recommended to
+build from head instead of using a distributed version. Each of these systems
+has a "getting started" page for installation (such as
+[Clang's](https://clang.llvm.org/get_started.html)). A couple helpful tips are:
+
+-   Instead of checking out LLVM separately, use the LLVM submodule in under
+    `third_party/llvm_project`.
+
+    -   In other words, create your `build` directory at
+        `third_party/llvm_project/build`.
+
+-   Build all needed projects at once:
+
+    ```bash
+    cmake -G "Unix Makefiles" -DLLVM_ENABLE_PROJECTS="clang;lld;libcxx;libcxxabi" ../llvm
+    make
+    ```
 
 ### pyenv and Python
 
