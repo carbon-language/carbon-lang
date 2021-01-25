@@ -11,7 +11,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 ## Table of contents
 
 -   [Background](#background)
-    -   [What are we talking about when we discuss safety?](#what-are-we-talking-about-when-we-discuss-safety)
+    -   [What "safety" means in Carbon](#what-safety-means-in-carbon)
     -   [Safety guarantees versus hardening](#safety-guarantees-versus-hardening)
 -   [Philosophy](#philosophy)
 -   [Principles](#principles)
@@ -40,7 +40,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 Carbon's goal is to provide
 [practical safety and testing mechanisms](../goals.md#practical-safety-and-testing-mechanisms).
 
-### What are we talking about when we discuss safety?
+### What "safety" means in Carbon
 
 Safety is protection from software bugs, whether the protection is required by
 the language or merely an implementation option. Application-specific logic
@@ -53,7 +53,7 @@ they protect against.
 A key subset of safety categories Carbon should address are:
 
 -   [**Memory safety**](https://en.wikipedia.org/wiki/Memory_safety) protects
-    against invalid memory accesses. We use
+    against invalid memory accesses. Carbon uses
     [two main subcategories](https://onlinelibrary.wiley.com/doi/full/10.1002/spe.2105)
     for memory safety:
 
@@ -133,10 +133,10 @@ Carbon's
 [practical safety and testing mechanisms](../goals.md#practical-safety-and-testing-mechanisms)
 will emphasize guaranteed safety where feasible without creating barriers to
 Carbon's [other goals](../goals.md), particularly performance and
-interoperability. In several major safety categories, we don't expect guaranteed
-safety to be feasible without such compromises, so we will need to focus on
-error detection and safety hardening. The language's design should incentivize
-safe programming, although it will not be required.
+interoperability. This limits Carbon's options for guaranteed safety, and as a
+result there will be more reliance upon error detection and safety hardening.
+The language's design should incentivize safe programming, although it will not
+be required.
 
 When writing code, Carbon developers should expect to receive safety without
 needing to add safety annotations. Carbon will have optional safety annotations
@@ -606,18 +606,18 @@ and are ultimately similar, are:
 
     -   "Development" was also considered, but this term is less specific and
         would be better for describing all non-release builds together. For
-        example, we might later introduce a "fast build" mode that disables
-        safety checks to improve iteration time, like might be controlled by way
-        of C++'s `NDEBUG` option.
+        example, a "fast build" mode might be added that disables safety checks
+        to improve iteration time, like might be controlled by way of C++'s
+        `NDEBUG` option.
 
 -   "Performance" aligns with the phrasing of the language performance goal.
 
     -   "Optimized" implies that other modes would not be fully optimized, but
         hardened should be optimized.
 
-    -   "Fast" would suggest that speed is the only aspect of performance that
-        we are optimizing for, but "performance" also optimizes for memory usage
-        and binary size.
+    -   "Fast" would suggest that speed is the only aspect of performance being
+        optimizing for, but "performance" also optimizes for memory usage and
+        binary size.
 
 -   "Hardened" is the choice for succinctly describing the additional safety
     measures that will be taken, and is a well-known term in the safety space.
@@ -749,3 +749,7 @@ Any long-term additions to the set of build modes will need to update this
 principle, raising the visibility and requiring more consideration of such an
 addition. If build modes are added for non-safety-related reasons, this may lead
 to moving build modes out of the safety strategy.
+
+**Experiment**: This can be considered an experiment. Carbon may eventually add
+more than the initial three build modes, although the reticence to add more is
+likely to remain.
