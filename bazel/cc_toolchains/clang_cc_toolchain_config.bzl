@@ -375,7 +375,7 @@ def _impl(ctx):
                             # linked. This works even with libc++ despite the
                             # name, however we have to manually link the ABI
                             # library and libunwind.
-                            "-static-libstdc++",
+                            #"-static-libstdc++",
                             # Link with libc++.
                             "-stdlib=libc++",
                             # Force static linking with libc++abi as well.
