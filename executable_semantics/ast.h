@@ -111,24 +111,24 @@ struct Expression {
   } u;
 };
 
-Expression* make_var(int lineno, string var);
-Expression* make_var_pat(int lineno, string var, Expression* type);
-Expression* make_int(int lineno, int i);
-Expression* make_bool(int lineno, bool b);
-Expression* make_op(int lineno, Operator op, vector<Expression*>* args);
-Expression* make_unop(int lineno, enum Operator op, Expression* arg);
-Expression* make_binop(int lineno, enum Operator op, Expression* arg1,
+Expression* MakeVar(int lineno, string var);
+Expression* MakeVarPat(int lineno, string var, Expression* type);
+Expression* MakeInt(int lineno, int i);
+Expression* MakeBool(int lineno, bool b);
+Expression* MakeOp(int lineno, Operator op, vector<Expression*>* args);
+Expression* MakeUnOp(int lineno, enum Operator op, Expression* arg);
+Expression* MakeBinOp(int lineno, enum Operator op, Expression* arg1,
                        Expression* arg2);
-Expression* make_call(int lineno, Expression* fun, Expression* arg);
-Expression* make_get_field(int lineno, Expression* exp, string field);
-Expression* make_tuple(int lineno, vector<pair<string, Expression*> >* args);
-Expression* make_index(int lineno, Expression* exp, Expression* i);
+Expression* MakeCall(int lineno, Expression* fun, Expression* arg);
+Expression* MakeGetField(int lineno, Expression* exp, string field);
+Expression* MakeTuple(int lineno, vector<pair<string, Expression*> >* args);
+Expression* MakeIndex(int lineno, Expression* exp, Expression* i);
 
-Expression* make_type_type(int lineno);
-Expression* make_int_type(int lineno);
-Expression* make_bool_type(int lineno);
-Expression* make_fun_type(int lineno, Expression* param, Expression* ret);
-Expression* make_auto_type(int lineno);
+Expression* MakeTypeType(int lineno);
+Expression* MakeIntType(int lineno);
+Expression* MakeBoolType(int lineno);
+Expression* MakeFunType(int lineno, Expression* param, Expression* ret);
+Expression* MakeAutoType(int lineno);
 
 void print_exp(Expression*);
 
@@ -147,9 +147,9 @@ struct ExpOrFieldList {
   } u;
 };
 
-ExpOrFieldList* make_exp(Expression* exp);
-ExpOrFieldList* make_field_list(list<pair<string, Expression*> >* fields);
-ExpOrFieldList* cons_field(ExpOrFieldList* e1, ExpOrFieldList* e2);
+ExpOrFieldList* MakeExp(Expression* exp);
+ExpOrFieldList* MakeFieldList(list<pair<string, Expression*> >* fields);
+ExpOrFieldList* MakeConstructorField(ExpOrFieldList* e1, ExpOrFieldList* e2);
 
 /***** Statements *****/
 
@@ -204,18 +204,18 @@ struct Statement {
   } u;
 };
 
-Statement* make_exp_stmt(int lineno, Expression* exp);
-Statement* make_assign(int lineno, Expression* lhs, Expression* rhs);
-Statement* make_var_def(int lineno, Expression* pat, Expression* init);
-Statement* make_if(int lineno, Expression* cond, Statement* then_,
+Statement* MakeExp_stmt(int lineno, Expression* exp);
+Statement* MakeAssign(int lineno, Expression* lhs, Expression* rhs);
+Statement* MakeVar_def(int lineno, Expression* pat, Expression* init);
+Statement* MakeIf(int lineno, Expression* cond, Statement* then_,
                    Statement* else_);
-Statement* make_return(int lineno, Expression* e);
-Statement* make_seq(int lineno, Statement* s1, Statement* s2);
-Statement* make_block(int lineno, Statement* s);
-Statement* make_while(int lineno, Expression* cond, Statement* body);
-Statement* make_break(int lineno);
-Statement* make_continue(int lineno);
-Statement* make_match(int lineno, Expression* exp,
+Statement* MakeReturn(int lineno, Expression* e);
+Statement* MakeSeq(int lineno, Statement* s1, Statement* s2);
+Statement* MakeBlock(int lineno, Statement* s);
+Statement* MakeWhile(int lineno, Expression* cond, Statement* body);
+Statement* MakeBreak(int lineno);
+Statement* MakeContinue(int lineno);
+Statement* MakeMatch(int lineno, Expression* exp,
                       list<pair<Expression*, Statement*> >* clauses);
 
 void print_stmt(Statement*, int);
@@ -245,7 +245,7 @@ struct Member {
   } u;
 };
 
-Member* make_field(int lineno, string name, Expression* type);
+Member* MakeField(int lineno, string name, Expression* type);
 
 /***** Declarations *****/
 
@@ -274,15 +274,15 @@ struct Declaration {
   } u;
 };
 
-struct FunctionDefinition* make_fun_def(int lineno, string name,
+struct FunctionDefinition* MakeFun_def(int lineno, string name,
                                         Expression* ret_type, Expression* param,
                                         Statement* body);
 void print_fun_def(struct FunctionDefinition*);
 void print_fun_def_depth(struct FunctionDefinition*, int);
 
-Declaration* make_fun_decl(struct FunctionDefinition* f);
-Declaration* make_struct_decl(int lineno, string name, list<Member*>* members);
-Declaration* make_choice_decl(int lineno, string name,
+Declaration* MakeFun_decl(struct FunctionDefinition* f);
+Declaration* MakeStruct_decl(int lineno, string name, list<Member*>* members);
+Declaration* MakeChoice_decl(int lineno, string name,
                               list<pair<string, Expression*> >* alts);
 
 void print_decl(Declaration*);

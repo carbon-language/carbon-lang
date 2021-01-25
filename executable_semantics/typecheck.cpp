@@ -209,9 +209,9 @@ Value* subst_type(Value* t, map<string, Value*>& tyvar_map) {
     case IntTV:
       return t;
     case PointerTV:
-      return make_ptr_type_val(subst_type(t->u.ptr_type.type, tyvar_map));
+      return MakePtr_type_val(subst_type(t->u.ptr_type.type, tyvar_map));
     case FunctionTV: {
-      return make_fun_type_val(subst_type(t->u.fun_type.param, tyvar_map),
+      return MakeFunType_val(subst_type(t->u.fun_type.param, tyvar_map),
                                subst_type(t->u.fun_type.ret, tyvar_map));
     }
     case TupleTV: {
@@ -221,7 +221,7 @@ Value* subst_type(Value* t, map<string, Value*>& tyvar_map) {
         fields->push_back(
             make_pair(i->first, subst_type(i->second, tyvar_map)));
       }
-      return make_tuple_type_val(fields);
+      return MakeTuple_type_val(fields);
     }
     default:
       cerr << "in subst_type, expected a type " << endl;
@@ -239,7 +239,7 @@ Value* to_type(int lineno, Value* val) {
         Value* ty = to_type(lineno, state->heap[i->second]);
         fields->push_back(make_pair(i->first, ty));
       }
-      return make_tuple_type_val(fields);
+      return MakeTuple_type_val(fields);
     }
     case TupleTV: {
       auto fields = new VarValues();
@@ -248,17 +248,17 @@ Value* to_type(int lineno, Value* val) {
         Value* ty = to_type(lineno, i->second);
         fields->push_back(make_pair(i->first, ty));
       }
-      return make_tuple_type_val(fields);
+      return MakeTuple_type_val(fields);
     }
     case PointerTV: {
-      return make_ptr_type_val(to_type(lineno, val->u.ptr_type.type));
+      return MakePtr_type_val(to_type(lineno, val->u.ptr_type.type));
     }
     case FunctionTV: {
-      return make_fun_type_val(to_type(lineno, val->u.fun_type.param),
+      return MakeFunType_val(to_type(lineno, val->u.fun_type.param),
                                to_type(lineno, val->u.fun_type.ret));
     }
     case VarPatV: {
-      return make_var_pat_val(*val->u.var_pat.name,
+      return MakeVarPat_val(*val->u.var_pat.name,
                               to_type(lineno, val->u.var_pat.type));
     }
     case ChoiceTV:
@@ -281,15 +281,15 @@ Value* to_type(int lineno, Value* val) {
 Expression* reify_type(Value* t, int lineno) {
   switch (t->tag) {
     case VarTV:
-      return make_var(0, *t->u.var_type);
+      return MakeVar(0, *t->u.var_type);
     case IntTV:
-      return make_int_type(0);
+      return MakeIntType(0);
     case BoolTV:
-      return make_bool_type(0);
+      return MakeBoolType(0);
     case TypeTV:
-      return make_type_type(0);
+      return MakeTypeType(0);
     case FunctionTV:
-      return make_fun_type(0, reify_type(t->u.fun_type.param, lineno),
+      return MakeFunType(0, reify_type(t->u.fun_type.param, lineno),
                            reify_type(t->u.fun_type.ret, lineno));
     case TupleTV: {
       auto args = new vector<pair<string, Expression*> >();
@@ -297,12 +297,12 @@ Expression* reify_type(Value* t, int lineno) {
            i != t->u.tuple_type.fields->end(); ++i) {
         args->push_back(make_pair(i->first, reify_type(i->second, lineno)));
       }
-      return make_tuple(0, args);
+      return MakeTuple(0, args);
     }
     case StructTV:
-      return make_var(0, *t->u.struct_type.name);
+      return MakeVar(0, *t->u.struct_type.name);
     case ChoiceTV:
-      return make_var(0, *t->u.choice_type.name);
+      return MakeVar(0, *t->u.choice_type.name);
     default:
       cerr << lineno << ": expected a type, not ";
       print_value(t, cerr);
@@ -333,7 +333,7 @@ TCResult typecheck_exp(
           t = expected;
         }
       }
-      auto new_e = make_var_pat(e->lineno, *e->u.pattern_variable.name,
+      auto new_e = MakeVarPat(e->lineno, *e->u.pattern_variable.name,
                                 reify_type(t, e->lineno));
       return TCResult(new_e, t,
                       new TypeEnv(*e->u.pattern_variable.name, t, env));
@@ -348,7 +348,7 @@ TCResult typecheck_exp(
           string f = std::to_string(i);
           try {
             auto fieldT = find_alist(f, t->u.tuple_type.fields);
-            auto new_e = make_index(e->lineno, res.exp, make_int(e->lineno, i));
+            auto new_e = MakeIndex(e->lineno, res.exp, MakeInt(e->lineno, i));
             return TCResult(new_e, fieldT, res.env);
           } catch (std::domain_error de) {
             cerr << e->lineno << ": compilation error, field " << f
@@ -386,8 +386,8 @@ TCResult typecheck_exp(
         new_args->push_back(make_pair(arg->first, arg_res.exp));
         arg_types->push_back(make_pair(arg->first, arg_res.type));
       }
-      auto tupleE = make_tuple(e->lineno, new_args);
-      auto tupleT = make_tuple_type_val(arg_types);
+      auto tupleE = MakeTuple(e->lineno, new_args);
+      auto tupleT = MakeTuple_type_val(arg_types);
       return TCResult(tupleE, tupleT, new_env);
     }
     case GetField: {
@@ -401,7 +401,7 @@ TCResult typecheck_exp(
                vt != t->u.struct_type.fields->end(); ++vt) {
             if (*e->u.get_field.field == vt->first) {
               Expression* new_e =
-                  make_get_field(e->lineno, res.exp, *e->u.get_field.field);
+                  MakeGetField(e->lineno, res.exp, *e->u.get_field.field);
               return TCResult(new_e, vt->second, res.env);
             }
           }
@@ -410,7 +410,7 @@ TCResult typecheck_exp(
                vt != t->u.struct_type.methods->end(); ++vt) {
             if (*e->u.get_field.field == vt->first) {
               Expression* new_e =
-                  make_get_field(e->lineno, res.exp, *e->u.get_field.field);
+                  MakeGetField(e->lineno, res.exp, *e->u.get_field.field);
               return TCResult(new_e, vt->second, res.env);
             }
           }
@@ -423,7 +423,7 @@ TCResult typecheck_exp(
                vt != t->u.tuple_type.fields->end(); ++vt) {
             if (*e->u.get_field.field == vt->first) {
               auto new_e =
-                  make_get_field(e->lineno, res.exp, *e->u.get_field.field);
+                  MakeGetField(e->lineno, res.exp, *e->u.get_field.field);
               return TCResult(new_e, vt->second, res.env);
             }
           }
@@ -436,8 +436,8 @@ TCResult typecheck_exp(
                vt != t->u.choice_type.alternatives->end(); ++vt) {
             if (*e->u.get_field.field == vt->first) {
               Expression* new_e =
-                  make_get_field(e->lineno, res.exp, *e->u.get_field.field);
-              auto fun_ty = make_fun_type_val(vt->second, t);
+                  MakeGetField(e->lineno, res.exp, *e->u.get_field.field);
+              auto fun_ty = MakeFunType_val(vt->second, t);
               return TCResult(new_e, fun_ty, res.env);
             }
           }
@@ -461,10 +461,10 @@ TCResult typecheck_exp(
       return TCResult(e, t, env);
     }
     case Integer:
-      return TCResult(e, make_int_type_val(), env);
+      return TCResult(e, MakeIntType_val(), env);
       break;
     case Boolean:
-      return TCResult(e, make_bool_type_val(), env);
+      return TCResult(e, MakeBoolType_val(), env);
       break;
     case PrimitiveOp: {
       auto es = new vector<Expression*>();
@@ -477,31 +477,31 @@ TCResult typecheck_exp(
         es->push_back(res.exp);
         ts.push_back(res.type);
       }
-      auto new_e = make_op(e->lineno, e->u.primitive_op.operator_, es);
+      auto new_e = MakeOp(e->lineno, e->u.primitive_op.operator_, es);
       switch (e->u.primitive_op.operator_) {
         case Neg:
-          expect_type(e->lineno, "negation", make_int_type_val(), ts[0]);
-          return TCResult(new_e, make_int_type_val(), new_env);
+          expect_type(e->lineno, "negation", MakeIntType_val(), ts[0]);
+          return TCResult(new_e, MakeIntType_val(), new_env);
         case Add:
         case Sub:
-          expect_type(e->lineno, "subtraction(1)", make_int_type_val(), ts[0]);
-          expect_type(e->lineno, "substration(2)", make_int_type_val(), ts[1]);
-          return TCResult(new_e, make_int_type_val(), new_env);
+          expect_type(e->lineno, "subtraction(1)", MakeIntType_val(), ts[0]);
+          expect_type(e->lineno, "substration(2)", MakeIntType_val(), ts[1]);
+          return TCResult(new_e, MakeIntType_val(), new_env);
         case And:
-          expect_type(e->lineno, "&&(1)", make_bool_type_val(), ts[0]);
-          expect_type(e->lineno, "&&(2)", make_bool_type_val(), ts[1]);
-          return TCResult(new_e, make_bool_type_val(), new_env);
+          expect_type(e->lineno, "&&(1)", MakeBoolType_val(), ts[0]);
+          expect_type(e->lineno, "&&(2)", MakeBoolType_val(), ts[1]);
+          return TCResult(new_e, MakeBoolType_val(), new_env);
         case Or:
-          expect_type(e->lineno, "||(1)", make_bool_type_val(), ts[0]);
-          expect_type(e->lineno, "||(2)", make_bool_type_val(), ts[1]);
-          return TCResult(new_e, make_bool_type_val(), new_env);
+          expect_type(e->lineno, "||(1)", MakeBoolType_val(), ts[0]);
+          expect_type(e->lineno, "||(2)", MakeBoolType_val(), ts[1]);
+          return TCResult(new_e, MakeBoolType_val(), new_env);
         case Not:
-          expect_type(e->lineno, "!", make_bool_type_val(), ts[0]);
-          return TCResult(new_e, make_bool_type_val(), new_env);
+          expect_type(e->lineno, "!", MakeBoolType_val(), ts[0]);
+          return TCResult(new_e, MakeBoolType_val(), new_env);
         case Eq:
-          expect_type(e->lineno, "==(1)", make_int_type_val(), ts[0]);
-          expect_type(e->lineno, "==(2)", make_int_type_val(), ts[1]);
-          return TCResult(new_e, make_bool_type_val(), new_env);
+          expect_type(e->lineno, "==(1)", MakeIntType_val(), ts[0]);
+          expect_type(e->lineno, "==(2)", MakeIntType_val(), ts[1]);
+          return TCResult(new_e, MakeBoolType_val(), new_env);
       }
       break;
     }
@@ -514,7 +514,7 @@ TCResult typecheck_exp(
           auto arg_res = typecheck_exp(e->u.call.argument, fun_res.env, ct_env,
                                        funT->u.fun_type.param, ValueContext);
           expect_type(e->lineno, "call", funT->u.fun_type.param, arg_res.type);
-          auto new_e = make_call(e->lineno, fun_res.exp, arg_res.exp);
+          auto new_e = MakeCall(e->lineno, fun_res.exp, arg_res.exp);
           return TCResult(new_e, funT->u.fun_type.ret, arg_res.env);
         }
         default: {
@@ -535,9 +535,9 @@ TCResult typecheck_exp(
                             interp_exp(ct_env, e->u.function_type.parameter));
           auto rt = to_type(e->lineno,
                             interp_exp(ct_env, e->u.function_type.return_type));
-          auto new_e = make_fun_type(e->lineno, reify_type(pt, e->lineno),
+          auto new_e = MakeFunType(e->lineno, reify_type(pt, e->lineno),
                                      reify_type(rt, e->lineno));
-          return TCResult(new_e, make_type_type_val(), env);
+          return TCResult(new_e, MakeTypeType_val(), env);
         }
         case PatternContext: {
           auto param_res = typecheck_exp(e->u.function_type.parameter, env,
@@ -545,9 +545,9 @@ TCResult typecheck_exp(
           auto ret_res = typecheck_exp(e->u.function_type.return_type,
                                        param_res.env, ct_env, 0, context);
           auto new_e =
-              make_fun_type(e->lineno, reify_type(param_res.type, e->lineno),
+              MakeFunType(e->lineno, reify_type(param_res.type, e->lineno),
                             reify_type(ret_res.type, e->lineno));
-          return TCResult(new_e, make_type_type_val(), ret_res.env);
+          return TCResult(new_e, MakeTypeType_val(), ret_res.env);
         }
       }
     }
@@ -555,7 +555,7 @@ TCResult typecheck_exp(
     case BoolT:
     case TypeT:
     case AutoT:
-      return TCResult(e, make_type_type_val(), env);
+      return TCResult(e, MakeTypeType_val(), env);
   }
 }
 
@@ -583,17 +583,17 @@ TCStatement typecheck_stmt(Statement* s, TypeEnv* env, Env* ct_env,
         new_clauses->push_back(typecheck_case(res_type, i->first, i->second,
                                               env, ct_env, ret_type));
       }
-      Statement* new_s = make_match(s->lineno, res.exp, new_clauses);
+      Statement* new_s = MakeMatch(s->lineno, res.exp, new_clauses);
       return TCStatement(new_s, env);
     }
     case While: {
       auto cnd_res =
           typecheck_exp(s->u.while_stmt.cond, env, ct_env, 0, ValueContext);
-      expect_type(s->lineno, "condition of `while`", make_bool_type_val(),
+      expect_type(s->lineno, "condition of `while`", MakeBoolType_val(),
                   cnd_res.type);
       auto body_res =
           typecheck_stmt(s->u.while_stmt.body, env, ct_env, ret_type);
-      auto new_s = make_while(s->lineno, cnd_res.exp, body_res.stmt);
+      auto new_s = MakeWhile(s->lineno, cnd_res.exp, body_res.stmt);
       return TCStatement(new_s, env);
     }
     case Break:
@@ -602,7 +602,7 @@ TCStatement typecheck_stmt(Statement* s, TypeEnv* env, Env* ct_env,
       return TCStatement(s, env);
     case Block: {
       auto stmt_res = typecheck_stmt(s->u.block.stmt, env, ct_env, ret_type);
-      return TCStatement(make_block(s->lineno, stmt_res.stmt), env);
+      return TCStatement(MakeBlock(s->lineno, stmt_res.stmt), env);
     }
     case VariableDefinition: {
       auto res = typecheck_exp(s->u.variable_definition.init, env, ct_env, 0,
@@ -611,7 +611,7 @@ TCStatement typecheck_stmt(Statement* s, TypeEnv* env, Env* ct_env,
       auto lhs_res = typecheck_exp(s->u.variable_definition.pat, env, ct_env,
                                    rhs_ty, PatternContext);
       Statement* new_s =
-          make_var_def(s->lineno, s->u.variable_definition.pat, res.exp);
+          MakeVar_def(s->lineno, s->u.variable_definition.pat, res.exp);
       return TCStatement(new_s, lhs_res.env);
     }
     case Sequence: {
@@ -620,7 +620,7 @@ TCStatement typecheck_stmt(Statement* s, TypeEnv* env, Env* ct_env,
       auto next_res =
           typecheck_stmt(s->u.sequence.next, env2, ct_env, ret_type);
       auto env3 = next_res.env;
-      return TCStatement(make_seq(s->lineno, stmt_res.stmt, next_res.stmt),
+      return TCStatement(MakeSeq(s->lineno, stmt_res.stmt, next_res.stmt),
                          env3);
     }
     case Assign: {
@@ -631,22 +631,22 @@ TCStatement typecheck_stmt(Statement* s, TypeEnv* env, Env* ct_env,
           typecheck_exp(s->u.assign.lhs, env, ct_env, rhsT, ValueContext);
       auto lhsT = lhs_res.type;
       expect_type(s->lineno, "assign", lhsT, rhsT);
-      auto new_s = make_assign(s->lineno, lhs_res.exp, rhs_res.exp);
+      auto new_s = MakeAssign(s->lineno, lhs_res.exp, rhs_res.exp);
       return TCStatement(new_s, lhs_res.env);
     }
     case ExpressionStatement: {
       auto res = typecheck_exp(s->u.exp, env, ct_env, 0, ValueContext);
-      auto new_s = make_exp_stmt(s->lineno, res.exp);
+      auto new_s = MakeExp_stmt(s->lineno, res.exp);
       return TCStatement(new_s, env);
     }
     case If: {
       auto cnd_res =
           typecheck_exp(s->u.if_stmt.cond, env, ct_env, 0, ValueContext);
-      expect_type(s->lineno, "condition of `if`", make_bool_type_val(),
+      expect_type(s->lineno, "condition of `if`", MakeBoolType_val(),
                   cnd_res.type);
       auto thn_res = typecheck_stmt(s->u.if_stmt.then_, env, ct_env, ret_type);
       auto els_res = typecheck_stmt(s->u.if_stmt.else_, env, ct_env, ret_type);
-      auto new_s = make_if(s->lineno, cnd_res.exp, thn_res.stmt, els_res.stmt);
+      auto new_s = MakeIf(s->lineno, cnd_res.exp, thn_res.stmt, els_res.stmt);
       return TCStatement(new_s, env);
     }
     case Return: {
@@ -659,7 +659,7 @@ TCStatement typecheck_stmt(Statement* s, TypeEnv* env, Env* ct_env,
       } else {
         expect_type(s->lineno, "return", ret_type, res.type);
       }
-      return TCStatement(make_return(s->lineno, res.exp), env);
+      return TCStatement(MakeReturn(s->lineno, res.exp), env);
     }
   }
 }
@@ -669,7 +669,7 @@ Statement* check_or_ensure_return(Statement* stmt, bool void_return,
   if (!stmt) {
     if (void_return) {
       auto args = new vector<pair<string, Expression*> >();
-      return make_return(lineno, make_tuple(lineno, args));
+      return MakeReturn(lineno, MakeTuple(lineno, args));
     } else {
       cerr << "control-flow reaches end of non-void function without a return"
            << endl;
@@ -684,14 +684,14 @@ Statement* check_or_ensure_return(Statement* stmt, bool void_return,
         auto s = check_or_ensure_return(i->second, void_return, stmt->lineno);
         new_clauses->push_back(make_pair(i->first, s));
       }
-      return make_match(stmt->lineno, stmt->u.match_stmt.exp, new_clauses);
+      return MakeMatch(stmt->lineno, stmt->u.match_stmt.exp, new_clauses);
     }
     case Block:
-      return make_block(stmt->lineno,
+      return MakeBlock(stmt->lineno,
                         check_or_ensure_return(stmt->u.block.stmt, void_return,
                                                stmt->lineno));
     case If:
-      return make_if(stmt->lineno, stmt->u.if_stmt.cond,
+      return MakeIf(stmt->lineno, stmt->u.if_stmt.cond,
                      check_or_ensure_return(stmt->u.if_stmt.then_, void_return,
                                             stmt->lineno),
                      check_or_ensure_return(stmt->u.if_stmt.else_, void_return,
@@ -700,7 +700,7 @@ Statement* check_or_ensure_return(Statement* stmt, bool void_return,
       return stmt;
     case Sequence:
       if (stmt->u.sequence.next) {
-        return make_seq(stmt->lineno, stmt->u.sequence.stmt,
+        return MakeSeq(stmt->lineno, stmt->u.sequence.stmt,
                         check_or_ensure_return(stmt->u.sequence.next,
                                                void_return, stmt->lineno));
       } else {
@@ -715,9 +715,9 @@ Statement* check_or_ensure_return(Statement* stmt, bool void_return,
     case VariableDefinition:
       if (void_return) {
         auto args = new vector<pair<string, Expression*> >();
-        return make_seq(
+        return MakeSeq(
             stmt->lineno, stmt,
-            make_return(stmt->lineno, make_tuple(stmt->lineno, args)));
+            MakeReturn(stmt->lineno, MakeTuple(stmt->lineno, args)));
       } else {
         cerr << stmt->lineno
              << ": control-flow reaches end of non-void function without a "
@@ -734,14 +734,14 @@ struct FunctionDefinition* typecheck_fun_def(struct FunctionDefinition* f,
       typecheck_exp(f->param_pattern, env, ct_env, 0, PatternContext);
   auto return_type = to_type(f->lineno, interp_exp(ct_env, f->return_type));
   if (f->name == "main") {
-    expect_type(f->lineno, "return type of `main`", make_int_type_val(),
+    expect_type(f->lineno, "return type of `main`", MakeIntType_val(),
                 return_type);
     // todo: check that main doesn't have any parameters
   }
   auto res = typecheck_stmt(f->body, param_res.env, ct_env, return_type);
-  bool void_return = type_equal(return_type, make_void_type_val());
+  bool void_return = type_equal(return_type, MakeVoid_type_val());
   auto body = check_or_ensure_return(res.stmt, void_return, f->lineno);
-  return make_fun_def(f->lineno, f->name, reify_type(return_type, f->lineno),
+  return MakeFun_def(f->lineno, f->name, reify_type(return_type, f->lineno),
                       f->param_pattern, body);
 }
 
@@ -755,7 +755,7 @@ Value* type_of_fun_def(TypeEnv* env, Env* ct_env,
     auto f = typecheck_fun_def(fun_def, env, ct_env);
     ret = interp_exp(ct_env, f->return_type);
   }
-  return make_fun_type_val(param_type, ret);
+  return MakeFunType_val(param_type, ret);
 }
 
 Value* type_of_struct_def(struct StructDefinition* sd, TypeEnv* env,
@@ -768,7 +768,7 @@ Value* type_of_struct_def(struct StructDefinition* sd, TypeEnv* env,
       fields->push_back(make_pair(*(*m)->u.field.name, t));
     }
   }
-  return make_struct_type_val(*sd->name, fields, methods);
+  return MakeStruct_type_val(*sd->name, fields, methods);
 }
 
 string name_of_decl(Declaration* d) {
@@ -796,11 +796,11 @@ Declaration* typecheck_decl(Declaration* d, TypeEnv* env, Env* ct_env) {
           }
         }
       }
-      return make_struct_decl(d->u.struct_def->lineno, *d->u.struct_def->name,
+      return MakeStruct_decl(d->u.struct_def->lineno, *d->u.struct_def->name,
                               members);
     }
     case FunctionDeclaration:
-      return make_fun_decl(typecheck_fun_def(d->u.fun_def, env, ct_env));
+      return MakeFun_decl(typecheck_fun_def(d->u.fun_def, env, ct_env));
     case ChoiceDeclaration:
       return d;  // TODO
   }
@@ -825,8 +825,8 @@ pair<TypeEnv*, Env*> top_level(list<Declaration*>* fs) {
         auto st = type_of_struct_def(d->u.struct_def, top, ct_top);
         address a = allocate_value(st);
         ct_top = new Env(name_of_decl(d), a, ct_top);  // is this obsolete?
-        auto params = make_tuple_type_val(st->u.struct_type.fields);
-        auto fun_ty = make_fun_type_val(params, st);
+        auto params = MakeTuple_type_val(st->u.struct_type.fields);
+        auto fun_ty = MakeFunType_val(params, st);
         top = new TypeEnv(name_of_decl(d), fun_ty, top);
         break;
       }
@@ -838,7 +838,7 @@ pair<TypeEnv*, Env*> top_level(list<Declaration*>* fs) {
               to_type(d->u.choice_def.lineno, interp_exp(ct_top, i->second));
           alts->push_back(make_pair(i->first, t));
         }
-        auto ct = make_choice_type_val(d->u.choice_def.name, alts);
+        auto ct = MakeChoice_type_val(d->u.choice_def.name, alts);
         address a = allocate_value(ct);
         ct_top = new Env(name_of_decl(d), a, ct_top);  // is this obsolete?
         top = new TypeEnv(name_of_decl(d), ct, top);

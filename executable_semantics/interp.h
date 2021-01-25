@@ -105,29 +105,29 @@ struct Value {
   } u;
 };
 
-Value* make_int_val(int i);
-Value* make_bool_val(bool b);
-Value* make_fun_val(string name, VarValues* implicit_params, Value* param,
+Value* MakeInt_val(int i);
+Value* MakeBool_val(bool b);
+Value* MakeFun_val(string name, VarValues* implicit_params, Value* param,
                     Statement* body, vector<Value*>* implicit_args);
-Value* make_ptr_val(address addr);
-Value* make_struct_val(Value* type, vector<pair<string, address> >* inits);
-Value* make_tuple_val(vector<pair<string, address> >* elts);
-Value* make_alt_val(string alt_name, string choice_name, Value* arg);
-Value* make_alt_cons(string alt_name, string choice_name);
+Value* MakePtr_val(address addr);
+Value* MakeStruct_val(Value* type, vector<pair<string, address> >* inits);
+Value* MakeTuple_val(vector<pair<string, address> >* elts);
+Value* MakeAlt_val(string alt_name, string choice_name, Value* arg);
+Value* MakeAlt_cons(string alt_name, string choice_name);
 
-Value* make_var_pat_val(string name, Value* type);
+Value* MakeVarPat_val(string name, Value* type);
 
-Value* make_var_type_val(string name);
-Value* make_int_type_val();
-Value* make_auto_type_val();
-Value* make_bool_type_val();
-Value* make_type_type_val();
-Value* make_fun_type_val(Value* param, Value* ret);
-Value* make_ptr_type_val(Value* type);
-Value* make_struct_type_val(string name, VarValues* fields, VarValues* methods);
-Value* make_tuple_type_val(VarValues* fields);
-Value* make_void_type_val();
-Value* make_choice_type_val(string* name, VarValues* alts);
+Value* MakeVar_type_val(string name);
+Value* MakeIntType_val();
+Value* MakeAutoType_val();
+Value* MakeBoolType_val();
+Value* MakeTypeType_val();
+Value* MakeFunType_val(Value* param, Value* ret);
+Value* MakePtr_type_val(Value* type);
+Value* MakeStruct_type_val(string name, VarValues* fields, VarValues* methods);
+Value* MakeTuple_type_val(VarValues* fields);
+Value* MakeVoid_type_val();
+Value* MakeChoice_type_val(string* name, VarValues* alts);
 
 bool value_equal(Value* v1, Value* v2, int lineno);
 

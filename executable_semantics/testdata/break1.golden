@@ -1,4 +1,4 @@
-make_block
+MakeBlock
 ********** source program **********
 fn main () -> Int {
 var Int: x = 2;

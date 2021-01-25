@@ -22,35 +22,35 @@ char* input;
 
 /***** Types *****/
 
-Expression* make_type_type(int lineno) {
+Expression* MakeTypeType(int lineno) {
   Expression* t = new Expression();
   t->tag = TypeT;
   t->lineno = lineno;
   return t;
 }
 
-Expression* make_int_type(int lineno) {
+Expression* MakeIntType(int lineno) {
   Expression* t = new Expression();
   t->tag = IntT;
   t->lineno = lineno;
   return t;
 }
 
-Expression* make_bool_type(int lineno) {
+Expression* MakeBoolType(int lineno) {
   Expression* t = new Expression();
   t->tag = BoolT;
   t->lineno = lineno;
   return t;
 }
 
-Expression* make_auto_type(int lineno) {
+Expression* MakeAutoType(int lineno) {
   Expression* t = new Expression();
   t->tag = AutoT;
   t->lineno = lineno;
   return t;
 }
 
-Expression* make_fun_type(int lineno, Expression* param, Expression* ret) {
+Expression* MakeFunType(int lineno, Expression* param, Expression* ret) {
   Expression* t = new Expression();
   t->tag = FunctionT;
   t->lineno = lineno;
@@ -63,7 +63,7 @@ void print_string(string* s) { cout << *s; }
 
 /***** Expressions *****/
 
-Expression* make_var(int lineno, string var) {
+Expression* MakeVar(int lineno, string var) {
   Expression* v = new Expression();
   v->lineno = lineno;
   v->tag = Variable;
@@ -71,7 +71,7 @@ Expression* make_var(int lineno, string var) {
   return v;
 }
 
-Expression* make_var_pat(int lineno, string var, Expression* type) {
+Expression* MakeVarPat(int lineno, string var, Expression* type) {
   Expression* v = new Expression();
   v->lineno = lineno;
   v->tag = PatternVariable;
@@ -80,7 +80,7 @@ Expression* make_var_pat(int lineno, string var, Expression* type) {
   return v;
 }
 
-Expression* make_int(int lineno, int i) {
+Expression* MakeInt(int lineno, int i) {
   Expression* e = new Expression();
   e->lineno = lineno;
   e->tag = Integer;
@@ -88,7 +88,7 @@ Expression* make_int(int lineno, int i) {
   return e;
 }
 
-Expression* make_bool(int lineno, bool b) {
+Expression* MakeBool(int lineno, bool b) {
   Expression* e = new Expression();
   e->lineno = lineno;
   e->tag = Boolean;
@@ -96,7 +96,7 @@ Expression* make_bool(int lineno, bool b) {
   return e;
 }
 
-Expression* make_op(int lineno, enum Operator op, vector<Expression*>* args) {
+Expression* MakeOp(int lineno, enum Operator op, vector<Expression*>* args) {
   Expression* e = new Expression();
   e->lineno = lineno;
   e->tag = PrimitiveOp;
@@ -105,7 +105,7 @@ Expression* make_op(int lineno, enum Operator op, vector<Expression*>* args) {
   return e;
 }
 
-Expression* make_unop(int lineno, enum Operator op, Expression* arg) {
+Expression* MakeUnOp(int lineno, enum Operator op, Expression* arg) {
   Expression* e = new Expression();
   e->lineno = lineno;
   e->tag = PrimitiveOp;
@@ -116,7 +116,7 @@ Expression* make_unop(int lineno, enum Operator op, Expression* arg) {
   return e;
 }
 
-Expression* make_binop(int lineno, enum Operator op, Expression* arg1,
+Expression* MakeBinOp(int lineno, enum Operator op, Expression* arg1,
                        Expression* arg2) {
   Expression* e = new Expression();
   e->lineno = lineno;
@@ -129,7 +129,7 @@ Expression* make_binop(int lineno, enum Operator op, Expression* arg1,
   return e;
 }
 
-Expression* make_call(int lineno, Expression* fun, Expression* arg) {
+Expression* MakeCall(int lineno, Expression* fun, Expression* arg) {
   Expression* e = new Expression();
   e->lineno = lineno;
   e->tag = Call;
@@ -138,7 +138,7 @@ Expression* make_call(int lineno, Expression* fun, Expression* arg) {
   return e;
 }
 
-Expression* make_get_field(int lineno, Expression* exp, string field) {
+Expression* MakeGetField(int lineno, Expression* exp, string field) {
   Expression* e = new Expression();
   e->lineno = lineno;
   e->tag = GetField;
@@ -147,7 +147,7 @@ Expression* make_get_field(int lineno, Expression* exp, string field) {
   return e;
 }
 
-Expression* make_tuple(int lineno, vector<pair<string, Expression*> >* args) {
+Expression* MakeTuple(int lineno, vector<pair<string, Expression*> >* args) {
   Expression* e = new Expression();
   e->lineno = lineno;
   e->tag = Tuple;
@@ -162,7 +162,7 @@ Expression* make_tuple(int lineno, vector<pair<string, Expression*> >* args) {
   return e;
 }
 
-Expression* make_index(int lineno, Expression* exp, Expression* i) {
+Expression* MakeIndex(int lineno, Expression* exp, Expression* i) {
   Expression* e = new Expression();
   e->lineno = lineno;
   e->tag = Index;
@@ -294,21 +294,21 @@ void print_exp(Expression* e) {
 
 /***** Expression or Field List *****/
 
-ExpOrFieldList* make_exp(Expression* exp) {
+ExpOrFieldList* MakeExp(Expression* exp) {
   auto e = new ExpOrFieldList();
   e->tag = Exp;
   e->u.exp = exp;
   return e;
 }
 
-ExpOrFieldList* make_field_list(list<pair<string, Expression*> >* fields) {
+ExpOrFieldList* MakeFieldList(list<pair<string, Expression*> >* fields) {
   auto e = new ExpOrFieldList();
   e->tag = FieldList;
   e->u.fields = fields;
   return e;
 }
 
-ExpOrFieldList* cons_field(ExpOrFieldList* e1, ExpOrFieldList* e2) {
+ExpOrFieldList* MakeConstructorField(ExpOrFieldList* e1, ExpOrFieldList* e2) {
   auto fields = new list<pair<string, Expression*> >();
   switch (e1->tag) {
     case Exp:
@@ -330,7 +330,7 @@ ExpOrFieldList* cons_field(ExpOrFieldList* e1, ExpOrFieldList* e2) {
       }
       break;
   }
-  return make_field_list(fields);
+  return MakeFieldList(fields);
 }
 
 Expression* ensure_tuple(int lineno, Expression* e) {
@@ -339,13 +339,13 @@ Expression* ensure_tuple(int lineno, Expression* e) {
   } else {
     auto vec = new vector<pair<string, Expression*> >();
     vec->push_back(make_pair("", e));
-    return make_tuple(lineno, vec);
+    return MakeTuple(lineno, vec);
   }
 }
 
 /***** Statements *****/
 
-Statement* make_exp_stmt(int lineno, Expression* exp) {
+Statement* MakeExp_stmt(int lineno, Expression* exp) {
   Statement* s = new Statement();
   s->lineno = lineno;
   s->tag = ExpressionStatement;
@@ -353,7 +353,7 @@ Statement* make_exp_stmt(int lineno, Expression* exp) {
   return s;
 }
 
-Statement* make_assign(int lineno, Expression* lhs, Expression* rhs) {
+Statement* MakeAssign(int lineno, Expression* lhs, Expression* rhs) {
   Statement* s = new Statement();
   s->lineno = lineno;
   s->tag = Assign;
@@ -362,7 +362,7 @@ Statement* make_assign(int lineno, Expression* lhs, Expression* rhs) {
   return s;
 }
 
-Statement* make_var_def(int lineno, Expression* pat, Expression* init) {
+Statement* MakeVar_def(int lineno, Expression* pat, Expression* init) {
   Statement* s = new Statement();
   s->lineno = lineno;
   s->tag = VariableDefinition;
@@ -371,7 +371,7 @@ Statement* make_var_def(int lineno, Expression* pat, Expression* init) {
   return s;
 }
 
-Statement* make_if(int lineno, Expression* cond, Statement* then_,
+Statement* MakeIf(int lineno, Expression* cond, Statement* then_,
                    Statement* else_) {
   Statement* s = new Statement();
   s->lineno = lineno;
@@ -382,7 +382,7 @@ Statement* make_if(int lineno, Expression* cond, Statement* then_,
   return s;
 }
 
-Statement* make_while(int lineno, Expression* cond, Statement* body) {
+Statement* MakeWhile(int lineno, Expression* cond, Statement* body) {
   Statement* s = new Statement();
   s->lineno = lineno;
   s->tag = While;
@@ -391,22 +391,22 @@ Statement* make_while(int lineno, Expression* cond, Statement* body) {
   return s;
 }
 
-Statement* make_break(int lineno) {
-  cout << "make_block" << endl;
+Statement* MakeBreak(int lineno) {
+  cout << "MakeBlock" << endl;
   Statement* s = new Statement();
   s->lineno = lineno;
   s->tag = Break;
   return s;
 }
 
-Statement* make_continue(int lineno) {
+Statement* MakeContinue(int lineno) {
   Statement* s = new Statement();
   s->lineno = lineno;
   s->tag = Continue;
   return s;
 }
 
-Statement* make_return(int lineno, Expression* e) {
+Statement* MakeReturn(int lineno, Expression* e) {
   Statement* s = new Statement();
   s->lineno = lineno;
   s->tag = Return;
@@ -414,7 +414,7 @@ Statement* make_return(int lineno, Expression* e) {
   return s;
 }
 
-Statement* make_seq(int lineno, Statement* s1, Statement* s2) {
+Statement* MakeSeq(int lineno, Statement* s1, Statement* s2) {
   Statement* s = new Statement();
   s->lineno = lineno;
   s->tag = Sequence;
@@ -423,7 +423,7 @@ Statement* make_seq(int lineno, Statement* s1, Statement* s2) {
   return s;
 }
 
-Statement* make_block(int lineno, Statement* stmt) {
+Statement* MakeBlock(int lineno, Statement* stmt) {
   Statement* s = new Statement();
   s->lineno = lineno;
   s->tag = Block;
@@ -431,7 +431,7 @@ Statement* make_block(int lineno, Statement* stmt) {
   return s;
 }
 
-Statement* make_match(int lineno, Expression* exp,
+Statement* MakeMatch(int lineno, Expression* exp,
                       list<pair<Expression*, Statement*> >* clauses) {
   Statement* s = new Statement();
   s->lineno = lineno;
@@ -525,7 +525,7 @@ void print_stmt(Statement* s, int depth) {
 
 /***** Struct Members *****/
 
-Member* make_field(int lineno, string name, Expression* type) {
+Member* MakeField(int lineno, string name, Expression* type) {
   auto m = new Member();
   m->lineno = lineno;
   m->tag = FieldMember;
@@ -536,7 +536,7 @@ Member* make_field(int lineno, string name, Expression* type) {
 
 /***** Declarations *****/
 
-struct FunctionDefinition* make_fun_def(int lineno, string name,
+struct FunctionDefinition* MakeFun_def(int lineno, string name,
                                         Expression* ret_type,
                                         Expression* param_pattern,
                                         Statement* body) {
@@ -549,14 +549,14 @@ struct FunctionDefinition* make_fun_def(int lineno, string name,
   return f;
 }
 
-Declaration* make_fun_decl(struct FunctionDefinition* f) {
+Declaration* MakeFun_decl(struct FunctionDefinition* f) {
   Declaration* d = new Declaration();
   d->tag = FunctionDeclaration;
   d->u.fun_def = f;
   return d;
 }
 
-Declaration* make_struct_decl(int lineno, string name, list<Member*>* members) {
+Declaration* MakeStruct_decl(int lineno, string name, list<Member*>* members) {
   Declaration* d = new Declaration();
   d->tag = StructDeclaration;
   d->u.struct_def = new struct StructDefinition();
@@ -566,7 +566,7 @@ Declaration* make_struct_decl(int lineno, string name, list<Member*>* members) {
   return d;
 }
 
-Declaration* make_choice_decl(int lineno, string name,
+Declaration* MakeChoice_decl(int lineno, string name,
                               list<pair<string, Expression*> >* alts) {
   Declaration* d = new Declaration();
   d->tag = ChoiceDeclaration;

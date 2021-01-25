@@ -42,7 +42,7 @@ void check_alive(Value* v, int lineno) {
   }
 }
 
-Value* make_int_val(int i) {
+Value* MakeInt_val(int i) {
   Value* v = new Value();
   v->alive = true;
   v->tag = IntV;
@@ -50,7 +50,7 @@ Value* make_int_val(int i) {
   return v;
 }
 
-Value* make_bool_val(bool b) {
+Value* MakeBool_val(bool b) {
   Value* v = new Value();
   v->alive = true;
   v->tag = BoolV;
@@ -58,7 +58,7 @@ Value* make_bool_val(bool b) {
   return v;
 }
 
-Value* make_fun_val(string name, Value* param, Statement* body) {
+Value* MakeFun_val(string name, Value* param, Statement* body) {
   Value* v = new Value();
   v->alive = true;
   v->tag = FunV;
@@ -68,7 +68,7 @@ Value* make_fun_val(string name, Value* param, Statement* body) {
   return v;
 }
 
-Value* make_ptr_val(address addr) {
+Value* MakePtr_val(address addr) {
   Value* v = new Value();
   v->alive = true;
   v->tag = PtrV;
@@ -76,7 +76,7 @@ Value* make_ptr_val(address addr) {
   return v;
 }
 
-Value* make_struct_val(Value* type, Value* inits) {
+Value* MakeStruct_val(Value* type, Value* inits) {
   Value* v = new Value();
   v->alive = true;
   v->tag = StructV;
@@ -85,7 +85,7 @@ Value* make_struct_val(Value* type, Value* inits) {
   return v;
 }
 
-Value* make_tuple_val(vector<pair<string,address> >* elts) {
+Value* MakeTuple_val(vector<pair<string,address> >* elts) {
   Value* v = new Value();
   v->alive = true;
   v->tag = TupleV;
@@ -93,7 +93,7 @@ Value* make_tuple_val(vector<pair<string,address> >* elts) {
   return v;
 }
 
-Value* make_alt_val(string alt_name, string choice_name, Value* arg) {
+Value* MakeAlt_val(string alt_name, string choice_name, Value* arg) {
   Value* v = new Value();
   v->alive = true;
   v->tag = AltV;
@@ -103,7 +103,7 @@ Value* make_alt_val(string alt_name, string choice_name, Value* arg) {
   return v;
 }
 
-Value* make_alt_cons(string alt_name, string choice_name) {
+Value* MakeAlt_cons(string alt_name, string choice_name) {
   Value* v = new Value();
   v->alive = true;
   v->tag = AltConsV;
@@ -112,7 +112,7 @@ Value* make_alt_cons(string alt_name, string choice_name) {
   return v;
 }
 
-Value* make_var_pat_val(string name, Value* type) {
+Value* MakeVarPat_val(string name, Value* type) {
   Value* v = new Value();
   v->alive = true;
   v->tag = VarPatV;
@@ -121,7 +121,7 @@ Value* make_var_pat_val(string name, Value* type) {
   return v;
 }
 
-Value* make_var_type_val(string name) {
+Value* MakeVar_type_val(string name) {
   Value* v = new Value();
   v->alive = true;
   v->tag = VarTV;
@@ -129,35 +129,35 @@ Value* make_var_type_val(string name) {
   return v;
 }
 
-Value* make_int_type_val() {
+Value* MakeIntType_val() {
   Value* v = new Value();
   v->alive = true;
   v->tag = IntTV;
   return v;
 }
 
-Value* make_bool_type_val() {
+Value* MakeBoolType_val() {
   Value* v = new Value();
   v->alive = true;
   v->tag = BoolTV;
   return v;
 }
 
-Value* make_type_type_val() {
+Value* MakeTypeType_val() {
   Value* v = new Value();
   v->alive = true;
   v->tag = TypeTV;
   return v;
 }
 
-Value* make_auto_type_val() {
+Value* MakeAutoType_val() {
   Value* v = new Value();
   v->alive = true;
   v->tag = AutoTV;
   return v;
 }
 
-Value* make_fun_type_val(Value* param, Value* ret) {
+Value* MakeFunType_val(Value* param, Value* ret) {
   Value* v = new Value();
   v->alive = true;
   v->tag = FunctionTV;
@@ -166,7 +166,7 @@ Value* make_fun_type_val(Value* param, Value* ret) {
   return v;
 }
 
-Value* make_ptr_type_val(Value* type) {
+Value* MakePtr_type_val(Value* type) {
   Value* v = new Value();
   v->alive = true;
   v->tag = PointerTV;
@@ -174,7 +174,7 @@ Value* make_ptr_type_val(Value* type) {
   return v;
 }
 
-Value* make_struct_type_val(string name, VarValues* fields, VarValues* methods){
+Value* MakeStruct_type_val(string name, VarValues* fields, VarValues* methods){
   Value* v = new Value();
   v->alive = true;
   v->tag = StructTV;
@@ -184,7 +184,7 @@ Value* make_struct_type_val(string name, VarValues* fields, VarValues* methods){
   return v;
 }
 
-Value* make_tuple_type_val(VarValues* fields) {
+Value* MakeTuple_type_val(VarValues* fields) {
   Value* v = new Value();
   v->alive = true;
   v->tag = TupleTV;
@@ -192,7 +192,7 @@ Value* make_tuple_type_val(VarValues* fields) {
   return v;
 }
 
-Value* make_void_type_val() {
+Value* MakeVoid_type_val() {
   Value* v = new Value();
   v->alive = true;
   v->tag = TupleTV;
@@ -201,7 +201,7 @@ Value* make_void_type_val() {
 }
 
 
-Value* make_choice_type_val(string* name, list<pair<string, Value* > >* alts){
+Value* MakeChoice_type_val(string* name, list<pair<string, Value* > >* alts){
   Value* v = new Value();
   v->alive = true;
   v->tag = ChoiceTV;
@@ -233,40 +233,40 @@ Value* copy_val(Value* val, int lineno) {
       Value* elt = copy_val(state->heap[i->second], lineno);
       elts->push_back(make_pair(i->first, allocate_value(elt)));
     }
-    return make_tuple_val(elts);
+    return MakeTuple_val(elts);
   }
   case AltV: {
     Value* arg = copy_val(val->u.alt.arg, lineno);
-    return make_alt_val(*val->u.alt.alt_name, *val->u.alt.choice_name, arg);
+    return MakeAlt_val(*val->u.alt.alt_name, *val->u.alt.choice_name, arg);
   }
   case StructV: {
     Value* inits = copy_val(val->u.struct_val.inits, lineno);
-    return make_struct_val(val->u.struct_val.type, inits);
+    return MakeStruct_val(val->u.struct_val.type, inits);
   }
   case IntV:
-    return make_int_val(val->u.integer);
+    return MakeInt_val(val->u.integer);
   case BoolV:
-    return make_bool_val(val->u.boolean);
+    return MakeBool_val(val->u.boolean);
   case FunV:
-    return make_fun_val(*val->u.fun.name, val->u.fun.param, val->u.fun.body);
+    return MakeFun_val(*val->u.fun.name, val->u.fun.param, val->u.fun.body);
   case PtrV:
-    return make_ptr_val(val->u.ptr);
+    return MakePtr_val(val->u.ptr);
   case FunctionTV:
-    return make_fun_type_val(copy_val(val->u.fun_type.param, lineno),
+    return MakeFunType_val(copy_val(val->u.fun_type.param, lineno),
                              copy_val(val->u.fun_type.ret, lineno));
 
   case PointerTV:
-    return make_ptr_type_val(copy_val(val->u.ptr_type.type, lineno));
+    return MakePtr_type_val(copy_val(val->u.ptr_type.type, lineno));
   case IntTV:
-    return make_int_type_val();
+    return MakeIntType_val();
   case BoolTV:
-    return make_bool_type_val();
+    return MakeBoolType_val();
   case TypeTV:
-    return make_type_type_val();
+    return MakeTypeType_val();
   case VarTV:
-    return make_var_type_val(* val->u.var_type);
+    return MakeVar_type_val(* val->u.var_type);
   case AutoTV:
-    return make_auto_type_val();
+    return MakeAutoType_val();
   case TupleTV: {
     auto new_fields = new VarValues();
     for (auto i = val->u.tuple_type.fields->begin();
@@ -274,7 +274,7 @@ Value* copy_val(Value* val, int lineno) {
       auto v = copy_val(i->second, lineno);
       new_fields->push_back(make_pair(i->first, v));
     }
-    return make_tuple_type_val(new_fields);
+    return MakeTuple_type_val(new_fields);
   }
   case StructTV: case ChoiceTV:
   case VarPatV: case AltConsV:
@@ -463,7 +463,7 @@ void print_act_list(Cons<Action*>* ls, std::ostream& out) {
   }
 }
 
-Action* make_exp_act(Expression* e) {
+Action* MakeExp_act(Expression* e) {
   Action* act = new Action();
   act->tag = ExpressionAction;
   act->u.exp = e;
@@ -471,7 +471,7 @@ Action* make_exp_act(Expression* e) {
   return act;
 }
 
-Action* make_lval_act(Expression* e) {
+Action* MakeLval_act(Expression* e) {
   Action* act = new Action();
   act->tag = LValAction;
   act->u.exp = e;
@@ -479,7 +479,7 @@ Action* make_lval_act(Expression* e) {
   return act;
 }
 
-Action* make_stmt_act(Statement* s) {
+Action* MakeStmt_act(Statement* s) {
   Action* act = new Action();
   act->tag = StatementAction;
   act->u.stmt = s;
@@ -487,7 +487,7 @@ Action* make_stmt_act(Statement* s) {
   return act;
 }
 
-Action* make_val_act(Value* v) {
+Action* MakeVal_act(Value* v) {
   Action* act = new Action();
   act->tag = ValAction;
   act->u.val = v;
@@ -495,14 +495,14 @@ Action* make_val_act(Value* v) {
   return act;
 }
 
-Action* make_exp_to_lval_act() {
+Action* MakeExp_to_lval_act() {
   Action* act = new Action();
   act->tag = ExpToLValAction;
   act->pos = -1;
   return act;
 }
 
-Action* make_delete_act(address a) {
+Action* MakeDelete_act(address a) {
   Action* act = new Action();
   act->tag = DeleteTmpAction;
   act->pos = -1;
@@ -628,23 +628,23 @@ bool value_equal(Value* v1, Value* v2, int lineno) {
 Value* eval_prim(Operator op, const vector<Value*>& args, int lineno) {
   switch (op) {
   case Neg:
-    return make_int_val(- val_to_int(args[0], lineno));
+    return MakeInt_val(- val_to_int(args[0], lineno));
   case Add:
-    return make_int_val(val_to_int(args[0], lineno)
+    return MakeInt_val(val_to_int(args[0], lineno)
                         + val_to_int(args[1], lineno));
   case Sub:
-    return make_int_val(val_to_int(args[0], lineno)
+    return MakeInt_val(val_to_int(args[0], lineno)
                         - val_to_int(args[1], lineno));
   case Not:
-    return make_bool_val(! val_to_bool(args[0], lineno));
+    return MakeBool_val(! val_to_bool(args[0], lineno));
   case And:
-    return make_bool_val(val_to_bool(args[0], lineno)
+    return MakeBool_val(val_to_bool(args[0], lineno)
                          && val_to_bool(args[1], lineno));
   case Or:
-    return make_bool_val(val_to_bool(args[0], lineno)
+    return MakeBool_val(val_to_bool(args[0], lineno)
                          || val_to_bool(args[1], lineno));
   case Eq:
-    return make_bool_val(value_equal(args[0], args[1], lineno));
+    return MakeBool_val(value_equal(args[0], args[1], lineno));
   }
 }
 
@@ -662,7 +662,7 @@ void init_globals(list<Declaration*>* fs) {
         auto t = to_type(d->u.choice_def.lineno, interp_exp(0, i->second));
         alts->push_back(make_pair(i->first, t));
       }
-      auto ct = make_choice_type_val(d->u.choice_def.name, alts);
+      auto ct = MakeChoice_type_val(d->u.choice_def.name, alts);
       auto a = allocate_value(ct);
       globals = new Env(* d->u.choice_def.name, a, globals);
       break;
@@ -682,7 +682,7 @@ void init_globals(list<Declaration*>* fs) {
         }
         }
       }
-      auto st = make_struct_type_val(*d->u.struct_def->name, fields, methods);
+      auto st = MakeStruct_type_val(*d->u.struct_def->name, fields, methods);
       auto a = allocate_value(st);
       globals = new Env(* d->u.struct_def->name, a, globals);
       break;
@@ -692,7 +692,7 @@ void init_globals(list<Declaration*>* fs) {
       Env* env = 0;
       VarValues* implicit_params = 0;
       auto pt = interp_exp(env, fun->param_pattern);
-      auto f = make_fun_val(fun->name, pt, fun->body);
+      auto f = MakeFun_val(fun->name, pt, fun->body);
       address a = allocate_value(f);
       globals = new Env(fun->name, a, globals);
       break;
@@ -721,25 +721,25 @@ void call_function(int lineno, vector<Value*> operas, State* state) {
     Scope* scope = new Scope(env, params);
     Frame* frame = new Frame(* operas[0]->u.fun.name,
                              cons(scope, (Cons<Scope*>*)0),
-                             cons(make_stmt_act(operas[0]->u.fun.body),
+                             cons(MakeStmt_act(operas[0]->u.fun.body),
                                   (Cons<Action*>*)0));
     state->stack = cons(frame, state->stack);
     break;
   }
   case StructTV: {
     Value* arg = copy_val(operas[1], lineno);
-    Value* sv = make_struct_val(operas[0], arg);
+    Value* sv = MakeStruct_val(operas[0], arg);
     Frame* frame = state->stack->curr;
-    frame->todo = cons(make_val_act(sv), frame->todo);
+    frame->todo = cons(MakeVal_act(sv), frame->todo);
     break;
   }
   case AltConsV: {
     Value* arg = copy_val(operas[1], lineno);
-    Value* av = make_alt_val(* operas[0]->u.alt_cons.alt_name,
+    Value* av = MakeAlt_val(* operas[0]->u.alt_cons.alt_name,
                              * operas[0]->u.alt_cons.choice_name,
                              arg);
     Frame* frame = state->stack->curr;
-    frame->todo = cons(make_val_act(av), frame->todo);
+    frame->todo = cons(MakeVal_act(av), frame->todo);
     break;
   }
   default:
@@ -773,22 +773,22 @@ void create_tuple(Frame* frame, Action* act, Expression* exp) {
     address a = allocate_value(*i); // copy?
     elts->push_back(make_pair(f->first, a));
   }
-  Value* tv = make_tuple_val(elts);
-  frame->todo = cons(make_val_act(tv), frame->todo->next);
+  Value* tv = MakeTuple_val(elts);
+  frame->todo = cons(MakeVal_act(tv), frame->todo->next);
 }
 
 Value* to_value(Expression* value) {
   switch (value->tag) {
   case Integer:
-    return make_int_val(value->u.integer);
+    return MakeInt_val(value->u.integer);
   case Boolean:
-    return make_bool_val(value->u.boolean);
+    return MakeBool_val(value->u.boolean);
   case IntT:
-    return make_int_type_val();
+    return MakeIntType_val();
   case BoolT:
-    return make_bool_type_val();
+    return MakeBoolType_val();
   case TypeT:
-    return make_type_type_val();
+    return MakeTypeType_val();
   case FunctionT:
     // instead add to patterns?
   default:
@@ -939,22 +939,22 @@ void step_lvalue() {
     // -> { {E(x) :: C, E, F} :: S, H}
     address a = Lookup(exp->lineno, current_env(state), *(exp->u.variable.name),
                        print_error_string);
-    Value* v = make_ptr_val(a);
+    Value* v = MakePtr_val(a);
     check_alive(v, exp->lineno);
-    frame->todo = cons(make_val_act(v), frame->todo->next);
+    frame->todo = cons(MakeVal_act(v), frame->todo->next);
     break;
   }
   case GetField: {
     //    { {e.f :: C, E, F} :: S, H}
     // -> { e :: [].f :: C, E, F} :: S, H}
-    frame->todo = cons(make_lval_act(exp->u.get_field.aggregate), frame->todo);
+    frame->todo = cons(MakeLval_act(exp->u.get_field.aggregate), frame->todo);
     act->pos++;
     break;
   }
   case Index: {
     //    { {e[i] :: C, E, F} :: S, H}
     // -> { e :: [][i] :: C, E, F} :: S, H}
-    frame->todo = cons(make_exp_act(exp->u.index.aggregate), frame->todo);
+    frame->todo = cons(MakeExp_act(exp->u.index.aggregate), frame->todo);
     act->pos++;
     break;
   }
@@ -962,15 +962,15 @@ void step_lvalue() {
     //    { {(f1=e1,...) :: C, E, F} :: S, H}
     // -> { {e1 :: (f1=[],...) :: C, E, F} :: S, H}
     Expression* e1 = (*exp->u.tuple.fields)[0].second;
-    frame->todo = cons(make_lval_act(e1), frame->todo);
+    frame->todo = cons(MakeLval_act(e1), frame->todo);
     act->pos++;
     break;
   }
   case Integer: case Boolean: case Call: case PrimitiveOp:
   case IntT: case BoolT: case TypeT: case FunctionT: case AutoT:
   case PatternVariable: {
-    frame->todo = cons(make_exp_act(exp),
-                       cons(make_exp_to_lval_act(),
+    frame->todo = cons(MakeExp_act(exp),
+                       cons(MakeExp_to_lval_act(),
                             frame->todo->next));
   }
   }
@@ -985,14 +985,14 @@ void step_exp() {
   cout << "--- step exp "; print_exp(exp); cout << " --->" << endl;
   switch (exp->tag) {
   case PatternVariable: {
-    frame->todo = cons(make_exp_act(exp->u.pattern_variable.type), frame->todo);
+    frame->todo = cons(MakeExp_act(exp->u.pattern_variable.type), frame->todo);
     act->pos++;
     break;
   }
   case Index: {
     //    { { e[i] :: C, E, F} :: S, H}
     // -> { { e :: [][i] :: C, E, F} :: S, H}
-    frame->todo = cons(make_exp_act(exp->u.index.aggregate), frame->todo);
+    frame->todo = cons(MakeExp_act(exp->u.index.aggregate), frame->todo);
     act->pos++;
     break;
   }
@@ -1001,7 +1001,7 @@ void step_exp() {
       //    { {(f1=e1,...) :: C, E, F} :: S, H}
       // -> { {e1 :: (f1=[],...) :: C, E, F} :: S, H}
       Expression* e1 = (*exp->u.tuple.fields)[0].second;
-      frame->todo = cons(make_exp_act(e1), frame->todo);
+      frame->todo = cons(MakeExp_act(e1), frame->todo);
       act->pos++;
     } else {
       create_tuple(frame, act, exp);
@@ -1011,7 +1011,7 @@ void step_exp() {
   case GetField: {
     //    { { e.f :: C, E, F} :: S, H}
     // -> { { e :: [].f :: C, E, F} :: S, H}
-    frame->todo = cons(make_lval_act(exp->u.get_field.aggregate), frame->todo);
+    frame->todo = cons(MakeLval_act(exp->u.get_field.aggregate), frame->todo);
     act->pos++;
     break;
   }
@@ -1020,24 +1020,24 @@ void step_exp() {
     address a = Lookup(exp->lineno, current_env(state), *(exp->u.variable.name),
                        print_error_string);
     Value* v = state->heap[a];
-    frame->todo = cons(make_val_act(v), frame->todo->next);
+    frame->todo = cons(MakeVal_act(v), frame->todo->next);
     break;
   }
   case Integer:
     // { {n :: C, E, F} :: S, H} -> { {n' :: C, E, F} :: S, H}
-    frame->todo = cons(make_val_act(make_int_val(exp->u.integer)),
+    frame->todo = cons(MakeVal_act(MakeInt_val(exp->u.integer)),
                        frame->todo->next);
     break;
   case Boolean:
     // { {n :: C, E, F} :: S, H} -> { {n' :: C, E, F} :: S, H}
-    frame->todo = cons(make_val_act(make_bool_val(exp->u.boolean)),
+    frame->todo = cons(MakeVal_act(MakeBool_val(exp->u.boolean)),
                        frame->todo->next);
     break;
   case PrimitiveOp:
     if (exp->u.primitive_op.arguments->size() > 0) {
       //    { {op(e :: es) :: C, E, F} :: S, H}
       // -> { e :: op([] :: es) :: C, E, F} :: S, H}
-      frame->todo = cons(make_exp_act(exp->u.primitive_op.arguments->front()),
+      frame->todo = cons(MakeExp_act(exp->u.primitive_op.arguments->front()),
                          frame->todo);
       act->pos++;
     } else {
@@ -1045,37 +1045,37 @@ void step_exp() {
       // -> { {eval_prim(op, ()) :: C, E, F} :: S, H}
       Value* v = eval_prim(exp->u.primitive_op.operator_, act->results,
                            exp->lineno);
-      frame->todo = cons(make_val_act(v), frame->todo->next->next);
+      frame->todo = cons(MakeVal_act(v), frame->todo->next->next);
     }
     break;
   case Call:
     //    { {e1(e2) :: C, E, F} :: S, H}
     // -> { {e1 :: [](e2) :: C, E, F} :: S, H}
-    frame->todo = cons(make_exp_act(exp->u.call.function), frame->todo);
+    frame->todo = cons(MakeExp_act(exp->u.call.function), frame->todo);
     act->pos++;
     break;
   case IntT: {
-    Value* v = make_int_type_val();
-    frame->todo = cons(make_val_act(v), frame->todo->next);
+    Value* v = MakeIntType_val();
+    frame->todo = cons(MakeVal_act(v), frame->todo->next);
     break;
   }
   case BoolT: {
-    Value* v = make_bool_type_val();
-    frame->todo = cons(make_val_act(v), frame->todo->next);
+    Value* v = MakeBoolType_val();
+    frame->todo = cons(MakeVal_act(v), frame->todo->next);
     break;
   }
   case AutoT: {
-    Value* v = make_auto_type_val();
-    frame->todo = cons(make_val_act(v), frame->todo->next);
+    Value* v = MakeAutoType_val();
+    frame->todo = cons(MakeVal_act(v), frame->todo->next);
     break;
   }
   case TypeT: {
-    Value* v = make_type_type_val();
-    frame->todo = cons(make_val_act(v), frame->todo->next);
+    Value* v = MakeTypeType_val();
+    frame->todo = cons(MakeVal_act(v), frame->todo->next);
     break;
   }
   case FunctionT: {
-    frame->todo = cons(make_exp_act(exp->u.function_type.parameter),
+    frame->todo = cons(MakeExp_act(exp->u.function_type.parameter),
                        frame->todo);
     act->pos++;
     break;
@@ -1122,13 +1122,13 @@ void step_stmt() {
   case Match:
     //    { { (match (e) ...) :: C, E, F} :: S, H}
     // -> { { e :: (match ([]) ...) :: C, E, F} :: S, H}
-    frame->todo = cons(make_exp_act(stmt->u.match_stmt.exp), frame->todo);
+    frame->todo = cons(MakeExp_act(stmt->u.match_stmt.exp), frame->todo);
     act->pos++;
     break;
   case While:
     //    { { (while (e) s) :: C, E, F} :: S, H}
     // -> { { e :: (while ([]) s) :: C, E, F} :: S, H}
-    frame->todo = cons(make_exp_act(stmt->u.while_stmt.cond), frame->todo);
+    frame->todo = cons(MakeExp_act(stmt->u.while_stmt.cond), frame->todo);
     act->pos++;
     break;
   case Break:
@@ -1160,7 +1160,7 @@ void step_stmt() {
     if (act->pos == -1) {
       Scope* scope = new Scope(current_env(state), list<string>());
       frame->scopes = cons(scope, frame->scopes);
-      frame->todo = cons(make_stmt_act(stmt->u.block.stmt),
+      frame->todo = cons(MakeStmt_act(stmt->u.block.stmt),
                          frame->todo);
       act->pos++;
     } else {
@@ -1174,32 +1174,32 @@ void step_stmt() {
   case VariableDefinition:
     //    { {(var x = e) :: C, E, F} :: S, H}
     // -> { {e :: (var x = []) :: C, E, F} :: S, H}
-    frame->todo = cons(make_exp_act(stmt->u.variable_definition.init),
+    frame->todo = cons(MakeExp_act(stmt->u.variable_definition.init),
                        frame->todo);
     act->pos++;
     break;
   case ExpressionStatement:
     //    { {e :: C, E, F} :: S, H}
     // -> { {e :: C, E, F} :: S, H}
-    frame->todo = cons(make_exp_act(stmt->u.exp), frame->todo);
+    frame->todo = cons(MakeExp_act(stmt->u.exp), frame->todo);
     break;
   case Assign:
     //    { {(lv = e) :: C, E, F} :: S, H}
     // -> { {lv :: ([] = e) :: C, E, F} :: S, H}
-    frame->todo = cons(make_lval_act(stmt->u.assign.lhs),
+    frame->todo = cons(MakeLval_act(stmt->u.assign.lhs),
                           frame->todo);
     act->pos++;
     break;
   case If:
     //    { {(if (e) then_ else else_) :: C, E, F} :: S, H}
     // -> { { e :: (if ([]) then_ else else_) :: C, E, F} :: S, H}
-    frame->todo = cons(make_exp_act(stmt->u.if_stmt.cond), frame->todo);
+    frame->todo = cons(MakeExp_act(stmt->u.if_stmt.cond), frame->todo);
     act->pos++;
     break;
   case Return:
     //    { {return e :: C, E, F} :: S, H}
     // -> { {e :: return [] :: C, E, F} :: S, H}
-    frame->todo = cons(make_exp_act(stmt->u.return_stmt), frame->todo);
+    frame->todo = cons(MakeExp_act(stmt->u.return_stmt), frame->todo);
     act->pos++;
     break;
   case Sequence:
@@ -1207,9 +1207,9 @@ void step_stmt() {
     // -> { { s1 :: s2 :: C, E, F} :: S, H}
     Cons<Action*>* todo = frame->todo->next;
     if (stmt->u.sequence.next) {
-      todo = cons(make_stmt_act(stmt->u.sequence.next), todo);
+      todo = cons(MakeStmt_act(stmt->u.sequence.next), todo);
     }
-    frame->todo = cons(make_stmt_act(stmt->u.sequence.stmt), todo);
+    frame->todo = cons(MakeStmt_act(stmt->u.sequence.stmt), todo);
     break;
   }
 }
@@ -1241,7 +1241,7 @@ address get_member(address a, string f) {
   case ChoiceTV: {
     try {
       find_alist(f, v->u.choice_type.alternatives);
-      auto ac = make_alt_cons(f, * v->u.choice_type.name);
+      auto ac = MakeAlt_cons(f, * v->u.choice_type.name);
       return allocate_value(ac);
     } catch (std::domain_error de) {
       cerr << "alternative " << f << " not in ";
@@ -1296,8 +1296,8 @@ void handle_value() {
   }
   case ExpToLValAction: {
     address a = allocate_value(act->results[0]);
-    auto del = make_delete_act(a);
-    frame->todo = cons(make_val_act(make_ptr_val(a)),
+    auto del = MakeDelete_act(a);
+    frame->todo = cons(MakeVal_act(MakePtr_val(a)),
                        insert_delete(del, frame->todo->next->next));
     break;
   }
@@ -1311,7 +1311,7 @@ void handle_value() {
       try {
         address a = get_member(val_to_ptr(str, exp->lineno),
                                * exp->u.get_field.field);
-        frame->todo = cons(make_val_act(make_ptr_val(a)),
+        frame->todo = cons(MakeVal_act(MakePtr_val(a)),
                            frame->todo->next->next);
       } catch (std::domain_error de) {
         cerr << "field " << * exp->u.get_field.field << " not in ";
@@ -1323,7 +1323,7 @@ void handle_value() {
     }
     case Index: {
       if (act->pos == 1) {
-        frame->todo = cons(make_exp_act(exp->u.index.offset),
+        frame->todo = cons(MakeExp_act(exp->u.index.offset),
                            frame->todo->next);
       } else if (act->pos == 2) {
         //    { v :: [][i] :: C, E, F} :: S, H}
@@ -1332,7 +1332,7 @@ void handle_value() {
         string f = std::to_string(to_integer(act->results[1]));
         try {
           address a = find_field(f, tuple->u.tuple.elts);
-          frame->todo = cons(make_val_act(make_ptr_val(a)),
+          frame->todo = cons(MakeVal_act(MakePtr_val(a)),
                              frame->todo->next->next);
         } catch (std::domain_error de) {
           cerr << "runtime error: field " << f << "not in ";
@@ -1348,7 +1348,7 @@ void handle_value() {
         //    { { vk :: (f1=v1,..., fk=[],fk+1=ek+1,...) :: C, E, F} :: S, H}
         // -> { { ek+1 :: (f1=v1,..., fk=vk, fk+1=[],...) :: C, E, F} :: S, H}
         Expression* elt = (*exp->u.tuple.fields)[act->pos].second;
-        frame->todo = cons(make_lval_act(elt), frame->todo->next);
+        frame->todo = cons(MakeLval_act(elt), frame->todo->next);
       } else {
         frame->todo = frame->todo->next;
         create_tuple(frame, act, exp);
@@ -1365,9 +1365,9 @@ void handle_value() {
     Expression* exp = act->u.exp;
     switch (exp->tag) {
     case PatternVariable: {
-      auto v = make_var_pat_val(* exp->u.pattern_variable.name,
+      auto v = MakeVarPat_val(* exp->u.pattern_variable.name,
                                 act->results[0]);
-      frame->todo = cons(make_val_act(v), frame->todo->next->next);
+      frame->todo = cons(MakeVal_act(v), frame->todo->next->next);
       break;
     }
     case Tuple: {
@@ -1375,7 +1375,7 @@ void handle_value() {
         //    { { vk :: (f1=v1,..., fk=[],fk+1=ek+1,...) :: C, E, F} :: S, H}
         // -> { { ek+1 :: (f1=v1,..., fk=vk, fk+1=[],...) :: C, E, F} :: S, H}
         Expression* elt = (*exp->u.tuple.fields)[act->pos].second;
-        frame->todo = cons(make_exp_act(elt), frame->todo->next);
+        frame->todo = cons(MakeExp_act(elt), frame->todo->next);
       } else {
         frame->todo = frame->todo->next;
         create_tuple(frame, act, exp);
@@ -1384,7 +1384,7 @@ void handle_value() {
     }
     case Index: {
       if (act->pos == 1) {
-        frame->todo = cons(make_exp_act(exp->u.index.offset),
+        frame->todo = cons(MakeExp_act(exp->u.index.offset),
                            frame->todo->next);
       } else if (act->pos == 2) {
         auto tuple = act->results[0];;
@@ -1395,7 +1395,7 @@ void handle_value() {
           string f = std::to_string(to_integer(act->results[1]));
           try {
             auto a = find_field(f, tuple->u.tuple.elts);
-            frame->todo = cons(make_val_act(state->heap[a]),
+            frame->todo = cons(MakeVal_act(state->heap[a]),
                                frame->todo->next->next);
           } catch (std::domain_error de) {
             cerr << "runtime error, field " << f
@@ -1419,7 +1419,7 @@ void handle_value() {
       // -> { { v_f :: C, E, F} : S, H}
       auto a = get_member(val_to_ptr(act->results[0], exp->lineno),
                          * exp->u.get_field.field);
-      frame->todo = cons(make_val_act(state->heap[a]),
+      frame->todo = cons(MakeVal_act(state->heap[a]),
                          frame->todo->next->next);
       break;
     }
@@ -1428,13 +1428,13 @@ void handle_value() {
         //    { {v :: op(vs,[],e,es) :: C, E, F} :: S, H}
         // -> { {e :: op(vs,v,[],es) :: C, E, F} :: S, H}
         Expression* arg = (*exp->u.primitive_op.arguments)[act->pos];
-        frame->todo = cons(make_exp_act(arg), frame->todo->next);
+        frame->todo = cons(MakeExp_act(arg), frame->todo->next);
       } else {
         //    { {v :: op(vs,[]) :: C, E, F} :: S, H}
         // -> { {eval_prim(op, (vs,v)) :: C, E, F} :: S, H}
         Value* v = eval_prim(exp->u.primitive_op.operator_, act->results,
                              exp->lineno);
-        frame->todo = cons(make_val_act(v), frame->todo->next->next);
+        frame->todo = cons(MakeVal_act(v), frame->todo->next->next);
       }
       break;
     }
@@ -1442,7 +1442,7 @@ void handle_value() {
       if (act->pos == 1) {
         //    { { v :: [](e) :: C, E, F} :: S, H}
         // -> { { e :: v([]) :: C, E, F} :: S, H}
-        frame->todo = cons(make_exp_act(exp->u.call.argument),
+        frame->todo = cons(MakeExp_act(exp->u.call.argument),
                            frame->todo->next);
       } else if (act->pos == 2) {
         //    { { v2 :: v1([]) :: C, E, F} :: S, H}
@@ -1459,12 +1459,12 @@ void handle_value() {
       if (act->pos == 2) {
         //    { { rt :: fn pt -> [] :: C, E, F} :: S, H}
         // -> { fn pt -> rt :: {C, E, F} :: S, H}
-        Value* v = make_fun_type_val(act->results[0], act->results[1]);
-        frame->todo = cons(make_val_act(v), frame->todo->next->next);
+        Value* v = MakeFunType_val(act->results[0], act->results[1]);
+        frame->todo = cons(MakeVal_act(v), frame->todo->next->next);
       } else {
         //    { { pt :: fn [] -> e :: C, E, F} :: S, H}
         // -> { { e :: fn pt -> []) :: C, E, F} :: S, H}
-        frame->todo = cons(make_exp_act(exp->u.function_type.return_type),
+        frame->todo = cons(MakeExp_act(exp->u.function_type.return_type),
                            frame->todo->next);
       }
       break;
@@ -1484,7 +1484,7 @@ void handle_value() {
       break;
     case VariableDefinition: {
       if (act->pos == 1) {
-        frame->todo = cons(make_exp_act(stmt->u.variable_definition.pat),
+        frame->todo = cons(MakeExp_act(stmt->u.variable_definition.pat),
                            frame->todo->next);
       } else if (act->pos == 2) {
         //    { { v :: (x = []) :: C, E, F} :: S, H}
@@ -1509,7 +1509,7 @@ void handle_value() {
       if (act->pos == 1) {
         //    { { a :: ([] = e) :: C, E, F} :: S, H}
         // -> { { e :: (a = []) :: C, E, F} :: S, H}
-        frame->todo = cons(make_exp_act(stmt->u.assign.rhs),
+        frame->todo = cons(MakeExp_act(stmt->u.assign.rhs),
                            frame->todo->next);
       } else if (act->pos == 2) {
         //    { { v :: (a = []) :: C, E, F} :: S, H}
@@ -1524,12 +1524,12 @@ void handle_value() {
       if (val_to_bool(act->results[0], stmt->lineno)) {
         //    { {true :: if ([]) then_ else else_ :: C, E, F} :: S, H}
         // -> { { then_ :: C, E, F } :: S, H}
-        frame->todo = cons(make_stmt_act(stmt->u.if_stmt.then_),
+        frame->todo = cons(MakeStmt_act(stmt->u.if_stmt.then_),
                            frame->todo->next->next);
       } else {
         //    { {false :: if ([]) then_ else else_ :: C, E, F} :: S, H}
         // -> { { else_ :: C, E, F } :: S, H}
-        frame->todo = cons(make_stmt_act(stmt->u.if_stmt.else_),
+        frame->todo = cons(MakeStmt_act(stmt->u.if_stmt.else_),
                            frame->todo->next->next);
       }
       break;
@@ -1539,7 +1539,7 @@ void handle_value() {
         // -> { { s :: (while (e) s) :: C, E, F } :: S, H}
         frame->todo->next->curr->pos = -1;
         frame->todo->next->curr->results.clear();
-        frame->todo = cons(make_stmt_act(stmt->u.while_stmt.body),
+        frame->todo = cons(MakeStmt_act(stmt->u.while_stmt.body),
                            frame->todo->next);
       } else {
         //    { {false :: (while ([]) s) :: C, E, F} :: S, H}
@@ -1573,7 +1573,7 @@ void handle_value() {
         // start interpreting the pattern of the clause
         //    { {v :: (match ([]) ...) :: C, E, F} :: S, H}
         // -> { {pi :: (match ([]) ...) :: C, E, F} :: S, H}
-        frame->todo = cons(make_exp_act(c->first), frame->todo->next);
+        frame->todo = cons(MakeExp_act(c->first), frame->todo->next);
       } else { // try to match
         auto v = act->results[0];
         auto pat = act->results[clause_num + 1];
@@ -1583,10 +1583,10 @@ void handle_value() {
         if (new_env) { // we have a match, start the body
           Scope* new_scope = new Scope(new_env, vars);
           frame->scopes = cons(new_scope, frame->scopes);
-          Statement* body_block = make_block(stmt->lineno, c->second);
-          Action* body_act = make_stmt_act(body_block);
+          Statement* body_block = MakeBlock(stmt->lineno, c->second);
+          Action* body_act = MakeStmt_act(body_block);
           body_act->pos = 0;
-          frame->todo = cons(make_stmt_act(c->second),
+          frame->todo = cons(MakeStmt_act(c->second),
                              cons(body_act, frame->todo->next->next));
         } else {
           act->pos++;
@@ -1595,7 +1595,7 @@ void handle_value() {
             // move on to the next clause
             c = stmt->u.match_stmt.clauses->begin();
             std::advance(c, clause_num);
-            frame->todo = cons(make_exp_act(c->first), frame->todo->next);
+            frame->todo = cons(MakeExp_act(c->first), frame->todo->next);
           } else { // No more clauses in match
             frame->todo = frame->todo->next->next;
           }
@@ -1610,7 +1610,7 @@ void handle_value() {
       kill_locals(stmt->lineno, frame);
       state->stack = state->stack->next;
       frame = state->stack->curr;
-      frame->todo = cons(make_val_act(ret_val), frame->todo);
+      frame->todo = cons(MakeVal_act(ret_val), frame->todo);
       break;
     }
     case Block:
@@ -1670,9 +1670,9 @@ int interp_program(list<Declaration*>* fs) {
   cout << "********** initializing globals **********" << endl;
   init_globals(fs);
 
-  Expression* arg = make_tuple(0, new vector<pair<string,Expression*> >());
-  Expression* call_main = make_call(0, make_var(0, "main"), arg);
-  Cons<Action*>* todo = cons(make_exp_act(call_main), (Cons<Action*>*)0);
+  Expression* arg = MakeTuple(0, new vector<pair<string,Expression*> >());
+  Expression* call_main = MakeCall(0, MakeVar(0, "main"), arg);
+  Cons<Action*>* todo = cons(MakeExp_act(call_main), (Cons<Action*>*)0);
   Scope* scope = new Scope(globals, list<string>());
   Frame* frame = new Frame("top", cons(scope, (Cons<Scope*>*)0), todo);
   state->stack = cons(frame, (Cons<Frame*>*)0);
@@ -1693,7 +1693,7 @@ int interp_program(list<Declaration*>* fs) {
 /***** interpret an expression (at compile-time) *****/
 
 Value* interp_exp(Env* env, Expression* e) {
-  Cons<Action*>* todo = cons(make_exp_act(e), (Cons<Action*>*)0);
+  Cons<Action*>* todo = cons(MakeExp_act(e), (Cons<Action*>*)0);
   Scope* scope = new Scope(env, list<string>());
   Frame* frame = new Frame("interp_exp", cons(scope, (Cons<Scope*>*)0), todo);
   state->stack = cons(frame, (Cons<Frame*>*)0);
