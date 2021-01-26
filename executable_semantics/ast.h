@@ -5,41 +5,38 @@
 #ifndef AST_H
 #define AST_H
 
-#include <stdlib.h>
-
+#include <cstdlib>
 #include <exception>
 #include <list>
+#include <stdexcept>
 #include <string>
 #include <vector>
-
-using std::list;
-using std::pair;
-using std::string;
-using std::vector;
 
 /***** Utilities *****/
 
 template <class T>
-void PrintList(list<T*>* ts, void (*printer)(T*), const char* sep) {
+void PrintList(std::list<T*>* ts, void (*printer)(T*), const char* sep) {
   int i = 0;
   for (auto iter = ts->begin(); iter != ts->end(); ++iter, ++i) {
-    if (i != 0)
+    if (i != 0) {
       printf("%s", sep);
+    }
     printer(*iter);
   }
 }
 
 template <class T>
-void PrintVector(vector<T*>* ts, void (*printer)(T*), const char* sep) {
+void PrintVector(std::vector<T*>* ts, void (*printer)(T*), const char* sep) {
   int i = 0;
   for (auto iter = ts->begin(); iter != ts->end(); ++iter, ++i) {
-    if (i != 0)
+    if (i != 0) {
       printf("%s", sep);
+    }
     printer(*iter);
   }
 }
 
-char* ReadFile(FILE* fp);
+auto ReadFile(FILE* fp) -> char*;
 
 extern char* input;
 
@@ -50,7 +47,7 @@ struct Expression;
 struct Statement;
 struct FunctionDefinition;
 
-typedef list<pair<string, Expression*> > VarTypes;
+using VarTypes = std::list<std::pair<std::string, Expression*>>;
 
 /***** Expressions *****/
 
@@ -77,28 +74,28 @@ struct Expression {
   ExpressionKind tag;
   union {
     struct {
-      string* name;
+      std::string* name;
     } variable;
     struct {
       Expression* aggregate;
-      string* field;
+      std::string* field;
     } get_field;
     struct {
       Expression* aggregate;
       Expression* offset;
     } index;
     struct {
-      string* name;
+      std::string* name;
       Expression* type;
     } pattern_variable;
     int integer;
     bool boolean;
     struct {
-      vector<pair<string, Expression*> >* fields;
+      std::vector<std::pair<std::string, Expression*>>* fields;
     } tuple;
     struct {
       Operator operator_;
-      vector<Expression*>* arguments;
+      std::vector<Expression*>* arguments;
     } primitive_op;
     struct {
       Expression* function;
@@ -111,26 +108,30 @@ struct Expression {
   } u;
 };
 
-Expression* MakeVar(int lineno, string var);
-Expression* MakeVarPat(int lineno, string var, Expression* type);
-Expression* MakeInt(int lineno, int i);
-Expression* MakeBool(int lineno, bool b);
-Expression* MakeOp(int lineno, Operator op, vector<Expression*>* args);
-Expression* MakeUnOp(int lineno, enum Operator op, Expression* arg);
-Expression* MakeBinOp(int lineno, enum Operator op, Expression* arg1,
-                       Expression* arg2);
-Expression* MakeCall(int lineno, Expression* fun, Expression* arg);
-Expression* MakeGetField(int lineno, Expression* exp, string field);
-Expression* MakeTuple(int lineno, vector<pair<string, Expression*> >* args);
-Expression* MakeIndex(int lineno, Expression* exp, Expression* i);
+auto MakeVar(int lineno, std::string var) -> Expression*;
+auto MakeVarPat(int lineno, std::string var, Expression* type) -> Expression*;
+auto MakeInt(int lineno, int i) -> Expression*;
+auto MakeBool(int lineno, bool b) -> Expression*;
+auto MakeOp(int lineno, Operator op, std::vector<Expression*>* args)
+    -> Expression*;
+auto MakeUnOp(int lineno, enum Operator op, Expression* arg) -> Expression*;
+auto MakeBinOp(int lineno, enum Operator op, Expression* arg1, Expression* arg2)
+    -> Expression*;
+auto MakeCall(int lineno, Expression* fun, Expression* arg) -> Expression*;
+auto MakeGetField(int lineno, Expression* exp, std::string field)
+    -> Expression*;
+auto MakeTuple(int lineno,
+               std::vector<std::pair<std::string, Expression*>>* args)
+    -> Expression*;
+auto MakeIndex(int lineno, Expression* exp, Expression* i) -> Expression*;
 
-Expression* MakeTypeType(int lineno);
-Expression* MakeIntType(int lineno);
-Expression* MakeBoolType(int lineno);
-Expression* MakeFunType(int lineno, Expression* param, Expression* ret);
-Expression* MakeAutoType(int lineno);
+auto MakeTypeType(int lineno) -> Expression*;
+auto MakeIntType(int lineno) -> Expression*;
+auto MakeBoolType(int lineno) -> Expression*;
+auto MakeFunType(int lineno, Expression* param, Expression* ret) -> Expression*;
+auto MakeAutoType(int lineno) -> Expression*;
 
-void print_exp(Expression*);
+void PrintExp(Expression*);
 
 /***** Expression or Field List *****/
 /*
@@ -143,13 +144,15 @@ struct ExpOrFieldList {
   ExpOrFieldListKind tag;
   union {
     Expression* exp;
-    list<pair<string, Expression*> >* fields;
+    std::list<std::pair<std::string, Expression*>>* fields;
   } u;
 };
 
-ExpOrFieldList* MakeExp(Expression* exp);
-ExpOrFieldList* MakeFieldList(list<pair<string, Expression*> >* fields);
-ExpOrFieldList* MakeConstructorField(ExpOrFieldList* e1, ExpOrFieldList* e2);
+auto MakeExp(Expression* exp) -> ExpOrFieldList*;
+auto MakeFieldList(std::list<std::pair<std::string, Expression*>>* fields)
+    -> ExpOrFieldList*;
+auto MakeConstructorField(ExpOrFieldList* e1, ExpOrFieldList* e2)
+    -> ExpOrFieldList*;
 
 /***** Statements *****/
 
@@ -182,8 +185,8 @@ struct Statement {
     } variable_definition;
     struct {
       Expression* cond;
-      Statement* then_;
-      Statement* else_;
+      Statement* then_stmt;
+      Statement* else_stmt;
     } if_stmt;
     Expression* return_stmt;
     struct {
@@ -199,32 +202,33 @@ struct Statement {
     } while_stmt;
     struct {
       Expression* exp;
-      list<pair<Expression*, Statement*> >* clauses;
+      std::list<std::pair<Expression*, Statement*>>* clauses;
     } match_stmt;
   } u;
 };
 
-Statement* MakeExp_stmt(int lineno, Expression* exp);
-Statement* MakeAssign(int lineno, Expression* lhs, Expression* rhs);
-Statement* MakeVar_def(int lineno, Expression* pat, Expression* init);
-Statement* MakeIf(int lineno, Expression* cond, Statement* then_,
-                   Statement* else_);
-Statement* MakeReturn(int lineno, Expression* e);
-Statement* MakeSeq(int lineno, Statement* s1, Statement* s2);
-Statement* MakeBlock(int lineno, Statement* s);
-Statement* MakeWhile(int lineno, Expression* cond, Statement* body);
-Statement* MakeBreak(int lineno);
-Statement* MakeContinue(int lineno);
-Statement* MakeMatch(int lineno, Expression* exp,
-                      list<pair<Expression*, Statement*> >* clauses);
+auto MakeExpStmt(int lineno, Expression* exp) -> Statement*;
+auto MakeAssign(int lineno, Expression* lhs, Expression* rhs) -> Statement*;
+auto MakeVarDef(int lineno, Expression* pat, Expression* init) -> Statement*;
+auto MakeIf(int lineno, Expression* cond, Statement* then_stmt,
+            Statement* else_stmt) -> Statement*;
+auto MakeReturn(int lineno, Expression* e) -> Statement*;
+auto MakeSeq(int lineno, Statement* s1, Statement* s2) -> Statement*;
+auto MakeBlock(int lineno, Statement* s) -> Statement*;
+auto MakeWhile(int lineno, Expression* cond, Statement* body) -> Statement*;
+auto MakeBreak(int lineno) -> Statement*;
+auto MakeContinue(int lineno) -> Statement*;
+auto MakeMatch(int lineno, Expression* exp,
+               std::list<std::pair<Expression*, Statement*>>* clauses)
+    -> Statement*;
 
-void print_stmt(Statement*, int);
+void PrintStatement(Statement*, int);
 
 /***** Function Definitions *****/
 
 struct FunctionDefinition {
   int lineno;
-  string name;
+  std::string name;
   Expression* param_pattern;
   Expression* return_type;
   Statement* body;
@@ -239,20 +243,20 @@ struct Member {
   MemberKind tag;
   union {
     struct {
-      string* name;
+      std::string* name;
       Expression* type;
     } field;
   } u;
 };
 
-Member* MakeField(int lineno, string name, Expression* type);
+auto MakeField(int lineno, std::string name, Expression* type) -> Member*;
 
 /***** Declarations *****/
 
 struct StructDefinition {
   int lineno;
-  string* name;
-  list<Member*>* members;
+  std::string* name;
+  std::list<Member*>* members;
 };
 
 enum DeclarationKind {
@@ -268,41 +272,47 @@ struct Declaration {
     struct StructDefinition* struct_def;
     struct {
       int lineno;
-      string* name;
-      list<pair<string, Expression*> >* alternatives;
+      std::string* name;
+      std::list<std::pair<std::string, Expression*>>* alternatives;
     } choice_def;
   } u;
 };
 
-struct FunctionDefinition* MakeFun_def(int lineno, string name,
-                                        Expression* ret_type, Expression* param,
-                                        Statement* body);
-void print_fun_def(struct FunctionDefinition*);
-void print_fun_def_depth(struct FunctionDefinition*, int);
+auto MakeFunDef(int lineno, std::string name, Expression* ret_type,
+                Expression* param, Statement* body)
+    -> struct FunctionDefinition*;
+void PrintFunDef(struct FunctionDefinition*);
+void PrintFunDefDepth(struct FunctionDefinition*, int);
 
-Declaration* MakeFun_decl(struct FunctionDefinition* f);
-Declaration* MakeStruct_decl(int lineno, string name, list<Member*>* members);
-Declaration* MakeChoice_decl(int lineno, string name,
-                              list<pair<string, Expression*> >* alts);
+auto MakeFunDecl(struct FunctionDefinition* f) -> Declaration*;
+auto MakeStructDecl(int lineno, std::string name, std::list<Member*>* members)
+    -> Declaration*;
+auto MakeChoiceDecl(int lineno, std::string name,
+                    std::list<std::pair<std::string, Expression*>>* alts)
+    -> Declaration*;
 
-void print_decl(Declaration*);
+void PrintDecl(Declaration*);
 
-void print_string(string* s);
+void PrintString(std::string* s);
 
 template <class T>
-T find_field(string field, vector<pair<string, T> >* inits) {
+auto FindField(const std::string& field,
+               std::vector<std::pair<std::string, T>>* inits) -> T {
   for (auto i = inits->begin(); i != inits->end(); ++i) {
-    if (i->first == field)
+    if (i->first == field) {
       return i->second;
+    }
   }
   throw std::domain_error(field);
 }
 
 template <class T>
-T find_alist(string field, list<pair<string, T> >* inits) {
+auto FindAlist(const std::string& field,
+               std::list<std::pair<std::string, T>>* inits) -> T {
   for (auto i = inits->begin(); i != inits->end(); ++i) {
-    if (i->first == field)
+    if (i->first == field) {
       return i->second;
+    }
   }
   throw std::domain_error(field);
 }

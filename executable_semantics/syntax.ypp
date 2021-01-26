@@ -37,7 +37,7 @@ using std::make_pair;
 using std::cout;
 using std::endl;
 
-static list<FunctionDefinition*> program;
+static std::list<FunctionDefinition*> program;
 %}
 %union
  {
@@ -49,14 +49,14 @@ static list<FunctionDefinition*> program;
    Statement* statement_list;
    struct FunctionDefinition* function_definition;
    Declaration* declaration;
-   list<Declaration*>* declaration_list;
+   std::list<Declaration*>* declaration_list;
    Member* member;
-   list<Member*>* member_list;
+   std::list<Member*>* member_list;
    ExpOrFieldList* field_list;
-   pair<string, Expression*>* alternative;
-   list<pair<string, Expression* > >* alternative_list;
-   pair<Expression*,Statement*>* clause;
-   list< pair<Expression*,Statement*> >* clause_list;
+   std::pair<std::string, Expression*>* alternative;
+   std::list<std::pair<std::string, Expression* > >* alternative_list;
+   std::pair<Expression*,Statement*>* clause;
+   std::list< std::pair<Expression*,Statement*> >* clause_list;
    Expression* fun_type;
 };
 
@@ -120,19 +120,19 @@ static list<FunctionDefinition*> program;
 input: declaration_list
     {
       printf("********** source program **********\n");
-      PrintList($1, print_decl, "");
+      PrintList($1, PrintDecl, "");
       printf("********** type checking **********\n");
       state = new State(); // compile-time state
-      pair<TypeEnv*,Env*> p = top_level($1);
+      std::pair<TypeEnv*,Env*> p = TopLevel($1);
       TypeEnv* top = p.first;
       Env* ct_top = p.second;
-      list<Declaration*> new_decls;
+      std::list<Declaration*> new_decls;
       for (auto i = $1->begin(); i != $1->end(); ++i) {
-        new_decls.push_back(typecheck_decl(*i, top, ct_top));
+        new_decls.push_back(TypeCheckDecl(*i, top, ct_top));
       }
       printf("\n");
       printf("********** type checking complete **********\n");
-      PrintList(&new_decls, print_decl, "");
+      PrintList(&new_decls, PrintDecl, "");
       printf("********** starting execution **********\n");
       int result = interp_program(&new_decls);
       cout << "result: " << result << endl;
@@ -185,7 +185,7 @@ expression:
       if ($2->tag == Tuple) {
         $$ = MakeCall(yylineno, $1, $2);
       } else {
-        auto vec = new vector<pair<string,Expression*> >();
+        auto vec = new std::vector<std::pair<std::string,Expression*> >();
         vec->push_back(make_pair("", $2));
         $$ = MakeCall(yylineno, $1, MakeTuple(yylineno, vec));
       }
@@ -202,7 +202,7 @@ tuple: '(' field_list ')'
         $$ = $2->u.exp;
         break;
       case FieldList:
-        auto vec = new vector<pair<string,Expression*> >($2->u.fields->begin(),
+        auto vec = new std::vector<std::pair<std::string,Expression*> >($2->u.fields->begin(),
                                                          $2->u.fields->end());
         $$ = MakeTuple(yylineno, vec);
         break;
@@ -213,13 +213,13 @@ field:
   pattern
     { $$ = MakeExp($1); }
 | designator '=' pattern
-    { auto fields = new list<pair<string,Expression*> >();
+    { auto fields = new std::list<std::pair<std::string,Expression*> >();
       fields->push_back(make_pair($1, $3));
       $$ = MakeFieldList(fields); }
 ;
 field_list:
   /* empty */
-    { $$ = MakeFieldList(new list<pair<string,Expression*> >()); }
+    { $$ = MakeFieldList(new std::list<std::pair<std::string,Expression*> >()); }
 | field
     { $$ = $1; }
 | field ',' field_list
@@ -227,16 +227,16 @@ field_list:
 ;
 clause:
   CASE pattern DBLARROW statement
-    { $$ = new pair<Expression*,Statement*>($2, $4); }
+    { $$ = new std::pair<Expression*,Statement*>($2, $4); }
 | DEFAULT DBLARROW statement
     {
       auto vp = MakeVarPat(yylineno, "_", MakeAutoType(yylineno));
-      $$ = new pair<Expression*,Statement*>(vp, $3);
+      $$ = new std::pair<Expression*,Statement*>(vp, $3);
     }
 ;
 clause_list:
   /* empty */
-    { $$ = new list< pair<Expression*,Statement*> >(); }
+    { $$ = new std::list< std::pair<Expression*,Statement*> >(); }
 | clause clause_list
     { $$ = $2; $$->push_front(*$1); }
 ;
@@ -244,9 +244,9 @@ statement:
   expression '=' expression ';'
     { $$ = MakeAssign(yylineno, $1, $3); }
 | VAR pattern '=' expression ';'
-    { $$ = MakeVar_def(yylineno, $2, $4); }
+    { $$ = MakeVarDef(yylineno, $2, $4); }
 | expression ';'
-    { $$ = MakeExp_stmt(yylineno, $1); }
+    { $$ = MakeExpStmt(yylineno, $1); }
 | IF '(' expression ')' statement ELSE statement
     { $$ = MakeIf(yylineno, $3, $5, $7); }
 | WHILE '(' expression ')' statement
@@ -270,20 +270,20 @@ statement_list:
 ;
 return_type:
   /* empty */
-    { $$ = MakeTuple(yylineno, new vector<pair<string,Expression*> >()); }
+    { $$ = MakeTuple(yylineno, new std::vector<std::pair<std::string,Expression*> >()); }
 | ARROW expression
     { $$ = $2; }
 ;
 function_definition:
   FN identifier tuple return_type '{' statement_list '}'
-    { $$ = MakeFun_def(yylineno, $2, $4, $3, $6); }
+    { $$ = MakeFunDef(yylineno, $2, $4, $3, $6); }
 | FN identifier tuple DBLARROW expression ';'
-    { $$ = MakeFun_def(yylineno, $2, MakeAutoType(yylineno), $3,
+    { $$ = MakeFunDef(yylineno, $2, MakeAutoType(yylineno), $3,
                         MakeReturn(yylineno, $5)); }
 ;
 function_declaration:
   FN identifier tuple return_type ';'
-    { $$ = MakeFun_def(yylineno, $2, $4, $3, 0); }
+    { $$ = MakeFunDef(yylineno, $2, $4, $3, 0); }
 ;
 member:
   VAR expression ':' identifier ';'
@@ -291,33 +291,33 @@ member:
 ;
 member_list:
   /* empty */
-    { $$ = new list<Member*>(); }
+    { $$ = new std::list<Member*>(); }
 | member member_list
     { $$ = $2; $$->push_front($1); }
 ;
 alternative:
   identifier tuple ';'
-    { $$ = new pair<string,Expression*>($1, $2); }
+    { $$ = new std::pair<std::string,Expression*>($1, $2); }
 ;
 alternative_list:
   /* empty */
-    { $$ = new list<pair<string, Expression*> >(); }
+    { $$ = new std::list<std::pair<std::string, Expression*> >(); }
 | alternative alternative_list
     { $$ = $2; $$->push_front(*$1); }
 ;
 declaration:
   function_definition
-    { $$ = MakeFun_decl($1); }
+    { $$ = MakeFunDecl($1); }
 | function_declaration
-    { $$ = MakeFun_decl($1); }
+    { $$ = MakeFunDecl($1); }
 | STRUCT identifier '{' member_list '}'
-    { $$ = MakeStruct_decl(yylineno, $2, $4); }
+    { $$ = MakeStructDecl(yylineno, $2, $4); }
 | CHOICE identifier '{' alternative_list '}'
-    { $$ = MakeChoice_decl(yylineno, $2, $4); }
+    { $$ = MakeChoiceDecl(yylineno, $2, $4); }
 ;
 declaration_list:
   /* empty */
-    { $$ = new list<Declaration*>(); }
+    { $$ = new std::list<Declaration*>(); }
 | declaration declaration_list
     { $$ = $2; $$->push_front($1); }
 ;
