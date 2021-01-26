@@ -11,9 +11,9 @@
 #include "executable_semantics/ast.h"
 #include "executable_semantics/interp.h"
 
-typedef AList<std::string, Value*> TypeEnv;
+using TypeEnv = AList<std::string, Value *>;
 
-void print_type_env(TypeEnv* env);
+void PrintTypeEnv(TypeEnv* env);
 
 enum TCContext { ValueContext, PatternContext, TypeContext };
 
@@ -32,23 +32,23 @@ struct TCStatement {
   TypeEnv* env;
 };
 
-Value* ToType(int lineno, Value* val);
+auto ToType(int lineno, Value* val) -> Value*;
 
-bool TypeEqual(Value* t1, Value* t2);
-bool FieldsEqual(VarValues* ts1, VarValues* ts2);
+auto TypeEqual(Value* t1, Value* t2) -> bool;
+auto FieldsEqual(VarValues* ts1, VarValues* ts2) -> bool;
 
-TCResult TypeCheckExp(Expression* e, TypeEnv* env, Env* ct_env, Value* expected,
-                      TCContext context);
+auto TypeCheckExp(Expression* e, TypeEnv* env, Env* ct_env, Value* expected,
+                      TCContext context) -> TCResult;
 
-TCStatement TypeCheckStmt(Statement*, TypeEnv*, Env*, Value*);
+auto TypeCheckStmt(Statement*, TypeEnv*, Env*, Value*) -> TCStatement;
 
-struct FunctionDefinition* TypeCheckFunDef(struct FunctionDefinition*,
-                                           TypeEnv*);
+auto TypeCheckFunDef(struct FunctionDefinition*,
+                                           TypeEnv*) -> struct FunctionDefinition*;
 
-Declaration* TypeCheckDecl(Declaration* d, TypeEnv* env, Env* ct_env);
+auto TypeCheckDecl(Declaration* d, TypeEnv* env, Env* ct_env) -> Declaration*;
 
-std::pair<TypeEnv*, Env*> TopLevel(std::list<struct Declaration*>* fs);
+auto TopLevel(std::list<struct Declaration*>* fs) -> std::pair<TypeEnv*, Env*>;
 
-void PrintErrorString(std::string s);
+void PrintErrorString(const std::string& s);
 
 #endif

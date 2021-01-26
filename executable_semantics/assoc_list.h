@@ -10,14 +10,16 @@
 
 template <class K, class V>
 struct AList {
+  AList(K k, V v, AList* n) : key(k), value(v), next(n) {}
+
   K key;
   V value;
   AList* next;
-  AList(K k, V v, AList* n) : key(k), value(v), next(n) {}
 };
 
 template <class K, class V>
-auto Lookup(int lineno, AList<K, V>* alist, K key, void (*print_key)(K)) -> V {
+auto Lookup(int lineno, AList<K, V>* alist, const K& key,
+            void (*print_key)(const K&)) -> V {
   if (alist == NULL) {
     std::cerr << lineno << ": could not find `";
     print_key(key);

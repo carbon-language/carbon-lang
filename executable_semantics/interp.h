@@ -2,10 +2,11 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#ifndef INTERP_H
-#define INTERP_H
+#ifndef EXECUTABLE_SEMANTICS_INTERP_H
+#define EXECUTABLE_SEMANTICS_INTERP_H
 
 #include <list>
+#include <utility>
 #include <vector>
 
 #include "executable_semantics/assoc_list.h"
@@ -14,9 +15,9 @@
 
 struct Value;
 
-typedef unsigned int Address;
-typedef std::list<std::pair<std::string, Value*> > VarValues;
-typedef AList<std::string, Address> Env;
+using Address = unsigned int;
+using VarValues = std::list<std::pair<std::string, Value*>>;
+using Env = AList<std::string, Address>;
 
 /***** Values *****/
 
@@ -67,7 +68,7 @@ struct Value {
       Value* arg;
     } alt;
     struct {
-      std::vector<std::pair<std::string, Address> >* elts;
+      std::vector<std::pair<std::string, Address>>* elts;
     } tuple;
     Address ptr;
     std::string* var_type;
@@ -102,33 +103,35 @@ struct Value {
   } u;
 };
 
-Value* MakeInt_val(int i);
-Value* MakeBool_val(bool b);
-Value* MakeFun_val(std::string name, VarValues* implicit_params, Value* param,
-                   Statement* body, std::vector<Value*>* implicit_args);
-Value* MakePtr_val(Address addr);
-Value* MakeStruct_val(Value* type,
-                      std::vector<std::pair<std::string, Address> >* inits);
-Value* MakeTuple_val(std::vector<std::pair<std::string, Address> >* elts);
-Value* MakeAlt_val(std::string alt_name, std::string choice_name, Value* arg);
-Value* MakeAlt_cons(std::string alt_name, std::string choice_name);
+auto MakeIntVal(int i) -> Value*;
+auto MakeBoolVal(bool b) -> Value*;
+auto MakeFunVal(std::string name, VarValues* implicit_params, Value* param,
+                Statement* body, std::vector<Value*>* implicit_args) -> Value*;
+auto MakePtrVal(Address addr) -> Value*;
+auto MakeStructVal(Value* type,
+                   std::vector<std::pair<std::string, Address>>* inits)
+    -> Value*;
+auto MakeTupleVal(std::vector<std::pair<std::string, Address>>* elts) -> Value*;
+auto MakeAltVal(std::string alt_name, std::string choice_name, Value* arg)
+    -> Value*;
+auto MakeAltCons(std::string alt_name, std::string choice_name) -> Value*;
 
-Value* MakeVarPat_val(std::string name, Value* type);
+auto MakeVarPatVal(std::string name, Value* type) -> Value*;
 
-Value* MakeVar_type_val(std::string name);
-Value* MakeIntType_val();
-Value* MakeAutoType_val();
-Value* MakeBoolType_val();
-Value* MakeTypeType_val();
-Value* MakeFunType_val(Value* param, Value* ret);
-Value* MakePtr_type_val(Value* type);
-Value* MakeStruct_type_val(std::string name, VarValues* fields,
-                           VarValues* methods);
-Value* MakeTuple_type_val(VarValues* fields);
-Value* MakeVoid_type_val();
-Value* MakeChoice_type_val(std::string* name, VarValues* alts);
+auto MakeVarTypeVal(std::string name) -> Value*;
+auto MakeIntTypeVal() -> Value*;
+auto MakeAutoTypeVal() -> Value*;
+auto MakeBoolTypeVal() -> Value*;
+auto MakeTypeTypeVal() -> Value*;
+auto MakeFunTypeVal(Value* param, Value* ret) -> Value*;
+auto MakePtrTypeVal(Value* type) -> Value*;
+auto MakeStructTypeVal(std::string name, VarValues* fields, VarValues* methods)
+    -> Value*;
+auto MakeTupleTypeVal(VarValues* fields) -> Value*;
+auto MakeVoidTypeVal() -> Value*;
+auto MakeChoiceTypeVal(std::string* name, VarValues* alts) -> Value*;
 
-bool value_equal(Value* v1, Value* v2, int lineno);
+auto ValueEqual(Value* v1, Value* v2, int lineno) -> bool;
 
 /***** Actions *****/
 
@@ -149,15 +152,15 @@ struct Action {
     Value* val;  // for finished actions with a value (ValAction)
     Address delete_;
   } u;
-  int pos;                 // position or state of the action
+  int pos;                      // position or state of the action
   std::vector<Value*> results;  // results from subexpression
 };
-typedef Cons<Action*>* ActionList;
+using ActionList = Cons<Action*>*;
 
 /***** Scopes *****/
 
 struct Scope {
-  Scope(Env* e, const std::list<std::string>& l) : env(e), locals(l) {}
+  Scope(Env* e, std::list<std::string> l) : env(e), locals(std::move(l)) {}
   Env* env;
   std::list<std::string> locals;
 };
@@ -170,7 +173,7 @@ struct Frame {
   Cons<Action*>* todo;
 
   Frame(std::string n, Cons<Scope*>* s, Cons<Action*>* c)
-      : name(n), scopes(s), todo(c) {}
+      : name(std::move(std::move(n))), scopes(s), todo(c) {}
 };
 
 struct State {
@@ -180,15 +183,15 @@ struct State {
 
 extern State* state;
 
-void print_value(Value* val, std::ostream& out);
-void print_env(Env* env);
-Address allocate_value(Value* v);
-Value* copy_val(Value* val, int lineno);
-int to_integer(Value* v);
+void PrintValue(Value* val, std::ostream& out);
+void PrintEnv(Env* env);
+auto AllocateValue(Value* v) -> Address;
+auto CopyVal(Value* val, int lineno) -> Value*;
+auto ToInteger(Value* v) -> int;
 
 /***** Interpreters *****/
 
-int interp_program(std::list<Declaration*>* fs);
-Value* interp_exp(Env* env, Expression* e);
+auto InterpProgram(std::list<Declaration*>* fs) -> int;
+auto InterpExp(Env* env, Expression* e) -> Value*;
 
-#endif
+#endif  // EXECUTABLE_SEMANTICS_INTERP_H

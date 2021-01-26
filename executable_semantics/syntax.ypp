@@ -5,11 +5,14 @@
 */
 
 %{
-#include <stdlib.h>
-#include <stdio.h>
-#include <iostream>
 #include <stdarg.h>
+#include <stdio.h>
+#include <stdlib.h>
+
 #include <algorithm>
+#include <iostream>
+#include <list>
+
 #include "executable_semantics/ast.h"
 #include "executable_semantics/typecheck.h"
 #include "executable_semantics/interp.h"
@@ -18,7 +21,7 @@ extern FILE* yyin;
 extern int yylineno;
 char* input_filename;
 
-void yyerror(char*s)  {
+void yyerror(char* s)  {
   fprintf(stderr, "%s:%d: %s\n", input_filename, yylineno, s);
   exit(-1);
 }
@@ -26,16 +29,6 @@ void yyerror(char*s)  {
 
 extern int yylex();
 extern int yywrap();
-
-//#include "typecheck.h"
-//#include "eval.h"
-#include <list>
-#include "executable_semantics/ast.h"
-using std::list;
-using std::pair;
-using std::make_pair;
-using std::cout;
-using std::endl;
 
 static std::list<FunctionDefinition*> program;
 %}
@@ -134,8 +127,8 @@ input: declaration_list
       printf("********** type checking complete **********\n");
       PrintList(&new_decls, PrintDecl, "");
       printf("********** starting execution **********\n");
-      int result = interp_program(&new_decls);
-      cout << "result: " << result << endl;
+      int result = InterpProgram(&new_decls);
+      std::cout << "result: " << result << std::endl;
     }
 ;
 pattern:
@@ -186,7 +179,7 @@ expression:
         $$ = MakeCall(yylineno, $1, $2);
       } else {
         auto vec = new std::vector<std::pair<std::string,Expression*> >();
-        vec->push_back(make_pair("", $2));
+        vec->push_back(std::make_pair("", $2));
         $$ = MakeCall(yylineno, $1, MakeTuple(yylineno, vec));
       }
     }
@@ -214,7 +207,7 @@ field:
     { $$ = MakeExp($1); }
 | designator '=' pattern
     { auto fields = new std::list<std::pair<std::string,Expression*> >();
-      fields->push_back(make_pair($1, $3));
+      fields->push_back(std::make_pair($1, $3));
       $$ = MakeFieldList(fields); }
 ;
 field_list:

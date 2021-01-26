@@ -2,29 +2,28 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#ifndef CONS_LIST_H
-#define CONS_LIST_H
+#ifndef EXECUTABLE_SEMANTICS_CONS_LIST_H
+#define EXECUTABLE_SEMANTICS_CONS_LIST_H
 
-template<class T>
+template <class T>
 struct Cons {
   T curr;
   Cons* next;
-  Cons(T e, Cons* n) : curr(e), next(n) { }
+  Cons(T e, Cons* n) : curr(e), next(n) {}
 };
 
-template<class T>
-Cons<T>* cons(const T& x, Cons<T>* ls) {
+template <class T>
+auto MakeCons(const T& x, Cons<T>* ls) -> Cons<T>* {
   return new Cons<T>(x, ls);
 }
 
-template<class T>
-unsigned int length(Cons<T>* ls) {
+template <class T>
+auto Length(Cons<T>* ls) -> unsigned int {
   if (ls) {
-    return 1 + length(ls->next);
+    return 1 + Length(ls->next);
   } else {
     return 0;
   }
 }
 
-
-#endif
+#endif  // EXECUTABLE_SEMANTICS_CONS_LIST_H
