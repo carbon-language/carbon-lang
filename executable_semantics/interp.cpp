@@ -19,7 +19,7 @@ using std::vector;
 
 State* state;
 
-auto PatternMatch(Value* pat, Value* val, Env*, std::list<std::string>&, int)
+auto PatternMatch(Value* pat, Value* val, Env*, std::list<std::string>*, int)
     -> Env*;
 void HandleValue();
 
@@ -36,16 +36,16 @@ auto ToInteger(Value* v) -> int {
   }
 }
 
-void CheckAlive(Value* v, int lineno) {
+void CheckAlive(Value* v, int line_num) {
   if (!v->alive) {
-    std::cerr << lineno << ": undefined behavior: access to dead value ";
+    std::cerr << line_num << ": undefined behavior: access to dead value ";
     PrintValue(v, cerr);
     std::cerr << std::endl;
     exit(-1);
   }
 }
 
-auto MakeInt_val(int i) -> Value* {
+auto MakeIntVal(int i) -> Value* {
   auto* v = new Value();
   v->alive = true;
   v->tag = IntV;
@@ -53,7 +53,7 @@ auto MakeInt_val(int i) -> Value* {
   return v;
 }
 
-auto MakeBool_val(bool b) -> Value* {
+auto MakeBoolVal(bool b) -> Value* {
   auto* v = new Value();
   v->alive = true;
   v->tag = BoolV;
@@ -71,7 +71,7 @@ auto MakeFunVal(std::string name, Value* param, Statement* body) -> Value* {
   return v;
 }
 
-auto MakePtr_val(Address addr) -> Value* {
+auto MakePtrVal(Address addr) -> Value* {
   auto* v = new Value();
   v->alive = true;
   v->tag = PtrV;
@@ -88,7 +88,7 @@ auto MakeStructVal(Value* type, Value* inits) -> Value* {
   return v;
 }
 
-auto MakeTuple_val(std::vector<std::pair<std::string, Address>>* elts)
+auto MakeTupleVal(std::vector<std::pair<std::string, Address>>* elts)
     -> Value* {
   auto* v = new Value();
   v->alive = true;
@@ -97,7 +97,7 @@ auto MakeTuple_val(std::vector<std::pair<std::string, Address>>* elts)
   return v;
 }
 
-auto MakeAlt_val(std::string alt_name, std::string choice_name, Value* arg)
+auto MakeAltVal(std::string alt_name, std::string choice_name, Value* arg)
     -> Value* {
   auto* v = new Value();
   v->alive = true;
@@ -108,7 +108,7 @@ auto MakeAlt_val(std::string alt_name, std::string choice_name, Value* arg)
   return v;
 }
 
-auto MakeAlt_cons(std::string alt_name, std::string choice_name) -> Value* {
+auto MakeAltCons(std::string alt_name, std::string choice_name) -> Value* {
   auto* v = new Value();
   v->alive = true;
   v->tag = AltConsV;
@@ -155,7 +155,7 @@ auto MakeTypeTypeVal() -> Value* {
   return v;
 }
 
-auto MakeAutoType_val() -> Value* {
+auto MakeAutoTypeVal() -> Value* {
   auto* v = new Value();
   v->alive = true;
   v->tag = AutoTV;
@@ -179,8 +179,8 @@ auto MakePtrTypeVal(Value* type) -> Value* {
   return v;
 }
 
-auto MakeStructTypeVal(std::string name, VarValues* fields,
-                         VarValues* methods) -> Value* {
+auto MakeStructTypeVal(std::string name, VarValues* fields, VarValues* methods)
+    -> Value* {
   auto* v = new Value();
   v->alive = true;
   v->tag = StructTV;
@@ -207,7 +207,7 @@ auto MakeVoidTypeVal() -> Value* {
 }
 
 auto MakeChoiceTypeVal(std::string* name,
-                         std::list<std::pair<std::string, Value*>>* alts)
+                       std::list<std::pair<std::string, Value*>>* alts)
     -> Value* {
   auto* v = new Value();
   v->alive = true;
@@ -229,39 +229,39 @@ auto AllocateValue(Value* v) -> Address {
   return a;
 }
 
-auto CopyVal(Value* val, int lineno) -> Value* {
-  CheckAlive(val, lineno);
+auto CopyVal(Value* val, int line_num) -> Value* {
+  CheckAlive(val, line_num);
   switch (val->tag) {
     case TupleV: {
       auto elts = new std::vector<std::pair<std::string, Address>>();
       for (auto& i : *val->u.tuple.elts) {
-        Value* elt = CopyVal(state->heap[i.second], lineno);
+        Value* elt = CopyVal(state->heap[i.second], line_num);
         elts->push_back(make_pair(i.first, AllocateValue(elt)));
       }
-      return MakeTuple_val(elts);
+      return MakeTupleVal(elts);
     }
     case AltV: {
-      Value* arg = CopyVal(val->u.alt.arg, lineno);
-      return MakeAlt_val(*val->u.alt.alt_name, *val->u.alt.choice_name, arg);
+      Value* arg = CopyVal(val->u.alt.arg, line_num);
+      return MakeAltVal(*val->u.alt.alt_name, *val->u.alt.choice_name, arg);
     }
     case StructV: {
-      Value* inits = CopyVal(val->u.struct_val.inits, lineno);
+      Value* inits = CopyVal(val->u.struct_val.inits, line_num);
       return MakeStructVal(val->u.struct_val.type, inits);
     }
     case IntV:
-      return MakeInt_val(val->u.integer);
+      return MakeIntVal(val->u.integer);
     case BoolV:
-      return MakeBool_val(val->u.boolean);
+      return MakeBoolVal(val->u.boolean);
     case FunV:
       return MakeFunVal(*val->u.fun.name, val->u.fun.param, val->u.fun.body);
     case PtrV:
-      return MakePtr_val(val->u.ptr);
+      return MakePtrVal(val->u.ptr);
     case FunctionTV:
-      return MakeFunTypeVal(CopyVal(val->u.fun_type.param, lineno),
-                             CopyVal(val->u.fun_type.ret, lineno));
+      return MakeFunTypeVal(CopyVal(val->u.fun_type.param, line_num),
+                            CopyVal(val->u.fun_type.ret, line_num));
 
     case PointerTV:
-      return MakePtrTypeVal(CopyVal(val->u.ptr_type.type, lineno));
+      return MakePtrTypeVal(CopyVal(val->u.ptr_type.type, line_num));
     case IntTV:
       return MakeIntTypeVal();
     case BoolTV:
@@ -271,11 +271,11 @@ auto CopyVal(Value* val, int lineno) -> Value* {
     case VarTV:
       return MakeVarTypeVal(*val->u.var_type);
     case AutoTV:
-      return MakeAutoType_val();
+      return MakeAutoTypeVal();
     case TupleTV: {
       auto new_fields = new VarValues();
       for (auto& field : *val->u.tuple_type.fields) {
-        auto v = CopyVal(field.second, lineno);
+        auto v = CopyVal(field.second, line_num);
         new_fields->push_back(make_pair(field.first, v));
       }
       return MakeTupleTypeVal(new_fields);
@@ -303,7 +303,8 @@ void KillValue(Value* val) {
         if (state->heap[elt.second]->alive) {
           KillValue(state->heap[elt.second]);
         } else {
-          std::cerr << "runtime error, killing an already dead value" << std::endl;
+          std::cerr << "runtime error, killing an already dead value"
+                    << std::endl;
           exit(-1);
         }
       }
@@ -534,7 +535,7 @@ void PrintStack(Cons<Frame*>* ls, std::ostream& out) {
   }
 }
 
-void PrintHeap(std::vector<Value*>& heap, std::ostream& out) {
+void PrintHeap(const std::vector<Value*>& heap, std::ostream& out) {
   for (auto& iter : heap) {
     if (iter) {
       PrintValue(iter, out);
@@ -563,19 +564,20 @@ void PrintState(std::ostream& out) {
 
 /***** Auxiliary Functions *****/
 
-auto ValToInt(Value* v, int lineno) -> int {
-  CheckAlive(v, lineno);
+auto ValToInt(Value* v, int line_num) -> int {
+  CheckAlive(v, line_num);
   switch (v->tag) {
     case IntV:
       return v->u.integer;
     default:
-      std::cerr << lineno << ": runtime error: expected an integer" << std::endl;
+      std::cerr << line_num << ": runtime error: expected an integer"
+                << std::endl;
       exit(-1);
   }
 }
 
-auto ValToBool(Value* v, int lineno) -> int {
-  CheckAlive(v, lineno);
+auto ValToBool(Value* v, int line_num) -> int {
+  CheckAlive(v, line_num);
   switch (v->tag) {
     case BoolV:
       return v->u.boolean;
@@ -585,8 +587,8 @@ auto ValToBool(Value* v, int lineno) -> int {
   }
 }
 
-auto ValToPtr(Value* v, int lineno) -> Address {
-  CheckAlive(v, lineno);
+auto ValToPtr(Value* v, int line_num) -> Address {
+  CheckAlive(v, line_num);
   switch (v->tag) {
     case PtrV:
       return v->u.ptr;
@@ -598,12 +600,12 @@ auto ValToPtr(Value* v, int lineno) -> Address {
   }
 }
 
-auto FieldsValueEqual(VarValues* ts1, VarValues* ts2, int lineno) -> bool {
+auto FieldsValueEqual(VarValues* ts1, VarValues* ts2, int line_num) -> bool {
   if (ts1->size() == ts2->size()) {
     for (auto& iter1 : *ts1) {
       try {
         auto t2 = FindAlist(iter1.first, ts2);
-        if (!ValueEqual(iter1.second, t2, lineno)) {
+        if (!ValueEqual(iter1.second, t2, line_num)) {
           return false;
         }
       } catch (std::domain_error de) {
@@ -616,9 +618,9 @@ auto FieldsValueEqual(VarValues* ts1, VarValues* ts2, int lineno) -> bool {
   }
 }
 
-auto ValueEqual(Value* v1, Value* v2, int lineno) -> bool {
-  CheckAlive(v1, lineno);
-  CheckAlive(v2, lineno);
+auto ValueEqual(Value* v1, Value* v2, int line_num) -> bool {
+  CheckAlive(v1, line_num);
+  CheckAlive(v2, line_num);
   return (v1->tag == IntV && v2->tag == IntV &&
           v1->u.integer == v2->u.integer) ||
          (v1->tag == BoolV && v2->tag == BoolV &&
@@ -628,30 +630,30 @@ auto ValueEqual(Value* v1, Value* v2, int lineno) -> bool {
           v1->u.fun.body == v2->u.fun.body) ||
          (v1->tag == TupleV && v2->tag == TupleV &&
           FieldsValueEqual(v1->u.tuple_type.fields, v2->u.tuple_type.fields,
-                           lineno))
+                           line_num))
          // TODO: struct and alternative values
          || TypeEqual(v1, v2);
 }
 
-auto EvalPrim(Operator op, const std::vector<Value*>& args, int lineno)
+auto EvalPrim(Operator op, const std::vector<Value*>& args, int line_num)
     -> Value* {
   switch (op) {
     case Neg:
-      return MakeInt_val(-ValToInt(args[0], lineno));
+      return MakeIntVal(-ValToInt(args[0], line_num));
     case Add:
-      return MakeInt_val(ValToInt(args[0], lineno) + ValToInt(args[1], lineno));
+      return MakeIntVal(ValToInt(args[0], line_num) + ValToInt(args[1], line_num));
     case Sub:
-      return MakeInt_val(ValToInt(args[0], lineno) - ValToInt(args[1], lineno));
+      return MakeIntVal(ValToInt(args[0], line_num) - ValToInt(args[1], line_num));
     case Not:
-      return MakeBool_val(!ValToBool(args[0], lineno));
+      return MakeBoolVal(!ValToBool(args[0], line_num));
     case And:
-      return MakeBool_val(ValToBool(args[0], lineno) &&
-                          ValToBool(args[1], lineno));
+      return MakeBoolVal(ValToBool(args[0], line_num) &&
+                         ValToBool(args[1], line_num));
     case Or:
-      return MakeBool_val(ValToBool(args[0], lineno) ||
-                          ValToBool(args[1], lineno));
+      return MakeBoolVal(ValToBool(args[0], line_num) ||
+                         ValToBool(args[1], line_num));
     case Eq:
-      return MakeBool_val(ValueEqual(args[0], args[1], lineno));
+      return MakeBoolVal(ValueEqual(args[0], args[1], line_num));
   }
 }
 
@@ -667,7 +669,7 @@ void InitGlobals(std::list<Declaration*>* fs) {
         for (auto i = d->u.choice_def.alternatives->begin();
              i != d->u.choice_def.alternatives->end(); ++i) {
           auto t =
-              ToType(d->u.choice_def.lineno, InterpExp(nullptr, i->second));
+              ToType(d->u.choice_def.line_num, InterpExp(nullptr, i->second));
           alts->push_back(make_pair(i->first, t));
         }
         auto ct = MakeChoiceTypeVal(d->u.choice_def.name, alts);
@@ -683,7 +685,7 @@ void InitGlobals(std::list<Declaration*>* fs) {
              i != d->u.struct_def->members->end(); ++i) {
           switch ((*i)->tag) {
             case FieldMember: {
-              auto t = ToType(d->u.struct_def->lineno,
+              auto t = ToType(d->u.struct_def->line_num,
                               InterpExp(nullptr, (*i)->u.field.type));
               fields->push_back(make_pair(*(*i)->u.field.name, t));
               break;
@@ -712,62 +714,60 @@ void InitGlobals(std::list<Declaration*>* fs) {
 // where C is the body of the function,
 //       E is the environment (functions + parameters + locals)
 //       F is the function
-void CallFunction(int lineno, std::vector<Value*> operas, State* state) {
-  CheckAlive(operas[0], lineno);
+void CallFunction(int line_num, std::vector<Value*> operas, State* state) {
+  CheckAlive(operas[0], line_num);
   switch (operas[0]->tag) {
     case FunV: {
-      Env* env = globals;
       // Bind arguments to parameters
       std::list<std::string> params;
-      env =
-          PatternMatch(operas[0]->u.fun.param, operas[1], env, params, lineno);
+      Env* env = PatternMatch(operas[0]->u.fun.param, operas[1], globals,
+                              &params, line_num);
       if (!env) {
-        std::cerr << "internal error in call_function, pattern match failed" << std::endl;
+        std::cerr << "internal error in call_function, pattern match failed"
+                  << std::endl;
         exit(-1);
       }
       // Create the new frame and push it on the stack
       auto* scope = new Scope(env, params);
-      auto* frame = new Frame(*operas[0]->u.fun.name,
-                              MakeCons(scope, (Cons<Scope*>*)nullptr),
-                              MakeCons(MakeStmtAct(operas[0]->u.fun.body),
-                                       (Cons<Action*>*)nullptr));
+      auto* frame = new Frame(*operas[0]->u.fun.name, MakeCons(scope),
+                              MakeCons(MakeStmtAct(operas[0]->u.fun.body)));
       state->stack = MakeCons(frame, state->stack);
       break;
     }
     case StructTV: {
-      Value* arg = CopyVal(operas[1], lineno);
+      Value* arg = CopyVal(operas[1], line_num);
       Value* sv = MakeStructVal(operas[0], arg);
       Frame* frame = state->stack->curr;
       frame->todo = MakeCons(MakeValAct(sv), frame->todo);
       break;
     }
     case AltConsV: {
-      Value* arg = CopyVal(operas[1], lineno);
-      Value* av = MakeAlt_val(*operas[0]->u.alt_cons.alt_name,
-                              *operas[0]->u.alt_cons.choice_name, arg);
+      Value* arg = CopyVal(operas[1], line_num);
+      Value* av = MakeAltVal(*operas[0]->u.alt_cons.alt_name,
+                             *operas[0]->u.alt_cons.choice_name, arg);
       Frame* frame = state->stack->curr;
       frame->todo = MakeCons(MakeValAct(av), frame->todo);
       break;
     }
     default:
-      std::cerr << lineno << ": in call, expected a function, not ";
+      std::cerr << line_num << ": in call, expected a function, not ";
       PrintValue(operas[0], cerr);
       std::cerr << std::endl;
       exit(-1);
   }
 }
 
-void KillScope(int lineno, Scope* scope) {
+void KillScope(int line_num, Scope* scope) {
   for (const auto& l : scope->locals) {
-    Address a = Lookup(lineno, scope->env, l, PrintErrorString);
+    Address a = Lookup(line_num, scope->env, l, PrintErrorString);
     KillValue(state->heap[a]);
   }
 }
 
-void KillLocals(int lineno, Frame* frame) {
+void KillLocals(int line_num, Frame* frame) {
   Cons<Scope*>* scopes = frame->scopes;
   for (Scope* scope = scopes->curr; scopes; scopes = scopes->next) {
-    KillScope(lineno, scope);
+    KillScope(line_num, scope);
   }
 }
 
@@ -780,16 +780,16 @@ void CreateTuple(Frame* frame, Action* act, Expression* /*exp*/) {
     Address a = AllocateValue(*i);  // copy?
     elts->push_back(make_pair(f->first, a));
   }
-  Value* tv = MakeTuple_val(elts);
+  Value* tv = MakeTupleVal(elts);
   frame->todo = MakeCons(MakeValAct(tv), frame->todo->next);
 }
 
 auto ToValue(Expression* value) -> Value* {
   switch (value->tag) {
     case Integer:
-      return MakeInt_val(value->u.integer);
+      return MakeIntVal(value->u.integer);
     case Boolean:
-      return MakeBool_val(value->u.boolean);
+      return MakeBoolVal(value->u.boolean);
     case IntT:
       return MakeIntTypeVal();
     case BoolT:
@@ -809,8 +809,8 @@ auto ToValue(Expression* value) -> Value* {
 //
 // Returns 0 if the value doesn't match the pattern
 //
-auto PatternMatch(Value* p, Value* v, Env* env, std::list<std::string>& vars,
-                  int lineno) -> Env* {
+auto PatternMatch(Value* p, Value* v, Env* env, std::list<std::string>* vars,
+                  int line_num) -> Env* {
   std::cout << "pattern_match(";
   PrintValue(p, cout);
   std::cout << ", ";
@@ -818,8 +818,8 @@ auto PatternMatch(Value* p, Value* v, Env* env, std::list<std::string>& vars,
   std::cout << ")" << std::endl;
   switch (p->tag) {
     case VarPatV: {
-      Address a = AllocateValue(CopyVal(v, lineno));
-      vars.push_back(*p->u.var_pat.name);
+      Address a = AllocateValue(CopyVal(v, line_num));
+      vars->push_back(*p->u.var_pat.name);
       return new Env(*p->u.var_pat.name, a, env);
     }
     case TupleV:
@@ -827,18 +827,19 @@ auto PatternMatch(Value* p, Value* v, Env* env, std::list<std::string>& vars,
         case TupleV: {
           if (p->u.tuple.elts->size() != v->u.tuple.elts->size()) {
             std::cerr << "runtime error: arity mismatch in tuple pattern match"
-                 << std::endl;
+                      << std::endl;
             exit(-1);
           }
           for (auto& elt : *p->u.tuple.elts) {
             Address a = FindField(elt.first, v->u.tuple.elts);
             env = PatternMatch(state->heap[elt.second], state->heap[a], env,
-                               vars, lineno);
+                               vars, line_num);
           }
           return env;
         }
         default:
-          std::cerr << "internal error, expected a tuple value in pattern, not ";
+          std::cerr
+              << "internal error, expected a tuple value in pattern, not ";
           PrintValue(v, cerr);
           std::cerr << std::endl;
           exit(-1);
@@ -850,12 +851,13 @@ auto PatternMatch(Value* p, Value* v, Env* env, std::list<std::string>& vars,
               *p->u.alt.alt_name != *v->u.alt.alt_name) {
             return nullptr;
           }
-          env = PatternMatch(p->u.alt.arg, v->u.alt.arg, env, vars, lineno);
+          env = PatternMatch(p->u.alt.arg, v->u.alt.arg, env, vars, line_num);
           return env;
         }
         default:
-          std::cerr << "internal error, expected a choice alternative in pattern, "
-                  "not ";
+          std::cerr
+              << "internal error, expected a choice alternative in pattern, "
+                 "not ";
           PrintValue(v, cerr);
           std::cerr << std::endl;
           exit(-1);
@@ -864,15 +866,15 @@ auto PatternMatch(Value* p, Value* v, Env* env, std::list<std::string>& vars,
       switch (v->tag) {
         case FunctionTV:
           env = PatternMatch(p->u.fun_type.param, v->u.fun_type.param, env,
-                             vars, lineno);
+                             vars, line_num);
           env = PatternMatch(p->u.fun_type.ret, v->u.fun_type.ret, env, vars,
-                             lineno);
+                             line_num);
           return env;
         default:
           return nullptr;
       }
     default:
-      if (ValueEqual(p, v, lineno)) {
+      if (ValueEqual(p, v, line_num)) {
         return env;
       } else {
         return nullptr;
@@ -880,28 +882,29 @@ auto PatternMatch(Value* p, Value* v, Env* env, std::list<std::string>& vars,
   }
 }
 
-void PatternAssignment(Value* pat, Value* val, int lineno) {
+void PatternAssignment(Value* pat, Value* val, int line_num) {
   switch (pat->tag) {
     case PtrV:
-      state->heap[ValToPtr(pat, lineno)] = val;
+      state->heap[ValToPtr(pat, line_num)] = val;
       break;
     case TupleV: {
       switch (val->tag) {
         case TupleV: {
           if (pat->u.tuple.elts->size() != val->u.tuple.elts->size()) {
             std::cerr << "runtime error: arity mismatch in tuple pattern match"
-                 << std::endl;
+                      << std::endl;
             exit(-1);
           }
           for (auto& elt : *pat->u.tuple.elts) {
             Address a = FindField(elt.first, val->u.tuple.elts);
-            PatternAssignment(state->heap[elt.second], state->heap[a], lineno);
+            PatternAssignment(state->heap[elt.second], state->heap[a], line_num);
           }
           break;
         }
         default:
-          std::cerr << "internal error, expected a tuple value on right-hand-side, "
-                  "not ";
+          std::cerr
+              << "internal error, expected a tuple value on right-hand-side, "
+                 "not ";
           PrintValue(val, cerr);
           std::cerr << std::endl;
           exit(-1);
@@ -916,12 +919,13 @@ void PatternAssignment(Value* pat, Value* val, int lineno) {
             std::cerr << "internal error in pattern assignment" << std::endl;
             exit(-1);
           }
-          PatternAssignment(pat->u.alt.arg, val->u.alt.arg, lineno);
+          PatternAssignment(pat->u.alt.arg, val->u.alt.arg, line_num);
           break;
         }
         default:
-          std::cerr << "internal error, expected an alternative in left-hand-side, "
-                  "not ";
+          std::cerr
+              << "internal error, expected an alternative in left-hand-side, "
+                 "not ";
           PrintValue(val, cerr);
           std::cerr << std::endl;
           exit(-1);
@@ -929,7 +933,7 @@ void PatternAssignment(Value* pat, Value* val, int lineno) {
       break;
     }
     default:
-      if (!ValueEqual(pat, val, lineno)) {
+      if (!ValueEqual(pat, val, line_num)) {
         std::cerr << "internal error in pattern assignment" << std::endl;
         exit(-1);
       }
@@ -949,10 +953,10 @@ void StepLvalue() {
     case Variable: {
       //    { {x :: C, E, F} :: S, H}
       // -> { {E(x) :: C, E, F} :: S, H}
-      Address a = Lookup(exp->lineno, CurrentEnv(state),
+      Address a = Lookup(exp->line_num, CurrentEnv(state),
                          *(exp->u.variable.name), PrintErrorString);
-      Value* v = MakePtr_val(a);
-      CheckAlive(v, exp->lineno);
+      Value* v = MakePtrVal(a);
+      CheckAlive(v, exp->line_num);
       frame->todo = MakeCons(MakeValAct(v), frame->todo->next);
       break;
     }
@@ -1040,7 +1044,7 @@ void StepExp() {
     }
     case Variable: {
       // { {x :: C, E, F} :: S, H} -> { {H(E(x)) :: C, E, F} :: S, H}
-      Address a = Lookup(exp->lineno, CurrentEnv(state),
+      Address a = Lookup(exp->line_num, CurrentEnv(state),
                          *(exp->u.variable.name), PrintErrorString);
       Value* v = state->heap[a];
       frame->todo = MakeCons(MakeValAct(v), frame->todo->next);
@@ -1049,12 +1053,12 @@ void StepExp() {
     case Integer:
       // { {n :: C, E, F} :: S, H} -> { {n' :: C, E, F} :: S, H}
       frame->todo =
-          MakeCons(MakeValAct(MakeInt_val(exp->u.integer)), frame->todo->next);
+          MakeCons(MakeValAct(MakeIntVal(exp->u.integer)), frame->todo->next);
       break;
     case Boolean:
       // { {n :: C, E, F} :: S, H} -> { {n' :: C, E, F} :: S, H}
       frame->todo =
-          MakeCons(MakeValAct(MakeBool_val(exp->u.boolean)), frame->todo->next);
+          MakeCons(MakeValAct(MakeBoolVal(exp->u.boolean)), frame->todo->next);
       break;
     case PrimitiveOp:
       if (exp->u.primitive_op.arguments->size() > 0) {
@@ -1067,7 +1071,7 @@ void StepExp() {
         //    { {v :: op(]) :: C, E, F} :: S, H}
         // -> { {eval_prim(op, ()) :: C, E, F} :: S, H}
         Value* v =
-            EvalPrim(exp->u.primitive_op.operator_, act->results, exp->lineno);
+            EvalPrim(exp->u.primitive_op.operator_, act->results, exp->line_num);
         frame->todo = MakeCons(MakeValAct(v), frame->todo->next->next);
       }
       break;
@@ -1088,7 +1092,7 @@ void StepExp() {
       break;
     }
     case AutoT: {
-      Value* v = MakeAutoType_val();
+      Value* v = MakeAutoTypeVal();
       frame->todo = MakeCons(MakeValAct(v), frame->todo->next);
       break;
     }
@@ -1162,7 +1166,7 @@ void StepStmt() {
       frame->todo = frame->todo->next;
       while (frame->todo && !IsWhileAct(frame->todo->curr)) {
         if (IsBlockAct(frame->todo->curr)) {
-          KillScope(stmt->lineno, frame->scopes->curr);
+          KillScope(stmt->line_num, frame->scopes->curr);
           frame->scopes = frame->scopes->next;
         }
         frame->todo = frame->todo->next;
@@ -1175,7 +1179,7 @@ void StepStmt() {
       frame->todo = frame->todo->next;
       while (frame->todo && !IsWhileAct(frame->todo->curr)) {
         if (IsBlockAct(frame->todo->curr)) {
-          KillScope(stmt->lineno, frame->scopes->curr);
+          KillScope(stmt->line_num, frame->scopes->curr);
           frame->scopes = frame->scopes->next;
         }
         frame->todo = frame->todo->next;
@@ -1189,7 +1193,7 @@ void StepStmt() {
         act->pos++;
       } else {
         Scope* scope = frame->scopes->curr;
-        KillScope(stmt->lineno, scope);
+        KillScope(stmt->line_num, scope);
         frame->scopes = frame->scopes->next;
         frame->todo = frame->todo->next;
       }
@@ -1266,7 +1270,7 @@ auto GetMember(Address a, const std::string& f) -> Address {
     case ChoiceTV: {
       try {
         FindAlist(f, v->u.choice_type.alternatives);
-        auto ac = MakeAlt_cons(f, *v->u.choice_type.name);
+        auto ac = MakeAltCons(f, *v->u.choice_type.name);
         return AllocateValue(ac);
       } catch (std::domain_error de) {
         std::cerr << "alternative " << f << " not in ";
@@ -1329,7 +1333,7 @@ void HandleValue() {
     case ExpToLValAction: {
       Address a = AllocateValue(act->results[0]);
       auto del = MakeDeleteAct(a);
-      frame->todo = MakeCons(MakeValAct(MakePtr_val(a)),
+      frame->todo = MakeCons(MakeValAct(MakePtrVal(a)),
                              InsertDelete(del, frame->todo->next->next));
       break;
     }
@@ -1342,9 +1346,9 @@ void HandleValue() {
           Value* str = act->results[0];
           try {
             Address a =
-                GetMember(ValToPtr(str, exp->lineno), *exp->u.get_field.field);
+                GetMember(ValToPtr(str, exp->line_num), *exp->u.get_field.field);
             frame->todo =
-                MakeCons(MakeValAct(MakePtr_val(a)), frame->todo->next->next);
+                MakeCons(MakeValAct(MakePtrVal(a)), frame->todo->next->next);
           } catch (std::domain_error de) {
             std::cerr << "field " << *exp->u.get_field.field << " not in ";
             PrintValue(str, cerr);
@@ -1365,7 +1369,7 @@ void HandleValue() {
             try {
               Address a = FindField(f, tuple->u.tuple.elts);
               frame->todo =
-                  MakeCons(MakeValAct(MakePtr_val(a)), frame->todo->next->next);
+                  MakeCons(MakeValAct(MakePtrVal(a)), frame->todo->next->next);
             } catch (std::domain_error de) {
               std::cerr << "runtime error: field " << f << "not in ";
               PrintValue(tuple, cerr);
@@ -1390,7 +1394,8 @@ void HandleValue() {
           break;
         }
         default:
-          std::cerr << "internal error in handle_value, LValAction" << std::endl;
+          std::cerr << "internal error in handle_value, LValAction"
+                    << std::endl;
           exit(-1);
       }
       break;
@@ -1443,8 +1448,9 @@ void HandleValue() {
                 break;
               }
               default:
-                std::cerr << "runtime type error, expected a tuple in field access, "
-                        "not ";
+                std::cerr
+                    << "runtime type error, expected a tuple in field access, "
+                       "not ";
                 PrintValue(tuple, cerr);
                 exit(-1);
             }
@@ -1454,7 +1460,7 @@ void HandleValue() {
         case GetField: {
           //    { { v :: [].f :: C, E, F} :: S, H}
           // -> { { v_f :: C, E, F} : S, H}
-          auto a = GetMember(ValToPtr(act->results[0], exp->lineno),
+          auto a = GetMember(ValToPtr(act->results[0], exp->line_num),
                              *exp->u.get_field.field);
           frame->todo =
               MakeCons(MakeValAct(state->heap[a]), frame->todo->next->next);
@@ -1471,7 +1477,7 @@ void HandleValue() {
             //    { {v :: op(vs,[]) :: C, E, F} :: S, H}
             // -> { {eval_prim(op, (vs,v)) :: C, E, F} :: S, H}
             Value* v = EvalPrim(exp->u.primitive_op.operator_, act->results,
-                                exp->lineno);
+                                exp->line_num);
             frame->todo = MakeCons(MakeValAct(v), frame->todo->next->next);
           }
           break;
@@ -1486,9 +1492,10 @@ void HandleValue() {
             //    { { v2 :: v1([]) :: C, E, F} :: S, H}
             // -> { {C',E',F'} :: {C, E, F} :: S, H}
             frame->todo = frame->todo->next->next;
-            CallFunction(exp->lineno, act->results, state);
+            CallFunction(exp->line_num, act->results, state);
           } else {
-            std::cerr << "internal error in handle_value with Call" << std::endl;
+            std::cerr << "internal error in handle_value with Call"
+                      << std::endl;
             exit(-1);
           }
           break;
@@ -1515,7 +1522,7 @@ void HandleValue() {
         case TypeT:
         case AutoT:
           std::cerr << "internal error, bad expression context in handle_value"
-               << std::endl;
+                    << std::endl;
           exit(-1);
       }
       break;
@@ -1538,11 +1545,12 @@ void HandleValue() {
             // Address a = AllocateValue(CopyVal(v));
             frame->scopes->curr->env =
                 PatternMatch(p, v, frame->scopes->curr->env,
-                             frame->scopes->curr->locals, stmt->lineno);
+                             &frame->scopes->curr->locals, stmt->line_num);
             if (!frame->scopes->curr->env) {
-              std::cerr << stmt->lineno
-                   << ": internal error in variable definition, match failed"
-                   << std::endl;
+              std::cerr
+                  << stmt->line_num
+                  << ": internal error in variable definition, match failed"
+                  << std::endl;
               exit(-1);
             }
             frame->todo = frame->todo->next->next;
@@ -1560,12 +1568,12 @@ void HandleValue() {
             // -> { { C, E, F} :: S, H(a := v)}
             auto pat = act->results[0];
             auto val = act->results[1];
-            PatternAssignment(pat, val, stmt->lineno);
+            PatternAssignment(pat, val, stmt->line_num);
             frame->todo = frame->todo->next->next;
           }
           break;
         case If:
-          if (ValToBool(act->results[0], stmt->lineno)) {
+          if (ValToBool(act->results[0], stmt->line_num)) {
             //    { {true :: if ([]) then_stmt else else_stmt :: C, E, F} ::
             //      S, H}
             // -> { { then_stmt :: C, E, F } :: S, H}
@@ -1580,7 +1588,7 @@ void HandleValue() {
           }
           break;
         case While:
-          if (ValToBool(act->results[0], stmt->lineno)) {
+          if (ValToBool(act->results[0], stmt->line_num)) {
             //    { {true :: (while ([]) s) :: C, E, F} :: S, H}
             // -> { { s :: (while (e) s) :: C, E, F } :: S, H}
             frame->todo->next->curr->pos = -1;
@@ -1626,11 +1634,11 @@ void HandleValue() {
             auto pat = act->results[clause_num + 1];
             auto env = CurrentEnv(state);
             std::list<std::string> vars;
-            Env* new_env = PatternMatch(pat, v, env, vars, stmt->lineno);
+            Env* new_env = PatternMatch(pat, v, env, &vars, stmt->line_num);
             if (new_env) {  // we have a match, start the body
               auto* new_scope = new Scope(new_env, vars);
               frame->scopes = MakeCons(new_scope, frame->scopes);
-              Statement* body_block = MakeBlock(stmt->lineno, c->second);
+              Statement* body_block = MakeBlock(stmt->line_num, c->second);
               Action* body_act = MakeStmtAct(body_block);
               body_act->pos = 0;
               frame->todo =
@@ -1655,8 +1663,8 @@ void HandleValue() {
         case Return: {
           //    { {v :: return [] :: C, E, F} :: {C', E', F'} :: S, H}
           // -> { {v :: C', E', F'} :: S, H}
-          Value* ret_val = CopyVal(val_act->u.val, stmt->lineno);
-          KillLocals(stmt->lineno, frame);
+          Value* ret_val = CopyVal(val_act->u.val, stmt->line_num);
+          KillLocals(stmt->line_num, frame);
           state->stack = state->stack->next;
           frame = state->stack->curr;
           frame->todo = MakeCons(MakeValAct(ret_val), frame->todo);
@@ -1685,17 +1693,19 @@ void Step() {
   Frame* frame = state->stack->curr;
   if (!frame->todo) {
     std::cerr << "runtime error: fell off end of function " << frame->name
-         << " without `return`" << std::endl;
+              << " without `return`" << std::endl;
     exit(-1);
   }
 
   Action* act = frame->todo->curr;
   switch (act->tag) {
     case DeleteTmpAction:
-      std::cerr << "internal error in step, did not expect DeleteTmpAction" << std::endl;
+      std::cerr << "internal error in step, did not expect DeleteTmpAction"
+                << std::endl;
       break;
     case ExpToLValAction:
-      std::cerr << "internal error in step, did not expect ExpToLValAction" << std::endl;
+      std::cerr << "internal error in step, did not expect ExpToLValAction"
+                << std::endl;
       break;
     case ValAction:
       HandleValue();
@@ -1722,11 +1732,10 @@ auto InterpProgram(std::list<Declaration*>* fs) -> int {
   Expression* arg =
       MakeTuple(0, new std::vector<std::pair<std::string, Expression*>>());
   Expression* call_main = MakeCall(0, MakeVar(0, "main"), arg);
-  Cons<Action*>* todo =
-      MakeCons(MakeExpAct(call_main), (Cons<Action*>*)nullptr);
+  Cons<Action*>* todo = MakeCons(MakeExpAct(call_main));
   auto* scope = new Scope(globals, std::list<std::string>());
-  auto* frame = new Frame("top", MakeCons(scope, (Cons<Scope*>*)nullptr), todo);
-  state->stack = MakeCons(frame, (Cons<Frame*>*)nullptr);
+  auto* frame = new Frame("top", MakeCons(scope), todo);
+  state->stack = MakeCons(frame);
 
   std::cout << "********** calling main function **********" << std::endl;
   PrintState(cout);
@@ -1743,11 +1752,10 @@ auto InterpProgram(std::list<Declaration*>* fs) -> int {
 /***** interpret an expression (at compile-time) *****/
 
 auto InterpExp(Env* env, Expression* e) -> Value* {
-  Cons<Action*>* todo = MakeCons(MakeExpAct(e), (Cons<Action*>*)nullptr);
+  Cons<Action*>* todo = MakeCons(MakeExpAct(e));
   auto* scope = new Scope(env, std::list<std::string>());
-  auto* frame =
-      new Frame("InterpExp", MakeCons(scope, (Cons<Scope*>*)nullptr), todo);
-  state->stack = MakeCons(frame, (Cons<Frame*>*)nullptr);
+  auto* frame = new Frame("InterpExp", MakeCons(scope), todo);
+  state->stack = MakeCons(frame);
 
   while (Length(state->stack) > 1 || Length(state->stack->curr->todo) > 1 ||
          state->stack->curr->todo->curr->tag != ValAction) {

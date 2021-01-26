@@ -39,14 +39,10 @@ genrule(
         "syntax.tab.cpp",
         "syntax.tab.h",
     ],
-    cmd = "M4=$(M4) $(BISON) " +
+    cmd = "bison " +
           "--output=$(location syntax.tab.cpp) " +
           "--defines=$(location syntax.tab.h) " +
           "$(location syntax.ypp)",
-    toolchains = [
-        "@rules_bison//bison:current_bison_toolchain",
-        "@rules_m4//m4:current_m4_toolchain",
-    ],
 )
 
 cc_library(
@@ -71,13 +67,9 @@ genrule(
     name = "syntax_flex_srcs",
     srcs = ["syntax.lpp"],
     outs = ["syntax.yy.cpp"],
-    cmd = "M4=$(M4) $(FLEX) " +
+    cmd = "flex " +
           "--outfile=$(location syntax.yy.cpp) " +
           "$(location syntax.lpp)",
-    toolchains = [
-        "@rules_flex//flex:current_flex_toolchain",
-        "@rules_m4//m4:current_m4_toolchain",
-    ],
 )
 
 EXAMPLES = [

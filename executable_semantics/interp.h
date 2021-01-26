@@ -131,7 +131,7 @@ auto MakeTupleTypeVal(VarValues* fields) -> Value*;
 auto MakeVoidTypeVal() -> Value*;
 auto MakeChoiceTypeVal(std::string* name, VarValues* alts) -> Value*;
 
-auto ValueEqual(Value* v1, Value* v2, int lineno) -> bool;
+auto ValueEqual(Value* v1, Value* v2, int line_num) -> bool;
 
 /***** Actions *****/
 
@@ -186,7 +186,7 @@ extern State* state;
 void PrintValue(Value* val, std::ostream& out);
 void PrintEnv(Env* env);
 auto AllocateValue(Value* v) -> Address;
-auto CopyVal(Value* val, int lineno) -> Value*;
+auto CopyVal(Value* val, int line_num) -> Value*;
 auto ToInteger(Value* v) -> int;
 
 /***** Interpreters *****/

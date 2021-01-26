@@ -18,39 +18,39 @@ char* input;
 
 /***** Types *****/
 
-auto MakeTypeType(int lineno) -> Expression* {
+auto MakeTypeType(int line_num) -> Expression* {
   auto* t = new Expression();
   t->tag = TypeT;
-  t->lineno = lineno;
+  t->line_num = line_num;
   return t;
 }
 
-auto MakeIntType(int lineno) -> Expression* {
+auto MakeIntType(int line_num) -> Expression* {
   auto* t = new Expression();
   t->tag = IntT;
-  t->lineno = lineno;
+  t->line_num = line_num;
   return t;
 }
 
-auto MakeBoolType(int lineno) -> Expression* {
+auto MakeBoolType(int line_num) -> Expression* {
   auto* t = new Expression();
   t->tag = BoolT;
-  t->lineno = lineno;
+  t->line_num = line_num;
   return t;
 }
 
-auto MakeAutoType(int lineno) -> Expression* {
+auto MakeAutoType(int line_num) -> Expression* {
   auto* t = new Expression();
   t->tag = AutoT;
-  t->lineno = lineno;
+  t->line_num = line_num;
   return t;
 }
 
-auto MakeFunType(int lineno, Expression* param, Expression* ret)
+auto MakeFunType(int line_num, Expression* param, Expression* ret)
     -> Expression* {
   auto* t = new Expression();
   t->tag = FunctionT;
-  t->lineno = lineno;
+  t->line_num = line_num;
   t->u.function_type.parameter = param;
   t->u.function_type.return_type = ret;
   return t;
@@ -60,52 +60,52 @@ void PrintString(std::string* s) { std::cout << *s; }
 
 /***** Expressions *****/
 
-auto MakeVar(int lineno, std::string var) -> Expression* {
+auto MakeVar(int line_num, std::string var) -> Expression* {
   auto* v = new Expression();
-  v->lineno = lineno;
+  v->line_num = line_num;
   v->tag = Variable;
   v->u.variable.name = new std::string(std::move(var));
   return v;
 }
 
-auto MakeVarPat(int lineno, std::string var, Expression* type) -> Expression* {
+auto MakeVarPat(int line_num, std::string var, Expression* type) -> Expression* {
   auto* v = new Expression();
-  v->lineno = lineno;
+  v->line_num = line_num;
   v->tag = PatternVariable;
   v->u.pattern_variable.name = new std::string(std::move(var));
   v->u.pattern_variable.type = type;
   return v;
 }
 
-auto MakeInt(int lineno, int i) -> Expression* {
+auto MakeInt(int line_num, int i) -> Expression* {
   auto* e = new Expression();
-  e->lineno = lineno;
+  e->line_num = line_num;
   e->tag = Integer;
   e->u.integer = i;
   return e;
 }
 
-auto MakeBool(int lineno, bool b) -> Expression* {
+auto MakeBool(int line_num, bool b) -> Expression* {
   auto* e = new Expression();
-  e->lineno = lineno;
+  e->line_num = line_num;
   e->tag = Boolean;
   e->u.boolean = b;
   return e;
 }
 
-auto MakeOp(int lineno, enum Operator op, std::vector<Expression*>* args)
+auto MakeOp(int line_num, enum Operator op, std::vector<Expression*>* args)
     -> Expression* {
   auto* e = new Expression();
-  e->lineno = lineno;
+  e->line_num = line_num;
   e->tag = PrimitiveOp;
   e->u.primitive_op.operator_ = op;
   e->u.primitive_op.arguments = args;
   return e;
 }
 
-auto MakeUnOp(int lineno, enum Operator op, Expression* arg) -> Expression* {
+auto MakeUnOp(int line_num, enum Operator op, Expression* arg) -> Expression* {
   auto* e = new Expression();
-  e->lineno = lineno;
+  e->line_num = line_num;
   e->tag = PrimitiveOp;
   e->u.primitive_op.operator_ = op;
   auto* args = new std::vector<Expression*>();
@@ -114,10 +114,10 @@ auto MakeUnOp(int lineno, enum Operator op, Expression* arg) -> Expression* {
   return e;
 }
 
-auto MakeBinOp(int lineno, enum Operator op, Expression* arg1, Expression* arg2)
+auto MakeBinOp(int line_num, enum Operator op, Expression* arg1, Expression* arg2)
     -> Expression* {
   auto* e = new Expression();
-  e->lineno = lineno;
+  e->line_num = line_num;
   e->tag = PrimitiveOp;
   e->u.primitive_op.operator_ = op;
   auto* args = new std::vector<Expression*>();
@@ -127,30 +127,30 @@ auto MakeBinOp(int lineno, enum Operator op, Expression* arg1, Expression* arg2)
   return e;
 }
 
-auto MakeCall(int lineno, Expression* fun, Expression* arg) -> Expression* {
+auto MakeCall(int line_num, Expression* fun, Expression* arg) -> Expression* {
   auto* e = new Expression();
-  e->lineno = lineno;
+  e->line_num = line_num;
   e->tag = Call;
   e->u.call.function = fun;
   e->u.call.argument = arg;
   return e;
 }
 
-auto MakeGetField(int lineno, Expression* exp, std::string field)
+auto MakeGetField(int line_num, Expression* exp, std::string field)
     -> Expression* {
   auto* e = new Expression();
-  e->lineno = lineno;
+  e->line_num = line_num;
   e->tag = GetField;
   e->u.get_field.aggregate = exp;
   e->u.get_field.field = new std::string(std::move(field));
   return e;
 }
 
-auto MakeTuple(int lineno,
+auto MakeTuple(int line_num,
                std::vector<std::pair<std::string, Expression*> >* args)
     -> Expression* {
   auto* e = new Expression();
-  e->lineno = lineno;
+  e->line_num = line_num;
   e->tag = Tuple;
   int i = 0;
   for (auto& arg : *args) {
@@ -163,9 +163,9 @@ auto MakeTuple(int lineno,
   return e;
 }
 
-auto MakeIndex(int lineno, Expression* exp, Expression* i) -> Expression* {
+auto MakeIndex(int line_num, Expression* exp, Expression* i) -> Expression* {
   auto* e = new Expression();
-  e->lineno = lineno;
+  e->line_num = line_num;
   e->tag = Index;
   e->u.index.aggregate = exp;
   e->u.index.offset = i;
@@ -337,48 +337,48 @@ auto MakeConstructorField(ExpOrFieldList* e1, ExpOrFieldList* e2)
   return MakeFieldList(fields);
 }
 
-auto EnsureTuple(int lineno, Expression* e) -> Expression* {
+auto EnsureTuple(int line_num, Expression* e) -> Expression* {
   if (e->tag == Tuple) {
     return e;
   } else {
     auto vec = new std::vector<std::pair<std::string, Expression*> >();
     vec->push_back(std::make_pair("", e));
-    return MakeTuple(lineno, vec);
+    return MakeTuple(line_num, vec);
   }
 }
 
 /***** Statements *****/
 
-auto MakeExpStmt(int lineno, Expression* exp) -> Statement* {
+auto MakeExpStmt(int line_num, Expression* exp) -> Statement* {
   auto* s = new Statement();
-  s->lineno = lineno;
+  s->line_num = line_num;
   s->tag = ExpressionStatement;
   s->u.exp = exp;
   return s;
 }
 
-auto MakeAssign(int lineno, Expression* lhs, Expression* rhs) -> Statement* {
+auto MakeAssign(int line_num, Expression* lhs, Expression* rhs) -> Statement* {
   auto* s = new Statement();
-  s->lineno = lineno;
+  s->line_num = line_num;
   s->tag = Assign;
   s->u.assign.lhs = lhs;
   s->u.assign.rhs = rhs;
   return s;
 }
 
-auto MakeVarDef(int lineno, Expression* pat, Expression* init) -> Statement* {
+auto MakeVarDef(int line_num, Expression* pat, Expression* init) -> Statement* {
   auto* s = new Statement();
-  s->lineno = lineno;
+  s->line_num = line_num;
   s->tag = VariableDefinition;
   s->u.variable_definition.pat = pat;
   s->u.variable_definition.init = init;
   return s;
 }
 
-auto MakeIf(int lineno, Expression* cond, Statement* then_stmt,
+auto MakeIf(int line_num, Expression* cond, Statement* then_stmt,
             Statement* else_stmt) -> Statement* {
   auto* s = new Statement();
-  s->lineno = lineno;
+  s->line_num = line_num;
   s->tag = If;
   s->u.if_stmt.cond = cond;
   s->u.if_stmt.then_stmt = then_stmt;
@@ -386,60 +386,60 @@ auto MakeIf(int lineno, Expression* cond, Statement* then_stmt,
   return s;
 }
 
-auto MakeWhile(int lineno, Expression* cond, Statement* body) -> Statement* {
+auto MakeWhile(int line_num, Expression* cond, Statement* body) -> Statement* {
   auto* s = new Statement();
-  s->lineno = lineno;
+  s->line_num = line_num;
   s->tag = While;
   s->u.while_stmt.cond = cond;
   s->u.while_stmt.body = body;
   return s;
 }
 
-auto MakeBreak(int lineno) -> Statement* {
+auto MakeBreak(int line_num) -> Statement* {
   std::cout << "MakeBlock" << std::endl;
   auto* s = new Statement();
-  s->lineno = lineno;
+  s->line_num = line_num;
   s->tag = Break;
   return s;
 }
 
-auto MakeContinue(int lineno) -> Statement* {
+auto MakeContinue(int line_num) -> Statement* {
   auto* s = new Statement();
-  s->lineno = lineno;
+  s->line_num = line_num;
   s->tag = Continue;
   return s;
 }
 
-auto MakeReturn(int lineno, Expression* e) -> Statement* {
+auto MakeReturn(int line_num, Expression* e) -> Statement* {
   auto* s = new Statement();
-  s->lineno = lineno;
+  s->line_num = line_num;
   s->tag = Return;
   s->u.return_stmt = e;
   return s;
 }
 
-auto MakeSeq(int lineno, Statement* s1, Statement* s2) -> Statement* {
+auto MakeSeq(int line_num, Statement* s1, Statement* s2) -> Statement* {
   auto* s = new Statement();
-  s->lineno = lineno;
+  s->line_num = line_num;
   s->tag = Sequence;
   s->u.sequence.stmt = s1;
   s->u.sequence.next = s2;
   return s;
 }
 
-auto MakeBlock(int lineno, Statement* stmt) -> Statement* {
+auto MakeBlock(int line_num, Statement* stmt) -> Statement* {
   auto* s = new Statement();
-  s->lineno = lineno;
+  s->line_num = line_num;
   s->tag = Block;
   s->u.block.stmt = stmt;
   return s;
 }
 
-auto MakeMatch(int lineno, Expression* exp,
+auto MakeMatch(int line_num, Expression* exp,
                std::list<std::pair<Expression*, Statement*> >* clauses)
     -> Statement* {
   auto* s = new Statement();
-  s->lineno = lineno;
+  s->line_num = line_num;
   s->tag = Match;
   s->u.match_stmt.exp = exp;
   s->u.match_stmt.clauses = clauses;
@@ -531,9 +531,9 @@ void PrintStatement(Statement* s, int depth) {
 
 /***** Struct Members *****/
 
-auto MakeField(int lineno, std::string name, Expression* type) -> Member* {
+auto MakeField(int line_num, std::string name, Expression* type) -> Member* {
   auto m = new Member();
-  m->lineno = lineno;
+  m->line_num = line_num;
   m->tag = FieldMember;
   m->u.field.name = new std::string(std::move(name));
   m->u.field.type = type;
@@ -542,11 +542,11 @@ auto MakeField(int lineno, std::string name, Expression* type) -> Member* {
 
 /***** Declarations *****/
 
-auto MakeFunDef(int lineno, std::string name, Expression* ret_type,
+auto MakeFunDef(int line_num, std::string name, Expression* ret_type,
                 Expression* param_pattern, Statement* body)
     -> struct FunctionDefinition* {
   auto* f = new struct FunctionDefinition();
-  f->lineno = lineno;
+  f->line_num = line_num;
   f->name = std::move(name);
   f->return_type = ret_type;
   f->param_pattern = param_pattern;
@@ -561,23 +561,23 @@ auto MakeFunDecl(struct FunctionDefinition* f) -> Declaration* {
   return d;
 }
 
-auto MakeStructDecl(int lineno, std::string name, std::list<Member*>* members)
+auto MakeStructDecl(int line_num, std::string name, std::list<Member*>* members)
     -> Declaration* {
   auto* d = new Declaration();
   d->tag = StructDeclaration;
   d->u.struct_def = new struct StructDefinition();
-  d->u.struct_def->lineno = lineno;
+  d->u.struct_def->line_num = line_num;
   d->u.struct_def->name = new std::string(std::move(name));
   d->u.struct_def->members = members;
   return d;
 }
 
-auto MakeChoiceDecl(int lineno, std::string name,
+auto MakeChoiceDecl(int line_num, std::string name,
                     std::list<std::pair<std::string, Expression*> >* alts)
     -> Declaration* {
   auto* d = new Declaration();
   d->tag = ChoiceDeclaration;
-  d->u.choice_def.lineno = lineno;
+  d->u.choice_def.line_num = line_num;
   d->u.choice_def.name = new std::string(std::move(name));
   d->u.choice_def.alternatives = alts;
   return d;
@@ -657,18 +657,16 @@ void PrintDecl(Declaration* d) {
 }
 
 auto ReadFile(FILE* fp) -> char* {
-  char* fcontent = nullptr;
-  int fsize = 0;
-
+  char* content = nullptr;
   if (fp) {
     fseek(fp, 0, SEEK_END);
-    fsize = ftell(fp);
+    int64_t fsize = ftell(fp);
     rewind(fp);
 
-    fcontent = static_cast<char*>(malloc(sizeof(char) * fsize));
-    fread(fcontent, 1, fsize, fp);
+    content = static_cast<char*>(malloc(sizeof(char) * fsize));
+    fread(content, 1, fsize, fp);
 
     fclose(fp);
   }
-  return fcontent;
+  return content;
 }

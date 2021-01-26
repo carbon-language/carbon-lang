@@ -18,17 +18,17 @@ struct AList {
 };
 
 template <class K, class V>
-auto Lookup(int lineno, AList<K, V>* alist, const K& key,
+auto Lookup(int line_num, AList<K, V>* alist, const K& key,
             void (*print_key)(const K&)) -> V {
   if (alist == NULL) {
-    std::cerr << lineno << ": could not find `";
+    std::cerr << line_num << ": could not find `";
     print_key(key);
     std::cerr << "`" << std::endl;
     exit(-1);
   } else if (alist->key == key) {
     return alist->value;
   } else {
-    return Lookup(lineno, alist->next, key, print_key);
+    return Lookup(line_num, alist->next, key, print_key);
   }
 }
 

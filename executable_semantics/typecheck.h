@@ -32,7 +32,7 @@ struct TCStatement {
   TypeEnv* env;
 };
 
-auto ToType(int lineno, Value* val) -> Value*;
+auto ToType(int line_num, Value* val) -> Value*;
 
 auto TypeEqual(Value* t1, Value* t2) -> bool;
 auto FieldsEqual(VarValues* ts1, VarValues* ts2) -> bool;

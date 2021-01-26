@@ -70,7 +70,7 @@ enum ExpressionKind {
 enum Operator { Neg, Add, Sub, Not, And, Or, Eq };
 
 struct Expression {
-  int lineno;
+  int line_num;
   ExpressionKind tag;
   union {
     struct {
@@ -108,28 +108,28 @@ struct Expression {
   } u;
 };
 
-auto MakeVar(int lineno, std::string var) -> Expression*;
-auto MakeVarPat(int lineno, std::string var, Expression* type) -> Expression*;
-auto MakeInt(int lineno, int i) -> Expression*;
-auto MakeBool(int lineno, bool b) -> Expression*;
-auto MakeOp(int lineno, Operator op, std::vector<Expression*>* args)
+auto MakeVar(int line_num, std::string var) -> Expression*;
+auto MakeVarPat(int line_num, std::string var, Expression* type) -> Expression*;
+auto MakeInt(int line_num, int i) -> Expression*;
+auto MakeBool(int line_num, bool b) -> Expression*;
+auto MakeOp(int line_num, Operator op, std::vector<Expression*>* args)
     -> Expression*;
-auto MakeUnOp(int lineno, enum Operator op, Expression* arg) -> Expression*;
-auto MakeBinOp(int lineno, enum Operator op, Expression* arg1, Expression* arg2)
+auto MakeUnOp(int line_num, enum Operator op, Expression* arg) -> Expression*;
+auto MakeBinOp(int line_num, enum Operator op, Expression* arg1, Expression* arg2)
     -> Expression*;
-auto MakeCall(int lineno, Expression* fun, Expression* arg) -> Expression*;
-auto MakeGetField(int lineno, Expression* exp, std::string field)
+auto MakeCall(int line_num, Expression* fun, Expression* arg) -> Expression*;
+auto MakeGetField(int line_num, Expression* exp, std::string field)
     -> Expression*;
-auto MakeTuple(int lineno,
+auto MakeTuple(int line_num,
                std::vector<std::pair<std::string, Expression*>>* args)
     -> Expression*;
-auto MakeIndex(int lineno, Expression* exp, Expression* i) -> Expression*;
+auto MakeIndex(int line_num, Expression* exp, Expression* i) -> Expression*;
 
-auto MakeTypeType(int lineno) -> Expression*;
-auto MakeIntType(int lineno) -> Expression*;
-auto MakeBoolType(int lineno) -> Expression*;
-auto MakeFunType(int lineno, Expression* param, Expression* ret) -> Expression*;
-auto MakeAutoType(int lineno) -> Expression*;
+auto MakeTypeType(int line_num) -> Expression*;
+auto MakeIntType(int line_num) -> Expression*;
+auto MakeBoolType(int line_num) -> Expression*;
+auto MakeFunType(int line_num, Expression* param, Expression* ret) -> Expression*;
+auto MakeAutoType(int line_num) -> Expression*;
 
 void PrintExp(Expression*);
 
@@ -171,7 +171,7 @@ enum StatementKind {
 };
 
 struct Statement {
-  int lineno;
+  int line_num;
   StatementKind tag;
   union {
     Expression* exp;
@@ -207,18 +207,18 @@ struct Statement {
   } u;
 };
 
-auto MakeExpStmt(int lineno, Expression* exp) -> Statement*;
-auto MakeAssign(int lineno, Expression* lhs, Expression* rhs) -> Statement*;
-auto MakeVarDef(int lineno, Expression* pat, Expression* init) -> Statement*;
-auto MakeIf(int lineno, Expression* cond, Statement* then_stmt,
+auto MakeExpStmt(int line_num, Expression* exp) -> Statement*;
+auto MakeAssign(int line_num, Expression* lhs, Expression* rhs) -> Statement*;
+auto MakeVarDef(int line_num, Expression* pat, Expression* init) -> Statement*;
+auto MakeIf(int line_num, Expression* cond, Statement* then_stmt,
             Statement* else_stmt) -> Statement*;
-auto MakeReturn(int lineno, Expression* e) -> Statement*;
-auto MakeSeq(int lineno, Statement* s1, Statement* s2) -> Statement*;
-auto MakeBlock(int lineno, Statement* s) -> Statement*;
-auto MakeWhile(int lineno, Expression* cond, Statement* body) -> Statement*;
-auto MakeBreak(int lineno) -> Statement*;
-auto MakeContinue(int lineno) -> Statement*;
-auto MakeMatch(int lineno, Expression* exp,
+auto MakeReturn(int line_num, Expression* e) -> Statement*;
+auto MakeSeq(int line_num, Statement* s1, Statement* s2) -> Statement*;
+auto MakeBlock(int line_num, Statement* s) -> Statement*;
+auto MakeWhile(int line_num, Expression* cond, Statement* body) -> Statement*;
+auto MakeBreak(int line_num) -> Statement*;
+auto MakeContinue(int line_num) -> Statement*;
+auto MakeMatch(int line_num, Expression* exp,
                std::list<std::pair<Expression*, Statement*>>* clauses)
     -> Statement*;
 
@@ -227,7 +227,7 @@ void PrintStatement(Statement*, int);
 /***** Function Definitions *****/
 
 struct FunctionDefinition {
-  int lineno;
+  int line_num;
   std::string name;
   Expression* param_pattern;
   Expression* return_type;
@@ -239,7 +239,7 @@ struct FunctionDefinition {
 enum MemberKind { FieldMember };
 
 struct Member {
-  int lineno;
+  int line_num;
   MemberKind tag;
   union {
     struct {
@@ -249,12 +249,12 @@ struct Member {
   } u;
 };
 
-auto MakeField(int lineno, std::string name, Expression* type) -> Member*;
+auto MakeField(int line_num, std::string name, Expression* type) -> Member*;
 
 /***** Declarations *****/
 
 struct StructDefinition {
-  int lineno;
+  int line_num;
   std::string* name;
   std::list<Member*>* members;
 };
@@ -271,23 +271,23 @@ struct Declaration {
     struct FunctionDefinition* fun_def;
     struct StructDefinition* struct_def;
     struct {
-      int lineno;
+      int line_num;
       std::string* name;
       std::list<std::pair<std::string, Expression*>>* alternatives;
     } choice_def;
   } u;
 };
 
-auto MakeFunDef(int lineno, std::string name, Expression* ret_type,
+auto MakeFunDef(int line_num, std::string name, Expression* ret_type,
                 Expression* param, Statement* body)
     -> struct FunctionDefinition*;
 void PrintFunDef(struct FunctionDefinition*);
 void PrintFunDefDepth(struct FunctionDefinition*, int);
 
 auto MakeFunDecl(struct FunctionDefinition* f) -> Declaration*;
-auto MakeStructDecl(int lineno, std::string name, std::list<Member*>* members)
+auto MakeStructDecl(int line_num, std::string name, std::list<Member*>* members)
     -> Declaration*;
-auto MakeChoiceDecl(int lineno, std::string name,
+auto MakeChoiceDecl(int line_num, std::string name,
                     std::list<std::pair<std::string, Expression*>>* alts)
     -> Declaration*;
 

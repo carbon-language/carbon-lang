@@ -7,10 +7,16 @@
 
 template <class T>
 struct Cons {
+  Cons(T e, Cons* n) : curr(e), next(n) {}
+
   T curr;
   Cons* next;
-  Cons(T e, Cons* n) : curr(e), next(n) {}
 };
+
+template <class T>
+auto MakeCons(const T& x) -> Cons<T>* {
+  return new Cons<T>(x, nullptr);
+}
 
 template <class T>
 auto MakeCons(const T& x, Cons<T>* ls) -> Cons<T>* {
