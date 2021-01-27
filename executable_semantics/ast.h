@@ -2,8 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#ifndef AST_H
-#define AST_H
+#ifndef EXECUTABLE_SEMANTICS_AST_H
+#define EXECUTABLE_SEMANTICS_AST_H
 
 #include <cstdlib>
 #include <exception>
@@ -51,23 +51,31 @@ using VarTypes = std::list<std::pair<std::string, Expression*>>;
 
 /***** Expressions *****/
 
-enum ExpressionKind {
-  Variable,
-  PatternVariable,
-  Integer,
-  Boolean,
-  PrimitiveOp,
-  Call,
-  Tuple,
-  Index,
-  GetField,
-  IntT,
+enum class ExpressionKind {
+  AutoT,
   BoolT,
-  TypeT,
+  Boolean,
+  Call,
   FunctionT,
-  AutoT
+  GetField,
+  Index,
+  IntT,
+  Integer,
+  PatternVariable,
+  PrimitiveOp,
+  Tuple,
+  TypeT,
+  Variable,
 };
-enum Operator { Neg, Add, Sub, Not, And, Or, Eq };
+enum class Operator {
+  Add,
+  And,
+  Eq,
+  Neg,
+  Not,
+  Or,
+  Sub,
+};
 
 struct Expression {
   int line_num;
@@ -115,8 +123,8 @@ auto MakeBool(int line_num, bool b) -> Expression*;
 auto MakeOp(int line_num, Operator op, std::vector<Expression*>* args)
     -> Expression*;
 auto MakeUnOp(int line_num, enum Operator op, Expression* arg) -> Expression*;
-auto MakeBinOp(int line_num, enum Operator op, Expression* arg1, Expression* arg2)
-    -> Expression*;
+auto MakeBinOp(int line_num, enum Operator op, Expression* arg1,
+               Expression* arg2) -> Expression*;
 auto MakeCall(int line_num, Expression* fun, Expression* arg) -> Expression*;
 auto MakeGetField(int line_num, Expression* exp, std::string field)
     -> Expression*;
@@ -128,7 +136,8 @@ auto MakeIndex(int line_num, Expression* exp, Expression* i) -> Expression*;
 auto MakeTypeType(int line_num) -> Expression*;
 auto MakeIntType(int line_num) -> Expression*;
 auto MakeBoolType(int line_num) -> Expression*;
-auto MakeFunType(int line_num, Expression* param, Expression* ret) -> Expression*;
+auto MakeFunType(int line_num, Expression* param, Expression* ret)
+    -> Expression*;
 auto MakeAutoType(int line_num) -> Expression*;
 
 void PrintExp(Expression*);
@@ -138,7 +147,7 @@ void PrintExp(Expression*);
   This is used in the parsing of tuples and parenthesized expressions.
  */
 
-enum ExpOrFieldListKind { Exp, FieldList };
+enum class ExpOrFieldListKind { Exp, FieldList };
 
 struct ExpOrFieldList {
   ExpOrFieldListKind tag;
@@ -151,12 +160,11 @@ struct ExpOrFieldList {
 auto MakeExp(Expression* exp) -> ExpOrFieldList*;
 auto MakeFieldList(std::list<std::pair<std::string, Expression*>>* fields)
     -> ExpOrFieldList*;
-auto MakeConstructorField(ExpOrFieldList* e1, ExpOrFieldList* e2)
-    -> ExpOrFieldList*;
+auto MakeConsField(ExpOrFieldList* e1, ExpOrFieldList* e2) -> ExpOrFieldList*;
 
 /***** Statements *****/
 
-enum StatementKind {
+enum class StatementKind {
   ExpressionStatement,
   Assign,
   VariableDefinition,
@@ -236,7 +244,7 @@ struct FunctionDefinition {
 
 /***** Struct Members *****/
 
-enum MemberKind { FieldMember };
+enum class MemberKind { FieldMember };
 
 struct Member {
   int line_num;
@@ -259,7 +267,7 @@ struct StructDefinition {
   std::list<Member*>* members;
 };
 
-enum DeclarationKind {
+enum class DeclarationKind {
   FunctionDeclaration,
   StructDeclaration,
   ChoiceDeclaration
@@ -291,7 +299,7 @@ auto MakeChoiceDecl(int line_num, std::string name,
                     std::list<std::pair<std::string, Expression*>>* alts)
     -> Declaration*;
 
-void PrintDecl(Declaration*);
+void PrintDecl(Declaration* d);
 
 void PrintString(std::string* s);
 
@@ -317,4 +325,4 @@ auto FindAlist(const std::string& field,
   throw std::domain_error(field);
 }
 
-#endif
+#endif  // EXECUTABLE_SEMANTICS_AST_H

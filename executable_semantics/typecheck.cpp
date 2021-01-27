@@ -76,21 +76,29 @@ auto Find(const std::string& s, Cons<std::string>* ls, int n) -> int {
 }
 
 auto TypeEqual(Value* t1, Value* t2) -> bool {
-  return (t1->tag == VarTV && t2->tag == VarTV &&
-          *t1->u.var_type == *t2->u.var_type) ||
-         (t1->tag == IntTV && t2->tag == IntTV) ||
-         (t1->tag == BoolTV && t2->tag == BoolTV) ||
-         (t1->tag == PointerTV && t2->tag == PointerTV &&
-          TypeEqual(t1->u.ptr_type.type, t2->u.ptr_type.type)) ||
-         (t1->tag == FunctionTV && t2->tag == FunctionTV &&
-          TypeEqual(t1->u.fun_type.param, t2->u.fun_type.param) &&
-          TypeEqual(t1->u.fun_type.ret, t2->u.fun_type.ret)) ||
-         (t1->tag == StructTV && t2->tag == StructTV &&
-          *t1->u.struct_type.name == *t2->u.struct_type.name) ||
-         (t1->tag == ChoiceTV && t2->tag == ChoiceTV &&
-          *t1->u.choice_type.name == *t2->u.choice_type.name) ||
-         (t1->tag == TupleTV && t2->tag == TupleTV &&
-          FieldsEqual(t1->u.tuple_type.fields, t2->u.tuple_type.fields));
+  if (t1->tag != t2->tag) {
+    return false;
+  }
+  switch (t1->tag) {
+    case ValKind::VarTV:
+      return *t1->u.var_type == *t2->u.var_type;
+    case ValKind::PointerTV:
+      return TypeEqual(t1->u.ptr_type.type, t2->u.ptr_type.type);
+    case ValKind::FunctionTV:
+      return TypeEqual(t1->u.fun_type.param, t2->u.fun_type.param) &&
+             TypeEqual(t1->u.fun_type.ret, t2->u.fun_type.ret);
+    case ValKind::StructTV:
+      return *t1->u.struct_type.name == *t2->u.struct_type.name;
+    case ValKind::ChoiceTV:
+      return *t1->u.choice_type.name == *t2->u.choice_type.name;
+    case ValKind::TupleTV:
+      return FieldsEqual(t1->u.tuple_type.fields, t2->u.tuple_type.fields);
+    case ValKind::IntTV:
+    case ValKind::BoolTV:
+      return true;
+    default:
+      return false;
+  }
 }
 
 void ExpectType(int line_num, const std::string& context, Value* expected,
@@ -120,7 +128,7 @@ void PrintTypeEnv(TypeEnv* env, std::ostream& out) {
 // Convert tuples to tuple types.
 auto ToType(int line_num, Value* val) -> Value* {
   switch (val->tag) {
-    case TupleV: {
+    case ValKind::TupleV: {
       auto fields = new VarValues();
       for (auto& elt : *val->u.tuple.elts) {
         Value* ty = ToType(line_num, state->heap[elt.second]);
@@ -128,7 +136,7 @@ auto ToType(int line_num, Value* val) -> Value* {
       }
       return MakeTupleTypeVal(fields);
     }
-    case TupleTV: {
+    case ValKind::TupleTV: {
       auto fields = new VarValues();
       for (auto& field : *val->u.tuple_type.fields) {
         Value* ty = ToType(line_num, field.second);
@@ -136,24 +144,24 @@ auto ToType(int line_num, Value* val) -> Value* {
       }
       return MakeTupleTypeVal(fields);
     }
-    case PointerTV: {
+    case ValKind::PointerTV: {
       return MakePtrTypeVal(ToType(line_num, val->u.ptr_type.type));
     }
-    case FunctionTV: {
+    case ValKind::FunctionTV: {
       return MakeFunTypeVal(ToType(line_num, val->u.fun_type.param),
                             ToType(line_num, val->u.fun_type.ret));
     }
-    case VarPatV: {
+    case ValKind::VarPatV: {
       return MakeVarPatVal(*val->u.var_pat.name,
                            ToType(line_num, val->u.var_pat.type));
     }
-    case ChoiceTV:
-    case StructTV:
-    case TypeTV:
-    case VarTV:
-    case BoolTV:
-    case IntTV:
-    case AutoTV:
+    case ValKind::ChoiceTV:
+    case ValKind::StructTV:
+    case ValKind::TypeTV:
+    case ValKind::VarTV:
+    case ValKind::BoolTV:
+    case ValKind::IntTV:
+    case ValKind::AutoTV:
       return val;
     default:
       std::cerr << line_num << ": in ToType, expected a type, not ";
@@ -166,28 +174,28 @@ auto ToType(int line_num, Value* val) -> Value* {
 // Reify type to type expression.
 auto ReifyType(Value* t, int line_num) -> Expression* {
   switch (t->tag) {
-    case VarTV:
+    case ValKind::VarTV:
       return MakeVar(0, *t->u.var_type);
-    case IntTV:
+    case ValKind::IntTV:
       return MakeIntType(0);
-    case BoolTV:
+    case ValKind::BoolTV:
       return MakeBoolType(0);
-    case TypeTV:
+    case ValKind::TypeTV:
       return MakeTypeType(0);
-    case FunctionTV:
+    case ValKind::FunctionTV:
       return MakeFunType(0, ReifyType(t->u.fun_type.param, line_num),
                          ReifyType(t->u.fun_type.ret, line_num));
-    case TupleTV: {
-      auto args = new std::vector<std::pair<std::string, Expression*> >();
+    case ValKind::TupleTV: {
+      auto args = new std::vector<std::pair<std::string, Expression*>>();
       for (auto& field : *t->u.tuple_type.fields) {
         args->push_back(
             make_pair(field.first, ReifyType(field.second, line_num)));
       }
       return MakeTuple(0, args);
     }
-    case StructTV:
+    case ValKind::StructTV:
       return MakeVar(0, *t->u.struct_type.name);
-    case ChoiceTV:
+    case ValKind::ChoiceTV:
       return MakeVar(0, *t->u.choice_type.name);
     default:
       std::cerr << line_num << ": expected a type, not ";
@@ -201,18 +209,20 @@ auto TypeCheckExp(Expression* e, TypeEnv* env, Env* ct_env, Value* expected,
                   TCContext context)
     -> TCResult {  //                   expected can be null
   switch (e->tag) {
-    case PatternVariable: {
-      if (context != PatternContext) {
+    case ExpressionKind::PatternVariable: {
+      if (context != TCContext::PatternContext) {
         std::cerr
             << e->line_num
             << ": compilation error, pattern variables are only allowed in "
                "pattern context"
             << std::endl;
       }
-      auto t = ToType(e->line_num, InterpExp(ct_env, e->u.pattern_variable.type));
-      if (t->tag == AutoTV) {
+      auto t =
+          ToType(e->line_num, InterpExp(ct_env, e->u.pattern_variable.type));
+      if (t->tag == ValKind::AutoTV) {
         if (expected == nullptr) {
-          std::cerr << e->line_num << ": compilation error, auto not allowed here"
+          std::cerr << e->line_num
+                    << ": compilation error, auto not allowed here"
                     << std::endl;
           exit(-1);
         } else {
@@ -224,17 +234,18 @@ auto TypeCheckExp(Expression* e, TypeEnv* env, Env* ct_env, Value* expected,
       return TCResult(new_e, t,
                       new TypeEnv(*e->u.pattern_variable.name, t, env));
     }
-    case Index: {
+    case ExpressionKind::Index: {
       auto res = TypeCheckExp(e->u.get_field.aggregate, env, ct_env, nullptr,
-                              ValueContext);
+                              TCContext::ValueContext);
       auto t = res.type;
       switch (t->tag) {
-        case TupleTV: {
+        case ValKind::TupleTV: {
           auto i = ToInteger(InterpExp(ct_env, e->u.index.offset));
           std::string f = std::to_string(i);
           try {
             auto field_t = FindAlist(f, t->u.tuple_type.fields);
-            auto new_e = MakeIndex(e->line_num, res.exp, MakeInt(e->line_num, i));
+            auto new_e =
+                MakeIndex(e->line_num, res.exp, MakeInt(e->line_num, i));
             return TCResult(new_e, field_t, res.env);
           } catch (std::domain_error de) {
             std::cerr << e->line_num << ": compilation error, field " << f
@@ -249,15 +260,15 @@ auto TypeCheckExp(Expression* e, TypeEnv* env, Env* ct_env, Value* expected,
           exit(-1);
       }
     }
-    case Tuple: {
-      auto new_args = new std::vector<std::pair<std::string, Expression*> >();
+    case ExpressionKind::Tuple: {
+      auto new_args = new std::vector<std::pair<std::string, Expression*>>();
       auto arg_types = new VarValues();
       auto new_env = env;
       int i = 0;
       for (auto arg = e->u.tuple.fields->begin();
            arg != e->u.tuple.fields->end(); ++arg, ++i) {
         Value* arg_expected = nullptr;
-        if (expected && expected->tag == TupleTV) {
+        if (expected && expected->tag == ValKind::TupleTV) {
           try {
             arg_expected = FindAlist(arg->first, expected->u.tuple_type.fields);
           } catch (std::domain_error de) {
@@ -276,12 +287,12 @@ auto TypeCheckExp(Expression* e, TypeEnv* env, Env* ct_env, Value* expected,
       auto tuple_t = MakeTupleTypeVal(arg_types);
       return TCResult(tuple_e, tuple_t, new_env);
     }
-    case GetField: {
+    case ExpressionKind::GetField: {
       auto res = TypeCheckExp(e->u.get_field.aggregate, env, ct_env, nullptr,
-                              ValueContext);
+                              TCContext::ValueContext);
       auto t = res.type;
       switch (t->tag) {
-        case StructTV:
+        case ValKind::StructTV:
           // Search for a field
           for (auto& field : *t->u.struct_type.fields) {
             if (*e->u.get_field.field == field.first) {
@@ -302,7 +313,7 @@ auto TypeCheckExp(Expression* e, TypeEnv* env, Env* ct_env, Value* expected,
                     << *t->u.struct_type.name << " does not have a field named "
                     << *e->u.get_field.field << std::endl;
           exit(-1);
-        case TupleTV:
+        case ValKind::TupleTV:
           for (auto& field : *t->u.tuple_type.fields) {
             if (*e->u.get_field.field == field.first) {
               auto new_e =
@@ -314,7 +325,7 @@ auto TypeCheckExp(Expression* e, TypeEnv* env, Env* ct_env, Value* expected,
                     << *t->u.struct_type.name << " does not have a field named "
                     << *e->u.get_field.field << std::endl;
           exit(-1);
-        case ChoiceTV:
+        case ValKind::ChoiceTV:
           for (auto vt = t->u.choice_type.alternatives->begin();
                vt != t->u.choice_type.alternatives->end(); ++vt) {
             if (*e->u.get_field.field == vt->first) {
@@ -338,63 +349,65 @@ auto TypeCheckExp(Expression* e, TypeEnv* env, Env* ct_env, Value* expected,
           exit(-1);
       }
     }
-    case Variable: {
-      auto t = Lookup(e->line_num, env, *(e->u.variable.name), PrintErrorString);
+    case ExpressionKind::Variable: {
+      auto t =
+          Lookup(e->line_num, env, *(e->u.variable.name), PrintErrorString);
       return TCResult(e, t, env);
     }
-    case Integer:
+    case ExpressionKind::Integer:
       return TCResult(e, MakeIntTypeVal(), env);
-      break;
-    case Boolean:
+    case ExpressionKind::Boolean:
       return TCResult(e, MakeBoolTypeVal(), env);
-      break;
-    case PrimitiveOp: {
+    case ExpressionKind::PrimitiveOp: {
       auto es = new std::vector<Expression*>();
       std::vector<Value*> ts;
       auto new_env = env;
       for (auto& argument : *e->u.primitive_op.arguments) {
-        auto res = TypeCheckExp(argument, env, ct_env, nullptr, ValueContext);
+        auto res = TypeCheckExp(argument, env, ct_env, nullptr,
+                                TCContext::ValueContext);
         new_env = res.env;
         es->push_back(res.exp);
         ts.push_back(res.type);
       }
       auto new_e = MakeOp(e->line_num, e->u.primitive_op.operator_, es);
       switch (e->u.primitive_op.operator_) {
-        case Neg:
+        case Operator::Neg:
           ExpectType(e->line_num, "negation", MakeIntTypeVal(), ts[0]);
           return TCResult(new_e, MakeIntTypeVal(), new_env);
-        case Add:
-        case Sub:
+        case Operator::Add:
+        case Operator::Sub:
           ExpectType(e->line_num, "subtraction(1)", MakeIntTypeVal(), ts[0]);
           ExpectType(e->line_num, "substration(2)", MakeIntTypeVal(), ts[1]);
           return TCResult(new_e, MakeIntTypeVal(), new_env);
-        case And:
+        case Operator::And:
           ExpectType(e->line_num, "&&(1)", MakeBoolTypeVal(), ts[0]);
           ExpectType(e->line_num, "&&(2)", MakeBoolTypeVal(), ts[1]);
           return TCResult(new_e, MakeBoolTypeVal(), new_env);
-        case Or:
+        case Operator::Or:
           ExpectType(e->line_num, "||(1)", MakeBoolTypeVal(), ts[0]);
           ExpectType(e->line_num, "||(2)", MakeBoolTypeVal(), ts[1]);
           return TCResult(new_e, MakeBoolTypeVal(), new_env);
-        case Not:
+        case Operator::Not:
           ExpectType(e->line_num, "!", MakeBoolTypeVal(), ts[0]);
           return TCResult(new_e, MakeBoolTypeVal(), new_env);
-        case Eq:
+        case Operator::Eq:
           ExpectType(e->line_num, "==(1)", MakeIntTypeVal(), ts[0]);
           ExpectType(e->line_num, "==(2)", MakeIntTypeVal(), ts[1]);
           return TCResult(new_e, MakeBoolTypeVal(), new_env);
       }
       break;
     }
-    case Call: {
-      auto fun_res =
-          TypeCheckExp(e->u.call.function, env, ct_env, nullptr, ValueContext);
+    case ExpressionKind::Call: {
+      auto fun_res = TypeCheckExp(e->u.call.function, env, ct_env, nullptr,
+                                  TCContext::ValueContext);
       switch (fun_res.type->tag) {
-        case FunctionTV: {
+        case ValKind::FunctionTV: {
           auto fun_t = fun_res.type;
-          auto arg_res = TypeCheckExp(e->u.call.argument, fun_res.env, ct_env,
-                                      fun_t->u.fun_type.param, ValueContext);
-          ExpectType(e->line_num, "call", fun_t->u.fun_type.param, arg_res.type);
+          auto arg_res =
+              TypeCheckExp(e->u.call.argument, fun_res.env, ct_env,
+                           fun_t->u.fun_type.param, TCContext::ValueContext);
+          ExpectType(e->line_num, "call", fun_t->u.fun_type.param,
+                     arg_res.type);
           auto new_e = MakeCall(e->line_num, fun_res.exp, arg_res.exp);
           return TCResult(new_e, fun_t->u.fun_type.ret, arg_res.env);
         }
@@ -409,10 +422,10 @@ auto TypeCheckExp(Expression* e, TypeEnv* env, Env* ct_env, Value* expected,
       }
       break;
     }
-    case FunctionT: {
+    case ExpressionKind::FunctionT: {
       switch (context) {
-        case ValueContext:
-        case TypeContext: {
+        case TCContext::ValueContext:
+        case TCContext::TypeContext: {
           auto pt = ToType(e->line_num,
                            InterpExp(ct_env, e->u.function_type.parameter));
           auto rt = ToType(e->line_num,
@@ -421,7 +434,7 @@ auto TypeCheckExp(Expression* e, TypeEnv* env, Env* ct_env, Value* expected,
                                    ReifyType(rt, e->line_num));
           return TCResult(new_e, MakeTypeTypeVal(), env);
         }
-        case PatternContext: {
+        case TCContext::PatternContext: {
           auto param_res = TypeCheckExp(e->u.function_type.parameter, env,
                                         ct_env, nullptr, context);
           auto ret_res = TypeCheckExp(e->u.function_type.return_type,
@@ -433,10 +446,10 @@ auto TypeCheckExp(Expression* e, TypeEnv* env, Env* ct_env, Value* expected,
         }
       }
     }
-    case IntT:
-    case BoolT:
-    case TypeT:
-    case AutoT:
+    case ExpressionKind::IntT:
+    case ExpressionKind::BoolT:
+    case ExpressionKind::TypeT:
+    case ExpressionKind::AutoT:
       return TCResult(e, MakeTypeTypeVal(), env);
   }
 }
@@ -444,7 +457,8 @@ auto TypeCheckExp(Expression* e, TypeEnv* env, Env* ct_env, Value* expected,
 auto TypecheckCase(Value* expected, Expression* pat, Statement* body,
                    TypeEnv* env, Env* ct_env, Value* ret_type)
     -> std::pair<Expression*, Statement*> {
-  auto pat_res = TypeCheckExp(pat, env, ct_env, expected, PatternContext);
+  auto pat_res =
+      TypeCheckExp(pat, env, ct_env, expected, TCContext::PatternContext);
   auto res = TypeCheckStmt(body, pat_res.env, ct_env, ret_type);
   return std::make_pair(pat, res.stmt);
 }
@@ -455,11 +469,11 @@ auto TypeCheckStmt(Statement* s, TypeEnv* env, Env* ct_env, Value* ret_type)
     return TCStatement(s, env);
   }
   switch (s->tag) {
-    case Match: {
-      auto res =
-          TypeCheckExp(s->u.match_stmt.exp, env, ct_env, nullptr, ValueContext);
+    case StatementKind::Match: {
+      auto res = TypeCheckExp(s->u.match_stmt.exp, env, ct_env, nullptr,
+                              TCContext::ValueContext);
       auto res_type = res.type;
-      auto new_clauses = new std::list<std::pair<Expression*, Statement*> >();
+      auto new_clauses = new std::list<std::pair<Expression*, Statement*>>();
       for (auto& clause : *s->u.match_stmt.clauses) {
         new_clauses->push_back(TypecheckCase(
             res_type, clause.first, clause.second, env, ct_env, ret_type));
@@ -467,9 +481,9 @@ auto TypeCheckStmt(Statement* s, TypeEnv* env, Env* ct_env, Value* ret_type)
       Statement* new_s = MakeMatch(s->line_num, res.exp, new_clauses);
       return TCStatement(new_s, env);
     }
-    case While: {
+    case StatementKind::While: {
       auto cnd_res = TypeCheckExp(s->u.while_stmt.cond, env, ct_env, nullptr,
-                                  ValueContext);
+                                  TCContext::ValueContext);
       ExpectType(s->line_num, "condition of `while`", MakeBoolTypeVal(),
                  cnd_res.type);
       auto body_res =
@@ -477,24 +491,24 @@ auto TypeCheckStmt(Statement* s, TypeEnv* env, Env* ct_env, Value* ret_type)
       auto new_s = MakeWhile(s->line_num, cnd_res.exp, body_res.stmt);
       return TCStatement(new_s, env);
     }
-    case Break:
-    case Continue:
+    case StatementKind::Break:
+    case StatementKind::Continue:
       return TCStatement(s, env);
-    case Block: {
+    case StatementKind::Block: {
       auto stmt_res = TypeCheckStmt(s->u.block.stmt, env, ct_env, ret_type);
       return TCStatement(MakeBlock(s->line_num, stmt_res.stmt), env);
     }
-    case VariableDefinition: {
+    case StatementKind::VariableDefinition: {
       auto res = TypeCheckExp(s->u.variable_definition.init, env, ct_env,
-                              nullptr, ValueContext);
+                              nullptr, TCContext::ValueContext);
       Value* rhs_ty = res.type;
       auto lhs_res = TypeCheckExp(s->u.variable_definition.pat, env, ct_env,
-                                  rhs_ty, PatternContext);
+                                  rhs_ty, TCContext::PatternContext);
       Statement* new_s =
           MakeVarDef(s->line_num, s->u.variable_definition.pat, res.exp);
       return TCStatement(new_s, lhs_res.env);
     }
-    case Sequence: {
+    case StatementKind::Sequence: {
       auto stmt_res = TypeCheckStmt(s->u.sequence.stmt, env, ct_env, ret_type);
       auto env2 = stmt_res.env;
       auto next_res = TypeCheckStmt(s->u.sequence.next, env2, ct_env, ret_type);
@@ -502,25 +516,26 @@ auto TypeCheckStmt(Statement* s, TypeEnv* env, Env* ct_env, Value* ret_type)
       return TCStatement(MakeSeq(s->line_num, stmt_res.stmt, next_res.stmt),
                          env3);
     }
-    case Assign: {
-      auto rhs_res =
-          TypeCheckExp(s->u.assign.rhs, env, ct_env, nullptr, ValueContext);
+    case StatementKind::Assign: {
+      auto rhs_res = TypeCheckExp(s->u.assign.rhs, env, ct_env, nullptr,
+                                  TCContext::ValueContext);
       auto rhs_t = rhs_res.type;
-      auto lhs_res =
-          TypeCheckExp(s->u.assign.lhs, env, ct_env, rhs_t, ValueContext);
+      auto lhs_res = TypeCheckExp(s->u.assign.lhs, env, ct_env, rhs_t,
+                                  TCContext::ValueContext);
       auto lhs_t = lhs_res.type;
       ExpectType(s->line_num, "assign", lhs_t, rhs_t);
       auto new_s = MakeAssign(s->line_num, lhs_res.exp, rhs_res.exp);
       return TCStatement(new_s, lhs_res.env);
     }
-    case ExpressionStatement: {
-      auto res = TypeCheckExp(s->u.exp, env, ct_env, nullptr, ValueContext);
+    case StatementKind::ExpressionStatement: {
+      auto res =
+          TypeCheckExp(s->u.exp, env, ct_env, nullptr, TCContext::ValueContext);
       auto new_s = MakeExpStmt(s->line_num, res.exp);
       return TCStatement(new_s, env);
     }
-    case If: {
-      auto cnd_res =
-          TypeCheckExp(s->u.if_stmt.cond, env, ct_env, nullptr, ValueContext);
+    case StatementKind::If: {
+      auto cnd_res = TypeCheckExp(s->u.if_stmt.cond, env, ct_env, nullptr,
+                                  TCContext::ValueContext);
       ExpectType(s->line_num, "condition of `if`", MakeBoolTypeVal(),
                  cnd_res.type);
       auto thn_res =
@@ -530,10 +545,10 @@ auto TypeCheckStmt(Statement* s, TypeEnv* env, Env* ct_env, Value* ret_type)
       auto new_s = MakeIf(s->line_num, cnd_res.exp, thn_res.stmt, els_res.stmt);
       return TCStatement(new_s, env);
     }
-    case Return: {
-      auto res =
-          TypeCheckExp(s->u.return_stmt, env, ct_env, nullptr, ValueContext);
-      if (ret_type->tag == AutoTV) {
+    case StatementKind::Return: {
+      auto res = TypeCheckExp(s->u.return_stmt, env, ct_env, nullptr,
+                              TCContext::ValueContext);
+      if (ret_type->tag == ValKind::AutoTV) {
         // The following infers the return type from the first 'return'
         // statement. This will get more difficult with subtyping, when we
         // should infer the least-upper bound of all the 'return' statements.
@@ -550,7 +565,7 @@ auto CheckOrEnsureReturn(Statement* stmt, bool void_return, int line_num)
     -> Statement* {
   if (!stmt) {
     if (void_return) {
-      auto args = new std::vector<std::pair<std::string, Expression*> >();
+      auto args = new std::vector<std::pair<std::string, Expression*>>();
       return MakeReturn(line_num, MakeTuple(line_num, args));
     } else {
       std::cerr
@@ -560,8 +575,8 @@ auto CheckOrEnsureReturn(Statement* stmt, bool void_return, int line_num)
     }
   }
   switch (stmt->tag) {
-    case Match: {
-      auto new_clauses = new std::list<std::pair<Expression*, Statement*> >();
+    case StatementKind::Match: {
+      auto new_clauses = new std::list<std::pair<Expression*, Statement*>>();
       for (auto i = stmt->u.match_stmt.clauses->begin();
            i != stmt->u.match_stmt.clauses->end(); ++i) {
         auto s = CheckOrEnsureReturn(i->second, void_return, stmt->line_num);
@@ -569,19 +584,19 @@ auto CheckOrEnsureReturn(Statement* stmt, bool void_return, int line_num)
       }
       return MakeMatch(stmt->line_num, stmt->u.match_stmt.exp, new_clauses);
     }
-    case Block:
+    case StatementKind::Block:
       return MakeBlock(
           stmt->line_num,
           CheckOrEnsureReturn(stmt->u.block.stmt, void_return, stmt->line_num));
-    case If:
+    case StatementKind::If:
       return MakeIf(stmt->line_num, stmt->u.if_stmt.cond,
                     CheckOrEnsureReturn(stmt->u.if_stmt.then_stmt, void_return,
                                         stmt->line_num),
                     CheckOrEnsureReturn(stmt->u.if_stmt.else_stmt, void_return,
                                         stmt->line_num));
-    case Return:
+    case StatementKind::Return:
       return stmt;
-    case Sequence:
+    case StatementKind::Sequence:
       if (stmt->u.sequence.next) {
         return MakeSeq(stmt->line_num, stmt->u.sequence.stmt,
                        CheckOrEnsureReturn(stmt->u.sequence.next, void_return,
@@ -590,16 +605,17 @@ auto CheckOrEnsureReturn(Statement* stmt, bool void_return, int line_num)
         return CheckOrEnsureReturn(stmt->u.sequence.stmt, void_return,
                                    stmt->line_num);
       }
-    case Assign:
-    case ExpressionStatement:
-    case While:
-    case Break:
-    case Continue:
-    case VariableDefinition:
+    case StatementKind::Assign:
+    case StatementKind::ExpressionStatement:
+    case StatementKind::While:
+    case StatementKind::Break:
+    case StatementKind::Continue:
+    case StatementKind::VariableDefinition:
       if (void_return) {
-        auto args = new std::vector<std::pair<std::string, Expression*> >();
-        return MakeSeq(stmt->line_num, stmt,
-                       MakeReturn(stmt->line_num, MakeTuple(stmt->line_num, args)));
+        auto args = new std::vector<std::pair<std::string, Expression*>>();
+        return MakeSeq(
+            stmt->line_num, stmt,
+            MakeReturn(stmt->line_num, MakeTuple(stmt->line_num, args)));
       } else {
         std::cerr
             << stmt->line_num
@@ -613,13 +629,13 @@ auto CheckOrEnsureReturn(Statement* stmt, bool void_return, int line_num)
 
 auto TypeCheckFunDef(struct FunctionDefinition* f, TypeEnv* env, Env* ct_env)
     -> struct FunctionDefinition* {
-  auto param_res =
-      TypeCheckExp(f->param_pattern, env, ct_env, nullptr, PatternContext);
+  auto param_res = TypeCheckExp(f->param_pattern, env, ct_env, nullptr,
+                                TCContext::PatternContext);
   auto return_type = ToType(f->line_num, InterpExp(ct_env, f->return_type));
   if (f->name == "main") {
     ExpectType(f->line_num, "return type of `main`", MakeIntTypeVal(),
                return_type);
-    // todo: check that main doesn't have any parameters
+    // TODO: Check that main doesn't have any parameters.
   }
   auto res = TypeCheckStmt(f->body, param_res.env, ct_env, return_type);
   bool void_return = TypeEqual(return_type, MakeVoidTypeVal());
@@ -631,10 +647,10 @@ auto TypeCheckFunDef(struct FunctionDefinition* f, TypeEnv* env, Env* ct_env)
 auto TypeOfFunDef(TypeEnv* env, Env* ct_env, struct FunctionDefinition* fun_def)
     -> Value* {
   auto param_res = TypeCheckExp(fun_def->param_pattern, env, ct_env, nullptr,
-                                PatternContext);
+                                TCContext::PatternContext);
   auto param_type = ToType(fun_def->line_num, param_res.type);
   auto ret = InterpExp(ct_env, fun_def->return_type);
-  if (ret->tag == AutoTV) {
+  if (ret->tag == ValKind::AutoTV) {
     auto f = TypeCheckFunDef(fun_def, env, ct_env);
     ret = InterpExp(ct_env, f->return_type);
   }
@@ -646,7 +662,7 @@ auto TypeOfStructDef(struct StructDefinition* sd, TypeEnv* /*env*/, Env* ct_top)
   auto fields = new VarValues();
   auto methods = new VarValues();
   for (auto m = sd->members->begin(); m != sd->members->end(); ++m) {
-    if ((*m)->tag == FieldMember) {
+    if ((*m)->tag == MemberKind::FieldMember) {
       auto t = ToType(sd->line_num, InterpExp(ct_top, (*m)->u.field.type));
       fields->push_back(std::make_pair(*(*m)->u.field.name, t));
     }
@@ -656,23 +672,23 @@ auto TypeOfStructDef(struct StructDefinition* sd, TypeEnv* /*env*/, Env* ct_top)
 
 auto NameOfDecl(Declaration* d) -> std::string {
   switch (d->tag) {
-    case FunctionDeclaration:
+    case DeclarationKind::FunctionDeclaration:
       return d->u.fun_def->name;
-    case StructDeclaration:
+    case DeclarationKind::StructDeclaration:
       return *d->u.struct_def->name;
-    case ChoiceDeclaration:
+    case DeclarationKind::ChoiceDeclaration:
       return *d->u.choice_def.name;
   }
 }
 
 auto TypeCheckDecl(Declaration* d, TypeEnv* env, Env* ct_env) -> Declaration* {
   switch (d->tag) {
-    case StructDeclaration: {
+    case DeclarationKind::StructDeclaration: {
       auto members = new std::list<Member*>();
       for (auto& member : *d->u.struct_def->members) {
         switch (member->tag) {
-          case FieldMember: {
-            // TODO interpret the type expression and store the result.
+          case MemberKind::FieldMember: {
+            // TODO: Interpret the type expression and store the result.
             members->push_back(member);
             break;
           }
@@ -681,10 +697,10 @@ auto TypeCheckDecl(Declaration* d, TypeEnv* env, Env* ct_env) -> Declaration* {
       return MakeStructDecl(d->u.struct_def->line_num, *d->u.struct_def->name,
                             members);
     }
-    case FunctionDeclaration:
+    case DeclarationKind::FunctionDeclaration:
       return MakeFunDecl(TypeCheckFunDef(d->u.fun_def, env, ct_env));
-    case ChoiceDeclaration:
-      return d;  // TODO
+    case DeclarationKind::ChoiceDeclaration:
+      return d;  // TODO.
   }
 }
 
@@ -697,30 +713,31 @@ auto TopLevel(std::list<Declaration*>* fs) -> std::pair<TypeEnv*, Env*> {
       found_main = true;
     }
     switch (d->tag) {
-      case FunctionDeclaration: {
+      case DeclarationKind::FunctionDeclaration: {
         auto t = TypeOfFunDef(top, ct_top, d->u.fun_def);
         top = new TypeEnv(NameOfDecl(d), t, top);
         break;
       }
-      case StructDeclaration: {
+      case DeclarationKind::StructDeclaration: {
         auto st = TypeOfStructDef(d->u.struct_def, top, ct_top);
         Address a = AllocateValue(st);
-        ct_top = new Env(NameOfDecl(d), a, ct_top);  // is this obsolete?
+        ct_top = new Env(NameOfDecl(d), a, ct_top);  // Is this obsolete?
         auto params = MakeTupleTypeVal(st->u.struct_type.fields);
         auto fun_ty = MakeFunTypeVal(params, st);
         top = new TypeEnv(NameOfDecl(d), fun_ty, top);
         break;
       }
-      case ChoiceDeclaration: {
+      case DeclarationKind::ChoiceDeclaration: {
         auto alts = new VarValues();
         for (auto i = d->u.choice_def.alternatives->begin();
              i != d->u.choice_def.alternatives->end(); ++i) {
-          auto t = ToType(d->u.choice_def.line_num, InterpExp(ct_top, i->second));
+          auto t =
+              ToType(d->u.choice_def.line_num, InterpExp(ct_top, i->second));
           alts->push_back(std::make_pair(i->first, t));
         }
         auto ct = MakeChoiceTypeVal(d->u.choice_def.name, alts);
         Address a = AllocateValue(ct);
-        ct_top = new Env(NameOfDecl(d), a, ct_top);  // is this obsolete?
+        ct_top = new Env(NameOfDecl(d), a, ct_top);  // Is this obsolete?
         top = new TypeEnv(NameOfDecl(d), ct, top);
         break;
       }

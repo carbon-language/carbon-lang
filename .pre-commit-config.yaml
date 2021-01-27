@@ -41,6 +41,16 @@ repos:
           - ''
           - '// '
           - ''
+          - --custom_format
+          - '\.lpp$'
+          - '/*'
+          - ''
+          - '*/'
+          - --custom_format
+          - '\.ypp$'
+          - ''
+          - '// '
+          - ''
         exclude: '^(website/(firebase/.firebaserc|jekyll/(Gemfile.lock|theme/.*))|.bazelversion|compile_flags.txt|.*\.def|.*/testdata/.*\.golden)$'
       - id: check-google-doc-style
       - id: markdown-toc

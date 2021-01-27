@@ -11,11 +11,11 @@
 #include "executable_semantics/ast.h"
 #include "executable_semantics/interp.h"
 
-using TypeEnv = AList<std::string, Value *>;
+using TypeEnv = AssocList<std::string, Value*>;
 
 void PrintTypeEnv(TypeEnv* env);
 
-enum TCContext { ValueContext, PatternContext, TypeContext };
+enum class TCContext { ValueContext, PatternContext, TypeContext };
 
 struct TCResult {
   TCResult(Expression* e, Value* t, TypeEnv* env) : exp(e), type(t), env(env) {}
@@ -38,12 +38,12 @@ auto TypeEqual(Value* t1, Value* t2) -> bool;
 auto FieldsEqual(VarValues* ts1, VarValues* ts2) -> bool;
 
 auto TypeCheckExp(Expression* e, TypeEnv* env, Env* ct_env, Value* expected,
-                      TCContext context) -> TCResult;
+                  TCContext context) -> TCResult;
 
 auto TypeCheckStmt(Statement*, TypeEnv*, Env*, Value*) -> TCStatement;
 
-auto TypeCheckFunDef(struct FunctionDefinition*,
-                                           TypeEnv*) -> struct FunctionDefinition*;
+auto TypeCheckFunDef(struct FunctionDefinition*, TypeEnv*)
+    -> struct FunctionDefinition*;
 
 auto TypeCheckDecl(Declaration* d, TypeEnv* env, Env* ct_env) -> Declaration*;
 
@@ -51,4 +51,4 @@ auto TopLevel(std::list<struct Declaration*>* fs) -> std::pair<TypeEnv*, Env*>;
 
 void PrintErrorString(const std::string& s);
 
-#endif
+#endif  // EXECUTABLE_SEMANTICS_TYPECHECK_H

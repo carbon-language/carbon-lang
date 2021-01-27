@@ -1,8 +1,6 @@
-/*
-# Part of the Carbon Language project, under the Apache License v2.0 with LLVM
-# Exceptions. See /LICENSE for license information.
-# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
-*/
+// Part of the Carbon Language project, under the Apache License v2.0 with LLVM
+// Exceptions. See /LICENSE for license information.
+// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 %{
 #include <stdarg.h>
@@ -112,13 +110,13 @@ input: declaration_list
       printf("********** source program **********\n");
       PrintList($1, PrintDecl, "");
       printf("********** type checking **********\n");
-      state = new State(); // compile-time state
-      std::pair<TypeEnv*,Env*> p = TopLevel($1);
+      state = new State();  // Compile-time state.
+      std::pair<TypeEnv*, Env*> p = TopLevel($1);
       TypeEnv* top = p.first;
       Env* ct_top = p.second;
       std::list<Declaration*> new_decls;
-      for (auto i = $1->begin(); i != $1->end(); ++i) {
-        new_decls.push_back(TypeCheckDecl(*i, top, ct_top));
+      for (const auto& i : *$1) {
+        new_decls.push_back(TypeCheckDecl(i, top, ct_top));
       }
       printf("\n");
       printf("********** type checking complete **********\n");
@@ -157,22 +155,22 @@ expression:
     { $$ = MakeAutoType(yylineno); }
 | tuple { $$ = $1; }
 | expression EQUAL expression
-    { $$ = MakeBinOp(yylineno, Eq, $1, $3); }
+    { $$ = MakeBinOp(yylineno, Operator::Eq, $1, $3); }
 | expression '+' expression
-    { $$ = MakeBinOp(yylineno, Add, $1, $3); }
+    { $$ = MakeBinOp(yylineno, Operator::Add, $1, $3); }
 | expression '-' expression
-    { $$ = MakeBinOp(yylineno, Sub, $1, $3); }
+    { $$ = MakeBinOp(yylineno, Operator::Sub, $1, $3); }
 | expression AND expression
-    { $$ = MakeBinOp(yylineno, And, $1, $3); }
+    { $$ = MakeBinOp(yylineno, Operator::And, $1, $3); }
 | expression OR expression
-    { $$ = MakeBinOp(yylineno, Or, $1, $3); }
+    { $$ = MakeBinOp(yylineno, Operator::Or, $1, $3); }
 | NOT expression
-    { $$ = MakeUnOp(yylineno, Not, $2); }
+    { $$ = MakeUnOp(yylineno, Operator::Not, $2); }
 | '-' expression
-    { $$ = MakeUnOp(yylineno, Neg, $2); }
+    { $$ = MakeUnOp(yylineno, Operator::Neg, $2); }
 | expression tuple
     {
-      if ($2->tag == Tuple) {
+      if ($2->tag == ExpressionKind::Tuple) {
         $$ = MakeCall(yylineno, $1, $2);
       } else {
         auto vec = new std::vector<std::pair<std::string,Expression*>>();
@@ -188,10 +186,10 @@ designator: '.' identifier { $$ = $2; }
 tuple: '(' field_list ')'
     {
       switch ($2->tag) {
-      case Exp:
+      case ExpOrFieldListKind::Exp:
         $$ = $2->u.exp;
         break;
-      case FieldList:
+      case ExpOrFieldListKind::FieldList:
         auto vec = new std::vector<std::pair<std::string,Expression*>>(
             $2->u.fields->begin(), $2->u.fields->end());
         $$ = MakeTuple(yylineno, vec);
@@ -210,14 +208,14 @@ field:
     }
 ;
 field_list:
-  /* empty */
+  // Empty
     {
       $$ = MakeFieldList(new std::list<std::pair<std::string,Expression*>>());
     }
 | field
     { $$ = $1; }
 | field ',' field_list
-    { $$ = MakeConstructorField($1, $3); }
+    { $$ = MakeConsField($1, $3); }
 ;
 clause:
   CASE pattern DBLARROW statement
@@ -229,7 +227,7 @@ clause:
     }
 ;
 clause_list:
-  /* empty */
+  // Empty
     { $$ = new std::list< std::pair<Expression*,Statement*>>(); }
 | clause clause_list
     { $$ = $2; $$->push_front(*$1); }
@@ -257,13 +255,13 @@ statement:
     { $$ = MakeMatch(yylineno, $3, $6); }
 ;
 statement_list:
-  /* empty */
+  // Empty
     { $$ = 0; }
 | statement statement_list
     { $$ = MakeSeq(yylineno, $1, $2); }
 ;
 return_type:
-  /* empty */
+  // Empty
     {
       $$ = MakeTuple(yylineno,
                      new std::vector<std::pair<std::string,Expression*>>());
@@ -289,7 +287,7 @@ member:
     { $$ = MakeField(yylineno, $4, $2); }
 ;
 member_list:
-  /* empty */
+  // Empty
     { $$ = new std::list<Member*>(); }
 | member member_list
     { $$ = $2; $$->push_front($1); }
@@ -299,7 +297,7 @@ alternative:
     { $$ = new std::pair<std::string,Expression*>($1, $2); }
 ;
 alternative_list:
-  /* empty */
+  // Empty
     { $$ = new std::list<std::pair<std::string, Expression*>>(); }
 | alternative alternative_list
     { $$ = $2; $$->push_front(*$1); }
@@ -315,14 +313,15 @@ declaration:
     { $$ = MakeChoiceDecl(yylineno, $2, $4); }
 ;
 declaration_list:
-  /* empty */
+  // Empty
     { $$ = new std::list<Declaration*>(); }
 | declaration declaration_list
     { $$ = $2; $$->push_front($1); }
 ;
 %%
 int main(int argc, char* argv[])  {
-  /*yydebug = 1;*/
+  // Uncomment the next line to enable debug output.
+  // yydebug = 1;
 
   if (argc > 1) {
     input_filename = argv[1];

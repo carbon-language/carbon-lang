@@ -9,16 +9,16 @@
 #include <string>
 
 template <class K, class V>
-struct AList {
-  AList(K k, V v, AList* n) : key(k), value(v), next(n) {}
+struct AssocList {
+  AssocList(K k, V v, AssocList* n) : key(k), value(v), next(n) {}
 
   K key;
   V value;
-  AList* next;
+  AssocList* next;
 };
 
 template <class K, class V>
-auto Lookup(int line_num, AList<K, V>* alist, const K& key,
+auto Lookup(int line_num, AssocList<K, V>* alist, const K& key,
             void (*print_key)(const K&)) -> V {
   if (alist == NULL) {
     std::cerr << line_num << ": could not find `";

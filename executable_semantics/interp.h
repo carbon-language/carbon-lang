@@ -17,11 +17,11 @@ struct Value;
 
 using Address = unsigned int;
 using VarValues = std::list<std::pair<std::string, Value*>>;
-using Env = AList<std::string, Address>;
+using Env = AssocList<std::string, Address>;
 
 /***** Values *****/
 
-enum ValKind {
+enum class ValKind {
   IntV,
   FunV,
   PtrV,
@@ -135,7 +135,7 @@ auto ValueEqual(Value* v1, Value* v2, int line_num) -> bool;
 
 /***** Actions *****/
 
-enum ActionKind {
+enum class ActionKind {
   LValAction,
   ExpressionAction,
   StatementAction,
@@ -150,7 +150,7 @@ struct Action {
     Expression* exp;  // for LValAction and ExpressionAction
     Statement* stmt;
     Value* val;  // for finished actions with a value (ValAction)
-    Address delete_;
+    Address delete_tmp;
   } u;
   int pos;                      // position or state of the action
   std::vector<Value*> results;  // results from subexpression
