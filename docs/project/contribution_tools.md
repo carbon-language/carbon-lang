@@ -56,7 +56,7 @@ tools that we recommend. See the [installation instructions](https://brew.sh/).
 [go get](https://golang.org/pkg/cmd/go/internal/get/) is Go's package manager.
 It will mainly be used for Linux, where [brew](#brew) doesn't work as well.
 
-To install on Linux:
+To install on Debian- or Ubuntu-based Linux distributions:
 
 ```bash
 apt install golang
@@ -134,8 +134,14 @@ Tips:
     `LLVM_ENABLE_PROJECTS` build looks like:
 
     ```bash
-    cmake -G "Unix Makefiles" -DLLVM_ENABLE_PROJECTS="clang;lld;libcxx;libcxxabi" ../llvm
-    make
+    cmake -G Ninja ../llvm \
+        -DLLVM_ENABLE_PROJECTS="clang;clang-tools-extra;lld;libcxx;libcxxabi;compiler-rt;libunwind" \
+        -DCMAKE_BUILD_TYPE=Release \
+        -DLIBCXX_ABI_UNSTABLE=ON \
+        -DLLVM_ENABLE_ASSERTIONS=OFF \
+        -DLIBCXX_ENABLE_ASSERTIONS=OFF \
+        -DLIBCXXABI_ENABLE_ASSERTIONS=OFF
+    ninja
     ```
 
 ### pyenv and Python
