@@ -89,7 +89,7 @@ void InstrumentationRuntimeLibrary::emitBinary(BinaryContext &BC,
 
                                      ))
                            : static_cast<MCSection *>(BC.Ctx->getMachOSection(
-                                 "__INSTR", "__counters", MachO::S_REGULAR,
+                                 "__BOLT", "__counters", MachO::S_REGULAR,
                                  SectionKind::getData()));
 
   // All of the following symbols will be exported as globals to be used by the

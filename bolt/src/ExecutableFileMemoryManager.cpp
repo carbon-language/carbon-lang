@@ -58,8 +58,9 @@ uint8_t *ExecutableFileMemoryManager::allocateSection(intptr_t Size,
     } else if (BC.isMachO()) {
       assert((SectionName == "__text" || SectionName == "__data" ||
               SectionName == "__fini" || SectionName == "__setup" ||
-              SectionName == "__cstring") &&
+              SectionName == "__cstring" || SectionName == "__literal16") &&
              "Unexpected section in the instrumentation library");
+      // Sections coming from the instrumentation runtime are prefixed with "I".
       SectionName = ("I" + Twine(SectionName)).toStringRef(Buf);
     }
   }

@@ -433,6 +433,7 @@ void MachORewriteInstance::emitAndLink() {
           mapInstrumentationSection(Key, "I__data");
           mapInstrumentationSection(Key, "I__text");
           mapInstrumentationSection(Key, "I__cstring");
+          mapInstrumentationSection(Key, "I__literal16");
         }
       },
       [&](orc::VModuleKey Key) {
@@ -493,6 +494,8 @@ void MachORewriteInstance::rewriteFile() {
               Function->getImageSize(), Function->getFileOffset());
   }
 
+  writeInstrumentationSection("__counters", OS);
+
   // TODO: Refactor addRuntimeLibSections to work properly on Mach-O and
   // use it here.
   writeInstrumentationSection("I__setup", OS);
@@ -500,6 +503,7 @@ void MachORewriteInstance::rewriteFile() {
   writeInstrumentationSection("I__data", OS);
   writeInstrumentationSection("I__text", OS);
   writeInstrumentationSection("I__cstring", OS);
+  writeInstrumentationSection("I__literal16", OS);
 
   Out->keep();
 }
