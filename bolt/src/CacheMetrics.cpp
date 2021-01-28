@@ -17,7 +17,6 @@ namespace opts {
 
 extern cl::OptionCategory BoltOptCategory;
 
-extern cl::opt<double> FallthroughWeight;
 extern cl::opt<double> ForwardWeight;
 extern cl::opt<double> BackwardWeight;
 extern cl::opt<unsigned> ForwardDistance;
@@ -222,7 +221,8 @@ double CacheMetrics::extTSPScore(uint64_t SrcAddr,
 
   // Fallthrough
   if (SrcAddr + SrcSize == DstAddr) {
-    return opts::FallthroughWeight * Count;
+    // Assume that FallthroughWeight = 1.0 after normalization
+    return static_cast<double>(Count);
   }
   // Forward
   if (SrcAddr + SrcSize < DstAddr) {

@@ -26,8 +26,9 @@
 // while keeping the implementation sufficiently fast.
 //
 // Reference:
-//   * A. Newell and S. Pupyrev, Improved Basic Block Reordering, available
-//         at https://arxiv.org/abs/1809.04676
+//   * A. Newell and S. Pupyrev, Improved Basic Block Reordering,
+//     IEEE Transactions on Computers, 2020
+//     https://arxiv.org/abs/1809.04676
 //===----------------------------------------------------------------------===//
 #include "BinaryBasicBlock.h"
 #include "BinaryFunction.h"
@@ -46,13 +47,7 @@ cl::opt<unsigned>
 ChainSplitThreshold("chain-split-threshold",
   cl::desc("The maximum size of a chain to apply splitting"),
   cl::init(128),
-  cl::ZeroOrMore,
-  cl::cat(BoltOptCategory));
-
-cl::opt<double>
-FallthroughWeight("fallthrough-weight",
-  cl::desc("The weight of forward jumps for ExtTSP value"),
-  cl::init(1),
+  cl::ReallyHidden,
   cl::ZeroOrMore,
   cl::cat(BoltOptCategory));
 
@@ -60,6 +55,7 @@ cl::opt<double>
 ForwardWeight("forward-weight",
   cl::desc("The weight of forward jumps for ExtTSP value"),
   cl::init(0.1),
+  cl::ReallyHidden,
   cl::ZeroOrMore,
   cl::cat(BoltOptCategory));
 
@@ -67,6 +63,7 @@ cl::opt<double>
 BackwardWeight("backward-weight",
   cl::desc("The weight of backward jumps for ExtTSP value"),
   cl::init(0.1),
+  cl::ReallyHidden,
   cl::ZeroOrMore,
   cl::cat(BoltOptCategory));
 
@@ -74,6 +71,7 @@ cl::opt<unsigned>
 ForwardDistance("forward-distance",
   cl::desc("The maximum distance (in bytes) of forward jumps for ExtTSP value"),
   cl::init(1024),
+  cl::ReallyHidden,
   cl::ZeroOrMore,
   cl::cat(BoltOptCategory));
 
@@ -81,6 +79,7 @@ cl::opt<unsigned>
 BackwardDistance("backward-distance",
   cl::desc("The maximum distance (in bytes) of backward jumps for ExtTSP value"),
   cl::init(640),
+  cl::ReallyHidden,
   cl::ZeroOrMore,
   cl::cat(BoltOptCategory));
 
@@ -89,13 +88,12 @@ BackwardDistance("backward-distance",
 namespace llvm {
 namespace bolt {
 
-namespace {
+// Epsilon for comparison of doubles
+constexpr double EPS = 1e-8;
 
 class Block;
 class Chain;
 class Edge;
-
-const double EPS = 1e-8;
 
 // Calculate Ext-TSP value, which quantifies the expected number of i-cache
 // misses for a given ordering of basic blocks
@@ -107,7 +105,8 @@ double extTSPScore(uint64_t SrcAddr,
 
   // Fallthrough
   if (SrcAddr + SrcSize == DstAddr) {
-    return opts::FallthroughWeight * Count;
+    // Assume that FallthroughWeight = 1.0 after normalization
+    return static_cast<double>(Count);
   }
   // Forward
   if (SrcAddr + SrcSize < DstAddr) {
@@ -129,15 +128,50 @@ double extTSPScore(uint64_t SrcAddr,
 
 using BlockPair = std::pair<Block *, Block *>;
 using JumpList = std::vector<std::pair<BlockPair, uint64_t>>;
-using MergeGainTy = std::pair<double, size_t>;
 using BlockIter = std::vector<Block *>::const_iterator;
+
+enum MergeTypeTy {
+  X_Y = 0,
+  X1_Y_X2 = 1,
+  Y_X2_X1 = 2,
+  X2_X1_Y = 3,
+};
+
+class MergeGainTy {
+public:
+  explicit MergeGainTy() {}
+  explicit MergeGainTy(double Score, size_t MergeOffset, MergeTypeTy MergeType)
+    : Score(Score),
+      MergeOffset(MergeOffset),
+      MergeType(MergeType) {}
+
+  double score() const {
+    return Score;
+  }
+
+  size_t mergeOffset() const {
+    return MergeOffset;
+  }
+
+  MergeTypeTy mergeType() const {
+    return MergeType;
+  }
+
+  // returns 'true' iff Other is preferred over this
+  bool operator < (const MergeGainTy& Other) const {
+    return (Other.Score > EPS && Other.Score > Score + EPS);
+  }
+
+private:
+  double Score{-1.0};
+  size_t MergeOffset{0};
+  MergeTypeTy MergeType{MergeTypeTy::X_Y};
+};
 
 // A node in CFG corresponding to a BinaryBasicBlock.
 // The class wraps several mutable fields utilized in the ExtTSP algorithm
 class Block {
 public:
-  // Delete copy constructor to make sure objects are moved rather than copied
-  Block() {}
   Block(const Block&) = delete;
   Block(Block&&) = default;
   Block& operator=(const Block&) = delete;
@@ -153,6 +187,8 @@ public:
   uint64_t ExecutionCount{0};
   // An original index of the node in CFG
   size_t Index{0};
+  // The index of the block in the current chain
+  size_t CurIndex{0};
   // An offset of the block in the current chain
   mutable uint64_t EstimatedAddr{0};
   // Fallthrough successor of the node in CFG
@@ -161,29 +197,51 @@ public:
   Block *FallthroughPred{nullptr};
   // Outgoing jumps from the block
   std::vector<std::pair<Block *, uint64_t>> OutJumps;
+  // Incoming jumps to the block
+  std::vector<std::pair<Block *, uint64_t>> InJumps;
   // Total execution count of incoming jumps
   uint64_t InWeight{0};
   // Total execution count of outgoing jumps
   uint64_t OutWeight{0};
 
+public:
   explicit Block(BinaryBasicBlock *BB_, uint64_t Size_)
     : BB(BB_),
       Size(Size_),
       ExecutionCount(BB_->getKnownExecutionCount()),
       Index(BB->getLayoutIndex()) {}
+
+  bool adjacent(const Block *Other) const {
+    return hasOutJump(Other) || hasInJump(Other);
+  }
+
+  bool hasOutJump(const Block *Other) const {
+    for (auto Jump : OutJumps) {
+      if (Jump.first == Other)
+        return true;
+    }
+    return false;
+  }
+
+  bool hasInJump(const Block *Other) const {
+    for (auto Jump : InJumps) {
+      if (Jump.first == Other)
+        return true;
+    }
+    return false;
+  }
 };
 
 // A chain (ordered sequence) of CFG nodes (basic blocks)
 class Chain {
 public:
-  Chain() {}
   Chain(const Chain&) = delete;
   Chain(Chain&&) = default;
   Chain& operator=(const Chain&) = delete;
   Chain& operator=(Chain&&) = default;
 
-  explicit Chain(size_t Id_, Block *Block)
-    : Id(Id_),
+  explicit Chain(size_t Id, Block *Block)
+    : Id(Id),
       IsEntry(Block->Index == 0),
       ExecutionCount(Block->ExecutionCount),
       Size(Block->Size),
@@ -200,10 +258,6 @@ public:
 
   double density() const {
     return static_cast<double>(ExecutionCount) / Size;
-  }
-
-  bool isCold() const {
-    return ExecutionCount == 0;
   }
 
   uint64_t executionCount() const {
@@ -226,32 +280,43 @@ public:
     return Blocks;
   }
 
-  const std::unordered_map<Chain *, Edge *> &edges() const {
+  const std::vector<std::pair<Chain *, Edge *>> &edges() const {
     return Edges;
   }
 
   Edge *getEdge(Chain *Other) const {
-    auto It = Edges.find(Other);
-    return It != Edges.end() ? It->second : nullptr;
+    for (auto It : Edges) {
+      if (It.first == Other)
+        return It.second;
+    }
+    return nullptr;
+  }
+
+  void removeEdge(Chain *Other) {
+    auto It = Edges.begin();
+    while (It != Edges.end()) {
+      if (It->first == Other) {
+        Edges.erase(It);
+        return;
+      }
+      It++;
+    }
   }
 
   void addEdge(Chain *Other, Edge *Edge) {
-    assert(Edges.find(Other) == Edges.end());
-    Edges.insert(std::make_pair(Other, Edge));
+    Edges.push_back(std::make_pair(Other, Edge));
   }
 
-  /// Update the list of basic blocks and aggregated chain data
   void merge(Chain *Other, const std::vector<Block *> &MergedBlocks) {
     Blocks = MergedBlocks;
     IsEntry |= Other->IsEntry;
     ExecutionCount += Other->ExecutionCount;
     Size += Other->Size;
     // Update block's chains
-    for (auto Block : Other->blocks()) {
-      Block->CurChain = this;
+    for (size_t Idx = 0; Idx < Blocks.size(); Idx++) {
+      Blocks[Idx]->CurChain = this;
+      Blocks[Idx]->CurIndex = Idx;
     }
-    // Merge edges
-    mergeEdges(Other);
   }
 
   void mergeEdges(Chain *Other);
@@ -271,7 +336,7 @@ private:
   // Blocks of the chain
   std::vector<Block *> Blocks;
   // Adjacent chains and corresponding edges (lists of jumps)
-  std::unordered_map<Chain *, Edge *> Edges;
+  std::vector<std::pair<Chain *, Edge *>> Edges;
 };
 
 // An edge in CFG reprsenting jumps between chains of BinaryBasicBlocks.
@@ -279,7 +344,6 @@ private:
 // there is always at most one edge between a pair of chains
 class Edge {
 public:
-  Edge() {}
   Edge(const Edge&) = delete;
   Edge(Edge&&) = default;
   Edge& operator=(const Edge&) = delete;
@@ -295,7 +359,6 @@ public:
   }
 
   void changeEndpoint(Chain *From, Chain *To) {
-    assert(From == SrcChain || From == DstChain);
     if (From == SrcChain)
       SrcChain = To;
     if (From == DstChain)
@@ -312,29 +375,26 @@ public:
   }
 
   bool hasCachedMergeGain(Chain *Src, Chain *Dst) const {
-    assert(Src == SrcChain || Src == DstChain);
-    return Src == SrcChain ? CacheIsValidF : CacheIsValidB;
+    return Src == SrcChain ? CacheValidForward : CacheValidBackward;
   }
 
   MergeGainTy getCachedMergeGain(Chain *Src, Chain *Dst) const {
-    assert(Src == SrcChain || Src == DstChain);
-    return Src == SrcChain ? CachedMergeGainF : CachedMergeGainB;
+    return Src == SrcChain ? CachedGainForward : CachedGainBackward;
   }
 
   void setCachedMergeGain(Chain *Src, Chain *Dst, MergeGainTy MergeGain) {
-    assert(Src == SrcChain || Src == DstChain);
     if (Src == SrcChain) {
-      CachedMergeGainF = MergeGain;
-      CacheIsValidF = true;
+      CachedGainForward = MergeGain;
+      CacheValidForward = true;
     } else {
-      CachedMergeGainB = MergeGain;
-      CacheIsValidB = true;
+      CachedGainBackward = MergeGain;
+      CacheValidBackward = true;
     }
   }
 
   void invalidateCache() {
-    CacheIsValidF = false;
-    CacheIsValidB = false;
+    CacheValidForward = false;
+    CacheValidBackward = false;
   }
 
 private:
@@ -345,44 +405,36 @@ private:
   // Cached ext-tsp value for merging the pair of chains
   // Since the gain of merging (Src, Dst) and (Dst, Src) might be different,
   // we store both values here
-  MergeGainTy CachedMergeGainF;
-  MergeGainTy CachedMergeGainB;
+  MergeGainTy CachedGainForward;
+  MergeGainTy CachedGainBackward;
   // Whether the cached value must be recomputed
-  bool CacheIsValidF{false};
-  bool CacheIsValidB{false};
+  bool CacheValidForward{false};
+  bool CacheValidBackward{false};
 };
 
 void Chain::mergeEdges(Chain *Other) {
-  assert(this != Other && "cannot merge a cluster with itself");
+  assert(this != Other && "cannot merge a chain with itself");
 
-  // update edges adjacent to Other
-  for (auto EdgeIter : Other->edges()) {
-    const auto DstChain = EdgeIter.first;
-    auto DstEdge = EdgeIter.second;
+  // Update edges adjacent to chain Other
+  for (auto EdgeIt : Other->Edges) {
+    const auto DstChain = EdgeIt.first;
+    const auto DstEdge = EdgeIt.second;
+    const auto TargetChain = DstChain == Other ? this : DstChain;
 
-    if (DstChain == Other) {
-      // processing self-edge (Other, Other)
-      auto It = Edges.find(this);
-      if (It == Edges.end()) {
-        DstEdge->changeEndpoint(Other, this);
-        Edges.insert(std::make_pair(this, DstEdge));
-      } else {
-        auto CurEdge = It->second;
-        CurEdge->moveJumps(DstEdge);
+    // Find the corresponding edge in the current chain
+    auto curEdge = getEdge(TargetChain);
+    if (curEdge == nullptr) {
+      DstEdge->changeEndpoint(Other, this);
+      this->addEdge(TargetChain, DstEdge);
+      if (DstChain != this && DstChain != Other) {
+        DstChain->addEdge(this, DstEdge);
       }
     } else {
-      // processing edge (Other, DstChain)
-      auto It = Edges.find(DstChain);
-      if (It == Edges.end()) {
-        DstEdge->changeEndpoint(Other, this);
-        Edges.insert(std::make_pair(DstChain, DstEdge));
-        DstChain->Edges.insert(std::make_pair(this, DstEdge));
-      } else {
-        auto CurEdge = It->second;
-        CurEdge->moveJumps(DstEdge);
-      }
-      // cleanup leftover edge
-      DstChain->Edges.erase(Other);
+      curEdge->moveJumps(DstEdge);
+    }
+    // Cleanup leftover edge
+    if (DstChain != Other) {
+      DstChain->removeEdge(Other);
     }
   }
 }
@@ -451,9 +503,6 @@ bool compareChainPairs(const Chain *A1, const Chain *B1,
     return A1->id() < A2->id();
   return B1->id() < B2->id();
 }
-
-} // end namespace anonymous
-
 class ExtTSP {
 public:
   ExtTSP(const BinaryFunction &BF) : BF(BF) {
@@ -465,7 +514,7 @@ public:
     // Pass 1: Merge blocks with their fallthrough successors
     mergeFallthroughs();
 
-    // Pass 2: Merge pairs of chains while improving the ExtTSP metric
+    // Pass 2: Merge pairs of chains while improving the ExtTSP objective
     mergeChainPairs();
 
     // Pass 3: Merge cold blocks to reduce code size
@@ -502,9 +551,11 @@ private:
                "missing profile for a jump");
         if (SuccBB != Block.BB && BI->Count > 0) {
           auto &SuccBlock = AllBlocks[SuccBB->getLayoutIndex()];
-          SuccBlock.InWeight += BI->Count;
-          Block.OutWeight += BI->Count;
-          Block.OutJumps.push_back(std::make_pair(&SuccBlock, BI->Count));
+          auto Count = BI->Count;
+          SuccBlock.InWeight += Count;
+          SuccBlock.InJumps.push_back(std::make_pair(&Block, Count));
+          Block.OutWeight += Count;
+          Block.OutJumps.push_back(std::make_pair(&SuccBlock, Count));
           NumEdges++;
         }
         ++BI;
@@ -538,7 +589,6 @@ private:
     for (auto &Block : AllBlocks) {
       for (auto &Jump : Block.OutJumps) {
         const auto SuccBlock = Jump.first;
-        assert(Block.CurChain != SuccBlock->CurChain);
         auto CurEdge = Block.CurChain->getEdge(SuccBlock->CurChain);
         // this edge is already present in the graph
         if (CurEdge != nullptr) {
@@ -553,16 +603,13 @@ private:
       }
     }
     assert(AllEdges.size() <= NumEdges && "Incorrect number of created edges");
-
-    // Initialize fallthrough successors
-    findFallthroughBlocks();
   }
 
   /// For a pair of blocks, A and B, block B is the fallthrough successor of A,
   /// if (i) all jumps (based on profile) from A goes to B and (ii) all jumps
-  /// to B are from A. Such blocks should be adjacent in an optimal ordering,
-  /// and the method finds such pairs of blocks
-  void findFallthroughBlocks() {
+  /// to B are from A. Such blocks should be adjacent in an optimal ordering;
+  /// the method finds and merges such pairs of blocks
+  void mergeFallthroughs() {
     // Find fallthroughs based on edge weights
     for (auto &Block : AllBlocks) {
       if (Block.BB->succ_size() == 1 &&
@@ -606,51 +653,49 @@ private:
       AllBlocks[Block.FallthroughPred->Index].FallthroughSucc = nullptr;
       Block.FallthroughPred = nullptr;
     }
-  }
 
-  /// Merge blocks with their fallthrough successors
-  void mergeFallthroughs() {
+    // Merge blocks with their fallthrough successors
     for (auto &Block : AllBlocks) {
       if (Block.FallthroughPred == nullptr &&
           Block.FallthroughSucc != nullptr) {
         auto CurBlock = &Block;
         while (CurBlock->FallthroughSucc != nullptr) {
           const auto NextBlock = CurBlock->FallthroughSucc;
-          mergeChains(Block.CurChain, NextBlock->CurChain);
+          mergeChains(Block.CurChain, NextBlock->CurChain, 0, MergeTypeTy::X_Y);
           CurBlock = NextBlock;
         }
       }
     }
   }
 
-  /// Merge pairs of chains while improving the ExtTSP metric
+  /// Merge pairs of chains while improving the ExtTSP objective
   void mergeChainPairs() {
     while (HotChains.size() > 1) {
       Chain *BestChainPred = nullptr;
       Chain *BestChainSucc = nullptr;
-      std::pair<double, size_t> BestGain(-1.0, 0);
+      auto BestGain = MergeGainTy();
       // Iterate over all pairs of chains
       for (auto ChainPred : HotChains) {
         // Get candidates for merging with the current chain
         for (auto EdgeIter : ChainPred->edges()) {
           auto ChainSucc = EdgeIter.first;
+          auto ChainEdge = EdgeIter.second;
           // Ignore loop edges
           if (ChainPred == ChainSucc)
             continue;
 
           // Compute the gain of merging the two chains
-          auto Gain = mergeGain(ChainPred, ChainSucc, EdgeIter.second);
-          if (Gain.first <= 0.0)
+          auto CurGain = mergeGain(ChainPred, ChainSucc, ChainEdge);
+          if (CurGain.score() <= EPS)
             continue;
 
-          // Breaking ties by density to make the hottest chains be merged first
-          if (Gain.first > BestGain.first + EPS ||
-              (std::abs(Gain.first - BestGain.first) < EPS &&
+          if (BestGain < CurGain ||
+              (std::abs(CurGain.score() - BestGain.score()) < EPS &&
                compareChainPairs(ChainPred,
                                  ChainSucc,
                                  BestChainPred,
                                  BestChainSucc))) {
-            BestGain = Gain;
+            BestGain = CurGain;
             BestChainPred = ChainPred;
             BestChainSucc = ChainSucc;
           }
@@ -658,18 +703,21 @@ private:
       }
 
       // Stop merging when there is no improvement
-      if (BestGain.first <= 0.0)
+      if (BestGain.score() <= EPS)
         break;
 
       // Merge the best pair of chains
-      mergeChains(BestChainPred, BestChainSucc, BestGain.second);
+      mergeChains(BestChainPred,
+                  BestChainSucc,
+                  BestGain.mergeOffset(),
+                  BestGain.mergeType());
     }
   }
 
   /// Merge cold blocks to reduce code size
   void mergeColdChains() {
     for (auto SrcBB : BF.layout()) {
-      // Iterating in reverse order to make sure original fall-trough jumps are
+      // Iterating in reverse order to make sure original fallthrough jumps are
       // merged first
       for (auto Itr = SrcBB->succ_rbegin(); Itr != SrcBB->succ_rend(); ++Itr) {
         BinaryBasicBlock *DstBB = *Itr;
@@ -680,7 +728,7 @@ private:
         if (SrcChain != DstChain && !DstChain->isEntryPoint() &&
             SrcChain->blocks().back()->Index == SrcIndex &&
             DstChain->blocks().front()->Index == DstIndex) {
-          mergeChains(SrcChain, DstChain);
+          mergeChains(SrcChain, DstChain, 0, MergeTypeTy::X_Y);
         }
       }
     }
@@ -710,41 +758,12 @@ private:
     return Score;
   }
 
-  /// Verify if it is valid to merge two chains into the new one
-  bool isValidMerge(const Chain *ChainPred,
-                    const Chain *ChainSucc,
-                    size_t MergeType,
-                    const MergedChain& MergedBlocks) const {
-    // Does the new chain preserve the original entry point?
-    if ((ChainPred->isEntryPoint() || ChainSucc->isEntryPoint()) &&
-        MergedBlocks.getFirstBlock()->Index != 0)
-      return false;
-
-    // This corresponds to a concatentation of chains w/o splitting, which is
-    // always safe
-    if (MergeType == 0)
-      return true;
-
-    size_t Offset = MergeType / 5;
-    // The basic blocks on the boundary of a split of ChainPred
-    auto BB1 = ChainPred->blocks()[Offset - 1];
-    auto BB2 = ChainPred->blocks()[Offset];
-    // Does the splitting break FT successors?
-    if (BB1->FallthroughSucc != nullptr) {
-      assert(BB1->FallthroughSucc == BB2 &&
-             "Fallthrough successor is not preserved");
-      return false;
-    }
-
-    return true;
-  }
-
-  /// The gain of merging two chains
+  /// Compute the gain of merging two chains
   ///
   /// The function considers all possible ways of merging two chains and
-  /// computes the one having the largest increase in ExtTSP metric. The result
-  /// is a pair with the first element being the gain and the second element being
-  /// the corresponding merging type (encoded as an integer).
+  /// computes the one having the largest increase in ExtTSP objective. The
+  /// result is a pair with the first element being the gain and the second
+  /// element being the corresponding merging type.
   MergeGainTy mergeGain(Chain *ChainPred, Chain *ChainSucc, Edge *Edge) const {
     if (Edge->hasCachedMergeGain(ChainPred, ChainSucc)) {
       return Edge->getCachedMergeGain(ChainPred, ChainSucc);
@@ -757,44 +776,56 @@ private:
       Jumps.insert(Jumps.end(), EdgePP->jumps().begin(), EdgePP->jumps().end());
     assert(Jumps.size() > 0 && "trying to merge chains w/o jumps");
 
-    // Merge two chains and update the best Gain
-    auto computeMergeGain = [&](const MergeGainTy &CurGain,
-                                const Chain *ChainPred,
-                                const Chain *ChainSucc,
-                                size_t MergeType) {
-      auto MergedBlocks = mergeBlocks(ChainPred->blocks(),
-                                      ChainSucc->blocks(),
-                                      MergeType);
-
-      if (!isValidMerge(ChainPred, ChainSucc, MergeType, MergedBlocks))
-        return CurGain;
-
-      // The gain for the new chain
-      const auto NewGain = score(MergedBlocks, Jumps) - ChainPred->score();
-      if (NewGain > EPS && NewGain > CurGain.first + EPS)
-        return std::make_pair(NewGain, MergeType);
-      else
-        return CurGain;
-    };
-
-    MergeGainTy Gain = std::make_pair(-1.0, 0);
+    MergeGainTy Gain = MergeGainTy();
     // Try to concatenate two chains w/o splitting
-    Gain = computeMergeGain(Gain, ChainPred, ChainSucc, 0);
+    Gain = computeMergeGain(
+        Gain, ChainPred, ChainSucc, Jumps, 0, MergeTypeTy::X_Y);
 
-    // Do not split large chains to reduce computation time
+    // Try to break ChainPred in various ways and concatenate with ChainSucc
     if (ChainPred->blocks().size() <= opts::ChainSplitThreshold) {
-      // Try to split ChainPred into two sub-chains in various ways and then
-      // merge it with ChainSucc
       for (size_t Offset = 1; Offset < ChainPred->blocks().size(); Offset++) {
-        for (size_t Type = 1; Type <= 4; Type++) {
-          size_t MergeType = Type + Offset * 5;
-          Gain = computeMergeGain(Gain, ChainPred, ChainSucc, MergeType);
+        auto BB1 = ChainPred->blocks()[Offset - 1];
+        auto BB2 = ChainPred->blocks()[Offset];
+        // Does the splitting break FT successors?
+        if (BB1->FallthroughSucc != nullptr) {
+          assert(BB1->FallthroughSucc == BB2 && "Fallthrough not preserved");
+          continue;
         }
+
+        Gain = computeMergeGain(
+            Gain, ChainPred, ChainSucc, Jumps, Offset, MergeTypeTy::X1_Y_X2);
+        Gain = computeMergeGain(
+            Gain, ChainPred, ChainSucc, Jumps, Offset, MergeTypeTy::Y_X2_X1);
+        Gain = computeMergeGain(
+            Gain, ChainPred, ChainSucc, Jumps, Offset, MergeTypeTy::X2_X1_Y);
       }
     }
 
     Edge->setCachedMergeGain(ChainPred, ChainSucc, Gain);
     return Gain;
+  }
+
+  /// Merge two chains and update the best Gain
+  MergeGainTy computeMergeGain(const MergeGainTy &CurGain,
+                               const Chain *ChainPred,
+                               const Chain *ChainSucc,
+                               const JumpList &Jumps,
+                               size_t MergeOffset,
+                               MergeTypeTy MergeType) const {
+    auto MergedBlocks = mergeBlocks(ChainPred->blocks(),
+                                    ChainSucc->blocks(),
+                                    MergeOffset,
+                                    MergeType);
+
+    // Do not allow a merge that does not preserve the original entry block
+    if ((ChainPred->isEntryPoint() || ChainSucc->isEntryPoint()) &&
+        MergedBlocks.getFirstBlock()->Index != 0)
+      return CurGain;
+
+    // The gain for the new chain
+    const auto NewScore = score(MergedBlocks, Jumps) - ChainPred->score();
+    auto NewGain = MergeGainTy(NewScore, MergeOffset, MergeType);
+    return CurGain < NewGain ? NewGain : CurGain;
   }
 
   /// Merge two chains of blocks respecting a given merge 'type' and 'offset'
@@ -804,42 +835,46 @@ private:
   /// and merged using all possible ways of concatenating three chains.
   MergedChain mergeBlocks(const std::vector<Block *> &X,
                           const std::vector<Block *> &Y,
-                          size_t MergeType) const {
-    // Merging w/o splitting existing chains
-    if (MergeType == 0)
-      return MergedChain(X.begin(), X.end(), Y.begin(), Y.end());
-
-    size_t Type = MergeType % 5;
-    size_t Offset = MergeType / 5;
-    assert(0 < Offset && Offset < X.size() &&
-           "Invalid offset while merging chains");
+                          size_t MergeOffset,
+                          MergeTypeTy MergeType) const {
     // Split the first chain, X, into X1 and X2
     BlockIter BeginX1 = X.begin();
-    BlockIter EndX1 = X.begin() + Offset;
-    BlockIter BeginX2 = X.begin() + Offset;
+    BlockIter EndX1 = X.begin() + MergeOffset;
+    BlockIter BeginX2 = X.begin() + MergeOffset;
     BlockIter EndX2 = X.end();
     BlockIter BeginY = Y.begin();
     BlockIter EndY = Y.end();
 
-    // Construct a new chain from three existing ones
-    switch(Type) {
-    case 1: return MergedChain(BeginX1, EndX1, BeginY, EndY, BeginX2, EndX2);
-    case 2: return MergedChain(BeginY, EndY, BeginX2, EndX2, BeginX1, EndX1);
-    case 3: return MergedChain(BeginX2, EndX2, BeginY, EndY, BeginX1, EndX1);
-    case 4: return MergedChain(BeginX2, EndX2, BeginX1, EndX1, BeginY, EndY);
-    default:
-      llvm_unreachable("unexpected merge type");
+    // Construct a new chain from the three existing ones
+    switch(MergeType) {
+      case MergeTypeTy::X_Y:
+        return MergedChain(BeginX1, EndX2, BeginY, EndY);
+      case MergeTypeTy::X1_Y_X2:
+        return MergedChain(BeginX1, EndX1, BeginY, EndY, BeginX2, EndX2);
+      case MergeTypeTy::Y_X2_X1:
+        return MergedChain(BeginY, EndY, BeginX2, EndX2, BeginX1, EndX1);
+      case MergeTypeTy::X2_X1_Y:
+        return MergedChain(BeginX2, EndX2, BeginX1, EndX1, BeginY, EndY);
+      default:
+        llvm_unreachable("unexpected merge type");
     }
   }
 
   /// Merge chain From into chain Into, update the list of active chains,
   /// adjacency information, and the corresponding cached values
-  void mergeChains(Chain *Into, Chain *From, size_t MergeType = 0) {
-    assert(Into != From && "chain cannot be merged with itself");
+  void mergeChains(Chain *Into,
+                   Chain *From,
+                   size_t MergeOffset,
+                   MergeTypeTy MergeType) {
+    assert(Into != From && "a chain cannot be merged with itself");
 
     // Merge the blocks
-    auto MergedBlocks = mergeBlocks(Into->blocks(), From->blocks(), MergeType);
+    auto MergedBlocks = mergeBlocks(Into->blocks(),
+                                    From->blocks(),
+                                    MergeOffset,
+                                    MergeType);
     Into->merge(From, MergedBlocks.getBlocks());
+    Into->mergeEdges(From);
     From->clear();
 
     // Update cached ext-tsp score for the new chain
@@ -874,10 +909,12 @@ private:
       SortedChains.begin(), SortedChains.end(),
       [](const Chain *C1, const Chain *C2) {
         // Original entry point to the front
-        if (C1->isEntryPoint())
-          return true;
-        if (C2->isEntryPoint())
-          return false;
+        if (C1->isEntryPoint() != C2->isEntryPoint()) {
+          if (C1->isEntryPoint())
+            return true;
+          if (C2->isEntryPoint())
+            return false;
+        }
 
         const double D1 = C1->density();
         const double D2 = C2->density();
@@ -908,7 +945,7 @@ private:
   // All chains of blocks
   std::vector<Chain> AllChains;
 
-  // Active chains. The vector gets udpated at runtime when chains are merged
+  // Active chains. The vector gets updated at runtime when chains are merged
   std::vector<Chain *> HotChains;
 
   // All edges between chains
@@ -921,7 +958,7 @@ void ExtTSPReorderAlgorithm::reorderBasicBlocks(
     return;
 
   // Do not change layout of functions w/o profile information
-  if (!BF.hasValidProfile() || BF.layout_size() <= 1) {
+  if (!BF.hasValidProfile() || BF.layout_size() <= 2) {
     for (auto BB : BF.layout()) {
       Order.push_back(BB);
     }
