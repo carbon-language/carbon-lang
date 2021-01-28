@@ -612,6 +612,10 @@ void Instrumentation::createAuxiliaryFunctions(BinaryContext &BC) {
                        BC.MIB->createNumCountersGetter(BC.Ctx.get()));
   createSimpleFunction("__bolt_instr_locations_getter",
                        BC.MIB->createInstrLocationsGetter(BC.Ctx.get()));
+  createSimpleFunction("__bolt_instr_tables_getter",
+                       BC.MIB->createInstrTablesGetter(BC.Ctx.get()));
+  createSimpleFunction("__bolt_instr_num_funcs_getter",
+                       BC.MIB->createInstrNumFuncsGetter(BC.Ctx.get()));
 }
 
 void Instrumentation::setupRuntimeLibrary(BinaryContext &BC) {

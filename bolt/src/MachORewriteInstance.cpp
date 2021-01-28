@@ -424,6 +424,7 @@ void MachORewriteInstance::emitAndLink() {
         if (Key == K) {
           mapCodeSections(Key);
           mapInstrumentationSection(Key, "__counters");
+          mapInstrumentationSection(Key, "__tables");
         } else {
           // TODO: Refactor addRuntimeLibSections to work properly on Mach-O
           // and use it here.
@@ -494,6 +495,7 @@ void MachORewriteInstance::rewriteFile() {
   }
 
   writeInstrumentationSection("__counters", OS);
+  writeInstrumentationSection("__tables", OS);
 
   // TODO: Refactor addRuntimeLibSections to work properly on Mach-O and
   // use it here.

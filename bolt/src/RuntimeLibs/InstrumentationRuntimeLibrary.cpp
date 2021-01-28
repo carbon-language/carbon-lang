@@ -152,6 +152,7 @@ void InstrumentationRuntimeLibrary::emitBinary(BinaryContext &BC,
   Streamer.EmitIntValue(Summary->IndCallTargetDescriptions.size(), /*Size=*/4);
   Streamer.EmitLabel(NumFuncs);
   Streamer.EmitSymbolAttribute(NumFuncs, MCSymbolAttr::MCSA_Global);
+
   Streamer.EmitIntValue(Summary->FunctionDescriptions.size(), /*Size=*/4);
   Streamer.EmitLabel(FilenameSym);
   Streamer.EmitBytes(opts::InstrumentationFilename);
@@ -168,6 +169,18 @@ void InstrumentationRuntimeLibrary::emitBinary(BinaryContext &BC,
     Streamer.EmitSymbolAttribute(FiniPtr, MCSymbolAttr::MCSA_Global);
     Streamer.EmitValue(
       MCSymbolRefExpr::create(FiniFunction->getSymbol(), *BC.Ctx), /*Size=*/8);
+  }
+
+  if (BC.isMachO()) {
+    MCSection *TablesSection = BC.Ctx->getMachOSection(
+                                 "__BOLT", "__tables", MachO::S_REGULAR,
+                                 SectionKind::getData());
+    MCSymbol *Tables = BC.Ctx->getOrCreateSymbol("__bolt_instr_tables");
+    TablesSection->setAlignment(BC.RegularPageSize);
+    Streamer.SwitchSection(TablesSection);
+    Streamer.EmitLabel(Tables);
+    Streamer.EmitSymbolAttribute(Tables, MCSymbolAttr::MCSA_Global);
+    Streamer.EmitBytes(buildTables(BC));
   }
 }
 
@@ -208,11 +221,11 @@ void InstrumentationRuntimeLibrary::link(BinaryContext &BC, StringRef ToolPath,
   emitTablesAsELFNote(BC);
 }
 
-void InstrumentationRuntimeLibrary::emitTablesAsELFNote(BinaryContext &BC) {
+std::string InstrumentationRuntimeLibrary::buildTables(BinaryContext &BC) {
   std::string TablesStr;
   raw_string_ostream OS(TablesStr);
-  // This is sync'ed with runtime/instr.cpp:readDescriptions()
 
+  // This is sync'ed with runtime/instr.cpp:readDescriptions()
   auto getOutputAddress = [](const BinaryFunction &Func,
                              uint64_t Offset) -> uint64_t {
     return Offset == 0
@@ -238,6 +251,7 @@ void InstrumentationRuntimeLibrary::emitTablesAsELFNote(BinaryContext &BC) {
     OS.write(reinterpret_cast<const char *>(&Desc.FromLoc.FuncString), 4);
     OS.write(reinterpret_cast<const char *>(&Desc.FromLoc.Offset), 4);
   }
+
   const auto ITDSize = Summary->IndCallTargetDescriptions.size() *
                        sizeof(IndCallTargetDescription);
   OS.write(reinterpret_cast<const char *>(&ITDSize), 4);
@@ -248,6 +262,7 @@ void InstrumentationRuntimeLibrary::emitTablesAsELFNote(BinaryContext &BC) {
         getOutputAddress(*Desc.Target, Desc.ToLoc.Offset);
     OS.write(reinterpret_cast<const char *>(&TargetFuncAddress), 8);
   }
+
   auto FuncDescSize = Summary->getFDSize();
   OS.write(reinterpret_cast<const char *>(&FuncDescSize), 4);
   for (const auto &Desc : Summary->FunctionDescriptions) {
@@ -293,6 +308,12 @@ void InstrumentationRuntimeLibrary::emitTablesAsELFNote(BinaryContext &BC) {
   // Our string table lives immediately after descriptions vector
   OS << Summary->StringTable;
   OS.flush();
+
+  return TablesStr;
+}
+
+void InstrumentationRuntimeLibrary::emitTablesAsELFNote(BinaryContext &BC) {
+  std::string TablesStr = buildTables(BC);
   const auto BoltInfo = BinarySection::encodeELFNote(
       "BOLT", TablesStr, BinarySection::NT_BOLT_INSTRUMENTATION_TABLES);
   BC.registerOrUpdateNoteSection(".bolt.instr.tables", copyByteArray(BoltInfo),

@@ -1748,6 +1748,16 @@ public:
     return {};
   }
 
+  virtual std::vector<MCInst> createInstrTablesGetter(MCContext *Ctx) const {
+    llvm_unreachable("not implemented");
+    return {};
+  }
+
+  virtual std::vector<MCInst> createInstrNumFuncsGetter(MCContext *Ctx) const {
+    llvm_unreachable("not implemented");
+    return {};
+  }
+
   /// This method takes an indirect call instruction and splits it up into an
   /// equivalent set of instructions that use direct calls for target
   /// symbols/addresses that are contained in the Targets vector.  This is done

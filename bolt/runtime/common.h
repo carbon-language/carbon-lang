@@ -17,6 +17,7 @@ typedef __SSIZE_TYPE__ ssize_t;
 
 typedef unsigned long long uint64_t;
 typedef unsigned uint32_t;
+typedef unsigned char uint8_t;
 
 typedef long long int64_t;
 typedef int int32_t;
@@ -123,6 +124,21 @@ uint64_t __munmap(void *addr, uint64_t size) {
                        "syscall\n"
                        : "=a"(ret)
                        : "D"(addr), "S"(size)
+                       : "cc", "rcx", "r11", "memory");
+  return ret;
+}
+
+uint64_t __exit(uint64_t code) {
+#if defined(__APPLE__)
+#define EXIT_SYSCALL 0x2000001
+#else
+#define EXIT_SYSCALL 231
+#endif
+  uint64_t ret;
+  __asm__ __volatile__("movq $" STRINGIFY(EXIT_SYSCALL) ", %%rax\n"
+                       "syscall\n"
+                       : "=a"(ret)
+                       : "D"(code)
                        : "cc", "rcx", "r11", "memory");
   return ret;
 }
@@ -317,15 +333,7 @@ uint64_t __getppid() {
   return ret;
 }
 
-uint64_t __exit(uint64_t code) {
-  uint64_t ret;
-  __asm__ __volatile__("movq $231, %%rax\n"
-                       "syscall\n"
-                       : "=a"(ret)
-                       : "D"(code)
-                       : "cc", "rcx", "r11", "memory");
-  return ret;
-}
+#endif
 
 void reportError(const char *Msg, uint64_t Size) {
   __write(2, Msg, Size);
@@ -371,7 +379,5 @@ public:
 inline uint64_t alignTo(uint64_t Value, uint64_t Align) {
   return (Value + Align - 1) / Align * Align;
 }
-
-#endif
 
 } // anonymous namespace

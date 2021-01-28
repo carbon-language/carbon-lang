@@ -34,6 +34,8 @@ public:
             orc::RTDyldObjectLinkingLayer &OLT) override;
 
 private:
+  std::string buildTables(BinaryContext &BC);
+
   /// Create a non-allocatable ELF section with read-only tables necessary for
   /// writing the instrumented data profile during program finish. The runtime
   /// library needs to open the program executable file and read this data from

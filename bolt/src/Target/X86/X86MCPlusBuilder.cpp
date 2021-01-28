@@ -3341,6 +3341,22 @@ public:
     return Insts;
   }
 
+  std::vector<MCInst> createInstrTablesGetter(MCContext *Ctx) const override {
+    std::vector<MCInst> Insts(2);
+    MCSymbol *Locs = Ctx->getOrCreateSymbol("__bolt_instr_tables");
+    createLea(Insts[0], Locs, X86::EAX, Ctx);
+    createReturn(Insts[1]);
+    return Insts;
+  }
+
+  std::vector<MCInst> createInstrNumFuncsGetter(MCContext *Ctx) const override {
+    std::vector<MCInst> Insts(2);
+    MCSymbol *NumFuncs = Ctx->getOrCreateSymbol("__bolt_instr_num_funcs");
+    createMove(Insts[0], NumFuncs, X86::EAX, Ctx);
+    createReturn(Insts[1]);
+    return Insts;
+  }
+
   BlocksVectorTy indirectCallPromotion(
     const MCInst &CallInst,
     const std::vector<std::pair<MCSymbol *, uint64_t>> &Targets,
