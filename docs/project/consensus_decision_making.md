@@ -88,8 +88,7 @@ it can cite the now pertinent goals, priorities and principles.
 
 In order to ensure we can rapidly make decisions, each team will have a standing
 weekly meeting slot, which observers may attend. Members are expected to do
-their best to keep the slot available. Meetings will be held using Google
-Hangouts Meet.
+their best to keep the slot available. Meetings will be held using Google Meet.
 
 Each time a team needs to make a decision, for example, about a change to
 Carbon, it is expected that we'll try to make a decision without using a live
