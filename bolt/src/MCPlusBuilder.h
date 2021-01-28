@@ -1738,6 +1738,16 @@ public:
     return std::vector<MCInst>();
   }
 
+  virtual std::vector<MCInst> createNumCountersGetter(MCContext *Ctx) const {
+    llvm_unreachable("not implemented");
+    return {};
+  }
+
+  virtual std::vector<MCInst> createInstrLocationsGetter(MCContext *Ctx) const {
+    llvm_unreachable("not implemented");
+    return {};
+  }
+
   /// This method takes an indirect call instruction and splits it up into an
   /// equivalent set of instructions that use direct calls for target
   /// symbols/addresses that are contained in the Targets vector.  This is done

@@ -180,6 +180,17 @@ uint32_t strLen(const char *Str) {
   return Size;
 }
 
+void reportNumber(const char *Msg, uint64_t Num, uint32_t Base) {
+  char Buf[BufSize];
+  char *Ptr = Buf;
+  Ptr = strCopy(Ptr, Msg, BufSize - 23);
+  Ptr = intToStr(Ptr, Num, Base);
+  Ptr = strCopy(Ptr, "\n");
+  __write(2, Buf, Ptr - Buf);
+}
+
+void report(const char *Msg) { __write(2, Msg, strLen(Msg)); }
+
 #if !defined(__APPLE__)
 // We use a stack-allocated buffer for string manipulation in many pieces of
 // this code, including the code that prints each line of the fdata file. This
@@ -331,17 +342,6 @@ void assert(bool Assertion, const char *Msg) {
   Ptr = strCopy(Ptr, "\n");
   reportError(Buf, Ptr - Buf);
 }
-
-void reportNumber(const char *Msg, uint64_t Num, uint32_t Base) {
-  char Buf[BufSize];
-  char *Ptr = Buf;
-  Ptr = strCopy(Ptr, Msg, BufSize - 23);
-  Ptr = intToStr(Ptr, Num, Base);
-  Ptr = strCopy(Ptr, "\n");
-  __write(2, Buf, Ptr - Buf);
-}
-
-void report(const char *Msg) { __write(2, Msg, strLen(Msg)); }
 
 /// 1B mutex accessed by lock xchg
 class Mutex {

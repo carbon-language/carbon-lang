@@ -57,7 +57,16 @@
   {}
 #endif
 
-#if !defined(__APPLE__)
+
+#if defined(__APPLE__)
+extern "C" {
+
+extern uint64_t* _bolt_instr_locations_getter();
+extern uint32_t _bolt_num_counters_getter();
+
+}
+
+#else
 
 // Main counters inserted by instrumentation, incremented during runtime when
 // points of interest (locations) in the program are reached. Those are direct
@@ -1463,17 +1472,45 @@ extern "C" void __bolt_instr_fini() {
   DEBUG(report("Finished.\n"));
 }
 
-#else
+#endif
+
+#if defined(__APPLE__)
 
 // On OSX/iOS the final symbol name of an extern "C" function/variable contains
 // one extra leading underscore: _bolt_instr_setup -> __bolt_instr_setup.
-extern "C" __attribute((section("__TEXT,__setup"))) void _bolt_instr_setup() {
-  const char* Message = "Hello!\n";
+extern "C"
+__attribute__((section("__TEXT,__setup")))
+__attribute__((force_align_arg_pointer))
+void _bolt_instr_setup() {
+  const char *Message = "Hello!\n";
   __write(2, Message, 7);
+
+  uint32_t NumCounters = _bolt_num_counters_getter();
+  reportNumber("__bolt_instr_setup, number of counters: ", NumCounters, 10);
+
+  uint64_t *Locs = _bolt_instr_locations_getter();
+  reportNumber("__bolt_instr_setup, address of counters: ",
+               reinterpret_cast<uint64_t>(Locs), 10);
+
+  for (size_t I = 0; I < NumCounters; ++I)
+    reportNumber("Counter value: ", Locs[I], 10);
 }
 
-extern "C" __attribute((section("__TEXT,__fini"))) void _bolt_instr_fini() {
-  const char* Message = "Bye!\n";
+extern "C"
+__attribute__((section("__TEXT,__fini")))
+__attribute__((force_align_arg_pointer))
+void _bolt_instr_fini() {
+  uint32_t NumCounters = _bolt_num_counters_getter();
+  reportNumber("__bolt_instr_fini, number of counters: ", NumCounters, 10);
+
+  uint64_t *Locs = _bolt_instr_locations_getter();
+  reportNumber("__bolt_instr_fini, address of counters: ",
+               reinterpret_cast<uint64_t>(Locs), 10);
+
+  for (size_t I = 0; I < NumCounters; ++I)
+    reportNumber("Counter value: ", Locs[I], 10);
+
+  const char *Message = "Bye!\n";
   __write(2, Message, 5);
 }
 

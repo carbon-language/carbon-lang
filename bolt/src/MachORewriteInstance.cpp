@@ -344,6 +344,7 @@ void MachORewriteInstance::mapCodeSections(orc::VModuleKey Key) {
                               BOLT->getInputFileOffset());
       Function->setImageAddress(FuncSection->getAllocAddress());
       Function->setImageSize(FuncSection->getOutputSize());
+      BC->registerNameAtAddress(Function->getOneName(), Addr, 0, 0);
       Addr += FuncSection->getOutputSize();
     }
   }
@@ -386,8 +387,6 @@ void MachORewriteInstance::emitAndLink() {
   auto Resolver = orc::createLegacyLookupResolver(
       [&](const std::string &Name) -> JITSymbol {
         llvm::errs() << "looking for " << Name << "\n";
-        assert(!BC->EFMM->ObjectsLoaded &&
-               "Linking multiple objects is unsupported");
         DEBUG(dbgs() << "BOLT: looking for " << Name << "\n");
         if (auto *I = BC->getBinaryDataByName(Name)) {
           const uint64_t Address = I->isMoved() && !I->isJumpTable()

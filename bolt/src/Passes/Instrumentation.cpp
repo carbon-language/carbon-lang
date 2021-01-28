@@ -607,6 +607,11 @@ void Instrumentation::createAuxiliaryFunctions(BinaryContext &BC) {
   Summary->InitialIndTailCallHandlerFunction =
       createSimpleFunction("__bolt_instr_default_ind_tailcall_handler",
                            BC.MIB->createInstrumentedNoopIndTailCallHandler());
+
+  createSimpleFunction("__bolt_num_counters_getter",
+                       BC.MIB->createNumCountersGetter(BC.Ctx.get()));
+  createSimpleFunction("__bolt_instr_locations_getter",
+                       BC.MIB->createInstrLocationsGetter(BC.Ctx.get()));
 }
 
 void Instrumentation::setupRuntimeLibrary(BinaryContext &BC) {
