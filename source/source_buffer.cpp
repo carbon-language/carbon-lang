@@ -54,7 +54,12 @@ auto SourceBuffer::CreateFromFile(llvm::StringRef filename)
   }
 
   errno = 0;
-  void* mapped_text = mmap(nullptr, size, PROT_READ, MAP_PRIVATE | MAP_POPULATE,
+  void* mapped_text = mmap(nullptr, size, PROT_READ,
+#ifdef __APPLE__
+                           MAP_PRIVATE,
+#else
+                           MAP_PRIVATE | MAP_POPULATE,
+#endif
                            file_descriptor, /*offset=*/0);
   if (mapped_text == MAP_FAILED) {
     return ErrnoToError(errno);

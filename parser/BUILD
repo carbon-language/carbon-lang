@@ -36,10 +36,10 @@ cc_library(
     hdrs = ["parse_tree.h"],
     deps = [
         ":parse_node_kind",
-        "@llvm-project//llvm:Support",
         "//diagnostics:diagnostic_emitter",
         "//lexer:token_kind",
         "//lexer:tokenized_buffer",
+        "@llvm-project//llvm:Support",
     ],
 )
 
@@ -50,9 +50,9 @@ cc_library(
     deps = [
         ":parse_node_kind",
         ":parse_tree",
+        "//lexer:tokenized_buffer",
         "@llvm-project//llvm:Support",
         "@llvm-project//llvm:gmock",
-        "//lexer:tokenized_buffer",
     ],
 )
 
@@ -63,13 +63,13 @@ cc_test(
         ":parse_node_kind",
         ":parse_test_helpers",
         ":parse_tree",
+        "//diagnostics:diagnostic_emitter",
+        "//lexer:tokenized_buffer",
+        "//lexer:tokenized_buffer_test_helpers",
         "@llvm-project//llvm:Support",
         "@llvm-project//llvm:gmock",
         "@llvm-project//llvm:gtest",
         "@llvm-project//llvm:gtest_main",
-        "//diagnostics:diagnostic_emitter",
-        "//lexer:tokenized_buffer",
-        "//lexer:tokenized_buffer_test_helpers",
     ],
 )
 
@@ -79,8 +79,8 @@ cc_fuzz_test(
     corpus = glob(["fuzzer_corpus/*"]),
     deps = [
         ":parse_tree",
-        "@llvm-project//llvm:Support",
         "//diagnostics:diagnostic_emitter",
         "//lexer:tokenized_buffer",
+        "@llvm-project//llvm:Support",
     ],
 )

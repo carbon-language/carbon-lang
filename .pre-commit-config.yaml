@@ -74,6 +74,12 @@ repos:
     rev: 20.8b1
     hooks:
       - id: black
+  - repo: https://github.com/jlebar/pre-commit-hooks.git
+    rev: HEAD
+    hooks:
+      - id: bazel-buildifier
+      - id: clang-format-whole-file
+        types: [c++]
   - repo: https://github.com/prettier/pre-commit
     rev: v2.1.2
     hooks:

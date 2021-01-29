@@ -8,9 +8,6 @@ load("//bazel/testing:golden_test.bzl", "golden_test")
 cc_binary(
     name = "executable_semantics",
     srcs = ["main.cpp"],
-    linkopts = [
-        "-lpthread",
-    ],
     deps = [":syntax"],
 )
 
@@ -41,6 +38,9 @@ cc_library(
         "-Wno-unneeded-internal-declaration",
         "-Wno-unused-function",
         "-Wno-writable-strings",
+    ],
+    linkopts = [
+        "-lpthread",
     ],
     deps = [
         "//executable_semantics/ast:declaration",

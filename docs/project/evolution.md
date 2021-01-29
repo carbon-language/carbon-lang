@@ -79,8 +79,7 @@ We use several tools to coordinate changes to Carbon:
         get summarized on a relevant Discourse Forum topic.
 -   **Google Docs** may be used for early draft proposals. This facilitates
     collaborative editing and easy commenting about wording issues.
--   **Google Hangouts Meet** will be used for VC meetings, typically for
-    decisions.
+-   **Google Meet** will be used for VC meetings, typically for decisions.
     -   Meetings should typically be summarized on a relevant Discourse Forum
         topic.
 -   **Google Calendar** will be used to track team meeting and vacation times.
@@ -103,6 +102,7 @@ team will still review participation.
 Our current review managers are:
 
 -   [jonmeow](https://github.com/jonmeow)
+-   [mmdriley](https://github.com/mmdriley)
 -   [sidney13](https://github.com/sidney13)
 
 ### Core team
