@@ -2,14 +2,17 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#ifndef EXECUTABLE_SEMANTICS_TYPECHECK_H
-#define EXECUTABLE_SEMANTICS_TYPECHECK_H
+#ifndef EXECUTABLE_SEMANTICS_INTERPRETER_TYPECHECK_H_
+#define EXECUTABLE_SEMANTICS_INTERPRETER_TYPECHECK_H_
 
 #include <set>
 
-#include "executable_semantics/assoc_list.h"
-#include "executable_semantics/ast.h"
-#include "executable_semantics/interp.h"
+#include "executable_semantics/ast/expression.h"
+#include "executable_semantics/ast/statement.h"
+#include "executable_semantics/interpreter/assoc_list.h"
+#include "executable_semantics/interpreter/interpreter.h"
+
+namespace Carbon {
 
 using TypeEnv = AssocList<std::string, Value*>;
 
@@ -34,9 +37,6 @@ struct TCStatement {
 
 auto ToType(int line_num, Value* val) -> Value*;
 
-auto TypeEqual(Value* t1, Value* t2) -> bool;
-auto FieldsEqual(VarValues* ts1, VarValues* ts2) -> bool;
-
 auto TypeCheckExp(Expression* e, TypeEnv* env, Env* ct_env, Value* expected,
                   TCContext context) -> TCResult;
 
@@ -47,8 +47,10 @@ auto TypeCheckFunDef(struct FunctionDefinition*, TypeEnv*)
 
 auto TypeCheckDecl(Declaration* d, TypeEnv* env, Env* ct_env) -> Declaration*;
 
-auto TopLevel(std::list<struct Declaration*>* fs) -> std::pair<TypeEnv*, Env*>;
+auto TopLevel(std::list<Declaration*>* fs) -> std::pair<TypeEnv*, Env*>;
 
 void PrintErrorString(const std::string& s);
 
-#endif  // EXECUTABLE_SEMANTICS_TYPECHECK_H
+}  // namespace Carbon
+
+#endif  // EXECUTABLE_SEMANTICS_INTERPRETER_TYPECHECK_H_

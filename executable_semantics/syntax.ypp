@@ -2,50 +2,51 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-%{
-#include <stdarg.h>
-#include <stdio.h>
-#include <stdlib.h>
-
+%code top {
 #include <algorithm>
+#include <cstdarg>
+#include <cstdio>
+#include <cstdlib>
 #include <iostream>
 #include <list>
 
-#include "executable_semantics/ast.h"
-#include "executable_semantics/typecheck.h"
-#include "executable_semantics/interp.h"
-
-extern FILE* yyin;
-extern int yylineno;
-char* input_filename = nullptr;
-
-void yyerror(char* s)  {
-  fprintf(stderr, "%s:%d: %s\n", input_filename, yylineno, s);
-  exit(-1);
+#include "executable_semantics/syntax_helpers.h"
 }
-// void yyerror(char *s, ...);
 
+%code requires {
+#include "executable_semantics/ast/declaration.h"
+#include "executable_semantics/ast/expression_or_field_list.h"
+#include "executable_semantics/ast/function_definition.h"
+}
+
+%code {
+extern int yylineno;
 extern int yylex();
-extern int yywrap();
-%}
+
+void yyerror(char* error) {
+  Carbon::PrintSyntaxError(error, yylineno);
+}
+// void yyerror(char* error, ...);
+}
+
 %union {
    char* str;
    int num;
-   Expression* expression;
-   VarTypes* field_types;
-   Statement* statement;
-   Statement* statement_list;
-   struct FunctionDefinition* function_definition;
-   Declaration* declaration;
-   std::list<Declaration*>* declaration_list;
-   Member* member;
-   std::list<Member*>* member_list;
-   ExpOrFieldList* field_list;
-   std::pair<std::string, Expression*>* alternative;
-   std::list<std::pair<std::string, Expression*>>* alternative_list;
-   std::pair<Expression*,Statement*>* clause;
-   std::list<std::pair<Expression*,Statement*>>* clause_list;
-   Expression* fun_type;
+   Carbon::Expression* expression;
+   std::list<std::pair<std::string, Carbon::Expression*>>* field_types;
+   Carbon::Statement* statement;
+   Carbon::Statement* statement_list;
+   Carbon::FunctionDefinition* function_definition;
+   Carbon::Declaration* declaration;
+   std::list<Carbon::Declaration*>* declaration_list;
+   Carbon::Member* member;
+   std::list<Carbon::Member*>* member_list;
+   Carbon::ExpOrFieldList* field_list;
+   std::pair<std::string, Carbon::Expression*>* alternative;
+   std::list<std::pair<std::string, Carbon::Expression*>>* alternative_list;
+   std::pair<Carbon::Expression*, Carbon::Statement*>* clause;
+   std::list<std::pair<Carbon::Expression*, Carbon::Statement*>>* clause_list;
+   Carbon::Expression* fun_type;
 };
 
 %token <num> integer_literal
@@ -106,25 +107,7 @@ extern int yywrap();
 %locations
 %%
 input: declaration_list
-    {
-      printf("********** source program **********\n");
-      PrintList($1, PrintDecl, "");
-      printf("********** type checking **********\n");
-      state = new State();  // Compile-time state.
-      std::pair<TypeEnv*, Env*> p = TopLevel($1);
-      TypeEnv* top = p.first;
-      Env* ct_top = p.second;
-      std::list<Declaration*> new_decls;
-      for (const auto& i : *$1) {
-        new_decls.push_back(TypeCheckDecl(i, top, ct_top));
-      }
-      printf("\n");
-      printf("********** type checking complete **********\n");
-      PrintList(&new_decls, PrintDecl, "");
-      printf("********** starting execution **********\n");
-      int result = InterpProgram(&new_decls);
-      std::cout << "result: " << result << std::endl;
-    }
+    { Carbon::ExecProgram($1); }
 ;
 pattern:
   expression
@@ -132,139 +115,146 @@ pattern:
 ;
 expression:
   identifier
-    { $$ = MakeVar(yylineno, $1); }
+    { $$ = Carbon::MakeVar(yylineno, $1); }
 | expression designator
-    { $$ = MakeGetField(yylineno, $1, $2); }
+    { $$ = Carbon::MakeGetField(yylineno, $1, $2); }
 | expression '[' expression ']'
-    { $$ = MakeIndex(yylineno, $1, $3); }
+    { $$ = Carbon::MakeIndex(yylineno, $1, $3); }
 | expression ':' identifier
-    { $$ = MakeVarPat(yylineno, $3, $1); }
+    { $$ = Carbon::MakeVarPat(yylineno, $3, $1); }
 | integer_literal
-    { $$ = MakeInt(yylineno, $1); }
+    { $$ = Carbon::MakeInt(yylineno, $1); }
 | TRUE
-    { $$ = MakeBool(yylineno, true); }
+    { $$ = Carbon::MakeBool(yylineno, true); }
 | FALSE
-    { $$ = MakeBool(yylineno, false); }
+    { $$ = Carbon::MakeBool(yylineno, false); }
 | INT
-    { $$ = MakeIntType(yylineno); }
+    { $$ = Carbon::MakeIntType(yylineno); }
 | BOOL
-    { $$ = MakeBoolType(yylineno); }
+    { $$ = Carbon::MakeBoolType(yylineno); }
 | TYPE
-    { $$ = MakeTypeType(yylineno); }
+    { $$ = Carbon::MakeTypeType(yylineno); }
 | AUTO
-    { $$ = MakeAutoType(yylineno); }
+    { $$ = Carbon::MakeAutoType(yylineno); }
 | tuple { $$ = $1; }
 | expression EQUAL expression
-    { $$ = MakeBinOp(yylineno, Operator::Eq, $1, $3); }
+    { $$ = Carbon::MakeBinOp(yylineno, Carbon::Operator::Eq, $1, $3); }
 | expression '+' expression
-    { $$ = MakeBinOp(yylineno, Operator::Add, $1, $3); }
+    { $$ = Carbon::MakeBinOp(yylineno, Carbon::Operator::Add, $1, $3); }
 | expression '-' expression
-    { $$ = MakeBinOp(yylineno, Operator::Sub, $1, $3); }
+    { $$ = Carbon::MakeBinOp(yylineno, Carbon::Operator::Sub, $1, $3); }
 | expression AND expression
-    { $$ = MakeBinOp(yylineno, Operator::And, $1, $3); }
+    { $$ = Carbon::MakeBinOp(yylineno, Carbon::Operator::And, $1, $3); }
 | expression OR expression
-    { $$ = MakeBinOp(yylineno, Operator::Or, $1, $3); }
+    { $$ = Carbon::MakeBinOp(yylineno, Carbon::Operator::Or, $1, $3); }
 | NOT expression
-    { $$ = MakeUnOp(yylineno, Operator::Not, $2); }
+    { $$ = Carbon::MakeUnOp(yylineno, Carbon::Operator::Not, $2); }
 | '-' expression
-    { $$ = MakeUnOp(yylineno, Operator::Neg, $2); }
+    { $$ = Carbon::MakeUnOp(yylineno, Carbon::Operator::Neg, $2); }
 | expression tuple
     {
-      if ($2->tag == ExpressionKind::Tuple) {
-        $$ = MakeCall(yylineno, $1, $2);
+      if ($2->tag == Carbon::ExpressionKind::Tuple) {
+        $$ = Carbon::MakeCall(yylineno, $1, $2);
       } else {
-        auto vec = new std::vector<std::pair<std::string,Expression*>>();
+        auto vec =
+            new std::vector<std::pair<std::string, Carbon::Expression*>>();
         vec->push_back(std::make_pair("", $2));
-        $$ = MakeCall(yylineno, $1, MakeTuple(yylineno, vec));
+        $$ = Carbon::MakeCall(yylineno, $1, Carbon::MakeTuple(yylineno, vec));
       }
     }
 | FNTY tuple return_type
-    { $$ = MakeFunType(yylineno, $2, $3); }
+    { $$ = Carbon::MakeFunType(yylineno, $2, $3); }
 ;
 designator: '.' identifier { $$ = $2; }
 ;
 tuple: '(' field_list ')'
     {
       switch ($2->tag) {
-      case ExpOrFieldListKind::Exp:
+      case Carbon::ExpOrFieldListKind::Exp:
         $$ = $2->u.exp;
         break;
-      case ExpOrFieldListKind::FieldList:
-        auto vec = new std::vector<std::pair<std::string,Expression*>>(
+      case Carbon::ExpOrFieldListKind::FieldList:
+        auto vec = new std::vector<std::pair<std::string,Carbon::Expression*>>(
             $2->u.fields->begin(), $2->u.fields->end());
-        $$ = MakeTuple(yylineno, vec);
+        $$ = Carbon::MakeTuple(yylineno, vec);
         break;
       }
     }
 ;
 field:
   pattern
-    { $$ = MakeExp($1); }
+    { $$ = Carbon::MakeExp($1); }
 | designator '=' pattern
     {
-      auto fields = new std::list<std::pair<std::string,Expression*>>();
+      auto fields =
+          new std::list<std::pair<std::string, Carbon::Expression*>>();
       fields->push_back(std::make_pair($1, $3));
-      $$ = MakeFieldList(fields);
+      $$ = Carbon::MakeFieldList(fields);
     }
 ;
 field_list:
   // Empty
     {
-      $$ = MakeFieldList(new std::list<std::pair<std::string,Expression*>>());
+      $$ = Carbon::MakeFieldList(
+          new std::list<std::pair<std::string, Carbon::Expression*>>());
     }
 | field
     { $$ = $1; }
 | field ',' field_list
-    { $$ = MakeConsField($1, $3); }
+    { $$ = Carbon::MakeConsField($1, $3); }
 ;
 clause:
   CASE pattern DBLARROW statement
-    { $$ = new std::pair<Expression*, Statement*>($2, $4); }
+    { $$ = new std::pair<Carbon::Expression*, Carbon::Statement*>($2, $4); }
 | DEFAULT DBLARROW statement
     {
-      auto vp = MakeVarPat(yylineno, "_", MakeAutoType(yylineno));
-      $$ = new std::pair<Expression*, Statement*>(vp, $3);
+      auto vp = Carbon::MakeVarPat(yylineno, "_",
+                                   Carbon::MakeAutoType(yylineno));
+      $$ = new std::pair<Carbon::Expression*, Carbon::Statement*>(vp, $3);
     }
 ;
 clause_list:
   // Empty
-    { $$ = new std::list< std::pair<Expression*,Statement*>>(); }
+    {
+      $$ = new std::list<std::pair<Carbon::Expression*, Carbon::Statement*>>();
+    }
 | clause clause_list
     { $$ = $2; $$->push_front(*$1); }
 ;
 statement:
   expression '=' expression ';'
-    { $$ = MakeAssign(yylineno, $1, $3); }
+    { $$ = Carbon::MakeAssign(yylineno, $1, $3); }
 | VAR pattern '=' expression ';'
-    { $$ = MakeVarDef(yylineno, $2, $4); }
+    { $$ = Carbon::MakeVarDef(yylineno, $2, $4); }
 | expression ';'
-    { $$ = MakeExpStmt(yylineno, $1); }
+    { $$ = Carbon::MakeExpStmt(yylineno, $1); }
 | IF '(' expression ')' statement ELSE statement
-    { $$ = MakeIf(yylineno, $3, $5, $7); }
+    { $$ = Carbon::MakeIf(yylineno, $3, $5, $7); }
 | WHILE '(' expression ')' statement
-    { $$ = MakeWhile(yylineno, $3, $5); }
+    { $$ = Carbon::MakeWhile(yylineno, $3, $5); }
 | BREAK ';'
-    { $$ = MakeBreak(yylineno); }
+    { $$ = Carbon::MakeBreak(yylineno); }
 | CONTINUE ';'
-    { $$ = MakeContinue(yylineno); }
+    { $$ = Carbon::MakeContinue(yylineno); }
 | RETURN expression ';'
-    { $$ = MakeReturn(yylineno, $2); }
+    { $$ = Carbon::MakeReturn(yylineno, $2); }
 | '{' statement_list '}'
-    { $$ = MakeBlock(yylineno, $2); }
+    { $$ = Carbon::MakeBlock(yylineno, $2); }
 | MATCH '(' expression ')' '{' clause_list '}'
-    { $$ = MakeMatch(yylineno, $3, $6); }
+    { $$ = Carbon::MakeMatch(yylineno, $3, $6); }
 ;
 statement_list:
   // Empty
     { $$ = 0; }
 | statement statement_list
-    { $$ = MakeSeq(yylineno, $1, $2); }
+    { $$ = Carbon::MakeSeq(yylineno, $1, $2); }
 ;
 return_type:
   // Empty
     {
-      $$ = MakeTuple(yylineno,
-                     new std::vector<std::pair<std::string,Expression*>>());
+      $$ = Carbon::MakeTuple(
+          yylineno,
+          new std::vector<std::pair<std::string, Carbon::Expression*>>());
     }
 | ARROW expression
     { $$ = $2; }
@@ -274,8 +264,8 @@ function_definition:
     { $$ = MakeFunDef(yylineno, $2, $4, $3, $6); }
 | FN identifier tuple DBLARROW expression ';'
     {
-      $$ = MakeFunDef(yylineno, $2, MakeAutoType(yylineno), $3,
-                      MakeReturn(yylineno, $5));
+      $$ = Carbon::MakeFunDef(yylineno, $2, Carbon::MakeAutoType(yylineno), $3,
+                              Carbon::MakeReturn(yylineno, $5));
     }
 ;
 function_declaration:
@@ -288,58 +278,37 @@ member:
 ;
 member_list:
   // Empty
-    { $$ = new std::list<Member*>(); }
+    { $$ = new std::list<Carbon::Member*>(); }
 | member member_list
     { $$ = $2; $$->push_front($1); }
 ;
 alternative:
   identifier tuple ';'
-    { $$ = new std::pair<std::string,Expression*>($1, $2); }
+    { $$ = new std::pair<std::string, Carbon::Expression*>($1, $2); }
 ;
 alternative_list:
   // Empty
-    { $$ = new std::list<std::pair<std::string, Expression*>>(); }
+    { $$ = new std::list<std::pair<std::string, Carbon::Expression*>>(); }
 | alternative alternative_list
     { $$ = $2; $$->push_front(*$1); }
 ;
 declaration:
   function_definition
-    { $$ = MakeFunDecl($1); }
+    { $$ = Carbon::MakeFunDecl($1); }
 | function_declaration
-    { $$ = MakeFunDecl($1); }
+    { $$ = Carbon::MakeFunDecl($1); }
 | STRUCT identifier '{' member_list '}'
-    { $$ = MakeStructDecl(yylineno, $2, $4); }
+    { $$ = Carbon::MakeStructDecl(yylineno, $2, $4); }
 | CHOICE identifier '{' alternative_list '}'
-    { $$ = MakeChoiceDecl(yylineno, $2, $4); }
+    { $$ = Carbon::MakeChoiceDecl(yylineno, $2, $4); }
 ;
 declaration_list:
   // Empty
-    { $$ = new std::list<Declaration*>(); }
+    { $$ = new std::list<Carbon::Declaration*>(); }
 | declaration declaration_list
-    { $$ = $2; $$->push_front($1); }
+    {
+      $$ = $2;
+      $$->push_front($1);
+    }
 ;
 %%
-int main(int argc, char* argv[])  {
-  // Uncomment the next line to enable debug output.
-  // yydebug = 1;
-
-  if (argc > 1) {
-    input_filename = argv[1];
-    yyin = fopen(argv[1], "r");
-    if (yyin == nullptr) {
-      fprintf(stderr, "Error opening '%s': %s\n", argv[1], strerror(errno));
-      return 1;
-    }
-  }
-  if (argc > 2) {
-    FILE* program = fopen(argv[2], "r");
-    if (program == nullptr) {
-      fprintf(stderr, "Error opening '%s': %s\n", argv[2], strerror(errno));
-      return 1;
-    }
-    input = ReadFile(program);
-    fclose(program);
-  }
-  yyparse();
-  return 0;
-}

@@ -2,15 +2,20 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#include "interp.h"
+#include "executable_semantics/interpreter/interpreter.h"
 
 #include <iostream>
 #include <iterator>
 #include <map>
+#include <optional>
 #include <utility>
 #include <vector>
 
-#include "typecheck.h"
+#include "executable_semantics/ast/expression.h"
+#include "executable_semantics/ast/function_definition.h"
+#include "executable_semantics/interpreter/typecheck.h"
+
+namespace Carbon {
 
 State* state = nullptr;
 
@@ -18,198 +23,16 @@ auto PatternMatch(Value* pat, Value* val, Env*, std::list<std::string>*, int)
     -> Env*;
 void HandleValue();
 
-/***** Value Operations *****/
-
-auto ToInteger(Value* v) -> int {
-  switch (v->tag) {
-    case ValKind::IntV:
-      return v->u.integer;
-    default:
-      std::cerr << "expected an integer, not ";
-      PrintValue(v, std::cerr);
-      exit(-1);
+template <class T>
+static auto FindField(const std::string& field,
+                      const std::vector<std::pair<std::string, T>>& inits)
+    -> std::optional<T> {
+  for (const auto& i : inits) {
+    if (i.first == field) {
+      return i.second;
+    }
   }
-}
-
-void CheckAlive(Value* v, int line_num) {
-  if (!v->alive) {
-    std::cerr << line_num << ": undefined behavior: access to dead value ";
-    PrintValue(v, std::cerr);
-    std::cerr << std::endl;
-    exit(-1);
-  }
-}
-
-auto MakeIntVal(int i) -> Value* {
-  auto* v = new Value();
-  v->alive = true;
-  v->tag = ValKind::IntV;
-  v->u.integer = i;
-  return v;
-}
-
-auto MakeBoolVal(bool b) -> Value* {
-  auto* v = new Value();
-  v->alive = true;
-  v->tag = ValKind::BoolV;
-  v->u.boolean = b;
-  return v;
-}
-
-auto MakeFunVal(std::string name, Value* param, Statement* body) -> Value* {
-  auto* v = new Value();
-  v->alive = true;
-  v->tag = ValKind::FunV;
-  v->u.fun.name = new std::string(std::move(name));
-  v->u.fun.param = param;
-  v->u.fun.body = body;
-  return v;
-}
-
-auto MakePtrVal(Address addr) -> Value* {
-  auto* v = new Value();
-  v->alive = true;
-  v->tag = ValKind::PtrV;
-  v->u.ptr = addr;
-  return v;
-}
-
-auto MakeStructVal(Value* type, Value* inits) -> Value* {
-  auto* v = new Value();
-  v->alive = true;
-  v->tag = ValKind::StructV;
-  v->u.struct_val.type = type;
-  v->u.struct_val.inits = inits;
-  return v;
-}
-
-auto MakeTupleVal(std::vector<std::pair<std::string, Address>>* elts)
-    -> Value* {
-  auto* v = new Value();
-  v->alive = true;
-  v->tag = ValKind::TupleV;
-  v->u.tuple.elts = elts;
-  return v;
-}
-
-auto MakeAltVal(std::string alt_name, std::string choice_name, Value* arg)
-    -> Value* {
-  auto* v = new Value();
-  v->alive = true;
-  v->tag = ValKind::AltV;
-  v->u.alt.alt_name = new std::string(std::move(alt_name));
-  v->u.alt.choice_name = new std::string(std::move(choice_name));
-  v->u.alt.arg = arg;
-  return v;
-}
-
-auto MakeAltCons(std::string alt_name, std::string choice_name) -> Value* {
-  auto* v = new Value();
-  v->alive = true;
-  v->tag = ValKind::AltConsV;
-  v->u.alt.alt_name = new std::string(std::move(alt_name));
-  v->u.alt.choice_name = new std::string(std::move(choice_name));
-  return v;
-}
-
-auto MakeVarPatVal(std::string name, Value* type) -> Value* {
-  auto* v = new Value();
-  v->alive = true;
-  v->tag = ValKind::VarPatV;
-  v->u.var_pat.name = new std::string(std::move(name));
-  v->u.var_pat.type = type;
-  return v;
-}
-
-auto MakeVarTypeVal(std::string name) -> Value* {
-  auto* v = new Value();
-  v->alive = true;
-  v->tag = ValKind::VarTV;
-  v->u.var_type = new std::string(std::move(name));
-  return v;
-}
-
-auto MakeIntTypeVal() -> Value* {
-  auto* v = new Value();
-  v->alive = true;
-  v->tag = ValKind::IntTV;
-  return v;
-}
-
-auto MakeBoolTypeVal() -> Value* {
-  auto* v = new Value();
-  v->alive = true;
-  v->tag = ValKind::BoolTV;
-  return v;
-}
-
-auto MakeTypeTypeVal() -> Value* {
-  auto* v = new Value();
-  v->alive = true;
-  v->tag = ValKind::TypeTV;
-  return v;
-}
-
-auto MakeAutoTypeVal() -> Value* {
-  auto* v = new Value();
-  v->alive = true;
-  v->tag = ValKind::AutoTV;
-  return v;
-}
-
-auto MakeFunTypeVal(Value* param, Value* ret) -> Value* {
-  auto* v = new Value();
-  v->alive = true;
-  v->tag = ValKind::FunctionTV;
-  v->u.fun_type.param = param;
-  v->u.fun_type.ret = ret;
-  return v;
-}
-
-auto MakePtrTypeVal(Value* type) -> Value* {
-  auto* v = new Value();
-  v->alive = true;
-  v->tag = ValKind::PointerTV;
-  v->u.ptr_type.type = type;
-  return v;
-}
-
-auto MakeStructTypeVal(std::string name, VarValues* fields, VarValues* methods)
-    -> Value* {
-  auto* v = new Value();
-  v->alive = true;
-  v->tag = ValKind::StructTV;
-  v->u.struct_type.name = new std::string(std::move(name));
-  v->u.struct_type.fields = fields;
-  v->u.struct_type.methods = methods;
-  return v;
-}
-
-auto MakeTupleTypeVal(VarValues* fields) -> Value* {
-  auto* v = new Value();
-  v->alive = true;
-  v->tag = ValKind::TupleTV;
-  v->u.tuple_type.fields = fields;
-  return v;
-}
-
-auto MakeVoidTypeVal() -> Value* {
-  auto* v = new Value();
-  v->alive = true;
-  v->tag = ValKind::TupleTV;
-  v->u.tuple_type.fields = new VarValues();
-  return v;
-}
-
-auto MakeChoiceTypeVal(std::string* name,
-                       std::list<std::pair<std::string, Value*>>* alts)
-    -> Value* {
-  auto* v = new Value();
-  v->alive = true;
-  v->tag = ValKind::ChoiceTV;
-  v->u.choice_type.name = name;
-  v->u.choice_type.alternatives = alts;
-  return v;
+  return std::nullopt;
 }
 
 /**** Auxiliary Functions ****/
@@ -318,202 +141,6 @@ void PrintEnv(Env* env, std::ostream& out) {
   }
 }
 
-void PrintValue(Value* val, std::ostream& out) {
-  if (!val->alive) {
-    out << "!!";
-  }
-  switch (val->tag) {
-    case ValKind::AltConsV: {
-      out << *val->u.alt_cons.choice_name << "." << *val->u.alt_cons.alt_name;
-      break;
-    }
-    case ValKind::VarPatV: {
-      PrintValue(val->u.var_pat.type, out);
-      out << ": " << *val->u.var_pat.name;
-      break;
-    }
-    case ValKind::AltV: {
-      out << "alt " << *val->u.alt.choice_name << "." << *val->u.alt.alt_name
-          << " ";
-      PrintValue(val->u.alt.arg, out);
-      break;
-    }
-    case ValKind::StructV: {
-      out << *val->u.struct_val.type->u.struct_type.name;
-      PrintValue(val->u.struct_val.inits, out);
-      break;
-    }
-    case ValKind::TupleV: {
-      out << "(";
-      bool add_commas = false;
-      for (const auto& elt : *val->u.tuple.elts) {
-        if (add_commas) {
-          out << ", ";
-        } else {
-          add_commas = true;
-        }
-
-        out << elt.first << " = ";
-        PrintValue(state->heap[elt.second], out);
-        out << "@" << elt.second;
-      }
-      out << ")";
-      break;
-    }
-    case ValKind::IntV:
-      out << val->u.integer;
-      break;
-    case ValKind::BoolV:
-      out << std::boolalpha << val->u.boolean;
-      break;
-    case ValKind::FunV:
-      out << "fun<" << *val->u.fun.name << ">";
-      break;
-    case ValKind::PtrV:
-      out << "ptr<" << val->u.ptr << ">";
-      break;
-    case ValKind::BoolTV:
-      out << "Bool";
-      break;
-    case ValKind::IntTV:
-      out << "Int";
-      break;
-    case ValKind::TypeTV:
-      out << "Type";
-      break;
-    case ValKind::AutoTV:
-      out << "auto";
-      break;
-    case ValKind::PointerTV:
-      out << "Ptr(";
-      PrintValue(val->u.ptr_type.type, out);
-      out << ")";
-      break;
-    case ValKind::FunctionTV:
-      out << "fn ";
-      PrintValue(val->u.fun_type.param, out);
-      out << " -> ";
-      PrintValue(val->u.fun_type.ret, out);
-      break;
-    case ValKind::VarTV:
-      out << *val->u.var_type;
-      break;
-    case ValKind::TupleTV: {
-      out << "Tuple(";
-      bool add_commas = false;
-      for (const auto& elt : *val->u.tuple_type.fields) {
-        if (add_commas) {
-          out << ", ";
-        } else {
-          add_commas = true;
-        }
-
-        out << elt.first << " = ";
-        PrintValue(elt.second, out);
-      }
-      out << ")";
-      break;
-    }
-    case ValKind::StructTV:
-      out << "struct " << *val->u.struct_type.name;
-      break;
-    case ValKind::ChoiceTV:
-      out << "choice " << *val->u.choice_type.name;
-      break;
-  }
-}
-
-/***** Action Operations *****/
-
-void PrintAct(Action* act, std::ostream& out) {
-  switch (act->tag) {
-    case ActionKind::DeleteTmpAction:
-      std::cout << "delete_tmp(" << act->u.delete_tmp << ")";
-      break;
-    case ActionKind::ExpToLValAction:
-      out << "exp=>lval";
-      break;
-    case ActionKind::LValAction:
-    case ActionKind::ExpressionAction:
-      PrintExp(act->u.exp);
-      break;
-    case ActionKind::StatementAction:
-      PrintStatement(act->u.stmt, 1);
-      break;
-    case ActionKind::ValAction:
-      PrintValue(act->u.val, out);
-      break;
-  }
-  out << "<" << act->pos << ">";
-  if (act->results.size() > 0) {
-    out << "(";
-    for (auto& result : act->results) {
-      if (result) {
-        PrintValue(result, out);
-      }
-      out << ",";
-    }
-    out << ")";
-  }
-}
-
-void PrintActList(Cons<Action*>* ls, std::ostream& out) {
-  if (ls) {
-    PrintAct(ls->curr, out);
-    if (ls->next) {
-      out << " :: ";
-      PrintActList(ls->next, out);
-    }
-  }
-}
-
-auto MakeExpAct(Expression* e) -> Action* {
-  auto* act = new Action();
-  act->tag = ActionKind::ExpressionAction;
-  act->u.exp = e;
-  act->pos = -1;
-  return act;
-}
-
-auto MakeLvalAct(Expression* e) -> Action* {
-  auto* act = new Action();
-  act->tag = ActionKind::LValAction;
-  act->u.exp = e;
-  act->pos = -1;
-  return act;
-}
-
-auto MakeStmtAct(Statement* s) -> Action* {
-  auto* act = new Action();
-  act->tag = ActionKind::StatementAction;
-  act->u.stmt = s;
-  act->pos = -1;
-  return act;
-}
-
-auto MakeValAct(Value* v) -> Action* {
-  auto* act = new Action();
-  act->tag = ActionKind::ValAction;
-  act->u.val = v;
-  act->pos = -1;
-  return act;
-}
-
-auto MakeExpToLvalAct() -> Action* {
-  auto* act = new Action();
-  act->tag = ActionKind::ExpToLValAction;
-  act->pos = -1;
-  return act;
-}
-
-auto MakeDeleteAct(Address a) -> Action* {
-  auto* act = new Action();
-  act->tag = ActionKind::DeleteTmpAction;
-  act->pos = -1;
-  act->u.delete_tmp = a;
-  return act;
-}
-
 /***** Frame and State Operations *****/
 
 void PrintFrame(Frame* frame, std::ostream& out) {
@@ -596,42 +223,6 @@ auto ValToPtr(Value* v, int line_num) -> Address {
       std::cerr << std::endl;
       exit(-1);
   }
-}
-
-auto FieldsValueEqual(VarValues* ts1, VarValues* ts2, int line_num) -> bool {
-  if (ts1->size() == ts2->size()) {
-    for (auto& iter1 : *ts1) {
-      try {
-        auto t2 = FindAlist(iter1.first, ts2);
-        if (!ValueEqual(iter1.second, t2, line_num)) {
-          return false;
-        }
-      } catch (std::domain_error de) {
-        return false;
-      }
-    }
-    return true;
-  } else {
-    return false;
-  }
-}
-
-auto ValueEqual(Value* v1, Value* v2, int line_num) -> bool {
-  CheckAlive(v1, line_num);
-  CheckAlive(v2, line_num);
-  return (v1->tag == ValKind::IntV && v2->tag == ValKind::IntV &&
-          v1->u.integer == v2->u.integer) ||
-         (v1->tag == ValKind::BoolV && v2->tag == ValKind::BoolV &&
-          v1->u.boolean == v2->u.boolean) ||
-         (v1->tag == ValKind::PtrV && v2->tag == ValKind::PtrV &&
-          v1->u.ptr == v2->u.ptr) ||
-         (v1->tag == ValKind::FunV && v2->tag == ValKind::FunV &&
-          v1->u.fun.body == v2->u.fun.body) ||
-         (v1->tag == ValKind::TupleV && v2->tag == ValKind::TupleV &&
-          FieldsValueEqual(v1->u.tuple_type.fields, v2->u.tuple_type.fields,
-                           line_num))
-         // TODO: struct and alternative values
-         || TypeEqual(v1, v2);
 }
 
 auto EvalPrim(Operator op, const std::vector<Value*>& args, int line_num)
@@ -830,8 +421,14 @@ auto PatternMatch(Value* p, Value* v, Env* env, std::list<std::string>* vars,
             exit(-1);
           }
           for (auto& elt : *p->u.tuple.elts) {
-            Address a = FindField(elt.first, v->u.tuple.elts);
-            env = PatternMatch(state->heap[elt.second], state->heap[a], env,
+            auto a = FindField(elt.first, *v->u.tuple.elts);
+            if (a == std::nullopt) {
+              std::cerr << "runtime error: field " << elt.first << "not in ";
+              PrintValue(v, std::cerr);
+              std::cerr << std::endl;
+              exit(-1);
+            }
+            env = PatternMatch(state->heap[elt.second], state->heap[*a], env,
                                vars, line_num);
           }
           return env;
@@ -895,8 +492,14 @@ void PatternAssignment(Value* pat, Value* val, int line_num) {
             exit(-1);
           }
           for (auto& elt : *pat->u.tuple.elts) {
-            Address a = FindField(elt.first, val->u.tuple.elts);
-            PatternAssignment(state->heap[elt.second], state->heap[a],
+            auto a = FindField(elt.first, *val->u.tuple.elts);
+            if (a == std::nullopt) {
+              std::cerr << "runtime error: field " << elt.first << "not in ";
+              PrintValue(val, std::cerr);
+              std::cerr << std::endl;
+              exit(-1);
+            }
+            PatternAssignment(state->heap[elt.second], state->heap[*a],
                               line_num);
           }
           break;
@@ -1070,8 +673,8 @@ void StepExp() {
       } else {
         //    { {v :: op(]) :: C, E, F} :: S, H}
         // -> { {eval_prim(op, ()) :: C, E, F} :: S, H}
-        Value* v = EvalPrim(exp->u.primitive_op.operator_, act->results,
-                            exp->line_num);
+        Value* v =
+            EvalPrim(exp->u.primitive_op.op, act->results, exp->line_num);
         frame->todo = MakeCons(MakeValAct(v), frame->todo->next->next);
       }
       break;
@@ -1242,43 +845,37 @@ void StepStmt() {
 }
 
 auto GetMember(Address a, const std::string& f) -> Address {
-  std::vector<std::pair<std::string, Address>>* fields;
   Value* v = state->heap[a];
   switch (v->tag) {
-    case ValKind::StructV:
-      fields = v->u.struct_val.inits->u.tuple.elts;
-      try {
-        return FindField(f, fields);
-      } catch (std::domain_error de) {
+    case ValKind::StructV: {
+      auto a = FindField(f, *v->u.struct_val.inits->u.tuple.elts);
+      if (a == std::nullopt) {
         std::cerr << "runtime error, member " << f << " not in ";
         PrintValue(v, std::cerr);
         std::cerr << std::endl;
         exit(-1);
       }
-      break;
-    case ValKind::TupleV:
-      fields = v->u.tuple.elts;
-      try {
-        return FindField(f, fields);
-      } catch (std::domain_error de) {
+      return *a;
+    }
+    case ValKind::TupleV: {
+      auto a = FindField(f, *v->u.tuple.elts);
+      if (a == std::nullopt) {
         std::cerr << "field " << f << " not in ";
         PrintValue(v, std::cerr);
         std::cerr << std::endl;
         exit(-1);
       }
-      break;
+      return *a;
+    }
     case ValKind::ChoiceTV: {
-      try {
-        FindAlist(f, v->u.choice_type.alternatives);
-        auto ac = MakeAltCons(f, *v->u.choice_type.name);
-        return AllocateValue(ac);
-      } catch (std::domain_error de) {
+      if (FindInVarValues(f, v->u.choice_type.alternatives) == nullptr) {
         std::cerr << "alternative " << f << " not in ";
         PrintValue(v, std::cerr);
         std::cerr << std::endl;
         exit(-1);
       }
-      break;
+      auto ac = MakeAltCons(f, *v->u.choice_type.name);
+      return AllocateValue(ac);
     }
     default:
       std::cerr << "field access not allowed for value ";
@@ -1344,17 +941,10 @@ void HandleValue() {
           //    { v :: [].f :: C, E, F} :: S, H}
           // -> { { &v.f :: C, E, F} :: S, H }
           Value* str = act->results[0];
-          try {
-            Address a = GetMember(ValToPtr(str, exp->line_num),
-                                  *exp->u.get_field.field);
-            frame->todo =
-                MakeCons(MakeValAct(MakePtrVal(a)), frame->todo->next->next);
-          } catch (std::domain_error de) {
-            std::cerr << "field " << *exp->u.get_field.field << " not in ";
-            PrintValue(str, std::cerr);
-            std::cerr << std::endl;
-            exit(-1);
-          }
+          Address a =
+              GetMember(ValToPtr(str, exp->line_num), *exp->u.get_field.field);
+          frame->todo =
+              MakeCons(MakeValAct(MakePtrVal(a)), frame->todo->next->next);
           break;
         }
         case ExpressionKind::Index: {
@@ -1366,16 +956,15 @@ void HandleValue() {
             // -> { { &v[i] :: C, E, F} :: S, H }
             Value* tuple = act->results[0];
             std::string f = std::to_string(ToInteger(act->results[1]));
-            try {
-              Address a = FindField(f, tuple->u.tuple.elts);
-              frame->todo =
-                  MakeCons(MakeValAct(MakePtrVal(a)), frame->todo->next->next);
-            } catch (std::domain_error de) {
+            auto a = FindField(f, *tuple->u.tuple.elts);
+            if (a == std::nullopt) {
               std::cerr << "runtime error: field " << f << "not in ";
               PrintValue(tuple, std::cerr);
               std::cerr << std::endl;
               exit(-1);
             }
+            frame->todo =
+                MakeCons(MakeValAct(MakePtrVal(*a)), frame->todo->next->next);
           }
           break;
         }
@@ -1434,16 +1023,15 @@ void HandleValue() {
                 //    { { v :: [][i] :: C, E, F} :: S, H}
                 // -> { { v_i :: C, E, F} : S, H}
                 std::string f = std::to_string(ToInteger(act->results[1]));
-                try {
-                  auto a = FindField(f, tuple->u.tuple.elts);
-                  frame->todo = MakeCons(MakeValAct(state->heap[a]),
-                                         frame->todo->next->next);
-                } catch (std::domain_error de) {
+                auto a = FindField(f, *tuple->u.tuple.elts);
+                if (a == std::nullopt) {
                   std::cerr << "runtime error, field " << f << " not in ";
                   PrintValue(tuple, std::cerr);
                   std::cerr << std::endl;
                   exit(-1);
                 }
+                frame->todo = MakeCons(MakeValAct(state->heap[*a]),
+                                       frame->todo->next->next);
                 break;
               }
               default:
@@ -1475,8 +1063,8 @@ void HandleValue() {
           } else {
             //    { {v :: op(vs,[]) :: C, E, F} :: S, H}
             // -> { {eval_prim(op, (vs,v)) :: C, E, F} :: S, H}
-            Value* v = EvalPrim(exp->u.primitive_op.operator_, act->results,
-                                exp->line_num);
+            Value* v =
+                EvalPrim(exp->u.primitive_op.op, act->results, exp->line_num);
             frame->todo = MakeCons(MakeValAct(v), frame->todo->next->next);
           }
           break;
@@ -1603,17 +1191,15 @@ void HandleValue() {
           }
           break;
         case StatementKind::Match: {
-          /*
-            Regarding act->pos:
-            * odd: start interpreting the pattern of a clause
-            * even: finished interpreting the pattern, now try to match
-
-            Regarding act->results:
-            * 0: the value that we're matching
-            * 1: the pattern for clause 0
-            * 2: the pattern for clause 1
-            * ...
-          */
+          // Regarding act->pos:
+          // * odd: start interpreting the pattern of a clause
+          // * even: finished interpreting the pattern, now try to match
+          //
+          // Regarding act->results:
+          // * 0: the value that we're matching
+          // * 1: the pattern for clause 0
+          // * 2: the pattern for clause 1
+          // * ...
           auto clause_num = (act->pos - 1) / 2;
           if (clause_num >=
               static_cast<int>(stmt->u.match_stmt.clauses->size())) {
@@ -1760,3 +1346,5 @@ auto InterpExp(Env* env, Expression* e) -> Value* {
   Value* v = state->stack->curr->todo->curr->u.val;
   return v;
 }
+
+}  // namespace Carbon

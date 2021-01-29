@@ -2,11 +2,14 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#ifndef EXECUTABLE_SEMANTICS_ASSOC_LIST_H
-#define EXECUTABLE_SEMANTICS_ASSOC_LIST_H
+#ifndef EXECUTABLE_SEMANTICS_INTERPRETER_ASSOC_LIST_H_
+#define EXECUTABLE_SEMANTICS_INTERPRETER_ASSOC_LIST_H_
 
 #include <iostream>
+#include <list>
 #include <string>
+
+namespace Carbon {
 
 template <class K, class V>
 struct AssocList {
@@ -21,9 +24,7 @@ template <class K, class V>
 auto Lookup(int line_num, AssocList<K, V>* alist, const K& key,
             void (*print_key)(const K&)) -> V {
   if (alist == NULL) {
-    std::cerr << line_num << ": could not find `";
-    print_key(key);
-    std::cerr << "`" << std::endl;
+    std::cerr << line_num << ": could not find `" << key << "`" << std::endl;
     exit(-1);
   } else if (alist->key == key) {
     return alist->value;
@@ -32,4 +33,6 @@ auto Lookup(int line_num, AssocList<K, V>* alist, const K& key,
   }
 }
 
-#endif  // EXECUTABLE_SEMANTICS_ASSOC_LIST_H
+}  // namespace Carbon
+
+#endif  // EXECUTABLE_SEMANTICS_INTERPRETER_ASSOC_LIST_H_

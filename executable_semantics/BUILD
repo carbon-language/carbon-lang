@@ -7,31 +7,13 @@ load("//bazel/testing:golden_test.bzl", "golden_test")
 
 cc_binary(
     name = "executable_semantics",
+    srcs = ["main.cpp"],
     linkopts = [
         "-lpthread",
     ],
     deps = [":syntax"],
 )
 
-# TODO: It may be helpful to break this apart.
-cc_library(
-    name = "lib",
-    srcs = [
-        "ast.cpp",
-        "interp.cpp",
-        "typecheck.cpp",
-    ],
-    hdrs = [
-        "assoc_list.h",
-        "ast.h",
-        "cons_list.h",
-        "interp.h",
-        "typecheck.h",
-    ],
-)
-
-# TODO: Investigate further if this can use the @rules_flex `bison_cc_library` rule.
-# load("@rules_bison//bison:bison.bzl", "bison_cc_library")
 genrule(
     name = "syntax_bison_srcs",
     srcs = ["syntax.ypp"],
@@ -48,6 +30,8 @@ genrule(
 cc_library(
     name = "syntax",
     srcs = [
+        "syntax_helpers.cpp",
+        "syntax_helpers.h",
         ":syntax.tab.cpp",
         ":syntax.yy.cpp",
     ],
@@ -58,11 +42,14 @@ cc_library(
         "-Wno-unused-function",
         "-Wno-writable-strings",
     ],
-    deps = [":lib"],
+    deps = [
+        "//executable_semantics/ast:declaration",
+        "//executable_semantics/ast:expression",
+        "//executable_semantics/ast:expression_or_field_list",
+        "//executable_semantics/interpreter",
+    ],
 )
 
-# TODO: Investigate further if this can use the @rules_flex `flex` rule.
-# load("@rules_flex//flex:flex.bzl", "flex")
 genrule(
     name = "syntax_flex_srcs",
     srcs = ["syntax.lpp"],

@@ -6,7 +6,6 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 %{
 #include <stdlib.h>
-#include "executable_semantics/ast.h"
 #include "executable_semantics/syntax.tab.h"
 %}
 %option yylineno
@@ -51,7 +50,7 @@ integer_literal   [0-9]+
 {BREAK}    { return BREAK; }
 {CASE}     { return CASE; }
 {CHOICE}   { return CHOICE; }
-{COMMENT} ;
+{COMMENT}  ;
 {CONTINUE} { return CONTINUE; }
 {DBLARROW} { return DBLARROW; }
 {DEFAULT}  { return DEFAULT; }

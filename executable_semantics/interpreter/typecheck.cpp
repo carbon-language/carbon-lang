@@ -2,65 +2,18 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#include "executable_semantics/typecheck.h"
+#include "executable_semantics/interpreter/typecheck.h"
 
 #include <iostream>
 #include <map>
 #include <set>
 #include <vector>
 
-#include "executable_semantics/cons_list.h"
-#include "executable_semantics/interp.h"
+#include "executable_semantics/ast/function_definition.h"
+#include "executable_semantics/interpreter/cons_list.h"
+#include "executable_semantics/interpreter/interpreter.h"
 
-template <class T>
-auto ListEqual(std::list<T*>* ts1, std::list<T*>* ts2, bool (*eq)(T*, T*))
-    -> bool {
-  if (ts1->size() == ts2->size()) {
-    auto iter2 = ts2->begin();
-    for (auto iter1 = ts1->begin(); iter1 != ts1->end(); ++iter1, ++iter2) {
-      if (!eq(*iter1, *iter2)) {
-        return false;
-      }
-    }
-    return true;
-  } else {
-    return false;
-  }
-}
-
-template <class T>
-auto VectorEqual(std::vector<T*>* ts1, std::vector<T*>* ts2, bool (*eq)(T*, T*))
-    -> bool {
-  if (ts1->size() == ts2->size()) {
-    auto iter2 = ts2->begin();
-    for (auto iter1 = ts1->begin(); iter1 != ts1->end(); ++iter1, ++iter2) {
-      if (!eq(*iter1, *iter2)) {
-        return false;
-      }
-    }
-    return true;
-  } else {
-    return false;
-  }
-}
-
-auto FieldsEqual(VarValues* ts1, VarValues* ts2) -> bool {
-  if (ts1->size() == ts2->size()) {
-    for (auto& iter1 : *ts1) {
-      try {
-        auto t2 = FindAlist(iter1.first, ts2);
-        if (!TypeEqual(iter1.second, t2)) {
-          return false;
-        }
-      } catch (std::domain_error de) {
-        return false;
-      }
-    }
-    return true;
-  } else {
-    return false;
-  }
-}
+namespace Carbon {
 
 auto Find(const std::string& s, Cons<std::string>* ls, int n) -> int {
   if (ls) {
@@ -72,32 +25,6 @@ auto Find(const std::string& s, Cons<std::string>* ls, int n) -> int {
   } else {
     std::cerr << "could not find " << s << std::endl;
     exit(-1);
-  }
-}
-
-auto TypeEqual(Value* t1, Value* t2) -> bool {
-  if (t1->tag != t2->tag) {
-    return false;
-  }
-  switch (t1->tag) {
-    case ValKind::VarTV:
-      return *t1->u.var_type == *t2->u.var_type;
-    case ValKind::PointerTV:
-      return TypeEqual(t1->u.ptr_type.type, t2->u.ptr_type.type);
-    case ValKind::FunctionTV:
-      return TypeEqual(t1->u.fun_type.param, t2->u.fun_type.param) &&
-             TypeEqual(t1->u.fun_type.ret, t2->u.fun_type.ret);
-    case ValKind::StructTV:
-      return *t1->u.struct_type.name == *t2->u.struct_type.name;
-    case ValKind::ChoiceTV:
-      return *t1->u.choice_type.name == *t2->u.choice_type.name;
-    case ValKind::TupleTV:
-      return FieldsEqual(t1->u.tuple_type.fields, t2->u.tuple_type.fields);
-    case ValKind::IntTV:
-    case ValKind::BoolTV:
-      return true;
-    default:
-      return false;
   }
 }
 
@@ -242,17 +169,16 @@ auto TypeCheckExp(Expression* e, TypeEnv* env, Env* ct_env, Value* expected,
         case ValKind::TupleTV: {
           auto i = ToInteger(InterpExp(ct_env, e->u.index.offset));
           std::string f = std::to_string(i);
-          try {
-            auto field_t = FindAlist(f, t->u.tuple_type.fields);
-            auto new_e =
-                MakeIndex(e->line_num, res.exp, MakeInt(e->line_num, i));
-            return TCResult(new_e, field_t, res.env);
-          } catch (std::domain_error de) {
+          auto field_t = FindInVarValues(f, t->u.tuple_type.fields);
+          if (field_t == nullptr) {
             std::cerr << e->line_num << ": compilation error, field " << f
                       << " is not in the tuple ";
             PrintValue(t, std::cerr);
             std::cerr << std::endl;
+            exit(-1);
           }
+          auto new_e = MakeIndex(e->line_num, res.exp, MakeInt(e->line_num, i));
+          return TCResult(new_e, field_t, res.env);
         }
         default:
           std::cerr << e->line_num << ": compilation error, expected a tuple"
@@ -269,9 +195,9 @@ auto TypeCheckExp(Expression* e, TypeEnv* env, Env* ct_env, Value* expected,
            arg != e->u.tuple.fields->end(); ++arg, ++i) {
         Value* arg_expected = nullptr;
         if (expected && expected->tag == ValKind::TupleTV) {
-          try {
-            arg_expected = FindAlist(arg->first, expected->u.tuple_type.fields);
-          } catch (std::domain_error de) {
+          arg_expected =
+              FindInVarValues(arg->first, expected->u.tuple_type.fields);
+          if (arg_expected == nullptr) {
             std::cerr << e->line_num << ": compilation error, missing field "
                       << arg->first << std::endl;
             exit(-1);
@@ -369,8 +295,8 @@ auto TypeCheckExp(Expression* e, TypeEnv* env, Env* ct_env, Value* expected,
         es->push_back(res.exp);
         ts.push_back(res.type);
       }
-      auto new_e = MakeOp(e->line_num, e->u.primitive_op.operator_, es);
-      switch (e->u.primitive_op.operator_) {
+      auto new_e = MakeOp(e->line_num, e->u.primitive_op.op, es);
+      switch (e->u.primitive_op.op) {
         case Operator::Neg:
           ExpectType(e->line_num, "negation", MakeIntTypeVal(), ts[0]);
           return TCResult(new_e, MakeIntTypeVal(), new_env);
@@ -750,3 +676,5 @@ auto TopLevel(std::list<Declaration*>* fs) -> std::pair<TypeEnv*, Env*> {
   }
   return make_pair(top, ct_top);
 }
+
+}  // namespace Carbon

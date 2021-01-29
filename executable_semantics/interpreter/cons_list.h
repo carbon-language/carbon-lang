@@ -2,8 +2,10 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#ifndef EXECUTABLE_SEMANTICS_CONS_LIST_H
-#define EXECUTABLE_SEMANTICS_CONS_LIST_H
+#ifndef EXECUTABLE_SEMANTICS_INTERPRETER_CONS_LIST_H_
+#define EXECUTABLE_SEMANTICS_INTERPRETER_CONS_LIST_H_
+
+namespace Carbon {
 
 template <class T>
 struct Cons {
@@ -32,4 +34,6 @@ auto Length(Cons<T>* ls) -> unsigned int {
   }
 }
 
-#endif  // EXECUTABLE_SEMANTICS_CONS_LIST_H
+}  // namespace Carbon
+
+#endif  // EXECUTABLE_SEMANTICS_INTERPRETER_CONS_LIST_H_
