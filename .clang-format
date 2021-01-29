@@ -10,5 +10,4 @@ AllowShortLoopsOnASingleLine: 'false'
 DerivePointerAlignment: 'false'
 ExperimentalAutoDetectBinPacking: 'false'
 FixNamespaceComments: 'true'
-Standard: Cpp11
 PointerAlignment: Left
