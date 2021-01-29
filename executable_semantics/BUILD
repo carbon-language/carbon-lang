@@ -39,9 +39,6 @@ cc_library(
         "-Wno-unused-function",
         "-Wno-writable-strings",
     ],
-    linkopts = [
-        "-lpthread",
-    ],
     deps = [
         "//executable_semantics/ast:declaration",
         "//executable_semantics/ast:expression",

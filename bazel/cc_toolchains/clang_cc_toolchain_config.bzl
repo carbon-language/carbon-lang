@@ -346,6 +346,8 @@ def _impl(ctx):
                             # Link with Clang's runtime library. This is always
                             # linked statically.
                             #"-rtlib=compiler-rt",
+                            # Link with pthread.
+                            "-lpthread",
                         ],
                     ),
                 ]),
