@@ -346,6 +346,10 @@ def _impl(ctx):
                             # Link with Clang's runtime library. This is always
                             # linked statically.
                             #"-rtlib=compiler-rt",
+                            # Explicitly add LLVM libs to the search path to
+                            # preempt gcc paths, which could otherwise result in
+                            # the wrong libc++ being picked up.
+                            "-L" + llvm_bindir + "/../lib",
                         ],
                     ),
                 ]),
