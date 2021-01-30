@@ -6,6 +6,23 @@ Exceptions. See /LICENSE for license information.
 SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -->
 
+<!-- toc -->
+
+## Table of contents
+
+-   [Overview](#overview)
+-   [Conduct team](#conduct-team)
+    -   [Reporting conduct](#reporting-conduct)
+    -   [Filing a report](#filing-a-report)
+    -   [What happens after contacting the conduct team?](#what-happens-after-contacting-the-conduct-team)
+    -   [Appealing](#appealing)
+-   [Enforcement action guidelines](#enforcement-action-guidelines)
+-   [Acknowledgements](#acknowledgements)
+
+<!-- tocstop -->
+
+## Overview
+
 The Carbon community works to be welcoming and respectful, with a deep
 commitment to psychological safety, and we want to ensure that doesn’t change as
 we grow and evolve. To that end, we have a few ground rules that we ask all
