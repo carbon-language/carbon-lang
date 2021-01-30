@@ -6,6 +6,37 @@ Exceptions. See /LICENSE for license information.
 SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -->
 
+<!-- toc -->
+
+## Table of contents
+
+-   [Overview](#overview)
+-   [Ways to contribute](#ways-to-contribute)
+    -   [Help comment on proposals](#help-comment-on-proposals)
+    -   [Help contribute ideas to Carbon](#help-contribute-ideas-to-carbon)
+    -   [Help implement Carbon's design](#help-implement-carbons-design)
+    -   [Help address bugs](#help-address-bugs)
+-   [How to become a contributor to Carbon](#how-to-become-a-contributor-to-carbon)
+    -   [Contributor License Agreements (CLAs)](#contributor-license-agreements-clas)
+        -   [Future CLA plans](#future-cla-plans)
+    -   [Collaboration systems](#collaboration-systems)
+    -   [Contribution tools](#contribution-tools)
+    -   [Contribution guidelines and standards](#contribution-guidelines-and-standards)
+        -   [Guidelines and philosophy for contributions](#guidelines-and-philosophy-for-contributions)
+-   [Style](#style)
+    -   [Google Docs and Markdown](#google-docs-and-markdown)
+    -   [Other files](#other-files)
+-   [License](#license)
+    -   [Google Docs](#google-docs)
+    -   [Markdown](#markdown)
+    -   [Other files](#other-files-1)
+-   [Workflow](#workflow)
+-   [Acknowledgements](#acknowledgements)
+
+<!-- tocstop -->
+
+## Overview
+
 Thank you for your interest in contributing to Carbon! There are many ways to
 contribute, and we appreciate all of them. If you have questions, please feel
 free to ask on our Discourse Forums or Discord Chat.
@@ -133,11 +164,23 @@ the Code of Conduct.
 -   [A shared Google Drive](https://drive.google.com/corp/drive/folders/0ALTu5Y6kc39XUk9PVA)
     is used for all of our Google Docs, particularly proposal drafts. **To
     join:**
+
     1.  Ask [an admin](docs/project/groups.md#admins) to invite you, providing
         your Google account email.
     2.  The admin will add you to the
         [Google Group](https://groups.google.com/g/carbon-lang-contributors)
         used for access.
+
+-   [Google Calendar](https://calendar.google.com/calendar/embed?src=c_07td7k4qjq0ssb4gdl6bmbnkik%40group.calendar.google.com)
+    is used for meeting invites and project reminders.
+
+### Contribution tools
+
+Please see our [contribution tool](/docs/project/contribution_tools.md)
+documentation for information on setting up a git client for Carbon development,
+as well as helpful tooling that will ease the contribution process. For example,
+[pre-commit](/docs/project/contribution_tools.md#pre-commit) is used to simplify
+[code review](/docs/project/code_review.md).
 
 ### Contribution guidelines and standards
 
@@ -182,18 +225,12 @@ follow the Carbon documentation and coding styles.
     -   Unit tests must pass with the changes.
     -   If some tests fail for unrelated reasons, we wait until they're fixed.
         It helps to contribute a fix!
-    -   Code changes are made with API compatibility and evolvability in mind.
-        Reviewers will comment on any API compatibility issues.
+    -   Code changes should be made with API compatibility and evolvability in
+        mind.
+    -   [Code review](/docs/project/code_review.md) will check that changes are
+        consistent with Carbon's guidelines.
     -   Keep in mind that code contribution guidelines are incomplete while we
         start work on Carbon, and may change later.
-
-## pre-commit
-
-We use [pre-commit](/docs/project/contribution_tools.md#pre-commit) for
-automated checks, including formatting of documentation. Please see
-[contribution tools](/docs/project/contribution_tools.md) for more information.
-
-Please use pre-commit to simplify reviews.
 
 ## Style
 
