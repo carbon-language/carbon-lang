@@ -227,8 +227,8 @@ follow the Carbon documentation and coding styles.
         It helps to contribute a fix!
     -   Code changes should be made with API compatibility and evolvability in
         mind.
-    -   [Code review](/docs/project/code_review.md) will check that changes are
-        consistent with Carbon's guidelines.
+    -   [Code review](/docs/project/code_review.md) is used to improve the
+        correctness, clarity, and consistency of contributions.
     -   Keep in mind that code contribution guidelines are incomplete while we
         start work on Carbon, and may change later.
 
