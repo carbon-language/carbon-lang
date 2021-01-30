@@ -10,7 +10,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 ## Table of contents
 
--   [Overview](#overview)
+-   [Guidelines](#guidelines)
 -   [Conduct team](#conduct-team)
     -   [Reporting conduct](#reporting-conduct)
     -   [Filing a report](#filing-a-report)
@@ -21,7 +21,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 <!-- tocstop -->
 
-## Overview
+## Guidelines
 
 The Carbon community works to be welcoming and respectful, with a deep
 commitment to psychological safety, and we want to ensure that doesn’t change as
