@@ -14,6 +14,7 @@
 #include "BinaryEmitter.h"
 #include "BinaryFunction.h"
 #include "BinaryPassManager.h"
+#include "DataReader.h"
 #include "ExecutableFileMemoryManager.h"
 #include "JumpTable.h"
 #include "Passes/Instrumentation.h"
@@ -63,6 +64,42 @@ MachORewriteInstance::MachORewriteInstance(object::MachOObjectFile *InputFile,
           DWARFContext::create(*InputFile, nullptr,
                                DWARFContext::defaultErrorHandler, "",
                                false))) {}
+
+Error MachORewriteInstance::setProfile(StringRef Filename) {
+  if (!sys::fs::exists(Filename))
+    return errorCodeToError(make_error_code(errc::no_such_file_or_directory));
+
+  if (ProfileReader) {
+    // Already exists
+    return make_error<StringError>(
+        Twine("multiple profiles specified: ") + ProfileReader->getFilename() +
+        " and " + Filename, inconvertibleErrorCode());
+  }
+
+  ProfileReader = llvm::make_unique<DataReader>(Filename);
+  return Error::success();
+}
+
+void MachORewriteInstance::preprocessProfileData() {
+  if (!ProfileReader)
+    return;
+  if (auto E = ProfileReader->preprocessProfile(*BC.get()))
+    report_error("cannot pre-process profile", std::move(E));
+}
+
+void MachORewriteInstance::processProfileDataPreCFG() {
+  if (!ProfileReader)
+    return;
+  if (auto E = ProfileReader->readProfilePreCFG(*BC.get()))
+    report_error("cannot read profile pre-CFG", std::move(E));
+}
+
+void MachORewriteInstance::processProfileData() {
+  if (!ProfileReader)
+    return;
+  if (auto E = ProfileReader->readProfile(*BC.get()))
+    report_error("cannot read profile", std::move(E));
+}
 
 void MachORewriteInstance::readSpecialSections() {
   for (const auto &Section : InputFile->sections()) {
@@ -252,6 +289,14 @@ void MachORewriteInstance::disassembleFunctions() {
     Function.disassemble();
     if (opts::PrintDisasm)
       Function.print(outs(), "after disassembly", true);
+  }
+}
+
+void MachORewriteInstance::buildFunctionsCFG() {
+  for (auto &BFI : BC->getBinaryFunctions()) {
+    BinaryFunction &Function = BFI.second;
+    if (!Function.isSimple())
+      continue;
     if (!Function.buildCFG(/*AllocId*/ 0)) {
       errs() << "BOLT-WARNING: failed to build CFG for the function "
              << Function << "\n";
@@ -522,12 +567,27 @@ void MachORewriteInstance::adjustCommandLineOptions() {
 
 void MachORewriteInstance::run() {
   adjustCommandLineOptions();
+
   readSpecialSections();
+
   discoverFileObjects();
+
+  preprocessProfileData();
+
   disassembleFunctions();
+
+  processProfileDataPreCFG();
+
+  buildFunctionsCFG();
+
+  processProfileData();
+
   postProcessFunctions();
+
   runOptimizationPasses();
+
   emitAndLink();
+
   rewriteFile();
 }
 
