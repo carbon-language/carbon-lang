@@ -13,14 +13,19 @@ contributions.
 
 ## Table of contents
 
+-   [git](#git)
 -   [Package managers](#package-managers)
+-   [Linux and MacOS](#linux-and-macos)
     -   [brew](#brew)
-    -   [go get](#go-get)
     -   [pip](#pip)
+-   [Linux only](#linux-only)
+    -   [cargo](#cargo)
+    -   [go get](#go-get)
 -   [Main tools](#main-tools)
     -   [Bazel and Bazelisk](#bazel-and-bazelisk)
     -   [buildifier](#buildifier)
     -   [Clang and LLVM](#clang-and-llvm)
+    -   [ninja](#ninja)
     -   [pyenv and Python](#pyenv-and-python)
     -   [pre-commit](#pre-commit)
 -   [Optional tools](#optional-tools)
@@ -30,6 +35,7 @@ contributions.
     -   [GitHub](#github)
         -   [gh CLI](#gh-cli)
         -   [GitHub Desktop](#github-desktop)
+    -   [rs-git-fsmonitor and Watchman](#rs-git-fsmonitor-and-watchman)
     -   [Vim](#vim)
         -   [vim-prettier](#vim-prettier)
     -   [Atom](#atom)
@@ -41,31 +47,79 @@ contributions.
 
 <!-- tocstop -->
 
+## git
+
+[https://git-scm.com/](https://git-scm.com/) is required to work on Carbon. A
+few tips for setting up the repository are:
+
+-   The [carbon-lang repository](https://github.com/carbon-language/carbon-lang)
+    should be cloned for most work.
+-   Sync submodules if you'll be building C++ code or working on the compiler:
+    `git submodule update --init --recursive`. This will take a few minutes due
+    to the project size.
+-   [rs-git-fsmonitor](#rs-git-fsmonitor-and-watchman) can be used to speed up
+    git operations.
+-   Run [pre-commit install](#pre-commit) to have pre-commits run.
+
 ## Package managers
 
 Instructions for installing tools can be helpful for installing tooling. These
 instructions will try to rely on a minimum of managers.
+
+## Linux and MacOS
 
 ### brew
 
 [brew](https://brew.sh/) is a package manager, and can help install several
 tools that we recommend. See the [installation instructions](https://brew.sh/).
 
-### go get
-
-[go get](https://golang.org/pkg/cmd/go/internal/get/) is Go's package manager.
-It will mainly be used for Linux, where [brew](#brew) doesn't work as well.
-
-To install on Debian- or Ubuntu-based Linux distributions:
-
-```bash
-apt install golang
-```
+To get the latest version of `brew` packages, it will be necessary to
+periodically run `brew upgrade`.
 
 ### pip
 
 `pip` is Python's package manager, and installed as part of
 [pyenv and Python](#pyenv-and-python).
+
+To get the latest version of `pip` packages, it will be necessary to
+periodically run `pip list --outdated`, then `pip install -U <package>` to
+upgrade desired packages. Keep in mind when upgrading that version dependencies
+may mean packages _should_ be outdated, and not be upgraded.
+
+## Linux only
+
+Linux-specific package managers are typically used for packages which work
+through [brew](#brew) on MacOS, but not on Linux.
+
+We assume Debian- or Ubuntu-based Linux distributions with
+[apt](<https://en.wikipedia.org/wiki/APT_(software)>) available.
+
+### cargo
+
+Rust's [Cargo](https://doc.rust-lang.org/cargo/) package manager is used to
+install a couple tools on Linux.
+
+Our recommended way of installing is:
+
+```bash
+apt install cargo
+```
+
+To get the latest version of `cargo` packages, it will be necessary to
+periodically re-run the original `cargo` command used to install the package.
+
+### go get
+
+[go get](https://golang.org/pkg/cmd/go/internal/get/) is Go's package manager.
+
+Our recommended way of installing is:
+
+```bash
+apt install golang
+```
+
+To get the latest version of `go` packages, it will be necessary to periodically
+re-run the original `go` command used to install the package.
 
 ## Main tools
 
@@ -80,18 +134,9 @@ recommended for installing Bazel.
 
 Our recommended way of installing is:
 
--   Linux:
-
-    ```bash
-    go get github.com/bazelbuild/bazelisk
-    ```
-
--   MacOS:
-
-    ```bash
-    brew update
-    brew install bazelisk
-    ```
+```bash
+brew install bazelisk
+```
 
 ### buildifier
 
@@ -110,7 +155,6 @@ Our recommended way of installing is:
 -   MacOS:
 
     ```bash
-    brew update
     brew install buildifier
     ```
 
@@ -144,13 +188,34 @@ Tips:
     ninja
     ```
 
+    Note these instructions use [ninja](#ninja), which should be installed
+    first. The build should be expected to take hours, even on powerful
+    computers.
+
+### ninja
+
+[Ninja](https://ninja-build.org/) is used to build Clang and LLVM.
+
+Our recommended way of installing is:
+
+-   Linux:
+
+    ```bash
+    apt install ninja-build
+    ```
+
+-   MacOS:
+
+    ```bash
+    brew install ninja
+    ```
+
 ### pyenv and Python
 
 [pyenv](https://github.com/pyenv/pyenv) is the recommended way to install
 [Python](python.org). Our recommended way of installing both is:
 
 ```bash
-brew update
 brew install pyenv
 pyenv install 3.8.5
 pyenv global 3.8.5
@@ -235,7 +300,6 @@ used by some scripts.
 To install gh, run:
 
 ```bash
-brew update
 brew install github/gh/gh
 ```
 
@@ -243,6 +307,36 @@ brew install github/gh/gh
 
 [GitHub Desktop](https://desktop.github.com/) provides a UI for managing git
 repositories. See the page for installation instructions.
+
+### rs-git-fsmonitor and Watchman
+
+[rs-git-fsmonitor](https://github.com/jgavris/rs-git-fsmonitor) is a file system
+monitor that uses [Watchman](https://github.com/facebook/watchman) to speed up
+git on large repositories, such as `carbon-lang` when submodules are synced.
+
+Our recommended way of installing is:
+
+-   Linux:
+
+    ```bash
+    brew install watchman
+    cargo install --git https://github.com/jgavris/rs-git-fsmonitor.git
+
+    # Configure the git repository to use fsmonitor.
+    git config core.fsmonitor rs-git-fsmonitor
+    ```
+
+-   MacOS:
+
+    ```bash
+    brew install watchman
+    brew tap jgavris/rs-git-fsmonitor \
+      https://github.com/jgavris/rs-git-fsmonitor.git && \
+      brew install rs-git-fsmonitor
+
+    # Configure the git repository to use fsmonitor.
+    git config core.fsmonitor rs-git-fsmonitor
+    ```
 
 ### Vim
 
