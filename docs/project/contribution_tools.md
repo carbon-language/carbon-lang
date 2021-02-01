@@ -198,17 +198,9 @@ Tips:
 
 Our recommended way of installing is:
 
--   Linux:
-
-    ```bash
-    apt install ninja-build
-    ```
-
--   MacOS:
-
-    ```bash
-    brew install ninja
-    ```
+```bash
+brew install ninja
+```
 
 ### pyenv and Python
 
