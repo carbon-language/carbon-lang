@@ -344,9 +344,8 @@ approach.
 
 ##### Actions
 
--   **Author**:
-    -   Update the proposal and/or reply to comments to address feedback.
-    -   Create GitHub issues for any open questions to be revisited later.
+-   **Author**: Update the proposal and/or reply to comments to address
+    feedback.
 -   **Reviewing team and community**: Provide
     [constructive commentary](commenting_guidelines.md) for proposals.
 
