@@ -15,12 +15,12 @@ contributions.
 
 -   [git](#git)
 -   [Package managers](#package-managers)
--   [Linux and MacOS](#linux-and-macos)
-    -   [brew](#brew)
-    -   [pip](#pip)
--   [Linux only](#linux-only)
-    -   [cargo](#cargo)
-    -   [go get](#go-get)
+    -   [Linux and MacOS](#linux-and-macos)
+        -   [brew](#brew)
+        -   [pip](#pip)
+    -   [Linux only](#linux-only)
+        -   [cargo](#cargo)
+        -   [go get](#go-get)
 -   [Main tools](#main-tools)
     -   [Bazel and Bazelisk](#bazel-and-bazelisk)
     -   [buildifier](#buildifier)
@@ -66,9 +66,9 @@ few tips for setting up the repository are:
 Instructions for installing tools can be helpful for installing tooling. These
 instructions will try to rely on a minimum of managers.
 
-## Linux and MacOS
+### Linux and MacOS
 
-### brew
+#### brew
 
 [brew](https://brew.sh/) is a package manager, and can help install several
 tools that we recommend. See the [installation instructions](https://brew.sh/).
@@ -76,7 +76,7 @@ tools that we recommend. See the [installation instructions](https://brew.sh/).
 To get the latest version of `brew` packages, it will be necessary to
 periodically run `brew upgrade`.
 
-### pip
+#### pip
 
 `pip` is Python's package manager, and installed as part of
 [pyenv and Python](#pyenv-and-python).
@@ -86,7 +86,7 @@ periodically run `pip list --outdated`, then `pip install -U <package>` to
 upgrade desired packages. Keep in mind when upgrading that version dependencies
 may mean packages _should_ be outdated, and not be upgraded.
 
-## Linux only
+### Linux only
 
 Linux-specific package managers are typically used for packages which work
 through [brew](#brew) on MacOS, but not on Linux.
@@ -94,7 +94,7 @@ through [brew](#brew) on MacOS, but not on Linux.
 We assume Debian- or Ubuntu-based Linux distributions with
 [apt](<https://en.wikipedia.org/wiki/APT_(software)>) available.
 
-### cargo
+#### cargo
 
 Rust's [Cargo](https://doc.rust-lang.org/cargo/) package manager is used to
 install a couple tools on Linux.
@@ -108,7 +108,7 @@ apt install cargo
 To get the latest version of `cargo` packages, it will be necessary to
 periodically re-run the original `cargo` command used to install the package.
 
-### go get
+#### go get
 
 [go get](https://golang.org/pkg/cmd/go/internal/get/) is Go's package manager.
 
