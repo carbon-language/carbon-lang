@@ -172,7 +172,22 @@ the Code of Conduct.
         used for access.
 
 -   [Google Calendar](https://calendar.google.com/calendar/embed?src=c_07td7k4qjq0ssb4gdl6bmbnkik%40group.calendar.google.com)
-    is used for meeting invites and project reminders.
+    is used for meeting invites and project reminders. Contributors may add
+    calendar entries for meetings added to discuss details. Standard entries
+    are:
+
+    -   The
+        [weekly sync](https://docs.google.com/document/d/1K_5uig1HHMsfEl-6eSMjM1qjwX-7PsbkBuRp36knxlQ/edit),
+        where everyone is welcome.
+    -   The
+        [core team meeting](https://docs.google.com/document/d/1zBmqLKgqWwIkcu27qADQTm79LEwMA7uT9agAM2R2qjI/edit),
+        used for
+        [consensus decision-making](https://github.com/carbon-language/carbon-lang/blob/trunk/docs/project/consensus_decision_making.md#meetings).
+    -   [Open discussions](https://docs.google.com/document/d/1QCdKQ33rki-kCDrxi8UHy3a36dtW0WdMqpUzluGSrz4/edit?resourcekey=0-bZmNUiueOiH_sysJNqnT9A)
+        which are unstructured meeting slots used for discussing proposals,
+        tooling, and other Carbon topics based on who attends.
+    -   Reminders about proposal deadlines, such as
+        [comment deadlines](https://github.com/carbon-language/carbon-lang/blob/trunk/docs/project/evolution.md#request-a-review-manager).
 
 ### Contribution tools
 
