@@ -56,3 +56,8 @@ performance-optimized code (much like C++ today) that can still be built and
 deployed at reasonable engineering cost with strong guarantees around memory
 safety for the purposes of security. I think this proposal provides that
 foundation.
+
+Note: The decision by the core team included a request to clarify the wording on
+build modes as described in
+[chandlerc's post](https://forums.carbon-lang.dev/t/request-for-decision-language-level-safety-strategy/196/6)
+on the decision thread.
