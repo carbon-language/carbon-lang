@@ -46,8 +46,9 @@ With regard to Carbon's goals:
     abstraction penalty is reliably removed in common cases, but this seems
     sufficiently feasible to be worth attempting.
 -   Evolution: software evolution is supported by allowing user-defined pattern
-    matching to specify (via the presence/absence of operator default) whether
     the set of patterns is intended to be extended in the future.
+    matching to specify (by way of the presence/absence of operator default)
+    whether the set of patterns is intended to be extended in the future.
 -   Ergonomics: custom pattern matching for user-defined types promotes language
     consistency and removes boilerplate
 
