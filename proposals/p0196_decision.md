@@ -54,7 +54,7 @@ being overly distracted from other goals.
 It is critical that Carbon use build modes to enable writing
 performance-optimized code (much like C++ today) that can still be built and
 deployed at reasonable engineering cost with strong guarantees around memory
-safety for the purposes of security. I think this proposal provides that
+safety for the purposes of security. We think this proposal provides that
 foundation.
 
 Note: The decision by the core team included a request to clarify the wording on
