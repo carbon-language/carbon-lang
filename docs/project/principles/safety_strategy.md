@@ -62,10 +62,9 @@ A key subset of safety categories Carbon should address are:
         dereferencing invalid pointers such as uninitialized pointers, `NULL` in
         C++, or manufactured pointer addresses.
 
-    -   _Temporal_ memory safety protects against use-after-free access. This
-        typically involves dereferencing pointers to dynamically allocated
-        objects, but can also include pointers that are given the address of
-        stack objects.
+    -   _Temporal_ memory safety protects against accessing an address that has
+        been deallocated. This includes use-after-free for heap and
+        use-after-return for stack addresses.
 
 -   [**Type safety**](https://en.wikipedia.org/wiki/Type_safety) protects
     against accessing valid memory with an incorrect type, also known as "type
@@ -118,10 +117,11 @@ be thought of in terms of how they prevent attacks:
         makes each attempt at an invalid read or write operation have a high
         probability of trapping, while still not detecting the underlying bug in
         every case. Realistic attacks require many such operations, so memory
-        tagging will probably stop attacks. Alternatively, the trap might be
-        asynchronous, leaving only a tiny window of time prior to the attack
-        being detected and program terminated. These are probabilistic hardening
-        and reduces the feasibility of both spatial and temporal memory attacks.
+        tagging may stop attacks in some environments. Alternatively, the trap
+        might be asynchronous, leaving only a tiny window of time prior to the
+        attack being detected and program terminated. These are probabilistic
+        hardening and reduces the feasibility of both spatial and temporal
+        memory attacks.
 
 Under both error detection and safety hardening, even if a safety is protected,
 the underlying bugs will still exist and will need to be fixed. For example,
@@ -402,8 +402,9 @@ level are attackable through a variety of techniques:
     only run the attack when it would not be.
 -   The attacker might be able control the test condition to make detection much
     less likely or avoid detection completely. For example, if detection is
-    based on the last 4 bits of a memory address, an attacker may be able
-    control those bits or generate collisions by triggering memory allocations.
+    based on the last 4 bits of a memory address, an attacker may be able to
+    generate memory allocations, viewing the address and only attacking when
+    there's a collision.
 
 Hardware vulnerabilities may make these attacks easier than they might otherwise
 appear. Future hardware vulnerabilities are difficult to predict.
