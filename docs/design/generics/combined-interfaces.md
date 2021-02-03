@@ -14,6 +14,10 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [Overview](#overview)
 -   [Interfaces](#interfaces)
 -   [Implementing interfaces](#implementing-interfaces)
+    -   [Qualified member names](#qualified-member-names)
+    -   [External impl](#external-impl)
+    -   [Facet type](#facet-type)
+    -   [Rejected: inline impl](#rejected-inline-impl)
     -   [Impl arguments for parameterized types](#impl-arguments-for-parameterized-types)
     -   [Impl lookup](#impl-lookup)
 -   [Generics](#generics)
@@ -226,15 +230,90 @@ impl Vector for Point {
 }
 ```
 
-Unless the `impl` is defined as `external`, the `Vector` methods `Add` and
-`Scale` will also be defined for values of type `Point`.
+### Qualified member names
 
-To address concerns re:
-[the expression problem](https://eli.thegreenplace.net/2016/the-expression-problem-and-its-solutions),
-we should allow out-of-line impl definitions either in the library that defines
-the interface (`Vector`) or in the library that defines the type (`Point`).
-Definitions that are not in the same library as the type must be defined as
-`external`.
+Given a value of type `Point` and an interface `Vector` implemented for that
+type, you can access the methods from that interface using the member's
+_qualified name_:
+
+```
+var Point: p1 = (.x = 1.0, .y = 2.0);
+var Point: p2 = (.x = 2.0, .y = 4.0);
+Assert(p1.(Vector.Scale)(2.0) == p2);
+Assert(p1.(Vector.Add)(p1) == p2);
+```
+
+Note that the name in the parens is looked up in the containing scope, not in
+the names of members of `Point`. So if there was another interface `MyInterface`
+with method `MyMember` defined in the `MyPackage` package also implemented for
+`Point`, you could access `MyMember` with a qualified name:
+
+```
+import MyPackage;
+
+struct Point { ... }
+impl Vector for MyPackage.MyInterface { ... }
+
+var Point: p = (.x = 1.0, .y = 2.0);
+p.(MyPackage.MyInterface.MyMember)();
+```
+
+### External impl
+
+Unless the `impl` is defined as `external`, the `Vector` methods `Add` and
+`Scale` will _also_ be defined for values of type `Point`.
+
+```
+var Point: p1 = (.x = 1.0, .y = 2.0);
+var Point: p2 = (.x = 2.0, .y = 4.0);
+Assert(p1.Scale(2.0) == p1.(Vector.Scale)(2.0));
+Assert(p1.Add(p1) == p1.(Vector.Add)(p1));
+```
+
+The goal here is that generally speaking a given name for an object corresponds
+to the same method whenever that name is legal. There are a few reasons you
+might not want this, and you would choose to define the `impl` as `external`:
+
+-   You never access the methods of an interface directly. For example you would
+    typically do this for interface for operator overloads, where you would
+    instead access those methods via operators.
+-   You want to avoid name collisions or other ambiguity between two different
+    interfaces, and will use qualified names instead.
+-   The `impl` is defined in a different library than the type.
+
+To expand on this last point, we do want to allow `impl` definitions either in
+the library that defines the interface (`Vector`) or in the library that defines
+the type (`Point`). This addresses
+[the expression problem](https://eli.thegreenplace.net/2016/the-expression-problem-and-its-solutions).
+Note though we don't allow impl definitions in other libraries, to address the
+concers about coherence/orphans -- we don't want the implementation of an
+interface to change based on imports. Since you have to import both the type and
+the interface, those are the places where you can define impls. Note that there
+is a refinement of this rule for types and interfaces that are parameterized in
+[the "Impl lookup" section](#impl-lookup).
+
+We require all `impl` definitions outside of the library defining the type to be
+`external`. This is for two reasons:
+
+-   This means you can find all the names of direct (unqualified) members of a
+    type in the library defining that type. The only thing that may be in
+    another library is an `impl` of an interface.
+-   It also means these members do not vary based on imports.
+
+**Rejected alternative:** We could allow types to have different APIs in
+different files based on explicit configuration in that file. For example, we
+could support a declaration that a given interface or a given method of an
+interface is "in scope" for a particular type in this file. With that
+declaration, the method could be called unqualified. This avoids most concerns
+arising from name collisions between interfaces. It has a few downsides though:
+
+-   It increases variability between files, since the same type will have
+    different APIs depending on these declarations. This makes it harder to
+    copy-paste code between files.
+-   It makes reading code harder, since you have to search the file for these
+    declarations that affect name lookup.
+
+### Facet type
 
 The impl definition defines a
 [facet type](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#invoking-interface-methods):
@@ -248,10 +327,8 @@ with `Point`, so we allow you to cast between the two implicitly:
 var Point: a = (.x = 1.0, .y = 2.0);
 // Cast from Point implicitly
 var Point as Vector: b = a;
-// Cast from (Point as Vector)
-var Point: c = b.Scale(1.5);
 // Will also implicitly cast when calling functions:
-fn F(Point as Vector: d, Point: e) { ... }
+fn F(Point as Vector: c, Point: d) { ... }
 F(a, b);
 ```
 
@@ -267,17 +344,16 @@ var Point: w = z as Point;
 `Point as Vector`, the value `Point` is a type, and `Vector` is a type of a
 type, or a "type-type".
 
-**Note:** If `Point` defines a method required by the interface, say `Scale`,
-with the correct signature, then defining `Scale` in the impl definition becomes
-optional, defaulting to the definition in `Point`. `Scale` is allowed to have
-its own definition (which can have completely different semantics) in the
-`Vector` impl definition since `Point` and `Point as Vector` are different
-types.
-
 **Note:** A type may implement any number of different interfaces, but may
 provide at most one implementation of any single interface. This makes the act
 of selecting an implementation of an interface for a type unambiguous throughout
 the whole program, so e.g. `Point as Vector` is clearly defined.
+
+We don't expect users to ordinarily name facet types explicitly in source code.
+Instead, values are cast to a facet type as part of calling a generic function,
+as described in the [Generics](#generics) section.
+
+### Rejected: inline impl
 
 **Rejected alternative:** We considered supporting `impl` definitions in line
 like so:
