@@ -125,10 +125,10 @@ Please refer to
 Tips:
 
 -   When `carbon-lang` is checked out with submodules, the LLVM submodule is at
-    `third_party/llvm_project`.
+    `third_party/llvm-project`.
 
     -   In other words, create your `build` directory at
-        `third_party/llvm_project/build`.
+        `third_party/llvm-project/build`.
 
 -   Carbon uses the Clang, LLD, and libc++ subprojects. A corresponding
     `LLVM_ENABLE_PROJECTS` build looks like:
