@@ -13,11 +13,12 @@ contributions.
 
 ## Table of contents
 
+-   [Overall setup flow](#overall-setup-flow)
 -   [git](#git)
 -   [Package managers](#package-managers)
     -   [Linux and MacOS](#linux-and-macos)
         -   [brew](#brew)
-        -   [pip](#pip)
+    -   [pip, pyenv and Python](#pip-pyenv-and-python)
     -   [Linux only](#linux-only)
         -   [cargo](#cargo)
         -   [go get](#go-get)
@@ -26,7 +27,6 @@ contributions.
     -   [buildifier](#buildifier)
     -   [Clang and LLVM](#clang-and-llvm)
     -   [ninja](#ninja)
-    -   [pyenv and Python](#pyenv-and-python)
     -   [pre-commit](#pre-commit)
 -   [Optional tools](#optional-tools)
     -   [Carbon-maintained](#carbon-maintained)
@@ -47,13 +47,24 @@ contributions.
 
 <!-- tocstop -->
 
+## Overall setup flow
+
+In order to set up a machine and git client for developing on Carbon, a typical
+flow is:
+
+1. Set up [package managers](#package-managers).
+2. Install [main tools](#main-tools) and any desired
+   [optional tools](#optional-tools).
+3. Set up the [git repository](#git).
+
 ## git
 
 [https://git-scm.com/](https://git-scm.com/) is required to work on Carbon. A
 few tips for setting up the repository are:
 
--   The [carbon-lang repository](https://github.com/carbon-language/carbon-lang)
-    should be cloned for most work.
+1.  -   This clones the
+        [carbon-lang repository](https://github.com/carbon-language/carbon-lang).
+
 -   Sync submodules if you'll be building C++ code or working on the compiler:
     `git submodule update --init --recursive`. This will take a few minutes due
     to the project size.
@@ -76,10 +87,22 @@ tools that we recommend. See the [installation instructions](https://brew.sh/).
 To get the latest version of `brew` packages, it will be necessary to
 periodically run `brew upgrade`.
 
-#### pip
+### pip, pyenv and Python
 
-`pip` is Python's package manager, and installed as part of
-[pyenv and Python](#pyenv-and-python).
+`pip` is Python's package manager, and we strongly recommend using
+[pyenv](https://github.com/pyenv/pyenv) to manage [Python](python.org). Our
+recommended way of installing both is:
+
+```bash
+brew install pyenv
+pyenv install 3.8.5
+pyenv global 3.8.5
+
+# Add 'eval "$(pyenv init -)"' to your shell rc file.
+echo 'eval "$(pyenv init -)"' >> ~/.zshrc
+# Load the shell rc file changes.
+exec $SHELL
+```
 
 To get the latest version of `pip` packages, it will be necessary to
 periodically run `pip list --outdated`, then `pip install -U <package>` to
@@ -200,22 +223,6 @@ Our recommended way of installing is:
 
 ```bash
 brew install ninja
-```
-
-### pyenv and Python
-
-[pyenv](https://github.com/pyenv/pyenv) is the recommended way to install
-[Python](python.org). Our recommended way of installing both is:
-
-```bash
-brew install pyenv
-pyenv install 3.8.5
-pyenv global 3.8.5
-
-# Add 'eval "$(pyenv init -)"' to your shell rc file.
-echo 'eval "$(pyenv init -)"' >> ~/.zshrc
-# Load the shell rc file changes.
-exec $SHELL
 ```
 
 ### pre-commit
