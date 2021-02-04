@@ -14,7 +14,6 @@ contributions.
 ## Table of contents
 
 -   [Overall setup flow](#overall-setup-flow)
--   [git](#git)
 -   [Package managers](#package-managers)
     -   [Linux and MacOS](#linux-and-macos)
         -   [brew](#brew)
@@ -55,22 +54,16 @@ flow is:
 1. Set up [package managers](#package-managers).
 2. Install [main tools](#main-tools) and any desired
    [optional tools](#optional-tools).
-3. Set up the [git repository](#git).
-
-## git
-
-[https://git-scm.com/](https://git-scm.com/) is required to work on Carbon. A
-few tips for setting up the repository are:
-
-1.  -   This clones the
-        [carbon-lang repository](https://github.com/carbon-language/carbon-lang).
-
--   Sync submodules if you'll be building C++ code or working on the compiler:
-    `git submodule update --init`. This will take a few minutes due
-    to the project size.
--   [rs-git-fsmonitor](#rs-git-fsmonitor-and-watchman) can be used to speed up
-    git operations.
--   Run [pre-commit install](#pre-commit) to have pre-commits run.
+3. Set up the [git](https://git-scm.com/) repository:
+    - In GitHub, create a fork for development at
+      https://github.com/carbon-language/carbon-lang.
+    - `gh repository clone USER/carbon-lang`, or otherwise clone the fork.
+    - `cd carbon-lang` to go into the cloned fork's directory.
+    - `git submodule update --init` to sync submodules if you'll be building c++
+      code or working on the compiler.
+    - `git config core.fsmonitor rs-git-fsmonitor` to set up
+      [rs-git-fsmonitor](#rs-git-fsmonitor-and-watchman) in the clone.
+    - `pre-commit install` to set up [pre-commit](#pre-commit) in the clone.
 
 ## Package managers
 
@@ -90,8 +83,8 @@ periodically run `brew upgrade`.
 ### pip, pyenv and Python
 
 `pip` is Python's package manager, and we strongly recommend using
-[pyenv](https://github.com/pyenv/pyenv) to manage [Python](python.org). Our
-recommended way of installing both is:
+[pyenv](https://github.com/pyenv/pyenv) to manage [Python](python.org). These
+can be installed together through `brew`:
 
 ```bash
 brew install pyenv
@@ -114,19 +107,14 @@ may mean packages _should_ be outdated, and not be upgraded.
 Linux-specific package managers are typically used for packages which work
 through [brew](#brew) on MacOS, but not on Linux.
 
-We assume Debian- or Ubuntu-based Linux distributions with
-[apt](<https://en.wikipedia.org/wiki/APT_(software)>) available.
+Installation instructions assume Debian- or Ubuntu-based Linux distributions
+with [apt](<https://en.wikipedia.org/wiki/APT_(software)>) available.
 
 #### cargo
 
 Rust's [Cargo](https://doc.rust-lang.org/cargo/) package manager is used to
-install a couple tools on Linux.
-
-Our recommended way of installing is:
-
-```bash
-apt install cargo
-```
+install a couple tools on Linux. See the
+[installation instructions](https://rustup.rs/).
 
 To get the latest version of `cargo` packages, it will be necessary to
 periodically re-run the original `cargo` command used to install the package.
