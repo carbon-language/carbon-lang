@@ -55,7 +55,7 @@ few tips for setting up the repository are:
 -   The [carbon-lang repository](https://github.com/carbon-language/carbon-lang)
     should be cloned for most work.
 -   Sync submodules if you'll be building C++ code or working on the compiler:
-    `git submodule update --init --recursive`. This will take a few minutes due
+    `git submodule update --init`. This will take a few minutes due
     to the project size.
 -   [rs-git-fsmonitor](#rs-git-fsmonitor-and-watchman) can be used to speed up
     git operations.
