@@ -29,14 +29,14 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
         -   [Model](#model-1)
         -   [External constraints via optional parameters](#external-constraints-via-optional-parameters)
     -   [Constraints that are hard to express](#constraints-that-are-hard-to-express)
--   [Parameterized interfaces [optional feature]](#parameterized-interfaces-optional-feature)
+-   [Parameterized interfaces](#parameterized-interfaces)
 -   [Conditional conformance](#conditional-conformance)
 -   [Templated impls for generic interfaces](#templated-impls-for-generic-interfaces)
     -   [Structural conformance](#structural-conformance)
     -   [Bridge for C++ templates](#bridge-for-c-templates)
         -   [Calling C++ template code from Carbon](#calling-c-template-code-from-carbon)
         -   [Moving a C++ template to Carbon](#moving-a-c-template-to-carbon)
-    -   [Subtlety around templated interfaces](#subtlety-around-templated-interfaces)
+    -   [Subtlety around interfaces with multi parameters](#subtlety-around-interfaces-with-multi-parameters)
     -   [Lookup resolution](#lookup-resolution)
 -   [Composition of type-types](#composition-of-type-types)
     -   [Interface extension [optional feature]](#interface-extension-optional-feature)
@@ -119,7 +119,7 @@ implementation. There are a few cases why we would include another interface
 implementation as a member:
 
 -   [associated types](#associated-types)
--   [type parameters](#parameterized-interfaces-optional-feature)
+-   [type parameters](#parameterized-interfaces)
 -   [interface nesting/containment](#interface-nestingcontainment-optional-feature)
     (unlike the others, these define types with the same data representation as
     the type implementing the interface)
@@ -347,7 +347,7 @@ type, or a "type-type".
 **Note:** A type may implement any number of different interfaces, but may
 provide at most one implementation of any single interface. This makes the act
 of selecting an implementation of an interface for a type unambiguous throughout
-the whole program, so e.g. `Point as Vector` is clearly defined.
+the whole program, so e.g. `Point as Vector` is well defined.
 
 We don't expect users to ordinarily name facet types explicitly in source code.
 Instead, values are cast to a facet type as part of calling a generic function,
@@ -404,9 +404,8 @@ impl[Type:$$ T] Vector for PointT(T) {
 ```
 
 We put these arguments syntactically early so those names could also be used
-with [parameterized interfaces](#parameterized-interfaces-optional-feature).
-This syntax is also convenient for
-[conditional conformance](#conditional-conformance) and
+with [parameterized interfaces](#parameterized-interfaces). This syntax is also
+convenient for [conditional conformance](#conditional-conformance) and
 [templated impls](#templated-impls-for-generic-interfaces), below. We use square
 brackets here as is done for implicit arguments to functions, since there is no
 explicit caller providing these arguments.
@@ -517,8 +516,8 @@ struct Vector {
   var Type:$ Self;  // Self is the representation type.
   // Self is a member, not a parameter, so there is a single witness table type
   // across different `Self` types.
-  var fn(Self: a, Self: b) -> Self : Add;
-  var fn(Self: a, Double: v) -> Self : Scale;
+  var fnty(Self: a, Self: b) -> Self : Add;
+  var fnty(Self: a, Double: v) -> Self : Scale;
 }
 ```
 
@@ -528,10 +527,10 @@ this type:
 ```
 var Vector : VectorForPoint = (
     .Self = Point,
-    .Add = fn(Point: a, Point: b) -> Point {
+    .Add = fnty(Point: a, Point: b) -> Point {
       return Point(.x = a.x + b.x, .y = a.y + b.y);
     },
-    .Scale = fn(Point: a, Double: v) -> Point {
+    .Scale = fnty(Point: a, Double: v) -> Point {
       return Point(.x = a.x * v, .y = a.y * v);
     },
 );
@@ -566,19 +565,15 @@ them:
 ```
 interface A { method (Self: this) F(); }
 interface B { method (Self: this) G(); }
-struct C {
-  impl A { method (Self: this) F() { Print("CA"); } }
-}
-adaptor D for C {
-  impl B { method (Self: this) G() { Print("DB"); } }
-}
-adaptor E for C {
-  impl A { method (Self: this) F() { Print("EA"); } }
-}
-adaptor F for C {
-  impl A = E as A;  // Possibly we'd allow "impl A = E;" here.
-  impl B = D as B;
-}
+struct C { }
+impl A for C { method (Self: this) F() { Print("CA"); } }
+adaptor D for C { }
+impl B for D { method (Self: this) G() { Print("DB"); } }
+adaptor E for C { }
+impl A for E { method (Self: this) F() { Print("EA"); } }
+adaptor F for C { }
+impl A for F = E as A;  // Possibly we'd allow "impl A for F = E;" here.
+impl B for F = D as B;
 ```
 
 This allows us to provide implementations of new interfaces (as in `D`), provide
@@ -607,19 +602,21 @@ interface Comparable {
   fn operator<(Self: this, Self: that) -> Bool;
   ... // And also for >, <=, etc.
 }
-adaptor ComparableFromDifferenceFn(Type:$ T, fn(T, T)->Int:$ Difference) for T {
-  impl Comparable {
-    fn operator<(Self: this, Self: that) -> Bool {
-      return Difference(this, that) < 0;
-    }
-    ... // And also for >, <=, etc.
+adaptor ComparableFromDifferenceFn(Type:$ T, fnty(T, T)->Int:$ Difference)
+    for T { }
+impl[Type:$ T, fnty(T, T)->Int:$ Difference] Comparable
+    for ComparableFromDifferenceFn(T, Difference) {
+  fn operator<(Self: this, Self: that) -> Bool {
+    return Difference(this, that) < 0;
   }
+  ... // And also for >, <=, etc.
 }
 struct MyType {
   var Int: x;
   fn Difference(Self: this, Self: that) { return that.x - this.x; }
-  impl Comparable = ComparableFromDifferenceFn(MyType, Difference) as Comparable;
 }
+impl Comparable for MyType =
+    ComparableFromDifferenceFn(MyType, Difference) as Comparable;
 ```
 
 ## Associated types
@@ -653,18 +650,17 @@ struct DynamicArray(Type:$ T) {
   method (Ptr(Self): this) PushBack(T: value);
   method (Ptr(Self): this) PopBack() -> T;
   method (Ptr(Self): this) IsEmpty() -> Bool;
-
-  impl Stack {
-    var Type:$ ElementType = T;
-    // `Self` and `DynamicArray(T)` are still equivalent here.
-    method (Ptr(Self): this) Push(ElementType: value) {
-      this->PushBack(value);
-    }
-    method (Ptr(Self): this) Pop() -> ElementType {
-      return this->PopBack();
-    }
-    // Use default version of IsEmpty() from DynamicArray.
+}
+impl[Type:$ T] Stack for DynamicArray(T) {
+  var Type:$ ElementType = T;
+  // `Self` and `DynamicArray(T)` are still equivalent here.
+  method (Ptr(Self): this) Push(ElementType: value) {
+    this->PushBack(value);
   }
+  method (Ptr(Self): this) Pop() -> ElementType {
+    return this->PopBack();
+  }
+  // Use default version of IsEmpty() from DynamicArray.
 }
 ```
 
@@ -726,7 +722,7 @@ The associated type is modeled by a witness table field in the interface.
 
 ```
 struct Iterator(Type:$ Self) {
-  var fn(Ptr(Self): this): Advance;
+  var fnty(Ptr(Self): this): Advance;
   ...
 }
 struct Container(Type:$ Self) {
@@ -797,8 +793,7 @@ fn EqualContainers[TypeImplements(HasEquality):$ ET,
 This approach has a few advantages:
 
 -   There is one mechanism for constraining an interface: passing in arguments.
-    We use this both for
-    [interface parameters](#parameterized-interfaces-optional-feature)
+    We use this both for [interface parameters](#parameterized-interfaces)
     (required, typically positional parameters) and associated types (optional,
     named parameters).
 -   You can express a variety of constraints, including that two things must be
@@ -844,19 +839,7 @@ Another use case for inequality type constraints would be to say something like
 "define `ComparableTo(T1)` for `T2` if `ComparableTo(T2)` is defined for `T1`
 and `T1 != T2`".
 
-## Parameterized interfaces [optional feature]
-
-(This feature is optional: we may not want this extra complexity. I do recommend
-implementing this feature, for the reasons discussed below.)
-
-Reasons:
-
--   In Carbon we are consistently allowing constructs to be parameterized.
--   Some things are more naturally represented by required, positional
-    parameters (as opposed to associated types, which are optional and named).
--   Parameterized interfaces more naturally support cases where one type
-    naturally implements an interface multiple times with different parameters.
-    For example, a type might be comparable with multiple other types.
+## Parameterized interfaces
 
 Some type constraints would be more conveniently expressed by moving from
 [associated types](#associated-types) to
@@ -872,13 +855,18 @@ interface Stack(Type:$ ElementType) {
 }
 struct DynamicArray(Type:$ T) {
   ...
-  // References to a parameterized interface must be followed by an argument list
-  // with specific values for every parameter.
-  impl Stack(T) { ... }
 }
-// Equivalent out-of-line definition:
+// References to a parameterized interface must be followed by an argument list
+// with specific values for every parameter.
 impl[Type:$ T] Stack(T) for DynamicArray(T) { ... }
 ```
+
+All interface parameters must be marked as "generic", using the `:$` syntax.
+This reflects these two properties of these parameters:
+
+-   They must be resolved at compile-time, and so can't be passed regular
+    dynamic values.
+-   We allow either generic or template values to be passed in.
 
 It is a little more convenient to express type constraints on type parameters
 than associated types, since you don't need to specify the name:
@@ -934,10 +922,11 @@ a parameterized type can be distinguished:
 interface Map(Type:$ FromType, Type:$ ToType) {
   method (Ptr(Self): this) Map(FromType: needle) -> Optional(ToType);
 }
-struct Bijection(Type:$ FromType, Type:$ ToType) {
-  impl Map(FromType, ToType) { ... }
-  impl Map(ToType, FromType) { ... }
-}
+struct Bijection(Type:$ FromType, Type:$ ToType) { ... }
+impl[Type:$ FromType, Type:$ ToType] Map(FromType, ToType)
+    for Bijection(FromType, ToType) { ... }
+impl[Type:$ FromType, Type:$ ToType] Map(ToType, FromType)
+    for Bijection(FromType, ToType) { ... }
 // Error: Bijection has two impls of interface Dictionary(String, String)
 var Bijection(String, String): oops = ...;
 ```
@@ -946,44 +935,53 @@ In this case, it would be better to have an adapting type to contain the impl
 for the reverse map lookup:
 
 ```
-struct Bijection(Type:$ FromType, Type:$ ToType) {
-  impl Map(FromType, ToType) { ... }
-}
+struct Bijection(Type:$ FromType, Type:$ ToType) { ... }
+impl[Type:$ FromType, Type:$ ToType] Map(FromType, ToType)
+    for Bijection(FromType, ToType) { ... }
 adaptor ReverseLookup(Type:$ FromType, Type:$ ToType)
-    for Bijection(FromType, ToType) {
-  impl Map(ToType, FromType) { ... }
-}
+    for Bijection(FromType, ToType) { }
+impl[Type:$ FromType, Type:$ ToType] Map(ToType, FromType)
+    for ReverseLookup(FromType, ToType) { ... }
 ```
 
 This would be the preferred approach to use instead of multiple impls of the
 same interface.
 
-**Proposal:** You can opt in to allowing multiple impls for a type by using
-templated type parameters to an interface. Templated type parameters to
-interfaces generally won't be inferred / deduced (at least not in a context
-where only one answer is allowed).
+**Proposal:** You can opt in to allowing multiple impls for a type by using a
+keyword annotation on the type parameter to an interface, for now `multi`. Multi
+type parameters to interfaces generally won't be inferred / deduced (at least
+not in a context where only one answer is allowed).
 
 This will be the approach used for `ComparableTo(T)`, `ConstructibleFrom(...)`,
 or other operators that might have multiple overloads. Example:
 
 ```
-interface EqualityComparableTo(Type:$$ T) {  // Note: $$ instead of $
+interface EqualityComparableTo(multi Type:$ T) {  // Note: multi
   fn operator==(Self: this, T: that) -> Bool;
   ...
 }
 struct Complex {
   var Float64: real;
   var Float64: imag;
-  // Can implement this interface more than once as long as it has different
-  // arguments.
-  impl EqualityComparableTo(Complex) { ... }
-  impl EqualityComparableTo(Float64) { ... }
 }
+// Can implement this interface more than once as long as it has different
+// arguments.
+impl EqualityComparableTo(Complex) for Complex { ... }
+impl EqualityComparableTo(Float64) for Complex { ... }
 ```
 
-**Question:** Should we use something other than the generic/template
-distinction to specify whether different values to the parameter create
-different interfaces for purposes of inference and implementation?
+Observation: While you can switch between regular ("inferable") parameters and
+associated types, a `multi` parameter can't be changed to an associated type.
+
+**Rationale:** Reasons to support parameterized interfaces:
+
+-   In Carbon we are consistently allowing constructs to be parameterized.
+-   Some things are more naturally represented by required, positional
+    parameters (as opposed to associated types, which are optional and named).
+-   Parameterized interfaces support cases where one type implements an
+    interface multiple times with different parameters (`multi` parameters). For
+    example, a type might be comparable with multiple other types. We expect to
+    need this for operator overloading.
 
 ## Conditional conformance
 
@@ -1063,7 +1061,7 @@ Some things going on here:
 
 -   Our syntax for out-of-line impls already allows you to have a templated type
     parameter. This can be used to provide a general impl that depends on
-    templated access to the type, even when the interface itself is defined
+    templated access to the type, even though the interface itself is defined
     generically.
 -   We very likely will want to restrict the impl in some ways.
     -   Easy case: An impl for a family of parameterized types.
@@ -1106,7 +1104,7 @@ constructible from `U` if it has a `operator create` method that takes a `U`
 value", without any way to write down an particular value for `U` in general:
 
 ```
-interface ConstructibleFrom(...:$$ Args) { ... }
+interface ConstructibleFrom(multi ...:$ Args) { ... }
 impl[Type:$$ T, Type:$$ U] if (LegalExpression(T.operator create(???)))
     ConstructibleFrom(U) for T { ... }
 ```
@@ -1136,8 +1134,8 @@ keyword arguments, as in:
 Example:
 
 ```
-fn CallsFooAndBar[HasFunction(.Foo = fn(Int:_)->String,
-                              .Bar = fn(String:_)->Bool):$$ T]
+fn CallsFooAndBar[HasFunction(.Foo = fnty(Int:_)->String,
+                              .Bar = fnty(String:_)->Bool):$$ T]
     (T: x, Int: y) -> Bool {
   return x.Bar(x.Foo(y));
 }
@@ -1148,8 +1146,8 @@ signatures that involve `Self`. Supporting that may require something a bit more
 cumbersome:
 
 ```
-HasMethod(fn(Type:$$ Self)->(.Foo = fn(Self:_, Int:_)->String,
-                             .Bar = fn(Self:_, String:_)->Bool))
+HasMethod(fnty(Type:$$ Self)->(.Foo = fnty(Self:_, Int:_)->String,
+                               .Bar = fnty(Self:_, String:_)->Bool))
 ```
 
 **Possible answer:** A last possibility: anonymous interfaces would match
@@ -1263,28 +1261,32 @@ interface Optional(Type:$ T) { ... }
 impl[Type:$$ T] Opt(T) for C++::std::optional(T);
 ```
 
-### Subtlety around templated interfaces
+### Subtlety around interfaces with multi parameters
 
-One subtlety around templated interfaces is that they may have multiple
-implementations for a single type. Templated impls could take these each of
-these multiple implementations for one interface and manufacture an impl for
-another interface, as in this example:
+Since interfaces with `multi` parameters can have multiple implementations for a
+single type, it opens the question of how they work when implementing one
+interface in terms of another.
+
+**Open question:** We could allow templated impls to take each of these multiple
+implementations for one interface and manufacture an impl for another interface,
+as in this example:
 
 ```
-// Some interfaces with templated type parameters.
-interface EqualityComparableTo(Type:$$ T) { ... }
+// Some interfaces with multi type parameters.
+interface EqualityComparableTo(multi Type:$ T) { ... }
 // Types can implement templated interfaces more than once as long as the
 // templated arguments differ.
 struct Complex {
   var Float64: r;
   var Float64: i;
-  impl EqualityComparableTo(Complex) { ... }
-  impl EqualityComparableTo(Float64) { ... }
 }
-// Some other interface with a templated type parameter.
-interface Foo(Type:$$ T) { ... }
+impl EqualityComparableTo(Complex) for Complex { ... }
+impl EqualityComparableTo(Float64) for Complex { ... }
+// Some other interface with a multi type parameter.
+interface Foo(multi Type:$ T) { ... }
 // This provides an impl of Foo(T) for U if U is EqualityComparableTo(T).
-// In the case of Complex, this provides two impls, one for T == Complex, and one for T == Float64.
+// In the case of Complex, this provides two impls, one for T == Complex,
+// and one for T == Float64.
 impl[EqualityComparableTo(Type:$$ T):$ U] Foo(T) for U { ... }
 ```
 
@@ -1339,11 +1341,10 @@ interface A {
 interface B extends A {
   method (Self: this) G();
 }
-struct S {
-  impl B {
-    method (Self: this) F() { ... }
-    method (Self: this) G() { ... }
-  }
+struct S { }
+impl B for S {
+  method (Self: this) F() { ... }
+  method (Self: this) G() { ... }
 }
 var S: x;
 (x as (S as B)).F();
@@ -1358,9 +1359,8 @@ fn TakesA[A: T](Ptr(T): a) { ... }
 TakesA(&x);  // Okay: S implements B so it also implements A.
 
 fn TakesB[B: T](Ptr(T): b) { ... }
-struct SA {
-  impl A { ... }
-}
+struct SA { }
+impl A for SA { ... }
 var SA: y;
 TakesB(&y);  // Error: SA implements A but not B.
 ```
@@ -1432,10 +1432,10 @@ For the above example, this would be represented as:
 
 ```
 struct A(Type:$ Self) {
-  var fn(Self): F;
+  var fnty(Self): F;
 }
 struct B(Type:$ Self) extends A(Self) {
-  var fn(Self): G;
+  var fnty(Self): G;
 }
 ```
 
@@ -1461,10 +1461,10 @@ fn H[TypeImplements(A, B):$ T](T: x) {
   (x as (T as A)).F();
   (x as (T as B)).G();
 }
-struct S {
-  impl A { method (Self: this) F() { ... } }
-  impl B { method (Self: this) G() { ... } }
-}
+struct S { }
+impl A for S { method (Self: this) F() { ... } }
+impl B for S { method (Self: this) G() { ... } }
+
 var S: y = ...;
 H(y); // H's T is set to S
 ```
@@ -1607,8 +1607,10 @@ Used as:
 
 ```
 struct Song { ... }
-adaptor SongByArtist for Song { impl Comparable { ... } }
-adaptor SongByTitle for Song { impl Comparable { ... } }
+adaptor SongByArtist for Song { }
+impl Comparable for SongByArtist { ... }
+adaptor SongByTitle for Song { }
+impl Comparable for SongByTitle { ... }
 assert(CombinedLess(Song(...), Song(...), SongByArtist, SongByTitle) == True);
 ```
 
@@ -1638,17 +1640,17 @@ combine `CompatibleWith` with [type adaptation](#adapting-types):
 
 ```
 adaptor ThenCompare(Type:$ T,
-                    List(CompatibleWith(Comparable, T)):$ CompareList) for T {
-  impl Comparable {
-    method (Self: this) Compare(Self: that) -> CompareResult {
-      for (auto : U) in CompareList {
-        var CompareResult: result = (this as U).Compare(that);
-        if (result != CompareResult.Equal) {
-          return result;
-        }
+                    List(CompatibleWith(Comparable, T)):$ CompareList) for T { }
+impl[Type:$ T, List(CompatibleWith(Comparable, T)):$ CompareList] Comparable
+    for ThenCompare(T, CompareList) {
+  method (Self: this) Compare(Self: that) -> CompareResult {
+    for (auto : U) in CompareList {
+      var CompareResult: result = (this as U).Compare(that);
+      if (result != CompareResult.Equal) {
+        return result;
       }
-      return CompareResult.Equal;
     }
+    return CompareResult.Equal;
   }
 }
 
@@ -1660,9 +1662,8 @@ assert((song as SongByArtistThenTitle).Compare(song2) == CaompareResult.Less);
 
 ### Other type constraints
 
-Some constraints, such as that some
-[type parameter](#parameterized-interfaces-optional-feature) or
-[associated type](#associated-types) must implement an interface or that two
+Some constraints, such as that some [type parameter](#parameterized-interfaces)
+or [associated type](#associated-types) must implement an interface or that two
 must be equal, are
 [represented using multiple clauses](#external-constraints-via-optional-parameters)
 rather than a single type-type. Sometimes we may need a single type-type, such
@@ -1758,13 +1759,13 @@ Example:
 interface Foo {
   impl DefaultConstructible;  // See "interface nesting/containment" below.
 }
-struct Bar {  // Structs are "sized" by default.
-  impl Foo;
-}
+struct Bar { }  // Structs are "sized" by default.
+impl Foo for Bar;
 fn F[Foo: T](Ptr(T): x) {  // T is unsized.
   var T: y;  // Illegal: T is unsized.
 }
-fn G[Sized(Foo): T](Ptr(T): x) { // T is sized, but its size is only known generically.
+// T is sized, but its size is only known generically.
+fn G[Sized(Foo): T](Ptr(T): x) {
   var T: y;  // Allowed: T is sized and default constructible.
 }
 var Bar: z;
@@ -1872,11 +1873,15 @@ interface Printable {
 }
 struct AnInt {
   var Int: x;
-  impl Printable { method (Ptr(Self): this) Print() { PrintInt(this->x); } }
+}
+impl Printable for AnInt {
+  method (Ptr(Self): this) Print() { PrintInt(this->x); }
 }
 struct AString {
   var String: x;
-  impl Printable { method (Ptr(Self): this) Print() { PrintString(this->x); } }
+}
+impl Printable for AString {
+  method (Ptr(Self): this) Print() { PrintString(this->x); }
 }
 
 var AnInt: i = (.x = 3);
@@ -1971,16 +1976,17 @@ struct DynPtr(InterfaceType:$$ TT) {  // TT is any interface
   struct DynPtrImpl {
     private TT: t;
     private Ptr(Void): p;  // Really Ptr(t) instead of Ptr(Void).
-    impl TT {
-      // Defined using meta-programming.
-      // Forwards this->F(...) to (this->p as Ptr(this->t))->F(...)
-      // or equivalently, this->t.F(this->p as Ptr(this->t), ...).
-    }
   }
   var TT:$ T = (DynPtrImpl as TT);
   private DynPtrImpl: impl;
   fn operator->(Ptr(Self): this) -> Ptr(T) { return &this->impl; }
   fn operator=[TT:$ U](Ptr(Self): this, Ptr(U): p) { this->impl = (.t = U, .p = p); }
+}
+
+impl[InterfaceType:$$ TT] TT for DynPtr(TT).DynPtrImpl {
+  // Defined using meta-programming.
+  // Forwards this->F(...) to (this->p as Ptr(this->t))->F(...)
+  // or equivalently, this->t.F(this->p as Ptr(this->t), ...).
 }
 ```
 
@@ -2055,8 +2061,9 @@ struct Boxed(Type:$ T,
   private var T*: p;
   private var AllocatorType: allocator;
   operator create(T*: p, AllocatorType: allocator = DefaultAllocator) { ... }
-  impl Movable { ... }
 }
+impl[Type:$ T, AllocatorInterface:$$ AllocatorType] Movable
+    for Boxed(T, AllocatorType) { ... }
 
 // TODO: Should these just be constructors defined within Boxed(T)?
 // If T is constructible from X, then Boxed(T) is constructible from X ...
@@ -2096,8 +2103,9 @@ struct DynBoxed(InterfaceType:$$ TT,
   private var AllocatorType: allocator;
   ...  // Constructors, etc.
   // Destructor deallocates this->p.
-  impl Movable { ... }
 }
+impl[InterfaceType:$$ TT, AllocatorInterface:$$ AllocatorType]
+    Movable for DynBoxed(TT, AllocatorType) { ... }
 ```
 
 **Question:** Should there be some mechanism to have values be dynboxed in
@@ -2150,10 +2158,10 @@ supports zero-runtime-cost casting.
 // Can pass a T to a function accepting a MaybeBoxed(T) value without boxing by
 // first casting it to NotBoxed(T), as long as T is sized and movable.
 adaptor NotBoxed(Sized(TypeImplements(Movable)):$ T) for T {  // :$ or :$$ here?
-  impl Movable = T as Movable;
-  impl MaybeBoxed(T) {
-    fn operator->(Ptr(Self): this) -> Ptr(T) { return this as Ptr(T); }
-  }
+}
+impl[Sized(TypeImplements(Movable)):$ T] Movable for NotBoxed(T) = T as Movable;
+impl[Sized(TypeImplements(Movable)):$ T] MaybeBoxed(T) for NotBoxed(T) {
+  fn operator->(Ptr(Self): this) -> Ptr(T) { return this as Ptr(T); }
 }
 // TODO: Should this just be a constructor defined within NotBoxed(T)?
 // Says NotBoxed(T) is constructible from a value of type Args if T is.
@@ -2180,7 +2188,8 @@ interface Foo { method (Ptr(Self): this) F(); }
 fn UseBoxed[Foo:$ T, Sized(MaybeBoxed(T)):$ BoxType](BoxType: x) {
   x->F();  // Possible indirection is visible
 }
-struct Bar { impl Foo { ... } }
+struct Bar { }
+impl Foo for Bar { ... }
 var DynBoxed(Foo): y = new Bar(...);
 UseBoxed(y);
 // DontBox might not be needed, if Bar meets the requirements to use the
@@ -2237,6 +2246,8 @@ represent the same thing with extra implicit arguments.
 
 ## Interface nesting/containment [optional feature]
 
+TODO REDO, not this
+
 Just as we might want to support
 [interface extension](#interface-extension-optional-feature), we may also want
 to support a containment relationship between interfaces & implementations. This
@@ -2255,17 +2266,17 @@ interface Outer {
   impl Inner1;
   impl Inner2;
 }
-struct S {
-  impl Inner2 {
-    method (S: this) L() { ... }
-  }
-  impl Outer {
-    impl Inner1 {
-      method (S: this) K() { ... }
-    }
-    // impl of Inner2 here uses (S as Inner2) by default.
-  }
+struct S { }
+impl Inner2 for S {
+  method (S: this) L() { ... }
 }
+impl Outer for S {
+  impl Inner1 {
+    method (S: this) K() { ... }
+  }
+  // impl of Inner2 here uses (S as Inner2) by default.
+}
+
 var S: y = ...;
 (y as ((S as Outer) as Inner1)).K();
 ```
@@ -2278,6 +2289,8 @@ implements `Inner1` or `Inner2`, it could use that as the default in the impl of
 This, combined with unnamed/structural interfaces, would be a building block for
 the
 [`TypeImplements` construction above](#type-implementing-multiple-interfaces).
+
+TODO Yes this instead
 
 **Question:** A similar feature that is perhaps a bit simpler would be to say
 that interfaces can require other interfaces, but there is no containment.
@@ -2299,7 +2312,7 @@ interface Outer {
   impl Inner1;
   impl Inner2;
 }
-struct S {
+struct S { }
   impl Inner1 {
     method (S: this) K() { ... }
   }
@@ -2309,10 +2322,14 @@ struct S {
   impl Outer {
     // Requirements satisfied by impl of Inner1 and Inner2 above.
   }
-}
+
 var S: y = ...;
 (y as (S as Inner1)).K();
 ```
+
+TODO: Maybe can implement all three `Inner1`, `Inner2`, and `Outer` by
+implementing methods `K` and `L` in an `Outer` `impl`. Or maybe only if `Outer`
+"extends" `Inner1` and `Inner2` and so has aliases for `K` and `L`.
 
 ## Index of examples
 
@@ -2328,7 +2345,7 @@ Specifically, how does this proposal address
     [associated types](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#interface-type-parameters-vs-associated-types)
     (almost certainly).
     -   [associated types](#associated-types),
-    -   [type parameters](#parameterized-interfaces-optional-feature).
+    -   [type parameters](#parameterized-interfaces).
 -   Define an interface with
     [type constraints](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#type-constraints),
     such as associated types or type parameters satisfying some interface. Type
