@@ -15,11 +15,13 @@
 # The core team owns the core language and project documentation. The
 # implementation team has access for small (non-evolution) edits.
 /*.md               @carbon-language/core-team @carbon-language/implementation-team
-/LICENSE            @carbon-language/core-team
 /docs/              @carbon-language/core-team @carbon-language/implementation-team
 
 # The review managers own updates to the proposals.
 /proposals/         @carbon-language/review-managers
+
+# The core team should review license changes.
+/LICENSE            @carbon-language/core-team
 
 # ACLs are owned by the admin team and handled last to avoid accidentally being
 # overridden by later patterns.
