@@ -4,13 +4,13 @@
 
 # Most of the repository consists of implementation code or other supporting
 # material for the implementation of Carbon. Rather than enumerate these, we
-# default them to toolchain team ownership, which will be overridden by later
+# default them to implementation team ownership, which will be overridden by later
 # lines.
-*                   @carbon-language/toolchain-team
+*                   @carbon-language/implementation-team
 
 # Co-own top-level config files. Ownership is actually mixed, but low value to
 # separate. Top-level docs will be overridden as core-team-owned files.
-/*                  @carbon-language/toolchain-team @carbon-language/infra-team
+/*                  @carbon-language/implementation-team @carbon-language/infra-team
 
 # Directories that contain infrastructure and support scripts.
 /.github/           @carbon-language/infra-team
