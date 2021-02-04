@@ -10,17 +10,13 @@
 
 # Co-own top-level config files. Ownership is actually mixed, but low value to
 # separate. Top-level docs will be overridden as core-team-owned files.
-/*                  @carbon-language/implementation-team @carbon-language/infra-team
+/*                  @carbon-language/implementation-team
 
-# Directories that contain infrastructure and support scripts.
-/.github/           @carbon-language/infra-team
-/github/            @carbon-language/infra-team
-/website/           @carbon-language/infra-team
-
-# The core team owns the core language and project documentation.
-/*.md               @carbon-language/core-team
+# The core team owns the core language and project documentation. The
+# implementation team has access for small (non-evolution) edits.
+/*.md               @carbon-language/core-team @carbon-language/implementation-team
 /LICENSE            @carbon-language/core-team
-/docs/              @carbon-language/core-team
+/docs/              @carbon-language/core-team @carbon-language/implementation-team
 
 # The review managers own updates to the proposals.
 /proposals/         @carbon-language/review-managers
