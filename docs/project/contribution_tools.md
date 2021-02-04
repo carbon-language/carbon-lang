@@ -66,7 +66,7 @@ few tips for setting up the repository are:
         [carbon-lang repository](https://github.com/carbon-language/carbon-lang).
 
 -   Sync submodules if you'll be building C++ code or working on the compiler:
-    `git submodule update --init --recursive`. This will take a few minutes due
+    `git submodule update --init`. This will take a few minutes due
     to the project size.
 -   [rs-git-fsmonitor](#rs-git-fsmonitor-and-watchman) can be used to speed up
     git operations.
@@ -328,7 +328,6 @@ Our recommended way of installing is:
 -   MacOS:
 
     ```bash
-    brew install watchman
     brew tap jgavris/rs-git-fsmonitor \
       https://github.com/jgavris/rs-git-fsmonitor.git && \
       brew install rs-git-fsmonitor
