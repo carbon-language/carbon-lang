@@ -321,7 +321,6 @@ Our recommended way of installing is:
 -   MacOS:
 
     ```bash
-    brew install watchman
     brew tap jgavris/rs-git-fsmonitor \
       https://github.com/jgavris/rs-git-fsmonitor.git && \
       brew install rs-git-fsmonitor
