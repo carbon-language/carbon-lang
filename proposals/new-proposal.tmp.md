@@ -1,0 +1,1145 @@
+# Initialization of memory and variables
+
+<!--
+Part of the Carbon Language project, under the Apache License v2.0 with LLVM
+Exceptions. See /LICENSE for license information.
+SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+-->
+
+[Pull request](https://github.com/carbon-language/carbon-lang/pull/####)
+
+<!-- toc -->
+
+## Table of contents
+
+-   [Problem](#problem)
+-   [Background](#background)
+-   [Proposal](#proposal)
+    -   [Unformed objects](#unformed-objects)
+        -   [Representation](#representation)
+        -   [Address-of and escape](#address-of-and-escape)
+        -   [Types with an unformed state](#types-with-an-unformed-state)
+        -   [Raw storage and padding](#raw-storage-and-padding)
+    -   [Necessary initialization](#necessary-initialization)
+    -   [Optional features for unformed states](#optional-features-for-unformed-states)
+        -   [Hardening initialization](#hardening-initialization)
+        -   [Queryable unformed state](#queryable-unformed-state)
+    -   [Function returns and initialization](#function-returns-and-initialization)
+        -   [Named return variable in place of a return type](#named-return-variable-in-place-of-a-return-type)
+        -   [Declared `returned` variable](#declared-returned-variable)
+    -   [Constructors and initializing aggregate objects](#constructors-and-initializing-aggregate-objects)
+        -   [Unformed members](#unformed-members)
+-   [Open questions](#open-questions)
+    -   [Named return variable, declared `returned` variables, or both?](#named-return-variable-declared-returned-variables-or-both)
+    -   [Allow accessing member access of unformed objects?](#allow-accessing-member-access-of-unformed-objects)
+    -   [Allow assigning an unformed object to another unformed object?](#allow-assigning-an-unformed-object-to-another-unformed-object)
+-   [Alternatives considered](#alternatives-considered)
+    -   [Require compile-time-proven initialization](#require-compile-time-proven-initialization)
+        -   [Trivially required initialization](#trivially-required-initialization)
+        -   [Initialize on all branches prior to use (Rust)](#initialize-on-all-branches-prior-to-use-rust)
+        -   [Definitive initialization (Swift)](#definitive-initialization-swift)
+    -   [C/C++ uninitialized](#cc-uninitialized)
+    -   [Fully destructive move (Rust)](#fully-destructive-move-rust)
+    -   [Completely non-destructive move (C++)](#completely-non-destructive-move-c)
+
+<!-- tocstop -->
+
+## Problem
+
+How should Carbon handle uninitialized memory and variables? There are a number
+of goals we would like to satisfy in this space:
+
+-   Minimize the overhead (in optimized builds) of unnecessary initialization.
+-   Detect and diagnose bugs in code where variables are used without being
+    initialized first at lower cost than a separate and unscalable build mode
+    (MSan for C++).
+-   Avoid the ergonomic and readability burden of being forced to initialize all
+    variables at the point of declaration, even when there is no intentional
+    value to yet use.
+-   Minimize the security risk posed by accidental access of uninitialized
+    memory.
+-   Avoid unnecessary overhead for dynamic tracking of whether a variable is
+    initialized.
+-   Avoid unnecessarily running destructors for known uninitialized variables.
+-   Allow most types similar ergonomics and behaviors as a simple machine
+    integer type.
+-   Offer similar behavior regardless of storage location (stack, heap,
+    thread-local-storage, static / global storage).
+
+Part of our goal is also to support code patterns such as:
+
+```
+  // At block scope of some function...
+  var Int: temporary;
+  while (...) {
+    // ... code not using `temporary` ...
+
+    temporary = ...;
+    // ... code using `temporary` ...
+  }
+```
+
+That is we also don't want to force a _syntactic_ distinction when an assignment
+occurs to an already initialized variable. That would end up with fundamentally
+similar ergonomic (and potentially performance) overheads as forcing
+initialization as part of declaration. Throughout this document, the term
+"assignment" should instead be understood as the operation that can be used in
+this construct.
+
+These problems are also tightly related to the problems of _moved-from_
+semantics. These semantics might range from completely non-destructive (as in
+C++) to completely destructive (as in Rust). A compelling solution for the
+variable initialization challenges can also provide a compelling approach for
+moved-from semantics that represents a middle ground between the two extremes
+seen in C++ and Rust. For example, we propose that the following should hold
+equally for moved-from objects and objects without an explicit initializer:
+
+-   The object must not be used in any way other than assignment or destruction.
+    -   Note that this doesn't say anything about taking the address which is
+        orthogonal.
+-   It must be possible to transition it to a valid, normal object through
+    assignment.
+-   It should be allowed to destroy them.
+-   It should not be necessary to destroy them.
+
+## Background
+
+-   [Definitive assignment or definitive initialization](https://en.wikipedia.org/wiki/Definite_assignment_analysis)
+    (used by Swift, Java, etc)
+-   [Rust checked uninitialized data](https://doc.rust-lang.org/nomicon/checked-uninit.html)
+-   [Elements of Programming](http://elementsofprogramming.com/eop_bluelinks.pdf)
+-   [P2025 - Guaranteed copy elision for named return objects](http://wg21.link/p2025)
+
+## Proposal
+
+We propose two fundamental concepts:
+
+1. An _unformed state_ for objects.
+2. Raw, uninitialized storage.
+
+The first of these is a new concept and is discussed in detail below. However,
+uninitialized storage in Carbon should work in the same way as an uninitialized
+array of `unsigned char` or `std::byte` in C++. This is intended primarily to
+serve the needs of custom data structures such as C++'s `std::vector` or
+whatever Carbon ends up with as an `Optional(T)` type. With such raw storage,
+initialization and destruction of any objects within the storage must be managed
+manually and externally and the language won't provide any automatic mechanisms.
+The detailed syntax for working with raw storage in this manner is left to a
+subsequent proposal.
+
+### Unformed objects
+
+An _unformed_ state is a state of an _object_. We both classify _objects_ based
+on whether they are in an unformed state or a fully formed state, as well as
+classify _types_ which support unformed states at all versus types that require
+objects to always be in a fully formed state.
+
+An unformed state for an object is one that satisfies the following properties:
+
+-   Assignment to a fully formed value is correct using the normal assignment
+    implementation for the type.
+-   Destruction must be correct and a no-op using the type's normal destruction
+    implementation.
+-   Destruction must be optional. The behavior of the program must be equivalent
+    whether the destructor is run or not for an unformed object, including not
+    leaking resources.
+
+Any operation on an unformed object _other_ than destruction or assignment to a
+fully formed value is an **error**, including comparisons with other objects. It
+should be diagnosed as early as possible in a debug build and at least at
+runtime. In a performance build, it may lead to undefined behavior, but in a
+hardened build we have a strong mitigation that restores safety by defining the
+behavior using a maximally safe representation.
+
+When a variable is declared without initialization, such as:
+
+```
+var Int: x;
+```
+
+The variable is implicitly initialized to its type's unformed state and
+represents an unformed object.
+
+It is invalid to declare a variable without explicit initialization unless its
+type implements the interface to specify how to do that initialization. For
+types that do not support initializing the variable to an unformed state, the
+programmer must either explicitly initialize it to a valid and fully formed
+state for the type, or must change the type to something like an `Optional(T)`
+that introduces an unformed state (and the dynamic tracking necessary to
+implement it) alongside raw storage for the underlying object.
+
+#### Representation
+
+This state can have the same representation as valid and fully formed states for
+the object (for example, an empty `Optional(T)`). While there is a semantic
+difference (any operation _other_ than assignment and destruction is an error
+for an unformed object), there is no problem re-using a representation which is
+also used for fully formed and valid objects provided it satisfies all three of
+the above constraints. The semantic restrictions remain even in this case. Using
+the hypothetical `Optional(T)` API, we could imagine:
+
+```
+var Optional(T): formed = .Empty;
+// This is of course fine.
+if (formed.empty()) { ... }
+
+var Optional(T): unformed;
+// This would be an error even though `unformed` might have identical
+// in-memory representation or bit-pattern to `formed`:
+if (unformed.empty()) { ... }
+```
+
+#### Address-of and escape
+
+It is allowed to take the address of an unformed object and escape it to another
+function. This function may even be responsible for assigning a fully formed
+object to that location.
+
+```
+fn AssignIntTo(Int: x, Ptr(Int): destination) {
+  *destination = x;
+}
+
+fn Example() {
+  var Int: y;
+  // `y` is unformed here.
+  AssignIntTo(42, &y);
+  // `y` is fully formed and usable.
+}
+```
+
+This in turn is part of why it is important that the destructor is _allowed_ to
+be run on an unformed object. This gives us a conservatively correct way to
+implement code where it may be impossible to know whether the object has been
+initialized to a fully formed object, and similarly code where it is impossible
+to know whether the object has been moved-from. Consider some `HashMap`
+container with allocated memory where the destructor _must_ be run to release
+the memory:
+
+```
+fn MaybeInitializes(Ptr(HashMap): map);
+fn MaybeMovesFrom(Ptr(HashMap): map);
+
+fn Example() {
+  var HashMap: map;
+  MaybeInitializes(&map);
+  if (...) {
+    // Don't know if we need to destroy `map`. But conservatively we can run the
+    // destructor unconditionally.
+    return;
+  }
+
+  // Unconditionally assign a particular value to our map.
+  map = ...;
+  MaybeMovesFrom(&map);
+
+  // `map` could be unformed (due to being moved from) or still fully formed.
+  // Run the destructor unconditionally to be safe.
+  return;
+}
+```
+
+#### Types with an unformed state
+
+The intent is that most types have an unformed state, as it will let types "be
+like the `int`s" -- we design it to closely match how machine integers actually
+behave in modern optimizing compilers: when left "uninitialized" they can be
+safely _assigned_ or _destroyed_. But running the destructor is _optional_.
+
+Types can opt into this semantic model and define an explicit operation to
+create a type in the unformed state by implementing an interface. Because this
+will be defined semantically by the existence of an implementation of the
+relevant interface, and operationally by providing code to produce an unformed
+object, there is no specific bit pattern or representation encoded for the
+unformed state. The interface should provide a default implementation for types
+where all members have an implementation which recurses member-wise.
+
+It is reasonable to wonder if types where the default implementation is valid
+implicitly implement the interface, or should it require an explicit opt-in?
+Initially we suggest this should be explicit. There may grow to be a set of
+interfaces which should be implicitly implemented due to their prevalence, but
+it seems better to be conservative at first and approach that systematically.
+
+Note that this state is similar but more restrictive than the _partially formed
+state_ from Elements of Programming (EoP) in section 1.5.
+
+#### Raw storage and padding
+
+Raw storage and padding bytes are treated like they consist of unformed bytes.
+Padding cannot ever be assigned to and thus will _always_ be unformed if
+observed in any way. We propose not allowing sub-byte raw storage or padding.
+
+### Necessary initialization
+
+Some types will not provide an unformed state. Variables of such types must be
+initialized when declared:
+
+```
+struct NecessaryInit {
+  var Mutex m;
+
+  // Potentially other members without a meaningful unformed state.
+}
+
+// This line would be an error:
+var NecessaryInit: error_no_init;
+```
+
+For these types, the programmer must either explicitly initialize it to a valid
+and fully formed state for the type, or must change the type to something like
+an `Optional(T)` that introduces an unformed state (and the dynamic tracking
+necessary to implement it) alongside raw storage for the underlying object:
+
+```
+// This is fine, it contains the boolean necessary to track initialization.
+var Optional(NecessaryInit): ok;
+```
+
+### Optional features for unformed states
+
+There are two _optional_ aspects of unformed states that types may elect to
+explicitly specify (again by implementing interfaces, here by specializing the
+implementation rather than relying on the default fallback).
+
+#### Hardening initialization
+
+First, types may specify how to further initialize an object that is in the
+unformed state to harden it against erroneous usage. For example, the unformed
+state of an `Int` is trivial -- it can simply be left uninitialized. However, it
+can be hardened against bugs by setting it to zero. User defined types have the
+option of specifying a specific routine to do similar hardening initialization.
+Any storage for the type that is not specifically initialized by this routine
+will be zeroed, including any padding.
+
+#### Queryable unformed state
+
+The second optional aspect is implementing a test for whether an object is
+unformed. This test cannot be run by user code -- doing so would be a bug due to
+referencing an unformed object. However, for types where the unformed state is
+intrinsically distinct from any other state, they can expose the ability to
+query this. That allows debug builds of Carbon to verify objects are fully
+formed prior to use without external tracking state. Types which do not
+implement this functionality will still get partial checking in debug builds
+through external state, but may lose dynamic enforcement across ABI boundaries
+where this extra state cannot be propagated. These are also the boundaries
+across which the hardening will be done to ensure bugs across those boundaries
+cannot become security vulnerabilities in the hardened build configuration.
+
+### Function returns and initialization
+
+This proposal also has implications for returning values from functions,
+especially as it relates to how Carbon can provide something analogous to named
+return values in a more principled form from what C++ does.
+
+Consider the following common initialization code:
+
+```
+fn CreateMyObject() -> MyType {
+  return <return-expression>;
+}
+
+var MyType: x = CreateMyObject();
+```
+
+We propose that the `&lt;return-expression>` in the `return` statement of
+`CreateMyObject` _initializes_ the variable `x` here. There is no copy, etc. It
+is precisely the same as:
+
+```
+var MyType: x = <return-expression>;
+```
+
+We also propose this applies _recursively_. This matches how C++ has evolved
+with "guaranteed copy elision".
+
+However, C++ has found that it is extremely desirable for functions to have the
+same fundamental behavior apply for a _variable_ within a function rather than
+just the expression in the `return` statement. We suggest that Carbon should
+provide a direct mechanism for this with a named return variable which obeys the
+same initialization rules as any other variable.
+
+An important aspect of any approach to named return variables is that, much like
+with normal return values, there is no copy when initializing. This means that
+the address of `result` in the examples below of `CreateMyObject2` and
+`CreateMyObject3` are the same as the address of `y` during the evaluation of
+`y`'s initialization expression. Only one variable is created. It is first
+initialized to an unformed state on entry to `CreateMyObject2` and assigned to a
+fully formed value internally.
+
+We see two possible approaches to achieve this: named return variable in place
+of a return type, and declared `returned` variable.
+
+#### Named return variable in place of a return type
+
+With this approach, there is an alternate syntax for the return type which
+declares a named variable that holds the return value. For example, provided
+that `MyType` has an unformed state:
+
+```
+fn CreateMyObject2() -> var MyType: result {
+  // `result` here is an unformed object.
+  // so we can assign to it here:
+  result = CreateMyObject();
+
+  // Because there is a named return variable, we cannot
+  // have an expression in the return statement.
+  return;
+}
+```
+
+We could also explicitly initialize the return variable, which eliminates the
+requirement that its type has an unformed state:
+
+```
+fn CreateMyObject3() -> var MyType: result = CreateMyObject2() {
+  // any code we want
+  return;
+}
+
+var MyType: y = CreateMyObject3();
+```
+
+**Minor syntax variations:**
+
+-   Possible to use different arrow symbols (such as `=>` instead of `->`) to
+    differentiate different kinds of returns.
+    -   However, we don't recommend this given the subtlety of the visual
+        difference.
+-   Potentially require `return &lt;name>;` where `&lt;name>` must exactly match
+    the return variable's name to make it clear what is being returned.
+    -   One concern with this is that `&lt;name>` can't really be an expression
+        in general, it needs to _just_ be a name. This may be a bit surprising.
+    -   Also complicated as there is no need to have a single name for the
+        variable: it might be `var (MyType: result, Error: error)` for example,
+        and it becomes unclear what to put in the `return`.
+
+#### Declared `returned` variable
+
+Another approach is to allow a specific variable within the function body to be
+declared as `returned` from the function. Again assuming that `MyType` has an
+unformed state, the alternative to the above syntax would be:
+
+```
+fn CreateMyObject2() -> MyType {
+  returned var MyType: result;
+  // Any code we want here.
+
+  result = CreateMyObject();
+
+  // No expression in the return statement here either.
+  return;
+}
+```
+
+And again we can initialize the return variable to remove the partially formed
+requirement:
+
+```
+fn CreateMyObject3() -> MyType {
+  // Any code we want here.
+
+  returned var MyType: result = CreateMyObject();
+
+  // Potentially more code...
+  return;
+}
+```
+
+Minor syntax variations:
+
+-   As above, potentially require `return &lt;name>;` where `&lt;name>` is
+    constrained to match the declared variable name.
+    -   Has the same fundamental concerns as above: it's not an expression, and
+        there might not _be_ a single name.
+    -   If there were good syntax, might be particularly valuable to help with
+        scoping?
+-   Maybe better syntax than `returned var`, open to suggestions here.
+
+A significant advantage of this approach is that it makes initializing the
+variable _much_ more clean and convenient. There is code that can run prior to
+the initialization, etc. This makes it a substantially more ergonomic solution
+for types without an unformed state.
+
+If we pursue this direction, we may want to generalize it to non-`var`
+declarations, it doesn't seem like there would be any significant problem with
+that and it would seem like a clean generalization of the construct.
+
+One open question is what rules should be used for the types in the pattern, and
+to what degree they must match the return type. A simple approach would be that
+whatever type would be the _allocated_ type of the variable must match the
+return type, and allow any pattern that satisfies this rule. This would, for
+example, allow potentially binding names in interesting and useful ways.
+However, there are other possibilities:
+
+-   Require the pattern to consist of a single type exactly matching the return,
+    and binding it to a single name.
+-   Require using a placeholder type with a keyword (syntactically similar to
+    `auto`) that is replaced with the return type. This might even provide the
+    syntax (`var return: result1;`).
+-   Use a custom type-less pattern syntax.
+
+None of these dramatically change the resulting design tradeoffs, but we will
+need to make a decision on which strategy to use.
+
+Control flow presents some challenging questions for this design. Consider code
+with the following structure:
+
+```
+fn ReturnEitherOr(...) -> MyType {
+  // ...
+  if (...) {
+    returned var MyType: result1 = ...;
+    // ...
+    return;
+  } else if (...) {
+    returned var MyType: result2 = ...;
+    // ...
+  } else {
+    returned var MyType: result3 = ...;
+    // ...
+  }
+  // ...
+  return;
+}
+```
+
+It seems like at least `result1` should be valid. What about `result2` and
+`result3`? Theoretically we could make this work in some cases, but it requires
+enumerating all of paths through the function and ensuring all contain a
+`returned var`. We would also need to reject cases where such an enumeration
+isn't possible.
+
+More complex control flow patterns grow the complexity this presents. For
+example:
+
+```
+fn ReturnVarWithControlFlow() -> Point {
+  if ... {
+    // Is this allowed?
+    returned var Point: p1 = ...;
+
+    if ... {
+      // This seems fine to return `p1`.
+      return;
+    }
+  }
+  if ... {
+    // But this would have to be an error...
+    return;
+  }
+
+  // And what happens here?
+  returned var Point: p2 = ...;
+
+  for ... {
+    // Or here?
+    returned var Point: p3 = ...;
+
+    // Even though we might actually return...
+    if ... {
+      return;
+    }
+  }
+  // Definitely no way to know what happens here between p1, p2, and p3.
+  return;
+}
+```
+
+We can add restrictions to end up with a reasonable set of rules here. The
+restrictions seem unlikely to be a problem in practice with real world code
+using this tool. However, it may result in a surprisingly restricted language
+construct compared to others, or surprising usability gaps.
+
+One candidate set of restrictions that is reasonably simple to explain and
+understand and is at least sufficient for implementation:
+
+1. The only way to exit a scope after a `returned var` declaration is by way of
+   a `return`.
+2. At most one `returned var` declaration can exist within a scope.
+
+These rules are fairly restrictive, but might still be sufficient for practical
+usage. We might at least be able to start with these rules and see how far they
+get. It would make all of `result2`, `result3`, `p1`, and `p3` invalid in the
+above examples.
+
+A major open question is whether the ergonomic benefits of declared return
+variables outweigh the complexity of handling how they interact with control
+flow.
+
+### Constructors and initializing aggregate objects
+
+Constructors of user defined aggregate types can present specific problems with
+initialization because they intrinsically operate on types prior to all of their
+invariants being established and when a valid value may not (yet) exist for
+subobjects such as members. These problems are discussed in detail in the blog
+post
+["Perils of Constructors"](https://matklad.github.io/2019/07/16/perils-of-constructors.html).
+A primary goal in trying to solve these problems is being able to separate the
+phase of initializing members (or other kinds of subobjects) prior to the outer
+object existing and establishing any necessary invariants without creating holes
+in the type system soundness. An interconnected problem is correctly running
+destructors (in order to release any acquired resources) in the event of errors
+_during_ construction.
+
+The behavior of function returns provides interesting build blocks to write code
+that addresses these problems. They provide a natural set of tools to build two
+phases of a constructor: code that executes before a valid object exists and
+code that executes afterward. It even gives a clear demarcation between these
+phases. Both replacing the return type with a named variable and adding
+`returned` variable declarations are effective building blocks for solving these
+problems.
+
+An example with the named return variable:
+
+```
+struct Point {
+  var Int: x;
+  var Int: y;
+}
+
+fn PointConstructorPreObjectPhase() -> Point {
+  // Code that runs prior to an object existing.
+  // Just assembles inputs needed to initialize the members.
+  return (<x-expression>, <y-expression>);
+}
+
+fn PointConstructor -> var Point: p = PointConstructorPreObjectPhase() {
+  // Code that runs after an object exists.
+  // A failure here would, for example, require destroying p.
+  return;
+}
+```
+
+The unformed state allows a simpler formulation of the same concept for types
+supporting it:
+
+```
+fn SimplerPointConstructor -> var Point: p {
+  // `p` is unformed. We don't need to destroy it, but we can if convenient.
+  // Code can run here to assemble the members:
+  var Int: x_init = ...;
+  var Int: y_init = ...;
+
+  // And we can express the demarcation with an assignment.
+  p = (x_init, y_init);
+  // `p` is now fully formed, and its destructor *must* run.
+
+  // More code that uses p can go here.
+  return;
+}
+```
+
+An example with `returned` variable declarations shows how that approach brings
+similar ergonomics as the unformed example above without relying on an unformed
+state:
+
+```
+fn PointConstructorWithDeclaredReturnVar() -> Point {
+  // Code that runs prior to an object existing.
+  returned var Point: p = (<x-expression>, <y-expression>);
+  // `p` is now a fully formed object, its destructor must run.
+
+  // More code that uses p can go here.
+  return;
+}
+```
+
+Using the `returned` variable declarations may also make the semantics more
+clear (or potentially avoid some copies of intermediate state) even for types
+with an unformed state.
+
+#### Unformed members
+
+Regardless of which specific strategy is used above, using these facilities for
+constructing aggregate objects still presents some ergonomic difficulties for
+large objects with many members, or members that are expensive/impossible to
+move if we don't have the `returned var` facility. To further ease initializing
+members, we could allow access to unformed members of an unformed object.
+Superficially, this remains safe -- we aren't allowing access to uninitialized
+storage, and the only access allowed is what is always allowed for unformed
+objects: assignment (and destruction). However, making this work with
+destructors adds some complexity to rules around unformed objects.
+
+Disallowing access to unformed members provides a simple rule for the semantics
+required of the destructor: it must be valid and correct to run on an unformed
+object or a _fully_ formed object. Destructors always have to be valid for fully
+formed objects, so the only addition is the unformed state being a no-op.
+
+However, for the same reasons it might be necessary to run the destructor on an
+unformed object, if we allow assigning to a _member_ of an unformed object the
+destructor may also need to be run with this mixed state where some members are
+unformed and others are fully formed:
+
+```
+struct Point {
+  var Int: x;
+  var Int: y;
+}
+
+fn AssignToX(Int: x, Ptr(Point): p) {
+  p->x = x;
+}
+
+fn Example() {
+  var Point: p;
+  if (...) {
+    // Allowed to call the destructor of `p`, sees a fully unformed `Point`.
+    return;
+  }
+  AssignToX(42, &p);
+  if (...) {
+    // If `AssignToX` is in another file, don't know if `p` is fully unformed,
+    // a mixture of `x` fully formed and `y` unformed, or `p` is fully formed.
+    // The last case can only be handled by running the destructor of `p`
+    // so that's what we have to do here, and it must handle all the other
+    // cases as well.
+    return;
+  }
+  p->y = 13;
+  // ...
+}
+```
+
+The added requirement for destructors of types that support an unformed state is
+that if they are called for an unformed object of that type, they must run the
+destructors for any members that might themselves be fully formed.
+
+-   For private members, the type itself controls which members might be
+    assigned fully formed values and the destructor run. The type's destructor
+    merely needs to agree with the constructors and/or factories of the type to
+    destroy any members that might have been assigned values.
+-   For public members, the type's destructor must destroy _all_ members as it
+    cannot know which ones might have been assigned a value.
+
+Because of these inherent restrictions around private members, types can ensure
+any necessary relationship between its private data members hold in order for
+the destructor to work. See the detailed example below for how this might work
+in practice.
+
+Despite these added requirements to the destructor, it isn't exempt from the
+rules governing unformed objects when accessing its members: any that are in
+fact unformed when the type's destructor runs are only allowed to be assigned to
+or destroyed.
+
+Lastly, we need some syntax other than assignment for marking when the members
+have reached a state where the entire object is fully formed. This proposal uses
+a hypothetical `?reify?` statement that is intended to be placeholder syntax
+only. Just like an assignment to an unformed object, after this point it is
+fully formed and follows those rules. Our example becomes:
+
+```
+fn EvenSimplerPointConstructor() -> var Point: p {
+  // p is unformed and no members are referenced.
+  // Destruction is completely optional.
+  p.x = ...;
+  // p.x may now be fully formed. Either p must be destroyed,
+  // or p.x must be destroyed.
+  p.y = ...;
+  // Now either p must be destroyed, or both p.x and p.y must be
+  // destroyed.
+
+  ?reify? p;
+  // Now p must be destroyed, and is a fully formed object.
+
+  // ...
+
+  return;
+}
+```
+
+Before the `?reify?` operation, the compiler can either track the members which
+are assigned fully formed values and run their destructors, or it can elect to
+run the entire object's destructor if, for example, the entire object escapes
+and it becomes impossible to track which members have been assigned fully formed
+values. But once the object has the `?reify?` operation performed, its
+destructor _must_ be run as it is now itself a fully formed object.
+
+Now that we have all the components of this tool, let's consider a container
+like `std::vector` using a hypothetical syntax for defining a type, its
+implementation of the necessary initialization, its destructor, and a factory
+function. This example specifically tries to illustrate how, for private
+members, the function doing construction and the destructor can work together to
+ensure at any point of destruction, the necessary state and invariants hold.
+
+```
+struct MyContainer(Type: T) {
+  private var Int: size;
+  private var Int: capacity;
+  private var Optional(Ptr(T)): data;
+
+  // ... public API ...
+
+  impl NecessaryInit {
+    // Not necessarily suggesting this specific API.
+    // Just *some* API we pick for doing the necessary init.
+    // This API assumes that all members with an unformed state
+    // have their implementation called already, all we need to do is
+    // adjust to *specific* values anything that is necessary for this
+    // type.
+    fn Init(Ptr(Self): this) {
+      this->data = Optional(Ptr(T)).Empty;
+    }
+  }
+
+  fn Create(Int: count, T: value) -> Optional(MyContainer(T)) {
+    var MyContainer(T): container;
+    // Set the capacity first so it is available for deallocation.
+    container.capacity = count;
+    // And clear the size so we don't need a special case.
+    container.size = 0;
+
+    // Next set the data to the allocated buffer. If the allocation fails,
+    // this routine should just return null.
+    container.data = AllocateRawStorage(count, T);
+    if (container.data == null) {
+      // Might destroy `container` here.
+      return .Empty;
+    }
+
+    // Some loop syntax over [0, count).
+    for (Int: i = 0 ..< count) {
+      if (not CopyThatMightFail(value, &container.data[i])) {
+        // Might destroy `container` here.
+        return .Empty;
+      }
+      // Increment size as we go to track how many objects
+      // need to be destroyed if the next one fails.
+      ++container.size;
+    }
+
+    ?reify? container;
+
+    // Maybe we make this implicit... somehow make it move...
+    return .Some(container);
+  }
+
+  // However we end up naming this...
+  fn Destructor(Ptr(Self): this) {
+    if (this->data.IsEmpty()) {
+      // If the buffer isn't allocated, nothing to do.
+      return;
+    }
+    // Destroy any successfully created object. The `Create`
+    // function ensures that `size` is valid for use here.
+    for (Int: i = 0 ..< this->size) {
+      // However we spell in-place destroy...
+      this->data[i].Destructor();
+    }
+    // Deallocate the buffer. Here as well the `Create`
+    // function ensures that `capacity` is available for a
+    // non-null data pointer.
+    Deallocate(this->data, this->capacity);
+  }
+}
+```
+
+This kind of type creates a close contract between construction and destruction
+to simplify both routines by ensuring that the necessary members are valid any
+time the destructor would need them to continue executing correctly.
+
+While this provides a very flexible and convenient set of tools for
+construction, it comes at a fairly high cost. There is no way for the language
+to _enforce_ any contract between the construction and destruction. I don't see
+any way to provide compile time checking that one or the other doesn't make a
+mistake. We can verify it dynamically, but at fairly high cost. It also adds
+non-trivial complexity. Given that this is merely an ergonomic improvement as
+opposed to an expressivity improvement, it isn't at all clear that we should
+pursue this until we have clear evidence that the ergonomic need is sufficiently
+large.
+
+In fact, for this kind of realistic example, the `returned` variable approach
+appears to be significantly _more_ ergonomic as well as simpler, undermining the
+purpose of pursing this direction:
+
+```
+struct MyContainer(Type: T) {
+  private var Int: size;
+  private var Int: capacity;
+  private var Optional(Ptr(T)): data;
+
+  // ... public API ...
+
+  impl NecessaryInit {
+    // Not necessarily suggesting this specific API.
+    // Just *some* API we pick for doing the necessary init.
+    // This API assumes that all members with an unformed state
+    // have their implementation called already, all we need to do is
+    // adjust to *specific* values anything that is necessary for this
+    // type.
+    fn Init(Ptr(Self): this) {
+      this->data = Optional(Ptr(T)).Empty;
+    }
+  }
+
+  // Private helper factored out of the destructor.
+  fn DestroyElements(Ptr(T): data, Int: count) {
+    for (Int: i = 0 ..< count) {
+      data[i].Destructor();
+    }
+  }
+
+  fn Create(Int: count, T: value) -> Optional(MyContainer(T)) {
+    // Try to allocate the storage.
+    var UniquePtr(T): data = AllocateRawStorage(count, T);
+    if (data == null) {
+      return .Empty;
+    }
+
+    // Some loop syntax over [0, count).
+    for (Int: i = 0 ..< count) {
+      if (not CopyThatMightFail(value, &container.data[i])) {
+        // Here we have to destroy the copies that succeeded.
+        // But we can easily share the logic with the destructor.
+        DestroyElements(data, i);
+        return .Empty;
+      }
+    }
+
+    // Now we can just initialize the object and all invariants
+    // hold for its destructor.
+    returned var MyContainer(T): container = (count, count, data);
+
+    return .Some(container);
+  }
+
+  // However we end up naming this...
+  fn Destructor(Ptr(Self): this) {
+    if (this->data.IsEmpty()) {
+      // If the buffer isn't allocated, nothing to do.
+      return;
+    }
+    // The above check is the only thing needed, and it is only needed
+    // to support an unformed state. Once we get here, everything holds.
+    DestroyElements(this->data, this->size);
+    Deallocate(this->data, this->capacity);
+  }
+
+}
+```
+
+With this approach, the necessary steps in the `Create` function are all _local_
+constraints, and changes to the destructor can't break their assumptions. There
+is no significant added complexity in practice due to needing to form the entire
+object at a single point. Normal techniques for factoring common logic are
+easily used to address what little added logic is needed.
+
+Note that inheritance opens a set of closely related but also importantly
+different concerns as members here.
+
+## Open questions
+
+All of the open questions are discussed in more detail as part of the proposal,
+but are called out here to make it clear that these need to be independently
+decided.
+
+### Named return variable, declared `returned` variables, or both?
+
+Advantages of named return variable:
+
+-   Simple and unambiguous approach.
+-   Difficult to misuse.
+-   Obvious rules.
+
+Disadvantages of named return variable:
+
+-   Weirdly overloads the return type.
+    -   Probably not part of the signature, especially the _name_, but
+        positioned there.
+-   Significantly less flexible than
+    [NRVO](https://www.digitalmars.com/d/2.0/glossary.html#nrvo) in C++.
+-   Ergonomics are really bad for types without an unformed state.
+
+Advantages of declared `returned` variables:
+
+-   Very natural syntax.
+-   Expressive enough to handle lots of interesting NRVO-like cases.
+-   Excellent ergonomics for complex construction including types without an
+    unformed state.
+
+Disadvantages of declared `returned` variables:
+
+-   Somewhat complex constraints on how and where they can be used.
+    -   However, this doesn't seem likely to come up frequently or be surprising
+        for users. The complexity seems mostly confined to the specification and
+        implementation.
+-   Syntax appears to be _much_ more general than it is in reality. No obvious
+    syntactic reinforcement of the inherent restrictions.
+
+It would be possible to have both, but it's unclear why we would want named
+return variables which are mostly less ergonomic if we're willing to get
+declared `returned` variables.
+
+### Allow accessing member access of unformed objects?
+
+TODO: write up an advantage/disadvantage summary.
+
+### Allow assigning an unformed object to another unformed object?
+
+Advantages:
+
+-   Avoids surprise for users.
+    -   It seems like it should work for integers.
+    -   They may not know when the incoming object is actually unformed
+        resulting in an error far away from the root cause.
+-   May be important to enable specific code patterns if we allow member access.
+
+Disadvantages:
+
+-   Will require the core propagation logic and origin tracking that is a source
+    of large complexity and cost in MSan to detect bugs.
+    -   However, object granularity and lack of arithmetic makes this still
+        somewhat less severe than what MSan deals with.
+    -   Only a concern for detection, hardening is easily accomplished
+        regardless.
+-   Can only possibly support combined debug build mode if restricted to a
+    special/designated operation rather than arbitrary assignment.
+    -   Origin tracking will still be required and have significant cost.
+
+Proposed decision: **not yet.**
+
+-   We should try _not_ allowing this at first.
+-   If we find we must allow this in some cases, we should start by allowing it
+    only using specially named operations.
+-   If either can be made to work, they are significantly easier to check for
+    bugs.
+
+## Alternatives considered
+
+### Require compile-time-proven initialization
+
+A primary alternative to the approach of unformed objects for initialization is
+to simply require initializing all variables at compile time. This can take a
+few forms across the spectrum of compile time analysis complexity.
+
+#### Trivially required initialization
+
+The simplest approach is to require initialization at the point of declaration
+or allocation for any variable or memory.
+
+Advantages:
+
+-   No need to specify or support the complexity of objects that have been
+    declared but not fully initialized in the language.
+-   Simple, easy to teach, easy to implement.
+
+Disadvantages:
+
+-   Will result in initialization with nonsensical values that if used remain a
+    bug. We won't have any realistic way to detect these bugs.
+-   Imposes a non-trivial performance cost in some cases and for some users
+    without providing any effective mechanisms to address this overhead.
+
+#### Initialize on all branches prior to use (Rust)
+
+Use a simple rule such as requiring initialization before use along all
+branches.
+
+Advantages:
+
+-   Still avoids much of the language level complexity of unformed objects.
+-   Very simple to implement.
+-   Reasonably teachable.
+-   Avoids trivially redundant initializations.
+
+Disadvantages:
+
+-   Has significant expressivity limits past which initialization is forced.
+    -   When this happens, the disadvantages of always requiring initialization
+        repeat. While it is expected to happen less often, it still happens.
+
+#### Definitive initialization (Swift)
+
+We could do significantly more complete analysis of the dataflow of the program
+to prove that initialization occurs prior to use.
+
+Advantages:
+
+-   Still avoids much of the language level complexity of unformed objects.
+
+Disadvantages:
+
+-   Some implementation complexity to achieve strong dataflow analysis.
+-   Significant complexity to teach -- it can be difficult to understand or
+    explain why the data flow analysis fails in edge cases.
+-   Can result in brittleness where changes to one part of code confuse the
+    dataflow analysis needed by another part of code.
+-   There still exist rare cases where the analysis fails, and a nonsensical
+    initialization may be required and the disadvantages of those return (both
+    bug detection and performance).
+    -   The rate at which this occurs scale inversely proportional to the
+        complexity of the data flow analysis and the teachability.
+
+### C/C++ uninitialized
+
+We could pursue the same approach as C and C++ here. However, this path has
+proven to have severe problems. It has inevitably resulted in prevalent bugs and
+security vulnerabilities due to programmer errors, And having uninitialized
+variables in the language makes teaching the debug build to catch these bugs
+extremely difficult and potentially impossible. We essentially will need
+developers to heavily use an MSan-like mode (either by integrating it with the
+debug build or having a separate one) in order to cope with the bugs caused by
+uninitialized memory. This is the only thing that has allowed coping with C/C++
+semantics here and even it is not very effective.
+
+If MSan remains a separate tool that needs propagation and origin tracking
+([details](https://research.google.com/pubs/archive/43308.pdf)), the cost and
+the barrier to entry will remain very high: MSan is currently the least used and
+the least portable of the sanitizers; it is widely used only in two Google’s
+ecosystems, only on one OS, where it is maintained with a considerable effort.
+
+If we end up having uninitialized memory, we should aim at having MSan-like
+checking be part of the normal debug build, which means no or very limited
+propagation. Any form of propagation will require optional original tracking,
+which is doable, but will mean extra CPU/RAM overhead for meaningful
+diagnostics.
+
+Even without propagation, MSan-like checking requires bit-to-bit shadow, that is
+will generally incur 2x RAM overhead in the debug build. Byte-to-bit shadow
+(that is &lt; 12% RAM overhead) is prone to racy false positives and false
+negatives unless a) instrumentation uses expensive bit-wise atomics or b) the
+language defines data races on 8-byte granularity (this idea has been rejected
+in the early stages of Carbon design)
+
+### Fully destructive move (Rust)
+
+Rust has truly destructive moves -- the object is gone after being moved from,
+and no destructor ever runs past that point. This is possible because the type
+system models when a variable declared in one function can be moved-from by
+another function. It is incompatible with allowing move-from through a pointer
+to a non-local object.
+
+Advantages:
+
+-   Precise, safe, and efficient lifetime management.
+-   Perfect detection of use-after-move bugs.
+
+Disadvantages:
+
+-   Doesn't compose with pointers and C++ idioms which involve moving out of
+    non-local objects through a pointer.
+    -   Would require redesigning systems to model the lifetime in the type
+        system.
+
+### Completely non-destructive move (C++)
+
+C++ moves are never destructive. The result is that moves simply do not impact
+the _lifetime_ of the moved-from object, only its state.
+
+Advantages:
+
+-   Perfect match for C++ semantics and idioms, including interoperability and
+    migrated code and systems.
+
+Disadvantages:
+
+-   Pervasive user expectation that destroying a moved-from object is a no-op,
+    but nothing in the language helps enforce this pattern.
+-   Allows types to provide meaningful semantics for use-after-move.
+    -   Rarely used, resulting in strong user expectations that this isn't
+        allowed but special cases where it is allowed.
+    -   Complicates generic code having to handle both patterns.
+    -   Significantly reduces the effectiveness of use-after-move bug detection.
+-   Introduces difficulty in optimizing away no-op destruction post move.
+    -   Some cases requires complex rules around ABIs and calling conventions.
+    -   Other cases require expensive optimization techniques (inlining and
+        memory analysis) that can fail in some circumstances.
