@@ -55,5 +55,6 @@ request:
     -   [0175 - Decision](p0175_decision.md)
 -   [0179 - Create a toolchain team.](p0179.md)
     -   [0179 - Decision](p0179_decision.md)
+-   [0257 - Initialization of memory and variables](p0257.md)
 
 <!-- endproposals -->
