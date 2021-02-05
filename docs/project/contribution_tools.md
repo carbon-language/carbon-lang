@@ -205,7 +205,7 @@ Tips:
     first. The build should be expected to take hours, even on powerful
     computers.
 
-### ninja
+### Ninja
 
 [Ninja](https://ninja-build.org/) is used to build Clang and LLVM.
 
