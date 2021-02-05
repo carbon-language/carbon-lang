@@ -19,8 +19,8 @@ contributions.
         -   [Homebrew](#homebrew)
         -   [Python using `pyenv`](#python-using-pyenv)
     -   [Linux only](#linux-only)
-        -   [Cargo (optional)](#cargo-optional)
         -   [`go get`](#go-get)
+        -   [Cargo (optional)](#cargo-optional)
 -   [Main tools](#main-tools)
     -   [Bazel and Bazelisk](#bazel-and-bazelisk)
     -   [buildifier](#buildifier)
@@ -114,15 +114,6 @@ through [brew](#brew) on MacOS, but not on Linux.
 Installation instructions assume Debian- or Ubuntu-based Linux distributions
 with [apt](<https://en.wikipedia.org/wiki/APT_(software)>) available.
 
-#### Cargo (optional)
-
-Rust's [Cargo](https://doc.rust-lang.org/cargo/) package manager is used to
-install a couple tools on Linux. See the
-[installation instructions](https://rustup.rs/).
-
-To get the latest version of `cargo` packages, it will be necessary to
-periodically re-run the original `cargo install ...` command used.
-
 #### `go get`
 
 [go get](https://golang.org/pkg/cmd/go/internal/get/) is Go's package manager.
@@ -135,6 +126,15 @@ apt install golang
 
 To get the latest version of `go` packages, it will be necessary to periodically
 re-run the original `go get ...` command used to install the package.
+
+#### Cargo (optional)
+
+Rust's [Cargo](https://doc.rust-lang.org/cargo/) package manager is used to
+install a couple tools on Linux. See the
+[installation instructions](https://rustup.rs/).
+
+To get the latest version of `cargo` packages, it will be necessary to
+periodically re-run the original `cargo install ...` command used.
 
 ## Main tools
 
