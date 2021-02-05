@@ -74,7 +74,7 @@ instructions will try to rely on a minimum of managers.
 
 ### Linux and MacOS
 
-#### brew
+#### Homebrew or `brew`
 
 [brew](https://brew.sh/) is a package manager, and can help install several
 tools that we recommend. See the [installation instructions](https://brew.sh/).
