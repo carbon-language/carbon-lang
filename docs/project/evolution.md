@@ -251,22 +251,13 @@ When writing a proposal, try to keep it brief and focused to maximize the
 community's engagement in it. Beyond the above structure, try to use
 [Inverted Pyramid](<https://en.wikipedia.org/wiki/Inverted_pyramid_(journalism)>)
 or [BLUF](<https://en.wikipedia.org/wiki/BLUF_(communication)>) writing style to
-help readers rapidly skim the material.
+help readers rapidly skim the material. See
+[CONTRIBUTING.md](/CONTRIBUTING.md#style) for other style guidance.
 
 The proposal's pull request may include changes in the same repository. Please
 be thoughtful about how much effort you invest this way: it can help illustrate
 the intent of a proposal and avoid duplicating text in the proposal, but
 proposals may also need to be rewritten substantially or be deferred/declined.
-
-Where parts of a proposal may have several ways to address them, feel free to
-list options and mark them as "open questions". When describing an open
-question, it is a good idea to describe a proposed solution as well as other
-options, compare their advantages, disadvantages, and non-trivial consequences.
-These may be resolved during discussion, or be left for decision by the
-reviewing team.
-
-Where the proposal makes a decision between multiple options, move them to the
-"alternatives" section so that it's clear why a given choice was made.
 
 ##### Drafting using Google Docs
 
