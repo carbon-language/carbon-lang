@@ -125,8 +125,8 @@ head in order to avoid compatibility issues in many distributions. Once
 `third_party/llvm-project/build/bin/clang` exists, it will automatically be used
 instead of `CC`.
 
-To prepare `third_party/llvm-project/build/bin/clang`, please refer to
-[LLVM's build instructions](https://llvm.org/docs/GettingStarted.html#getting-the-source-code-and-building-llvm).
+In order to build `third_party/llvm-project/build/bin/clang`, please refer to
+[LLVM's instructions](https://llvm.org/docs/GettingStarted.html#getting-the-source-code-and-building-llvm).
 Tips:
 
 -   When `carbon-lang` is checked out with submodules, the LLVM submodule is at
