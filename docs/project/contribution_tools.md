@@ -13,7 +13,7 @@ contributions.
 
 ## Table of contents
 
--   [Overall setup flow](#overall-setup-flow)
+-   [Tool setup flow](#tool-setup-flow)
 -   [Package managers](#package-managers)
     -   [Linux and MacOS](#linux-and-macos)
         -   [brew](#brew)
@@ -46,10 +46,10 @@ contributions.
 
 <!-- tocstop -->
 
-## Overall setup flow
+## Tool setup flow
 
-In order to set up a machine and git client for developing on Carbon, a typical
-flow is:
+In order to set up a machine and git repository for developing on Carbon, a
+typical tool setup flow is:
 
 1. Set up [package managers](#package-managers).
 2. Install [main tools](#main-tools) and any desired
