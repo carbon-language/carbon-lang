@@ -16,16 +16,16 @@ contributions.
 -   [Tool setup flow](#tool-setup-flow)
 -   [Package managers](#package-managers)
     -   [Linux and MacOS](#linux-and-macos)
-        -   [brew](#brew)
-    -   [pip, pyenv and Python](#pip-pyenv-and-python)
+        -   [Homebrew](#homebrew)
+        -   [Python using `pyenv`](#python-using-pyenv)
     -   [Linux only](#linux-only)
-        -   [cargo](#cargo)
-        -   [go get](#go-get)
+        -   [Cargo (optional)](#cargo-optional)
+        -   [`go get`](#go-get)
 -   [Main tools](#main-tools)
     -   [Bazel and Bazelisk](#bazel-and-bazelisk)
     -   [buildifier](#buildifier)
     -   [Clang and LLVM](#clang-and-llvm)
-    -   [ninja](#ninja)
+    -   [Ninja](#ninja)
     -   [pre-commit](#pre-commit)
 -   [Optional tools](#optional-tools)
     -   [Carbon-maintained](#carbon-maintained)
@@ -34,7 +34,7 @@ contributions.
     -   [GitHub](#github)
         -   [gh CLI](#gh-cli)
         -   [GitHub Desktop](#github-desktop)
-    -   [rs-git-fsmonitor and Watchman](#rs-git-fsmonitor-and-watchman)
+    -   [`rs-git-fsmonitor` and Watchman](#rs-git-fsmonitor-and-watchman)
     -   [Vim](#vim)
         -   [vim-prettier](#vim-prettier)
     -   [Atom](#atom)
@@ -74,26 +74,28 @@ instructions will try to rely on a minimum of managers.
 
 ### Linux and MacOS
 
-#### Homebrew or `brew`
+#### Homebrew
 
-[brew](https://brew.sh/) is a package manager, and can help install several
+[Homebrew](https://brew.sh/) is a package manager, and can help install several
 tools that we recommend. See the [installation instructions](https://brew.sh/).
 
 To get the latest version of `brew` packages, it will be necessary to
 periodically run `brew upgrade`.
 
-#### Python using `pyenv` and `pip`
+#### Python using `pyenv`
 
-`pip` is Python's package manager, and we strongly recommend using
-[pyenv](https://github.com/pyenv/pyenv) to manage [Python](python.org). These
-can be installed together through `brew`:
+We strongly recommend using [pyenv](https://github.com/pyenv/pyenv) to manage
+[Python](python.org) and Python's `pip` package manager. `pip` should typically
+be used for Python package installation rather than other package managers.
+
+These can be installed together through `brew`:
 
 ```bash
 brew install pyenv
 pyenv install 3.8.5
 pyenv global 3.8.5
 
-# Add 'eval "$(pyenv init -)"' to your shell rc file.
+# Add 'eval "$(pyenv init -)"' to your shell rc file, for example zshrc.
 echo 'eval "$(pyenv init -)"' >> ~/.zshrc
 # Load the shell rc file changes.
 exec $SHELL
@@ -202,8 +204,7 @@ Tips:
     ```
 
     Note these instructions use [ninja](#ninja), which should be installed
-    first. The build should be expected to take hours, even on powerful
-    computers.
+    first.
 
 ### Ninja
 
