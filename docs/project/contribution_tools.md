@@ -82,7 +82,7 @@ tools that we recommend. See the [installation instructions](https://brew.sh/).
 To get the latest version of `brew` packages, it will be necessary to
 periodically run `brew upgrade`.
 
-### pip, pyenv and Python
+#### Python using `pyenv` and `pip`
 
 `pip` is Python's package manager, and we strongly recommend using
 [pyenv](https://github.com/pyenv/pyenv) to manage [Python](python.org). These
@@ -112,14 +112,14 @@ through [brew](#brew) on MacOS, but not on Linux.
 Installation instructions assume Debian- or Ubuntu-based Linux distributions
 with [apt](<https://en.wikipedia.org/wiki/APT_(software)>) available.
 
-#### cargo
+#### Cargo (optional)
 
 Rust's [Cargo](https://doc.rust-lang.org/cargo/) package manager is used to
 install a couple tools on Linux. See the
 [installation instructions](https://rustup.rs/).
 
 To get the latest version of `cargo` packages, it will be necessary to
-periodically re-run the original `cargo` command used to install the package.
+periodically re-run the original `cargo install ...` command used.
 
 #### go get
 
@@ -132,7 +132,7 @@ apt install golang
 ```
 
 To get the latest version of `go` packages, it will be necessary to periodically
-re-run the original `go` command used to install the package.
+re-run the original `go get ...` command used to install the package.
 
 ## Main tools
 
@@ -297,7 +297,7 @@ brew install github/gh/gh
 [GitHub Desktop](https://desktop.github.com/) provides a UI for managing git
 repositories. See the page for installation instructions.
 
-### rs-git-fsmonitor and Watchman
+### `rs-git-fsmonitor` and Watchman
 
 [rs-git-fsmonitor](https://github.com/jgavris/rs-git-fsmonitor) is a file system
 monitor that uses [Watchman](https://github.com/facebook/watchman) to speed up
@@ -319,8 +319,8 @@ Our recommended way of installing is:
 
     ```bash
     brew tap jgavris/rs-git-fsmonitor \
-      https://github.com/jgavris/rs-git-fsmonitor.git && \
-      brew install rs-git-fsmonitor
+      https://github.com/jgavris/rs-git-fsmonitor.git
+    brew install rs-git-fsmonitor
 
     # Configure the git repository to use fsmonitor.
     git config core.fsmonitor rs-git-fsmonitor
