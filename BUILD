@@ -7,5 +7,3 @@ filegroup(
     srcs = glob(["*"]),
     visibility = ["//website/jekyll:__pkg__"],
 )
-
-exports_files(glob(["third_party/llvm-project/build/bin/*"]))
