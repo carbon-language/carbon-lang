@@ -1744,9 +1744,10 @@ What is the size of a type?
 
 I'm going to call a type "sized" if it is in the first two categories, and
 "unsized" otherwise. (Note: something with size 0 is still considered "sized".)
-Given a type-type `TT`, define the type-type `Sized(TT)` as follows:
+The type-type `Sized` is defined as follows:
 
-    `Sized(TT)` is a type whose values are types `T` with type `TT` that are "sized" -- that is the size of `T` is known, though possibly only generically.
+> `Sized` is a type whose values are types `T` that are "sized" -- that is the
+> size of `T` is known, though possibly only generically.
 
 Knowing a type is sized is a precondition to declaring (member/local) variables
 of that type, taking values of that type as parameters, returning values of that
@@ -1765,8 +1766,8 @@ fn F[Foo: T](Ptr(T): x) {  // T is unsized.
   var T: y;  // Illegal: T is unsized.
 }
 // T is sized, but its size is only known generically.
-fn G[Sized(Foo): T](Ptr(T): x) {
-  var T: y;  // Allowed: T is sized and default constructible.
+fn G[Foo + Sized: T](Ptr(T): x) {
+  var T: y = *x;  // Allowed: T is sized and default constructible.
 }
 var Bar: z;
 G(&z);  // Allowed: Bar is sized and implements Foo.
@@ -1816,8 +1817,7 @@ code for this parameter.
 **Restrictions:** The type's size will only be known at runtime, so patterns
 that use a type's size such as declaring local variables of that type or passing
 values of that type by value are forbidden. Essentially the type is considered
-[unsized](#sized-types-and-type-types), even if the type-type uses the
-`Sized(TT)` function.
+[unsized](#sized-types-and-type-types), even if the type-type is `Sized`.
 
 **Note:** In principle you could imagine supporting values with a dynamic size,
 but it would add a large amount of implementation complexity and would not have
@@ -2021,7 +2021,7 @@ implementing `Printable` or a `DynPtr(Printable)`:
 ```
 // This is equivalent to `fn PrintIt[Printable:$ T](T*: x) ...`,
 // except it also accepts `DynPtr(Printable)` arguments.
-fn PrintIt[Printable:$ T, Sized(Deref(T)): PtrT](PtrT: x) {
+fn PrintIt[Printable:$ T, Deref(T) + Sized: PtrT](PtrT: x) {
   x->Print();
 }
 PrintIt(&i); // T == (AnInt as Printable), PtrT == T*
@@ -2137,9 +2137,10 @@ interface MaybeBoxed(Type:$ T) {
   fn operator->(Ptr(Self): this) -> Ptr(T);
   // plus other smart pointer operators
   impl Movable;
+  // We require that MaybeBoxed(T) should be sized, to avoid all
+  // users having to say so
+  impl Sized;
 }
-// TODO: Want some way to say that MaybeBoxed(T) should be sized, to avoid all
-// users having to say so?
 
 impl[Type:$ T] MaybeBoxed(T) for Boxed(T) {
   fn operator->(Ptr(Self): this) -> Ptr(T) { return this->p; }
@@ -2157,10 +2158,10 @@ supports zero-runtime-cost casting.
 ```
 // Can pass a T to a function accepting a MaybeBoxed(T) value without boxing by
 // first casting it to NotBoxed(T), as long as T is sized and movable.
-adaptor NotBoxed(Sized(TypeImplements(Movable)):$ T) for T {  // :$ or :$$ here?
+adaptor NotBoxed(TypeImplements(Movable, Sized):$ T) for T {  // :$ or :$$ here?
 }
-impl[Sized(TypeImplements(Movable)):$ T] Movable for NotBoxed(T) = T as Movable;
-impl[Sized(TypeImplements(Movable)):$ T] MaybeBoxed(T) for NotBoxed(T) {
+impl[TypeImplements(Movable, Sized):$ T] Movable for NotBoxed(T) = T as Movable;
+impl[TypeImplements(Movable, Sized):$ T] MaybeBoxed(T) for NotBoxed(T) {
   fn operator->(Ptr(Self): this) -> Ptr(T) { return this as Ptr(T); }
 }
 // TODO: Should this just be a constructor defined within NotBoxed(T)?
@@ -2171,11 +2172,11 @@ impl[ConstructibleFrom(...:$$ Args): T] ConstructibleFrom(Args) for NotBoxed(T) 
 
 // This allows you to create a NotBoxed(T) value inferring T so you don't have to
 // say it explicitly. TODO: Could probably replace "Type:$$ T" with
-// "Sized(TypeImplements(Movable)):$ T", here.
+// "TypeImplements(Movable, Sized):$ T", here.
 fn DontBox[Type:$$ T](T: x) -> NotBoxed(T) inline { return x as NotBoxed(T); }
 // Use NotBoxed as the default implementation of MaybeBoxed for small & movable
 // types. TODO: Not sure how to write a size <= 16 bytes constraint here.
-impl[Sized(TypeImplements(Movable)):$$ T] if (sizeof(T) <= 16)
+impl[TypeImplements(Movable, Sized):$$ T] if (sizeof(T) <= 16)
     MaybeBoxed(T) for T = NotBoxed(T);
 ```
 
@@ -2185,7 +2186,7 @@ types being used.
 
 ```
 interface Foo { method (Ptr(Self): this) F(); }
-fn UseBoxed[Foo:$ T, Sized(MaybeBoxed(T)):$ BoxType](BoxType: x) {
+fn UseBoxed[Foo:$ T, MaybeBoxed(T):$ BoxType](BoxType: x) {
   x->F();  // Possible indirection is visible
 }
 struct Bar { }
