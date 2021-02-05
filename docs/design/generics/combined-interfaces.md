@@ -565,15 +565,19 @@ them:
 ```
 interface A { method (Self: this) F(); }
 interface B { method (Self: this) G(); }
-struct C { }
-impl A for C { method (Self: this) F() { Print("CA"); } }
-adaptor D for C { }
-impl B for D { method (Self: this) G() { Print("DB"); } }
-adaptor E for C { }
-impl A for E { method (Self: this) F() { Print("EA"); } }
-adaptor F for C { }
-impl A for F = E as A;  // Possibly we'd allow "impl A for F = E;" here.
-impl B for F = D as B;
+struct C {
+  impl A { method (Self: this) F() { Print("CA"); } }
+}
+adaptor D for C {
+  impl B { method (Self: this) G() { Print("DB"); } }
+}
+adaptor E for C {
+  impl A { method (Self: this) F() { Print("EA"); } }
+}
+adaptor F for C {
+  impl A = E as A;  // Possibly we'd allow "impl A = E;" here.
+  impl B = D as B;
+}
 ```
 
 This allows us to provide implementations of new interfaces (as in `D`), provide
@@ -602,21 +606,19 @@ interface Comparable {
   fn operator<(Self: this, Self: that) -> Bool;
   ... // And also for >, <=, etc.
 }
-adaptor ComparableFromDifferenceFn(Type:$ T, fnty(T, T)->Int:$ Difference)
-    for T { }
-impl[Type:$ T, fnty(T, T)->Int:$ Difference] Comparable
-    for ComparableFromDifferenceFn(T, Difference) {
-  fn operator<(Self: this, Self: that) -> Bool {
-    return Difference(this, that) < 0;
+adaptor ComparableFromDifferenceFn(Type:$ T, fn(T, T)->Int:$ Difference) for T {
+  impl Comparable {
+    fn operator<(Self: this, Self: that) -> Bool {
+      return Difference(this, that) < 0;
+    }
+    ... // And also for >, <=, etc.
   }
-  ... // And also for >, <=, etc.
 }
 struct MyType {
   var Int: x;
   fn Difference(Self: this, Self: that) { return that.x - this.x; }
+  impl Comparable = ComparableFromDifferenceFn(MyType, Difference) as Comparable;
 }
-impl Comparable for MyType =
-    ComparableFromDifferenceFn(MyType, Difference) as Comparable;
 ```
 
 ## Associated types
@@ -650,17 +652,18 @@ struct DynamicArray(Type:$ T) {
   method (Ptr(Self): this) PushBack(T: value);
   method (Ptr(Self): this) PopBack() -> T;
   method (Ptr(Self): this) IsEmpty() -> Bool;
-}
-impl[Type:$ T] Stack for DynamicArray(T) {
-  var Type:$ ElementType = T;
-  // `Self` and `DynamicArray(T)` are still equivalent here.
-  method (Ptr(Self): this) Push(ElementType: value) {
-    this->PushBack(value);
+
+  impl Stack {
+    var Type:$ ElementType = T;
+    // `Self` and `DynamicArray(T)` are still equivalent here.
+    method (Ptr(Self): this) Push(ElementType: value) {
+      this->PushBack(value);
+    }
+    method (Ptr(Self): this) Pop() -> ElementType {
+      return this->PopBack();
+    }
+    // Use default version of IsEmpty() from DynamicArray.
   }
-  method (Ptr(Self): this) Pop() -> ElementType {
-    return this->PopBack();
-  }
-  // Use default version of IsEmpty() from DynamicArray.
 }
 ```
 
@@ -855,10 +858,10 @@ interface Stack(Type:$ ElementType) {
 }
 struct DynamicArray(Type:$ T) {
   ...
+  // References to a parameterized interface must be followed by an argument list
+  // with specific values for every parameter.
+  impl Stack(T) { ... }
 }
-// References to a parameterized interface must be followed by an argument list
-// with specific values for every parameter.
-impl[Type:$ T] Stack(T) for DynamicArray(T) { ... }
 ```
 
 All interface parameters must be marked as "generic", using the `:$` syntax.
@@ -922,11 +925,10 @@ a parameterized type can be distinguished:
 interface Map(Type:$ FromType, Type:$ ToType) {
   method (Ptr(Self): this) Map(FromType: needle) -> Optional(ToType);
 }
-struct Bijection(Type:$ FromType, Type:$ ToType) { ... }
-impl[Type:$ FromType, Type:$ ToType] Map(FromType, ToType)
-    for Bijection(FromType, ToType) { ... }
-impl[Type:$ FromType, Type:$ ToType] Map(ToType, FromType)
-    for Bijection(FromType, ToType) { ... }
+struct Bijection(Type:$ FromType, Type:$ ToType) {
+  impl Map(FromType, ToType) { ... }
+  impl Map(ToType, FromType) { ... }
+}
 // Error: Bijection has two impls of interface Dictionary(String, String)
 var Bijection(String, String): oops = ...;
 ```
@@ -935,13 +937,13 @@ In this case, it would be better to have an adapting type to contain the impl
 for the reverse map lookup:
 
 ```
-struct Bijection(Type:$ FromType, Type:$ ToType) { ... }
-impl[Type:$ FromType, Type:$ ToType] Map(FromType, ToType)
-    for Bijection(FromType, ToType) { ... }
+struct Bijection(Type:$ FromType, Type:$ ToType) {
+  impl Map(FromType, ToType) { ... }
+}
 adaptor ReverseLookup(Type:$ FromType, Type:$ ToType)
-    for Bijection(FromType, ToType) { }
-impl[Type:$ FromType, Type:$ ToType] Map(ToType, FromType)
-    for ReverseLookup(FromType, ToType) { ... }
+    for Bijection(FromType, ToType) {
+  impl Map(ToType, FromType) { ... }
+}
 ```
 
 This would be the preferred approach to use instead of multiple impls of the
@@ -963,11 +965,11 @@ interface EqualityComparableTo(multi Type:$ T) {  // Note: multi
 struct Complex {
   var Float64: real;
   var Float64: imag;
+  // Can implement this interface more than once as long as it has different
+  // arguments.
+  impl EqualityComparableTo(Complex) { ... }
+  impl EqualityComparableTo(Float64) { ... }
 }
-// Can implement this interface more than once as long as it has different
-// arguments.
-impl EqualityComparableTo(Complex) for Complex { ... }
-impl EqualityComparableTo(Float64) for Complex { ... }
 ```
 
 Observation: While you can switch between regular ("inferable") parameters and
@@ -1279,9 +1281,9 @@ interface EqualityComparableTo(multi Type:$ T) { ... }
 struct Complex {
   var Float64: r;
   var Float64: i;
+  impl EqualityComparableTo(Complex) { ... }
+  impl EqualityComparableTo(Float64) { ... }
 }
-impl EqualityComparableTo(Complex) for Complex { ... }
-impl EqualityComparableTo(Float64) for Complex { ... }
 // Some other interface with a multi type parameter.
 interface Foo(multi Type:$ T) { ... }
 // This provides an impl of Foo(T) for U if U is EqualityComparableTo(T).
@@ -1341,10 +1343,11 @@ interface A {
 interface B extends A {
   method (Self: this) G();
 }
-struct S { }
-impl B for S {
-  method (Self: this) F() { ... }
-  method (Self: this) G() { ... }
+struct S {
+  impl B {
+    method (Self: this) F() { ... }
+    method (Self: this) G() { ... }
+  }
 }
 var S: x;
 (x as (S as B)).F();
@@ -1359,8 +1362,9 @@ fn TakesA[A: T](Ptr(T): a) { ... }
 TakesA(&x);  // Okay: S implements B so it also implements A.
 
 fn TakesB[B: T](Ptr(T): b) { ... }
-struct SA { }
-impl A for SA { ... }
+struct SA {
+  impl A { ... }
+}
 var SA: y;
 TakesB(&y);  // Error: SA implements A but not B.
 ```
@@ -1461,10 +1465,10 @@ fn H[TypeImplements(A, B):$ T](T: x) {
   (x as (T as A)).F();
   (x as (T as B)).G();
 }
-struct S { }
-impl A for S { method (Self: this) F() { ... } }
-impl B for S { method (Self: this) G() { ... } }
-
+struct S {
+  impl A { method (Self: this) F() { ... } }
+  impl B { method (Self: this) G() { ... } }
+}
 var S: y = ...;
 H(y); // H's T is set to S
 ```
@@ -1607,10 +1611,8 @@ Used as:
 
 ```
 struct Song { ... }
-adaptor SongByArtist for Song { }
-impl Comparable for SongByArtist { ... }
-adaptor SongByTitle for Song { }
-impl Comparable for SongByTitle { ... }
+adaptor SongByArtist for Song { impl Comparable { ... } }
+adaptor SongByTitle for Song { impl Comparable { ... } }
 assert(CombinedLess(Song(...), Song(...), SongByArtist, SongByTitle) == True);
 ```
 
@@ -1640,17 +1642,17 @@ combine `CompatibleWith` with [type adaptation](#adapting-types):
 
 ```
 adaptor ThenCompare(Type:$ T,
-                    List(CompatibleWith(Comparable, T)):$ CompareList) for T { }
-impl[Type:$ T, List(CompatibleWith(Comparable, T)):$ CompareList] Comparable
-    for ThenCompare(T, CompareList) {
-  method (Self: this) Compare(Self: that) -> CompareResult {
-    for (auto : U) in CompareList {
-      var CompareResult: result = (this as U).Compare(that);
-      if (result != CompareResult.Equal) {
-        return result;
+                    List(CompatibleWith(Comparable, T)):$ CompareList) for T {
+  impl Comparable {
+    method (Self: this) Compare(Self: that) -> CompareResult {
+      for (auto : U) in CompareList {
+        var CompareResult: result = (this as U).Compare(that);
+        if (result != CompareResult.Equal) {
+          return result;
+        }
       }
+      return CompareResult.Equal;
     }
-    return CompareResult.Equal;
   }
 }
 
@@ -1760,8 +1762,9 @@ Example:
 interface Foo {
   impl DefaultConstructible;  // See "interface nesting/containment" below.
 }
-struct Bar { }  // Structs are "sized" by default.
-impl Foo for Bar;
+struct Bar {  // Structs are "sized" by default.
+  impl Foo;
+}
 fn F[Foo: T](Ptr(T): x) {  // T is unsized.
   var T: y;  // Illegal: T is unsized.
 }
@@ -1873,15 +1876,11 @@ interface Printable {
 }
 struct AnInt {
   var Int: x;
-}
-impl Printable for AnInt {
-  method (Ptr(Self): this) Print() { PrintInt(this->x); }
+  impl Printable { method (Ptr(Self): this) Print() { PrintInt(this->x); } }
 }
 struct AString {
   var String: x;
-}
-impl Printable for AString {
-  method (Ptr(Self): this) Print() { PrintString(this->x); }
+  impl Printable { method (Ptr(Self): this) Print() { PrintString(this->x); } }
 }
 
 var AnInt: i = (.x = 3);
@@ -1976,17 +1975,16 @@ struct DynPtr(InterfaceType:$$ TT) {  // TT is any interface
   struct DynPtrImpl {
     private TT: t;
     private Ptr(Void): p;  // Really Ptr(t) instead of Ptr(Void).
+    impl TT {
+      // Defined using meta-programming.
+      // Forwards this->F(...) to (this->p as Ptr(this->t))->F(...)
+      // or equivalently, this->t.F(this->p as Ptr(this->t), ...).
+    }
   }
   var TT:$ T = (DynPtrImpl as TT);
   private DynPtrImpl: impl;
   fn operator->(Ptr(Self): this) -> Ptr(T) { return &this->impl; }
   fn operator=[TT:$ U](Ptr(Self): this, Ptr(U): p) { this->impl = (.t = U, .p = p); }
-}
-
-impl[InterfaceType:$$ TT] TT for DynPtr(TT).DynPtrImpl {
-  // Defined using meta-programming.
-  // Forwards this->F(...) to (this->p as Ptr(this->t))->F(...)
-  // or equivalently, this->t.F(this->p as Ptr(this->t), ...).
 }
 ```
 
@@ -2061,9 +2059,8 @@ struct Boxed(Type:$ T,
   private var T*: p;
   private var AllocatorType: allocator;
   operator create(T*: p, AllocatorType: allocator = DefaultAllocator) { ... }
+  impl Movable { ... }
 }
-impl[Type:$ T, AllocatorInterface:$$ AllocatorType] Movable
-    for Boxed(T, AllocatorType) { ... }
 
 // TODO: Should these just be constructors defined within Boxed(T)?
 // If T is constructible from X, then Boxed(T) is constructible from X ...
@@ -2103,9 +2100,8 @@ struct DynBoxed(InterfaceType:$$ TT,
   private var AllocatorType: allocator;
   ...  // Constructors, etc.
   // Destructor deallocates this->p.
+  impl Movable { ... }
 }
-impl[InterfaceType:$$ TT, AllocatorInterface:$$ AllocatorType]
-    Movable for DynBoxed(TT, AllocatorType) { ... }
 ```
 
 **Question:** Should there be some mechanism to have values be dynboxed in
@@ -2159,10 +2155,10 @@ supports zero-runtime-cost casting.
 // Can pass a T to a function accepting a MaybeBoxed(T) value without boxing by
 // first casting it to NotBoxed(T), as long as T is sized and movable.
 adaptor NotBoxed(TypeImplements(Movable, Sized):$ T) for T {  // :$ or :$$ here?
-}
-impl[TypeImplements(Movable, Sized):$ T] Movable for NotBoxed(T) = T as Movable;
-impl[TypeImplements(Movable, Sized):$ T] MaybeBoxed(T) for NotBoxed(T) {
-  fn operator->(Ptr(Self): this) -> Ptr(T) { return this as Ptr(T); }
+  impl Movable = T as Movable;
+  impl MaybeBoxed(T) {
+    fn operator->(Ptr(Self): this) -> Ptr(T) { return this as Ptr(T); }
+  }
 }
 // TODO: Should this just be a constructor defined within NotBoxed(T)?
 // Says NotBoxed(T) is constructible from a value of type Args if T is.
@@ -2189,8 +2185,7 @@ interface Foo { method (Ptr(Self): this) F(); }
 fn UseBoxed[Foo:$ T, MaybeBoxed(T):$ BoxType](BoxType: x) {
   x->F();  // Possible indirection is visible
 }
-struct Bar { }
-impl Foo for Bar { ... }
+struct Bar { impl Foo { ... } }
 var DynBoxed(Foo): y = new Bar(...);
 UseBoxed(y);
 // DontBox might not be needed, if Bar meets the requirements to use the
@@ -2267,17 +2262,17 @@ interface Outer {
   impl Inner1;
   impl Inner2;
 }
-struct S { }
-impl Inner2 for S {
-  method (S: this) L() { ... }
-}
-impl Outer for S {
-  impl Inner1 {
-    method (S: this) K() { ... }
+struct S {
+  impl Inner2 {
+    method (S: this) L() { ... }
   }
-  // impl of Inner2 here uses (S as Inner2) by default.
+  impl Outer {
+    impl Inner1 {
+      method (S: this) K() { ... }
+    }
+    // impl of Inner2 here uses (S as Inner2) by default.
+  }
 }
-
 var S: y = ...;
 (y as ((S as Outer) as Inner1)).K();
 ```
@@ -2313,7 +2308,7 @@ interface Outer {
   impl Inner1;
   impl Inner2;
 }
-struct S { }
+struct S {
   impl Inner1 {
     method (S: this) K() { ... }
   }
@@ -2323,7 +2318,7 @@ struct S { }
   impl Outer {
     // Requirements satisfied by impl of Inner1 and Inner2 above.
   }
-
+}
 var S: y = ...;
 (y as (S as Inner1)).K();
 ```
