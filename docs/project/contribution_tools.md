@@ -51,7 +51,7 @@ contributions.
 In order to set up a machine and git repository for developing on Carbon, a
 typical tool setup flow is:
 
-1. Set up [package managers](#package-managers).
+1. Install [package managers](#package-managers).
 2. Install [main tools](#main-tools) and any desired
    [optional tools](#optional-tools).
 3. Set up the [git](https://git-scm.com/) repository:
