@@ -121,7 +121,7 @@ install a couple tools on Linux. See the
 To get the latest version of `cargo` packages, it will be necessary to
 periodically re-run the original `cargo install ...` command used.
 
-#### go get
+#### `go get`
 
 [go get](https://golang.org/pkg/cmd/go/internal/get/) is Go's package manager.
 
