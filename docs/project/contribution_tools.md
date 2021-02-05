@@ -117,11 +117,16 @@ Our recommended way of installing is:
 ### Clang and LLVM
 
 [Clang](https://clang.llvm.org/) and [LLVM](https://llvm.org/) are used to
-compile and link Carbon. It's currently recommended to build LLVM from head in
-order to avoid compatibility issues in many distributions.
+compile and link Carbon.
 
-Please refer to
-[LLVM's build instructions](https://llvm.org/docs/GettingStarted.html#getting-the-source-code-and-building-llvm).
+If the `CC` environment variable is set to `clang`, or if `clang` is in the
+path, it can be used without building LLVM from head. However, it's currently
+recommended to build LLVM from head in order to avoid compatibility issues in
+many distributions. Once `third_party/llvm-project/build/bin/clang` exists, it
+will automatically be used instead of `CC`.
+
+In order to build `third_party/llvm-project/build/bin/clang`, please refer to
+[LLVM's instructions](https://llvm.org/docs/GettingStarted.html#getting-the-source-code-and-building-llvm).
 Tips:
 
 -   When `carbon-lang` is checked out with submodules, the LLVM submodule is at

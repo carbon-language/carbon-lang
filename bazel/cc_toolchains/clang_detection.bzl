@@ -37,19 +37,22 @@ def _find_clang(repository_ctx):
     This assumes the `CC` environment variable points to a Clang binary or
     looks for one on the path.
     """
-    cc_env = repository_ctx.os.environ.get("CC")
-    if not cc_env:
-        # Without a specified `CC` name, simply look for `clang`.
-        clang = repository_ctx.which("clang")
-    elif "/" not in cc_env:
-        # Lookup relative `CC` names according to the system `PATH`.
-        clang = repository_ctx.which(cc_env)
-    else:
-        # An absolute `CC` path is simply be used directly.
-        clang = repository_ctx.path(cc_env)
-        if not clang.exists:
-            fail(("The `CC` environment variable is set to a path (`%s`) " +
-                  "that doesn't exist.") % cc_env)
+    clang = repository_ctx.path("%s/third_party/llvm-project/build/bin/clang" %
+                                repository_ctx.attr.workspace_dir)
+    if not clang.exists:
+        cc_env = repository_ctx.os.environ.get("CC")
+        if not cc_env:
+            # Without a specified `CC` name, simply look for `clang`.
+            clang = repository_ctx.which("clang")
+        elif "/" not in cc_env:
+            # Lookup relative `CC` names according to the system `PATH`.
+            clang = repository_ctx.which(cc_env)
+        else:
+            # An absolute `CC` path is simply be used directly.
+            clang = repository_ctx.path(cc_env)
+            if not clang.exists:
+                fail(("The `CC` environment variable is set to a path (`%s`) " +
+                      "that doesn't exist.") % cc_env)
 
     # Check if either of the `which` invocations fail.
     if not clang:
@@ -152,6 +155,7 @@ detect_clang_toolchain = repository_rule(
     configure = True,
     local = True,
     attrs = {
+        "workspace_dir": attr.string(mandatory = True),
         "_clang_toolchain_build": attr.label(
             default = Label("//bazel/cc_toolchains:clang_toolchain.BUILD"),
             allow_single_file = True,
