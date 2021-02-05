@@ -51,19 +51,21 @@ contributions.
 In order to set up a machine and git repository for developing on Carbon, a
 typical tool setup flow is:
 
-1. Install [package managers](#package-managers).
-2. Install [main tools](#main-tools) and any desired
-   [optional tools](#optional-tools).
-3. Set up the [git](https://git-scm.com/) repository:
-    - In GitHub, create a fork for development at
-      https://github.com/carbon-language/carbon-lang.
-    - `gh repository clone USER/carbon-lang`, or otherwise clone the fork.
-    - `cd carbon-lang` to go into the cloned fork's directory.
-    - `git submodule update --init` to sync submodules if you'll be building c++
-      code or working on the compiler.
-    - `git config core.fsmonitor rs-git-fsmonitor` to set up
-      [rs-git-fsmonitor](#rs-git-fsmonitor-and-watchman) in the clone.
-    - `pre-commit install` to set up [pre-commit](#pre-commit) in the clone.
+1.  Install [package managers](#package-managers).
+2.  Install [main tools](#main-tools) and any desired
+    [optional tools](#optional-tools).
+3.  Set up the [git](https://git-scm.com/) repository:
+    -   In GitHub, create a fork for development at
+        https://github.com/carbon-language/carbon-lang.
+    -   `gh repository clone USER/carbon-lang`, or otherwise clone the fork.
+    -   `cd carbon-lang` to go into the cloned fork's directory.
+    -   `git submodule update --init` to sync submodules if you'll be building
+        c++ code or working on the compiler.
+    -   `git config core.fsmonitor rs-git-fsmonitor` to set up
+        [rs-git-fsmonitor](#rs-git-fsmonitor-and-watchman) in the clone.
+    -   `pre-commit install` to set up [pre-commit](#pre-commit) in the clone.
+4.  If building [Clang and LLVM](#clang-and-llvm), do so in the cloned
+    repository.
 
 ## Package managers
 
