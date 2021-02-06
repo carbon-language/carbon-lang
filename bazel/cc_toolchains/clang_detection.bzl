@@ -23,44 +23,98 @@ _CLANG_LLVM_TOOLS = [
     "llvm-strip",
 ]
 
-def _run(repository_ctx, cmd):
+def _run(
+        repository_ctx,
+        cmd,
+        timeout = 10,
+        quiet = True,
+        working_directory = ""):
     """Runs the provided `cmd`, checks for failure, and returns the result."""
-    exec_result = repository_ctx.execute(cmd, timeout = 10)
+    exec_result = repository_ctx.execute(
+        cmd,
+        timeout = timeout,
+        quiet = quiet,
+        # Need to convert path objects to a string.
+        working_directory = str(working_directory),
+    )
     if exec_result.return_code != 0:
         fail("Unable to run command successfully: %s" % str(cmd))
 
     return exec_result
 
-def _find_clang(repository_ctx):
+def _detect_or_build_clang(repository_ctx):
     """Returns the path to a Clang executable if it can find one.
 
-    This assumes the `CC` environment variable points to a Clang binary or
-    looks for one on the path.
+    This looks for third_party/llvm-project/build/bin/clang. If that doesn't
+    exist, it will be build it.
     """
-    clang = repository_ctx.path("%s/third_party/llvm-project/build/bin/clang" %
-                                repository_ctx.attr.workspace_dir)
+    llvm_root = repository_ctx.path("%s/third_party/llvm-project" %
+                                    repository_ctx.attr.workspace_dir)
+    clang = repository_ctx.path("%s/build/bin/clang" % llvm_root)
+    if clang.exists:
+        return clang
+
+    cmake = repository_ctx.which("cmake")
+    if not cmake:
+        fail("`cmake` not found: is it installed?")
+    mkdir = repository_ctx.which("mkdir")
+    if not cmake:
+        fail("`mkdir` not found: unsupported OS?")
+    ninja = repository_ctx.which("ninja")
+    if not ninja:
+        fail("`ninja` not found: is it installed?")
+
+    llvm_dir = repository_ctx.path("%s/llvm" % llvm_root)
+    if not llvm_dir.exists:
+        fail(
+            ("`%s` not found: are submodules initialized? " +
+             "(git submodule update --init)") %
+            llvm_dir,
+        )
+
+    print("Clang/LLVM not found, starting build.")
+    build_dir = repository_ctx.path("%s/build" % llvm_root)
+    if not build_dir.exists:
+        _run(repository_ctx, [mkdir, build_dir])
+
+    cmake_args = [
+        cmake,
+        "-G",
+        "Ninja",
+        "../llvm",
+        "-DLLVM_ENABLE_PROJECTS=clang;clang-tools-extra;lld;libcxx;libcxxabi;compiler-rt;libunwind",
+        "-DCMAKE_BUILD_TYPE=Release",
+        "-DLIBCXX_ABI_UNSTABLE=ON",
+        "-DLLVM_ENABLE_ASSERTIONS=OFF",
+        "-DLIBCXX_ENABLE_ASSERTIONS=OFF",
+        "-DLIBCXXABI_ENABLE_ASSERTIONS=OFF",
+    ]
+    _run(
+        repository_ctx,
+        cmake_args,
+        timeout = 600,
+        # This is very slow, so print output as a form of progress.
+        quiet = False,
+        working_directory = build_dir,
+    )
+
+    # Run ninja for the final build.
+    _run(
+        repository_ctx,
+        [ninja],
+        timeout = 3600,
+        # This is very slow, so print output as a form of progress.
+        quiet = False,
+        working_directory = build_dir,
+    )
+
     if not clang.exists:
-        cc_env = repository_ctx.os.environ.get("CC")
-        if not cc_env:
-            # Without a specified `CC` name, simply look for `clang`.
-            clang = repository_ctx.which("clang")
-        elif "/" not in cc_env:
-            # Lookup relative `CC` names according to the system `PATH`.
-            clang = repository_ctx.which(cc_env)
-        else:
-            # An absolute `CC` path is simply be used directly.
-            clang = repository_ctx.path(cc_env)
-            if not clang.exists:
-                fail(("The `CC` environment variable is set to a path (`%s`) " +
-                      "that doesn't exist.") % cc_env)
+        fail("`%s` still not found after building LLVM" % clang)
 
-    # Check if either of the `which` invocations fail.
-    if not clang:
-        missing = "`clang`"
-        if cc_env:
-            missing = "`%s` (from the `CC` environment variable)" % cc_env
-        fail("Unable to find the %s executable on the PATH." % missing)
+    return clang
 
+def _validate_clang(repository_ctx, clang):
+    """Validates that the discovered clang is correctly set up."""
     version_output = _run(repository_ctx, [clang, "--version"]).stdout
     if "clang" not in version_output:
         fail(("Selected Clang executable (`%s`) does not appear to actually " +
@@ -72,8 +126,6 @@ def _find_clang(repository_ctx):
             fail(("Couldn't find executable `%s` that is expected to be part " +
                   "of the Clang and LLVM toolchain detected with `%s`.") %
                  (tool, clang))
-
-    return clang
 
 def _compute_clang_resource_dir(repository_ctx, clang):
     """Runs the `clang` binary to get its resource dir."""
@@ -132,7 +184,8 @@ def _detect_clang_toolchain_impl(repository_ctx):
         "cc_toolchain_config.bzl",
     )
 
-    clang = _find_clang(repository_ctx)
+    clang = _detect_or_build_clang(repository_ctx)
+    _validate_clang(repository_ctx, clang)
     resource_dir = _compute_clang_resource_dir(repository_ctx, clang)
     include_dirs = _compute_clang_cpp_include_search_paths(
         repository_ctx,
