@@ -27,12 +27,14 @@ def _run(
         repository_ctx,
         cmd,
         timeout = 10,
+        environment = {},
         quiet = True,
         working_directory = ""):
     """Runs the provided `cmd`, checks for failure, and returns the result."""
     exec_result = repository_ctx.execute(
         cmd,
         timeout = timeout,
+        environment = environment,
         quiet = quiet,
         # Need to convert path objects to a string.
         working_directory = str(working_directory),
@@ -48,56 +50,144 @@ def _detect_or_build_clang(repository_ctx):
     This looks for third_party/llvm-project/build/bin/clang. If that doesn't
     exist, it will be build it.
     """
-    llvm_root = repository_ctx.path("%s/third_party/llvm-project" %
-                                    repository_ctx.attr.workspace_dir)
-    clang = repository_ctx.path("%s/build/bin/clang" % llvm_root)
-    if clang.exists:
-        return clang
+    # If we can build our Clang toolchain using a system-installed Clang, try
+    # to do so. However, if the user provides an explicit `CC` environment
+    # variable, just use that as the system C++ compiler.
+    environment = {}
+    if not repository_ctx.os.environ.get("CC"):
+        system_clang = repository_ctx.which("clang")
+        if system_clang:
+            environment.update(CC = str(system_clang))
 
     cmake = repository_ctx.which("cmake")
     if not cmake:
         fail("`cmake` not found: is it installed?")
-    mkdir = repository_ctx.which("mkdir")
-    if not cmake:
-        fail("`mkdir` not found: unsupported OS?")
     ninja = repository_ctx.which("ninja")
     if not ninja:
         fail("`ninja` not found: is it installed?")
 
-    llvm_dir = repository_ctx.path("%s/llvm" % llvm_root)
-    if not llvm_dir.exists:
-        fail(
-            ("`%s` not found: are submodules initialized? " +
-             "(git submodule update --init)") %
-            llvm_dir,
-        )
-
-    repository_ctx.report_progress("Clang/LLVM not found, starting build.")
-    build_dir = repository_ctx.path("%s/build" % llvm_root)
-    if not build_dir.exists:
-        _run(repository_ctx, [mkdir, build_dir])
-
+    workspace_dir = repository_ctx.path(repository_ctx.attr._workspace).dirname
+    llvm_dir = repository_ctx.path("%s/third_party/llvm-project/llvm" %
+                                   workspace_dir)
+    repository_ctx.report_progress("Running CMake for the LLVM toolchain build...")
     cmake_args = [
         cmake,
         "-G",
         "Ninja",
-        "../llvm",
+        str(llvm_dir),
         "-DLLVM_ENABLE_PROJECTS=clang;clang-tools-extra;lld;libcxx;libcxxabi;compiler-rt;libunwind",
         "-DCMAKE_BUILD_TYPE=Release",
         "-DLIBCXX_ABI_UNSTABLE=ON",
         "-DLLVM_ENABLE_ASSERTIONS=OFF",
+        "-DLLVM_STATIC_LINK_CXX_STDLIB=ON",
+        "-DLLVM_TARGETS_TO_BUILD=AArch64;X86",
         "-DLIBCXX_ENABLE_ASSERTIONS=OFF",
         "-DLIBCXXABI_ENABLE_ASSERTIONS=OFF",
+
+        # Disable components of the build that we'll never need.
+        "-DCLANG_ENABLE_ARCMT=OFF",
+        "-DCLANG_INCLUDE_TESTS=OFF",
+        "-DCLANG_TOOL_APINOTES_TEST_BUILD=OFF",
+        "-DCLANG_TOOL_ARCMT_TEST_BUILD=OFF",
+        "-DCLANG_TOOL_CLANG_CHECK_BUILD=OFF",
+        "-DCLANG_TOOL_CLANG_DIFF_BUILD=OFF",
+        "-DCLANG_TOOL_CLANG_EXTDEF_MAPPING_BUILD=OFF",
+        "-DCLANG_TOOL_CLANG_FUZZER_BUILD=OFF",
+        "-DCLANG_TOOL_CLANG_IMPORT_TEST_BUILD=OFF",
+        "-DCLANG_TOOL_CLANG_OFFLOAD_BUNDLER_BUILD=OFF",
+        "-DCLANG_TOOL_CLANG_OFFLOAD_WRAPPER_BUILD=OFF",
+        "-DCLANG_TOOL_CLANG_SCAN_DEPS_BUILD=OFF",
+        "-DCLANG_TOOL_CLANG_SHLIB_BUILD=OFF",
+        "-DCLANG_TOOL_C_ARCMT_TEST_BUILD=OFF",
+        "-DCLANG_TOOL_C_INDEX_TEST_BUILD=OFF",
+        "-DCLANG_TOOL_DIAGTOOL_BUILD=OFF",
+        "-DCLANG_TOOL_LIBCLANG_BUILD=OFF",
+        "-DCLANG_TOOL_SCAN_BUILD_BUILD=OFF",
+        "-DCLANG_TOOL_SCAN_VIEW_BUILD=OFF",
+        "-DLLVM_BUILD_UTILS=OFF",
+        "-DLLVM_ENABLE_BINDINGS=OFF",
+        "-DLLVM_ENABLE_LIBXML2=OFF",
+        "-DLLVM_ENABLE_OCAMLDOC=OFF",
+        "-DLLVM_INCLUDE_BENCHMARKS=OFF",
+        "-DLLVM_INCLUDE_DOCS=OFF",
+        "-DLLVM_INCLUDE_EXAMPLES=OFF",
+        "-DLLVM_INCLUDE_GO_TESTS=OFF",
+        "-DLLVM_INCLUDE_TESTS=OFF",
+        "-DLLVM_INCLUDE_UTILS=OFF",
+        "-DLLVM_TOOL_BUGPOINT_BUILD=OFF",
+        "-DLLVM_TOOL_BUGPOINT_PASSES_BUILD=OFF",
+        "-DLLVM_TOOL_DSYMUTIL_BUILD=OFF",
+        "-DLLVM_TOOL_GOLD_BUILD=OFF",
+        "-DLLVM_TOOL_LLC_BUILD=OFF",
+        "-DLLVM_TOOL_LLI_BUILD=OFF",
+        "-DLLVM_TOOL_LLVM_AS_BUILD=OFF",
+        "-DLLVM_TOOL_LLVM_BCANALYZER_BUILD=OFF",
+        "-DLLVM_TOOL_LLVM_CAT_BUILD=OFF",
+        "-DLLVM_TOOL_LLVM_CFI_VERIFY_BUILD=OFF",
+        "-DLLVM_TOOL_LLVM_CONFIG_BUILD=OFF",
+        "-DLLVM_TOOL_LLVM_CVTRES_BUILD=OFF",
+        "-DLLVM_TOOL_LLVM_CXXDUMP_BUILD=OFF",
+        "-DLLVM_TOOL_LLVM_CXXFILT_BUILD=OFF",
+        "-DLLVM_TOOL_LLVM_CXXMAP_BUILD=OFF",
+        "-DLLVM_TOOL_LLVM_C_TEST_BUILD=OFF",
+        "-DLLVM_TOOL_LLVM_DIFF_BUILD=OFF",
+        "-DLLVM_TOOL_LLVM_DWARFDUMP_BUILD=OFF",
+        "-DLLVM_TOOL_LLVM_ELFABI_BUILD=OFF",
+        "-DLLVM_TOOL_LLVM_EXEGESIS_BUILD=OFF",
+        "-DLLVM_TOOL_LLVM_EXTRACT_BUILD=OFF",
+        "-DLLVM_TOOL_LLVM_GO_BUILD=OFF",
+        "-DLLVM_TOOL_LLVM_GSYMUTIL_BUILD=OFF",
+        "-DLLVM_TOOL_LLVM_IFS_BUILD=OFF",
+        "-DLLVM_TOOL_LLVM_ISEL_FUZZER_BUILD=OFF",
+        "-DLLVM_TOOL_LLVM_ITANIUM_DEMANGLE_FUZZER_BUILD=OFF",
+        "-DLLVM_TOOL_LLVM_JITLINK_BUILD=OFF",
+        "-DLLVM_TOOL_LLVM_JITLISTENER_BUILD=OFF",
+        "-DLLVM_TOOL_LLVM_LIBTOOL_DARWIN_BUILD=OFF",
+        "-DLLVM_TOOL_LLVM_LINK_BUILD=OFF",
+        "-DLLVM_TOOL_LLVM_LIPO_BUILD=OFF",
+        "-DLLVM_TOOL_LLVM_LTO2_BUILD=OFF",
+        "-DLLVM_TOOL_LLVM_LTO_BUILD=OFF",
+        "-DLLVM_TOOL_LLVM_MCA_BUILD=OFF",
+        "-DLLVM_TOOL_LLVM_MC_BUILD=OFF",
+        "-DLLVM_TOOL_LLVM_ML_BUILD=OFF",
+        "-DLLVM_TOOL_LLVM_MICROSOFT_DEMANGLE_FUZZER_BUILD=OFF",
+        "-DLLVM_TOOL_LLVM_MT_BUILD=OFF",
+        "-DLLVM_TOOL_LLVM_OPT_FUZZER_BUILD=OFF",
+        "-DLLVM_TOOL_LLVM_PDBUTIL_BUILD=OFF",
+        "-DLLVM_TOOL_LLVM_PROFDATA_BUILD=OFF",
+        "-DLLVM_TOOL_LLVM_PROFGEN_BUILD=OFF",
+        "-DLLVM_TOOL_LLVM_RC_BUILD=OFF",
+        "-DLLVM_TOOL_LLVM_READOBJ_BUILD=OFF",
+        "-DLLVM_TOOL_LLVM_REDUCE_BUILD=OFF",
+        "-DLLVM_TOOL_LLVM_RTDYLD_BUILD=OFF",
+        "-DLLVM_TOOL_LLVM_SHLIB_BUILD=OFF",
+        "-DLLVM_TOOL_LLVM_SIZE_BUILD=OFF",
+        "-DLLVM_TOOL_LLVM_SPECIAL_CASE_LIST_FUZZER_BUILD=OFF",
+        "-DLLVM_TOOL_LLVM_SPLIT_BUILD=OFF",
+        "-DLLVM_TOOL_LLVM_STRESS_BUILD=OFF",
+        "-DLLVM_TOOL_LLVM_STRINGS_BUILD=OFF",
+        "-DLLVM_TOOL_LLVM_XRAY_BUILD=OFF",
+        "-DLLVM_TOOL_LLVM_YAML_NUMERIC_PARSER_FUZZER_BUILD=OFF",
+        "-DLLVM_TOOL_LLVM_YAML_PARSER_FUZZER_BUILD=OFF",
+        "-DLLVM_TOOL_LTO_BUILD=OFF",
+        "-DLLVM_TOOL_OBJ2YAML_BUILD=OFF",
+        "-DLLVM_TOOL_OPT_BUILD=OFF",
+        "-DLLVM_TOOL_OPT_VIEWER_BUILD=OFF",
+        "-DLLVM_TOOL_REMARKS_SHLIB_BUILD=OFF",
+        "-DLLVM_TOOL_SPLIT_FILE_BUILD=OFF",
+        "-DLLVM_TOOL_VERIFY_USELISTORDER_BUILD=OFF",
+        "-DLLVM_TOOL_YAML2OBJ_BUILD=OFF",
     ]
     _run(
         repository_ctx,
         cmake_args,
         timeout = 600,
+        environment = environment,
         # This is very slow, so print output as a form of progress.
         quiet = False,
-        working_directory = build_dir,
     )
 
+    repository_ctx.report_progress("Building the LLVM toolchain...")
     # Run ninja for the final build.
     _run(
         repository_ctx,
@@ -105,11 +195,11 @@ def _detect_or_build_clang(repository_ctx):
         timeout = 3600,
         # This is very slow, so print output as a form of progress.
         quiet = False,
-        working_directory = build_dir,
     )
 
+    clang = repository_ctx.path("bin/clang")
     if not clang.exists:
-        fail("`%s` still not found after building LLVM" % clang)
+        fail("`%s` still not found after building the LLVM toolchain" % clang)
 
     return clang
 
@@ -208,7 +298,6 @@ detect_clang_toolchain = repository_rule(
     configure = True,
     local = True,
     attrs = {
-        "workspace_dir": attr.string(mandatory = True),
         "_clang_toolchain_build": attr.label(
             default = Label("//bazel/cc_toolchains:clang_toolchain.BUILD"),
             allow_single_file = True,
@@ -219,6 +308,20 @@ detect_clang_toolchain = repository_rule(
         ),
         "_clang_detected_variables_template": attr.label(
             default = Label("//bazel/cc_toolchains:clang_detected_variables.tpl.bzl"),
+            allow_single_file = True,
+        ),
+        # This rule builds LLVM out of its submodule. We artificially depend on
+        # the HEAD file for the submodule to trigger an automatic rebuild when
+        # the submodule changes.
+        "_llvm_project_git_submodule_head": attr.label(
+            default = Label("//:.git/modules/third_party%2fllvm-project/HEAD"),
+            allow_single_file = True,
+        ),
+
+        # We use a label pointing at the workspace file to compute the
+        # workspace directory.
+        "_workspace": attr.label(
+            default = Label("//:WORKSPACE"),
             allow_single_file = True,
         ),
     },

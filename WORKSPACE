@@ -29,10 +29,7 @@ rules_foreign_cc_dependencies()
 # Detect and configure a Clang and LLVM based toolchain.
 load("//bazel/cc_toolchains:clang_detection.bzl", "detect_clang_toolchain")
 
-detect_clang_toolchain(
-    name = "bazel_cc_toolchain",
-    workspace_dir = __workspace_dir__,
-)
+detect_clang_toolchain(name = "bazel_cc_toolchain")
 
 local_repository(
     name = "llvm_bazel",
