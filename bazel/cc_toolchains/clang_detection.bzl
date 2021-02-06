@@ -50,6 +50,7 @@ def _detect_or_build_clang(repository_ctx):
     This looks for third_party/llvm-project/build/bin/clang. If that doesn't
     exist, it will be build it.
     """
+
     # If we can build our Clang toolchain using a system-installed Clang, try
     # to do so. However, if the user provides an explicit `CC` environment
     # variable, just use that as the system C++ compiler.
@@ -188,6 +189,7 @@ def _detect_or_build_clang(repository_ctx):
     )
 
     repository_ctx.report_progress("Building the LLVM toolchain...")
+
     # Run ninja for the final build.
     _run(
         repository_ctx,
