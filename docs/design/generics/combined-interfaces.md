@@ -17,7 +17,6 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Facet type](#facet-type)
     -   [External impl](#external-impl)
     -   [Qualified member names](#qualified-member-names)
-    -   [Impl arguments for parameterized types](#impl-arguments-for-parameterized-types)
     -   [Impl lookup](#impl-lookup)
 -   [Generics](#generics)
 -   [Model](#model)
@@ -422,30 +421,6 @@ struct Point2 {
 var Point2: p = (.x = 1.0, .y = 2.0);
 p.(MyPackage.MyInterface.MyMember)();
 ```
-
-### Impl arguments for parameterized types
-
-What if our `Point` type was parameterized? We need some way of providing those
-parameters. For example,
-
-```
-struct PointT(Type:$$ T) {
-  var T: x;
-  var T: y;
-  impl Vector {
-    method (Self: a) Add(Self: b) -> Self { ... }
-    method (Self: a) Scale(Double: v) -> Self { ... }
-  }
-}
-
-```
-
-We put these arguments syntactically early so those names could also be used
-with [parameterized interfaces](#parameterized-interfaces). This syntax is also
-convenient for [conditional conformance](#conditional-conformance) and
-[templated impls](#templated-impls-for-generic-interfaces), below. We use square
-brackets here as is done for implicit arguments to functions, since there is no
-explicit caller providing these arguments.
 
 ### Impl lookup
 
