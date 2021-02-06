@@ -16,6 +16,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [Implementing interfaces](#implementing-interfaces)
     -   [Facet type](#facet-type)
     -   [External impl](#external-impl)
+    -   [Rejected: out-of-line impl](#rejected-out-of-line-impl)
     -   [Qualified member names](#qualified-member-names)
     -   [Impl lookup](#impl-lookup)
 -   [Generics](#generics)
@@ -390,6 +391,25 @@ arising from name collisions between interfaces. It has a few downsides though:
     copy-paste code between files.
 -   It makes reading code harder, since you have to search the file for these
     declarations that affect name lookup.
+
+### Rejected: out-of-line impl
+
+We considered an out-of-line syntax for declaring and defining interface `impl`
+blocks, to replace both the inline syntax and the `extends` statement. For,
+example:
+
+```
+struct Point { ... }
+impl Vector for Point { ... }
+```
+
+The main advantage of this syntax was that it was uniform across many cases,
+including conditional conformance. It wasn't ideal across a number of dimensions
+though:
+
+-   it was redundant and verbose,
+-   it was difficult to read and author, and
+-   it could affect the API of the type outside of the type definition.
 
 ### Qualified member names
 
