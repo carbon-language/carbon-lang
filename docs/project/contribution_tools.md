@@ -24,7 +24,6 @@ contributions.
 -   [Main tools](#main-tools)
     -   [Bazel and Bazelisk](#bazel-and-bazelisk)
     -   [buildifier](#buildifier)
-    -   [Clang and LLVM](#clang-and-llvm)
     -   [Ninja](#ninja)
     -   [pre-commit](#pre-commit)
 -   [Optional tools](#optional-tools)
@@ -64,8 +63,6 @@ typical tool setup flow is:
     -   `git config core.fsmonitor rs-git-fsmonitor` to set up
         [rs-git-fsmonitor](#rs-git-fsmonitor-and-watchman) in the clone.
     -   `pre-commit install` to set up [pre-commit](#pre-commit) in the clone.
-4.  If building [Clang and LLVM](#clang-and-llvm), do so in the cloned
-    repository.
 
 ## Package managers
 
@@ -172,44 +169,6 @@ Our recommended way of installing is:
     ```bash
     brew install buildifier
     ```
-
-### Clang and LLVM
-
-[Clang](https://clang.llvm.org/) and [LLVM](https://llvm.org/) are used to
-compile and link Carbon.
-
-If the `CC` environment variable is set to `clang`, or if `clang` is in the
-path, it can be used without building LLVM from head. However, it's currently
-recommended to build LLVM from head in order to avoid compatibility issues in
-many distributions. Once `third_party/llvm-project/build/bin/clang` exists, it
-will automatically be used instead of `CC`.
-
-In order to build `third_party/llvm-project/build/bin/clang`, please refer to
-[LLVM's instructions](https://llvm.org/docs/GettingStarted.html#getting-the-source-code-and-building-llvm).
-Tips:
-
--   When `carbon-lang` is checked out with submodules, the LLVM submodule is at
-    `third_party/llvm-project`.
-
-    -   In other words, create your `build` directory at
-        `third_party/llvm-project/build`.
-
--   Carbon uses the Clang, LLD, and libc++ subprojects. A corresponding
-    `LLVM_ENABLE_PROJECTS` build looks like:
-
-    ```bash
-    cmake -G Ninja ../llvm \
-        -DLLVM_ENABLE_PROJECTS="clang;clang-tools-extra;lld;libcxx;libcxxabi;compiler-rt;libunwind" \
-        -DCMAKE_BUILD_TYPE=Release \
-        -DLIBCXX_ABI_UNSTABLE=ON \
-        -DLLVM_ENABLE_ASSERTIONS=OFF \
-        -DLIBCXX_ENABLE_ASSERTIONS=OFF \
-        -DLIBCXXABI_ENABLE_ASSERTIONS=OFF
-    ninja
-    ```
-
-    Note these instructions use [ninja](#ninja), which should be installed
-    first.
 
 ### Ninja
 
