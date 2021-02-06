@@ -14,10 +14,9 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [Overview](#overview)
 -   [Interfaces](#interfaces)
 -   [Implementing interfaces](#implementing-interfaces)
-    -   [Qualified member names](#qualified-member-names)
-    -   [External impl](#external-impl)
     -   [Facet type](#facet-type)
-    -   [Rejected: inline impl](#rejected-inline-impl)
+    -   [External impl](#external-impl)
+    -   [Qualified member names](#qualified-member-names)
     -   [Impl arguments for parameterized types](#impl-arguments-for-parameterized-types)
     -   [Impl lookup](#impl-lookup)
 -   [Generics](#generics)
@@ -212,151 +211,8 @@ by which we mean types that are declared as specifically implementing
 ## Implementing interfaces
 
 Given a type, it can define an "impl" that defines how that interface is
-implemented for that type. Impls are defined out of line:
-
-```
-struct Point {
-  var Double: x;
-  var Double: y;
-}
-impl Vector for Point {
-  // In this scope, "Self" is an alias for "Point".
-  method (Self: a) Add(Self: b) -> Self {
-    return Point(.x = a.x + b.x, .y = a.y + b.y);
-  }
-  method (Self: a) Scale(Double: v) -> Self {
-    return Point(.x = a.x * v, .y = a.y * v);
-  }
-}
-```
-
-### Qualified member names
-
-Given a value of type `Point` and an interface `Vector` implemented for that
-type, you can access the methods from that interface using the member's
-_qualified name_:
-
-```
-var Point: p1 = (.x = 1.0, .y = 2.0);
-var Point: p2 = (.x = 2.0, .y = 4.0);
-Assert(p1.(Vector.Scale)(2.0) == p2);
-Assert(p1.(Vector.Add)(p1) == p2);
-```
-
-Note that the name in the parens is looked up in the containing scope, not in
-the names of members of `Point`. So if there was another interface `MyInterface`
-with method `MyMember` defined in the `MyPackage` package also implemented for
-`Point`, you could access `MyMember` with a qualified name:
-
-```
-import MyPackage;
-
-struct Point { ... }
-impl Vector for MyPackage.MyInterface { ... }
-
-var Point: p = (.x = 1.0, .y = 2.0);
-p.(MyPackage.MyInterface.MyMember)();
-```
-
-### External impl
-
-Unless the `impl` is defined as `external`, the `Vector` methods `Add` and
-`Scale` will _also_ be defined for values of type `Point`.
-
-```
-var Point: p1 = (.x = 1.0, .y = 2.0);
-var Point: p2 = (.x = 2.0, .y = 4.0);
-Assert(p1.Scale(2.0) == p1.(Vector.Scale)(2.0));
-Assert(p1.Add(p1) == p1.(Vector.Add)(p1));
-```
-
-The goal here is that generally speaking a given name for an object corresponds
-to the same method whenever that name is legal. There are a few reasons you
-might not want this, and you would choose to define the `impl` as `external`:
-
--   You never access the methods of an interface directly. For example you would
-    typically do this for interface for operator overloads, where you would
-    instead access those methods via operators.
--   You want to avoid name collisions or other ambiguity between two different
-    interfaces, and will use qualified names instead.
--   The `impl` is defined in a different library than the type.
-
-To expand on this last point, we do want to allow `impl` definitions either in
-the library that defines the interface (`Vector`) or in the library that defines
-the type (`Point`). This addresses
-[the expression problem](https://eli.thegreenplace.net/2016/the-expression-problem-and-its-solutions).
-Note though we don't allow impl definitions in other libraries, to address the
-concers about coherence/orphans -- we don't want the implementation of an
-interface to change based on imports. Since you have to import both the type and
-the interface, those are the places where you can define impls. Note that there
-is a refinement of this rule for types and interfaces that are parameterized in
-[the "Impl lookup" section](#impl-lookup).
-
-We require all `impl` definitions outside of the library defining the type to be
-`external`. This is for two reasons:
-
--   This means you can find all the names of direct (unqualified) members of a
-    type in the library defining that type. The only thing that may be in
-    another library is an `impl` of an interface.
--   It also means these members do not vary based on imports.
-
-**Rejected alternative:** We could allow types to have different APIs in
-different files based on explicit configuration in that file. For example, we
-could support a declaration that a given interface or a given method of an
-interface is "in scope" for a particular type in this file. With that
-declaration, the method could be called unqualified. This avoids most concerns
-arising from name collisions between interfaces. It has a few downsides though:
-
--   It increases variability between files, since the same type will have
-    different APIs depending on these declarations. This makes it harder to
-    copy-paste code between files.
--   It makes reading code harder, since you have to search the file for these
-    declarations that affect name lookup.
-
-### Facet type
-
-The impl definition defines a
-[facet type](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#invoking-interface-methods):
-`Point as Vector`. While the API of `Point` includes the two fields `x` and `y`,
-the API of `Point as Vector` _only_ has the `Add` and `Scale` methods of the
-`Vector` interface. The facet type `Point as Vector` is
-[compatible](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#compatible-types)
-with `Point`, so we allow you to cast between the two implicitly:
-
-```
-var Point: a = (.x = 1.0, .y = 2.0);
-// Cast from Point implicitly
-var Point as Vector: b = a;
-// Will also implicitly cast when calling functions:
-fn F(Point as Vector: c, Point: d) { ... }
-F(a, b);
-```
-
-or explicitly:
-
-```
-var Point as Vector: z = (a as (Point as Vector)).Scale(3.0);
-var Point: w = z as Point;
-```
-
-**Note:** In general the above is written assuming that casts are written
-"`a as T`" where `a` is a value and `T` is the type to cast to. When we write
-`Point as Vector`, the value `Point` is a type, and `Vector` is a type of a
-type, or a "type-type".
-
-**Note:** A type may implement any number of different interfaces, but may
-provide at most one implementation of any single interface. This makes the act
-of selecting an implementation of an interface for a type unambiguous throughout
-the whole program, so e.g. `Point as Vector` is well defined.
-
-We don't expect users to ordinarily name facet types explicitly in source code.
-Instead, values are cast to a facet type as part of calling a generic function,
-as described in the [Generics](#generics) section.
-
-### Rejected: inline impl
-
-**Rejected alternative:** We considered supporting `impl` definitions in line
-like so:
+implemented for that type. Impls may be defined in line inside the type
+definition:
 
 ```
 struct Point {
@@ -374,18 +230,198 @@ struct Point {
 }
 ```
 
-For now, we aren't recommending this approach for a few reasons:
+Interfaces that are implemented inline contribute to the type's API:
 
--   It is simpler to have only one way of defining things, and there are cases
-    we can only express using out of line `impl` definitions.
--   It is easier to find a definition, for example with text search, if it is
-    always defined the same way.
--   Methods defined in an out-of-line `impl` definition are at one less level of
-    indent, matching the indent level of methods defined in a `struct`.
+```
+var Point: p1 = (.x = 1.0, .y = 2.0);
+var Point: p2 = (.x = 2.0, .y = 4.0);
+Assert(p1.Scale(2.0) == p2);
+Assert(p1.Add(p1) == p2);
+```
 
-This is a decision we could easily revisit in the future. We might do this, for
-example, if we decide that the `for <type>` syntax is burdensome boilerplate.
-This is more burdensome if the type is parameterized.
+### Facet type
+
+The impl definition defines a
+[facet type](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#invoking-interface-methods):
+`Point as Vector`. While the API of `Point` includes the two fields `x` and `y`
+along with the `Add` and `Scale` methods, the API of `Point as Vector` _only_
+has the `Add` and `Scale` methods of the `Vector` interface. The facet type
+`Point as Vector` is
+[compatible](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#compatible-types)
+with `Point`, meaning their data representations are the same, so we allow you
+to cast between the two freely:
+
+```
+var Point: a = (.x = 1.0, .y = 2.0);
+// `a` has `Add` and `Scale` methods:
+a.Add(a.Scale(2.0));
+
+// Cast from Point implicitly
+var Point as Vector: b = a;
+// `b` has `Add` and `Scale` methods:
+b.Add(b.Scale(2.0));
+
+// Will also implicitly cast when calling functions:
+fn F(Point as Vector: c, Point: d) {
+  d.Add(c.Scale(2.0));
+}
+F(a, b);
+
+// Explicit casts
+var Point as Vector: z = (a as (Point as Vector)).Scale(3.0);
+z.Add(b);
+var Point: w = z as Point;
+```
+
+These casts change which names are exposed in the type's API, but as much as
+possible we don't want the meaning of any given name to change. Instead we want
+these casts to simply change the subset of names that are visible.
+
+**Note:** In general the above is written assuming that casts are written
+"`a as T`" where `a` is a value and `T` is the type to cast to. When we write
+`Point as Vector`, the value `Point` is a type, and `Vector` is a type of a
+type, or a "type-type".
+
+**Note:** A type may implement any number of different interfaces, but may
+provide at most one implementation of any single interface. This makes the act
+of selecting an implementation of an interface for a type unambiguous throughout
+the whole program, so e.g. `Point as Vector` is well defined.
+
+We don't expect users to ordinarily name facet types explicitly in source code.
+Instead, values are cast to a facet type as part of calling a generic function,
+as described in the [Generics](#generics) section.
+
+### External impl
+
+Interfaces may also be implemented for a type externally, by using the `extend`
+construct which takes the name of an existing type:
+
+```
+struct Point2 {
+  var Double: x;
+  var Double: y;
+}
+
+extend Point2 {
+  impl Vector {
+    // In this scope, "Self" is an alias for "Point2".
+    method (Self: a) Add(Self: b) -> Self {
+      return Point2(.x = a.x + b.x, .y = a.y + b.y);
+    }
+    method (Self: a) Scale(Double: v) -> Self {
+      return Point2(.x = a.x * v, .y = a.y * v);
+    }
+  }
+}
+```
+
+The `extend` statement is allowed to be defined in a different library from
+`Point2`, restricted by [the coherence/orphan rules](#impl-lookup) that ensure
+that the implementation of an interface to change based on imports. In
+particular, the `extend` statement is allowed in the library defining the
+interface (`Vector` in this case) in addition to the library that defines the
+type (`Point2` here). This (at least partially) addresses
+[the expression problem](https://eli.thegreenplace.net/2016/the-expression-problem-and-its-solutions).
+
+We don't want the API of `Point2` to change based on what is imported though. So
+the `extend` statement does not add the interface's methods to the type. It
+would be particularly bad if two different libraries implemented interfaces with
+conflicting names both affected the API of a single type. The result is you can
+find all the names of direct (unqualified) members of a type in the definition
+of that type. The only thing that may be in another library is an `impl` of an
+interface.
+
+On the other hand, if we cast to the facet type, those methods do become
+visible:
+
+```
+var Point2: a = (.x = 1.0, .y = 2.0);
+// `a` does *not* have `Add` and `Scale` methods:
+// Error: a.Add(a.Scale(2.0));
+
+// Cast from Point2 implicitly
+var Point2 as Vector: b = a;
+// `b` does have `Add` and `Scale` methods:
+b.Add(b.Scale(2.0));
+
+fn F(Point2 as Vector: c) {
+  // Can call `Add` and `Scale` on `c` even though we can't on `a`.
+  c.Add(c.Scale(2.0));
+}
+F(a);
+```
+
+You might intentionally use `extend` to implement an interface for a type to
+avoid cluttering the API of that type, for example to avoid a name collision. A
+syntax for reusing method implementations would allow you to do this selectively
+when needed:
+
+```
+struct Point3 {
+  var Double: x;
+  var Double: y;
+  method (Self: a) Add(Self: b) -> Self {
+    return Point3(.x = a.x + b.x, .y = a.y + b.y);
+  }
+}
+
+extend Point3 {
+  impl Vector {
+    alias Add = Point3.Add;  // Syntax TBD
+    method (Self: a) Scale(Double: v) -> Self {
+      return Point3(.x = a.x * v, .y = a.y * v);
+    }
+  }
+}
+```
+
+With this definition, `Point3` includes `Add` in its API but not `Scale`, while
+`Point3 as Vector` includes both. This maintains the property that you can
+determine the API of a type by looking at its definition.
+
+**Rejected alternative:** We could allow types to have different APIs in
+different files based on explicit configuration in that file. For example, we
+could support a declaration that a given interface or a given method of an
+interface is "in scope" for a particular type in this file. With that
+declaration, the method could be called unqualified. This avoids most concerns
+arising from name collisions between interfaces. It has a few downsides though:
+
+-   It increases variability between files, since the same type will have
+    different APIs depending on these declarations. This makes it harder to
+    copy-paste code between files.
+-   It makes reading code harder, since you have to search the file for these
+    declarations that affect name lookup.
+
+### Qualified member names
+
+Given a value of type `Point2` and an interface `Vector` implemented for that
+type, you can access the methods from that interface using the member's
+_qualified name_, whether or not the implementation is done externally with an
+`extend` statement:
+
+```
+var Point2: p1 = (.x = 1.0, .y = 2.0);
+var Point2: p2 = (.x = 2.0, .y = 4.0);
+Assert(p1.(Vector.Scale)(2.0) == p2);
+Assert(p1.(Vector.Add)(p1) == p2);
+```
+
+Note that the name in the parens is looked up in the containing scope, not in
+the names of members of `Point2`. So if there was another interface
+`MyInterface` with method `MyMember` defined in the `MyPackage` package also
+implemented for `Point2`, you could access `MyMember` with a qualified name:
+
+```
+import MyPackage;
+
+struct Point2 {
+  ...
+  impl MyPackage.MyInterface { ... }
+}
+
+var Point2: p = (.x = 1.0, .y = 2.0);
+p.(MyPackage.MyInterface.MyMember)();
+```
 
 ### Impl arguments for parameterized types
 
@@ -396,11 +432,12 @@ parameters. For example,
 struct PointT(Type:$$ T) {
   var T: x;
   var T: y;
+  impl Vector {
+    method (Self: a) Add(Self: b) -> Self { ... }
+    method (Self: a) Scale(Double: v) -> Self { ... }
+  }
 }
-impl[Type:$$ T] Vector for PointT(T) {
-  method (Self: a) Add(Self: b) -> Self { ... }
-  method (Self: a) Scale(Double: v) -> Self { ... }
-}
+
 ```
 
 We put these arguments syntactically early so those names could also be used
@@ -554,6 +591,8 @@ the code for `AddAndScale`. So `AddAndScale` is using a
 [static-dispatch witness table](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#static-dispatch-witness-table).
 
 ## Adapting types
+
+TODO: if I'm not mistakenm this is `newtype` in Rust.
 
 We also provide a way to create new types
 [compatible with](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#compatible-types)
@@ -858,8 +897,8 @@ interface Stack(Type:$ ElementType) {
 }
 struct DynamicArray(Type:$ T) {
   ...
-  // References to a parameterized interface must be followed by an argument list
-  // with specific values for every parameter.
+  // References to a parameterized interface must be followed by an
+  //  argument list with specific values for every parameter.
   impl Stack(T) { ... }
 }
 ```
@@ -989,8 +1028,7 @@ associated types, a `multi` parameter can't be changed to an associated type.
 
 The problem we are trying to solve here is expressing that we have an impl of
 some interface for some type, but only if some additional type restrictions are
-met. To do this, we leverage
-[impl arguments](#out-of-line-impl-arguments-for-parameterized-types):
+met. To do this, we leverage [external impl](#external-impl):
 
 -   We can provide the same impl argument in two places to constrain them to be
     the same.
@@ -1008,19 +1046,19 @@ struct FixedArray(Type:$ T, Int:$ N) { ... }
 
 // By saying "Printable:$ T" instead of "Type:$ T" here, we constrain
 // T to be Printable for this impl.
-// Note: this should probably be "TypeImplements(Printable):$ T", but
-// "TypeImplements" is described later in this document.
-impl[Printable:$ T, Int:$ N] Printable for FixedArray(T, N) {
-  method (Ptr(Self): this) Print() -> String {
-    var Bool: first = False;
-    var String: ret = "";
-    for (auto: a) in *this {
-      if (!first) {
-        ret += ", ";
+extend FixedArray(Printable:$ T, Int:$ N) {
+  impl Printable {
+    method (Ptr(Self): this) Print() -> String {
+      var Bool: first = False;
+      var String: ret = "";
+      for (auto: a) in *this {
+        if (!first) {
+          ret += ", ";
+        }
+        ret += a.Print();
       }
-      ret += a.Print();
+      return ret;
     }
-    return ret;
   }
 }
 ```
@@ -1031,7 +1069,13 @@ impl[Printable:$ T, Int:$ N] Printable for FixedArray(T, N) {
 ```
 interface Foo(Type:$ T) { ... }
 struct Pair(Type:$ T, Type:$ U) { ... }
-impl[Type:$ T] Foo(T) for Pair(T, T) { ... }
+extend Pair(Type:$ T, T) {
+  impl Foo(T) { ... }
+}
+// Alternatively:
+extend Pair[Type:$ T](T, T) {
+  impl Foo(T) { ... }
+}
 ```
 
 **Proposal:** [Other boolean condition constraints] Just like we support
@@ -1039,7 +1083,9 @@ conditions when pattern matching (for example in overload resolution), we should
 also allow them when defining an impl:
 
 ```
-impl[Type:$$ T] if (sizeof(T) <= 16) Foo for T { ... }
+extend[Type:$$ T] T if (sizeof(T) <= 16) {
+  impl Foo { ... }
+}
 ```
 
 **Concern:** The conditional conformance feature makes the question "is this
@@ -1056,6 +1102,9 @@ have to introduce a new name for the constrained type or have the same name mean
 different things in the inner scope with the impl definition vs. the containing
 struct scope. This was discussed in
 [Carbon meeting Nov 27, 2019 on Generics & Interfaces (TODO)](#broken-links-footnote)<!-- T:Carbon meeting Nov 27, 2019 on Generics & Interfaces --><!-- A:#heading=h.gebr4cdi0y8o -->.
+
+This means that the unqualified API of types won't vary. If this proves to be
+undesirable, we will have to revisit this.
 
 ## Templated impls for generic interfaces
 
@@ -1107,8 +1156,9 @@ value", without any way to write down an particular value for `U` in general:
 
 ```
 interface ConstructibleFrom(multi ...:$ Args) { ... }
-impl[Type:$$ T, Type:$$ U] if (LegalExpression(T.operator create(???)))
-    ConstructibleFrom(U) for T { ... }
+extend[Type:$$ T, Type:$$ U] T if (LegalExpression(T.operator create(???))) {
+  impl ConstructibleFrom(U) { ... }
+}
 ```
 
 This is a problem for the `LegalExpression(...)` model, another reason to avoid
@@ -1224,11 +1274,13 @@ interface SInterface(Type:$ T) {
 and once we implement that interface for the C++ type `S`:
 
 ```
-// Note: T has to be a templated argument to be usable with the C++ template `S`.
-// There is no problem passing a template argument `T` to the generic argument of
-// `SInterface`.
-impl[Type:$$ T] SInterface(T) for C++::S(T) {
-  method (Ptr(Self): this) F(Ptr(T): t) { this->F(t); }
+// Note: T has to be a templated argument to be usable with the
+// C++ template `S`. There is no problem passing a template
+// argument `T` to the generic argument of `SInterface`.
+extend C++::S(Type:$$ T) {
+  impl SInterface(T) {
+    method (Ptr(Self): this) F(Ptr(T): t) { this->F(t); }
+  }
 }
 ```
 
@@ -1260,7 +1312,9 @@ for it:
 
 ```
 interface Optional(Type:$ T) { ... }
-impl[Type:$$ T] Opt(T) for C++::std::optional(T);
+extend C++::std::optional(Type:$$ T) {
+  impl Optional(T) { ... }
+}
 ```
 
 ### Subtlety around interfaces with multi parameters
@@ -1289,7 +1343,9 @@ interface Foo(multi Type:$ T) { ... }
 // This provides an impl of Foo(T) for U if U is EqualityComparableTo(T).
 // In the case of Complex, this provides two impls, one for T == Complex,
 // and one for T == Float64.
-impl[EqualityComparableTo(Type:$$ T):$ U] Foo(T) for U { ... }
+extend [EqualityComparableTo(Type:$$ T):$ U] U {
+  impl Foo(T) { ... }
+}
 ```
 
 One tricky part of this is that you may not have visibility into all the impls
@@ -2003,13 +2059,19 @@ interface Deref(Type:$ T) {
 }
 
 // Implementation of Deref() for DynPtr(TT).
-impl[InterfaceType:$$ TT] Deref(DynPtr(TT).DynPtrImpl as TT) for DynPtr(TT);
+extend DynPtr(InterfaceType:$$ TT) {
+  impl Deref(DynPtr(TT).DynPtrImpl as TT) { ... }
+}
 // or equivalently:
-impl[InterfaceType:$$ TT] Deref(DynPtr(TT).T) for DynPtr(TT);
+extend DynPtr(InterfaceType:$$ TT) {
+  impl Deref(DynPtr(TT).T) { ... }
+}
 
 // Implementation of Deref(T) for Ptr(T).
-impl[Type:$ T] Deref(T) for Ptr(T) {
-  method (Ptr(T): this) Deref() -> Ptr(T) { return this; }
+extend Ptr(Type:$ T) {
+  impl Deref(T) {
+    method (Ptr(T): this) Deref() -> Ptr(T) { return this; }
+  }
 }
 ```
 
@@ -2064,12 +2126,13 @@ struct Boxed(Type:$ T,
 
 // TODO: Should these just be constructors defined within Boxed(T)?
 // If T is constructible from X, then Boxed(T) is constructible from X ...
-impl[ConstructibleFrom(...:$$ Args): T] ConstructibleFrom(Args) for Boxed(T) {
-  ...
+extend Boxed(ConstructibleFrom(...:$$ Args): T) {
+  impl ConstructibleFrom(Args) { ... }
 }
 // ... and Boxed(X) as well.
-impl[ConstructibleFrom(...:$$ Args): T] ConstructibleFrom(Boxed(Args))
-    for Boxed(T) { ... }
+extend Boxed(ConstructibleFrom(...:$$ Args): T) {
+  impl ConstructibleFrom(Boxed(Args)) { ... }
+}
 
 // This allows you to create a Boxed(T) value inferring T so you don't have to
 // say it explicitly.
@@ -2087,9 +2150,9 @@ boxing.
 
 #### DynBoxed
 
-`DynBoxed(TT)` is to `Boxed(T)` as `DynPtr(TT)` is to `T*`. Like `DynPtr(TT)`,
-it holds a pointer to a value of any type `T` that satisfies the interface `TT`.
-Like `Boxed(T)`, it owns that pointer.
+`DynBoxed(TT)` is to `Boxed(T)` as `DynPtr(TT)` is to `Ptr(T)`. Like
+`DynPtr(TT)`, it holds a pointer to a value of any type `T` that satisfies the
+interface `TT`. Like `Boxed(T)`, it owns that pointer.
 
 TODO
 
@@ -2138,12 +2201,16 @@ interface MaybeBoxed(Type:$ T) {
   impl Sized;
 }
 
-impl[Type:$ T] MaybeBoxed(T) for Boxed(T) {
-  fn operator->(Ptr(Self): this) -> Ptr(T) { return this->p; }
+extend Boxed(Type:$ T) {
+  impl MaybeBoxed(T {
+    fn operator->(Ptr(Self): this) -> Ptr(T) { return this->p; }
+  }
 }
 
-impl[InterfaceType:$$ TT] MaybeBoxed(DynBoxed(TT).T) for DynBoxed(TT) {
-  ...  // TODO
+extend DynBoxed(InterfaceType:$$ TT) {
+  impl MaybeBoxed(DynBoxed(TT).T) {
+    ...  // TODO
+  }
 }
 ```
 
@@ -2162,18 +2229,19 @@ adaptor NotBoxed(TypeImplements(Movable, Sized):$ T) for T {  // :$ or :$$ here?
 }
 // TODO: Should this just be a constructor defined within NotBoxed(T)?
 // Says NotBoxed(T) is constructible from a value of type Args if T is.
-impl[ConstructibleFrom(...:$$ Args): T] ConstructibleFrom(Args) for NotBoxed(T) {
-  ...
+extend NotBoxed(ConstructibleFrom(...:$$ Args):$ T) {
+  impl ConstructibleFrom(Args) { ... }
 }
 
-// This allows you to create a NotBoxed(T) value inferring T so you don't have to
-// say it explicitly. TODO: Could probably replace "Type:$$ T" with
+// This allows you to create a NotBoxed(T) value inferring T so you don't have
+// to say it explicitly. TODO: Could probably replace "Type:$$ T" with
 // "TypeImplements(Movable, Sized):$ T", here.
 fn DontBox[Type:$$ T](T: x) -> NotBoxed(T) inline { return x as NotBoxed(T); }
 // Use NotBoxed as the default implementation of MaybeBoxed for small & movable
 // types. TODO: Not sure how to write a size <= 16 bytes constraint here.
-impl[TypeImplements(Movable, Sized):$$ T] if (sizeof(T) <= 16)
-    MaybeBoxed(T) for T = NotBoxed(T);
+extend[TypeImplements(Movable, Sized):$$ T] T if (sizeof(T) <= 16) {
+  impl MaybBoxed(T) = NotBoxed(T);
+}
 ```
 
 This allows us to write a single generic function using that interface and have
@@ -2366,10 +2434,10 @@ Specifically, how does this proposal address
 
     It should address
     [the expression problem](https://eli.thegreenplace.net/2016/the-expression-problem-and-its-solutions),
-    e.g. by allowing the impl definition to be completely out of line as long as
-    it is defined with either the type or the interface.
+    e.g. by allowing the impl definition to be completely separate as long as it
+    is defined with either the type or the interface.
 
-    -   [Out-of-line impl](#out-of-line-impl-arguments-for-parameterized-types)
+    -   [External impl](#external-impl)
     -   [Impl lookup](#impl-lookup)
 
 -   Define a parameterized implementation of an interface for a family of types.
