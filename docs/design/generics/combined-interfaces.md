@@ -1179,6 +1179,16 @@ struct Pair(Type:$ T, Type:$ U) {
 }
 ```
 
+This has the desirable property that the syntax for internal vs. external
+matches. So it is straightforward to refactor between those two choices.
+
+Other alternatives:
+
+-   `extend` statements may have an `internal` keyword if its in the same
+    library.
+-   "Flow sensitive": inside an `impl` block with boolean `if` condition, the
+    types change to reflect the condition being true.
+
 ## Templated impls for generic interfaces
 
 Some things going on here:
