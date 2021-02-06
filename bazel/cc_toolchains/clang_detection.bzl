@@ -72,7 +72,7 @@ def _detect_or_build_clang(repository_ctx):
             llvm_dir,
         )
 
-    print("Clang/LLVM not found, starting build.")
+    repository_ctx.report_progress("Clang/LLVM not found, starting build.")
     build_dir = repository_ctx.path("%s/build" % llvm_root)
     if not build_dir.exists:
         _run(repository_ctx, [mkdir, build_dir])
