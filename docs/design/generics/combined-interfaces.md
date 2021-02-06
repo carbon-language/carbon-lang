@@ -404,8 +404,8 @@ impl Vector for Point { ... }
 ```
 
 The main advantage of this syntax was that it was uniform across many cases,
-including conditional conformance. It wasn't ideal across a number of dimensions
-though:
+including [conditional conformance](#conditional-conformance). It wasn't ideal
+across a number of dimensions though:
 
 -   it was redundant and verbose,
 -   it was difficult to read and author, and
@@ -1089,17 +1089,46 @@ interface implemented for this type" undecidable in general.
 This means we will likely need some heuristic like a limit on how many steps of
 recursion are allowed.
 
-**Rejected alternative:** We could also have a syntax for defining these impls
-inline in the struct definition, but I haven't found a satisfactory solution
-here. For example, it is hard to express the "two types are actually the same"
-constraint from the previous example. It also causes issues where you either
-have to introduce a new name for the constrained type or have the same name mean
-different things in the inner scope with the impl definition vs. the containing
-struct scope. This was discussed in
+**Open question:** We could also have a syntax for defining these impls inline
+in the struct definition, but I haven't found a syntax that works as well as the
+`extend` statement constructs shown above. In particular, since we don't want
+the meaning of the names defined in the outer struct to change inside the
+conditional impl, we end up having to give new names to the same values. This
+was discussed in
 [Carbon meeting Nov 27, 2019 on Generics & Interfaces (TODO)](#broken-links-footnote)<!-- T:Carbon meeting Nov 27, 2019 on Generics & Interfaces --><!-- A:#heading=h.gebr4cdi0y8o -->.
 
-This means that the unqualified API of types won't vary. If this proves to be
-undesirable, we will have to revisit this.
+My best syntax suggestion would be to use implicit arguments in square brackets
+after the `impl` keyword, and an `if` clause to add constraints. The above two
+examples could be written:
+
+```
+interface Printable {
+  method (Ptr(Self): this) Print() -> String;
+}
+struct FixedArray(Type:$ T, Int:$ N) {
+  // ...
+  impl[Printable:$ U] Printable if T == U {
+    method (Ptr(Self): this) Print() -> String {
+      // Here `T` and `U` have the same value and so you can freely
+      // cast between them. The difference is that you can call the
+      // `Print` method on values of type `U`.
+    }
+  }
+}
+
+interface Foo(Type:$ T) { ... }
+struct Pair(Type:$ T, Type:$ U) {
+  // ...
+  impl Foo(T) if T == U {
+    // Can cast between `Pair(T, U)` and `Pair(T, T)` since `T == U`.
+  }
+}
+```
+
+Note that there are differences from the `extend` statement usage, making it a
+bit awkward to refactor an `impl` between inline and external. The `extend`
+syntax is more natural, avoid having two names for the same type and casting
+between them.
 
 ## Templated impls for generic interfaces
 
