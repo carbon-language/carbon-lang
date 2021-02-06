@@ -1130,6 +1130,55 @@ bit awkward to refactor an `impl` between inline and external. The `extend`
 syntax is more natural, avoid having two names for the same type and casting
 between them.
 
+A possible syntax that uses pattern matching instead of boolean conditions might
+look like:
+
+```
+interface Printable {
+  method (Ptr(Self): this) Print() -> String;
+}
+struct FixedArray(Type:$ T, Int:$ N) {
+  // ...
+  @if let Printable:$ P = T {
+    impl Printable {
+      method (Ptr(Self): this) Print() -> String {
+        // Here `T` and `U` have the same value and so you can freely
+        // cast between them. The difference is that you can call the
+        // `Print` method on values of type `U`.
+      }
+    }
+  }
+}
+
+interface Foo(Type:$ T) { ... }
+struct Pair(Type:$ T, Type:$ U) {
+  // ...
+  @if let Pair(T, T):$ P = Self {
+    impl Foo(T) {
+      // ..
+    }
+  }
+}
+```
+
+Another alternative is to just include an `extend` statement inside the `struct`
+definition:
+
+```
+struct FixedArray(Type:$ T, Int:$ N) {
+  // ...
+  // A few different possibilities here:
+  extend FixedArray(Printable:$ P, Int:$ N2) { impl Printable { ... } }
+  extend FixedArray(Printable:$ P, N) { impl Printable { ... } }
+  extend[Printable:$ P] FixedArray(P, N) { impl Printable { ... } }
+}
+
+struct Pair(Type:$ T, Type:$ U) {
+  // ...
+  extend Pair(T, T) { impl Foo(T) { ... } }
+}
+```
+
 ## Templated impls for generic interfaces
 
 Some things going on here:
