@@ -358,6 +358,24 @@ def _impl(ctx):
         ],
     )
 
+    darwin_link_flags_feature = feature(
+        name = "darwin_link_flags",
+        enabled = True,
+        flag_sets = [
+            flag_set(
+                actions = all_link_actions,
+                flag_groups = ([
+                    flag_group(
+                        flags = [
+                            #"-fuse-ld=lld",
+                            "-lc++",
+                        ],
+                    ),
+                ]),
+            ),
+        ],
+    )
+
     default_link_flags_feature = feature(
         name = "default_link_flags",
         enabled = True,
@@ -713,7 +731,9 @@ def _impl(ctx):
             feature(name = "supports_dynamic_linker", enabled = True),
         ]
     elif (ctx.attr.target_cpu == "darwin"):
-        features = common_features
+        features = common_features + [
+            darwin_link_flags_feature,
+        ]
     else:
         fail("Unsupported target platform!")
 
@@ -722,6 +742,7 @@ def _impl(ctx):
         features = features,
         action_configs = action_configs,
         cxx_builtin_include_directories = clang_include_dirs_list + [
+            "/Library/Developer/CommandLineTools/SDKs/MacOSX10.15.sdk/usr/include",
             # Append the share directory for sanitizer data files.
             clang_resource_dir + "/share",
         ],
