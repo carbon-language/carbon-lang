@@ -452,7 +452,6 @@ def _configure_clang_toolchain_impl(repository_ctx):
 configure_clang_toolchain = repository_rule(
     implementation = _configure_clang_toolchain_impl,
     configure = True,
-    local = True,
     attrs = {
         "_clang_toolchain_build": attr.label(
             default = Label("//bazel/cc_toolchains:clang_toolchain.BUILD"),

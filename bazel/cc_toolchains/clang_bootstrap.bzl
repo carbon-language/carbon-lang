@@ -224,7 +224,6 @@ def _bootstrap_clang_toolchain_impl(repository_ctx):
 bootstrap_clang_toolchain = repository_rule(
     implementation = _bootstrap_clang_toolchain_impl,
     configure = True,
-    local = True,
     attrs = {
         # We use a label pointing at the workspace file to compute the
         # workspace directory.
