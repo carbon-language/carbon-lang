@@ -36,7 +36,7 @@ load("//bazel/cc_toolchains:clang_detection.bzl", "configure_clang_toolchain")
 
 configure_clang_toolchain(
     name = "bazel_cc_toolchain",
-    clang = "@bootstrap_clang_toolchain//bin/clang",
+    clang = "@bootstrap_clang_toolchain//:bin/clang",
 )
 
 local_repository(

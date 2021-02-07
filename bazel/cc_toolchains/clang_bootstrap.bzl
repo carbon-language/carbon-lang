@@ -217,7 +217,9 @@ def _bootstrap_clang_toolchain_impl(repository_ctx):
     if not clang.exists:
         fail("`%s` still not found after building the LLVM toolchain" % clang)
 
-    return clang
+    # Create an empty BUILD file to mark the package, the files are used without
+    # Bazel labels directly pointing at them.
+    repository_ctx.file("BUILD", content="")
 
 bootstrap_clang_toolchain = repository_rule(
     implementation = _bootstrap_clang_toolchain_impl,
