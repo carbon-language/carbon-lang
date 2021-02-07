@@ -26,10 +26,18 @@ load("@rules_foreign_cc//:workspace_definitions.bzl", "rules_foreign_cc_dependen
 
 rules_foreign_cc_dependencies()
 
-# Detect and configure a Clang and LLVM based toolchain.
-load("//bazel/cc_toolchains:clang_detection.bzl", "detect_clang_toolchain")
+# Bootstrap a Clang toolchain.
+load("//bazel/cc_toolchains:clang_bootstrap.bzl", "bootstrap_clang_toolchain")
 
-detect_clang_toolchain(name = "bazel_cc_toolchain")
+bootstrap_clang_toolchain(name = "bootstrap_clang_toolchain")
+
+# Detect and configure a Clang and LLVM based toolchain.
+load("//bazel/cc_toolchains:clang_detection.bzl", "configure_clang_toolchain")
+
+configure_clang_toolchain(
+    name = "bazel_cc_toolchain",
+    clang = "@bootstrap_clang_toolchain//bin/clang",
+)
 
 local_repository(
     name = "llvm_bazel",

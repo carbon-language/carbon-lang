@@ -72,7 +72,7 @@ def _impl(ctx):
         tool_path(name = "ar", path = llvm_bindir + "/llvm-ar"),
         tool_path(name = "ld", path = llvm_bindir + "/ld.lld"),
         tool_path(name = "cpp", path = llvm_bindir + "/clang-cpp"),
-        tool_path(name = "gcc", path = llvm_bindir + "/clang"),
+        tool_path(name = "gcc", path = llvm_bindir + "/clang++"),
         tool_path(name = "dwp", path = llvm_bindir + "/llvm-dwp"),
         tool_path(name = "gcov", path = llvm_bindir + "/llvm-cov"),
         tool_path(name = "nm", path = llvm_bindir + "/llvm-nm"),
