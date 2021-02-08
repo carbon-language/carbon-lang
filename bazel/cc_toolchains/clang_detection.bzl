@@ -466,7 +466,7 @@ def _configure_clang_toolchain_impl(repository_ctx):
             "{LLVM_BINDIR}": str(clang.dirname),
             "{CLANG_RESOURCE_DIR}": resource_dir,
             "{CLANG_INCLUDE_DIRS_LIST}": str([str(path) for path in include_dirs]),
-            "{SYSROOT}": sysroot_dir,
+            "{SYSROOT}": str(sysroot_dir),
         },
         executable = False,
     )
