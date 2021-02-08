@@ -213,8 +213,7 @@ follow the Carbon documentation and coding styles.
     -   The appropriate [style](#style) is applied.
     -   The [license](#license) is present in all contributions.
     -   [Code review](/docs/project/code_review.md) is used to improve the
-        correctness, clarity, and consistency of all contributions, including
-        both code and documentation.
+        correctness, clarity, and consistency of all contributions.
         -   Please avoid rebasing PRs after receiving comments; it can break
             viewing of the comments in files.
 
