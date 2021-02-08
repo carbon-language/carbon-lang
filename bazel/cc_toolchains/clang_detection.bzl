@@ -9,54 +9,13 @@ configured values into a `clang_detected_variables.bzl` file that can be used
 by the actual toolchain configuration.
 """
 
-# Tools that we verify are present as part of the detected Clang & LLVM toolchain.
-_CLANG_LLVM_TOOLS = [
-    "llvm-ar",
-    "ld.lld",
-    "clang-cpp",
-    "clang",
-    "clang++",
-    "llvm-dwp",
-    "llvm-cov",
-    "llvm-nm",
-    "llvm-objcopy",
-    "llvm-strip",
-]
-
-def _run(
-        repository_ctx,
-        cmd,
-        timeout = 10,
-        environment = {},
-        quiet = True,
-        working_directory = ""):
+def _run(repository_ctx, cmd):
     """Runs the provided `cmd`, checks for failure, and returns the result."""
-    exec_result = repository_ctx.execute(
-        cmd,
-        timeout = timeout,
-        environment = environment,
-        quiet = quiet,
-        # Need to convert path objects to a string.
-        working_directory = str(working_directory),
-    )
+    exec_result = repository_ctx.execute(cmd)
     if exec_result.return_code != 0:
         fail("Unable to run command successfully: %s" % str(cmd))
 
     return exec_result
-
-def _validate_clang(repository_ctx, clang):
-    """Validates that the discovered clang is correctly set up."""
-    version_output = _run(repository_ctx, [clang, "--version"]).stdout
-    if "clang" not in version_output:
-        fail(("Selected Clang executable (`%s`) does not appear to actually " +
-              "be Clang.") % clang)
-
-    # Make sure this is part of a complete Clang and LLVM toolchain.
-    for tool in _CLANG_LLVM_TOOLS:
-        if not clang.dirname.get_child(tool).exists:
-            fail(("Couldn't find executable `%s` that is expected to be part " +
-                  "of the Clang and LLVM toolchain detected with `%s`.") %
-                 (tool, clang))
 
 def _compute_clang_resource_dir(repository_ctx, clang):
     """Runs the `clang` binary to get its resource dir."""
@@ -81,7 +40,6 @@ def _compute_clang_cpp_include_search_paths(repository_ctx, clang, sysroot):
 
     Returns the resulting paths as a list of strings.
     """
-
     # The only way to get this out of Clang currently is to parse the verbose
     # output of the compiler when it is compiling C++ code.
     cmd = [
@@ -97,13 +55,15 @@ def _compute_clang_cpp_include_search_paths(repository_ctx, clang, sysroot):
         "c++",
         # Read in an empty input file.
         "/dev/null",
+        # Always use libc++.
+        "-stdlib=libc++",
     ]
+
+    # We need to use a sysroot to correctly represent a run on macOS.
     if repository_ctx.os.name.lower().startswith("mac os"):
         if not sysroot:
             fail("Must provide a sysroot on macOS!")
         cmd.append("--sysroot=" + sysroot)
-    else:
-        cmd.append("-stdlib=libc++")
 
     # Note that verbose output is on stderr, not stdout!
     output = _run(repository_ctx, cmd).stderr.splitlines()
@@ -180,5 +140,4 @@ configure_clang_toolchain = repository_rule(
             mandatory = True,
         ),
     },
-    environ = ["CC"],
 )

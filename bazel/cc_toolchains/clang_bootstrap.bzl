@@ -9,35 +9,18 @@ configured values into a `clang_detected_variables.bzl` file that can be used
 by the actual toolchain configuration.
 """
 
-# Tools that we verify are present as part of the detected Clang & LLVM toolchain.
-_CLANG_LLVM_TOOLS = [
-    "llvm-ar",
-    "ld.lld",
-    "clang-cpp",
-    "clang",
-    "clang++",
-    "llvm-dwp",
-    "llvm-cov",
-    "llvm-nm",
-    "llvm-objcopy",
-    "llvm-strip",
-]
-
 def _run(
         repository_ctx,
         cmd,
         timeout = 10,
         environment = {},
-        quiet = True,
-        working_directory = ""):
+        quiet = True):
     """Runs the provided `cmd`, checks for failure, and returns the result."""
     exec_result = repository_ctx.execute(
         cmd,
         timeout = timeout,
         environment = environment,
         quiet = quiet,
-        # Need to convert path objects to a string.
-        working_directory = str(working_directory),
     )
     if exec_result.return_code != 0:
         fail("Unable to run command successfully: %s" % str(cmd))
@@ -237,5 +220,5 @@ bootstrap_clang_toolchain = repository_rule(
             allow_single_file = True,
         ),
     },
-    environ = ["CC"],
+    environ = ["CC", "CXX"],
 )
