@@ -1117,7 +1117,7 @@ This has the desirable property that the syntax for internal vs. external
 conditional conformance matches. This makes it straightforward to refactor
 between those two choices, and is easier to learn.
 
-The other ideas we have considered lack this consistency:
+Some other ideas we have considered lack this consistency:
 
 -   One approach would be to use implicit arguments in square brackets after the
     `impl` keyword, and an `if` clause to add constraints:
