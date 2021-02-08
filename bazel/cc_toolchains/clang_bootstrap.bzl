@@ -56,11 +56,12 @@ def _bootstrap_clang_toolchain_impl(repository_ctx):
     is_clang = False
     environment = {}
     cc = repository_ctx.os.environ.get("CC")
-    if not cc:
+    cxx = repository_ctx.os.environ.get("CXX")
+    if not cc and not cxx:
         system_clang = repository_ctx.which("clang")
         if system_clang:
             is_clang = True
-            environment.update(CC = str(system_clang))
+            environment.update(CC = str(system_clang), CXX = str(system_clang) + "++")
     else:
         version_output = _run(repository_ctx, [cc, "--version"]).stdout
         if "clang" not in version_output:
