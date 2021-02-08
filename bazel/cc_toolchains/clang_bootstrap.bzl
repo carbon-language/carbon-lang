@@ -63,6 +63,7 @@ def _get_cmake_defines(repository_ctx, is_clang):
         # unable to use it later on.
         static_link_cxx = "OFF"
         unstable_libcxx_abi = "OFF"
+
     return [
         "-DLLVM_ENABLE_PROJECTS=clang;clang-tools-extra;lld;libcxx;libcxxabi;compiler-rt;libunwind",
         "-DCMAKE_BUILD_TYPE=Release",
