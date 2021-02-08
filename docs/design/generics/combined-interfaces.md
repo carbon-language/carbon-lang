@@ -1091,103 +1091,94 @@ recursion are allowed.
 
 **Open question:** We could also have a syntax for defining these impls inline
 in the struct definition, but I haven't found a syntax that works as well as the
-`extend` statement constructs shown above. In particular, since we don't want
-the meaning of the names defined in the outer struct to change inside the
-conditional impl, we end up having to give new names to the same values. This
+`extend` statement constructs shown above. We have a choice between two evils:
+either the meaning of the names defined in the outer struct change inside the
+conditional impl, or we end up having to give new names to the same values. This
 was discussed in
 [Carbon meeting Nov 27, 2019 on Generics & Interfaces (TODO)](#broken-links-footnote)<!-- T:Carbon meeting Nov 27, 2019 on Generics & Interfaces --><!-- A:#heading=h.gebr4cdi0y8o -->.
 
-My best syntax suggestion would be to use implicit arguments in square brackets
-after the `impl` keyword, and an `if` clause to add constraints. The above two
-examples could be written:
-
-```
-interface Printable {
-  method (Ptr(Self): this) Print() -> String;
-}
-struct FixedArray(Type:$ T, Int:$ N) {
-  // ...
-  impl[Printable:$ U] Printable if T == U {
-    method (Ptr(Self): this) Print() -> String {
-      // Here `T` and `U` have the same value and so you can freely
-      // cast between them. The difference is that you can call the
-      // `Print` method on values of type `U`.
-    }
-  }
-}
-
-interface Foo(Type:$ T) { ... }
-struct Pair(Type:$ T, Type:$ U) {
-  // ...
-  impl Foo(T) if T == U {
-    // Can cast between `Pair(T, U)` and `Pair(T, T)` since `T == U`.
-  }
-}
-```
-
-Note that there are differences from the `extend` statement usage, making it a
-bit awkward to refactor an `impl` between inline and external. The `extend`
-syntax is more natural, avoid having two names for the same type and casting
-between them.
-
-A possible syntax that uses pattern matching instead of boolean conditions might
-look like:
-
-```
-interface Printable {
-  method (Ptr(Self): this) Print() -> String;
-}
-struct FixedArray(Type:$ T, Int:$ N) {
-  // ...
-  @if let Printable:$ P = T {
-    impl Printable {
-      method (Ptr(Self): this) Print() -> String {
-        // Here `T` and `U` have the same value and so you can freely
-        // cast between them. The difference is that you can call the
-        // `Print` method on values of type `U`.
-      }
-    }
-  }
-}
-
-interface Foo(Type:$ T) { ... }
-struct Pair(Type:$ T, Type:$ U) {
-  // ...
-  @if let Pair(T, T):$ P = Self {
-    impl Foo(T) {
-      // ..
-    }
-  }
-}
-```
-
-Another alternative is to just include an `extend` statement inside the `struct`
-definition:
+The best idea I've had so far is to include an `extend` statement inside the
+`struct` definition to make it inline:
 
 ```
 struct FixedArray(Type:$ T, Int:$ N) {
-  // ...
-  // A few different possibilities here:
+  // A few different syntax possibilities here:
   extend FixedArray(Printable:$ P, Int:$ N2) { impl Printable { ... } }
   extend FixedArray(Printable:$ P, N) { impl Printable { ... } }
   extend[Printable:$ P] FixedArray(P, N) { impl Printable { ... } }
 }
 
 struct Pair(Type:$ T, Type:$ U) {
-  // ...
   extend Pair(T, T) { impl Foo(T) { ... } }
 }
 ```
 
 This has the desirable property that the syntax for internal vs. external
-matches. So it is straightforward to refactor between those two choices.
+conditional conformance matches. This makes it straightforward to refactor
+between those two choices, and is easier to learn.
 
-Other alternatives:
+The other ideas we have considered lack this consistency:
 
--   `extend` statements may have an `internal` keyword if its in the same
-    library.
--   "Flow sensitive": inside an `impl` block with boolean `if` condition, the
-    types change to reflect the condition being true.
+-   One approach would be to use implicit arguments in square brackets after the
+    `impl` keyword, and an `if` clause to add constraints:
+
+```
+struct FixedArray(Type:$ T, Int:$ N) {
+  impl[Printable:$ U] Printable if T == U {
+    // Here `T` and `U` have the same value and so you can freely
+    // cast between them. The difference is that you can call the
+    // `Print` method on values of type `U`.
+  }
+}
+
+struct Pair(Type:$ T, Type:$ U) {
+  impl Foo(T) if T == U {
+    // Can cast between `Pair(T, U)` and `Pair(T, T)` since `T == U`.
+  }
+}
+```
+
+-   Another approach is to use pattern matching instead of boolean conditions.
+    This might look like (though it introduces another level of indentation):
+
+```
+struct FixedArray(Type:$ T, Int:$ N) {
+  @if let Printable:$ P = T {
+    impl Printable { ... }
+  }
+}
+
+interface Foo(Type:$ T) { ... }
+struct Pair(Type:$ T, Type:$ U) {
+  @if let Pair(T, T):$ P = Self {
+    impl Foo(T) { ... }
+  }
+}
+```
+
+-   We could keep `extend` statements outside of the struct block to avoid
+    sharing names between scopes, but allow them to have an `internal` keyword
+    (as long as it is in the same library).
+
+```
+struct FixedArray(Type:$ T, Int:$ N) { ... }
+extend FixedArray(Printable:$ P, Int:$ N) internal { impl Printable { ... } }
+
+struct Pair(Type:$ T, Type:$ U) { ... }
+extend Pair(Type:$ T, T) internal { ... }
+```
+
+-   Or we could adopt a "flow sensitive" approach. That would mean that inside
+    an `impl` block with boolean `if` condition, the types change to reflect the
+    condition being true.
+
+```
+struct FixedArray(Type:$ T, Int:$ N) {
+  impl Printable if (T implements Printable) {
+    // Inside this scope, `T` has type `Printable` instead of `Type`.
+  }
+}
+```
 
 ## Templated impls for generic interfaces
 
