@@ -92,7 +92,7 @@ def _configure_clang_toolchain_impl(repository_ctx):
     clang = repository_ctx.path(repository_ctx.attr.clang)
     if clang.basename != "clang":
         fail("The provided Clang binary must be `clang`, but is `%s` (%s)" %
-             (clang.basename, clang))
+             (clang.basename, str(clang)))
 
     # Adjust this to the "clang++" binary to ensure we get the correct behavior
     # when configuring it.
