@@ -450,13 +450,13 @@ def _configure_clang_toolchain_impl(repository_ctx):
     clang = repository_ctx.path(str(clang) + "++")
     _validate_clang(repository_ctx, clang)
     resource_dir = _compute_clang_resource_dir(repository_ctx, clang)
-    sysroot = None
+    sysroot_dir = None
     if repository_ctx.os.name.lower().startswith("mac os"):
-        sysroot = _compute_mac_os_sysroot(repository_ctx)
+        sysroot_dir = _compute_mac_os_sysroot(repository_ctx)
     include_dirs = _compute_clang_cpp_include_search_paths(
         repository_ctx,
         clang,
-        sysroot,
+        sysroot_dir,
     )
 
     repository_ctx.template(
@@ -466,7 +466,7 @@ def _configure_clang_toolchain_impl(repository_ctx):
             "{LLVM_BINDIR}": str(clang.dirname),
             "{CLANG_RESOURCE_DIR}": resource_dir,
             "{CLANG_INCLUDE_DIRS_LIST}": str([str(path) for path in include_dirs]),
-            "{SYSROOT}": sysroot,
+            "{SYSROOT}": sysroot_dir,
         },
         executable = False,
     )

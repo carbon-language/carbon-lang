@@ -22,7 +22,7 @@ load(
     "clang_include_dirs_list",
     "clang_resource_dir",
     "llvm_bindir",
-    "sysroot",
+    "sysroot_dir",
 )
 
 all_compile_actions = [
@@ -271,7 +271,7 @@ def _impl(ctx):
                     flag_group(
                         flags = [
                             "-std=c++17",
-                            #"-stdlib=libc++",
+                            "-stdlib=libc++",
                         ],
                     ),
                 ]),
@@ -368,8 +368,7 @@ def _impl(ctx):
                 flag_groups = ([
                     flag_group(
                         flags = [
-                            #"-fuse-ld=lld",
-                            "-lc++",
+                            "-fuse-ld=lld.darwinnew",
                         ],
                     ),
                 ]),
@@ -731,23 +730,12 @@ def _impl(ctx):
             feature(name = "supports_start_end_lib", enabled = True),
             feature(name = "supports_dynamic_linker", enabled = True),
         ]
-        include_dirs = clang_include_dirs_list + [
-            # Add Clang's resource directory to the end of the builtin include
-            # directories to cover the use of sanitizer resource files by the driver.
-            clang_resource_dir + "/share",
-        ]
+        sysroot = None
     elif (ctx.attr.target_cpu == "darwin"):
         features = common_features + [
             darwin_link_flags_feature,
         ]
-        include_dirs = clang_include_dirs_list + [
-            # The macOS sysroot needs to be added to the include list.
-            sysroot + "/usr/include",
-
-            # Add Clang's resource directory to the end of the builtin include
-            # directories to cover the use of sanitizer resource files by the driver.
-            clang_resource_dir + "/share",
-        ]
+        sysroot = sysroot_dir
     else:
         fail("Unsupported target platform!")
 
@@ -755,7 +743,12 @@ def _impl(ctx):
         ctx = ctx,
         features = features,
         action_configs = action_configs,
-        cxx_builtin_include_directories = include_dirs,
+        cxx_builtin_include_directories = clang_include_dirs_list + [
+            # Add Clang's resource directory to the end of the builtin include
+            # directories to cover the use of sanitizer resource files by the driver.
+            clang_resource_dir + "/share",
+        ],
+        builtin_sysroot = sysroot,
 
         # This configuration only supports local non-cross builds so derive
         # everything from the target CPU selected.
