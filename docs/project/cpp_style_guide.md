@@ -115,7 +115,7 @@ these.
     -   Including `std::` gives clearer diagnostics and avoids any possible
         ambiguity, particularly for ADL.
     -   An exception is made for `std::swap`, which should be written as
-        `{ using std::swap; swap(thing1, thing2); }` for ADL.
+        `{ using std::swap; swap(thing1, thing2); }` (scoped) for ADL.
 -   Follow the rules for initialization outlined in
     [Abseil's tip #88](https://abseil.io/tips/88#best-practices-for-initialization).
     To summarize, omitting some details from the article:
