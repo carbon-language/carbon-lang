@@ -4,7 +4,7 @@
 
 """Starlark rules to bootstrap Clang (and LLVM) using the llvm-project submodule.
 
-These are run from `clang_configure.bzl`. (name TODO)
+These are run from `clang_configuration.bzl`.
 """
 
 def _run(
@@ -25,46 +25,36 @@ def _run(
 
     return exec_result
 
-def _bootstrap_clang_toolchain_impl(repository_ctx):
-    """Returns the path a bootstrapped Clang executable.
+def _detect_system_clang(repository_ctx):
+    """Detects whether a system-provided clang can be used.
 
-    This bootstraps Clang and the rest of the LLVM toolchain from the LLVM
-    submodule.
+    Returns a tuple of (is_clang, environment).
     """
 
-    repository_ctx.report_progress("Configuring Clang toolchain bootstrap...")
-    # If we can build our Clang toolchain using a system-installed Clang, try
-    # to do so. However, if the user provides an explicit `CC` environment
-    # variable, use that as the system C++ compiler.
-    is_clang = False
-    environment = {}
+    # If the user provides an explicit `CC` environment variable, use that as
+    # the compiler.
     cc = repository_ctx.os.environ.get("CC")
     cxx = repository_ctx.os.environ.get("CXX")
-    if not cc and not cxx:
-        system_clang = repository_ctx.which("clang")
-        if system_clang:
-            is_clang = True
-            environment.update(CC = str(system_clang), CXX = str(system_clang) + "++")
-    else:
+    if cc or cxx:
         version_output = _run(repository_ctx, [cc, "--version"]).stdout
-        if "clang" not in version_output:
-            is_clang = True
+        return "clang" in version_output, {}
 
-    cmake = repository_ctx.which("cmake")
-    if not cmake:
-        fail("`cmake` not found: is it installed?")
-    ninja = repository_ctx.which("ninja")
-    if not ninja:
-        fail("`ninja` not found: is it installed?")
+    # If we can build our Clang toolchain using a system-installed Clang, try
+    # to do so.
+    system_clang = repository_ctx.which("clang")
+    if system_clang:
+        return True, {
+            "CC": str(system_clang),
+            "CXX": str(system_clang) + "++",
+        }
+    return False, {}
 
-    workspace_dir = repository_ctx.path(repository_ctx.attr._workspace).dirname
-    llvm_dir = repository_ctx.path("%s/third_party/llvm-project/llvm" %
-                                   workspace_dir)
-                                   
+def _get_cmake_defines(repository_ctx, is_clang):
+    """Returns a long list of cmake defines for the bootstrap."""
     modules_setting = "OFF"
     if is_clang:
         modules_setting = "ON"
-        
+
     static_link_cxx = "ON"
     unstable_libcxx_abi = "ON"
     if repository_ctx.os.name.lower().startswith("mac os"):
@@ -73,12 +63,7 @@ def _bootstrap_clang_toolchain_impl(repository_ctx):
         # unable to use it later on.
         static_link_cxx = "OFF"
         unstable_libcxx_abi = "OFF"
-        
-    cmake_args = [
-        cmake,
-        "-G",
-        "Ninja",
-        str(llvm_dir),
+    return [
         "-DLLVM_ENABLE_PROJECTS=clang;clang-tools-extra;lld;libcxx;libcxxabi;compiler-rt;libunwind",
         "-DCMAKE_BUILD_TYPE=Release",
         "-DLLVM_ENABLE_ASSERTIONS=OFF",
@@ -183,7 +168,32 @@ def _bootstrap_clang_toolchain_impl(repository_ctx):
         "-DLLVM_TOOL_VERIFY_USELISTORDER_BUILD=OFF",
         "-DLLVM_TOOL_YAML2OBJ_BUILD=OFF",
     ]
-    repository_ctx.report_progress("Running CMake for the Clang toolchain build...")
+
+def _bootstrap_clang_toolchain_impl(repository_ctx):
+    """Returns the path a bootstrapped Clang executable.
+
+    This bootstraps Clang and the rest of the LLVM toolchain from the LLVM
+    submodule.
+    """
+    repository_ctx.report_progress("Configuring Clang toolchain bootstrap...")
+    is_clang, environment = _detect_system_clang(repository_ctx)
+
+    cmake = repository_ctx.which("cmake")
+    if not cmake:
+        fail("`cmake` not found: is it installed?")
+    ninja = repository_ctx.which("ninja")
+    if not ninja:
+        fail("`ninja` not found: is it installed?")
+
+    workspace_dir = repository_ctx.path(repository_ctx.attr._workspace).dirname
+    llvm_dir = repository_ctx.path("%s/third_party/llvm-project/llvm" %
+                                   workspace_dir)
+
+    repository_ctx.report_progress(
+        "Running CMake for the Clang toolchain build...",
+    )
+    cmake_args = [cmake, "-G", "Ninja", str(llvm_dir)]
+    cmake_args += _get_cmake_defines(repository_ctx, is_clang)
     _run(
         repository_ctx,
         cmake_args,
@@ -194,7 +204,7 @@ def _bootstrap_clang_toolchain_impl(repository_ctx):
     )
 
     # Run ninja for the final build.
-    repository_ctx.report_progress("Building the LLVM toolchain...")
+    repository_ctx.report_progress("Building the Clang toolchain...")
     _run(
         repository_ctx,
         [ninja],

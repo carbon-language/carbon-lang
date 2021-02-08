@@ -26,7 +26,7 @@ load("@rules_foreign_cc//:workspace_definitions.bzl", "rules_foreign_cc_dependen
 
 rules_foreign_cc_dependencies()
 
-# Bootstrap a Clang toolchain.
+# Bootstrap a Clang and LLVM toolchain.
 load("//bazel/cc_toolchains:clang_bootstrap.bzl", "bootstrap_clang_toolchain")
 
 bootstrap_clang_toolchain(name = "bootstrap_clang_toolchain")

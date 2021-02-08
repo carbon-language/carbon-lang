@@ -91,7 +91,8 @@ def _configure_clang_toolchain_impl(repository_ctx):
     # Run the bootstrapped clang to detect relevant features for the toolchain.
     clang = repository_ctx.path(repository_ctx.attr.clang)
     if clang.basename != "clang":
-        fail("The provided Clang binary is not spelled `clang`, but: %s" % clang.basename)
+        fail("The provided Clang binary must be `clang`, but is `%s` (%s)" %
+             (clang.basename, clang))
 
     # Adjust this to the "clang++" binary to ensure we get the correct behavior
     # when configuring it.
@@ -112,7 +113,9 @@ def _configure_clang_toolchain_impl(repository_ctx):
         substitutions = {
             "{LLVM_BINDIR}": str(clang.dirname),
             "{CLANG_RESOURCE_DIR}": resource_dir,
-            "{CLANG_INCLUDE_DIRS_LIST}": str([str(path) for path in include_dirs]),
+            "{CLANG_INCLUDE_DIRS_LIST}": str(
+                [str(path) for path in include_dirs],
+            ),
             "{SYSROOT}": str(sysroot_dir),
         },
         executable = False,
@@ -127,11 +130,15 @@ configure_clang_toolchain = repository_rule(
             allow_single_file = True,
         ),
         "_clang_cc_toolchain_config": attr.label(
-            default = Label("//bazel/cc_toolchains:clang_cc_toolchain_config.bzl"),
+            default = Label(
+                "//bazel/cc_toolchains:clang_cc_toolchain_config.bzl",
+            ),
             allow_single_file = True,
         ),
         "_clang_detected_variables_template": attr.label(
-            default = Label("//bazel/cc_toolchains:clang_detected_variables.tpl.bzl"),
+            default = Label(
+                "//bazel/cc_toolchains:clang_detected_variables.tpl.bzl",
+            ),
             allow_single_file = True,
         ),
         # This must point at the `clang` binary inside a full LLVM toolchain
