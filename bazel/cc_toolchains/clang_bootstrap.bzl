@@ -33,6 +33,7 @@ def _bootstrap_clang_toolchain_impl(repository_ctx):
     This bootstraps Clang and the rest of the LLVM toolchain from the LLVM
     submodule.
     """
+
     # If we can build our Clang toolchain using a system-installed Clang, try
     # to do so. However, if the user provides an explicit `CC` environment
     # variable, just use that as the system C++ compiler.
@@ -190,9 +191,8 @@ def _bootstrap_clang_toolchain_impl(repository_ctx):
         quiet = False,
     )
 
-    repository_ctx.report_progress("Building the LLVM toolchain...")
-
     # Run ninja for the final build.
+    repository_ctx.report_progress("Building the LLVM toolchain...")
     _run(
         repository_ctx,
         [ninja],
@@ -201,13 +201,9 @@ def _bootstrap_clang_toolchain_impl(repository_ctx):
         quiet = False,
     )
 
-    clang = repository_ctx.path("bin/clang")
-    if not clang.exists:
-        fail("`%s` still not found after building the LLVM toolchain" % clang)
-
     # Create an empty BUILD file to mark the package, the files are used without
     # Bazel labels directly pointing at them.
-    repository_ctx.file("BUILD", content="")
+    repository_ctx.file("BUILD", content = "")
 
 bootstrap_clang_toolchain = repository_rule(
     implementation = _bootstrap_clang_toolchain_impl,

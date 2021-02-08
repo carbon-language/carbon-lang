@@ -40,6 +40,7 @@ def _compute_clang_cpp_include_search_paths(repository_ctx, clang, sysroot):
 
     Returns the resulting paths as a list of strings.
     """
+
     # The only way to get this out of Clang currently is to parse the verbose
     # output of the compiler when it is compiling C++ code.
     cmd = [
@@ -91,6 +92,7 @@ def _configure_clang_toolchain_impl(repository_ctx):
     clang = repository_ctx.path(repository_ctx.attr.clang)
     if clang.basename != "clang":
         fail("The provided Clang binary is not spelled `clang`, but: %s" % clang.basename)
+
     # Adjust this to the "clang++" binary to ensure we get the correct behavior
     # when configuring it.
     clang = repository_ctx.path(str(clang) + "++")
