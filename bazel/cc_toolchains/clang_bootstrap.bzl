@@ -2,11 +2,9 @@
 # Exceptions. See /LICENSE for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-"""Starlark repository rules to detect and configure Clang (and LLVM) toolchain.
+"""Starlark rules to bootstrap Clang (and LLVM) using the llvm-project submodule.
 
-These rules should be run from the `WORKSPACE` file to substitute appropriate
-configured values into a `clang_detected_variables.bzl` file that can be used
-by the actual toolchain configuration.
+These are run from `clang_configure.bzl`. (name TODO)
 """
 
 def _run(
@@ -34,9 +32,10 @@ def _bootstrap_clang_toolchain_impl(repository_ctx):
     submodule.
     """
 
+    repository_ctx.report_progress("Configuring Clang toolchain bootstrap...")
     # If we can build our Clang toolchain using a system-installed Clang, try
     # to do so. However, if the user provides an explicit `CC` environment
-    # variable, just use that as the system C++ compiler.
+    # variable, use that as the system C++ compiler.
     is_clang = False
     environment = {}
     cc = repository_ctx.os.environ.get("CC")
@@ -61,9 +60,11 @@ def _bootstrap_clang_toolchain_impl(repository_ctx):
     workspace_dir = repository_ctx.path(repository_ctx.attr._workspace).dirname
     llvm_dir = repository_ctx.path("%s/third_party/llvm-project/llvm" %
                                    workspace_dir)
+                                   
     modules_setting = "OFF"
     if is_clang:
         modules_setting = "ON"
+        
     static_link_cxx = "ON"
     unstable_libcxx_abi = "ON"
     if repository_ctx.os.name.lower().startswith("mac os"):
@@ -72,6 +73,7 @@ def _bootstrap_clang_toolchain_impl(repository_ctx):
         # unable to use it later on.
         static_link_cxx = "OFF"
         unstable_libcxx_abi = "OFF"
+        
     cmake_args = [
         cmake,
         "-G",
@@ -181,7 +183,7 @@ def _bootstrap_clang_toolchain_impl(repository_ctx):
         "-DLLVM_TOOL_VERIFY_USELISTORDER_BUILD=OFF",
         "-DLLVM_TOOL_YAML2OBJ_BUILD=OFF",
     ]
-    repository_ctx.report_progress("Running CMake for the LLVM toolchain build...")
+    repository_ctx.report_progress("Running CMake for the Clang toolchain build...")
     _run(
         repository_ctx,
         cmake_args,
@@ -196,12 +198,12 @@ def _bootstrap_clang_toolchain_impl(repository_ctx):
     _run(
         repository_ctx,
         [ninja],
-        timeout = 3600,
+        timeout = 10800,
         # This is very slow, so print output as a form of progress.
         quiet = False,
     )
 
-    # Create an empty BUILD file to mark the package, the files are used without
+    # Create an empty BUILD file to mark the package. The files are used without
     # Bazel labels directly pointing at them.
     repository_ctx.file("BUILD", content = "")
 
