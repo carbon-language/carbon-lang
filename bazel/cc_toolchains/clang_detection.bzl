@@ -27,14 +27,12 @@ def _run(
         repository_ctx,
         cmd,
         timeout = 10,
-        environment = {},
         quiet = True,
         working_directory = ""):
     """Runs the provided `cmd`, checks for failure, and returns the result."""
     exec_result = repository_ctx.execute(
         cmd,
         timeout = timeout,
-        environment = environment,
         quiet = quiet,
         # Need to convert path objects to a string.
         working_directory = str(working_directory),
@@ -50,15 +48,6 @@ def _detect_or_build_clang(repository_ctx):
     This looks for third_party/llvm-project/build/bin/clang. If that doesn't
     exist, it will be build it.
     """
-
-    # If we can build our Clang toolchain using a system-installed Clang, try
-    # to do so. However, if the user provides an explicit `CC` environment
-    # variable, just use that as the system C++ compiler.
-    environment = {}
-    if not repository_ctx.os.environ.get("CC"):
-        system_clang = repository_ctx.which("clang")
-        if system_clang:
-            environment.update(CC = str(system_clang))
 
     cmake = repository_ctx.which("cmake")
     if not cmake:
@@ -183,7 +172,6 @@ def _detect_or_build_clang(repository_ctx):
         repository_ctx,
         cmake_args,
         timeout = 600,
-        environment = environment,
         # This is very slow, so print output as a form of progress.
         quiet = False,
     )
