@@ -1156,6 +1156,9 @@ struct Pair(Type:$ T, Type:$ U) {
 }
 ```
 
+We can have this consistency, but lose the property that all unqualified names
+for a type come from its `struct definition:
+
 -   We could keep `extend` statements outside of the struct block to avoid
     sharing names between scopes, but allow them to have an `internal` keyword
     (as long as it is in the same library).
@@ -1168,9 +1171,9 @@ struct Pair(Type:$ T, Type:$ U) { ... }
 extend Pair(Type:$ T, T) internal { ... }
 ```
 
--   Or we could adopt a "flow sensitive" approach. That would mean that inside
-    an `impl` block with boolean `if` condition, the types change to reflect the
-    condition being true.
+Lastly, we could adopt a "flow sensitive" approach, where the meaning of names
+can change in an inner scope. This would allow the `if` conditions that govern
+when an impl is used to affect the types in that impl's definition:
 
 ```
 struct FixedArray(Type:$ T, Int:$ N) {
@@ -1179,6 +1182,9 @@ struct FixedArray(Type:$ T, Int:$ N) {
   }
 }
 ```
+
+This would require mechanisms to both describe these conditions and determine
+how they affect types.
 
 ## Templated impls for generic interfaces
 
