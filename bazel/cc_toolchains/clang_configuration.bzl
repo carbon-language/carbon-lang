@@ -2,7 +2,7 @@
 # Exceptions. See /LICENSE for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-"""Starlark repository rules to detect and configure Clang (and LLVM) toolchain.
+"""Starlark repository rules to configure Clang (and LLVM) toolchain for Bazel.
 
 These rules should be run from the `WORKSPACE` file to substitute appropriate
 configured values into a `clang_detected_variables.bzl` file that can be used
@@ -94,7 +94,6 @@ def _configure_clang_toolchain_impl(repository_ctx):
     # Adjust this to the "clang++" binary to ensure we get the correct behavior
     # when configuring it.
     clang = repository_ctx.path(str(clang) + "++")
-    _validate_clang(repository_ctx, clang)
     resource_dir = _compute_clang_resource_dir(repository_ctx, clang)
     sysroot_dir = None
     if repository_ctx.os.name.lower().startswith("mac os"):
