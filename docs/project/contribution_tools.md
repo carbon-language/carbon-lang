@@ -24,6 +24,7 @@ contributions.
 -   [Main tools](#main-tools)
     -   [Bazel and Bazelisk](#bazel-and-bazelisk)
     -   [buildifier](#buildifier)
+    -   [Clang and LLVM](#clang-and-llvm)
     -   [Ninja](#ninja)
     -   [pre-commit](#pre-commit)
 -   [Optional tools](#optional-tools)
@@ -169,6 +170,13 @@ Our recommended way of installing is:
     ```bash
     brew install buildifier
     ```
+
+### Clang and LLVM
+
+[Clang](https://clang.llvm.org/) and [LLVM](https://llvm.org/) are used to
+compile and link Carbon, and are provided through git submodules. These will be
+built as part of standard `bazel` execution; `bazel sync --configure` will force
+a rebuild.
 
 ### Ninja
 
