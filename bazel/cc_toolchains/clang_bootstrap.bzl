@@ -80,9 +80,13 @@ def _bootstrap_clang_toolchain_impl(repository_ctx):
     if is_clang:
         modules_setting = "ON"
     static_link_cxx = "ON"
+    unstable_libcxx_abi = "ON"
     if repository_ctx.os.name.lower().startswith("mac os"):
-        # macOS doesn't support the static C++ standard library linking.
+        # macOS doesn't support the static C++ standard library linking. Turn
+        # it off here, and disable the unstable libc++ ABI as we will also be
+        # unable to use it later on.
         static_link_cxx = "OFF"
+        unstable_libcxx_abi = "OFF"
     cmake_args = [
         cmake,
         "-G",
@@ -94,7 +98,7 @@ def _bootstrap_clang_toolchain_impl(repository_ctx):
         "-DLLVM_ENABLE_MODULES=" + modules_setting,
         "-DLLVM_STATIC_LINK_CXX_STDLIB=" + static_link_cxx,
         "-DLLVM_TARGETS_TO_BUILD=AArch64;X86",
-        "-DLIBCXX_ABI_UNSTABLE=ON",
+        "-DLIBCXX_ABI_UNSTABLE=" + unstable_libcxx_abi,
         "-DLIBCXX_ENABLE_ASSERTIONS=OFF",
         "-DLIBCXXABI_ENABLE_ASSERTIONS=OFF",
 

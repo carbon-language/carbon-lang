@@ -22,6 +22,7 @@ load(
     "clang_include_dirs_list",
     "clang_resource_dir",
     "llvm_bindir",
+    "sysroot",
 )
 
 all_compile_actions = [
@@ -270,7 +271,7 @@ def _impl(ctx):
                     flag_group(
                         flags = [
                             "-std=c++17",
-                            "-stdlib=libc++",
+                            #"-stdlib=libc++",
                         ],
                     ),
                 ]),
@@ -720,19 +721,32 @@ def _impl(ctx):
         use_module_maps,
     ]
 
-    # Select the features based on the target platform. Currently, this is
-    # configured with the "cpu" attribute for legacy reasons. Further, for
-    # legacy reasons the default is a Linux OS target and the x88-64 CPU name
-    # is "k8".
+    # Select the features and builtin include directories based on the target
+    # platform. Currently, this is configured with the "cpu" attribute for
+    # legacy reasons. Further, for legacy reasons the default is a Linux OS
+    # target and the x88-64 CPU name is "k8".
     if (ctx.attr.target_cpu == "k8"):
         features = common_features + [
             linux_link_flags_feature,
             feature(name = "supports_start_end_lib", enabled = True),
             feature(name = "supports_dynamic_linker", enabled = True),
         ]
+        include_dirs = clang_include_dirs_list + [
+            # Add Clang's resource directory to the end of the builtin include
+            # directories to cover the use of sanitizer resource files by the driver.
+            clang_resource_dir + "/share",
+        ]
     elif (ctx.attr.target_cpu == "darwin"):
         features = common_features + [
             darwin_link_flags_feature,
+        ]
+        include_dirs = clang_include_dirs_list + [
+            # The macOS sysroot needs to be added to the include list.
+            sysroot + "/usr/include",
+
+            # Add Clang's resource directory to the end of the builtin include
+            # directories to cover the use of sanitizer resource files by the driver.
+            clang_resource_dir + "/share",
         ]
     else:
         fail("Unsupported target platform!")
@@ -741,11 +755,7 @@ def _impl(ctx):
         ctx = ctx,
         features = features,
         action_configs = action_configs,
-        cxx_builtin_include_directories = clang_include_dirs_list + [
-            "/Library/Developer/CommandLineTools/SDKs/MacOSX10.15.sdk/usr/include",
-            # Append the share directory for sanitizer data files.
-            clang_resource_dir + "/share",
-        ],
+        cxx_builtin_include_directories = include_dirs,
 
         # This configuration only supports local non-cross builds so derive
         # everything from the target CPU selected.

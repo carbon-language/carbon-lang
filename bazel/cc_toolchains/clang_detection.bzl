@@ -382,7 +382,15 @@ def _compute_clang_resource_dir(repository_ctx, clang):
     # The only line printed is this path.
     return output.splitlines()[0]
 
-def _compute_clang_cpp_include_search_paths(repository_ctx, clang):
+def _compute_mac_os_sysroot(repository_ctx):
+    """Runs `xcrun` to extract the correct sysroot."""
+    xcrun = repository_ctx.which("xcrun")
+    if not xcrun:
+        fail("`xcrun` not found: is Xcode installed?")
+    output = _run(repository_ctx, [xcrun, "--show-sdk-path"]).stdout
+    return output.splitlines()[0]
+
+def _compute_clang_cpp_include_search_paths(repository_ctx, clang, sysroot):
     """Runs the `clang` binary and extracts the include search paths.
 
     Returns the resulting paths as a list of strings.
@@ -398,14 +406,18 @@ def _compute_clang_cpp_include_search_paths(repository_ctx, clang):
         "-v",
         # Just parse the input, don't generate outputs.
         "-fsyntax-only",
-        # Use libc++ rather than any other standard library.
-        "-stdlib=libc++",
         # Force the language to be C++.
         "-x",
         "c++",
         # Read in an empty input file.
         "/dev/null",
     ]
+    if repository_ctx.os.name.lower().startswith("mac os"):
+        if not sysroot:
+            fail("Must provide a sysroot on macOS!")
+        cmd.append("--sysroot=" + sysroot)
+    else:
+        cmd.append("-stdlib=libc++")
 
     # Note that verbose output is on stderr, not stdout!
     output = _run(repository_ctx, cmd).stderr.splitlines()
@@ -431,11 +443,20 @@ def _configure_clang_toolchain_impl(repository_ctx):
 
     # Run the bootstrapped clang to detect relevant features for the toolchain.
     clang = repository_ctx.path(repository_ctx.attr.clang)
+    if clang.basename != "clang":
+        fail("The provided Clang binary is not spelled `clang`, but: %s" % clang.basename)
+    # Adjust this to the "clang++" binary to ensure we get the correct behavior
+    # when configuring it.
+    clang = repository_ctx.path(str(clang) + "++")
     _validate_clang(repository_ctx, clang)
     resource_dir = _compute_clang_resource_dir(repository_ctx, clang)
+    sysroot = None
+    if repository_ctx.os.name.lower().startswith("mac os"):
+        sysroot = _compute_mac_os_sysroot(repository_ctx)
     include_dirs = _compute_clang_cpp_include_search_paths(
         repository_ctx,
         clang,
+        sysroot,
     )
 
     repository_ctx.template(
@@ -445,6 +466,7 @@ def _configure_clang_toolchain_impl(repository_ctx):
             "{LLVM_BINDIR}": str(clang.dirname),
             "{CLANG_RESOURCE_DIR}": resource_dir,
             "{CLANG_INCLUDE_DIRS_LIST}": str([str(path) for path in include_dirs]),
+            "{SYSROOT}": sysroot,
         },
         executable = False,
     )
@@ -465,14 +487,8 @@ configure_clang_toolchain = repository_rule(
             default = Label("//bazel/cc_toolchains:clang_detected_variables.tpl.bzl"),
             allow_single_file = True,
         ),
-        # This rule builds LLVM out of its submodule. We artificially depend on
-        # the HEAD file for the submodule to trigger an automatic rebuild when
-        # the submodule changes.
-        "_llvm_project_git_submodule_head": attr.label(
-            default = Label("//:.git/modules/third_party%2fllvm-project/HEAD"),
-            allow_single_file = True,
-        ),
-
+        # This must point at the `clang` binary inside a full LLVM toolchain
+        # installation.
         "clang": attr.label(
             allow_single_file = True,
             mandatory = True,
