@@ -359,23 +359,6 @@ def _impl(ctx):
         ],
     )
 
-    darwin_link_flags_feature = feature(
-        name = "darwin_link_flags",
-        enabled = True,
-        flag_sets = [
-            flag_set(
-                actions = all_link_actions,
-                flag_groups = ([
-                    flag_group(
-                        flags = [
-                            "-fuse-ld=lld.darwinnew",
-                        ],
-                    ),
-                ]),
-            ),
-        ],
-    )
-
     default_link_flags_feature = feature(
         name = "default_link_flags",
         enabled = True,
@@ -732,9 +715,7 @@ def _impl(ctx):
         ]
         sysroot = None
     elif (ctx.attr.target_cpu == "darwin"):
-        features = common_features + [
-            darwin_link_flags_feature,
-        ]
+        features = common_features
         sysroot = sysroot_dir
     else:
         fail("Unsupported target platform!")
