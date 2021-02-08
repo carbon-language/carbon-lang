@@ -1113,9 +1113,10 @@ struct Pair(Type:$ T, Type:$ U) {
 }
 ```
 
-This has the desirable property that the syntax for internal vs. external
-conditional conformance matches. This makes it straightforward to refactor
-between those two choices, and is easier to learn.
+We would need rules to prevent inconsistent reuse of the names from the outer
+scope. This proposal has the desirable property that the syntax for internal vs.
+external conditional conformance matches. This makes it straightforward to
+refactor between those two choices, and is easier to learn.
 
 Some other ideas we have considered lack this consistency:
 
