@@ -66,9 +66,9 @@ Here are some possible decisions with their meanings:
     -   We aren't sure about the direction, but it isn't our priority right now,
         so bring it back later.
 
-When a proposal has open questions, the formal decision must include a decision
-for each open question. That may include filing GitHub issues to revisit the
-open questions later.
+When a proposal has questions for reviewers, the formal decision must include a
+decision for each question. That may include filing GitHub issues to revisit the
+questions later.
 
 Each decision should have a rationale based on Carbon's
 [goals, priorities, and principles](goals.md). When the rationale requires
