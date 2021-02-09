@@ -13,15 +13,19 @@ contributions.
 
 ## Table of contents
 
+-   [Tool setup flow](#tool-setup-flow)
 -   [Package managers](#package-managers)
-    -   [brew](#brew)
-    -   [go get](#go-get)
-    -   [pip](#pip)
+    -   [Linux and MacOS](#linux-and-macos)
+        -   [Homebrew](#homebrew)
+        -   [Python using `pyenv`](#python-using-pyenv)
+    -   [Linux only](#linux-only)
+        -   [`go get`](#go-get)
+        -   [Cargo (optional)](#cargo-optional)
 -   [Main tools](#main-tools)
     -   [Bazel and Bazelisk](#bazel-and-bazelisk)
     -   [buildifier](#buildifier)
     -   [Clang and LLVM](#clang-and-llvm)
-    -   [pyenv and Python](#pyenv-and-python)
+    -   [Ninja](#ninja)
     -   [pre-commit](#pre-commit)
 -   [Optional tools](#optional-tools)
     -   [Carbon-maintained](#carbon-maintained)
@@ -30,6 +34,7 @@ contributions.
     -   [GitHub](#github)
         -   [gh CLI](#gh-cli)
         -   [GitHub Desktop](#github-desktop)
+    -   [`rs-git-fsmonitor` and Watchman](#rs-git-fsmonitor-and-watchman)
     -   [Vim](#vim)
         -   [vim-prettier](#vim-prettier)
     -   [Atom](#atom)
@@ -41,31 +46,93 @@ contributions.
 
 <!-- tocstop -->
 
+## Tool setup flow
+
+In order to set up a machine and git repository for developing on Carbon, a
+typical tool setup flow is:
+
+1.  Install [package managers](#package-managers).
+2.  Install [main tools](#main-tools) and any desired
+    [optional tools](#optional-tools).
+3.  Set up the [git](https://git-scm.com/) repository:
+    -   In GitHub, create a fork for development at
+        https://github.com/carbon-language/carbon-lang.
+    -   `gh repository clone USER/carbon-lang`, or otherwise clone the fork.
+    -   `cd carbon-lang` to go into the cloned fork's directory.
+    -   `git submodule update --init` to sync submodules if you'll be building
+        c++ code or working on the compiler.
+    -   `git config core.fsmonitor rs-git-fsmonitor` to set up
+        [rs-git-fsmonitor](#rs-git-fsmonitor-and-watchman) in the clone.
+    -   `pre-commit install` to set up [pre-commit](#pre-commit) in the clone.
+
 ## Package managers
 
 Instructions for installing tools can be helpful for installing tooling. These
 instructions will try to rely on a minimum of managers.
 
-### brew
+### Linux and MacOS
 
-[brew](https://brew.sh/) is a package manager, and can help install several
+#### Homebrew
+
+[Homebrew](https://brew.sh/) is a package manager, and can help install several
 tools that we recommend. See the [installation instructions](https://brew.sh/).
 
-### go get
+To get the latest version of `brew` packages, it will be necessary to
+periodically run `brew upgrade`.
+
+#### Python using `pyenv`
+
+We strongly recommend using [pyenv](https://github.com/pyenv/pyenv) to manage
+[Python](python.org) and Python's `pip` package manager. `pip` should typically
+be used for Python package installation rather than other package managers.
+
+These can be installed together through `brew`:
+
+```bash
+brew install pyenv
+pyenv install 3.8.5
+pyenv global 3.8.5
+
+# Add 'eval "$(pyenv init -)"' to your shell rc file, for example zshrc.
+echo 'eval "$(pyenv init -)"' >> ~/.zshrc
+# Load the shell rc file changes.
+exec $SHELL
+```
+
+To get the latest version of `pip` packages, it will be necessary to
+periodically run `pip list --outdated`, then `pip install -U <package>` to
+upgrade desired packages. Keep in mind when upgrading that version dependencies
+may mean packages _should_ be outdated, and not be upgraded.
+
+### Linux only
+
+Linux-specific package managers are typically used for packages which work
+through [brew](#brew) on MacOS, but not on Linux.
+
+Installation instructions assume Debian- or Ubuntu-based Linux distributions
+with [apt](<https://en.wikipedia.org/wiki/APT_(software)>) available.
+
+#### `go get`
 
 [go get](https://golang.org/pkg/cmd/go/internal/get/) is Go's package manager.
-It will mainly be used for Linux, where [brew](#brew) doesn't work as well.
 
-To install on Debian- or Ubuntu-based Linux distributions:
+Our recommended way of installing is:
 
 ```bash
 apt install golang
 ```
 
-### pip
+To get the latest version of `go` packages, it will be necessary to periodically
+re-run the original `go get ...` command used to install the package.
 
-`pip` is Python's package manager, and installed as part of
-[pyenv and Python](#pyenv-and-python).
+#### Cargo (optional)
+
+Rust's [Cargo](https://doc.rust-lang.org/cargo/) package manager is used to
+install a couple tools on Linux. See the
+[installation instructions](https://rustup.rs/).
+
+To get the latest version of `cargo` packages, it will be necessary to
+periodically re-run the original `cargo install ...` command used.
 
 ## Main tools
 
@@ -80,18 +147,9 @@ recommended for installing Bazel.
 
 Our recommended way of installing is:
 
--   Linux:
-
-    ```bash
-    go get github.com/bazelbuild/bazelisk
-    ```
-
--   MacOS:
-
-    ```bash
-    brew update
-    brew install bazelisk
-    ```
+```bash
+brew install bazelisk
+```
 
 ### buildifier
 
@@ -110,55 +168,27 @@ Our recommended way of installing is:
 -   MacOS:
 
     ```bash
-    brew update
     brew install buildifier
     ```
 
 ### Clang and LLVM
 
 [Clang](https://clang.llvm.org/) and [LLVM](https://llvm.org/) are used to
-compile and link Carbon. It's currently recommended to build LLVM from head in
-order to avoid compatibility issues in many distributions.
+compile and link Carbon, and are provided through git submodules. A complete
+toolchain will be built and cached as part of standard `bazel` execution. This
+can be very slow on less powerful computers or laptops (30 minutes to an hour).
+However, it should only happen when either Bazel or LLVM's submodule is updated,
+which we try to minimize. If you need to force a rebuild of the toolchain, you
+can use `bazel sync --configure`.
 
-Please refer to
-[LLVM's build instructions](https://llvm.org/docs/GettingStarted.html#getting-the-source-code-and-building-llvm).
-Tips:
+### Ninja
 
--   When `carbon-lang` is checked out with submodules, the LLVM submodule is at
-    `third_party/llvm_project`.
+[Ninja](https://ninja-build.org/) is used to build Clang and LLVM.
 
-    -   In other words, create your `build` directory at
-        `third_party/llvm_project/build`.
-
--   Carbon uses the Clang, LLD, and libc++ subprojects. A corresponding
-    `LLVM_ENABLE_PROJECTS` build looks like:
-
-    ```bash
-    cmake -G Ninja ../llvm \
-        -DLLVM_ENABLE_PROJECTS="clang;clang-tools-extra;lld;libcxx;libcxxabi;compiler-rt;libunwind" \
-        -DCMAKE_BUILD_TYPE=Release \
-        -DLIBCXX_ABI_UNSTABLE=ON \
-        -DLLVM_ENABLE_ASSERTIONS=OFF \
-        -DLIBCXX_ENABLE_ASSERTIONS=OFF \
-        -DLIBCXXABI_ENABLE_ASSERTIONS=OFF
-    ninja
-    ```
-
-### pyenv and Python
-
-[pyenv](https://github.com/pyenv/pyenv) is the recommended way to install
-[Python](python.org). Our recommended way of installing both is:
+Our recommended way of installing is:
 
 ```bash
-brew update
-brew install pyenv
-pyenv install 3.8.5
-pyenv global 3.8.5
-
-# Add 'eval "$(pyenv init -)"' to your shell rc file.
-echo 'eval "$(pyenv init -)"' >> ~/.zshrc
-# Load the shell rc file changes.
-exec $SHELL
+brew install ninja
 ```
 
 ### pre-commit
@@ -235,7 +265,6 @@ used by some scripts.
 To install gh, run:
 
 ```bash
-brew update
 brew install github/gh/gh
 ```
 
@@ -243,6 +272,35 @@ brew install github/gh/gh
 
 [GitHub Desktop](https://desktop.github.com/) provides a UI for managing git
 repositories. See the page for installation instructions.
+
+### `rs-git-fsmonitor` and Watchman
+
+[rs-git-fsmonitor](https://github.com/jgavris/rs-git-fsmonitor) is a file system
+monitor that uses [Watchman](https://github.com/facebook/watchman) to speed up
+git on large repositories, such as `carbon-lang` when submodules are synced.
+
+Our recommended way of installing is:
+
+-   Linux:
+
+    ```bash
+    brew install watchman
+    cargo install --git https://github.com/jgavris/rs-git-fsmonitor.git
+
+    # Configure the git repository to use fsmonitor.
+    git config core.fsmonitor rs-git-fsmonitor
+    ```
+
+-   MacOS:
+
+    ```bash
+    brew tap jgavris/rs-git-fsmonitor \
+      https://github.com/jgavris/rs-git-fsmonitor.git
+    brew install rs-git-fsmonitor
+
+    # Configure the git repository to use fsmonitor.
+    git config core.fsmonitor rs-git-fsmonitor
+    ```
 
 ### Vim
 
