@@ -31,7 +31,7 @@ do not match generated target:
 
 To update the golden file, run the following:
 
-  bazel run //${TEST_BINARY%/*}:${TEST_BINARY##*/} -- --update
+  bazel run ${TEST_TARGET} -- --update
 EOT
 
 exit 1
