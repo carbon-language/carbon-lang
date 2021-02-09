@@ -22,9 +22,12 @@ if "${CMD[@]}"; then
 fi
 
 cat <<EOT
-In directory ${MYSRCDIR}:
-${GOLDEN} contents do not match generated target
-:${SUBJECT}
+When running under:
+  ${MYSRCDIR}
+Golden contents of:
+  ${GOLDEN}
+do not match generated target:
+  ${SUBJECT}
 
 To update the golden file, run the following:
 

@@ -2,6 +2,9 @@
 # Exceptions. See /LICENSE for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
+# TODO(https://github.com/carbon-language/carbon-lang/issues/266):
+# Migrate bison/flex usage to a more hermetic bazel build.
+
 load("@rules_cc//cc:defs.bzl", "cc_binary", "cc_library")
 load("//bazel/testing:golden_test.bzl", "golden_test")
 
@@ -11,26 +14,13 @@ cc_binary(
     deps = [":syntax"],
 )
 
-genrule(
-    name = "syntax_bison_srcs",
-    srcs = ["syntax.ypp"],
-    outs = [
-        "syntax.tab.cpp",
-        "syntax.tab.h",
-    ],
-    cmd = "bison " +
-          "--output=$(location syntax.tab.cpp) " +
-          "--defines=$(location syntax.tab.h) " +
-          "$(location syntax.ypp)",
-)
-
 cc_library(
     name = "syntax",
     srcs = [
-        "syntax_helpers.cpp",
-        "syntax_helpers.h",
         "syntax.tab.cpp",
         "syntax.yy.cpp",
+        "syntax_helpers.cpp",
+        "syntax_helpers.h",
     ],
     hdrs = ["syntax.tab.h"],
     # Disable warnings for generated code.
@@ -45,6 +35,19 @@ cc_library(
         "//executable_semantics/ast:expression_or_field_list",
         "//executable_semantics/interpreter",
     ],
+)
+
+genrule(
+    name = "syntax_bison_srcs",
+    srcs = ["syntax.ypp"],
+    outs = [
+        "syntax.tab.cpp",
+        "syntax.tab.h",
+    ],
+    cmd = "bison " +
+          "--output=$(location syntax.tab.cpp) " +
+          "--defines=$(location syntax.tab.h) " +
+          "$(location syntax.ypp)",
 )
 
 genrule(
