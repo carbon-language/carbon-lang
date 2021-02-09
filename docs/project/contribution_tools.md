@@ -174,8 +174,12 @@ Our recommended way of installing is:
 ### Clang and LLVM
 
 [Clang](https://clang.llvm.org/) and [LLVM](https://llvm.org/) are used to
-compile and link Carbon, and are provided through git submodules. A complete toolchain will be
-built and cached as part of standard `bazel` execution. This can be very slow on less powerful computers or laptops (30 minutes to an hour). However, it should only happen when either Bazel or LLVM's submodule is updated, which we try to minimize. If you need to force a rebuild of the toolchain, you can use `bazel sync --configure`.
+compile and link Carbon, and are provided through git submodules. A complete
+toolchain will be built and cached as part of standard `bazel` execution. This
+can be very slow on less powerful computers or laptops (30 minutes to an hour).
+However, it should only happen when either Bazel or LLVM's submodule is updated,
+which we try to minimize. If you need to force a rebuild of the toolchain, you
+can use `bazel sync --configure`.
 
 ### Ninja
 
