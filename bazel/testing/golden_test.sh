@@ -16,7 +16,7 @@ fi
 
 CMD=("diff" "-u" "${GOLDEN}" "${SUBJECT}")
 
-if "${CMD[@]}" ; then
+if "${CMD[@]}"; then
   echo "PASS"
   exit 0
 fi

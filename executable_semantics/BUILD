@@ -29,10 +29,10 @@ cc_library(
     srcs = [
         "syntax_helpers.cpp",
         "syntax_helpers.h",
-        ":syntax.tab.cpp",
-        ":syntax.yy.cpp",
+        "syntax.tab.cpp",
+        "syntax.yy.cpp",
     ],
-    hdrs = [":syntax.tab.h"],
+    hdrs = ["syntax.tab.h"],
     # Disable warnings for generated code.
     copts = [
         "-Wno-unneeded-internal-declaration",
