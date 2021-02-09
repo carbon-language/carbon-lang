@@ -111,8 +111,9 @@ these.
 
 -   Use the `using`-based type alias syntax instead of `typedef`.
 -   Don't use `using` to support unqualified lookup on `std` types; for example,
-    `using std::vector;`.
-    -   Including `std::` gives clearer diagnostics and avoids any possible
+    `using std::vector;`. This also applies to other short namespaces,
+    particularly `llvm` and `clang`.
+    -   Writing `std::` gives clearer diagnostics and avoids any possible
         ambiguity, particularly for ADL.
     -   An exception is made for `std::swap`, which should be written as
         `{ using std::swap; swap(thing1, thing2); }` (scoped) for ADL.
