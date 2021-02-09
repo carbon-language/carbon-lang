@@ -8,7 +8,7 @@
 
 namespace Carbon {
 
-auto MakeFunDecl(struct FunctionDefinition* f) -> Declaration* {
+auto MakeFunDecl(FunctionDefinition* f) -> Declaration* {
   auto* d = new Declaration();
   d->tag = DeclarationKind::FunctionDeclaration;
   d->u.fun_def = f;

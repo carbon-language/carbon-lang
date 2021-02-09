@@ -4,11 +4,7 @@
 
 """Rule for a golden ttest."""
 
-def golden_test(
-        name,
-        subject,
-        golden,  # Required
-        **kwargs):  # Rest
+def golden_test(name, golden, subject, **kwargs):
     """Compares two files. Passes if they are identical.
 
     Args:
