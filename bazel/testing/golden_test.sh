@@ -5,7 +5,6 @@
 
 set -e -u -o pipefail
 
-MYSRCDIR="${TEST_SRCDIR}"
 GOLDEN=$1
 SUBJECT=$2
 
@@ -23,7 +22,7 @@ fi
 
 cat <<EOT
 When running under:
-  ${MYSRCDIR}
+  ${TEST_SRCDIR}
 the golden contents of:
   ${GOLDEN}
 do not match generated target:
