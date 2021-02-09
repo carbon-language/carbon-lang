@@ -2,9 +2,10 @@
 # Exceptions. See /LICENSE for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-"""Starlark rules to bootstrap Clang (and LLVM) using the llvm-project submodule.
+"""Starlark rules to bootstrap Clang (and LLVM).
 
-These are run from `clang_configuration.bzl`.
+These rules are loaded as part of the `WORKSPACE`, and used by
+`clang_configuration.bzl`. The llvm-project submodule is used for the build.
 """
 
 def _run(
