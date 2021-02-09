@@ -24,7 +24,7 @@ fi
 cat <<EOT
 When running under:
   ${MYSRCDIR}
-Golden contents of:
+the golden contents of:
   ${GOLDEN}
 do not match generated target:
   ${SUBJECT}
