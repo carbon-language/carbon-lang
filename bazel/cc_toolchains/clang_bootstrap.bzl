@@ -75,7 +75,7 @@ def _get_cmake_defines(repository_ctx, is_clang):
         "-DLIBCXX_ENABLE_ASSERTIONS=OFF",
         "-DLIBCXXABI_ENABLE_ASSERTIONS=OFF",
 
-        # Disable components of the build that we'll never need.
+        # Disable components of the build that we don't use while building Carbon.
         "-DCLANG_ENABLE_ARCMT=OFF",
         "-DCLANG_INCLUDE_TESTS=OFF",
         "-DCLANG_TOOL_APINOTES_TEST_BUILD=OFF",
