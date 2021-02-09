@@ -540,7 +540,7 @@ var Point2: w2 = (.x = 3.0, .y = 4.0);
 var Point2: v3 = AddAndScaleGeneric(a, w, 2.5);
 ```
 
-## Model
+### Model
 
 The underlying model here is
 [interfaces are type-types](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#interfaces-are-type-types),
