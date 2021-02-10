@@ -8,9 +8,9 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 [Pull request](https://github.com/carbon-language/carbon-lang/pull/####)
 
-## Table of contents
-
 <!-- toc -->
+
+## Table of contents
 
 -   [TODO: Initial proposal setup](#todo-initial-proposal-setup)
 -   [Problem](#problem)
@@ -23,7 +23,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 ## TODO: Initial proposal setup
 
-> TIP: Run `../src/scripts/new_proposal.py "TITLE"` to do new proposal setup.
+> TIP: Run `./scripts/new_proposal.py "TITLE"` to do new proposal setup.
 
 1. Copy this template to `new.md`, and create a commit.
 2. Create a GitHub pull request, to get a pull request number.

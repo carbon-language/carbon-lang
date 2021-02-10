@@ -6,23 +6,27 @@ Exceptions. See /LICENSE for license information.
 SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -->
 
-## Table of contents
-
 <!-- toc -->
 
--   [TODO](#todo)
+## Table of contents
+
+-   [Philsophy and goals](#philsophy-and-goals)
 -   [Overview](#overview)
 
 <!-- tocstop -->
 
-## TODO
+## Philsophy and goals
 
-This is a skeletal design, added to support [the overview](README.md). It should
-not be treated as accepted by the core team; rather, it is a placeholder until
-we have more time to examine this detail. Please feel welcome to rewrite and
-update as appropriate.
+The C++ interoperability layer of Carbon allows a subset of C++ APIs to be
+accessed from Carbon code, and similarly a subset of Carbon APIs to be accessed
+from C++ code. This requires expressing one language as a subset of the other.
+Bridge code may be needed to map some APIs into the relevant subset, but the
+constraints on expressivity should be loose enough to keep the amount of such
+bridge code sustainable.
+
+The [interoperability philosophy and goals](philosophy_and_goals.md) provide
+more detail.
 
 ## Overview
 
-See the draft in
-[PR 80](https://github.com/carbon-language/carbon-lang/pull/80).
+TODO

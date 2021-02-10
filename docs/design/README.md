@@ -1,4 +1,4 @@
-# Language design overview
+# Language design
 
 <!--
 Part of the Carbon Language project, under the Apache License v2.0 with LLVM
@@ -6,15 +6,15 @@ Exceptions. See /LICENSE for license information.
 SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -->
 
-## Table of contents
-
 <!-- toc -->
+
+## Table of contents
 
 -   [Context and disclaimer](#context-and-disclaimer)
     -   [Example code](#example-code)
 -   [Basic syntax](#basic-syntax)
     -   [Code and comments](#code-and-comments)
-    -   [Files, libraries, and packages](#files-libraries-and-packages)
+    -   [Packages, libraries, and namespaces](#packages-libraries-and-namespaces)
     -   [Names and scopes](#names-and-scopes)
         -   [Naming conventions](#naming-conventions)
         -   [Aliases](#aliases)
@@ -105,7 +105,8 @@ cleaned up during evolution.
 
 ### Code and comments
 
-> References: [Lexical conventions](lexical_conventions.md)
+> References: [Source files](code_and_name_organization/source_files.md) and
+> [lexical conventions](lexical_conventions)
 >
 > **TODO:** References need to be evolved.
 
@@ -127,50 +128,57 @@ cleaned up during evolution.
       live code
     ```
 
-### Files, libraries, and packages
+-   Decimal, hexadecimal, and binary integer literals and decimal and
+    hexadecimal floating-point literals are supported, with `_` as a digit
+    separator. For example, `42`, `0b1011_1101` and `0x1.EEFp+5`. Numeric
+    literals are case-sensitive: `0x`, `0b`, `e+`, and `p+` must be lowercase,
+    whereas hexadecimal digits must be uppercase. A digit is required on both
+    sides of a period.
 
-> References: [Files, libraries and packages](files_libraries_and_packages.md)
->
-> **TODO:** References need to be evolved.
+### Packages, libraries, and namespaces
 
-Carbon code is organized into files, libraries, and packages:
+> References: [Code and name organization](code_and_name_organization)
 
--   A **file** is the unit of compilation.
--   A **library** can be made up of multiple files, and is the unit whose public
-    interface can be imported.
--   A **package** is a collection of one or more libraries, typically ones with
-    a single common source and with some close association.
+-   **Files** are grouped into libraries, which are in turn grouped into
+    packages.
+-   **Libraries** are the granularity of code reuse through imports.
+-   **Packages** are the unit of distribution.
 
-A file belongs to precisely one library, and a library belongs to precisely one
-package.
+Name paths in Carbon always start with the package name. Additional namespaces
+may be specified as desired.
 
-Files have a `.6c` extension. They must start with a declaration of their
-package and library. They may import both other libraries from within their
-package, as well as libraries from other packages. For example:
+For example, this code declares a struct `Geometry.Shapes.Flat.Circle` in a
+library `Geometry/OneSide`:
 
 ```carbon
-// This is a file in the "Eucalyptus" library of the "Koala" package.
-package Koala library Eucalyptus;
+package Geometry library("OneSide") namespace Shapes;
 
-// Import the "Wombat" library from the "Widget" package.
-import Widget library Wombat;
+namespace Flat;
+struct Flat.Circle { ... }
+```
 
-// Import the "Container" library from the "Koala" package.
-import library Container;
+This type can be used from another package:
+
+```carbon
+package ExampleUser;
+
+import Geometry library("OneSide");
+
+fn Foo(var Geometry.Shapes.Flat.Circle: circle) { ... }
 ```
 
 ### Names and scopes
 
-> References: [Lexical conventions](lexical_conventions.md)
+> References: [Lexical conventions](lexical_conventions)
 >
 > **TODO:** References need to be evolved.
 
 Various constructs introduce a named entity in Carbon. These can be functions,
 types, variables, or other kinds of entities that we'll cover. A name in Carbon
-is always formed out of an "identifier", or a sequence of letters, numbers, and
-underscores which starts with a letter. As a regular expression, this would be
-`/[a-zA-Z][a-zA-Z0-9_]*/`. Eventually we may add support for more unicode
-characters as well.
+is formed from a word, which is a sequence of letters, numbers, and underscores,
+and which starts with a letter. We intend to follow Unicode's Annex 31 in
+selecting valid identifier characters, but a concrete set of valid characters
+has not been selected yet.
 
 #### Naming conventions
 
@@ -222,37 +230,11 @@ textually after this can refer to `MyInt`, and it will transparently refer to
 
 #### Name lookup
 
-> References: [Name lookup](name_lookup.md)
+> References: [name lookup](name_lookup.md)
 >
 > **TODO:** References need to be evolved.
 
-Names are always introduced into some scope which defines where they can be
-referenced. Many of these scopes are themselves named. `namespace` is used to
-introduce a dedicated named scope, and we traverse nested names in a uniform way
-with `.`-separated names. Unqualified name lookup will always find a file-local
-result, including aliases.
-
-For example:
-
-```carbon
-package Koala library Eucalyptus;
-
-namespace Leaf {
-  namespace Vein {
-    fn Count() -> Int;
-  }
-}
-```
-
-`Count` may be referred to as:
-
--   `Count` from within the `Vein` namespace.
--   `Vein.Count` from within the `Leaf` namespace.
--   `Leaf.Vein.Count` from within this file.
--   `Koala.Leaf.Vein.Count` from any arbitrary location.
-
-Note that libraries do **not** introduce a scope; they share the scope of their
-package.
+Unqualified name lookup will always find a file-local result, including aliases.
 
 ##### Name lookup for common types
 
@@ -266,7 +248,7 @@ file, including `Int` and `Bool`. These will likely be defined in a special
 
 ### Expressions
 
-> References: [Lexical conventions](lexical_conventions.md) and
+> References: [Lexical conventions](lexical_conventions) and
 > [operators](operators.md)
 >
 > **TODO:** References need to be evolved.

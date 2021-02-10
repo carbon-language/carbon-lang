@@ -1,52 +1,78 @@
+# Part of the Carbon Language project, under the Apache License v2.0 with LLVM
+# Exceptions. See /LICENSE for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+
 # See https://pre-commit.com for more information
 # See https://pre-commit.com/hooks.html for more hooks
+
+default_language_version:
+  python: python3 # Defaults to python2, so override it.
+
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v2.4.0
+    rev: 6e2418c5521b7d606e72914dced3253f9ace1205 # frozen: v3.4.0
     hooks:
       - id: check-added-large-files
       - id: check-case-conflict
       - id: check-executables-have-shebangs
       - id: check-merge-conflict
       - id: check-symlinks
+        exclude: '^website/jekyll/site/_includes$'
       - id: check-yaml
       - id: detect-private-key
       - id: end-of-file-fixer
       - id: mixed-line-ending
         args: ['--fix=lf']
       - id: trailing-whitespace
+  - repo: https://github.com/google/pre-commit-tool-hooks
+    rev: 1d04a2848ac54d64bd6474ccec69aac45fa88414 # frozen: v1.1.1
+    hooks:
+      - id: check-copyright
+        args:
+          - --copyright
+          - |+
+            Part of the Carbon Language project, under the Apache License v2.0 with LLVM
+            Exceptions. See /LICENSE for license information.
+            SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+        exclude: '^(website/(firebase/.firebaserc|jekyll/(Gemfile.lock|theme/.*))|.bazelversion|compile_flags.txt|.*\.def)$'
+      - id: check-google-doc-style
+      - id: markdown-toc
   - repo: https://github.com/codespell-project/codespell
-    rev: v1.17.1
+    rev: 67c489d36dd4c52cbb9e4755d90c35c6231842ef # frozen: v2.0.0
     hooks:
       - id: codespell
         args: ['-I', '.codespell_ignore']
-        exclude: '^src/jekyll/Gemfile.lock$'
+        exclude: '^website/jekyll/Gemfile.lock$'
   - repo: local
     hooks:
-      - id: markdown-toc
-        name: Update table of contents
-        description: Runs https://github.com/jonschlinkert/markdown-toc
-        entry: src/scripts/pre_commit_toc.js
-        language: node
-        additional_dependencies: [markdown-toc]
-        files: .*\.md$
-        exclude: ^src/jekyll/theme/
       - id: proposal-list
         name: Update list of proposals
         description: Updates the list of proposals in proposals/README.md
-        entry: src/scripts/update_proposal_list.py
+        entry: proposals/scripts/update_proposal_list.py
         language: python
-        language_version: python3
         files: ^proposals/(README|p.*)\.md$
         pass_filenames: false
   # Formatters should be run late so that they can re-format any prior changes.
   - repo: https://github.com/psf/black
-    rev: stable
+    rev: e66be67b9b6811913470f70c28b4d50f94d05b22 # frozen: 20.8b1
     hooks:
       - id: black
-        language_version: python3
-  - repo: https://github.com/prettier/prettier
-    rev: 2.0.5
+  - repo: https://github.com/jlebar/pre-commit-hooks.git
+    rev: 349213c5414e360385e74f04964e6d5c43cdad36
+    hooks:
+      - id: bazel-buildifier
+      - id: clang-format-whole-file
+        types: [c++]
+  - repo: https://github.com/pre-commit/mirrors-prettier
+    rev: 8e0d199f4004a7f226ed7974fc3883d9c702bded # frozen: v2.2.1
     hooks:
       - id: prettier
-        exclude: ^src/jekyll/theme/
+        exclude: ^website/jekyll/theme/
+  # Run linters last, as formatters and other checks may fix issues.
+  - repo: https://gitlab.com/PyCQA/flake8
+    rev: bb6a530e28acab8d3551043b3e8709db8bcbac6b # frozen: 3.8.4
+    hooks:
+      - id: flake8
+
+# We fully exclude fuzzer corpus directories as they are generated binary data.
+exclude: '^(.*/fuzzer_corpus/.*)$'

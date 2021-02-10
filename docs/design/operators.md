@@ -6,9 +6,9 @@ Exceptions. See /LICENSE for license information.
 SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -->
 
-## Table of contents
-
 <!-- toc -->
+
+## Table of contents
 
 -   [TODO](#todo)
 
@@ -21,6 +21,5 @@ not be treated as accepted by the core team; rather, it is a placeholder until
 we have more time to examine this detail. Please feel welcome to rewrite and
 update as appropriate.
 
-See
-[carbon-proposals PR 5](https://github.com/carbon-language/carbon-proposals/pull/5)
+See [proposals PR 168](https://github.com/carbon-language/carbon-lang/pull/168)
 for context -- that proposal may replace this.
