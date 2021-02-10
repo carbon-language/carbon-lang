@@ -35,9 +35,10 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 ## High level goals of code review
 
 Code review serves several goals in the Carbon project. It directly improves the
-correctness, clarity, and consistency of the code. These improvements range from
-the high-level functionality down through the design and implementation details.
-It also promotes team ownership and spreads knowledge across the team.
+correctness, clarity, and consistency of contributions, including both code and
+documentation. These improvements range from the high-level functionality down
+through the design and implementation details. It also promotes team ownership
+and spreads knowledge across the team.
 
 More detailed discussions can be found in chapter 9 "Code Review" of the book
 _[Software Engineering at Google](https://www.amazon.com/Software-Engineering-Google-Lessons-Programming/dp/1492082791)_
