@@ -562,7 +562,7 @@ interface I {
 // Which types T meet the requirements to have type I?
 // Those with member functions F and G with types fn(Ptr(T): this).
 
-fn CompileTime[I:$ T](Ptr(T): a) {
+fn GenericCompileTimeTypeParam[I:$ T](Ptr(T): a) {
   a->F();
 }
 impl FooI(Foo, .implements = I) {
@@ -573,8 +573,8 @@ impl FooI(Foo, .implements = I) {
   }
 }
 // FooI is of type impl(Foo, .implements = I) (which extends I).
-CompileTime(FooI.CastToGeneric(&a));  // Explicit
-CompileTime(&a);  // Implicit
+GenericCompileTimeTypeParam(FooI.CastToGeneric(&a));  // Explicit
+GenericCompileTimeTypeParam(&a);  // Implicit
 interface I2 extends I {  ... }  // Supports interface inheritance
 // Supports interfaces with type arguments
 interface Tree(Type: T) { ... }
