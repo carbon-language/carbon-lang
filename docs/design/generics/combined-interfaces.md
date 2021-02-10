@@ -20,7 +20,11 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Qualified member names](#qualified-member-names)
     -   [Impl lookup](#impl-lookup)
 -   [Generics](#generics)
--   [Model](#model)
+    -   [Model](#model)
+-   [Interfaces recap](#interfaces-recap)
+-   [Type-types and facet types](#type-types-and-facet-types)
+-   [Structural interfaces](#structural-interfaces)
+    -   [Future work: method constraints](#future-work-method-constraints)
 -   [Adapting types](#adapting-types)
     -   [Example: Defining an impl for use by other types](#example-defining-an-impl-for-use-by-other-types)
 -   [Associated types](#associated-types)
@@ -540,7 +544,7 @@ var Point2: w2 = (.x = 3.0, .y = 4.0);
 var Point2: v3 = AddAndScaleGeneric(a, w, 2.5);
 ```
 
-## Model
+### Model
 
 The underlying model here is
 [interfaces are type-types](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#interfaces-are-type-types),
@@ -605,6 +609,95 @@ The rule is that generic arguments (declared using `:$`) are passed at compile
 time, so the actual value of the `impl` argument here can be used to generate
 the code for `AddAndScaleGeneric`. So `AddAndScaleGeneric` is using a
 [static-dispatch witness table](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#static-dispatch-witness-table).
+
+## Interfaces recap
+
+Interfaces have a name and a definition.
+
+The definition of an interface consists of a set of declarations. Each
+declaration defines a requirement for `impl` that is in turn a capability that
+users can rely on. Typically those declarations also have a name, useful for
+both satisfying the requirement and accessing the capability.
+
+Interfaces are "nominal" which means their name is significant. So two
+interfaces with the same definition but different names are different, just like
+two structs with the same definition but different names are considered
+different types. For example, lets say we define another interface, say
+`LegoFish`, with the same `Add` and `Scale` method signatures. Implementing
+`Vector` would not imply an implementation of `LegoFish` and vice versa.
+
+An interface's name may be used in a few different contexts:
+
+-   to define [an `impl` for a type](#implementing-interfaces),
+-   as a namespace name in [a qualified name](#qualified-member-names), and
+-   as a type-type for [a generic type parameter](#generics).
+
+While interfaces are examples of type-types, type-types are a more general
+concept, for which interfaces are a building block.
+
+## Type-types and facet types
+
+A type-type consists of a set of requirements and a set of names. Requirements
+are typically a set of interfaces that a type must satisfy. The names are
+aliases for qualified names in those interfaces.
+
+An interface is one particularly simple example of a type-type. For example,
+`Vector` as a type-type has a set of requirements consisting of the single
+interface `Vector`. Its set of names consists of `Add` and `Scale` which are
+aliases for the corresponding qualified names inside `Vector` as a namespace.
+
+The requirements determine which types may be cast to a given type-type. The
+result of casting a type `T` to a type-type `I` (written `T as I`) is called a
+facet type, you might say a facet type `F` is the `I` facet of `T` if `F` is
+`T as I`. The API of `F` is determined by the set of names in the type-type.
+
+This general structure of type-types holds not just for interfaces, but others
+described in the rest of this document.
+
+## Structural interfaces
+
+If the nominal interfaces discussed above are the building blocks for
+type-types, structural interfaces describe how they may be composed together.
+Unlike nominal interfaces, the name of a structural interface is not a part of
+its value. Two different structural interfaces with the same definition are
+equivalent even if they have different names. This is because types don't
+explicitly specify which structural interfaces they implement, types
+automatically implement any structural interfaces they can satisfy.
+
+A structural interface definition can contain interface requirements using
+`impl` declarations and names using `alias` declarations. Note that this allows
+us to declare the aspects of a type-type directly.
+
+```
+structural interface VectorLegoFish {
+  // Interface implementation requirements
+  impl Vector;
+  impl LegoFish;
+  // Names
+  alias Scale = Vector.Scale;
+  alias VAdd = Vector.Add;
+  alias LFAdd = LegoFish.Add;
+}
+```
+
+We don't expect users do directly define many structural interfaces, but other
+constructs we do expect them to use will be defined in terms of them. For
+example, we can define the Carbon builtin `Type` as:
+
+```
+structural interface Type { }
+```
+
+That is, `Type` is the type-type with no requirements (so matches every type),
+and defines no names.
+
+### Future work: method constraints
+
+Structural interfaces are a reasonable mechanism for describing other structural
+type constraints, which we will likely want for template constraints. For
+example, a method definition in a structural interface would match any type that
+has a method with that name and signature. This is future work though, as it
+does not directly impact generics in Carbon.
 
 ## Adapting types
 
