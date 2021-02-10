@@ -156,14 +156,15 @@ through different build modes that prioritize safety checks differently:
     safety checks to reduce overhead.
 -   A [hardened](#hardened) oriented build mode that prioritizes ensuring
     sufficient safety to prevent security vulnerabilities, although it may not
-    allow detecting all of the bugs. These high level build modes may be tuned,
-    either to select specific nuanced approach for achieving the high level
-    goal, or to configure orthogonal constraints such as whether to prioritize
-    binary size or execution speed. However, there is a strong desire to avoid
-    requiring more fundamental build modes to achieve the necessary coverage of
-    detecting bugs and shipping software. These build modes are also not
-    expected to be interchangeable or compatible with each other within a single
-    executable -- they must be a global selection.
+    allow detecting all of the bugs.
+
+These high level build modes may be tuned, either to select specific nuanced
+approach for achieving the high level goal, or to configure orthogonal
+constraints such as whether to prioritize binary size or execution speed.
+However, there is a strong desire to avoid requiring more fundamental build
+modes to achieve the necessary coverage of detecting bugs and shipping software.
+These build modes are also not expected to be interchangeable or compatible with
+each other within a single executable -- they must be a global selection.
 
 Although expensive safety checks could be provided through additional build
 modes, Carbon will favor safety checks that can be combined into these three
