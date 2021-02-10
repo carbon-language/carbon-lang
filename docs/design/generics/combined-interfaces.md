@@ -18,7 +18,6 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [External impl](#external-impl)
     -   [Rejected: out-of-line impl](#rejected-out-of-line-impl)
     -   [Qualified member names](#qualified-member-names)
-    -   [Impl lookup](#impl-lookup)
 -   [Generics](#generics)
     -   [Model](#model)
 -   [Interfaces recap](#interfaces-recap)
@@ -27,12 +26,14 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Future work: method constraints](#future-work-method-constraints)
 -   [Adapting types](#adapting-types)
     -   [Example: Defining an impl for use by other types](#example-defining-an-impl-for-use-by-other-types)
+-   [Associated constants](#associated-constants)
 -   [Associated types](#associated-types)
     -   [Constraints on associated types in interfaces](#constraints-on-associated-types-in-interfaces)
         -   [Model](#model-1)
         -   [External constraints via optional parameters](#external-constraints-via-optional-parameters)
     -   [Constraints that are hard to express](#constraints-that-are-hard-to-express)
 -   [Parameterized interfaces](#parameterized-interfaces)
+    -   [Impl lookup](#impl-lookup)
 -   [Conditional conformance](#conditional-conformance)
 -   [Templated impls for generic interfaces](#templated-impls-for-generic-interfaces)
     -   [Structural conformance](#structural-conformance)
@@ -446,37 +447,6 @@ var Point2: p = (.x = 1.0, .y = 2.0);
 p.(MyPackage.MyInterface.MyMember)();
 ```
 
-### Impl lookup
-
-Let's say you have some interface `I(T, U(V))` being implemented for some type
-`A(B(C(D), E))`. That impl must be defined in the same library that defines the
-interface or one of the names needed by the type. That is, the impl must be
-defined with (exactly) one of `I`, `A`, `B`, `C`, `D`, or `E`. Note that you
-can't define the impl with `T`, `U`, `V`, or any other library unless it also
-defines one of `I`, `A`, ..., or `E`. We further require anything looking up
-this impl to import the _definitions_ of all of those names. Seeing a forward
-declaration of these names is insufficient, since you can presumably see forward
-declarations without seeing an impl with the definition. This accomplishes a few
-goals:
-
--   The compiler can check that there is only one definition of any impl that is
-    actually used, avoiding
-    [One Definition Rule (ODR)](https://en.wikipedia.org/wiki/One_Definition_Rule)
-    problems.
--   Every attempt to use an impl will see the exact same impl, making the
-    interpretation and semantics of code consistent no matter its context, in
-    accordance with the
-    [Refactoring principle](https://github.com/josh11b/carbon-lang/blob/principle-refactoring/docs/project/principles/principle-refactoring.md).
--   Allowing the impl to be defined with either the interface or the type
-    addresses the
-    [expression problem](https://eli.thegreenplace.net/2016/the-expression-problem-and-its-solutions).
-
-Note that interface parameters are treated differently because they can be
-inferred as part of calling a function call, as described in
-[this appendix](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/appendix-interface-param-impl.md).
-We could allow implementations to be defined with arguments that can't be
-inferred, if we were willing to use a more complicated rule.
-
 ## Generics
 
 Now let us write a function that can accept values of any type that has
@@ -769,7 +739,44 @@ struct MyType {
 }
 ```
 
+## Associated constants
+
+An associated constant is an interface requirement that any satisfying type
+knows a particular value known at compile time. For example, a fixed-dimensional
+point type could have the dimension as an associated constant.
+
+```
+interface NSpacePoint {
+  var Int:$ N;
+  // The following require: 0 <= i < N.
+  method (Ptr(Self): this) Get(Int: i) -> Float64;
+  method (Ptr(Self): this) Set(Int: i, Float64 : value);
+}
+```
+
+Implementations of `NSpacePoint` might have different values for `N`:
+
+```
+struct Point2D {
+  impl NSpacePoint {
+    var Int:$ N = 2;
+    method (Ptr(Self): this) Get(Int: i) -> Float64 { ... }
+    method (Ptr(Self): this) Set(Int: i, Float64 : value) { ... }
+  }
+}
+
+struct Point3D {
+  impl NSpacePoint {
+    var Int:$ N = 3;
+    method (Ptr(Self): this) Get(Int: i) -> Float64 { ... }
+    method (Ptr(Self): this) Set(Int: i, Float64 : value) { ... }
+  }
+}
+```
+
 ## Associated types
+
+Associated types are associated constants that happen to be types.
 
 For context, see
 ["Interface type parameters vs. associated types" in the Carbon: Generics Terminology doc](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#interface-type-parameters-vs-associated-types).
@@ -1129,9 +1136,41 @@ associated types, a `multi` parameter can't be changed to an associated type.
 -   Some things are more naturally represented by required, positional
     parameters (as opposed to associated types, which are optional and named).
 -   Parameterized interfaces support cases where one type implements an
-    interface multiple times with different parameters (`multi` parameters). For
-    example, a type might be comparable with multiple other types. We expect to
-    need this for operator overloading.
+    interface multiple times with different parameters (`multi` parameters),
+    unlike associated types. For example, a type might be comparable with
+    multiple other types. We expect to need this for operator overloading.
+
+### Impl lookup
+
+Let's say you have some interface `I(T, U(V))` being implemented for some type
+`A(B(C(D), E))`. That impl must be defined in the same library that defines the
+interface or one of the names needed by the type. That is, the impl must be
+defined with (exactly) one of `I`, `A`, `B`, `C`, `D`, or `E`. Note that you
+can't define the impl with `T`, `U`, `V`, or any other library unless it also
+defines one of `I`, `A`, ..., or `E`. We further require anything looking up
+this impl to import the _definitions_ of all of those names. Seeing a forward
+declaration of these names is insufficient, since you can presumably see forward
+declarations without seeing an impl with the definition. This accomplishes a few
+goals:
+
+-   The compiler can check that there is only one definition of any impl that is
+    actually used, avoiding
+    [One Definition Rule (ODR)](https://en.wikipedia.org/wiki/One_Definition_Rule)
+    problems.
+-   Every attempt to use an impl will see the exact same impl, making the
+    interpretation and semantics of code consistent no matter its context, in
+    accordance with the
+    [Refactoring principle](https://github.com/josh11b/carbon-lang/blob/principle-refactoring/docs/project/principles/principle-refactoring.md).
+-   Allowing the impl to be defined with either the interface or the type
+    addresses the
+    [expression problem](https://eli.thegreenplace.net/2016/the-expression-problem-and-its-solutions).
+
+Note that interface parameters are treated differently because they can be
+inferred as part of calling a function call, as described in
+[this appendix](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/appendix-interface-param-impl.md).
+We could allow implementations to be defined with arguments that can't be
+inferred (`multi` parameters), if we were willing to use a more complicated
+rule.
 
 ## Conditional conformance
 
