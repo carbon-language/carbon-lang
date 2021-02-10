@@ -23,7 +23,11 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [Interfaces recap](#interfaces-recap)
 -   [Type-types and facet types](#type-types-and-facet-types)
 -   [Structural interfaces](#structural-interfaces)
+    -   [Subsumption](#subsumption)
     -   [Future work: method constraints](#future-work-method-constraints)
+-   [Adding interfaces](#adding-interfaces)
+-   [Interface requiring other interfaces](#interface-requiring-other-interfaces)
+-   [Interface extension](#interface-extension)
 -   [Adapting types](#adapting-types)
     -   [Example: Defining an impl for use by other types](#example-defining-an-impl-for-use-by-other-types)
 -   [Associated constants](#associated-constants)
@@ -48,7 +52,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
         -   [Covariant return type constraints](#covariant-return-type-constraints)
         -   [Model](#model-2)
     -   [Type implementing multiple interfaces](#type-implementing-multiple-interfaces)
-        -   [Subsumption](#subsumption)
+        -   [Subsumption](#subsumption-1)
         -   [Model](#model-3)
     -   [Type compatible with another type](#type-compatible-with-another-type)
         -   [Example: Multiple implementations of the same interface](#example-multiple-implementations-of-the-same-interface)
@@ -661,6 +665,34 @@ structural interface Type { }
 That is, `Type` is the type-type with no requirements (so matches every type),
 and defines no names.
 
+### Subsumption
+
+Given a generic type `T` with type-type `I1`, it may be implicitly cast to a
+type-type `I2`, resulting in `T as I2`, as long as the requirements of `I1` are
+a superset of the requirements of `I2`. Further, given a value `x` of type `T`,
+it can be implicitly cast to `T as I2`. For example:
+
+```
+interface A { method (Self: this) AMethod(); }
+interface B { method (Self: this) BMethod(); }
+structural interface I1 {
+  impl A;
+  impl B;
+}
+structural interface I2 {
+  impl A;
+}
+fn F2[I2:$ T2](T2: x2) {
+  x2.(A.AMethod)();
+}
+fn F1[I1:$ T1](T1: x1) {
+  x1.(A.AMethod)();
+  x1.(B.BMethod)();
+  // Calls `F2` with `T2 == T1 as I2` and `x2 == x1 as T2`.
+  F2(x1);
+}
+```
+
 ### Future work: method constraints
 
 Structural interfaces are a reasonable mechanism for describing other structural
@@ -669,9 +701,87 @@ example, a method definition in a structural interface would match any type that
 has a method with that name and signature. This is future work though, as it
 does not directly impact generics in Carbon.
 
+## Adding interfaces
+
+TODO
+
+```
+interface A { method (Self: this) AMethod(); }
+interface B { method (Self: this) BMethod(); }
+// `A + B` is syntactic sugar for this type-type:
+structural interface {
+  impl A;
+  impl B;
+  alias AMethod = A.AMethod;
+  alias BMethod = B.BMethod;
+}
+
+fn F[A + B:$ T](T: x) {
+  // Can use methods of `A` or `B` on `x` here.
+  x.AMethod();  // Same as `x.(A.AMethod)();`.
+  x.BMethod();  // Same as `x.(B.BMethod)();`.
+}
+```
+
+Any conflicting names between the two types are replaced with a name that is an
+error to use.
+
+```
+interface C {
+  method (Self: this) One();
+  method (Self: this) Two();
+}
+interface D {
+  method (Self: this) Two();
+  method (Self: this) Three();
+}
+// `C + D` is syntactic sugar for this type-type:
+structural interface {
+  impl C;
+  impl D;
+  alias One = C.One;
+  forbidden Two "Ambiguous, use either `(C.Two)` or `(D.Two)`.";
+  alias Three = D.Three;
+}
+```
+
+Reserving the name when there is a conflict means that `+` does something
+sensible and consistent when combining more than two interfaces.
+
+## Interface requiring other interfaces
+
+TODO
+
+## Interface extension
+
+TODO
+
+```
+interface B { method (Self: this) BMethod(); }
+
+interface D extends B {
+  method (Self: this) DMethod();
+}
+// is equivalent to:
+interface D {
+  impl B;
+  alias BMethod = B.BMethod;
+  method (Self: this) DMethod();
+}
+```
+
+No names in `D` are allowed to conflict with names in `B`. (Except as noted in
+separate forthcoming interface evolution doc.) Hopefully this won't be a problem
+in practice, since interface extension is a very closely coupled relationship,
+but this may be something we will have to revisit in the future.
+
+Use cases: Boost.Graph concepts, C++ iterator concepts.
+
 ## Adapting types
 
 TODO: if I'm not mistaken this is `newtype` in Rust.
+[The Rust community identifies `newtype` as the workaround for the orphan rule for coherence](https://github.com/Ixrec/rust-orphan-rules#user-content-why-are-the-orphan-rules-controversial),
+which are the same as our [impl lookup](#impl-lookup) rules.
 
 We also provide a way to create new types
 [compatible with](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#compatible-types)
