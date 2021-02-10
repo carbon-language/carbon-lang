@@ -147,11 +147,23 @@ Carbon will favor compile-time safety checks because catching issues early will
 make applications more reliable. Runtime checks, either error detection or
 safety hardening, will be enabled where safety cannot be proven at compile-time.
 
-There will be three high-level use cases or directions that Carbon addresses through different build modes that prioritize safety checks differently:
--   A [debug](#debug) oriented build mode that prioritizes detecting bugs and reporting errors helpfully.
--   A [performance](#performance) oriented build mode that skips any dynamic safety checks to reduce overhead.
--   A [hardened](#hardened) oriented build mode that prioritizes ensuring sufficient safety to prevent security vulnerabilities, although it may not allow detecting all of the bugs.
-These high level build modes may be tuned, either to select specific nuanced approach for achieving the high level goal, or to configure orthogonal constraints such as whether to prioritize binary size or execution speed. However, there is a strong desire to avoid requiring more fundamental build modes to achieve the necessary coverage of detecting bugs and shipping software. These build modes are also not expected to be interchangeable or compatible with each other within a single executable -- they must be a global selection.
+There will be three high-level use cases or directions that Carbon addresses
+through different build modes that prioritize safety checks differently:
+
+-   A [debug](#debug) oriented build mode that prioritizes detecting bugs and
+    reporting errors helpfully.
+-   A [performance](#performance) oriented build mode that skips any dynamic
+    safety checks to reduce overhead.
+-   A [hardened](#hardened) oriented build mode that prioritizes ensuring
+    sufficient safety to prevent security vulnerabilities, although it may not
+    allow detecting all of the bugs. These high level build modes may be tuned,
+    either to select specific nuanced approach for achieving the high level
+    goal, or to configure orthogonal constraints such as whether to prioritize
+    binary size or execution speed. However, there is a strong desire to avoid
+    requiring more fundamental build modes to achieve the necessary coverage of
+    detecting bugs and shipping software. These build modes are also not
+    expected to be interchangeable or compatible with each other within a single
+    executable -- they must be a global selection.
 
 Although expensive safety checks could be provided through additional build
 modes, Carbon will favor safety checks that can be combined into these three
