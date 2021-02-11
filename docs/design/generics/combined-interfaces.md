@@ -25,7 +25,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [Structural interfaces](#structural-interfaces)
     -   [Subsumption](#subsumption)
     -   [Future work: method constraints](#future-work-method-constraints)
--   [Adding interfaces](#adding-interfaces)
+-   [Combining interfaces by adding type-types](#combining-interfaces-by-adding-type-types)
 -   [Interface requiring other interfaces](#interface-requiring-other-interfaces)
 -   [Interface extension](#interface-extension)
 -   [Adapting types](#adapting-types)
@@ -702,12 +702,12 @@ example, a method definition in a structural interface would match any type that
 has a method with that name and signature. This is future work though, as it
 does not directly impact generics in Carbon.
 
-## Adding interfaces
+## Combining interfaces by adding type-types
 
 In order to support functions that require more than one interface to be
 implemented, we provide an addition operator on type-types. This operator gives
-the type-type with the union of all the requirements and the symmetric
-difference of the names.
+the type-type with the union of all the requirements and the union of the names
+minus any conflicts.
 
 ```
 interface A { method (Self: this) AMethod(); }
@@ -760,9 +760,14 @@ structural interface {
 Conflicts can be resolved at the call site using
 [the qualified name syntax](#qualified-member-names).
 
-Reserving the name when there is a conflict means that `+` is associative and
-commutative, and so can be thought of as well defined on sets of interfaces or
-other type-types independent of order.
+Reserving the name when there is a conflict is part of resolving what happens
+when you add more than two type-types. If `x` is forbidden in `A`, it is
+forbidden in `A + B`, whether or not `B` defines the name `x`. This makes `+`
+associative and commutative, and so it is well defined on sets of interfaces, or
+other type-types, independent of order.
+
+**Open syntax question:** Instead of using `+` as the combining operator, we
+could use `&`. I'm using `+` in this proposal since it is consistent with Rust.
 
 **Alternatives considered:** See
 [Carbon: Access to interface methods](https://docs.google.com/document/d/1u_i_s31OMI_apPur7WmVxcYq6MUXsG3oCiKwH893GRI/edit?usp=sharing&resourcekey=0-0lzSNebBMtUBi4lStL825g).
