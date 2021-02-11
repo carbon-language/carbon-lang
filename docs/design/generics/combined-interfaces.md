@@ -38,6 +38,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Constraints that are hard to express](#constraints-that-are-hard-to-express)
 -   [Parameterized interfaces](#parameterized-interfaces)
     -   [Impl lookup](#impl-lookup)
+    -   [Parameterized structural interfaces](#parameterized-structural-interfaces)
 -   [Conditional conformance](#conditional-conformance)
 -   [Templated impls for generic interfaces](#templated-impls-for-generic-interfaces)
     -   [Structural conformance](#structural-conformance)
@@ -1268,6 +1269,10 @@ associated types, a `multi` parameter can't be changed to an associated type.
     unlike associated types. For example, a type might be comparable with
     multiple other types. We expect to need this for operator overloading.
 
+**Rejected alternative:** We could simplify the language by making all interface
+parameters be `multi`. You would instead use associated types for anything
+deducible. I (Josh11b) think this degrades the usability overall.
+
 ### Impl lookup
 
 Let's say you have some interface `I(T, U(V))` being implemented for some type
@@ -1299,6 +1304,16 @@ inferred as part of calling a function call, as described in
 We could allow implementations to be defined with arguments that can't be
 inferred (`multi` parameters), if we were willing to use a more complicated
 rule.
+
+### Parameterized structural interfaces
+
+We should also allow the [structural interface](#structural-interfaces)
+construct to support parameters. Parameters marked `multi` would work the same
+way as for regular (nominal/non-structural) interfaces. We should only allow
+parameters to be deducible (no `multi`) when they can be deduced unambiguously.
+For example, if the structural interface has a `T` parameter that is passed as
+an argument to a deducible parameter of an interface requirement, like
+`impl RequiredInterface(T)`, then `T` can be deduced as well.
 
 ## Conditional conformance
 
