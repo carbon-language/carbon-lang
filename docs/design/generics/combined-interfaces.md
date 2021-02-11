@@ -703,7 +703,10 @@ does not directly impact generics in Carbon.
 
 ## Adding interfaces
 
-TODO
+In order to support functions that require more than one interface to be
+implemented, we provide an addition operator on type-types. This operator gives
+the type-type with the union of all the requirements and the symmetric
+difference of the names.
 
 ```
 interface A { method (Self: this) AMethod(); }
@@ -721,6 +724,14 @@ fn F[A + B:$ T](T: x) {
   x.AMethod();  // Same as `x.(A.AMethod)();`.
   x.BMethod();  // Same as `x.(B.BMethod)();`.
 }
+
+struct S {
+  impl A { method (Self: this) AMethod() { Carbon.Print("A"); } }
+  impl B { method (Self: this) BMethod() { Carbon.Print("B"); } }
+}
+
+var S: s = ();
+F(s);
 ```
 
 Any conflicting names between the two types are replaced with a name that is an
@@ -745,8 +756,15 @@ structural interface {
 }
 ```
 
-Reserving the name when there is a conflict means that `+` does something
-sensible and consistent when combining more than two interfaces.
+Conflicts can be resolved at the call site using
+[the qualified name syntax](#qualified-member-names).
+
+Reserving the name when there is a conflict means that `+` is associative and
+commutative, and so can be thought of as well defined on sets of interfaces or
+other type-types independent of order.
+
+**Alternatives considered:** See
+[Carbon: Access to interface methods](https://docs.google.com/document/d/1u_i_s31OMI_apPur7WmVxcYq6MUXsG3oCiKwH893GRI/edit?usp=sharing&resourcekey=0-0lzSNebBMtUBi4lStL825g).
 
 ## Interface requiring other interfaces
 
