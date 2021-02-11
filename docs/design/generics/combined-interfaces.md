@@ -28,6 +28,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [Combining interfaces by adding type-types](#combining-interfaces-by-adding-type-types)
 -   [Interface requiring other interfaces](#interface-requiring-other-interfaces)
     -   [Interface extension](#interface-extension)
+    -   [Use case: overload resolution](#use-case-overload-resolution)
 -   [Adapting types](#adapting-types)
     -   [Example: Defining an impl for use by other types](#example-defining-an-impl-for-use-by-other-types)
 -   [Associated constants](#associated-constants)
@@ -48,13 +49,9 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Subtlety around interfaces with multi parameters](#subtlety-around-interfaces-with-multi-parameters)
     -   [Lookup resolution](#lookup-resolution)
 -   [Composition of type-types](#composition-of-type-types)
-    -   [Interface extension [optional feature]](#interface-extension-optional-feature)
-        -   [Use case: overload resolution](#use-case-overload-resolution)
-        -   [Covariant return type constraints](#covariant-return-type-constraints)
-        -   [Model](#model-2)
     -   [Type implementing multiple interfaces](#type-implementing-multiple-interfaces)
         -   [Subsumption](#subsumption-1)
-        -   [Model](#model-3)
+        -   [Model](#model-2)
     -   [Type compatible with another type](#type-compatible-with-another-type)
         -   [Example: Multiple implementations of the same interface](#example-multiple-implementations-of-the-same-interface)
         -   [Example: Creating an impl out of other impls](#example-creating-an-impl-out-of-other-impls)
@@ -62,12 +59,12 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
         -   [Recommendation: interface adapter](#recommendation-interface-adapter)
         -   [Rejected alternative: `ForSome(F)`](#rejected-alternative-forsomef)
     -   [Sized types and type-types](#sized-types-and-type-types)
-        -   [Model](#model-4)
+        -   [Model](#model-3)
 -   [Dynamic types](#dynamic-types)
     -   [Runtime type parameters](#runtime-type-parameters)
     -   [Runtime type fields](#runtime-type-fields)
         -   [Dynamic pointer type](#dynamic-pointer-type)
-            -   [Model](#model-5)
+            -   [Model](#model-4)
         -   [Deref](#deref)
         -   [Boxed](#boxed)
         -   [DynBoxed](#dynboxed)
@@ -787,24 +784,24 @@ use the same semantics and syntax as we do for
 ```
 interface B { method (Self: this) BMethod(); }
 
-interface D1 {
+interface A {
+  method (Self: this) AMethod();
   impl B;
-  method (Self: this) DMethod();
 }
 
-def F1[D1:$ T](T: x) {
-  // `x` has type `T` that implements `D1`, and so has `DMethod`.
-  x.DMethod();
-  // `D1` requires an implementation of `B`, so `T` also implements `B`.
+def F[A:$ T](T: x) {
+  // `x` has type `T` that implements `A`, and so has `AMethod`.
+  x.AMethod();
+  // `A` requires an implementation of `B`, so `T` also implements `B`.
   x.(B.BMethod)();
 }
 
-struct S1 {
+struct S {
+  impl A { method (Self: this) AMethod() { ... } }
   impl B { method (Self: this) BMethod() { ... } }
-  impl D1 { method (Self: this) DMethod() { ... } }
 }
-var S1: x1;
-F1(x1);
+var S: x;
+F(x);
 ```
 
 Like with structural interfaces, an interface implementation requirement doesn't
@@ -812,51 +809,45 @@ by itself add any names to the interface, but again those can be added with
 `alias` declarations:
 
 ```
-interface D2 {
+interface D {
+  method (Self: this) DMethod();
   impl B;
   alias BMethod = B.BMethod;
-  method (Self: this) DMethod();
 }
 
-def F2[D2:$ T](T: x) {
+def G[D:$ T](T: x) {
   // Now both `DMethod` and `BMethod` are available directly:
   x.DMethod();
   x.BMethod();
 }
 ```
 
-When implementing an interface, we should allow implementing any name in that
-interface:
-
-```
-struct S2 {
-  impl D2 {
-    method (Self: this) BMethod() { ... }
-    method (Self: this) DMethod() { ... }
-  }
-}
-var S2: x2;
-F2(x2);
-```
-
-This is for a few reasons:
-
--   In this example, `BMethod` is part of the API that `D2` provides. It is
-    logical that you should be able to implement `BMethod` as part of
-    implementing `D2`.
--   In the `D2` example, one interface (`D2`) completely subsumes another (`B`).
-    This means that implementing `D2` is sufficient to both say that `B` is
-    implemented and giving an implementation of all of `B`'s methods. In this
-    case, `B` can be an implementation detail of `D2`, with no need to
-    separately mention `B` in types implementing `D2`.
--   It is convenient for users, by reducing the amount of boilerplate users will
-    have to include in their type definitions.
-
-TODO: covariant return types?
-
 ### Interface extension
 
-TODO
+When implementing an interface, we should allow implementing the aliased names
+as well. In the case of `D` above, this includes all the members of `B`,
+obviating the need to implement `B` itself:
+
+```
+struct T {
+  impl D {
+    method (Self: this) DMethod() { ... }
+    method (Self: this) BMethod() { ... }
+  }
+}
+var T: y;
+G(y);
+```
+
+This allows us to say that `D`
+["extends" or "refines"](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#extendingrefining-an-interface)
+`B`, with some benefits:
+
+-   This allows `B` to be an implementation detail of `D`.
+-   This allows types implementing `D` to implement all of its API in one place.
+-   This reduces the boilerplate for types implementing `D`.
+
+We expect this concept to be common enough to warrant dedicated syntax:
 
 ```
 interface B { method (Self: this) BMethod(); }
@@ -864,12 +855,12 @@ interface B { method (Self: this) BMethod(); }
 interface D extends B {
   method (Self: this) DMethod();
 }
-// is equivalent to:
-interface D {
-  impl B;
-  alias BMethod = B.BMethod;
-  method (Self: this) DMethod();
-}
+// is equivalent to the definition of D from before:
+// interface D {
+//   impl B;
+//   alias BMethod = B.BMethod;
+//   method (Self: this) DMethod();
+// }
 ```
 
 No names in `D` are allowed to conflict with names in `B` (unless those names
@@ -878,7 +869,78 @@ interface evolution doc). Hopefully this won't be a problem in practice, since
 interface extension is a very closely coupled relationship, but this may be
 something we will have to revisit in the future.
 
+TODO Concern: having both `extends` and [`extend`](#external-impl) with
+different meanings is likely confusing. One should be renamed.
+
 TODO Use cases: Boost.Graph concepts, C++ iterator concepts.
+
+TODO open question: how to extend multiple interfaces.
+
+```
+interface Option1 extends B1 + B2 { ... }
+
+interface Option2 {
+  extends B1;
+  extends B2;
+}
+```
+
+One advantage of Option1 is it defines what happens when there is a conflict in
+the names of the members between `B1` and `B2`.
+
+One advantage of Option2 is it allows us more flexibility specifying the
+parameters or constraints of the interface being extended. Example:
+
+```
+interface ForwardContainer(Type:$ T) {
+  var ForwardIterator(T):$ IteratorType;
+  method (Ptr(Self): this) Begin() -> IteratorType;
+  method (Ptr(Self): this) End() -> IteratorType;
+}
+interface BidirectionalContainer(Type:$ T) {
+  var BidirectionalIterator(T):$ IteratorType;
+  // Question: does this cause any weird shadowing?
+  extends ForwardContainer(T, .IteratorType = IteratorType);
+}
+```
+
+TODO type-theory question: can this only be done if `ForwardContainer(T)` uses
+`IteratorType` in covariant positions like return types? Or are you always
+allowed to pass in a type with a superset of requirements? I think it is the
+latter, but I previously wrote down the former and I'm not sure why.
+
+TODO: Since types can implement interfaces at most once, if type `U` implements
+interfaces `D1` and `D2`, both of which extend `B`, can only have one definition
+of each method of `B`.
+
+### Use case: overload resolution
+
+Implementing an extended interface is an example of a more specific match for
+[lookup resolution](#lookup-resolution). For example, this could be used to
+provide different implementations of an algorithm depending on the capabilities
+of the iterator being passed in:
+
+```
+interface ForwardIterator(Type:$ T) { ... }
+interface BidirectionalIterator(Type:$ T)
+    extends ForwardIterator(T) { ... }
+interface RandomAccessIterator(Type:$ T)
+    extends BidirectionalIterator(T) { ... }
+
+fn SearchInSortedList[Comparable:$ T, ForwardIterator(T): IterT]
+    (IterT: begin, IterT: end, T: needle) -> Bool {
+  // does linear search
+}
+// Will prefer the following overload when it matches since it is more specific.
+fn SearchInSortedList[Comparable:$ T, RandomAccessIterator(T): IterT]
+    (IterT: begin, IterT: end, T: needle) -> Bool {
+  // does binary search
+}
+```
+
+This would be an example of the more general rule that an interface `A`
+requiring an implementation of interface `B` means `A` is more specific than
+`B`.
 
 ## Adapting types
 
@@ -1843,123 +1905,6 @@ type-type. In addition, Carbon defines `Type`, the type-type whose values
 include every type. We now introduce ways of defining new type-types in terms of
 other type-types.
 
-### Interface extension [optional feature]
-
-(I'm not sure that we need this extra complexity, but it is easy to define in
-case we decide this feature is sufficiently useful.)
-
-We can define a new interface as the extension of another interface, adding
-additional API. Anything implementing the extended interface also implements the
-base interface, but is required to give definitions/implementations for all the
-functions defined in the base interface.
-
-```
-interface A {
-  method (Self: this) F();
-}
-interface B extends A {
-  method (Self: this) G();
-}
-struct S {
-  impl B {
-    method (Self: this) F() { ... }
-    method (Self: this) G() { ... }
-  }
-}
-var S: x;
-(x as (S as B)).F();
-(x as (S as B)).G();
-(x as (S as A)).F();
-```
-
-Interface extension supports a form of subsumption:
-
-```
-fn TakesA[A: T](Ptr(T): a) { ... }
-TakesA(&x);  // Okay: S implements B so it also implements A.
-
-fn TakesB[B: T](Ptr(T): b) { ... }
-struct SA {
-  impl A { ... }
-}
-var SA: y;
-TakesB(&y);  // Error: SA implements A but not B.
-```
-
-TODO: State the rules of covariance/contravariance for inheritance.
-
-#### Use case: overload resolution
-
-Implementing an extended interface is an example of a more specific match for
-[lookup resolution](#lookup-resolution). For example, this could be used to
-provide different implementations of an algorithm depending on the capabilities
-of the iterator being passed in:
-
-```
-interface ForwardIterator(Type:$ T) {
-  fn operator*(Self: this) -> Ref(T);
-  fn operator++(Ptr(Self): this);
-  fn operator==(Self: this, Self: that) -> Bool;
-  fn operator!=(Self: this, Self: that) -> Bool;
-}
-interface BidirectionalIterator(Type:$ T) extends ForwardIterator(T) {
-  fn operator--(Ptr(Self): this);
-}
-interface RandomAccessIterator(Type:$ T) extends BidirectionalIterator(T) {
-  fn operator+(Self: this, Int: offset) -> Self;
-  fn operator-(Self: this, Int: offset) -> Self;
-  fn operator-(Self: this, Self: that) -> Int;
-  fn operator+=(Ptr(Self): this, Int: offset);
-  fn operator-=(Ptr(Self): this, Int: offset);
-}
-fn SearchInSortedList[Comparable:$ T, ForwardIterator(T): IterT]
-    (IterT: begin, IterT: end, T: needle) -> Bool {
-  // does linear search
-}
-// Will prefer the following overload when it matches since it is more specific.
-fn SearchInSortedList[Comparable:$ T, RandomAccessIterator(T): IterT]
-    (IterT: begin, IterT: end, T: needle) -> Bool {
-  // does binary search
-}
-```
-
-#### Covariant return type constraints
-
-In addition to adding functions, the extended interface can have more
-restrictive constraints on any associated types used only in covariant positions
-in the interface, such as return values.
-
-```
-interface ForwardContainer(Type:$ T) {
-  var ForwardIterator(T):$ IteratorType;
-  method (Ptr(Self): this) Begin() -> IteratorType;
-  method (Ptr(Self): this) End() -> IteratorType;
-}
-interface BidirectionalContainer(Type:$ T) extends ForwardContainer(T) {
-  var BidirectionalIterator(T):$ IteratorType;
-}
-```
-
-Any consumer of a `ForwardContainer(T)` can call all the `ForwardIterator(T)`
-methods on values of `IteratorType`, and all of those methods will also be
-present for any value of type `BidirectionalIterator(T)`.
-
-#### Model
-
-The extended interface just appends on to the end of the existing interface,
-just like as is done
-[with structs](https://github.com/josh11b/carbon-lang/blob/structs/docs/design/structs.md#question-extension--inheritance).
-For the above example, this would be represented as:
-
-```
-struct A(Type:$ Self) {
-  var fnty(Self): F;
-}
-struct B(Type:$ Self) extends A(Self) {
-  var fnty(Self): G;
-}
-```
-
 ### Type implementing multiple interfaces
 
 Let's define a type-type constructor called `TypeImplements`. Given a list
@@ -2773,12 +2718,11 @@ represent the same thing with extra implicit arguments.
 
 TODO REDO, not this
 
-Just as we might want to support
-[interface extension](#interface-extension-optional-feature), we may also want
-to support a containment relationship between interfaces & implementations. This
-would have the advantage that each interface would get a separate namespace, and
-you could easily contain more than one impl (while extending multiple interfaces
-is scarier). Example:
+Just as we might want to support [interface extension](#interface-extension), we
+may also want to support a containment relationship between interfaces &
+implementations. This would have the advantage that each interface would get a
+separate namespace, and you could easily contain more than one impl (while
+extending multiple interfaces is scarier). Example:
 
 ```
 interface Inner1 {
@@ -2882,7 +2826,7 @@ Specifically, how does this proposal address
     that
     [extends/refines](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#extendingrefining-an-interface)
     another interface:
-    -   [interface extension](#interface-extension-optional-feature).
+    -   [interface extension](#interface-extension).
 -   Similarly we probably want a way to say an interface requires an
     implementation of one or more other interfaces:
     -   [interface nesting/containment](#interface-nestingcontainment-optional-feature).
