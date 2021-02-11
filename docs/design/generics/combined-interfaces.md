@@ -27,7 +27,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Future work: method constraints](#future-work-method-constraints)
 -   [Combining interfaces by adding type-types](#combining-interfaces-by-adding-type-types)
 -   [Interface requiring other interfaces](#interface-requiring-other-interfaces)
--   [Interface extension](#interface-extension)
+    -   [Interface extension](#interface-extension)
 -   [Adapting types](#adapting-types)
     -   [Example: Defining an impl for use by other types](#example-defining-an-impl-for-use-by-other-types)
 -   [Associated constants](#associated-constants)
@@ -774,9 +774,87 @@ could use `&`. I'm using `+` in this proposal since it is consistent with Rust.
 
 ## Interface requiring other interfaces
 
-TODO
+Some interfaces will depend on other interfaces being implemented for the same
+type. For example, in C++,
+[the `Container` concept](https://en.cppreference.com/w/cpp/named_req/Container#Other_requirements)
+requires all containers to also satisfy the requirements of
+`DefaultConstructible`, `CopyConstructible`, `EqualityComparable`, and
+`Swappable`. This is already a capability for
+[type-types in general](#type-types-and-facet-types). For consistency we will
+use the same semantics and syntax as we do for
+[structural interfaces](#structural-interfaces):
 
-## Interface extension
+```
+interface B { method (Self: this) BMethod(); }
+
+interface D1 {
+  impl B;
+  method (Self: this) DMethod();
+}
+
+def F1[D1:$ T](T: x) {
+  // `x` has type `T` that implements `D1`, and so has `DMethod`.
+  x.DMethod();
+  // `D1` requires an implementation of `B`, so `T` also implements `B`.
+  x.(B.BMethod)();
+}
+
+struct S1 {
+  impl B { method (Self: this) BMethod() { ... } }
+  impl D1 { method (Self: this) DMethod() { ... } }
+}
+var S1: x1;
+F1(x1);
+```
+
+Like with structural interfaces, an interface implementation requirement doesn't
+by itself add any names to the interface, but again those can be added with
+`alias` declarations:
+
+```
+interface D2 {
+  impl B;
+  alias BMethod = B.BMethod;
+  method (Self: this) DMethod();
+}
+
+def F2[D2:$ T](T: x) {
+  // Now both `DMethod` and `BMethod` are available directly:
+  x.DMethod();
+  x.BMethod();
+}
+```
+
+When implementing an interface, we should allow implementing any name in that
+interface:
+
+```
+struct S2 {
+  impl D2 {
+    method (Self: this) BMethod() { ... }
+    method (Self: this) DMethod() { ... }
+  }
+}
+var S2: x2;
+F2(x2);
+```
+
+This is for a few reasons:
+
+-   In this example, `BMethod` is part of the API that `D2` provides. It is
+    logical that you should be able to implement `BMethod` as part of
+    implementing `D2`.
+-   In the `D2` example, one interface (`D2`) completely subsumes another (`B`).
+    This means that implementing `D2` is sufficient to both say that `B` is
+    implemented and giving an implementation of all of `B`'s methods. In this
+    case, `B` can be an implementation detail of `D2`, with no need to
+    separately mention `B` in types implementing `D2`.
+-   It is convenient for users, by reducing the amount of boilerplate users will
+    have to include in their type definitions.
+
+TODO: covariant return types?
+
+### Interface extension
 
 TODO
 
@@ -794,12 +872,13 @@ interface D {
 }
 ```
 
-No names in `D` are allowed to conflict with names in `B`. (Except as noted in
-separate forthcoming interface evolution doc.) Hopefully this won't be a problem
-in practice, since interface extension is a very closely coupled relationship,
-but this may be something we will have to revisit in the future.
+No names in `D` are allowed to conflict with names in `B` (unless those names
+are marked as `upcoming` or `deprecated` as noted in separate forthcoming
+interface evolution doc). Hopefully this won't be a problem in practice, since
+interface extension is a very closely coupled relationship, but this may be
+something we will have to revisit in the future.
 
-Use cases: Boost.Graph concepts, C++ iterator concepts.
+TODO Use cases: Boost.Graph concepts, C++ iterator concepts.
 
 ## Adapting types
 
