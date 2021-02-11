@@ -23,6 +23,7 @@ class ParseTree::Parser {
       -> ParseTree;
 
  private:
+  struct CodeBlock;
   struct SubtreeStart;
 
   explicit Parser(ParseTree& tree_arg, TokenizedBuffer& tokens_arg)
@@ -103,6 +104,8 @@ class ParseTree::Parser {
   // optional return type. Returns the root node of the signature which must be
   // based on the open parenthesis of the parameter list.
   auto ParseFunctionSignature() -> Node;
+
+  auto StartCodeBlock() -> CodeBlock;
 
   // Parses a block of code: `{ ... }`.
   //

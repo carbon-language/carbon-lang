@@ -205,52 +205,65 @@ auto ParseTree::Parser::ParseFunctionSignature() -> Node {
   return AddNode(ParseNodeKind::ParameterList(), open_paren, start, has_errors);
 }
 
-auto ParseTree::Parser::ParseCodeBlock() -> Node {
-  assert(position != end && "Cannot parse past the end!");
+struct ParseTree::Parser::CodeBlock {
+  CodeBlock(TokenizedBuffer::Token in_open_curly, SubtreeStart in_start)
+      : open_curly(in_open_curly), start(in_start) {}
 
+  TokenizedBuffer::Token open_curly;
+  SubtreeStart start;
+  bool has_errors = false;
+};
+
+auto ParseTree::Parser::StartCodeBlock() -> CodeBlock {
   TokenizedBuffer::Token open_curly = Consume(TokenKind::OpenCurlyBrace());
   assert(position != end &&
          "The lexer ensures we always have a closing curly!");
-  auto start = StartSubtree();
+  return CodeBlock(open_curly, StartSubtree());
+}
 
-  bool has_errors = false;
+auto ParseTree::Parser::ParseCodeBlock() -> Node {
+  assert(position != end && "Cannot parse past the end!");
 
-  // Loop over all the different possibly nested elements in the code block.
+  llvm::SmallVector<CodeBlock, 16> block_stack;
+  block_stack.push_back(StartCodeBlock());
+
+  // Loop until a matching close curly is found.
   for (;;) {
     switch (tokens.GetKind(*position)) {
-      default:
+      case TokenKind::OpenCurlyBrace():
+        block_stack.push_back(StartCodeBlock());
+        break;
+
+      case TokenKind::CloseCurlyBrace(): {
+        auto block = block_stack.pop_back_val();
+        // We always reach here having set our position in the token stream to
+        // the close curly brace.
+        AddLeafNode(ParseNodeKind::CodeBlockEnd(),
+                    Consume(TokenKind::CloseCurlyBrace()));
+
+        auto node = AddNode(ParseNodeKind::CodeBlock(), block.open_curly,
+                            block.start, block.has_errors);
+        if (block_stack.empty()) {
+          return node;
+        }
+        break;
+      }
+
+      default: {
         // FIXME: Add support for parsing more expressions & statements.
         llvm::errs() << "ERROR: unexpected token before the close of the "
                         "function definition on line "
                      << tokens.GetLineNumber(*position) << "!\n";
-        has_errors = true;
+        auto& block = *block_stack.rbegin();
+        block.has_errors = true;
 
         // We can trivially skip to the actual close curly brace from here.
         position = TokenizedBuffer::TokenIterator(
-            tokens.GetMatchedClosingToken(open_curly));
-        // Now fall through to the close curly brace handling code.
-        LLVM_FALLTHROUGH;
-
-      case TokenKind::CloseCurlyBrace():
+            tokens.GetMatchedClosingToken(block.open_curly));
         break;
-
-      case TokenKind::OpenCurlyBrace():
-        // FIXME: We should consider avoiding recursion here with some side
-        // stack.
-        ParseCodeBlock();
-        continue;
+      }
     }
-
-    // We only continue looping with `continue` above.
-    break;
   }
-
-  // We always reach here having set our position in the token stream to the
-  // close curly brace.
-  AddLeafNode(ParseNodeKind::CodeBlockEnd(),
-              Consume(TokenKind::CloseCurlyBrace()));
-
-  return AddNode(ParseNodeKind::CodeBlock(), open_curly, start, has_errors);
 }
 
 auto ParseTree::Parser::ParseFunctionDeclaration() -> Node {
