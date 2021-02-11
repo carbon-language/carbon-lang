@@ -76,9 +76,9 @@ answer the underlying questions and build confidence in the design. However,
 that won't happen for numbered proposals, because they are generally not
 "living" documents. Consequently, when a shorthand in a numbered proposal
 indicates a need for future work, as with "TODO", "open question", and
-especially "experimental", consider making it a link to a tracking issue, as in
-[the "experimental" example](#experimental), so that future readers can see how the issue
-was resolved.
+especially "experimental", consider including a link to a tracking issue, as in
+[the "experimental" example](#experimental), so that future readers can see how
+the issue was resolved.
 
 The specific shorthands are described below. It's important to bear in mind that
 they are inherently somewhat fuzzy and subjective, because they're intended to
