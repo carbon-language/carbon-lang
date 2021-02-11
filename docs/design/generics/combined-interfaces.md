@@ -29,6 +29,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [Interface requiring other interfaces](#interface-requiring-other-interfaces)
     -   [Interface extension](#interface-extension)
     -   [Use case: overload resolution](#use-case-overload-resolution)
+-   [Type compatibility](#type-compatibility)
 -   [Adapting types](#adapting-types)
     -   [Example: Defining an impl for use by other types](#example-defining-an-impl-for-use-by-other-types)
 -   [Associated constants](#associated-constants)
@@ -942,11 +943,62 @@ This would be an example of the more general rule that an interface `A`
 requiring an implementation of interface `B` means `A` is more specific than
 `B`.
 
+## Type compatibility
+
+None of the casts between facet types change the implementation of any
+interfaces for a type. So the result of a cast does not depend on the sequence
+of casts you perform, just the original type and the final type-type. That is,
+these types will all be equal:
+
+-   `T as I`
+-   `(T as A) as I`
+-   `(((T as A) as B) as C) as I`
+
+Now consider a type with a generic type parameter, like a hash map type:
+
+```
+interface Hashable { ... }
+struct HashMap(Hashable:$ KeyT, Type:$ ValueT) { ... }
+```
+
+If we write something like `HashMap(String, Int)` the type we actually get is:
+
+```
+HashMap(String as Hashable, Int as Type)
+```
+
+This is the same type we will get if we pass in some other facet types in, so
+all of these types are equal:
+
+-   `HashMap(String, Int)`
+-   `HashMap(String as Hashable, Int as Type)`
+-   `HashMap((String as Printable) as Hashable, Int)`
+-   `HashMap((String as Printable + Hashable) as Hashable, Int)`
+
+This means we don't generally need to worry about getting the wrong facet type
+as the argument for a generic type. This means we don't get type mismatches when
+calling functions as in this example, where the type parameters have different
+constraints than the type requires:
+
+```
+fn PrintValue[
+    Printable + Hashable:$ KeyT,
+    Printable:$ ValueT](HashMap(KeyT, ValueT): map, KeyT: key) { ... }
+
+var HashMap(String, Int): m;
+PrintValue(m, "key");
+```
+
 ## Adapting types
 
 TODO: if I'm not mistaken this is `newtype` in Rust.
 [The Rust community identifies `newtype` as the workaround for the orphan rule for coherence](https://github.com/Ixrec/rust-orphan-rules#user-content-why-are-the-orphan-rules-controversial),
 which are the same as our [impl lookup](#impl-lookup) rules.
+
+TODO: Need to be careful, can't cast between
+`HashMap(TypeWithOneHashImpl, ValueType)` and
+`HashMap(TypeWithAnotherHashImpl, ValueType)`, even if they have the same data
+representation if `HashMap` depends on the hash impl
 
 We also provide a way to create new types
 [compatible with](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#compatible-types)
@@ -1205,7 +1257,7 @@ Or you might constrain the element type to satisfy an interface (`Comparable` in
 this example) without saying exactly what type it is:
 
 ```
-fn SortContainer[TypeImplements(Comparable):$ ElementType,
+fn SortContainer[Comparable:$ ElementType,
                  Container(.ElementType = ElementType):$ ContainerType]
     (Ptr(ContainerType): container_to_sort);
 ```
@@ -1217,7 +1269,7 @@ interface:
 ```
 // CT1.ElementType == CT2.ElementType
 // CT1.ElementType implements HasEquality
-fn EqualContainers[TypeImplements(HasEquality):$ ET,
+fn EqualContainers[HasEquality:$ ET,
                    Container(.ElementType = ET):$ CT1,
                    Container(.ElementType = ET):$ CT2]
     (Ptr(CT1): c1, Ptr(CT2): c2) -> Bool;
