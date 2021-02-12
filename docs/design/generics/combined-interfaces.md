@@ -755,7 +755,24 @@ structural interface {
 ```
 
 Conflicts can be resolved at the call site using
-[the qualified name syntax](#qualified-member-names).
+[the qualified name syntax](#qualified-member-names), or by defining a
+structural interface explicitly and renaming the methods:
+
+```
+structural interface CAndD {
+  impl C;
+  impl D;
+  alias One = C.One;
+  alias CTwo = C.Two;
+  alias DTwo = D.Two;
+  alias Three = D.Three;
+}
+
+fn F[CAndD:$ T](T: x) {
+  x.CTwo();
+  x.DTwo();
+}
+```
 
 Reserving the name when there is a conflict is part of resolving what happens
 when you add more than two type-types. If `x` is forbidden in `A`, it is
