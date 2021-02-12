@@ -869,12 +869,16 @@ interface evolution doc). Hopefully this won't be a problem in practice, since
 interface extension is a very closely coupled relationship, but this may be
 something we will have to revisit in the future.
 
-TODO Concern: having both `extends` and [`extend`](#external-impl) with
-different meanings is likely confusing. One should be renamed.
+**Concern:** Having both `extends` and [`extend`](#external-impl) with different
+meanings is going to be confusing. One should be renamed.
 
-TODO Use cases: Boost.Graph concepts, C++ iterator concepts.
+TODO Use cases:
+[Boost.Graph](https://www.boost.org/doc/libs/1_74_0/libs/graph/doc/) concepts,
+see , C++ iterator concepts. See
+[Carbon generics use case: graph library](https://docs.google.com/document/d/1xk0GLtpBl2OOnf3F_6Z-A3DtTt-r7wdOZ5wPipYUSO0/edit?usp=sharing&resourcekey=0-mBSmwn6b6jwbLaQw2WG6OA).
 
-TODO open question: how to extend multiple interfaces.
+**Open question:** How should we write an interface extending multiple
+interfaces? Here are a couple of approaches:
 
 ```
 interface Option1 extends B1 + B2 { ... }
@@ -904,14 +908,69 @@ interface BidirectionalContainer(Type:$ T) {
 }
 ```
 
-TODO type-theory question: can this only be done if `ForwardContainer(T)` uses
+**Open question:** Can this only be done if `ForwardContainer(T)` uses
 `IteratorType` in covariant positions like return types? Or are you always
 allowed to pass in a type with a superset of requirements? I think it is the
 latter, but I previously wrote down the former and I'm not sure why.
 
-TODO: Since types can implement interfaces at most once, if type `U` implements
-interfaces `D1` and `D2`, both of which extend `B`, can only have one definition
-of each method of `B`.
+**Diamond dependency issue:** Since types can implement interfaces at most once,
+we need to specify what happens in when a type implements interfaces `D1` and
+`D2` both of which extend `B`.
+
+```
+interface B {
+  method (Self: this) B1();
+  method (Self: this) B2();
+}
+interface D1 extends B { ... }
+interface D2 extends B { ... }
+struct U {
+  impl D1 { ... }
+  impl D2 { ... }
+}
+```
+
+We can only have one definition of each method of `B`. Each method though could
+be defined in `D1`, `D2`, or `B`. These would all be valid:
+
+-   `D1` implements all methods of `B`, `D2` implements none of them.
+
+```
+struct U {
+  impl D1 {
+    method (Self: this) B1() { ... }
+    method (Self: this) B2() { ... }
+  }
+  impl D2 { ... }
+}
+```
+
+-   `D1` and `D2` implement all methods of `B` between them, but with no
+    overlap.
+
+```
+struct U {
+  impl D1 {
+    method (Self: this) B1() { ... }
+  }
+  impl D2 {
+    method (Self: this) B2() { ... }
+  }
+}
+```
+
+-   We explicitly implement `B`.
+
+```
+struct U {
+  impl B {
+    method (Self: this) B1() { ... }
+    method (Self: this) B2() { ... }
+  }
+  impl D1 { ... }
+  impl D2 { ... }
+}
+```
 
 ### Use case: overload resolution
 
