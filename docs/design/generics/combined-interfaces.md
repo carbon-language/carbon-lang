@@ -50,9 +50,6 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Subtlety around interfaces with multi parameters](#subtlety-around-interfaces-with-multi-parameters)
     -   [Lookup resolution](#lookup-resolution)
 -   [Composition of type-types](#composition-of-type-types)
-    -   [Type implementing multiple interfaces](#type-implementing-multiple-interfaces)
-        -   [Subsumption](#subsumption-1)
-        -   [Model](#model-2)
     -   [Type compatible with another type](#type-compatible-with-another-type)
         -   [Example: Multiple implementations of the same interface](#example-multiple-implementations-of-the-same-interface)
         -   [Example: Creating an impl out of other impls](#example-creating-an-impl-out-of-other-impls)
@@ -60,17 +57,16 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
         -   [Recommendation: interface adapter](#recommendation-interface-adapter)
         -   [Rejected alternative: `ForSome(F)`](#rejected-alternative-forsomef)
     -   [Sized types and type-types](#sized-types-and-type-types)
-        -   [Model](#model-3)
+        -   [Model](#model-2)
 -   [Dynamic types](#dynamic-types)
     -   [Runtime type parameters](#runtime-type-parameters)
     -   [Runtime type fields](#runtime-type-fields)
         -   [Dynamic pointer type](#dynamic-pointer-type)
-            -   [Model](#model-4)
+            -   [Model](#model-3)
         -   [Deref](#deref)
         -   [Boxed](#boxed)
         -   [DynBoxed](#dynboxed)
         -   [MaybeBoxed](#maybeboxed)
--   [Implicit interface arguments [rejected optional feature]](#implicit-interface-arguments-rejected-optional-feature)
 -   [Interface nesting/containment [optional feature]](#interface-nestingcontainment-optional-feature)
 -   [Index of examples](#index-of-examples)
 -   [Notes](#notes)
@@ -1957,118 +1953,6 @@ type-type. In addition, Carbon defines `Type`, the type-type whose values
 include every type. We now introduce ways of defining new type-types in terms of
 other type-types.
 
-### Type implementing multiple interfaces
-
-Let's define a type-type constructor called `TypeImplements`. Given a list
-`(TT1, ..., TTn)` of type-types (typically interfaces), we define a new
-type-type `TypeImplements(TT1, ..., TTn)` according to this rule:
-
-> `TypeImplements(TT1, ..., TTn)` is a type whose values are types `T` such that
-> `T as TT1`, ..., `T as TTn` are all legal expressions.
-
-Note that the order of the arguments does not matter (so `TypeImplements(A, B)`
-is the same as `TypeImplements(B, A)`).
-
-This would be used as follows:
-
-```
-interface A { method (Self: this) F(); }
-interface B { method (Self: this) G(); }
-fn H[TypeImplements(A, B):$ T](T: x) {
-  // Can't call any methods on "x" directly.
-  (x as (T as A)).F();
-  (x as (T as B)).G();
-}
-struct S {
-  impl A { method (Self: this) F() { ... } }
-  impl B { method (Self: this) G() { ... } }
-}
-var S: y = ...;
-H(y); // H's T is set to S
-```
-
-Note that `TypeImplements(A)` is different from `A` when it comes to the
-function body, even if the difference is invisible to callers of the function
-(through the magic of implicit casts):
-
-```
-fn K1[A:$ T](T: x) {
-  x.F();  // Legal
-  // T has type A, so (T as A) == T, so (x as (T as A)) == (x as T) == x.
-  // Since all the those casts are trivial, this is exactly equivalent to the
-  // x.F() statement above:
-  (x as (T as A)).F();
-}
-fn K2[TypeImplements(A):$ T](T: x) {
-  x.F();  // Error: "x" doesn't have a method named "F".
-  // In this case T does not have type A, so these casts are not trivial:
-  (x as (T as A)).F();  // Legal
-}
-// K1 and K2 accept the same values
-K1(y);  K2(y);
-K1(y as (S as A));  K2(y as (S as A));
-```
-
-Furthermore, there are cases where you must use `TypeImplements(A)` instead of
-`A`:
-
-```
-fn GetWithDefault
-    [Type:$ K, TypeImplements(HasDefault):$ V]
-    (HashMap(K, V): map, K: key) -> Ptr(V) {
-  if (not map.has_key(key)) {
-    map.insert(key, (V as HasDefault).default());
-  }
-  return &map[key];
-}
-```
-
-The reason we need `V` to be `TypeImplements(HasDefault)` instead of just
-`HasDefault` is so it can match the parameter to `HashMap(K, V)` which typically
-won't be the `HasDefault` facet of whatever type you are using.
-
-#### Subsumption
-
-We have the following two subsumption rules:
-
-> If `T` has type `TypeImplements(A1, ..., Am)`, it may be implicitly cast to
-> `TypeImplements(B1, ..., Bn)` if for every `Bi` there is a `Aj` such that
-> `Bi == Aj` or `Aj` extends `Bi`.
-
-> If `T` has type `TypeImplements(A1, ..., Am)`, `T` may be implicitly cast to
-> `T as Aj` for any `Aj` in `(A1, ..., Am)`.
-
-This subsumption rule allows generic functions to call other generic functions
-with equal or less-strict requirements.
-
-```
-fn L[TypeImplements(A, B):$ T](T: x) {
-  H(x);  // Same requirements, no casting
-  K1(x);  // Implicitly casts: x as (T as A)
-  K2(x);  // Implicitly casts: x as (T as TypeImplements(A))
-}
-```
-
-The subsumption rule implies that the composition of `TypeImplements`
-expressions can be flattened:
-`TypeImplements(TypeImplements(A, B), TypeImplements(C, D))` is the same as
-`TypeImplements(A, B, C, D)`.
-
-#### Model
-
-The `TypeImplements` construction essentially creates an unnamed interface that
-[contains the other interfaces](#interface-nestingcontainment-optional-feature).
-Since the interface doesn't have a name, it is just matched structurally. So
-`TypeImplements(A, B)` for interfaces `A` and `B` would be approximately
-equivalent to
-
-```
-interface {
-  impl A;
-  impl B;
-}
-```
-
 ### Type compatible with another type
 
 Given a type-type `TT` and a type `U`, define the type-type
@@ -2228,14 +2112,14 @@ fn F[Type:$ T, PairInterface(T, T):$ MatchedPairType]
 might be written as:
 
 ```
-fn F[ForSome(lambda (TypeImplements(HasEquality):$ T) => Container(T)):$ ContainerType]
+fn F[ForSome(lambda (HasEquality:$ T) => Container(T)):$ ContainerType]
   (Ptr(ContainerType): x) { ... }
 ```
 
 This would be equivalent to:
 
 ```
-fn F[TypeImplements(HasEquality):$ T, Container(T):$ ContainerType]
+fn F[HasEquality:$ T, Container(T):$ ContainerType]
   (Ptr(ContainerType): x) { ... }
 ```
 
@@ -2679,7 +2563,7 @@ supports zero-runtime-cost casting.
 ```
 // Can pass a T to a function accepting a MaybeBoxed(T) value without boxing by
 // first casting it to NotBoxed(T), as long as T is sized and movable.
-adaptor NotBoxed(TypeImplements(Movable, Sized):$ T) for T {  // :$ or :$$ here?
+adaptor NotBoxed(Movable + Sized:$ T) for T {  // :$ or :$$ here?
   impl Movable = T as Movable;
   impl MaybeBoxed(T) {
     fn operator->(Ptr(Self): this) -> Ptr(T) { return this as Ptr(T); }
@@ -2693,11 +2577,11 @@ extend NotBoxed(ConstructibleFrom(...:$$ Args):$ T) {
 
 // This allows you to create a NotBoxed(T) value inferring T so you don't have
 // to say it explicitly. TODO: Could probably replace "Type:$$ T" with
-// "TypeImplements(Movable, Sized):$ T", here.
+// "Movable + Sized:$ T", here.
 fn DontBox[Type:$$ T](T: x) -> NotBoxed(T) inline { return x as NotBoxed(T); }
 // Use NotBoxed as the default implementation of MaybeBoxed for small & movable
 // types. TODO: Not sure how to write a size <= 16 bytes constraint here.
-extend[TypeImplements(Movable, Sized):$$ T] T if (sizeof(T) <= 16) {
+extend[Movable + Sized:$$ T] T if (sizeof(T) <= 16) {
   impl MaybBoxed(T) = NotBoxed(T);
 }
 ```
@@ -2718,53 +2602,6 @@ UseBoxed(y);
 // default NotBoxed impl of MaybeBox.
 UseBoxed(DontBox(Bar()));
 ```
-
-## Implicit interface arguments [rejected optional feature]
-
-(Right now I'm leaning against the extra complexity of this feature.)
-
-An alternative mechanism for
-[functions requiring a type to implement multiple interfaces](#type-implementing-multiple-interfaces),
-would be to have extra arguments in the implicit argument list without colons
-(`:`). For example:
-
-```
-// Instead of: fn H[TypeImplements(A, B):$ T](T: x) { ... }
-fn H[Type:$ T, T as A, T as B](T: x) { ... }
-```
-
-The idea here is that the pattern matching syntax used inside the parens
-(`(`...`)`) allows you to either match any value with a type by using a colon
-(&lt;type> `:` &lt;name>) or match a specific value without (&lt;value>). We
-would extend that idea to the syntax used in the implicit argument list inside
-the brackets (`[`...`]`) to also allow values without a colon (`:`), to (a)
-assert that an expression evaluates to a legal value and (b) have the caller
-pass whatever information is needed to so that same expression can be used
-inside the function (e.g. a
-[witness table](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#witness-tables-eg-swift-and-carbon-generics)).
-
-**Argument against this feature:** It is redundant with `TypeImplements()`, and
-the `TypeImplements()` feature is more broadly applicable / more composable.
-Consider this example from the
-["Example: Multiple implementations of the same interface" section](#example-multiple-implementations-of-the-same-interface):
-
-```
-fn CombinedCompare[Type:$ T]
-    (..., List(CompatibleWith(Comparable, T)):$ CompareList) ...
-```
-
-What if we wanted `CompareList` to have types that implement two interfaces
-`Foo` and `Bar` instead of just `Comparable`? With `TypeImplements`, this is
-straightforward:
-
-```
-fn CombinedCompare[Type:$ T]
-    (..., List(CompatibleWith(TypeImplements(Foo, Bar), T)):$ CompareList) ...
-```
-
-This construction comes up with the type of variadic arguments, when their type
-can vary but they all need to implement some interfaces. I don't see how to
-represent the same thing with extra implicit arguments.
 
 ## Interface nesting/containment [optional feature]
 
@@ -2806,10 +2643,6 @@ The fact that the `Outer` interface requires an implementation of two other
 interfaces is now well captured in a compositional way. If `S` directly
 implements `Inner1` or `Inner2`, it could use that as the default in the impl of
 `Outer`.
-
-This, combined with unnamed/structural interfaces, would be a building block for
-the
-[`TypeImplements` construction above](#type-implementing-multiple-interfaces).
 
 TODO Yes this instead
 
