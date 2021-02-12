@@ -41,6 +41,8 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [Parameterized interfaces](#parameterized-interfaces)
     -   [Impl lookup](#impl-lookup)
     -   [Parameterized structural interfaces](#parameterized-structural-interfaces)
+-   [Implicit constraints](#implicit-constraints)
+-   [Generic type equality](#generic-type-equality)
 -   [Conditional conformance](#conditional-conformance)
 -   [Templated impls for generic interfaces](#templated-impls-for-generic-interfaces)
     -   [Structural conformance](#structural-conformance)
@@ -54,7 +56,6 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
         -   [Example: Multiple implementations of the same interface](#example-multiple-implementations-of-the-same-interface)
         -   [Example: Creating an impl out of other impls](#example-creating-an-impl-out-of-other-impls)
     -   [Other type constraints](#other-type-constraints)
-        -   [Recommendation: interface adapter](#recommendation-interface-adapter)
         -   [Rejected alternative: `ForSome(F)`](#rejected-alternative-forsomef)
     -   [Sized types and type-types](#sized-types-and-type-types)
         -   [Model](#model-2)
@@ -67,6 +68,10 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
         -   [Boxed](#boxed)
         -   [DynBoxed](#dynboxed)
         -   [MaybeBoxed](#maybeboxed)
+-   [Future work](#future-work)
+    -   [Generic associated types](#generic-associated-types)
+    -   [Impls with state](#impls-with-state)
+    -   [Higher-ranked types](#higher-ranked-types)
 -   [Index of examples](#index-of-examples)
 -   [Notes](#notes)
 -   [Broken links footnote](#broken-links-footnote)
@@ -690,8 +695,9 @@ fn F1[I1:$ T1](T1: x1) {
 Structural interfaces are a reasonable mechanism for describing other structural
 type constraints, which we will likely want for template constraints. For
 example, a method definition in a structural interface would match any type that
-has a method with that name and signature. This is future work though, as it
-does not directly impact generics in Carbon.
+has a method with that name and signature. We could similarly support associated
+constant and data field constraints. This is future work though, as it does not
+directly impact generics in Carbon.
 
 ## Combining interfaces by adding type-types
 
@@ -1506,6 +1512,14 @@ For example, if the structural interface has a `T` parameter that is passed as
 an argument to a deducible parameter of an interface requirement, like
 `impl RequiredInterface(T)`, then `T` can be deduced as well.
 
+## Implicit constraints
+
+TODO
+
+## Generic type equality
+
+TODO
+
 ## Conditional conformance
 
 The problem we are trying to solve here is expressing that we have an impl of
@@ -2066,21 +2080,9 @@ must be equal, are
 rather than a single type-type. Sometimes we may need a single type-type, such
 as to define a `DynPtr(TT)` (as
 [described in the following dynamic pointer type section](#dynamic-pointer-type)).
-There are a couple of approaches we could use to form a single type-type that
-includes such constraints.
 
-#### Recommendation: interface adapter
-
-Imagine a construct for naming a new type-type that captures a set of
-constraints on a type. For example, the type could be restricted to implementing
-an interface with particular constraints on its type parameters. Analogous to
-[adapting a type](#adapting-types), this could be called "adapting an
-interface".
-
-TODO
-
-**Alternative approach:** unnamed interfaces, using structural conformance, may
-also be able to express this. TODO
+We recommend that these constraints should be expressed as a
+[structural interface](#structural-interfaces).
 
 #### Rejected alternative: `ForSome(F)`
 
@@ -2600,6 +2602,53 @@ UseBoxed(y);
 UseBoxed(DontBox(Bar()));
 ```
 
+## Future work
+
+### Generic associated types
+
+TODO: Used for "property maps" in the Boost.Graph library.
+
+See
+[Carbon generics use case: graph library](https://docs.google.com/document/d/1xk0GLtpBl2OOnf3F_6Z-A3DtTt-r7wdOZ5wPipYUSO0/edit?usp=sharing&resourcekey=0-mBSmwn6b6jwbLaQw2WG6OA)
+for context.
+
+### Impls with state
+
+Impls where the impl itself has state. (from richardsmith@) Use case:
+implementing interfaces for a flyweight in a Flyweight pattern where the Impl
+needs a reference to a key -> info map.
+
+### Higher-ranked types
+
+A solution to the problem posed
+[here (TODO)](#broken-links-footnote)<!-- T:Carbon: types as function tables, interfaces as type-types --><!-- A:#heading=h.qvhzlz54obmt -->,
+where we need a representation for a way to go from a type to an implementation
+of an interface parameterized by that type. Examples of things we might want to
+express:
+
+-   This priority queue's second argument (`QueueLike`) is a function that takes
+    a type `U` and returns a type that implements `QueueInterface(U)`:
+
+```
+struct PriorityQueue(
+    Type:$ T, fn (Type:$ U)->QueueInterface(U):$ QueueLike) {
+  ...
+}
+```
+
+-   Map takes a container of type `T` and function from `T` to `V` into a
+    container of type `V`:
+
+```
+fn Map[Type:$ T,
+       fn (Type:$ U)->StackInterface(U):$ StackLike,
+       Type:$ V]
+    (Ptr(StackLike(T)): x, fn (T)->V: f) -> StackLike(V) { ... }
+```
+
+TODO: Challenging! Probably needs something like
+[Dependent function types](https://en.wikipedia.org/wiki/Dependent_type#Pi_type)
+
 ## Index of examples
 
 Specifically, how does this proposal address
@@ -2770,7 +2819,9 @@ Very stretch goals (these are more difficult, and possibly optional):
     would like to define an interface for. Is the problem when you `Edge` and
     `Node` refer to each other, so you need a forward declaration to break the
     cycle?
-    -   TODO
+    -   See
+        [Carbon generics use case: graph library](https://docs.google.com/document/d/1xk0GLtpBl2OOnf3F_6Z-A3DtTt-r7wdOZ5wPipYUSO0/edit?usp=sharing&resourcekey=0-mBSmwn6b6jwbLaQw2WG6OA)
+        for the WIP here.
 -   Impls where the impl itself has state. (from richardsmith@) Use case:
     implementing interfaces for a flyweight in a Flyweight pattern where the
     Impl needs a reference to a key -> info map.
@@ -2815,8 +2866,9 @@ expressions are legal.
 These are notes from discussions after this document was first written that have
 not yet been incorporated into the main text above.
 
--   Can use IDE tooling to show all available methods, automatically inserting
-    casting to a facet type to get that method
+-   Can use IDE tooling to show all methods including external impl,
+    automatically switching to [qualified member names](#qualified-member-names)
+    where needed to get that method.
 -   "Functional dependencies" in Haskell about the unique/generic vs.
     non-unique/template arguments distinction for type parameters of interfaces
 -   Open question: is it okay for interface definer to decide (a) whether type
