@@ -19,7 +19,8 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
         -   [TODO](#todo)
         -   [Open question](#open-question)
         -   [Placeholder](#placeholder)
-        -   [Experiment](#experiment)
+        -   [Provisional](#provisional)
+        -   [Experimental](#experimental)
 
 <!-- tocstop -->
 
@@ -143,7 +144,26 @@ In the following discussion, we use C++-like `[...](...){...}` syntax as a
 **placeholder** for whatever syntax Carbon uses for lambdas.
 ```
 
-#### Experiment
+#### Provisional
+
+"Provisional" indicates material that the Carbon team has not evaluated in
+detail, but has adopted (or will, if the proposal is accepted) as their best
+guess at how that aspect of Carbon will work. For example:
+
+```markdown
+> The design direction described in this proposal is **provisional**, and will
+> be fleshed out in more detail by subsequent proposals.
+```
+
+This is primarily intended to help us "bootstrap" the design process by quickly
+sketching the overall shape of a group of language features, without committing
+to any of their specifics. Any design choice marked "provisional" will need to
+be revisited by a future proposal that evaluates the tradeoffs and alternatives
+in more depth, and may reach a different decision. However, proposal authors are
+encouraged to take provisional design choices as givens, if that helps unblock
+their own work.
+
+#### Experimental
 
 "Experiment" or "experimental" indicates that the Carbon team has chosen to try
 something (or will, if the proposal is adopted), but considers it relatively
