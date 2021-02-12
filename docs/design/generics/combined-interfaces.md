@@ -67,7 +67,6 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
         -   [Boxed](#boxed)
         -   [DynBoxed](#dynboxed)
         -   [MaybeBoxed](#maybeboxed)
--   [Interface nesting/containment [optional feature]](#interface-nestingcontainment-optional-feature)
 -   [Index of examples](#index-of-examples)
 -   [Notes](#notes)
 -   [Broken links footnote](#broken-links-footnote)
@@ -123,9 +122,7 @@ implementation as a member:
 
 -   [associated types](#associated-types)
 -   [type parameters](#parameterized-interfaces)
--   [interface nesting/containment](#interface-nestingcontainment-optional-feature)
-    (unlike the others, these define types with the same data representation as
-    the type implementing the interface)
+-   [interface requirements](#interface-requiring-other-interfaces)
 
 The function can decide whether that type argument is passed in
 [statically](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#static-dispatch-witness-table)
@@ -2158,7 +2155,7 @@ Example:
 
 ```
 interface Foo {
-  impl DefaultConstructible;  // See "interface nesting/containment" below.
+  impl DefaultConstructible;  // See "interface requiring other interfaces".
 }
 struct Bar {  // Structs are "sized" by default.
   impl Foo;
@@ -2603,88 +2600,6 @@ UseBoxed(y);
 UseBoxed(DontBox(Bar()));
 ```
 
-## Interface nesting/containment [optional feature]
-
-TODO REDO, not this
-
-Just as we might want to support [interface extension](#interface-extension), we
-may also want to support a containment relationship between interfaces &
-implementations. This would have the advantage that each interface would get a
-separate namespace, and you could easily contain more than one impl (while
-extending multiple interfaces is scarier). Example:
-
-```
-interface Inner1 {
-  method (Self: this) K();
-}
-interface Inner2 {
-  method (Self: this) L();
-}
-interface Outer {
-  impl Inner1;
-  impl Inner2;
-}
-struct S {
-  impl Inner2 {
-    method (S: this) L() { ... }
-  }
-  impl Outer {
-    impl Inner1 {
-      method (S: this) K() { ... }
-    }
-    // impl of Inner2 here uses (S as Inner2) by default.
-  }
-}
-var S: y = ...;
-(y as ((S as Outer) as Inner1)).K();
-```
-
-The fact that the `Outer` interface requires an implementation of two other
-interfaces is now well captured in a compositional way. If `S` directly
-implements `Inner1` or `Inner2`, it could use that as the default in the impl of
-`Outer`.
-
-TODO Yes this instead
-
-**Question:** A similar feature that is perhaps a bit simpler would be to say
-that interfaces can require other interfaces, but there is no containment.
-Instead, types would contain a flat list of implementations.
-
-For the example above, we could leave the definitions of the interfaces alone,
-but the interpretation would be different. Instead of `Outer` containing
-`Inner1` and `Inner2`, it would simply have a requirement that the type
-implement them separately.
-
-```
-interface Inner1 {
-  method (Self: this) K();
-}
-interface Inner2 {
-  method (Self: this) L();
-}
-interface Outer {
-  impl Inner1;
-  impl Inner2;
-}
-struct S {
-  impl Inner1 {
-    method (S: this) K() { ... }
-  }
-  impl Inner2 {
-    method (S: this) L() { ... }
-  }
-  impl Outer {
-    // Requirements satisfied by impl of Inner1 and Inner2 above.
-  }
-}
-var S: y = ...;
-(y as (S as Inner1)).K();
-```
-
-TODO: Maybe can implement all three `Inner1`, `Inner2`, and `Outer` by
-implementing methods `K` and `L` in an `Outer` `impl`. Or maybe only if `Outer`
-"extends" `Inner1` and `Inner2` and so has aliases for `K` and `L`.
-
 ## Index of examples
 
 Specifically, how does this proposal address
@@ -2714,7 +2629,7 @@ Specifically, how does this proposal address
     -   [interface extension](#interface-extension).
 -   Similarly we probably want a way to say an interface requires an
     implementation of one or more other interfaces:
-    -   [interface nesting/containment](#interface-nestingcontainment-optional-feature).
+    -   [interface requiring other interfaces](#interface-requiring-other-interfaces)
 -   Define how a type
     [implements](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#impls-implementations-of-interfaces)
     an interface
@@ -2765,7 +2680,7 @@ Specifically, how does this proposal address
     those interfaces. Ideally this would be convenient enough that we could
     favor fewer narrow interfaces and combine them instead of having a large
     number of wide interfaces.
-    -   [Type implementing multiple interfaces](#type-implementing-multiple-interfaces).
+    -   [Combining interfaces by adding type-types](#combining-interfaces-by-adding-type-types)
 -   Define multiple implementations of an interface for a single type, be able
     to pass those multiple implementations in a single function call, and have
     the function body be able to control which implementation is used when
@@ -2834,9 +2749,11 @@ Stretch goals:
     will change merely as the result of switching from template to generics. See
     ["Carbon principle: Generics"](https://github.com/josh11b/carbon-lang/blob/principle-generics/docs/project/principles/principle-generics.md).
     -   No semantic changes to code when switching from template -> generic.
-    -   Only changes needed are additional casts when there are
-        [multiple interface requirements for a single type](#type-implementing-multiple-interfaces).
-        Code will not compile without those changes.
+    -   [Interfaces implemented inline contribute to the type's API](#implementing-interfaces)
+    -   Only changes needed are when using [external impl](#external-impl), or
+        [resolving name conflicts between interfaces](#combining-interfaces-by-adding-type-types)
+        using [qualified member names](#qualified-member-names). Code will not
+        compile without those changes.
     -   No change to function body code going from generic -> template.
 
 Very stretch goals (these are more difficult, and possibly optional):
