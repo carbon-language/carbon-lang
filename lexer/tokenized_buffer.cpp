@@ -79,7 +79,9 @@ struct InvalidDigit {
     unsigned radix;
   };
   static auto Format(const Substitutions &subst) -> std::string {
-    char digit_str[] = {subst.digit, '\0'};
+    // TODO: Switch Format to using raw_ostream so we can easily use
+    // llvm::format here.
+    llvm::StringRef digit_str(&subst.digit, 1);
     return (llvm::Twine("Invalid digit '") + digit_str + "' in " +
             (subst.radix == 2 ? "binary"
                               : subst.radix == 16 ? "hexadecimal" : "decimal") +
@@ -253,11 +255,11 @@ class TokenizedBuffer::Lexer {
       return {.ok = false};
     }
 
-    unsigned digit_separators = 0;
+    unsigned num_digit_separators = 0;
     char max_decimal = (radix == 2) ? '1' : '9';
 
-    for (auto it = text.begin(), end = text.end(); it != end; ++it) {
-      char c = *it;
+    for (std::size_t i = 0, n = text.size(); i != n; ++i) {
+      char c = text[i];
       if ((c >= '0' && c <= max_decimal) ||
           (radix == 16 && c >= 'A' && c <= 'Z')) {
         continue;
@@ -266,12 +268,12 @@ class TokenizedBuffer::Lexer {
       if (c == '_') {
         // A digit separator cannot appear at the start of a digit sequence,
         // next to another digit separator, or at the end.
-        if (it == text.begin() || it[-1] == '_' || it + 1 == text.end()) {
+        if (i == 0 || text[i-1] == '_' || i + 1 == n) {
           emitter.EmitError<InvalidDigitSeparator>(
               [&](InvalidDigitSeparator::Substitutions &) {});
           buffer.has_errors = true;
         }
-        ++digit_separators;
+        ++num_digit_separators;
         continue;
       }
 
@@ -283,39 +285,39 @@ class TokenizedBuffer::Lexer {
       return {.ok = false};
     }
 
-    if (!digit_separators)
-      return {.ok = true};
-
-    // For decimal and hexadecimal digit sequences, digit separators must form
-    // groups of 3 or 4 digits (4 or 5 characters), respectively.
-    if (radix != 2) {
-      // Check for digit separators in the expected positions.
-      unsigned stride = (radix == 10 ? 4 : 5);
-      for (auto pos = text.end(); pos - text.begin() >= stride; /*in loop*/) {
-        pos -= stride;
-        if (*pos != '_') {
-          emitter.EmitError<IrregularDigitSeparators>(
-              [&](IrregularDigitSeparators::Substitutions &subst) {
-                subst.radix = radix;
-              });
-          buffer.has_errors = true;
-          digit_separators = 0;
-          break;
-        }
-        --digit_separators;
-      }
-
-      // Check there weren't any other digit separators.
-      if (digit_separators) {
+    auto check_digit_separator_placement = [&](unsigned
+                                                   remaining_digit_separators) {
+      auto diagnose_irregular_digit_separators = [&] {
         emitter.EmitError<IrregularDigitSeparators>(
             [&](IrregularDigitSeparators::Substitutions &subst) {
               subst.radix = radix;
             });
         buffer.has_errors = true;
-      }
-    }
+      };
 
-    return {.ok = true, .has_digit_separators = true};
+      // Check that digit separators occur in all the expected positions.
+      unsigned stride = (radix == 10 ? 4 : 5);
+      for (auto pos = text.end(); pos - text.begin() >= stride; /*in loop*/) {
+        pos -= stride;
+        if (*pos != '_')
+          return diagnose_irregular_digit_separators();
+
+        assert(remaining_digit_separators > 0 &&
+               "given incorrect digit separator count");
+        --remaining_digit_separators;
+      }
+
+      // Check there weren't any other digit separators.
+      if (remaining_digit_separators)
+        diagnose_irregular_digit_separators();
+    };
+
+    // For decimal and hexadecimal digit sequences, digit separators must form
+    // groups of 3 or 4 digits (4 or 5 characters), respectively.
+    if (num_digit_separators && radix != 2)
+      check_digit_separator_placement(num_digit_separators);
+
+    return {.ok = true, .has_digit_separators = (num_digit_separators != 0)};
   }
 
   auto LexIntegerLiteral(llvm::StringRef& source_text) -> bool {
@@ -333,7 +335,7 @@ class TokenizedBuffer::Lexer {
       set_indent = true;
     }
 
-    auto add_error_token = [&] {
+    auto add_error_token_and_continue_lexing = [&] {
       buffer.AddToken({
           .kind = TokenKind::Error(),
           .token_line = current_line,
@@ -341,6 +343,8 @@ class TokenizedBuffer::Lexer {
           .error_length = static_cast<int32_t>(int_text.size()),
       });
       buffer.has_errors = true;
+      // Indicate to the caller that we consumed a token.
+      return true;
     };
 
     unsigned radix = 10;
@@ -355,17 +359,18 @@ class TokenizedBuffer::Lexer {
       } else {
         emitter.EmitError<UnknownBaseSpecifier>(
             [&](UnknownBaseSpecifier::Substitutions &subst) {});
-        add_error_token();
-        return true;
+        return add_error_token_and_continue_lexing();
       }
     }
 
     llvm::APInt int_value;
 
-    if (auto result = CheckDigitSequence(digits, radix); !result.ok) {
-      add_error_token();
-      return true;
-    } else if (result.has_digit_separators) {
+    auto result = CheckDigitSequence(digits, radix);
+    if (!result.ok) {
+      return add_error_token_and_continue_lexing();
+    }
+
+    if (result.has_digit_separators) {
       // TODO(zygoloid): Avoid the memory allocation here.
       std::string cleaned;
       cleaned.reserve(digits.size());

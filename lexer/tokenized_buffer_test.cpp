@@ -138,9 +138,18 @@ TEST_F(LexerTest, HandlesIntegerLiteral) {
 
 TEST_F(LexerTest, ValidatesBaseSpecifier) {
   llvm::StringLiteral valid[] = {
-    "0", "1", "123456789000000000000000000000000000000000000", //
-    "0x0123456789ABCDEF", "0x0000000000000000000000000000000", //
-    "0b10110100101001010", "0b0000000"
+      // Decimal integer literals.
+      "0",
+      "1",
+      "123456789000000000000000000000000000000000000",
+
+      // Hexadecimal integer literals.
+      "0x0123456789ABCDEF",
+      "0x0000000000000000000000000000000",
+
+      // Binary integer literals.
+      "0b10110100101001010",
+      "0b0000000",
   };
   for (llvm::StringLiteral literal : valid) {
     auto buffer = Lex(literal);
@@ -154,8 +163,9 @@ TEST_F(LexerTest, ValidatesBaseSpecifier) {
   }
 
   llvm::StringLiteral invalid[] = {
-    "00", "0X123", "0o123", "0B1", "007", "123L", "123456789A", "0x", "0b",
-    "0x123abc", "0b011101201001", "0b10A"
+      "00",  "0X123",    "0o123",          "0B1",
+      "007", "123L",     "123456789A",     "0x",
+      "0b",  "0x123abc", "0b011101201001", "0b10A",
   };
   for (llvm::StringLiteral literal : invalid) {
     auto buffer = Lex(literal);
@@ -171,9 +181,19 @@ TEST_F(LexerTest, ValidatesBaseSpecifier) {
 
 TEST_F(LexerTest, ValidatesIntegerDigitSeparators) {
   llvm::StringLiteral valid[] = {
-      "1_234",         "123_456",     "1_234_567",     //
-      "0x1_0000",      "0x1000_0000", "0x1_0000_0000", //
-      "0b1_0_1_0_1_0", "0b111_0000",
+      // Decimal literals optionally have digit separators every 3 places.
+      "1_234",
+      "123_456",
+      "1_234_567",
+
+      // Hexadecimal literals optionally have digit separators every 4 places.
+      "0x1_0000",
+      "0x1000_0000",
+      "0x1_0000_0000",
+
+      // Binary integer literals can have digit separators anywhere..
+      "0b1_0_1_0_1_0",
+      "0b111_0000",
   };
   for (llvm::StringLiteral literal : valid) {
     auto buffer = Lex(literal);
@@ -187,9 +207,25 @@ TEST_F(LexerTest, ValidatesIntegerDigitSeparators) {
   }
 
   llvm::StringLiteral invalid[] = {
-      "12_34",    "123_4_6_789", "12_3456_789", "12__345",     "1_",         //
-      "0x_1234",  "0x123_",      "0x12_3",      "0x_234_5678", "0x1234_567", //
-      "0b_10101", "0b1__01",     "0b1011_",     "0b1_01_01_",
+      // Decimal literals.
+      "12_34",
+      "123_4_6_789",
+      "12_3456_789",
+      "12__345",
+      "1_",
+
+      // Hexadecimal literals.
+      "0x_1234",
+      "0x123_",
+      "0x12_3",
+      "0x_234_5678",
+      "0x1234_567",
+
+      // Binary literals.
+      "0b_10101",
+      "0b1__01",
+      "0b1011_",
+      "0b1_01_01_",
   };
   for (llvm::StringLiteral literal : invalid) {
     auto buffer = Lex(literal);
