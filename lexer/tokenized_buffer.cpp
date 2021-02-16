@@ -5,6 +5,7 @@
 #include "lexer/tokenized_buffer.h"
 
 #include <algorithm>
+#include <bitset>
 #include <cmath>
 #include <iterator>
 #include <string>
@@ -255,13 +256,23 @@ class TokenizedBuffer::Lexer {
       return {.ok = false};
     }
 
+    std::bitset<256> valid_digits;
+    if (radix == 2) {
+      for (char c : "01")
+        valid_digits[static_cast<unsigned char>(c)] = true;
+    } else if (radix == 10) {
+      for (char c : "0123456789")
+        valid_digits[static_cast<unsigned char>(c)] = true;
+    } else {
+      for (char c : "0123456789ABCDEF")
+        valid_digits[static_cast<unsigned char>(c)] = true;
+    }
+
     unsigned num_digit_separators = 0;
-    char max_decimal = (radix == 2) ? '1' : '9';
 
     for (std::size_t i = 0, n = text.size(); i != n; ++i) {
       char c = text[i];
-      if ((c >= '0' && c <= max_decimal) ||
-          (radix == 16 && c >= 'A' && c <= 'Z')) {
+      if (valid_digits[static_cast<unsigned char>(c)]) {
         continue;
       }
 
