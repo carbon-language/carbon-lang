@@ -186,6 +186,32 @@ class TokenizedBuffer {
     Token token;
   };
 
+  // The value of a real literal.
+  //
+  // This is either a dyadic fraction (mantissa * 2^exponent) or a decadic
+  // fraction (mantissa * 10^exponent).
+  class RealLiteralValue {
+    const llvm::APInt *mantissa;
+    const llvm::APInt *exponent;
+    bool is_decimal;
+
+   public:
+    // The mantissa, represented as an unsigned integer.
+    const llvm::APInt &Mantissa() const { return *mantissa; }
+    // The exponent, represented as a signed integer.
+    const llvm::APInt &Exponent() const { return *exponent; }
+    // If false, the value is mantissa * 2^exponent.
+    // If true, the value is mantissa * 10^exponent.
+    bool IsDecimal() const { return is_decimal; }
+
+   private:
+    friend class TokenizedBuffer;
+
+    RealLiteralValue(const llvm::APInt *mantissa, const llvm::APInt *exponent,
+                     bool is_decimal)
+        : mantissa(mantissa), exponent(exponent), is_decimal(is_decimal) {}
+  };
+
   // Lexes a buffer of source code into a tokenized buffer.
   //
   // The provided source buffer must outlive any returned `TokenizedBuffer`
@@ -223,7 +249,10 @@ class TokenizedBuffer {
   [[nodiscard]] auto GetIdentifier(Token token) const -> Identifier;
 
   // Returns the value of an `IntegerLiteral()` token.
-  auto GetIntegerLiteral(Token token) const -> llvm::APInt;
+  [[nodiscard]] auto GetIntegerLiteral(Token token) const -> llvm::APInt;
+
+  // Returns the value of an `RealLiteral()` token.
+  [[nodiscard]] auto GetRealLiteral(Token token) const -> RealLiteralValue;
 
   // Returns the closing token matched with the given opening token.
   //

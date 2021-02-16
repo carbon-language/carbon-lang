@@ -21,19 +21,93 @@
 
 namespace Carbon {
 
-static auto TakeLeadingIntegerLiteral(llvm::StringRef source_text)
-    -> llvm::StringRef {
-  if (source_text.empty() || !llvm::isDigit(source_text.front()))
-    return llvm::StringRef();
+struct NumericLiteral {
+  llvm::StringRef text;
 
-  // Greedily consume all following characters that might be part of an integer
+  // The offset of the '.'. Set to npos if none is present.
+  size_t radix_point = llvm::StringRef::npos;
+
+  // The offset of the alphabetical character introducing the exponent. In a
+  // valid literal, this will be an 'e' or a 'p', and may be followed by a '+'
+  // or a '-', but for error recovery, this may simply be the last lowercase
+  // letter in the invalid token. Always greater than or equal to radix_point.
+  // Set to npos if none is present.
+  size_t exponent = llvm::StringRef::npos;
+};
+
+static auto TakeLeadingNumericLiteral(llvm::StringRef source_text)
+    -> NumericLiteral {
+  NumericLiteral result;
+
+  if (source_text.empty() || !llvm::isDigit(source_text.front()))
+    return result;
+
+  bool seen_plus_minus = false;
+
+  // Greedily consume all following characters that might be part of a numeric
   // literal. This allows us to produce better diagnostics on invalid literals.
   //
-  // TODO(zygoloid): Update lexical rules to specify that an integer literal
-  // cannot be immediately followed by another integer literal or a word.
-  return source_text.take_while([](char c) {
-    return llvm::isAlnum(c) || c == '_';
-  });
+  // TODO(zygoloid): Update lexical rules to specify that a numeric literal
+  // cannot be immediately followed by an alphanumeric character.
+  std::size_t i = 1;
+  for (std::size_t n = source_text.size(); i != n; ++i) {
+    char c = source_text[i];
+    if (llvm::isAlnum(c) || c == '_') {
+      if (c >= 'a' && c <= 'z' && result.radix_point != llvm::StringRef::npos &&
+          !seen_plus_minus) {
+        result.exponent = i;
+      }
+      continue;
+    }
+
+    // Exactly one `.` can be part of the literal, but only if it's followed by
+    // an alphanumeric character.
+    if (c == '.' && i + 1 != n && llvm::isAlnum(source_text[i + 1]) &&
+        result.radix_point == llvm::StringRef::npos) {
+      result.radix_point = i;
+      continue;
+    }
+
+    // A `+` or `-` continues the literal only if it's preceded by a lowercase
+    // letter (which will be 'e' or 'p' or part of an invalid literal) and
+    // followed by an alphanumeric character. This '+' or '-' cannot be an
+    // operator because a literal cannot end in a lowercase letter.
+    if ((c == '+' || c == '-') && result.exponent == i - 1 && i + 1 != n &&
+        llvm::isAlnum(source_text[i + 1])) {
+      // This is not possible because we don't update result.exponent after we
+      // see a '+' or '-'.
+      assert(!seen_plus_minus && "should only consume one + or -");
+      seen_plus_minus = true;
+      continue;
+    }
+
+    break;
+  }
+
+  result.text = source_text.substr(0, i);
+  return result;
+}
+
+// Parse a string that is known to be a valid base-radix integer into an APInt.
+// If needs_cleaning is true, the string may additionally contain _ and .
+// characters that should be ignored.
+static auto ParseInteger(llvm::StringRef digits, unsigned radix,
+                         bool needs_cleaning) -> llvm::APInt {
+  std::string cleaned;
+  if (needs_cleaning) {
+    // TODO(zygoloid): Avoid the memory allocation here.
+    cleaned.reserve(digits.size());
+    std::remove_copy_if(digits.begin(), digits.end(),
+                        std::back_inserter(cleaned),
+                        [](char c) { return c == '_' || c == '.'; });
+    digits = cleaned;
+  }
+
+  llvm::APInt value;
+  if (digits.getAsInteger(radix, value)) {
+    llvm_unreachable("should never fail");
+  }
+  return value;
 }
 
 struct UnmatchedClosing {
@@ -130,6 +204,31 @@ struct UnknownBaseSpecifier {
   struct Substitutions {};
   static auto Format(const Substitutions&) -> std::string {
     return Message.str();
+  }
+};
+
+struct BinaryRealLiteral {
+  static constexpr llvm::StringLiteral ShortName =
+      "syntax-invalid-number";
+  static constexpr llvm::StringLiteral Message =
+      "Binary real number literals are not supported.";
+
+  struct Substitutions {};
+  static auto Format(const Substitutions&) -> std::string {
+    return Message.str();
+  }
+};
+
+struct WrongRealLiteralExponent {
+  static constexpr llvm::StringLiteral ShortName =
+      "syntax-invalid-number";
+
+  struct Substitutions { char expected; };
+  static auto Format(const Substitutions &subst) -> std::string {
+    char expected_str[] = {subst.expected, '\0'};
+    return (llvm::Twine("Expected '") + expected_str +
+            "' to introduce exponent.")
+        .str();
   }
 };
 
@@ -246,7 +345,8 @@ class TokenizedBuffer::Lexer {
     bool has_digit_separators = false;
   };
 
-  auto CheckDigitSequence(llvm::StringRef text, unsigned radix)
+  auto CheckDigitSequence(llvm::StringRef text, unsigned radix,
+                          bool allow_digit_separators = true)
       -> CheckDigitSequenceResult {
     assert((radix == 2 || radix == 10 || radix == 16) && "unknown radix");
 
@@ -279,7 +379,8 @@ class TokenizedBuffer::Lexer {
       if (c == '_') {
         // A digit separator cannot appear at the start of a digit sequence,
         // next to another digit separator, or at the end.
-        if (i == 0 || text[i-1] == '_' || i + 1 == n) {
+        if (!allow_digit_separators || i == 0 || text[i - 1] == '_' ||
+            i + 1 == n) {
           emitter.EmitError<InvalidDigitSeparator>(
               [&](InvalidDigitSeparator::Substitutions &) {});
           buffer.has_errors = true;
@@ -331,15 +432,15 @@ class TokenizedBuffer::Lexer {
     return {.ok = true, .has_digit_separators = (num_digit_separators != 0)};
   }
 
-  auto LexIntegerLiteral(llvm::StringRef& source_text) -> bool {
-    llvm::StringRef int_text = TakeLeadingIntegerLiteral(source_text);
-    if (int_text.empty()) {
+  auto LexNumericLiteral(llvm::StringRef& source_text) -> bool {
+    NumericLiteral literal = TakeLeadingNumericLiteral(source_text);
+    if (literal.text.empty()) {
       return false;
     }
 
     int int_column = current_column;
-    current_column += int_text.size();
-    source_text = source_text.drop_front(int_text.size());
+    current_column += literal.text.size();
+    source_text = source_text.drop_front(literal.text.size());
 
     if (!set_indent) {
       current_line_info->indent = int_column;
@@ -351,57 +452,134 @@ class TokenizedBuffer::Lexer {
           .kind = TokenKind::Error(),
           .token_line = current_line,
           .column = int_column,
-          .error_length = static_cast<int32_t>(int_text.size()),
+          .error_length = static_cast<int32_t>(literal.text.size()),
       });
       buffer.has_errors = true;
       // Indicate to the caller that we consumed a token.
       return true;
     };
 
+    // Check and remove base specifier.
     unsigned radix = 10;
-    llvm::StringRef digits = int_text;
-    if (int_text.size() >= 2 && int_text[0] == '0') {
-      if (int_text[1] == 'x') {
+    llvm::StringRef int_part = literal.text.substr(0, literal.radix_point);
+    llvm::StringRef digits = literal.text.substr(0, literal.exponent);
+    if (int_part.size() >= 2 && int_part[0] == '0') {
+      if (int_part[1] == 'x') {
         radix = 16;
-        digits = digits.drop_front(2);
-      } else if (int_text[1] == 'b') {
+      } else if (int_part[1] == 'b') {
         radix = 2;
-        digits = digits.drop_front(2);
       } else {
         emitter.EmitError<UnknownBaseSpecifier>(
             [&](UnknownBaseSpecifier::Substitutions &subst) {});
         return add_error_token_and_continue_lexing();
       }
+
+      int_part = int_part.drop_front(2);
+      digits = digits.drop_front(2);
     }
 
-    llvm::APInt int_value;
-
-    auto result = CheckDigitSequence(digits, radix);
-    if (!result.ok) {
+    auto int_result = CheckDigitSequence(int_part, radix);
+    if (!int_result.ok) {
       return add_error_token_and_continue_lexing();
     }
 
-    if (result.has_digit_separators) {
-      // TODO(zygoloid): Avoid the memory allocation here.
-      std::string cleaned;
-      cleaned.reserve(digits.size());
-      std::remove_copy_if(digits.begin(), digits.end(),
-                          std::back_inserter(cleaned),
-                          [](char c) { return c == '_'; });
-      if (llvm::StringRef(cleaned).getAsInteger(radix, int_value)) {
-        llvm_unreachable("should never fail");
+    // Do we need to remove any special characters (digit separator or radix
+    // point) before interpreting the mantissa or exponent as an integer?
+    bool mantissa_needs_cleaning = int_result.has_digit_separators;
+    bool exponent_needs_cleaning = false;
+
+    llvm::StringRef fract_part;
+    llvm::StringRef exponent_part;
+    bool exponent_is_negative = false;
+
+    // Check fractional part and exponent, if present.
+    if (literal.radix_point != llvm::StringRef::npos) {
+      if (radix == 2) {
+        emitter.EmitError<BinaryRealLiteral>(
+            [&](BinaryRealLiteral::Substitutions &subst) {});
+        buffer.has_errors = true;
+        // Carry on and parse the binary real literal anyway.
       }
-    } else {
-      if (digits.getAsInteger(radix, int_value)) {
-        llvm_unreachable("should never fail");
+
+      fract_part = literal.text.substr(0, literal.exponent)
+                       .substr(literal.radix_point + 1);
+      if (!CheckDigitSequence(fract_part, radix,
+                              /*allow_digit_separators=*/false)
+               .ok) {
+        return add_error_token_and_continue_lexing();
       }
+
+      // After the fractional part, we can optionally have 'e' or 'p' followed
+      // by a signed decimal integer.
+      if (literal.exponent != llvm::StringRef::npos) {
+        char expected_exponent_kind = (radix == 10 ? 'e' : 'p');
+        if (literal.text[literal.exponent] != expected_exponent_kind) {
+          emitter.EmitError<WrongRealLiteralExponent>(
+              [&](WrongRealLiteralExponent::Substitutions &subst) {
+                subst.expected = expected_exponent_kind;
+              });
+          return add_error_token_and_continue_lexing();
+        }
+
+        exponent_part = literal.text.substr(literal.exponent + 1);
+        if (!exponent_part.consume_front("+")) {
+          exponent_is_negative = exponent_part.consume_front("-");
+        }
+        auto exponent_result = CheckDigitSequence(exponent_part, 10);
+        if (!exponent_result.ok) {
+          return add_error_token_and_continue_lexing();
+        }
+        exponent_needs_cleaning = exponent_result.has_digit_separators;
+      }
+
+      mantissa_needs_cleaning = true;
     }
 
-    auto token = buffer.AddToken({.kind = TokenKind::IntegerLiteral(),
-                                  .token_line = current_line,
-                                  .column = int_column});
-    buffer.GetTokenInfo(token).literal_index = buffer.int_literals.size();
-    buffer.int_literals.push_back(std::move(int_value));
+    llvm::APInt mantissa = ParseInteger(digits, radix, mantissa_needs_cleaning);
+
+    // Form a suitable token.
+    if (literal.radix_point == llvm::StringRef::npos) {
+      auto token = buffer.AddToken({.kind = TokenKind::IntegerLiteral(),
+                                    .token_line = current_line,
+                                    .column = int_column});
+      buffer.GetTokenInfo(token).literal_index = buffer.int_literals.size();
+      buffer.int_literals.push_back(std::move(mantissa));
+    } else {
+      // Compute the effective exponent from the specified exponent, if any,
+      // and the position of the radix point.
+      llvm::APInt exponent(64, 0);
+      if (!exponent_part.empty()) {
+        exponent = ParseInteger(exponent_part, 10, exponent_needs_cleaning);
+        if (exponent.isSignBitSet() || exponent.getBitWidth() < 64) {
+          exponent = exponent.zext(std::max(64u, exponent.getBitWidth() + 1));
+        }
+        if (exponent_is_negative) {
+          exponent.negate();
+        }
+      }
+
+      // Each character after the decimal point reduces the effective exponent.
+      size_t excess_exponent = fract_part.size();
+      if (radix == 16) {
+        excess_exponent *= 4;
+      }
+      exponent -= excess_exponent;
+      if (exponent_is_negative && !exponent.isNegative()) {
+        // We overflowed. Note that we can only overflow by a little, and only
+        // from negative to positive, because exponent is at least 64 bits wide
+        // and excess_exponent is bounded above by four times the size of the
+        // input buffer.
+        exponent = exponent.zext(exponent.getBitWidth() + 1);
+        exponent.setSignBit();
+      }
+
+      auto token = buffer.AddToken({.kind = TokenKind::RealLiteral(),
+                                    .token_line = current_line,
+                                    .column = int_column});
+      buffer.GetTokenInfo(token).literal_index = buffer.int_literals.size();
+      buffer.int_literals.push_back(std::move(mantissa));
+      buffer.int_literals.push_back(std::move(exponent));
+    }
     return true;
   }
 
@@ -596,7 +774,7 @@ auto TokenizedBuffer::Lex(SourceBuffer& source, DiagnosticEmitter& emitter)
     if (lexer.LexKeywordOrIdentifier(source_text)) {
       continue;
     }
-    if (lexer.LexIntegerLiteral(source_text)) {
+    if (lexer.LexNumericLiteral(source_text)) {
       continue;
     }
     lexer.LexError(source_text);
@@ -645,10 +823,11 @@ auto TokenizedBuffer::GetTokenText(Token token) const -> llvm::StringRef {
 
   // Refer back to the source text to preserve oddities like radix or digit
   // separators the author included.
-  if (token_info.kind == TokenKind::IntegerLiteral()) {
+  if (token_info.kind == TokenKind::IntegerLiteral() ||
+      token_info.kind == TokenKind::RealLiteral()) {
     auto& line_info = GetLineInfo(token_info.token_line);
     int64_t token_start = line_info.start + token_info.column;
-    return TakeLeadingIntegerLiteral(source->Text().substr(token_start));
+    return TakeLeadingNumericLiteral(source->Text().substr(token_start)).text;
   }
 
   assert(token_info.kind == TokenKind::Identifier() &&
@@ -668,6 +847,24 @@ auto TokenizedBuffer::GetIntegerLiteral(Token token) const -> llvm::APInt {
   assert(token_info.kind == TokenKind::IntegerLiteral() &&
          "The token must be an integer literal!");
   return int_literals[token_info.literal_index];
+}
+
+auto TokenizedBuffer::GetRealLiteral(Token token) const -> RealLiteralValue {
+  auto& token_info = GetTokenInfo(token);
+  assert(token_info.kind == TokenKind::RealLiteral() &&
+         "The token must be a real literal!");
+
+  // Note that every real literal is at least three characters long, so we can
+  // safely look at the second character to determine whether we have a decimal
+  // or hexadecimal literal.
+  auto& line_info = GetLineInfo(token_info.token_line);
+  int64_t token_start = line_info.start + token_info.column;
+  char second_char = source->Text()[token_start + 1];
+  bool is_decimal = second_char != 'x' && second_char != 'b';
+
+  return RealLiteralValue(&int_literals[token_info.literal_index],
+                          &int_literals[token_info.literal_index + 1],
+                          is_decimal);
 }
 
 auto TokenizedBuffer::GetMatchedClosingToken(Token opening_token) const
