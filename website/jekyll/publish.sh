@@ -23,4 +23,5 @@ trap cleanup EXIT
 # Extract the built site.
 tar -xof website/jekyll/jekyll_site.tgz -C "${TMP_SITE}"
 
-gsutil -m -u carbon-language cp -R "${TMP_SITE}"/jekyll_site/* gs://www.carbon-lang.dev/
+gsutil -m -u carbon-language cp -R \
+  "${TMP_SITE}"/jekyll_site/* gs://www.carbon-lang.dev/
