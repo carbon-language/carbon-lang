@@ -9,7 +9,7 @@ url: 'https://carbon-lang.dev/'
 
 source: ./site
 destination: /tmp/jekyll_site
-markdown: CommonMark
+markdown: CommonMarkGhPages
 
 exclude:
   - src/
@@ -30,16 +30,7 @@ defaults:
       search: true
       topnav: topnav
 
-plugins:
-  # https://github.com/benbalter/jekyll-commonmark
-  - jekyll-commonmark
-  # https://github.com/benbalter/jekyll-default-layout
-  - jekyll-default-layout
-  # https://github.com/benbalter/jekyll-optional-front-matter
-  - jekyll-optional-front-matter
-  # https://github.com/benbalter/jekyll-readme-index
-  - jekyll-readme-index
-  # https://github.com/benbalter/jekyll-relative-links
-  - jekyll-relative-links
-  # https://github.com/benbalter/jekyll-titles-from-headings
-  - jekyll-titles-from-headings
+# Settings from https://github.com/github/jekyll-commonmark-ghpages.
+commonmark:
+  options: ['SMART', 'FOOTNOTES']
+  extensions: ['strikethrough', 'autolink', 'table', 'tagfilter']
