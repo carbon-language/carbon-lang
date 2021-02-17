@@ -48,6 +48,7 @@ tool_dirs = [config.llvm_tools_dir,
              config.test_source_root]
 
 tools = [
+    ToolSubst('llvm-dwarfdump', unresolved='fatal'),
     ToolSubst('llvm-bolt', unresolved='fatal'),
     ToolSubst('perf2bolt', unresolved='fatal'),
     ToolSubst('yaml2obj', unresolved='fatal'),

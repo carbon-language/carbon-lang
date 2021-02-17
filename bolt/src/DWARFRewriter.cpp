@@ -404,6 +404,25 @@ void DWARFRewriter::updateLineTableOffsets() {
   uint64_t CurrentOffset = 0;
   uint64_t Offset = 0;
 
+  auto DbgInfoSection = BC.getUniqueSectionByName(".debug_info");
+  auto TypeInfoSection = BC.getUniqueSectionByName(".debug_types");
+  assert(((BC.DwCtx->getNumTypeUnits() > 0 && TypeInfoSection) ||
+          BC.DwCtx->getNumTypeUnits() == 0) &&
+         "Was not able to retrieve Debug Types section.");
+
+  // There is no direct connection between CU and TU, but same offsets,
+  // encoded in DW_AT_stmt_list, into .debug_line get modified.
+  // We take advantage of that to map original CU line table offsets to new
+  // ones.
+  std::unordered_map<uint64_t, uint64_t> DebugLineOffsetMap;
+
+  auto getStatementListValue = [](DWARFUnit *Unit) {
+    auto StmtList = Unit->getUnitDIE().find(dwarf::DW_AT_stmt_list);
+    auto Offset = dwarf::toSectionOffset(StmtList);
+    assert(Offset && "Was not able to retreive value of DW_AT_stmt_list.");
+    return *Offset;
+  };
+
   for (const auto &CU : BC.DwCtx->compile_units()) {
     const unsigned CUID = CU->getOffset();
     MCSymbol *Label = BC.Ctx->getMCDwarfLineTable(CUID).getLabel();
@@ -441,7 +460,7 @@ void DWARFRewriter::updateLineTableOffsets() {
     Offset += Label->getOffset() - CurrentOffset;
     CurrentOffset = Label->getOffset();
 
-    auto DbgInfoSection = BC.getUniqueSectionByName(".debug_info");
+    DebugLineOffsetMap[getStatementListValue(CU.get())] = Offset;
     assert(DbgInfoSection && ".debug_info section must exist");
     DbgInfoSection->addRelocation(LTOffset,
                                   nullptr,
@@ -449,14 +468,32 @@ void DWARFRewriter::updateLineTableOffsets() {
                                   Offset,
                                   0,
                                   /*Pending=*/true);
-    // Set .debug_info as finalized so it won't be skipped over when
-    // we process sections while writing out the new binary.  This ensures
-    // that the pending relocations will be processed and not ignored.
-    DbgInfoSection->setIsFinalized();
 
     LLVM_DEBUG(dbgs() << "BOLT-DEBUG: CU " << CUID
                       << " has line table at " << Offset << "\n");
   }
+
+  for (const auto &TU : BC.DwCtx->types_section_units()) {
+    auto *Unit = TU.get();
+    const uint64_t LTOffset =
+        BC.DwCtx->getAttrFieldOffsetForUnit(Unit, dwarf::DW_AT_stmt_list);
+    if (!LTOffset)
+      continue;
+    auto Iter = DebugLineOffsetMap.find(getStatementListValue(Unit));
+    assert(Iter != DebugLineOffsetMap.end() &&
+           "Type Unit Updated Line Number Entry does not exist.");
+    TypeInfoSection->addRelocation(LTOffset, nullptr, ELF::R_X86_64_32,
+                                   Iter->second, 0, /*Pending=*/true);
+  }
+
+  // Set .debug_info as finalized so it won't be skipped over when
+  // we process sections while writing out the new binary.  This ensures
+  // that the pending relocations will be processed and not ignored.
+  if(DbgInfoSection)
+    DbgInfoSection->setIsFinalized();
+
+  if (TypeInfoSection)
+    TypeInfoSection->setIsFinalized();
 }
 
 void DWARFRewriter::finalizeDebugSections() {
