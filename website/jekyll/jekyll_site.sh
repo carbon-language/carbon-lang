@@ -43,6 +43,9 @@ for f in * .*; do
   fi
 done
 
+# Workaround for jekyll-github-metadata, which expects a $HOME.
+export HOME=${TMP_SITE}
+
 pushd "${TMP_SITE}"
 bundle exec jekyll build --quiet
 popd

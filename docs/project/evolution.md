@@ -101,9 +101,9 @@ team will still review participation.
 
 Our current review managers are:
 
--   [jonmeow](https://github.com/jonmeow)
--   [mmdriley](https://github.com/mmdriley)
--   [sidney13](https://github.com/sidney13)
+-   @jonmeow
+-   @mmdriley
+-   @sidney13
 
 ### Core team
 

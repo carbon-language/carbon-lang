@@ -32,5 +32,5 @@ tar -xof website/jekyll/jekyll_site.tgz -C "${TMP_SITE}"
 mkdir "${TMP_SITE}/site"
 
 pushd "${TMP_SITE}"
-bundle exec jekyll server --skip-initial-build
+bundle exec jekyll server --host "$(hostname)" --skip-initial-build
 popd

@@ -17,7 +17,24 @@ Important pieces are:
 
 ## Installing tooling
 
-See [Jekyll install instructions](https://jekyllrb.com/docs/installation/)
+See [Jekyll install instructions](https://jekyllrb.com/docs/installation/). This
+will look like:
+
+```bash
+brew install ruby
+gem install --user-install bundler jekyll
+```
+
+Then add `$HOME/.gem/ruby/X.X.0/bin` to the `PATH` environment variable; the
+required path is also printed in `gem` output.
+
+Finally, install from the `Gemfile`:
+
+```bash
+bundle install
+```
+
+Note that `bundle update` will update versions.
 
 ## Testing changes
 
