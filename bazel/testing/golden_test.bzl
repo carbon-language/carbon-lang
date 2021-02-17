@@ -2,7 +2,7 @@
 # Exceptions. See /LICENSE for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-"""Rule for a golden ttest."""
+"""Rule for a golden test."""
 
 def golden_test(name, golden, subject, **kwargs):
     """Compares two files. Passes if they are identical.
