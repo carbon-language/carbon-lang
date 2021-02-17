@@ -2158,13 +2158,16 @@ void RewriteInstance::readDynamicRelocations(const SectionRef &Section) {
                     << SectionName << ":\n");
 
   for (const auto &Rel : Section.relocations()) {
-    auto SymbolIter = Rel.getSymbol();
+    auto RType = Rel.getType();
+    if (Relocation::isNone(RType))
+      continue;
 
     StringRef SymbolName = "<none>";
     MCSymbol *Symbol = nullptr;
     uint64_t SymbolAddress = 0;
     const uint64_t Addend = getRelocationAddend(InputFile, Rel);
 
+    auto SymbolIter = Rel.getSymbol();
     if (SymbolIter != InputFile->symbol_end()) {
       SymbolName = cantFail(SymbolIter->getName());
       auto *BD = BC->getBinaryDataByName(SymbolName);

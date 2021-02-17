@@ -349,6 +349,12 @@ bool Relocation::isGOT(uint64_t Type) {
   return isGOTX86(Type);
 }
 
+bool Relocation::isNone(uint64_t Type) {
+  if (Arch == Triple::aarch64)
+    return Type == ELF::R_AARCH64_NONE;
+  return Type == ELF::R_X86_64_NONE;
+}
+
 bool Relocation::isTLS(uint64_t Type) {
   if (Arch == Triple::aarch64)
     return isTLSAArch64(Type);

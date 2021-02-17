@@ -69,6 +69,9 @@ struct Relocation {
   /// Return true if relocation type implies the creation of a GOT entry
   static bool isGOT(uint64_t Type);
 
+  /// Return true if relocation type is NONE
+  static bool isNone(uint64_t Type);
+
   /// Return true if relocation type is for thread local storage.
   static bool isTLS(uint64_t Type);
 
