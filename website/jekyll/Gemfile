@@ -14,7 +14,6 @@ gem 'webrick'
 group :jekyll_plugins do
   gem 'jekyll-commonmark-ghpages'
   gem 'jekyll-default-layout'
-  gem 'jekyll-mentions'
   gem 'jekyll-optional-front-matter'
   gem 'jekyll-readme-index'
   gem 'jekyll-relative-links'
