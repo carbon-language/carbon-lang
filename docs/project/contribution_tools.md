@@ -27,12 +27,12 @@ contributions.
     -   [Clang and LLVM](#clang-and-llvm)
     -   [Ninja](#ninja)
     -   [pre-commit](#pre-commit)
+    -   [Testing Support](#testing-support)
 -   [Optional tools](#optional-tools)
     -   [Carbon-maintained](#carbon-maintained)
         -   [new_proposal.py](#new_proposalpy)
         -   [pr_comments.py](#pr_commentspy)
     -   [GitHub](#github)
-        -   [gh CLI](#gh-cli)
         -   [GitHub Desktop](#github-desktop)
     -   [`rs-git-fsmonitor` and Watchman](#rs-git-fsmonitor-and-watchman)
     -   [Vim](#vim)
@@ -54,7 +54,9 @@ typical tool setup flow is:
 1.  Install [package managers](#package-managers).
 2.  Install [main tools](#main-tools) and any desired
     [optional tools](#optional-tools).
-3.  Set up the [git](https://git-scm.com/) repository:
+3.  Validate your installation by invoking `bazelisk test //...:all' from the
+    project root. All tests should pass.
+4.  Set up the [git](https://git-scm.com/) repository:
     -   In GitHub, create a fork for development at
         https://github.com/carbon-language/carbon-lang.
     -   `gh repository clone USER/carbon-lang`, or otherwise clone the fork.
@@ -222,6 +224,19 @@ git commit
 When modifying or adding pre-commit hooks, please run
 `pre-commit run --all-files` to see what changes.
 
+### Testing Support
+
+These installations packages are needed in order to run all the tests.
+
+```bash
+pip install gql PyGitHub
+brew install gh
+```
+
+**Note**: If you've installed all the foregoing tools in this document. You can
+validate that you've done everything right by invoking `bazelisk test //...:all'
+from the project root. All tests should pass.
+
 ## Optional tools
 
 ### Carbon-maintained
@@ -249,24 +264,7 @@ Options can be seen with `-h`. A couple key options to be aware of are:
 -   `--comments-from LOGIN`: Only print threads with comments from the given
     user. For example, use when looking for threads that you've commented on.
 
-**NOTE**: This requires the Python gql package:
-
-```bash
-pip install gql
-```
-
 ### GitHub
-
-#### gh CLI
-
-[The gh CLI](https://github.com/cli/cli) supports some GitHub queries, and is
-used by some scripts.
-
-To install gh, run:
-
-```bash
-brew install github/gh/gh
-```
 
 #### GitHub Desktop
 
