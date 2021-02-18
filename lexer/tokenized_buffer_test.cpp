@@ -167,6 +167,7 @@ TEST_F(LexerTest, ValidatesBaseSpecifier) {
       "00",  "0X123",    "0o123",          "0B1",
       "007", "123L",     "123456789A",     "0x",
       "0b",  "0x123abc", "0b011101201001", "0b10A",
+      "0x_", "0b_",
   };
   for (llvm::StringLiteral literal : invalid) {
     auto buffer = Lex(literal);
@@ -353,6 +354,8 @@ TEST_F(LexerTest, ValidatesRealLiterals) {
       // No digits in integer part.
       "0x.0",
       "0b.0",
+      "0x_.0",
+      "0b_.0",
 
       // Invalid digits in mantissa.
       "123A.4",
@@ -375,6 +378,8 @@ TEST_F(LexerTest, ValidatesRealLiterals) {
       // No digits in exponent part.
       "0.0e",
       "0x0.0p",
+      "0.0e_",
+      "0x0.0p_",
 
       // Invalid digits in exponent part.
       "0.0eHELLO",
@@ -409,6 +414,7 @@ TEST_F(LexerTest, SplitsNumericLiteralsProperly) {
     10.foo
     11.0.foo
     12e+1
+    13._
   )";
   auto buffer = Lex(source_text);
   EXPECT_TRUE(buffer.HasErrors());
@@ -457,6 +463,10 @@ TEST_F(LexerTest, SplitsNumericLiteralsProperly) {
                   {.kind = TokenKind::Error(), .text = "12e"},
                   {.kind = TokenKind::Plus()},
                   {.kind = TokenKind::IntegerLiteral(), .text = "1"},
+                  // newline
+                  {.kind = TokenKind::IntegerLiteral(), .text = "13"},
+                  {.kind = TokenKind::Period()},
+                  {.kind = TokenKind::UnderscoreKeyword()},
               }));
 }
 

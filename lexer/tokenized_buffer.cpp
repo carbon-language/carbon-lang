@@ -350,12 +350,6 @@ class TokenizedBuffer::Lexer {
       -> CheckDigitSequenceResult {
     assert((radix == 2 || radix == 10 || radix == 16) && "unknown radix");
 
-    if (text.empty()) {
-      emitter.EmitError<EmptyDigitSequence>(
-          [&](EmptyDigitSequence::Substitutions &) {});
-      return {.ok = false};
-    }
-
     std::bitset<256> valid_digits;
     if (radix == 2) {
       for (char c : "01")
@@ -394,6 +388,12 @@ class TokenizedBuffer::Lexer {
             subst.digit = c;
             subst.radix = radix;
           });
+      return {.ok = false};
+    }
+
+    if (num_digit_separators == text.size()) {
+      emitter.EmitError<EmptyDigitSequence>(
+          [&](EmptyDigitSequence::Substitutions &) {});
       return {.ok = false};
     }
 
