@@ -256,7 +256,8 @@ class TokenizedBuffer::Lexer {
       buffer.has_errors = true;
     };
 
-    // Check that digit separators occur in all the expected positions.
+    // For decimal and hexadecimal digit sequences, digit separators must form
+    // groups of 3 or 4 digits (4 or 5 characters), respectively.
     unsigned stride = (radix == 10 ? 4 : 5);
     unsigned remaining_digit_separators = num_digit_separators;
     for (auto pos = text.end(); pos - text.begin() >= stride; /*in loop*/) {
@@ -327,8 +328,7 @@ class TokenizedBuffer::Lexer {
       return {.ok = false};
     }
 
-    // For decimal and hexadecimal digit sequences, digit separators must form
-    // groups of 3 or 4 digits (4 or 5 characters), respectively.
+    // Check that digit separators occur in exactly the expected positions.
     if (num_digit_separators && radix != 2)
       CheckDigitSeparatorPlacement(text, radix, num_digit_separators);
 
