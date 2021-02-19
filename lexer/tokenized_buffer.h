@@ -191,6 +191,10 @@ class TokenizedBuffer {
   // This is either a dyadic fraction (mantissa * 2^exponent) or a decadic
   // fraction (mantissa * 10^exponent).
   class RealLiteralValue {
+    // The mantissa and exponent of the literal value are pointers into the
+    // int_literals collection on the TokenizedBuffer. That collection becomes
+    // immutable when construction of the TokenizedBuffer is complete, so these
+    // pointers remain valid for as long as the TokenizedBuffer does.
     const llvm::APInt *mantissa;
     const llvm::APInt *exponent;
     bool is_decimal;
