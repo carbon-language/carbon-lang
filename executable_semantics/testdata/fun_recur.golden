@@ -1,0 +1,21 @@
+********** source program **********
+fn f Int: x -> Int {
+if ((x == 0))
+return x;
+else
+return f(0 = (x - 1));
+
+}
+fn main () -> Int {
+return f(0 = 2);
+
+}
+********** type checking **********
+--- step exp Int --->
+--- step exp Int --->
+--- step exp Int --->
+--- step exp Int --->
+--- step exp Int --->
+9: type error in call
+expected: Int
+actual: Tuple(0 = Int)
