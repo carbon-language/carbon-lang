@@ -340,6 +340,37 @@ class TokenizedBuffer::Lexer {
     return false;
   }
 
+  auto CheckDigitSeparatorPlacement(llvm::StringRef text, unsigned radix,
+                                    unsigned num_digit_separators) {
+    assert((radix == 10 || radix == 16) &&
+           "unexpected radix for digit separator checks");
+    assert(std::count(text.begin(), text.end(), '_') == num_digit_separators &&
+           "given wrong number of digit separators");
+
+    auto diagnose_irregular_digit_separators = [&] {
+      emitter.EmitError<IrregularDigitSeparators>(
+          [&](IrregularDigitSeparators::Substitutions &subst) {
+            subst.radix = radix;
+          });
+      buffer.has_errors = true;
+    };
+
+    // Check that digit separators occur in all the expected positions.
+    unsigned stride = (radix == 10 ? 4 : 5);
+    unsigned remaining_digit_separators = num_digit_separators;
+    for (auto pos = text.end(); pos - text.begin() >= stride; /*in loop*/) {
+      pos -= stride;
+      if (*pos != '_')
+        return diagnose_irregular_digit_separators();
+
+      --remaining_digit_separators;
+    }
+
+    // Check there weren't any other digit separators.
+    if (remaining_digit_separators)
+      diagnose_irregular_digit_separators();
+  };
+
   struct CheckDigitSequenceResult {
     bool ok;
     bool has_digit_separators = false;
@@ -397,37 +428,10 @@ class TokenizedBuffer::Lexer {
       return {.ok = false};
     }
 
-    auto check_digit_separator_placement = [&](unsigned
-                                                   remaining_digit_separators) {
-      auto diagnose_irregular_digit_separators = [&] {
-        emitter.EmitError<IrregularDigitSeparators>(
-            [&](IrregularDigitSeparators::Substitutions &subst) {
-              subst.radix = radix;
-            });
-        buffer.has_errors = true;
-      };
-
-      // Check that digit separators occur in all the expected positions.
-      unsigned stride = (radix == 10 ? 4 : 5);
-      for (auto pos = text.end(); pos - text.begin() >= stride; /*in loop*/) {
-        pos -= stride;
-        if (*pos != '_')
-          return diagnose_irregular_digit_separators();
-
-        assert(remaining_digit_separators > 0 &&
-               "given incorrect digit separator count");
-        --remaining_digit_separators;
-      }
-
-      // Check there weren't any other digit separators.
-      if (remaining_digit_separators)
-        diagnose_irregular_digit_separators();
-    };
-
     // For decimal and hexadecimal digit sequences, digit separators must form
     // groups of 3 or 4 digits (4 or 5 characters), respectively.
     if (num_digit_separators && radix != 2)
-      check_digit_separator_placement(num_digit_separators);
+      CheckDigitSeparatorPlacement(text, radix, num_digit_separators);
 
     return {.ok = true, .has_digit_separators = (num_digit_separators != 0)};
   }
