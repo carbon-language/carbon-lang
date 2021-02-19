@@ -264,8 +264,6 @@ class TokenizedBuffer::Lexer {
       if (*pos != '_')
         return diagnose_irregular_digit_separators();
 
-      assert(remaining_digit_separators > 0 &&
-             "given incorrect digit separator count");
       --remaining_digit_separators;
     }
 
