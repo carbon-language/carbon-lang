@@ -1,0 +1,265 @@
+********** source program **********
+fn main () -> Int {
+var Int: x = 0;
+{
+var Int: x = 1;
+
+}
+
+return x;
+
+}
+********** type checking **********
+--- step exp Int --->
+--- step exp Int --->
+--- step exp Int --->
+--- step exp Int --->
+
+********** type checking complete **********
+fn main () -> Int {
+var Int: x = 0;
+{
+var Int: x = 1;
+
+}
+
+return x;
+}
+********** starting execution **********
+********** initializing globals **********
+--- step exp () --->
+********** calling main function **********
+{
+stack: top{main()<-1>}
+heap: fun<main>, 
+env: main: fun<main>, 
+}
+--- step exp main() --->
+{
+stack: top{main<-1> :: main()<0>}
+heap: fun<main>, 
+env: main: fun<main>, 
+}
+--- step exp main --->
+{
+stack: top{fun<main><-1> :: main()<0>}
+heap: fun<main>, 
+env: main: fun<main>, 
+}
+--- handle value fun<main> with main()<1>(fun<main>,) --->
+{
+stack: top{()<-1> :: main()<1>(fun<main>,)}
+heap: fun<main>, 
+env: main: fun<main>, 
+}
+--- step exp () --->
+{
+stack: top{()<-1> :: main()<1>(fun<main>,)}
+heap: fun<main>, 
+env: main: fun<main>, 
+}
+--- handle value () with main()<2>(fun<main>,(),) --->
+pattern_match((), ())
+{
+stack: main{var Int: x = 0; ... <-1>} :: top{}
+heap: fun<main>, 
+env: main: fun<main>, 
+}
+--- step stmt var Int: x = 0; ...  --->
+{
+stack: main{var Int: x = 0;<-1> :: {
+ ... 
+}
+ ... <-1>} :: top{}
+heap: fun<main>, 
+env: main: fun<main>, 
+}
+--- step stmt var Int: x = 0; --->
+{
+stack: main{0<-1> :: var Int: x = 0;<0> :: {
+ ... 
+}
+ ... <-1>} :: top{}
+heap: fun<main>, 
+env: main: fun<main>, 
+}
+--- step exp 0 --->
+{
+stack: main{0<-1> :: var Int: x = 0;<0> :: {
+ ... 
+}
+ ... <-1>} :: top{}
+heap: fun<main>, 
+env: main: fun<main>, 
+}
+--- handle value 0 with var Int: x = 0;<1>(0,) --->
+{
+stack: main{Int: x<-1> :: var Int: x = 0;<1>(0,) :: {
+ ... 
+}
+ ... <-1>} :: top{}
+heap: fun<main>, 
+env: main: fun<main>, 
+}
+--- step exp Int: x --->
+{
+stack: main{Int<-1> :: Int: x<0> :: var Int: x = 0;<1>(0,) :: {
+ ... 
+}
+ ... <-1>} :: top{}
+heap: fun<main>, 
+env: main: fun<main>, 
+}
+--- step exp Int --->
+{
+stack: main{Int<-1> :: Int: x<0> :: var Int: x = 0;<1>(0,) :: {
+ ... 
+}
+ ... <-1>} :: top{}
+heap: fun<main>, 
+env: main: fun<main>, 
+}
+--- handle value Int with Int: x<1>(Int,) --->
+{
+stack: main{Int: x<-1> :: var Int: x = 0;<1>(0,) :: {
+ ... 
+}
+ ... <-1>} :: top{}
+heap: fun<main>, 
+env: main: fun<main>, 
+}
+--- handle value Int: x with var Int: x = 0;<2>(0,Int: x,) --->
+pattern_match(Int: x, 0)
+{
+stack: main{{
+ ... 
+}
+ ... <-1>} :: top{}
+heap: fun<main>, 0, 
+env: x: 0, main: fun<main>, 
+}
+--- step stmt {
+ ... 
+}
+ ...  --->
+{
+stack: main{{
+ ... 
+}
+<-1> :: return x;<-1>} :: top{}
+heap: fun<main>, 0, 
+env: x: 0, main: fun<main>, 
+}
+--- step stmt {
+ ... 
+}
+ --->
+{
+stack: main{var Int: x = 1;<-1> :: {
+ ... 
+}
+<0> :: return x;<-1>} :: top{}
+heap: fun<main>, 0, 
+env: x: 0, main: fun<main>, 
+}
+--- step stmt var Int: x = 1; --->
+{
+stack: main{var Int: x = 1;<-1> :: {
+ ... 
+}
+<0> :: return x;<-1>} :: top{}
+heap: fun<main>, 0, 
+env: x: 0, main: fun<main>, 
+}
+--- step stmt var Int: x = 1; --->
+{
+stack: main{1<-1> :: var Int: x = 1;<0> :: {
+ ... 
+}
+<0> :: return x;<-1>} :: top{}
+heap: fun<main>, 0, 
+env: x: 0, main: fun<main>, 
+}
+--- step exp 1 --->
+{
+stack: main{1<-1> :: var Int: x = 1;<0> :: {
+ ... 
+}
+<0> :: return x;<-1>} :: top{}
+heap: fun<main>, 0, 
+env: x: 0, main: fun<main>, 
+}
+--- handle value 1 with var Int: x = 1;<1>(1,) --->
+{
+stack: main{Int: x<-1> :: var Int: x = 1;<1>(1,) :: {
+ ... 
+}
+<0> :: return x;<-1>} :: top{}
+heap: fun<main>, 0, 
+env: x: 0, main: fun<main>, 
+}
+--- step exp Int: x --->
+{
+stack: main{Int<-1> :: Int: x<0> :: var Int: x = 1;<1>(1,) :: {
+ ... 
+}
+<0> :: return x;<-1>} :: top{}
+heap: fun<main>, 0, 
+env: x: 0, main: fun<main>, 
+}
+--- step exp Int --->
+{
+stack: main{Int<-1> :: Int: x<0> :: var Int: x = 1;<1>(1,) :: {
+ ... 
+}
+<0> :: return x;<-1>} :: top{}
+heap: fun<main>, 0, 
+env: x: 0, main: fun<main>, 
+}
+--- handle value Int with Int: x<1>(Int,) --->
+{
+stack: main{Int: x<-1> :: var Int: x = 1;<1>(1,) :: {
+ ... 
+}
+<0> :: return x;<-1>} :: top{}
+heap: fun<main>, 0, 
+env: x: 0, main: fun<main>, 
+}
+--- handle value Int: x with var Int: x = 1;<2>(1,Int: x,) --->
+pattern_match(Int: x, 1)
+{
+stack: main{{
+ ... 
+}
+<0> :: return x;<-1>} :: top{}
+heap: fun<main>, 0, 1, 
+env: x: 1, x: 0, main: fun<main>, 
+}
+--- step stmt {
+ ... 
+}
+ --->
+{
+stack: main{return x;<-1>} :: top{}
+heap: fun<main>, 0, !!1, 
+env: x: 0, main: fun<main>, 
+}
+--- step stmt return x; --->
+{
+stack: main{x<-1> :: return x;<0>} :: top{}
+heap: fun<main>, 0, !!1, 
+env: x: 0, main: fun<main>, 
+}
+--- step exp x --->
+{
+stack: main{0<-1> :: return x;<0>} :: top{}
+heap: fun<main>, 0, !!1, 
+env: x: 0, main: fun<main>, 
+}
+--- handle value 0 with return x;<1>(0,) --->
+{
+stack: top{0<-1>}
+heap: fun<main>, !!0, !!1, 
+env: main: fun<main>, 
+}
+result: 0
