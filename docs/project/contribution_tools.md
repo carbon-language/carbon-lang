@@ -27,12 +27,15 @@ contributions.
     -   [Clang and LLVM](#clang-and-llvm)
     -   [Ninja](#ninja)
     -   [pre-commit](#pre-commit)
-    -   [Testing Support](#testing-support)
+    -   [gql](#gql)
+    -   [PyGitHub](#pygithub)
+-   [Setup Validation](#setup-validation)
 -   [Optional tools](#optional-tools)
     -   [Carbon-maintained](#carbon-maintained)
         -   [new_proposal.py](#new_proposalpy)
         -   [pr_comments.py](#pr_commentspy)
     -   [GitHub](#github)
+        -   [gh CLI](#gh-cli)
         -   [GitHub Desktop](#github-desktop)
     -   [`rs-git-fsmonitor` and Watchman](#rs-git-fsmonitor-and-watchman)
     -   [Vim](#vim)
@@ -224,18 +227,23 @@ git commit
 When modifying or adding pre-commit hooks, please run
 `pre-commit run --all-files` to see what changes.
 
-### Testing Support
-
-These installations packages are needed in order to run all the tests.
+### gql
 
 ```bash
-pip install gql PyGitHub
-brew install gh
+pip install gql
 ```
 
-**Note**: If you've installed all the foregoing tools in this document. You can
-validate that you've done everything right by invoking `bazelisk test //...:all'
-from the project root. All tests should pass.
+### PyGitHub
+
+```bash
+pip install PyGitHub
+```
+
+## Setup Validation
+
+If you've installed all the foregoing tools in this document. You can validate
+that you've done everything right by invoking `bazelisk test //...:all' from the
+project root. All tests should pass.
 
 ## Optional tools
 
@@ -265,6 +273,17 @@ Options can be seen with `-h`. A couple key options to be aware of are:
     user. For example, use when looking for threads that you've commented on.
 
 ### GitHub
+
+#### gh CLI
+
+[The gh CLI](https://github.com/cli/cli) supports some GitHub queries, and is
+used by some scripts.
+
+To install gh, run:
+
+```bash
+brew install github/gh/gh
+```
 
 #### GitHub Desktop
 
