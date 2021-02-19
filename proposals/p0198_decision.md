@@ -6,7 +6,7 @@ Exceptions. See /LICENSE for license information.
 SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -->
 
-Proposal accepted on 2020-02-19
+Proposal accepted on 2021-02-19
 
 Affirming:
 
