@@ -398,6 +398,14 @@ arising from name collisions between interfaces. It has a few downsides though:
 -   It makes reading code harder, since you have to search the file for these
     declarations that affect name lookup.
 
+**Comparison with other languages:** Both Rust and Swift support external
+implementation. The concept of doing this as an "extension" of the original type
+is more similar to
+[Swift](https://docs.swift.org/swift-book/LanguageGuide/Protocols.html#ID277),
+but, unlike Swift, we don't allow a type's API to be modified outside its
+definition. In Rust, all implementations are external as in
+[this example](https://doc.rust-lang.org/rust-by-example/trait.html).
+
 ### Rejected: out-of-line impl
 
 We considered an out-of-line syntax for declaring and defining interface `impl`
@@ -785,6 +793,10 @@ could use `&`. I'm using `+` in this proposal since it is consistent with Rust.
 
 **Alternatives considered:** See
 [Carbon: Access to interface methods](https://docs.google.com/document/d/1u_i_s31OMI_apPur7WmVxcYq6MUXsG3oCiKwH893GRI/edit?usp=sharing&resourcekey=0-0lzSNebBMtUBi4lStL825g).
+
+**Comparison with other languages:** This `+` operation on interfaces works very
+similarly to Rust, with the main difference being how you
+[qualify names when there is a conflict](https://doc.rust-lang.org/rust-by-example/trait/disambiguating.html).
 
 ## Interface requiring other interfaces
 
