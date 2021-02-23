@@ -198,6 +198,8 @@ def main():
             "pr",
             "comment",
             str(pr_num),
+            "--repo",
+            "carbon-language/carbon-lang",
             "--body",
             _LINK_TEMPLATE % pr_num,
         ]
