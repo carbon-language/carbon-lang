@@ -192,9 +192,9 @@ class TokenizedBuffer {
   // fraction (mantissa * 10^exponent).
   class RealLiteralValue {
     // The mantissa and exponent of the literal value are pointers into the
-    // int_literals collection on the TokenizedBuffer. That collection becomes
-    // immutable when construction of the TokenizedBuffer is complete, so these
-    // pointers remain valid for as long as the TokenizedBuffer does.
+    // literal_int_storage collection on the TokenizedBuffer. That collection
+    // becomes immutable when construction of the TokenizedBuffer is complete,
+    // so these pointers remain valid for as long as the TokenizedBuffer does.
     const llvm::APInt *mantissa;
     const llvm::APInt *exponent;
     bool is_decimal;
@@ -253,7 +253,7 @@ class TokenizedBuffer {
   [[nodiscard]] auto GetIdentifier(Token token) const -> Identifier;
 
   // Returns the value of an `IntegerLiteral()` token.
-  [[nodiscard]] auto GetIntegerLiteral(Token token) const -> llvm::APInt;
+  [[nodiscard]] auto GetIntegerLiteral(Token token) const -> const llvm::APInt&;
 
   // Returns the value of an `RealLiteral()` token.
   [[nodiscard]] auto GetRealLiteral(Token token) const -> RealLiteralValue;
@@ -394,7 +394,7 @@ class TokenizedBuffer {
 
   llvm::SmallVector<IdentifierInfo, 16> identifier_infos;
 
-  llvm::SmallVector<llvm::APInt, 16> int_literals;
+  llvm::SmallVector<llvm::APInt, 16> literal_int_storage;
 
   llvm::DenseMap<llvm::StringRef, Identifier> identifier_map;
 

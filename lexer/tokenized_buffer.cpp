@@ -624,15 +624,17 @@ class TokenizedBuffer::Lexer {
       auto token = buffer.AddToken({.kind = TokenKind::IntegerLiteral(),
                                     .token_line = current_line,
                                     .column = int_column});
-      buffer.GetTokenInfo(token).literal_index = buffer.int_literals.size();
-      buffer.int_literals.push_back(literal_lexer.GetMantissa());
+      buffer.GetTokenInfo(token).literal_index =
+          buffer.literal_int_storage.size();
+      buffer.literal_int_storage.push_back(literal_lexer.GetMantissa());
     } else {
       auto token = buffer.AddToken({.kind = TokenKind::RealLiteral(),
                                     .token_line = current_line,
                                     .column = int_column});
-      buffer.GetTokenInfo(token).literal_index = buffer.int_literals.size();
-      buffer.int_literals.push_back(literal_lexer.GetMantissa());
-      buffer.int_literals.push_back(literal_lexer.GetExponent());
+      buffer.GetTokenInfo(token).literal_index =
+          buffer.literal_int_storage.size();
+      buffer.literal_int_storage.push_back(literal_lexer.GetMantissa());
+      buffer.literal_int_storage.push_back(literal_lexer.GetExponent());
     }
     return true;
   }
@@ -896,11 +898,12 @@ auto TokenizedBuffer::GetIdentifier(Token token) const -> Identifier {
   return token_info.id;
 }
 
-auto TokenizedBuffer::GetIntegerLiteral(Token token) const -> llvm::APInt {
+auto TokenizedBuffer::GetIntegerLiteral(Token token) const
+    -> const llvm::APInt& {
   auto& token_info = GetTokenInfo(token);
   assert(token_info.kind == TokenKind::IntegerLiteral() &&
          "The token must be an integer literal!");
-  return int_literals[token_info.literal_index];
+  return literal_int_storage[token_info.literal_index];
 }
 
 auto TokenizedBuffer::GetRealLiteral(Token token) const -> RealLiteralValue {
@@ -916,8 +919,8 @@ auto TokenizedBuffer::GetRealLiteral(Token token) const -> RealLiteralValue {
   char second_char = source->Text()[token_start + 1];
   bool is_decimal = second_char != 'x' && second_char != 'b';
 
-  return RealLiteralValue(&int_literals[token_info.literal_index],
-                          &int_literals[token_info.literal_index + 1],
+  return RealLiteralValue(&literal_int_storage[token_info.literal_index],
+                          &literal_int_storage[token_info.literal_index + 1],
                           is_decimal);
 }
 
