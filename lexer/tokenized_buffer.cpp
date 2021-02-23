@@ -2,14 +2,13 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#include "lexer/tokenized_buffer.h"
-
 #include <algorithm>
 #include <bitset>
 #include <cmath>
 #include <iterator>
 #include <string>
 
+#include "lexer/tokenized_buffer.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/StringSwitch.h"
@@ -44,46 +43,42 @@ struct MismatchedClosing {
 };
 
 struct EmptyDigitSequence {
-  static constexpr llvm::StringLiteral ShortName =
-      "syntax-invalid-number";
+  static constexpr llvm::StringLiteral ShortName = "syntax-invalid-number";
   static constexpr llvm::StringLiteral Message =
       "Empty digit sequence in numeric literal.";
 
-  struct Substitutions {
-  };
+  struct Substitutions {};
   static auto Format(const Substitutions&) -> std::string {
     return Message.str();
   }
 };
 
 struct InvalidDigit {
-  static constexpr llvm::StringLiteral ShortName =
-      "syntax-invalid-number";
+  static constexpr llvm::StringLiteral ShortName = "syntax-invalid-number";
 
   struct Substitutions {
     char digit;
     int radix;
   };
-  static auto Format(const Substitutions &subst) -> std::string {
+  static auto Format(const Substitutions& subst) -> std::string {
     // TODO: Switch Format to using raw_ostream so we can easily use
     // llvm::format here.
     llvm::StringRef digit_str(&subst.digit, 1);
     return (llvm::Twine("Invalid digit '") + digit_str + "' in " +
-            (subst.radix == 2 ? "binary"
-                              : subst.radix == 16 ? "hexadecimal" : "decimal") +
+            (subst.radix == 2    ? "binary"
+             : subst.radix == 16 ? "hexadecimal"
+                                 : "decimal") +
             " numeric literal.")
         .str();
   }
 };
 
 struct InvalidDigitSeparator {
-  static constexpr llvm::StringLiteral ShortName =
-      "syntax-invalid-number";
+  static constexpr llvm::StringLiteral ShortName = "syntax-invalid-number";
   static constexpr llvm::StringLiteral Message =
       "Misplaced digit separator in numeric literal.";
 
-  struct Substitutions {
-  };
+  struct Substitutions {};
   static auto Format(const Substitutions&) -> std::string {
     return Message.str();
   }
@@ -96,7 +91,7 @@ struct IrregularDigitSeparators {
   struct Substitutions {
     int radix;
   };
-  static auto Format(const Substitutions &subst) -> std::string {
+  static auto Format(const Substitutions& subst) -> std::string {
     assert((subst.radix == 10 || subst.radix == 16) && "unexpected radix");
     return (llvm::Twine("Digit separators in ") +
             (subst.radix == 10 ? "decimal" : "hexadecimal") +
@@ -107,8 +102,7 @@ struct IrregularDigitSeparators {
 };
 
 struct UnknownBaseSpecifier {
-  static constexpr llvm::StringLiteral ShortName =
-      "syntax-invalid-number";
+  static constexpr llvm::StringLiteral ShortName = "syntax-invalid-number";
   static constexpr llvm::StringLiteral Message =
       "Unknown base specifier in numeric literal.";
 
@@ -119,8 +113,7 @@ struct UnknownBaseSpecifier {
 };
 
 struct BinaryRealLiteral {
-  static constexpr llvm::StringLiteral ShortName =
-      "syntax-invalid-number";
+  static constexpr llvm::StringLiteral ShortName = "syntax-invalid-number";
   static constexpr llvm::StringLiteral Message =
       "Binary real number literals are not supported.";
 
@@ -131,11 +124,12 @@ struct BinaryRealLiteral {
 };
 
 struct WrongRealLiteralExponent {
-  static constexpr llvm::StringLiteral ShortName =
-      "syntax-invalid-number";
+  static constexpr llvm::StringLiteral ShortName = "syntax-invalid-number";
 
-  struct Substitutions { char expected; };
-  static auto Format(const Substitutions &subst) -> std::string {
+  struct Substitutions {
+    char expected;
+  };
+  static auto Format(const Substitutions& subst) -> std::string {
     char expected_str[] = {subst.expected, '\0'};
     return (llvm::Twine("Expected '") + expected_str +
             "' to introduce exponent.")
@@ -236,7 +230,11 @@ static auto TakeLeadingNumericLiteral(llvm::StringRef source_text)
 }
 
 namespace {
-class NumericLiteralLexer {
+// Parser for numeric literal tokens.
+//
+// Responsible for checking that a numeric literal is valid and meaningful and
+// either diagnosing or extracting its meaning.
+class NumericLiteralParser {
   DiagnosticEmitter& emitter;
   NumericLiteral literal;
 
@@ -263,7 +261,7 @@ class NumericLiteralLexer {
   bool recovered_from_error = false;
 
  public:
-  NumericLiteralLexer(DiagnosticEmitter& emitter, NumericLiteral literal)
+  NumericLiteralParser(DiagnosticEmitter& emitter, NumericLiteral literal)
       : emitter(emitter), literal(literal) {
     int_part = literal.text.substr(0, literal.radix_point);
     if (int_part.consume_front("0x")) {
@@ -286,10 +284,17 @@ class NumericLiteralLexer {
   }
 
   enum CheckResult {
+    // The token is valid.
     Valid,
+    // The token is invalid, but we've diagnosed and recovered from the error.
     RecoverableError,
+    // The token is invalid, and we've diagnosed, but we can't assign meaning
+    // to it.
     UnrecoverableError,
   };
+
+  // Check that the numeric literal token is syntactically valid and
+  // meaningful, and diagnose if not.
   auto Check() -> CheckResult {
     if (!CheckLeadingZero() || !CheckIntPart() || !CheckFractionalPart() ||
         !CheckExponentPart())
@@ -345,6 +350,9 @@ class NumericLiteralLexer {
     bool has_digit_separators = false;
   };
 
+  // Check that a digit sequence is valid: that it contains one or more digits,
+  // contains only digits in the specified base, and that any digit separators
+  // are present and correctly positioned.
   auto CheckDigitSequence(llvm::StringRef text, int radix,
                           bool allow_digit_separators = true)
       -> CheckDigitSequenceResult {
@@ -403,6 +411,8 @@ class NumericLiteralLexer {
     return {.ok = true, .has_digit_separators = (num_digit_separators != 0)};
   }
 
+  // Given a number with digit separators, check that the digit separators are
+  // correctly positioned.
   auto CheckDigitSeparatorPlacement(llvm::StringRef text, int radix,
                                     int num_digit_separators) -> void {
     assert((radix == 10 || radix == 16) &&
@@ -435,6 +445,7 @@ class NumericLiteralLexer {
       diagnose_irregular_digit_separators();
   };
 
+  // Check that we don't have a '0' prefix on a non-zero decimal integer.
   auto CheckLeadingZero() -> bool {
     if (radix == 10 && int_part.size() > 1 && int_part[0] == '0') {
       emitter.EmitError<UnknownBaseSpecifier>(
@@ -444,12 +455,15 @@ class NumericLiteralLexer {
     return true;
   }
 
+  // Check the integer part (before the '.', if any) is valid.
   auto CheckIntPart() -> bool {
     auto int_result = CheckDigitSequence(int_part, radix);
     mantissa_needs_cleaning |= int_result.has_digit_separators;
     return int_result.ok;
   }
 
+  // Check the fractional part (after the '.' and before the exponent, if any)
+  // is valid.
   auto CheckFractionalPart() -> bool {
     if (IsInteger()) {
       return true;
@@ -470,6 +484,7 @@ class NumericLiteralLexer {
         .ok;
   }
 
+  // Check the exponent part (if any) is valid.
   auto CheckExponentPart() -> bool {
     if (literal.exponent == static_cast<int>(literal.text.size())) {
       return true;
@@ -628,42 +643,42 @@ class TokenizedBuffer::Lexer {
       set_indent = true;
     }
 
-    NumericLiteralLexer literal_lexer(emitter, literal);
+    NumericLiteralParser literal_parser(emitter, literal);
 
-    switch (literal_lexer.Check()) {
-    case NumericLiteralLexer::UnrecoverableError:
-      buffer.AddToken({
-          .kind = TokenKind::Error(),
-          .token_line = current_line,
-          .column = int_column,
-          .error_length = static_cast<int32_t>(literal.text.size()),
-      });
-      buffer.has_errors = true;
-      return true;
+    switch (literal_parser.Check()) {
+      case NumericLiteralParser::UnrecoverableError:
+        buffer.AddToken({
+            .kind = TokenKind::Error(),
+            .token_line = current_line,
+            .column = int_column,
+            .error_length = static_cast<int32_t>(literal.text.size()),
+        });
+        buffer.has_errors = true;
+        return true;
 
-    case NumericLiteralLexer::RecoverableError:
-      buffer.has_errors = true;
-      break;
+      case NumericLiteralParser::RecoverableError:
+        buffer.has_errors = true;
+        break;
 
-    case NumericLiteralLexer::Valid:
-      break;
+      case NumericLiteralParser::Valid:
+        break;
     }
 
-    if (literal_lexer.IsInteger()) {
+    if (literal_parser.IsInteger()) {
       auto token = buffer.AddToken({.kind = TokenKind::IntegerLiteral(),
                                     .token_line = current_line,
                                     .column = int_column});
       buffer.GetTokenInfo(token).literal_index =
           buffer.literal_int_storage.size();
-      buffer.literal_int_storage.push_back(literal_lexer.GetMantissa());
+      buffer.literal_int_storage.push_back(literal_parser.GetMantissa());
     } else {
       auto token = buffer.AddToken({.kind = TokenKind::RealLiteral(),
                                     .token_line = current_line,
                                     .column = int_column});
       buffer.GetTokenInfo(token).literal_index =
           buffer.literal_int_storage.size();
-      buffer.literal_int_storage.push_back(literal_lexer.GetMantissa());
-      buffer.literal_int_storage.push_back(literal_lexer.GetExponent());
+      buffer.literal_int_storage.push_back(literal_parser.GetMantissa());
+      buffer.literal_int_storage.push_back(literal_parser.GetExponent());
     }
     return true;
   }

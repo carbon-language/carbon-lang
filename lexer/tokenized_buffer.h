@@ -194,7 +194,7 @@ class TokenizedBuffer {
   // The `TokenizedBuffer` must outlive any `RealLiteralValue`s referring to
   // its tokens.
   class RealLiteralValue {
-    const TokenizedBuffer *buffer;
+    const TokenizedBuffer* buffer;
     int32_t literal_index;
     bool is_decimal;
 
