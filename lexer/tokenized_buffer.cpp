@@ -21,110 +21,6 @@
 
 namespace Carbon {
 
-struct NumericLiteral {
-  llvm::StringRef text;
-
-  // The offset of the '.'. Set to text.size() if none is present.
-  int radix_point;
-
-  // The offset of the alphabetical character introducing the exponent. In a
-  // valid literal, this will be an 'e' or a 'p', and may be followed by a '+'
-  // or a '-', but for error recovery, this may simply be the last lowercase
-  // letter in the invalid token. Always greater than or equal to radix_point.
-  // Set to text.size() if none is present.
-  int exponent;
-};
-
-static bool isLower(char c) { return 'a' <= c && c <= 'z'; }
-
-static auto TakeLeadingNumericLiteral(llvm::StringRef source_text)
-    -> NumericLiteral {
-  NumericLiteral result;
-
-  if (source_text.empty() || !llvm::isDigit(source_text.front()))
-    return result;
-
-  bool seen_plus_minus = false;
-  bool seen_radix_point = false;
-  bool seen_potential_exponent = false;
-
-  // Greedily consume all following characters that might be part of a numeric
-  // literal. This allows us to produce better diagnostics on invalid literals.
-  //
-  // TODO(zygoloid): Update lexical rules to specify that a numeric literal
-  // cannot be immediately followed by an alphanumeric character.
-  int i = 1, n = source_text.size();
-  for (; i != n; ++i) {
-    char c = source_text[i];
-    if (llvm::isAlnum(c) || c == '_') {
-      if (isLower(c) && seen_radix_point && !seen_plus_minus) {
-        result.exponent = i;
-        seen_potential_exponent = true;
-      }
-      continue;
-    }
-
-    // Exactly one `.` can be part of the literal, but only if it's followed by
-    // an alphanumeric character.
-    if (c == '.' && i + 1 != n && llvm::isAlnum(source_text[i + 1]) &&
-        !seen_radix_point) {
-      result.radix_point = i;
-      seen_radix_point = true;
-      continue;
-    }
-
-    // A `+` or `-` continues the literal only if it's preceded by a lowercase
-    // letter (which will be 'e' or 'p' or part of an invalid literal) and
-    // followed by an alphanumeric character. This '+' or '-' cannot be an
-    // operator because a literal cannot end in a lowercase letter.
-    if ((c == '+' || c == '-') && seen_potential_exponent &&
-        result.exponent == i - 1 && i + 1 != n &&
-        llvm::isAlnum(source_text[i + 1])) {
-      // This is not possible because we don't update result.exponent after we
-      // see a '+' or '-'.
-      assert(!seen_plus_minus && "should only consume one + or -");
-      seen_plus_minus = true;
-      continue;
-    }
-
-    break;
-  }
-
-  result.text = source_text.substr(0, i);
-  if (!seen_radix_point)
-    result.radix_point = i;
-  if (!seen_potential_exponent)
-    result.exponent = i;
-
-  return result;
-}
-
-// Parse a string that is known to be a valid base-radix integer into an APInt.
-// If needs_cleaning is true, the string may additionally contain '_' and '.'
-// characters that should be ignored.
-//
-// Ignoring '.' is used when parsing a real literal. For example, when parsing
-// 123.456e7, we want to decompose it into an integer mantissa (123456) and an
-// exponent (7 - 3 = 2), and this routine is given the "123.456" to parse as
-// the mantissa.
-static auto ParseInteger(llvm::StringRef digits, int radix,
-                         bool needs_cleaning) -> llvm::APInt {
-  llvm::SmallString<32> cleaned;
-  if (needs_cleaning) {
-    cleaned.reserve(digits.size());
-    std::remove_copy_if(digits.begin(), digits.end(),
-                        std::back_inserter(cleaned),
-                        [](char c) { return c == '_' || c == '.'; });
-    digits = cleaned;
-  }
-
-  llvm::APInt value;
-  if (digits.getAsInteger(radix, value)) {
-    llvm_unreachable("should never fail");
-  }
-  return value;
-}
-
 struct UnmatchedClosing {
   static constexpr llvm::StringLiteral ShortName = "syntax-balanced-delimiters";
   static constexpr llvm::StringLiteral Message =
@@ -259,6 +155,368 @@ struct UnrecognizedCharacters {
   }
 };
 
+static bool isLower(char c) { return 'a' <= c && c <= 'z'; }
+
+namespace {
+struct NumericLiteral {
+  llvm::StringRef text;
+
+  // The offset of the '.'. Set to text.size() if none is present.
+  int radix_point;
+
+  // The offset of the alphabetical character introducing the exponent. In a
+  // valid literal, this will be an 'e' or a 'p', and may be followed by a '+'
+  // or a '-', but for error recovery, this may simply be the last lowercase
+  // letter in the invalid token. Always greater than or equal to radix_point.
+  // Set to text.size() if none is present.
+  int exponent;
+};
+}  // namespace
+
+static auto TakeLeadingNumericLiteral(llvm::StringRef source_text)
+    -> NumericLiteral {
+  NumericLiteral result;
+
+  if (source_text.empty() || !llvm::isDigit(source_text.front()))
+    return result;
+
+  bool seen_plus_minus = false;
+  bool seen_radix_point = false;
+  bool seen_potential_exponent = false;
+
+  // Greedily consume all following characters that might be part of a numeric
+  // literal. This allows us to produce better diagnostics on invalid literals.
+  //
+  // TODO(zygoloid): Update lexical rules to specify that a numeric literal
+  // cannot be immediately followed by an alphanumeric character.
+  int i = 1, n = source_text.size();
+  for (; i != n; ++i) {
+    char c = source_text[i];
+    if (llvm::isAlnum(c) || c == '_') {
+      if (isLower(c) && seen_radix_point && !seen_plus_minus) {
+        result.exponent = i;
+        seen_potential_exponent = true;
+      }
+      continue;
+    }
+
+    // Exactly one `.` can be part of the literal, but only if it's followed by
+    // an alphanumeric character.
+    if (c == '.' && i + 1 != n && llvm::isAlnum(source_text[i + 1]) &&
+        !seen_radix_point) {
+      result.radix_point = i;
+      seen_radix_point = true;
+      continue;
+    }
+
+    // A `+` or `-` continues the literal only if it's preceded by a lowercase
+    // letter (which will be 'e' or 'p' or part of an invalid literal) and
+    // followed by an alphanumeric character. This '+' or '-' cannot be an
+    // operator because a literal cannot end in a lowercase letter.
+    if ((c == '+' || c == '-') && seen_potential_exponent &&
+        result.exponent == i - 1 && i + 1 != n &&
+        llvm::isAlnum(source_text[i + 1])) {
+      // This is not possible because we don't update result.exponent after we
+      // see a '+' or '-'.
+      assert(!seen_plus_minus && "should only consume one + or -");
+      seen_plus_minus = true;
+      continue;
+    }
+
+    break;
+  }
+
+  result.text = source_text.substr(0, i);
+  if (!seen_radix_point)
+    result.radix_point = i;
+  if (!seen_potential_exponent)
+    result.exponent = i;
+
+  return result;
+}
+
+namespace {
+class NumericLiteralLexer {
+  DiagnosticEmitter& emitter;
+  NumericLiteral literal;
+
+  // The radix of the literal: 2, 10, or 16, for a prefix of '0b', no prefix,
+  // or '0x', respectively.
+  int radix = 10;
+
+  // The various components of a numeric literal:
+  //
+  //     [radix] int_part [. fract_part [[ep] [+-] exponent_part]]
+  llvm::StringRef int_part;
+  llvm::StringRef fract_part;
+  llvm::StringRef exponent_part;
+
+  // Do we need to remove any special characters (digit separator or radix
+  // point) before interpreting the mantissa or exponent as an integer?
+  bool mantissa_needs_cleaning = false;
+  bool exponent_needs_cleaning = false;
+
+  // True if we found a `-` before `exponent_part`.
+  bool exponent_is_negative = false;
+
+  // True if we produced an error but recovered.
+  bool recovered_from_error = false;
+
+ public:
+  NumericLiteralLexer(DiagnosticEmitter& emitter, NumericLiteral literal)
+      : emitter(emitter), literal(literal) {
+    int_part = literal.text.substr(0, literal.radix_point);
+    if (int_part.consume_front("0x")) {
+      radix = 16;
+    } else if (int_part.consume_front("0b")) {
+      radix = 2;
+    }
+
+    fract_part = literal.text.substr(
+        literal.radix_point + 1, literal.exponent - literal.radix_point - 1);
+
+    exponent_part = literal.text.substr(literal.exponent + 1);
+    if (!exponent_part.consume_front("+")) {
+      exponent_is_negative = exponent_part.consume_front("-");
+    }
+  }
+
+  auto IsInteger() -> bool {
+    return literal.radix_point == static_cast<int>(literal.text.size());
+  }
+
+  enum CheckResult {
+    Valid,
+    RecoverableError,
+    UnrecoverableError,
+  };
+  auto Check() -> CheckResult {
+    if (!CheckLeadingZero() || !CheckIntPart() || !CheckFractionalPart() ||
+        !CheckExponentPart())
+      return UnrecoverableError;
+    return recovered_from_error ? RecoverableError : Valid;
+  }
+
+  auto GetMantissa() -> llvm::APInt {
+    const char* end = IsInteger() ? int_part.end() : fract_part.end();
+    llvm::StringRef digits(int_part.begin(), end - int_part.begin());
+    return ParseInteger(digits, radix, mantissa_needs_cleaning);
+  }
+
+  auto GetExponent() -> llvm::APInt {
+    // Compute the effective exponent from the specified exponent, if any,
+    // and the position of the radix point.
+    llvm::APInt exponent(64, 0);
+    if (!exponent_part.empty()) {
+      exponent = ParseInteger(exponent_part, 10, exponent_needs_cleaning);
+
+      // The exponent is a signed integer, and the number we just parsed is
+      // non-negative, so ensure we have a wide enough representation to
+      // include a sign bit. Also make sure the exponent isn't too narrow so
+      // the calculation below can't lose information through overflow.
+      if (exponent.isSignBitSet() || exponent.getBitWidth() < 64) {
+        exponent = exponent.zext(std::max(64u, exponent.getBitWidth() + 1));
+      }
+      if (exponent_is_negative) {
+        exponent.negate();
+      }
+    }
+
+    // Each character after the decimal point reduces the effective exponent.
+    int excess_exponent = fract_part.size();
+    if (radix == 16) {
+      excess_exponent *= 4;
+    }
+    exponent -= excess_exponent;
+    if (exponent_is_negative && !exponent.isNegative()) {
+      // We overflowed. Note that we can only overflow by a little, and only
+      // from negative to positive, because exponent is at least 64 bits wide
+      // and excess_exponent is bounded above by four times the size of the
+      // input buffer, which we assume fits into 32 bits.
+      exponent = exponent.zext(exponent.getBitWidth() + 1);
+      exponent.setSignBit();
+    }
+    return exponent;
+  }
+
+ private:
+  struct CheckDigitSequenceResult {
+    bool ok;
+    bool has_digit_separators = false;
+  };
+
+  auto CheckDigitSequence(llvm::StringRef text, int radix,
+                          bool allow_digit_separators = true)
+      -> CheckDigitSequenceResult {
+    assert((radix == 2 || radix == 10 || radix == 16) && "unknown radix");
+
+    std::bitset<256> valid_digits;
+    if (radix == 2) {
+      for (char c : "01")
+        valid_digits[static_cast<unsigned char>(c)] = true;
+    } else if (radix == 10) {
+      for (char c : "0123456789")
+        valid_digits[static_cast<unsigned char>(c)] = true;
+    } else {
+      for (char c : "0123456789ABCDEF")
+        valid_digits[static_cast<unsigned char>(c)] = true;
+    }
+
+    int num_digit_separators = 0;
+
+    for (int i = 0, n = text.size(); i != n; ++i) {
+      char c = text[i];
+      if (valid_digits[static_cast<unsigned char>(c)]) {
+        continue;
+      }
+
+      if (c == '_') {
+        // A digit separator cannot appear at the start of a digit sequence,
+        // next to another digit separator, or at the end.
+        if (!allow_digit_separators || i == 0 || text[i - 1] == '_' ||
+            i + 1 == n) {
+          emitter.EmitError<InvalidDigitSeparator>(
+              [&](InvalidDigitSeparator::Substitutions&) {});
+          recovered_from_error = true;
+        }
+        ++num_digit_separators;
+        continue;
+      }
+
+      emitter.EmitError<InvalidDigit>([&](InvalidDigit::Substitutions& subst) {
+        subst.digit = c;
+        subst.radix = radix;
+      });
+      return {.ok = false};
+    }
+
+    if (num_digit_separators == static_cast<int>(text.size())) {
+      emitter.EmitError<EmptyDigitSequence>(
+          [&](EmptyDigitSequence::Substitutions&) {});
+      return {.ok = false};
+    }
+
+    // Check that digit separators occur in exactly the expected positions.
+    if (num_digit_separators && radix != 2)
+      CheckDigitSeparatorPlacement(text, radix, num_digit_separators);
+
+    return {.ok = true, .has_digit_separators = (num_digit_separators != 0)};
+  }
+
+  auto CheckDigitSeparatorPlacement(llvm::StringRef text, int radix,
+                                    int num_digit_separators) -> void {
+    assert((radix == 10 || radix == 16) &&
+           "unexpected radix for digit separator checks");
+    assert(std::count(text.begin(), text.end(), '_') == num_digit_separators &&
+           "given wrong number of digit separators");
+
+    auto diagnose_irregular_digit_separators = [&] {
+      emitter.EmitError<IrregularDigitSeparators>(
+          [&](IrregularDigitSeparators::Substitutions& subst) {
+            subst.radix = radix;
+          });
+      recovered_from_error = true;
+    };
+
+    // For decimal and hexadecimal digit sequences, digit separators must form
+    // groups of 3 or 4 digits (4 or 5 characters), respectively.
+    int stride = (radix == 10 ? 4 : 5);
+    int remaining_digit_separators = num_digit_separators;
+    for (auto pos = text.end(); pos - text.begin() >= stride; /*in loop*/) {
+      pos -= stride;
+      if (*pos != '_')
+        return diagnose_irregular_digit_separators();
+
+      --remaining_digit_separators;
+    }
+
+    // Check there weren't any other digit separators.
+    if (remaining_digit_separators)
+      diagnose_irregular_digit_separators();
+  };
+
+  auto CheckLeadingZero() -> bool {
+    if (radix == 10 && int_part.size() > 1 && int_part[0] == '0') {
+      emitter.EmitError<UnknownBaseSpecifier>(
+          [&](UnknownBaseSpecifier::Substitutions& subst) {});
+      return false;
+    }
+    return true;
+  }
+
+  auto CheckIntPart() -> bool {
+    auto int_result = CheckDigitSequence(int_part, radix);
+    mantissa_needs_cleaning |= int_result.has_digit_separators;
+    return int_result.ok;
+  }
+
+  auto CheckFractionalPart() -> bool {
+    if (IsInteger()) {
+      return true;
+    }
+
+    if (radix == 2) {
+      emitter.EmitError<BinaryRealLiteral>(
+          [&](BinaryRealLiteral::Substitutions& subst) {});
+      recovered_from_error = true;
+      // Carry on and parse the binary real literal anyway.
+    }
+
+    // We need to remove a '.' from the mantissa.
+    mantissa_needs_cleaning = true;
+
+    return CheckDigitSequence(fract_part, radix,
+                              /*allow_digit_separators=*/false)
+        .ok;
+  }
+
+  auto CheckExponentPart() -> bool {
+    if (literal.exponent == static_cast<int>(literal.text.size())) {
+      return true;
+    }
+
+    char expected_exponent_kind = (radix == 10 ? 'e' : 'p');
+    if (literal.text[literal.exponent] != expected_exponent_kind) {
+      emitter.EmitError<WrongRealLiteralExponent>(
+          [&](WrongRealLiteralExponent::Substitutions& subst) {
+            subst.expected = expected_exponent_kind;
+          });
+      return false;
+    }
+
+    auto exponent_result = CheckDigitSequence(exponent_part, 10);
+    exponent_needs_cleaning = exponent_result.has_digit_separators;
+    return exponent_result.ok;
+  }
+
+  // Parse a string that is known to be a valid base-radix integer into an
+  // APInt.  If needs_cleaning is true, the string may additionally contain '_'
+  // and '.' characters that should be ignored.
+  //
+  // Ignoring '.' is used when parsing a real literal. For example, when
+  // parsing 123.456e7, we want to decompose it into an integer mantissa
+  // (123456) and an exponent (7 - 3 = 2), and this routine is given the
+  // "123.456" to parse as the mantissa.
+  static auto ParseInteger(llvm::StringRef digits, int radix,
+                           bool needs_cleaning) -> llvm::APInt {
+    llvm::SmallString<32> cleaned;
+    if (needs_cleaning) {
+      cleaned.reserve(digits.size());
+      std::remove_copy_if(digits.begin(), digits.end(),
+                          std::back_inserter(cleaned),
+                          [](char c) { return c == '_' || c == '.'; });
+      digits = cleaned;
+    }
+
+    llvm::APInt value;
+    if (digits.getAsInteger(radix, value)) {
+      llvm_unreachable("should never fail");
+    }
+    return value;
+  }
+};
+}  // namespace
+
 // Implementation of the lexer logic itself.
 //
 // The design is that lexing can loop over the source buffer, consuming it into
@@ -354,261 +612,6 @@ class TokenizedBuffer::Lexer {
     current_line_info->length = current_column;
     return false;
   }
-
-  class NumericLiteralLexer {
-    DiagnosticEmitter& emitter;
-    NumericLiteral literal;
-
-    // The radix of the literal: 2, 10, or 16, for a prefix of '0b', no prefix,
-    // or '0x', respectively.
-    int radix = 10;
-
-    // The various components of a numeric literal:
-    //
-    //     [radix] int_part [. fract_part [[ep] [+-] exponent_part]]
-    llvm::StringRef int_part;
-    llvm::StringRef fract_part;
-    llvm::StringRef exponent_part;
-
-    // Do we need to remove any special characters (digit separator or radix
-    // point) before interpreting the mantissa or exponent as an integer?
-    bool mantissa_needs_cleaning = false;
-    bool exponent_needs_cleaning = false;
-
-    // True if we found a `-` before `exponent_part`.
-    bool exponent_is_negative = false;
-
-    // True if we produced an error but recovered.
-    bool recovered_from_error = false;
-
-   public:
-    NumericLiteralLexer(DiagnosticEmitter& emitter, NumericLiteral literal)
-        : emitter(emitter), literal(literal) {
-      int_part = literal.text.substr(0, literal.radix_point);
-      if (int_part.consume_front("0x")) {
-        radix = 16;
-      } else if (int_part.consume_front("0b")) {
-        radix = 2;
-      }
-
-      fract_part = literal.text.substr(
-          literal.radix_point + 1, literal.exponent - literal.radix_point - 1);
-
-      exponent_part = literal.text.substr(literal.exponent + 1);
-      if (!exponent_part.consume_front("+")) {
-        exponent_is_negative = exponent_part.consume_front("-");
-      }
-    }
-
-    auto IsInteger() -> bool {
-      return literal.radix_point == static_cast<int>(literal.text.size());
-    }
-
-    enum CheckResult {
-      Valid,
-      RecoverableError,
-      UnrecoverableError,
-    };
-    auto Check() -> CheckResult {
-      if (!CheckLeadingZero() || !CheckIntPart() || !CheckFractionalPart() ||
-          !CheckExponentPart())
-        return UnrecoverableError;
-      return recovered_from_error ? RecoverableError : Valid;
-    }
-
-    auto GetMantissa() -> llvm::APInt {
-      const char *end = IsInteger() ? int_part.end() : fract_part.end();
-      llvm::StringRef digits(int_part.begin(), end - int_part.begin());
-      return ParseInteger(digits, radix, mantissa_needs_cleaning);
-    }
-
-    auto GetExponent() -> llvm::APInt {
-      // Compute the effective exponent from the specified exponent, if any,
-      // and the position of the radix point.
-      llvm::APInt exponent(64, 0);
-      if (!exponent_part.empty()) {
-        exponent = ParseInteger(exponent_part, 10, exponent_needs_cleaning);
-
-        // The exponent is a signed integer, and the number we just parsed is
-        // non-negative, so ensure we have a wide enough representation to
-        // include a sign bit. Also make sure the exponent isn't too narrow so
-        // the calculation below can't lose information through overflow.
-        if (exponent.isSignBitSet() || exponent.getBitWidth() < 64) {
-          exponent = exponent.zext(std::max(64u, exponent.getBitWidth() + 1));
-        }
-        if (exponent_is_negative) {
-          exponent.negate();
-        }
-      }
-
-      // Each character after the decimal point reduces the effective exponent.
-      int excess_exponent = fract_part.size();
-      if (radix == 16) {
-        excess_exponent *= 4;
-      }
-      exponent -= excess_exponent;
-      if (exponent_is_negative && !exponent.isNegative()) {
-        // We overflowed. Note that we can only overflow by a little, and only
-        // from negative to positive, because exponent is at least 64 bits wide
-        // and excess_exponent is bounded above by four times the size of the
-        // input buffer, which we assume fits into 32 bits.
-        exponent = exponent.zext(exponent.getBitWidth() + 1);
-        exponent.setSignBit();
-      }
-      return exponent;
-    }
-
-   private:
-    struct CheckDigitSequenceResult {
-      bool ok;
-      bool has_digit_separators = false;
-    };
-
-    auto CheckDigitSequence(llvm::StringRef text, int radix,
-                            bool allow_digit_separators = true)
-        -> CheckDigitSequenceResult {
-      assert((radix == 2 || radix == 10 || radix == 16) && "unknown radix");
-
-      std::bitset<256> valid_digits;
-      if (radix == 2) {
-        for (char c : "01")
-          valid_digits[static_cast<unsigned char>(c)] = true;
-      } else if (radix == 10) {
-        for (char c : "0123456789")
-          valid_digits[static_cast<unsigned char>(c)] = true;
-      } else {
-        for (char c : "0123456789ABCDEF")
-          valid_digits[static_cast<unsigned char>(c)] = true;
-      }
-
-      int num_digit_separators = 0;
-
-      for (int i = 0, n = text.size(); i != n; ++i) {
-        char c = text[i];
-        if (valid_digits[static_cast<unsigned char>(c)]) {
-          continue;
-        }
-
-        if (c == '_') {
-          // A digit separator cannot appear at the start of a digit sequence,
-          // next to another digit separator, or at the end.
-          if (!allow_digit_separators || i == 0 || text[i - 1] == '_' ||
-              i + 1 == n) {
-            emitter.EmitError<InvalidDigitSeparator>(
-                [&](InvalidDigitSeparator::Substitutions &) {});
-            recovered_from_error = true;
-          }
-          ++num_digit_separators;
-          continue;
-        }
-
-        emitter.EmitError<InvalidDigit>(
-            [&](InvalidDigit::Substitutions &subst) {
-              subst.digit = c;
-              subst.radix = radix;
-            });
-        return {.ok = false};
-      }
-
-      if (num_digit_separators == static_cast<int>(text.size())) {
-        emitter.EmitError<EmptyDigitSequence>(
-            [&](EmptyDigitSequence::Substitutions &) {});
-        return {.ok = false};
-      }
-
-      // Check that digit separators occur in exactly the expected positions.
-      if (num_digit_separators && radix != 2)
-        CheckDigitSeparatorPlacement(text, radix, num_digit_separators);
-
-      return {.ok = true, .has_digit_separators = (num_digit_separators != 0)};
-    }
-
-    auto CheckDigitSeparatorPlacement(llvm::StringRef text, int radix,
-                                      int num_digit_separators) -> void {
-      assert((radix == 10 || radix == 16) &&
-             "unexpected radix for digit separator checks");
-      assert(std::count(text.begin(), text.end(), '_') == num_digit_separators &&
-             "given wrong number of digit separators");
-
-      auto diagnose_irregular_digit_separators = [&] {
-        emitter.EmitError<IrregularDigitSeparators>(
-            [&](IrregularDigitSeparators::Substitutions &subst) {
-              subst.radix = radix;
-            });
-        recovered_from_error = true;
-      };
-
-      // For decimal and hexadecimal digit sequences, digit separators must form
-      // groups of 3 or 4 digits (4 or 5 characters), respectively.
-      int stride = (radix == 10 ? 4 : 5);
-      int remaining_digit_separators = num_digit_separators;
-      for (auto pos = text.end(); pos - text.begin() >= stride; /*in loop*/) {
-        pos -= stride;
-        if (*pos != '_')
-          return diagnose_irregular_digit_separators();
-
-        --remaining_digit_separators;
-      }
-
-      // Check there weren't any other digit separators.
-      if (remaining_digit_separators)
-        diagnose_irregular_digit_separators();
-    };
-
-    auto CheckLeadingZero() -> bool {
-      if (radix == 10 && int_part.size() > 1 && int_part[0] == '0') {
-        emitter.EmitError<UnknownBaseSpecifier>(
-            [&](UnknownBaseSpecifier::Substitutions& subst) {});
-        return false;
-      }
-      return true;
-    }
-
-    auto CheckIntPart() -> bool {
-      auto int_result = CheckDigitSequence(int_part, radix);
-      mantissa_needs_cleaning |= int_result.has_digit_separators;
-      return int_result.ok;
-    }
-
-    auto CheckFractionalPart() -> bool {
-      if (IsInteger()) {
-        return true;
-      }
-
-      if (radix == 2) {
-        emitter.EmitError<BinaryRealLiteral>(
-            [&](BinaryRealLiteral::Substitutions& subst) {});
-        recovered_from_error = true;
-        // Carry on and parse the binary real literal anyway.
-      }
-
-      // We need to remove a '.' from the mantissa.
-      mantissa_needs_cleaning = true;
-
-      return CheckDigitSequence(fract_part, radix,
-                                /*allow_digit_separators=*/false)
-          .ok;
-    }
-
-    auto CheckExponentPart() -> bool {
-      if (literal.exponent == static_cast<int>(literal.text.size())) {
-        return true;
-      }
-
-      char expected_exponent_kind = (radix == 10 ? 'e' : 'p');
-      if (literal.text[literal.exponent] != expected_exponent_kind) {
-        emitter.EmitError<WrongRealLiteralExponent>(
-            [&](WrongRealLiteralExponent::Substitutions& subst) {
-              subst.expected = expected_exponent_kind;
-            });
-        return false;
-      }
-
-      auto exponent_result = CheckDigitSequence(exponent_part, 10);
-      exponent_needs_cleaning = exponent_result.has_digit_separators;
-      return exponent_result.ok;
-    }
-  };
 
   auto LexNumericLiteral(llvm::StringRef& source_text) -> bool {
     NumericLiteral literal = TakeLeadingNumericLiteral(source_text);
