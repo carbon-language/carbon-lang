@@ -1198,6 +1198,17 @@ struct Point3D {
 }
 ```
 
+And these values may be accessed as follows:
+
+```
+fn PrintPoint[NSpacePoint:$ PointT](PointT: p) {
+  for (var Int: i = 0; i < PointT.N; ++i) {
+    if (i > 0) { Print(", "); }
+    Print(p.Get(i));
+  }
+}
+```
+
 ## Associated types
 
 Associated types are associated constants that happen to be types.
@@ -1250,7 +1261,8 @@ Now we can write a generic function that operates on anything implementing the
 `Stack` interface, for example:
 
 ```
-fn PeekAtTopOfStack[Stack:$ StackType](Ptr(StackType): s) -> StackType.ElementType {
+fn PeekAtTopOfStack[Stack:$ StackType](Ptr(StackType): s)
+    -> StackType.ElementType {
   var StackType.ElementType: top = s->Pop();
   s->Push(top);
   return top;
