@@ -31,9 +31,8 @@ static auto TakeLeadingIntegerLiteral(llvm::StringRef source_text)
   //
   // TODO(zygoloid): Update lexical rules to specify that an integer literal
   // cannot be immediately followed by another integer literal or a word.
-  return source_text.take_while([](char c) {
-    return llvm::isAlnum(c) || c == '_';
-  });
+  return source_text.take_while(
+      [](char c) { return llvm::isAlnum(c) || c == '_'; });
 }
 
 struct UnmatchedClosing {
@@ -59,27 +58,24 @@ struct MismatchedClosing {
 };
 
 struct EmptyDigitSequence {
-  static constexpr llvm::StringLiteral ShortName =
-      "syntax-invalid-number";
+  static constexpr llvm::StringLiteral ShortName = "syntax-invalid-number";
   static constexpr llvm::StringLiteral Message =
       "Empty digit sequence in numeric literal.";
 
-  struct Substitutions {
-  };
+  struct Substitutions {};
   static auto Format(const Substitutions&) -> std::string {
     return Message.str();
   }
 };
 
 struct InvalidDigit {
-  static constexpr llvm::StringLiteral ShortName =
-      "syntax-invalid-number";
+  static constexpr llvm::StringLiteral ShortName = "syntax-invalid-number";
 
   struct Substitutions {
     char digit;
     unsigned radix;
   };
-  static auto Format(const Substitutions &subst) -> std::string {
+  static auto Format(const Substitutions& subst) -> std::string {
     // TODO: Switch Format to using raw_ostream so we can easily use
     // llvm::format here.
     llvm::StringRef digit_str(&subst.digit, 1);
@@ -92,13 +88,11 @@ struct InvalidDigit {
 };
 
 struct InvalidDigitSeparator {
-  static constexpr llvm::StringLiteral ShortName =
-      "syntax-invalid-number";
+  static constexpr llvm::StringLiteral ShortName = "syntax-invalid-number";
   static constexpr llvm::StringLiteral Message =
       "Misplaced digit separator in numeric literal.";
 
-  struct Substitutions {
-  };
+  struct Substitutions {};
   static auto Format(const Substitutions&) -> std::string {
     return Message.str();
   }
@@ -111,7 +105,7 @@ struct IrregularDigitSeparators {
   struct Substitutions {
     unsigned radix;
   };
-  static auto Format(const Substitutions &subst) -> std::string {
+  static auto Format(const Substitutions& subst) -> std::string {
     assert((subst.radix == 10 || subst.radix == 16) && "unexpected radix");
     return (llvm::Twine("Digit separators in ") +
             (subst.radix == 10 ? "decimal" : "hexadecimal") +
@@ -122,8 +116,7 @@ struct IrregularDigitSeparators {
 };
 
 struct UnknownBaseSpecifier {
-  static constexpr llvm::StringLiteral ShortName =
-      "syntax-invalid-number";
+  static constexpr llvm::StringLiteral ShortName = "syntax-invalid-number";
   static constexpr llvm::StringLiteral Message =
       "Unknown base specifier in numeric literal.";
 
@@ -250,7 +243,7 @@ class TokenizedBuffer::Lexer {
 
     auto diagnose_irregular_digit_separators = [&] {
       emitter.EmitError<IrregularDigitSeparators>(
-          [&](IrregularDigitSeparators::Substitutions &subst) {
+          [&](IrregularDigitSeparators::Substitutions& subst) {
             subst.radix = radix;
           });
       buffer.has_errors = true;
@@ -284,7 +277,7 @@ class TokenizedBuffer::Lexer {
 
     if (text.empty()) {
       emitter.EmitError<EmptyDigitSequence>(
-          [&](EmptyDigitSequence::Substitutions &) {});
+          [&](EmptyDigitSequence::Substitutions&) {});
       return {.ok = false};
     }
 
@@ -313,18 +306,17 @@ class TokenizedBuffer::Lexer {
         // next to another digit separator, or at the end.
         if (i == 0 || text[i - 1] == '_' || i + 1 == n) {
           emitter.EmitError<InvalidDigitSeparator>(
-              [&](InvalidDigitSeparator::Substitutions &) {});
+              [&](InvalidDigitSeparator::Substitutions&) {});
           buffer.has_errors = true;
         }
         ++num_digit_separators;
         continue;
       }
 
-      emitter.EmitError<InvalidDigit>(
-          [&](InvalidDigit::Substitutions &subst) {
-            subst.digit = c;
-            subst.radix = radix;
-          });
+      emitter.EmitError<InvalidDigit>([&](InvalidDigit::Substitutions& subst) {
+        subst.digit = c;
+        subst.radix = radix;
+      });
       return {.ok = false};
     }
 
@@ -373,7 +365,7 @@ class TokenizedBuffer::Lexer {
         digits = digits.drop_front(2);
       } else {
         emitter.EmitError<UnknownBaseSpecifier>(
-            [&](UnknownBaseSpecifier::Substitutions &subst) {});
+            [&](UnknownBaseSpecifier::Substitutions& subst) {});
         return add_error_token_and_continue_lexing();
       }
     }

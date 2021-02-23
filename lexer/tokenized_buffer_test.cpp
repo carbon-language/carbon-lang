@@ -155,11 +155,11 @@ TEST_F(LexerTest, ValidatesBaseSpecifier) {
     auto buffer = Lex(literal);
     EXPECT_FALSE(buffer.HasErrors()) << literal;
     ASSERT_THAT(buffer, HasTokens(llvm::ArrayRef<ExpectedToken>{
-                          {.kind = TokenKind::IntegerLiteral(),
-                           .line = 1,
-                           .column = 1,
-                           .indent_column = 1,
-                           .text = literal}}));
+                            {.kind = TokenKind::IntegerLiteral(),
+                             .line = 1,
+                             .column = 1,
+                             .indent_column = 1,
+                             .text = literal}}));
   }
 
   llvm::StringLiteral invalid[] = {
@@ -170,12 +170,13 @@ TEST_F(LexerTest, ValidatesBaseSpecifier) {
   for (llvm::StringLiteral literal : invalid) {
     auto buffer = Lex(literal);
     EXPECT_TRUE(buffer.HasErrors()) << literal;
-    ASSERT_THAT(buffer, HasTokens(llvm::ArrayRef<ExpectedToken>{
-                          {.kind = TokenKind::Error(),
-                           .line = 1,
-                           .column = 1,
-                           .indent_column = 1,
-                           .text = literal}}));
+    ASSERT_THAT(
+        buffer,
+        HasTokens(llvm::ArrayRef<ExpectedToken>{{.kind = TokenKind::Error(),
+                                                 .line = 1,
+                                                 .column = 1,
+                                                 .indent_column = 1,
+                                                 .text = literal}}));
   }
 }
 
@@ -199,11 +200,11 @@ TEST_F(LexerTest, ValidatesIntegerDigitSeparators) {
     auto buffer = Lex(literal);
     EXPECT_FALSE(buffer.HasErrors()) << literal;
     ASSERT_THAT(buffer, HasTokens(llvm::ArrayRef<ExpectedToken>{
-                          {.kind = TokenKind::IntegerLiteral(),
-                           .line = 1,
-                           .column = 1,
-                           .indent_column = 1,
-                           .text = literal}}));
+                            {.kind = TokenKind::IntegerLiteral(),
+                             .line = 1,
+                             .column = 1,
+                             .indent_column = 1,
+                             .text = literal}}));
   }
 
   llvm::StringLiteral invalid[] = {
@@ -233,11 +234,11 @@ TEST_F(LexerTest, ValidatesIntegerDigitSeparators) {
     // We expect to produce a token even for a literal containing invalid digit
     // separators, for better error recovery.
     ASSERT_THAT(buffer, HasTokens(llvm::ArrayRef<ExpectedToken>{
-                          {.kind = TokenKind::IntegerLiteral(),
-                           .line = 1,
-                           .column = 1,
-                           .indent_column = 1,
-                           .text = literal}}));
+                            {.kind = TokenKind::IntegerLiteral(),
+                             .line = 1,
+                             .column = 1,
+                             .indent_column = 1,
+                             .text = literal}}));
   }
 }
 
