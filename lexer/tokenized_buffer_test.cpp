@@ -357,6 +357,13 @@ TEST_F(LexerTest, ValidatesRealLiterals) {
       "0x_.0",
       "0b_.0",
 
+      // No digits in fractional part.
+      "0.e",
+      "0.e0",
+      "0.e+0",
+      "0x0.p",
+      "0x0.p-0",
+
       // Invalid digits in mantissa.
       "123A.4",
       "123.4A",
