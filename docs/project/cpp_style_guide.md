@@ -110,6 +110,14 @@ these.
     imprecise, are at least less confusing over the course of such refactorings.
 
 -   Use the `using`-based type alias syntax instead of `typedef`.
+-   Don't use `using` to support unqualified lookup on `std` types; for example,
+    `using std::vector;`. This also applies to other short namespaces,
+    particularly `llvm` and `clang`.
+    -   Writing `std::` gives clearer diagnostics and avoids any possible
+        ambiguity, particularly for ADL.
+    -   An exception is made for functions like `std::swap` that are
+        intentionally called using ADL. This pattern should be written as
+        `{ using std::swap; swap(thing1, thing2); }`.
 -   Follow the rules for initialization outlined in
     [Abseil's tip #88](https://abseil.io/tips/88#best-practices-for-initialization).
     To summarize, omitting some details from the article:

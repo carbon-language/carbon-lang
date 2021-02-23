@@ -23,6 +23,7 @@ contributions.
         -   [Cargo (optional)](#cargo-optional)
 -   [Main tools](#main-tools)
     -   [Bazel and Bazelisk](#bazel-and-bazelisk)
+    -   [Bison and Flex](#bison-and-flex)
     -   [buildifier](#buildifier)
     -   [Clang and LLVM](#clang-and-llvm)
     -   [Ninja](#ninja)
@@ -150,6 +151,24 @@ Our recommended way of installing is:
 ```bash
 brew install bazelisk
 ```
+
+### Bison and Flex
+
+[Bison](https://www.gnu.org/software/bison/) and
+[Flex](https://github.com/westes/flex) are used by executable semantics.
+Although we may
+[switch to a hemertic toolchain later](https://github.com/carbon-language/carbon-lang/issues/266),
+an install is currently required.
+
+Our recommended way of installing is:
+
+```bash
+brew install bison flex
+```
+
+On MacOS, it will be necessary to explicitly add the installed paths to the
+`PATH` environment variable so that the brew-installed versions are used instead
+of Xcode-installed versions. Read `brew` output for instructions.
 
 ### buildifier
 
