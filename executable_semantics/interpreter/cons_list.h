@@ -11,7 +11,7 @@ template <class T>
 struct Cons {
   Cons(T e, Cons* n) : curr(e), next(n) {}
 
-  T curr;
+  const T curr;
   Cons* next;
 };
 
