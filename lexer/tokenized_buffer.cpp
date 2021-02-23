@@ -923,9 +923,7 @@ auto TokenizedBuffer::GetRealLiteral(Token token) const -> RealLiteralValue {
   char second_char = source->Text()[token_start + 1];
   bool is_decimal = second_char != 'x' && second_char != 'b';
 
-  return RealLiteralValue(&literal_int_storage[token_info.literal_index],
-                          &literal_int_storage[token_info.literal_index + 1],
-                          is_decimal);
+  return RealLiteralValue(this, token_info.literal_index, is_decimal);
 }
 
 auto TokenizedBuffer::GetMatchedClosingToken(Token opening_token) const

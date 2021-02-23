@@ -190,20 +190,23 @@ class TokenizedBuffer {
   //
   // This is either a dyadic fraction (mantissa * 2^exponent) or a decadic
   // fraction (mantissa * 10^exponent).
+  //
+  // The `TokenizedBuffer` must outlive any `RealLiteralValue`s referring to
+  // its tokens.
   class RealLiteralValue {
-    // The mantissa and exponent of the literal value are pointers into the
-    // literal_int_storage collection on the TokenizedBuffer. That collection
-    // becomes immutable when construction of the TokenizedBuffer is complete,
-    // so these pointers remain valid for as long as the TokenizedBuffer does.
-    const llvm::APInt *mantissa;
-    const llvm::APInt *exponent;
+    const TokenizedBuffer *buffer;
+    int32_t literal_index;
     bool is_decimal;
 
    public:
     // The mantissa, represented as an unsigned integer.
-    const llvm::APInt &Mantissa() const { return *mantissa; }
+    const llvm::APInt& Mantissa() const {
+      return buffer->literal_int_storage[literal_index];
+    }
     // The exponent, represented as a signed integer.
-    const llvm::APInt &Exponent() const { return *exponent; }
+    const llvm::APInt& Exponent() const {
+      return buffer->literal_int_storage[literal_index + 1];
+    }
     // If false, the value is mantissa * 2^exponent.
     // If true, the value is mantissa * 10^exponent.
     bool IsDecimal() const { return is_decimal; }
@@ -211,9 +214,11 @@ class TokenizedBuffer {
    private:
     friend class TokenizedBuffer;
 
-    RealLiteralValue(const llvm::APInt *mantissa, const llvm::APInt *exponent,
+    RealLiteralValue(const TokenizedBuffer* buffer, int32_t literal_index,
                      bool is_decimal)
-        : mantissa(mantissa), exponent(exponent), is_decimal(is_decimal) {}
+        : buffer(buffer),
+          literal_index(literal_index),
+          is_decimal(is_decimal) {}
   };
 
   // Lexes a buffer of source code into a tokenized buffer.
