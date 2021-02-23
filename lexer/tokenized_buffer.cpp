@@ -355,102 +355,6 @@ class TokenizedBuffer::Lexer {
     return false;
   }
 
-  auto CheckDigitSeparatorPlacement(llvm::StringRef text, int radix,
-                                    int num_digit_separators) {
-    assert((radix == 10 || radix == 16) &&
-           "unexpected radix for digit separator checks");
-    assert(std::count(text.begin(), text.end(), '_') == num_digit_separators &&
-           "given wrong number of digit separators");
-
-    auto diagnose_irregular_digit_separators = [&] {
-      emitter.EmitError<IrregularDigitSeparators>(
-          [&](IrregularDigitSeparators::Substitutions &subst) {
-            subst.radix = radix;
-          });
-      buffer.has_errors = true;
-    };
-
-    // For decimal and hexadecimal digit sequences, digit separators must form
-    // groups of 3 or 4 digits (4 or 5 characters), respectively.
-    int stride = (radix == 10 ? 4 : 5);
-    int remaining_digit_separators = num_digit_separators;
-    for (auto pos = text.end(); pos - text.begin() >= stride; /*in loop*/) {
-      pos -= stride;
-      if (*pos != '_')
-        return diagnose_irregular_digit_separators();
-
-      --remaining_digit_separators;
-    }
-
-    // Check there weren't any other digit separators.
-    if (remaining_digit_separators)
-      diagnose_irregular_digit_separators();
-  };
-
-  struct CheckDigitSequenceResult {
-    bool ok;
-    bool has_digit_separators = false;
-  };
-
-  auto CheckDigitSequence(llvm::StringRef text, int radix,
-                          bool allow_digit_separators = true)
-      -> CheckDigitSequenceResult {
-    assert((radix == 2 || radix == 10 || radix == 16) && "unknown radix");
-
-    std::bitset<256> valid_digits;
-    if (radix == 2) {
-      for (char c : "01")
-        valid_digits[static_cast<unsigned char>(c)] = true;
-    } else if (radix == 10) {
-      for (char c : "0123456789")
-        valid_digits[static_cast<unsigned char>(c)] = true;
-    } else {
-      for (char c : "0123456789ABCDEF")
-        valid_digits[static_cast<unsigned char>(c)] = true;
-    }
-
-    int num_digit_separators = 0;
-
-    for (int i = 0, n = text.size(); i != n; ++i) {
-      char c = text[i];
-      if (valid_digits[static_cast<unsigned char>(c)]) {
-        continue;
-      }
-
-      if (c == '_') {
-        // A digit separator cannot appear at the start of a digit sequence,
-        // next to another digit separator, or at the end.
-        if (!allow_digit_separators || i == 0 || text[i - 1] == '_' ||
-            i + 1 == n) {
-          emitter.EmitError<InvalidDigitSeparator>(
-              [&](InvalidDigitSeparator::Substitutions &) {});
-          buffer.has_errors = true;
-        }
-        ++num_digit_separators;
-        continue;
-      }
-
-      emitter.EmitError<InvalidDigit>(
-          [&](InvalidDigit::Substitutions &subst) {
-            subst.digit = c;
-            subst.radix = radix;
-          });
-      return {.ok = false};
-    }
-
-    if (num_digit_separators == static_cast<int>(text.size())) {
-      emitter.EmitError<EmptyDigitSequence>(
-          [&](EmptyDigitSequence::Substitutions &) {});
-      return {.ok = false};
-    }
-
-    // Check that digit separators occur in exactly the expected positions.
-    if (num_digit_separators && radix != 2)
-      CheckDigitSeparatorPlacement(text, radix, num_digit_separators);
-
-    return {.ok = true, .has_digit_separators = (num_digit_separators != 0)};
-  }
-
   struct NumericLiteralLexer {
     Lexer &lexer;
     NumericLiteral literal;
@@ -496,6 +400,102 @@ class TokenizedBuffer::Lexer {
       return literal.radix_point == static_cast<int>(literal.text.size());
     }
 
+    struct CheckDigitSequenceResult {
+      bool ok;
+      bool has_digit_separators = false;
+    };
+
+    auto CheckDigitSequence(llvm::StringRef text, int radix,
+                            bool allow_digit_separators = true)
+        -> CheckDigitSequenceResult {
+      assert((radix == 2 || radix == 10 || radix == 16) && "unknown radix");
+
+      std::bitset<256> valid_digits;
+      if (radix == 2) {
+        for (char c : "01")
+          valid_digits[static_cast<unsigned char>(c)] = true;
+      } else if (radix == 10) {
+        for (char c : "0123456789")
+          valid_digits[static_cast<unsigned char>(c)] = true;
+      } else {
+        for (char c : "0123456789ABCDEF")
+          valid_digits[static_cast<unsigned char>(c)] = true;
+      }
+
+      int num_digit_separators = 0;
+
+      for (int i = 0, n = text.size(); i != n; ++i) {
+        char c = text[i];
+        if (valid_digits[static_cast<unsigned char>(c)]) {
+          continue;
+        }
+
+        if (c == '_') {
+          // A digit separator cannot appear at the start of a digit sequence,
+          // next to another digit separator, or at the end.
+          if (!allow_digit_separators || i == 0 || text[i - 1] == '_' ||
+              i + 1 == n) {
+            lexer.emitter.EmitError<InvalidDigitSeparator>(
+                [&](InvalidDigitSeparator::Substitutions &) {});
+            lexer.buffer.has_errors = true;
+          }
+          ++num_digit_separators;
+          continue;
+        }
+
+        lexer.emitter.EmitError<InvalidDigit>(
+            [&](InvalidDigit::Substitutions &subst) {
+              subst.digit = c;
+              subst.radix = radix;
+            });
+        return {.ok = false};
+      }
+
+      if (num_digit_separators == static_cast<int>(text.size())) {
+        lexer.emitter.EmitError<EmptyDigitSequence>(
+            [&](EmptyDigitSequence::Substitutions &) {});
+        return {.ok = false};
+      }
+
+      // Check that digit separators occur in exactly the expected positions.
+      if (num_digit_separators && radix != 2)
+        CheckDigitSeparatorPlacement(text, radix, num_digit_separators);
+
+      return {.ok = true, .has_digit_separators = (num_digit_separators != 0)};
+    }
+
+    auto CheckDigitSeparatorPlacement(llvm::StringRef text, int radix,
+                                      int num_digit_separators) -> void {
+      assert((radix == 10 || radix == 16) &&
+             "unexpected radix for digit separator checks");
+      assert(std::count(text.begin(), text.end(), '_') == num_digit_separators &&
+             "given wrong number of digit separators");
+
+      auto diagnose_irregular_digit_separators = [&] {
+        lexer.emitter.EmitError<IrregularDigitSeparators>(
+            [&](IrregularDigitSeparators::Substitutions &subst) {
+              subst.radix = radix;
+            });
+        lexer.buffer.has_errors = true;
+      };
+
+      // For decimal and hexadecimal digit sequences, digit separators must form
+      // groups of 3 or 4 digits (4 or 5 characters), respectively.
+      int stride = (radix == 10 ? 4 : 5);
+      int remaining_digit_separators = num_digit_separators;
+      for (auto pos = text.end(); pos - text.begin() >= stride; /*in loop*/) {
+        pos -= stride;
+        if (*pos != '_')
+          return diagnose_irregular_digit_separators();
+
+        --remaining_digit_separators;
+      }
+
+      // Check there weren't any other digit separators.
+      if (remaining_digit_separators)
+        diagnose_irregular_digit_separators();
+    };
+
     auto CheckLeadingZero() -> bool {
       if (radix == 10 && int_part.size() > 1 && int_part[0] == '0') {
         lexer.emitter.EmitError<UnknownBaseSpecifier>(
@@ -506,7 +506,7 @@ class TokenizedBuffer::Lexer {
     }
 
     auto CheckIntPart() -> bool {
-      auto int_result = lexer.CheckDigitSequence(int_part, radix);
+      auto int_result = CheckDigitSequence(int_part, radix);
       mantissa_needs_cleaning |= int_result.has_digit_separators;
       return int_result.ok;
     }
@@ -526,9 +526,8 @@ class TokenizedBuffer::Lexer {
       // We need to remove a '.' from the mantissa.
       mantissa_needs_cleaning = true;
 
-      return lexer
-          .CheckDigitSequence(fract_part, radix,
-                              /*allow_digit_separators=*/false)
+      return CheckDigitSequence(fract_part, radix,
+                                /*allow_digit_separators=*/false)
           .ok;
     }
 
@@ -546,7 +545,7 @@ class TokenizedBuffer::Lexer {
         return false;
       }
 
-      auto exponent_result = lexer.CheckDigitSequence(exponent_part, 10);
+      auto exponent_result = CheckDigitSequence(exponent_part, 10);
       exponent_needs_cleaning = exponent_result.has_digit_separators;
       return exponent_result.ok;
     }
