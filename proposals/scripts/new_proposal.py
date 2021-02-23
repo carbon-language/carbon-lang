@@ -174,9 +174,9 @@ def main():
     shutil.copyfile(template_path, temp_path)
     _run([git_bin, "add", temp_path])
     _run([git_bin, "commit", "-m", "Creating new proposal: %s" % title])
-    _run([git_bin, "push"])
 
     # Create a PR with WIP+proposal labels.
+    _run([git_bin, "push"])
     pr_num = _run_pr_create(
         [
             gh_bin,
