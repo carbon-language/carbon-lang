@@ -456,6 +456,10 @@ var Point2: p = (.x = 1.0, .y = 2.0);
 p.(MyPackage.MyInterface.MyMember)();
 ```
 
+**Comparison with other languages:** This is intended to be analogous to, in
+C++, adding `ClassName::` in front of a member name to disambiguate, such as
+[names defined in both a parent and child class](https://stackoverflow.com/questions/357307/how-to-call-a-parent-class-function-from-derived-class-function).
+
 ## Generics
 
 Now let us write a function that can accept values of any type that has
@@ -787,6 +791,12 @@ when you add more than two type-types. If `x` is forbidden in `A`, it is
 forbidden in `A + B`, whether or not `B` defines the name `x`. This makes `+`
 associative and commutative, and so it is well defined on sets of interfaces, or
 other type-types, independent of order.
+
+Note that we do _not_ consider two type-types using the same name to mean the
+same thing to be a conflict. For example, the adding a type-type to itself gives
+itself, `MyTypeType + MyTypeType == MyTypeType`. Also, given two
+[interface extensions](#interface-extension) of a common base interface, the sum
+should not conflict on any names in the common base.
 
 **Open syntax question:** Instead of using `+` as the combining operator, we
 could use `&`. I'm using `+` in this proposal since it is consistent with Rust.
