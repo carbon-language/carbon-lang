@@ -24,16 +24,18 @@ namespace Carbon {
 struct NumericLiteral {
   llvm::StringRef text;
 
-  // The offset of the '.'. Set to npos if none is present.
-  size_t radix_point = llvm::StringRef::npos;
+  // The offset of the '.'. Set to text.size() if none is present.
+  int radix_point;
 
   // The offset of the alphabetical character introducing the exponent. In a
   // valid literal, this will be an 'e' or a 'p', and may be followed by a '+'
   // or a '-', but for error recovery, this may simply be the last lowercase
   // letter in the invalid token. Always greater than or equal to radix_point.
-  // Set to npos if none is present.
-  size_t exponent = llvm::StringRef::npos;
+  // Set to text.size() if none is present.
+  int exponent;
 };
+
+static bool isLower(char c) { return 'a' <= c && c <= 'z'; }
 
 static auto TakeLeadingNumericLiteral(llvm::StringRef source_text)
     -> NumericLiteral {
@@ -43,19 +45,21 @@ static auto TakeLeadingNumericLiteral(llvm::StringRef source_text)
     return result;
 
   bool seen_plus_minus = false;
+  bool seen_radix_point = false;
+  bool seen_potential_exponent = false;
 
   // Greedily consume all following characters that might be part of a numeric
   // literal. This allows us to produce better diagnostics on invalid literals.
   //
   // TODO(zygoloid): Update lexical rules to specify that a numeric literal
   // cannot be immediately followed by an alphanumeric character.
-  std::size_t i = 1;
-  for (std::size_t n = source_text.size(); i != n; ++i) {
+  int i = 1, n = source_text.size();
+  for (; i != n; ++i) {
     char c = source_text[i];
     if (llvm::isAlnum(c) || c == '_') {
-      if (c >= 'a' && c <= 'z' && result.radix_point != llvm::StringRef::npos &&
-          !seen_plus_minus) {
+      if (isLower(c) && seen_radix_point && !seen_plus_minus) {
         result.exponent = i;
+        seen_potential_exponent = true;
       }
       continue;
     }
@@ -63,8 +67,9 @@ static auto TakeLeadingNumericLiteral(llvm::StringRef source_text)
     // Exactly one `.` can be part of the literal, but only if it's followed by
     // an alphanumeric character.
     if (c == '.' && i + 1 != n && llvm::isAlnum(source_text[i + 1]) &&
-        result.radix_point == llvm::StringRef::npos) {
+        !seen_radix_point) {
       result.radix_point = i;
+      seen_radix_point = true;
       continue;
     }
 
@@ -72,7 +77,8 @@ static auto TakeLeadingNumericLiteral(llvm::StringRef source_text)
     // letter (which will be 'e' or 'p' or part of an invalid literal) and
     // followed by an alphanumeric character. This '+' or '-' cannot be an
     // operator because a literal cannot end in a lowercase letter.
-    if ((c == '+' || c == '-') && result.exponent == i - 1 && i + 1 != n &&
+    if ((c == '+' || c == '-') && seen_potential_exponent &&
+        result.exponent == i - 1 && i + 1 != n &&
         llvm::isAlnum(source_text[i + 1])) {
       // This is not possible because we don't update result.exponent after we
       // see a '+' or '-'.
@@ -85,13 +91,18 @@ static auto TakeLeadingNumericLiteral(llvm::StringRef source_text)
   }
 
   result.text = source_text.substr(0, i);
+  if (!seen_radix_point)
+    result.radix_point = i;
+  if (!seen_potential_exponent)
+    result.exponent = i;
+
   return result;
 }
 
 // Parse a string that is known to be a valid base-radix integer into an APInt.
 // If needs_cleaning is true, the string may additionally contain _ and .
 // characters that should be ignored.
-static auto ParseInteger(llvm::StringRef digits, unsigned radix,
+static auto ParseInteger(llvm::StringRef digits, int radix,
                          bool needs_cleaning) -> llvm::APInt {
   std::string cleaned;
   if (needs_cleaning) {
@@ -151,7 +162,7 @@ struct InvalidDigit {
 
   struct Substitutions {
     char digit;
-    unsigned radix;
+    int radix;
   };
   static auto Format(const Substitutions &subst) -> std::string {
     // TODO: Switch Format to using raw_ostream so we can easily use
@@ -183,7 +194,7 @@ struct IrregularDigitSeparators {
       "syntax-irregular-digit-separators";
 
   struct Substitutions {
-    unsigned radix;
+    int radix;
   };
   static auto Format(const Substitutions &subst) -> std::string {
     assert((subst.radix == 10 || subst.radix == 16) && "unexpected radix");
@@ -340,8 +351,8 @@ class TokenizedBuffer::Lexer {
     return false;
   }
 
-  auto CheckDigitSeparatorPlacement(llvm::StringRef text, unsigned radix,
-                                    unsigned num_digit_separators) {
+  auto CheckDigitSeparatorPlacement(llvm::StringRef text, int radix,
+                                    int num_digit_separators) {
     assert((radix == 10 || radix == 16) &&
            "unexpected radix for digit separator checks");
     assert(std::count(text.begin(), text.end(), '_') == num_digit_separators &&
@@ -357,8 +368,8 @@ class TokenizedBuffer::Lexer {
 
     // For decimal and hexadecimal digit sequences, digit separators must form
     // groups of 3 or 4 digits (4 or 5 characters), respectively.
-    unsigned stride = (radix == 10 ? 4 : 5);
-    unsigned remaining_digit_separators = num_digit_separators;
+    int stride = (radix == 10 ? 4 : 5);
+    int remaining_digit_separators = num_digit_separators;
     for (auto pos = text.end(); pos - text.begin() >= stride; /*in loop*/) {
       pos -= stride;
       if (*pos != '_')
@@ -377,7 +388,7 @@ class TokenizedBuffer::Lexer {
     bool has_digit_separators = false;
   };
 
-  auto CheckDigitSequence(llvm::StringRef text, unsigned radix,
+  auto CheckDigitSequence(llvm::StringRef text, int radix,
                           bool allow_digit_separators = true)
       -> CheckDigitSequenceResult {
     assert((radix == 2 || radix == 10 || radix == 16) && "unknown radix");
@@ -394,9 +405,9 @@ class TokenizedBuffer::Lexer {
         valid_digits[static_cast<unsigned char>(c)] = true;
     }
 
-    unsigned num_digit_separators = 0;
+    int num_digit_separators = 0;
 
-    for (std::size_t i = 0, n = text.size(); i != n; ++i) {
+    for (int i = 0, n = text.size(); i != n; ++i) {
       char c = text[i];
       if (valid_digits[static_cast<unsigned char>(c)]) {
         continue;
@@ -423,7 +434,7 @@ class TokenizedBuffer::Lexer {
       return {.ok = false};
     }
 
-    if (num_digit_separators == text.size()) {
+    if (num_digit_separators == static_cast<int>(text.size())) {
       emitter.EmitError<EmptyDigitSequence>(
           [&](EmptyDigitSequence::Substitutions &) {});
       return {.ok = false};
@@ -464,7 +475,7 @@ class TokenizedBuffer::Lexer {
     };
 
     // Check and remove base specifier.
-    unsigned radix = 10;
+    int radix = 10;
     llvm::StringRef int_part = literal.text.substr(0, literal.radix_point);
     llvm::StringRef digits = literal.text.substr(0, literal.exponent);
     if (int_part.size() >= 2 && int_part[0] == '0') {
@@ -497,7 +508,7 @@ class TokenizedBuffer::Lexer {
     bool exponent_is_negative = false;
 
     // Check fractional part and exponent, if present.
-    if (literal.radix_point != llvm::StringRef::npos) {
+    if (literal.radix_point != static_cast<int>(literal.text.size())) {
       if (radix == 2) {
         emitter.EmitError<BinaryRealLiteral>(
             [&](BinaryRealLiteral::Substitutions &subst) {});
@@ -505,8 +516,8 @@ class TokenizedBuffer::Lexer {
         // Carry on and parse the binary real literal anyway.
       }
 
-      fract_part = literal.text.substr(0, literal.exponent)
-                       .substr(literal.radix_point + 1);
+      fract_part = literal.text.substr(
+          literal.radix_point + 1, literal.exponent - literal.radix_point - 1);
       if (!CheckDigitSequence(fract_part, radix,
                               /*allow_digit_separators=*/false)
                .ok) {
@@ -515,7 +526,7 @@ class TokenizedBuffer::Lexer {
 
       // After the fractional part, we can optionally have 'e' or 'p' followed
       // by a signed decimal integer.
-      if (literal.exponent != llvm::StringRef::npos) {
+      if (literal.exponent != static_cast<int>(literal.text.size())) {
         char expected_exponent_kind = (radix == 10 ? 'e' : 'p');
         if (literal.text[literal.exponent] != expected_exponent_kind) {
           emitter.EmitError<WrongRealLiteralExponent>(
@@ -542,7 +553,7 @@ class TokenizedBuffer::Lexer {
     llvm::APInt mantissa = ParseInteger(digits, radix, mantissa_needs_cleaning);
 
     // Form a suitable token.
-    if (literal.radix_point == llvm::StringRef::npos) {
+    if (literal.radix_point == static_cast<int>(literal.text.size())) {
       auto token = buffer.AddToken({.kind = TokenKind::IntegerLiteral(),
                                     .token_line = current_line,
                                     .column = int_column});
@@ -563,7 +574,7 @@ class TokenizedBuffer::Lexer {
       }
 
       // Each character after the decimal point reduces the effective exponent.
-      size_t excess_exponent = fract_part.size();
+      int excess_exponent = fract_part.size();
       if (radix == 16) {
         excess_exponent *= 4;
       }
