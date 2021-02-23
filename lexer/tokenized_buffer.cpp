@@ -5,12 +5,15 @@
 #include "lexer/tokenized_buffer.h"
 
 #include <algorithm>
+#include <bitset>
 #include <cmath>
+#include <iterator>
 #include <string>
 
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/StringSwitch.h"
+#include "llvm/ADT/Twine.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/Format.h"
 #include "llvm/Support/FormatVariadic.h"
@@ -20,7 +23,16 @@ namespace Carbon {
 
 static auto TakeLeadingIntegerLiteral(llvm::StringRef source_text)
     -> llvm::StringRef {
-  return source_text.take_while([](char c) { return llvm::isDigit(c); });
+  if (source_text.empty() || !llvm::isDigit(source_text.front()))
+    return llvm::StringRef();
+
+  // Greedily consume all following characters that might be part of an integer
+  // literal. This allows us to produce better diagnostics on invalid literals.
+  //
+  // TODO(zygoloid): Update lexical rules to specify that an integer literal
+  // cannot be immediately followed by another integer literal or a word.
+  return source_text.take_while(
+      [](char c) { return llvm::isAlnum(c) || c == '_'; });
 }
 
 struct UnmatchedClosing {
@@ -38,6 +50,75 @@ struct MismatchedClosing {
   static constexpr llvm::StringLiteral ShortName = "syntax-balanced-delimiters";
   static constexpr llvm::StringLiteral Message =
       "Closing symbol does not match most recent opening symbol.";
+
+  struct Substitutions {};
+  static auto Format(const Substitutions&) -> std::string {
+    return Message.str();
+  }
+};
+
+struct EmptyDigitSequence {
+  static constexpr llvm::StringLiteral ShortName = "syntax-invalid-number";
+  static constexpr llvm::StringLiteral Message =
+      "Empty digit sequence in numeric literal.";
+
+  struct Substitutions {};
+  static auto Format(const Substitutions&) -> std::string {
+    return Message.str();
+  }
+};
+
+struct InvalidDigit {
+  static constexpr llvm::StringLiteral ShortName = "syntax-invalid-number";
+
+  struct Substitutions {
+    char digit;
+    unsigned radix;
+  };
+  static auto Format(const Substitutions& subst) -> std::string {
+    // TODO: Switch Format to using raw_ostream so we can easily use
+    // llvm::format here.
+    llvm::StringRef digit_str(&subst.digit, 1);
+    return (llvm::Twine("Invalid digit '") + digit_str + "' in " +
+            (subst.radix == 2 ? "binary"
+                              : subst.radix == 16 ? "hexadecimal" : "decimal") +
+            " numeric literal.")
+        .str();
+  }
+};
+
+struct InvalidDigitSeparator {
+  static constexpr llvm::StringLiteral ShortName = "syntax-invalid-number";
+  static constexpr llvm::StringLiteral Message =
+      "Misplaced digit separator in numeric literal.";
+
+  struct Substitutions {};
+  static auto Format(const Substitutions&) -> std::string {
+    return Message.str();
+  }
+};
+
+struct IrregularDigitSeparators {
+  static constexpr llvm::StringLiteral ShortName =
+      "syntax-irregular-digit-separators";
+
+  struct Substitutions {
+    unsigned radix;
+  };
+  static auto Format(const Substitutions& subst) -> std::string {
+    assert((subst.radix == 10 || subst.radix == 16) && "unexpected radix");
+    return (llvm::Twine("Digit separators in ") +
+            (subst.radix == 10 ? "decimal" : "hexadecimal") +
+            " should appear every " + (subst.radix == 10 ? "3" : "4") +
+            " characters from the right.")
+        .str();
+  }
+};
+
+struct UnknownBaseSpecifier {
+  static constexpr llvm::StringLiteral ShortName = "syntax-invalid-number";
+  static constexpr llvm::StringLiteral Message =
+      "Unknown base specifier in numeric literal.";
 
   struct Substitutions {};
   static auto Format(const Substitutions&) -> std::string {
@@ -153,13 +234,102 @@ class TokenizedBuffer::Lexer {
     return false;
   }
 
+  auto CheckDigitSeparatorPlacement(llvm::StringRef text, unsigned radix,
+                                    unsigned num_digit_separators) {
+    assert((radix == 10 || radix == 16) &&
+           "unexpected radix for digit separator checks");
+    assert(std::count(text.begin(), text.end(), '_') == num_digit_separators &&
+           "given wrong number of digit separators");
+
+    auto diagnose_irregular_digit_separators = [&] {
+      emitter.EmitError<IrregularDigitSeparators>(
+          [&](IrregularDigitSeparators::Substitutions& subst) {
+            subst.radix = radix;
+          });
+      buffer.has_errors = true;
+    };
+
+    // For decimal and hexadecimal digit sequences, digit separators must form
+    // groups of 3 or 4 digits (4 or 5 characters), respectively.
+    unsigned stride = (radix == 10 ? 4 : 5);
+    unsigned remaining_digit_separators = num_digit_separators;
+    for (auto pos = text.end(); pos - text.begin() >= stride; /*in loop*/) {
+      pos -= stride;
+      if (*pos != '_')
+        return diagnose_irregular_digit_separators();
+
+      --remaining_digit_separators;
+    }
+
+    // Check there weren't any other digit separators.
+    if (remaining_digit_separators)
+      diagnose_irregular_digit_separators();
+  };
+
+  struct CheckDigitSequenceResult {
+    bool ok;
+    bool has_digit_separators = false;
+  };
+
+  auto CheckDigitSequence(llvm::StringRef text, unsigned radix)
+      -> CheckDigitSequenceResult {
+    assert((radix == 2 || radix == 10 || radix == 16) && "unknown radix");
+
+    if (text.empty()) {
+      emitter.EmitError<EmptyDigitSequence>(
+          [&](EmptyDigitSequence::Substitutions&) {});
+      return {.ok = false};
+    }
+
+    std::bitset<256> valid_digits;
+    if (radix == 2) {
+      for (char c : "01")
+        valid_digits[static_cast<unsigned char>(c)] = true;
+    } else if (radix == 10) {
+      for (char c : "0123456789")
+        valid_digits[static_cast<unsigned char>(c)] = true;
+    } else {
+      for (char c : "0123456789ABCDEF")
+        valid_digits[static_cast<unsigned char>(c)] = true;
+    }
+
+    unsigned num_digit_separators = 0;
+
+    for (std::size_t i = 0, n = text.size(); i != n; ++i) {
+      char c = text[i];
+      if (valid_digits[static_cast<unsigned char>(c)]) {
+        continue;
+      }
+
+      if (c == '_') {
+        // A digit separator cannot appear at the start of a digit sequence,
+        // next to another digit separator, or at the end.
+        if (i == 0 || text[i - 1] == '_' || i + 1 == n) {
+          emitter.EmitError<InvalidDigitSeparator>(
+              [&](InvalidDigitSeparator::Substitutions&) {});
+          buffer.has_errors = true;
+        }
+        ++num_digit_separators;
+        continue;
+      }
+
+      emitter.EmitError<InvalidDigit>([&](InvalidDigit::Substitutions& subst) {
+        subst.digit = c;
+        subst.radix = radix;
+      });
+      return {.ok = false};
+    }
+
+    // Check that digit separators occur in exactly the expected positions.
+    if (num_digit_separators && radix != 2)
+      CheckDigitSeparatorPlacement(text, radix, num_digit_separators);
+
+    return {.ok = true, .has_digit_separators = (num_digit_separators != 0)};
+  }
+
   auto LexIntegerLiteral(llvm::StringRef& source_text) -> bool {
     llvm::StringRef int_text = TakeLeadingIntegerLiteral(source_text);
     if (int_text.empty()) {
-      return false;
-    }
-    llvm::APInt int_value;
-    if (int_text.getAsInteger(/*Radix=*/0, int_value)) {
       return false;
     }
 
@@ -171,6 +341,58 @@ class TokenizedBuffer::Lexer {
       current_line_info->indent = int_column;
       set_indent = true;
     }
+
+    auto add_error_token_and_continue_lexing = [&] {
+      buffer.AddToken({
+          .kind = TokenKind::Error(),
+          .token_line = current_line,
+          .column = int_column,
+          .error_length = static_cast<int32_t>(int_text.size()),
+      });
+      buffer.has_errors = true;
+      // Indicate to the caller that we consumed a token.
+      return true;
+    };
+
+    unsigned radix = 10;
+    llvm::StringRef digits = int_text;
+    if (int_text.size() >= 2 && int_text[0] == '0') {
+      if (int_text[1] == 'x') {
+        radix = 16;
+        digits = digits.drop_front(2);
+      } else if (int_text[1] == 'b') {
+        radix = 2;
+        digits = digits.drop_front(2);
+      } else {
+        emitter.EmitError<UnknownBaseSpecifier>(
+            [&](UnknownBaseSpecifier::Substitutions& subst) {});
+        return add_error_token_and_continue_lexing();
+      }
+    }
+
+    llvm::APInt int_value;
+
+    auto result = CheckDigitSequence(digits, radix);
+    if (!result.ok) {
+      return add_error_token_and_continue_lexing();
+    }
+
+    if (result.has_digit_separators) {
+      // TODO(zygoloid): Avoid the memory allocation here.
+      std::string cleaned;
+      cleaned.reserve(digits.size());
+      std::remove_copy_if(digits.begin(), digits.end(),
+                          std::back_inserter(cleaned),
+                          [](char c) { return c == '_'; });
+      if (llvm::StringRef(cleaned).getAsInteger(radix, int_value)) {
+        llvm_unreachable("should never fail");
+      }
+    } else {
+      if (digits.getAsInteger(radix, int_value)) {
+        llvm_unreachable("should never fail");
+      }
+    }
+
     auto token = buffer.AddToken({.kind = TokenKind::IntegerLiteral(),
                                   .token_line = current_line,
                                   .column = int_column});
@@ -417,8 +639,8 @@ auto TokenizedBuffer::GetTokenText(Token token) const -> llvm::StringRef {
     return source->Text().slice(token_start, token_stop);
   }
 
-  // Refer back to the source text to preserve oddities like radix or leading
-  // 0's the author had.
+  // Refer back to the source text to preserve oddities like radix or digit
+  // separators the author included.
   if (token_info.kind == TokenKind::IntegerLiteral()) {
     auto& line_info = GetLineInfo(token_info.token_line);
     int64_t token_start = line_info.start + token_info.column;

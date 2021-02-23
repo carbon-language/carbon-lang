@@ -1,0 +1,25 @@
+********** source program **********
+fn f Int: x -> Int {
+return 0;
+
+}
+fn main () -> Int {
+var Int: a = 0;
+var Int: b = 1;
+f(0 = a);
+b = a;
+return b;
+
+}
+********** type checking **********
+--- step exp Int --->
+--- step exp Int --->
+--- step exp Int --->
+--- step exp Int --->
+--- step exp Int --->
+--- step exp Int --->
+--- step exp Int --->
+--- step exp Int --->
+15: type error in call
+expected: Int
+actual: Tuple(0 = Int)
