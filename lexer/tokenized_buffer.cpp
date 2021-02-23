@@ -447,7 +447,7 @@ class NumericLiteralParser {
 
   // Check that we don't have a '0' prefix on a non-zero decimal integer.
   auto CheckLeadingZero() -> bool {
-    if (radix == 10 && int_part.size() > 1 && int_part[0] == '0') {
+    if (radix == 10 && int_part.startswith("0") && int_part != "0") {
       emitter.EmitError<UnknownBaseSpecifier>(
           [&](UnknownBaseSpecifier::Substitutions& subst) {});
       return false;
