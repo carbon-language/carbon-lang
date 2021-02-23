@@ -2,13 +2,12 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#include "lexer/tokenized_buffer.h"
-
 #include <iterator>
 
 #include "diagnostics/diagnostic_emitter.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
+#include "lexer/tokenized_buffer.h"
 #include "lexer/tokenized_buffer_test_helpers.h"
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/None.h"
@@ -329,14 +328,8 @@ TEST_F(LexerTest, HandlesRealLiteralOverflow) {
 TEST_F(LexerTest, ValidatesRealLiterals) {
   llvm::StringLiteral invalid_digit_separators[] = {
       // Invalid digit separators.
-      "12_34.5",
-      "123.4_567",
-      "123.456_7",
-      "1_2_3.4",
-      "123.4e56_78",
-      "0x12_34.5",
-      "0x12.3_4",
-      "0x12.34p5_6",
+      "12_34.5",     "123.4_567", "123.456_7", "1_2_3.4",
+      "123.4e56_78", "0x12_34.5", "0x12.3_4",  "0x12.34p5_6",
   };
   for (llvm::StringLiteral literal : invalid_digit_separators) {
     auto buffer = Lex(literal);
@@ -399,12 +392,13 @@ TEST_F(LexerTest, ValidatesRealLiterals) {
   for (llvm::StringLiteral literal : invalid) {
     auto buffer = Lex(literal);
     EXPECT_TRUE(buffer.HasErrors()) << literal;
-    ASSERT_THAT(buffer, HasTokens(llvm::ArrayRef<ExpectedToken>{
-                            {.kind = TokenKind::Error(),
-                             .line = 1,
-                             .column = 1,
-                             .indent_column = 1,
-                             .text = literal}}));
+    ASSERT_THAT(
+        buffer,
+        HasTokens(llvm::ArrayRef<ExpectedToken>{{.kind = TokenKind::Error(),
+                                                 .line = 1,
+                                                 .column = 1,
+                                                 .indent_column = 1,
+                                                 .text = literal}}));
   }
 }
 
