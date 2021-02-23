@@ -100,13 +100,17 @@ static auto TakeLeadingNumericLiteral(llvm::StringRef source_text)
 }
 
 // Parse a string that is known to be a valid base-radix integer into an APInt.
-// If needs_cleaning is true, the string may additionally contain _ and .
+// If needs_cleaning is true, the string may additionally contain '_' and '.'
 // characters that should be ignored.
+//
+// Ignoring '.' is used when parsing a real literal. For example, when parsing
+// 123.456e7, we want to decompose it into an integer mantissa (123456) and an
+// exponent (7 - 3 = 2), and this routine is given the "123.456" to parse as
+// the mantissa.
 static auto ParseInteger(llvm::StringRef digits, int radix,
                          bool needs_cleaning) -> llvm::APInt {
-  std::string cleaned;
+  llvm::SmallString<32> cleaned;
   if (needs_cleaning) {
-    // TODO(zygoloid): Avoid the memory allocation here.
     cleaned.reserve(digits.size());
     std::remove_copy_if(digits.begin(), digits.end(),
                         std::back_inserter(cleaned),

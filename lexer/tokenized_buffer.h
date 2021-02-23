@@ -394,6 +394,7 @@ class TokenizedBuffer {
 
   llvm::SmallVector<IdentifierInfo, 16> identifier_infos;
 
+  // Storage for integers that form part of the value of a numeric literal.
   llvm::SmallVector<llvm::APInt, 16> literal_int_storage;
 
   llvm::DenseMap<llvm::StringRef, Identifier> identifier_map;
