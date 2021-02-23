@@ -1209,6 +1209,29 @@ fn PrintPoint[NSpacePoint:$ PointT](PointT: p) {
 }
 ```
 
+We might need to write a function that only works with a specific value of `N`.
+To support this, we automatically make every associated constant an optional
+named parameter to the interface, as in:
+
+```
+fn PrintPoint2D[NSpacePoint:$ PointT(.N = 2)](PointT: p) {
+  Print(p.Get(0), ", ", p.Get(1));
+}
+```
+
+The specific case where the associated constant is a type is discussed
+[in the next section](#associated-types).
+
+**Future work:** We still need a good story for other constraints. Right now the
+only suggestion on the table is some sort of boolean condition that can be
+evaluated by the caller at compile time included as an optional clause in the
+function signature:
+
+```
+fn PrintPoint2Or3[NSpacePoint:$ PointT](PointT: p)
+  if (2 <= PointT.N && PointT.N <= 3) { ... }
+```
+
 ## Associated types
 
 Associated types are associated constants that happen to be types.
