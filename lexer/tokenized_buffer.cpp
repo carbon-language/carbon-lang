@@ -447,124 +447,128 @@ class TokenizedBuffer::Lexer {
     return {.ok = true, .has_digit_separators = (num_digit_separators != 0)};
   }
 
-  auto LexNumericLiteral(llvm::StringRef& source_text) -> bool {
-    NumericLiteral literal = TakeLeadingNumericLiteral(source_text);
-    if (literal.text.empty()) {
-      return false;
-    }
+  struct NumericLiteralLexer {
+    Lexer &lexer;
+    NumericLiteral literal;
 
-    int int_column = current_column;
-    current_column += literal.text.size();
-    source_text = source_text.drop_front(literal.text.size());
-
-    if (!set_indent) {
-      current_line_info->indent = int_column;
-      set_indent = true;
-    }
-
-    auto add_error_token_and_continue_lexing = [&] {
-      buffer.AddToken({
-          .kind = TokenKind::Error(),
-          .token_line = current_line,
-          .column = int_column,
-          .error_length = static_cast<int32_t>(literal.text.size()),
-      });
-      buffer.has_errors = true;
-      // Indicate to the caller that we consumed a token.
-      return true;
-    };
-
-    // Check and remove base specifier.
+    // The radix of the literal: 2, 10, or 16, for a prefix of '0b', no prefix,
+    // or '0x', respectively.
     int radix = 10;
-    llvm::StringRef int_part = literal.text.substr(0, literal.radix_point);
-    llvm::StringRef digits = literal.text.substr(0, literal.exponent);
-    if (int_part.size() >= 2 && int_part[0] == '0') {
-      if (int_part[1] == 'x') {
-        radix = 16;
-      } else if (int_part[1] == 'b') {
-        radix = 2;
-      } else {
-        emitter.EmitError<UnknownBaseSpecifier>(
-            [&](UnknownBaseSpecifier::Substitutions &subst) {});
-        return add_error_token_and_continue_lexing();
-      }
 
-      int_part = int_part.drop_front(2);
-      digits = digits.drop_front(2);
-    }
-
-    auto int_result = CheckDigitSequence(int_part, radix);
-    if (!int_result.ok) {
-      return add_error_token_and_continue_lexing();
-    }
+    // The various components of a numeric literal:
+    //
+    //     [radix] int_part [. fract_part [[ep] [+-] exponent_part]]
+    llvm::StringRef int_part;
+    llvm::StringRef fract_part;
+    llvm::StringRef exponent_part;
 
     // Do we need to remove any special characters (digit separator or radix
     // point) before interpreting the mantissa or exponent as an integer?
-    bool mantissa_needs_cleaning = int_result.has_digit_separators;
+    bool mantissa_needs_cleaning = false;
     bool exponent_needs_cleaning = false;
 
-    llvm::StringRef fract_part;
-    llvm::StringRef exponent_part;
+    // True if we found a `-` before `exponent_part`.
     bool exponent_is_negative = false;
 
-    // Check fractional part and exponent, if present.
-    if (literal.radix_point != static_cast<int>(literal.text.size())) {
-      if (radix == 2) {
-        emitter.EmitError<BinaryRealLiteral>(
-            [&](BinaryRealLiteral::Substitutions &subst) {});
-        buffer.has_errors = true;
-        // Carry on and parse the binary real literal anyway.
+    NumericLiteralLexer(Lexer& lexer, NumericLiteral literal)
+        : lexer(lexer), literal(literal) {
+      int_part = literal.text.substr(0, literal.radix_point);
+      if (int_part.consume_front("0x")) {
+        radix = 16;
+      } else if (int_part.consume_front("0b")) {
+        radix = 2;
       }
 
       fract_part = literal.text.substr(
           literal.radix_point + 1, literal.exponent - literal.radix_point - 1);
-      if (!CheckDigitSequence(fract_part, radix,
-                              /*allow_digit_separators=*/false)
-               .ok) {
-        return add_error_token_and_continue_lexing();
+
+      exponent_part = literal.text.substr(literal.exponent + 1);
+      if (!exponent_part.consume_front("+")) {
+        exponent_is_negative = exponent_part.consume_front("-");
       }
-
-      // After the fractional part, we can optionally have 'e' or 'p' followed
-      // by a signed decimal integer.
-      if (literal.exponent != static_cast<int>(literal.text.size())) {
-        char expected_exponent_kind = (radix == 10 ? 'e' : 'p');
-        if (literal.text[literal.exponent] != expected_exponent_kind) {
-          emitter.EmitError<WrongRealLiteralExponent>(
-              [&](WrongRealLiteralExponent::Substitutions &subst) {
-                subst.expected = expected_exponent_kind;
-              });
-          return add_error_token_and_continue_lexing();
-        }
-
-        exponent_part = literal.text.substr(literal.exponent + 1);
-        if (!exponent_part.consume_front("+")) {
-          exponent_is_negative = exponent_part.consume_front("-");
-        }
-        auto exponent_result = CheckDigitSequence(exponent_part, 10);
-        if (!exponent_result.ok) {
-          return add_error_token_and_continue_lexing();
-        }
-        exponent_needs_cleaning = exponent_result.has_digit_separators;
-      }
-
-      mantissa_needs_cleaning = true;
     }
 
-    llvm::APInt mantissa = ParseInteger(digits, radix, mantissa_needs_cleaning);
+    auto IsInteger() -> bool {
+      return literal.radix_point == static_cast<int>(literal.text.size());
+    }
 
-    // Form a suitable token.
-    if (literal.radix_point == static_cast<int>(literal.text.size())) {
-      auto token = buffer.AddToken({.kind = TokenKind::IntegerLiteral(),
-                                    .token_line = current_line,
-                                    .column = int_column});
-      buffer.GetTokenInfo(token).literal_index = buffer.int_literals.size();
-      buffer.int_literals.push_back(std::move(mantissa));
-    } else {
+    auto CheckLeadingZero() -> bool {
+      if (radix == 10 && int_part.size() > 1 && int_part[0] == '0') {
+        lexer.emitter.EmitError<UnknownBaseSpecifier>(
+            [&](UnknownBaseSpecifier::Substitutions& subst) {});
+        return false;
+      }
+      return true;
+    }
+
+    auto CheckIntPart() -> bool {
+      auto int_result = lexer.CheckDigitSequence(int_part, radix);
+      mantissa_needs_cleaning |= int_result.has_digit_separators;
+      return int_result.ok;
+    }
+
+    auto CheckFractionalPart() -> bool {
+      if (IsInteger()) {
+        return true;
+      }
+
+      if (radix == 2) {
+        lexer.emitter.EmitError<BinaryRealLiteral>(
+            [&](BinaryRealLiteral::Substitutions& subst) {});
+        lexer.buffer.has_errors = true;
+        // Carry on and parse the binary real literal anyway.
+      }
+
+      // We need to remove a '.' from the mantissa.
+      mantissa_needs_cleaning = true;
+
+      return lexer
+          .CheckDigitSequence(fract_part, radix,
+                              /*allow_digit_separators=*/false)
+          .ok;
+    }
+
+    auto CheckExponentPart() -> bool {
+      if (literal.exponent == static_cast<int>(literal.text.size())) {
+        return true;
+      }
+
+      char expected_exponent_kind = (radix == 10 ? 'e' : 'p');
+      if (literal.text[literal.exponent] != expected_exponent_kind) {
+        lexer.emitter.EmitError<WrongRealLiteralExponent>(
+            [&](WrongRealLiteralExponent::Substitutions& subst) {
+              subst.expected = expected_exponent_kind;
+            });
+        return false;
+      }
+
+      auto exponent_result = lexer.CheckDigitSequence(exponent_part, 10);
+      exponent_needs_cleaning = exponent_result.has_digit_separators;
+      return exponent_result.ok;
+    }
+
+    auto Check() -> bool {
+      return CheckLeadingZero() && CheckIntPart() && CheckFractionalPart() &&
+             CheckExponentPart();
+    }
+
+    auto GetMantissa() -> llvm::APInt {
+      const char *end = IsInteger() ? int_part.end() : fract_part.end();
+      llvm::StringRef digits(int_part.begin(), end - int_part.begin());
+      return ParseInteger(digits, radix, mantissa_needs_cleaning);
+    }
+
+    auto GetExponent() -> llvm::APInt {
       // Compute the effective exponent from the specified exponent, if any,
       // and the position of the radix point.
       llvm::APInt exponent(64, 0);
       if (!exponent_part.empty()) {
         exponent = ParseInteger(exponent_part, 10, exponent_needs_cleaning);
+
+        // The exponent is a signed integer, and the number we just parsed is
+        // non-negative, so ensure we have a wide enough representation to
+        // include a sign bit. Also make sure the exponent isn't too narrow so
+        // the calculation below can't lose information through overflow.
         if (exponent.isSignBitSet() || exponent.getBitWidth() < 64) {
           exponent = exponent.zext(std::max(64u, exponent.getBitWidth() + 1));
         }
@@ -583,17 +587,52 @@ class TokenizedBuffer::Lexer {
         // We overflowed. Note that we can only overflow by a little, and only
         // from negative to positive, because exponent is at least 64 bits wide
         // and excess_exponent is bounded above by four times the size of the
-        // input buffer.
+        // input buffer, which we assume fits into 32 bits.
         exponent = exponent.zext(exponent.getBitWidth() + 1);
         exponent.setSignBit();
       }
+      return exponent;
+    }
+  };
 
+  auto LexNumericLiteral(llvm::StringRef& source_text) -> bool {
+    NumericLiteral literal = TakeLeadingNumericLiteral(source_text);
+    if (literal.text.empty()) {
+      return false;
+    }
+
+    int int_column = current_column;
+    current_column += literal.text.size();
+    source_text = source_text.drop_front(literal.text.size());
+
+    if (!set_indent) {
+      current_line_info->indent = int_column;
+      set_indent = true;
+    }
+
+    NumericLiteralLexer literal_lexer(*this, literal);
+
+    if (!literal_lexer.Check()) {
+      buffer.AddToken({
+          .kind = TokenKind::Error(),
+          .token_line = current_line,
+          .column = int_column,
+          .error_length = static_cast<int32_t>(literal.text.size()),
+      });
+      buffer.has_errors = true;
+    } else if (literal_lexer.IsInteger()) {
+      auto token = buffer.AddToken({.kind = TokenKind::IntegerLiteral(),
+                                    .token_line = current_line,
+                                    .column = int_column});
+      buffer.GetTokenInfo(token).literal_index = buffer.int_literals.size();
+      buffer.int_literals.push_back(literal_lexer.GetMantissa());
+    } else {
       auto token = buffer.AddToken({.kind = TokenKind::RealLiteral(),
                                     .token_line = current_line,
                                     .column = int_column});
       buffer.GetTokenInfo(token).literal_index = buffer.int_literals.size();
-      buffer.int_literals.push_back(std::move(mantissa));
-      buffer.int_literals.push_back(std::move(exponent));
+      buffer.int_literals.push_back(literal_lexer.GetMantissa());
+      buffer.int_literals.push_back(literal_lexer.GetExponent());
     }
     return true;
   }
