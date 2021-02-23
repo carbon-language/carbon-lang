@@ -13,7 +13,7 @@ contributions.
 
 ## Table of contents
 
--   [Contribution Setup Flow](#contribution-setup-flow)
+-   [Tool setup flow](#tool-setup-flow)
 -   [Package managers](#package-managers)
     -   [Linux and MacOS](#linux-and-macos)
         -   [Homebrew](#homebrew)
@@ -29,7 +29,6 @@ contributions.
     -   [pre-commit](#pre-commit)
     -   [gql](#gql)
     -   [PyGitHub](#pygithub)
--   [Setup Validation](#setup-validation)
 -   [Optional tools](#optional-tools)
     -   [Carbon-maintained](#carbon-maintained)
         -   [new_proposal.py](#new_proposalpy)
@@ -49,31 +48,26 @@ contributions.
 
 <!-- tocstop -->
 
-## Contribution Setup Flow
+## Tool setup flow
 
 In order to set up a machine and git repository for developing on Carbon, a
-typical setup flow for contribution is:
+typical tool setup flow is:
 
-1.  Set up the [git](https://git-scm.com/) repository:
+1.  Install [package managers](#package-managers).
+2.  Install [main tools](#main-tools) and any desired
+    [optional tools](#optional-tools).
+3.  Set up the [git](https://git-scm.com/) repository:
     -   In GitHub, create a fork for development at
         https://github.com/carbon-language/carbon-lang.
     -   `gh repository clone USER/carbon-lang`, or otherwise clone the fork.
     -   `cd carbon-lang` to go into the cloned fork's directory.
+    -   `git submodule update --init` to sync submodules if you'll be building
+        c++ code or working on the compiler.
     -   `git config core.fsmonitor rs-git-fsmonitor` to set up
         [rs-git-fsmonitor](#rs-git-fsmonitor-and-watchman) in the clone.
-    -   `git submodule update --init` to sync submodules if you'll be building
-        c++ code or working on the compiler. **Note:** this step is slow and you
-        can proceed with steps 2-4 while it completes.
-2.  Install [package managers](#package-managers).
-3.  Install [main tools](#main-tools)
-4.  `pre-commit install` in the cloned fork's directory to set up
-    [pre-commit](#pre-commit).
-5.  If you you updated submodules in step 1, and the command is complete, you
-    can validate your required tools by invoking `bazel test //...:all' from the
-    project root. All tests should pass. **Note:** the first time around, this
-    step is very slow (10 minutes on the fastest workstations). You can proceed
-    with step 6 while it completes.
-6.  Install any desired [optional tools](#optional-tools).
+    -   `pre-commit install` to set up [pre-commit](#pre-commit) in the clone.
+4.  Validate your installation by invoking `bazelisk test //...:all' from the
+    project root. All tests should pass.
 
 ## Package managers
 
@@ -243,12 +237,6 @@ pip install gql
 ```bash
 pip install PyGitHub
 ```
-
-## Setup Validation
-
-If you've installed all the foregoing tools in this document. You can validate
-that you've done everything right by invoking `bazelisk test //...:all' from the
-project root. All tests should pass.
 
 ## Optional tools
 
