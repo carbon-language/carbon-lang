@@ -36,8 +36,8 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Constraints on associated types in interfaces](#constraints-on-associated-types-in-interfaces)
         -   [Model](#model-1)
         -   [External constraints via optional parameters](#external-constraints-via-optional-parameters)
+    -   [Associated constants](#associated-constants)
     -   [Constraints that are hard to express](#constraints-that-are-hard-to-express)
--   [Associated constants](#associated-constants)
 -   [Parameterized interfaces](#parameterized-interfaces)
     -   [Impl lookup](#impl-lookup)
     -   [Parameterized structural interfaces](#parameterized-structural-interfaces)
@@ -1361,33 +1361,7 @@ This approach has a few advantages:
 constraints, as discussed in
 [this appendix](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/appendix-requires-constraints.md).
 
-### Constraints that are hard to express
-
-**Concern:** It is difficult to express some kinds of constraints in this
-framework: mathematical constraints on values (for example, "`NTuple` where `N`
-is at least 2"), and inequality type constraints (for example "type is not
-`Bool`").
-
-You might need an inequality type constraint, for example, to control overload
-resolution:
-
-```
-fn F[Type:$ T](T: x) -> T { return x; }
-fn F(Bool: x) -> String {
-  if (x) return "True"; else return "False";
-}
-
-fn G[Type:$ T](T: x) -> T {
-  // We need a T != Bool constraint for this to type check.
-  return F(x);
-}
-```
-
-Another use case for inequality type constraints would be to say something like
-"define `ComparableTo(T1)` for `T2` if `ComparableTo(T2)` is defined for `T1`
-and `T1 != T2`".
-
-## Associated constants
+### Associated constants
 
 The syntax for associated types is intended to generalize to other type
 constants. An associated constant is an interface requirement that any
@@ -1435,8 +1409,8 @@ fn PrintPoint[NSpacePoint:$ PointT](PointT: p) {
 ```
 
 We might need to write a function that only works with a specific value of `N`.
-To support this, we automatically make every associated constant an optional
-named parameter to the interface, as in:
+We solve this using the same approach of making each associated constant an
+optional named parameter to the interface, as in:
 
 ```
 fn PrintPoint2D[NSpacePoint:$ PointT(.N = 2)](PointT: p) {
@@ -1444,12 +1418,41 @@ fn PrintPoint2D[NSpacePoint:$ PointT(.N = 2)](PointT: p) {
 }
 ```
 
-**Future work:** We still need a good story for other constraints. Right now the
-only suggestion on the table is some sort of boolean condition that can be
-evaluated by the caller at compile time included as an optional clause in the
-function signature:
+### Constraints that are hard to express
+
+**Concern:** It is difficult to express some kinds of constraints in this
+framework: mathematical constraints on values (for example, "`NTuple` where `N`
+is at least 2"), and inequality type constraints (for example "type is not
+`Bool`").
+
+You might need an inequality type constraint, for example, to control overload
+resolution:
 
 ```
+fn F[Type:$ T](T: x) -> T { return x; }
+fn F(Bool: x) -> String {
+  if (x) return "True"; else return "False";
+}
+
+fn G[Type:$ T](T: x) -> T {
+  // We need a T != Bool constraint for this to type check.
+  return F(x);
+}
+```
+
+Another use case for inequality type constraints would be to say something like
+"define `ComparableTo(T1)` for `T2` if `ComparableTo(T2)` is defined for `T1`
+and `T1 != T2`".
+
+**Future work:** Right now the only suggestion on the table is some sort of
+boolean condition that can be evaluated by the caller at compile time included
+as an optional clause in the function signature:
+
+```
+fn TakesAtLeastAPair[Int:$ N](NTuple(N, Int): x) if (N >= 2) { ... }
+
+fn G[Type:$ T](T: x) -> T if (T != Bool) { return F(x); }
+
 fn PrintPoint2Or3[NSpacePoint:$ PointT](PointT: p)
   if (2 <= PointT.N && PointT.N <= 3) { ... }
 ```
