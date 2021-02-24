@@ -32,12 +32,12 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [Type compatibility](#type-compatibility)
 -   [Adapting types](#adapting-types)
     -   [Example: Defining an impl for use by other types](#example-defining-an-impl-for-use-by-other-types)
--   [Associated constants](#associated-constants)
 -   [Associated types](#associated-types)
     -   [Constraints on associated types in interfaces](#constraints-on-associated-types-in-interfaces)
         -   [Model](#model-1)
         -   [External constraints via optional parameters](#external-constraints-via-optional-parameters)
     -   [Constraints that are hard to express](#constraints-that-are-hard-to-express)
+-   [Associated constants](#associated-constants)
 -   [Parameterized interfaces](#parameterized-interfaces)
     -   [Impl lookup](#impl-lookup)
     -   [Parameterized structural interfaces](#parameterized-structural-interfaces)
@@ -1163,75 +1163,6 @@ struct MyType {
 }
 ```
 
-## Associated constants
-
-An associated constant is an interface requirement that any satisfying type
-knows a particular value known at compile time. For example, a fixed-dimensional
-point type could have the dimension as an associated constant.
-
-```
-interface NSpacePoint {
-  var Int:$ N;
-  // The following require: 0 <= i < N.
-  method (Ptr(Self): this) Get(Int: i) -> Float64;
-  method (Ptr(Self): this) Set(Int: i, Float64 : value);
-}
-```
-
-Implementations of `NSpacePoint` might have different values for `N`:
-
-```
-struct Point2D {
-  impl NSpacePoint {
-    var Int:$ N = 2;
-    method (Ptr(Self): this) Get(Int: i) -> Float64 { ... }
-    method (Ptr(Self): this) Set(Int: i, Float64 : value) { ... }
-  }
-}
-
-struct Point3D {
-  impl NSpacePoint {
-    var Int:$ N = 3;
-    method (Ptr(Self): this) Get(Int: i) -> Float64 { ... }
-    method (Ptr(Self): this) Set(Int: i, Float64 : value) { ... }
-  }
-}
-```
-
-And these values may be accessed as follows:
-
-```
-fn PrintPoint[NSpacePoint:$ PointT](PointT: p) {
-  for (var Int: i = 0; i < PointT.N; ++i) {
-    if (i > 0) { Print(", "); }
-    Print(p.Get(i));
-  }
-}
-```
-
-We might need to write a function that only works with a specific value of `N`.
-To support this, we automatically make every associated constant an optional
-named parameter to the interface, as in:
-
-```
-fn PrintPoint2D[NSpacePoint:$ PointT(.N = 2)](PointT: p) {
-  Print(p.Get(0), ", ", p.Get(1));
-}
-```
-
-The specific case where the associated constant is a type is discussed
-[in the next section](#associated-types).
-
-**Future work:** We still need a good story for other constraints. Right now the
-only suggestion on the table is some sort of boolean condition that can be
-evaluated by the caller at compile time included as an optional clause in the
-function signature:
-
-```
-fn PrintPoint2Or3[NSpacePoint:$ PointT](PointT: p)
-  if (2 <= PointT.N && PointT.N <= 3) { ... }
-```
-
 ## Associated types
 
 Associated types are associated constants that happen to be types.
@@ -1455,6 +1386,73 @@ fn G[Type:$ T](T: x) -> T {
 Another use case for inequality type constraints would be to say something like
 "define `ComparableTo(T1)` for `T2` if `ComparableTo(T2)` is defined for `T1`
 and `T1 != T2`".
+
+## Associated constants
+
+The syntax for associated types is intended to generalize to other type
+constants. An associated constant is an interface requirement that any
+satisfying type knows a particular value known at compile time. For example, a
+fixed-dimensional point type could have the dimension as an associated constant.
+
+```
+interface NSpacePoint {
+  var Int:$ N;
+  // The following require: 0 <= i < N.
+  method (Ptr(Self): this) Get(Int: i) -> Float64;
+  method (Ptr(Self): this) Set(Int: i, Float64 : value);
+}
+```
+
+Implementations of `NSpacePoint` might have different values for `N`:
+
+```
+struct Point2D {
+  impl NSpacePoint {
+    var Int:$ N = 2;
+    method (Ptr(Self): this) Get(Int: i) -> Float64 { ... }
+    method (Ptr(Self): this) Set(Int: i, Float64 : value) { ... }
+  }
+}
+
+struct Point3D {
+  impl NSpacePoint {
+    var Int:$ N = 3;
+    method (Ptr(Self): this) Get(Int: i) -> Float64 { ... }
+    method (Ptr(Self): this) Set(Int: i, Float64 : value) { ... }
+  }
+}
+```
+
+And these values may be accessed as follows:
+
+```
+fn PrintPoint[NSpacePoint:$ PointT](PointT: p) {
+  for (var Int: i = 0; i < PointT.N; ++i) {
+    if (i > 0) { Print(", "); }
+    Print(p.Get(i));
+  }
+}
+```
+
+We might need to write a function that only works with a specific value of `N`.
+To support this, we automatically make every associated constant an optional
+named parameter to the interface, as in:
+
+```
+fn PrintPoint2D[NSpacePoint:$ PointT(.N = 2)](PointT: p) {
+  Print(p.Get(0), ", ", p.Get(1));
+}
+```
+
+**Future work:** We still need a good story for other constraints. Right now the
+only suggestion on the table is some sort of boolean condition that can be
+evaluated by the caller at compile time included as an optional clause in the
+function signature:
+
+```
+fn PrintPoint2Or3[NSpacePoint:$ PointT](PointT: p)
+  if (2 <= PointT.N && PointT.N <= 3) { ... }
+```
 
 ## Parameterized interfaces
 
