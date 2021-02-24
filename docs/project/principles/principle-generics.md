@@ -70,6 +70,10 @@ to generic code, which gives us these additional principles:
   This is to allow more templated functions to be converted to generics, instead
   of requiring them to be converted specifically in bottom-up order.
 
+Also, we want the generics system to have the _coherence_ property. This means
+that the behavior of any type is consistent independent of context such as the
+libraries imported into a given file or being inside a generic function.
+
 ### Caveats
 
 - Don't need to provide full flexibility of templates from generics.
@@ -107,20 +111,27 @@ implement specific _Interfaces_. Interfaces serve several purposes:
   by Carbon itself. For example, a _Draw_ method would mean different things
   when it is part of a _GameResult_ interface vs. a _2DImage_ interface, even if
   those methods happen to have the same signature.
-- **MAYBE:** They allow multiple implementations of an interface for a given
-  type. For example, a _Song_ might support multiple orderings (by title, by
-  artist, etc.), which would be represented by having multiple implementations
-  of a _Comparable_ interface.
-- **MAYBE:** They allow you to define a set of constraints by composing multiple
-  interfaces.
 - **MAYBE:** Have mechanisms to support evolution, such as allowing new
-  additions to an interface to have default implementations or be marked
+  additions to an interface to have default implementations and/or be marked
   "upcoming" to allow for a period of transition.
+  
+There are some desirable capabilities which are in tension with the coherence
+property:
+
+- They should be some way of selecting between multiple implementations
+  of an interface for a given type. For example, a _Song_ might support multiple
+  orderings (by title, by artist, etc.), which would be represented by having
+  multiple implementations of a _Comparable_ interface.
 - In order to allow libraries to be composed, there must be some way of saying a
   type implements an interface that is in another package that the authors of
   the type were unaware of. This is especially important since the library a
   type is defined in may not be able to see the interface definition without
   creating a dependency cycle or layering violation.
+
+This means either that the interface implementations are external to types and
+are passed in to generic functions separately, or there is some way to create
+multiple types that are compatible with a given value that you can switch
+between using casts to select different interface implementations.
 
 What are we NOT doing with generics, particularly things that some other
 language does?
