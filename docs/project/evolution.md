@@ -374,9 +374,9 @@ discussion points thus far. Links to prior topics should be included.
 #### Request a review manager
 
 Once discussion settles down and all comments have been resolved, the author
-should ask for a review manager on either the RFC topic or `#proposals` in
-Discord Chat. A review manager should respond within a day or two. This may not
-be needed if a review manager has already taken ownership.
+should ask for a review manager either on the RFC topic with `@review_managers`
+or on `#proposals` in Discord Chat. A review manager should respond within a day
+or two. This may not be needed if a review manager has already taken ownership.
 
 The review manager is responsible for validating that the proposal is ready for
 the reviewing team to make a decision. They will ensure that at least a couple
