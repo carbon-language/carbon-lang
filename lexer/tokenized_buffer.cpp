@@ -20,37 +20,22 @@
 
 namespace Carbon {
 
-struct UnmatchedClosing {
+struct UnmatchedClosing : SimpleDiagnostic<UnmatchedClosing> {
   static constexpr llvm::StringLiteral ShortName = "syntax-balanced-delimiters";
   static constexpr llvm::StringLiteral Message =
       "Closing symbol without a corresponding opening symbol.";
-
-  struct Substitutions {};
-  static auto Format(const Substitutions&) -> std::string {
-    return Message.str();
-  }
 };
 
-struct MismatchedClosing {
+struct MismatchedClosing : SimpleDiagnostic<MismatchedClosing> {
   static constexpr llvm::StringLiteral ShortName = "syntax-balanced-delimiters";
   static constexpr llvm::StringLiteral Message =
       "Closing symbol does not match most recent opening symbol.";
-
-  struct Substitutions {};
-  static auto Format(const Substitutions&) -> std::string {
-    return Message.str();
-  }
 };
 
-struct EmptyDigitSequence {
+struct EmptyDigitSequence : SimpleDiagnostic<EmptyDigitSequence> {
   static constexpr llvm::StringLiteral ShortName = "syntax-invalid-number";
   static constexpr llvm::StringLiteral Message =
       "Empty digit sequence in numeric literal.";
-
-  struct Substitutions {};
-  static auto Format(const Substitutions&) -> std::string {
-    return Message.str();
-  }
 };
 
 struct InvalidDigit {
@@ -61,27 +46,19 @@ struct InvalidDigit {
     int radix;
   };
   static auto Format(const Substitutions& subst) -> std::string {
-    // TODO: Switch Format to using raw_ostream so we can easily use
-    // llvm::format here.
-    llvm::StringRef digit_str(&subst.digit, 1);
-    return (llvm::Twine("Invalid digit '") + digit_str + "' in " +
-            (subst.radix == 2    ? "binary"
-             : subst.radix == 16 ? "hexadecimal"
-                                 : "decimal") +
-            " numeric literal.")
+    return llvm::formatv("Invalid digit '{0}' in {1} numeric literal.",
+                         subst.digit,
+                         (subst.radix == 2    ? "binary"
+                          : subst.radix == 16 ? "hexadecimal"
+                                              : "decimal"))
         .str();
   }
 };
 
-struct InvalidDigitSeparator {
+struct InvalidDigitSeparator : SimpleDiagnostic<InvalidDigitSeparator> {
   static constexpr llvm::StringLiteral ShortName = "syntax-invalid-number";
   static constexpr llvm::StringLiteral Message =
       "Misplaced digit separator in numeric literal.";
-
-  struct Substitutions {};
-  static auto Format(const Substitutions&) -> std::string {
-    return Message.str();
-  }
 };
 
 struct IrregularDigitSeparators {
@@ -93,34 +70,25 @@ struct IrregularDigitSeparators {
   };
   static auto Format(const Substitutions& subst) -> std::string {
     assert((subst.radix == 10 || subst.radix == 16) && "unexpected radix");
-    return (llvm::Twine("Digit separators in ") +
-            (subst.radix == 10 ? "decimal" : "hexadecimal") +
-            " should appear every " + (subst.radix == 10 ? "3" : "4") +
-            " characters from the right.")
+    return llvm::formatv(
+               "Digit separators in {0} number should appear every {1} "
+               "characters from the right.",
+               (subst.radix == 10 ? "decimal" : "hexadecimal"),
+               (subst.radix == 10 ? "3" : "4"))
         .str();
   }
 };
 
-struct UnknownBaseSpecifier {
+struct UnknownBaseSpecifier : SimpleDiagnostic<UnknownBaseSpecifier> {
   static constexpr llvm::StringLiteral ShortName = "syntax-invalid-number";
   static constexpr llvm::StringLiteral Message =
       "Unknown base specifier in numeric literal.";
-
-  struct Substitutions {};
-  static auto Format(const Substitutions&) -> std::string {
-    return Message.str();
-  }
 };
 
-struct BinaryRealLiteral {
+struct BinaryRealLiteral : SimpleDiagnostic<BinaryRealLiteral> {
   static constexpr llvm::StringLiteral ShortName = "syntax-invalid-number";
   static constexpr llvm::StringLiteral Message =
       "Binary real number literals are not supported.";
-
-  struct Substitutions {};
-  static auto Format(const Substitutions&) -> std::string {
-    return Message.str();
-  }
 };
 
 struct WrongRealLiteralExponent {
@@ -130,23 +98,17 @@ struct WrongRealLiteralExponent {
     char expected;
   };
   static auto Format(const Substitutions& subst) -> std::string {
-    char expected_str[] = {subst.expected, '\0'};
-    return (llvm::Twine("Expected '") + expected_str +
-            "' to introduce exponent.")
+    return llvm::formatv("Expected '{0}' to introduce exponent.",
+                         subst.expected)
         .str();
   }
 };
 
-struct UnrecognizedCharacters {
+struct UnrecognizedCharacters : SimpleDiagnostic<UnrecognizedCharacters> {
   static constexpr llvm::StringLiteral ShortName =
       "syntax-unrecognized-characters";
   static constexpr llvm::StringLiteral Message =
       "Encountered unrecognized characters while parsing.";
-
-  struct Substitutions {};
-  static auto Format(const Substitutions&) -> std::string {
-    return Message.str();
-  }
 };
 
 static bool isLower(char c) { return 'a' <= c && c <= 'z'; }
@@ -383,24 +345,19 @@ class NumericLiteralParser {
         // next to another digit separator, or at the end.
         if (!allow_digit_separators || i == 0 || text[i - 1] == '_' ||
             i + 1 == n) {
-          emitter.EmitError<InvalidDigitSeparator>(
-              [&](InvalidDigitSeparator::Substitutions&) {});
+          emitter.EmitError<InvalidDigitSeparator>();
           recovered_from_error = true;
         }
         ++num_digit_separators;
         continue;
       }
 
-      emitter.EmitError<InvalidDigit>([&](InvalidDigit::Substitutions& subst) {
-        subst.digit = c;
-        subst.radix = radix;
-      });
+      emitter.EmitError<InvalidDigit>({.digit = c, .radix = radix});
       return {.ok = false};
     }
 
     if (num_digit_separators == static_cast<int>(text.size())) {
-      emitter.EmitError<EmptyDigitSequence>(
-          [&](EmptyDigitSequence::Substitutions&) {});
+      emitter.EmitError<EmptyDigitSequence>();
       return {.ok = false};
     }
 
@@ -421,10 +378,7 @@ class NumericLiteralParser {
            "given wrong number of digit separators");
 
     auto diagnose_irregular_digit_separators = [&] {
-      emitter.EmitError<IrregularDigitSeparators>(
-          [&](IrregularDigitSeparators::Substitutions& subst) {
-            subst.radix = radix;
-          });
+      emitter.EmitError<IrregularDigitSeparators>({.radix = radix});
       recovered_from_error = true;
     };
 
@@ -448,8 +402,7 @@ class NumericLiteralParser {
   // Check that we don't have a '0' prefix on a non-zero decimal integer.
   auto CheckLeadingZero() -> bool {
     if (radix == 10 && int_part.startswith("0") && int_part != "0") {
-      emitter.EmitError<UnknownBaseSpecifier>(
-          [&](UnknownBaseSpecifier::Substitutions& subst) {});
+      emitter.EmitError<UnknownBaseSpecifier>();
       return false;
     }
     return true;
@@ -470,8 +423,7 @@ class NumericLiteralParser {
     }
 
     if (radix == 2) {
-      emitter.EmitError<BinaryRealLiteral>(
-          [&](BinaryRealLiteral::Substitutions& subst) {});
+      emitter.EmitError<BinaryRealLiteral>();
       recovered_from_error = true;
       // Carry on and parse the binary real literal anyway.
     }
@@ -493,9 +445,7 @@ class NumericLiteralParser {
     char expected_exponent_kind = (radix == 10 ? 'e' : 'p');
     if (literal.text[literal.exponent] != expected_exponent_kind) {
       emitter.EmitError<WrongRealLiteralExponent>(
-          [&](WrongRealLiteralExponent::Substitutions& subst) {
-            subst.expected = expected_exponent_kind;
-          });
+          {.expected = expected_exponent_kind});
       return false;
     }
 
@@ -725,8 +675,7 @@ class TokenizedBuffer::Lexer {
       closing_token_info.error_length = kind.GetFixedSpelling().size();
       buffer.has_errors = true;
 
-      emitter.EmitError<UnmatchedClosing>(
-          [](UnmatchedClosing::Substitutions&) {});
+      emitter.EmitError<UnmatchedClosing>();
       // Note that this still returns true as we do consume a symbol.
       return true;
     }
@@ -755,8 +704,7 @@ class TokenizedBuffer::Lexer {
 
       open_groups.pop_back();
       buffer.has_errors = true;
-      emitter.EmitError<MismatchedClosing>(
-          [](MismatchedClosing::Substitutions&) {});
+      emitter.EmitError<MismatchedClosing>();
 
       // TODO: do a smarter backwards scan for where to put the closing
       // token.
