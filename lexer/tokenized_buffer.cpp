@@ -658,14 +658,6 @@ auto TokenizedBuffer::GetTokenText(Token token) const -> llvm::StringRef {
     return source->Text().substr(token_start, token_info.error_length);
   }
 
-  // Documentation comment tokens refer back to the source text.
-  if (token_info.kind == TokenKind::DocComment()) {
-    auto& line_info = GetLineInfo(token_info.token_line);
-    int64_t token_start = line_info.start + token_info.column;
-    int64_t token_stop = line_info.start + line_info.length;
-    return source->Text().slice(token_start, token_stop);
-  }
-
   // Refer back to the source text to preserve oddities like radix or digit
   // separators the author included.
   if (token_info.kind == TokenKind::IntegerLiteral()) {
