@@ -1,0 +1,14 @@
+# Part of the Carbon Language project, under the Apache License v2.0 with LLVM
+# Exceptions. See /LICENSE for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+
+printWidth: 80
+proseWrap: 'always'
+singleQuote: true
+tabWidth: 2
+trailingComma: 'es5'
+useTabs: false
+overrides:
+  - files: '*.md'
+    options:
+      tabWidth: 4
