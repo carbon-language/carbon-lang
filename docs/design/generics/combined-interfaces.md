@@ -1088,16 +1088,6 @@ PrintValue(m, "key");
 
 ## Adapting types
 
-TODO: if I'm not mistaken this is `newtype` in Rust.
-[The Rust community identifies `newtype` as the workaround for the orphan rule for coherence](https://github.com/Ixrec/rust-orphan-rules#user-content-why-are-the-orphan-rules-controversial),
-which are the same as our [impl lookup](#impl-lookup) rules.
-
-TODO: Need to be careful, can't cast between
-`HashMap(TypeWithOneHashImpl, ValueType)` and
-`HashMap(TypeWithAnotherHashImpl, ValueType)`, even if they have the same data
-representation if `HashMap` depends on the hash impl. I _think_ the previous
-[type compatibility section](#type-compatibility) mostly addresses this concern.
-
 We also provide a way to create new types
 [compatible with](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#compatible-types)
 existing types with different APIs, in particular with different interface
@@ -1135,6 +1125,36 @@ implementations from other compatible types (as in `F`). The rules are:
 -   Since adapted types are compatible with the original type, you may
     explicitly cast between them, but there is no implicit casting between these
     types (unlike between a type and one of its facet types / impls).
+
+The framework from the previous
+[type compatibility section](#type-compatibility) allows us to evaluate when we
+can cast between two different arguments to a parameterized type. Consider three
+compatible types, all of which implement `Hashable`:
+
+```
+struct X {
+  impl Hashable { ... }
+}
+adaptor Y for X {
+  impl Hashable { ... }
+}
+adaptor Z for X {
+  impl Hashable = X as Hashable;
+}
+```
+
+Observe that `X as Hashable` is different from `Y as Hashable` but the same as
+`Z as Hashable`. This means that it is safe to cast between `HashMap(X, Int)`
+and `HashMap(Z, Int)` but `HashMap(Y, Int)` is incompatible. This is a relief,
+because we know that in practice the invariants of a `HashMap` implementation
+rely on the hashing function staying the same.
+
+**Comparison with other languages:** This matches the Rust construct called
+`newtype`, which is used to implement traits on types while avoiding coherence
+problems, see
+[here](https://doc.rust-lang.org/book/ch19-03-advanced-traits.html#using-the-newtype-pattern-to-implement-external-traits-on-external-types)
+and
+[here](https://github.com/Ixrec/rust-orphan-rules#user-content-why-are-the-orphan-rules-controversial).
 
 ### Example: Defining an impl for use by other types
 
