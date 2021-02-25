@@ -1165,11 +1165,14 @@ struct MyType {
 
 ## Associated types
 
-Associated types are associated constants that happen to be types.
-
-For context, see
+A given interface `I` may declare that it requires an _associated type_ `T`.
+This means that an implementation of that interface for a type `U` must specify
+some type value for `T`. Different types `U1`, `U2` satisfying `I` can have
+different type values for `T`, so we say the value of `T` is associated with
+what type is implementing `I`. For context, see
 ["Interface type parameters vs. associated types" in the Carbon: Generics Terminology doc](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#interface-type-parameters-vs-associated-types).
-In some cases, we will want the signatures of methods to vary from
+
+This is used, for example, to allow the signatures of methods to vary from
 implementation to implementation. We already have one example of this: the
 `Self` type discussed [above in the "Interfaces" section](#interfaces). For
 other cases, we can say that the interface declares that each implementation
