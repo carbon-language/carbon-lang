@@ -26,16 +26,23 @@ load("@rules_foreign_cc//:workspace_definitions.bzl", "rules_foreign_cc_dependen
 
 rules_foreign_cc_dependencies()
 
-# Bootstrap a Clang and LLVM toolchain.
-load("//bazel/cc_toolchains:clang_bootstrap.bzl", "bootstrap_clang_toolchain")
-
-bootstrap_clang_toolchain(name = "bootstrap_clang_toolchain")
-
-# Configure the bootstrapped Clang and LLVM toolchain for Bazel.
 load("//bazel/cc_toolchains:clang_configuration.bzl", "configure_clang_toolchain")
 
+# Option 1 (default in .blazerc): download prebuilt Clang
+load("//bazel/cc_toolchains:download_clang_toolchain.bzl", "download_clang_toolchain")
+download_clang_toolchain(name = "download_clang_toolchain")
 configure_clang_toolchain(
-    name = "bazel_cc_toolchain",
+    name = "downloaded_clang_toolchain",
+    clang = "@download_clang_toolchain//:bin/clang",
+)
+
+# Option 2: bootstrap (build) a Clang toolchain locally
+# To use:
+#   bazel build --config=bootstrap ...
+load("//bazel/cc_toolchains:clang_bootstrap.bzl", "bootstrap_clang_toolchain")
+bootstrap_clang_toolchain(name = "bootstrap_clang_toolchain")
+configure_clang_toolchain(
+    name = "bootstrapped_clang_toolchain",
     clang = "@bootstrap_clang_toolchain//:bin/clang",
 )
 

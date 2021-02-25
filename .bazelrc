@@ -2,7 +2,10 @@
 # Exceptions. See /LICENSE for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-build --crosstool_top=@bazel_cc_toolchain
-build --host_crosstool_top=@bazel_cc_toolchain
+build --crosstool_top=@downloaded_clang_toolchain//:bazel_cc_toolchain
+build --host_crosstool_top=@downloaded_clang_toolchain//:bazel_cc_toolchain
+
+build:bootstrap --crosstool_top=@bootstrapped_clang_toolchain//:bazel_cc_toolchain
+build:bootstrap --host_crosstool_top=@bootstrapped_clang_toolchain//:bazel_cc_toolchain
 
 build:fuzzer --features=fuzzer
