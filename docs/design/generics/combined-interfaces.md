@@ -36,6 +36,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Constraints on associated types in interfaces](#constraints-on-associated-types-in-interfaces)
         -   [Model](#model-1)
         -   [External constraints via optional parameters](#external-constraints-via-optional-parameters)
+        -   [Tricky cases](#tricky-cases)
     -   [Associated constants](#associated-constants)
     -   [Constraints that are hard to express](#constraints-that-are-hard-to-express)
 -   [Parameterized interfaces](#parameterized-interfaces)
@@ -69,6 +70,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
         -   [DynBoxed](#dynboxed)
         -   [MaybeBoxed](#maybeboxed)
 -   [Future work](#future-work)
+    -   [Operator overloading](#operator-overloading)
     -   [Generic associated types](#generic-associated-types)
     -   [Impls with state](#impls-with-state)
     -   [Higher-ranked types](#higher-ranked-types)
@@ -861,6 +863,9 @@ def G[D:$ T](T: x) {
 }
 ```
 
+**Comparison with other languages:**
+[This feature is called "Supertraits" in Rust](https://doc.rust-lang.org/book/ch19-03-advanced-traits.html#using-supertraits-to-require-one-traits-functionality-within-another-trait).
+
 ### Interface extension
 
 When implementing an interface, we should allow implementing the aliased names
@@ -1258,6 +1263,11 @@ Assert(PeekAtTopOfStack(my_array) == 3);
 **Aside:** In general, any field declared as "generic" (using the `:$` syntax),
 will only have compile-time and not runtime storage associated with it.
 
+**Comparison with other languages:** Both
+[Rust](https://doc.rust-lang.org/book/ch19-03-advanced-traits.html#specifying-placeholder-types-in-trait-definitions-with-associated-types)
+and [Swift](https://docs.swift.org/swift-book/LanguageGuide/Generics.html#ID189)
+support associated types.
+
 ### Constraints on associated types in interfaces
 
 Now note that inside `PeekAtTopOfStack` we don't know anything about
@@ -1387,6 +1397,35 @@ This approach has a few advantages:
 **Rejected alternative:** Other languages use `requires` clauses to expressed
 constraints, as discussed in
 [this appendix](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/appendix-requires-constraints.md).
+
+#### Tricky cases
+
+TODO: Want to be able to say "The slice type for a container is another
+container, with a constraint saying it is idempotent."
+
+```
+interface Container {
+  var Type:$ ElementType;
+  var Iterator(.ElementType = ElementType):$ IteratorType;
+  // PROBLEM: recursive definition, requires forward reference
+  var Container(.ElementType = ElementType, .SliceType = SliceType):$ SliceType;
+  method (Ptr(Self): this) GetSlice(IteratorType: start,
+                                    IteratorType: end) -> SliceType;
+}
+```
+
+My only current solution involves writing a separate `alias` or
+[structural interface](#structural-interfaces) to represent the constraint.
+
+```
+alias ContainerAsSlice = Container(.SliceType = Self);
+// Or
+structural interface ContainerAsSlice
+  extends Container(.SliceType = Self) {
+}
+```
+
+TODO: More tricky cases from other docs here.
 
 ### Associated constants
 
@@ -1629,7 +1668,13 @@ associated types, a `multi` parameter can't be changed to an associated type.
 
 **Rejected alternative:** We could simplify the language by making all interface
 parameters be `multi`. You would instead use associated types for anything
-deducible. I (Josh11b) think this degrades the usability overall.
+deducible. I (Josh11b) think this degrades the usability overall, but is a
+viable option, and simplifies the language.
+
+**Comparison with other languages:**
+[Rust uses traits with type parameters for operator overloading](https://doc.rust-lang.org/book/ch19-03-advanced-traits.html#default-generic-type-parameters-and-operator-overloading).
+Note that Rust further supports defaults for those type parameters (such as
+`Self`).
 
 ### Impl lookup
 
@@ -2764,6 +2809,23 @@ UseBoxed(DontBox(Bar()));
 ```
 
 ## Future work
+
+### Operator overloading
+
+TODO: Basically same approach as Rust, implement specific standardized
+interfaces for each operator, or family of operators. See
+[Rust operator overloading](https://doc.rust-lang.org/rust-by-example/trait/ops.html)
+and the [Rust ops module](https://doc.rust-lang.org/std/ops/index.html).
+
+TODO: should implement one function to get both `==` and `!=`, or another
+function to get those plus all comparison operators (`<`, `<=`, `>=`, `>`, and
+maybe `<=>`).
+
+TODO: Concern about handling `a + b` and `b + a` in both mixed and same types
+cases.
+
+Rust added defaults for trait parameters for this use case, see
+[Default Generic Type Parameters and Operator Overloading](https://doc.rust-lang.org/book/ch19-03-advanced-traits.html#default-generic-type-parameters-and-operator-overloading)
 
 ### Generic associated types
 
