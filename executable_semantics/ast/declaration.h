@@ -24,12 +24,15 @@ struct Declaration {
   DeclarationKind tag;
   union {
     struct FunctionDefinition* fun_def;
+
     struct StructDefinition* struct_def;
+
     struct {
       int line_num;
       std::string* name;
       std::list<std::pair<std::string, Expression*>>* alternatives;
     } choice_def;
+
   } u;
 };
 
