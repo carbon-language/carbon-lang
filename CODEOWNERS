@@ -2,14 +2,27 @@
 # Exceptions. See /LICENSE for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-# Global owners.
-*           @carbon-language/admin-team
+# Most of the repository consists of implementation code or other supporting
+# material for the implementation of Carbon. Rather than enumerate these, we
+# default them to implementation team ownership, which will be overridden by later
+# lines.
+*                   @carbon-language/implementation-team
 
-# The core team owns the core language and project documentation.
-/docs/      @carbon-language/core-team
+# Co-own top-level config files. Ownership is actually mixed, but low value to
+# separate. Top-level docs will be overridden as core-team-owned files.
+/*                  @carbon-language/implementation-team
+
+# The core team owns the core language and project documentation. The
+# implementation team has access for small (non-evolution) edits.
+/*.md               @carbon-language/core-team @carbon-language/implementation-team
+/docs/              @carbon-language/core-team @carbon-language/implementation-team
 
 # The review managers own updates to the proposals.
-/proposals/ @carbon-language/review-managers
+/proposals/         @carbon-language/review-managers
 
-# This directory contains infrastructure and support scripts
-/src/       @carbon-language/infra-team
+# The core team should review license changes.
+/LICENSE            @carbon-language/core-team
+
+# ACLs are owned by the admin team and handled last to avoid accidentally being
+# overridden by later patterns.
+CODEOWNERS          @carbon-language/admin-team

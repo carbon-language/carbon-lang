@@ -1,0 +1,27 @@
+********** source program **********
+fn f (0 = Int: x, 1 = Int: y) -> Int {
+return (x + y);
+
+}
+fn main () -> Int {
+var (0 = Int, 1 = Int): xy = (0 = 1, 1 = 2);
+return f(0 = xy);
+
+}
+********** type checking **********
+--- step exp Int --->
+--- step exp Int --->
+--- step exp Int --->
+--- step exp Int --->
+--- step exp Int --->
+--- step exp Int --->
+--- step exp Int --->
+--- step exp Int --->
+--- step exp (0 = Int, 1 = Int) --->
+--- step exp Int --->
+--- handle value Int with (0 = Int, 1 = Int)<1>(Int,) --->
+--- step exp Int --->
+--- handle value Int with (0 = Int, 1 = Int)<2>(Int,Int,) --->
+10: type error in call
+expected: Tuple(0 = Int, 1 = Int)
+actual: Tuple(0 = Tuple(0 = Int, 1 = Int))

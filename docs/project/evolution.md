@@ -79,8 +79,7 @@ We use several tools to coordinate changes to Carbon:
         get summarized on a relevant Discourse Forum topic.
 -   **Google Docs** may be used for early draft proposals. This facilitates
     collaborative editing and easy commenting about wording issues.
--   **Google Hangouts Meet** will be used for VC meetings, typically for
-    decisions.
+-   **Google Meet** will be used for VC meetings, typically for decisions.
     -   Meetings should typically be summarized on a relevant Discourse Forum
         topic.
 -   **Google Calendar** will be used to track team meeting and vacation times.
@@ -103,6 +102,7 @@ team will still review participation.
 Our current review managers are:
 
 -   [jonmeow](https://github.com/jonmeow)
+-   [mmdriley](https://github.com/mmdriley)
 -   [sidney13](https://github.com/sidney13)
 
 ### Core team
@@ -344,9 +344,8 @@ approach.
 
 ##### Actions
 
--   **Author**:
-    -   Update the proposal and/or reply to comments to address feedback.
-    -   Create GitHub issues for any open questions to be revisited later.
+-   **Author**: Update the proposal and/or reply to comments to address
+    feedback.
 -   **Reviewing team and community**: Provide
     [constructive commentary](commenting_guidelines.md) for proposals.
 
@@ -375,10 +374,9 @@ discussion points thus far. Links to prior topics should be included.
 #### Request a review manager
 
 Once discussion settles down and all comments have been resolved, the author
-should request a review manager by creating a
-`Evolution > Review manager requests` topic. A review manager should respond
-within a day or two. This may not be needed if a review manager has already
-taken ownership.
+should ask for a review manager either on the RFC topic with `@review_managers`
+or on `#proposals` in Discord Chat. A review manager should respond within a day
+or two. This may not be needed if a review manager has already taken ownership.
 
 The review manager is responsible for validating that the proposal is ready for
 the reviewing team to make a decision. They will ensure that at least a couple
@@ -395,12 +393,12 @@ the comment period by posting another message to the "Evolution > RFCs" topic.
 
 -   **Author**:
     -   Ensure all comments are resolved.
-    -   Create a `Evolution > Review manager requests` topic asking for a review
-        manager, providing a link to the proposal's GitHub pull request.
-        -   Add the topic's link to the GitHub pull request.
+    -   Ask for a review manager on either the RFC topic or `#proposals` in
+        Discord chat.
 -   **Review manager**:
     -   Ask reviewing team members to review the proposal when needed.
-    -   Double-check that comment threads are addressed by the proposal.
+    -   Double-check for comment threads that the author may have missed before
+        proceeding.
     -   [Update](review_managers.md#comment-deadline) the `Evolution > RFCs`
         topic with a last call for comments.
     -   Add the `comment deadline` label to the GitHub pull request.
@@ -455,6 +453,8 @@ make decisions.
 -   **Author**:
     -   Respond to comments.
 -   **Review manager:**
+    -   Double-check for comment threads that the author may have missed before
+        proceeding.
     -   Replace the GitHub pull request's `RFC` and `comment deadline` labels
         with `needs decision`.
     -   [Create](review_managers.md#decision-request) an
