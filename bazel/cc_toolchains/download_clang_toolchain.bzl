@@ -28,5 +28,4 @@ def _impl(repository_ctx):
 
 download_clang_toolchain = repository_rule(
     implementation = _impl,
-    configure = True,
 )
