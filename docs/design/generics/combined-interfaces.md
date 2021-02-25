@@ -1145,9 +1145,10 @@ adaptor Z for X {
 
 Observe that `X as Hashable` is different from `Y as Hashable` but the same as
 `Z as Hashable`. This means that it is safe to cast between `HashMap(X, Int)`
-and `HashMap(Z, Int)` but `HashMap(Y, Int)` is incompatible. This is a relief,
-because we know that in practice the invariants of a `HashMap` implementation
-rely on the hashing function staying the same.
+and `HashMap(Z, Int)` (since they are both equal to
+`HashMap(X as Hashable, Int)`) but `HashMap(Y, Int)` is incompatible. This is a
+relief, because we know that in practice the invariants of a `HashMap`
+implementation rely on the hashing function staying the same.
 
 **Comparison with other languages:** This matches the Rust construct called
 `newtype`, which is used to implement traits on types while avoiding coherence
