@@ -1095,7 +1095,8 @@ which are the same as our [impl lookup](#impl-lookup) rules.
 TODO: Need to be careful, can't cast between
 `HashMap(TypeWithOneHashImpl, ValueType)` and
 `HashMap(TypeWithAnotherHashImpl, ValueType)`, even if they have the same data
-representation if `HashMap` depends on the hash impl
+representation if `HashMap` depends on the hash impl. I _think_ the previous
+[type compatibility section](#type-compatibility) mostly addresses this concern.
 
 We also provide a way to create new types
 [compatible with](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#compatible-types)
@@ -1148,7 +1149,9 @@ interface Comparable {
   fn operator<(Self: this, Self: that) -> Bool;
   ... // And also for >, <=, etc.
 }
-adaptor ComparableFromDifferenceFn(Type:$ T, fn(T, T)->Int:$ Difference) for T {
+adaptor ComparableFromDifferenceFn(Type:$ T,
+                                   fnty(T, T)->Int:$ Difference)
+    for T {
   impl Comparable {
     fn operator<(Self: this, Self: that) -> Bool {
       return Difference(this, that) < 0;
