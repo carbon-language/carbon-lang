@@ -71,8 +71,8 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
         -   [MaybeBoxed](#maybeboxed)
 -   [Future work](#future-work)
     -   [Operator overloading](#operator-overloading)
-    -   [Generic associated types](#generic-associated-types)
     -   [Impls with state](#impls-with-state)
+    -   [Generic associated types](#generic-associated-types)
     -   [Higher-ranked types](#higher-ranked-types)
 -   [Index of examples](#index-of-examples)
 -   [Notes](#notes)
@@ -2838,6 +2838,12 @@ cases.
 Rust added defaults for trait parameters for this use case, see
 [Default Generic Type Parameters and Operator Overloading](https://doc.rust-lang.org/book/ch19-03-advanced-traits.html#default-generic-type-parameters-and-operator-overloading)
 
+### Impls with state
+
+Impls where the impl itself has state. (from richardsmith@) Use case:
+implementing interfaces for a flyweight in a Flyweight pattern where the Impl
+needs a reference to a key -> info map.
+
 ### Generic associated types
 
 TODO: Used for "property maps" in the Boost.Graph library.
@@ -2846,11 +2852,14 @@ See
 [Carbon generics use case: graph library](https://docs.google.com/document/d/1xk0GLtpBl2OOnf3F_6Z-A3DtTt-r7wdOZ5wPipYUSO0/edit?usp=sharing&resourcekey=0-mBSmwn6b6jwbLaQw2WG6OA)
 for context.
 
-### Impls with state
-
-Impls where the impl itself has state. (from richardsmith@) Use case:
-implementing interfaces for a flyweight in a Flyweight pattern where the Impl
-needs a reference to a key -> info map.
+Rust has been working toward adding this feature
+([1](https://github.com/rust-lang/rust/issues/44265),
+[2](https://github.com/rust-lang/rfcs/blob/master/text/1598-generic_associated_types.md),
+[3](https://github.com/rust-lang/rfcs/pull/1598),
+[4](https://www.fpcomplete.com/blog/monads-gats-nightly-rust/)). It has been
+proposed for Swift as well
+([1](https://forums.swift.org/t/idea-generic-associated-types/5422),
+[2](https://forums.swift.org/t/generic-associated-type/17831)).
 
 ### Higher-ranked types
 
@@ -2882,6 +2891,15 @@ fn Map[Type:$ T,
 
 TODO: Challenging! Probably needs something like
 [Dependent function types](https://en.wikipedia.org/wiki/Dependent_type#Pi_type)
+
+Generic associated types and higher-ranked (or is it higher-kinded?) types solve
+the same problem in two different contexts. Generic associated types are about
+members of interfaces and higher-ranked types are about function parameters.
+
+Swift proposals:
+[1](https://forums.swift.org/t/higher-kinded-types-monads-functors-etc/4691),
+[2](https://forums.swift.org/t/proposal-higher-kinded-types-monads-functors-etc/559),
+[3](https://github.com/typelift/swift/issues/1).
 
 ## Index of examples
 
