@@ -132,25 +132,25 @@ auto ReifyType(Value* t, int line_num) -> Expression* {
   }
 }
 
-/* The TypeCheckExp function performs semantic analysis on an expression.
-   It returns a new version of the expression, its type, and an
-   updated environment which are bundled into a TCResult object.
-   The purpose of the updated environment is
-   to bring pattern variables into scope, for example, in a match case.
-   The new version of the expression may include more information,
-   for example, the type arguments deduced for the type parameters of a
-   generic.
+// The TypeCheckExp function performs semantic analysis on an expression.
+// It returns a new version of the expression, its type, and an
+// updated environment which are bundled into a TCResult object.
+// The purpose of the updated environment is
+// to bring pattern variables into scope, for example, in a match case.
+// The new version of the expression may include more information,
+// for example, the type arguments deduced for the type parameters of a
+// generic.
+//
+// e is the expression to be analyzed.
+// env maps variable names to the type of their run-time value.
+// ct_env maps variable names to their compile-time values. It is not
+//    directly used in this function but is passed to InterExp.
+// expected is the type that this expression is expected to have.
+//    This parameter is non-null when the expression is in a pattern context
+//    and it is used to implement `auto`, otherwise it is null.
+// context says what kind of position this expression is nested in,
+//    whether it's a position that expects a value, a pattern, or a type.
 
-   e is the expression to be analyzed.
-   env maps variable names to the type of their run-time value.
-   ct_env maps variable names to their compile-time values. It is not
-      directly used in this function but is passed to InterExp.
-   expected is the type that this expression is expected to have.
-      This parameter is non-null when the expression is in a pattern context
-      and it is used to implement `auto`, otherwise it is null.
-   context says what kind of position this expression is nested in,
-      whether it's a position that expects a value, a pattern, or a type.
-*/
 auto TypeCheckExp(Expression* e, TypeEnv* env, Env* ct_env, Value* expected,
                   TCContext context) -> TCResult {
   switch (e->tag) {
@@ -407,14 +407,14 @@ auto TypecheckCase(Value* expected, Expression* pat, Statement* body,
   return std::make_pair(pat, res.stmt);
 }
 
-/* The TypeCheckStmt function performs semantic analysis on a statement.
-   It returns a new version of the statement and a new type environment.
+// The TypeCheckStmt function performs semantic analysis on a statement.
+// It returns a new version of the statement and a new type environment.
+//
+// The ret_type parameter is used for analyzing return statements.
+// It is the declared return type of the enclosing function definition.
+// If the return type is "auto", then the return type is inferred from
+// the first return statement.
 
-   The ret_type parameter is used for analyzing return statements.
-   It is the declared return type of the enclosing function definition.
-   If the return type is "auto", then the return type is inferred from
-   the first return statement.
- */
 auto TypeCheckStmt(Statement* s, TypeEnv* env, Env* ct_env, Value* ret_type)
     -> TCStatement {
   if (!s) {
