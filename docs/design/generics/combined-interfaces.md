@@ -1680,7 +1680,7 @@ associated types, a `multi` parameter can't be changed to an associated type.
 **Rejected alternative:** We could simplify the language by making all interface
 parameters be `multi`. You would instead use associated types for anything
 deducible. I (Josh11b) think this degrades the usability overall, but is a
-viable option, and simplifies the language.
+viable option, and simplifies the language. This is what Rust does.
 
 **Comparison with other languages:**
 [Rust uses traits with type parameters for operator overloading](https://doc.rust-lang.org/book/ch19-03-advanced-traits.html#default-generic-type-parameters-and-operator-overloading).
