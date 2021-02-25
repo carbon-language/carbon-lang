@@ -1139,21 +1139,30 @@ compatible types, all of which implement `Hashable`:
 ```
 struct X {
   impl Hashable { ... }
+  impl A { ... }
 }
 adaptor Y for X {
   impl Hashable { ... }
 }
 adaptor Z for X {
   impl Hashable = X as Hashable;
+  impl B { ... }
 }
 ```
 
-Observe that `X as Hashable` is different from `Y as Hashable` but the same as
-`Z as Hashable`. This means that it is safe to cast between `HashMap(X, Int)`
-and `HashMap(Z, Int)` (since they are both equal to
-`HashMap(X as Hashable, Int)`) but `HashMap(Y, Int)` is incompatible. This is a
-relief, because we know that in practice the invariants of a `HashMap`
-implementation rely on the hashing function staying the same.
+Observe that `X as Hashable` is different from `Y as Hashable`, since they have
+different definitions of the `Hashable` interface even though they are
+compatible types since they use the same data representation. However
+`X as Hashable` and `Z as Hashable` are almost the same. In addition to using
+the same data representation, they both implement one interface, `Hashable`, and
+use the same implementation for that interface. The one difference between them
+is that `X as Hashable` may be implicitly cast to `X`, which implements
+interface `A`, and `Z as Hashable` may be implicilty cast to `Z`, which
+implements interface `B`. This means that it is safe to cast between
+`HashMap(X, Int)` and `HashMap(Z, Int)` (though maybe only with an explicit
+cast) but `HashMap(Y, Int)` is incompatible. This is a relief, because we know
+that in practice the invariants of a `HashMap` implementation rely on the
+hashing function staying the same.
 
 **Comparison with other languages:** This matches the Rust construct called
 `newtype`, which is used to implement traits on types while avoiding coherence
