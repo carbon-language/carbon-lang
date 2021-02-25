@@ -413,7 +413,6 @@ auto TypecheckCase(Value* expected, Expression* pat, Statement* body,
 // It is the declared return type of the enclosing function definition.
 // If the return type is "auto", then the return type is inferred from
 // the first return statement.
-
 auto TypeCheckStmt(Statement* s, TypeEnv* env, Env* ct_env, Value* ret_type)
     -> TCStatement {
   if (!s) {
