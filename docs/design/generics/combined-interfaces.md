@@ -1425,7 +1425,9 @@ structural interface ContainerAsSlice
 }
 ```
 
-TODO: More tricky cases from other docs here.
+TODO: Move other tricky cases from
+[this doc](https://docs.google.com/document/d/1YjF1jcXCSb4zQ4kCcZFAK5jtbIJh9IdaaTbzmQEwSNg/edit)
+here.
 
 ### Associated constants
 
