@@ -136,7 +136,7 @@ auto ReifyType(Value* t, int line_num) -> Expression* {
    It returns a new version of the expression, its type, and an
    updated environment which are bundled into a TCResult object.
    The purpose of the updated environment is
-   bring pattern variables into scope, e.g., in a match case.
+   to bring pattern variables into scope, for example, in a match case.
    The new version of the expression may include more information,
    e.g., the type arguments deduced for the type parameters of a
    generic.
