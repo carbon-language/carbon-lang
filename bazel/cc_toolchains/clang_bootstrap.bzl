@@ -8,6 +8,8 @@ These rules are loaded as part of the `WORKSPACE`, and used by
 `clang_configuration.bzl`. The llvm-project submodule is used for the build.
 """
 
+FORCE_LOCAL_BOOTSTRAP_ENV = "BAZEL_FORCE_LOCAL_BOOTSTRAP_BUILD"
+
 def _run(
         repository_ctx,
         cmd,
@@ -171,11 +173,11 @@ def _get_cmake_defines(repository_ctx, is_clang):
         "-DLLVM_TOOL_YAML2OBJ_BUILD=OFF",
     ]
 
-def _bootstrap_clang_toolchain_impl(repository_ctx):
-    """Returns the path a bootstrapped Clang executable.
+def _local_cmake_build_clang_toolchain(repository_ctx):
+    """Locally build the LLVM toolchain with CMake and Ninja.
 
-    This bootstraps Clang and the rest of the LLVM toolchain from the LLVM
-    submodule.
+    This is used as a fallback for when we can't download a prebuilt set of
+    binaries and libraries for a particular platform.
     """
     repository_ctx.report_progress("Configuring Clang toolchain bootstrap...")
     is_clang, environment = _detect_system_clang(repository_ctx)
@@ -215,9 +217,52 @@ def _bootstrap_clang_toolchain_impl(repository_ctx):
         quiet = False,
     )
 
+def _download_prebuilt_toolchain(repository_ctx):
+    """Downloads and extracts an LLVM build for the current platform.
+
+    Returns `True` when a toolchain can be successfully downloaded.
+    """
+    repository_ctx.report_progress("Checking for a downloadable toolchain...")
+    os = repository_ctx.os.name
+    if os == "linux":
+        url = "https://github.com/mmdriley/llvm-builds/releases/download/r30/llvm-linux.tar.xz"
+        sha256 = "e449ea845cf219bc4cb4f5554a01325edf1294ecbc75b9a5c39291bc891c696b"
+    elif os == "mac os x":
+        url = "https://github.com/mmdriley/llvm-builds/releases/download/r30/llvm-macos.tar.xz"
+        sha256 = "dab57a53d8500282e0d46d6280c47b6192e17e659830a9888edff4362c8f5ece"
+    elif os.startswith("windows"):
+        url = "https://github.com/mmdriley/llvm-builds/releases/download/r30/llvm-windows.tar.xz"
+        sha256 = "4a1c988cb53e3175e80667f687be8de85185f1715024919cdb4976569eade8d3"
+    else:
+        print(("No prebuilt LLVM toolcahin to download for {}, falling back " +
+               "to a local build. This may be very slow!").format(os))
+        return False
+
+    repository_ctx.report_progress("Downloading and extracting a toolchain...")
+    repository_ctx.download_and_extract(url, sha256 = sha256)
+    return True
+
+def _bootstrap_clang_toolchain_impl(repository_ctx):
+    """Bootstrap a fresh Clang and LLVM toolchain for use.
+
+    This will first try to download a pre-built archive of the LLVM toolchain
+    if one is available.
+
+    Otherwise will locally build the toolchain using CMake out of the LLVM
+    submodule.
+    """
+    force_local_build = False
+    if FORCE_LOCAL_BOOTSTRAP_ENV in repository_ctx.os.environ:
+        print("Forcing a local bootstrap build. This may be very slow!")
+        force_local_build = True
+
+    if force_local_build or not _download_prebuilt_toolchain(repository_ctx):
+        # Fallback to a local build.
+        _local_cmake_build_clang_toolchain(repository_ctx)
+
     # Create an empty BUILD file to mark the package. The files are used without
     # Bazel labels directly pointing at them.
-    repository_ctx.file("BUILD", content = "")
+    repository_ctx.file("BUILD")
 
 bootstrap_clang_toolchain = repository_rule(
     implementation = _bootstrap_clang_toolchain_impl,
@@ -230,5 +275,5 @@ bootstrap_clang_toolchain = repository_rule(
             allow_single_file = True,
         ),
     },
-    environ = ["CC", "CXX"],
+    environ = ["CC", "CXX", FORCE_LOCAL_BOOTSTRAP_ENV],
 )
