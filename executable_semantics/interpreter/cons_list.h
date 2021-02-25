@@ -8,22 +8,23 @@
 namespace Carbon {
 
 template <class T>
+struct Stack;
+
+template <class T>
 struct Cons {
+  friend struct Stack<T>;
+
+ private:
   Cons(T e, Cons* n) : curr(e), next(n) {}
 
   const T curr;
-  Cons* next;
+  Cons* const next;
+
+  // Cons cells are part of a "persistent data structure" and are thus
+  // immutable.
+  Cons& operator=(const Cons&) = delete;
+  Cons& operator=(Cons&&) = delete;
 };
-
-template <class T>
-auto MakeCons(const T& x) -> Cons<T>* {
-  return new Cons<T>(x, nullptr);
-}
-
-template <class T>
-auto MakeCons(const T& x, Cons<T>* ls) -> Cons<T>* {
-  return new Cons<T>(x, ls);
-}
 
 template <class T>
 auto Length(Cons<T>* ls) -> unsigned int {

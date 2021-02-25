@@ -4,7 +4,9 @@
 
 #include "executable_semantics/interpreter/typecheck.h"
 
+#include <algorithm>
 #include <iostream>
+#include <iterator>
 #include <map>
 #include <set>
 #include <vector>
