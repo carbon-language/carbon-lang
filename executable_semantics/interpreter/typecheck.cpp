@@ -133,7 +133,7 @@ auto ReifyType(Value* t, int line_num) -> Expression* {
 }
 
 /* The TypeCheckExp function performs semantic analysis on an expression.
-   It returns a new version of the expression, it's type, and an
+   It returns a new version of the expression, its type, and an
    updated environment which are bundled into a TCResult object.
    The purpose of the updated environment is
    bring pattern variables into scope, e.g., in a match case.
