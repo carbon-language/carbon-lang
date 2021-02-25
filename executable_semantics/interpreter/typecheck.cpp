@@ -149,7 +149,7 @@ auto ReifyType(Value* t, int line_num) -> Expression* {
       This parameter is non-null when the expression is in a pattern context
       and it is used to implement `auto`, otherwise it is null.
    context says what kind of position this expression is nested in,
-      whether its a position that expects a value, a pattern, or a type.
+      whether it's a position that expects a value, a pattern, or a type.
 */
 auto TypeCheckExp(Expression* e, TypeEnv* env, Env* ct_env, Value* expected,
                   TCContext context) -> TCResult {
