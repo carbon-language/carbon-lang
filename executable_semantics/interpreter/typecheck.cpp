@@ -141,7 +141,7 @@ auto ReifyType(Value* t, int line_num) -> Expression* {
    for example, the type arguments deduced for the type parameters of a
    generic.
 
-   e is the expression to be analyzed
+   e is the expression to be analyzed.
    env maps variable names to the type of their run-time value.
    ct_env maps variable names to their compile-time values. It is not
       directly used in this function but is passed to InterExp.
