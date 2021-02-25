@@ -57,6 +57,7 @@ void yyerror(char* error) {
 %type <function_definition> function_definition
 %type <declaration_list> declaration_list
 %type <statement> statement
+%type <statement> optional_else
 %type <statement_list> statement_list
 %type <expression> expression
 %type <expression> pattern
@@ -228,8 +229,8 @@ statement:
     { $$ = Carbon::MakeVarDef(yylineno, $2, $4); }
 | expression ';'
     { $$ = Carbon::MakeExpStmt(yylineno, $1); }
-| IF '(' expression ')' statement ELSE statement
-    { $$ = Carbon::MakeIf(yylineno, $3, $5, $7); }
+| IF '(' expression ')' statement optional_else
+    { $$ = Carbon::MakeIf(yylineno, $3, $5, $6); }
 | WHILE '(' expression ')' statement
     { $$ = Carbon::MakeWhile(yylineno, $3, $5); }
 | BREAK ';'
@@ -242,6 +243,11 @@ statement:
     { $$ = Carbon::MakeBlock(yylineno, $2); }
 | MATCH '(' expression ')' '{' clause_list '}'
     { $$ = Carbon::MakeMatch(yylineno, $3, $6); }
+;
+optional_else:
+  // Empty
+    { $$ = 0; }
+| ELSE statement { $$ = $2; }
 ;
 statement_list:
   // Empty
