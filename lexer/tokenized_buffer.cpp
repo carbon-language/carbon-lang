@@ -21,6 +21,69 @@
 
 namespace Carbon {
 
+static auto TakeMultiLineStringLiteralPrefix(llvm::StringRef source_text)
+    -> llvm::StringRef {
+  const char *begin = source_text.begin();
+  if (!source_text.consume_front("\"\"\"")) {
+    return llvm::StringRef();
+  }
+
+  // The rest of the line must be a valid file type indicator: a sequence of
+  // characters containing neither '#' nor '"'.
+  auto Interesting = source_text.find_first_of("\"#\n");
+  if (Interesting == source_text.npos) {
+    Interesting = source_text.size();
+  } else if (source_text[Interesting] != '\n') {
+    return llvm::StringRef();
+  }
+
+  return llvm::StringRef(begin, Interesting + 3);
+}
+
+static auto TakeLeadingStringLiteral(llvm::StringRef source_text)
+    -> llvm::StringRef {
+  const char *begin = source_text.begin();
+
+  int hash_level = 0;
+  while (source_text.consume_front("#"))
+    ++hash_level;
+
+  llvm::SmallString<16> terminator("\"");
+  llvm::SmallString<16> escape("\\");
+  bool multi_line = false;
+
+  llvm::StringRef multiline_prefix =
+      TakeMultiLineStringLiteralPrefix(source_text);
+  if (!multiline_prefix.empty()) {
+    source_text = source_text.drop_front(multiline_prefix.size());
+    multi_line = true;
+    terminator = "\"\"\"";
+  } else if (!source_text.consume_front("\"")) {
+    return llvm::StringRef();
+  }
+
+  // The terminator and escape sequence marker require a number of '#'s
+  // matching the leading sequence of '#'s.
+  terminator.resize(terminator.size() + hash_level, '#');
+  escape.resize(escape.size() + hash_level, '#');
+
+  while (!source_text.consume_front(terminator)) {
+    // Let LexError figure out how to recover from an unterminated string
+    // literal.
+    if (source_text.empty())
+      return llvm::StringRef();
+    if (!multi_line && source_text.startswith("\n"))
+      return llvm::StringRef();
+
+    // Either consume a single character, or consume a single character
+    // preceded by the escape sequence marker.
+    (void)source_text.consume_front(escape);
+    source_text = source_text.drop_front(1);
+  }
+
+  return llvm::StringRef(begin, source_text.begin() - begin);
+}
+
 struct TrailingComment : SimpleDiagnostic<TrailingComment> {
   static constexpr llvm::StringLiteral ShortName = "syntax-comments";
   static constexpr llvm::StringLiteral Message =
@@ -676,6 +739,32 @@ class TokenizedBuffer::Lexer {
     }
   }
 
+  auto LexStringLiteral(llvm::StringRef& source_text) -> LexResult {
+    llvm::StringRef string_text = TakeLeadingStringLiteral(source_text);
+    if (string_text.empty()) {
+      return LexResult::NoMatch();
+    }
+
+    Line string_line = current_line;
+    int string_column = current_column;
+    source_text = source_text.drop_front(string_text.size());
+
+    if (!set_indent) {
+      current_line_info->indent = string_column;
+      set_indent = true;
+    }
+
+    // TODO: Update line and column information properly for multiline strings.
+    current_column += string_text.size();
+
+    auto token = buffer.AddToken({
+        .kind = TokenKind::StringLiteral(),
+        .token_line = string_line,
+        .column = string_column,
+    });
+    return token;
+  }
+
   auto LexSymbolToken(llvm::StringRef& source_text) -> LexResult {
     TokenKind kind = llvm::StringSwitch<TokenKind>(source_text)
 #define CARBON_SYMBOL_TOKEN(Name, Spelling) \
@@ -857,8 +946,14 @@ auto TokenizedBuffer::Lex(SourceBuffer& source, DiagnosticEmitter& emitter)
   llvm::StringRef source_text = source.Text();
   while (lexer.SkipWhitespace(source_text)) {
     // Each time we find non-whitespace characters, try each kind of token we
-    // support lexing, from simplest to most complex.
-    Lexer::LexResult result = lexer.LexSymbolToken(source_text);
+    // support lexing. Try lexing longer tokens (such as `#""#`) before shorter
+    // ones (such as `#`).
+    // TODO: Should we recognize `#` as an operator? If not, we could defer
+    // lexing string literals until after we check for the more common cases.
+    Lexer::LexResult result = lexer.LexStringLiteral(source_text);
+    if (!result) {
+      result = lexer.LexSymbolToken(source_text);
+    }
     if (!result) {
       result = lexer.LexKeywordOrIdentifier(source_text);
     }
@@ -911,6 +1006,14 @@ auto TokenizedBuffer::GetTokenText(Token token) const -> llvm::StringRef {
     auto& line_info = GetLineInfo(token_info.token_line);
     int64_t token_start = line_info.start + token_info.column;
     return TakeLeadingNumericLiteral(source->Text().substr(token_start)).text;
+  }
+
+  // Refer back to the source text to find the original spelling, including
+  // escape sequences etc.
+  if (token_info.kind == TokenKind::StringLiteral()) {
+    auto& line_info = GetLineInfo(token_info.token_line);
+    int64_t token_start = line_info.start + token_info.column;
+    return TakeLeadingStringLiteral(source->Text().substr(token_start));
   }
 
   assert(token_info.kind == TokenKind::Identifier() &&

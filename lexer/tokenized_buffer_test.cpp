@@ -838,6 +838,60 @@ TEST_F(LexerTest, Identifiers) {
                       }));
 }
 
+TEST_F(LexerTest, StringLiteralBounds) {
+  llvm::StringLiteral valid[] = {
+      R"("")",
+      R"("""
+      """)",
+      R"("""
+      "foo"
+      """)",
+
+      // Escaped terminators don't end the string.
+      R"("\"")",
+      R"("""
+      \"""
+      """)",
+      R"("""
+      "\""
+      """)",
+      R"("""
+      ""\"
+      """)",
+      R"("""
+      ""\
+      """)",
+      R"(#"""
+      """\#n
+      """#)",
+
+      // Only a matching number of '#'s terminates the string.
+      R"(#""#)",
+      R"(#"xyz"foo"#)",
+      R"(##"xyz"#foo"##)",
+      R"(#"\""#)",
+
+      // Escape sequences likewise require a matching number of '#'s.
+      R"(#"\#"#"#)",
+      R"(#"\"#)",
+      R"(#"""
+      \#"""#
+      """#)",
+
+      // #"""# does not start a multiline string literal.
+      R"(#"""#)",
+      R"(##"""##)",
+  };
+
+  for (llvm::StringLiteral test : valid) {
+    auto buffer = Lex(test);
+    EXPECT_FALSE(buffer.HasErrors()) << test;
+    EXPECT_THAT(buffer, HasTokens(llvm::ArrayRef<ExpectedToken>{
+                            {.kind = TokenKind::StringLiteral(), .text = test},
+                        }));
+  }
+}
+
 auto GetAndDropLine(llvm::StringRef& text) -> std::string {
   auto newline_offset = text.find_first_of('\n');
   llvm::StringRef line = text.slice(0, newline_offset);
