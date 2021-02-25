@@ -138,7 +138,7 @@ auto ReifyType(Value* t, int line_num) -> Expression* {
    The purpose of the updated environment is
    to bring pattern variables into scope, for example, in a match case.
    The new version of the expression may include more information,
-   e.g., the type arguments deduced for the type parameters of a
+   for example, the type arguments deduced for the type parameters of a
    generic.
 
    e is the expression to be analyzed
