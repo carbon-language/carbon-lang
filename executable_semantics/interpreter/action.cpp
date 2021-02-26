@@ -12,6 +12,7 @@
 #include "executable_semantics/ast/expression.h"
 #include "executable_semantics/ast/function_definition.h"
 #include "executable_semantics/interpreter/interpreter.h"
+#include "executable_semantics/interpreter/stack.h"
 #include "executable_semantics/interpreter/typecheck.h"
 
 namespace Carbon {
@@ -48,12 +49,12 @@ void PrintAct(Action* act, std::ostream& out) {
   }
 }
 
-void PrintActList(Cons<Action*>* ls, std::ostream& out) {
-  if (ls) {
-    PrintAct(ls->curr, out);
-    if (ls->next) {
+void PrintActList(Stack<Action*> ls, std::ostream& out) {
+  if (!ls.IsEmpty()) {
+    PrintAct(ls.Pop(), out);
+    if (!ls.IsEmpty()) {
       out << " :: ";
-      PrintActList(ls->next, out);
+      PrintActList(ls, out);
     }
   }
 }

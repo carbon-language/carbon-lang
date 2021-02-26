@@ -20,6 +20,7 @@ cc_library(
         "assoc_list.h",
         "cons_list.h",
         "interpreter.h",
+        "stack.h",
         "typecheck.h",
         "value.h",
     ],
