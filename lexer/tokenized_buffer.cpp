@@ -14,6 +14,7 @@
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/StringSwitch.h"
 #include "llvm/ADT/Twine.h"
+#include "llvm/Support/ConvertUTF.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/Format.h"
 #include "llvm/Support/FormatVariadic.h"
@@ -126,6 +127,51 @@ struct ContentBeforeStringTerminator
       "multi-line string.";
 };
 
+struct UnicodeEscapeTooLarge : SimpleDiagnostic<UnicodeEscapeTooLarge> {
+  static constexpr llvm::StringLiteral ShortName = "syntax-invalid-string";
+  static constexpr llvm::StringLiteral Message =
+      "Code point specified by `\\u{...}` escape is greater than 0x10FFFF.";
+};
+
+struct UnicodeEscapeSurrogate : SimpleDiagnostic<UnicodeEscapeSurrogate> {
+  static constexpr llvm::StringLiteral ShortName = "syntax-invalid-string";
+  static constexpr llvm::StringLiteral Message =
+      "Code point specified by `\\u{...}` escape is a surrogate character.";
+};
+
+struct UnicodeEscapeMissingBracedDigits
+    : SimpleDiagnostic<UnicodeEscapeMissingBracedDigits> {
+  static constexpr llvm::StringLiteral ShortName = "syntax-invalid-string";
+  static constexpr llvm::StringLiteral Message =
+      "Escape sequence `\\u` must be followed by a braced sequence of "
+      "uppercase hexadecimal digits, for example `\\u{70AD}`.";
+};
+
+struct HexadecimalEscapeMissingDigits
+    : SimpleDiagnostic<HexadecimalEscapeMissingDigits> {
+  static constexpr llvm::StringLiteral ShortName = "syntax-invalid-string";
+  static constexpr llvm::StringLiteral Message =
+      "Escape sequence `\\x` must be followed by two "
+      "uppercase hexadecimal digits, for example `\\x0F`.";
+};
+
+struct UnknownEscapeSequence {
+  static constexpr llvm::StringLiteral ShortName = "syntax-invalid-string";
+  static constexpr const char* Message = "Unrecognized escape sequence `{0}`.";
+
+  struct Substitutions { char first; };
+  static auto Format(const Substitutions& subst) -> std::string {
+    return llvm::formatv(Message, subst.first).str();
+  }
+};
+
+struct MismatchedIndentInString : SimpleDiagnostic<MismatchedIndentInString> {
+  static constexpr llvm::StringLiteral ShortName = "syntax-invalid-string";
+  static constexpr llvm::StringLiteral Message =
+      "Indentation does not match that of the closing \"\"\" in multi-line "
+      "string literal.";
+};
+
 struct UnrecognizedCharacters : SimpleDiagnostic<UnrecognizedCharacters> {
   static constexpr llvm::StringLiteral ShortName =
       "syntax-unrecognized-characters";
@@ -140,6 +186,10 @@ static bool isSpace(char c) {
 }
 
 static bool isLower(char c) { return 'a' <= c && c <= 'z'; }
+
+static bool isUpperHexDigit(char c) {
+  return ('0' <= c && c <= '9') || ('A' <= c && c <= 'F');
+}
 
 namespace {
 struct NumericLiteral {
@@ -531,6 +581,7 @@ static auto TakeMultiLineStringLiteralPrefix(llvm::StringRef source_text)
   return llvm::StringRef(begin, 3 + file_type_length + 1);
 }
 
+namespace {
 struct StringLiteral {
   // The complete text of the string literal.
   llvm::StringRef text;
@@ -544,6 +595,7 @@ struct StringLiteral {
   // Whether this was a multi-line string literal.
   bool multi_line;
 };
+}  // namespace
 
 // If source_text begins with a string literal token, extract and return
 // information on that token.
@@ -586,7 +638,7 @@ static auto TakeLeadingStringLiteral(llvm::StringRef source_text)
     // Either consume a single character, or consume a single character
     // preceded by the escape sequence marker.
     (void)source_text.consume_front(escape);
-    source_text = source_text.drop_front(1);
+    source_text = source_text.substr(1);
     content_end = source_text.begin();
   }
 
@@ -597,11 +649,13 @@ static auto TakeLeadingStringLiteral(llvm::StringRef source_text)
       .multi_line = multi_line};
 }
 
+namespace {
 // The leading whitespace in a multi-line string literal.
 struct StringLiteralIndent {
   llvm::StringRef indent;
   bool has_errors;
 };
+}  // namespace
 
 // Find the leading whitespace that should be removed from each line of a multi-line string literal.
 static auto CheckMultiLineStringLiteralIndent(DiagnosticEmitter& emitter,
@@ -631,6 +685,173 @@ static auto CheckMultiLineStringLiteralIndent(DiagnosticEmitter& emitter,
 
   return {.indent = llvm::StringRef(indent_begin, indent_end - indent_begin),
           .has_errors = has_errors};
+}
+
+// Expand a `\u{HHHHHH}` escape sequence into a sequence of UTF-8 code units.
+static auto ExpandUnicodeEscapeSequence(DiagnosticEmitter& emitter,
+                                        llvm::StringRef digits,
+                                        std::string& result) -> bool {
+  unsigned code_point;
+  if (!digits.getAsInteger(16, code_point) || code_point > 0x10FFFF) {
+    emitter.EmitError<UnicodeEscapeTooLarge>();
+    return false;
+  }
+
+  if (code_point >= 0xD800 && code_point <= 0xE000) {
+    emitter.EmitError<UnicodeEscapeSurrogate>();
+    return false;
+  }
+
+  // Convert the code point to a sequence of UTF-8 code units.
+  // Every code point fits in 6 UTF-8 code units.
+  const llvm::UTF32 utf32_code_units[1] = {code_point};
+  llvm::UTF8 utf8_code_units[6];
+  const llvm::UTF32* src_pos = utf32_code_units;
+  llvm::UTF8* dest_pos = utf8_code_units;
+  llvm::ConversionResult conv_result = llvm::ConvertUTF32toUTF8(
+      &src_pos, src_pos + 1, &dest_pos, dest_pos + 6, llvm::strictConversion);
+  if (conv_result != llvm::conversionOK) {
+    llvm_unreachable("conversion of valid code point to UTF-8 cannot fail");
+  }
+  result.insert(result.end(), reinterpret_cast<char*>(utf8_code_units),
+                reinterpret_cast<char*>(dest_pos));
+  return true;
+}
+
+static auto ExpandAndConsumeEscapeSequence(DiagnosticEmitter& emitter,
+                                           llvm::StringRef& escape,
+                                           std::string& result) -> bool {
+  assert(!escape.empty() && "should have escaped closing delimiter");
+  char first = escape.front();
+  escape = escape.drop_front(1);
+
+  switch (first) {
+    case 't':
+      result += '\t';
+      return true;
+    case 'n':
+      result += '\n';
+      return true;
+    case 'r':
+      result += '\r';
+      return true;
+    case '"':
+      result += '"';
+      return true;
+    case '\'':
+      result += '\'';
+      return true;
+    case '\\':
+      result += '\\';
+      return true;
+    case '0':
+      result += '\0';
+      return true;
+    case 'x':
+      if (escape.size() >= 3 && isUpperHexDigit(escape[1]) && isUpperHexDigit(escape[2])) {
+        result += static_cast<char>(llvm::hexFromNibbles(escape[1], escape[2]));
+        return true;
+      }
+      emitter.EmitError<HexadecimalEscapeMissingDigits>();
+      break;
+    case 'u': {
+      if (escape[1] == '{') {
+        const char *pos = escape.begin() + 1;
+        while (pos != escape.end() && isUpperHexDigit(*pos)) {
+          ++pos;
+        }
+        if (pos != escape.end() && *pos == '}') {
+          llvm::StringRef digits(escape.begin() + 1,
+                                 pos - (escape.begin() + 1));
+          if (!ExpandUnicodeEscapeSequence(emitter, digits, result)) {
+            break;
+          }
+          escape = escape.drop_front(digits.size() + 2);
+          return true;
+        }
+      }
+      emitter.EmitError<UnicodeEscapeMissingBracedDigits>();
+      break;
+    }
+    default:
+      emitter.EmitError<UnknownEscapeSequence>({.first = first});
+      break;
+  }
+
+  // If we get here, we didn't recognize this escape sequence and have already
+  // issued a diagnostic. For error recovery purposes, expand this escape
+  // sequence to itself, dropping the introducer (for example, `\q` -> `q`).
+  result += first;
+  return false;
+}
+
+namespace {
+// The result of expanding escape sequences in a string literal.
+struct ExpandedStringLiteral {
+  std::string result;
+  bool has_errors;
+};
+}  // namespace
+
+// Expand any escape sequences in the given string literal.
+static auto ExpandEscapeSequencesAndRemoveIndent(DiagnosticEmitter& emitter,
+                                                 llvm::StringRef contents,
+                                                 int hash_level,
+                                                 llvm::StringRef indent)
+    -> ExpandedStringLiteral {
+  std::string result;
+  result.reserve(contents.size());
+  bool has_errors = false;
+
+  llvm::SmallString<16> escape("\\");
+  escape.resize(1 + hash_level, '#');
+
+  // Process each line of the string literal.
+  while (true) {
+    if (!contents.consume_front(indent)) {
+      emitter.EmitError<MismatchedIndentInString>();
+      has_errors = true;
+    }
+
+    // Process the contents of the line.
+    while (true) {
+      auto end_of_regular_text = contents.find_first_of("\n\\");
+      result += contents.substr(0, end_of_regular_text);
+      contents = contents.substr(end_of_regular_text);
+
+      if (contents.empty()) {
+        return {.result = result, .has_errors = has_errors};
+      }
+
+      if (contents.consume_front("\n")) {
+        // Trailing whitespace before a newline doesn't contribute to the string
+        // literal value.
+        while (!result.empty() && result.back() != '\n' && isSpace(result.back()))
+          result.pop_back();
+        result += '\n';
+        // Move onto to the next line.
+        break;
+      }
+
+      if (!contents.consume_front(escape)) {
+        // This is not an escape sequence, just a raw `\`.
+        result += contents.front();
+        contents = contents.drop_front(1);
+        continue;
+      }
+
+      if (contents.consume_front("\n")) {
+        // An escaped ends the line without producing any content and without
+        // trimming trailing whitespace.
+        break;
+      }
+
+      // Handle this escape sequence.
+      if (!ExpandAndConsumeEscapeSequence(emitter, contents, result)) {
+        has_errors = true;
+      }
+    }
+  }
 }
 
 // Implementation of the lexer logic itself.
@@ -854,11 +1075,17 @@ class TokenizedBuffer::Lexer {
       }
     }
 
-    auto token = buffer.AddToken({
-        .kind = TokenKind::StringLiteral(),
-        .token_line = string_line,
-        .column = string_column,
-    });
+    // Determine string literal value.
+    auto expanded = ExpandEscapeSequencesAndRemoveIndent(
+        emitter, literal.content, literal.hash_level, indent);
+    buffer.has_errors |= expanded.has_errors;
+
+    auto token = buffer.AddToken({.kind = TokenKind::StringLiteral(),
+                                  .token_line = string_line,
+                                  .column = string_column});
+    buffer.GetTokenInfo(token).literal_index =
+        buffer.literal_string_storage.size();
+    buffer.literal_string_storage.push_back(std::move(expanded.result));
     return token;
   }
 
@@ -1024,9 +1251,9 @@ class TokenizedBuffer::Lexer {
          .column = current_column,
          .error_length = static_cast<int32_t>(error_text.size())});
     // TODO: #19 - Need to convert to the diagnostics library.
-    llvm::errs() << "ERROR: Line " << buffer.GetLineNumber(token) << ", Column "
-                 << buffer.GetColumnNumber(token)
-                 << ": Unrecognized characters!\n";
+//    llvm::errs() << "ERROR: Line " << buffer.GetLineNumber(token) << ", Column "
+//                 << buffer.GetColumnNumber(token)
+//                 << ": Unrecognized characters!\n";
 
     current_column += error_text.size();
     source_text = source_text.drop_front(error_text.size());
@@ -1147,6 +1374,13 @@ auto TokenizedBuffer::GetRealLiteral(Token token) const -> RealLiteralValue {
   bool is_decimal = second_char != 'x' && second_char != 'b';
 
   return RealLiteralValue(this, token_info.literal_index, is_decimal);
+}
+
+auto TokenizedBuffer::GetStringLiteral(Token token) const -> llvm::StringRef {
+  auto& token_info = GetTokenInfo(token);
+  assert(token_info.kind == TokenKind::StringLiteral() &&
+         "The token must be a string literal!");
+  return literal_string_storage[token_info.literal_index];
 }
 
 auto TokenizedBuffer::GetMatchedClosingToken(Token opening_token) const

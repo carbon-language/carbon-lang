@@ -492,7 +492,7 @@ TEST_F(LexerTest, SplitsNumericLiteralsProperly) {
 }
 
 TEST_F(LexerTest, HandlesGarbageCharacters) {
-  constexpr char GarbageText[] = "$$💩-$\n$\0$12$";
+  constexpr char GarbageText[] = "$$💩-$\n$\0$12$\n\"\n\"\\";
   auto buffer = Lex(llvm::StringRef(GarbageText, sizeof(GarbageText) - 1));
   EXPECT_TRUE(buffer.HasErrors());
   EXPECT_THAT(
@@ -515,6 +515,20 @@ TEST_F(LexerTest, HandlesGarbageCharacters) {
            .column = 4,
            .text = "12"},
           {.kind = TokenKind::Error(), .line = 2, .column = 6, .text = "$"},
+          // newline
+          {.kind = TokenKind::Error(),
+           .line = 3,
+           .column = 1,
+           .text = llvm::StringRef("\"", 1)},
+          // newline
+          {.kind = TokenKind::Error(),
+           .line = 4,
+           .column = 1,
+           .text = llvm::StringRef("\"", 1)},
+          {.kind = TokenKind::Backslash(),
+           .line = 4,
+           .column = 2,
+           .text = llvm::StringRef("\\", 1)},
       }));
 }
 
@@ -867,6 +881,8 @@ TEST_F(LexerTest, StringLiteralBounds) {
 
       // Escaped terminators don't end the string.
       R"("\"")",
+      R"("\\")",
+      R"("\\\"")",
       R"("""
       \"""
       """)",
@@ -907,6 +923,37 @@ TEST_F(LexerTest, StringLiteralBounds) {
     EXPECT_THAT(buffer, HasTokens(llvm::ArrayRef<ExpectedToken>{
                             {.kind = TokenKind::StringLiteral(), .text = test},
                         }));
+  }
+
+  llvm::StringLiteral invalid[] = {
+      R"(")",
+      R"("""
+      "")",
+      R"("\)",
+      R"("\")",
+      R"("\\)",
+      R"("\\\")",
+      R"(""")",
+      R"("""
+      )",
+      R"("""\)",
+      R"(#"""
+      """)",
+  };
+
+  for (llvm::StringLiteral test : invalid) {
+    auto buffer = Lex(test);
+    EXPECT_TRUE(buffer.HasErrors()) << "`" << test << "`";
+
+    // We should have formed at least one error token.
+    bool found_error = false;
+    for (TokenizedBuffer::Token token : buffer.Tokens()) {
+      if (buffer.GetKind(token) == TokenKind::Error()) {
+        found_error = true;
+        break;
+      }
+    }
+    EXPECT_TRUE(found_error) << "`" << test << "`";
   }
 }
 
