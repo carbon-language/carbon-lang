@@ -225,14 +225,14 @@ def _download_prebuilt_toolchain(repository_ctx):
     repository_ctx.report_progress("Checking for a downloadable toolchain...")
     os = repository_ctx.os.name
     if os == "linux":
-        url = "https://github.com/mmdriley/llvm-builds/releases/download/r30/llvm-linux.tar.xz"
-        sha256 = "e449ea845cf219bc4cb4f5554a01325edf1294ecbc75b9a5c39291bc891c696b"
+        url = "https://github.com/mmdriley/llvm-builds/releases/download/r32/llvm-linux.tar.xz"
+        sha256 = "db9f2698aa84935efca3402bdebada127de16f6746adbe54d4cdb7e3b8fec5f3"
     elif os == "mac os x":
-        url = "https://github.com/mmdriley/llvm-builds/releases/download/r30/llvm-macos.tar.xz"
-        sha256 = "dab57a53d8500282e0d46d6280c47b6192e17e659830a9888edff4362c8f5ece"
+        url = "https://github.com/mmdriley/llvm-builds/releases/download/r32/llvm-macos.tar.xz"
+        sha256 = "937b81c235977ed2b265baf656f30b7a03c33b6299090d91beb72c2b41846673"
     elif os.startswith("windows"):
-        url = "https://github.com/mmdriley/llvm-builds/releases/download/r30/llvm-windows.tar.xz"
-        sha256 = "4a1c988cb53e3175e80667f687be8de85185f1715024919cdb4976569eade8d3"
+        url = "https://github.com/mmdriley/llvm-builds/releases/download/r32/llvm-windows.tar.xz"
+        sha256 = "b6b015f9f2fcfb79381004e6a3ae925df4fb827cf7e07f3d5b0b66210fddd172"
     else:
         print(("No prebuilt LLVM toolcahin to download for {}, falling back " +
                "to a local build. This may be very slow!").format(os))
