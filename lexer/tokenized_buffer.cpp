@@ -21,69 +21,6 @@
 
 namespace Carbon {
 
-static auto TakeMultiLineStringLiteralPrefix(llvm::StringRef source_text)
-    -> llvm::StringRef {
-  const char *begin = source_text.begin();
-  if (!source_text.consume_front("\"\"\"")) {
-    return llvm::StringRef();
-  }
-
-  // The rest of the line must be a valid file type indicator: a sequence of
-  // characters containing neither '#' nor '"'.
-  auto Interesting = source_text.find_first_of("\"#\n");
-  if (Interesting == source_text.npos) {
-    Interesting = source_text.size();
-  } else if (source_text[Interesting] != '\n') {
-    return llvm::StringRef();
-  }
-
-  return llvm::StringRef(begin, Interesting + 3);
-}
-
-static auto TakeLeadingStringLiteral(llvm::StringRef source_text)
-    -> llvm::StringRef {
-  const char *begin = source_text.begin();
-
-  int hash_level = 0;
-  while (source_text.consume_front("#"))
-    ++hash_level;
-
-  llvm::SmallString<16> terminator("\"");
-  llvm::SmallString<16> escape("\\");
-  bool multi_line = false;
-
-  llvm::StringRef multiline_prefix =
-      TakeMultiLineStringLiteralPrefix(source_text);
-  if (!multiline_prefix.empty()) {
-    source_text = source_text.drop_front(multiline_prefix.size());
-    multi_line = true;
-    terminator = "\"\"\"";
-  } else if (!source_text.consume_front("\"")) {
-    return llvm::StringRef();
-  }
-
-  // The terminator and escape sequence marker require a number of '#'s
-  // matching the leading sequence of '#'s.
-  terminator.resize(terminator.size() + hash_level, '#');
-  escape.resize(escape.size() + hash_level, '#');
-
-  while (!source_text.consume_front(terminator)) {
-    // Let LexError figure out how to recover from an unterminated string
-    // literal.
-    if (source_text.empty())
-      return llvm::StringRef();
-    if (!multi_line && source_text.startswith("\n"))
-      return llvm::StringRef();
-
-    // Either consume a single character, or consume a single character
-    // preceded by the escape sequence marker.
-    (void)source_text.consume_front(escape);
-    source_text = source_text.drop_front(1);
-  }
-
-  return llvm::StringRef(begin, source_text.begin() - begin);
-}
-
 struct TrailingComment : SimpleDiagnostic<TrailingComment> {
   static constexpr llvm::StringLiteral ShortName = "syntax-comments";
   static constexpr llvm::StringLiteral Message =
@@ -179,6 +116,14 @@ struct WrongRealLiteralExponent {
                          subst.expected)
         .str();
   }
+};
+
+struct ContentBeforeStringTerminator
+    : SimpleDiagnostic<ContentBeforeStringTerminator> {
+  static constexpr llvm::StringLiteral ShortName = "syntax-invalid-string";
+  static constexpr llvm::StringLiteral Message =
+      "Only whitespace is permitted before the closing `\"\"\"` of a "
+      "multi-line string.";
 };
 
 struct UnrecognizedCharacters : SimpleDiagnostic<UnrecognizedCharacters> {
@@ -566,6 +511,128 @@ class NumericLiteralParser {
 };
 }  // namespace
 
+// Find and return the opening characters of a multi-line string literal,
+// after any '#'s, including the file type indicator and following newline.
+static auto TakeMultiLineStringLiteralPrefix(llvm::StringRef source_text)
+    -> llvm::StringRef {
+  const char *begin = source_text.begin();
+  if (!source_text.consume_front("\"\"\"")) {
+    return llvm::StringRef();
+  }
+
+  // The rest of the line must be a valid file type indicator: a sequence of
+  // characters containing neither '#' nor '"' followed by a newline.
+  auto file_type_length = source_text.find_first_of("\"#\n");
+  if (file_type_length == source_text.npos ||
+      source_text[file_type_length] != '\n') {
+    return llvm::StringRef();
+  }
+
+  return llvm::StringRef(begin, 3 + file_type_length + 1);
+}
+
+struct StringLiteral {
+  // The complete text of the string literal.
+  llvm::StringRef text;
+  // The content of the literal. For a multi-line literal, this begins
+  // immediately after the newline following the file type indicator, and ends
+  // at the start of the closing `"""`. Leading whitespace is not removed from
+  // either end.
+  llvm::StringRef content;
+  // The number of `#`s preceding the opening `"` or `"""`.
+  int hash_level;
+  // Whether this was a multi-line string literal.
+  bool multi_line;
+};
+
+// If source_text begins with a string literal token, extract and return
+// information on that token.
+static auto TakeLeadingStringLiteral(llvm::StringRef source_text)
+    -> StringLiteral {
+  const char *begin = source_text.begin();
+
+  int hash_level = 0;
+  while (source_text.consume_front("#"))
+    ++hash_level;
+
+  llvm::SmallString<16> terminator("\"");
+  llvm::SmallString<16> escape("\\");
+
+  llvm::StringRef multi_line_prefix =
+      TakeMultiLineStringLiteralPrefix(source_text);
+  bool multi_line = !multi_line_prefix.empty();
+  if (multi_line) {
+    source_text = source_text.drop_front(multi_line_prefix.size());
+    terminator = "\"\"\"";
+  } else if (!source_text.consume_front("\"")) {
+    return {};
+  }
+
+  // The terminator and escape sequence marker require a number of '#'s
+  // matching the leading sequence of '#'s.
+  terminator.resize(terminator.size() + hash_level, '#');
+  escape.resize(escape.size() + hash_level, '#');
+
+  const char *content_begin = source_text.begin();
+  const char *content_end = content_begin;
+  while (!source_text.consume_front(terminator)) {
+    // Let LexError figure out how to recover from an unterminated string
+    // literal.
+    if (source_text.empty())
+      return StringLiteral();
+    if (!multi_line && source_text.startswith("\n"))
+      return StringLiteral();
+
+    // Either consume a single character, or consume a single character
+    // preceded by the escape sequence marker.
+    (void)source_text.consume_front(escape);
+    source_text = source_text.drop_front(1);
+    content_end = source_text.begin();
+  }
+
+  return {
+      .text = llvm::StringRef(begin, source_text.begin() - begin),
+      .content = llvm::StringRef(content_begin, content_end - content_begin),
+      .hash_level = hash_level,
+      .multi_line = multi_line};
+}
+
+// The leading whitespace in a multi-line string literal.
+struct StringLiteralIndent {
+  llvm::StringRef indent;
+  bool has_errors;
+};
+
+// Find the leading whitespace that should be removed from each line of a multi-line string literal.
+static auto CheckMultiLineStringLiteralIndent(DiagnosticEmitter& emitter,
+                                              const StringLiteral& literal)
+    -> StringLiteralIndent {
+  assert(literal.multi_line);
+  bool has_errors = false;
+
+  // Find the text before the closing `"""` on the final line of the literal.
+  const char* indent_end = literal.content.end();
+  const char* indent_begin = indent_end;
+  while (indent_begin[-1] != '\n') {
+    assert(indent_begin > literal.content.begin() &&
+           "content must contain a newline");
+    --indent_begin;
+    if (!isSpace(*indent_begin)) {
+      indent_end = indent_begin;
+    }
+  }
+
+  // If we found any non-space characters in the indent, diagnose them and
+  // exclude them from the indent for error recovery purposes.
+  if (indent_end != literal.content.end()) {
+    emitter.EmitError<ContentBeforeStringTerminator>();
+    has_errors = true;
+  }
+
+  return {.indent = llvm::StringRef(indent_begin, indent_end - indent_begin),
+          .has_errors = has_errors};
+}
+
 // Implementation of the lexer logic itself.
 //
 // The design is that lexing can loop over the source buffer, consuming it into
@@ -614,6 +681,18 @@ class TokenizedBuffer::Lexer {
     explicit operator bool() const { return formed_token; }
   };
 
+  // Perform the necessary bookkeeping to step past a newline at the current
+  // line and column.
+  auto HandleNewline() -> void {
+    current_line_info->length = current_column;
+
+    current_line = buffer.AddLine(
+        {current_line_info->start + current_column + 1, 0, 0});
+    current_line_info = &buffer.GetLineInfo(current_line);
+    current_column = 0;
+    set_indent = false;
+  }
+
   auto SkipWhitespace(llvm::StringRef& source_text) -> bool {
     while (!source_text.empty()) {
       // We only support line-oriented commenting and lex comments as-if they
@@ -646,21 +725,16 @@ class TokenizedBuffer::Lexer {
           return true;
 
         case '\n':
-          // New lines are special in order to track line structure.
-          current_line_info->length = current_column;
           // If this is the last character in the source, directly return here
           // to avoid creating an empty line.
           source_text = source_text.drop_front();
           if (source_text.empty()) {
+            current_line_info->length = current_column;
             return false;
           }
 
           // Otherwise, add a line and set up to continue lexing.
-          current_line = buffer.AddLine(
-              {current_line_info->start + current_column + 1, 0, 0});
-          current_line_info = &buffer.GetLineInfo(current_line);
-          current_column = 0;
-          set_indent = false;
+          HandleNewline();
           continue;
 
         case ' ':
@@ -740,22 +814,45 @@ class TokenizedBuffer::Lexer {
   }
 
   auto LexStringLiteral(llvm::StringRef& source_text) -> LexResult {
-    llvm::StringRef string_text = TakeLeadingStringLiteral(source_text);
-    if (string_text.empty()) {
+    StringLiteral literal = TakeLeadingStringLiteral(source_text);
+    if (literal.text.empty()) {
       return LexResult::NoMatch();
     }
 
     Line string_line = current_line;
     int string_column = current_column;
-    source_text = source_text.drop_front(string_text.size());
+    source_text = source_text.drop_front(literal.text.size());
 
     if (!set_indent) {
       current_line_info->indent = string_column;
       set_indent = true;
     }
 
-    // TODO: Update line and column information properly for multiline strings.
-    current_column += string_text.size();
+    // Determine the indentation for a multi-line string literal.
+    llvm::StringRef indent;
+    if (literal.multi_line) {
+      StringLiteralIndent indent_info =
+          CheckMultiLineStringLiteralIndent(emitter, literal);
+      indent = indent_info.indent;
+      buffer.has_errors |= indent_info.has_errors;
+    }
+
+    // Update line and column information.
+    if (!literal.multi_line) {
+      current_column += literal.text.size();
+    } else {
+      for (char c : literal.text) {
+        if (c == '\n') {
+          HandleNewline();
+          // The indentation of all lines in a multi-line string literal is
+          // that of the final line.
+          current_line_info->indent = indent.size();
+          set_indent = true;
+        } else {
+          ++current_column;
+        }
+      }
+    }
 
     auto token = buffer.AddToken({
         .kind = TokenKind::StringLiteral(),
@@ -1013,7 +1110,7 @@ auto TokenizedBuffer::GetTokenText(Token token) const -> llvm::StringRef {
   if (token_info.kind == TokenKind::StringLiteral()) {
     auto& line_info = GetLineInfo(token_info.token_line);
     int64_t token_start = line_info.start + token_info.column;
-    return TakeLeadingStringLiteral(source->Text().substr(token_start));
+    return TakeLeadingStringLiteral(source->Text().substr(token_start)).text;
   }
 
   assert(token_info.kind == TokenKind::Identifier() &&

@@ -51,7 +51,7 @@ TEST_F(LexerTest, HandlesEmptyBuffer) {
 }
 
 TEST_F(LexerTest, TracksLinesAndColumns) {
-  auto buffer = Lex("\n  ;;\n   ;;;\n");
+  auto buffer = Lex("\n  ;;\n   ;;;\n   x\"foo\" \"\"\"baz\n  a\n \"\"\" y");
   EXPECT_FALSE(buffer.HasErrors());
   EXPECT_THAT(buffer, HasTokens(llvm::ArrayRef<ExpectedToken>{
                           {.kind = TokenKind::Semi(),
@@ -74,6 +74,24 @@ TEST_F(LexerTest, TracksLinesAndColumns) {
                            .line = 3,
                            .column = 6,
                            .indent_column = 4},
+                          {.kind = TokenKind::Identifier(),
+                           .line = 4,
+                           .column = 4,
+                           .indent_column = 4,
+                           .text = "x"},
+                          {.kind = TokenKind::StringLiteral(),
+                           .line = 4,
+                           .column = 5,
+                           .indent_column = 4},
+                          {.kind = TokenKind::StringLiteral(),
+                           .line = 4,
+                           .column = 11,
+                           .indent_column = 4},
+                          {.kind = TokenKind::Identifier(),
+                           .line = 6,
+                           .column = 6,
+                           .indent_column = 2,
+                           .text = "y"},
                       }));
 }
 
