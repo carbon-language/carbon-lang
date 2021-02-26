@@ -27,6 +27,11 @@ n = 5;
 return n;
 
 }
+choice MoreInts {
+alt None ();
+alt One Int;
+alt Two (0 = Int, 1 = Int);
+}
 ********** type checking **********
 --- step exp () --->
 --- step exp Int --->
@@ -36,6 +41,13 @@ return n;
 --- step exp Int --->
 --- handle value Int with (0 = Int, 1 = Int)<2>(Int,Int,) --->
 --- step exp Int --->
+--- step exp () --->
+--- step exp Int --->
+--- step exp (0 = Int, 1 = Int) --->
+--- step exp Int --->
+--- handle value Int with (0 = Int, 1 = Int)<1>(Int,) --->
+--- step exp Int --->
+--- handle value Int with (0 = Int, 1 = Int)<2>(Int,Int,) --->
 --- step exp Int --->
 --- step exp auto --->
 13: type error in call
