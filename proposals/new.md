@@ -1,0 +1,215 @@
+# Lightweight error propagation
+
+<!--
+Part of the Carbon Language project, under the Apache License v2.0 with LLVM
+Exceptions. See /LICENSE for license information.
+SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+-->
+
+[Pull request](https://github.com/carbon-language/carbon-lang/pull/####)
+
+<!-- toc -->
+
+## Table of contents
+
+-   [Problem](#problem)
+-   [Background](#background)
+-   [Proposal](#proposal)
+-   [Details](#details)
+-   [Alternatives considered](#alternatives-considered)
+    -   [Prefix `try` instead of suffix `?`](#prefix-try-instead-of-suffix-)
+    -   [Model error propagation using coroutines](#model-error-propagation-using-coroutines)
+    -   [Decouple errors from return values](#decouple-errors-from-return-values)
+    -   [Implicit error propagation](#implicit-error-propagation)
+
+<!-- tocstop -->
+
+## Problem
+
+Most nontrivial programs contain functions that can fail, meaning that even if
+all their preconditions are met, they may not be able to perform their primary
+behavior. For example, a function that reads data from a remote server may fail
+if the server is unreachable, and a function parses a string to return an
+integer may fail if the input string is not a properly-formatted integer.
+
+When such a function fails, that often means that the caller must fail as well,
+or in other words, the failure must be _propagated_. For example, a function
+that parses a number in scientific notation might call another function to parse
+the exponent as an integer, and if the integer parse fails, the caller has no
+way to succeed.
+
+These use cases can be supported using ordinary procedural constructs like
+return values and conditional branches. However, this leads to a code style in
+which the primary application logic is obscured by error-propagation
+boilerplate:
+
+```
+// These functions take the input as `Ptr(StringView)` so that they can
+// advance the start of the underlying `StringView` past any parsed characters.
+fn ParseLeadingDecimal(Ptr(StringView): in) -> Optional(Float);
+fn ParseLeadingInteger(Ptr(StringView): in) -> Optional(Int);
+fn ParseLeadingSubstring(Ptr(StringView): in, StringView: substring) -> Bool;
+
+fn ParseScientificNotation(Ptr(StringView): in) -> Optional(Float) {
+  let Optional(Float): mantissa = ParseLeadingDecimal(in);
+  if (!mantissa.HasValue()) {
+    return NullOpt;
+  }
+  if (!ParseLeadingSubstring(in, "x10^")) {
+    return NullOpt;
+  }
+  let Optional(Int): exponent = ParseLeadingInteger(in);
+  if (!exponent.HasValue()) {
+    return NullOpt;
+  }
+  return *mantissa * Pow(10, *exponent);
+}
+```
+
+Carbon needs a much more lightweight syntax for expressing this kind of logic.
+
+## Background
+
+FIXME
+
+## Proposal
+
+I propose adopting a simplified version of Rust's `?` operator in Carbon. This
+operator should eventually support any type that opts in, but we do not yet know
+enough about generic programming in Carbon to specify how that will work. As an
+interim **placeholder**, I propose restricting it to operating on a single sum
+type template:
+
+```
+choice Result(Type:$$ T, Type:$$ E = ()) {
+  Success(T: value),
+  Failure(E: error)
+}
+```
+
+This will enable us to rewrite the earlier example as follows:
+
+```
+fn ParseLeadingDecimal(Ptr(StringView): in) -> Result(Float);
+fn ParseLeadingInteger(Ptr(StringView): in) -> Result(Int);
+fn ParseLeadingSubstring(Ptr(StringView): in, StringView: substring)
+    -> Result(());
+
+fn ParseScientificNotation(Ptr(StringView): in) -> Result(Float) {
+  let Float: mantissa = ParseLeadingDecimal(in)?;
+  ParseLeadingSubstring(in, "x10^")?;
+  let Int: exponent = ParseLeadingInteger(in)?;
+
+  return mantissa * Pow(10, exponent);
+}
+```
+
+## Details
+
+`?` is a unary suffix operator. Its operand must have type `Result(T, E)`, the
+function that invokes it must have return type `Result(T2, E2)`, and `E` must be
+convertible to `E2`. Its semantics are as follows:
+
+-   If the operand matches `Success(T: val)`, the expression evaluates to `val`.
+-   If the operand matches `Failure(E: e)`, the enclosing function returns
+    `.Failure(e)`.
+
+## Alternatives considered
+
+### Prefix `try` instead of suffix `?`
+
+The operator could be spelled `try` rather than `?`, and be placed before its
+operand rather than after. This might enhance readability by making the operator
+harder to overlook, and reduce the potential for confusion with C/C++'s `?:`
+ternary operator. A prefix operator would combine more naturally with other
+prefix operations like `*` and `&`, but less naturally with postfix operations
+such as indexing, function invocation, and member access:
+
+FIXME figure out how markdown tables work
+
+| Prefix `try` | Postfix `?` | | `*try *foo` | `*((*foo)?)` | |
+`(try (try foo)[i]).bar` | `foo?[i]?.bar` | | `(try optional_callable)(args)` |
+`optional_callable?(args)` |
+
+Finally, `?` is more syntactically consistent with Rust, which seems desirable
+since the operator's semantics are also based closely on Rust.
+
+### Model error propagation using coroutines
+
+The behavior of `?` can be emulated in C++20 using the `co_await`
+coroutine-suspension operator, and it seems likely that Carbon will eventually
+have broadly similar support for coroutines. We could therefore treat error
+propagation as a special case of Carbon's coroutine support, rather than as a
+separate feature.
+
+In the long term, this approach has a lot to recommend it. However, coroutines
+are a much more complex feature, and much less urgently needed. Consequently, I
+propose adopting error propagation as a stand-alone feature for now, and then
+consider re-specifying it as a special case of coroutines once we have a design
+for coroutines.
+
+### Decouple errors from return values
+
+Rather than representing errors using function return values, we could convey
+errors by way of a separate "channel", as in Swift. Under this approach, the
+earlier example might be written as:
+
+```
+fn ParseLeadingDecimal(Ptr(StringView): in) throws () -> Float;
+fn ParseLeadingInteger(Ptr(StringView): in) throws () -> Int;
+fn ParseLeadingSubstring(Ptr(StringView): in, StringView: substring) throws ();
+
+fn ParseScientificNotation(Ptr(StringView): in) throws () -> Float {
+  let Float: mantissa = ParseLeadingDecimal(in)?;
+  ParseLeadingSubstring(in, "x10^")?;
+  let Int: exponent = ParseLeadingInteger(in)?;
+
+  return mantissa * Pow(10, exponent);
+}
+```
+
+Here `throws ()` indicates that the function can raise errors, and those errors
+have type `()`; this is verified by ordinary static type-checking, unlike with
+C++'s late, unlamented
+[dynamic exception specifications](https://en.cppreference.com/w/cpp/language/except_spec).
+The syntax for propagating errors remains the same, although we might spell the
+operator as prefix `try` for consistency with Swift; the major difference with
+this model is in how error propagation _stops_. Under the primary proposal, we
+can avoid propagating the error by omitting the `?`, and processing the returned
+`Result(T, E)` directly, for example by pattern-matching. Under this approach,
+however, Carbon would need to have special-purpose syntax for intercepting and
+stopping error propagation, such as Swift's `do`/`catch`, because the error
+"channel" is invisible to ordinary code.
+
+This approach may have some performance advantages, because the compiler always
+statically knows whether a given object represents an error or a successful
+return value, although it's not clear how significant that advantage will be in
+Carbon.
+
+This approach will make it harder for Carbon code to interoperate with C++ code
+that uses error returns, and harder to migrate such code to Carbon. It might be
+an easier migration/interoperation target for C++ code that uses exceptions, but
+that's less certain, because this approach still differs from C++ exceptions in
+fairly important ways, such as the fact that typing is static and propagation is
+explicit. By the same token, this approach is somewhat less likely to feel
+familiar to C++ programmers.
+
+I recommend against this approach for the present, because the need for
+something like `do`/`catch` makes it more complex to design, and because the
+potential advantages, particularly with respect to performance, are fairly
+speculative. It seems better to start with the simpler approach, and let
+subsequent design changes be driven by concrete experience with whatever
+problems it has.
+
+### Implicit error propagation
+
+As an extension of the previous option, we could treat errors as a separate
+channel from return values, and allow them to propagate across stack frames
+implicitly, without an explicit `?` or `try` at the callsite. This is basically
+how C++ exceptions work, so this would ease migration and interoperation with
+C++ code that uses them. However, this would make Carbon code substantially less
+readable and harder to maintain, because it would introduce control-flow paths
+that are entirely invisible to the reader. A very large fraction of the C++
+community has rejected use of exceptions, in large part for those reasons. Those
+engineers and organizations would be much less likely to adopt Carbon if we took
+this approach.
