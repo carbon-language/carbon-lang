@@ -42,6 +42,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [Parameterized interfaces](#parameterized-interfaces)
     -   [Impl lookup](#impl-lookup)
     -   [Parameterized structural interfaces](#parameterized-structural-interfaces)
+-   [Naming constraints](#naming-constraints)
 -   [Implicit constraints](#implicit-constraints)
 -   [Generic type equality](#generic-type-equality)
 -   [Conditional conformance](#conditional-conformance)
@@ -1410,7 +1411,10 @@ constraints, as discussed in
 #### Tricky cases
 
 TODO: Want to be able to say "The slice type for a container is another
-container, with a constraint saying it is idempotent."
+container, with a constraint saying it is idempotent." That is, we want to write
+a constraint saying `Container.SliceType.SliceType == Container.SliceType`,
+which is straightforward using a `requires` clause. Unfortunately, this
+definition doesn't work:
 
 ```
 interface Container {
@@ -1428,15 +1432,20 @@ My only current solution involves writing a separate `alias` or
 
 ```
 alias ContainerAsSlice = Container(.SliceType = Self);
-// Or
+// Really we want to support things like `ContainerAsSlice(.ElementType = ...)`
+// so we need alias definitions to support something like:
+alias ContainerAsSlice(auto...:$$ args) =
+    Container(args..., .SliceType = Self);
+
+// Alternative using `structural interface`, assuming we supports `extends`
+// like ordinary `interface` definitions.
 structural interface ContainerAsSlice
   extends Container(.SliceType = Self) {
 }
 ```
 
-TODO: Move other tricky cases from
-[this doc](https://docs.google.com/document/d/1YjF1jcXCSb4zQ4kCcZFAK5jtbIJh9IdaaTbzmQEwSNg/edit)
-here.
+TODO: Add context where this was originally discussed
+[here](https://docs.google.com/document/d/1YjF1jcXCSb4zQ4kCcZFAK5jtbIJh9IdaaTbzmQEwSNg/edit#heading=h.eak2vxz3de3v).
 
 ### Associated constants
 
@@ -1731,6 +1740,50 @@ parameters to be deducible (no `multi`) when they can be deduced unambiguously.
 For example, if the structural interface has a `T` parameter that is passed as
 an argument to a deducible parameter of an interface requirement, like
 `impl RequiredInterface(T)`, then `T` can be deduced as well.
+
+## Naming constraints
+
+Given these definitions:
+
+```
+interface IteratorInterface(Type:$ ElementType) { ... }
+interface RandomAccessIterator(Type:$ ElementType)
+    extends IteratorInterface(ElementType) { ... }
+interface ContainerInterface(Type:$ ElementType) {
+  var IteratorInterface(ElementType):$ IteratorType;
+  ...
+}
+```
+
+TODO: We would like to be able to define a `RandomAccessContainer(T)` to be a
+type-type whose types satisfy `ContainerInterface(T)` with an `IteratorType`
+satisfying `RandomAccessIterator(T)`.
+
+```
+fn F[Type:$ T,
+     RandomAccessIterator(T):$ IterType,
+     ContainerInterface(T, .IteratorType=IterType):$ ContainerType]
+  (ContainerType: c);
+
+// WANT a definition of RandomAccessContainer(T) such that the above
+// is equivalent to:
+fn F[Type:$ T, RandomAccessContainer(T):$ ContainerType](ContainerType: c);
+```
+
+A similar problem where we want to constrain two parameters to be the same.
+
+```
+// Given a function `G` defined:
+fn G[Type:$ T, PairInterface(T, T):$ U](U: u);
+// Want to define `Double(T)` so this is equivalent:
+fn G[Type:$ T, Double(T):$ U](U: u);
+
+// The following works if we support `extends` for `structural interface`
+// to mean the same thing as for regular nominal `interface` definitions:
+structural interface Double(Type:$ T) extends PairInterface(T, T) { }
+// Similarly we might support this using an `alias`:
+alias Double(Type:$ T) = PairInterface(T, T);
+```
 
 ## Implicit constraints
 
@@ -2836,7 +2889,8 @@ function to get those plus all comparison operators (`<`, `<=`, `>=`, `>`, and
 maybe `<=>`).
 
 TODO: Concern about handling `a + b` and `b + a` in both mixed and same types
-cases.
+cases. See
+[the discussion in this doc](https://docs.google.com/document/d/1YjF1jcXCSb4zQ4kCcZFAK5jtbIJh9IdaaTbzmQEwSNg/edit#heading=h.unhb6k4e2tps).
 
 Rust added defaults for trait parameters for this use case, see
 [Default Generic Type Parameters and Operator Overloading](https://doc.rust-lang.org/book/ch19-03-advanced-traits.html#default-generic-type-parameters-and-operator-overloading)
