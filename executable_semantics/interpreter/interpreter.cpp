@@ -896,6 +896,7 @@ void InsertDelete(Action* del, Stack<Action*>& todo) {
         // Not sure if that is OK. Conceptually it should go after
         // but that is tricky for some statements, like 'return'. -Jeremy
         todo.Push(del);
+        break;
       }
       case ActionKind::LValAction:
       case ActionKind::ExpressionAction:
@@ -905,6 +906,7 @@ void InsertDelete(Action* del, Stack<Action*>& todo) {
         auto top = todo.Pop();
         InsertDelete(del, todo);
         todo.Push(top);
+        break;
     }
   } else {
     todo.Push(del);
