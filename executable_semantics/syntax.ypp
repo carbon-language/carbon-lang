@@ -291,6 +291,13 @@ member_list:
 alternative:
   identifier tuple ';'
     { $$ = new std::pair<std::string, Carbon::Expression*>($1, $2); }
+| identifier ';'
+    {
+      $$ = new std::pair<std::string, Carbon::Expression*>(
+          $1, Carbon::MakeTuple(
+            yylineno,
+            new std::vector<std::pair<std::string, Carbon::Expression*>>()));
+    }
 ;
 alternative_list:
   // Empty

@@ -9,7 +9,7 @@ var auto: x = Ints.None();
 var auto: y = Ints.One(0 = 42);
 var auto: n = 0;
 match (y) {
-case Ints.None() =>
+case Ints.None =>
 n = (n + 2);
 case Ints.One(0 = auto: x) =>
 n = ((x + 1) - 42);
