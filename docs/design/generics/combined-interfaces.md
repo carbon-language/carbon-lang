@@ -1495,6 +1495,9 @@ fn PrintPoint2D[NSpacePoint:$ PointT(.N = 2)](PointT: p) {
 }
 ```
 
+**Comparison with other languages:** This feature is also called
+[associated constants in Rust](https://doc.rust-lang.org/reference/items/associated-items.html#associated-constants).
+
 ### Constraints that are hard to express
 
 **Concern:** It is difficult to express some kinds of constraints in this
@@ -2859,7 +2862,9 @@ Rust has been working toward adding this feature
 [4](https://www.fpcomplete.com/blog/monads-gats-nightly-rust/)). It has been
 proposed for Swift as well
 ([1](https://forums.swift.org/t/idea-generic-associated-types/5422),
-[2](https://forums.swift.org/t/generic-associated-type/17831)).
+[2](https://forums.swift.org/t/generic-associated-type/17831)). This corresponds
+roughly to
+[member templates in C++](https://en.cppreference.com/w/cpp/language/member_template).
 
 ### Higher-ranked types
 
@@ -2899,7 +2904,8 @@ members of interfaces and higher-ranked types are about function parameters.
 Swift proposals:
 [1](https://forums.swift.org/t/higher-kinded-types-monads-functors-etc/4691),
 [2](https://forums.swift.org/t/proposal-higher-kinded-types-monads-functors-etc/559),
-[3](https://github.com/typelift/swift/issues/1).
+[3](https://github.com/typelift/swift/issues/1). These correspond roughly to
+[C++ template template parameters](https://en.cppreference.com/w/cpp/language/template_parameters#Template_template_parameter).
 
 ## Index of examples
 

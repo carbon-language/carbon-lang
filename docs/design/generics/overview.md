@@ -219,6 +219,9 @@ we decide for
 [Carbon metaprogramming](https://github.com/josh11b/carbon-lang/blob/metaprogramming/docs/design/metaprogramming.md)
 constructs.
 
+**Comparison with other languages:** This feature is part of
+[const generics in Rust](https://blog.rust-lang.org/2021/02/26/const-generics-mvp-beta.html).
+
 ### Basic templates
 
 For this function, we could change the argument to be a template argument by
@@ -247,6 +250,9 @@ PrintXs_Template(3);  // Compile error: NumXs(3) undefined.
 
 Since type checking is delayed until `n` is known, we don't need the return type
 of `NumXs` to be consistent across different values of `n`.
+
+**Comparison with other languages:** These are called
+[non-type template parameters in C++](https://en.cppreference.com/w/cpp/language/template_parameters#Non-type_template_parameter).
 
 #### Difference between templates and generics
 
