@@ -66,7 +66,7 @@ typical tool setup flow is:
     -   `git config core.fsmonitor rs-git-fsmonitor` to set up
         [rs-git-fsmonitor](#rs-git-fsmonitor-and-watchman) in the clone.
     -   `pre-commit install` to set up [pre-commit](#pre-commit) in the clone.
-4.  Validate your installation by invoking `bazelisk test //...:all' from the
+4.  Validate your installation by invoking `bazel test //...:all' from the
     project root. All tests should pass.
 
 ## Package managers
