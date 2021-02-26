@@ -956,6 +956,75 @@ TEST_F(LexerTest, StringLiteralBounds) {
   }
 }
 
+TEST_F(LexerTest, StringLiteralContents) {
+  // We use ""s strings to handle embedded nul characters below.
+  using std::operator""s;
+
+  auto buffer = Lex(R"(
+// #0
+""
+// #1
+"""
+"""
+// #2
+"""
+
+"""
+// #3
+"""file type indicator
+   indented contents \
+  """
+// #4
+"\x14,\u{1234},\u{00000010},\n,\r,\t,\0,\",\',\\"
+// #5
+#"\#x00,\#xFF,\#u{56789},\#u{ABCD},\#u{00000000000000000EF}"#
+// #6
+##"\n,\#n,\##n,\##\##n,\##\###n"##
+)");
+  EXPECT_FALSE(buffer.HasErrors());
+  EXPECT_THAT(
+      buffer,
+      HasTokens(llvm::ArrayRef<ExpectedToken>{
+          // #0
+          {.kind = TokenKind::StringLiteral(), .string_contents = {""}},
+          // #1
+          {.kind = TokenKind::StringLiteral(), .string_contents = {""}},
+          // #2
+          {.kind = TokenKind::StringLiteral(), .string_contents = {"\n"}},
+          // #3
+          {.kind = TokenKind::StringLiteral(),
+           .string_contents = {" indented contents "}},
+          // #4
+          {.kind = TokenKind::StringLiteral(),
+           .string_contents =
+               {"\x14,\xE1\x88\xB4,\x10,\x0A,\x0D,\x09,\x00,\x22,\x27,\x5C"s}},
+          // #5
+          {.kind = TokenKind::StringLiteral(),
+           .string_contents =
+               {"\x00,\xFF,\xF1\x96\x9E\x89,\xEA\xAF\x8D,\xC3\xAF"s}},
+          // #6
+          {.kind = TokenKind::StringLiteral(),
+           .string_contents =
+               {"\\n,\\#n,\n,\\##n,\\###n"}},
+      }));
+}
+
+TEST_F(LexerTest, StringLiteralTrailingWhitespace) {
+  auto buffer = Lex("\"\"\"\n  Hello \\\n  World \t \n  Bye!  \\\n  \"\"\"");
+  EXPECT_FALSE(buffer.HasErrors());
+  EXPECT_THAT(
+      buffer,
+      HasTokens(llvm::ArrayRef<ExpectedToken>{
+          {.kind = TokenKind::StringLiteral(),
+           .string_contents =
+               {"Hello World\nBye!  "}},
+      }));
+}
+
+// TODO: Test mismatched indentation.
+// TODO: Test contents on last line.
+// TODO: Test various escape sequence error cases.
+
 auto GetAndDropLine(llvm::StringRef& text) -> std::string {
   auto newline_offset = text.find_first_of('\n');
   llvm::StringRef line = text.slice(0, newline_offset);

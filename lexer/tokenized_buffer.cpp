@@ -692,7 +692,7 @@ static auto ExpandUnicodeEscapeSequence(DiagnosticEmitter& emitter,
                                         llvm::StringRef digits,
                                         std::string& result) -> bool {
   unsigned code_point;
-  if (!digits.getAsInteger(16, code_point) || code_point > 0x10FFFF) {
+  if (digits.getAsInteger(16, code_point) || code_point > 0x10FFFF) {
     emitter.EmitError<UnicodeEscapeTooLarge>();
     return false;
   }
@@ -748,19 +748,20 @@ static auto ExpandAndConsumeEscapeSequence(DiagnosticEmitter& emitter,
       result += '\0';
       return true;
     case 'x':
-      if (escape.size() >= 3 && isUpperHexDigit(escape[1]) && isUpperHexDigit(escape[2])) {
-        result += static_cast<char>(llvm::hexFromNibbles(escape[1], escape[2]));
+      if (escape.size() >= 2 && isUpperHexDigit(escape[0]) && isUpperHexDigit(escape[1])) {
+        result += static_cast<char>(llvm::hexFromNibbles(escape[0], escape[1]));
+        escape = escape.drop_front(2);
         return true;
       }
       emitter.EmitError<HexadecimalEscapeMissingDigits>();
       break;
     case 'u': {
-      if (escape[1] == '{') {
+      if (escape[0] == '{') {
         const char *pos = escape.begin() + 1;
         while (pos != escape.end() && isUpperHexDigit(*pos)) {
           ++pos;
         }
-        if (pos != escape.end() && *pos == '}') {
+        if (pos != escape.end() && pos != escape.begin() + 1 && *pos == '}') {
           llvm::StringRef digits(escape.begin() + 1,
                                  pos - (escape.begin() + 1));
           if (!ExpandUnicodeEscapeSequence(emitter, digits, result)) {
@@ -1497,7 +1498,10 @@ auto TokenizedBuffer::PrintToken(llvm::raw_ostream& output_stream, Token token,
     output_stream << ", closing_token: " << GetMatchedClosingToken(token).index;
   } else if (token_info.kind.IsClosingSymbol()) {
     output_stream << ", opening_token: " << GetMatchedOpeningToken(token).index;
+  } else if (token_info.kind == TokenKind::StringLiteral()) {
+    output_stream << ", value: `" << GetStringLiteral(token) << "`";
   }
+  // TODO: Include value for numeric literals.
 
   if (token_info.is_recovery) {
     output_stream << ", recovery: true";
