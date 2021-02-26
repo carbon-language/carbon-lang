@@ -558,13 +558,12 @@ TEST_F(LexerTest, Symbols) {
                           {TokenKind::Greater()},
                       }));
 
-  buffer = Lex("\\/?#@&^!");
+  buffer = Lex("\\/?@&^!");
   EXPECT_FALSE(buffer.HasErrors());
   EXPECT_THAT(buffer, HasTokens(llvm::ArrayRef<ExpectedToken>{
                           {TokenKind::Backslash()},
                           {TokenKind::Slash()},
                           {TokenKind::Question()},
-                          {TokenKind::Hash()},
                           {TokenKind::At()},
                           {TokenKind::Amp()},
                           {TokenKind::Caret()},

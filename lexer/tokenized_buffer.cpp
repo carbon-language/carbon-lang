@@ -1251,9 +1251,9 @@ class TokenizedBuffer::Lexer {
          .column = current_column,
          .error_length = static_cast<int32_t>(error_text.size())});
     // TODO: #19 - Need to convert to the diagnostics library.
-//    llvm::errs() << "ERROR: Line " << buffer.GetLineNumber(token) << ", Column "
-//                 << buffer.GetColumnNumber(token)
-//                 << ": Unrecognized characters!\n";
+    llvm::errs() << "ERROR: Line " << buffer.GetLineNumber(token) << ", Column "
+                 << buffer.GetColumnNumber(token)
+                 << ": Unrecognized characters!\n";
 
     current_column += error_text.size();
     source_text = source_text.drop_front(error_text.size());
@@ -1270,19 +1270,16 @@ auto TokenizedBuffer::Lex(SourceBuffer& source, DiagnosticEmitter& emitter)
   llvm::StringRef source_text = source.Text();
   while (lexer.SkipWhitespace(source_text)) {
     // Each time we find non-whitespace characters, try each kind of token we
-    // support lexing. Try lexing longer tokens (such as `#""#`) before shorter
-    // ones (such as `#`).
-    // TODO: Should we recognize `#` as an operator? If not, we could defer
-    // lexing string literals until after we check for the more common cases.
-    Lexer::LexResult result = lexer.LexStringLiteral(source_text);
-    if (!result) {
-      result = lexer.LexSymbolToken(source_text);
-    }
+    // support lexing, from simplest to most complex.
+    Lexer::LexResult result = lexer.LexSymbolToken(source_text);
     if (!result) {
       result = lexer.LexKeywordOrIdentifier(source_text);
     }
     if (!result) {
       result = lexer.LexNumericLiteral(source_text);
+    }
+    if (!result) {
+      result = lexer.LexStringLiteral(source_text);
     }
     if (!result) {
       result = lexer.LexError(source_text);
