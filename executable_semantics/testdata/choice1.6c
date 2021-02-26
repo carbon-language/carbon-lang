@@ -3,9 +3,9 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 choice Ints {
-  None;
-  One(Int);
-  Two(Int,Int);
+  None,
+  One(Int),
+  Two(Int,Int)
 }
 
 fn main() -> Int {

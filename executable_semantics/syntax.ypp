@@ -289,9 +289,9 @@ member_list:
     { $$ = $2; $$->push_front($1); }
 ;
 alternative:
-  identifier tuple ';'
+  identifier tuple
     { $$ = new std::pair<std::string, Carbon::Expression*>($1, $2); }
-| identifier ';'
+| identifier
     {
       $$ = new std::pair<std::string, Carbon::Expression*>(
           $1, Carbon::MakeTuple(
@@ -302,8 +302,13 @@ alternative:
 alternative_list:
   // Empty
     { $$ = new std::list<std::pair<std::string, Carbon::Expression*>>(); }
-| alternative alternative_list
-    { $$ = $2; $$->push_front(*$1); }
+| alternative
+    {
+      $$ = new std::list<std::pair<std::string, Carbon::Expression*>>();
+      $$->push_front(*$1);
+    }
+| alternative ',' alternative_list
+    { $$ = $3; $$->push_front(*$1); }
 ;
 declaration:
   function_definition
