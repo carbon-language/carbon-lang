@@ -57,5 +57,6 @@ request:
     -   [0175 - Decision](p0175_decision.md)
 -   [0179 - Create a toolchain team.](p0179.md)
     -   [0179 - Decision](p0179_decision.md)
+-   [0301 - Lightweight error propagation](p0301.md)
 
 <!-- endproposals -->
