@@ -5,6 +5,6 @@
 build --crosstool_top=@bazel_cc_toolchain
 build --host_crosstool_top=@bazel_cc_toolchain
 
-build:force_local_bootstrap --repo_env=BAZEL_FORCE_LOCAL_BOOTSTRAP_BUILD=1
+build:force_local_bootstrap --repo_env=CARBON_FORCE_LOCAL_BOOTSTRAP_BUILD=1
 
 build:fuzzer --features=fuzzer

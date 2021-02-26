@@ -8,7 +8,7 @@ These rules are loaded as part of the `WORKSPACE`, and used by
 `clang_configuration.bzl`. The llvm-project submodule is used for the build.
 """
 
-FORCE_LOCAL_BOOTSTRAP_ENV = "BAZEL_FORCE_LOCAL_BOOTSTRAP_BUILD"
+FORCE_LOCAL_BOOTSTRAP_ENV = "CARBON_FORCE_LOCAL_BOOTSTRAP_BUILD"
 
 def _run(
         repository_ctx,
