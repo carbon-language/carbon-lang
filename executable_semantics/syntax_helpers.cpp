@@ -20,22 +20,22 @@ void PrintSyntaxError(char* error, int line_num) {
 
 void ExecProgram(std::list<Declaration*>* fs) {
   std::cout << "********** source program **********" << std::endl;
-  for (const auto& decl : *fs) {
-    PrintDecl(decl);
+  for (const auto decl : *fs) {
+    decl->Print();
   }
   std::cout << "********** type checking **********" << std::endl;
   state = new State();  // Compile-time state.
   std::pair<TypeEnv*, Env*> p = TopLevel(fs);
   TypeEnv* top = p.first;
   Env* ct_top = p.second;
-  std::list<Declaration*> new_decls;
-  for (const auto& i : *fs) {
-    new_decls.push_back(TypeCheckDecl(i, top, ct_top));
+  std::list<const Declaration*> new_decls;
+  for (const auto i : *fs) {
+    new_decls.push_back(i->TypeChecked(top, ct_top));
   }
   std::cout << std::endl;
   std::cout << "********** type checking complete **********" << std::endl;
-  for (const auto& decl : new_decls) {
-    PrintDecl(decl);
+  for (const auto decl : new_decls) {
+    decl->Print();
   }
   std::cout << "********** starting execution **********" << std::endl;
   int result = InterpProgram(&new_decls);

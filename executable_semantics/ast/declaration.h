@@ -14,36 +14,64 @@
 
 namespace Carbon {
 
-enum class DeclarationKind {
-  FunctionDeclaration,
-  StructDeclaration,
-  ChoiceDeclaration
-};
+struct Value;
+template <class K, class V>
+struct AssocList;
+using Address = unsigned int;
+using TypeEnv = AssocList<std::string, Value*>;
+using Env = AssocList<std::string, Address>;
+
+/// TODO:explain this. Also name it if necessary. Consult with jsiek.
+using ExecutionEnvironment = std::pair<TypeEnv*, Env*>;
 
 struct Declaration {
-  DeclarationKind tag;
-  union {
-    struct FunctionDefinition* fun_def;
-
-    struct StructDefinition* struct_def;
-
-    struct {
-      int line_num;
-      std::string* name;
-      std::list<std::pair<std::string, Expression*>>* alternatives;
-    } choice_def;
-
-  } u;
+  virtual void Print() const = 0;
+  virtual auto Name() const -> std::string = 0;
+  virtual auto TypeChecked(TypeEnv* env, Env* ct_env) const
+      -> const Declaration* = 0;
+  virtual void InitGlobals(Env*& globals) const = 0;
+  virtual auto TopLevel(ExecutionEnvironment&) const -> void = 0;
 };
 
-auto MakeFunDecl(struct FunctionDefinition* f) -> Declaration*;
-auto MakeStructDecl(int line_num, std::string name, std::list<Member*>* members)
-    -> Declaration*;
-auto MakeChoiceDecl(int line_num, std::string name,
-                    std::list<std::pair<std::string, Expression*>>* alts)
-    -> Declaration*;
+struct FunctionDeclaration : Declaration {
+  const FunctionDefinition* definition;
+  FunctionDeclaration(const FunctionDefinition* definition)
+      : definition(definition) {}
 
-void PrintDecl(Declaration* d);
+  void Print() const;
+  auto Name() const -> std::string;
+  auto TypeChecked(TypeEnv* env, Env* ct_env) const -> const Declaration*;
+  void InitGlobals(Env*& globals) const;
+  auto TopLevel(ExecutionEnvironment&) const -> void;
+};
+
+struct StructDeclaration : Declaration {
+  const StructDefinition definition;
+  StructDeclaration(int line_num, std::string name, std::list<Member*>* members)
+      : definition{line_num, new std::string(name), members} {}
+
+  void Print() const;
+  auto Name() const -> std::string;
+  auto TypeChecked(TypeEnv* env, Env* ct_env) const -> const Declaration*;
+  void InitGlobals(Env*& globals) const;
+  auto TopLevel(ExecutionEnvironment&) const -> void;
+};
+
+struct ChoiceDeclaration : Declaration {
+  int line_num;
+  const std::string name;
+  std::list<std::pair<std::string, Expression*>> alternatives;
+
+  ChoiceDeclaration(int line_num, std::string name,
+                    std::list<std::pair<std::string, Expression*>> alternatives)
+      : line_num(line_num), name(name), alternatives(alternatives) {}
+
+  void Print() const;
+  auto Name() const -> std::string;
+  auto TypeChecked(TypeEnv* env, Env* ct_env) const -> const Declaration*;
+  void InitGlobals(Env*& globals) const;
+  auto TopLevel(ExecutionEnvironment&) const -> void;
+};
 
 }  // namespace Carbon
 
