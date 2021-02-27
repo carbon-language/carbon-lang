@@ -35,7 +35,7 @@ struct Declaration {
 
 struct FunctionDeclaration : Declaration {
   const FunctionDefinition* definition;
-  FunctionDeclaration(const FunctionDefinition* definition)
+  explicit FunctionDeclaration(const FunctionDefinition* definition)
       : definition(definition) {}
 
   void Print() const;
