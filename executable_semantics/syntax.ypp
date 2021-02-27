@@ -41,7 +41,7 @@ void yyerror(char* error) {
    std::list<Carbon::Declaration*>* declaration_list;
    Carbon::Member* member;
    std::list<Carbon::Member*>* member_list;
-   Carbon::ExpOrFieldList* field_list;
+   Carbon::FieldList* field_list;
    std::pair<std::string, Carbon::Expression*>* alternative;
    std::list<std::pair<std::string, Carbon::Expression*>>* alternative_list;
    std::pair<Carbon::Expression*, Carbon::Statement*>* clause;
@@ -170,21 +170,25 @@ designator: '.' identifier { $$ = $2; }
 ;
 tuple: '(' field_list ')'
     {
-      switch ($2->tag) {
-      case Carbon::ExpOrFieldListKind::Exp:
-        $$ = $2->u.exp;
-        break;
-      case Carbon::ExpOrFieldListKind::FieldList:
+     if ($2->fields->size() == 1 &&
+         $2->fields->front().first == "" &&
+	 !$2->has_explicit_comma) {
+	$$ = $2->fields->front().second;
+     } else {
         auto vec = new std::vector<std::pair<std::string,Carbon::Expression*>>(
-            $2->u.fields->begin(), $2->u.fields->end());
+            $2->fields->begin(), $2->fields->end());
         $$ = Carbon::MakeTuple(yylineno, vec);
-        break;
       }
     }
 ;
 field:
   pattern
-    { $$ = Carbon::MakeExp($1); }
+    {
+      auto fields =
+          new std::list<std::pair<std::string, Carbon::Expression*>>();
+      fields->push_back(std::make_pair("", $1));
+      $$ = Carbon::MakeFieldList(fields);
+    }
 | designator '=' pattern
     {
       auto fields =

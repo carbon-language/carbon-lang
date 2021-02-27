@@ -11,21 +11,15 @@
 
 namespace Carbon {
 
-enum class ExpOrFieldListKind { Exp, FieldList };
-
 // This is used in the parsing of tuples and parenthesized expressions.
-struct ExpOrFieldList {
-  ExpOrFieldListKind tag;
-  union {
-    Expression* exp;
-    std::list<std::pair<std::string, Expression*>>* fields;
-  } u;
+struct FieldList {
+  std::list<std::pair<std::string, Expression*>>* fields;
+  bool has_explicit_comma = false;
 };
 
-auto MakeExp(Expression* exp) -> ExpOrFieldList*;
 auto MakeFieldList(std::list<std::pair<std::string, Expression*>>* fields)
-    -> ExpOrFieldList*;
-auto MakeConsField(ExpOrFieldList* e1, ExpOrFieldList* e2) -> ExpOrFieldList*;
+    -> FieldList*;
+auto MakeConsField(FieldList* e1, FieldList* e2) -> FieldList*;
 
 }  // namespace Carbon
 
