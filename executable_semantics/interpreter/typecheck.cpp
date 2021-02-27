@@ -618,7 +618,7 @@ auto StructDeclaration::Name() const -> std::string { return *definition.name; }
 auto ChoiceDeclaration::Name() const -> std::string { return name; }
 
 auto StructDeclaration::TypeChecked(TypeEnv* env, Env* ct_env) const
-    -> const Declaration* {
+    -> Declaration {
   auto fields = new std::list<Member*>();
   for (auto& m : *definition.members) {
     if (m->tag == MemberKind::FieldMember) {
@@ -626,28 +626,28 @@ auto StructDeclaration::TypeChecked(TypeEnv* env, Env* ct_env) const
       fields->push_back(m);
     }
   }
-  return new StructDeclaration(definition.line_num, *definition.name, fields);
+  return StructDeclaration(definition.line_num, *definition.name, fields);
 }
 
 auto FunctionDeclaration::TypeChecked(TypeEnv* env, Env* ct_env) const
-    -> const Declaration* {
-  return new FunctionDeclaration(TypeCheckFunDef(definition, env, ct_env));
+    -> Declaration {
+  return FunctionDeclaration(TypeCheckFunDef(definition, env, ct_env));
 }
 
 auto ChoiceDeclaration::TypeChecked(TypeEnv* env, Env* ct_env) const
-    -> const Declaration* {
-  return this;  // TODO.
+    -> Declaration {
+  return *this;  // TODO.
 }
 
-auto TopLevel(std::list<Declaration*>* fs) -> std::pair<TypeEnv*, Env*> {
+auto TopLevel(std::list<Declaration>* fs) -> std::pair<TypeEnv*, Env*> {
   ExecutionEnvironment tops = {nullptr, nullptr};
   bool found_main = false;
 
-  for (auto d : *fs) {
-    if (d->Name() == "main") {
+  for (auto const& d : *fs) {
+    if (d.Name() == "main") {
       found_main = true;
     }
-    d->TopLevel(tops);
+    d.TopLevel(tops);
   }
 
   if (found_main == false) {
