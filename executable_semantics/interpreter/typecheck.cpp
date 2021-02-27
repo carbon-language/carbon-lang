@@ -4,7 +4,9 @@
 
 #include "executable_semantics/interpreter/typecheck.h"
 
+#include <algorithm>
 #include <iostream>
+#include <iterator>
 #include <map>
 #include <set>
 #include <vector>
@@ -14,19 +16,6 @@
 #include "executable_semantics/interpreter/interpreter.h"
 
 namespace Carbon {
-
-auto Find(const std::string& s, Cons<std::string>* ls, int n) -> int {
-  if (ls) {
-    if (ls->curr == s) {
-      return n;
-    } else {
-      return Find(s, ls->next, n + 1);
-    }
-  } else {
-    std::cerr << "could not find " << s << std::endl;
-    exit(-1);
-  }
-}
 
 void ExpectType(int line_num, const std::string& context, Value* expected,
                 Value* actual) {
