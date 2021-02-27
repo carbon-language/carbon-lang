@@ -20,7 +20,7 @@ auto MakeFunDef(int line_num, std::string name, Expression* ret_type,
   return f;
 }
 
-void PrintFunDefDepth(struct FunctionDefinition* f, int depth) {
+void PrintFunDefDepth(const FunctionDefinition* f, int depth) {
   std::cout << "fn " << f->name << " ";
   PrintExp(f->param_pattern);
   std::cout << " -> ";
@@ -34,6 +34,6 @@ void PrintFunDefDepth(struct FunctionDefinition* f, int depth) {
   }
 }
 
-void PrintFunDef(struct FunctionDefinition* f) { PrintFunDefDepth(f, -1); }
+void PrintFunDef(const FunctionDefinition* f) { PrintFunDefDepth(f, -1); }
 
 }  // namespace Carbon

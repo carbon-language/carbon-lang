@@ -566,7 +566,7 @@ auto CheckOrEnsureReturn(Statement* stmt, bool void_return, int line_num)
   }
 }
 
-auto TypeCheckFunDef(struct FunctionDefinition* f, TypeEnv* env, Env* ct_env)
+auto TypeCheckFunDef(const FunctionDefinition* f, TypeEnv* env, Env* ct_env)
     -> struct FunctionDefinition* {
   auto param_res = TypeCheckExp(f->param_pattern, env, ct_env, nullptr,
                                 TCContext::PatternContext);
@@ -583,7 +583,7 @@ auto TypeCheckFunDef(struct FunctionDefinition* f, TypeEnv* env, Env* ct_env)
                     f->param_pattern, body);
 }
 
-auto TypeOfFunDef(TypeEnv* env, Env* ct_env, struct FunctionDefinition* fun_def)
+auto TypeOfFunDef(TypeEnv* env, Env* ct_env, const FunctionDefinition* fun_def)
     -> Value* {
   auto param_res = TypeCheckExp(fun_def->param_pattern, env, ct_env, nullptr,
                                 TCContext::PatternContext);
@@ -596,7 +596,7 @@ auto TypeOfFunDef(TypeEnv* env, Env* ct_env, struct FunctionDefinition* fun_def)
   return MakeFunTypeVal(param_type, ret);
 }
 
-auto TypeOfStructDef(struct StructDefinition* sd, TypeEnv* /*env*/, Env* ct_top)
+auto TypeOfStructDef(const StructDefinition* sd, TypeEnv* /*env*/, Env* ct_top)
     -> Value* {
   auto fields = new VarValues();
   auto methods = new VarValues();
@@ -609,85 +609,79 @@ auto TypeOfStructDef(struct StructDefinition* sd, TypeEnv* /*env*/, Env* ct_top)
   return MakeStructTypeVal(*sd->name, fields, methods);
 }
 
-auto NameOfDecl(Declaration* d) -> std::string {
-  switch (d->tag) {
-    case DeclarationKind::FunctionDeclaration:
-      return d->u.fun_def->name;
-    case DeclarationKind::StructDeclaration:
-      return *d->u.struct_def->name;
-    case DeclarationKind::ChoiceDeclaration:
-      return *d->u.choice_def.name;
-  }
+auto FunctionDeclaration::Name() const -> std::string {
+  return definition->name;
 }
 
-auto TypeCheckDecl(Declaration* d, TypeEnv* env, Env* ct_env) -> Declaration* {
-  switch (d->tag) {
-    case DeclarationKind::StructDeclaration: {
-      auto members = new std::list<Member*>();
-      for (auto& member : *d->u.struct_def->members) {
-        switch (member->tag) {
-          case MemberKind::FieldMember: {
-            // TODO: Interpret the type expression and store the result.
-            members->push_back(member);
-            break;
-          }
-        }
-      }
-      return MakeStructDecl(d->u.struct_def->line_num, *d->u.struct_def->name,
-                            members);
+auto StructDeclaration::Name() const -> std::string { return *definition.name; }
+
+auto ChoiceDeclaration::Name() const -> std::string { return name; }
+
+auto StructDeclaration::TypeChecked(TypeEnv* env, Env* ct_env) const
+    -> const Declaration* {
+  auto fields = new std::list<Member*>();
+  for (auto& m : *definition.members) {
+    if (m->tag == MemberKind::FieldMember) {
+      // TODO: Interpret the type expression and store the result.
+      fields->push_back(m);
     }
-    case DeclarationKind::FunctionDeclaration:
-      return MakeFunDecl(TypeCheckFunDef(d->u.fun_def, env, ct_env));
-    case DeclarationKind::ChoiceDeclaration:
-      return d;  // TODO.
   }
+  return new StructDeclaration(definition.line_num, *definition.name, fields);
+}
+
+auto FunctionDeclaration::TypeChecked(TypeEnv* env, Env* ct_env) const
+    -> const Declaration* {
+  return new FunctionDeclaration(TypeCheckFunDef(definition, env, ct_env));
+}
+
+auto ChoiceDeclaration::TypeChecked(TypeEnv* env, Env* ct_env) const
+    -> const Declaration* {
+  return this;  // TODO.
 }
 
 auto TopLevel(std::list<Declaration*>* fs) -> std::pair<TypeEnv*, Env*> {
-  TypeEnv* top = nullptr;
-  Env* ct_top = nullptr;
+  ExecutionEnvironment tops = {nullptr, nullptr};
   bool found_main = false;
+
   for (auto d : *fs) {
-    if (NameOfDecl(d) == "main") {
+    if (d->Name() == "main") {
       found_main = true;
     }
-    switch (d->tag) {
-      case DeclarationKind::FunctionDeclaration: {
-        auto t = TypeOfFunDef(top, ct_top, d->u.fun_def);
-        top = new TypeEnv(NameOfDecl(d), t, top);
-        break;
-      }
-      case DeclarationKind::StructDeclaration: {
-        auto st = TypeOfStructDef(d->u.struct_def, top, ct_top);
-        Address a = AllocateValue(st);
-        ct_top = new Env(NameOfDecl(d), a, ct_top);  // Is this obsolete?
-        auto params = MakeTupleTypeVal(st->u.struct_type.fields);
-        auto fun_ty = MakeFunTypeVal(params, st);
-        top = new TypeEnv(NameOfDecl(d), fun_ty, top);
-        break;
-      }
-      case DeclarationKind::ChoiceDeclaration: {
-        auto alts = new VarValues();
-        for (auto i = d->u.choice_def.alternatives->begin();
-             i != d->u.choice_def.alternatives->end(); ++i) {
-          auto t =
-              ToType(d->u.choice_def.line_num, InterpExp(ct_top, i->second));
-          alts->push_back(std::make_pair(i->first, t));
-        }
-        auto ct = MakeChoiceTypeVal(d->u.choice_def.name, alts);
-        Address a = AllocateValue(ct);
-        ct_top = new Env(NameOfDecl(d), a, ct_top);  // Is this obsolete?
-        top = new TypeEnv(NameOfDecl(d), ct, top);
-        break;
-      }
-    }  // switch (d->tag)
-  }    // for
+    d->TopLevel(tops);
+  }
+
   if (found_main == false) {
     std::cerr << "error, program must contain a function named `main`"
               << std::endl;
     exit(-1);
   }
-  return make_pair(top, ct_top);
+  return tops;
+}
+
+auto FunctionDeclaration::TopLevel(ExecutionEnvironment& tops) const -> void {
+  auto t = TypeOfFunDef(tops.first, tops.second, definition);
+  tops.first = new TypeEnv(Name(), t, tops.first);
+}
+
+auto StructDeclaration::TopLevel(ExecutionEnvironment& tops) const -> void {
+  auto st = TypeOfStructDef(&definition, tops.first, tops.second);
+  Address a = AllocateValue(st);
+  tops.second = new Env(Name(), a, tops.second);  // Is this obsolete?
+  auto params = MakeTupleTypeVal(st->u.struct_type.fields);
+  auto fun_ty = MakeFunTypeVal(params, st);
+  tops.first = new TypeEnv(Name(), fun_ty, tops.first);
+}
+
+auto ChoiceDeclaration::TopLevel(ExecutionEnvironment& tops) const -> void {
+  auto alts = new VarValues();
+  for (auto a : alternatives) {
+    auto t = ToType(line_num, InterpExp(tops.second, a.second));
+    alts->push_back(std::make_pair(a.first, t));
+  }
+  auto ct = MakeChoiceTypeVal(name, alts);
+  Address a = AllocateValue(ct);
+  tops.second = new Env(Name(), a, tops.second);  // Is this obsolete?
+  tops.first = new TypeEnv(Name(), ct, tops.first);
 }
 
 }  // namespace Carbon
