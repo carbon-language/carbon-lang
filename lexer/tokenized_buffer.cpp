@@ -587,6 +587,29 @@ class TokenizedBuffer::Lexer {
         current_line(buffer.AddLine({0, 0, 0})),
         current_line_info(&buffer.GetLineInfo(current_line)) {}
 
+  // Symbolic result of a lexing action. This indicates whether we successfully
+  // lexed a token, or whether other lexing actions should be attempted.
+  //
+  // While it wraps a simple boolean state, its API both helps make the failures
+  // more self documenting, and by consuming the actual token constructively
+  // when one is produced, it helps ensure the correct result is returned.
+  class LexResult {
+    bool formed_token;
+    explicit LexResult(bool formed_token) : formed_token(formed_token) {}
+
+   public:
+    // Consumes (and discard) a valid token to construct a result
+    // indicating a token has been produced.
+    LexResult(Token) : LexResult(true) {}
+
+    // Returns a result indicating no token was produced.
+    static LexResult NoMatch() { return LexResult(false); }
+
+    // Tests whether a token was produced by the lexing routine, and
+    // the lexer can continue forming tokens.
+    explicit operator bool() const { return formed_token; }
+  };
+
   auto SkipWhitespace(llvm::StringRef& source_text) -> bool {
     while (!source_text.empty()) {
       // We only support line-oriented commenting and lex comments as-if they
@@ -657,10 +680,10 @@ class TokenizedBuffer::Lexer {
     return false;
   }
 
-  auto LexNumericLiteral(llvm::StringRef& source_text) -> bool {
+  auto LexNumericLiteral(llvm::StringRef& source_text) -> LexResult {
     NumericLiteral literal = TakeLeadingNumericLiteral(source_text);
     if (literal.text.empty()) {
-      return false;
+      return LexResult::NoMatch();
     }
 
     int int_column = current_column;
@@ -675,15 +698,16 @@ class TokenizedBuffer::Lexer {
     NumericLiteralParser literal_parser(emitter, literal);
 
     switch (literal_parser.Check()) {
-      case NumericLiteralParser::UnrecoverableError:
-        buffer.AddToken({
+      case NumericLiteralParser::UnrecoverableError: {
+        auto token = buffer.AddToken({
             .kind = TokenKind::Error(),
             .token_line = current_line,
             .column = int_column,
             .error_length = static_cast<int32_t>(literal.text.size()),
         });
         buffer.has_errors = true;
-        return true;
+        return token;
+      }
 
       case NumericLiteralParser::RecoverableError:
         buffer.has_errors = true;
@@ -700,6 +724,7 @@ class TokenizedBuffer::Lexer {
       buffer.GetTokenInfo(token).literal_index =
           buffer.literal_int_storage.size();
       buffer.literal_int_storage.push_back(literal_parser.GetMantissa());
+      return token;
     } else {
       auto token = buffer.AddToken({.kind = TokenKind::RealLiteral(),
                                     .token_line = current_line,
@@ -708,18 +733,18 @@ class TokenizedBuffer::Lexer {
           buffer.literal_int_storage.size();
       buffer.literal_int_storage.push_back(literal_parser.GetMantissa());
       buffer.literal_int_storage.push_back(literal_parser.GetExponent());
+      return token;
     }
-    return true;
   }
 
-  auto LexSymbolToken(llvm::StringRef& source_text) -> bool {
+  auto LexSymbolToken(llvm::StringRef& source_text) -> LexResult {
     TokenKind kind = llvm::StringSwitch<TokenKind>(source_text)
 #define CARBON_SYMBOL_TOKEN(Name, Spelling) \
   .StartsWith(Spelling, TokenKind::Name())
 #include "lexer/token_registry.def"
                          .Default(TokenKind::Error());
     if (kind == TokenKind::Error()) {
-      return false;
+      return LexResult::NoMatch();
     }
 
     if (!set_indent) {
@@ -737,12 +762,12 @@ class TokenizedBuffer::Lexer {
     // Opening symbols just need to be pushed onto our queue of opening groups.
     if (kind.IsOpeningSymbol()) {
       open_groups.push_back(token);
-      return true;
+      return token;
     }
 
     // Only closing symbols need further special handling.
     if (!kind.IsClosingSymbol()) {
-      return true;
+      return token;
     }
 
     TokenInfo& closing_token_info = buffer.GetTokenInfo(token);
@@ -757,7 +782,7 @@ class TokenizedBuffer::Lexer {
       emitter.EmitError<UnmatchedClosing>(
           [](UnmatchedClosing::Substitutions&) {});
       // Note that this still returns true as we do consume a symbol.
-      return true;
+      return token;
     }
 
     // Finally can handle a normal closing symbol.
@@ -765,7 +790,7 @@ class TokenizedBuffer::Lexer {
     TokenInfo& opening_token_info = buffer.GetTokenInfo(opening_token);
     opening_token_info.closing_token = token;
     closing_token_info.opening_token = opening_token;
-    return true;
+    return token;
   }
 
   // Closes all open groups that cannot remain open across the symbol `K`.
@@ -810,9 +835,9 @@ class TokenizedBuffer::Lexer {
     return insert_result.first->second;
   }
 
-  auto LexKeywordOrIdentifier(llvm::StringRef& source_text) -> bool {
+  auto LexKeywordOrIdentifier(llvm::StringRef& source_text) -> LexResult {
     if (!llvm::isAlpha(source_text.front()) && source_text.front() != '_') {
-      return false;
+      return LexResult::NoMatch();
     }
 
     if (!set_indent) {
@@ -834,21 +859,19 @@ class TokenizedBuffer::Lexer {
 #include "lexer/token_registry.def"
                          .Default(TokenKind::Error());
     if (kind != TokenKind::Error()) {
-      buffer.AddToken({.kind = kind,
-                       .token_line = current_line,
-                       .column = identifier_column});
-      return true;
+      return buffer.AddToken({.kind = kind,
+                              .token_line = current_line,
+                              .column = identifier_column});
     }
 
     // Otherwise we have a generic identifier.
-    buffer.AddToken({.kind = TokenKind::Identifier(),
-                     .token_line = current_line,
-                     .column = identifier_column,
-                     .id = GetOrCreateIdentifier(identifier_text)});
-    return true;
+    return buffer.AddToken({.kind = TokenKind::Identifier(),
+                            .token_line = current_line,
+                            .column = identifier_column,
+                            .id = GetOrCreateIdentifier(identifier_text)});
   }
 
-  auto LexError(llvm::StringRef& source_text) -> void {
+  auto LexError(llvm::StringRef& source_text) -> LexResult {
     llvm::StringRef error_text = source_text.take_while([](char c) {
       if (llvm::isAlnum(c)) {
         return false;
@@ -885,6 +908,7 @@ class TokenizedBuffer::Lexer {
     current_column += error_text.size();
     source_text = source_text.drop_front(error_text.size());
     buffer.has_errors = true;
+    return token;
   }
 };
 
@@ -897,16 +921,17 @@ auto TokenizedBuffer::Lex(SourceBuffer& source, DiagnosticEmitter& emitter)
   while (lexer.SkipWhitespace(source_text)) {
     // Each time we find non-whitespace characters, try each kind of token we
     // support lexing, from simplest to most complex.
-    if (lexer.LexSymbolToken(source_text)) {
-      continue;
+    Lexer::LexResult result = lexer.LexSymbolToken(source_text);
+    if (!result) {
+      result = lexer.LexKeywordOrIdentifier(source_text);
     }
-    if (lexer.LexKeywordOrIdentifier(source_text)) {
-      continue;
+    if (!result) {
+      result = lexer.LexNumericLiteral(source_text);
     }
-    if (lexer.LexNumericLiteral(source_text)) {
-      continue;
+    if (!result) {
+      result = lexer.LexError(source_text);
     }
-    lexer.LexError(source_text);
+    assert(result && "No token was lexed.");
   }
 
   lexer.CloseInvalidOpenGroups(TokenKind::Error());
