@@ -87,11 +87,11 @@ CARBON_SYMBOL_TOKEN(Tilde,               "~")
 // clang-format on
 
 #ifndef CARBON_OPENING_GROUP_SYMBOL_TOKEN
-#define CARBON_OPENING_GROUP_SYMBOL_TOKEN(Name, Spelling, ClosingName)         \
+#define CARBON_OPENING_GROUP_SYMBOL_TOKEN(Name, Spelling, ClosingName) \
   CARBON_SYMBOL_TOKEN(Name, Spelling)
 #endif
 // clang-format on
-CARBON_OPENING_GROUP_SYMBOL_TOKEN(OpenParen,      "(", CloseParen)
+CARBON_OPENING_GROUP_SYMBOL_TOKEN(OpenParen, "(", CloseParen)
 CARBON_OPENING_GROUP_SYMBOL_TOKEN(OpenCurlyBrace, "{", CloseCurlyBrace)
 // clang-format off
 #undef CARBON_OPENING_GROUP_SYMBOL_TOKEN
@@ -101,7 +101,7 @@ CARBON_OPENING_GROUP_SYMBOL_TOKEN(OpenCurlyBrace, "{", CloseCurlyBrace)
   CARBON_SYMBOL_TOKEN(Name, Spelling)
 #endif
 // clang-format on
-CARBON_CLOSING_GROUP_SYMBOL_TOKEN(CloseParen,      ")", OpenParen)
+CARBON_CLOSING_GROUP_SYMBOL_TOKEN(CloseParen, ")", OpenParen)
 CARBON_CLOSING_GROUP_SYMBOL_TOKEN(CloseCurlyBrace, "}", OpenCurlyBrace)
 // clang-format off
 #undef CARBON_CLOSING_GROUP_SYMBOL_TOKEN
@@ -157,7 +157,6 @@ CARBON_KEYWORD_TOKEN(XorKeyword,        "xor")
 CARBON_TOKEN(Identifier)
 CARBON_TOKEN(IntegerLiteral)
 CARBON_TOKEN(RealLiteral)
-CARBON_TOKEN(DocComment)
 CARBON_TOKEN(Error)
 
 #undef CARBON_TOKEN
