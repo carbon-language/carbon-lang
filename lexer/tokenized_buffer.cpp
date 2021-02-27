@@ -21,6 +21,28 @@
 
 namespace Carbon {
 
+struct TrailingComment {
+  static constexpr llvm::StringLiteral ShortName = "syntax-comments";
+  static constexpr llvm::StringLiteral Message =
+      "Trailing comments are not permitted.";
+
+  struct Substitutions {};
+  static auto Format(const Substitutions&) -> std::string {
+    return Message.str();
+  }
+};
+
+struct NoWhitespaceAfterCommentIntroducer {
+  static constexpr llvm::StringLiteral ShortName = "syntax-comments";
+  static constexpr llvm::StringLiteral Message =
+      "Whitespace is required after '//'.";
+
+  struct Substitutions {};
+  static auto Format(const Substitutions&) -> std::string {
+    return Message.str();
+  }
+};
+
 struct UnmatchedClosing {
   static constexpr llvm::StringLiteral ShortName = "syntax-balanced-delimiters";
   static constexpr llvm::StringLiteral Message =
@@ -149,6 +171,12 @@ struct UnrecognizedCharacters {
     return Message.str();
   }
 };
+
+// TODO(zygoloid): Update this to match whatever we decide qualifies as
+// acceptable whitespace.
+static bool isSpace(char c) {
+  return c == ' ' || c == '\n' || c == '\t';
+}
 
 static bool isLower(char c) { return 'a' <= c && c <= 'z'; }
 
@@ -562,21 +590,19 @@ class TokenizedBuffer::Lexer {
   auto SkipWhitespace(llvm::StringRef& source_text) -> bool {
     while (!source_text.empty()) {
       // We only support line-oriented commenting and lex comments as-if they
-      // were whitespace. Any comment must be the only non-whitespace on the
-      // line.
-      if (source_text.startswith("//") && !set_indent) {
-        // Check if the comment has a special starting sequence of three slashes
-        // followed by a space. This represents a documentation comment that is
-        // preserved as a token in the buffer. When parsing, these comments will
-        // only be accepted in specific parts of the grammar and will be
-        // associated with the parsed constructs as structure documentation. All
-        // other comments are simply treated as whitespace.
-        if (source_text.startswith("///")) {
-          current_line_info->indent = current_column;
-          set_indent = true;
-          buffer.AddToken({.kind = TokenKind::DocComment(),
-                           .token_line = current_line,
-                           .column = current_column});
+      // were whitespace.
+      if (source_text.startswith("//")) {
+        // Any comment must be the only non-whitespace on the line.
+        if (set_indent) {
+          emitter.EmitError<TrailingComment>(
+              [](TrailingComment::Substitutions&) {});
+          buffer.has_errors = true;
+        }
+        // The introducer '//' must be followed by whitespace or EOF.
+        if (source_text.size() > 2 && !isSpace(source_text[2])) {
+          emitter.EmitError<NoWhitespaceAfterCommentIntroducer>(
+              [](NoWhitespaceAfterCommentIntroducer::Substitutions&) {});
+          buffer.has_errors = true;
         }
         while (!source_text.empty() && source_text.front() != '\n') {
           ++current_column;
@@ -591,6 +617,7 @@ class TokenizedBuffer::Lexer {
         default:
           // If we find a non-whitespace character without exhausting the
           // buffer, return true to continue lexing.
+          assert(!isSpace(source_text.front()));
           return true;
 
         case '\n':
@@ -913,14 +940,6 @@ auto TokenizedBuffer::GetTokenText(Token token) const -> llvm::StringRef {
     auto& line_info = GetLineInfo(token_info.token_line);
     int64_t token_start = line_info.start + token_info.column;
     return source->Text().substr(token_start, token_info.error_length);
-  }
-
-  // Documentation comment tokens refer back to the source text.
-  if (token_info.kind == TokenKind::DocComment()) {
-    auto& line_info = GetLineInfo(token_info.token_line);
-    int64_t token_start = line_info.start + token_info.column;
-    int64_t token_stop = line_info.start + line_info.length;
-    return source->Text().slice(token_start, token_stop);
   }
 
   // Refer back to the source text to preserve oddities like radix or digit

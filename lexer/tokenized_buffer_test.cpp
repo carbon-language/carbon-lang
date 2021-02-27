@@ -751,67 +751,27 @@ TEST_F(LexerTest, Comments) {
   EXPECT_THAT(buffer, HasTokens(llvm::ArrayRef<ExpectedToken>{}));
 
   // Make sure weird characters aren't a problem.
-  buffer = Lex("  //foo#$!^?@-_💩🍫⃠ [̲̅$̲̅(̲̅ ͡° ͜ʖ ͡°̲̅)̲̅$̲̅]");
+  buffer = Lex("  // foo#$!^?@-_💩🍫⃠ [̲̅$̲̅(̲̅ ͡° ͜ʖ ͡°̲̅)̲̅$̲̅]");
+  EXPECT_FALSE(buffer.HasErrors());
+  EXPECT_THAT(buffer, HasTokens(llvm::ArrayRef<ExpectedToken>{}));
+
+  // Make sure we can lex a comment at the end of the input.
+  buffer = Lex("//");
   EXPECT_FALSE(buffer.HasErrors());
   EXPECT_THAT(buffer, HasTokens(llvm::ArrayRef<ExpectedToken>{}));
 }
 
-TEST_F(LexerTest, DocComments) {
-  auto buffer = Lex("  /// foo");
-  EXPECT_FALSE(buffer.HasErrors());
-  EXPECT_THAT(buffer, HasTokens(llvm::ArrayRef<ExpectedToken>{
-                          {.kind = TokenKind::DocComment(),
-                           .line = 1,
-                           .column = 3,
-                           .indent_column = 3,
-                           .text = "/// foo"},
-                      }));
-
-  buffer = Lex("/// foo\n//\n/// bar");
-  EXPECT_FALSE(buffer.HasErrors());
-  EXPECT_THAT(buffer, HasTokens(llvm::ArrayRef<ExpectedToken>{
-                          {.kind = TokenKind::DocComment(),
-                           .line = 1,
-                           .column = 1,
-                           .indent_column = 1,
-                           .text = "/// foo"},
-                          {.kind = TokenKind::DocComment(),
-                           .line = 3,
-                           .column = 1,
-                           .indent_column = 1,
-                           .text = "/// bar"},
-                      }));
-
-  buffer = Lex("/// foo\n///\n/// bar");
-  EXPECT_FALSE(buffer.HasErrors());
-  EXPECT_THAT(buffer, HasTokens(llvm::ArrayRef<ExpectedToken>{
-                          {.kind = TokenKind::DocComment(),
-                           .line = 1,
-                           .column = 1,
-                           .indent_column = 1,
-                           .text = "/// foo"},
-                          {.kind = TokenKind::DocComment(),
-                           .line = 2,
-                           .column = 1,
-                           .indent_column = 1,
-                           .text = "///"},
-                          {.kind = TokenKind::DocComment(),
-                           .line = 3,
-                           .column = 1,
-                           .indent_column = 1,
-                           .text = "/// bar"},
-                      }));
-
-  // Make sure weird characters aren't a problem.
-  buffer = Lex("  ///foo#$!^?@-_💩🍫⃠ [̲̅$̲̅(̲̅ ͡° ͜ʖ ͡°̲̅)̲̅$̲̅]");
-  EXPECT_FALSE(buffer.HasErrors());
-  EXPECT_THAT(buffer, HasTokens(llvm::ArrayRef<ExpectedToken>{
-                          {.kind = TokenKind::DocComment(),
-                           .line = 1,
-                           .column = 3,
-                           .indent_column = 3,
-                           .text = "///foo#$!^?@-_💩🍫⃠ [̲̅$̲̅(̲̅ ͡° ͜ʖ ͡°̲̅)̲̅$̲̅]"},
-                      }));
+TEST_F(LexerTest, InvalidComments) {
+  llvm::StringLiteral testcases[] = {
+      "  /// foo\n",
+      "foo // bar\n",
+      "//! hello",
+      " //world",
+  };
+  for (llvm::StringLiteral testcase : testcases) {
+    auto buffer = Lex(testcase);
+    EXPECT_TRUE(buffer.HasErrors());
+  }
 }
 
 TEST_F(LexerTest, Identifiers) {

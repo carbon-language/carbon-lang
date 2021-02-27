@@ -157,7 +157,6 @@ CARBON_KEYWORD_TOKEN(XorKeyword,        "xor")
 CARBON_TOKEN(Identifier)
 CARBON_TOKEN(IntegerLiteral)
 CARBON_TOKEN(RealLiteral)
-CARBON_TOKEN(DocComment)
 CARBON_TOKEN(Error)
 
 #undef CARBON_TOKEN
