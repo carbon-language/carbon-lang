@@ -557,16 +557,26 @@ class TokenizedBuffer::Lexer {
         current_line(buffer.AddLine({0, 0, 0})),
         current_line_info(&buffer.GetLineInfo(current_line)) {}
 
-  // Result of a lexing action. This tracks whether we successfully lexed a
-  // token, or whether other lexing actions should be attempted.
+  // Symbolic result of a lexing action. This indicates whether we successfully
+  // lexed a token, or whether other lexing actions should be attempted.
+  //
+  // While it wraps a simple boolean state, its API both helps make the failures
+  // more self documenting, and by consuming the actual token constructively
+  // when one is produced, it helps ensure the correct result is returned.
   class LexResult {
     bool formed_token;
     explicit LexResult(bool formed_token) : formed_token(formed_token) {}
 
    public:
+    // Consumes (and discard) a valid token to construct a result
+    // indicating a token has been produced.
     LexResult(Token) : LexResult(true) {}
+    
+    // Returns a result indicating no token was produced.
     static LexResult NoMatch() { return LexResult(false); }
 
+    // Tests whether a token was produced by the lexing routine, and
+    // the lexer can continue forming tokens.
     explicit operator bool() const { return formed_token; }
   };
 
@@ -892,7 +902,7 @@ auto TokenizedBuffer::Lex(SourceBuffer& source, DiagnosticEmitter& emitter)
     if (!result) {
       result = lexer.LexError(source_text);
     }
-    assert(result && "couldn't lex any token");
+    assert(result && "No token was lexed.");
   }
 
   lexer.CloseInvalidOpenGroups(TokenKind::Error());
