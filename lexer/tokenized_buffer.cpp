@@ -601,7 +601,7 @@ class TokenizedBuffer::Lexer {
     // Consumes (and discard) a valid token to construct a result
     // indicating a token has been produced.
     LexResult(Token) : LexResult(true) {}
-    
+
     // Returns a result indicating no token was produced.
     static LexResult NoMatch() { return LexResult(false); }
 
