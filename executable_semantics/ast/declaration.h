@@ -46,7 +46,7 @@ struct FunctionDeclaration : Declaration {
 };
 
 struct StructDeclaration : Declaration {
-  const StructDefinition definition;
+  StructDefinition definition;
   StructDeclaration(int line_num, std::string name, std::list<Member*>* members)
       : definition{line_num, new std::string(name), members} {}
 
@@ -59,7 +59,7 @@ struct StructDeclaration : Declaration {
 
 struct ChoiceDeclaration : Declaration {
   int line_num;
-  const std::string name;
+ std::string name;
   std::list<std::pair<std::string, Expression*>> alternatives;
 
   ChoiceDeclaration(int line_num, std::string name,
