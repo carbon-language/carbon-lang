@@ -2,13 +2,14 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
+#include "lexer/tokenized_buffer.h"
+
 #include <algorithm>
 #include <bitset>
 #include <cmath>
 #include <iterator>
 #include <string>
 
-#include "lexer/tokenized_buffer.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/StringSwitch.h"

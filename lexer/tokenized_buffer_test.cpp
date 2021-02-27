@@ -2,12 +2,13 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
+#include "lexer/tokenized_buffer.h"
+
 #include <iterator>
 
 #include "diagnostics/diagnostic_emitter.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
-#include "lexer/tokenized_buffer.h"
 #include "lexer/tokenized_buffer_test_helpers.h"
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/None.h"
