@@ -197,13 +197,14 @@ auto MakeVoidTypeVal() -> Value* {
   return v;
 }
 
-auto MakeChoiceTypeVal(std::string* name,
+auto MakeChoiceTypeVal(std::string name,
                        std::list<std::pair<std::string, Value*>>* alts)
     -> Value* {
   auto* v = new Value();
   v->alive = true;
   v->tag = ValKind::ChoiceTV;
-  v->u.choice_type.name = name;
+  // Transitional leak: when we get rid of all pointers, this will disappear.
+  v->u.choice_type.name = new std::string(name);
   v->u.choice_type.alternatives = alts;
   return v;
 }
