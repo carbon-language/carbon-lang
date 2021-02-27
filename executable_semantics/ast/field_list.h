@@ -2,8 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#ifndef EXECUTABLE_SEMANTICS_AST_EXPRESSION_OR_FIELD_LIST_H_
-#define EXECUTABLE_SEMANTICS_AST_EXPRESSION_OR_FIELD_LIST_H_
+#ifndef EXECUTABLE_SEMANTICS_AST_FIELD_LIST_H_
+#define EXECUTABLE_SEMANTICS_AST_FIELD_LIST_H_
 
 #include <list>
 
@@ -23,4 +23,4 @@ auto MakeConsField(FieldList* e1, FieldList* e2) -> FieldList*;
 
 }  // namespace Carbon
 
-#endif  // EXECUTABLE_SEMANTICS_AST_EXPRESSION_OR_FIELD_LIST_H_
+#endif  // EXECUTABLE_SEMANTICS_AST_FIELD_LIST_H_

@@ -15,7 +15,7 @@
 
 %code requires {
 #include "executable_semantics/ast/declaration.h"
-#include "executable_semantics/ast/expression_or_field_list.h"
+#include "executable_semantics/ast/field_list.h"
 #include "executable_semantics/ast/function_definition.h"
 }
 

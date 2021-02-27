@@ -32,7 +32,7 @@ cc_library(
     deps = [
         "//executable_semantics/ast:declaration",
         "//executable_semantics/ast:expression",
-        "//executable_semantics/ast:expression_or_field_list",
+        "//executable_semantics/ast:field_list",
         "//executable_semantics/interpreter",
     ],
 )
