@@ -62,6 +62,7 @@ void yyerror(char* error) {
 %type <expression> expression
 %type <expression> pattern
 %type <expression> return_type
+%type <expression> paren_expression
 %type <expression> tuple
 %type <member> member
 %type <member_list> member_list
@@ -137,7 +138,7 @@ expression:
     { $$ = Carbon::MakeTypeType(yylineno); }
 | AUTO
     { $$ = Carbon::MakeAutoType(yylineno); }
-| tuple { $$ = $1; }
+| paren_expression { $$ = $1; }
 | expression EQUAL expression
     { $$ = Carbon::MakeBinOp(yylineno, Carbon::Operator::Eq, $1, $3); }
 | expression '+' expression
@@ -153,22 +154,13 @@ expression:
 | '-' expression
     { $$ = Carbon::MakeUnOp(yylineno, Carbon::Operator::Neg, $2); }
 | expression tuple
-    {
-      if ($2->tag == Carbon::ExpressionKind::Tuple) {
-        $$ = Carbon::MakeCall(yylineno, $1, $2);
-      } else {
-        auto vec =
-            new std::vector<std::pair<std::string, Carbon::Expression*>>();
-        vec->push_back(std::make_pair("", $2));
-        $$ = Carbon::MakeCall(yylineno, $1, Carbon::MakeTuple(yylineno, vec));
-      }
-    }
+    { $$ = Carbon::MakeCall(yylineno, $1, $2); }
 | FNTY tuple return_type
     { $$ = Carbon::MakeFunType(yylineno, $2, $3); }
 ;
 designator: '.' identifier { $$ = $2; }
 ;
-tuple: '(' field_list ')'
+paren_expression: '(' field_list ')'
     {
      if ($2->fields->size() == 1 &&
          $2->fields->front().first == "" &&
@@ -181,6 +173,12 @@ tuple: '(' field_list ')'
       }
     }
 ;
+tuple: '(' field_list ')'
+    {
+     auto vec = new std::vector<std::pair<std::string,Carbon::Expression*>>(
+         $2->fields->begin(), $2->fields->end());
+     $$ = Carbon::MakeTuple(yylineno, vec);
+    }
 field:
   pattern
     {
