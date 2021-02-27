@@ -7,6 +7,7 @@
 
 #include <functional>
 #include <string>
+#include <type_traits>
 
 #include "llvm/ADT/Any.h"
 #include "llvm/ADT/STLExtras.h"
@@ -36,14 +37,18 @@ class DiagnosticEmitter {
       : callback_(std::move(callback)) {}
   ~DiagnosticEmitter() = default;
 
-  // Emits an error unconditionally.  `F` is guaranteed to be called.
+  // Emits an error unconditionally after applying the provided `substitutions`.
   template <typename DiagnosticT>
-  void EmitError(
-      llvm::function_ref<void(typename DiagnosticT::Substitutions&)> f) {
-    typename DiagnosticT::Substitutions substitutions;
-    f(substitutions);
+  void EmitError(typename DiagnosticT::Substitutions substitutions) {
     callback_({.short_name = DiagnosticT::ShortName,
                .message = DiagnosticT::Format(substitutions)});
+  }
+
+  // Emits an error unconditionally when there are no substitutions.
+  template <typename DiagnosticT>
+  std::enable_if_t<std::is_empty_v<typename DiagnosticT::Substitutions>>
+  EmitError() {
+    EmitError<DiagnosticT>({});
   }
 
   // Emits a warning if `F` returns true.  `F` may or may not be called if the
@@ -73,6 +78,14 @@ inline auto NullDiagnosticEmitter() -> DiagnosticEmitter& {
   static auto* emitter = new DiagnosticEmitter([](const Diagnostic&) {});
   return *emitter;
 }
+
+// CRTP base class for diagnostics with no substitutions.
+template<typename Derived> struct SimpleDiagnostic {
+  struct Substitutions {};
+  static auto Format(const Substitutions&) -> std::string {
+    return Derived::Message.str();
+  }
+};
 
 }  // namespace Carbon
 
