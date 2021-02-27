@@ -80,7 +80,8 @@ inline auto NullDiagnosticEmitter() -> DiagnosticEmitter& {
 }
 
 // CRTP base class for diagnostics with no substitutions.
-template<typename Derived> struct SimpleDiagnostic {
+template <typename Derived>
+struct SimpleDiagnostic {
   struct Substitutions {};
   static auto Format(const Substitutions&) -> std::string {
     return Derived::Message.str();
