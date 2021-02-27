@@ -37,13 +37,14 @@ class DiagnosticEmitter {
       : callback_(std::move(callback)) {}
   ~DiagnosticEmitter() = default;
 
-  // Emits an error unconditionally.
+  // Emits an error unconditionally after applying the provided `substitutions`.
   template <typename DiagnosticT>
   void EmitError(typename DiagnosticT::Substitutions substitutions) {
     callback_({.short_name = DiagnosticT::ShortName,
                .message = DiagnosticT::Format(substitutions)});
   }
 
+  // Emits an error unconditionally when there are no substitutions.
   template <typename DiagnosticT>
   std::enable_if_t<std::is_empty_v<typename DiagnosticT::Substitutions>>
   EmitError() {
