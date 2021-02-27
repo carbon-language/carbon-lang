@@ -155,6 +155,13 @@ struct HexadecimalEscapeMissingDigits
       "uppercase hexadecimal digits, for example `\\x0F`.";
 };
 
+struct DecimalEscapeSequence : SimpleDiagnostic<DecimalEscapeSequence> {
+  static constexpr llvm::StringLiteral ShortName = "syntax-invalid-string";
+  static constexpr llvm::StringLiteral Message =
+      "Decimal digit follows `\\0` escape sequence. Use `\\x00` instead of "
+      "`\\0` if the next character is a digit.";
+};
+
 struct UnknownEscapeSequence {
   static constexpr llvm::StringLiteral ShortName = "syntax-invalid-string";
   static constexpr const char* Message = "Unrecognized escape sequence `{0}`.";
@@ -184,6 +191,8 @@ struct UnrecognizedCharacters : SimpleDiagnostic<UnrecognizedCharacters> {
 static bool isSpace(char c) {
   return c == ' ' || c == '\n' || c == '\t';
 }
+
+static constexpr llvm::StringLiteral HorizontalWhitespace = " \t";
 
 static bool isLower(char c) { return 'a' <= c && c <= 'z'; }
 
@@ -697,7 +706,7 @@ static auto ExpandUnicodeEscapeSequence(DiagnosticEmitter& emitter,
     return false;
   }
 
-  if (code_point >= 0xD800 && code_point <= 0xE000) {
+  if (code_point >= 0xD800 && code_point < 0xE000) {
     emitter.EmitError<UnicodeEscapeSurrogate>();
     return false;
   }
@@ -746,6 +755,10 @@ static auto ExpandAndConsumeEscapeSequence(DiagnosticEmitter& emitter,
       return true;
     case '0':
       result += '\0';
+      if (!escape.empty() && llvm::isDigit(escape.front())) {
+        emitter.EmitError<DecimalEscapeSequence>();
+        return false;
+      }
       return true;
     case 'x':
       if (escape.size() >= 2 && isUpperHexDigit(escape[0]) && isUpperHexDigit(escape[1])) {
@@ -756,7 +769,7 @@ static auto ExpandAndConsumeEscapeSequence(DiagnosticEmitter& emitter,
       emitter.EmitError<HexadecimalEscapeMissingDigits>();
       break;
     case 'u': {
-      if (escape[0] == '{') {
+      if (!escape.empty() && escape.front() == '{') {
         const char *pos = escape.begin() + 1;
         while (pos != escape.end() && isUpperHexDigit(*pos)) {
           ++pos;
@@ -809,9 +822,15 @@ static auto ExpandEscapeSequencesAndRemoveIndent(DiagnosticEmitter& emitter,
 
   // Process each line of the string literal.
   while (true) {
+    // Every non-empty line (that contains anything other than horizontal
+    // whitespace) is required to start with the string's indent. For error
+    // recovery, remove all leading whitespace if the indent doesn't match.
     if (!contents.consume_front(indent)) {
-      emitter.EmitError<MismatchedIndentInString>();
-      has_errors = true;
+      contents = contents.ltrim(HorizontalWhitespace);
+      if (!contents.startswith("\n")) {
+        emitter.EmitError<MismatchedIndentInString>();
+        has_errors = true;
+      }
     }
 
     // Process the contents of the line.

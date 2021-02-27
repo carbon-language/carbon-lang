@@ -980,6 +980,17 @@ TEST_F(LexerTest, StringLiteralContents) {
 #"\#x00,\#xFF,\#u{56789},\#u{ABCD},\#u{00000000000000000EF}"#
 // #6
 ##"\n,\#n,\##n,\##\##n,\##\###n"##
+// #7
+    """
+   hello
+  world
+
+   end of test
+  """
+// #8
+"\0A\x1234"
+// #9
+"\u{D7FF},\u{E000},\u{10FFFF}"
 )");
   EXPECT_FALSE(buffer.HasErrors());
   EXPECT_THAT(
@@ -1004,8 +1015,16 @@ TEST_F(LexerTest, StringLiteralContents) {
                {"\x00,\xFF,\xF1\x96\x9E\x89,\xEA\xAF\x8D,\xC3\xAF"s}},
           // #6
           {.kind = TokenKind::StringLiteral(),
-           .string_contents =
-               {"\\n,\\#n,\n,\\##n,\\###n"}},
+           .string_contents = {"\\n,\\#n,\n,\\##n,\\###n"}},
+          // #7
+          {.kind = TokenKind::StringLiteral(),
+           .string_contents = {" hello\nworld\n\n end of test\n"}},
+          // #8
+          {.kind = TokenKind::StringLiteral(),
+           .string_contents = {"\0A\x12"s + "34"}},
+          // #9
+          {.kind = TokenKind::StringLiteral(),
+           .string_contents = {"\xED\x9F\xBF,\xEE\x80\x80,\xF4\x8F\xBF\xBF"}},
       }));
 }
 
@@ -1021,9 +1040,83 @@ TEST_F(LexerTest, StringLiteralTrailingWhitespace) {
       }));
 }
 
-// TODO: Test mismatched indentation.
-// TODO: Test contents on last line.
-// TODO: Test various escape sequence error cases.
+TEST_F(LexerTest, StringLiteralBadIndent) {
+  std::pair<llvm::StringLiteral, llvm::StringLiteral> testcases[] = {
+    // Indent doesn't match the last line.
+    {"\"\"\"\n \tx\n  \"\"\"", "x\n"},
+    {"\"\"\"\n x\n  \"\"\"", "x\n"},
+    {"\"\"\"\n  x\n\t\"\"\"", "x\n"},
+    {"\"\"\"\n  ok\n bad\n  \"\"\"", "ok\nbad\n"},
+    {"\"\"\"\n bad\n  ok\n  \"\"\"", "bad\nok\n"},
+    {"\"\"\"\n  escaped,\\\n bad\n  \"\"\"", "escaped,bad\n"},
+
+    // Indent on last line is followed by text.
+    {"\"\"\"\n  x\n  x\"\"\"", "x\nx"},
+    {"\"\"\"\n   x\n  x\"\"\"", " x\nx"},
+    {"\"\"\"\n x\n  x\"\"\"", "x\nx"},
+  };
+
+  for (auto [test, contents] : testcases) {
+    auto buffer = Lex(test);
+    EXPECT_TRUE(buffer.HasErrors()) << "`" << test << "`";
+    EXPECT_THAT(buffer, HasTokens(llvm::ArrayRef<ExpectedToken>{
+                            {.kind = TokenKind::StringLiteral(),
+                             .line = 1,
+                             .column = 1,
+                             .text = test,
+                             .string_contents = contents}}));
+  }
+}
+
+TEST_F(LexerTest, StringLiteralBadEscapeSequence) {
+  llvm::StringLiteral testcases[] = {
+    R"("\a")",
+    R"("\b")",
+    R"("\e")",
+    R"("\f")",
+    R"("\v")",
+    R"("\?")",
+    R"("\1")",
+    R"("\9")",
+
+    // \0 can't be followed by a decimal digit.
+    R"("\01")",
+    R"("\09")",
+
+    // \x requires two (uppercase) hexadecimal digits.
+    R"("\x")",
+    R"("\x0")",
+    R"("\x0G")",
+    R"("\xab")",
+    R"("\x\n")",
+    R"("\x\"")",
+
+    // \u requires a braced list of one or more hexadecimal digits.
+    R"("\u")",
+    R"("\u?")",
+    R"("\u\"")",
+    R"("\u{")",
+    R"("\u{}")",
+    R"("\u{A")",
+    R"("\u{G}")",
+    R"("\u{0000012323127z}")",
+    R"("\u{-3}")",
+
+    // \u must specify a non-surrogate code point.
+    R"("\u{110000}")",
+    R"("\u{000000000000000000000000000000000110000}")",
+    R"("\u{D800}")",
+    R"("\u{DFFF}")",
+  };
+
+  for (llvm::StringLiteral test : testcases) {
+    auto buffer = Lex(test);
+    EXPECT_TRUE(buffer.HasErrors()) << "`" << test << "`";
+    EXPECT_THAT(buffer,
+                HasTokens(llvm::ArrayRef<ExpectedToken>{
+                    {.kind = TokenKind::StringLiteral(), .text = test}}));
+  }
+}
 
 auto GetAndDropLine(llvm::StringRef& text) -> std::string {
   auto newline_offset = text.find_first_of('\n');
