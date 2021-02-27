@@ -236,31 +236,6 @@ namespace {
 // Responsible for checking that a numeric literal is valid and meaningful and
 // either diagnosing or extracting its meaning.
 class NumericLiteralParser {
-  DiagnosticEmitter& emitter;
-  NumericLiteral literal;
-
-  // The radix of the literal: 2, 10, or 16, for a prefix of '0b', no prefix,
-  // or '0x', respectively.
-  int radix = 10;
-
-  // The various components of a numeric literal:
-  //
-  //     [radix] int_part [. fract_part [[ep] [+-] exponent_part]]
-  llvm::StringRef int_part;
-  llvm::StringRef fract_part;
-  llvm::StringRef exponent_part;
-
-  // Do we need to remove any special characters (digit separator or radix
-  // point) before interpreting the mantissa or exponent as an integer?
-  bool mantissa_needs_cleaning = false;
-  bool exponent_needs_cleaning = false;
-
-  // True if we found a `-` before `exponent_part`.
-  bool exponent_is_negative = false;
-
-  // True if we produced an error but recovered.
-  bool recovered_from_error = false;
-
  public:
   NumericLiteralParser(DiagnosticEmitter& emitter, NumericLiteral literal)
       : emitter(emitter), literal(literal) {
@@ -530,6 +505,32 @@ class NumericLiteralParser {
     }
     return value;
   }
+
+ private:
+  DiagnosticEmitter& emitter;
+  NumericLiteral literal;
+
+  // The radix of the literal: 2, 10, or 16, for a prefix of '0b', no prefix,
+  // or '0x', respectively.
+  int radix = 10;
+
+  // The various components of a numeric literal:
+  //
+  //     [radix] int_part [. fract_part [[ep] [+-] exponent_part]]
+  llvm::StringRef int_part;
+  llvm::StringRef fract_part;
+  llvm::StringRef exponent_part;
+
+  // Do we need to remove any special characters (digit separator or radix
+  // point) before interpreting the mantissa or exponent as an integer?
+  bool mantissa_needs_cleaning = false;
+  bool exponent_needs_cleaning = false;
+
+  // True if we found a `-` before `exponent_part`.
+  bool exponent_is_negative = false;
+
+  // True if we produced an error but recovered.
+  bool recovered_from_error = false;
 };
 }  // namespace
 
