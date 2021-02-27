@@ -62,9 +62,9 @@ struct InvalidDigit {
   static auto Format(const Substitutions& subst) -> std::string {
     return llvm::formatv("Invalid digit '{0}' in {1} numeric literal.",
                          subst.digit,
-                         (subst.radix == 2    ? "binary"
-                          : subst.radix == 16 ? "hexadecimal"
-                                              : "decimal"))
+                         (subst.radix == 2
+                              ? "binary"
+                              : subst.radix == 16 ? "hexadecimal" : "decimal"))
         .str();
   }
 };
@@ -127,9 +127,7 @@ struct UnrecognizedCharacters : SimpleDiagnostic<UnrecognizedCharacters> {
 
 // TODO(zygoloid): Update this to match whatever we decide qualifies as
 // acceptable whitespace.
-static bool isSpace(char c) {
-  return c == ' ' || c == '\n' || c == '\t';
-}
+static bool isSpace(char c) { return c == ' ' || c == '\n' || c == '\t'; }
 
 static bool isLower(char c) { return 'a' <= c && c <= 'z'; }
 
