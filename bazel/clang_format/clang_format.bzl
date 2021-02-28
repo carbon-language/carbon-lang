@@ -44,14 +44,37 @@ def _clang_format_impl(target, ctx):
     if hasattr(ctx.rule.attr, "textual_hdrs"):
         source_targets += ctx.rule.attr.textual_hdrs
 
-    sources = [file for target in source_targets for file in target.files.to_list()]
-    outputs = [ctx.actions.declare_file(src.path + ".validation") for src in sources]
+    output_tree = ctx.label.name + ".clang_format_validation/"
+
+    sources = [
+        file
+        for target in source_targets
+        for file in target.files.to_list()
+        # Filter out generated files.
+        # TODO: Eventually, it would be nice to format them instead.
+        if not (file.basename.endswith(".tab.cpp") or
+                file.basename.endswith(".tab.h") or
+                file.basename.endswith(".yy.cpp"))
+    ]
+    outputs = [
+        ctx.actions.declare_file(output_tree + src.path + ".validation")
+        for src in sources
+    ]
 
     for src, out in zip(sources, outputs):
         ctx.actions.run(
-            inputs = depset(direct = [src], transitive = [ctx.attr._clang_format_config.files]),
+            inputs = depset(
+                direct = [src],
+                transitive = [ctx.attr._clang_format_config.files],
+            ),
             outputs = [out],
-            arguments = [out.path, clang_format, "--dry-run", "-Werror", src.path],
+            arguments = [
+                out.path,
+                clang_format,
+                "--dry-run",
+                "-Werror",
+                src.path,
+            ],
             progress_message = "Checking `clang-format` of `%s`" % src,
             executable = ctx.executable._clang_format_runner,
         )
