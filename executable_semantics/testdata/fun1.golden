@@ -17,3 +17,4 @@ return f(0 = 1);
 10: type error in call
 expected: Int
 actual: Tuple(0 = Int)
+EXIT CODE: 255
