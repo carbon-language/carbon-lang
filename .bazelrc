@@ -9,4 +9,8 @@ build:force_local_bootstrap --repo_env=CARBON_FORCE_LOCAL_BOOTSTRAP_BUILD=1
 
 build:fuzzer --features=fuzzer
 
-build:check_format --aspects bazel/clang_format/clang_format.bzl%clang_format_aspect --experimental_run_validations
+# Enable checking clang-format by default. Note that you can and should use
+# `-k` to cause Bazel to keep running past any failures here. It should still
+# be able to build and run tests so that you don't need to fix format failures
+# while debugging.
+build --aspects bazel/clang_format/clang_format.bzl%clang_format_aspect --experimental_run_validations
