@@ -128,8 +128,7 @@ auto MakeVoidTypeVal() -> Value*;
 auto MakeChoiceTypeVal(std::string name, VarValues* alts) -> Value*;
 
 void PrintValue(Value* val, std::ostream& out);
-// The following will be possible once Value is a value type! -Jeremy
-// auto operator<<(std::ostream& os, Value* v) -> std::ostream&;
+auto operator<<(std::ostream& os, const Value& v) -> std::ostream&;
 
 auto TypeEqual(Value* t1, Value* t2) -> bool;
 auto ValueEqual(Value* v1, Value* v2, int line_num) -> bool;

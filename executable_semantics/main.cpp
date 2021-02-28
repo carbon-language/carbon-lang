@@ -5,6 +5,7 @@
 #include <cstdio>
 #include <cstring>
 #include <iostream>
+#include <string>
 
 #include "executable_semantics/syntax_helpers.h"
 
@@ -22,6 +23,10 @@ int main(int argc, char* argv[]) {
                 << std::endl;
       return 1;
     }
+  }
+
+  if (argc > 2 && argv[2] == std::string("-trace")) {
+    Carbon::tracing_output = true;
   }
   return yyparse();
 }

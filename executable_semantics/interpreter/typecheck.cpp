@@ -274,9 +274,8 @@ auto TypeCheckExp(Expression* e, TypeEnv env, Env ct_env, Value* expected,
         default:
           std::cerr << e->line_num
                     << ": compilation error in field access, expected a struct"
-                    << std::endl;
-          PrintExp(e);
-          std::cerr << std::endl;
+                    << std::endl
+                    << *e << std::endl;
           exit(-1);
       }
     }
@@ -350,9 +349,8 @@ auto TypeCheckExp(Expression* e, TypeEnv env, Env ct_env, Value* expected,
         default: {
           std::cerr << e->line_num
                     << ": compilation error in call, expected a function"
-                    << std::endl;
-          PrintExp(e);
-          std::cerr << std::endl;
+                    << std::endl
+                    << *e << std::endl;
           exit(-1);
         }
       }

@@ -115,15 +115,11 @@ void PrintStatement(Statement* s, int depth) {
   }
   switch (s->tag) {
     case StatementKind::Match:
-      std::cout << "match (";
-      PrintExp(s->u.match_stmt.exp);
-      std::cout << ") {";
+      std::cout << "match (" << *s->u.match_stmt.exp << ") {";
       if (depth < 0 || depth > 1) {
         std::cout << std::endl;
         for (auto& clause : *s->u.match_stmt.clauses) {
-          std::cout << "case ";
-          PrintExp(clause.first);
-          std::cout << " =>" << std::endl;
+          std::cout << "case " << *clause.first << " =>" << std::endl;
           PrintStatement(clause.second, depth - 1);
           std::cout << std::endl;
         }
@@ -133,9 +129,7 @@ void PrintStatement(Statement* s, int depth) {
       std::cout << "}";
       break;
     case StatementKind::While:
-      std::cout << "while (";
-      PrintExp(s->u.while_stmt.cond);
-      std::cout << ")" << std::endl;
+      std::cout << "while (" << *s->u.while_stmt.cond << ")" << std::endl;
       PrintStatement(s->u.while_stmt.body, depth - 1);
       break;
     case StatementKind::Break:
@@ -145,34 +139,23 @@ void PrintStatement(Statement* s, int depth) {
       std::cout << "continue;";
       break;
     case StatementKind::VariableDefinition:
-      std::cout << "var ";
-      PrintExp(s->u.variable_definition.pat);
-      std::cout << " = ";
-      PrintExp(s->u.variable_definition.init);
-      std::cout << ";";
+      std::cout << "var " << *s->u.variable_definition.pat << " = "
+                << *s->u.variable_definition.init << ";";
       break;
     case StatementKind::ExpressionStatement:
-      PrintExp(s->u.exp);
-      std::cout << ";";
+      std::cout << *s->u.exp << ";";
       break;
     case StatementKind::Assign:
-      PrintExp(s->u.assign.lhs);
-      std::cout << " = ";
-      PrintExp(s->u.assign.rhs);
-      std::cout << ";";
+      std::cout << *s->u.assign.lhs << " = " << *s->u.assign.rhs << ";";
       break;
     case StatementKind::If:
-      std::cout << "if (";
-      PrintExp(s->u.if_stmt.cond);
-      std::cout << ")" << std::endl;
+      std::cout << "if (" << *s->u.if_stmt.cond << ")" << std::endl;
       PrintStatement(s->u.if_stmt.then_stmt, depth - 1);
       std::cout << std::endl << "else" << std::endl;
       PrintStatement(s->u.if_stmt.else_stmt, depth - 1);
       break;
     case StatementKind::Return:
-      std::cout << "return ";
-      PrintExp(s->u.return_stmt);
-      std::cout << ";";
+      std::cout << "return " << *s->u.return_stmt << ";";
       break;
     case StatementKind::Sequence:
       PrintStatement(s->u.sequence.stmt, depth);
