@@ -23,3 +23,4 @@ return b;
 15: type error in call
 expected: Int
 actual: Tuple(0 = Int)
+EXIT CODE: 255

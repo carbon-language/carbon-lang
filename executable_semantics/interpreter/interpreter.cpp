@@ -4,6 +4,7 @@
 
 #include "executable_semantics/interpreter/interpreter.h"
 
+#include <cassert>
 #include <iostream>
 #include <iterator>
 #include <map>
@@ -744,7 +745,8 @@ auto IsBlockAct(Action* act) -> bool {
 void StepStmt() {
   Frame* frame = state->stack.Top();
   Action* act = frame->todo.Top();
-  Statement* stmt = act->u.stmt;
+  Statement* const stmt = act->u.stmt;
+  assert(stmt != nullptr && "null statement!");
   std::cout << "--- step stmt ";
   PrintStatement(stmt, 1);
   std::cout << " --->" << std::endl;
