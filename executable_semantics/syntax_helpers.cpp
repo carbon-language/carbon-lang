@@ -13,8 +13,11 @@ namespace Carbon {
 
 char* input_filename = nullptr;
 
-void PrintSyntaxError(char* error, int line_num) {
-  std::cerr << input_filename << ":" << line_num << ": " << error << std::endl;
+/// Reports a syntax error at `sourceLocation` with the given `details` and
+/// exits the program with code `-1`.
+void SyntaxError(std::string details, yy::location sourceLocation) {
+  std::cerr << input_filename << ":" << sourceLocation << ": " << details
+            << std::endl;
   exit(-1);
 }
 

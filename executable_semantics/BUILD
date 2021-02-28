@@ -22,7 +22,10 @@ cc_library(
         "syntax_helpers.cpp",
         "syntax_helpers.h",
     ],
-    hdrs = ["syntax.tab.h"],
+    hdrs = [
+        "location.hh",
+        "syntax.tab.h",
+    ],
     # Disable warnings for generated code.
     copts = [
         "-Wno-unneeded-internal-declaration",
@@ -43,6 +46,7 @@ genrule(
     outs = [
         "syntax.tab.cpp",
         "syntax.tab.h",
+        "location.hh",
     ],
     cmd = "M4=$(M4) $(BISON) " +
           "--output=$(location syntax.tab.cpp) " +

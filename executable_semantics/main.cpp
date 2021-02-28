@@ -6,10 +6,10 @@
 #include <cstring>
 #include <iostream>
 
+#include "executable_semantics/syntax.tab.h"
 #include "executable_semantics/syntax_helpers.h"
 
 extern FILE* yyin;
-extern auto yyparse() -> int;  // NOLINT(readability-identifier-naming)
 
 int main(int argc, char* argv[]) {
   // yydebug = 1;
@@ -23,5 +23,7 @@ int main(int argc, char* argv[]) {
       return 1;
     }
   }
-  return yyparse();
+
+  yy::parser parse;
+  return parse();
 }

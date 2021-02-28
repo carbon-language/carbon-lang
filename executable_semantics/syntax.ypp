@@ -2,6 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
+%language "c++"
 %code top {
 #include <algorithm>
 #include <cstdarg>
@@ -21,12 +22,17 @@
 
 %code {
 extern int yylineno;
-extern int yylex();
+extern int yylex(
+  yy::parser::semantic_type * const lval, yy::parser::location_type *location );
 
-void yyerror(char* error) {
-  Carbon::PrintSyntaxError(error, yylineno);
+namespace yy
+{
+  // Report an error to the user.
+  auto parser::error (const location_type& loc, const std::string& msg) -> void
+  {
+    Carbon::SyntaxError(msg, loc);
+  }
 }
-// void yyerror(char* error, ...);
 }
 
 %union {

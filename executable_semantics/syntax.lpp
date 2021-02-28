@@ -7,6 +7,12 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 %{
 #include <cstdlib>
 #include "executable_semantics/syntax.tab.h"
+
+#undef  YY_DECL
+#define YY_DECL int yylex( yy::parser::semantic_type * const lval, yy::parser::location_type *location )
+
+yy::parser::semantic_type yylval;
+
 %}
 %option yylineno
 
@@ -43,43 +49,43 @@ integer_literal   [0-9]+
 
 %%
 
-{AND}      { return AND; }
-{ARROW}    { return ARROW; }
-{AUTO}     { return AUTO; }
-{BOOL}     { return BOOL; }
-{BREAK}    { return BREAK; }
-{CASE}     { return CASE; }
-{CHOICE}   { return CHOICE; }
+{AND}      { return yy::parser::token::AND; }
+{ARROW}    { return yy::parser::token::ARROW; }
+{AUTO}     { return yy::parser::token::AUTO; }
+{BOOL}     { return yy::parser::token::BOOL; }
+{BREAK}    { return yy::parser::token::BREAK; }
+{CASE}     { return yy::parser::token::CASE; }
+{CHOICE}   { return yy::parser::token::CHOICE; }
 {COMMENT}  ;
-{CONTINUE} { return CONTINUE; }
-{DBLARROW} { return DBLARROW; }
-{DEFAULT}  { return DEFAULT; }
-{ELSE}     { return ELSE; }
-{EQUAL}    { return EQUAL; }
-{FALSE}    { return FALSE; }
-{FN}       { return FN; }
-{FNTY}     { return FNTY; }
-{IF}       { return IF; }
-{INT}      { return INT; }
-{MATCH}    { return MATCH; }
-{NOT}      { return NOT; }
-{OR}       { return OR; }
-{RETURN}   { return RETURN; }
-{STRUCT}   { return STRUCT; }
-{TRUE}     { return TRUE; }
-{TYPE}     { return TYPE; }
-{VAR}      { return VAR; }
-{WHILE}    { return WHILE; }
+{CONTINUE} { return yy::parser::token::CONTINUE; }
+{DBLARROW} { return yy::parser::token::DBLARROW; }
+{DEFAULT}  { return yy::parser::token::DEFAULT; }
+{ELSE}     { return yy::parser::token::ELSE; }
+{EQUAL}    { return yy::parser::token::EQUAL; }
+{FALSE}    { return yy::parser::token::FALSE; }
+{FN}       { return yy::parser::token::FN; }
+{FNTY}     { return yy::parser::token::FNTY; }
+{IF}       { return yy::parser::token::IF; }
+{INT}      { return yy::parser::token::INT; }
+{MATCH}    { return yy::parser::token::MATCH; }
+{NOT}      { return yy::parser::token::NOT; }
+{OR}       { return yy::parser::token::OR; }
+{RETURN}   { return yy::parser::token::RETURN; }
+{STRUCT}   { return yy::parser::token::STRUCT; }
+{TRUE}     { return yy::parser::token::TRUE; }
+{TYPE}     { return yy::parser::token::TYPE; }
+{VAR}      { return yy::parser::token::VAR; }
+{WHILE}    { return yy::parser::token::WHILE; }
 
 {identifier} {
   int n = strlen(yytext);
   yylval.str = reinterpret_cast<char*>(malloc((n + 1) * sizeof(char)));
   strncpy(yylval.str, yytext, n + 1);
-  return identifier;
+  return yy::parser::token::identifier;
 }
 {integer_literal} {
   yylval.num = atof(yytext);
-  return integer_literal;
+  return yy::parser::token::integer_literal;
 }
 
 [ \t\n]+ ;

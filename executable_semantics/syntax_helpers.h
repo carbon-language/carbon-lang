@@ -12,14 +12,16 @@
 #include <list>
 
 #include "executable_semantics/ast/declaration.h"
+#include "executable_semantics/location.hh"
 
 namespace Carbon {
 
 // Initialized by main(), and used when printing errors.
 extern char* input_filename;
 
-// Prints errors.
-void PrintSyntaxError(char* error, int line_num);
+/// Reports a syntax error at `sourceLocation` with the given `details` and
+/// exits the program with code `-1`.
+void SyntaxError(std::string message, yy::location sourceLocation);
 
 // Runs the top-level declaration list.
 void ExecProgram(std::list<Declaration>* fs);
