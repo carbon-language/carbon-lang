@@ -312,13 +312,13 @@ alternative_list:
 ;
 declaration:
   function_definition
-    { $$ = Carbon::MakeFunDecl($1); }
+    { $$ = new Carbon::FunctionDeclaration{$1}; }
 | function_declaration
-    { $$ = Carbon::MakeFunDecl($1); }
+    { $$ = new Carbon::FunctionDeclaration{$1}; }
 | STRUCT identifier '{' member_list '}'
-    { $$ = Carbon::MakeStructDecl(yylineno, $2, $4); }
+    { $$ = new Carbon::StructDeclaration{yylineno, $2, $4}; }
 | CHOICE identifier '{' alternative_list '}'
-    { $$ = Carbon::MakeChoiceDecl(yylineno, $2, $4); }
+    { $$ = new Carbon::ChoiceDeclaration{yylineno, $2, std::list(*$4)}; }
 ;
 declaration_list:
   // Empty

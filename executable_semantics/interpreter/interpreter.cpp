@@ -4,6 +4,7 @@
 
 #include "executable_semantics/interpreter/interpreter.h"
 
+#include <cassert>
 #include <iostream>
 #include <iterator>
 #include <map>
@@ -252,55 +253,49 @@ auto EvalPrim(Operator op, const std::vector<Value*>& args, int line_num)
 
 Env globals;
 
-void InitGlobals(std::list<Declaration*>* fs) {
+void InitGlobals(std::list<const Declaration*>* fs) {
   globals = nullptr;
-  for (auto& iter : *fs) {
-    switch (iter->tag) {
-      case DeclarationKind::ChoiceDeclaration: {
-        auto d = iter;
-        auto alts = new VarValues();
-        for (auto i = d->u.choice_def.alternatives->begin();
-             i != d->u.choice_def.alternatives->end(); ++i) {
-          auto t =
-              ToType(d->u.choice_def.line_num, InterpExp(nullptr, i->second));
-          alts->push_back(make_pair(i->first, t));
-        }
-        auto ct = MakeChoiceTypeVal(d->u.choice_def.name, alts);
-        auto a = AllocateValue(ct);
-        globals.Extend(*d->u.choice_def.name, a);
-        break;
-      }
-      case DeclarationKind::StructDeclaration: {
-        auto d = iter;
-        auto fields = new VarValues();
-        auto methods = new VarValues();
-        for (auto i = d->u.struct_def->members->begin();
-             i != d->u.struct_def->members->end(); ++i) {
-          switch ((*i)->tag) {
-            case MemberKind::FieldMember: {
-              auto t = ToType(d->u.struct_def->line_num,
-                              InterpExp(nullptr, (*i)->u.field.type));
-              fields->push_back(make_pair(*(*i)->u.field.name, t));
-              break;
-            }
-          }
-        }
-        auto st = MakeStructTypeVal(*d->u.struct_def->name, fields, methods);
-        auto a = AllocateValue(st);
-        globals.Extend(*d->u.struct_def->name, a);
-        break;
-      }
-      case DeclarationKind::FunctionDeclaration: {
-        struct FunctionDefinition* fun = iter->u.fun_def;
-        Env env = nullptr;
-        auto pt = InterpExp(env, fun->param_pattern);
-        auto f = MakeFunVal(fun->name, pt, fun->body);
-        Address a = AllocateValue(f);
-        globals.Extend(fun->name, a);
+  for (auto d : *fs) {
+    d->InitGlobals(globals);
+  }
+}
+
+auto ChoiceDeclaration::InitGlobals(Env& globals) const -> void {
+  auto alts = new VarValues();
+  for (auto kv : alternatives) {
+    auto t = ToType(line_num, InterpExp(nullptr, kv.second));
+    alts->push_back(make_pair(kv.first, t));
+  }
+  auto ct = MakeChoiceTypeVal(name, alts);
+  auto a = AllocateValue(ct);
+  globals.Extend(name, a);
+}
+
+auto StructDeclaration::InitGlobals(Env& globals) const -> void {
+  auto fields = new VarValues();
+  auto methods = new VarValues();
+  for (auto i = definition.members->begin(); i != definition.members->end();
+       ++i) {
+    switch ((*i)->tag) {
+      case MemberKind::FieldMember: {
+        auto t =
+            ToType(definition.line_num, InterpExp(nullptr, (*i)->u.field.type));
+        fields->push_back(make_pair(*(*i)->u.field.name, t));
         break;
       }
     }
   }
+  auto st = MakeStructTypeVal(*definition.name, fields, methods);
+  auto a = AllocateValue(st);
+  globals.Extend(*definition.name, a);
+}
+
+auto FunctionDeclaration::InitGlobals(Env& globals) const -> void {
+  Env env;
+  auto pt = InterpExp(env, definition->param_pattern);
+  auto f = MakeFunVal(definition->name, pt, definition->body);
+  Address a = AllocateValue(f);
+  globals.Extend(definition->name, a);
 }
 
 //    { S, H} -> { { C, E, F} :: S, H}
@@ -771,7 +766,8 @@ auto IsBlockAct(Action* act) -> bool {
 void StepStmt() {
   Frame* frame = state->stack.Top();
   Action* act = frame->todo.Top();
-  Statement* stmt = act->u.stmt;
+  Statement* const stmt = act->u.stmt;
+  assert(stmt != nullptr && "null statement!");
   std::cout << "--- step stmt ";
   PrintStatement(stmt, 1);
   std::cout << " --->" << std::endl;
@@ -1349,7 +1345,7 @@ void Step() {
 }
 
 // Interpret the whole porogram.
-auto InterpProgram(std::list<Declaration*>* fs) -> int {
+auto InterpProgram(std::list<const Declaration*>* fs) -> int {
   state = new State();  // Runtime state.
   std::cout << "********** initializing globals **********" << std::endl;
   InitGlobals(fs);

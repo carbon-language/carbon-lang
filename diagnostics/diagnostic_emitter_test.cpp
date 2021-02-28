@@ -41,14 +41,8 @@ TEST(DiagTest, EmitErrors) {
     reported.push_back(diagnostic.message);
   });
 
-  emitter.EmitError<FakeDiagnostic>(
-      [](FakeDiagnostic::Substitutions& diagnostic) {
-        diagnostic.message = "M1";
-      });
-  emitter.EmitError<FakeDiagnostic>(
-      [](FakeDiagnostic::Substitutions& diagnostic) {
-        diagnostic.message = "M2";
-      });
+  emitter.EmitError<FakeDiagnostic>({.message = "M1"});
+  emitter.EmitError<FakeDiagnostic>({.message = "M2"});
 
   EXPECT_THAT(reported, ElementsAre("M1", "M2"));
 }
