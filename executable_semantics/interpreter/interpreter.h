@@ -22,8 +22,8 @@ using Env = AssocList<std::string, Address>;
 /***** Scopes *****/
 
 struct Scope {
-  Scope(Env* e, std::list<std::string> l) : env(e), locals(std::move(l)) {}
-  Env* env;
+  Scope(Env e, std::list<std::string> l) : env(e), locals(std::move(l)) {}
+  Env env;
   std::list<std::string> locals;
 };
 
@@ -45,7 +45,7 @@ struct State {
 
 extern State* state;
 
-void PrintEnv(Env* env);
+void PrintEnv(Env env);
 auto AllocateValue(Value* v) -> Address;
 auto CopyVal(Value* val, int line_num) -> Value*;
 auto ToInteger(Value* v) -> int;
@@ -53,7 +53,7 @@ auto ToInteger(Value* v) -> int;
 /***** Interpreters *****/
 
 auto InterpProgram(std::list<Declaration*>* fs) -> int;
-auto InterpExp(Env* env, Expression* e) -> Value*;
+auto InterpExp(Env env, Expression* e) -> Value*;
 
 }  // namespace Carbon
 

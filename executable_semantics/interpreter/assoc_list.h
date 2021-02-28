@@ -7,31 +7,41 @@
 
 #include <iostream>
 #include <list>
+#include <optional>
 #include <string>
+
+#include "executable_semantics/interpreter/cons_list.h"
 
 namespace Carbon {
 
 template <class K, class V>
-struct AssocList {
-  AssocList(K k, V v, AssocList* n) : key(k), value(v), next(n) {}
+class AssocList {
+ public:
+  AssocList() { head = nullptr; }
 
-  K key;
-  V value;
-  AssocList* next;
-};
-
-template <class K, class V>
-auto Lookup(int line_num, AssocList<K, V>* alist, const K& key,
-            void (*print_key)(const K&)) -> V {
-  if (alist == NULL) {
-    std::cerr << line_num << ": could not find `" << key << "`" << std::endl;
-    exit(-1);
-  } else if (alist->key == key) {
-    return alist->value;
-  } else {
-    return Lookup(line_num, alist->next, key, print_key);
+  auto Lookup(const K& key) -> std::optional<V> {
+    if (head == nullptr) {
+      return std::nullopt;
+    } else if (head->curr.first == key) {
+      return head->curr.second;
+    } else {
+      auto next = AssocList(head->next);
+      return next.Lookup(key);
+    }
   }
-}
+
+  auto Extend(const K& k, const V& v) -> void {
+    head = new Cons<std::pair<K, V> >(std::make_pair(k, v), head);
+  }
+
+  auto Extending(const K& k, const V& v) -> AssocList<K, V> {
+    return AssocList(new Cons<std::pair<K, V> >(std::make_pair(k, v), head));
+  }
+
+  AssocList(Cons<std::pair<K, V> >* h) : head(h) {}
+
+  Cons<std::pair<K, V> >* head;
+};
 
 }  // namespace Carbon
 
