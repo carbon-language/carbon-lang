@@ -677,6 +677,17 @@ structural interface Type { }
 That is, `Type` is the type-type with no requirements (so matches every type),
 and defines no names.
 
+```
+fn F[Type:$ T](T: x) -> T {
+  // Can accept values of any type. But, since we no nothing of the type,
+  // we don't know about any operations on `x` inside this function.
+  return x;
+}
+
+var Int: i = F(3);
+var String: s = F("string");
+```
+
 ### Subsumption
 
 Given a generic type `T` with type-type `I1`, it may be implicitly cast to a
