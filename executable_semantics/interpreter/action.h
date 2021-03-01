@@ -10,7 +10,7 @@
 
 #include "executable_semantics/ast/expression.h"
 #include "executable_semantics/ast/statement.h"
-#include "executable_semantics/interpreter/stack.h"
+#include "executable_semantics/interpreter/cons_list.h"
 #include "executable_semantics/interpreter/value.h"
 
 namespace Carbon {

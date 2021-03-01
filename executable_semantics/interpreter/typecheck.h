@@ -16,37 +16,37 @@ namespace Carbon {
 
 using TypeEnv = AssocList<std::string, Value*>;
 
-void PrintTypeEnv(TypeEnv env);
+void PrintTypeEnv(TypeEnv* env);
 
 enum class TCContext { ValueContext, PatternContext, TypeContext };
 
 struct TCResult {
-  TCResult(Expression* e, Value* t, TypeEnv env) : exp(e), type(t), env(env) {}
+  TCResult(Expression* e, Value* t, TypeEnv* env) : exp(e), type(t), env(env) {}
 
   Expression* exp;
   Value* type;
-  TypeEnv env;
+  TypeEnv* env;
 };
 
 struct TCStatement {
-  TCStatement(Statement* s, TypeEnv e) : stmt(s), env(e) {}
+  TCStatement(Statement* s, TypeEnv* e) : stmt(s), env(e) {}
 
   Statement* stmt;
-  TypeEnv env;
+  TypeEnv* env;
 };
 
 auto ToType(int line_num, Value* val) -> Value*;
 
-auto TypeCheckExp(Expression* e, TypeEnv env, Env ct_env, Value* expected,
+auto TypeCheckExp(Expression* e, TypeEnv* env, Env* ct_env, Value* expected,
                   TCContext context) -> TCResult;
 
-auto TypeCheckStmt(Statement*, TypeEnv, Env, Value*) -> TCStatement;
+auto TypeCheckStmt(Statement*, TypeEnv*, Env*, Value*) -> TCStatement;
 
-auto TypeCheckFunDef(struct FunctionDefinition*, TypeEnv)
+auto TypeCheckFunDef(struct FunctionDefinition*, TypeEnv*)
     -> struct FunctionDefinition*;
 
-auto TopLevel(std::list<Declaration>* fs) -> std::pair<TypeEnv, Env>;
-  
+auto TopLevel(std::list<Declaration>* fs) -> std::pair<TypeEnv*, Env*>;
+
 void PrintErrorString(const std::string& s);
 
 }  // namespace Carbon

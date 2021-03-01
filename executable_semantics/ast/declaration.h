@@ -15,16 +15,14 @@
 namespace Carbon {
 
 struct Value;
-
 template <class K, class V>
-class AssocList;
-
+struct AssocList;
 using Address = unsigned int;
 using TypeEnv = AssocList<std::string, Value*>;
 using Env = AssocList<std::string, Address>;
 
 /// TODO:explain this. Also name it if necessary. Consult with jsiek.
-using ExecutionEnvironment = std::pair<TypeEnv, Env>;
+using ExecutionEnvironment = std::pair<TypeEnv*, Env*>;
 
 /// An existential AST declaration satisfying the Declaration concept.
 class Declaration {
@@ -40,10 +38,10 @@ class Declaration {
  public:  // Declaration concept API, in addition to ValueSemantic.
   void Print() const { box->Print(); }
   auto Name() const -> std::string { return box->Name(); }
-  auto TypeChecked(TypeEnv env, Env ct_env) const -> Declaration {
+  auto TypeChecked(TypeEnv* env, Env* ct_env) const -> Declaration {
     return box->TypeChecked(env, ct_env);
   }
-  void InitGlobals(Env& globals) const { return box->InitGlobals(globals); }
+  void InitGlobals(Env*& globals) const { return box->InitGlobals(globals); }
   auto TopLevel(ExecutionEnvironment& e) const -> void {
     return box->TopLevel(e);
   }
@@ -62,9 +60,9 @@ class Declaration {
     virtual ~Box() {}
     virtual auto Print() const -> void = 0;
     virtual auto Name() const -> std::string = 0;
-    virtual auto TypeChecked(TypeEnv env, Env ct_env) const
+    virtual auto TypeChecked(TypeEnv* env, Env* ct_env) const
         -> Declaration = 0;
-    virtual auto InitGlobals(Env& globals) const -> void = 0;
+    virtual auto InitGlobals(Env*& globals) const -> void = 0;
     virtual auto TopLevel(ExecutionEnvironment&) const -> void = 0;
   };
 
@@ -77,10 +75,10 @@ class Declaration {
 
     auto Print() const -> void override { return content.Print(); }
     auto Name() const -> std::string override { return content.Name(); }
-    auto TypeChecked(TypeEnv env, Env ct_env) const -> Declaration override {
+    auto TypeChecked(TypeEnv* env, Env* ct_env) const -> Declaration override {
       return content.TypeChecked(env, ct_env);
     }
-    auto InitGlobals(Env& globals) const -> void override {
+    auto InitGlobals(Env*& globals) const -> void override {
       content.InitGlobals(globals);
     }
     auto TopLevel(ExecutionEnvironment& e) const -> void override {
@@ -100,8 +98,8 @@ struct FunctionDeclaration {
 
   auto Print() const -> void;
   auto Name() const -> std::string;
-  auto TypeChecked(TypeEnv env, Env ct_env) const -> Declaration;
-  auto InitGlobals(Env& globals) const -> void;
+  auto TypeChecked(TypeEnv* env, Env* ct_env) const -> Declaration;
+  auto InitGlobals(Env*& globals) const -> void;
   auto TopLevel(ExecutionEnvironment&) const -> void;
 };
 
@@ -112,8 +110,8 @@ struct StructDeclaration {
 
   void Print() const;
   auto Name() const -> std::string;
-  auto TypeChecked(TypeEnv env, Env ct_env) const -> Declaration;
-  void InitGlobals(Env& globals) const;
+  auto TypeChecked(TypeEnv* env, Env* ct_env) const -> Declaration;
+  void InitGlobals(Env*& globals) const;
   auto TopLevel(ExecutionEnvironment&) const -> void;
 };
 
@@ -128,8 +126,8 @@ struct ChoiceDeclaration {
 
   void Print() const;
   auto Name() const -> std::string;
-  auto TypeChecked(TypeEnv env, Env ct_env) const -> Declaration;
-  void InitGlobals(Env& globals) const;
+  auto TypeChecked(TypeEnv* env, Env* ct_env) const -> Declaration;
+  void InitGlobals(Env*& globals) const;
   auto TopLevel(ExecutionEnvironment&) const -> void;
 };
 

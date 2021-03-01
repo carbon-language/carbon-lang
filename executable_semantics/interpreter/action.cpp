@@ -20,14 +20,14 @@ namespace Carbon {
 void PrintAct(Action* act, std::ostream& out) {
   switch (act->tag) {
     case ActionKind::DeleteTmpAction:
-      out << "delete_tmp(" << act->u.delete_tmp << ")";
+      std::cout << "delete_tmp(" << act->u.delete_tmp << ")";
       break;
     case ActionKind::ExpToLValAction:
       out << "exp=>lval";
       break;
     case ActionKind::LValAction:
     case ActionKind::ExpressionAction:
-      out << *act->u.exp;
+      PrintExp(act->u.exp);
       break;
     case ActionKind::StatementAction:
       PrintStatement(act->u.stmt, 1);

@@ -21,8 +21,10 @@ auto MakeFunDef(int line_num, std::string name, Expression* ret_type,
 }
 
 void PrintFunDefDepth(const FunctionDefinition* f, int depth) {
-  std::cout << "fn " << f->name << " " << *f->param_pattern << " -> "
-            << *f->return_type;
+  std::cout << "fn " << f->name << " ";
+  PrintExp(f->param_pattern);
+  std::cout << " -> ";
+  PrintExp(f->return_type);
   if (f->body) {
     std::cout << " {" << std::endl;
     PrintStatement(f->body, depth);

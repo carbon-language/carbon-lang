@@ -9,8 +9,6 @@
 #include <cstddef>
 #include <iterator>
 
-#include "executable_semantics/interpreter/cons_list.h"
-
 namespace Carbon {
 
 /// A persistent stack data structure.
