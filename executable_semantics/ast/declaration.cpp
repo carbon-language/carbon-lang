@@ -21,9 +21,8 @@ void StructDeclaration::Print() const {
 void ChoiceDeclaration::Print() const {
   std::cout << "choice " << name << " {" << std::endl;
   for (auto& alternative : alternatives) {
-    std::cout << "alt " << alternative.first << " ";
-    PrintExp(alternative.second);
-    std::cout << ";" << std::endl;
+    std::cout << "alt " << alternative.first << " " << *alternative.second
+              << ";" << std::endl;
   }
   std::cout << "}" << std::endl;
 }
