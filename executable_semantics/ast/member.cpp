@@ -20,9 +20,8 @@ auto MakeField(int line_num, std::string name, Expression* type) -> Member* {
 void PrintMember(Member* m) {
   switch (m->tag) {
     case MemberKind::FieldMember:
-      std::cout << "var " << *m->u.field.name << " : ";
-      PrintExp(m->u.field.type);
-      std::cout << ";" << std::endl;
+      std::cout << "var " << *m->u.field.name << " : " << *m->u.field.type
+                << ";" << std::endl;
       break;
   }
 }
