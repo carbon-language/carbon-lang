@@ -19,3 +19,4 @@ return f(0 = 2);
 9: type error in call
 expected: Int
 actual: Tuple(0 = Int)
+EXIT CODE: 255

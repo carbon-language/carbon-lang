@@ -52,7 +52,7 @@ auto ToInteger(Value* v) -> int;
 
 /***** Interpreters *****/
 
-auto InterpProgram(std::list<Declaration*>* fs) -> int;
+auto InterpProgram(std::list<Declaration>* fs) -> int;
 auto InterpExp(Env* env, Expression* e) -> Value*;
 
 }  // namespace Carbon

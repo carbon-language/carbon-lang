@@ -53,3 +53,4 @@ alt Two (0 = Int, 1 = Int);
 13: type error in call
 expected: Int
 actual: Tuple(0 = Int)
+EXIT CODE: 255
