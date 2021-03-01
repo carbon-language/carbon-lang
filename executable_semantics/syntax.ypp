@@ -36,7 +36,7 @@ namespace yy
 }
 
 %union {
-   char* str;
+   std::string const* str;
    int num;
    Carbon::Expression* expression;
    std::list<std::pair<std::string, Carbon::Expression*>>* field_types;
@@ -122,13 +122,13 @@ pattern:
 ;
 expression:
   identifier
-    { $$ = Carbon::MakeVar(yylineno, $1); }
+    { $$ = Carbon::MakeVar(yylineno, *$1); }
 | expression designator
-    { $$ = Carbon::MakeGetField(yylineno, $1, $2); }
+    { $$ = Carbon::MakeGetField(yylineno, $1, *$2); }
 | expression '[' expression ']'
     { $$ = Carbon::MakeIndex(yylineno, $1, $3); }
 | expression ':' identifier
-    { $$ = Carbon::MakeVarPat(yylineno, $3, $1); }
+    { $$ = Carbon::MakeVarPat(yylineno, *$3, $1); }
 | integer_literal
     { $$ = Carbon::MakeInt(yylineno, $1); }
 | TRUE
@@ -195,7 +195,7 @@ field:
     {
       auto fields =
           new std::list<std::pair<std::string, Carbon::Expression*>>();
-      fields->push_back(std::make_pair($1, $3));
+      fields->push_back(std::make_pair(*$1, $3));
       $$ = Carbon::MakeFieldList(fields);
     }
 ;
@@ -273,20 +273,20 @@ return_type:
 ;
 function_definition:
   FN identifier tuple return_type '{' statement_list '}'
-    { $$ = MakeFunDef(yylineno, $2, $4, $3, $6); }
+    { $$ = MakeFunDef(yylineno, *$2, $4, $3, $6); }
 | FN identifier tuple DBLARROW expression ';'
     {
-      $$ = Carbon::MakeFunDef(yylineno, $2, Carbon::MakeAutoType(yylineno), $3,
+      $$ = Carbon::MakeFunDef(yylineno, *$2, Carbon::MakeAutoType(yylineno), $3,
                               Carbon::MakeReturn(yylineno, $5));
     }
 ;
 function_declaration:
   FN identifier tuple return_type ';'
-    { $$ = MakeFunDef(yylineno, $2, $4, $3, 0); }
+    { $$ = MakeFunDef(yylineno, *$2, $4, $3, 0); }
 ;
 member:
   VAR expression ':' identifier ';'
-    { $$ = MakeField(yylineno, $4, $2); }
+    { $$ = MakeField(yylineno, *$4, $2); }
 ;
 member_list:
   // Empty
@@ -296,11 +296,11 @@ member_list:
 ;
 alternative:
   identifier tuple
-    { $$ = new std::pair<std::string, Carbon::Expression*>($1, $2); }
+    { $$ = new std::pair<std::string, Carbon::Expression*>(*$1, $2); }
 | identifier
     {
       $$ = new std::pair<std::string, Carbon::Expression*>(
-          $1, Carbon::MakeTuple(
+          *$1, Carbon::MakeTuple(
             yylineno,
             new std::vector<std::pair<std::string, Carbon::Expression*>>()));
     }
@@ -324,12 +324,12 @@ declaration:
 | STRUCT identifier '{' member_list '}'
     {
       $$ = new Carbon::Declaration(
-        Carbon::StructDeclaration{yylineno, $2, $4});
+        Carbon::StructDeclaration{yylineno, *$2, $4});
     }
 | CHOICE identifier '{' alternative_list '}'
     {
       $$ = new Carbon::Declaration(
-        Carbon::ChoiceDeclaration{yylineno, $2, std::list(*$4)});
+        Carbon::ChoiceDeclaration{yylineno, *$2, std::list(*$4)});
     }
 ;
 declaration_list:

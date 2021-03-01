@@ -6,6 +6,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 %{
 #include <cstdlib>
+#include <string>
 #include "executable_semantics/syntax.tab.h"
 
 #undef  YY_DECL
@@ -78,9 +79,7 @@ integer_literal   [0-9]+
 {WHILE}    { return yy::parser::token::WHILE; }
 
 {identifier} {
-  int n = strlen(yytext);
-  yylval.str = reinterpret_cast<char*>(malloc((n + 1) * sizeof(char)));
-  strncpy(yylval.str, yytext, n + 1);
+  yylval.str = new std::string(yytext);
   return yy::parser::token::identifier;
 }
 {integer_literal} {
