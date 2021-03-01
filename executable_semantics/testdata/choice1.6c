@@ -30,3 +30,10 @@ fn main() -> Int {
   }
   return n;
 }
+
+// Test some alternate syntaxes
+choice MoreInts {
+  None(),
+  One(Int),
+  Two(Int,Int),
+}
