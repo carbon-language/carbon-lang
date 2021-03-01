@@ -96,8 +96,6 @@ EXAMPLES = [
     "tuple_match",
     "tuple1",
     "tuple2",
-    "undef1",
-    "undef2",
     "while1",
     "zero",
 ]
@@ -107,7 +105,7 @@ EXAMPLES = [
     srcs = ["testdata/%s.6c" % e],
     outs = ["testdata/%s.out" % e],
     # Suppress command errors.
-    cmd = "$(location executable_semantics) $< > $@ 2>&1 || true",
+    cmd = "$(location executable_semantics) $< > $@ 2>&1 || echo EXIT CODE: $$? >> $@",
     tools = [":executable_semantics"],
 ) for e in EXAMPLES]
 

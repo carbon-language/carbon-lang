@@ -109,7 +109,8 @@ auto MakeFunType(int line_num, Expression* param, Expression* ret)
     -> Expression*;
 auto MakeAutoType(int line_num) -> Expression*;
 
-void PrintExp(Expression* exp);
+void PrintExp(const Expression* exp, std::ostream& out);
+auto operator<<(std::ostream& os, const Expression& v) -> std::ostream&;
 
 }  // namespace Carbon
 

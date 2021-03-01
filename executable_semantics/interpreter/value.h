@@ -5,6 +5,7 @@
 #ifndef EXECUTABLE_SEMANTICS_INTERPRETER_VALUE_H_
 #define EXECUTABLE_SEMANTICS_INTERPRETER_VALUE_H_
 
+#include <iostream>
 #include <list>
 #include <vector>
 
@@ -124,9 +125,10 @@ auto MakeStructTypeVal(std::string name, VarValues* fields, VarValues* methods)
     -> Value*;
 auto MakeTupleTypeVal(VarValues* fields) -> Value*;
 auto MakeVoidTypeVal() -> Value*;
-auto MakeChoiceTypeVal(std::string* name, VarValues* alts) -> Value*;
+auto MakeChoiceTypeVal(std::string name, VarValues* alts) -> Value*;
 
 void PrintValue(Value* val, std::ostream& out);
+auto operator<<(std::ostream& os, const Value& v) -> std::ostream&;
 
 auto TypeEqual(Value* t1, Value* t2) -> bool;
 auto ValueEqual(Value* v1, Value* v2, int line_num) -> bool;

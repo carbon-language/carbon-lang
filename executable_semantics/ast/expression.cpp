@@ -192,93 +192,85 @@ static void PrintFields(
     if (i != 0) {
       std::cout << ", ";
     }
-    std::cout << iter->first << " = ";
-    PrintExp(iter->second);
+    std::cout << iter->first << " = " << *iter->second;
   }
 }
 
-void PrintExp(Expression* e) {
+void PrintExp(const Expression* e, std::ostream& out) {
   switch (e->tag) {
     case ExpressionKind::Index:
-      PrintExp(e->u.index.aggregate);
-      std::cout << "[";
-      PrintExp(e->u.index.offset);
-      std::cout << "]";
+      out << *e->u.index.aggregate << "[" << *e->u.index.offset << "]";
       break;
     case ExpressionKind::GetField:
-      PrintExp(e->u.get_field.aggregate);
-      std::cout << ".";
-      std::cout << *e->u.get_field.field;
+      out << *e->u.get_field.aggregate << "." << *e->u.get_field.field;
       break;
     case ExpressionKind::Tuple:
-      std::cout << "(";
+      out << "(";
       PrintFields(e->u.tuple.fields);
-      std::cout << ")";
+      out << ")";
       break;
     case ExpressionKind::Integer:
-      std::cout << e->u.integer;
+      out << e->u.integer;
       break;
     case ExpressionKind::Boolean:
-      std::cout << std::boolalpha;
-      std::cout << e->u.boolean;
+      out << std::boolalpha;
+      out << e->u.boolean;
       break;
     case ExpressionKind::PrimitiveOp:
-      std::cout << "(";
+      out << "(";
       if (e->u.primitive_op.arguments->size() == 0) {
         PrintOp(e->u.primitive_op.op);
       } else if (e->u.primitive_op.arguments->size() == 1) {
         PrintOp(e->u.primitive_op.op);
-        std::cout << " ";
+        out << " ";
         auto iter = e->u.primitive_op.arguments->begin();
-        PrintExp(*iter);
+        PrintExp(*iter, out);
       } else if (e->u.primitive_op.arguments->size() == 2) {
         auto iter = e->u.primitive_op.arguments->begin();
-        PrintExp(*iter);
-        std::cout << " ";
+        out << **iter << " ";
         PrintOp(e->u.primitive_op.op);
-        std::cout << " ";
+        out << " ";
         ++iter;
-        PrintExp(*iter);
+        out << **iter;
       }
-      std::cout << ")";
+      out << ")";
       break;
     case ExpressionKind::Variable:
-      std::cout << *e->u.variable.name;
+      out << *e->u.variable.name;
       break;
     case ExpressionKind::PatternVariable:
-      PrintExp(e->u.pattern_variable.type);
-      std::cout << ": ";
-      std::cout << *e->u.pattern_variable.name;
+      out << *e->u.pattern_variable.type << ": " << *e->u.pattern_variable.name;
       break;
     case ExpressionKind::Call:
-      PrintExp(e->u.call.function);
+      out << *e->u.call.function;
       if (e->u.call.argument->tag == ExpressionKind::Tuple) {
-        PrintExp(e->u.call.argument);
+        out << *e->u.call.argument;
       } else {
-        std::cout << "(";
-        PrintExp(e->u.call.argument);
-        std::cout << ")";
+        out << "(" << *e->u.call.argument << ")";
       }
       break;
     case ExpressionKind::BoolT:
-      std::cout << "Bool";
+      out << "Bool";
       break;
     case ExpressionKind::IntT:
-      std::cout << "Int";
+      out << "Int";
       break;
     case ExpressionKind::TypeT:
-      std::cout << "Type";
+      out << "Type";
       break;
     case ExpressionKind::AutoT:
-      std::cout << "auto";
+      out << "auto";
       break;
     case ExpressionKind::FunctionT:
-      std::cout << "fn ";
-      PrintExp(e->u.function_type.parameter);
-      std::cout << " -> ";
-      PrintExp(e->u.function_type.return_type);
+      out << "fn " << *e->u.function_type.parameter << " -> "
+          << *e->u.function_type.return_type;
       break;
   }
+}
+
+auto operator<<(std::ostream& out, const Expression& e) -> std::ostream& {
+  PrintExp(&e, out);
+  return out;
 }
 
 }  // namespace Carbon

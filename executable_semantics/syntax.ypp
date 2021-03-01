@@ -38,7 +38,7 @@ void yyerror(char* error) {
    Carbon::Statement* statement_list;
    Carbon::FunctionDefinition* function_definition;
    Carbon::Declaration* declaration;
-   std::list<Carbon::Declaration*>* declaration_list;
+   std::list<Carbon::Declaration>* declaration_list;
    Carbon::Member* member;
    std::list<Carbon::Member*>* member_list;
    Carbon::FieldList* field_list;
@@ -314,21 +314,27 @@ alternative_list:
 ;
 declaration:
   function_definition
-    { $$ = Carbon::MakeFunDecl($1); }
+    { $$ = new Carbon::Declaration(Carbon::FunctionDeclaration{$1}); }
 | function_declaration
-    { $$ = Carbon::MakeFunDecl($1); }
+    { $$ = new Carbon::Declaration(Carbon::FunctionDeclaration{$1}); }
 | STRUCT identifier '{' member_list '}'
-    { $$ = Carbon::MakeStructDecl(yylineno, $2, $4); }
+    {
+      $$ = new Carbon::Declaration(
+        Carbon::StructDeclaration{yylineno, $2, $4});
+    }
 | CHOICE identifier '{' alternative_list '}'
-    { $$ = Carbon::MakeChoiceDecl(yylineno, $2, $4); }
+    {
+      $$ = new Carbon::Declaration(
+        Carbon::ChoiceDeclaration{yylineno, $2, std::list(*$4)});
+    }
 ;
 declaration_list:
   // Empty
-    { $$ = new std::list<Carbon::Declaration*>(); }
+    { $$ = new std::list<Carbon::Declaration>(); }
 | declaration declaration_list
     {
       $$ = $2;
-      $$->push_front($1);
+      $$->push_front(*$1);
     }
 ;
 %%
