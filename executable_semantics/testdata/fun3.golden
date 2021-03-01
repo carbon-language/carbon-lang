@@ -1,1 +1,211 @@
+********** source program **********
+fn f (0 = Int: x, 1 = Int: y) -> Int {
+return (x + y);
+
+}
+fn main () -> Int {
+return (f(0 = 2, 1 = 3) - 5);
+
+}
+********** type checking **********
+--- step exp Int --->
+--- step exp Int --->
+--- step exp Int --->
+--- step exp Int --->
+--- step exp Int --->
+--- step exp Int --->
+--- step exp Int --->
+--- step exp Int --->
+
+********** type checking complete **********
+fn f (0 = Int: x, 1 = Int: y) -> Int {
+return (x + y);
+}
+fn main () -> Int {
+return (f(0 = 2, 1 = 3) - 5);
+}
+********** starting execution **********
+********** initializing globals **********
+--- step exp (0 = Int: x, 1 = Int: y) --->
+--- step exp Int: x --->
+--- step exp Int --->
+--- handle value Int with Int: x<1>(Int,) --->
+--- handle value Int: x with (0 = Int: x, 1 = Int: y)<1>(Int: x,) --->
+--- step exp Int: y --->
+--- step exp Int --->
+--- handle value Int with Int: y<1>(Int,) --->
+--- handle value Int: y with (0 = Int: x, 1 = Int: y)<2>(Int: x,Int: y,) --->
+--- step exp () --->
+********** calling main function **********
+{
+stack: top{main()<-1>}
+heap: Int: x, Int: y, fun<f>, fun<main>, 
+env: main: fun<main>, f: fun<f>, 
+}
+--- step exp main() --->
+{
+stack: top{main<-1> :: main()<0>}
+heap: Int: x, Int: y, fun<f>, fun<main>, 
+env: main: fun<main>, f: fun<f>, 
+}
+--- step exp main --->
+{
+stack: top{fun<main><-1> :: main()<0>}
+heap: Int: x, Int: y, fun<f>, fun<main>, 
+env: main: fun<main>, f: fun<f>, 
+}
+--- handle value fun<main> with main()<1>(fun<main>,) --->
+{
+stack: top{()<-1> :: main()<1>(fun<main>,)}
+heap: Int: x, Int: y, fun<f>, fun<main>, 
+env: main: fun<main>, f: fun<f>, 
+}
+--- step exp () --->
+{
+stack: top{()<-1> :: main()<1>(fun<main>,)}
+heap: Int: x, Int: y, fun<f>, fun<main>, 
+env: main: fun<main>, f: fun<f>, 
+}
+--- handle value () with main()<2>(fun<main>,(),) --->
+pattern_match((), ())
+{
+stack: main{return (f(0 = 2, 1 = 3) - 5);<-1>} :: top{}
+heap: Int: x, Int: y, fun<f>, fun<main>, 
+env: main: fun<main>, f: fun<f>, 
+}
+--- step stmt return (f(0 = 2, 1 = 3) - 5); --->
+{
+stack: main{(f(0 = 2, 1 = 3) - 5)<-1> :: return (f(0 = 2, 1 = 3) - 5);<0>} :: top{}
+heap: Int: x, Int: y, fun<f>, fun<main>, 
+env: main: fun<main>, f: fun<f>, 
+}
+--- step exp (f(0 = 2, 1 = 3) - 5) --->
+{
+stack: main{f(0 = 2, 1 = 3)<-1> :: (f(0 = 2, 1 = 3) - 5)<0> :: return (f(0 = 2, 1 = 3) - 5);<0>} :: top{}
+heap: Int: x, Int: y, fun<f>, fun<main>, 
+env: main: fun<main>, f: fun<f>, 
+}
+--- step exp f(0 = 2, 1 = 3) --->
+{
+stack: main{f<-1> :: f(0 = 2, 1 = 3)<0> :: (f(0 = 2, 1 = 3) - 5)<0> :: return (f(0 = 2, 1 = 3) - 5);<0>} :: top{}
+heap: Int: x, Int: y, fun<f>, fun<main>, 
+env: main: fun<main>, f: fun<f>, 
+}
+--- step exp f --->
+{
+stack: main{fun<f><-1> :: f(0 = 2, 1 = 3)<0> :: (f(0 = 2, 1 = 3) - 5)<0> :: return (f(0 = 2, 1 = 3) - 5);<0>} :: top{}
+heap: Int: x, Int: y, fun<f>, fun<main>, 
+env: main: fun<main>, f: fun<f>, 
+}
+--- handle value fun<f> with f(0 = 2, 1 = 3)<1>(fun<f>,) --->
+{
+stack: main{(0 = 2, 1 = 3)<-1> :: f(0 = 2, 1 = 3)<1>(fun<f>,) :: (f(0 = 2, 1 = 3) - 5)<0> :: return (f(0 = 2, 1 = 3) - 5);<0>} :: top{}
+heap: Int: x, Int: y, fun<f>, fun<main>, 
+env: main: fun<main>, f: fun<f>, 
+}
+--- step exp (0 = 2, 1 = 3) --->
+{
+stack: main{2<-1> :: (0 = 2, 1 = 3)<0> :: f(0 = 2, 1 = 3)<1>(fun<f>,) :: (f(0 = 2, 1 = 3) - 5)<0> :: return (f(0 = 2, 1 = 3) - 5);<0>} :: top{}
+heap: Int: x, Int: y, fun<f>, fun<main>, 
+env: main: fun<main>, f: fun<f>, 
+}
+--- step exp 2 --->
+{
+stack: main{2<-1> :: (0 = 2, 1 = 3)<0> :: f(0 = 2, 1 = 3)<1>(fun<f>,) :: (f(0 = 2, 1 = 3) - 5)<0> :: return (f(0 = 2, 1 = 3) - 5);<0>} :: top{}
+heap: Int: x, Int: y, fun<f>, fun<main>, 
+env: main: fun<main>, f: fun<f>, 
+}
+--- handle value 2 with (0 = 2, 1 = 3)<1>(2,) --->
+{
+stack: main{3<-1> :: (0 = 2, 1 = 3)<1>(2,) :: f(0 = 2, 1 = 3)<1>(fun<f>,) :: (f(0 = 2, 1 = 3) - 5)<0> :: return (f(0 = 2, 1 = 3) - 5);<0>} :: top{}
+heap: Int: x, Int: y, fun<f>, fun<main>, 
+env: main: fun<main>, f: fun<f>, 
+}
+--- step exp 3 --->
+{
+stack: main{3<-1> :: (0 = 2, 1 = 3)<1>(2,) :: f(0 = 2, 1 = 3)<1>(fun<f>,) :: (f(0 = 2, 1 = 3) - 5)<0> :: return (f(0 = 2, 1 = 3) - 5);<0>} :: top{}
+heap: Int: x, Int: y, fun<f>, fun<main>, 
+env: main: fun<main>, f: fun<f>, 
+}
+--- handle value 3 with (0 = 2, 1 = 3)<2>(2,3,) --->
+{
+stack: main{(0 = 2@4, 1 = 3@5)<-1> :: f(0 = 2, 1 = 3)<1>(fun<f>,) :: (f(0 = 2, 1 = 3) - 5)<0> :: return (f(0 = 2, 1 = 3) - 5);<0>} :: top{}
+heap: Int: x, Int: y, fun<f>, fun<main>, 2, 3, 
+env: main: fun<main>, f: fun<f>, 
+}
+--- handle value (0 = 2@4, 1 = 3@5) with f(0 = 2, 1 = 3)<2>(fun<f>,(0 = 2@4, 1 = 3@5),) --->
+pattern_match((0 = Int: x@0, 1 = Int: y@1), (0 = 2@4, 1 = 3@5))
+pattern_match(Int: x, 2)
+pattern_match(Int: y, 3)
+{
+stack: f{return (x + y);<-1>} :: main{(f(0 = 2, 1 = 3) - 5)<0> :: return (f(0 = 2, 1 = 3) - 5);<0>} :: top{}
+heap: Int: x, Int: y, fun<f>, fun<main>, 2, 3, 2, 3, 
+env: y: 3, x: 2, main: fun<main>, f: fun<f>, 
+}
+--- step stmt return (x + y); --->
+{
+stack: f{(x + y)<-1> :: return (x + y);<0>} :: main{(f(0 = 2, 1 = 3) - 5)<0> :: return (f(0 = 2, 1 = 3) - 5);<0>} :: top{}
+heap: Int: x, Int: y, fun<f>, fun<main>, 2, 3, 2, 3, 
+env: y: 3, x: 2, main: fun<main>, f: fun<f>, 
+}
+--- step exp (x + y) --->
+{
+stack: f{x<-1> :: (x + y)<0> :: return (x + y);<0>} :: main{(f(0 = 2, 1 = 3) - 5)<0> :: return (f(0 = 2, 1 = 3) - 5);<0>} :: top{}
+heap: Int: x, Int: y, fun<f>, fun<main>, 2, 3, 2, 3, 
+env: y: 3, x: 2, main: fun<main>, f: fun<f>, 
+}
+--- step exp x --->
+{
+stack: f{2<-1> :: (x + y)<0> :: return (x + y);<0>} :: main{(f(0 = 2, 1 = 3) - 5)<0> :: return (f(0 = 2, 1 = 3) - 5);<0>} :: top{}
+heap: Int: x, Int: y, fun<f>, fun<main>, 2, 3, 2, 3, 
+env: y: 3, x: 2, main: fun<main>, f: fun<f>, 
+}
+--- handle value 2 with (x + y)<1>(2,) --->
+{
+stack: f{y<-1> :: (x + y)<1>(2,) :: return (x + y);<0>} :: main{(f(0 = 2, 1 = 3) - 5)<0> :: return (f(0 = 2, 1 = 3) - 5);<0>} :: top{}
+heap: Int: x, Int: y, fun<f>, fun<main>, 2, 3, 2, 3, 
+env: y: 3, x: 2, main: fun<main>, f: fun<f>, 
+}
+--- step exp y --->
+{
+stack: f{3<-1> :: (x + y)<1>(2,) :: return (x + y);<0>} :: main{(f(0 = 2, 1 = 3) - 5)<0> :: return (f(0 = 2, 1 = 3) - 5);<0>} :: top{}
+heap: Int: x, Int: y, fun<f>, fun<main>, 2, 3, 2, 3, 
+env: y: 3, x: 2, main: fun<main>, f: fun<f>, 
+}
+--- handle value 3 with (x + y)<2>(2,3,) --->
+{
+stack: f{5<-1> :: return (x + y);<0>} :: main{(f(0 = 2, 1 = 3) - 5)<0> :: return (f(0 = 2, 1 = 3) - 5);<0>} :: top{}
+heap: Int: x, Int: y, fun<f>, fun<main>, 2, 3, 2, 3, 
+env: y: 3, x: 2, main: fun<main>, f: fun<f>, 
+}
+--- handle value 5 with return (x + y);<1>(5,) --->
+{
+stack: main{5<-1> :: (f(0 = 2, 1 = 3) - 5)<0> :: return (f(0 = 2, 1 = 3) - 5);<0>} :: top{}
+heap: Int: x, Int: y, fun<f>, fun<main>, 2, 3, !!2, !!3, 
+env: main: fun<main>, f: fun<f>, 
+}
+--- handle value 5 with (f(0 = 2, 1 = 3) - 5)<1>(5,) --->
+{
+stack: main{5<-1> :: (f(0 = 2, 1 = 3) - 5)<1>(5,) :: return (f(0 = 2, 1 = 3) - 5);<0>} :: top{}
+heap: Int: x, Int: y, fun<f>, fun<main>, 2, 3, !!2, !!3, 
+env: main: fun<main>, f: fun<f>, 
+}
+--- step exp 5 --->
+{
+stack: main{5<-1> :: (f(0 = 2, 1 = 3) - 5)<1>(5,) :: return (f(0 = 2, 1 = 3) - 5);<0>} :: top{}
+heap: Int: x, Int: y, fun<f>, fun<main>, 2, 3, !!2, !!3, 
+env: main: fun<main>, f: fun<f>, 
+}
+--- handle value 5 with (f(0 = 2, 1 = 3) - 5)<2>(5,5,) --->
+{
+stack: main{0<-1> :: return (f(0 = 2, 1 = 3) - 5);<0>} :: top{}
+heap: Int: x, Int: y, fun<f>, fun<main>, 2, 3, !!2, !!3, 
+env: main: fun<main>, f: fun<f>, 
+}
+--- handle value 0 with return (f(0 = 2, 1 = 3) - 5);<1>(0,) --->
+{
+stack: top{0<-1>}
+heap: Int: x, Int: y, fun<f>, fun<main>, 2, 3, !!2, !!3, 
+env: main: fun<main>, f: fun<f>, 
+}
 result: 0

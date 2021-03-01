@@ -1,1 +1,298 @@
+********** source program **********
+fn main () -> Int {
+var auto: x = 0;
+var auto: y = 1;
+(0 = x, 1 = y) = (0 = 5, 1 = (- 5));
+return (x + y);
+
+}
+********** type checking **********
+--- step exp Int --->
+--- step exp Int --->
+--- step exp auto --->
+--- step exp auto --->
+
+********** type checking complete **********
+fn main () -> Int {
+var auto: x = 0;
+var auto: y = 1;
+(0 = x, 1 = y) = (0 = 5, 1 = (- 5));
+return (x + y);
+}
+********** starting execution **********
+********** initializing globals **********
+--- step exp () --->
+********** calling main function **********
+{
+stack: top{main()<-1>}
+heap: fun<main>, 
+env: main: fun<main>, 
+}
+--- step exp main() --->
+{
+stack: top{main<-1> :: main()<0>}
+heap: fun<main>, 
+env: main: fun<main>, 
+}
+--- step exp main --->
+{
+stack: top{fun<main><-1> :: main()<0>}
+heap: fun<main>, 
+env: main: fun<main>, 
+}
+--- handle value fun<main> with main()<1>(fun<main>,) --->
+{
+stack: top{()<-1> :: main()<1>(fun<main>,)}
+heap: fun<main>, 
+env: main: fun<main>, 
+}
+--- step exp () --->
+{
+stack: top{()<-1> :: main()<1>(fun<main>,)}
+heap: fun<main>, 
+env: main: fun<main>, 
+}
+--- handle value () with main()<2>(fun<main>,(),) --->
+pattern_match((), ())
+{
+stack: main{var auto: x = 0; ... <-1>} :: top{}
+heap: fun<main>, 
+env: main: fun<main>, 
+}
+--- step stmt var auto: x = 0; ...  --->
+{
+stack: main{var auto: x = 0;<-1> :: var auto: y = 1; ... <-1>} :: top{}
+heap: fun<main>, 
+env: main: fun<main>, 
+}
+--- step stmt var auto: x = 0; --->
+{
+stack: main{0<-1> :: var auto: x = 0;<0> :: var auto: y = 1; ... <-1>} :: top{}
+heap: fun<main>, 
+env: main: fun<main>, 
+}
+--- step exp 0 --->
+{
+stack: main{0<-1> :: var auto: x = 0;<0> :: var auto: y = 1; ... <-1>} :: top{}
+heap: fun<main>, 
+env: main: fun<main>, 
+}
+--- handle value 0 with var auto: x = 0;<1>(0,) --->
+{
+stack: main{auto: x<-1> :: var auto: x = 0;<1>(0,) :: var auto: y = 1; ... <-1>} :: top{}
+heap: fun<main>, 
+env: main: fun<main>, 
+}
+--- step exp auto: x --->
+{
+stack: main{auto<-1> :: auto: x<0> :: var auto: x = 0;<1>(0,) :: var auto: y = 1; ... <-1>} :: top{}
+heap: fun<main>, 
+env: main: fun<main>, 
+}
+--- step exp auto --->
+{
+stack: main{auto<-1> :: auto: x<0> :: var auto: x = 0;<1>(0,) :: var auto: y = 1; ... <-1>} :: top{}
+heap: fun<main>, 
+env: main: fun<main>, 
+}
+--- handle value auto with auto: x<1>(auto,) --->
+{
+stack: main{auto: x<-1> :: var auto: x = 0;<1>(0,) :: var auto: y = 1; ... <-1>} :: top{}
+heap: fun<main>, 
+env: main: fun<main>, 
+}
+--- handle value auto: x with var auto: x = 0;<2>(0,auto: x,) --->
+pattern_match(auto: x, 0)
+{
+stack: main{var auto: y = 1; ... <-1>} :: top{}
+heap: fun<main>, 0, 
+env: x: 0, main: fun<main>, 
+}
+--- step stmt var auto: y = 1; ...  --->
+{
+stack: main{var auto: y = 1;<-1> :: (0 = x, 1 = y) = (0 = 5, 1 = (- 5)); ... <-1>} :: top{}
+heap: fun<main>, 0, 
+env: x: 0, main: fun<main>, 
+}
+--- step stmt var auto: y = 1; --->
+{
+stack: main{1<-1> :: var auto: y = 1;<0> :: (0 = x, 1 = y) = (0 = 5, 1 = (- 5)); ... <-1>} :: top{}
+heap: fun<main>, 0, 
+env: x: 0, main: fun<main>, 
+}
+--- step exp 1 --->
+{
+stack: main{1<-1> :: var auto: y = 1;<0> :: (0 = x, 1 = y) = (0 = 5, 1 = (- 5)); ... <-1>} :: top{}
+heap: fun<main>, 0, 
+env: x: 0, main: fun<main>, 
+}
+--- handle value 1 with var auto: y = 1;<1>(1,) --->
+{
+stack: main{auto: y<-1> :: var auto: y = 1;<1>(1,) :: (0 = x, 1 = y) = (0 = 5, 1 = (- 5)); ... <-1>} :: top{}
+heap: fun<main>, 0, 
+env: x: 0, main: fun<main>, 
+}
+--- step exp auto: y --->
+{
+stack: main{auto<-1> :: auto: y<0> :: var auto: y = 1;<1>(1,) :: (0 = x, 1 = y) = (0 = 5, 1 = (- 5)); ... <-1>} :: top{}
+heap: fun<main>, 0, 
+env: x: 0, main: fun<main>, 
+}
+--- step exp auto --->
+{
+stack: main{auto<-1> :: auto: y<0> :: var auto: y = 1;<1>(1,) :: (0 = x, 1 = y) = (0 = 5, 1 = (- 5)); ... <-1>} :: top{}
+heap: fun<main>, 0, 
+env: x: 0, main: fun<main>, 
+}
+--- handle value auto with auto: y<1>(auto,) --->
+{
+stack: main{auto: y<-1> :: var auto: y = 1;<1>(1,) :: (0 = x, 1 = y) = (0 = 5, 1 = (- 5)); ... <-1>} :: top{}
+heap: fun<main>, 0, 
+env: x: 0, main: fun<main>, 
+}
+--- handle value auto: y with var auto: y = 1;<2>(1,auto: y,) --->
+pattern_match(auto: y, 1)
+{
+stack: main{(0 = x, 1 = y) = (0 = 5, 1 = (- 5)); ... <-1>} :: top{}
+heap: fun<main>, 0, 1, 
+env: y: 1, x: 0, main: fun<main>, 
+}
+--- step stmt (0 = x, 1 = y) = (0 = 5, 1 = (- 5)); ...  --->
+{
+stack: main{(0 = x, 1 = y) = (0 = 5, 1 = (- 5));<-1> :: return (x + y);<-1>} :: top{}
+heap: fun<main>, 0, 1, 
+env: y: 1, x: 0, main: fun<main>, 
+}
+--- step stmt (0 = x, 1 = y) = (0 = 5, 1 = (- 5)); --->
+{
+stack: main{(0 = x, 1 = y)<-1> :: (0 = x, 1 = y) = (0 = 5, 1 = (- 5));<0> :: return (x + y);<-1>} :: top{}
+heap: fun<main>, 0, 1, 
+env: y: 1, x: 0, main: fun<main>, 
+}
+--- step lvalue (0 = x, 1 = y) --->
+{
+stack: main{x<-1> :: (0 = x, 1 = y)<0> :: (0 = x, 1 = y) = (0 = 5, 1 = (- 5));<0> :: return (x + y);<-1>} :: top{}
+heap: fun<main>, 0, 1, 
+env: y: 1, x: 0, main: fun<main>, 
+}
+--- step lvalue x --->
+{
+stack: main{ptr<1><-1> :: (0 = x, 1 = y)<0> :: (0 = x, 1 = y) = (0 = 5, 1 = (- 5));<0> :: return (x + y);<-1>} :: top{}
+heap: fun<main>, 0, 1, 
+env: y: 1, x: 0, main: fun<main>, 
+}
+--- handle value ptr<1> with (0 = x, 1 = y)<1>(ptr<1>,) --->
+{
+stack: main{y<-1> :: (0 = x, 1 = y)<1>(ptr<1>,) :: (0 = x, 1 = y) = (0 = 5, 1 = (- 5));<0> :: return (x + y);<-1>} :: top{}
+heap: fun<main>, 0, 1, 
+env: y: 1, x: 0, main: fun<main>, 
+}
+--- step lvalue y --->
+{
+stack: main{ptr<2><-1> :: (0 = x, 1 = y)<1>(ptr<1>,) :: (0 = x, 1 = y) = (0 = 5, 1 = (- 5));<0> :: return (x + y);<-1>} :: top{}
+heap: fun<main>, 0, 1, 
+env: y: 1, x: 0, main: fun<main>, 
+}
+--- handle value ptr<2> with (0 = x, 1 = y)<2>(ptr<1>,ptr<2>,) --->
+{
+stack: main{(0 = ptr<1>@3, 1 = ptr<2>@4)<-1> :: (0 = x, 1 = y) = (0 = 5, 1 = (- 5));<0> :: return (x + y);<-1>} :: top{}
+heap: fun<main>, 0, 1, ptr<1>, ptr<2>, 
+env: y: 1, x: 0, main: fun<main>, 
+}
+--- handle value (0 = ptr<1>@3, 1 = ptr<2>@4) with (0 = x, 1 = y) = (0 = 5, 1 = (- 5));<1>((0 = ptr<1>@3, 1 = ptr<2>@4),) --->
+{
+stack: main{(0 = 5, 1 = (- 5))<-1> :: (0 = x, 1 = y) = (0 = 5, 1 = (- 5));<1>((0 = ptr<1>@3, 1 = ptr<2>@4),) :: return (x + y);<-1>} :: top{}
+heap: fun<main>, 0, 1, ptr<1>, ptr<2>, 
+env: y: 1, x: 0, main: fun<main>, 
+}
+--- step exp (0 = 5, 1 = (- 5)) --->
+{
+stack: main{5<-1> :: (0 = 5, 1 = (- 5))<0> :: (0 = x, 1 = y) = (0 = 5, 1 = (- 5));<1>((0 = ptr<1>@3, 1 = ptr<2>@4),) :: return (x + y);<-1>} :: top{}
+heap: fun<main>, 0, 1, ptr<1>, ptr<2>, 
+env: y: 1, x: 0, main: fun<main>, 
+}
+--- step exp 5 --->
+{
+stack: main{5<-1> :: (0 = 5, 1 = (- 5))<0> :: (0 = x, 1 = y) = (0 = 5, 1 = (- 5));<1>((0 = ptr<1>@3, 1 = ptr<2>@4),) :: return (x + y);<-1>} :: top{}
+heap: fun<main>, 0, 1, ptr<1>, ptr<2>, 
+env: y: 1, x: 0, main: fun<main>, 
+}
+--- handle value 5 with (0 = 5, 1 = (- 5))<1>(5,) --->
+{
+stack: main{(- 5)<-1> :: (0 = 5, 1 = (- 5))<1>(5,) :: (0 = x, 1 = y) = (0 = 5, 1 = (- 5));<1>((0 = ptr<1>@3, 1 = ptr<2>@4),) :: return (x + y);<-1>} :: top{}
+heap: fun<main>, 0, 1, ptr<1>, ptr<2>, 
+env: y: 1, x: 0, main: fun<main>, 
+}
+--- step exp (- 5) --->
+{
+stack: main{5<-1> :: (- 5)<0> :: (0 = 5, 1 = (- 5))<1>(5,) :: (0 = x, 1 = y) = (0 = 5, 1 = (- 5));<1>((0 = ptr<1>@3, 1 = ptr<2>@4),) :: return (x + y);<-1>} :: top{}
+heap: fun<main>, 0, 1, ptr<1>, ptr<2>, 
+env: y: 1, x: 0, main: fun<main>, 
+}
+--- step exp 5 --->
+{
+stack: main{5<-1> :: (- 5)<0> :: (0 = 5, 1 = (- 5))<1>(5,) :: (0 = x, 1 = y) = (0 = 5, 1 = (- 5));<1>((0 = ptr<1>@3, 1 = ptr<2>@4),) :: return (x + y);<-1>} :: top{}
+heap: fun<main>, 0, 1, ptr<1>, ptr<2>, 
+env: y: 1, x: 0, main: fun<main>, 
+}
+--- handle value 5 with (- 5)<1>(5,) --->
+{
+stack: main{-5<-1> :: (0 = 5, 1 = (- 5))<1>(5,) :: (0 = x, 1 = y) = (0 = 5, 1 = (- 5));<1>((0 = ptr<1>@3, 1 = ptr<2>@4),) :: return (x + y);<-1>} :: top{}
+heap: fun<main>, 0, 1, ptr<1>, ptr<2>, 
+env: y: 1, x: 0, main: fun<main>, 
+}
+--- handle value -5 with (0 = 5, 1 = (- 5))<2>(5,-5,) --->
+{
+stack: main{(0 = 5@5, 1 = -5@6)<-1> :: (0 = x, 1 = y) = (0 = 5, 1 = (- 5));<1>((0 = ptr<1>@3, 1 = ptr<2>@4),) :: return (x + y);<-1>} :: top{}
+heap: fun<main>, 0, 1, ptr<1>, ptr<2>, 5, -5, 
+env: y: 1, x: 0, main: fun<main>, 
+}
+--- handle value (0 = 5@5, 1 = -5@6) with (0 = x, 1 = y) = (0 = 5, 1 = (- 5));<2>((0 = ptr<1>@3, 1 = ptr<2>@4),(0 = 5@5, 1 = -5@6),) --->
+{
+stack: main{return (x + y);<-1>} :: top{}
+heap: fun<main>, 5, -5, ptr<1>, ptr<2>, 5, -5, 
+env: y: -5, x: 5, main: fun<main>, 
+}
+--- step stmt return (x + y); --->
+{
+stack: main{(x + y)<-1> :: return (x + y);<0>} :: top{}
+heap: fun<main>, 5, -5, ptr<1>, ptr<2>, 5, -5, 
+env: y: -5, x: 5, main: fun<main>, 
+}
+--- step exp (x + y) --->
+{
+stack: main{x<-1> :: (x + y)<0> :: return (x + y);<0>} :: top{}
+heap: fun<main>, 5, -5, ptr<1>, ptr<2>, 5, -5, 
+env: y: -5, x: 5, main: fun<main>, 
+}
+--- step exp x --->
+{
+stack: main{5<-1> :: (x + y)<0> :: return (x + y);<0>} :: top{}
+heap: fun<main>, 5, -5, ptr<1>, ptr<2>, 5, -5, 
+env: y: -5, x: 5, main: fun<main>, 
+}
+--- handle value 5 with (x + y)<1>(5,) --->
+{
+stack: main{y<-1> :: (x + y)<1>(5,) :: return (x + y);<0>} :: top{}
+heap: fun<main>, 5, -5, ptr<1>, ptr<2>, 5, -5, 
+env: y: -5, x: 5, main: fun<main>, 
+}
+--- step exp y --->
+{
+stack: main{-5<-1> :: (x + y)<1>(5,) :: return (x + y);<0>} :: top{}
+heap: fun<main>, 5, -5, ptr<1>, ptr<2>, 5, -5, 
+env: y: -5, x: 5, main: fun<main>, 
+}
+--- handle value -5 with (x + y)<2>(5,-5,) --->
+{
+stack: main{0<-1> :: return (x + y);<0>} :: top{}
+heap: fun<main>, 5, -5, ptr<1>, ptr<2>, 5, -5, 
+env: y: -5, x: 5, main: fun<main>, 
+}
+--- handle value 0 with return (x + y);<1>(0,) --->
+{
+stack: top{0<-1>}
+heap: fun<main>, !!5, !!-5, ptr<1>, ptr<2>, !!5, !!-5, 
+env: main: fun<main>, 
+}
 result: 0

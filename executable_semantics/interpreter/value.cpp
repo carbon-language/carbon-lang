@@ -314,11 +314,6 @@ void PrintValue(Value* val, std::ostream& out) {
   }
 }
 
-auto operator<<(std::ostream& out, const Value& v) -> std::ostream& {
-  PrintValue((Value*)&v, out);
-  return out;
-}
-
 auto TypeEqual(Value* t1, Value* t2) -> bool {
   if (t1->tag != t2->tag) {
     return false;

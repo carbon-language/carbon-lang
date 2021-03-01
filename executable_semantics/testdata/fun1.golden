@@ -1,1 +1,20 @@
-result: 0
+********** source program **********
+fn f Int: x -> Int {
+return (x - 1);
+
+}
+fn main () -> Int {
+return f(0 = 1);
+
+}
+********** type checking **********
+--- step exp Int --->
+--- step exp Int --->
+--- step exp Int --->
+--- step exp Int --->
+--- step exp Int --->
+--- step exp Int --->
+10: type error in call
+expected: Int
+actual: Tuple(0 = Int)
+EXIT CODE: 255

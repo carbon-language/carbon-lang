@@ -1,1 +1,214 @@
+********** source program **********
+fn add (0 = Int: x, 1 = Int: y) -> auto {
+return (x + y);
+}
+fn main () -> Int {
+return (add(0 = 1, 1 = 2) - 3);
+
+}
+********** type checking **********
+--- step exp Int --->
+--- step exp Int --->
+--- step exp auto --->
+--- step exp Int --->
+--- step exp Int --->
+--- step exp auto --->
+--- step exp Int --->
+--- step exp Int --->
+--- step exp Int --->
+--- step exp Int --->
+--- step exp auto --->
+--- step exp Int --->
+
+********** type checking complete **********
+fn add (0 = Int: x, 1 = Int: y) -> Int {
+return (x + y);
+}
+fn main () -> Int {
+return (add(0 = 1, 1 = 2) - 3);
+}
+********** starting execution **********
+********** initializing globals **********
+--- step exp (0 = Int: x, 1 = Int: y) --->
+--- step exp Int: x --->
+--- step exp Int --->
+--- handle value Int with Int: x<1>(Int,) --->
+--- handle value Int: x with (0 = Int: x, 1 = Int: y)<1>(Int: x,) --->
+--- step exp Int: y --->
+--- step exp Int --->
+--- handle value Int with Int: y<1>(Int,) --->
+--- handle value Int: y with (0 = Int: x, 1 = Int: y)<2>(Int: x,Int: y,) --->
+--- step exp () --->
+********** calling main function **********
+{
+stack: top{main()<-1>}
+heap: Int: x, Int: y, fun<add>, fun<main>, 
+env: main: fun<main>, add: fun<add>, 
+}
+--- step exp main() --->
+{
+stack: top{main<-1> :: main()<0>}
+heap: Int: x, Int: y, fun<add>, fun<main>, 
+env: main: fun<main>, add: fun<add>, 
+}
+--- step exp main --->
+{
+stack: top{fun<main><-1> :: main()<0>}
+heap: Int: x, Int: y, fun<add>, fun<main>, 
+env: main: fun<main>, add: fun<add>, 
+}
+--- handle value fun<main> with main()<1>(fun<main>,) --->
+{
+stack: top{()<-1> :: main()<1>(fun<main>,)}
+heap: Int: x, Int: y, fun<add>, fun<main>, 
+env: main: fun<main>, add: fun<add>, 
+}
+--- step exp () --->
+{
+stack: top{()<-1> :: main()<1>(fun<main>,)}
+heap: Int: x, Int: y, fun<add>, fun<main>, 
+env: main: fun<main>, add: fun<add>, 
+}
+--- handle value () with main()<2>(fun<main>,(),) --->
+pattern_match((), ())
+{
+stack: main{return (add(0 = 1, 1 = 2) - 3);<-1>} :: top{}
+heap: Int: x, Int: y, fun<add>, fun<main>, 
+env: main: fun<main>, add: fun<add>, 
+}
+--- step stmt return (add(0 = 1, 1 = 2) - 3); --->
+{
+stack: main{(add(0 = 1, 1 = 2) - 3)<-1> :: return (add(0 = 1, 1 = 2) - 3);<0>} :: top{}
+heap: Int: x, Int: y, fun<add>, fun<main>, 
+env: main: fun<main>, add: fun<add>, 
+}
+--- step exp (add(0 = 1, 1 = 2) - 3) --->
+{
+stack: main{add(0 = 1, 1 = 2)<-1> :: (add(0 = 1, 1 = 2) - 3)<0> :: return (add(0 = 1, 1 = 2) - 3);<0>} :: top{}
+heap: Int: x, Int: y, fun<add>, fun<main>, 
+env: main: fun<main>, add: fun<add>, 
+}
+--- step exp add(0 = 1, 1 = 2) --->
+{
+stack: main{add<-1> :: add(0 = 1, 1 = 2)<0> :: (add(0 = 1, 1 = 2) - 3)<0> :: return (add(0 = 1, 1 = 2) - 3);<0>} :: top{}
+heap: Int: x, Int: y, fun<add>, fun<main>, 
+env: main: fun<main>, add: fun<add>, 
+}
+--- step exp add --->
+{
+stack: main{fun<add><-1> :: add(0 = 1, 1 = 2)<0> :: (add(0 = 1, 1 = 2) - 3)<0> :: return (add(0 = 1, 1 = 2) - 3);<0>} :: top{}
+heap: Int: x, Int: y, fun<add>, fun<main>, 
+env: main: fun<main>, add: fun<add>, 
+}
+--- handle value fun<add> with add(0 = 1, 1 = 2)<1>(fun<add>,) --->
+{
+stack: main{(0 = 1, 1 = 2)<-1> :: add(0 = 1, 1 = 2)<1>(fun<add>,) :: (add(0 = 1, 1 = 2) - 3)<0> :: return (add(0 = 1, 1 = 2) - 3);<0>} :: top{}
+heap: Int: x, Int: y, fun<add>, fun<main>, 
+env: main: fun<main>, add: fun<add>, 
+}
+--- step exp (0 = 1, 1 = 2) --->
+{
+stack: main{1<-1> :: (0 = 1, 1 = 2)<0> :: add(0 = 1, 1 = 2)<1>(fun<add>,) :: (add(0 = 1, 1 = 2) - 3)<0> :: return (add(0 = 1, 1 = 2) - 3);<0>} :: top{}
+heap: Int: x, Int: y, fun<add>, fun<main>, 
+env: main: fun<main>, add: fun<add>, 
+}
+--- step exp 1 --->
+{
+stack: main{1<-1> :: (0 = 1, 1 = 2)<0> :: add(0 = 1, 1 = 2)<1>(fun<add>,) :: (add(0 = 1, 1 = 2) - 3)<0> :: return (add(0 = 1, 1 = 2) - 3);<0>} :: top{}
+heap: Int: x, Int: y, fun<add>, fun<main>, 
+env: main: fun<main>, add: fun<add>, 
+}
+--- handle value 1 with (0 = 1, 1 = 2)<1>(1,) --->
+{
+stack: main{2<-1> :: (0 = 1, 1 = 2)<1>(1,) :: add(0 = 1, 1 = 2)<1>(fun<add>,) :: (add(0 = 1, 1 = 2) - 3)<0> :: return (add(0 = 1, 1 = 2) - 3);<0>} :: top{}
+heap: Int: x, Int: y, fun<add>, fun<main>, 
+env: main: fun<main>, add: fun<add>, 
+}
+--- step exp 2 --->
+{
+stack: main{2<-1> :: (0 = 1, 1 = 2)<1>(1,) :: add(0 = 1, 1 = 2)<1>(fun<add>,) :: (add(0 = 1, 1 = 2) - 3)<0> :: return (add(0 = 1, 1 = 2) - 3);<0>} :: top{}
+heap: Int: x, Int: y, fun<add>, fun<main>, 
+env: main: fun<main>, add: fun<add>, 
+}
+--- handle value 2 with (0 = 1, 1 = 2)<2>(1,2,) --->
+{
+stack: main{(0 = 1@4, 1 = 2@5)<-1> :: add(0 = 1, 1 = 2)<1>(fun<add>,) :: (add(0 = 1, 1 = 2) - 3)<0> :: return (add(0 = 1, 1 = 2) - 3);<0>} :: top{}
+heap: Int: x, Int: y, fun<add>, fun<main>, 1, 2, 
+env: main: fun<main>, add: fun<add>, 
+}
+--- handle value (0 = 1@4, 1 = 2@5) with add(0 = 1, 1 = 2)<2>(fun<add>,(0 = 1@4, 1 = 2@5),) --->
+pattern_match((0 = Int: x@0, 1 = Int: y@1), (0 = 1@4, 1 = 2@5))
+pattern_match(Int: x, 1)
+pattern_match(Int: y, 2)
+{
+stack: add{return (x + y);<-1>} :: main{(add(0 = 1, 1 = 2) - 3)<0> :: return (add(0 = 1, 1 = 2) - 3);<0>} :: top{}
+heap: Int: x, Int: y, fun<add>, fun<main>, 1, 2, 1, 2, 
+env: y: 2, x: 1, main: fun<main>, add: fun<add>, 
+}
+--- step stmt return (x + y); --->
+{
+stack: add{(x + y)<-1> :: return (x + y);<0>} :: main{(add(0 = 1, 1 = 2) - 3)<0> :: return (add(0 = 1, 1 = 2) - 3);<0>} :: top{}
+heap: Int: x, Int: y, fun<add>, fun<main>, 1, 2, 1, 2, 
+env: y: 2, x: 1, main: fun<main>, add: fun<add>, 
+}
+--- step exp (x + y) --->
+{
+stack: add{x<-1> :: (x + y)<0> :: return (x + y);<0>} :: main{(add(0 = 1, 1 = 2) - 3)<0> :: return (add(0 = 1, 1 = 2) - 3);<0>} :: top{}
+heap: Int: x, Int: y, fun<add>, fun<main>, 1, 2, 1, 2, 
+env: y: 2, x: 1, main: fun<main>, add: fun<add>, 
+}
+--- step exp x --->
+{
+stack: add{1<-1> :: (x + y)<0> :: return (x + y);<0>} :: main{(add(0 = 1, 1 = 2) - 3)<0> :: return (add(0 = 1, 1 = 2) - 3);<0>} :: top{}
+heap: Int: x, Int: y, fun<add>, fun<main>, 1, 2, 1, 2, 
+env: y: 2, x: 1, main: fun<main>, add: fun<add>, 
+}
+--- handle value 1 with (x + y)<1>(1,) --->
+{
+stack: add{y<-1> :: (x + y)<1>(1,) :: return (x + y);<0>} :: main{(add(0 = 1, 1 = 2) - 3)<0> :: return (add(0 = 1, 1 = 2) - 3);<0>} :: top{}
+heap: Int: x, Int: y, fun<add>, fun<main>, 1, 2, 1, 2, 
+env: y: 2, x: 1, main: fun<main>, add: fun<add>, 
+}
+--- step exp y --->
+{
+stack: add{2<-1> :: (x + y)<1>(1,) :: return (x + y);<0>} :: main{(add(0 = 1, 1 = 2) - 3)<0> :: return (add(0 = 1, 1 = 2) - 3);<0>} :: top{}
+heap: Int: x, Int: y, fun<add>, fun<main>, 1, 2, 1, 2, 
+env: y: 2, x: 1, main: fun<main>, add: fun<add>, 
+}
+--- handle value 2 with (x + y)<2>(1,2,) --->
+{
+stack: add{3<-1> :: return (x + y);<0>} :: main{(add(0 = 1, 1 = 2) - 3)<0> :: return (add(0 = 1, 1 = 2) - 3);<0>} :: top{}
+heap: Int: x, Int: y, fun<add>, fun<main>, 1, 2, 1, 2, 
+env: y: 2, x: 1, main: fun<main>, add: fun<add>, 
+}
+--- handle value 3 with return (x + y);<1>(3,) --->
+{
+stack: main{3<-1> :: (add(0 = 1, 1 = 2) - 3)<0> :: return (add(0 = 1, 1 = 2) - 3);<0>} :: top{}
+heap: Int: x, Int: y, fun<add>, fun<main>, 1, 2, !!1, !!2, 
+env: main: fun<main>, add: fun<add>, 
+}
+--- handle value 3 with (add(0 = 1, 1 = 2) - 3)<1>(3,) --->
+{
+stack: main{3<-1> :: (add(0 = 1, 1 = 2) - 3)<1>(3,) :: return (add(0 = 1, 1 = 2) - 3);<0>} :: top{}
+heap: Int: x, Int: y, fun<add>, fun<main>, 1, 2, !!1, !!2, 
+env: main: fun<main>, add: fun<add>, 
+}
+--- step exp 3 --->
+{
+stack: main{3<-1> :: (add(0 = 1, 1 = 2) - 3)<1>(3,) :: return (add(0 = 1, 1 = 2) - 3);<0>} :: top{}
+heap: Int: x, Int: y, fun<add>, fun<main>, 1, 2, !!1, !!2, 
+env: main: fun<main>, add: fun<add>, 
+}
+--- handle value 3 with (add(0 = 1, 1 = 2) - 3)<2>(3,3,) --->
+{
+stack: main{0<-1> :: return (add(0 = 1, 1 = 2) - 3);<0>} :: top{}
+heap: Int: x, Int: y, fun<add>, fun<main>, 1, 2, !!1, !!2, 
+env: main: fun<main>, add: fun<add>, 
+}
+--- handle value 0 with return (add(0 = 1, 1 = 2) - 3);<1>(0,) --->
+{
+stack: top{0<-1>}
+heap: Int: x, Int: y, fun<add>, fun<main>, 1, 2, !!1, !!2, 
+env: main: fun<main>, add: fun<add>, 
+}
 result: 0
