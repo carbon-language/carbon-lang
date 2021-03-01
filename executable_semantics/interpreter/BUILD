@@ -17,18 +17,28 @@ cc_library(
     ],
     hdrs = [
         "action.h",
-        "assoc_list.h",
-        "cons_list.h",
         "interpreter.h",
         "stack.h",
         "typecheck.h",
         "value.h",
     ],
     deps = [
+        ":dictionary",
         "//executable_semantics/ast:declaration",
         "//executable_semantics/ast:expression",
         "//executable_semantics/ast:function_definition",
         "//executable_semantics/ast:member",
         "//executable_semantics/ast:statement",
     ],
+)
+
+cc_library(
+    name = "dictionary",
+    hdrs = ["dictionary.h"],
+    deps = [":cons_list"],
+)
+
+cc_library(
+    name = "cons_list",
+    hdrs = ["cons_list.h"],
 )

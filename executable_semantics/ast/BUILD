@@ -14,6 +14,7 @@ cc_library(
         ":function_definition",
         ":member",
         ":struct_definition",
+        "//executable_semantics/interpreter:dictionary",
     ],
 )
 

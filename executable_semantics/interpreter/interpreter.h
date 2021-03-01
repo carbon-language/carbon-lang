@@ -11,13 +11,13 @@
 
 #include "executable_semantics/ast/declaration.h"
 #include "executable_semantics/interpreter/action.h"
-#include "executable_semantics/interpreter/assoc_list.h"
+#include "executable_semantics/interpreter/dictionary.h"
 #include "executable_semantics/interpreter/stack.h"
 #include "executable_semantics/interpreter/value.h"
 
 namespace Carbon {
 
-using Env = AssocList<std::string, Address>;
+using Env = Dictionary<std::string, Address>;
 
 /***** Scopes *****/
 

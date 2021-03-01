@@ -270,7 +270,7 @@ auto ChoiceDeclaration::InitGlobals(Env& globals) const -> void {
   }
   auto ct = MakeChoiceTypeVal(name, alts);
   auto a = AllocateValue(ct);
-  globals.Extend(name, a);
+  globals.SetValueAt(name, a);
 }
 
 auto StructDeclaration::InitGlobals(Env& globals) const -> void {
@@ -289,7 +289,7 @@ auto StructDeclaration::InitGlobals(Env& globals) const -> void {
   }
   auto st = MakeStructTypeVal(*definition.name, fields, methods);
   auto a = AllocateValue(st);
-  globals.Extend(*definition.name, a);
+  globals.SetValueAt(*definition.name, a);
 }
 
 auto FunctionDeclaration::InitGlobals(Env& globals) const -> void {
@@ -297,7 +297,7 @@ auto FunctionDeclaration::InitGlobals(Env& globals) const -> void {
   auto pt = InterpExp(env, definition->param_pattern);
   auto f = MakeFunVal(definition->name, pt, definition->body);
   Address a = AllocateValue(f);
-  globals.Extend(definition->name, a);
+  globals.SetValueAt(definition->name, a);
 }
 
 //    { S, H} -> { { C, E, F} :: S, H}
@@ -349,7 +349,7 @@ void CallFunction(int line_num, std::vector<Value*> operas, State* state) {
 
 void KillScope(int line_num, Scope* scope) {
   for (const auto& l : scope->locals) {
-    auto a = scope->env.Lookup(l);
+    std::optional<Address> a = scope->env.Lookup(l);
     if (a) {
       KillValue(state->heap[*a]);
     } else {
@@ -399,7 +399,11 @@ auto ToValue(Expression* value) -> Value* {
   }
 }
 
-// Returns 0 if the value doesn't match the pattern.
+// Matches the value v to the pattern p, binding parts of v to
+// the pattern variables inside p. These bindings are added
+// to the environment env and returned if the value matches
+// the pattern.
+// Returns nullopt if the value doesn't match the pattern.
 auto PatternMatch(Value* p, Value* v, Env env, std::list<std::string>* vars,
                   int line_num) -> std::optional<Env> {
   if (tracing_output) {
@@ -409,7 +413,7 @@ auto PatternMatch(Value* p, Value* v, Env env, std::list<std::string>* vars,
     case ValKind::VarPatV: {
       Address a = AllocateValue(CopyVal(v, line_num));
       vars->push_back(*p->u.var_pat.name);
-      return env.Extending(*p->u.var_pat.name, a);
+      return env.SettingValueAt(*p->u.var_pat.name, a);
     }
     case ValKind::TupleV:
       switch (v->tag) {
@@ -562,7 +566,8 @@ void StepLvalue() {
     case ExpressionKind::Variable: {
       //    { {x :: C, E, F} :: S, H}
       // -> { {E(x) :: C, E, F} :: S, H}
-      auto a = CurrentEnv(state).Lookup(*(exp->u.variable.name));
+      std::optional<Address> a =
+          CurrentEnv(state).Lookup(*(exp->u.variable.name));
       if (a) {
         Value* v = MakePtrVal(*a);
         CheckAlive(v, exp->line_num);
@@ -657,7 +662,8 @@ void StepExp() {
     }
     case ExpressionKind::Variable: {
       // { {x :: C, E, F} :: S, H} -> { {H(E(x)) :: C, E, F} :: S, H}
-      auto a = CurrentEnv(state).Lookup(*(exp->u.variable.name));
+      std::optional<Address> a =
+          CurrentEnv(state).Lookup(*(exp->u.variable.name));
       if (a) {
         Value* v = state->heap[*a];
         frame->todo.Pop(1);
@@ -1162,7 +1168,6 @@ void HandleValue() {
             // -> { { C, E(x := a), F} :: S, H(a := copy(v))}
             Value* v = act->results[0];
             Value* p = act->results[1];
-            // Address a = AllocateValue(CopyVal(v));
             auto result =
                 PatternMatch(p, v, frame->scopes.Top()->env,
                              &frame->scopes.Top()->locals, stmt->line_num);

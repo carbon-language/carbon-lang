@@ -9,12 +9,12 @@
 
 #include "executable_semantics/ast/expression.h"
 #include "executable_semantics/ast/statement.h"
-#include "executable_semantics/interpreter/assoc_list.h"
+#include "executable_semantics/interpreter/dictionary.h"
 #include "executable_semantics/interpreter/interpreter.h"
 
 namespace Carbon {
 
-using TypeEnv = AssocList<std::string, Value*>;
+using TypeEnv = Dictionary<std::string, Value*>;
 
 void PrintTypeEnv(TypeEnv env);
 

@@ -145,10 +145,13 @@ auto TypeCheckExp(Expression* e, TypeEnv env, Env ct_env, Value* expected,
     case ExpressionKind::PatternVariable: {
       if (context != TCContext::PatternContext) {
         std::cerr
-            << e->line_num
-            << ": compilation error, pattern variables are only allowed in "
-               "pattern context"
+            << e->line_num << ": compilation error, pattern variable "
+            << *e->u.pattern_variable.name
+            << " only allowed in pattern context, not "
+            << static_cast<typename std::underlying_type<TCContext>::type>(
+                   context)
             << std::endl;
+        exit(-1);
       }
       auto t =
           ToType(e->line_num, InterpExp(ct_env, e->u.pattern_variable.type));
@@ -164,7 +167,8 @@ auto TypeCheckExp(Expression* e, TypeEnv env, Env ct_env, Value* expected,
       }
       auto new_e = MakeVarPat(e->line_num, *e->u.pattern_variable.name,
                               ReifyType(t, e->line_num));
-      return TCResult(new_e, t, env.Extending(*e->u.pattern_variable.name, t));
+      return TCResult(new_e, t,
+                      env.SettingValueAt(*e->u.pattern_variable.name, t));
     }
     case ExpressionKind::Index: {
       auto res = TypeCheckExp(e->u.get_field.aggregate, env, ct_env, nullptr,
@@ -338,9 +342,8 @@ auto TypeCheckExp(Expression* e, TypeEnv env, Env ct_env, Value* expected,
       switch (fun_res.type->tag) {
         case ValKind::FunctionTV: {
           auto fun_t = fun_res.type;
-          auto arg_res =
-              TypeCheckExp(e->u.call.argument, fun_res.env, ct_env,
-                           fun_t->u.fun_type.param, TCContext::ValueContext);
+          auto arg_res = TypeCheckExp(e->u.call.argument, fun_res.env, ct_env,
+                                      fun_t->u.fun_type.param, context);
           ExpectType(e->line_num, "call", fun_t->u.fun_type.param,
                      arg_res.type);
           auto new_e = MakeCall(e->line_num, fun_res.exp, arg_res.exp);
@@ -662,16 +665,16 @@ auto TopLevel(std::list<Declaration>* fs) -> std::pair<TypeEnv, Env> {
 
 auto FunctionDeclaration::TopLevel(ExecutionEnvironment& tops) const -> void {
   auto t = TypeOfFunDef(tops.first, tops.second, definition);
-  tops.first.Extend(Name(), t);
+  tops.first.SetValueAt(Name(), t);
 }
 
 auto StructDeclaration::TopLevel(ExecutionEnvironment& tops) const -> void {
   auto st = TypeOfStructDef(&definition, tops.first, tops.second);
   Address a = AllocateValue(st);
-  tops.second.Extend(Name(), a);  // Is this obsolete?
+  tops.second.SetValueAt(Name(), a);  // Is this obsolete?
   auto params = MakeTupleTypeVal(st->u.struct_type.fields);
   auto fun_ty = MakeFunTypeVal(params, st);
-  tops.first.Extend(Name(), fun_ty);
+  tops.first.SetValueAt(Name(), fun_ty);
 }
 
 auto ChoiceDeclaration::TopLevel(ExecutionEnvironment& tops) const -> void {
@@ -682,8 +685,8 @@ auto ChoiceDeclaration::TopLevel(ExecutionEnvironment& tops) const -> void {
   }
   auto ct = MakeChoiceTypeVal(name, alts);
   Address a = AllocateValue(ct);
-  tops.second.Extend(Name(), a);  // Is this obsolete?
-  tops.first.Extend(Name(), ct);
+  tops.second.SetValueAt(Name(), a);  // Is this obsolete?
+  tops.first.SetValueAt(Name(), ct);
 }
 
 }  // namespace Carbon
