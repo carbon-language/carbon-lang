@@ -12,7 +12,7 @@
 #include "executable_semantics/ast/declaration.h"
 #include "executable_semantics/interpreter/action.h"
 #include "executable_semantics/interpreter/assoc_list.h"
-#include "executable_semantics/interpreter/cons_list.h"
+#include "executable_semantics/interpreter/stack.h"
 #include "executable_semantics/interpreter/value.h"
 
 namespace Carbon {
@@ -31,15 +31,15 @@ struct Scope {
 
 struct Frame {
   std::string name;
-  Cons<Scope*>* scopes;
-  Cons<Action*>* todo;
+  Stack<Scope*> scopes;
+  Stack<Action*> todo;
 
-  Frame(std::string n, Cons<Scope*>* s, Cons<Action*>* c)
+  Frame(std::string n, Stack<Scope*> s, Stack<Action*> c)
       : name(std::move(std::move(n))), scopes(s), todo(c) {}
 };
 
 struct State {
-  Cons<Frame*>* stack;
+  Stack<Frame*> stack;
   std::vector<Value*> heap;
 };
 
@@ -52,7 +52,7 @@ auto ToInteger(Value* v) -> int;
 
 /***** Interpreters *****/
 
-auto InterpProgram(std::list<Declaration*>* fs) -> int;
+auto InterpProgram(std::list<Declaration>* fs) -> int;
 auto InterpExp(Env* env, Expression* e) -> Value*;
 
 }  // namespace Carbon

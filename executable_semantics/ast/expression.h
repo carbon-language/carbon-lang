@@ -26,6 +26,7 @@ enum class ExpressionKind {
   TypeT,
   Variable,
 };
+
 enum class Operator {
   Add,
   And,
@@ -43,35 +44,44 @@ struct Expression {
     struct {
       std::string* name;
     } variable;
+
     struct {
       Expression* aggregate;
       std::string* field;
     } get_field;
+
     struct {
       Expression* aggregate;
       Expression* offset;
     } index;
+
     struct {
       std::string* name;
       Expression* type;
     } pattern_variable;
+
     int integer;
     bool boolean;
+
     struct {
       std::vector<std::pair<std::string, Expression*>>* fields;
     } tuple;
+
     struct {
       Operator op;
       std::vector<Expression*>* arguments;
     } primitive_op;
+
     struct {
       Expression* function;
       Expression* argument;
     } call;
+
     struct {
       Expression* parameter;
       Expression* return_type;
     } function_type;
+
   } u;
 };
 
@@ -99,7 +109,7 @@ auto MakeFunType(int line_num, Expression* param, Expression* ret)
     -> Expression*;
 auto MakeAutoType(int line_num) -> Expression*;
 
-void PrintExp(Expression* exp);
+void PrintExp(const Expression* exp);
 
 }  // namespace Carbon
 

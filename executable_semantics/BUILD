@@ -32,7 +32,7 @@ cc_library(
     deps = [
         "//executable_semantics/ast:declaration",
         "//executable_semantics/ast:expression",
-        "//executable_semantics/ast:expression_or_field_list",
+        "//executable_semantics/ast:field_list",
         "//executable_semantics/interpreter",
     ],
 )
@@ -44,19 +44,27 @@ genrule(
         "syntax.tab.cpp",
         "syntax.tab.h",
     ],
-    cmd = "bison " +
+    cmd = "M4=$(M4) $(BISON) " +
           "--output=$(location syntax.tab.cpp) " +
           "--defines=$(location syntax.tab.h) " +
           "$(location syntax.ypp)",
+    toolchains = [
+        "@rules_bison//bison:current_bison_toolchain",
+        "@rules_m4//m4:current_m4_toolchain",
+    ],
 )
 
 genrule(
     name = "syntax_flex_srcs",
     srcs = ["syntax.lpp"],
     outs = ["syntax.yy.cpp"],
-    cmd = "flex " +
+    cmd = "M4=$(M4) $(FLEX) " +
           "--outfile=$(location syntax.yy.cpp) " +
           "$(location syntax.lpp)",
+    toolchains = [
+        "@rules_flex//flex:current_flex_toolchain",
+        "@rules_m4//m4:current_m4_toolchain",
+    ],
 )
 
 EXAMPLES = [
@@ -72,6 +80,11 @@ EXAMPLES = [
     "fun5",
     "fun6_fail_type",
     "funptr1",
+    "if1",
+    # (Temporarily disabled pending
+    # https://github.com/carbon-language/carbon-lang/issues/311)
+    # "if2",
+    "if3",
     "match_int_default",
     "match_int",
     "match_type",
@@ -96,7 +109,7 @@ EXAMPLES = [
     srcs = ["testdata/%s.6c" % e],
     outs = ["testdata/%s.out" % e],
     # Suppress command errors.
-    cmd = "$(location executable_semantics) $< > $@ 2>&1 || true",
+    cmd = "$(location executable_semantics) $< > $@ 2>&1 || echo EXIT CODE: $$? >> $@",
     tools = [":executable_semantics"],
 ) for e in EXAMPLES]
 
