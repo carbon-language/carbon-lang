@@ -255,10 +255,10 @@ auto EvalPrim(Operator op, const std::vector<Value*>& args, int line_num)
 
 Env globals;
 
-void InitGlobals(std::list<const Declaration*>* fs) {
+void InitGlobals(std::list<Declaration>* fs) {
   globals = nullptr;
-  for (auto d : *fs) {
-    d->InitGlobals(globals);
+  for (auto const& d : *fs) {
+    d.InitGlobals(globals);
   }
 }
 
@@ -1346,7 +1346,7 @@ void Step() {
 }
 
 // Interpret the whole porogram.
-auto InterpProgram(std::list<const Declaration*>* fs) -> int {
+auto InterpProgram(std::list<Declaration>* fs) -> int {
   state = new State();  // Runtime state.
   if (tracing_output) {
     std::cout << "********** initializing globals **********" << std::endl;

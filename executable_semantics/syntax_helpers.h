@@ -22,7 +22,7 @@ extern char* input_filename;
 void PrintSyntaxError(char* error, int line_num);
 
 // Runs the top-level declaration list.
-void ExecProgram(std::list<Declaration*>* fs);
+void ExecProgram(std::list<Declaration>* fs);
 
 extern bool tracing_output;
 

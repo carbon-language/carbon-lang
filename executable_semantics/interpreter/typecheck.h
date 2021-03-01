@@ -45,8 +45,8 @@ auto TypeCheckStmt(Statement*, TypeEnv, Env, Value*) -> TCStatement;
 auto TypeCheckFunDef(struct FunctionDefinition*, TypeEnv)
     -> struct FunctionDefinition*;
 
-auto TopLevel(std::list<Declaration*>* fs) -> std::pair<TypeEnv, Env>;
-
+auto TopLevel(std::list<Declaration>* fs) -> std::pair<TypeEnv, Env>;
+  
 void PrintErrorString(const std::string& s);
 
 }  // namespace Carbon
