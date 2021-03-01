@@ -81,9 +81,7 @@ EXAMPLES = [
     "fun6_fail_type",
     "funptr1",
     "if1",
-    # (Temporarily disabled pending
-    # https://github.com/carbon-language/carbon-lang/issues/311)
-    # "if2",
+    "if2",
     "if3",
     "match_int_default",
     "match_int",
@@ -98,8 +96,6 @@ EXAMPLES = [
     "tuple_match",
     "tuple1",
     "tuple2",
-    "undef1",
-    "undef2",
     "while1",
     "zero",
 ]

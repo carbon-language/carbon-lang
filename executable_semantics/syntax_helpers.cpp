@@ -11,7 +11,7 @@
 
 namespace Carbon {
 
-bool tracing_output = true;
+bool tracing_output = false;
 
 char* input_filename = nullptr;
 
