@@ -56,17 +56,11 @@ alt Two (0 = Int, 1 = Int);
 --- step exp auto --->
 --- step exp auto --->
 --- step exp auto --->
-18: compilation error, pattern variables are only allowed in pattern context
 --- step exp auto --->
-20: compilation error, pattern variables are only allowed in pattern context
 --- step exp auto --->
-20: compilation error, pattern variables are only allowed in pattern context
 --- step exp auto --->
-24: compilation error, pattern variables are only allowed in pattern context
 --- step exp auto --->
-28: compilation error, pattern variables are only allowed in pattern context
 --- step exp auto --->
-28: compilation error, pattern variables are only allowed in pattern context
 --- step exp auto --->
 
 ********** type checking complete **********
