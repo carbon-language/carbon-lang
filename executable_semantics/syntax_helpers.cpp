@@ -20,32 +20,30 @@ void PrintSyntaxError(char* error, int line_num) {
   exit(-1);
 }
 
-void ExecProgram(std::list<Declaration*>* fs) {
+void ExecProgram(std::list<Declaration>* fs) {
   if (tracing_output) {
     std::cout << "********** source program **********" << std::endl;
-    for (const auto decl : *fs) {
-      decl->Print();
+    for (const auto& decl : *fs) {
+      decl.Print();
+      std::cout << "********** type checking **********" << std::endl;
     }
-    std::cout << "********** type checking **********" << std::endl;
-  }
-  state = new State();  // Compile-time state.
-  std::pair<TypeEnv, Env> p = TopLevel(fs);
-  TypeEnv top = p.first;
-  Env ct_top = p.second;
-  std::list<const Declaration*> new_decls;
-  for (const auto& i : *fs) {
-    new_decls.push_back(i->TypeChecked(top, ct_top));
-  }
-  if (tracing_output) {
-    std::cout << std::endl;
-    std::cout << "********** type checking complete **********" << std::endl;
-    for (const auto decl : new_decls) {
-      decl->Print();
+    state = new State();  // Compile-time state.
+    std::pair<TypeEnv, Env> p = TopLevel(fs);
+    TypeEnv top = p.first;
+    Env ct_top = p.second;
+    std::list<Declaration> new_decls;
+    for (const auto& decl : *fs) {
+      new_decls.push_back(decl.TypeChecked(top, ct_top));
     }
-    std::cout << "********** starting execution **********" << std::endl;
+    if (tracing_output) {
+      std::cout << std::endl;
+      std::cout << "********** type checking complete **********" << std::endl;
+      for (const auto& decl : new_decls) {
+        decl.Print();
+      }
+    }
+    int result = InterpProgram(&new_decls);
+    std::cout << "result: " << result << std::endl;
   }
-  int result = InterpProgram(&new_decls);
-  std::cout << "result: " << result << std::endl;
-}
 
 }  // namespace Carbon
