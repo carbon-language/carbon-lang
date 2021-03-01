@@ -25,5 +25,6 @@ int main(int argc, char* argv[]) {
   }
 
   yy::parser parse;
+  parse.set_debug_level(10);
   return parse();
 }

@@ -31,6 +31,7 @@ cc_library(
         "-Wno-unneeded-internal-declaration",
         "-Wno-unused-function",
         "-Wno-writable-strings",
+        "-DYYDEBUG=1",
     ],
     deps = [
         "//executable_semantics/ast:declaration",
@@ -49,6 +50,7 @@ genrule(
         "location.hh",
     ],
     cmd = "M4=$(M4) $(BISON) " +
+          "--debug " +
           "--output=$(location syntax.tab.cpp) " +
           "--defines=$(location syntax.tab.h) " +
           "$(location syntax.ypp)",
@@ -63,6 +65,7 @@ genrule(
     srcs = ["syntax.lpp"],
     outs = ["syntax.yy.cpp"],
     cmd = "M4=$(M4) $(FLEX) " +
+          "--debug " +
           "--outfile=$(location syntax.yy.cpp) " +
           "$(location syntax.lpp)",
     toolchains = [
