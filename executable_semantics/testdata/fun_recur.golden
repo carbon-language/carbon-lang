@@ -1,5 +1,5 @@
 ********** source program **********
-fn f Int: x -> Int {
+fn f (0 = Int: x) -> Int {
 if ((x == 0))
 return x;
 else
@@ -16,7 +16,502 @@ return f(0 = 2);
 --- step exp Int --->
 --- step exp Int --->
 --- step exp Int --->
-9: type error in call
-expected: Int
-actual: Tuple(0 = Int)
-EXIT CODE: 255
+--- step exp Int --->
+
+********** type checking complete **********
+fn f (0 = Int: x) -> Int {
+if ((x == 0))
+return x;
+else
+return f(0 = (x - 1));
+}
+fn main () -> Int {
+return f(0 = 2);
+}
+********** starting execution **********
+********** initializing globals **********
+--- step exp (0 = Int: x) --->
+--- step exp Int: x --->
+--- step exp Int --->
+--- handle value Int with Int: x<1>(Int,) --->
+--- handle value Int: x with (0 = Int: x)<1>(Int: x,) --->
+--- step exp () --->
+********** calling main function **********
+{
+stack: top{main()<-1>}
+heap: Int: x, fun<f>, fun<main>, 
+env: main: fun<main>, f: fun<f>, 
+}
+--- step exp main() --->
+{
+stack: top{main<-1> :: main()<0>}
+heap: Int: x, fun<f>, fun<main>, 
+env: main: fun<main>, f: fun<f>, 
+}
+--- step exp main --->
+{
+stack: top{fun<main><-1> :: main()<0>}
+heap: Int: x, fun<f>, fun<main>, 
+env: main: fun<main>, f: fun<f>, 
+}
+--- handle value fun<main> with main()<1>(fun<main>,) --->
+{
+stack: top{()<-1> :: main()<1>(fun<main>,)}
+heap: Int: x, fun<f>, fun<main>, 
+env: main: fun<main>, f: fun<f>, 
+}
+--- step exp () --->
+{
+stack: top{()<-1> :: main()<1>(fun<main>,)}
+heap: Int: x, fun<f>, fun<main>, 
+env: main: fun<main>, f: fun<f>, 
+}
+--- handle value () with main()<2>(fun<main>,(),) --->
+pattern_match((), ())
+{
+stack: main{return f(0 = 2);<-1>} :: top{}
+heap: Int: x, fun<f>, fun<main>, 
+env: main: fun<main>, f: fun<f>, 
+}
+--- step stmt return f(0 = 2); --->
+{
+stack: main{f(0 = 2)<-1> :: return f(0 = 2);<0>} :: top{}
+heap: Int: x, fun<f>, fun<main>, 
+env: main: fun<main>, f: fun<f>, 
+}
+--- step exp f(0 = 2) --->
+{
+stack: main{f<-1> :: f(0 = 2)<0> :: return f(0 = 2);<0>} :: top{}
+heap: Int: x, fun<f>, fun<main>, 
+env: main: fun<main>, f: fun<f>, 
+}
+--- step exp f --->
+{
+stack: main{fun<f><-1> :: f(0 = 2)<0> :: return f(0 = 2);<0>} :: top{}
+heap: Int: x, fun<f>, fun<main>, 
+env: main: fun<main>, f: fun<f>, 
+}
+--- handle value fun<f> with f(0 = 2)<1>(fun<f>,) --->
+{
+stack: main{(0 = 2)<-1> :: f(0 = 2)<1>(fun<f>,) :: return f(0 = 2);<0>} :: top{}
+heap: Int: x, fun<f>, fun<main>, 
+env: main: fun<main>, f: fun<f>, 
+}
+--- step exp (0 = 2) --->
+{
+stack: main{2<-1> :: (0 = 2)<0> :: f(0 = 2)<1>(fun<f>,) :: return f(0 = 2);<0>} :: top{}
+heap: Int: x, fun<f>, fun<main>, 
+env: main: fun<main>, f: fun<f>, 
+}
+--- step exp 2 --->
+{
+stack: main{2<-1> :: (0 = 2)<0> :: f(0 = 2)<1>(fun<f>,) :: return f(0 = 2);<0>} :: top{}
+heap: Int: x, fun<f>, fun<main>, 
+env: main: fun<main>, f: fun<f>, 
+}
+--- handle value 2 with (0 = 2)<1>(2,) --->
+{
+stack: main{(0 = 2@3)<-1> :: f(0 = 2)<1>(fun<f>,) :: return f(0 = 2);<0>} :: top{}
+heap: Int: x, fun<f>, fun<main>, 2, 
+env: main: fun<main>, f: fun<f>, 
+}
+--- handle value (0 = 2@3) with f(0 = 2)<2>(fun<f>,(0 = 2@3),) --->
+pattern_match((0 = Int: x@0), (0 = 2@3))
+pattern_match(Int: x, 2)
+{
+stack: f{if ((x == 0))
+ ... 
+else
+ ... <-1>} :: main{return f(0 = 2);<0>} :: top{}
+heap: Int: x, fun<f>, fun<main>, 2, 2, 
+env: x: 2, main: fun<main>, f: fun<f>, 
+}
+--- step stmt if ((x == 0))
+ ... 
+else
+ ...  --->
+{
+stack: f{(x == 0)<-1> :: if ((x == 0))
+ ... 
+else
+ ... <0>} :: main{return f(0 = 2);<0>} :: top{}
+heap: Int: x, fun<f>, fun<main>, 2, 2, 
+env: x: 2, main: fun<main>, f: fun<f>, 
+}
+--- step exp (x == 0) --->
+{
+stack: f{x<-1> :: (x == 0)<0> :: if ((x == 0))
+ ... 
+else
+ ... <0>} :: main{return f(0 = 2);<0>} :: top{}
+heap: Int: x, fun<f>, fun<main>, 2, 2, 
+env: x: 2, main: fun<main>, f: fun<f>, 
+}
+--- step exp x --->
+{
+stack: f{2<-1> :: (x == 0)<0> :: if ((x == 0))
+ ... 
+else
+ ... <0>} :: main{return f(0 = 2);<0>} :: top{}
+heap: Int: x, fun<f>, fun<main>, 2, 2, 
+env: x: 2, main: fun<main>, f: fun<f>, 
+}
+--- handle value 2 with (x == 0)<1>(2,) --->
+{
+stack: f{0<-1> :: (x == 0)<1>(2,) :: if ((x == 0))
+ ... 
+else
+ ... <0>} :: main{return f(0 = 2);<0>} :: top{}
+heap: Int: x, fun<f>, fun<main>, 2, 2, 
+env: x: 2, main: fun<main>, f: fun<f>, 
+}
+--- step exp 0 --->
+{
+stack: f{0<-1> :: (x == 0)<1>(2,) :: if ((x == 0))
+ ... 
+else
+ ... <0>} :: main{return f(0 = 2);<0>} :: top{}
+heap: Int: x, fun<f>, fun<main>, 2, 2, 
+env: x: 2, main: fun<main>, f: fun<f>, 
+}
+--- handle value 0 with (x == 0)<2>(2,0,) --->
+{
+stack: f{false<-1> :: if ((x == 0))
+ ... 
+else
+ ... <0>} :: main{return f(0 = 2);<0>} :: top{}
+heap: Int: x, fun<f>, fun<main>, 2, 2, 
+env: x: 2, main: fun<main>, f: fun<f>, 
+}
+--- handle value false with if ((x == 0))
+ ... 
+else
+ ... <1>(false,) --->
+{
+stack: f{return f(0 = (x - 1));<-1>} :: main{return f(0 = 2);<0>} :: top{}
+heap: Int: x, fun<f>, fun<main>, 2, 2, 
+env: x: 2, main: fun<main>, f: fun<f>, 
+}
+--- step stmt return f(0 = (x - 1)); --->
+{
+stack: f{f(0 = (x - 1))<-1> :: return f(0 = (x - 1));<0>} :: main{return f(0 = 2);<0>} :: top{}
+heap: Int: x, fun<f>, fun<main>, 2, 2, 
+env: x: 2, main: fun<main>, f: fun<f>, 
+}
+--- step exp f(0 = (x - 1)) --->
+{
+stack: f{f<-1> :: f(0 = (x - 1))<0> :: return f(0 = (x - 1));<0>} :: main{return f(0 = 2);<0>} :: top{}
+heap: Int: x, fun<f>, fun<main>, 2, 2, 
+env: x: 2, main: fun<main>, f: fun<f>, 
+}
+--- step exp f --->
+{
+stack: f{fun<f><-1> :: f(0 = (x - 1))<0> :: return f(0 = (x - 1));<0>} :: main{return f(0 = 2);<0>} :: top{}
+heap: Int: x, fun<f>, fun<main>, 2, 2, 
+env: x: 2, main: fun<main>, f: fun<f>, 
+}
+--- handle value fun<f> with f(0 = (x - 1))<1>(fun<f>,) --->
+{
+stack: f{(0 = (x - 1))<-1> :: f(0 = (x - 1))<1>(fun<f>,) :: return f(0 = (x - 1));<0>} :: main{return f(0 = 2);<0>} :: top{}
+heap: Int: x, fun<f>, fun<main>, 2, 2, 
+env: x: 2, main: fun<main>, f: fun<f>, 
+}
+--- step exp (0 = (x - 1)) --->
+{
+stack: f{(x - 1)<-1> :: (0 = (x - 1))<0> :: f(0 = (x - 1))<1>(fun<f>,) :: return f(0 = (x - 1));<0>} :: main{return f(0 = 2);<0>} :: top{}
+heap: Int: x, fun<f>, fun<main>, 2, 2, 
+env: x: 2, main: fun<main>, f: fun<f>, 
+}
+--- step exp (x - 1) --->
+{
+stack: f{x<-1> :: (x - 1)<0> :: (0 = (x - 1))<0> :: f(0 = (x - 1))<1>(fun<f>,) :: return f(0 = (x - 1));<0>} :: main{return f(0 = 2);<0>} :: top{}
+heap: Int: x, fun<f>, fun<main>, 2, 2, 
+env: x: 2, main: fun<main>, f: fun<f>, 
+}
+--- step exp x --->
+{
+stack: f{2<-1> :: (x - 1)<0> :: (0 = (x - 1))<0> :: f(0 = (x - 1))<1>(fun<f>,) :: return f(0 = (x - 1));<0>} :: main{return f(0 = 2);<0>} :: top{}
+heap: Int: x, fun<f>, fun<main>, 2, 2, 
+env: x: 2, main: fun<main>, f: fun<f>, 
+}
+--- handle value 2 with (x - 1)<1>(2,) --->
+{
+stack: f{1<-1> :: (x - 1)<1>(2,) :: (0 = (x - 1))<0> :: f(0 = (x - 1))<1>(fun<f>,) :: return f(0 = (x - 1));<0>} :: main{return f(0 = 2);<0>} :: top{}
+heap: Int: x, fun<f>, fun<main>, 2, 2, 
+env: x: 2, main: fun<main>, f: fun<f>, 
+}
+--- step exp 1 --->
+{
+stack: f{1<-1> :: (x - 1)<1>(2,) :: (0 = (x - 1))<0> :: f(0 = (x - 1))<1>(fun<f>,) :: return f(0 = (x - 1));<0>} :: main{return f(0 = 2);<0>} :: top{}
+heap: Int: x, fun<f>, fun<main>, 2, 2, 
+env: x: 2, main: fun<main>, f: fun<f>, 
+}
+--- handle value 1 with (x - 1)<2>(2,1,) --->
+{
+stack: f{1<-1> :: (0 = (x - 1))<0> :: f(0 = (x - 1))<1>(fun<f>,) :: return f(0 = (x - 1));<0>} :: main{return f(0 = 2);<0>} :: top{}
+heap: Int: x, fun<f>, fun<main>, 2, 2, 
+env: x: 2, main: fun<main>, f: fun<f>, 
+}
+--- handle value 1 with (0 = (x - 1))<1>(1,) --->
+{
+stack: f{(0 = 1@5)<-1> :: f(0 = (x - 1))<1>(fun<f>,) :: return f(0 = (x - 1));<0>} :: main{return f(0 = 2);<0>} :: top{}
+heap: Int: x, fun<f>, fun<main>, 2, 2, 1, 
+env: x: 2, main: fun<main>, f: fun<f>, 
+}
+--- handle value (0 = 1@5) with f(0 = (x - 1))<2>(fun<f>,(0 = 1@5),) --->
+pattern_match((0 = Int: x@0), (0 = 1@5))
+pattern_match(Int: x, 1)
+{
+stack: f{if ((x == 0))
+ ... 
+else
+ ... <-1>} :: f{return f(0 = (x - 1));<0>} :: main{return f(0 = 2);<0>} :: top{}
+heap: Int: x, fun<f>, fun<main>, 2, 2, 1, 1, 
+env: x: 1, main: fun<main>, f: fun<f>, 
+}
+--- step stmt if ((x == 0))
+ ... 
+else
+ ...  --->
+{
+stack: f{(x == 0)<-1> :: if ((x == 0))
+ ... 
+else
+ ... <0>} :: f{return f(0 = (x - 1));<0>} :: main{return f(0 = 2);<0>} :: top{}
+heap: Int: x, fun<f>, fun<main>, 2, 2, 1, 1, 
+env: x: 1, main: fun<main>, f: fun<f>, 
+}
+--- step exp (x == 0) --->
+{
+stack: f{x<-1> :: (x == 0)<0> :: if ((x == 0))
+ ... 
+else
+ ... <0>} :: f{return f(0 = (x - 1));<0>} :: main{return f(0 = 2);<0>} :: top{}
+heap: Int: x, fun<f>, fun<main>, 2, 2, 1, 1, 
+env: x: 1, main: fun<main>, f: fun<f>, 
+}
+--- step exp x --->
+{
+stack: f{1<-1> :: (x == 0)<0> :: if ((x == 0))
+ ... 
+else
+ ... <0>} :: f{return f(0 = (x - 1));<0>} :: main{return f(0 = 2);<0>} :: top{}
+heap: Int: x, fun<f>, fun<main>, 2, 2, 1, 1, 
+env: x: 1, main: fun<main>, f: fun<f>, 
+}
+--- handle value 1 with (x == 0)<1>(1,) --->
+{
+stack: f{0<-1> :: (x == 0)<1>(1,) :: if ((x == 0))
+ ... 
+else
+ ... <0>} :: f{return f(0 = (x - 1));<0>} :: main{return f(0 = 2);<0>} :: top{}
+heap: Int: x, fun<f>, fun<main>, 2, 2, 1, 1, 
+env: x: 1, main: fun<main>, f: fun<f>, 
+}
+--- step exp 0 --->
+{
+stack: f{0<-1> :: (x == 0)<1>(1,) :: if ((x == 0))
+ ... 
+else
+ ... <0>} :: f{return f(0 = (x - 1));<0>} :: main{return f(0 = 2);<0>} :: top{}
+heap: Int: x, fun<f>, fun<main>, 2, 2, 1, 1, 
+env: x: 1, main: fun<main>, f: fun<f>, 
+}
+--- handle value 0 with (x == 0)<2>(1,0,) --->
+{
+stack: f{false<-1> :: if ((x == 0))
+ ... 
+else
+ ... <0>} :: f{return f(0 = (x - 1));<0>} :: main{return f(0 = 2);<0>} :: top{}
+heap: Int: x, fun<f>, fun<main>, 2, 2, 1, 1, 
+env: x: 1, main: fun<main>, f: fun<f>, 
+}
+--- handle value false with if ((x == 0))
+ ... 
+else
+ ... <1>(false,) --->
+{
+stack: f{return f(0 = (x - 1));<-1>} :: f{return f(0 = (x - 1));<0>} :: main{return f(0 = 2);<0>} :: top{}
+heap: Int: x, fun<f>, fun<main>, 2, 2, 1, 1, 
+env: x: 1, main: fun<main>, f: fun<f>, 
+}
+--- step stmt return f(0 = (x - 1)); --->
+{
+stack: f{f(0 = (x - 1))<-1> :: return f(0 = (x - 1));<0>} :: f{return f(0 = (x - 1));<0>} :: main{return f(0 = 2);<0>} :: top{}
+heap: Int: x, fun<f>, fun<main>, 2, 2, 1, 1, 
+env: x: 1, main: fun<main>, f: fun<f>, 
+}
+--- step exp f(0 = (x - 1)) --->
+{
+stack: f{f<-1> :: f(0 = (x - 1))<0> :: return f(0 = (x - 1));<0>} :: f{return f(0 = (x - 1));<0>} :: main{return f(0 = 2);<0>} :: top{}
+heap: Int: x, fun<f>, fun<main>, 2, 2, 1, 1, 
+env: x: 1, main: fun<main>, f: fun<f>, 
+}
+--- step exp f --->
+{
+stack: f{fun<f><-1> :: f(0 = (x - 1))<0> :: return f(0 = (x - 1));<0>} :: f{return f(0 = (x - 1));<0>} :: main{return f(0 = 2);<0>} :: top{}
+heap: Int: x, fun<f>, fun<main>, 2, 2, 1, 1, 
+env: x: 1, main: fun<main>, f: fun<f>, 
+}
+--- handle value fun<f> with f(0 = (x - 1))<1>(fun<f>,) --->
+{
+stack: f{(0 = (x - 1))<-1> :: f(0 = (x - 1))<1>(fun<f>,) :: return f(0 = (x - 1));<0>} :: f{return f(0 = (x - 1));<0>} :: main{return f(0 = 2);<0>} :: top{}
+heap: Int: x, fun<f>, fun<main>, 2, 2, 1, 1, 
+env: x: 1, main: fun<main>, f: fun<f>, 
+}
+--- step exp (0 = (x - 1)) --->
+{
+stack: f{(x - 1)<-1> :: (0 = (x - 1))<0> :: f(0 = (x - 1))<1>(fun<f>,) :: return f(0 = (x - 1));<0>} :: f{return f(0 = (x - 1));<0>} :: main{return f(0 = 2);<0>} :: top{}
+heap: Int: x, fun<f>, fun<main>, 2, 2, 1, 1, 
+env: x: 1, main: fun<main>, f: fun<f>, 
+}
+--- step exp (x - 1) --->
+{
+stack: f{x<-1> :: (x - 1)<0> :: (0 = (x - 1))<0> :: f(0 = (x - 1))<1>(fun<f>,) :: return f(0 = (x - 1));<0>} :: f{return f(0 = (x - 1));<0>} :: main{return f(0 = 2);<0>} :: top{}
+heap: Int: x, fun<f>, fun<main>, 2, 2, 1, 1, 
+env: x: 1, main: fun<main>, f: fun<f>, 
+}
+--- step exp x --->
+{
+stack: f{1<-1> :: (x - 1)<0> :: (0 = (x - 1))<0> :: f(0 = (x - 1))<1>(fun<f>,) :: return f(0 = (x - 1));<0>} :: f{return f(0 = (x - 1));<0>} :: main{return f(0 = 2);<0>} :: top{}
+heap: Int: x, fun<f>, fun<main>, 2, 2, 1, 1, 
+env: x: 1, main: fun<main>, f: fun<f>, 
+}
+--- handle value 1 with (x - 1)<1>(1,) --->
+{
+stack: f{1<-1> :: (x - 1)<1>(1,) :: (0 = (x - 1))<0> :: f(0 = (x - 1))<1>(fun<f>,) :: return f(0 = (x - 1));<0>} :: f{return f(0 = (x - 1));<0>} :: main{return f(0 = 2);<0>} :: top{}
+heap: Int: x, fun<f>, fun<main>, 2, 2, 1, 1, 
+env: x: 1, main: fun<main>, f: fun<f>, 
+}
+--- step exp 1 --->
+{
+stack: f{1<-1> :: (x - 1)<1>(1,) :: (0 = (x - 1))<0> :: f(0 = (x - 1))<1>(fun<f>,) :: return f(0 = (x - 1));<0>} :: f{return f(0 = (x - 1));<0>} :: main{return f(0 = 2);<0>} :: top{}
+heap: Int: x, fun<f>, fun<main>, 2, 2, 1, 1, 
+env: x: 1, main: fun<main>, f: fun<f>, 
+}
+--- handle value 1 with (x - 1)<2>(1,1,) --->
+{
+stack: f{0<-1> :: (0 = (x - 1))<0> :: f(0 = (x - 1))<1>(fun<f>,) :: return f(0 = (x - 1));<0>} :: f{return f(0 = (x - 1));<0>} :: main{return f(0 = 2);<0>} :: top{}
+heap: Int: x, fun<f>, fun<main>, 2, 2, 1, 1, 
+env: x: 1, main: fun<main>, f: fun<f>, 
+}
+--- handle value 0 with (0 = (x - 1))<1>(0,) --->
+{
+stack: f{(0 = 0@7)<-1> :: f(0 = (x - 1))<1>(fun<f>,) :: return f(0 = (x - 1));<0>} :: f{return f(0 = (x - 1));<0>} :: main{return f(0 = 2);<0>} :: top{}
+heap: Int: x, fun<f>, fun<main>, 2, 2, 1, 1, 0, 
+env: x: 1, main: fun<main>, f: fun<f>, 
+}
+--- handle value (0 = 0@7) with f(0 = (x - 1))<2>(fun<f>,(0 = 0@7),) --->
+pattern_match((0 = Int: x@0), (0 = 0@7))
+pattern_match(Int: x, 0)
+{
+stack: f{if ((x == 0))
+ ... 
+else
+ ... <-1>} :: f{return f(0 = (x - 1));<0>} :: f{return f(0 = (x - 1));<0>} :: main{return f(0 = 2);<0>} :: top{}
+heap: Int: x, fun<f>, fun<main>, 2, 2, 1, 1, 0, 0, 
+env: x: 0, main: fun<main>, f: fun<f>, 
+}
+--- step stmt if ((x == 0))
+ ... 
+else
+ ...  --->
+{
+stack: f{(x == 0)<-1> :: if ((x == 0))
+ ... 
+else
+ ... <0>} :: f{return f(0 = (x - 1));<0>} :: f{return f(0 = (x - 1));<0>} :: main{return f(0 = 2);<0>} :: top{}
+heap: Int: x, fun<f>, fun<main>, 2, 2, 1, 1, 0, 0, 
+env: x: 0, main: fun<main>, f: fun<f>, 
+}
+--- step exp (x == 0) --->
+{
+stack: f{x<-1> :: (x == 0)<0> :: if ((x == 0))
+ ... 
+else
+ ... <0>} :: f{return f(0 = (x - 1));<0>} :: f{return f(0 = (x - 1));<0>} :: main{return f(0 = 2);<0>} :: top{}
+heap: Int: x, fun<f>, fun<main>, 2, 2, 1, 1, 0, 0, 
+env: x: 0, main: fun<main>, f: fun<f>, 
+}
+--- step exp x --->
+{
+stack: f{0<-1> :: (x == 0)<0> :: if ((x == 0))
+ ... 
+else
+ ... <0>} :: f{return f(0 = (x - 1));<0>} :: f{return f(0 = (x - 1));<0>} :: main{return f(0 = 2);<0>} :: top{}
+heap: Int: x, fun<f>, fun<main>, 2, 2, 1, 1, 0, 0, 
+env: x: 0, main: fun<main>, f: fun<f>, 
+}
+--- handle value 0 with (x == 0)<1>(0,) --->
+{
+stack: f{0<-1> :: (x == 0)<1>(0,) :: if ((x == 0))
+ ... 
+else
+ ... <0>} :: f{return f(0 = (x - 1));<0>} :: f{return f(0 = (x - 1));<0>} :: main{return f(0 = 2);<0>} :: top{}
+heap: Int: x, fun<f>, fun<main>, 2, 2, 1, 1, 0, 0, 
+env: x: 0, main: fun<main>, f: fun<f>, 
+}
+--- step exp 0 --->
+{
+stack: f{0<-1> :: (x == 0)<1>(0,) :: if ((x == 0))
+ ... 
+else
+ ... <0>} :: f{return f(0 = (x - 1));<0>} :: f{return f(0 = (x - 1));<0>} :: main{return f(0 = 2);<0>} :: top{}
+heap: Int: x, fun<f>, fun<main>, 2, 2, 1, 1, 0, 0, 
+env: x: 0, main: fun<main>, f: fun<f>, 
+}
+--- handle value 0 with (x == 0)<2>(0,0,) --->
+{
+stack: f{true<-1> :: if ((x == 0))
+ ... 
+else
+ ... <0>} :: f{return f(0 = (x - 1));<0>} :: f{return f(0 = (x - 1));<0>} :: main{return f(0 = 2);<0>} :: top{}
+heap: Int: x, fun<f>, fun<main>, 2, 2, 1, 1, 0, 0, 
+env: x: 0, main: fun<main>, f: fun<f>, 
+}
+--- handle value true with if ((x == 0))
+ ... 
+else
+ ... <1>(true,) --->
+{
+stack: f{return x;<-1>} :: f{return f(0 = (x - 1));<0>} :: f{return f(0 = (x - 1));<0>} :: main{return f(0 = 2);<0>} :: top{}
+heap: Int: x, fun<f>, fun<main>, 2, 2, 1, 1, 0, 0, 
+env: x: 0, main: fun<main>, f: fun<f>, 
+}
+--- step stmt return x; --->
+{
+stack: f{x<-1> :: return x;<0>} :: f{return f(0 = (x - 1));<0>} :: f{return f(0 = (x - 1));<0>} :: main{return f(0 = 2);<0>} :: top{}
+heap: Int: x, fun<f>, fun<main>, 2, 2, 1, 1, 0, 0, 
+env: x: 0, main: fun<main>, f: fun<f>, 
+}
+--- step exp x --->
+{
+stack: f{0<-1> :: return x;<0>} :: f{return f(0 = (x - 1));<0>} :: f{return f(0 = (x - 1));<0>} :: main{return f(0 = 2);<0>} :: top{}
+heap: Int: x, fun<f>, fun<main>, 2, 2, 1, 1, 0, 0, 
+env: x: 0, main: fun<main>, f: fun<f>, 
+}
+--- handle value 0 with return x;<1>(0,) --->
+{
+stack: f{0<-1> :: return f(0 = (x - 1));<0>} :: f{return f(0 = (x - 1));<0>} :: main{return f(0 = 2);<0>} :: top{}
+heap: Int: x, fun<f>, fun<main>, 2, 2, 1, 1, 0, !!0, 
+env: x: 1, main: fun<main>, f: fun<f>, 
+}
+--- handle value 0 with return f(0 = (x - 1));<1>(0,) --->
+{
+stack: f{0<-1> :: return f(0 = (x - 1));<0>} :: main{return f(0 = 2);<0>} :: top{}
+heap: Int: x, fun<f>, fun<main>, 2, 2, 1, !!1, 0, !!0, 
+env: x: 2, main: fun<main>, f: fun<f>, 
+}
+--- handle value 0 with return f(0 = (x - 1));<1>(0,) --->
+{
+stack: main{0<-1> :: return f(0 = 2);<0>} :: top{}
+heap: Int: x, fun<f>, fun<main>, 2, !!2, 1, !!1, 0, !!0, 
+env: main: fun<main>, f: fun<f>, 
+}
+--- handle value 0 with return f(0 = 2);<1>(0,) --->
+{
+stack: top{0<-1>}
+heap: Int: x, fun<f>, fun<main>, 2, !!2, 1, !!1, 0, !!0, 
+env: main: fun<main>, f: fun<f>, 
+}
+result: 0
