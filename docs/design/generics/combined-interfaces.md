@@ -679,8 +679,8 @@ and defines no names.
 
 ```
 fn F[Type:$ T](T: x) -> T {
-  // Can accept values of any type. But, since we no nothing of the type,
-  // we don't know about any operations on `x` inside this function.
+  // Can accept values of any type. But, since we no nothing about the
+  // type, we don't know about any operations on `x` inside this function.
   return x;
 }
 
