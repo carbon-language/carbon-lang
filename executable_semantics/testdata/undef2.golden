@@ -1,0 +1,4 @@
+********** source program **********
+********** type checking **********
+error, program must contain a function named `main`
+EXIT CODE: 255

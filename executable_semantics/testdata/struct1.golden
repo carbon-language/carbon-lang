@@ -1,1 +1,256 @@
+********** source program **********
+struct Point {
+var x : Int;
+var y : Int;
+}
+fn main () -> Int {
+var auto: p = Point(x = 1, y = 2);
+return ((p.y - p.x) - 1);
+
+}
+********** type checking **********
+--- step exp Int --->
+--- step exp Int --->
+--- step exp Int --->
+--- step exp Int --->
+--- step exp auto --->
+
+********** type checking complete **********
+struct Point {
+var x : Int;
+var y : Int;
+}
+fn main () -> Int {
+var auto: p = Point(x = 1, y = 2);
+return ((p.y - p.x) - 1);
+}
+********** starting execution **********
+********** initializing globals **********
+--- step exp Int --->
+--- step exp Int --->
+--- step exp () --->
+********** calling main function **********
+{
+stack: top{main()<-1>}
+heap: struct Point, fun<main>, 
+env: main: fun<main>, Point: struct Point, 
+}
+--- step exp main() --->
+{
+stack: top{main<-1> :: main()<0>}
+heap: struct Point, fun<main>, 
+env: main: fun<main>, Point: struct Point, 
+}
+--- step exp main --->
+{
+stack: top{fun<main><-1> :: main()<0>}
+heap: struct Point, fun<main>, 
+env: main: fun<main>, Point: struct Point, 
+}
+--- handle value fun<main> with main()<1>(fun<main>,) --->
+{
+stack: top{()<-1> :: main()<1>(fun<main>,)}
+heap: struct Point, fun<main>, 
+env: main: fun<main>, Point: struct Point, 
+}
+--- step exp () --->
+{
+stack: top{()<-1> :: main()<1>(fun<main>,)}
+heap: struct Point, fun<main>, 
+env: main: fun<main>, Point: struct Point, 
+}
+--- handle value () with main()<2>(fun<main>,(),) --->
+pattern_match((), ())
+{
+stack: main{var auto: p = Point(x = 1, y = 2); ... <-1>} :: top{}
+heap: struct Point, fun<main>, 
+env: main: fun<main>, Point: struct Point, 
+}
+--- step stmt var auto: p = Point(x = 1, y = 2); ...  --->
+{
+stack: main{var auto: p = Point(x = 1, y = 2);<-1> :: return ((p.y - p.x) - 1);<-1>} :: top{}
+heap: struct Point, fun<main>, 
+env: main: fun<main>, Point: struct Point, 
+}
+--- step stmt var auto: p = Point(x = 1, y = 2); --->
+{
+stack: main{Point(x = 1, y = 2)<-1> :: var auto: p = Point(x = 1, y = 2);<0> :: return ((p.y - p.x) - 1);<-1>} :: top{}
+heap: struct Point, fun<main>, 
+env: main: fun<main>, Point: struct Point, 
+}
+--- step exp Point(x = 1, y = 2) --->
+{
+stack: main{Point<-1> :: Point(x = 1, y = 2)<0> :: var auto: p = Point(x = 1, y = 2);<0> :: return ((p.y - p.x) - 1);<-1>} :: top{}
+heap: struct Point, fun<main>, 
+env: main: fun<main>, Point: struct Point, 
+}
+--- step exp Point --->
+{
+stack: main{struct Point<-1> :: Point(x = 1, y = 2)<0> :: var auto: p = Point(x = 1, y = 2);<0> :: return ((p.y - p.x) - 1);<-1>} :: top{}
+heap: struct Point, fun<main>, 
+env: main: fun<main>, Point: struct Point, 
+}
+--- handle value struct Point with Point(x = 1, y = 2)<1>(struct Point,) --->
+{
+stack: main{(x = 1, y = 2)<-1> :: Point(x = 1, y = 2)<1>(struct Point,) :: var auto: p = Point(x = 1, y = 2);<0> :: return ((p.y - p.x) - 1);<-1>} :: top{}
+heap: struct Point, fun<main>, 
+env: main: fun<main>, Point: struct Point, 
+}
+--- step exp (x = 1, y = 2) --->
+{
+stack: main{1<-1> :: (x = 1, y = 2)<0> :: Point(x = 1, y = 2)<1>(struct Point,) :: var auto: p = Point(x = 1, y = 2);<0> :: return ((p.y - p.x) - 1);<-1>} :: top{}
+heap: struct Point, fun<main>, 
+env: main: fun<main>, Point: struct Point, 
+}
+--- step exp 1 --->
+{
+stack: main{1<-1> :: (x = 1, y = 2)<0> :: Point(x = 1, y = 2)<1>(struct Point,) :: var auto: p = Point(x = 1, y = 2);<0> :: return ((p.y - p.x) - 1);<-1>} :: top{}
+heap: struct Point, fun<main>, 
+env: main: fun<main>, Point: struct Point, 
+}
+--- handle value 1 with (x = 1, y = 2)<1>(1,) --->
+{
+stack: main{2<-1> :: (x = 1, y = 2)<1>(1,) :: Point(x = 1, y = 2)<1>(struct Point,) :: var auto: p = Point(x = 1, y = 2);<0> :: return ((p.y - p.x) - 1);<-1>} :: top{}
+heap: struct Point, fun<main>, 
+env: main: fun<main>, Point: struct Point, 
+}
+--- step exp 2 --->
+{
+stack: main{2<-1> :: (x = 1, y = 2)<1>(1,) :: Point(x = 1, y = 2)<1>(struct Point,) :: var auto: p = Point(x = 1, y = 2);<0> :: return ((p.y - p.x) - 1);<-1>} :: top{}
+heap: struct Point, fun<main>, 
+env: main: fun<main>, Point: struct Point, 
+}
+--- handle value 2 with (x = 1, y = 2)<2>(1,2,) --->
+{
+stack: main{(x = 1@2, y = 2@3)<-1> :: Point(x = 1, y = 2)<1>(struct Point,) :: var auto: p = Point(x = 1, y = 2);<0> :: return ((p.y - p.x) - 1);<-1>} :: top{}
+heap: struct Point, fun<main>, 1, 2, 
+env: main: fun<main>, Point: struct Point, 
+}
+--- handle value (x = 1@2, y = 2@3) with Point(x = 1, y = 2)<2>(struct Point,(x = 1@2, y = 2@3),) --->
+{
+stack: main{Point(x = 1@4, y = 2@5)<-1> :: var auto: p = Point(x = 1, y = 2);<0> :: return ((p.y - p.x) - 1);<-1>} :: top{}
+heap: struct Point, fun<main>, 1, 2, 1, 2, 
+env: main: fun<main>, Point: struct Point, 
+}
+--- handle value Point(x = 1@4, y = 2@5) with var auto: p = Point(x = 1, y = 2);<1>(Point(x = 1@4, y = 2@5),) --->
+{
+stack: main{auto: p<-1> :: var auto: p = Point(x = 1, y = 2);<1>(Point(x = 1@4, y = 2@5),) :: return ((p.y - p.x) - 1);<-1>} :: top{}
+heap: struct Point, fun<main>, 1, 2, 1, 2, 
+env: main: fun<main>, Point: struct Point, 
+}
+--- step exp auto: p --->
+{
+stack: main{auto<-1> :: auto: p<0> :: var auto: p = Point(x = 1, y = 2);<1>(Point(x = 1@4, y = 2@5),) :: return ((p.y - p.x) - 1);<-1>} :: top{}
+heap: struct Point, fun<main>, 1, 2, 1, 2, 
+env: main: fun<main>, Point: struct Point, 
+}
+--- step exp auto --->
+{
+stack: main{auto<-1> :: auto: p<0> :: var auto: p = Point(x = 1, y = 2);<1>(Point(x = 1@4, y = 2@5),) :: return ((p.y - p.x) - 1);<-1>} :: top{}
+heap: struct Point, fun<main>, 1, 2, 1, 2, 
+env: main: fun<main>, Point: struct Point, 
+}
+--- handle value auto with auto: p<1>(auto,) --->
+{
+stack: main{auto: p<-1> :: var auto: p = Point(x = 1, y = 2);<1>(Point(x = 1@4, y = 2@5),) :: return ((p.y - p.x) - 1);<-1>} :: top{}
+heap: struct Point, fun<main>, 1, 2, 1, 2, 
+env: main: fun<main>, Point: struct Point, 
+}
+--- handle value auto: p with var auto: p = Point(x = 1, y = 2);<2>(Point(x = 1@4, y = 2@5),auto: p,) --->
+pattern_match(auto: p, Point(x = 1@4, y = 2@5))
+{
+stack: main{return ((p.y - p.x) - 1);<-1>} :: top{}
+heap: struct Point, fun<main>, 1, 2, 1, 2, 1, 2, Point(x = 1@6, y = 2@7), 
+env: p: Point(x = 1@6, y = 2@7), main: fun<main>, Point: struct Point, 
+}
+--- step stmt return ((p.y - p.x) - 1); --->
+{
+stack: main{((p.y - p.x) - 1)<-1> :: return ((p.y - p.x) - 1);<0>} :: top{}
+heap: struct Point, fun<main>, 1, 2, 1, 2, 1, 2, Point(x = 1@6, y = 2@7), 
+env: p: Point(x = 1@6, y = 2@7), main: fun<main>, Point: struct Point, 
+}
+--- step exp ((p.y - p.x) - 1) --->
+{
+stack: main{(p.y - p.x)<-1> :: ((p.y - p.x) - 1)<0> :: return ((p.y - p.x) - 1);<0>} :: top{}
+heap: struct Point, fun<main>, 1, 2, 1, 2, 1, 2, Point(x = 1@6, y = 2@7), 
+env: p: Point(x = 1@6, y = 2@7), main: fun<main>, Point: struct Point, 
+}
+--- step exp (p.y - p.x) --->
+{
+stack: main{p.y<-1> :: (p.y - p.x)<0> :: ((p.y - p.x) - 1)<0> :: return ((p.y - p.x) - 1);<0>} :: top{}
+heap: struct Point, fun<main>, 1, 2, 1, 2, 1, 2, Point(x = 1@6, y = 2@7), 
+env: p: Point(x = 1@6, y = 2@7), main: fun<main>, Point: struct Point, 
+}
+--- step exp p.y --->
+{
+stack: main{p<-1> :: p.y<0> :: (p.y - p.x)<0> :: ((p.y - p.x) - 1)<0> :: return ((p.y - p.x) - 1);<0>} :: top{}
+heap: struct Point, fun<main>, 1, 2, 1, 2, 1, 2, Point(x = 1@6, y = 2@7), 
+env: p: Point(x = 1@6, y = 2@7), main: fun<main>, Point: struct Point, 
+}
+--- step lvalue p --->
+{
+stack: main{ptr<8><-1> :: p.y<0> :: (p.y - p.x)<0> :: ((p.y - p.x) - 1)<0> :: return ((p.y - p.x) - 1);<0>} :: top{}
+heap: struct Point, fun<main>, 1, 2, 1, 2, 1, 2, Point(x = 1@6, y = 2@7), 
+env: p: Point(x = 1@6, y = 2@7), main: fun<main>, Point: struct Point, 
+}
+--- handle value ptr<8> with p.y<1>(ptr<8>,) --->
+{
+stack: main{2<-1> :: (p.y - p.x)<0> :: ((p.y - p.x) - 1)<0> :: return ((p.y - p.x) - 1);<0>} :: top{}
+heap: struct Point, fun<main>, 1, 2, 1, 2, 1, 2, Point(x = 1@6, y = 2@7), 
+env: p: Point(x = 1@6, y = 2@7), main: fun<main>, Point: struct Point, 
+}
+--- handle value 2 with (p.y - p.x)<1>(2,) --->
+{
+stack: main{p.x<-1> :: (p.y - p.x)<1>(2,) :: ((p.y - p.x) - 1)<0> :: return ((p.y - p.x) - 1);<0>} :: top{}
+heap: struct Point, fun<main>, 1, 2, 1, 2, 1, 2, Point(x = 1@6, y = 2@7), 
+env: p: Point(x = 1@6, y = 2@7), main: fun<main>, Point: struct Point, 
+}
+--- step exp p.x --->
+{
+stack: main{p<-1> :: p.x<0> :: (p.y - p.x)<1>(2,) :: ((p.y - p.x) - 1)<0> :: return ((p.y - p.x) - 1);<0>} :: top{}
+heap: struct Point, fun<main>, 1, 2, 1, 2, 1, 2, Point(x = 1@6, y = 2@7), 
+env: p: Point(x = 1@6, y = 2@7), main: fun<main>, Point: struct Point, 
+}
+--- step lvalue p --->
+{
+stack: main{ptr<8><-1> :: p.x<0> :: (p.y - p.x)<1>(2,) :: ((p.y - p.x) - 1)<0> :: return ((p.y - p.x) - 1);<0>} :: top{}
+heap: struct Point, fun<main>, 1, 2, 1, 2, 1, 2, Point(x = 1@6, y = 2@7), 
+env: p: Point(x = 1@6, y = 2@7), main: fun<main>, Point: struct Point, 
+}
+--- handle value ptr<8> with p.x<1>(ptr<8>,) --->
+{
+stack: main{1<-1> :: (p.y - p.x)<1>(2,) :: ((p.y - p.x) - 1)<0> :: return ((p.y - p.x) - 1);<0>} :: top{}
+heap: struct Point, fun<main>, 1, 2, 1, 2, 1, 2, Point(x = 1@6, y = 2@7), 
+env: p: Point(x = 1@6, y = 2@7), main: fun<main>, Point: struct Point, 
+}
+--- handle value 1 with (p.y - p.x)<2>(2,1,) --->
+{
+stack: main{1<-1> :: ((p.y - p.x) - 1)<0> :: return ((p.y - p.x) - 1);<0>} :: top{}
+heap: struct Point, fun<main>, 1, 2, 1, 2, 1, 2, Point(x = 1@6, y = 2@7), 
+env: p: Point(x = 1@6, y = 2@7), main: fun<main>, Point: struct Point, 
+}
+--- handle value 1 with ((p.y - p.x) - 1)<1>(1,) --->
+{
+stack: main{1<-1> :: ((p.y - p.x) - 1)<1>(1,) :: return ((p.y - p.x) - 1);<0>} :: top{}
+heap: struct Point, fun<main>, 1, 2, 1, 2, 1, 2, Point(x = 1@6, y = 2@7), 
+env: p: Point(x = 1@6, y = 2@7), main: fun<main>, Point: struct Point, 
+}
+--- step exp 1 --->
+{
+stack: main{1<-1> :: ((p.y - p.x) - 1)<1>(1,) :: return ((p.y - p.x) - 1);<0>} :: top{}
+heap: struct Point, fun<main>, 1, 2, 1, 2, 1, 2, Point(x = 1@6, y = 2@7), 
+env: p: Point(x = 1@6, y = 2@7), main: fun<main>, Point: struct Point, 
+}
+--- handle value 1 with ((p.y - p.x) - 1)<2>(1,1,) --->
+{
+stack: main{0<-1> :: return ((p.y - p.x) - 1);<0>} :: top{}
+heap: struct Point, fun<main>, 1, 2, 1, 2, 1, 2, Point(x = 1@6, y = 2@7), 
+env: p: Point(x = 1@6, y = 2@7), main: fun<main>, Point: struct Point, 
+}
+--- handle value 0 with return ((p.y - p.x) - 1);<1>(0,) --->
+{
+stack: top{0<-1>}
+heap: struct Point, fun<main>, 1, 2, 1, 2, !!1, !!2, !!Point!!(x = !!1@6, y = !!2@7), 
+env: main: fun<main>, Point: struct Point, 
+}
 result: 0
