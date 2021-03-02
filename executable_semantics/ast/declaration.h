@@ -21,17 +21,17 @@ using Address = unsigned int;
 using TypeEnv = AssocList<std::string, Value*>;
 using Env = AssocList<std::string, Address>;
 
-/// TODO:explain this. Also name it if necessary. Consult with jsiek.
+// TODO:explain this. Also name it if necessary. Consult with jsiek.
 using ExecutionEnvironment = std::pair<TypeEnv*, Env*>;
 
-/// An existential AST declaration satisfying the Declaration concept.
+// An existential AST declaration satisfying the Declaration concept.
 class Declaration {
  public:  // ValueSemantic concept API.
   Declaration(const Declaration& other) = default;
   Declaration& operator=(const Declaration& other) = default;
 
-  /// Constructs an instance equivalent to `d`, where `Model` satisfies the
-  /// Declaration concept.
+  // Constructs an instance equivalent to `d`, where `Model` satisfies the
+  // Declaration concept.
   template <class Model>
   Declaration(Model d) : box(std::make_shared<Boxed<Model>>(d)) {}
 
@@ -47,8 +47,8 @@ class Declaration {
   }
 
  private:  // types
-  /// A base class that erases the type of a `Boxed<Content>`, where `Content`
-  /// satisfies the Declaration concept.
+  // A base class that erases the type of a `Boxed<Content>`, where `Content`
+  // satisfies the Declaration concept.
   struct Box {
    protected:
     Box() {}
@@ -66,8 +66,8 @@ class Declaration {
     virtual auto TopLevel(ExecutionEnvironment&) const -> void = 0;
   };
 
-  /// The derived class that holds an instance of `Content` satisfying the
-  /// Declaration concept.
+  // The derived class that holds an instance of `Content` satisfying the
+  // Declaration concept.
   template <class Content>
   struct Boxed final : Box {
     const Content content;
