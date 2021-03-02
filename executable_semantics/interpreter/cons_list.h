@@ -8,13 +8,7 @@
 namespace Carbon {
 
 template <class T>
-struct Stack;
-
-template <class T>
 struct Cons {
-  friend struct Stack<T>;
-
- private:
   Cons(T e, Cons* n) : curr(e), next(n) {}
 
   const T curr;
@@ -24,6 +18,35 @@ struct Cons {
   // immutable.
   Cons& operator=(const Cons&) = delete;
   Cons& operator=(Cons&&) = delete;
+};
+
+// A forward iterator over elements of a `Cons` list.
+template <class T>
+struct ConsIterator {
+  using value_type = T;
+  using difference_type = std::ptrdiff_t;
+  using pointer = const T*;
+  using reference = const T&;
+  using iterator_category = std::forward_iterator_tag;
+
+  ConsIterator(Cons<T>* x) : p(x) {}
+  ConsIterator(const ConsIterator& mit) : p(mit.p) {}
+  ConsIterator& operator++() {
+    p = p->next;
+    return *this;
+  }
+  ConsIterator operator++(int) {
+    ConsIterator tmp(*this);
+    operator++();
+    return tmp;
+  }
+  bool operator==(const ConsIterator& rhs) const { return p == rhs.p; }
+  bool operator!=(const ConsIterator& rhs) const { return p != rhs.p; }
+  const T& operator*() { return p->curr; }
+  const T* operator->() { return &p->curr; }
+
+ private:
+  Cons<T>* p;
 };
 
 template <class T>
