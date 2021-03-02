@@ -90,6 +90,7 @@ EXAMPLES = [
     "match_type",
     "next",
     "pattern_init",
+    "pattern_variable_fail",
     "record1",
     "struct1",
     "struct2",
