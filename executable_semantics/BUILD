@@ -11,7 +11,10 @@ load("//bazel/testing:golden_test.bzl", "golden_test")
 cc_binary(
     name = "executable_semantics",
     srcs = ["main.cpp"],
-    deps = [":syntax"],
+    deps = [
+        ":syntax",
+        "@llvm-project//llvm:Support",
+    ],
 )
 
 cc_library(

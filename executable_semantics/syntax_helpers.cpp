@@ -11,7 +11,7 @@
 
 namespace Carbon {
 
-char* input_filename = nullptr;
+const char* input_filename = nullptr;
 
 void PrintSyntaxError(char* error, int line_num) {
   std::cerr << input_filename << ":" << line_num << ": " << error << std::endl;
