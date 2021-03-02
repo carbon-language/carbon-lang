@@ -16,7 +16,7 @@
 namespace Carbon {
 
 // Initialized by main(), and used when printing errors.
-extern char* input_filename;
+extern const char* input_filename;
 
 // Prints errors.
 void PrintSyntaxError(char* error, int line_num);
