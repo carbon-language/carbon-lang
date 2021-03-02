@@ -38,13 +38,15 @@ jobs:
           echo gql "$(pip show gql | grep Version)"
           echo PyGitHub "$(pip show PyGitHub | grep Version)"
       - name: Build (Debug)
-        run: bazel build --verbose_failures -c dbg //...:all
+        run:
+          bazel build --test-output errors --verbose_failures -c dbg //...:all
       - name: Build (Release)
-        run: bazel build --verbose_failures -c opt //...:all
+        run:
+          bazel build --test-output errors --verbose_failures -c opt //...:all
       - name: Test (Debug)
-        run: bazel test --verbose_failures -c dbg //...:all
+        run: bazel test --test-output errors --verbose_failures -c dbg //...:all
       - name: Test (Release)
-        run: bazel test --verbose_failures -c opt //...:all
+        run: bazel test --test-output errors --verbose_failures -c opt //...:all
 
   linux:
     name: Linux x86_64
@@ -75,10 +77,12 @@ jobs:
           echo gql "$(pip show gql | grep Version)"
           echo PyGitHub "$(pip show PyGitHub | grep Version)"
       - name: Build (Debug)
-        run: bazel build --verbose_failures -c dbg //...:all
+        run:
+          bazel build --test-output errors --verbose_failures -c dbg //...:all
       - name: Build (Release)
-        run: bazel build --verbose_failures -c opt //...:all
+        run:
+          bazel build --test-output errors --verbose_failures -c opt //...:all
       - name: Test (Debug)
-        run: bazel test --verbose_failures -c dbg //...:all
+        run: bazel test --test-output errors --verbose_failures -c dbg //...:all
       - name: Test (Release)
-        run: bazel test --verbose_failures -c opt //...:all
+        run: bazel test --test-output errors --verbose_failures -c opt //...:all
