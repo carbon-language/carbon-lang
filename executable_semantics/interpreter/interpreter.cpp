@@ -1177,12 +1177,14 @@ void HandleValue() {
             // -> { { then_stmt :: C, E, F } :: S, H}
             frame->todo.Pop(2);
             frame->todo.Push(MakeStmtAct(stmt->u.if_stmt.then_stmt));
-          } else {
+          } else if (stmt->u.if_stmt.else_stmt) {
             //    { {false :: if ([]) then_stmt else else_stmt :: C, E, F} ::
             //      S, H}
             // -> { { else_stmt :: C, E, F } :: S, H}
             frame->todo.Pop(2);
             frame->todo.Push(MakeStmtAct(stmt->u.if_stmt.else_stmt));
+          } else {
+            frame->todo.Pop(2);
           }
           break;
         case StatementKind::While:
