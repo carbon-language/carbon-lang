@@ -1705,8 +1705,10 @@ parameters be `multi`. You would instead use associated types for anything
 deducible. I (Josh11b) think this degrades the usability overall, but is a
 viable option, and simplifies the language. This is what Rust does.
 
-**Comparison with other languages:**
-[Rust uses traits with type parameters for operator overloading](https://doc.rust-lang.org/book/ch19-03-advanced-traits.html#default-generic-type-parameters-and-operator-overloading).
+**Comparison with other languages:** Rust calls
+[traits with type parameters "generic traits"](https://doc.rust-lang.org/reference/items/traits.html#generic-traits)
+and
+[uses them for operator overloading](https://doc.rust-lang.org/book/ch19-03-advanced-traits.html#default-generic-type-parameters-and-operator-overloading).
 Note that Rust further supports defaults for those type parameters (such as
 `Self`).
 
