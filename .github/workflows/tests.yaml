@@ -41,14 +41,14 @@ jobs:
         run: |
           eval "$(pyenv init -)"
           bazel build --verbose_failures -c dbg //...:all
-      - name: Build (Release)
-        run: |
-          eval "$(pyenv init -)"
-          bazel build --verbose_failures -c opt //...:all
       - name: Test (Debug)
         run: |
           eval "$(pyenv init -)"
           bazel test --test_output errors --verbose_failures -c dbg //...:all
+      - name: Build (Release)
+        run: |
+          eval "$(pyenv init -)"
+          bazel build --verbose_failures -c opt //...:all
       - name: Test (Release)
         run: |
           eval "$(pyenv init -)"
@@ -86,14 +86,14 @@ jobs:
         run: |
           eval "$(pyenv init -)"
           bazel build --verbose_failures -c dbg //...:all
-      - name: Build (Release)
-        run: |
-          eval "$(pyenv init -)"
-          bazel build --verbose_failures -c opt //...:all
       - name: Test (Debug)
         run: |
           eval "$(pyenv init -)"
           bazel test --test_output errors --verbose_failures -c dbg //...:all
+      - name: Build (Release)
+        run: |
+          eval "$(pyenv init -)"
+          bazel build --verbose_failures -c opt //...:all
       - name: Test (Release)
         run: |
           eval "$(pyenv init -)"
