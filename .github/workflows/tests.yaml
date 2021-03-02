@@ -1,0 +1,83 @@
+# Part of the Carbon Language project, under the Apache License v2.0 with LLVM
+# Exceptions. See /LICENSE for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+
+name: test
+
+on:
+  push:
+    branches: [trunk]
+  pull_request:
+
+jobs:
+  macOS:
+    name: macOS (Swift 5.3)
+    runs-on: macOS-latest
+    steps:
+      - name: Install Tools
+        run: |
+          /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+          brew install pyenv bazelisk buildifier ninja
+          pyenv install 3.8.5
+          pyenv global 3.8.5
+          eval "$(pyenv init -)"
+          pip install pre-commit gql PyGitHub
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          - submodules: recursive
+      - name: Tool Versions
+        run: |
+          pyenv --version
+          bazel --version
+          buildifier --version
+          echo ninja version "$(ninja --version)"
+          eval "$(pyenv init -)"
+          python --version
+          pre-commit --version
+          echo gql "$(pip show gql | grep Version)"
+          echo PyGitHub "$(pip show PyGitHub | grep Version)"
+      - name: Build (Debug)
+        run: bazel build --verbose_failures -c dbg //...:all
+      - name: Build (Release)
+        run: bazel build --verbose_failures -c opt //...:all
+      - name: Test (Debug)
+        run: bazel test --verbose_failures -c dbg //...:all
+      - name: Test (Release)
+        run: bazel test --verbose_failures -c opt //...:all
+
+  linux:
+    name: Linux x86_64
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install Tools
+        run: |
+          /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+          brew install pyenv bazelisk buildifier ninja
+          pyenv install 3.8.5
+          pyenv global 3.8.5
+          eval "$(pyenv init -)"
+          pip install pre-commit gql PyGitHub
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          - submodules: recursive
+      - name: Tool Versions
+        run: |
+          pyenv --version
+          bazel --version
+          buildifier --version
+          echo ninja version "$(ninja --version)"
+          eval "$(pyenv init -)"
+          python --version
+          pre-commit --version
+          echo gql "$(pip show gql | grep Version)"
+          echo PyGitHub "$(pip show PyGitHub | grep Version)"
+      - name: Build (Debug)
+        run: bazel build --verbose_failures -c dbg //...:all
+      - name: Build (Release)
+        run: bazel build --verbose_failures -c opt //...:all
+      - name: Test (Debug)
+        run: bazel test --verbose_failures -c dbg //...:all
+      - name: Test (Release)
+        run: bazel test --verbose_failures -c opt //...:all
