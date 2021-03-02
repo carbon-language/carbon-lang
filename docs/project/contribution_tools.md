@@ -62,8 +62,8 @@ typical tool setup flow is:
         https://github.com/carbon-language/carbon-lang.
     -   `gh repository clone USER/carbon-lang`, or otherwise clone the fork.
     -   `cd carbon-lang` to go into the cloned fork's directory.
-    -   `git submodule update --init` to sync submodules if you'll be building
-        c++ code or working on the compiler.
+    -   `git submodule update --init --depth=1` to sync submodules if you'll be
+        building c++ code or working on the compiler.
     -   `git config core.fsmonitor rs-git-fsmonitor` to set up
         [rs-git-fsmonitor](#rs-git-fsmonitor-and-watchman) in the clone.
     -   `pre-commit install` to set up [pre-commit](#pre-commit) in the clone.
