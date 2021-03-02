@@ -149,6 +149,7 @@ auto TypeCheckExp(Expression* e, TypeEnv* env, Env* ct_env, Value* expected,
             << ": compilation error, pattern variables are only allowed in "
                "pattern context"
             << std::endl;
+        exit(-1);
       }
       auto t =
           ToType(e->line_num, InterpExp(ct_env, e->u.pattern_variable.type));
