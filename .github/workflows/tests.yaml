@@ -38,11 +38,9 @@ jobs:
           echo gql "$(pip show gql | grep Version)"
           echo PyGitHub "$(pip show PyGitHub | grep Version)"
       - name: Build (Debug)
-        run:
-          bazel build --test-output errors --verbose_failures -c dbg //...:all
+        run: bazel build --verbose_failures -c dbg //...:all
       - name: Build (Release)
-        run:
-          bazel build --test-output errors --verbose_failures -c opt //...:all
+        run: bazel build --verbose_failures -c opt //...:all
       - name: Test (Debug)
         run: bazel test --test-output errors --verbose_failures -c dbg //...:all
       - name: Test (Release)
@@ -77,11 +75,9 @@ jobs:
           echo gql "$(pip show gql | grep Version)"
           echo PyGitHub "$(pip show PyGitHub | grep Version)"
       - name: Build (Debug)
-        run:
-          bazel build --test-output errors --verbose_failures -c dbg //...:all
+        run: bazel build --verbose_failures -c dbg //...:all
       - name: Build (Release)
-        run:
-          bazel build --test-output errors --verbose_failures -c opt //...:all
+        run: bazel build --verbose_failures -c opt //...:all
       - name: Test (Debug)
         run: bazel test --test-output errors --verbose_failures -c dbg //...:all
       - name: Test (Release)
