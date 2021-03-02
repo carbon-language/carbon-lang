@@ -23,5 +23,12 @@ int main(int argc, char* argv[]) {
       return 1;
     }
   }
+  if (argc > 2) {
+    if (argv[2] == std::string("-trace")) {
+      Carbon::tracing_output = true;
+    } else if (argv[2] == std::string("-quiet")) {
+      Carbon::tracing_output = false;
+    }
+  }
   return yyparse();
 }

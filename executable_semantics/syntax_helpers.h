@@ -24,6 +24,9 @@ void PrintSyntaxError(char* error, int line_num);
 // Runs the top-level declaration list.
 void ExecProgram(std::list<Declaration>* fs);
 
+// Program option to enable/disable tracing.
+extern bool tracing_output;
+
 }  // namespace Carbon
 
 #endif  // EXECUTABLE_SEMANTICS_EXEC_H_
