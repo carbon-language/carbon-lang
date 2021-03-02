@@ -19,7 +19,8 @@
 
 namespace Carbon {
 
-extern bool tracing_output;  // from syntax_helpers
+// From syntax_helpers:
+extern bool tracing_output;
 
 State* state = nullptr;
 
