@@ -644,9 +644,11 @@ static auto TakeLeadingStringLiteral(llvm::StringRef source_text)
     if (!multi_line && source_text.startswith("\n"))
       return StringLiteral();
 
-    // Either consume a single character, or consume a single character
-    // preceded by the escape sequence marker.
+    // Consume an escape sequence marker if present.
     (void)source_text.consume_front(escape);
+    // Then consume one more character, either of the content or of an
+    // escape sequence. This relies on multi-character escape sequences
+    // not containing an embedded and unescaped terminator or newline.
     source_text = source_text.substr(1);
     content_end = source_text.begin();
   }
