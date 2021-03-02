@@ -16,6 +16,7 @@ jobs:
     steps:
       - name: Install Tools
         run: |
+          brew update
           brew install pyenv bazelisk buildifier ninja
           pyenv install 3.8.5
           pyenv global 3.8.5
@@ -51,6 +52,7 @@ jobs:
     steps:
       - name: Install Tools
         run: |
+          brew update
           brew install pyenv bazelisk ninja
           brew install --build-from-source buildifier
           pyenv install 3.8.5
