@@ -668,34 +668,41 @@ struct StringLiteralIndent {
 };
 }  // namespace
 
-// Find the leading whitespace that should be removed from each line of a multi-line string literal.
+// Given a string that contains at least one newline, find the indent (the
+// leading sequence of horizontal whitespace) of its final line.
+static auto ComputeIndentOfFinalLine(llvm::StringRef text) -> llvm::StringRef {
+  int indent_end = text.size();
+  for (int i = indent_end - 1; i >= 0; --i) {
+    if (text[i] == '\n') {
+      return text.substr(i + 1, indent_end - i - 1);
+    }
+    if (!isSpace(text[i])) {
+      indent_end = i;
+    }
+  }
+  llvm_unreachable("Given text is required to contain a newline.");
+}
+
+// Find the leading whitespace that should be removed from each line of a
+// multi-line string literal.
 static auto CheckMultiLineStringLiteralIndent(DiagnosticEmitter& emitter,
                                               const StringLiteral& literal)
     -> StringLiteralIndent {
   assert(literal.multi_line);
+
+  // Find the leading horizontal whitespace on the final line of the literal.
+  // Note that for an empty literal, this might not be inside the content.
+  llvm::StringRef indent = ComputeIndentOfFinalLine(literal.text);
   bool has_errors = false;
 
-  // Find the text before the closing `"""` on the final line of the literal.
-  const char* indent_end = literal.content.end();
-  const char* indent_begin = indent_end;
-  while (indent_begin[-1] != '\n') {
-    assert(indent_begin > literal.content.begin() &&
-           "content must contain a newline");
-    --indent_begin;
-    if (!isSpace(*indent_begin)) {
-      indent_end = indent_begin;
-    }
-  }
-
-  // If we found any non-space characters in the indent, diagnose them and
-  // exclude them from the indent for error recovery purposes.
-  if (indent_end != literal.content.end()) {
+  // The last line is not permitted to contain any content after its
+  // indentation.
+  if (indent.end() != literal.content.end()) {
     emitter.EmitError<ContentBeforeStringTerminator>();
     has_errors = true;
   }
 
-  return {.indent = llvm::StringRef(indent_begin, indent_end - indent_begin),
-          .has_errors = has_errors};
+  return {.indent = indent, .has_errors = has_errors};
 }
 
 // Expand a `\u{HHHHHH}` escape sequence into a sequence of UTF-8 code units.
