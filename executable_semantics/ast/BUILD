@@ -24,9 +24,9 @@ cc_library(
 )
 
 cc_library(
-    name = "expression_or_field_list",
-    srcs = ["expression_or_field_list.cpp"],
-    hdrs = ["expression_or_field_list.h"],
+    name = "field_list",
+    srcs = ["field_list.cpp"],
+    hdrs = ["field_list.h"],
     deps = [":expression"],
 )
 

@@ -54,9 +54,7 @@ struct UnrecognizedCharacters : SimpleDiagnostic<UnrecognizedCharacters> {
 
 // TODO(zygoloid): Update this to match whatever we decide qualifies as
 // acceptable whitespace.
-static bool isSpace(char c) {
-  return c == ' ' || c == '\n' || c == '\t';
-}
+static bool isSpace(char c) { return c == ' ' || c == '\n' || c == '\t'; }
 
 // Implementation of the lexer logic itself.
 //
