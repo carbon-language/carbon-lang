@@ -2273,6 +2273,9 @@ single best match. Best is defined using the "more specific" partial ordering:
     type-types.
 -   TODO: others?
 
+The ability to have a more specific implementation used in place of a more
+general is commonly called _specialization_.
+
 TODO: Examples
 
 **Implication:** Can't do impl lookup with generic arguments, even if you can
@@ -2281,6 +2284,21 @@ and we want to be assured that we always get the same result any time we do an
 impl lookup.
 
 TODO: Example
+
+**Open question:** Rust
+[doesn't allow specialization of a general implementation unless its items are marked `default`](https://rust-lang.github.io/rfcs/1210-impl-specialization.html#the-default-keyword).
+Is that something we want to require? This would allow us to relax the
+restriction of the previous implication for items that may not be specialized.
+
+**Future Work:** Rust's
+[specialization rules](https://rust-lang.github.io/rfcs/1210-impl-specialization.html#the-default-keyword)
+allow you to omit definitions in the more specific implementation, using the
+definition in the more general implementation as a default. It furthermore
+supports defining a general
+[`default impl`](https://rust-lang.github.io/rfcs/1210-impl-specialization.html#default-impls)
+that is incomplete (in fact this feature was originally called "partial impl")
+and _only_ used to provide default implementations for more specialized
+implementations.
 
 **Comparison with other languages:** See
 [Rust's rules for deciding which impl is more specific](https://rust-lang.github.io/rfcs/1210-impl-specialization.html#defining-the-precedence-rules).
