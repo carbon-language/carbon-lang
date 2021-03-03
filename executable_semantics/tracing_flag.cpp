@@ -8,4 +8,4 @@ namespace Carbon {
 
 bool tracing_output = true;
 
-}
+}  // namespace Carbon
