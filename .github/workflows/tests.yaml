@@ -10,82 +10,51 @@ on:
   pull_request:
 
 jobs:
-  macOS:
-    name: macOS
-    runs-on: macOS-latest
+  test:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+        build_mode: [fastbuild, opt]
+    runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/setup-go@v2
-      - uses: actions/setup-python@v2
-        with:
-          python-version: '3.8.5'
-      - name: Install More Tools
-        run: |
-          go get github.com/bazelbuild/bazelisk
-          pip install gql PyGitHub
       - name: Checkout
         uses: actions/checkout@v2
         with:
           submodules: true
-      - name: Tool Versions
-        run: |
-          $(go env GOPATH)/bin/bazelisk --version
-          python --version
-          echo gql "$(pip show gql | grep Version)"
-          echo PyGitHub "$(pip show PyGitHub | grep Version)"
-      - name: >-
-          Build  (-c fastbuild: debug / no symbols)
-        run: |
-          $(go env GOPATH)/bin/bazelisk build \
-            --verbose_failures //...:all
-      - name: >-
-          Test (-c fastbuild: debug / no symbols)
-        run: |
-          $(go env GOPATH)/bin/bazelisk test --test_output errors \
-            --verbose_failures //...:all
-      - name: >-
-          Build (-c opt: release)
-        run: |
-          $(go env GOPATH)/bin/bazelisk build \
-            --verbose_failures -c opt //...:all
-      - name: >-
-          Test (-c opt: release)
-        run: |
-          $(go env GOPATH)/bin/bazelisk test --test_output errors \
-            --verbose_failures -c opt //...:all
 
-  linux:
-    name: Linux x86_64
-    runs-on: ubuntu-latest
-    steps:
+      # Setup Python and related tools.
       - uses: actions/setup-python@v2
         with:
           python-version: '3.8.5'
-      - name: Install More Tools
+      - name: Install python modules
         run: |
           pip install gql PyGitHub
-      - name: Checkout
-        uses: actions/checkout@v2
-        with:
-          submodules: recursive
-      - name: Tool Versions
+
+      # On macOS we need Go and to use it to install Bazelisk.
+      - uses: actions/setup-go@v2
+        if: matrix.os == 'macos-latest'
+      - name: Install bazelisk
+        if: matrix.os == 'macos-latest'
+        run: |
+          go get github.com/bazelbuild/bazelisk
+          echo "$(go env GOPATH)/bin" >> $GITHUB_PATH
+
+      # Print the various tool versions to help in debugging.
+      - name: Print tool versions
         run: |
           bazelisk --version
           python --version
           echo gql "$(pip show gql | grep Version)"
           echo PyGitHub "$(pip show PyGitHub | grep Version)"
-      - name: >-
-          Build  (-c fastbuild: debug / no symbols)
+
+      # Build all targets first to isolate build failures.
+      - name: Build (${{ matrix.build_mode }})
         run: |
-          bazelisk build --verbose_failures //...:all
-      - name: >-
-          Test (-c fastbuild: debug/no symbols)
+          bazelisk build -c ${{ matrix.build_mode }} --verbose_failures \
+            //...:all
+
+      # Run all test targets.
+      - name: Test (${{ matrix.build_mode }})
         run: |
-          bazelisk test --test_output errors --verbose_failures //...:all
-      - name: >-
-          Build (-c opt: release)
-        run: |
-          bazelisk build --verbose_failures -c opt //...:all
-      - name: >-
-          Test (-c opt: release)
-        run: |
-          bazelisk test --test_output errors --verbose_failures -c opt //...:all
+          bazelisk test -c ${{ matrix.build_mode }} --test_output errors \
+            --verbose_failures //...:all
