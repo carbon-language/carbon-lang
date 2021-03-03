@@ -32,22 +32,22 @@ jobs:
           python --version
           echo gql "$(pip show gql | grep Version)"
           echo PyGitHub "$(pip show PyGitHub | grep Version)"
-      - name:
+      - name: >-
           Build  (-c fastbuild: debug / no symbols)
         run: |
           $(go env GOPATH)/bin/bazelisk test --test_output errors \
             --verbose_failures -c fastbuild //...:all
-      - name:
+      - name: >-
           Test (-c fastbuild: debug / no symbols)
         run: |
           $(go env GOPATH)/bin/bazelisk test --test_output errors \
             --verbose_failures -c fastbuild //...:all
-      - name:
+      - name: >-
           Build (-c opt: release)
         run: |
           $(go env GOPATH)/bin/bazelisk test --test_output errors \
             --verbose_failures -c opt //...:all
-      - name:
+      - name: >-
           Test (-c opt: release)
         run: |
           $(go env GOPATH)/bin/bazelisk test --test_output errors \
@@ -73,19 +73,19 @@ jobs:
           python --version
           echo gql "$(pip show gql | grep Version)"
           echo PyGitHub "$(pip show PyGitHub | grep Version)"
-      - name:
+      - name: >-
           Build  (-c fastbuild: debug / no symbols)
         run: |
           bazelisk test --test_output errors --verbose_failures -c fastbuild //...:all
-      - name:
+      - name: >-
           Test (-c fastbuild: debug/no symbols)
         run: |
           bazelisk test --test_output errors --verbose_failures -c fastbuild //...:all
-      - name:
+      - name: >-
           Build (-c opt: release)
         run: |
           bazelisk test --test_output errors --verbose_failures -c opt //...:all
-      - name:
+      - name: >-
           Test (-c opt: release)
         run: |
           bazelisk test --test_output errors --verbose_failures -c opt //...:all
