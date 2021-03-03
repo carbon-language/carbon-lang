@@ -71,6 +71,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
         -   [DynBoxed](#dynboxed)
         -   [MaybeBoxed](#maybeboxed)
 -   [Future work](#future-work)
+    -   [Interface defaults](#interface-defaults)
     -   [Operator overloading](#operator-overloading)
     -   [Impls with state](#impls-with-state)
     -   [Generic associated types](#generic-associated-types)
@@ -2889,6 +2890,15 @@ UseBoxed(DontBox(Bar()));
 ```
 
 ## Future work
+
+### Interface defaults
+
+Rust supports specifying defaults for
+[interface parameters](https://doc.rust-lang.org/book/ch19-03-advanced-traits.html#default-generic-type-parameters-and-operator-overloading),
+[methods](https://doc.rust-lang.org/book/ch10-02-traits.html#default-implementations),
+[associated constants](https://doc.rust-lang.org/reference/items/associated-items.html#associated-constants-examples).
+We should support this too. It is helpful for evolution, as well as reducing
+boilerplate.
 
 ### Operator overloading
 
