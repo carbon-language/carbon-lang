@@ -49,6 +49,8 @@ request:
     -   [0143 - Decision](p0143_decision.md)
 -   [0149 - Change documentation style guide](p0149.md)
     -   [0149 - Decision](p0149_decision.md)
+-   [0157 - Design direction for sum types](p0157.md)
+    -   [0157 - Decision](p0157_decision.md)
 -   [0162 - Basic Syntax](p0162.md)
     -   [0162 - Decision](p0162_decision.md)
 -   [0175 - C++ interoperability goals](p0175.md)
@@ -57,5 +59,7 @@ request:
     -   [0179 - Decision](p0179_decision.md)
 -   [0196 - Language-level safety strategy](p0196.md)
     -   [0196 - Decision](p0196_decision.md)
+-   [0198 - Comments](p0198.md)
+-   [0199 - String literals](p0199.md)
 
 <!-- endproposals -->

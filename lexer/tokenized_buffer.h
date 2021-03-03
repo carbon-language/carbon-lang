@@ -186,6 +186,41 @@ class TokenizedBuffer {
     Token token;
   };
 
+  // The value of a real literal.
+  //
+  // This is either a dyadic fraction (mantissa * 2^exponent) or a decadic
+  // fraction (mantissa * 10^exponent).
+  //
+  // The `TokenizedBuffer` must outlive any `RealLiteralValue`s referring to
+  // its tokens.
+  class RealLiteralValue {
+    const TokenizedBuffer* buffer;
+    int32_t literal_index;
+    bool is_decimal;
+
+   public:
+    // The mantissa, represented as an unsigned integer.
+    const llvm::APInt& Mantissa() const {
+      return buffer->literal_int_storage[literal_index];
+    }
+    // The exponent, represented as a signed integer.
+    const llvm::APInt& Exponent() const {
+      return buffer->literal_int_storage[literal_index + 1];
+    }
+    // If false, the value is mantissa * 2^exponent.
+    // If true, the value is mantissa * 10^exponent.
+    bool IsDecimal() const { return is_decimal; }
+
+   private:
+    friend class TokenizedBuffer;
+
+    RealLiteralValue(const TokenizedBuffer* buffer, int32_t literal_index,
+                     bool is_decimal)
+        : buffer(buffer),
+          literal_index(literal_index),
+          is_decimal(is_decimal) {}
+  };
+
   // Lexes a buffer of source code into a tokenized buffer.
   //
   // The provided source buffer must outlive any returned `TokenizedBuffer`
@@ -223,7 +258,10 @@ class TokenizedBuffer {
   [[nodiscard]] auto GetIdentifier(Token token) const -> Identifier;
 
   // Returns the value of an `IntegerLiteral()` token.
-  auto GetIntegerLiteral(Token token) const -> llvm::APInt;
+  [[nodiscard]] auto GetIntegerLiteral(Token token) const -> const llvm::APInt&;
+
+  // Returns the value of an `RealLiteral()` token.
+  [[nodiscard]] auto GetRealLiteral(Token token) const -> RealLiteralValue;
 
   // Returns the closing token matched with the given opening token.
   //
@@ -361,7 +399,8 @@ class TokenizedBuffer {
 
   llvm::SmallVector<IdentifierInfo, 16> identifier_infos;
 
-  llvm::SmallVector<llvm::APInt, 16> int_literals;
+  // Storage for integers that form part of the value of a numeric literal.
+  llvm::SmallVector<llvm::APInt, 16> literal_int_storage;
 
   llvm::DenseMap<llvm::StringRef, Identifier> identifier_map;
 
