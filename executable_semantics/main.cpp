@@ -7,6 +7,7 @@
 #include <iostream>
 
 #include "executable_semantics/syntax_helpers.h"
+#include "executable_semantics/tracing_flag.h"
 #include "llvm/Support/CommandLine.h"
 
 extern FILE* yyin;
@@ -17,8 +18,7 @@ int main(int argc, char* argv[]) {
 
   using llvm::cl::desc;
   using llvm::cl::opt;
-  // TODO: Add with related support.
-  // opt<bool> quiet_option("quiet", desc("Disable tracing"));
+  opt<bool> quiet_option("quiet", desc("Disable tracing"));
   opt<std::string> input_filename(llvm::cl::Positional, desc("<input file>"));
   llvm::cl::ParseCommandLineOptions(argc, argv);
 
@@ -30,6 +30,9 @@ int main(int argc, char* argv[]) {
                 << "': " << strerror(errno) << std::endl;
       return 1;
     }
+  }
+  if (quiet_option) {
+    Carbon::tracing_output = false;
   }
   return yyparse();
 }
