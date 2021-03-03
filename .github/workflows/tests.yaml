@@ -36,12 +36,12 @@ jobs:
           Build  (-c fastbuild: debug / no symbols)
         run: |
           $(go env GOPATH)/bin/bazelisk test --test_output errors \
-            --verbose_failures -c fastbuild //...:all
+            --verbose_failures //...:all
       - name: >-
           Test (-c fastbuild: debug / no symbols)
         run: |
           $(go env GOPATH)/bin/bazelisk test --test_output errors \
-            --verbose_failures -c fastbuild //...:all
+            --verbose_failures //...:all
       - name: >-
           Build (-c opt: release)
         run: |
@@ -76,11 +76,11 @@ jobs:
       - name: >-
           Build  (-c fastbuild: debug / no symbols)
         run: |
-          bazelisk test --test_output errors --verbose_failures -c fastbuild //...:all
+          bazelisk test --test_output errors --verbose_failures //...:all
       - name: >-
           Test (-c fastbuild: debug/no symbols)
         run: |
-          bazelisk test --test_output errors --verbose_failures -c fastbuild //...:all
+          bazelisk test --test_output errors --verbose_failures //...:all
       - name: >-
           Build (-c opt: release)
         run: |
