@@ -40,7 +40,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Associated constants](#associated-constants)
     -   [Constraints that are hard to express](#constraints-that-are-hard-to-express)
 -   [Parameterized interfaces](#parameterized-interfaces)
-    -   [Impl lookup](#impl-lookup)
+    -   [Impl lookup and specialization](#impl-lookup-and-specialization)
     -   [Parameterized structural interfaces](#parameterized-structural-interfaces)
 -   [Naming constraints](#naming-constraints)
 -   [Implicit constraints](#implicit-constraints)
@@ -329,11 +329,12 @@ extend Point2 {
 ```
 
 The `extend` statement is allowed to be defined in a different library from
-`Point2`, restricted by [the coherence/orphan rules](#impl-lookup) that ensure
-that the implementation of an interface won't change based on imports. In
-particular, the `extend` statement is allowed in the library defining the
-interface (`Vector` in this case) in addition to the library that defines the
-type (`Point2` here). This (at least partially) addresses
+`Point2`, restricted by
+[the coherence/orphan rules](#impl-lookup-and-specialization) that ensure that
+the implementation of an interface won't change based on imports. In particular,
+the `extend` statement is allowed in the library defining the interface
+(`Vector` in this case) in addition to the library that defines the type
+(`Point2` here). This (at least partially) addresses
 [the expression problem](https://eli.thegreenplace.net/2016/the-expression-problem-and-its-solutions).
 
 We don't want the API of `Point2` to change based on what is imported though. So
@@ -1728,7 +1729,7 @@ and
 Note that Rust further supports defaults for those type parameters (such as
 `Self`).
 
-### Impl lookup
+### Impl lookup and specialization
 
 Let's say you have some interface `I(T, U(V))` being implemented for some type
 `A(B(C(D), E))`. That impl must be defined in the same library that defines the
@@ -2253,9 +2254,9 @@ extend [EqualityComparableTo(Type:$$ T):$ U] U {
 
 One tricky part of this is that you may not have visibility into all the impls
 of an interface for a type since they may be
-[defined with one of the other types involved](#impl-lookup). Hopefully this
-isn't a problem -- you will always be able to see the _relevant_ impls given the
-types that have been imported / have visible definitions.
+[defined with one of the other types involved](#impl-lookup-and-specialization).
+Hopefully this isn't a problem -- you will always be able to see the _relevant_
+impls given the types that have been imported / have visible definitions.
 
 ### Lookup resolution
 
@@ -3093,7 +3094,7 @@ Specifically, how does this proposal address
     is defined with either the type or the interface.
 
     -   [External impl](#external-impl)
-    -   [Impl lookup](#impl-lookup)
+    -   [Impl lookup](#impl-lookup-and-specialization)
 
 -   Define a parameterized implementation of an interface for a family of types.
     This is both for
