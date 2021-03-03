@@ -211,6 +211,9 @@ interface Vector {
 }
 ```
 
+The syntax here is intended to match how the same members would be defined in a
+type.
+
 An interface defines a type-type, that is a type whose values are types. The
 values of an interface are specifically
 [facet types](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#invoking-interface-methods),
@@ -1031,6 +1034,9 @@ struct U {
   impl D2 { ... }
 }
 ```
+
+The `extends` declaration makes sense with the same meaning inside a
+[`structural interface`](#structural-interfaces), and should also be supported.
 
 ### Use case: overload resolution
 
