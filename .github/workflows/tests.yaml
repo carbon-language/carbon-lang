@@ -14,12 +14,13 @@ jobs:
     name: macOS
     runs-on: macOS-latest
     steps:
-      - name: Install Tools
+      - uses: actions/setup-go@v2
+      - uses: actions/setup-python@v2
+        with:
+          python-version: '3.8.5'
+      - name: Install More Tools
         run: |
-          brew install pyenv bazelisk
-          pyenv install 3.8.5
-          pyenv global 3.8.5
-          eval "$(pyenv init -)"
+          go get github.com/bazelbuild/bazelisk
           pip install gql PyGitHub
       - name: Checkout
         uses: actions/checkout@v2
@@ -27,42 +28,38 @@ jobs:
           submodules: recursive
       - name: Tool Versions
         run: |
-          pyenv --version
-          bazel --version
-          buildifier --version
-          echo ninja version "$(ninja --version)"
-          eval "$(pyenv init -)"
+          $(go env GOPATH)/bin/bazel --version
           python --version
-          pre-commit --version
           echo gql "$(pip show gql | grep Version)"
           echo PyGitHub "$(pip show PyGitHub | grep Version)"
       - name: Build (Debug)
         run: |
-          eval "$(pyenv init -)"
-          bazel build --verbose_failures -c fastbuild //...:all
+          $(go env GOPATH)/bin/bazel test --test_output errors \
+            --verbose_failures -c opt //...:all
       - name: Test (Debug)
         run: |
-          eval "$(pyenv init -)"
-          bazel test --test_output errors --verbose_failures -c fastbuild //...:all
+          $(go env GOPATH)/bin/bazel test --test_output errors \
+            --verbose_failures -c opt //...:all
       - name: Build (Release)
         run: |
-          eval "$(pyenv init -)"
-          bazel build --verbose_failures -c opt //...:all
+          $(go env GOPATH)/bin/bazel test --test_output errors \
+            --verbose_failures -c opt //...:all
       - name: Test (Release)
         run: |
-          eval "$(pyenv init -)"
-          bazel test --test_output errors --verbose_failures -c opt //...:all
+          $(go env GOPATH)/bin/bazel test --test_output errors \
+            --verbose_failures -c opt //...:all
 
   linux:
     name: Linux x86_64
     runs-on: ubuntu-latest
     steps:
-      - name: Install Tools
+      - uses: actions/setup-go@v2
+      - uses: actions/setup-python@v2
+        with:
+          python-version: '3.8.5'
+      - name: Install More Tools
         run: |
-          brew install pyenv bazelisk
-          pyenv install 3.8.5
-          pyenv global 3.8.5
-          eval "$(pyenv init -)"
+          go get github.com/bazelbuild/bazelisk
           pip install gql PyGitHub
       - name: Checkout
         uses: actions/checkout@v2
@@ -70,28 +67,23 @@ jobs:
           submodules: recursive
       - name: Tool Versions
         run: |
-          pyenv --version
-          bazel --version
-          buildifier --version
-          echo ninja version "$(ninja --version)"
-          eval "$(pyenv init -)"
+          $(go env GOPATH)/bin/bazelisk --version
           python --version
-          pre-commit --version
           echo gql "$(pip show gql | grep Version)"
           echo PyGitHub "$(pip show PyGitHub | grep Version)"
       - name: Build (Debug)
         run: |
-          eval "$(pyenv init -)"
-          bazel build --verbose_failures -c fastbuild //...:all
+          $(go env GOPATH)/bin/bazelisk test --test_output errors \
+            --verbose_failures -c opt //...:all
       - name: Test (Debug)
         run: |
-          eval "$(pyenv init -)"
-          bazel test --test_output errors --verbose_failures -c fastbuild //...:all
+          $(go env GOPATH)/bin/bazelisk test --test_output errors \
+            --verbose_failures -c opt //...:all
       - name: Build (Release)
         run: |
-          eval "$(pyenv init -)"
-          bazel build --verbose_failures -c opt //...:all
+          $(go env GOPATH)/bin/bazelisk test --test_output errors \
+            --verbose_failures -c opt //...:all
       - name: Test (Release)
         run: |
-          eval "$(pyenv init -)"
-          bazel test --test_output errors --verbose_failures -c opt //...:all
+          $(go env GOPATH)/bin/bazelisk test --test_output errors \
+            --verbose_failures -c opt //...:all
