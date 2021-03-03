@@ -18,8 +18,8 @@ cc_library(
     hdrs = [
         "action.h",
         "assoc_list.h",
-        "cons_list.h",
         "interpreter.h",
+        "list_node.h",
         "stack.h",
         "typecheck.h",
         "value.h",
