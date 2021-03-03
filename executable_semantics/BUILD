@@ -18,6 +18,13 @@ cc_binary(
 )
 
 cc_library(
+    name = "tracing_flag",
+    srcs = ["tracing_flag.cpp"],
+    hdrs = ["tracing_flag.h"],
+    visibility = ["//visibility:public"],
+)
+
+cc_library(
     name = "syntax",
     srcs = [
         "syntax.tab.cpp",
@@ -33,6 +40,7 @@ cc_library(
         "-Wno-writable-strings",
     ],
     deps = [
+        ":tracing_flag",
         "//executable_semantics/ast:declaration",
         "//executable_semantics/ast:expression",
         "//executable_semantics/ast:field_list",
