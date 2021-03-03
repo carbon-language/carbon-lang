@@ -25,6 +25,7 @@ cc_library(
         "value.h",
     ],
     deps = [
+        "//executable_semantics:syntax_helpers_hdrs",
         "//executable_semantics/ast:declaration",
         "//executable_semantics/ast:expression",
         "//executable_semantics/ast:function_definition",

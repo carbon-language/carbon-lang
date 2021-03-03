@@ -18,12 +18,19 @@ cc_binary(
 )
 
 cc_library(
+    name = "syntax_helpers_hdrs",
+    hdrs = [
+        "syntax_helpers.h",
+    ],
+    visibility = ["//visibility:public"],
+)
+
+cc_library(
     name = "syntax",
     srcs = [
         "syntax.tab.cpp",
         "syntax.yy.cpp",
         "syntax_helpers.cpp",
-        "syntax_helpers.h",
     ],
     hdrs = ["syntax.tab.h"],
     # Disable warnings for generated code.
@@ -33,6 +40,7 @@ cc_library(
         "-Wno-writable-strings",
     ],
     deps = [
+        ":syntax_helpers_hdrs",
         "//executable_semantics/ast:declaration",
         "//executable_semantics/ast:expression",
         "//executable_semantics/ast:field_list",
