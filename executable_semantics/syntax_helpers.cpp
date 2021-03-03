@@ -8,12 +8,11 @@
 
 #include "executable_semantics/interpreter/interpreter.h"
 #include "executable_semantics/interpreter/typecheck.h"
+#include "executable_semantics/tracing_flag.h"
 
 namespace Carbon {
 
 const char* input_filename = nullptr;
-
-bool tracing_output = true;
 
 void PrintSyntaxError(char* error, int line_num) {
   std::cerr << input_filename << ":" << line_num << ": " << error << std::endl;

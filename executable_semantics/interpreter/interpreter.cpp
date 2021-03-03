@@ -16,7 +16,7 @@
 #include "executable_semantics/ast/function_definition.h"
 #include "executable_semantics/interpreter/stack.h"
 #include "executable_semantics/interpreter/typecheck.h"
-#include "executable_semantics/syntax_helpers.h"
+#include "executable_semantics/tracing_flag.h"
 
 namespace Carbon {
 
