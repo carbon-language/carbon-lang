@@ -11,17 +11,16 @@ on:
 
 jobs:
   macOS:
-    name: macOS (Swift 5.3)
+    name: macOS
     runs-on: macOS-latest
     steps:
       - name: Install Tools
         run: |
-          brew update
-          brew install pyenv bazelisk buildifier ninja
+          brew install pyenv bazelisk
           pyenv install 3.8.5
           pyenv global 3.8.5
           eval "$(pyenv init -)"
-          pip install pre-commit gql PyGitHub
+          pip install gql PyGitHub
       - name: Checkout
         uses: actions/checkout@v2
         with:
@@ -40,11 +39,11 @@ jobs:
       - name: Build (Debug)
         run: |
           eval "$(pyenv init -)"
-          bazel build --verbose_failures -c dbg //...:all
+          bazel build --verbose_failures -c fastbuild //...:all
       - name: Test (Debug)
         run: |
           eval "$(pyenv init -)"
-          bazel test --test_output errors --verbose_failures -c dbg //...:all
+          bazel test --test_output errors --verbose_failures -c fastbuild //...:all
       - name: Build (Release)
         run: |
           eval "$(pyenv init -)"
@@ -60,13 +59,11 @@ jobs:
     steps:
       - name: Install Tools
         run: |
-          brew update
-          brew install pyenv bazelisk ninja
-          brew install --build-from-source buildifier
+          brew install pyenv bazelisk
           pyenv install 3.8.5
           pyenv global 3.8.5
           eval "$(pyenv init -)"
-          pip install pre-commit gql PyGitHub
+          pip install gql PyGitHub
       - name: Checkout
         uses: actions/checkout@v2
         with:
@@ -85,11 +82,11 @@ jobs:
       - name: Build (Debug)
         run: |
           eval "$(pyenv init -)"
-          bazel build --verbose_failures -c dbg //...:all
+          bazel build --verbose_failures -c fastbuild //...:all
       - name: Test (Debug)
         run: |
           eval "$(pyenv init -)"
-          bazel test --test_output errors --verbose_failures -c dbg //...:all
+          bazel test --test_output errors --verbose_failures -c fastbuild //...:all
       - name: Build (Release)
         run: |
           eval "$(pyenv init -)"
