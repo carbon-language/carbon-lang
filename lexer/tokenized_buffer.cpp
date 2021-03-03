@@ -62,9 +62,9 @@ struct InvalidDigit {
   static auto Format(const Substitutions& subst) -> std::string {
     return llvm::formatv("Invalid digit '{0}' in {1} numeric literal.",
                          subst.digit,
-                         (subst.radix == 2
-                              ? "binary"
-                              : subst.radix == 16 ? "hexadecimal" : "decimal"))
+                         (subst.radix == 2    ? "binary"
+                          : subst.radix == 16 ? "hexadecimal"
+                                              : "decimal"))
         .str();
   }
 };
