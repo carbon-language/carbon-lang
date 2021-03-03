@@ -413,7 +413,7 @@ definition. In Rust, all implementations are external as in
 ### Rejected: out-of-line impl
 
 We considered an out-of-line syntax for declaring and defining interface `impl`
-blocks, to replace both the inline syntax and the `extends` statement. For,
+blocks, to replace both the inline syntax and the `extend` statement. For,
 example:
 
 ```
@@ -909,7 +909,8 @@ We expect this concept to be common enough to warrant dedicated syntax:
 ```
 interface B { method (Self: this) BMethod(); }
 
-interface D extends B {
+interface D {
+  extends B;
   method (Self: this) DMethod();
 }
 // is equivalent to the definition of D from before:
@@ -934,23 +935,30 @@ TODO Use cases:
 see , C++ iterator concepts. See
 [Carbon generics use case: graph library](https://docs.google.com/document/d/1xk0GLtpBl2OOnf3F_6Z-A3DtTt-r7wdOZ5wPipYUSO0/edit?usp=sharing&resourcekey=0-mBSmwn6b6jwbLaQw2WG6OA).
 
-**Open question:** How should we write an interface extending multiple
-interfaces? Here are a couple of approaches:
+To write an interface extending multiple interfaces, use multiple `extends`
+declarations:
 
 ```
-interface Option1 extends B1 + B2 { ... }
-
-interface Option2 {
+interface RefinesTwo {
   extends B1;
   extends B2;
 }
 ```
 
-One advantage of Option1 is it defines what happens when there is a conflict in
-the names of the members between `B1` and `B2`.
+The `extends` declarations are in the body of the `interface` definition instead
+of the header so we can use associated types also defined in the body in
+parameters or constraints of the interface being extended.
 
-One advantage of Option2 is it allows us more flexibility specifying the
-parameters or constraints of the interface being extended. Example:
+```
+interface A(Type:$ T) { ... }
+interface B {
+  var Type:$ T;
+  extends A(T);
+}
+```
+
+**Open question:** Can we redefine associated types in the refined interface as
+long as the new definition is compatible but more specific ("covariance")?
 
 ```
 interface ForwardContainer(Type:$ T) {
@@ -965,11 +973,6 @@ interface BidirectionalContainer(Type:$ T) {
 }
 ```
 
-**Open question:** Can this only be done if `ForwardContainer(T)` uses
-`IteratorType` in covariant positions like return types? Or are you always
-allowed to pass in a type with a superset of requirements? I think it is the
-latter, but I previously wrote down the former and I'm not sure why.
-
 **Diamond dependency issue:** Since types can implement interfaces at most once,
 we need to specify what happens in when a type implements interfaces `D1` and
 `D2` both of which extend `B`.
@@ -979,8 +982,8 @@ interface B {
   method (Self: this) B1();
   method (Self: this) B2();
 }
-interface D1 extends B { ... }
-interface D2 extends B { ... }
+interface D1 { extends B; ... }
+interface D2 { extends B; ... }
 struct U {
   impl D1 { ... }
   impl D2 { ... }
@@ -1038,10 +1041,12 @@ of the iterator being passed in:
 
 ```
 interface ForwardIterator(Type:$ T) { ... }
-interface BidirectionalIterator(Type:$ T)
-    extends ForwardIterator(T) { ... }
-interface RandomAccessIterator(Type:$ T)
-    extends BidirectionalIterator(T) { ... }
+interface BidirectionalIterator(Type:$ T) {
+  extends ForwardIterator(T);  ...
+}
+interface RandomAccessIterator(Type:$ T) {
+  extends BidirectionalIterator(T); ...
+}
 
 fn SearchInSortedList[Comparable:$ T, ForwardIterator(T): IterT]
     (IterT: begin, IterT: end, T: needle) -> Bool {
@@ -1439,8 +1444,10 @@ interface Container {
 }
 ```
 
-My only current solution involves writing a separate `alias` or
-[structural interface](#structural-interfaces) to represent the constraint.
+Unfortunately writing a separate `alias` or
+[structural interface](#structural-interfaces) to represent the constraint
+doesn't work here. All of these refer to `Container` and so can only be defined
+afterwards and can't be used to define `Container` itself:
 
 ```
 alias ContainerAsSlice = Container(.SliceType = Self);
@@ -1451,8 +1458,8 @@ alias ContainerAsSlice(auto...:$$ args) =
 
 // Alternative using `structural interface`, assuming we supports `extends`
 // like ordinary `interface` definitions.
-structural interface ContainerAsSlice
-  extends Container(.SliceType = Self) {
+structural interface ContainerAsSlice {
+  extends Container(.SliceType = Self);
 }
 ```
 
@@ -1761,8 +1768,10 @@ Given these definitions:
 
 ```
 interface IteratorInterface(Type:$ ElementType) { ... }
-interface RandomAccessIterator(Type:$ ElementType)
-    extends IteratorInterface(ElementType) { ... }
+interface RandomAccessIterator(Type:$ ElementType) {
+  extends IteratorInterface(ElementType);
+  ...
+}
 interface ContainerInterface(Type:$ ElementType) {
   var IteratorInterface(ElementType):$ IteratorType;
   ...
@@ -1794,7 +1803,7 @@ fn G[Type:$ T, Double(T):$ U](U: u);
 
 // The following works if we support `extends` for `structural interface`
 // to mean the same thing as for regular nominal `interface` definitions:
-structural interface Double(Type:$ T) extends PairInterface(T, T) { }
+structural interface Double(Type:$ T) { extends PairInterface(T, T); }
 // Similarly we might support this using an `alias`:
 alias Double(Type:$ T) = PairInterface(T, T);
 ```
