@@ -38,15 +38,6 @@ alternatives of the sum type, rather than reported by way of output parameters
 or other side channels. Carbon's design will prioritize making this form of
 error handling efficient and ergonomic.
 
-The operations that can cause a function body to return must be identifiable by
-local inspection
-
-points where a function body can return must be straightforwardly
-
-Returning a failure value might not take the form of a `return` statement; for
-example, Carbon might have something like Rust's `?` error-propagation operator.
-However, returning a value will always be syntactically visible in some way.
-
 ## Applications of these principles
 
 Carbon errors, unlike C++/Java/Python/etc exceptions, will not be propagated
