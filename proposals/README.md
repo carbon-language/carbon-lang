@@ -57,6 +57,8 @@ request:
     -   [0175 - Decision](p0175_decision.md)
 -   [0179 - Create a toolchain team.](p0179.md)
     -   [0179 - Decision](p0179_decision.md)
+-   [0196 - Language-level safety strategy](p0196.md)
+    -   [0196 - Decision](p0196_decision.md)
 -   [0198 - Comments](p0198.md)
 -   [0199 - String literals](p0199.md)
 
