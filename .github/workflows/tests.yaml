@@ -25,7 +25,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2
         with:
-          submodules: recursive
+          submodules: true
       - name: Tool Versions
         run: |
           $(go env GOPATH)/bin/bazelisk --version
