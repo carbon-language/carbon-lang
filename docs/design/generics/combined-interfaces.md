@@ -330,7 +330,7 @@ extend Point2 {
 
 The `extend` statement is allowed to be defined in a different library from
 `Point2`, restricted by [the coherence/orphan rules](#impl-lookup) that ensure
-that the implementation of an interface to change based on imports. In
+that the implementation of an interface won't change based on imports. In
 particular, the `extend` statement is allowed in the library defining the
 interface (`Vector` in this case) in addition to the library that defines the
 type (`Point2` here). This (at least partially) addresses
@@ -961,7 +961,9 @@ interface B {
 ```
 
 **Open question:** Can we redefine associated types in the refined interface as
-long as the new definition is compatible but more specific ("covariance")?
+long as the new definition is compatible but more specific ("covariance")? Here,
+more specific means that the requirements and the name-to-binding map are
+supersets.
 
 ```
 interface ForwardContainer(Type:$ T) {
@@ -1990,6 +1992,23 @@ struct FixedArray(Type:$ T, Int:$ N) {
 This would require mechanisms to both describe these conditions and determine
 how they affect types.
 
+**Future work:** Rust uses this mechanism (TODO: find link) to also allow
+conditionally defining methods on types, independent of interfaces. This is not
+specific to generics, but we would like to have a syntax that is consistent
+across these two use cases. The above "inline `extend`" syntax does naturally
+generalize to this case:
+
+```
+struct FixedArray(Type:$ T, Int:$ N) {
+  // ...
+  extend[Printable:$ P] FixedArray(P, N) {
+    method (Ptr(Self): this) Print() { ... }
+  }
+}
+
+// FixedArray(T, N) has a `Print()` method if `T` is `Printable`.
+```
+
 ## Templated impls for generic interfaces
 
 Some things going on here:
@@ -2248,6 +2267,10 @@ single best match. Best is defined using the "more specific" partial ordering:
 -   Matching an exact type (`Foo` or `Foo(Bar)`) is more specific than a
     parameterized family of types (`Foo(T)` for any type `T`) is more specific
     than a generic type (`T` for any type `T`).
+-   A more restrictive constraint is more specific. In particular, a type-type
+    `T` is more restrictive than a type-type `U` if the set of restrictions for
+    `T` is a superset of those for `U`. This defines a partial order on
+    type-types.
 -   TODO: others?
 
 TODO: Examples
@@ -2258,6 +2281,9 @@ and we want to be assured that we always get the same result any time we do an
 impl lookup.
 
 TODO: Example
+
+**Comparison with other languages:** See
+[Rust's rules for deciding which impl is more specific](https://rust-lang.github.io/rfcs/1210-impl-specialization.html#defining-the-precedence-rules).
 
 ## Composition of type-types
 
@@ -2915,12 +2941,19 @@ Rust supports specifying defaults for
 We should support this too. It is helpful for evolution, as well as reducing
 boilerplate.
 
+In fact, this is a generalization of specialization, as observed
+[here](https://rust-lang.github.io/rfcs/1210-impl-specialization.html#default-impls),
+as long as we allow more specific implementations to be incomplete and reuse
+more general implementations for anything unspecified.
+
 ### Operator overloading
 
 TODO: Basically same approach as Rust, implement specific standardized
 interfaces for each operator, or family of operators. See
-[Rust operator overloading](https://doc.rust-lang.org/rust-by-example/trait/ops.html)
-and the [Rust ops module](https://doc.rust-lang.org/std/ops/index.html).
+[Rust operator overloading](https://doc.rust-lang.org/rust-by-example/trait/ops.html),
+the [Rust ops module](https://doc.rust-lang.org/std/ops/index.html), and the
+list of
+[Rust operators and corresponding traits](https://doc.rust-lang.org/book/appendix-02-operators.html#operators).
 
 TODO: should implement one function to get both `==` and `!=`, or another
 function to get those plus all comparison operators (`<`, `<=`, `>=`, `>`, and
