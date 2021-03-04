@@ -1181,7 +1181,7 @@ void HandleValue() {
             std::optional<Env> result =
                 PatternMatch(p, v, frame->scopes.Top()->env,
                              &frame->scopes.Top()->locals, stmt->line_num);
-            if (!res) {
+            if (!result) {
               std::cerr
                   << stmt->line_num
                   << ": internal error in variable definition, match failed"
