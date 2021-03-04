@@ -59,5 +59,6 @@ request:
     -   [0179 - Decision](p0179_decision.md)
 -   [0198 - Comments](p0198.md)
 -   [0199 - String literals](p0199.md)
+-   [0340 - while loops](p0340.md)
 
 <!-- endproposals -->
