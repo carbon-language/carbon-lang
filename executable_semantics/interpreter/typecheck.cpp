@@ -12,7 +12,6 @@
 #include <vector>
 
 #include "executable_semantics/ast/function_definition.h"
-#include "executable_semantics/interpreter/cons_list.h"
 #include "executable_semantics/interpreter/interpreter.h"
 
 namespace Carbon {
@@ -149,6 +148,7 @@ auto TypeCheckExp(Expression* e, TypeEnv* env, Env* ct_env, Value* expected,
             << ": compilation error, pattern variables are only allowed in "
                "pattern context"
             << std::endl;
+        exit(-1);
       }
       auto t =
           ToType(e->line_num, InterpExp(ct_env, e->u.pattern_variable.type));

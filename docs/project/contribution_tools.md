@@ -23,7 +23,6 @@ contributions.
         -   [Cargo (optional)](#cargo-optional)
 -   [Main tools](#main-tools)
     -   [Bazel and Bazelisk](#bazel-and-bazelisk)
-    -   [Bison and Flex](#bison-and-flex)
     -   [buildifier](#buildifier)
     -   [Clang and LLVM](#clang-and-llvm)
     -   [Ninja](#ninja)
@@ -62,8 +61,8 @@ typical tool setup flow is:
         https://github.com/carbon-language/carbon-lang.
     -   `gh repository clone USER/carbon-lang`, or otherwise clone the fork.
     -   `cd carbon-lang` to go into the cloned fork's directory.
-    -   `git submodule update --init` to sync submodules if you'll be building
-        c++ code or working on the compiler.
+    -   `git submodule update --init --depth=1` to sync submodules if you'll be
+        building c++ code or working on the compiler.
     -   `git config core.fsmonitor rs-git-fsmonitor` to set up
         [rs-git-fsmonitor](#rs-git-fsmonitor-and-watchman) in the clone.
     -   `pre-commit install` to set up [pre-commit](#pre-commit) in the clone.
@@ -155,24 +154,6 @@ Our recommended way of installing is:
 ```bash
 brew install bazelisk
 ```
-
-### Bison and Flex
-
-[Bison](https://www.gnu.org/software/bison/) and
-[Flex](https://github.com/westes/flex) are used by executable semantics.
-Although we may
-[switch to a hemertic toolchain later](https://github.com/carbon-language/carbon-lang/issues/266),
-an install is currently required.
-
-Our recommended way of installing is:
-
-```bash
-brew install bison flex
-```
-
-On MacOS, it will be necessary to explicitly add the installed paths to the
-`PATH` environment variable so that the brew-installed versions are used instead
-of Xcode-installed versions. Read `brew` output for instructions.
 
 ### buildifier
 
