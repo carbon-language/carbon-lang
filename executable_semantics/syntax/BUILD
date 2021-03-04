@@ -12,12 +12,12 @@ package(default_visibility = ["//executable_semantics:__subpackages__"])
 cc_library(
     name = "syntax",
     srcs = [
-        "syntax.tab.cpp",
-        "syntax.yy.cpp",
+        "lexer.cpp",
+        "parser.cpp",
         "syntax_helpers.cpp",
         "syntax_helpers.h",
     ],
-    hdrs = ["syntax.tab.h"],
+    hdrs = ["parser.h"],
     # Disable warnings for generated code.
     copts = [
         "-Wno-unneeded-internal-declaration",
@@ -35,15 +35,15 @@ cc_library(
 
 genrule(
     name = "syntax_bison_srcs",
-    srcs = ["syntax.ypp"],
+    srcs = ["parser.ypp"],
     outs = [
-        "syntax.tab.cpp",
-        "syntax.tab.h",
+        "parser.cpp",
+        "parser.h",
     ],
     cmd = "M4=$(M4) $(BISON) " +
-          "--output=$(location syntax.tab.cpp) " +
-          "--defines=$(location syntax.tab.h) " +
-          "$(location syntax.ypp)",
+          "--output=$(location parser.cpp) " +
+          "--defines=$(location parser.h) " +
+          "$(location parser.ypp)",
     toolchains = [
         "@rules_bison//bison:current_bison_toolchain",
         "@rules_m4//m4:current_m4_toolchain",
@@ -52,11 +52,11 @@ genrule(
 
 genrule(
     name = "syntax_flex_srcs",
-    srcs = ["syntax.lpp"],
-    outs = ["syntax.yy.cpp"],
+    srcs = ["lexer.lpp"],
+    outs = ["lexer.cpp"],
     cmd = "M4=$(M4) $(FLEX) " +
-          "--outfile=$(location syntax.yy.cpp) " +
-          "$(location syntax.lpp)",
+          "--outfile=$(location lexer.cpp) " +
+          "$(location lexer.lpp)",
     toolchains = [
         "@rules_flex//flex:current_flex_toolchain",
         "@rules_m4//m4:current_m4_toolchain",
