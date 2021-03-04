@@ -456,12 +456,12 @@ auto PatternMatch(Value* p, Value* v, Env env, std::list<std::string>* vars,
               *p->u.alt.alt_name != *v->u.alt.alt_name) {
             return std::nullopt;
           }
-          auto res =
+          std::optional<Env> result =
               PatternMatch(p->u.alt.arg, v->u.alt.arg, env, vars, line_num);
-          if (!res) {
+          if (!result) {
             return std::nullopt;
           }
-          return *res;
+          return *result;
         }
         default:
           std::cerr
