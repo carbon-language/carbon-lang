@@ -694,6 +694,9 @@ Also see
 
 **Concern:** Does not handle conditional conformance as gracefully.
 
+A brief sketch of this idea (without defaults) was suggested in
+[Another Generic Dilemma](https://matklad.github.io//2021/02/24/another-generic-dilemma.html).
+
 #### Type-types parameterized by reprs
 
 [Carbon meeting Nov 27, 2019 on Generics & Interfaces: Approach 1 (TODO)](#broken-links-footnote)<!-- T:Carbon meeting Nov 27, 2019 on Generics & Interfaces --><!-- A:#heading=h.n2k3narvy12b -->

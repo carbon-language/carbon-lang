@@ -367,8 +367,8 @@ F(a);
 
 You might intentionally use `extend` to implement an interface for a type to
 avoid cluttering the API of that type, for example to avoid a name collision. A
-syntax for reusing method implementations would allow you to do this selectively
-when needed:
+syntax for reusing method implementations allows us to do this selectively when
+needed:
 
 ```
 struct Point3 {
