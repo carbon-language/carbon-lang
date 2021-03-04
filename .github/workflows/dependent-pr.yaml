@@ -2,14 +2,14 @@
 # Exceptions. See /LICENSE for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-name: Dependent PR
+name: Dependencies
 
 on: [pull_request]
 
 jobs:
   check_dependencies:
     runs-on: ubuntu-latest
-    name: Check dependencies landed
+    name: check PRs landed
     steps:
       - uses: gregsdennis/dependencies-action@main
         env:
