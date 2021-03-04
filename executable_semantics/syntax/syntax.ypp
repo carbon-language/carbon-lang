@@ -10,7 +10,7 @@
 #include <iostream>
 #include <list>
 
-#include "executable_semantics/syntax_helpers.h"
+#include "executable_semantics/syntax/syntax_helpers.h"
 }
 
 %code requires {
