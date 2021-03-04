@@ -2270,8 +2270,9 @@ single best match. Best is defined using the "more specific" partial ordering:
     than a generic type (`T` for any type `T`).
 -   A more restrictive constraint is more specific. In particular, a type-type
     `T` is more restrictive than a type-type `U` if the set of restrictions for
-    `T` is a superset of those for `U`. This defines a partial order on
-    type-types.
+    `T` is a superset of those for `U`. So `Foo(T)` for
+    `Comparable + Printable:$ T` is more specific than `Comparable:$ T`, which
+    is more specific than `Type:$ T`.
 -   TODO: others?
 
 The ability to have a more specific implementation used in place of a more
