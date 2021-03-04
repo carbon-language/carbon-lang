@@ -32,9 +32,9 @@ void ExpectType(int line_num, const std::string& context, Value* expected,
 void PrintErrorString(const std::string& s) { std::cerr << s; }
 
 void PrintTypeEnv(TypeEnv env, std::ostream& out) {
-  for (auto var_val : env) {
-    out << var_val.first << ": ";
-    PrintValue(var_val.second, out);
+  for (const auto& [name, value] : env) {
+    out << name << ": ";
+    PrintValue(value, out);
     out << ", ";
   }
 }
