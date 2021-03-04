@@ -28,6 +28,8 @@ contributions.
     -   [Clang and LLVM](#clang-and-llvm)
     -   [Ninja](#ninja)
     -   [pre-commit](#pre-commit)
+    -   [gql](#gql)
+    -   [PyGitHub](#pygithub)
 -   [Optional tools](#optional-tools)
     -   [Carbon-maintained](#carbon-maintained)
         -   [new_proposal.py](#new_proposalpy)
@@ -65,6 +67,8 @@ typical tool setup flow is:
     -   `git config core.fsmonitor rs-git-fsmonitor` to set up
         [rs-git-fsmonitor](#rs-git-fsmonitor-and-watchman) in the clone.
     -   `pre-commit install` to set up [pre-commit](#pre-commit) in the clone.
+4.  Validate your installation by invoking `bazel test //...:all' from the
+    project root. All tests should pass.
 
 ## Package managers
 
@@ -241,6 +245,18 @@ git commit
 When modifying or adding pre-commit hooks, please run
 `pre-commit run --all-files` to see what changes.
 
+### gql
+
+```bash
+pip install gql
+```
+
+### PyGitHub
+
+```bash
+pip install PyGitHub
+```
+
 ## Optional tools
 
 ### Carbon-maintained
@@ -267,12 +283,6 @@ Options can be seen with `-h`. A couple key options to be aware of are:
     still need to respond to.
 -   `--comments-from LOGIN`: Only print threads with comments from the given
     user. For example, use when looking for threads that you've commented on.
-
-**NOTE**: This requires the Python gql package:
-
-```bash
-pip install gql
-```
 
 ### GitHub
 

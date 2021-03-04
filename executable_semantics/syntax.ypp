@@ -15,7 +15,7 @@
 
 %code requires {
 #include "executable_semantics/ast/declaration.h"
-#include "executable_semantics/ast/expression_or_field_list.h"
+#include "executable_semantics/ast/field_list.h"
 #include "executable_semantics/ast/function_definition.h"
 }
 
@@ -38,10 +38,10 @@ void yyerror(char* error) {
    Carbon::Statement* statement_list;
    Carbon::FunctionDefinition* function_definition;
    Carbon::Declaration* declaration;
-   std::list<Carbon::Declaration*>* declaration_list;
+   std::list<Carbon::Declaration>* declaration_list;
    Carbon::Member* member;
    std::list<Carbon::Member*>* member_list;
-   Carbon::ExpOrFieldList* field_list;
+   Carbon::FieldList* field_list;
    std::pair<std::string, Carbon::Expression*>* alternative;
    std::list<std::pair<std::string, Carbon::Expression*>>* alternative_list;
    std::pair<Carbon::Expression*, Carbon::Statement*>* clause;
@@ -62,6 +62,7 @@ void yyerror(char* error) {
 %type <expression> expression
 %type <expression> pattern
 %type <expression> return_type
+%type <expression> paren_expression
 %type <expression> tuple
 %type <member> member
 %type <member_list> member_list
@@ -137,7 +138,7 @@ expression:
     { $$ = Carbon::MakeTypeType(yylineno); }
 | AUTO
     { $$ = Carbon::MakeAutoType(yylineno); }
-| tuple { $$ = $1; }
+| paren_expression { $$ = $1; }
 | expression EQUAL expression
     { $$ = Carbon::MakeBinOp(yylineno, Carbon::Operator::Eq, $1, $3); }
 | expression '+' expression
@@ -153,38 +154,39 @@ expression:
 | '-' expression
     { $$ = Carbon::MakeUnOp(yylineno, Carbon::Operator::Neg, $2); }
 | expression tuple
-    {
-      if ($2->tag == Carbon::ExpressionKind::Tuple) {
-        $$ = Carbon::MakeCall(yylineno, $1, $2);
-      } else {
-        auto vec =
-            new std::vector<std::pair<std::string, Carbon::Expression*>>();
-        vec->push_back(std::make_pair("", $2));
-        $$ = Carbon::MakeCall(yylineno, $1, Carbon::MakeTuple(yylineno, vec));
-      }
-    }
+    { $$ = Carbon::MakeCall(yylineno, $1, $2); }
 | FNTY tuple return_type
     { $$ = Carbon::MakeFunType(yylineno, $2, $3); }
 ;
 designator: '.' identifier { $$ = $2; }
 ;
-tuple: '(' field_list ')'
+paren_expression: '(' field_list ')'
     {
-      switch ($2->tag) {
-      case Carbon::ExpOrFieldListKind::Exp:
-        $$ = $2->u.exp;
-        break;
-      case Carbon::ExpOrFieldListKind::FieldList:
+     if ($2->fields->size() == 1 &&
+         $2->fields->front().first == "" &&
+	 !$2->has_explicit_comma) {
+	$$ = $2->fields->front().second;
+     } else {
         auto vec = new std::vector<std::pair<std::string,Carbon::Expression*>>(
-            $2->u.fields->begin(), $2->u.fields->end());
+            $2->fields->begin(), $2->fields->end());
         $$ = Carbon::MakeTuple(yylineno, vec);
-        break;
       }
     }
 ;
+tuple: '(' field_list ')'
+    {
+     auto vec = new std::vector<std::pair<std::string,Carbon::Expression*>>(
+         $2->fields->begin(), $2->fields->end());
+     $$ = Carbon::MakeTuple(yylineno, vec);
+    }
 field:
   pattern
-    { $$ = Carbon::MakeExp($1); }
+    {
+      auto fields =
+          new std::list<std::pair<std::string, Carbon::Expression*>>();
+      fields->push_back(std::make_pair("", $1));
+      $$ = Carbon::MakeFieldList(fields);
+    }
 | designator '=' pattern
     {
       auto fields =
@@ -289,32 +291,50 @@ member_list:
     { $$ = $2; $$->push_front($1); }
 ;
 alternative:
-  identifier tuple ';'
+  identifier tuple
     { $$ = new std::pair<std::string, Carbon::Expression*>($1, $2); }
+| identifier
+    {
+      $$ = new std::pair<std::string, Carbon::Expression*>(
+          $1, Carbon::MakeTuple(
+            yylineno,
+            new std::vector<std::pair<std::string, Carbon::Expression*>>()));
+    }
 ;
 alternative_list:
   // Empty
     { $$ = new std::list<std::pair<std::string, Carbon::Expression*>>(); }
-| alternative alternative_list
-    { $$ = $2; $$->push_front(*$1); }
+| alternative
+    {
+      $$ = new std::list<std::pair<std::string, Carbon::Expression*>>();
+      $$->push_front(*$1);
+    }
+| alternative ',' alternative_list
+    { $$ = $3; $$->push_front(*$1); }
 ;
 declaration:
   function_definition
-    { $$ = Carbon::MakeFunDecl($1); }
+    { $$ = new Carbon::Declaration(Carbon::FunctionDeclaration{$1}); }
 | function_declaration
-    { $$ = Carbon::MakeFunDecl($1); }
+    { $$ = new Carbon::Declaration(Carbon::FunctionDeclaration{$1}); }
 | STRUCT identifier '{' member_list '}'
-    { $$ = Carbon::MakeStructDecl(yylineno, $2, $4); }
+    {
+      $$ = new Carbon::Declaration(
+        Carbon::StructDeclaration{yylineno, $2, $4});
+    }
 | CHOICE identifier '{' alternative_list '}'
-    { $$ = Carbon::MakeChoiceDecl(yylineno, $2, $4); }
+    {
+      $$ = new Carbon::Declaration(
+        Carbon::ChoiceDeclaration{yylineno, $2, std::list(*$4)});
+    }
 ;
 declaration_list:
   // Empty
-    { $$ = new std::list<Carbon::Declaration*>(); }
+    { $$ = new std::list<Carbon::Declaration>(); }
 | declaration declaration_list
     {
       $$ = $2;
-      $$->push_front($1);
+      $$->push_front(*$1);
     }
 ;
 %%

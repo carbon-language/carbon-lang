@@ -1,7 +1,7 @@
 ********** source program **********
 choice Ints {
 alt None ();
-alt One Int;
+alt One (0 = Int);
 alt Two (0 = Int, 1 = Int);
 }
 fn main () -> Int {
@@ -9,7 +9,7 @@ var auto: x = Ints.None();
 var auto: y = Ints.One(0 = 42);
 var auto: n = 0;
 match (y) {
-case Ints.None() =>
+case Ints.None =>
 n = (n + 2);
 case Ints.One(0 = auto: x) =>
 n = ((x + 1) - 42);
@@ -27,17 +27,873 @@ n = 5;
 return n;
 
 }
+choice MoreInts {
+alt None ();
+alt One (0 = Int);
+alt Two (0 = Int, 1 = Int);
+}
 ********** type checking **********
 --- step exp () --->
+--- step exp (0 = Int) --->
 --- step exp Int --->
+--- handle value Int with (0 = Int)<1>(Int,) --->
 --- step exp (0 = Int, 1 = Int) --->
 --- step exp Int --->
 --- handle value Int with (0 = Int, 1 = Int)<1>(Int,) --->
 --- step exp Int --->
 --- handle value Int with (0 = Int, 1 = Int)<2>(Int,Int,) --->
 --- step exp Int --->
+--- step exp () --->
+--- step exp (0 = Int) --->
+--- step exp Int --->
+--- handle value Int with (0 = Int)<1>(Int,) --->
+--- step exp (0 = Int, 1 = Int) --->
+--- step exp Int --->
+--- handle value Int with (0 = Int, 1 = Int)<1>(Int,) --->
+--- step exp Int --->
+--- handle value Int with (0 = Int, 1 = Int)<2>(Int,Int,) --->
 --- step exp Int --->
 --- step exp auto --->
-13: type error in call
-expected: Int
-actual: Tuple(0 = Int)
+--- step exp auto --->
+--- step exp auto --->
+--- step exp auto --->
+--- step exp auto --->
+--- step exp auto --->
+--- step exp auto --->
+--- step exp auto --->
+--- step exp auto --->
+
+********** type checking complete **********
+choice Ints {
+alt None ();
+alt One (0 = Int);
+alt Two (0 = Int, 1 = Int);
+}
+fn main () -> Int {
+var auto: x = Ints.None();
+var auto: y = Ints.One(0 = 42);
+var auto: n = 0;
+match (y) {
+case Ints.None =>
+n = (n + 2);
+case Ints.One(0 = auto: x) =>
+n = ((x + 1) - 42);
+case Ints.Two(0 = auto: a, 1 = auto: b) =>
+n = 2;
+}
+match (x) {
+case Ints.One(0 = auto: x) =>
+n = (x + 2);
+case Ints.None() =>
+n = (n - 1);
+case Ints.Two(0 = auto: x, 1 = auto: y) =>
+n = 5;
+}
+return n;
+}
+choice MoreInts {
+alt None ();
+alt One (0 = Int);
+alt Two (0 = Int, 1 = Int);
+}
+********** starting execution **********
+********** initializing globals **********
+--- step exp () --->
+--- step exp (0 = Int) --->
+--- step exp Int --->
+--- handle value Int with (0 = Int)<1>(Int,) --->
+--- step exp (0 = Int, 1 = Int) --->
+--- step exp Int --->
+--- handle value Int with (0 = Int, 1 = Int)<1>(Int,) --->
+--- step exp Int --->
+--- handle value Int with (0 = Int, 1 = Int)<2>(Int,Int,) --->
+--- step exp () --->
+--- step exp () --->
+--- step exp (0 = Int) --->
+--- step exp Int --->
+--- handle value Int with (0 = Int)<1>(Int,) --->
+--- step exp (0 = Int, 1 = Int) --->
+--- step exp Int --->
+--- handle value Int with (0 = Int, 1 = Int)<1>(Int,) --->
+--- step exp Int --->
+--- handle value Int with (0 = Int, 1 = Int)<2>(Int,Int,) --->
+********** calling main function **********
+{
+stack: top{main()<-1>}
+heap: Int, Int, Int, choice Ints, fun<main>, Int, Int, Int, choice MoreInts, 
+env: MoreInts: choice MoreInts, main: fun<main>, Ints: choice Ints, 
+}
+--- step exp main() --->
+{
+stack: top{main<-1> :: main()<0>}
+heap: Int, Int, Int, choice Ints, fun<main>, Int, Int, Int, choice MoreInts, 
+env: MoreInts: choice MoreInts, main: fun<main>, Ints: choice Ints, 
+}
+--- step exp main --->
+{
+stack: top{fun<main><-1> :: main()<0>}
+heap: Int, Int, Int, choice Ints, fun<main>, Int, Int, Int, choice MoreInts, 
+env: MoreInts: choice MoreInts, main: fun<main>, Ints: choice Ints, 
+}
+--- handle value fun<main> with main()<1>(fun<main>,) --->
+{
+stack: top{()<-1> :: main()<1>(fun<main>,)}
+heap: Int, Int, Int, choice Ints, fun<main>, Int, Int, Int, choice MoreInts, 
+env: MoreInts: choice MoreInts, main: fun<main>, Ints: choice Ints, 
+}
+--- step exp () --->
+{
+stack: top{()<-1> :: main()<1>(fun<main>,)}
+heap: Int, Int, Int, choice Ints, fun<main>, Int, Int, Int, choice MoreInts, 
+env: MoreInts: choice MoreInts, main: fun<main>, Ints: choice Ints, 
+}
+--- handle value () with main()<2>(fun<main>,(),) --->
+pattern_match((), ())
+{
+stack: main{var auto: x = Ints.None(); ... <-1>} :: top{}
+heap: Int, Int, Int, choice Ints, fun<main>, Int, Int, Int, choice MoreInts, 
+env: MoreInts: choice MoreInts, main: fun<main>, Ints: choice Ints, 
+}
+--- step stmt var auto: x = Ints.None(); ...  --->
+{
+stack: main{var auto: x = Ints.None();<-1> :: var auto: y = Ints.One(0 = 42); ... <-1>} :: top{}
+heap: Int, Int, Int, choice Ints, fun<main>, Int, Int, Int, choice MoreInts, 
+env: MoreInts: choice MoreInts, main: fun<main>, Ints: choice Ints, 
+}
+--- step stmt var auto: x = Ints.None(); --->
+{
+stack: main{Ints.None()<-1> :: var auto: x = Ints.None();<0> :: var auto: y = Ints.One(0 = 42); ... <-1>} :: top{}
+heap: Int, Int, Int, choice Ints, fun<main>, Int, Int, Int, choice MoreInts, 
+env: MoreInts: choice MoreInts, main: fun<main>, Ints: choice Ints, 
+}
+--- step exp Ints.None() --->
+{
+stack: main{Ints.None<-1> :: Ints.None()<0> :: var auto: x = Ints.None();<0> :: var auto: y = Ints.One(0 = 42); ... <-1>} :: top{}
+heap: Int, Int, Int, choice Ints, fun<main>, Int, Int, Int, choice MoreInts, 
+env: MoreInts: choice MoreInts, main: fun<main>, Ints: choice Ints, 
+}
+--- step exp Ints.None --->
+{
+stack: main{Ints<-1> :: Ints.None<0> :: Ints.None()<0> :: var auto: x = Ints.None();<0> :: var auto: y = Ints.One(0 = 42); ... <-1>} :: top{}
+heap: Int, Int, Int, choice Ints, fun<main>, Int, Int, Int, choice MoreInts, 
+env: MoreInts: choice MoreInts, main: fun<main>, Ints: choice Ints, 
+}
+--- step lvalue Ints --->
+{
+stack: main{ptr<3><-1> :: Ints.None<0> :: Ints.None()<0> :: var auto: x = Ints.None();<0> :: var auto: y = Ints.One(0 = 42); ... <-1>} :: top{}
+heap: Int, Int, Int, choice Ints, fun<main>, Int, Int, Int, choice MoreInts, 
+env: MoreInts: choice MoreInts, main: fun<main>, Ints: choice Ints, 
+}
+--- handle value ptr<3> with Ints.None<1>(ptr<3>,) --->
+{
+stack: main{Ints.None<-1> :: Ints.None()<0> :: var auto: x = Ints.None();<0> :: var auto: y = Ints.One(0 = 42); ... <-1>} :: top{}
+heap: Int, Int, Int, choice Ints, fun<main>, Int, Int, Int, choice MoreInts, Ints.None, 
+env: MoreInts: choice MoreInts, main: fun<main>, Ints: choice Ints, 
+}
+--- handle value Ints.None with Ints.None()<1>(Ints.None,) --->
+{
+stack: main{()<-1> :: Ints.None()<1>(Ints.None,) :: var auto: x = Ints.None();<0> :: var auto: y = Ints.One(0 = 42); ... <-1>} :: top{}
+heap: Int, Int, Int, choice Ints, fun<main>, Int, Int, Int, choice MoreInts, Ints.None, 
+env: MoreInts: choice MoreInts, main: fun<main>, Ints: choice Ints, 
+}
+--- step exp () --->
+{
+stack: main{()<-1> :: Ints.None()<1>(Ints.None,) :: var auto: x = Ints.None();<0> :: var auto: y = Ints.One(0 = 42); ... <-1>} :: top{}
+heap: Int, Int, Int, choice Ints, fun<main>, Int, Int, Int, choice MoreInts, Ints.None, 
+env: MoreInts: choice MoreInts, main: fun<main>, Ints: choice Ints, 
+}
+--- handle value () with Ints.None()<2>(Ints.None,(),) --->
+{
+stack: main{alt Ints.None ()<-1> :: var auto: x = Ints.None();<0> :: var auto: y = Ints.One(0 = 42); ... <-1>} :: top{}
+heap: Int, Int, Int, choice Ints, fun<main>, Int, Int, Int, choice MoreInts, Ints.None, 
+env: MoreInts: choice MoreInts, main: fun<main>, Ints: choice Ints, 
+}
+--- handle value alt Ints.None () with var auto: x = Ints.None();<1>(alt Ints.None (),) --->
+{
+stack: main{auto: x<-1> :: var auto: x = Ints.None();<1>(alt Ints.None (),) :: var auto: y = Ints.One(0 = 42); ... <-1>} :: top{}
+heap: Int, Int, Int, choice Ints, fun<main>, Int, Int, Int, choice MoreInts, Ints.None, 
+env: MoreInts: choice MoreInts, main: fun<main>, Ints: choice Ints, 
+}
+--- step exp auto: x --->
+{
+stack: main{auto<-1> :: auto: x<0> :: var auto: x = Ints.None();<1>(alt Ints.None (),) :: var auto: y = Ints.One(0 = 42); ... <-1>} :: top{}
+heap: Int, Int, Int, choice Ints, fun<main>, Int, Int, Int, choice MoreInts, Ints.None, 
+env: MoreInts: choice MoreInts, main: fun<main>, Ints: choice Ints, 
+}
+--- step exp auto --->
+{
+stack: main{auto<-1> :: auto: x<0> :: var auto: x = Ints.None();<1>(alt Ints.None (),) :: var auto: y = Ints.One(0 = 42); ... <-1>} :: top{}
+heap: Int, Int, Int, choice Ints, fun<main>, Int, Int, Int, choice MoreInts, Ints.None, 
+env: MoreInts: choice MoreInts, main: fun<main>, Ints: choice Ints, 
+}
+--- handle value auto with auto: x<1>(auto,) --->
+{
+stack: main{auto: x<-1> :: var auto: x = Ints.None();<1>(alt Ints.None (),) :: var auto: y = Ints.One(0 = 42); ... <-1>} :: top{}
+heap: Int, Int, Int, choice Ints, fun<main>, Int, Int, Int, choice MoreInts, Ints.None, 
+env: MoreInts: choice MoreInts, main: fun<main>, Ints: choice Ints, 
+}
+--- handle value auto: x with var auto: x = Ints.None();<2>(alt Ints.None (),auto: x,) --->
+pattern_match(auto: x, alt Ints.None ())
+{
+stack: main{var auto: y = Ints.One(0 = 42); ... <-1>} :: top{}
+heap: Int, Int, Int, choice Ints, fun<main>, Int, Int, Int, choice MoreInts, Ints.None, alt Ints.None (), 
+env: x: alt Ints.None (), MoreInts: choice MoreInts, main: fun<main>, Ints: choice Ints, 
+}
+--- step stmt var auto: y = Ints.One(0 = 42); ...  --->
+{
+stack: main{var auto: y = Ints.One(0 = 42);<-1> :: var auto: n = 0; ... <-1>} :: top{}
+heap: Int, Int, Int, choice Ints, fun<main>, Int, Int, Int, choice MoreInts, Ints.None, alt Ints.None (), 
+env: x: alt Ints.None (), MoreInts: choice MoreInts, main: fun<main>, Ints: choice Ints, 
+}
+--- step stmt var auto: y = Ints.One(0 = 42); --->
+{
+stack: main{Ints.One(0 = 42)<-1> :: var auto: y = Ints.One(0 = 42);<0> :: var auto: n = 0; ... <-1>} :: top{}
+heap: Int, Int, Int, choice Ints, fun<main>, Int, Int, Int, choice MoreInts, Ints.None, alt Ints.None (), 
+env: x: alt Ints.None (), MoreInts: choice MoreInts, main: fun<main>, Ints: choice Ints, 
+}
+--- step exp Ints.One(0 = 42) --->
+{
+stack: main{Ints.One<-1> :: Ints.One(0 = 42)<0> :: var auto: y = Ints.One(0 = 42);<0> :: var auto: n = 0; ... <-1>} :: top{}
+heap: Int, Int, Int, choice Ints, fun<main>, Int, Int, Int, choice MoreInts, Ints.None, alt Ints.None (), 
+env: x: alt Ints.None (), MoreInts: choice MoreInts, main: fun<main>, Ints: choice Ints, 
+}
+--- step exp Ints.One --->
+{
+stack: main{Ints<-1> :: Ints.One<0> :: Ints.One(0 = 42)<0> :: var auto: y = Ints.One(0 = 42);<0> :: var auto: n = 0; ... <-1>} :: top{}
+heap: Int, Int, Int, choice Ints, fun<main>, Int, Int, Int, choice MoreInts, Ints.None, alt Ints.None (), 
+env: x: alt Ints.None (), MoreInts: choice MoreInts, main: fun<main>, Ints: choice Ints, 
+}
+--- step lvalue Ints --->
+{
+stack: main{ptr<3><-1> :: Ints.One<0> :: Ints.One(0 = 42)<0> :: var auto: y = Ints.One(0 = 42);<0> :: var auto: n = 0; ... <-1>} :: top{}
+heap: Int, Int, Int, choice Ints, fun<main>, Int, Int, Int, choice MoreInts, Ints.None, alt Ints.None (), 
+env: x: alt Ints.None (), MoreInts: choice MoreInts, main: fun<main>, Ints: choice Ints, 
+}
+--- handle value ptr<3> with Ints.One<1>(ptr<3>,) --->
+{
+stack: main{Ints.One<-1> :: Ints.One(0 = 42)<0> :: var auto: y = Ints.One(0 = 42);<0> :: var auto: n = 0; ... <-1>} :: top{}
+heap: Int, Int, Int, choice Ints, fun<main>, Int, Int, Int, choice MoreInts, Ints.None, alt Ints.None (), Ints.One, 
+env: x: alt Ints.None (), MoreInts: choice MoreInts, main: fun<main>, Ints: choice Ints, 
+}
+--- handle value Ints.One with Ints.One(0 = 42)<1>(Ints.One,) --->
+{
+stack: main{(0 = 42)<-1> :: Ints.One(0 = 42)<1>(Ints.One,) :: var auto: y = Ints.One(0 = 42);<0> :: var auto: n = 0; ... <-1>} :: top{}
+heap: Int, Int, Int, choice Ints, fun<main>, Int, Int, Int, choice MoreInts, Ints.None, alt Ints.None (), Ints.One, 
+env: x: alt Ints.None (), MoreInts: choice MoreInts, main: fun<main>, Ints: choice Ints, 
+}
+--- step exp (0 = 42) --->
+{
+stack: main{42<-1> :: (0 = 42)<0> :: Ints.One(0 = 42)<1>(Ints.One,) :: var auto: y = Ints.One(0 = 42);<0> :: var auto: n = 0; ... <-1>} :: top{}
+heap: Int, Int, Int, choice Ints, fun<main>, Int, Int, Int, choice MoreInts, Ints.None, alt Ints.None (), Ints.One, 
+env: x: alt Ints.None (), MoreInts: choice MoreInts, main: fun<main>, Ints: choice Ints, 
+}
+--- step exp 42 --->
+{
+stack: main{42<-1> :: (0 = 42)<0> :: Ints.One(0 = 42)<1>(Ints.One,) :: var auto: y = Ints.One(0 = 42);<0> :: var auto: n = 0; ... <-1>} :: top{}
+heap: Int, Int, Int, choice Ints, fun<main>, Int, Int, Int, choice MoreInts, Ints.None, alt Ints.None (), Ints.One, 
+env: x: alt Ints.None (), MoreInts: choice MoreInts, main: fun<main>, Ints: choice Ints, 
+}
+--- handle value 42 with (0 = 42)<1>(42,) --->
+{
+stack: main{(0 = 42@12)<-1> :: Ints.One(0 = 42)<1>(Ints.One,) :: var auto: y = Ints.One(0 = 42);<0> :: var auto: n = 0; ... <-1>} :: top{}
+heap: Int, Int, Int, choice Ints, fun<main>, Int, Int, Int, choice MoreInts, Ints.None, alt Ints.None (), Ints.One, 42, 
+env: x: alt Ints.None (), MoreInts: choice MoreInts, main: fun<main>, Ints: choice Ints, 
+}
+--- handle value (0 = 42@12) with Ints.One(0 = 42)<2>(Ints.One,(0 = 42@12),) --->
+{
+stack: main{alt Ints.One (0 = 42@13)<-1> :: var auto: y = Ints.One(0 = 42);<0> :: var auto: n = 0; ... <-1>} :: top{}
+heap: Int, Int, Int, choice Ints, fun<main>, Int, Int, Int, choice MoreInts, Ints.None, alt Ints.None (), Ints.One, 42, 42, 
+env: x: alt Ints.None (), MoreInts: choice MoreInts, main: fun<main>, Ints: choice Ints, 
+}
+--- handle value alt Ints.One (0 = 42@13) with var auto: y = Ints.One(0 = 42);<1>(alt Ints.One (0 = 42@13),) --->
+{
+stack: main{auto: y<-1> :: var auto: y = Ints.One(0 = 42);<1>(alt Ints.One (0 = 42@13),) :: var auto: n = 0; ... <-1>} :: top{}
+heap: Int, Int, Int, choice Ints, fun<main>, Int, Int, Int, choice MoreInts, Ints.None, alt Ints.None (), Ints.One, 42, 42, 
+env: x: alt Ints.None (), MoreInts: choice MoreInts, main: fun<main>, Ints: choice Ints, 
+}
+--- step exp auto: y --->
+{
+stack: main{auto<-1> :: auto: y<0> :: var auto: y = Ints.One(0 = 42);<1>(alt Ints.One (0 = 42@13),) :: var auto: n = 0; ... <-1>} :: top{}
+heap: Int, Int, Int, choice Ints, fun<main>, Int, Int, Int, choice MoreInts, Ints.None, alt Ints.None (), Ints.One, 42, 42, 
+env: x: alt Ints.None (), MoreInts: choice MoreInts, main: fun<main>, Ints: choice Ints, 
+}
+--- step exp auto --->
+{
+stack: main{auto<-1> :: auto: y<0> :: var auto: y = Ints.One(0 = 42);<1>(alt Ints.One (0 = 42@13),) :: var auto: n = 0; ... <-1>} :: top{}
+heap: Int, Int, Int, choice Ints, fun<main>, Int, Int, Int, choice MoreInts, Ints.None, alt Ints.None (), Ints.One, 42, 42, 
+env: x: alt Ints.None (), MoreInts: choice MoreInts, main: fun<main>, Ints: choice Ints, 
+}
+--- handle value auto with auto: y<1>(auto,) --->
+{
+stack: main{auto: y<-1> :: var auto: y = Ints.One(0 = 42);<1>(alt Ints.One (0 = 42@13),) :: var auto: n = 0; ... <-1>} :: top{}
+heap: Int, Int, Int, choice Ints, fun<main>, Int, Int, Int, choice MoreInts, Ints.None, alt Ints.None (), Ints.One, 42, 42, 
+env: x: alt Ints.None (), MoreInts: choice MoreInts, main: fun<main>, Ints: choice Ints, 
+}
+--- handle value auto: y with var auto: y = Ints.One(0 = 42);<2>(alt Ints.One (0 = 42@13),auto: y,) --->
+pattern_match(auto: y, alt Ints.One (0 = 42@13))
+{
+stack: main{var auto: n = 0; ... <-1>} :: top{}
+heap: Int, Int, Int, choice Ints, fun<main>, Int, Int, Int, choice MoreInts, Ints.None, alt Ints.None (), Ints.One, 42, 42, 42, alt Ints.One (0 = 42@14), 
+env: y: alt Ints.One (0 = 42@14), x: alt Ints.None (), MoreInts: choice MoreInts, main: fun<main>, Ints: choice Ints, 
+}
+--- step stmt var auto: n = 0; ...  --->
+{
+stack: main{var auto: n = 0;<-1> :: match (y) {...} ... <-1>} :: top{}
+heap: Int, Int, Int, choice Ints, fun<main>, Int, Int, Int, choice MoreInts, Ints.None, alt Ints.None (), Ints.One, 42, 42, 42, alt Ints.One (0 = 42@14), 
+env: y: alt Ints.One (0 = 42@14), x: alt Ints.None (), MoreInts: choice MoreInts, main: fun<main>, Ints: choice Ints, 
+}
+--- step stmt var auto: n = 0; --->
+{
+stack: main{0<-1> :: var auto: n = 0;<0> :: match (y) {...} ... <-1>} :: top{}
+heap: Int, Int, Int, choice Ints, fun<main>, Int, Int, Int, choice MoreInts, Ints.None, alt Ints.None (), Ints.One, 42, 42, 42, alt Ints.One (0 = 42@14), 
+env: y: alt Ints.One (0 = 42@14), x: alt Ints.None (), MoreInts: choice MoreInts, main: fun<main>, Ints: choice Ints, 
+}
+--- step exp 0 --->
+{
+stack: main{0<-1> :: var auto: n = 0;<0> :: match (y) {...} ... <-1>} :: top{}
+heap: Int, Int, Int, choice Ints, fun<main>, Int, Int, Int, choice MoreInts, Ints.None, alt Ints.None (), Ints.One, 42, 42, 42, alt Ints.One (0 = 42@14), 
+env: y: alt Ints.One (0 = 42@14), x: alt Ints.None (), MoreInts: choice MoreInts, main: fun<main>, Ints: choice Ints, 
+}
+--- handle value 0 with var auto: n = 0;<1>(0,) --->
+{
+stack: main{auto: n<-1> :: var auto: n = 0;<1>(0,) :: match (y) {...} ... <-1>} :: top{}
+heap: Int, Int, Int, choice Ints, fun<main>, Int, Int, Int, choice MoreInts, Ints.None, alt Ints.None (), Ints.One, 42, 42, 42, alt Ints.One (0 = 42@14), 
+env: y: alt Ints.One (0 = 42@14), x: alt Ints.None (), MoreInts: choice MoreInts, main: fun<main>, Ints: choice Ints, 
+}
+--- step exp auto: n --->
+{
+stack: main{auto<-1> :: auto: n<0> :: var auto: n = 0;<1>(0,) :: match (y) {...} ... <-1>} :: top{}
+heap: Int, Int, Int, choice Ints, fun<main>, Int, Int, Int, choice MoreInts, Ints.None, alt Ints.None (), Ints.One, 42, 42, 42, alt Ints.One (0 = 42@14), 
+env: y: alt Ints.One (0 = 42@14), x: alt Ints.None (), MoreInts: choice MoreInts, main: fun<main>, Ints: choice Ints, 
+}
+--- step exp auto --->
+{
+stack: main{auto<-1> :: auto: n<0> :: var auto: n = 0;<1>(0,) :: match (y) {...} ... <-1>} :: top{}
+heap: Int, Int, Int, choice Ints, fun<main>, Int, Int, Int, choice MoreInts, Ints.None, alt Ints.None (), Ints.One, 42, 42, 42, alt Ints.One (0 = 42@14), 
+env: y: alt Ints.One (0 = 42@14), x: alt Ints.None (), MoreInts: choice MoreInts, main: fun<main>, Ints: choice Ints, 
+}
+--- handle value auto with auto: n<1>(auto,) --->
+{
+stack: main{auto: n<-1> :: var auto: n = 0;<1>(0,) :: match (y) {...} ... <-1>} :: top{}
+heap: Int, Int, Int, choice Ints, fun<main>, Int, Int, Int, choice MoreInts, Ints.None, alt Ints.None (), Ints.One, 42, 42, 42, alt Ints.One (0 = 42@14), 
+env: y: alt Ints.One (0 = 42@14), x: alt Ints.None (), MoreInts: choice MoreInts, main: fun<main>, Ints: choice Ints, 
+}
+--- handle value auto: n with var auto: n = 0;<2>(0,auto: n,) --->
+pattern_match(auto: n, 0)
+{
+stack: main{match (y) {...} ... <-1>} :: top{}
+heap: Int, Int, Int, choice Ints, fun<main>, Int, Int, Int, choice MoreInts, Ints.None, alt Ints.None (), Ints.One, 42, 42, 42, alt Ints.One (0 = 42@14), 0, 
+env: n: 0, y: alt Ints.One (0 = 42@14), x: alt Ints.None (), MoreInts: choice MoreInts, main: fun<main>, Ints: choice Ints, 
+}
+--- step stmt match (y) {...} ...  --->
+{
+stack: main{match (y) {...}<-1> :: match (x) {...} ... <-1>} :: top{}
+heap: Int, Int, Int, choice Ints, fun<main>, Int, Int, Int, choice MoreInts, Ints.None, alt Ints.None (), Ints.One, 42, 42, 42, alt Ints.One (0 = 42@14), 0, 
+env: n: 0, y: alt Ints.One (0 = 42@14), x: alt Ints.None (), MoreInts: choice MoreInts, main: fun<main>, Ints: choice Ints, 
+}
+--- step stmt match (y) {...} --->
+{
+stack: main{y<-1> :: match (y) {...}<0> :: match (x) {...} ... <-1>} :: top{}
+heap: Int, Int, Int, choice Ints, fun<main>, Int, Int, Int, choice MoreInts, Ints.None, alt Ints.None (), Ints.One, 42, 42, 42, alt Ints.One (0 = 42@14), 0, 
+env: n: 0, y: alt Ints.One (0 = 42@14), x: alt Ints.None (), MoreInts: choice MoreInts, main: fun<main>, Ints: choice Ints, 
+}
+--- step exp y --->
+{
+stack: main{alt Ints.One (0 = 42@14)<-1> :: match (y) {...}<0> :: match (x) {...} ... <-1>} :: top{}
+heap: Int, Int, Int, choice Ints, fun<main>, Int, Int, Int, choice MoreInts, Ints.None, alt Ints.None (), Ints.One, 42, 42, 42, alt Ints.One (0 = 42@14), 0, 
+env: n: 0, y: alt Ints.One (0 = 42@14), x: alt Ints.None (), MoreInts: choice MoreInts, main: fun<main>, Ints: choice Ints, 
+}
+--- handle value alt Ints.One (0 = 42@14) with match (y) {...}<1>(alt Ints.One (0 = 42@14),) --->
+{
+stack: main{Ints.None<-1> :: match (y) {...}<1>(alt Ints.One (0 = 42@14),) :: match (x) {...} ... <-1>} :: top{}
+heap: Int, Int, Int, choice Ints, fun<main>, Int, Int, Int, choice MoreInts, Ints.None, alt Ints.None (), Ints.One, 42, 42, 42, alt Ints.One (0 = 42@14), 0, 
+env: n: 0, y: alt Ints.One (0 = 42@14), x: alt Ints.None (), MoreInts: choice MoreInts, main: fun<main>, Ints: choice Ints, 
+}
+--- step exp Ints.None --->
+{
+stack: main{Ints<-1> :: Ints.None<0> :: match (y) {...}<1>(alt Ints.One (0 = 42@14),) :: match (x) {...} ... <-1>} :: top{}
+heap: Int, Int, Int, choice Ints, fun<main>, Int, Int, Int, choice MoreInts, Ints.None, alt Ints.None (), Ints.One, 42, 42, 42, alt Ints.One (0 = 42@14), 0, 
+env: n: 0, y: alt Ints.One (0 = 42@14), x: alt Ints.None (), MoreInts: choice MoreInts, main: fun<main>, Ints: choice Ints, 
+}
+--- step lvalue Ints --->
+{
+stack: main{ptr<3><-1> :: Ints.None<0> :: match (y) {...}<1>(alt Ints.One (0 = 42@14),) :: match (x) {...} ... <-1>} :: top{}
+heap: Int, Int, Int, choice Ints, fun<main>, Int, Int, Int, choice MoreInts, Ints.None, alt Ints.None (), Ints.One, 42, 42, 42, alt Ints.One (0 = 42@14), 0, 
+env: n: 0, y: alt Ints.One (0 = 42@14), x: alt Ints.None (), MoreInts: choice MoreInts, main: fun<main>, Ints: choice Ints, 
+}
+--- handle value ptr<3> with Ints.None<1>(ptr<3>,) --->
+{
+stack: main{Ints.None<-1> :: match (y) {...}<1>(alt Ints.One (0 = 42@14),) :: match (x) {...} ... <-1>} :: top{}
+heap: Int, Int, Int, choice Ints, fun<main>, Int, Int, Int, choice MoreInts, Ints.None, alt Ints.None (), Ints.One, 42, 42, 42, alt Ints.One (0 = 42@14), 0, Ints.None, 
+env: n: 0, y: alt Ints.One (0 = 42@14), x: alt Ints.None (), MoreInts: choice MoreInts, main: fun<main>, Ints: choice Ints, 
+}
+--- handle value Ints.None with match (y) {...}<2>(alt Ints.One (0 = 42@14),Ints.None,) --->
+pattern_match(Ints.None, alt Ints.One (0 = 42@14))
+{
+stack: main{Ints.One(0 = auto: x)<-1> :: match (y) {...}<3>(alt Ints.One (0 = 42@14),Ints.None,) :: match (x) {...} ... <-1>} :: top{}
+heap: Int, Int, Int, choice Ints, fun<main>, Int, Int, Int, choice MoreInts, Ints.None, alt Ints.None (), Ints.One, 42, 42, 42, alt Ints.One (0 = 42@14), 0, Ints.None, 
+env: n: 0, y: alt Ints.One (0 = 42@14), x: alt Ints.None (), MoreInts: choice MoreInts, main: fun<main>, Ints: choice Ints, 
+}
+--- step exp Ints.One(0 = auto: x) --->
+{
+stack: main{Ints.One<-1> :: Ints.One(0 = auto: x)<0> :: match (y) {...}<3>(alt Ints.One (0 = 42@14),Ints.None,) :: match (x) {...} ... <-1>} :: top{}
+heap: Int, Int, Int, choice Ints, fun<main>, Int, Int, Int, choice MoreInts, Ints.None, alt Ints.None (), Ints.One, 42, 42, 42, alt Ints.One (0 = 42@14), 0, Ints.None, 
+env: n: 0, y: alt Ints.One (0 = 42@14), x: alt Ints.None (), MoreInts: choice MoreInts, main: fun<main>, Ints: choice Ints, 
+}
+--- step exp Ints.One --->
+{
+stack: main{Ints<-1> :: Ints.One<0> :: Ints.One(0 = auto: x)<0> :: match (y) {...}<3>(alt Ints.One (0 = 42@14),Ints.None,) :: match (x) {...} ... <-1>} :: top{}
+heap: Int, Int, Int, choice Ints, fun<main>, Int, Int, Int, choice MoreInts, Ints.None, alt Ints.None (), Ints.One, 42, 42, 42, alt Ints.One (0 = 42@14), 0, Ints.None, 
+env: n: 0, y: alt Ints.One (0 = 42@14), x: alt Ints.None (), MoreInts: choice MoreInts, main: fun<main>, Ints: choice Ints, 
+}
+--- step lvalue Ints --->
+{
+stack: main{ptr<3><-1> :: Ints.One<0> :: Ints.One(0 = auto: x)<0> :: match (y) {...}<3>(alt Ints.One (0 = 42@14),Ints.None,) :: match (x) {...} ... <-1>} :: top{}
+heap: Int, Int, Int, choice Ints, fun<main>, Int, Int, Int, choice MoreInts, Ints.None, alt Ints.None (), Ints.One, 42, 42, 42, alt Ints.One (0 = 42@14), 0, Ints.None, 
+env: n: 0, y: alt Ints.One (0 = 42@14), x: alt Ints.None (), MoreInts: choice MoreInts, main: fun<main>, Ints: choice Ints, 
+}
+--- handle value ptr<3> with Ints.One<1>(ptr<3>,) --->
+{
+stack: main{Ints.One<-1> :: Ints.One(0 = auto: x)<0> :: match (y) {...}<3>(alt Ints.One (0 = 42@14),Ints.None,) :: match (x) {...} ... <-1>} :: top{}
+heap: Int, Int, Int, choice Ints, fun<main>, Int, Int, Int, choice MoreInts, Ints.None, alt Ints.None (), Ints.One, 42, 42, 42, alt Ints.One (0 = 42@14), 0, Ints.None, Ints.One, 
+env: n: 0, y: alt Ints.One (0 = 42@14), x: alt Ints.None (), MoreInts: choice MoreInts, main: fun<main>, Ints: choice Ints, 
+}
+--- handle value Ints.One with Ints.One(0 = auto: x)<1>(Ints.One,) --->
+{
+stack: main{(0 = auto: x)<-1> :: Ints.One(0 = auto: x)<1>(Ints.One,) :: match (y) {...}<3>(alt Ints.One (0 = 42@14),Ints.None,) :: match (x) {...} ... <-1>} :: top{}
+heap: Int, Int, Int, choice Ints, fun<main>, Int, Int, Int, choice MoreInts, Ints.None, alt Ints.None (), Ints.One, 42, 42, 42, alt Ints.One (0 = 42@14), 0, Ints.None, Ints.One, 
+env: n: 0, y: alt Ints.One (0 = 42@14), x: alt Ints.None (), MoreInts: choice MoreInts, main: fun<main>, Ints: choice Ints, 
+}
+--- step exp (0 = auto: x) --->
+{
+stack: main{auto: x<-1> :: (0 = auto: x)<0> :: Ints.One(0 = auto: x)<1>(Ints.One,) :: match (y) {...}<3>(alt Ints.One (0 = 42@14),Ints.None,) :: match (x) {...} ... <-1>} :: top{}
+heap: Int, Int, Int, choice Ints, fun<main>, Int, Int, Int, choice MoreInts, Ints.None, alt Ints.None (), Ints.One, 42, 42, 42, alt Ints.One (0 = 42@14), 0, Ints.None, Ints.One, 
+env: n: 0, y: alt Ints.One (0 = 42@14), x: alt Ints.None (), MoreInts: choice MoreInts, main: fun<main>, Ints: choice Ints, 
+}
+--- step exp auto: x --->
+{
+stack: main{auto<-1> :: auto: x<0> :: (0 = auto: x)<0> :: Ints.One(0 = auto: x)<1>(Ints.One,) :: match (y) {...}<3>(alt Ints.One (0 = 42@14),Ints.None,) :: match (x) {...} ... <-1>} :: top{}
+heap: Int, Int, Int, choice Ints, fun<main>, Int, Int, Int, choice MoreInts, Ints.None, alt Ints.None (), Ints.One, 42, 42, 42, alt Ints.One (0 = 42@14), 0, Ints.None, Ints.One, 
+env: n: 0, y: alt Ints.One (0 = 42@14), x: alt Ints.None (), MoreInts: choice MoreInts, main: fun<main>, Ints: choice Ints, 
+}
+--- step exp auto --->
+{
+stack: main{auto<-1> :: auto: x<0> :: (0 = auto: x)<0> :: Ints.One(0 = auto: x)<1>(Ints.One,) :: match (y) {...}<3>(alt Ints.One (0 = 42@14),Ints.None,) :: match (x) {...} ... <-1>} :: top{}
+heap: Int, Int, Int, choice Ints, fun<main>, Int, Int, Int, choice MoreInts, Ints.None, alt Ints.None (), Ints.One, 42, 42, 42, alt Ints.One (0 = 42@14), 0, Ints.None, Ints.One, 
+env: n: 0, y: alt Ints.One (0 = 42@14), x: alt Ints.None (), MoreInts: choice MoreInts, main: fun<main>, Ints: choice Ints, 
+}
+--- handle value auto with auto: x<1>(auto,) --->
+{
+stack: main{auto: x<-1> :: (0 = auto: x)<0> :: Ints.One(0 = auto: x)<1>(Ints.One,) :: match (y) {...}<3>(alt Ints.One (0 = 42@14),Ints.None,) :: match (x) {...} ... <-1>} :: top{}
+heap: Int, Int, Int, choice Ints, fun<main>, Int, Int, Int, choice MoreInts, Ints.None, alt Ints.None (), Ints.One, 42, 42, 42, alt Ints.One (0 = 42@14), 0, Ints.None, Ints.One, 
+env: n: 0, y: alt Ints.One (0 = 42@14), x: alt Ints.None (), MoreInts: choice MoreInts, main: fun<main>, Ints: choice Ints, 
+}
+--- handle value auto: x with (0 = auto: x)<1>(auto: x,) --->
+{
+stack: main{(0 = auto: x@19)<-1> :: Ints.One(0 = auto: x)<1>(Ints.One,) :: match (y) {...}<3>(alt Ints.One (0 = 42@14),Ints.None,) :: match (x) {...} ... <-1>} :: top{}
+heap: Int, Int, Int, choice Ints, fun<main>, Int, Int, Int, choice MoreInts, Ints.None, alt Ints.None (), Ints.One, 42, 42, 42, alt Ints.One (0 = 42@14), 0, Ints.None, Ints.One, auto: x, 
+env: n: 0, y: alt Ints.One (0 = 42@14), x: alt Ints.None (), MoreInts: choice MoreInts, main: fun<main>, Ints: choice Ints, 
+}
+--- handle value (0 = auto: x@19) with Ints.One(0 = auto: x)<2>(Ints.One,(0 = auto: x@19),) --->
+{
+stack: main{alt Ints.One (0 = auto: x@20)<-1> :: match (y) {...}<3>(alt Ints.One (0 = 42@14),Ints.None,) :: match (x) {...} ... <-1>} :: top{}
+heap: Int, Int, Int, choice Ints, fun<main>, Int, Int, Int, choice MoreInts, Ints.None, alt Ints.None (), Ints.One, 42, 42, 42, alt Ints.One (0 = 42@14), 0, Ints.None, Ints.One, auto: x, auto: x, 
+env: n: 0, y: alt Ints.One (0 = 42@14), x: alt Ints.None (), MoreInts: choice MoreInts, main: fun<main>, Ints: choice Ints, 
+}
+--- handle value alt Ints.One (0 = auto: x@20) with match (y) {...}<4>(alt Ints.One (0 = 42@14),Ints.None,alt Ints.One (0 = auto: x@20),) --->
+pattern_match(alt Ints.One (0 = auto: x@20), alt Ints.One (0 = 42@14))
+pattern_match((0 = auto: x@20), (0 = 42@14))
+pattern_match(auto: x, 42)
+{
+stack: main{n = ((x + 1) - 42);<-1> :: {
+ ... 
+}
+<0> :: match (x) {...} ... <-1>} :: top{}
+heap: Int, Int, Int, choice Ints, fun<main>, Int, Int, Int, choice MoreInts, Ints.None, alt Ints.None (), Ints.One, 42, 42, 42, alt Ints.One (0 = 42@14), 0, Ints.None, Ints.One, auto: x, auto: x, 42, 
+env: x: 42, n: 0, y: alt Ints.One (0 = 42@14), x: alt Ints.None (), MoreInts: choice MoreInts, main: fun<main>, Ints: choice Ints, 
+}
+--- step stmt n = ((x + 1) - 42); --->
+{
+stack: main{n<-1> :: n = ((x + 1) - 42);<0> :: {
+ ... 
+}
+<0> :: match (x) {...} ... <-1>} :: top{}
+heap: Int, Int, Int, choice Ints, fun<main>, Int, Int, Int, choice MoreInts, Ints.None, alt Ints.None (), Ints.One, 42, 42, 42, alt Ints.One (0 = 42@14), 0, Ints.None, Ints.One, auto: x, auto: x, 42, 
+env: x: 42, n: 0, y: alt Ints.One (0 = 42@14), x: alt Ints.None (), MoreInts: choice MoreInts, main: fun<main>, Ints: choice Ints, 
+}
+--- step lvalue n --->
+{
+stack: main{ptr<16><-1> :: n = ((x + 1) - 42);<0> :: {
+ ... 
+}
+<0> :: match (x) {...} ... <-1>} :: top{}
+heap: Int, Int, Int, choice Ints, fun<main>, Int, Int, Int, choice MoreInts, Ints.None, alt Ints.None (), Ints.One, 42, 42, 42, alt Ints.One (0 = 42@14), 0, Ints.None, Ints.One, auto: x, auto: x, 42, 
+env: x: 42, n: 0, y: alt Ints.One (0 = 42@14), x: alt Ints.None (), MoreInts: choice MoreInts, main: fun<main>, Ints: choice Ints, 
+}
+--- handle value ptr<16> with n = ((x + 1) - 42);<1>(ptr<16>,) --->
+{
+stack: main{((x + 1) - 42)<-1> :: n = ((x + 1) - 42);<1>(ptr<16>,) :: {
+ ... 
+}
+<0> :: match (x) {...} ... <-1>} :: top{}
+heap: Int, Int, Int, choice Ints, fun<main>, Int, Int, Int, choice MoreInts, Ints.None, alt Ints.None (), Ints.One, 42, 42, 42, alt Ints.One (0 = 42@14), 0, Ints.None, Ints.One, auto: x, auto: x, 42, 
+env: x: 42, n: 0, y: alt Ints.One (0 = 42@14), x: alt Ints.None (), MoreInts: choice MoreInts, main: fun<main>, Ints: choice Ints, 
+}
+--- step exp ((x + 1) - 42) --->
+{
+stack: main{(x + 1)<-1> :: ((x + 1) - 42)<0> :: n = ((x + 1) - 42);<1>(ptr<16>,) :: {
+ ... 
+}
+<0> :: match (x) {...} ... <-1>} :: top{}
+heap: Int, Int, Int, choice Ints, fun<main>, Int, Int, Int, choice MoreInts, Ints.None, alt Ints.None (), Ints.One, 42, 42, 42, alt Ints.One (0 = 42@14), 0, Ints.None, Ints.One, auto: x, auto: x, 42, 
+env: x: 42, n: 0, y: alt Ints.One (0 = 42@14), x: alt Ints.None (), MoreInts: choice MoreInts, main: fun<main>, Ints: choice Ints, 
+}
+--- step exp (x + 1) --->
+{
+stack: main{x<-1> :: (x + 1)<0> :: ((x + 1) - 42)<0> :: n = ((x + 1) - 42);<1>(ptr<16>,) :: {
+ ... 
+}
+<0> :: match (x) {...} ... <-1>} :: top{}
+heap: Int, Int, Int, choice Ints, fun<main>, Int, Int, Int, choice MoreInts, Ints.None, alt Ints.None (), Ints.One, 42, 42, 42, alt Ints.One (0 = 42@14), 0, Ints.None, Ints.One, auto: x, auto: x, 42, 
+env: x: 42, n: 0, y: alt Ints.One (0 = 42@14), x: alt Ints.None (), MoreInts: choice MoreInts, main: fun<main>, Ints: choice Ints, 
+}
+--- step exp x --->
+{
+stack: main{42<-1> :: (x + 1)<0> :: ((x + 1) - 42)<0> :: n = ((x + 1) - 42);<1>(ptr<16>,) :: {
+ ... 
+}
+<0> :: match (x) {...} ... <-1>} :: top{}
+heap: Int, Int, Int, choice Ints, fun<main>, Int, Int, Int, choice MoreInts, Ints.None, alt Ints.None (), Ints.One, 42, 42, 42, alt Ints.One (0 = 42@14), 0, Ints.None, Ints.One, auto: x, auto: x, 42, 
+env: x: 42, n: 0, y: alt Ints.One (0 = 42@14), x: alt Ints.None (), MoreInts: choice MoreInts, main: fun<main>, Ints: choice Ints, 
+}
+--- handle value 42 with (x + 1)<1>(42,) --->
+{
+stack: main{1<-1> :: (x + 1)<1>(42,) :: ((x + 1) - 42)<0> :: n = ((x + 1) - 42);<1>(ptr<16>,) :: {
+ ... 
+}
+<0> :: match (x) {...} ... <-1>} :: top{}
+heap: Int, Int, Int, choice Ints, fun<main>, Int, Int, Int, choice MoreInts, Ints.None, alt Ints.None (), Ints.One, 42, 42, 42, alt Ints.One (0 = 42@14), 0, Ints.None, Ints.One, auto: x, auto: x, 42, 
+env: x: 42, n: 0, y: alt Ints.One (0 = 42@14), x: alt Ints.None (), MoreInts: choice MoreInts, main: fun<main>, Ints: choice Ints, 
+}
+--- step exp 1 --->
+{
+stack: main{1<-1> :: (x + 1)<1>(42,) :: ((x + 1) - 42)<0> :: n = ((x + 1) - 42);<1>(ptr<16>,) :: {
+ ... 
+}
+<0> :: match (x) {...} ... <-1>} :: top{}
+heap: Int, Int, Int, choice Ints, fun<main>, Int, Int, Int, choice MoreInts, Ints.None, alt Ints.None (), Ints.One, 42, 42, 42, alt Ints.One (0 = 42@14), 0, Ints.None, Ints.One, auto: x, auto: x, 42, 
+env: x: 42, n: 0, y: alt Ints.One (0 = 42@14), x: alt Ints.None (), MoreInts: choice MoreInts, main: fun<main>, Ints: choice Ints, 
+}
+--- handle value 1 with (x + 1)<2>(42,1,) --->
+{
+stack: main{43<-1> :: ((x + 1) - 42)<0> :: n = ((x + 1) - 42);<1>(ptr<16>,) :: {
+ ... 
+}
+<0> :: match (x) {...} ... <-1>} :: top{}
+heap: Int, Int, Int, choice Ints, fun<main>, Int, Int, Int, choice MoreInts, Ints.None, alt Ints.None (), Ints.One, 42, 42, 42, alt Ints.One (0 = 42@14), 0, Ints.None, Ints.One, auto: x, auto: x, 42, 
+env: x: 42, n: 0, y: alt Ints.One (0 = 42@14), x: alt Ints.None (), MoreInts: choice MoreInts, main: fun<main>, Ints: choice Ints, 
+}
+--- handle value 43 with ((x + 1) - 42)<1>(43,) --->
+{
+stack: main{42<-1> :: ((x + 1) - 42)<1>(43,) :: n = ((x + 1) - 42);<1>(ptr<16>,) :: {
+ ... 
+}
+<0> :: match (x) {...} ... <-1>} :: top{}
+heap: Int, Int, Int, choice Ints, fun<main>, Int, Int, Int, choice MoreInts, Ints.None, alt Ints.None (), Ints.One, 42, 42, 42, alt Ints.One (0 = 42@14), 0, Ints.None, Ints.One, auto: x, auto: x, 42, 
+env: x: 42, n: 0, y: alt Ints.One (0 = 42@14), x: alt Ints.None (), MoreInts: choice MoreInts, main: fun<main>, Ints: choice Ints, 
+}
+--- step exp 42 --->
+{
+stack: main{42<-1> :: ((x + 1) - 42)<1>(43,) :: n = ((x + 1) - 42);<1>(ptr<16>,) :: {
+ ... 
+}
+<0> :: match (x) {...} ... <-1>} :: top{}
+heap: Int, Int, Int, choice Ints, fun<main>, Int, Int, Int, choice MoreInts, Ints.None, alt Ints.None (), Ints.One, 42, 42, 42, alt Ints.One (0 = 42@14), 0, Ints.None, Ints.One, auto: x, auto: x, 42, 
+env: x: 42, n: 0, y: alt Ints.One (0 = 42@14), x: alt Ints.None (), MoreInts: choice MoreInts, main: fun<main>, Ints: choice Ints, 
+}
+--- handle value 42 with ((x + 1) - 42)<2>(43,42,) --->
+{
+stack: main{1<-1> :: n = ((x + 1) - 42);<1>(ptr<16>,) :: {
+ ... 
+}
+<0> :: match (x) {...} ... <-1>} :: top{}
+heap: Int, Int, Int, choice Ints, fun<main>, Int, Int, Int, choice MoreInts, Ints.None, alt Ints.None (), Ints.One, 42, 42, 42, alt Ints.One (0 = 42@14), 0, Ints.None, Ints.One, auto: x, auto: x, 42, 
+env: x: 42, n: 0, y: alt Ints.One (0 = 42@14), x: alt Ints.None (), MoreInts: choice MoreInts, main: fun<main>, Ints: choice Ints, 
+}
+--- handle value 1 with n = ((x + 1) - 42);<2>(ptr<16>,1,) --->
+{
+stack: main{{
+ ... 
+}
+<0> :: match (x) {...} ... <-1>} :: top{}
+heap: Int, Int, Int, choice Ints, fun<main>, Int, Int, Int, choice MoreInts, Ints.None, alt Ints.None (), Ints.One, 42, 42, 42, alt Ints.One (0 = 42@14), 1, Ints.None, Ints.One, auto: x, auto: x, 42, 
+env: x: 42, n: 1, y: alt Ints.One (0 = 42@14), x: alt Ints.None (), MoreInts: choice MoreInts, main: fun<main>, Ints: choice Ints, 
+}
+--- step stmt {
+ ... 
+}
+ --->
+{
+stack: main{match (x) {...} ... <-1>} :: top{}
+heap: Int, Int, Int, choice Ints, fun<main>, Int, Int, Int, choice MoreInts, Ints.None, alt Ints.None (), Ints.One, 42, 42, 42, alt Ints.One (0 = 42@14), 1, Ints.None, Ints.One, auto: x, auto: x, !!42, 
+env: n: 1, y: alt Ints.One (0 = 42@14), x: alt Ints.None (), MoreInts: choice MoreInts, main: fun<main>, Ints: choice Ints, 
+}
+--- step stmt match (x) {...} ...  --->
+{
+stack: main{match (x) {...}<-1> :: return n;<-1>} :: top{}
+heap: Int, Int, Int, choice Ints, fun<main>, Int, Int, Int, choice MoreInts, Ints.None, alt Ints.None (), Ints.One, 42, 42, 42, alt Ints.One (0 = 42@14), 1, Ints.None, Ints.One, auto: x, auto: x, !!42, 
+env: n: 1, y: alt Ints.One (0 = 42@14), x: alt Ints.None (), MoreInts: choice MoreInts, main: fun<main>, Ints: choice Ints, 
+}
+--- step stmt match (x) {...} --->
+{
+stack: main{x<-1> :: match (x) {...}<0> :: return n;<-1>} :: top{}
+heap: Int, Int, Int, choice Ints, fun<main>, Int, Int, Int, choice MoreInts, Ints.None, alt Ints.None (), Ints.One, 42, 42, 42, alt Ints.One (0 = 42@14), 1, Ints.None, Ints.One, auto: x, auto: x, !!42, 
+env: n: 1, y: alt Ints.One (0 = 42@14), x: alt Ints.None (), MoreInts: choice MoreInts, main: fun<main>, Ints: choice Ints, 
+}
+--- step exp x --->
+{
+stack: main{alt Ints.None ()<-1> :: match (x) {...}<0> :: return n;<-1>} :: top{}
+heap: Int, Int, Int, choice Ints, fun<main>, Int, Int, Int, choice MoreInts, Ints.None, alt Ints.None (), Ints.One, 42, 42, 42, alt Ints.One (0 = 42@14), 1, Ints.None, Ints.One, auto: x, auto: x, !!42, 
+env: n: 1, y: alt Ints.One (0 = 42@14), x: alt Ints.None (), MoreInts: choice MoreInts, main: fun<main>, Ints: choice Ints, 
+}
+--- handle value alt Ints.None () with match (x) {...}<1>(alt Ints.None (),) --->
+{
+stack: main{Ints.One(0 = auto: x)<-1> :: match (x) {...}<1>(alt Ints.None (),) :: return n;<-1>} :: top{}
+heap: Int, Int, Int, choice Ints, fun<main>, Int, Int, Int, choice MoreInts, Ints.None, alt Ints.None (), Ints.One, 42, 42, 42, alt Ints.One (0 = 42@14), 1, Ints.None, Ints.One, auto: x, auto: x, !!42, 
+env: n: 1, y: alt Ints.One (0 = 42@14), x: alt Ints.None (), MoreInts: choice MoreInts, main: fun<main>, Ints: choice Ints, 
+}
+--- step exp Ints.One(0 = auto: x) --->
+{
+stack: main{Ints.One<-1> :: Ints.One(0 = auto: x)<0> :: match (x) {...}<1>(alt Ints.None (),) :: return n;<-1>} :: top{}
+heap: Int, Int, Int, choice Ints, fun<main>, Int, Int, Int, choice MoreInts, Ints.None, alt Ints.None (), Ints.One, 42, 42, 42, alt Ints.One (0 = 42@14), 1, Ints.None, Ints.One, auto: x, auto: x, !!42, 
+env: n: 1, y: alt Ints.One (0 = 42@14), x: alt Ints.None (), MoreInts: choice MoreInts, main: fun<main>, Ints: choice Ints, 
+}
+--- step exp Ints.One --->
+{
+stack: main{Ints<-1> :: Ints.One<0> :: Ints.One(0 = auto: x)<0> :: match (x) {...}<1>(alt Ints.None (),) :: return n;<-1>} :: top{}
+heap: Int, Int, Int, choice Ints, fun<main>, Int, Int, Int, choice MoreInts, Ints.None, alt Ints.None (), Ints.One, 42, 42, 42, alt Ints.One (0 = 42@14), 1, Ints.None, Ints.One, auto: x, auto: x, !!42, 
+env: n: 1, y: alt Ints.One (0 = 42@14), x: alt Ints.None (), MoreInts: choice MoreInts, main: fun<main>, Ints: choice Ints, 
+}
+--- step lvalue Ints --->
+{
+stack: main{ptr<3><-1> :: Ints.One<0> :: Ints.One(0 = auto: x)<0> :: match (x) {...}<1>(alt Ints.None (),) :: return n;<-1>} :: top{}
+heap: Int, Int, Int, choice Ints, fun<main>, Int, Int, Int, choice MoreInts, Ints.None, alt Ints.None (), Ints.One, 42, 42, 42, alt Ints.One (0 = 42@14), 1, Ints.None, Ints.One, auto: x, auto: x, !!42, 
+env: n: 1, y: alt Ints.One (0 = 42@14), x: alt Ints.None (), MoreInts: choice MoreInts, main: fun<main>, Ints: choice Ints, 
+}
+--- handle value ptr<3> with Ints.One<1>(ptr<3>,) --->
+{
+stack: main{Ints.One<-1> :: Ints.One(0 = auto: x)<0> :: match (x) {...}<1>(alt Ints.None (),) :: return n;<-1>} :: top{}
+heap: Int, Int, Int, choice Ints, fun<main>, Int, Int, Int, choice MoreInts, Ints.None, alt Ints.None (), Ints.One, 42, 42, 42, alt Ints.One (0 = 42@14), 1, Ints.None, Ints.One, auto: x, auto: x, !!42, Ints.One, 
+env: n: 1, y: alt Ints.One (0 = 42@14), x: alt Ints.None (), MoreInts: choice MoreInts, main: fun<main>, Ints: choice Ints, 
+}
+--- handle value Ints.One with Ints.One(0 = auto: x)<1>(Ints.One,) --->
+{
+stack: main{(0 = auto: x)<-1> :: Ints.One(0 = auto: x)<1>(Ints.One,) :: match (x) {...}<1>(alt Ints.None (),) :: return n;<-1>} :: top{}
+heap: Int, Int, Int, choice Ints, fun<main>, Int, Int, Int, choice MoreInts, Ints.None, alt Ints.None (), Ints.One, 42, 42, 42, alt Ints.One (0 = 42@14), 1, Ints.None, Ints.One, auto: x, auto: x, !!42, Ints.One, 
+env: n: 1, y: alt Ints.One (0 = 42@14), x: alt Ints.None (), MoreInts: choice MoreInts, main: fun<main>, Ints: choice Ints, 
+}
+--- step exp (0 = auto: x) --->
+{
+stack: main{auto: x<-1> :: (0 = auto: x)<0> :: Ints.One(0 = auto: x)<1>(Ints.One,) :: match (x) {...}<1>(alt Ints.None (),) :: return n;<-1>} :: top{}
+heap: Int, Int, Int, choice Ints, fun<main>, Int, Int, Int, choice MoreInts, Ints.None, alt Ints.None (), Ints.One, 42, 42, 42, alt Ints.One (0 = 42@14), 1, Ints.None, Ints.One, auto: x, auto: x, !!42, Ints.One, 
+env: n: 1, y: alt Ints.One (0 = 42@14), x: alt Ints.None (), MoreInts: choice MoreInts, main: fun<main>, Ints: choice Ints, 
+}
+--- step exp auto: x --->
+{
+stack: main{auto<-1> :: auto: x<0> :: (0 = auto: x)<0> :: Ints.One(0 = auto: x)<1>(Ints.One,) :: match (x) {...}<1>(alt Ints.None (),) :: return n;<-1>} :: top{}
+heap: Int, Int, Int, choice Ints, fun<main>, Int, Int, Int, choice MoreInts, Ints.None, alt Ints.None (), Ints.One, 42, 42, 42, alt Ints.One (0 = 42@14), 1, Ints.None, Ints.One, auto: x, auto: x, !!42, Ints.One, 
+env: n: 1, y: alt Ints.One (0 = 42@14), x: alt Ints.None (), MoreInts: choice MoreInts, main: fun<main>, Ints: choice Ints, 
+}
+--- step exp auto --->
+{
+stack: main{auto<-1> :: auto: x<0> :: (0 = auto: x)<0> :: Ints.One(0 = auto: x)<1>(Ints.One,) :: match (x) {...}<1>(alt Ints.None (),) :: return n;<-1>} :: top{}
+heap: Int, Int, Int, choice Ints, fun<main>, Int, Int, Int, choice MoreInts, Ints.None, alt Ints.None (), Ints.One, 42, 42, 42, alt Ints.One (0 = 42@14), 1, Ints.None, Ints.One, auto: x, auto: x, !!42, Ints.One, 
+env: n: 1, y: alt Ints.One (0 = 42@14), x: alt Ints.None (), MoreInts: choice MoreInts, main: fun<main>, Ints: choice Ints, 
+}
+--- handle value auto with auto: x<1>(auto,) --->
+{
+stack: main{auto: x<-1> :: (0 = auto: x)<0> :: Ints.One(0 = auto: x)<1>(Ints.One,) :: match (x) {...}<1>(alt Ints.None (),) :: return n;<-1>} :: top{}
+heap: Int, Int, Int, choice Ints, fun<main>, Int, Int, Int, choice MoreInts, Ints.None, alt Ints.None (), Ints.One, 42, 42, 42, alt Ints.One (0 = 42@14), 1, Ints.None, Ints.One, auto: x, auto: x, !!42, Ints.One, 
+env: n: 1, y: alt Ints.One (0 = 42@14), x: alt Ints.None (), MoreInts: choice MoreInts, main: fun<main>, Ints: choice Ints, 
+}
+--- handle value auto: x with (0 = auto: x)<1>(auto: x,) --->
+{
+stack: main{(0 = auto: x@23)<-1> :: Ints.One(0 = auto: x)<1>(Ints.One,) :: match (x) {...}<1>(alt Ints.None (),) :: return n;<-1>} :: top{}
+heap: Int, Int, Int, choice Ints, fun<main>, Int, Int, Int, choice MoreInts, Ints.None, alt Ints.None (), Ints.One, 42, 42, 42, alt Ints.One (0 = 42@14), 1, Ints.None, Ints.One, auto: x, auto: x, !!42, Ints.One, auto: x, 
+env: n: 1, y: alt Ints.One (0 = 42@14), x: alt Ints.None (), MoreInts: choice MoreInts, main: fun<main>, Ints: choice Ints, 
+}
+--- handle value (0 = auto: x@23) with Ints.One(0 = auto: x)<2>(Ints.One,(0 = auto: x@23),) --->
+{
+stack: main{alt Ints.One (0 = auto: x@24)<-1> :: match (x) {...}<1>(alt Ints.None (),) :: return n;<-1>} :: top{}
+heap: Int, Int, Int, choice Ints, fun<main>, Int, Int, Int, choice MoreInts, Ints.None, alt Ints.None (), Ints.One, 42, 42, 42, alt Ints.One (0 = 42@14), 1, Ints.None, Ints.One, auto: x, auto: x, !!42, Ints.One, auto: x, auto: x, 
+env: n: 1, y: alt Ints.One (0 = 42@14), x: alt Ints.None (), MoreInts: choice MoreInts, main: fun<main>, Ints: choice Ints, 
+}
+--- handle value alt Ints.One (0 = auto: x@24) with match (x) {...}<2>(alt Ints.None (),alt Ints.One (0 = auto: x@24),) --->
+pattern_match(alt Ints.One (0 = auto: x@24), alt Ints.None ())
+{
+stack: main{Ints.None()<-1> :: match (x) {...}<3>(alt Ints.None (),alt Ints.One (0 = auto: x@24),) :: return n;<-1>} :: top{}
+heap: Int, Int, Int, choice Ints, fun<main>, Int, Int, Int, choice MoreInts, Ints.None, alt Ints.None (), Ints.One, 42, 42, 42, alt Ints.One (0 = 42@14), 1, Ints.None, Ints.One, auto: x, auto: x, !!42, Ints.One, auto: x, auto: x, 
+env: n: 1, y: alt Ints.One (0 = 42@14), x: alt Ints.None (), MoreInts: choice MoreInts, main: fun<main>, Ints: choice Ints, 
+}
+--- step exp Ints.None() --->
+{
+stack: main{Ints.None<-1> :: Ints.None()<0> :: match (x) {...}<3>(alt Ints.None (),alt Ints.One (0 = auto: x@24),) :: return n;<-1>} :: top{}
+heap: Int, Int, Int, choice Ints, fun<main>, Int, Int, Int, choice MoreInts, Ints.None, alt Ints.None (), Ints.One, 42, 42, 42, alt Ints.One (0 = 42@14), 1, Ints.None, Ints.One, auto: x, auto: x, !!42, Ints.One, auto: x, auto: x, 
+env: n: 1, y: alt Ints.One (0 = 42@14), x: alt Ints.None (), MoreInts: choice MoreInts, main: fun<main>, Ints: choice Ints, 
+}
+--- step exp Ints.None --->
+{
+stack: main{Ints<-1> :: Ints.None<0> :: Ints.None()<0> :: match (x) {...}<3>(alt Ints.None (),alt Ints.One (0 = auto: x@24),) :: return n;<-1>} :: top{}
+heap: Int, Int, Int, choice Ints, fun<main>, Int, Int, Int, choice MoreInts, Ints.None, alt Ints.None (), Ints.One, 42, 42, 42, alt Ints.One (0 = 42@14), 1, Ints.None, Ints.One, auto: x, auto: x, !!42, Ints.One, auto: x, auto: x, 
+env: n: 1, y: alt Ints.One (0 = 42@14), x: alt Ints.None (), MoreInts: choice MoreInts, main: fun<main>, Ints: choice Ints, 
+}
+--- step lvalue Ints --->
+{
+stack: main{ptr<3><-1> :: Ints.None<0> :: Ints.None()<0> :: match (x) {...}<3>(alt Ints.None (),alt Ints.One (0 = auto: x@24),) :: return n;<-1>} :: top{}
+heap: Int, Int, Int, choice Ints, fun<main>, Int, Int, Int, choice MoreInts, Ints.None, alt Ints.None (), Ints.One, 42, 42, 42, alt Ints.One (0 = 42@14), 1, Ints.None, Ints.One, auto: x, auto: x, !!42, Ints.One, auto: x, auto: x, 
+env: n: 1, y: alt Ints.One (0 = 42@14), x: alt Ints.None (), MoreInts: choice MoreInts, main: fun<main>, Ints: choice Ints, 
+}
+--- handle value ptr<3> with Ints.None<1>(ptr<3>,) --->
+{
+stack: main{Ints.None<-1> :: Ints.None()<0> :: match (x) {...}<3>(alt Ints.None (),alt Ints.One (0 = auto: x@24),) :: return n;<-1>} :: top{}
+heap: Int, Int, Int, choice Ints, fun<main>, Int, Int, Int, choice MoreInts, Ints.None, alt Ints.None (), Ints.One, 42, 42, 42, alt Ints.One (0 = 42@14), 1, Ints.None, Ints.One, auto: x, auto: x, !!42, Ints.One, auto: x, auto: x, Ints.None, 
+env: n: 1, y: alt Ints.One (0 = 42@14), x: alt Ints.None (), MoreInts: choice MoreInts, main: fun<main>, Ints: choice Ints, 
+}
+--- handle value Ints.None with Ints.None()<1>(Ints.None,) --->
+{
+stack: main{()<-1> :: Ints.None()<1>(Ints.None,) :: match (x) {...}<3>(alt Ints.None (),alt Ints.One (0 = auto: x@24),) :: return n;<-1>} :: top{}
+heap: Int, Int, Int, choice Ints, fun<main>, Int, Int, Int, choice MoreInts, Ints.None, alt Ints.None (), Ints.One, 42, 42, 42, alt Ints.One (0 = 42@14), 1, Ints.None, Ints.One, auto: x, auto: x, !!42, Ints.One, auto: x, auto: x, Ints.None, 
+env: n: 1, y: alt Ints.One (0 = 42@14), x: alt Ints.None (), MoreInts: choice MoreInts, main: fun<main>, Ints: choice Ints, 
+}
+--- step exp () --->
+{
+stack: main{()<-1> :: Ints.None()<1>(Ints.None,) :: match (x) {...}<3>(alt Ints.None (),alt Ints.One (0 = auto: x@24),) :: return n;<-1>} :: top{}
+heap: Int, Int, Int, choice Ints, fun<main>, Int, Int, Int, choice MoreInts, Ints.None, alt Ints.None (), Ints.One, 42, 42, 42, alt Ints.One (0 = 42@14), 1, Ints.None, Ints.One, auto: x, auto: x, !!42, Ints.One, auto: x, auto: x, Ints.None, 
+env: n: 1, y: alt Ints.One (0 = 42@14), x: alt Ints.None (), MoreInts: choice MoreInts, main: fun<main>, Ints: choice Ints, 
+}
+--- handle value () with Ints.None()<2>(Ints.None,(),) --->
+{
+stack: main{alt Ints.None ()<-1> :: match (x) {...}<3>(alt Ints.None (),alt Ints.One (0 = auto: x@24),) :: return n;<-1>} :: top{}
+heap: Int, Int, Int, choice Ints, fun<main>, Int, Int, Int, choice MoreInts, Ints.None, alt Ints.None (), Ints.One, 42, 42, 42, alt Ints.One (0 = 42@14), 1, Ints.None, Ints.One, auto: x, auto: x, !!42, Ints.One, auto: x, auto: x, Ints.None, 
+env: n: 1, y: alt Ints.One (0 = 42@14), x: alt Ints.None (), MoreInts: choice MoreInts, main: fun<main>, Ints: choice Ints, 
+}
+--- handle value alt Ints.None () with match (x) {...}<4>(alt Ints.None (),alt Ints.One (0 = auto: x@24),alt Ints.None (),) --->
+pattern_match(alt Ints.None (), alt Ints.None ())
+pattern_match((), ())
+{
+stack: main{n = (n - 1);<-1> :: {
+ ... 
+}
+<0> :: return n;<-1>} :: top{}
+heap: Int, Int, Int, choice Ints, fun<main>, Int, Int, Int, choice MoreInts, Ints.None, alt Ints.None (), Ints.One, 42, 42, 42, alt Ints.One (0 = 42@14), 1, Ints.None, Ints.One, auto: x, auto: x, !!42, Ints.One, auto: x, auto: x, Ints.None, 
+env: n: 1, y: alt Ints.One (0 = 42@14), x: alt Ints.None (), MoreInts: choice MoreInts, main: fun<main>, Ints: choice Ints, 
+}
+--- step stmt n = (n - 1); --->
+{
+stack: main{n<-1> :: n = (n - 1);<0> :: {
+ ... 
+}
+<0> :: return n;<-1>} :: top{}
+heap: Int, Int, Int, choice Ints, fun<main>, Int, Int, Int, choice MoreInts, Ints.None, alt Ints.None (), Ints.One, 42, 42, 42, alt Ints.One (0 = 42@14), 1, Ints.None, Ints.One, auto: x, auto: x, !!42, Ints.One, auto: x, auto: x, Ints.None, 
+env: n: 1, y: alt Ints.One (0 = 42@14), x: alt Ints.None (), MoreInts: choice MoreInts, main: fun<main>, Ints: choice Ints, 
+}
+--- step lvalue n --->
+{
+stack: main{ptr<16><-1> :: n = (n - 1);<0> :: {
+ ... 
+}
+<0> :: return n;<-1>} :: top{}
+heap: Int, Int, Int, choice Ints, fun<main>, Int, Int, Int, choice MoreInts, Ints.None, alt Ints.None (), Ints.One, 42, 42, 42, alt Ints.One (0 = 42@14), 1, Ints.None, Ints.One, auto: x, auto: x, !!42, Ints.One, auto: x, auto: x, Ints.None, 
+env: n: 1, y: alt Ints.One (0 = 42@14), x: alt Ints.None (), MoreInts: choice MoreInts, main: fun<main>, Ints: choice Ints, 
+}
+--- handle value ptr<16> with n = (n - 1);<1>(ptr<16>,) --->
+{
+stack: main{(n - 1)<-1> :: n = (n - 1);<1>(ptr<16>,) :: {
+ ... 
+}
+<0> :: return n;<-1>} :: top{}
+heap: Int, Int, Int, choice Ints, fun<main>, Int, Int, Int, choice MoreInts, Ints.None, alt Ints.None (), Ints.One, 42, 42, 42, alt Ints.One (0 = 42@14), 1, Ints.None, Ints.One, auto: x, auto: x, !!42, Ints.One, auto: x, auto: x, Ints.None, 
+env: n: 1, y: alt Ints.One (0 = 42@14), x: alt Ints.None (), MoreInts: choice MoreInts, main: fun<main>, Ints: choice Ints, 
+}
+--- step exp (n - 1) --->
+{
+stack: main{n<-1> :: (n - 1)<0> :: n = (n - 1);<1>(ptr<16>,) :: {
+ ... 
+}
+<0> :: return n;<-1>} :: top{}
+heap: Int, Int, Int, choice Ints, fun<main>, Int, Int, Int, choice MoreInts, Ints.None, alt Ints.None (), Ints.One, 42, 42, 42, alt Ints.One (0 = 42@14), 1, Ints.None, Ints.One, auto: x, auto: x, !!42, Ints.One, auto: x, auto: x, Ints.None, 
+env: n: 1, y: alt Ints.One (0 = 42@14), x: alt Ints.None (), MoreInts: choice MoreInts, main: fun<main>, Ints: choice Ints, 
+}
+--- step exp n --->
+{
+stack: main{1<-1> :: (n - 1)<0> :: n = (n - 1);<1>(ptr<16>,) :: {
+ ... 
+}
+<0> :: return n;<-1>} :: top{}
+heap: Int, Int, Int, choice Ints, fun<main>, Int, Int, Int, choice MoreInts, Ints.None, alt Ints.None (), Ints.One, 42, 42, 42, alt Ints.One (0 = 42@14), 1, Ints.None, Ints.One, auto: x, auto: x, !!42, Ints.One, auto: x, auto: x, Ints.None, 
+env: n: 1, y: alt Ints.One (0 = 42@14), x: alt Ints.None (), MoreInts: choice MoreInts, main: fun<main>, Ints: choice Ints, 
+}
+--- handle value 1 with (n - 1)<1>(1,) --->
+{
+stack: main{1<-1> :: (n - 1)<1>(1,) :: n = (n - 1);<1>(ptr<16>,) :: {
+ ... 
+}
+<0> :: return n;<-1>} :: top{}
+heap: Int, Int, Int, choice Ints, fun<main>, Int, Int, Int, choice MoreInts, Ints.None, alt Ints.None (), Ints.One, 42, 42, 42, alt Ints.One (0 = 42@14), 1, Ints.None, Ints.One, auto: x, auto: x, !!42, Ints.One, auto: x, auto: x, Ints.None, 
+env: n: 1, y: alt Ints.One (0 = 42@14), x: alt Ints.None (), MoreInts: choice MoreInts, main: fun<main>, Ints: choice Ints, 
+}
+--- step exp 1 --->
+{
+stack: main{1<-1> :: (n - 1)<1>(1,) :: n = (n - 1);<1>(ptr<16>,) :: {
+ ... 
+}
+<0> :: return n;<-1>} :: top{}
+heap: Int, Int, Int, choice Ints, fun<main>, Int, Int, Int, choice MoreInts, Ints.None, alt Ints.None (), Ints.One, 42, 42, 42, alt Ints.One (0 = 42@14), 1, Ints.None, Ints.One, auto: x, auto: x, !!42, Ints.One, auto: x, auto: x, Ints.None, 
+env: n: 1, y: alt Ints.One (0 = 42@14), x: alt Ints.None (), MoreInts: choice MoreInts, main: fun<main>, Ints: choice Ints, 
+}
+--- handle value 1 with (n - 1)<2>(1,1,) --->
+{
+stack: main{0<-1> :: n = (n - 1);<1>(ptr<16>,) :: {
+ ... 
+}
+<0> :: return n;<-1>} :: top{}
+heap: Int, Int, Int, choice Ints, fun<main>, Int, Int, Int, choice MoreInts, Ints.None, alt Ints.None (), Ints.One, 42, 42, 42, alt Ints.One (0 = 42@14), 1, Ints.None, Ints.One, auto: x, auto: x, !!42, Ints.One, auto: x, auto: x, Ints.None, 
+env: n: 1, y: alt Ints.One (0 = 42@14), x: alt Ints.None (), MoreInts: choice MoreInts, main: fun<main>, Ints: choice Ints, 
+}
+--- handle value 0 with n = (n - 1);<2>(ptr<16>,0,) --->
+{
+stack: main{{
+ ... 
+}
+<0> :: return n;<-1>} :: top{}
+heap: Int, Int, Int, choice Ints, fun<main>, Int, Int, Int, choice MoreInts, Ints.None, alt Ints.None (), Ints.One, 42, 42, 42, alt Ints.One (0 = 42@14), 0, Ints.None, Ints.One, auto: x, auto: x, !!42, Ints.One, auto: x, auto: x, Ints.None, 
+env: n: 0, y: alt Ints.One (0 = 42@14), x: alt Ints.None (), MoreInts: choice MoreInts, main: fun<main>, Ints: choice Ints, 
+}
+--- step stmt {
+ ... 
+}
+ --->
+{
+stack: main{return n;<-1>} :: top{}
+heap: Int, Int, Int, choice Ints, fun<main>, Int, Int, Int, choice MoreInts, Ints.None, alt Ints.None (), Ints.One, 42, 42, 42, alt Ints.One (0 = 42@14), 0, Ints.None, Ints.One, auto: x, auto: x, !!42, Ints.One, auto: x, auto: x, Ints.None, 
+env: n: 0, y: alt Ints.One (0 = 42@14), x: alt Ints.None (), MoreInts: choice MoreInts, main: fun<main>, Ints: choice Ints, 
+}
+--- step stmt return n; --->
+{
+stack: main{n<-1> :: return n;<0>} :: top{}
+heap: Int, Int, Int, choice Ints, fun<main>, Int, Int, Int, choice MoreInts, Ints.None, alt Ints.None (), Ints.One, 42, 42, 42, alt Ints.One (0 = 42@14), 0, Ints.None, Ints.One, auto: x, auto: x, !!42, Ints.One, auto: x, auto: x, Ints.None, 
+env: n: 0, y: alt Ints.One (0 = 42@14), x: alt Ints.None (), MoreInts: choice MoreInts, main: fun<main>, Ints: choice Ints, 
+}
+--- step exp n --->
+{
+stack: main{0<-1> :: return n;<0>} :: top{}
+heap: Int, Int, Int, choice Ints, fun<main>, Int, Int, Int, choice MoreInts, Ints.None, alt Ints.None (), Ints.One, 42, 42, 42, alt Ints.One (0 = 42@14), 0, Ints.None, Ints.One, auto: x, auto: x, !!42, Ints.One, auto: x, auto: x, Ints.None, 
+env: n: 0, y: alt Ints.One (0 = 42@14), x: alt Ints.None (), MoreInts: choice MoreInts, main: fun<main>, Ints: choice Ints, 
+}
+--- handle value 0 with return n;<1>(0,) --->
+{
+stack: top{0<-1>}
+heap: Int, Int, Int, choice Ints, fun<main>, Int, Int, Int, choice MoreInts, Ints.None, !!alt Ints.None !!(), Ints.One, 42, 42, !!42, !!alt Ints.One !!(0 = !!42@14), !!0, Ints.None, Ints.One, auto: x, auto: x, !!42, Ints.One, auto: x, auto: x, Ints.None, 
+env: MoreInts: choice MoreInts, main: fun<main>, Ints: choice Ints, 
+}
+result: 0

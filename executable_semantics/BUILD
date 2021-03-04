@@ -11,7 +11,17 @@ load("//bazel/testing:golden_test.bzl", "golden_test")
 cc_binary(
     name = "executable_semantics",
     srcs = ["main.cpp"],
-    deps = [":syntax"],
+    deps = [
+        ":syntax",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_library(
+    name = "tracing_flag",
+    srcs = ["tracing_flag.cpp"],
+    hdrs = ["tracing_flag.h"],
+    visibility = ["//visibility:public"],
 )
 
 cc_library(
@@ -30,9 +40,10 @@ cc_library(
         "-Wno-writable-strings",
     ],
     deps = [
+        ":tracing_flag",
         "//executable_semantics/ast:declaration",
         "//executable_semantics/ast:expression",
-        "//executable_semantics/ast:expression_or_field_list",
+        "//executable_semantics/ast:field_list",
         "//executable_semantics/interpreter",
     ],
 )
@@ -88,6 +99,7 @@ EXAMPLES = [
     "match_type",
     "next",
     "pattern_init",
+    "pattern_variable_fail",
     "record1",
     "struct1",
     "struct2",
@@ -107,7 +119,7 @@ EXAMPLES = [
     srcs = ["testdata/%s.6c" % e],
     outs = ["testdata/%s.out" % e],
     # Suppress command errors.
-    cmd = "$(location executable_semantics) $< > $@ 2>&1 || true",
+    cmd = "$(location executable_semantics) $< > $@ 2>&1 || echo EXIT CODE: $$? >> $@",
     tools = [":executable_semantics"],
 ) for e in EXAMPLES]
 

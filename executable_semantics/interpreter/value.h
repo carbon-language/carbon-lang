@@ -124,7 +124,7 @@ auto MakeStructTypeVal(std::string name, VarValues* fields, VarValues* methods)
     -> Value*;
 auto MakeTupleTypeVal(VarValues* fields) -> Value*;
 auto MakeVoidTypeVal() -> Value*;
-auto MakeChoiceTypeVal(std::string* name, VarValues* alts) -> Value*;
+auto MakeChoiceTypeVal(std::string name, VarValues* alts) -> Value*;
 
 void PrintValue(Value* val, std::ostream& out);
 

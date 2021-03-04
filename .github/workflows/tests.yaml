@@ -1,0 +1,91 @@
+# Part of the Carbon Language project, under the Apache License v2.0 with LLVM
+# Exceptions. See /LICENSE for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+
+name: test
+
+on:
+  push:
+    branches: [trunk]
+  pull_request:
+
+jobs:
+  macOS:
+    name: macOS
+    runs-on: macOS-latest
+    steps:
+      - uses: actions/setup-go@v2
+      - uses: actions/setup-python@v2
+        with:
+          python-version: '3.8.5'
+      - name: Install More Tools
+        run: |
+          go get github.com/bazelbuild/bazelisk
+          pip install gql PyGitHub
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          submodules: true
+      - name: Tool Versions
+        run: |
+          $(go env GOPATH)/bin/bazelisk --version
+          python --version
+          echo gql "$(pip show gql | grep Version)"
+          echo PyGitHub "$(pip show PyGitHub | grep Version)"
+      - name: >-
+          Build  (-c fastbuild: debug / no symbols)
+        run: |
+          $(go env GOPATH)/bin/bazelisk build \
+            --verbose_failures //...:all
+      - name: >-
+          Test (-c fastbuild: debug / no symbols)
+        run: |
+          $(go env GOPATH)/bin/bazelisk test --test_output errors \
+            --verbose_failures //...:all
+      - name: >-
+          Build (-c opt: release)
+        run: |
+          $(go env GOPATH)/bin/bazelisk build \
+            --verbose_failures -c opt //...:all
+      - name: >-
+          Test (-c opt: release)
+        run: |
+          $(go env GOPATH)/bin/bazelisk test --test_output errors \
+            --verbose_failures -c opt //...:all
+
+  linux:
+    name: Linux x86_64
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/setup-python@v2
+        with:
+          python-version: '3.8.5'
+      - name: Install More Tools
+        run: |
+          pip install gql PyGitHub
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          submodules: recursive
+      - name: Tool Versions
+        run: |
+          bazelisk --version
+          python --version
+          echo gql "$(pip show gql | grep Version)"
+          echo PyGitHub "$(pip show PyGitHub | grep Version)"
+      - name: >-
+          Build  (-c fastbuild: debug / no symbols)
+        run: |
+          bazelisk build --verbose_failures //...:all
+      - name: >-
+          Test (-c fastbuild: debug/no symbols)
+        run: |
+          bazelisk test --test_output errors --verbose_failures //...:all
+      - name: >-
+          Build (-c opt: release)
+        run: |
+          bazelisk build --verbose_failures -c opt //...:all
+      - name: >-
+          Test (-c opt: release)
+        run: |
+          bazelisk test --test_output errors --verbose_failures -c opt //...:all
