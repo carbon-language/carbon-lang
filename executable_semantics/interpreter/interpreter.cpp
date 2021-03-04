@@ -136,9 +136,9 @@ void KillValue(Value* val) {
 }
 
 void PrintEnv(Env env, std::ostream& out) {
-  for (auto var_val : env) {
-    out << var_val.first << ": ";
-    PrintValue(state->heap[var_val.second], out);
+  for (const auto& [name, value] : env) {
+    out << name << ": ";
+    PrintValue(state->heap[value], out);
     out << ", ";
   }
 }
