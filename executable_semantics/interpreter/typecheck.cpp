@@ -281,9 +281,9 @@ auto TypeCheckExp(Expression* e, TypeEnv env, Env ct_env, Value* expected,
       }
     }
     case ExpressionKind::Variable: {
-      auto t = env.Get(*(e->u.variable.name));
-      if (t) {
-        return TCResult(e, *t, env);
+      std::optional<Value> type = env.Get(*(e->u.variable.name));
+      if (type) {
+        return TCResult(e, *type, env);
       } else {
         std::cerr << e->line_num << ": could not find `"
                   << *(e->u.variable.name) << "`" << std::endl;
