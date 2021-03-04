@@ -8,6 +8,13 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #include <cstdlib>
 #include "executable_semantics/syntax.tab.h"
 %}
+
+/* Turn off legacy bits we don't need */
+%option noyywrap nounput nodefault noinput
+
+/* maintains the number of the current line read from input in the
+   global variable yylineno.
+*/
 %option yylineno
 
 AND      "and"
@@ -86,5 +93,3 @@ integer_literal   [0-9]+
 . { return yytext[0]; }
 
 %%
-
-int yywrap()  { return 1; }
