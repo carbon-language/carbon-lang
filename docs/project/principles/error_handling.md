@@ -21,7 +21,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 Most nontrivial programs contain functions that can _fail_, meaning that even if
 all their preconditions are met, they may not be able to perform their primary
 behavior. For example, a function that reads data from a remote server may fail
-if the server is unreachable, and a function parses a string to return an
+if the server is unreachable, and a function that parses a string to return an
 integer may fail if the input string is not a properly-formatted integer.
 
 In many cases, the function author wants these failures to be _recoverable_,
