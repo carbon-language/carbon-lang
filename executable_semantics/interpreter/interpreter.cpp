@@ -574,9 +574,9 @@ void StepLvalue() {
     case ExpressionKind::Variable: {
       //    { {x :: C, E, F} :: S, H}
       // -> { {E(x) :: C, E, F} :: S, H}
-      std::optional<Address> a = CurrentEnv(state).Get(*(exp->u.variable.name));
-      if (a) {
-        Value* v = MakePtrVal(*a);
+      std::optional<Address> pointer = CurrentEnv(state).Get(*(exp->u.variable.name));
+      if (pointer) {
+        Value* v = MakePtrVal(*pointer);
         CheckAlive(v, exp->line_num);
         frame->todo.Pop();
         frame->todo.Push(MakeValAct(v));
