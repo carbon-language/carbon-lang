@@ -17,19 +17,28 @@ cc_library(
     ],
     hdrs = [
         "action.h",
-        "assoc_list.h",
         "interpreter.h",
-        "list_node.h",
-        "stack.h",
         "typecheck.h",
         "value.h",
     ],
     deps = [
+        ":containers",
         "//executable_semantics:tracing_flag",
         "//executable_semantics/ast:declaration",
         "//executable_semantics/ast:expression",
         "//executable_semantics/ast:function_definition",
         "//executable_semantics/ast:member",
         "//executable_semantics/ast:statement",
+    ],
+)
+
+cc_library(
+    name = "containers",
+    srcs = [
+        "list_node.h",
+    ],
+    hdrs = [
+        "dictionary.h",
+        "stack.h",
     ],
 )
