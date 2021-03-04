@@ -6,7 +6,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 %{
 #include <cstdlib>
-#include "executable_semantics/syntax.tab.h"
+#include "executable_semantics/syntax/syntax.tab.h"
 %}
 
 /* Turn off legacy bits we don't need */
