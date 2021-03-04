@@ -671,11 +671,11 @@ void StepExp() {
     }
     case ExpressionKind::Variable: {
       // { {x :: C, E, F} :: S, H} -> { {H(E(x)) :: C, E, F} :: S, H}
-      std::optional<Address> a = CurrentEnv(state).Get(*(exp->u.variable.name));
-      if (a) {
-        Value* v = state->heap[*a];
+      std::optional<Address> pointer = CurrentEnv(state).Get(*(exp->u.variable.name));
+      if (pointee) {
+        Value* pointee = state->heap[*pointer];
         frame->todo.Pop(1);
-        frame->todo.Push(MakeValAct(v));
+        frame->todo.Push(MakeValAct(pointee));
       } else {
         std::cerr << exp->line_num << ": could not find `"
                   << *(exp->u.variable.name) << "`" << std::endl;
