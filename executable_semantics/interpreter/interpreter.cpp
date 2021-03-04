@@ -1283,7 +1283,8 @@ void HandleValue() {
               frame->todo.Pop(2);
               frame->todo.Push(body_act);
               frame->todo.Push(MakeStmtAct(c->second));
-            } else {  // this case did not match, moving on
+            } else {
+              // this case did not match, moving on
               act->pos++;
               clause_num = (act->pos - 1) / 2;
               if (clause_num <
