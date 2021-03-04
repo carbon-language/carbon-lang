@@ -1188,7 +1188,7 @@ void HandleValue() {
                   << std::endl;
               exit(-1);
             }
-            frame->scopes.Top()->env = *res;
+            frame->scopes.Top()->env = *result;
             frame->todo.Pop(2);
           }
           break;
