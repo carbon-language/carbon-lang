@@ -20,6 +20,9 @@ Can we allow an implementation of a parameterized interface `I(T)` for a type
 `A` to be in the same library as `T`, or can it only be provided with `I` or
 `A`?
 
+**NOTE:** This is only a concern for an earlier iteration of the generics design
+where interface parameters were deducible.
+
 ## Answer
 
 It can only be provided with `I` or `A`, unless `T` can not be deduced, and then
@@ -115,5 +118,5 @@ a single type (such as `ComparableTo(T)`), this problem doesn't arise.
 
 It appears we need to require all implementations of interface `I(...)` for type
 `A(...)` to live in the same library as either the definition of `I`, `A`, or a
-parameter of `A`. Being in the same library as a parameter of `I` is
+parameter of `A`. Being in the same library as an argument to `I` is
 insufficient, unless it can't be deduced.
