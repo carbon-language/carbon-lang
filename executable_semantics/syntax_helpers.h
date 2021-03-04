@@ -17,7 +17,7 @@
 namespace Carbon {
 
 // Initialized by main(), and used when printing errors.
-extern char* input_filename;
+extern const char* input_filename;
 
 /// Reports a syntax error at `sourceLocation` with the given `details` and
 /// exits the program with code `-1`.

@@ -16,7 +16,7 @@
 
 %code requires {
 #include "executable_semantics/ast/declaration.h"
-#include "executable_semantics/ast/expression_or_field_list.h"
+#include "executable_semantics/ast/field_list.h"
 #include "executable_semantics/ast/function_definition.h"
 }
 
@@ -47,7 +47,7 @@ namespace yy
    std::list<Carbon::Declaration>* declaration_list;
    Carbon::Member* member;
    std::list<Carbon::Member*>* member_list;
-   Carbon::ExpOrFieldList* field_list;
+   Carbon::FieldList* field_list;
    std::pair<std::string, Carbon::Expression*>* alternative;
    std::list<std::pair<std::string, Carbon::Expression*>>* alternative_list;
    std::pair<Carbon::Expression*, Carbon::Statement*>* clause;
@@ -68,6 +68,7 @@ namespace yy
 %type <expression> expression
 %type <expression> pattern
 %type <expression> return_type
+%type <expression> paren_expression
 %type <expression> tuple
 %type <member> member
 %type <member_list> member_list
@@ -143,7 +144,7 @@ expression:
     { $$ = Carbon::MakeTypeType(yylineno); }
 | AUTO
     { $$ = Carbon::MakeAutoType(yylineno); }
-| tuple { $$ = $1; }
+| paren_expression { $$ = $1; }
 | expression EQUAL expression
     { $$ = Carbon::MakeBinOp(yylineno, Carbon::Operator::Eq, $1, $3); }
 | expression '+' expression
@@ -159,38 +160,39 @@ expression:
 | '-' expression
     { $$ = Carbon::MakeUnOp(yylineno, Carbon::Operator::Neg, $2); }
 | expression tuple
-    {
-      if ($2->tag == Carbon::ExpressionKind::Tuple) {
-        $$ = Carbon::MakeCall(yylineno, $1, $2);
-      } else {
-        auto vec =
-            new std::vector<std::pair<std::string, Carbon::Expression*>>();
-        vec->push_back(std::make_pair("", $2));
-        $$ = Carbon::MakeCall(yylineno, $1, Carbon::MakeTuple(yylineno, vec));
-      }
-    }
+    { $$ = Carbon::MakeCall(yylineno, $1, $2); }
 | FNTY tuple return_type
     { $$ = Carbon::MakeFunType(yylineno, $2, $3); }
 ;
 designator: '.' identifier { $$ = $2; }
 ;
-tuple: '(' field_list ')'
+paren_expression: '(' field_list ')'
     {
-      switch ($2->tag) {
-      case Carbon::ExpOrFieldListKind::Exp:
-        $$ = $2->u.exp;
-        break;
-      case Carbon::ExpOrFieldListKind::FieldList:
+     if ($2->fields->size() == 1 &&
+         $2->fields->front().first == "" &&
+	 !$2->has_explicit_comma) {
+	$$ = $2->fields->front().second;
+     } else {
         auto vec = new std::vector<std::pair<std::string,Carbon::Expression*>>(
-            $2->u.fields->begin(), $2->u.fields->end());
+            $2->fields->begin(), $2->fields->end());
         $$ = Carbon::MakeTuple(yylineno, vec);
-        break;
       }
     }
 ;
+tuple: '(' field_list ')'
+    {
+     auto vec = new std::vector<std::pair<std::string,Carbon::Expression*>>(
+         $2->fields->begin(), $2->fields->end());
+     $$ = Carbon::MakeTuple(yylineno, vec);
+    }
 field:
   pattern
-    { $$ = Carbon::MakeExp($1); }
+    {
+      auto fields =
+          new std::list<std::pair<std::string, Carbon::Expression*>>();
+      fields->push_back(std::make_pair("", $1));
+      $$ = Carbon::MakeFieldList(fields);
+    }
 | designator '=' pattern
     {
       auto fields =

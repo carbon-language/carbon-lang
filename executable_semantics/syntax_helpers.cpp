@@ -8,10 +8,11 @@
 
 #include "executable_semantics/interpreter/interpreter.h"
 #include "executable_semantics/interpreter/typecheck.h"
+#include "executable_semantics/tracing_flag.h"
 
 namespace Carbon {
 
-char* input_filename = nullptr;
+const char* input_filename = nullptr;
 
 /// Reports a syntax error at `sourceLocation` with the given `details` and
 /// exits the program with code `-1`.
@@ -22,11 +23,13 @@ void SyntaxError(std::string details, yy::location sourceLocation) {
 }
 
 void ExecProgram(std::list<Declaration>* fs) {
-  std::cout << "********** source program **********" << std::endl;
-  for (const auto& decl : *fs) {
-    decl.Print();
+  if (tracing_output) {
+    std::cout << "********** source program **********" << std::endl;
+    for (const auto& decl : *fs) {
+      decl.Print();
+    }
+    std::cout << "********** type checking **********" << std::endl;
   }
-  std::cout << "********** type checking **********" << std::endl;
   state = new State();  // Compile-time state.
   std::pair<TypeEnv*, Env*> p = TopLevel(fs);
   TypeEnv* top = p.first;
@@ -35,12 +38,14 @@ void ExecProgram(std::list<Declaration>* fs) {
   for (const auto& decl : *fs) {
     new_decls.push_back(decl.TypeChecked(top, ct_top));
   }
-  std::cout << std::endl;
-  std::cout << "********** type checking complete **********" << std::endl;
-  for (const auto& decl : new_decls) {
-    decl.Print();
+  if (tracing_output) {
+    std::cout << std::endl;
+    std::cout << "********** type checking complete **********" << std::endl;
+    for (const auto& decl : new_decls) {
+      decl.Print();
+    }
+    std::cout << "********** starting execution **********" << std::endl;
   }
-  std::cout << "********** starting execution **********" << std::endl;
   int result = InterpProgram(&new_decls);
   std::cout << "result: " << result << std::endl;
 }
