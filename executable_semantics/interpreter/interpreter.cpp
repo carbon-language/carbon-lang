@@ -1178,7 +1178,7 @@ void HandleValue() {
             Value* v = act->results[0];
             Value* p = act->results[1];
 
-            auto res =
+            std::optional<Env> result =
                 PatternMatch(p, v, frame->scopes.Top()->env,
                              &frame->scopes.Top()->locals, stmt->line_num);
             if (!res) {
