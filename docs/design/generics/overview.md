@@ -23,7 +23,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Local constants](#local-constants)
     -   [Generic type parameters vs. templated type parameters](#generic-type-parameters-vs-templated-type-parameters)
 -   [Proposed programming model](#proposed-programming-model)
-    -   [Syntax examples for common use cases](#syntax-examples-for-common-use-cases)
+    -   [Syntax examples of common use cases](#syntax-examples-of-common-use-cases)
     -   [Calling templated code](#calling-templated-code)
 
 <!-- tocstop -->
@@ -356,25 +356,64 @@ to add to support generic type arguments, beyond what is described in
 
 ## Proposed programming model
 
-[Carbon deep dive: combined interfaces](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/combined-interfaces.md).
+This is described in detail in a separate document,
+["Carbon deep dive: combined interfaces"](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/combined-interfaces.md).
+In summary:
 
-This is a modification of
-[interfaces as facet type-types](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/facet-type-types.md)
-that attempts to improve usability:
+-   Interfaces have a name and describe functions and other items for types to
+    implement.
+-   Types may implement interfaces at most once.
+-   Implementations may be part of the type's definition, in which case you can
+    directly call functions on those types. Or they may be external, in which
+    case the implementation is allowed to be defined in the library defining the
+    interface. The goal is that methods for interfaces implemented with the type
+    are generally available without qualification, and a function with a generic
+    type parameter can have the same function body as an unparameterized one.
+-   Interfaces are usable as type-types, meaning you can define a generic
+    function that have a type parameter satisfying the interface by saying the
+    type of the type parameter is the interface. Inside such a generic function,
+    the API of the type is erased, except for the names of the interface.
+-   You may also declare type-types, called "structural interfaces", that
+    require multiple interfaces to be implemented, and give you control over how
+    name conflicts are handled.
+-   Alternatively, you may use a qualified syntax to directly call a function
+    from a specific interface.
+-   The `+` operation on type-types allows you conveniently combine interfaces.
+    It gives you all the names that don't conflict. Names with conflicts can be
+    accessed using the qualified syntax.
+-   Interfaces can require other interfaces be implemented, or extend/refine
+    them.
 
--   Methods for interfaces implemented with the type are generally available
-    without qualification.
--   A function can be parameterized by a generic type implementing multiple
-    interfaces, and methods from all interfaces may be called without
-    qualification as long as there are no conflicts.
--   We provide a more concise qualification syntax for when that is needed.
+Future work:
 
-### Syntax examples for common use cases
+-   A "newtype" mechanism called "adapting types" is provided to create new
+    types that compatible with existing types but with different interface
+    implementations. This can be used to add or replace implementations, or
+    define implementations for reuse.
+-   Associated types and interface parameters are two features provided to allow
+    function signatures to vary with the implementing type. The biggest
+    difference between these is that associated types ("output types") may be
+    deduced from a type, and types can implement the same interface multiple
+    times with different interface parameters ("input types").
+-   Constraints have not been finalized.
+-   Implementations can be parameterized, to apply to multiple types. These
+    implementations can be restricted to various conditions are true for the
+    parameters. When there are two implementations that can apply, there is a
+    specialization rule that picks the more specific one.
+-   Support types that vary at runtime.
+-   Defaults and other ways to reuse code across implementations.
+-   Types can define overloads for operators by implementing standard
+    interfaces.
+-   Ability to mark items as `upcoming` or `deprecated` to support evolution.
+-   Generic associated and higher-ranked/kinded types.
+
+### Syntax examples of common use cases
 
 Interface definition
 
 ```
 interface Foo {
+  // `F` is an associated method.
   method (Ptr(Self): this) F();
 }
 ```
@@ -403,7 +442,9 @@ struct Baz {
     method (Ptr(Baz): this) F() { ... }
   }
 }
-// Implement `Bar` for `Baz` without changing the API of `Baz`:
+// Implement `Bar` for `Baz` without changing the API of `Baz`
+// using an `extend` declaration. This may be defined in either
+// the library defining `Baz` or `Bar`.
 extend Baz {
   impl Bar {
     var Foo:$ U = ...;
@@ -412,8 +453,12 @@ extend Baz {
 }
 
 var Baz: x;
-// Allowed, unlike `x.G()`.
+// `x.F()` is allowed, unlike `x.G()`.
 x.F();
+// To call `G` on `x`, use the qualified syntax:
+x.(Bar.G)();
+// Can also call `F` using the qualified syntax:
+x.(Foo.F)();
 ```
 
 Function taking a value with type conforming to an interface
@@ -432,7 +477,11 @@ Function taking a value with type conforming to two different interfaces
 
 ```
 fn Ha[Foo + Bar:$ T](Ptr(T): y) {
+  // `T` has all the names of `Foo` and `Bar` that don't conflict.
   y->F();
+  // Can call `G` here, even though `x.G()` isn't allowed since
+  // `Bar` is external.
+  y->G();
   // Qualified syntax works even if there is a name conflict between
   // Foo and Bar.
   y->(Bar.G)();
@@ -456,7 +505,12 @@ Function taking a list of values with different types that all implement a
 single interface
 
 ```
-fn StringConcat[Int:$ N, NTuple(N, ToString):$ Ts](Ts...: input) -> String;
+// `NTuple(N, ToString)` is `(ToString, ..., ToString)`, the tuple
+// with `N` copies of `ToString`. `Ts` is a tuple of `N` types
+// `(Ts[0], ..., Ts[N-1])`, where each type `Ts[i]` has type `ToString`.
+// `input` is a tuple of `N` values, where `input[i]` has type `Ts[i]`.
+fn StringConcat[Int:$ N, NTuple(N, ToString):$ Ts](Ts...: input)
+    -> String { ... }
 ```
 
 Interface semantically containing other interfaces
@@ -475,7 +529,7 @@ struct S {
   impl Inner {
     method (S: this) K() { ... }
   }
-  impl Outer1 {}
+  impl Outer1 { }
 }
 var S: y = ...;
 y.K();

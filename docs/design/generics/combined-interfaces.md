@@ -71,6 +71,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
         -   [DynBoxed](#dynboxed)
         -   [MaybeBoxed](#maybeboxed)
 -   [Future work](#future-work)
+    -   [Abstract return types](#abstract-return-types)
     -   [Interface defaults](#interface-defaults)
     -   [Operator overloading](#operator-overloading)
     -   [Impls with state](#impls-with-state)
@@ -818,7 +819,8 @@ itself, `MyTypeType + MyTypeType == MyTypeType`. Also, given two
 should not conflict on any names in the common base.
 
 **Open syntax question:** Instead of using `+` as the combining operator, we
-could use `&`. I'm using `+` in this proposal since it is consistent with Rust.
+could use `&`. I'm using `+` in this proposal since it is
+[consistent with Rust](https://rust-lang.github.io/rfcs/0087-trait-bounds-with-plus.html).
 
 **Alternatives considered:** See
 [Carbon: Access to interface methods](https://docs.google.com/document/d/1u_i_s31OMI_apPur7WmVxcYq6MUXsG3oCiKwH893GRI/edit?usp=sharing&resourcekey=0-0lzSNebBMtUBi4lStL825g).
@@ -1817,6 +1819,9 @@ structural interface Double(Type:$ T) { extends PairInterface(T, T); }
 alias Double(Type:$ T) = PairInterface(T, T);
 ```
 
+Related:
+[Rust has trait aliases](https://rust-lang.github.io/rfcs/1733-trait-alias.html).
+
 ## Implicit constraints
 
 TODO
@@ -2562,8 +2567,8 @@ means passing the witness table as an ordinary parameter -- that is a
 -- to the function. This means that there will be a single copy of the generated
 code for this parameter.
 
-**Restrictions:** The type's size will only be known at runtime, so patterns
-that use a type's size such as declaring local variables of that type or passing
+**Restriction:** The type's size will only be known at runtime, so patterns that
+use a type's size such as declaring local variables of that type or passing
 values of that type by value are forbidden. Essentially the type is considered
 [unsized](#sized-types-and-type-types), even if the type-type is `Sized`.
 
@@ -2578,6 +2583,11 @@ allocate anything with a dynamic size on the heap using something like
 `Self` parameters or return `Self` values (and therefore violate the unsized
 restriction) from being used as the type of runtime type parameters, or should
 just those functions be blacklisted?
+
+**Restriction:**
+[Rust requires](https://rust-lang.github.io/rfcs/0195-associated-items.html#constraining-associated-types)
+all of the type-type's parameters and associated types be specified, since they
+can not vary at runtime.
 
 TODO examples
 
@@ -2951,6 +2961,17 @@ UseBoxed(DontBox(Bar()));
 ```
 
 ## Future work
+
+### Abstract return types
+
+This lets you return am anonymous type implementing an interface from a
+function.
+[Rust has this feature](https://rust-lang.github.io/rfcs/1522-conservative-impl-trait.html).
+Also see:
+
+-   [https://rust-lang.github.io/rfcs/1951-expand-impl-trait.html]
+-   [https://rust-lang.github.io/rfcs/2071-impl-trait-existential-types.html]
+-   [https://rust-lang.github.io/rfcs/2515-type_alias_impl_trait.html]
 
 ### Interface defaults
 
