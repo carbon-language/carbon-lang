@@ -38,7 +38,9 @@ static auto FindField(const std::string& field,
   return std::nullopt;
 }
 
-/**** Auxiliary Functions ****/
+//
+// Auxiliary Functions
+//
 
 auto AllocateValue(Value* v) -> Address {
   // Putting the following two side effects together in this function
@@ -143,7 +145,9 @@ void PrintEnv(Env env, std::ostream& out) {
   }
 }
 
-/***** Frame and State Operations *****/
+//
+// Frame and State Operations
+//
 
 void PrintFrame(Frame* frame, std::ostream& out) {
   out << frame->name;
@@ -189,7 +193,9 @@ void PrintState(std::ostream& out) {
   out << std::endl << "}" << std::endl;
 }
 
-/***** Auxiliary Functions *****/
+//
+// More Auxiliary Functions
+//
 
 auto ValToInt(Value* v, int line_num) -> int {
   CheckAlive(v, line_num);
@@ -251,6 +257,7 @@ auto EvalPrim(Operator op, const std::vector<Value*>& args, int line_num)
   }
 }
 
+// Globally-defined entities, such as functions, structs, choices.
 Env globals;
 
 void InitGlobals(std::list<Declaration>* fs) {
@@ -399,7 +406,10 @@ auto ToValue(Expression* value) -> Value* {
   }
 }
 
-// Returns 0 if the value doesn't match the pattern.
+// Returns an updated environment that includes the bindings of
+//    pattern variables to their matched values, if matching succeeds.
+// The names of the pattern variables are added to the vars parameter.
+// Returns nullopt if the value doesn't match the pattern.
 auto PatternMatch(Value* p, Value* v, Env env, std::list<std::string>* vars,
                   int line_num) -> std::optional<Env> {
   if (tracing_output) {
@@ -559,7 +569,7 @@ void PatternAssignment(Value* pat, Value* val, int line_num) {
   }
 }
 
-/***** state transitions for lvalues *****/
+// State transitions for lvalues.
 
 void StepLvalue() {
   Frame* frame = state->stack.Top();
@@ -627,7 +637,7 @@ void StepLvalue() {
   }
 }
 
-/***** state transitions for expressions *****/
+// State transitions for expressions.
 
 void StepExp() {
   Frame* frame = state->stack.Top();
@@ -748,8 +758,6 @@ void StepExp() {
   }  // switch (exp->tag)
 }
 
-/***** state transitions for statements *****/
-
 auto IsWhileAct(Action* act) -> bool {
   switch (act->tag) {
     case ActionKind::StatementAction:
@@ -777,6 +785,8 @@ auto IsBlockAct(Action* act) -> bool {
       return false;
   }
 }
+
+// State transitions for statements.
 
 void StepStmt() {
   Frame* frame = state->stack.Top();
@@ -947,7 +957,7 @@ void InsertDelete(Action* del, Stack<Action*>& todo) {
   }
 }
 
-/***** State transition for handling a value *****/
+// State transition for handling a value.
 
 void HandleValue() {
   Frame* frame = state->stack.Top();
