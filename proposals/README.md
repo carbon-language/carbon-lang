@@ -59,6 +59,6 @@ request:
     -   [0179 - Decision](p0179_decision.md)
 -   [0198 - Comments](p0198.md)
 -   [0199 - String literals](p0199.md)
--   [0353 - for loops](p0353.md)
+-   [0353 - `for` loops](p0353.md)
 
 <!-- endproposals -->
