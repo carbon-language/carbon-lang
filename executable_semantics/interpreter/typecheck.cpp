@@ -281,7 +281,7 @@ auto TypeCheckExp(Expression* e, TypeEnv env, Env ct_env, Value* expected,
       }
     }
     case ExpressionKind::Variable: {
-      std::optional<Value> type = env.Get(*(e->u.variable.name));
+      std::optional<Value*> type = env.Get(*(e->u.variable.name));
       if (type) {
         return TCResult(e, *type, env);
       } else {
