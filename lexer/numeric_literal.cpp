@@ -91,8 +91,9 @@ auto NumericLiteralToken::Lex(llvm::StringRef source_text)
     -> llvm::Optional<NumericLiteralToken> {
   NumericLiteralToken result;
 
-  if (source_text.empty() || !llvm::isDigit(source_text.front()))
+  if (source_text.empty() || !llvm::isDigit(source_text.front())) {
     return llvm::None;
+  }
 
   bool seen_plus_minus = false;
   bool seen_radix_point = false;
@@ -141,10 +142,12 @@ auto NumericLiteralToken::Lex(llvm::StringRef source_text)
   }
 
   result.text = source_text.substr(0, i);
-  if (!seen_radix_point)
+  if (!seen_radix_point) {
     result.radix_point = i;
-  if (!seen_potential_exponent)
+  }
+  if (!seen_potential_exponent) {
     result.exponent = i;
+  }
 
   return result;
 }
@@ -172,8 +175,10 @@ NumericLiteralToken::Parser::Parser(DiagnosticEmitter& emitter,
 // and diagnose if not.
 auto NumericLiteralToken::Parser::Check() -> CheckResult {
   if (!CheckLeadingZero() || !CheckIntPart() || !CheckFractionalPart() ||
-      !CheckExponentPart())
+      !CheckExponentPart()) {
     return UnrecoverableError;
+  }
+
   return recovered_from_error ? RecoverableError : Valid;
 }
 
@@ -255,14 +260,17 @@ auto NumericLiteralToken::Parser::CheckDigitSequence(
 
   std::bitset<256> valid_digits;
   if (radix == 2) {
-    for (char c : "01")
+    for (char c : "01") {
       valid_digits[static_cast<unsigned char>(c)] = true;
+    }
   } else if (radix == 10) {
-    for (char c : "0123456789")
+    for (char c : "0123456789") {
       valid_digits[static_cast<unsigned char>(c)] = true;
+    }
   } else {
-    for (char c : "0123456789ABCDEF")
+    for (char c : "0123456789ABCDEF") {
       valid_digits[static_cast<unsigned char>(c)] = true;
+    }
   }
 
   int num_digit_separators = 0;
@@ -295,8 +303,9 @@ auto NumericLiteralToken::Parser::CheckDigitSequence(
   }
 
   // Check that digit separators occur in exactly the expected positions.
-  if (num_digit_separators && radix != 2)
+  if (num_digit_separators) {
     CheckDigitSeparatorPlacement(text, radix, num_digit_separators);
+  }
 
   return {.ok = true, .has_digit_separators = (num_digit_separators != 0)};
 }
@@ -305,10 +314,17 @@ auto NumericLiteralToken::Parser::CheckDigitSequence(
 // correctly positioned.
 auto NumericLiteralToken::Parser::CheckDigitSeparatorPlacement(
     llvm::StringRef text, int radix, int num_digit_separators) -> void {
-  assert((radix == 10 || radix == 16) &&
-         "unexpected radix for digit separator checks");
   assert(std::count(text.begin(), text.end(), '_') == num_digit_separators &&
          "given wrong number of digit separators");
+
+  if (radix == 2) {
+    // There are no restrictions on digit separator placement for binary
+    // literals.
+    return;
+  }
+
+  assert((radix == 10 || radix == 16) &&
+         "unexpected radix for digit separator checks");
 
   auto diagnose_irregular_digit_separators = [&] {
     emitter.EmitError<IrregularDigitSeparators>({.radix = radix});
@@ -319,17 +335,21 @@ auto NumericLiteralToken::Parser::CheckDigitSeparatorPlacement(
   // groups of 3 or 4 digits (4 or 5 characters), respectively.
   int stride = (radix == 10 ? 4 : 5);
   int remaining_digit_separators = num_digit_separators;
-  for (auto pos = text.end(); pos - text.begin() >= stride; /*in loop*/) {
+  auto pos = text.end();
+  while (pos - text.begin() >= stride) {
     pos -= stride;
-    if (*pos != '_')
-      return diagnose_irregular_digit_separators();
+    if (*pos != '_') {
+      diagnose_irregular_digit_separators();
+      return;
+    }
 
     --remaining_digit_separators;
   }
 
   // Check there weren't any other digit separators.
-  if (remaining_digit_separators)
+  if (remaining_digit_separators) {
     diagnose_irregular_digit_separators();
+  }
 };
 
 // Check that we don't have a '0' prefix on a non-zero decimal integer.
