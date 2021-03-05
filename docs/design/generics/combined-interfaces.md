@@ -830,7 +830,9 @@ should not conflict on any names in the common base.
 
 **Open syntax question:** Instead of using `+` as the combining operator, we
 could use `&`. I'm using `+` in this proposal since it is
-[consistent with Rust](https://rust-lang.github.io/rfcs/0087-trait-bounds-with-plus.html).
+[consistent with Rust](https://rust-lang.github.io/rfcs/0087-trait-bounds-with-plus.html),
+but
+[Swift uses `&`](https://docs.swift.org/swift-book/LanguageGuide/Protocols.html#ID282).
 
 **Alternatives considered:** See
 [Carbon: Access to interface methods](https://docs.google.com/document/d/1u_i_s31OMI_apPur7WmVxcYq6MUXsG3oCiKwH893GRI/edit?usp=sharing&resourcekey=0-0lzSNebBMtUBi4lStL825g).
@@ -1630,13 +1632,6 @@ an argument to a deducible parameter of an interface requirement, like
 
 TODO: Fix this up a lot
 
-TODO: Constraint types include:
-
--   Set to a specific value.
--   Two types must be the same.
--   Type bounds.
--   Recursive constraints like `Self`.
-
 TODO: Places where we need to say constraints:
 
 -   In a declaration, like a function, type, interface or impl.
@@ -1645,8 +1640,20 @@ TODO: Places where we need to say constraints:
 
 TODO: Two approaches:
 
--   `where`/`requires` clauses
+-   `where`/`requires` clauses (Swift
+    ([1](https://docs.swift.org/swift-book/LanguageGuide/Generics.html#ID553),
+    [2](https://docs.swift.org/swift-book/ReferenceManual/GenericParametersAndArguments.html#ID408))
+    and Rust both use `where`). Note Swift also uses `where` to write
+    [filter conditions evaluated at runtime](https://medium.com/@shubhamkaliyar255/how-to-use-where-clause-in-for-in-loops-e61d0860debe).
+    So far Carbon has been using `if` in those locations.
 -   argument passing
+
+TODO: Constraint types include:
+
+-   Set to a specific value.
+-   Two types must be the same.
+-   Type bounds.
+-   Recursive constraints like `Self`.
 
 ### Constraints on associated constants
 
