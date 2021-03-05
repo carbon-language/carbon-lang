@@ -86,6 +86,10 @@ void yyerror(char* error) {
 %token IF
 %token ELSE
 %token WHILE
+%token DELIMIT
+%token WITH
+%token SUSPEND
+%token RESUME
 %token BREAK
 %token CONTINUE
 %token RETURN
@@ -245,6 +249,12 @@ statement:
     { $$ = Carbon::MakeBlock(yylineno, $2); }
 | MATCH '(' expression ')' '{' clause_list '}'
     { $$ = Carbon::MakeMatch(yylineno, $3, $6); }
+| DELIMIT statement WITH '(' identifier ')' statement
+    { $$ = Carbon::MakeDelimitStmt(yylineno, $2, $5, $7); }
+| SUSPEND ';'
+    { $$ = Carbon::MakeSuspendStmt(yylineno); }
+| RESUME expression ';'
+    { $$ = Carbon::MakeResumeStmt(yylineno, $2); }
 ;
 optional_else:
   // Empty

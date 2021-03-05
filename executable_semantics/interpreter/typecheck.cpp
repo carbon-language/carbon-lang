@@ -496,6 +496,14 @@ auto TypeCheckStmt(Statement* s, TypeEnv* env, Env* ct_env, Value* ret_type)
       }
       return TCStatement(MakeReturn(s->line_num, res.exp), env);
     }
+    case StatementKind::Delimit: {
+      std::cerr << "delimit not implemented" << std::endl;
+      exit(-1);
+    }
+    case StatementKind::Suspend: {
+      std::cerr << "suspend not implemented" << std::endl;
+      exit(-1);
+    }
   }
 }
 
@@ -549,6 +557,8 @@ auto CheckOrEnsureReturn(Statement* stmt, bool void_return, int line_num)
     case StatementKind::Break:
     case StatementKind::Continue:
     case StatementKind::VariableDefinition:
+    case StatementKind::Delimit:
+    case StatementKind::Suspend:
       if (void_return) {
         auto args = new std::vector<std::pair<std::string, Expression*>>();
         return MakeSeq(

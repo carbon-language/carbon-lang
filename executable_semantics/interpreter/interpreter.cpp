@@ -849,6 +849,18 @@ void StepStmt() {
       }
       frame->todo.Push(MakeStmtAct(stmt->u.sequence.stmt));
       break;
+    case StatementKind::Delimit:
+      std::cerr << "delimit not implemented" << std::endl;
+      exit(-1);
+      break;
+    case StatementKind::Suspend:
+      std::cerr << "suspend not implemented" << std::endl;
+      exit(-1);
+      break;
+    case StatementKind::Resume:
+      std::cerr << "resume not implemented" << std::endl;
+      exit(-1);
+      break;
   }
 }
 
@@ -1285,6 +1297,9 @@ void HandleValue() {
         case StatementKind::Sequence:
         case StatementKind::Break:
         case StatementKind::Continue:
+        case StatementKind::Delimit:
+        case StatementKind::Suspend:
+        case StatementKind::Resume:
           std::cerr << "internal error in handle_value, unhandled statement ";
           PrintStatement(stmt, 1);
           std::cerr << std::endl;

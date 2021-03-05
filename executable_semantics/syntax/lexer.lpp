@@ -44,6 +44,10 @@ TRUE     "true"
 TYPE     "Type"
 VAR      "var"
 WHILE    "while"
+DELIMIT  "delimit"
+SUSPEND  "suspend"
+RESUME   "resume"
+WITH     "with"
 
 identifier    [A-Za-z_][A-Za-z0-9_]*
 integer_literal   [0-9]+
@@ -77,6 +81,10 @@ integer_literal   [0-9]+
 {TYPE}     { return TYPE; }
 {VAR}      { return VAR; }
 {WHILE}    { return WHILE; }
+{DELIMIT}  { return DELIMIT; }
+{SUSPEND}  { return SUSPEND; }
+{RESUME}   { return RESUME; }
+{WITH}     { return WITH; }
 
 {identifier} {
   int n = strlen(yytext);

@@ -22,7 +22,10 @@ enum class StatementKind {
   While,
   Break,
   Continue,
-  Match
+  Match,
+  Delimit,
+  Suspend,
+  Resume
 };
 
 struct Statement {
@@ -69,6 +72,16 @@ struct Statement {
       std::list<std::pair<Expression*, Statement*>>* clauses;
     } match_stmt;
 
+    struct {
+      Statement* body;
+      std::string* continuation;
+      Statement* handler;
+    } delimit_stmt;
+
+    struct {
+      Expression* exp;
+    } resume_stmt;
+
   } u;
 };
 
@@ -86,6 +99,10 @@ auto MakeContinue(int line_num) -> Statement*;
 auto MakeMatch(int line_num, Expression* exp,
                std::list<std::pair<Expression*, Statement*>>* clauses)
     -> Statement*;
+auto MakeDelimitStmt(int line_num, Statement*, std::string, Statement*)
+    -> Statement*;
+auto MakeSuspendStmt(int line_num) -> Statement*;
+auto MakeResumeStmt(int line_num, Expression*) -> Statement*;
 
 void PrintStatement(Statement*, int);
 
