@@ -3956,23 +3956,28 @@ std::vector<ELFShdrTy> RewriteInstance::getOutputSections(
       });
 
   // Fix section sizes to prevent overlapping.
-  for (uint32_t Index = 1; Index < OutputSections.size(); ++Index) {
-    auto &PrevSection = OutputSections[Index - 1].second;
-    auto &Section = OutputSections[Index].second;
+  ELFShdrTy *PrevSection = nullptr;
+  StringRef PrevSectionName;
+  for (auto &SectionKV : OutputSections) {
+    ELFShdrTy &Section = SectionKV.second;
 
-    // Skip TBSS section size adjustment.
-    if (PrevSection.sh_type == ELF::SHT_NOBITS &&
-        (PrevSection.sh_flags & ELF::SHF_TLS))
+    // TBSS section does not take file or memory space. Ignore it for layout
+    // purposes.
+    if (Section.sh_type == ELF::SHT_NOBITS && (Section.sh_flags & ELF::SHF_TLS))
       continue;
 
-    if (PrevSection.sh_addr + PrevSection.sh_size > Section.sh_addr) {
+    if (PrevSection &&
+        PrevSection->sh_addr + PrevSection->sh_size > Section.sh_addr) {
       if (opts::Verbosity > 1) {
-        outs() << "BOLT-INFO: adjusting size for section "
-               << OutputSections[Index - 1].first << '\n';
+        outs() << "BOLT-INFO: adjusting size for section " << PrevSectionName
+               << '\n';
       }
-      PrevSection.sh_size = Section.sh_addr > PrevSection.sh_addr ?
-        Section.sh_addr - PrevSection.sh_addr : 0;
+      PrevSection->sh_size = Section.sh_addr > PrevSection->sh_addr ?
+        Section.sh_addr - PrevSection->sh_addr : 0;
     }
+
+    PrevSection = &Section;
+    PrevSectionName = SectionKV.first;
   }
 
   uint64_t LastFileOffset = 0;
