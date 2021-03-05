@@ -1,4 +1,2 @@
-********** source program **********
-********** type checking **********
-error, program must contain a function named `main`
+executable_semantics/testdata/undef2.6c:7: syntax error
 EXIT CODE: 255
