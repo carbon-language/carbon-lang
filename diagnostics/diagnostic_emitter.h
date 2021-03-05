@@ -37,30 +37,28 @@ class DiagnosticEmitter {
       : callback_(std::move(callback)) {}
   ~DiagnosticEmitter() = default;
 
-  // Emits an error unconditionally after applying the provided `substitutions`.
+  // Emits an error unconditionally.
   template <typename DiagnosticT>
-  void EmitError(typename DiagnosticT::Substitutions substitutions) {
+  auto EmitError(DiagnosticT diag) -> void {
     callback_({.short_name = DiagnosticT::ShortName,
-               .message = DiagnosticT::Format(substitutions)});
+               .message = diag.Format()});
   }
 
   // Emits an error unconditionally when there are no substitutions.
   template <typename DiagnosticT>
-  std::enable_if_t<std::is_empty_v<typename DiagnosticT::Substitutions>>
-  EmitError() {
+  auto EmitError() -> std::enable_if_t<std::is_empty_v<DiagnosticT>> {
     EmitError<DiagnosticT>({});
   }
 
   // Emits a warning if `F` returns true.  `F` may or may not be called if the
   // warning is disabled.
   template <typename DiagnosticT>
-  void EmitWarningIf(
-      llvm::function_ref<bool(typename DiagnosticT::Substitutions&)> f) {
+  auto EmitWarningIf(llvm::function_ref<bool(DiagnosticT&)> f) -> void {
     // TODO(kfm): check if this warning is enabled
-    typename DiagnosticT::Substitutions substitutions;
-    if (f(substitutions)) {
-      callback_({.short_name = DiagnosticT::ShortName,
-                 .message = DiagnosticT::Format(substitutions)});
+    DiagnosticT diag;
+    if (f(diag)) {
+      callback_(
+          {.short_name = DiagnosticT::ShortName, .message = diag.Format()});
     }
   }
 
@@ -83,9 +81,7 @@ inline auto NullDiagnosticEmitter() -> DiagnosticEmitter& {
 template <typename Derived>
 struct SimpleDiagnostic {
   struct Substitutions {};
-  static auto Format(const Substitutions&) -> std::string {
-    return Derived::Message.str();
-  }
+  static auto Format() -> std::string { return Derived::Message.str(); }
 };
 
 }  // namespace Carbon
