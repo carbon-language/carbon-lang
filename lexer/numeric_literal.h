@@ -91,8 +91,7 @@ class NumericLiteralToken::Parser {
                           bool allow_digit_separators = true)
       -> CheckDigitSequenceResult;
   auto CheckDigitSeparatorPlacement(llvm::StringRef text, int radix,
-                                    int num_digit_separators)
-      -> void;
+                                    int num_digit_separators) -> void;
   auto CheckLeadingZero() -> bool;
   auto CheckIntPart() -> bool;
   auto CheckFractionalPart() -> bool;
