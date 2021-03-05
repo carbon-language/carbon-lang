@@ -21,6 +21,8 @@ class NumericLiteralToken {
   llvm::StringRef Text() const { return text; }
 
   // Extract a numeric literal from the given text, if it has a suitable form.
+  //
+  // The supplied `source_text` must outlive the return value.
   static auto Lex(llvm::StringRef source_text)
       -> llvm::Optional<NumericLiteralToken>;
 
@@ -89,7 +91,8 @@ class NumericLiteralToken::Parser {
                           bool allow_digit_separators = true)
       -> CheckDigitSequenceResult;
   auto CheckDigitSeparatorPlacement(llvm::StringRef text, int radix,
-                                    int num_digit_separators) -> void;
+                                    int num_digit_separators)
+      -> bool;
   auto CheckLeadingZero() -> bool;
   auto CheckIntPart() -> bool;
   auto CheckFractionalPart() -> bool;
