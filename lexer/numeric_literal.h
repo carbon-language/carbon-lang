@@ -18,7 +18,7 @@ namespace Carbon {
 class NumericLiteralToken {
  public:
   // Get the text corresponding to this literal.
-  llvm::StringRef Text() const { return text; }
+  auto Text() const -> llvm::StringRef { return text; }
 
   // Extract a numeric literal from the given text, if it has a suitable form.
   //
@@ -92,7 +92,7 @@ class NumericLiteralToken::Parser {
       -> CheckDigitSequenceResult;
   auto CheckDigitSeparatorPlacement(llvm::StringRef text, int radix,
                                     int num_digit_separators)
-      -> bool;
+      -> void;
   auto CheckLeadingZero() -> bool;
   auto CheckIntPart() -> bool;
   auto CheckFractionalPart() -> bool;
