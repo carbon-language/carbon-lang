@@ -27,6 +27,29 @@ cc_test(
 )
 
 cc_library(
+    name = "numeric_literal",
+    srcs = ["numeric_literal.cpp"],
+    hdrs = ["numeric_literal.h"],
+    deps = [
+        "//diagnostics:diagnostic_emitter",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_test(
+    name = "numeric_literal_test",
+    srcs = ["numeric_literal_test.cpp"],
+    deps = [
+        ":numeric_literal",
+        "//diagnostics:diagnostic_emitter",
+        "@llvm-project//llvm:Support",
+        "@llvm-project//llvm:gmock",
+        "@llvm-project//llvm:gtest",
+        "@llvm-project//llvm:gtest_main",
+    ],
+)
+
+cc_library(
     name = "string_literal",
     srcs = ["string_literal.cpp"],
     hdrs = ["string_literal.h"],
@@ -56,6 +79,7 @@ cc_library(
     deps = [
         ":string_literal",
         ":token_kind",
+        ":numeric_literal",
         "//diagnostics:diagnostic_emitter",
         "//source:source_buffer",
         "@llvm-project//llvm:Support",

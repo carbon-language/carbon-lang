@@ -6,7 +6,9 @@
 #include <cstring>
 #include <iostream>
 
-#include "executable_semantics/syntax_helpers.h"
+#include "executable_semantics/syntax/syntax_helpers.h"
+#include "executable_semantics/tracing_flag.h"
+#include "llvm/Support/CommandLine.h"
 
 extern FILE* yyin;
 extern auto yyparse() -> int;  // NOLINT(readability-identifier-naming)
@@ -14,14 +16,23 @@ extern auto yyparse() -> int;  // NOLINT(readability-identifier-naming)
 int main(int argc, char* argv[]) {
   // yydebug = 1;
 
-  if (argc > 1) {
-    Carbon::input_filename = argv[1];
-    yyin = fopen(argv[1], "r");
+  using llvm::cl::desc;
+  using llvm::cl::opt;
+  opt<bool> quiet_option("quiet", desc("Disable tracing"));
+  opt<std::string> input_filename(llvm::cl::Positional, desc("<input file>"));
+  llvm::cl::ParseCommandLineOptions(argc, argv);
+
+  if (input_filename.getNumOccurrences() > 0) {
+    Carbon::input_filename = input_filename.c_str();
+    yyin = fopen(input_filename.c_str(), "r");
     if (yyin == nullptr) {
-      std::cerr << "Error opening '" << argv[1] << "': " << strerror(errno)
-                << std::endl;
+      std::cerr << "Error opening '" << input_filename
+                << "': " << strerror(errno) << std::endl;
       return 1;
     }
+  }
+  if (quiet_option) {
+    Carbon::tracing_output = false;
   }
   return yyparse();
 }

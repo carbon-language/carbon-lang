@@ -136,8 +136,26 @@ env: main: fun<main>,
 else
 <1>(false,) --->
 {
-stack: main{<-1> :: return 0;<-1>} :: top{}
+stack: main{return 0;<-1>} :: top{}
 heap: fun<main>, 
 env: main: fun<main>, 
 }
---- step stmt  --->
+--- step stmt return 0; --->
+{
+stack: main{0<-1> :: return 0;<0>} :: top{}
+heap: fun<main>, 
+env: main: fun<main>, 
+}
+--- step exp 0 --->
+{
+stack: main{0<-1> :: return 0;<0>} :: top{}
+heap: fun<main>, 
+env: main: fun<main>, 
+}
+--- handle value 0 with return 0;<1>(0,) --->
+{
+stack: top{0<-1>}
+heap: fun<main>, 
+env: main: fun<main>, 
+}
+result: 0
