@@ -4,6 +4,7 @@
 
 #include "executable_semantics/interpreter/interpreter.h"
 
+#include <cassert>
 #include <iostream>
 #include <iterator>
 #include <map>
@@ -15,6 +16,7 @@
 #include "executable_semantics/ast/function_definition.h"
 #include "executable_semantics/interpreter/stack.h"
 #include "executable_semantics/interpreter/typecheck.h"
+#include "executable_semantics/tracing_flag.h"
 
 namespace Carbon {
 
@@ -252,55 +254,49 @@ auto EvalPrim(Operator op, const std::vector<Value*>& args, int line_num)
 
 Env* globals;
 
-void InitGlobals(std::list<Declaration*>* fs) {
+void InitGlobals(std::list<Declaration>* fs) {
   globals = nullptr;
-  for (auto& iter : *fs) {
-    switch (iter->tag) {
-      case DeclarationKind::ChoiceDeclaration: {
-        auto d = iter;
-        auto alts = new VarValues();
-        for (auto i = d->u.choice_def.alternatives->begin();
-             i != d->u.choice_def.alternatives->end(); ++i) {
-          auto t =
-              ToType(d->u.choice_def.line_num, InterpExp(nullptr, i->second));
-          alts->push_back(make_pair(i->first, t));
-        }
-        auto ct = MakeChoiceTypeVal(d->u.choice_def.name, alts);
-        auto a = AllocateValue(ct);
-        globals = new Env(*d->u.choice_def.name, a, globals);
-        break;
-      }
-      case DeclarationKind::StructDeclaration: {
-        auto d = iter;
-        auto fields = new VarValues();
-        auto methods = new VarValues();
-        for (auto i = d->u.struct_def->members->begin();
-             i != d->u.struct_def->members->end(); ++i) {
-          switch ((*i)->tag) {
-            case MemberKind::FieldMember: {
-              auto t = ToType(d->u.struct_def->line_num,
-                              InterpExp(nullptr, (*i)->u.field.type));
-              fields->push_back(make_pair(*(*i)->u.field.name, t));
-              break;
-            }
-          }
-        }
-        auto st = MakeStructTypeVal(*d->u.struct_def->name, fields, methods);
-        auto a = AllocateValue(st);
-        globals = new Env(*d->u.struct_def->name, a, globals);
-        break;
-      }
-      case DeclarationKind::FunctionDeclaration: {
-        struct FunctionDefinition* fun = iter->u.fun_def;
-        Env* env = nullptr;
-        auto pt = InterpExp(env, fun->param_pattern);
-        auto f = MakeFunVal(fun->name, pt, fun->body);
-        Address a = AllocateValue(f);
-        globals = new Env(fun->name, a, globals);
+  for (auto const& d : *fs) {
+    d.InitGlobals(globals);
+  }
+}
+
+auto ChoiceDeclaration::InitGlobals(Env*& globals) const -> void {
+  auto alts = new VarValues();
+  for (auto kv : alternatives) {
+    auto t = ToType(line_num, InterpExp(nullptr, kv.second));
+    alts->push_back(make_pair(kv.first, t));
+  }
+  auto ct = MakeChoiceTypeVal(name, alts);
+  auto a = AllocateValue(ct);
+  globals = new Env(name, a, globals);
+}
+
+auto StructDeclaration::InitGlobals(Env*& globals) const -> void {
+  auto fields = new VarValues();
+  auto methods = new VarValues();
+  for (auto i = definition.members->begin(); i != definition.members->end();
+       ++i) {
+    switch ((*i)->tag) {
+      case MemberKind::FieldMember: {
+        auto t =
+            ToType(definition.line_num, InterpExp(nullptr, (*i)->u.field.type));
+        fields->push_back(make_pair(*(*i)->u.field.name, t));
         break;
       }
     }
   }
+  auto st = MakeStructTypeVal(*definition.name, fields, methods);
+  auto a = AllocateValue(st);
+  globals = new Env(*definition.name, a, globals);
+}
+
+auto FunctionDeclaration::InitGlobals(Env*& globals) const -> void {
+  Env* env = nullptr;
+  auto pt = InterpExp(env, definition->param_pattern);
+  auto f = MakeFunVal(definition->name, pt, definition->body);
+  Address a = AllocateValue(f);
+  globals = new Env(definition->name, a, globals);
 }
 
 //    { S, H} -> { { C, E, F} :: S, H}
@@ -402,11 +398,13 @@ auto ToValue(Expression* value) -> Value* {
 // Returns 0 if the value doesn't match the pattern.
 auto PatternMatch(Value* p, Value* v, Env* env, std::list<std::string>* vars,
                   int line_num) -> Env* {
-  std::cout << "pattern_match(";
-  PrintValue(p, std::cout);
-  std::cout << ", ";
-  PrintValue(v, std::cout);
-  std::cout << ")" << std::endl;
+  if (tracing_output) {
+    std::cout << "pattern_match(";
+    PrintValue(p, std::cout);
+    std::cout << ", ";
+    PrintValue(v, std::cout);
+    std::cout << ")" << std::endl;
+  }
   switch (p->tag) {
     case ValKind::VarPatV: {
       Address a = AllocateValue(CopyVal(v, line_num));
@@ -550,9 +548,11 @@ void StepLvalue() {
   Frame* frame = state->stack.Top();
   Action* act = frame->todo.Top();
   Expression* exp = act->u.exp;
-  std::cout << "--- step lvalue ";
-  PrintExp(exp);
-  std::cout << " --->" << std::endl;
+  if (tracing_output) {
+    std::cout << "--- step lvalue ";
+    PrintExp(exp);
+    std::cout << " --->" << std::endl;
+  }
   switch (exp->tag) {
     case ExpressionKind::Variable: {
       //    { {x :: C, E, F} :: S, H}
@@ -610,9 +610,11 @@ void StepExp() {
   Frame* frame = state->stack.Top();
   Action* act = frame->todo.Top();
   Expression* exp = act->u.exp;
-  std::cout << "--- step exp ";
-  PrintExp(exp);
-  std::cout << " --->" << std::endl;
+  if (tracing_output) {
+    std::cout << "--- step exp ";
+    PrintExp(exp);
+    std::cout << " --->" << std::endl;
+  }
   switch (exp->tag) {
     case ExpressionKind::PatternVariable: {
       frame->todo.Push(MakeExpAct(exp->u.pattern_variable.type));
@@ -750,10 +752,13 @@ auto IsBlockAct(Action* act) -> bool {
 void StepStmt() {
   Frame* frame = state->stack.Top();
   Action* act = frame->todo.Top();
-  Statement* stmt = act->u.stmt;
-  std::cout << "--- step stmt ";
-  PrintStatement(stmt, 1);
-  std::cout << " --->" << std::endl;
+  Statement* const stmt = act->u.stmt;
+  assert(stmt != nullptr && "null statement!");
+  if (tracing_output) {
+    std::cout << "--- step stmt ";
+    PrintStatement(stmt, 1);
+    std::cout << " --->" << std::endl;
+  }
   switch (stmt->tag) {
     case StatementKind::Match:
       //    { { (match (e) ...) :: C, E, F} :: S, H}
@@ -922,12 +927,13 @@ void HandleValue() {
   act->results.push_back(val_act->u.val);
   act->pos++;
 
-  std::cout << "--- handle value ";
-  PrintValue(val_act->u.val, std::cout);
-  std::cout << " with ";
-  PrintAct(act, std::cout);
-  std::cout << " --->" << std::endl;
-
+  if (tracing_output) {
+    std::cout << "--- handle value ";
+    PrintValue(val_act->u.val, std::cout);
+    std::cout << " with ";
+    PrintAct(act, std::cout);
+    std::cout << " --->" << std::endl;
+  }
   switch (act->tag) {
     case ActionKind::DeleteTmpAction: {
       KillValue(state->heap[act->u.delete_tmp]);
@@ -1181,12 +1187,14 @@ void HandleValue() {
             // -> { { then_stmt :: C, E, F } :: S, H}
             frame->todo.Pop(2);
             frame->todo.Push(MakeStmtAct(stmt->u.if_stmt.then_stmt));
-          } else {
+          } else if (stmt->u.if_stmt.else_stmt) {
             //    { {false :: if ([]) then_stmt else else_stmt :: C, E, F} ::
             //      S, H}
             // -> { { else_stmt :: C, E, F } :: S, H}
             frame->todo.Pop(2);
             frame->todo.Push(MakeStmtAct(stmt->u.if_stmt.else_stmt));
+          } else {
+            frame->todo.Pop(2);
           }
           break;
         case StatementKind::While:
@@ -1325,9 +1333,11 @@ void Step() {
 }
 
 // Interpret the whole porogram.
-auto InterpProgram(std::list<Declaration*>* fs) -> int {
+auto InterpProgram(std::list<Declaration>* fs) -> int {
   state = new State();  // Runtime state.
-  std::cout << "********** initializing globals **********" << std::endl;
+  if (tracing_output) {
+    std::cout << "********** initializing globals **********" << std::endl;
+  }
   InitGlobals(fs);
 
   Expression* arg =
@@ -1338,14 +1348,18 @@ auto InterpProgram(std::list<Declaration*>* fs) -> int {
   auto* frame = new Frame("top", Stack(scope), todo);
   state->stack = Stack(frame);
 
-  std::cout << "********** calling main function **********" << std::endl;
-  PrintState(std::cout);
+  if (tracing_output) {
+    std::cout << "********** calling main function **********" << std::endl;
+    PrintState(std::cout);
+  }
 
   while (state->stack.CountExceeds(1) ||
          state->stack.Top()->todo.CountExceeds(1) ||
          state->stack.Top()->todo.Top()->tag != ActionKind::ValAction) {
     Step();
-    PrintState(std::cout);
+    if (tracing_output) {
+      PrintState(std::cout);
+    }
   }
   Value* v = state->stack.Top()->todo.Top()->u.val;
   return ValToInt(v, 0);

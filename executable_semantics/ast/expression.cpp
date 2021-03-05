@@ -197,7 +197,7 @@ static void PrintFields(
   }
 }
 
-void PrintExp(Expression* e) {
+void PrintExp(const Expression* e) {
   switch (e->tag) {
     case ExpressionKind::Index:
       PrintExp(e->u.index.aggregate);
