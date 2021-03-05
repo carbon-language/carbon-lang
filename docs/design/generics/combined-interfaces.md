@@ -32,12 +32,12 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [Type compatibility](#type-compatibility)
 -   [Adapting types](#adapting-types)
     -   [Example: Defining an impl for use by other types](#example-defining-an-impl-for-use-by-other-types)
+    -   [Associated constants](#associated-constants)
 -   [Associated types](#associated-types)
     -   [Constraints on associated types in interfaces](#constraints-on-associated-types-in-interfaces)
         -   [Model](#model-1)
         -   [External constraints via optional parameters](#external-constraints-via-optional-parameters)
         -   [Tricky cases](#tricky-cases)
-    -   [Associated constants](#associated-constants)
     -   [Constraints that are hard to express](#constraints-that-are-hard-to-express)
 -   [Parameterized interfaces](#parameterized-interfaces)
     -   [Impl lookup and specialization](#impl-lookup-and-specialization)
@@ -206,14 +206,15 @@ interface capturing a vector API might have two methods:
 
 ```
 interface Vector {
-  // Here "Self" means "the type implementing this interface"
+  // Here "Self" means "the type implementing this interface".
   method (Self: a) Add(Self: b) -> Self;
   method (Self: a) Scale(Double: v) -> Self;
 }
 ```
 
 The syntax here is intended to match how the same members would be defined in a
-type.
+type. Each declaration in the interface defines an _associated item_. In this
+example, `Vector` has two associated methods, `Add` and `Scale`.
 
 An interface defines a type-type, that is a type whose values are types. The
 values of an interface are specifically
@@ -225,8 +226,13 @@ by which we mean types that are declared as specifically implementing
 ## Implementing interfaces
 
 Given a type, it can define an "impl" that defines how that interface is
-implemented for that type. Impls may be defined in line inside the type
-definition:
+implemented for that type. Every associated item is given a definition.
+Different types satisfying `Vector` can have different definitions for `Add` and
+`Scale`, so we say their definitions are associated with what type is
+implementing `Vector`. The impl defines what is associated with the type for
+that interface.
+
+Impls may be defined inline inside the type definition:
 
 ```
 struct Point {
@@ -952,8 +958,9 @@ interface RefinesTwo {
 ```
 
 The `extends` declarations are in the body of the `interface` definition instead
-of the header so we can use associated types also defined in the body in
-parameters or constraints of the interface being extended.
+of the header so we can use
+[associated types (defined below)](#associated-types) also defined in the body
+in parameters or constraints of the interface being extended.
 
 ```
 interface A(Type:$ T) { ... }
@@ -1230,16 +1237,116 @@ struct MyType {
 }
 ```
 
+### Associated constants
+
+In addition to associated methods, we allow other kinds of associated items. For
+consistency, we use the same syntax to describe a constant in an interface as in
+a type without assigning a value. Since these are compile-time constants with
+unknown value until compile time, they use the generic `:$` syntax. For example,
+a fixed-dimensional point type could have the dimension as an associated
+constant.
+
+```
+interface NSpacePoint {
+  var Int:$ N;
+  // The following require: 0 <= i < N.
+  method (Ptr(Self): this) Get(Int: i) -> Float64;
+  method (Ptr(Self): this) Set(Int: i, Float64 : value);
+}
+```
+
+Implementations of `NSpacePoint` for different types might have different values
+for `N`:
+
+```
+struct Point2D {
+  impl NSpacePoint {
+    var Int:$ N = 2;
+    method (Ptr(Self): this) Get(Int: i) -> Float64 { ... }
+    method (Ptr(Self): this) Set(Int: i, Float64: value) { ... }
+  }
+}
+
+struct Point3D {
+  impl NSpacePoint {
+    var Int:$ N = 3;
+    method (Ptr(Self): this) Get(Int: i) -> Float64 { ... }
+    method (Ptr(Self): this) Set(Int: i, Float64: value) { ... }
+  }
+}
+```
+
+And these values may be accessed as follows:
+
+```
+Assert(Point2D.N == 2);
+Assert(Point3D.N == 3);
+
+fn PrintPoint[NSpacePoint:$ PointT](PointT: p) {
+  for (var Int: i = 0; i < PointT.N; ++i) {
+    if (i > 0) { Print(", "); }
+    Print(p.Get(i));
+  }
+}
+
+fn ExtractPoint[NSpacePoint:$ PointT](
+    PointT: p,
+    Ptr(Array(Float64, PointT.N)): dest) {
+  for (var Int: i = 0; i < PointT.N; ++i) {
+    (*dest)[i] = p.Get(i);
+  }
+}
+```
+
+To be consistent with normal function declaration syntax, function constants are
+written:
+
+```
+interface DeserializeFromString {
+  fn Deserialize(String: serialized) -> Self;
+}
+
+struct MySerializableType {
+  var Int: i;
+
+  impl DeserializeFromString {
+    fn Deserialize(String: serialized) -> Self {
+      return (.i = StringToInt(serialized));
+    }
+  }
+}
+
+var MySerializableType: x = MySerializableType.Deserialize("3");
+
+fn Deserialize(DeserializeFromString:$ T, String: serialized) -> T {
+  return T.Deserialize(serialized);
+}
+var MySerializableType: y = Deserialize(MySerializableType, "4");
+```
+
+**Aside:** In general, any field declared as "generic" (using the `:$` syntax),
+will only have compile-time and not runtime storage associated with it.
+
+TODO: Move the following to a dedicated constraints section.
+
+We might need to write a function that only works with a specific value of `N`.
+We solve this using the same approach of making each associated constant an
+optional named parameter to the interface, as in:
+
+```
+fn PrintPoint2D[NSpacePoint:$ PointT(.N = 2)](PointT: p) {
+  Print(p.Get(0), ", ", p.Get(1));
+}
+```
+
+**Comparison with other languages:** This feature is also called
+[associated constants in Rust](https://doc.rust-lang.org/reference/items/associated-items.html#associated-constants).
+
 ## Associated types
 
-A given interface `I` may declare that it requires an _associated type_ `T`.
-This means that an implementation of that interface for a type `U` must specify
-some type value for `T`. Different types `U1`, `U2` satisfying `I` can have
-different type values for `T`, so we say the value of `T` is associated with
-what type is implementing `I`. For context, see
-["Interface type parameters vs. associated types" in the Carbon: Generics Terminology doc](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#interface-type-parameters-vs-associated-types).
-
-This is used, for example, to allow the signatures of methods to vary from
+Associated types are associated constants that happen to be types. These are
+particularly interesting since they can be used in the signatures of associated
+methods or functions, to allow the signatures of methods to vary from
 implementation to implementation. We already have one example of this: the
 `Self` type discussed [above in the "Interfaces" section](#interfaces). For
 other cases, we can say that the interface declares that each implementation
@@ -1298,8 +1405,8 @@ var DynamicArray(Int): my_array = (1, 2, 3);
 Assert(PeekAtTopOfStack(my_array) == 3);
 ```
 
-**Aside:** In general, any field declared as "generic" (using the `:$` syntax),
-will only have compile-time and not runtime storage associated with it.
+For context, see
+["Interface type parameters vs. associated types" in the Carbon: Generics Terminology doc](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#interface-type-parameters-vs-associated-types).
 
 **Comparison with other languages:** Both
 [Rust](https://doc.rust-lang.org/book/ch19-03-advanced-traits.html#specifying-placeholder-types-in-trait-definitions-with-associated-types)
@@ -1476,66 +1583,6 @@ structural interface ContainerAsSlice {
 
 TODO: Add context where this was originally discussed
 [here](https://docs.google.com/document/d/1YjF1jcXCSb4zQ4kCcZFAK5jtbIJh9IdaaTbzmQEwSNg/edit#heading=h.eak2vxz3de3v).
-
-### Associated constants
-
-The syntax for associated types is intended to generalize to other type
-constants. An associated constant is an interface requirement that any
-satisfying type knows a particular value known at compile time. For example, a
-fixed-dimensional point type could have the dimension as an associated constant.
-
-```
-interface NSpacePoint {
-  var Int:$ N;
-  // The following require: 0 <= i < N.
-  method (Ptr(Self): this) Get(Int: i) -> Float64;
-  method (Ptr(Self): this) Set(Int: i, Float64 : value);
-}
-```
-
-Implementations of `NSpacePoint` might have different values for `N`:
-
-```
-struct Point2D {
-  impl NSpacePoint {
-    var Int:$ N = 2;
-    method (Ptr(Self): this) Get(Int: i) -> Float64 { ... }
-    method (Ptr(Self): this) Set(Int: i, Float64 : value) { ... }
-  }
-}
-
-struct Point3D {
-  impl NSpacePoint {
-    var Int:$ N = 3;
-    method (Ptr(Self): this) Get(Int: i) -> Float64 { ... }
-    method (Ptr(Self): this) Set(Int: i, Float64 : value) { ... }
-  }
-}
-```
-
-And these values may be accessed as follows:
-
-```
-fn PrintPoint[NSpacePoint:$ PointT](PointT: p) {
-  for (var Int: i = 0; i < PointT.N; ++i) {
-    if (i > 0) { Print(", "); }
-    Print(p.Get(i));
-  }
-}
-```
-
-We might need to write a function that only works with a specific value of `N`.
-We solve this using the same approach of making each associated constant an
-optional named parameter to the interface, as in:
-
-```
-fn PrintPoint2D[NSpacePoint:$ PointT(.N = 2)](PointT: p) {
-  Print(p.Get(0), ", ", p.Get(1));
-}
-```
-
-**Comparison with other languages:** This feature is also called
-[associated constants in Rust](https://doc.rust-lang.org/reference/items/associated-items.html#associated-constants).
 
 ### Constraints that are hard to express
 
