@@ -18,9 +18,11 @@ namespace Carbon {
 class NumericLiteralToken {
  public:
   // Get the text corresponding to this literal.
-  llvm::StringRef Text() const { return text; }
+  auto Text() const -> llvm::StringRef { return text; }
 
   // Extract a numeric literal from the given text, if it has a suitable form.
+  //
+  // The supplied `source_text` must outlive the return value.
   static auto Lex(llvm::StringRef source_text)
       -> llvm::Optional<NumericLiteralToken>;
 
