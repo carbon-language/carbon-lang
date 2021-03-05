@@ -44,7 +44,7 @@ class DiagnosticEmitter {
                .message = diag.Format()});
   }
 
-  // Emits an error unconditionally when there are no substitutions.
+  // Emits a stateless error unconditionally.
   template <typename DiagnosticT>
   auto EmitError() -> std::enable_if_t<std::is_empty_v<DiagnosticT>> {
     EmitError<DiagnosticT>({});
