@@ -6,12 +6,12 @@
 #include <cstring>
 #include <iostream>
 
+#include "executable_semantics/syntax/parser.h"
 #include "executable_semantics/syntax/syntax_helpers.h"
 #include "executable_semantics/tracing_flag.h"
 #include "llvm/Support/CommandLine.h"
 
 extern FILE* yyin;
-extern auto yyparse() -> int;  // NOLINT(readability-identifier-naming)
 
 int main(int argc, char* argv[]) {
   // yydebug = 1;
@@ -34,5 +34,22 @@ int main(int argc, char* argv[]) {
   if (quiet_option) {
     Carbon::tracing_output = false;
   }
-  return yyparse();
+
+  // No AST yet
+  std::optional<Carbon::AST> parsedInput = std::nullopt;
+
+  // Parse and handle syntax errors
+  auto syntaxErrorCode = yyparse(parsedInput);
+  if (syntaxErrorCode != 0) {
+    return syntaxErrorCode;
+  }
+
+  if (parsedInput == std::nullopt) {
+    std::cerr << "Internal error: parser validated syntax yet didn't produce "
+                 "an AST.\n";
+    return 1;
+  }
+
+  // Typecheck and run the parsed program.
+  Carbon::ExecProgram(*parsedInput);
 }
