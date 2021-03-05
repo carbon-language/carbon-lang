@@ -32,17 +32,21 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [Type compatibility](#type-compatibility)
 -   [Adapting types](#adapting-types)
     -   [Example: Defining an impl for use by other types](#example-defining-an-impl-for-use-by-other-types)
-    -   [Associated constants](#associated-constants)
+-   [Associated constants](#associated-constants)
 -   [Associated types](#associated-types)
-    -   [Constraints on associated types in interfaces](#constraints-on-associated-types-in-interfaces)
-        -   [Model](#model-1)
-        -   [External constraints via optional parameters](#external-constraints-via-optional-parameters)
-        -   [Tricky cases](#tricky-cases)
-    -   [Constraints that are hard to express](#constraints-that-are-hard-to-express)
+    -   [Model](#model-1)
 -   [Parameterized interfaces](#parameterized-interfaces)
     -   [Impl lookup and specialization](#impl-lookup-and-specialization)
     -   [Parameterized structural interfaces](#parameterized-structural-interfaces)
--   [Naming constraints](#naming-constraints)
+-   [Constraints](#constraints)
+    -   [Constraints on associated constants](#constraints-on-associated-constants)
+    -   [Constraints on associated types](#constraints-on-associated-types)
+        -   [In interfaces](#in-interfaces)
+        -   [External constraints via optional parameters](#external-constraints-via-optional-parameters)
+        -   [Tricky cases](#tricky-cases)
+        -   [Constraints that are hard to express](#constraints-that-are-hard-to-express)
+    -   [Constraints on interface parameters](#constraints-on-interface-parameters)
+    -   [Naming constraints](#naming-constraints)
 -   [Implicit constraints](#implicit-constraints)
 -   [Generic type equality](#generic-type-equality)
 -   [Conditional conformance](#conditional-conformance)
@@ -213,8 +217,9 @@ interface Vector {
 ```
 
 The syntax here is intended to match how the same members would be defined in a
-type. Each declaration in the interface defines an _associated item_. In this
-example, `Vector` has two associated methods, `Add` and `Scale`.
+type. Each declaration in the interface defines an _associated item_ (same
+[terminology as Rust](https://doc.rust-lang.org/reference/items/associated-items.html)).
+In this example, `Vector` has two associated methods, `Add` and `Scale`.
 
 An interface defines a type-type, that is a type whose values are types. The
 values of an interface are specifically
@@ -965,8 +970,8 @@ in parameters or constraints of the interface being extended.
 ```
 interface A(Type:$ T) { ... }
 interface B {
-  var Type:$ T;
-  extends A(T);
+  var Type:$ AssociatedType;
+  extends A(AssociatedType);
 }
 ```
 
@@ -1237,7 +1242,7 @@ struct MyType {
 }
 ```
 
-### Associated constants
+## Associated constants
 
 In addition to associated methods, we allow other kinds of associated items. For
 consistency, we use the same syntax to describe a constant in an interface as in
@@ -1327,18 +1332,6 @@ var MySerializableType: y = Deserialize(MySerializableType, "4");
 **Aside:** In general, any field declared as "generic" (using the `:$` syntax),
 will only have compile-time and not runtime storage associated with it.
 
-TODO: Move the following to a dedicated constraints section.
-
-We might need to write a function that only works with a specific value of `N`.
-We solve this using the same approach of making each associated constant an
-optional named parameter to the interface, as in:
-
-```
-fn PrintPoint2D[NSpacePoint:$ PointT(.N = 2)](PointT: p) {
-  Print(p.Get(0), ", ", p.Get(1));
-}
-```
-
 **Comparison with other languages:** This feature is also called
 [associated constants in Rust](https://doc.rust-lang.org/reference/items/associated-items.html#associated-constants).
 
@@ -1413,40 +1406,7 @@ For context, see
 and [Swift](https://docs.swift.org/swift-book/LanguageGuide/Generics.html#ID189)
 support associated types.
 
-### Constraints on associated types in interfaces
-
-Now note that inside `PeekAtTopOfStack` we don't know anything about
-`StackType.ElementType`, so we can't perform any operations on values of that
-type, other than pass them to `Stack` methods. We can define an interface that
-has an associated type constrained to satisfy an interface (or any
-[other type-type](#adapting-types)). For example, we might say interface
-`Container` has a `Begin` method returning values with type satisfying the
-`Iterator` interface:
-
-```
-interface Iterator {
-  method (Ptr(Self): this) Advance();
-  ...
-}
-interface Container {
-  var Iterator:$ IteratorType;
-  method (Ptr(Self): this) Begin() -> IteratorType;
-  ...
-}
-```
-
-With this additional information, a function can now call `Iterator` methods on
-the return value of `Begin`:
-
-```
-fn OneAfterBegin[Container:$ T](Ptr(T): c) -> T.IteratorType {
-  var T.IteratorType: iter = c->Begin();
-  iter.Advance();
-  return iter;
-}
-```
-
-#### Model
+### Model
 
 The associated type is modeled by a witness table field in the interface.
 
@@ -1462,165 +1422,6 @@ struct Container(Type:$ Self) {
   method (Ptr(Self): this) Begin() -> IteratorType;
   ...
 }
-```
-
-#### External constraints via optional parameters
-
-Users of an interface may also want to introduce constraints on an associated
-type, in addition to constraints in the definition of the interface. To support
-this, we automatically make every associated type an optional named parameter to
-the interface. For example, we could make a the `ElementType` of an `Iterator`
-interface equal to the `ElementType` of a `Container` interface as follows:
-
-```
-interface Iterator {
-  var Type:$ ElementType;
-  ...
-}
-interface Container {
-  var Type:$ ElementType;
-  var Iterator(.ElementType = ElementType):$ IteratorType;
-  ...
-}
-```
-
-Functions accepting a generic type might also want to constrain an associated
-type. For example, we might want to have a function only accept stacks
-containing integers:
-
-```
-fn SumIntStack[Stack(.ElementType = Int):$ T](Ptr(T): s) -> Int {
-  var Int: sum = 0;
-  while (!s->IsEmpty()) {
-    sum += s->Pop();
-  }
-  return sum;
-}
-```
-
-Or you might constrain the element type to satisfy an interface (`Comparable` in
-this example) without saying exactly what type it is:
-
-```
-fn SortContainer[Comparable:$ ElementType,
-                 Container(.ElementType = ElementType):$ ContainerType]
-    (Ptr(ContainerType): container_to_sort);
-```
-
-These different types of constraints can be combined. For example, this example
-expresses a constraint that two associated types are equal and satisfy an
-interface:
-
-```
-// CT1.ElementType == CT2.ElementType
-// CT1.ElementType implements HasEquality
-fn EqualContainers[HasEquality:$ ET,
-                   Container(.ElementType = ET):$ CT1,
-                   Container(.ElementType = ET):$ CT2]
-    (Ptr(CT1): c1, Ptr(CT2): c2) -> Bool;
-```
-
-This approach has a few advantages:
-
--   There is one mechanism for constraining an interface: passing in arguments.
-    We use this both for [interface parameters](#parameterized-interfaces)
-    (required, typically positional parameters) and associated types (optional,
-    named parameters).
--   You can express a variety of constraints, including that two things must be
-    the same, something must take on a specific value, or something must satisfy
-    an interface.
--   Deciding if two types must always be the same can be done just by
-    normalizing their expressions by substituting any parameters. For example,
-    `Container.IteratorType.ElementType` normalizes to `Container.ElementType`.
-    In the case of the `SortContainer` function, there is an additional
-    constraint making `ContainerType.IteratorType.ElementType` and
-    `ContainerType.ElementType` both equal to `ElementType`.
--   Many constrained interfaces are naturally represented as type-types, which
-    is useful for constructs like [`DynPtr`](#dynamic-pointer-type) or
-    [`DynBoxed`](#dynboxed) that are parameterized by type-types.
-
-**Rejected alternative:** Other languages use `requires` clauses to expressed
-constraints, as discussed in
-[this appendix](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/appendix-requires-constraints.md).
-
-#### Tricky cases
-
-TODO: Want to be able to say "The slice type for a container is another
-container, with a constraint saying it is idempotent." That is, we want to write
-a constraint saying `Container.SliceType.SliceType == Container.SliceType`,
-which is straightforward using a `requires` clause. Unfortunately, this
-definition doesn't work:
-
-```
-interface Container {
-  var Type:$ ElementType;
-  var Iterator(.ElementType = ElementType):$ IteratorType;
-  // PROBLEM: recursive definition, requires forward reference
-  var Container(.ElementType = ElementType, .SliceType = SliceType):$ SliceType;
-  method (Ptr(Self): this) GetSlice(IteratorType: start,
-                                    IteratorType: end) -> SliceType;
-}
-```
-
-Unfortunately writing a separate `alias` or
-[structural interface](#structural-interfaces) to represent the constraint
-doesn't work here. All of these refer to `Container` and so can only be defined
-afterwards and can't be used to define `Container` itself:
-
-```
-alias ContainerAsSlice = Container(.SliceType = Self);
-// Really we want to support things like `ContainerAsSlice(.ElementType = ...)`
-// so we need alias definitions to support something like:
-alias ContainerAsSlice(auto...:$$ args) =
-    Container(args..., .SliceType = Self);
-
-// Alternative using `structural interface`, assuming we supports `extends`
-// like ordinary `interface` definitions.
-structural interface ContainerAsSlice {
-  extends Container(.SliceType = Self);
-}
-```
-
-TODO: Add context where this was originally discussed
-[here](https://docs.google.com/document/d/1YjF1jcXCSb4zQ4kCcZFAK5jtbIJh9IdaaTbzmQEwSNg/edit#heading=h.eak2vxz3de3v).
-
-### Constraints that are hard to express
-
-**Concern:** It is difficult to express some kinds of constraints in this
-framework: mathematical constraints on values (for example, "`NTuple` where `N`
-is at least 2"), and inequality type constraints (for example "type is not
-`Bool`").
-
-You might need an inequality type constraint, for example, to control overload
-resolution:
-
-```
-fn F[Type:$ T](T: x) -> T { return x; }
-fn F(Bool: x) -> String {
-  if (x) return "True"; else return "False";
-}
-
-fn G[Type:$ T](T: x) -> T {
-  // We need a T != Bool constraint for this to type check.
-  return F(x);
-}
-```
-
-Another use case for inequality type constraints would be to say something like
-"define `ComparableTo(T1)` for `T2` if `ComparableTo(T2)` is defined for `T1`
-and `T1 != T2`".
-
-**Future work:** Right now the only suggestion on the table is some sort of
-boolean condition that can be evaluated by the caller at compile time included
-as an optional clause in the function signature:
-
-```
-fn TakesAtLeastAPair[Int:$ N](NTuple(N, Int): x) if (N >= 2) { ... }
-
-fn G[Type:$ T](T: x) -> T if (T != Bool) { return F(x); }
-
-fn PrintPoint2Or3[NSpacePoint:$ PointT](PointT: p)
-  if (2 <= PointT.N && PointT.N <= 3) { ... }
 ```
 
 ## Parameterized interfaces
@@ -1651,36 +1452,6 @@ This reflects these two properties of these parameters:
 -   They must be resolved at compile-time, and so can't be passed regular
     dynamic values.
 -   We allow either generic or template values to be passed in.
-
-It is a little more convenient to express type constraints on type parameters
-than associated types, since you don't need to specify the name:
-
-```
-// Stack.ElementType constrained to be Int.
-fn SumIntStack[Stack(Int):$ T](Ptr(T): s) -> Int { ... }
-
-interface Iterator(Type:$ ElementType) { ... }
-interface Container(Type:$ ElementType) {
-  // IteratorType constrained to implement the Iterator interface,
-  // with matching ElementType.
-  var Iterator(ElementType):$ IteratorType;
-  ...
-}
-
-// ElementType of the two containers constrained to match and
-// implement HasEquality interface.
-fn EqualContainers[HasEquality:$ ElementType,
-                   Container(ElementType):$ CT1,
-                   Container(ElementType):$ CT2]
-    (Ptr(CT1): c1, Ptr(CT2): c2) -> Bool { ... }
-```
-
-Note that the way to express constraints on type parameters is consistent with
-treating associated types as optional parameters.
-
-But it is more awkward in the unconstrained case, since you still need to pass
-something in that position. That is both more ceremony for something you didn't
-care about, and creates an issue of how that parameter is determined.
 
 **Proposal:** A type will be by default only allowed one implementation of an
 interface, not one per interface & type parameter combination.
@@ -1820,7 +1591,267 @@ For example, if the structural interface has a `T` parameter that is passed as
 an argument to a deducible parameter of an interface requirement, like
 `impl RequiredInterface(T)`, then `T` can be deduced as well.
 
-## Naming constraints
+## Constraints
+
+TODO: Fix this up a lot
+
+TODO: Constraint types include:
+
+-   Set to a specific value.
+-   Two types must be the same.
+-   Type bounds.
+-   Recursive constraints like `Self`.
+
+TODO: Places where we need to say constraints:
+
+-   In a declaration, like a function, type, interface or impl.
+-   Within an interface definition.
+-   Naming constrained type-types.
+
+TODO: Two approaches:
+
+-   `where`/`requires` clauses
+-   argument passing
+
+### Constraints on associated constants
+
+We might need to write a function that only works with a specific value of `N`.
+We solve this using the same approach of making each associated constant an
+optional named parameter to the interface, as in:
+
+```
+fn PrintPoint2D[NSpacePoint:$ PointT(.N = 2)](PointT: p) {
+  Print(p.Get(0), ", ", p.Get(1));
+}
+```
+
+### Constraints on associated types
+
+#### In interfaces
+
+Now note that inside `PeekAtTopOfStack` we don't know anything about
+`StackType.ElementType`, so we can't perform any operations on values of that
+type, other than pass them to `Stack` methods. We can define an interface that
+has an associated type constrained to satisfy an interface (or any
+[other type-type](#adapting-types)). For example, we might say interface
+`Container` has a `Begin` method returning values with type satisfying the
+`Iterator` interface:
+
+```
+interface Iterator {
+  method (Ptr(Self): this) Advance();
+  ...
+}
+interface Container {
+  var Iterator:$ IteratorType;
+  method (Ptr(Self): this) Begin() -> IteratorType;
+  ...
+}
+```
+
+With this additional information, a function can now call `Iterator` methods on
+the return value of `Begin`:
+
+```
+fn OneAfterBegin[Container:$ T](Ptr(T): c) -> T.IteratorType {
+  var T.IteratorType: iter = c->Begin();
+  iter.Advance();
+  return iter;
+}
+```
+
+#### External constraints via optional parameters
+
+Users of an interface may also want to introduce constraints on an associated
+type, in addition to constraints in the definition of the interface. To support
+this, we automatically make every associated type an optional named parameter to
+the interface. For example, we could make a the `ElementType` of an `Iterator`
+interface equal to the `ElementType` of a `Container` interface as follows:
+
+```
+interface Iterator {
+  var Type:$ ElementType;
+  ...
+}
+interface Container {
+  var Type:$ ElementType;
+  var Iterator(.ElementType = ElementType):$ IteratorType;
+  ...
+}
+```
+
+Functions accepting a generic type might also want to constrain an associated
+type. For example, we might want to have a function only accept stacks
+containing integers:
+
+```
+fn SumIntStack[Stack(.ElementType = Int):$ T](Ptr(T): s) -> Int {
+  var Int: sum = 0;
+  while (!s->IsEmpty()) {
+    sum += s->Pop();
+  }
+  return sum;
+}
+```
+
+Or you might constrain the element type to satisfy an interface (`Comparable` in
+this example) without saying exactly what type it is:
+
+```
+fn SortContainer[Comparable:$ ElementType,
+                 Container(.ElementType = ElementType):$ ContainerType]
+    (Ptr(ContainerType): container_to_sort);
+```
+
+These different types of constraints can be combined. For example, this example
+expresses a constraint that two associated types are equal and satisfy an
+interface:
+
+```
+// CT1.ElementType == CT2.ElementType
+// CT1.ElementType implements HasEquality
+fn EqualContainers[HasEquality:$ ET,
+                   Container(.ElementType = ET):$ CT1,
+                   Container(.ElementType = ET):$ CT2]
+    (Ptr(CT1): c1, Ptr(CT2): c2) -> Bool;
+```
+
+This approach has a few advantages:
+
+-   There is one mechanism for constraining an interface: passing in arguments.
+    We use this both for [interface parameters](#parameterized-interfaces)
+    (required, typically positional parameters) and associated types (optional,
+    named parameters).
+-   You can express a variety of constraints, including that two things must be
+    the same, something must take on a specific value, or something must satisfy
+    an interface.
+-   Deciding if two types must always be the same can be done just by
+    normalizing their expressions by substituting any parameters. For example,
+    `Container.IteratorType.ElementType` normalizes to `Container.ElementType`.
+    In the case of the `SortContainer` function, there is an additional
+    constraint making `ContainerType.IteratorType.ElementType` and
+    `ContainerType.ElementType` both equal to `ElementType`.
+-   Many constrained interfaces are naturally represented as type-types, which
+    is useful for constructs like [`DynPtr`](#dynamic-pointer-type) or
+    [`DynBoxed`](#dynboxed) that are parameterized by type-types.
+
+**Rejected alternative:** Other languages use `requires` clauses to expressed
+constraints, as discussed in
+[this appendix](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/appendix-requires-constraints.md).
+
+#### Tricky cases
+
+TODO: Want to be able to say "The slice type for a container is another
+container, with a constraint saying it is idempotent." That is, we want to write
+a constraint saying `Container.SliceType.SliceType == Container.SliceType`,
+which is straightforward using a `requires` clause. Unfortunately, this
+definition doesn't work:
+
+```
+interface Container {
+  var Type:$ ElementType;
+  var Iterator(.ElementType = ElementType):$ IteratorType;
+  // PROBLEM: recursive definition, requires forward reference
+  var Container(.ElementType = ElementType, .SliceType = SliceType):$ SliceType;
+  method (Ptr(Self): this) GetSlice(IteratorType: start,
+                                    IteratorType: end) -> SliceType;
+}
+```
+
+Unfortunately writing a separate `alias` or
+[structural interface](#structural-interfaces) to represent the constraint
+doesn't work here. All of these refer to `Container` and so can only be defined
+afterwards and can't be used to define `Container` itself:
+
+```
+alias ContainerAsSlice = Container(.SliceType = Self);
+// Really we want to support things like `ContainerAsSlice(.ElementType = ...)`
+// so we need alias definitions to support something like:
+alias ContainerAsSlice(auto...:$$ args) =
+    Container(args..., .SliceType = Self);
+
+// Alternative using `structural interface`, assuming we supports `extends`
+// like ordinary `interface` definitions.
+structural interface ContainerAsSlice {
+  extends Container(.SliceType = Self);
+}
+```
+
+TODO: Add context where this was originally discussed
+[here](https://docs.google.com/document/d/1YjF1jcXCSb4zQ4kCcZFAK5jtbIJh9IdaaTbzmQEwSNg/edit#heading=h.eak2vxz3de3v).
+
+#### Constraints that are hard to express
+
+**Concern:** It is difficult to express some kinds of constraints in this
+framework: mathematical constraints on values (for example, "`NTuple` where `N`
+is at least 2"), and inequality type constraints (for example "type is not
+`Bool`").
+
+You might need an inequality type constraint, for example, to control overload
+resolution:
+
+```
+fn F[Type:$ T](T: x) -> T { return x; }
+fn F(Bool: x) -> String {
+  if (x) return "True"; else return "False";
+}
+
+fn G[Type:$ T](T: x) -> T {
+  // We need a T != Bool constraint for this to type check.
+  return F(x);
+}
+```
+
+Another use case for inequality type constraints would be to say something like
+"define `ComparableTo(T1)` for `T2` if `ComparableTo(T2)` is defined for `T1`
+and `T1 != T2`".
+
+**Future work:** Right now the only suggestion on the table is some sort of
+boolean condition that can be evaluated by the caller at compile time included
+as an optional clause in the function signature:
+
+```
+fn TakesAtLeastAPair[Int:$ N](NTuple(N, Int): x) if (N >= 2) { ... }
+
+fn G[Type:$ T](T: x) -> T if (T != Bool) { return F(x); }
+
+fn PrintPoint2Or3[NSpacePoint:$ PointT](PointT: p)
+  if (2 <= PointT.N && PointT.N <= 3) { ... }
+```
+
+### Constraints on interface parameters
+
+It is a little more convenient to express type constraints on type parameters
+than associated types, since you don't need to specify the name:
+
+```
+// Stack.ElementType constrained to be Int.
+fn SumIntStack[Stack(Int):$ T](Ptr(T): s) -> Int { ... }
+
+interface Iterator(Type:$ ElementType) { ... }
+interface Container(Type:$ ElementType) {
+  // IteratorType constrained to implement the Iterator interface,
+  // with matching ElementType.
+  var Iterator(ElementType):$ IteratorType;
+  ...
+}
+
+// ElementType of the two containers constrained to match and
+// implement HasEquality interface.
+fn EqualContainers[HasEquality:$ ElementType,
+                   Container(ElementType):$ CT1,
+                   Container(ElementType):$ CT2]
+    (Ptr(CT1): c1, Ptr(CT2): c2) -> Bool { ... }
+```
+
+Note that the way to express constraints on type parameters is consistent with
+treating associated types as optional parameters.
+
+But it is more awkward in the unconstrained case, since you still need to pass
+something in that position. That is both more ceremony for something you didn't
+care about, and creates an issue of how that parameter is determined.
+
+### Naming constraints
 
 Given these definitions:
 
