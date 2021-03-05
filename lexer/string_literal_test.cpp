@@ -21,8 +21,7 @@ struct StringLiteralTest : ::testing::Test {
 
   auto Parse(llvm::StringRef text) -> StringLiteralToken::ExpandedValue {
     StringLiteralToken token = Lex(text);
-    return token.ComputeValue(ConsoleDiagnosticEmitter(),
-                              token.CheckIndent(ConsoleDiagnosticEmitter()));
+    return token.ComputeValue(ConsoleDiagnosticEmitter());
   }
 };
 

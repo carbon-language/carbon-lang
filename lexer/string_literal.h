@@ -23,25 +23,6 @@ class StringLiteralToken {
   static auto Lex(llvm::StringRef source_text)
       -> llvm::Optional<StringLiteralToken>;
 
-  // The leading whitespace in a multi-line string literal.
-  struct Indent {
-   public:
-    // Get the indentation text: a sequence of horizontal whitespace
-    // characters.
-    auto Text() const -> llvm::StringRef { return indent; }
-
-   private:
-    Indent() : Indent("", false) {}
-    Indent(llvm::StringRef indent, bool has_errors)
-        : indent(indent), has_errors(has_errors) {}
-    friend class StringLiteralToken;
-    llvm::StringRef indent;
-    bool has_errors;
-  };
-
-  // Check the literal is indented properly, if it's a multi-line litera.
-  auto CheckIndent(DiagnosticEmitter& emitter) const -> Indent;
-
   // The result of expanding escape sequences in a string literal.
   struct ExpandedValue {
     std::string result;
@@ -50,8 +31,7 @@ class StringLiteralToken {
 
   // Expand any escape sequences in the given string literal and compute the
   // resulting value.
-  auto ComputeValue(DiagnosticEmitter& emitter, Indent indent) const
-      -> ExpandedValue;
+  auto ComputeValue(DiagnosticEmitter& emitter) const -> ExpandedValue;
 
  private:
   StringLiteralToken(llvm::StringRef text, llvm::StringRef content,

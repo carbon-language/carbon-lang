@@ -90,7 +90,7 @@ TEST_F(LexerTest, TracksLinesAndColumns) {
                           {.kind = TokenKind::Identifier(),
                            .line = 6,
                            .column = 6,
-                           .indent_column = 2,
+                           .indent_column = 11,
                            .text = "y"},
                       }));
 }
@@ -904,7 +904,7 @@ TEST_F(LexerTest, StringLiterals) {
                   {.kind = TokenKind::Identifier(),
                    .line = 7,
                    .column = 10,
-                   .indent_column = 6,
+                   .indent_column = 5,
                    .text = "trailing"},
                   {.kind = TokenKind::StringLiteral(),
                    .line = 9,

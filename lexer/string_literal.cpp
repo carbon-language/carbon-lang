@@ -172,14 +172,19 @@ static auto ComputeIndentOfFinalLine(llvm::StringRef text) -> llvm::StringRef {
   llvm_unreachable("Given text is required to contain a newline.");
 }
 
+namespace {
+// The leading whitespace in a multi-line string literal.
+struct Indent {
+  llvm::StringRef indent;
+  bool has_errors;
+};
+}
+
+// Check the literal is indented properly, if it's a multi-line litera.
 // Find the leading whitespace that should be removed from each line of a
 // multi-line string literal.
-auto StringLiteralToken::CheckIndent(DiagnosticEmitter& emitter) const
-    -> Indent {
-  if (!multi_line) {
-    return Indent();
-  }
-
+static auto CheckIndent(DiagnosticEmitter& emitter, llvm::StringRef text,
+                        llvm::StringRef content) -> Indent {
   // Find the leading horizontal whitespace on the final line of this literal.
   // Note that for an empty literal, this might not be inside the content.
   llvm::StringRef indent = ComputeIndentOfFinalLine(text);
@@ -192,7 +197,7 @@ auto StringLiteralToken::CheckIndent(DiagnosticEmitter& emitter) const
     has_errors = true;
   }
 
-  return Indent(indent, has_errors);
+  return {.indent = indent, .has_errors = has_errors};
 }
 
 // Expand a `\u{HHHHHH}` escape sequence into a sequence of UTF-8 code units.
@@ -365,8 +370,9 @@ static auto ExpandEscapeSequencesAndRemoveIndent(DiagnosticEmitter& emitter,
   }
 }
 
-auto StringLiteralToken::ComputeValue(DiagnosticEmitter& emitter,
-                                      Indent indent) const -> ExpandedValue {
+auto StringLiteralToken::ComputeValue(DiagnosticEmitter& emitter) const
+    -> ExpandedValue {
+  auto indent = multi_line ? CheckIndent(emitter, text, content) : Indent();
   auto result = ExpandEscapeSequencesAndRemoveIndent(emitter, content,
                                                      hash_level, indent.indent);
   result.has_errors |= indent.has_errors;

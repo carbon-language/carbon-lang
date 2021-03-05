@@ -761,9 +761,6 @@ class TokenizedBuffer::Lexer {
       set_indent = true;
     }
 
-    // Determine and check the indentation for a multi-line string literal.
-    StringLiteralToken::Indent indent = literal->CheckIndent(emitter);
-
     // Update line and column information.
     if (!literal->IsMultiLine()) {
       current_column += literal_size;
@@ -772,10 +769,8 @@ class TokenizedBuffer::Lexer {
         if (c == '\n') {
           HandleNewline();
           // The indentation of all lines in a multi-line string literal is
-          // that of the final line.
-          // TODO: Should we inherit the indent from the first line instead of
-          // taking it from the last line?
-          current_line_info->indent = indent.Text().size();
+          // that of the first line.
+          current_line_info->indent = string_column;
           set_indent = true;
         } else {
           ++current_column;
@@ -784,7 +779,7 @@ class TokenizedBuffer::Lexer {
     }
 
     // Determine string literal value.
-    auto expanded = literal->ComputeValue(emitter, indent);
+    auto expanded = literal->ComputeValue(emitter);
     buffer.has_errors |= expanded.has_errors;
 
     auto token = buffer.AddToken({.kind = TokenKind::StringLiteral(),
