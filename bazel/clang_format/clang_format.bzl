@@ -52,9 +52,9 @@ def _clang_format_impl(target, ctx):
         for file in target.files.to_list()
         # Filter out generated files.
         # TODO: Eventually, it would be nice to format them instead.
-        if not (file.basename.endswith(".tab.cpp") or
-                file.basename.endswith(".tab.h") or
-                file.basename.endswith(".yy.cpp"))
+        if not (file.basename.endswith(".ypp.cpp") or
+                file.basename.endswith(".ypp.h") or
+                file.basename.endswith(".lpp.cpp"))
     ]
     outputs = [
         ctx.actions.declare_file(output_tree + src.path + ".validation")
