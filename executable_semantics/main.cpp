@@ -6,7 +6,7 @@
 #include <cstring>
 #include <iostream>
 
-#include "executable_semantics/syntax_helpers.h"
+#include "executable_semantics/syntax/syntax_helpers.h"
 #include "executable_semantics/tracing_flag.h"
 #include "llvm/Support/CommandLine.h"
 
