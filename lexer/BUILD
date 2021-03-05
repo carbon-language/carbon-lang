@@ -27,10 +27,34 @@ cc_test(
 )
 
 cc_library(
+    name = "string_literal",
+    srcs = ["string_literal.cpp"],
+    hdrs = ["string_literal.h"],
+    deps = [
+        "//diagnostics:diagnostic_emitter",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_test(
+    name = "string_literal_test",
+    srcs = ["string_literal_test.cpp"],
+    deps = [
+        ":string_literal",
+        "//diagnostics:diagnostic_emitter",
+        "@llvm-project//llvm:Support",
+        "@llvm-project//llvm:gmock",
+        "@llvm-project//llvm:gtest",
+        "@llvm-project//llvm:gtest_main",
+    ],
+)
+
+cc_library(
     name = "tokenized_buffer",
     srcs = ["tokenized_buffer.cpp"],
     hdrs = ["tokenized_buffer.h"],
     deps = [
+        ":string_literal",
         ":token_kind",
         "//diagnostics:diagnostic_emitter",
         "//source:source_buffer",

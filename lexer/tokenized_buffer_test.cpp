@@ -869,61 +869,79 @@ TEST_F(LexerTest, Identifiers) {
                       }));
 }
 
-TEST_F(LexerTest, StringLiteralBounds) {
-  llvm::StringLiteral valid[] = {
-      R"("")",
-      R"("""
-      """)",
-      R"("""
-      "foo"
-      """)",
+TEST_F(LexerTest, StringLiterals) {
+  llvm::StringLiteral testcase = R"(
+    "hello world\n"
 
-      // Escaped terminators don't end the string.
-      R"("\"")",
-      R"("\\")",
-      R"("\\\"")",
-      R"("""
-      \"""
-      """)",
-      R"("""
-      "\""
-      """)",
-      R"("""
-      ""\"
-      """)",
-      R"("""
-      ""\
-      """)",
-      R"(#"""
-      """\#n
-      """#)",
+    """foo
+      test \
+      \xAB
+     """ trailing
 
-      // Only a matching number of '#'s terminates the string.
-      R"(#""#)",
-      R"(#"xyz"foo"#)",
-      R"(##"xyz"#foo"##)",
-      R"(#"\""#)",
+      #"""#
 
-      // Escape sequences likewise require a matching number of '#'s.
-      R"(#"\#"#"#)",
-      R"(#"\"#)",
-      R"(#"""
-      \#"""#
-      """#)",
+    "\0"
 
-      // #"""# does not start a multiline string literal.
-      R"(#"""#)",
-      R"(##"""##)",
-  };
+    #"\0"foo"\1"#
 
-  for (llvm::StringLiteral test : valid) {
-    auto buffer = Lex(test);
-    EXPECT_FALSE(buffer.HasErrors()) << test;
-    EXPECT_THAT(buffer, HasTokens(llvm::ArrayRef<ExpectedToken>{
-                            {.kind = TokenKind::StringLiteral(), .text = test},
-                        }));
-  }
+    """x"""
+  )";
 
+  auto buffer = Lex(testcase);
+  EXPECT_FALSE(buffer.HasErrors());
+  EXPECT_THAT(buffer,
+              HasTokens(llvm::ArrayRef<ExpectedToken>{
+                  {.kind = TokenKind::StringLiteral(),
+                   .line = 2,
+                   .column = 5,
+                   .indent_column = 5,
+                   .string_contents = {"hello world\n"}},
+                  {.kind = TokenKind::StringLiteral(),
+                   .line = 4,
+                   .column = 5,
+                   .indent_column = 5,
+                   .string_contents = {" test  \xAB\n"}},
+                  {.kind = TokenKind::Identifier(),
+                   .line = 7,
+                   .column = 10,
+                   .indent_column = 6,
+                   .text = "trailing"},
+                  {.kind = TokenKind::StringLiteral(),
+                   .line = 9,
+                   .column = 7,
+                   .indent_column = 7,
+                   .string_contents = {"\""}},
+                  {.kind = TokenKind::StringLiteral(),
+                   .line = 11,
+                   .column = 5,
+                   .indent_column = 5,
+                   .string_contents = llvm::StringLiteral::withInnerNUL("\0")},
+                  {.kind = TokenKind::StringLiteral(),
+                   .line = 13,
+                   .column = 5,
+                   .indent_column = 5,
+                   .string_contents = {"\\0\"foo\"\\1"}},
+
+                  // """x""" is three string literals, not one.
+                  {.kind = TokenKind::StringLiteral(),
+                   .line = 15,
+                   .column = 5,
+                   .indent_column = 5,
+                   .string_contents = {""}},
+                  {.kind = TokenKind::StringLiteral(),
+                   .line = 15,
+                   .column = 7,
+                   .indent_column = 5,
+                   .string_contents = {"x"}},
+                  {.kind = TokenKind::StringLiteral(),
+                   .line = 15,
+                   .column = 10,
+                   .indent_column = 5,
+                   .string_contents = {""}},
+              }));
+}
+
+TEST_F(LexerTest, InvalidStringLiterals) {
   llvm::StringLiteral invalid[] = {
       R"(")",
       R"("""
@@ -953,168 +971,6 @@ TEST_F(LexerTest, StringLiteralBounds) {
       }
     }
     EXPECT_TRUE(found_error) << "`" << test << "`";
-  }
-}
-
-TEST_F(LexerTest, StringLiteralContents) {
-  // We use ""s strings to handle embedded nul characters below.
-  using std::operator""s;
-
-  auto buffer = Lex(R"(
-// #0
-""
-// #1
-"""
-"""
-// #2
-"""
-
-"""
-// #3
-"""file type indicator
-   indented contents \
-  """
-// #4
-"\x14,\u{1234},\u{00000010},\n,\r,\t,\0,\",\',\\"
-// #5
-#"\#x00,\#xFF,\#u{56789},\#u{ABCD},\#u{00000000000000000EF}"#
-// #6
-##"\n,\#n,\##n,\##\##n,\##\###n"##
-// #7
-    """
-   hello
-  world
-
-   end of test
-  """
-// #8
-"\0A\x1234"
-// #9
-"\u{D7FF},\u{E000},\u{10FFFF}"
-)");
-  EXPECT_FALSE(buffer.HasErrors());
-  EXPECT_THAT(
-      buffer,
-      HasTokens(llvm::ArrayRef<ExpectedToken>{
-          // #0
-          {.kind = TokenKind::StringLiteral(), .string_contents = {""}},
-          // #1
-          {.kind = TokenKind::StringLiteral(), .string_contents = {""}},
-          // #2
-          {.kind = TokenKind::StringLiteral(), .string_contents = {"\n"}},
-          // #3
-          {.kind = TokenKind::StringLiteral(),
-           .string_contents = {" indented contents "}},
-          // #4
-          {.kind = TokenKind::StringLiteral(),
-           .string_contents =
-               {"\x14,\xE1\x88\xB4,\x10,\x0A,\x0D,\x09,\x00,\x22,\x27,\x5C"s}},
-          // #5
-          {.kind = TokenKind::StringLiteral(),
-           .string_contents =
-               {"\x00,\xFF,\xF1\x96\x9E\x89,\xEA\xAF\x8D,\xC3\xAF"s}},
-          // #6
-          {.kind = TokenKind::StringLiteral(),
-           .string_contents = {"\\n,\\#n,\n,\\##n,\\###n"}},
-          // #7
-          {.kind = TokenKind::StringLiteral(),
-           .string_contents = {" hello\nworld\n\n end of test\n"}},
-          // #8
-          {.kind = TokenKind::StringLiteral(),
-           .string_contents = {"\0A\x12"s + "34"}},
-          // #9
-          {.kind = TokenKind::StringLiteral(),
-           .string_contents = {"\xED\x9F\xBF,\xEE\x80\x80,\xF4\x8F\xBF\xBF"}},
-      }));
-}
-
-TEST_F(LexerTest, StringLiteralTrailingWhitespace) {
-  auto buffer = Lex("\"\"\"\n  Hello \\\n  World \t \n  Bye!  \\\n  \"\"\"");
-  EXPECT_FALSE(buffer.HasErrors());
-  EXPECT_THAT(
-      buffer,
-      HasTokens(llvm::ArrayRef<ExpectedToken>{
-          {.kind = TokenKind::StringLiteral(),
-           .string_contents =
-               {"Hello World\nBye!  "}},
-      }));
-}
-
-TEST_F(LexerTest, StringLiteralBadIndent) {
-  std::pair<llvm::StringLiteral, llvm::StringLiteral> testcases[] = {
-    // Indent doesn't match the last line.
-    {"\"\"\"\n \tx\n  \"\"\"", "x\n"},
-    {"\"\"\"\n x\n  \"\"\"", "x\n"},
-    {"\"\"\"\n  x\n\t\"\"\"", "x\n"},
-    {"\"\"\"\n  ok\n bad\n  \"\"\"", "ok\nbad\n"},
-    {"\"\"\"\n bad\n  ok\n  \"\"\"", "bad\nok\n"},
-    {"\"\"\"\n  escaped,\\\n bad\n  \"\"\"", "escaped,bad\n"},
-
-    // Indent on last line is followed by text.
-    {"\"\"\"\n  x\n  x\"\"\"", "x\nx"},
-    {"\"\"\"\n   x\n  x\"\"\"", " x\nx"},
-    {"\"\"\"\n x\n  x\"\"\"", "x\nx"},
-  };
-
-  for (auto [test, contents] : testcases) {
-    auto buffer = Lex(test);
-    EXPECT_TRUE(buffer.HasErrors()) << "`" << test << "`";
-    EXPECT_THAT(buffer, HasTokens(llvm::ArrayRef<ExpectedToken>{
-                            {.kind = TokenKind::StringLiteral(),
-                             .line = 1,
-                             .column = 1,
-                             .text = test,
-                             .string_contents = contents}}));
-  }
-}
-
-TEST_F(LexerTest, StringLiteralBadEscapeSequence) {
-  llvm::StringLiteral testcases[] = {
-    R"("\a")",
-    R"("\b")",
-    R"("\e")",
-    R"("\f")",
-    R"("\v")",
-    R"("\?")",
-    R"("\1")",
-    R"("\9")",
-
-    // \0 can't be followed by a decimal digit.
-    R"("\01")",
-    R"("\09")",
-
-    // \x requires two (uppercase) hexadecimal digits.
-    R"("\x")",
-    R"("\x0")",
-    R"("\x0G")",
-    R"("\xab")",
-    R"("\x\n")",
-    R"("\x\"")",
-
-    // \u requires a braced list of one or more hexadecimal digits.
-    R"("\u")",
-    R"("\u?")",
-    R"("\u\"")",
-    R"("\u{")",
-    R"("\u{}")",
-    R"("\u{A")",
-    R"("\u{G}")",
-    R"("\u{0000012323127z}")",
-    R"("\u{-3}")",
-
-    // \u must specify a non-surrogate code point.
-    R"("\u{110000}")",
-    R"("\u{000000000000000000000000000000000110000}")",
-    R"("\u{D800}")",
-    R"("\u{DFFF}")",
-  };
-
-  for (llvm::StringLiteral test : testcases) {
-    auto buffer = Lex(test);
-    EXPECT_TRUE(buffer.HasErrors()) << "`" << test << "`";
-    EXPECT_THAT(buffer,
-                HasTokens(llvm::ArrayRef<ExpectedToken>{
-                    {.kind = TokenKind::StringLiteral(), .text = test}}));
   }
 }
 
