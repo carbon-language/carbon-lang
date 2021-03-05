@@ -68,6 +68,7 @@ def _clang_format_impl(target, ctx):
                 transitive = [ctx.attr._clang_format_config.files],
             ),
             outputs = [out],
+            mnemonic = "CheckClangFormat",
             arguments = [
                 out.path,
                 clang_format,
