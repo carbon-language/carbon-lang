@@ -36,7 +36,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [Associated types](#associated-types)
     -   [Model](#model-1)
 -   [Parameterized interfaces](#parameterized-interfaces)
-    -   [Impl lookup and specialization](#impl-lookup-and-specialization)
+    -   [Impl lookup](#impl-lookup)
     -   [Parameterized structural interfaces](#parameterized-structural-interfaces)
 -   [Constraints](#constraints)
     -   [Constraints on associated constants](#constraints-on-associated-constants)
@@ -56,7 +56,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
         -   [Calling C++ template code from Carbon](#calling-c-template-code-from-carbon)
         -   [Moving a C++ template to Carbon](#moving-a-c-template-to-carbon)
     -   [Subtlety around interfaces with multi parameters](#subtlety-around-interfaces-with-multi-parameters)
-    -   [Lookup resolution](#lookup-resolution)
+    -   [Lookup resolution and specialization](#lookup-resolution-and-specialization)
 -   [Composition of type-types](#composition-of-type-types)
     -   [Type compatible with another type](#type-compatible-with-another-type)
         -   [Example: Multiple implementations of the same interface](#example-multiple-implementations-of-the-same-interface)
@@ -341,12 +341,11 @@ extend Point2 {
 ```
 
 The `extend` statement is allowed to be defined in a different library from
-`Point2`, restricted by
-[the coherence/orphan rules](#impl-lookup-and-specialization) that ensure that
-the implementation of an interface won't change based on imports. In particular,
-the `extend` statement is allowed in the library defining the interface
-(`Vector` in this case) in addition to the library that defines the type
-(`Point2` here). This (at least partially) addresses
+`Point2`, restricted by [the coherence/orphan rules](#impl-lookup) that ensure
+that the implementation of an interface won't change based on imports. In
+particular, the `extend` statement is allowed in the library defining the
+interface (`Vector` in this case) in addition to the library that defines the
+type (`Point2` here). This (at least partially) addresses
 [the expression problem](https://eli.thegreenplace.net/2016/the-expression-problem-and-its-solutions).
 
 We don't want the API of `Point2` to change based on what is imported though. So
@@ -1058,9 +1057,9 @@ The `extends` declaration makes sense with the same meaning inside a
 ### Use case: overload resolution
 
 Implementing an extended interface is an example of a more specific match for
-[lookup resolution](#lookup-resolution). For example, this could be used to
-provide different implementations of an algorithm depending on the capabilities
-of the iterator being passed in:
+[lookup resolution](#lookup-resolution-and-specialization). For example, this
+could be used to provide different implementations of an algorithm depending on
+the capabilities of the iterator being passed in:
 
 ```
 interface ForwardIterator(Type:$ T) { ... }
@@ -1346,7 +1345,7 @@ other cases, we can say that the interface declares that each implementation
 will provide a type under a specific name. For example:
 
 ```
-interface Stack {
+interface StackAssociatedType {
   var Type:$ ElementType;
   method (Ptr(Self): this) Push(ElementType: value);
   method (Ptr(Self): this) Pop() -> ElementType;
@@ -1354,38 +1353,45 @@ interface Stack {
 }
 ```
 
-Here we have an interface called `Stack` which defines two methods, `Push` and
-`Pop`. The signatures of those two methods declared as accepting or returning
-values with the type `ElementType`, which any implementer of `Stack` must also
-define. For example, maybe `DynamicArray` implements `Stack`:
+Here we have an interface called `StackAssociatedType` which defines two
+methods, `Push` and `Pop`. The signatures of those two methods declared as
+accepting or returning values with the type `ElementType`, which any implementer
+of `StackAssociatedType` must also define. For example, maybe `DynamicArray`
+implements `StackAssociatedType`:
 
 ```
 struct DynamicArray(Type:$ T) {
-  // DynamicArray methods
-  // Could use either `Self` or `DynamicArray(T)` here.
-  method (Ptr(Self): this) PushBack(T: value);
-  method (Ptr(Self): this) PopBack() -> T;
-  method (Ptr(Self): this) IsEmpty() -> Bool;
+  method (Ptr(Self): this) Begin() -> IteratorType;
+  method (Ptr(Self): this) End() -> IteratorType;
+  method (Ptr(Self): this) Insert(IteratorType: pos, T: value);
+  method (Ptr(Self): this) Remove(IteratorType: pos);
 
-  impl Stack {
+  impl StackAssociatedType {
     var Type:$ ElementType = T;
     // `Self` and `DynamicArray(T)` are still equivalent here.
     method (Ptr(Self): this) Push(ElementType: value) {
-      this->PushBack(value);
+      this->Insert(this->End(), value);
     }
     method (Ptr(Self): this) Pop() -> ElementType {
-      return this->PopBack();
+      var IteratorType: pos = this->End();
+      Assert(pos != this->Begin());
+      --pos;
+      var ElementType: ret = *pos;
+      this->Remove(pos);
+      return ret;
     }
-    // Use default version of IsEmpty() from DynamicArray.
+    method (Ptr(Self): this) IsEmpty() -> Bool {
+      return this->Begin() == this->End();
+    }
   }
 }
 ```
 
 Now we can write a generic function that operates on anything implementing the
-`Stack` interface, for example:
+`StackAssociatedType` interface, for example:
 
 ```
-fn PeekAtTopOfStack[Stack:$ StackType](Ptr(StackType): s)
+fn PeekAtTopOfStack[StackAssociatedType:$ StackType](Ptr(StackType): s)
     -> StackType.ElementType {
   var StackType.ElementType: top = s->Pop();
   s->Push(top);
@@ -1393,8 +1399,9 @@ fn PeekAtTopOfStack[Stack:$ StackType](Ptr(StackType): s)
 }
 
 var DynamicArray(Int): my_array = (1, 2, 3);
-// PeekAtTopOfStack's StackType is set to (DynamicArray(Int) as Stack).
-// StackType.ElementType becomes Int.
+// PeekAtTopOfStack's `StackType` is set to
+// `DynamicArray(Int) as StackAssociatedType`.
+// `StackType.ElementType` becomes `Int`.
 Assert(PeekAtTopOfStack(my_array) == 3);
 ```
 
@@ -1411,106 +1418,89 @@ support associated types.
 The associated type is modeled by a witness table field in the interface.
 
 ```
+interface Iterator {
+  method (Ptr(Self): this) Advance();
+}
+
+interface Container {
+  var Iterator:$ IteratorType;
+  method (Ptr(Self): this) Begin() -> IteratorType;
+}
+```
+
+is represented by:
+
+```
 struct Iterator(Type:$ Self) {
   var fnty(Ptr(Self): this): Advance;
   ...
 }
 struct Container(Type:$ Self) {
-  var Type:$ IteratorType;  // Representation type for the iterator.
+  // Representation type for the iterator.
+  var Type:$ IteratorType;
   // Witness that IteratorType implements Iterator.
   var Ptr(Iterator(IteratorType)): iterator_impl;
-  method (Ptr(Self): this) Begin() -> IteratorType;
+
+  // Method
+  var fnty (Ptr(Self): this) -> IteratorType: begin;
   ...
 }
 ```
 
 ## Parameterized interfaces
 
-Some type constraints would be more conveniently expressed by moving from
-[associated types](#associated-types) to
-[type parameters for interfaces](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#interface-type-parameters-vs-associated-types).
-The syntax for type parameters is that we allow a parameter list after the name
-of the interface:
+Associated types don't change the fact that a type can only implement an
+interface at most once. If instead you want a family of related interfaces, each
+of which could be implemented for a given type, you could use parameterized
+interfaces instead. To parameterized the stack interface instead of using
+associated types, write a parameter list after the name of the interface:
 
 ```
-interface Stack(Type:$ ElementType) {
+interface StackParameterized(Type:$ ElementType) {
   method (Ptr(Self): this) Push(ElementType: value);
   method (Ptr(Self): this) Pop() -> ElementType;
   method (Ptr(Self): this) IsEmpty() -> Bool;
 }
-struct DynamicArray(Type:$ T) {
-  ...
-  // References to a parameterized interface must be followed by an
-  //  argument list with specific values for every parameter.
-  impl Stack(T) { ... }
+```
+
+Then `StackParameterized(Fruit)` and `StackParameterized(Veggie)` would be
+considered different interfaces, with distinct implementations.
+
+```
+struct Produce {
+  var DynamicArray(Fruit): fruit;
+  var DynamicArray(Veggie): veggie;
+  impl StackParameterized(Fruit) {
+    method (Ptr(Self): this) Push(Fruit: value) {
+      this->fruit.Push(value);
+    }
+    method (Ptr(Self): this) Pop() -> Fruit {
+      return this->fruit.Pop();
+    }
+    method (Ptr(Self): this) IsEmpty() -> Bool {
+      return this->fruit.IsEmpty();
+    }
+  }
+  impl StackParameterized(Veggie) {
+    method (Ptr(Self): this) Push(Veggie: value) {
+      this->veggie.Push(value);
+    }
+    method (Ptr(Self): this) Pop() -> Veggie {
+      return this->veggie.Pop();
+    }
+    method (Ptr(Self): this) IsEmpty() -> Bool {
+      return this->veggie.IsEmpty();
+    }
+  }
 }
 ```
 
-All interface parameters must be marked as "generic", using the `:$` syntax.
-This reflects these two properties of these parameters:
-
--   They must be resolved at compile-time, and so can't be passed regular
-    dynamic values.
--   We allow either generic or template values to be passed in.
-
-**Proposal:** A type will be by default only allowed one implementation of an
-interface, not one per interface & type parameter combination.
-
-The advantage of this approach is that it makes inferring the type parameters
-unambiguous. This allows us to use a parameterized interface in cases where we
-don't know the type parameter. For example, to write `PeekAtTopOfStack` from the
-[associated types section](#associated-types) with the parameterized version of
-`Stack`, we need to infer the `ElementType`:
+This approach is useful for the `ComparableTo(T)` interface, where a type might
+be comparable with multiple other types, and in fact interfaces for
+[operator overloads](#operator-overloading) more generally. Example:
 
 ```
-fn PeekAtTopOfStack[Type:$ ElementType, Stack(ElementType):$ StackType]
-    (Ptr(StackType): s) -> ElementType { ... }
-```
-
-The alternative of one implementation per interface & type parameter combination
-is perhaps more natural. It seems useful for something like a `ComparableTo(T)`
-interface, where a type might be comparable with multiple other types. It does
-have a problem where you need to be certain that every impl of an interface for
-a parameterized type can be distinguished:
-
-```
-interface Map(Type:$ FromType, Type:$ ToType) {
-  method (Ptr(Self): this) Map(FromType: needle) -> Optional(ToType);
-}
-struct Bijection(Type:$ FromType, Type:$ ToType) {
-  impl Map(FromType, ToType) { ... }
-  impl Map(ToType, FromType) { ... }
-}
-// Error: Bijection has two impls of interface Dictionary(String, String)
-var Bijection(String, String): oops = ...;
-```
-
-In this case, it would be better to have an adapting type to contain the impl
-for the reverse map lookup:
-
-```
-struct Bijection(Type:$ FromType, Type:$ ToType) {
-  impl Map(FromType, ToType) { ... }
-}
-adaptor ReverseLookup(Type:$ FromType, Type:$ ToType)
-    for Bijection(FromType, ToType) {
-  impl Map(ToType, FromType) { ... }
-}
-```
-
-This would be the preferred approach to use instead of multiple impls of the
-same interface.
-
-**Proposal:** You can opt in to allowing multiple impls for a type by using a
-keyword annotation on the type parameter to an interface, for now `multi`. Multi
-type parameters to interfaces generally won't be inferred / deduced (at least
-not in a context where only one answer is allowed).
-
-This will be the approach used for `ComparableTo(T)`, `ConstructibleFrom(...)`,
-or other operators that might have multiple overloads. Example:
-
-```
-interface EqualityComparableTo(multi Type:$ T) {  // Note: multi
+interface EqualityComparableTo(Type:$ T) {
   fn operator==(Self: this, T: that) -> Bool;
   ...
 }
@@ -1524,23 +1514,45 @@ struct Complex {
 }
 ```
 
-Observation: While you can switch between regular ("inferable") parameters and
-associated types, a `multi` parameter can't be changed to an associated type.
+All interface parameters must be marked as "generic", using the `:$` syntax.
+This reflects these two properties of these parameters:
 
-**Rationale:** Reasons to support parameterized interfaces:
+-   They must be resolved at compile-time, and so can't be passed regular
+    dynamic values.
+-   We allow either generic or template values to be passed in.
 
--   In Carbon we are consistently allowing constructs to be parameterized.
--   Some things are more naturally represented by required, positional
-    parameters (as opposed to associated types, which are optional and named).
--   Parameterized interfaces support cases where one type implements an
-    interface multiple times with different parameters (`multi` parameters),
-    unlike associated types. For example, a type might be comparable with
-    multiple other types. We expect to need this for operator overloading.
+**Context:** See
+[type parameters for interfaces](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#interface-type-parameters-vs-associated-types)
+in the terminology doc.
 
-**Rejected alternative:** We could simplify the language by making all interface
-parameters be `multi`. You would instead use associated types for anything
-deducible. I (Josh11b) think this degrades the usability overall, but is a
-viable option, and simplifies the language. This is what Rust does.
+**Caveat:** When implementing an interface twice for a type, you need to be sure
+that the interface parameters will always be different. For example:
+
+```
+interface Map(Type:$ FromType, Type:$ ToType) {
+  method (Ptr(Self): this) Map(FromType: needle) -> Optional(ToType);
+}
+struct Bijection(Type:$ FromType, Type:$ ToType) {
+  impl Map(FromType, ToType) { ... }
+  impl Map(ToType, FromType) { ... }
+}
+// Error: Bijection has two impls of interface Map(String, String)
+var Bijection(String, String): oops = ...;
+```
+
+In this case, it would be better to have an [adapting type](#adapting-types) to
+contain the impl for the reverse map lookup, instead of implementing the `Map`
+interface twice:
+
+```
+struct Bijection(Type:$ FromType, Type:$ ToType) {
+  impl Map(FromType, ToType) { ... }
+}
+adaptor ReverseLookup(Type:$ FromType, Type:$ ToType)
+    for Bijection(FromType, ToType) {
+  impl Map(ToType, FromType) { ... }
+}
+```
 
 **Comparison with other languages:** Rust calls
 [traits with type parameters "generic traits"](https://doc.rust-lang.org/reference/items/traits.html#generic-traits)
@@ -1549,18 +1561,44 @@ and
 Note that Rust further supports defaults for those type parameters (such as
 `Self`).
 
-### Impl lookup and specialization
+**Rejected alternative:** We considered and then rejected the idea that we would
+have two kinds of parameters. "Multi" parameters would work as described above.
+"Deducible" type parameters would only allow one implementation of an interface,
+not one per interface & type parameter combination. These deducible type
+parameters could be inferred like associated types are. For example, we could
+make a `Stack` interface that took a deducible `ElementType` parameter. You
+would only be able to implement that interface once for a type, which would
+allow you to infer the `ElementType` parameter like so:
+
+```
+fn PeekAtTopOfStack[Type:$ ElementType, Stack(ElementType):$ StackType]
+    (Ptr(StackType): s) -> ElementType { ... }
+```
+
+**Rationale for the rejection:**
+
+-   Having only one type of parameter simplifies the language.
+-   Multi parameters express something we need, while deducible parameters can
+    always be changed to associated types.
+-   One implementation per interface & type parameter combination is more
+    consistent with other parameterized constructs in Carbon. For example,
+    parameterized types `Foo(A)` and `Foo(B)` are distinct, unconnected types.
+-   It would be hard to give clear guidance on when to use associated types vs.
+    deducible type parameters, since which is best for a particular use is more
+    of a subtle judgement call.
+-   Deducible parameters
+    [complicate the lookup rules for impls](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/appendix-interface-param-impl.md).
+
+### Impl lookup
 
 Let's say you have some interface `I(T, U(V))` being implemented for some type
 `A(B(C(D), E))`. That impl must be defined in the same library that defines the
 interface or one of the names needed by the type. That is, the impl must be
-defined with (exactly) one of `I`, `A`, `B`, `C`, `D`, or `E`. Note that you
-can't define the impl with `T`, `U`, `V`, or any other library unless it also
-defines one of `I`, `A`, ..., or `E`. We further require anything looking up
-this impl to import the _definitions_ of all of those names. Seeing a forward
-declaration of these names is insufficient, since you can presumably see forward
-declarations without seeing an impl with the definition. This accomplishes a few
-goals:
+defined with one of `I`, `T`, `U`, `V`, `A`, `B`, `C`, `D`, or `E`. We further
+require anything looking up this impl to import the _definitions_ of all of
+those names. Seeing a forward declaration of these names is insufficient, since
+you can presumably see forward declarations without seeing an impl with the
+definition. This accomplishes a few goals:
 
 -   The compiler can check that there is only one definition of any impl that is
     actually used, avoiding
@@ -1574,12 +1612,9 @@ goals:
     addresses the
     [expression problem](https://eli.thegreenplace.net/2016/the-expression-problem-and-its-solutions).
 
-Note that interface parameters are treated differently because they can be
-inferred as part of calling a function call, as described in
-[this appendix](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/appendix-interface-param-impl.md).
-We could allow implementations to be defined with arguments that can't be
-inferred (`multi` parameters), if we were willing to use a more complicated
-rule.
+Note that [the rules for specialization](#lookup-resolution-and-specialization)
+do allow there to be more than one impl to be defined for a type, as long as one
+can unambiguously be picked as most specific.
 
 ### Parameterized structural interfaces
 
@@ -2337,11 +2372,11 @@ extend [EqualityComparableTo(Type:$$ T):$ U] U {
 
 One tricky part of this is that you may not have visibility into all the impls
 of an interface for a type since they may be
-[defined with one of the other types involved](#impl-lookup-and-specialization).
-Hopefully this isn't a problem -- you will always be able to see the _relevant_
-impls given the types that have been imported / have visible definitions.
+[defined with one of the other types involved](#impl-lookup). Hopefully this
+isn't a problem -- you will always be able to see the _relevant_ impls given the
+types that have been imported / have visible definitions.
 
-### Lookup resolution
+### Lookup resolution and specialization
 
 **Rule:** Can have multiple impl definitions that match, as long as there is a
 single best match. Best is defined using the "more specific" partial ordering:
@@ -3194,7 +3229,7 @@ Specifically, how does this proposal address
     is defined with either the type or the interface.
 
     -   [External impl](#external-impl)
-    -   [Impl lookup](#impl-lookup-and-specialization)
+    -   [Impl lookup](#impl-lookup)
 
 -   Define a parameterized implementation of an interface for a family of types.
     This is both for
