@@ -14,20 +14,29 @@
 }
 
 %code requires {
+#include <optional>
+
 #include "executable_semantics/ast/declaration.h"
 #include "executable_semantics/ast/field_list.h"
 #include "executable_semantics/ast/function_definition.h"
+
+namespace Carbon {
+// A representation of the parsed program.
+using AST = std::list<Carbon::Declaration>*;
+}
+
 }
 
 %code {
 extern int yylineno;
 extern int yylex();
 
-void yyerror(char* error) {
+void yyerror(std::optional<Carbon::AST> const& parsedProgram, char* error) {
   Carbon::PrintSyntaxError(error, yylineno);
 }
-// void yyerror(char* error, ...);
 }
+
+%parse-param {std::optional<Carbon::AST>& parsedProgram}
 
 %union {
    char* str;
@@ -109,7 +118,7 @@ void yyerror(char* error) {
 %locations
 %%
 input: declaration_list
-    { Carbon::ExecProgram($1); }
+    { parsedProgram = $1; }
 ;
 pattern:
   expression
