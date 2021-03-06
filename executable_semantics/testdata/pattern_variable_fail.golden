@@ -7,5 +7,5 @@ return 1;
 ********** type checking **********
 --- step exp Int --->
 --- step exp Int --->
-2: compilation error, pattern variables are only allowed in pattern context
+6: compilation error, pattern variables are only allowed in pattern context
 EXIT CODE: 255

@@ -16,6 +16,7 @@
 #include "executable_semantics/ast/function_definition.h"
 #include "executable_semantics/interpreter/stack.h"
 #include "executable_semantics/interpreter/typecheck.h"
+#include "executable_semantics/tracing_flag.h"
 
 namespace Carbon {
 
@@ -397,11 +398,13 @@ auto ToValue(Expression* value) -> Value* {
 // Returns 0 if the value doesn't match the pattern.
 auto PatternMatch(Value* p, Value* v, Env* env, std::list<std::string>* vars,
                   int line_num) -> Env* {
-  std::cout << "pattern_match(";
-  PrintValue(p, std::cout);
-  std::cout << ", ";
-  PrintValue(v, std::cout);
-  std::cout << ")" << std::endl;
+  if (tracing_output) {
+    std::cout << "pattern_match(";
+    PrintValue(p, std::cout);
+    std::cout << ", ";
+    PrintValue(v, std::cout);
+    std::cout << ")" << std::endl;
+  }
   switch (p->tag) {
     case ValKind::VarPatV: {
       Address a = AllocateValue(CopyVal(v, line_num));
@@ -545,9 +548,11 @@ void StepLvalue() {
   Frame* frame = state->stack.Top();
   Action* act = frame->todo.Top();
   Expression* exp = act->u.exp;
-  std::cout << "--- step lvalue ";
-  PrintExp(exp);
-  std::cout << " --->" << std::endl;
+  if (tracing_output) {
+    std::cout << "--- step lvalue ";
+    PrintExp(exp);
+    std::cout << " --->" << std::endl;
+  }
   switch (exp->tag) {
     case ExpressionKind::Variable: {
       //    { {x :: C, E, F} :: S, H}
@@ -605,9 +610,11 @@ void StepExp() {
   Frame* frame = state->stack.Top();
   Action* act = frame->todo.Top();
   Expression* exp = act->u.exp;
-  std::cout << "--- step exp ";
-  PrintExp(exp);
-  std::cout << " --->" << std::endl;
+  if (tracing_output) {
+    std::cout << "--- step exp ";
+    PrintExp(exp);
+    std::cout << " --->" << std::endl;
+  }
   switch (exp->tag) {
     case ExpressionKind::PatternVariable: {
       frame->todo.Push(MakeExpAct(exp->u.pattern_variable.type));
@@ -747,9 +754,11 @@ void StepStmt() {
   Action* act = frame->todo.Top();
   Statement* const stmt = act->u.stmt;
   assert(stmt != nullptr && "null statement!");
-  std::cout << "--- step stmt ";
-  PrintStatement(stmt, 1);
-  std::cout << " --->" << std::endl;
+  if (tracing_output) {
+    std::cout << "--- step stmt ";
+    PrintStatement(stmt, 1);
+    std::cout << " --->" << std::endl;
+  }
   switch (stmt->tag) {
     case StatementKind::Match:
       //    { { (match (e) ...) :: C, E, F} :: S, H}
@@ -918,12 +927,13 @@ void HandleValue() {
   act->results.push_back(val_act->u.val);
   act->pos++;
 
-  std::cout << "--- handle value ";
-  PrintValue(val_act->u.val, std::cout);
-  std::cout << " with ";
-  PrintAct(act, std::cout);
-  std::cout << " --->" << std::endl;
-
+  if (tracing_output) {
+    std::cout << "--- handle value ";
+    PrintValue(val_act->u.val, std::cout);
+    std::cout << " with ";
+    PrintAct(act, std::cout);
+    std::cout << " --->" << std::endl;
+  }
   switch (act->tag) {
     case ActionKind::DeleteTmpAction: {
       KillValue(state->heap[act->u.delete_tmp]);
@@ -1325,7 +1335,9 @@ void Step() {
 // Interpret the whole porogram.
 auto InterpProgram(std::list<Declaration>* fs) -> int {
   state = new State();  // Runtime state.
-  std::cout << "********** initializing globals **********" << std::endl;
+  if (tracing_output) {
+    std::cout << "********** initializing globals **********" << std::endl;
+  }
   InitGlobals(fs);
 
   Expression* arg =
@@ -1336,14 +1348,18 @@ auto InterpProgram(std::list<Declaration>* fs) -> int {
   auto* frame = new Frame("top", Stack(scope), todo);
   state->stack = Stack(frame);
 
-  std::cout << "********** calling main function **********" << std::endl;
-  PrintState(std::cout);
+  if (tracing_output) {
+    std::cout << "********** calling main function **********" << std::endl;
+    PrintState(std::cout);
+  }
 
   while (state->stack.CountExceeds(1) ||
          state->stack.Top()->todo.CountExceeds(1) ||
          state->stack.Top()->todo.Top()->tag != ActionKind::ValAction) {
     Step();
-    PrintState(std::cout);
+    if (tracing_output) {
+      PrintState(std::cout);
+    }
   }
   Value* v = state->stack.Top()->todo.Top()->u.val;
   return ValToInt(v, 0);

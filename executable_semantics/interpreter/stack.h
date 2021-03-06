@@ -9,6 +9,8 @@
 #include <cstddef>
 #include <iterator>
 
+#include "executable_semantics/interpreter/list_node.h"
+
 namespace Carbon {
 
 // A persistent stack data structure.
@@ -24,7 +26,7 @@ struct Stack {
     using reference = const T&;
     using iterator_category = std::forward_iterator_tag;
 
-    Iterator(Cons<T>* x) : p(x) {}
+    Iterator(ListNode<T>* x) : p(x) {}
     Iterator(const Iterator& mit) : p(mit.p) {}
     Iterator& operator++() {
       p = p->next;
@@ -41,7 +43,7 @@ struct Stack {
     const T* operator->() { return &p->curr; }
 
    private:
-    Cons<T>* p;
+    ListNode<T>* p;
   };
 
   // The position of the first/`Top()` element, or `end()` if
@@ -58,7 +60,7 @@ struct Stack {
   Stack(T x) : Stack() { Push(x); }
 
   // Pushes `x` onto the top of the stack.
-  void Push(T x) { head = new Cons<T>(x, head); }
+  void Push(T x) { head = new ListNode<T>(x, head); }
 
   // Returns a copy of `*this`, with `x` pushed onto the top.
   auto Pushing(T x) const -> Stack {
@@ -127,8 +129,8 @@ struct Stack {
   auto Count() const -> int { return std::distance(begin(), end()); }
 
  private:
-  // An linked list of cells containing the elements of self.
-  Cons<T>* head;
+  // A linked list of cells containing the elements of self.
+  ListNode<T>* head;
 };
 
 }  // namespace Carbon

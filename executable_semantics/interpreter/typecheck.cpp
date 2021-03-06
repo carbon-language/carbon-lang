@@ -12,7 +12,6 @@
 #include <vector>
 
 #include "executable_semantics/ast/function_definition.h"
-#include "executable_semantics/interpreter/cons_list.h"
 #include "executable_semantics/interpreter/interpreter.h"
 
 namespace Carbon {

@@ -18,13 +18,14 @@ cc_library(
     hdrs = [
         "action.h",
         "assoc_list.h",
-        "cons_list.h",
         "interpreter.h",
+        "list_node.h",
         "stack.h",
         "typecheck.h",
         "value.h",
     ],
     deps = [
+        "//executable_semantics:tracing_flag",
         "//executable_semantics/ast:declaration",
         "//executable_semantics/ast:expression",
         "//executable_semantics/ast:function_definition",
