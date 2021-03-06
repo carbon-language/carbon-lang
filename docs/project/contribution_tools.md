@@ -40,6 +40,7 @@ contributions.
     -   [Vim](#vim)
         -   [vim-prettier](#vim-prettier)
     -   [Atom](#atom)
+    -   [`clang-format`](#clang-format)
     -   [pre-commit enabled tools](#pre-commit-enabled-tools)
         -   [black](#black)
         -   [codespell](#codespell)
