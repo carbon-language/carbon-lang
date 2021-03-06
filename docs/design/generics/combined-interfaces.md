@@ -2147,7 +2147,7 @@ Some things going on here:
     -   Easy case: An impl for a family of parameterized types.
     -   Trickier is "structural conformance": we might want to say "here is an
         impl for interface `Foo` for any class implementing a method `Bar`".
-        TODO: real use case.
+        This is particularly for C++ types.
 
 ### Structural conformance
 
@@ -2193,87 +2193,36 @@ extend[Type:$$ T, Type:$$ U] T if (LegalExpression(T.operator create(???))) {
 This is a problem for the `LegalExpression(...)` model, another reason to avoid
 it.
 
-**Possible answer:** likely we will write constraints using the reflection API,
-though it isn't written at this time. The advantage of this approach is that we
-likely will want a reflection API anyway for use in metaprogramming, so reusing
-that instead of introducing another mechanism reduces complexity.
+**Answer:** We will use the planned
+[method constraints extension](#future-work-method-constraints) to
+[structural interfaces](#structural-interfaces).
 
-TODO: Go interface structural matching -- do we really want that? Could really
-help with decoupling dependencies, breaking cycles, cleaning up layering.
-Example: two libraries can be combined without knowing about each other.
-
-**Possible answer:** Another approach would be define a function that returns a
-type-type that matches types satisfying a structural constraint. This structural
-constraint might be represented by a list of name, signature pairs encoded as
-keyword arguments, as in:
-
-> `HasFunction(.Name1 = FnType1, .Name2 = FnType2)` defines a type-type whose
-> values are types with at least a method named `Name1` with signature matching
-> the function type `FnType1` and a method name `Name2` with signature matching
-> the function type `FnType2`.
-
-Example:
+This is similar to the structural interface matching used in the Go language. It
+isn't clear how much we want to encourage it, but it does have some advantages
+with respect to decoupling dependencies, breaking cycles, cleaning up layering.
+Example: two libraries can be combined without knowing about each other as long
+as they use methods with the same names and signatures.
 
 ```
-fn CallsFooAndBar[HasFunction(.Foo = fnty(Int:_)->String,
-                              .Bar = fnty(String:_)->Bool):$$ T]
+structural interface HasFooAndBar {
+  method (Self: this) Foo(Int: _) -> String;
+  method (Self: this) Bar(String: _) -> Bool;
+}
+
+fn CallsFooAndBar[HasFooAndBar:$$ T]
     (T: x, Int: y) -> Bool {
   return x.Bar(x.Foo(y));
 }
 ```
 
-One downside of this approach is that it does not provide a way to write down
-signatures that involve `Self`. Supporting that may require something a bit more
-cumbersome:
-
-```
-HasMethod(fnty(Type:$$ Self)->(.Foo = fnty(Self:_, Int:_)->String,
-                               .Bar = fnty(Self:_, String:_)->Bool))
-```
-
-**Possible answer:** A last possibility: anonymous interfaces would match
-structurally. Just as types with names use nominative typing and types without
-names are compared structurally, we could say that an interface defined without
-a name is automatically implemented for any type that structurally matches the
-API defined in the interface.
-
-```
-interface {
-  fn Foo(Int: _) -> String;
-  fn Bar(String: _) -> Bool;
-}
-```
-
-This has the benefit that signatures involving `Self` are much more natural to
-write using the machinery and syntax already associated with defining
-interfaces.
-
-```
-interface {
-  fn Foo(Self: _, Int: _) -> String;
-  fn Bar(Self: _, String: _) -> Bool;
-}
-```
-
-To give a name to this type-type while staying with structural conformance, use
-the `alias` facility:
-
-```
-alias HasFooAndBar = interface {
-  fn Foo(Int: _) -> String;
-  fn Bar(String: _) -> Bool;
-}
-fn CallsFooAndBar[HasFooAndBar:$$ T](T: x, Int: y) -> Bool { ... }
-```
-
-Unfortunately, the difference between `alias Foo = interface { ... }` and
-`interface Foo { ... }` is pretty subtle but important. It might be better to
-instead have a keyword to draw attention to this difference, like:
+One downside of this approach is that it nails down the type of `this`, even
+though multiple options would work in a template. We might need to introduce
+additional optiion in the syntax only for use with templates:
 
 ```
 structural interface HasFooAndBar {
-  fn Foo(Int: _) -> String;
-  fn Bar(String: _) -> Bool;
+  method (_) Foo(Int: _) -> String;
+  method (_) Bar(String: _) -> Bool;
 }
 ```
 
