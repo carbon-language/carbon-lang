@@ -354,12 +354,11 @@ void CallFunction(int line_num, std::vector<Value*> operas, State* state) {
 void KillScope(int line_num, Scope* scope) {
   for (const auto& l : scope->locals) {
     std::optional<Address> a = scope->env.Get(l);
-    if (a) {
-      KillValue(state->heap[*a]);
-    } else {
+    if (!a) {
       std::cerr << "internal error in KillScope" << std::endl;
       exit(-1);
     }
+    KillValue(state->heap[*a]);
   }
 }
 
@@ -585,16 +584,15 @@ void StepLvalue() {
       // -> { {E(x) :: C, E, F} :: S, H}
       std::optional<Address> pointer =
           CurrentEnv(state).Get(*(exp->u.variable.name));
-      if (pointer) {
-        Value* v = MakePtrVal(*pointer);
-        CheckAlive(v, exp->line_num);
-        frame->todo.Pop();
-        frame->todo.Push(MakeValAct(v));
-      } else {
+      if (!pointer) {
         std::cerr << exp->line_num << ": could not find `"
                   << *(exp->u.variable.name) << "`" << std::endl;
         exit(-1);
       }
+      Value* v = MakePtrVal(*pointer);
+      CheckAlive(v, exp->line_num);
+      frame->todo.Pop();
+      frame->todo.Push(MakeValAct(v));
       break;
     }
     case ExpressionKind::GetField: {
@@ -683,15 +681,14 @@ void StepExp() {
       // { {x :: C, E, F} :: S, H} -> { {H(E(x)) :: C, E, F} :: S, H}
       std::optional<Address> pointer =
           CurrentEnv(state).Get(*(exp->u.variable.name));
-      if (pointer) {
-        Value* pointee = state->heap[*pointer];
-        frame->todo.Pop(1);
-        frame->todo.Push(MakeValAct(pointee));
-      } else {
+      if (!pointer) {
         std::cerr << exp->line_num << ": could not find `"
                   << *(exp->u.variable.name) << "`" << std::endl;
         exit(-1);
       }
+      Value* pointee = state->heap[*pointer];
+      frame->todo.Pop(1);
+      frame->todo.Push(MakeValAct(pointee));
       break;
     }
     case ExpressionKind::Integer:
