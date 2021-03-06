@@ -408,6 +408,7 @@ auto ToValue(Expression* value) -> Value* {
 
 // Returns an updated environment that includes the bindings of
 //    pattern variables to their matched values, if matching succeeds.
+//
 // The names of the pattern variables are added to the vars parameter.
 // Returns nullopt if the value doesn't match the pattern.
 auto PatternMatch(Value* p, Value* v, Env env, std::list<std::string>* vars,
