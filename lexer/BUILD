@@ -54,8 +54,8 @@ cc_library(
     srcs = ["tokenized_buffer.cpp"],
     hdrs = ["tokenized_buffer.h"],
     deps = [
-        ":token_kind",
         ":numeric_literal",
+        ":token_kind",
         "//diagnostics:diagnostic_emitter",
         "//source:source_buffer",
         "@llvm-project//llvm:Support",
