@@ -650,7 +650,7 @@ auto TopLevel(std::list<Declaration>* fs) -> std::pair<TypeEnv, Env> {
     if (d.Name() == "main") {
       found_main = true;
     }
-    d.TopLevel(tops);
+    d.TopLevel(*&tops);
   }
 
   if (found_main == false) {

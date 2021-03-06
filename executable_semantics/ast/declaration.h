@@ -43,7 +43,7 @@ class Declaration {
   }
   void InitGlobals(Env& globals) const { return box->InitGlobals(globals); }
   auto TopLevel(ExecutionEnvironment& e) const -> void {
-    return box->TopLevel(e);
+    return box->TopLevel(*&e);
   }
 
  private:  // types
@@ -78,10 +78,10 @@ class Declaration {
       return content.TypeChecked(env, ct_env);
     }
     auto InitGlobals(Env& globals) const -> void override {
-      content.InitGlobals(globals);
+      content.InitGlobals(*&globals);
     }
     auto TopLevel(ExecutionEnvironment& e) const -> void override {
-      content.TopLevel(e);
+      content.TopLevel(*&e);
     }
   };
 

@@ -262,7 +262,7 @@ Env globals;
 
 void InitGlobals(std::list<Declaration>* fs) {
   for (auto const& d : *fs) {
-    d.InitGlobals(globals);
+    d.InitGlobals(*&globals);
   }
 }
 

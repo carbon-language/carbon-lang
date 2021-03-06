@@ -39,7 +39,7 @@ int main(int argc, char* argv[]) {
   std::optional<Carbon::AST> parsedInput = std::nullopt;
 
   // Parse and handle syntax errors
-  auto syntaxErrorCode = yyparse(parsedInput);
+  auto syntaxErrorCode = yyparse(*&parsedInput);
   if (syntaxErrorCode != 0) {
     return syntaxErrorCode;
   }
