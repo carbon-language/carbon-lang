@@ -13,4 +13,13 @@ set -euo pipefail
 OUTPUT_PATH="${1}"
 shift 1
 
-"$@" && touch "${OUTPUT_PATH}"
+if "$@"; then
+  # Create an output file signifying success.
+  touch "${OUTPUT_PATH}"
+  exit 0
+fi
+
+# When failing, try to suggest a commandline to fix.
+echo >&2 ""
+echo >&2 "Fix this by running: clang-format -i ${!#}"
+exit 1

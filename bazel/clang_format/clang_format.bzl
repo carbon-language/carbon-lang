@@ -65,13 +65,17 @@ def _clang_format_impl(target, ctx):
         ctx.actions.run(
             inputs = depset(
                 direct = [src],
-                transitive = [ctx.attr._clang_format_config.files],
+                transitive = [
+                    ctx.attr._clang_format_config.files,
+                    ctx.attr._clang_format_runner.files,
+                ],
             ),
             outputs = [out],
             mnemonic = "CheckClangFormat",
             arguments = [
                 out.path,
                 clang_format,
+                "--fcolor-diagnostics",
                 "--dry-run",
                 "-Werror",
                 src.path,

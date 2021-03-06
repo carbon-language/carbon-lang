@@ -343,6 +343,36 @@ Some packages that may be helpful are:
 -   [python-black](https://atom.io/packages/python-black): For [black](#black)
     integration.
 
+### `clang-format`
+
+We use [`clang-format`](https://clang.llvm.org/docs/ClangFormat.html) to format
+our C++ code. This will be automatically checked as part of building. You can
+optionally install it locally to reformat code after changes.
+
+Our recommended way of installing is:
+
+-   Linux:
+
+    ```bash
+    apt install clang-format
+    ```
+
+-   MacOS:
+
+    ```bash
+    brew install clang-format
+    ```
+
+We also have a script to run `clang-format` across all the source code at once
+if desired. This requires that you have `clang-format` installed, Bazel
+installed and working, and run it from the root of the repository:
+
+```bash
+./scripts/clang_format_all.sh
+```
+
+See the script comments for more details on using it.
+
 ### pre-commit enabled tools
 
 If you're using pre-commit, it will run these tools. Installing and running them
