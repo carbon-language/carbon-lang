@@ -37,6 +37,7 @@ enum class ValKind {
   TupleTV,
   StructTV,
   ChoiceTV,
+  SnapshotTV,
   VarPatV,
   AltConsV
 };
@@ -47,53 +48,66 @@ struct Value {
   union {
     int integer;
     bool boolean;
+
     struct {
       std::string* name;
       Value* param;
       Statement* body;
     } fun;
+
     struct {
       Value* type;
       Value* inits;
     } struct_val;
+
     struct {
       std::string* alt_name;
       std::string* choice_name;
     } alt_cons;
+
     struct {
       std::string* alt_name;
       std::string* choice_name;
       Value* arg;
     } alt;
+
     struct {
       std::vector<std::pair<std::string, Address>>* elts;
     } tuple;
+
     Address ptr;
     std::string* var_type;
+
     struct {
       std::string* name;
       Value* type;
     } var_pat;
+
     struct {
       Value* param;
       Value* ret;
     } fun_type;
+
     struct {
       Value* type;
     } ptr_type;
+
     struct {
       std::string* name;
       VarValues* fields;
       VarValues* methods;
     } struct_type;
+
     struct {
       std::string* name;
       VarValues* fields;
     } tuple_type;
+
     struct {
       std::string* name;
       VarValues* alternatives;
     } choice_type;
+
     struct {
       std::list<std::string*>* params;
       Value* type;

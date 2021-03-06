@@ -497,14 +497,20 @@ auto TypeCheckStmt(Statement* s, TypeEnv* env, Env* ct_env, Value* ret_type)
       return TCStatement(MakeReturn(s->line_num, res.exp), env);
     }
     case StatementKind::Delimit: {
-      std::cerr << "delimit not implemented" << std::endl;
-      exit(-1);
+      auto body_result =
+          TypeCheckStmt(s->u.delimit_stmt.body, env, ct_env, ret_type);
+
+      UNDER CONSTRUCTION
     }
     case StatementKind::Suspend: {
-      std::cerr << "suspend not implemented" << std::endl;
-      exit(-1);
+      return TCStatement(s, env);
     }
-  }
+    case StatementKind::Resume: {
+      auto result = TypeCheckExp(s->u.return_stmt, env, ct_env, nullptr,
+                                 TCContext::ValueContext);
+      return TCStatement(MakeResume(s->line_num, result.exp), env);
+    }
+  }  // switch
 }
 
 auto CheckOrEnsureReturn(Statement* stmt, bool void_return, int line_num)
