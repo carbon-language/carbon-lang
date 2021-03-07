@@ -43,7 +43,14 @@ void yyerror(
 }
 }
 
+//
+// Parameters to yyparse and yylex.
+//
+
+// "out" parameter passed to the parser, where the AST is written.
 %parse-param {std::optional<Carbon::AST>& parsedProgram}
+
+// "inout" parameter passed to both the parser and the lexer.
 %param {Carbon::SyntaxDriver& driver}
 
 %union {
