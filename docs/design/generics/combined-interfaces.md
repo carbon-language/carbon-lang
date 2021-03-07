@@ -2687,10 +2687,14 @@ var Bar: z;
 G(&z);  // Allowed: Bar is sized and implements Foo.
 ```
 
-**Question:** Even if the size is fixed, it won't be known at the time of
+**Open question:** Even if the size is fixed, it won't be known at the time of
 compiling the generic function if we are using the dynamic strategy. Should we
 automatically [box](#boxed) local variables when using the dynamic strategy? Or
 should we only allow `MaybeBox` values to be instantiated locally?
+
+**Open question:** Should the `Sized` type-type expose an associated constant
+with the size? So you could say `T.ByteSize` in the above example to get a
+generic int value with the size of `T`.
 
 #### Model
 
