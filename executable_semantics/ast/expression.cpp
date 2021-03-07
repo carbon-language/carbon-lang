@@ -279,6 +279,9 @@ void PrintExp(const Expression* e) {
     case ExpressionKind::AutoT:
       std::cout << "auto";
       break;
+    case ExpressionKind::SnapshotT:
+      std::cout << "Snapshot";
+      break;
     case ExpressionKind::FunctionT:
       std::cout << "fn ";
       PrintExp(e->u.function_type.parameter);

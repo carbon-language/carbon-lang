@@ -108,6 +108,14 @@ auto MakeAltCons(std::string alt_name, std::string choice_name) -> Value* {
   return v;
 }
 
+auto MakeContinuation(Stack<Frame*> stack) -> Value* {
+  auto* v = new Value();
+  v->alive = true;
+  v->tag = ValKind::ContinuationV;
+  v->u.continuation.stack = new Stack<Frame*>(stack);
+  return v;
+}
+
 auto MakeVarPatVal(std::string name, Value* type) -> Value* {
   auto* v = new Value();
   v->alive = true;
@@ -320,6 +328,9 @@ void PrintValue(Value* val, std::ostream& out) {
       break;
     case ValKind::ChoiceTV:
       out << "choice " << *val->u.choice_type.name;
+      break;
+    case ValKind::ContinuationV:
+      out << "continuation";
       break;
   }
 }

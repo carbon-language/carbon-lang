@@ -59,6 +59,7 @@ EXAMPLES = [
     "while1",
     "zero",
     "demo_delimit1",
+    "demo_delimit2",
 ]
 
 [genrule(

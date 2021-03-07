@@ -79,6 +79,8 @@ auto CopyVal(Value* val, int line_num) -> Value* {
       return MakeFunVal(*val->u.fun.name, val->u.fun.param, val->u.fun.body);
     case ValKind::PtrV:
       return MakePtrVal(val->u.ptr);
+    case ValKind::ContinuationV:
+      return MakeContinuation(*val->u.continuation.stack);
     case ValKind::FunctionTV:
       return MakeFunTypeVal(CopyVal(val->u.fun_type.param, line_num),
                             CopyVal(val->u.fun_type.ret, line_num));
@@ -95,6 +97,8 @@ auto CopyVal(Value* val, int line_num) -> Value* {
       return MakeVarTypeVal(*val->u.var_type);
     case ValKind::AutoTV:
       return MakeAutoTypeVal();
+    case ValKind::SnapshotTV:
+      return MakeSnapshotTypeVal();
     case ValKind::TupleTV: {
       auto new_fields = new VarValues();
       for (auto& field : *val->u.tuple_type.fields) {
@@ -626,6 +630,7 @@ void StepLvalue() {
     case ExpressionKind::TypeT:
     case ExpressionKind::FunctionT:
     case ExpressionKind::AutoT:
+    case ExpressionKind::SnapshotT:
     case ExpressionKind::PatternVariable: {
       frame->todo.Pop();
       frame->todo.Push(MakeExpToLvalAct());
@@ -749,6 +754,12 @@ void StepExp() {
     case ExpressionKind::FunctionT: {
       frame->todo.Push(MakeExpAct(exp->u.function_type.parameter));
       act->pos++;
+      break;
+    }
+    case ExpressionKind::SnapshotT: {
+      Value* v = MakeSnapshotTypeVal();
+      frame->todo.Pop(1);
+      frame->todo.Push(MakeValAct(v));
       break;
     }
   }  // switch (exp->tag)
@@ -885,13 +896,47 @@ void StepStmt() {
       frame->todo.Push(MakeStmtAct(stmt->u.sequence.stmt));
       break;
     case StatementKind::Delimit:
-      std::cerr << "delimit not implemented" << std::endl;
-      exit(-1);
+      if (act->pos == -1) {
+        frame->todo.Push(MakeStmtAct(stmt->u.delimit_stmt.body));
+        act->pos++;
+      } else if (act->pos == 0) {
+        frame->todo.Pop(1);
+      } else {
+        std::cerr << "delimit not implemented at pos " << act->pos << std::endl;
+        exit(-1);
+      }
       break;
-    case StatementKind::Suspend:
-      std::cerr << "suspend not implemented" << std::endl;
+    case StatementKind::Suspend: {
+      // Save the current continuation
+      Stack<Frame*> suspended = state->stack;
+
+      // Roll back to the nearest delimit and push
+      // the suspended continuation (as a value) on the stack.
+      Stack<Frame*> new_stack = suspended;
+      while (!new_stack.IsEmpty()) {
+        Stack<Action*> todo = new_stack.Top()->todo;
+        while (!todo.IsEmpty()) {
+          if (todo.Top()->tag == ActionKind::StatementAction &&
+              todo.Top()->u.stmt->tag == StatementKind::Delimit) {
+            todo.Push(MakeValAct(MakeContinuation(suspended)));
+            Frame* new_frame =
+                new Frame(new_stack.Top()->name, new_stack.Top()->scopes, todo);
+            new_stack.Pop();
+            new_stack.Push(new_frame);
+            state->stack = new_stack;
+            goto handler;
+          } else {
+            todo.Pop();
+          }
+        }
+        new_stack.Pop();
+      }
+      std::cerr << "suspend without an enclosing delimiter" << std::endl;
       exit(-1);
+    handler:
+      // Leave it to HandleValue to execute the handler
       break;
+    }
     case StatementKind::Resume:
       std::cerr << "resume not implemented" << std::endl;
       exit(-1);
@@ -1176,6 +1221,7 @@ void HandleValue() {
         case ExpressionKind::BoolT:
         case ExpressionKind::TypeT:
         case ExpressionKind::AutoT:
+        case ExpressionKind::SnapshotT:
           std::cerr << "internal error, bad expression context in handle_value"
                     << std::endl;
           exit(-1);

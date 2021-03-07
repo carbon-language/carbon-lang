@@ -9,6 +9,7 @@
 #include <vector>
 
 #include "executable_semantics/ast/statement.h"
+#include "executable_semantics/interpreter/stack.h"
 
 namespace Carbon {
 
@@ -39,8 +40,11 @@ enum class ValKind {
   ChoiceTV,
   SnapshotTV,
   VarPatV,
-  AltConsV
+  AltConsV,
+  ContinuationV
 };
+
+struct Frame;  // used by continuation
 
 struct Value {
   ValKind tag;
@@ -112,6 +116,11 @@ struct Value {
       std::list<std::string*>* params;
       Value* type;
     } implicit;
+
+    struct {
+      Stack<Frame*>* stack;
+    } continuation;
+
   } u;
 };
 
@@ -124,6 +133,7 @@ auto MakeTupleVal(std::vector<std::pair<std::string, Address>>* elts) -> Value*;
 auto MakeAltVal(std::string alt_name, std::string choice_name, Value* arg)
     -> Value*;
 auto MakeAltCons(std::string alt_name, std::string choice_name) -> Value*;
+auto MakeContinuation(Stack<Frame*> stack) -> Value*;
 
 auto MakeVarPatVal(std::string name, Value* type) -> Value*;
 

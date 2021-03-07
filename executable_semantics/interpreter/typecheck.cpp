@@ -382,10 +382,15 @@ auto TypeCheckExp(Expression* e, TypeEnv env, Env ct_env, Value* expected,
       }
     }
     case ExpressionKind::IntT:
+      return TCResult(e, MakeIntTypeVal(), env);
     case ExpressionKind::BoolT:
+      return TCResult(e, MakeBoolTypeVal(), env);
     case ExpressionKind::TypeT:
-    case ExpressionKind::AutoT:
       return TCResult(e, MakeTypeTypeVal(), env);
+    case ExpressionKind::AutoT:
+      return TCResult(e, MakeAutoTypeVal(), env);
+    case ExpressionKind::SnapshotT:
+      return TCResult(e, MakeSnapshotTypeVal(), env);
   }
 }
 
@@ -504,8 +509,8 @@ auto TypeCheckStmt(Statement* s, TypeEnv env, Env ct_env, Value* ret_type)
       auto body_result =
           TypeCheckStmt(s->u.delimit_stmt.body, env, ct_env, ret_type);
       auto handler_env = env;
-      handler_env.Set(s->u.delimit_stmt.continuation, MakeSnapshotTypeVal());
-      auto handler_result = TypeCheckSTmt(s->u.delimit_stmt.handler,
+      handler_env.Set(*s->u.delimit_stmt.continuation, MakeSnapshotTypeVal());
+      auto handler_result = TypeCheckStmt(s->u.delimit_stmt.handler,
                                           handler_env, ct_env, ret_type);
       return TCStatement(
           MakeDelimitStmt(s->line_num, body_result.stmt,
@@ -568,14 +573,22 @@ auto CheckOrEnsureReturn(Statement* stmt, bool void_return, int line_num)
         return CheckOrEnsureReturn(stmt->u.sequence.stmt, void_return,
                                    stmt->line_num);
       }
+    case StatementKind::Delimit:
+      return MakeDelimitStmt(stmt->line_num,
+                             CheckOrEnsureReturn(stmt->u.delimit_stmt.body,
+                                                 void_return, stmt->line_num),
+                             *stmt->u.delimit_stmt.continuation,
+                             CheckOrEnsureReturn(stmt->u.delimit_stmt.handler,
+                                                 void_return, stmt->line_num));
+    case StatementKind::Suspend:
+    case StatementKind::Resume:
+      return stmt;
     case StatementKind::Assign:
     case StatementKind::ExpressionStatement:
     case StatementKind::While:
     case StatementKind::Break:
     case StatementKind::Continue:
     case StatementKind::VariableDefinition:
-    case StatementKind::Delimit:
-    case StatementKind::Suspend:
       if (void_return) {
         auto args = new std::vector<std::pair<std::string, Expression*>>();
         return MakeSeq(
