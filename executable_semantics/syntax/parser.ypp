@@ -2,6 +2,30 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
+// -----------------------------------------------------------------------------
+// Bison Configuration
+// -----------------------------------------------------------------------------
+
+%require "3.2"
+%language "c++"
+
+// We don't need a separate header for Bison locations yet.
+%define api.location.file none
+
+//
+// Parameters to the parser and lexer
+//
+// Parameters to the parser are stored therein as protected data members, and
+// thus available to its methods.
+
+// "out" parameter passed to the parser, where the AST is written.
+%parse-param {std::optional<Carbon::AST>& parsedProgram}
+
+// "inout" parameter passed to both the parser and the lexer.
+%param {Carbon::SyntaxDriver& driver}
+
+// -----------------------------------------------------------------------------
+
 %code top {
 #include <algorithm>
 #include <cstdarg>
@@ -34,68 +58,39 @@ class SyntaxDriver;
 
 extern int yylineno;
 
-void yyerror(
-    std::optional<Carbon::AST> const& parsedProgram,
-    Carbon::SyntaxDriver& driver,
-    char* message
-) {
-  driver.PrintDiagnostic(message, yylineno);
-}
+void yy::parser::error(
+    const location_type&, const std::string& message)
+{
+  driver.PrintDiagnostic(message.c_str(), yylineno);
 }
 
-//
-// Parameters to yyparse and yylex.
-//
+}
 
-// "out" parameter passed to the parser, where the AST is written.
-%parse-param {std::optional<Carbon::AST>& parsedProgram}
+%define api.value.type union
 
-// "inout" parameter passed to both the parser and the lexer.
-%param {Carbon::SyntaxDriver& driver}
-
-%union {
-   char* str;
-   int num;
-   Carbon::Expression* expression;
-   std::list<std::pair<std::string, Carbon::Expression*>>* field_types;
-   Carbon::Statement* statement;
-   Carbon::Statement* statement_list;
-   Carbon::FunctionDefinition* function_definition;
-   Carbon::Declaration* declaration;
-   std::list<Carbon::Declaration>* declaration_list;
-   Carbon::Member* member;
-   std::list<Carbon::Member*>* member_list;
-   Carbon::FieldList* field_list;
-   std::pair<std::string, Carbon::Expression*>* alternative;
-   std::list<std::pair<std::string, Carbon::Expression*>>* alternative_list;
-   std::pair<Carbon::Expression*, Carbon::Statement*>* clause;
-   std::list<std::pair<Carbon::Expression*, Carbon::Statement*>>* clause_list;
-   Carbon::Expression* fun_type;
-};
-
-%token <num> integer_literal
-%token <str> identifier
-%type <str> designator
-%type <declaration> declaration
-%type <function_definition> function_declaration
-%type <function_definition> function_definition
-%type <declaration_list> declaration_list
-%type <statement> statement
-%type <statement> optional_else
-%type <statement_list> statement_list
-%type <expression> expression
-%type <expression> pattern
-%type <expression> return_type
-%type <expression> paren_expression
-%type <expression> tuple
-%type <member> member
-%type <member_list> member_list
-%type <field_list> field
-%type <field_list> field_list
-%type <alternative> alternative
-%type <alternative_list> alternative_list
-%type <clause> clause
-%type <clause_list> clause_list
+%token <int> integer_literal
+%token <char*> identifier
+%type <char*> designator
+%type <Carbon::Declaration*> declaration
+%type <Carbon::FunctionDefinition*> function_declaration
+%type <Carbon::FunctionDefinition*> function_definition
+%type <std::list<Carbon::Declaration>*> declaration_list
+%type <Carbon::Statement*> statement
+%type <Carbon::Statement*> optional_else
+%type <Carbon::Statement*> statement_list
+%type <Carbon::Expression*> expression
+%type <Carbon::Expression*> pattern
+%type <Carbon::Expression*> return_type
+%type <Carbon::Expression*> paren_expression
+%type <Carbon::Expression*> tuple
+%type <Carbon::Member*> member
+%type <std::list<Carbon::Member*>*> member_list
+%type <Carbon::FieldList*> field
+%type <Carbon::FieldList*> field_list
+%type <std::pair<std::string, Carbon::Expression*>*> alternative
+%type <std::list<std::pair<std::string, Carbon::Expression*>>*> alternative_list
+%type <std::pair<Carbon::Expression*, Carbon::Statement*>*> clause
+%type <std::list<std::pair<Carbon::Expression*, Carbon::Statement*>>*> clause_list
 %token AND
 %token OR
 %token NOT

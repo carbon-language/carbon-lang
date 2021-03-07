@@ -24,7 +24,8 @@ auto Carbon::SyntaxDriver::operator()()
   }
 
   std::optional<Carbon::AST> parsedInput = std::nullopt;
-  auto syntaxErrorCode = yyparse(parsedInput, *this);
+  yy::parser parse(parsedInput, *this);
+  auto syntaxErrorCode = parse();
   if (syntaxErrorCode != 0) {
     return syntaxErrorCode;
   }

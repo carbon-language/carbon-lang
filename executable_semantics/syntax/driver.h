@@ -49,7 +49,10 @@ class SyntaxDriver {
 }  // namespace Carbon
 
 // Gives flex the yylex prototype we want.
-#define YY_DECL int yylex(Carbon::SyntaxDriver& driver)
+#define YY_DECL                                        \
+  int yylex(yy::parser::semantic_type* yylval,         \
+            yy::parser::location_type* sourceLocation, \
+            Carbon::SyntaxDriver& driver)
 
 // Declares yylex for the parser's sake.
 YY_DECL;
