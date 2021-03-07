@@ -36,6 +36,13 @@ auto MakeAutoType(int line_num) -> Expression* {
   return t;
 }
 
+auto MakeSnapshotType(int line_num) -> Expression* {
+  auto* t = new Expression();
+  t->tag = ExpressionKind::SnapshotT;
+  t->line_num = line_num;
+  return t;
+}
+
 auto MakeFunType(int line_num, Expression* param, Expression* ret)
     -> Expression* {
   auto* t = new Expression();

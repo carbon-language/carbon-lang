@@ -58,6 +58,7 @@ EXAMPLES = [
     "undef2",
     "while1",
     "zero",
+    "demo_delimit1",
 ]
 
 [genrule(

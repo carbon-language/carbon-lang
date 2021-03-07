@@ -499,16 +499,23 @@ auto TypeCheckStmt(Statement* s, TypeEnv* env, Env* ct_env, Value* ret_type)
     case StatementKind::Delimit: {
       auto body_result =
           TypeCheckStmt(s->u.delimit_stmt.body, env, ct_env, ret_type);
-
-      UNDER CONSTRUCTION
+      auto handler_env = env;
+      handler_env.Set(s->u.delimit_stmt.continuation, MakeSnapshotTypeVal());
+      auto handler_result = TypeCheckSTmt(s->u.delimit_stmt.handler,
+                                          handler_env, ct_env, ret_type);
+      return TCStatement(
+          MakeDelimitStmt(s->line_num, body_result.stmt,
+                          *s->u.delimit_stmt.continuation, handler_result.stmt),
+          env);
     }
     case StatementKind::Suspend: {
+      // Nothing to do here.
       return TCStatement(s, env);
     }
     case StatementKind::Resume: {
-      auto result = TypeCheckExp(s->u.return_stmt, env, ct_env, nullptr,
+      auto result = TypeCheckExp(s->u.resume_stmt.exp, env, ct_env, nullptr,
                                  TCContext::ValueContext);
-      return TCStatement(MakeResume(s->line_num, result.exp), env);
+      return TCStatement(MakeResumeStmt(s->line_num, result.exp), env);
     }
   }  // switch
 }

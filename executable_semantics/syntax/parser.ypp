@@ -90,6 +90,7 @@ void yyerror(char* error) {
 %token WITH
 %token SUSPEND
 %token RESUME
+%token SNAPSHOT
 %token BREAK
 %token CONTINUE
 %token RETURN
@@ -142,6 +143,8 @@ expression:
     { $$ = Carbon::MakeTypeType(yylineno); }
 | AUTO
     { $$ = Carbon::MakeAutoType(yylineno); }
+| SNAPSHOT
+    { $$ = Carbon::MakeSnapshotType(yylineno); }
 | paren_expression { $$ = $1; }
 | expression EQUAL expression
     { $$ = Carbon::MakeBinOp(yylineno, Carbon::Operator::Eq, $1, $3); }

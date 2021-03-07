@@ -19,6 +19,7 @@ enum class ExpressionKind {
   GetField,
   Index,
   IntT,
+  SnapshotT,
   Integer,
   PatternVariable,
   PrimitiveOp,
@@ -108,6 +109,7 @@ auto MakeBoolType(int line_num) -> Expression*;
 auto MakeFunType(int line_num, Expression* param, Expression* ret)
     -> Expression*;
 auto MakeAutoType(int line_num) -> Expression*;
+auto MakeSnapshotType(int line_num) -> Expression*;
 
 void PrintExp(const Expression* exp);
 

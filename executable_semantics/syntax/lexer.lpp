@@ -48,6 +48,7 @@ DELIMIT  "delimit"
 SUSPEND  "suspend"
 RESUME   "resume"
 WITH     "with"
+SNAPSHOT "Snapshot"
 
 identifier    [A-Za-z_][A-Za-z0-9_]*
 integer_literal   [0-9]+
@@ -85,6 +86,7 @@ integer_literal   [0-9]+
 {SUSPEND}  { return SUSPEND; }
 {RESUME}   { return RESUME; }
 {WITH}     { return WITH; }
+{SNAPSHOT} { return SNAPSHOT; }
 
 {identifier} {
   int n = strlen(yytext);

@@ -132,6 +132,7 @@ auto MakeIntTypeVal() -> Value*;
 auto MakeAutoTypeVal() -> Value*;
 auto MakeBoolTypeVal() -> Value*;
 auto MakeTypeTypeVal() -> Value*;
+auto MakeSnapshotTypeVal() -> Value*;
 auto MakeFunTypeVal(Value* param, Value* ret) -> Value*;
 auto MakePtrTypeVal(Value* type) -> Value*;
 auto MakeStructTypeVal(std::string name, VarValues* fields, VarValues* methods)

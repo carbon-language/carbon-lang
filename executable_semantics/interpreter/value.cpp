@@ -146,6 +146,13 @@ auto MakeTypeTypeVal() -> Value* {
   return v;
 }
 
+auto MakeSnapshotTypeVal() -> Value* {
+  auto* v = new Value();
+  v->alive = true;
+  v->tag = ValKind::SnapshotTV;
+  return v;
+}
+
 auto MakeAutoTypeVal() -> Value* {
   auto* v = new Value();
   v->alive = true;
@@ -274,6 +281,9 @@ void PrintValue(Value* val, std::ostream& out) {
       break;
     case ValKind::AutoTV:
       out << "auto";
+      break;
+    case ValKind::SnapshotTV:
+      out << "Snapshot";
       break;
     case ValKind::PointerTV:
       out << "Ptr(";
