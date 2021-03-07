@@ -1655,6 +1655,10 @@ decide to go with a combination of these approaches.
 
 #### Where clauses
 
+This approach is to specify constraints using boolean expressions that are
+required to evaluate to true. These expressions come after the thing they
+constrain since they are written in terms of those names.
+
 Could also be spelled `requires` or `if`, but Swift
 ([1](https://docs.swift.org/swift-book/LanguageGuide/Generics.html#ID553),
 [2](https://docs.swift.org/swift-book/ReferenceManual/GenericParametersAndArguments.html#ID408))
@@ -1684,7 +1688,11 @@ Disadvantages:
 
 #### Argument passing
 
-Associated types become optional arguments
+This approach is to constrain the inputs to the thing being constrained. It
+requires that anything that might be constrained be able to be specified as an
+input. In particular this means associated types can be specified as optional
+arguments. In this approach, the constraints come before the thing being
+constrainted.
 
 Users of an interface may also want to introduce constraints on an associated
 type, in addition to constraints in the definition of the interface. To support
