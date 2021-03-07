@@ -1650,6 +1650,9 @@ TODO: Fix this up a lot
 
 ### Two approaches for expressing constraints
 
+**Open question:** It is undecided which approach we will go with. We may also
+decide to go with a combination of these approaches.
+
 #### Where clauses
 
 Could also be spelled `requires` or `if`, but Swift
