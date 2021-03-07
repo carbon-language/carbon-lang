@@ -21,14 +21,16 @@ struct EmptyDigitSequence : SimpleDiagnostic<EmptyDigitSequence> {
 struct InvalidDigit {
   static constexpr llvm::StringLiteral ShortName = "syntax-invalid-number";
 
-  char digit;
-  int radix;
-
-  auto Format() -> std::string {
-    return llvm::formatv("Invalid digit '{0}' in {1} numeric literal.", digit,
-                         (radix == 2    ? "binary"
-                          : radix == 16 ? "hexadecimal"
-                                        : "decimal"))
+  struct Substitutions {
+    char digit;
+    int radix;
+  };
+  static auto Format(const Substitutions& subst) -> std::string {
+    return llvm::formatv("Invalid digit '{0}' in {1} numeric literal.",
+                         subst.digit,
+                         (subst.radix == 2    ? "binary"
+                          : subst.radix == 16 ? "hexadecimal"
+                                              : "decimal"))
         .str();
   }
 };
@@ -43,15 +45,16 @@ struct IrregularDigitSeparators {
   static constexpr llvm::StringLiteral ShortName =
       "syntax-irregular-digit-separators";
 
-  int radix;
-
-  auto Format() -> std::string {
-    assert((radix == 10 || radix == 16) && "unexpected radix");
+  struct Substitutions {
+    int radix;
+  };
+  static auto Format(const Substitutions& subst) -> std::string {
+    assert((subst.radix == 10 || subst.radix == 16) && "unexpected radix");
     return llvm::formatv(
                "Digit separators in {0} number should appear every {1} "
                "characters from the right.",
-               (radix == 10 ? "decimal" : "hexadecimal"),
-               (radix == 10 ? "3" : "4"))
+               (subst.radix == 10 ? "decimal" : "hexadecimal"),
+               (subst.radix == 10 ? "3" : "4"))
         .str();
   }
 };
@@ -71,10 +74,12 @@ struct BinaryRealLiteral : SimpleDiagnostic<BinaryRealLiteral> {
 struct WrongRealLiteralExponent {
   static constexpr llvm::StringLiteral ShortName = "syntax-invalid-number";
 
-  char expected;
-
-  auto Format() -> std::string {
-    return llvm::formatv("Expected '{0}' to introduce exponent.", expected)
+  struct Substitutions {
+    char expected;
+  };
+  static auto Format(const Substitutions& subst) -> std::string {
+    return llvm::formatv("Expected '{0}' to introduce exponent.",
+                         subst.expected)
         .str();
   }
 };
