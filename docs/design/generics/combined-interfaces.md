@@ -1672,9 +1672,10 @@ Advantages:
 
 Disadvantages:
 
--   Determining canonical types or type equality in a generic context becomes
-    undecidable. Algorithms become heuristic and potentially slow. Boundary
-    between acceptable code and rejected code becomes fuzzy and unpredictable.
+-   Determining canonical types or type equality in a generic context
+    [becomes undecidable](https://forums.swift.org/t/swift-type-checking-is-undecidable/39024).
+    Algorithms become heuristic and potentially slow. Boundary between
+    acceptable code and rejected code becomes fuzzy and unpredictable.
 -   Awkward to produce type-types that have specified values for all associated
     types for use with `DynPtr` and `DynBox`.
 -   Can introduce some inconsistency/redundancy with how interface parameters
