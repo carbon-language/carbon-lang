@@ -64,7 +64,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Bridge for C++ templates](#bridge-for-c-templates)
         -   [Calling C++ template code from Carbon](#calling-c-template-code-from-carbon)
         -   [Moving a C++ template to Carbon](#moving-a-c-template-to-carbon)
-    -   [Subtlety around interfaces with multi parameters](#subtlety-around-interfaces-with-multi-parameters)
+    -   [Subtlety around interfaces with parameters](#subtlety-around-interfaces-with-parameters)
     -   [Lookup resolution and specialization](#lookup-resolution-and-specialization)
 -   [Composition of type-types](#composition-of-type-types)
     -   [Type compatible with another type](#type-compatible-with-another-type)
@@ -1602,6 +1602,8 @@ talk about some parameter anytime you use that interface.
     of a subtle judgement call.
 -   Deducible parameters
     [complicate the lookup rules for impls](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/appendix-interface-param-impl.md).
+-   Deducible parameters in structural interfaces require additional rules to
+    ensure they can be deduced unambiguously.
 
 ### Impl lookup
 
@@ -1633,12 +1635,8 @@ can unambiguously be picked as most specific.
 ### Parameterized structural interfaces
 
 We should also allow the [structural interface](#structural-interfaces)
-construct to support parameters. Parameters marked `multi` would work the same
-way as for regular (nominal/non-structural) interfaces. We should only allow
-parameters to be deducible (no `multi`) when they can be deduced unambiguously.
-For example, if the structural interface has a `T` parameter that is passed as
-an argument to a deducible parameter of an interface requirement, like
-`impl RequiredInterface(T)`, then `T` can be deduced as well.
+construct to support parameters. Parameters would work the same way as for
+regular (nominal/non-structural) interfaces.
 
 ## Constraints
 
@@ -2279,7 +2277,7 @@ constructible from `U` if it has a `operator create` method that takes a `U`
 value", without any way to write down an particular value for `U` in general:
 
 ```
-interface ConstructibleFrom(multi ...:$ Args) { ... }
+interface ConstructibleFrom(...:$ Args) { ... }
 extend[Type:$$ T, Type:$$ U] T if (LegalExpression(T.operator create(???))) {
   impl ConstructibleFrom(U) { ... }
 }
@@ -2390,19 +2388,19 @@ extend C++::std::optional(Type:$$ T) {
 }
 ```
 
-### Subtlety around interfaces with multi parameters
+### Subtlety around interfaces with parameters
 
-Since interfaces with `multi` parameters can have multiple implementations for a
-single type, it opens the question of how they work when implementing one
-interface in terms of another.
+Since interfaces with parameters can have multiple implementations for a single
+type, it opens the question of how they work when implementing one interface in
+terms of another.
 
 **Open question:** We could allow templated impls to take each of these multiple
 implementations for one interface and manufacture an impl for another interface,
 as in this example:
 
 ```
-// Some interfaces with multi type parameters.
-interface EqualityComparableTo(multi Type:$ T) { ... }
+// Some interfaces with type parameters.
+interface EqualityComparableTo(Type:$ T) { ... }
 // Types can implement templated interfaces more than once as long as the
 // templated arguments differ.
 struct Complex {
@@ -2411,8 +2409,8 @@ struct Complex {
   impl EqualityComparableTo(Complex) { ... }
   impl EqualityComparableTo(Float64) { ... }
 }
-// Some other interface with a multi type parameter.
-interface Foo(multi Type:$ T) { ... }
+// Some other interface with a type parameter.
+interface Foo(Type:$ T) { ... }
 // This provides an impl of Foo(T) for U if U is EqualityComparableTo(T).
 // In the case of Complex, this provides two impls, one for T == Complex,
 // and one for T == Float64.
