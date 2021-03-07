@@ -11,6 +11,7 @@
 #include <list>
 
 #include "executable_semantics/syntax/syntax_helpers.h"
+#include "executable_semantics/syntax/driver.h"
 }
 
 %code requires {
@@ -23,20 +24,27 @@
 namespace Carbon {
 // A representation of the parsed program.
 using AST = std::list<Carbon::Declaration>*;
+
+class SyntaxDriver;
 }
 
 }
 
 %code {
-extern int yylineno;
-extern int yylex();
 
-void yyerror(std::optional<Carbon::AST> const& parsedProgram, char* error) {
-  Carbon::PrintSyntaxError(error, yylineno);
+extern int yylineno;
+
+void yyerror(
+    std::optional<Carbon::AST> const& parsedProgram,
+    Carbon::SyntaxDriver& driver,
+    char* message
+) {
+  driver.PrintDiagnostic(message, yylineno);
 }
 }
 
 %parse-param {std::optional<Carbon::AST>& parsedProgram}
+%param {Carbon::SyntaxDriver& driver}
 
 %union {
    char* str;

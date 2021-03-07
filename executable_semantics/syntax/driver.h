@@ -20,10 +20,6 @@ namespace Carbon {
 // An encapsulation of the lexing/parsing process and all its state.
 class SyntaxDriver {
  public:
-  // A path to the file processed, relative to the current working directory
-  // when Run() is invoked.
-  const std::string inputFileName;
-
   // Creates an instance analyzing the given input file.
   SyntaxDriver(std::string inputFile) : inputFileName(inputFile) {}
 
@@ -34,10 +30,18 @@ class SyntaxDriver {
 
   // Returns an abstract representation of the program contained in the
   // well-formed input file, or if the file was malformed, a description of the
-  // problem.
+  // syntax problem.
   auto operator()() -> std::variant<Carbon::AST, Error>;
 
+  // Writes a syntax error diagnostic, containing message, for the input file at
+  // the given line, to standard error.
+  auto PrintDiagnostic(const char* message, int lineNumber) -> void;
+
  private:
+  // A path to the file processed, relative to the current working directory
+  // when *this is called.
+  const std::string inputFileName;
+
   SyntaxDriver(const SyntaxDriver&) = delete;
   SyntaxDriver& operator=(const SyntaxDriver&) = delete;
 };

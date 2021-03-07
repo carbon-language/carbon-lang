@@ -12,12 +12,16 @@ package(default_visibility = ["//executable_semantics:__subpackages__"])
 cc_library(
     name = "syntax",
     srcs = [
+        "driver.cpp",
         "lexer.cpp",
         "parser.cpp",
         "syntax_helpers.cpp",
         "syntax_helpers.h",
     ],
-    hdrs = ["parser.h"],
+    hdrs = [
+        "driver.h",
+        "parser.h",
+    ],
     # Disable warnings for generated code.
     copts = [
         "-Wno-unneeded-internal-declaration",
