@@ -2481,23 +2481,22 @@ other type-types.
 
 ### Type compatible with another type
 
-Given a type-type `TT` and a type `U`, define the type-type
-`CompatibleWith(TT, U)` as follows:
+Given a type `U`, define the type-type `CompatibleWith(U)` as follows:
 
-> `CompatibleWith(TT, U)` is a type whose values are types `T` such that:
->
-> -   `T` has type `TT`.
-> -   `T` and `U` are
->     [compatible](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#compatible-types).
->     That is values of types `T` and `U` can be cast back and forth without any
->     change in representation (e.g. `T` is an [adaptor](#adapting-types) for
->     `U`).
+> `CompatibleWith(U)` is a type whose values are types `T` such that `T` and `U`
+> are
+> [compatible](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#compatible-types).
+> That is values of types `T` and `U` can be cast back and forth without any
+> change in representation (e.g. `T` is an [adaptor](#adapting-types) for `U`).
 
-**Note:** We require the user to supply `TT` and `U`, they may not be inferred.
-Specifically, this code would be illegal:
+To support this, we extend the requirements that type-types are allowed to have
+to include a "data representation requirement" option.
+
+**Note:** Just like interface parameters, we require the user to supply `U`,
+they may not be inferred. Specifically, this code would be illegal:
 
 ```
-fn Illegal[Type:$ U, CompatibleWith(TT, U):$ T](Ptr(T): x) ...
+fn Illegal[Type:$ U, CompatibleWith(U):$ T](Ptr(T): x) ...
 ```
 
 In general there would be multiple choices for `U` given a specific `T` here,
@@ -2505,7 +2504,7 @@ and no good way of picking one. However, similar code is allowed if there is
 another way of determining `U`:
 
 ```
-fn Allowed[Type:$ U, CompatibleWith(TT, U):$ T](Ptr(U): x, Ptr(T): y) ...
+fn Allowed[Type:$ U, CompatibleWith(U):$ T](Ptr(U): x, Ptr(T): y) ...
 ```
 
 #### Example: Multiple implementations of the same interface
@@ -2519,8 +2518,8 @@ interface Comparable {
   method (Self: this) Compare(Self: that) -> CompareResult;
 }
 fn CombinedLess[Type:$ T](T: a, T: b,
-                          CompatibleWith(Comparable, T):$ U,
-                          CompatibleWith(Comparable, T):$ V) -> Bool {
+                          CompatibleWith(T) + Comparable:$ U,
+                          CompatibleWith(T) + Comparable:$ V) -> Bool {
   match ((a as U).Compare(b)) {
     case CompareResult.Less => { return True; }
     case CompareResult.Greater => { return False; }
@@ -2544,7 +2543,7 @@ We might generalize this to a list of implementations:
 
 ```
 fn CombinedCompare[Type:$ T]
-    (T: a, T: b, List(CompatibleWith(Comparable, T)):$ CompareList)
+    (T: a, T: b, List(CompatibleWith(T) + Comparable):$ CompareList)
     -> CompareResult {
   for (auto: U) in CompareList {
     var CompareResult: result = (a as U).Compare(b);
@@ -2566,7 +2565,7 @@ combine `CompatibleWith` with [type adaptation](#adapting-types):
 
 ```
 adaptor ThenCompare(Type:$ T,
-                    List(CompatibleWith(Comparable, T)):$ CompareList) for T {
+                    List(CompatibleWith(T) + Comparable):$ CompareList) for T {
   impl Comparable {
     method (Self: this) Compare(Self: that) -> CompareResult {
       for (auto : U) in CompareList {
