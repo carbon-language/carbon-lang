@@ -6,6 +6,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 %{
 #include <cstdlib>
+#include <iostream>
 #include "executable_semantics/syntax/driver.h"
 %}
 
@@ -17,79 +18,138 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 */
 %option yylineno
 
-AND      "and"
-ARROW    "->"
-AUTO     "auto"
-BOOL     "Bool"
-BREAK    "break"
-CASE     "case"
-CHOICE   "choice"
-COMMENT  \/\/[^\n]*\n
-CONTINUE "continue"
-DBLARROW "=>"
-DEFAULT  "default"
-ELSE     "else"
-EQUAL    "=="
-FALSE    "false"
-FN       "fn"
-FNTY     "fnty"
-IF       "if"
-INT      "Int"
-MATCH    "match"
-NOT      "not"
-OR       "or"
-RETURN   "return"
-STRUCT   "struct"
-TRUE     "true"
-TYPE     "Type"
-VAR      "var"
-WHILE    "while"
+AND               "and"
+ARROW             "->"
+AUTO              "auto"
+BOOL              "Bool"
+BREAK             "break"
+CASE              "case"
+CHOICE            "choice"
+ONE_LINE_COMMENT  \/\/[^\n]*\n
+CONTINUE          "continue"
+DBLARROW          "=>"
+DEFAULT           "default"
+ELSE              "else"
+EQUAL_EQUAL       "=="
+FALSE             "false"
+FN                "fn"
+FNTY              "fnty"
+IF                "if"
+INT               "Int"
+MATCH             "match"
+NOT               "not"
+OR                "or"
+RETURN            "return"
+STRUCT            "struct"
+TRUE              "true"
+TYPE              "Type"
+VAR               "var"
+WHILE             "while"
 
 identifier    [A-Za-z_][A-Za-z0-9_]*
 integer_literal   [0-9]+
+horizontal_whitespace [ \t\r]
+
+%{
+  // This macro is expanded to run each time a token is recognized.
+  //
+  // Advances the current token position by yyleng columns without changing
+  // the line number.
+  # define YY_USER_ACTION driver.currentTokenPosition.columns(yyleng);
+%}
 
 %%
 
-{AND}      { return yy::parser::token::AND; }
-{ARROW}    { return yy::parser::token::ARROW; }
-{AUTO}     { return yy::parser::token::AUTO; }
-{BOOL}     { return yy::parser::token::BOOL; }
-{BREAK}    { return yy::parser::token::BREAK; }
-{CASE}     { return yy::parser::token::CASE; }
-{CHOICE}   { return yy::parser::token::CHOICE; }
-{COMMENT}  ;
-{CONTINUE} { return yy::parser::token::CONTINUE; }
-{DBLARROW} { return yy::parser::token::DBLARROW; }
-{DEFAULT}  { return yy::parser::token::DEFAULT; }
-{ELSE}     { return yy::parser::token::ELSE; }
-{EQUAL}    { return yy::parser::token::EQUAL; }
-{FALSE}    { return yy::parser::token::FALSE; }
-{FN}       { return yy::parser::token::FN; }
-{FNTY}     { return yy::parser::token::FNTY; }
-{IF}       { return yy::parser::token::IF; }
-{INT}      { return yy::parser::token::INT; }
-{MATCH}    { return yy::parser::token::MATCH; }
-{NOT}      { return yy::parser::token::NOT; }
-{OR}       { return yy::parser::token::OR; }
-{RETURN}   { return yy::parser::token::RETURN; }
-{STRUCT}   { return yy::parser::token::STRUCT; }
-{TRUE}     { return yy::parser::token::TRUE; }
-{TYPE}     { return yy::parser::token::TYPE; }
-{VAR}      { return yy::parser::token::VAR; }
-{WHILE}    { return yy::parser::token::WHILE; }
+%{
+  // Code run each time yylex is called.
+
+  // Begin with an empty token span starting where its previous end was.
+  driver.currentTokenPosition.step();
+%}
+
+{AND}      { return yy::parser::make_AND(driver.currentTokenPosition); }
+{ARROW}    { return yy::parser::make_ARROW(driver.currentTokenPosition); }
+{AUTO}     { return yy::parser::make_AUTO(driver.currentTokenPosition); }
+{BOOL}     { return yy::parser::make_BOOL(driver.currentTokenPosition); }
+{BREAK}    { return yy::parser::make_BREAK(driver.currentTokenPosition); }
+{CASE}     { return yy::parser::make_CASE(driver.currentTokenPosition); }
+{CHOICE}   { return yy::parser::make_CHOICE(driver.currentTokenPosition); }
+{CONTINUE} { return yy::parser::make_CONTINUE(driver.currentTokenPosition); }
+{DBLARROW} { return yy::parser::make_DBLARROW(driver.currentTokenPosition); }
+{DEFAULT}  { return yy::parser::make_DEFAULT(driver.currentTokenPosition); }
+{ELSE}     { return yy::parser::make_ELSE(driver.currentTokenPosition); }
+"=="       { return yy::parser::make_EQUAL_EQUAL(driver.currentTokenPosition); }
+{FALSE}    { return yy::parser::make_FALSE(driver.currentTokenPosition); }
+{FN}       { return yy::parser::make_FN(driver.currentTokenPosition); }
+{FNTY}     { return yy::parser::make_FNTY(driver.currentTokenPosition); }
+{IF}       { return yy::parser::make_IF(driver.currentTokenPosition); }
+{INT}      { return yy::parser::make_INT(driver.currentTokenPosition); }
+{MATCH}    { return yy::parser::make_MATCH(driver.currentTokenPosition); }
+{NOT}      { return yy::parser::make_NOT(driver.currentTokenPosition); }
+{OR}       { return yy::parser::make_OR(driver.currentTokenPosition); }
+{RETURN}   { return yy::parser::make_RETURN(driver.currentTokenPosition); }
+{STRUCT}   { return yy::parser::make_STRUCT(driver.currentTokenPosition); }
+{TRUE}     { return yy::parser::make_TRUE(driver.currentTokenPosition); }
+{TYPE}     { return yy::parser::make_TYPE(driver.currentTokenPosition); }
+{VAR}      { return yy::parser::make_VAR(driver.currentTokenPosition); }
+{WHILE}    { return yy::parser::make_WHILE(driver.currentTokenPosition); }
+
+"=" return yy::parser::make_EQUAL(driver.currentTokenPosition);
+"-" return yy::parser::make_MINUS(driver.currentTokenPosition);
+"+" return yy::parser::make_PLUS(driver.currentTokenPosition);
+"*" return yy::parser::make_STAR(driver.currentTokenPosition);
+"/" return yy::parser::make_SLASH(driver.currentTokenPosition);
+"(" return yy::parser::make_LEFT_PARENTHESIS(driver.currentTokenPosition);
+")" return yy::parser::make_RIGHT_PARENTHESIS(driver.currentTokenPosition);
+"{" return yy::parser::make_LEFT_CURLY_BRACE(driver.currentTokenPosition);
+"}" return yy::parser::make_RIGHT_CURLY_BRACE(driver.currentTokenPosition);
+"[" return yy::parser::make_LEFT_SQUARE_BRACKET(driver.currentTokenPosition);
+"]" return yy::parser::make_RIGHT_SQUARE_BRACKET(driver.currentTokenPosition);
+"." return yy::parser::make_PERIOD(driver.currentTokenPosition);
+"," return yy::parser::make_COMMA(driver.currentTokenPosition);
+";" return yy::parser::make_SEMICOLON(driver.currentTokenPosition);
+":" return yy::parser::make_COLON(driver.currentTokenPosition);
 
 {identifier} {
   int n = strlen(yytext);
-  yylval->identifier = reinterpret_cast<char*>(malloc((n + 1) * sizeof(char)));
-  strncpy(yylval->identifier, yytext, n + 1);
-  return yy::parser::token::identifier;
-}
-{integer_literal} {
-  yylval->integer_literal = atof(yytext);
-  return yy::parser::token::integer_literal;
+  auto r = reinterpret_cast<char*>(malloc((n + 1) * sizeof(char)));
+  strncpy(r, yytext, n + 1);
+  return yy::parser::make_identifier(r, driver.currentTokenPosition);
 }
 
-[ \t\n]+ ;
-. { return yytext[0]; }
+{integer_literal} {
+  auto r = atof(yytext);
+  return yy::parser::make_integer_literal(r, driver.currentTokenPosition);
+}
+
+{ONE_LINE_COMMENT} {
+  // Advance end by 1 line, resetting the column to zero.
+  driver.currentTokenPosition.lines(1);
+  // Make the span empty by setting start to end.
+  driver.currentTokenPosition.step();
+}
+
+{horizontal_whitespace}+ {
+  // Make the span empty by setting start to end.
+  driver.currentTokenPosition.step();
+}
+
+\n+ {
+  // Advance end by yyleng lines, resetting the column to zero.
+  driver.currentTokenPosition.lines(yyleng);
+  // Make the span empty by setting start to end.
+  driver.currentTokenPosition.step();
+}
+
+. {
+  std::cerr << driver.currentTokenPosition << ": invalid character '"
+            << yytext[0] << "' in source file." << std::endl;
+  std::exit(1);
+}
+
+<<EOF>>    {
+  // A more modern Bison would give us make_EOF.
+  return yy::parser::make_END_OF_FILE(driver.currentTokenPosition);
+}
 
 %%

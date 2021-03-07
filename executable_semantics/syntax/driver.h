@@ -17,6 +17,9 @@
 
 namespace Carbon {
 
+// TODO: separate things needed by clients of the driver from things it supplies
+// to the parser/lexer.
+
 // An encapsulation of the lexing/parsing process and all its state.
 class SyntaxDriver {
  public:
@@ -37,6 +40,9 @@ class SyntaxDriver {
   // the given line, to standard error.
   auto PrintDiagnostic(const char* message, int lineNumber) -> void;
 
+  // The source range of the token being (or just) lex'd.
+  yy::location currentTokenPosition;
+
  private:
   // A path to the file processed, relative to the current working directory
   // when *this is called.
@@ -49,12 +55,9 @@ class SyntaxDriver {
 }  // namespace Carbon
 
 // Gives flex the yylex prototype we want.
-#define YY_DECL                                        \
-  int yylex(yy::parser::semantic_type* yylval,         \
-            yy::parser::location_type* sourceLocation, \
-            Carbon::SyntaxDriver& driver)
+#define YY_DECL yy::parser::symbol_type yylex(Carbon::SyntaxDriver& driver)
 
-// Declares yylex for the parser's sake.
+// Declare yylex for the parser's sake.
 YY_DECL;
 
 #endif  // EXECUTABLE_SYNTAX_DRIVER_EXEC_H_
