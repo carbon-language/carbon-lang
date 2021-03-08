@@ -85,6 +85,8 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [Future work](#future-work)
     -   [Abstract return types](#abstract-return-types)
     -   [Interface defaults](#interface-defaults)
+    -   [Evolution](#evolution)
+    -   [Testing](#testing)
     -   [Operator overloading](#operator-overloading)
     -   [Impls with state](#impls-with-state)
     -   [Generic associated types](#generic-associated-types)
@@ -993,10 +995,10 @@ interface D {
 ```
 
 No names in `D` are allowed to conflict with names in `B` (unless those names
-are marked as `upcoming` or `deprecated` as noted in separate forthcoming
-interface evolution doc). Hopefully this won't be a problem in practice, since
-interface extension is a very closely coupled relationship, but this may be
-something we will have to revisit in the future.
+are marked as `upcoming` or `deprecated` as in
+[evolution future work](#evolution)). Hopefully this won't be a problem in
+practice, since interface extension is a very closely coupled relationship, but
+this may be something we will have to revisit in the future.
 
 **Concern:** Having both `extends` and [`extend`](#external-impl) with different
 meanings is going to be confusing. One should be renamed.
@@ -3230,6 +3232,25 @@ In fact, this is a generalization of specialization, as observed
 [here](https://rust-lang.github.io/rfcs/1210-impl-specialization.html#default-impls),
 as long as we allow more specific implementations to be incomplete and reuse
 more general implementations for anything unspecified.
+
+### Evolution
+
+Being able to decorate associated items with `upcoming`, `deprecated`, etc. to
+allow for transition periods when items are being added or removed.
+
+### Testing
+
+The idea is that you would write tests alongside an interface that validate the
+expected behavior of any type implementing that interface. These tests would
+only have to be written once, and would serve both a documentation function and
+give assurance that types implementing an interface satisfy expected properites.
+
+Inevitably we will need some mechanism for generating values of the type. So an
+interface's test suite would actually be parameterized by the `+` of two
+interfaces: the interface being tested and a testing-specific interface for
+generating values. In some cases, the test suite might be able to use a standard
+generate-values-for-tests interface (of which there may be only a few). In
+others, a particular interface's test suite might have specific requirements.
 
 ### Operator overloading
 
