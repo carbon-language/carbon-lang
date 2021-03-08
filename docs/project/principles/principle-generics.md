@@ -6,34 +6,74 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 # Carbon principle: Generics
 
-## Principle
+## Definition
 
-**Goal:** Our goal for generics support in Carbon is to get most of the
-expressive benefits of C++ templates -- an abstraction mechanism that optimizes
-for performance,
-[the top priority for Carbon](https://github.com/jonmeow/carbon-lang/blob/proposal-goals/docs/project/goals.md#performance-critical-software)
--- with fewer downsides. In particular:
+C++ supports
+[parametric polymorphism](https://en.wikipedia.org/wiki/Parametric_polymorphism)
+and [generic programming](https://en.wikipedia.org/wiki/Generic_programming)
+through templates, which use
+[structural typing](https://en.wikipedia.org/wiki/Structural_type_system) to
+determine which arguments are valid. Carbon will support (possibly in addition
+to a template system) _generics_, which are still a form of parametric
+polymorphism for generic programming, but instead of structural typing use
+[bounded parametric polymorphism](https://en.wikipedia.org/wiki/Parametric_polymorphism#Bounded_parametric_polymorphism).
+This means the legal arguments and the legal uses of a parameter are both
+goverened by explicit bounds on the parameter in a generic function's signature.
 
--   Reduce build times, particularly when developing.
--   Clearer and earlier error reporting.
--   Encapsulation of logic (with a template, the implementation is part of the
-    interface).
--   Enable simple user control of whether to use dynamic or static dispatch.
--   Provide better code generation (both code size and speed) in all cases.
+### Semantics
 
-**Semantics:** A generic function will take some "generic arguments", which will
+A generic function (or type) will take some "generic arguments", which will
 frequently be types, and in some cases will be implicit / inferred from the
 types of the values of explicit arguments to the function. If a generic argument
 is a type, the generic function's signature can specify constraints that the
 caller's type must satisfy (this should also be legal for template arguments,
 but less needed and less common). For example, a resizable array type (like
 C++'s `std::vector`) might have a generic type parameter with the constraint
-that the type must be movable. A sort function might apply to any array whose
-elements are comparable and movable.
+that the type must be movable and have a static size. A sort function might
+apply to any array whose elements are comparable and movable.
 
-The key difference between templates and generics is that a generic function is
-type checked when it is defined, and type checking can't use any information
-that is only known when the function is instantiated (such as the exact type).
+## Goal
+
+Our goal for generics support in Carbon is to get most of the expressive
+benefits of C++ templates with fewer downsides.
+
+## Principles
+
+### Expressive
+
+The vast majority of use cases for templates and open overloading in C++ shall
+instead be addressed by generics in Carbon. Open overloading is where the
+overload set is not restricted to a single file or library.
+
+### Performance
+
+Generics shall provide better code generation (both code size and speed) in all
+cases over C++ templates.
+[Performance is the top priority for Carbon](https://github.com/jonmeow/carbon-lang/blob/proposal-goals/docs/project/goals.md#performance-critical-software),
+and we expect to use generics pervasively, and so they can't compromise that
+goal in release builds.
+
+### Better compiler experience
+
+Compared to C++ templates:
+
+-   Reduce build times, particularly when developing.
+-   Clearer and earlier error reporting.
+
+### Encapsulation
+
+With a template, the implementation is part of the interface and types are only
+checked when the function is called and the template is instantiated.
+
+A generic function is type checked when it is defined, and type checking can't
+use any information that is only known when the function is instantiated (such
+as the exact type). Furthermore, calls to a generic function may be type checked
+using only its declaration, not its body. You should be able to call a generic
+function using only a forward declaration.
+
+### Dispatch control
+
+Enable simple user control of whether to use dynamic or static dispatch.
 
 **Implementation strategy:** There are two strategies for generating code for
 generic functions:
@@ -56,8 +96,10 @@ specific specializations are needed for performance, but others would just be
 code bloat), or support dynamic dispatch when types are not known at compile
 time.
 
-**Desiderata:** We want there to be a natural upgrade path from templated code
-to generic code, which gives us these additional principles:
+### Upgrade path from templates
+
+We want there to be a natural upgrade path from templated code to generic code,
+which gives us these additional principles:
 
 -   Converting from a template to a generic argument should be safe -- it should
     either fail to compile or work, never silently change semantics.
@@ -70,11 +112,21 @@ to generic code, which gives us these additional principles:
     generics, instead of requiring them to be converted specifically in
     bottom-up order.
 
+### Coherence
+
 Also, we want the generics system to have the _coherence_ property. This means
 that the behavior of any type is consistent independent of context such as the
 libraries imported into a given file or being inside a generic function.
 
-### Caveats
+### No novel name lookup
+
+No novel (generic specific) rules for name lookup:
+
+-   An example of these would be the name lookup rules inside of Rust's traits.
+-   Instead, structure generics in a way that reuses existing name lookup
+    facilities of the language.
+
+## Caveats
 
 -   Don't need to provide full flexibility of templates from generics.
     -   We still intend to provide templates for those exceptional cases that
@@ -86,11 +138,6 @@ libraries imported into a given file or being inside a generic function.
         interface for some particular type to actually expose a _different_
         interface (different set of methods or types within the interface for
         example).
--   No novel (generic specific) rules for name lookup.
-    -   An example of these would be the name lookup rules inside of Rust's
-        traits.
-    -   Instead, structure generics in a way that reuses existing name lookup
-        facilities of the language.
 -   Features of generics that for example allow you to put constraints on the
     types passed in are presented as part of generics since that is where they
     are most useful, but are still intended to be available for template
@@ -104,17 +151,17 @@ implement specific _Interfaces_. Interfaces serve several purposes:
 -   They specify a set of functions (names and signatures) that must be
     available for any type being passed to a generic function, and therefore the
     only functions that may be called in the body of that function.
--   **MAYBE:** They will allow other type constraints such as on size, prefix of
+-   **Maybe:** They will allow other type constraints such as on size, prefix of
     the data layout, specified method implementations, tests that must pass,
     etc.
 -   They allow a set of constraints to be given a name so they can be reused.
--   **MAYBE:** They implicitly specify the intended semantics and invariants of
+-   **Maybe:** They implicitly specify the intended semantics and invariants of
     and between those functions. Unlike the function signatures, this contract
     is between the implementers and the consumers of interfaces and is not
     enforced by Carbon itself. For example, a _Draw_ method would mean different
     things when it is part of a _GameResult_ interface versus a _2DImage_
     interface, even if those methods happen to have the same signature.
--   **MAYBE:** Have mechanisms to support evolution, such as allowing new
+-   **Maybe:** Have mechanisms to support evolution, such as allowing new
     additions to an interface to have default implementations and/or be marked
     "upcoming" to allow for a period of transition.
 
@@ -136,34 +183,38 @@ are passed in to generic functions separately, or there is some way to create
 multiple types that are compatible with a given value that you can switch
 between using casts to select different interface implementations.
 
-What are we NOT doing with generics, particularly things that some other
+### Out of scope
+
+What are we **not** doing with generics, particularly things that some other
 language does?
 
 -   Cannot add features to generics that inherently require monomorphization (or
-    creating differently specialized code)
-    -   MAYBE can add such features to a restricted subset, but would create a
-        significantly restricted subset.
+    creating differently specialized code) or templating, that would prevent the
+    dynamic compilation strategy.
 -   Cannot defer type checking of generic definitions (an implementation
     strategy used by some C++ compilers where the tokens are stashed and
     replayed on use).
--   ...
+-   We won't support runtime specialization as an implementation strategy. That
+    is, some language runtimes JIT a specialization when it is first needed, but
+    that is out of scope for Carbon.
+-   We won't support unbounded type families
+    ([such as this example from Swift](https://forums.swift.org/t/ergonomics-generic-types-conforming-in-more-than-one-way/34589/71)).
+    This is an obstacle to supporting static dispatch.
 
-## Proposals relevant to these principles
+Another example of unbounded type families:
 
-From newest to oldest (and most likely to be out of date):
+```
+fn Sort[Comparable T](List(T) list) -> List(T) {
+  if (list.size() == 1) return list;
+  var List(List(T)) chunks = FormChunks(list, sqrt(list.size()));
+  chunks = chunks.ApplyToEach(Sort);
+  chunks = Sort(chunks);
+  return MergeSortedListOfSortedLists(chunks);
+}
+```
 
--   [Carbon Generics](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/designs/generics-overview.md)
--   [Carbon meeting Nov 27, 2019 on Generics & Interfaces (TODO)](#broken-links-footnote)<!-- T:Carbon meeting Nov 27, 2019 on Generics & Interfaces -->
--   [Carbon generic -> template function calls (TODO)](#broken-links-footnote)<!-- T:Carbon generic -> template function calls -->
--   [Carbon closed function overloading proposal (TODO)](#broken-links-footnote)<!-- T:Carbon closed function overloading proposal -->
--   [Carbon: facet types and interfaces (TODO)](#broken-links-footnote)<!-- T:Carbon: facet types and interfaces --><!-- A:#heading=h.cg5jp928f02n -->
--   [Carbon: types as function tables, interfaces as type-types (TODO)](#broken-links-footnote)<!-- T:Carbon: types as function tables, interfaces as type-types -->
--   [Carbon pervasive generics (TODO)](#broken-links-footnote)<!-- T:Carbon pervasive generics -->
--   [Carbon templates and generics (TODO)](#broken-links-footnote)<!-- T:Carbon templates and generics -->
-
-## Broken links footnote
-
-Some links in this document aren't yet available, and so have been directed here
-until we can do the work to make them available.
-
-We thank you for your patience.
+This, given an implementation of `Comparable` for any list with elements that
+are themselves `Comparable`, would recursively call itself to produce a set of
+types without bound. That is, calling `Sort` on a `List(Int)` would internally
+call `Sort` on a `List(List(Int))` and so on recursively without any static
+limit.
