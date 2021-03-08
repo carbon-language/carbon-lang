@@ -88,20 +88,20 @@ static bool isUpperHexDigit(char c) {
 // after any '#'s, including the file type indicator and following newline.
 static auto TakeMultiLineStringLiteralPrefix(llvm::StringRef source_text)
     -> llvm::StringRef {
-  const char *begin = source_text.begin();
-  if (!source_text.consume_front("\"\"\"")) {
+  llvm::StringRef remaining = source_text;
+  if (!remaining.consume_front("\"\"\"")) {
     return llvm::StringRef();
   }
 
   // The rest of the line must be a valid file type indicator: a sequence of
   // characters containing neither '#' nor '"' followed by a newline.
-  auto file_type_length = source_text.find_first_of("\"#\n");
-  if (file_type_length == source_text.npos ||
-      source_text[file_type_length] != '\n') {
+  remaining = remaining.drop_until(
+      [](char c) { return c == '"' || c == '#' || c == '\n'; });
+  if (!remaining.consume_front("\n")) {
     return llvm::StringRef();
   }
 
-  return llvm::StringRef(begin, 3 + file_type_length + 1);
+  return source_text.take_front(remaining.begin() - source_text.begin());
 }
 
 // If source_text begins with a string literal token, extract and return
@@ -163,7 +163,8 @@ static auto ComputeIndentOfFinalLine(llvm::StringRef text) -> llvm::StringRef {
   int indent_end = text.size();
   for (int i = indent_end - 1; i >= 0; --i) {
     if (text[i] == '\n') {
-      return text.substr(i + 1, indent_end - i - 1);
+      int indent_start = i + 1;
+      return text.substr(indent_start, indent_end - indent_start);
     }
     if (!isSpace(text[i])) {
       indent_end = i;
@@ -231,12 +232,16 @@ static auto ExpandUnicodeEscapeSequence(DiagnosticEmitter& emitter,
   return true;
 }
 
+// Expand an escape sequence, appending the expanded value to the given
+// `result` string. `content` is the string content, starting from the first
+// character after the escape sequence introducer (for example, the `n` in
+// `\n`), and will be updated to remove the leading escape sequence.
 static auto ExpandAndConsumeEscapeSequence(DiagnosticEmitter& emitter,
-                                           llvm::StringRef& escape,
+                                           llvm::StringRef& content,
                                            std::string& result) -> bool {
-  assert(!escape.empty() && "should have escaped closing delimiter");
-  char first = escape.front();
-  escape = escape.drop_front(1);
+  assert(!content.empty() && "should have escaped closing delimiter");
+  char first = content.front();
+  content = content.drop_front(1);
 
   switch (first) {
     case 't':
@@ -259,32 +264,31 @@ static auto ExpandAndConsumeEscapeSequence(DiagnosticEmitter& emitter,
       return true;
     case '0':
       result += '\0';
-      if (!escape.empty() && llvm::isDigit(escape.front())) {
+      if (!content.empty() && llvm::isDigit(content.front())) {
         emitter.EmitError<DecimalEscapeSequence>();
         return false;
       }
       return true;
     case 'x':
-      if (escape.size() >= 2 && isUpperHexDigit(escape[0]) && isUpperHexDigit(escape[1])) {
-        result += static_cast<char>(llvm::hexFromNibbles(escape[0], escape[1]));
-        escape = escape.drop_front(2);
+      if (content.size() >= 2 && isUpperHexDigit(content[0]) &&
+          isUpperHexDigit(content[1])) {
+        result +=
+            static_cast<char>(llvm::hexFromNibbles(content[0], content[1]));
+        content = content.drop_front(2);
         return true;
       }
       emitter.EmitError<HexadecimalEscapeMissingDigits>();
       break;
     case 'u': {
-      if (!escape.empty() && escape.front() == '{') {
-        const char *pos = escape.begin() + 1;
-        while (pos != escape.end() && isUpperHexDigit(*pos)) {
-          ++pos;
-        }
-        if (pos != escape.end() && pos != escape.begin() + 1 && *pos == '}') {
-          llvm::StringRef digits(escape.begin() + 1,
-                                 pos - (escape.begin() + 1));
+      llvm::StringRef remaining = content;
+      if (remaining.consume_front("{")) {
+        llvm::StringRef digits = remaining.take_while(isUpperHexDigit);
+        remaining = remaining.drop_front(digits.size());
+        if (!digits.empty() && remaining.consume_front("}")) {
           if (!ExpandUnicodeEscapeSequence(emitter, digits, result)) {
             break;
           }
-          escape = escape.drop_front(digits.size() + 2);
+          content = remaining;
           return true;
         }
       }
