@@ -237,6 +237,18 @@ auto ValToPtr(Value* v, int line_num) -> Address {
   }
 }
 
+auto ValToContinuation(Value* v, int line_num) -> Stack<Frame*> {
+  CheckAlive(v, line_num);
+  switch (v->tag) {
+    case ValKind::ContinuationV:
+      return *v->u.continuation.stack;
+    default:
+      std::cerr << line_num << ": runtime error: expected an integer"
+                << std::endl;
+      exit(-1);
+  }
+}
+
 auto EvalPrim(Operator op, const std::vector<Value*>& args, int line_num)
     -> Value* {
   switch (op) {
@@ -793,6 +805,46 @@ auto IsBlockAct(Action* act) -> bool {
   }
 }
 
+auto IsDelimitAction(Action* act) -> bool {
+  return act->tag == ActionKind::StatementAction &&
+         act->u.stmt->tag == StatementKind::Delimit;
+}
+
+auto ResumeTodo(Stack<Action*> todo, Stack<Action*>& new_todo) -> void {
+  if (todo.IsEmpty() || IsDelimitAction(todo.Top())) {
+    return;
+  } else {
+    Action* a = todo.Top();
+    todo.Pop();
+    ResumeTodo(todo, new_todo);
+    new_todo.Push(a);
+    return;
+  }
+}
+
+auto ResumeContinuation(Stack<Frame*> suspended) -> void {
+  Frame* frame = suspended.Top();
+  bool found_delimit = false;
+  for (auto i = frame->todo.begin(); i != frame->todo.end(); ++i) {
+    if (IsDelimitAction(*i))
+      found_delimit = true;
+  }
+  if (!found_delimit) {
+    suspended.Pop();
+    if (suspended.IsEmpty()) {
+      std::cerr << "suspend without enclosing delimit" << std::endl;
+      exit(-1);
+    } else {
+      Frame* new_frame =
+          new Frame(frame->name, Stack<Scope*>(), Stack<Action*>());
+      state->stack.Push(new_frame);
+      ResumeContinuation(suspended);
+    }
+  }
+  // Resume the current frame
+  ResumeTodo(frame->todo, state->stack.Top()->todo);
+}
+
 // State transitions for statements.
 
 void StepStmt() {
@@ -909,6 +961,8 @@ void StepStmt() {
     case StatementKind::Suspend: {
       // Save the current continuation
       Stack<Frame*> suspended = state->stack;
+      // Pop the suspend action itself
+      suspended.Top()->todo.Pop();
 
       // Roll back to the nearest delimit and push
       // the suspended continuation (as a value) on the stack.
@@ -916,8 +970,7 @@ void StepStmt() {
       while (!new_stack.IsEmpty()) {
         Stack<Action*> todo = new_stack.Top()->todo;
         while (!todo.IsEmpty()) {
-          if (todo.Top()->tag == ActionKind::StatementAction &&
-              todo.Top()->u.stmt->tag == StatementKind::Delimit) {
+          if (IsDelimitAction(todo.Top())) {
             todo.Push(MakeValAct(MakeContinuation(suspended)));
             Frame* new_frame =
                 new Frame(new_stack.Top()->name, new_stack.Top()->scopes, todo);
@@ -938,8 +991,8 @@ void StepStmt() {
       break;
     }
     case StatementKind::Resume:
-      std::cerr << "resume not implemented" << std::endl;
-      exit(-1);
+      frame->todo.Push(MakeExpAct(stmt->u.resume_stmt.exp));
+      act->pos++;
       break;
   }
 }
@@ -1377,13 +1430,33 @@ void HandleValue() {
           frame->todo.Push(MakeValAct(ret_val));
           break;
         }
+        case StatementKind::Delimit: {
+          // Evaluate the handler, binding the suspended continuation
+          // to the continuation variable.
+          std::list<std::string> scope_locals;
+          scope_locals.push_back(*stmt->u.delimit_stmt.continuation);
+          Scope* new_scope = new Scope(CurrentEnv(state), scope_locals);
+          Address a = AllocateValue(val_act->u.val);
+          new_scope->env.Set(*stmt->u.delimit_stmt.continuation, a);
+          frame->scopes.Push(new_scope);
+          Statement* handler_block =
+              MakeBlock(stmt->line_num, stmt->u.delimit_stmt.handler);
+          frame->todo.Pop(2);
+          frame->todo.Push(MakeStmtAct(handler_block));
+          break;
+        }
+        case StatementKind::Resume: {
+          // Push the suspended continuation onto the current stack
+          Stack<Frame*> suspended =
+              ValToContinuation(val_act->u.val, stmt->line_num);
+          ResumeContinuation(suspended);
+          break;
+        }
         case StatementKind::Block:
         case StatementKind::Sequence:
         case StatementKind::Break:
         case StatementKind::Continue:
-        case StatementKind::Delimit:
         case StatementKind::Suspend:
-        case StatementKind::Resume:
           std::cerr << "internal error in handle_value, unhandled statement ";
           PrintStatement(stmt, 1);
           std::cerr << std::endl;

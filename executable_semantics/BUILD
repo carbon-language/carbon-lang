@@ -60,6 +60,7 @@ EXAMPLES = [
     "zero",
     "demo_delimit1",
     "demo_delimit2",
+    "demo_delimit3",
 ]
 
 [genrule(
