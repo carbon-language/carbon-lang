@@ -1768,8 +1768,9 @@ Disadvantages:
 -   Inventive to use it broadly.
 -   Difficulty naming constraints and expressing constraints in interface
     definitions.
+-   Some types of constraints are hard to express or need additional syntax.
 
-This approach has a few advantages:
+TODO This approach has a few advantages:
 
 -   There is one mechanism for constraining an interface: passing in arguments.
     We use this both for [interface parameters](#parameterized-interfaces)
@@ -1908,6 +1909,10 @@ fn SortContainer[Comparable:$ ElementType,
                  Container(.ElementType = ElementType):$ ContainerType]
     (Ptr(ContainerType): container_to_sort);
 ```
+
+To do this with a `where` clause, we need some way of saying a type bound, which
+unfortunately is likely to be redundant and inconsistent with how it is said
+outside of a `where` clause.
 
 ##### Naming constraints
 
