@@ -9,7 +9,6 @@
 #ifndef EXECUTABLE_SEMANTICS_SYNTAX_DRIVER_H_
 #define EXECUTABLE_SEMANTICS_SYNTAX_DRIVER_H_
 
-#include <cstdint>
 #include <variant>
 
 #include "executable_semantics/syntax/driver.h"
@@ -21,7 +20,7 @@ namespace Carbon {
 class SyntaxDriver {
  public:
   // Creates an instance analyzing the given input file.
-  SyntaxDriver(std::string inputFile) : inputFileName(inputFile) {}
+  SyntaxDriver(const std::string& inputFile) : inputFileName(inputFile) {}
 
   // Indication of a syntax error.
   //
@@ -36,14 +35,13 @@ class SyntaxDriver {
   // Writes a syntax error diagnostic, containing message, for the input file at
   // the given line, to standard error.
   auto PrintDiagnostic(const char* message, int lineNumber) -> void;
+  SyntaxDriver(const SyntaxDriver&) = delete;
+  SyntaxDriver& operator=(const SyntaxDriver&) = delete;
 
  private:
   // A path to the file processed, relative to the current working directory
   // when *this is called.
   const std::string inputFileName;
-
-  SyntaxDriver(const SyntaxDriver&) = delete;
-  SyntaxDriver& operator=(const SyntaxDriver&) = delete;
 };
 
 }  // namespace Carbon
