@@ -58,6 +58,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
         -   [Type inequality](#type-inequality)
     -   [Implicit constraints](#implicit-constraints)
     -   [Generic type equality](#generic-type-equality)
+    -   [Rejected alternative: `ForSome(F)`](#rejected-alternative-forsomef)
 -   [Conditional conformance](#conditional-conformance)
 -   [Templated impls for generic interfaces](#templated-impls-for-generic-interfaces)
     -   [Structural conformance](#structural-conformance)
@@ -66,12 +67,10 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
         -   [Moving a C++ template to Carbon](#moving-a-c-template-to-carbon)
     -   [Subtlety around interfaces with parameters](#subtlety-around-interfaces-with-parameters)
     -   [Lookup resolution and specialization](#lookup-resolution-and-specialization)
--   [Composition of type-types](#composition-of-type-types)
+-   [Other constraints as type-types](#other-constraints-as-type-types)
     -   [Type compatible with another type](#type-compatible-with-another-type)
         -   [Example: Multiple implementations of the same interface](#example-multiple-implementations-of-the-same-interface)
         -   [Example: Creating an impl out of other impls](#example-creating-an-impl-out-of-other-impls)
-    -   [Other type constraints](#other-type-constraints)
-        -   [Rejected alternative: `ForSome(F)`](#rejected-alternative-forsomef)
     -   [Sized types and type-types](#sized-types-and-type-types)
         -   [Model](#model-2)
 -   [Dynamic types](#dynamic-types)
@@ -1693,6 +1692,14 @@ TODO: Fix this up a lot
 -   Within an interface definition.
 -   Naming constrained type-types.
 
+Sometimes we may need a single type-type without any parameters or unspecified
+associated types, such as to define a `DynPtr(TT)` (as
+[described in the following dynamic pointer type section](#dynamic-pointer-type)).
+This could be done by naming the constraint before using it, but it would be
+nicer if that extra step was not needed for common cases. For Rust, it is part
+of
+[the motivation of supporting argument passing to set values of associated types](https://rust-lang.github.io/rfcs/0195-associated-items.html#constraining-associated-types).
+
 ### Two approaches for expressing constraints
 
 **Open question:** It is undecided which approach we will go with. We may also
@@ -1971,7 +1978,8 @@ alias Double(Type:$ T) = PairInterface(T, T);
 
 TODO
 
-Now note that inside `PeekAtTopOfStack` we don't know anything about
+Now note that inside the `PeekAtTopOfStack` function from the example in the
+["associated types" section](#associated-types), we don't know anything about
 `StackType.ElementType`, so we can't perform any operations on values of that
 type, other than pass them to `Stack` methods. We can define an interface that
 has an associated type constrained to satisfy an interface (or any
@@ -2114,6 +2122,46 @@ TODO
 ### Generic type equality
 
 TODO
+
+### Rejected alternative: `ForSome(F)`
+
+TODO
+
+Another way to solve this problem would be to have a `ForSome(F)` construct,
+where `F` is a function from types to type-types.
+
+> `ForSome(F)`, where `F` is a function from type `T` to type-type `TT`, is a
+> type whose values are types `U` with type `TT=F(T)` for some type `T`.
+
+**Example:** Pairs of values where both values have the same type might be
+written as
+
+```
+fn F[ForSome(lambda (Type:$ T) => PairInterface(T, T)):$ MatchedPairType]
+    (Ptr(MatchedPairType): x) { ... }
+```
+
+This would be equivalent to:
+
+```
+fn F[Type:$ T, PairInterface(T, T):$ MatchedPairType]
+    (Ptr(MatchedPairType): x) { ... }
+```
+
+**Example:** Containers where the elements implement the `HasEquality` interface
+might be written as:
+
+```
+fn F[ForSome(lambda (HasEquality:$ T) => Container(T)):$ ContainerType]
+  (Ptr(ContainerType): x) { ... }
+```
+
+This would be equivalent to:
+
+```
+fn F[HasEquality:$ T, Container(T):$ ContainerType]
+  (Ptr(ContainerType): x) { ... }
+```
 
 ## Conditional conformance
 
@@ -2302,6 +2350,11 @@ struct FixedArray(Type:$ T, Int:$ N) {
 ```
 
 ## Templated impls for generic interfaces
+
+TODO: This section should be rewritten to be about parameterized `impl` in
+general, not just templated. For example, the
+["lookup resolution and specialization" section](#lookup-resolution-and-specialization)
+is applicable broadly.
 
 Some things going on here:
 
@@ -2549,12 +2602,7 @@ implementations.
 **Comparison with other languages:** See
 [Rust's rules for deciding which impl is more specific](https://rust-lang.github.io/rfcs/1210-impl-specialization.html#defining-the-precedence-rules).
 
-## Composition of type-types
-
-So we have one way of defining a type-type: every interface is represented by a
-type-type. In addition, Carbon defines `Type`, the type-type whose values
-include every type. We now introduce ways of defining new type-types in terms of
-other type-types.
+## Other constraints as type-types
 
 ### Type compatible with another type
 
@@ -2660,57 +2708,6 @@ alias SongByArtistThenTitle = ThenCompare(Song, (SongByArtist, SongByTitle));
 var Song: song = ...;
 var SongByArtistThenTitle: song2 = Song(...) as SongByArtistThenTitle;
 assert((song as SongByArtistThenTitle).Compare(song2) == CaompareResult.Less);
-```
-
-### Other type constraints
-
-Some constraints, such as that some [type parameter](#parameterized-interfaces)
-or [associated type](#associated-types) must implement an interface or that two
-must be equal, are
-[represented using multiple clauses](#external-constraints-via-optional-parameters)
-rather than a single type-type. Sometimes we may need a single type-type, such
-as to define a `DynPtr(TT)` (as
-[described in the following dynamic pointer type section](#dynamic-pointer-type)).
-
-We recommend that these constraints should be expressed as a
-[structural interface](#structural-interfaces).
-
-#### Rejected alternative: `ForSome(F)`
-
-Another way to solve this problem would be to have a `ForSome(F)` construct,
-where `F` is a function from types to type-types.
-
-> `ForSome(F)`, where `F` is a function from type `T` to type-type `TT`, is a
-> type whose values are types `U` with type `TT=F(T)` for some type `T`.
-
-**Example:** Pairs of values where both values have the same type might be
-written as
-
-```
-fn F[ForSome(lambda (Type:$ T) => PairInterface(T, T)):$ MatchedPairType]
-    (Ptr(MatchedPairType): x) { ... }
-```
-
-This would be equivalent to:
-
-```
-fn F[Type:$ T, PairInterface(T, T):$ MatchedPairType]
-    (Ptr(MatchedPairType): x) { ... }
-```
-
-**Example:** Containers where the elements implement the `HasEquality` interface
-might be written as:
-
-```
-fn F[ForSome(lambda (HasEquality:$ T) => Container(T)):$ ContainerType]
-  (Ptr(ContainerType): x) { ... }
-```
-
-This would be equivalent to:
-
-```
-fn F[HasEquality:$ T, Container(T):$ ContainerType]
-  (Ptr(ContainerType): x) { ... }
 ```
 
 ### Sized types and type-types
