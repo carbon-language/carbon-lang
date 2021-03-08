@@ -2392,6 +2392,10 @@ structural interface HasFooAndBar {
 }
 ```
 
+Note that this would be awkward for generics to support the dynamic compilation
+strategy, and we don't expect to want to hide the difference between read-only
+and mutable in a generic context.
+
 ### Bridge for C++ templates
 
 #### Calling C++ template code from Carbon
