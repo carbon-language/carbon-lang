@@ -4,14 +4,14 @@
 
 fn main() -> Int {
   var Int: x = 0;
-  delimit {
+  __delimit {
     x = x + 1;
-    suspend 3;
+    __yield 3;
     x = x + 2;
     return x - 6;
-  } with (v, k) {
+  } __catch (v, k) {
     x = x + v;
-    resume k;
+    __resume k;
     return 1;
   }
 }

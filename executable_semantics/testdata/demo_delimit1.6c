@@ -4,9 +4,9 @@
 
 fn main() -> Int {
   var Int: x = 1;
-  delimit {
+  __delimit {
     x = 0;
-  } with (v, k) {
+  } __catch (v, k) {
     return 1;
   }
   return x;

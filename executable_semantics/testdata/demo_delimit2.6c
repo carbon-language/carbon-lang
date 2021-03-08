@@ -3,10 +3,10 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 fn main() -> Int {
-  delimit {
-    suspend 0;
+  __delimit {
+    __yield 0;
     return 1;
-  } with (v, k) {
+  } __catch (v, k) {
     return v;
   }
 }

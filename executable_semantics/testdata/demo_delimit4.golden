@@ -1,11 +1,11 @@
 ********** source program **********
 fn naturals () -> () {
 var Int: n = 0;
-suspend n;
+yield n;
 while (true)
 {
 n = (n + 1);
-suspend n;
+yield n;
 
 }
 
@@ -55,11 +55,11 @@ resume k;
 ********** type checking complete **********
 fn naturals () -> () {
 var Int: n = 0;
-suspend n;
+yield n;
 while (true)
 {
 n = (n + 1);
-suspend n;
+yield n;
 
 }
 
@@ -390,7 +390,7 @@ env: main: fun<main>, naturals: fun<naturals>,
 }
 --- step stmt var Int: n = 0; ...  --->
 {
-stack: naturals{var Int: n = 0;<-1> :: suspend n; ... <-1>} :: main{naturals();<-1> :: return 1;<-1> :: {
+stack: naturals{var Int: n = 0;<-1> :: yield n; ... <-1>} :: main{naturals();<-1> :: return 1;<-1> :: {
  ... 
 }
 <0> :: delimit
@@ -403,7 +403,7 @@ env: main: fun<main>, naturals: fun<naturals>,
 }
 --- step stmt var Int: n = 0; --->
 {
-stack: naturals{0<-1> :: var Int: n = 0;<0> :: suspend n; ... <-1>} :: main{naturals();<-1> :: return 1;<-1> :: {
+stack: naturals{0<-1> :: var Int: n = 0;<0> :: yield n; ... <-1>} :: main{naturals();<-1> :: return 1;<-1> :: {
  ... 
 }
 <0> :: delimit
@@ -416,7 +416,7 @@ env: main: fun<main>, naturals: fun<naturals>,
 }
 --- step exp 0 --->
 {
-stack: naturals{0<-1> :: var Int: n = 0;<0> :: suspend n; ... <-1>} :: main{naturals();<-1> :: return 1;<-1> :: {
+stack: naturals{0<-1> :: var Int: n = 0;<0> :: yield n; ... <-1>} :: main{naturals();<-1> :: return 1;<-1> :: {
  ... 
 }
 <0> :: delimit
@@ -429,7 +429,7 @@ env: main: fun<main>, naturals: fun<naturals>,
 }
 --- handle value 0 with var Int: n = 0;<1>(0,) --->
 {
-stack: naturals{Int: n<-1> :: var Int: n = 0;<1>(0,) :: suspend n; ... <-1>} :: main{naturals();<-1> :: return 1;<-1> :: {
+stack: naturals{Int: n<-1> :: var Int: n = 0;<1>(0,) :: yield n; ... <-1>} :: main{naturals();<-1> :: return 1;<-1> :: {
  ... 
 }
 <0> :: delimit
@@ -442,7 +442,7 @@ env: main: fun<main>, naturals: fun<naturals>,
 }
 --- step exp Int: n --->
 {
-stack: naturals{Int<-1> :: Int: n<0> :: var Int: n = 0;<1>(0,) :: suspend n; ... <-1>} :: main{naturals();<-1> :: return 1;<-1> :: {
+stack: naturals{Int<-1> :: Int: n<0> :: var Int: n = 0;<1>(0,) :: yield n; ... <-1>} :: main{naturals();<-1> :: return 1;<-1> :: {
  ... 
 }
 <0> :: delimit
@@ -455,7 +455,7 @@ env: main: fun<main>, naturals: fun<naturals>,
 }
 --- step exp Int --->
 {
-stack: naturals{Int<-1> :: Int: n<0> :: var Int: n = 0;<1>(0,) :: suspend n; ... <-1>} :: main{naturals();<-1> :: return 1;<-1> :: {
+stack: naturals{Int<-1> :: Int: n<0> :: var Int: n = 0;<1>(0,) :: yield n; ... <-1>} :: main{naturals();<-1> :: return 1;<-1> :: {
  ... 
 }
 <0> :: delimit
@@ -468,7 +468,7 @@ env: main: fun<main>, naturals: fun<naturals>,
 }
 --- handle value Int with Int: n<1>(Int,) --->
 {
-stack: naturals{Int: n<-1> :: var Int: n = 0;<1>(0,) :: suspend n; ... <-1>} :: main{naturals();<-1> :: return 1;<-1> :: {
+stack: naturals{Int: n<-1> :: var Int: n = 0;<1>(0,) :: yield n; ... <-1>} :: main{naturals();<-1> :: return 1;<-1> :: {
  ... 
 }
 <0> :: delimit
@@ -482,7 +482,7 @@ env: main: fun<main>, naturals: fun<naturals>,
 --- handle value Int: n with var Int: n = 0;<2>(0,Int: n,) --->
 pattern_match(Int: n, 0)
 {
-stack: naturals{suspend n; ... <-1>} :: main{naturals();<-1> :: return 1;<-1> :: {
+stack: naturals{yield n; ... <-1>} :: main{naturals();<-1> :: return 1;<-1> :: {
  ... 
 }
 <0> :: delimit
@@ -493,9 +493,9 @@ with (v, k)
 heap: fun<naturals>, fun<main>, 0, 0, 0, 
 env: n: 0, main: fun<main>, naturals: fun<naturals>, 
 }
---- step stmt suspend n; ...  --->
+--- step stmt yield n; ...  --->
 {
-stack: naturals{suspend n;<-1> :: while (true)
+stack: naturals{yield n;<-1> :: while (true)
  ...  ... <-1>} :: main{naturals();<-1> :: return 1;<-1> :: {
  ... 
 }
@@ -507,9 +507,9 @@ with (v, k)
 heap: fun<naturals>, fun<main>, 0, 0, 0, 
 env: n: 0, main: fun<main>, naturals: fun<naturals>, 
 }
---- step stmt suspend n; --->
+--- step stmt yield n; --->
 {
-stack: naturals{n<-1> :: suspend n;<0> :: while (true)
+stack: naturals{n<-1> :: yield n;<0> :: while (true)
  ...  ... <-1>} :: main{naturals();<-1> :: return 1;<-1> :: {
  ... 
 }
@@ -523,7 +523,7 @@ env: n: 0, main: fun<main>, naturals: fun<naturals>,
 }
 --- step exp n --->
 {
-stack: naturals{0<-1> :: suspend n;<0> :: while (true)
+stack: naturals{0<-1> :: yield n;<0> :: while (true)
  ...  ... <-1>} :: main{naturals();<-1> :: return 1;<-1> :: {
  ... 
 }
@@ -535,7 +535,7 @@ with (v, k)
 heap: fun<naturals>, fun<main>, 0, 0, 0, 
 env: n: 0, main: fun<main>, naturals: fun<naturals>, 
 }
---- handle value 0 with suspend n;<1>(0,) --->
+--- handle value 0 with yield n;<1>(0,) --->
 {
 stack: main{{
  ... 
@@ -1138,10 +1138,10 @@ env: k: continuation, v: 0, count: 1, sum: 0, main: fun<main>, naturals: fun<nat
 --- handle value continuation with resume k;<1>(continuation,) --->
 {
 stack: naturals{while (true)
- ...  ... <-1> :: naturals();<-1> :: return 1;<-1> :: {
+ ...  ... <-1>} :: main{naturals();<-1> :: return 1;<-1> :: {
  ... 
 }
-<0>} :: main{continuation<-1> :: resume k;<1>(continuation,) :: {
+<0> :: {
  ... 
 }
 <0> :: {
@@ -1162,10 +1162,10 @@ env: n: 0, main: fun<main>, naturals: fun<naturals>,
  ...  ...  --->
 {
 stack: naturals{while (true)
- ... <-1> :: return ();<-1> :: naturals();<-1> :: return 1;<-1> :: {
+ ... <-1> :: return ();<-1>} :: main{naturals();<-1> :: return 1;<-1> :: {
  ... 
 }
-<0>} :: main{continuation<-1> :: resume k;<1>(continuation,) :: {
+<0> :: {
  ... 
 }
 <0> :: {
@@ -1186,10 +1186,10 @@ env: n: 0, main: fun<main>, naturals: fun<naturals>,
  ...  --->
 {
 stack: naturals{true<-1> :: while (true)
- ... <0> :: return ();<-1> :: naturals();<-1> :: return 1;<-1> :: {
+ ... <0> :: return ();<-1>} :: main{naturals();<-1> :: return 1;<-1> :: {
  ... 
 }
-<0>} :: main{continuation<-1> :: resume k;<1>(continuation,) :: {
+<0> :: {
  ... 
 }
 <0> :: {
@@ -1209,10 +1209,10 @@ env: n: 0, main: fun<main>, naturals: fun<naturals>,
 --- step exp true --->
 {
 stack: naturals{true<-1> :: while (true)
- ... <0> :: return ();<-1> :: naturals();<-1> :: return 1;<-1> :: {
+ ... <0> :: return ();<-1>} :: main{naturals();<-1> :: return 1;<-1> :: {
  ... 
 }
-<0>} :: main{continuation<-1> :: resume k;<1>(continuation,) :: {
+<0> :: {
  ... 
 }
 <0> :: {
@@ -1236,10 +1236,10 @@ stack: naturals{{
  ... 
 }
 <-1> :: while (true)
- ... <-1> :: return ();<-1> :: naturals();<-1> :: return 1;<-1> :: {
+ ... <-1> :: return ();<-1>} :: main{naturals();<-1> :: return 1;<-1> :: {
  ... 
 }
-<0>} :: main{continuation<-1> :: resume k;<1>(continuation,) :: {
+<0> :: {
  ... 
 }
 <0> :: {
@@ -1265,10 +1265,10 @@ stack: naturals{n = (n + 1); ... <-1> :: {
  ... 
 }
 <0> :: while (true)
- ... <-1> :: return ();<-1> :: naturals();<-1> :: return 1;<-1> :: {
+ ... <-1> :: return ();<-1>} :: main{naturals();<-1> :: return 1;<-1> :: {
  ... 
 }
-<0>} :: main{continuation<-1> :: resume k;<1>(continuation,) :: {
+<0> :: {
  ... 
 }
 <0> :: {
@@ -1287,14 +1287,14 @@ env: n: 0, main: fun<main>, naturals: fun<naturals>,
 }
 --- step stmt n = (n + 1); ...  --->
 {
-stack: naturals{n = (n + 1);<-1> :: suspend n;<-1> :: {
+stack: naturals{n = (n + 1);<-1> :: yield n;<-1> :: {
  ... 
 }
 <0> :: while (true)
- ... <-1> :: return ();<-1> :: naturals();<-1> :: return 1;<-1> :: {
+ ... <-1> :: return ();<-1>} :: main{naturals();<-1> :: return 1;<-1> :: {
  ... 
 }
-<0>} :: main{continuation<-1> :: resume k;<1>(continuation,) :: {
+<0> :: {
  ... 
 }
 <0> :: {
@@ -1313,14 +1313,14 @@ env: n: 0, main: fun<main>, naturals: fun<naturals>,
 }
 --- step stmt n = (n + 1); --->
 {
-stack: naturals{n<-1> :: n = (n + 1);<0> :: suspend n;<-1> :: {
+stack: naturals{n<-1> :: n = (n + 1);<0> :: yield n;<-1> :: {
  ... 
 }
 <0> :: while (true)
- ... <-1> :: return ();<-1> :: naturals();<-1> :: return 1;<-1> :: {
+ ... <-1> :: return ();<-1>} :: main{naturals();<-1> :: return 1;<-1> :: {
  ... 
 }
-<0>} :: main{continuation<-1> :: resume k;<1>(continuation,) :: {
+<0> :: {
  ... 
 }
 <0> :: {
@@ -1339,14 +1339,14 @@ env: n: 0, main: fun<main>, naturals: fun<naturals>,
 }
 --- step lvalue n --->
 {
-stack: naturals{ptr<4><-1> :: n = (n + 1);<0> :: suspend n;<-1> :: {
+stack: naturals{ptr<4><-1> :: n = (n + 1);<0> :: yield n;<-1> :: {
  ... 
 }
 <0> :: while (true)
- ... <-1> :: return ();<-1> :: naturals();<-1> :: return 1;<-1> :: {
+ ... <-1> :: return ();<-1>} :: main{naturals();<-1> :: return 1;<-1> :: {
  ... 
 }
-<0>} :: main{continuation<-1> :: resume k;<1>(continuation,) :: {
+<0> :: {
  ... 
 }
 <0> :: {
@@ -1365,14 +1365,14 @@ env: n: 0, main: fun<main>, naturals: fun<naturals>,
 }
 --- handle value ptr<4> with n = (n + 1);<1>(ptr<4>,) --->
 {
-stack: naturals{(n + 1)<-1> :: n = (n + 1);<1>(ptr<4>,) :: suspend n;<-1> :: {
+stack: naturals{(n + 1)<-1> :: n = (n + 1);<1>(ptr<4>,) :: yield n;<-1> :: {
  ... 
 }
 <0> :: while (true)
- ... <-1> :: return ();<-1> :: naturals();<-1> :: return 1;<-1> :: {
+ ... <-1> :: return ();<-1>} :: main{naturals();<-1> :: return 1;<-1> :: {
  ... 
 }
-<0>} :: main{continuation<-1> :: resume k;<1>(continuation,) :: {
+<0> :: {
  ... 
 }
 <0> :: {
@@ -1391,14 +1391,14 @@ env: n: 0, main: fun<main>, naturals: fun<naturals>,
 }
 --- step exp (n + 1) --->
 {
-stack: naturals{n<-1> :: (n + 1)<0> :: n = (n + 1);<1>(ptr<4>,) :: suspend n;<-1> :: {
+stack: naturals{n<-1> :: (n + 1)<0> :: n = (n + 1);<1>(ptr<4>,) :: yield n;<-1> :: {
  ... 
 }
 <0> :: while (true)
- ... <-1> :: return ();<-1> :: naturals();<-1> :: return 1;<-1> :: {
+ ... <-1> :: return ();<-1>} :: main{naturals();<-1> :: return 1;<-1> :: {
  ... 
 }
-<0>} :: main{continuation<-1> :: resume k;<1>(continuation,) :: {
+<0> :: {
  ... 
 }
 <0> :: {
@@ -1417,14 +1417,14 @@ env: n: 0, main: fun<main>, naturals: fun<naturals>,
 }
 --- step exp n --->
 {
-stack: naturals{0<-1> :: (n + 1)<0> :: n = (n + 1);<1>(ptr<4>,) :: suspend n;<-1> :: {
+stack: naturals{0<-1> :: (n + 1)<0> :: n = (n + 1);<1>(ptr<4>,) :: yield n;<-1> :: {
  ... 
 }
 <0> :: while (true)
- ... <-1> :: return ();<-1> :: naturals();<-1> :: return 1;<-1> :: {
+ ... <-1> :: return ();<-1>} :: main{naturals();<-1> :: return 1;<-1> :: {
  ... 
 }
-<0>} :: main{continuation<-1> :: resume k;<1>(continuation,) :: {
+<0> :: {
  ... 
 }
 <0> :: {
@@ -1443,14 +1443,14 @@ env: n: 0, main: fun<main>, naturals: fun<naturals>,
 }
 --- handle value 0 with (n + 1)<1>(0,) --->
 {
-stack: naturals{1<-1> :: (n + 1)<1>(0,) :: n = (n + 1);<1>(ptr<4>,) :: suspend n;<-1> :: {
+stack: naturals{1<-1> :: (n + 1)<1>(0,) :: n = (n + 1);<1>(ptr<4>,) :: yield n;<-1> :: {
  ... 
 }
 <0> :: while (true)
- ... <-1> :: return ();<-1> :: naturals();<-1> :: return 1;<-1> :: {
+ ... <-1> :: return ();<-1>} :: main{naturals();<-1> :: return 1;<-1> :: {
  ... 
 }
-<0>} :: main{continuation<-1> :: resume k;<1>(continuation,) :: {
+<0> :: {
  ... 
 }
 <0> :: {
@@ -1469,14 +1469,14 @@ env: n: 0, main: fun<main>, naturals: fun<naturals>,
 }
 --- step exp 1 --->
 {
-stack: naturals{1<-1> :: (n + 1)<1>(0,) :: n = (n + 1);<1>(ptr<4>,) :: suspend n;<-1> :: {
+stack: naturals{1<-1> :: (n + 1)<1>(0,) :: n = (n + 1);<1>(ptr<4>,) :: yield n;<-1> :: {
  ... 
 }
 <0> :: while (true)
- ... <-1> :: return ();<-1> :: naturals();<-1> :: return 1;<-1> :: {
+ ... <-1> :: return ();<-1>} :: main{naturals();<-1> :: return 1;<-1> :: {
  ... 
 }
-<0>} :: main{continuation<-1> :: resume k;<1>(continuation,) :: {
+<0> :: {
  ... 
 }
 <0> :: {
@@ -1495,14 +1495,14 @@ env: n: 0, main: fun<main>, naturals: fun<naturals>,
 }
 --- handle value 1 with (n + 1)<2>(0,1,) --->
 {
-stack: naturals{1<-1> :: n = (n + 1);<1>(ptr<4>,) :: suspend n;<-1> :: {
+stack: naturals{1<-1> :: n = (n + 1);<1>(ptr<4>,) :: yield n;<-1> :: {
  ... 
 }
 <0> :: while (true)
- ... <-1> :: return ();<-1> :: naturals();<-1> :: return 1;<-1> :: {
+ ... <-1> :: return ();<-1>} :: main{naturals();<-1> :: return 1;<-1> :: {
  ... 
 }
-<0>} :: main{continuation<-1> :: resume k;<1>(continuation,) :: {
+<0> :: {
  ... 
 }
 <0> :: {
@@ -1521,14 +1521,14 @@ env: n: 0, main: fun<main>, naturals: fun<naturals>,
 }
 --- handle value 1 with n = (n + 1);<2>(ptr<4>,1,) --->
 {
-stack: naturals{suspend n;<-1> :: {
+stack: naturals{yield n;<-1> :: {
  ... 
 }
 <0> :: while (true)
- ... <-1> :: return ();<-1> :: naturals();<-1> :: return 1;<-1> :: {
+ ... <-1> :: return ();<-1>} :: main{naturals();<-1> :: return 1;<-1> :: {
  ... 
 }
-<0>} :: main{continuation<-1> :: resume k;<1>(continuation,) :: {
+<0> :: {
  ... 
 }
 <0> :: {
@@ -1545,16 +1545,16 @@ with (v, k)
 heap: fun<naturals>, fun<main>, 0, 1, 1, 0, continuation, 
 env: n: 1, main: fun<main>, naturals: fun<naturals>, 
 }
---- step stmt suspend n; --->
+--- step stmt yield n; --->
 {
-stack: naturals{suspend n;<-1> :: {
+stack: naturals{yield n;<-1> :: {
  ... 
 }
 <0> :: while (true)
- ... <-1> :: return ();<-1> :: naturals();<-1> :: return 1;<-1> :: {
+ ... <-1> :: return ();<-1>} :: main{naturals();<-1> :: return 1;<-1> :: {
  ... 
 }
-<0>} :: main{continuation<-1> :: resume k;<1>(continuation,) :: {
+<0> :: {
  ... 
 }
 <0> :: {
@@ -1571,16 +1571,16 @@ with (v, k)
 heap: fun<naturals>, fun<main>, 0, 1, 1, 0, continuation, 
 env: n: 1, main: fun<main>, naturals: fun<naturals>, 
 }
---- step stmt suspend n; --->
+--- step stmt yield n; --->
 {
-stack: naturals{n<-1> :: suspend n;<0> :: {
+stack: naturals{n<-1> :: yield n;<0> :: {
  ... 
 }
 <0> :: while (true)
- ... <-1> :: return ();<-1> :: naturals();<-1> :: return 1;<-1> :: {
+ ... <-1> :: return ();<-1>} :: main{naturals();<-1> :: return 1;<-1> :: {
  ... 
 }
-<0>} :: main{continuation<-1> :: resume k;<1>(continuation,) :: {
+<0> :: {
  ... 
 }
 <0> :: {
@@ -1599,14 +1599,14 @@ env: n: 1, main: fun<main>, naturals: fun<naturals>,
 }
 --- step exp n --->
 {
-stack: naturals{1<-1> :: suspend n;<0> :: {
+stack: naturals{1<-1> :: yield n;<0> :: {
  ... 
 }
 <0> :: while (true)
- ... <-1> :: return ();<-1> :: naturals();<-1> :: return 1;<-1> :: {
+ ... <-1> :: return ();<-1>} :: main{naturals();<-1> :: return 1;<-1> :: {
  ... 
 }
-<0>} :: main{continuation<-1> :: resume k;<1>(continuation,) :: {
+<0> :: {
  ... 
 }
 <0> :: {
@@ -1623,7 +1623,7 @@ with (v, k)
 heap: fun<naturals>, fun<main>, 0, 1, 1, 0, continuation, 
 env: n: 1, main: fun<main>, naturals: fun<naturals>, 
 }
---- handle value 1 with suspend n;<1>(1,) --->
+--- handle value 1 with yield n;<1>(1,) --->
 {
 stack: main{{
  ... 
@@ -1634,7 +1634,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 0, 1, 1, 0, continuation, 1, continuation, 
-env: k: continuation, v: 1, k: continuation, v: 0, count: 1, sum: 0, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 1, count: 1, sum: 0, main: fun<main>, naturals: fun<naturals>, 
 }
 --- step stmt {
  ... 
@@ -1653,7 +1653,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 0, 1, 1, 0, continuation, 1, continuation, 
-env: k: continuation, v: 1, k: continuation, v: 0, count: 1, sum: 0, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 1, count: 1, sum: 0, main: fun<main>, naturals: fun<naturals>, 
 }
 --- step stmt {
  ... 
@@ -1672,7 +1672,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 0, 1, 1, 0, continuation, 1, continuation, 
-env: k: continuation, v: 1, k: continuation, v: 0, count: 1, sum: 0, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 1, count: 1, sum: 0, main: fun<main>, naturals: fun<naturals>, 
 }
 --- step stmt sum = (sum + v); ...  --->
 {
@@ -1688,7 +1688,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 0, 1, 1, 0, continuation, 1, continuation, 
-env: k: continuation, v: 1, k: continuation, v: 0, count: 1, sum: 0, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 1, count: 1, sum: 0, main: fun<main>, naturals: fun<naturals>, 
 }
 --- step stmt sum = (sum + v); --->
 {
@@ -1704,7 +1704,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 0, 1, 1, 0, continuation, 1, continuation, 
-env: k: continuation, v: 1, k: continuation, v: 0, count: 1, sum: 0, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 1, count: 1, sum: 0, main: fun<main>, naturals: fun<naturals>, 
 }
 --- step lvalue sum --->
 {
@@ -1720,7 +1720,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 0, 1, 1, 0, continuation, 1, continuation, 
-env: k: continuation, v: 1, k: continuation, v: 0, count: 1, sum: 0, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 1, count: 1, sum: 0, main: fun<main>, naturals: fun<naturals>, 
 }
 --- handle value ptr<2> with sum = (sum + v);<1>(ptr<2>,) --->
 {
@@ -1736,7 +1736,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 0, 1, 1, 0, continuation, 1, continuation, 
-env: k: continuation, v: 1, k: continuation, v: 0, count: 1, sum: 0, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 1, count: 1, sum: 0, main: fun<main>, naturals: fun<naturals>, 
 }
 --- step exp (sum + v) --->
 {
@@ -1752,7 +1752,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 0, 1, 1, 0, continuation, 1, continuation, 
-env: k: continuation, v: 1, k: continuation, v: 0, count: 1, sum: 0, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 1, count: 1, sum: 0, main: fun<main>, naturals: fun<naturals>, 
 }
 --- step exp sum --->
 {
@@ -1768,7 +1768,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 0, 1, 1, 0, continuation, 1, continuation, 
-env: k: continuation, v: 1, k: continuation, v: 0, count: 1, sum: 0, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 1, count: 1, sum: 0, main: fun<main>, naturals: fun<naturals>, 
 }
 --- handle value 0 with (sum + v)<1>(0,) --->
 {
@@ -1784,7 +1784,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 0, 1, 1, 0, continuation, 1, continuation, 
-env: k: continuation, v: 1, k: continuation, v: 0, count: 1, sum: 0, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 1, count: 1, sum: 0, main: fun<main>, naturals: fun<naturals>, 
 }
 --- step exp v --->
 {
@@ -1800,7 +1800,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 0, 1, 1, 0, continuation, 1, continuation, 
-env: k: continuation, v: 1, k: continuation, v: 0, count: 1, sum: 0, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 1, count: 1, sum: 0, main: fun<main>, naturals: fun<naturals>, 
 }
 --- handle value 1 with (sum + v)<2>(0,1,) --->
 {
@@ -1816,7 +1816,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 0, 1, 1, 0, continuation, 1, continuation, 
-env: k: continuation, v: 1, k: continuation, v: 0, count: 1, sum: 0, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 1, count: 1, sum: 0, main: fun<main>, naturals: fun<naturals>, 
 }
 --- handle value 1 with sum = (sum + v);<2>(ptr<2>,1,) --->
 {
@@ -1832,7 +1832,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 1, 1, 1, 0, continuation, 1, continuation, 
-env: k: continuation, v: 1, k: continuation, v: 0, count: 1, sum: 1, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 1, count: 1, sum: 1, main: fun<main>, naturals: fun<naturals>, 
 }
 --- step stmt count = (count + 1); ...  --->
 {
@@ -1851,7 +1851,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 1, 1, 1, 0, continuation, 1, continuation, 
-env: k: continuation, v: 1, k: continuation, v: 0, count: 1, sum: 1, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 1, count: 1, sum: 1, main: fun<main>, naturals: fun<naturals>, 
 }
 --- step stmt count = (count + 1); --->
 {
@@ -1870,7 +1870,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 1, 1, 1, 0, continuation, 1, continuation, 
-env: k: continuation, v: 1, k: continuation, v: 0, count: 1, sum: 1, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 1, count: 1, sum: 1, main: fun<main>, naturals: fun<naturals>, 
 }
 --- step lvalue count --->
 {
@@ -1889,7 +1889,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 1, 1, 1, 0, continuation, 1, continuation, 
-env: k: continuation, v: 1, k: continuation, v: 0, count: 1, sum: 1, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 1, count: 1, sum: 1, main: fun<main>, naturals: fun<naturals>, 
 }
 --- handle value ptr<3> with count = (count + 1);<1>(ptr<3>,) --->
 {
@@ -1908,7 +1908,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 1, 1, 1, 0, continuation, 1, continuation, 
-env: k: continuation, v: 1, k: continuation, v: 0, count: 1, sum: 1, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 1, count: 1, sum: 1, main: fun<main>, naturals: fun<naturals>, 
 }
 --- step exp (count + 1) --->
 {
@@ -1927,7 +1927,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 1, 1, 1, 0, continuation, 1, continuation, 
-env: k: continuation, v: 1, k: continuation, v: 0, count: 1, sum: 1, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 1, count: 1, sum: 1, main: fun<main>, naturals: fun<naturals>, 
 }
 --- step exp count --->
 {
@@ -1946,7 +1946,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 1, 1, 1, 0, continuation, 1, continuation, 
-env: k: continuation, v: 1, k: continuation, v: 0, count: 1, sum: 1, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 1, count: 1, sum: 1, main: fun<main>, naturals: fun<naturals>, 
 }
 --- handle value 1 with (count + 1)<1>(1,) --->
 {
@@ -1965,7 +1965,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 1, 1, 1, 0, continuation, 1, continuation, 
-env: k: continuation, v: 1, k: continuation, v: 0, count: 1, sum: 1, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 1, count: 1, sum: 1, main: fun<main>, naturals: fun<naturals>, 
 }
 --- step exp 1 --->
 {
@@ -1984,7 +1984,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 1, 1, 1, 0, continuation, 1, continuation, 
-env: k: continuation, v: 1, k: continuation, v: 0, count: 1, sum: 1, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 1, count: 1, sum: 1, main: fun<main>, naturals: fun<naturals>, 
 }
 --- handle value 1 with (count + 1)<2>(1,1,) --->
 {
@@ -2003,7 +2003,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 1, 1, 1, 0, continuation, 1, continuation, 
-env: k: continuation, v: 1, k: continuation, v: 0, count: 1, sum: 1, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 1, count: 1, sum: 1, main: fun<main>, naturals: fun<naturals>, 
 }
 --- handle value 2 with count = (count + 1);<2>(ptr<3>,2,) --->
 {
@@ -2022,7 +2022,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 1, 2, 1, 0, continuation, 1, continuation, 
-env: k: continuation, v: 1, k: continuation, v: 0, count: 2, sum: 1, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 1, count: 2, sum: 1, main: fun<main>, naturals: fun<naturals>, 
 }
 --- step stmt if ((count == 5))
  ... 
@@ -2044,7 +2044,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 1, 2, 1, 0, continuation, 1, continuation, 
-env: k: continuation, v: 1, k: continuation, v: 0, count: 2, sum: 1, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 1, count: 2, sum: 1, main: fun<main>, naturals: fun<naturals>, 
 }
 --- step exp (count == 5) --->
 {
@@ -2063,7 +2063,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 1, 2, 1, 0, continuation, 1, continuation, 
-env: k: continuation, v: 1, k: continuation, v: 0, count: 2, sum: 1, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 1, count: 2, sum: 1, main: fun<main>, naturals: fun<naturals>, 
 }
 --- step exp count --->
 {
@@ -2082,7 +2082,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 1, 2, 1, 0, continuation, 1, continuation, 
-env: k: continuation, v: 1, k: continuation, v: 0, count: 2, sum: 1, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 1, count: 2, sum: 1, main: fun<main>, naturals: fun<naturals>, 
 }
 --- handle value 2 with (count == 5)<1>(2,) --->
 {
@@ -2101,7 +2101,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 1, 2, 1, 0, continuation, 1, continuation, 
-env: k: continuation, v: 1, k: continuation, v: 0, count: 2, sum: 1, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 1, count: 2, sum: 1, main: fun<main>, naturals: fun<naturals>, 
 }
 --- step exp 5 --->
 {
@@ -2120,7 +2120,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 1, 2, 1, 0, continuation, 1, continuation, 
-env: k: continuation, v: 1, k: continuation, v: 0, count: 2, sum: 1, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 1, count: 2, sum: 1, main: fun<main>, naturals: fun<naturals>, 
 }
 --- handle value 5 with (count == 5)<2>(2,5,) --->
 {
@@ -2139,7 +2139,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 1, 2, 1, 0, continuation, 1, continuation, 
-env: k: continuation, v: 1, k: continuation, v: 0, count: 2, sum: 1, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 1, count: 2, sum: 1, main: fun<main>, naturals: fun<naturals>, 
 }
 --- handle value false with if ((count == 5))
  ... 
@@ -2161,7 +2161,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 1, 2, 1, 0, continuation, 1, continuation, 
-env: k: continuation, v: 1, k: continuation, v: 0, count: 2, sum: 1, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 1, count: 2, sum: 1, main: fun<main>, naturals: fun<naturals>, 
 }
 --- step stmt {
  ... 
@@ -2183,7 +2183,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 1, 2, 1, 0, continuation, 1, continuation, 
-env: k: continuation, v: 1, k: continuation, v: 0, count: 2, sum: 1, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 1, count: 2, sum: 1, main: fun<main>, naturals: fun<naturals>, 
 }
 --- step stmt resume k; --->
 {
@@ -2202,7 +2202,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 1, 2, 1, 0, continuation, 1, continuation, 
-env: k: continuation, v: 1, k: continuation, v: 0, count: 2, sum: 1, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 1, count: 2, sum: 1, main: fun<main>, naturals: fun<naturals>, 
 }
 --- step exp k --->
 {
@@ -2221,7 +2221,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 1, 2, 1, 0, continuation, 1, continuation, 
-env: k: continuation, v: 1, k: continuation, v: 0, count: 2, sum: 1, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 1, count: 2, sum: 1, main: fun<main>, naturals: fun<naturals>, 
 }
 --- handle value continuation with resume k;<1>(continuation,) --->
 {
@@ -2229,10 +2229,7 @@ stack: naturals{{
  ... 
 }
 <0> :: while (true)
- ... <-1> :: return ();<-1> :: naturals();<-1> :: return 1;<-1> :: {
- ... 
-}
-<0> :: continuation<-1> :: resume k;<1>(continuation,) :: {
+ ... <-1> :: return ();<-1>} :: main{naturals();<-1> :: return 1;<-1> :: {
  ... 
 }
 <0> :: {
@@ -2241,7 +2238,10 @@ stack: naturals{{
 <0> :: {
  ... 
 }
-<0>} :: main{continuation<-1> :: resume k;<1>(continuation,) :: {
+<0> :: {
+ ... 
+}
+<0> :: {
  ... 
 }
 <0> :: {
@@ -2264,10 +2264,7 @@ env: n: 1, main: fun<main>, naturals: fun<naturals>,
  --->
 {
 stack: naturals{while (true)
- ... <-1> :: return ();<-1> :: naturals();<-1> :: return 1;<-1> :: {
- ... 
-}
-<0> :: continuation<-1> :: resume k;<1>(continuation,) :: {
+ ... <-1> :: return ();<-1>} :: main{naturals();<-1> :: return 1;<-1> :: {
  ... 
 }
 <0> :: {
@@ -2276,7 +2273,10 @@ stack: naturals{while (true)
 <0> :: {
  ... 
 }
-<0>} :: main{continuation<-1> :: resume k;<1>(continuation,) :: {
+<0> :: {
+ ... 
+}
+<0> :: {
  ... 
 }
 <0> :: {
@@ -2297,10 +2297,7 @@ env: n: 1, main: fun<main>, naturals: fun<naturals>,
  ...  --->
 {
 stack: naturals{true<-1> :: while (true)
- ... <0> :: return ();<-1> :: naturals();<-1> :: return 1;<-1> :: {
- ... 
-}
-<0> :: continuation<-1> :: resume k;<1>(continuation,) :: {
+ ... <0> :: return ();<-1>} :: main{naturals();<-1> :: return 1;<-1> :: {
  ... 
 }
 <0> :: {
@@ -2309,7 +2306,10 @@ stack: naturals{true<-1> :: while (true)
 <0> :: {
  ... 
 }
-<0>} :: main{continuation<-1> :: resume k;<1>(continuation,) :: {
+<0> :: {
+ ... 
+}
+<0> :: {
  ... 
 }
 <0> :: {
@@ -2329,10 +2329,7 @@ env: n: 1, main: fun<main>, naturals: fun<naturals>,
 --- step exp true --->
 {
 stack: naturals{true<-1> :: while (true)
- ... <0> :: return ();<-1> :: naturals();<-1> :: return 1;<-1> :: {
- ... 
-}
-<0> :: continuation<-1> :: resume k;<1>(continuation,) :: {
+ ... <0> :: return ();<-1>} :: main{naturals();<-1> :: return 1;<-1> :: {
  ... 
 }
 <0> :: {
@@ -2341,7 +2338,10 @@ stack: naturals{true<-1> :: while (true)
 <0> :: {
  ... 
 }
-<0>} :: main{continuation<-1> :: resume k;<1>(continuation,) :: {
+<0> :: {
+ ... 
+}
+<0> :: {
  ... 
 }
 <0> :: {
@@ -2365,10 +2365,7 @@ stack: naturals{{
  ... 
 }
 <-1> :: while (true)
- ... <-1> :: return ();<-1> :: naturals();<-1> :: return 1;<-1> :: {
- ... 
-}
-<0> :: continuation<-1> :: resume k;<1>(continuation,) :: {
+ ... <-1> :: return ();<-1>} :: main{naturals();<-1> :: return 1;<-1> :: {
  ... 
 }
 <0> :: {
@@ -2377,7 +2374,10 @@ stack: naturals{{
 <0> :: {
  ... 
 }
-<0>} :: main{continuation<-1> :: resume k;<1>(continuation,) :: {
+<0> :: {
+ ... 
+}
+<0> :: {
  ... 
 }
 <0> :: {
@@ -2403,10 +2403,7 @@ stack: naturals{n = (n + 1); ... <-1> :: {
  ... 
 }
 <0> :: while (true)
- ... <-1> :: return ();<-1> :: naturals();<-1> :: return 1;<-1> :: {
- ... 
-}
-<0> :: continuation<-1> :: resume k;<1>(continuation,) :: {
+ ... <-1> :: return ();<-1>} :: main{naturals();<-1> :: return 1;<-1> :: {
  ... 
 }
 <0> :: {
@@ -2415,7 +2412,10 @@ stack: naturals{n = (n + 1); ... <-1> :: {
 <0> :: {
  ... 
 }
-<0>} :: main{continuation<-1> :: resume k;<1>(continuation,) :: {
+<0> :: {
+ ... 
+}
+<0> :: {
  ... 
 }
 <0> :: {
@@ -2434,14 +2434,11 @@ env: n: 1, main: fun<main>, naturals: fun<naturals>,
 }
 --- step stmt n = (n + 1); ...  --->
 {
-stack: naturals{n = (n + 1);<-1> :: suspend n;<-1> :: {
+stack: naturals{n = (n + 1);<-1> :: yield n;<-1> :: {
  ... 
 }
 <0> :: while (true)
- ... <-1> :: return ();<-1> :: naturals();<-1> :: return 1;<-1> :: {
- ... 
-}
-<0> :: continuation<-1> :: resume k;<1>(continuation,) :: {
+ ... <-1> :: return ();<-1>} :: main{naturals();<-1> :: return 1;<-1> :: {
  ... 
 }
 <0> :: {
@@ -2450,7 +2447,10 @@ stack: naturals{n = (n + 1);<-1> :: suspend n;<-1> :: {
 <0> :: {
  ... 
 }
-<0>} :: main{continuation<-1> :: resume k;<1>(continuation,) :: {
+<0> :: {
+ ... 
+}
+<0> :: {
  ... 
 }
 <0> :: {
@@ -2469,14 +2469,11 @@ env: n: 1, main: fun<main>, naturals: fun<naturals>,
 }
 --- step stmt n = (n + 1); --->
 {
-stack: naturals{n<-1> :: n = (n + 1);<0> :: suspend n;<-1> :: {
+stack: naturals{n<-1> :: n = (n + 1);<0> :: yield n;<-1> :: {
  ... 
 }
 <0> :: while (true)
- ... <-1> :: return ();<-1> :: naturals();<-1> :: return 1;<-1> :: {
- ... 
-}
-<0> :: continuation<-1> :: resume k;<1>(continuation,) :: {
+ ... <-1> :: return ();<-1>} :: main{naturals();<-1> :: return 1;<-1> :: {
  ... 
 }
 <0> :: {
@@ -2485,7 +2482,10 @@ stack: naturals{n<-1> :: n = (n + 1);<0> :: suspend n;<-1> :: {
 <0> :: {
  ... 
 }
-<0>} :: main{continuation<-1> :: resume k;<1>(continuation,) :: {
+<0> :: {
+ ... 
+}
+<0> :: {
  ... 
 }
 <0> :: {
@@ -2504,14 +2504,11 @@ env: n: 1, main: fun<main>, naturals: fun<naturals>,
 }
 --- step lvalue n --->
 {
-stack: naturals{ptr<4><-1> :: n = (n + 1);<0> :: suspend n;<-1> :: {
+stack: naturals{ptr<4><-1> :: n = (n + 1);<0> :: yield n;<-1> :: {
  ... 
 }
 <0> :: while (true)
- ... <-1> :: return ();<-1> :: naturals();<-1> :: return 1;<-1> :: {
- ... 
-}
-<0> :: continuation<-1> :: resume k;<1>(continuation,) :: {
+ ... <-1> :: return ();<-1>} :: main{naturals();<-1> :: return 1;<-1> :: {
  ... 
 }
 <0> :: {
@@ -2520,7 +2517,10 @@ stack: naturals{ptr<4><-1> :: n = (n + 1);<0> :: suspend n;<-1> :: {
 <0> :: {
  ... 
 }
-<0>} :: main{continuation<-1> :: resume k;<1>(continuation,) :: {
+<0> :: {
+ ... 
+}
+<0> :: {
  ... 
 }
 <0> :: {
@@ -2539,14 +2539,11 @@ env: n: 1, main: fun<main>, naturals: fun<naturals>,
 }
 --- handle value ptr<4> with n = (n + 1);<1>(ptr<4>,) --->
 {
-stack: naturals{(n + 1)<-1> :: n = (n + 1);<1>(ptr<4>,) :: suspend n;<-1> :: {
+stack: naturals{(n + 1)<-1> :: n = (n + 1);<1>(ptr<4>,) :: yield n;<-1> :: {
  ... 
 }
 <0> :: while (true)
- ... <-1> :: return ();<-1> :: naturals();<-1> :: return 1;<-1> :: {
- ... 
-}
-<0> :: continuation<-1> :: resume k;<1>(continuation,) :: {
+ ... <-1> :: return ();<-1>} :: main{naturals();<-1> :: return 1;<-1> :: {
  ... 
 }
 <0> :: {
@@ -2555,7 +2552,10 @@ stack: naturals{(n + 1)<-1> :: n = (n + 1);<1>(ptr<4>,) :: suspend n;<-1> :: {
 <0> :: {
  ... 
 }
-<0>} :: main{continuation<-1> :: resume k;<1>(continuation,) :: {
+<0> :: {
+ ... 
+}
+<0> :: {
  ... 
 }
 <0> :: {
@@ -2574,14 +2574,11 @@ env: n: 1, main: fun<main>, naturals: fun<naturals>,
 }
 --- step exp (n + 1) --->
 {
-stack: naturals{n<-1> :: (n + 1)<0> :: n = (n + 1);<1>(ptr<4>,) :: suspend n;<-1> :: {
+stack: naturals{n<-1> :: (n + 1)<0> :: n = (n + 1);<1>(ptr<4>,) :: yield n;<-1> :: {
  ... 
 }
 <0> :: while (true)
- ... <-1> :: return ();<-1> :: naturals();<-1> :: return 1;<-1> :: {
- ... 
-}
-<0> :: continuation<-1> :: resume k;<1>(continuation,) :: {
+ ... <-1> :: return ();<-1>} :: main{naturals();<-1> :: return 1;<-1> :: {
  ... 
 }
 <0> :: {
@@ -2590,7 +2587,10 @@ stack: naturals{n<-1> :: (n + 1)<0> :: n = (n + 1);<1>(ptr<4>,) :: suspend n;<-1
 <0> :: {
  ... 
 }
-<0>} :: main{continuation<-1> :: resume k;<1>(continuation,) :: {
+<0> :: {
+ ... 
+}
+<0> :: {
  ... 
 }
 <0> :: {
@@ -2609,14 +2609,11 @@ env: n: 1, main: fun<main>, naturals: fun<naturals>,
 }
 --- step exp n --->
 {
-stack: naturals{1<-1> :: (n + 1)<0> :: n = (n + 1);<1>(ptr<4>,) :: suspend n;<-1> :: {
+stack: naturals{1<-1> :: (n + 1)<0> :: n = (n + 1);<1>(ptr<4>,) :: yield n;<-1> :: {
  ... 
 }
 <0> :: while (true)
- ... <-1> :: return ();<-1> :: naturals();<-1> :: return 1;<-1> :: {
- ... 
-}
-<0> :: continuation<-1> :: resume k;<1>(continuation,) :: {
+ ... <-1> :: return ();<-1>} :: main{naturals();<-1> :: return 1;<-1> :: {
  ... 
 }
 <0> :: {
@@ -2625,7 +2622,10 @@ stack: naturals{1<-1> :: (n + 1)<0> :: n = (n + 1);<1>(ptr<4>,) :: suspend n;<-1
 <0> :: {
  ... 
 }
-<0>} :: main{continuation<-1> :: resume k;<1>(continuation,) :: {
+<0> :: {
+ ... 
+}
+<0> :: {
  ... 
 }
 <0> :: {
@@ -2644,14 +2644,11 @@ env: n: 1, main: fun<main>, naturals: fun<naturals>,
 }
 --- handle value 1 with (n + 1)<1>(1,) --->
 {
-stack: naturals{1<-1> :: (n + 1)<1>(1,) :: n = (n + 1);<1>(ptr<4>,) :: suspend n;<-1> :: {
+stack: naturals{1<-1> :: (n + 1)<1>(1,) :: n = (n + 1);<1>(ptr<4>,) :: yield n;<-1> :: {
  ... 
 }
 <0> :: while (true)
- ... <-1> :: return ();<-1> :: naturals();<-1> :: return 1;<-1> :: {
- ... 
-}
-<0> :: continuation<-1> :: resume k;<1>(continuation,) :: {
+ ... <-1> :: return ();<-1>} :: main{naturals();<-1> :: return 1;<-1> :: {
  ... 
 }
 <0> :: {
@@ -2660,7 +2657,10 @@ stack: naturals{1<-1> :: (n + 1)<1>(1,) :: n = (n + 1);<1>(ptr<4>,) :: suspend n
 <0> :: {
  ... 
 }
-<0>} :: main{continuation<-1> :: resume k;<1>(continuation,) :: {
+<0> :: {
+ ... 
+}
+<0> :: {
  ... 
 }
 <0> :: {
@@ -2679,14 +2679,11 @@ env: n: 1, main: fun<main>, naturals: fun<naturals>,
 }
 --- step exp 1 --->
 {
-stack: naturals{1<-1> :: (n + 1)<1>(1,) :: n = (n + 1);<1>(ptr<4>,) :: suspend n;<-1> :: {
+stack: naturals{1<-1> :: (n + 1)<1>(1,) :: n = (n + 1);<1>(ptr<4>,) :: yield n;<-1> :: {
  ... 
 }
 <0> :: while (true)
- ... <-1> :: return ();<-1> :: naturals();<-1> :: return 1;<-1> :: {
- ... 
-}
-<0> :: continuation<-1> :: resume k;<1>(continuation,) :: {
+ ... <-1> :: return ();<-1>} :: main{naturals();<-1> :: return 1;<-1> :: {
  ... 
 }
 <0> :: {
@@ -2695,7 +2692,10 @@ stack: naturals{1<-1> :: (n + 1)<1>(1,) :: n = (n + 1);<1>(ptr<4>,) :: suspend n
 <0> :: {
  ... 
 }
-<0>} :: main{continuation<-1> :: resume k;<1>(continuation,) :: {
+<0> :: {
+ ... 
+}
+<0> :: {
  ... 
 }
 <0> :: {
@@ -2714,14 +2714,11 @@ env: n: 1, main: fun<main>, naturals: fun<naturals>,
 }
 --- handle value 1 with (n + 1)<2>(1,1,) --->
 {
-stack: naturals{2<-1> :: n = (n + 1);<1>(ptr<4>,) :: suspend n;<-1> :: {
+stack: naturals{2<-1> :: n = (n + 1);<1>(ptr<4>,) :: yield n;<-1> :: {
  ... 
 }
 <0> :: while (true)
- ... <-1> :: return ();<-1> :: naturals();<-1> :: return 1;<-1> :: {
- ... 
-}
-<0> :: continuation<-1> :: resume k;<1>(continuation,) :: {
+ ... <-1> :: return ();<-1>} :: main{naturals();<-1> :: return 1;<-1> :: {
  ... 
 }
 <0> :: {
@@ -2730,7 +2727,10 @@ stack: naturals{2<-1> :: n = (n + 1);<1>(ptr<4>,) :: suspend n;<-1> :: {
 <0> :: {
  ... 
 }
-<0>} :: main{continuation<-1> :: resume k;<1>(continuation,) :: {
+<0> :: {
+ ... 
+}
+<0> :: {
  ... 
 }
 <0> :: {
@@ -2749,14 +2749,11 @@ env: n: 1, main: fun<main>, naturals: fun<naturals>,
 }
 --- handle value 2 with n = (n + 1);<2>(ptr<4>,2,) --->
 {
-stack: naturals{suspend n;<-1> :: {
+stack: naturals{yield n;<-1> :: {
  ... 
 }
 <0> :: while (true)
- ... <-1> :: return ();<-1> :: naturals();<-1> :: return 1;<-1> :: {
- ... 
-}
-<0> :: continuation<-1> :: resume k;<1>(continuation,) :: {
+ ... <-1> :: return ();<-1>} :: main{naturals();<-1> :: return 1;<-1> :: {
  ... 
 }
 <0> :: {
@@ -2765,7 +2762,10 @@ stack: naturals{suspend n;<-1> :: {
 <0> :: {
  ... 
 }
-<0>} :: main{continuation<-1> :: resume k;<1>(continuation,) :: {
+<0> :: {
+ ... 
+}
+<0> :: {
  ... 
 }
 <0> :: {
@@ -2782,16 +2782,13 @@ with (v, k)
 heap: fun<naturals>, fun<main>, 1, 2, 2, 0, continuation, 1, continuation, 
 env: n: 2, main: fun<main>, naturals: fun<naturals>, 
 }
---- step stmt suspend n; --->
+--- step stmt yield n; --->
 {
-stack: naturals{suspend n;<-1> :: {
+stack: naturals{yield n;<-1> :: {
  ... 
 }
 <0> :: while (true)
- ... <-1> :: return ();<-1> :: naturals();<-1> :: return 1;<-1> :: {
- ... 
-}
-<0> :: continuation<-1> :: resume k;<1>(continuation,) :: {
+ ... <-1> :: return ();<-1>} :: main{naturals();<-1> :: return 1;<-1> :: {
  ... 
 }
 <0> :: {
@@ -2800,7 +2797,10 @@ stack: naturals{suspend n;<-1> :: {
 <0> :: {
  ... 
 }
-<0>} :: main{continuation<-1> :: resume k;<1>(continuation,) :: {
+<0> :: {
+ ... 
+}
+<0> :: {
  ... 
 }
 <0> :: {
@@ -2817,16 +2817,13 @@ with (v, k)
 heap: fun<naturals>, fun<main>, 1, 2, 2, 0, continuation, 1, continuation, 
 env: n: 2, main: fun<main>, naturals: fun<naturals>, 
 }
---- step stmt suspend n; --->
+--- step stmt yield n; --->
 {
-stack: naturals{n<-1> :: suspend n;<0> :: {
+stack: naturals{n<-1> :: yield n;<0> :: {
  ... 
 }
 <0> :: while (true)
- ... <-1> :: return ();<-1> :: naturals();<-1> :: return 1;<-1> :: {
- ... 
-}
-<0> :: continuation<-1> :: resume k;<1>(continuation,) :: {
+ ... <-1> :: return ();<-1>} :: main{naturals();<-1> :: return 1;<-1> :: {
  ... 
 }
 <0> :: {
@@ -2835,7 +2832,10 @@ stack: naturals{n<-1> :: suspend n;<0> :: {
 <0> :: {
  ... 
 }
-<0>} :: main{continuation<-1> :: resume k;<1>(continuation,) :: {
+<0> :: {
+ ... 
+}
+<0> :: {
  ... 
 }
 <0> :: {
@@ -2854,14 +2854,11 @@ env: n: 2, main: fun<main>, naturals: fun<naturals>,
 }
 --- step exp n --->
 {
-stack: naturals{2<-1> :: suspend n;<0> :: {
+stack: naturals{2<-1> :: yield n;<0> :: {
  ... 
 }
 <0> :: while (true)
- ... <-1> :: return ();<-1> :: naturals();<-1> :: return 1;<-1> :: {
- ... 
-}
-<0> :: continuation<-1> :: resume k;<1>(continuation,) :: {
+ ... <-1> :: return ();<-1>} :: main{naturals();<-1> :: return 1;<-1> :: {
  ... 
 }
 <0> :: {
@@ -2870,7 +2867,10 @@ stack: naturals{2<-1> :: suspend n;<0> :: {
 <0> :: {
  ... 
 }
-<0>} :: main{continuation<-1> :: resume k;<1>(continuation,) :: {
+<0> :: {
+ ... 
+}
+<0> :: {
  ... 
 }
 <0> :: {
@@ -2887,7 +2887,7 @@ with (v, k)
 heap: fun<naturals>, fun<main>, 1, 2, 2, 0, continuation, 1, continuation, 
 env: n: 2, main: fun<main>, naturals: fun<naturals>, 
 }
---- handle value 2 with suspend n;<1>(2,) --->
+--- handle value 2 with yield n;<1>(2,) --->
 {
 stack: main{{
  ... 
@@ -2898,7 +2898,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 1, 2, 2, 0, continuation, 1, continuation, 2, continuation, 
-env: k: continuation, v: 2, k: continuation, v: 1, k: continuation, v: 0, count: 2, sum: 1, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 2, count: 2, sum: 1, main: fun<main>, naturals: fun<naturals>, 
 }
 --- step stmt {
  ... 
@@ -2917,7 +2917,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 1, 2, 2, 0, continuation, 1, continuation, 2, continuation, 
-env: k: continuation, v: 2, k: continuation, v: 1, k: continuation, v: 0, count: 2, sum: 1, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 2, count: 2, sum: 1, main: fun<main>, naturals: fun<naturals>, 
 }
 --- step stmt {
  ... 
@@ -2936,7 +2936,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 1, 2, 2, 0, continuation, 1, continuation, 2, continuation, 
-env: k: continuation, v: 2, k: continuation, v: 1, k: continuation, v: 0, count: 2, sum: 1, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 2, count: 2, sum: 1, main: fun<main>, naturals: fun<naturals>, 
 }
 --- step stmt sum = (sum + v); ...  --->
 {
@@ -2952,7 +2952,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 1, 2, 2, 0, continuation, 1, continuation, 2, continuation, 
-env: k: continuation, v: 2, k: continuation, v: 1, k: continuation, v: 0, count: 2, sum: 1, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 2, count: 2, sum: 1, main: fun<main>, naturals: fun<naturals>, 
 }
 --- step stmt sum = (sum + v); --->
 {
@@ -2968,7 +2968,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 1, 2, 2, 0, continuation, 1, continuation, 2, continuation, 
-env: k: continuation, v: 2, k: continuation, v: 1, k: continuation, v: 0, count: 2, sum: 1, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 2, count: 2, sum: 1, main: fun<main>, naturals: fun<naturals>, 
 }
 --- step lvalue sum --->
 {
@@ -2984,7 +2984,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 1, 2, 2, 0, continuation, 1, continuation, 2, continuation, 
-env: k: continuation, v: 2, k: continuation, v: 1, k: continuation, v: 0, count: 2, sum: 1, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 2, count: 2, sum: 1, main: fun<main>, naturals: fun<naturals>, 
 }
 --- handle value ptr<2> with sum = (sum + v);<1>(ptr<2>,) --->
 {
@@ -3000,7 +3000,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 1, 2, 2, 0, continuation, 1, continuation, 2, continuation, 
-env: k: continuation, v: 2, k: continuation, v: 1, k: continuation, v: 0, count: 2, sum: 1, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 2, count: 2, sum: 1, main: fun<main>, naturals: fun<naturals>, 
 }
 --- step exp (sum + v) --->
 {
@@ -3016,7 +3016,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 1, 2, 2, 0, continuation, 1, continuation, 2, continuation, 
-env: k: continuation, v: 2, k: continuation, v: 1, k: continuation, v: 0, count: 2, sum: 1, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 2, count: 2, sum: 1, main: fun<main>, naturals: fun<naturals>, 
 }
 --- step exp sum --->
 {
@@ -3032,7 +3032,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 1, 2, 2, 0, continuation, 1, continuation, 2, continuation, 
-env: k: continuation, v: 2, k: continuation, v: 1, k: continuation, v: 0, count: 2, sum: 1, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 2, count: 2, sum: 1, main: fun<main>, naturals: fun<naturals>, 
 }
 --- handle value 1 with (sum + v)<1>(1,) --->
 {
@@ -3048,7 +3048,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 1, 2, 2, 0, continuation, 1, continuation, 2, continuation, 
-env: k: continuation, v: 2, k: continuation, v: 1, k: continuation, v: 0, count: 2, sum: 1, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 2, count: 2, sum: 1, main: fun<main>, naturals: fun<naturals>, 
 }
 --- step exp v --->
 {
@@ -3064,7 +3064,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 1, 2, 2, 0, continuation, 1, continuation, 2, continuation, 
-env: k: continuation, v: 2, k: continuation, v: 1, k: continuation, v: 0, count: 2, sum: 1, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 2, count: 2, sum: 1, main: fun<main>, naturals: fun<naturals>, 
 }
 --- handle value 2 with (sum + v)<2>(1,2,) --->
 {
@@ -3080,7 +3080,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 1, 2, 2, 0, continuation, 1, continuation, 2, continuation, 
-env: k: continuation, v: 2, k: continuation, v: 1, k: continuation, v: 0, count: 2, sum: 1, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 2, count: 2, sum: 1, main: fun<main>, naturals: fun<naturals>, 
 }
 --- handle value 3 with sum = (sum + v);<2>(ptr<2>,3,) --->
 {
@@ -3096,7 +3096,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 3, 2, 2, 0, continuation, 1, continuation, 2, continuation, 
-env: k: continuation, v: 2, k: continuation, v: 1, k: continuation, v: 0, count: 2, sum: 3, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 2, count: 2, sum: 3, main: fun<main>, naturals: fun<naturals>, 
 }
 --- step stmt count = (count + 1); ...  --->
 {
@@ -3115,7 +3115,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 3, 2, 2, 0, continuation, 1, continuation, 2, continuation, 
-env: k: continuation, v: 2, k: continuation, v: 1, k: continuation, v: 0, count: 2, sum: 3, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 2, count: 2, sum: 3, main: fun<main>, naturals: fun<naturals>, 
 }
 --- step stmt count = (count + 1); --->
 {
@@ -3134,7 +3134,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 3, 2, 2, 0, continuation, 1, continuation, 2, continuation, 
-env: k: continuation, v: 2, k: continuation, v: 1, k: continuation, v: 0, count: 2, sum: 3, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 2, count: 2, sum: 3, main: fun<main>, naturals: fun<naturals>, 
 }
 --- step lvalue count --->
 {
@@ -3153,7 +3153,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 3, 2, 2, 0, continuation, 1, continuation, 2, continuation, 
-env: k: continuation, v: 2, k: continuation, v: 1, k: continuation, v: 0, count: 2, sum: 3, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 2, count: 2, sum: 3, main: fun<main>, naturals: fun<naturals>, 
 }
 --- handle value ptr<3> with count = (count + 1);<1>(ptr<3>,) --->
 {
@@ -3172,7 +3172,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 3, 2, 2, 0, continuation, 1, continuation, 2, continuation, 
-env: k: continuation, v: 2, k: continuation, v: 1, k: continuation, v: 0, count: 2, sum: 3, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 2, count: 2, sum: 3, main: fun<main>, naturals: fun<naturals>, 
 }
 --- step exp (count + 1) --->
 {
@@ -3191,7 +3191,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 3, 2, 2, 0, continuation, 1, continuation, 2, continuation, 
-env: k: continuation, v: 2, k: continuation, v: 1, k: continuation, v: 0, count: 2, sum: 3, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 2, count: 2, sum: 3, main: fun<main>, naturals: fun<naturals>, 
 }
 --- step exp count --->
 {
@@ -3210,7 +3210,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 3, 2, 2, 0, continuation, 1, continuation, 2, continuation, 
-env: k: continuation, v: 2, k: continuation, v: 1, k: continuation, v: 0, count: 2, sum: 3, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 2, count: 2, sum: 3, main: fun<main>, naturals: fun<naturals>, 
 }
 --- handle value 2 with (count + 1)<1>(2,) --->
 {
@@ -3229,7 +3229,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 3, 2, 2, 0, continuation, 1, continuation, 2, continuation, 
-env: k: continuation, v: 2, k: continuation, v: 1, k: continuation, v: 0, count: 2, sum: 3, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 2, count: 2, sum: 3, main: fun<main>, naturals: fun<naturals>, 
 }
 --- step exp 1 --->
 {
@@ -3248,7 +3248,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 3, 2, 2, 0, continuation, 1, continuation, 2, continuation, 
-env: k: continuation, v: 2, k: continuation, v: 1, k: continuation, v: 0, count: 2, sum: 3, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 2, count: 2, sum: 3, main: fun<main>, naturals: fun<naturals>, 
 }
 --- handle value 1 with (count + 1)<2>(2,1,) --->
 {
@@ -3267,7 +3267,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 3, 2, 2, 0, continuation, 1, continuation, 2, continuation, 
-env: k: continuation, v: 2, k: continuation, v: 1, k: continuation, v: 0, count: 2, sum: 3, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 2, count: 2, sum: 3, main: fun<main>, naturals: fun<naturals>, 
 }
 --- handle value 3 with count = (count + 1);<2>(ptr<3>,3,) --->
 {
@@ -3286,7 +3286,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 3, 3, 2, 0, continuation, 1, continuation, 2, continuation, 
-env: k: continuation, v: 2, k: continuation, v: 1, k: continuation, v: 0, count: 3, sum: 3, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 2, count: 3, sum: 3, main: fun<main>, naturals: fun<naturals>, 
 }
 --- step stmt if ((count == 5))
  ... 
@@ -3308,7 +3308,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 3, 3, 2, 0, continuation, 1, continuation, 2, continuation, 
-env: k: continuation, v: 2, k: continuation, v: 1, k: continuation, v: 0, count: 3, sum: 3, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 2, count: 3, sum: 3, main: fun<main>, naturals: fun<naturals>, 
 }
 --- step exp (count == 5) --->
 {
@@ -3327,7 +3327,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 3, 3, 2, 0, continuation, 1, continuation, 2, continuation, 
-env: k: continuation, v: 2, k: continuation, v: 1, k: continuation, v: 0, count: 3, sum: 3, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 2, count: 3, sum: 3, main: fun<main>, naturals: fun<naturals>, 
 }
 --- step exp count --->
 {
@@ -3346,7 +3346,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 3, 3, 2, 0, continuation, 1, continuation, 2, continuation, 
-env: k: continuation, v: 2, k: continuation, v: 1, k: continuation, v: 0, count: 3, sum: 3, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 2, count: 3, sum: 3, main: fun<main>, naturals: fun<naturals>, 
 }
 --- handle value 3 with (count == 5)<1>(3,) --->
 {
@@ -3365,7 +3365,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 3, 3, 2, 0, continuation, 1, continuation, 2, continuation, 
-env: k: continuation, v: 2, k: continuation, v: 1, k: continuation, v: 0, count: 3, sum: 3, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 2, count: 3, sum: 3, main: fun<main>, naturals: fun<naturals>, 
 }
 --- step exp 5 --->
 {
@@ -3384,7 +3384,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 3, 3, 2, 0, continuation, 1, continuation, 2, continuation, 
-env: k: continuation, v: 2, k: continuation, v: 1, k: continuation, v: 0, count: 3, sum: 3, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 2, count: 3, sum: 3, main: fun<main>, naturals: fun<naturals>, 
 }
 --- handle value 5 with (count == 5)<2>(3,5,) --->
 {
@@ -3403,7 +3403,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 3, 3, 2, 0, continuation, 1, continuation, 2, continuation, 
-env: k: continuation, v: 2, k: continuation, v: 1, k: continuation, v: 0, count: 3, sum: 3, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 2, count: 3, sum: 3, main: fun<main>, naturals: fun<naturals>, 
 }
 --- handle value false with if ((count == 5))
  ... 
@@ -3425,7 +3425,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 3, 3, 2, 0, continuation, 1, continuation, 2, continuation, 
-env: k: continuation, v: 2, k: continuation, v: 1, k: continuation, v: 0, count: 3, sum: 3, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 2, count: 3, sum: 3, main: fun<main>, naturals: fun<naturals>, 
 }
 --- step stmt {
  ... 
@@ -3447,7 +3447,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 3, 3, 2, 0, continuation, 1, continuation, 2, continuation, 
-env: k: continuation, v: 2, k: continuation, v: 1, k: continuation, v: 0, count: 3, sum: 3, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 2, count: 3, sum: 3, main: fun<main>, naturals: fun<naturals>, 
 }
 --- step stmt resume k; --->
 {
@@ -3466,7 +3466,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 3, 3, 2, 0, continuation, 1, continuation, 2, continuation, 
-env: k: continuation, v: 2, k: continuation, v: 1, k: continuation, v: 0, count: 3, sum: 3, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 2, count: 3, sum: 3, main: fun<main>, naturals: fun<naturals>, 
 }
 --- step exp k --->
 {
@@ -3485,7 +3485,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 3, 3, 2, 0, continuation, 1, continuation, 2, continuation, 
-env: k: continuation, v: 2, k: continuation, v: 1, k: continuation, v: 0, count: 3, sum: 3, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 2, count: 3, sum: 3, main: fun<main>, naturals: fun<naturals>, 
 }
 --- handle value continuation with resume k;<1>(continuation,) --->
 {
@@ -3493,10 +3493,7 @@ stack: naturals{{
  ... 
 }
 <0> :: while (true)
- ... <-1> :: return ();<-1> :: naturals();<-1> :: return 1;<-1> :: {
- ... 
-}
-<0> :: continuation<-1> :: resume k;<1>(continuation,) :: {
+ ... <-1> :: return ();<-1>} :: main{naturals();<-1> :: return 1;<-1> :: {
  ... 
 }
 <0> :: {
@@ -3505,7 +3502,10 @@ stack: naturals{{
 <0> :: {
  ... 
 }
-<0> :: continuation<-1> :: resume k;<1>(continuation,) :: {
+<0> :: {
+ ... 
+}
+<0> :: {
  ... 
 }
 <0> :: {
@@ -3514,7 +3514,7 @@ stack: naturals{{
 <0> :: {
  ... 
 }
-<0>} :: main{continuation<-1> :: resume k;<1>(continuation,) :: {
+<0> :: {
  ... 
 }
 <0> :: {
@@ -3537,10 +3537,7 @@ env: n: 2, main: fun<main>, naturals: fun<naturals>,
  --->
 {
 stack: naturals{while (true)
- ... <-1> :: return ();<-1> :: naturals();<-1> :: return 1;<-1> :: {
- ... 
-}
-<0> :: continuation<-1> :: resume k;<1>(continuation,) :: {
+ ... <-1> :: return ();<-1>} :: main{naturals();<-1> :: return 1;<-1> :: {
  ... 
 }
 <0> :: {
@@ -3549,7 +3546,10 @@ stack: naturals{while (true)
 <0> :: {
  ... 
 }
-<0> :: continuation<-1> :: resume k;<1>(continuation,) :: {
+<0> :: {
+ ... 
+}
+<0> :: {
  ... 
 }
 <0> :: {
@@ -3558,7 +3558,7 @@ stack: naturals{while (true)
 <0> :: {
  ... 
 }
-<0>} :: main{continuation<-1> :: resume k;<1>(continuation,) :: {
+<0> :: {
  ... 
 }
 <0> :: {
@@ -3579,10 +3579,7 @@ env: n: 2, main: fun<main>, naturals: fun<naturals>,
  ...  --->
 {
 stack: naturals{true<-1> :: while (true)
- ... <0> :: return ();<-1> :: naturals();<-1> :: return 1;<-1> :: {
- ... 
-}
-<0> :: continuation<-1> :: resume k;<1>(continuation,) :: {
+ ... <0> :: return ();<-1>} :: main{naturals();<-1> :: return 1;<-1> :: {
  ... 
 }
 <0> :: {
@@ -3591,7 +3588,10 @@ stack: naturals{true<-1> :: while (true)
 <0> :: {
  ... 
 }
-<0> :: continuation<-1> :: resume k;<1>(continuation,) :: {
+<0> :: {
+ ... 
+}
+<0> :: {
  ... 
 }
 <0> :: {
@@ -3600,7 +3600,7 @@ stack: naturals{true<-1> :: while (true)
 <0> :: {
  ... 
 }
-<0>} :: main{continuation<-1> :: resume k;<1>(continuation,) :: {
+<0> :: {
  ... 
 }
 <0> :: {
@@ -3620,10 +3620,7 @@ env: n: 2, main: fun<main>, naturals: fun<naturals>,
 --- step exp true --->
 {
 stack: naturals{true<-1> :: while (true)
- ... <0> :: return ();<-1> :: naturals();<-1> :: return 1;<-1> :: {
- ... 
-}
-<0> :: continuation<-1> :: resume k;<1>(continuation,) :: {
+ ... <0> :: return ();<-1>} :: main{naturals();<-1> :: return 1;<-1> :: {
  ... 
 }
 <0> :: {
@@ -3632,7 +3629,10 @@ stack: naturals{true<-1> :: while (true)
 <0> :: {
  ... 
 }
-<0> :: continuation<-1> :: resume k;<1>(continuation,) :: {
+<0> :: {
+ ... 
+}
+<0> :: {
  ... 
 }
 <0> :: {
@@ -3641,7 +3641,7 @@ stack: naturals{true<-1> :: while (true)
 <0> :: {
  ... 
 }
-<0>} :: main{continuation<-1> :: resume k;<1>(continuation,) :: {
+<0> :: {
  ... 
 }
 <0> :: {
@@ -3665,10 +3665,7 @@ stack: naturals{{
  ... 
 }
 <-1> :: while (true)
- ... <-1> :: return ();<-1> :: naturals();<-1> :: return 1;<-1> :: {
- ... 
-}
-<0> :: continuation<-1> :: resume k;<1>(continuation,) :: {
+ ... <-1> :: return ();<-1>} :: main{naturals();<-1> :: return 1;<-1> :: {
  ... 
 }
 <0> :: {
@@ -3677,7 +3674,10 @@ stack: naturals{{
 <0> :: {
  ... 
 }
-<0> :: continuation<-1> :: resume k;<1>(continuation,) :: {
+<0> :: {
+ ... 
+}
+<0> :: {
  ... 
 }
 <0> :: {
@@ -3686,7 +3686,7 @@ stack: naturals{{
 <0> :: {
  ... 
 }
-<0>} :: main{continuation<-1> :: resume k;<1>(continuation,) :: {
+<0> :: {
  ... 
 }
 <0> :: {
@@ -3712,10 +3712,7 @@ stack: naturals{n = (n + 1); ... <-1> :: {
  ... 
 }
 <0> :: while (true)
- ... <-1> :: return ();<-1> :: naturals();<-1> :: return 1;<-1> :: {
- ... 
-}
-<0> :: continuation<-1> :: resume k;<1>(continuation,) :: {
+ ... <-1> :: return ();<-1>} :: main{naturals();<-1> :: return 1;<-1> :: {
  ... 
 }
 <0> :: {
@@ -3724,7 +3721,10 @@ stack: naturals{n = (n + 1); ... <-1> :: {
 <0> :: {
  ... 
 }
-<0> :: continuation<-1> :: resume k;<1>(continuation,) :: {
+<0> :: {
+ ... 
+}
+<0> :: {
  ... 
 }
 <0> :: {
@@ -3733,7 +3733,7 @@ stack: naturals{n = (n + 1); ... <-1> :: {
 <0> :: {
  ... 
 }
-<0>} :: main{continuation<-1> :: resume k;<1>(continuation,) :: {
+<0> :: {
  ... 
 }
 <0> :: {
@@ -3752,14 +3752,11 @@ env: n: 2, main: fun<main>, naturals: fun<naturals>,
 }
 --- step stmt n = (n + 1); ...  --->
 {
-stack: naturals{n = (n + 1);<-1> :: suspend n;<-1> :: {
+stack: naturals{n = (n + 1);<-1> :: yield n;<-1> :: {
  ... 
 }
 <0> :: while (true)
- ... <-1> :: return ();<-1> :: naturals();<-1> :: return 1;<-1> :: {
- ... 
-}
-<0> :: continuation<-1> :: resume k;<1>(continuation,) :: {
+ ... <-1> :: return ();<-1>} :: main{naturals();<-1> :: return 1;<-1> :: {
  ... 
 }
 <0> :: {
@@ -3768,7 +3765,10 @@ stack: naturals{n = (n + 1);<-1> :: suspend n;<-1> :: {
 <0> :: {
  ... 
 }
-<0> :: continuation<-1> :: resume k;<1>(continuation,) :: {
+<0> :: {
+ ... 
+}
+<0> :: {
  ... 
 }
 <0> :: {
@@ -3777,7 +3777,7 @@ stack: naturals{n = (n + 1);<-1> :: suspend n;<-1> :: {
 <0> :: {
  ... 
 }
-<0>} :: main{continuation<-1> :: resume k;<1>(continuation,) :: {
+<0> :: {
  ... 
 }
 <0> :: {
@@ -3796,14 +3796,11 @@ env: n: 2, main: fun<main>, naturals: fun<naturals>,
 }
 --- step stmt n = (n + 1); --->
 {
-stack: naturals{n<-1> :: n = (n + 1);<0> :: suspend n;<-1> :: {
+stack: naturals{n<-1> :: n = (n + 1);<0> :: yield n;<-1> :: {
  ... 
 }
 <0> :: while (true)
- ... <-1> :: return ();<-1> :: naturals();<-1> :: return 1;<-1> :: {
- ... 
-}
-<0> :: continuation<-1> :: resume k;<1>(continuation,) :: {
+ ... <-1> :: return ();<-1>} :: main{naturals();<-1> :: return 1;<-1> :: {
  ... 
 }
 <0> :: {
@@ -3812,7 +3809,10 @@ stack: naturals{n<-1> :: n = (n + 1);<0> :: suspend n;<-1> :: {
 <0> :: {
  ... 
 }
-<0> :: continuation<-1> :: resume k;<1>(continuation,) :: {
+<0> :: {
+ ... 
+}
+<0> :: {
  ... 
 }
 <0> :: {
@@ -3821,7 +3821,7 @@ stack: naturals{n<-1> :: n = (n + 1);<0> :: suspend n;<-1> :: {
 <0> :: {
  ... 
 }
-<0>} :: main{continuation<-1> :: resume k;<1>(continuation,) :: {
+<0> :: {
  ... 
 }
 <0> :: {
@@ -3840,14 +3840,11 @@ env: n: 2, main: fun<main>, naturals: fun<naturals>,
 }
 --- step lvalue n --->
 {
-stack: naturals{ptr<4><-1> :: n = (n + 1);<0> :: suspend n;<-1> :: {
+stack: naturals{ptr<4><-1> :: n = (n + 1);<0> :: yield n;<-1> :: {
  ... 
 }
 <0> :: while (true)
- ... <-1> :: return ();<-1> :: naturals();<-1> :: return 1;<-1> :: {
- ... 
-}
-<0> :: continuation<-1> :: resume k;<1>(continuation,) :: {
+ ... <-1> :: return ();<-1>} :: main{naturals();<-1> :: return 1;<-1> :: {
  ... 
 }
 <0> :: {
@@ -3856,7 +3853,10 @@ stack: naturals{ptr<4><-1> :: n = (n + 1);<0> :: suspend n;<-1> :: {
 <0> :: {
  ... 
 }
-<0> :: continuation<-1> :: resume k;<1>(continuation,) :: {
+<0> :: {
+ ... 
+}
+<0> :: {
  ... 
 }
 <0> :: {
@@ -3865,7 +3865,7 @@ stack: naturals{ptr<4><-1> :: n = (n + 1);<0> :: suspend n;<-1> :: {
 <0> :: {
  ... 
 }
-<0>} :: main{continuation<-1> :: resume k;<1>(continuation,) :: {
+<0> :: {
  ... 
 }
 <0> :: {
@@ -3884,14 +3884,11 @@ env: n: 2, main: fun<main>, naturals: fun<naturals>,
 }
 --- handle value ptr<4> with n = (n + 1);<1>(ptr<4>,) --->
 {
-stack: naturals{(n + 1)<-1> :: n = (n + 1);<1>(ptr<4>,) :: suspend n;<-1> :: {
+stack: naturals{(n + 1)<-1> :: n = (n + 1);<1>(ptr<4>,) :: yield n;<-1> :: {
  ... 
 }
 <0> :: while (true)
- ... <-1> :: return ();<-1> :: naturals();<-1> :: return 1;<-1> :: {
- ... 
-}
-<0> :: continuation<-1> :: resume k;<1>(continuation,) :: {
+ ... <-1> :: return ();<-1>} :: main{naturals();<-1> :: return 1;<-1> :: {
  ... 
 }
 <0> :: {
@@ -3900,7 +3897,10 @@ stack: naturals{(n + 1)<-1> :: n = (n + 1);<1>(ptr<4>,) :: suspend n;<-1> :: {
 <0> :: {
  ... 
 }
-<0> :: continuation<-1> :: resume k;<1>(continuation,) :: {
+<0> :: {
+ ... 
+}
+<0> :: {
  ... 
 }
 <0> :: {
@@ -3909,7 +3909,7 @@ stack: naturals{(n + 1)<-1> :: n = (n + 1);<1>(ptr<4>,) :: suspend n;<-1> :: {
 <0> :: {
  ... 
 }
-<0>} :: main{continuation<-1> :: resume k;<1>(continuation,) :: {
+<0> :: {
  ... 
 }
 <0> :: {
@@ -3928,14 +3928,11 @@ env: n: 2, main: fun<main>, naturals: fun<naturals>,
 }
 --- step exp (n + 1) --->
 {
-stack: naturals{n<-1> :: (n + 1)<0> :: n = (n + 1);<1>(ptr<4>,) :: suspend n;<-1> :: {
+stack: naturals{n<-1> :: (n + 1)<0> :: n = (n + 1);<1>(ptr<4>,) :: yield n;<-1> :: {
  ... 
 }
 <0> :: while (true)
- ... <-1> :: return ();<-1> :: naturals();<-1> :: return 1;<-1> :: {
- ... 
-}
-<0> :: continuation<-1> :: resume k;<1>(continuation,) :: {
+ ... <-1> :: return ();<-1>} :: main{naturals();<-1> :: return 1;<-1> :: {
  ... 
 }
 <0> :: {
@@ -3944,7 +3941,10 @@ stack: naturals{n<-1> :: (n + 1)<0> :: n = (n + 1);<1>(ptr<4>,) :: suspend n;<-1
 <0> :: {
  ... 
 }
-<0> :: continuation<-1> :: resume k;<1>(continuation,) :: {
+<0> :: {
+ ... 
+}
+<0> :: {
  ... 
 }
 <0> :: {
@@ -3953,7 +3953,7 @@ stack: naturals{n<-1> :: (n + 1)<0> :: n = (n + 1);<1>(ptr<4>,) :: suspend n;<-1
 <0> :: {
  ... 
 }
-<0>} :: main{continuation<-1> :: resume k;<1>(continuation,) :: {
+<0> :: {
  ... 
 }
 <0> :: {
@@ -3972,14 +3972,11 @@ env: n: 2, main: fun<main>, naturals: fun<naturals>,
 }
 --- step exp n --->
 {
-stack: naturals{2<-1> :: (n + 1)<0> :: n = (n + 1);<1>(ptr<4>,) :: suspend n;<-1> :: {
+stack: naturals{2<-1> :: (n + 1)<0> :: n = (n + 1);<1>(ptr<4>,) :: yield n;<-1> :: {
  ... 
 }
 <0> :: while (true)
- ... <-1> :: return ();<-1> :: naturals();<-1> :: return 1;<-1> :: {
- ... 
-}
-<0> :: continuation<-1> :: resume k;<1>(continuation,) :: {
+ ... <-1> :: return ();<-1>} :: main{naturals();<-1> :: return 1;<-1> :: {
  ... 
 }
 <0> :: {
@@ -3988,7 +3985,10 @@ stack: naturals{2<-1> :: (n + 1)<0> :: n = (n + 1);<1>(ptr<4>,) :: suspend n;<-1
 <0> :: {
  ... 
 }
-<0> :: continuation<-1> :: resume k;<1>(continuation,) :: {
+<0> :: {
+ ... 
+}
+<0> :: {
  ... 
 }
 <0> :: {
@@ -3997,7 +3997,7 @@ stack: naturals{2<-1> :: (n + 1)<0> :: n = (n + 1);<1>(ptr<4>,) :: suspend n;<-1
 <0> :: {
  ... 
 }
-<0>} :: main{continuation<-1> :: resume k;<1>(continuation,) :: {
+<0> :: {
  ... 
 }
 <0> :: {
@@ -4016,14 +4016,11 @@ env: n: 2, main: fun<main>, naturals: fun<naturals>,
 }
 --- handle value 2 with (n + 1)<1>(2,) --->
 {
-stack: naturals{1<-1> :: (n + 1)<1>(2,) :: n = (n + 1);<1>(ptr<4>,) :: suspend n;<-1> :: {
+stack: naturals{1<-1> :: (n + 1)<1>(2,) :: n = (n + 1);<1>(ptr<4>,) :: yield n;<-1> :: {
  ... 
 }
 <0> :: while (true)
- ... <-1> :: return ();<-1> :: naturals();<-1> :: return 1;<-1> :: {
- ... 
-}
-<0> :: continuation<-1> :: resume k;<1>(continuation,) :: {
+ ... <-1> :: return ();<-1>} :: main{naturals();<-1> :: return 1;<-1> :: {
  ... 
 }
 <0> :: {
@@ -4032,7 +4029,10 @@ stack: naturals{1<-1> :: (n + 1)<1>(2,) :: n = (n + 1);<1>(ptr<4>,) :: suspend n
 <0> :: {
  ... 
 }
-<0> :: continuation<-1> :: resume k;<1>(continuation,) :: {
+<0> :: {
+ ... 
+}
+<0> :: {
  ... 
 }
 <0> :: {
@@ -4041,7 +4041,7 @@ stack: naturals{1<-1> :: (n + 1)<1>(2,) :: n = (n + 1);<1>(ptr<4>,) :: suspend n
 <0> :: {
  ... 
 }
-<0>} :: main{continuation<-1> :: resume k;<1>(continuation,) :: {
+<0> :: {
  ... 
 }
 <0> :: {
@@ -4060,14 +4060,11 @@ env: n: 2, main: fun<main>, naturals: fun<naturals>,
 }
 --- step exp 1 --->
 {
-stack: naturals{1<-1> :: (n + 1)<1>(2,) :: n = (n + 1);<1>(ptr<4>,) :: suspend n;<-1> :: {
+stack: naturals{1<-1> :: (n + 1)<1>(2,) :: n = (n + 1);<1>(ptr<4>,) :: yield n;<-1> :: {
  ... 
 }
 <0> :: while (true)
- ... <-1> :: return ();<-1> :: naturals();<-1> :: return 1;<-1> :: {
- ... 
-}
-<0> :: continuation<-1> :: resume k;<1>(continuation,) :: {
+ ... <-1> :: return ();<-1>} :: main{naturals();<-1> :: return 1;<-1> :: {
  ... 
 }
 <0> :: {
@@ -4076,7 +4073,10 @@ stack: naturals{1<-1> :: (n + 1)<1>(2,) :: n = (n + 1);<1>(ptr<4>,) :: suspend n
 <0> :: {
  ... 
 }
-<0> :: continuation<-1> :: resume k;<1>(continuation,) :: {
+<0> :: {
+ ... 
+}
+<0> :: {
  ... 
 }
 <0> :: {
@@ -4085,7 +4085,7 @@ stack: naturals{1<-1> :: (n + 1)<1>(2,) :: n = (n + 1);<1>(ptr<4>,) :: suspend n
 <0> :: {
  ... 
 }
-<0>} :: main{continuation<-1> :: resume k;<1>(continuation,) :: {
+<0> :: {
  ... 
 }
 <0> :: {
@@ -4104,14 +4104,11 @@ env: n: 2, main: fun<main>, naturals: fun<naturals>,
 }
 --- handle value 1 with (n + 1)<2>(2,1,) --->
 {
-stack: naturals{3<-1> :: n = (n + 1);<1>(ptr<4>,) :: suspend n;<-1> :: {
+stack: naturals{3<-1> :: n = (n + 1);<1>(ptr<4>,) :: yield n;<-1> :: {
  ... 
 }
 <0> :: while (true)
- ... <-1> :: return ();<-1> :: naturals();<-1> :: return 1;<-1> :: {
- ... 
-}
-<0> :: continuation<-1> :: resume k;<1>(continuation,) :: {
+ ... <-1> :: return ();<-1>} :: main{naturals();<-1> :: return 1;<-1> :: {
  ... 
 }
 <0> :: {
@@ -4120,7 +4117,10 @@ stack: naturals{3<-1> :: n = (n + 1);<1>(ptr<4>,) :: suspend n;<-1> :: {
 <0> :: {
  ... 
 }
-<0> :: continuation<-1> :: resume k;<1>(continuation,) :: {
+<0> :: {
+ ... 
+}
+<0> :: {
  ... 
 }
 <0> :: {
@@ -4129,7 +4129,7 @@ stack: naturals{3<-1> :: n = (n + 1);<1>(ptr<4>,) :: suspend n;<-1> :: {
 <0> :: {
  ... 
 }
-<0>} :: main{continuation<-1> :: resume k;<1>(continuation,) :: {
+<0> :: {
  ... 
 }
 <0> :: {
@@ -4148,14 +4148,11 @@ env: n: 2, main: fun<main>, naturals: fun<naturals>,
 }
 --- handle value 3 with n = (n + 1);<2>(ptr<4>,3,) --->
 {
-stack: naturals{suspend n;<-1> :: {
+stack: naturals{yield n;<-1> :: {
  ... 
 }
 <0> :: while (true)
- ... <-1> :: return ();<-1> :: naturals();<-1> :: return 1;<-1> :: {
- ... 
-}
-<0> :: continuation<-1> :: resume k;<1>(continuation,) :: {
+ ... <-1> :: return ();<-1>} :: main{naturals();<-1> :: return 1;<-1> :: {
  ... 
 }
 <0> :: {
@@ -4164,7 +4161,10 @@ stack: naturals{suspend n;<-1> :: {
 <0> :: {
  ... 
 }
-<0> :: continuation<-1> :: resume k;<1>(continuation,) :: {
+<0> :: {
+ ... 
+}
+<0> :: {
  ... 
 }
 <0> :: {
@@ -4173,7 +4173,7 @@ stack: naturals{suspend n;<-1> :: {
 <0> :: {
  ... 
 }
-<0>} :: main{continuation<-1> :: resume k;<1>(continuation,) :: {
+<0> :: {
  ... 
 }
 <0> :: {
@@ -4190,16 +4190,13 @@ with (v, k)
 heap: fun<naturals>, fun<main>, 3, 3, 3, 0, continuation, 1, continuation, 2, continuation, 
 env: n: 3, main: fun<main>, naturals: fun<naturals>, 
 }
---- step stmt suspend n; --->
+--- step stmt yield n; --->
 {
-stack: naturals{suspend n;<-1> :: {
+stack: naturals{yield n;<-1> :: {
  ... 
 }
 <0> :: while (true)
- ... <-1> :: return ();<-1> :: naturals();<-1> :: return 1;<-1> :: {
- ... 
-}
-<0> :: continuation<-1> :: resume k;<1>(continuation,) :: {
+ ... <-1> :: return ();<-1>} :: main{naturals();<-1> :: return 1;<-1> :: {
  ... 
 }
 <0> :: {
@@ -4208,7 +4205,10 @@ stack: naturals{suspend n;<-1> :: {
 <0> :: {
  ... 
 }
-<0> :: continuation<-1> :: resume k;<1>(continuation,) :: {
+<0> :: {
+ ... 
+}
+<0> :: {
  ... 
 }
 <0> :: {
@@ -4217,7 +4217,7 @@ stack: naturals{suspend n;<-1> :: {
 <0> :: {
  ... 
 }
-<0>} :: main{continuation<-1> :: resume k;<1>(continuation,) :: {
+<0> :: {
  ... 
 }
 <0> :: {
@@ -4234,16 +4234,13 @@ with (v, k)
 heap: fun<naturals>, fun<main>, 3, 3, 3, 0, continuation, 1, continuation, 2, continuation, 
 env: n: 3, main: fun<main>, naturals: fun<naturals>, 
 }
---- step stmt suspend n; --->
+--- step stmt yield n; --->
 {
-stack: naturals{n<-1> :: suspend n;<0> :: {
+stack: naturals{n<-1> :: yield n;<0> :: {
  ... 
 }
 <0> :: while (true)
- ... <-1> :: return ();<-1> :: naturals();<-1> :: return 1;<-1> :: {
- ... 
-}
-<0> :: continuation<-1> :: resume k;<1>(continuation,) :: {
+ ... <-1> :: return ();<-1>} :: main{naturals();<-1> :: return 1;<-1> :: {
  ... 
 }
 <0> :: {
@@ -4252,7 +4249,10 @@ stack: naturals{n<-1> :: suspend n;<0> :: {
 <0> :: {
  ... 
 }
-<0> :: continuation<-1> :: resume k;<1>(continuation,) :: {
+<0> :: {
+ ... 
+}
+<0> :: {
  ... 
 }
 <0> :: {
@@ -4261,7 +4261,7 @@ stack: naturals{n<-1> :: suspend n;<0> :: {
 <0> :: {
  ... 
 }
-<0>} :: main{continuation<-1> :: resume k;<1>(continuation,) :: {
+<0> :: {
  ... 
 }
 <0> :: {
@@ -4280,14 +4280,11 @@ env: n: 3, main: fun<main>, naturals: fun<naturals>,
 }
 --- step exp n --->
 {
-stack: naturals{3<-1> :: suspend n;<0> :: {
+stack: naturals{3<-1> :: yield n;<0> :: {
  ... 
 }
 <0> :: while (true)
- ... <-1> :: return ();<-1> :: naturals();<-1> :: return 1;<-1> :: {
- ... 
-}
-<0> :: continuation<-1> :: resume k;<1>(continuation,) :: {
+ ... <-1> :: return ();<-1>} :: main{naturals();<-1> :: return 1;<-1> :: {
  ... 
 }
 <0> :: {
@@ -4296,7 +4293,10 @@ stack: naturals{3<-1> :: suspend n;<0> :: {
 <0> :: {
  ... 
 }
-<0> :: continuation<-1> :: resume k;<1>(continuation,) :: {
+<0> :: {
+ ... 
+}
+<0> :: {
  ... 
 }
 <0> :: {
@@ -4305,7 +4305,7 @@ stack: naturals{3<-1> :: suspend n;<0> :: {
 <0> :: {
  ... 
 }
-<0>} :: main{continuation<-1> :: resume k;<1>(continuation,) :: {
+<0> :: {
  ... 
 }
 <0> :: {
@@ -4322,7 +4322,7 @@ with (v, k)
 heap: fun<naturals>, fun<main>, 3, 3, 3, 0, continuation, 1, continuation, 2, continuation, 
 env: n: 3, main: fun<main>, naturals: fun<naturals>, 
 }
---- handle value 3 with suspend n;<1>(3,) --->
+--- handle value 3 with yield n;<1>(3,) --->
 {
 stack: main{{
  ... 
@@ -4333,7 +4333,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 3, 3, 3, 0, continuation, 1, continuation, 2, continuation, 3, continuation, 
-env: k: continuation, v: 3, k: continuation, v: 2, k: continuation, v: 1, k: continuation, v: 0, count: 3, sum: 3, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 3, count: 3, sum: 3, main: fun<main>, naturals: fun<naturals>, 
 }
 --- step stmt {
  ... 
@@ -4352,7 +4352,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 3, 3, 3, 0, continuation, 1, continuation, 2, continuation, 3, continuation, 
-env: k: continuation, v: 3, k: continuation, v: 2, k: continuation, v: 1, k: continuation, v: 0, count: 3, sum: 3, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 3, count: 3, sum: 3, main: fun<main>, naturals: fun<naturals>, 
 }
 --- step stmt {
  ... 
@@ -4371,7 +4371,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 3, 3, 3, 0, continuation, 1, continuation, 2, continuation, 3, continuation, 
-env: k: continuation, v: 3, k: continuation, v: 2, k: continuation, v: 1, k: continuation, v: 0, count: 3, sum: 3, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 3, count: 3, sum: 3, main: fun<main>, naturals: fun<naturals>, 
 }
 --- step stmt sum = (sum + v); ...  --->
 {
@@ -4387,7 +4387,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 3, 3, 3, 0, continuation, 1, continuation, 2, continuation, 3, continuation, 
-env: k: continuation, v: 3, k: continuation, v: 2, k: continuation, v: 1, k: continuation, v: 0, count: 3, sum: 3, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 3, count: 3, sum: 3, main: fun<main>, naturals: fun<naturals>, 
 }
 --- step stmt sum = (sum + v); --->
 {
@@ -4403,7 +4403,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 3, 3, 3, 0, continuation, 1, continuation, 2, continuation, 3, continuation, 
-env: k: continuation, v: 3, k: continuation, v: 2, k: continuation, v: 1, k: continuation, v: 0, count: 3, sum: 3, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 3, count: 3, sum: 3, main: fun<main>, naturals: fun<naturals>, 
 }
 --- step lvalue sum --->
 {
@@ -4419,7 +4419,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 3, 3, 3, 0, continuation, 1, continuation, 2, continuation, 3, continuation, 
-env: k: continuation, v: 3, k: continuation, v: 2, k: continuation, v: 1, k: continuation, v: 0, count: 3, sum: 3, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 3, count: 3, sum: 3, main: fun<main>, naturals: fun<naturals>, 
 }
 --- handle value ptr<2> with sum = (sum + v);<1>(ptr<2>,) --->
 {
@@ -4435,7 +4435,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 3, 3, 3, 0, continuation, 1, continuation, 2, continuation, 3, continuation, 
-env: k: continuation, v: 3, k: continuation, v: 2, k: continuation, v: 1, k: continuation, v: 0, count: 3, sum: 3, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 3, count: 3, sum: 3, main: fun<main>, naturals: fun<naturals>, 
 }
 --- step exp (sum + v) --->
 {
@@ -4451,7 +4451,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 3, 3, 3, 0, continuation, 1, continuation, 2, continuation, 3, continuation, 
-env: k: continuation, v: 3, k: continuation, v: 2, k: continuation, v: 1, k: continuation, v: 0, count: 3, sum: 3, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 3, count: 3, sum: 3, main: fun<main>, naturals: fun<naturals>, 
 }
 --- step exp sum --->
 {
@@ -4467,7 +4467,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 3, 3, 3, 0, continuation, 1, continuation, 2, continuation, 3, continuation, 
-env: k: continuation, v: 3, k: continuation, v: 2, k: continuation, v: 1, k: continuation, v: 0, count: 3, sum: 3, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 3, count: 3, sum: 3, main: fun<main>, naturals: fun<naturals>, 
 }
 --- handle value 3 with (sum + v)<1>(3,) --->
 {
@@ -4483,7 +4483,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 3, 3, 3, 0, continuation, 1, continuation, 2, continuation, 3, continuation, 
-env: k: continuation, v: 3, k: continuation, v: 2, k: continuation, v: 1, k: continuation, v: 0, count: 3, sum: 3, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 3, count: 3, sum: 3, main: fun<main>, naturals: fun<naturals>, 
 }
 --- step exp v --->
 {
@@ -4499,7 +4499,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 3, 3, 3, 0, continuation, 1, continuation, 2, continuation, 3, continuation, 
-env: k: continuation, v: 3, k: continuation, v: 2, k: continuation, v: 1, k: continuation, v: 0, count: 3, sum: 3, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 3, count: 3, sum: 3, main: fun<main>, naturals: fun<naturals>, 
 }
 --- handle value 3 with (sum + v)<2>(3,3,) --->
 {
@@ -4515,7 +4515,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 3, 3, 3, 0, continuation, 1, continuation, 2, continuation, 3, continuation, 
-env: k: continuation, v: 3, k: continuation, v: 2, k: continuation, v: 1, k: continuation, v: 0, count: 3, sum: 3, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 3, count: 3, sum: 3, main: fun<main>, naturals: fun<naturals>, 
 }
 --- handle value 6 with sum = (sum + v);<2>(ptr<2>,6,) --->
 {
@@ -4531,7 +4531,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 6, 3, 3, 0, continuation, 1, continuation, 2, continuation, 3, continuation, 
-env: k: continuation, v: 3, k: continuation, v: 2, k: continuation, v: 1, k: continuation, v: 0, count: 3, sum: 6, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 3, count: 3, sum: 6, main: fun<main>, naturals: fun<naturals>, 
 }
 --- step stmt count = (count + 1); ...  --->
 {
@@ -4550,7 +4550,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 6, 3, 3, 0, continuation, 1, continuation, 2, continuation, 3, continuation, 
-env: k: continuation, v: 3, k: continuation, v: 2, k: continuation, v: 1, k: continuation, v: 0, count: 3, sum: 6, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 3, count: 3, sum: 6, main: fun<main>, naturals: fun<naturals>, 
 }
 --- step stmt count = (count + 1); --->
 {
@@ -4569,7 +4569,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 6, 3, 3, 0, continuation, 1, continuation, 2, continuation, 3, continuation, 
-env: k: continuation, v: 3, k: continuation, v: 2, k: continuation, v: 1, k: continuation, v: 0, count: 3, sum: 6, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 3, count: 3, sum: 6, main: fun<main>, naturals: fun<naturals>, 
 }
 --- step lvalue count --->
 {
@@ -4588,7 +4588,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 6, 3, 3, 0, continuation, 1, continuation, 2, continuation, 3, continuation, 
-env: k: continuation, v: 3, k: continuation, v: 2, k: continuation, v: 1, k: continuation, v: 0, count: 3, sum: 6, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 3, count: 3, sum: 6, main: fun<main>, naturals: fun<naturals>, 
 }
 --- handle value ptr<3> with count = (count + 1);<1>(ptr<3>,) --->
 {
@@ -4607,7 +4607,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 6, 3, 3, 0, continuation, 1, continuation, 2, continuation, 3, continuation, 
-env: k: continuation, v: 3, k: continuation, v: 2, k: continuation, v: 1, k: continuation, v: 0, count: 3, sum: 6, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 3, count: 3, sum: 6, main: fun<main>, naturals: fun<naturals>, 
 }
 --- step exp (count + 1) --->
 {
@@ -4626,7 +4626,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 6, 3, 3, 0, continuation, 1, continuation, 2, continuation, 3, continuation, 
-env: k: continuation, v: 3, k: continuation, v: 2, k: continuation, v: 1, k: continuation, v: 0, count: 3, sum: 6, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 3, count: 3, sum: 6, main: fun<main>, naturals: fun<naturals>, 
 }
 --- step exp count --->
 {
@@ -4645,7 +4645,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 6, 3, 3, 0, continuation, 1, continuation, 2, continuation, 3, continuation, 
-env: k: continuation, v: 3, k: continuation, v: 2, k: continuation, v: 1, k: continuation, v: 0, count: 3, sum: 6, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 3, count: 3, sum: 6, main: fun<main>, naturals: fun<naturals>, 
 }
 --- handle value 3 with (count + 1)<1>(3,) --->
 {
@@ -4664,7 +4664,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 6, 3, 3, 0, continuation, 1, continuation, 2, continuation, 3, continuation, 
-env: k: continuation, v: 3, k: continuation, v: 2, k: continuation, v: 1, k: continuation, v: 0, count: 3, sum: 6, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 3, count: 3, sum: 6, main: fun<main>, naturals: fun<naturals>, 
 }
 --- step exp 1 --->
 {
@@ -4683,7 +4683,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 6, 3, 3, 0, continuation, 1, continuation, 2, continuation, 3, continuation, 
-env: k: continuation, v: 3, k: continuation, v: 2, k: continuation, v: 1, k: continuation, v: 0, count: 3, sum: 6, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 3, count: 3, sum: 6, main: fun<main>, naturals: fun<naturals>, 
 }
 --- handle value 1 with (count + 1)<2>(3,1,) --->
 {
@@ -4702,7 +4702,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 6, 3, 3, 0, continuation, 1, continuation, 2, continuation, 3, continuation, 
-env: k: continuation, v: 3, k: continuation, v: 2, k: continuation, v: 1, k: continuation, v: 0, count: 3, sum: 6, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 3, count: 3, sum: 6, main: fun<main>, naturals: fun<naturals>, 
 }
 --- handle value 4 with count = (count + 1);<2>(ptr<3>,4,) --->
 {
@@ -4721,7 +4721,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 6, 4, 3, 0, continuation, 1, continuation, 2, continuation, 3, continuation, 
-env: k: continuation, v: 3, k: continuation, v: 2, k: continuation, v: 1, k: continuation, v: 0, count: 4, sum: 6, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 3, count: 4, sum: 6, main: fun<main>, naturals: fun<naturals>, 
 }
 --- step stmt if ((count == 5))
  ... 
@@ -4743,7 +4743,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 6, 4, 3, 0, continuation, 1, continuation, 2, continuation, 3, continuation, 
-env: k: continuation, v: 3, k: continuation, v: 2, k: continuation, v: 1, k: continuation, v: 0, count: 4, sum: 6, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 3, count: 4, sum: 6, main: fun<main>, naturals: fun<naturals>, 
 }
 --- step exp (count == 5) --->
 {
@@ -4762,7 +4762,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 6, 4, 3, 0, continuation, 1, continuation, 2, continuation, 3, continuation, 
-env: k: continuation, v: 3, k: continuation, v: 2, k: continuation, v: 1, k: continuation, v: 0, count: 4, sum: 6, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 3, count: 4, sum: 6, main: fun<main>, naturals: fun<naturals>, 
 }
 --- step exp count --->
 {
@@ -4781,7 +4781,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 6, 4, 3, 0, continuation, 1, continuation, 2, continuation, 3, continuation, 
-env: k: continuation, v: 3, k: continuation, v: 2, k: continuation, v: 1, k: continuation, v: 0, count: 4, sum: 6, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 3, count: 4, sum: 6, main: fun<main>, naturals: fun<naturals>, 
 }
 --- handle value 4 with (count == 5)<1>(4,) --->
 {
@@ -4800,7 +4800,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 6, 4, 3, 0, continuation, 1, continuation, 2, continuation, 3, continuation, 
-env: k: continuation, v: 3, k: continuation, v: 2, k: continuation, v: 1, k: continuation, v: 0, count: 4, sum: 6, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 3, count: 4, sum: 6, main: fun<main>, naturals: fun<naturals>, 
 }
 --- step exp 5 --->
 {
@@ -4819,7 +4819,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 6, 4, 3, 0, continuation, 1, continuation, 2, continuation, 3, continuation, 
-env: k: continuation, v: 3, k: continuation, v: 2, k: continuation, v: 1, k: continuation, v: 0, count: 4, sum: 6, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 3, count: 4, sum: 6, main: fun<main>, naturals: fun<naturals>, 
 }
 --- handle value 5 with (count == 5)<2>(4,5,) --->
 {
@@ -4838,7 +4838,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 6, 4, 3, 0, continuation, 1, continuation, 2, continuation, 3, continuation, 
-env: k: continuation, v: 3, k: continuation, v: 2, k: continuation, v: 1, k: continuation, v: 0, count: 4, sum: 6, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 3, count: 4, sum: 6, main: fun<main>, naturals: fun<naturals>, 
 }
 --- handle value false with if ((count == 5))
  ... 
@@ -4860,7 +4860,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 6, 4, 3, 0, continuation, 1, continuation, 2, continuation, 3, continuation, 
-env: k: continuation, v: 3, k: continuation, v: 2, k: continuation, v: 1, k: continuation, v: 0, count: 4, sum: 6, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 3, count: 4, sum: 6, main: fun<main>, naturals: fun<naturals>, 
 }
 --- step stmt {
  ... 
@@ -4882,7 +4882,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 6, 4, 3, 0, continuation, 1, continuation, 2, continuation, 3, continuation, 
-env: k: continuation, v: 3, k: continuation, v: 2, k: continuation, v: 1, k: continuation, v: 0, count: 4, sum: 6, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 3, count: 4, sum: 6, main: fun<main>, naturals: fun<naturals>, 
 }
 --- step stmt resume k; --->
 {
@@ -4901,7 +4901,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 6, 4, 3, 0, continuation, 1, continuation, 2, continuation, 3, continuation, 
-env: k: continuation, v: 3, k: continuation, v: 2, k: continuation, v: 1, k: continuation, v: 0, count: 4, sum: 6, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 3, count: 4, sum: 6, main: fun<main>, naturals: fun<naturals>, 
 }
 --- step exp k --->
 {
@@ -4920,7 +4920,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 6, 4, 3, 0, continuation, 1, continuation, 2, continuation, 3, continuation, 
-env: k: continuation, v: 3, k: continuation, v: 2, k: continuation, v: 1, k: continuation, v: 0, count: 4, sum: 6, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 3, count: 4, sum: 6, main: fun<main>, naturals: fun<naturals>, 
 }
 --- handle value continuation with resume k;<1>(continuation,) --->
 {
@@ -4928,10 +4928,7 @@ stack: naturals{{
  ... 
 }
 <0> :: while (true)
- ... <-1> :: return ();<-1> :: naturals();<-1> :: return 1;<-1> :: {
- ... 
-}
-<0> :: continuation<-1> :: resume k;<1>(continuation,) :: {
+ ... <-1> :: return ();<-1>} :: main{naturals();<-1> :: return 1;<-1> :: {
  ... 
 }
 <0> :: {
@@ -4940,7 +4937,10 @@ stack: naturals{{
 <0> :: {
  ... 
 }
-<0> :: continuation<-1> :: resume k;<1>(continuation,) :: {
+<0> :: {
+ ... 
+}
+<0> :: {
  ... 
 }
 <0> :: {
@@ -4949,16 +4949,16 @@ stack: naturals{{
 <0> :: {
  ... 
 }
-<0> :: continuation<-1> :: resume k;<1>(continuation,) :: {
- ... 
-}
 <0> :: {
  ... 
 }
 <0> :: {
  ... 
 }
-<0>} :: main{continuation<-1> :: resume k;<1>(continuation,) :: {
+<0> :: {
+ ... 
+}
+<0> :: {
  ... 
 }
 <0> :: {
@@ -4981,10 +4981,7 @@ env: n: 3, main: fun<main>, naturals: fun<naturals>,
  --->
 {
 stack: naturals{while (true)
- ... <-1> :: return ();<-1> :: naturals();<-1> :: return 1;<-1> :: {
- ... 
-}
-<0> :: continuation<-1> :: resume k;<1>(continuation,) :: {
+ ... <-1> :: return ();<-1>} :: main{naturals();<-1> :: return 1;<-1> :: {
  ... 
 }
 <0> :: {
@@ -4993,7 +4990,10 @@ stack: naturals{while (true)
 <0> :: {
  ... 
 }
-<0> :: continuation<-1> :: resume k;<1>(continuation,) :: {
+<0> :: {
+ ... 
+}
+<0> :: {
  ... 
 }
 <0> :: {
@@ -5002,16 +5002,16 @@ stack: naturals{while (true)
 <0> :: {
  ... 
 }
-<0> :: continuation<-1> :: resume k;<1>(continuation,) :: {
- ... 
-}
 <0> :: {
  ... 
 }
 <0> :: {
  ... 
 }
-<0>} :: main{continuation<-1> :: resume k;<1>(continuation,) :: {
+<0> :: {
+ ... 
+}
+<0> :: {
  ... 
 }
 <0> :: {
@@ -5032,10 +5032,7 @@ env: n: 3, main: fun<main>, naturals: fun<naturals>,
  ...  --->
 {
 stack: naturals{true<-1> :: while (true)
- ... <0> :: return ();<-1> :: naturals();<-1> :: return 1;<-1> :: {
- ... 
-}
-<0> :: continuation<-1> :: resume k;<1>(continuation,) :: {
+ ... <0> :: return ();<-1>} :: main{naturals();<-1> :: return 1;<-1> :: {
  ... 
 }
 <0> :: {
@@ -5044,7 +5041,10 @@ stack: naturals{true<-1> :: while (true)
 <0> :: {
  ... 
 }
-<0> :: continuation<-1> :: resume k;<1>(continuation,) :: {
+<0> :: {
+ ... 
+}
+<0> :: {
  ... 
 }
 <0> :: {
@@ -5053,16 +5053,16 @@ stack: naturals{true<-1> :: while (true)
 <0> :: {
  ... 
 }
-<0> :: continuation<-1> :: resume k;<1>(continuation,) :: {
- ... 
-}
 <0> :: {
  ... 
 }
 <0> :: {
  ... 
 }
-<0>} :: main{continuation<-1> :: resume k;<1>(continuation,) :: {
+<0> :: {
+ ... 
+}
+<0> :: {
  ... 
 }
 <0> :: {
@@ -5082,10 +5082,7 @@ env: n: 3, main: fun<main>, naturals: fun<naturals>,
 --- step exp true --->
 {
 stack: naturals{true<-1> :: while (true)
- ... <0> :: return ();<-1> :: naturals();<-1> :: return 1;<-1> :: {
- ... 
-}
-<0> :: continuation<-1> :: resume k;<1>(continuation,) :: {
+ ... <0> :: return ();<-1>} :: main{naturals();<-1> :: return 1;<-1> :: {
  ... 
 }
 <0> :: {
@@ -5094,7 +5091,10 @@ stack: naturals{true<-1> :: while (true)
 <0> :: {
  ... 
 }
-<0> :: continuation<-1> :: resume k;<1>(continuation,) :: {
+<0> :: {
+ ... 
+}
+<0> :: {
  ... 
 }
 <0> :: {
@@ -5103,16 +5103,16 @@ stack: naturals{true<-1> :: while (true)
 <0> :: {
  ... 
 }
-<0> :: continuation<-1> :: resume k;<1>(continuation,) :: {
- ... 
-}
 <0> :: {
  ... 
 }
 <0> :: {
  ... 
 }
-<0>} :: main{continuation<-1> :: resume k;<1>(continuation,) :: {
+<0> :: {
+ ... 
+}
+<0> :: {
  ... 
 }
 <0> :: {
@@ -5136,10 +5136,7 @@ stack: naturals{{
  ... 
 }
 <-1> :: while (true)
- ... <-1> :: return ();<-1> :: naturals();<-1> :: return 1;<-1> :: {
- ... 
-}
-<0> :: continuation<-1> :: resume k;<1>(continuation,) :: {
+ ... <-1> :: return ();<-1>} :: main{naturals();<-1> :: return 1;<-1> :: {
  ... 
 }
 <0> :: {
@@ -5148,7 +5145,10 @@ stack: naturals{{
 <0> :: {
  ... 
 }
-<0> :: continuation<-1> :: resume k;<1>(continuation,) :: {
+<0> :: {
+ ... 
+}
+<0> :: {
  ... 
 }
 <0> :: {
@@ -5157,16 +5157,16 @@ stack: naturals{{
 <0> :: {
  ... 
 }
-<0> :: continuation<-1> :: resume k;<1>(continuation,) :: {
- ... 
-}
 <0> :: {
  ... 
 }
 <0> :: {
  ... 
 }
-<0>} :: main{continuation<-1> :: resume k;<1>(continuation,) :: {
+<0> :: {
+ ... 
+}
+<0> :: {
  ... 
 }
 <0> :: {
@@ -5192,10 +5192,7 @@ stack: naturals{n = (n + 1); ... <-1> :: {
  ... 
 }
 <0> :: while (true)
- ... <-1> :: return ();<-1> :: naturals();<-1> :: return 1;<-1> :: {
- ... 
-}
-<0> :: continuation<-1> :: resume k;<1>(continuation,) :: {
+ ... <-1> :: return ();<-1>} :: main{naturals();<-1> :: return 1;<-1> :: {
  ... 
 }
 <0> :: {
@@ -5204,7 +5201,10 @@ stack: naturals{n = (n + 1); ... <-1> :: {
 <0> :: {
  ... 
 }
-<0> :: continuation<-1> :: resume k;<1>(continuation,) :: {
+<0> :: {
+ ... 
+}
+<0> :: {
  ... 
 }
 <0> :: {
@@ -5213,16 +5213,16 @@ stack: naturals{n = (n + 1); ... <-1> :: {
 <0> :: {
  ... 
 }
-<0> :: continuation<-1> :: resume k;<1>(continuation,) :: {
- ... 
-}
 <0> :: {
  ... 
 }
 <0> :: {
  ... 
 }
-<0>} :: main{continuation<-1> :: resume k;<1>(continuation,) :: {
+<0> :: {
+ ... 
+}
+<0> :: {
  ... 
 }
 <0> :: {
@@ -5241,14 +5241,11 @@ env: n: 3, main: fun<main>, naturals: fun<naturals>,
 }
 --- step stmt n = (n + 1); ...  --->
 {
-stack: naturals{n = (n + 1);<-1> :: suspend n;<-1> :: {
+stack: naturals{n = (n + 1);<-1> :: yield n;<-1> :: {
  ... 
 }
 <0> :: while (true)
- ... <-1> :: return ();<-1> :: naturals();<-1> :: return 1;<-1> :: {
- ... 
-}
-<0> :: continuation<-1> :: resume k;<1>(continuation,) :: {
+ ... <-1> :: return ();<-1>} :: main{naturals();<-1> :: return 1;<-1> :: {
  ... 
 }
 <0> :: {
@@ -5257,7 +5254,10 @@ stack: naturals{n = (n + 1);<-1> :: suspend n;<-1> :: {
 <0> :: {
  ... 
 }
-<0> :: continuation<-1> :: resume k;<1>(continuation,) :: {
+<0> :: {
+ ... 
+}
+<0> :: {
  ... 
 }
 <0> :: {
@@ -5266,16 +5266,16 @@ stack: naturals{n = (n + 1);<-1> :: suspend n;<-1> :: {
 <0> :: {
  ... 
 }
-<0> :: continuation<-1> :: resume k;<1>(continuation,) :: {
- ... 
-}
 <0> :: {
  ... 
 }
 <0> :: {
  ... 
 }
-<0>} :: main{continuation<-1> :: resume k;<1>(continuation,) :: {
+<0> :: {
+ ... 
+}
+<0> :: {
  ... 
 }
 <0> :: {
@@ -5294,14 +5294,11 @@ env: n: 3, main: fun<main>, naturals: fun<naturals>,
 }
 --- step stmt n = (n + 1); --->
 {
-stack: naturals{n<-1> :: n = (n + 1);<0> :: suspend n;<-1> :: {
+stack: naturals{n<-1> :: n = (n + 1);<0> :: yield n;<-1> :: {
  ... 
 }
 <0> :: while (true)
- ... <-1> :: return ();<-1> :: naturals();<-1> :: return 1;<-1> :: {
- ... 
-}
-<0> :: continuation<-1> :: resume k;<1>(continuation,) :: {
+ ... <-1> :: return ();<-1>} :: main{naturals();<-1> :: return 1;<-1> :: {
  ... 
 }
 <0> :: {
@@ -5310,7 +5307,10 @@ stack: naturals{n<-1> :: n = (n + 1);<0> :: suspend n;<-1> :: {
 <0> :: {
  ... 
 }
-<0> :: continuation<-1> :: resume k;<1>(continuation,) :: {
+<0> :: {
+ ... 
+}
+<0> :: {
  ... 
 }
 <0> :: {
@@ -5319,16 +5319,16 @@ stack: naturals{n<-1> :: n = (n + 1);<0> :: suspend n;<-1> :: {
 <0> :: {
  ... 
 }
-<0> :: continuation<-1> :: resume k;<1>(continuation,) :: {
- ... 
-}
 <0> :: {
  ... 
 }
 <0> :: {
  ... 
 }
-<0>} :: main{continuation<-1> :: resume k;<1>(continuation,) :: {
+<0> :: {
+ ... 
+}
+<0> :: {
  ... 
 }
 <0> :: {
@@ -5347,14 +5347,11 @@ env: n: 3, main: fun<main>, naturals: fun<naturals>,
 }
 --- step lvalue n --->
 {
-stack: naturals{ptr<4><-1> :: n = (n + 1);<0> :: suspend n;<-1> :: {
+stack: naturals{ptr<4><-1> :: n = (n + 1);<0> :: yield n;<-1> :: {
  ... 
 }
 <0> :: while (true)
- ... <-1> :: return ();<-1> :: naturals();<-1> :: return 1;<-1> :: {
- ... 
-}
-<0> :: continuation<-1> :: resume k;<1>(continuation,) :: {
+ ... <-1> :: return ();<-1>} :: main{naturals();<-1> :: return 1;<-1> :: {
  ... 
 }
 <0> :: {
@@ -5363,7 +5360,10 @@ stack: naturals{ptr<4><-1> :: n = (n + 1);<0> :: suspend n;<-1> :: {
 <0> :: {
  ... 
 }
-<0> :: continuation<-1> :: resume k;<1>(continuation,) :: {
+<0> :: {
+ ... 
+}
+<0> :: {
  ... 
 }
 <0> :: {
@@ -5372,16 +5372,16 @@ stack: naturals{ptr<4><-1> :: n = (n + 1);<0> :: suspend n;<-1> :: {
 <0> :: {
  ... 
 }
-<0> :: continuation<-1> :: resume k;<1>(continuation,) :: {
- ... 
-}
 <0> :: {
  ... 
 }
 <0> :: {
  ... 
 }
-<0>} :: main{continuation<-1> :: resume k;<1>(continuation,) :: {
+<0> :: {
+ ... 
+}
+<0> :: {
  ... 
 }
 <0> :: {
@@ -5400,14 +5400,11 @@ env: n: 3, main: fun<main>, naturals: fun<naturals>,
 }
 --- handle value ptr<4> with n = (n + 1);<1>(ptr<4>,) --->
 {
-stack: naturals{(n + 1)<-1> :: n = (n + 1);<1>(ptr<4>,) :: suspend n;<-1> :: {
+stack: naturals{(n + 1)<-1> :: n = (n + 1);<1>(ptr<4>,) :: yield n;<-1> :: {
  ... 
 }
 <0> :: while (true)
- ... <-1> :: return ();<-1> :: naturals();<-1> :: return 1;<-1> :: {
- ... 
-}
-<0> :: continuation<-1> :: resume k;<1>(continuation,) :: {
+ ... <-1> :: return ();<-1>} :: main{naturals();<-1> :: return 1;<-1> :: {
  ... 
 }
 <0> :: {
@@ -5416,7 +5413,10 @@ stack: naturals{(n + 1)<-1> :: n = (n + 1);<1>(ptr<4>,) :: suspend n;<-1> :: {
 <0> :: {
  ... 
 }
-<0> :: continuation<-1> :: resume k;<1>(continuation,) :: {
+<0> :: {
+ ... 
+}
+<0> :: {
  ... 
 }
 <0> :: {
@@ -5425,16 +5425,16 @@ stack: naturals{(n + 1)<-1> :: n = (n + 1);<1>(ptr<4>,) :: suspend n;<-1> :: {
 <0> :: {
  ... 
 }
-<0> :: continuation<-1> :: resume k;<1>(continuation,) :: {
- ... 
-}
 <0> :: {
  ... 
 }
 <0> :: {
  ... 
 }
-<0>} :: main{continuation<-1> :: resume k;<1>(continuation,) :: {
+<0> :: {
+ ... 
+}
+<0> :: {
  ... 
 }
 <0> :: {
@@ -5453,14 +5453,11 @@ env: n: 3, main: fun<main>, naturals: fun<naturals>,
 }
 --- step exp (n + 1) --->
 {
-stack: naturals{n<-1> :: (n + 1)<0> :: n = (n + 1);<1>(ptr<4>,) :: suspend n;<-1> :: {
+stack: naturals{n<-1> :: (n + 1)<0> :: n = (n + 1);<1>(ptr<4>,) :: yield n;<-1> :: {
  ... 
 }
 <0> :: while (true)
- ... <-1> :: return ();<-1> :: naturals();<-1> :: return 1;<-1> :: {
- ... 
-}
-<0> :: continuation<-1> :: resume k;<1>(continuation,) :: {
+ ... <-1> :: return ();<-1>} :: main{naturals();<-1> :: return 1;<-1> :: {
  ... 
 }
 <0> :: {
@@ -5469,7 +5466,10 @@ stack: naturals{n<-1> :: (n + 1)<0> :: n = (n + 1);<1>(ptr<4>,) :: suspend n;<-1
 <0> :: {
  ... 
 }
-<0> :: continuation<-1> :: resume k;<1>(continuation,) :: {
+<0> :: {
+ ... 
+}
+<0> :: {
  ... 
 }
 <0> :: {
@@ -5478,16 +5478,16 @@ stack: naturals{n<-1> :: (n + 1)<0> :: n = (n + 1);<1>(ptr<4>,) :: suspend n;<-1
 <0> :: {
  ... 
 }
-<0> :: continuation<-1> :: resume k;<1>(continuation,) :: {
- ... 
-}
 <0> :: {
  ... 
 }
 <0> :: {
  ... 
 }
-<0>} :: main{continuation<-1> :: resume k;<1>(continuation,) :: {
+<0> :: {
+ ... 
+}
+<0> :: {
  ... 
 }
 <0> :: {
@@ -5506,14 +5506,11 @@ env: n: 3, main: fun<main>, naturals: fun<naturals>,
 }
 --- step exp n --->
 {
-stack: naturals{3<-1> :: (n + 1)<0> :: n = (n + 1);<1>(ptr<4>,) :: suspend n;<-1> :: {
+stack: naturals{3<-1> :: (n + 1)<0> :: n = (n + 1);<1>(ptr<4>,) :: yield n;<-1> :: {
  ... 
 }
 <0> :: while (true)
- ... <-1> :: return ();<-1> :: naturals();<-1> :: return 1;<-1> :: {
- ... 
-}
-<0> :: continuation<-1> :: resume k;<1>(continuation,) :: {
+ ... <-1> :: return ();<-1>} :: main{naturals();<-1> :: return 1;<-1> :: {
  ... 
 }
 <0> :: {
@@ -5522,7 +5519,10 @@ stack: naturals{3<-1> :: (n + 1)<0> :: n = (n + 1);<1>(ptr<4>,) :: suspend n;<-1
 <0> :: {
  ... 
 }
-<0> :: continuation<-1> :: resume k;<1>(continuation,) :: {
+<0> :: {
+ ... 
+}
+<0> :: {
  ... 
 }
 <0> :: {
@@ -5531,16 +5531,16 @@ stack: naturals{3<-1> :: (n + 1)<0> :: n = (n + 1);<1>(ptr<4>,) :: suspend n;<-1
 <0> :: {
  ... 
 }
-<0> :: continuation<-1> :: resume k;<1>(continuation,) :: {
- ... 
-}
 <0> :: {
  ... 
 }
 <0> :: {
  ... 
 }
-<0>} :: main{continuation<-1> :: resume k;<1>(continuation,) :: {
+<0> :: {
+ ... 
+}
+<0> :: {
  ... 
 }
 <0> :: {
@@ -5559,14 +5559,11 @@ env: n: 3, main: fun<main>, naturals: fun<naturals>,
 }
 --- handle value 3 with (n + 1)<1>(3,) --->
 {
-stack: naturals{1<-1> :: (n + 1)<1>(3,) :: n = (n + 1);<1>(ptr<4>,) :: suspend n;<-1> :: {
+stack: naturals{1<-1> :: (n + 1)<1>(3,) :: n = (n + 1);<1>(ptr<4>,) :: yield n;<-1> :: {
  ... 
 }
 <0> :: while (true)
- ... <-1> :: return ();<-1> :: naturals();<-1> :: return 1;<-1> :: {
- ... 
-}
-<0> :: continuation<-1> :: resume k;<1>(continuation,) :: {
+ ... <-1> :: return ();<-1>} :: main{naturals();<-1> :: return 1;<-1> :: {
  ... 
 }
 <0> :: {
@@ -5575,7 +5572,10 @@ stack: naturals{1<-1> :: (n + 1)<1>(3,) :: n = (n + 1);<1>(ptr<4>,) :: suspend n
 <0> :: {
  ... 
 }
-<0> :: continuation<-1> :: resume k;<1>(continuation,) :: {
+<0> :: {
+ ... 
+}
+<0> :: {
  ... 
 }
 <0> :: {
@@ -5584,16 +5584,16 @@ stack: naturals{1<-1> :: (n + 1)<1>(3,) :: n = (n + 1);<1>(ptr<4>,) :: suspend n
 <0> :: {
  ... 
 }
-<0> :: continuation<-1> :: resume k;<1>(continuation,) :: {
- ... 
-}
 <0> :: {
  ... 
 }
 <0> :: {
  ... 
 }
-<0>} :: main{continuation<-1> :: resume k;<1>(continuation,) :: {
+<0> :: {
+ ... 
+}
+<0> :: {
  ... 
 }
 <0> :: {
@@ -5612,14 +5612,11 @@ env: n: 3, main: fun<main>, naturals: fun<naturals>,
 }
 --- step exp 1 --->
 {
-stack: naturals{1<-1> :: (n + 1)<1>(3,) :: n = (n + 1);<1>(ptr<4>,) :: suspend n;<-1> :: {
+stack: naturals{1<-1> :: (n + 1)<1>(3,) :: n = (n + 1);<1>(ptr<4>,) :: yield n;<-1> :: {
  ... 
 }
 <0> :: while (true)
- ... <-1> :: return ();<-1> :: naturals();<-1> :: return 1;<-1> :: {
- ... 
-}
-<0> :: continuation<-1> :: resume k;<1>(continuation,) :: {
+ ... <-1> :: return ();<-1>} :: main{naturals();<-1> :: return 1;<-1> :: {
  ... 
 }
 <0> :: {
@@ -5628,7 +5625,10 @@ stack: naturals{1<-1> :: (n + 1)<1>(3,) :: n = (n + 1);<1>(ptr<4>,) :: suspend n
 <0> :: {
  ... 
 }
-<0> :: continuation<-1> :: resume k;<1>(continuation,) :: {
+<0> :: {
+ ... 
+}
+<0> :: {
  ... 
 }
 <0> :: {
@@ -5637,16 +5637,16 @@ stack: naturals{1<-1> :: (n + 1)<1>(3,) :: n = (n + 1);<1>(ptr<4>,) :: suspend n
 <0> :: {
  ... 
 }
-<0> :: continuation<-1> :: resume k;<1>(continuation,) :: {
- ... 
-}
 <0> :: {
  ... 
 }
 <0> :: {
  ... 
 }
-<0>} :: main{continuation<-1> :: resume k;<1>(continuation,) :: {
+<0> :: {
+ ... 
+}
+<0> :: {
  ... 
 }
 <0> :: {
@@ -5665,14 +5665,11 @@ env: n: 3, main: fun<main>, naturals: fun<naturals>,
 }
 --- handle value 1 with (n + 1)<2>(3,1,) --->
 {
-stack: naturals{4<-1> :: n = (n + 1);<1>(ptr<4>,) :: suspend n;<-1> :: {
+stack: naturals{4<-1> :: n = (n + 1);<1>(ptr<4>,) :: yield n;<-1> :: {
  ... 
 }
 <0> :: while (true)
- ... <-1> :: return ();<-1> :: naturals();<-1> :: return 1;<-1> :: {
- ... 
-}
-<0> :: continuation<-1> :: resume k;<1>(continuation,) :: {
+ ... <-1> :: return ();<-1>} :: main{naturals();<-1> :: return 1;<-1> :: {
  ... 
 }
 <0> :: {
@@ -5681,7 +5678,10 @@ stack: naturals{4<-1> :: n = (n + 1);<1>(ptr<4>,) :: suspend n;<-1> :: {
 <0> :: {
  ... 
 }
-<0> :: continuation<-1> :: resume k;<1>(continuation,) :: {
+<0> :: {
+ ... 
+}
+<0> :: {
  ... 
 }
 <0> :: {
@@ -5690,16 +5690,16 @@ stack: naturals{4<-1> :: n = (n + 1);<1>(ptr<4>,) :: suspend n;<-1> :: {
 <0> :: {
  ... 
 }
-<0> :: continuation<-1> :: resume k;<1>(continuation,) :: {
- ... 
-}
 <0> :: {
  ... 
 }
 <0> :: {
  ... 
 }
-<0>} :: main{continuation<-1> :: resume k;<1>(continuation,) :: {
+<0> :: {
+ ... 
+}
+<0> :: {
  ... 
 }
 <0> :: {
@@ -5718,14 +5718,11 @@ env: n: 3, main: fun<main>, naturals: fun<naturals>,
 }
 --- handle value 4 with n = (n + 1);<2>(ptr<4>,4,) --->
 {
-stack: naturals{suspend n;<-1> :: {
+stack: naturals{yield n;<-1> :: {
  ... 
 }
 <0> :: while (true)
- ... <-1> :: return ();<-1> :: naturals();<-1> :: return 1;<-1> :: {
- ... 
-}
-<0> :: continuation<-1> :: resume k;<1>(continuation,) :: {
+ ... <-1> :: return ();<-1>} :: main{naturals();<-1> :: return 1;<-1> :: {
  ... 
 }
 <0> :: {
@@ -5734,7 +5731,10 @@ stack: naturals{suspend n;<-1> :: {
 <0> :: {
  ... 
 }
-<0> :: continuation<-1> :: resume k;<1>(continuation,) :: {
+<0> :: {
+ ... 
+}
+<0> :: {
  ... 
 }
 <0> :: {
@@ -5743,16 +5743,16 @@ stack: naturals{suspend n;<-1> :: {
 <0> :: {
  ... 
 }
-<0> :: continuation<-1> :: resume k;<1>(continuation,) :: {
- ... 
-}
 <0> :: {
  ... 
 }
 <0> :: {
  ... 
 }
-<0>} :: main{continuation<-1> :: resume k;<1>(continuation,) :: {
+<0> :: {
+ ... 
+}
+<0> :: {
  ... 
 }
 <0> :: {
@@ -5769,16 +5769,13 @@ with (v, k)
 heap: fun<naturals>, fun<main>, 6, 4, 4, 0, continuation, 1, continuation, 2, continuation, 3, continuation, 
 env: n: 4, main: fun<main>, naturals: fun<naturals>, 
 }
---- step stmt suspend n; --->
+--- step stmt yield n; --->
 {
-stack: naturals{suspend n;<-1> :: {
+stack: naturals{yield n;<-1> :: {
  ... 
 }
 <0> :: while (true)
- ... <-1> :: return ();<-1> :: naturals();<-1> :: return 1;<-1> :: {
- ... 
-}
-<0> :: continuation<-1> :: resume k;<1>(continuation,) :: {
+ ... <-1> :: return ();<-1>} :: main{naturals();<-1> :: return 1;<-1> :: {
  ... 
 }
 <0> :: {
@@ -5787,7 +5784,10 @@ stack: naturals{suspend n;<-1> :: {
 <0> :: {
  ... 
 }
-<0> :: continuation<-1> :: resume k;<1>(continuation,) :: {
+<0> :: {
+ ... 
+}
+<0> :: {
  ... 
 }
 <0> :: {
@@ -5796,16 +5796,16 @@ stack: naturals{suspend n;<-1> :: {
 <0> :: {
  ... 
 }
-<0> :: continuation<-1> :: resume k;<1>(continuation,) :: {
- ... 
-}
 <0> :: {
  ... 
 }
 <0> :: {
  ... 
 }
-<0>} :: main{continuation<-1> :: resume k;<1>(continuation,) :: {
+<0> :: {
+ ... 
+}
+<0> :: {
  ... 
 }
 <0> :: {
@@ -5822,16 +5822,13 @@ with (v, k)
 heap: fun<naturals>, fun<main>, 6, 4, 4, 0, continuation, 1, continuation, 2, continuation, 3, continuation, 
 env: n: 4, main: fun<main>, naturals: fun<naturals>, 
 }
---- step stmt suspend n; --->
+--- step stmt yield n; --->
 {
-stack: naturals{n<-1> :: suspend n;<0> :: {
+stack: naturals{n<-1> :: yield n;<0> :: {
  ... 
 }
 <0> :: while (true)
- ... <-1> :: return ();<-1> :: naturals();<-1> :: return 1;<-1> :: {
- ... 
-}
-<0> :: continuation<-1> :: resume k;<1>(continuation,) :: {
+ ... <-1> :: return ();<-1>} :: main{naturals();<-1> :: return 1;<-1> :: {
  ... 
 }
 <0> :: {
@@ -5840,7 +5837,10 @@ stack: naturals{n<-1> :: suspend n;<0> :: {
 <0> :: {
  ... 
 }
-<0> :: continuation<-1> :: resume k;<1>(continuation,) :: {
+<0> :: {
+ ... 
+}
+<0> :: {
  ... 
 }
 <0> :: {
@@ -5849,16 +5849,16 @@ stack: naturals{n<-1> :: suspend n;<0> :: {
 <0> :: {
  ... 
 }
-<0> :: continuation<-1> :: resume k;<1>(continuation,) :: {
- ... 
-}
 <0> :: {
  ... 
 }
 <0> :: {
  ... 
 }
-<0>} :: main{continuation<-1> :: resume k;<1>(continuation,) :: {
+<0> :: {
+ ... 
+}
+<0> :: {
  ... 
 }
 <0> :: {
@@ -5877,14 +5877,11 @@ env: n: 4, main: fun<main>, naturals: fun<naturals>,
 }
 --- step exp n --->
 {
-stack: naturals{4<-1> :: suspend n;<0> :: {
+stack: naturals{4<-1> :: yield n;<0> :: {
  ... 
 }
 <0> :: while (true)
- ... <-1> :: return ();<-1> :: naturals();<-1> :: return 1;<-1> :: {
- ... 
-}
-<0> :: continuation<-1> :: resume k;<1>(continuation,) :: {
+ ... <-1> :: return ();<-1>} :: main{naturals();<-1> :: return 1;<-1> :: {
  ... 
 }
 <0> :: {
@@ -5893,7 +5890,10 @@ stack: naturals{4<-1> :: suspend n;<0> :: {
 <0> :: {
  ... 
 }
-<0> :: continuation<-1> :: resume k;<1>(continuation,) :: {
+<0> :: {
+ ... 
+}
+<0> :: {
  ... 
 }
 <0> :: {
@@ -5902,16 +5902,16 @@ stack: naturals{4<-1> :: suspend n;<0> :: {
 <0> :: {
  ... 
 }
-<0> :: continuation<-1> :: resume k;<1>(continuation,) :: {
- ... 
-}
 <0> :: {
  ... 
 }
 <0> :: {
  ... 
 }
-<0>} :: main{continuation<-1> :: resume k;<1>(continuation,) :: {
+<0> :: {
+ ... 
+}
+<0> :: {
  ... 
 }
 <0> :: {
@@ -5928,7 +5928,7 @@ with (v, k)
 heap: fun<naturals>, fun<main>, 6, 4, 4, 0, continuation, 1, continuation, 2, continuation, 3, continuation, 
 env: n: 4, main: fun<main>, naturals: fun<naturals>, 
 }
---- handle value 4 with suspend n;<1>(4,) --->
+--- handle value 4 with yield n;<1>(4,) --->
 {
 stack: main{{
  ... 
@@ -5939,7 +5939,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 6, 4, 4, 0, continuation, 1, continuation, 2, continuation, 3, continuation, 4, continuation, 
-env: k: continuation, v: 4, k: continuation, v: 3, k: continuation, v: 2, k: continuation, v: 1, k: continuation, v: 0, count: 4, sum: 6, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 4, count: 4, sum: 6, main: fun<main>, naturals: fun<naturals>, 
 }
 --- step stmt {
  ... 
@@ -5958,7 +5958,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 6, 4, 4, 0, continuation, 1, continuation, 2, continuation, 3, continuation, 4, continuation, 
-env: k: continuation, v: 4, k: continuation, v: 3, k: continuation, v: 2, k: continuation, v: 1, k: continuation, v: 0, count: 4, sum: 6, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 4, count: 4, sum: 6, main: fun<main>, naturals: fun<naturals>, 
 }
 --- step stmt {
  ... 
@@ -5977,7 +5977,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 6, 4, 4, 0, continuation, 1, continuation, 2, continuation, 3, continuation, 4, continuation, 
-env: k: continuation, v: 4, k: continuation, v: 3, k: continuation, v: 2, k: continuation, v: 1, k: continuation, v: 0, count: 4, sum: 6, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 4, count: 4, sum: 6, main: fun<main>, naturals: fun<naturals>, 
 }
 --- step stmt sum = (sum + v); ...  --->
 {
@@ -5993,7 +5993,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 6, 4, 4, 0, continuation, 1, continuation, 2, continuation, 3, continuation, 4, continuation, 
-env: k: continuation, v: 4, k: continuation, v: 3, k: continuation, v: 2, k: continuation, v: 1, k: continuation, v: 0, count: 4, sum: 6, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 4, count: 4, sum: 6, main: fun<main>, naturals: fun<naturals>, 
 }
 --- step stmt sum = (sum + v); --->
 {
@@ -6009,7 +6009,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 6, 4, 4, 0, continuation, 1, continuation, 2, continuation, 3, continuation, 4, continuation, 
-env: k: continuation, v: 4, k: continuation, v: 3, k: continuation, v: 2, k: continuation, v: 1, k: continuation, v: 0, count: 4, sum: 6, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 4, count: 4, sum: 6, main: fun<main>, naturals: fun<naturals>, 
 }
 --- step lvalue sum --->
 {
@@ -6025,7 +6025,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 6, 4, 4, 0, continuation, 1, continuation, 2, continuation, 3, continuation, 4, continuation, 
-env: k: continuation, v: 4, k: continuation, v: 3, k: continuation, v: 2, k: continuation, v: 1, k: continuation, v: 0, count: 4, sum: 6, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 4, count: 4, sum: 6, main: fun<main>, naturals: fun<naturals>, 
 }
 --- handle value ptr<2> with sum = (sum + v);<1>(ptr<2>,) --->
 {
@@ -6041,7 +6041,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 6, 4, 4, 0, continuation, 1, continuation, 2, continuation, 3, continuation, 4, continuation, 
-env: k: continuation, v: 4, k: continuation, v: 3, k: continuation, v: 2, k: continuation, v: 1, k: continuation, v: 0, count: 4, sum: 6, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 4, count: 4, sum: 6, main: fun<main>, naturals: fun<naturals>, 
 }
 --- step exp (sum + v) --->
 {
@@ -6057,7 +6057,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 6, 4, 4, 0, continuation, 1, continuation, 2, continuation, 3, continuation, 4, continuation, 
-env: k: continuation, v: 4, k: continuation, v: 3, k: continuation, v: 2, k: continuation, v: 1, k: continuation, v: 0, count: 4, sum: 6, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 4, count: 4, sum: 6, main: fun<main>, naturals: fun<naturals>, 
 }
 --- step exp sum --->
 {
@@ -6073,7 +6073,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 6, 4, 4, 0, continuation, 1, continuation, 2, continuation, 3, continuation, 4, continuation, 
-env: k: continuation, v: 4, k: continuation, v: 3, k: continuation, v: 2, k: continuation, v: 1, k: continuation, v: 0, count: 4, sum: 6, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 4, count: 4, sum: 6, main: fun<main>, naturals: fun<naturals>, 
 }
 --- handle value 6 with (sum + v)<1>(6,) --->
 {
@@ -6089,7 +6089,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 6, 4, 4, 0, continuation, 1, continuation, 2, continuation, 3, continuation, 4, continuation, 
-env: k: continuation, v: 4, k: continuation, v: 3, k: continuation, v: 2, k: continuation, v: 1, k: continuation, v: 0, count: 4, sum: 6, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 4, count: 4, sum: 6, main: fun<main>, naturals: fun<naturals>, 
 }
 --- step exp v --->
 {
@@ -6105,7 +6105,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 6, 4, 4, 0, continuation, 1, continuation, 2, continuation, 3, continuation, 4, continuation, 
-env: k: continuation, v: 4, k: continuation, v: 3, k: continuation, v: 2, k: continuation, v: 1, k: continuation, v: 0, count: 4, sum: 6, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 4, count: 4, sum: 6, main: fun<main>, naturals: fun<naturals>, 
 }
 --- handle value 4 with (sum + v)<2>(6,4,) --->
 {
@@ -6121,7 +6121,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 6, 4, 4, 0, continuation, 1, continuation, 2, continuation, 3, continuation, 4, continuation, 
-env: k: continuation, v: 4, k: continuation, v: 3, k: continuation, v: 2, k: continuation, v: 1, k: continuation, v: 0, count: 4, sum: 6, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 4, count: 4, sum: 6, main: fun<main>, naturals: fun<naturals>, 
 }
 --- handle value 10 with sum = (sum + v);<2>(ptr<2>,10,) --->
 {
@@ -6137,7 +6137,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 10, 4, 4, 0, continuation, 1, continuation, 2, continuation, 3, continuation, 4, continuation, 
-env: k: continuation, v: 4, k: continuation, v: 3, k: continuation, v: 2, k: continuation, v: 1, k: continuation, v: 0, count: 4, sum: 10, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 4, count: 4, sum: 10, main: fun<main>, naturals: fun<naturals>, 
 }
 --- step stmt count = (count + 1); ...  --->
 {
@@ -6156,7 +6156,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 10, 4, 4, 0, continuation, 1, continuation, 2, continuation, 3, continuation, 4, continuation, 
-env: k: continuation, v: 4, k: continuation, v: 3, k: continuation, v: 2, k: continuation, v: 1, k: continuation, v: 0, count: 4, sum: 10, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 4, count: 4, sum: 10, main: fun<main>, naturals: fun<naturals>, 
 }
 --- step stmt count = (count + 1); --->
 {
@@ -6175,7 +6175,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 10, 4, 4, 0, continuation, 1, continuation, 2, continuation, 3, continuation, 4, continuation, 
-env: k: continuation, v: 4, k: continuation, v: 3, k: continuation, v: 2, k: continuation, v: 1, k: continuation, v: 0, count: 4, sum: 10, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 4, count: 4, sum: 10, main: fun<main>, naturals: fun<naturals>, 
 }
 --- step lvalue count --->
 {
@@ -6194,7 +6194,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 10, 4, 4, 0, continuation, 1, continuation, 2, continuation, 3, continuation, 4, continuation, 
-env: k: continuation, v: 4, k: continuation, v: 3, k: continuation, v: 2, k: continuation, v: 1, k: continuation, v: 0, count: 4, sum: 10, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 4, count: 4, sum: 10, main: fun<main>, naturals: fun<naturals>, 
 }
 --- handle value ptr<3> with count = (count + 1);<1>(ptr<3>,) --->
 {
@@ -6213,7 +6213,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 10, 4, 4, 0, continuation, 1, continuation, 2, continuation, 3, continuation, 4, continuation, 
-env: k: continuation, v: 4, k: continuation, v: 3, k: continuation, v: 2, k: continuation, v: 1, k: continuation, v: 0, count: 4, sum: 10, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 4, count: 4, sum: 10, main: fun<main>, naturals: fun<naturals>, 
 }
 --- step exp (count + 1) --->
 {
@@ -6232,7 +6232,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 10, 4, 4, 0, continuation, 1, continuation, 2, continuation, 3, continuation, 4, continuation, 
-env: k: continuation, v: 4, k: continuation, v: 3, k: continuation, v: 2, k: continuation, v: 1, k: continuation, v: 0, count: 4, sum: 10, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 4, count: 4, sum: 10, main: fun<main>, naturals: fun<naturals>, 
 }
 --- step exp count --->
 {
@@ -6251,7 +6251,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 10, 4, 4, 0, continuation, 1, continuation, 2, continuation, 3, continuation, 4, continuation, 
-env: k: continuation, v: 4, k: continuation, v: 3, k: continuation, v: 2, k: continuation, v: 1, k: continuation, v: 0, count: 4, sum: 10, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 4, count: 4, sum: 10, main: fun<main>, naturals: fun<naturals>, 
 }
 --- handle value 4 with (count + 1)<1>(4,) --->
 {
@@ -6270,7 +6270,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 10, 4, 4, 0, continuation, 1, continuation, 2, continuation, 3, continuation, 4, continuation, 
-env: k: continuation, v: 4, k: continuation, v: 3, k: continuation, v: 2, k: continuation, v: 1, k: continuation, v: 0, count: 4, sum: 10, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 4, count: 4, sum: 10, main: fun<main>, naturals: fun<naturals>, 
 }
 --- step exp 1 --->
 {
@@ -6289,7 +6289,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 10, 4, 4, 0, continuation, 1, continuation, 2, continuation, 3, continuation, 4, continuation, 
-env: k: continuation, v: 4, k: continuation, v: 3, k: continuation, v: 2, k: continuation, v: 1, k: continuation, v: 0, count: 4, sum: 10, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 4, count: 4, sum: 10, main: fun<main>, naturals: fun<naturals>, 
 }
 --- handle value 1 with (count + 1)<2>(4,1,) --->
 {
@@ -6308,7 +6308,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 10, 4, 4, 0, continuation, 1, continuation, 2, continuation, 3, continuation, 4, continuation, 
-env: k: continuation, v: 4, k: continuation, v: 3, k: continuation, v: 2, k: continuation, v: 1, k: continuation, v: 0, count: 4, sum: 10, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 4, count: 4, sum: 10, main: fun<main>, naturals: fun<naturals>, 
 }
 --- handle value 5 with count = (count + 1);<2>(ptr<3>,5,) --->
 {
@@ -6327,7 +6327,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 10, 5, 4, 0, continuation, 1, continuation, 2, continuation, 3, continuation, 4, continuation, 
-env: k: continuation, v: 4, k: continuation, v: 3, k: continuation, v: 2, k: continuation, v: 1, k: continuation, v: 0, count: 5, sum: 10, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 4, count: 5, sum: 10, main: fun<main>, naturals: fun<naturals>, 
 }
 --- step stmt if ((count == 5))
  ... 
@@ -6349,7 +6349,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 10, 5, 4, 0, continuation, 1, continuation, 2, continuation, 3, continuation, 4, continuation, 
-env: k: continuation, v: 4, k: continuation, v: 3, k: continuation, v: 2, k: continuation, v: 1, k: continuation, v: 0, count: 5, sum: 10, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 4, count: 5, sum: 10, main: fun<main>, naturals: fun<naturals>, 
 }
 --- step exp (count == 5) --->
 {
@@ -6368,7 +6368,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 10, 5, 4, 0, continuation, 1, continuation, 2, continuation, 3, continuation, 4, continuation, 
-env: k: continuation, v: 4, k: continuation, v: 3, k: continuation, v: 2, k: continuation, v: 1, k: continuation, v: 0, count: 5, sum: 10, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 4, count: 5, sum: 10, main: fun<main>, naturals: fun<naturals>, 
 }
 --- step exp count --->
 {
@@ -6387,7 +6387,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 10, 5, 4, 0, continuation, 1, continuation, 2, continuation, 3, continuation, 4, continuation, 
-env: k: continuation, v: 4, k: continuation, v: 3, k: continuation, v: 2, k: continuation, v: 1, k: continuation, v: 0, count: 5, sum: 10, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 4, count: 5, sum: 10, main: fun<main>, naturals: fun<naturals>, 
 }
 --- handle value 5 with (count == 5)<1>(5,) --->
 {
@@ -6406,7 +6406,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 10, 5, 4, 0, continuation, 1, continuation, 2, continuation, 3, continuation, 4, continuation, 
-env: k: continuation, v: 4, k: continuation, v: 3, k: continuation, v: 2, k: continuation, v: 1, k: continuation, v: 0, count: 5, sum: 10, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 4, count: 5, sum: 10, main: fun<main>, naturals: fun<naturals>, 
 }
 --- step exp 5 --->
 {
@@ -6425,7 +6425,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 10, 5, 4, 0, continuation, 1, continuation, 2, continuation, 3, continuation, 4, continuation, 
-env: k: continuation, v: 4, k: continuation, v: 3, k: continuation, v: 2, k: continuation, v: 1, k: continuation, v: 0, count: 5, sum: 10, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 4, count: 5, sum: 10, main: fun<main>, naturals: fun<naturals>, 
 }
 --- handle value 5 with (count == 5)<2>(5,5,) --->
 {
@@ -6444,7 +6444,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 10, 5, 4, 0, continuation, 1, continuation, 2, continuation, 3, continuation, 4, continuation, 
-env: k: continuation, v: 4, k: continuation, v: 3, k: continuation, v: 2, k: continuation, v: 1, k: continuation, v: 0, count: 5, sum: 10, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 4, count: 5, sum: 10, main: fun<main>, naturals: fun<naturals>, 
 }
 --- handle value true with if ((count == 5))
  ... 
@@ -6466,7 +6466,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 10, 5, 4, 0, continuation, 1, continuation, 2, continuation, 3, continuation, 4, continuation, 
-env: k: continuation, v: 4, k: continuation, v: 3, k: continuation, v: 2, k: continuation, v: 1, k: continuation, v: 0, count: 5, sum: 10, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 4, count: 5, sum: 10, main: fun<main>, naturals: fun<naturals>, 
 }
 --- step stmt {
  ... 
@@ -6488,7 +6488,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 10, 5, 4, 0, continuation, 1, continuation, 2, continuation, 3, continuation, 4, continuation, 
-env: k: continuation, v: 4, k: continuation, v: 3, k: continuation, v: 2, k: continuation, v: 1, k: continuation, v: 0, count: 5, sum: 10, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 4, count: 5, sum: 10, main: fun<main>, naturals: fun<naturals>, 
 }
 --- step stmt return (sum - 10); --->
 {
@@ -6507,7 +6507,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 10, 5, 4, 0, continuation, 1, continuation, 2, continuation, 3, continuation, 4, continuation, 
-env: k: continuation, v: 4, k: continuation, v: 3, k: continuation, v: 2, k: continuation, v: 1, k: continuation, v: 0, count: 5, sum: 10, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 4, count: 5, sum: 10, main: fun<main>, naturals: fun<naturals>, 
 }
 --- step exp (sum - 10) --->
 {
@@ -6526,7 +6526,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 10, 5, 4, 0, continuation, 1, continuation, 2, continuation, 3, continuation, 4, continuation, 
-env: k: continuation, v: 4, k: continuation, v: 3, k: continuation, v: 2, k: continuation, v: 1, k: continuation, v: 0, count: 5, sum: 10, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 4, count: 5, sum: 10, main: fun<main>, naturals: fun<naturals>, 
 }
 --- step exp sum --->
 {
@@ -6545,7 +6545,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 10, 5, 4, 0, continuation, 1, continuation, 2, continuation, 3, continuation, 4, continuation, 
-env: k: continuation, v: 4, k: continuation, v: 3, k: continuation, v: 2, k: continuation, v: 1, k: continuation, v: 0, count: 5, sum: 10, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 4, count: 5, sum: 10, main: fun<main>, naturals: fun<naturals>, 
 }
 --- handle value 10 with (sum - 10)<1>(10,) --->
 {
@@ -6564,7 +6564,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 10, 5, 4, 0, continuation, 1, continuation, 2, continuation, 3, continuation, 4, continuation, 
-env: k: continuation, v: 4, k: continuation, v: 3, k: continuation, v: 2, k: continuation, v: 1, k: continuation, v: 0, count: 5, sum: 10, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 4, count: 5, sum: 10, main: fun<main>, naturals: fun<naturals>, 
 }
 --- step exp 10 --->
 {
@@ -6583,7 +6583,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 10, 5, 4, 0, continuation, 1, continuation, 2, continuation, 3, continuation, 4, continuation, 
-env: k: continuation, v: 4, k: continuation, v: 3, k: continuation, v: 2, k: continuation, v: 1, k: continuation, v: 0, count: 5, sum: 10, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 4, count: 5, sum: 10, main: fun<main>, naturals: fun<naturals>, 
 }
 --- handle value 10 with (sum - 10)<2>(10,10,) --->
 {
@@ -6602,7 +6602,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 10, 5, 4, 0, continuation, 1, continuation, 2, continuation, 3, continuation, 4, continuation, 
-env: k: continuation, v: 4, k: continuation, v: 3, k: continuation, v: 2, k: continuation, v: 1, k: continuation, v: 0, count: 5, sum: 10, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 4, count: 5, sum: 10, main: fun<main>, naturals: fun<naturals>, 
 }
 --- handle value 0 with return (sum - 10);<1>(0,) --->
 {

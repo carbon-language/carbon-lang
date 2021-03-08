@@ -4,26 +4,26 @@
 
 fn naturals() -> () {
   var Int: n = 0;
-  suspend n;
+  __yield n;
   while (true) {
     n = n + 1;
-    suspend n;
+    __yield n;
   }
 }
 
 fn main() -> Int {
   var Int: sum = 0;
   var Int: count = 0;
-  delimit {
+  __delimit {
     naturals();
     return 1;
-  } with (v, k) {
+  } __catch (v, k) {
     sum = sum + v;
     count = count + 1;
     if (count == 5) {
       return sum - 10;
     } else {
-      resume k;
+      __resume k;
     }
   }
 }

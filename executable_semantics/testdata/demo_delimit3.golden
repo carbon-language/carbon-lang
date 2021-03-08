@@ -4,7 +4,7 @@ var Int: x = 0;
 delimit
 {
 x = (x + 1);
-suspend 3;
+yield 3;
 x = (x + 2);
 return (x - 6);
 
@@ -32,7 +32,7 @@ var Int: x = 0;
 delimit
 {
 x = (x + 1);
-suspend 3;
+yield 3;
 x = (x + 2);
 return (x - 6);
 }
@@ -202,7 +202,7 @@ env: x: 0, main: fun<main>,
 }
 --- step stmt x = (x + 1); ...  --->
 {
-stack: main{x = (x + 1);<-1> :: suspend 3; ... <-1> :: {
+stack: main{x = (x + 1);<-1> :: yield 3; ... <-1> :: {
  ... 
 }
 <0> :: delimit
@@ -215,7 +215,7 @@ env: x: 0, main: fun<main>,
 }
 --- step stmt x = (x + 1); --->
 {
-stack: main{x<-1> :: x = (x + 1);<0> :: suspend 3; ... <-1> :: {
+stack: main{x<-1> :: x = (x + 1);<0> :: yield 3; ... <-1> :: {
  ... 
 }
 <0> :: delimit
@@ -228,7 +228,7 @@ env: x: 0, main: fun<main>,
 }
 --- step lvalue x --->
 {
-stack: main{ptr<1><-1> :: x = (x + 1);<0> :: suspend 3; ... <-1> :: {
+stack: main{ptr<1><-1> :: x = (x + 1);<0> :: yield 3; ... <-1> :: {
  ... 
 }
 <0> :: delimit
@@ -241,7 +241,7 @@ env: x: 0, main: fun<main>,
 }
 --- handle value ptr<1> with x = (x + 1);<1>(ptr<1>,) --->
 {
-stack: main{(x + 1)<-1> :: x = (x + 1);<1>(ptr<1>,) :: suspend 3; ... <-1> :: {
+stack: main{(x + 1)<-1> :: x = (x + 1);<1>(ptr<1>,) :: yield 3; ... <-1> :: {
  ... 
 }
 <0> :: delimit
@@ -254,7 +254,7 @@ env: x: 0, main: fun<main>,
 }
 --- step exp (x + 1) --->
 {
-stack: main{x<-1> :: (x + 1)<0> :: x = (x + 1);<1>(ptr<1>,) :: suspend 3; ... <-1> :: {
+stack: main{x<-1> :: (x + 1)<0> :: x = (x + 1);<1>(ptr<1>,) :: yield 3; ... <-1> :: {
  ... 
 }
 <0> :: delimit
@@ -267,7 +267,7 @@ env: x: 0, main: fun<main>,
 }
 --- step exp x --->
 {
-stack: main{0<-1> :: (x + 1)<0> :: x = (x + 1);<1>(ptr<1>,) :: suspend 3; ... <-1> :: {
+stack: main{0<-1> :: (x + 1)<0> :: x = (x + 1);<1>(ptr<1>,) :: yield 3; ... <-1> :: {
  ... 
 }
 <0> :: delimit
@@ -280,7 +280,7 @@ env: x: 0, main: fun<main>,
 }
 --- handle value 0 with (x + 1)<1>(0,) --->
 {
-stack: main{1<-1> :: (x + 1)<1>(0,) :: x = (x + 1);<1>(ptr<1>,) :: suspend 3; ... <-1> :: {
+stack: main{1<-1> :: (x + 1)<1>(0,) :: x = (x + 1);<1>(ptr<1>,) :: yield 3; ... <-1> :: {
  ... 
 }
 <0> :: delimit
@@ -293,7 +293,7 @@ env: x: 0, main: fun<main>,
 }
 --- step exp 1 --->
 {
-stack: main{1<-1> :: (x + 1)<1>(0,) :: x = (x + 1);<1>(ptr<1>,) :: suspend 3; ... <-1> :: {
+stack: main{1<-1> :: (x + 1)<1>(0,) :: x = (x + 1);<1>(ptr<1>,) :: yield 3; ... <-1> :: {
  ... 
 }
 <0> :: delimit
@@ -306,7 +306,7 @@ env: x: 0, main: fun<main>,
 }
 --- handle value 1 with (x + 1)<2>(0,1,) --->
 {
-stack: main{1<-1> :: x = (x + 1);<1>(ptr<1>,) :: suspend 3; ... <-1> :: {
+stack: main{1<-1> :: x = (x + 1);<1>(ptr<1>,) :: yield 3; ... <-1> :: {
  ... 
 }
 <0> :: delimit
@@ -319,7 +319,7 @@ env: x: 0, main: fun<main>,
 }
 --- handle value 1 with x = (x + 1);<2>(ptr<1>,1,) --->
 {
-stack: main{suspend 3; ... <-1> :: {
+stack: main{yield 3; ... <-1> :: {
  ... 
 }
 <0> :: delimit
@@ -330,9 +330,9 @@ with (v, k)
 heap: fun<main>, 1, 
 env: x: 1, main: fun<main>, 
 }
---- step stmt suspend 3; ...  --->
+--- step stmt yield 3; ...  --->
 {
-stack: main{suspend 3;<-1> :: x = (x + 2); ... <-1> :: {
+stack: main{yield 3;<-1> :: x = (x + 2); ... <-1> :: {
  ... 
 }
 <0> :: delimit
@@ -343,9 +343,9 @@ with (v, k)
 heap: fun<main>, 1, 
 env: x: 1, main: fun<main>, 
 }
---- step stmt suspend 3; --->
+--- step stmt yield 3; --->
 {
-stack: main{3<-1> :: suspend 3;<0> :: x = (x + 2); ... <-1> :: {
+stack: main{3<-1> :: yield 3;<0> :: x = (x + 2); ... <-1> :: {
  ... 
 }
 <0> :: delimit
@@ -358,7 +358,7 @@ env: x: 1, main: fun<main>,
 }
 --- step exp 3 --->
 {
-stack: main{3<-1> :: suspend 3;<0> :: x = (x + 2); ... <-1> :: {
+stack: main{3<-1> :: yield 3;<0> :: x = (x + 2); ... <-1> :: {
  ... 
 }
 <0> :: delimit
@@ -369,7 +369,7 @@ with (v, k)
 heap: fun<main>, 1, 
 env: x: 1, main: fun<main>, 
 }
---- handle value 3 with suspend 3;<1>(3,) --->
+--- handle value 3 with yield 3;<1>(3,) --->
 {
 stack: main{{
  ... 
@@ -633,7 +633,7 @@ env: k: continuation, v: 3, x: 4, main: fun<main>,
 stack: main{x = (x + 2); ... <-1> :: {
  ... 
 }
-<0> :: continuation<-1> :: resume k;<1>(continuation,) :: return 1;<-1> :: {
+<0> :: return 1;<-1> :: {
  ... 
 }
 <0> :: {
@@ -645,14 +645,14 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<main>, 4, 3, continuation, 
-env: k: continuation, v: 3, x: 4, main: fun<main>, 
+env: x: 4, main: fun<main>, 
 }
 --- step stmt x = (x + 2); ...  --->
 {
 stack: main{x = (x + 2);<-1> :: return (x - 6);<-1> :: {
  ... 
 }
-<0> :: continuation<-1> :: resume k;<1>(continuation,) :: return 1;<-1> :: {
+<0> :: return 1;<-1> :: {
  ... 
 }
 <0> :: {
@@ -664,14 +664,14 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<main>, 4, 3, continuation, 
-env: k: continuation, v: 3, x: 4, main: fun<main>, 
+env: x: 4, main: fun<main>, 
 }
 --- step stmt x = (x + 2); --->
 {
 stack: main{x<-1> :: x = (x + 2);<0> :: return (x - 6);<-1> :: {
  ... 
 }
-<0> :: continuation<-1> :: resume k;<1>(continuation,) :: return 1;<-1> :: {
+<0> :: return 1;<-1> :: {
  ... 
 }
 <0> :: {
@@ -683,14 +683,14 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<main>, 4, 3, continuation, 
-env: k: continuation, v: 3, x: 4, main: fun<main>, 
+env: x: 4, main: fun<main>, 
 }
 --- step lvalue x --->
 {
 stack: main{ptr<1><-1> :: x = (x + 2);<0> :: return (x - 6);<-1> :: {
  ... 
 }
-<0> :: continuation<-1> :: resume k;<1>(continuation,) :: return 1;<-1> :: {
+<0> :: return 1;<-1> :: {
  ... 
 }
 <0> :: {
@@ -702,14 +702,14 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<main>, 4, 3, continuation, 
-env: k: continuation, v: 3, x: 4, main: fun<main>, 
+env: x: 4, main: fun<main>, 
 }
 --- handle value ptr<1> with x = (x + 2);<1>(ptr<1>,) --->
 {
 stack: main{(x + 2)<-1> :: x = (x + 2);<1>(ptr<1>,) :: return (x - 6);<-1> :: {
  ... 
 }
-<0> :: continuation<-1> :: resume k;<1>(continuation,) :: return 1;<-1> :: {
+<0> :: return 1;<-1> :: {
  ... 
 }
 <0> :: {
@@ -721,14 +721,14 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<main>, 4, 3, continuation, 
-env: k: continuation, v: 3, x: 4, main: fun<main>, 
+env: x: 4, main: fun<main>, 
 }
 --- step exp (x + 2) --->
 {
 stack: main{x<-1> :: (x + 2)<0> :: x = (x + 2);<1>(ptr<1>,) :: return (x - 6);<-1> :: {
  ... 
 }
-<0> :: continuation<-1> :: resume k;<1>(continuation,) :: return 1;<-1> :: {
+<0> :: return 1;<-1> :: {
  ... 
 }
 <0> :: {
@@ -740,14 +740,14 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<main>, 4, 3, continuation, 
-env: k: continuation, v: 3, x: 4, main: fun<main>, 
+env: x: 4, main: fun<main>, 
 }
 --- step exp x --->
 {
 stack: main{4<-1> :: (x + 2)<0> :: x = (x + 2);<1>(ptr<1>,) :: return (x - 6);<-1> :: {
  ... 
 }
-<0> :: continuation<-1> :: resume k;<1>(continuation,) :: return 1;<-1> :: {
+<0> :: return 1;<-1> :: {
  ... 
 }
 <0> :: {
@@ -759,14 +759,14 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<main>, 4, 3, continuation, 
-env: k: continuation, v: 3, x: 4, main: fun<main>, 
+env: x: 4, main: fun<main>, 
 }
 --- handle value 4 with (x + 2)<1>(4,) --->
 {
 stack: main{2<-1> :: (x + 2)<1>(4,) :: x = (x + 2);<1>(ptr<1>,) :: return (x - 6);<-1> :: {
  ... 
 }
-<0> :: continuation<-1> :: resume k;<1>(continuation,) :: return 1;<-1> :: {
+<0> :: return 1;<-1> :: {
  ... 
 }
 <0> :: {
@@ -778,14 +778,14 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<main>, 4, 3, continuation, 
-env: k: continuation, v: 3, x: 4, main: fun<main>, 
+env: x: 4, main: fun<main>, 
 }
 --- step exp 2 --->
 {
 stack: main{2<-1> :: (x + 2)<1>(4,) :: x = (x + 2);<1>(ptr<1>,) :: return (x - 6);<-1> :: {
  ... 
 }
-<0> :: continuation<-1> :: resume k;<1>(continuation,) :: return 1;<-1> :: {
+<0> :: return 1;<-1> :: {
  ... 
 }
 <0> :: {
@@ -797,14 +797,14 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<main>, 4, 3, continuation, 
-env: k: continuation, v: 3, x: 4, main: fun<main>, 
+env: x: 4, main: fun<main>, 
 }
 --- handle value 2 with (x + 2)<2>(4,2,) --->
 {
 stack: main{6<-1> :: x = (x + 2);<1>(ptr<1>,) :: return (x - 6);<-1> :: {
  ... 
 }
-<0> :: continuation<-1> :: resume k;<1>(continuation,) :: return 1;<-1> :: {
+<0> :: return 1;<-1> :: {
  ... 
 }
 <0> :: {
@@ -816,14 +816,14 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<main>, 4, 3, continuation, 
-env: k: continuation, v: 3, x: 4, main: fun<main>, 
+env: x: 4, main: fun<main>, 
 }
 --- handle value 6 with x = (x + 2);<2>(ptr<1>,6,) --->
 {
 stack: main{return (x - 6);<-1> :: {
  ... 
 }
-<0> :: continuation<-1> :: resume k;<1>(continuation,) :: return 1;<-1> :: {
+<0> :: return 1;<-1> :: {
  ... 
 }
 <0> :: {
@@ -835,14 +835,14 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<main>, 6, 3, continuation, 
-env: k: continuation, v: 3, x: 6, main: fun<main>, 
+env: x: 6, main: fun<main>, 
 }
 --- step stmt return (x - 6); --->
 {
 stack: main{(x - 6)<-1> :: return (x - 6);<0> :: {
  ... 
 }
-<0> :: continuation<-1> :: resume k;<1>(continuation,) :: return 1;<-1> :: {
+<0> :: return 1;<-1> :: {
  ... 
 }
 <0> :: {
@@ -854,14 +854,14 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<main>, 6, 3, continuation, 
-env: k: continuation, v: 3, x: 6, main: fun<main>, 
+env: x: 6, main: fun<main>, 
 }
 --- step exp (x - 6) --->
 {
 stack: main{x<-1> :: (x - 6)<0> :: return (x - 6);<0> :: {
  ... 
 }
-<0> :: continuation<-1> :: resume k;<1>(continuation,) :: return 1;<-1> :: {
+<0> :: return 1;<-1> :: {
  ... 
 }
 <0> :: {
@@ -873,14 +873,14 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<main>, 6, 3, continuation, 
-env: k: continuation, v: 3, x: 6, main: fun<main>, 
+env: x: 6, main: fun<main>, 
 }
 --- step exp x --->
 {
 stack: main{6<-1> :: (x - 6)<0> :: return (x - 6);<0> :: {
  ... 
 }
-<0> :: continuation<-1> :: resume k;<1>(continuation,) :: return 1;<-1> :: {
+<0> :: return 1;<-1> :: {
  ... 
 }
 <0> :: {
@@ -892,14 +892,14 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<main>, 6, 3, continuation, 
-env: k: continuation, v: 3, x: 6, main: fun<main>, 
+env: x: 6, main: fun<main>, 
 }
 --- handle value 6 with (x - 6)<1>(6,) --->
 {
 stack: main{6<-1> :: (x - 6)<1>(6,) :: return (x - 6);<0> :: {
  ... 
 }
-<0> :: continuation<-1> :: resume k;<1>(continuation,) :: return 1;<-1> :: {
+<0> :: return 1;<-1> :: {
  ... 
 }
 <0> :: {
@@ -911,14 +911,14 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<main>, 6, 3, continuation, 
-env: k: continuation, v: 3, x: 6, main: fun<main>, 
+env: x: 6, main: fun<main>, 
 }
 --- step exp 6 --->
 {
 stack: main{6<-1> :: (x - 6)<1>(6,) :: return (x - 6);<0> :: {
  ... 
 }
-<0> :: continuation<-1> :: resume k;<1>(continuation,) :: return 1;<-1> :: {
+<0> :: return 1;<-1> :: {
  ... 
 }
 <0> :: {
@@ -930,14 +930,14 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<main>, 6, 3, continuation, 
-env: k: continuation, v: 3, x: 6, main: fun<main>, 
+env: x: 6, main: fun<main>, 
 }
 --- handle value 6 with (x - 6)<2>(6,6,) --->
 {
 stack: main{0<-1> :: return (x - 6);<0> :: {
  ... 
 }
-<0> :: continuation<-1> :: resume k;<1>(continuation,) :: return 1;<-1> :: {
+<0> :: return 1;<-1> :: {
  ... 
 }
 <0> :: {
@@ -949,7 +949,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<main>, 6, 3, continuation, 
-env: k: continuation, v: 3, x: 6, main: fun<main>, 
+env: x: 6, main: fun<main>, 
 }
 --- handle value 0 with return (x - 6);<1>(0,) --->
 {

@@ -44,11 +44,11 @@ TRUE     "true"
 TYPE     "Type"
 VAR      "var"
 WHILE    "while"
-DELIMIT  "delimit"
-SUSPEND  "suspend"
-RESUME   "resume"
-WITH     "with"
-SNAPSHOT "Snapshot"
+DELIMIT  "__delimit"
+YIELD    "__yield"
+RESUME   "__resume"
+CATCH     "__catch"
+SNAPSHOT "__Snapshot"
 
 identifier    [A-Za-z_][A-Za-z0-9_]*
 integer_literal   [0-9]+
@@ -83,9 +83,9 @@ integer_literal   [0-9]+
 {VAR}      { return VAR; }
 {WHILE}    { return WHILE; }
 {DELIMIT}  { return DELIMIT; }
-{SUSPEND}  { return SUSPEND; }
+{YIELD}    { return YIELD; }
 {RESUME}   { return RESUME; }
-{WITH}     { return WITH; }
+{CATCH}    { return CATCH; }
 {SNAPSHOT} { return SNAPSHOT; }
 
 {identifier} {

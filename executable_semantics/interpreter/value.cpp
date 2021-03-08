@@ -355,6 +355,7 @@ auto TypeEqual(Value* t1, Value* t2) -> bool {
       return FieldsEqual(t1->u.tuple_type.fields, t2->u.tuple_type.fields);
     case ValKind::IntTV:
     case ValKind::BoolTV:
+    case ValKind::SnapshotTV:
       return true;
     default:
       return false;

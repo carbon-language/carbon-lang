@@ -810,40 +810,63 @@ auto IsDelimitAction(Action* act) -> bool {
          act->u.stmt->tag == StatementKind::Delimit;
 }
 
-auto ResumeTodo(Stack<Action*> todo, Stack<Action*>& new_todo) -> void {
+auto ResumeTodoAndScopes(Stack<Action*> todo, Stack<Action*>& new_todo,
+                         Stack<Scope*> scopes, Stack<Scope*>& new_scopes)
+    -> void {
   if (todo.IsEmpty() || IsDelimitAction(todo.Top())) {
     return;
   } else {
     Action* a = todo.Top();
     todo.Pop();
-    ResumeTodo(todo, new_todo);
+    Scope* s = nullptr;
+    if (IsBlockAct(a)) {
+      s = scopes.Top();
+      scopes.Pop();
+    }
+    ResumeTodoAndScopes(todo, new_todo, scopes, new_scopes);
     new_todo.Push(a);
+    if (IsBlockAct(a)) {
+      new_scopes.Push(s);
+    }
     return;
   }
 }
 
-// todo: fix handling of scopes
-auto ResumeContinuation(Stack<Frame*> suspended) -> void {
-  Frame* frame = suspended.Top();
+auto GetFrameScope(Frame* frame) -> Scope* {
+  Stack<Scope*> scopes = frame->scopes;
+  Scope* current = scopes.Top();
+  while (!scopes.IsEmpty()) {
+    current = scopes.Top();
+    scopes.Pop();
+  }
+  return current;
+}
+
+auto ResumeContinuation(Stack<Frame*> yielded) -> void {
+  Frame* frame = yielded.Top();
   bool found_delimit = false;
   for (auto i = frame->todo.begin(); i != frame->todo.end(); ++i) {
     if (IsDelimitAction(*i))
       found_delimit = true;
   }
-  if (!found_delimit) {
-    suspended.Pop();
-    if (suspended.IsEmpty()) {
-      std::cerr << "suspend without enclosing delimit" << std::endl;
+  if (found_delimit) {
+    Frame* new_frame = state->stack.Top();
+    ResumeTodoAndScopes(frame->todo, new_frame->todo, frame->scopes,
+                        new_frame->scopes);
+  } else {
+    yielded.Pop();
+    if (yielded.IsEmpty()) {
+      std::cerr << "yield without enclosing delimit" << std::endl;
       exit(-1);
-    } else {
-      Frame* new_frame =
-          new Frame(frame->name, frame->scopes, Stack<Action*>());
-      state->stack.Push(new_frame);
-      ResumeContinuation(suspended);
     }
+    ResumeContinuation(yielded);
+    Stack<Scope*> new_scopes;
+    new_scopes.Push(GetFrameScope(frame));
+    Frame* new_frame = new Frame(frame->name, new_scopes, Stack<Action*>());
+    ResumeTodoAndScopes(frame->todo, new_frame->todo, frame->scopes,
+                        new_frame->scopes);
+    state->stack.Push(new_frame);
   }
-  // Resume the current frame
-  ResumeTodo(frame->todo, state->stack.Top()->todo);
 }
 
 // State transitions for statements.
@@ -959,8 +982,8 @@ void StepStmt() {
         exit(-1);
       }
       break;
-    case StatementKind::Suspend:
-      frame->todo.Push(MakeExpAct(stmt->u.suspend_stmt.exp));
+    case StatementKind::Yield:
+      frame->todo.Push(MakeExpAct(stmt->u.yield_stmt.exp));
       act->pos++;
       break;
     case StatementKind::Resume:
@@ -1403,15 +1426,15 @@ void HandleValue() {
           frame->todo.Push(MakeValAct(ret_val));
           break;
         }
-        case StatementKind::Suspend: {
-          // Pop the argument and suspend action off the todo list.
+        case StatementKind::Yield: {
+          // Pop the argument and yield action off the todo list.
           frame->todo.Pop(2);
 
           // Save the current continuation
-          Stack<Frame*> suspended = state->stack;
+          Stack<Frame*> yielded = state->stack;
 
           // Roll back to the nearest delimit
-          Stack<Frame*> new_stack = suspended;
+          Stack<Frame*> new_stack = yielded;
           Statement* delimit;
           while (!new_stack.IsEmpty()) {
             Stack<Action*> todo = new_stack.Top()->todo;
@@ -1430,19 +1453,19 @@ void HandleValue() {
             }
             new_stack.Pop();
           }
-          std::cerr << "suspend without an enclosing delimiter" << std::endl;
+          std::cerr << "yield without an enclosing delimiter" << std::endl;
           exit(-1);
         handler : {
           // Create a new scope for the handler, binding the
-          // suspend and continuation variables.
+          // yield and continuation variables.
           std::list<std::string> scope_locals;
 
-          scope_locals.push_back(*delimit->u.delimit_stmt.suspend_variable);
+          scope_locals.push_back(*delimit->u.delimit_stmt.yield_variable);
           scope_locals.push_back(*delimit->u.delimit_stmt.continuation);
           Scope* new_scope = new Scope(CurrentEnv(state), scope_locals);
           Address a1 = AllocateValue(val_act->u.val);
-          new_scope->env.Set(*delimit->u.delimit_stmt.suspend_variable, a1);
-          Address a2 = AllocateValue(MakeContinuation(suspended));
+          new_scope->env.Set(*delimit->u.delimit_stmt.yield_variable, a1);
+          Address a2 = AllocateValue(MakeContinuation(yielded));
           new_scope->env.Set(*delimit->u.delimit_stmt.continuation, a2);
 
           // Push the new scope onto the stack
@@ -1455,10 +1478,11 @@ void HandleValue() {
         } break;
         }
         case StatementKind::Resume: {
-          // Push the suspended continuation onto the current stack
-          Stack<Frame*> suspended =
+          // Push the yielded continuation onto the current stack
+          Stack<Frame*> yielded =
               ValToContinuation(val_act->u.val, stmt->line_num);
-          ResumeContinuation(suspended);
+          frame->todo.Pop(2);
+          ResumeContinuation(yielded);
           break;
         }
         case StatementKind::Block:

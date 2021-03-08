@@ -24,7 +24,7 @@ enum class StatementKind {
   Continue,
   Match,
   Delimit,
-  Suspend,
+  Yield,
   Resume
 };
 
@@ -74,14 +74,14 @@ struct Statement {
 
     struct {
       Statement* body;
-      std::string* suspend_variable;
+      std::string* yield_variable;
       std::string* continuation;
       Statement* handler;
     } delimit_stmt;
 
     struct {
       Expression* exp;
-    } suspend_stmt;
+    } yield_stmt;
 
     struct {
       Expression* exp;
@@ -106,7 +106,7 @@ auto MakeMatch(int line_num, Expression* exp,
     -> Statement*;
 auto MakeDelimitStmt(int line_num, Statement*, std::string, std::string,
                      Statement*) -> Statement*;
-auto MakeSuspendStmt(int line_num, Expression*) -> Statement*;
+auto MakeYieldStmt(int line_num, Expression*) -> Statement*;
 auto MakeResumeStmt(int line_num, Expression*) -> Statement*;
 
 void PrintStatement(Statement*, int);

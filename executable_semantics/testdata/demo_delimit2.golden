@@ -2,7 +2,7 @@
 fn main () -> Int {
 delimit
 {
-suspend 0;
+yield 0;
 return 1;
 
 }
@@ -24,7 +24,7 @@ return v;
 fn main () -> Int {
 delimit
 {
-suspend 0;
+yield 0;
 return 1;
 }
 
@@ -101,7 +101,7 @@ env: main: fun<main>,
 }
  --->
 {
-stack: main{suspend 0; ... <-1> :: {
+stack: main{yield 0; ... <-1> :: {
  ... 
 }
 <0> :: delimit
@@ -112,9 +112,9 @@ with (v, k)
 heap: fun<main>, 
 env: main: fun<main>, 
 }
---- step stmt suspend 0; ...  --->
+--- step stmt yield 0; ...  --->
 {
-stack: main{suspend 0;<-1> :: return 1;<-1> :: {
+stack: main{yield 0;<-1> :: return 1;<-1> :: {
  ... 
 }
 <0> :: delimit
@@ -125,9 +125,9 @@ with (v, k)
 heap: fun<main>, 
 env: main: fun<main>, 
 }
---- step stmt suspend 0; --->
+--- step stmt yield 0; --->
 {
-stack: main{0<-1> :: suspend 0;<0> :: return 1;<-1> :: {
+stack: main{0<-1> :: yield 0;<0> :: return 1;<-1> :: {
  ... 
 }
 <0> :: delimit
@@ -140,7 +140,7 @@ env: main: fun<main>,
 }
 --- step exp 0 --->
 {
-stack: main{0<-1> :: suspend 0;<0> :: return 1;<-1> :: {
+stack: main{0<-1> :: yield 0;<0> :: return 1;<-1> :: {
  ... 
 }
 <0> :: delimit
@@ -151,7 +151,7 @@ with (v, k)
 heap: fun<main>, 
 env: main: fun<main>, 
 }
---- handle value 0 with suspend 0;<1>(0,) --->
+--- handle value 0 with yield 0;<1>(0,) --->
 {
 stack: main{{
  ... 
