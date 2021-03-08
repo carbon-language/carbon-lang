@@ -3250,7 +3250,8 @@ interface's test suite would actually be parameterized by the `+` of two
 interfaces: the interface being tested and a testing-specific interface for
 generating values. In some cases, the test suite might be able to use a standard
 generate-values-for-tests interface (of which there may be only a few). In
-others, a particular interface's test suite might have specific requirements.
+others, a particular interface's test suite might have specific requirements and
+so require a custom testing interface.
 
 ### Operator overloading
 
