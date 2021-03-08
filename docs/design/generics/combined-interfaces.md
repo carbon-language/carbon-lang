@@ -746,9 +746,54 @@ fn F1[I1:$ T1](T1: x1) {
 Structural interfaces are a reasonable mechanism for describing other structural
 type constraints, which we will likely want for template constraints. For
 example, a method definition in a structural interface would match any type that
-has a method with that name and signature. We could similarly support associated
-constant and data field constraints. This is future work though, as it does not
-directly impact generics in Carbon.
+has a method with that name and signature. This is only for templates, not
+generics, since "the method with a given name and signature" can change when
+casting to a facet type. For example:
+
+```
+structural interface SA {
+  impl A;
+  alias F = A.AMethod;
+}
+
+structural interface SB {
+  impl B;
+  alias F = B.BMethod;
+}
+
+structural interface HasF {
+  method (Self: this) F();
+}
+
+// Template, not generic, since this relies on structural/duck typing.
+fn CallF[HasF:$$ T](T: x) {
+  x.F();
+}
+
+fn ViaA[SA:$ T](T: x) {
+  // Calls A.AMethod().
+  CallF(x);
+}
+
+fn ViaB[SB:$ T](T: x) {
+  // Calls B.BMethod().
+  CallF(x);
+}
+
+struct S {
+  impl A { ... }
+  impl B { ... }
+}
+
+var S: x = ();
+ViaA(x);
+ViaB(x);
+// Not allowed, no method `F`:
+CallF(x);
+```
+
+We could similarly support associated constant and data field constraints. This
+is future work though, as it does not directly impact generics in Carbon.
 
 ## Combining interfaces by adding type-types
 
@@ -1971,7 +2016,23 @@ T where Printable: Vector(T)
 
 One case of this is handled with the `Self` type/keyword.
 
-TODO
+TODO: Include the `Abs` example:
+
+```
+interface HasAbs {
+  extends Numeric;
+  var Numeric:$ MagnitudeType;
+  method (Self: this) Abs() -> MagnitudeType;
+}
+
+// For Int, Float32, etc. HasAbs.MagnitudeType == Self.
+// For Complex64, HasAbs.MagnitudeType == Float32.
+
+// Problem: for this function, need T.MagnitudeType == T constraint.
+fn Relu[???: T](T: x) -> T {
+  return (x + x.Abs()) / 2;
+}
+```
 
 TODO: Want to be able to say "The slice type for a container is another
 container, with a constraint saying it is idempotent." That is, we want to write
