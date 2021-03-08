@@ -28,7 +28,7 @@ int main(int argc, char* argv[]) {
   auto analyzeSyntax = Carbon::SyntaxDriver(inputFileName);
   auto astOrError = analyzeSyntax();
 
-  if (auto error = std::get_if<Carbon::SyntaxDriver::Error>(&astOrError)) {
+  if (auto* error = std::get_if<Carbon::SyntaxDriver::Error>(&astOrError)) {
     // Diagnostic already reported to std::cerr; this is just a return code.
     return *error;
   }
