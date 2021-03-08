@@ -4,9 +4,9 @@
 
 fn main() -> Int {
   delimit {
-    suspend;
+    suspend 0;
     return 1;
-  } with (k) {
-    return 0;
+  } with (v, k) {
+    return v;
   }
 }

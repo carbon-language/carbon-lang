@@ -105,21 +105,23 @@ auto MakeMatch(int line_num, Expression* exp,
   return s;
 }
 
-auto MakeDelimitStmt(int line_num, Statement* body, std::string cont,
-                     Statement* handler) -> Statement* {
+auto MakeDelimitStmt(int line_num, Statement* body, std::string suspend,
+                     std::string cont, Statement* handler) -> Statement* {
   auto* s = new Statement();
   s->line_num = line_num;
   s->tag = StatementKind::Delimit;
   s->u.delimit_stmt.body = body;
+  s->u.delimit_stmt.suspend_variable = new std::string(suspend);
   s->u.delimit_stmt.continuation = new std::string(cont);
   s->u.delimit_stmt.handler = handler;
   return s;
 }
 
-auto MakeSuspendStmt(int line_num) -> Statement* {
+auto MakeSuspendStmt(int line_num, Expression* exp) -> Statement* {
   auto* s = new Statement();
   s->line_num = line_num;
   s->tag = StatementKind::Suspend;
+  s->u.suspend_stmt.exp = exp;
   return s;
 }
 
@@ -216,13 +218,15 @@ void PrintStatement(Statement* s, int depth) {
       std::cout << "delimit" << std::endl;
       PrintStatement(s->u.delimit_stmt.body, depth - 1);
       std::cout << std::endl
-                << "with (" << *s->u.delimit_stmt.continuation << ")"
-                << std::endl;
+                << "with (" << *s->u.delimit_stmt.suspend_variable << ", "
+                << *s->u.delimit_stmt.continuation << ")" << std::endl;
       PrintStatement(s->u.delimit_stmt.handler, depth - 1);
       std::cout << std::endl;
       break;
     case StatementKind::Suspend:
-      std::cout << "suspend;";
+      std::cout << "suspend ";
+      PrintExp(s->u.suspend_stmt.exp);
+      std::cout << ";";
       break;
     case StatementKind::Resume:
       std::cout << "resume ";

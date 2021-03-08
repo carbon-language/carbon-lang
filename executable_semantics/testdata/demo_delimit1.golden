@@ -7,7 +7,7 @@ x = 0;
 
 }
 
-with (k)
+with (v, k)
 {
 return 1;
 
@@ -31,7 +31,7 @@ x = 0;
 
 }
 
-with (k)
+with (v, k)
 {
 return 1;
 
@@ -84,7 +84,7 @@ env: main: fun<main>,
 {
 stack: main{var Int: x = 1;<-1> :: delimit
  ... 
-with (k)
+with (v, k)
  ... 
  ... <-1>} :: top{}
 heap: fun<main>, 
@@ -94,7 +94,7 @@ env: main: fun<main>,
 {
 stack: main{1<-1> :: var Int: x = 1;<0> :: delimit
  ... 
-with (k)
+with (v, k)
  ... 
  ... <-1>} :: top{}
 heap: fun<main>, 
@@ -104,7 +104,7 @@ env: main: fun<main>,
 {
 stack: main{1<-1> :: var Int: x = 1;<0> :: delimit
  ... 
-with (k)
+with (v, k)
  ... 
  ... <-1>} :: top{}
 heap: fun<main>, 
@@ -114,7 +114,7 @@ env: main: fun<main>,
 {
 stack: main{Int: x<-1> :: var Int: x = 1;<1>(1,) :: delimit
  ... 
-with (k)
+with (v, k)
  ... 
  ... <-1>} :: top{}
 heap: fun<main>, 
@@ -124,7 +124,7 @@ env: main: fun<main>,
 {
 stack: main{Int<-1> :: Int: x<0> :: var Int: x = 1;<1>(1,) :: delimit
  ... 
-with (k)
+with (v, k)
  ... 
  ... <-1>} :: top{}
 heap: fun<main>, 
@@ -134,7 +134,7 @@ env: main: fun<main>,
 {
 stack: main{Int<-1> :: Int: x<0> :: var Int: x = 1;<1>(1,) :: delimit
  ... 
-with (k)
+with (v, k)
  ... 
  ... <-1>} :: top{}
 heap: fun<main>, 
@@ -144,7 +144,7 @@ env: main: fun<main>,
 {
 stack: main{Int: x<-1> :: var Int: x = 1;<1>(1,) :: delimit
  ... 
-with (k)
+with (v, k)
  ... 
  ... <-1>} :: top{}
 heap: fun<main>, 
@@ -155,7 +155,7 @@ pattern_match(Int: x, 1)
 {
 stack: main{delimit
  ... 
-with (k)
+with (v, k)
  ... 
  ... <-1>} :: top{}
 heap: fun<main>, 1, 
@@ -163,13 +163,13 @@ env: x: 1, main: fun<main>,
 }
 --- step stmt delimit
  ... 
-with (k)
+with (v, k)
  ... 
  ...  --->
 {
 stack: main{delimit
  ... 
-with (k)
+with (v, k)
  ... 
 <-1> :: return x;<-1>} :: top{}
 heap: fun<main>, 1, 
@@ -177,7 +177,7 @@ env: x: 1, main: fun<main>,
 }
 --- step stmt delimit
  ... 
-with (k)
+with (v, k)
  ... 
  --->
 {
@@ -186,7 +186,7 @@ stack: main{{
 }
 <-1> :: delimit
  ... 
-with (k)
+with (v, k)
  ... 
 <0> :: return x;<-1>} :: top{}
 heap: fun<main>, 1, 
@@ -202,7 +202,7 @@ stack: main{x = 0;<-1> :: {
 }
 <0> :: delimit
  ... 
-with (k)
+with (v, k)
  ... 
 <0> :: return x;<-1>} :: top{}
 heap: fun<main>, 1, 
@@ -215,7 +215,7 @@ stack: main{x = 0;<-1> :: {
 }
 <0> :: delimit
  ... 
-with (k)
+with (v, k)
  ... 
 <0> :: return x;<-1>} :: top{}
 heap: fun<main>, 1, 
@@ -228,7 +228,7 @@ stack: main{x<-1> :: x = 0;<0> :: {
 }
 <0> :: delimit
  ... 
-with (k)
+with (v, k)
  ... 
 <0> :: return x;<-1>} :: top{}
 heap: fun<main>, 1, 
@@ -241,7 +241,7 @@ stack: main{ptr<1><-1> :: x = 0;<0> :: {
 }
 <0> :: delimit
  ... 
-with (k)
+with (v, k)
  ... 
 <0> :: return x;<-1>} :: top{}
 heap: fun<main>, 1, 
@@ -254,7 +254,7 @@ stack: main{0<-1> :: x = 0;<1>(ptr<1>,) :: {
 }
 <0> :: delimit
  ... 
-with (k)
+with (v, k)
  ... 
 <0> :: return x;<-1>} :: top{}
 heap: fun<main>, 1, 
@@ -267,7 +267,7 @@ stack: main{0<-1> :: x = 0;<1>(ptr<1>,) :: {
 }
 <0> :: delimit
  ... 
-with (k)
+with (v, k)
  ... 
 <0> :: return x;<-1>} :: top{}
 heap: fun<main>, 1, 
@@ -280,7 +280,7 @@ stack: main{{
 }
 <0> :: delimit
  ... 
-with (k)
+with (v, k)
  ... 
 <0> :: return x;<-1>} :: top{}
 heap: fun<main>, 0, 
@@ -293,7 +293,7 @@ env: x: 0, main: fun<main>,
 {
 stack: main{delimit
  ... 
-with (k)
+with (v, k)
  ... 
 <0> :: return x;<-1>} :: top{}
 heap: fun<main>, 0, 
@@ -301,7 +301,7 @@ env: x: 0, main: fun<main>,
 }
 --- step stmt delimit
  ... 
-with (k)
+with (v, k)
  ... 
  --->
 {

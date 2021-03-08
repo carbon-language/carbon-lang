@@ -6,11 +6,11 @@ fn main() -> Int {
   var Int: x = 0;
   delimit {
     x = x + 1;
-    suspend;
-    x = x + 1;
-    return x - 3;
-  } with (k) {
-    x = x + 1;
+    suspend 3;
+    x = x + 2;
+    return x - 6;
+  } with (v, k) {
+    x = x + v;
     resume k;
     return 1;
   }

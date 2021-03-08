@@ -509,17 +509,21 @@ auto TypeCheckStmt(Statement* s, TypeEnv env, Env ct_env, Value* ret_type)
       auto body_result =
           TypeCheckStmt(s->u.delimit_stmt.body, env, ct_env, ret_type);
       auto handler_env = env;
+      handler_env.Set(*s->u.delimit_stmt.suspend_variable, MakeIntTypeVal());
       handler_env.Set(*s->u.delimit_stmt.continuation, MakeSnapshotTypeVal());
       auto handler_result = TypeCheckStmt(s->u.delimit_stmt.handler,
                                           handler_env, ct_env, ret_type);
       return TCStatement(
           MakeDelimitStmt(s->line_num, body_result.stmt,
+                          *s->u.delimit_stmt.suspend_variable,
                           *s->u.delimit_stmt.continuation, handler_result.stmt),
           env);
     }
     case StatementKind::Suspend: {
-      // Nothing to do here.
-      return TCStatement(s, env);
+      auto result = TypeCheckExp(s->u.suspend_stmt.exp, env, ct_env, nullptr,
+                                 TCContext::ValueContext);
+      ExpectType(s->line_num, "suspend", MakeIntTypeVal(), result.type);
+      return TCStatement(MakeSuspendStmt(s->line_num, result.exp), env);
     }
     case StatementKind::Resume: {
       auto result = TypeCheckExp(s->u.resume_stmt.exp, env, ct_env, nullptr,
@@ -577,6 +581,7 @@ auto CheckOrEnsureReturn(Statement* stmt, bool void_return, int line_num)
       return MakeDelimitStmt(stmt->line_num,
                              CheckOrEnsureReturn(stmt->u.delimit_stmt.body,
                                                  void_return, stmt->line_num),
+                             *stmt->u.delimit_stmt.suspend_variable,
                              *stmt->u.delimit_stmt.continuation,
                              CheckOrEnsureReturn(stmt->u.delimit_stmt.handler,
                                                  void_return, stmt->line_num));

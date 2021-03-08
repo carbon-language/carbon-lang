@@ -2,14 +2,14 @@
 fn main () -> Int {
 delimit
 {
-suspend;
+suspend 0;
 return 1;
 
 }
 
-with (k)
+with (v, k)
 {
-return 0;
+return v;
 
 }
 
@@ -24,13 +24,13 @@ return 0;
 fn main () -> Int {
 delimit
 {
-suspend;
+suspend 0;
 return 1;
 }
 
-with (k)
+with (v, k)
 {
-return 0;
+return v;
 }
 
 
@@ -73,7 +73,7 @@ pattern_match((), ())
 {
 stack: main{delimit
  ... 
-with (k)
+with (v, k)
  ... 
 <-1>} :: top{}
 heap: fun<main>, 
@@ -81,7 +81,7 @@ env: main: fun<main>,
 }
 --- step stmt delimit
  ... 
-with (k)
+with (v, k)
  ... 
  --->
 {
@@ -90,7 +90,7 @@ stack: main{{
 }
 <-1> :: delimit
  ... 
-with (k)
+with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<main>, 
@@ -101,52 +101,68 @@ env: main: fun<main>,
 }
  --->
 {
-stack: main{suspend; ... <-1> :: {
+stack: main{suspend 0; ... <-1> :: {
  ... 
 }
 <0> :: delimit
  ... 
-with (k)
+with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<main>, 
 env: main: fun<main>, 
 }
---- step stmt suspend; ...  --->
+--- step stmt suspend 0; ...  --->
 {
-stack: main{suspend;<-1> :: return 1;<-1> :: {
+stack: main{suspend 0;<-1> :: return 1;<-1> :: {
  ... 
 }
 <0> :: delimit
  ... 
-with (k)
+with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<main>, 
 env: main: fun<main>, 
 }
---- step stmt suspend; --->
+--- step stmt suspend 0; --->
 {
-stack: main{continuation<-1> :: delimit
+stack: main{0<-1> :: suspend 0;<0> :: return 1;<-1> :: {
  ... 
-with (k)
+}
+<0> :: delimit
+ ... 
+with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<main>, 
 env: main: fun<main>, 
 }
---- handle value continuation with delimit
+--- step exp 0 --->
+{
+stack: main{0<-1> :: suspend 0;<0> :: return 1;<-1> :: {
  ... 
-with (k)
+}
+<0> :: delimit
  ... 
-<1>(continuation,) --->
+with (v, k)
+ ... 
+<0>} :: top{}
+heap: fun<main>, 
+env: main: fun<main>, 
+}
+--- handle value 0 with suspend 0;<1>(0,) --->
 {
 stack: main{{
  ... 
 }
-<-1>} :: top{}
-heap: fun<main>, continuation, 
-env: k: continuation, main: fun<main>, 
+<-1> :: delimit
+ ... 
+with (v, k)
+ ... 
+<0>} :: top{}
+heap: fun<main>, 0, continuation, 
+env: k: continuation, v: 0, main: fun<main>, 
 }
 --- step stmt {
  ... 
@@ -159,53 +175,69 @@ stack: main{{
 <-1> :: {
  ... 
 }
+<0> :: delimit
+ ... 
+with (v, k)
+ ... 
 <0>} :: top{}
-heap: fun<main>, continuation, 
-env: k: continuation, main: fun<main>, 
+heap: fun<main>, 0, continuation, 
+env: k: continuation, v: 0, main: fun<main>, 
 }
 --- step stmt {
  ... 
 }
  --->
 {
-stack: main{return 0;<-1> :: {
+stack: main{return v;<-1> :: {
  ... 
 }
 <0> :: {
  ... 
 }
+<0> :: delimit
+ ... 
+with (v, k)
+ ... 
 <0>} :: top{}
-heap: fun<main>, continuation, 
-env: k: continuation, main: fun<main>, 
+heap: fun<main>, 0, continuation, 
+env: k: continuation, v: 0, main: fun<main>, 
 }
---- step stmt return 0; --->
+--- step stmt return v; --->
 {
-stack: main{0<-1> :: return 0;<0> :: {
+stack: main{v<-1> :: return v;<0> :: {
  ... 
 }
 <0> :: {
  ... 
 }
+<0> :: delimit
+ ... 
+with (v, k)
+ ... 
 <0>} :: top{}
-heap: fun<main>, continuation, 
-env: k: continuation, main: fun<main>, 
+heap: fun<main>, 0, continuation, 
+env: k: continuation, v: 0, main: fun<main>, 
 }
---- step exp 0 --->
+--- step exp v --->
 {
-stack: main{0<-1> :: return 0;<0> :: {
+stack: main{0<-1> :: return v;<0> :: {
  ... 
 }
 <0> :: {
  ... 
 }
+<0> :: delimit
+ ... 
+with (v, k)
+ ... 
 <0>} :: top{}
-heap: fun<main>, continuation, 
-env: k: continuation, main: fun<main>, 
+heap: fun<main>, 0, continuation, 
+env: k: continuation, v: 0, main: fun<main>, 
 }
---- handle value 0 with return 0;<1>(0,) --->
+--- handle value 0 with return v;<1>(0,) --->
 {
 stack: top{0<-1>}
-heap: fun<main>, !!continuation, 
+heap: fun<main>, !!0, !!continuation, 
 env: main: fun<main>, 
 }
 result: 0

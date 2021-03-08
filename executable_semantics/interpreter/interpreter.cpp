@@ -822,6 +822,7 @@ auto ResumeTodo(Stack<Action*> todo, Stack<Action*>& new_todo) -> void {
   }
 }
 
+// todo: fix handling of scopes
 auto ResumeContinuation(Stack<Frame*> suspended) -> void {
   Frame* frame = suspended.Top();
   bool found_delimit = false;
@@ -836,7 +837,7 @@ auto ResumeContinuation(Stack<Frame*> suspended) -> void {
       exit(-1);
     } else {
       Frame* new_frame =
-          new Frame(frame->name, Stack<Scope*>(), Stack<Action*>());
+          new Frame(frame->name, frame->scopes, Stack<Action*>());
       state->stack.Push(new_frame);
       ResumeContinuation(suspended);
     }
@@ -958,38 +959,10 @@ void StepStmt() {
         exit(-1);
       }
       break;
-    case StatementKind::Suspend: {
-      // Save the current continuation
-      Stack<Frame*> suspended = state->stack;
-      // Pop the suspend action itself
-      suspended.Top()->todo.Pop();
-
-      // Roll back to the nearest delimit and push
-      // the suspended continuation (as a value) on the stack.
-      Stack<Frame*> new_stack = suspended;
-      while (!new_stack.IsEmpty()) {
-        Stack<Action*> todo = new_stack.Top()->todo;
-        while (!todo.IsEmpty()) {
-          if (IsDelimitAction(todo.Top())) {
-            todo.Push(MakeValAct(MakeContinuation(suspended)));
-            Frame* new_frame =
-                new Frame(new_stack.Top()->name, new_stack.Top()->scopes, todo);
-            new_stack.Pop();
-            new_stack.Push(new_frame);
-            state->stack = new_stack;
-            goto handler;
-          } else {
-            todo.Pop();
-          }
-        }
-        new_stack.Pop();
-      }
-      std::cerr << "suspend without an enclosing delimiter" << std::endl;
-      exit(-1);
-    handler:
-      // Leave it to HandleValue to execute the handler
+    case StatementKind::Suspend:
+      frame->todo.Push(MakeExpAct(stmt->u.suspend_stmt.exp));
+      act->pos++;
       break;
-    }
     case StatementKind::Resume:
       frame->todo.Push(MakeExpAct(stmt->u.resume_stmt.exp));
       act->pos++;
@@ -1430,20 +1403,56 @@ void HandleValue() {
           frame->todo.Push(MakeValAct(ret_val));
           break;
         }
-        case StatementKind::Delimit: {
-          // Evaluate the handler, binding the suspended continuation
-          // to the continuation variable.
-          std::list<std::string> scope_locals;
-          scope_locals.push_back(*stmt->u.delimit_stmt.continuation);
-          Scope* new_scope = new Scope(CurrentEnv(state), scope_locals);
-          Address a = AllocateValue(val_act->u.val);
-          new_scope->env.Set(*stmt->u.delimit_stmt.continuation, a);
-          frame->scopes.Push(new_scope);
-          Statement* handler_block =
-              MakeBlock(stmt->line_num, stmt->u.delimit_stmt.handler);
+        case StatementKind::Suspend: {
+          // Pop the argument and suspend action off the todo list.
           frame->todo.Pop(2);
-          frame->todo.Push(MakeStmtAct(handler_block));
-          break;
+
+          // Save the current continuation
+          Stack<Frame*> suspended = state->stack;
+
+          // Roll back to the nearest delimit
+          Stack<Frame*> new_stack = suspended;
+          Statement* delimit;
+          while (!new_stack.IsEmpty()) {
+            Stack<Action*> todo = new_stack.Top()->todo;
+            while (!todo.IsEmpty()) {
+              if (IsDelimitAction(todo.Top())) {
+                delimit = todo.Top()->u.stmt;
+                Frame* new_frame = new Frame(new_stack.Top()->name,
+                                             new_stack.Top()->scopes, todo);
+                new_stack.Pop();
+                new_stack.Push(new_frame);
+                state->stack = new_stack;
+                goto handler;
+              } else {
+                todo.Pop();
+              }
+            }
+            new_stack.Pop();
+          }
+          std::cerr << "suspend without an enclosing delimiter" << std::endl;
+          exit(-1);
+        handler : {
+          // Create a new scope for the handler, binding the
+          // suspend and continuation variables.
+          std::list<std::string> scope_locals;
+
+          scope_locals.push_back(*delimit->u.delimit_stmt.suspend_variable);
+          scope_locals.push_back(*delimit->u.delimit_stmt.continuation);
+          Scope* new_scope = new Scope(CurrentEnv(state), scope_locals);
+          Address a1 = AllocateValue(val_act->u.val);
+          new_scope->env.Set(*delimit->u.delimit_stmt.suspend_variable, a1);
+          Address a2 = AllocateValue(MakeContinuation(suspended));
+          new_scope->env.Set(*delimit->u.delimit_stmt.continuation, a2);
+
+          // Push the new scope onto the stack
+          state->stack.Top()->scopes.Push(new_scope);
+
+          // Push the handler block onto the stack
+          Statement* handler_block =
+              MakeBlock(delimit->line_num, delimit->u.delimit_stmt.handler);
+          state->stack.Top()->todo.Push(MakeStmtAct(handler_block));
+        } break;
         }
         case StatementKind::Resume: {
           // Push the suspended continuation onto the current stack
@@ -1456,7 +1465,7 @@ void HandleValue() {
         case StatementKind::Sequence:
         case StatementKind::Break:
         case StatementKind::Continue:
-        case StatementKind::Suspend:
+        case StatementKind::Delimit:
           std::cerr << "internal error in handle_value, unhandled statement ";
           PrintStatement(stmt, 1);
           std::cerr << std::endl;

@@ -6,7 +6,7 @@ fn main() -> Int {
   var Int: x = 1;
   delimit {
     x = 0;
-  } with (k) {
+  } with (v, k) {
     return 1;
   }
   return x;

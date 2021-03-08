@@ -261,10 +261,10 @@ statement:
     { $$ = Carbon::MakeBlock(yylineno, $2); }
 | MATCH '(' expression ')' '{' clause_list '}'
     { $$ = Carbon::MakeMatch(yylineno, $3, $6); }
-| DELIMIT statement WITH '(' identifier ')' statement
-    { $$ = Carbon::MakeDelimitStmt(yylineno, $2, $5, $7); }
-| SUSPEND ';'
-    { $$ = Carbon::MakeSuspendStmt(yylineno); }
+| DELIMIT statement WITH '(' identifier ',' identifier ')' statement
+    { $$ = Carbon::MakeDelimitStmt(yylineno, $2, $5, $7, $9); }
+| SUSPEND expression ';'
+    { $$ = Carbon::MakeSuspendStmt(yylineno, $2); }
 | RESUME expression ';'
     { $$ = Carbon::MakeResumeStmt(yylineno, $2); }
 ;
