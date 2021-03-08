@@ -35,7 +35,7 @@ class SyntaxDriver;
 extern int yylineno;
 
 void yyerror(
-    std::optional<Carbon::AST> const& parsedProgram,
+    std::optional<Carbon::AST> const& /* parsedProgram */,
     Carbon::SyntaxDriver& driver,
     char* message
 ) {
