@@ -117,6 +117,7 @@ auto MakeVarPatVal(std::string name, Value* type) -> Value* {
   return v;
 }
 
+// Returns a value representing a lambda (an anonymous function).
 auto MakeLambdaVal(Value* parameter, Statement* body,
                    Dictionary<std::string, Address> env) -> Value* {
   auto* v = new Value();

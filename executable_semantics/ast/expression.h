@@ -25,7 +25,7 @@ enum class ExpressionKind {
   Tuple,
   TypeT,
   Variable,
-  Lambda,
+  Lambda,  // anonymous, lexically-scoped functions
 };
 
 enum class Operator {
@@ -110,6 +110,10 @@ auto MakeTuple(int line_num,
                std::vector<std::pair<std::string, Expression*>>* args)
     -> Expression*;
 auto MakeIndex(int line_num, Expression* exp, Expression* i) -> Expression*;
+// Returns an AST node for a lambda expression, that is,
+// an anonymous, lexically scoped function, given the
+// source line number, the parameter (a tuple expression),
+// the return type, and the body.
 auto MakeLambda(int line_num, Expression* parameter, Expression* return_type,
                 Statement* body) -> Expression*;
 

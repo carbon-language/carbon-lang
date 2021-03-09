@@ -40,7 +40,7 @@ enum class ValKind {
   ChoiceTV,
   VarPatV,
   AltConsV,
-  LambdaV
+  LambdaV  // An anonymous function
 };
 
 struct Value {
@@ -101,8 +101,12 @@ struct Value {
       Value* type;
     } implicit;
     struct {
+      // The parameter is a tuple pattern.
       Value* parameter;
       Statement* body;
+      // The environment captures the lexical scope surrounding the
+      // lambda's definition, so that it can be reinstated when the
+      // lambda is called.
       Dictionary<std::string, Address>* environment;
     } lambda;
   } u;
@@ -119,6 +123,7 @@ auto MakeAltVal(std::string alt_name, std::string choice_name, Value* arg)
 auto MakeAltCons(std::string alt_name, std::string choice_name) -> Value*;
 
 auto MakeVarPatVal(std::string name, Value* type) -> Value*;
+// Returns a value representing a lambda (an anonymous function).
 auto MakeLambdaVal(Value* parameter, Statement* body,
                    Dictionary<std::string, Address> env) -> Value*;
 

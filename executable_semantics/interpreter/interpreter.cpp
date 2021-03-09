@@ -183,6 +183,8 @@ auto CurrentEnv(State* state) -> Env {
   return frame->scopes.Top()->env;
 }
 
+// Returns a copy of the environment, mapping each value
+// to a newly allocated copy.
 auto CopyEnv(Env env) -> Env {
   Env copy;
   for (auto [var, addr] : env) {
@@ -322,6 +324,7 @@ void CallFunction(int line_num, std::vector<Value*> operas, State* state) {
   CheckAlive(operas[0], line_num);
   switch (operas[0]->tag) {
     case ValKind::FunV: {
+      // Call a function.
       // Bind arguments to parameters
       std::list<std::string> params;
       std::optional<Env> envWithMatches = PatternMatch(
@@ -339,7 +342,9 @@ void CallFunction(int line_num, std::vector<Value*> operas, State* state) {
       break;
     }
     case ValKind::LambdaV: {
+      // Call a lambda expression.
       Value* lambda = operas[0];
+      // Bind arguments to parameters.
       std::list<std::string> parameters;
       std::optional<Env> envWithMatches =
           PatternMatch(lambda->u.lambda.parameter, operas[1],
@@ -348,6 +353,7 @@ void CallFunction(int line_num, std::vector<Value*> operas, State* state) {
         std::cerr << "internal error" << std::endl;
         exit(-1);
       }
+      // Create the new frame and push it on the stack
       Scope* scope = new Scope(*envWithMatches, parameters);
       Frame* frame = new Frame("fn", Stack(scope),
                                Stack(MakeStmtAct(lambda->u.lambda.body)));
@@ -779,6 +785,7 @@ void StepExp() {
       break;
     }
     case ExpressionKind::Lambda: {
+      // First, evaluate the type expressions in the parameter.
       frame->todo.Push(MakeExpAct(exp->u.lambda.parameter));
       act->pos++;
       break;
@@ -1190,8 +1197,9 @@ void HandleValue() {
           break;
         }
         case ExpressionKind::Lambda: {
-          // The below use of CopyEnv to extend the lifetime of everything
-          // in the environment is not good. That should be
+          // Create a lambda value from a lambda expression.
+          // The use of CopyEnv to extend the lifetime of everything
+          // in the environment is bad. That should be
           // replaced with some better approach. -Jeremy
           Value* v = MakeLambdaVal(act->results[0], exp->u.lambda.body,
                                    CopyEnv(CurrentEnv(state)));
