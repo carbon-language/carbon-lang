@@ -111,8 +111,9 @@ auto StringLiteralToken::Lex(llvm::StringRef source_text)
   const char* begin = source_text.begin();
 
   int hash_level = 0;
-  while (source_text.consume_front("#"))
+  while (source_text.consume_front("#")) {
     ++hash_level;
+  }
 
   llvm::SmallString<16> terminator("\"");
   llvm::SmallString<16> escape("\\");
@@ -137,10 +138,12 @@ auto StringLiteralToken::Lex(llvm::StringRef source_text)
   while (!source_text.consume_front(terminator)) {
     // Let LexError figure out how to recover from an unterminated string
     // literal.
-    if (source_text.empty())
+    if (source_text.empty()) {
       return llvm::None;
-    if (!multi_line && source_text.startswith("\n"))
+    }
+    if (!multi_line && source_text.startswith("\n")) {
       return llvm::None;
+    }
 
     // Consume an escape sequence marker if present.
     (void)source_text.consume_front(escape);
@@ -347,8 +350,9 @@ static auto ExpandEscapeSequencesAndRemoveIndent(DiagnosticEmitter& emitter,
         // Trailing whitespace before a newline doesn't contribute to the string
         // literal value.
         while (!result.empty() && result.back() != '\n' &&
-               isSpace(result.back()))
+               isSpace(result.back())) {
           result.pop_back();
+        }
         result += '\n';
         // Move onto to the next line.
         break;
