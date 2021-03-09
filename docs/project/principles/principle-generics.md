@@ -22,15 +22,15 @@ goverened by explicit bounds on the parameter in a generic function's signature.
 
 ### Semantics
 
-A generic function (or type) will take some "generic arguments", which will
+A generic function (or type) will take some "generic parameters", which will
 frequently be types, and in some cases will be implicit / inferred from the
-types of the values of explicit arguments to the function. If a generic argument
-is a type, the generic function's signature can specify constraints that the
-caller's type must satisfy (this should also be legal for template arguments,
-but less needed and less common). For example, a resizable array type (like
-C++'s `std::vector`) might have a generic type parameter with the constraint
-that the type must be movable and have a static size. A sort function might
-apply to any array whose elements are comparable and movable.
+types of the values of explicit parameters to the function. If a generic
+parameter is a type, the generic function's signature can specify constraints
+that the caller's type must satisfy (this should also be legal for template
+parameters, but less needed and less common). For example, a resizable array
+type (like C++'s `std::vector`) might have a generic type parameter with the
+constraint that the type must be movable and have a static size. A sort function
+might apply to any array whose elements are comparable and movable.
 
 ## Goal
 
@@ -78,12 +78,12 @@ Enable simple user control of whether to use dynamic or static dispatch.
 **Implementation strategy:** There are two strategies for generating code for
 generic functions:
 
--   Static specialization strategy: Like template arguments, the values for
-    generic arguments must be statically known at the callsite, or known to be a
-    generic argument to the calling function. This can generate separate,
+-   Static specialization strategy: Like template parameters, the values for
+    generic parameters must be statically known at the callsite, or known to be
+    a generic parameter to the calling function. This can generate separate,
     specialized versions of each combination of generic & template arguments, in
     order to optimize for those types / values.
--   Dynamic strategy: Unlike template arguments, we require that it be possible
+-   Dynamic strategy: Unlike template parameters, we require that it be possible
     to generate a single version of the function that uses runtime dispatch to
     get something semantically equivalent to separate instantiation, but likely
     with different size, build time, and performance characteristics.
@@ -101,8 +101,8 @@ time.
 We want there to be a natural upgrade path from templated code to generic code,
 which gives us these additional principles:
 
--   Converting from a template to a generic argument should be safe -- it should
-    either fail to compile or work, never silently change semantics.
+-   Converting from a template parameter to a generic parameter should be safe.
+    It should either fail to compile or work, never silently change semantics.
 -   We should minimize the effort to convert from template code to generic code.
     Ideally it should just require specifying the type constraints, affecting
     just the signature of the function, not its body.
