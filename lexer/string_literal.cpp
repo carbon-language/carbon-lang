@@ -59,7 +59,9 @@ struct UnknownEscapeSequence {
   static constexpr llvm::StringLiteral ShortName = "syntax-invalid-string";
   static constexpr const char* Message = "Unrecognized escape sequence `{0}`.";
 
-  struct Substitutions { char first; };
+  struct Substitutions {
+    char first;
+  };
   static auto Format(const Substitutions& subst) -> std::string {
     return llvm::formatv(Message, subst.first).str();
   }
@@ -74,9 +76,7 @@ struct MismatchedIndentInString : SimpleDiagnostic<MismatchedIndentInString> {
 
 // TODO(zygoloid): Update this to match whatever we decide qualifies as
 // acceptable whitespace.
-static bool isSpace(char c) {
-  return c == ' ' || c == '\n' || c == '\t';
-}
+static bool isSpace(char c) { return c == ' ' || c == '\n' || c == '\t'; }
 
 static constexpr llvm::StringLiteral HorizontalWhitespace = " \t";
 
@@ -108,7 +108,7 @@ static auto TakeMultiLineStringLiteralPrefix(llvm::StringRef source_text)
 // information on that token.
 auto StringLiteralToken::Lex(llvm::StringRef source_text)
     -> llvm::Optional<StringLiteralToken> {
-  const char *begin = source_text.begin();
+  const char* begin = source_text.begin();
 
   int hash_level = 0;
   while (source_text.consume_front("#"))
@@ -132,8 +132,8 @@ auto StringLiteralToken::Lex(llvm::StringRef source_text)
   terminator.resize(terminator.size() + hash_level, '#');
   escape.resize(escape.size() + hash_level, '#');
 
-  const char *content_begin = source_text.begin();
-  const char *content_end = content_begin;
+  const char* content_begin = source_text.begin();
+  const char* content_end = content_begin;
   while (!source_text.consume_front(terminator)) {
     // Let LexError figure out how to recover from an unterminated string
     // literal.
@@ -179,7 +179,7 @@ struct Indent {
   llvm::StringRef indent;
   bool has_errors;
 };
-}
+}  // namespace
 
 // Check the literal is indented properly, if it's a multi-line litera.
 // Find the leading whitespace that should be removed from each line of a
@@ -346,7 +346,8 @@ static auto ExpandEscapeSequencesAndRemoveIndent(DiagnosticEmitter& emitter,
       if (contents.consume_front("\n")) {
         // Trailing whitespace before a newline doesn't contribute to the string
         // literal value.
-        while (!result.empty() && result.back() != '\n' && isSpace(result.back()))
+        while (!result.empty() && result.back() != '\n' &&
+               isSpace(result.back()))
           result.pop_back();
         result += '\n';
         // Move onto to the next line.
