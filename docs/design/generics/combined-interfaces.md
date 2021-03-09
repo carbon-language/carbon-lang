@@ -2128,7 +2128,121 @@ TODO
 
 ### Generic type equality
 
-TODO
+Imagine we have some function with generic parameters:
+
+```
+fn F1[SomeInterface:$ T](T: x) {
+  x.G(x.H());
+}
+```
+
+We want to know if the return type of method `T.H` is the same as the parameter
+type of `T.G` in order to typecheck the function. With the full expressive power
+of `where` clauses, determining whether two type expressions are equal is in
+general undecidable, as
+[has been shown in Swift](https://forums.swift.org/t/swift-type-checking-is-undecidable/39024).
+
+However, with enough constraints, we can make an efficient decision procedure
+for the argument passing formulation. The way we do this is by assigning every
+type expression a canonical type, and then two types expressions are equal if
+and only if they are assigned the same canonical type. To show how to assign
+canonical types, lets work an example with interfaces `A` and `B` (letters from
+the end of the alphabet will represent types), and this function declaration:
+
+```
+fn F2[A:$ Z, B(.Y = Z, .X = Z.W):$ V](...) { ... }
+```
+
+We require the following rules to be enforced by the language definition and
+compiler:
+
+-   No forward references in a function declaration.
+-   No forward references between items in an `interface` definition.
+-   No implicit type equality constraints.
+
+From these rules, we derive rules about which type expressions are canonical.
+The first rule is:
+
+> For purposes of type checking a function, the names of types declared in the
+> function declaration to the right of the `:$` are all canonical.
+
+This is because these can all be given distinct types freely, only their
+associated types can be constrained to be equal to some other type. In this
+example, this means that the types `Z` and `V` are both canonical. The second
+rule comes from there being no forward references in declarations, and no
+impliict type equality constraints:
+
+> No declaration can affect type equality for any declaration to its left.
+
+This means that the canonical types for type expressions starting with `Z.` are
+completely determined by the declaration `A:$ Z`. Furthermore, since the set of
+type expressions starting with `Z.` might be infinite, we adopt the lazy
+strategy of only evaluating expressions that are needed for something explicitly
+mentioned.
+
+We do need to evaluate `Z.W` though for the `B(.Y = Z, .X = Z.W):$ V`
+expression. This is an easy case, though since `A:$ Z` doesn't include any
+assignments to any associated types. In this case, the associated types of `A`
+are all canonical. An alias defined in `A` would of course not be, it would be
+set to the canonical type for whatever it is an alias for. For example:
+
+```
+interface A {
+  // `W` is canonical.
+  var A:$ W;
+  // `U` is not canonical, is equal to `W.W`.
+  alias U = W.W;
+  // `T` is canonical, but `T.Y` is not.
+  var B(.Y = Self):$ T;
+}
+```
+
+Next lets examine the definition of `B` so we can resolve expressions starting
+with `V.`.
+
+```
+interface B {
+  var A:$ S;
+  var A(.W = S):$ Y;
+  var A:$ X;
+  var B(.X = S):$ R;
+}
+```
+
+This time we also have assignments `V.Y = Z` and `V.X = Z.W`. As a consequence,
+neither `V.Y` nor `V.X` are canonical, and their canonical type is determined
+from their assignments. Furthermore, the assignment to `Y` determines `S`, since
+`B.S = B.Y.W`, so `V.S` also isn't canonical, it is `V.Y.W` (not canonical)
+which is `Z.W` (canonical). Observe that `V.R` is canonical since nothing
+constrains it to equal any other type, even though `V.R.X` is not, since it is
+`V.S == Z.W`. The property that there are no forward references between items in
+interface definitions ensures this process terminates, and when something is
+established as not canonical it is always in terms of an expression for which we
+have or can compute a canonical type for.
+
+**Note:** Here `A` and `B` recursive and mutually recursive just to emphasize
+that does not pose an issue for this algorithm.
+
+If instead we had functions declared like so:
+
+```
+fn F3[A:$ N, A:$ P, B(.S = N, .Y = P):$ Q](...) { ... }
+```
+
+The compiler is required to report an error rejecting this declaration. This is
+because the constraints declared in `B` require that `Q.Y.W == Q.S == N` so
+`P.Y == N`. This violates the "no implicit type equality constraint" rule since
+`P` is not declared with any constraint forcing that to hold. We can't let `Q`'s
+declaration affect earlier declarations, otherwise our algorithm would
+potentially have to resolve cycles. The compiler should recommend the user
+rewrite their code to:
+
+```
+fn F3[A:$ N, A(.Y = N):$ P, B(.S = N, .Y = P):$ Q](...) { ... }
+```
+
+This resolves the issue, and with this change the compiler can now correctly
+determine canonical types.
 
 ### Rejected alternative: `ForSome(F)`
 
