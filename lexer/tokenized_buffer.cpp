@@ -10,6 +10,7 @@
 #include <string>
 
 #include "lexer/numeric_literal.h"
+#include "lexer/string_literal.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/StringSwitch.h"
 #include "llvm/ADT/Twine.h"
@@ -104,6 +105,18 @@ class TokenizedBuffer::Lexer {
     explicit operator bool() const { return formed_token; }
   };
 
+  // Perform the necessary bookkeeping to step past a newline at the current
+  // line and column.
+  auto HandleNewline() -> void {
+    current_line_info->length = current_column;
+
+    current_line = buffer.AddLine(
+        {current_line_info->start + current_column + 1, 0, 0});
+    current_line_info = &buffer.GetLineInfo(current_line);
+    current_column = 0;
+    set_indent = false;
+  }
+
   auto SkipWhitespace(llvm::StringRef& source_text) -> bool {
     while (!source_text.empty()) {
       // We only support line-oriented commenting and lex comments as-if they
@@ -136,21 +149,16 @@ class TokenizedBuffer::Lexer {
           return true;
 
         case '\n':
-          // New lines are special in order to track line structure.
-          current_line_info->length = current_column;
           // If this is the last character in the source, directly return here
           // to avoid creating an empty line.
           source_text = source_text.drop_front();
           if (source_text.empty()) {
+            current_line_info->length = current_column;
             return false;
           }
 
           // Otherwise, add a line and set up to continue lexing.
-          current_line = buffer.AddLine(
-              {current_line_info->start + current_column + 1, 0, 0});
-          current_line_info = &buffer.GetLineInfo(current_line);
-          current_column = 0;
-          set_indent = false;
+          HandleNewline();
           continue;
 
         case ' ':
@@ -229,6 +237,53 @@ class TokenizedBuffer::Lexer {
       buffer.literal_int_storage.push_back(literal_parser.GetExponent());
       return token;
     }
+  }
+
+  auto LexStringLiteral(llvm::StringRef& source_text) -> LexResult {
+    llvm::Optional<StringLiteralToken> literal =
+        StringLiteralToken::Lex(source_text);
+    if (!literal) {
+      return LexResult::NoMatch();
+    }
+
+    Line string_line = current_line;
+    int string_column = current_column;
+    int literal_size = literal->Text().size();
+    source_text = source_text.drop_front(literal_size);
+
+    if (!set_indent) {
+      current_line_info->indent = string_column;
+      set_indent = true;
+    }
+
+    // Update line and column information.
+    if (!literal->IsMultiLine()) {
+      current_column += literal_size;
+    } else {
+      for (char c : literal->Text()) {
+        if (c == '\n') {
+          HandleNewline();
+          // The indentation of all lines in a multi-line string literal is
+          // that of the first line.
+          current_line_info->indent = string_column;
+          set_indent = true;
+        } else {
+          ++current_column;
+        }
+      }
+    }
+
+    // Determine string literal value.
+    auto expanded = literal->ComputeValue(emitter);
+    buffer.has_errors |= expanded.has_errors;
+
+    auto token = buffer.AddToken({.kind = TokenKind::StringLiteral(),
+                                  .token_line = string_line,
+                                  .column = string_column});
+    buffer.GetTokenInfo(token).literal_index =
+        buffer.literal_string_storage.size();
+    buffer.literal_string_storage.push_back(std::move(expanded.result));
+    return token;
   }
 
   auto LexSymbolToken(llvm::StringRef& source_text) -> LexResult {
@@ -421,6 +476,9 @@ auto TokenizedBuffer::Lex(SourceBuffer& source, DiagnosticEmitter& emitter)
       result = lexer.LexNumericLiteral(source_text);
     }
     if (!result) {
+      result = lexer.LexStringLiteral(source_text);
+    }
+    if (!result) {
       result = lexer.LexError(source_text);
     }
     assert(result && "No token was lexed.");
@@ -471,6 +529,17 @@ auto TokenizedBuffer::GetTokenText(Token token) const -> llvm::StringRef {
     return relexed_token->Text();
   }
 
+  // Refer back to the source text to find the original spelling, including
+  // escape sequences etc.
+  if (token_info.kind == TokenKind::StringLiteral()) {
+    auto& line_info = GetLineInfo(token_info.token_line);
+    int64_t token_start = line_info.start + token_info.column;
+    llvm::Optional<StringLiteralToken> relexed_token =
+        StringLiteralToken::Lex(source->Text().substr(token_start));
+    assert(relexed_token && "Could not reform string literal token.");
+    return relexed_token->Text();
+  }
+
   assert(token_info.kind == TokenKind::Identifier() &&
          "Only identifiers have stored text!");
   return GetIdentifierText(token_info.id);
@@ -505,6 +574,13 @@ auto TokenizedBuffer::GetRealLiteral(Token token) const -> RealLiteralValue {
   bool is_decimal = second_char != 'x' && second_char != 'b';
 
   return RealLiteralValue(this, token_info.literal_index, is_decimal);
+}
+
+auto TokenizedBuffer::GetStringLiteral(Token token) const -> llvm::StringRef {
+  auto& token_info = GetTokenInfo(token);
+  assert(token_info.kind == TokenKind::StringLiteral() &&
+         "The token must be a string literal!");
+  return literal_string_storage[token_info.literal_index];
 }
 
 auto TokenizedBuffer::GetMatchedClosingToken(Token opening_token) const
@@ -624,7 +700,10 @@ auto TokenizedBuffer::PrintToken(llvm::raw_ostream& output_stream, Token token,
     output_stream << ", closing_token: " << GetMatchedClosingToken(token).index;
   } else if (token_info.kind.IsClosingSymbol()) {
     output_stream << ", opening_token: " << GetMatchedOpeningToken(token).index;
+  } else if (token_info.kind == TokenKind::StringLiteral()) {
+    output_stream << ", value: `" << GetStringLiteral(token) << "`";
   }
+  // TODO: Include value for numeric literals.
 
   if (token_info.is_recovery) {
     output_stream << ", recovery: true";

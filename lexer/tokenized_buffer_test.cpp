@@ -51,7 +51,7 @@ TEST_F(LexerTest, HandlesEmptyBuffer) {
 }
 
 TEST_F(LexerTest, TracksLinesAndColumns) {
-  auto buffer = Lex("\n  ;;\n   ;;;\n");
+  auto buffer = Lex("\n  ;;\n   ;;;\n   x\"foo\" \"\"\"baz\n  a\n \"\"\" y");
   EXPECT_FALSE(buffer.HasErrors());
   EXPECT_THAT(buffer, HasTokens(llvm::ArrayRef<ExpectedToken>{
                           {.kind = TokenKind::Semi(),
@@ -74,6 +74,24 @@ TEST_F(LexerTest, TracksLinesAndColumns) {
                            .line = 3,
                            .column = 6,
                            .indent_column = 4},
+                          {.kind = TokenKind::Identifier(),
+                           .line = 4,
+                           .column = 4,
+                           .indent_column = 4,
+                           .text = "x"},
+                          {.kind = TokenKind::StringLiteral(),
+                           .line = 4,
+                           .column = 5,
+                           .indent_column = 4},
+                          {.kind = TokenKind::StringLiteral(),
+                           .line = 4,
+                           .column = 11,
+                           .indent_column = 4},
+                          {.kind = TokenKind::Identifier(),
+                           .line = 6,
+                           .column = 6,
+                           .indent_column = 11,
+                           .text = "y"},
                       }));
 }
 
@@ -250,7 +268,7 @@ TEST_F(LexerTest, SplitsNumericLiteralsProperly) {
 }
 
 TEST_F(LexerTest, HandlesGarbageCharacters) {
-  constexpr char GarbageText[] = "$$💩-$\n$\0$12$";
+  constexpr char GarbageText[] = "$$💩-$\n$\0$12$\n\"\n\"\\";
   auto buffer = Lex(llvm::StringRef(GarbageText, sizeof(GarbageText) - 1));
   EXPECT_TRUE(buffer.HasErrors());
   EXPECT_THAT(
@@ -273,6 +291,20 @@ TEST_F(LexerTest, HandlesGarbageCharacters) {
            .column = 4,
            .text = "12"},
           {.kind = TokenKind::Error(), .line = 2, .column = 6, .text = "$"},
+          // newline
+          {.kind = TokenKind::Error(),
+           .line = 3,
+           .column = 1,
+           .text = llvm::StringRef("\"", 1)},
+          // newline
+          {.kind = TokenKind::Error(),
+           .line = 4,
+           .column = 1,
+           .text = llvm::StringRef("\"", 1)},
+          {.kind = TokenKind::Backslash(),
+           .line = 4,
+           .column = 2,
+           .text = llvm::StringRef("\\", 1)},
       }));
 }
 
@@ -302,13 +334,12 @@ TEST_F(LexerTest, Symbols) {
                           {TokenKind::Greater()},
                       }));
 
-  buffer = Lex("\\/?#@&^!");
+  buffer = Lex("\\/?@&^!");
   EXPECT_FALSE(buffer.HasErrors());
   EXPECT_THAT(buffer, HasTokens(llvm::ArrayRef<ExpectedToken>{
                           {TokenKind::Backslash()},
                           {TokenKind::Slash()},
                           {TokenKind::Question()},
-                          {TokenKind::Hash()},
                           {TokenKind::At()},
                           {TokenKind::Amp()},
                           {TokenKind::Caret()},
@@ -612,6 +643,111 @@ TEST_F(LexerTest, Identifiers) {
                            .indent_column = 3,
                            .text = "foo"},
                       }));
+}
+
+TEST_F(LexerTest, StringLiterals) {
+  llvm::StringLiteral testcase = R"(
+    "hello world\n"
+
+    """foo
+      test \
+      \xAB
+     """ trailing
+
+      #"""#
+
+    "\0"
+
+    #"\0"foo"\1"#
+
+    """x"""
+  )";
+
+  auto buffer = Lex(testcase);
+  EXPECT_FALSE(buffer.HasErrors());
+  EXPECT_THAT(buffer,
+              HasTokens(llvm::ArrayRef<ExpectedToken>{
+                  {.kind = TokenKind::StringLiteral(),
+                   .line = 2,
+                   .column = 5,
+                   .indent_column = 5,
+                   .string_contents = {"hello world\n"}},
+                  {.kind = TokenKind::StringLiteral(),
+                   .line = 4,
+                   .column = 5,
+                   .indent_column = 5,
+                   .string_contents = {" test  \xAB\n"}},
+                  {.kind = TokenKind::Identifier(),
+                   .line = 7,
+                   .column = 10,
+                   .indent_column = 5,
+                   .text = "trailing"},
+                  {.kind = TokenKind::StringLiteral(),
+                   .line = 9,
+                   .column = 7,
+                   .indent_column = 7,
+                   .string_contents = {"\""}},
+                  {.kind = TokenKind::StringLiteral(),
+                   .line = 11,
+                   .column = 5,
+                   .indent_column = 5,
+                   .string_contents = llvm::StringLiteral::withInnerNUL("\0")},
+                  {.kind = TokenKind::StringLiteral(),
+                   .line = 13,
+                   .column = 5,
+                   .indent_column = 5,
+                   .string_contents = {"\\0\"foo\"\\1"}},
+
+                  // """x""" is three string literals, not one.
+                  {.kind = TokenKind::StringLiteral(),
+                   .line = 15,
+                   .column = 5,
+                   .indent_column = 5,
+                   .string_contents = {""}},
+                  {.kind = TokenKind::StringLiteral(),
+                   .line = 15,
+                   .column = 7,
+                   .indent_column = 5,
+                   .string_contents = {"x"}},
+                  {.kind = TokenKind::StringLiteral(),
+                   .line = 15,
+                   .column = 10,
+                   .indent_column = 5,
+                   .string_contents = {""}},
+              }));
+}
+
+TEST_F(LexerTest, InvalidStringLiterals) {
+  llvm::StringLiteral invalid[] = {
+      R"(")",
+      R"("""
+      "")",
+      R"("\)",
+      R"("\")",
+      R"("\\)",
+      R"("\\\")",
+      R"(""")",
+      R"("""
+      )",
+      R"("""\)",
+      R"(#"""
+      """)",
+  };
+
+  for (llvm::StringLiteral test : invalid) {
+    auto buffer = Lex(test);
+    EXPECT_TRUE(buffer.HasErrors()) << "`" << test << "`";
+
+    // We should have formed at least one error token.
+    bool found_error = false;
+    for (TokenizedBuffer::Token token : buffer.Tokens()) {
+      if (buffer.GetKind(token) == TokenKind::Error()) {
+        found_error = true;
+        break;
+      }
+    }
+    EXPECT_TRUE(found_error) << "`" << test << "`";
+  }
 }
 
 auto GetAndDropLine(llvm::StringRef& text) -> std::string {
