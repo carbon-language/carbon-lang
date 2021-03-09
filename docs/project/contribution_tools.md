@@ -23,11 +23,12 @@ contributions.
         -   [Cargo (optional)](#cargo-optional)
 -   [Main tools](#main-tools)
     -   [Bazel and Bazelisk](#bazel-and-bazelisk)
-    -   [Bison and Flex](#bison-and-flex)
     -   [buildifier](#buildifier)
     -   [Clang and LLVM](#clang-and-llvm)
     -   [Ninja](#ninja)
     -   [pre-commit](#pre-commit)
+    -   [gql](#gql)
+    -   [PyGitHub](#pygithub)
 -   [Optional tools](#optional-tools)
     -   [Carbon-maintained](#carbon-maintained)
         -   [new_proposal.py](#new_proposalpy)
@@ -60,11 +61,13 @@ typical tool setup flow is:
         https://github.com/carbon-language/carbon-lang.
     -   `gh repository clone USER/carbon-lang`, or otherwise clone the fork.
     -   `cd carbon-lang` to go into the cloned fork's directory.
-    -   `git submodule update --init` to sync submodules if you'll be building
-        c++ code or working on the compiler.
+    -   `git submodule update --init --depth=1` to sync submodules if you'll be
+        building c++ code or working on the compiler.
     -   `git config core.fsmonitor rs-git-fsmonitor` to set up
         [rs-git-fsmonitor](#rs-git-fsmonitor-and-watchman) in the clone.
     -   `pre-commit install` to set up [pre-commit](#pre-commit) in the clone.
+4.  Validate your installation by invoking `bazel test //...:all' from the
+    project root. All tests should pass.
 
 ## Package managers
 
@@ -152,24 +155,6 @@ Our recommended way of installing is:
 brew install bazelisk
 ```
 
-### Bison and Flex
-
-[Bison](https://www.gnu.org/software/bison/) and
-[Flex](https://github.com/westes/flex) are used by executable semantics.
-Although we may
-[switch to a hemertic toolchain later](https://github.com/carbon-language/carbon-lang/issues/266),
-an install is currently required.
-
-Our recommended way of installing is:
-
-```bash
-brew install bison flex
-```
-
-On MacOS, it will be necessary to explicitly add the installed paths to the
-`PATH` environment variable so that the brew-installed versions are used instead
-of Xcode-installed versions. Read `brew` output for instructions.
-
 ### buildifier
 
 [Buildifier](https://github.com/bazelbuild/buildtools/tree/master/buildifier) is
@@ -241,6 +226,18 @@ git commit
 When modifying or adding pre-commit hooks, please run
 `pre-commit run --all-files` to see what changes.
 
+### gql
+
+```bash
+pip install gql
+```
+
+### PyGitHub
+
+```bash
+pip install PyGitHub
+```
+
 ## Optional tools
 
 ### Carbon-maintained
@@ -267,12 +264,6 @@ Options can be seen with `-h`. A couple key options to be aware of are:
     still need to respond to.
 -   `--comments-from LOGIN`: Only print threads with comments from the given
     user. For example, use when looking for threads that you've commented on.
-
-**NOTE**: This requires the Python gql package:
-
-```bash
-pip install gql
-```
 
 ### GitHub
 

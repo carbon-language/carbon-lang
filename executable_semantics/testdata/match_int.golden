@@ -169,7 +169,7 @@ env: t: 5, main: fun<main>,
 --- handle value 0 with return 0;<1>(0,) --->
 {
 stack: top{0<-1>}
-heap: fun<main>, 5, 
+heap: fun<main>, !!5, 
 env: main: fun<main>, 
 }
 result: 0

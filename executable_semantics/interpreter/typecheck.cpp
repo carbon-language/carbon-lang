@@ -4,29 +4,17 @@
 
 #include "executable_semantics/interpreter/typecheck.h"
 
+#include <algorithm>
 #include <iostream>
+#include <iterator>
 #include <map>
 #include <set>
 #include <vector>
 
 #include "executable_semantics/ast/function_definition.h"
-#include "executable_semantics/interpreter/cons_list.h"
 #include "executable_semantics/interpreter/interpreter.h"
 
 namespace Carbon {
-
-auto Find(const std::string& s, Cons<std::string>* ls, int n) -> int {
-  if (ls) {
-    if (ls->curr == s) {
-      return n;
-    } else {
-      return Find(s, ls->next, n + 1);
-    }
-  } else {
-    std::cerr << "could not find " << s << std::endl;
-    exit(-1);
-  }
-}
 
 void ExpectType(int line_num, const std::string& context, Value* expected,
                 Value* actual) {
@@ -43,12 +31,11 @@ void ExpectType(int line_num, const std::string& context, Value* expected,
 
 void PrintErrorString(const std::string& s) { std::cerr << s; }
 
-void PrintTypeEnv(TypeEnv* env, std::ostream& out) {
-  if (env) {
-    out << env->key << ": ";
-    PrintValue(env->value, out);
+void PrintTypeEnv(TypeEnv env, std::ostream& out) {
+  for (const auto& [name, value] : env) {
+    out << name << ": ";
+    PrintValue(value, out);
     out << ", ";
-    PrintTypeEnv(env->next, out);
   }
 }
 
@@ -132,9 +119,26 @@ auto ReifyType(Value* t, int line_num) -> Expression* {
   }
 }
 
-auto TypeCheckExp(Expression* e, TypeEnv* env, Env* ct_env, Value* expected,
-                  TCContext context)
-    -> TCResult {  //                   expected can be null
+// The TypeCheckExp function performs semantic analysis on an expression.
+// It returns a new version of the expression, its type, and an
+// updated environment which are bundled into a TCResult object.
+// The purpose of the updated environment is
+// to bring pattern variables into scope, for example, in a match case.
+// The new version of the expression may include more information,
+// for example, the type arguments deduced for the type parameters of a
+// generic.
+//
+// e is the expression to be analyzed.
+// env maps variable names to the type of their run-time value.
+// ct_env maps variable names to their compile-time values. It is not
+//    directly used in this function but is passed to InterExp.
+// expected is the type that this expression is expected to have.
+//    This parameter is non-null when the expression is in a pattern context
+//    and it is used to implement `auto`, otherwise it is null.
+// context says what kind of position this expression is nested in,
+//    whether it's a position that expects a value, a pattern, or a type.
+auto TypeCheckExp(Expression* e, TypeEnv env, Env ct_env, Value* expected,
+                  TCContext context) -> TCResult {
   switch (e->tag) {
     case ExpressionKind::PatternVariable: {
       if (context != TCContext::PatternContext) {
@@ -143,6 +147,7 @@ auto TypeCheckExp(Expression* e, TypeEnv* env, Env* ct_env, Value* expected,
             << ": compilation error, pattern variables are only allowed in "
                "pattern context"
             << std::endl;
+        exit(-1);
       }
       auto t =
           ToType(e->line_num, InterpExp(ct_env, e->u.pattern_variable.type));
@@ -158,8 +163,8 @@ auto TypeCheckExp(Expression* e, TypeEnv* env, Env* ct_env, Value* expected,
       }
       auto new_e = MakeVarPat(e->line_num, *e->u.pattern_variable.name,
                               ReifyType(t, e->line_num));
-      return TCResult(new_e, t,
-                      new TypeEnv(*e->u.pattern_variable.name, t, env));
+      env.Set(*e->u.pattern_variable.name, t);
+      return TCResult(new_e, t, env);
     }
     case ExpressionKind::Index: {
       auto res = TypeCheckExp(e->u.get_field.aggregate, env, ct_env, nullptr,
@@ -276,9 +281,14 @@ auto TypeCheckExp(Expression* e, TypeEnv* env, Env* ct_env, Value* expected,
       }
     }
     case ExpressionKind::Variable: {
-      auto t =
-          Lookup(e->line_num, env, *(e->u.variable.name), PrintErrorString);
-      return TCResult(e, t, env);
+      std::optional<Value*> type = env.Get(*(e->u.variable.name));
+      if (type) {
+        return TCResult(e, *type, env);
+      } else {
+        std::cerr << e->line_num << ": could not find `"
+                  << *(e->u.variable.name) << "`" << std::endl;
+        exit(-1);
+      }
     }
     case ExpressionKind::Integer:
       return TCResult(e, MakeIntTypeVal(), env);
@@ -329,9 +339,8 @@ auto TypeCheckExp(Expression* e, TypeEnv* env, Env* ct_env, Value* expected,
       switch (fun_res.type->tag) {
         case ValKind::FunctionTV: {
           auto fun_t = fun_res.type;
-          auto arg_res =
-              TypeCheckExp(e->u.call.argument, fun_res.env, ct_env,
-                           fun_t->u.fun_type.param, TCContext::ValueContext);
+          auto arg_res = TypeCheckExp(e->u.call.argument, fun_res.env, ct_env,
+                                      fun_t->u.fun_type.param, context);
           ExpectType(e->line_num, "call", fun_t->u.fun_type.param,
                      arg_res.type);
           auto new_e = MakeCall(e->line_num, fun_res.exp, arg_res.exp);
@@ -381,7 +390,7 @@ auto TypeCheckExp(Expression* e, TypeEnv* env, Env* ct_env, Value* expected,
 }
 
 auto TypecheckCase(Value* expected, Expression* pat, Statement* body,
-                   TypeEnv* env, Env* ct_env, Value* ret_type)
+                   TypeEnv env, Env ct_env, Value* ret_type)
     -> std::pair<Expression*, Statement*> {
   auto pat_res =
       TypeCheckExp(pat, env, ct_env, expected, TCContext::PatternContext);
@@ -389,7 +398,14 @@ auto TypecheckCase(Value* expected, Expression* pat, Statement* body,
   return std::make_pair(pat, res.stmt);
 }
 
-auto TypeCheckStmt(Statement* s, TypeEnv* env, Env* ct_env, Value* ret_type)
+// The TypeCheckStmt function performs semantic analysis on a statement.
+// It returns a new version of the statement and a new type environment.
+//
+// The ret_type parameter is used for analyzing return statements.
+// It is the declared return type of the enclosing function definition.
+// If the return type is "auto", then the return type is inferred from
+// the first return statement.
+auto TypeCheckStmt(Statement* s, TypeEnv env, Env ct_env, Value* ret_type)
     -> TCStatement {
   if (!s) {
     return TCStatement(s, env);
@@ -553,7 +569,7 @@ auto CheckOrEnsureReturn(Statement* stmt, bool void_return, int line_num)
   }
 }
 
-auto TypeCheckFunDef(struct FunctionDefinition* f, TypeEnv* env, Env* ct_env)
+auto TypeCheckFunDef(const FunctionDefinition* f, TypeEnv env, Env ct_env)
     -> struct FunctionDefinition* {
   auto param_res = TypeCheckExp(f->param_pattern, env, ct_env, nullptr,
                                 TCContext::PatternContext);
@@ -570,7 +586,7 @@ auto TypeCheckFunDef(struct FunctionDefinition* f, TypeEnv* env, Env* ct_env)
                     f->param_pattern, body);
 }
 
-auto TypeOfFunDef(TypeEnv* env, Env* ct_env, struct FunctionDefinition* fun_def)
+auto TypeOfFunDef(TypeEnv env, Env ct_env, const FunctionDefinition* fun_def)
     -> Value* {
   auto param_res = TypeCheckExp(fun_def->param_pattern, env, ct_env, nullptr,
                                 TCContext::PatternContext);
@@ -583,7 +599,7 @@ auto TypeOfFunDef(TypeEnv* env, Env* ct_env, struct FunctionDefinition* fun_def)
   return MakeFunTypeVal(param_type, ret);
 }
 
-auto TypeOfStructDef(struct StructDefinition* sd, TypeEnv* /*env*/, Env* ct_top)
+auto TypeOfStructDef(const StructDefinition* sd, TypeEnv /*env*/, Env ct_top)
     -> Value* {
   auto fields = new VarValues();
   auto methods = new VarValues();
@@ -596,85 +612,79 @@ auto TypeOfStructDef(struct StructDefinition* sd, TypeEnv* /*env*/, Env* ct_top)
   return MakeStructTypeVal(*sd->name, fields, methods);
 }
 
-auto NameOfDecl(Declaration* d) -> std::string {
-  switch (d->tag) {
-    case DeclarationKind::FunctionDeclaration:
-      return d->u.fun_def->name;
-    case DeclarationKind::StructDeclaration:
-      return *d->u.struct_def->name;
-    case DeclarationKind::ChoiceDeclaration:
-      return *d->u.choice_def.name;
-  }
+auto FunctionDeclaration::Name() const -> std::string {
+  return definition->name;
 }
 
-auto TypeCheckDecl(Declaration* d, TypeEnv* env, Env* ct_env) -> Declaration* {
-  switch (d->tag) {
-    case DeclarationKind::StructDeclaration: {
-      auto members = new std::list<Member*>();
-      for (auto& member : *d->u.struct_def->members) {
-        switch (member->tag) {
-          case MemberKind::FieldMember: {
-            // TODO: Interpret the type expression and store the result.
-            members->push_back(member);
-            break;
-          }
-        }
-      }
-      return MakeStructDecl(d->u.struct_def->line_num, *d->u.struct_def->name,
-                            members);
+auto StructDeclaration::Name() const -> std::string { return *definition.name; }
+
+auto ChoiceDeclaration::Name() const -> std::string { return name; }
+
+auto StructDeclaration::TypeChecked(TypeEnv env, Env ct_env) const
+    -> Declaration {
+  auto fields = new std::list<Member*>();
+  for (auto& m : *definition.members) {
+    if (m->tag == MemberKind::FieldMember) {
+      // TODO: Interpret the type expression and store the result.
+      fields->push_back(m);
     }
-    case DeclarationKind::FunctionDeclaration:
-      return MakeFunDecl(TypeCheckFunDef(d->u.fun_def, env, ct_env));
-    case DeclarationKind::ChoiceDeclaration:
-      return d;  // TODO.
   }
+  return StructDeclaration(definition.line_num, *definition.name, fields);
 }
 
-auto TopLevel(std::list<Declaration*>* fs) -> std::pair<TypeEnv*, Env*> {
-  TypeEnv* top = nullptr;
-  Env* ct_top = nullptr;
+auto FunctionDeclaration::TypeChecked(TypeEnv env, Env ct_env) const
+    -> Declaration {
+  return FunctionDeclaration(TypeCheckFunDef(definition, env, ct_env));
+}
+
+auto ChoiceDeclaration::TypeChecked(TypeEnv env, Env ct_env) const
+    -> Declaration {
+  return *this;  // TODO.
+}
+
+auto TopLevel(std::list<Declaration>* fs) -> std::pair<TypeEnv, Env> {
+  ExecutionEnvironment tops;
   bool found_main = false;
-  for (auto d : *fs) {
-    if (NameOfDecl(d) == "main") {
+
+  for (auto const& d : *fs) {
+    if (d.Name() == "main") {
       found_main = true;
     }
-    switch (d->tag) {
-      case DeclarationKind::FunctionDeclaration: {
-        auto t = TypeOfFunDef(top, ct_top, d->u.fun_def);
-        top = new TypeEnv(NameOfDecl(d), t, top);
-        break;
-      }
-      case DeclarationKind::StructDeclaration: {
-        auto st = TypeOfStructDef(d->u.struct_def, top, ct_top);
-        Address a = AllocateValue(st);
-        ct_top = new Env(NameOfDecl(d), a, ct_top);  // Is this obsolete?
-        auto params = MakeTupleTypeVal(st->u.struct_type.fields);
-        auto fun_ty = MakeFunTypeVal(params, st);
-        top = new TypeEnv(NameOfDecl(d), fun_ty, top);
-        break;
-      }
-      case DeclarationKind::ChoiceDeclaration: {
-        auto alts = new VarValues();
-        for (auto i = d->u.choice_def.alternatives->begin();
-             i != d->u.choice_def.alternatives->end(); ++i) {
-          auto t =
-              ToType(d->u.choice_def.line_num, InterpExp(ct_top, i->second));
-          alts->push_back(std::make_pair(i->first, t));
-        }
-        auto ct = MakeChoiceTypeVal(d->u.choice_def.name, alts);
-        Address a = AllocateValue(ct);
-        ct_top = new Env(NameOfDecl(d), a, ct_top);  // Is this obsolete?
-        top = new TypeEnv(NameOfDecl(d), ct, top);
-        break;
-      }
-    }  // switch (d->tag)
-  }    // for
+    d.TopLevel(tops);
+  }
+
   if (found_main == false) {
     std::cerr << "error, program must contain a function named `main`"
               << std::endl;
     exit(-1);
   }
-  return make_pair(top, ct_top);
+  return tops;
+}
+
+auto FunctionDeclaration::TopLevel(ExecutionEnvironment& tops) const -> void {
+  auto t = TypeOfFunDef(tops.first, tops.second, definition);
+  tops.first.Set(Name(), t);
+}
+
+auto StructDeclaration::TopLevel(ExecutionEnvironment& tops) const -> void {
+  auto st = TypeOfStructDef(&definition, tops.first, tops.second);
+  Address a = AllocateValue(st);
+  tops.second.Set(Name(), a);  // Is this obsolete?
+  auto params = MakeTupleTypeVal(st->u.struct_type.fields);
+  auto fun_ty = MakeFunTypeVal(params, st);
+  tops.first.Set(Name(), fun_ty);
+}
+
+auto ChoiceDeclaration::TopLevel(ExecutionEnvironment& tops) const -> void {
+  auto alts = new VarValues();
+  for (auto a : alternatives) {
+    auto t = ToType(line_num, InterpExp(tops.second, a.second));
+    alts->push_back(std::make_pair(a.first, t));
+  }
+  auto ct = MakeChoiceTypeVal(name, alts);
+  Address a = AllocateValue(ct);
+  tops.second.Set(Name(), a);  // Is this obsolete?
+  tops.first.Set(Name(), ct);
 }
 
 }  // namespace Carbon

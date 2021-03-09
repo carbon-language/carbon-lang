@@ -24,6 +24,10 @@ process.
 
 ## Templates
 
+The list of links for the proposal PR, RFC topic, etc., should be maintained as
+a comment on the proposal PR. Try to keep this up-to-date, and copy-paste it
+when adding links to Discourse Forum topics.
+
 ### Comment deadline
 
 When an RFC approaches readiness for a decision, the review manager must post a
@@ -53,10 +57,8 @@ titled "Request for decision: PROPOSAL":
 ```markdown
 @core_team: Please provide a decision on "PROPOSAL".
 
-Links:
-
--   [Proposal PR](LINK)
--   [RFC topic](LINK)
+TODO: Copy links from the proposal PR, add add a link to the decision topic when
+created.
 
 Please focus on affirm, object, and stand aside comments in this topic; other
 things specific to reaching consensus may be included. Affirm and object
@@ -95,9 +97,8 @@ titled "[DECISION] PROPOSAL":
 
 Please read the [formal decision PR](LINK) for details.
 
--   [Proposal PR](LINK)
--   [RFC topic](LINK)
--   [Decision topic](link)
+TODO: Copy links from the proposal PR, and add links to the decision PR and
+announcement topic when created.
 
 This decision is now entering the
 [decision comment period](https://carbon-lang.dev/docs/project/evolution.html#community-comments-on-proposal-decision),

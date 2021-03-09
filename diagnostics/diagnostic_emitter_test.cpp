@@ -21,15 +21,14 @@ struct FakeDiagnostic {
   // selection of the message.
   static constexpr llvm::StringLiteral Message = "{0}";
 
-  struct Substitutions {
-    std::string message;
-  };
-  static auto Format(const Substitutions& substitutions) -> std::string {
+  std::string message;
+
+  auto Format() -> std::string {
     // Work around a bug in Clang's unused const variable warning by marking it
     // used here with a no-op.
     static_cast<void>(ShortName);
 
-    return llvm::formatv(Message.data(), substitutions.message).str();
+    return llvm::formatv(Message.data(), message).str();
   }
 };
 
@@ -41,14 +40,8 @@ TEST(DiagTest, EmitErrors) {
     reported.push_back(diagnostic.message);
   });
 
-  emitter.EmitError<FakeDiagnostic>(
-      [](FakeDiagnostic::Substitutions& diagnostic) {
-        diagnostic.message = "M1";
-      });
-  emitter.EmitError<FakeDiagnostic>(
-      [](FakeDiagnostic::Substitutions& diagnostic) {
-        diagnostic.message = "M2";
-      });
+  emitter.EmitError<FakeDiagnostic>({.message = "M1"});
+  emitter.EmitError<FakeDiagnostic>({.message = "M2"});
 
   EXPECT_THAT(reported, ElementsAre("M1", "M2"));
 }
@@ -61,21 +54,18 @@ TEST(DiagTest, EmitWarnings) {
     reported.push_back(diagnostic.message);
   });
 
-  emitter.EmitWarningIf<FakeDiagnostic>(
-      [](FakeDiagnostic::Substitutions& diagnostic) {
-        diagnostic.message = "M1";
-        return true;
-      });
-  emitter.EmitWarningIf<FakeDiagnostic>(
-      [](FakeDiagnostic::Substitutions& diagnostic) {
-        diagnostic.message = "M2";
-        return false;
-      });
-  emitter.EmitWarningIf<FakeDiagnostic>(
-      [](FakeDiagnostic::Substitutions& diagnostic) {
-        diagnostic.message = "M3";
-        return true;
-      });
+  emitter.EmitWarningIf<FakeDiagnostic>([](FakeDiagnostic& diagnostic) {
+    diagnostic.message = "M1";
+    return true;
+  });
+  emitter.EmitWarningIf<FakeDiagnostic>([](FakeDiagnostic& diagnostic) {
+    diagnostic.message = "M2";
+    return false;
+  });
+  emitter.EmitWarningIf<FakeDiagnostic>([](FakeDiagnostic& diagnostic) {
+    diagnostic.message = "M3";
+    return true;
+  });
 
   EXPECT_THAT(reported, ElementsAre("M1", "M3"));
 }

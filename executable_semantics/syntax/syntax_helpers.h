@@ -16,13 +16,13 @@
 namespace Carbon {
 
 // Initialized by main(), and used when printing errors.
-extern char* input_filename;
+extern const char* input_filename;
 
 // Prints errors.
 void PrintSyntaxError(char* error, int line_num);
 
 // Runs the top-level declaration list.
-void ExecProgram(std::list<Declaration*>* fs);
+void ExecProgram(std::list<Declaration>* fs);
 
 }  // namespace Carbon
 

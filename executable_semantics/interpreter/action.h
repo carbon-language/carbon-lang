@@ -10,7 +10,7 @@
 
 #include "executable_semantics/ast/expression.h"
 #include "executable_semantics/ast/statement.h"
-#include "executable_semantics/interpreter/cons_list.h"
+#include "executable_semantics/interpreter/stack.h"
 #include "executable_semantics/interpreter/value.h"
 
 namespace Carbon {
@@ -37,7 +37,7 @@ struct Action {
 };
 
 void PrintAct(Action* act, std::ostream& out);
-void PrintActList(Cons<Action*>* ls, std::ostream& out);
+void PrintActList(Stack<Action*> ls, std::ostream& out);
 auto MakeExpAct(Expression* e) -> Action*;
 auto MakeLvalAct(Expression* e) -> Action*;
 auto MakeStmtAct(Statement* s) -> Action*;

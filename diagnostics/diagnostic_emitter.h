@@ -7,6 +7,7 @@
 
 #include <functional>
 #include <string>
+#include <type_traits>
 
 #include "llvm/ADT/Any.h"
 #include "llvm/ADT/STLExtras.h"
@@ -36,26 +37,27 @@ class DiagnosticEmitter {
       : callback_(std::move(callback)) {}
   ~DiagnosticEmitter() = default;
 
-  // Emits an error unconditionally.  `F` is guaranteed to be called.
+  // Emits an error unconditionally.
   template <typename DiagnosticT>
-  void EmitError(
-      llvm::function_ref<void(typename DiagnosticT::Substitutions&)> f) {
-    typename DiagnosticT::Substitutions substitutions;
-    f(substitutions);
-    callback_({.short_name = DiagnosticT::ShortName,
-               .message = DiagnosticT::Format(substitutions)});
+  auto EmitError(DiagnosticT diag) -> void {
+    callback_({.short_name = DiagnosticT::ShortName, .message = diag.Format()});
+  }
+
+  // Emits a stateless error unconditionally.
+  template <typename DiagnosticT>
+  auto EmitError() -> std::enable_if_t<std::is_empty_v<DiagnosticT>> {
+    EmitError<DiagnosticT>({});
   }
 
   // Emits a warning if `F` returns true.  `F` may or may not be called if the
   // warning is disabled.
   template <typename DiagnosticT>
-  void EmitWarningIf(
-      llvm::function_ref<bool(typename DiagnosticT::Substitutions&)> f) {
+  auto EmitWarningIf(llvm::function_ref<bool(DiagnosticT&)> f) -> void {
     // TODO(kfm): check if this warning is enabled
-    typename DiagnosticT::Substitutions substitutions;
-    if (f(substitutions)) {
-      callback_({.short_name = DiagnosticT::ShortName,
-                 .message = DiagnosticT::Format(substitutions)});
+    DiagnosticT diag;
+    if (f(diag)) {
+      callback_(
+          {.short_name = DiagnosticT::ShortName, .message = diag.Format()});
     }
   }
 
@@ -73,6 +75,13 @@ inline auto NullDiagnosticEmitter() -> DiagnosticEmitter& {
   static auto* emitter = new DiagnosticEmitter([](const Diagnostic&) {});
   return *emitter;
 }
+
+// CRTP base class for diagnostics with no substitutions.
+template <typename Derived>
+struct SimpleDiagnostic {
+  struct Substitutions {};
+  static auto Format() -> std::string { return Derived::Message.str(); }
+};
 
 }  // namespace Carbon
 
