@@ -27,10 +27,17 @@ cc_test(
 )
 
 cc_library(
+    name = "character_set",
+    hdrs = ["character_set.h"],
+    deps = ["@llvm-project//llvm:Support"],
+)
+
+cc_library(
     name = "numeric_literal",
     srcs = ["numeric_literal.cpp"],
     hdrs = ["numeric_literal.h"],
     deps = [
+        ":character_set",
         "//diagnostics:diagnostic_emitter",
         "@llvm-project//llvm:Support",
     ],
@@ -54,6 +61,7 @@ cc_library(
     srcs = ["string_literal.cpp"],
     hdrs = ["string_literal.h"],
     deps = [
+        ":character_set",
         "//diagnostics:diagnostic_emitter",
         "@llvm-project//llvm:Support",
     ],
@@ -77,9 +85,10 @@ cc_library(
     srcs = ["tokenized_buffer.cpp"],
     hdrs = ["tokenized_buffer.h"],
     deps = [
+        ":character_set",
+        ":numeric_literal",
         ":string_literal",
         ":token_kind",
-        ":numeric_literal",
         "//diagnostics:diagnostic_emitter",
         "//source:source_buffer",
         "@llvm-project//llvm:Support",
