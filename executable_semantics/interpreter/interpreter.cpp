@@ -237,7 +237,9 @@ auto ValToPtr(Value* v, int line_num) -> Address {
   }
 }
 
-auto ValToContinuation(Value* v, int line_num) -> Stack<Frame*> {
+// If the value is a first-class continuation, return the continuation
+// represented as a stack of frames. Otherwise error.
+auto ToContinuation(Value* v, int line_num) -> Stack<Frame*> {
   CheckAlive(v, line_num);
   switch (v->tag) {
     case ValKind::ContinuationV:
@@ -805,15 +807,25 @@ auto IsBlockAct(Action* act) -> bool {
   }
 }
 
-auto IsDelimitAction(Action* act) -> bool {
+auto IsDelimit(Action* act) -> bool {
   return act->tag == ActionKind::StatementAction &&
          act->u.stmt->tag == StatementKind::Delimit;
 }
 
+// This is an auxiliary function of ResumeContinuation function which
+// copies a saved continuation (a stack of frames) onto the current
+// stack. This function does most of the work of copying a frame from
+// the continuation into a frame on the current stack.  In particular,
+// it copies the todo and scopes members from the frame in the
+// continuation to the target frame on the current stack.
+// The end of the saved continuation is marked by a Delimit
+// AST node, so the copying of a frame stops when it reaches Delimit
+// or when it reaches the end of the frame (and the Delimit is
+// in a frame further down the stack).
 auto ResumeTodoAndScopes(Stack<Action*> todo, Stack<Action*>& new_todo,
                          Stack<Scope*> scopes, Stack<Scope*>& new_scopes)
     -> void {
-  if (todo.IsEmpty() || IsDelimitAction(todo.Top())) {
+  if (todo.IsEmpty() || IsDelimit(todo.Top())) {
     return;
   } else {
     Action* a = todo.Top();
@@ -832,6 +844,8 @@ auto ResumeTodoAndScopes(Stack<Action*> todo, Stack<Action*>& new_todo,
   }
 }
 
+// Returns the bottom scope of a frame, which corresponds
+// to the scope with the function's parameters.
 auto GetFrameScope(Frame* frame) -> Scope* {
   Stack<Scope*> scopes = frame->scopes;
   Scope* current = scopes.Top();
@@ -842,11 +856,17 @@ auto GetFrameScope(Frame* frame) -> Scope* {
   return current;
 }
 
+// Copies a saved continuation (a stack of frames) onto the current
+// stack. The end of the saved continuation is marked by a Delimit
+// AST node, so the copying stops when it reaches Delimit.
+// This function recursively processes the saved stack and
+// on the way back up the recursion, it copies each frame
+// over to the current stack.
 auto ResumeContinuation(Stack<Frame*> yielded) -> void {
   Frame* frame = yielded.Top();
   bool found_delimit = false;
   for (auto i = frame->todo.begin(); i != frame->todo.end(); ++i) {
-    if (IsDelimitAction(*i))
+    if (IsDelimit(*i))
       found_delimit = true;
   }
   if (found_delimit) {
@@ -973,9 +993,11 @@ void StepStmt() {
       break;
     case StatementKind::Delimit:
       if (act->pos == -1) {
+        // First, evaluate the body of the delimit statement.
         frame->todo.Push(MakeStmtAct(stmt->u.delimit_stmt.body));
         act->pos++;
       } else if (act->pos == 0) {
+        // The body is complete, fall through to the next statement.
         frame->todo.Pop(1);
       } else {
         std::cerr << "delimit not implemented at pos " << act->pos << std::endl;
@@ -983,10 +1005,12 @@ void StepStmt() {
       }
       break;
     case StatementKind::Yield:
+      // First, evaluate the expression for the yielded value.
       frame->todo.Push(MakeExpAct(stmt->u.yield_stmt.exp));
       act->pos++;
       break;
     case StatementKind::Resume:
+      // First, evaluate the expression for the continuation.
       frame->todo.Push(MakeExpAct(stmt->u.resume_stmt.exp));
       act->pos++;
       break;
@@ -1427,6 +1451,11 @@ void HandleValue() {
           break;
         }
         case StatementKind::Yield: {
+          // The yield statement rolls back the stack to the nearest
+          // delimit and then executes the handler statement, binding
+          // the yielded value and the captured continuation to
+          // variables in scope for the handler.
+
           // Pop the argument and yield action off the todo list.
           frame->todo.Pop(2);
 
@@ -1440,7 +1469,7 @@ void HandleValue() {
             Stack<Action*> todo = new_stack.Top()->todo;
             Stack<Scope*> scopes = new_stack.Top()->scopes;
             while (!todo.IsEmpty()) {
-              if (IsDelimitAction(todo.Top())) {
+              if (IsDelimit(todo.Top())) {
                 delimit = todo.Top()->u.stmt;
                 Frame* new_frame =
                     new Frame(new_stack.Top()->name, scopes, todo);
@@ -1463,7 +1492,6 @@ void HandleValue() {
           // Create a new scope for the handler, binding the
           // yield and continuation variables.
           std::list<std::string> scope_locals;
-
           scope_locals.push_back(*delimit->u.delimit_stmt.yield_variable);
           scope_locals.push_back(*delimit->u.delimit_stmt.continuation);
           Scope* new_scope = new Scope(CurrentEnv(state), scope_locals);
@@ -1484,7 +1512,7 @@ void HandleValue() {
         case StatementKind::Resume: {
           // Push the yielded continuation onto the current stack
           Stack<Frame*> yielded =
-              ValToContinuation(val_act->u.val, stmt->line_num);
+              ToContinuation(val_act->u.val, stmt->line_num);
           frame->todo.Pop(2);
           ResumeContinuation(yielded);
           break;

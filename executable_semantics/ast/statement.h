@@ -23,9 +23,9 @@ enum class StatementKind {
   Break,
   Continue,
   Match,
-  Delimit,
-  Yield,
-  Resume
+  Delimit,  // An experimental "try" for delimited continuations.
+  Yield,    // Pause the current continuation, return to the enclosing delimit.
+  Resume    // Restart a continuation.
 };
 
 struct Statement {
@@ -104,9 +104,18 @@ auto MakeContinue(int line_num) -> Statement*;
 auto MakeMatch(int line_num, Expression* exp,
                std::list<std::pair<Expression*, Statement*>>* clauses)
     -> Statement*;
-auto MakeDelimitStmt(int line_num, Statement*, std::string, std::string,
-                     Statement*) -> Statement*;
+// Returns an AST node for a delimit statement, given the source
+// line number, the body statement, the variable name for the yielded value,
+// the variable name for the captured continuation, and the handler
+// statement.
+auto MakeDelimitStmt(int line_num, Statement* body, std::string yield,
+                     std::string continuation, Statement* handler)
+    -> Statement*;
+// Returns an AST node for a yield stament given an expression
+// that produces the yielded value.
 auto MakeYieldStmt(int line_num, Expression*) -> Statement*;
+// Returns an AST node for a resume statement given an expression
+// that produces a continuation.
 auto MakeResumeStmt(int line_num, Expression*) -> Statement*;
 
 void PrintStatement(Statement*, int);

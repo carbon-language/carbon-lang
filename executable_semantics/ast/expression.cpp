@@ -36,6 +36,8 @@ auto MakeAutoType(int line_num) -> Expression* {
   return t;
 }
 
+// Returns a Snapshot type AST node at the given source location,
+// which is the type of a continuation value.
 auto MakeSnapshotType(int line_num) -> Expression* {
   auto* t = new Expression();
   t->tag = ExpressionKind::SnapshotT;

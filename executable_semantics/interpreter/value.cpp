@@ -108,6 +108,8 @@ auto MakeAltCons(std::string alt_name, std::string choice_name) -> Value* {
   return v;
 }
 
+// Return a first-class continuation represented by the
+// given stack, down to the first Delimit.
 auto MakeContinuation(Stack<Frame*> stack) -> Value* {
   auto* v = new Value();
   v->alive = true;
@@ -154,6 +156,8 @@ auto MakeTypeTypeVal() -> Value* {
   return v;
 }
 
+// Return a Snapshot type, that is, the type of a first-class
+// continuation.
 auto MakeSnapshotTypeVal() -> Value* {
   auto* v = new Value();
   v->alive = true;

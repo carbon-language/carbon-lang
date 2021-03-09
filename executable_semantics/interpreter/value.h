@@ -38,10 +38,10 @@ enum class ValKind {
   TupleTV,
   StructTV,
   ChoiceTV,
-  SnapshotTV,
+  SnapshotTV,  // The type of a continuation.
   VarPatV,
   AltConsV,
-  ContinuationV
+  ContinuationV  // A first-class continuation value.
 };
 
 struct Frame;  // used by continuation
@@ -133,6 +133,9 @@ auto MakeTupleVal(std::vector<std::pair<std::string, Address>>* elts) -> Value*;
 auto MakeAltVal(std::string alt_name, std::string choice_name, Value* arg)
     -> Value*;
 auto MakeAltCons(std::string alt_name, std::string choice_name) -> Value*;
+
+// Return a first-class continuation represented by the
+// given stack, down to the first Delimit.
 auto MakeContinuation(Stack<Frame*> stack) -> Value*;
 
 auto MakeVarPatVal(std::string name, Value* type) -> Value*;
