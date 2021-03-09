@@ -9,6 +9,7 @@
 #include <iterator>
 #include <string>
 
+#include "lexer/character_set.h"
 #include "lexer/numeric_literal.h"
 #include "lexer/string_literal.h"
 #include "llvm/ADT/StringRef.h"
@@ -52,10 +53,6 @@ struct UnrecognizedCharacters : SimpleDiagnostic<UnrecognizedCharacters> {
   static constexpr llvm::StringLiteral Message =
       "Encountered unrecognized characters while parsing.";
 };
-
-// TODO(zygoloid): Update this to match whatever we decide qualifies as
-// acceptable whitespace.
-static bool isSpace(char c) { return c == ' ' || c == '\n' || c == '\t'; }
 
 // Implementation of the lexer logic itself.
 //
@@ -128,7 +125,7 @@ class TokenizedBuffer::Lexer {
           buffer.has_errors = true;
         }
         // The introducer '//' must be followed by whitespace or EOF.
-        if (source_text.size() > 2 && !isSpace(source_text[2])) {
+        if (source_text.size() > 2 && !IsSpace(source_text[2])) {
           emitter.EmitError<NoWhitespaceAfterCommentIntroducer>();
           buffer.has_errors = true;
         }
@@ -145,7 +142,7 @@ class TokenizedBuffer::Lexer {
         default:
           // If we find a non-whitespace character without exhausting the
           // buffer, return true to continue lexing.
-          assert(!isSpace(source_text.front()));
+          assert(!IsSpace(source_text.front()));
           return true;
 
         case '\n':
@@ -383,7 +380,7 @@ class TokenizedBuffer::Lexer {
   }
 
   auto LexKeywordOrIdentifier(llvm::StringRef& source_text) -> LexResult {
-    if (!llvm::isAlpha(source_text.front()) && source_text.front() != '_') {
+    if (!IsAlpha(source_text.front()) && source_text.front() != '_') {
       return LexResult::NoMatch();
     }
 
@@ -394,7 +391,7 @@ class TokenizedBuffer::Lexer {
 
     // Take the valid characters off the front of the source buffer.
     llvm::StringRef identifier_text = source_text.take_while(
-        [](char c) { return llvm::isAlnum(c) || c == '_'; });
+        [](char c) { return IsAlnum(c) || c == '_'; });
     assert(!identifier_text.empty() && "Must have at least one character!");
     int identifier_column = current_column;
     current_column += identifier_text.size();
@@ -420,7 +417,7 @@ class TokenizedBuffer::Lexer {
 
   auto LexError(llvm::StringRef& source_text) -> LexResult {
     llvm::StringRef error_text = source_text.take_while([](char c) {
-      if (llvm::isAlnum(c)) {
+      if (IsAlnum(c)) {
         return false;
       }
       switch (c) {
