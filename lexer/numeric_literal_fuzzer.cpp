@@ -28,9 +28,13 @@ extern "C" int LLVMFuzzerTestOneInput(const unsigned char* data,
   }
 
   // Ensure we can exercise the various queries on a valid literal.
-  parser.GetRadix();
-  (void)parser.GetMantissa();
-  (void)parser.GetExponent();
+  volatile auto radix = parser.GetRadix();
+  volatile auto mantissa = parser.GetMantissa();
+  volatile auto exponent = parser.GetExponent();
+
+  (void)radix;
+  (void)mantissa;
+  (void)exponent;
 
   return 0;
 }
