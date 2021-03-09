@@ -13,14 +13,16 @@ cc_library(
     name = "syntax",
     srcs = [
         "driver.cpp",
+        "driver.h",
         "lexer.cpp",
+        "parse.cpp",
         "parser.cpp",
+        "parser.h",
         "syntax_helpers.cpp",
         "syntax_helpers.h",
     ],
     hdrs = [
-        "driver.h",
-        "parser.h",
+        "parse.h",
     ],
     # Disable warnings for generated code.
     copts = [

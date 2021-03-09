@@ -2,16 +2,12 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-// Helpers should be added here when logic in syntax.ypp is more than a single
-// statement. The intent is to minimize the amount of C++ in the .ypp file, to
-// improve ease of maintenance.
-
 #ifndef EXECUTABLE_SEMANTICS_SYNTAX_DRIVER_H_
 #define EXECUTABLE_SEMANTICS_SYNTAX_DRIVER_H_
 
 #include <variant>
 
-#include "executable_semantics/syntax/driver.h"
+#include "executable_semantics/ast/abstract_syntax_tree.h"
 #include "executable_semantics/syntax/parser.h"  // from parser.ypp
 
 namespace Carbon {
@@ -55,4 +51,4 @@ class SyntaxDriver {
 // Declares yylex for the parser's sake.
 YY_DECL;
 
-#endif  // EXECUTABLE_SYNTAX_DRIVER_EXEC_H_
+#endif  // EXECUTABLE_SYNTAX_DRIVER_H_
