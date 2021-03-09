@@ -18,11 +18,18 @@ class TestProposal(unittest.TestCase):
         self.assertEqual(
             p[0],
             (
+                '0024 - Carbon: First version of "Principles: Generics"',
+                "p0024.md",
+            ),
+        )
+        self.assertEqual(
+            p[1],
+            (
                 "0029 - Linear, rebase, and pull-request GitHub workflow",
                 "p0029.md",
             ),
         )
-        self.assertEqual(p[1], ("0029 - Decision", "p0029_decision.md"))
+        self.assertEqual(p[2], ("0029 - Decision", "p0029_decision.md"))
 
 
 if __name__ == "__main__":
