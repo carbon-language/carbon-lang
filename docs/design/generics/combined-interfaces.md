@@ -58,6 +58,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
         -   [Type inequality](#type-inequality)
     -   [Implicit constraints](#implicit-constraints)
     -   [Generic type equality](#generic-type-equality)
+    -   [Options](#options)
     -   [Rejected alternative: `ForSome(F)`](#rejected-alternative-forsomef)
 -   [Conditional conformance](#conditional-conformance)
 -   [Templated impls for generic interfaces](#templated-impls-for-generic-interfaces)
@@ -2141,6 +2142,9 @@ type of `T.G` in order to typecheck the function. With the full expressive power
 of `where` clauses, determining whether two type expressions are equal is in
 general undecidable, as
 [has been shown in Swift](https://forums.swift.org/t/swift-type-checking-is-undecidable/39024).
+There is
+[ongoing work in Swift](https://forums.swift.org/t/formalizing-swift-generics-as-a-term-rewriting-system/45175)
+iterating on how to approach this problem.
 
 However, with enough constraints, we can make an efficient decision procedure
 for the argument passing formulation. The way we do this is by assigning every
@@ -2243,6 +2247,21 @@ fn F3[A:$ N, A(.Y = N):$ P, B(.S = N, .Y = P):$ Q](...) { ... }
 
 This resolves the issue, and with this change the compiler can now correctly
 determine canonical types.
+
+**Open question:** Does this algorithm still work with the `.Self` feature from
+the ["recursive constraints" section](#recursive-constraints)?
+
+### Options
+
+There is one big choice here, whether we want the fully general expressive
+semantics of `where` clauses and the difficult compilation that comes with it,
+or the parameter passing approach with enough restrictions to make type equality
+straightforward and efficient.
+
+With the general `where` clause approach we may decide, as Rust did, to include
+some parameter passing alternatives to the `where` syntax, for convenience.
+Similarly we could adopt the parameter passing model, but allow the `where`
+syntax in some cases where we could rewrite it automatically to fit.
 
 ### Rejected alternative: `ForSome(F)`
 
