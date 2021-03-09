@@ -263,6 +263,9 @@ class TokenizedBuffer {
   // Returns the value of an `RealLiteral()` token.
   [[nodiscard]] auto GetRealLiteral(Token token) const -> RealLiteralValue;
 
+  // Returns the value of a `StringLiteral()` token.
+  auto GetStringLiteral(Token token) const -> llvm::StringRef;
+
   // Returns the closing token matched with the given opening token.
   //
   // The given token must be an opening token kind.
@@ -401,6 +404,8 @@ class TokenizedBuffer {
 
   // Storage for integers that form part of the value of a numeric literal.
   llvm::SmallVector<llvm::APInt, 16> literal_int_storage;
+
+  llvm::SmallVector<std::string, 16> literal_string_storage;
 
   llvm::DenseMap<llvm::StringRef, Identifier> identifier_map;
 
