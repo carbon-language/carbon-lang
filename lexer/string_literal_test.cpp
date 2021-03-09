@@ -92,6 +92,8 @@ TEST_F(StringLiteralTest, StringLiteralBounds) {
       )",
       R"(#"""
       """)",
+      R"(" \
+      ")",
   };
 
   for (llvm::StringLiteral test : invalid) {

@@ -91,6 +91,17 @@ cc_test(
     ],
 )
 
+cc_fuzz_test(
+    name = "string_literal_fuzzer",
+    srcs = ["string_literal_fuzzer.cpp"],
+    corpus = glob(["fuzzer_corpus/string_literal/*"]),
+    deps = [
+        ":string_literal",
+        "//diagnostics:diagnostic_emitter",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
 cc_library(
     name = "tokenized_buffer",
     srcs = ["tokenized_buffer.cpp"],
