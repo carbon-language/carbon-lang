@@ -59,12 +59,9 @@ struct UnknownEscapeSequence {
   static constexpr llvm::StringLiteral ShortName = "syntax-invalid-string";
   static constexpr const char* Message = "Unrecognized escape sequence `{0}`.";
 
-  struct Substitutions {
-    char first;
-  };
-  static auto Format(const Substitutions& subst) -> std::string {
-    return llvm::formatv(Message, subst.first).str();
-  }
+  char first;
+
+  auto Format() -> std::string { return llvm::formatv(Message, first).str(); }
 };
 
 struct MismatchedIndentInString : SimpleDiagnostic<MismatchedIndentInString> {
