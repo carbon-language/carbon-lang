@@ -49,13 +49,24 @@ cc_test(
     ],
 )
 
+cc_fuzz_test(
+    name = "numeric_literal_fuzzer",
+    srcs = ["numeric_literal_fuzzer.cpp"],
+    corpus = glob(["fuzzer_corpus/numeric_literal/*"]),
+    deps = [
+        ":numeric_literal",
+        "//diagnostics:diagnostic_emitter",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
 cc_library(
     name = "tokenized_buffer",
     srcs = ["tokenized_buffer.cpp"],
     hdrs = ["tokenized_buffer.h"],
     deps = [
-        ":token_kind",
         ":numeric_literal",
+        ":token_kind",
         "//diagnostics:diagnostic_emitter",
         "//source:source_buffer",
         "@llvm-project//llvm:Support",
@@ -90,7 +101,7 @@ cc_test(
 cc_fuzz_test(
     name = "tokenized_buffer_fuzzer",
     srcs = ["tokenized_buffer_fuzzer.cpp"],
-    corpus = glob(["fuzzer_corpus/*"]),
+    corpus = glob(["fuzzer_corpus/tokenized_buffer/*"]),
     deps = [
         ":tokenized_buffer",
         "//diagnostics:diagnostic_emitter",
