@@ -1634,7 +1634,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 0, 1, 1, 0, continuation, 1, continuation, 
-env: k: continuation, v: 1, count: 1, sum: 0, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 1, k: continuation, v: 0, count: 1, sum: 0, main: fun<main>, naturals: fun<naturals>, 
 }
 --- step stmt {
  ... 
@@ -1653,7 +1653,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 0, 1, 1, 0, continuation, 1, continuation, 
-env: k: continuation, v: 1, count: 1, sum: 0, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 1, k: continuation, v: 0, count: 1, sum: 0, main: fun<main>, naturals: fun<naturals>, 
 }
 --- step stmt {
  ... 
@@ -1672,7 +1672,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 0, 1, 1, 0, continuation, 1, continuation, 
-env: k: continuation, v: 1, count: 1, sum: 0, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 1, k: continuation, v: 0, count: 1, sum: 0, main: fun<main>, naturals: fun<naturals>, 
 }
 --- step stmt sum = (sum + v); ...  --->
 {
@@ -1688,7 +1688,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 0, 1, 1, 0, continuation, 1, continuation, 
-env: k: continuation, v: 1, count: 1, sum: 0, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 1, k: continuation, v: 0, count: 1, sum: 0, main: fun<main>, naturals: fun<naturals>, 
 }
 --- step stmt sum = (sum + v); --->
 {
@@ -1704,7 +1704,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 0, 1, 1, 0, continuation, 1, continuation, 
-env: k: continuation, v: 1, count: 1, sum: 0, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 1, k: continuation, v: 0, count: 1, sum: 0, main: fun<main>, naturals: fun<naturals>, 
 }
 --- step lvalue sum --->
 {
@@ -1720,7 +1720,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 0, 1, 1, 0, continuation, 1, continuation, 
-env: k: continuation, v: 1, count: 1, sum: 0, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 1, k: continuation, v: 0, count: 1, sum: 0, main: fun<main>, naturals: fun<naturals>, 
 }
 --- handle value ptr<2> with sum = (sum + v);<1>(ptr<2>,) --->
 {
@@ -1736,7 +1736,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 0, 1, 1, 0, continuation, 1, continuation, 
-env: k: continuation, v: 1, count: 1, sum: 0, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 1, k: continuation, v: 0, count: 1, sum: 0, main: fun<main>, naturals: fun<naturals>, 
 }
 --- step exp (sum + v) --->
 {
@@ -1752,7 +1752,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 0, 1, 1, 0, continuation, 1, continuation, 
-env: k: continuation, v: 1, count: 1, sum: 0, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 1, k: continuation, v: 0, count: 1, sum: 0, main: fun<main>, naturals: fun<naturals>, 
 }
 --- step exp sum --->
 {
@@ -1768,7 +1768,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 0, 1, 1, 0, continuation, 1, continuation, 
-env: k: continuation, v: 1, count: 1, sum: 0, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 1, k: continuation, v: 0, count: 1, sum: 0, main: fun<main>, naturals: fun<naturals>, 
 }
 --- handle value 0 with (sum + v)<1>(0,) --->
 {
@@ -1784,7 +1784,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 0, 1, 1, 0, continuation, 1, continuation, 
-env: k: continuation, v: 1, count: 1, sum: 0, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 1, k: continuation, v: 0, count: 1, sum: 0, main: fun<main>, naturals: fun<naturals>, 
 }
 --- step exp v --->
 {
@@ -1800,7 +1800,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 0, 1, 1, 0, continuation, 1, continuation, 
-env: k: continuation, v: 1, count: 1, sum: 0, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 1, k: continuation, v: 0, count: 1, sum: 0, main: fun<main>, naturals: fun<naturals>, 
 }
 --- handle value 1 with (sum + v)<2>(0,1,) --->
 {
@@ -1816,7 +1816,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 0, 1, 1, 0, continuation, 1, continuation, 
-env: k: continuation, v: 1, count: 1, sum: 0, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 1, k: continuation, v: 0, count: 1, sum: 0, main: fun<main>, naturals: fun<naturals>, 
 }
 --- handle value 1 with sum = (sum + v);<2>(ptr<2>,1,) --->
 {
@@ -1832,7 +1832,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 1, 1, 1, 0, continuation, 1, continuation, 
-env: k: continuation, v: 1, count: 1, sum: 1, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 1, k: continuation, v: 0, count: 1, sum: 1, main: fun<main>, naturals: fun<naturals>, 
 }
 --- step stmt count = (count + 1); ...  --->
 {
@@ -1851,7 +1851,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 1, 1, 1, 0, continuation, 1, continuation, 
-env: k: continuation, v: 1, count: 1, sum: 1, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 1, k: continuation, v: 0, count: 1, sum: 1, main: fun<main>, naturals: fun<naturals>, 
 }
 --- step stmt count = (count + 1); --->
 {
@@ -1870,7 +1870,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 1, 1, 1, 0, continuation, 1, continuation, 
-env: k: continuation, v: 1, count: 1, sum: 1, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 1, k: continuation, v: 0, count: 1, sum: 1, main: fun<main>, naturals: fun<naturals>, 
 }
 --- step lvalue count --->
 {
@@ -1889,7 +1889,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 1, 1, 1, 0, continuation, 1, continuation, 
-env: k: continuation, v: 1, count: 1, sum: 1, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 1, k: continuation, v: 0, count: 1, sum: 1, main: fun<main>, naturals: fun<naturals>, 
 }
 --- handle value ptr<3> with count = (count + 1);<1>(ptr<3>,) --->
 {
@@ -1908,7 +1908,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 1, 1, 1, 0, continuation, 1, continuation, 
-env: k: continuation, v: 1, count: 1, sum: 1, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 1, k: continuation, v: 0, count: 1, sum: 1, main: fun<main>, naturals: fun<naturals>, 
 }
 --- step exp (count + 1) --->
 {
@@ -1927,7 +1927,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 1, 1, 1, 0, continuation, 1, continuation, 
-env: k: continuation, v: 1, count: 1, sum: 1, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 1, k: continuation, v: 0, count: 1, sum: 1, main: fun<main>, naturals: fun<naturals>, 
 }
 --- step exp count --->
 {
@@ -1946,7 +1946,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 1, 1, 1, 0, continuation, 1, continuation, 
-env: k: continuation, v: 1, count: 1, sum: 1, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 1, k: continuation, v: 0, count: 1, sum: 1, main: fun<main>, naturals: fun<naturals>, 
 }
 --- handle value 1 with (count + 1)<1>(1,) --->
 {
@@ -1965,7 +1965,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 1, 1, 1, 0, continuation, 1, continuation, 
-env: k: continuation, v: 1, count: 1, sum: 1, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 1, k: continuation, v: 0, count: 1, sum: 1, main: fun<main>, naturals: fun<naturals>, 
 }
 --- step exp 1 --->
 {
@@ -1984,7 +1984,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 1, 1, 1, 0, continuation, 1, continuation, 
-env: k: continuation, v: 1, count: 1, sum: 1, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 1, k: continuation, v: 0, count: 1, sum: 1, main: fun<main>, naturals: fun<naturals>, 
 }
 --- handle value 1 with (count + 1)<2>(1,1,) --->
 {
@@ -2003,7 +2003,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 1, 1, 1, 0, continuation, 1, continuation, 
-env: k: continuation, v: 1, count: 1, sum: 1, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 1, k: continuation, v: 0, count: 1, sum: 1, main: fun<main>, naturals: fun<naturals>, 
 }
 --- handle value 2 with count = (count + 1);<2>(ptr<3>,2,) --->
 {
@@ -2022,7 +2022,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 1, 2, 1, 0, continuation, 1, continuation, 
-env: k: continuation, v: 1, count: 2, sum: 1, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 1, k: continuation, v: 0, count: 2, sum: 1, main: fun<main>, naturals: fun<naturals>, 
 }
 --- step stmt if ((count == 5))
  ... 
@@ -2044,7 +2044,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 1, 2, 1, 0, continuation, 1, continuation, 
-env: k: continuation, v: 1, count: 2, sum: 1, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 1, k: continuation, v: 0, count: 2, sum: 1, main: fun<main>, naturals: fun<naturals>, 
 }
 --- step exp (count == 5) --->
 {
@@ -2063,7 +2063,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 1, 2, 1, 0, continuation, 1, continuation, 
-env: k: continuation, v: 1, count: 2, sum: 1, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 1, k: continuation, v: 0, count: 2, sum: 1, main: fun<main>, naturals: fun<naturals>, 
 }
 --- step exp count --->
 {
@@ -2082,7 +2082,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 1, 2, 1, 0, continuation, 1, continuation, 
-env: k: continuation, v: 1, count: 2, sum: 1, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 1, k: continuation, v: 0, count: 2, sum: 1, main: fun<main>, naturals: fun<naturals>, 
 }
 --- handle value 2 with (count == 5)<1>(2,) --->
 {
@@ -2101,7 +2101,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 1, 2, 1, 0, continuation, 1, continuation, 
-env: k: continuation, v: 1, count: 2, sum: 1, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 1, k: continuation, v: 0, count: 2, sum: 1, main: fun<main>, naturals: fun<naturals>, 
 }
 --- step exp 5 --->
 {
@@ -2120,7 +2120,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 1, 2, 1, 0, continuation, 1, continuation, 
-env: k: continuation, v: 1, count: 2, sum: 1, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 1, k: continuation, v: 0, count: 2, sum: 1, main: fun<main>, naturals: fun<naturals>, 
 }
 --- handle value 5 with (count == 5)<2>(2,5,) --->
 {
@@ -2139,7 +2139,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 1, 2, 1, 0, continuation, 1, continuation, 
-env: k: continuation, v: 1, count: 2, sum: 1, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 1, k: continuation, v: 0, count: 2, sum: 1, main: fun<main>, naturals: fun<naturals>, 
 }
 --- handle value false with if ((count == 5))
  ... 
@@ -2161,7 +2161,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 1, 2, 1, 0, continuation, 1, continuation, 
-env: k: continuation, v: 1, count: 2, sum: 1, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 1, k: continuation, v: 0, count: 2, sum: 1, main: fun<main>, naturals: fun<naturals>, 
 }
 --- step stmt {
  ... 
@@ -2183,7 +2183,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 1, 2, 1, 0, continuation, 1, continuation, 
-env: k: continuation, v: 1, count: 2, sum: 1, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 1, k: continuation, v: 0, count: 2, sum: 1, main: fun<main>, naturals: fun<naturals>, 
 }
 --- step stmt resume k; --->
 {
@@ -2202,7 +2202,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 1, 2, 1, 0, continuation, 1, continuation, 
-env: k: continuation, v: 1, count: 2, sum: 1, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 1, k: continuation, v: 0, count: 2, sum: 1, main: fun<main>, naturals: fun<naturals>, 
 }
 --- step exp k --->
 {
@@ -2221,7 +2221,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 1, 2, 1, 0, continuation, 1, continuation, 
-env: k: continuation, v: 1, count: 2, sum: 1, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 1, k: continuation, v: 0, count: 2, sum: 1, main: fun<main>, naturals: fun<naturals>, 
 }
 --- handle value continuation with resume k;<1>(continuation,) --->
 {
@@ -2898,7 +2898,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 1, 2, 2, 0, continuation, 1, continuation, 2, continuation, 
-env: k: continuation, v: 2, count: 2, sum: 1, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 2, k: continuation, v: 1, k: continuation, v: 0, count: 2, sum: 1, main: fun<main>, naturals: fun<naturals>, 
 }
 --- step stmt {
  ... 
@@ -2917,7 +2917,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 1, 2, 2, 0, continuation, 1, continuation, 2, continuation, 
-env: k: continuation, v: 2, count: 2, sum: 1, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 2, k: continuation, v: 1, k: continuation, v: 0, count: 2, sum: 1, main: fun<main>, naturals: fun<naturals>, 
 }
 --- step stmt {
  ... 
@@ -2936,7 +2936,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 1, 2, 2, 0, continuation, 1, continuation, 2, continuation, 
-env: k: continuation, v: 2, count: 2, sum: 1, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 2, k: continuation, v: 1, k: continuation, v: 0, count: 2, sum: 1, main: fun<main>, naturals: fun<naturals>, 
 }
 --- step stmt sum = (sum + v); ...  --->
 {
@@ -2952,7 +2952,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 1, 2, 2, 0, continuation, 1, continuation, 2, continuation, 
-env: k: continuation, v: 2, count: 2, sum: 1, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 2, k: continuation, v: 1, k: continuation, v: 0, count: 2, sum: 1, main: fun<main>, naturals: fun<naturals>, 
 }
 --- step stmt sum = (sum + v); --->
 {
@@ -2968,7 +2968,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 1, 2, 2, 0, continuation, 1, continuation, 2, continuation, 
-env: k: continuation, v: 2, count: 2, sum: 1, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 2, k: continuation, v: 1, k: continuation, v: 0, count: 2, sum: 1, main: fun<main>, naturals: fun<naturals>, 
 }
 --- step lvalue sum --->
 {
@@ -2984,7 +2984,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 1, 2, 2, 0, continuation, 1, continuation, 2, continuation, 
-env: k: continuation, v: 2, count: 2, sum: 1, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 2, k: continuation, v: 1, k: continuation, v: 0, count: 2, sum: 1, main: fun<main>, naturals: fun<naturals>, 
 }
 --- handle value ptr<2> with sum = (sum + v);<1>(ptr<2>,) --->
 {
@@ -3000,7 +3000,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 1, 2, 2, 0, continuation, 1, continuation, 2, continuation, 
-env: k: continuation, v: 2, count: 2, sum: 1, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 2, k: continuation, v: 1, k: continuation, v: 0, count: 2, sum: 1, main: fun<main>, naturals: fun<naturals>, 
 }
 --- step exp (sum + v) --->
 {
@@ -3016,7 +3016,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 1, 2, 2, 0, continuation, 1, continuation, 2, continuation, 
-env: k: continuation, v: 2, count: 2, sum: 1, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 2, k: continuation, v: 1, k: continuation, v: 0, count: 2, sum: 1, main: fun<main>, naturals: fun<naturals>, 
 }
 --- step exp sum --->
 {
@@ -3032,7 +3032,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 1, 2, 2, 0, continuation, 1, continuation, 2, continuation, 
-env: k: continuation, v: 2, count: 2, sum: 1, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 2, k: continuation, v: 1, k: continuation, v: 0, count: 2, sum: 1, main: fun<main>, naturals: fun<naturals>, 
 }
 --- handle value 1 with (sum + v)<1>(1,) --->
 {
@@ -3048,7 +3048,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 1, 2, 2, 0, continuation, 1, continuation, 2, continuation, 
-env: k: continuation, v: 2, count: 2, sum: 1, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 2, k: continuation, v: 1, k: continuation, v: 0, count: 2, sum: 1, main: fun<main>, naturals: fun<naturals>, 
 }
 --- step exp v --->
 {
@@ -3064,7 +3064,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 1, 2, 2, 0, continuation, 1, continuation, 2, continuation, 
-env: k: continuation, v: 2, count: 2, sum: 1, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 2, k: continuation, v: 1, k: continuation, v: 0, count: 2, sum: 1, main: fun<main>, naturals: fun<naturals>, 
 }
 --- handle value 2 with (sum + v)<2>(1,2,) --->
 {
@@ -3080,7 +3080,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 1, 2, 2, 0, continuation, 1, continuation, 2, continuation, 
-env: k: continuation, v: 2, count: 2, sum: 1, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 2, k: continuation, v: 1, k: continuation, v: 0, count: 2, sum: 1, main: fun<main>, naturals: fun<naturals>, 
 }
 --- handle value 3 with sum = (sum + v);<2>(ptr<2>,3,) --->
 {
@@ -3096,7 +3096,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 3, 2, 2, 0, continuation, 1, continuation, 2, continuation, 
-env: k: continuation, v: 2, count: 2, sum: 3, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 2, k: continuation, v: 1, k: continuation, v: 0, count: 2, sum: 3, main: fun<main>, naturals: fun<naturals>, 
 }
 --- step stmt count = (count + 1); ...  --->
 {
@@ -3115,7 +3115,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 3, 2, 2, 0, continuation, 1, continuation, 2, continuation, 
-env: k: continuation, v: 2, count: 2, sum: 3, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 2, k: continuation, v: 1, k: continuation, v: 0, count: 2, sum: 3, main: fun<main>, naturals: fun<naturals>, 
 }
 --- step stmt count = (count + 1); --->
 {
@@ -3134,7 +3134,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 3, 2, 2, 0, continuation, 1, continuation, 2, continuation, 
-env: k: continuation, v: 2, count: 2, sum: 3, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 2, k: continuation, v: 1, k: continuation, v: 0, count: 2, sum: 3, main: fun<main>, naturals: fun<naturals>, 
 }
 --- step lvalue count --->
 {
@@ -3153,7 +3153,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 3, 2, 2, 0, continuation, 1, continuation, 2, continuation, 
-env: k: continuation, v: 2, count: 2, sum: 3, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 2, k: continuation, v: 1, k: continuation, v: 0, count: 2, sum: 3, main: fun<main>, naturals: fun<naturals>, 
 }
 --- handle value ptr<3> with count = (count + 1);<1>(ptr<3>,) --->
 {
@@ -3172,7 +3172,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 3, 2, 2, 0, continuation, 1, continuation, 2, continuation, 
-env: k: continuation, v: 2, count: 2, sum: 3, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 2, k: continuation, v: 1, k: continuation, v: 0, count: 2, sum: 3, main: fun<main>, naturals: fun<naturals>, 
 }
 --- step exp (count + 1) --->
 {
@@ -3191,7 +3191,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 3, 2, 2, 0, continuation, 1, continuation, 2, continuation, 
-env: k: continuation, v: 2, count: 2, sum: 3, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 2, k: continuation, v: 1, k: continuation, v: 0, count: 2, sum: 3, main: fun<main>, naturals: fun<naturals>, 
 }
 --- step exp count --->
 {
@@ -3210,7 +3210,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 3, 2, 2, 0, continuation, 1, continuation, 2, continuation, 
-env: k: continuation, v: 2, count: 2, sum: 3, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 2, k: continuation, v: 1, k: continuation, v: 0, count: 2, sum: 3, main: fun<main>, naturals: fun<naturals>, 
 }
 --- handle value 2 with (count + 1)<1>(2,) --->
 {
@@ -3229,7 +3229,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 3, 2, 2, 0, continuation, 1, continuation, 2, continuation, 
-env: k: continuation, v: 2, count: 2, sum: 3, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 2, k: continuation, v: 1, k: continuation, v: 0, count: 2, sum: 3, main: fun<main>, naturals: fun<naturals>, 
 }
 --- step exp 1 --->
 {
@@ -3248,7 +3248,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 3, 2, 2, 0, continuation, 1, continuation, 2, continuation, 
-env: k: continuation, v: 2, count: 2, sum: 3, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 2, k: continuation, v: 1, k: continuation, v: 0, count: 2, sum: 3, main: fun<main>, naturals: fun<naturals>, 
 }
 --- handle value 1 with (count + 1)<2>(2,1,) --->
 {
@@ -3267,7 +3267,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 3, 2, 2, 0, continuation, 1, continuation, 2, continuation, 
-env: k: continuation, v: 2, count: 2, sum: 3, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 2, k: continuation, v: 1, k: continuation, v: 0, count: 2, sum: 3, main: fun<main>, naturals: fun<naturals>, 
 }
 --- handle value 3 with count = (count + 1);<2>(ptr<3>,3,) --->
 {
@@ -3286,7 +3286,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 3, 3, 2, 0, continuation, 1, continuation, 2, continuation, 
-env: k: continuation, v: 2, count: 3, sum: 3, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 2, k: continuation, v: 1, k: continuation, v: 0, count: 3, sum: 3, main: fun<main>, naturals: fun<naturals>, 
 }
 --- step stmt if ((count == 5))
  ... 
@@ -3308,7 +3308,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 3, 3, 2, 0, continuation, 1, continuation, 2, continuation, 
-env: k: continuation, v: 2, count: 3, sum: 3, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 2, k: continuation, v: 1, k: continuation, v: 0, count: 3, sum: 3, main: fun<main>, naturals: fun<naturals>, 
 }
 --- step exp (count == 5) --->
 {
@@ -3327,7 +3327,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 3, 3, 2, 0, continuation, 1, continuation, 2, continuation, 
-env: k: continuation, v: 2, count: 3, sum: 3, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 2, k: continuation, v: 1, k: continuation, v: 0, count: 3, sum: 3, main: fun<main>, naturals: fun<naturals>, 
 }
 --- step exp count --->
 {
@@ -3346,7 +3346,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 3, 3, 2, 0, continuation, 1, continuation, 2, continuation, 
-env: k: continuation, v: 2, count: 3, sum: 3, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 2, k: continuation, v: 1, k: continuation, v: 0, count: 3, sum: 3, main: fun<main>, naturals: fun<naturals>, 
 }
 --- handle value 3 with (count == 5)<1>(3,) --->
 {
@@ -3365,7 +3365,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 3, 3, 2, 0, continuation, 1, continuation, 2, continuation, 
-env: k: continuation, v: 2, count: 3, sum: 3, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 2, k: continuation, v: 1, k: continuation, v: 0, count: 3, sum: 3, main: fun<main>, naturals: fun<naturals>, 
 }
 --- step exp 5 --->
 {
@@ -3384,7 +3384,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 3, 3, 2, 0, continuation, 1, continuation, 2, continuation, 
-env: k: continuation, v: 2, count: 3, sum: 3, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 2, k: continuation, v: 1, k: continuation, v: 0, count: 3, sum: 3, main: fun<main>, naturals: fun<naturals>, 
 }
 --- handle value 5 with (count == 5)<2>(3,5,) --->
 {
@@ -3403,7 +3403,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 3, 3, 2, 0, continuation, 1, continuation, 2, continuation, 
-env: k: continuation, v: 2, count: 3, sum: 3, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 2, k: continuation, v: 1, k: continuation, v: 0, count: 3, sum: 3, main: fun<main>, naturals: fun<naturals>, 
 }
 --- handle value false with if ((count == 5))
  ... 
@@ -3425,7 +3425,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 3, 3, 2, 0, continuation, 1, continuation, 2, continuation, 
-env: k: continuation, v: 2, count: 3, sum: 3, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 2, k: continuation, v: 1, k: continuation, v: 0, count: 3, sum: 3, main: fun<main>, naturals: fun<naturals>, 
 }
 --- step stmt {
  ... 
@@ -3447,7 +3447,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 3, 3, 2, 0, continuation, 1, continuation, 2, continuation, 
-env: k: continuation, v: 2, count: 3, sum: 3, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 2, k: continuation, v: 1, k: continuation, v: 0, count: 3, sum: 3, main: fun<main>, naturals: fun<naturals>, 
 }
 --- step stmt resume k; --->
 {
@@ -3466,7 +3466,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 3, 3, 2, 0, continuation, 1, continuation, 2, continuation, 
-env: k: continuation, v: 2, count: 3, sum: 3, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 2, k: continuation, v: 1, k: continuation, v: 0, count: 3, sum: 3, main: fun<main>, naturals: fun<naturals>, 
 }
 --- step exp k --->
 {
@@ -3485,7 +3485,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 3, 3, 2, 0, continuation, 1, continuation, 2, continuation, 
-env: k: continuation, v: 2, count: 3, sum: 3, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 2, k: continuation, v: 1, k: continuation, v: 0, count: 3, sum: 3, main: fun<main>, naturals: fun<naturals>, 
 }
 --- handle value continuation with resume k;<1>(continuation,) --->
 {
@@ -4333,7 +4333,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 3, 3, 3, 0, continuation, 1, continuation, 2, continuation, 3, continuation, 
-env: k: continuation, v: 3, count: 3, sum: 3, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 3, k: continuation, v: 2, k: continuation, v: 1, k: continuation, v: 0, count: 3, sum: 3, main: fun<main>, naturals: fun<naturals>, 
 }
 --- step stmt {
  ... 
@@ -4352,7 +4352,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 3, 3, 3, 0, continuation, 1, continuation, 2, continuation, 3, continuation, 
-env: k: continuation, v: 3, count: 3, sum: 3, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 3, k: continuation, v: 2, k: continuation, v: 1, k: continuation, v: 0, count: 3, sum: 3, main: fun<main>, naturals: fun<naturals>, 
 }
 --- step stmt {
  ... 
@@ -4371,7 +4371,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 3, 3, 3, 0, continuation, 1, continuation, 2, continuation, 3, continuation, 
-env: k: continuation, v: 3, count: 3, sum: 3, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 3, k: continuation, v: 2, k: continuation, v: 1, k: continuation, v: 0, count: 3, sum: 3, main: fun<main>, naturals: fun<naturals>, 
 }
 --- step stmt sum = (sum + v); ...  --->
 {
@@ -4387,7 +4387,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 3, 3, 3, 0, continuation, 1, continuation, 2, continuation, 3, continuation, 
-env: k: continuation, v: 3, count: 3, sum: 3, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 3, k: continuation, v: 2, k: continuation, v: 1, k: continuation, v: 0, count: 3, sum: 3, main: fun<main>, naturals: fun<naturals>, 
 }
 --- step stmt sum = (sum + v); --->
 {
@@ -4403,7 +4403,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 3, 3, 3, 0, continuation, 1, continuation, 2, continuation, 3, continuation, 
-env: k: continuation, v: 3, count: 3, sum: 3, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 3, k: continuation, v: 2, k: continuation, v: 1, k: continuation, v: 0, count: 3, sum: 3, main: fun<main>, naturals: fun<naturals>, 
 }
 --- step lvalue sum --->
 {
@@ -4419,7 +4419,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 3, 3, 3, 0, continuation, 1, continuation, 2, continuation, 3, continuation, 
-env: k: continuation, v: 3, count: 3, sum: 3, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 3, k: continuation, v: 2, k: continuation, v: 1, k: continuation, v: 0, count: 3, sum: 3, main: fun<main>, naturals: fun<naturals>, 
 }
 --- handle value ptr<2> with sum = (sum + v);<1>(ptr<2>,) --->
 {
@@ -4435,7 +4435,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 3, 3, 3, 0, continuation, 1, continuation, 2, continuation, 3, continuation, 
-env: k: continuation, v: 3, count: 3, sum: 3, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 3, k: continuation, v: 2, k: continuation, v: 1, k: continuation, v: 0, count: 3, sum: 3, main: fun<main>, naturals: fun<naturals>, 
 }
 --- step exp (sum + v) --->
 {
@@ -4451,7 +4451,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 3, 3, 3, 0, continuation, 1, continuation, 2, continuation, 3, continuation, 
-env: k: continuation, v: 3, count: 3, sum: 3, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 3, k: continuation, v: 2, k: continuation, v: 1, k: continuation, v: 0, count: 3, sum: 3, main: fun<main>, naturals: fun<naturals>, 
 }
 --- step exp sum --->
 {
@@ -4467,7 +4467,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 3, 3, 3, 0, continuation, 1, continuation, 2, continuation, 3, continuation, 
-env: k: continuation, v: 3, count: 3, sum: 3, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 3, k: continuation, v: 2, k: continuation, v: 1, k: continuation, v: 0, count: 3, sum: 3, main: fun<main>, naturals: fun<naturals>, 
 }
 --- handle value 3 with (sum + v)<1>(3,) --->
 {
@@ -4483,7 +4483,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 3, 3, 3, 0, continuation, 1, continuation, 2, continuation, 3, continuation, 
-env: k: continuation, v: 3, count: 3, sum: 3, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 3, k: continuation, v: 2, k: continuation, v: 1, k: continuation, v: 0, count: 3, sum: 3, main: fun<main>, naturals: fun<naturals>, 
 }
 --- step exp v --->
 {
@@ -4499,7 +4499,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 3, 3, 3, 0, continuation, 1, continuation, 2, continuation, 3, continuation, 
-env: k: continuation, v: 3, count: 3, sum: 3, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 3, k: continuation, v: 2, k: continuation, v: 1, k: continuation, v: 0, count: 3, sum: 3, main: fun<main>, naturals: fun<naturals>, 
 }
 --- handle value 3 with (sum + v)<2>(3,3,) --->
 {
@@ -4515,7 +4515,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 3, 3, 3, 0, continuation, 1, continuation, 2, continuation, 3, continuation, 
-env: k: continuation, v: 3, count: 3, sum: 3, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 3, k: continuation, v: 2, k: continuation, v: 1, k: continuation, v: 0, count: 3, sum: 3, main: fun<main>, naturals: fun<naturals>, 
 }
 --- handle value 6 with sum = (sum + v);<2>(ptr<2>,6,) --->
 {
@@ -4531,7 +4531,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 6, 3, 3, 0, continuation, 1, continuation, 2, continuation, 3, continuation, 
-env: k: continuation, v: 3, count: 3, sum: 6, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 3, k: continuation, v: 2, k: continuation, v: 1, k: continuation, v: 0, count: 3, sum: 6, main: fun<main>, naturals: fun<naturals>, 
 }
 --- step stmt count = (count + 1); ...  --->
 {
@@ -4550,7 +4550,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 6, 3, 3, 0, continuation, 1, continuation, 2, continuation, 3, continuation, 
-env: k: continuation, v: 3, count: 3, sum: 6, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 3, k: continuation, v: 2, k: continuation, v: 1, k: continuation, v: 0, count: 3, sum: 6, main: fun<main>, naturals: fun<naturals>, 
 }
 --- step stmt count = (count + 1); --->
 {
@@ -4569,7 +4569,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 6, 3, 3, 0, continuation, 1, continuation, 2, continuation, 3, continuation, 
-env: k: continuation, v: 3, count: 3, sum: 6, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 3, k: continuation, v: 2, k: continuation, v: 1, k: continuation, v: 0, count: 3, sum: 6, main: fun<main>, naturals: fun<naturals>, 
 }
 --- step lvalue count --->
 {
@@ -4588,7 +4588,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 6, 3, 3, 0, continuation, 1, continuation, 2, continuation, 3, continuation, 
-env: k: continuation, v: 3, count: 3, sum: 6, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 3, k: continuation, v: 2, k: continuation, v: 1, k: continuation, v: 0, count: 3, sum: 6, main: fun<main>, naturals: fun<naturals>, 
 }
 --- handle value ptr<3> with count = (count + 1);<1>(ptr<3>,) --->
 {
@@ -4607,7 +4607,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 6, 3, 3, 0, continuation, 1, continuation, 2, continuation, 3, continuation, 
-env: k: continuation, v: 3, count: 3, sum: 6, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 3, k: continuation, v: 2, k: continuation, v: 1, k: continuation, v: 0, count: 3, sum: 6, main: fun<main>, naturals: fun<naturals>, 
 }
 --- step exp (count + 1) --->
 {
@@ -4626,7 +4626,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 6, 3, 3, 0, continuation, 1, continuation, 2, continuation, 3, continuation, 
-env: k: continuation, v: 3, count: 3, sum: 6, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 3, k: continuation, v: 2, k: continuation, v: 1, k: continuation, v: 0, count: 3, sum: 6, main: fun<main>, naturals: fun<naturals>, 
 }
 --- step exp count --->
 {
@@ -4645,7 +4645,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 6, 3, 3, 0, continuation, 1, continuation, 2, continuation, 3, continuation, 
-env: k: continuation, v: 3, count: 3, sum: 6, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 3, k: continuation, v: 2, k: continuation, v: 1, k: continuation, v: 0, count: 3, sum: 6, main: fun<main>, naturals: fun<naturals>, 
 }
 --- handle value 3 with (count + 1)<1>(3,) --->
 {
@@ -4664,7 +4664,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 6, 3, 3, 0, continuation, 1, continuation, 2, continuation, 3, continuation, 
-env: k: continuation, v: 3, count: 3, sum: 6, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 3, k: continuation, v: 2, k: continuation, v: 1, k: continuation, v: 0, count: 3, sum: 6, main: fun<main>, naturals: fun<naturals>, 
 }
 --- step exp 1 --->
 {
@@ -4683,7 +4683,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 6, 3, 3, 0, continuation, 1, continuation, 2, continuation, 3, continuation, 
-env: k: continuation, v: 3, count: 3, sum: 6, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 3, k: continuation, v: 2, k: continuation, v: 1, k: continuation, v: 0, count: 3, sum: 6, main: fun<main>, naturals: fun<naturals>, 
 }
 --- handle value 1 with (count + 1)<2>(3,1,) --->
 {
@@ -4702,7 +4702,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 6, 3, 3, 0, continuation, 1, continuation, 2, continuation, 3, continuation, 
-env: k: continuation, v: 3, count: 3, sum: 6, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 3, k: continuation, v: 2, k: continuation, v: 1, k: continuation, v: 0, count: 3, sum: 6, main: fun<main>, naturals: fun<naturals>, 
 }
 --- handle value 4 with count = (count + 1);<2>(ptr<3>,4,) --->
 {
@@ -4721,7 +4721,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 6, 4, 3, 0, continuation, 1, continuation, 2, continuation, 3, continuation, 
-env: k: continuation, v: 3, count: 4, sum: 6, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 3, k: continuation, v: 2, k: continuation, v: 1, k: continuation, v: 0, count: 4, sum: 6, main: fun<main>, naturals: fun<naturals>, 
 }
 --- step stmt if ((count == 5))
  ... 
@@ -4743,7 +4743,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 6, 4, 3, 0, continuation, 1, continuation, 2, continuation, 3, continuation, 
-env: k: continuation, v: 3, count: 4, sum: 6, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 3, k: continuation, v: 2, k: continuation, v: 1, k: continuation, v: 0, count: 4, sum: 6, main: fun<main>, naturals: fun<naturals>, 
 }
 --- step exp (count == 5) --->
 {
@@ -4762,7 +4762,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 6, 4, 3, 0, continuation, 1, continuation, 2, continuation, 3, continuation, 
-env: k: continuation, v: 3, count: 4, sum: 6, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 3, k: continuation, v: 2, k: continuation, v: 1, k: continuation, v: 0, count: 4, sum: 6, main: fun<main>, naturals: fun<naturals>, 
 }
 --- step exp count --->
 {
@@ -4781,7 +4781,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 6, 4, 3, 0, continuation, 1, continuation, 2, continuation, 3, continuation, 
-env: k: continuation, v: 3, count: 4, sum: 6, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 3, k: continuation, v: 2, k: continuation, v: 1, k: continuation, v: 0, count: 4, sum: 6, main: fun<main>, naturals: fun<naturals>, 
 }
 --- handle value 4 with (count == 5)<1>(4,) --->
 {
@@ -4800,7 +4800,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 6, 4, 3, 0, continuation, 1, continuation, 2, continuation, 3, continuation, 
-env: k: continuation, v: 3, count: 4, sum: 6, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 3, k: continuation, v: 2, k: continuation, v: 1, k: continuation, v: 0, count: 4, sum: 6, main: fun<main>, naturals: fun<naturals>, 
 }
 --- step exp 5 --->
 {
@@ -4819,7 +4819,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 6, 4, 3, 0, continuation, 1, continuation, 2, continuation, 3, continuation, 
-env: k: continuation, v: 3, count: 4, sum: 6, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 3, k: continuation, v: 2, k: continuation, v: 1, k: continuation, v: 0, count: 4, sum: 6, main: fun<main>, naturals: fun<naturals>, 
 }
 --- handle value 5 with (count == 5)<2>(4,5,) --->
 {
@@ -4838,7 +4838,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 6, 4, 3, 0, continuation, 1, continuation, 2, continuation, 3, continuation, 
-env: k: continuation, v: 3, count: 4, sum: 6, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 3, k: continuation, v: 2, k: continuation, v: 1, k: continuation, v: 0, count: 4, sum: 6, main: fun<main>, naturals: fun<naturals>, 
 }
 --- handle value false with if ((count == 5))
  ... 
@@ -4860,7 +4860,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 6, 4, 3, 0, continuation, 1, continuation, 2, continuation, 3, continuation, 
-env: k: continuation, v: 3, count: 4, sum: 6, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 3, k: continuation, v: 2, k: continuation, v: 1, k: continuation, v: 0, count: 4, sum: 6, main: fun<main>, naturals: fun<naturals>, 
 }
 --- step stmt {
  ... 
@@ -4882,7 +4882,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 6, 4, 3, 0, continuation, 1, continuation, 2, continuation, 3, continuation, 
-env: k: continuation, v: 3, count: 4, sum: 6, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 3, k: continuation, v: 2, k: continuation, v: 1, k: continuation, v: 0, count: 4, sum: 6, main: fun<main>, naturals: fun<naturals>, 
 }
 --- step stmt resume k; --->
 {
@@ -4901,7 +4901,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 6, 4, 3, 0, continuation, 1, continuation, 2, continuation, 3, continuation, 
-env: k: continuation, v: 3, count: 4, sum: 6, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 3, k: continuation, v: 2, k: continuation, v: 1, k: continuation, v: 0, count: 4, sum: 6, main: fun<main>, naturals: fun<naturals>, 
 }
 --- step exp k --->
 {
@@ -4920,7 +4920,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 6, 4, 3, 0, continuation, 1, continuation, 2, continuation, 3, continuation, 
-env: k: continuation, v: 3, count: 4, sum: 6, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 3, k: continuation, v: 2, k: continuation, v: 1, k: continuation, v: 0, count: 4, sum: 6, main: fun<main>, naturals: fun<naturals>, 
 }
 --- handle value continuation with resume k;<1>(continuation,) --->
 {
@@ -5939,7 +5939,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 6, 4, 4, 0, continuation, 1, continuation, 2, continuation, 3, continuation, 4, continuation, 
-env: k: continuation, v: 4, count: 4, sum: 6, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 4, k: continuation, v: 3, k: continuation, v: 2, k: continuation, v: 1, k: continuation, v: 0, count: 4, sum: 6, main: fun<main>, naturals: fun<naturals>, 
 }
 --- step stmt {
  ... 
@@ -5958,7 +5958,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 6, 4, 4, 0, continuation, 1, continuation, 2, continuation, 3, continuation, 4, continuation, 
-env: k: continuation, v: 4, count: 4, sum: 6, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 4, k: continuation, v: 3, k: continuation, v: 2, k: continuation, v: 1, k: continuation, v: 0, count: 4, sum: 6, main: fun<main>, naturals: fun<naturals>, 
 }
 --- step stmt {
  ... 
@@ -5977,7 +5977,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 6, 4, 4, 0, continuation, 1, continuation, 2, continuation, 3, continuation, 4, continuation, 
-env: k: continuation, v: 4, count: 4, sum: 6, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 4, k: continuation, v: 3, k: continuation, v: 2, k: continuation, v: 1, k: continuation, v: 0, count: 4, sum: 6, main: fun<main>, naturals: fun<naturals>, 
 }
 --- step stmt sum = (sum + v); ...  --->
 {
@@ -5993,7 +5993,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 6, 4, 4, 0, continuation, 1, continuation, 2, continuation, 3, continuation, 4, continuation, 
-env: k: continuation, v: 4, count: 4, sum: 6, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 4, k: continuation, v: 3, k: continuation, v: 2, k: continuation, v: 1, k: continuation, v: 0, count: 4, sum: 6, main: fun<main>, naturals: fun<naturals>, 
 }
 --- step stmt sum = (sum + v); --->
 {
@@ -6009,7 +6009,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 6, 4, 4, 0, continuation, 1, continuation, 2, continuation, 3, continuation, 4, continuation, 
-env: k: continuation, v: 4, count: 4, sum: 6, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 4, k: continuation, v: 3, k: continuation, v: 2, k: continuation, v: 1, k: continuation, v: 0, count: 4, sum: 6, main: fun<main>, naturals: fun<naturals>, 
 }
 --- step lvalue sum --->
 {
@@ -6025,7 +6025,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 6, 4, 4, 0, continuation, 1, continuation, 2, continuation, 3, continuation, 4, continuation, 
-env: k: continuation, v: 4, count: 4, sum: 6, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 4, k: continuation, v: 3, k: continuation, v: 2, k: continuation, v: 1, k: continuation, v: 0, count: 4, sum: 6, main: fun<main>, naturals: fun<naturals>, 
 }
 --- handle value ptr<2> with sum = (sum + v);<1>(ptr<2>,) --->
 {
@@ -6041,7 +6041,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 6, 4, 4, 0, continuation, 1, continuation, 2, continuation, 3, continuation, 4, continuation, 
-env: k: continuation, v: 4, count: 4, sum: 6, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 4, k: continuation, v: 3, k: continuation, v: 2, k: continuation, v: 1, k: continuation, v: 0, count: 4, sum: 6, main: fun<main>, naturals: fun<naturals>, 
 }
 --- step exp (sum + v) --->
 {
@@ -6057,7 +6057,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 6, 4, 4, 0, continuation, 1, continuation, 2, continuation, 3, continuation, 4, continuation, 
-env: k: continuation, v: 4, count: 4, sum: 6, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 4, k: continuation, v: 3, k: continuation, v: 2, k: continuation, v: 1, k: continuation, v: 0, count: 4, sum: 6, main: fun<main>, naturals: fun<naturals>, 
 }
 --- step exp sum --->
 {
@@ -6073,7 +6073,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 6, 4, 4, 0, continuation, 1, continuation, 2, continuation, 3, continuation, 4, continuation, 
-env: k: continuation, v: 4, count: 4, sum: 6, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 4, k: continuation, v: 3, k: continuation, v: 2, k: continuation, v: 1, k: continuation, v: 0, count: 4, sum: 6, main: fun<main>, naturals: fun<naturals>, 
 }
 --- handle value 6 with (sum + v)<1>(6,) --->
 {
@@ -6089,7 +6089,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 6, 4, 4, 0, continuation, 1, continuation, 2, continuation, 3, continuation, 4, continuation, 
-env: k: continuation, v: 4, count: 4, sum: 6, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 4, k: continuation, v: 3, k: continuation, v: 2, k: continuation, v: 1, k: continuation, v: 0, count: 4, sum: 6, main: fun<main>, naturals: fun<naturals>, 
 }
 --- step exp v --->
 {
@@ -6105,7 +6105,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 6, 4, 4, 0, continuation, 1, continuation, 2, continuation, 3, continuation, 4, continuation, 
-env: k: continuation, v: 4, count: 4, sum: 6, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 4, k: continuation, v: 3, k: continuation, v: 2, k: continuation, v: 1, k: continuation, v: 0, count: 4, sum: 6, main: fun<main>, naturals: fun<naturals>, 
 }
 --- handle value 4 with (sum + v)<2>(6,4,) --->
 {
@@ -6121,7 +6121,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 6, 4, 4, 0, continuation, 1, continuation, 2, continuation, 3, continuation, 4, continuation, 
-env: k: continuation, v: 4, count: 4, sum: 6, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 4, k: continuation, v: 3, k: continuation, v: 2, k: continuation, v: 1, k: continuation, v: 0, count: 4, sum: 6, main: fun<main>, naturals: fun<naturals>, 
 }
 --- handle value 10 with sum = (sum + v);<2>(ptr<2>,10,) --->
 {
@@ -6137,7 +6137,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 10, 4, 4, 0, continuation, 1, continuation, 2, continuation, 3, continuation, 4, continuation, 
-env: k: continuation, v: 4, count: 4, sum: 10, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 4, k: continuation, v: 3, k: continuation, v: 2, k: continuation, v: 1, k: continuation, v: 0, count: 4, sum: 10, main: fun<main>, naturals: fun<naturals>, 
 }
 --- step stmt count = (count + 1); ...  --->
 {
@@ -6156,7 +6156,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 10, 4, 4, 0, continuation, 1, continuation, 2, continuation, 3, continuation, 4, continuation, 
-env: k: continuation, v: 4, count: 4, sum: 10, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 4, k: continuation, v: 3, k: continuation, v: 2, k: continuation, v: 1, k: continuation, v: 0, count: 4, sum: 10, main: fun<main>, naturals: fun<naturals>, 
 }
 --- step stmt count = (count + 1); --->
 {
@@ -6175,7 +6175,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 10, 4, 4, 0, continuation, 1, continuation, 2, continuation, 3, continuation, 4, continuation, 
-env: k: continuation, v: 4, count: 4, sum: 10, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 4, k: continuation, v: 3, k: continuation, v: 2, k: continuation, v: 1, k: continuation, v: 0, count: 4, sum: 10, main: fun<main>, naturals: fun<naturals>, 
 }
 --- step lvalue count --->
 {
@@ -6194,7 +6194,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 10, 4, 4, 0, continuation, 1, continuation, 2, continuation, 3, continuation, 4, continuation, 
-env: k: continuation, v: 4, count: 4, sum: 10, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 4, k: continuation, v: 3, k: continuation, v: 2, k: continuation, v: 1, k: continuation, v: 0, count: 4, sum: 10, main: fun<main>, naturals: fun<naturals>, 
 }
 --- handle value ptr<3> with count = (count + 1);<1>(ptr<3>,) --->
 {
@@ -6213,7 +6213,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 10, 4, 4, 0, continuation, 1, continuation, 2, continuation, 3, continuation, 4, continuation, 
-env: k: continuation, v: 4, count: 4, sum: 10, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 4, k: continuation, v: 3, k: continuation, v: 2, k: continuation, v: 1, k: continuation, v: 0, count: 4, sum: 10, main: fun<main>, naturals: fun<naturals>, 
 }
 --- step exp (count + 1) --->
 {
@@ -6232,7 +6232,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 10, 4, 4, 0, continuation, 1, continuation, 2, continuation, 3, continuation, 4, continuation, 
-env: k: continuation, v: 4, count: 4, sum: 10, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 4, k: continuation, v: 3, k: continuation, v: 2, k: continuation, v: 1, k: continuation, v: 0, count: 4, sum: 10, main: fun<main>, naturals: fun<naturals>, 
 }
 --- step exp count --->
 {
@@ -6251,7 +6251,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 10, 4, 4, 0, continuation, 1, continuation, 2, continuation, 3, continuation, 4, continuation, 
-env: k: continuation, v: 4, count: 4, sum: 10, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 4, k: continuation, v: 3, k: continuation, v: 2, k: continuation, v: 1, k: continuation, v: 0, count: 4, sum: 10, main: fun<main>, naturals: fun<naturals>, 
 }
 --- handle value 4 with (count + 1)<1>(4,) --->
 {
@@ -6270,7 +6270,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 10, 4, 4, 0, continuation, 1, continuation, 2, continuation, 3, continuation, 4, continuation, 
-env: k: continuation, v: 4, count: 4, sum: 10, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 4, k: continuation, v: 3, k: continuation, v: 2, k: continuation, v: 1, k: continuation, v: 0, count: 4, sum: 10, main: fun<main>, naturals: fun<naturals>, 
 }
 --- step exp 1 --->
 {
@@ -6289,7 +6289,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 10, 4, 4, 0, continuation, 1, continuation, 2, continuation, 3, continuation, 4, continuation, 
-env: k: continuation, v: 4, count: 4, sum: 10, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 4, k: continuation, v: 3, k: continuation, v: 2, k: continuation, v: 1, k: continuation, v: 0, count: 4, sum: 10, main: fun<main>, naturals: fun<naturals>, 
 }
 --- handle value 1 with (count + 1)<2>(4,1,) --->
 {
@@ -6308,7 +6308,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 10, 4, 4, 0, continuation, 1, continuation, 2, continuation, 3, continuation, 4, continuation, 
-env: k: continuation, v: 4, count: 4, sum: 10, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 4, k: continuation, v: 3, k: continuation, v: 2, k: continuation, v: 1, k: continuation, v: 0, count: 4, sum: 10, main: fun<main>, naturals: fun<naturals>, 
 }
 --- handle value 5 with count = (count + 1);<2>(ptr<3>,5,) --->
 {
@@ -6327,7 +6327,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 10, 5, 4, 0, continuation, 1, continuation, 2, continuation, 3, continuation, 4, continuation, 
-env: k: continuation, v: 4, count: 5, sum: 10, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 4, k: continuation, v: 3, k: continuation, v: 2, k: continuation, v: 1, k: continuation, v: 0, count: 5, sum: 10, main: fun<main>, naturals: fun<naturals>, 
 }
 --- step stmt if ((count == 5))
  ... 
@@ -6349,7 +6349,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 10, 5, 4, 0, continuation, 1, continuation, 2, continuation, 3, continuation, 4, continuation, 
-env: k: continuation, v: 4, count: 5, sum: 10, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 4, k: continuation, v: 3, k: continuation, v: 2, k: continuation, v: 1, k: continuation, v: 0, count: 5, sum: 10, main: fun<main>, naturals: fun<naturals>, 
 }
 --- step exp (count == 5) --->
 {
@@ -6368,7 +6368,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 10, 5, 4, 0, continuation, 1, continuation, 2, continuation, 3, continuation, 4, continuation, 
-env: k: continuation, v: 4, count: 5, sum: 10, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 4, k: continuation, v: 3, k: continuation, v: 2, k: continuation, v: 1, k: continuation, v: 0, count: 5, sum: 10, main: fun<main>, naturals: fun<naturals>, 
 }
 --- step exp count --->
 {
@@ -6387,7 +6387,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 10, 5, 4, 0, continuation, 1, continuation, 2, continuation, 3, continuation, 4, continuation, 
-env: k: continuation, v: 4, count: 5, sum: 10, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 4, k: continuation, v: 3, k: continuation, v: 2, k: continuation, v: 1, k: continuation, v: 0, count: 5, sum: 10, main: fun<main>, naturals: fun<naturals>, 
 }
 --- handle value 5 with (count == 5)<1>(5,) --->
 {
@@ -6406,7 +6406,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 10, 5, 4, 0, continuation, 1, continuation, 2, continuation, 3, continuation, 4, continuation, 
-env: k: continuation, v: 4, count: 5, sum: 10, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 4, k: continuation, v: 3, k: continuation, v: 2, k: continuation, v: 1, k: continuation, v: 0, count: 5, sum: 10, main: fun<main>, naturals: fun<naturals>, 
 }
 --- step exp 5 --->
 {
@@ -6425,7 +6425,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 10, 5, 4, 0, continuation, 1, continuation, 2, continuation, 3, continuation, 4, continuation, 
-env: k: continuation, v: 4, count: 5, sum: 10, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 4, k: continuation, v: 3, k: continuation, v: 2, k: continuation, v: 1, k: continuation, v: 0, count: 5, sum: 10, main: fun<main>, naturals: fun<naturals>, 
 }
 --- handle value 5 with (count == 5)<2>(5,5,) --->
 {
@@ -6444,7 +6444,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 10, 5, 4, 0, continuation, 1, continuation, 2, continuation, 3, continuation, 4, continuation, 
-env: k: continuation, v: 4, count: 5, sum: 10, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 4, k: continuation, v: 3, k: continuation, v: 2, k: continuation, v: 1, k: continuation, v: 0, count: 5, sum: 10, main: fun<main>, naturals: fun<naturals>, 
 }
 --- handle value true with if ((count == 5))
  ... 
@@ -6466,7 +6466,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 10, 5, 4, 0, continuation, 1, continuation, 2, continuation, 3, continuation, 4, continuation, 
-env: k: continuation, v: 4, count: 5, sum: 10, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 4, k: continuation, v: 3, k: continuation, v: 2, k: continuation, v: 1, k: continuation, v: 0, count: 5, sum: 10, main: fun<main>, naturals: fun<naturals>, 
 }
 --- step stmt {
  ... 
@@ -6488,7 +6488,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 10, 5, 4, 0, continuation, 1, continuation, 2, continuation, 3, continuation, 4, continuation, 
-env: k: continuation, v: 4, count: 5, sum: 10, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 4, k: continuation, v: 3, k: continuation, v: 2, k: continuation, v: 1, k: continuation, v: 0, count: 5, sum: 10, main: fun<main>, naturals: fun<naturals>, 
 }
 --- step stmt return (sum - 10); --->
 {
@@ -6507,7 +6507,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 10, 5, 4, 0, continuation, 1, continuation, 2, continuation, 3, continuation, 4, continuation, 
-env: k: continuation, v: 4, count: 5, sum: 10, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 4, k: continuation, v: 3, k: continuation, v: 2, k: continuation, v: 1, k: continuation, v: 0, count: 5, sum: 10, main: fun<main>, naturals: fun<naturals>, 
 }
 --- step exp (sum - 10) --->
 {
@@ -6526,7 +6526,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 10, 5, 4, 0, continuation, 1, continuation, 2, continuation, 3, continuation, 4, continuation, 
-env: k: continuation, v: 4, count: 5, sum: 10, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 4, k: continuation, v: 3, k: continuation, v: 2, k: continuation, v: 1, k: continuation, v: 0, count: 5, sum: 10, main: fun<main>, naturals: fun<naturals>, 
 }
 --- step exp sum --->
 {
@@ -6545,7 +6545,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 10, 5, 4, 0, continuation, 1, continuation, 2, continuation, 3, continuation, 4, continuation, 
-env: k: continuation, v: 4, count: 5, sum: 10, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 4, k: continuation, v: 3, k: continuation, v: 2, k: continuation, v: 1, k: continuation, v: 0, count: 5, sum: 10, main: fun<main>, naturals: fun<naturals>, 
 }
 --- handle value 10 with (sum - 10)<1>(10,) --->
 {
@@ -6564,7 +6564,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 10, 5, 4, 0, continuation, 1, continuation, 2, continuation, 3, continuation, 4, continuation, 
-env: k: continuation, v: 4, count: 5, sum: 10, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 4, k: continuation, v: 3, k: continuation, v: 2, k: continuation, v: 1, k: continuation, v: 0, count: 5, sum: 10, main: fun<main>, naturals: fun<naturals>, 
 }
 --- step exp 10 --->
 {
@@ -6583,7 +6583,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 10, 5, 4, 0, continuation, 1, continuation, 2, continuation, 3, continuation, 4, continuation, 
-env: k: continuation, v: 4, count: 5, sum: 10, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 4, k: continuation, v: 3, k: continuation, v: 2, k: continuation, v: 1, k: continuation, v: 0, count: 5, sum: 10, main: fun<main>, naturals: fun<naturals>, 
 }
 --- handle value 10 with (sum - 10)<2>(10,10,) --->
 {
@@ -6602,7 +6602,7 @@ with (v, k)
  ... 
 <0>} :: top{}
 heap: fun<naturals>, fun<main>, 10, 5, 4, 0, continuation, 1, continuation, 2, continuation, 3, continuation, 4, continuation, 
-env: k: continuation, v: 4, count: 5, sum: 10, main: fun<main>, naturals: fun<naturals>, 
+env: k: continuation, v: 4, k: continuation, v: 3, k: continuation, v: 2, k: continuation, v: 1, k: continuation, v: 0, count: 5, sum: 10, main: fun<main>, naturals: fun<naturals>, 
 }
 --- handle value 0 with return (sum - 10);<1>(0,) --->
 {

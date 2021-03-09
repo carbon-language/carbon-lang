@@ -1434,25 +1434,29 @@ void HandleValue() {
           Stack<Frame*> yielded = state->stack;
 
           // Roll back to the nearest delimit
-          Stack<Frame*> new_stack = yielded;
+          Stack<Frame*> new_stack = state->stack;
           Statement* delimit;
           while (!new_stack.IsEmpty()) {
             Stack<Action*> todo = new_stack.Top()->todo;
+            Stack<Scope*> scopes = new_stack.Top()->scopes;
             while (!todo.IsEmpty()) {
               if (IsDelimitAction(todo.Top())) {
                 delimit = todo.Top()->u.stmt;
-                Frame* new_frame = new Frame(new_stack.Top()->name,
-                                             new_stack.Top()->scopes, todo);
+                Frame* new_frame =
+                    new Frame(new_stack.Top()->name, scopes, todo);
                 new_stack.Pop();
                 new_stack.Push(new_frame);
                 state->stack = new_stack;
                 goto handler;
               } else {
+                if (IsBlockAct(todo.Top())) {
+                  scopes.Pop();
+                }
                 todo.Pop();
               }
-            }
+            }  // while (!todo.IsEmpty())
             new_stack.Pop();
-          }
+          }  // while (!new_stack.IsEmpty())
           std::cerr << "yield without an enclosing delimiter" << std::endl;
           exit(-1);
         handler : {
