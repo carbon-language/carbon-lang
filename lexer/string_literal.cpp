@@ -4,6 +4,7 @@
 
 #include "lexer/string_literal.h"
 
+#include "lexer/character_set.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/ConvertUTF.h"
@@ -70,16 +71,6 @@ struct MismatchedIndentInString : SimpleDiagnostic<MismatchedIndentInString> {
       "Indentation does not match that of the closing \"\"\" in multi-line "
       "string literal.";
 };
-
-// TODO(zygoloid): Update this to match whatever we decide qualifies as
-// acceptable whitespace.
-static bool isSpace(char c) { return c == ' ' || c == '\n' || c == '\t'; }
-
-static constexpr llvm::StringLiteral HorizontalWhitespace = " \t";
-
-static bool isUpperHexDigit(char c) {
-  return ('0' <= c && c <= '9') || ('A' <= c && c <= 'F');
-}
 
 // Find and return the opening characters of a multi-line string literal,
 // after any '#'s, including the file type indicator and following newline.
@@ -166,7 +157,7 @@ static auto ComputeIndentOfFinalLine(llvm::StringRef text) -> llvm::StringRef {
       int indent_start = i + 1;
       return text.substr(indent_start, indent_end - indent_start);
     }
-    if (!isSpace(text[i])) {
+    if (!IsSpace(text[i])) {
       indent_end = i;
     }
   }
@@ -264,14 +255,14 @@ static auto ExpandAndConsumeEscapeSequence(DiagnosticEmitter& emitter,
       return true;
     case '0':
       result += '\0';
-      if (!content.empty() && llvm::isDigit(content.front())) {
+      if (!content.empty() && IsDecimalDigit(content.front())) {
         emitter.EmitError<DecimalEscapeSequence>();
         return false;
       }
       return true;
     case 'x':
-      if (content.size() >= 2 && isUpperHexDigit(content[0]) &&
-          isUpperHexDigit(content[1])) {
+      if (content.size() >= 2 && IsUpperHexDigit(content[0]) &&
+          IsUpperHexDigit(content[1])) {
         result +=
             static_cast<char>(llvm::hexFromNibbles(content[0], content[1]));
         content = content.drop_front(2);
@@ -282,7 +273,7 @@ static auto ExpandAndConsumeEscapeSequence(DiagnosticEmitter& emitter,
     case 'u': {
       llvm::StringRef remaining = content;
       if (remaining.consume_front("{")) {
-        llvm::StringRef digits = remaining.take_while(isUpperHexDigit);
+        llvm::StringRef digits = remaining.take_while(IsUpperHexDigit);
         remaining = remaining.drop_front(digits.size());
         if (!digits.empty() && remaining.consume_front("}")) {
           if (!ExpandUnicodeEscapeSequence(emitter, digits, result)) {
@@ -326,7 +317,7 @@ static auto ExpandEscapeSequencesAndRemoveIndent(DiagnosticEmitter& emitter,
     // whitespace) is required to start with the string's indent. For error
     // recovery, remove all leading whitespace if the indent doesn't match.
     if (!contents.consume_front(indent)) {
-      contents = contents.ltrim(HorizontalWhitespace);
+      contents = contents.drop_while(IsHorizontalWhitespace);
       if (!contents.startswith("\n")) {
         emitter.EmitError<MismatchedIndentInString>();
         has_errors = true;
@@ -347,7 +338,7 @@ static auto ExpandEscapeSequencesAndRemoveIndent(DiagnosticEmitter& emitter,
         // Trailing whitespace before a newline doesn't contribute to the string
         // literal value.
         while (!result.empty() && result.back() != '\n' &&
-               isSpace(result.back())) {
+               IsSpace(result.back())) {
           result.pop_back();
         }
         result += '\n';
