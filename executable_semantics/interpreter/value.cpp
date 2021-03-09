@@ -117,6 +117,17 @@ auto MakeVarPatVal(std::string name, Value* type) -> Value* {
   return v;
 }
 
+auto MakeLambdaVal(Value* parameter, Statement* body,
+                   Dictionary<std::string, Address> env) -> Value* {
+  auto* v = new Value();
+  v->alive = true;
+  v->tag = ValKind::LambdaV;
+  v->u.lambda.parameter = parameter;
+  v->u.lambda.body = body;
+  v->u.lambda.environment = new Dictionary<std::string, Address>(env);
+  return v;
+}
+
 auto MakeVarTypeVal(std::string name) -> Value* {
   auto* v = new Value();
   v->alive = true;
@@ -311,7 +322,14 @@ void PrintValue(Value* val, std::ostream& out) {
     case ValKind::ChoiceTV:
       out << "choice " << *val->u.choice_type.name;
       break;
-  }
+    case ValKind::LambdaV:
+      out << "fn ";
+      PrintValue(val->u.lambda.parameter, out);
+      out << " {" << std::endl;
+      PrintStatement(val->u.lambda.body, 1);
+      out << "}" << std::endl;
+      break;
+  }  // switch (val->tag)
 }
 
 auto TypeEqual(Value* t1, Value* t2) -> bool {

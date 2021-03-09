@@ -6,6 +6,8 @@
 
 #include <iostream>
 
+#include "executable_semantics/ast/statement.h"
+
 namespace Carbon {
 
 auto MakeTypeType(int line_num) -> Expression* {
@@ -159,6 +161,17 @@ auto MakeIndex(int line_num, Expression* exp, Expression* i) -> Expression* {
   return e;
 }
 
+auto MakeLambda(int line_num, Expression* parameter, Expression* return_type,
+                Statement* body) -> Expression* {
+  auto* e = new Expression();
+  e->line_num = line_num;
+  e->tag = ExpressionKind::Lambda;
+  e->u.lambda.parameter = parameter;
+  e->u.lambda.return_type = return_type;
+  e->u.lambda.body = body;
+  return e;
+}
+
 static void PrintOp(Operator op) {
   switch (op) {
     case Operator::Neg:
@@ -278,7 +291,15 @@ void PrintExp(const Expression* e) {
       std::cout << " -> ";
       PrintExp(e->u.function_type.return_type);
       break;
-  }
+    case ExpressionKind::Lambda:
+      std::cout << "fn ";
+      PrintExp(e->u.lambda.parameter);
+      PrintExp(e->u.lambda.return_type);
+      std::cout << "{ ";
+      PrintStatement(e->u.lambda.body, -1);
+      std::cout << "}";
+      break;
+  }  // switch (e->tag)
 }
 
 }  // namespace Carbon

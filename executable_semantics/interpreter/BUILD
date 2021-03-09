@@ -25,7 +25,6 @@ cc_library(
         ":containers",
         "//executable_semantics:tracing_flag",
         "//executable_semantics/ast:declaration",
-        "//executable_semantics/ast:expression",
         "//executable_semantics/ast:function_definition",
         "//executable_semantics/ast:member",
         "//executable_semantics/ast:statement",

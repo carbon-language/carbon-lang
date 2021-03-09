@@ -381,6 +381,19 @@ auto TypeCheckExp(Expression* e, TypeEnv env, Env ct_env, Value* expected,
         }
       }
     }
+    case ExpressionKind::Lambda: {
+      auto param_res = TypeCheckExp(e->u.lambda.parameter, env, ct_env, nullptr,
+                                    TCContext::PatternContext);
+      auto return_type = ToType(
+          e->line_num,
+          InterpExp(/*param_res.ct_env*/ ct_env, e->u.lambda.return_type));
+      auto res = TypeCheckStmt(e->u.lambda.body, param_res.env,
+                               /*param_res.ct_env*/ ct_env, return_type);
+      auto return_t = ReifyType(return_type, e->line_num);
+      auto new_e =
+          MakeLambda(e->line_num, e->u.lambda.parameter, return_t, res.stmt);
+      return TCResult(new_e, MakeFunTypeVal(param_res.type, return_type), env);
+    }
     case ExpressionKind::IntT:
     case ExpressionKind::BoolT:
     case ExpressionKind::TypeT:

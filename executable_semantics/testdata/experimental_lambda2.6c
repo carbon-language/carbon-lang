@@ -1,0 +1,10 @@
+// Part of the Carbon Language project, under the Apache License v2.0 with LLVM
+// Exceptions. See /LICENSE for license information.
+// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+
+fn main() -> Int {
+  var auto: f = fn(Int: y) -> (fnty(Int) -> Int) {
+                    return fn (Int: x) -> Int { return y; };
+		};
+  return f(0)(42);
+}

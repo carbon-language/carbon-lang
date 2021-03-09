@@ -9,6 +9,7 @@
 #include <vector>
 
 #include "executable_semantics/ast/statement.h"
+#include "executable_semantics/interpreter/dictionary.h"
 
 namespace Carbon {
 
@@ -38,7 +39,8 @@ enum class ValKind {
   StructTV,
   ChoiceTV,
   VarPatV,
-  AltConsV
+  AltConsV,
+  LambdaV
 };
 
 struct Value {
@@ -98,6 +100,11 @@ struct Value {
       std::list<std::string*>* params;
       Value* type;
     } implicit;
+    struct {
+      Value* parameter;
+      Statement* body;
+      Dictionary<std::string, Address>* environment;
+    } lambda;
   } u;
 };
 
@@ -112,6 +119,8 @@ auto MakeAltVal(std::string alt_name, std::string choice_name, Value* arg)
 auto MakeAltCons(std::string alt_name, std::string choice_name) -> Value*;
 
 auto MakeVarPatVal(std::string name, Value* type) -> Value*;
+auto MakeLambdaVal(Value* parameter, Statement* body,
+                   Dictionary<std::string, Address> env) -> Value*;
 
 auto MakeVarTypeVal(std::string name) -> Value*;
 auto MakeIntTypeVal() -> Value*;

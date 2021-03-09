@@ -27,8 +27,8 @@ cc_library(
     deps = [
         "//executable_semantics:tracing_flag",
         "//executable_semantics/ast:declaration",
-        "//executable_semantics/ast:expression",
         "//executable_semantics/ast:field_list",
+        "//executable_semantics/ast:statement",
         "//executable_semantics/interpreter",
     ],
 )

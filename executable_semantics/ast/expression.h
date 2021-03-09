@@ -25,6 +25,7 @@ enum class ExpressionKind {
   Tuple,
   TypeT,
   Variable,
+  Lambda,
 };
 
 enum class Operator {
@@ -36,6 +37,8 @@ enum class Operator {
   Or,
   Sub,
 };
+
+struct Statement;
 
 struct Expression {
   int line_num;
@@ -82,6 +85,12 @@ struct Expression {
       Expression* return_type;
     } function_type;
 
+    struct {
+      Expression* parameter;
+      Expression* return_type;
+      Statement* body;
+    } lambda;
+
   } u;
 };
 
@@ -101,6 +110,8 @@ auto MakeTuple(int line_num,
                std::vector<std::pair<std::string, Expression*>>* args)
     -> Expression*;
 auto MakeIndex(int line_num, Expression* exp, Expression* i) -> Expression*;
+auto MakeLambda(int line_num, Expression* parameter, Expression* return_type,
+                Statement* body) -> Expression*;
 
 auto MakeTypeType(int line_num) -> Expression*;
 auto MakeIntType(int line_num) -> Expression*;

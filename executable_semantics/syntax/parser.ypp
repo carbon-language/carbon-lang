@@ -166,6 +166,8 @@ expression:
     { $$ = Carbon::MakeCall(yylineno, $1, $2); }
 | FNTY tuple return_type
     { $$ = Carbon::MakeFunType(yylineno, $2, $3); }
+| FN tuple return_type '{' statement_list '}'
+    { $$ = MakeLambda(yylineno, $2, $3, $5); }
 ;
 designator: '.' identifier { $$ = $2; }
 ;

@@ -1,0 +1,618 @@
+********** source program **********
+fn main () -> Int {
+var auto: f = fn (0 = Int: y)fn (0 = Int) -> Int{ return fn (0 = Int: x)Int{ return y;
+};
+};
+return f(0 = 0)(0 = 42);
+
+}
+********** type checking **********
+--- step exp Int --->
+--- step exp Int --->
+--- step exp Int --->
+--- step exp fn (0 = Int) -> Int --->
+--- step exp (0 = Int) --->
+--- step exp Int --->
+--- handle value Int with (0 = Int)<1>(Int,) --->
+--- handle value (0 = Int@0) with fn (0 = Int) -> Int<1>((0 = Int@0),) --->
+--- step exp Int --->
+--- handle value Int with fn (0 = Int) -> Int<2>((0 = Int@0),Int,) --->
+--- step exp Int --->
+--- step exp Int --->
+--- step exp auto --->
+
+********** type checking complete **********
+fn main () -> Int {
+var auto: f = fn (0 = Int: y)fn (0 = Int) -> Int{ return fn (0 = Int: x)Int{ return y;
+};
+};
+return f(0 = 0)(0 = 42);
+}
+********** starting execution **********
+********** initializing globals **********
+--- step exp () --->
+********** calling main function **********
+{
+stack: top{main()<-1>}
+heap: fun<main>, 
+env: main: fun<main>, 
+}
+--- step exp main() --->
+{
+stack: top{main<-1> :: main()<0>}
+heap: fun<main>, 
+env: main: fun<main>, 
+}
+--- step exp main --->
+{
+stack: top{fun<main><-1> :: main()<0>}
+heap: fun<main>, 
+env: main: fun<main>, 
+}
+--- handle value fun<main> with main()<1>(fun<main>,) --->
+{
+stack: top{()<-1> :: main()<1>(fun<main>,)}
+heap: fun<main>, 
+env: main: fun<main>, 
+}
+--- step exp () --->
+{
+stack: top{()<-1> :: main()<1>(fun<main>,)}
+heap: fun<main>, 
+env: main: fun<main>, 
+}
+--- handle value () with main()<2>(fun<main>,(),) --->
+pattern_match((), ())
+{
+stack: main{var auto: f = fn (0 = Int: y)fn (0 = Int) -> Int{ return fn (0 = Int: x)Int{ return y;
+};
+}; ... <-1>} :: top{}
+heap: fun<main>, 
+env: main: fun<main>, 
+}
+--- step stmt var auto: f = fn (0 = Int: y)fn (0 = Int) -> Int{ return fn (0 = Int: x)Int{ return y;
+};
+}; ...  --->
+{
+stack: main{var auto: f = fn (0 = Int: y)fn (0 = Int) -> Int{ return fn (0 = Int: x)Int{ return y;
+};
+};<-1> :: return f(0 = 0)(0 = 42);<-1>} :: top{}
+heap: fun<main>, 
+env: main: fun<main>, 
+}
+--- step stmt var auto: f = fn (0 = Int: y)fn (0 = Int) -> Int{ return fn (0 = Int: x)Int{ return y;
+};
+}; --->
+{
+stack: main{fn (0 = Int: y)fn (0 = Int) -> Int{ return fn (0 = Int: x)Int{ return y;
+};
+}<-1> :: var auto: f = fn (0 = Int: y)fn (0 = Int) -> Int{ return fn (0 = Int: x)Int{ return y;
+};
+};<0> :: return f(0 = 0)(0 = 42);<-1>} :: top{}
+heap: fun<main>, 
+env: main: fun<main>, 
+}
+--- step exp fn (0 = Int: y)fn (0 = Int) -> Int{ return fn (0 = Int: x)Int{ return y;
+};
+} --->
+{
+stack: main{(0 = Int: y)<-1> :: fn (0 = Int: y)fn (0 = Int) -> Int{ return fn (0 = Int: x)Int{ return y;
+};
+}<0> :: var auto: f = fn (0 = Int: y)fn (0 = Int) -> Int{ return fn (0 = Int: x)Int{ return y;
+};
+};<0> :: return f(0 = 0)(0 = 42);<-1>} :: top{}
+heap: fun<main>, 
+env: main: fun<main>, 
+}
+--- step exp (0 = Int: y) --->
+{
+stack: main{Int: y<-1> :: (0 = Int: y)<0> :: fn (0 = Int: y)fn (0 = Int) -> Int{ return fn (0 = Int: x)Int{ return y;
+};
+}<0> :: var auto: f = fn (0 = Int: y)fn (0 = Int) -> Int{ return fn (0 = Int: x)Int{ return y;
+};
+};<0> :: return f(0 = 0)(0 = 42);<-1>} :: top{}
+heap: fun<main>, 
+env: main: fun<main>, 
+}
+--- step exp Int: y --->
+{
+stack: main{Int<-1> :: Int: y<0> :: (0 = Int: y)<0> :: fn (0 = Int: y)fn (0 = Int) -> Int{ return fn (0 = Int: x)Int{ return y;
+};
+}<0> :: var auto: f = fn (0 = Int: y)fn (0 = Int) -> Int{ return fn (0 = Int: x)Int{ return y;
+};
+};<0> :: return f(0 = 0)(0 = 42);<-1>} :: top{}
+heap: fun<main>, 
+env: main: fun<main>, 
+}
+--- step exp Int --->
+{
+stack: main{Int<-1> :: Int: y<0> :: (0 = Int: y)<0> :: fn (0 = Int: y)fn (0 = Int) -> Int{ return fn (0 = Int: x)Int{ return y;
+};
+}<0> :: var auto: f = fn (0 = Int: y)fn (0 = Int) -> Int{ return fn (0 = Int: x)Int{ return y;
+};
+};<0> :: return f(0 = 0)(0 = 42);<-1>} :: top{}
+heap: fun<main>, 
+env: main: fun<main>, 
+}
+--- handle value Int with Int: y<1>(Int,) --->
+{
+stack: main{Int: y<-1> :: (0 = Int: y)<0> :: fn (0 = Int: y)fn (0 = Int) -> Int{ return fn (0 = Int: x)Int{ return y;
+};
+}<0> :: var auto: f = fn (0 = Int: y)fn (0 = Int) -> Int{ return fn (0 = Int: x)Int{ return y;
+};
+};<0> :: return f(0 = 0)(0 = 42);<-1>} :: top{}
+heap: fun<main>, 
+env: main: fun<main>, 
+}
+--- handle value Int: y with (0 = Int: y)<1>(Int: y,) --->
+{
+stack: main{(0 = Int: y@1)<-1> :: fn (0 = Int: y)fn (0 = Int) -> Int{ return fn (0 = Int: x)Int{ return y;
+};
+}<0> :: var auto: f = fn (0 = Int: y)fn (0 = Int) -> Int{ return fn (0 = Int: x)Int{ return y;
+};
+};<0> :: return f(0 = 0)(0 = 42);<-1>} :: top{}
+heap: fun<main>, Int: y, 
+env: main: fun<main>, 
+}
+--- handle value (0 = Int: y@1) with fn (0 = Int: y)fn (0 = Int) -> Int{ return fn (0 = Int: x)Int{ return y;
+};
+}<1>((0 = Int: y@1),) --->
+{
+stack: main{fn (0 = Int: y@1) {
+return fn (0 = Int: x)Int{ return y;
+};}
+<-1> :: var auto: f = fn (0 = Int: y)fn (0 = Int) -> Int{ return fn (0 = Int: x)Int{ return y;
+};
+};<0> :: return f(0 = 0)(0 = 42);<-1>} :: top{}
+heap: fun<main>, Int: y, fun<main>, 
+env: main: fun<main>, 
+}
+--- handle value fn (0 = Int: y@1) {
+return fn (0 = Int: x)Int{ return y;
+};}
+ with var auto: f = fn (0 = Int: y)fn (0 = Int) -> Int{ return fn (0 = Int: x)Int{ return y;
+};
+};<1>(fn (0 = Int: y@1) {
+return fn (0 = Int: x)Int{ return y;
+};}
+,) --->
+{
+stack: main{auto: f<-1> :: var auto: f = fn (0 = Int: y)fn (0 = Int) -> Int{ return fn (0 = Int: x)Int{ return y;
+};
+};<1>(fn (0 = Int: y@1) {
+return fn (0 = Int: x)Int{ return y;
+};}
+,) :: return f(0 = 0)(0 = 42);<-1>} :: top{}
+heap: fun<main>, Int: y, fun<main>, 
+env: main: fun<main>, 
+}
+--- step exp auto: f --->
+{
+stack: main{auto<-1> :: auto: f<0> :: var auto: f = fn (0 = Int: y)fn (0 = Int) -> Int{ return fn (0 = Int: x)Int{ return y;
+};
+};<1>(fn (0 = Int: y@1) {
+return fn (0 = Int: x)Int{ return y;
+};}
+,) :: return f(0 = 0)(0 = 42);<-1>} :: top{}
+heap: fun<main>, Int: y, fun<main>, 
+env: main: fun<main>, 
+}
+--- step exp auto --->
+{
+stack: main{auto<-1> :: auto: f<0> :: var auto: f = fn (0 = Int: y)fn (0 = Int) -> Int{ return fn (0 = Int: x)Int{ return y;
+};
+};<1>(fn (0 = Int: y@1) {
+return fn (0 = Int: x)Int{ return y;
+};}
+,) :: return f(0 = 0)(0 = 42);<-1>} :: top{}
+heap: fun<main>, Int: y, fun<main>, 
+env: main: fun<main>, 
+}
+--- handle value auto with auto: f<1>(auto,) --->
+{
+stack: main{auto: f<-1> :: var auto: f = fn (0 = Int: y)fn (0 = Int) -> Int{ return fn (0 = Int: x)Int{ return y;
+};
+};<1>(fn (0 = Int: y@1) {
+return fn (0 = Int: x)Int{ return y;
+};}
+,) :: return f(0 = 0)(0 = 42);<-1>} :: top{}
+heap: fun<main>, Int: y, fun<main>, 
+env: main: fun<main>, 
+}
+--- handle value auto: f with var auto: f = fn (0 = Int: y)fn (0 = Int) -> Int{ return fn (0 = Int: x)Int{ return y;
+};
+};<2>(fn (0 = Int: y@1) {
+return fn (0 = Int: x)Int{ return y;
+};}
+,auto: f,) --->
+pattern_match(auto: f, fn (0 = Int: y@1) {
+return fn (0 = Int: x)Int{ return y;
+};}
+)
+{
+stack: main{return f(0 = 0)(0 = 42);<-1>} :: top{}
+heap: fun<main>, Int: y, fun<main>, fn (0 = Int: y@1) {
+return fn (0 = Int: x)Int{ return y;
+};}
+, 
+env: f: fn (0 = Int: y@1) {
+return fn (0 = Int: x)Int{ return y;
+};}
+, main: fun<main>, 
+}
+--- step stmt return f(0 = 0)(0 = 42); --->
+{
+stack: main{f(0 = 0)(0 = 42)<-1> :: return f(0 = 0)(0 = 42);<0>} :: top{}
+heap: fun<main>, Int: y, fun<main>, fn (0 = Int: y@1) {
+return fn (0 = Int: x)Int{ return y;
+};}
+, 
+env: f: fn (0 = Int: y@1) {
+return fn (0 = Int: x)Int{ return y;
+};}
+, main: fun<main>, 
+}
+--- step exp f(0 = 0)(0 = 42) --->
+{
+stack: main{f(0 = 0)<-1> :: f(0 = 0)(0 = 42)<0> :: return f(0 = 0)(0 = 42);<0>} :: top{}
+heap: fun<main>, Int: y, fun<main>, fn (0 = Int: y@1) {
+return fn (0 = Int: x)Int{ return y;
+};}
+, 
+env: f: fn (0 = Int: y@1) {
+return fn (0 = Int: x)Int{ return y;
+};}
+, main: fun<main>, 
+}
+--- step exp f(0 = 0) --->
+{
+stack: main{f<-1> :: f(0 = 0)<0> :: f(0 = 0)(0 = 42)<0> :: return f(0 = 0)(0 = 42);<0>} :: top{}
+heap: fun<main>, Int: y, fun<main>, fn (0 = Int: y@1) {
+return fn (0 = Int: x)Int{ return y;
+};}
+, 
+env: f: fn (0 = Int: y@1) {
+return fn (0 = Int: x)Int{ return y;
+};}
+, main: fun<main>, 
+}
+--- step exp f --->
+{
+stack: main{fn (0 = Int: y@1) {
+return fn (0 = Int: x)Int{ return y;
+};}
+<-1> :: f(0 = 0)<0> :: f(0 = 0)(0 = 42)<0> :: return f(0 = 0)(0 = 42);<0>} :: top{}
+heap: fun<main>, Int: y, fun<main>, fn (0 = Int: y@1) {
+return fn (0 = Int: x)Int{ return y;
+};}
+, 
+env: f: fn (0 = Int: y@1) {
+return fn (0 = Int: x)Int{ return y;
+};}
+, main: fun<main>, 
+}
+--- handle value fn (0 = Int: y@1) {
+return fn (0 = Int: x)Int{ return y;
+};}
+ with f(0 = 0)<1>(fn (0 = Int: y@1) {
+return fn (0 = Int: x)Int{ return y;
+};}
+,) --->
+{
+stack: main{(0 = 0)<-1> :: f(0 = 0)<1>(fn (0 = Int: y@1) {
+return fn (0 = Int: x)Int{ return y;
+};}
+,) :: f(0 = 0)(0 = 42)<0> :: return f(0 = 0)(0 = 42);<0>} :: top{}
+heap: fun<main>, Int: y, fun<main>, fn (0 = Int: y@1) {
+return fn (0 = Int: x)Int{ return y;
+};}
+, 
+env: f: fn (0 = Int: y@1) {
+return fn (0 = Int: x)Int{ return y;
+};}
+, main: fun<main>, 
+}
+--- step exp (0 = 0) --->
+{
+stack: main{0<-1> :: (0 = 0)<0> :: f(0 = 0)<1>(fn (0 = Int: y@1) {
+return fn (0 = Int: x)Int{ return y;
+};}
+,) :: f(0 = 0)(0 = 42)<0> :: return f(0 = 0)(0 = 42);<0>} :: top{}
+heap: fun<main>, Int: y, fun<main>, fn (0 = Int: y@1) {
+return fn (0 = Int: x)Int{ return y;
+};}
+, 
+env: f: fn (0 = Int: y@1) {
+return fn (0 = Int: x)Int{ return y;
+};}
+, main: fun<main>, 
+}
+--- step exp 0 --->
+{
+stack: main{0<-1> :: (0 = 0)<0> :: f(0 = 0)<1>(fn (0 = Int: y@1) {
+return fn (0 = Int: x)Int{ return y;
+};}
+,) :: f(0 = 0)(0 = 42)<0> :: return f(0 = 0)(0 = 42);<0>} :: top{}
+heap: fun<main>, Int: y, fun<main>, fn (0 = Int: y@1) {
+return fn (0 = Int: x)Int{ return y;
+};}
+, 
+env: f: fn (0 = Int: y@1) {
+return fn (0 = Int: x)Int{ return y;
+};}
+, main: fun<main>, 
+}
+--- handle value 0 with (0 = 0)<1>(0,) --->
+{
+stack: main{(0 = 0@4)<-1> :: f(0 = 0)<1>(fn (0 = Int: y@1) {
+return fn (0 = Int: x)Int{ return y;
+};}
+,) :: f(0 = 0)(0 = 42)<0> :: return f(0 = 0)(0 = 42);<0>} :: top{}
+heap: fun<main>, Int: y, fun<main>, fn (0 = Int: y@1) {
+return fn (0 = Int: x)Int{ return y;
+};}
+, 0, 
+env: f: fn (0 = Int: y@1) {
+return fn (0 = Int: x)Int{ return y;
+};}
+, main: fun<main>, 
+}
+--- handle value (0 = 0@4) with f(0 = 0)<2>(fn (0 = Int: y@1) {
+return fn (0 = Int: x)Int{ return y;
+};}
+,(0 = 0@4),) --->
+pattern_match((0 = Int: y@1), (0 = 0@4))
+pattern_match(Int: y, 0)
+{
+stack: fn{return fn (0 = Int: x)Int{ return y;
+};<-1>} :: main{f(0 = 0)(0 = 42)<0> :: return f(0 = 0)(0 = 42);<0>} :: top{}
+heap: fun<main>, Int: y, fun<main>, fn (0 = Int: y@1) {
+return fn (0 = Int: x)Int{ return y;
+};}
+, 0, 0, 
+env: y: 0, main: fun<main>, 
+}
+--- step stmt return fn (0 = Int: x)Int{ return y;
+}; --->
+{
+stack: fn{return fn (0 = Int: x)Int{ return y;
+};<-1>} :: main{f(0 = 0)(0 = 42)<0> :: return f(0 = 0)(0 = 42);<0>} :: top{}
+heap: fun<main>, Int: y, fun<main>, fn (0 = Int: y@1) {
+return fn (0 = Int: x)Int{ return y;
+};}
+, 0, 0, 
+env: y: 0, main: fun<main>, 
+}
+--- step stmt return fn (0 = Int: x)Int{ return y;
+}; --->
+{
+stack: fn{fn (0 = Int: x)Int{ return y;
+}<-1> :: return fn (0 = Int: x)Int{ return y;
+};<0>} :: main{f(0 = 0)(0 = 42)<0> :: return f(0 = 0)(0 = 42);<0>} :: top{}
+heap: fun<main>, Int: y, fun<main>, fn (0 = Int: y@1) {
+return fn (0 = Int: x)Int{ return y;
+};}
+, 0, 0, 
+env: y: 0, main: fun<main>, 
+}
+--- step exp fn (0 = Int: x)Int{ return y;
+} --->
+{
+stack: fn{(0 = Int: x)<-1> :: fn (0 = Int: x)Int{ return y;
+}<0> :: return fn (0 = Int: x)Int{ return y;
+};<0>} :: main{f(0 = 0)(0 = 42)<0> :: return f(0 = 0)(0 = 42);<0>} :: top{}
+heap: fun<main>, Int: y, fun<main>, fn (0 = Int: y@1) {
+return fn (0 = Int: x)Int{ return y;
+};}
+, 0, 0, 
+env: y: 0, main: fun<main>, 
+}
+--- step exp (0 = Int: x) --->
+{
+stack: fn{Int: x<-1> :: (0 = Int: x)<0> :: fn (0 = Int: x)Int{ return y;
+}<0> :: return fn (0 = Int: x)Int{ return y;
+};<0>} :: main{f(0 = 0)(0 = 42)<0> :: return f(0 = 0)(0 = 42);<0>} :: top{}
+heap: fun<main>, Int: y, fun<main>, fn (0 = Int: y@1) {
+return fn (0 = Int: x)Int{ return y;
+};}
+, 0, 0, 
+env: y: 0, main: fun<main>, 
+}
+--- step exp Int: x --->
+{
+stack: fn{Int<-1> :: Int: x<0> :: (0 = Int: x)<0> :: fn (0 = Int: x)Int{ return y;
+}<0> :: return fn (0 = Int: x)Int{ return y;
+};<0>} :: main{f(0 = 0)(0 = 42)<0> :: return f(0 = 0)(0 = 42);<0>} :: top{}
+heap: fun<main>, Int: y, fun<main>, fn (0 = Int: y@1) {
+return fn (0 = Int: x)Int{ return y;
+};}
+, 0, 0, 
+env: y: 0, main: fun<main>, 
+}
+--- step exp Int --->
+{
+stack: fn{Int<-1> :: Int: x<0> :: (0 = Int: x)<0> :: fn (0 = Int: x)Int{ return y;
+}<0> :: return fn (0 = Int: x)Int{ return y;
+};<0>} :: main{f(0 = 0)(0 = 42)<0> :: return f(0 = 0)(0 = 42);<0>} :: top{}
+heap: fun<main>, Int: y, fun<main>, fn (0 = Int: y@1) {
+return fn (0 = Int: x)Int{ return y;
+};}
+, 0, 0, 
+env: y: 0, main: fun<main>, 
+}
+--- handle value Int with Int: x<1>(Int,) --->
+{
+stack: fn{Int: x<-1> :: (0 = Int: x)<0> :: fn (0 = Int: x)Int{ return y;
+}<0> :: return fn (0 = Int: x)Int{ return y;
+};<0>} :: main{f(0 = 0)(0 = 42)<0> :: return f(0 = 0)(0 = 42);<0>} :: top{}
+heap: fun<main>, Int: y, fun<main>, fn (0 = Int: y@1) {
+return fn (0 = Int: x)Int{ return y;
+};}
+, 0, 0, 
+env: y: 0, main: fun<main>, 
+}
+--- handle value Int: x with (0 = Int: x)<1>(Int: x,) --->
+{
+stack: fn{(0 = Int: x@6)<-1> :: fn (0 = Int: x)Int{ return y;
+}<0> :: return fn (0 = Int: x)Int{ return y;
+};<0>} :: main{f(0 = 0)(0 = 42)<0> :: return f(0 = 0)(0 = 42);<0>} :: top{}
+heap: fun<main>, Int: y, fun<main>, fn (0 = Int: y@1) {
+return fn (0 = Int: x)Int{ return y;
+};}
+, 0, 0, Int: x, 
+env: y: 0, main: fun<main>, 
+}
+--- handle value (0 = Int: x@6) with fn (0 = Int: x)Int{ return y;
+}<1>((0 = Int: x@6),) --->
+{
+stack: fn{fn (0 = Int: x@6) {
+return y;}
+<-1> :: return fn (0 = Int: x)Int{ return y;
+};<0>} :: main{f(0 = 0)(0 = 42)<0> :: return f(0 = 0)(0 = 42);<0>} :: top{}
+heap: fun<main>, Int: y, fun<main>, fn (0 = Int: y@1) {
+return fn (0 = Int: x)Int{ return y;
+};}
+, 0, 0, Int: x, 0, fun<main>, 
+env: y: 0, main: fun<main>, 
+}
+--- handle value fn (0 = Int: x@6) {
+return y;}
+ with return fn (0 = Int: x)Int{ return y;
+};<1>(fn (0 = Int: x@6) {
+return y;}
+,) --->
+{
+stack: main{fn (0 = Int: x@6) {
+return y;}
+<-1> :: f(0 = 0)(0 = 42)<0> :: return f(0 = 0)(0 = 42);<0>} :: top{}
+heap: fun<main>, Int: y, fun<main>, fn (0 = Int: y@1) {
+return fn (0 = Int: x)Int{ return y;
+};}
+, 0, !!0, Int: x, 0, fun<main>, 
+env: f: fn (0 = Int: y@1) {
+return fn (0 = Int: x)Int{ return y;
+};}
+, main: fun<main>, 
+}
+--- handle value fn (0 = Int: x@6) {
+return y;}
+ with f(0 = 0)(0 = 42)<1>(fn (0 = Int: x@6) {
+return y;}
+,) --->
+{
+stack: main{(0 = 42)<-1> :: f(0 = 0)(0 = 42)<1>(fn (0 = Int: x@6) {
+return y;}
+,) :: return f(0 = 0)(0 = 42);<0>} :: top{}
+heap: fun<main>, Int: y, fun<main>, fn (0 = Int: y@1) {
+return fn (0 = Int: x)Int{ return y;
+};}
+, 0, !!0, Int: x, 0, fun<main>, 
+env: f: fn (0 = Int: y@1) {
+return fn (0 = Int: x)Int{ return y;
+};}
+, main: fun<main>, 
+}
+--- step exp (0 = 42) --->
+{
+stack: main{42<-1> :: (0 = 42)<0> :: f(0 = 0)(0 = 42)<1>(fn (0 = Int: x@6) {
+return y;}
+,) :: return f(0 = 0)(0 = 42);<0>} :: top{}
+heap: fun<main>, Int: y, fun<main>, fn (0 = Int: y@1) {
+return fn (0 = Int: x)Int{ return y;
+};}
+, 0, !!0, Int: x, 0, fun<main>, 
+env: f: fn (0 = Int: y@1) {
+return fn (0 = Int: x)Int{ return y;
+};}
+, main: fun<main>, 
+}
+--- step exp 42 --->
+{
+stack: main{42<-1> :: (0 = 42)<0> :: f(0 = 0)(0 = 42)<1>(fn (0 = Int: x@6) {
+return y;}
+,) :: return f(0 = 0)(0 = 42);<0>} :: top{}
+heap: fun<main>, Int: y, fun<main>, fn (0 = Int: y@1) {
+return fn (0 = Int: x)Int{ return y;
+};}
+, 0, !!0, Int: x, 0, fun<main>, 
+env: f: fn (0 = Int: y@1) {
+return fn (0 = Int: x)Int{ return y;
+};}
+, main: fun<main>, 
+}
+--- handle value 42 with (0 = 42)<1>(42,) --->
+{
+stack: main{(0 = 42@9)<-1> :: f(0 = 0)(0 = 42)<1>(fn (0 = Int: x@6) {
+return y;}
+,) :: return f(0 = 0)(0 = 42);<0>} :: top{}
+heap: fun<main>, Int: y, fun<main>, fn (0 = Int: y@1) {
+return fn (0 = Int: x)Int{ return y;
+};}
+, 0, !!0, Int: x, 0, fun<main>, 42, 
+env: f: fn (0 = Int: y@1) {
+return fn (0 = Int: x)Int{ return y;
+};}
+, main: fun<main>, 
+}
+--- handle value (0 = 42@9) with f(0 = 0)(0 = 42)<2>(fn (0 = Int: x@6) {
+return y;}
+,(0 = 42@9),) --->
+pattern_match((0 = Int: x@6), (0 = 42@9))
+pattern_match(Int: x, 42)
+{
+stack: fn{return y;<-1>} :: main{return f(0 = 0)(0 = 42);<0>} :: top{}
+heap: fun<main>, Int: y, fun<main>, fn (0 = Int: y@1) {
+return fn (0 = Int: x)Int{ return y;
+};}
+, 0, !!0, Int: x, 0, fun<main>, 42, 42, 
+env: x: 42, main: fun<main>, y: 0, 
+}
+--- step stmt return y; --->
+{
+stack: fn{return y;<-1>} :: main{return f(0 = 0)(0 = 42);<0>} :: top{}
+heap: fun<main>, Int: y, fun<main>, fn (0 = Int: y@1) {
+return fn (0 = Int: x)Int{ return y;
+};}
+, 0, !!0, Int: x, 0, fun<main>, 42, 42, 
+env: x: 42, main: fun<main>, y: 0, 
+}
+--- step stmt return y; --->
+{
+stack: fn{y<-1> :: return y;<0>} :: main{return f(0 = 0)(0 = 42);<0>} :: top{}
+heap: fun<main>, Int: y, fun<main>, fn (0 = Int: y@1) {
+return fn (0 = Int: x)Int{ return y;
+};}
+, 0, !!0, Int: x, 0, fun<main>, 42, 42, 
+env: x: 42, main: fun<main>, y: 0, 
+}
+--- step exp y --->
+{
+stack: fn{0<-1> :: return y;<0>} :: main{return f(0 = 0)(0 = 42);<0>} :: top{}
+heap: fun<main>, Int: y, fun<main>, fn (0 = Int: y@1) {
+return fn (0 = Int: x)Int{ return y;
+};}
+, 0, !!0, Int: x, 0, fun<main>, 42, 42, 
+env: x: 42, main: fun<main>, y: 0, 
+}
+--- handle value 0 with return y;<1>(0,) --->
+{
+stack: main{0<-1> :: return f(0 = 0)(0 = 42);<0>} :: top{}
+heap: fun<main>, Int: y, fun<main>, fn (0 = Int: y@1) {
+return fn (0 = Int: x)Int{ return y;
+};}
+, 0, !!0, Int: x, 0, fun<main>, 42, !!42, 
+env: f: fn (0 = Int: y@1) {
+return fn (0 = Int: x)Int{ return y;
+};}
+, main: fun<main>, 
+}
+--- handle value 0 with return f(0 = 0)(0 = 42);<1>(0,) --->
+{
+stack: top{0<-1>}
+heap: fun<main>, Int: y, fun<main>, !!fn (0 = Int: y@1) {
+return fn (0 = Int: x)Int{ return y;
+};}
+, 0, !!0, Int: x, 0, fun<main>, 42, !!42, 
+env: main: fun<main>, 
+}
+result: 0

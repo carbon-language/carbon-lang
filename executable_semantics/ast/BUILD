@@ -18,17 +18,18 @@ cc_library(
     ],
 )
 
-cc_library(
-    name = "expression",
-    srcs = ["expression.cpp"],
-    hdrs = ["expression.h"],
-)
+# cc_library(
+#     name = "expression",
+#     srcs = ["expression.cpp"],
+#     hdrs = ["expression.h"],
+#     deps = [":statement"]
+# )
 
 cc_library(
     name = "field_list",
     srcs = ["field_list.cpp"],
     hdrs = ["field_list.h"],
-    deps = [":expression"],
+    deps = [":statement"],
 )
 
 cc_library(
@@ -36,7 +37,6 @@ cc_library(
     srcs = ["function_definition.cpp"],
     hdrs = ["function_definition.h"],
     deps = [
-        ":expression",
         ":statement",
     ],
 )
@@ -45,14 +45,19 @@ cc_library(
     name = "member",
     srcs = ["member.cpp"],
     hdrs = ["member.h"],
-    deps = [":expression"],
+    deps = [":statement"],
 )
 
 cc_library(
     name = "statement",
-    srcs = ["statement.cpp"],
-    hdrs = ["statement.h"],
-    deps = [":expression"],
+    srcs = [
+        "expression.cpp",
+        "statement.cpp",
+    ],
+    hdrs = [
+        "expression.h",
+        "statement.h",
+    ],
 )
 
 cc_library(

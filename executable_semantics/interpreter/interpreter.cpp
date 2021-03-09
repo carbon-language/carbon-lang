@@ -103,6 +103,7 @@ auto CopyVal(Value* val, int line_num) -> Value* {
       }
       return MakeTupleTypeVal(new_fields);
     }
+    case ValKind::LambdaV:
     case ValKind::StructTV:
     case ValKind::ChoiceTV:
     case ValKind::VarPatV:
@@ -180,6 +181,15 @@ void PrintHeap(const std::vector<Value*>& heap, std::ostream& out) {
 auto CurrentEnv(State* state) -> Env {
   Frame* frame = state->stack.Top();
   return frame->scopes.Top()->env;
+}
+
+auto CopyEnv(Env env) -> Env {
+  Env copy;
+  for (auto [var, addr] : env) {
+    Address a = AllocateValue(CopyVal(state->heap[addr], 0));
+    copy.Set(var, a);
+  }
+  return copy;
 }
 
 void PrintState(std::ostream& out) {
@@ -325,6 +335,22 @@ void CallFunction(int line_num, std::vector<Value*> operas, State* state) {
       auto* scope = new Scope(*envWithMatches, params);
       auto* frame = new Frame(*operas[0]->u.fun.name, Stack(scope),
                               Stack(MakeStmtAct(operas[0]->u.fun.body)));
+      state->stack.Push(frame);
+      break;
+    }
+    case ValKind::LambdaV: {
+      Value* lambda = operas[0];
+      std::list<std::string> parameters;
+      std::optional<Env> envWithMatches =
+          PatternMatch(lambda->u.lambda.parameter, operas[1],
+                       *lambda->u.lambda.environment, &parameters, line_num);
+      if (!envWithMatches) {
+        std::cerr << "internal error" << std::endl;
+        exit(-1);
+      }
+      Scope* scope = new Scope(*envWithMatches, parameters);
+      Frame* frame = new Frame("fn", Stack(scope),
+                               Stack(MakeStmtAct(lambda->u.lambda.body)));
       state->stack.Push(frame);
       break;
     }
@@ -621,6 +647,7 @@ void StepLvalue() {
     case ExpressionKind::Boolean:
     case ExpressionKind::Call:
     case ExpressionKind::PrimitiveOp:
+    case ExpressionKind::Lambda:
     case ExpressionKind::IntT:
     case ExpressionKind::BoolT:
     case ExpressionKind::TypeT:
@@ -748,6 +775,11 @@ void StepExp() {
     }
     case ExpressionKind::FunctionT: {
       frame->todo.Push(MakeExpAct(exp->u.function_type.parameter));
+      act->pos++;
+      break;
+    }
+    case ExpressionKind::Lambda: {
+      frame->todo.Push(MakeExpAct(exp->u.lambda.parameter));
       act->pos++;
       break;
     }
@@ -1155,6 +1187,16 @@ void HandleValue() {
             frame->todo.Pop(1);
             frame->todo.Push(MakeExpAct(exp->u.function_type.return_type));
           }
+          break;
+        }
+        case ExpressionKind::Lambda: {
+          // The below use of CopyEnv to extend the lifetime of everything
+          // in the environment is not good. That should be
+          // replaced with some better approach. -Jeremy
+          Value* v = MakeLambdaVal(act->results[0], exp->u.lambda.body,
+                                   CopyEnv(CurrentEnv(state)));
+          frame->todo.Pop(2);
+          frame->todo.Push(MakeValAct(v));
           break;
         }
         case ExpressionKind::Variable:

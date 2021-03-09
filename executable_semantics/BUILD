@@ -29,6 +29,8 @@ EXAMPLES = [
     "break1",
     "choice1",
     "continue1",
+    "experimental_lambda1",
+    "experimental_lambda2",
     "fun_recur",
     "fun1",
     "fun2",
