@@ -86,9 +86,9 @@ cc_library(
     hdrs = ["tokenized_buffer.h"],
     deps = [
         ":character_set",
+        ":numeric_literal",
         ":string_literal",
         ":token_kind",
-        ":numeric_literal",
         "//diagnostics:diagnostic_emitter",
         "//source:source_buffer",
         "@llvm-project//llvm:Support",

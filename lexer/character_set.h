@@ -55,16 +55,12 @@ inline bool IsLower(char c) { return 'a' <= c && c <= 'z'; }
 // Is this character considered to be horizontal whitespace?
 //
 // Such characters can appear in the indentation of a line.
-inline bool IsHorizontalWhitespace(char c) {
-  return c == ' ' || c == '\t';
-}
+inline bool IsHorizontalWhitespace(char c) { return c == ' ' || c == '\t'; }
 
 // Is this character considered to be vertical whitespace?
 //
 // Such characters are considered to terminate lines.
-inline bool IsVerticalWhitespace(char c) {
-  return c == '\n';
-}
+inline bool IsVerticalWhitespace(char c) { return c == '\n'; }
 
 // Is this character considered to be whitespace?
 //
@@ -74,6 +70,6 @@ inline bool IsSpace(char c) {
   return IsHorizontalWhitespace(c) || IsVerticalWhitespace(c);
 }
 
-}
+}  // namespace Carbon
 
 #endif  // LEXER_CHARACTER_SET_H_

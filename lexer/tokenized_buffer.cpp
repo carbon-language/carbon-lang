@@ -107,8 +107,8 @@ class TokenizedBuffer::Lexer {
   auto HandleNewline() -> void {
     current_line_info->length = current_column;
 
-    current_line = buffer.AddLine(
-        {current_line_info->start + current_column + 1, 0, 0});
+    current_line =
+        buffer.AddLine({current_line_info->start + current_column + 1, 0, 0});
     current_line_info = &buffer.GetLineInfo(current_line);
     current_column = 0;
     set_indent = false;
@@ -390,8 +390,8 @@ class TokenizedBuffer::Lexer {
     }
 
     // Take the valid characters off the front of the source buffer.
-    llvm::StringRef identifier_text = source_text.take_while(
-        [](char c) { return IsAlnum(c) || c == '_'; });
+    llvm::StringRef identifier_text =
+        source_text.take_while([](char c) { return IsAlnum(c) || c == '_'; });
     assert(!identifier_text.empty() && "Must have at least one character!");
     int identifier_column = current_column;
     current_column += identifier_text.size();
