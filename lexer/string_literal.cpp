@@ -94,8 +94,8 @@ static auto TakeMultiLineStringLiteralPrefix(llvm::StringRef source_text)
 
 // If source_text begins with a string literal token, extract and return
 // information on that token.
-auto StringLiteralToken::Lex(llvm::StringRef source_text)
-    -> llvm::Optional<StringLiteralToken> {
+auto LexedStringLiteral::Lex(llvm::StringRef source_text)
+    -> llvm::Optional<LexedStringLiteral> {
   const char* begin = source_text.begin();
 
   int hash_level = 0;
@@ -144,7 +144,7 @@ auto StringLiteralToken::Lex(llvm::StringRef source_text)
     content_end = source_text.begin();
   }
 
-  return StringLiteralToken(
+  return LexedStringLiteral(
       llvm::StringRef(begin, source_text.begin() - begin),
       llvm::StringRef(content_begin, content_end - content_begin), hash_level,
       multi_line);
@@ -305,7 +305,7 @@ static auto ExpandEscapeSequencesAndRemoveIndent(DiagnosticEmitter& emitter,
                                                  llvm::StringRef contents,
                                                  int hash_level,
                                                  llvm::StringRef indent)
-    -> StringLiteralToken::ExpandedValue {
+    -> LexedStringLiteral::ExpandedValue {
   std::string result;
   result.reserve(contents.size());
   bool has_errors = false;
@@ -369,7 +369,7 @@ static auto ExpandEscapeSequencesAndRemoveIndent(DiagnosticEmitter& emitter,
   }
 }
 
-auto StringLiteralToken::ComputeValue(DiagnosticEmitter& emitter) const
+auto LexedStringLiteral::ComputeValue(DiagnosticEmitter& emitter) const
     -> ExpandedValue {
   auto indent = multi_line ? CheckIndent(emitter, text, content) : Indent();
   auto result = ExpandEscapeSequencesAndRemoveIndent(emitter, content,
