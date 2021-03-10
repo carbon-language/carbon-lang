@@ -107,16 +107,16 @@ auto MakeMatch(int line_num, Expression* exp,
 // Returns a delimit statement's AST node, given its source
 // location and constituent parts.
 //
-//      __delimit { 
+//      __delimit {
 //         <body>
 //      }
 //      __catch ( <yieldedValueName>, <continuationName> ) {
-//        <handler> 
+//        <handler>
 //      }
 //
-auto MakeDelimitStmt(int sourceLocation, Statement* body, std::string yieldedValueName,
-                     std::string continuationName, Statement* handler)
-    -> Statement*;
+auto MakeDelimitStmt(int sourceLocation, Statement* body,
+                     std::string yieldedValueName, std::string continuationName,
+                     Statement* handler) -> Statement*;
 // Returns an AST node for a yield stament given an expression
 // that produces the yielded value.
 auto MakeYieldStmt(int line_num, Expression*) -> Statement*;
