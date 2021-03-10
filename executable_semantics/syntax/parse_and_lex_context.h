@@ -21,7 +21,7 @@ class ParseAndLexContext {
 
   // Writes a syntax error diagnostic, containing message, for the input file at
   // the given line, to standard error.
-  auto PrintDiagnostic(const char* message, int lineNumber) -> void;
+  auto PrintDiagnostic(const std::string& message, int lineNumber) -> void;
 
  private:
   // A path to the file processed, relative to the current working directory
@@ -32,7 +32,10 @@ class ParseAndLexContext {
 }  // namespace Carbon
 
 // Gives flex the yylex prototype we want.
-#define YY_DECL int yylex(Carbon::ParseAndLexContext& context)
+#define YY_DECL                                        \
+  int yylex(yy::parser::semantic_type* yylval,         \
+            yy::parser::location_type* sourceLocation, \
+            Carbon::ParseAndLexContext& context)
 
 // Declares yylex for the parser's sake.
 YY_DECL;

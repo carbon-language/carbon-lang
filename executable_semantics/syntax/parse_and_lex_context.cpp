@@ -11,7 +11,7 @@
 
 // Writes a syntax error diagnostic, containing message, for the input file at
 // the given line, to standard error.
-auto Carbon::ParseAndLexContext::PrintDiagnostic(const char* message,
+auto Carbon::ParseAndLexContext::PrintDiagnostic(const std::string& message,
                                                  int line_num) -> void {
   std::cerr << inputFileName << ":" << line_num << ": " << message << std::endl;
   exit(-1);  // TODO: do we really want this here?  It makes the comment and the
