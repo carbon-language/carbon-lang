@@ -57,6 +57,8 @@ interpreter.
 [InterpProgram()](interpreter/interpreter.h) runs an abstract machine using the
 [interpreter](interpreter/), as described below.
 
+## Abstract Machine
+
 The abstract machine implements a state-transition system. The state is defined
 by the `State` structure, which includes three components: the procedure call
 stack, the heap, and the function definitions. The `Step` function updates the
@@ -114,20 +116,128 @@ Let `n3` be the sum of `n1` and `n2`.
 
     n3 :: ...
 
-The heap is an array of values. It is used not only for `malloc` but also to
-store anything that is mutable, including function parameters and local
-variables. A pointer is simply an index into the array. The `malloc` expression
-causes the heap to grow (at the end) and returns the index of the last slot. The
-dereference expression returns the nth value of the heap, as specified by the
-dereferenced pointer. The assignment operation stores the value of the
-right-hand side into the heap at the index specified by the left-hand side
+The heap is an array of values. It is used to store anything that is mutable,
+including function parameters and local variables. An address is simply an index
+into the array. The assignment operation stores the value of the right-hand side
+into the heap at the index specified by the address of the left-hand side
 lvalue.
 
-As you might expect, function calls push a new frame on the stack and the
-`return` statement pops a frame off the stack. The parameter passing semantics
-is call-by-value, so the machine applies `CopyVal` to the incoming arguments and
-the outgoing return value. Also, the machine is careful to kill the parameters
-and local variables when the function call is complete.
+Function calls push a new frame on the stack and the `return` statement pops a
+frame off the stack. The parameter passing semantics is call-by-value, so the
+machine applies `CopyVal` to the incoming arguments and the outgoing return
+value. Also, the machine kills the values stored in the parameters and local
+variables when the function call is complete.
+
+## Experimental: Delimited Continuations
+
+Delimited continuations provide a kind of resumable exception with first-class
+continuations. The point of experimenting with this feature is not to say that
+we want delimited continuations in Carbon, but this represents a place-holder
+for other powerful control-flow features that might eventually be in Carbon,
+such as coroutines, threads, exceptions, etc. As we refactor the executable
+semantics, having this feature in place will keep us honest and prevent us from
+accidentally simplifying the interpreter to the point where it can't handle
+features like this one.
+
+Instead of delimited continuations, we could have instead done regular
+continuations with callcc. However, there seems to be a consensus amongst the
+experts that delimited continuations are better than regular ones.
+
+So what are delimited continuations? Recall that a continuation is a
+representation of what happens next in a computation. In the abstract machine,
+the procedure call stack represents the current continuation. A delimited
+continuation is also about what happens next, but it doesn't go all the way to
+the end of the execution. Instead it represents what happens up until control
+reaches the nearest enclosing `__delimit` statement. A delimited continuation is
+created when a `__yield` statement is executed within the dynamic extent of a
+`__delimit`. The delimited continuation will included everything that comes
+after the `__yield` up until the end of the body of the `__delimit`. After the
+`__yield`, execution continues in the handler of the `__delimit`, which has two
+parameters. The first holds the integer that was yielded and the second holds
+the delimited continuation. Last but not least, the `__resume` statement
+transfers control to the delimited continuation. Once that continuation is
+finished, control transfers to the statement following the `__resume`.
+
+To make this all concrete, let's consider some examples. In the following, the
+body of the `__delimit` never performs a `__yield`, so once the body of the
+`__delimit` is finished, control transfers to the statement after the
+`__delimit`, which in this case is `return x`.
+
+```carbon
+fn main() -> Int {
+  var Int: x = 1;
+  __delimit {
+    x = 0;
+  } __catch (v, k) {
+    return 1;
+  }
+  return x;
+}
+```
+
+In the next example, the body of the `__delimit` immediately invokes `__yield`
+with the argument `0`. This transfers control to the handler (inside the
+`__catch`). The argument `0` is bound to the variable `v`, so this program
+returns `0`.
+
+```carbon
+fn main() -> Int {
+  __delimit {
+    __yield 0;
+    return 1;
+  } __catch (v, k) {
+    return v;
+  }
+}
+```
+
+The `__catch` clause also binds the delimited continuation to the second
+variable `k`, which can then be used in a `__resume` statement. In the following
+program, `x` starts at `0` and is incremented to `1` at the beginning of the
+body of the `__delimit`. The program then yields `3`, which is caught by the
+handler and added to `x`, so it contains `4`. The handler then resumes the
+continuation, so control transfers to the statement after the `__yield`. So we
+add `2` to `x` to make `6`, and then return `x - 6`, which is `0`.
+
+```carbon
+fn main() -> Int {
+  var Int: x = 0;
+  __delimit {
+    x = x + 1;
+    __yield 3;
+    x = x + 2;
+    return x - 6;
+  } __catch (v, k) {
+    x = x + v;
+    __resume k;
+    return 1;
+  }
+}
+```
+
+These three examples are just the tip of the iceberg regarding what can be done
+with delimited continuations. For example, a `__yield` can be separated from a
+`__delimit` by one or more function calls. Also, the delimited continuations are
+first-class in that they have a type, called `Snapshot`, and can be passed to
+functions, returned, and stored in data structures (such as tuples).
+
+However, most of the interesting examples in the literature also use lambda
+expressions, so those examples will come after an experimental lambda is added.
+Also, it is difficult to create good examples without some kind of global side
+effect, such as printing output or global variables. So we should think about
+adding experimental versions of one or both of those.
+
+Finally, the currently implementation is half-baked and not fully tested. In
+particular, the handling of variable scoping is most likely incorrect. Also,
+delimited continuations have historically appeared in expression-oriented
+languages, such as Lisp. The design above is trying to adapt to Carbon, which is
+a statement-oriented language. There are many questions in that context that
+need to be answered, such as how do delimited continuations interact with
+`return` statements. However, we don't want to go all the way down this rabbit
+hole right away. After all, we're not suggesting that delimited continuations
+should appear in Carbon!
+
+## Example Programs (Regression Tests)
 
 The [`testdata/`](testdata/) subdirectory includes some example programs with
 golden output.
