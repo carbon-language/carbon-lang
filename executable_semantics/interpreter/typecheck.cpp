@@ -620,6 +620,10 @@ auto StructDeclaration::Name() const -> std::string { return *definition.name; }
 
 auto ChoiceDeclaration::Name() const -> std::string { return name; }
 
+auto VariableDeclaration::Name() const -> std::string {
+  return definition.name;
+}
+
 auto StructDeclaration::TypeChecked(TypeEnv env, Env ct_env) const
     -> Declaration {
   auto fields = new std::list<Member*>();
@@ -640,6 +644,13 @@ auto FunctionDeclaration::TypeChecked(TypeEnv env, Env ct_env) const
 auto ChoiceDeclaration::TypeChecked(TypeEnv env, Env ct_env) const
     -> Declaration {
   return *this;  // TODO.
+}
+
+auto VariableDeclaration::TypeChecked(TypeEnv env, Env ct_env) const
+    -> Declaration {
+  // TODO: type check the initializer and check that the initializer
+  // has the right type. Add a test that fails type checking.
+  return *this;
 }
 
 auto TopLevel(std::list<Declaration>* fs) -> std::pair<TypeEnv, Env> {
@@ -685,6 +696,14 @@ auto ChoiceDeclaration::TopLevel(ExecutionEnvironment& tops) const -> void {
   Address a = AllocateValue(ct);
   tops.second.Set(Name(), a);  // Is this obsolete?
   tops.first.Set(Name(), ct);
+}
+
+// Associate the variable name with it's type in the top-level type
+// environment.
+auto VariableDeclaration::TopLevel(ExecutionEnvironment& tops) const -> void {
+  Value* type = ToType(definition.sourceLocation,
+                       InterpExp(tops.second, definition.type));
+  tops.first.Set(Name(), type);
 }
 
 }  // namespace Carbon

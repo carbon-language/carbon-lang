@@ -1,0 +1,19 @@
+// Part of the Carbon Language project, under the Apache License v2.0 with LLVM
+// Exceptions. See /LICENSE for license information.
+// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+
+var Int: flag = 0;
+
+fn flipFlag() -> () {
+  if (flag == 0) {
+    flag = 1;
+  } else {
+    flag = 0;
+  }
+}
+
+fn main() -> Int {
+  flag = 1;
+  flipFlag();
+  return flag;
+}

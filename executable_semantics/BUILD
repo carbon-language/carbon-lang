@@ -37,6 +37,8 @@ EXAMPLES = [
     "fun5",
     "fun6_fail_type",
     "funptr1",
+    "global_variable1",
+    "global_variable2",
     "if1",
     "if2",
     "if3",

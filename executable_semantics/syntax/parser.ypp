@@ -368,6 +368,11 @@ declaration:
       $$ = new Carbon::Declaration(
         Carbon::ChoiceDeclaration{yylineno, $2, std::list(*$4)});
     }
+| VAR expression ":" identifier "=" expression ";"
+    {
+      $$ = new Carbon::Declaration(
+        Carbon::VariableDeclaration{yylineno, $4, $2, $6});
+    }
 ;
 declaration_list:
   // Empty

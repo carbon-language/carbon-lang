@@ -1,0 +1,76 @@
+********** source program **********
+var Int : zero = 0
+fn main () -> Int {
+return zero;
+
+}
+********** type checking **********
+--- step exp Int --->
+--- step exp Int --->
+--- step exp Int --->
+
+********** type checking complete **********
+var Int : zero = 0
+fn main () -> Int {
+return zero;
+}
+********** starting execution **********
+********** initializing globals **********
+--- step exp 0 --->
+--- step exp () --->
+********** calling main function **********
+{
+stack: top{main()<-1>}
+heap: 0, fun<main>, 
+env: main: fun<main>, zero: 0, 
+}
+--- step exp main() --->
+{
+stack: top{main<-1> :: main()<0>}
+heap: 0, fun<main>, 
+env: main: fun<main>, zero: 0, 
+}
+--- step exp main --->
+{
+stack: top{fun<main><-1> :: main()<0>}
+heap: 0, fun<main>, 
+env: main: fun<main>, zero: 0, 
+}
+--- handle value fun<main> with main()<1>(fun<main>,) --->
+{
+stack: top{()<-1> :: main()<1>(fun<main>,)}
+heap: 0, fun<main>, 
+env: main: fun<main>, zero: 0, 
+}
+--- step exp () --->
+{
+stack: top{()<-1> :: main()<1>(fun<main>,)}
+heap: 0, fun<main>, 
+env: main: fun<main>, zero: 0, 
+}
+--- handle value () with main()<2>(fun<main>,(),) --->
+pattern_match((), ())
+{
+stack: main{return zero;<-1>} :: top{}
+heap: 0, fun<main>, 
+env: main: fun<main>, zero: 0, 
+}
+--- step stmt return zero; --->
+{
+stack: main{zero<-1> :: return zero;<0>} :: top{}
+heap: 0, fun<main>, 
+env: main: fun<main>, zero: 0, 
+}
+--- step exp zero --->
+{
+stack: main{0<-1> :: return zero;<0>} :: top{}
+heap: 0, fun<main>, 
+env: main: fun<main>, zero: 0, 
+}
+--- handle value 0 with return zero;<1>(0,) --->
+{
+stack: top{0<-1>}
+heap: 0, fun<main>, 
+env: main: fun<main>, zero: 0, 
+}
+result: 0

@@ -11,6 +11,7 @@
 #include "executable_semantics/ast/function_definition.h"
 #include "executable_semantics/ast/member.h"
 #include "executable_semantics/ast/struct_definition.h"
+#include "executable_semantics/ast/variable_definition.h"
 #include "executable_semantics/interpreter/dictionary.h"
 
 namespace Carbon {
@@ -122,6 +123,20 @@ struct ChoiceDeclaration {
   ChoiceDeclaration(int line_num, std::string name,
                     std::list<std::pair<std::string, Expression*>> alternatives)
       : line_num(line_num), name(name), alternatives(alternatives) {}
+
+  void Print() const;
+  auto Name() const -> std::string;
+  auto TypeChecked(TypeEnv env, Env ct_env) const -> Declaration;
+  void InitGlobals(Env& globals) const;
+  auto TopLevel(ExecutionEnvironment&) const -> void;
+};
+
+// Global variable definition implements the Declaration concept.
+struct VariableDeclaration {
+  VariableDefinition definition;
+  VariableDeclaration(int sourceLocation, std::string name, Expression* type,
+                      Expression* initializer)
+      : definition{sourceLocation, name, type, initializer} {}
 
   void Print() const;
   auto Name() const -> std::string;

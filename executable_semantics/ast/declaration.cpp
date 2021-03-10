@@ -28,4 +28,13 @@ void ChoiceDeclaration::Print() const {
   std::cout << "}" << std::endl;
 }
 
+// Print a global variable declaration to standard out.
+void VariableDeclaration::Print() const {
+  std::cout << "var ";
+  PrintExp(definition.type);
+  std::cout << " : " << definition.name << " = ";
+  PrintExp(definition.initializer);
+  std::cout << std::endl;
+}
+
 }  // namespace Carbon
