@@ -237,9 +237,10 @@ auto ValToPtr(Value* v, int line_num) -> Address {
   }
 }
 
-// If the value is a first-class continuation, return the continuation
-// represented as a stack of frames. Otherwise error.
-auto ToContinuation(Value* v, int line_num) -> Stack<Frame*> {
+// Returns *continuation represented as a stack of frames.
+//
+// - Precondition: continuation->tag == ValKind::ContinuationV.
+auto ToContinuation(Value* continuation, int sourceLocation) -> Stack<Frame*> {
   CheckAlive(v, line_num);
   switch (v->tag) {
     case ValKind::ContinuationV:

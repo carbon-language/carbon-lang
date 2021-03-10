@@ -104,12 +104,18 @@ auto MakeContinue(int line_num) -> Statement*;
 auto MakeMatch(int line_num, Expression* exp,
                std::list<std::pair<Expression*, Statement*>>* clauses)
     -> Statement*;
-// Returns an AST node for a delimit statement, given the source
-// line number, the body statement, the variable name for the yielded value,
-// the variable name for the captured continuation, and the handler
-// statement.
-auto MakeDelimitStmt(int line_num, Statement* body, std::string yield,
-                     std::string continuation, Statement* handler)
+// Returns a delimit statement's AST node, given its source
+// location and constituent parts.
+//
+//      __delimit { 
+//         <body>
+//      }
+//      __catch ( <yieldedValueName>, <continuationName> ) {
+//        <handler> 
+//      }
+//
+auto MakeDelimitStmt(int sourceLocation, Statement* body, std::string yieldedValueName,
+                     std::string continuationName, Statement* handler)
     -> Statement*;
 // Returns an AST node for a yield stament given an expression
 // that produces the yielded value.
