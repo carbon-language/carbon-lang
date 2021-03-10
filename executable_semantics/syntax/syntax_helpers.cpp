@@ -12,13 +12,6 @@
 
 namespace Carbon {
 
-const char* input_filename = nullptr;
-
-void PrintSyntaxError(char* error, int line_num) {
-  std::cerr << input_filename << ":" << line_num << ": " << error << std::endl;
-  exit(-1);
-}
-
 void ExecProgram(std::list<Declaration>* fs) {
   if (tracing_output) {
     std::cout << "********** source program **********" << std::endl;
