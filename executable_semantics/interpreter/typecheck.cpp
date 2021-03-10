@@ -646,10 +646,16 @@ auto ChoiceDeclaration::TypeChecked(TypeEnv env, Env ct_env) const
   return *this;  // TODO.
 }
 
+// Check that the type of the initializing expression matches
+// the declared type of the variable.
 auto VariableDeclaration::TypeChecked(TypeEnv env, Env ct_env) const
     -> Declaration {
-  // TODO: type check the initializer and check that the initializer
-  // has the right type. Add a test that fails type checking.
+  TCResult initResult = TypeCheckExp(definition.initializer, env, ct_env,
+                                     nullptr, TCContext::ValueContext);
+  Value* type =
+      ToType(definition.sourceLocation, InterpExp(ct_env, definition.type));
+  ExpectType(definition.sourceLocation, "initializer of variable", type,
+             initResult.type);
   return *this;
 }
 
