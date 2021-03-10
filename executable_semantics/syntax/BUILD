@@ -13,11 +13,17 @@ cc_library(
     name = "syntax",
     srcs = [
         "lexer.cpp",
+        "parse.cpp",
+        "parse_and_lex_context.cpp",
+        "parse_and_lex_context.h",
         "parser.cpp",
+        "parser.h",
         "syntax_helpers.cpp",
         "syntax_helpers.h",
     ],
-    hdrs = ["parser.h"],
+    hdrs = [
+        "parse.h",
+    ],
     # Disable warnings for generated code.
     copts = [
         "-Wno-unneeded-internal-declaration",

@@ -9,7 +9,10 @@ package(default_visibility = ["//executable_semantics:__subpackages__"])
 cc_library(
     name = "declaration",
     srcs = ["declaration.cpp"],
-    hdrs = ["declaration.h"],
+    hdrs = [
+        "abstract_syntax_tree.h",
+        "declaration.h",
+    ],
     deps = [
         ":function_definition",
         ":member",

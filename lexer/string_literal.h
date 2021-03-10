@@ -54,5 +54,4 @@ class StringLiteralToken {
   bool multi_line;
 };
 
-
 }  // namespace Carbon

@@ -27,10 +27,17 @@ cc_test(
 )
 
 cc_library(
+    name = "character_set",
+    hdrs = ["character_set.h"],
+    deps = ["@llvm-project//llvm:Support"],
+)
+
+cc_library(
     name = "numeric_literal",
     srcs = ["numeric_literal.cpp"],
     hdrs = ["numeric_literal.h"],
     deps = [
+        ":character_set",
         "//diagnostics:diagnostic_emitter",
         "@llvm-project//llvm:Support",
     ],
@@ -49,11 +56,23 @@ cc_test(
     ],
 )
 
+cc_fuzz_test(
+    name = "numeric_literal_fuzzer",
+    srcs = ["numeric_literal_fuzzer.cpp"],
+    corpus = glob(["fuzzer_corpus/numeric_literal/*"]),
+    deps = [
+        ":numeric_literal",
+        "//diagnostics:diagnostic_emitter",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
 cc_library(
     name = "string_literal",
     srcs = ["string_literal.cpp"],
     hdrs = ["string_literal.h"],
     deps = [
+        ":character_set",
         "//diagnostics:diagnostic_emitter",
         "@llvm-project//llvm:Support",
     ],
@@ -72,14 +91,26 @@ cc_test(
     ],
 )
 
+cc_fuzz_test(
+    name = "string_literal_fuzzer",
+    srcs = ["string_literal_fuzzer.cpp"],
+    corpus = glob(["fuzzer_corpus/string_literal/*"]),
+    deps = [
+        ":string_literal",
+        "//diagnostics:diagnostic_emitter",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
 cc_library(
     name = "tokenized_buffer",
     srcs = ["tokenized_buffer.cpp"],
     hdrs = ["tokenized_buffer.h"],
     deps = [
+        ":character_set",
+        ":numeric_literal",
         ":string_literal",
         ":token_kind",
-        ":numeric_literal",
         "//diagnostics:diagnostic_emitter",
         "//source:source_buffer",
         "@llvm-project//llvm:Support",
@@ -114,7 +145,7 @@ cc_test(
 cc_fuzz_test(
     name = "tokenized_buffer_fuzzer",
     srcs = ["tokenized_buffer_fuzzer.cpp"],
-    corpus = glob(["fuzzer_corpus/*"]),
+    corpus = glob(["fuzzer_corpus/tokenized_buffer/*"]),
     deps = [
         ":tokenized_buffer",
         "//diagnostics:diagnostic_emitter",
