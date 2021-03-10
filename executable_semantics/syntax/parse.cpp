@@ -7,6 +7,7 @@
 #include <iostream>
 
 #include "executable_semantics/syntax/parse_and_lex_context.h"
+#include "executable_semantics/syntax/parser.h"
 #include "executable_semantics/tracing_flag.h"
 
 extern FILE* yyin;
@@ -28,7 +29,7 @@ auto parse(const std::string& inputFileName)
   std::optional<AST> parsedInput = std::nullopt;
   ParseAndLexContext context(inputFileName);
 
-  auto syntaxErrorCode = yyparse(parsedInput, context);
+  auto syntaxErrorCode = yy::parser(parsedInput, context)();
   if (syntaxErrorCode != 0) {
     return syntaxErrorCode;
   }
