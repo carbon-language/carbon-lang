@@ -812,16 +812,11 @@ auto IsDelimit(Action* act) -> bool {
          act->u.stmt->tag == StatementKind::Delimit;
 }
 
-// This is an auxiliary function of ResumeContinuation function which
-// copies a saved continuation (a stack of frames) onto the current
-// stack. This function does most of the work of copying a frame from
-// the continuation into a frame on the current stack.  In particular,
-// it copies the todo and scopes members from the frame in the
-// continuation to the target frame on the current stack.
-// The end of the saved continuation is marked by a Delimit
-// AST node, so the copying of a frame stops when it reaches Delimit
-// or when it reaches the end of the frame (and the Delimit is
-// in a frame further down the stack).
+// Copies the todo and scopes stacks, from their top down to their end
+// or to the first Delimit, over to the new_todo and new_scopes.
+//
+// Used by ResumeContinuation to copy a saved continuation onto the
+// current stack.
 auto ResumeTodoAndScopes(Stack<Action*> todo, Stack<Action*>& new_todo,
                          Stack<Scope*> scopes, Stack<Scope*>& new_scopes)
     -> void {
@@ -856,14 +851,11 @@ auto ParameterBindings(Frame* frame) -> Scope* {
   return current;
 }
 
-// Copies a saved continuation (a stack of frames) onto the current
-// stack. The end of the saved continuation is marked by a Delimit
-// AST node, so the copying stops when it reaches Delimit.
-// This function recursively processes the saved stack and
-// on the way back up the recursion, it copies each frame
-// over to the current stack.
-auto ResumeContinuation(Stack<Frame*> yielded) -> void {
-  Frame* frame = yielded.Top();
+// Copies a saved continuation onto the current stack. The end of the
+// saved continuation is marked by a Delimit AST node, so the copying
+// stops when it reaches Delimit.
+auto ResumeContinuation(Stack<Frame*> continuation) -> void {
+  Frame* frame = continuation.Top();
   bool found_delimit = false;
   for (auto i = frame->todo.begin(); i != frame->todo.end(); ++i) {
     if (IsDelimit(*i))
@@ -874,12 +866,12 @@ auto ResumeContinuation(Stack<Frame*> yielded) -> void {
     ResumeTodoAndScopes(frame->todo, new_frame->todo, frame->scopes,
                         new_frame->scopes);
   } else {
-    yielded.Pop();
-    if (yielded.IsEmpty()) {
+    continuation.Pop();
+    if (continuation.IsEmpty()) {
       std::cerr << "yield without enclosing delimit" << std::endl;
       exit(-1);
     }
-    ResumeContinuation(yielded);
+    ResumeContinuation(continuation);
     Stack<Scope*> new_scopes;
     new_scopes.Push(ParameterBindings(frame));
     Frame* new_frame = new Frame(frame->name, new_scopes, Stack<Action*>());
@@ -993,7 +985,7 @@ void StepStmt() {
       break;
     case StatementKind::Delimit:
       if (act->pos == -1) {
-        // First, evaluate the body of the delimit statement.
+        // Evaluate the body of the delimit statement.
         frame->todo.Push(MakeStmtAct(stmt->u.delimit_stmt.body));
         act->pos++;
       } else if (act->pos == 0) {
@@ -1005,12 +997,12 @@ void StepStmt() {
       }
       break;
     case StatementKind::Yield:
-      // First, evaluate the expression for the yielded value.
+      // Evaluate the expression for the yielded value.
       frame->todo.Push(MakeExpAct(stmt->u.yield_stmt.exp));
       act->pos++;
       break;
     case StatementKind::Resume:
-      // First, evaluate the expression for the continuation.
+      // Evaluate the expression for the continuation.
       frame->todo.Push(MakeExpAct(stmt->u.resume_stmt.exp));
       act->pos++;
       break;
