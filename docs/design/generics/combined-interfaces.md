@@ -2142,8 +2142,9 @@ type of `T.G` in order to typecheck the function. With the full expressive power
 of `where` clauses, determining whether two type expressions are equal is in
 general undecidable, as
 [has been shown in Swift](https://forums.swift.org/t/swift-type-checking-is-undecidable/39024).
-There is
-[ongoing work in Swift](https://forums.swift.org/t/formalizing-swift-generics-as-a-term-rewriting-system/45175)
+There is ongoing work in Swift
+([1](https://forums.swift.org/t/formalizing-swift-generics-as-a-term-rewriting-system/45175),
+[2](https://gist.github.com/slavapestov/75dbec34f9eba5fb4a4a00b1ee520d0b))
 iterating on how to approach this problem.
 
 However, with enough constraints, we can make an efficient decision procedure
