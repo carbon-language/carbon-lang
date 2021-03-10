@@ -11,7 +11,7 @@
 #include <list>
 
 #include "executable_semantics/syntax/syntax_helpers.h"
-#include "executable_semantics/syntax/driver.h"
+#include "executable_semantics/syntax/parse_and_lex_context.h"
 }
 
 %code requires {
@@ -23,7 +23,7 @@
 #include "executable_semantics/ast/function_definition.h"
 
 namespace Carbon {
-class SyntaxDriver;
+class ParseAndLexContext;
 }
 
 }
@@ -34,10 +34,10 @@ extern int yylineno;
 
 void yyerror(
     std::optional<Carbon::AST> const& /* parsedProgram */,
-    Carbon::SyntaxDriver& driver,
+    Carbon::ParseAndLexContext& context,
     char* message
 ) {
-  driver.PrintDiagnostic(message, yylineno);
+  context.PrintDiagnostic(message, yylineno);
 }
 }
 
@@ -49,7 +49,7 @@ void yyerror(
 %parse-param {std::optional<Carbon::AST>& parsedProgram}
 
 // "inout" parameter passed to both the parser and the lexer.
-%param {Carbon::SyntaxDriver& driver}
+%param {Carbon::ParseAndLexContext& context}
 
 %union {
    char* str;

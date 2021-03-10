@@ -12,27 +12,16 @@
 
 namespace Carbon {
 
-// An encapsulation of the lexing/parsing process and all its state.
-class SyntaxDriver {
+// The state and functionality that is threaded "globally" through the
+// lexing/parsing process.
+class ParseAndLexContext {
  public:
   // Creates an instance analyzing the given input file.
-  SyntaxDriver(const std::string& inputFile) : inputFileName(inputFile) {}
-
-  // Indication of a syntax error.
-  //
-  // Will be used as an exit code, so the low 8 bits should never be zero.
-  using Error = int;
-
-  // Returns an abstract representation of the program contained in the
-  // well-formed input file, or if the file was malformed, a description of the
-  // syntax problem.
-  auto operator()() -> std::variant<Carbon::AST, Error>;
+  ParseAndLexContext(const std::string& inputFile) : inputFileName(inputFile) {}
 
   // Writes a syntax error diagnostic, containing message, for the input file at
   // the given line, to standard error.
   auto PrintDiagnostic(const char* message, int lineNumber) -> void;
-  SyntaxDriver(const SyntaxDriver&) = delete;
-  SyntaxDriver& operator=(const SyntaxDriver&) = delete;
 
  private:
   // A path to the file processed, relative to the current working directory
@@ -43,7 +32,7 @@ class SyntaxDriver {
 }  // namespace Carbon
 
 // Gives flex the yylex prototype we want.
-#define YY_DECL int yylex(Carbon::SyntaxDriver& driver)
+#define YY_DECL int yylex(Carbon::ParseAndLexContext& context)
 
 // Declares yylex for the parser's sake.
 YY_DECL;

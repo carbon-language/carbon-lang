@@ -12,10 +12,10 @@ package(default_visibility = ["//executable_semantics:__subpackages__"])
 cc_library(
     name = "syntax",
     srcs = [
-        "driver.cpp",
-        "driver.h",
         "lexer.cpp",
         "parse.cpp",
+        "parse_and_lex_context.cpp",
+        "parse_and_lex_context.h",
         "parser.cpp",
         "parser.h",
         "syntax_helpers.cpp",
