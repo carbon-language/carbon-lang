@@ -2030,9 +2030,11 @@ T where Printable: Vector(T)
 
 #### Recursive constraints
 
-One case of this is handled with the `Self` type/keyword.
-
-TODO: Include the `Abs` example:
+Just like we use `Self` to refer to the type implementing an interface, we
+sometimes need to constrain a type to equal one of its associated types. In this
+first example, we want to represent the function `Abs` which will return `Self`
+for some but not all types, so we use an associated type `MagnitudeType` to
+encode the return type:
 
 ```
 interface HasAbs {
@@ -2040,54 +2042,117 @@ interface HasAbs {
   var Numeric:$ MagnitudeType;
   method (Self: this) Abs() -> MagnitudeType;
 }
+```
 
-// For Int, Float32, etc. HasAbs.MagnitudeType == Self.
-// For Complex64, HasAbs.MagnitudeType == Float32.
+For types representing subsets of the real numbers, such as `Int32` or
+`Float32`, the `MagnitudeType` will match `Self`. For types representing complex
+numbers, the types will be different. For example, the `Abs()` applied to a
+`Complex64` value would produce a `Float32` result. The challenge is to write a
+constraint to restrict to the first case.
 
-// Problem: for this function, need T.MagnitudeType == T constraint.
-fn Relu[???: T](T: x) -> T {
-  return (x + x.Abs()) / 2;
+In a second example, when you take the slice of a type implementing `Container`
+you get a type implementing `Container` which may or may not be the same type as
+the original container type. However, taking the slice of a slice always gives
+you the same type, and some functions want to only operate on containers whose
+slice type is the same.
+
+These problems can be solved directly using the `where` clause approach, but for
+argument passing we need to introduce a name for "the type we are in the middle
+of declaring". We can't use `Self` directly for this, since we might be in the
+middle of an `interface` definition where `Self` already has a meaning.
+Provisionally we'll write this `.Self`.
+
+Function declaration:
+
+```
+// Argument passing
+fn Relu[HasAbs(.MagnitudeType = .Self):$ T](T: x) {
+  // T.MagnitudeType == T so the following is allowed:
+  return (x.Abs() + x) / 2;
+}
+fn UseContainer[Container(.SliceType = .Self):$ T](T: c) -> Bool {
+  // T.SliceType == T so `c` and `c.Slice(...)` can be compared:
+  return c == c.Slice(...);
+}
+
+// Where clause
+fn Relu[HasAbs:$ T](T: x) where T.MagnitudeType == T {
+  return (x.Abs() + x) / 2;
+}
+fn UseContainer[Container:$ T](T: c) -> Bool where T.SliceType == T {
+  return c == c.Slice(...);
 }
 ```
 
-TODO: Want to be able to say "The slice type for a container is another
-container, with a constraint saying it is idempotent." That is, we want to write
-a constraint saying `Container.SliceType.SliceType == Container.SliceType`,
-which is straightforward using a `requires` clause. Unfortunately, this
-definition doesn't work:
+Interface definition:
 
 ```
 interface Container {
   var Type:$ ElementType;
-  var Iterator(.ElementType = ElementType):$ IteratorType;
-  // PROBLEM: recursive definition, requires forward reference
-  var Container(.ElementType = ElementType, .SliceType = SliceType):$ SliceType;
+
+  // Argument passing:
+  var Container(.ElementType = ElementType, .SliceType = .Self):$ SliceType;
+  // Where clause:
+  var Container:$ SliceType where SliceType.ElementType == ElementType,
+                                  Slicetype.SliceType == SliceType;
+
   method (Ptr(Self): this) GetSlice(IteratorType: start,
                                     IteratorType: end) -> SliceType;
 }
 ```
 
-Unfortunately writing a separate `alias` or
-[structural interface](#structural-interfaces) to represent the constraint
-doesn't work here. All of these refer to `Container` and so can only be defined
-afterwards and can't be used to define `Container` itself:
+Naming these constraints:
 
 ```
-alias ContainerAsSlice = Container(.SliceType = Self);
-// Really we want to support things like `ContainerAsSlice(.ElementType = ...)`
-// so we need alias definitions to support something like:
-alias ContainerAsSlice(auto...:$$ args) =
-    Container(args..., .SliceType = Self);
-
-// Alternative using `structural interface`, assuming we supports `extends`
-// like ordinary `interface` definitions.
-structural interface ContainerAsSlice {
+// Argument passing
+alias RealAbs = HasAbs(.MagnitudeType = .Self);
+structural interface RealAbs {
+  extends HasAbs(.MagnitudeType = Self);
+}
+alias ContainerIsSlice = Container(.SliceType = .Self);
+structural interface ContainerIsSlice {
   extends Container(.SliceType = Self);
+}
+
+// Where clause:
+alias RealAbs = HasAbs where RealAbs.MagnitudeType == RealAbs;
+structural interface RealAbs {
+  extends HasAbs where HasAbs.MagnitudeType == Self;
+}
+alias ContainerIsSlice = Container
+    where ContainerIsSlice.SliceType == ContainerIsSlice;
+structural interface ContainerIsSlice {
+  extends Container where Container.SliceType == Self;
 }
 ```
 
-TODO: Add context where this was originally discussed
-[here](https://docs.google.com/document/d/1YjF1jcXCSb4zQ4kCcZFAK5jtbIJh9IdaaTbzmQEwSNg/edit#heading=h.eak2vxz3de3v).
+Note that using the `structural interface` approach we can name these
+constraints without using `.Self` even with argument passing. However, you can't
+always avoid using `.Self`, since naming the constraint before using it doesn't
+allow you to define the `Container` interface above, since the named constraint
+refers to `Container` in its definition.
+
+**Rejected alternative:** To use this `structural interface` trick to define
+`Container`, you'd have to allow the it do be defined inline in the `Container`
+definition:
+
+```
+interface Container {
+  var Type:$ ElementType;
+
+  structural interface ContainerIsSlice {
+    extends Container where Container.SliceType == Self;
+  }
+  var ContainerIsSlice(.ElementType = ElementType):$ SliceType;
+
+  method (Ptr(Self): this) GetSlice(IteratorType: start,
+                                    IteratorType: end) -> SliceType;
+}
+```
+
+**Rejected alternative:** If we were to write variable declarations with the
+name first instead of the type, we could use that name inside the type
+declaration, as in `T:$ HasAbs(.MagnitudeType = T)`.
 
 #### Type inequality
 
