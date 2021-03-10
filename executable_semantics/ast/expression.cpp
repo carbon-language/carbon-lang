@@ -10,6 +10,7 @@
 
 namespace Carbon {
 
+// Returns a capture by-value given a variable name.
 auto MakeCaptureByValue(std::string s) -> Capture* {
   Capture* c = new Capture;
   c->tag = CaptureKind::ByValue;
@@ -17,6 +18,7 @@ auto MakeCaptureByValue(std::string s) -> Capture* {
   return c;
 }
 
+// Returns a capture by-reference given a variable name.
 auto MakeCaptureByReference(std::string s) -> Capture* {
   Capture* c = new Capture;
   c->tag = CaptureKind::ByReference;

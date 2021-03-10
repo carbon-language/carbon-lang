@@ -40,17 +40,24 @@ enum class Operator {
 
 struct Statement;
 
+// Lambda expressions can capture free variable either by value or by
+// reference.
 enum class CaptureKind {
   ByValue,
   ByReference,
 };
 
+// This bundles a variable name together with the choice regarding how
+// to capture it for use in the body of a lambda expression.
 struct Capture {
   CaptureKind tag;
   std::string* variable;
 };
 
+// Returns a capture by-value given a variable name.
 auto MakeCaptureByValue(std::string) -> Capture*;
+
+// Returns a capture by-reference given a variable name.
 auto MakeCaptureByReference(std::string) -> Capture*;
 
 struct Expression {
@@ -98,6 +105,7 @@ struct Expression {
       Expression* return_type;
     } function_type;
 
+    // An anonymous, lexically-scoped function.
     struct {
       Expression* parameter;
       Expression* return_type;
@@ -124,8 +132,8 @@ auto MakeTuple(int line_num,
                std::vector<std::pair<std::string, Expression*>>* args)
     -> Expression*;
 auto MakeIndex(int line_num, Expression* exp, Expression* i) -> Expression*;
-// Returns an AST node for a lambda expression, that is,
-// an anonymous, lexically scoped function, given the
+
+// Returns an AST node for a lambda expression given the
 // source line number, the parameter (a tuple expression),
 // the return type, capture clause, and the body.
 auto MakeLambda(int line_num, Expression* parameter, Expression* return_type,
