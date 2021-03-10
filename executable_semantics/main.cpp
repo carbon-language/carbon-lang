@@ -6,7 +6,7 @@
 #include <cstring>
 #include <iostream>
 
-#include "executable_semantics/syntax/driver.h"
+#include "executable_semantics/syntax/parse.h"
 #include "executable_semantics/syntax/syntax_helpers.h"
 #include "executable_semantics/tracing_flag.h"
 #include "llvm/Support/CommandLine.h"
@@ -25,10 +25,10 @@ int main(int argc, char* argv[]) {
     Carbon::tracing_output = false;
   }
 
-  auto analyzeSyntax = Carbon::SyntaxDriver(inputFileName);
-  auto astOrError = analyzeSyntax();
+  std::variant<Carbon::AST, Carbon::SyntaxErrorCode> astOrError =
+      Carbon::parse(inputFileName);
 
-  if (auto error = std::get_if<Carbon::SyntaxDriver::Error>(&astOrError)) {
+  if (auto* error = std::get_if<Carbon::SyntaxErrorCode>(&astOrError)) {
     // Diagnostic already reported to std::cerr; this is just a return code.
     return *error;
   }

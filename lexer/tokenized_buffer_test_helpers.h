@@ -26,9 +26,9 @@ namespace Testing {
 struct ExpectedToken {
   friend auto operator<<(std::ostream& output, const ExpectedToken& expected)
       -> std::ostream& {
-    output << "\ntoken: { kind: '" << expected.kind.Name().str();
+    output << "\ntoken: { kind: '" << expected.kind.Name().str() << "'";
     if (expected.line != -1) {
-      output << "', line: " << expected.line;
+      output << ", line: " << expected.line;
     }
     if (expected.column != -1) {
       output << ", column " << expected.column;
@@ -38,6 +38,10 @@ struct ExpectedToken {
     }
     if (!expected.text.empty()) {
       output << ", spelling: '" << expected.text.str() << "'";
+    }
+    if (expected.string_contents) {
+      output << ", string contents: '" << expected.string_contents->str()
+             << "'";
     }
     if (expected.recovery) {
       output << ", recovery: true";
@@ -52,6 +56,7 @@ struct ExpectedToken {
   int indent_column = -1;
   bool recovery = false;
   llvm::StringRef text = "";
+  llvm::Optional<llvm::StringRef> string_contents = llvm::None;
 };
 
 // TODO: Consider rewriting this into a `TokenEq` matcher which is used inside
@@ -122,6 +127,18 @@ MATCHER_P(HasTokens, raw_all_expected, "") {
                        << actual_text.str() << "`, expected `"
                        << expected.text.str() << "`.";
       matches = false;
+    }
+
+    assert(!expected.string_contents ||
+           expected.kind == TokenKind::StringLiteral());
+    if (expected.string_contents && actual_kind == TokenKind::StringLiteral()) {
+      llvm::StringRef actual_contents = buffer.GetStringLiteral(token);
+      if (actual_contents != *expected.string_contents) {
+        *result_listener << "\nToken " << index << " has contents `"
+                         << actual_contents.str() << "`, expected `"
+                         << expected.string_contents->str() << "`.";
+        matches = false;
+      }
     }
   }
 
