@@ -6,6 +6,7 @@
 
 #include <bitset>
 
+#include "lexer/character_set.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/FormatVariadic.h"
 
@@ -21,16 +22,13 @@ struct EmptyDigitSequence : SimpleDiagnostic<EmptyDigitSequence> {
 struct InvalidDigit {
   static constexpr llvm::StringLiteral ShortName = "syntax-invalid-number";
 
-  struct Substitutions {
-    char digit;
-    int radix;
-  };
-  static auto Format(const Substitutions& subst) -> std::string {
-    return llvm::formatv("Invalid digit '{0}' in {1} numeric literal.",
-                         subst.digit,
-                         (subst.radix == 2    ? "binary"
-                          : subst.radix == 16 ? "hexadecimal"
-                                              : "decimal"))
+  char digit;
+  int radix;
+
+  auto Format() -> std::string {
+    return llvm::formatv("Invalid digit '{0}' in {1} numeric literal.", digit,
+                         (radix == 2 ? "binary"
+                                     : radix == 16 ? "hexadecimal" : "decimal"))
         .str();
   }
 };
@@ -45,16 +43,15 @@ struct IrregularDigitSeparators {
   static constexpr llvm::StringLiteral ShortName =
       "syntax-irregular-digit-separators";
 
-  struct Substitutions {
-    int radix;
-  };
-  static auto Format(const Substitutions& subst) -> std::string {
-    assert((subst.radix == 10 || subst.radix == 16) && "unexpected radix");
+  int radix;
+
+  auto Format() -> std::string {
+    assert((radix == 10 || radix == 16) && "unexpected radix");
     return llvm::formatv(
                "Digit separators in {0} number should appear every {1} "
                "characters from the right.",
-               (subst.radix == 10 ? "decimal" : "hexadecimal"),
-               (subst.radix == 10 ? "3" : "4"))
+               (radix == 10 ? "decimal" : "hexadecimal"),
+               (radix == 10 ? "3" : "4"))
         .str();
   }
 };
@@ -74,24 +71,20 @@ struct BinaryRealLiteral : SimpleDiagnostic<BinaryRealLiteral> {
 struct WrongRealLiteralExponent {
   static constexpr llvm::StringLiteral ShortName = "syntax-invalid-number";
 
-  struct Substitutions {
-    char expected;
-  };
-  static auto Format(const Substitutions& subst) -> std::string {
-    return llvm::formatv("Expected '{0}' to introduce exponent.",
-                         subst.expected)
+  char expected;
+
+  auto Format() -> std::string {
+    return llvm::formatv("Expected '{0}' to introduce exponent.", expected)
         .str();
   }
 };
 }  // namespace
 
-static bool isLower(char c) { return 'a' <= c && c <= 'z'; }
-
 auto NumericLiteralToken::Lex(llvm::StringRef source_text)
     -> llvm::Optional<NumericLiteralToken> {
   NumericLiteralToken result;
 
-  if (source_text.empty() || !llvm::isDigit(source_text.front())) {
+  if (source_text.empty() || !IsDecimalDigit(source_text.front())) {
     return llvm::None;
   }
 
@@ -107,8 +100,8 @@ auto NumericLiteralToken::Lex(llvm::StringRef source_text)
   int i = 1, n = source_text.size();
   for (; i != n; ++i) {
     char c = source_text[i];
-    if (llvm::isAlnum(c) || c == '_') {
-      if (isLower(c) && seen_radix_point && !seen_plus_minus) {
+    if (IsAlnum(c) || c == '_') {
+      if (IsLower(c) && seen_radix_point && !seen_plus_minus) {
         result.exponent = i;
         seen_potential_exponent = true;
       }
@@ -117,7 +110,7 @@ auto NumericLiteralToken::Lex(llvm::StringRef source_text)
 
     // Exactly one `.` can be part of the literal, but only if it's followed by
     // an alphanumeric character.
-    if (c == '.' && i + 1 != n && llvm::isAlnum(source_text[i + 1]) &&
+    if (c == '.' && i + 1 != n && IsAlnum(source_text[i + 1]) &&
         !seen_radix_point) {
       result.radix_point = i;
       seen_radix_point = true;
@@ -129,8 +122,7 @@ auto NumericLiteralToken::Lex(llvm::StringRef source_text)
     // followed by an alphanumeric character. This '+' or '-' cannot be an
     // operator because a literal cannot end in a lowercase letter.
     if ((c == '+' || c == '-') && seen_potential_exponent &&
-        result.exponent == i - 1 && i + 1 != n &&
-        llvm::isAlnum(source_text[i + 1])) {
+        result.exponent == i - 1 && i + 1 != n && IsAlnum(source_text[i + 1])) {
       // This is not possible because we don't update result.exponent after we
       // see a '+' or '-'.
       assert(!seen_plus_minus && "should only consume one + or -");
