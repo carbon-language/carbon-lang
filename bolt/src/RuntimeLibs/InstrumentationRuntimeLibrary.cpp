@@ -24,6 +24,8 @@ extern cl::OptionCategory BoltOptCategory;
 extern cl::opt<bool> InstrumentationFileAppendPID;
 extern cl::opt<std::string> InstrumentationFilename;
 extern cl::opt<uint32_t> InstrumentationSleepTime;
+extern cl::opt<bool> InstrumentationNoCountersClear;
+extern cl::opt<bool> InstrumentationWaitForks;
 
 cl::opt<bool>
     Instrument("instrument",
@@ -93,31 +95,43 @@ void InstrumentationRuntimeLibrary::emitBinary(BinaryContext &BC,
                                  "__BOLT", "__counters", MachO::S_REGULAR,
                                  SectionKind::getData()));
 
+  Section->setAlignment(llvm::Align(BC.RegularPageSize));
+  Streamer.SwitchSection(Section);
+
+  auto EmitLabel = [&](MCSymbol *Symbol, bool IsGlobal = true) {
+    Streamer.emitLabel(Symbol);
+    if (IsGlobal)
+      Streamer.emitSymbolAttribute(Symbol, MCSymbolAttr::MCSA_Global);
+  };
+
+  auto EmitLabelByName = [&](StringRef Name, bool IsGlobal = true) {
+    MCSymbol *Symbol = BC.Ctx->getOrCreateSymbol(Name);
+    EmitLabel(Symbol, IsGlobal);
+  };
+
+  auto EmitValue = [&](MCSymbol *Symbol, const MCExpr *Value) {
+    EmitLabel(Symbol);
+    Streamer.emitValue(Value, /*Size*/ 8);
+  };
+
+  auto EmitIntValue = [&](StringRef Name, uint64_t Value, unsigned Size = 4) {
+    EmitLabelByName(Name);
+    Streamer.emitIntValue(Value, Size);
+  };
+
+  auto EmitString = [&](StringRef Name, StringRef Contents) {
+    EmitLabelByName(Name);
+    Streamer.emitBytes(Contents);
+    Streamer.emitFill(1, 0);
+  };
+
   // All of the following symbols will be exported as globals to be used by the
   // instrumentation runtime library to dump the instrumentation data to disk.
   // Label marking start of the memory region containing instrumentation
   // counters, total vector size is Counters.size() 8-byte counters
-  MCSymbol *Locs = BC.Ctx->getOrCreateSymbol("__bolt_instr_locations");
-  MCSymbol *NumLocs = BC.Ctx->getOrCreateSymbol("__bolt_num_counters");
-  MCSymbol *NumIndCalls =
-      BC.Ctx->getOrCreateSymbol("__bolt_instr_num_ind_calls");
-  MCSymbol *NumIndCallTargets =
-      BC.Ctx->getOrCreateSymbol("__bolt_instr_num_ind_targets");
-  MCSymbol *NumFuncs = BC.Ctx->getOrCreateSymbol("__bolt_instr_num_funcs");
-  /// File name where profile is going to written to after target binary
-  /// finishes a run
-  MCSymbol *FilenameSym = BC.Ctx->getOrCreateSymbol("__bolt_instr_filename");
-  MCSymbol *UsePIDSym = BC.Ctx->getOrCreateSymbol("__bolt_instr_use_pid");
-  MCSymbol *InitPtr = BC.Ctx->getOrCreateSymbol("__bolt_instr_init_ptr");
-  MCSymbol *FiniPtr = BC.Ctx->getOrCreateSymbol("__bolt_instr_fini_ptr");
-  MCSymbol *SleepSym = BC.Ctx->getOrCreateSymbol("__bolt_instr_sleep_time");
-
-  Section->setAlignment(llvm::Align(BC.RegularPageSize));
-  Streamer.SwitchSection(Section);
-  Streamer.emitLabel(Locs);
-  Streamer.emitSymbolAttribute(Locs, MCSymbolAttr::MCSA_Global);
+  EmitLabelByName("__bolt_instr_locations");
   for (const auto &Label : Summary->Counters) {
-    Streamer.emitLabel(Label);
+    EmitLabel(Label, /*IsGlobal*/ false);
     Streamer.emitFill(8, 0);
   }
   const uint64_t Padding =
@@ -125,63 +139,40 @@ void InstrumentationRuntimeLibrary::emitBinary(BinaryContext &BC,
       8 * Summary->Counters.size();
   if (Padding)
     Streamer.emitFill(Padding, 0);
-  Streamer.emitLabel(SleepSym);
-  Streamer.emitSymbolAttribute(SleepSym, MCSymbolAttr::MCSA_Global);
-  Streamer.emitIntValue(opts::InstrumentationSleepTime, /*Size=*/4);
-  Streamer.emitLabel(NumLocs);
-  Streamer.emitSymbolAttribute(NumLocs, MCSymbolAttr::MCSA_Global);
-  Streamer.emitIntValue(Summary->Counters.size(), /*Size=*/4);
-  Streamer.emitLabel(Summary->IndCallHandlerFunc);
-  Streamer.emitSymbolAttribute(Summary->IndCallHandlerFunc,
-                               MCSymbolAttr::MCSA_Global);
-  Streamer.emitValue(
-      MCSymbolRefExpr::create(
-          Summary->InitialIndCallHandlerFunction->getSymbol(), *BC.Ctx),
-      /*Size=*/8);
-  Streamer.emitLabel(Summary->IndTailCallHandlerFunc);
-  Streamer.emitSymbolAttribute(Summary->IndTailCallHandlerFunc,
-                               MCSymbolAttr::MCSA_Global);
-  Streamer.emitValue(
-      MCSymbolRefExpr::create(
-          Summary->InitialIndTailCallHandlerFunction->getSymbol(), *BC.Ctx),
-      /*Size=*/8);
-  Streamer.emitLabel(NumIndCalls);
-  Streamer.emitSymbolAttribute(NumIndCalls, MCSymbolAttr::MCSA_Global);
-  Streamer.emitIntValue(Summary->IndCallDescriptions.size(), /*Size=*/4);
-  Streamer.emitLabel(NumIndCallTargets);
-  Streamer.emitSymbolAttribute(NumIndCallTargets, MCSymbolAttr::MCSA_Global);
-  Streamer.emitIntValue(Summary->IndCallTargetDescriptions.size(), /*Size=*/4);
-  Streamer.emitLabel(NumFuncs);
-  Streamer.emitSymbolAttribute(NumFuncs, MCSymbolAttr::MCSA_Global);
 
-  Streamer.emitIntValue(Summary->FunctionDescriptions.size(), /*Size=*/4);
-  Streamer.emitLabel(FilenameSym);
-  Streamer.emitBytes(opts::InstrumentationFilename);
-  Streamer.emitFill(1, 0);
-  Streamer.emitLabel(UsePIDSym);
-  Streamer.emitIntValue(opts::InstrumentationFileAppendPID ? 1 : 0, /*Size=*/1);
-
-  Streamer.emitLabel(InitPtr);
-  Streamer.emitSymbolAttribute(InitPtr, MCSymbolAttr::MCSA_Global);
-  Streamer.emitValue(
-      MCSymbolRefExpr::create(StartFunction->getSymbol(), *BC.Ctx), /*Size=*/8);
+  EmitIntValue("__bolt_instr_sleep_time", opts::InstrumentationSleepTime);
+  EmitIntValue("__bolt_instr_no_counters_clear",
+               !!opts::InstrumentationNoCountersClear, 1);
+  EmitIntValue("__bolt_instr_wait_forks", !!opts::InstrumentationWaitForks, 1);
+  EmitIntValue("__bolt_num_counters", Summary->Counters.size());
+  EmitValue(Summary->IndCallHandlerFunc,
+            MCSymbolRefExpr::create(
+                Summary->InitialIndCallHandlerFunction->getSymbol(), *BC.Ctx));
+  EmitValue(
+      Summary->IndTailCallHandlerFunc,
+      MCSymbolRefExpr::create(
+          Summary->InitialIndTailCallHandlerFunction->getSymbol(), *BC.Ctx));
+  EmitIntValue("__bolt_instr_num_ind_calls",
+               Summary->IndCallDescriptions.size());
+  EmitIntValue("__bolt_instr_num_ind_targets",
+               Summary->IndCallTargetDescriptions.size());
+  EmitIntValue("__bolt_instr_num_funcs", Summary->FunctionDescriptions.size());
+  EmitString("__bolt_instr_filename", opts::InstrumentationFilename);
+  EmitIntValue("__bolt_instr_use_pid", !!opts::InstrumentationFileAppendPID, 1);
+  EmitValue(BC.Ctx->getOrCreateSymbol("__bolt_instr_init_ptr"),
+            MCSymbolRefExpr::create(StartFunction->getSymbol(), *BC.Ctx));
   if (FiniFunction) {
-    Streamer.emitLabel(FiniPtr);
-    Streamer.emitSymbolAttribute(FiniPtr, MCSymbolAttr::MCSA_Global);
-    Streamer.emitValue(
-      MCSymbolRefExpr::create(FiniFunction->getSymbol(), *BC.Ctx), /*Size=*/8);
+    EmitValue(BC.Ctx->getOrCreateSymbol("__bolt_instr_fini_ptr"),
+              MCSymbolRefExpr::create(FiniFunction->getSymbol(), *BC.Ctx));
   }
 
   if (BC.isMachO()) {
     MCSection *TablesSection = BC.Ctx->getMachOSection(
                                  "__BOLT", "__tables", MachO::S_REGULAR,
                                  SectionKind::getData());
-    MCSymbol *Tables = BC.Ctx->getOrCreateSymbol("__bolt_instr_tables");
     TablesSection->setAlignment(llvm::Align(BC.RegularPageSize));
     Streamer.SwitchSection(TablesSection);
-    Streamer.emitLabel(Tables);
-    Streamer.emitSymbolAttribute(Tables, MCSymbolAttr::MCSA_Global);
-    Streamer.emitBytes(buildTables(BC));
+    EmitString("__bolt_instr_tables", buildTables(BC));
   }
 }
 

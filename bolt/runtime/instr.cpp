@@ -84,6 +84,10 @@ extern uint32_t __bolt_instr_num_ind_targets;
 extern uint32_t __bolt_instr_num_funcs;
 // Time to sleep across dumps (when we write the fdata profile to disk)
 extern uint32_t __bolt_instr_sleep_time;
+// Do not clear counters across dumps, rewrite file with the updated values
+extern bool __bolt_instr_no_counters_clear;
+// Wait until all forks of instrumented process will finish
+extern bool __bolt_instr_wait_forks;
 // Filename to dump data to
 extern char __bolt_instr_filename[];
 // If true, append current PID to the fdata filename when creating it so
@@ -1402,23 +1406,43 @@ extern "C" void __bolt_instr_data_dump() {
 void watchProcess() {
   timespec ts, rem;
   uint64_t Ellapsed = 0ull;
+  uint64_t ppid;
+  if (__bolt_instr_wait_forks) {
+    // Store parent pgid
+    ppid = -__getpgid(0);
+    // And leave parent process group
+    __setpgid(0, 0);
+  } else {
+    // Store parent pid
+    ppid = __getppid();
+    if (ppid == 1) {
+      // Parent already dead
+      goto out;
+    }
+  }
+
   ts.tv_sec = 1;
   ts.tv_nsec = 0;
   while (1) {
     __nanosleep(&ts, &rem);
-    // This means our parent process died, so no need for us to keep dumping.
-    // Notice that make and some systems will wait until all child processes
-    // of a command finishes before proceeding, so it is important to exit as
-    // early as possible once our parent dies.
-    if (__getppid() == 1) {
+    // This means our parent process or all its forks are dead,
+    // so no need for us to keep dumping.
+    if (__kill(ppid, 0) < 0) {
+      if (__bolt_instr_no_counters_clear)
+        __bolt_instr_data_dump();
       break;
     }
+
     if (++Ellapsed < __bolt_instr_sleep_time)
       continue;
+
     Ellapsed = 0;
     __bolt_instr_data_dump();
-    __bolt_instr_clear_counters();
+    if (__bolt_instr_no_counters_clear == false)
+      __bolt_instr_clear_counters();
   }
+
+out:;
   DEBUG(report("My parent process is dead, bye!\n"));
   __exit(0);
 }
@@ -1453,6 +1477,10 @@ extern "C" void __bolt_instr_setup() {
         new (GlobalAlloc, 0) IndirectCallHashTable[__bolt_instr_num_ind_calls];
 
   if (__bolt_instr_sleep_time != 0) {
+    // Separate instrumented process to the own process group
+    if (__bolt_instr_wait_forks)
+      __setpgid(0, 0);
+
     if (auto PID = __fork())
       return;
     watchProcess();
