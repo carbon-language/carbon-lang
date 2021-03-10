@@ -5,7 +5,7 @@
 # TODO(https://github.com/carbon-language/carbon-lang/issues/266):
 # Migrate bison/flex usage to a more hermetic bazel build.
 
-load("@rules_cc//cc:defs.bzl", "cc_binary", "cc_library")
+load("@rules_cc//cc:defs.bzl", "cc_library")
 
 package(default_visibility = ["//executable_semantics:__subpackages__"])
 
