@@ -620,6 +620,7 @@ auto StructDeclaration::Name() const -> std::string { return *definition.name; }
 
 auto ChoiceDeclaration::Name() const -> std::string { return name; }
 
+// Returns the name of the variable being declared.
 auto VariableDeclaration::Name() const -> std::string {
   return definition.name;
 }
