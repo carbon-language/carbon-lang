@@ -52,23 +52,23 @@ auto AllocateValue(Value* v) -> Address {
   return a;
 }
 
-auto CopyVal(Value* val, int line_num) -> Value* {
-  CheckAlive(val, line_num);
+auto CopyVal(Value* val, int sourceLocation) -> Value* {
+  CheckAlive(val, sourceLocation);
   switch (val->tag) {
     case ValKind::TupleV: {
       auto elts = new std::vector<std::pair<std::string, Address>>();
       for (auto& i : *val->u.tuple.elts) {
-        Value* elt = CopyVal(state->heap[i.second], line_num);
+        Value* elt = CopyVal(state->heap[i.second], sourceLocation);
         elts->push_back(make_pair(i.first, AllocateValue(elt)));
       }
       return MakeTupleVal(elts);
     }
     case ValKind::AltV: {
-      Value* arg = CopyVal(val->u.alt.arg, line_num);
+      Value* arg = CopyVal(val->u.alt.arg, sourceLocation);
       return MakeAltVal(*val->u.alt.alt_name, *val->u.alt.choice_name, arg);
     }
     case ValKind::StructV: {
-      Value* inits = CopyVal(val->u.struct_val.inits, line_num);
+      Value* inits = CopyVal(val->u.struct_val.inits, sourceLocation);
       return MakeStructVal(val->u.struct_val.type, inits);
     }
     case ValKind::IntV:
@@ -82,11 +82,11 @@ auto CopyVal(Value* val, int line_num) -> Value* {
     case ValKind::ContinuationV:
       return MakeContinuation(*val->u.continuation.stack);
     case ValKind::FunctionTV:
-      return MakeFunTypeVal(CopyVal(val->u.fun_type.param, line_num),
-                            CopyVal(val->u.fun_type.ret, line_num));
+      return MakeFunTypeVal(CopyVal(val->u.fun_type.param, sourceLocation),
+                            CopyVal(val->u.fun_type.ret, sourceLocation));
 
     case ValKind::PointerTV:
-      return MakePtrTypeVal(CopyVal(val->u.ptr_type.type, line_num));
+      return MakePtrTypeVal(CopyVal(val->u.ptr_type.type, sourceLocation));
     case ValKind::IntTV:
       return MakeIntTypeVal();
     case ValKind::BoolTV:
@@ -102,7 +102,7 @@ auto CopyVal(Value* val, int line_num) -> Value* {
     case ValKind::TupleTV: {
       auto new_fields = new VarValues();
       for (auto& field : *val->u.tuple_type.fields) {
-        auto v = CopyVal(field.second, line_num);
+        auto v = CopyVal(field.second, sourceLocation);
         new_fields->push_back(make_pair(field.first, v));
       }
       return MakeTupleTypeVal(new_fields);
@@ -201,20 +201,20 @@ void PrintState(std::ostream& out) {
 // More Auxiliary Functions
 //
 
-auto ValToInt(Value* v, int line_num) -> int {
-  CheckAlive(v, line_num);
+auto ValToInt(Value* v, int sourceLocation) -> int {
+  CheckAlive(v, sourceLocation);
   switch (v->tag) {
     case ValKind::IntV:
       return v->u.integer;
     default:
-      std::cerr << line_num << ": runtime error: expected an integer"
+      std::cerr << sourceLocation << ": runtime error: expected an integer"
                 << std::endl;
       exit(-1);
   }
 }
 
-auto ValToBool(Value* v, int line_num) -> int {
-  CheckAlive(v, line_num);
+auto ValToBool(Value* v, int sourceLocation) -> int {
+  CheckAlive(v, sourceLocation);
   switch (v->tag) {
     case ValKind::BoolV:
       return v->u.boolean;
@@ -224,8 +224,8 @@ auto ValToBool(Value* v, int line_num) -> int {
   }
 }
 
-auto ValToPtr(Value* v, int line_num) -> Address {
-  CheckAlive(v, line_num);
+auto ValToPtr(Value* v, int sourceLocation) -> Address {
+  CheckAlive(v, sourceLocation);
   switch (v->tag) {
     case ValKind::PtrV:
       return v->u.ptr;
@@ -241,38 +241,38 @@ auto ValToPtr(Value* v, int line_num) -> Address {
 //
 // - Precondition: continuation->tag == ValKind::ContinuationV.
 auto ToContinuation(Value* continuation, int sourceLocation) -> Stack<Frame*> {
-  CheckAlive(v, line_num);
-  switch (v->tag) {
+  CheckAlive(continuation, sourceLocation);
+  switch (continuation->tag) {
     case ValKind::ContinuationV:
-      return *v->u.continuation.stack;
+      return *continuation->u.continuation.stack;
     default:
-      std::cerr << line_num << ": runtime error: expected an integer"
+      std::cerr << sourceLocation << ": runtime error: expected an integer"
                 << std::endl;
       exit(-1);
   }
 }
 
-auto EvalPrim(Operator op, const std::vector<Value*>& args, int line_num)
+auto EvalPrim(Operator op, const std::vector<Value*>& args, int sourceLocation)
     -> Value* {
   switch (op) {
     case Operator::Neg:
-      return MakeIntVal(-ValToInt(args[0], line_num));
+      return MakeIntVal(-ValToInt(args[0], sourceLocation));
     case Operator::Add:
-      return MakeIntVal(ValToInt(args[0], line_num) +
-                        ValToInt(args[1], line_num));
+      return MakeIntVal(ValToInt(args[0], sourceLocation) +
+                        ValToInt(args[1], sourceLocation));
     case Operator::Sub:
-      return MakeIntVal(ValToInt(args[0], line_num) -
-                        ValToInt(args[1], line_num));
+      return MakeIntVal(ValToInt(args[0], sourceLocation) -
+                        ValToInt(args[1], sourceLocation));
     case Operator::Not:
-      return MakeBoolVal(!ValToBool(args[0], line_num));
+      return MakeBoolVal(!ValToBool(args[0], sourceLocation));
     case Operator::And:
-      return MakeBoolVal(ValToBool(args[0], line_num) &&
-                         ValToBool(args[1], line_num));
+      return MakeBoolVal(ValToBool(args[0], sourceLocation) &&
+                         ValToBool(args[1], sourceLocation));
     case Operator::Or:
-      return MakeBoolVal(ValToBool(args[0], line_num) ||
-                         ValToBool(args[1], line_num));
+      return MakeBoolVal(ValToBool(args[0], sourceLocation) ||
+                         ValToBool(args[1], sourceLocation));
     case Operator::Eq:
-      return MakeBoolVal(ValueEqual(args[0], args[1], line_num));
+      return MakeBoolVal(ValueEqual(args[0], args[1], sourceLocation));
   }
 }
 
@@ -288,7 +288,7 @@ void InitGlobals(std::list<Declaration>* fs) {
 auto ChoiceDeclaration::InitGlobals(Env& globals) const -> void {
   auto alts = new VarValues();
   for (auto kv : alternatives) {
-    auto t = ToType(line_num, InterpExp(Env(), kv.second));
+    auto t = ToType(this->line_num, InterpExp(Env(), kv.second));
     alts->push_back(make_pair(kv.first, t));
   }
   auto ct = MakeChoiceTypeVal(name, alts);
@@ -327,14 +327,15 @@ auto FunctionDeclaration::InitGlobals(Env& globals) const -> void {
 // where C is the body of the function,
 //       E is the environment (functions + parameters + locals)
 //       F is the function
-void CallFunction(int line_num, std::vector<Value*> operas, State* state) {
-  CheckAlive(operas[0], line_num);
+void CallFunction(int sourceLocation, std::vector<Value*> operas,
+                  State* state) {
+  CheckAlive(operas[0], sourceLocation);
   switch (operas[0]->tag) {
     case ValKind::FunV: {
       // Bind arguments to parameters
       std::list<std::string> params;
       std::optional<Env> envWithMatches = PatternMatch(
-          operas[0]->u.fun.param, operas[1], globals, &params, line_num);
+          operas[0]->u.fun.param, operas[1], globals, &params, sourceLocation);
       if (!envWithMatches) {
         std::cerr << "internal error in call_function, pattern match failed"
                   << std::endl;
@@ -348,14 +349,14 @@ void CallFunction(int line_num, std::vector<Value*> operas, State* state) {
       break;
     }
     case ValKind::StructTV: {
-      Value* arg = CopyVal(operas[1], line_num);
+      Value* arg = CopyVal(operas[1], sourceLocation);
       Value* sv = MakeStructVal(operas[0], arg);
       Frame* frame = state->stack.Top();
       frame->todo.Push(MakeValAct(sv));
       break;
     }
     case ValKind::AltConsV: {
-      Value* arg = CopyVal(operas[1], line_num);
+      Value* arg = CopyVal(operas[1], sourceLocation);
       Value* av = MakeAltVal(*operas[0]->u.alt_cons.alt_name,
                              *operas[0]->u.alt_cons.choice_name, arg);
       Frame* frame = state->stack.Top();
@@ -363,14 +364,14 @@ void CallFunction(int line_num, std::vector<Value*> operas, State* state) {
       break;
     }
     default:
-      std::cerr << line_num << ": in call, expected a function, not ";
+      std::cerr << sourceLocation << ": in call, expected a function, not ";
       PrintValue(operas[0], std::cerr);
       std::cerr << std::endl;
       exit(-1);
   }
 }
 
-void KillScope(int line_num, Scope* scope) {
+void KillScope(int sourceLocation, Scope* scope) {
   for (const auto& l : scope->locals) {
     std::optional<Address> a = scope->env.Get(l);
     if (!a) {
@@ -381,9 +382,9 @@ void KillScope(int line_num, Scope* scope) {
   }
 }
 
-void KillLocals(int line_num, Frame* frame) {
+void KillLocals(int sourceLocation, Frame* frame) {
   for (auto scope : frame->scopes) {
-    KillScope(line_num, scope);
+    KillScope(sourceLocation, scope);
   }
 }
 
@@ -429,7 +430,7 @@ auto ToValue(Expression* value) -> Value* {
 // The names of the pattern variables are added to the vars parameter.
 // Returns nullopt if the value doesn't match the pattern.
 auto PatternMatch(Value* p, Value* v, Env env, std::list<std::string>* vars,
-                  int line_num) -> std::optional<Env> {
+                  int sourceLocation) -> std::optional<Env> {
   if (tracing_output) {
     std::cout << "pattern_match(";
     PrintValue(p, std::cout);
@@ -439,7 +440,7 @@ auto PatternMatch(Value* p, Value* v, Env env, std::list<std::string>* vars,
   }
   switch (p->tag) {
     case ValKind::VarPatV: {
-      Address a = AllocateValue(CopyVal(v, line_num));
+      Address a = AllocateValue(CopyVal(v, sourceLocation));
       vars->push_back(*p->u.var_pat.name);
       env.Set(*p->u.var_pat.name, a);
       return env;
@@ -460,8 +461,9 @@ auto PatternMatch(Value* p, Value* v, Env env, std::list<std::string>* vars,
               std::cerr << std::endl;
               exit(-1);
             }
-            std::optional<Env> envWithMatches = PatternMatch(
-                state->heap[elt.second], state->heap[*a], env, vars, line_num);
+            std::optional<Env> envWithMatches =
+                PatternMatch(state->heap[elt.second], state->heap[*a], env,
+                             vars, sourceLocation);
             if (!envWithMatches) {
               return std::nullopt;
             }
@@ -483,8 +485,8 @@ auto PatternMatch(Value* p, Value* v, Env env, std::list<std::string>* vars,
               *p->u.alt.alt_name != *v->u.alt.alt_name) {
             return std::nullopt;
           }
-          std::optional<Env> envWithMatches =
-              PatternMatch(p->u.alt.arg, v->u.alt.arg, env, vars, line_num);
+          std::optional<Env> envWithMatches = PatternMatch(
+              p->u.alt.arg, v->u.alt.arg, env, vars, sourceLocation);
           if (!envWithMatches) {
             return std::nullopt;
           }
@@ -501,19 +503,20 @@ auto PatternMatch(Value* p, Value* v, Env env, std::list<std::string>* vars,
     case ValKind::FunctionTV:
       switch (v->tag) {
         case ValKind::FunctionTV: {
-          std::optional<Env> envWithMatches = PatternMatch(
-              p->u.fun_type.param, v->u.fun_type.param, env, vars, line_num);
+          std::optional<Env> envWithMatches =
+              PatternMatch(p->u.fun_type.param, v->u.fun_type.param, env, vars,
+                           sourceLocation);
           if (!envWithMatches) {
             return std::nullopt;
           }
           return PatternMatch(p->u.fun_type.ret, v->u.fun_type.ret,
-                              *envWithMatches, vars, line_num);
+                              *envWithMatches, vars, sourceLocation);
         }
         default:
           return std::nullopt;
       }
     default:
-      if (ValueEqual(p, v, line_num)) {
+      if (ValueEqual(p, v, sourceLocation)) {
         return env;
       } else {
         return std::nullopt;
@@ -521,10 +524,10 @@ auto PatternMatch(Value* p, Value* v, Env env, std::list<std::string>* vars,
   }
 }
 
-void PatternAssignment(Value* pat, Value* val, int line_num) {
+void PatternAssignment(Value* pat, Value* val, int sourceLocation) {
   switch (pat->tag) {
     case ValKind::PtrV:
-      state->heap[ValToPtr(pat, line_num)] = val;
+      state->heap[ValToPtr(pat, sourceLocation)] = val;
       break;
     case ValKind::TupleV: {
       switch (val->tag) {
@@ -543,7 +546,7 @@ void PatternAssignment(Value* pat, Value* val, int line_num) {
               exit(-1);
             }
             PatternAssignment(state->heap[elt.second], state->heap[*a],
-                              line_num);
+                              sourceLocation);
           }
           break;
         }
@@ -565,7 +568,7 @@ void PatternAssignment(Value* pat, Value* val, int line_num) {
             std::cerr << "internal error in pattern assignment" << std::endl;
             exit(-1);
           }
-          PatternAssignment(pat->u.alt.arg, val->u.alt.arg, line_num);
+          PatternAssignment(pat->u.alt.arg, val->u.alt.arg, sourceLocation);
           break;
         }
         default:
@@ -579,7 +582,7 @@ void PatternAssignment(Value* pat, Value* val, int line_num) {
       break;
     }
     default:
-      if (!ValueEqual(pat, val, line_num)) {
+      if (!ValueEqual(pat, val, sourceLocation)) {
         std::cerr << "internal error in pattern assignment" << std::endl;
         exit(-1);
       }
