@@ -48,7 +48,7 @@ DELIMIT  "__delimit"
 YIELD    "__yield"
 RESUME   "__resume"
 CATCH     "__catch"
-SNAPSHOT "__Snapshot"
+CONTINUATION "__Continuation"
 
 identifier    [A-Za-z_][A-Za-z0-9_]*
 integer_literal   [0-9]+
@@ -86,7 +86,7 @@ integer_literal   [0-9]+
 {YIELD}    { return YIELD; }
 {RESUME}   { return RESUME; }
 {CATCH}    { return CATCH; }
-{SNAPSHOT} { return SNAPSHOT; }
+{CONTINUATION} { return CONTINUATION; }
 
 {identifier} {
   int n = strlen(yytext);

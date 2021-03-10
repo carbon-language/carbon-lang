@@ -97,8 +97,8 @@ auto CopyVal(Value* val, int line_num) -> Value* {
       return MakeVarTypeVal(*val->u.var_type);
     case ValKind::AutoTV:
       return MakeAutoTypeVal();
-    case ValKind::SnapshotTV:
-      return MakeSnapshotTypeVal();
+    case ValKind::ContinuationTV:
+      return MakeContinuationTypeVal();
     case ValKind::TupleTV: {
       auto new_fields = new VarValues();
       for (auto& field : *val->u.tuple_type.fields) {
@@ -644,7 +644,7 @@ void StepLvalue() {
     case ExpressionKind::TypeT:
     case ExpressionKind::FunctionT:
     case ExpressionKind::AutoT:
-    case ExpressionKind::SnapshotT:
+    case ExpressionKind::ContinuationT:
     case ExpressionKind::PatternVariable: {
       frame->todo.Pop();
       frame->todo.Push(MakeExpToLvalAct());
@@ -770,8 +770,8 @@ void StepExp() {
       act->pos++;
       break;
     }
-    case ExpressionKind::SnapshotT: {
-      Value* v = MakeSnapshotTypeVal();
+    case ExpressionKind::ContinuationT: {
+      Value* v = MakeContinuationTypeVal();
       frame->todo.Pop(1);
       frame->todo.Push(MakeValAct(v));
       break;
@@ -844,9 +844,9 @@ auto ResumeTodoAndScopes(Stack<Action*> todo, Stack<Action*>& new_todo,
   }
 }
 
-// Returns the bottom scope of a frame, which corresponds
-// to the scope with the function's parameters.
-auto GetFrameScope(Frame* frame) -> Scope* {
+// Returns the scope of the frame that contains the function's
+// parameters.
+auto ParameterBindings(Frame* frame) -> Scope* {
   Stack<Scope*> scopes = frame->scopes;
   Scope* current = scopes.Top();
   while (!scopes.IsEmpty()) {
@@ -881,7 +881,7 @@ auto ResumeContinuation(Stack<Frame*> yielded) -> void {
     }
     ResumeContinuation(yielded);
     Stack<Scope*> new_scopes;
-    new_scopes.Push(GetFrameScope(frame));
+    new_scopes.Push(ParameterBindings(frame));
     Frame* new_frame = new Frame(frame->name, new_scopes, Stack<Action*>());
     ResumeTodoAndScopes(frame->todo, new_frame->todo, frame->scopes,
                         new_frame->scopes);
@@ -1294,7 +1294,7 @@ void HandleValue() {
         case ExpressionKind::BoolT:
         case ExpressionKind::TypeT:
         case ExpressionKind::AutoT:
-        case ExpressionKind::SnapshotT:
+        case ExpressionKind::ContinuationT:
           std::cerr << "internal error, bad expression context in handle_value"
                     << std::endl;
           exit(-1);

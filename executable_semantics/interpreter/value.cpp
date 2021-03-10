@@ -156,12 +156,11 @@ auto MakeTypeTypeVal() -> Value* {
   return v;
 }
 
-// Return a Snapshot type, that is, the type of a first-class
-// continuation.
-auto MakeSnapshotTypeVal() -> Value* {
+// Return a Continuation type.
+auto MakeContinuationTypeVal() -> Value* {
   auto* v = new Value();
   v->alive = true;
-  v->tag = ValKind::SnapshotTV;
+  v->tag = ValKind::ContinuationTV;
   return v;
 }
 
@@ -294,8 +293,8 @@ void PrintValue(Value* val, std::ostream& out) {
     case ValKind::AutoTV:
       out << "auto";
       break;
-    case ValKind::SnapshotTV:
-      out << "Snapshot";
+    case ValKind::ContinuationTV:
+      out << "Continuation";
       break;
     case ValKind::PointerTV:
       out << "Ptr(";
@@ -359,7 +358,7 @@ auto TypeEqual(Value* t1, Value* t2) -> bool {
       return FieldsEqual(t1->u.tuple_type.fields, t2->u.tuple_type.fields);
     case ValKind::IntTV:
     case ValKind::BoolTV:
-    case ValKind::SnapshotTV:
+    case ValKind::ContinuationTV:
       return true;
     default:
       return false;

@@ -38,7 +38,7 @@ enum class ValKind {
   TupleTV,
   StructTV,
   ChoiceTV,
-  SnapshotTV,  // The type of a continuation.
+  ContinuationTV,  // The type of a continuation.
   VarPatV,
   AltConsV,
   ContinuationV  // A first-class continuation value.
@@ -145,7 +145,7 @@ auto MakeIntTypeVal() -> Value*;
 auto MakeAutoTypeVal() -> Value*;
 auto MakeBoolTypeVal() -> Value*;
 auto MakeTypeTypeVal() -> Value*;
-auto MakeSnapshotTypeVal() -> Value*;
+auto MakeContinuationTypeVal() -> Value*;
 auto MakeFunTypeVal(Value* param, Value* ret) -> Value*;
 auto MakePtrTypeVal(Value* type) -> Value*;
 auto MakeStructTypeVal(std::string name, VarValues* fields, VarValues* methods)

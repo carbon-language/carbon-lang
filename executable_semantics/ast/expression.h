@@ -19,7 +19,7 @@ enum class ExpressionKind {
   GetField,
   Index,
   IntT,
-  SnapshotT,  // The type of a continuation value.
+  ContinuationT,  // The type of a continuation value.
   Integer,
   PatternVariable,
   PrimitiveOp,
@@ -109,9 +109,9 @@ auto MakeBoolType(int line_num) -> Expression*;
 auto MakeFunType(int line_num, Expression* param, Expression* ret)
     -> Expression*;
 auto MakeAutoType(int line_num) -> Expression*;
-// Returns a Snapshot type AST node at the given source location,
+// Returns a Continuation type AST node at the given source location,
 // which is the type of a continuation value.
-auto MakeSnapshotType(int line_num) -> Expression*;
+auto MakeContinuationType(int line_num) -> Expression*;
 
 void PrintExp(const Expression* exp);
 

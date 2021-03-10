@@ -36,11 +36,10 @@ auto MakeAutoType(int line_num) -> Expression* {
   return t;
 }
 
-// Returns a Snapshot type AST node at the given source location,
-// which is the type of a continuation value.
-auto MakeSnapshotType(int line_num) -> Expression* {
+// Returns a Continuation type AST node at the given source location.
+auto MakeContinuationType(int line_num) -> Expression* {
   auto* t = new Expression();
-  t->tag = ExpressionKind::SnapshotT;
+  t->tag = ExpressionKind::ContinuationT;
   t->line_num = line_num;
   return t;
 }
@@ -281,8 +280,8 @@ void PrintExp(const Expression* e) {
     case ExpressionKind::AutoT:
       std::cout << "auto";
       break;
-    case ExpressionKind::SnapshotT:
-      std::cout << "Snapshot";
+    case ExpressionKind::ContinuationT:
+      std::cout << "Continuation";
       break;
     case ExpressionKind::FunctionT:
       std::cout << "fn ";

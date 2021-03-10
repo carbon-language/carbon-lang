@@ -99,7 +99,7 @@ void yyerror(std::optional<Carbon::AST> const& parsedProgram, char* error) {
 %token CATCH
 %token YIELD
 %token RESUME
-%token SNAPSHOT
+%token CONTINUATION
 %token BREAK
 %token CONTINUE
 %token RETURN
@@ -152,8 +152,8 @@ expression:
     { $$ = Carbon::MakeTypeType(yylineno); }
 | AUTO
     { $$ = Carbon::MakeAutoType(yylineno); }
-| SNAPSHOT
-    { $$ = Carbon::MakeSnapshotType(yylineno); }
+| CONTINUATION
+    { $$ = Carbon::MakeContinuationType(yylineno); }
 | paren_expression { $$ = $1; }
 | expression EQUAL expression
     { $$ = Carbon::MakeBinOp(yylineno, Carbon::Operator::Eq, $1, $3); }

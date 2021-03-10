@@ -30,8 +30,17 @@ struct Scope {
 /***** Frames and State *****/
 
 struct Frame {
+  // The name of the function.
   std::string name;
+  // The bottom scope always contains the parameter-argument bindings
+  // for this function call. The rest of the scopes contain local
+  // variables defined by blocks within the function. The scope at the
+  // top of the stack is the current scope and it's environment is the
+  // one used for looking up the value associated with a variable.
   Stack<Scope*> scopes;
+  // The actions that need to be executed in the future of the
+  // current function call. The top of the stack is the action
+  // that is executed first.
   Stack<Action*> todo;
 
   Frame(std::string n, Stack<Scope*> s, Stack<Action*> c)

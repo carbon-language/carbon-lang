@@ -76,7 +76,7 @@ auto ToType(int line_num, Value* val) -> Value* {
     case ValKind::BoolTV:
     case ValKind::IntTV:
     case ValKind::AutoTV:
-    case ValKind::SnapshotTV:
+    case ValKind::ContinuationTV:
       return val;
     default:
       std::cerr << line_num << ": in ToType, expected a type, not ";
@@ -97,8 +97,8 @@ auto ReifyType(Value* t, int line_num) -> Expression* {
       return MakeBoolType(0);
     case ValKind::TypeTV:
       return MakeTypeType(0);
-    case ValKind::SnapshotTV:
-      return MakeSnapshotType(0);
+    case ValKind::ContinuationTV:
+      return MakeContinuationType(0);
     case ValKind::FunctionTV:
       return MakeFunType(0, ReifyType(t->u.fun_type.param, line_num),
                          ReifyType(t->u.fun_type.ret, line_num));
@@ -392,8 +392,8 @@ auto TypeCheckExp(Expression* e, TypeEnv env, Env ct_env, Value* expected,
       return TCResult(e, MakeTypeTypeVal(), env);
     case ExpressionKind::AutoT:
       return TCResult(e, MakeAutoTypeVal(), env);
-    case ExpressionKind::SnapshotT:
-      return TCResult(e, MakeSnapshotTypeVal(), env);
+    case ExpressionKind::ContinuationT:
+      return TCResult(e, MakeContinuationTypeVal(), env);
   }
 }
 
@@ -513,7 +513,8 @@ auto TypeCheckStmt(Statement* s, TypeEnv env, Env ct_env, Value* ret_type)
           TypeCheckStmt(s->u.delimit_stmt.body, env, ct_env, ret_type);
       auto handler_env = env;
       handler_env.Set(*s->u.delimit_stmt.yield_variable, MakeIntTypeVal());
-      handler_env.Set(*s->u.delimit_stmt.continuation, MakeSnapshotTypeVal());
+      handler_env.Set(*s->u.delimit_stmt.continuation,
+                      MakeContinuationTypeVal());
       auto handler_result = TypeCheckStmt(s->u.delimit_stmt.handler,
                                           handler_env, ct_env, ret_type);
       return TCStatement(
