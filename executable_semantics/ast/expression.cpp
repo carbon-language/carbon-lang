@@ -10,6 +10,20 @@
 
 namespace Carbon {
 
+auto MakeCaptureByValue(std::string s) -> Capture* {
+  Capture* c = new Capture;
+  c->tag = CaptureKind::ByValue;
+  c->variable = new std::string(s);
+  return c;
+}
+
+auto MakeCaptureByReference(std::string s) -> Capture* {
+  Capture* c = new Capture;
+  c->tag = CaptureKind::ByReference;
+  c->variable = new std::string(s);
+  return c;
+}
+
 auto MakeTypeType(int line_num) -> Expression* {
   auto* t = new Expression();
   t->tag = ExpressionKind::TypeT;
@@ -164,14 +178,16 @@ auto MakeIndex(int line_num, Expression* exp, Expression* i) -> Expression* {
 // Returns an AST node for a lambda expression, that is,
 // an anonymous, lexically scoped function, given the
 // source line number, the parameter (a tuple expression),
-// the return type, and the body.
+// the return type, capture clause, and the body.
 auto MakeLambda(int line_num, Expression* parameter, Expression* return_type,
-                Statement* body) -> Expression* {
+                std::vector<Capture*>* capture_clause, Statement* body)
+    -> Expression* {
   auto* e = new Expression();
   e->line_num = line_num;
   e->tag = ExpressionKind::Lambda;
   e->u.lambda.parameter = parameter;
   e->u.lambda.return_type = return_type;
+  e->u.lambda.capture_clause = capture_clause;
   e->u.lambda.body = body;
   return e;
 }

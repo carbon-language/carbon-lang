@@ -472,7 +472,7 @@ return y;}
 heap: fun<main>, Int: y, fn (0 = Int: y@1) {
 return fn (0 = Int: x)Int{ return y;
 };}
-, 0, 0, Int: x, 0, 
+, 0, 0, Int: x, 
 env: y: 0, 
 }
 --- handle value fn (0 = Int: x@5) {
@@ -488,7 +488,7 @@ return y;}
 heap: fun<main>, Int: y, fn (0 = Int: y@1) {
 return fn (0 = Int: x)Int{ return y;
 };}
-, 0, !!0, Int: x, 0, 
+, 0, !!0, Int: x, 
 env: f: fn (0 = Int: y@1) {
 return fn (0 = Int: x)Int{ return y;
 };}
@@ -506,7 +506,7 @@ return y;}
 heap: fun<main>, Int: y, fn (0 = Int: y@1) {
 return fn (0 = Int: x)Int{ return y;
 };}
-, 0, !!0, Int: x, 0, 
+, 0, !!0, Int: x, 
 env: f: fn (0 = Int: y@1) {
 return fn (0 = Int: x)Int{ return y;
 };}
@@ -520,7 +520,7 @@ return y;}
 heap: fun<main>, Int: y, fn (0 = Int: y@1) {
 return fn (0 = Int: x)Int{ return y;
 };}
-, 0, !!0, Int: x, 0, 
+, 0, !!0, Int: x, 
 env: f: fn (0 = Int: y@1) {
 return fn (0 = Int: x)Int{ return y;
 };}
@@ -534,7 +534,7 @@ return y;}
 heap: fun<main>, Int: y, fn (0 = Int: y@1) {
 return fn (0 = Int: x)Int{ return y;
 };}
-, 0, !!0, Int: x, 0, 
+, 0, !!0, Int: x, 
 env: f: fn (0 = Int: y@1) {
 return fn (0 = Int: x)Int{ return y;
 };}
@@ -542,30 +542,30 @@ return fn (0 = Int: x)Int{ return y;
 }
 --- handle value 42 with (0 = 42)<1>(42,) --->
 {
-stack: main{(0 = 42@7)<-1> :: f(0 = 0)(0 = 42)<1>(fn (0 = Int: x@5) {
+stack: main{(0 = 42@6)<-1> :: f(0 = 0)(0 = 42)<1>(fn (0 = Int: x@5) {
 return y;}
 ,) :: return f(0 = 0)(0 = 42);<0>} :: top{}
 heap: fun<main>, Int: y, fn (0 = Int: y@1) {
 return fn (0 = Int: x)Int{ return y;
 };}
-, 0, !!0, Int: x, 0, 42, 
+, 0, !!0, Int: x, 42, 
 env: f: fn (0 = Int: y@1) {
 return fn (0 = Int: x)Int{ return y;
 };}
 , main: fun<main>, 
 }
---- handle value (0 = 42@7) with f(0 = 0)(0 = 42)<2>(fn (0 = Int: x@5) {
+--- handle value (0 = 42@6) with f(0 = 0)(0 = 42)<2>(fn (0 = Int: x@5) {
 return y;}
-,(0 = 42@7),) --->
-pattern_match((0 = Int: x@5), (0 = 42@7))
+,(0 = 42@6),) --->
+pattern_match((0 = Int: x@5), (0 = 42@6))
 pattern_match(Int: x, 42)
 {
 stack: fn{return y;<-1>} :: main{return f(0 = 0)(0 = 42);<0>} :: top{}
 heap: fun<main>, Int: y, fn (0 = Int: y@1) {
 return fn (0 = Int: x)Int{ return y;
 };}
-, 0, !!0, Int: x, 0, 42, 42, 
-env: x: 42, y: 0, 
+, 0, !!0, Int: x, 42, 42, 
+env: x: 42, y: !!0, 
 }
 --- step stmt return y; --->
 {
@@ -573,8 +573,8 @@ stack: fn{return y;<-1>} :: main{return f(0 = 0)(0 = 42);<0>} :: top{}
 heap: fun<main>, Int: y, fn (0 = Int: y@1) {
 return fn (0 = Int: x)Int{ return y;
 };}
-, 0, !!0, Int: x, 0, 42, 42, 
-env: x: 42, y: 0, 
+, 0, !!0, Int: x, 42, 42, 
+env: x: 42, y: !!0, 
 }
 --- step stmt return y; --->
 {
@@ -582,37 +582,18 @@ stack: fn{y<-1> :: return y;<0>} :: main{return f(0 = 0)(0 = 42);<0>} :: top{}
 heap: fun<main>, Int: y, fn (0 = Int: y@1) {
 return fn (0 = Int: x)Int{ return y;
 };}
-, 0, !!0, Int: x, 0, 42, 42, 
-env: x: 42, y: 0, 
+, 0, !!0, Int: x, 42, 42, 
+env: x: 42, y: !!0, 
 }
 --- step exp y --->
 {
-stack: fn{0<-1> :: return y;<0>} :: main{return f(0 = 0)(0 = 42);<0>} :: top{}
+stack: fn{!!0<-1> :: return y;<0>} :: main{return f(0 = 0)(0 = 42);<0>} :: top{}
 heap: fun<main>, Int: y, fn (0 = Int: y@1) {
 return fn (0 = Int: x)Int{ return y;
 };}
-, 0, !!0, Int: x, 0, 42, 42, 
-env: x: 42, y: 0, 
+, 0, !!0, Int: x, 42, 42, 
+env: x: 42, y: !!0, 
 }
---- handle value 0 with return y;<1>(0,) --->
-{
-stack: main{0<-1> :: return f(0 = 0)(0 = 42);<0>} :: top{}
-heap: fun<main>, Int: y, fn (0 = Int: y@1) {
-return fn (0 = Int: x)Int{ return y;
-};}
-, 0, !!0, Int: x, 0, 42, !!42, 
-env: f: fn (0 = Int: y@1) {
-return fn (0 = Int: x)Int{ return y;
-};}
-, main: fun<main>, 
-}
---- handle value 0 with return f(0 = 0)(0 = 42);<1>(0,) --->
-{
-stack: top{0<-1>}
-heap: fun<main>, Int: y, !!fn (0 = Int: y@1) {
-return fn (0 = Int: x)Int{ return y;
-};}
-, 0, !!0, Int: x, 0, 42, !!42, 
-env: main: fun<main>, 
-}
-result: 0
+--- handle value !!0 with return y;<1>(!!0,) --->
+7: undefined behavior: access to dead value !!0
+EXIT CODE: 255

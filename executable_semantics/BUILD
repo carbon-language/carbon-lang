@@ -31,6 +31,8 @@ EXAMPLES = [
     "continue1",
     "experimental_lambda1",
     "experimental_lambda2",
+    "experimental_lambda3",
+    "experimental_lambda_upward_funarg",
     "fun_recur",
     "fun1",
     "fun2",

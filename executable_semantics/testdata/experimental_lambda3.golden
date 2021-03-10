@@ -1,0 +1,1988 @@
+********** source program **********
+fn main () -> Int {
+var Int: x = 0;
+var auto: cell = (0 = fn ()(){ x = (x + 1);
+return ();
+}, 1 = fn ()Int{ return x;
+});
+cell[0]();
+cell[0]();
+return (cell[1]() - 2);
+
+}
+********** type checking **********
+--- step exp Int --->
+--- step exp Int --->
+--- step exp Int --->
+--- step exp () --->
+--- step exp Int --->
+--- step exp auto --->
+--- step exp 0 --->
+--- step exp 0 --->
+--- step exp 1 --->
+
+********** type checking complete **********
+fn main () -> Int {
+var Int: x = 0;
+var auto: cell = (0 = fn ()(){ x = (x + 1);
+return ();
+}, 1 = fn ()Int{ return x;
+});
+cell[0]();
+cell[0]();
+return (cell[1]() - 2);
+}
+********** starting execution **********
+********** initializing globals **********
+--- step exp () --->
+********** calling main function **********
+{
+stack: top{main()<-1>}
+heap: fun<main>, 
+env: main: fun<main>, 
+}
+--- step exp main() --->
+{
+stack: top{main<-1> :: main()<0>}
+heap: fun<main>, 
+env: main: fun<main>, 
+}
+--- step exp main --->
+{
+stack: top{fun<main><-1> :: main()<0>}
+heap: fun<main>, 
+env: main: fun<main>, 
+}
+--- handle value fun<main> with main()<1>(fun<main>,) --->
+{
+stack: top{()<-1> :: main()<1>(fun<main>,)}
+heap: fun<main>, 
+env: main: fun<main>, 
+}
+--- step exp () --->
+{
+stack: top{()<-1> :: main()<1>(fun<main>,)}
+heap: fun<main>, 
+env: main: fun<main>, 
+}
+--- handle value () with main()<2>(fun<main>,(),) --->
+pattern_match((), ())
+{
+stack: main{var Int: x = 0; ... <-1>} :: top{}
+heap: fun<main>, 
+env: main: fun<main>, 
+}
+--- step stmt var Int: x = 0; ...  --->
+{
+stack: main{var Int: x = 0;<-1> :: var auto: cell = (0 = fn ()(){ x = (x + 1);
+return ();
+}, 1 = fn ()Int{ return x;
+}); ... <-1>} :: top{}
+heap: fun<main>, 
+env: main: fun<main>, 
+}
+--- step stmt var Int: x = 0; --->
+{
+stack: main{0<-1> :: var Int: x = 0;<0> :: var auto: cell = (0 = fn ()(){ x = (x + 1);
+return ();
+}, 1 = fn ()Int{ return x;
+}); ... <-1>} :: top{}
+heap: fun<main>, 
+env: main: fun<main>, 
+}
+--- step exp 0 --->
+{
+stack: main{0<-1> :: var Int: x = 0;<0> :: var auto: cell = (0 = fn ()(){ x = (x + 1);
+return ();
+}, 1 = fn ()Int{ return x;
+}); ... <-1>} :: top{}
+heap: fun<main>, 
+env: main: fun<main>, 
+}
+--- handle value 0 with var Int: x = 0;<1>(0,) --->
+{
+stack: main{Int: x<-1> :: var Int: x = 0;<1>(0,) :: var auto: cell = (0 = fn ()(){ x = (x + 1);
+return ();
+}, 1 = fn ()Int{ return x;
+}); ... <-1>} :: top{}
+heap: fun<main>, 
+env: main: fun<main>, 
+}
+--- step exp Int: x --->
+{
+stack: main{Int<-1> :: Int: x<0> :: var Int: x = 0;<1>(0,) :: var auto: cell = (0 = fn ()(){ x = (x + 1);
+return ();
+}, 1 = fn ()Int{ return x;
+}); ... <-1>} :: top{}
+heap: fun<main>, 
+env: main: fun<main>, 
+}
+--- step exp Int --->
+{
+stack: main{Int<-1> :: Int: x<0> :: var Int: x = 0;<1>(0,) :: var auto: cell = (0 = fn ()(){ x = (x + 1);
+return ();
+}, 1 = fn ()Int{ return x;
+}); ... <-1>} :: top{}
+heap: fun<main>, 
+env: main: fun<main>, 
+}
+--- handle value Int with Int: x<1>(Int,) --->
+{
+stack: main{Int: x<-1> :: var Int: x = 0;<1>(0,) :: var auto: cell = (0 = fn ()(){ x = (x + 1);
+return ();
+}, 1 = fn ()Int{ return x;
+}); ... <-1>} :: top{}
+heap: fun<main>, 
+env: main: fun<main>, 
+}
+--- handle value Int: x with var Int: x = 0;<2>(0,Int: x,) --->
+pattern_match(Int: x, 0)
+{
+stack: main{var auto: cell = (0 = fn ()(){ x = (x + 1);
+return ();
+}, 1 = fn ()Int{ return x;
+}); ... <-1>} :: top{}
+heap: fun<main>, 0, 
+env: x: 0, main: fun<main>, 
+}
+--- step stmt var auto: cell = (0 = fn ()(){ x = (x + 1);
+return ();
+}, 1 = fn ()Int{ return x;
+}); ...  --->
+{
+stack: main{var auto: cell = (0 = fn ()(){ x = (x + 1);
+return ();
+}, 1 = fn ()Int{ return x;
+});<-1> :: cell[0](); ... <-1>} :: top{}
+heap: fun<main>, 0, 
+env: x: 0, main: fun<main>, 
+}
+--- step stmt var auto: cell = (0 = fn ()(){ x = (x + 1);
+return ();
+}, 1 = fn ()Int{ return x;
+}); --->
+{
+stack: main{(0 = fn ()(){ x = (x + 1);
+return ();
+}, 1 = fn ()Int{ return x;
+})<-1> :: var auto: cell = (0 = fn ()(){ x = (x + 1);
+return ();
+}, 1 = fn ()Int{ return x;
+});<0> :: cell[0](); ... <-1>} :: top{}
+heap: fun<main>, 0, 
+env: x: 0, main: fun<main>, 
+}
+--- step exp (0 = fn ()(){ x = (x + 1);
+return ();
+}, 1 = fn ()Int{ return x;
+}) --->
+{
+stack: main{fn ()(){ x = (x + 1);
+return ();
+}<-1> :: (0 = fn ()(){ x = (x + 1);
+return ();
+}, 1 = fn ()Int{ return x;
+})<0> :: var auto: cell = (0 = fn ()(){ x = (x + 1);
+return ();
+}, 1 = fn ()Int{ return x;
+});<0> :: cell[0](); ... <-1>} :: top{}
+heap: fun<main>, 0, 
+env: x: 0, main: fun<main>, 
+}
+--- step exp fn ()(){ x = (x + 1);
+return ();
+} --->
+{
+stack: main{()<-1> :: fn ()(){ x = (x + 1);
+return ();
+}<0> :: (0 = fn ()(){ x = (x + 1);
+return ();
+}, 1 = fn ()Int{ return x;
+})<0> :: var auto: cell = (0 = fn ()(){ x = (x + 1);
+return ();
+}, 1 = fn ()Int{ return x;
+});<0> :: cell[0](); ... <-1>} :: top{}
+heap: fun<main>, 0, 
+env: x: 0, main: fun<main>, 
+}
+--- step exp () --->
+{
+stack: main{()<-1> :: fn ()(){ x = (x + 1);
+return ();
+}<0> :: (0 = fn ()(){ x = (x + 1);
+return ();
+}, 1 = fn ()Int{ return x;
+})<0> :: var auto: cell = (0 = fn ()(){ x = (x + 1);
+return ();
+}, 1 = fn ()Int{ return x;
+});<0> :: cell[0](); ... <-1>} :: top{}
+heap: fun<main>, 0, 
+env: x: 0, main: fun<main>, 
+}
+--- handle value () with fn ()(){ x = (x + 1);
+return ();
+}<1>((),) --->
+{
+stack: main{fn () {
+x = (x + 1); ... }
+<-1> :: (0 = fn ()(){ x = (x + 1);
+return ();
+}, 1 = fn ()Int{ return x;
+})<0> :: var auto: cell = (0 = fn ()(){ x = (x + 1);
+return ();
+}, 1 = fn ()Int{ return x;
+});<0> :: cell[0](); ... <-1>} :: top{}
+heap: fun<main>, 0, 
+env: x: 0, main: fun<main>, 
+}
+--- handle value fn () {
+x = (x + 1); ... }
+ with (0 = fn ()(){ x = (x + 1);
+return ();
+}, 1 = fn ()Int{ return x;
+})<1>(fn () {
+x = (x + 1); ... }
+,) --->
+{
+stack: main{fn ()Int{ return x;
+}<-1> :: (0 = fn ()(){ x = (x + 1);
+return ();
+}, 1 = fn ()Int{ return x;
+})<1>(fn () {
+x = (x + 1); ... }
+,) :: var auto: cell = (0 = fn ()(){ x = (x + 1);
+return ();
+}, 1 = fn ()Int{ return x;
+});<0> :: cell[0](); ... <-1>} :: top{}
+heap: fun<main>, 0, 
+env: x: 0, main: fun<main>, 
+}
+--- step exp fn ()Int{ return x;
+} --->
+{
+stack: main{()<-1> :: fn ()Int{ return x;
+}<0> :: (0 = fn ()(){ x = (x + 1);
+return ();
+}, 1 = fn ()Int{ return x;
+})<1>(fn () {
+x = (x + 1); ... }
+,) :: var auto: cell = (0 = fn ()(){ x = (x + 1);
+return ();
+}, 1 = fn ()Int{ return x;
+});<0> :: cell[0](); ... <-1>} :: top{}
+heap: fun<main>, 0, 
+env: x: 0, main: fun<main>, 
+}
+--- step exp () --->
+{
+stack: main{()<-1> :: fn ()Int{ return x;
+}<0> :: (0 = fn ()(){ x = (x + 1);
+return ();
+}, 1 = fn ()Int{ return x;
+})<1>(fn () {
+x = (x + 1); ... }
+,) :: var auto: cell = (0 = fn ()(){ x = (x + 1);
+return ();
+}, 1 = fn ()Int{ return x;
+});<0> :: cell[0](); ... <-1>} :: top{}
+heap: fun<main>, 0, 
+env: x: 0, main: fun<main>, 
+}
+--- handle value () with fn ()Int{ return x;
+}<1>((),) --->
+{
+stack: main{fn () {
+return x;}
+<-1> :: (0 = fn ()(){ x = (x + 1);
+return ();
+}, 1 = fn ()Int{ return x;
+})<1>(fn () {
+x = (x + 1); ... }
+,) :: var auto: cell = (0 = fn ()(){ x = (x + 1);
+return ();
+}, 1 = fn ()Int{ return x;
+});<0> :: cell[0](); ... <-1>} :: top{}
+heap: fun<main>, 0, 
+env: x: 0, main: fun<main>, 
+}
+--- handle value fn () {
+return x;}
+ with (0 = fn ()(){ x = (x + 1);
+return ();
+}, 1 = fn ()Int{ return x;
+})<2>(fn () {
+x = (x + 1); ... }
+,fn () {
+return x;}
+,) --->
+{
+stack: main{(0 = fn () {
+x = (x + 1); ... }
+@2, 1 = fn () {
+return x;}
+@3)<-1> :: var auto: cell = (0 = fn ()(){ x = (x + 1);
+return ();
+}, 1 = fn ()Int{ return x;
+});<0> :: cell[0](); ... <-1>} :: top{}
+heap: fun<main>, 0, fn () {
+x = (x + 1); ... }
+, fn () {
+return x;}
+, 
+env: x: 0, main: fun<main>, 
+}
+--- handle value (0 = fn () {
+x = (x + 1); ... }
+@2, 1 = fn () {
+return x;}
+@3) with var auto: cell = (0 = fn ()(){ x = (x + 1);
+return ();
+}, 1 = fn ()Int{ return x;
+});<1>((0 = fn () {
+x = (x + 1); ... }
+@2, 1 = fn () {
+return x;}
+@3),) --->
+{
+stack: main{auto: cell<-1> :: var auto: cell = (0 = fn ()(){ x = (x + 1);
+return ();
+}, 1 = fn ()Int{ return x;
+});<1>((0 = fn () {
+x = (x + 1); ... }
+@2, 1 = fn () {
+return x;}
+@3),) :: cell[0](); ... <-1>} :: top{}
+heap: fun<main>, 0, fn () {
+x = (x + 1); ... }
+, fn () {
+return x;}
+, 
+env: x: 0, main: fun<main>, 
+}
+--- step exp auto: cell --->
+{
+stack: main{auto<-1> :: auto: cell<0> :: var auto: cell = (0 = fn ()(){ x = (x + 1);
+return ();
+}, 1 = fn ()Int{ return x;
+});<1>((0 = fn () {
+x = (x + 1); ... }
+@2, 1 = fn () {
+return x;}
+@3),) :: cell[0](); ... <-1>} :: top{}
+heap: fun<main>, 0, fn () {
+x = (x + 1); ... }
+, fn () {
+return x;}
+, 
+env: x: 0, main: fun<main>, 
+}
+--- step exp auto --->
+{
+stack: main{auto<-1> :: auto: cell<0> :: var auto: cell = (0 = fn ()(){ x = (x + 1);
+return ();
+}, 1 = fn ()Int{ return x;
+});<1>((0 = fn () {
+x = (x + 1); ... }
+@2, 1 = fn () {
+return x;}
+@3),) :: cell[0](); ... <-1>} :: top{}
+heap: fun<main>, 0, fn () {
+x = (x + 1); ... }
+, fn () {
+return x;}
+, 
+env: x: 0, main: fun<main>, 
+}
+--- handle value auto with auto: cell<1>(auto,) --->
+{
+stack: main{auto: cell<-1> :: var auto: cell = (0 = fn ()(){ x = (x + 1);
+return ();
+}, 1 = fn ()Int{ return x;
+});<1>((0 = fn () {
+x = (x + 1); ... }
+@2, 1 = fn () {
+return x;}
+@3),) :: cell[0](); ... <-1>} :: top{}
+heap: fun<main>, 0, fn () {
+x = (x + 1); ... }
+, fn () {
+return x;}
+, 
+env: x: 0, main: fun<main>, 
+}
+--- handle value auto: cell with var auto: cell = (0 = fn ()(){ x = (x + 1);
+return ();
+}, 1 = fn ()Int{ return x;
+});<2>((0 = fn () {
+x = (x + 1); ... }
+@2, 1 = fn () {
+return x;}
+@3),auto: cell,) --->
+pattern_match(auto: cell, (0 = fn () {
+x = (x + 1); ... }
+@2, 1 = fn () {
+return x;}
+@3))
+{
+stack: main{cell[0](); ... <-1>} :: top{}
+heap: fun<main>, 0, fn () {
+x = (x + 1); ... }
+, fn () {
+return x;}
+, fn () {
+x = (x + 1); ... }
+, fn () {
+return x;}
+, (0 = fn () {
+x = (x + 1); ... }
+@4, 1 = fn () {
+return x;}
+@5), 
+env: cell: (0 = fn () {
+x = (x + 1); ... }
+@4, 1 = fn () {
+return x;}
+@5), x: 0, main: fun<main>, 
+}
+--- step stmt cell[0](); ...  --->
+{
+stack: main{cell[0]();<-1> :: cell[0](); ... <-1>} :: top{}
+heap: fun<main>, 0, fn () {
+x = (x + 1); ... }
+, fn () {
+return x;}
+, fn () {
+x = (x + 1); ... }
+, fn () {
+return x;}
+, (0 = fn () {
+x = (x + 1); ... }
+@4, 1 = fn () {
+return x;}
+@5), 
+env: cell: (0 = fn () {
+x = (x + 1); ... }
+@4, 1 = fn () {
+return x;}
+@5), x: 0, main: fun<main>, 
+}
+--- step stmt cell[0](); --->
+{
+stack: main{cell[0]()<-1> :: cell[0]();<-1> :: cell[0](); ... <-1>} :: top{}
+heap: fun<main>, 0, fn () {
+x = (x + 1); ... }
+, fn () {
+return x;}
+, fn () {
+x = (x + 1); ... }
+, fn () {
+return x;}
+, (0 = fn () {
+x = (x + 1); ... }
+@4, 1 = fn () {
+return x;}
+@5), 
+env: cell: (0 = fn () {
+x = (x + 1); ... }
+@4, 1 = fn () {
+return x;}
+@5), x: 0, main: fun<main>, 
+}
+--- step exp cell[0]() --->
+{
+stack: main{cell[0]<-1> :: cell[0]()<0> :: cell[0]();<-1> :: cell[0](); ... <-1>} :: top{}
+heap: fun<main>, 0, fn () {
+x = (x + 1); ... }
+, fn () {
+return x;}
+, fn () {
+x = (x + 1); ... }
+, fn () {
+return x;}
+, (0 = fn () {
+x = (x + 1); ... }
+@4, 1 = fn () {
+return x;}
+@5), 
+env: cell: (0 = fn () {
+x = (x + 1); ... }
+@4, 1 = fn () {
+return x;}
+@5), x: 0, main: fun<main>, 
+}
+--- step exp cell[0] --->
+{
+stack: main{cell<-1> :: cell[0]<0> :: cell[0]()<0> :: cell[0]();<-1> :: cell[0](); ... <-1>} :: top{}
+heap: fun<main>, 0, fn () {
+x = (x + 1); ... }
+, fn () {
+return x;}
+, fn () {
+x = (x + 1); ... }
+, fn () {
+return x;}
+, (0 = fn () {
+x = (x + 1); ... }
+@4, 1 = fn () {
+return x;}
+@5), 
+env: cell: (0 = fn () {
+x = (x + 1); ... }
+@4, 1 = fn () {
+return x;}
+@5), x: 0, main: fun<main>, 
+}
+--- step exp cell --->
+{
+stack: main{(0 = fn () {
+x = (x + 1); ... }
+@4, 1 = fn () {
+return x;}
+@5)<-1> :: cell[0]<0> :: cell[0]()<0> :: cell[0]();<-1> :: cell[0](); ... <-1>} :: top{}
+heap: fun<main>, 0, fn () {
+x = (x + 1); ... }
+, fn () {
+return x;}
+, fn () {
+x = (x + 1); ... }
+, fn () {
+return x;}
+, (0 = fn () {
+x = (x + 1); ... }
+@4, 1 = fn () {
+return x;}
+@5), 
+env: cell: (0 = fn () {
+x = (x + 1); ... }
+@4, 1 = fn () {
+return x;}
+@5), x: 0, main: fun<main>, 
+}
+--- handle value (0 = fn () {
+x = (x + 1); ... }
+@4, 1 = fn () {
+return x;}
+@5) with cell[0]<1>((0 = fn () {
+x = (x + 1); ... }
+@4, 1 = fn () {
+return x;}
+@5),) --->
+{
+stack: main{0<-1> :: cell[0]<1>((0 = fn () {
+x = (x + 1); ... }
+@4, 1 = fn () {
+return x;}
+@5),) :: cell[0]()<0> :: cell[0]();<-1> :: cell[0](); ... <-1>} :: top{}
+heap: fun<main>, 0, fn () {
+x = (x + 1); ... }
+, fn () {
+return x;}
+, fn () {
+x = (x + 1); ... }
+, fn () {
+return x;}
+, (0 = fn () {
+x = (x + 1); ... }
+@4, 1 = fn () {
+return x;}
+@5), 
+env: cell: (0 = fn () {
+x = (x + 1); ... }
+@4, 1 = fn () {
+return x;}
+@5), x: 0, main: fun<main>, 
+}
+--- step exp 0 --->
+{
+stack: main{0<-1> :: cell[0]<1>((0 = fn () {
+x = (x + 1); ... }
+@4, 1 = fn () {
+return x;}
+@5),) :: cell[0]()<0> :: cell[0]();<-1> :: cell[0](); ... <-1>} :: top{}
+heap: fun<main>, 0, fn () {
+x = (x + 1); ... }
+, fn () {
+return x;}
+, fn () {
+x = (x + 1); ... }
+, fn () {
+return x;}
+, (0 = fn () {
+x = (x + 1); ... }
+@4, 1 = fn () {
+return x;}
+@5), 
+env: cell: (0 = fn () {
+x = (x + 1); ... }
+@4, 1 = fn () {
+return x;}
+@5), x: 0, main: fun<main>, 
+}
+--- handle value 0 with cell[0]<2>((0 = fn () {
+x = (x + 1); ... }
+@4, 1 = fn () {
+return x;}
+@5),0,) --->
+{
+stack: main{fn () {
+x = (x + 1); ... }
+<-1> :: cell[0]()<0> :: cell[0]();<-1> :: cell[0](); ... <-1>} :: top{}
+heap: fun<main>, 0, fn () {
+x = (x + 1); ... }
+, fn () {
+return x;}
+, fn () {
+x = (x + 1); ... }
+, fn () {
+return x;}
+, (0 = fn () {
+x = (x + 1); ... }
+@4, 1 = fn () {
+return x;}
+@5), 
+env: cell: (0 = fn () {
+x = (x + 1); ... }
+@4, 1 = fn () {
+return x;}
+@5), x: 0, main: fun<main>, 
+}
+--- handle value fn () {
+x = (x + 1); ... }
+ with cell[0]()<1>(fn () {
+x = (x + 1); ... }
+,) --->
+{
+stack: main{()<-1> :: cell[0]()<1>(fn () {
+x = (x + 1); ... }
+,) :: cell[0]();<-1> :: cell[0](); ... <-1>} :: top{}
+heap: fun<main>, 0, fn () {
+x = (x + 1); ... }
+, fn () {
+return x;}
+, fn () {
+x = (x + 1); ... }
+, fn () {
+return x;}
+, (0 = fn () {
+x = (x + 1); ... }
+@4, 1 = fn () {
+return x;}
+@5), 
+env: cell: (0 = fn () {
+x = (x + 1); ... }
+@4, 1 = fn () {
+return x;}
+@5), x: 0, main: fun<main>, 
+}
+--- step exp () --->
+{
+stack: main{()<-1> :: cell[0]()<1>(fn () {
+x = (x + 1); ... }
+,) :: cell[0]();<-1> :: cell[0](); ... <-1>} :: top{}
+heap: fun<main>, 0, fn () {
+x = (x + 1); ... }
+, fn () {
+return x;}
+, fn () {
+x = (x + 1); ... }
+, fn () {
+return x;}
+, (0 = fn () {
+x = (x + 1); ... }
+@4, 1 = fn () {
+return x;}
+@5), 
+env: cell: (0 = fn () {
+x = (x + 1); ... }
+@4, 1 = fn () {
+return x;}
+@5), x: 0, main: fun<main>, 
+}
+--- handle value () with cell[0]()<2>(fn () {
+x = (x + 1); ... }
+,(),) --->
+pattern_match((), ())
+{
+stack: fn{x = (x + 1); ... <-1>} :: main{cell[0]();<-1> :: cell[0](); ... <-1>} :: top{}
+heap: fun<main>, 0, fn () {
+x = (x + 1); ... }
+, fn () {
+return x;}
+, fn () {
+x = (x + 1); ... }
+, fn () {
+return x;}
+, (0 = fn () {
+x = (x + 1); ... }
+@4, 1 = fn () {
+return x;}
+@5), 
+env: x: 0, 
+}
+--- step stmt x = (x + 1); ...  --->
+{
+stack: fn{x = (x + 1);<-1> :: return ();<-1>} :: main{cell[0]();<-1> :: cell[0](); ... <-1>} :: top{}
+heap: fun<main>, 0, fn () {
+x = (x + 1); ... }
+, fn () {
+return x;}
+, fn () {
+x = (x + 1); ... }
+, fn () {
+return x;}
+, (0 = fn () {
+x = (x + 1); ... }
+@4, 1 = fn () {
+return x;}
+@5), 
+env: x: 0, 
+}
+--- step stmt x = (x + 1); --->
+{
+stack: fn{x<-1> :: x = (x + 1);<0> :: return ();<-1>} :: main{cell[0]();<-1> :: cell[0](); ... <-1>} :: top{}
+heap: fun<main>, 0, fn () {
+x = (x + 1); ... }
+, fn () {
+return x;}
+, fn () {
+x = (x + 1); ... }
+, fn () {
+return x;}
+, (0 = fn () {
+x = (x + 1); ... }
+@4, 1 = fn () {
+return x;}
+@5), 
+env: x: 0, 
+}
+--- step lvalue x --->
+{
+stack: fn{ptr<1><-1> :: x = (x + 1);<0> :: return ();<-1>} :: main{cell[0]();<-1> :: cell[0](); ... <-1>} :: top{}
+heap: fun<main>, 0, fn () {
+x = (x + 1); ... }
+, fn () {
+return x;}
+, fn () {
+x = (x + 1); ... }
+, fn () {
+return x;}
+, (0 = fn () {
+x = (x + 1); ... }
+@4, 1 = fn () {
+return x;}
+@5), 
+env: x: 0, 
+}
+--- handle value ptr<1> with x = (x + 1);<1>(ptr<1>,) --->
+{
+stack: fn{(x + 1)<-1> :: x = (x + 1);<1>(ptr<1>,) :: return ();<-1>} :: main{cell[0]();<-1> :: cell[0](); ... <-1>} :: top{}
+heap: fun<main>, 0, fn () {
+x = (x + 1); ... }
+, fn () {
+return x;}
+, fn () {
+x = (x + 1); ... }
+, fn () {
+return x;}
+, (0 = fn () {
+x = (x + 1); ... }
+@4, 1 = fn () {
+return x;}
+@5), 
+env: x: 0, 
+}
+--- step exp (x + 1) --->
+{
+stack: fn{x<-1> :: (x + 1)<0> :: x = (x + 1);<1>(ptr<1>,) :: return ();<-1>} :: main{cell[0]();<-1> :: cell[0](); ... <-1>} :: top{}
+heap: fun<main>, 0, fn () {
+x = (x + 1); ... }
+, fn () {
+return x;}
+, fn () {
+x = (x + 1); ... }
+, fn () {
+return x;}
+, (0 = fn () {
+x = (x + 1); ... }
+@4, 1 = fn () {
+return x;}
+@5), 
+env: x: 0, 
+}
+--- step exp x --->
+{
+stack: fn{0<-1> :: (x + 1)<0> :: x = (x + 1);<1>(ptr<1>,) :: return ();<-1>} :: main{cell[0]();<-1> :: cell[0](); ... <-1>} :: top{}
+heap: fun<main>, 0, fn () {
+x = (x + 1); ... }
+, fn () {
+return x;}
+, fn () {
+x = (x + 1); ... }
+, fn () {
+return x;}
+, (0 = fn () {
+x = (x + 1); ... }
+@4, 1 = fn () {
+return x;}
+@5), 
+env: x: 0, 
+}
+--- handle value 0 with (x + 1)<1>(0,) --->
+{
+stack: fn{1<-1> :: (x + 1)<1>(0,) :: x = (x + 1);<1>(ptr<1>,) :: return ();<-1>} :: main{cell[0]();<-1> :: cell[0](); ... <-1>} :: top{}
+heap: fun<main>, 0, fn () {
+x = (x + 1); ... }
+, fn () {
+return x;}
+, fn () {
+x = (x + 1); ... }
+, fn () {
+return x;}
+, (0 = fn () {
+x = (x + 1); ... }
+@4, 1 = fn () {
+return x;}
+@5), 
+env: x: 0, 
+}
+--- step exp 1 --->
+{
+stack: fn{1<-1> :: (x + 1)<1>(0,) :: x = (x + 1);<1>(ptr<1>,) :: return ();<-1>} :: main{cell[0]();<-1> :: cell[0](); ... <-1>} :: top{}
+heap: fun<main>, 0, fn () {
+x = (x + 1); ... }
+, fn () {
+return x;}
+, fn () {
+x = (x + 1); ... }
+, fn () {
+return x;}
+, (0 = fn () {
+x = (x + 1); ... }
+@4, 1 = fn () {
+return x;}
+@5), 
+env: x: 0, 
+}
+--- handle value 1 with (x + 1)<2>(0,1,) --->
+{
+stack: fn{1<-1> :: x = (x + 1);<1>(ptr<1>,) :: return ();<-1>} :: main{cell[0]();<-1> :: cell[0](); ... <-1>} :: top{}
+heap: fun<main>, 0, fn () {
+x = (x + 1); ... }
+, fn () {
+return x;}
+, fn () {
+x = (x + 1); ... }
+, fn () {
+return x;}
+, (0 = fn () {
+x = (x + 1); ... }
+@4, 1 = fn () {
+return x;}
+@5), 
+env: x: 0, 
+}
+--- handle value 1 with x = (x + 1);<2>(ptr<1>,1,) --->
+{
+stack: fn{return ();<-1>} :: main{cell[0]();<-1> :: cell[0](); ... <-1>} :: top{}
+heap: fun<main>, 1, fn () {
+x = (x + 1); ... }
+, fn () {
+return x;}
+, fn () {
+x = (x + 1); ... }
+, fn () {
+return x;}
+, (0 = fn () {
+x = (x + 1); ... }
+@4, 1 = fn () {
+return x;}
+@5), 
+env: x: 1, 
+}
+--- step stmt return (); --->
+{
+stack: fn{return ();<-1>} :: main{cell[0]();<-1> :: cell[0](); ... <-1>} :: top{}
+heap: fun<main>, 1, fn () {
+x = (x + 1); ... }
+, fn () {
+return x;}
+, fn () {
+x = (x + 1); ... }
+, fn () {
+return x;}
+, (0 = fn () {
+x = (x + 1); ... }
+@4, 1 = fn () {
+return x;}
+@5), 
+env: x: 1, 
+}
+--- step stmt return (); --->
+{
+stack: fn{()<-1> :: return ();<0>} :: main{cell[0]();<-1> :: cell[0](); ... <-1>} :: top{}
+heap: fun<main>, 1, fn () {
+x = (x + 1); ... }
+, fn () {
+return x;}
+, fn () {
+x = (x + 1); ... }
+, fn () {
+return x;}
+, (0 = fn () {
+x = (x + 1); ... }
+@4, 1 = fn () {
+return x;}
+@5), 
+env: x: 1, 
+}
+--- step exp () --->
+{
+stack: fn{()<-1> :: return ();<0>} :: main{cell[0]();<-1> :: cell[0](); ... <-1>} :: top{}
+heap: fun<main>, 1, fn () {
+x = (x + 1); ... }
+, fn () {
+return x;}
+, fn () {
+x = (x + 1); ... }
+, fn () {
+return x;}
+, (0 = fn () {
+x = (x + 1); ... }
+@4, 1 = fn () {
+return x;}
+@5), 
+env: x: 1, 
+}
+--- handle value () with return ();<1>((),) --->
+{
+stack: main{()<-1> :: cell[0]();<-1> :: cell[0](); ... <-1>} :: top{}
+heap: fun<main>, 1, fn () {
+x = (x + 1); ... }
+, fn () {
+return x;}
+, fn () {
+x = (x + 1); ... }
+, fn () {
+return x;}
+, (0 = fn () {
+x = (x + 1); ... }
+@4, 1 = fn () {
+return x;}
+@5), 
+env: cell: (0 = fn () {
+x = (x + 1); ... }
+@4, 1 = fn () {
+return x;}
+@5), x: 1, main: fun<main>, 
+}
+--- handle value () with cell[0]();<0>((),) --->
+{
+stack: main{cell[0](); ... <-1>} :: top{}
+heap: fun<main>, 1, fn () {
+x = (x + 1); ... }
+, fn () {
+return x;}
+, fn () {
+x = (x + 1); ... }
+, fn () {
+return x;}
+, (0 = fn () {
+x = (x + 1); ... }
+@4, 1 = fn () {
+return x;}
+@5), 
+env: cell: (0 = fn () {
+x = (x + 1); ... }
+@4, 1 = fn () {
+return x;}
+@5), x: 1, main: fun<main>, 
+}
+--- step stmt cell[0](); ...  --->
+{
+stack: main{cell[0]();<-1> :: return (cell[1]() - 2);<-1>} :: top{}
+heap: fun<main>, 1, fn () {
+x = (x + 1); ... }
+, fn () {
+return x;}
+, fn () {
+x = (x + 1); ... }
+, fn () {
+return x;}
+, (0 = fn () {
+x = (x + 1); ... }
+@4, 1 = fn () {
+return x;}
+@5), 
+env: cell: (0 = fn () {
+x = (x + 1); ... }
+@4, 1 = fn () {
+return x;}
+@5), x: 1, main: fun<main>, 
+}
+--- step stmt cell[0](); --->
+{
+stack: main{cell[0]()<-1> :: cell[0]();<-1> :: return (cell[1]() - 2);<-1>} :: top{}
+heap: fun<main>, 1, fn () {
+x = (x + 1); ... }
+, fn () {
+return x;}
+, fn () {
+x = (x + 1); ... }
+, fn () {
+return x;}
+, (0 = fn () {
+x = (x + 1); ... }
+@4, 1 = fn () {
+return x;}
+@5), 
+env: cell: (0 = fn () {
+x = (x + 1); ... }
+@4, 1 = fn () {
+return x;}
+@5), x: 1, main: fun<main>, 
+}
+--- step exp cell[0]() --->
+{
+stack: main{cell[0]<-1> :: cell[0]()<0> :: cell[0]();<-1> :: return (cell[1]() - 2);<-1>} :: top{}
+heap: fun<main>, 1, fn () {
+x = (x + 1); ... }
+, fn () {
+return x;}
+, fn () {
+x = (x + 1); ... }
+, fn () {
+return x;}
+, (0 = fn () {
+x = (x + 1); ... }
+@4, 1 = fn () {
+return x;}
+@5), 
+env: cell: (0 = fn () {
+x = (x + 1); ... }
+@4, 1 = fn () {
+return x;}
+@5), x: 1, main: fun<main>, 
+}
+--- step exp cell[0] --->
+{
+stack: main{cell<-1> :: cell[0]<0> :: cell[0]()<0> :: cell[0]();<-1> :: return (cell[1]() - 2);<-1>} :: top{}
+heap: fun<main>, 1, fn () {
+x = (x + 1); ... }
+, fn () {
+return x;}
+, fn () {
+x = (x + 1); ... }
+, fn () {
+return x;}
+, (0 = fn () {
+x = (x + 1); ... }
+@4, 1 = fn () {
+return x;}
+@5), 
+env: cell: (0 = fn () {
+x = (x + 1); ... }
+@4, 1 = fn () {
+return x;}
+@5), x: 1, main: fun<main>, 
+}
+--- step exp cell --->
+{
+stack: main{(0 = fn () {
+x = (x + 1); ... }
+@4, 1 = fn () {
+return x;}
+@5)<-1> :: cell[0]<0> :: cell[0]()<0> :: cell[0]();<-1> :: return (cell[1]() - 2);<-1>} :: top{}
+heap: fun<main>, 1, fn () {
+x = (x + 1); ... }
+, fn () {
+return x;}
+, fn () {
+x = (x + 1); ... }
+, fn () {
+return x;}
+, (0 = fn () {
+x = (x + 1); ... }
+@4, 1 = fn () {
+return x;}
+@5), 
+env: cell: (0 = fn () {
+x = (x + 1); ... }
+@4, 1 = fn () {
+return x;}
+@5), x: 1, main: fun<main>, 
+}
+--- handle value (0 = fn () {
+x = (x + 1); ... }
+@4, 1 = fn () {
+return x;}
+@5) with cell[0]<1>((0 = fn () {
+x = (x + 1); ... }
+@4, 1 = fn () {
+return x;}
+@5),) --->
+{
+stack: main{0<-1> :: cell[0]<1>((0 = fn () {
+x = (x + 1); ... }
+@4, 1 = fn () {
+return x;}
+@5),) :: cell[0]()<0> :: cell[0]();<-1> :: return (cell[1]() - 2);<-1>} :: top{}
+heap: fun<main>, 1, fn () {
+x = (x + 1); ... }
+, fn () {
+return x;}
+, fn () {
+x = (x + 1); ... }
+, fn () {
+return x;}
+, (0 = fn () {
+x = (x + 1); ... }
+@4, 1 = fn () {
+return x;}
+@5), 
+env: cell: (0 = fn () {
+x = (x + 1); ... }
+@4, 1 = fn () {
+return x;}
+@5), x: 1, main: fun<main>, 
+}
+--- step exp 0 --->
+{
+stack: main{0<-1> :: cell[0]<1>((0 = fn () {
+x = (x + 1); ... }
+@4, 1 = fn () {
+return x;}
+@5),) :: cell[0]()<0> :: cell[0]();<-1> :: return (cell[1]() - 2);<-1>} :: top{}
+heap: fun<main>, 1, fn () {
+x = (x + 1); ... }
+, fn () {
+return x;}
+, fn () {
+x = (x + 1); ... }
+, fn () {
+return x;}
+, (0 = fn () {
+x = (x + 1); ... }
+@4, 1 = fn () {
+return x;}
+@5), 
+env: cell: (0 = fn () {
+x = (x + 1); ... }
+@4, 1 = fn () {
+return x;}
+@5), x: 1, main: fun<main>, 
+}
+--- handle value 0 with cell[0]<2>((0 = fn () {
+x = (x + 1); ... }
+@4, 1 = fn () {
+return x;}
+@5),0,) --->
+{
+stack: main{fn () {
+x = (x + 1); ... }
+<-1> :: cell[0]()<0> :: cell[0]();<-1> :: return (cell[1]() - 2);<-1>} :: top{}
+heap: fun<main>, 1, fn () {
+x = (x + 1); ... }
+, fn () {
+return x;}
+, fn () {
+x = (x + 1); ... }
+, fn () {
+return x;}
+, (0 = fn () {
+x = (x + 1); ... }
+@4, 1 = fn () {
+return x;}
+@5), 
+env: cell: (0 = fn () {
+x = (x + 1); ... }
+@4, 1 = fn () {
+return x;}
+@5), x: 1, main: fun<main>, 
+}
+--- handle value fn () {
+x = (x + 1); ... }
+ with cell[0]()<1>(fn () {
+x = (x + 1); ... }
+,) --->
+{
+stack: main{()<-1> :: cell[0]()<1>(fn () {
+x = (x + 1); ... }
+,) :: cell[0]();<-1> :: return (cell[1]() - 2);<-1>} :: top{}
+heap: fun<main>, 1, fn () {
+x = (x + 1); ... }
+, fn () {
+return x;}
+, fn () {
+x = (x + 1); ... }
+, fn () {
+return x;}
+, (0 = fn () {
+x = (x + 1); ... }
+@4, 1 = fn () {
+return x;}
+@5), 
+env: cell: (0 = fn () {
+x = (x + 1); ... }
+@4, 1 = fn () {
+return x;}
+@5), x: 1, main: fun<main>, 
+}
+--- step exp () --->
+{
+stack: main{()<-1> :: cell[0]()<1>(fn () {
+x = (x + 1); ... }
+,) :: cell[0]();<-1> :: return (cell[1]() - 2);<-1>} :: top{}
+heap: fun<main>, 1, fn () {
+x = (x + 1); ... }
+, fn () {
+return x;}
+, fn () {
+x = (x + 1); ... }
+, fn () {
+return x;}
+, (0 = fn () {
+x = (x + 1); ... }
+@4, 1 = fn () {
+return x;}
+@5), 
+env: cell: (0 = fn () {
+x = (x + 1); ... }
+@4, 1 = fn () {
+return x;}
+@5), x: 1, main: fun<main>, 
+}
+--- handle value () with cell[0]()<2>(fn () {
+x = (x + 1); ... }
+,(),) --->
+pattern_match((), ())
+{
+stack: fn{x = (x + 1); ... <-1>} :: main{cell[0]();<-1> :: return (cell[1]() - 2);<-1>} :: top{}
+heap: fun<main>, 1, fn () {
+x = (x + 1); ... }
+, fn () {
+return x;}
+, fn () {
+x = (x + 1); ... }
+, fn () {
+return x;}
+, (0 = fn () {
+x = (x + 1); ... }
+@4, 1 = fn () {
+return x;}
+@5), 
+env: x: 1, 
+}
+--- step stmt x = (x + 1); ...  --->
+{
+stack: fn{x = (x + 1);<-1> :: return ();<-1>} :: main{cell[0]();<-1> :: return (cell[1]() - 2);<-1>} :: top{}
+heap: fun<main>, 1, fn () {
+x = (x + 1); ... }
+, fn () {
+return x;}
+, fn () {
+x = (x + 1); ... }
+, fn () {
+return x;}
+, (0 = fn () {
+x = (x + 1); ... }
+@4, 1 = fn () {
+return x;}
+@5), 
+env: x: 1, 
+}
+--- step stmt x = (x + 1); --->
+{
+stack: fn{x<-1> :: x = (x + 1);<0> :: return ();<-1>} :: main{cell[0]();<-1> :: return (cell[1]() - 2);<-1>} :: top{}
+heap: fun<main>, 1, fn () {
+x = (x + 1); ... }
+, fn () {
+return x;}
+, fn () {
+x = (x + 1); ... }
+, fn () {
+return x;}
+, (0 = fn () {
+x = (x + 1); ... }
+@4, 1 = fn () {
+return x;}
+@5), 
+env: x: 1, 
+}
+--- step lvalue x --->
+{
+stack: fn{ptr<1><-1> :: x = (x + 1);<0> :: return ();<-1>} :: main{cell[0]();<-1> :: return (cell[1]() - 2);<-1>} :: top{}
+heap: fun<main>, 1, fn () {
+x = (x + 1); ... }
+, fn () {
+return x;}
+, fn () {
+x = (x + 1); ... }
+, fn () {
+return x;}
+, (0 = fn () {
+x = (x + 1); ... }
+@4, 1 = fn () {
+return x;}
+@5), 
+env: x: 1, 
+}
+--- handle value ptr<1> with x = (x + 1);<1>(ptr<1>,) --->
+{
+stack: fn{(x + 1)<-1> :: x = (x + 1);<1>(ptr<1>,) :: return ();<-1>} :: main{cell[0]();<-1> :: return (cell[1]() - 2);<-1>} :: top{}
+heap: fun<main>, 1, fn () {
+x = (x + 1); ... }
+, fn () {
+return x;}
+, fn () {
+x = (x + 1); ... }
+, fn () {
+return x;}
+, (0 = fn () {
+x = (x + 1); ... }
+@4, 1 = fn () {
+return x;}
+@5), 
+env: x: 1, 
+}
+--- step exp (x + 1) --->
+{
+stack: fn{x<-1> :: (x + 1)<0> :: x = (x + 1);<1>(ptr<1>,) :: return ();<-1>} :: main{cell[0]();<-1> :: return (cell[1]() - 2);<-1>} :: top{}
+heap: fun<main>, 1, fn () {
+x = (x + 1); ... }
+, fn () {
+return x;}
+, fn () {
+x = (x + 1); ... }
+, fn () {
+return x;}
+, (0 = fn () {
+x = (x + 1); ... }
+@4, 1 = fn () {
+return x;}
+@5), 
+env: x: 1, 
+}
+--- step exp x --->
+{
+stack: fn{1<-1> :: (x + 1)<0> :: x = (x + 1);<1>(ptr<1>,) :: return ();<-1>} :: main{cell[0]();<-1> :: return (cell[1]() - 2);<-1>} :: top{}
+heap: fun<main>, 1, fn () {
+x = (x + 1); ... }
+, fn () {
+return x;}
+, fn () {
+x = (x + 1); ... }
+, fn () {
+return x;}
+, (0 = fn () {
+x = (x + 1); ... }
+@4, 1 = fn () {
+return x;}
+@5), 
+env: x: 1, 
+}
+--- handle value 1 with (x + 1)<1>(1,) --->
+{
+stack: fn{1<-1> :: (x + 1)<1>(1,) :: x = (x + 1);<1>(ptr<1>,) :: return ();<-1>} :: main{cell[0]();<-1> :: return (cell[1]() - 2);<-1>} :: top{}
+heap: fun<main>, 1, fn () {
+x = (x + 1); ... }
+, fn () {
+return x;}
+, fn () {
+x = (x + 1); ... }
+, fn () {
+return x;}
+, (0 = fn () {
+x = (x + 1); ... }
+@4, 1 = fn () {
+return x;}
+@5), 
+env: x: 1, 
+}
+--- step exp 1 --->
+{
+stack: fn{1<-1> :: (x + 1)<1>(1,) :: x = (x + 1);<1>(ptr<1>,) :: return ();<-1>} :: main{cell[0]();<-1> :: return (cell[1]() - 2);<-1>} :: top{}
+heap: fun<main>, 1, fn () {
+x = (x + 1); ... }
+, fn () {
+return x;}
+, fn () {
+x = (x + 1); ... }
+, fn () {
+return x;}
+, (0 = fn () {
+x = (x + 1); ... }
+@4, 1 = fn () {
+return x;}
+@5), 
+env: x: 1, 
+}
+--- handle value 1 with (x + 1)<2>(1,1,) --->
+{
+stack: fn{2<-1> :: x = (x + 1);<1>(ptr<1>,) :: return ();<-1>} :: main{cell[0]();<-1> :: return (cell[1]() - 2);<-1>} :: top{}
+heap: fun<main>, 1, fn () {
+x = (x + 1); ... }
+, fn () {
+return x;}
+, fn () {
+x = (x + 1); ... }
+, fn () {
+return x;}
+, (0 = fn () {
+x = (x + 1); ... }
+@4, 1 = fn () {
+return x;}
+@5), 
+env: x: 1, 
+}
+--- handle value 2 with x = (x + 1);<2>(ptr<1>,2,) --->
+{
+stack: fn{return ();<-1>} :: main{cell[0]();<-1> :: return (cell[1]() - 2);<-1>} :: top{}
+heap: fun<main>, 2, fn () {
+x = (x + 1); ... }
+, fn () {
+return x;}
+, fn () {
+x = (x + 1); ... }
+, fn () {
+return x;}
+, (0 = fn () {
+x = (x + 1); ... }
+@4, 1 = fn () {
+return x;}
+@5), 
+env: x: 2, 
+}
+--- step stmt return (); --->
+{
+stack: fn{return ();<-1>} :: main{cell[0]();<-1> :: return (cell[1]() - 2);<-1>} :: top{}
+heap: fun<main>, 2, fn () {
+x = (x + 1); ... }
+, fn () {
+return x;}
+, fn () {
+x = (x + 1); ... }
+, fn () {
+return x;}
+, (0 = fn () {
+x = (x + 1); ... }
+@4, 1 = fn () {
+return x;}
+@5), 
+env: x: 2, 
+}
+--- step stmt return (); --->
+{
+stack: fn{()<-1> :: return ();<0>} :: main{cell[0]();<-1> :: return (cell[1]() - 2);<-1>} :: top{}
+heap: fun<main>, 2, fn () {
+x = (x + 1); ... }
+, fn () {
+return x;}
+, fn () {
+x = (x + 1); ... }
+, fn () {
+return x;}
+, (0 = fn () {
+x = (x + 1); ... }
+@4, 1 = fn () {
+return x;}
+@5), 
+env: x: 2, 
+}
+--- step exp () --->
+{
+stack: fn{()<-1> :: return ();<0>} :: main{cell[0]();<-1> :: return (cell[1]() - 2);<-1>} :: top{}
+heap: fun<main>, 2, fn () {
+x = (x + 1); ... }
+, fn () {
+return x;}
+, fn () {
+x = (x + 1); ... }
+, fn () {
+return x;}
+, (0 = fn () {
+x = (x + 1); ... }
+@4, 1 = fn () {
+return x;}
+@5), 
+env: x: 2, 
+}
+--- handle value () with return ();<1>((),) --->
+{
+stack: main{()<-1> :: cell[0]();<-1> :: return (cell[1]() - 2);<-1>} :: top{}
+heap: fun<main>, 2, fn () {
+x = (x + 1); ... }
+, fn () {
+return x;}
+, fn () {
+x = (x + 1); ... }
+, fn () {
+return x;}
+, (0 = fn () {
+x = (x + 1); ... }
+@4, 1 = fn () {
+return x;}
+@5), 
+env: cell: (0 = fn () {
+x = (x + 1); ... }
+@4, 1 = fn () {
+return x;}
+@5), x: 2, main: fun<main>, 
+}
+--- handle value () with cell[0]();<0>((),) --->
+{
+stack: main{return (cell[1]() - 2);<-1>} :: top{}
+heap: fun<main>, 2, fn () {
+x = (x + 1); ... }
+, fn () {
+return x;}
+, fn () {
+x = (x + 1); ... }
+, fn () {
+return x;}
+, (0 = fn () {
+x = (x + 1); ... }
+@4, 1 = fn () {
+return x;}
+@5), 
+env: cell: (0 = fn () {
+x = (x + 1); ... }
+@4, 1 = fn () {
+return x;}
+@5), x: 2, main: fun<main>, 
+}
+--- step stmt return (cell[1]() - 2); --->
+{
+stack: main{(cell[1]() - 2)<-1> :: return (cell[1]() - 2);<0>} :: top{}
+heap: fun<main>, 2, fn () {
+x = (x + 1); ... }
+, fn () {
+return x;}
+, fn () {
+x = (x + 1); ... }
+, fn () {
+return x;}
+, (0 = fn () {
+x = (x + 1); ... }
+@4, 1 = fn () {
+return x;}
+@5), 
+env: cell: (0 = fn () {
+x = (x + 1); ... }
+@4, 1 = fn () {
+return x;}
+@5), x: 2, main: fun<main>, 
+}
+--- step exp (cell[1]() - 2) --->
+{
+stack: main{cell[1]()<-1> :: (cell[1]() - 2)<0> :: return (cell[1]() - 2);<0>} :: top{}
+heap: fun<main>, 2, fn () {
+x = (x + 1); ... }
+, fn () {
+return x;}
+, fn () {
+x = (x + 1); ... }
+, fn () {
+return x;}
+, (0 = fn () {
+x = (x + 1); ... }
+@4, 1 = fn () {
+return x;}
+@5), 
+env: cell: (0 = fn () {
+x = (x + 1); ... }
+@4, 1 = fn () {
+return x;}
+@5), x: 2, main: fun<main>, 
+}
+--- step exp cell[1]() --->
+{
+stack: main{cell[1]<-1> :: cell[1]()<0> :: (cell[1]() - 2)<0> :: return (cell[1]() - 2);<0>} :: top{}
+heap: fun<main>, 2, fn () {
+x = (x + 1); ... }
+, fn () {
+return x;}
+, fn () {
+x = (x + 1); ... }
+, fn () {
+return x;}
+, (0 = fn () {
+x = (x + 1); ... }
+@4, 1 = fn () {
+return x;}
+@5), 
+env: cell: (0 = fn () {
+x = (x + 1); ... }
+@4, 1 = fn () {
+return x;}
+@5), x: 2, main: fun<main>, 
+}
+--- step exp cell[1] --->
+{
+stack: main{cell<-1> :: cell[1]<0> :: cell[1]()<0> :: (cell[1]() - 2)<0> :: return (cell[1]() - 2);<0>} :: top{}
+heap: fun<main>, 2, fn () {
+x = (x + 1); ... }
+, fn () {
+return x;}
+, fn () {
+x = (x + 1); ... }
+, fn () {
+return x;}
+, (0 = fn () {
+x = (x + 1); ... }
+@4, 1 = fn () {
+return x;}
+@5), 
+env: cell: (0 = fn () {
+x = (x + 1); ... }
+@4, 1 = fn () {
+return x;}
+@5), x: 2, main: fun<main>, 
+}
+--- step exp cell --->
+{
+stack: main{(0 = fn () {
+x = (x + 1); ... }
+@4, 1 = fn () {
+return x;}
+@5)<-1> :: cell[1]<0> :: cell[1]()<0> :: (cell[1]() - 2)<0> :: return (cell[1]() - 2);<0>} :: top{}
+heap: fun<main>, 2, fn () {
+x = (x + 1); ... }
+, fn () {
+return x;}
+, fn () {
+x = (x + 1); ... }
+, fn () {
+return x;}
+, (0 = fn () {
+x = (x + 1); ... }
+@4, 1 = fn () {
+return x;}
+@5), 
+env: cell: (0 = fn () {
+x = (x + 1); ... }
+@4, 1 = fn () {
+return x;}
+@5), x: 2, main: fun<main>, 
+}
+--- handle value (0 = fn () {
+x = (x + 1); ... }
+@4, 1 = fn () {
+return x;}
+@5) with cell[1]<1>((0 = fn () {
+x = (x + 1); ... }
+@4, 1 = fn () {
+return x;}
+@5),) --->
+{
+stack: main{1<-1> :: cell[1]<1>((0 = fn () {
+x = (x + 1); ... }
+@4, 1 = fn () {
+return x;}
+@5),) :: cell[1]()<0> :: (cell[1]() - 2)<0> :: return (cell[1]() - 2);<0>} :: top{}
+heap: fun<main>, 2, fn () {
+x = (x + 1); ... }
+, fn () {
+return x;}
+, fn () {
+x = (x + 1); ... }
+, fn () {
+return x;}
+, (0 = fn () {
+x = (x + 1); ... }
+@4, 1 = fn () {
+return x;}
+@5), 
+env: cell: (0 = fn () {
+x = (x + 1); ... }
+@4, 1 = fn () {
+return x;}
+@5), x: 2, main: fun<main>, 
+}
+--- step exp 1 --->
+{
+stack: main{1<-1> :: cell[1]<1>((0 = fn () {
+x = (x + 1); ... }
+@4, 1 = fn () {
+return x;}
+@5),) :: cell[1]()<0> :: (cell[1]() - 2)<0> :: return (cell[1]() - 2);<0>} :: top{}
+heap: fun<main>, 2, fn () {
+x = (x + 1); ... }
+, fn () {
+return x;}
+, fn () {
+x = (x + 1); ... }
+, fn () {
+return x;}
+, (0 = fn () {
+x = (x + 1); ... }
+@4, 1 = fn () {
+return x;}
+@5), 
+env: cell: (0 = fn () {
+x = (x + 1); ... }
+@4, 1 = fn () {
+return x;}
+@5), x: 2, main: fun<main>, 
+}
+--- handle value 1 with cell[1]<2>((0 = fn () {
+x = (x + 1); ... }
+@4, 1 = fn () {
+return x;}
+@5),1,) --->
+{
+stack: main{fn () {
+return x;}
+<-1> :: cell[1]()<0> :: (cell[1]() - 2)<0> :: return (cell[1]() - 2);<0>} :: top{}
+heap: fun<main>, 2, fn () {
+x = (x + 1); ... }
+, fn () {
+return x;}
+, fn () {
+x = (x + 1); ... }
+, fn () {
+return x;}
+, (0 = fn () {
+x = (x + 1); ... }
+@4, 1 = fn () {
+return x;}
+@5), 
+env: cell: (0 = fn () {
+x = (x + 1); ... }
+@4, 1 = fn () {
+return x;}
+@5), x: 2, main: fun<main>, 
+}
+--- handle value fn () {
+return x;}
+ with cell[1]()<1>(fn () {
+return x;}
+,) --->
+{
+stack: main{()<-1> :: cell[1]()<1>(fn () {
+return x;}
+,) :: (cell[1]() - 2)<0> :: return (cell[1]() - 2);<0>} :: top{}
+heap: fun<main>, 2, fn () {
+x = (x + 1); ... }
+, fn () {
+return x;}
+, fn () {
+x = (x + 1); ... }
+, fn () {
+return x;}
+, (0 = fn () {
+x = (x + 1); ... }
+@4, 1 = fn () {
+return x;}
+@5), 
+env: cell: (0 = fn () {
+x = (x + 1); ... }
+@4, 1 = fn () {
+return x;}
+@5), x: 2, main: fun<main>, 
+}
+--- step exp () --->
+{
+stack: main{()<-1> :: cell[1]()<1>(fn () {
+return x;}
+,) :: (cell[1]() - 2)<0> :: return (cell[1]() - 2);<0>} :: top{}
+heap: fun<main>, 2, fn () {
+x = (x + 1); ... }
+, fn () {
+return x;}
+, fn () {
+x = (x + 1); ... }
+, fn () {
+return x;}
+, (0 = fn () {
+x = (x + 1); ... }
+@4, 1 = fn () {
+return x;}
+@5), 
+env: cell: (0 = fn () {
+x = (x + 1); ... }
+@4, 1 = fn () {
+return x;}
+@5), x: 2, main: fun<main>, 
+}
+--- handle value () with cell[1]()<2>(fn () {
+return x;}
+,(),) --->
+pattern_match((), ())
+{
+stack: fn{return x;<-1>} :: main{(cell[1]() - 2)<0> :: return (cell[1]() - 2);<0>} :: top{}
+heap: fun<main>, 2, fn () {
+x = (x + 1); ... }
+, fn () {
+return x;}
+, fn () {
+x = (x + 1); ... }
+, fn () {
+return x;}
+, (0 = fn () {
+x = (x + 1); ... }
+@4, 1 = fn () {
+return x;}
+@5), 
+env: x: 2, 
+}
+--- step stmt return x; --->
+{
+stack: fn{return x;<-1>} :: main{(cell[1]() - 2)<0> :: return (cell[1]() - 2);<0>} :: top{}
+heap: fun<main>, 2, fn () {
+x = (x + 1); ... }
+, fn () {
+return x;}
+, fn () {
+x = (x + 1); ... }
+, fn () {
+return x;}
+, (0 = fn () {
+x = (x + 1); ... }
+@4, 1 = fn () {
+return x;}
+@5), 
+env: x: 2, 
+}
+--- step stmt return x; --->
+{
+stack: fn{x<-1> :: return x;<0>} :: main{(cell[1]() - 2)<0> :: return (cell[1]() - 2);<0>} :: top{}
+heap: fun<main>, 2, fn () {
+x = (x + 1); ... }
+, fn () {
+return x;}
+, fn () {
+x = (x + 1); ... }
+, fn () {
+return x;}
+, (0 = fn () {
+x = (x + 1); ... }
+@4, 1 = fn () {
+return x;}
+@5), 
+env: x: 2, 
+}
+--- step exp x --->
+{
+stack: fn{2<-1> :: return x;<0>} :: main{(cell[1]() - 2)<0> :: return (cell[1]() - 2);<0>} :: top{}
+heap: fun<main>, 2, fn () {
+x = (x + 1); ... }
+, fn () {
+return x;}
+, fn () {
+x = (x + 1); ... }
+, fn () {
+return x;}
+, (0 = fn () {
+x = (x + 1); ... }
+@4, 1 = fn () {
+return x;}
+@5), 
+env: x: 2, 
+}
+--- handle value 2 with return x;<1>(2,) --->
+{
+stack: main{2<-1> :: (cell[1]() - 2)<0> :: return (cell[1]() - 2);<0>} :: top{}
+heap: fun<main>, 2, fn () {
+x = (x + 1); ... }
+, fn () {
+return x;}
+, fn () {
+x = (x + 1); ... }
+, fn () {
+return x;}
+, (0 = fn () {
+x = (x + 1); ... }
+@4, 1 = fn () {
+return x;}
+@5), 
+env: cell: (0 = fn () {
+x = (x + 1); ... }
+@4, 1 = fn () {
+return x;}
+@5), x: 2, main: fun<main>, 
+}
+--- handle value 2 with (cell[1]() - 2)<1>(2,) --->
+{
+stack: main{2<-1> :: (cell[1]() - 2)<1>(2,) :: return (cell[1]() - 2);<0>} :: top{}
+heap: fun<main>, 2, fn () {
+x = (x + 1); ... }
+, fn () {
+return x;}
+, fn () {
+x = (x + 1); ... }
+, fn () {
+return x;}
+, (0 = fn () {
+x = (x + 1); ... }
+@4, 1 = fn () {
+return x;}
+@5), 
+env: cell: (0 = fn () {
+x = (x + 1); ... }
+@4, 1 = fn () {
+return x;}
+@5), x: 2, main: fun<main>, 
+}
+--- step exp 2 --->
+{
+stack: main{2<-1> :: (cell[1]() - 2)<1>(2,) :: return (cell[1]() - 2);<0>} :: top{}
+heap: fun<main>, 2, fn () {
+x = (x + 1); ... }
+, fn () {
+return x;}
+, fn () {
+x = (x + 1); ... }
+, fn () {
+return x;}
+, (0 = fn () {
+x = (x + 1); ... }
+@4, 1 = fn () {
+return x;}
+@5), 
+env: cell: (0 = fn () {
+x = (x + 1); ... }
+@4, 1 = fn () {
+return x;}
+@5), x: 2, main: fun<main>, 
+}
+--- handle value 2 with (cell[1]() - 2)<2>(2,2,) --->
+{
+stack: main{0<-1> :: return (cell[1]() - 2);<0>} :: top{}
+heap: fun<main>, 2, fn () {
+x = (x + 1); ... }
+, fn () {
+return x;}
+, fn () {
+x = (x + 1); ... }
+, fn () {
+return x;}
+, (0 = fn () {
+x = (x + 1); ... }
+@4, 1 = fn () {
+return x;}
+@5), 
+env: cell: (0 = fn () {
+x = (x + 1); ... }
+@4, 1 = fn () {
+return x;}
+@5), x: 2, main: fun<main>, 
+}
+--- handle value 0 with return (cell[1]() - 2);<1>(0,) --->
+{
+stack: top{0<-1>}
+heap: fun<main>, !!2, !!fn () {
+x = (x + 1); ... }
+, !!fn () {
+return x;}
+, !!fn () {
+x = (x + 1); ... }
+, !!fn () {
+return x;}
+, !!(0 = !!fn () {
+x = (x + 1); ... }
+@4, 1 = !!fn () {
+return x;}
+@5), 
+env: main: fun<main>, 
+}
+result: 0

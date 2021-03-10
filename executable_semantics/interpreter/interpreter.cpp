@@ -1198,11 +1198,27 @@ void HandleValue() {
         }
         case ExpressionKind::Lambda: {
           // Create a lambda value from a lambda expression.
-          // The use of CopyEnv to extend the lifetime of everything
-          // in the environment is bad. That should be
-          // replaced with some better approach. -Jeremy
-          Value* v = MakeLambdaVal(act->results[0], exp->u.lambda.body,
-                                   CopyEnv(CurrentEnv(state)));
+          // Capture some variables
+          Env capturedEnv;
+          for (auto capture : *exp->u.lambda.capture_clause) {
+            std::optional<Address> addr =
+                CurrentEnv(state).Get(*capture->variable);
+            if (!addr) {
+              std::cerr << "internal error" << std::endl;
+              std::exit(-1);
+            }
+            Address new_addr;
+            switch (capture->tag) {
+              case CaptureKind::ByValue:
+                new_addr = AllocateValue(CopyVal(state->heap[*addr], 0));
+                break;
+              case CaptureKind::ByReference:
+                new_addr = *addr;
+            }
+            capturedEnv.Set(*capture->variable, new_addr);
+          }
+          Value* v =
+              MakeLambdaVal(act->results[0], exp->u.lambda.body, capturedEnv);
           frame->todo.Pop(2);
           frame->todo.Push(MakeValAct(v));
           break;

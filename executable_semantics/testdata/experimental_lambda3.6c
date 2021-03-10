@@ -2,9 +2,13 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
+
+
 fn main() -> Int {
-  var auto: f = fn(Int: y) -> (fnty(Int) -> Int) {
-                    return fn (Int: x) -> Int | y { return y; };
-		};
-  return f(0)(42);
+  var Int: x = 0;
+  var auto: cell = (fn () -> () | &x { x = x + 1; return (); },
+                    fn () -> Int | &x { return x; });
+  cell[0]();
+  cell[0]();
+  return cell[1]() - 2;
 }

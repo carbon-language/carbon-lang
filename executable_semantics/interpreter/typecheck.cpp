@@ -382,16 +382,26 @@ auto TypeCheckExp(Expression* e, TypeEnv env, Env ct_env, Value* expected,
       }
     }
     case ExpressionKind::Lambda: {
-      auto param_res = TypeCheckExp(e->u.lambda.parameter, env, ct_env, nullptr,
-                                    TCContext::PatternContext);
+      TypeEnv capturedEnv;
+      for (auto capture : *e->u.lambda.capture_clause) {
+        std::optional<Value*> type = env.Get(*capture->variable);
+        if (!type) {
+          std::cerr << "capture variable " << *capture->variable
+                    << " is not defined in this scope" << std::endl;
+          std::exit(-1);
+        }
+        capturedEnv.Set(*capture->variable, *type);
+      }
+      auto param_res = TypeCheckExp(e->u.lambda.parameter, capturedEnv, ct_env,
+                                    nullptr, TCContext::PatternContext);
       auto return_type = ToType(
           e->line_num,
           InterpExp(/*param_res.ct_env*/ ct_env, e->u.lambda.return_type));
       auto res = TypeCheckStmt(e->u.lambda.body, param_res.env,
                                /*param_res.ct_env*/ ct_env, return_type);
       auto return_t = ReifyType(return_type, e->line_num);
-      auto new_e =
-          MakeLambda(e->line_num, e->u.lambda.parameter, return_t, res.stmt);
+      auto new_e = MakeLambda(e->line_num, e->u.lambda.parameter, return_t,
+                              e->u.lambda.capture_clause, res.stmt);
       return TCResult(new_e, MakeFunTypeVal(param_res.type, return_type), env);
     }
     case ExpressionKind::IntT:
@@ -604,7 +614,7 @@ auto TypeOfFunDef(TypeEnv env, Env ct_env, const FunctionDefinition* fun_def)
   auto param_res = TypeCheckExp(fun_def->param_pattern, env, ct_env, nullptr,
                                 TCContext::PatternContext);
   auto param_type = ToType(fun_def->line_num, param_res.type);
-  auto ret = InterpExp(ct_env, fun_def->return_type);
+  auto ret = ToType(fun_def->line_num, InterpExp(ct_env, fun_def->return_type));
   if (ret->tag == ValKind::AutoTV) {
     auto f = TypeCheckFunDef(fun_def, env, ct_env);
     ret = InterpExp(ct_env, f->return_type);

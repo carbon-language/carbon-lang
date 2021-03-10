@@ -191,7 +191,7 @@ stack: main{fn (0 = Int: y@2) {
 return (x + y);}
 <-1> :: var auto: f = fn (0 = Int: y)Int{ return (x + y);
 };<0> :: return (f(0 = 10) - 52);<-1>} :: top{}
-heap: fun<main>, 42, Int: y, 42, fun<main>, 
+heap: fun<main>, 42, Int: y, 42, 
 env: x: 42, main: fun<main>, 
 }
 --- handle value fn (0 = Int: y@2) {
@@ -205,7 +205,7 @@ stack: main{auto: f<-1> :: var auto: f = fn (0 = Int: y)Int{ return (x + y);
 };<1>(fn (0 = Int: y@2) {
 return (x + y);}
 ,) :: return (f(0 = 10) - 52);<-1>} :: top{}
-heap: fun<main>, 42, Int: y, 42, fun<main>, 
+heap: fun<main>, 42, Int: y, 42, 
 env: x: 42, main: fun<main>, 
 }
 --- step exp auto: f --->
@@ -214,7 +214,7 @@ stack: main{auto<-1> :: auto: f<0> :: var auto: f = fn (0 = Int: y)Int{ return (
 };<1>(fn (0 = Int: y@2) {
 return (x + y);}
 ,) :: return (f(0 = 10) - 52);<-1>} :: top{}
-heap: fun<main>, 42, Int: y, 42, fun<main>, 
+heap: fun<main>, 42, Int: y, 42, 
 env: x: 42, main: fun<main>, 
 }
 --- step exp auto --->
@@ -223,7 +223,7 @@ stack: main{auto<-1> :: auto: f<0> :: var auto: f = fn (0 = Int: y)Int{ return (
 };<1>(fn (0 = Int: y@2) {
 return (x + y);}
 ,) :: return (f(0 = 10) - 52);<-1>} :: top{}
-heap: fun<main>, 42, Int: y, 42, fun<main>, 
+heap: fun<main>, 42, Int: y, 42, 
 env: x: 42, main: fun<main>, 
 }
 --- handle value auto with auto: f<1>(auto,) --->
@@ -232,7 +232,7 @@ stack: main{auto: f<-1> :: var auto: f = fn (0 = Int: y)Int{ return (x + y);
 };<1>(fn (0 = Int: y@2) {
 return (x + y);}
 ,) :: return (f(0 = 10) - 52);<-1>} :: top{}
-heap: fun<main>, 42, Int: y, 42, fun<main>, 
+heap: fun<main>, 42, Int: y, 42, 
 env: x: 42, main: fun<main>, 
 }
 --- handle value auto: f with var auto: f = fn (0 = Int: y)Int{ return (x + y);
@@ -244,7 +244,7 @@ return (x + y);}
 )
 {
 stack: main{return (f(0 = 10) - 52);<-1>} :: top{}
-heap: fun<main>, 42, Int: y, 42, fun<main>, fn (0 = Int: y@2) {
+heap: fun<main>, 42, Int: y, 42, fn (0 = Int: y@2) {
 return (x + y);}
 , 
 env: f: fn (0 = Int: y@2) {
@@ -254,7 +254,7 @@ return (x + y);}
 --- step stmt return (f(0 = 10) - 52); --->
 {
 stack: main{(f(0 = 10) - 52)<-1> :: return (f(0 = 10) - 52);<0>} :: top{}
-heap: fun<main>, 42, Int: y, 42, fun<main>, fn (0 = Int: y@2) {
+heap: fun<main>, 42, Int: y, 42, fn (0 = Int: y@2) {
 return (x + y);}
 , 
 env: f: fn (0 = Int: y@2) {
@@ -264,7 +264,7 @@ return (x + y);}
 --- step exp (f(0 = 10) - 52) --->
 {
 stack: main{f(0 = 10)<-1> :: (f(0 = 10) - 52)<0> :: return (f(0 = 10) - 52);<0>} :: top{}
-heap: fun<main>, 42, Int: y, 42, fun<main>, fn (0 = Int: y@2) {
+heap: fun<main>, 42, Int: y, 42, fn (0 = Int: y@2) {
 return (x + y);}
 , 
 env: f: fn (0 = Int: y@2) {
@@ -274,7 +274,7 @@ return (x + y);}
 --- step exp f(0 = 10) --->
 {
 stack: main{f<-1> :: f(0 = 10)<0> :: (f(0 = 10) - 52)<0> :: return (f(0 = 10) - 52);<0>} :: top{}
-heap: fun<main>, 42, Int: y, 42, fun<main>, fn (0 = Int: y@2) {
+heap: fun<main>, 42, Int: y, 42, fn (0 = Int: y@2) {
 return (x + y);}
 , 
 env: f: fn (0 = Int: y@2) {
@@ -286,7 +286,7 @@ return (x + y);}
 stack: main{fn (0 = Int: y@2) {
 return (x + y);}
 <-1> :: f(0 = 10)<0> :: (f(0 = 10) - 52)<0> :: return (f(0 = 10) - 52);<0>} :: top{}
-heap: fun<main>, 42, Int: y, 42, fun<main>, fn (0 = Int: y@2) {
+heap: fun<main>, 42, Int: y, 42, fn (0 = Int: y@2) {
 return (x + y);}
 , 
 env: f: fn (0 = Int: y@2) {
@@ -302,7 +302,7 @@ return (x + y);}
 stack: main{(0 = 10)<-1> :: f(0 = 10)<1>(fn (0 = Int: y@2) {
 return (x + y);}
 ,) :: (f(0 = 10) - 52)<0> :: return (f(0 = 10) - 52);<0>} :: top{}
-heap: fun<main>, 42, Int: y, 42, fun<main>, fn (0 = Int: y@2) {
+heap: fun<main>, 42, Int: y, 42, fn (0 = Int: y@2) {
 return (x + y);}
 , 
 env: f: fn (0 = Int: y@2) {
@@ -314,7 +314,7 @@ return (x + y);}
 stack: main{10<-1> :: (0 = 10)<0> :: f(0 = 10)<1>(fn (0 = Int: y@2) {
 return (x + y);}
 ,) :: (f(0 = 10) - 52)<0> :: return (f(0 = 10) - 52);<0>} :: top{}
-heap: fun<main>, 42, Int: y, 42, fun<main>, fn (0 = Int: y@2) {
+heap: fun<main>, 42, Int: y, 42, fn (0 = Int: y@2) {
 return (x + y);}
 , 
 env: f: fn (0 = Int: y@2) {
@@ -326,7 +326,7 @@ return (x + y);}
 stack: main{10<-1> :: (0 = 10)<0> :: f(0 = 10)<1>(fn (0 = Int: y@2) {
 return (x + y);}
 ,) :: (f(0 = 10) - 52)<0> :: return (f(0 = 10) - 52);<0>} :: top{}
-heap: fun<main>, 42, Int: y, 42, fun<main>, fn (0 = Int: y@2) {
+heap: fun<main>, 42, Int: y, 42, fn (0 = Int: y@2) {
 return (x + y);}
 , 
 env: f: fn (0 = Int: y@2) {
@@ -335,88 +335,88 @@ return (x + y);}
 }
 --- handle value 10 with (0 = 10)<1>(10,) --->
 {
-stack: main{(0 = 10@6)<-1> :: f(0 = 10)<1>(fn (0 = Int: y@2) {
+stack: main{(0 = 10@5)<-1> :: f(0 = 10)<1>(fn (0 = Int: y@2) {
 return (x + y);}
 ,) :: (f(0 = 10) - 52)<0> :: return (f(0 = 10) - 52);<0>} :: top{}
-heap: fun<main>, 42, Int: y, 42, fun<main>, fn (0 = Int: y@2) {
+heap: fun<main>, 42, Int: y, 42, fn (0 = Int: y@2) {
 return (x + y);}
 , 10, 
 env: f: fn (0 = Int: y@2) {
 return (x + y);}
 , x: 42, main: fun<main>, 
 }
---- handle value (0 = 10@6) with f(0 = 10)<2>(fn (0 = Int: y@2) {
+--- handle value (0 = 10@5) with f(0 = 10)<2>(fn (0 = Int: y@2) {
 return (x + y);}
-,(0 = 10@6),) --->
-pattern_match((0 = Int: y@2), (0 = 10@6))
+,(0 = 10@5),) --->
+pattern_match((0 = Int: y@2), (0 = 10@5))
 pattern_match(Int: y, 10)
 {
 stack: fn{return (x + y);<-1>} :: main{(f(0 = 10) - 52)<0> :: return (f(0 = 10) - 52);<0>} :: top{}
-heap: fun<main>, 42, Int: y, 42, fun<main>, fn (0 = Int: y@2) {
+heap: fun<main>, 42, Int: y, 42, fn (0 = Int: y@2) {
 return (x + y);}
 , 10, 10, 
-env: y: 10, main: fun<main>, x: 42, 
+env: y: 10, x: 42, 
 }
 --- step stmt return (x + y); --->
 {
 stack: fn{return (x + y);<-1>} :: main{(f(0 = 10) - 52)<0> :: return (f(0 = 10) - 52);<0>} :: top{}
-heap: fun<main>, 42, Int: y, 42, fun<main>, fn (0 = Int: y@2) {
+heap: fun<main>, 42, Int: y, 42, fn (0 = Int: y@2) {
 return (x + y);}
 , 10, 10, 
-env: y: 10, main: fun<main>, x: 42, 
+env: y: 10, x: 42, 
 }
 --- step stmt return (x + y); --->
 {
 stack: fn{(x + y)<-1> :: return (x + y);<0>} :: main{(f(0 = 10) - 52)<0> :: return (f(0 = 10) - 52);<0>} :: top{}
-heap: fun<main>, 42, Int: y, 42, fun<main>, fn (0 = Int: y@2) {
+heap: fun<main>, 42, Int: y, 42, fn (0 = Int: y@2) {
 return (x + y);}
 , 10, 10, 
-env: y: 10, main: fun<main>, x: 42, 
+env: y: 10, x: 42, 
 }
 --- step exp (x + y) --->
 {
 stack: fn{x<-1> :: (x + y)<0> :: return (x + y);<0>} :: main{(f(0 = 10) - 52)<0> :: return (f(0 = 10) - 52);<0>} :: top{}
-heap: fun<main>, 42, Int: y, 42, fun<main>, fn (0 = Int: y@2) {
+heap: fun<main>, 42, Int: y, 42, fn (0 = Int: y@2) {
 return (x + y);}
 , 10, 10, 
-env: y: 10, main: fun<main>, x: 42, 
+env: y: 10, x: 42, 
 }
 --- step exp x --->
 {
 stack: fn{42<-1> :: (x + y)<0> :: return (x + y);<0>} :: main{(f(0 = 10) - 52)<0> :: return (f(0 = 10) - 52);<0>} :: top{}
-heap: fun<main>, 42, Int: y, 42, fun<main>, fn (0 = Int: y@2) {
+heap: fun<main>, 42, Int: y, 42, fn (0 = Int: y@2) {
 return (x + y);}
 , 10, 10, 
-env: y: 10, main: fun<main>, x: 42, 
+env: y: 10, x: 42, 
 }
 --- handle value 42 with (x + y)<1>(42,) --->
 {
 stack: fn{y<-1> :: (x + y)<1>(42,) :: return (x + y);<0>} :: main{(f(0 = 10) - 52)<0> :: return (f(0 = 10) - 52);<0>} :: top{}
-heap: fun<main>, 42, Int: y, 42, fun<main>, fn (0 = Int: y@2) {
+heap: fun<main>, 42, Int: y, 42, fn (0 = Int: y@2) {
 return (x + y);}
 , 10, 10, 
-env: y: 10, main: fun<main>, x: 42, 
+env: y: 10, x: 42, 
 }
 --- step exp y --->
 {
 stack: fn{10<-1> :: (x + y)<1>(42,) :: return (x + y);<0>} :: main{(f(0 = 10) - 52)<0> :: return (f(0 = 10) - 52);<0>} :: top{}
-heap: fun<main>, 42, Int: y, 42, fun<main>, fn (0 = Int: y@2) {
+heap: fun<main>, 42, Int: y, 42, fn (0 = Int: y@2) {
 return (x + y);}
 , 10, 10, 
-env: y: 10, main: fun<main>, x: 42, 
+env: y: 10, x: 42, 
 }
 --- handle value 10 with (x + y)<2>(42,10,) --->
 {
 stack: fn{52<-1> :: return (x + y);<0>} :: main{(f(0 = 10) - 52)<0> :: return (f(0 = 10) - 52);<0>} :: top{}
-heap: fun<main>, 42, Int: y, 42, fun<main>, fn (0 = Int: y@2) {
+heap: fun<main>, 42, Int: y, 42, fn (0 = Int: y@2) {
 return (x + y);}
 , 10, 10, 
-env: y: 10, main: fun<main>, x: 42, 
+env: y: 10, x: 42, 
 }
 --- handle value 52 with return (x + y);<1>(52,) --->
 {
 stack: main{52<-1> :: (f(0 = 10) - 52)<0> :: return (f(0 = 10) - 52);<0>} :: top{}
-heap: fun<main>, 42, Int: y, 42, fun<main>, fn (0 = Int: y@2) {
+heap: fun<main>, 42, Int: y, 42, fn (0 = Int: y@2) {
 return (x + y);}
 , 10, !!10, 
 env: f: fn (0 = Int: y@2) {
@@ -426,7 +426,7 @@ return (x + y);}
 --- handle value 52 with (f(0 = 10) - 52)<1>(52,) --->
 {
 stack: main{52<-1> :: (f(0 = 10) - 52)<1>(52,) :: return (f(0 = 10) - 52);<0>} :: top{}
-heap: fun<main>, 42, Int: y, 42, fun<main>, fn (0 = Int: y@2) {
+heap: fun<main>, 42, Int: y, 42, fn (0 = Int: y@2) {
 return (x + y);}
 , 10, !!10, 
 env: f: fn (0 = Int: y@2) {
@@ -436,7 +436,7 @@ return (x + y);}
 --- step exp 52 --->
 {
 stack: main{52<-1> :: (f(0 = 10) - 52)<1>(52,) :: return (f(0 = 10) - 52);<0>} :: top{}
-heap: fun<main>, 42, Int: y, 42, fun<main>, fn (0 = Int: y@2) {
+heap: fun<main>, 42, Int: y, 42, fn (0 = Int: y@2) {
 return (x + y);}
 , 10, !!10, 
 env: f: fn (0 = Int: y@2) {
@@ -446,7 +446,7 @@ return (x + y);}
 --- handle value 52 with (f(0 = 10) - 52)<2>(52,52,) --->
 {
 stack: main{0<-1> :: return (f(0 = 10) - 52);<0>} :: top{}
-heap: fun<main>, 42, Int: y, 42, fun<main>, fn (0 = Int: y@2) {
+heap: fun<main>, 42, Int: y, 42, fn (0 = Int: y@2) {
 return (x + y);}
 , 10, !!10, 
 env: f: fn (0 = Int: y@2) {
@@ -456,7 +456,7 @@ return (x + y);}
 --- handle value 0 with return (f(0 = 10) - 52);<1>(0,) --->
 {
 stack: top{0<-1>}
-heap: fun<main>, !!42, Int: y, 42, fun<main>, !!fn (0 = Int: y@2) {
+heap: fun<main>, !!42, Int: y, 42, !!fn (0 = Int: y@2) {
 return (x + y);}
 , 10, !!10, 
 env: main: fun<main>, 

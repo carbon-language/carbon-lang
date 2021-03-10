@@ -44,6 +44,7 @@ TRUE     "true"
 TYPE     "Type"
 VAR      "var"
 WHILE    "while"
+AMPERSAND "&"
 
 identifier    [A-Za-z_][A-Za-z0-9_]*
 integer_literal   [0-9]+
@@ -77,6 +78,7 @@ integer_literal   [0-9]+
 {TYPE}     { return TYPE; }
 {VAR}      { return VAR; }
 {WHILE}    { return WHILE; }
+{AMPERSAND} { return AMPERSAND; }
 
 {identifier} {
   int n = strlen(yytext);

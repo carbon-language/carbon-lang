@@ -56,6 +56,8 @@ void yyerror(std::optional<Carbon::AST> const& parsedProgram, char* error) {
    std::pair<Carbon::Expression*, Carbon::Statement*>* clause;
    std::list<std::pair<Carbon::Expression*, Carbon::Statement*>>* clause_list;
    Carbon::Expression* fun_type;
+   Carbon::Capture* capture;
+   std::list<Carbon::Capture*>* capture_list;
 };
 
 %token <num> integer_literal
@@ -68,6 +70,9 @@ void yyerror(std::optional<Carbon::AST> const& parsedProgram, char* error) {
 %type <statement> statement
 %type <statement> optional_else
 %type <statement_list> statement_list
+%type <capture> capture
+%type <capture_list> capture_list
+%type <capture_list> capture_clause
 %type <expression> expression
 %type <expression> pattern
 %type <expression> return_type
@@ -107,6 +112,7 @@ void yyerror(std::optional<Carbon::AST> const& parsedProgram, char* error) {
 %token DBLARROW
 %token DEFAULT
 %token AUTO
+%token AMPERSAND
 %nonassoc '{' '}'
 %nonassoc ':' ',' DBLARROW
 %left OR AND
@@ -166,8 +172,34 @@ expression:
     { $$ = Carbon::MakeCall(yylineno, $1, $2); }
 | FNTY tuple return_type
     { $$ = Carbon::MakeFunType(yylineno, $2, $3); }
-| FN tuple return_type '{' statement_list '}'
-    { $$ = MakeLambda(yylineno, $2, $3, $5); }
+| FN tuple return_type capture_clause '{' statement_list '}'
+    { $$ = MakeLambda(yylineno, $2, $3, new std::vector($4->begin(), $4->end()), $6); }
+;
+capture:
+  identifier
+    { $$ = Carbon::MakeCaptureByValue($1); }
+| AMPERSAND identifier
+    { $$ = Carbon::MakeCaptureByReference($2); }
+;
+capture_list:
+ // Empty
+    { $$ = new std::list<Carbon::Capture*>(); }
+| capture
+    {
+     $$ = new std::list<Carbon::Capture*>();
+     $$->push_back($1);
+    }
+| capture ',' capture_list
+    {
+     $$ = $3;
+     $$->push_front($1);
+    }
+;
+capture_clause:
+ // Empty
+    { $$ = new std::list<Carbon::Capture*>(); }
+| '|' capture_list
+    { $$ = $2; }
 ;
 designator: '.' identifier { $$ = $2; }
 ;

@@ -40,6 +40,19 @@ enum class Operator {
 
 struct Statement;
 
+enum class CaptureKind {
+  ByValue,
+  ByReference,
+};
+
+struct Capture {
+  CaptureKind tag;
+  std::string* variable;
+};
+
+auto MakeCaptureByValue(std::string) -> Capture*;
+auto MakeCaptureByReference(std::string) -> Capture*;
+
 struct Expression {
   int line_num;
   ExpressionKind tag;
@@ -88,6 +101,7 @@ struct Expression {
     struct {
       Expression* parameter;
       Expression* return_type;
+      std::vector<Capture*>* capture_clause;
       Statement* body;
     } lambda;
 
@@ -113,9 +127,10 @@ auto MakeIndex(int line_num, Expression* exp, Expression* i) -> Expression*;
 // Returns an AST node for a lambda expression, that is,
 // an anonymous, lexically scoped function, given the
 // source line number, the parameter (a tuple expression),
-// the return type, and the body.
+// the return type, capture clause, and the body.
 auto MakeLambda(int line_num, Expression* parameter, Expression* return_type,
-                Statement* body) -> Expression*;
+                std::vector<Capture*>* capture_clause, Statement* body)
+    -> Expression*;
 
 auto MakeTypeType(int line_num) -> Expression*;
 auto MakeIntType(int line_num) -> Expression*;

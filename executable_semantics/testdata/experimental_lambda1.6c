@@ -4,6 +4,6 @@
 
 fn main() -> Int {
   var Int: x = 42;
-  var auto: f = fn(Int: y) -> Int { return x + y; };
+  var auto: f = fn(Int: y) -> Int | x { return x + y; };
   return f(10) - 52;
 }

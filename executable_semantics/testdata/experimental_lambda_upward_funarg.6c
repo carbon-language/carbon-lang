@@ -4,7 +4,8 @@
 
 fn main() -> Int {
   var auto: f = fn(Int: y) -> (fnty(Int) -> Int) {
-                    return fn (Int: x) -> Int | y { return y; };
+                    return fn (Int: x) -> Int | &y { return y; };
 		};
+  // error: access to dead value
   return f(0)(42);
 }
