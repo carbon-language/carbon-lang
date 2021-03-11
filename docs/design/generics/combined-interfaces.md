@@ -47,13 +47,17 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
         -   [Set to a specific value](#set-to-a-specific-value)
             -   [Associated constants](#associated-constants-1)
             -   [Associated types](#associated-types-1)
+            -   [Concern](#concern)
         -   [Range constraints on associated constants](#range-constraints-on-associated-constants)
         -   [Type bounds](#type-bounds)
             -   [Type bounds on associated types in declarations](#type-bounds-on-associated-types-in-declarations)
             -   [Type bounds on associated types in interfaces](#type-bounds-on-associated-types-in-interfaces)
+            -   [Refining a type bounds when refining/extending](#refining-a-type-bounds-when-refiningextending)
             -   [Naming constraints](#naming-constraints)
         -   [Two types must be the same](#two-types-must-be-the-same)
+        -   [Combining constraints](#combining-constraints)
             -   [Naming constraints](#naming-constraints-1)
+        -   [Rejected alternative: `ForSome(F)`](#rejected-alternative-forsomef)
         -   [Is a subtype](#is-a-subtype)
         -   [Parameterized type implements interface](#parameterized-type-implements-interface)
         -   [Recursive constraints](#recursive-constraints)
@@ -61,7 +65,6 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Implicit constraints](#implicit-constraints)
     -   [Generic type equality](#generic-type-equality)
     -   [Options](#options)
-    -   [Rejected alternative: `ForSome(F)`](#rejected-alternative-forsomef)
 -   [Conditional conformance](#conditional-conformance)
 -   [Templated impls for generic interfaces](#templated-impls-for-generic-interfaces)
     -   [Structural conformance](#structural-conformance)
@@ -1697,14 +1700,6 @@ TODO: Fix this up a lot
 -   Within an interface definition.
 -   Naming constrained type-types.
 
-Sometimes we may need a single type-type without any parameters or unspecified
-associated types, such as to define a `DynPtr(TT)` (as
-[described in the following dynamic pointer type section](#dynamic-pointer-type)).
-This could be done by naming the constraint before using it, but it would be
-nicer if that extra step was not needed for common cases. For Rust, it is part
-of
-[the motivation of supporting argument passing to set values of associated types](https://rust-lang.github.io/rfcs/0195-associated-items.html#constraining-associated-types).
-
 ### Two approaches for expressing constraints
 
 **Open question:** It is undecided which approach we will go with. We may also
@@ -1831,7 +1826,7 @@ Similarly in an interface definition:
 interface {
   // Argument passing:
   var NSpacePoint(.N = 2): PointT;
-  // vs. where clause:
+  // vs. `where` clause:
   var NSpacePoint: PointT where PointT.N == 2;
 }
 ```
@@ -1845,7 +1840,7 @@ structural interface Point2DInteface {
   extends NSpacePoint(.N = 2);
 }
 
-// vs. where clause:
+// vs. `where` clause:
 alias Point2DInterface = NSpacePoint where Point2D.N == 2;
 structural interface Point2DInterface {
   extends NSpacePoint where NSpacePoint.N == 2;
@@ -1870,7 +1865,7 @@ interface Container {
   var Type:$ ElementType;
   // Argument passing:
   var Iterator(.ElementType = ElementType):$ IteratorType;
-  // vs. where clause:
+  // vs. `where` clause:
   var Iterator:$ IteratorType where IteratorType.ElementType == ElementType;
   ...
 }
@@ -1883,7 +1878,7 @@ containing integers:
 ```
 // Argument passing:
 fn SumIntStack[Stack(.ElementType = Int):$ T](Ptr(T): s) -> Int {
-// vs. where clause:
+// vs. `where` clause:
 fn SumIntStack[Stack:$ T](Ptr(T): s) -> Int where T.ElementType == Int {
 
 // Same implementation in either case:
@@ -1905,7 +1900,7 @@ structural interface IntStack {
   extends Stack(.ElementType = Int);
 }
 
-// vs. where clause:
+// vs. `where` clause:
 alias IntStack = Stack where IntStack.ElementType == Int;
 structural interface IntStack {
   extends Stack where Stack.ElementType == Int;
@@ -1914,6 +1909,15 @@ structural interface IntStack {
 
 [Rust uses trait aliases](https://rust-lang.github.io/rfcs/1733-trait-alias.html)
 for this case.
+
+##### Concern
+
+Sometimes we may need a single type-type without any parameters or unspecified
+associated constants/types, such as to define a `DynPtr(TT)` (as
+[described in the following dynamic pointer type section](#dynamic-pointer-type)).
+To do this with a `where` clause approach you would have to name the constraint
+before using it, an annoying extra step. For Rust, it is part of
+[the motivation of supporting argument passing to set values of associated types](https://rust-lang.github.io/rfcs/0195-associated-items.html#constraining-associated-types).
 
 #### Range constraints on associated constants
 
@@ -2022,52 +2026,92 @@ fn OneAfterBegin[Container:$ T](Ptr(T): c) -> T.IteratorType {
 }
 ```
 
+##### Refining a type bounds when refining/extending
+
+TODO
+
 ##### Naming constraints
 
-Given these definitions:
+Given these definitions (omitting `ElementType` for brevity):
 
 ```
-interface IteratorInterface(Type:$ ElementType) { ... }
-interface RandomAccessIterator(Type:$ ElementType) {
-  extends IteratorInterface(ElementType);
+interface IteratorInterface { ... }
+interface ContainerInterface {
+  var IteratorInterface:$ IteratorType;
   ...
 }
-interface ContainerInterface(Type:$ ElementType) {
-  var IteratorInterface(ElementType):$ IteratorType;
+interface RandomAccessIterator {
+  extends IteratorInterface;
   ...
 }
 ```
 
-TODO: We would like to be able to define a `RandomAccessContainer(T)` to be a
-type-type whose types satisfy `ContainerInterface(T)` with an `IteratorType`
-satisfying `RandomAccessIterator(T)`.
+We would like to be able to define a `RandomAccessContainer` to be a type-type
+whose types satisfy `ContainerInterface` with an `IteratorType` satisfying
+`RandomAccessIterator`.
+
+**Concern:** We would need to introduce some sort of `for_some` operator to
+support this with argument passing.
 
 ```
-fn F[Type:$ T,
-     RandomAccessIterator(T):$ IterType,
-     ContainerInterface(T, .IteratorType=IterType):$ ContainerType]
-  (ContainerType: c);
+// Argument passing:
+fn F[RandomAccessIterator:$ IterType,
+     ContainerInterface(.IteratorType=IterType):$ ContainerType]
+    (ContainerType: c);
+// vs. `where` clause:
+fn F[ContainerInterface:$ ContainerType](ContainerType: c)
+    where ContainerType.IteratorType has_type RandomAccessIterator;
 
-// WANT a definition of RandomAccessContainer(T) such that the above
+// WANT a definition of RandomAccessContainer such that the above
 // is equivalent to:
-fn F[Type:$ T, RandomAccessContainer(T):$ ContainerType](ContainerType: c);
+fn F[RandomAccessContainer:$ ContainerType](ContainerType: c);
+
+// Argument passing:
+alias RandomAccessContainer =
+    for_some[RandomAccessIterator:$ IterType]
+    ContainerInterface(.IteratorType=IterType);
+// vs. `where` clause:
+alias RandomAccessContainer = ContainerInterface
+    where RandomAccessContainer.IteratorType has_type RandomAccessIterator;
 ```
 
 #### Two types must be the same
 
+```
+interface PairInterface {
+  var Type:$ Left;
+  var Type:$ Right;
+}
+
+// Argument passing:
+fn F[Type:$ T, PairInterface(.Left = T, .Right = T):$ MatchedPairType]
+    (Ptr(MatchedPairType): x);
+
+// vs. `where` clause:
+fn F[PairInterface:$ MatchedPairType](Ptr(MatchedPairType): x)
+    where MatchedPairType.Left == MatchedPairType.Right;
+```
+
 TODO
+
+#### Combining constraints
 
 These different types of constraints can be combined. For example, this example
 expresses a constraint that two associated types are equal and satisfy an
 interface:
 
 ```
-// CT1.ElementType == CT2.ElementType
-// CT1.ElementType implements HasEquality
+// Argument passing:
 fn EqualContainers[HasEquality:$ ET,
                    Container(.ElementType = ET):$ CT1,
                    Container(.ElementType = ET):$ CT2]
     (Ptr(CT1): c1, Ptr(CT2): c2) -> Bool;
+
+// vs. `where` clause:
+fn EqualContainers[Container:$ CT1, Container:$ CT2]
+    (Ptr(CT1): c1, Ptr(CT2): c2) -> Bool
+    where CT1.ElementType == CT2.ElementType,
+          CT1.ElementType has_type HasEquality;
 ```
 
 ##### Naming constraints
@@ -2085,6 +2129,46 @@ fn G[Type:$ T, Double(T):$ U](U: u);
 structural interface Double(Type:$ T) { extends PairInterface(T, T); }
 // Similarly we might support this using an `alias`:
 alias Double(Type:$ T) = PairInterface(T, T);
+```
+
+#### Rejected alternative: `ForSome(F)`
+
+Another way to solve the [type bounds](#type-bounds) and
+[two types must be the same](#two-types-must-be-the-same) use cases using
+argument passing without the `for_some` operator would be to have a `ForSome(F)`
+construct, where `F` is a function from types to type-types.
+
+> `ForSome(F)`, where `F` is a function from type `T` to type-type `TT`, is a
+> type whose values are types `U` with type `TT=F(T)` for some type `T`.
+
+**Example:** Pairs of values where both values have the same type might be
+written as
+
+```
+fn F[ForSome(lambda (Type:$ T) => PairInterface(T, T)):$ MatchedPairType]
+    (Ptr(MatchedPairType): x) { ... }
+```
+
+This would be equivalent to:
+
+```
+fn F[Type:$ T, PairInterface(T, T):$ MatchedPairType]
+    (Ptr(MatchedPairType): x) { ... }
+```
+
+**Example:** Containers where the elements implement the `HasEquality` interface
+might be written as:
+
+```
+fn F[ForSome(lambda (HasEquality:$ T) => Container(T)):$ ContainerType]
+  (Ptr(ContainerType): x) { ... }
+```
+
+This would be equivalent to:
+
+```
+fn F[HasEquality:$ T, Container(T):$ ContainerType]
+  (Ptr(ContainerType): x) { ... }
 ```
 
 #### Is a subtype
@@ -2158,7 +2242,7 @@ fn UseContainer[Container(.SliceType = .Self):$ T](T: c) -> Bool {
   return c == c.Slice(...);
 }
 
-// Where clause
+// vs. `where` clause
 fn Relu[HasAbs:$ T](T: x) where T.MagnitudeType == T {
   return (x.Abs() + x) / 2;
 }
@@ -2175,7 +2259,7 @@ interface Container {
 
   // Argument passing:
   var Container(.ElementType = ElementType, .SliceType = .Self):$ SliceType;
-  // Where clause:
+  // vs. `where` clause
   var Container:$ SliceType where SliceType.ElementType == ElementType,
                                   Slicetype.SliceType == SliceType;
 
@@ -2197,7 +2281,7 @@ structural interface ContainerIsSlice {
   extends Container(.SliceType = Self);
 }
 
-// Where clause:
+// vs. `where` clause
 alias RealAbs = HasAbs where RealAbs.MagnitudeType == RealAbs;
 structural interface RealAbs {
   extends HasAbs where HasAbs.MagnitudeType == Self;
@@ -2406,46 +2490,6 @@ With the general `where` clause approach we may decide, as Rust did, to include
 some parameter passing alternatives to the `where` syntax, for convenience.
 Similarly we could adopt the parameter passing model, but allow the `where`
 syntax in some cases where we could rewrite it automatically to fit.
-
-### Rejected alternative: `ForSome(F)`
-
-TODO
-
-Another way to solve this problem would be to have a `ForSome(F)` construct,
-where `F` is a function from types to type-types.
-
-> `ForSome(F)`, where `F` is a function from type `T` to type-type `TT`, is a
-> type whose values are types `U` with type `TT=F(T)` for some type `T`.
-
-**Example:** Pairs of values where both values have the same type might be
-written as
-
-```
-fn F[ForSome(lambda (Type:$ T) => PairInterface(T, T)):$ MatchedPairType]
-    (Ptr(MatchedPairType): x) { ... }
-```
-
-This would be equivalent to:
-
-```
-fn F[Type:$ T, PairInterface(T, T):$ MatchedPairType]
-    (Ptr(MatchedPairType): x) { ... }
-```
-
-**Example:** Containers where the elements implement the `HasEquality` interface
-might be written as:
-
-```
-fn F[ForSome(lambda (HasEquality:$ T) => Container(T)):$ ContainerType]
-  (Ptr(ContainerType): x) { ... }
-```
-
-This would be equivalent to:
-
-```
-fn F[HasEquality:$ T, Container(T):$ ContainerType]
-  (Ptr(ContainerType): x) { ... }
-```
 
 ## Conditional conformance
 
