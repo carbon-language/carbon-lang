@@ -2481,6 +2481,19 @@ determine canonical types.
 **Open question:** Does this algorithm still work with the `.Self` feature from
 the ["recursive constraints" section](#recursive-constraints)?
 
+**Open question:** Can we relax any of the restrictions? For example, perhaps we
+would like to allow items in an interface to reference each other, as in:
+
+```
+interface D {
+  var A(.W = F):$ E;
+  var A(.W = E):$ F;
+}
+```
+
+In this case `D.E.W == D.F` and `D.F.W == D.E` and we would need some way of
+deciding which were canonical.
+
 ### Options
 
 There is one big choice here, whether we want the fully general expressive
