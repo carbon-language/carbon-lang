@@ -448,10 +448,7 @@ class TokenizedBuffer::Lexer {
          .token_line = current_line,
          .column = current_column,
          .error_length = static_cast<int32_t>(error_text.size())});
-    // TODO: #19 - Need to convert to the diagnostics library.
-    llvm::errs() << "ERROR: Line " << buffer.GetLineNumber(token) << ", Column "
-                 << buffer.GetColumnNumber(token)
-                 << ": Unrecognized characters!\n";
+    emitter.EmitError<UnrecognizedCharacters>(error_text.begin());
 
     current_column += error_text.size();
     source_text = source_text.drop_front(error_text.size());

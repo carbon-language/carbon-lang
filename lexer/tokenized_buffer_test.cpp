@@ -761,6 +761,7 @@ TEST_F(LexerTest, Diagnostics) {
     //no space after comment
     "hello\bworld\xab"
     0x123abc
+    #"
   )";
 
   Testing::MockDiagnosticConsumer consumer;
@@ -786,6 +787,10 @@ TEST_F(LexerTest, Diagnostics) {
       HandleDiagnostic(AllOf(
           DiagnosticAt(6, 10),
           DiagnosticMessage(HasSubstr("Invalid digit 'a' in hexadecimal")))));
+  EXPECT_CALL(consumer,
+              HandleDiagnostic(AllOf(
+                  DiagnosticAt(7, 5),
+                  DiagnosticMessage(HasSubstr("unrecognized character")))));
 
   Lex(testcase, consumer);
 }
