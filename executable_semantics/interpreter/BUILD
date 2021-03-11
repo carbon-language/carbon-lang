@@ -40,5 +40,6 @@ cc_library(
     hdrs = [
         "dictionary.h",
         "stack.h",
+        "vocabulary_types.h",
     ],
 )

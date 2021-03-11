@@ -25,13 +25,17 @@ cc_library(
     name = "expression",
     srcs = ["expression.cpp"],
     hdrs = ["expression.h"],
+    deps = ["//executable_semantics/interpreter:containers"],
 )
 
 cc_library(
     name = "field_list",
     srcs = ["field_list.cpp"],
     hdrs = ["field_list.h"],
-    deps = [":expression"],
+    deps = [
+        ":expression",
+        "//executable_semantics/interpreter:containers",
+    ],
 )
 
 cc_library(

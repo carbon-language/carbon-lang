@@ -5,12 +5,17 @@
 #ifndef EXECUTABLE_SEMANTICS_AST_EXPRESSION_H_
 #define EXECUTABLE_SEMANTICS_AST_EXPRESSION_H_
 
+#include <optional>
 #include <string>
 #include <vector>
+
+#include "executable_semantics/interpreter/vocabulary_types.h"
 
 namespace Carbon {
 
 class Value;
+struct TCResult;
+struct TCContext_;
 
 // An existential AST expression satisfying the Expression concept.
 class Expression {
@@ -25,23 +30,22 @@ class Expression {
 
  public:  // Expression concept API, in addition to ValueSemantic.
   auto Print() const -> void { box->Print(); }
-  auto Value() const -> Value* { box->Value(); }
+  auto ToValue() const -> Value* { return box->ToValue(); }
   auto StepLvalue() const -> void { box->StepLvalue(); }
   auto StepExp() const -> void { box->StepExp(); }
   auto HandleValue() const -> void { box->HandleValue(); }
   auto HandleAction() const -> void { box->HandleAction(); }
-  auto TypeCheck(TypeEnv env, Env ct_env, Value* expected,
-                 TCContext context) const -> TCResult {
-    return box->TypeCheck(env, ct_env, expected, context);
-  }
+  auto TypeCheck(TypeEnv env, Env ct_env, Value* expected, TCContext_ context)
+      -> TCResult;
   auto SourceLocation() const -> int { return box->SourceLocation(); }
 
  public:  // Dynamic casting/unwrapping
   // Returns the instance of Concrete that *this notionally is, or nullopt if
   // *this notionally has some other concrete type.
-  auto As<class Content>() -> std::optional<Content> {
-    p = std::dynamic_cast<Boxed<Content>*>(box.get());
-    return p ? *p : std::nullopt;
+  template <class Content>
+  auto As() const -> std::optional<Content> {
+    const auto* p = dynamic_cast<const Boxed<Content>*>(box.get());
+    return p ? std::optional(p->content) : std::nullopt;
   }
 
  private:  // types
@@ -57,13 +61,13 @@ class Expression {
 
     virtual ~Box() {}
     virtual auto Print() const -> void = 0;
-    virtual auto Value() const -> Value* = 0;
+    virtual auto ToValue() const -> Value* = 0;
     virtual auto StepLvalue() const -> void = 0;
     virtual auto StepExp() const -> void = 0;
     virtual auto HandleValue() const -> void = 0;
     virtual auto HandleAction() const -> void = 0;
     virtual auto TypeCheck(TypeEnv env, Env ct_env, Value* expected,
-                           TCContext context) const -> TCResult = 0;
+                           TCContext_ context) const -> TCResult = 0;
     virtual auto SourceLocation() const -> int = 0;
   };
 
@@ -75,15 +79,13 @@ class Expression {
     explicit Boxed(Content content) : Box(), content(content) {}
 
     auto Print() const -> void { content.Print(); }
-    auto Value() const -> Value* { return content.Value(); }
+    auto ToValue() const -> Value* { return content.ToValue(); }
     auto StepLvalue() const -> void { content.StepLvalue(); }
     auto StepExp() const -> void { content.StepExp(); }
     auto HandleValue() const -> void { content.HandleValue(); }
     auto HandleAction() const -> void { content.HandleAction(); }
     auto TypeCheck(TypeEnv env, Env ct_env, Value* expected,
-                   TCContext context) const -> TCResult {
-      return content.TypeCheck(env, ct_env, expected, context);
-    }
+                   TCContext_ context) const -> TCResult;
     auto SourceLocation() const -> int { return content.sourceLocation; }
   };
 
@@ -102,50 +104,51 @@ class ExpressionSource {
     explicit Location(int lineNumber) : lineNumber(lineNumber) {}
 
     int lineNumber;
-  }
+  };
 
-  private : ExpressionSource(Location location)
-      : location(location) {
-  }
+  Location location;
+
+ protected:
+  ExpressionSource(Location location) : location(location) {}
 };
 
 struct AutoTypeExpression : ExpressionSource {
   AutoTypeExpression(Location textualPlacement)
       : ExpressionSource(textualPlacement) {}
   auto Print() const -> void;
-  auto Value() const -> Value*;
+  auto ToValue() const -> Value*;
   auto StepLvalue() const -> void;
   auto StepExp() const -> void;
   auto HandleValue() const -> void;
   auto HandleAction() const -> void;
   auto TypeCheck(TypeEnv env, Env ct_env, Value* expected,
-                 TCContext context) const -> TCResult;
+                 TCContext_ context) const -> TCResult;
 };
 
 struct BoolTypeExpression : ExpressionSource {
-  BoolTypeExpression(Location textualPlacement, bool value)
-      : ExpressionSource(textualPlacement), value(value) {}
+  BoolTypeExpression(Location textualPlacement)
+      : ExpressionSource(textualPlacement) {}
   auto Print() const -> void;
-  auto Value() const -> Value*;
+  auto ToValue() const -> Value*;
   auto StepLvalue() const -> void;
   auto StepExp() const -> void;
   auto HandleValue() const -> void;
   auto HandleAction() const -> void;
   auto TypeCheck(TypeEnv env, Env ct_env, Value* expected,
-                 TCContext context) const -> TCResult;
+                 TCContext_ context) const -> TCResult;
 };
 
 struct BooleanExpression : ExpressionSource {
   BooleanExpression(Location textualPlacement, bool value)
       : ExpressionSource(textualPlacement), value(value) {}
   auto Print() const -> void;
-  auto Value() const -> Value*;
+  auto ToValue() const -> Value*;
   auto StepLvalue() const -> void;
   auto StepExp() const -> void;
   auto HandleValue() const -> void;
   auto HandleAction() const -> void;
   auto TypeCheck(TypeEnv env, Env ct_env, Value* expected,
-                 TCContext context) const -> TCResult;
+                 TCContext_ context) const -> TCResult;
 
   bool value;
   int sourceLocation;
@@ -159,13 +162,13 @@ struct CallExpression : ExpressionSource {
         argumentTuple(argumentTuple) {}
 
   auto Print() const -> void;
-  auto Value() const -> Value*;
+  auto ToValue() const -> Value*;
   auto StepLvalue() const -> void;
   auto StepExp() const -> void;
   auto HandleValue() const -> void;
   auto HandleAction() const -> void;
   auto TypeCheck(TypeEnv env, Env ct_env, Value* expected,
-                 TCContext context) const -> TCResult;
+                 TCContext_ context) const -> TCResult;
 
   Expression function;
   // If not a tuple expression, this is the sole argument to a unary call.
@@ -180,13 +183,13 @@ struct FunctionTypeExpression : ExpressionSource {
         returnType(returnType) {}
 
   auto Print() const -> void;
-  auto Value() const -> Value*;
+  auto ToValue() const -> Value*;
   auto StepLvalue() const -> void;
   auto StepExp() const -> void;
   auto HandleValue() const -> void;
   auto HandleAction() const -> void;
   auto TypeCheck(TypeEnv env, Env ct_env, Value* expected,
-                 TCContext context) const -> TCResult;
+                 TCContext_ context) const -> TCResult;
 
   Expression parameterTupleType;
   Expression returnType;
@@ -200,13 +203,13 @@ struct GetFieldExpression : ExpressionSource {
         fieldName(fieldName) {}
 
   auto Print() const -> void;
-  auto Value() const -> Value*;
+  auto ToValue() const -> Value*;
   auto StepLvalue() const -> void;
   auto StepExp() const -> void;
   auto HandleValue() const -> void;
   auto HandleAction() const -> void;
   auto TypeCheck(TypeEnv env, Env ct_env, Value* expected,
-                 TCContext context) const -> TCResult;
+                 TCContext_ context) const -> TCResult;
 
   Expression aggregate;
   std::string fieldName;
@@ -220,13 +223,13 @@ struct IndexExpression : ExpressionSource {
         offset(offset) {}
 
   auto Print() const -> void;
-  auto Value() const -> Value*;
+  auto ToValue() const -> Value*;
   auto StepLvalue() const -> void;
   auto StepExp() const -> void;
   auto HandleValue() const -> void;
   auto HandleAction() const -> void;
   auto TypeCheck(TypeEnv env, Env ct_env, Value* expected,
-                 TCContext context) const -> TCResult;
+                 TCContext_ context) const -> TCResult;
 
   Expression aggregate;
   Expression offset;
@@ -237,13 +240,13 @@ struct IntTypeExpression : ExpressionSource {
       : ExpressionSource(textualPlacement) {}
 
   auto Print() const -> void;
-  auto Value() const -> Value*;
+  auto ToValue() const -> Value*;
   auto StepLvalue() const -> void;
   auto StepExp() const -> void;
   auto HandleValue() const -> void;
   auto HandleAction() const -> void;
   auto TypeCheck(TypeEnv env, Env ct_env, Value* expected,
-                 TCContext context) const -> TCResult;
+                 TCContext_ context) const -> TCResult;
 };
 
 struct IntegerExpression : ExpressionSource {
@@ -251,13 +254,13 @@ struct IntegerExpression : ExpressionSource {
       : ExpressionSource(textualPlacement), value(value) {}
 
   auto Print() const -> void;
-  auto Value() const -> Value*;
+  auto ToValue() const -> Value*;
   auto StepLvalue() const -> void;
   auto StepExp() const -> void;
   auto HandleValue() const -> void;
   auto HandleAction() const -> void;
   auto TypeCheck(TypeEnv env, Env ct_env, Value* expected,
-                 TCContext context) const -> TCResult;
+                 TCContext_ context) const -> TCResult;
 
   int value;
 };
@@ -268,13 +271,13 @@ struct PatternVariableExpression : ExpressionSource {
       : ExpressionSource(textualPlacement), name(name), type(type) {}
 
   auto Print() const -> void;
-  auto Value() const -> Value*;
+  auto ToValue() const -> Value*;
   auto StepLvalue() const -> void;
   auto StepExp() const -> void;
   auto HandleValue() const -> void;
   auto HandleAction() const -> void;
   auto TypeCheck(TypeEnv env, Env ct_env, Value* expected,
-                 TCContext context) const -> TCResult;
+                 TCContext_ context) const -> TCResult;
 
   std::string name;
   Expression type;
@@ -292,34 +295,25 @@ struct PrimitiveOperatorExpression : ExpressionSource {
   };
 
   // Creates a unary operator expression
-  PrimitiveOperatorExpression<Arguments...>(Location textualPlacement,
-                                            enum Operator operation,
-                                            Arguments arguments...)
-      : PrimitiveOperatorExpression(textualPlacement, operation,
-                                    {... arguments})
+  template <class... Arguments>
+  PrimitiveOperatorExpression(Location textualPlacement, Operation operation,
+                              Arguments... arguments);
 
-        // Creates a binary operator expression
-        PrimitiveOperatorExpression(Location textualPlacement,
-                                    enum Operator operation, Expression lhs,
-                                    Expression rhs)
-      : PrimitiveOperatorExpression(textualPlacement, operation, {lhs, rhs})
-
-            auto Print() const -> void;
-  auto Value() const -> Value*;
+  auto Print() const -> void;
+  auto ToValue() const -> Value*;
   auto StepLvalue() const -> void;
   auto StepExp() const -> void;
   auto HandleValue() const -> void;
   auto HandleAction() const -> void;
   auto TypeCheck(TypeEnv env, Env ct_env, Value* expected,
-                 TCContext context) const -> TCResult;
+                 TCContext_ context) const -> TCResult;
 
   Operation operation;
   std::vector<Expression> arguments;
 
  private:
   // Creates an N-ary operator expression
-  PrimitiveOperatorExpression(Location textualPlacement,
-                              enum Operator operation,
+  PrimitiveOperatorExpression(Location textualPlacement, Operation operation,
                               const std::vector<Expression>& arguments)
       : ExpressionSource(textualPlacement),
         operation(operation),
@@ -334,38 +328,34 @@ struct TupleExpression : ExpressionSource {
       : ExpressionSource(textualPlacement), elements(elements) {
     int i = 0;
     for (auto& e : this->elements) {
-      if (e == "") {
+      if (e.first.empty()) {
         e.first = std::to_string(i);
         ++i;
       }
     }
   }
 
-  TupleExpression(Location textualPlacement,
-                  const std::vector<Expression>& namedields)
-      : ExpressionSource(textualPlacement), namedFields(namedFields) {}
-
   auto Print() const -> void;
-  auto Value() const -> Value*;
+  auto ToValue() const -> Value*;
   auto StepLvalue() const -> void;
   auto StepExp() const -> void;
   auto HandleValue() const -> void;
   auto HandleAction() const -> void;
   auto TypeCheck(TypeEnv env, Env ct_env, Value* expected,
-                 TCContext context) const -> TCResult;
+                 TCContext_ context) const -> TCResult;
 
   std::vector<std::pair<std::string, Expression>> elements;
 };
 
 struct TypeTypeExpression : ExpressionSource {
   auto Print() const -> void;
-  auto Value() const -> Value*;
+  auto ToValue() const -> Value*;
   auto StepLvalue() const -> void;
   auto StepExp() const -> void;
   auto HandleValue() const -> void;
   auto HandleAction() const -> void;
   auto TypeCheck(TypeEnv env, Env ct_env, Value* expected,
-                 TCContext context) const -> TCResult;
+                 TCContext_ context) const -> TCResult;
 };
 
 struct VariableExpression : ExpressionSource {
@@ -375,13 +365,13 @@ struct VariableExpression : ExpressionSource {
       : ExpressionSource(textualPlacement), name(name) {}
 
   auto Print() const -> void;
-  auto Value() const -> Value*;
+  auto ToValue() const -> Value*;
   auto StepLvalue() const -> void;
   auto StepExp() const -> void;
   auto HandleValue() const -> void;
   auto HandleAction() const -> void;
   auto TypeCheck(TypeEnv env, Env ct_env, Value* expected,
-                 TCContext context) const -> TCResult;
+                 TCContext_ context) const -> TCResult;
 };
 
 }  // namespace Carbon

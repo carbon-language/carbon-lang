@@ -233,26 +233,26 @@ auto ValToPtr(Value* v, int line_num) -> Address {
   }
 }
 
-auto EvalPrim(Operator op, const std::vector<Value*>& args, int line_num)
-    -> Value* {
+auto EvalPrim(PrimitiveOperatorExpression::Operation op,
+              const std::vector<Value*>& args, int line_num) -> Value* {
   switch (op) {
-    case Operator::Neg:
+    case PrimitiveOperatorExpression::Operation::Neg:
       return MakeIntVal(-ValToInt(args[0], line_num));
-    case Operator::Add:
+    case PrimitiveOperatorExpression::Operation::Add:
       return MakeIntVal(ValToInt(args[0], line_num) +
                         ValToInt(args[1], line_num));
-    case Operator::Sub:
+    case PrimitiveOperatorExpression::Operation::Sub:
       return MakeIntVal(ValToInt(args[0], line_num) -
                         ValToInt(args[1], line_num));
-    case Operator::Not:
+    case PrimitiveOperatorExpression::Operation::Not:
       return MakeBoolVal(!ValToBool(args[0], line_num));
-    case Operator::And:
+    case PrimitiveOperatorExpression::Operation::And:
       return MakeBoolVal(ValToBool(args[0], line_num) &&
                          ValToBool(args[1], line_num));
-    case Operator::Or:
+    case PrimitiveOperatorExpression::Operation::Or:
       return MakeBoolVal(ValToBool(args[0], line_num) ||
                          ValToBool(args[1], line_num));
-    case Operator::Eq:
+    case PrimitiveOperatorExpression::Operation::Eq:
       return MakeBoolVal(ValueEqual(args[0], args[1], line_num));
   }
 }

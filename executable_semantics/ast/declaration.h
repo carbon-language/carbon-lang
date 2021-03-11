@@ -11,15 +11,11 @@
 #include "executable_semantics/ast/function_definition.h"
 #include "executable_semantics/ast/member.h"
 #include "executable_semantics/ast/struct_definition.h"
-#include "executable_semantics/interpreter/dictionary.h"
+#include "executable_semantics/interpreter/vocabulary_types.h"
 
 namespace Carbon {
 
 struct Value;
-
-using Address = unsigned int;
-using TypeEnv = Dictionary<std::string, Value*>;
-using Env = Dictionary<std::string, Address>;
 
 /// TODO:explain this. Also name it if necessary. Consult with jsiek.
 using ExecutionEnvironment = std::pair<TypeEnv, Env>;

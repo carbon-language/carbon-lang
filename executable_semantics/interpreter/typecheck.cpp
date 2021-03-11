@@ -89,16 +89,16 @@ auto ToType(int line_num, Value* val) -> Value* {
 auto ReifyType(Value* t, int line_num) -> Expression* {
   switch (t->tag) {
     case ValKind::VarTV:
-      return MakeVar(0, *t->u.var_type);
+      return VariableExpression(0, *t->u.var_type);
     case ValKind::IntTV:
-      return MakeIntType(0);
+      return IntTypeExpression(0);
     case ValKind::BoolTV:
-      return MakeBoolType(0);
+      return BoolTypeExpression(0);
     case ValKind::TypeTV:
-      return MakeTypeType(0);
+      return TypeTypeExpression(0);
     case ValKind::FunctionTV:
-      return MakeFunType(0, ReifyType(t->u.fun_type.param, line_num),
-                         ReifyType(t->u.fun_type.ret, line_num));
+      return FunctionTypeExpression(0, ReifyType(t->u.fun_type.param, line_num),
+                                    ReifyType(t->u.fun_type.ret, line_num));
     case ValKind::TupleTV: {
       auto args = new std::vector<std::pair<std::string, Expression*>>();
       for (auto& field : *t->u.tuple_type.fields) {
@@ -119,24 +119,29 @@ auto ReifyType(Value* t, int line_num) -> Expression* {
   }
 }
 
-// The TypeCheckExp function performs semantic analysis on an expression.
-// It returns a new version of the expression, its type, and an
-// updated environment which are bundled into a TCResult object.
-// The purpose of the updated environment is
-// to bring pattern variables into scope, for example, in a match case.
-// The new version of the expression may include more information,
-// for example, the type arguments deduced for the type parameters of a
-// generic.
+// Resolves types in this expression, given the environments and type checking
+// context in which *this, appears and any expected type, returning a result
+// object bundling 1) a new version of *this containing deduced type
+// information, 2) the computed type of *this, and 3) an updated environment
+// binding any pattern variables.
 //
-// e is the expression to be analyzed.
 // env maps variable names to the type of their run-time value.
-// ct_env maps variable names to their compile-time values. It is not
-//    directly used in this function but is passed to InterExp.
-// expected is the type that this expression is expected to have.
-//    This parameter is non-null when the expression is in a pattern context
-//    and it is used to implement `auto`, otherwise it is null.
+// ct_env maps variable names to their compile-time values.
+// expectedType may be nullopt outside of a pattern context.
 // context says what kind of position this expression is nested in,
 //    whether it's a position that expects a value, a pattern, or a type.
+auto Expression::TypeCheck(TypeEnv env, Env ct_env,
+                           optional<Value> expectedType,
+                           TCContext_ context) const -> TCResult {
+  return box->TypeCheck(env, ct_env, expected, context, result);
+}
+
+template <class Content>
+auto Expression::Boxed::TypeCheck(TypeEnv env, Env ct_env, Value* expected,
+                                  TCContext_ context) const -> TCResult {
+  return content.TypeCheck(env, ct_env, expected, context);
+}
+
 auto TypeCheckExp(Expression* e, TypeEnv env, Env ct_env, Value* expected,
                   TCContext context) -> TCResult {
   switch (e->tag) {

@@ -21,7 +21,7 @@ void PrintMember(Member* m) {
   switch (m->tag) {
     case MemberKind::FieldMember:
       std::cout << "var " << *m->u.field.name << " : ";
-      PrintExp(m->u.field.type);
+      m->u.field.type->Print();
       std::cout << ";" << std::endl;
       break;
   }

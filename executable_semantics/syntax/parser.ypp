@@ -159,42 +159,56 @@ pattern:
 ;
 expression:
   identifier
-    { $$ = Carbon::MakeVar(yylineno, $1); }
+    { $$ = Carbon::VariableExpression(yylineno, $1); }
 | expression designator
-    { $$ = Carbon::MakeGetField(yylineno, $1, $2); }
+    { $$ = Carbon::GetFieldExpression(yylineno, $1, $2); }
 | expression "[" expression "]"
-    { $$ = Carbon::MakeIndex(yylineno, $1, $3); }
+    { $$ = Carbon::IndexExpression(yylineno, $1, $3); }
 | expression ":" identifier
-    { $$ = Carbon::MakeVarPat(yylineno, $3, $1); }
+    { $$ = Carbon::VarPatExpression(yylineno, $3, $1); }
 | integer_literal
-    { $$ = Carbon::MakeInt(yylineno, $1); }
+    { $$ = Carbon::IntExpression(yylineno, $1); }
 | TRUE
-    { $$ = Carbon::MakeBool(yylineno, true); }
+    { $$ = Carbon::BooleanExpression(yylineno, true); }
 | FALSE
-    { $$ = Carbon::MakeBool(yylineno, false); }
+    { $$ = Carbon::BooleanExpression(yylineno, false); }
 | INT
-    { $$ = Carbon::MakeIntType(yylineno); }
+    { $$ = Carbon::IntTypeExpression(yylineno); }
 | BOOL
-    { $$ = Carbon::MakeBoolType(yylineno); }
+    { $$ = Carbon::BoolTypeExpression(yylineno); }
 | TYPE
-    { $$ = Carbon::MakeTypeType(yylineno); }
+    { $$ = Carbon::TypeTypeExpression(yylineno); }
 | AUTO
-    { $$ = Carbon::MakeAutoType(yylineno); }
+    { $$ = Carbon::AutoTypeExpression(yylineno); }
 | paren_expression { $$ = $1; }
 | expression EQUAL_EQUAL expression
-    { $$ = Carbon::MakeBinOp(yylineno, Carbon::Operator::Eq, $1, $3); }
+    { $$ = Carbon::PrimitiveOperatorExpression(
+        yylineno, Carbon::PrimitiveOperatorExpression::Operation::Eq, $1, $3); }
 | expression "+" expression
-    { $$ = Carbon::MakeBinOp(yylineno, Carbon::Operator::Add, $1, $3); }
+    {
+      $$ = Carbon::PrimitiveOperatorExpression(
+        yylineno, Carbon::PrimitiveOperatorExpression::Operation::Add, $1, $3);
+    }
 | expression "-" expression
-    { $$ = Carbon::MakeBinOp(yylineno, Carbon::Operator::Sub, $1, $3); }
+    { $$ = Carbon::PrimitiveOperatorExpression(
+        yylineno, Carbon::PrimitiveOperatorExpression::Operation::Sub, $1, $3);
+    }
 | expression AND expression
-    { $$ = Carbon::MakeBinOp(yylineno, Carbon::Operator::And, $1, $3); }
+    { $$ = Carbon::PrimitiveOperatorExpression(
+        yylineno, Carbon::PrimitiveOperatorExpression::Operation::And, $1, $3);
+    }
 | expression OR expression
-    { $$ = Carbon::MakeBinOp(yylineno, Carbon::Operator::Or, $1, $3); }
+    { $$ = Carbon::PrimitiveOperatorExpression(
+        yylineno, Carbon::PrimitiveOperatorExpression::Operation::Or, $1, $3);
+    }
 | NOT expression
-    { $$ = Carbon::MakeUnOp(yylineno, Carbon::Operator::Not, $2); }
+    { $$ = Carbon::PrimitiveOperatorExpression(
+        yylineno, Carbon::PrimitiveOperatorExpression::Operation::Not, $2);
+    }
 | "-" expression
-    { $$ = Carbon::MakeUnOp(yylineno, Carbon::Operator::Neg, $2); }
+    { $$ = Carbon::PrimitiveOperatorExpression(
+        yylineno, Carbon::PrimitiveOperatorExpression::Operation::Neg, $2);
+    }
 | expression tuple
     { $$ = Carbon::MakeCall(yylineno, $1, $2); }
 | FNTY tuple return_type

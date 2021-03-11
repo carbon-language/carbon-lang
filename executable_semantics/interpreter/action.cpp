@@ -27,7 +27,7 @@ void PrintAct(Action* act, std::ostream& out) {
       break;
     case ActionKind::LValAction:
     case ActionKind::ExpressionAction:
-      PrintExp(act->u.exp);
+      act->u.exp->Print();
       break;
     case ActionKind::StatementAction:
       PrintStatement(act->u.stmt, 1);

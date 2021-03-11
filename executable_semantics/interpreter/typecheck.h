@@ -7,12 +7,13 @@
 
 #include <set>
 
-#include "executable_semantics/ast/expression.h"
 #include "executable_semantics/ast/statement.h"
 #include "executable_semantics/interpreter/dictionary.h"
 #include "executable_semantics/interpreter/interpreter.h"
 
 namespace Carbon {
+
+class Expression;
 
 using TypeEnv = Dictionary<std::string, Value*>;
 
@@ -20,10 +21,16 @@ void PrintTypeEnv(TypeEnv env);
 
 enum class TCContext { ValueContext, PatternContext, TypeContext };
 
-struct TCResult {
-  TCResult(Expression* e, Value* t, TypeEnv env) : exp(e), type(t), env(env) {}
+// Transitional wrapper for TCContext until we figure out how to organize the
+// code.  Works around the inability to forward-declare an enum.
+struct TCContext_ {
+  TCContext value;
+};
 
-  Expression* exp;
+struct TCResult {
+  TCResult(Expression e, Value* t, TypeEnv env) : exp(e), type(t), env(env) {}
+
+  Expression exp;
   Value* type;
   TypeEnv env;
 };
@@ -36,9 +43,6 @@ struct TCStatement {
 };
 
 auto ToType(int line_num, Value* val) -> Value*;
-
-auto TypeCheckExp(Expression* e, TypeEnv env, Env ct_env, Value* expected,
-                  TCContext context) -> TCResult;
 
 auto TypeCheckStmt(Statement*, TypeEnv, Env, Value*) -> TCStatement;
 

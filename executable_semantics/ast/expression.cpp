@@ -8,27 +8,27 @@
 
 namespace Carbon {
 
-static void PrintOp(Operator op) {
+static void PrintOp(PrimitiveOperatorExpression::Operation op) {
   switch (op) {
-    case Operator::Neg:
+    case PrimitiveOperatorExpression::Operation::Neg:
       std::cout << "-";
       break;
-    case Operator::Add:
+    case PrimitiveOperatorExpression::Operation::Add:
       std::cout << "+";
       break;
-    case Operator::Sub:
+    case PrimitiveOperatorExpression::Operation::Sub:
       std::cout << "-";
       break;
-    case Operator::Not:
+    case PrimitiveOperatorExpression::Operation::Not:
       std::cout << "!";
       break;
-    case Operator::And:
+    case PrimitiveOperatorExpression::Operation::And:
       std::cout << "&&";
       break;
-    case Operator::Or:
+    case PrimitiveOperatorExpression::Operation::Or:
       std::cout << "||";
       break;
-    case Operator::Eq:
+    case PrimitiveOperatorExpression::Operation::Eq:
       std::cout << "==";
       break;
   }
@@ -50,9 +50,9 @@ auto GetFieldExpression::Print() const -> void {
 auto TupleExpression::Print() const -> void {
   std::cout << "(";
   const char* separator = "";
-  for (auto iter = fields->begin(); iter != fields->end(); ++iter) {
-    std::cout << separator << iter->first << " = ";
-    PrintExp(iter->second);
+  for (auto const& e : elements) {
+    std::cout << separator << e.first << " = ";
+    e.second.Print();
     separator = ", ";
   }
   std::cout << ")";
@@ -62,7 +62,7 @@ auto IntegerExpression::Print() const -> void { std::cout << value; }
 
 auto BooleanExpression::Print() const -> void {
   std::cout << std::boolalpha;
-  std::cout << e->u.boolean;
+  std::cout << value;
 }
 
 auto PrimitiveOperatorExpression::Print() const -> void {
@@ -90,7 +90,7 @@ auto PatternVariableExpression::Print() const -> void {
 auto CallExpression::Print() const -> void {
   function.Print();
   if (auto t = argumentTuple.As<TupleExpression>()) {
-    t.Print();
+    t->Print();
   } else {
     std::cout << "(";
     argumentTuple.Print();
@@ -104,16 +104,11 @@ auto IntTypeExpression::Print() const -> void { std::cout << "Int"; }
 
 auto AutoTypeExpression::Print() const -> void { std::cout << "auto"; }
 
-case ExpressionKind::AutoT:
-  std::cout << "auto";
-  break;
-case ExpressionKind::FunctionT:
+auto FunctionTypeExpression::Print() const -> void {
   std::cout << "fn ";
-  PrintExp(e->u.function_type.parameter);
+  parameterTupleType.Print();
   std::cout << " -> ";
-  PrintExp(e->u.function_type.return_type);
-  break;
-}  // namespace Carbon
+  returnType.Print();
 }
 
 }  // namespace Carbon
