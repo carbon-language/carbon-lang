@@ -49,10 +49,12 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
             -   [Associated types](#associated-types-1)
         -   [Range constraints on associated constants](#range-constraints-on-associated-constants)
         -   [Type bounds](#type-bounds)
+            -   [Type bounds on associated types in declarations](#type-bounds-on-associated-types-in-declarations)
+            -   [Type bounds on associated types in interfaces](#type-bounds-on-associated-types-in-interfaces)
             -   [Naming constraints](#naming-constraints)
         -   [Two types must be the same](#two-types-must-be-the-same)
             -   [Naming constraints](#naming-constraints-1)
-            -   [Type bounds on associated types in interfaces](#type-bounds-on-associated-types-in-interfaces)
+        -   [Is a subtype](#is-a-subtype)
         -   [Parameterized type implements interface](#parameterized-type-implements-interface)
         -   [Recursive constraints](#recursive-constraints)
         -   [Type inequality](#type-inequality)
@@ -1866,7 +1868,10 @@ interface Iterator {
 }
 interface Container {
   var Type:$ ElementType;
+  // Argument passing:
   var Iterator(.ElementType = ElementType):$ IteratorType;
+  // vs. where clause:
+  var Iterator:$ IteratorType where IteratorType.ElementType == ElementType;
   ...
 }
 ```
@@ -1876,7 +1881,12 @@ type. For example, we might want to have a function only accept stacks
 containing integers:
 
 ```
+// Argument passing:
 fn SumIntStack[Stack(.ElementType = Int):$ T](Ptr(T): s) -> Int {
+// vs. where clause:
+fn SumIntStack[Stack:$ T](Ptr(T): s) -> Int where T.ElementType == Int {
+
+// Same implementation in either case:
   var Int: sum = 0;
   while (!s->IsEmpty()) {
     sum += s->Pop();
@@ -1885,26 +1895,45 @@ fn SumIntStack[Stack(.ElementType = Int):$ T](Ptr(T): s) -> Int {
 }
 ```
 
-For naming these sorts of constraints,
-[Rust has trait aliases](https://rust-lang.github.io/rfcs/1733-trait-alias.html).
+To name these sorts of constraints, we could use `alias` statements or
+`structural interface` definitions.
+
+```
+// Argument passing:
+alias IntStack = Stack(.ElementType = Int);
+structural interface IntStack {
+  extends Stack(.ElementType = Int);
+}
+
+// vs. where clause:
+alias IntStack = Stack where IntStack.ElementType == Int;
+structural interface IntStack {
+  extends Stack where Stack.ElementType == Int;
+}
+```
+
+[Rust uses trait aliases](https://rust-lang.github.io/rfcs/1733-trait-alias.html)
+for this case.
 
 #### Range constraints on associated constants
 
 TODO
 
-**Concern:** It is difficult to express some kinds of constraints in this
-framework: mathematical constraints on values (for example, "`NTuple` where `N`
-is at least 2")
+**Concern:** It is difficult to express mathematical constraints on values in
+the argument passing framework. For example, the constraint "`NTuple` where `N`
+is at least 2" naturally translates into a `where` clause:
 
 ```
-fn TakesAtLeastAPair[Int:$ N](NTuple(N, Int): x) if (N >= 2) { ... }
+fn TakesAtLeastAPair[Int:$ N](NTuple(N, Int): x) where (N >= 2) { ... }
 ```
 
 #### Type bounds
 
 TODO
 
-Or you might constrain the element type to satisfy an interface (`Comparable` in
+##### Type bounds on associated types in declarations
+
+You might constrain the element type to satisfy an interface (`Comparable` in
 this example) without saying exactly what type it is:
 
 ```
@@ -1913,9 +1942,60 @@ fn SortContainer[Comparable:$ ElementType,
     (Ptr(ContainerType): container_to_sort);
 ```
 
+You might read this as "for some `ElementType` of type `Comparable`, ...".
+
 To do this with a `where` clause, we need some way of saying a type bound, which
 unfortunately is likely to be redundant and inconsistent with how it is said
 outside of a `where` clause.
+
+TODO: How would you spell that?
+
+```
+fn SortContainer[Container:$ ContainerType]
+    (Ptr(ContainerType): container_to_sort)
+    where ContainerType.ElementType has_type Comparable;
+```
+
+**Concern:** `Container` defines `ElementType` as having type `Type`, but inside
+this function we need to treat it as if it had type `Comparable`. The argument
+passing approach conveniently introduces a new name that has type `Comparable`
+instead of making the type of `Container.ElementType` context-dependent.
+
+##### Type bounds on associated types in interfaces
+
+TODO
+
+Now note that inside the `PeekAtTopOfStack` function from the example in the
+["associated types" section](#associated-types), we don't know anything about
+`StackType.ElementType`, so we can't perform any operations on values of that
+type, other than pass them to `Stack` methods. We can define an interface that
+has an associated type constrained to satisfy an interface (or any
+[other type-type](#adapting-types)). For example, we might say interface
+`Container` has a `Begin` method returning values with type satisfying the
+`Iterator` interface:
+
+```
+interface Iterator {
+  method (Ptr(Self): this) Advance();
+  ...
+}
+interface Container {
+  var Iterator:$ IteratorType;
+  method (Ptr(Self): this) Begin() -> IteratorType;
+  ...
+}
+```
+
+With this additional information, a function can now call `Iterator` methods on
+the return value of `Begin`:
+
+```
+fn OneAfterBegin[Container:$ T](Ptr(T): c) -> T.IteratorType {
+  var T.IteratorType: iter = c->Begin();
+  iter.Advance();
+  return iter;
+}
+```
 
 ##### Naming constraints
 
@@ -1982,50 +2062,28 @@ structural interface Double(Type:$ T) { extends PairInterface(T, T); }
 alias Double(Type:$ T) = PairInterface(T, T);
 ```
 
-##### Type bounds on associated types in interfaces
+#### Is a subtype
 
-TODO
-
-Now note that inside the `PeekAtTopOfStack` function from the example in the
-["associated types" section](#associated-types), we don't know anything about
-`StackType.ElementType`, so we can't perform any operations on values of that
-type, other than pass them to `Stack` methods. We can define an interface that
-has an associated type constrained to satisfy an interface (or any
-[other type-type](#adapting-types)). For example, we might say interface
-`Container` has a `Begin` method returning values with type satisfying the
-`Iterator` interface:
-
-```
-interface Iterator {
-  method (Ptr(Self): this) Advance();
-  ...
-}
-interface Container {
-  var Iterator:$ IteratorType;
-  method (Ptr(Self): this) Begin() -> IteratorType;
-  ...
-}
-```
-
-With this additional information, a function can now call `Iterator` methods on
-the return value of `Begin`:
-
-```
-fn OneAfterBegin[Container:$ T](Ptr(T): c) -> T.IteratorType {
-  var T.IteratorType: iter = c->Begin();
-  iter.Advance();
-  return iter;
-}
-```
+TODO: The `<:` symbol is traditional
 
 #### Parameterized type implements interface
 
 TODO
 
 ```
+// Some parametized type.
 struct Vector(Type:$ T) { ... }
 
-T where Printable: Vector(T)
+// Parameterized type implements interface only for some arguments.
+extend Vector(String) {
+  impl Printable { ... }
+}
+
+// Constraint: `T` such that `Vector(T)` implements `Printable`
+fn PrintThree[Type:$ T](T: a, T: b, T: c) where Printable: Vector(T) {
+  var Vector(T): v = (a, b, c);
+  Print(v);
+}
 ```
 
 #### Recursive constraints
