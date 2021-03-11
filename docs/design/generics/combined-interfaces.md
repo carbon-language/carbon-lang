@@ -1917,14 +1917,39 @@ for this case.
 
 #### Range constraints on associated constants
 
-TODO
-
 **Concern:** It is difficult to express mathematical constraints on values in
 the argument passing framework. For example, the constraint "`NTuple` where `N`
 is at least 2" naturally translates into a `where` clause:
 
 ```
 fn TakesAtLeastAPair[Int:$ N](NTuple(N, Int): x) where (N >= 2) { ... }
+```
+
+Similarly for now we only have a `where` clause formulation for constraining the
+`N` member of `NSpacePoint` from
+[the "associated constants" section](#associated-constants)
+
+```
+fn PrintPoint2Or3[NSpacePoint:$ PointT](PointT: p)
+  where (2 <= PointT.N && PointT.N <= 3) { ... }
+```
+
+The same syntax would be used in an interface definition:
+
+```
+interface HyperPointInterface {
+  var Int:$ N where N > 3;
+  method (Ptr(Self): this) Get(Int: i) -> Float64;
+}
+```
+
+or naming this kind of constraint:
+
+```
+alias HyperPoint = NSpacePoint where Point2Or3.N > 3;
+structural interface HyperPoint {
+  extends NSpacePoint where NSpacePoint.N > 3;
+}
 ```
 
 #### Type bounds
@@ -2235,15 +2260,10 @@ Another use case for inequality type constraints would be to say something like
 "define `ComparableTo(T1)` for `T2` if `ComparableTo(T2)` is defined for `T1`
 and `T1 != T2`".
 
-**Future work:** Right now the only suggestion on the table is some sort of
-boolean condition that can be evaluated by the caller at compile time included
-as an optional clause in the function signature:
+**Concern:** Right now this is only easily expressed using `where` clauses.
 
 ```
-fn G[Type:$ T](T: x) -> T if (T != Bool) { return F(x); }
-
-fn PrintPoint2Or3[NSpacePoint:$ PointT](PointT: p)
-  if (2 <= PointT.N && PointT.N <= 3) { ... }
+fn G[Type:$ T](T: x) -> T where (T != Bool) { return F(x); }
 ```
 
 ### Implicit constraints
