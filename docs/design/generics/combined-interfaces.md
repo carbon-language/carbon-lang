@@ -1030,10 +1030,14 @@ of the header so we can use
 in parameters or constraints of the interface being extended.
 
 ```
-interface A(Type:$ T) { ... }
-interface B {
+// A type can implement `ConvertibleTo` many times, using
+// different values of `T`.
+interface ConvertibleTo(Type:$ T) { ... }
+
+// A type can only implement `PreferredConversion` once.
+interface PreferredConversion {
   var Type:$ AssociatedType;
-  extends A(AssociatedType);
+  extends ConvertibleTo(AssociatedType);
 }
 ```
 
