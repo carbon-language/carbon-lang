@@ -13,11 +13,23 @@ cc_library(
     deps = ["@llvm-project//llvm:Support"],
 )
 
+cc_library(
+    name = "test_helpers",
+    testonly = 1,
+    hdrs = ["test_helpers.h"],
+    deps = [
+        ":diagnostic_emitter",
+        "@llvm-project//llvm:Support",
+        "@llvm-project//llvm:gmock",
+    ],
+)
+
 cc_test(
     name = "diagnostic_emitter_test",
     srcs = ["diagnostic_emitter_test.cpp"],
     deps = [
         ":diagnostic_emitter",
+        ":test_helpers",
         "@llvm-project//llvm:Support",
         "@llvm-project//llvm:gmock",
         "@llvm-project//llvm:gtest",

@@ -6,6 +6,7 @@
 #include <cstring>
 
 #include "diagnostics/diagnostic_emitter.h"
+#include "diagnostics/test_helpers.h"
 #include "lexer/string_literal.h"
 #include "llvm/ADT/StringRef.h"
 
@@ -26,7 +27,8 @@ extern "C" int LLVMFuzzerTestOneInput(const unsigned char* data,
     __builtin_trap();
   }
 
-  volatile auto value = token->ComputeValue(NullDiagnosticEmitter());
+  volatile auto value =
+      token->ComputeValue(NullDiagnosticEmitter<const char*>());
   (void)value;
 
   return 0;

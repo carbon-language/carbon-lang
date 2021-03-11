@@ -7,6 +7,7 @@
 #include "diagnostics/diagnostic_emitter.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
+#include "lexer/test_helpers.h"
 
 namespace Carbon {
 namespace {
@@ -21,7 +22,10 @@ struct StringLiteralTest : ::testing::Test {
 
   auto Parse(llvm::StringRef text) -> StringLiteralToken::ExpandedValue {
     StringLiteralToken token = Lex(text);
-    return token.ComputeValue(ConsoleDiagnosticEmitter());
+    Testing::SingleTokenDiagnosticTranslator translator(text);
+    DiagnosticEmitter<const char*> emitter(translator,
+                                           ConsoleDiagnosticConsumer());
+    return token.ComputeValue(emitter);
   }
 };
 

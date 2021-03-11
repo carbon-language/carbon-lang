@@ -21,6 +21,56 @@
 
 namespace Carbon {
 
+class TokenizedBuffer;
+
+// A lightweight handle to a lexed token in a `TokenizedBuffer`.
+//
+// This type's preferred name is `TokenizedBuffer::Token` and is only defined
+// outside the class to break a dependency cycle.
+//
+// `Token` objects are designed to be passed by value, not reference or
+// pointer. They are also designed to be small and efficient to store in data
+// structures.
+//
+// `Token` objects from the same `TokenizedBuffer` can be compared with each
+// other, both for being the same token within the buffer, and to establish
+// relative position within the token stream that has been lexed out of the
+// buffer.
+//
+// All other APIs to query a `Token` are on the `TokenizedBuffer`.
+class TokenizedBufferToken {
+ public:
+  using Token = TokenizedBufferToken;
+
+  TokenizedBufferToken() = default;
+
+  friend auto operator==(Token lhs, Token rhs) -> bool {
+    return lhs.index == rhs.index;
+  }
+  friend auto operator!=(Token lhs, Token rhs) -> bool {
+    return lhs.index != rhs.index;
+  }
+  friend auto operator<(Token lhs, Token rhs) -> bool {
+    return lhs.index < rhs.index;
+  }
+  friend auto operator<=(Token lhs, Token rhs) -> bool {
+    return lhs.index <= rhs.index;
+  }
+  friend auto operator>(Token lhs, Token rhs) -> bool {
+    return lhs.index > rhs.index;
+  }
+  friend auto operator>=(Token lhs, Token rhs) -> bool {
+    return lhs.index >= rhs.index;
+  }
+
+ private:
+  friend class TokenizedBuffer;
+
+  explicit TokenizedBufferToken(int index) : index(index) {}
+
+  int32_t index;
+};
+
 // A buffer of tokenized Carbon source code.
 //
 // This is constructed by lexing the source code text into a series of tokens.
@@ -29,50 +79,12 @@ namespace Carbon {
 //
 // Lexing errors result in a potentially incomplete sequence of tokens and
 // `HasError` returning true.
-class TokenizedBuffer {
+class TokenizedBuffer
+    : public DiagnosticLocationTranslator<const char*>,
+      public DiagnosticLocationTranslator<TokenizedBufferToken> {
  public:
   // A lightweight handle to a lexed token in a `TokenizedBuffer`.
-  //
-  // `Token` objects are designed to be passed by value, not reference or
-  // pointer. They are also designed to be small and efficient to store in data
-  // structures.
-  //
-  // `Token` objects from the same `TokenizedBuffer` can be compared with each
-  // other, both for being the same token within the buffer, and to establish
-  // relative position within the token stream that has been lexed out of the
-  // buffer.
-  //
-  // All other APIs to query a `Token` are on the `TokenizedBuffer`.
-  class Token {
-   public:
-    Token() = default;
-
-    friend auto operator==(Token lhs, Token rhs) -> bool {
-      return lhs.index == rhs.index;
-    }
-    friend auto operator!=(Token lhs, Token rhs) -> bool {
-      return lhs.index != rhs.index;
-    }
-    friend auto operator<(Token lhs, Token rhs) -> bool {
-      return lhs.index < rhs.index;
-    }
-    friend auto operator<=(Token lhs, Token rhs) -> bool {
-      return lhs.index <= rhs.index;
-    }
-    friend auto operator>(Token lhs, Token rhs) -> bool {
-      return lhs.index > rhs.index;
-    }
-    friend auto operator>=(Token lhs, Token rhs) -> bool {
-      return lhs.index >= rhs.index;
-    }
-
-   private:
-    friend class TokenizedBuffer;
-
-    explicit Token(int index) : index(index) {}
-
-    int32_t index;
-  };
+  using Token = TokenizedBufferToken;
 
   // A lightweight handle to a lexed line in a `TokenizedBuffer`.
   //
@@ -225,10 +237,7 @@ class TokenizedBuffer {
   //
   // The provided source buffer must outlive any returned `TokenizedBuffer`
   // which will refer into the source.
-  //
-  // FIXME: Need to pass in some diagnostic machinery to report the details of
-  // the error! Right now it prints to stderr.
-  static auto Lex(SourceBuffer& source, DiagnosticEmitter& emitter)
+  static auto Lex(SourceBuffer& source, DiagnosticConsumer& consumer)
       -> TokenizedBuffer;
 
   // Returns true if the buffer has errors that are detectable at lexing time.
@@ -316,6 +325,12 @@ class TokenizedBuffer {
   auto PrintToken(llvm::raw_ostream& output_stream, Token token) const -> void;
 
  private:
+  // Implementation of DiagnosticLocationTranslator<const char*>.
+  auto GetLocation(const char*) -> Diagnostic::Location override;
+
+  // Implementation of DiagnosticLocationTranslator<Token>.
+  auto GetLocation(Token) -> Diagnostic::Location override;
+
   // Implementation detail struct implementing the actual lexer logic.
   class Lexer;
   friend Lexer;
@@ -411,6 +426,9 @@ class TokenizedBuffer {
 
   bool has_errors = false;
 };
+
+// A diagnostic emitter that uses tokens as its source of location information.
+using TokenDiagnosticEmitter = DiagnosticEmitter<TokenizedBuffer::Token>;
 
 }  // namespace Carbon
 

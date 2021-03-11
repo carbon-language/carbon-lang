@@ -5,15 +5,22 @@
 #include "lexer/numeric_literal.h"
 
 #include <iterator>
+#include <memory>
+#include <vector>
 
 #include "diagnostics/diagnostic_emitter.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
+#include "lexer/test_helpers.h"
 
 namespace Carbon {
 namespace {
 
 struct NumericLiteralTest : ::testing::Test {
+  std::vector<std::unique_ptr<Testing::SingleTokenDiagnosticTranslator>>
+      translators;
+  std::vector<std::unique_ptr<DiagnosticEmitter<const char*>>> emitters;
+
   auto Lex(llvm::StringRef text) -> NumericLiteralToken {
     llvm::Optional<NumericLiteralToken> result = NumericLiteralToken::Lex(text);
     assert(result);
@@ -22,7 +29,11 @@ struct NumericLiteralTest : ::testing::Test {
   }
 
   auto Parse(llvm::StringRef text) -> NumericLiteralToken::Parser {
-    return NumericLiteralToken::Parser(ConsoleDiagnosticEmitter(), Lex(text));
+    translators.push_back(
+        std::make_unique<Testing::SingleTokenDiagnosticTranslator>(text));
+    emitters.push_back(std::make_unique<DiagnosticEmitter<const char*>>(
+        *translators.back(), ConsoleDiagnosticConsumer()));
+    return NumericLiteralToken::Parser(*emitters.back(), Lex(text));
   }
 };
 

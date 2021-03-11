@@ -62,7 +62,8 @@ struct UnrecognizedCharacters : SimpleDiagnostic<UnrecognizedCharacters> {
 // tokenized buffer with the lexed tokens.
 class TokenizedBuffer::Lexer {
   TokenizedBuffer& buffer;
-  DiagnosticEmitter& emitter;
+  DiagnosticEmitter<const char*> emitter;
+  DiagnosticEmitter<Token> token_emitter;
 
   Line current_line;
   LineInfo* current_line_info;
@@ -73,9 +74,10 @@ class TokenizedBuffer::Lexer {
   llvm::SmallVector<Token, 8> open_groups;
 
  public:
-  Lexer(TokenizedBuffer& buffer, DiagnosticEmitter& emitter)
+  Lexer(TokenizedBuffer& buffer, DiagnosticConsumer& consumer)
       : buffer(buffer),
-        emitter(emitter),
+        emitter(buffer, consumer),
+        token_emitter(buffer, consumer),
         current_line(buffer.AddLine({0, 0, 0})),
         current_line_info(&buffer.GetLineInfo(current_line)) {}
 
@@ -121,12 +123,13 @@ class TokenizedBuffer::Lexer {
       if (source_text.startswith("//")) {
         // Any comment must be the only non-whitespace on the line.
         if (set_indent) {
-          emitter.EmitError<TrailingComment>();
+          emitter.EmitError<TrailingComment>(source_text.begin());
           buffer.has_errors = true;
         }
         // The introducer '//' must be followed by whitespace or EOF.
         if (source_text.size() > 2 && !IsSpace(source_text[2])) {
-          emitter.EmitError<NoWhitespaceAfterCommentIntroducer>();
+          emitter.EmitError<NoWhitespaceAfterCommentIntroducer>(
+              source_text.begin() + 2);
           buffer.has_errors = true;
         }
         while (!source_text.empty() && source_text.front() != '\n') {
@@ -300,6 +303,7 @@ class TokenizedBuffer::Lexer {
 
     CloseInvalidOpenGroups(kind);
 
+    const char* location = source_text.begin();
     Token token = buffer.AddToken(
         {.kind = kind, .token_line = current_line, .column = current_column});
     current_column += kind.GetFixedSpelling().size();
@@ -325,7 +329,7 @@ class TokenizedBuffer::Lexer {
       closing_token_info.error_length = kind.GetFixedSpelling().size();
       buffer.has_errors = true;
 
-      emitter.EmitError<UnmatchedClosing>();
+      emitter.EmitError<UnmatchedClosing>(location);
       // Note that this still returns true as we do consume a symbol.
       return token;
     }
@@ -354,7 +358,7 @@ class TokenizedBuffer::Lexer {
 
       open_groups.pop_back();
       buffer.has_errors = true;
-      emitter.EmitError<MismatchedClosing>();
+      token_emitter.EmitError<MismatchedClosing>(opening_token);
 
       // TODO: do a smarter backwards scan for where to put the closing
       // token.
@@ -456,10 +460,10 @@ class TokenizedBuffer::Lexer {
   }
 };
 
-auto TokenizedBuffer::Lex(SourceBuffer& source, DiagnosticEmitter& emitter)
+auto TokenizedBuffer::Lex(SourceBuffer& source, DiagnosticConsumer& consumer)
     -> TokenizedBuffer {
   TokenizedBuffer buffer(source);
-  Lexer lexer(buffer, emitter);
+  Lexer lexer(buffer, consumer);
 
   llvm::StringRef source_text = source.Text();
   while (lexer.SkipWhitespace(source_text)) {
@@ -733,6 +737,58 @@ auto TokenizedBuffer::GetTokenInfo(Token token) const -> const TokenInfo& {
 auto TokenizedBuffer::AddToken(TokenInfo info) -> Token {
   token_infos.push_back(info);
   return Token(static_cast<int>(token_infos.size()) - 1);
+}
+
+auto TokenizedBuffer::GetLocation(const char* loc) -> Diagnostic::Location {
+  assert(loc >= source->Text().begin() && loc <= source->Text().end());
+  int64_t offset = loc - source->Text().begin();
+
+  // Find the first line starting after the given location. Note that we can't
+  // inspect `line.length` here because it is not necessarily correct for the
+  // final line.
+  auto line_it = std::partition_point(
+      line_infos.begin(), line_infos.end(),
+      [offset](const LineInfo& line) { return line.start <= offset; });
+  bool incomplete_line_info = line_it == line_infos.end();
+
+  // Step back one line to find the line containing the given position.
+  assert(line_it != line_infos.begin() &&
+         "location precedes the start of the first line");
+  --line_it;
+  int line_number = line_it - line_infos.begin();
+  int column_number = offset - line_it->start;
+
+  // We might still be lexing the last line. If so, check to see if there are
+  // any newline characters between the start of this line and the given
+  // location.
+  if (incomplete_line_info) {
+    column_number = 0;
+    for (int64_t i = line_it->start; i != offset; ++i) {
+      if (source->Text()[i] == '\n') {
+        ++line_number;
+        column_number = 0;
+      } else {
+        ++column_number;
+      }
+    }
+  }
+
+  return {.file_name = source->Filename(),
+          .line_number = line_number + 1,
+          .column_number = column_number + 1};
+}
+
+auto TokenizedBuffer::GetLocation(Token token) -> Diagnostic::Location {
+  // Map the token location into a position within the source buffer.
+  auto& token_info = GetTokenInfo(token);
+  auto& line_info = GetLineInfo(token_info.token_line);
+  const char* token_start =
+      source->Text().begin() + line_info.start + token_info.column;
+
+  // Find the corresponding file location.
+  // TODO: Should we somehow indicate in the diagnostic location if this token
+  // is a recovery token that doesn't correspond to the original source?
+  return GetLocation(token_start);
 }
 
 }  // namespace Carbon

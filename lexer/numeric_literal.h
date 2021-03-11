@@ -51,7 +51,7 @@ class NumericLiteralToken {
 // either diagnosing or extracting its meaning.
 class NumericLiteralToken::Parser {
  public:
-  Parser(DiagnosticEmitter& emitter, NumericLiteralToken literal);
+  Parser(DiagnosticEmitter<const char*>& emitter, NumericLiteralToken literal);
 
   auto IsInteger() -> bool {
     return literal.radix_point == static_cast<int>(literal.text.size());
@@ -98,7 +98,7 @@ class NumericLiteralToken::Parser {
   auto CheckExponentPart() -> bool;
 
  private:
-  DiagnosticEmitter& emitter;
+  DiagnosticEmitter<const char*>& emitter;
   NumericLiteralToken literal;
 
   // The radix of the literal: 2, 10, or 16, for a prefix of '0b', no prefix,

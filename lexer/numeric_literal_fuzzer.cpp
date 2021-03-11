@@ -6,6 +6,7 @@
 #include <cstring>
 
 #include "diagnostics/diagnostic_emitter.h"
+#include "diagnostics/test_helpers.h"
 #include "lexer/numeric_literal.h"
 #include "llvm/ADT/StringRef.h"
 
@@ -21,7 +22,8 @@ extern "C" int LLVMFuzzerTestOneInput(const unsigned char* data,
     return 0;
   }
 
-  NumericLiteralToken::Parser parser(NullDiagnosticEmitter(), *token);
+  NumericLiteralToken::Parser parser(NullDiagnosticEmitter<const char*>(),
+                                     *token);
   if (parser.Check() == NumericLiteralToken::Parser::UnrecoverableError) {
     // Lexically OK, but token is meaningless.
     return 0;

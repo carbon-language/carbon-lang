@@ -7,6 +7,7 @@
 #include <iterator>
 
 #include "diagnostics/diagnostic_emitter.h"
+#include "diagnostics/test_helpers.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 #include "lexer/tokenized_buffer_test_helpers.h"
@@ -22,10 +23,13 @@
 namespace Carbon {
 namespace {
 
+using ::Carbon::Testing::DiagnosticAt;
+using ::Carbon::Testing::DiagnosticMessage;
 using ::Carbon::Testing::ExpectedToken;
 using ::Carbon::Testing::HasTokens;
 using ::Carbon::Testing::IsKeyValueScalars;
 using ::testing::Eq;
+using ::testing::HasSubstr;
 using ::testing::NotNull;
 using ::testing::StrEq;
 
@@ -37,10 +41,10 @@ struct LexerTest : ::testing::Test {
     return source_storage.back();
   }
 
-  auto Lex(llvm::Twine text) -> TokenizedBuffer {
-    // TODO: build a full mock for this.
-    return TokenizedBuffer::Lex(GetSourceBuffer(text),
-                                ConsoleDiagnosticEmitter());
+  auto Lex(llvm::Twine text,
+           DiagnosticConsumer& consumer = ConsoleDiagnosticConsumer())
+      -> TokenizedBuffer {
+    return TokenizedBuffer::Lex(GetSourceBuffer(text), consumer);
   }
 };
 
@@ -748,6 +752,42 @@ TEST_F(LexerTest, InvalidStringLiterals) {
     }
     EXPECT_TRUE(found_error) << "`" << test << "`";
   }
+}
+
+TEST_F(LexerTest, Diagnostics) {
+  llvm::StringLiteral testcase = R"(
+    // Hello!
+    var String x; // trailing comment
+    //no space after comment
+    "hello\bworld\xab"
+    0x123abc
+  )";
+
+  Testing::MockDiagnosticConsumer consumer;
+  EXPECT_CALL(consumer, HandleDiagnostic(AllOf(
+                            DiagnosticAt(3, 19),
+                            DiagnosticMessage(HasSubstr("Trailing comment")))));
+  EXPECT_CALL(consumer,
+              HandleDiagnostic(AllOf(
+                  DiagnosticAt(4, 7),
+                  DiagnosticMessage(HasSubstr("Whitespace is required")))));
+  EXPECT_CALL(
+      consumer,
+      HandleDiagnostic(AllOf(
+          DiagnosticAt(5, 12),
+          DiagnosticMessage(HasSubstr("Unrecognized escape sequence `b`")))));
+  EXPECT_CALL(
+      consumer,
+      HandleDiagnostic(AllOf(
+          DiagnosticAt(5, 20),
+          DiagnosticMessage(HasSubstr("two uppercase hexadecimal digits")))));
+  EXPECT_CALL(
+      consumer,
+      HandleDiagnostic(AllOf(
+          DiagnosticAt(6, 10),
+          DiagnosticMessage(HasSubstr("Invalid digit 'a' in hexadecimal")))));
+
+  Lex(testcase, consumer);
 }
 
 auto GetAndDropLine(llvm::StringRef& text) -> std::string {

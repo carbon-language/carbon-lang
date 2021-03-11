@@ -13,6 +13,8 @@
 
 namespace Carbon {
 
+using LexerDiagnosticEmitter = DiagnosticEmitter<const char*>;
+
 struct ContentBeforeStringTerminator
     : SimpleDiagnostic<ContentBeforeStringTerminator> {
   static constexpr llvm::StringLiteral ShortName = "syntax-invalid-string";
@@ -177,7 +179,7 @@ struct Indent {
 // Check the literal is indented properly, if it's a multi-line litera.
 // Find the leading whitespace that should be removed from each line of a
 // multi-line string literal.
-static auto CheckIndent(DiagnosticEmitter& emitter, llvm::StringRef text,
+static auto CheckIndent(LexerDiagnosticEmitter& emitter, llvm::StringRef text,
                         llvm::StringRef content) -> Indent {
   // Find the leading horizontal whitespace on the final line of this literal.
   // Note that for an empty literal, this might not be inside the content.
@@ -187,7 +189,7 @@ static auto CheckIndent(DiagnosticEmitter& emitter, llvm::StringRef text,
   // The last line is not permitted to contain any content after its
   // indentation.
   if (indent.end() != content.end()) {
-    emitter.EmitError<ContentBeforeStringTerminator>();
+    emitter.EmitError<ContentBeforeStringTerminator>(indent.end());
     has_errors = true;
   }
 
@@ -195,17 +197,17 @@ static auto CheckIndent(DiagnosticEmitter& emitter, llvm::StringRef text,
 }
 
 // Expand a `\u{HHHHHH}` escape sequence into a sequence of UTF-8 code units.
-static auto ExpandUnicodeEscapeSequence(DiagnosticEmitter& emitter,
+static auto ExpandUnicodeEscapeSequence(LexerDiagnosticEmitter& emitter,
                                         llvm::StringRef digits,
                                         std::string& result) -> bool {
   unsigned code_point;
   if (digits.getAsInteger(16, code_point) || code_point > 0x10FFFF) {
-    emitter.EmitError<UnicodeEscapeTooLarge>();
+    emitter.EmitError<UnicodeEscapeTooLarge>(digits.begin());
     return false;
   }
 
   if (code_point >= 0xD800 && code_point < 0xE000) {
-    emitter.EmitError<UnicodeEscapeSurrogate>();
+    emitter.EmitError<UnicodeEscapeSurrogate>(digits.begin());
     return false;
   }
 
@@ -229,7 +231,7 @@ static auto ExpandUnicodeEscapeSequence(DiagnosticEmitter& emitter,
 // `result` string. `content` is the string content, starting from the first
 // character after the escape sequence introducer (for example, the `n` in
 // `\n`), and will be updated to remove the leading escape sequence.
-static auto ExpandAndConsumeEscapeSequence(DiagnosticEmitter& emitter,
+static auto ExpandAndConsumeEscapeSequence(LexerDiagnosticEmitter& emitter,
                                            llvm::StringRef& content,
                                            std::string& result) -> bool {
   assert(!content.empty() && "should have escaped closing delimiter");
@@ -258,7 +260,7 @@ static auto ExpandAndConsumeEscapeSequence(DiagnosticEmitter& emitter,
     case '0':
       result += '\0';
       if (!content.empty() && IsDecimalDigit(content.front())) {
-        emitter.EmitError<DecimalEscapeSequence>();
+        emitter.EmitError<DecimalEscapeSequence>(content.begin());
         return false;
       }
       return true;
@@ -270,7 +272,7 @@ static auto ExpandAndConsumeEscapeSequence(DiagnosticEmitter& emitter,
         content = content.drop_front(2);
         return true;
       }
-      emitter.EmitError<HexadecimalEscapeMissingDigits>();
+      emitter.EmitError<HexadecimalEscapeMissingDigits>(content.begin());
       break;
     case 'u': {
       llvm::StringRef remaining = content;
@@ -285,11 +287,12 @@ static auto ExpandAndConsumeEscapeSequence(DiagnosticEmitter& emitter,
           return true;
         }
       }
-      emitter.EmitError<UnicodeEscapeMissingBracedDigits>();
+      emitter.EmitError<UnicodeEscapeMissingBracedDigits>(content.begin());
       break;
     }
     default:
-      emitter.EmitError<UnknownEscapeSequence>({.first = first});
+      emitter.EmitError<UnknownEscapeSequence>(content.begin() - 1,
+                                               {.first = first});
       break;
   }
 
@@ -301,11 +304,9 @@ static auto ExpandAndConsumeEscapeSequence(DiagnosticEmitter& emitter,
 }
 
 // Expand any escape sequences in the given string literal.
-static auto ExpandEscapeSequencesAndRemoveIndent(DiagnosticEmitter& emitter,
-                                                 llvm::StringRef contents,
-                                                 int hash_level,
-                                                 llvm::StringRef indent)
-    -> StringLiteralToken::ExpandedValue {
+static auto ExpandEscapeSequencesAndRemoveIndent(
+    LexerDiagnosticEmitter& emitter, llvm::StringRef contents, int hash_level,
+    llvm::StringRef indent) -> StringLiteralToken::ExpandedValue {
   std::string result;
   result.reserve(contents.size());
   bool has_errors = false;
@@ -319,9 +320,10 @@ static auto ExpandEscapeSequencesAndRemoveIndent(DiagnosticEmitter& emitter,
     // whitespace) is required to start with the string's indent. For error
     // recovery, remove all leading whitespace if the indent doesn't match.
     if (!contents.consume_front(indent)) {
+      const char* line_start = contents.begin();
       contents = contents.drop_while(IsHorizontalWhitespace);
       if (!contents.startswith("\n")) {
-        emitter.EmitError<MismatchedIndentInString>();
+        emitter.EmitError<MismatchedIndentInString>(line_start);
         has_errors = true;
       }
     }
@@ -369,7 +371,7 @@ static auto ExpandEscapeSequencesAndRemoveIndent(DiagnosticEmitter& emitter,
   }
 }
 
-auto StringLiteralToken::ComputeValue(DiagnosticEmitter& emitter) const
+auto StringLiteralToken::ComputeValue(LexerDiagnosticEmitter& emitter) const
     -> ExpandedValue {
   auto indent = multi_line ? CheckIndent(emitter, text, content) : Indent();
   auto result = ExpandEscapeSequencesAndRemoveIndent(emitter, content,
