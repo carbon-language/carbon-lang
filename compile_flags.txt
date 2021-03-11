@@ -58,15 +58,13 @@ bazel-bin/external/llvm_zlib
 bazel-carbon-lang/external/bazel_tools
 -iquote
 bazel-bin/external/bazel_tools
--iquote
-third_party/llvm-project
--iquote
-third_party/llvm-project/llvm/include
 -Ibazel-bin/external/llvm-project/llvm/_virtual_includes/gtest_internal_headers
 -D_LIBCPP_ABI_UNSTABLE
 -D_LIBCPP_HAS_NO_VENDOR_AVAILABILITY_ANNOTATIONS
 -isystem
 third_party/llvm-project/libcxx/include
+-iquote
+third_party/llvm-project/llvm/include
 -isystem
 third_party/llvm-bazel/llvm-bazel/llvm-project-overlay/llvm/include
 -isystem
