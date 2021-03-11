@@ -54,8 +54,6 @@ EXAMPLES = [
     "tuple_match",
     "tuple1",
     "tuple2",
-    "undef1",
-    "undef2",
     "while1",
     "zero",
 ]

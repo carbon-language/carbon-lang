@@ -55,7 +55,6 @@ auto MakeWhile(int line_num, Expression* cond, Statement* body) -> Statement* {
 }
 
 auto MakeBreak(int line_num) -> Statement* {
-  std::cout << "MakeBlock" << std::endl;
   auto* s = new Statement();
   s->line_num = line_num;
   s->tag = StatementKind::Break;
