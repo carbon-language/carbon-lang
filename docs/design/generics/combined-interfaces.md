@@ -1639,7 +1639,9 @@ fn PeekAtTopOfStack[Type:$ ElementType, Stack(ElementType):$ StackType]
 ```
 
 This can result in more concise code for interfaces where you generally need to
-talk about some parameter anytime you use that interface.
+talk about some parameter anytime you use that interface. For example,
+`NTuple(N, type)` is much shorter without having to specify names with the
+arguments.
 
 **Rationale for the rejection:**
 
