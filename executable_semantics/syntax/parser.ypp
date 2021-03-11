@@ -69,6 +69,9 @@ void yy::parser::error(
   context.PrintDiagnostic(message, yylineno);
 }
 
+static CurrentSourceLocation() -> Carbon::ExpressionSource::Location {
+  return Carbon::ExpressionSource::Location(yylineno);
+}
 }
 
 %token <int> integer_literal
@@ -159,60 +162,68 @@ pattern:
 ;
 expression:
   identifier
-    { $$ = Carbon::VariableExpression(yylineno, $1); }
+    { $$ = Carbon::VariableExpression(CurrentSourceLocation(), $1); }
 | expression designator
-    { $$ = Carbon::GetFieldExpression(yylineno, $1, $2); }
+    { $$ = Carbon::GetFieldExpression(CurrentSourceLocation(), $1, $2); }
 | expression "[" expression "]"
-    { $$ = Carbon::IndexExpression(yylineno, $1, $3); }
+    { $$ = Carbon::IndexExpression(CurrentSourceLocation(), $1, $3); }
 | expression ":" identifier
-    { $$ = Carbon::VarPatExpression(yylineno, $3, $1); }
+    { $$ = Carbon::VarPatExpression(CurrentSourceLocation(), $3, $1); }
 | integer_literal
-    { $$ = Carbon::IntExpression(yylineno, $1); }
+    { $$ = Carbon::IntExpression(CurrentSourceLocation(), $1); }
 | TRUE
-    { $$ = Carbon::BooleanExpression(yylineno, true); }
+    { $$ = Carbon::BooleanExpression(CurrentSourceLocation(), true); }
 | FALSE
-    { $$ = Carbon::BooleanExpression(yylineno, false); }
+    { $$ = Carbon::BooleanExpression(CurrentSourceLocation(), false); }
 | INT
-    { $$ = Carbon::IntTypeExpression(yylineno); }
+    { $$ = Carbon::IntTypeExpression(CurrentSourceLocation()); }
 | BOOL
-    { $$ = Carbon::BoolTypeExpression(yylineno); }
+    { $$ = Carbon::BoolTypeExpression(CurrentSourceLocation()); }
 | TYPE
-    { $$ = Carbon::TypeTypeExpression(yylineno); }
+    { $$ = Carbon::TypeTypeExpression(CurrentSourceLocation()); }
 | AUTO
-    { $$ = Carbon::AutoTypeExpression(yylineno); }
+    { $$ = Carbon::AutoTypeExpression(CurrentSourceLocation()); }
 | paren_expression { $$ = $1; }
 | expression EQUAL_EQUAL expression
     { $$ = Carbon::PrimitiveOperatorExpression(
-        yylineno, Carbon::PrimitiveOperatorExpression::Operation::Eq, $1, $3); }
+        CurrentSourceLocation(),
+        Carbon::PrimitiveOperatorExpression::Operation::Eq, $1, $3);
+    }
 | expression "+" expression
     {
       $$ = Carbon::PrimitiveOperatorExpression(
-        yylineno, Carbon::PrimitiveOperatorExpression::Operation::Add, $1, $3);
+        CurrentSourceLocation(),
+        Carbon::PrimitiveOperatorExpression::Operation::Add, $1, $3);
     }
 | expression "-" expression
     { $$ = Carbon::PrimitiveOperatorExpression(
-        yylineno, Carbon::PrimitiveOperatorExpression::Operation::Sub, $1, $3);
+        CurrentSourceLocation(),
+        Carbon::PrimitiveOperatorExpression::Operation::Sub, $1, $3);
     }
 | expression AND expression
     { $$ = Carbon::PrimitiveOperatorExpression(
-        yylineno, Carbon::PrimitiveOperatorExpression::Operation::And, $1, $3);
+        CurrentSourceLocation(),
+        Carbon::PrimitiveOperatorExpression::Operation::And, $1, $3);
     }
 | expression OR expression
     { $$ = Carbon::PrimitiveOperatorExpression(
-        yylineno, Carbon::PrimitiveOperatorExpression::Operation::Or, $1, $3);
+        CurrentSourceLocation(),
+        Carbon::PrimitiveOperatorExpression::Operation::Or, $1, $3);
     }
 | NOT expression
     { $$ = Carbon::PrimitiveOperatorExpression(
-        yylineno, Carbon::PrimitiveOperatorExpression::Operation::Not, $2);
+        CurrentSourceLocation(),
+        Carbon::PrimitiveOperatorExpression::Operation::Not, $2);
     }
 | "-" expression
     { $$ = Carbon::PrimitiveOperatorExpression(
-        yylineno, Carbon::PrimitiveOperatorExpression::Operation::Neg, $2);
+        CurrentSourceLocation(),
+        Carbon::PrimitiveOperatorExpression::Operation::Neg, $2);
     }
 | expression tuple
-    { $$ = Carbon::MakeCall(yylineno, $1, $2); }
+    { $$ = Carbon::CallExpression(CurrentSourceLocation(), $1, $2); }
 | FNTY tuple return_type
-    { $$ = Carbon::MakeFunType(yylineno, $2, $3); }
+    { $$ = Carbon::FunctionTypeExpression(CurrentSourceLocation(), $2, $3); }
 ;
 designator: "." identifier { $$ = $2; }
 ;
@@ -225,7 +236,7 @@ paren_expression: "(" field_list ")"
      } else {
         auto vec = new std::vector<std::pair<std::string,Carbon::Expression*>>(
             $2->fields->begin(), $2->fields->end());
-        $$ = Carbon::MakeTuple(yylineno, vec);
+        $$ = Carbon::TupleExpression(CurrentSourceLocation(), vec);
       }
     }
 ;
@@ -233,7 +244,7 @@ tuple: "(" field_list ")"
     {
      auto vec = new std::vector<std::pair<std::string,Carbon::Expression*>>(
          $2->fields->begin(), $2->fields->end());
-     $$ = Carbon::MakeTuple(yylineno, vec);
+     $$ = Carbon::TupleExpression(CurrentSourceLocation(), vec);
     }
 field:
   pattern
@@ -267,8 +278,9 @@ clause:
     { $$ = new std::pair<Carbon::Expression*, Carbon::Statement*>($2, $4); }
 | DEFAULT DBLARROW statement
     {
-      auto vp = Carbon::MakeVarPat(yylineno, "_",
-                                   Carbon::MakeAutoType(yylineno));
+      auto vp = Carbon::PatternVariableExpression(
+        CurrentSourceLocation(), "_",
+        Carbon::AutoTypeExpression(CurrentSourceLocation()));
       $$ = new std::pair<Carbon::Expression*, Carbon::Statement*>(vp, $3);
     }
 ;

@@ -86,18 +86,20 @@ auto ToType(int line_num, Value* val) -> Value* {
 }
 
 // Reify type to type expression.
-auto ReifyType(Value* t, int line_num) -> Expression* {
+auto ReifyType(Value* t, int line_num) -> Expression {
+  ExpressionSource::Location bogus(0);
   switch (t->tag) {
     case ValKind::VarTV:
-      return VariableExpression(0, *t->u.var_type);
+      return VariableExpression(bogus, *t->u.var_type);
     case ValKind::IntTV:
-      return IntTypeExpression(0);
+      return IntTypeExpression(bogus);
     case ValKind::BoolTV:
-      return BoolTypeExpression(0);
+      return BoolTypeExpression(bogus);
     case ValKind::TypeTV:
-      return TypeTypeExpression(0);
+      return TypeTypeExpression(bogus);
     case ValKind::FunctionTV:
-      return FunctionTypeExpression(0, ReifyType(t->u.fun_type.param, line_num),
+      return FunctionTypeExpression(bogus,
+                                    ReifyType(t->u.fun_type.param, line_num),
                                     ReifyType(t->u.fun_type.ret, line_num));
     case ValKind::TupleTV: {
       auto args = new std::vector<std::pair<std::string, Expression*>>();
@@ -105,12 +107,12 @@ auto ReifyType(Value* t, int line_num) -> Expression* {
         args->push_back(
             make_pair(field.first, ReifyType(field.second, line_num)));
       }
-      return MakeTuple(0, args);
+      return MakeTuple(bogus, args);
     }
     case ValKind::StructTV:
-      return MakeVar(0, *t->u.struct_type.name);
+      return MakeVar(bogus, *t->u.struct_type.name);
     case ValKind::ChoiceTV:
-      return MakeVar(0, *t->u.choice_type.name);
+      return MakeVar(bogus, *t->u.choice_type.name);
     default:
       std::cerr << line_num << ": expected a type, not ";
       PrintValue(t, std::cerr);
@@ -166,8 +168,10 @@ auto TypeCheckExp(Expression* e, TypeEnv env, Env ct_env, Value* expected,
           t = expected;
         }
       }
-      auto new_e = MakeVarPat(e->line_num, *e->u.pattern_variable.name,
-                              ReifyType(t, e->line_num));
+      auto new_e = PatternVariableExpression(
+          ExpressionSource::Location(e->line_num), *e->u.pattern_variable.name,
+          ReifyType(t, e->line_num));
+
       env.Set(*e->u.pattern_variable.name, t);
       return TCResult(new_e, t, env);
     }
@@ -370,8 +374,9 @@ auto TypeCheckExp(Expression* e, TypeEnv env, Env ct_env, Value* expected,
                            InterpExp(ct_env, e->u.function_type.parameter));
           auto rt = ToType(e->line_num,
                            InterpExp(ct_env, e->u.function_type.return_type));
-          auto new_e = MakeFunType(e->line_num, ReifyType(pt, e->line_num),
-                                   ReifyType(rt, e->line_num));
+          auto new_e = FunctionTypeExpression(
+              ExpressionSource::Location(e->line_num),
+              ReifyType(pt, e->line_num), ReifyType(rt, e->line_num));
           return TCResult(new_e, MakeTypeTypeVal(), env);
         }
         case TCContext::PatternContext: {
@@ -380,8 +385,9 @@ auto TypeCheckExp(Expression* e, TypeEnv env, Env ct_env, Value* expected,
           auto ret_res = TypeCheckExp(e->u.function_type.return_type,
                                       param_res.env, ct_env, nullptr, context);
           auto new_e =
-              MakeFunType(e->line_num, ReifyType(param_res.type, e->line_num),
-                          ReifyType(ret_res.type, e->line_num));
+              FunctionTypeExpression(ExpressionSource::Location(e->line_num),
+                                     ReifyType(param_res.type, e->line_num),
+                                     ReifyType(ret_res.type, e->line_num));
           return TCResult(new_e, MakeTypeTypeVal(), ret_res.env);
         }
       }

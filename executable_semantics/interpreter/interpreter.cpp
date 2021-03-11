@@ -380,7 +380,8 @@ void CreateTuple(Frame* frame, Action* act, Expression* /*exp*/) {
   //    { { (v1,...,vn) :: C, E, F} :: S, H}
   // -> { { `(v1,...,vn) :: C, E, F} :: S, H}
   auto elts = new std::vector<std::pair<std::string, Address>>();
-  auto f = act->u.exp->u.tuple.fields->begin();
+  auto t = *act->u.exp->As<TupleExpression>();
+  auto f = t.elements.begin();
   for (auto i = act->results.begin(); i != act->results.end(); ++i, ++f) {
     Address a = AllocateValue(*i);  // copy?
     elts->push_back(make_pair(f->first, a));
