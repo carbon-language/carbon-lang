@@ -13,13 +13,14 @@
 namespace Carbon {
 
 namespace {
-auto RadixName(int radix) -> const char* {
-  if (radix == 2)
+auto RadixName(int radix) -> std::string_view {
+  if (radix == 2) {
     return "binary";
-  if (radix == 10)
+  } else if (radix == 10) {
     return "decimal";
-  if (radix == 16)
+  } else if (radix == 16) {
     return "hexadecimal";
+  }
 
   assert(!"unexpected radix");
   return "";
