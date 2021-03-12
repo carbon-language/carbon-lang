@@ -2170,7 +2170,25 @@ fn F[HasEquality:$ T, Container(T):$ ContainerType]
 
 #### Is a subtype
 
-TODO: The `<:` symbol is traditional
+**Concern:** We need to add some operator to express this, with either argument
+passing or where clauses.
+
+For `where` clause we could represent this by a binary `extends` operator
+returning a boolean. For argument passing, we'd introduce an `Extends(T)`
+type-type, whose values are types that extend `T`, that is types `U` that are
+subtypes of `T`.
+
+```
+// Argument passing:
+fn F[Extends(BaseType):$ T](Ptr(T): p);
+fn UpCast[Type:$ U, Extends(U):$ T](Ptr(T): p, U) -> Ptr(U);
+fn DownCast[Type:$ T](Ptr(T): p, Extends(T):$ U) -> Ptr(U);
+
+// vs. `where` clause:
+fn F[Type:$ T](Ptr(T): p) where T extends BaseType;
+fn UpCast[Type:$ T](Ptr(T): p, Type:$ U) -> Ptr(U) where T extends U;
+fn DownCast[Type:$ T](Ptr(T): p, Type:$ U) -> Ptr(U) where U extends T;
+```
 
 #### Parameterized type implements interface
 
