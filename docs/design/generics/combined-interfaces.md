@@ -1706,6 +1706,10 @@ TODO: Fix this up a lot
 -   Within an interface definition.
 -   Naming constrained type-types.
 
+To handle this last use case, we expand the kinds of requirements that
+type-types can have from just interface requirements to also include the kinds
+of constraints discussed below in this section.
+
 ### Two approaches for expressing constraints
 
 **Open question:** It is undecided which approach we will go with. We may also
@@ -1766,38 +1770,22 @@ bounds in Rust
 
 Advantages:
 
--   More uniform treatment of interface parameters and associated types.
--   Determining canonical types/type equality is fast and straightforward.
+-   More uniform treatment of [interface parameters](#parameterized-interfaces)
+    and [associated types](#associated-types).
+-   Determining canonical types/type equality is fast and straightforward, see
+    [the "generic type equality" section](#generic-type-equality).
 
 Disadvantages:
 
--   Inventive to use it broadly.
+-   Inventive to use it broadly, beyond
+    ["set to a specific value" constraints](#set-to-a-specific-value).
 -   Difficulty naming constraints and expressing constraints in interface
     definitions.
--   Some types of constraints are hard to express or need additional syntax.
+-   Some types of constraints are hard to express or need additional syntax,
+    such as `.Self` and `for_some`.
 
-TODO This approach has a few advantages:
-
--   There is one mechanism for constraining an interface: passing in arguments.
-    We use this both for [interface parameters](#parameterized-interfaces)
-    (required, typically positional parameters) and associated types (optional,
-    named parameters).
--   You can express a variety of constraints, including that two things must be
-    the same, something must take on a specific value, or something must satisfy
-    an interface.
--   Deciding if two types must always be the same can be done just by
-    normalizing their expressions by substituting any parameters. For example,
-    `Container.IteratorType.ElementType` normalizes to `Container.ElementType`.
-    In the case of the `SortContainer` function, there is an additional
-    constraint making `ContainerType.IteratorType.ElementType` and
-    `ContainerType.ElementType` both equal to `ElementType`.
--   Many constrained interfaces are naturally represented as type-types, which
-    is useful for constructs like [`DynPtr`](#dynamic-pointer-type) or
-    [`DynBoxed`](#dynboxed) that are parameterized by type-types.
-
-**Rejected alternative:** Other languages use `requires` clauses to expressed
-constraints, as discussed in
-[this appendix](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/appendix-requires-constraints.md).
+TODO: fold in content from
+[this appendix arguing against `requires` clauses](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/appendix-requires-constraints.md)
 
 ### Constraint use cases
 
@@ -1983,18 +1971,21 @@ To do this with a `where` clause, we need some way of saying a type bound, which
 unfortunately is likely to be redundant and inconsistent with how it is said
 outside of a `where` clause.
 
-TODO: How would you spell that?
+**Open question:** How do you spell that? This proposal provisionally uses `as`,
+which is our casting operator, but maybe we should have another operator that
+more clearly returns a boolean like `has_type`?
 
 ```
 fn SortContainer[Container:$ ContainerType]
     (Ptr(ContainerType): container_to_sort)
-    where ContainerType.ElementType has_type Comparable;
+    where ContainerType.ElementType as Comparable;
 ```
 
-**Concern:** `Container` defines `ElementType` as having type `Type`, but inside
-this function we need to treat it as if it had type `Comparable`. The argument
-passing approach conveniently introduces a new name that has type `Comparable`
-instead of making the type of `Container.ElementType` context-dependent.
+**Note:** `Container` defines `ElementType` as having type `Type`, but
+`ContainerType`, despite being superficially declared as having type
+`ContainerType`, is different. `ContainerType.ElementType` has type
+`Comparable`. This means we need to be a bit careful when talking about the type
+of `ContainerType` when there is a `where` clause that mentiones it.
 
 ##### Type bounds on associated types in interfaces
 
@@ -2066,7 +2057,7 @@ fn F[RandomAccessIterator:$ IterType,
     (ContainerType: c);
 // vs. `where` clause:
 fn F[ContainerInterface:$ ContainerType](ContainerType: c)
-    where ContainerType.IteratorType has_type RandomAccessIterator;
+    where ContainerType.IteratorType as RandomAccessIterator;
 
 // WANT a definition of RandomAccessContainer such that the above
 // is equivalent to:
@@ -2078,7 +2069,7 @@ alias RandomAccessContainer =
     ContainerInterface(.IteratorType=IterType);
 // vs. `where` clause:
 alias RandomAccessContainer = ContainerInterface
-    where RandomAccessContainer.IteratorType has_type RandomAccessIterator;
+    where RandomAccessContainer.IteratorType as RandomAccessIterator;
 ```
 
 #### Two types must be the same
@@ -2117,7 +2108,7 @@ fn EqualContainers[HasEquality:$ ET,
 fn EqualContainers[Container:$ CT1, Container:$ CT2]
     (Ptr(CT1): c1, Ptr(CT2): c2) -> Bool
     where CT1.ElementType == CT2.ElementType,
-          CT1.ElementType has_type HasEquality;
+          CT1.ElementType as HasEquality;
 ```
 
 ##### Naming constraints
