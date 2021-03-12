@@ -656,8 +656,9 @@ concept, for which interfaces are a building block.
 ## Type-types and facet types
 
 A type-type consists of a set of requirements and a set of names. Requirements
-are typically a set of interfaces that a type must satisfy. The names are
-aliases for qualified names in those interfaces.
+are typically a set of interfaces that a type must satisfy (though other kinds
+of requirements are added below). The names are aliases for qualified names in
+those interfaces.
 
 An interface is one particularly simple example of a type-type. For example,
 `Vector` as a type-type has a set of requirements consisting of the single
@@ -3116,6 +3117,9 @@ fn G[Foo + Sized: T](Ptr(T): x) {
 var Bar: z;
 G(&z);  // Allowed: Bar is sized and implements Foo.
 ```
+
+**Note:** The compiler will determine which types are "sized", this is not
+something types will implement explicitly like ordinary interfaces.
 
 **Open question:** Even if the size is fixed, it won't be known at the time of
 compiling the generic function if we are using the dynamic strategy. Should we
