@@ -1045,18 +1045,26 @@ interface PreferredConversion {
 **Open question:** Can we redefine associated types in the refined interface as
 long as the new definition is compatible but more specific ("covariance")? Here,
 more specific means that the requirements and the name-to-binding map are
-supersets.
+supersets (extending/refining the interface is sufficient).
 
 ```
-interface ForwardContainer(Type:$ T) {
-  var ForwardIterator(T):$ IteratorType;
+interface ForwardIterator { ... }
+interface BidirectionalIterator {
+  extends ForwardIterator;
+}
+interface ForwardContainer {
+  var ForwardIterator:$ IteratorType;
   method (Ptr(Self): this) Begin() -> IteratorType;
   method (Ptr(Self): this) End() -> IteratorType;
 }
-interface BidirectionalContainer(Type:$ T) {
-  var BidirectionalIterator(T):$ IteratorType;
-  // Question: does this cause any weird shadowing?
-  extends ForwardContainer(T, .IteratorType = IteratorType);
+interface BidirectionalContainer {
+  // Redeclaration of `IteratorType` with a more specific bound.
+  var BidirectionalIterator:$ IteratorType;
+
+// Question: does this cause any weird shadowing?
+  // Question: do we have to have a constraint equating IteratorType
+  // with ForwardContainer.IteratorType?
+  extends ForwardContainer;
 }
 ```
 
@@ -3585,6 +3593,31 @@ In fact, this is a generalization of specialization, as observed
 [here](https://rust-lang.github.io/rfcs/1210-impl-specialization.html#default-impls),
 as long as we allow more specific implementations to be incomplete and reuse
 more general implementations for anything unspecified.
+
+One variation on this may be default implementations of entire interfaces. For
+example, `RandomAccessContainer` refines `Container` with an `IteratorType`
+satisfying `RandomAccessIterator`. That is sufficient to provide a default
+implementation of the indexing operator (operator `[]`), via
+[implementing an interface](#operator-overloading).
+
+```
+interface RandomAccessContainer {
+  extends Container;
+  // However we decide to support refinement of associated types.
+  var RandomAccessIterator:$ IteratorType;
+  // Either `impl` or `extends` here, depending if you want
+  // `RandomAccessContainer`'s API to include these names.
+  impl OperatorIndex(Int) {
+    // Default implementation of interface.
+    method (Self: this) Get(Int: i) -> ElementType {
+      return (this.Begin() + i).Get();
+    }
+    method (Ptr(Self): this) Set(Int: i, ElementType: value) {
+      (this->Begin() + i).Set(value);
+    }
+  }
+}
+```
 
 ### Evolution
 
