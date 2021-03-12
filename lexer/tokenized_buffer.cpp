@@ -5,6 +5,7 @@
 #include "lexer/tokenized_buffer.h"
 
 #include <algorithm>
+#include <array>
 #include <cmath>
 #include <iterator>
 #include <string>
@@ -12,6 +13,7 @@
 #include "lexer/character_set.h"
 #include "lexer/numeric_literal.h"
 #include "lexer/string_literal.h"
+#include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/StringSwitch.h"
 #include "llvm/ADT/Twine.h"
@@ -737,7 +739,9 @@ auto TokenizedBuffer::AddToken(TokenInfo info) -> Token {
 }
 
 auto TokenizedBuffer::GetLocation(const char* loc) -> Diagnostic::Location {
-  assert(loc >= source->Text().begin() && loc <= source->Text().end());
+  assert(llvm::is_sorted(
+             std::array{source->Text().begin(), loc, source->Text().end()}) &&
+         "location not within buffer");
   int64_t offset = loc - source->Text().begin();
 
   // Find the first line starting after the given location. Note that we can't

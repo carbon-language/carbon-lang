@@ -35,7 +35,8 @@ class TokenizedBuffer;
 // `Token` objects from the same `TokenizedBuffer` can be compared with each
 // other, both for being the same token within the buffer, and to establish
 // relative position within the token stream that has been lexed out of the
-// buffer.
+// buffer. `Token` objects from different `TokenizedBuffer`s cannot be
+// meaningfully compared.
 //
 // All other APIs to query a `Token` are on the `TokenizedBuffer`.
 class TokenizedBufferToken {

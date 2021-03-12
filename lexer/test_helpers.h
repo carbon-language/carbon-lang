@@ -5,10 +5,12 @@
 #ifndef LEXER_TEST_HELPERS_H_
 #define LEXER_TEST_HELPERS_H_
 
+#include <array>
 #include <string>
 
 #include "diagnostics/diagnostic_emitter.h"
 #include "gmock/gmock.h"
+#include "llvm/ADT/STLExtras.h"
 #include "llvm/Support/FormatVariadic.h"
 
 namespace Carbon {
@@ -24,7 +26,7 @@ class SingleTokenDiagnosticTranslator
   SingleTokenDiagnosticTranslator(llvm::StringRef token) : token(token) {}
 
   auto GetLocation(const char* pos) -> Diagnostic::Location override {
-    assert(pos >= token.begin() && pos <= token.end() &&
+    assert(llvm::is_sorted(std::array{token.begin(), pos, token.end()}) &&
            "invalid diagnostic location");
     llvm::StringRef prefix = token.take_front(pos - token.begin());
     auto [before_last_newline, this_line] = prefix.rsplit('\n');
@@ -34,7 +36,9 @@ class SingleTokenDiagnosticTranslator
               .line_number = 1,
               .column_number = static_cast<int32_t>(pos - token.begin() + 1)};
     } else {
-      // On second or subsequent lines.
+      // On second or subsequent lines. Note that the line number here is 2
+      // more than the number of newlines because `rsplit` removed one newline
+      // and `line_number` is 1-based.
       return {.file_name = file_name,
               .line_number =
                   static_cast<int32_t>(before_last_newline.count('\n') + 2),

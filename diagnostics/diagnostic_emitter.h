@@ -73,6 +73,8 @@ class DiagnosticEmitter {
   // Emits an error unconditionally.
   template <typename DiagnosticT>
   auto EmitError(LocationT location, DiagnosticT diag) -> void {
+    // TODO: Encode the diagnostic kind in the Diagnostic object rather than
+    // hardcoding an "error: " prefix.
     consumer_->HandleDiagnostic({.location = translator_->GetLocation(location),
                                  .short_name = DiagnosticT::ShortName,
                                  .message = "error: " + diag.Format()});
@@ -93,6 +95,8 @@ class DiagnosticEmitter {
     // TODO(kfm): check if this warning is enabled at `location`.
     DiagnosticT diag;
     if (f(diag)) {
+      // TODO: Encode the diagnostic kind in the Diagnostic object rather than
+      // hardcoding a "warning: " prefix.
       consumer_->HandleDiagnostic(
           {.location = translator_->GetLocation(location),
            .short_name = DiagnosticT::ShortName,
