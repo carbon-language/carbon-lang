@@ -1061,10 +1061,23 @@ interface BidirectionalContainer {
   // Redeclaration of `IteratorType` with a more specific bound.
   var BidirectionalIterator:$ IteratorType;
 
-// Question: does this cause any weird shadowing?
+  // Question: does this cause any weird shadowing?
   // Question: do we have to have a constraint equating IteratorType
   // with ForwardContainer.IteratorType?
   extends ForwardContainer;
+}
+```
+
+One possible syntax would be to allow a block of these kinds of refinements in
+place of a terminating semicolon (`;`) for `impl` and `extends` declarations in
+an interface, as in:
+
+```
+interface BidirectionalContainer {
+  extends ForwardContainer {
+    // Redeclaration of `IteratorType` with a more specific bound.
+    var BidirectionalIterator:$ IteratorType;
+  }
 }
 ```
 
@@ -3602,9 +3615,10 @@ implementation of the indexing operator (operator `[]`), via
 
 ```
 interface RandomAccessContainer {
-  extends Container;
-  // However we decide to support refinement of associated types.
-  var RandomAccessIterator:$ IteratorType;
+  extends Container {
+    // Refinement of the associated type `IteratorType` from `Container`.
+    var RandomAccessIterator:$ IteratorType;
+  }
   // Either `impl` or `extends` here, depending if you want
   // `RandomAccessContainer`'s API to include these names.
   impl OperatorIndex(Int) {
