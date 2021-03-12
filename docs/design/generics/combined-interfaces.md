@@ -97,6 +97,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Impls with state](#impls-with-state)
     -   [Generic associated types](#generic-associated-types)
     -   [Higher-ranked types](#higher-ranked-types)
+    -   [Inferring associated types](#inferring-associated-types)
 -   [Index of examples](#index-of-examples)
 -   [Notes](#notes)
 -   [Broken links footnote](#broken-links-footnote)
@@ -2389,7 +2390,75 @@ fn G[Type:$ T](T: x) -> T where (T != Bool) { return F(x); }
 
 ### Implicit constraints
 
-TODO
+Imagine we have a generic function that accepts a arbitrary `HashMap`:
+
+```
+fn LookUp[Type:$ KeyType](Ptr(HashMap(KeyType, Int)): hm,
+                          KeyType: k) -> Int;
+
+fn PrintValueOrDefault[Printable:$ KeyType,
+                       Printable + HasDefault:$ ValueT]
+    (HashMap(KeyType, ValueT): map, KeyT: key);
+```
+
+The `KeyType` in these declarations does not satisfy the requirements of
+`HashMap`, which requires the type to at least implement `Hashable` and probably
+others like `Sized`, `EqualityComparable`, `Movable`, and so on.
+
+```
+struct HashMap(
+    Hashable + Sized + EqualityComparable + Movable:$ KeyType,
+    ...) { ... }
+```
+
+**Open question:** Should we allow those function declarations, and implicitly
+add needed constraints to `KeyType` implied by being used as an argument to a
+parameter with those constraints? Or should we require `KeyType` to name all
+needed constraints as part of its declarations?
+
+In this specific case, Swift will accept the definition and
+[infer the needed constraints on the generic type parameter](https://www.swiftbysundell.com/tips/inferred-generic-type-constraints/).
+This is both more concise for the author of the code and follows the
+["don't repeat yourself" principle](https://en.wikipedia.org/wiki/Don%27t_repeat_yourself).
+This redundancy is undesirable since it means if the needed constraints for
+`HashMap` are changed, then the code has to be updated in more locations.
+Further it can add noise that obscures relevant information. In practice, any
+user of these functions will have to pass in a valid `HashMap` instance, and so
+will have already satisfied these constraints.
+
+**Caveat:** These constraints can be obscured:
+
+```
+interface I(Type:$ A, Type:$ B, Type:$ C, Type:$ D, Type:$ E) {
+  var I(B, A, C, D, E):$ SwapType;
+  var I(B, C, D, E, A):$ CycleType;
+  fn LookUp(Ptr(HashMap(D, E)): hm) -> E;
+  fn Foo(Bar(A, B): x);
+}
+```
+
+All type arguments to "I" must actually implement `Hashable` (since
+[an adjacent swap and a cycle generate the full symmetry group on 5 elements](https://www.mathcounterexamples.net/generating-the-symmetric-group-with-a-transposition-and-a-maximal-length-cycle/)).
+And additional restrictions on those types depend on the definition of `Bar`.
+For example, this definition
+
+```
+struct Bar(Type:$ A, ComparableWith(A):$ B) { ... }
+```
+
+would imply that all the type arguments to `I` would have to be comparable with
+every other. This propagation problem means that allowing implicit constraints
+to be inferred in this context is substantial (potentially unbounded?) work for
+the compiler, and these implied constraints are not at all clear to human
+readers of the code either.
+
+**Conclusion:** The initial declaration part of an `interface`, type definition,
+or associated type declaration should include complete description of all needed
+constraints.
+
+Furthermore, inferring that two types are equal (in contrast to the type bound
+constraints described so far) introduces additional problems for establishing
+which types are equal in a generic context.
 
 ### Generic type equality
 
@@ -3738,6 +3807,36 @@ Swift proposals:
 [2](https://forums.swift.org/t/proposal-higher-kinded-types-monads-functors-etc/559),
 [3](https://github.com/typelift/swift/issues/1). These correspond roughly to
 [C++ template template parameters](https://en.cppreference.com/w/cpp/language/template_parameters#Template_template_parameter).
+
+### Inferring associated types
+
+Imagine we have an interface that has an associated type used in the signature
+of one of its methods:
+
+```
+interface A {
+  var Type:$ T;
+  method (Self: this) F() -> T;
+}
+```
+
+And we have a type implementing that interface:
+
+```
+struct S {
+  impl A {
+    // var Type:$ T = Int;
+    method (Self: this) F() -> Int { return 3; }
+  }
+}
+```
+
+The compiler could infer the type to assign to the associated type by matching
+the definition of `F`. This is
+[supported in Swift](https://docs.swift.org/swift-book/LanguageGuide/Generics.html#ID190),
+but may be tricky in the presence of function overloading or something where we
+would prefer the user to be explicit (so, for example, the name `T` was visible
+in the definition of `S`).
 
 ## Index of examples
 
