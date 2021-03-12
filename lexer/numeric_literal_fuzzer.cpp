@@ -6,7 +6,7 @@
 #include <cstring>
 
 #include "diagnostics/diagnostic_emitter.h"
-#include "diagnostics/test_helpers.h"
+#include "diagnostics/null_diagnostics.h"
 #include "lexer/numeric_literal.h"
 #include "llvm/ADT/StringRef.h"
 

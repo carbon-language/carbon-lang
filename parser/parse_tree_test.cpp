@@ -7,7 +7,6 @@
 #include <forward_list>
 
 #include "diagnostics/diagnostic_emitter.h"
-#include "diagnostics/test_helpers.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 #include "lexer/tokenized_buffer.h"
@@ -31,7 +30,7 @@ using ::testing::StrEq;
 struct ParseTreeTest : ::testing::Test {
   std::forward_list<SourceBuffer> source_storage;
   std::forward_list<TokenizedBuffer> token_storage;
-  DiagnosticConsumer& consumer = NullDiagnosticConsumer();
+  DiagnosticConsumer& consumer = ConsoleDiagnosticConsumer();
 
   auto GetSourceBuffer(llvm::Twine t) -> SourceBuffer& {
     source_storage.push_front(SourceBuffer::CreateFromText(t.str()));

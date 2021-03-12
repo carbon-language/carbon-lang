@@ -64,7 +64,6 @@ cc_test(
         ":parse_test_helpers",
         ":parse_tree",
         "//diagnostics:diagnostic_emitter",
-        "//diagnostics:test_helpers",
         "//lexer:tokenized_buffer",
         "//lexer:tokenized_buffer_test_helpers",
         "@llvm-project//llvm:Support",
@@ -81,7 +80,7 @@ cc_fuzz_test(
     deps = [
         ":parse_tree",
         "//diagnostics:diagnostic_emitter",
-        "//diagnostics:test_helpers",
+        "//diagnostics:null_diagnostics",
         "//lexer:tokenized_buffer",
         "@llvm-project//llvm:Support",
     ],

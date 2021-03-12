@@ -32,14 +32,14 @@ class SingleTokenDiagnosticTranslator
     auto [before_last_newline, this_line] = prefix.rsplit('\n');
     if (before_last_newline.size() == prefix.size()) {
       // On first line.
-      return {.file_name = file_name,
+      return {.file_name = SynthesizeFilename(),
               .line_number = 1,
               .column_number = static_cast<int32_t>(pos - token.begin() + 1)};
     } else {
       // On second or subsequent lines. Note that the line number here is 2
       // more than the number of newlines because `rsplit` removed one newline
       // and `line_number` is 1-based.
-      return {.file_name = file_name,
+      return {.file_name = SynthesizeFilename(),
               .line_number =
                   static_cast<int32_t>(before_last_newline.count('\n') + 2),
               .column_number = static_cast<int32_t>(this_line.size() + 1)};
@@ -47,8 +47,11 @@ class SingleTokenDiagnosticTranslator
   }
 
  private:
+  auto SynthesizeFilename() const -> std::string {
+    return llvm::formatv("`{0}`", token);
+  }
+
   llvm::StringRef token;
-  std::string file_name = llvm::formatv("`{0}`", token);
 };
 
 }  // namespace Testing

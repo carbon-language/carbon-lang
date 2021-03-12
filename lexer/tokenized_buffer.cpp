@@ -774,7 +774,7 @@ auto TokenizedBuffer::GetLocation(const char* loc) -> Diagnostic::Location {
     }
   }
 
-  return {.file_name = source->Filename(),
+  return {.file_name = source->Filename().str(),
           .line_number = line_number + 1,
           .column_number = column_number + 1};
 }

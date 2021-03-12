@@ -25,7 +25,7 @@ namespace Carbon {
 struct Diagnostic {
   struct Location {
     // Name of the file or buffer that this diagnostic refers to.
-    llvm::StringRef file_name;
+    std::string file_name;
     // 1-based line number.
     int32_t line_number;
     // 1-based column number.
@@ -40,7 +40,7 @@ struct Diagnostic {
 // Receives diagnostics as they are emitted.
 class DiagnosticConsumer {
  public:
-  virtual ~DiagnosticConsumer() {}
+  virtual ~DiagnosticConsumer() = default;
 
   // Handle a diagnostic.
   virtual auto HandleDiagnostic(const Diagnostic& diagnostic) -> void = 0;
@@ -51,7 +51,7 @@ class DiagnosticConsumer {
 template <typename LocationT>
 class DiagnosticLocationTranslator {
  public:
-  virtual ~DiagnosticLocationTranslator() {}
+  virtual ~DiagnosticLocationTranslator() = default;
 
   [[nodiscard]] virtual auto GetLocation(LocationT loc)
       -> Diagnostic::Location = 0;

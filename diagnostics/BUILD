@@ -14,9 +14,18 @@ cc_library(
 )
 
 cc_library(
-    name = "test_helpers",
+    name = "null_diagnostics",
+    hdrs = ["null_diagnostics.h"],
+    deps = [
+        ":diagnostic_emitter",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_library(
+    name = "mocks",
     testonly = 1,
-    hdrs = ["test_helpers.h"],
+    hdrs = ["mocks.h"],
     deps = [
         ":diagnostic_emitter",
         "@llvm-project//llvm:Support",
@@ -29,7 +38,7 @@ cc_test(
     srcs = ["diagnostic_emitter_test.cpp"],
     deps = [
         ":diagnostic_emitter",
-        ":test_helpers",
+        ":mocks",
         "@llvm-project//llvm:Support",
         "@llvm-project//llvm:gmock",
         "@llvm-project//llvm:gtest",

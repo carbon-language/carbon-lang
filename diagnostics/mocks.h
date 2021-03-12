@@ -2,46 +2,18 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#ifndef DIAGNOSTICS_TEST_HELPERS_H_
-#define DIAGNOSTICS_TEST_HELPERS_H_
+#ifndef DIAGNOSTICS_MOCKS_H_
+#define DIAGNOSTICS_MOCKS_H_
 
 #include "diagnostics/diagnostic_emitter.h"
 #include "gmock/gmock.h"
-#include "llvm/ADT/SmallString.h"
-#include "llvm/Support/Casting.h"
-#include "llvm/Support/YAMLParser.h"
 
 namespace Carbon {
-
-template <typename LocationT>
-inline auto NullDiagnosticLocationTranslator()
-    -> DiagnosticLocationTranslator<LocationT>& {
-  struct Translator : DiagnosticLocationTranslator<LocationT> {
-    auto GetLocation(LocationT) -> Diagnostic::Location override { return {}; }
-  };
-  static Translator* translator = new Translator;
-  return *translator;
-}
-
-inline auto NullDiagnosticConsumer() -> DiagnosticConsumer& {
-  struct Consumer : DiagnosticConsumer {
-    auto HandleDiagnostic(const Diagnostic& d) -> void override {}
-  };
-  static auto* consumer = new Consumer;
-  return *consumer;
-}
-
-template <typename LocationT>
-inline auto NullDiagnosticEmitter() -> DiagnosticEmitter<LocationT>& {
-  static auto* emitter = new DiagnosticEmitter<LocationT>(
-      NullDiagnosticLocationTranslator<LocationT>(), NullDiagnosticConsumer());
-  return *emitter;
-}
-
 namespace Testing {
 
 class MockDiagnosticConsumer : public DiagnosticConsumer {
  public:
+  // TODO: Use `MOCK_METHOD` once it's available.
   MOCK_METHOD1(HandleDiagnostic, void(const Diagnostic& diagnostic));
 };
 
@@ -78,4 +50,4 @@ auto DiagnosticShortName(Matcher&& inner_matcher) -> auto {
 }  // namespace Testing
 }  // namespace Carbon
 
-#endif  // DIAGNOSTICS_TEST_HELPERS_H_
+#endif  // DIAGNOSTICS_MOCKS_H_

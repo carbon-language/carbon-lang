@@ -4,7 +4,7 @@
 
 #include "diagnostics/diagnostic_emitter.h"
 
-#include "diagnostics/test_helpers.h"
+#include "diagnostics/mocks.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 #include "llvm/ADT/StringRef.h"

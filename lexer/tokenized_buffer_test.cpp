@@ -7,7 +7,7 @@
 #include <iterator>
 
 #include "diagnostics/diagnostic_emitter.h"
-#include "diagnostics/test_helpers.h"
+#include "diagnostics/mocks.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 #include "lexer/tokenized_buffer_test_helpers.h"

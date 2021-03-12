@@ -60,7 +60,6 @@ cc_test(
         ":numeric_literal",
         ":test_helpers",
         "//diagnostics:diagnostic_emitter",
-        "//diagnostics:test_helpers",
         "@llvm-project//llvm:Support",
         "@llvm-project//llvm:gmock",
         "@llvm-project//llvm:gtest",
@@ -75,7 +74,7 @@ cc_fuzz_test(
     deps = [
         ":numeric_literal",
         "//diagnostics:diagnostic_emitter",
-        "//diagnostics:test_helpers",
+        "//diagnostics:null_diagnostics",
         "@llvm-project//llvm:Support",
     ],
 )
@@ -98,7 +97,6 @@ cc_test(
         ":string_literal",
         ":test_helpers",
         "//diagnostics:diagnostic_emitter",
-        "//diagnostics:test_helpers",
         "@llvm-project//llvm:Support",
         "@llvm-project//llvm:gmock",
         "@llvm-project//llvm:gtest",
@@ -113,7 +111,7 @@ cc_fuzz_test(
     deps = [
         ":string_literal",
         "//diagnostics:diagnostic_emitter",
-        "//diagnostics:test_helpers",
+        "//diagnostics:null_diagnostics",
         "@llvm-project//llvm:Support",
     ],
 )
@@ -151,7 +149,7 @@ cc_test(
         ":tokenized_buffer",
         ":tokenized_buffer_test_helpers",
         "//diagnostics:diagnostic_emitter",
-        "//diagnostics:test_helpers",
+        "//diagnostics:mocks",
         "@llvm-project//llvm:Support",
         "@llvm-project//llvm:gmock",
         "@llvm-project//llvm:gtest",
@@ -166,7 +164,7 @@ cc_fuzz_test(
     deps = [
         ":tokenized_buffer",
         "//diagnostics:diagnostic_emitter",
-        "//diagnostics:test_helpers",
+        "//diagnostics:null_diagnostics",
         "@llvm-project//llvm:Support",
     ],
 )
