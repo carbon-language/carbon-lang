@@ -13,19 +13,6 @@
 namespace Carbon {
 
 namespace {
-auto RadixName(int radix) -> std::string_view {
-  if (radix == 2) {
-    return "binary";
-  } else if (radix == 10) {
-    return "decimal";
-  } else if (radix == 16) {
-    return "hexadecimal";
-  }
-
-  assert(!"unexpected radix");
-  return "";
-}
-
 struct EmptyDigitSequence : SimpleDiagnostic<EmptyDigitSequence> {
   static constexpr llvm::StringLiteral ShortName = "syntax-invalid-number";
   static constexpr llvm::StringLiteral Message =
@@ -40,7 +27,8 @@ struct InvalidDigit {
 
   auto Format() -> std::string {
     return llvm::formatv("Invalid digit '{0}' in {1} numeric literal.", digit,
-                         RadixName(radix))
+                         radix == 2 ? "binary"
+                                    : (radix == 16 ? "hexadecimal" : "decimal"))
         .str();
   }
 };
@@ -62,7 +50,8 @@ struct IrregularDigitSeparators {
     return llvm::formatv(
                "Digit separators in {0} number should appear every {1} "
                "characters from the right.",
-               RadixName(radix), (radix == 10 ? "3" : "4"))
+               (radix == 10 ? "decimal" : "hexadecimal"),
+               (radix == 10 ? "3" : "4"))
         .str();
   }
 };
