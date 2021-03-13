@@ -64,9 +64,11 @@ auto ParseTree::Parser::Parse(TokenizedBuffer& tokens,
   tree.node_impls.reserve(tokens.Size());
 
   Parser parser(tree, tokens, emitter);
-  while (parser.position != parser.end) {
+  while (!parser.AtEof()) {
     parser.ParseDeclaration();
   }
+
+  parser.AddLeafNode(ParseNodeKind::FileEnd(), *parser.position);
 
   assert(tree.Verify() && "Parse tree built but does not verify!");
   return tree;
@@ -74,6 +76,7 @@ auto ParseTree::Parser::Parse(TokenizedBuffer& tokens,
 
 auto ParseTree::Parser::Consume(TokenKind kind) -> TokenizedBuffer::Token {
   TokenizedBuffer::Token t = *position;
+  assert(kind != TokenKind::Eof() && "Cannot consume the EOF token!");
   assert(tokens.GetKind(t) == kind && "The current token is the wrong kind!");
   ++position;
   return t;
@@ -84,8 +87,7 @@ auto ParseTree::Parser::ConsumeIf(TokenKind kind)
   if (tokens.GetKind(*position) != kind) {
     return {};
   }
-
-  return *position++;
+  return Consume(kind);
 }
 
 auto ParseTree::Parser::AddLeafNode(ParseNodeKind kind,
@@ -147,7 +149,6 @@ auto ParseTree::Parser::AddNode(ParseNodeKind n_kind, TokenizedBuffer::Token t,
 }
 
 auto ParseTree::Parser::SkipMatchingGroup() -> bool {
-  assert(position != end && "Cannot skip at the end!");
   TokenizedBuffer::Token t = *position;
   TokenKind t_kind = tokens.GetKind(t);
   if (!t_kind.IsOpeningSymbol()) {
@@ -162,7 +163,7 @@ auto ParseTree::Parser::SkipMatchingGroup() -> bool {
 auto ParseTree::Parser::SkipPastLikelyDeclarationEnd(
     TokenizedBuffer::Token skip_root, bool is_inside_declaration)
     -> llvm::Optional<Node> {
-  if (position == end) {
+  if (AtEof()) {
     return {};
   }
 
@@ -209,18 +210,13 @@ auto ParseTree::Parser::SkipPastLikelyDeclarationEnd(
 
     // Otherwise just step forward one token.
     ++position;
-  } while (position != end &&
-           is_same_line_or_indent_greater_than_root(*position));
+  } while (!AtEof() && is_same_line_or_indent_greater_than_root(*position));
 
   return {};
 }
 
 auto ParseTree::Parser::ParseFunctionSignature() -> Node {
-  assert(position != end && "Cannot parse past the end!");
-
   TokenizedBuffer::Token open_paren = Consume(TokenKind::OpenParen());
-  assert(position != end &&
-         "The lexer ensures we always have a closing paren!");
   auto start = StartSubtree();
 
   // FIXME: Add support for parsing parameters.
@@ -243,11 +239,7 @@ auto ParseTree::Parser::ParseFunctionSignature() -> Node {
 }
 
 auto ParseTree::Parser::ParseCodeBlock() -> Node {
-  assert(position != end && "Cannot parse past the end!");
-
   TokenizedBuffer::Token open_curly = Consume(TokenKind::OpenCurlyBrace());
-  assert(position != end &&
-         "The lexer ensures we always have a closing curly!");
   auto start = StartSubtree();
 
   bool has_errors = false;
@@ -289,20 +281,12 @@ auto ParseTree::Parser::ParseCodeBlock() -> Node {
 }
 
 auto ParseTree::Parser::ParseFunctionDeclaration() -> Node {
-  assert(position != end && "Cannot parse past the end!");
-
   TokenizedBuffer::Token function_intro_token = Consume(TokenKind::FnKeyword());
   auto start = StartSubtree();
   auto add_error_function_node = [&] {
     return AddNode(ParseNodeKind::FunctionDeclaration(), function_intro_token,
                    start, /*has_error=*/true);
   };
-
-  if (position == end) {
-    // FIXME: Point this diagnostic at the end of the file instead.
-    emitter.EmitError<ExpectedFunctionName>(function_intro_token);
-    return add_error_function_node();
-  }
 
   auto name_n = ConsumeAndAddLeafNodeIf(TokenKind::Identifier(),
                                         ParseNodeKind::Identifier());
@@ -314,11 +298,6 @@ auto ParseTree::Parser::ParseFunctionDeclaration() -> Node {
     SkipPastLikelyDeclarationEnd(function_intro_token);
     return add_error_function_node();
   }
-  if (position == end) {
-    // FIXME: Point this diagnostic at the end of the file instead.
-    emitter.EmitError<ExpectedFunctionParams>(function_intro_token);
-    return add_error_function_node();
-  }
 
   TokenizedBuffer::Token open_paren = *position;
   if (tokens.GetKind(open_paren) != TokenKind::OpenParen()) {
@@ -326,8 +305,6 @@ auto ParseTree::Parser::ParseFunctionDeclaration() -> Node {
     SkipPastLikelyDeclarationEnd(function_intro_token);
     return add_error_function_node();
   }
-  assert(std::next(position) != end &&
-         "Unbalanced parentheses should be rejected by the lexer.");
   TokenizedBuffer::Token close_paren =
       tokens.GetMatchedClosingToken(open_paren);
 
@@ -361,19 +338,19 @@ auto ParseTree::Parser::ParseFunctionDeclaration() -> Node {
 }
 
 auto ParseTree::Parser::ParseEmptyDeclaration() -> Node {
-  assert(position != end && "Cannot parse past the end!");
   return AddLeafNode(ParseNodeKind::EmptyDeclaration(),
                      Consume(TokenKind::Semi()));
 }
 
 auto ParseTree::Parser::ParseDeclaration() -> llvm::Optional<Node> {
-  assert(position != end && "Cannot parse past the end!");
   TokenizedBuffer::Token t = *position;
   switch (tokens.GetKind(t)) {
     case TokenKind::FnKeyword():
       return ParseFunctionDeclaration();
     case TokenKind::Semi():
       return ParseEmptyDeclaration();
+    case TokenKind::Eof():
+      return llvm::None;
     default:
       // Errors are handled outside the switch.
       break;

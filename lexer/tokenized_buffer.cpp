@@ -457,6 +457,12 @@ class TokenizedBuffer::Lexer {
     buffer.has_errors = true;
     return token;
   }
+
+  auto AddEofToken() -> void {
+    buffer.AddToken({.kind = TokenKind::Eof(),
+                     .token_line = current_line,
+                     .column = current_column});
+  }
 };
 
 auto TokenizedBuffer::Lex(SourceBuffer& source, DiagnosticConsumer& consumer)
@@ -485,6 +491,7 @@ auto TokenizedBuffer::Lex(SourceBuffer& source, DiagnosticConsumer& consumer)
   }
 
   lexer.CloseInvalidOpenGroups(TokenKind::Error());
+  lexer.AddEofToken();
   return buffer;
 }
 
@@ -538,6 +545,10 @@ auto TokenizedBuffer::GetTokenText(Token token) const -> llvm::StringRef {
         StringLiteralToken::Lex(source->Text().substr(token_start));
     assert(relexed_token && "Could not reform string literal token.");
     return relexed_token->Text();
+  }
+
+  if (token_info.kind == TokenKind::Eof()) {
+    return llvm::StringRef();
   }
 
   assert(token_info.kind == TokenKind::Identifier() &&
