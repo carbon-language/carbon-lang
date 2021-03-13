@@ -3845,16 +3845,6 @@ not yet been incorporated into the main text above.
 -   Can use IDE tooling to show all methods including external impl,
     automatically switching to [qualified member names](#qualified-member-names)
     where needed to get that method.
--   "Functional dependencies" in Haskell about the unique/generic vs.
-    non-unique/template arguments distinction for type parameters of interfaces
--   Open question: is it okay for interface definer to decide (a) whether type
-    used in constraints, (b) whether different parameters make different
-    interfaces that a type can implement multiple of.
--   Example: what is the type of the subsequence of a sequence, from Dmitri
--   Imagine I want to define a new interface that has the type implements
-    property but also implements a new method.
--   Static/type fields holding non-type values: Should have these, should not
-    have distinction between types/functions/other types.
 -   Instance fields: capabilities include read, write, address-of (implies read
     & write?). Swift also has a modify capability implemented using coroutines.
     If we have address-of, it must be a real address.
