@@ -54,6 +54,7 @@ genrule(
     ],
     outs = ["jekyll_site.tgz"],
     cmd = "$(location jekyll_site.sh) $(location :gen_sidebar.html) $@",
+    tags = ["manual"],
     tools = ["jekyll_site.sh"],
 )
 
@@ -64,10 +65,12 @@ sh_binary(
         ":configs",
         ":jekyll_site.tgz",
     ],
+    tags = ["manual"],
 )
 
 sh_binary(
     name = "publish",
     srcs = ["publish.sh"],
     data = [":jekyll_site.tgz"],
+    tags = ["manual"],
 )

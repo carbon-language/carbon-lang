@@ -32,5 +32,6 @@ tar -xof website/jekyll/jekyll_site.tgz -C "${TMP_SITE}"
 mkdir "${TMP_SITE}/site"
 
 pushd "${TMP_SITE}"
-bundle exec jekyll server --skip-initial-build
+# Specify hostname to override the default of 127.0.0.1.
+bundle exec jekyll server --host "$(hostname)" --skip-initial-build
 popd

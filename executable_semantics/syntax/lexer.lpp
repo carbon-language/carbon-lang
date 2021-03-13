@@ -1,0 +1,155 @@
+/*
+Part of the Carbon Language project, under the Apache License v2.0 with LLVM
+Exceptions. See /LICENSE for license information.
+SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+*/
+
+%{
+#include <cstdlib>
+#include <iostream>
+#include "executable_semantics/syntax/parse_and_lex_context.h"
+%}
+
+/* Turn off legacy bits we don't need */
+%option noyywrap nounput nodefault noinput
+
+/* maintains the number of the current line read from input in the
+   global variable yylineno.
+*/
+%option yylineno
+
+AND               "and"
+ARROW             "->"
+AUTO              "auto"
+BOOL              "Bool"
+BREAK             "break"
+CASE              "case"
+CHOICE            "choice"
+ONE_LINE_COMMENT  \/\/[^\n]*\n
+CONTINUE          "continue"
+DBLARROW          "=>"
+DEFAULT           "default"
+ELSE              "else"
+EQUAL_EQUAL       "=="
+FALSE             "false"
+FN                "fn"
+FNTY              "fnty"
+IF                "if"
+INT               "Int"
+MATCH             "match"
+NOT               "not"
+OR                "or"
+RETURN            "return"
+STRUCT            "struct"
+TRUE              "true"
+TYPE              "Type"
+VAR               "var"
+WHILE             "while"
+
+identifier    [A-Za-z_][A-Za-z0-9_]*
+integer_literal   [0-9]+
+horizontal_whitespace [ \t\r]
+
+%{
+  // This macro is expanded to run each time a token is recognized.
+  //
+  // Advances the current token position by yyleng columns without changing
+  // the line number.
+  # define YY_USER_ACTION context.currentTokenPosition.columns(yyleng);
+%}
+
+%%
+
+%{
+  // Code run each time yylex is called.
+
+  // Begin with an empty token span starting where its previous end was.
+  context.currentTokenPosition.step();
+%}
+
+{AND}      { return yy::parser::make_AND(context.currentTokenPosition); }
+{ARROW}    { return yy::parser::make_ARROW(context.currentTokenPosition); }
+{AUTO}     { return yy::parser::make_AUTO(context.currentTokenPosition); }
+{BOOL}     { return yy::parser::make_BOOL(context.currentTokenPosition); }
+{BREAK}    { return yy::parser::make_BREAK(context.currentTokenPosition); }
+{CASE}     { return yy::parser::make_CASE(context.currentTokenPosition); }
+{CHOICE}   { return yy::parser::make_CHOICE(context.currentTokenPosition); }
+{CONTINUE} { return yy::parser::make_CONTINUE(context.currentTokenPosition); }
+{DBLARROW} { return yy::parser::make_DBLARROW(context.currentTokenPosition); }
+{DEFAULT}  { return yy::parser::make_DEFAULT(context.currentTokenPosition); }
+{ELSE}     { return yy::parser::make_ELSE(context.currentTokenPosition); }
+"=="       { return yy::parser::make_EQUAL_EQUAL(context.currentTokenPosition); }
+{FALSE}    { return yy::parser::make_FALSE(context.currentTokenPosition); }
+{FN}       { return yy::parser::make_FN(context.currentTokenPosition); }
+{FNTY}     { return yy::parser::make_FNTY(context.currentTokenPosition); }
+{IF}       { return yy::parser::make_IF(context.currentTokenPosition); }
+{INT}      { return yy::parser::make_INT(context.currentTokenPosition); }
+{MATCH}    { return yy::parser::make_MATCH(context.currentTokenPosition); }
+{NOT}      { return yy::parser::make_NOT(context.currentTokenPosition); }
+{OR}       { return yy::parser::make_OR(context.currentTokenPosition); }
+{RETURN}   { return yy::parser::make_RETURN(context.currentTokenPosition); }
+{STRUCT}   { return yy::parser::make_STRUCT(context.currentTokenPosition); }
+{TRUE}     { return yy::parser::make_TRUE(context.currentTokenPosition); }
+{TYPE}     { return yy::parser::make_TYPE(context.currentTokenPosition); }
+{VAR}      { return yy::parser::make_VAR(context.currentTokenPosition); }
+{WHILE}    { return yy::parser::make_WHILE(context.currentTokenPosition); }
+
+"=" return yy::parser::make_EQUAL(context.currentTokenPosition);
+"-" return yy::parser::make_MINUS(context.currentTokenPosition);
+"+" return yy::parser::make_PLUS(context.currentTokenPosition);
+"*" return yy::parser::make_STAR(context.currentTokenPosition);
+"/" return yy::parser::make_SLASH(context.currentTokenPosition);
+"(" return yy::parser::make_LEFT_PARENTHESIS(context.currentTokenPosition);
+")" return yy::parser::make_RIGHT_PARENTHESIS(context.currentTokenPosition);
+"{" return yy::parser::make_LEFT_CURLY_BRACE(context.currentTokenPosition);
+"}" return yy::parser::make_RIGHT_CURLY_BRACE(context.currentTokenPosition);
+"[" return yy::parser::make_LEFT_SQUARE_BRACKET(context.currentTokenPosition);
+"]" return yy::parser::make_RIGHT_SQUARE_BRACKET(context.currentTokenPosition);
+"." return yy::parser::make_PERIOD(context.currentTokenPosition);
+"," return yy::parser::make_COMMA(context.currentTokenPosition);
+";" return yy::parser::make_SEMICOLON(context.currentTokenPosition);
+":" return yy::parser::make_COLON(context.currentTokenPosition);
+
+{identifier} {
+  int n = strlen(yytext);
+  auto r = reinterpret_cast<char*>(malloc((n + 1) * sizeof(char)));
+  strncpy(r, yytext, n + 1);
+  return yy::parser::make_identifier(r, context.currentTokenPosition);
+}
+
+{integer_literal} {
+  auto r = atof(yytext);
+  return yy::parser::make_integer_literal(r, context.currentTokenPosition);
+}
+
+{ONE_LINE_COMMENT} {
+  // Advance end by 1 line, resetting the column to zero.
+  context.currentTokenPosition.lines(1);
+  // Make the span empty by setting start to end.
+  context.currentTokenPosition.step();
+}
+
+{horizontal_whitespace}+ {
+  // Make the span empty by setting start to end.
+  context.currentTokenPosition.step();
+}
+
+\n+ {
+  // Advance end by yyleng lines, resetting the column to zero.
+  context.currentTokenPosition.lines(yyleng);
+  // Make the span empty by setting start to end.
+  context.currentTokenPosition.step();
+}
+
+. {
+  std::cerr << context.currentTokenPosition << ": invalid character '"
+            << yytext[0] << "' in source file." << std::endl;
+  std::exit(1);
+}
+
+<<EOF>>    {
+  // A more modern Bison would give us make_EOF.
+  return yy::parser::make_END_OF_FILE(context.currentTokenPosition);
+}
+
+%%
