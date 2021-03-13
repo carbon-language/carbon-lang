@@ -11,7 +11,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 ## Table of contents
 
 -   [Overview](#overview)
--   [What about other languages?](#what-about-other-languages)
+-   [What about other languages???](#what-about-other-languages)
 -   [Project status](#project-status)
 -   [What will make Carbon a compelling future path for C++?](#what-will-make-carbon-a-compelling-future-path-for-c)
 -   [Contributing](#contributing)
@@ -46,7 +46,7 @@ tooling, automation, and incremental large-scale migration efforts.
 
 For more information, see [our goals document](docs/project/goals.md).
 
-## What about other languages?
+## What about other languages???
 
 Other programming languages don't _currently_ address these needs effectively.
 They present interoperability, migration, and performance challenges that make
