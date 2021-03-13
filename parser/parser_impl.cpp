@@ -15,8 +15,47 @@
 
 namespace Carbon {
 
+struct UnexpectedTokenInFunctionParams
+    : SimpleDiagnostic<UnexpectedTokenInFunctionParams> {
+  static constexpr llvm::StringLiteral ShortName = "syntax-error";
+  static constexpr llvm::StringLiteral Message =
+      "Unexpected token in function parameter list.";
+};
+
+struct UnexpectedTokenInCodeBlock
+    : SimpleDiagnostic<UnexpectedTokenInCodeBlock> {
+  static constexpr llvm::StringLiteral ShortName = "syntax-error";
+  static constexpr llvm::StringLiteral Message =
+      "Unexpected token in code block.";
+};
+
+struct ExpectedFunctionName : SimpleDiagnostic<ExpectedFunctionName> {
+  static constexpr llvm::StringLiteral ShortName = "syntax-error";
+  static constexpr llvm::StringLiteral Message =
+      "Expected function name after `fn` keyword.";
+};
+
+struct ExpectedFunctionParams : SimpleDiagnostic<ExpectedFunctionParams> {
+  static constexpr llvm::StringLiteral ShortName = "syntax-error";
+  static constexpr llvm::StringLiteral Message =
+      "Expected `(` after function name.";
+};
+
+struct ExpectedFunctionBodyOrSemi
+    : SimpleDiagnostic<ExpectedFunctionBodyOrSemi> {
+  static constexpr llvm::StringLiteral ShortName = "syntax-error";
+  static constexpr llvm::StringLiteral Message =
+      "Expected function definition or `;` after function declaration.";
+};
+
+struct UnrecognizedDeclaration : SimpleDiagnostic<UnrecognizedDeclaration> {
+  static constexpr llvm::StringLiteral ShortName = "syntax-error";
+  static constexpr llvm::StringLiteral Message =
+      "Unrecognized declaration introducer.";
+};
+
 auto ParseTree::Parser::Parse(TokenizedBuffer& tokens,
-                              TokenDiagnosticEmitter& /*unused*/) -> ParseTree {
+                              TokenDiagnosticEmitter& emitter) -> ParseTree {
   ParseTree tree(tokens);
 
   // We expect to have a 1:1 correspondence between tokens and tree nodes, so
@@ -24,7 +63,7 @@ auto ParseTree::Parser::Parse(TokenizedBuffer& tokens,
   // overhead.
   tree.node_impls.reserve(tokens.Size());
 
-  Parser parser(tree, tokens);
+  Parser parser(tree, tokens, emitter);
   while (parser.position != parser.end) {
     parser.ParseDeclaration();
   }
@@ -189,9 +228,7 @@ auto ParseTree::Parser::ParseFunctionSignature() -> Node {
   bool has_errors = false;
   auto close_paren = ConsumeIf(TokenKind::CloseParen());
   if (!close_paren) {
-    llvm::errs() << "ERROR: unexpected token before the close of the "
-                    "parameters on line "
-                 << tokens.GetLineNumber(*position) << "!\n";
+    emitter.EmitError<UnexpectedTokenInFunctionParams>(*position);
     has_errors = true;
 
     // We can trivially skip to the actual close parenthesis from here.
@@ -220,9 +257,7 @@ auto ParseTree::Parser::ParseCodeBlock() -> Node {
     switch (tokens.GetKind(*position)) {
       default:
         // FIXME: Add support for parsing more expressions & statements.
-        llvm::errs() << "ERROR: unexpected token before the close of the "
-                        "function definition on line "
-                     << tokens.GetLineNumber(*position) << "!\n";
+        emitter.EmitError<UnexpectedTokenInCodeBlock>(*position);
         has_errors = true;
 
         // We can trivially skip to the actual close curly brace from here.
@@ -264,16 +299,15 @@ auto ParseTree::Parser::ParseFunctionDeclaration() -> Node {
   };
 
   if (position == end) {
-    llvm::errs() << "ERROR: File ended with a function introducer on line "
-                 << tokens.GetLineNumber(function_intro_token) << "!\n";
+    // FIXME: Point this diagnostic at the end of the file instead.
+    emitter.EmitError<ExpectedFunctionName>(function_intro_token);
     return add_error_function_node();
   }
 
   auto name_n = ConsumeAndAddLeafNodeIf(TokenKind::Identifier(),
                                         ParseNodeKind::Identifier());
   if (!name_n) {
-    llvm::errs() << "ERROR: Function declaration with no name on line "
-                 << tokens.GetLineNumber(function_intro_token) << "!\n";
+    emitter.EmitError<ExpectedFunctionName>(*position);
     // FIXME: We could change the lexer to allow us to synthesize certain
     // kinds of tokens and try to "recover" here, but unclear that this is
     // really useful.
@@ -281,18 +315,14 @@ auto ParseTree::Parser::ParseFunctionDeclaration() -> Node {
     return add_error_function_node();
   }
   if (position == end) {
-    llvm::errs() << "ERROR: File ended after a function introducer and "
-                    "identifier on line "
-                 << tokens.GetLineNumber(function_intro_token) << "!\n";
+    // FIXME: Point this diagnostic at the end of the file instead.
+    emitter.EmitError<ExpectedFunctionParams>(function_intro_token);
     return add_error_function_node();
   }
 
   TokenizedBuffer::Token open_paren = *position;
   if (tokens.GetKind(open_paren) != TokenKind::OpenParen()) {
-    llvm::errs()
-        << "ERROR: Missing open parentheses in declaration of function '"
-        << tokens.GetTokenText(tree.GetNodeToken(*name_n)) << "' on line "
-        << tokens.GetLineNumber(function_intro_token) << "!\n";
+    emitter.EmitError<ExpectedFunctionParams>(open_paren);
     SkipPastLikelyDeclarationEnd(function_intro_token);
     return add_error_function_node();
   }
@@ -317,9 +347,7 @@ auto ParseTree::Parser::ParseFunctionDeclaration() -> Node {
     ParseCodeBlock();
   } else if (!ConsumeAndAddLeafNodeIf(TokenKind::Semi(),
                                       ParseNodeKind::DeclarationEnd())) {
-    llvm::errs() << "ERROR: Function declaration not terminated by a "
-                    "semicolon on line "
-                 << tokens.GetLineNumber(close_paren) << "!\n";
+    emitter.EmitError<ExpectedFunctionBodyOrSemi>(*position);
     if (tokens.GetLine(*position) == tokens.GetLine(close_paren)) {
       // Only need to skip if we've not already found a new line.
       SkipPastLikelyDeclarationEnd(function_intro_token);
@@ -352,9 +380,7 @@ auto ParseTree::Parser::ParseDeclaration() -> llvm::Optional<Node> {
   }
 
   // We didn't recognize an introducer for a valid declaration.
-  llvm::errs() << "ERROR: Unrecognized declaration introducer '"
-               << tokens.GetTokenText(t) << "' on line "
-               << tokens.GetLineNumber(t) << "!\n";
+  emitter.EmitError<UnrecognizedDeclaration>(t);
 
   // Skip forward past any end of a declaration we simply didn't understand so
   // that we can find the start of the next declaration or the end of a scope.

@@ -25,9 +25,11 @@ class ParseTree::Parser {
  private:
   struct SubtreeStart;
 
-  explicit Parser(ParseTree& tree_arg, TokenizedBuffer& tokens_arg)
+  explicit Parser(ParseTree& tree_arg, TokenizedBuffer& tokens_arg,
+                  TokenDiagnosticEmitter& emitter)
       : tree(tree_arg),
         tokens(tokens_arg),
+        emitter(emitter),
         position(tokens.Tokens().begin()),
         end(tokens.Tokens().end()) {}
 
@@ -124,6 +126,7 @@ class ParseTree::Parser {
 
   ParseTree& tree;
   TokenizedBuffer& tokens;
+  TokenDiagnosticEmitter& emitter;
 
   TokenizedBuffer::TokenIterator position;
   TokenizedBuffer::TokenIterator end;
