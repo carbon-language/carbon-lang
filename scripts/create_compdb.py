@@ -120,10 +120,15 @@ subprocess.run(["bazelisk", "build", "--keep_going"] + generated_file_labels)
 # Because we have built the generated files, rewrite the include paths that use
 # `bazel-bin` (which will fluctuate with different configs) to the specific
 # config we built the generated files with.
-bazel_bin = subprocess.run([bazel, "info", "bazel-bin"], capture_output=True, check=True, text=True).stdout.strip()
+bazel_bin = subprocess.run(
+    [bazel, "info", "bazel-bin"], capture_output=True, check=True, text=True
+).stdout.strip()
 # Only take the `bazel-out` relative suffix.
 bazel_bin = bazel_bin.partition("/bazel-out/")[2]
-arguments = [re.sub(r"^((-I)?)bazel-bin/", r"\1bazel-out/" + bazel_bin + "/", a) for a in arguments]
+arguments = [
+    re.sub(r"^((-I)?)bazel-bin/", r"\1bazel-out/" + bazel_bin + "/", a)
+    for a in arguments
+]
 
 
 # Manually translate the label to a user friendly path into the Bazel output
