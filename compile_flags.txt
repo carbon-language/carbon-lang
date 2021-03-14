@@ -58,7 +58,7 @@ bazel-bin/external/llvm_zlib
 bazel-carbon-lang/external/bazel_tools
 -iquote
 bazel-bin/external/bazel_tools
--Ibazel-bin/external/llvm-project/llvm/_virtual_includes/gtest_internal_headers
+-Ibazel-carbon-lang/external/llvm-project/llvm/utils/unittest/googletest/src
 -isystem
 bazel-carbon-lang/external/llvm-project/llvm/include
 -isystem
