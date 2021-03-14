@@ -1,13 +1,20 @@
 #!/usr/bin/env python3
 
-"""Set up workspace for clangd.
+"""Create a compilation database for Clang tools like `clangd`.
 
-If you want clangd to be able to index this project, run this script
-from the workspace root to generate the data that clangd needs. After
-the first run, you should only need to run it if you encounter clangd
-problems, or if you want clangd to build an up-to-date index of the
-entire project. Note that in the latter case you may need to manually
-clear and rebuild clangd's index after running this script.
+If you want `clangd` to be able to index this project, run this script from
+the workspace root to generate a rich compilation database. After the first
+run, you should only need to run it if you encounter `clangd` problems, or if
+you want `clangd` to build an up-to-date index of the entire project. Note
+that in the latter case you may need to manually clear and rebuild clangd's
+index after running this script.
+
+Note that this script will build generated files in the Carbon project and
+otherwise touch the Bazel build. It works to do the minimum amount necessary.
+Once setup, generally subsequent builds, even of small parts of the project,
+different configurations, or that hit errors won't disrupt things. But, if
+you do hit errors, you can get things back to a good state by fixing the
+build of generated files and re-running this script.
 """
 
 __copyright__ = """
@@ -20,75 +27,129 @@ import itertools
 import json
 import os
 import re
+import shutil
 import subprocess
 import sys
 
+directory = os.getcwd()
+
+# We use the `BAZEL` environment variable if present. If not, then we try to
+# use `bazelisk` and then `bazel`.
+bazel = os.environ.get('BAZEL')
+if not bazel:
+    bazel = 'bazelisk'
+    if not shutil.which(bazel):
+        bazel = 'bazel'
+        if not shutil.which(bazel):
+            sys.exit("Unable to run Bazel")
+
 # Load compiler flags. We do this first in order to fail fast if not run from
 # the workspace root.
+print("Reading the arguments to use...")
 try:
     with open("compile_flags.txt") as flag_file:
-        command = "clang " + " ".join([line.strip() for line in flag_file])
+        arguments = [line.strip() for line in flag_file]
 except FileNotFoundError:
     sys.exit(
         os.path.basename(sys.argv[0]) + " must be run from the project root"
     )
-
-directory = os.getcwd()
+# Prepend the `clang` executable path to the arguments that looks into our
+# downloaded Clang toolchain.
+arguments = ['bazel-clang-toolchain/bin/clang'] + arguments
 
 print("Building compilation database...")
 
-# Identify all inputs to all C++ compilation actions in this workspace.
-# Header files seem to be omitted, presumably because they're not declared
-# as inputs in the BUILD file, but we don't need them for this purpose.
-actions = subprocess.run(
-    ["bazel", "aquery", 'mnemonic("CppCompile", "//...:*")'],
+# Find all of the C++ source files that we expect to compile cleanly as
+# stand-alone files. This is a bit simpler than scraping the actual compile
+# actions and allows us to directly index header-only libraries easily and
+# pro-actively index the specific headers in the project.
+source_files_query = subprocess.run(
+    [
+        bazel,
+        "query",
+        "--keep_going",
+        "--output=location",
+        'filter(".*\.(h|cpp|cc|c|cxx)$", kind("source file", deps(//...)))',
+    ],
     capture_output=True,
     check=True,
     text=True,
 ).stdout
-input_lists = [
-    re.split(r",\s*", input_list)
-    for input_list in re.findall(r"Inputs: \[([^\]]*)\]", actions)
+source_files = [l.split(":")[0] for l in source_files_query.splitlines()]
+
+# Filter into the Carbon source files that we'll find directly in the
+# workspace, and LLVM source files that need to be mapped through the merged
+# LLVM tree in Bazel's execution root.
+pwd = os.environ["PWD"] + "/"
+carbon_files = [f.removeprefix(pwd) for f in source_files if f.startswith(pwd)]
+llvm_files = [
+    "bazel-carbon-lang/external/llvm-project/" + partitions[2]
+    for partitions in [
+        f.partition("/external/llvm-project/") for f in source_files
+    ]
+    if partitions[2] != ""
 ]
-inputs = set(itertools.chain.from_iterable(input_lists))
+print(
+    "Found %d Carbon source files and %d LLVM source files..."
+    % (len(carbon_files), len(llvm_files))
+)
 
-# Generate compile_commands.json with an entry for each C++ input.
-entries = []
-for input in inputs:
-    # Bazel considers these to be inputs, but they're not C++ source files.
-    if (
-        input == "external/bazel_tools/tools/cpp/grep-includes.sh"
-        or "_middlemen" in input
-    ):
-        continue
-    # Generated files are located in a bin directory that depends on the
-    # target architecture and build mode, e.g. bazel-out/k8-fastbuild/bin.
-    # bazel-bin is a symlink to the most recently-written bin directory,
-    # which makes it more durable for our purposes.
-    input = re.sub(r"bazel-out/[^/]*/bin/", "bazel-bin/", input)
-    entries.append(
-        {
-            "directory": directory,
-            "file": input,
-            "command": command + " " + os.path.join(directory, input),
-        }
-    )
-
-with open("compile_commands.json", "w") as json_file:
-    json.dump(entries, json_file, indent=2)
-
-print("Building generated C++ files...")
-
-# Identify all generated files that are transitive dependencies of C++ Bazel
-# rules in this workspace, and build them, so that they're available to clangd.
-generated_files = subprocess.run(
+# Now collect the generated file labels.
+generated_file_labels = subprocess.run(
     [
-        "bazel",
+        bazel,
         "query",
-        'kind("generated file", deps(kind("cc_.*", "//...:*")))',
+        "--keep_going",
+        "--output=label",
+        'filter(".*\.(h|cpp|cc|c|cxx|def|inc)$", kind("generated file", deps(//...)))',
     ],
     capture_output=True,
     check=True,
     text=True,
 ).stdout.splitlines()
-subprocess.run(["bazel", "build"] + generated_files, check=True)
+print("Found %d generated files..." % (len(generated_file_labels),))
+
+# Directly build these labels so that indexing can find them. Allow this to
+# fail in case there are build errors in the client, and just warn the user
+# that they may be missing generated files.
+print("Building the generated files so that tools can find them...")
+subprocess.run(["bazelisk", "build", "--keep_going"] + generated_file_labels)
+
+# Manually translate the label to a user friendly path into the Bazel output
+# symlinks.
+def _label_to_path(s):
+    s = re.sub(r"^@([^/]+)//", r"bazel-bin/external/\1/", s)
+    s = s if not s.startswith("//") else "bazel-bin/" + s.removeprefix("//")
+    s = s.replace(":", "/")
+    return s
+
+
+generated_files = [_label_to_path(l) for l in generated_file_labels]
+
+# Generate compile_commands.json with an entry for each C++ input.
+entries = [
+    {
+        "directory": directory,
+        "file": f,
+        "arguments": arguments + [f],
+    }
+    for f in carbon_files + llvm_files + generated_files
+]
+with open("compile_commands.json", "w") as json_file:
+    json.dump(entries, json_file, indent=2)
+
+# print("Building generated C++ files...")
+#
+## Identify all generated files that are transitive dependencies of C++ Bazel
+## rules in this workspace, and build them, so that they're available to clangd.
+# generated_files = subprocess.run(
+#    [
+#        "bazel",
+#        "query",
+#        'kind("generated file", deps(kind("cc_.*", "//...:*")))',
+#    ],
+#    capture_output=True,
+#    check=True,
+#    text=True,
+# ).stdout.splitlines()
+# subprocess.run(["bazel", "build"] + generated_files, check=True)
