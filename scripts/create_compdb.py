@@ -35,11 +35,11 @@ directory = os.getcwd()
 
 # We use the `BAZEL` environment variable if present. If not, then we try to
 # use `bazelisk` and then `bazel`.
-bazel = os.environ.get('BAZEL')
+bazel = os.environ.get("BAZEL")
 if not bazel:
-    bazel = 'bazelisk'
+    bazel = "bazelisk"
     if not shutil.which(bazel):
-        bazel = 'bazel'
+        bazel = "bazel"
         if not shutil.which(bazel):
             sys.exit("Unable to run Bazel")
 
@@ -55,7 +55,7 @@ except FileNotFoundError:
     )
 # Prepend the `clang` executable path to the arguments that looks into our
 # downloaded Clang toolchain.
-arguments = ['bazel-clang-toolchain/bin/clang'] + arguments
+arguments = ["bazel-clang-toolchain/bin/clang"] + arguments
 
 print("Building compilation database...")
 
