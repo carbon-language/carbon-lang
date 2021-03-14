@@ -23,7 +23,6 @@ Exceptions. See /LICENSE for license information.
 SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 """
 
-import itertools
 import json
 import os
 import re
@@ -69,13 +68,13 @@ source_files_query = subprocess.run(
         "query",
         "--keep_going",
         "--output=location",
-        'filter(".*\.(h|cpp|cc|c|cxx)$", kind("source file", deps(//...)))',
+        'filter(".*\\.(h|cpp|cc|c|cxx)$", kind("source file", deps(//...)))',
     ],
     capture_output=True,
     check=True,
     text=True,
 ).stdout
-source_files = [l.split(":")[0] for l in source_files_query.splitlines()]
+source_files = [line.split(":")[0] for line in source_files_query.splitlines()]
 
 # Filter into the Carbon source files that we'll find directly in the
 # workspace, and LLVM source files that need to be mapped through the merged
@@ -101,7 +100,10 @@ generated_file_labels = subprocess.run(
         "query",
         "--keep_going",
         "--output=label",
-        'filter(".*\.(h|cpp|cc|c|cxx|def|inc)$", kind("generated file", deps(//...)))',
+        (
+            'filter(".*\\.(h|cpp|cc|c|cxx|def|inc)$",'
+            'kind("generated file", deps(//...)))'
+        ),
     ],
     capture_output=True,
     check=True,
@@ -115,6 +117,7 @@ print("Found %d generated files..." % (len(generated_file_labels),))
 print("Building the generated files so that tools can find them...")
 subprocess.run(["bazelisk", "build", "--keep_going"] + generated_file_labels)
 
+
 # Manually translate the label to a user friendly path into the Bazel output
 # symlinks.
 def _label_to_path(s):
@@ -124,7 +127,7 @@ def _label_to_path(s):
     return s
 
 
-generated_files = [_label_to_path(l) for l in generated_file_labels]
+generated_files = [_label_to_path(label) for label in generated_file_labels]
 
 # Generate compile_commands.json with an entry for each C++ input.
 entries = [
@@ -137,19 +140,3 @@ entries = [
 ]
 with open("compile_commands.json", "w") as json_file:
     json.dump(entries, json_file, indent=2)
-
-# print("Building generated C++ files...")
-#
-## Identify all generated files that are transitive dependencies of C++ Bazel
-## rules in this workspace, and build them, so that they're available to clangd.
-# generated_files = subprocess.run(
-#    [
-#        "bazel",
-#        "query",
-#        'kind("generated file", deps(kind("cc_.*", "//...:*")))',
-#    ],
-#    capture_output=True,
-#    check=True,
-#    text=True,
-# ).stdout.splitlines()
-# subprocess.run(["bazel", "build"] + generated_files, check=True)
