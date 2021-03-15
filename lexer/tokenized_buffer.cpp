@@ -132,13 +132,11 @@ class TokenizedBuffer::Lexer {
         // Any comment must be the only non-whitespace on the line.
         if (set_indent) {
           emitter.EmitError<TrailingComment>(source_text.begin());
-          buffer.has_errors = true;
         }
         // The introducer '//' must be followed by whitespace or EOF.
         if (source_text.size() > 2 && !IsSpace(source_text[2])) {
           emitter.EmitError<NoWhitespaceAfterCommentIntroducer>(
               source_text.begin() + 2);
-          buffer.has_errors = true;
         }
         while (!source_text.empty() && source_text.front() != '\n') {
           ++current_column;
@@ -207,24 +205,14 @@ class TokenizedBuffer::Lexer {
 
     LexedNumericLiteral::Parser literal_parser(emitter, *literal);
 
-    switch (literal_parser.Check()) {
-      case LexedNumericLiteral::Parser::UnrecoverableError: {
-        auto token = buffer.AddToken({
-            .kind = TokenKind::Error(),
-            .token_line = current_line,
-            .column = int_column,
-            .error_length = token_size,
-        });
-        buffer.has_errors = true;
-        return token;
-      }
-
-      case LexedNumericLiteral::Parser::RecoverableError:
-        buffer.has_errors = true;
-        break;
-
-      case LexedNumericLiteral::Parser::Valid:
-        break;
+    if (!literal_parser.Check()) {
+      auto token = buffer.AddToken({
+          .kind = TokenKind::Error(),
+          .token_line = current_line,
+          .column = int_column,
+          .error_length = token_size,
+      });
+      return token;
     }
 
     if (literal_parser.IsInteger()) {
@@ -281,16 +269,12 @@ class TokenizedBuffer::Lexer {
       }
     }
 
-    // Determine string literal value.
-    auto expanded = literal->ComputeValue(emitter);
-    buffer.has_errors |= expanded.has_errors;
-
     auto token = buffer.AddToken({.kind = TokenKind::StringLiteral(),
                                   .token_line = string_line,
                                   .column = string_column});
     buffer.GetTokenInfo(token).literal_index =
         buffer.literal_string_storage.size();
-    buffer.literal_string_storage.push_back(std::move(expanded.result));
+    buffer.literal_string_storage.push_back(literal->ComputeValue(emitter));
     return token;
   }
 
@@ -335,7 +319,6 @@ class TokenizedBuffer::Lexer {
     if (open_groups.empty()) {
       closing_token_info.kind = TokenKind::Error();
       closing_token_info.error_length = kind.GetFixedSpelling().size();
-      buffer.has_errors = true;
 
       emitter.EmitError<UnmatchedClosing>(location);
       // Note that this still returns true as we do consume a symbol.
@@ -365,7 +348,6 @@ class TokenizedBuffer::Lexer {
       }
 
       open_groups.pop_back();
-      buffer.has_errors = true;
       token_emitter.EmitError<MismatchedClosing>(opening_token);
 
       // TODO: do a smarter backwards scan for where to put the closing
@@ -460,7 +442,6 @@ class TokenizedBuffer::Lexer {
 
     current_column += error_text.size();
     source_text = source_text.drop_front(error_text.size());
-    buffer.has_errors = true;
     return token;
   }
 
@@ -474,7 +455,8 @@ class TokenizedBuffer::Lexer {
 auto TokenizedBuffer::Lex(SourceBuffer& source, DiagnosticConsumer& consumer)
     -> TokenizedBuffer {
   TokenizedBuffer buffer(source);
-  Lexer lexer(buffer, consumer);
+  ErrorTrackingDiagnosticConsumer error_tracking_consumer(consumer);
+  Lexer lexer(buffer, error_tracking_consumer);
 
   llvm::StringRef source_text = source.Text();
   while (lexer.SkipWhitespace(source_text)) {
@@ -498,6 +480,11 @@ auto TokenizedBuffer::Lex(SourceBuffer& source, DiagnosticConsumer& consumer)
 
   lexer.CloseInvalidOpenGroups(TokenKind::Error());
   lexer.AddEndOfFileToken();
+
+  if (error_tracking_consumer.SeenError()) {
+    buffer.has_errors = true;
+  }
+
   return buffer;
 }
 

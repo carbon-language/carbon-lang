@@ -17,6 +17,9 @@ namespace Carbon {
 namespace {
 
 struct NumericLiteralTest : ::testing::Test {
+  NumericLiteralTest() : error_tracker(ConsoleDiagnosticConsumer()) {}
+
+  ErrorTrackingDiagnosticConsumer error_tracker;
   std::vector<std::unique_ptr<Testing::SingleTokenDiagnosticTranslator>>
       translators;
   std::vector<std::unique_ptr<DiagnosticEmitter<const char*>>> emitters;
@@ -32,7 +35,7 @@ struct NumericLiteralTest : ::testing::Test {
     translators.push_back(
         std::make_unique<Testing::SingleTokenDiagnosticTranslator>(text));
     emitters.push_back(std::make_unique<DiagnosticEmitter<const char*>>(
-        *translators.back(), ConsoleDiagnosticConsumer()));
+        *translators.back(), error_tracker));
     return LexedNumericLiteral::Parser(*emitters.back(), Lex(text));
   }
 };
@@ -50,8 +53,10 @@ TEST_F(NumericLiteralTest, HandlesIntegerLiteral) {
       {.token = "1_234_567", .value = 1'234'567, .radix = 10},
   };
   for (Testcase testcase : testcases) {
+    error_tracker.Reset();
     auto parser = Parse(testcase.token);
-    EXPECT_EQ(parser.Check(), parser.Valid) << testcase.token;
+    EXPECT_TRUE(parser.Check()) << testcase.token;
+    EXPECT_FALSE(error_tracker.SeenError()) << testcase.token;
     EXPECT_EQ(parser.IsInteger(), true);
     EXPECT_EQ(parser.GetMantissa().getZExtValue(), testcase.value);
     EXPECT_EQ(parser.GetExponent().getSExtValue(), 0);
@@ -75,8 +80,10 @@ TEST_F(NumericLiteralTest, ValidatesBaseSpecifier) {
       "0b0000000",
   };
   for (llvm::StringLiteral literal : valid) {
+    error_tracker.Reset();
     auto parser = Parse(literal);
-    EXPECT_EQ(parser.Check(), parser.Valid) << literal;
+    EXPECT_TRUE(parser.Check()) << literal;
+    EXPECT_FALSE(error_tracker.SeenError()) << literal;
   }
 
   llvm::StringLiteral invalid[] = {
@@ -86,8 +93,10 @@ TEST_F(NumericLiteralTest, ValidatesBaseSpecifier) {
       "0x_", "0b_",
   };
   for (llvm::StringLiteral literal : invalid) {
+    error_tracker.Reset();
     auto parser = Parse(literal);
-    EXPECT_EQ(parser.Check(), parser.UnrecoverableError) << literal;
+    EXPECT_FALSE(parser.Check()) << literal;
+    EXPECT_TRUE(error_tracker.SeenError()) << literal;
   }
 }
 
@@ -108,8 +117,10 @@ TEST_F(NumericLiteralTest, ValidatesIntegerDigitSeparators) {
       "0b111_0000",
   };
   for (llvm::StringLiteral literal : valid) {
+    error_tracker.Reset();
     auto parser = Parse(literal);
-    EXPECT_EQ(parser.Check(), parser.Valid) << literal;
+    EXPECT_TRUE(parser.Check()) << literal;
+    EXPECT_FALSE(error_tracker.SeenError()) << literal;
   }
 
   llvm::StringLiteral invalid[] = {
@@ -134,8 +145,10 @@ TEST_F(NumericLiteralTest, ValidatesIntegerDigitSeparators) {
       "0b1_01_01_",
   };
   for (llvm::StringLiteral literal : invalid) {
+    error_tracker.Reset();
     auto parser = Parse(literal);
-    EXPECT_EQ(parser.Check(), parser.RecoverableError) << literal;
+    EXPECT_TRUE(parser.Check()) << literal;
+    EXPECT_TRUE(error_tracker.SeenError()) << literal;
   }
 }
 
@@ -186,10 +199,10 @@ TEST_F(NumericLiteralTest, HandlesRealLiteral) {
        .radix = 2},
   };
   for (Testcase testcase : testcases) {
+    error_tracker.Reset();
     auto parser = Parse(testcase.token);
-    EXPECT_EQ(parser.Check(),
-              testcase.radix == 2 ? parser.RecoverableError : parser.Valid)
-        << testcase.token;
+    EXPECT_TRUE(parser.Check()) << testcase.token;
+    EXPECT_EQ(error_tracker.SeenError(), testcase.radix == 2) << testcase.token;
     EXPECT_EQ(parser.IsInteger(), false);
     EXPECT_EQ(parser.GetMantissa().getZExtValue(), testcase.mantissa);
     EXPECT_EQ(parser.GetExponent().getSExtValue(), testcase.exponent);
@@ -199,8 +212,10 @@ TEST_F(NumericLiteralTest, HandlesRealLiteral) {
 
 TEST_F(NumericLiteralTest, HandlesRealLiteralOverflow) {
   llvm::StringLiteral input = "0x1.000001p-9223372036854775800";
+  error_tracker.Reset();
   auto parser = Parse(input);
-  EXPECT_EQ(parser.Check(), parser.Valid);
+  EXPECT_TRUE(parser.Check());
+  EXPECT_FALSE(error_tracker.SeenError());
   EXPECT_EQ(parser.GetMantissa(), 0x1000001);
   EXPECT_EQ((parser.GetExponent() + 9223372036854775800).getSExtValue(), -24);
   EXPECT_EQ(parser.GetRadix(), 16);
@@ -213,8 +228,10 @@ TEST_F(NumericLiteralTest, ValidatesRealLiterals) {
       "123.4e56_78", "0x12_34.5", "0x12.3_4",  "0x12.34p5_6",
   };
   for (llvm::StringLiteral literal : invalid_digit_separators) {
+    error_tracker.Reset();
     auto parser = Parse(literal);
-    EXPECT_EQ(parser.Check(), parser.RecoverableError) << literal;
+    EXPECT_TRUE(parser.Check()) << literal;
+    EXPECT_TRUE(error_tracker.SeenError()) << literal;
   }
 
   llvm::StringLiteral invalid[] = {
@@ -263,8 +280,10 @@ TEST_F(NumericLiteralTest, ValidatesRealLiterals) {
       "0x0.0p-A",
   };
   for (llvm::StringLiteral literal : invalid) {
+    error_tracker.Reset();
     auto parser = Parse(literal);
-    EXPECT_EQ(parser.Check(), parser.UnrecoverableError) << literal;
+    EXPECT_FALSE(parser.Check()) << literal;
+    EXPECT_TRUE(error_tracker.SeenError()) << literal;
   }
 }
 

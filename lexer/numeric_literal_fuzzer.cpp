@@ -24,7 +24,7 @@ extern "C" int LLVMFuzzerTestOneInput(const unsigned char* data,
 
   LexedNumericLiteral::Parser parser(NullDiagnosticEmitter<const char*>(),
                                      *token);
-  if (parser.Check() == LexedNumericLiteral::Parser::UnrecoverableError) {
+  if (!parser.Check()) {
     // Lexically OK, but token is meaningless.
     return 0;
   }
