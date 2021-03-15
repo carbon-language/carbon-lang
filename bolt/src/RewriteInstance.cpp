@@ -943,34 +943,6 @@ void RewriteInstance::discoverFileObjects() {
     --LastSymbol;
   }
 
-  auto getNextAddress = [&](std::vector<SymbolRef>::const_iterator Itr) {
-    const auto SymbolSection = cantFail(Itr->getSection());
-    const auto SymbolAddress = cantFail(Itr->getAddress());
-    const auto SymbolEndAddress = SymbolAddress + ELFSymbolRef(*Itr).getSize();
-
-    // absolute sym
-    if (SymbolSection == InputFile->section_end())
-      return SymbolEndAddress;
-
-    while (Itr != LastSymbol &&
-           cantFail(std::next(Itr)->getSection()) == SymbolSection &&
-           cantFail(std::next(Itr)->getAddress()) == SymbolAddress) {
-      ++Itr;
-    }
-
-    if (Itr != LastSymbol &&
-        cantFail(std::next(Itr)->getSection()) == SymbolSection)
-      return cantFail(std::next(Itr)->getAddress());
-
-    const auto SymbolSectionEndAddress =
-      SymbolSection->getAddress() + SymbolSection->getSize();
-    if ((ELFSectionRef(*SymbolSection).getFlags() & ELF::SHF_TLS) ||
-        SymbolEndAddress > SymbolSectionEndAddress)
-      return SymbolEndAddress;
-
-    return SymbolSectionEndAddress;
-  };
-
   BinaryFunction *PreviousFunction = nullptr;
   unsigned AnonymousId = 0;
 
@@ -1053,8 +1025,6 @@ void RewriteInstance::discoverFileObjects() {
     }
 
     uint64_t SymbolSize = ELFSymbolRef(Symbol).getSize();
-    uint64_t TentativeSize = SymbolSize ? SymbolSize
-                                        : getNextAddress(ISym) - Address;
     uint64_t SymbolAlignment = Symbol.getAlignment();
     unsigned SymbolFlags = cantFail(Symbol.getFlags());
 
@@ -1074,7 +1044,7 @@ void RewriteInstance::discoverFileObjects() {
       LLVM_DEBUG(if (opts::Verbosity > 1) {
         dbgs() << "BOLT-INFO: absolute sym " << UniqueName << "\n";
       });
-      registerName(TentativeSize);
+      registerName(SymbolSize);
       continue;
     }
 
@@ -1085,7 +1055,7 @@ void RewriteInstance::discoverFileObjects() {
       assert(SymbolType != SymbolRef::ST_Function &&
              "unexpected function inside non-code section");
       LLVM_DEBUG(dbgs() << "BOLT-DEBUG: rejecting as symbol is not in code\n");
-      registerName(TentativeSize);
+      registerName(SymbolSize);
       continue;
     }
 
