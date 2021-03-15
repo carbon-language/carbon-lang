@@ -35,11 +35,24 @@ auto ParseTree::Parser::Parse(TokenizedBuffer& tokens,
   return tree;
 }
 
+ParseTree::Parser::Parser(ParseTree& tree_arg, TokenizedBuffer& tokens_arg)
+    : tree(tree_arg),
+      tokens(tokens_arg),
+      position(tokens.Tokens().begin()),
+      end(tokens.Tokens().end()) {
+  assert(std::find_if(position, end,
+                      [&](TokenizedBuffer::Token t) {
+                        return tokens.GetKind(t) == TokenKind::EndOfFile();
+                      }) != end &&
+         "No EndOfFileToken in token buffer.");
+}
+
 auto ParseTree::Parser::Consume(TokenKind kind) -> TokenizedBuffer::Token {
   TokenizedBuffer::Token t = *position;
   assert(kind != TokenKind::EndOfFile() && "Cannot consume the EOF token!");
   assert(tokens.GetKind(t) == kind && "The current token is the wrong kind!");
   ++position;
+  assert(position != end && "Reached end of tokens without finding EOF token.");
   return t;
 }
 
@@ -116,9 +129,16 @@ auto ParseTree::Parser::SkipMatchingGroup() -> bool {
     return false;
   }
 
-  position = std::next(
-      TokenizedBuffer::TokenIterator(tokens.GetMatchedClosingToken(t)));
+  SkipTo(tokens.GetMatchedClosingToken(t));
+  Consume(t_kind.GetClosingSymbol());
   return true;
+}
+
+auto ParseTree::Parser::SkipTo(TokenizedBuffer::Token t) -> void {
+  assert(t >= *position);
+  assert(tokens.GetKind(t) != TokenKind::EndOfFile());
+  position = TokenizedBuffer::TokenIterator(t);
+  assert(position != end && "Skipped past EOF.");
 }
 
 auto ParseTree::Parser::SkipPastLikelyDeclarationEnd(
@@ -152,16 +172,14 @@ auto ParseTree::Parser::SkipPastLikelyDeclarationEnd(
     }
 
     // If we find a semicolon, we want to parse it to end the declaration.
-    if (current_kind == TokenKind::Semi()) {
-      TokenizedBuffer::Token semi = *position++;
-
+    if (auto semi = ConsumeIf(TokenKind::Semi())) {
       // Add a node for the semicolon. If we're inside of a declaration, this
       // is a declaration ending semicolon, otherwise it simply forms an empty
       // declaration.
       return AddLeafNode(is_inside_declaration
                              ? ParseNodeKind::DeclarationEnd()
                              : ParseNodeKind::EmptyDeclaration(),
-                         semi);
+                         *semi);
     }
 
     // Skip over any matching group of tokens.
@@ -170,7 +188,7 @@ auto ParseTree::Parser::SkipPastLikelyDeclarationEnd(
     }
 
     // Otherwise just step forward one token.
-    ++position;
+    Consume(current_kind);
   } while (!AtEndOfFile() &&
            is_same_line_or_indent_greater_than_root(*position));
 
@@ -184,18 +202,17 @@ auto ParseTree::Parser::ParseFunctionSignature() -> Node {
   // FIXME: Add support for parsing parameters.
 
   bool has_errors = false;
-  auto close_paren = ConsumeIf(TokenKind::CloseParen());
-  if (!close_paren) {
+  if (tokens.GetKind(*position) != TokenKind::CloseParen()) {
     llvm::errs() << "ERROR: unexpected token before the close of the "
                     "parameters on line "
                  << tokens.GetLineNumber(*position) << "!\n";
     has_errors = true;
 
     // We can trivially skip to the actual close parenthesis from here.
-    close_paren = tokens.GetMatchedClosingToken(open_paren);
-    position = std::next(TokenizedBuffer::TokenIterator(*close_paren));
+    SkipTo(tokens.GetMatchedClosingToken(open_paren));
   }
-  AddLeafNode(ParseNodeKind::ParameterListEnd(), *close_paren);
+  AddLeafNode(ParseNodeKind::ParameterListEnd(),
+              Consume(TokenKind::CloseParen()));
 
   // FIXME: Implement parsing of a return type.
 
@@ -219,8 +236,7 @@ auto ParseTree::Parser::ParseCodeBlock() -> Node {
         has_errors = true;
 
         // We can trivially skip to the actual close curly brace from here.
-        position = TokenizedBuffer::TokenIterator(
-            tokens.GetMatchedClosingToken(open_curly));
+        SkipTo(tokens.GetMatchedClosingToken(open_curly));
         // Now fall through to the close curly brace handling code.
         LLVM_FALLTHROUGH;
 
