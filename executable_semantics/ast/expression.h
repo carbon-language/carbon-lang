@@ -30,7 +30,6 @@ class Expression {
 
  public:  // Expression concept API, in addition to ValueSemantic.
   auto Print() const -> void { box->Print(); }
-  auto ToValue() const -> Value* { return box->ToValue(); }
   auto StepLvalue() const -> void { box->StepLvalue(); }
   auto StepExp() const -> void { box->StepExp(); }
   auto HandleValue() const -> void { box->HandleValue(); }
@@ -61,7 +60,6 @@ class Expression {
 
     virtual ~Box() {}
     virtual auto Print() const -> void = 0;
-    virtual auto ToValue() const -> Value* = 0;
     virtual auto StepLvalue() const -> void = 0;
     virtual auto StepExp() const -> void = 0;
     virtual auto HandleValue() const -> void = 0;
@@ -79,7 +77,6 @@ class Expression {
     explicit Boxed(Content content) : Box(), content(content) {}
 
     auto Print() const -> void { content.Print(); }
-    auto ToValue() const -> Value* { return content.ToValue(); }
     auto StepLvalue() const -> void { content.StepLvalue(); }
     auto StepExp() const -> void { content.StepExp(); }
     auto HandleValue() const -> void { content.HandleValue(); }
@@ -116,7 +113,6 @@ struct AutoTypeExpression : ExpressionSource {
   AutoTypeExpression(Location textualPlacement)
       : ExpressionSource(textualPlacement) {}
   auto Print() const -> void;
-  auto ToValue() const -> Value*;
   auto StepLvalue() const -> void;
   auto StepExp() const -> void;
   auto HandleValue() const -> void;
@@ -129,7 +125,6 @@ struct BoolTypeExpression : ExpressionSource {
   BoolTypeExpression(Location textualPlacement)
       : ExpressionSource(textualPlacement) {}
   auto Print() const -> void;
-  auto ToValue() const -> Value*;
   auto StepLvalue() const -> void;
   auto StepExp() const -> void;
   auto HandleValue() const -> void;
@@ -142,7 +137,6 @@ struct BooleanExpression : ExpressionSource {
   BooleanExpression(Location textualPlacement, bool value)
       : ExpressionSource(textualPlacement), value(value) {}
   auto Print() const -> void;
-  auto ToValue() const -> Value*;
   auto StepLvalue() const -> void;
   auto StepExp() const -> void;
   auto HandleValue() const -> void;
@@ -162,7 +156,6 @@ struct CallExpression : ExpressionSource {
         argumentTuple(argumentTuple) {}
 
   auto Print() const -> void;
-  auto ToValue() const -> Value*;
   auto StepLvalue() const -> void;
   auto StepExp() const -> void;
   auto HandleValue() const -> void;
@@ -183,7 +176,6 @@ struct FunctionTypeExpression : ExpressionSource {
         returnType(returnType) {}
 
   auto Print() const -> void;
-  auto ToValue() const -> Value*;
   auto StepLvalue() const -> void;
   auto StepExp() const -> void;
   auto HandleValue() const -> void;
@@ -203,7 +195,6 @@ struct GetFieldExpression : ExpressionSource {
         fieldName(fieldName) {}
 
   auto Print() const -> void;
-  auto ToValue() const -> Value*;
   auto StepLvalue() const -> void;
   auto StepExp() const -> void;
   auto HandleValue() const -> void;
@@ -223,7 +214,6 @@ struct IndexExpression : ExpressionSource {
         offset(offset) {}
 
   auto Print() const -> void;
-  auto ToValue() const -> Value*;
   auto StepLvalue() const -> void;
   auto StepExp() const -> void;
   auto HandleValue() const -> void;
@@ -240,7 +230,6 @@ struct IntTypeExpression : ExpressionSource {
       : ExpressionSource(textualPlacement) {}
 
   auto Print() const -> void;
-  auto ToValue() const -> Value*;
   auto StepLvalue() const -> void;
   auto StepExp() const -> void;
   auto HandleValue() const -> void;
@@ -254,7 +243,6 @@ struct IntegerExpression : ExpressionSource {
       : ExpressionSource(textualPlacement), value(value) {}
 
   auto Print() const -> void;
-  auto ToValue() const -> Value*;
   auto StepLvalue() const -> void;
   auto StepExp() const -> void;
   auto HandleValue() const -> void;
@@ -271,7 +259,6 @@ struct PatternVariableExpression : ExpressionSource {
       : ExpressionSource(textualPlacement), name(name), type(type) {}
 
   auto Print() const -> void;
-  auto ToValue() const -> Value*;
   auto StepLvalue() const -> void;
   auto StepExp() const -> void;
   auto HandleValue() const -> void;
@@ -300,7 +287,6 @@ struct PrimitiveOperatorExpression : ExpressionSource {
                               Arguments... arguments);
 
   auto Print() const -> void;
-  auto ToValue() const -> Value*;
   auto StepLvalue() const -> void;
   auto StepExp() const -> void;
   auto HandleValue() const -> void;
@@ -336,7 +322,6 @@ struct TupleExpression : ExpressionSource {
   }
 
   auto Print() const -> void;
-  auto ToValue() const -> Value*;
   auto StepLvalue() const -> void;
   auto StepExp() const -> void;
   auto HandleValue() const -> void;
@@ -349,7 +334,6 @@ struct TupleExpression : ExpressionSource {
 
 struct TypeTypeExpression : ExpressionSource {
   auto Print() const -> void;
-  auto ToValue() const -> Value*;
   auto StepLvalue() const -> void;
   auto StepExp() const -> void;
   auto HandleValue() const -> void;
@@ -365,7 +349,6 @@ struct VariableExpression : ExpressionSource {
       : ExpressionSource(textualPlacement), name(name) {}
 
   auto Print() const -> void;
-  auto ToValue() const -> Value*;
   auto StepLvalue() const -> void;
   auto StepExp() const -> void;
   auto HandleValue() const -> void;
