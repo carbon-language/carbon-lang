@@ -1,0 +1,13 @@
+// Part of the Carbon Language project, under the Apache License v2.0 with LLVM
+// Exceptions. See /LICENSE for license information.
+// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+
+// Use-after-free.
+
+fun main() -> Int {
+  var Ptr(int): p;
+  p = malloc(Int);
+  *p = 0;
+  free(p);
+  return *p;
+}

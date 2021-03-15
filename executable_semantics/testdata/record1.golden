@@ -1,0 +1,298 @@
+********** source program **********
+fn main () -> Int {
+var (x = Int, y = Int): t2 = (y = 5, x = 2);
+t2.y = 3;
+return ((t2.y - t2.x) - 1);
+
+}
+********** type checking **********
+--- step exp Int --->
+--- step exp Int --->
+--- step exp (x = Int, y = Int) --->
+--- step exp Int --->
+--- handle value Int with (x = Int, y = Int)<1>(Int,) --->
+--- step exp Int --->
+--- handle value Int with (x = Int, y = Int)<2>(Int,Int,) --->
+
+********** type checking complete **********
+fn main () -> Int {
+var (x = Int, y = Int): t2 = (y = 5, x = 2);
+t2.y = 3;
+return ((t2.y - t2.x) - 1);
+}
+********** starting execution **********
+********** initializing globals **********
+--- step exp () --->
+********** calling main function **********
+{
+stack: top{main()<-1>}
+heap: fun<main>, 
+env: main: fun<main>, 
+}
+--- step exp main() --->
+{
+stack: top{main<-1> :: main()<0>}
+heap: fun<main>, 
+env: main: fun<main>, 
+}
+--- step exp main --->
+{
+stack: top{fun<main><-1> :: main()<0>}
+heap: fun<main>, 
+env: main: fun<main>, 
+}
+--- handle value fun<main> with main()<1>(fun<main>,) --->
+{
+stack: top{()<-1> :: main()<1>(fun<main>,)}
+heap: fun<main>, 
+env: main: fun<main>, 
+}
+--- step exp () --->
+{
+stack: top{()<-1> :: main()<1>(fun<main>,)}
+heap: fun<main>, 
+env: main: fun<main>, 
+}
+--- handle value () with main()<2>(fun<main>,(),) --->
+pattern_match((), ())
+{
+stack: main{var (x = Int, y = Int): t2 = (y = 5, x = 2); ... <-1>} :: top{}
+heap: fun<main>, 
+env: main: fun<main>, 
+}
+--- step stmt var (x = Int, y = Int): t2 = (y = 5, x = 2); ...  --->
+{
+stack: main{var (x = Int, y = Int): t2 = (y = 5, x = 2);<-1> :: t2.y = 3; ... <-1>} :: top{}
+heap: fun<main>, 
+env: main: fun<main>, 
+}
+--- step stmt var (x = Int, y = Int): t2 = (y = 5, x = 2); --->
+{
+stack: main{(y = 5, x = 2)<-1> :: var (x = Int, y = Int): t2 = (y = 5, x = 2);<0> :: t2.y = 3; ... <-1>} :: top{}
+heap: fun<main>, 
+env: main: fun<main>, 
+}
+--- step exp (y = 5, x = 2) --->
+{
+stack: main{5<-1> :: (y = 5, x = 2)<0> :: var (x = Int, y = Int): t2 = (y = 5, x = 2);<0> :: t2.y = 3; ... <-1>} :: top{}
+heap: fun<main>, 
+env: main: fun<main>, 
+}
+--- step exp 5 --->
+{
+stack: main{5<-1> :: (y = 5, x = 2)<0> :: var (x = Int, y = Int): t2 = (y = 5, x = 2);<0> :: t2.y = 3; ... <-1>} :: top{}
+heap: fun<main>, 
+env: main: fun<main>, 
+}
+--- handle value 5 with (y = 5, x = 2)<1>(5,) --->
+{
+stack: main{2<-1> :: (y = 5, x = 2)<1>(5,) :: var (x = Int, y = Int): t2 = (y = 5, x = 2);<0> :: t2.y = 3; ... <-1>} :: top{}
+heap: fun<main>, 
+env: main: fun<main>, 
+}
+--- step exp 2 --->
+{
+stack: main{2<-1> :: (y = 5, x = 2)<1>(5,) :: var (x = Int, y = Int): t2 = (y = 5, x = 2);<0> :: t2.y = 3; ... <-1>} :: top{}
+heap: fun<main>, 
+env: main: fun<main>, 
+}
+--- handle value 2 with (y = 5, x = 2)<2>(5,2,) --->
+{
+stack: main{(y = 5@1, x = 2@2)<-1> :: var (x = Int, y = Int): t2 = (y = 5, x = 2);<0> :: t2.y = 3; ... <-1>} :: top{}
+heap: fun<main>, 5, 2, 
+env: main: fun<main>, 
+}
+--- handle value (y = 5@1, x = 2@2) with var (x = Int, y = Int): t2 = (y = 5, x = 2);<1>((y = 5@1, x = 2@2),) --->
+{
+stack: main{(x = Int, y = Int): t2<-1> :: var (x = Int, y = Int): t2 = (y = 5, x = 2);<1>((y = 5@1, x = 2@2),) :: t2.y = 3; ... <-1>} :: top{}
+heap: fun<main>, 5, 2, 
+env: main: fun<main>, 
+}
+--- step exp (x = Int, y = Int): t2 --->
+{
+stack: main{(x = Int, y = Int)<-1> :: (x = Int, y = Int): t2<0> :: var (x = Int, y = Int): t2 = (y = 5, x = 2);<1>((y = 5@1, x = 2@2),) :: t2.y = 3; ... <-1>} :: top{}
+heap: fun<main>, 5, 2, 
+env: main: fun<main>, 
+}
+--- step exp (x = Int, y = Int) --->
+{
+stack: main{Int<-1> :: (x = Int, y = Int)<0> :: (x = Int, y = Int): t2<0> :: var (x = Int, y = Int): t2 = (y = 5, x = 2);<1>((y = 5@1, x = 2@2),) :: t2.y = 3; ... <-1>} :: top{}
+heap: fun<main>, 5, 2, 
+env: main: fun<main>, 
+}
+--- step exp Int --->
+{
+stack: main{Int<-1> :: (x = Int, y = Int)<0> :: (x = Int, y = Int): t2<0> :: var (x = Int, y = Int): t2 = (y = 5, x = 2);<1>((y = 5@1, x = 2@2),) :: t2.y = 3; ... <-1>} :: top{}
+heap: fun<main>, 5, 2, 
+env: main: fun<main>, 
+}
+--- handle value Int with (x = Int, y = Int)<1>(Int,) --->
+{
+stack: main{Int<-1> :: (x = Int, y = Int)<1>(Int,) :: (x = Int, y = Int): t2<0> :: var (x = Int, y = Int): t2 = (y = 5, x = 2);<1>((y = 5@1, x = 2@2),) :: t2.y = 3; ... <-1>} :: top{}
+heap: fun<main>, 5, 2, 
+env: main: fun<main>, 
+}
+--- step exp Int --->
+{
+stack: main{Int<-1> :: (x = Int, y = Int)<1>(Int,) :: (x = Int, y = Int): t2<0> :: var (x = Int, y = Int): t2 = (y = 5, x = 2);<1>((y = 5@1, x = 2@2),) :: t2.y = 3; ... <-1>} :: top{}
+heap: fun<main>, 5, 2, 
+env: main: fun<main>, 
+}
+--- handle value Int with (x = Int, y = Int)<2>(Int,Int,) --->
+{
+stack: main{(x = Int@3, y = Int@4)<-1> :: (x = Int, y = Int): t2<0> :: var (x = Int, y = Int): t2 = (y = 5, x = 2);<1>((y = 5@1, x = 2@2),) :: t2.y = 3; ... <-1>} :: top{}
+heap: fun<main>, 5, 2, Int, Int, 
+env: main: fun<main>, 
+}
+--- handle value (x = Int@3, y = Int@4) with (x = Int, y = Int): t2<1>((x = Int@3, y = Int@4),) --->
+{
+stack: main{(x = Int@3, y = Int@4): t2<-1> :: var (x = Int, y = Int): t2 = (y = 5, x = 2);<1>((y = 5@1, x = 2@2),) :: t2.y = 3; ... <-1>} :: top{}
+heap: fun<main>, 5, 2, Int, Int, 
+env: main: fun<main>, 
+}
+--- handle value (x = Int@3, y = Int@4): t2 with var (x = Int, y = Int): t2 = (y = 5, x = 2);<2>((y = 5@1, x = 2@2),(x = Int@3, y = Int@4): t2,) --->
+pattern_match((x = Int@3, y = Int@4): t2, (y = 5@1, x = 2@2))
+{
+stack: main{t2.y = 3; ... <-1>} :: top{}
+heap: fun<main>, 5, 2, Int, Int, 5, 2, (y = 5@5, x = 2@6), 
+env: t2: (y = 5@5, x = 2@6), main: fun<main>, 
+}
+--- step stmt t2.y = 3; ...  --->
+{
+stack: main{t2.y = 3;<-1> :: return ((t2.y - t2.x) - 1);<-1>} :: top{}
+heap: fun<main>, 5, 2, Int, Int, 5, 2, (y = 5@5, x = 2@6), 
+env: t2: (y = 5@5, x = 2@6), main: fun<main>, 
+}
+--- step stmt t2.y = 3; --->
+{
+stack: main{t2.y<-1> :: t2.y = 3;<0> :: return ((t2.y - t2.x) - 1);<-1>} :: top{}
+heap: fun<main>, 5, 2, Int, Int, 5, 2, (y = 5@5, x = 2@6), 
+env: t2: (y = 5@5, x = 2@6), main: fun<main>, 
+}
+--- step lvalue t2.y --->
+{
+stack: main{t2<-1> :: t2.y<0> :: t2.y = 3;<0> :: return ((t2.y - t2.x) - 1);<-1>} :: top{}
+heap: fun<main>, 5, 2, Int, Int, 5, 2, (y = 5@5, x = 2@6), 
+env: t2: (y = 5@5, x = 2@6), main: fun<main>, 
+}
+--- step lvalue t2 --->
+{
+stack: main{ptr<7><-1> :: t2.y<0> :: t2.y = 3;<0> :: return ((t2.y - t2.x) - 1);<-1>} :: top{}
+heap: fun<main>, 5, 2, Int, Int, 5, 2, (y = 5@5, x = 2@6), 
+env: t2: (y = 5@5, x = 2@6), main: fun<main>, 
+}
+--- handle value ptr<7> with t2.y<1>(ptr<7>,) --->
+{
+stack: main{ptr<5><-1> :: t2.y = 3;<0> :: return ((t2.y - t2.x) - 1);<-1>} :: top{}
+heap: fun<main>, 5, 2, Int, Int, 5, 2, (y = 5@5, x = 2@6), 
+env: t2: (y = 5@5, x = 2@6), main: fun<main>, 
+}
+--- handle value ptr<5> with t2.y = 3;<1>(ptr<5>,) --->
+{
+stack: main{3<-1> :: t2.y = 3;<1>(ptr<5>,) :: return ((t2.y - t2.x) - 1);<-1>} :: top{}
+heap: fun<main>, 5, 2, Int, Int, 5, 2, (y = 5@5, x = 2@6), 
+env: t2: (y = 5@5, x = 2@6), main: fun<main>, 
+}
+--- step exp 3 --->
+{
+stack: main{3<-1> :: t2.y = 3;<1>(ptr<5>,) :: return ((t2.y - t2.x) - 1);<-1>} :: top{}
+heap: fun<main>, 5, 2, Int, Int, 5, 2, (y = 5@5, x = 2@6), 
+env: t2: (y = 5@5, x = 2@6), main: fun<main>, 
+}
+--- handle value 3 with t2.y = 3;<2>(ptr<5>,3,) --->
+{
+stack: main{return ((t2.y - t2.x) - 1);<-1>} :: top{}
+heap: fun<main>, 5, 2, Int, Int, 3, 2, (y = 3@5, x = 2@6), 
+env: t2: (y = 3@5, x = 2@6), main: fun<main>, 
+}
+--- step stmt return ((t2.y - t2.x) - 1); --->
+{
+stack: main{((t2.y - t2.x) - 1)<-1> :: return ((t2.y - t2.x) - 1);<0>} :: top{}
+heap: fun<main>, 5, 2, Int, Int, 3, 2, (y = 3@5, x = 2@6), 
+env: t2: (y = 3@5, x = 2@6), main: fun<main>, 
+}
+--- step exp ((t2.y - t2.x) - 1) --->
+{
+stack: main{(t2.y - t2.x)<-1> :: ((t2.y - t2.x) - 1)<0> :: return ((t2.y - t2.x) - 1);<0>} :: top{}
+heap: fun<main>, 5, 2, Int, Int, 3, 2, (y = 3@5, x = 2@6), 
+env: t2: (y = 3@5, x = 2@6), main: fun<main>, 
+}
+--- step exp (t2.y - t2.x) --->
+{
+stack: main{t2.y<-1> :: (t2.y - t2.x)<0> :: ((t2.y - t2.x) - 1)<0> :: return ((t2.y - t2.x) - 1);<0>} :: top{}
+heap: fun<main>, 5, 2, Int, Int, 3, 2, (y = 3@5, x = 2@6), 
+env: t2: (y = 3@5, x = 2@6), main: fun<main>, 
+}
+--- step exp t2.y --->
+{
+stack: main{t2<-1> :: t2.y<0> :: (t2.y - t2.x)<0> :: ((t2.y - t2.x) - 1)<0> :: return ((t2.y - t2.x) - 1);<0>} :: top{}
+heap: fun<main>, 5, 2, Int, Int, 3, 2, (y = 3@5, x = 2@6), 
+env: t2: (y = 3@5, x = 2@6), main: fun<main>, 
+}
+--- step lvalue t2 --->
+{
+stack: main{ptr<7><-1> :: t2.y<0> :: (t2.y - t2.x)<0> :: ((t2.y - t2.x) - 1)<0> :: return ((t2.y - t2.x) - 1);<0>} :: top{}
+heap: fun<main>, 5, 2, Int, Int, 3, 2, (y = 3@5, x = 2@6), 
+env: t2: (y = 3@5, x = 2@6), main: fun<main>, 
+}
+--- handle value ptr<7> with t2.y<1>(ptr<7>,) --->
+{
+stack: main{3<-1> :: (t2.y - t2.x)<0> :: ((t2.y - t2.x) - 1)<0> :: return ((t2.y - t2.x) - 1);<0>} :: top{}
+heap: fun<main>, 5, 2, Int, Int, 3, 2, (y = 3@5, x = 2@6), 
+env: t2: (y = 3@5, x = 2@6), main: fun<main>, 
+}
+--- handle value 3 with (t2.y - t2.x)<1>(3,) --->
+{
+stack: main{t2.x<-1> :: (t2.y - t2.x)<1>(3,) :: ((t2.y - t2.x) - 1)<0> :: return ((t2.y - t2.x) - 1);<0>} :: top{}
+heap: fun<main>, 5, 2, Int, Int, 3, 2, (y = 3@5, x = 2@6), 
+env: t2: (y = 3@5, x = 2@6), main: fun<main>, 
+}
+--- step exp t2.x --->
+{
+stack: main{t2<-1> :: t2.x<0> :: (t2.y - t2.x)<1>(3,) :: ((t2.y - t2.x) - 1)<0> :: return ((t2.y - t2.x) - 1);<0>} :: top{}
+heap: fun<main>, 5, 2, Int, Int, 3, 2, (y = 3@5, x = 2@6), 
+env: t2: (y = 3@5, x = 2@6), main: fun<main>, 
+}
+--- step lvalue t2 --->
+{
+stack: main{ptr<7><-1> :: t2.x<0> :: (t2.y - t2.x)<1>(3,) :: ((t2.y - t2.x) - 1)<0> :: return ((t2.y - t2.x) - 1);<0>} :: top{}
+heap: fun<main>, 5, 2, Int, Int, 3, 2, (y = 3@5, x = 2@6), 
+env: t2: (y = 3@5, x = 2@6), main: fun<main>, 
+}
+--- handle value ptr<7> with t2.x<1>(ptr<7>,) --->
+{
+stack: main{2<-1> :: (t2.y - t2.x)<1>(3,) :: ((t2.y - t2.x) - 1)<0> :: return ((t2.y - t2.x) - 1);<0>} :: top{}
+heap: fun<main>, 5, 2, Int, Int, 3, 2, (y = 3@5, x = 2@6), 
+env: t2: (y = 3@5, x = 2@6), main: fun<main>, 
+}
+--- handle value 2 with (t2.y - t2.x)<2>(3,2,) --->
+{
+stack: main{1<-1> :: ((t2.y - t2.x) - 1)<0> :: return ((t2.y - t2.x) - 1);<0>} :: top{}
+heap: fun<main>, 5, 2, Int, Int, 3, 2, (y = 3@5, x = 2@6), 
+env: t2: (y = 3@5, x = 2@6), main: fun<main>, 
+}
+--- handle value 1 with ((t2.y - t2.x) - 1)<1>(1,) --->
+{
+stack: main{1<-1> :: ((t2.y - t2.x) - 1)<1>(1,) :: return ((t2.y - t2.x) - 1);<0>} :: top{}
+heap: fun<main>, 5, 2, Int, Int, 3, 2, (y = 3@5, x = 2@6), 
+env: t2: (y = 3@5, x = 2@6), main: fun<main>, 
+}
+--- step exp 1 --->
+{
+stack: main{1<-1> :: ((t2.y - t2.x) - 1)<1>(1,) :: return ((t2.y - t2.x) - 1);<0>} :: top{}
+heap: fun<main>, 5, 2, Int, Int, 3, 2, (y = 3@5, x = 2@6), 
+env: t2: (y = 3@5, x = 2@6), main: fun<main>, 
+}
+--- handle value 1 with ((t2.y - t2.x) - 1)<2>(1,1,) --->
+{
+stack: main{0<-1> :: return ((t2.y - t2.x) - 1);<0>} :: top{}
+heap: fun<main>, 5, 2, Int, Int, 3, 2, (y = 3@5, x = 2@6), 
+env: t2: (y = 3@5, x = 2@6), main: fun<main>, 
+}
+--- handle value 0 with return ((t2.y - t2.x) - 1);<1>(0,) --->
+{
+stack: top{0<-1>}
+heap: fun<main>, 5, 2, Int, Int, !!3, !!2, !!(y = !!3@5, x = !!2@6), 
+env: main: fun<main>, 
+}
+result: 0

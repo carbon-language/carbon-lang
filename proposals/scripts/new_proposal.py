@@ -23,6 +23,19 @@ _PROMPT = """This will:
 
 Continue? (Y/n) """
 
+_LINK_TEMPLATE = """Proposal links (add links as proposal evolves):
+
+-   Evolution links:
+    -   [Proposal PR](https://github.com/carbon-language/carbon-lang/pull/%s)
+    -   `[RFC topic](TODO)`
+    -   `[Decision topic](TODO)`
+    -   `[Decision PR](TODO)`
+    -   `[Announcement](TODO)`
+-   Related links (optional):
+    -   `[Idea topic](TODO)`
+    -   `[TODO](TODO)`
+"""
+
 
 def _exit(error):
     """Wraps sys.exit for testing."""
@@ -45,6 +58,12 @@ def _parse_args(args=None):
         metavar="BRANCH",
         help="The name of the branch. Automatically generated from the title "
         "by default.",
+    )
+    parser.add_argument(
+        "--proposals-dir",
+        metavar="PROPOSALS_DIR",
+        help="The proposals directory, mainly for testing cross-repository. "
+        "Automatically found by default.",
     )
     return parser.parse_args(args=args)
 
@@ -79,32 +98,38 @@ def _fill_template(template_path, title, pr_num):
     return content
 
 
-def _get_proposals_dir():
+def _get_proposals_dir(parsed_args):
     """Returns the path to the proposals directory."""
+    if parsed_args.proposals_dir:
+        return parsed_args.proposals_dir
     return os.path.realpath(
         os.path.join(os.path.dirname(__file__), "../../proposals")
     )
 
 
-def _run(argv, check=True):
+def _run(argv, check=True, get_stdout=False):
     """Runs a command."""
     cmd = " ".join([shlex.quote(x) for x in argv])
     print("\n+ RUNNING: %s" % cmd, file=sys.stderr)
-    p = subprocess.run(argv)
+
+    stdout_pipe = None
+    if get_stdout:
+        stdout_pipe = subprocess.PIPE
+
+    p = subprocess.Popen(argv, stdout=stdout_pipe)
+    stdout, _ = p.communicate()
+    if get_stdout:
+        out = stdout.decode("utf-8")
+        print(out, end="")
     if check and p.returncode != 0:
         _exit("ERROR: Command failed: %s" % cmd)
+    if get_stdout:
+        return out
 
 
 def _run_pr_create(argv):
     """Runs a command and returns the PR#."""
-    cmd = " ".join([shlex.quote(x) for x in argv])
-    print("\n+ RUNNING: %s" % cmd, file=sys.stderr)
-    p = subprocess.Popen(argv, stdout=subprocess.PIPE)
-    out, _ = p.communicate()
-    out = out.decode("utf-8")
-    print(out, end="")
-    if p.returncode != 0:
-        _exit("ERROR: Command failed: %s" % cmd)
+    out = _run(argv, get_stdout=True)
     match = re.search(
         r"^https://github.com/[^/]+/[^/]+/pull/(\d+)$", out, re.MULTILINE
     )
@@ -119,12 +144,12 @@ def main():
     branch = _calculate_branch(parsed_args)
 
     # Verify tools are available.
-    git_bin = _find_tool("git")
     gh_bin = _find_tool("gh")
+    git_bin = _find_tool("git")
     precommit_bin = _find_tool("pre-commit")
 
     # Ensure a good working directory.
-    proposals_dir = _get_proposals_dir()
+    proposals_dir = _get_proposals_dir(parsed_args)
     os.chdir(proposals_dir)
 
     # Verify there are no uncommitted changes.
@@ -163,6 +188,20 @@ def main():
             title,
             "--body",
             "",
+        ]
+    )
+
+    # Add links.
+    _run(
+        [
+            gh_bin,
+            "pr",
+            "comment",
+            str(pr_num),
+            "--repo",
+            "carbon-language/carbon-lang",
+            "--body",
+            _LINK_TEMPLATE % pr_num,
         ]
     )
 
