@@ -31,7 +31,9 @@ class ParseTree::Parser {
         position(tokens.Tokens().begin()),
         end(tokens.Tokens().end()) {}
 
-  auto AtEof() -> bool { return tokens.GetKind(*position) == TokenKind::Eof(); }
+  auto AtEndOfFile() -> bool {
+    return tokens.GetKind(*position) == TokenKind::EndOfFile();
+  }
 
   // Requires (and asserts) that the current position matches the provide
   // `Kind`. Returns the current token and advances to the next position.

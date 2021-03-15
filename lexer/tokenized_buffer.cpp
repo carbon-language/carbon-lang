@@ -455,8 +455,8 @@ class TokenizedBuffer::Lexer {
     return token;
   }
 
-  auto AddEofToken() -> void {
-    buffer.AddToken({.kind = TokenKind::Eof(),
+  auto AddEndOfFileToken() -> void {
+    buffer.AddToken({.kind = TokenKind::EndOfFile(),
                      .token_line = current_line,
                      .column = current_column});
   }
@@ -488,7 +488,7 @@ auto TokenizedBuffer::Lex(SourceBuffer& source, DiagnosticEmitter& emitter)
   }
 
   lexer.CloseInvalidOpenGroups(TokenKind::Error());
-  lexer.AddEofToken();
+  lexer.AddEndOfFileToken();
   return buffer;
 }
 
@@ -544,7 +544,7 @@ auto TokenizedBuffer::GetTokenText(Token token) const -> llvm::StringRef {
     return relexed_token->Text();
   }
 
-  if (token_info.kind == TokenKind::Eof()) {
+  if (token_info.kind == TokenKind::EndOfFile()) {
     return llvm::StringRef();
   }
 
