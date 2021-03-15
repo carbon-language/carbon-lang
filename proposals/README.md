@@ -63,5 +63,6 @@ request:
 -   [0199 - String literals](p0199.md)
     -   [0199 - Decision](p0199_decision.md)
 -   [0253 - 2021 Roadmap](p0253.md)
+-   [0257 - Initialization of memory and variables](p0257.md)
 
 <!-- endproposals -->
