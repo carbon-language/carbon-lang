@@ -7,6 +7,7 @@
 
 #include <list>
 #include <string>
+#include <utility>
 
 #include "executable_semantics/ast/function_definition.h"
 #include "executable_semantics/ast/member.h"
@@ -28,20 +29,25 @@ using ExecutionEnvironment = std::pair<TypeEnv, Env>;
 class Declaration {
  public:  // ValueSemantic concept API.
   Declaration(const Declaration& other) = default;
-  Declaration& operator=(const Declaration& other) = default;
+  auto operator=(const Declaration& other) -> Declaration& = default;
 
   /// Constructs an instance equivalent to `d`, where `Model` satisfies the
   /// Declaration concept.
   template <class Model>
+  // NOLINTNEXTLINE(google-explicit-constructor)
   Declaration(Model d) : box(std::make_shared<Boxed<Model>>(d)) {}
 
  public:  // Declaration concept API, in addition to ValueSemantic.
   void Print() const { box->Print(); }
-  auto Name() const -> std::string { return box->Name(); }
-  auto TypeChecked(TypeEnv env, Env ct_env) const -> Declaration {
+  [[nodiscard]] auto Name() const -> std::string { return box->Name(); }
+  [[nodiscard]] auto TypeChecked(TypeEnv env, Env ct_env) const -> Declaration {
     return box->TypeChecked(env, ct_env);
   }
+  // TODO: This lint issue should probably be fixed by switching to a pointer.
+  // NOLINTNEXTLINE(google-runtime-references)
   void InitGlobals(Env& globals) const { return box->InitGlobals(globals); }
+  // TODO: This lint issue should probably be fixed by switching to a pointer.
+  // NOLINTNEXTLINE(google-runtime-references)
   auto TopLevel(ExecutionEnvironment& e) const -> void {
     return box->TopLevel(e);
   }
@@ -51,17 +57,20 @@ class Declaration {
   /// satisfies the Declaration concept.
   struct Box {
    protected:
-    Box() {}
+    Box() = default;
 
    public:
     Box(const Box& other) = delete;
-    Box& operator=(const Box& other) = delete;
+    auto operator=(const Box& other) -> Box& = delete;
 
-    virtual ~Box() {}
+    virtual ~Box() = default;
     virtual auto Print() const -> void = 0;
-    virtual auto Name() const -> std::string = 0;
-    virtual auto TypeChecked(TypeEnv env, Env ct_env) const -> Declaration = 0;
+    [[nodiscard]] virtual auto Name() const -> std::string = 0;
+    [[nodiscard]] virtual auto TypeChecked(TypeEnv env, Env ct_env) const
+        -> Declaration = 0;
+    // NOLINTNEXTLINE(google-runtime-references)
     virtual auto InitGlobals(Env& globals) const -> void = 0;
+    // NOLINTNEXTLINE(google-runtime-references)
     virtual auto TopLevel(ExecutionEnvironment&) const -> void = 0;
   };
 
@@ -73,13 +82,18 @@ class Declaration {
     explicit Boxed(Content content) : Box(), content(content) {}
 
     auto Print() const -> void override { return content.Print(); }
-    auto Name() const -> std::string override { return content.Name(); }
-    auto TypeChecked(TypeEnv env, Env ct_env) const -> Declaration override {
+    [[nodiscard]] auto Name() const -> std::string override {
+      return content.Name();
+    }
+    [[nodiscard]] auto TypeChecked(TypeEnv env, Env ct_env) const
+        -> Declaration override {
       return content.TypeChecked(env, ct_env);
     }
+    // NOLINTNEXTLINE(google-runtime-references)
     auto InitGlobals(Env& globals) const -> void override {
       content.InitGlobals(globals);
     }
+    // NOLINTNEXTLINE(google-runtime-references)
     auto TopLevel(ExecutionEnvironment& e) const -> void override {
       content.TopLevel(e);
     }
@@ -96,21 +110,25 @@ struct FunctionDeclaration {
       : definition(definition) {}
 
   auto Print() const -> void;
-  auto Name() const -> std::string;
-  auto TypeChecked(TypeEnv env, Env ct_env) const -> Declaration;
+  [[nodiscard]] auto Name() const -> std::string;
+  [[nodiscard]] auto TypeChecked(TypeEnv env, Env ct_env) const -> Declaration;
+  // NOLINTNEXTLINE(google-runtime-references)
   auto InitGlobals(Env& globals) const -> void;
+  // NOLINTNEXTLINE(google-runtime-references)
   auto TopLevel(ExecutionEnvironment&) const -> void;
 };
 
 struct StructDeclaration {
   StructDefinition definition;
   StructDeclaration(int line_num, std::string name, std::list<Member*>* members)
-      : definition{line_num, new std::string(name), members} {}
+      : definition{line_num, new std::string(std::move(name)), members} {}
 
   void Print() const;
-  auto Name() const -> std::string;
-  auto TypeChecked(TypeEnv env, Env ct_env) const -> Declaration;
+  [[nodiscard]] auto Name() const -> std::string;
+  [[nodiscard]] auto TypeChecked(TypeEnv env, Env ct_env) const -> Declaration;
+  // NOLINTNEXTLINE(google-runtime-references)
   void InitGlobals(Env& globals) const;
+  // NOLINTNEXTLINE(google-runtime-references)
   auto TopLevel(ExecutionEnvironment&) const -> void;
 };
 
@@ -121,12 +139,16 @@ struct ChoiceDeclaration {
 
   ChoiceDeclaration(int line_num, std::string name,
                     std::list<std::pair<std::string, Expression*>> alternatives)
-      : line_num(line_num), name(name), alternatives(alternatives) {}
+      : line_num(line_num),
+        name(std::move(std::move(name))),
+        alternatives(std::move(std::move(alternatives))) {}
 
   void Print() const;
-  auto Name() const -> std::string;
-  auto TypeChecked(TypeEnv env, Env ct_env) const -> Declaration;
+  [[nodiscard]] auto Name() const -> std::string;
+  [[nodiscard]] auto TypeChecked(TypeEnv env, Env ct_env) const -> Declaration;
+  // NOLINTNEXTLINE(google-runtime-references)
   void InitGlobals(Env& globals) const;
+  // NOLINTNEXTLINE(google-runtime-references)
   auto TopLevel(ExecutionEnvironment&) const -> void;
 };
 

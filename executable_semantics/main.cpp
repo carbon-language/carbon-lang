@@ -11,28 +11,28 @@
 #include "executable_semantics/tracing_flag.h"
 #include "llvm/Support/CommandLine.h"
 
-int main(int argc, char* argv[]) {
+auto main(int argc, char* argv[]) -> int {
   // yydebug = 1;
 
   using llvm::cl::desc;
   using llvm::cl::opt;
-  opt<bool> quietOption("quiet", desc("Disable tracing"));
-  opt<std::string> inputFileName(llvm::cl::Positional, desc("<input file>"),
-                                 llvm::cl::Required);
+  opt<bool> quiet_option("quiet", desc("Disable tracing"));
+  opt<std::string> input_filename(llvm::cl::Positional, desc("<input file>"),
+                                  llvm::cl::Required);
 
   llvm::cl::ParseCommandLineOptions(argc, argv);
-  if (quietOption) {
+  if (quiet_option) {
     Carbon::tracing_output = false;
   }
 
-  std::variant<Carbon::AST, Carbon::SyntaxErrorCode> astOrError =
-      Carbon::parse(inputFileName);
+  std::variant<Carbon::AST, Carbon::SyntaxErrorCode> ast_or_error =
+      Carbon::Parse(input_filename);
 
-  if (auto* error = std::get_if<Carbon::SyntaxErrorCode>(&astOrError)) {
+  if (auto* error = std::get_if<Carbon::SyntaxErrorCode>(&ast_or_error)) {
     // Diagnostic already reported to std::cerr; this is just a return code.
     return *error;
   }
 
   // Typecheck and run the parsed program.
-  Carbon::ExecProgram(std::get<Carbon::AST>(astOrError));
+  Carbon::ExecProgram(std::get<Carbon::AST>(ast_or_error));
 }

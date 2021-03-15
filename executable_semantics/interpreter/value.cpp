@@ -5,6 +5,7 @@
 #include "executable_semantics/interpreter/value.h"
 
 #include <iostream>
+#include <utility>
 
 #include "executable_semantics/interpreter/interpreter.h"
 
@@ -204,7 +205,7 @@ auto MakeChoiceTypeVal(std::string name,
   v->alive = true;
   v->tag = ValKind::ChoiceTV;
   // Transitional leak: when we get rid of all pointers, this will disappear.
-  v->u.choice_type.name = new std::string(name);
+  v->u.choice_type.name = new std::string(std::move(name));
   v->u.choice_type.alternatives = alts;
   return v;
 }

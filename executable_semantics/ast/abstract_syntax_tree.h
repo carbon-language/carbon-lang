@@ -10,7 +10,9 @@
 #include "executable_semantics/ast/declaration.h"
 
 namespace Carbon {
+
 using AST = std::list<Carbon::Declaration>*;
-}
+
+}  // namespace Carbon
 
 #endif  // EXECUTABLE_SEMANTICS_AST_ABSTRACT_SYNTAX_TREE_H_

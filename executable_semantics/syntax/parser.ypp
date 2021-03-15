@@ -26,7 +26,7 @@
 // thus available to its methods.
 
 // "out" parameter passed to the parser, where the AST is written.
-%parse-param {std::optional<Carbon::AST>& parsedProgram}
+%parse-param {std::optional<Carbon::AST>& parsed_program}
 
 // "inout" parameter passed to both the parser and the lexer.
 %param {Carbon::ParseAndLexContext& context}
@@ -55,7 +55,7 @@
 
 namespace Carbon {
 class ParseAndLexContext;
-}
+}  // namespace Carbon
 
 }
 
@@ -63,9 +63,7 @@ class ParseAndLexContext;
 
 extern int yylineno;
 
-void yy::parser::error(
-    const location_type&, const std::string& message)
-{
+void yy::parser::error(const location_type&, const std::string& message) {
   context.PrintDiagnostic(message, yylineno);
 }
 
@@ -150,7 +148,7 @@ void yy::parser::error(
 %locations
 %%
 input: declaration_list
-    { parsedProgram = $1; }
+    { parsed_program = $1; }
 ;
 pattern:
   expression
@@ -208,7 +206,7 @@ paren_expression: "(" field_list ")"
 	 !$2->has_explicit_comma) {
 	$$ = $2->fields->front().second;
      } else {
-        auto vec = new std::vector<std::pair<std::string,Carbon::Expression*>>(
+        auto vec = new std::vector<std::pair<std::string, Carbon::Expression*>>(
             $2->fields->begin(), $2->fields->end());
         $$ = Carbon::MakeTuple(yylineno, vec);
       }
@@ -216,7 +214,7 @@ paren_expression: "(" field_list ")"
 ;
 tuple: "(" field_list ")"
     {
-     auto vec = new std::vector<std::pair<std::string,Carbon::Expression*>>(
+     auto vec = new std::vector<std::pair<std::string, Carbon::Expression*>>(
          $2->fields->begin(), $2->fields->end());
      $$ = Carbon::MakeTuple(yylineno, vec);
     }

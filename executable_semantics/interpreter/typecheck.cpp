@@ -620,7 +620,7 @@ auto StructDeclaration::Name() const -> std::string { return *definition.name; }
 
 auto ChoiceDeclaration::Name() const -> std::string { return name; }
 
-auto StructDeclaration::TypeChecked(TypeEnv env, Env ct_env) const
+auto StructDeclaration::TypeChecked(TypeEnv /*env*/, Env /*ct_env*/) const
     -> Declaration {
   auto fields = new std::list<Member*>();
   for (auto& m : *definition.members) {
@@ -637,7 +637,7 @@ auto FunctionDeclaration::TypeChecked(TypeEnv env, Env ct_env) const
   return FunctionDeclaration(TypeCheckFunDef(definition, env, ct_env));
 }
 
-auto ChoiceDeclaration::TypeChecked(TypeEnv env, Env ct_env) const
+auto ChoiceDeclaration::TypeChecked(TypeEnv /*env*/, Env /*ct_env*/) const
     -> Declaration {
   return *this;  // TODO.
 }
@@ -677,7 +677,7 @@ auto StructDeclaration::TopLevel(ExecutionEnvironment& tops) const -> void {
 
 auto ChoiceDeclaration::TopLevel(ExecutionEnvironment& tops) const -> void {
   auto alts = new VarValues();
-  for (auto a : alternatives) {
+  for (const auto& a : alternatives) {
     auto t = ToType(line_num, InterpExp(tops.second, a.second));
     alts->push_back(std::make_pair(a.first, t));
   }

@@ -5,6 +5,9 @@
 #ifndef EXECUTABLE_SEMANTICS_INTERPRETER_LIST_NODE_H_
 #define EXECUTABLE_SEMANTICS_INTERPRETER_LIST_NODE_H_
 
+#include <cstddef>
+#include <iterator>
+
 namespace Carbon {
 
 template <class T>
@@ -16,34 +19,43 @@ struct ListNode {
 
   // ListNode cells are part of a "persistent data structure" and are thus
   // immutable.
-  ListNode& operator=(const ListNode&) = delete;
-  ListNode& operator=(ListNode&&) = delete;
+  auto operator=(const ListNode&) -> ListNode& = delete;
+  auto operator=(ListNode&&) -> ListNode& = delete;
 };
 
 // A forward iterator over elements of a `ListNode` list.
 template <class T>
 struct ListNodeIterator {
+  // NOLINTNEXTLINE(readability-identifier-naming)
   using value_type = T;
+  // NOLINTNEXTLINE(readability-identifier-naming)
   using difference_type = std::ptrdiff_t;
+  // NOLINTNEXTLINE(readability-identifier-naming)
   using pointer = const T*;
+  // NOLINTNEXTLINE(readability-identifier-naming)
   using reference = const T&;
+  // NOLINTNEXTLINE(readability-identifier-naming)
   using iterator_category = std::forward_iterator_tag;
 
-  ListNodeIterator(ListNode<T>* x) : p(x) {}
+  explicit ListNodeIterator(ListNode<T>* x) : p(x) {}
   ListNodeIterator(const ListNodeIterator& iter) : p(iter.p) {}
-  ListNodeIterator& operator++() {
+  auto operator++() -> ListNodeIterator& {
     p = p->next;
     return *this;
   }
-  ListNodeIterator operator++(int) {
+  auto operator++(int) -> ListNodeIterator {
     ListNodeIterator tmp(*this);
     operator++();
     return tmp;
   }
-  bool operator==(const ListNodeIterator& rhs) const { return p == rhs.p; }
-  bool operator!=(const ListNodeIterator& rhs) const { return p != rhs.p; }
-  const T& operator*() { return p->curr; }
-  const T* operator->() { return &p->curr; }
+  auto operator==(const ListNodeIterator& rhs) const -> bool {
+    return p == rhs.p;
+  }
+  auto operator!=(const ListNodeIterator& rhs) const -> bool {
+    return p != rhs.p;
+  }
+  auto operator*() -> const T& { return p->curr; }
+  auto operator->() -> const T* { return &p->curr; }
 
  private:
   ListNode<T>* p;

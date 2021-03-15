@@ -40,17 +40,19 @@ class Dictionary {
     head = new ListNode<std::pair<K, V>>(std::make_pair(k, v), head);
   }
 
-  typedef ListNodeIterator<std::pair<K, V>> Iterator;
+  using Iterator = ListNodeIterator<std::pair<K, V>>;
 
   // The position of the first element of the dictionary
   // or `end()` if the dictionary is empty.
+  // NOLINTNEXTLINE(readability-identifier-naming)
   auto begin() const -> Iterator { return Iterator(head); }
 
   // The position one past that of the last element.
+  // NOLINTNEXTLINE(readability-identifier-naming)
   auto end() const -> Iterator { return Iterator(nullptr); }
 
  private:
-  Dictionary(ListNode<std::pair<K, V>>* h) : head(h) {}
+  explicit Dictionary(ListNode<std::pair<K, V>>* h) : head(h) {}
 
   ListNode<std::pair<K, V>>* head;
 };
