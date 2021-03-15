@@ -61,3 +61,57 @@ load("@llvm_bazel//:zlib.bzl", "llvm_zlib_system")
 
 # We require successful detection and use of a system zlib library.
 llvm_zlib_system(name = "llvm_zlib")
+
+# TODO(chandlerc): Replace this with an upstream release once the pull request
+# with our needed functionality lands:
+# https://github.com/jmillikin/rules_m4/pull/7
+#
+# Until then, this is pulling from that pull request's commit.
+http_archive(
+    name = "rules_m4",
+    strip_prefix = "rules_m4-add-extra-copts",
+    sha256 = "4d34917214e8890ad770bdf0c319c41c9201fffd770938b41a1d641d4b27e05c",
+    urls = ["https://github.com/chandlerc/rules_m4/archive/add-extra-copts.zip"],
+)
+
+load("@rules_m4//m4:m4.bzl", "m4_register_toolchains")
+
+# When building M4, disable all compiler warnings as we can't realistically fix
+# them anyways.
+m4_register_toolchains(extra_copts = ["-w"])
+
+# TODO(chandlerc): Replace this with an upstream release once the pull request
+# with our needed functionality lands:
+# https://github.com/jmillikin/rules_flex/pull/5
+#
+# Until then, this is pulling from that pull request's commit.
+http_archive(
+    name = "rules_flex",
+    strip_prefix = "rules_flex-add-extra-copts",
+    sha256 = "fd97c3ae23926507be1b95158a683cd41c628d201e852a325d38b5e9f821b752",
+    urls = ["https://github.com/chandlerc/rules_flex/archive/add-extra-copts.zip"],
+)
+
+load("@rules_flex//flex:flex.bzl", "flex_register_toolchains")
+
+# When building Flex, disable all compiler warnings as we can't realistically
+# fix them anyways.
+flex_register_toolchains(extra_copts = ["-w"])
+
+# TODO(chandlerc): Replace this with an upstream release once the pull request
+# with our needed functionality lands:
+# https://github.com/jmillikin/rules_bison/pull/7
+#
+# Until then, this is pulling from that pull request's commit.
+http_archive(
+    name = "rules_bison",
+    strip_prefix = "rules_bison-add-extra-copts",
+    sha256 = "c6e926f15214d903966dc950d759ec69116db67f148be114c119e4def0551eaa",
+    urls = ["https://github.com/chandlerc/rules_bison/archive/add-extra-copts.zip"],
+)
+
+load("@rules_bison//bison:bison.bzl", "bison_register_toolchains")
+
+# When building Bison, disable all compiler warnings as we can't realistically
+# fix them anyways.
+bison_register_toolchains(extra_copts = ["-w"])

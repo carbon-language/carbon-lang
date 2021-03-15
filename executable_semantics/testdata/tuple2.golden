@@ -1,0 +1,199 @@
+********** source program **********
+fn main () -> Int {
+var (0 = Int): t = (0 = 5);
+return (t[0] - 5);
+
+}
+********** type checking **********
+--- step exp Int --->
+--- step exp Int --->
+--- step exp (0 = Int) --->
+--- step exp Int --->
+--- handle value Int with (0 = Int)<1>(Int,) --->
+--- step exp 0 --->
+
+********** type checking complete **********
+fn main () -> Int {
+var (0 = Int): t = (0 = 5);
+return (t[0] - 5);
+}
+********** starting execution **********
+********** initializing globals **********
+--- step exp () --->
+********** calling main function **********
+{
+stack: top{main()<-1>}
+heap: fun<main>, 
+env: main: fun<main>, 
+}
+--- step exp main() --->
+{
+stack: top{main<-1> :: main()<0>}
+heap: fun<main>, 
+env: main: fun<main>, 
+}
+--- step exp main --->
+{
+stack: top{fun<main><-1> :: main()<0>}
+heap: fun<main>, 
+env: main: fun<main>, 
+}
+--- handle value fun<main> with main()<1>(fun<main>,) --->
+{
+stack: top{()<-1> :: main()<1>(fun<main>,)}
+heap: fun<main>, 
+env: main: fun<main>, 
+}
+--- step exp () --->
+{
+stack: top{()<-1> :: main()<1>(fun<main>,)}
+heap: fun<main>, 
+env: main: fun<main>, 
+}
+--- handle value () with main()<2>(fun<main>,(),) --->
+pattern_match((), ())
+{
+stack: main{var (0 = Int): t = (0 = 5); ... <-1>} :: top{}
+heap: fun<main>, 
+env: main: fun<main>, 
+}
+--- step stmt var (0 = Int): t = (0 = 5); ...  --->
+{
+stack: main{var (0 = Int): t = (0 = 5);<-1> :: return (t[0] - 5);<-1>} :: top{}
+heap: fun<main>, 
+env: main: fun<main>, 
+}
+--- step stmt var (0 = Int): t = (0 = 5); --->
+{
+stack: main{(0 = 5)<-1> :: var (0 = Int): t = (0 = 5);<0> :: return (t[0] - 5);<-1>} :: top{}
+heap: fun<main>, 
+env: main: fun<main>, 
+}
+--- step exp (0 = 5) --->
+{
+stack: main{5<-1> :: (0 = 5)<0> :: var (0 = Int): t = (0 = 5);<0> :: return (t[0] - 5);<-1>} :: top{}
+heap: fun<main>, 
+env: main: fun<main>, 
+}
+--- step exp 5 --->
+{
+stack: main{5<-1> :: (0 = 5)<0> :: var (0 = Int): t = (0 = 5);<0> :: return (t[0] - 5);<-1>} :: top{}
+heap: fun<main>, 
+env: main: fun<main>, 
+}
+--- handle value 5 with (0 = 5)<1>(5,) --->
+{
+stack: main{(0 = 5@1)<-1> :: var (0 = Int): t = (0 = 5);<0> :: return (t[0] - 5);<-1>} :: top{}
+heap: fun<main>, 5, 
+env: main: fun<main>, 
+}
+--- handle value (0 = 5@1) with var (0 = Int): t = (0 = 5);<1>((0 = 5@1),) --->
+{
+stack: main{(0 = Int): t<-1> :: var (0 = Int): t = (0 = 5);<1>((0 = 5@1),) :: return (t[0] - 5);<-1>} :: top{}
+heap: fun<main>, 5, 
+env: main: fun<main>, 
+}
+--- step exp (0 = Int): t --->
+{
+stack: main{(0 = Int)<-1> :: (0 = Int): t<0> :: var (0 = Int): t = (0 = 5);<1>((0 = 5@1),) :: return (t[0] - 5);<-1>} :: top{}
+heap: fun<main>, 5, 
+env: main: fun<main>, 
+}
+--- step exp (0 = Int) --->
+{
+stack: main{Int<-1> :: (0 = Int)<0> :: (0 = Int): t<0> :: var (0 = Int): t = (0 = 5);<1>((0 = 5@1),) :: return (t[0] - 5);<-1>} :: top{}
+heap: fun<main>, 5, 
+env: main: fun<main>, 
+}
+--- step exp Int --->
+{
+stack: main{Int<-1> :: (0 = Int)<0> :: (0 = Int): t<0> :: var (0 = Int): t = (0 = 5);<1>((0 = 5@1),) :: return (t[0] - 5);<-1>} :: top{}
+heap: fun<main>, 5, 
+env: main: fun<main>, 
+}
+--- handle value Int with (0 = Int)<1>(Int,) --->
+{
+stack: main{(0 = Int@2)<-1> :: (0 = Int): t<0> :: var (0 = Int): t = (0 = 5);<1>((0 = 5@1),) :: return (t[0] - 5);<-1>} :: top{}
+heap: fun<main>, 5, Int, 
+env: main: fun<main>, 
+}
+--- handle value (0 = Int@2) with (0 = Int): t<1>((0 = Int@2),) --->
+{
+stack: main{(0 = Int@2): t<-1> :: var (0 = Int): t = (0 = 5);<1>((0 = 5@1),) :: return (t[0] - 5);<-1>} :: top{}
+heap: fun<main>, 5, Int, 
+env: main: fun<main>, 
+}
+--- handle value (0 = Int@2): t with var (0 = Int): t = (0 = 5);<2>((0 = 5@1),(0 = Int@2): t,) --->
+pattern_match((0 = Int@2): t, (0 = 5@1))
+{
+stack: main{return (t[0] - 5);<-1>} :: top{}
+heap: fun<main>, 5, Int, 5, (0 = 5@3), 
+env: t: (0 = 5@3), main: fun<main>, 
+}
+--- step stmt return (t[0] - 5); --->
+{
+stack: main{(t[0] - 5)<-1> :: return (t[0] - 5);<0>} :: top{}
+heap: fun<main>, 5, Int, 5, (0 = 5@3), 
+env: t: (0 = 5@3), main: fun<main>, 
+}
+--- step exp (t[0] - 5) --->
+{
+stack: main{t[0]<-1> :: (t[0] - 5)<0> :: return (t[0] - 5);<0>} :: top{}
+heap: fun<main>, 5, Int, 5, (0 = 5@3), 
+env: t: (0 = 5@3), main: fun<main>, 
+}
+--- step exp t[0] --->
+{
+stack: main{t<-1> :: t[0]<0> :: (t[0] - 5)<0> :: return (t[0] - 5);<0>} :: top{}
+heap: fun<main>, 5, Int, 5, (0 = 5@3), 
+env: t: (0 = 5@3), main: fun<main>, 
+}
+--- step exp t --->
+{
+stack: main{(0 = 5@3)<-1> :: t[0]<0> :: (t[0] - 5)<0> :: return (t[0] - 5);<0>} :: top{}
+heap: fun<main>, 5, Int, 5, (0 = 5@3), 
+env: t: (0 = 5@3), main: fun<main>, 
+}
+--- handle value (0 = 5@3) with t[0]<1>((0 = 5@3),) --->
+{
+stack: main{0<-1> :: t[0]<1>((0 = 5@3),) :: (t[0] - 5)<0> :: return (t[0] - 5);<0>} :: top{}
+heap: fun<main>, 5, Int, 5, (0 = 5@3), 
+env: t: (0 = 5@3), main: fun<main>, 
+}
+--- step exp 0 --->
+{
+stack: main{0<-1> :: t[0]<1>((0 = 5@3),) :: (t[0] - 5)<0> :: return (t[0] - 5);<0>} :: top{}
+heap: fun<main>, 5, Int, 5, (0 = 5@3), 
+env: t: (0 = 5@3), main: fun<main>, 
+}
+--- handle value 0 with t[0]<2>((0 = 5@3),0,) --->
+{
+stack: main{5<-1> :: (t[0] - 5)<0> :: return (t[0] - 5);<0>} :: top{}
+heap: fun<main>, 5, Int, 5, (0 = 5@3), 
+env: t: (0 = 5@3), main: fun<main>, 
+}
+--- handle value 5 with (t[0] - 5)<1>(5,) --->
+{
+stack: main{5<-1> :: (t[0] - 5)<1>(5,) :: return (t[0] - 5);<0>} :: top{}
+heap: fun<main>, 5, Int, 5, (0 = 5@3), 
+env: t: (0 = 5@3), main: fun<main>, 
+}
+--- step exp 5 --->
+{
+stack: main{5<-1> :: (t[0] - 5)<1>(5,) :: return (t[0] - 5);<0>} :: top{}
+heap: fun<main>, 5, Int, 5, (0 = 5@3), 
+env: t: (0 = 5@3), main: fun<main>, 
+}
+--- handle value 5 with (t[0] - 5)<2>(5,5,) --->
+{
+stack: main{0<-1> :: return (t[0] - 5);<0>} :: top{}
+heap: fun<main>, 5, Int, 5, (0 = 5@3), 
+env: t: (0 = 5@3), main: fun<main>, 
+}
+--- handle value 0 with return (t[0] - 5);<1>(0,) --->
+{
+stack: top{0<-1>}
+heap: fun<main>, 5, Int, !!5, !!(0 = !!5@3), 
+env: main: fun<main>, 
+}
+result: 0

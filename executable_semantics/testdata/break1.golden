@@ -1,0 +1,821 @@
+MakeBlock
+********** source program **********
+fn main () -> Int {
+var Int: x = 2;
+while (true)
+{
+if ((x == 0))
+break;
+else
+x = (x - 1);
+
+}
+
+return x;
+
+}
+********** type checking **********
+--- step exp Int --->
+--- step exp Int --->
+--- step exp Int --->
+
+********** type checking complete **********
+fn main () -> Int {
+var Int: x = 2;
+while (true)
+{
+if ((x == 0))
+break;
+else
+x = (x - 1);
+
+}
+
+return x;
+}
+********** starting execution **********
+********** initializing globals **********
+--- step exp () --->
+********** calling main function **********
+{
+stack: top{main()<-1>}
+heap: fun<main>, 
+env: main: fun<main>, 
+}
+--- step exp main() --->
+{
+stack: top{main<-1> :: main()<0>}
+heap: fun<main>, 
+env: main: fun<main>, 
+}
+--- step exp main --->
+{
+stack: top{fun<main><-1> :: main()<0>}
+heap: fun<main>, 
+env: main: fun<main>, 
+}
+--- handle value fun<main> with main()<1>(fun<main>,) --->
+{
+stack: top{()<-1> :: main()<1>(fun<main>,)}
+heap: fun<main>, 
+env: main: fun<main>, 
+}
+--- step exp () --->
+{
+stack: top{()<-1> :: main()<1>(fun<main>,)}
+heap: fun<main>, 
+env: main: fun<main>, 
+}
+--- handle value () with main()<2>(fun<main>,(),) --->
+pattern_match((), ())
+{
+stack: main{var Int: x = 2; ... <-1>} :: top{}
+heap: fun<main>, 
+env: main: fun<main>, 
+}
+--- step stmt var Int: x = 2; ...  --->
+{
+stack: main{var Int: x = 2;<-1> :: while (true)
+ ...  ... <-1>} :: top{}
+heap: fun<main>, 
+env: main: fun<main>, 
+}
+--- step stmt var Int: x = 2; --->
+{
+stack: main{2<-1> :: var Int: x = 2;<0> :: while (true)
+ ...  ... <-1>} :: top{}
+heap: fun<main>, 
+env: main: fun<main>, 
+}
+--- step exp 2 --->
+{
+stack: main{2<-1> :: var Int: x = 2;<0> :: while (true)
+ ...  ... <-1>} :: top{}
+heap: fun<main>, 
+env: main: fun<main>, 
+}
+--- handle value 2 with var Int: x = 2;<1>(2,) --->
+{
+stack: main{Int: x<-1> :: var Int: x = 2;<1>(2,) :: while (true)
+ ...  ... <-1>} :: top{}
+heap: fun<main>, 
+env: main: fun<main>, 
+}
+--- step exp Int: x --->
+{
+stack: main{Int<-1> :: Int: x<0> :: var Int: x = 2;<1>(2,) :: while (true)
+ ...  ... <-1>} :: top{}
+heap: fun<main>, 
+env: main: fun<main>, 
+}
+--- step exp Int --->
+{
+stack: main{Int<-1> :: Int: x<0> :: var Int: x = 2;<1>(2,) :: while (true)
+ ...  ... <-1>} :: top{}
+heap: fun<main>, 
+env: main: fun<main>, 
+}
+--- handle value Int with Int: x<1>(Int,) --->
+{
+stack: main{Int: x<-1> :: var Int: x = 2;<1>(2,) :: while (true)
+ ...  ... <-1>} :: top{}
+heap: fun<main>, 
+env: main: fun<main>, 
+}
+--- handle value Int: x with var Int: x = 2;<2>(2,Int: x,) --->
+pattern_match(Int: x, 2)
+{
+stack: main{while (true)
+ ...  ... <-1>} :: top{}
+heap: fun<main>, 2, 
+env: x: 2, main: fun<main>, 
+}
+--- step stmt while (true)
+ ...  ...  --->
+{
+stack: main{while (true)
+ ... <-1> :: return x;<-1>} :: top{}
+heap: fun<main>, 2, 
+env: x: 2, main: fun<main>, 
+}
+--- step stmt while (true)
+ ...  --->
+{
+stack: main{true<-1> :: while (true)
+ ... <0> :: return x;<-1>} :: top{}
+heap: fun<main>, 2, 
+env: x: 2, main: fun<main>, 
+}
+--- step exp true --->
+{
+stack: main{true<-1> :: while (true)
+ ... <0> :: return x;<-1>} :: top{}
+heap: fun<main>, 2, 
+env: x: 2, main: fun<main>, 
+}
+--- handle value true with while (true)
+ ... <1>(true,) --->
+{
+stack: main{{
+ ... 
+}
+<-1> :: while (true)
+ ... <-1> :: return x;<-1>} :: top{}
+heap: fun<main>, 2, 
+env: x: 2, main: fun<main>, 
+}
+--- step stmt {
+ ... 
+}
+ --->
+{
+stack: main{if ((x == 0))
+ ... 
+else
+ ... <-1> :: {
+ ... 
+}
+<0> :: while (true)
+ ... <-1> :: return x;<-1>} :: top{}
+heap: fun<main>, 2, 
+env: x: 2, main: fun<main>, 
+}
+--- step stmt if ((x == 0))
+ ... 
+else
+ ...  --->
+{
+stack: main{if ((x == 0))
+ ... 
+else
+ ... <-1> :: {
+ ... 
+}
+<0> :: while (true)
+ ... <-1> :: return x;<-1>} :: top{}
+heap: fun<main>, 2, 
+env: x: 2, main: fun<main>, 
+}
+--- step stmt if ((x == 0))
+ ... 
+else
+ ...  --->
+{
+stack: main{(x == 0)<-1> :: if ((x == 0))
+ ... 
+else
+ ... <0> :: {
+ ... 
+}
+<0> :: while (true)
+ ... <-1> :: return x;<-1>} :: top{}
+heap: fun<main>, 2, 
+env: x: 2, main: fun<main>, 
+}
+--- step exp (x == 0) --->
+{
+stack: main{x<-1> :: (x == 0)<0> :: if ((x == 0))
+ ... 
+else
+ ... <0> :: {
+ ... 
+}
+<0> :: while (true)
+ ... <-1> :: return x;<-1>} :: top{}
+heap: fun<main>, 2, 
+env: x: 2, main: fun<main>, 
+}
+--- step exp x --->
+{
+stack: main{2<-1> :: (x == 0)<0> :: if ((x == 0))
+ ... 
+else
+ ... <0> :: {
+ ... 
+}
+<0> :: while (true)
+ ... <-1> :: return x;<-1>} :: top{}
+heap: fun<main>, 2, 
+env: x: 2, main: fun<main>, 
+}
+--- handle value 2 with (x == 0)<1>(2,) --->
+{
+stack: main{0<-1> :: (x == 0)<1>(2,) :: if ((x == 0))
+ ... 
+else
+ ... <0> :: {
+ ... 
+}
+<0> :: while (true)
+ ... <-1> :: return x;<-1>} :: top{}
+heap: fun<main>, 2, 
+env: x: 2, main: fun<main>, 
+}
+--- step exp 0 --->
+{
+stack: main{0<-1> :: (x == 0)<1>(2,) :: if ((x == 0))
+ ... 
+else
+ ... <0> :: {
+ ... 
+}
+<0> :: while (true)
+ ... <-1> :: return x;<-1>} :: top{}
+heap: fun<main>, 2, 
+env: x: 2, main: fun<main>, 
+}
+--- handle value 0 with (x == 0)<2>(2,0,) --->
+{
+stack: main{false<-1> :: if ((x == 0))
+ ... 
+else
+ ... <0> :: {
+ ... 
+}
+<0> :: while (true)
+ ... <-1> :: return x;<-1>} :: top{}
+heap: fun<main>, 2, 
+env: x: 2, main: fun<main>, 
+}
+--- handle value false with if ((x == 0))
+ ... 
+else
+ ... <1>(false,) --->
+{
+stack: main{x = (x - 1);<-1> :: {
+ ... 
+}
+<0> :: while (true)
+ ... <-1> :: return x;<-1>} :: top{}
+heap: fun<main>, 2, 
+env: x: 2, main: fun<main>, 
+}
+--- step stmt x = (x - 1); --->
+{
+stack: main{x<-1> :: x = (x - 1);<0> :: {
+ ... 
+}
+<0> :: while (true)
+ ... <-1> :: return x;<-1>} :: top{}
+heap: fun<main>, 2, 
+env: x: 2, main: fun<main>, 
+}
+--- step lvalue x --->
+{
+stack: main{ptr<1><-1> :: x = (x - 1);<0> :: {
+ ... 
+}
+<0> :: while (true)
+ ... <-1> :: return x;<-1>} :: top{}
+heap: fun<main>, 2, 
+env: x: 2, main: fun<main>, 
+}
+--- handle value ptr<1> with x = (x - 1);<1>(ptr<1>,) --->
+{
+stack: main{(x - 1)<-1> :: x = (x - 1);<1>(ptr<1>,) :: {
+ ... 
+}
+<0> :: while (true)
+ ... <-1> :: return x;<-1>} :: top{}
+heap: fun<main>, 2, 
+env: x: 2, main: fun<main>, 
+}
+--- step exp (x - 1) --->
+{
+stack: main{x<-1> :: (x - 1)<0> :: x = (x - 1);<1>(ptr<1>,) :: {
+ ... 
+}
+<0> :: while (true)
+ ... <-1> :: return x;<-1>} :: top{}
+heap: fun<main>, 2, 
+env: x: 2, main: fun<main>, 
+}
+--- step exp x --->
+{
+stack: main{2<-1> :: (x - 1)<0> :: x = (x - 1);<1>(ptr<1>,) :: {
+ ... 
+}
+<0> :: while (true)
+ ... <-1> :: return x;<-1>} :: top{}
+heap: fun<main>, 2, 
+env: x: 2, main: fun<main>, 
+}
+--- handle value 2 with (x - 1)<1>(2,) --->
+{
+stack: main{1<-1> :: (x - 1)<1>(2,) :: x = (x - 1);<1>(ptr<1>,) :: {
+ ... 
+}
+<0> :: while (true)
+ ... <-1> :: return x;<-1>} :: top{}
+heap: fun<main>, 2, 
+env: x: 2, main: fun<main>, 
+}
+--- step exp 1 --->
+{
+stack: main{1<-1> :: (x - 1)<1>(2,) :: x = (x - 1);<1>(ptr<1>,) :: {
+ ... 
+}
+<0> :: while (true)
+ ... <-1> :: return x;<-1>} :: top{}
+heap: fun<main>, 2, 
+env: x: 2, main: fun<main>, 
+}
+--- handle value 1 with (x - 1)<2>(2,1,) --->
+{
+stack: main{1<-1> :: x = (x - 1);<1>(ptr<1>,) :: {
+ ... 
+}
+<0> :: while (true)
+ ... <-1> :: return x;<-1>} :: top{}
+heap: fun<main>, 2, 
+env: x: 2, main: fun<main>, 
+}
+--- handle value 1 with x = (x - 1);<2>(ptr<1>,1,) --->
+{
+stack: main{{
+ ... 
+}
+<0> :: while (true)
+ ... <-1> :: return x;<-1>} :: top{}
+heap: fun<main>, 1, 
+env: x: 1, main: fun<main>, 
+}
+--- step stmt {
+ ... 
+}
+ --->
+{
+stack: main{while (true)
+ ... <-1> :: return x;<-1>} :: top{}
+heap: fun<main>, 1, 
+env: x: 1, main: fun<main>, 
+}
+--- step stmt while (true)
+ ...  --->
+{
+stack: main{true<-1> :: while (true)
+ ... <0> :: return x;<-1>} :: top{}
+heap: fun<main>, 1, 
+env: x: 1, main: fun<main>, 
+}
+--- step exp true --->
+{
+stack: main{true<-1> :: while (true)
+ ... <0> :: return x;<-1>} :: top{}
+heap: fun<main>, 1, 
+env: x: 1, main: fun<main>, 
+}
+--- handle value true with while (true)
+ ... <1>(true,) --->
+{
+stack: main{{
+ ... 
+}
+<-1> :: while (true)
+ ... <-1> :: return x;<-1>} :: top{}
+heap: fun<main>, 1, 
+env: x: 1, main: fun<main>, 
+}
+--- step stmt {
+ ... 
+}
+ --->
+{
+stack: main{if ((x == 0))
+ ... 
+else
+ ... <-1> :: {
+ ... 
+}
+<0> :: while (true)
+ ... <-1> :: return x;<-1>} :: top{}
+heap: fun<main>, 1, 
+env: x: 1, main: fun<main>, 
+}
+--- step stmt if ((x == 0))
+ ... 
+else
+ ...  --->
+{
+stack: main{if ((x == 0))
+ ... 
+else
+ ... <-1> :: {
+ ... 
+}
+<0> :: while (true)
+ ... <-1> :: return x;<-1>} :: top{}
+heap: fun<main>, 1, 
+env: x: 1, main: fun<main>, 
+}
+--- step stmt if ((x == 0))
+ ... 
+else
+ ...  --->
+{
+stack: main{(x == 0)<-1> :: if ((x == 0))
+ ... 
+else
+ ... <0> :: {
+ ... 
+}
+<0> :: while (true)
+ ... <-1> :: return x;<-1>} :: top{}
+heap: fun<main>, 1, 
+env: x: 1, main: fun<main>, 
+}
+--- step exp (x == 0) --->
+{
+stack: main{x<-1> :: (x == 0)<0> :: if ((x == 0))
+ ... 
+else
+ ... <0> :: {
+ ... 
+}
+<0> :: while (true)
+ ... <-1> :: return x;<-1>} :: top{}
+heap: fun<main>, 1, 
+env: x: 1, main: fun<main>, 
+}
+--- step exp x --->
+{
+stack: main{1<-1> :: (x == 0)<0> :: if ((x == 0))
+ ... 
+else
+ ... <0> :: {
+ ... 
+}
+<0> :: while (true)
+ ... <-1> :: return x;<-1>} :: top{}
+heap: fun<main>, 1, 
+env: x: 1, main: fun<main>, 
+}
+--- handle value 1 with (x == 0)<1>(1,) --->
+{
+stack: main{0<-1> :: (x == 0)<1>(1,) :: if ((x == 0))
+ ... 
+else
+ ... <0> :: {
+ ... 
+}
+<0> :: while (true)
+ ... <-1> :: return x;<-1>} :: top{}
+heap: fun<main>, 1, 
+env: x: 1, main: fun<main>, 
+}
+--- step exp 0 --->
+{
+stack: main{0<-1> :: (x == 0)<1>(1,) :: if ((x == 0))
+ ... 
+else
+ ... <0> :: {
+ ... 
+}
+<0> :: while (true)
+ ... <-1> :: return x;<-1>} :: top{}
+heap: fun<main>, 1, 
+env: x: 1, main: fun<main>, 
+}
+--- handle value 0 with (x == 0)<2>(1,0,) --->
+{
+stack: main{false<-1> :: if ((x == 0))
+ ... 
+else
+ ... <0> :: {
+ ... 
+}
+<0> :: while (true)
+ ... <-1> :: return x;<-1>} :: top{}
+heap: fun<main>, 1, 
+env: x: 1, main: fun<main>, 
+}
+--- handle value false with if ((x == 0))
+ ... 
+else
+ ... <1>(false,) --->
+{
+stack: main{x = (x - 1);<-1> :: {
+ ... 
+}
+<0> :: while (true)
+ ... <-1> :: return x;<-1>} :: top{}
+heap: fun<main>, 1, 
+env: x: 1, main: fun<main>, 
+}
+--- step stmt x = (x - 1); --->
+{
+stack: main{x<-1> :: x = (x - 1);<0> :: {
+ ... 
+}
+<0> :: while (true)
+ ... <-1> :: return x;<-1>} :: top{}
+heap: fun<main>, 1, 
+env: x: 1, main: fun<main>, 
+}
+--- step lvalue x --->
+{
+stack: main{ptr<1><-1> :: x = (x - 1);<0> :: {
+ ... 
+}
+<0> :: while (true)
+ ... <-1> :: return x;<-1>} :: top{}
+heap: fun<main>, 1, 
+env: x: 1, main: fun<main>, 
+}
+--- handle value ptr<1> with x = (x - 1);<1>(ptr<1>,) --->
+{
+stack: main{(x - 1)<-1> :: x = (x - 1);<1>(ptr<1>,) :: {
+ ... 
+}
+<0> :: while (true)
+ ... <-1> :: return x;<-1>} :: top{}
+heap: fun<main>, 1, 
+env: x: 1, main: fun<main>, 
+}
+--- step exp (x - 1) --->
+{
+stack: main{x<-1> :: (x - 1)<0> :: x = (x - 1);<1>(ptr<1>,) :: {
+ ... 
+}
+<0> :: while (true)
+ ... <-1> :: return x;<-1>} :: top{}
+heap: fun<main>, 1, 
+env: x: 1, main: fun<main>, 
+}
+--- step exp x --->
+{
+stack: main{1<-1> :: (x - 1)<0> :: x = (x - 1);<1>(ptr<1>,) :: {
+ ... 
+}
+<0> :: while (true)
+ ... <-1> :: return x;<-1>} :: top{}
+heap: fun<main>, 1, 
+env: x: 1, main: fun<main>, 
+}
+--- handle value 1 with (x - 1)<1>(1,) --->
+{
+stack: main{1<-1> :: (x - 1)<1>(1,) :: x = (x - 1);<1>(ptr<1>,) :: {
+ ... 
+}
+<0> :: while (true)
+ ... <-1> :: return x;<-1>} :: top{}
+heap: fun<main>, 1, 
+env: x: 1, main: fun<main>, 
+}
+--- step exp 1 --->
+{
+stack: main{1<-1> :: (x - 1)<1>(1,) :: x = (x - 1);<1>(ptr<1>,) :: {
+ ... 
+}
+<0> :: while (true)
+ ... <-1> :: return x;<-1>} :: top{}
+heap: fun<main>, 1, 
+env: x: 1, main: fun<main>, 
+}
+--- handle value 1 with (x - 1)<2>(1,1,) --->
+{
+stack: main{0<-1> :: x = (x - 1);<1>(ptr<1>,) :: {
+ ... 
+}
+<0> :: while (true)
+ ... <-1> :: return x;<-1>} :: top{}
+heap: fun<main>, 1, 
+env: x: 1, main: fun<main>, 
+}
+--- handle value 0 with x = (x - 1);<2>(ptr<1>,0,) --->
+{
+stack: main{{
+ ... 
+}
+<0> :: while (true)
+ ... <-1> :: return x;<-1>} :: top{}
+heap: fun<main>, 0, 
+env: x: 0, main: fun<main>, 
+}
+--- step stmt {
+ ... 
+}
+ --->
+{
+stack: main{while (true)
+ ... <-1> :: return x;<-1>} :: top{}
+heap: fun<main>, 0, 
+env: x: 0, main: fun<main>, 
+}
+--- step stmt while (true)
+ ...  --->
+{
+stack: main{true<-1> :: while (true)
+ ... <0> :: return x;<-1>} :: top{}
+heap: fun<main>, 0, 
+env: x: 0, main: fun<main>, 
+}
+--- step exp true --->
+{
+stack: main{true<-1> :: while (true)
+ ... <0> :: return x;<-1>} :: top{}
+heap: fun<main>, 0, 
+env: x: 0, main: fun<main>, 
+}
+--- handle value true with while (true)
+ ... <1>(true,) --->
+{
+stack: main{{
+ ... 
+}
+<-1> :: while (true)
+ ... <-1> :: return x;<-1>} :: top{}
+heap: fun<main>, 0, 
+env: x: 0, main: fun<main>, 
+}
+--- step stmt {
+ ... 
+}
+ --->
+{
+stack: main{if ((x == 0))
+ ... 
+else
+ ... <-1> :: {
+ ... 
+}
+<0> :: while (true)
+ ... <-1> :: return x;<-1>} :: top{}
+heap: fun<main>, 0, 
+env: x: 0, main: fun<main>, 
+}
+--- step stmt if ((x == 0))
+ ... 
+else
+ ...  --->
+{
+stack: main{if ((x == 0))
+ ... 
+else
+ ... <-1> :: {
+ ... 
+}
+<0> :: while (true)
+ ... <-1> :: return x;<-1>} :: top{}
+heap: fun<main>, 0, 
+env: x: 0, main: fun<main>, 
+}
+--- step stmt if ((x == 0))
+ ... 
+else
+ ...  --->
+{
+stack: main{(x == 0)<-1> :: if ((x == 0))
+ ... 
+else
+ ... <0> :: {
+ ... 
+}
+<0> :: while (true)
+ ... <-1> :: return x;<-1>} :: top{}
+heap: fun<main>, 0, 
+env: x: 0, main: fun<main>, 
+}
+--- step exp (x == 0) --->
+{
+stack: main{x<-1> :: (x == 0)<0> :: if ((x == 0))
+ ... 
+else
+ ... <0> :: {
+ ... 
+}
+<0> :: while (true)
+ ... <-1> :: return x;<-1>} :: top{}
+heap: fun<main>, 0, 
+env: x: 0, main: fun<main>, 
+}
+--- step exp x --->
+{
+stack: main{0<-1> :: (x == 0)<0> :: if ((x == 0))
+ ... 
+else
+ ... <0> :: {
+ ... 
+}
+<0> :: while (true)
+ ... <-1> :: return x;<-1>} :: top{}
+heap: fun<main>, 0, 
+env: x: 0, main: fun<main>, 
+}
+--- handle value 0 with (x == 0)<1>(0,) --->
+{
+stack: main{0<-1> :: (x == 0)<1>(0,) :: if ((x == 0))
+ ... 
+else
+ ... <0> :: {
+ ... 
+}
+<0> :: while (true)
+ ... <-1> :: return x;<-1>} :: top{}
+heap: fun<main>, 0, 
+env: x: 0, main: fun<main>, 
+}
+--- step exp 0 --->
+{
+stack: main{0<-1> :: (x == 0)<1>(0,) :: if ((x == 0))
+ ... 
+else
+ ... <0> :: {
+ ... 
+}
+<0> :: while (true)
+ ... <-1> :: return x;<-1>} :: top{}
+heap: fun<main>, 0, 
+env: x: 0, main: fun<main>, 
+}
+--- handle value 0 with (x == 0)<2>(0,0,) --->
+{
+stack: main{true<-1> :: if ((x == 0))
+ ... 
+else
+ ... <0> :: {
+ ... 
+}
+<0> :: while (true)
+ ... <-1> :: return x;<-1>} :: top{}
+heap: fun<main>, 0, 
+env: x: 0, main: fun<main>, 
+}
+--- handle value true with if ((x == 0))
+ ... 
+else
+ ... <1>(true,) --->
+{
+stack: main{break;<-1> :: {
+ ... 
+}
+<0> :: while (true)
+ ... <-1> :: return x;<-1>} :: top{}
+heap: fun<main>, 0, 
+env: x: 0, main: fun<main>, 
+}
+--- step stmt break; --->
+{
+stack: main{return x;<-1>} :: top{}
+heap: fun<main>, 0, 
+env: x: 0, main: fun<main>, 
+}
+--- step stmt return x; --->
+{
+stack: main{x<-1> :: return x;<0>} :: top{}
+heap: fun<main>, 0, 
+env: x: 0, main: fun<main>, 
+}
+--- step exp x --->
+{
+stack: main{0<-1> :: return x;<0>} :: top{}
+heap: fun<main>, 0, 
+env: x: 0, main: fun<main>, 
+}
+--- handle value 0 with return x;<1>(0,) --->
+{
+stack: top{0<-1>}
+heap: fun<main>, !!0, 
+env: main: fun<main>, 
+}
+result: 0

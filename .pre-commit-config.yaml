@@ -24,6 +24,8 @@ repos:
       - id: mixed-line-ending
         args: ['--fix=lf']
       - id: trailing-whitespace
+        exclude: '^(.*/testdata/.*\.golden)$'
+
   - repo: https://github.com/google/pre-commit-tool-hooks
     rev: 1d04a2848ac54d64bd6474ccec69aac45fa88414 # frozen: v1.1.1
     hooks:
@@ -34,7 +36,22 @@ repos:
             Part of the Carbon Language project, under the Apache License v2.0 with LLVM
             Exceptions. See /LICENSE for license information.
             SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
-        exclude: '^(website/(firebase/.firebaserc|jekyll/(Gemfile.lock|theme/.*))|.bazelversion|compile_flags.txt|.*\.def)$'
+          - --custom_format
+          - '\.6c$'
+          - ''
+          - '// '
+          - ''
+          - --custom_format
+          - '\.lpp$'
+          - '/*'
+          - ''
+          - '*/'
+          - --custom_format
+          - '\.ypp$'
+          - ''
+          - '// '
+          - ''
+        exclude: '^(website/(firebase/.firebaserc|jekyll/(Gemfile.lock|theme/.*))|.bazelversion|compile_flags.txt|.*\.def|.*/testdata/.*\.golden)$'
       - id: check-google-doc-style
       - id: markdown-toc
   - repo: https://github.com/codespell-project/codespell
