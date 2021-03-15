@@ -334,8 +334,9 @@ auto ParseTree::Parser::ParseFunctionDeclaration() -> Node {
 }
 
 auto ParseTree::Parser::ParseEmptyDeclaration() -> Node {
-  return AddLeafNode(ParseNodeKind::EmptyDeclaration(),
-                     Consume(TokenKind::Semi()));
+  auto semi = ConsumeIf(TokenKind::Semi());
+  assert(semi && "Empty declaration does not start with `;`.");
+  return AddLeafNode(ParseNodeKind::EmptyDeclaration(), *semi);
 }
 
 auto ParseTree::Parser::ParseDeclaration() -> llvm::Optional<Node> {
