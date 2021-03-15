@@ -1,0 +1,14 @@
+********** source program **********
+var Int : flag = true
+fn main () -> Int {
+return 0;
+
+}
+********** type checking **********
+--- step exp Int --->
+--- step exp Int --->
+--- step exp Int --->
+7: type error in initializer of variable
+expected: Int
+actual: Bool
+EXIT CODE: 255

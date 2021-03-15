@@ -83,11 +83,17 @@ TEST_F(StringLiteralTest, StringLiteralBounds) {
   llvm::StringLiteral invalid[] = {
       R"(")",
       R"("""
-      "")",  R"("\)", R"("\")", R"("\\)", R"("\\\")",
+      "")",
+      R"("\)",  //
+      R"("\")",
+      R"("\\)",  //
+      R"("\\\")",
       R"("""
       )",
       R"(#"""
       """)",
+      R"(" \
+      ")",
   };
 
   for (llvm::StringLiteral test : invalid) {

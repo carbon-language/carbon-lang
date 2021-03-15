@@ -1,0 +1,26 @@
+********** source program **********
+var Int : x = y
+var Int : y = 0
+fn main () -> Int {
+return x;
+
+}
+********** type checking **********
+--- step exp Int --->
+--- step exp Int --->
+--- step exp Int --->
+--- step exp Int --->
+--- step exp Int --->
+--- step exp Int --->
+
+********** type checking complete **********
+var Int : x = y
+var Int : y = 0
+fn main () -> Int {
+return x;
+}
+********** starting execution **********
+********** initializing globals **********
+--- step exp y --->
+8: could not find `y`
+EXIT CODE: 255

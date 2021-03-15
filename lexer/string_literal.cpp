@@ -129,15 +129,17 @@ auto StringLiteralToken::Lex(llvm::StringRef source_text)
     if (source_text.empty()) {
       return llvm::None;
     }
-    if (!multi_line && source_text.startswith("\n")) {
-      return llvm::None;
-    }
 
     // Consume an escape sequence marker if present.
     (void)source_text.consume_front(escape);
+
     // Then consume one more character, either of the content or of an
-    // escape sequence. This relies on multi-character escape sequences
-    // not containing an embedded and unescaped terminator or newline.
+    // escape sequence. This can be a newline in a multi-line string literal.
+    // This relies on multi-character escape sequences not containing an
+    // embedded and unescaped terminator or newline.
+    if (!multi_line && source_text.startswith("\n")) {
+      return llvm::None;
+    }
     source_text = source_text.substr(1);
     content_end = source_text.begin();
   }
@@ -354,8 +356,8 @@ static auto ExpandEscapeSequencesAndRemoveIndent(DiagnosticEmitter& emitter,
       }
 
       if (contents.consume_front("\n")) {
-        // An escaped ends the line without producing any content and without
-        // trimming trailing whitespace.
+        // An escaped newline ends the line without producing any content and
+        // without trimming trailing whitespace.
         break;
       }
 
