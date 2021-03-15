@@ -22,8 +22,8 @@ namespace Carbon {
 
 State* state = nullptr;
 
-auto PatternMatch(Value* pat, Value* val, Env*, std::list<std::string>*, int)
-    -> Env*;
+auto PatternMatch(Value* pat, Value* val, Env, std::list<std::string>*, int)
+    -> std::optional<Env>;
 void HandleValue();
 
 template <class T>
@@ -38,7 +38,9 @@ static auto FindField(const std::string& field,
   return std::nullopt;
 }
 
-/**** Auxiliary Functions ****/
+//
+// Auxiliary Functions
+//
 
 auto AllocateValue(Value* v) -> Address {
   // Putting the following two side effects together in this function
@@ -135,16 +137,17 @@ void KillValue(Value* val) {
   }
 }
 
-void PrintEnv(Env* env, std::ostream& out) {
-  if (env) {
-    std::cout << env->key << ": ";
-    PrintValue(state->heap[env->value], out);
-    std::cout << ", ";
-    PrintEnv(env->next, out);
+void PrintEnv(Env env, std::ostream& out) {
+  for (const auto& [name, value] : env) {
+    out << name << ": ";
+    PrintValue(state->heap[value], out);
+    out << ", ";
   }
 }
 
-/***** Frame and State Operations *****/
+//
+// Frame and State Operations
+//
 
 void PrintFrame(Frame* frame, std::ostream& out) {
   out << frame->name;
@@ -174,7 +177,7 @@ void PrintHeap(const std::vector<Value*>& heap, std::ostream& out) {
   }
 }
 
-auto CurrentEnv(State* state) -> Env* {
+auto CurrentEnv(State* state) -> Env {
   Frame* frame = state->stack.Top();
   return frame->scopes.Top()->env;
 }
@@ -190,7 +193,9 @@ void PrintState(std::ostream& out) {
   out << std::endl << "}" << std::endl;
 }
 
-/***** Auxiliary Functions *****/
+//
+// More Auxiliary Functions
+//
 
 auto ValToInt(Value* v, int line_num) -> int {
   CheckAlive(v, line_num);
@@ -252,27 +257,27 @@ auto EvalPrim(Operator op, const std::vector<Value*>& args, int line_num)
   }
 }
 
-Env* globals;
+// Globally-defined entities, such as functions, structs, choices.
+Env globals;
 
 void InitGlobals(std::list<Declaration>* fs) {
-  globals = nullptr;
   for (auto const& d : *fs) {
     d.InitGlobals(globals);
   }
 }
 
-auto ChoiceDeclaration::InitGlobals(Env*& globals) const -> void {
+auto ChoiceDeclaration::InitGlobals(Env& globals) const -> void {
   auto alts = new VarValues();
   for (auto kv : alternatives) {
-    auto t = ToType(line_num, InterpExp(nullptr, kv.second));
+    auto t = ToType(line_num, InterpExp(Env(), kv.second));
     alts->push_back(make_pair(kv.first, t));
   }
   auto ct = MakeChoiceTypeVal(name, alts);
   auto a = AllocateValue(ct);
-  globals = new Env(name, a, globals);
+  globals.Set(name, a);
 }
 
-auto StructDeclaration::InitGlobals(Env*& globals) const -> void {
+auto StructDeclaration::InitGlobals(Env& globals) const -> void {
   auto fields = new VarValues();
   auto methods = new VarValues();
   for (auto i = definition.members->begin(); i != definition.members->end();
@@ -280,7 +285,7 @@ auto StructDeclaration::InitGlobals(Env*& globals) const -> void {
     switch ((*i)->tag) {
       case MemberKind::FieldMember: {
         auto t =
-            ToType(definition.line_num, InterpExp(nullptr, (*i)->u.field.type));
+            ToType(definition.line_num, InterpExp(Env(), (*i)->u.field.type));
         fields->push_back(make_pair(*(*i)->u.field.name, t));
         break;
       }
@@ -288,15 +293,23 @@ auto StructDeclaration::InitGlobals(Env*& globals) const -> void {
   }
   auto st = MakeStructTypeVal(*definition.name, fields, methods);
   auto a = AllocateValue(st);
-  globals = new Env(*definition.name, a, globals);
+  globals.Set(*definition.name, a);
 }
 
-auto FunctionDeclaration::InitGlobals(Env*& globals) const -> void {
-  Env* env = nullptr;
+auto FunctionDeclaration::InitGlobals(Env& globals) const -> void {
+  Env env;
   auto pt = InterpExp(env, definition->param_pattern);
   auto f = MakeFunVal(definition->name, pt, definition->body);
   Address a = AllocateValue(f);
-  globals = new Env(definition->name, a, globals);
+  globals.Set(definition->name, a);
+}
+
+// Adds an entry in `globals` mapping the variable's name to the
+// result of evaluating the initializer.
+auto VariableDeclaration::InitGlobals(Env& globals) const -> void {
+  auto v = InterpExp(globals, initializer);
+  Address a = AllocateValue(v);
+  globals.Set(name, a);
 }
 
 //    { S, H} -> { { C, E, F} :: S, H}
@@ -309,15 +322,15 @@ void CallFunction(int line_num, std::vector<Value*> operas, State* state) {
     case ValKind::FunV: {
       // Bind arguments to parameters
       std::list<std::string> params;
-      Env* env = PatternMatch(operas[0]->u.fun.param, operas[1], globals,
-                              &params, line_num);
-      if (!env) {
+      std::optional<Env> envWithMatches = PatternMatch(
+          operas[0]->u.fun.param, operas[1], globals, &params, line_num);
+      if (!envWithMatches) {
         std::cerr << "internal error in call_function, pattern match failed"
                   << std::endl;
         exit(-1);
       }
       // Create the new frame and push it on the stack
-      auto* scope = new Scope(env, params);
+      auto* scope = new Scope(*envWithMatches, params);
       auto* frame = new Frame(*operas[0]->u.fun.name, Stack(scope),
                               Stack(MakeStmtAct(operas[0]->u.fun.body)));
       state->stack.Push(frame);
@@ -348,8 +361,12 @@ void CallFunction(int line_num, std::vector<Value*> operas, State* state) {
 
 void KillScope(int line_num, Scope* scope) {
   for (const auto& l : scope->locals) {
-    Address a = Lookup(line_num, scope->env, l, PrintErrorString);
-    KillValue(state->heap[a]);
+    std::optional<Address> a = scope->env.Get(l);
+    if (!a) {
+      std::cerr << "internal error in KillScope" << std::endl;
+      exit(-1);
+    }
+    KillValue(state->heap[*a]);
   }
 }
 
@@ -395,9 +412,13 @@ auto ToValue(Expression* value) -> Value* {
   }
 }
 
-// Returns 0 if the value doesn't match the pattern.
-auto PatternMatch(Value* p, Value* v, Env* env, std::list<std::string>* vars,
-                  int line_num) -> Env* {
+// Returns an updated environment that includes the bindings of
+//    pattern variables to their matched values, if matching succeeds.
+//
+// The names of the pattern variables are added to the vars parameter.
+// Returns nullopt if the value doesn't match the pattern.
+auto PatternMatch(Value* p, Value* v, Env env, std::list<std::string>* vars,
+                  int line_num) -> std::optional<Env> {
   if (tracing_output) {
     std::cout << "pattern_match(";
     PrintValue(p, std::cout);
@@ -409,7 +430,8 @@ auto PatternMatch(Value* p, Value* v, Env* env, std::list<std::string>* vars,
     case ValKind::VarPatV: {
       Address a = AllocateValue(CopyVal(v, line_num));
       vars->push_back(*p->u.var_pat.name);
-      return new Env(*p->u.var_pat.name, a, env);
+      env.Set(*p->u.var_pat.name, a);
+      return env;
     }
     case ValKind::TupleV:
       switch (v->tag) {
@@ -427,9 +449,13 @@ auto PatternMatch(Value* p, Value* v, Env* env, std::list<std::string>* vars,
               std::cerr << std::endl;
               exit(-1);
             }
-            env = PatternMatch(state->heap[elt.second], state->heap[*a], env,
-                               vars, line_num);
-          }
+            std::optional<Env> envWithMatches = PatternMatch(
+                state->heap[elt.second], state->heap[*a], env, vars, line_num);
+            if (!envWithMatches) {
+              return std::nullopt;
+            }
+            env = *envWithMatches;
+          }  // for
           return env;
         }
         default:
@@ -444,10 +470,14 @@ auto PatternMatch(Value* p, Value* v, Env* env, std::list<std::string>* vars,
         case ValKind::AltV: {
           if (*p->u.alt.choice_name != *v->u.alt.choice_name ||
               *p->u.alt.alt_name != *v->u.alt.alt_name) {
-            return nullptr;
+            return std::nullopt;
           }
-          env = PatternMatch(p->u.alt.arg, v->u.alt.arg, env, vars, line_num);
-          return env;
+          std::optional<Env> envWithMatches =
+              PatternMatch(p->u.alt.arg, v->u.alt.arg, env, vars, line_num);
+          if (!envWithMatches) {
+            return std::nullopt;
+          }
+          return *envWithMatches;
         }
         default:
           std::cerr
@@ -459,20 +489,23 @@ auto PatternMatch(Value* p, Value* v, Env* env, std::list<std::string>* vars,
       }
     case ValKind::FunctionTV:
       switch (v->tag) {
-        case ValKind::FunctionTV:
-          env = PatternMatch(p->u.fun_type.param, v->u.fun_type.param, env,
-                             vars, line_num);
-          env = PatternMatch(p->u.fun_type.ret, v->u.fun_type.ret, env, vars,
-                             line_num);
-          return env;
+        case ValKind::FunctionTV: {
+          std::optional<Env> envWithMatches = PatternMatch(
+              p->u.fun_type.param, v->u.fun_type.param, env, vars, line_num);
+          if (!envWithMatches) {
+            return std::nullopt;
+          }
+          return PatternMatch(p->u.fun_type.ret, v->u.fun_type.ret,
+                              *envWithMatches, vars, line_num);
+        }
         default:
-          return nullptr;
+          return std::nullopt;
       }
     default:
       if (ValueEqual(p, v, line_num)) {
         return env;
       } else {
-        return nullptr;
+        return std::nullopt;
       }
   }
 }
@@ -542,7 +575,7 @@ void PatternAssignment(Value* pat, Value* val, int line_num) {
   }
 }
 
-/***** state transitions for lvalues *****/
+// State transitions for lvalues.
 
 void StepLvalue() {
   Frame* frame = state->stack.Top();
@@ -557,9 +590,14 @@ void StepLvalue() {
     case ExpressionKind::Variable: {
       //    { {x :: C, E, F} :: S, H}
       // -> { {E(x) :: C, E, F} :: S, H}
-      Address a = Lookup(exp->line_num, CurrentEnv(state),
-                         *(exp->u.variable.name), PrintErrorString);
-      Value* v = MakePtrVal(a);
+      std::optional<Address> pointer =
+          CurrentEnv(state).Get(*(exp->u.variable.name));
+      if (!pointer) {
+        std::cerr << exp->line_num << ": could not find `"
+                  << *(exp->u.variable.name) << "`" << std::endl;
+        exit(-1);
+      }
+      Value* v = MakePtrVal(*pointer);
       CheckAlive(v, exp->line_num);
       frame->todo.Pop();
       frame->todo.Push(MakeValAct(v));
@@ -604,7 +642,7 @@ void StepLvalue() {
   }
 }
 
-/***** state transitions for expressions *****/
+// State transitions for expressions.
 
 void StepExp() {
   Frame* frame = state->stack.Top();
@@ -649,11 +687,16 @@ void StepExp() {
     }
     case ExpressionKind::Variable: {
       // { {x :: C, E, F} :: S, H} -> { {H(E(x)) :: C, E, F} :: S, H}
-      Address a = Lookup(exp->line_num, CurrentEnv(state),
-                         *(exp->u.variable.name), PrintErrorString);
-      Value* v = state->heap[a];
+      std::optional<Address> pointer =
+          CurrentEnv(state).Get(*(exp->u.variable.name));
+      if (!pointer) {
+        std::cerr << exp->line_num << ": could not find `"
+                  << *(exp->u.variable.name) << "`" << std::endl;
+        exit(-1);
+      }
+      Value* pointee = state->heap[*pointer];
       frame->todo.Pop(1);
-      frame->todo.Push(MakeValAct(v));
+      frame->todo.Push(MakeValAct(pointee));
       break;
     }
     case ExpressionKind::Integer:
@@ -719,8 +762,6 @@ void StepExp() {
   }  // switch (exp->tag)
 }
 
-/***** state transitions for statements *****/
-
 auto IsWhileAct(Action* act) -> bool {
   switch (act->tag) {
     case ActionKind::StatementAction:
@@ -748,6 +789,8 @@ auto IsBlockAct(Action* act) -> bool {
       return false;
   }
 }
+
+// State transitions for statements.
 
 void StepStmt() {
   Frame* frame = state->stack.Top();
@@ -918,7 +961,7 @@ void InsertDelete(Action* del, Stack<Action*>& todo) {
   }
 }
 
-/***** State transition for handling a value *****/
+// State transition for handling a value.
 
 void HandleValue() {
   Frame* frame = state->stack.Top();
@@ -1150,17 +1193,18 @@ void HandleValue() {
             // -> { { C, E(x := a), F} :: S, H(a := copy(v))}
             Value* v = act->results[0];
             Value* p = act->results[1];
-            // Address a = AllocateValue(CopyVal(v));
-            frame->scopes.Top()->env =
+
+            std::optional<Env> envWithMatches =
                 PatternMatch(p, v, frame->scopes.Top()->env,
                              &frame->scopes.Top()->locals, stmt->line_num);
-            if (!frame->scopes.Top()->env) {
+            if (!envWithMatches) {
               std::cerr
                   << stmt->line_num
                   << ": internal error in variable definition, match failed"
                   << std::endl;
               exit(-1);
             }
+            frame->scopes.Top()->env = *envWithMatches;
             frame->todo.Pop(2);
           }
           break;
@@ -1244,9 +1288,10 @@ void HandleValue() {
             auto pat = act->results[clause_num + 1];
             auto env = CurrentEnv(state);
             std::list<std::string> vars;
-            Env* new_env = PatternMatch(pat, v, env, &vars, stmt->line_num);
-            if (new_env) {  // we have a match, start the body
-              auto* new_scope = new Scope(new_env, vars);
+            std::optional<Env> envWithMatches =
+                PatternMatch(pat, v, env, &vars, stmt->line_num);
+            if (envWithMatches) {  // we have a match, start the body
+              auto* new_scope = new Scope(*envWithMatches, vars);
               frame->scopes.Push(new_scope);
               Statement* body_block = MakeBlock(stmt->line_num, c->second);
               Action* body_act = MakeStmtAct(body_block);
@@ -1255,11 +1300,12 @@ void HandleValue() {
               frame->todo.Push(body_act);
               frame->todo.Push(MakeStmtAct(c->second));
             } else {
+              // this case did not match, moving on
               act->pos++;
               clause_num = (act->pos - 1) / 2;
               if (clause_num <
                   static_cast<int>(stmt->u.match_stmt.clauses->size())) {
-                // move on to the next clause
+                // interpret the next clause
                 c = stmt->u.match_stmt.clauses->begin();
                 std::advance(c, clause_num);
                 frame->todo.Pop(1);
@@ -1366,7 +1412,7 @@ auto InterpProgram(std::list<Declaration>* fs) -> int {
 }
 
 // Interpret an expression at compile-time.
-auto InterpExp(Env* env, Expression* e) -> Value* {
+auto InterpExp(Env env, Expression* e) -> Value* {
   auto todo = Stack(MakeExpAct(e));
   auto* scope = new Scope(env, std::list<std::string>());
   auto* frame = new Frame("InterpExp", Stack(scope), todo);

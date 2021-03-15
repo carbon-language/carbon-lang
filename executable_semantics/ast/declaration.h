@@ -11,18 +11,18 @@
 #include "executable_semantics/ast/function_definition.h"
 #include "executable_semantics/ast/member.h"
 #include "executable_semantics/ast/struct_definition.h"
+#include "executable_semantics/interpreter/dictionary.h"
 
 namespace Carbon {
 
 struct Value;
-template <class K, class V>
-struct AssocList;
+
 using Address = unsigned int;
-using TypeEnv = AssocList<std::string, Value*>;
-using Env = AssocList<std::string, Address>;
+using TypeEnv = Dictionary<std::string, Value*>;
+using Env = Dictionary<std::string, Address>;
 
 /// TODO:explain this. Also name it if necessary. Consult with jsiek.
-using ExecutionEnvironment = std::pair<TypeEnv*, Env*>;
+using ExecutionEnvironment = std::pair<TypeEnv, Env>;
 
 /// An existential AST declaration satisfying the Declaration concept.
 class Declaration {
@@ -38,10 +38,18 @@ class Declaration {
  public:  // Declaration concept API, in addition to ValueSemantic.
   void Print() const { box->Print(); }
   auto Name() const -> std::string { return box->Name(); }
-  auto TypeChecked(TypeEnv* env, Env* ct_env) const -> Declaration {
+
+  // Signals a type error if the declaration is not well typed,
+  // otherwise returns this declaration with annotated types.
+  //
+  // - Parameter env: types of run-time names.
+  // - Paraemter ct_env: values of compile-time names.
+  auto TypeChecked(TypeEnv env, Env ct_env) const -> Declaration {
     return box->TypeChecked(env, ct_env);
   }
-  void InitGlobals(Env*& globals) const { return box->InitGlobals(globals); }
+  // Add an entry in the runtime global symbol table for this declaration.
+  void InitGlobals(Env& globals) const { return box->InitGlobals(globals); }
+  // Add an entry in the compile time global symbol tables for this declaration.
   auto TopLevel(ExecutionEnvironment& e) const -> void {
     return box->TopLevel(e);
   }
@@ -60,9 +68,8 @@ class Declaration {
     virtual ~Box() {}
     virtual auto Print() const -> void = 0;
     virtual auto Name() const -> std::string = 0;
-    virtual auto TypeChecked(TypeEnv* env, Env* ct_env) const
-        -> Declaration = 0;
-    virtual auto InitGlobals(Env*& globals) const -> void = 0;
+    virtual auto TypeChecked(TypeEnv env, Env ct_env) const -> Declaration = 0;
+    virtual auto InitGlobals(Env& globals) const -> void = 0;
     virtual auto TopLevel(ExecutionEnvironment&) const -> void = 0;
   };
 
@@ -75,10 +82,10 @@ class Declaration {
 
     auto Print() const -> void override { return content.Print(); }
     auto Name() const -> std::string override { return content.Name(); }
-    auto TypeChecked(TypeEnv* env, Env* ct_env) const -> Declaration override {
+    auto TypeChecked(TypeEnv env, Env ct_env) const -> Declaration override {
       return content.TypeChecked(env, ct_env);
     }
-    auto InitGlobals(Env*& globals) const -> void override {
+    auto InitGlobals(Env& globals) const -> void override {
       content.InitGlobals(globals);
     }
     auto TopLevel(ExecutionEnvironment& e) const -> void override {
@@ -98,8 +105,8 @@ struct FunctionDeclaration {
 
   auto Print() const -> void;
   auto Name() const -> std::string;
-  auto TypeChecked(TypeEnv* env, Env* ct_env) const -> Declaration;
-  auto InitGlobals(Env*& globals) const -> void;
+  auto TypeChecked(TypeEnv env, Env ct_env) const -> Declaration;
+  auto InitGlobals(Env& globals) const -> void;
   auto TopLevel(ExecutionEnvironment&) const -> void;
 };
 
@@ -110,8 +117,8 @@ struct StructDeclaration {
 
   void Print() const;
   auto Name() const -> std::string;
-  auto TypeChecked(TypeEnv* env, Env* ct_env) const -> Declaration;
-  void InitGlobals(Env*& globals) const;
+  auto TypeChecked(TypeEnv env, Env ct_env) const -> Declaration;
+  void InitGlobals(Env& globals) const;
   auto TopLevel(ExecutionEnvironment&) const -> void;
 };
 
@@ -126,9 +133,32 @@ struct ChoiceDeclaration {
 
   void Print() const;
   auto Name() const -> std::string;
-  auto TypeChecked(TypeEnv* env, Env* ct_env) const -> Declaration;
-  void InitGlobals(Env*& globals) const;
+  auto TypeChecked(TypeEnv env, Env ct_env) const -> Declaration;
+  void InitGlobals(Env& globals) const;
   auto TopLevel(ExecutionEnvironment&) const -> void;
+};
+
+// Global variable definition implements the Declaration concept.
+class VariableDeclaration {
+ public:
+  VariableDeclaration(int sourceLocation, std::string name, Expression* type,
+                      Expression* initializer)
+      : sourceLocation(sourceLocation),
+        name(name),
+        type(type),
+        initializer(initializer) {}
+
+  void Print() const;
+  auto Name() const -> std::string;
+  auto TypeChecked(TypeEnv env, Env ct_env) const -> Declaration;
+  void InitGlobals(Env& globals) const;
+  auto TopLevel(ExecutionEnvironment&) const -> void;
+
+ private:
+  int sourceLocation;
+  std::string name;
+  Expression* type;
+  Expression* initializer;
 };
 
 }  // namespace Carbon
