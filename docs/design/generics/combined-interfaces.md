@@ -53,6 +53,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
             -   [Type bounds on associated types in declarations](#type-bounds-on-associated-types-in-declarations)
             -   [Type bounds on associated types in interfaces](#type-bounds-on-associated-types-in-interfaces)
             -   [Naming constraints](#naming-constraints)
+            -   [Type bound with interface argument](#type-bound-with-interface-argument)
         -   [Two types must be the same](#two-types-must-be-the-same)
         -   [Combining constraints](#combining-constraints)
             -   [Naming constraints](#naming-constraints-1)
@@ -97,6 +98,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Generic associated types](#generic-associated-types)
     -   [Higher-ranked types](#higher-ranked-types)
     -   [Inferring associated types](#inferring-associated-types)
+    -   [Field requirements](#field-requirements)
 -   [Notes](#notes)
 -   [Broken links footnote](#broken-links-footnote)
 
@@ -772,7 +774,7 @@ structural interface HasF {
   method (Self: this) F();
 }
 
-// Template, not generic, since this relies on structural/duck typing.
+// Template, not generic, since this relies on structural typing.
 fn CallF[HasF:$$ T](T: x) {
   x.F();
 }
@@ -799,8 +801,9 @@ ViaB(x);
 CallF(x);
 ```
 
-We could similarly support associated constant and data field constraints. This
-is future work though, as it does not directly impact generics in Carbon.
+We could similarly support associated constant and
+[instance data field](#field-requirements) requirements. This is future work
+though, as it does not directly impact generics in Carbon.
 
 ## Combining interfaces by adding type-types
 
@@ -2130,6 +2133,18 @@ alias RandomAccessContainer =
 // vs. `where` clause:
 alias RandomAccessContainer = ContainerInterface
     where RandomAccessContainer.IteratorType as RandomAccessIterator;
+```
+
+##### Type bound with interface argument
+
+Use case: we want a function that can take two values `x` and `y`, with
+potentially different types, and multiply them. So `x` implements the
+`MultipliesBy(R)` interface for `R`, the type of `y`.
+
+```
+fn F[Type:$ R, MutipliesBy(R):$ L](L: x, R: y) {
+  x * y;
+}
 ```
 
 #### Two types must be the same
@@ -3777,6 +3792,10 @@ the [Rust ops module](https://doc.rust-lang.org/std/ops/index.html), and the
 list of
 [Rust operators and corresponding traits](https://doc.rust-lang.org/book/appendix-02-operators.html#operators).
 
+TODO: We absolutely want to support mixing types when overloading operators. For
+example, we should support things like `Point + Vector = Point`, and
+`Point - Point = Vector`.
+
 TODO: should implement one function to get both `==` and `!=`, or another
 function to get those plus all comparison operators (`<`, `<=`, `>=`, `>`, and
 maybe `<=>`).
@@ -3788,11 +3807,37 @@ cases. See
 Rust added defaults for trait parameters for this use case, see
 [Default Generic Type Parameters and Operator Overloading](https://doc.rust-lang.org/book/ch19-03-advanced-traits.html#default-generic-type-parameters-and-operator-overloading)
 
+**Rejected alternative:** How do we represent binary operations like `Addable`?
+Could the interface be defined on the pair of types of the two arguments
+somehow?
+
+```
+fn F(A: a, B: b, ..., Addable(A, B):$ T) where (A, B) : Addable(A, B) {
+  ((A, B) as T).DoTheAdd(x, y)
+}
+```
+
+There are a couple of problems with the idea of an interface implemented for the
+`(LeftType, RightType)` tuple. How does the impl get passed in? How do you say
+that an interface is only for pairs? These problems suggest it is not worth
+trying to do anything special for this edge case. Rust considered this approach
+and instead decided that the left-hand type implements the interface and the
+right-hand type is a parameter that defaults to being equal to the left-hand
+type.
+
+```
+interface Addable(Type:$ Right = Self) {
+  // Assuming we allow defaults for associated types.
+  var Type:$ AddResult = Self;
+  fn Add(Self: lhs, Right: rhs) -> AddResult;
+}
+```
+
 ### Impls with state
 
-Impls where the impl itself has state. (from richardsmith@) Use case:
-implementing interfaces for a flyweight in a Flyweight pattern where the Impl
-needs a reference to a key -> info map.
+Impls where the impl itself has state. (from @zygoloid). Use case: implementing
+interfaces for a flyweight in a Flyweight pattern where the Impl needs a
+reference to a key -> info map.
 
 ### Generic associated types
 
@@ -3884,6 +3929,17 @@ but may be tricky in the presence of function overloading or something where we
 would prefer the user to be explicit (so, for example, the name `T` was visible
 in the definition of `S`).
 
+### Field requirements
+
+To match the expressivity of inheritance, we might want to allow interfaces to
+express the requirement that any implementing type has a particular field. We
+might want to restrict what can be done with that field, using capabilities like
+"read", "write", and "address of" (which implies read and write). Swift also has
+a "modify" capability implemented using coroutines, without requiring there be a
+value of the right type we can take the address of. If we do expose an "address
+of" capability, it will have to be a real address since we don't expect any sort
+of proxy to be able to be used instead.
+
 ## Notes
 
 These are notes from discussions after this document was first written that have
@@ -3892,36 +3948,15 @@ not yet been incorporated into the main text above.
 -   Can use IDE tooling to show all methods including external impl,
     automatically switching to [qualified member names](#qualified-member-names)
     where needed to get that method.
--   Instance fields: capabilities include read, write, address-of (implies read
-    & write?). Swift also has a modify capability implemented using coroutines.
-    If we have address-of, it must be a real address.
 -   Question: C++ maybe gets wrong that you can take address of any member.
     Greatly simplifies sanitizers, makes reasoning about what side effects can
     affect members for correctness easier. Maybe opt-in feature? Similarly for
     local variables. Maybe can call function taking a pointer from a member
     function as long as it doesn't capture? Need to firm up design for instance
     fields before interfaces for instance fields.
--   Concern about interfaces for operator overloading: Point + Vector = Point,
-    Point - Point = Vector
--   Concern about type-type model: adds friction to binary operators -- is left
-    or right type is self? Couple of problems with the idea of interface
-    implemented for the (LeftType, RightType) tuple. How does the impl get
-    passed in? How do you say that an interface is only for pairs?
--   Use case problem: Have interface `MultipliesBy(R)` for Self \* R. Want to
-    write a constraint that a function can take any `R` type such that type
-    `Foo` implements `MultipliesBy(R)`.
 -   Want inheritance with virtual functions to be modeled by interface
     extension. Example showing the interaction between Dynamic pointer types and
     interface extension.
-
-How do we represent binary operations like `Addable`? Could the interface be
-defined on the pair of types of the two arguments somehow?
-
-```
-fn F(A: a, B: b, ..., Addable(A, B):$ T) requires (A,B) : Addable(A, B) {
-  ((A, B) as T).DoTheAdd(x, y)
-}
-```
 
 ## Broken links footnote
 
