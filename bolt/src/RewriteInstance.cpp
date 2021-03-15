@@ -494,8 +494,11 @@ RewriteInstance::RewriteInstance(ELFObjectFileBase *File, const int Argc,
   if (opts::UpdateDebugSections)
     DebugInfoRewriter = std::make_unique<DWARFRewriter>(*BC, SectionPatchers);
 
-  if (opts::Hugify)
+  if (opts::Instrument) {
+    BC->setRuntimeLibrary(std::make_unique<InstrumentationRuntimeLibrary>());
+  } else if (opts::Hugify) {
     BC->setRuntimeLibrary(std::make_unique<HugifyRuntimeLibrary>());
+  }
 }
 
 RewriteInstance::~RewriteInstance() {}

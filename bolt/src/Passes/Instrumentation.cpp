@@ -170,16 +170,18 @@ Instrumentation::createInstrumentationSnippet(BinaryContext &BC, bool IsLeaf) {
   MCSymbol *Label;
   Label = BC.Ctx->createNamedTempSymbol("InstrEntry");
   Summary->Counters.emplace_back(Label);
-  std::vector<MCInst> CounterInstrs(5);
+  std::vector<MCInst> CounterInstrs;
+  CounterInstrs.resize(IsLeaf? 5 : 3);
+  uint32_t I = 0;
   // Don't clobber application red zone (ABI dependent)
   if (IsLeaf)
-    BC.MIB->createStackPointerIncrement(CounterInstrs[0], 128,
+    BC.MIB->createStackPointerIncrement(CounterInstrs[I++], 128,
                                         /*NoFlagsClobber=*/true);
-  BC.MIB->createPushFlags(CounterInstrs[1], 2);
-  BC.MIB->createIncMemory(CounterInstrs[2], Label, &*BC.Ctx);
-  BC.MIB->createPopFlags(CounterInstrs[3], 2);
+  BC.MIB->createPushFlags(CounterInstrs[I++], 2);
+  BC.MIB->createIncMemory(CounterInstrs[I++], Label, &*BC.Ctx);
+  BC.MIB->createPopFlags(CounterInstrs[I++], 2);
   if (IsLeaf)
-    BC.MIB->createStackPointerDecrement(CounterInstrs[4], 128,
+    BC.MIB->createStackPointerDecrement(CounterInstrs[I++], 128,
                                         /*NoFlagsClobber=*/true);
   return CounterInstrs;
 }
@@ -660,8 +662,10 @@ void Instrumentation::setupRuntimeLibrary(BinaryContext &BC) {
   outs() << "BOLT-INSTRUMENTER: Profile will be saved to file "
          << opts::InstrumentationFilename << "\n";
 
-  BC.setRuntimeLibrary(
-      std::make_unique<InstrumentationRuntimeLibrary>(std::move(Summary)));
+  auto *RtLibrary =
+      static_cast<InstrumentationRuntimeLibrary *>(BC.getRuntimeLibrary());
+  assert(RtLibrary && "instrumentation runtime library object must be set");
+  RtLibrary->setSummary(std::move(Summary));
 }
 }
 }

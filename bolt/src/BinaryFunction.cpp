@@ -3864,7 +3864,7 @@ bool BinaryFunction::checkForAmbiguousJumpTables() {
 
 void BinaryFunction::disambiguateJumpTables(
     MCPlusBuilder::AllocatorIdTy AllocId) {
-  assert((opts::JumpTables != JTS_BASIC && isSimple()) || BC.HasRelocations);
+  assert((opts::JumpTables != JTS_BASIC && isSimple()) || !BC.HasRelocations);
   SmallPtrSet<JumpTable *, 4> JumpTables;
   for (auto &BB : BasicBlocks) {
     for (auto &Inst : *BB) {
@@ -3881,51 +3881,70 @@ void BinaryFunction::disambiguateJumpTables(
       // This instruction is an indirect jump using a jump table, but it is
       // using the same jump table of another jump. Try all our tricks to
       // extract the jump table symbol and make it point to a new, duplicated JT
+      MCPhysReg BaseReg1;
       uint64_t Scale;
       const MCSymbol *Target;
+      // In case we match if our first matcher, first instruction is the one to
+      // patch
       MCInst *JTLoadInst = &Inst;
       // Try a standard indirect jump matcher, scale 8
-      auto IndJmpMatcher = BC.MIB->matchIndJmp(
-          BC.MIB->matchReg(), BC.MIB->matchImm(Scale), BC.MIB->matchReg(),
-          /*Offset=*/BC.MIB->matchSymbol(Target));
-      if (!BC.MIB->hasPCRelOperand(Inst) ||
-          !IndJmpMatcher->match(
+      auto IndJmpMatcher =
+          BC.MIB->matchIndJmp(BC.MIB->matchReg(BaseReg1),
+                              BC.MIB->matchImm(Scale), BC.MIB->matchReg(),
+                              /*Offset=*/BC.MIB->matchSymbol(Target));
+      if (!IndJmpMatcher->match(
               *BC.MRI, *BC.MIB,
               MutableArrayRef<MCInst>(&*BB->begin(), &Inst + 1), -1) ||
+          BaseReg1 != BC.MIB->getNoRegister() ||
           Scale != 8) {
-        // Standard JT matching failed. Trying now:
-        // PIC-style matcher, scale 4
-        //    addq    %rdx, %rsi
-        //    addq    %rdx, %rdi
-        //    leaq    DATAat0x402450(%rip), %r11
-        //    movslq  (%r11,%rdx,4), %rcx
-        //    addq    %r11, %rcx
-        //    jmpq    *%rcx # JUMPTABLE @0x402450
-        MCPhysReg BaseReg1;
         MCPhysReg BaseReg2;
         uint64_t Offset;
-        auto PICIndJmpMatcher = BC.MIB->matchIndJmp(BC.MIB->matchAdd(
-            BC.MIB->matchReg(BaseReg1),
-            BC.MIB->matchLoad(BC.MIB->matchReg(BaseReg2),
-                              BC.MIB->matchImm(Scale), BC.MIB->matchReg(),
-                              BC.MIB->matchImm(Offset))));
-        auto LEAMatcherOwner =
-            BC.MIB->matchLoadAddr(BC.MIB->matchSymbol(Target));
-        auto LEAMatcher = LEAMatcherOwner.get();
-        auto PICBaseAddrMatcher = BC.MIB->matchIndJmp(BC.MIB->matchAdd(
-            std::move(LEAMatcherOwner), BC.MIB->matchAnyOperand()));
-        if (!PICIndJmpMatcher->match(
+        // Standard JT matching failed. Trying now:
+        //     movq  "jt.2397/1"(,%rax,8), %rax
+        //     jmpq  *%rax
+        auto LoadMatcherOwner = BC.MIB->matchLoad(
+            BC.MIB->matchReg(BaseReg1), BC.MIB->matchImm(Scale),
+            BC.MIB->matchReg(), /*Offset=*/BC.MIB->matchSymbol(Target));
+        auto LoadMatcher = LoadMatcherOwner.get();
+        auto IndJmpMatcher2 = BC.MIB->matchIndJmp(std::move(LoadMatcherOwner));
+        if (!IndJmpMatcher2->match(
                 *BC.MRI, *BC.MIB,
                 MutableArrayRef<MCInst>(&*BB->begin(), &Inst + 1), -1) ||
-            Scale != 4 || BaseReg1 != BaseReg2 || Offset != 0 ||
-            !PICBaseAddrMatcher->match(
-                *BC.MRI, *BC.MIB,
-                MutableArrayRef<MCInst>(&*BB->begin(), &Inst + 1), -1)) {
-          llvm_unreachable("Failed to extract jump table base");
-          continue;
+            BaseReg1 != BC.MIB->getNoRegister() || Scale != 8) {
+          // JT matching failed. Trying now:
+          // PIC-style matcher, scale 4
+          //    addq    %rdx, %rsi
+          //    addq    %rdx, %rdi
+          //    leaq    DATAat0x402450(%rip), %r11
+          //    movslq  (%r11,%rdx,4), %rcx
+          //    addq    %r11, %rcx
+          //    jmpq    *%rcx # JUMPTABLE @0x402450
+          auto PICIndJmpMatcher = BC.MIB->matchIndJmp(BC.MIB->matchAdd(
+              BC.MIB->matchReg(BaseReg1),
+              BC.MIB->matchLoad(BC.MIB->matchReg(BaseReg2),
+                                BC.MIB->matchImm(Scale), BC.MIB->matchReg(),
+                                BC.MIB->matchImm(Offset))));
+          auto LEAMatcherOwner =
+              BC.MIB->matchLoadAddr(BC.MIB->matchSymbol(Target));
+          auto LEAMatcher = LEAMatcherOwner.get();
+          auto PICBaseAddrMatcher = BC.MIB->matchIndJmp(BC.MIB->matchAdd(
+              std::move(LEAMatcherOwner), BC.MIB->matchAnyOperand()));
+          if (!PICIndJmpMatcher->match(
+                  *BC.MRI, *BC.MIB,
+                  MutableArrayRef<MCInst>(&*BB->begin(), &Inst + 1), -1) ||
+              Scale != 4 || BaseReg1 != BaseReg2 || Offset != 0 ||
+              !PICBaseAddrMatcher->match(
+                  *BC.MRI, *BC.MIB,
+                  MutableArrayRef<MCInst>(&*BB->begin(), &Inst + 1), -1)) {
+            llvm_unreachable("Failed to extract jump table base");
+            continue;
+          }
+          // Matched PIC, identify the instruction with the reference to the JT
+          JTLoadInst = LEAMatcher->CurInst;
+        } else {
+          // Matched non-PIC
+          JTLoadInst = LoadMatcher->CurInst;
         }
-        // Matched PIC
-        JTLoadInst = &*LEAMatcher->CurInst;
       }
 
       uint64_t NewJumpTableID{0};

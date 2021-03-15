@@ -61,9 +61,11 @@ namespace bolt {
 MachORewriteInstance::MachORewriteInstance(object::MachOObjectFile *InputFile,
                                            StringRef ToolPath)
     : InputFile(InputFile), ToolPath(ToolPath),
-      BC(BinaryContext::createBinaryContext(
-          InputFile, /* IsPIC */ true,
-          DWARFContext::create(*InputFile))) {}
+      BC(BinaryContext::createBinaryContext(InputFile, /* IsPIC */ true,
+                                            DWARFContext::create(*InputFile))) {
+  if (opts::Instrument)
+    BC->setRuntimeLibrary(std::make_unique<InstrumentationRuntimeLibrary>());
+}
 
 Error MachORewriteInstance::setProfile(StringRef Filename) {
   if (!sys::fs::exists(Filename))

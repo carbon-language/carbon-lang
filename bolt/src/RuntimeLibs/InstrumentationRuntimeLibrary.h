@@ -17,8 +17,9 @@ namespace bolt {
 
 class InstrumentationRuntimeLibrary : public RuntimeLibrary {
 public:
-  InstrumentationRuntimeLibrary(std::unique_ptr<InstrumentationSummary> Summary)
-      : Summary(std::move(Summary)) {}
+  void setSummary(std::unique_ptr<InstrumentationSummary> &&S) {
+    Summary.swap(S);
+  }
 
   void addRuntimeLibSections(std::vector<std::string> &SecNames) const final {
     SecNames.push_back(".bolt.instr.counters");
