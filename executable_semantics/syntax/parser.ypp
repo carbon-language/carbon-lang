@@ -86,6 +86,7 @@ void yy::parser::error(
 %type <Carbon::Expression*> return_type
 %type <Carbon::Expression*> paren_expression
 %type <Carbon::Expression*> tuple
+%type <Carbon::Member*> variable_declaration
 %type <Carbon::Member*> member
 %type <std::list<Carbon::Member*>*> member_list
 %type <Carbon::FieldList*> field
@@ -321,9 +322,11 @@ function_declaration:
   FN identifier tuple return_type ";"
     { $$ = MakeFunDef(yylineno, $2, $4, $3, 0); }
 ;
-member:
-  VAR expression ":" identifier ";"
-    { $$ = MakeField(yylineno, $4, $2); }
+variable_declaration: expression ":" identifier
+    { $$ = MakeField(yylineno, $3, $1); }
+;
+member: VAR variable_declaration ";"
+    { $$ = $2; }
 ;
 member_list:
   // Empty
@@ -367,6 +370,11 @@ declaration:
     {
       $$ = new Carbon::Declaration(
         Carbon::ChoiceDeclaration{yylineno, $2, std::list(*$4)});
+    }
+| VAR variable_declaration "=" expression ";"
+    {
+      $$ = new Carbon::Declaration(
+        Carbon::VariableDeclaration(yylineno, *$2->u.field.name, $2->u.field.type, $4));
     }
 ;
 declaration_list:
