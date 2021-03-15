@@ -83,11 +83,7 @@ TEST_F(StringLiteralTest, StringLiteralBounds) {
   llvm::StringLiteral invalid[] = {
       R"(")",
       R"("""
-      "")",
-      R"("\)",
-      R"("\")",
-      R"("\\)",
-      R"("\\\")",
+      "")",  R"("\)", R"("\")", R"("\\)", R"("\\\")",
       R"("""
       )",
       R"(#"""
@@ -184,18 +180,18 @@ TEST_F(StringLiteralTest, StringLiteralContents) {
 
 TEST_F(StringLiteralTest, StringLiteralBadIndent) {
   std::pair<llvm::StringLiteral, llvm::StringLiteral> testcases[] = {
-    // Indent doesn't match the last line.
-    {"\"\"\"\n \tx\n  \"\"\"", "x\n"},
-    {"\"\"\"\n x\n  \"\"\"", "x\n"},
-    {"\"\"\"\n  x\n\t\"\"\"", "x\n"},
-    {"\"\"\"\n  ok\n bad\n  \"\"\"", "ok\nbad\n"},
-    {"\"\"\"\n bad\n  ok\n  \"\"\"", "bad\nok\n"},
-    {"\"\"\"\n  escaped,\\\n bad\n  \"\"\"", "escaped,bad\n"},
+      // Indent doesn't match the last line.
+      {"\"\"\"\n \tx\n  \"\"\"", "x\n"},
+      {"\"\"\"\n x\n  \"\"\"", "x\n"},
+      {"\"\"\"\n  x\n\t\"\"\"", "x\n"},
+      {"\"\"\"\n  ok\n bad\n  \"\"\"", "ok\nbad\n"},
+      {"\"\"\"\n bad\n  ok\n  \"\"\"", "bad\nok\n"},
+      {"\"\"\"\n  escaped,\\\n bad\n  \"\"\"", "escaped,bad\n"},
 
-    // Indent on last line is followed by text.
-    {"\"\"\"\n  x\n  x\"\"\"", "x\nx"},
-    {"\"\"\"\n   x\n  x\"\"\"", " x\nx"},
-    {"\"\"\"\n x\n  x\"\"\"", "x\nx"},
+      // Indent on last line is followed by text.
+      {"\"\"\"\n  x\n  x\"\"\"", "x\nx"},
+      {"\"\"\"\n   x\n  x\"\"\"", " x\nx"},
+      {"\"\"\"\n x\n  x\"\"\"", "x\nx"},
   };
 
   for (auto [test, contents] : testcases) {
@@ -207,43 +203,43 @@ TEST_F(StringLiteralTest, StringLiteralBadIndent) {
 
 TEST_F(StringLiteralTest, StringLiteralBadEscapeSequence) {
   llvm::StringLiteral testcases[] = {
-    R"("\a")",
-    R"("\b")",
-    R"("\e")",
-    R"("\f")",
-    R"("\v")",
-    R"("\?")",
-    R"("\1")",
-    R"("\9")",
+      R"("\a")",
+      R"("\b")",
+      R"("\e")",
+      R"("\f")",
+      R"("\v")",
+      R"("\?")",
+      R"("\1")",
+      R"("\9")",
 
-    // \0 can't be followed by a decimal digit.
-    R"("\01")",
-    R"("\09")",
+      // \0 can't be followed by a decimal digit.
+      R"("\01")",
+      R"("\09")",
 
-    // \x requires two (uppercase) hexadecimal digits.
-    R"("\x")",
-    R"("\x0")",
-    R"("\x0G")",
-    R"("\xab")",
-    R"("\x\n")",
-    R"("\x\"")",
+      // \x requires two (uppercase) hexadecimal digits.
+      R"("\x")",
+      R"("\x0")",
+      R"("\x0G")",
+      R"("\xab")",
+      R"("\x\n")",
+      R"("\x\"")",
 
-    // \u requires a braced list of one or more hexadecimal digits.
-    R"("\u")",
-    R"("\u?")",
-    R"("\u\"")",
-    R"("\u{")",
-    R"("\u{}")",
-    R"("\u{A")",
-    R"("\u{G}")",
-    R"("\u{0000012323127z}")",
-    R"("\u{-3}")",
+      // \u requires a braced list of one or more hexadecimal digits.
+      R"("\u")",
+      R"("\u?")",
+      R"("\u\"")",
+      R"("\u{")",
+      R"("\u{}")",
+      R"("\u{A")",
+      R"("\u{G}")",
+      R"("\u{0000012323127z}")",
+      R"("\u{-3}")",
 
-    // \u must specify a non-surrogate code point.
-    R"("\u{110000}")",
-    R"("\u{000000000000000000000000000000000110000}")",
-    R"("\u{D800}")",
-    R"("\u{DFFF}")",
+      // \u must specify a non-surrogate code point.
+      R"("\u{110000}")",
+      R"("\u{000000000000000000000000000000000110000}")",
+      R"("\u{D800}")",
+      R"("\u{DFFF}")",
   };
 
   for (llvm::StringLiteral test : testcases) {
