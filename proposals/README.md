@@ -61,5 +61,7 @@ request:
     -   [0196 - Decision](p0196_decision.md)
 -   [0198 - Comments](p0198.md)
 -   [0199 - String literals](p0199.md)
+    -   [0199 - Decision](p0199_decision.md)
+-   [0253 - 2021 Roadmap](p0253.md)
 
 <!-- endproposals -->
