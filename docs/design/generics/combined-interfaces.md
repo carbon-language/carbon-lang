@@ -52,7 +52,6 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
         -   [Type bounds](#type-bounds)
             -   [Type bounds on associated types in declarations](#type-bounds-on-associated-types-in-declarations)
             -   [Type bounds on associated types in interfaces](#type-bounds-on-associated-types-in-interfaces)
-            -   [Refining a type bounds when refining/extending](#refining-a-type-bounds-when-refiningextending)
             -   [Naming constraints](#naming-constraints)
         -   [Two types must be the same](#two-types-must-be-the-same)
         -   [Combining constraints](#combining-constraints)
@@ -896,6 +895,40 @@ could use `&`. I'm using `+` in this proposal since it is
 but
 [Swift uses `&`](https://docs.swift.org/swift-book/LanguageGuide/Protocols.html#ID282).
 
+**Future work:** We may want to define the `&` operator on type-types as well.
+This operator would be for adding requirements to a type-type without affecting
+the names, and so avoid the possibility of name conflicts. Note this means the
+operation is not commutative: `A & B` has the names of `A` and `B & A` has the
+names of `B`.
+
+```
+// `A & B` is syntactic sugar for this type-type:
+structural interface {
+  impl A;
+  impl B;
+  alias AMethod = A.AMethod;
+}
+
+// `C & D` is syntactic sugar for this type-type:
+structural interface {
+  impl C;
+  impl D;
+  alias One = C.One;
+  alias Two = C.Two;
+}
+```
+
+Note that all three expressions `A + B`, `A & B`, and `B & A` have the same
+requirements, and so you would be able to switch a function declaration between
+them without affecting callers.
+
+Nothing in this design depends on the `&` operator, and having both `+` and `&`
+might be confusing for users, so it makes sense to postpone implementing `&`
+until we have a demonstrated need. The `&` operator seems most useful for adding
+requirements for interfaces used for
+[operator overloading](#operator-overloading), where merely implementing the
+interface is enough to be able to use the operator to access the functionality.
+
 **Alternatives considered:** See
 [Carbon: Access to interface methods](https://docs.google.com/document/d/1u_i_s31OMI_apPur7WmVxcYq6MUXsG3oCiKwH893GRI/edit?usp=sharing&resourcekey=0-0lzSNebBMtUBi4lStL825g).
 
@@ -1078,6 +1111,15 @@ interface BidirectionalContainer {
     // Redeclaration of `IteratorType` with a more specific bound.
     var BidirectionalIterator:$ IteratorType;
   }
+}
+```
+
+another uses a [`where` clause](#where-clauses):
+
+```
+interface BidirectionalContainer {
+  extends ForwardContainer
+      where ForwardContainer.IteratorType as BidirectionalIterator;
 }
 ```
 
@@ -2045,10 +2087,6 @@ fn OneAfterBegin[Container:$ T](Ptr(T): c) -> T.IteratorType {
 }
 ```
 
-##### Refining a type bounds when refining/extending
-
-TODO
-
 ##### Naming constraints
 
 Given these definitions (omitting `ElementType` for brevity):
@@ -2214,7 +2252,8 @@ fn DownCast[Type:$ T](Ptr(T): p, Type:$ U) -> Ptr(U) where U extends T;
 
 #### Parameterized type implements interface
 
-TODO
+TODO: This use case was part of the
+[Rust rationale for adding support for `where` clauses](https://rust-lang.github.io/rfcs/0135-where.html)
 
 ```
 // Some parametized type.
@@ -2425,6 +2464,11 @@ Further it can add noise that obscures relevant information. In practice, any
 user of these functions will have to pass in a valid `HashMap` instance, and so
 will have already satisfied these constraints.
 
+**Note:** These implied constraints should affect the _requirements_ of a
+generic type parameter, but not the _names_. This way you can always look at the
+declaration to see how name resolution works, without having to look up the
+definitions of everything it is used as an argument to.
+
 **Caveat:** These constraints can be obscured:
 
 ```
@@ -2595,7 +2639,10 @@ interface D {
 ```
 
 In this case `D.E.W == D.F` and `D.F.W == D.E` and we would need some way of
-deciding which were canonical.
+deciding which were canonical (probably `D.E` and `D.F`).
+
+**Open question:** Can we specify constraints on `where` clauses that would
+allow us to use this efficient decision procedure?
 
 ### Options
 
