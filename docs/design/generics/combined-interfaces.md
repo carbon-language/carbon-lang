@@ -3940,6 +3940,17 @@ value of the right type we can take the address of. If we do expose an "address
 of" capability, it will have to be a real address since we don't expect any sort
 of proxy to be able to be used instead.
 
+**Question:** C++ maybe gets wrong that you can take address of any member. If
+you couldn't it would:
+
+-   Greatly simplify sanitizers.
+-   Make reasoning about what side effects can affect members easier.
+
+Maybe being able to take the address of a member is an opt-in feature? Similarly
+for local variables. Maybe can call function taking a pointer from a member
+function as long as it doesn't capture? We need to firm up design for instance
+fields before interfaces for instance fields.
+
 ## Notes
 
 These are notes from discussions after this document was first written that have
@@ -3948,12 +3959,6 @@ not yet been incorporated into the main text above.
 -   Can use IDE tooling to show all methods including external impl,
     automatically switching to [qualified member names](#qualified-member-names)
     where needed to get that method.
--   Question: C++ maybe gets wrong that you can take address of any member.
-    Greatly simplifies sanitizers, makes reasoning about what side effects can
-    affect members for correctness easier. Maybe opt-in feature? Similarly for
-    local variables. Maybe can call function taking a pointer from a member
-    function as long as it doesn't capture? Need to firm up design for instance
-    fields before interfaces for instance fields.
 -   Want inheritance with virtual functions to be modeled by interface
     extension. Example showing the interaction between Dynamic pointer types and
     interface extension.
