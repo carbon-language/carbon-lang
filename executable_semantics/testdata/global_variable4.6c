@@ -2,16 +2,11 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-// Test that mutations to a global variable in one function is visible
-// in another function.
+// Test mutation of a global variable.
 
-var Int: flag = 1;
-
-fn flipFlag() -> () {
-  flag = 0;
-}
+var Int: zero = 1;
 
 fn main() -> Int {
-  flipFlag();
-  return flag;
+  zero = 0;
+  return zero;
 }

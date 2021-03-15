@@ -8,7 +8,7 @@ return 0;
 --- step exp Int --->
 --- step exp Int --->
 --- step exp Int --->
-5: type error in initializer of variable
+7: type error in initializer of variable
 expected: Int
 actual: Bool
 EXIT CODE: 255

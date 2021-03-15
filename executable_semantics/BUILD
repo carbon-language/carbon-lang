@@ -40,6 +40,8 @@ EXAMPLES = [
     "global_variable1",
     "global_variable2",
     "global_variable3",
+    "global_variable4",
+    "global_variable5",
     "if1",
     "if2",
     "if3",

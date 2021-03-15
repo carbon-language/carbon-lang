@@ -620,10 +620,8 @@ auto StructDeclaration::Name() const -> std::string { return *definition.name; }
 
 auto ChoiceDeclaration::Name() const -> std::string { return name; }
 
-// Returns the name of the variable being declared.
-auto VariableDeclaration::Name() const -> std::string {
-  return definition.name;
-}
+// Returns the name of the declared variable.
+auto VariableDeclaration::Name() const -> std::string { return name; }
 
 auto StructDeclaration::TypeChecked(TypeEnv env, Env ct_env) const
     -> Declaration {
@@ -647,16 +645,16 @@ auto ChoiceDeclaration::TypeChecked(TypeEnv env, Env ct_env) const
   return *this;  // TODO.
 }
 
-// Check that the type of the initializing expression matches
-// the declared type of the variable.
+// Signals a type error if the initializing expression does not have
+// the declared type of the variable, otherwise returns this
+// declaration with annotated types.
 auto VariableDeclaration::TypeChecked(TypeEnv env, Env ct_env) const
     -> Declaration {
-  TCResult initResult = TypeCheckExp(definition.initializer, env, ct_env,
-                                     nullptr, TCContext::ValueContext);
-  Value* type =
-      ToType(definition.sourceLocation, InterpExp(ct_env, definition.type));
-  ExpectType(definition.sourceLocation, "initializer of variable", type,
-             initResult.type);
+  TCResult typeCheckedInitializer =
+      TypeCheckExp(initializer, env, ct_env, nullptr, TCContext::ValueContext);
+  Value* declaredType = ToType(sourceLocation, InterpExp(ct_env, type));
+  ExpectType(sourceLocation, "initializer of variable", declaredType,
+             typeCheckedInitializer.type);
   return *this;
 }
 
@@ -705,12 +703,11 @@ auto ChoiceDeclaration::TopLevel(ExecutionEnvironment& tops) const -> void {
   tops.first.Set(Name(), ct);
 }
 
-// Associate the variable name with it's type in the top-level type
-// environment.
+// Associate the variable name with it's declared type in the
+// compile-time symbol table.
 auto VariableDeclaration::TopLevel(ExecutionEnvironment& tops) const -> void {
-  Value* type = ToType(definition.sourceLocation,
-                       InterpExp(tops.second, definition.type));
-  tops.first.Set(Name(), type);
+  Value* declaredType = ToType(sourceLocation, InterpExp(tops.second, type));
+  tops.first.Set(Name(), declaredType);
 }
 
 }  // namespace Carbon

@@ -1,22 +1,10 @@
 ********** source program **********
-var Int : flag = 0
+var Int : flag = 1
 fn flipFlag () -> () {
-if ((flag == 0))
-{
-flag = 1;
-
-}
-
-else
-{
 flag = 0;
 
 }
-
-
-}
 fn main () -> Int {
-flag = 1;
 flipFlag();
 return flag;
 
@@ -30,99 +18,52 @@ return flag;
 --- step exp Int --->
 
 ********** type checking complete **********
-var Int : flag = 0
+var Int : flag = 1
 fn flipFlag () -> () {
-if ((flag == 0))
-{
-flag = 1;
-return ();
-}
-
-else
-{
 flag = 0;
 return ();
 }
-
-}
 fn main () -> Int {
-flag = 1;
 flipFlag();
 return flag;
 }
 ********** starting execution **********
 ********** initializing globals **********
---- step exp 0 --->
+--- step exp 1 --->
 --- step exp () --->
 --- step exp () --->
 ********** calling main function **********
 {
 stack: top{main()<-1>}
-heap: 0, fun<flipFlag>, fun<main>, 
-env: main: fun<main>, flipFlag: fun<flipFlag>, flag: 0, 
+heap: 1, fun<flipFlag>, fun<main>, 
+env: main: fun<main>, flipFlag: fun<flipFlag>, flag: 1, 
 }
 --- step exp main() --->
 {
 stack: top{main<-1> :: main()<0>}
-heap: 0, fun<flipFlag>, fun<main>, 
-env: main: fun<main>, flipFlag: fun<flipFlag>, flag: 0, 
+heap: 1, fun<flipFlag>, fun<main>, 
+env: main: fun<main>, flipFlag: fun<flipFlag>, flag: 1, 
 }
 --- step exp main --->
 {
 stack: top{fun<main><-1> :: main()<0>}
-heap: 0, fun<flipFlag>, fun<main>, 
-env: main: fun<main>, flipFlag: fun<flipFlag>, flag: 0, 
+heap: 1, fun<flipFlag>, fun<main>, 
+env: main: fun<main>, flipFlag: fun<flipFlag>, flag: 1, 
 }
 --- handle value fun<main> with main()<1>(fun<main>,) --->
 {
 stack: top{()<-1> :: main()<1>(fun<main>,)}
-heap: 0, fun<flipFlag>, fun<main>, 
-env: main: fun<main>, flipFlag: fun<flipFlag>, flag: 0, 
+heap: 1, fun<flipFlag>, fun<main>, 
+env: main: fun<main>, flipFlag: fun<flipFlag>, flag: 1, 
 }
 --- step exp () --->
 {
 stack: top{()<-1> :: main()<1>(fun<main>,)}
-heap: 0, fun<flipFlag>, fun<main>, 
-env: main: fun<main>, flipFlag: fun<flipFlag>, flag: 0, 
+heap: 1, fun<flipFlag>, fun<main>, 
+env: main: fun<main>, flipFlag: fun<flipFlag>, flag: 1, 
 }
 --- handle value () with main()<2>(fun<main>,(),) --->
 pattern_match((), ())
-{
-stack: main{flag = 1; ... <-1>} :: top{}
-heap: 0, fun<flipFlag>, fun<main>, 
-env: main: fun<main>, flipFlag: fun<flipFlag>, flag: 0, 
-}
---- step stmt flag = 1; ...  --->
-{
-stack: main{flag = 1;<-1> :: flipFlag(); ... <-1>} :: top{}
-heap: 0, fun<flipFlag>, fun<main>, 
-env: main: fun<main>, flipFlag: fun<flipFlag>, flag: 0, 
-}
---- step stmt flag = 1; --->
-{
-stack: main{flag<-1> :: flag = 1;<0> :: flipFlag(); ... <-1>} :: top{}
-heap: 0, fun<flipFlag>, fun<main>, 
-env: main: fun<main>, flipFlag: fun<flipFlag>, flag: 0, 
-}
---- step lvalue flag --->
-{
-stack: main{ptr<0><-1> :: flag = 1;<0> :: flipFlag(); ... <-1>} :: top{}
-heap: 0, fun<flipFlag>, fun<main>, 
-env: main: fun<main>, flipFlag: fun<flipFlag>, flag: 0, 
-}
---- handle value ptr<0> with flag = 1;<1>(ptr<0>,) --->
-{
-stack: main{1<-1> :: flag = 1;<1>(ptr<0>,) :: flipFlag(); ... <-1>} :: top{}
-heap: 0, fun<flipFlag>, fun<main>, 
-env: main: fun<main>, flipFlag: fun<flipFlag>, flag: 0, 
-}
---- step exp 1 --->
-{
-stack: main{1<-1> :: flag = 1;<1>(ptr<0>,) :: flipFlag(); ... <-1>} :: top{}
-heap: 0, fun<flipFlag>, fun<main>, 
-env: main: fun<main>, flipFlag: fun<flipFlag>, flag: 0, 
-}
---- handle value 1 with flag = 1;<2>(ptr<0>,1,) --->
 {
 stack: main{flipFlag(); ... <-1>} :: top{}
 heap: 1, fun<flipFlag>, fun<main>, 
@@ -167,163 +108,55 @@ env: main: fun<main>, flipFlag: fun<flipFlag>, flag: 1,
 --- handle value () with flipFlag()<2>(fun<flipFlag>,(),) --->
 pattern_match((), ())
 {
-stack: flipFlag{if ((flag == 0))
- ... 
-else
- ... <-1>} :: main{flipFlag();<-1> :: return flag;<-1>} :: top{}
-heap: 1, fun<flipFlag>, fun<main>, 
-env: main: fun<main>, flipFlag: fun<flipFlag>, flag: 1, 
-}
---- step stmt if ((flag == 0))
- ... 
-else
- ...  --->
-{
-stack: flipFlag{(flag == 0)<-1> :: if ((flag == 0))
- ... 
-else
- ... <0>} :: main{flipFlag();<-1> :: return flag;<-1>} :: top{}
-heap: 1, fun<flipFlag>, fun<main>, 
-env: main: fun<main>, flipFlag: fun<flipFlag>, flag: 1, 
-}
---- step exp (flag == 0) --->
-{
-stack: flipFlag{flag<-1> :: (flag == 0)<0> :: if ((flag == 0))
- ... 
-else
- ... <0>} :: main{flipFlag();<-1> :: return flag;<-1>} :: top{}
-heap: 1, fun<flipFlag>, fun<main>, 
-env: main: fun<main>, flipFlag: fun<flipFlag>, flag: 1, 
-}
---- step exp flag --->
-{
-stack: flipFlag{1<-1> :: (flag == 0)<0> :: if ((flag == 0))
- ... 
-else
- ... <0>} :: main{flipFlag();<-1> :: return flag;<-1>} :: top{}
-heap: 1, fun<flipFlag>, fun<main>, 
-env: main: fun<main>, flipFlag: fun<flipFlag>, flag: 1, 
-}
---- handle value 1 with (flag == 0)<1>(1,) --->
-{
-stack: flipFlag{0<-1> :: (flag == 0)<1>(1,) :: if ((flag == 0))
- ... 
-else
- ... <0>} :: main{flipFlag();<-1> :: return flag;<-1>} :: top{}
-heap: 1, fun<flipFlag>, fun<main>, 
-env: main: fun<main>, flipFlag: fun<flipFlag>, flag: 1, 
-}
---- step exp 0 --->
-{
-stack: flipFlag{0<-1> :: (flag == 0)<1>(1,) :: if ((flag == 0))
- ... 
-else
- ... <0>} :: main{flipFlag();<-1> :: return flag;<-1>} :: top{}
-heap: 1, fun<flipFlag>, fun<main>, 
-env: main: fun<main>, flipFlag: fun<flipFlag>, flag: 1, 
-}
---- handle value 0 with (flag == 0)<2>(1,0,) --->
-{
-stack: flipFlag{false<-1> :: if ((flag == 0))
- ... 
-else
- ... <0>} :: main{flipFlag();<-1> :: return flag;<-1>} :: top{}
-heap: 1, fun<flipFlag>, fun<main>, 
-env: main: fun<main>, flipFlag: fun<flipFlag>, flag: 1, 
-}
---- handle value false with if ((flag == 0))
- ... 
-else
- ... <1>(false,) --->
-{
-stack: flipFlag{{
- ... 
-}
-<-1>} :: main{flipFlag();<-1> :: return flag;<-1>} :: top{}
-heap: 1, fun<flipFlag>, fun<main>, 
-env: main: fun<main>, flipFlag: fun<flipFlag>, flag: 1, 
-}
---- step stmt {
- ... 
-}
- --->
-{
-stack: flipFlag{flag = 0; ... <-1> :: {
- ... 
-}
-<0>} :: main{flipFlag();<-1> :: return flag;<-1>} :: top{}
+stack: flipFlag{flag = 0; ... <-1>} :: main{flipFlag();<-1> :: return flag;<-1>} :: top{}
 heap: 1, fun<flipFlag>, fun<main>, 
 env: main: fun<main>, flipFlag: fun<flipFlag>, flag: 1, 
 }
 --- step stmt flag = 0; ...  --->
 {
-stack: flipFlag{flag = 0;<-1> :: return ();<-1> :: {
- ... 
-}
-<0>} :: main{flipFlag();<-1> :: return flag;<-1>} :: top{}
+stack: flipFlag{flag = 0;<-1> :: return ();<-1>} :: main{flipFlag();<-1> :: return flag;<-1>} :: top{}
 heap: 1, fun<flipFlag>, fun<main>, 
 env: main: fun<main>, flipFlag: fun<flipFlag>, flag: 1, 
 }
 --- step stmt flag = 0; --->
 {
-stack: flipFlag{flag<-1> :: flag = 0;<0> :: return ();<-1> :: {
- ... 
-}
-<0>} :: main{flipFlag();<-1> :: return flag;<-1>} :: top{}
+stack: flipFlag{flag<-1> :: flag = 0;<0> :: return ();<-1>} :: main{flipFlag();<-1> :: return flag;<-1>} :: top{}
 heap: 1, fun<flipFlag>, fun<main>, 
 env: main: fun<main>, flipFlag: fun<flipFlag>, flag: 1, 
 }
 --- step lvalue flag --->
 {
-stack: flipFlag{ptr<0><-1> :: flag = 0;<0> :: return ();<-1> :: {
- ... 
-}
-<0>} :: main{flipFlag();<-1> :: return flag;<-1>} :: top{}
+stack: flipFlag{ptr<0><-1> :: flag = 0;<0> :: return ();<-1>} :: main{flipFlag();<-1> :: return flag;<-1>} :: top{}
 heap: 1, fun<flipFlag>, fun<main>, 
 env: main: fun<main>, flipFlag: fun<flipFlag>, flag: 1, 
 }
 --- handle value ptr<0> with flag = 0;<1>(ptr<0>,) --->
 {
-stack: flipFlag{0<-1> :: flag = 0;<1>(ptr<0>,) :: return ();<-1> :: {
- ... 
-}
-<0>} :: main{flipFlag();<-1> :: return flag;<-1>} :: top{}
+stack: flipFlag{0<-1> :: flag = 0;<1>(ptr<0>,) :: return ();<-1>} :: main{flipFlag();<-1> :: return flag;<-1>} :: top{}
 heap: 1, fun<flipFlag>, fun<main>, 
 env: main: fun<main>, flipFlag: fun<flipFlag>, flag: 1, 
 }
 --- step exp 0 --->
 {
-stack: flipFlag{0<-1> :: flag = 0;<1>(ptr<0>,) :: return ();<-1> :: {
- ... 
-}
-<0>} :: main{flipFlag();<-1> :: return flag;<-1>} :: top{}
+stack: flipFlag{0<-1> :: flag = 0;<1>(ptr<0>,) :: return ();<-1>} :: main{flipFlag();<-1> :: return flag;<-1>} :: top{}
 heap: 1, fun<flipFlag>, fun<main>, 
 env: main: fun<main>, flipFlag: fun<flipFlag>, flag: 1, 
 }
 --- handle value 0 with flag = 0;<2>(ptr<0>,0,) --->
 {
-stack: flipFlag{return ();<-1> :: {
- ... 
-}
-<0>} :: main{flipFlag();<-1> :: return flag;<-1>} :: top{}
+stack: flipFlag{return ();<-1>} :: main{flipFlag();<-1> :: return flag;<-1>} :: top{}
 heap: 0, fun<flipFlag>, fun<main>, 
 env: main: fun<main>, flipFlag: fun<flipFlag>, flag: 0, 
 }
 --- step stmt return (); --->
 {
-stack: flipFlag{()<-1> :: return ();<0> :: {
- ... 
-}
-<0>} :: main{flipFlag();<-1> :: return flag;<-1>} :: top{}
+stack: flipFlag{()<-1> :: return ();<0>} :: main{flipFlag();<-1> :: return flag;<-1>} :: top{}
 heap: 0, fun<flipFlag>, fun<main>, 
 env: main: fun<main>, flipFlag: fun<flipFlag>, flag: 0, 
 }
 --- step exp () --->
 {
-stack: flipFlag{()<-1> :: return ();<0> :: {
- ... 
-}
-<0>} :: main{flipFlag();<-1> :: return flag;<-1>} :: top{}
+stack: flipFlag{()<-1> :: return ();<0>} :: main{flipFlag();<-1> :: return flag;<-1>} :: top{}
 heap: 0, fun<flipFlag>, fun<main>, 
 env: main: fun<main>, flipFlag: fun<flipFlag>, flag: 0, 
 }

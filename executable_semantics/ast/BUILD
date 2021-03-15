@@ -17,7 +17,6 @@ cc_library(
         ":function_definition",
         ":member",
         ":struct_definition",
-        ":variable_definition",
         "//executable_semantics/interpreter:containers",
     ],
 )
@@ -63,10 +62,4 @@ cc_library(
     name = "struct_definition",
     hdrs = ["struct_definition.h"],
     deps = [":member"],
-)
-
-cc_library(
-    name = "variable_definition",
-    hdrs = ["variable_definition.h"],
-    deps = [":expression"],
 )

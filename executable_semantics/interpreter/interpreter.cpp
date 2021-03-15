@@ -304,15 +304,12 @@ auto FunctionDeclaration::InitGlobals(Env& globals) const -> void {
   globals.Set(definition->name, a);
 }
 
-// Evaluates the variable's initializer and associates the variable
-// name with the result value in the global environment.
+// Adds an entry in `globals` mapping the variable's name to the
+// result of evaluating the initializer.
 auto VariableDeclaration::InitGlobals(Env& globals) const -> void {
-  // Evaluate intitializer in an empty environment.
-  // Alternatively, it could be evaluated in the globals.
-  Env env;
-  auto v = InterpExp(env, definition.initializer);
+  auto v = InterpExp(globals, initializer);
   Address a = AllocateValue(v);
-  globals.Set(definition.name, a);
+  globals.Set(name, a);
 }
 
 //    { S, H} -> { { C, E, F} :: S, H}
