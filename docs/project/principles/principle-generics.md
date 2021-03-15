@@ -35,15 +35,17 @@ might apply to any array whose elements are comparable and movable.
 ## Goal
 
 Our goal for generics support in Carbon is to get most of the expressive
-benefits of C++ templates with fewer downsides.
+benefits of C++ templates and open overloading with fewer downsides. We in
+particular want to support
+[generic programming](https://en.wikipedia.org/wiki/Generic_programming),
+including generic algorithms and generic data types. C++ templates are also used
+for some things that are out of scope for Carbon generics:
+[template metaprogramming](https://en.wikipedia.org/wiki/Template_metaprogramming),
+[expression templates](https://en.wikipedia.org/wiki/Expression_templates), and
+[variadics](https://en.wikipedia.org/wiki/Variadic_function). We expect to
+address those use cases with Carbon metaprogramming or Carbon templates.
 
 ## Principles
-
-### Expressive
-
-The vast majority of use cases for templates and open overloading in C++ shall
-instead be addressed by generics in Carbon. Open overloading is where the
-overload set is not restricted to a single file or library.
 
 ### Performance
 
@@ -125,6 +127,25 @@ No novel (generic specific) rules for name lookup:
 -   An example of these would be the name lookup rules inside of Rust's traits.
 -   Instead, structure generics in a way that reuses existing name lookup
     facilities of the language.
+
+### Closed overloading
+
+One name lookup problem we would like to avoid is caused by open overloading.
+Overloading is where you provide multiple implementations of a function with the
+same name, and the implementation used in a specific context is determined by
+the argument types. Open overloading is overloading where the overload set is
+not restricted to a single file or library.
+
+This is commonly used to provide a type-specific implementation of some
+operation, but doesn't provide any enforcement of consistency across the
+different overloads. It makes the meaning of code dependent on which overloads
+are imported, and is at odds with being able to type check a function
+generically.
+
+Our goal is to address this use case, known as
+[the expression problem](https://eli.thegreenplace.net/2016/the-expression-problem-and-its-solutions),
+with a mechanism that does enforce consistency so that type checking is possible
+without seeing all implementations.
 
 ## Caveats
 
