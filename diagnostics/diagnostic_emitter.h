@@ -59,6 +59,12 @@ class DiagnosticLocationTranslator {
 
 // Manages the creation of reports, the testing if diagnostics are enabled, and
 // the collection of reports.
+//
+// This class is parameterized by a location type, allowing different
+// diagnostic clients to provide location information in whatever form is most
+// convenient for them, such as a position within a buffer when lexing, a token
+// when parsing, or a parse tree node when type-checking, and to allow unit
+// tests to be decoupled from any concrete location representation.
 template <typename LocationT>
 class DiagnosticEmitter {
  public:

@@ -23,6 +23,8 @@ namespace Carbon {
 
 class TokenizedBuffer;
 
+namespace Internal {
+
 // A lightweight handle to a lexed token in a `TokenizedBuffer`.
 //
 // This type's preferred name is `TokenizedBuffer::Token` and is only defined
@@ -65,12 +67,14 @@ class TokenizedBufferToken {
   }
 
  private:
-  friend class TokenizedBuffer;
+  friend TokenizedBuffer;
 
   explicit TokenizedBufferToken(int index) : index(index) {}
 
   int32_t index;
 };
+
+}  // namespace Internal
 
 // A buffer of tokenized Carbon source code.
 //
@@ -82,10 +86,10 @@ class TokenizedBufferToken {
 // `HasError` returning true.
 class TokenizedBuffer
     : public DiagnosticLocationTranslator<const char*>,
-      public DiagnosticLocationTranslator<TokenizedBufferToken> {
+      public DiagnosticLocationTranslator<Internal::TokenizedBufferToken> {
  public:
   // A lightweight handle to a lexed token in a `TokenizedBuffer`.
-  using Token = TokenizedBufferToken;
+  using Token = Internal::TokenizedBufferToken;
 
   // A lightweight handle to a lexed line in a `TokenizedBuffer`.
   //
@@ -427,6 +431,10 @@ class TokenizedBuffer
 
   bool has_errors = false;
 };
+
+// A diagnostic emitter that uses positions within a source buffer's text as
+// its source of location information.
+using LexerDiagnosticEmitter = DiagnosticEmitter<const char*>;
 
 // A diagnostic emitter that uses tokens as its source of location information.
 using TokenDiagnosticEmitter = DiagnosticEmitter<TokenizedBuffer::Token>;

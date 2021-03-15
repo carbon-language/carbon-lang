@@ -64,8 +64,8 @@ struct UnrecognizedCharacters : SimpleDiagnostic<UnrecognizedCharacters> {
 // tokenized buffer with the lexed tokens.
 class TokenizedBuffer::Lexer {
   TokenizedBuffer& buffer;
-  DiagnosticEmitter<const char*> emitter;
-  DiagnosticEmitter<Token> token_emitter;
+  LexerDiagnosticEmitter emitter;
+  TokenDiagnosticEmitter token_emitter;
 
   Line current_line;
   LineInfo* current_line_info;
