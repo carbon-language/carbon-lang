@@ -139,12 +139,8 @@ struct ChoiceDeclaration {
 };
 
 // Global variable definition implements the Declaration concept.
-struct VariableDeclaration {
-  int sourceLocation;
-  std::string name;
-  Expression* type;
-  Expression* initializer;
-
+class VariableDeclaration {
+ public:
   VariableDeclaration(int sourceLocation, std::string name, Expression* type,
                       Expression* initializer)
       : sourceLocation(sourceLocation),
@@ -157,6 +153,12 @@ struct VariableDeclaration {
   auto TypeChecked(TypeEnv env, Env ct_env) const -> Declaration;
   void InitGlobals(Env& globals) const;
   auto TopLevel(ExecutionEnvironment&) const -> void;
+
+ private:
+  int sourceLocation;
+  std::string name;
+  Expression* type;
+  Expression* initializer;
 };
 
 }  // namespace Carbon
