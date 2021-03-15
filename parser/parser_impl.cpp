@@ -47,7 +47,8 @@ ParseTree::Parser::Parser(ParseTree& tree_arg, TokenizedBuffer& tokens_arg)
          "No EndOfFileToken in token buffer.");
 }
 
-auto ParseTree::Parser::Consume(TokenKind kind) -> TokenizedBuffer::Token {
+auto ParseTree::Parser::ConsumeExpecting(TokenKind kind)
+    -> TokenizedBuffer::Token {
   TokenizedBuffer::Token t = *position;
   assert(kind != TokenKind::EndOfFile() && "Cannot consume the EOF token!");
   assert(tokens.GetKind(t) == kind && "The current token is the wrong kind!");
@@ -61,7 +62,7 @@ auto ParseTree::Parser::ConsumeIf(TokenKind kind)
   if (tokens.GetKind(*position) != kind) {
     return {};
   }
-  return Consume(kind);
+  return ConsumeExpecting(kind);
 }
 
 auto ParseTree::Parser::AddLeafNode(ParseNodeKind kind,
@@ -130,7 +131,7 @@ auto ParseTree::Parser::SkipMatchingGroup() -> bool {
   }
 
   SkipTo(tokens.GetMatchedClosingToken(t));
-  Consume(t_kind.GetClosingSymbol());
+  ConsumeExpecting(t_kind.GetClosingSymbol());
   return true;
 }
 
@@ -171,15 +172,14 @@ auto ParseTree::Parser::SkipPastLikelyDeclarationEnd(
       return {};
     }
 
-    // If we find a semicolon, we want to parse it to end the declaration.
-    if (auto semi = ConsumeIf(TokenKind::Semi())) {
-      // Add a node for the semicolon. If we're inside of a declaration, this
-      // is a declaration ending semicolon, otherwise it simply forms an empty
-      // declaration.
-      return AddLeafNode(is_inside_declaration
-                             ? ParseNodeKind::DeclarationEnd()
-                             : ParseNodeKind::EmptyDeclaration(),
-                         *semi);
+    // If we find a semicolon, parse it and add a corresponding node. If we're
+    // inside of a declaration, this is a declaration ending semicolon,
+    // otherwise it simply forms an empty declaration.
+    if (auto end_node = ConsumeAndAddLeafNodeIf(
+            TokenKind::Semi(), is_inside_declaration
+                                   ? ParseNodeKind::DeclarationEnd()
+                                   : ParseNodeKind::EmptyDeclaration())) {
+      return end_node;
     }
 
     // Skip over any matching group of tokens.
@@ -188,7 +188,7 @@ auto ParseTree::Parser::SkipPastLikelyDeclarationEnd(
     }
 
     // Otherwise just step forward one token.
-    Consume(current_kind);
+    ConsumeExpecting(current_kind);
   } while (!AtEndOfFile() &&
            is_same_line_or_indent_greater_than_root(*position));
 
@@ -196,9 +196,7 @@ auto ParseTree::Parser::SkipPastLikelyDeclarationEnd(
 }
 
 auto ParseTree::Parser::ParseFunctionSignature() -> Node {
-  auto open_paren = ConsumeIf(TokenKind::OpenParen());
-  assert(open_paren && "Function signature does not start with `(`.");
-
+  TokenizedBuffer::Token open_paren = ConsumeExpecting(TokenKind::OpenParen());
   auto start = StartSubtree();
 
   // FIXME: Add support for parsing parameters.
@@ -211,21 +209,19 @@ auto ParseTree::Parser::ParseFunctionSignature() -> Node {
     has_errors = true;
 
     // We can trivially skip to the actual close parenthesis from here.
-    SkipTo(tokens.GetMatchedClosingToken(*open_paren));
+    SkipTo(tokens.GetMatchedClosingToken(open_paren));
   }
   AddLeafNode(ParseNodeKind::ParameterListEnd(),
-              Consume(TokenKind::CloseParen()));
+              ConsumeExpecting(TokenKind::CloseParen()));
 
   // FIXME: Implement parsing of a return type.
 
-  return AddNode(ParseNodeKind::ParameterList(), *open_paren, start,
-                 has_errors);
+  return AddNode(ParseNodeKind::ParameterList(), open_paren, start, has_errors);
 }
 
 auto ParseTree::Parser::ParseCodeBlock() -> Node {
-  auto open_curly = ConsumeIf(TokenKind::OpenCurlyBrace());
-  assert(open_curly && "Code block does not start with `{`.");
-
+  TokenizedBuffer::Token open_curly =
+      ConsumeExpecting(TokenKind::OpenCurlyBrace());
   auto start = StartSubtree();
 
   bool has_errors = false;
@@ -241,7 +237,7 @@ auto ParseTree::Parser::ParseCodeBlock() -> Node {
         has_errors = true;
 
         // We can trivially skip to the actual close curly brace from here.
-        SkipTo(tokens.GetMatchedClosingToken(*open_curly));
+        SkipTo(tokens.GetMatchedClosingToken(open_curly));
         // Now fall through to the close curly brace handling code.
         LLVM_FALLTHROUGH;
 
@@ -262,19 +258,18 @@ auto ParseTree::Parser::ParseCodeBlock() -> Node {
   // We always reach here having set our position in the token stream to the
   // close curly brace.
   AddLeafNode(ParseNodeKind::CodeBlockEnd(),
-              Consume(TokenKind::CloseCurlyBrace()));
+              ConsumeExpecting(TokenKind::CloseCurlyBrace()));
 
-  return AddNode(ParseNodeKind::CodeBlock(), *open_curly, start, has_errors);
+  return AddNode(ParseNodeKind::CodeBlock(), open_curly, start, has_errors);
 }
 
 auto ParseTree::Parser::ParseFunctionDeclaration() -> Node {
-  auto function_intro_token = ConsumeIf(TokenKind::FnKeyword());
-  assert(function_intro_token &&
-         "Function declaration does not start with `fn`.");
-
+  TokenizedBuffer::Token function_intro_token =
+      ConsumeExpecting(TokenKind::FnKeyword());
   auto start = StartSubtree();
+
   auto add_error_function_node = [&] {
-    return AddNode(ParseNodeKind::FunctionDeclaration(), *function_intro_token,
+    return AddNode(ParseNodeKind::FunctionDeclaration(), function_intro_token,
                    start, /*has_error=*/true);
   };
 
@@ -282,11 +277,11 @@ auto ParseTree::Parser::ParseFunctionDeclaration() -> Node {
                                         ParseNodeKind::Identifier());
   if (!name_n) {
     llvm::errs() << "ERROR: Function declaration with no name on line "
-                 << tokens.GetLineNumber(*function_intro_token) << "!\n";
+                 << tokens.GetLineNumber(function_intro_token) << "!\n";
     // FIXME: We could change the lexer to allow us to synthesize certain
     // kinds of tokens and try to "recover" here, but unclear that this is
     // really useful.
-    SkipPastLikelyDeclarationEnd(*function_intro_token);
+    SkipPastLikelyDeclarationEnd(function_intro_token);
     return add_error_function_node();
   }
 
@@ -295,8 +290,8 @@ auto ParseTree::Parser::ParseFunctionDeclaration() -> Node {
     llvm::errs()
         << "ERROR: Missing open parentheses in declaration of function '"
         << tokens.GetTokenText(tree.GetNodeToken(*name_n)) << "' on line "
-        << tokens.GetLineNumber(*function_intro_token) << "!\n";
-    SkipPastLikelyDeclarationEnd(*function_intro_token);
+        << tokens.GetLineNumber(function_intro_token) << "!\n";
+    SkipPastLikelyDeclarationEnd(function_intro_token);
     return add_error_function_node();
   }
   TokenizedBuffer::Token close_paren =
@@ -309,7 +304,7 @@ auto ParseTree::Parser::ParseFunctionDeclaration() -> Node {
   if (tree.node_impls[signature_n.index].has_error) {
     // Don't try to parse more of the function declaration, but consume a
     // declaration ending semicolon if found (without going to a new line).
-    SkipPastLikelyDeclarationEnd(*function_intro_token);
+    SkipPastLikelyDeclarationEnd(function_intro_token);
     return add_error_function_node();
   }
 
@@ -323,20 +318,19 @@ auto ParseTree::Parser::ParseFunctionDeclaration() -> Node {
                  << tokens.GetLineNumber(close_paren) << "!\n";
     if (tokens.GetLine(*position) == tokens.GetLine(close_paren)) {
       // Only need to skip if we've not already found a new line.
-      SkipPastLikelyDeclarationEnd(*function_intro_token);
+      SkipPastLikelyDeclarationEnd(function_intro_token);
     }
     return add_error_function_node();
   }
 
   // Successfully parsed the function, add that node.
-  return AddNode(ParseNodeKind::FunctionDeclaration(), *function_intro_token,
+  return AddNode(ParseNodeKind::FunctionDeclaration(), function_intro_token,
                  start);
 }
 
 auto ParseTree::Parser::ParseEmptyDeclaration() -> Node {
-  auto semi = ConsumeIf(TokenKind::Semi());
-  assert(semi && "Empty declaration does not start with `;`.");
-  return AddLeafNode(ParseNodeKind::EmptyDeclaration(), *semi);
+  TokenizedBuffer::Token semi = ConsumeExpecting(TokenKind::Semi());
+  return AddLeafNode(ParseNodeKind::EmptyDeclaration(), semi);
 }
 
 auto ParseTree::Parser::ParseDeclaration() -> llvm::Optional<Node> {
