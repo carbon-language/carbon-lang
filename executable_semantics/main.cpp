@@ -21,7 +21,7 @@ int main(int argc, char* argv[]) {
                                  llvm::cl::Required);
 
   llvm::cl::ParseCommandLineOptions(argc, argv);
-  if (traceOption) {
+  if (trace_option) {
     Carbon::tracing_output = true;
   }
 
