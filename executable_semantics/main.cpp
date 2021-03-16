@@ -16,7 +16,7 @@ int main(int argc, char* argv[]) {
 
   using llvm::cl::desc;
   using llvm::cl::opt;
-  opt<bool> traceOption("trace", desc("Enable tracing"));
+  opt<bool> trace_option("trace", desc("Enable tracing"));
   opt<std::string> inputFileName(llvm::cl::Positional, desc("<input file>"),
                                  llvm::cl::Required);
 
