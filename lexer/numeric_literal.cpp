@@ -26,9 +26,10 @@ struct InvalidDigit {
   int radix;
 
   auto Format() -> std::string {
-    return llvm::formatv("Invalid digit '{0}' in {1} numeric literal.", digit,
-                         (radix == 2 ? "binary"
-                                     : radix == 16 ? "hexadecimal" : "decimal"))
+    return llvm::formatv(
+               "Invalid digit '{0}' in {1} numeric literal.", digit,
+               (radix == 2 ? "binary"
+                           : (radix == 16 ? "hexadecimal" : "decimal")))
         .str();
   }
 };
