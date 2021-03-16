@@ -419,13 +419,6 @@ auto ToValue(Expression* value) -> Value* {
 // Returns nullopt if the value doesn't match the pattern.
 auto PatternMatch(Value* p, Value* v, Env env, std::list<std::string>* vars,
                   int line_num) -> std::optional<Env> {
-  if (tracing_output) {
-    std::cout << "pattern_match(";
-    PrintValue(p, std::cout);
-    std::cout << ", ";
-    PrintValue(v, std::cout);
-    std::cout << ")" << std::endl;
-  }
   switch (p->tag) {
     case ValKind::VarPatV: {
       Address a = AllocateValue(CopyVal(v, line_num));
