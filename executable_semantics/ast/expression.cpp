@@ -179,13 +179,13 @@ static void PrintOp(Operator op) {
       std::cout << "-";
       break;
     case Operator::Not:
-      std::cout << "!";
+      std::cout << "not";
       break;
     case Operator::And:
-      std::cout << "&&";
+      std::cout << "and";
       break;
     case Operator::Or:
-      std::cout << "||";
+      std::cout << "or";
       break;
     case Operator::Eq:
       std::cout << "==";

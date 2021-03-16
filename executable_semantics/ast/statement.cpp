@@ -213,22 +213,43 @@ void PrintStatement(Statement* s, int depth) {
       PrintStatement(s->u.sequence.stmt, depth);
       if (depth < 0 || depth > 1) {
         std::cout << std::endl;
+      } else {
+        std::cout << " ";
       }
-      PrintStatement(s->u.sequence.next, depth - 1);
+      PrintStatement(s->u.sequence.next, depth);
       break;
     case StatementKind::Block:
-      std::cout << "{" << std::endl;
+      std::cout << "{";
+      if (depth < 0 || depth > 1) {
+        std::cout << std::endl;
+      }
       PrintStatement(s->u.block.stmt, depth - 1);
-      std::cout << std::endl << "}" << std::endl;
+      if (depth < 0 || depth > 1) {
+        std::cout << std::endl;
+      }
+      std::cout << "}";
+      if (depth < 0 || depth > 1) {
+        std::cout << std::endl;
+      }
       break;
     case StatementKind::Delimit:
-      std::cout << "delimit" << std::endl;
+      std::cout << "delimit";
+      if (depth < 0 || depth > 1) {
+        std::cout << std::endl;
+      }
       PrintStatement(s->u.delimit_stmt.body, depth - 1);
-      std::cout << std::endl
-                << "with (" << *s->u.delimit_stmt.yield_variable << ", "
-                << *s->u.delimit_stmt.continuation << ")" << std::endl;
+      if (depth < 0 || depth > 1) {
+        std::cout << std::endl;
+      }
+      std::cout << "with (" << *s->u.delimit_stmt.yield_variable << ", "
+                << *s->u.delimit_stmt.continuation << ")";
+      if (depth < 0 || depth > 1) {
+        std::cout << std::endl;
+      }
       PrintStatement(s->u.delimit_stmt.handler, depth - 1);
-      std::cout << std::endl;
+      if (depth < 0 || depth > 1) {
+        std::cout << std::endl;
+      }
       break;
     case StatementKind::Yield:
       std::cout << "yield ";

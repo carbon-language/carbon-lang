@@ -2,28 +2,40 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
+// Test the use of delimited continuations to create a stream of
+// natural numbers.  The consumer of the stream computes the sum of the
+// first 5 natural numbers.
+
 fn naturals() -> () {
+  __yield -1;
   var Int: n = 0;
-  __yield n;
   while (true) {
-    n = n + 1;
     __yield n;
+    n = n + 1;
   }
 }
 
-fn main() -> Int {
+fn sumOfNaturals(__Continuation: k) -> Int {
   var Int: sum = 0;
   var Int: count = 0;
-  __delimit {
-    naturals();
-    return 1;
-  } __catch (v, k) {
-    sum = sum + v;
-    count = count + 1;
-    if (count == 5) {
-      return sum - 10;
-    } else {
+  while (not (count == 5)) {
+    __delimit {
       __resume k;
+    } __catch(v,next_k) {
+      sum = sum + v;
+      count = count + 1;
+      k = next_k;
     }
   }
+  return sum;
+}
+
+
+fn main() -> Int {
+  __delimit {
+    naturals();
+  } __catch (_, k) {
+    return sumOfNaturals(k) - 10;
+  }
+  return -1;
 }

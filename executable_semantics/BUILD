@@ -25,6 +25,7 @@ cc_library(
 )
 
 EXAMPLES = [
+    "assignment_copy1",
     "block1",
     "break1",
     "choice1",
@@ -68,6 +69,7 @@ EXAMPLES = [
     "experimental_delimit2",
     "experimental_delimit3",
     "experimental_delimit4",
+    "experimental_delimit5",
 ]
 
 [genrule(

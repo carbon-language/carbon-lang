@@ -528,7 +528,7 @@ auto PatternMatch(Value* p, Value* v, Env env, std::list<std::string>* vars,
 void PatternAssignment(Value* pat, Value* val, int sourceLocation) {
   switch (pat->tag) {
     case ValKind::PtrV:
-      state->heap[ValToPtr(pat, sourceLocation)] = val;
+      state->heap[ValToPtr(pat, sourceLocation)] = CopyVal(val, sourceLocation);
       break;
     case ValKind::TupleV: {
       switch (val->tag) {
@@ -822,8 +822,8 @@ auto IsDelimit(Action* act) -> bool {
 //
 // Used by ResumeContinuation to copy a saved continuation onto the
 // current stack.
-auto ResumeTodoAndScopes(Stack<Action*> todo, Stack<Action*>& new_todo,
-                         Stack<Scope*> scopes, Stack<Scope*>& new_scopes)
+auto CopyTodoAndScopes(Stack<Action*> todo, Stack<Action*>& new_todo,
+                       Stack<Scope*> scopes, Stack<Scope*>& new_scopes)
     -> void {
   if (todo.IsEmpty() || IsDelimit(todo.Top())) {
     return;
@@ -835,7 +835,7 @@ auto ResumeTodoAndScopes(Stack<Action*> todo, Stack<Action*>& new_todo,
       s = scopes.Top();
       scopes.Pop();
     }
-    ResumeTodoAndScopes(todo, new_todo, scopes, new_scopes);
+    CopyTodoAndScopes(todo, new_todo, scopes, new_scopes);
     new_todo.Push(a);
     if (IsBlockAct(a)) {
       new_scopes.Push(s);
@@ -856,10 +856,37 @@ auto ParameterBindings(Frame* frame) -> Scope* {
   return current;
 }
 
-// Copies a saved continuation onto the current stack. The end of the
-// saved continuation is marked by a Delimit AST node, so the copying
-// stops when it reaches Delimit.
+// Copies a saved continuation onto the current stack.
 auto ResumeContinuation(Stack<Frame*> continuation) -> void {
+  int continuationSize = continuation.Count();
+  if (continuationSize == 1) {
+    Frame* frame = continuation.Top();
+    // Push onto the current frame
+    CopyTodoAndScopes(frame->todo, state->stack.Top()->todo, frame->scopes,
+                      state->stack.Top()->scopes);
+  } else if (continuationSize > 1) {
+    Frame* frame = continuation.Top();
+    continuation.Pop();
+    ResumeContinuation(continuation);
+    Frame* new_frame = new Frame(*frame);
+    state->stack.Push(new_frame);
+  }
+}
+
+// Returns a copy of the `frame` down to a Delimit AST node if there
+// is one, or copies the entire `frame`.
+auto CopyFrameToDelimit(Frame* frame) -> Frame* {
+  Stack<Scope*> new_scopes;
+  new_scopes.Push(ParameterBindings(frame));
+  Frame* frameCopy = new Frame(frame->name, new_scopes, Stack<Action*>());
+  CopyTodoAndScopes(frame->todo, frameCopy->todo, frame->scopes,
+                    frameCopy->scopes);
+  return frameCopy;
+}
+
+// Returns a copy of the continuation from its top down to
+// the first Delimit AST node.
+auto CopyContinuation(Stack<Frame*> continuation) -> Stack<Frame*> {
   Frame* frame = continuation.Top();
   bool found_delimit = false;
   for (auto i = frame->todo.begin(); i != frame->todo.end(); ++i) {
@@ -867,22 +894,16 @@ auto ResumeContinuation(Stack<Frame*> continuation) -> void {
       found_delimit = true;
   }
   if (found_delimit) {
-    Frame* new_frame = state->stack.Top();
-    ResumeTodoAndScopes(frame->todo, new_frame->todo, frame->scopes,
-                        new_frame->scopes);
+    Frame* copiedFrame = CopyFrameToDelimit(frame);
+    Stack<Frame*> copiedContinuation;
+    copiedContinuation.Push(copiedFrame);
+    return copiedContinuation;
   } else {
+    Frame* copiedFrame = new Frame(*frame);
     continuation.Pop();
-    if (continuation.IsEmpty()) {
-      std::cerr << "yield without enclosing delimit" << std::endl;
-      exit(-1);
-    }
-    ResumeContinuation(continuation);
-    Stack<Scope*> new_scopes;
-    new_scopes.Push(ParameterBindings(frame));
-    Frame* new_frame = new Frame(frame->name, new_scopes, Stack<Action*>());
-    ResumeTodoAndScopes(frame->todo, new_frame->todo, frame->scopes,
-                        new_frame->scopes);
-    state->stack.Push(new_frame);
+    Stack<Frame*> copiedContinuation = CopyContinuation(continuation);
+    copiedContinuation.Push(copiedFrame);
+    return copiedContinuation;
   }
 }
 
@@ -1457,22 +1478,22 @@ void HandleValue() {
           frame->todo.Pop(2);
 
           // Save the current continuation
-          Stack<Frame*> yielded = state->stack;
+          Stack<Frame*> yielded = CopyContinuation(state->stack);
 
           // Roll back to the nearest delimit
-          Stack<Frame*> new_stack = state->stack;
+          // Stack<Frame*> new_stack = state->stack;
           Statement* delimit;
-          while (!new_stack.IsEmpty()) {
-            Stack<Action*> todo = new_stack.Top()->todo;
-            Stack<Scope*> scopes = new_stack.Top()->scopes;
+          while (!state->stack.IsEmpty()) {
+            Stack<Action*> todo = state->stack.Top()->todo;
+            Stack<Scope*> scopes = state->stack.Top()->scopes;
             while (!todo.IsEmpty()) {
               if (IsDelimit(todo.Top())) {
                 delimit = todo.Top()->u.stmt;
+                todo.Pop();
                 Frame* new_frame =
-                    new Frame(new_stack.Top()->name, scopes, todo);
-                new_stack.Pop();
-                new_stack.Push(new_frame);
-                state->stack = new_stack;
+                    new Frame(state->stack.Top()->name, scopes, todo);
+                state->stack.Pop();
+                state->stack.Push(new_frame);
                 goto handler;
               } else {
                 if (IsBlockAct(todo.Top())) {
@@ -1481,7 +1502,7 @@ void HandleValue() {
                 todo.Pop();
               }
             }  // while (!todo.IsEmpty())
-            new_stack.Pop();
+            state->stack.Pop();
           }  // while (!new_stack.IsEmpty())
           std::cerr << "yield without an enclosing delimiter" << std::endl;
           exit(-1);
@@ -1492,7 +1513,8 @@ void HandleValue() {
           scope_locals.push_back(*delimit->u.delimit_stmt.yield_variable);
           scope_locals.push_back(*delimit->u.delimit_stmt.continuation);
           Scope* new_scope = new Scope(CurrentEnv(state), scope_locals);
-          Address a1 = AllocateValue(val_act->u.val);
+          Address a1 =
+              AllocateValue(CopyVal(val_act->u.val, delimit->line_num));
           new_scope->env.Set(*delimit->u.delimit_stmt.yield_variable, a1);
           Address a2 = AllocateValue(MakeContinuation(yielded));
           new_scope->env.Set(*delimit->u.delimit_stmt.continuation, a2);
