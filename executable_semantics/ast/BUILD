@@ -25,7 +25,10 @@ cc_library(
     name = "expression",
     srcs = ["expression.cpp"],
     hdrs = ["expression.h"],
-    deps = ["//executable_semantics/interpreter:containers"],
+    deps = [
+        "//executable_semantics/interpreter:containers",
+        "//executable_semantics/utility",
+    ],
 )
 
 cc_library(

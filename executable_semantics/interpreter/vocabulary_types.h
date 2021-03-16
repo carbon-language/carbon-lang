@@ -9,8 +9,7 @@
 
 namespace Carbon {
 
-class Value;
-
+struct Value;
 using Address = unsigned int;
 using TypeEnv = Dictionary<std::string, Value*>;
 using Env = Dictionary<std::string, Address>;

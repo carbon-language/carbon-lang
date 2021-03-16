@@ -6,6 +6,8 @@
 
 #include <iostream>
 
+#include "executable_semantics/utility/fatal.h"
+
 namespace Carbon {
 
 static void PrintOp(PrimitiveOperatorExpression::Operation op) {
@@ -109,6 +111,14 @@ auto FunctionTypeExpression::Print() const -> void {
   parameterTupleType.Print();
   std::cout << " -> ";
   returnType.Print();
+}
+
+auto ExpressionSource::fatalLValAction() const -> void {
+  fatal("internal error in handle_value, LValAction");
+}
+
+auto ExpressionSource::fatalBadExpressionContext() const -> void {
+  fatal("internal error, bad expression context in handle_value");
 }
 
 }  // namespace Carbon

@@ -13,9 +13,11 @@
 
 namespace Carbon {
 
-class Value;
+struct Value;
 struct TCResult;
 struct TCContext_;
+struct Action;
+struct Frame;
 
 // An existential AST expression satisfying the Expression concept.
 class Expression {
@@ -23,17 +25,35 @@ class Expression {
   Expression(const Expression& other) = default;
   Expression& operator=(const Expression& other) = default;
 
-  // Constructs an instance equivalent to `d`, where `Model` satisfies the
+  // Constructs an instance equivalent to `e`, where `Model` satisfies the
   // Expression concept.
   template <class Model>
-  Expression(Model d) : box(std::make_shared<Boxed<Model>>(d)) {}
+  Expression(Model e) : box(std::make_shared<Boxed<Model>>(e)) {}
+
+  // Makes *this equivalent to `e`, where `Model` satisfies the
+  // Expression concept.
+  template <class Model>
+  Expression& operator=(const Model& e) {
+    box = std::make_shared<Boxed<Model>>(e);
+  }
 
  public:  // Expression concept API, in addition to ValueSemantic.
   auto Print() const -> void { box->Print(); }
-  auto StepLvalue() const -> void { box->StepLvalue(); }
-  auto StepExp() const -> void { box->StepExp(); }
+  auto StepLvalue(Action* act, Frame* frame) const -> void {
+    box->StepLvalue(act, frame);
+  }
+  auto StepExp(Action* act, Frame* frame) const -> void {
+    box->StepExp(act, frame);
+  }
   auto HandleValue() const -> void { box->HandleValue(); }
   auto HandleAction() const -> void { box->HandleAction(); }
+  auto LValAction(Action* act, Frame* frame) const -> void {
+    box->LValAction(act, frame);
+  }
+  auto ExpressionAction(Action* act, Frame* frame) const -> void {
+    box->ExpressionAction(act, frame);
+  }
+
   auto TypeCheck(TypeEnv env, Env ct_env, Value* expected, TCContext_ context)
       -> TCResult;
   auto SourceLocation() const -> int { return box->SourceLocation(); }
@@ -60,10 +80,12 @@ class Expression {
 
     virtual ~Box() {}
     virtual auto Print() const -> void = 0;
-    virtual auto StepLvalue() const -> void = 0;
-    virtual auto StepExp() const -> void = 0;
+    virtual auto StepLvalue(Action* act, Frame* frame) const -> void = 0;
+    virtual auto StepExp(Action* act, Frame* frame) const -> void = 0;
     virtual auto HandleValue() const -> void = 0;
     virtual auto HandleAction() const -> void = 0;
+    virtual auto LValAction(Action* act, Frame* frame) const -> void = 0;
+    virtual auto ExpressionAction(Action* act, Frame* frame) const -> void = 0;
     virtual auto TypeCheck(TypeEnv env, Env ct_env, Value* expected,
                            TCContext_ context) const -> TCResult = 0;
     virtual auto SourceLocation() const -> int = 0;
@@ -77,10 +99,20 @@ class Expression {
     explicit Boxed(Content content) : Box(), content(content) {}
 
     auto Print() const -> void { content.Print(); }
-    auto StepLvalue() const -> void { content.StepLvalue(); }
-    auto StepExp() const -> void { content.StepExp(); }
+    auto StepLvalue(Action* act, Frame* frame) const -> void {
+      content.StepLvalue(act, frame);
+    }
+    auto StepExp(Action* act, Frame* frame) const -> void {
+      content.StepExp(act, frame);
+    }
     auto HandleValue() const -> void { content.HandleValue(); }
     auto HandleAction() const -> void { content.HandleAction(); }
+    auto LValAction(Action* act, Frame* frame) const -> void {
+      content.LValAction(act, frame);
+    }
+    auto ExpressionAction(Action* act, Frame* frame) const -> void {
+      content.ExpressionAction(act, frame);
+    }
     auto TypeCheck(TypeEnv env, Env ct_env, Value* expected,
                    TCContext_ context) const -> TCResult;
     auto SourceLocation() const -> int { return content.sourceLocation; }
@@ -106,17 +138,25 @@ class ExpressionSource {
   Location location;
 
  protected:
-  ExpressionSource(Location location) : location(location) {}
+  explicit ExpressionSource(Location location) : location(location) {}
+  auto fatalLValAction() const -> void;
+  auto fatalBadExpressionContext() const -> void;
 };
 
 struct AutoTypeExpression : ExpressionSource {
   AutoTypeExpression(Location textualPlacement)
       : ExpressionSource(textualPlacement) {}
   auto Print() const -> void;
-  auto StepLvalue() const -> void;
-  auto StepExp() const -> void;
+  auto StepLvalue(Action* act, Frame* frame) const -> void {}
+  auto StepExp(Action* act, Frame* frame) const -> void;
   auto HandleValue() const -> void;
   auto HandleAction() const -> void;
+  auto LValAction(Action* act, Frame* frame) const -> void {
+    fatalLValAction();
+  }
+  auto ExpressionAction(Action* act, Frame* frame) const -> void {
+    fatalBadExpressionContext();
+  }
   auto TypeCheck(TypeEnv env, Env ct_env, Value* expected,
                  TCContext_ context) const -> TCResult;
 };
@@ -125,10 +165,16 @@ struct BoolTypeExpression : ExpressionSource {
   BoolTypeExpression(Location textualPlacement)
       : ExpressionSource(textualPlacement) {}
   auto Print() const -> void;
-  auto StepLvalue() const -> void;
-  auto StepExp() const -> void;
+  auto StepLvalue(Action* act, Frame* frame) const -> void {}
+  auto StepExp(Action* act, Frame* frame) const -> void;
   auto HandleValue() const -> void;
   auto HandleAction() const -> void;
+  auto LValAction(Action* act, Frame* frame) const -> void {
+    fatalLValAction();
+  }
+  auto ExpressionAction(Action* act, Frame* frame) const -> void {
+    fatalBadExpressionContext();
+  }
   auto TypeCheck(TypeEnv env, Env ct_env, Value* expected,
                  TCContext_ context) const -> TCResult;
 };
@@ -137,10 +183,16 @@ struct BooleanExpression : ExpressionSource {
   BooleanExpression(Location textualPlacement, bool value)
       : ExpressionSource(textualPlacement), value(value) {}
   auto Print() const -> void;
-  auto StepLvalue() const -> void;
-  auto StepExp() const -> void;
+  auto StepLvalue(Action* act, Frame* frame) const -> void {}
+  auto StepExp(Action* act, Frame* frame) const -> void;
   auto HandleValue() const -> void;
   auto HandleAction() const -> void;
+  auto LValAction(Action* act, Frame* frame) const -> void {
+    fatalLValAction();
+  }
+  auto ExpressionAction(Action* act, Frame* frame) const -> void {
+    fatalBadExpressionContext();
+  }
   auto TypeCheck(TypeEnv env, Env ct_env, Value* expected,
                  TCContext_ context) const -> TCResult;
 
@@ -156,10 +208,14 @@ struct CallExpression : ExpressionSource {
         argumentTuple(argumentTuple) {}
 
   auto Print() const -> void;
-  auto StepLvalue() const -> void;
-  auto StepExp() const -> void;
+  auto StepLvalue(Action* act, Frame* frame) const -> void {}
+  auto StepExp(Action* act, Frame* frame) const -> void;
   auto HandleValue() const -> void;
   auto HandleAction() const -> void;
+  auto LValAction(Action* act, Frame* frame) const -> void {
+    fatalLValAction();
+  }
+  auto ExpressionAction(Action* act, Frame* frame) const -> void;
   auto TypeCheck(TypeEnv env, Env ct_env, Value* expected,
                  TCContext_ context) const -> TCResult;
 
@@ -176,10 +232,14 @@ struct FunctionTypeExpression : ExpressionSource {
         returnType(returnType) {}
 
   auto Print() const -> void;
-  auto StepLvalue() const -> void;
-  auto StepExp() const -> void;
+  auto StepLvalue(Action* act, Frame* frame) const -> void {}
+  auto StepExp(Action* act, Frame* frame) const -> void;
   auto HandleValue() const -> void;
   auto HandleAction() const -> void;
+  auto LValAction(Action* act, Frame* frame) const -> void {
+    fatalLValAction();
+  }
+  auto ExpressionAction(Action* act, Frame* frame) const -> void;
   auto TypeCheck(TypeEnv env, Env ct_env, Value* expected,
                  TCContext_ context) const -> TCResult;
 
@@ -195,10 +255,12 @@ struct GetFieldExpression : ExpressionSource {
         fieldName(fieldName) {}
 
   auto Print() const -> void;
-  auto StepLvalue() const -> void;
-  auto StepExp() const -> void;
+  auto StepLvalue(Action* act, Frame* frame) const -> void;
+  auto StepExp(Action* act, Frame* frame) const -> void;
   auto HandleValue() const -> void;
   auto HandleAction() const -> void;
+  auto LValAction(Action* act, Frame* frame) const -> void;
+  auto ExpressionAction(Action* act, Frame* frame) const -> void;
   auto TypeCheck(TypeEnv env, Env ct_env, Value* expected,
                  TCContext_ context) const -> TCResult;
 
@@ -214,10 +276,12 @@ struct IndexExpression : ExpressionSource {
         offset(offset) {}
 
   auto Print() const -> void;
-  auto StepLvalue() const -> void;
-  auto StepExp() const -> void;
+  auto StepLvalue(Action* act, Frame* frame) const -> void;
+  auto StepExp(Action* act, Frame* frame) const -> void;
   auto HandleValue() const -> void;
   auto HandleAction() const -> void;
+  auto LValAction(Action* act, Frame* frame) const -> void;
+  auto ExpressionAction(Action* act, Frame* frame) const -> void;
   auto TypeCheck(TypeEnv env, Env ct_env, Value* expected,
                  TCContext_ context) const -> TCResult;
 
@@ -230,10 +294,16 @@ struct IntTypeExpression : ExpressionSource {
       : ExpressionSource(textualPlacement) {}
 
   auto Print() const -> void;
-  auto StepLvalue() const -> void;
-  auto StepExp() const -> void;
+  auto StepLvalue(Action* act, Frame* frame) const -> void;
+  auto StepExp(Action* act, Frame* frame) const -> void;
   auto HandleValue() const -> void;
   auto HandleAction() const -> void;
+  auto LValAction(Action* act, Frame* frame) const -> void {
+    fatalLValAction();
+  }
+  auto ExpressionAction(Action* act, Frame* frame) const -> void {
+    fatalBadExpressionContext();
+  }
   auto TypeCheck(TypeEnv env, Env ct_env, Value* expected,
                  TCContext_ context) const -> TCResult;
 };
@@ -243,10 +313,16 @@ struct IntegerExpression : ExpressionSource {
       : ExpressionSource(textualPlacement), value(value) {}
 
   auto Print() const -> void;
-  auto StepLvalue() const -> void;
-  auto StepExp() const -> void;
+  auto StepLvalue(Action* act, Frame* frame) const -> void {}
+  auto StepExp(Action* act, Frame* frame) const -> void;
   auto HandleValue() const -> void;
   auto HandleAction() const -> void;
+  auto LValAction(Action* act, Frame* frame) const -> void {
+    fatalLValAction();
+  }
+  auto ExpressionAction(Action* act, Frame* frame) const -> void {
+    fatalBadExpressionContext();
+  }
   auto TypeCheck(TypeEnv env, Env ct_env, Value* expected,
                  TCContext_ context) const -> TCResult;
 
@@ -259,10 +335,14 @@ struct PatternVariableExpression : ExpressionSource {
       : ExpressionSource(textualPlacement), name(name), type(type) {}
 
   auto Print() const -> void;
-  auto StepLvalue() const -> void;
-  auto StepExp() const -> void;
+  auto StepLvalue(Action* act, Frame* frame) const -> void;
+  auto StepExp(Action* act, Frame* frame) const -> void;
   auto HandleValue() const -> void;
   auto HandleAction() const -> void;
+  auto LValAction(Action* act, Frame* frame) const -> void {
+    fatalLValAction();
+  }
+  auto ExpressionAction(Action* act, Frame* frame) const -> void;
   auto TypeCheck(TypeEnv env, Env ct_env, Value* expected,
                  TCContext_ context) const -> TCResult;
 
@@ -287,10 +367,14 @@ struct PrimitiveOperatorExpression : ExpressionSource {
                               Arguments... arguments);
 
   auto Print() const -> void;
-  auto StepLvalue() const -> void;
-  auto StepExp() const -> void;
+  auto StepLvalue(Action* act, Frame* frame) const -> void;
+  auto StepExp(Action* act, Frame* frame) const -> void;
   auto HandleValue() const -> void;
   auto HandleAction() const -> void;
+  auto LValAction(Action* act, Frame* frame) const -> void {
+    fatalLValAction();
+  }
+  auto ExpressionAction(Action* act, Frame* frame) const -> void;
   auto TypeCheck(TypeEnv env, Env ct_env, Value* expected,
                  TCContext_ context) const -> TCResult;
 
@@ -307,8 +391,8 @@ struct PrimitiveOperatorExpression : ExpressionSource {
 };
 
 struct TupleExpression : ExpressionSource {
-  // Creates an instance storing a copy of elements, except that each empty name
-  // in is replaced by a string representation of its index.
+  // Creates an instance storing a copy of elements with each empty name
+  // replaced by a string representation of its index.
   TupleExpression(Location textualPlacement,
                   std::vector<std::pair<std::string, Expression>> elements)
       : ExpressionSource(textualPlacement), elements(elements) {
@@ -322,10 +406,12 @@ struct TupleExpression : ExpressionSource {
   }
 
   auto Print() const -> void;
-  auto StepLvalue() const -> void;
-  auto StepExp() const -> void;
+  auto StepLvalue(Action* act, Frame* frame) const -> void;
+  auto StepExp(Action* act, Frame* frame) const -> void;
   auto HandleValue() const -> void;
   auto HandleAction() const -> void;
+  auto LValAction(Action* act, Frame* frame) const -> void;
+  auto ExpressionAction(Action* act, Frame* frame) const -> void;
   auto TypeCheck(TypeEnv env, Env ct_env, Value* expected,
                  TCContext_ context) const -> TCResult;
 
@@ -333,11 +419,19 @@ struct TupleExpression : ExpressionSource {
 };
 
 struct TypeTypeExpression : ExpressionSource {
+  explicit TypeTypeExpression(Location location) : ExpressionSource(location) {}
+
   auto Print() const -> void;
-  auto StepLvalue() const -> void;
-  auto StepExp() const -> void;
+  auto StepLvalue(Action* act, Frame* frame) const -> void {}
+  auto StepExp(Action* act, Frame* frame) const -> void;
   auto HandleValue() const -> void;
   auto HandleAction() const -> void;
+  auto LValAction(Action* act, Frame* frame) const -> void {
+    fatalLValAction();
+  }
+  auto ExpressionAction(Action* act, Frame* frame) const -> void {
+    fatalBadExpressionContext();
+  }
   auto TypeCheck(TypeEnv env, Env ct_env, Value* expected,
                  TCContext_ context) const -> TCResult;
 };
@@ -349,10 +443,16 @@ struct VariableExpression : ExpressionSource {
       : ExpressionSource(textualPlacement), name(name) {}
 
   auto Print() const -> void;
-  auto StepLvalue() const -> void;
-  auto StepExp() const -> void;
+  auto StepLvalue(Action* act, Frame* frame) const -> void;
+  auto StepExp(Action* act, Frame* frame) const -> void;
   auto HandleValue() const -> void;
   auto HandleAction() const -> void;
+  auto LValAction(Action* act, Frame* frame) const -> void {
+    fatalLValAction();
+  }
+  auto ExpressionAction(Action* act, Frame* frame) const -> void {
+    fatalBadExpressionContext();
+  }
   auto TypeCheck(TypeEnv env, Env ct_env, Value* expected,
                  TCContext_ context) const -> TCResult;
 };

@@ -38,8 +38,8 @@ struct Action {
 
 void PrintAct(Action* act, std::ostream& out);
 void PrintActList(Stack<Action*> ls, std::ostream& out);
-auto MakeExpAct(Expression* e) -> Action*;
-auto MakeLvalAct(Expression* e) -> Action*;
+auto MakeExpAct(Expression e) -> Action*;
+auto MakeLvalAct(Expression e) -> Action*;
 auto MakeStmtAct(Statement* s) -> Action*;
 auto MakeValAct(Value* v) -> Action*;
 auto MakeExpToLvalAct() -> Action*;

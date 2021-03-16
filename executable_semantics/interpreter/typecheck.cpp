@@ -102,7 +102,7 @@ auto ReifyType(Value* t, int line_num) -> Expression {
                                     ReifyType(t->u.fun_type.param, line_num),
                                     ReifyType(t->u.fun_type.ret, line_num));
     case ValKind::TupleTV: {
-      auto args = new std::vector<std::pair<std::string, Expression*>>();
+      auto args = new std::vector<std::pair<std::string, Expression>>();
       for (auto& field : *t->u.tuple_type.fields) {
         args->push_back(
             make_pair(field.first, ReifyType(field.second, line_num)));
@@ -201,7 +201,7 @@ auto TypeCheckExp(Expression* e, TypeEnv env, Env ct_env, Value* expected,
       }
     }
     case ExpressionKind::Tuple: {
-      auto new_args = new std::vector<std::pair<std::string, Expression*>>();
+      auto new_args = new std::vector<std::pair<std::string, Expression>>();
       auto arg_types = new VarValues();
       auto new_env = env;
       int i = 0;

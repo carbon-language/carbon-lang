@@ -59,18 +59,18 @@ void PrintActList(Stack<Action*> ls, std::ostream& out) {
   }
 }
 
-auto MakeExpAct(Expression* e) -> Action* {
+auto MakeExpAct(Expression e) -> Action* {
   auto* act = new Action();
   act->tag = ActionKind::ExpressionAction;
-  act->u.exp = e;
+  act->u.exp = new Expression(e);
   act->pos = -1;
   return act;
 }
 
-auto MakeLvalAct(Expression* e) -> Action* {
+auto MakeLvalAct(Expression e) -> Action* {
   auto* act = new Action();
   act->tag = ActionKind::LValAction;
-  act->u.exp = e;
+  act->u.exp = new Expression(e);
   act->pos = -1;
   return act;
 }

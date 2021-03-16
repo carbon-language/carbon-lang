@@ -69,7 +69,7 @@ void yy::parser::error(
   context.PrintDiagnostic(message, yylineno);
 }
 
-static CurrentSourceLocation() -> Carbon::ExpressionSource::Location {
+static auto CurrentSourceLocation() -> Carbon::ExpressionSource::Location {
   return Carbon::ExpressionSource::Location(yylineno);
 }
 }
@@ -84,20 +84,20 @@ static CurrentSourceLocation() -> Carbon::ExpressionSource::Location {
 %type <Carbon::Statement*> statement
 %type <Carbon::Statement*> optional_else
 %type <Carbon::Statement*> statement_list
-%type <Carbon::Expression*> expression
-%type <Carbon::Expression*> pattern
-%type <Carbon::Expression*> return_type
-%type <Carbon::Expression*> paren_expression
-%type <Carbon::Expression*> tuple
+%type <Carbon::Expression> expression
+%type <Carbon::Expression> pattern
+%type <Carbon::Expression> return_type
+%type <Carbon::Expression> paren_expression
+%type <Carbon::Expression> tuple
 %type <Carbon::Member*> variable_declaration
 %type <Carbon::Member*> member
 %type <std::list<Carbon::Member*>*> member_list
 %type <Carbon::FieldList*> field
 %type <Carbon::FieldList*> field_list
-%type <std::pair<std::string, Carbon::Expression*>*> alternative
-%type <std::list<std::pair<std::string, Carbon::Expression*>>*> alternative_list
-%type <std::pair<Carbon::Expression*, Carbon::Statement*>*> clause
-%type <std::list<std::pair<Carbon::Expression*, Carbon::Statement*>>*> clause_list
+%type <std::pair<std::string, Carbon::Expression>*> alternative
+%type <std::list<std::pair<std::string, Carbon::Expression>>*> alternative_list
+%type <std::pair<Carbon::Expression, Carbon::Statement*>*> clause
+%type <std::list<std::pair<Carbon::Expression, Carbon::Statement*>>*> clause_list
 %token END_OF_FILE 0
 %token AND
 %token OR
@@ -168,7 +168,7 @@ expression:
 | expression "[" expression "]"
     { $$ = Carbon::IndexExpression(CurrentSourceLocation(), $1, $3); }
 | expression ":" identifier
-    { $$ = Carbon::VarPatExpression(CurrentSourceLocation(), $3, $1); }
+    { $$ = Carbon::VariablePatternExpression(CurrentSourceLocation(), $3, $1); }
 | integer_literal
     { $$ = Carbon::IntExpression(CurrentSourceLocation(), $1); }
 | TRUE
@@ -234,7 +234,7 @@ paren_expression: "(" field_list ")"
 	 !$2->has_explicit_comma) {
 	$$ = $2->fields->front().second;
      } else {
-        auto vec = new std::vector<std::pair<std::string,Carbon::Expression*>>(
+        auto vec = new std::vector<std::pair<std::string,Carbon::Expression>>(
             $2->fields->begin(), $2->fields->end());
         $$ = Carbon::TupleExpression(CurrentSourceLocation(), vec);
       }
@@ -242,7 +242,7 @@ paren_expression: "(" field_list ")"
 ;
 tuple: "(" field_list ")"
     {
-     auto vec = new std::vector<std::pair<std::string,Carbon::Expression*>>(
+     auto vec = new std::vector<std::pair<std::string,Carbon::Expression>>(
          $2->fields->begin(), $2->fields->end());
      $$ = Carbon::TupleExpression(CurrentSourceLocation(), vec);
     }
@@ -250,14 +250,14 @@ field:
   pattern
     {
       auto fields =
-          new std::list<std::pair<std::string, Carbon::Expression*>>();
+          new std::list<std::pair<std::string, Carbon::Expression>>();
       fields->push_back(std::make_pair("", $1));
       $$ = Carbon::MakeFieldList(fields);
     }
 | designator "=" pattern
     {
       auto fields =
-          new std::list<std::pair<std::string, Carbon::Expression*>>();
+          new std::list<std::pair<std::string, Carbon::Expression>>();
       fields->push_back(std::make_pair($1, $3));
       $$ = Carbon::MakeFieldList(fields);
     }
@@ -266,7 +266,7 @@ field_list:
   // Empty
     {
       $$ = Carbon::MakeFieldList(
-          new std::list<std::pair<std::string, Carbon::Expression*>>());
+          new std::list<std::pair<std::string, Carbon::Expression>>());
     }
 | field
     { $$ = $1; }
@@ -275,19 +275,19 @@ field_list:
 ;
 clause:
   CASE pattern DBLARROW statement
-    { $$ = new std::pair<Carbon::Expression*, Carbon::Statement*>($2, $4); }
+    { $$ = new std::pair<Carbon::Expression, Carbon::Statement*>($2, $4); }
 | DEFAULT DBLARROW statement
     {
       auto vp = Carbon::PatternVariableExpression(
         CurrentSourceLocation(), "_",
         Carbon::AutoTypeExpression(CurrentSourceLocation()));
-      $$ = new std::pair<Carbon::Expression*, Carbon::Statement*>(vp, $3);
+      $$ = new std::pair<Carbon::Expression, Carbon::Statement*>(vp, $3);
     }
 ;
 clause_list:
   // Empty
     {
-      $$ = new std::list<std::pair<Carbon::Expression*, Carbon::Statement*>>();
+      $$ = new std::list<std::pair<Carbon::Expression, Carbon::Statement*>>();
     }
 | clause clause_list
     { $$ = $2; $$->push_front(*$1); }
@@ -330,7 +330,7 @@ return_type:
     {
       $$ = Carbon::MakeTuple(
           yylineno,
-          new std::vector<std::pair<std::string, Carbon::Expression*>>());
+          new std::vector<std::pair<std::string, Carbon::Expression>>());
     }
 | ARROW expression
     { $$ = $2; }
@@ -362,21 +362,21 @@ member_list:
 ;
 alternative:
   identifier tuple
-    { $$ = new std::pair<std::string, Carbon::Expression*>($1, $2); }
+    { $$ = new std::pair<std::string, Carbon::Expression>($1, $2); }
 | identifier
     {
-      $$ = new std::pair<std::string, Carbon::Expression*>(
+      $$ = new std::pair<std::string, Carbon::Expression>(
           $1, Carbon::MakeTuple(
             yylineno,
-            new std::vector<std::pair<std::string, Carbon::Expression*>>()));
+            new std::vector<std::pair<std::string, Carbon::Expression>>()));
     }
 ;
 alternative_list:
   // Empty
-    { $$ = new std::list<std::pair<std::string, Carbon::Expression*>>(); }
+    { $$ = new std::list<std::pair<std::string, Carbon::Expression>>(); }
 | alternative
     {
-      $$ = new std::list<std::pair<std::string, Carbon::Expression*>>();
+      $$ = new std::list<std::pair<std::string, Carbon::Expression>>();
       $$->push_front(*$1);
     }
 | alternative "," alternative_list
