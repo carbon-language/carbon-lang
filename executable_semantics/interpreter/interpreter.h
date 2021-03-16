@@ -35,7 +35,7 @@ struct Frame {
   // The bottom scope always contains the parameter-argument bindings
   // for this function call. The rest of the scopes contain local
   // variables defined by blocks within the function. The scope at the
-  // top of the stack is the current scope and it's environment is the
+  // top of the stack is the current scope and its environment is the
   // one used for looking up the value associated with a variable.
   Stack<Scope*> scopes;
   // The actions that need to be executed in the future of the

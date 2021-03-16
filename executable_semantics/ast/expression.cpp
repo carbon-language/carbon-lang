@@ -38,10 +38,10 @@ auto MakeAutoType(int line_num) -> Expression* {
 
 // Returns a Continuation type AST node at the given source location.
 auto MakeContinuationType(int line_num) -> Expression* {
-  auto* t = new Expression();
-  t->tag = ExpressionKind::ContinuationT;
-  t->line_num = line_num;
-  return t;
+  auto* type = new Expression();
+  type->tag = ExpressionKind::ContinuationT;
+  type->line_num = line_num;
+  return type;
 }
 
 auto MakeFunType(int line_num, Expression* param, Expression* ret)

@@ -75,16 +75,16 @@ struct Statement {
     struct {
       Statement* body;
       std::string* yield_variable;
-      std::string* continuation;
+      std::string* continuation_variable;
       Statement* handler;
     } delimit_stmt;
 
     struct {
-      Expression* exp;
+      Expression* operand;
     } yield_stmt;
 
     struct {
-      Expression* exp;
+      Expression* operand;
     } resume_stmt;
 
   } u;
@@ -114,15 +114,16 @@ auto MakeMatch(int line_num, Expression* exp,
 //        <handler>
 //      }
 //
-auto MakeDelimitStmt(int sourceLocation, Statement* body,
-                     std::string yieldedValueName, std::string continuationName,
-                     Statement* handler) -> Statement*;
+auto MakeDelimitStatement(int source_location, Statement* body,
+                          std::string yieldedValueName,
+                          std::string continuationName, Statement* handler)
+    -> Statement*;
 // Returns an AST node for a yield stament given an expression
 // that produces the yielded value.
-auto MakeYieldStmt(int line_num, Expression*) -> Statement*;
+auto MakeYieldStatement(int line_num, Expression* operand) -> Statement*;
 // Returns an AST node for a resume statement given an expression
 // that produces a continuation.
-auto MakeResumeStmt(int line_num, Expression*) -> Statement*;
+auto MakeResumeStatement(int line_num, Expression* operand) -> Statement*;
 
 void PrintStatement(Statement*, int);
 

@@ -52,23 +52,23 @@ auto AllocateValue(Value* v) -> Address {
   return a;
 }
 
-auto CopyVal(Value* val, int sourceLocation) -> Value* {
-  CheckAlive(val, sourceLocation);
+auto CopyVal(Value* val, int line_num) -> Value* {
+  CheckAlive(val, line_num);
   switch (val->tag) {
     case ValKind::TupleV: {
       auto elts = new std::vector<std::pair<std::string, Address>>();
       for (auto& i : *val->u.tuple.elts) {
-        Value* elt = CopyVal(state->heap[i.second], sourceLocation);
+        Value* elt = CopyVal(state->heap[i.second], line_num);
         elts->push_back(make_pair(i.first, AllocateValue(elt)));
       }
       return MakeTupleVal(elts);
     }
     case ValKind::AltV: {
-      Value* arg = CopyVal(val->u.alt.arg, sourceLocation);
+      Value* arg = CopyVal(val->u.alt.arg, line_num);
       return MakeAltVal(*val->u.alt.alt_name, *val->u.alt.choice_name, arg);
     }
     case ValKind::StructV: {
-      Value* inits = CopyVal(val->u.struct_val.inits, sourceLocation);
+      Value* inits = CopyVal(val->u.struct_val.inits, line_num);
       return MakeStructVal(val->u.struct_val.type, inits);
     }
     case ValKind::IntV:
@@ -82,11 +82,11 @@ auto CopyVal(Value* val, int sourceLocation) -> Value* {
     case ValKind::ContinuationV:
       return MakeContinuation(*val->u.continuation.stack);
     case ValKind::FunctionTV:
-      return MakeFunTypeVal(CopyVal(val->u.fun_type.param, sourceLocation),
-                            CopyVal(val->u.fun_type.ret, sourceLocation));
+      return MakeFunTypeVal(CopyVal(val->u.fun_type.param, line_num),
+                            CopyVal(val->u.fun_type.ret, line_num));
 
     case ValKind::PointerTV:
-      return MakePtrTypeVal(CopyVal(val->u.ptr_type.type, sourceLocation));
+      return MakePtrTypeVal(CopyVal(val->u.ptr_type.type, line_num));
     case ValKind::IntTV:
       return MakeIntTypeVal();
     case ValKind::BoolTV:
@@ -102,7 +102,7 @@ auto CopyVal(Value* val, int sourceLocation) -> Value* {
     case ValKind::TupleTV: {
       auto new_fields = new VarValues();
       for (auto& field : *val->u.tuple_type.fields) {
-        auto v = CopyVal(field.second, sourceLocation);
+        auto v = CopyVal(field.second, line_num);
         new_fields->push_back(make_pair(field.first, v));
       }
       return MakeTupleTypeVal(new_fields);
@@ -240,15 +240,15 @@ auto ValToPtr(Value* v, int sourceLocation) -> Address {
 // Returns *continuation represented as a stack of frames.
 //
 // - Precondition: continuation->tag == ValKind::ContinuationV.
-auto ToContinuation(Value* continuation, int sourceLocation) -> Stack<Frame*> {
+auto ContinuationToStack(Value* continuation, int sourceLocation)
+    -> Stack<Frame*> {
   CheckAlive(continuation, sourceLocation);
-  switch (continuation->tag) {
-    case ValKind::ContinuationV:
-      return *continuation->u.continuation.stack;
-    default:
-      std::cerr << sourceLocation << ": runtime error: expected an integer"
-                << std::endl;
-      exit(-1);
+  if (continuation->tag == ValKind::ContinuationV) {
+    return *continuation->u.continuation.stack;
+  } else {
+    std::cerr << sourceLocation << ": runtime error: expected an integer"
+              << std::endl;
+    exit(-1);
   }
 }
 
@@ -1024,12 +1024,12 @@ void StepStmt() {
       break;
     case StatementKind::Yield:
       // Evaluate the expression for the yielded value.
-      frame->todo.Push(MakeExpAct(stmt->u.yield_stmt.exp));
+      frame->todo.Push(MakeExpAct(stmt->u.yield_stmt.operand));
       act->pos++;
       break;
     case StatementKind::Resume:
       // Evaluate the expression for the continuation.
-      frame->todo.Push(MakeExpAct(stmt->u.resume_stmt.exp));
+      frame->todo.Push(MakeExpAct(stmt->u.resume_stmt.operand));
       act->pos++;
       break;
   }
@@ -1511,13 +1511,15 @@ void HandleValue() {
           // yield and continuation variables.
           std::list<std::string> scope_locals;
           scope_locals.push_back(*delimit->u.delimit_stmt.yield_variable);
-          scope_locals.push_back(*delimit->u.delimit_stmt.continuation);
+          scope_locals.push_back(
+              *delimit->u.delimit_stmt.continuation_variable);
           Scope* new_scope = new Scope(CurrentEnv(state), scope_locals);
           Address a1 =
               AllocateValue(CopyVal(val_act->u.val, delimit->line_num));
           new_scope->env.Set(*delimit->u.delimit_stmt.yield_variable, a1);
           Address a2 = AllocateValue(MakeContinuation(yielded));
-          new_scope->env.Set(*delimit->u.delimit_stmt.continuation, a2);
+          new_scope->env.Set(*delimit->u.delimit_stmt.continuation_variable,
+                             a2);
 
           // Push the new scope onto the stack
           state->stack.Top()->scopes.Push(new_scope);
@@ -1531,7 +1533,7 @@ void HandleValue() {
         case StatementKind::Resume: {
           // Push the yielded continuation onto the current stack
           Stack<Frame*> yielded =
-              ToContinuation(val_act->u.val, stmt->line_num);
+              ContinuationToStack(val_act->u.val, stmt->line_num);
           frame->todo.Pop(2);
           ResumeContinuation(yielded);
           break;

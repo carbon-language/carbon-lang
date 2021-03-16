@@ -108,36 +108,40 @@ auto MakeMatch(int line_num, Expression* exp,
 // line number, the body statement, the variable name for the yielded value,
 // the variable name for the captured continuation, and the handler
 // statement.
-auto MakeDelimitStmt(int line_num, Statement* body, std::string yield,
-                     std::string cont, Statement* handler) -> Statement* {
-  auto* s = new Statement();
-  s->line_num = line_num;
-  s->tag = StatementKind::Delimit;
-  s->u.delimit_stmt.body = body;
-  s->u.delimit_stmt.yield_variable = new std::string(yield);
-  s->u.delimit_stmt.continuation = new std::string(cont);
-  s->u.delimit_stmt.handler = handler;
-  return s;
+auto MakeDelimitStatement(int source_location, Statement* body,
+                          std::string yield_variable,
+                          std::string continuation_variable, Statement* handler)
+    -> Statement* {
+  auto* delimit_statement = new Statement();
+  delimit_statement->line_num = source_location;
+  delimit_statement->tag = StatementKind::Delimit;
+  delimit_statement->u.delimit_stmt.body = body;
+  delimit_statement->u.delimit_stmt.yield_variable =
+      new std::string(yield_variable);
+  delimit_statement->u.delimit_stmt.continuation_variable =
+      new std::string(continuation_variable);
+  delimit_statement->u.delimit_stmt.handler = handler;
+  return delimit_statement;
 }
 
 // Returns an AST node for a yield stament given an expression
 // that produces the yielded value.
-auto MakeYieldStmt(int line_num, Expression* exp) -> Statement* {
-  auto* s = new Statement();
-  s->line_num = line_num;
-  s->tag = StatementKind::Yield;
-  s->u.yield_stmt.exp = exp;
-  return s;
+auto MakeYieldStatement(int line_num, Expression* operand) -> Statement* {
+  auto* yield_statement = new Statement();
+  yield_statement->line_num = line_num;
+  yield_statement->tag = StatementKind::Yield;
+  yield_statement->u.yield_stmt.operand = operand;
+  return yield_statement;
 }
 
 // Returns an AST node for a resume statement given an expression
 // that produces a continuation.
-auto MakeResumeStmt(int line_num, Expression* exp) -> Statement* {
-  auto* s = new Statement();
-  s->line_num = line_num;
-  s->tag = StatementKind::Resume;
-  s->u.resume_stmt.exp = exp;
-  return s;
+auto MakeResumeStatement(int line_num, Expression* operand) -> Statement* {
+  auto* resume_statement = new Statement();
+  resume_statement->line_num = line_num;
+  resume_statement->tag = StatementKind::Resume;
+  resume_statement->u.resume_stmt.operand = operand;
+  return resume_statement;
 }
 
 void PrintStatement(Statement* s, int depth) {
@@ -242,7 +246,7 @@ void PrintStatement(Statement* s, int depth) {
         std::cout << std::endl;
       }
       std::cout << "with (" << *s->u.delimit_stmt.yield_variable << ", "
-                << *s->u.delimit_stmt.continuation << ")";
+                << *s->u.delimit_stmt.continuation_variable << ")";
       if (depth < 0 || depth > 1) {
         std::cout << std::endl;
       }
@@ -253,12 +257,12 @@ void PrintStatement(Statement* s, int depth) {
       break;
     case StatementKind::Yield:
       std::cout << "yield ";
-      PrintExp(s->u.yield_stmt.exp);
+      PrintExp(s->u.yield_stmt.operand);
       std::cout << ";";
       break;
     case StatementKind::Resume:
       std::cout << "resume ";
-      PrintExp(s->u.resume_stmt.exp);
+      PrintExp(s->u.resume_stmt.operand);
       std::cout << ";";
       break;
   }
