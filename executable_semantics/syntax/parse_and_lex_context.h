@@ -12,7 +12,7 @@
 
 namespace Carbon {
 
-// the state and functionality that is threaded "globally" through the
+// The state and functionality that is threaded "globally" through the
 // lexing/parsing process.
 class ParseAndLexContext {
  public:
