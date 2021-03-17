@@ -125,6 +125,7 @@ print("Found %d generated files..." % (len(generated_file_labels),))
 print("Building the generated files so that tools can find them...")
 subprocess.run([bazel, "build", "--keep_going"] + generated_file_labels)
 
+
 # Manually translate the label to a user friendly path into the Bazel output
 # symlinks.
 def _label_to_path(s):
