@@ -16,13 +16,13 @@ int main(int argc, char* argv[]) {
 
   using llvm::cl::desc;
   using llvm::cl::opt;
-  opt<bool> quietOption("quiet", desc("Disable tracing"));
+  opt<bool> trace_option("trace", desc("Enable tracing"));
   opt<std::string> inputFileName(llvm::cl::Positional, desc("<input file>"),
                                  llvm::cl::Required);
 
   llvm::cl::ParseCommandLineOptions(argc, argv);
-  if (quietOption) {
-    Carbon::tracing_output = false;
+  if (trace_option) {
+    Carbon::tracing_output = true;
   }
 
   std::variant<Carbon::AST, Carbon::SyntaxErrorCode> astOrError =
