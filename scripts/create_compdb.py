@@ -53,9 +53,7 @@ try:
     with open("compile_flags.txt") as flag_file:
         arguments = [line.strip() for line in flag_file]
 except FileNotFoundError:
-    sys.exit(
-        Path(sys.argv[0]).name + " must be run from the project root"
-    )
+    sys.exit(Path(sys.argv[0]).name + " must be run from the project root")
 
 # Prepend the `clang` executable path to the arguments that looks into our
 # downloaded Clang toolchain.
@@ -79,15 +77,24 @@ source_files_query = subprocess.run(
     check=True,
     text=True,
 ).stdout
-source_files = [Path(line.split(":")[0]) for line in source_files_query.splitlines()]
+source_files = [
+    Path(line.split(":")[0]) for line in source_files_query.splitlines()
+]
 
 # Filter into the Carbon source files that we'll find directly in the
 # workspace, and LLVM source files that need to be mapped through the merged
 # LLVM tree in Bazel's execution root.
-carbon_files = [f.relative_to(directory) for f in source_files if f.is_relative_to(directory)]
+carbon_files = [
+    f.relative_to(directory)
+    for f in source_files
+    if f.is_relative_to(directory)
+]
 llvm_files = [
-    Path("bazel-execroot/external").joinpath(*f.parts[f.parts.index('llvm-project'):])
-    for f in source_files if 'llvm-project' in f.parts
+    Path("bazel-execroot/external").joinpath(
+        *f.parts[f.parts.index("llvm-project") :]
+    )
+    for f in source_files
+    if "llvm-project" in f.parts
 ]
 print(
     "Found %d Carbon source files and %d LLVM source files..."
