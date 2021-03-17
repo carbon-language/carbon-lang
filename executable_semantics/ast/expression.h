@@ -112,7 +112,7 @@ class Expression {
     }
     auto TypeCheck(TypeEnv env, Env ct_env, Value* expected,
                    TCContext_ context) const -> TCResult;
-    auto SourceLocation() const -> int { return content.location.lineNumber; }
+    auto SourceLocation() const -> int { return content.location.line_number; }
   };
 
  private:  // data members
@@ -127,9 +127,9 @@ class ExpressionSource {
   struct Location {
     // TODO: replace with yy::parser::location or a wrapper thereof.
     // TODO: this shouldn't be specific to expressions.
-    explicit Location(int lineNumber) : lineNumber(lineNumber) {}
+    explicit Location(int line_number) : line_number(line_number) {}
 
-    int lineNumber;
+    int line_number;
   };
 
   Location location;
@@ -141,8 +141,8 @@ class ExpressionSource {
 };
 
 struct AutoTypeExpression : ExpressionSource {
-  AutoTypeExpression(Location textualPlacement)
-      : ExpressionSource(textualPlacement) {}
+  AutoTypeExpression(Location textual_placement)
+      : ExpressionSource(textual_placement) {}
   auto Print() const -> void;
   auto StepLvalue(Action* act, Frame* frame) const -> void;
   auto StepExp(Action* act, Frame* frame) const -> void;
@@ -157,8 +157,8 @@ struct AutoTypeExpression : ExpressionSource {
 };
 
 struct BoolTypeExpression : ExpressionSource {
-  BoolTypeExpression(Location textualPlacement)
-      : ExpressionSource(textualPlacement) {}
+  BoolTypeExpression(Location textual_placement)
+      : ExpressionSource(textual_placement) {}
   auto Print() const -> void;
   auto StepLvalue(Action* act, Frame* frame) const -> void;
   auto StepExp(Action* act, Frame* frame) const -> void;
@@ -173,8 +173,8 @@ struct BoolTypeExpression : ExpressionSource {
 };
 
 struct BooleanExpression : ExpressionSource {
-  BooleanExpression(Location textualPlacement, bool value)
-      : ExpressionSource(textualPlacement), value(value) {}
+  BooleanExpression(Location textual_placement, bool value)
+      : ExpressionSource(textual_placement), value(value) {}
   auto Print() const -> void;
   auto StepLvalue(Action* act, Frame* frame) const -> void;
   auto StepExp(Action* act, Frame* frame) const -> void;
@@ -188,15 +188,15 @@ struct BooleanExpression : ExpressionSource {
                  TCContext_ context) const -> TCResult;
 
   bool value;
-  int sourceLocation;
+  int source_location;
 };
 
 struct CallExpression : ExpressionSource {
-  CallExpression(Location textualPlacement, Expression function,
-                 Expression argumentTuple)
-      : ExpressionSource(textualPlacement),
+  CallExpression(Location textual_placement, Expression function,
+                 Expression argument_tuple)
+      : ExpressionSource(textual_placement),
         function(function),
-        argumentTuple(argumentTuple) {}
+        argument_tuple(argument_tuple) {}
 
   auto Print() const -> void;
   auto StepLvalue(Action* act, Frame* frame) const -> void;
@@ -210,15 +210,16 @@ struct CallExpression : ExpressionSource {
 
   Expression function;
   // If not a tuple expression, this is the sole argument to a unary call.
-  Expression argumentTuple;
+  Expression argument_tuple;
 };
 
 struct FunctionTypeExpression : ExpressionSource {
-  FunctionTypeExpression(Location textualPlacement,
-                         Expression parameterTupleType, Expression returnType)
-      : ExpressionSource(textualPlacement),
-        parameterTupleType(parameterTupleType),
-        returnType(returnType) {}
+  FunctionTypeExpression(Location textual_placement,
+                         Expression parameter_tuple_type,
+                         Expression return_type)
+      : ExpressionSource(textual_placement),
+        parameter_tuple_type(parameter_tuple_type),
+        return_type(return_type) {}
 
   auto Print() const -> void;
   auto StepLvalue(Action* act, Frame* frame) const -> void;
@@ -230,16 +231,16 @@ struct FunctionTypeExpression : ExpressionSource {
   auto TypeCheck(TypeEnv env, Env ct_env, Value* expected,
                  TCContext_ context) const -> TCResult;
 
-  Expression parameterTupleType;
-  Expression returnType;
+  Expression parameter_tuple_type;
+  Expression return_type;
 };
 
 struct GetFieldExpression : ExpressionSource {
-  GetFieldExpression(Location textualPlacement, Expression aggregate,
-                     std::string const& fieldName)
-      : ExpressionSource(textualPlacement),
+  GetFieldExpression(Location textual_placement, Expression aggregate,
+                     std::string const& field_name)
+      : ExpressionSource(textual_placement),
         aggregate(aggregate),
-        fieldName(fieldName) {}
+        field_name(field_name) {}
 
   auto Print() const -> void;
   auto StepLvalue(Action* act, Frame* frame) const -> void;
@@ -250,13 +251,13 @@ struct GetFieldExpression : ExpressionSource {
                  TCContext_ context) const -> TCResult;
 
   Expression aggregate;
-  std::string fieldName;
+  std::string field_name;
 };
 
 struct IndexExpression : ExpressionSource {
-  IndexExpression(Location textualPlacement, Expression aggregate,
+  IndexExpression(Location textual_placement, Expression aggregate,
                   Expression offset)
-      : ExpressionSource(textualPlacement),
+      : ExpressionSource(textual_placement),
         aggregate(aggregate),
         offset(offset) {}
 
@@ -273,8 +274,8 @@ struct IndexExpression : ExpressionSource {
 };
 
 struct IntTypeExpression : ExpressionSource {
-  IntTypeExpression(Location textualPlacement)
-      : ExpressionSource(textualPlacement) {}
+  IntTypeExpression(Location textual_placement)
+      : ExpressionSource(textual_placement) {}
 
   auto Print() const -> void;
   auto StepLvalue(Action* act, Frame* frame) const -> void;
@@ -290,8 +291,8 @@ struct IntTypeExpression : ExpressionSource {
 };
 
 struct IntegerExpression : ExpressionSource {
-  IntegerExpression(Location textualPlacement, int value)
-      : ExpressionSource(textualPlacement), value(value) {}
+  IntegerExpression(Location textual_placement, int value)
+      : ExpressionSource(textual_placement), value(value) {}
 
   auto Print() const -> void;
   auto StepLvalue(Action* act, Frame* frame) const -> void;
@@ -309,9 +310,9 @@ struct IntegerExpression : ExpressionSource {
 };
 
 struct PatternVariableExpression : ExpressionSource {
-  PatternVariableExpression(Location textualPlacement, const std::string& name,
+  PatternVariableExpression(Location textual_placement, const std::string& name,
                             Expression type)
-      : ExpressionSource(textualPlacement), name(name), type(type) {}
+      : ExpressionSource(textual_placement), name(name), type(type) {}
 
   auto Print() const -> void;
   auto StepLvalue(Action* act, Frame* frame) const -> void;
@@ -338,9 +339,9 @@ struct PrimitiveOperatorExpression : ExpressionSource {
     Sub,
   };
 
-  PrimitiveOperatorExpression(Location textualPlacement, Operation operation,
+  PrimitiveOperatorExpression(Location textual_placement, Operation operation,
                               std::vector<Expression> arguments)
-      : ExpressionSource(textualPlacement),
+      : ExpressionSource(textual_placement),
         operation(operation),
         arguments(arguments) {}
 
@@ -361,9 +362,9 @@ struct PrimitiveOperatorExpression : ExpressionSource {
 struct TupleExpression : ExpressionSource {
   // Creates an instance storing a copy of elements with each empty name
   // replaced by a string representation of its index.
-  TupleExpression(Location textualPlacement,
+  TupleExpression(Location textual_placement,
                   std::vector<std::pair<std::string, Expression>> elements)
-      : ExpressionSource(textualPlacement), elements(elements) {
+      : ExpressionSource(textual_placement), elements(elements) {
     int i = 0;
     for (auto& e : this->elements) {
       if (e.first.empty()) {
@@ -403,8 +404,8 @@ struct TypeTypeExpression : ExpressionSource {
 struct VariableExpression : ExpressionSource {
   std::string name;
 
-  VariableExpression(Location textualPlacement, const std::string& name)
-      : ExpressionSource(textualPlacement), name(name) {}
+  VariableExpression(Location textual_placement, const std::string& name)
+      : ExpressionSource(textual_placement), name(name) {}
 
   auto Print() const -> void;
   auto StepLvalue(Action* act, Frame* frame) const -> void;

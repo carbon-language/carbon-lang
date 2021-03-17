@@ -46,7 +46,7 @@ auto IndexExpression::Print() const -> void {
 auto GetFieldExpression::Print() const -> void {
   aggregate.Print();
   std::cout << ".";
-  std::cout << fieldName;
+  std::cout << field_name;
 }
 
 auto TupleExpression::Print() const -> void {
@@ -91,11 +91,11 @@ auto PatternVariableExpression::Print() const -> void {
 
 auto CallExpression::Print() const -> void {
   function.Print();
-  if (auto t = argumentTuple.As<TupleExpression>()) {
+  if (auto t = argument_tuple.As<TupleExpression>()) {
     t->Print();
   } else {
     std::cout << "(";
-    argumentTuple.Print();
+    argument_tuple.Print();
     std::cout << ")";
   }
 }
@@ -110,9 +110,9 @@ auto AutoTypeExpression::Print() const -> void { std::cout << "auto"; }
 
 auto FunctionTypeExpression::Print() const -> void {
   std::cout << "fn ";
-  parameterTupleType.Print();
+  parameter_tuple_type.Print();
   std::cout << " -> ";
-  returnType.Print();
+  return_type.Print();
 }
 
 auto ExpressionSource::FatalLValAction() const -> void {

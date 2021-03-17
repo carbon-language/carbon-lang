@@ -131,12 +131,12 @@ auto ReifyType(Value* t, int line_num) -> Expression {
 //
 // env maps variable names to the type of their run-time value.
 // ct_env maps variable names to their compile-time values.
-// expectedType may be nullopt outside of a pattern context.
+// expected_type may be nullopt outside of a pattern context.
 // context says what kind of position this expression is nested in,
 //    whether it's a position that expects a value, a pattern, or a type.
-auto Expression::TypeCheck(TypeEnv env, Env ct_env, Value* expectedType,
+auto Expression::TypeCheck(TypeEnv env, Env ct_env, Value* expected_type,
                            TCContext_ context) const -> TCResult {
-  return box->TypeCheck(env, ct_env, expectedType, context);
+  return box->TypeCheck(env, ct_env, expected_type, context);
 }
 
 template <class Content>
@@ -148,10 +148,10 @@ auto Expression::Boxed<Content>::TypeCheck(TypeEnv env, Env ct_env,
 }
 
 auto PatternVariableExpression::TypeCheck(TypeEnv env, Env ct_env,
-                                          Value* expectedType,
+                                          Value* expected_type,
                                           TCContext_ context) const
     -> TCResult {
-  auto line_number = location.lineNumber;
+  auto line_number = location.line_number;
 
   if (context.value != TCContext::PatternContext) {
     Fatal(line_number,
@@ -162,10 +162,10 @@ auto PatternVariableExpression::TypeCheck(TypeEnv env, Env ct_env,
   auto t = ToType(line_number, InterpExp(ct_env, type));
 
   if (t->tag == ValKind::AutoTV) {
-    if (expectedType == nullptr) {
+    if (expected_type == nullptr) {
       Fatal(line_number, ": compilation error, auto not allowed here");
     } else {
-      t = expectedType;
+      t = expected_type;
     }
   }
 
@@ -177,22 +177,22 @@ auto PatternVariableExpression::TypeCheck(TypeEnv env, Env ct_env,
   return TCResult(new_e, t, env);
 }
 
-auto IndexExpression::TypeCheck(TypeEnv env, Env ct_env, Value* expectedType,
+auto IndexExpression::TypeCheck(TypeEnv env, Env ct_env, Value* expected_type,
                                 TCContext_ context) const -> TCResult {
   auto res = aggregate.TypeCheck(env, ct_env, nullptr, TCContext::ValueContext);
   auto t = res.type;
-  auto line_number = location.lineNumber;
+  auto line_number = location.line_number;
   switch (t->tag) {
     case ValKind::TupleTV: {
-      auto line_number = location.lineNumber;
+      auto line_number = location.line_number;
       auto i = ToInteger(InterpExp(ct_env, offset));
       std::string f = std::to_string(i);
       auto field_t = FindInVarValues(f, t->u.tuple_type.fields);
       if (field_t == nullptr) {
-        std::ostringstream actualValueText;
-        PrintValue(t, actualValueText);
+        std::ostringstream actual_value_text;
+        PrintValue(t, actual_value_text);
         Fatal(line_number, ": compilation error, field ", f,
-              " is not in the tuple ", actualValueText.str());
+              " is not in the tuple ", actual_value_text.str());
       }
       auto new_e =
           IndexExpression(location, res.exp, IntegerExpression(location, i));
@@ -203,18 +203,18 @@ auto IndexExpression::TypeCheck(TypeEnv env, Env ct_env, Value* expectedType,
   }
 }
 
-auto TupleExpression::TypeCheck(TypeEnv env, Env ct_env, Value* expectedType,
+auto TupleExpression::TypeCheck(TypeEnv env, Env ct_env, Value* expected_type,
                                 TCContext_ context) const -> TCResult {
   std::vector<std::pair<std::string, Expression>> new_args;
   auto arg_types = new VarValues();
   auto new_env = env;
   for (auto const& arg : elements) {
     Value* arg_expected = nullptr;
-    if (expectedType && expectedType->tag == ValKind::TupleTV) {
+    if (expected_type && expected_type->tag == ValKind::TupleTV) {
       arg_expected =
-          FindInVarValues(arg.first, expectedType->u.tuple_type.fields);
+          FindInVarValues(arg.first, expected_type->u.tuple_type.fields);
       if (arg_expected == nullptr) {
-        Fatal(location.lineNumber, ": compilation error, missing field ",
+        Fatal(location.line_number, ": compilation error, missing field ",
               arg.first);
       }
     }
@@ -228,7 +228,8 @@ auto TupleExpression::TypeCheck(TypeEnv env, Env ct_env, Value* expectedType,
   return TCResult(tuple_e, tuple_t, new_env);
 }
 
-auto GetFieldExpression::TypeCheck(TypeEnv env, Env ct_env, Value* expectedType,
+auto GetFieldExpression::TypeCheck(TypeEnv env, Env ct_env,
+                                   Value* expected_type,
                                    TCContext_ context) const -> TCResult {
   auto res = aggregate.TypeCheck(env, ct_env, nullptr, TCContext::ValueContext);
   auto t = res.type;
@@ -236,43 +237,46 @@ auto GetFieldExpression::TypeCheck(TypeEnv env, Env ct_env, Value* expectedType,
     case ValKind::StructTV:
       // Search for a field
       for (auto& field : *t->u.struct_type.fields) {
-        if (fieldName == field.first) {
-          Expression new_e = GetFieldExpression(location, res.exp, fieldName);
+        if (field_name == field.first) {
+          Expression new_e = GetFieldExpression(location, res.exp, field_name);
           return TCResult(new_e, field.second, res.env);
         }
       }
       // Search for a method
       for (auto& method : *t->u.struct_type.methods) {
-        if (fieldName == method.first) {
-          Expression new_e = GetFieldExpression(location, res.exp, fieldName);
+        if (field_name == method.first) {
+          Expression new_e = GetFieldExpression(location, res.exp, field_name);
           return TCResult(new_e, method.second, res.env);
         }
       }
-      Fatal(location.lineNumber, ": compilation error, struct ",
-            *t->u.struct_type.name, " does not have a field named ", fieldName);
+      Fatal(location.line_number, ": compilation error, struct ",
+            *t->u.struct_type.name, " does not have a field named ",
+            field_name);
     case ValKind::TupleTV:
       for (auto& field : *t->u.tuple_type.fields) {
-        if (fieldName == field.first) {
-          auto new_e = GetFieldExpression(location, res.exp, fieldName);
+        if (field_name == field.first) {
+          auto new_e = GetFieldExpression(location, res.exp, field_name);
           return TCResult(new_e, field.second, res.env);
         }
       }
-      Fatal(location.lineNumber, ": compilation error, struct ",
-            *t->u.struct_type.name, " does not have a field named ", fieldName);
+      Fatal(location.line_number, ": compilation error, struct ",
+            *t->u.struct_type.name, " does not have a field named ",
+            field_name);
     case ValKind::ChoiceTV:
       for (auto vt = t->u.choice_type.alternatives->begin();
            vt != t->u.choice_type.alternatives->end(); ++vt) {
-        if (fieldName == vt->first) {
-          Expression new_e = GetFieldExpression(location, res.exp, fieldName);
+        if (field_name == vt->first) {
+          Expression new_e = GetFieldExpression(location, res.exp, field_name);
           auto fun_ty = MakeFunTypeVal(vt->second, t);
           return TCResult(new_e, fun_ty, res.env);
         }
       }
-      Fatal(location.lineNumber, ": compilation error, struct ",
-            *t->u.struct_type.name, " does not have a field named ", fieldName);
+      Fatal(location.line_number, ": compilation error, struct ",
+            *t->u.struct_type.name, " does not have a field named ",
+            field_name);
 
     default:
-      std::cerr << location.lineNumber
+      std::cerr << location.line_number
                 << ": compilation error in field access, expected a struct"
                 << std::endl;
       this->Print();
@@ -280,28 +284,29 @@ auto GetFieldExpression::TypeCheck(TypeEnv env, Env ct_env, Value* expectedType,
   }
 }
 
-auto VariableExpression::TypeCheck(TypeEnv env, Env ct_env, Value* expectedType,
+auto VariableExpression::TypeCheck(TypeEnv env, Env ct_env,
+                                   Value* expected_type,
                                    TCContext_ context) const -> TCResult {
   std::optional<Value*> type = env.Get(name);
   if (type) {
     return TCResult(*this, *type, env);
   } else {
-    Fatal(location.lineNumber, ": could not find `", name, "`");
+    Fatal(location.line_number, ": could not find `", name, "`");
   }
 }
 
-auto IntegerExpression::TypeCheck(TypeEnv env, Env ct_env, Value* expectedType,
+auto IntegerExpression::TypeCheck(TypeEnv env, Env ct_env, Value* expected_type,
                                   TCContext_ context) const -> TCResult {
   return TCResult(*this, MakeIntTypeVal(), env);
 }
 
-auto BooleanExpression::TypeCheck(TypeEnv env, Env ct_env, Value* expectedType,
+auto BooleanExpression::TypeCheck(TypeEnv env, Env ct_env, Value* expected_type,
                                   TCContext_ context) const -> TCResult {
   return TCResult(*this, MakeBoolTypeVal(), env);
 }
 
 auto PrimitiveOperatorExpression::TypeCheck(TypeEnv env, Env ct_env,
-                                            Value* expectedType,
+                                            Value* expected_type,
                                             TCContext_ context) const
     -> TCResult {
   std::vector<Expression> es;
@@ -315,7 +320,7 @@ auto PrimitiveOperatorExpression::TypeCheck(TypeEnv env, Env ct_env,
     ts.push_back(res.type);
   }
   auto new_e = PrimitiveOperatorExpression(location, operation, es);
-  auto line_number = location.lineNumber;
+  auto line_number = location.line_number;
   switch (operation) {
     case Operation::Neg:
       ExpectType(line_number, "negation", MakeIntTypeVal(), ts[0]);
@@ -343,22 +348,22 @@ auto PrimitiveOperatorExpression::TypeCheck(TypeEnv env, Env ct_env,
   }
 }
 
-auto CallExpression::TypeCheck(TypeEnv env, Env ct_env, Value* expectedType,
+auto CallExpression::TypeCheck(TypeEnv env, Env ct_env, Value* expected_type,
                                TCContext_ context) const -> TCResult {
   auto fun_res =
       function.TypeCheck(env, ct_env, nullptr, TCContext::ValueContext);
   switch (fun_res.type->tag) {
     case ValKind::FunctionTV: {
       auto fun_t = fun_res.type;
-      auto arg_res = argumentTuple.TypeCheck(fun_res.env, ct_env,
-                                             fun_t->u.fun_type.param, context);
-      ExpectType(location.lineNumber, "call", fun_t->u.fun_type.param,
+      auto arg_res = argument_tuple.TypeCheck(fun_res.env, ct_env,
+                                              fun_t->u.fun_type.param, context);
+      ExpectType(location.line_number, "call", fun_t->u.fun_type.param,
                  arg_res.type);
       auto new_e = CallExpression(location, fun_res.exp, arg_res.exp);
       return TCResult(new_e, fun_t->u.fun_type.ret, arg_res.env);
     }
     default: {
-      std::cerr << location.lineNumber
+      std::cerr << location.line_number
                 << ": compilation error in call, expected a function"
                 << std::endl;
       this->Print();
@@ -368,23 +373,23 @@ auto CallExpression::TypeCheck(TypeEnv env, Env ct_env, Value* expectedType,
 }
 
 auto FunctionTypeExpression::TypeCheck(TypeEnv env, Env ct_env,
-                                       Value* expectedType,
+                                       Value* expected_type,
                                        TCContext_ context) const -> TCResult {
-  auto line_number = location.lineNumber;
+  auto line_number = location.line_number;
   switch (context.value) {
     case TCContext::ValueContext:
     case TCContext::TypeContext: {
-      auto pt = ToType(line_number, InterpExp(ct_env, parameterTupleType));
-      auto rt = ToType(line_number, InterpExp(ct_env, returnType));
+      auto pt = ToType(line_number, InterpExp(ct_env, parameter_tuple_type));
+      auto rt = ToType(line_number, InterpExp(ct_env, return_type));
       auto new_e = FunctionTypeExpression(location, ReifyType(pt, line_number),
                                           ReifyType(rt, line_number));
       return TCResult(new_e, MakeTypeTypeVal(), env);
     }
     case TCContext::PatternContext: {
       auto param_res =
-          parameterTupleType.TypeCheck(env, ct_env, nullptr, context);
+          parameter_tuple_type.TypeCheck(env, ct_env, nullptr, context);
       auto ret_res =
-          returnType.TypeCheck(param_res.env, ct_env, nullptr, context);
+          return_type.TypeCheck(param_res.env, ct_env, nullptr, context);
       auto new_e = FunctionTypeExpression(
           location, ReifyType(param_res.type, line_number),
           ReifyType(ret_res.type, line_number));
@@ -393,22 +398,25 @@ auto FunctionTypeExpression::TypeCheck(TypeEnv env, Env ct_env,
   }
 }
 
-auto IntTypeExpression::TypeCheck(TypeEnv env, Env ct_env, Value* expectedType,
+auto IntTypeExpression::TypeCheck(TypeEnv env, Env ct_env, Value* expected_type,
                                   TCContext_ context) const -> TCResult {
   return TCResult(*this, MakeTypeTypeVal(), env);
 }
 
-auto BoolTypeExpression::TypeCheck(TypeEnv env, Env ct_env, Value* expectedType,
+auto BoolTypeExpression::TypeCheck(TypeEnv env, Env ct_env,
+                                   Value* expected_type,
                                    TCContext_ context) const -> TCResult {
   return TCResult(*this, MakeTypeTypeVal(), env);
 }
 
-auto TypeTypeExpression::TypeCheck(TypeEnv env, Env ct_env, Value* expectedType,
+auto TypeTypeExpression::TypeCheck(TypeEnv env, Env ct_env,
+                                   Value* expected_type,
                                    TCContext_ context) const -> TCResult {
   return TCResult(*this, MakeTypeTypeVal(), env);
 }
 
-auto AutoTypeExpression::TypeCheck(TypeEnv env, Env ct_env, Value* expectedType,
+auto AutoTypeExpression::TypeCheck(TypeEnv env, Env ct_env,
+                                   Value* expected_type,
                                    TCContext_ context) const -> TCResult {
   return TCResult(*this, MakeTypeTypeVal(), env);
 }

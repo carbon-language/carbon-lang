@@ -567,12 +567,12 @@ auto VariableExpression::StepLvalue(Action* act, Frame* frame) const -> void {
   // -> { {E(x) :: C, E, F} :: S, H}
   std::optional<Address> pointer = CurrentEnv(state).Get(name);
   if (!pointer) {
-    std::cerr << location.lineNumber << ": could not find `" << name << "`"
+    std::cerr << location.line_number << ": could not find `" << name << "`"
               << std::endl;
     exit(-1);
   }
   Value* v = MakePtrVal(*pointer);
-  CheckAlive(v, location.lineNumber);
+  CheckAlive(v, location.line_number);
   frame->todo.Pop();
   frame->todo.Push(MakeValAct(v));
 }
@@ -702,7 +702,7 @@ auto VariableExpression::StepExp(Action* act, Frame* frame) const -> void {
   // { {x :: C, E, F} :: S, H} -> { {H(E(x)) :: C, E, F} :: S, H}
   std::optional<Address> pointer = CurrentEnv(state).Get(name);
   if (!pointer) {
-    std::cerr << location.lineNumber << ": could not find `" << name << "`"
+    std::cerr << location.line_number << ": could not find `" << name << "`"
               << std::endl;
     exit(-1);
   }
@@ -733,7 +733,7 @@ auto PrimitiveOperatorExpression::StepExp(Action* act, Frame* frame) const
   } else {
     //    { {v :: op(]) :: C, E, F} :: S, H}
     // -> { {eval_prim(op, ()) :: C, E, F} :: S, H}
-    Value* v = EvalPrim(operation, act->results, location.lineNumber);
+    Value* v = EvalPrim(operation, act->results, location.line_number);
     frame->todo.Pop(2);
     frame->todo.Push(MakeValAct(v));
   }
@@ -771,7 +771,7 @@ auto TypeTypeExpression::StepExp(Action* act, Frame* frame) const -> void {
 }
 
 auto FunctionTypeExpression::StepExp(Action* act, Frame* frame) const -> void {
-  frame->todo.Push(MakeExpAct(parameterTupleType));
+  frame->todo.Push(MakeExpAct(parameter_tuple_type));
   act->pos++;
 }
 
@@ -980,7 +980,7 @@ auto GetFieldExpression::LValAction(Action* act, Frame* frame) const -> void {
   //    { v :: [].f :: C, E, F} :: S, H}
   // -> { { &v.f :: C, E, F} :: S, H }
   Value* str = act->results[0];
-  Address a = GetMember(ValToPtr(str, location.lineNumber), fieldName);
+  Address a = GetMember(ValToPtr(str, location.line_number), field_name);
   frame->todo.Pop(2);
   frame->todo.Push(MakeValAct(MakePtrVal(a)));
 }
@@ -1081,7 +1081,8 @@ auto GetFieldExpression::ExpressionAction(Action* act, Frame* frame) const
     -> void {
   //    { { v :: [].f :: C, E, F} :: S, H}
   // -> { { v_f :: C, E, F} : S, H}
-  auto a = GetMember(ValToPtr(act->results[0], location.lineNumber), fieldName);
+  auto a =
+      GetMember(ValToPtr(act->results[0], location.line_number), field_name);
   frame->todo.Pop(2);
   frame->todo.Push(MakeValAct(state->heap[a]));
 }
@@ -1097,7 +1098,7 @@ auto PrimitiveOperatorExpression::ExpressionAction(Action* act,
   } else {
     //    { {v :: op(vs,[]) :: C, E, F} :: S, H}
     // -> { {eval_prim(op, (vs,v)) :: C, E, F} :: S, H}
-    Value* v = EvalPrim(operation, act->results, location.lineNumber);
+    Value* v = EvalPrim(operation, act->results, location.line_number);
     frame->todo.Pop(2);
     frame->todo.Push(MakeValAct(v));
   }
@@ -1107,12 +1108,12 @@ auto CallExpression::ExpressionAction(Action* act, Frame* frame) const -> void {
     //    { { v :: [](e) :: C, E, F} :: S, H}
     // -> { { e :: v([]) :: C, E, F} :: S, H}
     frame->todo.Pop(1);
-    frame->todo.Push(MakeExpAct(argumentTuple));
+    frame->todo.Push(MakeExpAct(argument_tuple));
   } else if (act->pos == 2) {
     //    { { v2 :: v1([]) :: C, E, F} :: S, H}
     // -> { {C',E',F'} :: {C, E, F} :: S, H}
     frame->todo.Pop(2);
-    CallFunction(location.lineNumber, act->results, state);
+    CallFunction(location.line_number, act->results, state);
   } else {
     Fatal("internal error in handle_value with Call");
   }
@@ -1130,7 +1131,7 @@ auto FunctionTypeExpression::ExpressionAction(Action* act, Frame* frame) const
     //    { { pt :: fn [] -> e :: C, E, F} :: S, H}
     // -> { { e :: fn pt -> []) :: C, E, F} :: S, H}
     frame->todo.Pop(1);
-    frame->todo.Push(MakeExpAct(returnType));
+    frame->todo.Push(MakeExpAct(return_type));
   }
 }
 
@@ -1186,17 +1187,17 @@ auto HandleValue() -> void {
             Value* v = act->results[0];
             Value* p = act->results[1];
 
-            std::optional<Env> envWithMatches =
+            std::optional<Env> env_with_matches =
                 PatternMatch(p, v, frame->scopes.Top()->env,
                              &frame->scopes.Top()->locals, stmt->line_num);
-            if (!envWithMatches) {
+            if (!env_with_matches) {
               std::cerr
                   << stmt->line_num
                   << ": internal error in variable definition, match failed"
                   << std::endl;
               exit(-1);
             }
-            frame->scopes.Top()->env = *envWithMatches;
+            frame->scopes.Top()->env = *env_with_matches;
             frame->todo.Pop(2);
           }
           break;
@@ -1281,10 +1282,10 @@ auto HandleValue() -> void {
             auto pat = act->results[clause_num + 1];
             auto env = CurrentEnv(state);
             std::list<std::string> vars;
-            std::optional<Env> envWithMatches =
+            std::optional<Env> env_with_matches =
                 PatternMatch(pat, v, env, &vars, stmt->line_num);
-            if (envWithMatches) {  // we have a match, start the body
-              auto* new_scope = new Scope(*envWithMatches, vars);
+            if (env_with_matches) {  // we have a match, start the body
+              auto* new_scope = new Scope(*env_with_matches, vars);
               frame->scopes.Push(new_scope);
               Statement* body_block = MakeBlock(stmt->line_num, c->second);
               Action* body_act = MakeStmtAct(body_block);
