@@ -889,8 +889,8 @@ auto CopyFrameToDelimit(Frame* frame) -> Frame* {
 auto CopyContinuation(Stack<Frame*> continuation) -> Stack<Frame*> {
   Frame* frame = continuation.Top();
   bool found_delimit = false;
-  for (auto i = frame->todo.begin(); i != frame->todo.end(); ++i) {
-    if (IsDelimit(*i))
+  for (Action* action : frame->todo) {
+    if (IsDelimit(action))
       found_delimit = true;
   }
   if (found_delimit) {
@@ -1103,6 +1103,59 @@ void InsertDelete(Action* del, Stack<Action*>& todo) {
   } else {
     todo.Push(del);
   }
+}
+
+// Begin executing the `__catch` block of a `__delimit` statement
+// given a yielded continuation and value.
+auto HandleYieldedContinuation(Stack<Frame*> yielded_continuation,
+                               Value* yielded_value, Statement* delimit)
+    -> void {
+  // Create a new scope for the handler, binding the
+  // yield and continuation variables.
+  std::list<std::string> scope_locals;
+  scope_locals.push_back(*delimit->u.delimit_stmt.yield_variable);
+  scope_locals.push_back(*delimit->u.delimit_stmt.continuation_variable);
+  Scope* new_scope = new Scope(CurrentEnv(state), scope_locals);
+  Address a1 = AllocateValue(CopyVal(yielded_value, delimit->line_num));
+  new_scope->env.Set(*delimit->u.delimit_stmt.yield_variable, a1);
+  Address a2 = AllocateValue(MakeContinuation(yielded_continuation));
+  new_scope->env.Set(*delimit->u.delimit_stmt.continuation_variable, a2);
+
+  // Push the new scope onto the stack
+  state->stack.Top()->scopes.Push(new_scope);
+
+  // Push the handler block onto the stack
+  Statement* handler_block =
+      MakeBlock(delimit->line_num, delimit->u.delimit_stmt.handler);
+  state->stack.Top()->todo.Push(MakeStmtAct(handler_block));
+}
+
+// Pop frames and actions off the stack until a delimit statement is
+// reached and returns it, if there is one.
+auto PopToDelimit() -> std::optional<Statement*> {
+  // Roll back to the nearest delimit
+  Statement* delimit;
+  while (!state->stack.IsEmpty()) {
+    Stack<Action*> todo = state->stack.Top()->todo;
+    Stack<Scope*> scopes = state->stack.Top()->scopes;
+    while (!todo.IsEmpty()) {
+      if (IsDelimit(todo.Top())) {
+        delimit = todo.Top()->u.stmt;
+        todo.Pop();
+        Frame* new_frame = new Frame(state->stack.Top()->name, scopes, todo);
+        state->stack.Pop();
+        state->stack.Push(new_frame);
+        return delimit;
+      } else {
+        if (IsBlockAct(todo.Top())) {
+          scopes.Pop();
+        }
+        todo.Pop();
+      }
+    }  // while (!todo.IsEmpty())
+    state->stack.Pop();
+  }  // while (!new_stack.IsEmpty())
+  return std::nullopt;
 }
 
 // State transition for handling a value.
@@ -1484,55 +1537,13 @@ void HandleValue() {
           // Save the current continuation
           Stack<Frame*> yielded = CopyContinuation(state->stack);
 
-          // Roll back to the nearest delimit
-          // Stack<Frame*> new_stack = state->stack;
-          Statement* delimit;
-          while (!state->stack.IsEmpty()) {
-            Stack<Action*> todo = state->stack.Top()->todo;
-            Stack<Scope*> scopes = state->stack.Top()->scopes;
-            while (!todo.IsEmpty()) {
-              if (IsDelimit(todo.Top())) {
-                delimit = todo.Top()->u.stmt;
-                todo.Pop();
-                Frame* new_frame =
-                    new Frame(state->stack.Top()->name, scopes, todo);
-                state->stack.Pop();
-                state->stack.Push(new_frame);
-                goto handler;
-              } else {
-                if (IsBlockAct(todo.Top())) {
-                  scopes.Pop();
-                }
-                todo.Pop();
-              }
-            }  // while (!todo.IsEmpty())
-            state->stack.Pop();
-          }  // while (!new_stack.IsEmpty())
-          std::cerr << "yield without an enclosing delimiter" << std::endl;
-          exit(-1);
-        handler : {
-          // Create a new scope for the handler, binding the
-          // yield and continuation variables.
-          std::list<std::string> scope_locals;
-          scope_locals.push_back(*delimit->u.delimit_stmt.yield_variable);
-          scope_locals.push_back(
-              *delimit->u.delimit_stmt.continuation_variable);
-          Scope* new_scope = new Scope(CurrentEnv(state), scope_locals);
-          Address a1 =
-              AllocateValue(CopyVal(val_act->u.val, delimit->line_num));
-          new_scope->env.Set(*delimit->u.delimit_stmt.yield_variable, a1);
-          Address a2 = AllocateValue(MakeContinuation(yielded));
-          new_scope->env.Set(*delimit->u.delimit_stmt.continuation_variable,
-                             a2);
-
-          // Push the new scope onto the stack
-          state->stack.Top()->scopes.Push(new_scope);
-
-          // Push the handler block onto the stack
-          Statement* handler_block =
-              MakeBlock(delimit->line_num, delimit->u.delimit_stmt.handler);
-          state->stack.Top()->todo.Push(MakeStmtAct(handler_block));
-        } break;
+          std::optional<Statement*> delimit = PopToDelimit();
+          if (!delimit) {
+            std::cerr << "yield without an enclosing delimiter" << std::endl;
+            exit(-1);
+          }
+          HandleYieldedContinuation(yielded, val_act->u.val, *delimit);
+          break;
         }
         case StatementKind::Resume: {
           // Push the yielded continuation onto the current stack
