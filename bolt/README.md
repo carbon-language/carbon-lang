@@ -219,4 +219,4 @@ binary.
 
 ## License
 
-BOLT is licensed under [University of Illinois/NCSA Open Source License](./LICENSE.TXT).
+BOLT is licensed under the [Apache License v2.0 with LLVM Exceptions](./LICENSE.TXT).
