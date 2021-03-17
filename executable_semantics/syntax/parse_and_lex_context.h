@@ -17,19 +17,20 @@ namespace Carbon {
 class ParseAndLexContext {
  public:
   // Creates an instance analyzing the given input file.
-  ParseAndLexContext(const std::string& inputFile) : inputFileName(inputFile) {}
+  ParseAndLexContext(const std::string& input_File)
+      : input_File_Name(input_File) {}
 
   // Writes a syntax error diagnostic, containing message, for the input file at
   // the given line, to standard error.
-  auto PrintDiagnostic(const std::string& message, int lineNumber) -> void;
+  auto PrintDiagnostic(const std::string& message, int line_Number) -> void;
 
   // The source range of the token being (or just) lex'd.
-  yy::location currentTokenPosition;
+  yy::location current_Token_Position;
 
  private:
   // A path to the file processed, relative to the current working directory
   // when *this is called.
-  const std::string inputFileName;
+  const std::string input_File_Name;
 };
 
 }  // namespace Carbon

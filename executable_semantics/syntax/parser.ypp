@@ -26,7 +26,7 @@
 // thus available to its methods.
 
 // "out" parameter passed to the parser, where the AST is written.
-%parse-param {std::optional<Carbon::AST>& parsedProgram}
+%parse-param {std::optional<Carbon::AST>& parsed_Program}
 
 // "inout" parameter passed to both the parser and the lexer.
 %param {Carbon::ParseAndLexContext& context}
@@ -151,7 +151,7 @@ void yy::parser::error(
 %locations
 %%
 input: declaration_list
-    { parsedProgram = $1; }
+    { parsed_Program = $1; }
 ;
 pattern:
   expression

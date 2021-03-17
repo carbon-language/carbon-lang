@@ -141,9 +141,9 @@ struct ChoiceDeclaration {
 // Global variable definition implements the Declaration concept.
 class VariableDeclaration {
  public:
-  VariableDeclaration(int sourceLocation, std::string name, Expression* type,
+  VariableDeclaration(int source_Location, std::string name, Expression* type,
                       Expression* initializer)
-      : sourceLocation(sourceLocation),
+      : source_Location(source_Location),
         name(name),
         type(type),
         initializer(initializer) {}
@@ -155,7 +155,7 @@ class VariableDeclaration {
   auto TopLevel(ExecutionEnvironment&) const -> void;
 
  private:
-  int sourceLocation;
+  int source_Location;
   std::string name;
   Expression* type;
   Expression* initializer;

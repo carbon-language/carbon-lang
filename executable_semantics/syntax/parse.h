@@ -17,7 +17,7 @@ using SyntaxErrorCode = int;
 
 // Returns the AST representing the contents of the named file, or an error code
 // if parsing fails.
-auto parse(const std::string& inputFileName)
+auto parse(const std::string& input_File_Name)
     -> std::variant<Carbon::AST, SyntaxErrorCode>;
 
 }  // namespace Carbon

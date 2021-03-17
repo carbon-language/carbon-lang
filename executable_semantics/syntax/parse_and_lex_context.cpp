@@ -13,7 +13,8 @@
 // the given line, to standard error.
 auto Carbon::ParseAndLexContext::PrintDiagnostic(const std::string& message,
                                                  int line_num) -> void {
-  std::cerr << inputFileName << ":" << line_num << ": " << message << std::endl;
+  std::cerr << input_File_Name << ":" << line_num << ": " << message
+            << std::endl;
   exit(-1);  // TODO: do we really want this here?  It makes the comment and the
              // name a lie, and renders some of the other yyparse() result
              // propagation code moot.

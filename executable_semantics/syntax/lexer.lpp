@@ -55,7 +55,7 @@ horizontal_whitespace [ \t\r]
   //
   // Advances the current token position by yyleng columns without changing
   // the line number.
-  # define YY_USER_ACTION context.currentTokenPosition.columns(yyleng);
+  # define YY_USER_ACTION context.current_Token_Position.columns(yyleng);
 %}
 
 %%
@@ -64,92 +64,92 @@ horizontal_whitespace [ \t\r]
   // Code run each time yylex is called.
 
   // Begin with an empty token span starting where its previous end was.
-  context.currentTokenPosition.step();
+  context.current_Token_Position.step();
 %}
 
-{AND}      { return yy::parser::make_AND(context.currentTokenPosition); }
-{ARROW}    { return yy::parser::make_ARROW(context.currentTokenPosition); }
-{AUTO}     { return yy::parser::make_AUTO(context.currentTokenPosition); }
-{BOOL}     { return yy::parser::make_BOOL(context.currentTokenPosition); }
-{BREAK}    { return yy::parser::make_BREAK(context.currentTokenPosition); }
-{CASE}     { return yy::parser::make_CASE(context.currentTokenPosition); }
-{CHOICE}   { return yy::parser::make_CHOICE(context.currentTokenPosition); }
-{CONTINUE} { return yy::parser::make_CONTINUE(context.currentTokenPosition); }
-{DBLARROW} { return yy::parser::make_DBLARROW(context.currentTokenPosition); }
-{DEFAULT}  { return yy::parser::make_DEFAULT(context.currentTokenPosition); }
-{ELSE}     { return yy::parser::make_ELSE(context.currentTokenPosition); }
-"=="       { return yy::parser::make_EQUAL_EQUAL(context.currentTokenPosition); }
-{FALSE}    { return yy::parser::make_FALSE(context.currentTokenPosition); }
-{FN}       { return yy::parser::make_FN(context.currentTokenPosition); }
-{FNTY}     { return yy::parser::make_FNTY(context.currentTokenPosition); }
-{IF}       { return yy::parser::make_IF(context.currentTokenPosition); }
-{INT}      { return yy::parser::make_INT(context.currentTokenPosition); }
-{MATCH}    { return yy::parser::make_MATCH(context.currentTokenPosition); }
-{NOT}      { return yy::parser::make_NOT(context.currentTokenPosition); }
-{OR}       { return yy::parser::make_OR(context.currentTokenPosition); }
-{RETURN}   { return yy::parser::make_RETURN(context.currentTokenPosition); }
-{STRUCT}   { return yy::parser::make_STRUCT(context.currentTokenPosition); }
-{TRUE}     { return yy::parser::make_TRUE(context.currentTokenPosition); }
-{TYPE}     { return yy::parser::make_TYPE(context.currentTokenPosition); }
-{VAR}      { return yy::parser::make_VAR(context.currentTokenPosition); }
-{WHILE}    { return yy::parser::make_WHILE(context.currentTokenPosition); }
+{AND}      { return yy::parser::make_AND(context.current_Token_Position); }
+{ARROW}    { return yy::parser::make_ARROW(context.current_Token_Position); }
+{AUTO}     { return yy::parser::make_AUTO(context.current_Token_Position); }
+{BOOL}     { return yy::parser::make_BOOL(context.current_Token_Position); }
+{BREAK}    { return yy::parser::make_BREAK(context.current_Token_Position); }
+{CASE}     { return yy::parser::make_CASE(context.current_Token_Position); }
+{CHOICE}   { return yy::parser::make_CHOICE(context.current_Token_Position); }
+{CONTINUE} { return yy::parser::make_CONTINUE(context.current_Token_Position); }
+{DBLARROW} { return yy::parser::make_DBLARROW(context.current_Token_Position); }
+{DEFAULT}  { return yy::parser::make_DEFAULT(context.current_Token_Position); }
+{ELSE}     { return yy::parser::make_ELSE(context.current_Token_Position); }
+"=="       { return yy::parser::make_EQUAL_EQUAL(context.current_Token_Position); }
+{FALSE}    { return yy::parser::make_FALSE(context.current_Token_Position); }
+{FN}       { return yy::parser::make_FN(context.current_Token_Position); }
+{FNTY}     { return yy::parser::make_FNTY(context.current_Token_Position); }
+{IF}       { return yy::parser::make_IF(context.current_Token_Position); }
+{INT}      { return yy::parser::make_INT(context.current_Token_Position); }
+{MATCH}    { return yy::parser::make_MATCH(context.current_Token_Position); }
+{NOT}      { return yy::parser::make_NOT(context.current_Token_Position); }
+{OR}       { return yy::parser::make_OR(context.current_Token_Position); }
+{RETURN}   { return yy::parser::make_RETURN(context.current_Token_Position); }
+{STRUCT}   { return yy::parser::make_STRUCT(context.current_Token_Position); }
+{TRUE}     { return yy::parser::make_TRUE(context.current_Token_Position); }
+{TYPE}     { return yy::parser::make_TYPE(context.current_Token_Position); }
+{VAR}      { return yy::parser::make_VAR(context.current_Token_Position); }
+{WHILE}    { return yy::parser::make_WHILE(context.current_Token_Position); }
 
-"=" return yy::parser::make_EQUAL(context.currentTokenPosition);
-"-" return yy::parser::make_MINUS(context.currentTokenPosition);
-"+" return yy::parser::make_PLUS(context.currentTokenPosition);
-"*" return yy::parser::make_STAR(context.currentTokenPosition);
-"/" return yy::parser::make_SLASH(context.currentTokenPosition);
-"(" return yy::parser::make_LEFT_PARENTHESIS(context.currentTokenPosition);
-")" return yy::parser::make_RIGHT_PARENTHESIS(context.currentTokenPosition);
-"{" return yy::parser::make_LEFT_CURLY_BRACE(context.currentTokenPosition);
-"}" return yy::parser::make_RIGHT_CURLY_BRACE(context.currentTokenPosition);
-"[" return yy::parser::make_LEFT_SQUARE_BRACKET(context.currentTokenPosition);
-"]" return yy::parser::make_RIGHT_SQUARE_BRACKET(context.currentTokenPosition);
-"." return yy::parser::make_PERIOD(context.currentTokenPosition);
-"," return yy::parser::make_COMMA(context.currentTokenPosition);
-";" return yy::parser::make_SEMICOLON(context.currentTokenPosition);
-":" return yy::parser::make_COLON(context.currentTokenPosition);
+"=" return yy::parser::make_EQUAL(context.current_Token_Position);
+"-" return yy::parser::make_MINUS(context.current_Token_Position);
+"+" return yy::parser::make_PLUS(context.current_Token_Position);
+"*" return yy::parser::make_STAR(context.current_Token_Position);
+"/" return yy::parser::make_SLASH(context.current_Token_Position);
+"(" return yy::parser::make_LEFT_PARENTHESIS(context.current_Token_Position);
+")" return yy::parser::make_RIGHT_PARENTHESIS(context.current_Token_Position);
+"{" return yy::parser::make_LEFT_CURLY_BRACE(context.current_Token_Position);
+"}" return yy::parser::make_RIGHT_CURLY_BRACE(context.current_Token_Position);
+"[" return yy::parser::make_LEFT_SQUARE_BRACKET(context.current_Token_Position);
+"]" return yy::parser::make_RIGHT_SQUARE_BRACKET(context.current_Token_Position);
+"." return yy::parser::make_PERIOD(context.current_Token_Position);
+"," return yy::parser::make_COMMA(context.current_Token_Position);
+";" return yy::parser::make_SEMICOLON(context.current_Token_Position);
+":" return yy::parser::make_COLON(context.current_Token_Position);
 
 {identifier} {
   int n = strlen(yytext);
   auto r = reinterpret_cast<char*>(malloc((n + 1) * sizeof(char)));
   strncpy(r, yytext, n + 1);
-  return yy::parser::make_identifier(r, context.currentTokenPosition);
+  return yy::parser::make_identifier(r, context.current_Token_Position);
 }
 
 {integer_literal} {
   auto r = atof(yytext);
-  return yy::parser::make_integer_literal(r, context.currentTokenPosition);
+  return yy::parser::make_integer_literal(r, context.current_Token_Position);
 }
 
 {ONE_LINE_COMMENT} {
   // Advance end by 1 line, resetting the column to zero.
-  context.currentTokenPosition.lines(1);
+  context.current_Token_Position.lines(1);
   // Make the span empty by setting start to end.
-  context.currentTokenPosition.step();
+  context.current_Token_Position.step();
 }
 
 {horizontal_whitespace}+ {
   // Make the span empty by setting start to end.
-  context.currentTokenPosition.step();
+  context.current_Token_Position.step();
 }
 
 \n+ {
   // Advance end by yyleng lines, resetting the column to zero.
-  context.currentTokenPosition.lines(yyleng);
+  context.current_Token_Position.lines(yyleng);
   // Make the span empty by setting start to end.
-  context.currentTokenPosition.step();
+  context.current_Token_Position.step();
 }
 
 . {
-  std::cerr << context.currentTokenPosition << ": invalid character '"
+  std::cerr << context.current_Token_Position << ": invalid character '"
             << yytext[0] << "' in source file." << std::endl;
   std::exit(1);
 }
 
 <<EOF>>    {
   // A more modern Bison would give us make_EOF.
-  return yy::parser::make_END_OF_FILE(context.currentTokenPosition);
+  return yy::parser::make_END_OF_FILE(context.current_Token_Position);
 }
 
 %%
