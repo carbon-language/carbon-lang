@@ -84,7 +84,7 @@ auto MakeWhile(int line_num, Expression cond, Statement* body) -> Statement*;
 auto MakeBreak(int line_num) -> Statement*;
 auto MakeContinue(int line_num) -> Statement*;
 auto MakeMatch(int line_num, Expression exp,
-               std::list<std::pair<Expression, Statement*>>* clauses)
+               std::list<std::pair<Expression, Statement*>> clauses)
     -> Statement*;
 
 void PrintStatement(Statement*, int);

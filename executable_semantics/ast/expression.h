@@ -37,6 +37,7 @@ class Expression {
   template <class Model>
   Expression& operator=(const Model& e) {
     box = std::make_shared<Boxed<Model>>(e);
+    return *this;
   }
 
  public:  // Expression concept API, in addition to ValueSemantic.
@@ -47,8 +48,6 @@ class Expression {
   auto StepExp(Action* act, Frame* frame) const -> void {
     box->StepExp(act, frame);
   }
-  auto HandleValue() const -> void { box->HandleValue(); }
-  auto HandleAction() const -> void { box->HandleAction(); }
   auto LValAction(Action* act, Frame* frame) const -> void {
     box->LValAction(act, frame);
   }
@@ -84,8 +83,6 @@ class Expression {
     virtual auto Print() const -> void = 0;
     virtual auto StepLvalue(Action* act, Frame* frame) const -> void = 0;
     virtual auto StepExp(Action* act, Frame* frame) const -> void = 0;
-    virtual auto HandleValue() const -> void = 0;
-    virtual auto HandleAction() const -> void = 0;
     virtual auto LValAction(Action* act, Frame* frame) const -> void = 0;
     virtual auto ExpressionAction(Action* act, Frame* frame) const -> void = 0;
     virtual auto TypeCheck(TypeEnv env, Env ct_env, Value* expected,
@@ -107,8 +104,6 @@ class Expression {
     auto StepExp(Action* act, Frame* frame) const -> void {
       content.StepExp(act, frame);
     }
-    auto HandleValue() const -> void { content.HandleValue(); }
-    auto HandleAction() const -> void { content.HandleAction(); }
     auto LValAction(Action* act, Frame* frame) const -> void {
       content.LValAction(act, frame);
     }
@@ -151,8 +146,6 @@ struct AutoTypeExpression : ExpressionSource {
   auto Print() const -> void;
   auto StepLvalue(Action* act, Frame* frame) const -> void {}
   auto StepExp(Action* act, Frame* frame) const -> void;
-  auto HandleValue() const -> void;
-  auto HandleAction() const -> void;
   auto LValAction(Action* act, Frame* frame) const -> void {
     fatalLValAction();
   }
@@ -169,8 +162,6 @@ struct BoolTypeExpression : ExpressionSource {
   auto Print() const -> void;
   auto StepLvalue(Action* act, Frame* frame) const -> void {}
   auto StepExp(Action* act, Frame* frame) const -> void;
-  auto HandleValue() const -> void;
-  auto HandleAction() const -> void;
   auto LValAction(Action* act, Frame* frame) const -> void {
     fatalLValAction();
   }
@@ -187,8 +178,6 @@ struct BooleanExpression : ExpressionSource {
   auto Print() const -> void;
   auto StepLvalue(Action* act, Frame* frame) const -> void {}
   auto StepExp(Action* act, Frame* frame) const -> void;
-  auto HandleValue() const -> void;
-  auto HandleAction() const -> void;
   auto LValAction(Action* act, Frame* frame) const -> void {
     fatalLValAction();
   }
@@ -212,8 +201,6 @@ struct CallExpression : ExpressionSource {
   auto Print() const -> void;
   auto StepLvalue(Action* act, Frame* frame) const -> void {}
   auto StepExp(Action* act, Frame* frame) const -> void;
-  auto HandleValue() const -> void;
-  auto HandleAction() const -> void;
   auto LValAction(Action* act, Frame* frame) const -> void {
     fatalLValAction();
   }
@@ -236,8 +223,6 @@ struct FunctionTypeExpression : ExpressionSource {
   auto Print() const -> void;
   auto StepLvalue(Action* act, Frame* frame) const -> void {}
   auto StepExp(Action* act, Frame* frame) const -> void;
-  auto HandleValue() const -> void;
-  auto HandleAction() const -> void;
   auto LValAction(Action* act, Frame* frame) const -> void {
     fatalLValAction();
   }
@@ -259,8 +244,6 @@ struct GetFieldExpression : ExpressionSource {
   auto Print() const -> void;
   auto StepLvalue(Action* act, Frame* frame) const -> void;
   auto StepExp(Action* act, Frame* frame) const -> void;
-  auto HandleValue() const -> void;
-  auto HandleAction() const -> void;
   auto LValAction(Action* act, Frame* frame) const -> void;
   auto ExpressionAction(Action* act, Frame* frame) const -> void;
   auto TypeCheck(TypeEnv env, Env ct_env, Value* expected,
@@ -280,8 +263,6 @@ struct IndexExpression : ExpressionSource {
   auto Print() const -> void;
   auto StepLvalue(Action* act, Frame* frame) const -> void;
   auto StepExp(Action* act, Frame* frame) const -> void;
-  auto HandleValue() const -> void;
-  auto HandleAction() const -> void;
   auto LValAction(Action* act, Frame* frame) const -> void;
   auto ExpressionAction(Action* act, Frame* frame) const -> void;
   auto TypeCheck(TypeEnv env, Env ct_env, Value* expected,
@@ -298,8 +279,6 @@ struct IntTypeExpression : ExpressionSource {
   auto Print() const -> void;
   auto StepLvalue(Action* act, Frame* frame) const -> void;
   auto StepExp(Action* act, Frame* frame) const -> void;
-  auto HandleValue() const -> void;
-  auto HandleAction() const -> void;
   auto LValAction(Action* act, Frame* frame) const -> void {
     fatalLValAction();
   }
@@ -317,8 +296,6 @@ struct IntegerExpression : ExpressionSource {
   auto Print() const -> void;
   auto StepLvalue(Action* act, Frame* frame) const -> void {}
   auto StepExp(Action* act, Frame* frame) const -> void;
-  auto HandleValue() const -> void;
-  auto HandleAction() const -> void;
   auto LValAction(Action* act, Frame* frame) const -> void {
     fatalLValAction();
   }
@@ -339,8 +316,6 @@ struct PatternVariableExpression : ExpressionSource {
   auto Print() const -> void;
   auto StepLvalue(Action* act, Frame* frame) const -> void;
   auto StepExp(Action* act, Frame* frame) const -> void;
-  auto HandleValue() const -> void;
-  auto HandleAction() const -> void;
   auto LValAction(Action* act, Frame* frame) const -> void {
     fatalLValAction();
   }
@@ -363,16 +338,15 @@ struct PrimitiveOperatorExpression : ExpressionSource {
     Sub,
   };
 
-  // Creates a unary operator expression
-  template <class... Arguments>
   PrimitiveOperatorExpression(Location textualPlacement, Operation operation,
-                              Arguments... arguments);
+                              std::vector<Expression> arguments)
+      : ExpressionSource(textualPlacement),
+        operation(operation),
+        arguments(arguments) {}
 
   auto Print() const -> void;
   auto StepLvalue(Action* act, Frame* frame) const -> void;
   auto StepExp(Action* act, Frame* frame) const -> void;
-  auto HandleValue() const -> void;
-  auto HandleAction() const -> void;
   auto LValAction(Action* act, Frame* frame) const -> void {
     fatalLValAction();
   }
@@ -382,14 +356,6 @@ struct PrimitiveOperatorExpression : ExpressionSource {
 
   Operation operation;
   std::vector<Expression> arguments;
-
- private:
-  // Creates an N-ary operator expression
-  PrimitiveOperatorExpression(Location textualPlacement, Operation operation,
-                              const std::vector<Expression>& arguments)
-      : ExpressionSource(textualPlacement),
-        operation(operation),
-        arguments(arguments) {}
 };
 
 struct TupleExpression : ExpressionSource {
@@ -410,8 +376,6 @@ struct TupleExpression : ExpressionSource {
   auto Print() const -> void;
   auto StepLvalue(Action* act, Frame* frame) const -> void;
   auto StepExp(Action* act, Frame* frame) const -> void;
-  auto HandleValue() const -> void;
-  auto HandleAction() const -> void;
   auto LValAction(Action* act, Frame* frame) const -> void;
   auto ExpressionAction(Action* act, Frame* frame) const -> void;
   auto TypeCheck(TypeEnv env, Env ct_env, Value* expected,
@@ -426,8 +390,6 @@ struct TypeTypeExpression : ExpressionSource {
   auto Print() const -> void;
   auto StepLvalue(Action* act, Frame* frame) const -> void {}
   auto StepExp(Action* act, Frame* frame) const -> void;
-  auto HandleValue() const -> void;
-  auto HandleAction() const -> void;
   auto LValAction(Action* act, Frame* frame) const -> void {
     fatalLValAction();
   }
@@ -447,8 +409,6 @@ struct VariableExpression : ExpressionSource {
   auto Print() const -> void;
   auto StepLvalue(Action* act, Frame* frame) const -> void;
   auto StepExp(Action* act, Frame* frame) const -> void;
-  auto HandleValue() const -> void;
-  auto HandleAction() const -> void;
   auto LValAction(Action* act, Frame* frame) const -> void {
     fatalLValAction();
   }

@@ -439,9 +439,9 @@ auto TypeCheckStmt(Statement* s, TypeEnv env, Env ct_env, Value* ret_type)
       auto res = s->u.match_stmt.exp->TypeCheck(env, ct_env, nullptr,
                                                 TCContext::ValueContext);
       auto res_type = res.type;
-      auto new_clauses = new std::list<std::pair<Expression, Statement*>>();
+      auto new_clauses = std::list<std::pair<Expression, Statement*>>();
       for (auto& clause : *s->u.match_stmt.clauses) {
-        new_clauses->push_back(TypecheckCase(
+        new_clauses.push_back(TypecheckCase(
             res_type, clause.first, clause.second, env, ct_env, ret_type));
       }
       Statement* new_s = MakeMatch(s->line_num, res.exp, new_clauses);
@@ -541,11 +541,11 @@ auto CheckOrEnsureReturn(Statement* stmt, bool void_return, int line_num)
   }
   switch (stmt->tag) {
     case StatementKind::Match: {
-      auto new_clauses = new std::list<std::pair<Expression, Statement*>>();
+      auto new_clauses = std::list<std::pair<Expression, Statement*>>();
       for (auto i = stmt->u.match_stmt.clauses->begin();
            i != stmt->u.match_stmt.clauses->end(); ++i) {
         auto s = CheckOrEnsureReturn(i->second, void_return, stmt->line_num);
-        new_clauses->push_back(std::make_pair(i->first, s));
+        new_clauses.push_back(std::make_pair(i->first, s));
       }
       return MakeMatch(stmt->line_num, *stmt->u.match_stmt.exp, new_clauses);
     }
