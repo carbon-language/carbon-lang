@@ -959,10 +959,14 @@ void StepStmt() {
       break;
     case StatementKind::Block: {
       if (act->pos == -1) {
-        auto* scope = new Scope(CurrentEnv(state), std::list<std::string>());
-        frame->scopes.Push(scope);
-        frame->todo.Push(MakeStmtAct(stmt->u.block.stmt));
-        act->pos++;
+        if (stmt->u.block.stmt) {
+          auto* scope = new Scope(CurrentEnv(state), std::list<std::string>());
+          frame->scopes.Push(scope);
+          frame->todo.Push(MakeStmtAct(stmt->u.block.stmt));
+          act->pos++;
+        } else {
+          frame->todo.Pop();
+        }
       } else {
         Scope* scope = frame->scopes.Top();
         KillScope(stmt->line_num, scope);
