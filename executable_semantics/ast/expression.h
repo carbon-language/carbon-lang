@@ -54,8 +54,8 @@ class Expression {
     box->ExpressionAction(act, frame);
   }
 
-  auto TypeCheck(TypeEnv env, Env ct_env, Value* expected, TCContext_ context)
-      -> TCResult;
+  auto TypeCheck(TypeEnv env, Env ct_env, Value* expected,
+                 TCContext_ context) const -> TCResult;
   auto SourceLocation() const -> int { return box->SourceLocation(); }
 
  public:  // Dynamic casting/unwrapping

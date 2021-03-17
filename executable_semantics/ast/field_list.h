@@ -13,11 +13,11 @@ namespace Carbon {
 
 // This is used in the parsing of tuples and parenthesized expressions.
 struct FieldList {
-  std::list<std::pair<std::string, Expression*>>* fields;
+  std::list<std::pair<std::string, Expression>> fields;
   bool has_explicit_comma = false;
 };
 
-auto MakeFieldList(std::list<std::pair<std::string, Expression*>>* fields)
+auto MakeFieldList(std::list<std::pair<std::string, Expression>> fields)
     -> FieldList*;
 auto MakeConsField(FieldList* e1, FieldList* e2) -> FieldList*;
 

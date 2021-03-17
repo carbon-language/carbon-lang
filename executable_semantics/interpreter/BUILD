@@ -29,6 +29,7 @@ cc_library(
         "//executable_semantics/ast:function_definition",
         "//executable_semantics/ast:member",
         "//executable_semantics/ast:statement",
+        "//executable_semantics/utility",
     ],
 )
 

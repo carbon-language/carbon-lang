@@ -17,6 +17,7 @@
 #include "executable_semantics/interpreter/stack.h"
 #include "executable_semantics/interpreter/typecheck.h"
 #include "executable_semantics/tracing_flag.h"
+#include "executable_semantics/utility/fatal.h"
 
 namespace Carbon {
 
@@ -980,17 +981,17 @@ auto PatternVariableExpression::ExpressionAction(Action* act,
 
 auto TupleExpression::ExpressionAction(Action* act, Frame* frame) const
     -> void {
-  if (act->pos != static_cast<int>(exp->u.tuple.fields->size())) {
+  if (act->pos != static_cast<int>(elements.size())) {
     //    { { vk :: (f1=v1,..., fk=[],fk+1=ek+1,...) :: C, E, F} :: S,
     //    H}
     // -> { { ek+1 :: (f1=v1,..., fk=vk, fk+1=[],...) :: C, E, F} ::
     // S, H}
-    Expression* elt = elements[act->pos].second;
+    Expression elt = elements[act->pos].second;
     frame->todo.Pop(1);
     frame->todo.Push(MakeExpAct(elt));
   } else {
     frame->todo.Pop(1);
-    CreateTuple(frame, act, exp);
+    CreateTuple(frame, act, *this);
   }
 }
 
@@ -1031,23 +1032,23 @@ auto GetFieldExpression::ExpressionAction(Action* act, Frame* frame) const
     -> void {
   //    { { v :: [].f :: C, E, F} :: S, H}
   // -> { { v_f :: C, E, F} : S, H}
-  auto a = GetMember(ValToPtr(act->results[0], exp->line_num), fieldName);
+  auto a = GetMember(ValToPtr(act->results[0], location.lineNumber), fieldName);
   frame->todo.Pop(2);
   frame->todo.Push(MakeValAct(state->heap[a]));
 }
 
-auto PrimitiveOpExpression::ExpressionAction(Action* act, Frame* frame) const
-    -> void {
+auto PrimitiveOperatorExpression::ExpressionAction(Action* act,
+                                                   Frame* frame) const -> void {
   if (act->pos != static_cast<int>(arguments.size())) {
     //    { {v :: op(vs,[],e,es) :: C, E, F} :: S, H}
     // -> { {e :: op(vs,v,[],es) :: C, E, F} :: S, H}
-    Expression* arg = arguments[act->pos];
+    Expression arg = arguments[act->pos];
     frame->todo.Pop(1);
     frame->todo.Push(MakeExpAct(arg));
   } else {
     //    { {v :: op(vs,[]) :: C, E, F} :: S, H}
     // -> { {eval_prim(op, (vs,v)) :: C, E, F} :: S, H}
-    Value* v = EvalPrim(operation, act->results, exp->line_num);
+    Value* v = EvalPrim(operation, act->results, location.lineNumber);
     frame->todo.Pop(2);
     frame->todo.Push(MakeValAct(v));
   }
@@ -1057,7 +1058,7 @@ auto CallExpression::ExpressionAction(Action* act, Frame* frame) const -> void {
     //    { { v :: [](e) :: C, E, F} :: S, H}
     // -> { { e :: v([]) :: C, E, F} :: S, H}
     frame->todo.Pop(1);
-    frame->todo.Push(MakeExpAct(this->argument));
+    frame->todo.Push(MakeExpAct(argumentTuple));
   } else if (act->pos == 2) {
     //    { { v2 :: v1([]) :: C, E, F} :: S, H}
     // -> { {C',E',F'} :: {C, E, F} :: S, H}
@@ -1068,7 +1069,7 @@ auto CallExpression::ExpressionAction(Action* act, Frame* frame) const -> void {
   }
 }
 
-auto FunctionTExpression::ExpressionAction(Action* act, Frame* frame) const
+auto FunctionTypeExpression::ExpressionAction(Action* act, Frame* frame) const
     -> void {
   if (act->pos == 2) {
     //    { { rt :: fn pt -> [] :: C, E, F} :: S, H}
@@ -1080,7 +1081,7 @@ auto FunctionTExpression::ExpressionAction(Action* act, Frame* frame) const
     //    { { pt :: fn [] -> e :: C, E, F} :: S, H}
     // -> { { e :: fn pt -> []) :: C, E, F} :: S, H}
     frame->todo.Pop(1);
-    frame->todo.Push(MakeExpAct(exp->u.function_type.return_type));
+    frame->todo.Push(MakeExpAct(returnType));
   }
 }
 

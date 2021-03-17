@@ -6,22 +6,20 @@
 
 namespace Carbon {
 
-auto MakeFieldList(std::list<std::pair<std::string, Expression*>>* fields)
+auto MakeFieldList(std::list<std::pair<std::string, Expression>> fields)
     -> FieldList* {
-  auto e = new FieldList();
-  e->fields = fields;
-  return e;
+  return new FieldList{std::move(fields)};
 }
 
 auto MakeConsField(FieldList* e1, FieldList* e2) -> FieldList* {
-  auto fields = new std::list<std::pair<std::string, Expression*>>();
-  for (auto& field : *e1->fields) {
-    fields->push_back(field);
+  auto fields = std::list<std::pair<std::string, Expression>>();
+  for (auto& field : e1->fields) {
+    fields.push_back(field);
   }
-  for (auto& field : *e2->fields) {
-    fields->push_back(field);
+  for (auto& field : e2->fields) {
+    fields.push_back(field);
   }
-  auto result = MakeFieldList(fields);
+  auto result = MakeFieldList(std::move(fields));
   result->has_explicit_comma = true;
   return result;
 }

@@ -24,6 +24,7 @@ enum class TCContext { ValueContext, PatternContext, TypeContext };
 // Transitional wrapper for TCContext until we figure out how to organize the
 // code.  Works around the inability to forward-declare an enum.
 struct TCContext_ {
+  /* implicit */ TCContext_(TCContext value) : value(value) {}
   TCContext value;
 };
 

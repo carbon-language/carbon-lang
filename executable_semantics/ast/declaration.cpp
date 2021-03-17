@@ -22,7 +22,7 @@ void ChoiceDeclaration::Print() const {
   std::cout << "choice " << name << " {" << std::endl;
   for (auto& alternative : alternatives) {
     std::cout << "alt " << alternative.first << " ";
-    alternative.second->Print();
+    alternative.second.Print();
     std::cout << ";" << std::endl;
   }
   std::cout << "}" << std::endl;
