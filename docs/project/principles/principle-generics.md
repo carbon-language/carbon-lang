@@ -122,11 +122,11 @@ libraries imported into a given file or being inside a generic function.
 
 ### No novel name lookup
 
-No novel (generic specific) rules for name lookup:
-
--   An example of these would be the name lookup rules inside of Rust's traits.
--   Instead, structure generics in a way that reuses existing name lookup
-    facilities of the language.
+We want to avoid adding rules for name lookup that are specific to generics.
+This is in contrast to Rust which has different lookup rules inside its traits.
+Instead, we should structure generics in a way that reuses existing name lookup
+facilities of the language. For example, if `x` has type `T`, then if you write
+`x.y` you should be able to look up `y` in the definition of `T`.
 
 ### Closed overloading
 
