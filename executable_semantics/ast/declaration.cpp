@@ -31,9 +31,9 @@ void ChoiceDeclaration::Print() const {
 // Print a global variable declaration to standard out.
 void VariableDeclaration::Print() const {
   std::cout << "var ";
-  PrintExp(type);
+  type.Print();
   std::cout << " : " << name << " = ";
-  PrintExp(initializer);
+  initializer.Print();
   std::cout << std::endl;
 }
 

@@ -400,7 +400,7 @@ declaration:
 | VAR variable_declaration "=" expression ";"
     {
       $$ = new Carbon::Declaration(
-        Carbon::VariableDeclaration(yylineno, *$2->u.field.name, $2->u.field.type, $4));
+        Carbon::VariableDeclaration(yylineno, *$2->u.field.name, *$2->u.field.type, $4));
     }
 ;
 declaration_list:

@@ -676,7 +676,7 @@ auto ChoiceDeclaration::TypeChecked(TypeEnv env, Env ct_env) const
 auto VariableDeclaration::TypeChecked(TypeEnv env, Env ct_env) const
     -> Declaration {
   TCResult type_checked_initializer =
-      TypeCheckExp(initializer, env, ct_env, nullptr, TCContext::ValueContext);
+      initializer.TypeCheck(env, ct_env, nullptr, TCContext::ValueContext);
   Value* declared_type = ToType(source_location, InterpExp(ct_env, type));
   ExpectType(source_location, "initializer of variable", declared_type,
              type_checked_initializer.type);
