@@ -115,7 +115,7 @@ class Expression {
     }
     auto TypeCheck(TypeEnv env, Env ct_env, Value* expected,
                    TCContext_ context) const -> TCResult;
-    auto SourceLocation() const -> int { return content.sourceLocation; }
+    auto SourceLocation() const -> int { return content.location.lineNumber; }
   };
 
  private:  // data members
