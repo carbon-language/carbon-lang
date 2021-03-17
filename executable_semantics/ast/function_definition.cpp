@@ -11,8 +11,8 @@ namespace Carbon {
 auto MakeFunDef(int line_num, std::string name, Expression ret_type,
                 Expression param_pattern, Statement* body)
     -> struct FunctionDefinition* {
-  return new FunctionDefinition{line_num, std::move(name), ret_type,
-                                param_pattern, body};
+  return new FunctionDefinition{line_num, std::move(name), param_pattern,
+                                ret_type, body};
 }
 
 void PrintFunDefDepth(const FunctionDefinition* f, int depth) {
