@@ -9,19 +9,13 @@
 namespace Carbon {
 
 auto MakeField(int line_num, std::string name, Expression type) -> Member* {
-  return new Member{line_num,
-                    MemberKind::FieldMember,
-                    {new std::string(std::move(name)), new Expression(type)}};
+  return new Member{line_num, name, type};
 }
 
 void PrintMember(Member* m) {
-  switch (m->tag) {
-    case MemberKind::FieldMember:
-      std::cout << "var " << *m->u.field.name << " : ";
-      m->u.field.type->Print();
-      std::cout << ";" << std::endl;
-      break;
-  }
+  std::cout << "var " << m->name << " : ";
+  m->type.Print();
+  std::cout << ";" << std::endl;
 }
 
 }  // namespace Carbon

@@ -11,17 +11,10 @@
 
 namespace Carbon {
 
-enum class MemberKind { FieldMember };
-
 struct Member {
   int line_num;
-  MemberKind tag;
-  union {
-    struct {
-      std::string* name;
-      Expression* type;
-    } field;
-  } u;
+  std::string name;
+  Expression type;
 };
 
 auto MakeField(int line_num, std::string name, Expression type) -> Member*;

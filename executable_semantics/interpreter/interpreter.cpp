@@ -281,16 +281,9 @@ auto ChoiceDeclaration::InitGlobals(Env& globals) const -> void {
 auto StructDeclaration::InitGlobals(Env& globals) const -> void {
   auto fields = new VarValues();
   auto methods = new VarValues();
-  for (auto i = definition.members->begin(); i != definition.members->end();
-       ++i) {
-    switch ((*i)->tag) {
-      case MemberKind::FieldMember: {
-        auto t =
-            ToType(definition.line_num, InterpExp(Env(), *(*i)->u.field.type));
-        fields->push_back(make_pair(*(*i)->u.field.name, t));
-        break;
-      }
-    }
+  for (auto m : *definition.members) {
+    auto t = ToType(definition.line_num, InterpExp(Env(), m->type));
+    fields->push_back(make_pair(m->name, t));
   }
   auto st = MakeStructTypeVal(*definition.name, fields, methods);
   auto a = AllocateValue(st);
