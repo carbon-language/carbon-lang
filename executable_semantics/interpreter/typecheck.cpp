@@ -650,11 +650,11 @@ auto ChoiceDeclaration::TypeChecked(TypeEnv env, Env ct_env) const
 // declaration with annotated types.
 auto VariableDeclaration::TypeChecked(TypeEnv env, Env ct_env) const
     -> Declaration {
-  TCResult typeCheckedInitializer =
+  TCResult type_checked_initializer =
       TypeCheckExp(initializer, env, ct_env, nullptr, TCContext::ValueContext);
-  Value* declaredType = ToType(sourceLocation, InterpExp(ct_env, type));
-  ExpectType(sourceLocation, "initializer of variable", declaredType,
-             typeCheckedInitializer.type);
+  Value* declared_type = ToType(source_location, InterpExp(ct_env, type));
+  ExpectType(source_location, "initializer of variable", declared_type,
+             type_checked_initializer.type);
   return *this;
 }
 
@@ -706,8 +706,8 @@ auto ChoiceDeclaration::TopLevel(ExecutionEnvironment& tops) const -> void {
 // Associate the variable name with it's declared type in the
 // compile-time symbol table.
 auto VariableDeclaration::TopLevel(ExecutionEnvironment& tops) const -> void {
-  Value* declaredType = ToType(sourceLocation, InterpExp(tops.second, type));
-  tops.first.Set(Name(), declaredType);
+  Value* declared_type = ToType(source_location, InterpExp(tops.second, type));
+  tops.first.Set(Name(), declared_type);
 }
 
 }  // namespace Carbon
