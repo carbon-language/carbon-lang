@@ -14,15 +14,15 @@ namespace Carbon {
 namespace {
 
 struct NumericLiteralTest : ::testing::Test {
-  auto Lex(llvm::StringRef text) -> NumericLiteralToken {
-    llvm::Optional<NumericLiteralToken> result = NumericLiteralToken::Lex(text);
+  auto Lex(llvm::StringRef text) -> LexedNumericLiteral {
+    llvm::Optional<LexedNumericLiteral> result = LexedNumericLiteral::Lex(text);
     assert(result);
     EXPECT_EQ(result->Text(), text);
     return *result;
   }
 
-  auto Parse(llvm::StringRef text) -> NumericLiteralToken::Parser {
-    return NumericLiteralToken::Parser(ConsoleDiagnosticEmitter(), Lex(text));
+  auto Parse(llvm::StringRef text) -> LexedNumericLiteral::Parser {
+    return LexedNumericLiteral::Parser(ConsoleDiagnosticEmitter(), Lex(text));
   }
 };
 
