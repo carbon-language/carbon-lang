@@ -29,8 +29,12 @@ import re
 import shutil
 import subprocess
 import sys
+from pathlib import Path
 
-directory = os.getcwd()
+# Change the working directory to the repository root so that the remaining
+# operations reliably operate relative to that root.
+os.chdir(Path(__file__).parent.parent)
+directory = Path.cwd()
 
 # We use the `BAZEL` environment variable if present. If not, then we try to
 # use `bazelisk` and then `bazel`.
@@ -50,11 +54,12 @@ try:
         arguments = [line.strip() for line in flag_file]
 except FileNotFoundError:
     sys.exit(
-        os.path.basename(sys.argv[0]) + " must be run from the project root"
+        Path(sys.argv[0]).name + " must be run from the project root"
     )
+
 # Prepend the `clang` executable path to the arguments that looks into our
 # downloaded Clang toolchain.
-arguments = ["bazel-clang-toolchain/bin/clang"] + arguments
+arguments = [str(Path("bazel-clang-toolchain/bin/clang"))] + arguments
 
 print("Building compilation database...")
 
@@ -74,19 +79,15 @@ source_files_query = subprocess.run(
     check=True,
     text=True,
 ).stdout
-source_files = [line.split(":")[0] for line in source_files_query.splitlines()]
+source_files = [Path(line.split(":")[0]) for line in source_files_query.splitlines()]
 
 # Filter into the Carbon source files that we'll find directly in the
 # workspace, and LLVM source files that need to be mapped through the merged
 # LLVM tree in Bazel's execution root.
-pwd = os.environ["PWD"] + "/"
-carbon_files = [f.removeprefix(pwd) for f in source_files if f.startswith(pwd)]
+carbon_files = [f.relative_to(directory) for f in source_files if f.is_relative_to(directory)]
 llvm_files = [
-    "bazel-carbon-lang/external/llvm-project/" + partitions[2]
-    for partitions in [
-        f.partition("/external/llvm-project/") for f in source_files
-    ]
-    if partitions[2] != ""
+    Path("bazel-execroot/external").joinpath(*f.parts[f.parts.index('llvm-project'):])
+    for f in source_files if 'llvm-project' in f.parts
 ]
 print(
     "Found %d Carbon source files and %d LLVM source files..."
@@ -115,29 +116,19 @@ print("Found %d generated files..." % (len(generated_file_labels),))
 # fail in case there are build errors in the client, and just warn the user
 # that they may be missing generated files.
 print("Building the generated files so that tools can find them...")
-subprocess.run(["bazelisk", "build", "--keep_going"] + generated_file_labels)
-
-# Because we have built the generated files, rewrite the include paths that use
-# `bazel-bin` (which will fluctuate with different configs) to the specific
-# config we built the generated files with.
-bazel_bin = subprocess.run(
-    [bazel, "info", "bazel-bin"], capture_output=True, check=True, text=True
-).stdout.strip()
-# Only take the `bazel-out` relative suffix.
-bazel_bin = bazel_bin.partition("/bazel-out/")[2]
-arguments = [
-    re.sub(r"^((-I)?)bazel-bin/", r"\1bazel-out/" + bazel_bin + "/", a)
-    for a in arguments
-]
-
+subprocess.run([bazel, "build", "--keep_going"] + generated_file_labels)
 
 # Manually translate the label to a user friendly path into the Bazel output
 # symlinks.
 def _label_to_path(s):
+    # Map external repositories to their part of the output tree.
     s = re.sub(r"^@([^/]+)//", r"bazel-bin/external/\1/", s)
+    # Map this repository to the root of the output tree.
     s = s if not s.startswith("//") else "bazel-bin/" + s.removeprefix("//")
+    # Replace the colon used to mark the package name with a slash.
     s = s.replace(":", "/")
-    return s
+    # Convert to a native path.
+    return Path(s)
 
 
 generated_files = [_label_to_path(label) for label in generated_file_labels]
@@ -145,9 +136,9 @@ generated_files = [_label_to_path(label) for label in generated_file_labels]
 # Generate compile_commands.json with an entry for each C++ input.
 entries = [
     {
-        "directory": directory,
-        "file": f,
-        "arguments": arguments + [f],
+        "directory": str(directory),
+        "file": str(f),
+        "arguments": arguments + [str(f)],
     }
     for f in carbon_files + llvm_files + generated_files
 ]
