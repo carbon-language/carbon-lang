@@ -15,8 +15,8 @@
 // Use a type-safe C++ variant for semantic values
 %define api.value.type variant
 
-// Have Bison generate the functions ‘make_text’ and ‘make_number’, but also
-// ‘make_yyeof’, for the end of input.
+// Have Bison generate the functions ‘make_TEXT’ and ‘make_NUMBER’, but also
+// ‘make_YYEOF’, for the end of input.
 %define api.token.constructor
 
 //
