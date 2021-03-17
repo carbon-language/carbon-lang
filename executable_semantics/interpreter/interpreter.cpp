@@ -1114,7 +1114,7 @@ auto CallExpression::ExpressionAction(Action* act, Frame* frame) const -> void {
     frame->todo.Pop(2);
     CallFunction(location.lineNumber, act->results, state);
   } else {
-    fatal("internal error in handle_value with Call");
+    Fatal("internal error in handle_value with Call");
   }
 }
 

@@ -154,7 +154,7 @@ auto PatternVariableExpression::TypeCheck(TypeEnv env, Env ct_env,
   auto line_number = location.lineNumber;
 
   if (context.value != TCContext::PatternContext) {
-    fatal(line_number,
+    Fatal(line_number,
           ": compilation error, pattern variables are only allowed in "
           "pattern context");
   }
@@ -163,7 +163,7 @@ auto PatternVariableExpression::TypeCheck(TypeEnv env, Env ct_env,
 
   if (t->tag == ValKind::AutoTV) {
     if (expectedType == nullptr) {
-      fatal(line_number, ": compilation error, auto not allowed here");
+      Fatal(line_number, ": compilation error, auto not allowed here");
     } else {
       t = expectedType;
     }
@@ -191,7 +191,7 @@ auto IndexExpression::TypeCheck(TypeEnv env, Env ct_env, Value* expectedType,
       if (field_t == nullptr) {
         std::ostringstream actualValueText;
         PrintValue(t, actualValueText);
-        fatal(line_number, ": compilation error, field ", f,
+        Fatal(line_number, ": compilation error, field ", f,
               " is not in the tuple ", actualValueText.str());
       }
       auto new_e =
@@ -199,7 +199,7 @@ auto IndexExpression::TypeCheck(TypeEnv env, Env ct_env, Value* expectedType,
       return TCResult(new_e, field_t, res.env);
     }
     default:
-      fatal(line_number, ": compilation error, expected a tuple");
+      Fatal(line_number, ": compilation error, expected a tuple");
   }
 }
 
@@ -214,7 +214,7 @@ auto TupleExpression::TypeCheck(TypeEnv env, Env ct_env, Value* expectedType,
       arg_expected =
           FindInVarValues(arg.first, expectedType->u.tuple_type.fields);
       if (arg_expected == nullptr) {
-        fatal(location.lineNumber, ": compilation error, missing field ",
+        Fatal(location.lineNumber, ": compilation error, missing field ",
               arg.first);
       }
     }
@@ -248,7 +248,7 @@ auto GetFieldExpression::TypeCheck(TypeEnv env, Env ct_env, Value* expectedType,
           return TCResult(new_e, method.second, res.env);
         }
       }
-      fatal(location.lineNumber, ": compilation error, struct ",
+      Fatal(location.lineNumber, ": compilation error, struct ",
             *t->u.struct_type.name, " does not have a field named ", fieldName);
     case ValKind::TupleTV:
       for (auto& field : *t->u.tuple_type.fields) {
@@ -257,7 +257,7 @@ auto GetFieldExpression::TypeCheck(TypeEnv env, Env ct_env, Value* expectedType,
           return TCResult(new_e, field.second, res.env);
         }
       }
-      fatal(location.lineNumber, ": compilation error, struct ",
+      Fatal(location.lineNumber, ": compilation error, struct ",
             *t->u.struct_type.name, " does not have a field named ", fieldName);
     case ValKind::ChoiceTV:
       for (auto vt = t->u.choice_type.alternatives->begin();
@@ -268,7 +268,7 @@ auto GetFieldExpression::TypeCheck(TypeEnv env, Env ct_env, Value* expectedType,
           return TCResult(new_e, fun_ty, res.env);
         }
       }
-      fatal(location.lineNumber, ": compilation error, struct ",
+      Fatal(location.lineNumber, ": compilation error, struct ",
             *t->u.struct_type.name, " does not have a field named ", fieldName);
 
     default:
@@ -276,7 +276,7 @@ auto GetFieldExpression::TypeCheck(TypeEnv env, Env ct_env, Value* expectedType,
                 << ": compilation error in field access, expected a struct"
                 << std::endl;
       this->Print();
-      fatal("");
+      Fatal("");
   }
 }
 
@@ -286,7 +286,7 @@ auto VariableExpression::TypeCheck(TypeEnv env, Env ct_env, Value* expectedType,
   if (type) {
     return TCResult(*this, *type, env);
   } else {
-    fatal(location.lineNumber, ": could not find `", name, "`");
+    Fatal(location.lineNumber, ": could not find `", name, "`");
   }
 }
 
@@ -362,7 +362,7 @@ auto CallExpression::TypeCheck(TypeEnv env, Env ct_env, Value* expectedType,
                 << ": compilation error in call, expected a function"
                 << std::endl;
       this->Print();
-      fatal("");
+      Fatal("");
     }
   }
 }
@@ -536,7 +536,7 @@ auto CheckOrEnsureReturn(Statement* stmt, bool void_return, int line_num)
           line_num,
           TupleExpression(ExpressionSource::Location(line_num), args));
     } else {
-      fatal("control-flow reaches end of non-void function without a return");
+      Fatal("control-flow reaches end of non-void function without a return");
     }
   }
   switch (stmt->tag) {

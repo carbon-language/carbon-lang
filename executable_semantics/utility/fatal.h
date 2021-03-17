@@ -9,7 +9,7 @@ namespace Carbon {
 
 // Prints the arguments to std::cerr and exits with code 255.
 template <class First, class... Rest>
-[[noreturn]] auto fatal(const First& first, const Rest&... rest) -> void {
+[[noreturn]] auto Fatal(const First& first, const Rest&... rest) -> void {
   std::cerr << first;
   ((std::cerr << rest), ...);
   std::cerr << "\n";

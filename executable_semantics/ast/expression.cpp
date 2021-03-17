@@ -115,12 +115,12 @@ auto FunctionTypeExpression::Print() const -> void {
   returnType.Print();
 }
 
-auto ExpressionSource::fatalLValAction() const -> void {
-  fatal("internal error in handle_value, LValAction");
+auto ExpressionSource::FatalLValAction() const -> void {
+  Fatal("internal error in handle_value, LValAction");
 }
 
-auto ExpressionSource::fatalBadExpressionContext() const -> void {
-  fatal("internal error, bad expression context in handle_value");
+auto ExpressionSource::FatalBadExpressionContext() const -> void {
+  Fatal("internal error, bad expression context in handle_value");
 }
 
 }  // namespace Carbon
