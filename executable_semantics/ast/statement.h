@@ -66,25 +66,25 @@ struct Statement {
 
     struct {
       Expression* exp;
-      std::list<std::pair<Expression*, Statement*>>* clauses;
+      std::list<std::pair<Expression, Statement*>>* clauses;
     } match_stmt;
 
   } u;
 };
 
-auto MakeExpStmt(int line_num, Expression* exp) -> Statement*;
-auto MakeAssign(int line_num, Expression* lhs, Expression* rhs) -> Statement*;
-auto MakeVarDef(int line_num, Expression* pat, Expression* init) -> Statement*;
-auto MakeIf(int line_num, Expression* cond, Statement* then_stmt,
+auto MakeExpStmt(int line_num, Expression exp) -> Statement*;
+auto MakeAssign(int line_num, Expression lhs, Expression rhs) -> Statement*;
+auto MakeVarDef(int line_num, Expression pat, Expression init) -> Statement*;
+auto MakeIf(int line_num, Expression cond, Statement* then_stmt,
             Statement* else_stmt) -> Statement*;
-auto MakeReturn(int line_num, Expression* e) -> Statement*;
+auto MakeReturn(int line_num, Expression e) -> Statement*;
 auto MakeSeq(int line_num, Statement* s1, Statement* s2) -> Statement*;
 auto MakeBlock(int line_num, Statement* s) -> Statement*;
-auto MakeWhile(int line_num, Expression* cond, Statement* body) -> Statement*;
+auto MakeWhile(int line_num, Expression cond, Statement* body) -> Statement*;
 auto MakeBreak(int line_num) -> Statement*;
 auto MakeContinue(int line_num) -> Statement*;
-auto MakeMatch(int line_num, Expression* exp,
-               std::list<std::pair<Expression*, Statement*>>* clauses)
+auto MakeMatch(int line_num, Expression exp,
+               std::list<std::pair<Expression, Statement*>>* clauses)
     -> Statement*;
 
 void PrintStatement(Statement*, int);

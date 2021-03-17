@@ -24,7 +24,7 @@ struct Member {
   } u;
 };
 
-auto MakeField(int line_num, std::string name, Expression* type) -> Member*;
+auto MakeField(int line_num, std::string name, Expression type) -> Member*;
 
 void PrintMember(Member* m);
 

@@ -22,6 +22,8 @@ struct Frame;
 // An existential AST expression satisfying the Expression concept.
 class Expression {
  public:  // ValueSemantic concept API.
+  // TODO: REMOVE THIS WHEN WE FIGURE OUT HOW TO GET BISON TO COOPERATE
+  Expression() = default;
   Expression(const Expression& other) = default;
   Expression& operator=(const Expression& other) = default;
 

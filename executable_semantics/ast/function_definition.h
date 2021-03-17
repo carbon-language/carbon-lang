@@ -13,13 +13,13 @@ namespace Carbon {
 struct FunctionDefinition {
   int line_num;
   std::string name;
-  Expression* param_pattern;
-  Expression* return_type;
+  Expression param_pattern;
+  Expression return_type;
   Statement* body;
 };
 
-auto MakeFunDef(int line_num, std::string name, Expression* ret_type,
-                Expression* param, Statement* body) -> FunctionDefinition*;
+auto MakeFunDef(int line_num, std::string name, Expression ret_type,
+                Expression param, Statement* body) -> FunctionDefinition*;
 void PrintFunDef(const FunctionDefinition*);
 void PrintFunDefDepth(const FunctionDefinition*, int);
 

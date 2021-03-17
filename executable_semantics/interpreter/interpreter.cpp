@@ -286,7 +286,7 @@ auto StructDeclaration::InitGlobals(Env& globals) const -> void {
     switch ((*i)->tag) {
       case MemberKind::FieldMember: {
         auto t =
-            ToType(definition.line_num, InterpExp(Env(), (*i)->u.field.type));
+            ToType(definition.line_num, InterpExp(Env(), *(*i)->u.field.type));
         fields->push_back(make_pair(*(*i)->u.field.name, t));
         break;
       }
@@ -770,13 +770,13 @@ void StepStmt() {
     case StatementKind::Match:
       //    { { (match (e) ...) :: C, E, F} :: S, H}
       // -> { { e :: (match ([]) ...) :: C, E, F} :: S, H}
-      frame->todo.Push(MakeExpAct(stmt->u.match_stmt.exp));
+      frame->todo.Push(MakeExpAct(*stmt->u.match_stmt.exp));
       act->pos++;
       break;
     case StatementKind::While:
       //    { { (while (e) s) :: C, E, F} :: S, H}
       // -> { { e :: (while ([]) s) :: C, E, F} :: S, H}
-      frame->todo.Push(MakeExpAct(stmt->u.while_stmt.cond));
+      frame->todo.Push(MakeExpAct(*stmt->u.while_stmt.cond));
       act->pos++;
       break;
     case StatementKind::Break:
@@ -821,30 +821,30 @@ void StepStmt() {
     case StatementKind::VariableDefinition:
       //    { {(var x = e) :: C, E, F} :: S, H}
       // -> { {e :: (var x = []) :: C, E, F} :: S, H}
-      frame->todo.Push(MakeExpAct(stmt->u.variable_definition.init));
+      frame->todo.Push(MakeExpAct(*stmt->u.variable_definition.init));
       act->pos++;
       break;
     case StatementKind::ExpressionStatement:
       //    { {e :: C, E, F} :: S, H}
       // -> { {e :: C, E, F} :: S, H}
-      frame->todo.Push(MakeExpAct(stmt->u.exp));
+      frame->todo.Push(MakeExpAct(*stmt->u.exp));
       break;
     case StatementKind::Assign:
       //    { {(lv = e) :: C, E, F} :: S, H}
       // -> { {lv :: ([] = e) :: C, E, F} :: S, H}
-      frame->todo.Push(MakeLvalAct(stmt->u.assign.lhs));
+      frame->todo.Push(MakeLvalAct(*stmt->u.assign.lhs));
       act->pos++;
       break;
     case StatementKind::If:
       //    { {(if (e) then_stmt else else_stmt) :: C, E, F} :: S, H}
       // -> { { e :: (if ([]) then_stmt else else_stmt) :: C, E, F} :: S, H}
-      frame->todo.Push(MakeExpAct(stmt->u.if_stmt.cond));
+      frame->todo.Push(MakeExpAct(*stmt->u.if_stmt.cond));
       act->pos++;
       break;
     case StatementKind::Return:
       //    { {return e :: C, E, F} :: S, H}
       // -> { {e :: return [] :: C, E, F} :: S, H}
-      frame->todo.Push(MakeExpAct(stmt->u.return_stmt));
+      frame->todo.Push(MakeExpAct(*stmt->u.return_stmt));
       act->pos++;
       break;
     case StatementKind::Sequence:
@@ -1226,7 +1226,7 @@ auto HandleValue() -> void {
             //    { {v :: (match ([]) ...) :: C, E, F} :: S, H}
             // -> { {pi :: (match ([]) ...) :: C, E, F} :: S, H}
             frame->todo.Pop(1);
-            frame->todo.Push(MakeExpAct(*c->first));
+            frame->todo.Push(MakeExpAct(c->first));
           } else {  // try to match
             auto v = act->results[0];
             auto pat = act->results[clause_num + 1];
@@ -1253,7 +1253,7 @@ auto HandleValue() -> void {
                 c = stmt->u.match_stmt.clauses->begin();
                 std::advance(c, clause_num);
                 frame->todo.Pop(1);
-                frame->todo.Push(MakeExpAct(*c->first));
+                frame->todo.Push(MakeExpAct(c->first));
               } else {  // No more clauses in match
                 frame->todo.Pop(2);
               }
@@ -1356,8 +1356,8 @@ auto InterpProgram(std::list<Declaration>* fs) -> int {
 }
 
 // Interpret an expression at compile-time.
-auto InterpExp(Env env, Expression* e) -> Value* {
-  auto todo = Stack(MakeExpAct(*e));
+auto InterpExp(Env env, Expression e) -> Value* {
+  auto todo = Stack(MakeExpAct(e));
   auto* scope = new Scope(env, std::list<std::string>());
   auto* frame = new Frame("InterpExp", Stack(scope), todo);
   state->stack = Stack(frame);

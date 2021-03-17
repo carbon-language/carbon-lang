@@ -293,25 +293,25 @@ clause_list:
 ;
 statement:
   expression "=" expression ";"
-    { $$ = Carbon::MakeAssign(yylineno, $1, new Carbon::Expression($3)); }
+    { $$ = Carbon::MakeAssign(yylineno, $1, $3); }
 | VAR pattern "=" expression ";"
-    { $$ = Carbon::MakeVarDef(yylineno, $2, new Carbon::Expression($4)); }
+    { $$ = Carbon::MakeVarDef(yylineno, $2, $4); }
 | expression ";"
-    { $$ = Carbon::MakeExpStmt(yylineno, new Carbon::Expression($1)); }
+    { $$ = Carbon::MakeExpStmt(yylineno, $1); }
 | IF "(" expression ")" statement optional_else
-    { $$ = Carbon::MakeIf(yylineno, new Carbon::Expression($3), $5, $6); }
+    { $$ = Carbon::MakeIf(yylineno, $3, $5, $6); }
 | WHILE "(" expression ")" statement
-    { $$ = Carbon::MakeWhile(yylineno, new Carbon::Expression($3), $5); }
+    { $$ = Carbon::MakeWhile(yylineno, $3, $5); }
 | BREAK ";"
     { $$ = Carbon::MakeBreak(yylineno); }
 | CONTINUE ";"
     { $$ = Carbon::MakeContinue(yylineno); }
 | RETURN expression ";"
-    { $$ = Carbon::MakeReturn(yylineno, new Carbon::Expression($2)); }
+    { $$ = Carbon::MakeReturn(yylineno, $2); }
 | "{" statement_list "}"
     { $$ = Carbon::MakeBlock(yylineno, $2); }
 | MATCH "(" expression ")" "{" clause_list "}"
-    { $$ = Carbon::MakeMatch(yylineno, new Carbon::Expression($3), $6); }
+    { $$ = Carbon::MakeMatch(yylineno, $3, $6); }
 ;
 optional_else:
   // Empty
@@ -328,7 +328,7 @@ return_type:
   // Empty
     {
       $$ = Carbon::TupleExpression(
-          yylineno,
+          Carbon::ExpressionSource::Location(yylineno),
           std::vector<std::pair<std::string, Carbon::Expression>>());
     }
 | ARROW expression
@@ -336,19 +336,19 @@ return_type:
 ;
 function_definition:
   FN identifier tuple return_type "{" statement_list "}"
-    { $$ = MakeFunDef(yylineno, $2, new Expression($4), $3, $6); }
+    { $$ = MakeFunDef(yylineno, $2, $4, $3, $6); }
 | FN identifier tuple DBLARROW expression ";"
     {
-      $$ = Carbon::MakeFunDef(yylineno, $2, Carbon::MakeAutoType(yylineno), $3,
-                              Carbon::MakeReturn(yylineno, new Expression($5)));
+      $$ = Carbon::MakeFunDef(yylineno, $2, Carbon::AutoTypeExpression(Carbon::ExpressionSource::Location(yylineno)), $3,
+                              Carbon::MakeReturn(yylineno, $5));
     }
 ;
 function_declaration:
   FN identifier tuple return_type ";"
-    { $$ = MakeFunDef(yylineno, $2, new Expression($4), $3, 0); }
+    { $$ = MakeFunDef(yylineno, $2, $4, $3, 0); }
 ;
 variable_declaration: expression ":" identifier
-    { $$ = MakeField(yylineno, $3, new Expression($1)); }
+    { $$ = MakeField(yylineno, $3, $1); }
 ;
 member: VAR variable_declaration ";"
     { $$ = $2; }
@@ -366,7 +366,7 @@ alternative:
     {
       $$ = new std::pair<std::string, Carbon::Expression>(
           $1, Carbon::TupleExpression(
-            yylineno,
+            Carbon::ExpressionSource::Location(yylineno),
             std::vector<std::pair<std::string, Carbon::Expression>>()));
     }
 ;
