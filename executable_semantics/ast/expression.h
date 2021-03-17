@@ -144,7 +144,7 @@ struct AutoTypeExpression : ExpressionSource {
   AutoTypeExpression(Location textualPlacement)
       : ExpressionSource(textualPlacement) {}
   auto Print() const -> void;
-  auto StepLvalue(Action* act, Frame* frame) const -> void {}
+  auto StepLvalue(Action* act, Frame* frame) const -> void;
   auto StepExp(Action* act, Frame* frame) const -> void;
   auto LValAction(Action* act, Frame* frame) const -> void {
     fatalLValAction();
@@ -160,7 +160,7 @@ struct BoolTypeExpression : ExpressionSource {
   BoolTypeExpression(Location textualPlacement)
       : ExpressionSource(textualPlacement) {}
   auto Print() const -> void;
-  auto StepLvalue(Action* act, Frame* frame) const -> void {}
+  auto StepLvalue(Action* act, Frame* frame) const -> void;
   auto StepExp(Action* act, Frame* frame) const -> void;
   auto LValAction(Action* act, Frame* frame) const -> void {
     fatalLValAction();
@@ -176,7 +176,7 @@ struct BooleanExpression : ExpressionSource {
   BooleanExpression(Location textualPlacement, bool value)
       : ExpressionSource(textualPlacement), value(value) {}
   auto Print() const -> void;
-  auto StepLvalue(Action* act, Frame* frame) const -> void {}
+  auto StepLvalue(Action* act, Frame* frame) const -> void;
   auto StepExp(Action* act, Frame* frame) const -> void;
   auto LValAction(Action* act, Frame* frame) const -> void {
     fatalLValAction();
@@ -199,7 +199,7 @@ struct CallExpression : ExpressionSource {
         argumentTuple(argumentTuple) {}
 
   auto Print() const -> void;
-  auto StepLvalue(Action* act, Frame* frame) const -> void {}
+  auto StepLvalue(Action* act, Frame* frame) const -> void;
   auto StepExp(Action* act, Frame* frame) const -> void;
   auto LValAction(Action* act, Frame* frame) const -> void {
     fatalLValAction();
@@ -221,7 +221,7 @@ struct FunctionTypeExpression : ExpressionSource {
         returnType(returnType) {}
 
   auto Print() const -> void;
-  auto StepLvalue(Action* act, Frame* frame) const -> void {}
+  auto StepLvalue(Action* act, Frame* frame) const -> void;
   auto StepExp(Action* act, Frame* frame) const -> void;
   auto LValAction(Action* act, Frame* frame) const -> void {
     fatalLValAction();
@@ -294,7 +294,7 @@ struct IntegerExpression : ExpressionSource {
       : ExpressionSource(textualPlacement), value(value) {}
 
   auto Print() const -> void;
-  auto StepLvalue(Action* act, Frame* frame) const -> void {}
+  auto StepLvalue(Action* act, Frame* frame) const -> void;
   auto StepExp(Action* act, Frame* frame) const -> void;
   auto LValAction(Action* act, Frame* frame) const -> void {
     fatalLValAction();
@@ -388,7 +388,7 @@ struct TypeTypeExpression : ExpressionSource {
   explicit TypeTypeExpression(Location location) : ExpressionSource(location) {}
 
   auto Print() const -> void;
-  auto StepLvalue(Action* act, Frame* frame) const -> void {}
+  auto StepLvalue(Action* act, Frame* frame) const -> void;
   auto StepExp(Action* act, Frame* frame) const -> void;
   auto LValAction(Action* act, Frame* frame) const -> void {
     fatalLValAction();

@@ -598,11 +598,60 @@ auto TupleExpression::StepLvalue(Action* act, Frame* frame) const -> void {
   act->pos++;
 }
 
-auto PatternVariableExpression::StepLvalue(Action* act, Frame* frame) const
-    -> void {
+template <class E>
+auto StandardStepLvalue(E const& expression, Frame* frame) -> void {
   frame->todo.Pop();
   frame->todo.Push(MakeExpToLvalAct());
-  frame->todo.Push(MakeExpAct(*this));
+  frame->todo.Push(MakeExpAct(expression));
+}
+
+auto IntegerExpression::StepLvalue(Action* /*act*/, Frame* frame) const
+    -> void {
+  StandardStepLvalue(*this, frame);
+}
+
+auto BooleanExpression::StepLvalue(Action* /*act*/, Frame* frame) const
+    -> void {
+  StandardStepLvalue(*this, frame);
+}
+
+auto CallExpression::StepLvalue(Action* /*act*/, Frame* frame) const -> void {
+  StandardStepLvalue(*this, frame);
+}
+
+auto PrimitiveOperatorExpression::StepLvalue(Action* /*act*/,
+                                             Frame* frame) const -> void {
+  StandardStepLvalue(*this, frame);
+}
+
+auto IntTypeExpression::StepLvalue(Action* /*act*/, Frame* frame) const
+    -> void {
+  StandardStepLvalue(*this, frame);
+}
+
+auto BoolTypeExpression::StepLvalue(Action* /*act*/, Frame* frame) const
+    -> void {
+  StandardStepLvalue(*this, frame);
+}
+
+auto TypeTypeExpression::StepLvalue(Action* /*act*/, Frame* frame) const
+    -> void {
+  StandardStepLvalue(*this, frame);
+}
+
+auto FunctionTypeExpression::StepLvalue(Action* /*act*/, Frame* frame) const
+    -> void {
+  StandardStepLvalue(*this, frame);
+}
+
+auto AutoTypeExpression::StepLvalue(Action* /*act*/, Frame* frame) const
+    -> void {
+  StandardStepLvalue(*this, frame);
+}
+
+auto PatternVariableExpression::StepLvalue(Action* /*act*/, Frame* frame) const
+    -> void {
+  StandardStepLvalue(*this, frame);
 }
 
 // State transitions for expressions.

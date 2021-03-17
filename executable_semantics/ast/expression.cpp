@@ -104,6 +104,8 @@ auto BoolTypeExpression::Print() const -> void { std::cout << "Bool"; }
 
 auto IntTypeExpression::Print() const -> void { std::cout << "Int"; }
 
+auto TypeTypeExpression::Print() const -> void { std::cout << "Type"; }
+
 auto AutoTypeExpression::Print() const -> void { std::cout << "auto"; }
 
 auto FunctionTypeExpression::Print() const -> void {
