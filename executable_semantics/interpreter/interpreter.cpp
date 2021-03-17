@@ -390,28 +390,6 @@ void CreateTuple(Frame* frame, Action* act, Expression* /*exp*/) {
   frame->todo.Push(MakeValAct(tv));
 }
 
-auto ToValue(Expression* value) -> Value* {
-  switch (value->tag) {
-    case ExpressionKind::Integer:
-      return MakeIntVal(value->u.integer);
-    case ExpressionKind::Boolean:
-      return MakeBoolVal(value->u.boolean);
-    case ExpressionKind::IntT:
-      return MakeIntTypeVal();
-    case ExpressionKind::BoolT:
-      return MakeBoolTypeVal();
-    case ExpressionKind::TypeT:
-      return MakeTypeTypeVal();
-    case ExpressionKind::FunctionT:
-      // Instead add to patterns?
-    default:
-      std::cerr << "internal error in to_value, didn't expect ";
-      PrintExp(value);
-      std::cerr << std::endl;
-      exit(-1);
-  }
-}
-
 // Returns an updated environment that includes the bindings of
 //    pattern variables to their matched values, if matching succeeds.
 //
