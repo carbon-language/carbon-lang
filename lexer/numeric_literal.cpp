@@ -26,9 +26,10 @@ struct InvalidDigit {
   int radix;
 
   auto Format() -> std::string {
-    return llvm::formatv("Invalid digit '{0}' in {1} numeric literal.", digit,
-                         (radix == 2 ? "binary"
-                                     : radix == 16 ? "hexadecimal" : "decimal"))
+    return llvm::formatv(
+               "Invalid digit '{0}' in {1} numeric literal.", digit,
+               (radix == 2 ? "binary"
+                           : (radix == 16 ? "hexadecimal" : "decimal")))
         .str();
   }
 };
@@ -80,9 +81,9 @@ struct WrongRealLiteralExponent {
 };
 }  // namespace
 
-auto NumericLiteralToken::Lex(llvm::StringRef source_text)
-    -> llvm::Optional<NumericLiteralToken> {
-  NumericLiteralToken result;
+auto LexedNumericLiteral::Lex(llvm::StringRef source_text)
+    -> llvm::Optional<LexedNumericLiteral> {
+  LexedNumericLiteral result;
 
   if (source_text.empty() || !IsDecimalDigit(source_text.front())) {
     return llvm::None;
@@ -144,8 +145,8 @@ auto NumericLiteralToken::Lex(llvm::StringRef source_text)
   return result;
 }
 
-NumericLiteralToken::Parser::Parser(DiagnosticEmitter& emitter,
-                                    NumericLiteralToken literal)
+LexedNumericLiteral::Parser::Parser(DiagnosticEmitter& emitter,
+                                    LexedNumericLiteral literal)
     : emitter(emitter), literal(literal) {
   int_part = literal.text.substr(0, literal.radix_point);
   if (int_part.consume_front("0x")) {
@@ -165,7 +166,7 @@ NumericLiteralToken::Parser::Parser(DiagnosticEmitter& emitter,
 
 // Check that the numeric literal token is syntactically valid and meaningful,
 // and diagnose if not.
-auto NumericLiteralToken::Parser::Check() -> CheckResult {
+auto LexedNumericLiteral::Parser::Check() -> CheckResult {
   if (!CheckLeadingZero() || !CheckIntPart() || !CheckFractionalPart() ||
       !CheckExponentPart()) {
     return UnrecoverableError;
@@ -200,13 +201,13 @@ static auto ParseInteger(llvm::StringRef digits, int radix, bool needs_cleaning)
   return value;
 }
 
-auto NumericLiteralToken::Parser::GetMantissa() -> llvm::APInt {
+auto LexedNumericLiteral::Parser::GetMantissa() -> llvm::APInt {
   const char* end = IsInteger() ? int_part.end() : fract_part.end();
   llvm::StringRef digits(int_part.begin(), end - int_part.begin());
   return ParseInteger(digits, radix, mantissa_needs_cleaning);
 }
 
-auto NumericLiteralToken::Parser::GetExponent() -> llvm::APInt {
+auto LexedNumericLiteral::Parser::GetExponent() -> llvm::APInt {
   // Compute the effective exponent from the specified exponent, if any,
   // and the position of the radix point.
   llvm::APInt exponent(64, 0);
@@ -245,7 +246,7 @@ auto NumericLiteralToken::Parser::GetExponent() -> llvm::APInt {
 // Check that a digit sequence is valid: that it contains one or more digits,
 // contains only digits in the specified base, and that any digit separators
 // are present and correctly positioned.
-auto NumericLiteralToken::Parser::CheckDigitSequence(
+auto LexedNumericLiteral::Parser::CheckDigitSequence(
     llvm::StringRef text, int radix, bool allow_digit_separators)
     -> CheckDigitSequenceResult {
   assert((radix == 2 || radix == 10 || radix == 16) && "unknown radix");
@@ -304,7 +305,7 @@ auto NumericLiteralToken::Parser::CheckDigitSequence(
 
 // Given a number with digit separators, check that the digit separators are
 // correctly positioned.
-auto NumericLiteralToken::Parser::CheckDigitSeparatorPlacement(
+auto LexedNumericLiteral::Parser::CheckDigitSeparatorPlacement(
     llvm::StringRef text, int radix, int num_digit_separators) -> void {
   assert(std::count(text.begin(), text.end(), '_') == num_digit_separators &&
          "given wrong number of digit separators");
@@ -345,7 +346,7 @@ auto NumericLiteralToken::Parser::CheckDigitSeparatorPlacement(
 };
 
 // Check that we don't have a '0' prefix on a non-zero decimal integer.
-auto NumericLiteralToken::Parser::CheckLeadingZero() -> bool {
+auto LexedNumericLiteral::Parser::CheckLeadingZero() -> bool {
   if (radix == 10 && int_part.startswith("0") && int_part != "0") {
     emitter.EmitError<UnknownBaseSpecifier>();
     return false;
@@ -354,7 +355,7 @@ auto NumericLiteralToken::Parser::CheckLeadingZero() -> bool {
 }
 
 // Check the integer part (before the '.', if any) is valid.
-auto NumericLiteralToken::Parser::CheckIntPart() -> bool {
+auto LexedNumericLiteral::Parser::CheckIntPart() -> bool {
   auto int_result = CheckDigitSequence(int_part, radix);
   mantissa_needs_cleaning |= int_result.has_digit_separators;
   return int_result.ok;
@@ -362,7 +363,7 @@ auto NumericLiteralToken::Parser::CheckIntPart() -> bool {
 
 // Check the fractional part (after the '.' and before the exponent, if any)
 // is valid.
-auto NumericLiteralToken::Parser::CheckFractionalPart() -> bool {
+auto LexedNumericLiteral::Parser::CheckFractionalPart() -> bool {
   if (IsInteger()) {
     return true;
   }
@@ -382,7 +383,7 @@ auto NumericLiteralToken::Parser::CheckFractionalPart() -> bool {
 }
 
 // Check the exponent part (if any) is valid.
-auto NumericLiteralToken::Parser::CheckExponentPart() -> bool {
+auto LexedNumericLiteral::Parser::CheckExponentPart() -> bool {
   if (literal.exponent == static_cast<int>(literal.text.size())) {
     return true;
   }

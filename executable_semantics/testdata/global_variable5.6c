@@ -2,11 +2,14 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#include "executable_semantics/tracing_flag.h"
+// Test overshadowing of global variable.
 
-namespace Carbon {
+var Int: x = 1;
 
-// Program option to enable/disable tracing.
-bool tracing_output = false;
+fn identity(Int: x) {
+  return x;
+}
 
-}  // namespace Carbon
+fn main() -> Int {
+  return identity(0);
+}

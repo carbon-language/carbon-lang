@@ -12,15 +12,15 @@ namespace Carbon {
 namespace {
 
 struct StringLiteralTest : ::testing::Test {
-  auto Lex(llvm::StringRef text) -> StringLiteralToken {
-    llvm::Optional<StringLiteralToken> result = StringLiteralToken::Lex(text);
+  auto Lex(llvm::StringRef text) -> LexedStringLiteral {
+    llvm::Optional<LexedStringLiteral> result = LexedStringLiteral::Lex(text);
     assert(result);
     EXPECT_EQ(result->Text(), text);
     return *result;
   }
 
-  auto Parse(llvm::StringRef text) -> StringLiteralToken::ExpandedValue {
-    StringLiteralToken token = Lex(text);
+  auto Parse(llvm::StringRef text) -> LexedStringLiteral::ExpandedValue {
+    LexedStringLiteral token = Lex(text);
     return token.ComputeValue(ConsoleDiagnosticEmitter());
   }
 };
@@ -73,7 +73,7 @@ TEST_F(StringLiteralTest, StringLiteralBounds) {
   };
 
   for (llvm::StringLiteral test : valid) {
-    llvm::Optional<StringLiteralToken> result = StringLiteralToken::Lex(test);
+    llvm::Optional<LexedStringLiteral> result = LexedStringLiteral::Lex(test);
     EXPECT_TRUE(result.hasValue()) << test;
     if (result) {
       EXPECT_EQ(result->Text(), test);
@@ -97,7 +97,7 @@ TEST_F(StringLiteralTest, StringLiteralBounds) {
   };
 
   for (llvm::StringLiteral test : invalid) {
-    EXPECT_FALSE(StringLiteralToken::Lex(test).hasValue())
+    EXPECT_FALSE(LexedStringLiteral::Lex(test).hasValue())
         << "`" << test << "`";
   }
 }
