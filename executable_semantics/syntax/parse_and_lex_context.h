@@ -12,25 +12,25 @@
 
 namespace Carbon {
 
-// The state and functionality that is threaded "globally" through the
+// the state and functionality that is threaded "globally" through the
 // lexing/parsing process.
 class ParseAndLexContext {
  public:
   // Creates an instance analyzing the given input file.
-  ParseAndLexContext(const std::string& input_File)
-      : input_File_Name(input_File) {}
+  ParseAndLexContext(const std::string& input_file)
+      : input_file_name(input_file) {}
 
   // Writes a syntax error diagnostic, containing message, for the input file at
   // the given line, to standard error.
-  auto PrintDiagnostic(const std::string& message, int line_Number) -> void;
+  auto PrintDiagnostic(const std::string& message, int line_number) -> void;
 
   // The source range of the token being (or just) lex'd.
-  yy::location current_Token_Position;
+  yy::location current_token_position;
 
  private:
   // A path to the file processed, relative to the current working directory
   // when *this is called.
-  const std::string input_File_Name;
+  const std::string input_file_name;
 };
 
 }  // namespace Carbon

@@ -17,29 +17,29 @@ namespace Carbon {
 // Returns an abstract representation of the program contained in the
 // well-formed input file, or if the file was malformed, a description of the
 // problem.
-auto parse(const std::string& input_File_Name)
+auto parse(const std::string& input_file_name)
     -> std::variant<AST, SyntaxErrorCode> {
-  yyin = fopen(input_File_Name.c_str(), "r");
+  yyin = fopen(input_file_name.c_str(), "r");
   if (yyin == nullptr) {
-    std::cerr << "Error opening '" << input_File_Name
+    std::cerr << "Error opening '" << input_file_name
               << "': " << std::strerror(errno) << std::endl;
     exit(1);
   }
 
-  std::optional<AST> parsed_Input = std::nullopt;
-  ParseAndLexContext context(input_File_Name);
+  std::optional<AST> parsed_input = std::nullopt;
+  ParseAndLexContext context(input_file_name);
 
-  auto syntax_Error_Code = yy::parser(parsed_Input, context)();
-  if (syntax_Error_Code != 0) {
-    return syntax_Error_Code;
+  auto syntax_error_code = yy::parser(parsed_input, context)();
+  if (syntax_error_code != 0) {
+    return syntax_error_code;
   }
 
-  if (parsed_Input == std::nullopt) {
+  if (parsed_input == std::nullopt) {
     std::cerr << "Internal error: parser validated syntax yet didn't produce "
                  "an AST.\n";
     exit(1);
   }
-  return *parsed_Input;
+  return *parsed_input;
 }
 
 }  // namespace Carbon

@@ -322,15 +322,15 @@ void CallFunction(int line_num, std::vector<Value*> operas, State* state) {
     case ValKind::FunV: {
       // Bind arguments to parameters
       std::list<std::string> params;
-      std::optional<Env> env_With_Matches = PatternMatch(
+      std::optional<Env> env_with_matches = PatternMatch(
           operas[0]->u.fun.param, operas[1], globals, &params, line_num);
-      if (!env_With_Matches) {
+      if (!env_with_matches) {
         std::cerr << "internal error in call_function, pattern match failed"
                   << std::endl;
         exit(-1);
       }
       // Create the new frame and push it on the stack
-      auto* scope = new Scope(*env_With_Matches, params);
+      auto* scope = new Scope(*env_with_matches, params);
       auto* frame = new Frame(*operas[0]->u.fun.name, Stack(scope),
                               Stack(MakeStmtAct(operas[0]->u.fun.body)));
       state->stack.Push(frame);
@@ -442,12 +442,12 @@ auto PatternMatch(Value* p, Value* v, Env env, std::list<std::string>* vars,
               std::cerr << std::endl;
               exit(-1);
             }
-            std::optional<Env> env_With_Matches = PatternMatch(
+            std::optional<Env> env_with_matches = PatternMatch(
                 state->heap[elt.second], state->heap[*a], env, vars, line_num);
-            if (!env_With_Matches) {
+            if (!env_with_matches) {
               return std::nullopt;
             }
-            env = *env_With_Matches;
+            env = *env_with_matches;
           }  // for
           return env;
         }
@@ -465,12 +465,12 @@ auto PatternMatch(Value* p, Value* v, Env env, std::list<std::string>* vars,
               *p->u.alt.alt_name != *v->u.alt.alt_name) {
             return std::nullopt;
           }
-          std::optional<Env> env_With_Matches =
+          std::optional<Env> env_with_matches =
               PatternMatch(p->u.alt.arg, v->u.alt.arg, env, vars, line_num);
-          if (!env_With_Matches) {
+          if (!env_with_matches) {
             return std::nullopt;
           }
-          return *env_With_Matches;
+          return *env_with_matches;
         }
         default:
           std::cerr
@@ -483,13 +483,13 @@ auto PatternMatch(Value* p, Value* v, Env env, std::list<std::string>* vars,
     case ValKind::FunctionTV:
       switch (v->tag) {
         case ValKind::FunctionTV: {
-          std::optional<Env> env_With_Matches = PatternMatch(
+          std::optional<Env> env_with_matches = PatternMatch(
               p->u.fun_type.param, v->u.fun_type.param, env, vars, line_num);
-          if (!env_With_Matches) {
+          if (!env_with_matches) {
             return std::nullopt;
           }
           return PatternMatch(p->u.fun_type.ret, v->u.fun_type.ret,
-                              *env_With_Matches, vars, line_num);
+                              *env_with_matches, vars, line_num);
         }
         default:
           return std::nullopt;
@@ -1187,17 +1187,17 @@ void HandleValue() {
             Value* v = act->results[0];
             Value* p = act->results[1];
 
-            std::optional<Env> env_With_Matches =
+            std::optional<Env> env_with_matches =
                 PatternMatch(p, v, frame->scopes.Top()->env,
                              &frame->scopes.Top()->locals, stmt->line_num);
-            if (!env_With_Matches) {
+            if (!env_with_matches) {
               std::cerr
                   << stmt->line_num
                   << ": internal error in variable definition, match failed"
                   << std::endl;
               exit(-1);
             }
-            frame->scopes.Top()->env = *env_With_Matches;
+            frame->scopes.Top()->env = *env_with_matches;
             frame->todo.Pop(2);
           }
           break;
@@ -1281,10 +1281,10 @@ void HandleValue() {
             auto pat = act->results[clause_num + 1];
             auto env = CurrentEnv(state);
             std::list<std::string> vars;
-            std::optional<Env> env_With_Matches =
+            std::optional<Env> env_with_matches =
                 PatternMatch(pat, v, env, &vars, stmt->line_num);
-            if (env_With_Matches) {  // we have a match, start the body
-              auto* new_scope = new Scope(*env_With_Matches, vars);
+            if (env_with_matches) {  // we have a match, start the body
+              auto* new_scope = new Scope(*env_with_matches, vars);
               frame->scopes.Push(new_scope);
               Statement* body_block = MakeBlock(stmt->line_num, c->second);
               Action* body_act = MakeStmtAct(body_block);
