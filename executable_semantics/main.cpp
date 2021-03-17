@@ -17,22 +17,22 @@ int main(int argc, char* argv[]) {
   using llvm::cl::desc;
   using llvm::cl::opt;
   opt<bool> trace_option("trace", desc("Enable tracing"));
-  opt<std::string> inputFileName(llvm::cl::Positional, desc("<input file>"),
-                                 llvm::cl::Required);
+  opt<std::string> input_file_name(llvm::cl::Positional, desc("<input file>"),
+                                   llvm::cl::Required);
 
   llvm::cl::ParseCommandLineOptions(argc, argv);
   if (trace_option) {
     Carbon::tracing_output = true;
   }
 
-  std::variant<Carbon::AST, Carbon::SyntaxErrorCode> astOrError =
-      Carbon::parse(inputFileName);
+  std::variant<Carbon::AST, Carbon::SyntaxErrorCode> ast_or_error =
+      Carbon::parse(input_file_name);
 
-  if (auto* error = std::get_if<Carbon::SyntaxErrorCode>(&astOrError)) {
+  if (auto* error = std::get_if<Carbon::SyntaxErrorCode>(&ast_or_error)) {
     // Diagnostic already reported to std::cerr; this is just a return code.
     return *error;
   }
 
   // Typecheck and run the parsed program.
-  Carbon::ExecProgram(std::get<Carbon::AST>(astOrError));
+  Carbon::ExecProgram(std::get<Carbon::AST>(ast_or_error));
 }
