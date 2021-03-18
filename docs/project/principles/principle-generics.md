@@ -12,8 +12,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 -   [Definition](#definition)
     -   [Semantics](#semantics)
--   [Goal](#goal)
--   [Principles](#principles)
+-   [Goals](#goals)
     -   [Performance](#performance)
     -   [Better compiler experience](#better-compiler-experience)
     -   [Encapsulation](#encapsulation)
@@ -21,10 +20,10 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Upgrade path from templates](#upgrade-path-from-templates)
     -   [Coherence](#coherence)
     -   [No novel name lookup](#no-novel-name-lookup)
-    -   [Closed overloading](#closed-overloading)
--   [Caveats](#caveats)
--   [Applications of these principles](#applications-of-these-principles)
-    -   [Out of scope](#out-of-scope)
+    -   [Generics instead of open overloading](#generics-instead-of-open-overloading)
+    -   [Interface abstraction](#interface-abstraction)
+    -   [Interop and evolution](#interop-and-evolution)
+-   [Non-Goals / Caveats / Limitations / Out of scope](#non-goals--caveats--limitations--out-of-scope)
 
 <!-- tocstop -->
 
@@ -52,13 +51,12 @@ A generic function (or type) will take some "generic parameters", which will
 frequently be types, and in some cases will be implicit / inferred from the
 types of the values of explicit parameters to the function. If a generic
 parameter is a type, the generic function's signature can specify constraints
-that the caller's type must satisfy (this should also be legal for template
-parameters, but less needed and less common). For example, a resizable array
-type (like C++'s `std::vector`) might have a generic type parameter with the
-constraint that the type must be movable and have a static size. A sort function
-might apply to any array whose elements are comparable and movable.
+that the caller's type must satisfy. For example, a resizable array type (like
+C++'s `std::vector`) might have a generic type parameter with the constraint
+that the type must be movable and have a static size. A sort function might
+apply to any array whose elements are comparable and movable.
 
-## Goal
+## Goals
 
 Our goal for generics support in Carbon is to get most of the expressive
 benefits of C++ templates and open overloading with fewer downsides. We in
@@ -70,8 +68,6 @@ for some things that are out of scope for Carbon generics:
 [expression templates](https://en.wikipedia.org/wiki/Expression_templates), and
 [variadics](https://en.wikipedia.org/wiki/Variadic_function). We expect to
 address those use cases with Carbon metaprogramming or Carbon templates.
-
-## Principles
 
 ### Performance
 
@@ -143,7 +139,7 @@ which gives us these additional principles:
 ### Coherence
 
 Also, we want the generics system to have the _coherence_ property. This means
-that the behavior of any type is consistent independent of context such as the
+that the behavior of any type is consistent independent of context, such as the
 libraries imported into a given file or being inside a generic function.
 
 ### No novel name lookup
@@ -154,7 +150,7 @@ Instead, we should structure generics in a way that reuses existing name lookup
 facilities of the language. For example, if `x` has type `T`, then if you write
 `x.y` you should be able to look up `y` in the definition of `T`.
 
-### Closed overloading
+### Generics instead of open overloading
 
 One name lookup problem we would like to avoid is caused by open overloading.
 Overloading is where you provide multiple implementations of a function with the
@@ -170,47 +166,24 @@ generically.
 
 Our goal is to address this use case, known as
 [the expression problem](https://eli.thegreenplace.net/2016/the-expression-problem-and-its-solutions),
-with a mechanism that does enforce consistency so that type checking is possible
-without seeing all implementations.
+with a mechanism within generics that does enforce consistency so that type
+checking is possible without seeing all implementations.
 
-## Caveats
-
--   Don't need to provide full flexibility of templates from generics.
-    -   We still intend to provide templates for those exceptional cases that
-        don't fit inside generics.
-    -   If you want [duck](https://en.wikipedia.org/wiki/Duck_typing) /
-        [structural](https://en.wikipedia.org/wiki/Structural_type_system)
-        typing, that is available by way of templates.
-    -   Notably, there is no need to allow a specialization of some generic
-        interface for some particular type to actually expose a _different_
-        interface (different set of methods or types within the interface for
-        example).
--   Features of generics that for example allow you to put constraints on the
-    types passed in are presented as part of generics since that is where they
-    are most useful, but are still intended to be available for template
-    functions.
-
-## Applications of these principles
+### Interface abstraction
 
 We write a type constraint in Carbon by saying we restrict to types that
-implement specific _Interfaces_. Interfaces serve several purposes:
+implement specific _interfaces_. Interfaces serve several purposes:
 
 -   They specify a set of functions (names and signatures) that must be
     available for any type being passed to a generic function, and therefore the
     only functions that may be called in the body of that function.
--   **Maybe:** They will allow other type constraints such as on size, prefix of
-    the data layout, specified method implementations, tests that must pass,
-    etc.
 -   They allow a set of constraints to be given a name so they can be reused.
--   **Maybe:** They implicitly specify the intended semantics and invariants of
-    and between those functions. Unlike the function signatures, this contract
-    is between the implementers and the consumers of interfaces and is not
-    enforced by Carbon itself. For example, a _Draw_ method would mean different
-    things when it is part of a _GameResult_ interface versus a _2DImage_
-    interface, even if those methods happen to have the same signature.
--   **Maybe:** Have mechanisms to support evolution, such as allowing new
-    additions to an interface to have default implementations and/or be marked
-    "upcoming" to allow for a period of transition.
+-   They implicitly specify the intended semantics and invariants of and between
+    those functions. Unlike the function signatures, this contract is between
+    the implementers and the consumers of interfaces and is not enforced by
+    Carbon itself. For example, a _Draw_ method would mean different things when
+    it is part of a _GameResult_ interface versus a _Image2D_ interface, even if
+    those methods happen to have the same signature.
 
 There are some desirable capabilities which are in tension with the coherence
 property:
@@ -230,11 +203,43 @@ are passed in to generic functions separately, or there is some way to create
 multiple types that are compatible with a given value that you can switch
 between using casts to select different interface implementations.
 
-### Out of scope
+In addition to the above, we may in the future expand the role of interfaces to
+allow other type constraints such as on size, prefix of the data layout,
+specified method implementations, tests that must pass, etc. This might be part
+of making interfaces as expressive as classes, as part of a strategy to migrate
+to a future version of Carbon that uses interfaces instead of rather than in
+addition to standard inheritance-and-classes object-oriented language support.
+
+### Interop and evolution
+
+Interfaces should be separate, isolated namespaces, and we should provide
+mechanisms to allow one type to implement two interfaces that accidentally use
+the same name for different things. Contrast this with Swift protocols, where
+interfaces with associated types that have the same name are aliased.
+
+In addition, we will need mechanisms to support evolution, such as allowing new
+additions to an interface to have default implementations and/or be marked
+"upcoming" to allow for a period of transition.
+
+## Non-Goals / Caveats / Limitations / Out of scope
 
 What are we **not** doing with generics, particularly things that some other
-language does?
+languages do?
 
+-   Don't need to provide full flexibility of templates from generics.
+    -   We still intend to provide templates for those exceptional cases that
+        don't fit inside generics.
+    -   If you want [duck](https://en.wikipedia.org/wiki/Duck_typing) /
+        [structural](https://en.wikipedia.org/wiki/Structural_type_system)
+        typing, that is available by way of templates.
+    -   Notably, there is no need to allow a specialization of some generic
+        interface for some particular type to actually expose a _different_
+        interface (different set of methods or types within the interface for
+        example).
+-   Features of generics that for example allow you to put constraints on the
+    types passed in are presented as part of generics since that is where they
+    are most useful, but are still intended to be available for template
+    functions.
 -   Cannot add features to generics that inherently require monomorphization (or
     creating differently specialized code) or templating, that would prevent the
     dynamic compilation strategy.
