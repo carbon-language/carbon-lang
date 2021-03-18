@@ -11,10 +11,11 @@
 #ifndef LLVM_TOOLS_LLVM_BOLT_BINARY_SECTION_H
 #define LLVM_TOOLS_LLVM_BOLT_BINARY_SECTION_H
 
+#include "DebugData.h"
 #include "Relocation.h"
 #include "llvm/ADT/ArrayRef.h"
-#include "llvm/ADT/Triple.h"
 #include "llvm/ADT/STLExtras.h"
+#include "llvm/ADT/Triple.h"
 #include "llvm/BinaryFormat/ELF.h"
 #include "llvm/MC/MCSymbol.h"
 #include "llvm/Object/ELFObjectFile.h"
@@ -22,8 +23,9 @@
 #include "llvm/Object/ObjectFile.h"
 #include "llvm/Support/ErrorOr.h"
 #include "llvm/Support/raw_ostream.h"
-#include <set>
 #include <map>
+#include <memory>
+#include <set>
 
 namespace llvm {
 
@@ -69,6 +71,8 @@ class BinarySection {
       : Offset(Offset), Bytes(Bytes.begin(), Bytes.end()) {}
   };
   std::vector<BinaryPatch> Patches;
+  /// Patcher used to apply simple changes to sections of the input binary.
+  std::unique_ptr<BinaryPatcher> Patcher;
 
   // Output info
   bool IsFinalized{false};         // Has this section had output information
@@ -385,6 +389,14 @@ public:
   void addPatch(uint64_t Offset, const SmallVectorImpl<char> &Bytes) {
     Patches.emplace_back(BinaryPatch(Offset, Bytes));
   }
+
+  /// Register patcher for this section.
+  void registerPatcher(std::unique_ptr<BinaryPatcher> BPatcher) {
+    Patcher = std::move(BPatcher);
+  }
+
+  /// Returns the patcher
+  BinaryPatcher *getPatcher() { return Patcher.get(); }
 
   /// Lookup the relocation (if any) at the given /p Offset.
   const Relocation *getRelocationAt(uint64_t Offset) const {

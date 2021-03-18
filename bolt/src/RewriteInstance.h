@@ -368,9 +368,6 @@ public:
   /// Return true if the section holds linux kernel symbol information.
   static bool isKSymtabSection(StringRef SectionName);
 
-  using SectionPatchersType =
-      std::map<std::string, std::unique_ptr<BinaryPatcher>>;
-
 private:
   /// Get the contents of the LSDA section for this binary.
   ArrayRef<uint8_t> getLSDAData();
@@ -441,10 +438,6 @@ private:
   std::unique_ptr<DWARFRewriter> DebugInfoRewriter;
 
   std::unique_ptr<BoltAddressTranslation> BAT;
-
-  /// Patchers used to apply simple changes to sections of the input binary.
-  /// Maps section name -> patcher.
-  SectionPatchersType SectionPatchers;
 
   /// Number of local symbols in newly written symbol table.
   uint64_t NumLocalSymbols{0};

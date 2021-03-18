@@ -19,6 +19,7 @@
 #include "DWARFRewriter.h"
 #include "DataAggregator.h"
 #include "DataReader.h"
+#include "DebugData.h"
 #include "Exceptions.h"
 #include "ExecutableFileMemoryManager.h"
 #include "MCPlusBuilder.h"
@@ -33,8 +34,8 @@
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/BinaryFormat/Magic.h"
 #include "llvm/DebugInfo/DWARF/DWARFContext.h"
-#include "llvm/ExecutionEngine/RuntimeDyld.h"
 #include "llvm/ExecutionEngine/RTDyldMemoryManager.h"
+#include "llvm/ExecutionEngine/RuntimeDyld.h"
 #include "llvm/MC/MCAsmBackend.h"
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCAsmLayout.h"
@@ -67,6 +68,7 @@
 #include "llvm/Target/TargetMachine.h"
 #include <algorithm>
 #include <fstream>
+#include <llvm/Support/Error.h>
 #include <stack>
 #include <system_error>
 #include <thread>
@@ -493,7 +495,7 @@ RewriteInstance::RewriteInstance(ELFObjectFileBase *File, const int Argc,
   BAT = std::make_unique<BoltAddressTranslation>(*BC);
 
   if (opts::UpdateDebugSections)
-    DebugInfoRewriter = std::make_unique<DWARFRewriter>(*BC, SectionPatchers);
+    DebugInfoRewriter = std::make_unique<DWARFRewriter>(*BC);
 
   if (opts::Instrument) {
     BC->setRuntimeLibrary(std::make_unique<InstrumentationRuntimeLibrary>());
@@ -3126,9 +3128,12 @@ void RewriteInstance::updateSDTMarkers() {
   NamedRegionTimer T("updateSDTMarkers", "update SDT markers", TimerGroupName,
                      TimerGroupDesc, opts::TimeRewrite);
 
-  SectionPatchers[".note.stapsdt"] = std::make_unique<SimpleBinaryPatcher>();
-  auto *SDTNotePatcher = static_cast<SimpleBinaryPatcher *>(
-      SectionPatchers[".note.stapsdt"].get());
+  if (!SDTSection)
+    return;
+  SDTSection->registerPatcher(std::make_unique<SimpleBinaryPatcher>());
+
+  auto *SDTNotePatcher =
+      static_cast<SimpleBinaryPatcher *>(SDTSection->getPatcher());
   for (auto &SDTInfoKV : BC->SDTMarkers) {
     const auto OriginalAddress = SDTInfoKV.first;
     auto &SDTInfo = SDTInfoKV.second;
@@ -3170,16 +3175,11 @@ void RewriteInstance::updateLKMarkers() {
     for (auto &LKMarkerInfo : LKMarkerInfoKV.second) {
       StringRef SectionName = LKMarkerInfo.SectionName;
       SimpleBinaryPatcher *LKPatcher;
-      if (SectionPatchers.find(std::string(SectionName)) !=
-          SectionPatchers.end()) {
-        LKPatcher = static_cast<SimpleBinaryPatcher *>(
-            SectionPatchers[std::string(SectionName)].get());
-      } else {
-        SectionPatchers[std::string(SectionName)] =
-            std::make_unique<SimpleBinaryPatcher>();
-        LKPatcher = static_cast<SimpleBinaryPatcher *>(
-            SectionPatchers[std::string(SectionName)].get());
-      }
+      auto BSec = BC->getUniqueSectionByName(SectionName);
+      assert(BSec && "missing section info for kernel section");
+      if (!BSec->getPatcher())
+        BSec->registerPatcher(std::make_unique<SimpleBinaryPatcher>());
+      LKPatcher = static_cast<SimpleBinaryPatcher *>(BSec->getPatcher());
       PatchCounts[std::string(SectionName)]++;
       if (LKMarkerInfo.IsPCRelative) {
         LKPatcher->addLE32Patch(LKMarkerInfo.SectionOffset,
@@ -3684,6 +3684,7 @@ void RewriteInstance::rewriteNoteSections() {
 
     StringRef SectionName =
         cantFail(Obj.getSectionName(Section), "cannot get section name");
+    auto BSec = BC->getUniqueSectionByName(SectionName);
 
     if (shouldStrip(Section, SectionName))
       continue;
@@ -3700,10 +3701,8 @@ void RewriteInstance::rewriteNoteSections() {
       Size = Section.sh_size;
       std::string Data =
           std::string(InputFile->getData().substr(Section.sh_offset, Size));
-      auto SectionPatchersIt = SectionPatchers.find(std::string(SectionName));
-      if (SectionPatchersIt != SectionPatchers.end()) {
-        (*SectionPatchersIt->second).patchBinary(Data);
-      }
+      if (BSec && BSec->getPatcher())
+        BSec->getPatcher()->patchBinary(Data);
       OS << Data;
 
       // Add padding as the section extension might rely on the alignment.
@@ -3711,7 +3710,6 @@ void RewriteInstance::rewriteNoteSections() {
     }
 
     // Perform section post-processing.
-    auto BSec = BC->getUniqueSectionByName(SectionName);
     uint8_t *SectionData = nullptr;
     if (BSec && !BSec->isAllocatable()) {
       assert(BSec->getAlignment() <= Section.sh_addralign &&
