@@ -38,10 +38,18 @@ class Declaration {
  public:  // Declaration concept API, in addition to ValueSemantic.
   void Print() const { box->Print(); }
   auto Name() const -> std::string { return box->Name(); }
+
+  // Signals a type error if the declaration is not well typed,
+  // otherwise returns this declaration with annotated types.
+  //
+  // - Parameter env: types of run-time names.
+  // - Paraemter ct_env: values of compile-time names.
   auto TypeChecked(TypeEnv env, Env ct_env) const -> Declaration {
     return box->TypeChecked(env, ct_env);
   }
+  // Add an entry in the runtime global symbol table for this declaration.
   void InitGlobals(Env& globals) const { return box->InitGlobals(globals); }
+  // Add an entry in the compile time global symbol tables for this declaration.
   auto TopLevel(ExecutionEnvironment& e) const -> void {
     return box->TopLevel(e);
   }
@@ -128,6 +136,29 @@ struct ChoiceDeclaration {
   auto TypeChecked(TypeEnv env, Env ct_env) const -> Declaration;
   void InitGlobals(Env& globals) const;
   auto TopLevel(ExecutionEnvironment&) const -> void;
+};
+
+// Global variable definition implements the Declaration concept.
+class VariableDeclaration {
+ public:
+  VariableDeclaration(int source_location, std::string name, Expression* type,
+                      Expression* initializer)
+      : source_location(source_location),
+        name(name),
+        type(type),
+        initializer(initializer) {}
+
+  void Print() const;
+  auto Name() const -> std::string;
+  auto TypeChecked(TypeEnv env, Env ct_env) const -> Declaration;
+  void InitGlobals(Env& globals) const;
+  auto TopLevel(ExecutionEnvironment&) const -> void;
+
+ private:
+  int source_location;
+  std::string name;
+  Expression* type;
+  Expression* initializer;
 };
 
 }  // namespace Carbon

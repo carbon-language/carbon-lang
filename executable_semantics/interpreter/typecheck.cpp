@@ -620,6 +620,9 @@ auto StructDeclaration::Name() const -> std::string { return *definition.name; }
 
 auto ChoiceDeclaration::Name() const -> std::string { return name; }
 
+// Returns the name of the declared variable.
+auto VariableDeclaration::Name() const -> std::string { return name; }
+
 auto StructDeclaration::TypeChecked(TypeEnv env, Env ct_env) const
     -> Declaration {
   auto fields = new std::list<Member*>();
@@ -640,6 +643,19 @@ auto FunctionDeclaration::TypeChecked(TypeEnv env, Env ct_env) const
 auto ChoiceDeclaration::TypeChecked(TypeEnv env, Env ct_env) const
     -> Declaration {
   return *this;  // TODO.
+}
+
+// Signals a type error if the initializing expression does not have
+// the declared type of the variable, otherwise returns this
+// declaration with annotated types.
+auto VariableDeclaration::TypeChecked(TypeEnv env, Env ct_env) const
+    -> Declaration {
+  TCResult type_checked_initializer =
+      TypeCheckExp(initializer, env, ct_env, nullptr, TCContext::ValueContext);
+  Value* declared_type = ToType(source_location, InterpExp(ct_env, type));
+  ExpectType(source_location, "initializer of variable", declared_type,
+             type_checked_initializer.type);
+  return *this;
 }
 
 auto TopLevel(std::list<Declaration>* fs) -> std::pair<TypeEnv, Env> {
@@ -685,6 +701,13 @@ auto ChoiceDeclaration::TopLevel(ExecutionEnvironment& tops) const -> void {
   Address a = AllocateValue(ct);
   tops.second.Set(Name(), a);  // Is this obsolete?
   tops.first.Set(Name(), ct);
+}
+
+// Associate the variable name with it's declared type in the
+// compile-time symbol table.
+auto VariableDeclaration::TopLevel(ExecutionEnvironment& tops) const -> void {
+  Value* declared_type = ToType(source_location, InterpExp(tops.second, type));
+  tops.first.Set(Name(), declared_type);
 }
 
 }  // namespace Carbon

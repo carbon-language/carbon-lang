@@ -178,8 +178,8 @@ class TokenizedBuffer::Lexer {
   }
 
   auto LexNumericLiteral(llvm::StringRef& source_text) -> LexResult {
-    llvm::Optional<NumericLiteralToken> literal =
-        NumericLiteralToken::Lex(source_text);
+    llvm::Optional<LexedNumericLiteral> literal =
+        LexedNumericLiteral::Lex(source_text);
     if (!literal) {
       return LexResult::NoMatch();
     }
@@ -194,10 +194,10 @@ class TokenizedBuffer::Lexer {
       set_indent = true;
     }
 
-    NumericLiteralToken::Parser literal_parser(emitter, *literal);
+    LexedNumericLiteral::Parser literal_parser(emitter, *literal);
 
     switch (literal_parser.Check()) {
-      case NumericLiteralToken::Parser::UnrecoverableError: {
+      case LexedNumericLiteral::Parser::UnrecoverableError: {
         auto token = buffer.AddToken({
             .kind = TokenKind::Error(),
             .token_line = current_line,
@@ -208,11 +208,11 @@ class TokenizedBuffer::Lexer {
         return token;
       }
 
-      case NumericLiteralToken::Parser::RecoverableError:
+      case LexedNumericLiteral::Parser::RecoverableError:
         buffer.has_errors = true;
         break;
 
-      case NumericLiteralToken::Parser::Valid:
+      case LexedNumericLiteral::Parser::Valid:
         break;
     }
 
@@ -237,8 +237,8 @@ class TokenizedBuffer::Lexer {
   }
 
   auto LexStringLiteral(llvm::StringRef& source_text) -> LexResult {
-    llvm::Optional<StringLiteralToken> literal =
-        StringLiteralToken::Lex(source_text);
+    llvm::Optional<LexedStringLiteral> literal =
+        LexedStringLiteral::Lex(source_text);
     if (!literal) {
       return LexResult::NoMatch();
     }
@@ -520,8 +520,8 @@ auto TokenizedBuffer::GetTokenText(Token token) const -> llvm::StringRef {
       token_info.kind == TokenKind::RealLiteral()) {
     auto& line_info = GetLineInfo(token_info.token_line);
     int64_t token_start = line_info.start + token_info.column;
-    llvm::Optional<NumericLiteralToken> relexed_token =
-        NumericLiteralToken::Lex(source->Text().substr(token_start));
+    llvm::Optional<LexedNumericLiteral> relexed_token =
+        LexedNumericLiteral::Lex(source->Text().substr(token_start));
     assert(relexed_token && "Could not reform numeric literal token.");
     return relexed_token->Text();
   }
@@ -531,8 +531,8 @@ auto TokenizedBuffer::GetTokenText(Token token) const -> llvm::StringRef {
   if (token_info.kind == TokenKind::StringLiteral()) {
     auto& line_info = GetLineInfo(token_info.token_line);
     int64_t token_start = line_info.start + token_info.column;
-    llvm::Optional<StringLiteralToken> relexed_token =
-        StringLiteralToken::Lex(source->Text().substr(token_start));
+    llvm::Optional<LexedStringLiteral> relexed_token =
+        LexedStringLiteral::Lex(source->Text().substr(token_start));
     assert(relexed_token && "Could not reform string literal token.");
     return relexed_token->Text();
   }
