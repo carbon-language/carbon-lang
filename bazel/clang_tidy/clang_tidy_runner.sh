@@ -3,7 +3,7 @@
 # Exceptions. See /LICENSE for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
-# USAGE: clang_format_runner.sh <output-path> <clang-format> <clang-format-args>
+# USAGE: clang_tidy_runner.sh <output-path> <clang-format> <clang-format-args>
 #
 # Bazel needs every action to have at least one output;
 # thus, when validating formatting we have to generate a file.
@@ -20,6 +20,6 @@ if "$@"; then
 fi
 
 # When failing, try to suggest a commandline to fix.
-echo >&2 ""
-echo >&2 "Fix this by running: clang-format -i ${!#}"
+echo ""
+echo "Repro this by running: clang-tidy ${!#}"
 exit 1

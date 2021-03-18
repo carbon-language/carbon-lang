@@ -5,5 +5,5 @@
 """Feature configuration action names that are not defined in Bazel."""
 
 EXTRA_ACTION_NAMES = struct(
-    clang_format = "clang_format_action",
+    clang_tidy = "clang_tidy_action",
 )

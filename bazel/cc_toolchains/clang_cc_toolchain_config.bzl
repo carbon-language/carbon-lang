@@ -81,7 +81,7 @@ def _impl(ctx):
         tool_path(name = "objcopy", path = llvm_bindir + "/llvm-objcopy"),
         tool_path(name = "objdump", path = llvm_bindir + "/llvm-objdump"),
         tool_path(name = "strip", path = llvm_bindir + "/llvm-strip"),
-        tool_path(name = "format", path = llvm_bindir + "/clang-format"),
+        tool_path(name = "tidy", path = llvm_bindir + "/clang-tidy"),
     ]
 
     action_configs = [
@@ -100,8 +100,8 @@ def _impl(ctx):
         action_config(action_name = name, enabled = True, tools = [tool(path = llvm_bindir + "/llvm-strip")])
         for name in [ACTION_NAMES.strip]
     ] + [
-        action_config(action_name = name, enabled = True, tools = [tool(path = llvm_bindir + "/clang-format")])
-        for name in [EXTRA_ACTION_NAMES.clang_format]
+        action_config(action_name = name, enabled = True, tools = [tool(path = llvm_bindir + "/clang-tidy")])
+        for name in [EXTRA_ACTION_NAMES.clang_tidy]
     ]
 
     default_compile_flags_feature = feature(

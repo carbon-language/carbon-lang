@@ -9,7 +9,7 @@ filegroup(
 )
 
 filegroup(
-    name = "clang_format_config",
-    srcs = [".clang-format"],
+    name = "clang_tidy_config",
+    srcs = [".clang-tidy", "compile_flags.txt"],
     visibility = ["//visibility:public"],
 )

@@ -2,4 +2,4 @@
 # Exceptions. See /LICENSE for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-exports_files(["clang_format_runner.sh"])
+exports_files(["clang_tidy_runner.sh"])

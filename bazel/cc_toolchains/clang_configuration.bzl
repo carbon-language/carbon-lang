@@ -21,7 +21,7 @@ _CLANG_LLVM_TOOLS = [
     "llvm-nm",
     "llvm-objcopy",
     "llvm-strip",
-    "clang-format",
+    "clang-tidy",
 ]
 
 def _run(repository_ctx, cmd):
