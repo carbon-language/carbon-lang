@@ -69,8 +69,8 @@ class Expression {
   }
 
  private:  // types
-  /// A base class that erases the type of a `Boxed<Content>`, where `Content`
-  /// satisfies the Expression concept.
+  // A base class that erases the type of a `Boxed<Content>`, where `Content`
+  // satisfies the Expression concept.
   struct Box {
    protected:
     Box() {}
@@ -90,8 +90,8 @@ class Expression {
     virtual auto SourceLocation() const -> int = 0;
   };
 
-  /// The derived class that holds an instance of `Content` satisfying the
-  /// Expression concept.
+  // The derived class that holds an instance of `Content` satisfying the
+  // Expression concept.
   template <class Content>
   struct Boxed final : Box {
     const Content content;
@@ -115,7 +115,7 @@ class Expression {
     auto SourceLocation() const -> int { return content.location.line_number; }
   };
 
- private:  // data members
+ private:
   // Note: the pointee is const as long as we have no mutating methods. When
   std::shared_ptr<const Box> box;
 };

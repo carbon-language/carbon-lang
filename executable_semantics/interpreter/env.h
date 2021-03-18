@@ -10,8 +10,8 @@
 namespace Carbon {
 
 using TypeEnv = Dictionary<std::string, Value*>;
-using Env = Dictionary<std::string, Address>;
 using Address = unsigned int;
+using Env = Dictionary<std::string, Address>;
 
 }  // namespace Carbon
 

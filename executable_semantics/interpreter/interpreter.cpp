@@ -381,8 +381,7 @@ void CreateTuple(Frame* frame, Action* act, const TupleExpression& /*exp*/) {
   //    { { (v1,...,vn) :: C, E, F} :: S, H}
   // -> { { `(v1,...,vn) :: C, E, F} :: S, H}
   auto elts = new std::vector<std::pair<std::string, Address>>();
-  auto t = *act->u.exp->As<TupleExpression>();
-  auto f = t.elements.begin();
+  auto f = exp->As<TupleExpression>()->elements.begin();
   for (auto i = act->results.begin(); i != act->results.end(); ++i, ++f) {
     Address a = AllocateValue(*i);  // copy?
     elts->push_back(make_pair(f->first, a));
@@ -553,7 +552,7 @@ void PatternAssignment(Value* pat, Value* val, int line_num) {
 void StepLvalue() {
   Frame* frame = state->stack.Top();
   Action* act = frame->todo.Top();
-  const Expression exp = *act->u.exp;
+  Expression exp = *act->u.exp;
   if (tracing_output) {
     std::cout << "--- step lvalue ";
     exp.Print();

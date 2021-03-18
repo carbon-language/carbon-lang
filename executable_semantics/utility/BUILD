@@ -6,7 +6,6 @@ load("@rules_cc//cc:defs.bzl", "cc_library")
 
 package(default_visibility = ["//executable_semantics:__subpackages__"])
 
-# TODO: It may be helpful to break this apart.
 cc_library(
     name = "utility",
     srcs = [

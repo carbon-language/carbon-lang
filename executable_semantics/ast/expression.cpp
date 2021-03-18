@@ -52,9 +52,9 @@ auto GetFieldExpression::Print() const -> void {
 auto TupleExpression::Print() const -> void {
   std::cout << "(";
   const char* separator = "";
-  for (auto const& e : elements) {
-    std::cout << separator << e.first << " = ";
-    e.second.Print();
+  for (const auto& [name, value] : elements) {
+    std::cout << separator << name << " = ";
+    value.Print();
     separator = ", ";
   }
   std::cout << ")";
@@ -63,8 +63,7 @@ auto TupleExpression::Print() const -> void {
 auto IntegerExpression::Print() const -> void { std::cout << value; }
 
 auto BooleanExpression::Print() const -> void {
-  std::cout << std::boolalpha;
-  std::cout << value;
+  std::cout << std::boolalpha << value;
 }
 
 auto PrimitiveOperatorExpression::Print() const -> void {
