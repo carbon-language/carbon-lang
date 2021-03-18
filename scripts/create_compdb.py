@@ -73,9 +73,10 @@ source_files_query = subprocess.run(
         "--output=location",
         'filter(".*\\.(h|cpp|cc|c|cxx)$", kind("source file", deps(//...)))',
     ],
-    capture_output=True,
     check=True,
-    text=True,
+    stdout=subprocess.PIPE,
+    stderr=subprocess.DEVNULL,
+    universal_newlines=True,
 ).stdout
 source_files = [
     Path(line.split(":")[0]) for line in source_files_query.splitlines()
@@ -87,7 +88,7 @@ source_files = [
 carbon_files = [
     f.relative_to(directory)
     for f in source_files
-    if f.is_relative_to(directory)
+    if f.parts[: len(directory.parts)] == directory.parts
 ]
 llvm_files = [
     Path("bazel-execroot/external").joinpath(
@@ -113,9 +114,10 @@ generated_file_labels = subprocess.run(
             'kind("generated file", deps(//...)))'
         ),
     ],
-    capture_output=True,
     check=True,
-    text=True,
+    stdout=subprocess.PIPE,
+    stderr=subprocess.DEVNULL,
+    universal_newlines=True,
 ).stdout.splitlines()
 print("Found %d generated files..." % (len(generated_file_labels),))
 
@@ -132,7 +134,7 @@ def _label_to_path(s):
     # Map external repositories to their part of the output tree.
     s = re.sub(r"^@([^/]+)//", r"bazel-bin/external/\1/", s)
     # Map this repository to the root of the output tree.
-    s = s if not s.startswith("//") else "bazel-bin/" + s.removeprefix("//")
+    s = s if not s.startswith("//") else "bazel-bin/" + s[len("//") :]
     # Replace the colon used to mark the package name with a slash.
     s = s.replace(":", "/")
     # Convert to a native path.
