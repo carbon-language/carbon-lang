@@ -10,6 +10,9 @@ filegroup(
 
 filegroup(
     name = "clang_tidy_config",
-    srcs = [".clang-tidy", "compile_flags.txt"],
+    srcs = [
+        ".clang-tidy",
+        "compile_flags.txt",
+    ],
     visibility = ["//visibility:public"],
 )
