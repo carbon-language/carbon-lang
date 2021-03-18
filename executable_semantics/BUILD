@@ -69,9 +69,11 @@ EXAMPLES = [
     "experimental_delimit1",
     "experimental_delimit2",
     "experimental_delimit3",
-    "experimental_delimit4",
-    "experimental_delimit5",
-    "experimental_delimit6",
+    "experimental_delimit7",
+    "experimental_delimit8",
+    "experimental_delimit_block_scope",
+    "experimental_delimit_naturals",
+    "experimental_delimit_shared_stack_data",
 ]
 
 [genrule(

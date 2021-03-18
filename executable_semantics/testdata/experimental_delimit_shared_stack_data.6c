@@ -2,8 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-// Test the way in which copying of continuations interacts with state
-// such as the variable `x`.
+// Test the way in which copying of continuations interacts with data
+// such as the variable `x`. For now, stack data is not copied.
 
 fn f(__Continuation: s1, __Continuation: s2) -> Int {
   __delimit {
@@ -21,10 +21,9 @@ fn f(__Continuation: s1, __Continuation: s2) -> Int {
 fn main() -> Int {
   __delimit {
     var Int: x = 0;
-    while(true) {
-      __yield x;
-      x = x + 1;
-    }
+    __yield 0;
+    x = x + 1;
+    __yield x;
     return -1;
   } __catch (_, s) {
     return f(s, s);
