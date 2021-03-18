@@ -817,11 +817,9 @@ auto IsDelimit(Action* act) -> bool {
          act->u.stmt->tag == StatementKind::Delimit;
 }
 
-// Copies the todo and scopes stacks, from their top down to their end
-// or to the first Delimit, over to the new_todo and new_scopes.
-//
-// Used by ResumeContinuation to copy a saved continuation onto the
-// current stack.
+// Copies the todo and scopes stacks of a frame, from their top down
+// to their end or to the first Delimit, over to the new_todo and
+// new_scopes of another frame.
 auto CopyTodoAndScopes(Stack<Action*> todo, Stack<Action*>& new_todo,
                        Stack<Scope*> scopes, Stack<Scope*>& new_scopes)
     -> void {
