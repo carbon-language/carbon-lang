@@ -10,4 +10,4 @@
 # RUN: llvm-bolt %t.exe --reorder-blocks=reverse -update-debug-sections -o %t.out
 # RUN: llvm-dwarfdump --debug-types=0x000005f7 %t.out | grep DW_AT_stmt_list | FileCheck %s --check-prefix=CHECK-OUTPUT
 
-# CHECK-OUTPUT: DW_AT_stmt_list	(0x000004d1)
+# CHECK-OUTPUT: DW_AT_stmt_list	(0x000004d4)
