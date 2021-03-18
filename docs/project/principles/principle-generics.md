@@ -6,6 +6,28 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 # Carbon principle: Generics
 
+<!-- toc -->
+
+## Table of contents
+
+-   [Definition](#definition)
+    -   [Semantics](#semantics)
+-   [Goal](#goal)
+-   [Principles](#principles)
+    -   [Performance](#performance)
+    -   [Better compiler experience](#better-compiler-experience)
+    -   [Encapsulation](#encapsulation)
+    -   [Dispatch control](#dispatch-control)
+    -   [Upgrade path from templates](#upgrade-path-from-templates)
+    -   [Coherence](#coherence)
+    -   [No novel name lookup](#no-novel-name-lookup)
+    -   [Closed overloading](#closed-overloading)
+-   [Caveats](#caveats)
+-   [Applications of these principles](#applications-of-these-principles)
+    -   [Out of scope](#out-of-scope)
+
+<!-- tocstop -->
+
 ## Definition
 
 C++ supports
@@ -15,10 +37,14 @@ through templates, which use
 [structural typing](https://en.wikipedia.org/wiki/Structural_type_system) to
 determine which arguments are valid. Carbon will support (possibly in addition
 to a template system) _generics_, which are still a form of parametric
-polymorphism for generic programming, but instead of structural typing use
-[bounded parametric polymorphism](https://en.wikipedia.org/wiki/Parametric_polymorphism#Bounded_parametric_polymorphism).
-This means the legal arguments and the legal uses of a parameter are both
-goverened by explicit bounds on the parameter in a generic function's signature.
+polymorphism for generic programming, but supports definition checking. This
+means that the body of a function can be type checked when it is defined without
+any information from the call site, such as the actual argument values of
+generic parameters. This is accomplished by using
+[bounded parametric polymorphism](https://en.wikipedia.org/wiki/Parametric_polymorphism#Bounded_parametric_polymorphism)
+instead of structural typing. This means the legal arguments and the legal uses
+of a parameter are both goverened by explicit bounds on the parameter in a
+generic function's signature.
 
 ### Semantics
 
