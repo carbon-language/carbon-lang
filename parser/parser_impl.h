@@ -25,7 +25,8 @@ class ParseTree::Parser {
  private:
   struct SubtreeStart;
 
-  explicit Parser(ParseTree& tree_arg, TokenizedBuffer& tokens_arg);
+  explicit Parser(ParseTree& tree_arg, TokenizedBuffer& tokens_arg,
+                  TokenDiagnosticEmitter& emitter);
 
   auto AtEndOfFile() -> bool {
     return tokens.GetKind(*position) == TokenKind::EndOfFile();
@@ -127,6 +128,7 @@ class ParseTree::Parser {
 
   ParseTree& tree;
   TokenizedBuffer& tokens;
+  TokenDiagnosticEmitter& emitter;
 
   // The current position within the token buffer. Never equal to `end`.
   TokenizedBuffer::TokenIterator position;
