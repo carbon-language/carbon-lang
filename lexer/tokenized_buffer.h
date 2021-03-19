@@ -355,7 +355,8 @@ class TokenizedBuffer {
     explicit SourceBufferLocationTranslator(TokenizedBuffer& buffer)
         : buffer_(&buffer) {}
 
-    // Map the given position within the source buffer into a diagnostic location.
+    // Map the given position within the source buffer into a diagnostic
+    // location.
     auto GetLocation(const char* pos) -> Diagnostic::Location override;
 
    private:
