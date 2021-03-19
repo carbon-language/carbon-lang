@@ -18,7 +18,7 @@ class TestProposal(unittest.TestCase):
         self.assertEqual(
             p[0],
             (
-                '0024 - Carbon: First version of "Principles: Generics"',
+                "0024 - Generics goals",
                 "p0024.md",
             ),
         )
