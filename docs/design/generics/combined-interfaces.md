@@ -1852,9 +1852,6 @@ Disadvantages:
 -   Some types of constraints are hard to express or need additional syntax,
     such as `.Self` and `for_some`.
 
-TODO: fold in content from
-[this appendix arguing against `requires` clauses](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/appendix-requires-constraints.md)
-
 ### Constraint use cases
 
 #### Set to a specific value
@@ -2671,6 +2668,9 @@ With the general `where` clause approach we may decide, as Rust did, to include
 some parameter passing alternatives to the `where` syntax, for convenience.
 Similarly we could adopt the parameter passing model, but allow the `where`
 syntax in some cases where we could rewrite it automatically to fit.
+
+TODO: fold in content from
+[this appendix arguing against `requires` clauses](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/appendix-requires-constraints.md)
 
 ## Conditional conformance
 
@@ -3992,6 +3992,7 @@ not yet been incorporated into the main text above.
 -   Can use IDE tooling to show all methods including external impl,
     automatically switching to [qualified member names](#qualified-member-names)
     where needed to get that method.
+-   Address use cases in [the motivation document](motivation.md).
 -   Want inheritance with virtual functions to be modeled by interface
     extension. Example showing the interaction between Dynamic pointer types and
     interface extension.
