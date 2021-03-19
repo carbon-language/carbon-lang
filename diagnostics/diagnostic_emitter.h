@@ -48,6 +48,9 @@ class DiagnosticConsumer {
 
 // An interface that can translate some representation of a location into a
 // diagnostic location.
+//
+// TODO: Revisit this once the diagnostics machinery is more complete and see
+// if we can turn it into a `std::function`.
 template <typename LocationT>
 class DiagnosticLocationTranslator {
  public:

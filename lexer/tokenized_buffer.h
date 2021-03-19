@@ -84,9 +84,7 @@ class TokenizedBufferToken {
 //
 // Lexing errors result in a potentially incomplete sequence of tokens and
 // `HasError` returning true.
-class TokenizedBuffer
-    : public DiagnosticLocationTranslator<const char*>,
-      public DiagnosticLocationTranslator<Internal::TokenizedBufferToken> {
+class TokenizedBuffer {
  public:
   // A lightweight handle to a lexed token in a `TokenizedBuffer`.
   using Token = Internal::TokenizedBufferToken;
@@ -238,6 +236,21 @@ class TokenizedBuffer
           is_decimal(is_decimal) {}
   };
 
+  // A diagnostic location translator that maps token locations into source
+  // buffer locations.
+  class TokenLocationTranslator
+      : public DiagnosticLocationTranslator<Internal::TokenizedBufferToken> {
+   public:
+    explicit TokenLocationTranslator(TokenizedBuffer& buffer)
+        : buffer_(&buffer) {}
+
+    // Map the given token into a diagnostic location.
+    auto GetLocation(Token token) -> Diagnostic::Location override;
+
+   private:
+    TokenizedBuffer* buffer_;
+  };
+
   // Lexes a buffer of source code into a tokenized buffer.
   //
   // The provided source buffer must outlive any returned `TokenizedBuffer`
@@ -330,15 +343,24 @@ class TokenizedBuffer
   auto PrintToken(llvm::raw_ostream& output_stream, Token token) const -> void;
 
  private:
-  // Implementation of DiagnosticLocationTranslator<const char*>.
-  auto GetLocation(const char*) -> Diagnostic::Location override;
-
-  // Implementation of DiagnosticLocationTranslator<Token>.
-  auto GetLocation(Token) -> Diagnostic::Location override;
-
   // Implementation detail struct implementing the actual lexer logic.
   class Lexer;
   friend Lexer;
+
+  // A diagnostic location translator that maps token locations into source
+  // buffer locations.
+  class SourceBufferLocationTranslator
+      : public DiagnosticLocationTranslator<const char*> {
+   public:
+    explicit SourceBufferLocationTranslator(TokenizedBuffer& buffer)
+        : buffer_(&buffer) {}
+
+    // Map the given position within the source buffer into a diagnostic location.
+    auto GetLocation(const char* pos) -> Diagnostic::Location override;
+
+   private:
+    TokenizedBuffer* buffer_;
+  };
 
   // Specifies minimum widths to use when printing a token's fields via
   // `printToken`.
