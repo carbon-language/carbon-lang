@@ -172,7 +172,8 @@ generically.
 Our goal is to address this use case, known as
 [the expression problem](https://eli.thegreenplace.net/2016/the-expression-problem-and-its-solutions),
 with a mechanism within generics that does enforce consistency so that type
-checking is possible without seeing all implementations.
+checking is possible without seeing all implementations. This will be Carbon's
+replacement for open overloading.
 
 ### Learn from others
 
