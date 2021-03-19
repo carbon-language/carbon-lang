@@ -30,7 +30,7 @@ using ::testing::StrEq;
 struct ParseTreeTest : ::testing::Test {
   std::forward_list<SourceBuffer> source_storage;
   std::forward_list<TokenizedBuffer> token_storage;
-  DiagnosticEmitter emitter = NullDiagnosticEmitter();
+  DiagnosticConsumer& consumer = ConsoleDiagnosticConsumer();
 
   auto GetSourceBuffer(llvm::Twine t) -> SourceBuffer& {
     source_storage.push_front(SourceBuffer::CreateFromText(t.str()));
@@ -38,21 +38,22 @@ struct ParseTreeTest : ::testing::Test {
   }
 
   auto GetTokenizedBuffer(llvm::Twine t) -> TokenizedBuffer& {
-    token_storage.push_front(TokenizedBuffer::Lex(GetSourceBuffer(t), emitter));
+    token_storage.push_front(
+        TokenizedBuffer::Lex(GetSourceBuffer(t), consumer));
     return token_storage.front();
   }
 };
 
 TEST_F(ParseTreeTest, Empty) {
   TokenizedBuffer tokens = GetTokenizedBuffer("");
-  ParseTree tree = ParseTree::Parse(tokens, emitter);
+  ParseTree tree = ParseTree::Parse(tokens, consumer);
   EXPECT_FALSE(tree.HasErrors());
   EXPECT_THAT(tree, MatchParseTreeNodes({{.kind = ParseNodeKind::FileEnd()}}));
 }
 
 TEST_F(ParseTreeTest, EmptyDeclaration) {
   TokenizedBuffer tokens = GetTokenizedBuffer(";");
-  ParseTree tree = ParseTree::Parse(tokens, emitter);
+  ParseTree tree = ParseTree::Parse(tokens, consumer);
   EXPECT_FALSE(tree.HasErrors());
   auto it = tree.Postorder().begin();
   auto end = tree.Postorder().end();
@@ -84,7 +85,7 @@ TEST_F(ParseTreeTest, EmptyDeclaration) {
 
 TEST_F(ParseTreeTest, BasicFunctionDeclaration) {
   TokenizedBuffer tokens = GetTokenizedBuffer("fn F();");
-  ParseTree tree = ParseTree::Parse(tokens, emitter);
+  ParseTree tree = ParseTree::Parse(tokens, consumer);
   EXPECT_FALSE(tree.HasErrors());
   EXPECT_THAT(
       tree, MatchParseTreeNodes(
@@ -101,14 +102,14 @@ TEST_F(ParseTreeTest, BasicFunctionDeclaration) {
 
 TEST_F(ParseTreeTest, NoDeclarationIntroducerOrSemi) {
   TokenizedBuffer tokens = GetTokenizedBuffer("foo bar baz");
-  ParseTree tree = ParseTree::Parse(tokens, emitter);
+  ParseTree tree = ParseTree::Parse(tokens, consumer);
   EXPECT_TRUE(tree.HasErrors());
   EXPECT_THAT(tree, MatchParseTreeNodes({{.kind = ParseNodeKind::FileEnd()}}));
 }
 
 TEST_F(ParseTreeTest, NoDeclarationIntroducerWithSemi) {
   TokenizedBuffer tokens = GetTokenizedBuffer("foo;");
-  ParseTree tree = ParseTree::Parse(tokens, emitter);
+  ParseTree tree = ParseTree::Parse(tokens, consumer);
   EXPECT_TRUE(tree.HasErrors());
   EXPECT_THAT(tree,
               MatchParseTreeNodes({{.kind = ParseNodeKind::EmptyDeclaration(),
@@ -119,7 +120,7 @@ TEST_F(ParseTreeTest, NoDeclarationIntroducerWithSemi) {
 
 TEST_F(ParseTreeTest, JustFunctionIntroducerAndSemi) {
   TokenizedBuffer tokens = GetTokenizedBuffer("fn;");
-  ParseTree tree = ParseTree::Parse(tokens, emitter);
+  ParseTree tree = ParseTree::Parse(tokens, consumer);
   EXPECT_TRUE(tree.HasErrors());
   EXPECT_THAT(tree, MatchParseTreeNodes(
                         {{.kind = ParseNodeKind::FunctionDeclaration(),
@@ -130,7 +131,7 @@ TEST_F(ParseTreeTest, JustFunctionIntroducerAndSemi) {
 
 TEST_F(ParseTreeTest, RepeatedFunctionIntroducerAndSemi) {
   TokenizedBuffer tokens = GetTokenizedBuffer("fn fn;");
-  ParseTree tree = ParseTree::Parse(tokens, emitter);
+  ParseTree tree = ParseTree::Parse(tokens, consumer);
   EXPECT_TRUE(tree.HasErrors());
   EXPECT_THAT(tree, MatchParseTreeNodes(
                         {{.kind = ParseNodeKind::FunctionDeclaration(),
@@ -141,7 +142,7 @@ TEST_F(ParseTreeTest, RepeatedFunctionIntroducerAndSemi) {
 
 TEST_F(ParseTreeTest, FunctionDeclarationWithNoSignatureOrSemi) {
   TokenizedBuffer tokens = GetTokenizedBuffer("fn foo");
-  ParseTree tree = ParseTree::Parse(tokens, emitter);
+  ParseTree tree = ParseTree::Parse(tokens, consumer);
   EXPECT_TRUE(tree.HasErrors());
   EXPECT_THAT(tree, MatchParseTreeNodes(
                         {{.kind = ParseNodeKind::FunctionDeclaration(),
@@ -153,7 +154,7 @@ TEST_F(ParseTreeTest, FunctionDeclarationWithNoSignatureOrSemi) {
 TEST_F(ParseTreeTest,
        FunctionDeclarationWithIdentifierInsteadOfSignatureAndSemi) {
   TokenizedBuffer tokens = GetTokenizedBuffer("fn foo bar;");
-  ParseTree tree = ParseTree::Parse(tokens, emitter);
+  ParseTree tree = ParseTree::Parse(tokens, consumer);
   EXPECT_TRUE(tree.HasErrors());
   EXPECT_THAT(tree, MatchParseTreeNodes(
                         {{.kind = ParseNodeKind::FunctionDeclaration(),
@@ -165,7 +166,7 @@ TEST_F(ParseTreeTest,
 
 TEST_F(ParseTreeTest, FunctionDeclarationWithSingleIdentifierParameterList) {
   TokenizedBuffer tokens = GetTokenizedBuffer("fn foo(bar);");
-  ParseTree tree = ParseTree::Parse(tokens, emitter);
+  ParseTree tree = ParseTree::Parse(tokens, consumer);
   // Note: this might become valid depending on the parameter syntax, this test
   // shouldn't be taken as a sign it should remain invalid.
   EXPECT_TRUE(tree.HasErrors());
@@ -184,7 +185,7 @@ TEST_F(ParseTreeTest, FunctionDeclarationWithSingleIdentifierParameterList) {
 
 TEST_F(ParseTreeTest, FunctionDeclarationWithoutName) {
   TokenizedBuffer tokens = GetTokenizedBuffer("fn ();");
-  ParseTree tree = ParseTree::Parse(tokens, emitter);
+  ParseTree tree = ParseTree::Parse(tokens, consumer);
   EXPECT_TRUE(tree.HasErrors());
   EXPECT_THAT(tree, MatchParseTreeNodes(
                         {{.kind = ParseNodeKind::FunctionDeclaration(),
@@ -197,7 +198,7 @@ TEST_F(ParseTreeTest,
        FunctionDeclarationWithoutNameAndManyTokensToSkipInGroupedSymbols) {
   TokenizedBuffer tokens = GetTokenizedBuffer(
       "fn (a tokens c d e f g h i j k l m n o p q r s t u v w x y z);");
-  ParseTree tree = ParseTree::Parse(tokens, emitter);
+  ParseTree tree = ParseTree::Parse(tokens, consumer);
   EXPECT_TRUE(tree.HasErrors());
   EXPECT_THAT(tree, MatchParseTreeNodes(
                         {{.kind = ParseNodeKind::FunctionDeclaration(),
@@ -210,7 +211,7 @@ TEST_F(ParseTreeTest, FunctionDeclarationSkipToNewlineWithoutSemi) {
   TokenizedBuffer tokens = GetTokenizedBuffer(
       "fn ()\n"
       "fn F();");
-  ParseTree tree = ParseTree::Parse(tokens, emitter);
+  ParseTree tree = ParseTree::Parse(tokens, consumer);
   EXPECT_TRUE(tree.HasErrors());
   EXPECT_THAT(
       tree,
@@ -230,7 +231,7 @@ TEST_F(ParseTreeTest, FunctionDeclarationSkipIndentedNewlineWithSemi) {
       "    y,\n"
       "    z);\n"
       "fn F();");
-  ParseTree tree = ParseTree::Parse(tokens, emitter);
+  ParseTree tree = ParseTree::Parse(tokens, consumer);
   EXPECT_TRUE(tree.HasErrors());
   EXPECT_THAT(
       tree,
@@ -252,7 +253,7 @@ TEST_F(ParseTreeTest, FunctionDeclarationSkipIndentedNewlineWithoutSemi) {
       "    y,\n"
       "    z)\n"
       "fn F();");
-  ParseTree tree = ParseTree::Parse(tokens, emitter);
+  ParseTree tree = ParseTree::Parse(tokens, consumer);
   EXPECT_TRUE(tree.HasErrors());
   EXPECT_THAT(
       tree,
@@ -272,7 +273,7 @@ TEST_F(ParseTreeTest, FunctionDeclarationSkipIndentedNewlineUntilOutdent) {
       "      y,\n"
       "      z)\n"
       "fn F();");
-  ParseTree tree = ParseTree::Parse(tokens, emitter);
+  ParseTree tree = ParseTree::Parse(tokens, consumer);
   EXPECT_TRUE(tree.HasErrors());
   EXPECT_THAT(
       tree,
@@ -295,7 +296,7 @@ TEST_F(ParseTreeTest, FunctionDeclarationSkipWithoutSemiToCurly) {
   TokenizedBuffer tokens = GetTokenizedBuffer(
       "struct X { fn () }\n"
       "fn F();");
-  ParseTree tree = ParseTree::Parse(tokens, emitter);
+  ParseTree tree = ParseTree::Parse(tokens, consumer);
   EXPECT_TRUE(tree.HasErrors());
 }
 
@@ -303,7 +304,7 @@ TEST_F(ParseTreeTest, BasicFunctionDefinition) {
   TokenizedBuffer tokens = GetTokenizedBuffer(
       "fn F() {\n"
       "}");
-  ParseTree tree = ParseTree::Parse(tokens, emitter);
+  ParseTree tree = ParseTree::Parse(tokens, consumer);
   EXPECT_FALSE(tree.HasErrors());
   EXPECT_THAT(
       tree,
@@ -325,7 +326,7 @@ TEST_F(ParseTreeTest, FunctionDefinitionWithNestedBlocks) {
       "    {{}}\n"
       "  }\n"
       "}");
-  ParseTree tree = ParseTree::Parse(tokens, emitter);
+  ParseTree tree = ParseTree::Parse(tokens, consumer);
   EXPECT_FALSE(tree.HasErrors());
   EXPECT_THAT(
       tree,
@@ -354,7 +355,7 @@ TEST_F(ParseTreeTest, FunctionDefinitionWithIdenifierInStatements) {
       "fn F() {\n"
       "  bar\n"
       "}");
-  ParseTree tree = ParseTree::Parse(tokens, emitter);
+  ParseTree tree = ParseTree::Parse(tokens, consumer);
   // Note: this might become valid depending on the expression syntax. This test
   // shouldn't be taken as a sign it should remain invalid.
   EXPECT_TRUE(tree.HasErrors());
@@ -376,7 +377,7 @@ TEST_F(ParseTreeTest, FunctionDefinitionWithIdenifierInNestedBlock) {
       "fn F() {\n"
       "  {bar}\n"
       "}");
-  ParseTree tree = ParseTree::Parse(tokens, emitter);
+  ParseTree tree = ParseTree::Parse(tokens, consumer);
   // Note: this might become valid depending on the expression syntax. This test
   // shouldn't be taken as a sign it should remain invalid.
   EXPECT_TRUE(tree.HasErrors());
@@ -411,7 +412,7 @@ auto GetAndDropLine(llvm::StringRef& s) -> std::string {
 
 TEST_F(ParseTreeTest, Printing) {
   TokenizedBuffer tokens = GetTokenizedBuffer("fn F();");
-  ParseTree tree = ParseTree::Parse(tokens, emitter);
+  ParseTree tree = ParseTree::Parse(tokens, consumer);
   EXPECT_FALSE(tree.HasErrors());
   std::string print_storage;
   llvm::raw_string_ostream print_stream(print_storage);
@@ -439,7 +440,7 @@ TEST_F(ParseTreeTest, Printing) {
 
 TEST_F(ParseTreeTest, PrintingAsYAML) {
   TokenizedBuffer tokens = GetTokenizedBuffer("fn F();");
-  ParseTree tree = ParseTree::Parse(tokens, emitter);
+  ParseTree tree = ParseTree::Parse(tokens, consumer);
   EXPECT_FALSE(tree.HasErrors());
   std::string print_output;
   llvm::raw_string_ostream print_stream(print_output);

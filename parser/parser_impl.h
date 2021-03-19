@@ -19,7 +19,7 @@ class ParseTree::Parser {
   // Parses the tokens into a parse tree, emitting any errors encountered.
   //
   // This is the entry point to the parser implementation.
-  static auto Parse(TokenizedBuffer& tokens, DiagnosticEmitter& de)
+  static auto Parse(TokenizedBuffer& tokens, TokenDiagnosticEmitter& de)
       -> ParseTree;
 
  private:

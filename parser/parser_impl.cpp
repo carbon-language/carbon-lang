@@ -16,7 +16,7 @@
 namespace Carbon {
 
 auto ParseTree::Parser::Parse(TokenizedBuffer& tokens,
-                              DiagnosticEmitter& /*unused*/) -> ParseTree {
+                              TokenDiagnosticEmitter& /*unused*/) -> ParseTree {
   ParseTree tree(tokens);
 
   // We expect to have a 1:1 correspondence between tokens and tree nodes, so

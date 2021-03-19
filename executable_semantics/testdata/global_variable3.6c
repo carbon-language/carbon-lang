@@ -2,12 +2,10 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-// Use-after-free.
+// Test type checking of global variable. Error expected.
 
-fun main() -> Int {
-  var Ptr(int): p;
-  p = malloc(Int);
-  *p = 0;
-  free(p);
-  return *p;
+var Int: flag = true;
+
+fn main() -> Int {
+  return 0;
 }
