@@ -47,8 +47,7 @@ ParseTree::Parser::Parser(ParseTree& tree_arg, TokenizedBuffer& tokens_arg)
          "No EndOfFileToken in token buffer.");
 }
 
-auto ParseTree::Parser::Consume(TokenKind kind)
-    -> TokenizedBuffer::Token {
+auto ParseTree::Parser::Consume(TokenKind kind) -> TokenizedBuffer::Token {
   TokenizedBuffer::Token t = *position;
   assert(kind != TokenKind::EndOfFile() && "Cannot consume the EOF token!");
   assert(tokens.GetKind(t) == kind && "The current token is the wrong kind!");
