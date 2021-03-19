@@ -6,25 +6,12 @@ workspace(name = "carbon")
 
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 
-# We want to use LLVM via an external CMake build, so pull in the Bazel
-# infrastructure that provides direct CMake interfacing support.
-http_archive(
-    name = "rules_foreign_cc",
-    strip_prefix = "rules_foreign_cc-main",
-    url = "https://github.com/bazelbuild/rules_foreign_cc/archive/main.zip",
-)
-
 # Add Bazel's python rules.
 http_archive(
     name = "rules_python",
     sha256 = "b6d46438523a3ec0f3cead544190ee13223a52f6a6765a29eae7b7cc24cc83a0",
     url = "https://github.com/bazelbuild/rules_python/releases/download/0.1.0/rules_python-0.1.0.tar.gz",
 )
-
-# Set up necessary dependencies for working with the foreign C++ rules.
-load("@rules_foreign_cc//:workspace_definitions.bzl", "rules_foreign_cc_dependencies")
-
-rules_foreign_cc_dependencies()
 
 # Bootstrap a Clang and LLVM toolchain.
 load("//bazel/cc_toolchains:clang_bootstrap.bzl", "bootstrap_clang_toolchain")
