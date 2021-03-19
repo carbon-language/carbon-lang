@@ -31,7 +31,8 @@ class LexedStringLiteral {
 
   // Expand any escape sequences in the given string literal and compute the
   // resulting value.
-  auto ComputeValue(DiagnosticEmitter& emitter) const -> ExpandedValue;
+  auto ComputeValue(DiagnosticEmitter<const char*>& emitter) const
+      -> ExpandedValue;
 
  private:
   LexedStringLiteral(llvm::StringRef text, llvm::StringRef content,

@@ -145,7 +145,7 @@ auto LexedNumericLiteral::Lex(llvm::StringRef source_text)
   return result;
 }
 
-LexedNumericLiteral::Parser::Parser(DiagnosticEmitter& emitter,
+LexedNumericLiteral::Parser::Parser(DiagnosticEmitter<const char*>& emitter,
                                     LexedNumericLiteral literal)
     : emitter(emitter), literal(literal) {
   int_part = literal.text.substr(0, literal.radix_point);
@@ -279,19 +279,20 @@ auto LexedNumericLiteral::Parser::CheckDigitSequence(
       // next to another digit separator, or at the end.
       if (!allow_digit_separators || i == 0 || text[i - 1] == '_' ||
           i + 1 == n) {
-        emitter.EmitError<InvalidDigitSeparator>();
+        emitter.EmitError<InvalidDigitSeparator>(text.begin() + i);
         recovered_from_error = true;
       }
       ++num_digit_separators;
       continue;
     }
 
-    emitter.EmitError<InvalidDigit>({.digit = c, .radix = radix});
+    emitter.EmitError<InvalidDigit>(text.begin() + i,
+                                    {.digit = c, .radix = radix});
     return {.ok = false};
   }
 
   if (num_digit_separators == static_cast<int>(text.size())) {
-    emitter.EmitError<EmptyDigitSequence>();
+    emitter.EmitError<EmptyDigitSequence>(text.begin());
     return {.ok = false};
   }
 
@@ -319,8 +320,8 @@ auto LexedNumericLiteral::Parser::CheckDigitSeparatorPlacement(
   assert((radix == 10 || radix == 16) &&
          "unexpected radix for digit separator checks");
 
-  auto diagnose_irregular_digit_separators = [&] {
-    emitter.EmitError<IrregularDigitSeparators>({.radix = radix});
+  auto diagnose_irregular_digit_separators = [&]() {
+    emitter.EmitError<IrregularDigitSeparators>(text.begin(), {.radix = radix});
     recovered_from_error = true;
   };
 
@@ -348,7 +349,7 @@ auto LexedNumericLiteral::Parser::CheckDigitSeparatorPlacement(
 // Check that we don't have a '0' prefix on a non-zero decimal integer.
 auto LexedNumericLiteral::Parser::CheckLeadingZero() -> bool {
   if (radix == 10 && int_part.startswith("0") && int_part != "0") {
-    emitter.EmitError<UnknownBaseSpecifier>();
+    emitter.EmitError<UnknownBaseSpecifier>(int_part.begin());
     return false;
   }
   return true;
@@ -369,7 +370,8 @@ auto LexedNumericLiteral::Parser::CheckFractionalPart() -> bool {
   }
 
   if (radix == 2) {
-    emitter.EmitError<BinaryRealLiteral>();
+    emitter.EmitError<BinaryRealLiteral>(literal.text.begin() +
+                                         literal.radix_point);
     recovered_from_error = true;
     // Carry on and parse the binary real literal anyway.
   }
@@ -391,6 +393,7 @@ auto LexedNumericLiteral::Parser::CheckExponentPart() -> bool {
   char expected_exponent_kind = (radix == 10 ? 'e' : 'p');
   if (literal.text[literal.exponent] != expected_exponent_kind) {
     emitter.EmitError<WrongRealLiteralExponent>(
+        literal.text.begin() + literal.exponent,
         {.expected = expected_exponent_kind});
     return false;
   }
