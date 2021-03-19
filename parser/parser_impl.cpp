@@ -47,7 +47,7 @@ ParseTree::Parser::Parser(ParseTree& tree_arg, TokenizedBuffer& tokens_arg)
          "No EndOfFileToken in token buffer.");
 }
 
-auto ParseTree::Parser::ConsumeExpecting(TokenKind kind)
+auto ParseTree::Parser::Consume(TokenKind kind)
     -> TokenizedBuffer::Token {
   TokenizedBuffer::Token t = *position;
   assert(kind != TokenKind::EndOfFile() && "Cannot consume the EOF token!");
@@ -62,7 +62,7 @@ auto ParseTree::Parser::ConsumeIf(TokenKind kind)
   if (tokens.GetKind(*position) != kind) {
     return {};
   }
-  return ConsumeExpecting(kind);
+  return Consume(kind);
 }
 
 auto ParseTree::Parser::AddLeafNode(ParseNodeKind kind,
@@ -131,7 +131,7 @@ auto ParseTree::Parser::SkipMatchingGroup() -> bool {
   }
 
   SkipTo(tokens.GetMatchedClosingToken(t));
-  ConsumeExpecting(t_kind.GetClosingSymbol());
+  Consume(t_kind.GetClosingSymbol());
   return true;
 }
 
@@ -188,7 +188,7 @@ auto ParseTree::Parser::SkipPastLikelyDeclarationEnd(
     }
 
     // Otherwise just step forward one token.
-    ConsumeExpecting(current_kind);
+    Consume(current_kind);
   } while (!AtEndOfFile() &&
            is_same_line_or_indent_greater_than_root(*position));
 
@@ -196,7 +196,7 @@ auto ParseTree::Parser::SkipPastLikelyDeclarationEnd(
 }
 
 auto ParseTree::Parser::ParseFunctionSignature() -> Node {
-  TokenizedBuffer::Token open_paren = ConsumeExpecting(TokenKind::OpenParen());
+  TokenizedBuffer::Token open_paren = Consume(TokenKind::OpenParen());
   auto start = StartSubtree();
 
   // FIXME: Add support for parsing parameters.
@@ -212,7 +212,7 @@ auto ParseTree::Parser::ParseFunctionSignature() -> Node {
     SkipTo(tokens.GetMatchedClosingToken(open_paren));
   }
   AddLeafNode(ParseNodeKind::ParameterListEnd(),
-              ConsumeExpecting(TokenKind::CloseParen()));
+              Consume(TokenKind::CloseParen()));
 
   // FIXME: Implement parsing of a return type.
 
@@ -220,8 +220,7 @@ auto ParseTree::Parser::ParseFunctionSignature() -> Node {
 }
 
 auto ParseTree::Parser::ParseCodeBlock() -> Node {
-  TokenizedBuffer::Token open_curly =
-      ConsumeExpecting(TokenKind::OpenCurlyBrace());
+  TokenizedBuffer::Token open_curly = Consume(TokenKind::OpenCurlyBrace());
   auto start = StartSubtree();
 
   bool has_errors = false;
@@ -258,14 +257,13 @@ auto ParseTree::Parser::ParseCodeBlock() -> Node {
   // We always reach here having set our position in the token stream to the
   // close curly brace.
   AddLeafNode(ParseNodeKind::CodeBlockEnd(),
-              ConsumeExpecting(TokenKind::CloseCurlyBrace()));
+              Consume(TokenKind::CloseCurlyBrace()));
 
   return AddNode(ParseNodeKind::CodeBlock(), open_curly, start, has_errors);
 }
 
 auto ParseTree::Parser::ParseFunctionDeclaration() -> Node {
-  TokenizedBuffer::Token function_intro_token =
-      ConsumeExpecting(TokenKind::FnKeyword());
+  TokenizedBuffer::Token function_intro_token = Consume(TokenKind::FnKeyword());
   auto start = StartSubtree();
 
   auto add_error_function_node = [&] {
@@ -329,8 +327,8 @@ auto ParseTree::Parser::ParseFunctionDeclaration() -> Node {
 }
 
 auto ParseTree::Parser::ParseEmptyDeclaration() -> Node {
-  TokenizedBuffer::Token semi = ConsumeExpecting(TokenKind::Semi());
-  return AddLeafNode(ParseNodeKind::EmptyDeclaration(), semi);
+  return AddLeafNode(ParseNodeKind::EmptyDeclaration(),
+                     Consume(TokenKind::Semi()));
 }
 
 auto ParseTree::Parser::ParseDeclaration() -> llvm::Optional<Node> {

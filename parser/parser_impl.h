@@ -33,7 +33,7 @@ class ParseTree::Parser {
 
   // Requires (and asserts) that the current position matches the provide
   // `Kind`. Returns the current token and advances to the next position.
-  auto ConsumeExpecting(TokenKind kind) -> TokenizedBuffer::Token;
+  auto Consume(TokenKind kind) -> TokenizedBuffer::Token;
 
   // If the current position's token matches this `Kind`, returns it and
   // advances to the next position. Otherwise returns an empty optional.
