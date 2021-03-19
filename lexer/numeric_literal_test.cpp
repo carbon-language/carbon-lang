@@ -5,24 +5,35 @@
 #include "lexer/numeric_literal.h"
 
 #include <iterator>
+#include <memory>
+#include <vector>
 
 #include "diagnostics/diagnostic_emitter.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
+#include "lexer/test_helpers.h"
 
 namespace Carbon {
 namespace {
 
 struct NumericLiteralTest : ::testing::Test {
-  auto Lex(llvm::StringRef text) -> NumericLiteralToken {
-    llvm::Optional<NumericLiteralToken> result = NumericLiteralToken::Lex(text);
+  std::vector<std::unique_ptr<Testing::SingleTokenDiagnosticTranslator>>
+      translators;
+  std::vector<std::unique_ptr<DiagnosticEmitter<const char*>>> emitters;
+
+  auto Lex(llvm::StringRef text) -> LexedNumericLiteral {
+    llvm::Optional<LexedNumericLiteral> result = LexedNumericLiteral::Lex(text);
     assert(result);
     EXPECT_EQ(result->Text(), text);
     return *result;
   }
 
-  auto Parse(llvm::StringRef text) -> NumericLiteralToken::Parser {
-    return NumericLiteralToken::Parser(ConsoleDiagnosticEmitter(), Lex(text));
+  auto Parse(llvm::StringRef text) -> LexedNumericLiteral::Parser {
+    translators.push_back(
+        std::make_unique<Testing::SingleTokenDiagnosticTranslator>(text));
+    emitters.push_back(std::make_unique<DiagnosticEmitter<const char*>>(
+        *translators.back(), ConsoleDiagnosticConsumer()));
+    return LexedNumericLiteral::Parser(*emitters.back(), Lex(text));
   }
 };
 
