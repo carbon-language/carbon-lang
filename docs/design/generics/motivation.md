@@ -1,12 +1,10 @@
+# Carbon generics: motivating use cases
+
 <!--
 Part of the Carbon Language project, under the Apache License v2.0 with LLVM
 Exceptions. See /LICENSE for license information.
 SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -->
-
-# Carbon generics: motivating use cases
-
-## Table of contents
 
 <!-- toc -->
 
