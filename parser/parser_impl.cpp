@@ -136,8 +136,7 @@ auto ParseTree::Parser::SkipMatchingGroup() -> bool {
 }
 
 auto ParseTree::Parser::SkipTo(TokenizedBuffer::Token t) -> void {
-  assert(t >= *position);
-  assert(tokens.GetKind(t) != TokenKind::EndOfFile());
+  assert(t >= *position && "Tried to skip backwards.");
   position = TokenizedBuffer::TokenIterator(t);
   assert(position != end && "Skipped past EOF.");
 }
