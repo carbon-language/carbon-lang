@@ -54,6 +54,20 @@ struct UnrecognizedDeclaration : SimpleDiagnostic<UnrecognizedDeclaration> {
       "Unrecognized declaration introducer.";
 };
 
+ParseTree::Parser::Parser(ParseTree& tree_arg, TokenizedBuffer& tokens_arg,
+                          TokenDiagnosticEmitter& emitter)
+    : tree(tree_arg),
+      tokens(tokens_arg),
+      emitter(emitter),
+      position(tokens.Tokens().begin()),
+      end(tokens.Tokens().end()) {
+  assert(std::find_if(position, end,
+                      [&](TokenizedBuffer::Token t) {
+                        return tokens.GetKind(t) == TokenKind::EndOfFile();
+                      }) != end &&
+         "No EndOfFileToken in token buffer.");
+}
+
 auto ParseTree::Parser::Parse(TokenizedBuffer& tokens,
                               TokenDiagnosticEmitter& emitter) -> ParseTree {
   ParseTree tree(tokens);
@@ -72,20 +86,6 @@ auto ParseTree::Parser::Parse(TokenizedBuffer& tokens,
 
   assert(tree.Verify() && "Parse tree built but does not verify!");
   return tree;
-}
-
-ParseTree::Parser::Parser(ParseTree& tree_arg, TokenizedBuffer& tokens_arg,
-                          TokenDiagnosticEmitter& emitter)
-    : tree(tree_arg),
-      tokens(tokens_arg),
-      emitter(emitter),
-      position(tokens.Tokens().begin()),
-      end(tokens.Tokens().end()) {
-  assert(std::find_if(position, end,
-                      [&](TokenizedBuffer::Token t) {
-                        return tokens.GetKind(t) == TokenKind::EndOfFile();
-                      }) != end &&
-         "No EndOfFileToken in token buffer.");
 }
 
 auto ParseTree::Parser::Consume(TokenKind kind) -> TokenizedBuffer::Token {
