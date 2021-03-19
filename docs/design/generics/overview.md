@@ -113,7 +113,7 @@ implementation inheritance.
 ## Glossary / Terminology
 
 See
-[Carbon Generics: Terminology and Problem statement](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#terminology)
+[Carbon Generics: Terminology](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md)
 
 ## Non-type generics
 

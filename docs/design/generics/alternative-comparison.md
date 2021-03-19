@@ -45,7 +45,7 @@ A type constraint is called an
 Interfaces can match structurally or you can make there be a separate step to
 explicitly say that there is additional semantic information to say that a type
 conforms to an interface; see
-[Carbon Generics: Terminology and Problem statement: "Semantic versus structural interfaces"](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#semantic-versus-structural-interfaces).
+[Carbon Generics: Terminology: "Semantic versus structural interfaces"](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#semantic-versus-structural-interfaces).
 If interfaces are semantic, then interface implementations can be part of a type
 ("facets") or separate, named entities ("witnesses").
 
@@ -369,7 +369,7 @@ representation and you may cast freely between them. Furthermore, you may call
 `Compare` on two values of type `U`.
 
 This is like
-[the "type-types" model above](#carbon-types-as-function-tables-interfaces-as-type-types),
+[the "type-types" model above](#carbon-types-as-function-tables-interfaces-as-type-types-todo),
 but where the interfaces include a parameter that defines the representation
 type.
 

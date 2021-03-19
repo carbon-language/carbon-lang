@@ -1,4 +1,4 @@
-# Carbon: Generics - Terminology and problem statement
+# Carbon: Generics - Terminology
 
 <!--
 Part of the Carbon Language project, under the Apache License v2.0 with LLVM

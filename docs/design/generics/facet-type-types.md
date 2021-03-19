@@ -54,6 +54,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Runtime type parameters](#runtime-type-parameters)
     -   [Runtime type fields](#runtime-type-fields)
         -   [Dynamic pointer type](#dynamic-pointer-type)
+            -   [Restrictions](#restrictions)
             -   [Model](#model-5)
         -   [Deref](#deref)
         -   [Boxed](#boxed)
@@ -62,6 +63,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [Implicit interface arguments [rejected optional feature]](#implicit-interface-arguments-rejected-optional-feature)
 -   [Interface nesting/containment [optional feature]](#interface-nestingcontainment-optional-feature)
 -   [Index of examples](#index-of-examples)
+    -   [Higher-ranked types](#higher-ranked-types)
 -   [Notes](#notes)
 -   [Broken links footnote](#broken-links-footnote)
 
@@ -94,7 +96,7 @@ type-types" model by saying the type of `T` is `ConvertibleToString`.
 
 Since we can figure out `T` from the type of `val`, we don't need the caller to
 pass in `T` explicitly, it can be an
-[implicit argument](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#implicit-argument)
+[implicit argument](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#implicit-parameter)
 (also see
 [implicit argument](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/overview.md#implicit-arguments)
 in the Generics V2 doc). Basically, the user passes in a value for `val`, and
@@ -1161,8 +1163,8 @@ and we want to migrate that type to Carbon. For example, say we have a template
 `T`, but of course the way template code is typically written is to make it work
 with anything that has the `C++::std::optional<T>` API. When we move it to
 generic `Foo` in Carbon, we need both the `T` argument, and a
-[higher-ranked](#bookmark=id.kayz42hh0s7j) type parameter to represent the
-optional type. Some C++ users will continue to use this type with C++'s
+[higher-ranked](#higher-ranked-types) type parameter to represent the optional
+type. Some C++ users will continue to use this type with C++'s
 `std::optional<T>`, which by virtue of being a C++ template, can't take generic
 arguments. We still can make a templated implementation of a generic interface
 for it:
@@ -1747,7 +1749,7 @@ Instead of
 could store a type per value. This changes the data layout of the value, and so
 is a somewhat more invasive change. It also means that when a function operates
 on multiple values they could have different real types, and so
-[there are additional restrictions on what functions are supported, like no binary operations](#bookmark=id.3atpcs1p4un9).
+[there are additional restrictions on what functions are supported, like no binary operations](#restrictions).
 
 **Terminology:** Not quite
 ["Late binding" on Wikipedia](https://en.wikipedia.org/wiki/Late_binding), since
@@ -1805,8 +1807,10 @@ for (DynPtr(Printable): iter) in dynamic {
 This corresponds to
 [a trait object reference in Rust](https://doc.rust-lang.org/book/ch17-02-trait-objects.html).
 
-**Restrictions:** The member functions in the `TT` interface must only have
-`Self` in the "receiver" or "this" position.
+##### Restrictions
+
+The member functions in the `TT` interface must only have `Self` in the
+"receiver" or "this" position.
 
 This is similar to
 [the "object safe" restriction in Rust](https://github.com/rust-lang/rfcs/blob/master/text/0255-object-safety.md)
@@ -2242,8 +2246,8 @@ Specifically, how does this proposal address
     such as associated types or type parameters satisfying some interface. Type
     constraints will also be needed as part of generic function definitions, to
     define relationships between type parameters and associated types.
-    -   [associated types](#bookmark=id.y76bpmnyjm7k),
-    -   [type parameters](#bookmark=id.arne8eq43vmm).
+    -   [associated types](#associated-types),
+    -   [type parameters](#parameterized-interfaces-optional-feature).
 -   Optional, but probably straightforward if we want it: Define an interface
     that
     [extends/refines](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#extendingrefining-an-interface)
@@ -2288,7 +2292,7 @@ Specifically, how does this proposal address
 -   Specify a generic explicit (non-type or type) argument to a function:
     -   [Example: Multiple implementations of the same interface](#example-multiple-implementations-of-the-same-interface)..
 -   Specify a generic
-    [implicit argument](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#implicit-argument)
+    [implicit argument](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#implicit-parameter)
     to a function:
     -   ["generics" section](#generics).
 -   Specify a generic type argument constrained to conform to an interface. And
@@ -2395,14 +2399,25 @@ Very stretch goals (these are more difficult, and possibly optional):
     implementing interfaces for a flyweight in a Flyweight pattern where the
     Impl needs a reference to a key -> info map.
     -   TODO: Difficult! Not clear how this would work.
--   "Higher-ranked types": A solution to the problem posed
-    [here (TODO)](#broken-links-footnote)<!-- T:Carbon: types as function tables, interfaces as type-types --><!-- A:#heading=h.qvhzlz54obmt -->,
-    where we need a representation for a way to go from a type to an
-    implementation of an interface parameterized by that type. Examples of
-    things we might want to express:
 
-    -   This priority queue's second argument (`QueueLike`) is a function that
-        takes a type `U` and returns a type that implements `QueueInterface(U)`:
+These mechanisms need to have an underlying programming model that allows users
+to predict how to do these things, how to compose these things, and what
+expressions are legal.
+
+-   See the [main "Model" section](#model), in addition to "Model" subsections
+    throughout the doc
+
+### Higher-ranked types
+
+One last stretch goal is support for "Higher-ranked types". This would be a
+solution to the problem posed
+[here (TODO)](#broken-links-footnote)<!-- T:Carbon: types as function tables, interfaces as type-types --><!-- A:#heading=h.qvhzlz54obmt -->.
+where we need a representation for a way to go from a type to an implementation
+of an interface parameterized by that type. Examples of things we might want to
+express:
+
+-   This priority queue's second argument (`QueueLike`) is a function that takes
+    a type `U` and returns a type that implements `QueueInterface(U)`:
 
 ```
 struct PriorityQueue(
@@ -2411,8 +2426,8 @@ struct PriorityQueue(
 }
 ```
 
-    -  Map takes a container of type `T` and function from `T` to `V` into
-       a container of type `V`:
+-   Map takes a container of type `T` and function from `T` to `V` into a
+    container of type `V`:
 
 ```
 fn Map[Type:$ T,
@@ -2421,14 +2436,9 @@ fn Map[Type:$ T,
     (Ptr(StackLike(T)): x, fn (T)->V: f) -> StackLike(V) { ... }
 ```
 
-    -   TODO: Challenging! Probably needs something like [Dependent function types](https://en.wikipedia.org/wiki/Dependent_type#Pi_type)
-
-These mechanisms need to have an underlying programming model that allows users
-to predict how to do these things, how to compose these things, and what
-expressions are legal.
-
--   See the [main "Model" section](#model), in addition to "Model" subsections
-    throughout the doc
+This is a challenging problem, not currently solved by this proposal. It
+probably requires something like
+[Dependent function types](https://en.wikipedia.org/wiki/Dependent_type#Pi_type).
 
 ## Notes
 

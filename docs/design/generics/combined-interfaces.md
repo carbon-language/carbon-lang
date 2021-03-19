@@ -83,6 +83,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Runtime type parameters](#runtime-type-parameters)
     -   [Runtime type fields](#runtime-type-fields)
         -   [Dynamic pointer type](#dynamic-pointer-type)
+            -   [Restrictions](#restrictions)
             -   [Model](#model-3)
         -   [Deref](#deref)
         -   [Boxed](#boxed)
@@ -131,7 +132,7 @@ type-types" model by saying the type of `T` is `ConvertibleToString`.
 
 Since we can figure out `T` from the type of `val`, we don't need the caller to
 pass in `T` explicitly, it can be an
-[implicit argument](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#implicit-argument)
+[implicit argument](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#implicit-parameter)
 (also see
 [implicit argument](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/overview.md#implicit-arguments)
 in the Generics overview doc). Basically, the user passes in a value for `val`,
@@ -2263,6 +2264,9 @@ fn UpCast[Type:$ T](Ptr(T): p, Type:$ U) -> Ptr(U) where T extends U;
 fn DownCast[Type:$ T](Ptr(T): p, Type:$ U) -> Ptr(U) where U extends T;
 ```
 
+In Swift, you can
+[add a required superclass to a type bound using `&`](https://docs.swift.org/swift-book/LanguageGuide/Protocols.html#ID282).
+
 #### Parameterized type implements interface
 
 TODO: This use case was part of the
@@ -3014,8 +3018,8 @@ and we want to migrate that type to Carbon. For example, say we have a template
 `T`, but of course the way template code is typically written is to make it work
 with anything that has the `C++::std::optional<T>` API. When we move it to
 generic `Foo` in Carbon, we need both the `T` argument, and a
-[higher-ranked](#bookmark=id.kayz42hh0s7j) type parameter to represent the
-optional type. Some C++ users will continue to use this type with C++'s
+[higher-ranked](#higher-ranked-types) type parameter to represent the optional
+type. Some C++ users will continue to use this type with C++'s
 `std::optional<T>`, which by virtue of being a C++ template, can't take generic
 arguments. We still can make a templated implementation of a generic interface
 for it:
@@ -3350,7 +3354,7 @@ Instead of
 could store a type per value. This changes the data layout of the value, and so
 is a somewhat more invasive change. It also means that when a function operates
 on multiple values they could have different real types, and so
-[there are additional restrictions on what functions are supported, like no binary operations](#bookmark=id.3atpcs1p4un9).
+[there are additional restrictions on what functions are supported, like no binary operations](#restrictions).
 
 **Terminology:** Not quite
 ["Late binding" on Wikipedia](https://en.wikipedia.org/wiki/Late_binding), since
@@ -3361,6 +3365,12 @@ does not distinguish it from [runtime type parameter](#runtime-type-parameters)
 [dynamic-dispatch witness tables](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#dynamic-dispatch-witness-table))
 or normal
 [virtual method dispatch](https://en.wikipedia.org/wiki/Virtual_function).
+
+This is called
+["protocols as types" or "existential types" in Swift](https://docs.swift.org/swift-book/LanguageGuide/Protocols.html#ID275)
+and "trait objects" in Rust
+([1](https://doc.rust-lang.org/book/ch17-02-trait-objects.html),
+[2](https://doc.rust-lang.org/reference/types/trait-object.html)).
 
 #### Dynamic pointer type
 
@@ -3408,8 +3418,10 @@ for (DynPtr(Printable): iter) in dynamic {
 This corresponds to
 [a trait object reference in Rust](https://doc.rust-lang.org/book/ch17-02-trait-objects.html).
 
-**Restrictions:** The member functions in the `TT` interface must only have
-`Self` in the "receiver" or "this" position.
+##### Restrictions
+
+The member functions in the `TT` interface must only have `Self` in the
+"receiver" or `this` position.
 
 This is similar to
 [the "object safe" restriction in Rust](https://github.com/rust-lang/rfcs/blob/master/text/0255-object-safety.md)
