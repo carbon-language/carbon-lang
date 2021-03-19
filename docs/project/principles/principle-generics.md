@@ -13,6 +13,11 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [Definition](#definition)
     -   [Semantics](#semantics)
 -   [Goals](#goals)
+    -   [Use cases](#use-cases)
+        -   [Generic programming](#generic-programming)
+        -   [Upgrade path from C++ abstract interfaces](#upgrade-path-from-c-abstract-interfaces)
+        -   [Dependency injection](#dependency-injection)
+        -   [Use cases that are out of scope](#use-cases-that-are-out-of-scope)
     -   [Performance](#performance)
     -   [Better compiler experience](#better-compiler-experience)
     -   [Encapsulation](#encapsulation)
@@ -60,15 +65,63 @@ apply to any array whose elements are comparable and movable.
 ## Goals
 
 Our goal for generics support in Carbon is to get most of the expressive
-benefits of C++ templates and open overloading with fewer downsides. We in
-particular want to support
+benefits of C++ templates and open overloading with fewer downsides.
+
+### Use cases
+
+To clarify the expressive range we are aming for, here are some specific use
+cases we expect Carbon generics to cover.
+
+#### Generic programming
+
+We in particular want to support
 [generic programming](https://en.wikipedia.org/wiki/Generic_programming),
-including generic algorithms and generic data types. C++ templates are also used
-for some things that are out of scope for Carbon generics:
-[template metaprogramming](https://en.wikipedia.org/wiki/Template_metaprogramming),
-[expression templates](https://en.wikipedia.org/wiki/Expression_templates), and
-[variadics](https://en.wikipedia.org/wiki/Variadic_function). We expect to
-address those use cases with Carbon metaprogramming or Carbon templates.
+including:
+
+-   Containers (arrays, maps, lists)
+-   Algorithms (sort, search)
+-   Wrappers (optional, variant, expected/result, smart pointers)
+-   Parameterized numeric types (`std::complex<T>`)
+-   Configurable / parametric APIs such as the storage-customized `std::chrono`
+    APIs
+-   [Policy-based design](https://en.wikipedia.org/wiki/Modern_C%2B%2B_Design#Policy-based_design)
+
+These would generally involve static, compile-time type arguments, and so would
+generally be used with [static dispatch](#dispatch-control).
+
+#### Upgrade path from C++ abstract interfaces
+
+Interfaces in C++ are often represented by abstract base classes. Generics
+should offer an alternative that does not rely on inheritance. This means looser
+coupling and none of the problems of multiple inheritance. In fact, Sean Parent
+(and others) advocate for runtime polymorphism patterns in C++ that avoid
+inheritance, because
+["inheritance is the base class of Evil"](https://sean-parent.stlab.cc/papers-and-presentations/#better-code-runtime-polymorphism)
+and causes a number of runtime performance, correctness, and code maintenance
+problems. Carbon generics will be able to represent this form of polymorphism
+without all the boilerplate and complexity required in C++.
+
+This is a case that would use [dynamic dispatch](#dispatch-control).
+
+#### Dependency injection
+
+Similarly, types which only support subclassing for test stubs and mocks, as in
+["dependency injection"](https://en.wikipedia.org/wiki/Dependency_injection),
+should be able to easily migrate to generics. This would allow you to avoid the
+runtime overhead of virtual functions, using
+[static dispatch](#dispatch-control) without the
+[poor build experience of templates](#better-compiler-experience).
+
+#### Use cases that are out of scope
+
+C++ templates are also used for some things that are out of scope for Carbon
+generics such as
+[template metaprogramming](https://en.wikipedia.org/wiki/Template_metaprogramming).
+We expect to address those use cases with metaprogramming or templates in
+Carbon. We will also not require Carbon generics to support
+[expression templates](https://en.wikipedia.org/wiki/Expression_templates) or
+[variadics](https://en.wikipedia.org/wiki/Variadic_function), but they would be
+nice to have.
 
 ### Performance
 
@@ -127,19 +180,33 @@ values with dynamic types.
 
 ### Upgrade path from templates
 
-We want there to be a natural upgrade path from templated code to generic code,
-which gives us these additional principles:
+The entire idea of statically typed languages is that coding against specific
+types and interfaces is a better model and experience. Unfortunately, templates
+don't provide many of those benefits to programmers until it's too late (users
+are consuming the API) and with high overhead (template error messages).
+Generally, code should move towards more rigorously type checked constructs.
+However, existing C++ code is full of unrestricted usage of duck-typed
+templates. They are incredibly convenient to write and so likely will continue
+to exist for a long time.
 
+We want there to be a natural, incremental upgrade path from templated code to
+generic code. This gives us these additional principles:
+
+-   Users should be able to convert a single template parameter to be generic at
+    a time.
 -   Converting from a template parameter to a generic parameter should be safe.
     It should either fail to compile or work, never silently change semantics.
--   We should minimize the effort to convert from template code to generic code.
-    Ideally it should just require specifying the type constraints, affecting
-    just the signature of the function, not its body.
+-   We should minimize the effort to convert functions and types from templated
+    to generic. Ideally it should just require specifying the type constraints,
+    affecting just the signature of the function, not its body.
 -   It should be legal to call templated code from generic code when it would
     have the same semantics as if called from non-generic code, and an error
     otherwise. This is to allow more templated functions to be converted to
     generics, instead of requiring them to be converted specifically in
     bottom-up order.
+-   When defining a new generic interface to replace a template, support
+    providing using the old templated implementation temporarily as a default
+    until types transition.
 
 ### Coherence
 
@@ -173,7 +240,8 @@ Our goal is to address this use case, known as
 [the expression problem](https://eli.thegreenplace.net/2016/the-expression-problem-and-its-solutions),
 with a mechanism within generics that does enforce consistency so that type
 checking is possible without seeing all implementations. This will be Carbon's
-replacement for open overloading.
+replacement for open overloading. As a result, Carbon generics will need to be
+able to support operator overloading.
 
 ### Learn from others
 
