@@ -21,6 +21,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Coherence](#coherence)
     -   [No novel name lookup](#no-novel-name-lookup)
     -   [Generics instead of open overloading](#generics-instead-of-open-overloading)
+    -   [Learn from others](#learn-from-others)
     -   [Interface abstraction](#interface-abstraction)
     -   [Interop and evolution](#interop-and-evolution)
 -   [Non-Goals / Caveats / Limitations / Out of scope](#non-goals--caveats--limitations--out-of-scope)
@@ -169,10 +170,21 @@ Our goal is to address this use case, known as
 with a mechanism within generics that does enforce consistency so that type
 checking is possible without seeing all implementations.
 
+### Learn from others
+
+Many languages have implemented generics systems, and we should learn from those
+experiences. We should copy what works and makes sense in the context of Carbon,
+and change decisions that led to undesirable compromises. We are taking the
+strongest guidance from Rust and Swift, which have the most similar goals.
+
 ### Interface abstraction
 
 We write a type constraint in Carbon by saying we restrict to types that
-implement specific _interfaces_. Interfaces serve several purposes:
+implement specific _interfaces_. In the spirit of
+[learning from others](#learn-from-others), this is following
+[Rust's traits](https://doc.rust-lang.org/book/ch10-02-traits.html) and
+[Swift's protocols](https://docs.swift.org/swift-book/LanguageGuide/Protocols.html).
+Interfaces serve several purposes:
 
 -   They specify a set of functions (names and signatures) that must be
     available for any type being passed to a generic function, and therefore the
