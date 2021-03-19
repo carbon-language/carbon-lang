@@ -1,10 +1,10 @@
+# Rejected: Constraints using "requires" clauses
+
 <!--
 Part of the Carbon Language project, under the Apache License v2.0 with LLVM
 Exceptions. See /LICENSE for license information.
 SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -->
-
-# Rejected: Constraints using "requires" clauses
 
 ## Description
 
@@ -66,7 +66,7 @@ constraints to interface parameters. This is the discussion that eventually led
 me to say we should instead constrain associated types by making them optional,
 named parameters, unifying them (to an extent) with interface parameters.
 
-### Associated types vs. interface parameters: ergonomics
+### Associated types versus interface parameters: ergonomics
 
 Associated types provide an advantage in ergonomics because constraints in
 generic types and functions don't need to specify associated types that they
@@ -124,7 +124,7 @@ fn Map[CollectionAssoc:$ C, Type:$ NewElement](
   C: collection, fn (C.Element) -> NewElement: mapper) -> Array<NewElement> { ... }
 ```
 
-### Associated types vs. interface parameters: existential types (dynamic types)
+### Associated types versus interface parameters: existential types (dynamic types)
 
 Interface parameters make us create separate types for different
 "instantiations" of interfaces. Because of that, those instantiations can act as
@@ -328,15 +328,17 @@ var DynPtr(CollectionAssoc requires Element = Int) ints3 =
 ### joshl@ Reaction: Let's make associated types into "optional keyword parameters"
 
 There definitely seem to be some differences between types that you might
-typically want to parameterize vs. those you would want to be associated types:
+typically want to parameterize versus those you would want to be associated
+types:
 
 -   For things like "element type" in a "container" interface, it is going to be
     more convenient to use interface parameters since every user of the
     interface is going to want to have a name for it anyway, and many will want
     to constrain it. You expect to see the element type as parameter of the
     interface and you want to see it clearly in the code. You would expect most
-    (but not all, e.g. strings) container types to be parameterized by element
-    type anyway. Frequently the interface will not constrain the type at all.
+    (but not all, for example strings) container types to be parameterized by
+    element type anyway. Frequently the interface will not constrain the type at
+    all.
 -   For things like "iterator type" or "slice type", you expect that to be
     determined by the container type rather than a parameter to the container
     type, and associated types are a more natural fit. Furthermore, we expect to

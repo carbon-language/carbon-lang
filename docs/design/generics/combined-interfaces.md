@@ -509,7 +509,7 @@ var Point: v = AddAndScaleGeneric(a, w, 2.5);
 ```
 
 Here `T` is a type whose type is `Vector`. The `:$` syntax means that `T` is a
-_[generic argument](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#generic-vs-template-arguments)_,
+_[generic argument](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#generic-versus-template-parameters)_,
 that is it must be known to the caller but we will only use the information
 present in the signature of the function to typecheck the body of
 `AddAndScaleGeneric`'s definition. In this case, we know that any value of type
@@ -571,9 +571,9 @@ in particular
 [facet type-types](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#facet-type-types):
 
 -   [Interfaces](#interfaces) are types of
-    [witness table](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#witness-tables-eg-swift-and-carbon-generics)s
+    [witness table](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#witness-tables-for-example-swift-and-carbon-generics)s
 -   Facet types (defined by [Impls](#implementing-interfaces)) are
-    [witness table](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#witness-tables-eg-swift-and-carbon-generics)
+    [witness table](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#witness-tables-for-example-swift-and-carbon-generics)
     values
 -   The compiler rewrites functions with an implicit type argument
     (`fn Foo[InterfaceName:$ T](...)`) to have an actual argument with type
@@ -1541,7 +1541,7 @@ Assert(PeekAtTopOfStack(my_array) == 3);
 ```
 
 For context, see
-["Interface type parameters versus associated types" in the Carbon: Generics Terminology doc](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#interface-type-parameters-vs-associated-types).
+["Interface type parameters versus associated types" in the Carbon: Generics Terminology doc](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#interface-type-parameters-versus-associated-types).
 
 **Comparison with other languages:** Both
 [Rust](https://doc.rust-lang.org/book/ch19-03-advanced-traits.html#specifying-placeholder-types-in-trait-definitions-with-associated-types)
@@ -1657,7 +1657,7 @@ This reflects these two properties of these parameters:
 -   We allow either generic or template values to be passed in.
 
 **Context:** See
-[type parameters for interfaces](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#interface-type-parameters-vs-associated-types)
+[type parameters for interfaces](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#interface-type-parameters-versus-associated-types)
 in the terminology doc.
 
 **Caveat:** When implementing an interface twice for a type, you need to be sure

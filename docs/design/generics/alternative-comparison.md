@@ -1,14 +1,14 @@
+# Comparison of Carbon Generics alternatives
+
 <!--
 Part of the Carbon Language project, under the Apache License v2.0 with LLVM
 Exceptions. See /LICENSE for license information.
 SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -->
 
-# Comparison of Carbon Generics alternatives
+<!-- toc -->
 
 ## Table of contents
-
-<!-- toc -->
 
 -   [Type generics design space](#type-generics-design-space)
     -   [Problem statement](#problem-statement)
@@ -45,7 +45,7 @@ A type constraint is called an
 Interfaces can match structurally or you can make there be a separate step to
 explicitly say that there is additional semantic information to say that a type
 conforms to an interface; see
-[Carbon Generics: Terminology and Problem statement: "Semantic vs. structural interfaces"](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#semantic-vs-structural-interfaces).
+[Carbon Generics: Terminology and Problem statement: "Semantic versus structural interfaces"](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#semantic-versus-structural-interfaces).
 If interfaces are semantic, then interface implementations can be part of a type
 ("facets") or separate, named entities ("witnesses").
 
@@ -222,7 +222,7 @@ fn GenericCompileTimeTypeParam[I:$ T](Ptr(T): a) {
 impl FooI(Foo, .implements = I) {
   .F = Foo.F;  // May only name public members of `Foo`.
   fn G(Ptr(Foo): this) {
-    Print("Via interface! ");
+    Print("By way of interface! ");
     this->G();  // Naturally restricted to just the public API of Foo.
   }
 }

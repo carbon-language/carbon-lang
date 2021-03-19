@@ -1,26 +1,26 @@
+# Carbon: Generics - Terminology and problem statement
+
 <!--
 Part of the Carbon Language project, under the Apache License v2.0 with LLVM
 Exceptions. See /LICENSE for license information.
 SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -->
 
-# Carbon: Generics - Terminology and problem statement
+<!-- toc -->
 
 ## Table of contents
 
-<!-- toc -->
-
 -   [Basics](#basics)
 -   [Parameterized language constructs](#parameterized-language-constructs)
--   [Generic vs. template parameters](#generic-vs-template-parameters)
-    -   [Parametric vs. Ad Hoc polymorphism](#parametric-vs-ad-hoc-polymorphism)
-    -   [Constrained/bounded vs. Unconstrained/unbounded genericity](#constrainedbounded-vs-unconstrainedunbounded-genericity)
+-   [Generic versus template parameters](#generic-versus-template-parameters)
+    -   [Parametric versus Ad Hoc polymorphism](#parametric-versus-ad-hoc-polymorphism)
+    -   [Constrained/bounded versus Unconstrained/unbounded genericity](#constrainedbounded-versus-unconstrainedunbounded-genericity)
     -   [Definition checking](#definition-checking)
         -   [Complete definition checking](#complete-definition-checking)
-        -   [Early vs. late type checking](#early-vs-late-type-checking)
+        -   [Early versus late type checking](#early-versus-late-type-checking)
 -   [Implicit parameter](#implicit-parameter)
 -   [Interface](#interface)
-    -   [Semantic vs. structural interfaces](#semantic-vs-structural-interfaces)
+    -   [Semantic versus structural interfaces](#semantic-versus-structural-interfaces)
     -   [What kind of values are interfaces?](#what-kind-of-values-are-interfaces)
         -   [Interfaces are concrete types](#interfaces-are-concrete-types)
         -   [Interfaces are type-types](#interfaces-are-type-types)
@@ -40,15 +40,15 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [Adapting a type](#adapting-a-type)
 -   [Extending/refining an interface](#extendingrefining-an-interface)
 -   [Implementation strategies for generics](#implementation-strategies-for-generics)
-    -   [Witness tables (e.g., Swift and Carbon Generics)](#witness-tables-eg-swift-and-carbon-generics)
+    -   [Witness tables (for example, Swift and Carbon Generics)](#witness-tables-for-example-swift-and-carbon-generics)
         -   [Dynamic-dispatch witness table](#dynamic-dispatch-witness-table)
         -   [Static-dispatch witness table](#static-dispatch-witness-table)
-    -   [Type erasure (e.g., Java)](#type-erasure-eg-java)
-    -   [Monomorphization (e.g., Rust)](#monomorphization-eg-rust)
-    -   [Instantiation (e.g., C++ and Carbon Templates)](#instantiation-eg-c-and-carbon-templates)
+    -   [Type erasure (for example, Java)](#type-erasure-for-example-java)
+    -   [Monomorphization (for example, Rust)](#monomorphization-for-example-rust)
+    -   [Instantiation (for example, C++ and Carbon Templates)](#instantiation-for-example-c-and-carbon-templates)
 -   [Specialization](#specialization)
 -   [Conditional conformance](#conditional-conformance)
--   [Interface type parameters vs. associated types](#interface-type-parameters-vs-associated-types)
+-   [Interface type parameters versus associated types](#interface-type-parameters-versus-associated-types)
 -   [Type constraints](#type-constraints)
 -   [Dependent types (or more generally, values)](#dependent-types-or-more-generally-values)
 -   [Broken links footnote](#broken-links-footnote)
@@ -68,8 +68,8 @@ and
 "[Goals: Generics](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/overview.md#goals-generics)"
 sections.
 
-TODO: Runtime vs. compile-time trade offs, worry about things like size of value
-unknown producing much slower code -- needs guardrails, explicit opt-in?
+TODO: Runtime versus compile-time trade offs, worry about things like size of
+value unknown producing much slower code -- needs guardrails, explicit opt-in?
 
 ## Parameterized language constructs
 
@@ -77,13 +77,13 @@ Generally speaking, when we talk about either templates or a generics system, we
 are talking about generalizing some language construct by adding a parameter to
 it. Language constructs here primarily would include functions and types, but we
 may want to support parameterizing other language constructs like
-[interfaces](#interface-type-parameters-vs-associated-types).
+[interfaces](#interface-type-parameters-versus-associated-types).
 
 This parameter broadens the scope of the language construct on an axis defined
 by that parameter, effectively defining a family of functions (or whatever)
 instead of a single one.
 
-## Generic vs. template parameters
+## Generic versus template parameters
 
 When we are distinguishing between generics and templates in Carbon, it is on an
 parameter by parameter basis. A single function can take a mix of regular,
@@ -142,12 +142,12 @@ Expected difference between generics and templates:
   <tr>
    <td>allowed but not required to be implemented using dynamic dispatch
    </td>
-   <td>does not support implementation via dynamic dispatch, just static via instantiation
+   <td>does not support implementation by way of dynamic dispatch, just static by way of instantiation
    </td>
   </tr>
 </table>
 
-### Parametric vs. Ad Hoc polymorphism
+### Parametric versus Ad Hoc polymorphism
 
 From [Wikipedia](https://en.wikipedia.org/wiki/Parametric_polymorphism): Using
 parametric polymorphism, a function or a data type can be written generically so
@@ -182,7 +182,7 @@ either overload. (I think it is undecided what to do in the situation where `F`
 is overloaded, but the signatures are consistent and so callers could still
 typecheck calls to `F`.)
 
-### Constrained/bounded vs. Unconstrained/unbounded genericity
+### Constrained/bounded versus Unconstrained/unbounded genericity
 
 We will allow some way of specifying constraints as part of a function (or type
 or other parameterized language construct). These constraints are a limit on
@@ -208,11 +208,11 @@ Definition checking is the process of semantically checking the definition of
 parameterized code for correctness _independently_ of any particular arguments.
 It includes type checking and other semantic checks. Typically, all
 non-dependent semantics can be checked in the definition, but it is possible to
-add constraints (via generics) that increase how much of the definition can be
-checked. If anything remains unchecked (normal for templates), instantiating the
-implementation it requires instantiation (that may fail) is required in order to
-check its correctness once specific arguments can be substituted into the
-parameters.
+add constraints (by way of generics) that increase how much of the definition
+can be checked. If anything remains unchecked (normal for templates),
+instantiating the implementation it requires instantiation (that may fail) is
+required in order to check its correctness once specific arguments can be
+substituted into the parameters.
 
 #### Complete definition checking
 
@@ -221,10 +221,10 @@ checked, including type checking. It is an especially useful property because it
 enables _separate_ semantic checking of the definition, a prerequisite to
 separate compilation. It also enables implementation strategies that don’t
 instantiate the implementation (for example,
-[type erasure](#type-erasure-eg-java) or
+[type erasure](#type-erasure-for-example-java) or
 [dynamic-dispatch witness tables](#dynamic-dispatch-witness-table)).
 
-#### Early vs. late type checking
+#### Early versus late type checking
 
 Early type checking is where expressions and statements are type checked when
 the definition of the function body is compiled, as part of definition checking.
@@ -268,7 +268,7 @@ the function may then use that API (and nothing else).
 
 There are a few different possible interface programming models.
 
-### Semantic vs. structural interfaces
+### Semantic versus structural interfaces
 
 A "structural" interface is one where we say a type satisfies the interface as
 long as it has members with a specific list of names, and for each name it must
@@ -323,9 +323,9 @@ in the Generics proposal for more on this programming model.
 
 #### Interfaces are type-types
 
-In other programming models, an interface is a type-type, i.e., an interface is
-a type whose values are also types (satisfying some properties). For example, we
-might define a generic function like so:
+In other programming models, an interface is a type-type, that is, an interface
+is a type whose values are also types (satisfying some properties). For example,
+we might define a generic function like so:
 
 ```
 fn F[InterfaceName:$ T](T: x) ...
@@ -527,10 +527,10 @@ transition time where conflicts can be dealt with before they become errors.
 
 Separate impls use non-type objects that can be passed around as values. The
 type of an impl value is parameterized by both an interface and a compatible
-type. E.g., if `x` is the name of an impl value for interface `I` and compatible
-type `T` and `F` is the name of function defined in `I`, and `y` is a value of
-type `T`, you might have an explicit syntax where you call the `F` from `x` on
-`y` using `x.F(y)`, or an implicit syntax like `with (x) { y.F(); }`.
+type. For example, if `x` is the name of an impl value for interface `I` and
+compatible type `T` and `F` is the name of function defined in `I`, and `y` is a
+value of type `T`, you might have an explicit syntax where you call the `F` from
+`x` on `y` using `x.F(y)`, or an implicit syntax like `with (x) { y.F(); }`.
 
 For our example, you might write a function that takes values with a type
 implementing both `A` and `B` like so:
@@ -560,9 +560,9 @@ Subsumption is an automatic or implicit conversion that happens to argument
 values when calling a function or when assigning a value to a variable of a
 different type.
 
-Casting is indicated explicitly via some syntax in the source code. You might
-use a cast to switch between [type adaptations](#adapting-a-type), or to be
-explicit where an implicit cast would otherwise occur. For now, we are saying
+Casting is indicated explicitly by way of some syntax in the source code. You
+might use a cast to switch between [type adaptations](#adapting-a-type), or to
+be explicit where an implicit cast would otherwise occur. For now, we are saying
 "`x as y`" is the syntax in Carbon for casting the value `x` to the type `y`.
 
 Note that subsumption is a bit like coercion, except we want to make it clear
@@ -595,7 +595,7 @@ Witness tables, type erasure, monomorphization and instantiation all describe
 methods under which we could implement generics. They are each trying to address
 how generics perform operations on the type provided by a caller.
 
-### Witness tables (e.g., Swift and Carbon Generics)
+### Witness tables (for example, Swift and Carbon Generics)
 
 For witness tables, values passed to a generic parameter are compiled into a
 table of required functionality. That table is then filled in for a given
@@ -631,7 +631,7 @@ Static-dispatch may be implemented as a performance optimization for
 dynamic-dispatch that increases generated code size. The final compiled output
 may not retain the witness table.
 
-### Type erasure (e.g., Java)
+### Type erasure (for example, Java)
 
 Type erasure is similar to dynamic-dispatch witness tables, but it goes further
 and pushes the abstraction all the way to runtime. The actual type is completely
@@ -644,7 +644,7 @@ the actual type through some dynamic system rather than ensuring it is fully
 opaque. Type erasure removes that option, which can
 [cause problems](https://en.wikipedia.org/wiki/Generics_in_Java#Problems_with_type_erasure).
 
-### Monomorphization (e.g., Rust)
+### Monomorphization (for example, Rust)
 
 Monomorphization explicitly creates a copy of the generic code and replaces the
 generic components with the concrete type and its implementation operations.
@@ -659,7 +659,7 @@ However, monomorphization does not require a witness table. The risk is that by
 conceptualizing the implementation as monomorphization we may unintentionally
 introduce cases that cannot be represented as dynamic-dispatch witness tables.
 
-### Instantiation (e.g., C++ and Carbon Templates)
+### Instantiation (for example, C++ and Carbon Templates)
 
 Instantiation, like monomorphization, explicitly creates a copy of the template
 code and replaces the template components with the concrete type and its
@@ -717,11 +717,11 @@ that it always supports, but satisfies additional interfaces under some
 conditions on the type argument.
 
 For example: `Array(T)` might implement `Comparable` if `T` itself implements
-`Comparable`, using lexicographical order. This might be supported via a
+`Comparable`, using lexicographical order. This might be supported by way of a
 specific "conditionally implements" syntax, or as a special case of a
 [templated impls](#templated-impl) facility.
 
-## Interface type parameters vs. associated types
+## Interface type parameters versus associated types
 
 Let's say you have an interface defining a container. Different containers will
 contain different types of values, and the container API will have to refer to
@@ -831,7 +831,7 @@ instantiation causes a large amount of dependent type cascading across calls.
 With generics using interfaces (which are fully type checked), dependence won't
 cascade through calls, although it may cascade through interface relationships.
 
-e.g., consider this template definition:
+for example, consider this template definition:
 
 ```
 fn Call[Type:$$ T](T: val) -> Int {
@@ -840,7 +840,7 @@ fn Call[Type:$$ T](T: val) -> Int {
 ```
 
 Here, the type of `val` is a dependent type specified by the caller. The type of
-`Call` (e.g., parameters and return type) is a dependent value because it
+`Call` (for example, parameters and return type) is a dependent value because it
 depends on the type of `val`.
 
 For contrast, consider this similar generic definition:
