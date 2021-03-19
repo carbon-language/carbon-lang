@@ -15,7 +15,7 @@ namespace Carbon {
 // NOLINTNEXTLINE: Match the documented fuzzer entry point declaration style.
 extern "C" int LLVMFuzzerTestOneInput(const unsigned char* data,
                                       std::size_t size) {
-  auto token = StringLiteralToken::Lex(
+  auto token = LexedStringLiteral::Lex(
       llvm::StringRef(reinterpret_cast<const char*>(data), size));
   if (!token) {
     // Lexically not a string literal.

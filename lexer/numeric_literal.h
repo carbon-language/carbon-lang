@@ -15,7 +15,7 @@
 namespace Carbon {
 
 // A numeric literal token that has been extracted from a source buffer.
-class NumericLiteralToken {
+class LexedNumericLiteral {
  public:
   // Get the text corresponding to this literal.
   auto Text() const -> llvm::StringRef { return text; }
@@ -24,12 +24,12 @@ class NumericLiteralToken {
   //
   // The supplied `source_text` must outlive the return value.
   static auto Lex(llvm::StringRef source_text)
-      -> llvm::Optional<NumericLiteralToken>;
+      -> llvm::Optional<LexedNumericLiteral>;
 
   class Parser;
 
  private:
-  NumericLiteralToken() {}
+  LexedNumericLiteral() {}
 
   // The text of the token.
   llvm::StringRef text;
@@ -49,9 +49,9 @@ class NumericLiteralToken {
 //
 // Responsible for checking that a numeric literal is valid and meaningful and
 // either diagnosing or extracting its meaning.
-class NumericLiteralToken::Parser {
+class LexedNumericLiteral::Parser {
  public:
-  Parser(DiagnosticEmitter<const char*>& emitter, NumericLiteralToken literal);
+  Parser(DiagnosticEmitter<const char*>& emitter, LexedNumericLiteral literal);
 
   auto IsInteger() -> bool {
     return literal.radix_point == static_cast<int>(literal.text.size());
@@ -99,7 +99,7 @@ class NumericLiteralToken::Parser {
 
  private:
   DiagnosticEmitter<const char*>& emitter;
-  NumericLiteralToken literal;
+  LexedNumericLiteral literal;
 
   // The radix of the literal: 2, 10, or 16, for a prefix of '0b', no prefix,
   // or '0x', respectively.
