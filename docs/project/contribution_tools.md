@@ -86,6 +86,9 @@ periodically run `brew upgrade`.
 
 #### Python using `pyenv`
 
+Carbon requires Python 3.6 or newer. Everything below assumes that `python` or
+`pip` reach the Python 3 tools, not legacy installations of Python 2.
+
 We strongly recommend using [pyenv](https://github.com/pyenv/pyenv) to manage
 [Python](python.org) and Python's `pip` package manager. `pip` should typically
 be used for Python package installation rather than other package managers.
