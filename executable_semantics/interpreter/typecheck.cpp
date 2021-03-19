@@ -620,6 +620,9 @@ auto StructDeclaration::Name() const -> std::string { return *definition.name; }
 
 auto ChoiceDeclaration::Name() const -> std::string { return name; }
 
+// Returns the name of the declared variable.
+auto VariableDeclaration::Name() const -> std::string { return name; }
+
 auto StructDeclaration::TypeChecked(TypeEnv env, Env ct_env) const
     -> Declaration {
   auto fields = new std::list<Member*>();
@@ -642,8 +645,21 @@ auto ChoiceDeclaration::TypeChecked(TypeEnv env, Env ct_env) const
   return *this;  // TODO.
 }
 
-auto TopLevel(std::list<Declaration>* fs) -> std::pair<TypeEnv, Env> {
-  ExecutionEnvironment tops;
+// Signals a type error if the initializing expression does not have
+// the declared type of the variable, otherwise returns this
+// declaration with annotated types.
+auto VariableDeclaration::TypeChecked(TypeEnv env, Env ct_env) const
+    -> Declaration {
+  TCResult type_checked_initializer =
+      TypeCheckExp(initializer, env, ct_env, nullptr, TCContext::ValueContext);
+  Value* declared_type = ToType(source_location, InterpExp(ct_env, type));
+  ExpectType(source_location, "initializer of variable", declared_type,
+             type_checked_initializer.type);
+  return *this;
+}
+
+auto TopLevel(std::list<Declaration>* fs) -> TypeCheckContext {
+  TypeCheckContext tops;
   bool found_main = false;
 
   for (auto const& d : *fs) {
@@ -661,30 +677,37 @@ auto TopLevel(std::list<Declaration>* fs) -> std::pair<TypeEnv, Env> {
   return tops;
 }
 
-auto FunctionDeclaration::TopLevel(ExecutionEnvironment& tops) const -> void {
-  auto t = TypeOfFunDef(tops.first, tops.second, definition);
-  tops.first.Set(Name(), t);
+auto FunctionDeclaration::TopLevel(TypeCheckContext& tops) const -> void {
+  auto t = TypeOfFunDef(tops.types, tops.values, definition);
+  tops.types.Set(Name(), t);
 }
 
-auto StructDeclaration::TopLevel(ExecutionEnvironment& tops) const -> void {
-  auto st = TypeOfStructDef(&definition, tops.first, tops.second);
+auto StructDeclaration::TopLevel(TypeCheckContext& tops) const -> void {
+  auto st = TypeOfStructDef(&definition, tops.types, tops.values);
   Address a = AllocateValue(st);
-  tops.second.Set(Name(), a);  // Is this obsolete?
+  tops.values.Set(Name(), a);  // Is this obsolete?
   auto params = MakeTupleTypeVal(st->u.struct_type.fields);
   auto fun_ty = MakeFunTypeVal(params, st);
-  tops.first.Set(Name(), fun_ty);
+  tops.types.Set(Name(), fun_ty);
 }
 
-auto ChoiceDeclaration::TopLevel(ExecutionEnvironment& tops) const -> void {
+auto ChoiceDeclaration::TopLevel(TypeCheckContext& tops) const -> void {
   auto alts = new VarValues();
   for (auto a : alternatives) {
-    auto t = ToType(line_num, InterpExp(tops.second, a.second));
+    auto t = ToType(line_num, InterpExp(tops.values, a.second));
     alts->push_back(std::make_pair(a.first, t));
   }
   auto ct = MakeChoiceTypeVal(name, alts);
   Address a = AllocateValue(ct);
-  tops.second.Set(Name(), a);  // Is this obsolete?
-  tops.first.Set(Name(), ct);
+  tops.values.Set(Name(), a);  // Is this obsolete?
+  tops.types.Set(Name(), ct);
+}
+
+// Associate the variable name with it's declared type in the
+// compile-time symbol table.
+auto VariableDeclaration::TopLevel(TypeCheckContext& tops) const -> void {
+  Value* declared_type = ToType(source_location, InterpExp(tops.values, type));
+  tops.types.Set(Name(), declared_type);
 }
 
 }  // namespace Carbon

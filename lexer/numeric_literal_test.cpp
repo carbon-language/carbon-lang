@@ -21,19 +21,19 @@ struct NumericLiteralTest : ::testing::Test {
       translators;
   std::vector<std::unique_ptr<DiagnosticEmitter<const char*>>> emitters;
 
-  auto Lex(llvm::StringRef text) -> NumericLiteralToken {
-    llvm::Optional<NumericLiteralToken> result = NumericLiteralToken::Lex(text);
+  auto Lex(llvm::StringRef text) -> LexedNumericLiteral {
+    llvm::Optional<LexedNumericLiteral> result = LexedNumericLiteral::Lex(text);
     assert(result);
     EXPECT_EQ(result->Text(), text);
     return *result;
   }
 
-  auto Parse(llvm::StringRef text) -> NumericLiteralToken::Parser {
+  auto Parse(llvm::StringRef text) -> LexedNumericLiteral::Parser {
     translators.push_back(
         std::make_unique<Testing::SingleTokenDiagnosticTranslator>(text));
     emitters.push_back(std::make_unique<DiagnosticEmitter<const char*>>(
         *translators.back(), ConsoleDiagnosticConsumer()));
-    return NumericLiteralToken::Parser(*emitters.back(), Lex(text));
+    return LexedNumericLiteral::Parser(*emitters.back(), Lex(text));
   }
 };
 

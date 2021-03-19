@@ -10,7 +10,7 @@
 
 namespace Carbon {
 
-class StringLiteralToken {
+class LexedStringLiteral {
  public:
   // Get the text corresponding to this literal.
   auto Text() const -> llvm::StringRef { return text; }
@@ -21,7 +21,7 @@ class StringLiteralToken {
   // Extract a string literal token from the given text, if it has a suitable
   // form.
   static auto Lex(llvm::StringRef source_text)
-      -> llvm::Optional<StringLiteralToken>;
+      -> llvm::Optional<LexedStringLiteral>;
 
   // The result of expanding escape sequences in a string literal.
   struct ExpandedValue {
@@ -35,7 +35,7 @@ class StringLiteralToken {
       -> ExpandedValue;
 
  private:
-  StringLiteralToken(llvm::StringRef text, llvm::StringRef content,
+  LexedStringLiteral(llvm::StringRef text, llvm::StringRef content,
                      int hash_level, bool multi_line)
       : text(text),
         content(content),

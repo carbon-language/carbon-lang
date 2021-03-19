@@ -23,6 +23,8 @@ namespace Carbon {
 
 class TokenizedBuffer;
 
+namespace Internal {
+
 // A lightweight handle to a lexed token in a `TokenizedBuffer`.
 //
 // This type's preferred name is `TokenizedBuffer::Token` and is only defined
@@ -65,12 +67,14 @@ class TokenizedBufferToken {
   }
 
  private:
-  friend class TokenizedBuffer;
+  friend TokenizedBuffer;
 
   explicit TokenizedBufferToken(int index) : index(index) {}
 
   int32_t index;
 };
+
+}  // namespace Internal
 
 // A buffer of tokenized Carbon source code.
 //
@@ -80,12 +84,10 @@ class TokenizedBufferToken {
 //
 // Lexing errors result in a potentially incomplete sequence of tokens and
 // `HasError` returning true.
-class TokenizedBuffer
-    : public DiagnosticLocationTranslator<const char*>,
-      public DiagnosticLocationTranslator<TokenizedBufferToken> {
+class TokenizedBuffer {
  public:
   // A lightweight handle to a lexed token in a `TokenizedBuffer`.
-  using Token = TokenizedBufferToken;
+  using Token = Internal::TokenizedBufferToken;
 
   // A lightweight handle to a lexed line in a `TokenizedBuffer`.
   //
@@ -234,6 +236,21 @@ class TokenizedBuffer
           is_decimal(is_decimal) {}
   };
 
+  // A diagnostic location translator that maps token locations into source
+  // buffer locations.
+  class TokenLocationTranslator
+      : public DiagnosticLocationTranslator<Internal::TokenizedBufferToken> {
+   public:
+    explicit TokenLocationTranslator(TokenizedBuffer& buffer)
+        : buffer_(&buffer) {}
+
+    // Map the given token into a diagnostic location.
+    auto GetLocation(Token token) -> Diagnostic::Location override;
+
+   private:
+    TokenizedBuffer* buffer_;
+  };
+
   // Lexes a buffer of source code into a tokenized buffer.
   //
   // The provided source buffer must outlive any returned `TokenizedBuffer`
@@ -326,15 +343,25 @@ class TokenizedBuffer
   auto PrintToken(llvm::raw_ostream& output_stream, Token token) const -> void;
 
  private:
-  // Implementation of DiagnosticLocationTranslator<const char*>.
-  auto GetLocation(const char*) -> Diagnostic::Location override;
-
-  // Implementation of DiagnosticLocationTranslator<Token>.
-  auto GetLocation(Token) -> Diagnostic::Location override;
-
   // Implementation detail struct implementing the actual lexer logic.
   class Lexer;
   friend Lexer;
+
+  // A diagnostic location translator that maps token locations into source
+  // buffer locations.
+  class SourceBufferLocationTranslator
+      : public DiagnosticLocationTranslator<const char*> {
+   public:
+    explicit SourceBufferLocationTranslator(TokenizedBuffer& buffer)
+        : buffer_(&buffer) {}
+
+    // Map the given position within the source buffer into a diagnostic
+    // location.
+    auto GetLocation(const char* pos) -> Diagnostic::Location override;
+
+   private:
+    TokenizedBuffer* buffer_;
+  };
 
   // Specifies minimum widths to use when printing a token's fields via
   // `printToken`.
@@ -427,6 +454,10 @@ class TokenizedBuffer
 
   bool has_errors = false;
 };
+
+// A diagnostic emitter that uses positions within a source buffer's text as
+// its source of location information.
+using LexerDiagnosticEmitter = DiagnosticEmitter<const char*>;
 
 // A diagnostic emitter that uses tokens as its source of location information.
 using TokenDiagnosticEmitter = DiagnosticEmitter<TokenizedBuffer::Token>;

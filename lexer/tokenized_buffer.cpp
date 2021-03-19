@@ -64,8 +64,12 @@ struct UnrecognizedCharacters : SimpleDiagnostic<UnrecognizedCharacters> {
 // tokenized buffer with the lexed tokens.
 class TokenizedBuffer::Lexer {
   TokenizedBuffer& buffer;
-  DiagnosticEmitter<const char*> emitter;
-  DiagnosticEmitter<Token> token_emitter;
+
+  SourceBufferLocationTranslator translator;
+  LexerDiagnosticEmitter emitter;
+
+  TokenLocationTranslator token_translator;
+  TokenDiagnosticEmitter token_emitter;
 
   Line current_line;
   LineInfo* current_line_info;
@@ -78,8 +82,10 @@ class TokenizedBuffer::Lexer {
  public:
   Lexer(TokenizedBuffer& buffer, DiagnosticConsumer& consumer)
       : buffer(buffer),
-        emitter(buffer, consumer),
-        token_emitter(buffer, consumer),
+        translator(buffer),
+        emitter(translator, consumer),
+        token_translator(buffer),
+        token_emitter(token_translator, consumer),
         current_line(buffer.AddLine({0, 0, 0})),
         current_line_info(&buffer.GetLineInfo(current_line)) {}
 
@@ -183,8 +189,8 @@ class TokenizedBuffer::Lexer {
   }
 
   auto LexNumericLiteral(llvm::StringRef& source_text) -> LexResult {
-    llvm::Optional<NumericLiteralToken> literal =
-        NumericLiteralToken::Lex(source_text);
+    llvm::Optional<LexedNumericLiteral> literal =
+        LexedNumericLiteral::Lex(source_text);
     if (!literal) {
       return LexResult::NoMatch();
     }
@@ -199,10 +205,10 @@ class TokenizedBuffer::Lexer {
       set_indent = true;
     }
 
-    NumericLiteralToken::Parser literal_parser(emitter, *literal);
+    LexedNumericLiteral::Parser literal_parser(emitter, *literal);
 
     switch (literal_parser.Check()) {
-      case NumericLiteralToken::Parser::UnrecoverableError: {
+      case LexedNumericLiteral::Parser::UnrecoverableError: {
         auto token = buffer.AddToken({
             .kind = TokenKind::Error(),
             .token_line = current_line,
@@ -213,11 +219,11 @@ class TokenizedBuffer::Lexer {
         return token;
       }
 
-      case NumericLiteralToken::Parser::RecoverableError:
+      case LexedNumericLiteral::Parser::RecoverableError:
         buffer.has_errors = true;
         break;
 
-      case NumericLiteralToken::Parser::Valid:
+      case LexedNumericLiteral::Parser::Valid:
         break;
     }
 
@@ -242,8 +248,8 @@ class TokenizedBuffer::Lexer {
   }
 
   auto LexStringLiteral(llvm::StringRef& source_text) -> LexResult {
-    llvm::Optional<StringLiteralToken> literal =
-        StringLiteralToken::Lex(source_text);
+    llvm::Optional<LexedStringLiteral> literal =
+        LexedStringLiteral::Lex(source_text);
     if (!literal) {
       return LexResult::NoMatch();
     }
@@ -530,8 +536,8 @@ auto TokenizedBuffer::GetTokenText(Token token) const -> llvm::StringRef {
       token_info.kind == TokenKind::RealLiteral()) {
     auto& line_info = GetLineInfo(token_info.token_line);
     int64_t token_start = line_info.start + token_info.column;
-    llvm::Optional<NumericLiteralToken> relexed_token =
-        NumericLiteralToken::Lex(source->Text().substr(token_start));
+    llvm::Optional<LexedNumericLiteral> relexed_token =
+        LexedNumericLiteral::Lex(source->Text().substr(token_start));
     assert(relexed_token && "Could not reform numeric literal token.");
     return relexed_token->Text();
   }
@@ -541,8 +547,8 @@ auto TokenizedBuffer::GetTokenText(Token token) const -> llvm::StringRef {
   if (token_info.kind == TokenKind::StringLiteral()) {
     auto& line_info = GetLineInfo(token_info.token_line);
     int64_t token_start = line_info.start + token_info.column;
-    llvm::Optional<StringLiteralToken> relexed_token =
-        StringLiteralToken::Lex(source->Text().substr(token_start));
+    llvm::Optional<LexedStringLiteral> relexed_token =
+        LexedStringLiteral::Lex(source->Text().substr(token_start));
     assert(relexed_token && "Could not reform string literal token.");
     return relexed_token->Text();
   }
@@ -749,25 +755,26 @@ auto TokenizedBuffer::AddToken(TokenInfo info) -> Token {
   return Token(static_cast<int>(token_infos.size()) - 1);
 }
 
-auto TokenizedBuffer::GetLocation(const char* loc) -> Diagnostic::Location {
-  assert(llvm::is_sorted(
-             std::array{source->Text().begin(), loc, source->Text().end()}) &&
+auto TokenizedBuffer::SourceBufferLocationTranslator::GetLocation(
+    const char* loc) -> Diagnostic::Location {
+  assert(llvm::is_sorted(std::array{buffer_->source->Text().begin(), loc,
+                                    buffer_->source->Text().end()}) &&
          "location not within buffer");
-  int64_t offset = loc - source->Text().begin();
+  int64_t offset = loc - buffer_->source->Text().begin();
 
   // Find the first line starting after the given location. Note that we can't
   // inspect `line.length` here because it is not necessarily correct for the
   // final line.
   auto line_it = std::partition_point(
-      line_infos.begin(), line_infos.end(),
+      buffer_->line_infos.begin(), buffer_->line_infos.end(),
       [offset](const LineInfo& line) { return line.start <= offset; });
-  bool incomplete_line_info = line_it == line_infos.end();
+  bool incomplete_line_info = line_it == buffer_->line_infos.end();
 
   // Step back one line to find the line containing the given position.
-  assert(line_it != line_infos.begin() &&
+  assert(line_it != buffer_->line_infos.begin() &&
          "location precedes the start of the first line");
   --line_it;
-  int line_number = line_it - line_infos.begin();
+  int line_number = line_it - buffer_->line_infos.begin();
   int column_number = offset - line_it->start;
 
   // We might still be lexing the last line. If so, check to see if there are
@@ -776,7 +783,7 @@ auto TokenizedBuffer::GetLocation(const char* loc) -> Diagnostic::Location {
   if (incomplete_line_info) {
     column_number = 0;
     for (int64_t i = line_it->start; i != offset; ++i) {
-      if (source->Text()[i] == '\n') {
+      if (buffer_->source->Text()[i] == '\n') {
         ++line_number;
         column_number = 0;
       } else {
@@ -785,22 +792,23 @@ auto TokenizedBuffer::GetLocation(const char* loc) -> Diagnostic::Location {
     }
   }
 
-  return {.file_name = source->Filename().str(),
+  return {.file_name = buffer_->source->Filename().str(),
           .line_number = line_number + 1,
           .column_number = column_number + 1};
 }
 
-auto TokenizedBuffer::GetLocation(Token token) -> Diagnostic::Location {
+auto TokenizedBuffer::TokenLocationTranslator::GetLocation(Token token)
+    -> Diagnostic::Location {
   // Map the token location into a position within the source buffer.
-  auto& token_info = GetTokenInfo(token);
-  auto& line_info = GetLineInfo(token_info.token_line);
+  auto& token_info = buffer_->GetTokenInfo(token);
+  auto& line_info = buffer_->GetLineInfo(token_info.token_line);
   const char* token_start =
-      source->Text().begin() + line_info.start + token_info.column;
+      buffer_->source->Text().begin() + line_info.start + token_info.column;
 
   // Find the corresponding file location.
   // TODO: Should we somehow indicate in the diagnostic location if this token
   // is a recovery token that doesn't correspond to the original source?
-  return GetLocation(token_start);
+  return SourceBufferLocationTranslator(*buffer_).GetLocation(token_start);
 }
 
 }  // namespace Carbon
