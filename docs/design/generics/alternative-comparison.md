@@ -25,7 +25,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Impls are values passed as arguments with defaults](#impls-are-values-passed-as-arguments-with-defaults)
     -   [Type-types parameterized by reprs](#type-types-parameterized-by-reprs)
 -   [Comparisons](#comparisons)
-    -   ["Type-types parameterized by reprs" vs "facet types"](#type-types-parameterized-by-reprs-vs-facet-types)
+    -   ["Type-types parameterized by reprs" versus "facet types"](#type-types-parameterized-by-reprs-versus-facet-types)
     -   [Interfaces are concrete types](#interfaces-are-concrete-types-1)
     -   [Facet type-types](#facet-type-types)
     -   [Combined interfaces](#combined-interfaces)
@@ -383,7 +383,7 @@ Two main concerns (from
 
 ## Comparisons
 
-### "Type-types parameterized by reprs" vs "facet types"
+### "Type-types parameterized by reprs" versus "facet types"
 
 [Carbon Generics meeting Jan 22, 2020 (TODO)](#broken-links-footnote)<!-- T:Carbon Generics meeting Jan 22, 2020 -->
 
