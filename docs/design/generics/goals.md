@@ -127,7 +127,7 @@ nice to have.
 
 Generics shall provide better code generation (both code size and speed) in all
 cases over C++ templates.
-[Performance is the top priority for Carbon](/docs/project/goals.md#performance-critical-software),
+[Performance is the top priority for Carbon](../../project/goals.md#performance-critical-software),
 and we expect to use generics pervasively, and so they can't compromise that
 goal in release builds.
 
