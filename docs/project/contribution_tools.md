@@ -86,7 +86,7 @@ periodically run `brew upgrade`.
 
 #### Python using `pyenv`
 
-You will need Python version 3.6 or newer for Carbon, and everything below
+You will need Python version 3.6 or newer for Carbon. Everything below
 assumes that `python` or `pip` reach the Python 3 tools, not legacy
 installations of Python 2.
 
