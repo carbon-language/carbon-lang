@@ -1,12 +1,10 @@
+# Carbon deep dive: combined interfaces
+
 <!--
 Part of the Carbon Language project, under the Apache License v2.0 with LLVM
 Exceptions. See /LICENSE for license information.
 SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -->
-
-# Carbon deep dive: combined interfaces
-
-## Table of contents
 
 <!-- toc -->
 
