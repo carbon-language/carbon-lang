@@ -113,13 +113,17 @@ generic functions:
     get something semantically equivalent to separate instantiation, but likely
     with different size, build time, and performance characteristics.
 
-The strategy used by the compiler should not be semantically visible to the
-user. Users should be able to write a generic version of a function once, and
-then be able to control the mix of strategies used to generate the code for that
-function. For example, this can be to trade off binary size vs speed (maybe some
-specific specializations are needed for performance, but others would just be
-code bloat), or support dynamic dispatch when types are not known at compile
-time.
+By default, we expect the implementation strategy to be controlled by the
+compiler, and not semantically visible to the user. For example, the compiler
+might use the static strategy for release builds and the dynamic strategy for
+development. Or it might choose between them on a more granular level (maybe
+some specific specializations are needed for performance, but others would just
+be code bloat) based on code analysis or profiling.
+
+In addition, the user may opt in to using the dynamic strategy in specific
+cases. This could be just to control binary size in cases the user knows are not
+performance sensitive, or it could be to get additional support for operating on
+values with dynamic types.
 
 ### Upgrade path from templates
 
