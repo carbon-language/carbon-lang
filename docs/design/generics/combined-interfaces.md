@@ -10,6 +10,8 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 <!-- toc -->
 
+## Table of contents
+
 -   [What is this?](#what-is-this)
 -   [Overview](#overview)
 -   [Interfaces](#interfaces)
@@ -327,7 +329,7 @@ type, or a "type-type".
 **Note:** A type may implement any number of different interfaces, but may
 provide at most one implementation of any single interface. This makes the act
 of selecting an implementation of an interface for a type unambiguous throughout
-the whole program, so e.g. `Point as Vector` is well defined.
+the whole program, so for example `Point as Vector` is well defined.
 
 We don't expect users to ordinarily name facet types explicitly in source code.
 Instead, values are cast to a facet type as part of calling a generic function,
@@ -643,7 +645,8 @@ interfaces with the same definition but different names are different, just like
 two structs with the same definition but different names are considered
 different types. For example, lets say we define another interface, say
 `LegoFish`, with the same `Add` and `Scale` method signatures. Implementing
-`Vector` would not imply an implementation of `LegoFish` and vice versa.
+`Vector` would not imply an implementation of `LegoFish` and the other way
+around.
 
 An interface's name may be used in a few different contexts:
 
@@ -1540,7 +1543,7 @@ Assert(PeekAtTopOfStack(my_array) == 3);
 ```
 
 For context, see
-["Interface type parameters vs. associated types" in the Carbon: Generics Terminology doc](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#interface-type-parameters-vs-associated-types).
+["Interface type parameters versus associated types" in the Carbon: Generics Terminology doc](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#interface-type-parameters-vs-associated-types).
 
 **Comparison with other languages:** Both
 [Rust](https://doc.rust-lang.org/book/ch19-03-advanced-traits.html#specifying-placeholder-types-in-trait-definitions-with-associated-types)
@@ -1722,9 +1725,9 @@ arguments.
 -   One implementation per interface & type parameter combination is more
     consistent with other parameterized constructs in Carbon. For example,
     parameterized types `Foo(A)` and `Foo(B)` are distinct, unconnected types.
--   It would be hard to give clear guidance on when to use associated types vs.
-    deducible type parameters, since which is best for a particular use is more
-    of a subtle judgement call.
+-   It would be hard to give clear guidance on when to use associated types
+    versus deducible type parameters, since which is best for a particular use
+    is more of a subtle judgement call.
 -   Deducible parameters
     [complicate the lookup rules for impls](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/appendix-interface-param-impl.md).
 -   Deducible parameters in structural interfaces require additional rules to
@@ -1887,7 +1890,7 @@ Similarly in an interface definition:
 interface {
   // Argument passing:
   var NSpacePoint(.N = 2): PointT;
-  // vs. `where` clause:
+  // versus `where` clause:
   var NSpacePoint: PointT where PointT.N == 2;
 }
 ```
@@ -1901,7 +1904,7 @@ structural interface Point2DInteface {
   extends NSpacePoint(.N = 2);
 }
 
-// vs. `where` clause:
+// versus `where` clause:
 alias Point2DInterface = NSpacePoint where Point2D.N == 2;
 structural interface Point2DInterface {
   extends NSpacePoint where NSpacePoint.N == 2;
@@ -1926,7 +1929,7 @@ interface Container {
   var Type:$ ElementType;
   // Argument passing:
   var Iterator(.ElementType = ElementType):$ IteratorType;
-  // vs. `where` clause:
+  // versus `where` clause:
   var Iterator:$ IteratorType where IteratorType.ElementType == ElementType;
   ...
 }
@@ -1939,7 +1942,7 @@ containing integers:
 ```
 // Argument passing:
 fn SumIntStack[Stack(.ElementType = Int):$ T](Ptr(T): s) -> Int {
-// vs. `where` clause:
+// versus `where` clause:
 fn SumIntStack[Stack:$ T](Ptr(T): s) -> Int where T.ElementType == Int {
 
 // Same implementation in either case:
@@ -1961,7 +1964,7 @@ structural interface IntStack {
   extends Stack(.ElementType = Int);
 }
 
-// vs. `where` clause:
+// versus `where` clause:
 alias IntStack = Stack where IntStack.ElementType == Int;
 structural interface IntStack {
   extends Stack where Stack.ElementType == Int;
@@ -2118,7 +2121,7 @@ support this with argument passing.
 fn F[RandomAccessIterator:$ IterType,
      ContainerInterface(.IteratorType=IterType):$ ContainerType]
     (ContainerType: c);
-// vs. `where` clause:
+// versus `where` clause:
 fn F[ContainerInterface:$ ContainerType](ContainerType: c)
     where ContainerType.IteratorType as RandomAccessIterator;
 
@@ -2130,7 +2133,7 @@ fn F[RandomAccessContainer:$ ContainerType](ContainerType: c);
 alias RandomAccessContainer =
     for_some[RandomAccessIterator:$ IterType]
     ContainerInterface(.IteratorType=IterType);
-// vs. `where` clause:
+// versus `where` clause:
 alias RandomAccessContainer = ContainerInterface
     where RandomAccessContainer.IteratorType as RandomAccessIterator;
 ```
@@ -2159,7 +2162,7 @@ interface PairInterface {
 fn F[Type:$ T, PairInterface(.Left = T, .Right = T):$ MatchedPairType]
     (Ptr(MatchedPairType): x);
 
-// vs. `where` clause:
+// versus `where` clause:
 fn F[PairInterface:$ MatchedPairType](Ptr(MatchedPairType): x)
     where MatchedPairType.Left == MatchedPairType.Right;
 ```
@@ -2179,7 +2182,7 @@ fn EqualContainers[HasEquality:$ ET,
                    Container(.ElementType = ET):$ CT2]
     (Ptr(CT1): c1, Ptr(CT2): c2) -> Bool;
 
-// vs. `where` clause:
+// versus `where` clause:
 fn EqualContainers[Container:$ CT1, Container:$ CT2]
     (Ptr(CT1): c1, Ptr(CT2): c2) -> Bool
     where CT1.ElementType == CT2.ElementType,
@@ -2259,7 +2262,7 @@ fn F[Extends(BaseType):$ T](Ptr(T): p);
 fn UpCast[Type:$ U, Extends(U):$ T](Ptr(T): p, U) -> Ptr(U);
 fn DownCast[Type:$ T](Ptr(T): p, Extends(T):$ U) -> Ptr(U);
 
-// vs. `where` clause:
+// versus `where` clause:
 fn F[Type:$ T](Ptr(T): p) where T extends BaseType;
 fn UpCast[Type:$ T](Ptr(T): p, Type:$ U) -> Ptr(U) where T extends U;
 fn DownCast[Type:$ T](Ptr(T): p, Type:$ U) -> Ptr(U) where U extends T;
@@ -2333,7 +2336,7 @@ fn UseContainer[Container(.SliceType = .Self):$ T](T: c) -> Bool {
   return c == c.Slice(...);
 }
 
-// vs. `where` clause
+// versus `where` clause
 fn Relu[HasAbs:$ T](T: x) where T.MagnitudeType == T {
   return (x.Abs() + x) / 2;
 }
@@ -2350,7 +2353,7 @@ interface Container {
 
   // Argument passing:
   var Container(.ElementType = ElementType, .SliceType = .Self):$ SliceType;
-  // vs. `where` clause
+  // versus `where` clause
   var Container:$ SliceType where SliceType.ElementType == ElementType,
                                   Slicetype.SliceType == SliceType;
 
@@ -2372,7 +2375,7 @@ structural interface ContainerIsSlice {
   extends Container(.SliceType = Self);
 }
 
-// vs. `where` clause
+// versus `where` clause
 alias RealAbs = HasAbs where RealAbs.MagnitudeType == RealAbs;
 structural interface RealAbs {
   extends HasAbs where HasAbs.MagnitudeType == Self;
@@ -2679,8 +2682,8 @@ met. To do this, we leverage [external impl](#external-impl):
 
 -   We can provide the same impl argument in two places to constrain them to be
     the same.
--   We can declare the impl argument with a more-restrictive type, to e.g. say
-    this impl can only be used if that type satisfies an interface.
+-   We can declare the impl argument with a more-restrictive type, to for
+    example say this impl can only be used if that type satisfies an interface.
 
 **Example:** [Interface constraint] Here we implement the `Printable` interface
 for arrays of `N` elements of `Printable` type `T`, generically for `N`.
@@ -2766,9 +2769,9 @@ struct Pair(Type:$ T, Type:$ U) {
 ```
 
 We would need rules to prevent inconsistent reuse of the names from the outer
-scope. This proposal has the desirable property that the syntax for internal vs.
-external conditional conformance matches. This makes it straightforward to
-refactor between those two choices, and is easier to learn.
+scope. This proposal has the desirable property that the syntax for internal
+versus external conditional conformance matches. This makes it straightforward
+to refactor between those two choices, and is easier to learn.
 
 Some other ideas we have considered lack this consistency:
 
@@ -3001,7 +3004,7 @@ fn G[Type:$ T, SInterface(T):$ SType](Ptr(SType): s, Ptr(T): t) {
 }
 var C++::S(Int) : x;
 var Int : y = 3;
-G(&x, &y);  // C++::S(Int) implements SInterface(Int) via templated impl
+G(&x, &y);  // C++::S(Int) implements SInterface(Int) by way of templated impl
 ```
 
 #### Moving a C++ template to Carbon
@@ -3120,7 +3123,8 @@ Given a type `U`, define the type-type `CompatibleWith(U)` as follows:
 > are
 > [compatible](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#compatible-types).
 > That is values of types `T` and `U` can be cast back and forth without any
-> change in representation (e.g. `T` is an [adaptor](#adapting-types) for `U`).
+> change in representation (for example `T` is an [adaptor](#adapting-types) for
+> `U`).
 
 To support this, we extend the requirements that type-types are allowed to have
 to include a "data representation requirement" option.
@@ -3223,8 +3227,8 @@ assert((song as SongByArtistThenTitle).Compare(song2) == CaompareResult.Less);
 What is the size of a type?
 
 -   It could be fully known and fixed at compile time -- this is true of
-    primitive types (`Int32`, `Float64`, etc.) most other concrete types (e.g.
-    most
+    primitive types (`Int32`, `Float64`, etc.) most other concrete types (for
+    example most
     [structs](https://github.com/josh11b/carbon-lang/blob/structs/docs/design/structs.md)).
 -   It could be known generically. This means that it will be known at codegen
     time, but not at type-checking time.
@@ -3545,7 +3549,7 @@ PrintIt(dynamic[1]);  // T == DynPtr(Printable).T, PtrT == DynPtr(Printable)
 
 #### Boxed
 
-One way of dealing with unsized types is via a pointer, as with `T*` and
+One way of dealing with unsized types is by way of a pointer, as with `T*` and
 `DynPtr` above. Sometimes, though, you would like to work with something closer
 to value semantics. For example, the `Deref` interface and `DynPtr` type
 captures nothing about ownership of the pointed-to value, or how to destroy it.
@@ -3740,7 +3744,7 @@ more general implementations for anything unspecified.
 One variation on this may be default implementations of entire interfaces. For
 example, `RandomAccessContainer` refines `Container` with an `IteratorType`
 satisfying `RandomAccessIterator`. That is sufficient to provide a default
-implementation of the indexing operator (operator `[]`), via
+implementation of the indexing operator (operator `[]`), by way of
 [implementing an interface](#operator-overloading).
 
 ```
@@ -3767,6 +3771,37 @@ interface RandomAccessContainer {
 
 Being able to decorate associated items with `upcoming`, `deprecated`, etc. to
 allow for transition periods when items are being added or removed.
+
+As an alternative, users could version their interfaces explicitly. For example,
+if we had an interface `Foo` with a method `F`:
+
+```
+interface Foo {
+  method (Self: this) F() -> Int;
+}
+```
+
+and we want to add a method `G` with a default implementation, we do so in an
+interface with a new name:
+
+```
+interface Foo2 {
+  method (Self: this) F() -> Int;
+  method (Self: this) G() -> Int { return this.F() + 1; }
+}
+
+structural interface Foo {
+  impl Foo2;
+  alias F = Foo2.F;
+}
+```
+
+Since `Foo` is now a structural interface, implementing `Foo2` means you
+automatically also implement `Foo`. Further, implementing `Foo` implements
+`Foo2` with the default implementation of `G`. So, any function requiring an
+implementation of either `Foo` or `Foo2` is satisfied by any type implementing
+either of those. This would allow an incremental transition from `Foo` to
+`Foo2`.
 
 ### Testing
 
@@ -3948,8 +3983,8 @@ you couldn't it would:
 
 Maybe being able to take the address of a member is an opt-in feature? Similarly
 for local variables. Maybe can call function taking a pointer from a member
-function as long as it doesn't capture? We need to firm up design for instance
-fields before interfaces for instance fields.
+function as long as it doesn't capture? We need to firm up design for example
+fields before interfaces for example fields.
 
 ## Notes
 
