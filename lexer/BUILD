@@ -33,6 +33,16 @@ cc_library(
 )
 
 cc_library(
+    name = "test_helpers",
+    testonly = 1,
+    hdrs = ["test_helpers.h"],
+    deps = [
+        "//diagnostics:diagnostic_emitter",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_library(
     name = "numeric_literal",
     srcs = ["numeric_literal.cpp"],
     hdrs = ["numeric_literal.h"],
@@ -48,6 +58,7 @@ cc_test(
     srcs = ["numeric_literal_test.cpp"],
     deps = [
         ":numeric_literal",
+        ":test_helpers",
         "//diagnostics:diagnostic_emitter",
         "@llvm-project//llvm:Support",
         "@llvm-project//llvm:gmock",
@@ -63,6 +74,7 @@ cc_fuzz_test(
     deps = [
         ":numeric_literal",
         "//diagnostics:diagnostic_emitter",
+        "//diagnostics:null_diagnostics",
         "@llvm-project//llvm:Support",
     ],
 )
@@ -83,6 +95,7 @@ cc_test(
     srcs = ["string_literal_test.cpp"],
     deps = [
         ":string_literal",
+        ":test_helpers",
         "//diagnostics:diagnostic_emitter",
         "@llvm-project//llvm:Support",
         "@llvm-project//llvm:gmock",
@@ -98,6 +111,7 @@ cc_fuzz_test(
     deps = [
         ":string_literal",
         "//diagnostics:diagnostic_emitter",
+        "//diagnostics:null_diagnostics",
         "@llvm-project//llvm:Support",
     ],
 )
@@ -135,6 +149,7 @@ cc_test(
         ":tokenized_buffer",
         ":tokenized_buffer_test_helpers",
         "//diagnostics:diagnostic_emitter",
+        "//diagnostics:mocks",
         "@llvm-project//llvm:Support",
         "@llvm-project//llvm:gmock",
         "@llvm-project//llvm:gtest",
@@ -149,6 +164,7 @@ cc_fuzz_test(
     deps = [
         ":tokenized_buffer",
         "//diagnostics:diagnostic_emitter",
+        "//diagnostics:null_diagnostics",
         "@llvm-project//llvm:Support",
     ],
 )
