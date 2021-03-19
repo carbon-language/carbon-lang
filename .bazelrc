@@ -1,0 +1,16 @@
+# Part of the Carbon Language project, under the Apache License v2.0 with LLVM
+# Exceptions. See /LICENSE for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+
+build --crosstool_top=@bazel_cc_toolchain
+build --host_crosstool_top=@bazel_cc_toolchain
+
+build:force_local_bootstrap --repo_env=CARBON_FORCE_LOCAL_BOOTSTRAP_BUILD=1
+
+build:fuzzer --features=fuzzer
+
+# Force actions to have a UTF-8 language encoding.
+# TODO: Need to investigate what this should be on Windows, but at least for
+# Linux and macOS this seems strictly better than the Bazel default of just
+# `en_US`.
+build --action_env=LANG=en_US.UTF-8
