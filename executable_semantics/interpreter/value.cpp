@@ -82,13 +82,13 @@ auto MakeTupleVal(std::vector<std::pair<std::string, Address>>* elts)
   return v;
 }
 
-auto MakeAltVal(std::string alt_name, std::string choice_name, Value* arg)
+auto MakeAltVal(std::string alt_name, std::string choice_name, Address argument)
     -> Value* {
   auto* v = new Value();
   v->tag = ValKind::AltV;
   v->u.alt.alt_name = new std::string(std::move(alt_name));
   v->u.alt.choice_name = new std::string(std::move(choice_name));
-  v->u.alt.arg = arg;
+  v->u.alt.argument = argument;
   return v;
 }
 
@@ -203,7 +203,7 @@ void PrintValue(Value* val, std::ostream& out) {
     case ValKind::AltV: {
       out << "alt " << *val->u.alt.choice_name << "." << *val->u.alt.alt_name
           << " ";
-      PrintValue(val->u.alt.arg, out);
+      PrintValue(state->heap[val->u.alt.argument], out);
       break;
     }
     case ValKind::StructV: {

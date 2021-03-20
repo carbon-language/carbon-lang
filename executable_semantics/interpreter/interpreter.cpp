@@ -66,8 +66,10 @@ auto CopyVal(Value* val, int line_num) -> Value* {
       return MakeTupleVal(elts);
     }
     case ValKind::AltV: {
-      Value* arg = CopyVal(val->u.alt.arg, line_num);
-      return MakeAltVal(*val->u.alt.alt_name, *val->u.alt.choice_name, arg);
+      Value* arg = CopyVal(state->heap[val->u.alt.argument], line_num);
+      Address argument_address = AllocateValue(arg);
+      return MakeAltVal(*val->u.alt.alt_name, *val->u.alt.choice_name,
+                        argument_address);
     }
     case ValKind::StructV: {
       Value* inits = CopyVal(val->u.struct_val.inits, line_num);
@@ -114,20 +116,20 @@ auto CopyVal(Value* val, int line_num) -> Value* {
   }
 }
 
-void KillAddress(Address address);
+void KillObject(Address address);
 
 // Marks all of the sub-objects of this value as dead.
 void KillSubObjects(Value* val) {
   switch (val->tag) {
     case ValKind::AltV:
-      KillValue(val->u.alt.arg);
+      KillObject(val->u.alt.argument);
       break;
     case ValKind::StructV:
-      KillValue(val->u.struct_val.inits);
+      KillSubObjects(val->u.struct_val.inits);
       break;
     case ValKind::TupleV:
       for (auto& elt : *val->u.tuple.elts) {
-        KillAddress(elt.second);
+        KillObject(elt.second);
       }
       break;
     default:
@@ -139,7 +141,7 @@ void KillSubObjects(Value* val) {
 void KillObject(Address address) {
   if (state->alive[address]) {
     state->alive[address] = false;
-    KillValue(state->heap[address]);
+    KillSubObjects(state->heap[address]);
   } else {
     std::cerr << "runtime error, killing an already dead value" << std::endl;
     exit(-1);
@@ -351,8 +353,9 @@ void CallFunction(int line_num, std::vector<Value*> operas, State* state) {
     }
     case ValKind::AltConsV: {
       Value* arg = CopyVal(operas[1], line_num);
-      Value* av = MakeAltVal(*operas[0]->u.alt_cons.alt_name,
-                             *operas[0]->u.alt_cons.choice_name, arg);
+      Value* av =
+          MakeAltVal(*operas[0]->u.alt_cons.alt_name,
+                     *operas[0]->u.alt_cons.choice_name, AllocateValue(arg));
       Frame* frame = state->stack.Top();
       frame->todo.Push(MakeValAct(av));
       break;
@@ -372,7 +375,7 @@ void KillScope(int line_num, Scope* scope) {
       std::cerr << "internal error in KillScope" << std::endl;
       exit(-1);
     }
-    KillAddress(*a);
+    KillObject(*a);
   }
 }
 
@@ -450,7 +453,8 @@ auto PatternMatch(Value* p, Value* v, Env env, std::list<std::string>* vars,
             return std::nullopt;
           }
           std::optional<Env> env_with_matches =
-              PatternMatch(p->u.alt.arg, v->u.alt.arg, env, vars, line_num);
+              PatternMatch(state->heap[p->u.alt.argument],
+                           state->heap[v->u.alt.argument], env, vars, line_num);
           if (!env_with_matches) {
             return std::nullopt;
           }
@@ -531,7 +535,8 @@ void PatternAssignment(Value* pat, Value* val, int line_num) {
             std::cerr << "internal error in pattern assignment" << std::endl;
             exit(-1);
           }
-          PatternAssignment(pat->u.alt.arg, val->u.alt.arg, line_num);
+          PatternAssignment(state->heap[pat->u.alt.argument],
+                            state->heap[val->u.alt.argument], line_num);
           break;
         }
         default:
@@ -956,7 +961,7 @@ void HandleValue() {
   }
   switch (act->tag) {
     case ActionKind::DeleteTmpAction: {
-      KillAddress(act->u.delete_tmp);
+      KillObject(act->u.delete_tmp);
       frame->todo.Pop(2);
       frame->todo.Push(val_act);
       break;
