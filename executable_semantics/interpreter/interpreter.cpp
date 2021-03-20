@@ -117,7 +117,7 @@ auto CopyVal(Value* val, int line_num) -> Value* {
 void KillAddress(Address address);
 
 // Marks all of the sub-objects of this value as dead.
-void KillValue(Value* val) {
+void KillSubObjects(Value* val) {
   switch (val->tag) {
     case ValKind::AltV:
       KillValue(val->u.alt.arg);
