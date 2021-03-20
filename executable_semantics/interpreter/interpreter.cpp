@@ -116,6 +116,7 @@ auto CopyVal(Value* val, int line_num) -> Value* {
 
 void KillAddress(Address address);
 
+// Marks all of the sub-objects of this value as dead.
 void KillValue(Value* val) {
   switch (val->tag) {
     case ValKind::AltV:
@@ -134,6 +135,7 @@ void KillValue(Value* val) {
   }
 }
 
+// Marks as dead this address all of its sub-objects.
 void KillAddress(Address address) {
   if (state->alive[address]) {
     state->alive[address] = false;
