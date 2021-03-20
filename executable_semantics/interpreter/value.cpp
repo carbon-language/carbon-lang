@@ -38,7 +38,6 @@ auto FieldsEqual(VarValues* ts1, VarValues* ts2) -> bool {
 
 auto MakeIntVal(int i) -> Value* {
   auto* v = new Value();
-  v->alive = true;
   v->tag = ValKind::IntV;
   v->u.integer = i;
   return v;
@@ -46,7 +45,6 @@ auto MakeIntVal(int i) -> Value* {
 
 auto MakeBoolVal(bool b) -> Value* {
   auto* v = new Value();
-  v->alive = true;
   v->tag = ValKind::BoolV;
   v->u.boolean = b;
   return v;
@@ -54,7 +52,6 @@ auto MakeBoolVal(bool b) -> Value* {
 
 auto MakeFunVal(std::string name, Value* param, Statement* body) -> Value* {
   auto* v = new Value();
-  v->alive = true;
   v->tag = ValKind::FunV;
   v->u.fun.name = new std::string(std::move(name));
   v->u.fun.param = param;
@@ -64,7 +61,6 @@ auto MakeFunVal(std::string name, Value* param, Statement* body) -> Value* {
 
 auto MakePtrVal(Address addr) -> Value* {
   auto* v = new Value();
-  v->alive = true;
   v->tag = ValKind::PtrV;
   v->u.ptr = addr;
   return v;
@@ -72,7 +68,6 @@ auto MakePtrVal(Address addr) -> Value* {
 
 auto MakeStructVal(Value* type, Value* inits) -> Value* {
   auto* v = new Value();
-  v->alive = true;
   v->tag = ValKind::StructV;
   v->u.struct_val.type = type;
   v->u.struct_val.inits = inits;
@@ -82,26 +77,23 @@ auto MakeStructVal(Value* type, Value* inits) -> Value* {
 auto MakeTupleVal(std::vector<std::pair<std::string, Address>>* elts)
     -> Value* {
   auto* v = new Value();
-  v->alive = true;
   v->tag = ValKind::TupleV;
   v->u.tuple.elts = elts;
   return v;
 }
 
-auto MakeAltVal(std::string alt_name, std::string choice_name, Value* arg)
+auto MakeAltVal(std::string alt_name, std::string choice_name, Address argument)
     -> Value* {
   auto* v = new Value();
-  v->alive = true;
   v->tag = ValKind::AltV;
   v->u.alt.alt_name = new std::string(std::move(alt_name));
   v->u.alt.choice_name = new std::string(std::move(choice_name));
-  v->u.alt.arg = arg;
+  v->u.alt.argument = argument;
   return v;
 }
 
 auto MakeAltCons(std::string alt_name, std::string choice_name) -> Value* {
   auto* v = new Value();
-  v->alive = true;
   v->tag = ValKind::AltConsV;
   v->u.alt.alt_name = new std::string(std::move(alt_name));
   v->u.alt.choice_name = new std::string(std::move(choice_name));
@@ -110,7 +102,6 @@ auto MakeAltCons(std::string alt_name, std::string choice_name) -> Value* {
 
 auto MakeVarPatVal(std::string name, Value* type) -> Value* {
   auto* v = new Value();
-  v->alive = true;
   v->tag = ValKind::VarPatV;
   v->u.var_pat.name = new std::string(std::move(name));
   v->u.var_pat.type = type;
@@ -119,7 +110,6 @@ auto MakeVarPatVal(std::string name, Value* type) -> Value* {
 
 auto MakeVarTypeVal(std::string name) -> Value* {
   auto* v = new Value();
-  v->alive = true;
   v->tag = ValKind::VarTV;
   v->u.var_type = new std::string(std::move(name));
   return v;
@@ -127,35 +117,30 @@ auto MakeVarTypeVal(std::string name) -> Value* {
 
 auto MakeIntTypeVal() -> Value* {
   auto* v = new Value();
-  v->alive = true;
   v->tag = ValKind::IntTV;
   return v;
 }
 
 auto MakeBoolTypeVal() -> Value* {
   auto* v = new Value();
-  v->alive = true;
   v->tag = ValKind::BoolTV;
   return v;
 }
 
 auto MakeTypeTypeVal() -> Value* {
   auto* v = new Value();
-  v->alive = true;
   v->tag = ValKind::TypeTV;
   return v;
 }
 
 auto MakeAutoTypeVal() -> Value* {
   auto* v = new Value();
-  v->alive = true;
   v->tag = ValKind::AutoTV;
   return v;
 }
 
 auto MakeFunTypeVal(Value* param, Value* ret) -> Value* {
   auto* v = new Value();
-  v->alive = true;
   v->tag = ValKind::FunctionTV;
   v->u.fun_type.param = param;
   v->u.fun_type.ret = ret;
@@ -164,7 +149,6 @@ auto MakeFunTypeVal(Value* param, Value* ret) -> Value* {
 
 auto MakePtrTypeVal(Value* type) -> Value* {
   auto* v = new Value();
-  v->alive = true;
   v->tag = ValKind::PointerTV;
   v->u.ptr_type.type = type;
   return v;
@@ -173,7 +157,6 @@ auto MakePtrTypeVal(Value* type) -> Value* {
 auto MakeStructTypeVal(std::string name, VarValues* fields, VarValues* methods)
     -> Value* {
   auto* v = new Value();
-  v->alive = true;
   v->tag = ValKind::StructTV;
   v->u.struct_type.name = new std::string(std::move(name));
   v->u.struct_type.fields = fields;
@@ -183,7 +166,6 @@ auto MakeStructTypeVal(std::string name, VarValues* fields, VarValues* methods)
 
 auto MakeTupleTypeVal(VarValues* fields) -> Value* {
   auto* v = new Value();
-  v->alive = true;
   v->tag = ValKind::TupleTV;
   v->u.tuple_type.fields = fields;
   return v;
@@ -191,7 +173,6 @@ auto MakeTupleTypeVal(VarValues* fields) -> Value* {
 
 auto MakeVoidTypeVal() -> Value* {
   auto* v = new Value();
-  v->alive = true;
   v->tag = ValKind::TupleTV;
   v->u.tuple_type.fields = new VarValues();
   return v;
@@ -201,7 +182,6 @@ auto MakeChoiceTypeVal(std::string name,
                        std::list<std::pair<std::string, Value*>>* alts)
     -> Value* {
   auto* v = new Value();
-  v->alive = true;
   v->tag = ValKind::ChoiceTV;
   // Transitional leak: when we get rid of all pointers, this will disappear.
   v->u.choice_type.name = new std::string(name);
@@ -210,9 +190,6 @@ auto MakeChoiceTypeVal(std::string name,
 }
 
 void PrintValue(Value* val, std::ostream& out) {
-  if (!val->alive) {
-    out << "!!";
-  }
   switch (val->tag) {
     case ValKind::AltConsV: {
       out << *val->u.alt_cons.choice_name << "." << *val->u.alt_cons.alt_name;
@@ -226,7 +203,7 @@ void PrintValue(Value* val, std::ostream& out) {
     case ValKind::AltV: {
       out << "alt " << *val->u.alt.choice_name << "." << *val->u.alt.alt_name
           << " ";
-      PrintValue(val->u.alt.arg, out);
+      PrintValue(state->heap[val->u.alt.argument], out);
       break;
     }
     case ValKind::StructV: {
@@ -358,8 +335,6 @@ static auto FieldsValueEqual(VarValues* ts1, VarValues* ts2, int line_num)
 }
 
 auto ValueEqual(Value* v1, Value* v2, int line_num) -> bool {
-  CheckAlive(v1, line_num);
-  CheckAlive(v2, line_num);
   if (v1->tag != v2->tag) {
     return false;
   }
@@ -369,6 +344,8 @@ auto ValueEqual(Value* v1, Value* v2, int line_num) -> bool {
     case ValKind::BoolV:
       return v1->u.boolean == v2->u.boolean;
     case ValKind::PtrV:
+      CheckAlive(v1->u.ptr, line_num);
+      CheckAlive(v2->u.ptr, line_num);
       return v1->u.ptr == v2->u.ptr;
     case ValKind::FunV:
       return v1->u.fun.body == v2->u.fun.body;
@@ -391,10 +368,10 @@ auto ToInteger(Value* v) -> int {
   }
 }
 
-void CheckAlive(Value* v, int line_num) {
-  if (!v->alive) {
+void CheckAlive(Address address, int line_num) {
+  if (!state->alive[address]) {
     std::cerr << line_num << ": undefined behavior: access to dead value ";
-    PrintValue(v, std::cerr);
+    PrintValue(state->heap[address], std::cerr);
     std::cerr << std::endl;
     exit(-1);
   }
