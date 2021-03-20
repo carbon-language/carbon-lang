@@ -18,7 +18,7 @@ namespace Carbon {
 struct Value;
 
 using Address = unsigned int;
-using TypeEnv = Dictionary<std::string, Value*>;
+using TypeEnv = Dictionary<std::string, const Value*>;
 using Env = Dictionary<std::string, Address>;
 
 struct TypeCheckContext {

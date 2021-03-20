@@ -22,8 +22,8 @@ namespace Carbon {
 
 State* state = nullptr;
 
-auto PatternMatch(Value* pat, Value* val, Env, std::list<std::string>*, int)
-    -> std::optional<Env>;
+auto PatternMatch(const Value* pat, const Value* val, Env,
+                  std::list<std::string>*, int) -> std::optional<Env>;
 void HandleValue();
 
 template <class T>
@@ -42,35 +42,35 @@ static auto FindField(const std::string& field,
 // Auxiliary Functions
 //
 
-auto AllocateValue(Value* v) -> Address {
+auto AllocateValue(const Value* v) -> Address {
   // Putting the following two side effects together in this function
   // ensures that we don't do anything else in between, which is really bad!
   // Consider whether to include a copy of the input v in this function
   // or to leave it up to the caller.
   Address a = state->heap.size();
-  state->heap.push_back(v);
+  state->heap.push_back(new Value(*v));
   state->alive.push_back(true);
   return a;
 }
 
-auto CopyVal(Value* val, int line_num) -> Value* {
+auto CopyVal(const Value* val, int line_num) -> const Value* {
   switch (val->tag) {
     case ValKind::TupleV: {
       auto elts = new std::vector<std::pair<std::string, Address>>();
       for (auto& i : *val->u.tuple.elts) {
         CheckAlive(i.second, line_num);
-        Value* elt = CopyVal(state->heap[i.second], line_num);
+        const Value* elt = CopyVal(state->heap[i.second], line_num);
         Address new_address = AllocateValue(elt);
         elts->push_back(make_pair(i.first, new_address));
       }
       return MakeTupleVal(elts);
     }
     case ValKind::AltV: {
-      Value* arg = CopyVal(val->u.alt.arg, line_num);
+      const Value* arg = CopyVal(val->u.alt.arg, line_num);
       return MakeAltVal(*val->u.alt.alt_name, *val->u.alt.choice_name, arg);
     }
     case ValKind::StructV: {
-      Value* inits = CopyVal(val->u.struct_val.inits, line_num);
+      const Value* inits = CopyVal(val->u.struct_val.inits, line_num);
       return MakeStructVal(val->u.struct_val.type, inits);
     }
     case ValKind::IntV:
@@ -117,7 +117,7 @@ auto CopyVal(Value* val, int line_num) -> Value* {
 void KillAddress(Address address);
 
 // Marks all of the sub-objects of this value as dead.
-void KillValue(Value* val) {
+void KillValue(const Value* val) {
   switch (val->tag) {
     case ValKind::AltV:
       KillValue(val->u.alt.arg);
@@ -175,7 +175,7 @@ void PrintStack(Stack<Frame*> ls, std::ostream& out) {
   }
 }
 
-void PrintHeap(const std::vector<Value*>& heap, std::ostream& out) {
+void PrintHeap(const std::vector<const Value*>& heap, std::ostream& out) {
   for (auto& iter : heap) {
     if (iter) {
       PrintValue(iter, out);
@@ -206,7 +206,7 @@ void PrintState(std::ostream& out) {
 // More Auxiliary Functions
 //
 
-auto ValToInt(Value* v, int line_num) -> int {
+auto ValToInt(const Value* v, int line_num) -> int {
   switch (v->tag) {
     case ValKind::IntV:
       return v->u.integer;
@@ -217,7 +217,7 @@ auto ValToInt(Value* v, int line_num) -> int {
   }
 }
 
-auto ValToBool(Value* v, int line_num) -> int {
+auto ValToBool(const Value* v, int line_num) -> int {
   switch (v->tag) {
     case ValKind::BoolV:
       return v->u.boolean;
@@ -227,7 +227,7 @@ auto ValToBool(Value* v, int line_num) -> int {
   }
 }
 
-auto ValToPtr(Value* v, int line_num) -> Address {
+auto ValToPtr(const Value* v, int line_num) -> Address {
   CheckAlive(v->u.ptr, line_num);
   switch (v->tag) {
     case ValKind::PtrV:
@@ -240,8 +240,8 @@ auto ValToPtr(Value* v, int line_num) -> Address {
   }
 }
 
-auto EvalPrim(Operator op, const std::vector<Value*>& args, int line_num)
-    -> Value* {
+auto EvalPrim(Operator op, const std::vector<const Value*>& args, int line_num)
+    -> const Value* {
   switch (op) {
     case Operator::Neg:
       return MakeIntVal(-ValToInt(args[0], line_num));
@@ -323,7 +323,8 @@ auto VariableDeclaration::InitGlobals(Env& globals) const -> void {
 // where C is the body of the function,
 //       E is the environment (functions + parameters + locals)
 //       F is the function
-void CallFunction(int line_num, std::vector<Value*> operas, State* state) {
+void CallFunction(int line_num, std::vector<const Value*> operas,
+                  State* state) {
   switch (operas[0]->tag) {
     case ValKind::FunV: {
       // Bind arguments to parameters
@@ -343,16 +344,16 @@ void CallFunction(int line_num, std::vector<Value*> operas, State* state) {
       break;
     }
     case ValKind::StructTV: {
-      Value* arg = CopyVal(operas[1], line_num);
-      Value* sv = MakeStructVal(operas[0], arg);
+      const Value* arg = CopyVal(operas[1], line_num);
+      const Value* sv = MakeStructVal(operas[0], arg);
       Frame* frame = state->stack.Top();
       frame->todo.Push(MakeValAct(sv));
       break;
     }
     case ValKind::AltConsV: {
-      Value* arg = CopyVal(operas[1], line_num);
-      Value* av = MakeAltVal(*operas[0]->u.alt_cons.alt_name,
-                             *operas[0]->u.alt_cons.choice_name, arg);
+      const Value* arg = CopyVal(operas[1], line_num);
+      const Value* av = MakeAltVal(*operas[0]->u.alt_cons.alt_name,
+                                   *operas[0]->u.alt_cons.choice_name, arg);
       Frame* frame = state->stack.Top();
       frame->todo.Push(MakeValAct(av));
       break;
@@ -391,7 +392,7 @@ void CreateTuple(Frame* frame, Action* act, Expression* /*exp*/) {
     Address a = AllocateValue(*i);  // copy?
     elts->push_back(make_pair(f->first, a));
   }
-  Value* tv = MakeTupleVal(elts);
+  const Value* tv = MakeTupleVal(elts);
   frame->todo.Pop(1);
   frame->todo.Push(MakeValAct(tv));
 }
@@ -401,8 +402,9 @@ void CreateTuple(Frame* frame, Action* act, Expression* /*exp*/) {
 //
 // The names of the pattern variables are added to the vars parameter.
 // Returns nullopt if the value doesn't match the pattern.
-auto PatternMatch(Value* p, Value* v, Env env, std::list<std::string>* vars,
-                  int line_num) -> std::optional<Env> {
+auto PatternMatch(const Value* p, const Value* v, Env env,
+                  std::list<std::string>* vars, int line_num)
+    -> std::optional<Env> {
   switch (p->tag) {
     case ValKind::VarPatV: {
       Address a = AllocateValue(CopyVal(v, line_num));
@@ -487,7 +489,7 @@ auto PatternMatch(Value* p, Value* v, Env env, std::list<std::string>* vars,
   }
 }
 
-void PatternAssignment(Value* pat, Value* val, int line_num) {
+void PatternAssignment(const Value* pat, const Value* val, int line_num) {
   switch (pat->tag) {
     case ValKind::PtrV:
       state->heap[ValToPtr(pat, line_num)] = val;
@@ -574,7 +576,7 @@ void StepLvalue() {
                   << *(exp->u.variable.name) << "`" << std::endl;
         exit(-1);
       }
-      Value* v = MakePtrVal(*pointer);
+      const Value* v = MakePtrVal(*pointer);
       CheckAlive(*pointer, exp->line_num);
       frame->todo.Pop();
       frame->todo.Push(MakeValAct(v));
@@ -671,7 +673,7 @@ void StepExp() {
                   << *(exp->u.variable.name) << "`" << std::endl;
         exit(-1);
       }
-      Value* pointee = state->heap[*pointer];
+      const Value* pointee = state->heap[*pointer];
       frame->todo.Pop(1);
       frame->todo.Push(MakeValAct(pointee));
       break;
@@ -695,7 +697,7 @@ void StepExp() {
       } else {
         //    { {v :: op(]) :: C, E, F} :: S, H}
         // -> { {eval_prim(op, ()) :: C, E, F} :: S, H}
-        Value* v =
+        const Value* v =
             EvalPrim(exp->u.primitive_op.op, act->results, exp->line_num);
         frame->todo.Pop(2);
         frame->todo.Push(MakeValAct(v));
@@ -708,25 +710,25 @@ void StepExp() {
       act->pos++;
       break;
     case ExpressionKind::IntT: {
-      Value* v = MakeIntTypeVal();
+      const Value* v = MakeIntTypeVal();
       frame->todo.Pop(1);
       frame->todo.Push(MakeValAct(v));
       break;
     }
     case ExpressionKind::BoolT: {
-      Value* v = MakeBoolTypeVal();
+      const Value* v = MakeBoolTypeVal();
       frame->todo.Pop(1);
       frame->todo.Push(MakeValAct(v));
       break;
     }
     case ExpressionKind::AutoT: {
-      Value* v = MakeAutoTypeVal();
+      const Value* v = MakeAutoTypeVal();
       frame->todo.Pop(1);
       frame->todo.Push(MakeValAct(v));
       break;
     }
     case ExpressionKind::TypeT: {
-      Value* v = MakeTypeTypeVal();
+      const Value* v = MakeTypeTypeVal();
       frame->todo.Pop(1);
       frame->todo.Push(MakeValAct(v));
       break;
@@ -873,7 +875,7 @@ void StepStmt() {
 }
 
 auto GetMember(Address a, const std::string& f) -> Address {
-  Value* v = state->heap[a];
+  const Value* v = state->heap[a];
   switch (v->tag) {
     case ValKind::StructV: {
       auto a = FindField(f, *v->u.struct_val.inits->u.tuple.elts);
@@ -975,7 +977,7 @@ void HandleValue() {
         case ExpressionKind::GetField: {
           //    { v :: [].f :: C, E, F} :: S, H}
           // -> { { &v.f :: C, E, F} :: S, H }
-          Value* str = act->results[0];
+          const Value* str = act->results[0];
           Address a =
               GetMember(ValToPtr(str, exp->line_num), *exp->u.get_field.field);
           frame->todo.Pop(2);
@@ -989,7 +991,7 @@ void HandleValue() {
           } else if (act->pos == 2) {
             //    { v :: [][i] :: C, E, F} :: S, H}
             // -> { { &v[i] :: C, E, F} :: S, H }
-            Value* tuple = act->results[0];
+            const Value* tuple = act->results[0];
             std::string f = std::to_string(ToInteger(act->results[1]));
             auto a = FindField(f, *tuple->u.tuple.elts);
             if (a == std::nullopt) {
@@ -1102,7 +1104,7 @@ void HandleValue() {
           } else {
             //    { {v :: op(vs,[]) :: C, E, F} :: S, H}
             // -> { {eval_prim(op, (vs,v)) :: C, E, F} :: S, H}
-            Value* v =
+            const Value* v =
                 EvalPrim(exp->u.primitive_op.op, act->results, exp->line_num);
             frame->todo.Pop(2);
             frame->todo.Push(MakeValAct(v));
@@ -1131,7 +1133,7 @@ void HandleValue() {
           if (act->pos == 2) {
             //    { { rt :: fn pt -> [] :: C, E, F} :: S, H}
             // -> { fn pt -> rt :: {C, E, F} :: S, H}
-            Value* v = MakeFunTypeVal(act->results[0], act->results[1]);
+            const Value* v = MakeFunTypeVal(act->results[0], act->results[1]);
             frame->todo.Pop(2);
             frame->todo.Push(MakeValAct(v));
           } else {
@@ -1168,8 +1170,8 @@ void HandleValue() {
           } else if (act->pos == 2) {
             //    { { v :: (x = []) :: C, E, F} :: S, H}
             // -> { { C, E(x := a), F} :: S, H(a := copy(v))}
-            Value* v = act->results[0];
-            Value* p = act->results[1];
+            const Value* v = act->results[0];
+            const Value* p = act->results[1];
 
             std::optional<Env> env_with_matches =
                 PatternMatch(p, v, frame->scopes.Top()->env,
@@ -1297,7 +1299,7 @@ void HandleValue() {
         case StatementKind::Return: {
           //    { {v :: return [] :: C, E, F} :: {C', E', F'} :: S, H}
           // -> { {v :: C', E', F'} :: S, H}
-          Value* ret_val = CopyVal(val_act->u.val, stmt->line_num);
+          const Value* ret_val = CopyVal(val_act->u.val, stmt->line_num);
           KillLocals(stmt->line_num, frame);
           state->stack.Pop(1);
           frame = state->stack.Top();
@@ -1384,12 +1386,12 @@ auto InterpProgram(std::list<Declaration>* fs) -> int {
       PrintState(std::cout);
     }
   }
-  Value* v = state->stack.Top()->todo.Top()->u.val;
+  const Value* v = state->stack.Top()->todo.Top()->u.val;
   return ValToInt(v, 0);
 }
 
 // Interpret an expression at compile-time.
-auto InterpExp(Env env, Expression* e) -> Value* {
+auto InterpExp(Env env, Expression* e) -> const Value* {
   auto todo = Stack(MakeExpAct(e));
   auto* scope = new Scope(env, std::list<std::string>());
   auto* frame = new Frame("InterpExp", Stack(scope), todo);
@@ -1400,7 +1402,7 @@ auto InterpExp(Env env, Expression* e) -> Value* {
          state->stack.Top()->todo.Top()->tag != ActionKind::ValAction) {
     Step();
   }
-  Value* v = state->stack.Top()->todo.Top()->u.val;
+  const Value* v = state->stack.Top()->todo.Top()->u.val;
   return v;
 }
 
