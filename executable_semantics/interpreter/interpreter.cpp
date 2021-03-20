@@ -136,7 +136,7 @@ void KillSubObjects(Value* val) {
 }
 
 // Marks the object at this address, and all of its sub-objects, as dead.
-void KillAddress(Address address) {
+void KillObject(Address address) {
   if (state->alive[address]) {
     state->alive[address] = false;
     KillValue(state->heap[address]);
