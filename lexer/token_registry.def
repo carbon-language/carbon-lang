@@ -158,5 +158,6 @@ CARBON_TOKEN(IntegerLiteral)
 CARBON_TOKEN(RealLiteral)
 CARBON_TOKEN(StringLiteral)
 CARBON_TOKEN(Error)
+CARBON_TOKEN(EndOfFile)
 
 #undef CARBON_TOKEN

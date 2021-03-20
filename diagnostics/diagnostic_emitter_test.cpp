@@ -4,6 +4,7 @@
 
 #include "diagnostics/diagnostic_emitter.h"
 
+#include "diagnostics/mocks.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 #include "llvm/ADT/StringRef.h"
@@ -12,6 +13,9 @@
 namespace Carbon {
 namespace {
 
+using Testing::DiagnosticAt;
+using Testing::DiagnosticMessage;
+using Testing::DiagnosticShortName;
 using ::testing::ElementsAre;
 using ::testing::Eq;
 
@@ -32,42 +36,56 @@ struct FakeDiagnostic {
   }
 };
 
+struct FakeDiagnosticLocationTranslator : DiagnosticLocationTranslator<int> {
+  auto GetLocation(int n) -> Diagnostic::Location override {
+    return {.file_name = "test", .line_number = 1, .column_number = n};
+  }
+};
+
 TEST(DiagTest, EmitErrors) {
-  std::vector<std::string> reported;
+  FakeDiagnosticLocationTranslator translator;
+  Testing::MockDiagnosticConsumer consumer;
+  DiagnosticEmitter<int> emitter(translator, consumer);
 
-  DiagnosticEmitter emitter([&](const Diagnostic& diagnostic) {
-    EXPECT_THAT(diagnostic.short_name, Eq("fake-diagnostic"));
-    reported.push_back(diagnostic.message);
-  });
+  EXPECT_CALL(consumer, HandleDiagnostic(AllOf(
+                            DiagnosticAt(1, 1), DiagnosticMessage("error: M1"),
+                            DiagnosticShortName("fake-diagnostic"))));
+  EXPECT_CALL(consumer, HandleDiagnostic(AllOf(
+                            DiagnosticAt(1, 2), DiagnosticMessage("error: M2"),
+                            DiagnosticShortName("fake-diagnostic"))));
 
-  emitter.EmitError<FakeDiagnostic>({.message = "M1"});
-  emitter.EmitError<FakeDiagnostic>({.message = "M2"});
-
-  EXPECT_THAT(reported, ElementsAre("M1", "M2"));
+  emitter.EmitError<FakeDiagnostic>(1, {.message = "M1"});
+  emitter.EmitError<FakeDiagnostic>(2, {.message = "M2"});
 }
 
 TEST(DiagTest, EmitWarnings) {
   std::vector<std::string> reported;
 
-  DiagnosticEmitter emitter([&](const Diagnostic& diagnostic) {
-    EXPECT_THAT(diagnostic.short_name, Eq("fake-diagnostic"));
-    reported.push_back(diagnostic.message);
-  });
+  FakeDiagnosticLocationTranslator translator;
+  Testing::MockDiagnosticConsumer consumer;
+  DiagnosticEmitter<int> emitter(translator, consumer);
 
-  emitter.EmitWarningIf<FakeDiagnostic>([](FakeDiagnostic& diagnostic) {
+  EXPECT_CALL(consumer,
+              HandleDiagnostic(AllOf(DiagnosticAt(1, 3),
+                                     DiagnosticMessage("warning: M1"),
+                                     DiagnosticShortName("fake-diagnostic"))));
+  EXPECT_CALL(consumer,
+              HandleDiagnostic(AllOf(DiagnosticAt(1, 5),
+                                     DiagnosticMessage("warning: M3"),
+                                     DiagnosticShortName("fake-diagnostic"))));
+
+  emitter.EmitWarningIf<FakeDiagnostic>(3, [](FakeDiagnostic& diagnostic) {
     diagnostic.message = "M1";
     return true;
   });
-  emitter.EmitWarningIf<FakeDiagnostic>([](FakeDiagnostic& diagnostic) {
+  emitter.EmitWarningIf<FakeDiagnostic>(4, [](FakeDiagnostic& diagnostic) {
     diagnostic.message = "M2";
     return false;
   });
-  emitter.EmitWarningIf<FakeDiagnostic>([](FakeDiagnostic& diagnostic) {
+  emitter.EmitWarningIf<FakeDiagnostic>(5, [](FakeDiagnostic& diagnostic) {
     diagnostic.message = "M3";
     return true;
   });
-
-  EXPECT_THAT(reported, ElementsAre("M1", "M3"));
 }
 
 }  // namespace

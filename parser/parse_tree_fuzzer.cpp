@@ -7,6 +7,7 @@
 #include <cstring>
 
 #include "diagnostics/diagnostic_emitter.h"
+#include "diagnostics/null_diagnostics.h"
 #include "lexer/tokenized_buffer.h"
 #include "llvm/ADT/StringRef.h"
 #include "parser/parse_tree.h"
@@ -39,18 +40,15 @@ extern "C" int LLVMFuzzerTestOneInput(const unsigned char* data,
   auto source = SourceBuffer::CreateFromText(
       llvm::StringRef(reinterpret_cast<const char*>(data), size), filename);
 
-  // Use a real diagnostic emitter to get lazy codepaths to execute.
-  DiagnosticEmitter emitter = NullDiagnosticEmitter();
-
   // Lex the input.
-  auto tokens = TokenizedBuffer::Lex(source, emitter);
+  auto tokens = TokenizedBuffer::Lex(source, NullDiagnosticConsumer());
   if (tokens.HasErrors()) {
     return 0;
   }
 
   // Now parse it into a tree. Note that parsing will (when asserts are enabled)
   // walk the entire tree to verify it so we don't have to do that here.
-  ParseTree tree = ParseTree::Parse(tokens, emitter);
+  ParseTree tree = ParseTree::Parse(tokens, NullDiagnosticConsumer());
   if (tree.HasErrors()) {
     return 0;
   }

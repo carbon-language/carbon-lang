@@ -19,17 +19,18 @@ class ParseTree::Parser {
   // Parses the tokens into a parse tree, emitting any errors encountered.
   //
   // This is the entry point to the parser implementation.
-  static auto Parse(TokenizedBuffer& tokens, DiagnosticEmitter& de)
+  static auto Parse(TokenizedBuffer& tokens, TokenDiagnosticEmitter& de)
       -> ParseTree;
 
  private:
   struct SubtreeStart;
 
-  explicit Parser(ParseTree& tree_arg, TokenizedBuffer& tokens_arg)
-      : tree(tree_arg),
-        tokens(tokens_arg),
-        position(tokens.Tokens().begin()),
-        end(tokens.Tokens().end()) {}
+  explicit Parser(ParseTree& tree_arg, TokenizedBuffer& tokens_arg,
+                  TokenDiagnosticEmitter& emitter);
+
+  auto AtEndOfFile() -> bool {
+    return tokens.GetKind(*position) == TokenKind::EndOfFile();
+  }
 
   // Requires (and asserts) that the current position matches the provide
   // `Kind`. Returns the current token and advances to the next position.
@@ -74,6 +75,9 @@ class ParseTree::Parser {
   // forward to one past the matched closing symbol and returns true. Otherwise,
   // returns false.
   auto SkipMatchingGroup() -> bool;
+
+  // Skip forward to the token immediately after the given token.
+  auto SkipTo(TokenizedBuffer::Token t) -> void;
 
   // Skips forward to move past the likely end of a declaration.
   //
@@ -124,8 +128,12 @@ class ParseTree::Parser {
 
   ParseTree& tree;
   TokenizedBuffer& tokens;
+  TokenDiagnosticEmitter& emitter;
 
+  // The current position within the token buffer. Never equal to `end`.
   TokenizedBuffer::TokenIterator position;
+  // The end position of the token buffer. There will always be an `EndOfFile`
+  // token between `position` (inclusive) and `end` (exclusive).
   TokenizedBuffer::TokenIterator end;
 };
 
