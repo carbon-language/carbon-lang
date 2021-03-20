@@ -135,7 +135,7 @@ void KillValue(Value* val) {
   }
 }
 
-// Marks as dead this address all of its sub-objects.
+// Marks the object at this address, and all of its sub-objects, as dead.
 void KillAddress(Address address) {
   if (state->alive[address]) {
     state->alive[address] = false;
