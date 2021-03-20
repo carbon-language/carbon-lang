@@ -43,7 +43,6 @@ enum class ValKind {
 
 struct Value {
   ValKind tag;
-  bool alive;
   union {
     int integer;
     bool boolean;
@@ -132,7 +131,7 @@ auto TypeEqual(Value* t1, Value* t2) -> bool;
 auto ValueEqual(Value* v1, Value* v2, int line_num) -> bool;
 
 auto ToInteger(Value* v) -> int;
-void CheckAlive(Value* v, int line_num);
+void CheckAlive(Address a, int line_num);
 
 }  // namespace Carbon
 

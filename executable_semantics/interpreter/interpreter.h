@@ -41,6 +41,7 @@ struct Frame {
 struct State {
   Stack<Frame*> stack;
   std::vector<Value*> heap;
+  std::vector<bool> alive;
 };
 
 extern State* state;

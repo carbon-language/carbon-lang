@@ -49,17 +49,19 @@ auto AllocateValue(Value* v) -> Address {
   // or to leave it up to the caller.
   Address a = state->heap.size();
   state->heap.push_back(v);
+  state->alive.push_back(true);
   return a;
 }
 
 auto CopyVal(Value* val, int line_num) -> Value* {
-  CheckAlive(val, line_num);
   switch (val->tag) {
     case ValKind::TupleV: {
       auto elts = new std::vector<std::pair<std::string, Address>>();
       for (auto& i : *val->u.tuple.elts) {
+        CheckAlive(i.second, line_num);
         Value* elt = CopyVal(state->heap[i.second], line_num);
-        elts->push_back(make_pair(i.first, AllocateValue(elt)));
+        Address new_address = AllocateValue(elt);
+        elts->push_back(make_pair(i.first, new_address));
       }
       return MakeTupleVal(elts);
     }
@@ -109,31 +111,6 @@ auto CopyVal(Value* val, int line_num) -> Value* {
     case ValKind::AltConsV:
       return val;  // no need to copy these because they are immutable?
       // No, they need to be copied so they don't get killed. -Jeremy
-  }
-}
-
-void KillValue(Value* val) {
-  val->alive = false;
-  switch (val->tag) {
-    case ValKind::AltV:
-      KillValue(val->u.alt.arg);
-      break;
-    case ValKind::StructV:
-      KillValue(val->u.struct_val.inits);
-      break;
-    case ValKind::TupleV:
-      for (auto& elt : *val->u.tuple.elts) {
-        if (state->heap[elt.second]->alive) {
-          KillValue(state->heap[elt.second]);
-        } else {
-          std::cerr << "runtime error, killing an already dead value"
-                    << std::endl;
-          exit(-1);
-        }
-      }
-      break;
-    default:
-      break;
   }
 }
 
@@ -198,7 +175,6 @@ void PrintState(std::ostream& out) {
 //
 
 auto ValToInt(Value* v, int line_num) -> int {
-  CheckAlive(v, line_num);
   switch (v->tag) {
     case ValKind::IntV:
       return v->u.integer;
@@ -210,7 +186,6 @@ auto ValToInt(Value* v, int line_num) -> int {
 }
 
 auto ValToBool(Value* v, int line_num) -> int {
-  CheckAlive(v, line_num);
   switch (v->tag) {
     case ValKind::BoolV:
       return v->u.boolean;
@@ -221,7 +196,7 @@ auto ValToBool(Value* v, int line_num) -> int {
 }
 
 auto ValToPtr(Value* v, int line_num) -> Address {
-  CheckAlive(v, line_num);
+  CheckAlive(v->u.ptr, line_num);
   switch (v->tag) {
     case ValKind::PtrV:
       return v->u.ptr;
@@ -317,7 +292,6 @@ auto VariableDeclaration::InitGlobals(Env& globals) const -> void {
 //       E is the environment (functions + parameters + locals)
 //       F is the function
 void CallFunction(int line_num, std::vector<Value*> operas, State* state) {
-  CheckAlive(operas[0], line_num);
   switch (operas[0]->tag) {
     case ValKind::FunV: {
       // Bind arguments to parameters
@@ -366,7 +340,7 @@ void KillScope(int line_num, Scope* scope) {
       std::cerr << "internal error in KillScope" << std::endl;
       exit(-1);
     }
-    KillValue(state->heap[*a]);
+    state->alive[*a] = false;
   }
 }
 
@@ -569,7 +543,7 @@ void StepLvalue() {
         exit(-1);
       }
       Value* v = MakePtrVal(*pointer);
-      CheckAlive(v, exp->line_num);
+      CheckAlive(*pointer, exp->line_num);
       frame->todo.Pop();
       frame->todo.Push(MakeValAct(v));
       break;
@@ -950,7 +924,7 @@ void HandleValue() {
   }
   switch (act->tag) {
     case ActionKind::DeleteTmpAction: {
-      KillValue(state->heap[act->u.delete_tmp]);
+      state->alive[act->u.delete_tmp] = false;
       frame->todo.Pop(2);
       frame->todo.Push(val_act);
       break;
