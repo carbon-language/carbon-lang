@@ -43,7 +43,6 @@ enum class ValKind {
 
 struct Value {
   ValKind tag;
-  bool alive;
   union {
     int integer;
     bool boolean;
@@ -63,7 +62,7 @@ struct Value {
     struct {
       std::string* alt_name;
       std::string* choice_name;
-      Value* arg;
+      Address argument;
     } alt;
     struct {
       std::vector<std::pair<std::string, Address>>* elts;
@@ -107,7 +106,7 @@ auto MakeFunVal(std::string name, Value* param, Statement* body) -> Value*;
 auto MakePtrVal(Address addr) -> Value*;
 auto MakeStructVal(Value* type, Value* inits) -> Value*;
 auto MakeTupleVal(std::vector<std::pair<std::string, Address>>* elts) -> Value*;
-auto MakeAltVal(std::string alt_name, std::string choice_name, Value* arg)
+auto MakeAltVal(std::string alt_name, std::string choice_name, Address argument)
     -> Value*;
 auto MakeAltCons(std::string alt_name, std::string choice_name) -> Value*;
 
@@ -132,7 +131,7 @@ auto TypeEqual(Value* t1, Value* t2) -> bool;
 auto ValueEqual(Value* v1, Value* v2, int line_num) -> bool;
 
 auto ToInteger(Value* v) -> int;
-void CheckAlive(Value* v, int line_num);
+void CheckAlive(Address a, int line_num);
 
 }  // namespace Carbon
 
