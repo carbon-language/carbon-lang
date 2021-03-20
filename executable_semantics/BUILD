@@ -25,7 +25,9 @@ cc_library(
 )
 
 EXAMPLES = [
+    "assignment_copy1",
     "block1",
+    "block2",
     "break1",
     "choice1",
     "continue1",
@@ -64,6 +66,14 @@ EXAMPLES = [
     "tuple2",
     "while1",
     "zero",
+    "experimental_delimit1",
+    "experimental_delimit2",
+    "experimental_delimit3",
+    "experimental_delimit4",
+    "experimental_delimit5",
+    "experimental_delimit_block_scope",
+    "experimental_delimit_naturals",
+    "experimental_delimit_shared_stack_data",
 ]
 
 [genrule(

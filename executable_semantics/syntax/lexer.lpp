@@ -45,6 +45,13 @@ TRUE              "true"
 TYPE              "Type"
 VAR               "var"
 WHILE             "while"
+DELIMIT           "__delimit"
+YIELD             "__yield"
+RESUME            "__resume"
+CATCH             "__catch"
+CONTINUATION      "__Continuation"
+RESET             "__reset"
+SHIFT             "__shift"
 
 identifier    [A-Za-z_][A-Za-z0-9_]*
 integer_literal   [0-9]+
@@ -93,6 +100,13 @@ horizontal_whitespace [ \t\r]
 {TYPE}     { return yy::parser::make_TYPE(context.current_token_position); }
 {VAR}      { return yy::parser::make_VAR(context.current_token_position); }
 {WHILE}    { return yy::parser::make_WHILE(context.current_token_position); }
+{DELIMIT}  { return yy::parser::make_DELIMIT(context.current_token_position); }
+{YIELD}    { return yy::parser::make_YIELD(context.current_token_position); }
+{RESUME}   { return yy::parser::make_RESUME(context.current_token_position); }
+{CATCH}    { return yy::parser::make_CATCH(context.current_token_position); }
+{CONTINUATION} { return yy::parser::make_CONTINUATION(context.current_token_position); }
+{RESET}    { return yy::parser::make_RESET(context.current_token_position); }
+{SHIFT}    { return yy::parser::make_SHIFT(context.current_token_position); }
 
 "=" return yy::parser::make_EQUAL(context.current_token_position);
 "-" return yy::parser::make_MINUS(context.current_token_position);

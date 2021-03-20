@@ -83,6 +83,8 @@ auto CopyVal(Value* val, int line_num) -> Value* {
       return MakeFunVal(*val->u.fun.name, val->u.fun.param, val->u.fun.body);
     case ValKind::PtrV:
       return MakePtrVal(val->u.ptr);
+    case ValKind::ContinuationV:
+      return MakeContinuation(*val->u.continuation.stack);
     case ValKind::FunctionTV:
       return MakeFunTypeVal(CopyVal(val->u.fun_type.param, line_num),
                             CopyVal(val->u.fun_type.ret, line_num));
@@ -99,6 +101,8 @@ auto CopyVal(Value* val, int line_num) -> Value* {
       return MakeVarTypeVal(*val->u.var_type);
     case ValKind::AutoTV:
       return MakeAutoTypeVal();
+    case ValKind::ContinuationTV:
+      return MakeContinuationTypeVal();
     case ValKind::TupleTV: {
       auto new_fields = new VarValues();
       for (auto& field : *val->u.tuple_type.fields) {
@@ -242,27 +246,41 @@ auto ValToPtr(Value* v, int line_num) -> Address {
   }
 }
 
-auto EvalPrim(Operator op, const std::vector<Value*>& args, int line_num)
+// Returns *continuation represented as a stack of frames.
+//
+// - Precondition: continuation->tag == ValKind::ContinuationV.
+auto ContinuationToStack(Value* continuation, int sourceLocation)
+    -> Stack<Frame*> {
+  if (continuation->tag == ValKind::ContinuationV) {
+    return *continuation->u.continuation.stack;
+  } else {
+    std::cerr << sourceLocation << ": runtime error: expected an integer"
+              << std::endl;
+    exit(-1);
+  }
+}
+
+auto EvalPrim(Operator op, const std::vector<Value*>& args, int sourceLocation)
     -> Value* {
   switch (op) {
     case Operator::Neg:
-      return MakeIntVal(-ValToInt(args[0], line_num));
+      return MakeIntVal(-ValToInt(args[0], sourceLocation));
     case Operator::Add:
-      return MakeIntVal(ValToInt(args[0], line_num) +
-                        ValToInt(args[1], line_num));
+      return MakeIntVal(ValToInt(args[0], sourceLocation) +
+                        ValToInt(args[1], sourceLocation));
     case Operator::Sub:
-      return MakeIntVal(ValToInt(args[0], line_num) -
-                        ValToInt(args[1], line_num));
+      return MakeIntVal(ValToInt(args[0], sourceLocation) -
+                        ValToInt(args[1], sourceLocation));
     case Operator::Not:
-      return MakeBoolVal(!ValToBool(args[0], line_num));
+      return MakeBoolVal(!ValToBool(args[0], sourceLocation));
     case Operator::And:
-      return MakeBoolVal(ValToBool(args[0], line_num) &&
-                         ValToBool(args[1], line_num));
+      return MakeBoolVal(ValToBool(args[0], sourceLocation) &&
+                         ValToBool(args[1], sourceLocation));
     case Operator::Or:
-      return MakeBoolVal(ValToBool(args[0], line_num) ||
-                         ValToBool(args[1], line_num));
+      return MakeBoolVal(ValToBool(args[0], sourceLocation) ||
+                         ValToBool(args[1], sourceLocation));
     case Operator::Eq:
-      return MakeBoolVal(ValueEqual(args[0], args[1], line_num));
+      return MakeBoolVal(ValueEqual(args[0], args[1], sourceLocation));
   }
 }
 
@@ -278,7 +296,7 @@ void InitGlobals(std::list<Declaration>* fs) {
 auto ChoiceDeclaration::InitGlobals(Env& globals) const -> void {
   auto alts = new VarValues();
   for (auto kv : alternatives) {
-    auto t = ToType(line_num, InterpExp(Env(), kv.second));
+    auto t = ToType(this->line_num, InterpExp(Env(), kv.second));
     alts->push_back(make_pair(kv.first, t));
   }
   auto ct = MakeChoiceTypeVal(name, alts);
@@ -494,7 +512,7 @@ auto PatternMatch(Value* p, Value* v, Env env, std::list<std::string>* vars,
 void PatternAssignment(Value* pat, Value* val, int line_num) {
   switch (pat->tag) {
     case ValKind::PtrV:
-      state->heap[ValToPtr(pat, line_num)] = val;
+      state->heap[ValToPtr(pat, line_num)] = CopyVal(val, line_num);
       break;
     case ValKind::TupleV: {
       switch (val->tag) {
@@ -616,6 +634,7 @@ void StepLvalue() {
     case ExpressionKind::TypeT:
     case ExpressionKind::FunctionT:
     case ExpressionKind::AutoT:
+    case ExpressionKind::ContinuationT:
     case ExpressionKind::PatternVariable: {
       frame->todo.Pop();
       frame->todo.Push(MakeExpToLvalAct());
@@ -741,6 +760,12 @@ void StepExp() {
       act->pos++;
       break;
     }
+    case ExpressionKind::ContinuationT: {
+      Value* v = MakeContinuationTypeVal();
+      frame->todo.Pop(1);
+      frame->todo.Push(MakeValAct(v));
+      break;
+    }
   }  // switch (exp->tag)
 }
 
@@ -769,6 +794,99 @@ auto IsBlockAct(Action* act) -> bool {
       }
     default:
       return false;
+  }
+}
+
+auto IsDelimit(Action* act) -> bool {
+  return act->tag == ActionKind::StatementAction &&
+         act->u.stmt->tag == StatementKind::Delimit;
+}
+
+// Copies the todo and scopes stacks of a frame, from their top down
+// to their end or to the first Delimit, over to the new_todo and
+// new_scopes of another frame.
+auto CopyTodoAndScopes(Stack<Action*> todo, Stack<Action*>& new_todo,
+                       Stack<Scope*> scopes, Stack<Scope*>& new_scopes)
+    -> void {
+  if (todo.IsEmpty() || IsDelimit(todo.Top())) {
+    return;
+  } else {
+    Action* a = todo.Top();
+    todo.Pop();
+    Scope* s = nullptr;
+    if (IsBlockAct(a)) {
+      s = scopes.Top();
+      scopes.Pop();
+    }
+    CopyTodoAndScopes(todo, new_todo, scopes, new_scopes);
+    new_todo.Push(a);
+    if (IsBlockAct(a)) {
+      new_scopes.Push(s);
+    }
+    return;
+  }
+}
+
+// Returns the scope of the frame that contains the function's
+// parameters.
+auto ParameterBindings(Frame* frame) -> Scope* {
+  Stack<Scope*> scopes = frame->scopes;
+  Scope* current = scopes.Top();
+  while (!scopes.IsEmpty()) {
+    current = scopes.Top();
+    scopes.Pop();
+  }
+  return current;
+}
+
+// Copies a saved continuation onto the current stack.
+auto ResumeContinuation(Stack<Frame*> continuation) -> void {
+  int continuationSize = continuation.Count();
+  if (continuationSize == 1) {
+    Frame* frame = continuation.Top();
+    // Push onto the current frame
+    CopyTodoAndScopes(frame->todo, state->stack.Top()->todo, frame->scopes,
+                      state->stack.Top()->scopes);
+  } else if (continuationSize > 1) {
+    Frame* frame = continuation.Top();
+    continuation.Pop();
+    ResumeContinuation(continuation);
+    Frame* new_frame = new Frame(*frame);
+    state->stack.Push(new_frame);
+  }
+}
+
+// Returns a copy of the `frame` down to a Delimit AST node if there
+// is one, or copies the entire `frame`.
+auto CopyFrameToDelimit(Frame* frame) -> Frame* {
+  Stack<Scope*> new_scopes;
+  new_scopes.Push(ParameterBindings(frame));
+  Frame* frameCopy = new Frame(frame->name, new_scopes, Stack<Action*>());
+  CopyTodoAndScopes(frame->todo, frameCopy->todo, frame->scopes,
+                    frameCopy->scopes);
+  return frameCopy;
+}
+
+// Returns a copy of the continuation from its top down to
+// the first Delimit AST node.
+auto CopyContinuation(Stack<Frame*> continuation) -> Stack<Frame*> {
+  Frame* frame = continuation.Top();
+  bool found_delimit = false;
+  for (Action* action : frame->todo) {
+    if (IsDelimit(action))
+      found_delimit = true;
+  }
+  if (found_delimit) {
+    Frame* copiedFrame = CopyFrameToDelimit(frame);
+    Stack<Frame*> copiedContinuation;
+    copiedContinuation.Push(copiedFrame);
+    return copiedContinuation;
+  } else {
+    Frame* copiedFrame = new Frame(*frame);
+    continuation.Pop();
+    Stack<Frame*> copiedContinuation = CopyContinuation(continuation);
+    copiedContinuation.Push(copiedFrame);
+    return copiedContinuation;
   }
 }
 
@@ -824,10 +942,14 @@ void StepStmt() {
       break;
     case StatementKind::Block: {
       if (act->pos == -1) {
-        auto* scope = new Scope(CurrentEnv(state), std::list<std::string>());
-        frame->scopes.Push(scope);
-        frame->todo.Push(MakeStmtAct(stmt->u.block.stmt));
-        act->pos++;
+        if (stmt->u.block.stmt) {
+          auto* scope = new Scope(CurrentEnv(state), std::list<std::string>());
+          frame->scopes.Push(scope);
+          frame->todo.Push(MakeStmtAct(stmt->u.block.stmt));
+          act->pos++;
+        } else {
+          frame->todo.Pop();
+        }
       } else {
         Scope* scope = frame->scopes.Top();
         KillScope(stmt->line_num, scope);
@@ -873,6 +995,35 @@ void StepStmt() {
         frame->todo.Push(MakeStmtAct(stmt->u.sequence.next));
       }
       frame->todo.Push(MakeStmtAct(stmt->u.sequence.stmt));
+      break;
+    case StatementKind::Delimit:
+      if (act->pos == -1) {
+        // Evaluate the body of the delimit statement.
+        frame->todo.Push(MakeStmtAct(stmt->u.delimit_stmt.body));
+        act->pos++;
+      } else if (act->pos == 0) {
+        // The body is complete, fall through to the next statement.
+        frame->todo.Pop(1);
+      } else {
+        std::cerr << "delimit not implemented at pos " << act->pos << std::endl;
+        exit(-1);
+      }
+      break;
+    case StatementKind::Yield:
+      // Evaluate the expression for the yielded value.
+      frame->todo.Push(MakeExpAct(stmt->u.yield_stmt.operand));
+      act->pos++;
+      break;
+    case StatementKind::Resume:
+      // Evaluate the expression for the continuation.
+      frame->todo.Push(MakeExpAct(stmt->u.resume_stmt.operand));
+      act->pos++;
+      break;
+    case StatementKind::Reset:
+      // UNDER CONSTRUCTION
+      break;
+    case StatementKind::Shift:
+      // UNDER CONSTRUCTION
       break;
   }
 }
@@ -941,6 +1092,59 @@ void InsertDelete(Action* del, Stack<Action*>& todo) {
   } else {
     todo.Push(del);
   }
+}
+
+// Begin executing the `__catch` block of a `__delimit` statement
+// given a yielded continuation and value.
+auto HandleYieldedContinuation(Stack<Frame*> yielded_continuation,
+                               Value* yielded_value, Statement* delimit)
+    -> void {
+  // Create a new scope for the handler, binding the
+  // yield and continuation variables.
+  std::list<std::string> scope_locals;
+  scope_locals.push_back(*delimit->u.delimit_stmt.yield_variable);
+  scope_locals.push_back(*delimit->u.delimit_stmt.continuation_variable);
+  Scope* new_scope = new Scope(CurrentEnv(state), scope_locals);
+  Address a1 = AllocateValue(CopyVal(yielded_value, delimit->line_num));
+  new_scope->env.Set(*delimit->u.delimit_stmt.yield_variable, a1);
+  Address a2 = AllocateValue(MakeContinuation(yielded_continuation));
+  new_scope->env.Set(*delimit->u.delimit_stmt.continuation_variable, a2);
+
+  // Push the new scope onto the stack
+  state->stack.Top()->scopes.Push(new_scope);
+
+  // Push the handler block onto the stack
+  Statement* handler_block =
+      MakeBlock(delimit->line_num, delimit->u.delimit_stmt.handler);
+  state->stack.Top()->todo.Push(MakeStmtAct(handler_block));
+}
+
+// Pop frames and actions off the stack until a delimit statement is
+// reached and returns it, if there is one.
+auto PopToDelimit() -> std::optional<Statement*> {
+  // Roll back to the nearest delimit
+  Statement* delimit;
+  while (!state->stack.IsEmpty()) {
+    Stack<Action*> todo = state->stack.Top()->todo;
+    Stack<Scope*> scopes = state->stack.Top()->scopes;
+    while (!todo.IsEmpty()) {
+      if (IsDelimit(todo.Top())) {
+        delimit = todo.Top()->u.stmt;
+        todo.Pop();
+        Frame* new_frame = new Frame(state->stack.Top()->name, scopes, todo);
+        state->stack.Pop();
+        state->stack.Push(new_frame);
+        return delimit;
+      } else {
+        if (IsBlockAct(todo.Top())) {
+          scopes.Pop();
+        }
+        todo.Pop();
+      }
+    }  // while (!todo.IsEmpty())
+    state->stack.Pop();
+  }  // while (!new_stack.IsEmpty())
+  return std::nullopt;
 }
 
 // State transition for handling a value.
@@ -1154,6 +1358,7 @@ void HandleValue() {
         case ExpressionKind::BoolT:
         case ExpressionKind::TypeT:
         case ExpressionKind::AutoT:
+        case ExpressionKind::ContinuationT:
           std::cerr << "internal error, bad expression context in handle_value"
                     << std::endl;
           exit(-1);
@@ -1309,10 +1514,44 @@ void HandleValue() {
           frame->todo.Push(MakeValAct(ret_val));
           break;
         }
+        case StatementKind::Yield: {
+          // The yield statement rolls back the stack to the nearest
+          // delimit and then executes the handler statement, binding
+          // the yielded value and the captured continuation to
+          // variables in scope for the handler.
+
+          // Pop the argument and yield action off the todo list.
+          frame->todo.Pop(2);
+
+          // Save the current continuation
+          Stack<Frame*> yielded = CopyContinuation(state->stack);
+
+          std::optional<Statement*> delimit = PopToDelimit();
+          if (!delimit) {
+            std::cerr << "yield without an enclosing delimiter" << std::endl;
+            exit(-1);
+          }
+          HandleYieldedContinuation(yielded, val_act->u.val, *delimit);
+          break;
+        }
+        case StatementKind::Resume: {
+          // Push the yielded continuation onto the current stack
+          Stack<Frame*> yielded =
+              ContinuationToStack(val_act->u.val, stmt->line_num);
+          frame->todo.Pop(2);
+          ResumeContinuation(yielded);
+          break;
+        }
+        case StatementKind::Shift: {
+          // UNDER CONSTRUCTION
+          break;
+        }
         case StatementKind::Block:
         case StatementKind::Sequence:
         case StatementKind::Break:
         case StatementKind::Continue:
+        case StatementKind::Delimit:
+        case StatementKind::Reset:
           std::cerr << "internal error in handle_value, unhandled statement ";
           PrintStatement(stmt, 1);
           std::cerr << std::endl;

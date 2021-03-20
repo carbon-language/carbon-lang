@@ -100,6 +100,15 @@ auto MakeAltCons(std::string alt_name, std::string choice_name) -> Value* {
   return v;
 }
 
+// Return a first-class continuation represented by the
+// given stack, down to the first Delimit.
+auto MakeContinuation(Stack<Frame*> stack) -> Value* {
+  auto* v = new Value();
+  v->tag = ValKind::ContinuationV;
+  v->u.continuation.stack = new Stack<Frame*>(stack);
+  return v;
+}
+
 auto MakeVarPatVal(std::string name, Value* type) -> Value* {
   auto* v = new Value();
   v->tag = ValKind::VarPatV;
@@ -130,6 +139,13 @@ auto MakeBoolTypeVal() -> Value* {
 auto MakeTypeTypeVal() -> Value* {
   auto* v = new Value();
   v->tag = ValKind::TypeTV;
+  return v;
+}
+
+// Return a Continuation type.
+auto MakeContinuationTypeVal() -> Value* {
+  auto* v = new Value();
+  v->tag = ValKind::ContinuationTV;
   return v;
 }
 
@@ -252,6 +268,9 @@ void PrintValue(Value* val, std::ostream& out) {
     case ValKind::AutoTV:
       out << "auto";
       break;
+    case ValKind::ContinuationTV:
+      out << "Continuation";
+      break;
     case ValKind::PointerTV:
       out << "Ptr(";
       PrintValue(val->u.ptr_type.type, out);
@@ -288,6 +307,9 @@ void PrintValue(Value* val, std::ostream& out) {
     case ValKind::ChoiceTV:
       out << "choice " << *val->u.choice_type.name;
       break;
+    case ValKind::ContinuationV:
+      out << "continuation";
+      break;
   }
 }
 
@@ -311,6 +333,7 @@ auto TypeEqual(Value* t1, Value* t2) -> bool {
       return FieldsEqual(t1->u.tuple_type.fields, t2->u.tuple_type.fields);
     case ValKind::IntTV:
     case ValKind::BoolTV:
+    case ValKind::ContinuationTV:
       return true;
     default:
       return false;

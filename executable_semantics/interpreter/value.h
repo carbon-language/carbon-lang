@@ -9,6 +9,7 @@
 #include <vector>
 
 #include "executable_semantics/ast/statement.h"
+#include "executable_semantics/interpreter/stack.h"
 
 namespace Carbon {
 
@@ -37,66 +38,88 @@ enum class ValKind {
   TupleTV,
   StructTV,
   ChoiceTV,
+  ContinuationTV,  // The type of a continuation.
   VarPatV,
-  AltConsV
+  AltConsV,
+  ContinuationV  // A first-class continuation value.
 };
+
+struct Frame;  // used by continuation
 
 struct Value {
   ValKind tag;
   union {
     int integer;
     bool boolean;
+
     struct {
       std::string* name;
       Value* param;
       Statement* body;
     } fun;
+
     struct {
       Value* type;
       Value* inits;
     } struct_val;
+
     struct {
       std::string* alt_name;
       std::string* choice_name;
     } alt_cons;
+
     struct {
       std::string* alt_name;
       std::string* choice_name;
       Address argument;
     } alt;
+
     struct {
       std::vector<std::pair<std::string, Address>>* elts;
     } tuple;
+
     Address ptr;
     std::string* var_type;
+
     struct {
       std::string* name;
       Value* type;
     } var_pat;
+
     struct {
       Value* param;
       Value* ret;
     } fun_type;
+
     struct {
       Value* type;
     } ptr_type;
+
     struct {
       std::string* name;
       VarValues* fields;
       VarValues* methods;
     } struct_type;
+
     struct {
       std::string* name;
       VarValues* fields;
     } tuple_type;
+
     struct {
       std::string* name;
       VarValues* alternatives;
     } choice_type;
+
     struct {
       std::list<std::string*>* params;
       Value* type;
     } implicit;
+
+    struct {
+      Stack<Frame*>* stack;
+    } continuation;
+
   } u;
 };
 
@@ -110,6 +133,10 @@ auto MakeAltVal(std::string alt_name, std::string choice_name, Address argument)
     -> Value*;
 auto MakeAltCons(std::string alt_name, std::string choice_name) -> Value*;
 
+// Return a first-class continuation represented by the
+// given stack, down to the first Delimit.
+auto MakeContinuation(Stack<Frame*> stack) -> Value*;
+
 auto MakeVarPatVal(std::string name, Value* type) -> Value*;
 
 auto MakeVarTypeVal(std::string name) -> Value*;
@@ -117,6 +144,7 @@ auto MakeIntTypeVal() -> Value*;
 auto MakeAutoTypeVal() -> Value*;
 auto MakeBoolTypeVal() -> Value*;
 auto MakeTypeTypeVal() -> Value*;
+auto MakeContinuationTypeVal() -> Value*;
 auto MakeFunTypeVal(Value* param, Value* ret) -> Value*;
 auto MakePtrTypeVal(Value* type) -> Value*;
 auto MakeStructTypeVal(std::string name, VarValues* fields, VarValues* methods)

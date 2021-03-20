@@ -76,6 +76,7 @@ auto ToType(int line_num, Value* val) -> Value* {
     case ValKind::BoolTV:
     case ValKind::IntTV:
     case ValKind::AutoTV:
+    case ValKind::ContinuationTV:
       return val;
     default:
       std::cerr << line_num << ": in ToType, expected a type, not ";
@@ -96,6 +97,8 @@ auto ReifyType(Value* t, int line_num) -> Expression* {
       return MakeBoolType(0);
     case ValKind::TypeTV:
       return MakeTypeType(0);
+    case ValKind::ContinuationTV:
+      return MakeContinuationType(0);
     case ValKind::FunctionTV:
       return MakeFunType(0, ReifyType(t->u.fun_type.param, line_num),
                          ReifyType(t->u.fun_type.ret, line_num));
@@ -382,10 +385,15 @@ auto TypeCheckExp(Expression* e, TypeEnv env, Env ct_env, Value* expected,
       }
     }
     case ExpressionKind::IntT:
+      return TCResult(e, MakeIntTypeVal(), env);
     case ExpressionKind::BoolT:
+      return TCResult(e, MakeBoolTypeVal(), env);
     case ExpressionKind::TypeT:
-    case ExpressionKind::AutoT:
       return TCResult(e, MakeTypeTypeVal(), env);
+    case ExpressionKind::AutoT:
+      return TCResult(e, MakeAutoTypeVal(), env);
+    case ExpressionKind::ContinuationT:
+      return TCResult(e, MakeContinuationTypeVal(), env);
   }
 }
 
@@ -500,7 +508,37 @@ auto TypeCheckStmt(Statement* s, TypeEnv env, Env ct_env, Value* ret_type)
       }
       return TCStatement(MakeReturn(s->line_num, res.exp), env);
     }
-  }
+    case StatementKind::Delimit: {
+      TCStatement body_result =
+          TypeCheckStmt(s->u.delimit_stmt.body, env, ct_env, ret_type);
+      TypeEnv handler_env = env;
+      handler_env.Set(*s->u.delimit_stmt.yield_variable, MakeIntTypeVal());
+      handler_env.Set(*s->u.delimit_stmt.continuation_variable,
+                      MakeContinuationTypeVal());
+      TCStatement handler_result = TypeCheckStmt(s->u.delimit_stmt.handler,
+                                                 handler_env, ct_env, ret_type);
+      return TCStatement(
+          MakeDelimitStatement(
+              s->line_num, body_result.stmt, *s->u.delimit_stmt.yield_variable,
+              *s->u.delimit_stmt.continuation_variable, handler_result.stmt),
+          env);
+    }
+    case StatementKind::Yield: {
+      TCResult operand_result =
+          TypeCheckExp(s->u.yield_stmt.operand, env, ct_env, nullptr,
+                       TCContext::ValueContext);
+      ExpectType(s->line_num, "yield", MakeIntTypeVal(), operand_result.type);
+      return TCStatement(MakeYieldStatement(s->line_num, operand_result.exp),
+                         env);
+    }
+    case StatementKind::Resume: {
+      TCResult operand_result =
+          TypeCheckExp(s->u.resume_stmt.operand, env, ct_env, nullptr,
+                       TCContext::ValueContext);
+      return TCStatement(MakeResumeStatement(s->line_num, operand_result.exp),
+                         env);
+    }
+  }  // switch
 }
 
 auto CheckOrEnsureReturn(Statement* stmt, bool void_return, int line_num)
@@ -547,6 +585,18 @@ auto CheckOrEnsureReturn(Statement* stmt, bool void_return, int line_num)
         return CheckOrEnsureReturn(stmt->u.sequence.stmt, void_return,
                                    stmt->line_num);
       }
+    case StatementKind::Delimit:
+      return MakeDelimitStatement(
+          stmt->line_num,
+          CheckOrEnsureReturn(stmt->u.delimit_stmt.body, void_return,
+                              stmt->line_num),
+          *stmt->u.delimit_stmt.yield_variable,
+          *stmt->u.delimit_stmt.continuation_variable,
+          CheckOrEnsureReturn(stmt->u.delimit_stmt.handler, void_return,
+                              stmt->line_num));
+    case StatementKind::Yield:
+    case StatementKind::Resume:
+      return stmt;
     case StatementKind::Assign:
     case StatementKind::ExpressionStatement:
     case StatementKind::While:

@@ -104,6 +104,66 @@ auto MakeMatch(int line_num, Expression* exp,
   return s;
 }
 
+// Returns an AST node for a delimit statement, given the source
+// line number, the body statement, the variable name for the yielded value,
+// the variable name for the captured continuation, and the handler
+// statement.
+auto MakeDelimitStatement(int source_location, Statement* body,
+                          std::string yield_variable,
+                          std::string continuation_variable, Statement* handler)
+    -> Statement* {
+  auto* delimit_statement = new Statement();
+  delimit_statement->line_num = source_location;
+  delimit_statement->tag = StatementKind::Delimit;
+  delimit_statement->u.delimit_stmt.body = body;
+  delimit_statement->u.delimit_stmt.yield_variable =
+      new std::string(yield_variable);
+  delimit_statement->u.delimit_stmt.continuation_variable =
+      new std::string(continuation_variable);
+  delimit_statement->u.delimit_stmt.handler = handler;
+  return delimit_statement;
+}
+
+// Returns an AST node for a yield stament given an expression
+// that produces the yielded value.
+auto MakeYieldStatement(int line_num, Expression* operand) -> Statement* {
+  auto* yield_statement = new Statement();
+  yield_statement->line_num = line_num;
+  yield_statement->tag = StatementKind::Yield;
+  yield_statement->u.yield_stmt.operand = operand;
+  return yield_statement;
+}
+
+// Returns an AST node for a resume statement given an expression
+// that produces a continuation.
+auto MakeResumeStatement(int line_num, Expression* operand) -> Statement* {
+  auto* resume_statement = new Statement();
+  resume_statement->line_num = line_num;
+  resume_statement->tag = StatementKind::Resume;
+  resume_statement->u.resume_stmt.operand = operand;
+  return resume_statement;
+}
+
+// Returns an AST node for a reset statement give its line number and body.
+auto MakeReset(int line_num, Statement* body) -> Statement* {
+  auto* reset = new Statement();
+  reset->line_num = line_num;
+  reset->tag = StatementKind::Reset;
+  reset->u.reset.body = body;
+  return reset;
+}
+
+// Returns an AST node for a shift statement give its line number and body.
+auto MakeShift(int line_num, std::string continuation_variable, Statement* body)
+    -> Statement* {
+  auto* shift = new Statement();
+  shift->line_num = line_num;
+  shift->tag = StatementKind::Shift;
+  shift->u.shift.continuation_variable = new std::string(continuation_variable);
+  shift->u.shift.body = body;
+  return shift;
+}
+
 void PrintStatement(Statement* s, int depth) {
   if (!s) {
     return;
@@ -177,13 +237,74 @@ void PrintStatement(Statement* s, int depth) {
       PrintStatement(s->u.sequence.stmt, depth);
       if (depth < 0 || depth > 1) {
         std::cout << std::endl;
+      } else {
+        std::cout << " ";
       }
-      PrintStatement(s->u.sequence.next, depth - 1);
+      PrintStatement(s->u.sequence.next, depth);
       break;
     case StatementKind::Block:
-      std::cout << "{" << std::endl;
+      std::cout << "{";
+      if (depth < 0 || depth > 1) {
+        std::cout << std::endl;
+      }
       PrintStatement(s->u.block.stmt, depth - 1);
-      std::cout << std::endl << "}" << std::endl;
+      if (depth < 0 || depth > 1) {
+        std::cout << std::endl;
+      }
+      std::cout << "}";
+      if (depth < 0 || depth > 1) {
+        std::cout << std::endl;
+      }
+      break;
+    case StatementKind::Delimit:
+      std::cout << "delimit";
+      if (depth < 0 || depth > 1) {
+        std::cout << std::endl;
+      }
+      PrintStatement(s->u.delimit_stmt.body, depth - 1);
+      if (depth < 0 || depth > 1) {
+        std::cout << std::endl;
+      }
+      std::cout << "with (" << *s->u.delimit_stmt.yield_variable << ", "
+                << *s->u.delimit_stmt.continuation_variable << ")";
+      if (depth < 0 || depth > 1) {
+        std::cout << std::endl;
+      }
+      PrintStatement(s->u.delimit_stmt.handler, depth - 1);
+      if (depth < 0 || depth > 1) {
+        std::cout << std::endl;
+      }
+      break;
+    case StatementKind::Yield:
+      std::cout << "yield ";
+      PrintExp(s->u.yield_stmt.operand);
+      std::cout << ";";
+      break;
+    case StatementKind::Resume:
+      std::cout << "resume ";
+      PrintExp(s->u.resume_stmt.operand);
+      std::cout << ";";
+      break;
+    case StatementKind::Reset:
+      std::cout << "reset";
+      if (depth < 0 || depth > 1) {
+        std::cout << std::endl;
+      }
+      PrintStatement(s->u.reset.body, depth - 1);
+      if (depth < 0 || depth > 1) {
+        std::cout << std::endl;
+      }
+      break;
+    case StatementKind::Shift:
+      std::cout << "shift " << *s->u.shift.continuation_variable << " ";
+      if (depth < 0 || depth > 1) {
+        std::cout << std::endl;
+      }
+      PrintStatement(s->u.shift.body, depth - 1);
+      if (depth < 0 || depth > 1) {
+        std::cout << std::endl;
+      }
+      break;
   }
 }
 }  // namespace Carbon
