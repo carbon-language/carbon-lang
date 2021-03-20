@@ -114,6 +114,36 @@ auto CopyVal(Value* val, int line_num) -> Value* {
   }
 }
 
+void KillAddress(Address address);
+
+void KillValue(Value* val) {
+  switch (val->tag) {
+    case ValKind::AltV:
+      KillValue(val->u.alt.arg);
+      break;
+    case ValKind::StructV:
+      KillValue(val->u.struct_val.inits);
+      break;
+    case ValKind::TupleV:
+      for (auto& elt : *val->u.tuple.elts) {
+        KillAddress(elt.second);
+      }
+      break;
+    default:
+      break;
+  }
+}
+
+void KillAddress(Address address) {
+  if (state->alive[address]) {
+    state->alive[address] = false;
+    KillValue(state->heap[address]);
+  } else {
+    std::cerr << "runtime error, killing an already dead value" << std::endl;
+    exit(-1);
+  }
+}
+
 void PrintEnv(Env env, std::ostream& out) {
   for (const auto& [name, value] : env) {
     out << name << ": ";
@@ -340,7 +370,7 @@ void KillScope(int line_num, Scope* scope) {
       std::cerr << "internal error in KillScope" << std::endl;
       exit(-1);
     }
-    state->alive[*a] = false;
+    KillAddress(*a);
   }
 }
 
@@ -924,7 +954,7 @@ void HandleValue() {
   }
   switch (act->tag) {
     case ActionKind::DeleteTmpAction: {
-      state->alive[act->u.delete_tmp] = false;
+      KillAddress(act->u.delete_tmp);
       frame->todo.Pop(2);
       frame->todo.Push(val_act);
       break;
