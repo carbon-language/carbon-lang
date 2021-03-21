@@ -83,7 +83,7 @@ auto MakeStmtAct(Statement* s) -> Action* {
   return act;
 }
 
-auto MakeValAct(Value* v) -> Action* {
+auto MakeValAct(const Value* v) -> Action* {
   auto* act = new Action();
   act->tag = ActionKind::ValAction;
   act->u.val = v;

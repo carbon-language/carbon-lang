@@ -10,7 +10,8 @@
 
 namespace Carbon {
 
-auto FindInVarValues(const std::string& field, VarValues* inits) -> Value* {
+auto FindInVarValues(const std::string& field, VarValues* inits)
+    -> const Value* {
   for (auto& i : *inits) {
     if (i.first == field) {
       return i.second;
@@ -36,21 +37,22 @@ auto FieldsEqual(VarValues* ts1, VarValues* ts2) -> bool {
   }
 }
 
-auto MakeIntVal(int i) -> Value* {
+auto MakeIntVal(int i) -> const Value* {
   auto* v = new Value();
   v->tag = ValKind::IntV;
   v->u.integer = i;
   return v;
 }
 
-auto MakeBoolVal(bool b) -> Value* {
+auto MakeBoolVal(bool b) -> const Value* {
   auto* v = new Value();
   v->tag = ValKind::BoolV;
   v->u.boolean = b;
   return v;
 }
 
-auto MakeFunVal(std::string name, Value* param, Statement* body) -> Value* {
+auto MakeFunVal(std::string name, const Value* param, Statement* body)
+    -> const Value* {
   auto* v = new Value();
   v->tag = ValKind::FunV;
   v->u.fun.name = new std::string(std::move(name));
@@ -59,14 +61,14 @@ auto MakeFunVal(std::string name, Value* param, Statement* body) -> Value* {
   return v;
 }
 
-auto MakePtrVal(Address addr) -> Value* {
+auto MakePtrVal(Address addr) -> const Value* {
   auto* v = new Value();
   v->tag = ValKind::PtrV;
   v->u.ptr = addr;
   return v;
 }
 
-auto MakeStructVal(Value* type, Value* inits) -> Value* {
+auto MakeStructVal(const Value* type, const Value* inits) -> const Value* {
   auto* v = new Value();
   v->tag = ValKind::StructV;
   v->u.struct_val.type = type;
@@ -75,7 +77,7 @@ auto MakeStructVal(Value* type, Value* inits) -> Value* {
 }
 
 auto MakeTupleVal(std::vector<std::pair<std::string, Address>>* elts)
-    -> Value* {
+    -> const Value* {
   auto* v = new Value();
   v->tag = ValKind::TupleV;
   v->u.tuple.elts = elts;
@@ -83,7 +85,7 @@ auto MakeTupleVal(std::vector<std::pair<std::string, Address>>* elts)
 }
 
 auto MakeAltVal(std::string alt_name, std::string choice_name, Address argument)
-    -> Value* {
+    -> const Value* {
   auto* v = new Value();
   v->tag = ValKind::AltV;
   v->u.alt.alt_name = new std::string(std::move(alt_name));
@@ -92,7 +94,8 @@ auto MakeAltVal(std::string alt_name, std::string choice_name, Address argument)
   return v;
 }
 
-auto MakeAltCons(std::string alt_name, std::string choice_name) -> Value* {
+auto MakeAltCons(std::string alt_name, std::string choice_name)
+    -> const Value* {
   auto* v = new Value();
   v->tag = ValKind::AltConsV;
   v->u.alt.alt_name = new std::string(std::move(alt_name));
@@ -100,7 +103,7 @@ auto MakeAltCons(std::string alt_name, std::string choice_name) -> Value* {
   return v;
 }
 
-auto MakeVarPatVal(std::string name, Value* type) -> Value* {
+auto MakeVarPatVal(std::string name, const Value* type) -> const Value* {
   auto* v = new Value();
   v->tag = ValKind::VarPatV;
   v->u.var_pat.name = new std::string(std::move(name));
@@ -108,38 +111,38 @@ auto MakeVarPatVal(std::string name, Value* type) -> Value* {
   return v;
 }
 
-auto MakeVarTypeVal(std::string name) -> Value* {
+auto MakeVarTypeVal(std::string name) -> const Value* {
   auto* v = new Value();
   v->tag = ValKind::VarTV;
   v->u.var_type = new std::string(std::move(name));
   return v;
 }
 
-auto MakeIntTypeVal() -> Value* {
+auto MakeIntTypeVal() -> const Value* {
   auto* v = new Value();
   v->tag = ValKind::IntTV;
   return v;
 }
 
-auto MakeBoolTypeVal() -> Value* {
+auto MakeBoolTypeVal() -> const Value* {
   auto* v = new Value();
   v->tag = ValKind::BoolTV;
   return v;
 }
 
-auto MakeTypeTypeVal() -> Value* {
+auto MakeTypeTypeVal() -> const Value* {
   auto* v = new Value();
   v->tag = ValKind::TypeTV;
   return v;
 }
 
-auto MakeAutoTypeVal() -> Value* {
+auto MakeAutoTypeVal() -> const Value* {
   auto* v = new Value();
   v->tag = ValKind::AutoTV;
   return v;
 }
 
-auto MakeFunTypeVal(Value* param, Value* ret) -> Value* {
+auto MakeFunTypeVal(const Value* param, const Value* ret) -> const Value* {
   auto* v = new Value();
   v->tag = ValKind::FunctionTV;
   v->u.fun_type.param = param;
@@ -147,7 +150,7 @@ auto MakeFunTypeVal(Value* param, Value* ret) -> Value* {
   return v;
 }
 
-auto MakePtrTypeVal(Value* type) -> Value* {
+auto MakePtrTypeVal(const Value* type) -> const Value* {
   auto* v = new Value();
   v->tag = ValKind::PointerTV;
   v->u.ptr_type.type = type;
@@ -155,7 +158,7 @@ auto MakePtrTypeVal(Value* type) -> Value* {
 }
 
 auto MakeStructTypeVal(std::string name, VarValues* fields, VarValues* methods)
-    -> Value* {
+    -> const Value* {
   auto* v = new Value();
   v->tag = ValKind::StructTV;
   v->u.struct_type.name = new std::string(std::move(name));
@@ -164,14 +167,14 @@ auto MakeStructTypeVal(std::string name, VarValues* fields, VarValues* methods)
   return v;
 }
 
-auto MakeTupleTypeVal(VarValues* fields) -> Value* {
+auto MakeTupleTypeVal(VarValues* fields) -> const Value* {
   auto* v = new Value();
   v->tag = ValKind::TupleTV;
   v->u.tuple_type.fields = fields;
   return v;
 }
 
-auto MakeVoidTypeVal() -> Value* {
+auto MakeVoidTypeVal() -> const Value* {
   auto* v = new Value();
   v->tag = ValKind::TupleTV;
   v->u.tuple_type.fields = new VarValues();
@@ -179,8 +182,8 @@ auto MakeVoidTypeVal() -> Value* {
 }
 
 auto MakeChoiceTypeVal(std::string name,
-                       std::list<std::pair<std::string, Value*>>* alts)
-    -> Value* {
+                       std::list<std::pair<std::string, const Value*>>* alts)
+    -> const Value* {
   auto* v = new Value();
   v->tag = ValKind::ChoiceTV;
   // Transitional leak: when we get rid of all pointers, this will disappear.
@@ -189,7 +192,7 @@ auto MakeChoiceTypeVal(std::string name,
   return v;
 }
 
-void PrintValue(Value* val, std::ostream& out) {
+void PrintValue(const Value* val, std::ostream& out) {
   switch (val->tag) {
     case ValKind::AltConsV: {
       out << *val->u.alt_cons.choice_name << "." << *val->u.alt_cons.alt_name;
@@ -291,7 +294,7 @@ void PrintValue(Value* val, std::ostream& out) {
   }
 }
 
-auto TypeEqual(Value* t1, Value* t2) -> bool {
+auto TypeEqual(const Value* t1, const Value* t2) -> bool {
   if (t1->tag != t2->tag) {
     return false;
   }
@@ -334,7 +337,7 @@ static auto FieldsValueEqual(VarValues* ts1, VarValues* ts2, int line_num)
   return true;
 }
 
-auto ValueEqual(Value* v1, Value* v2, int line_num) -> bool {
+auto ValueEqual(const Value* v1, const Value* v2, int line_num) -> bool {
   if (v1->tag != v2->tag) {
     return false;
   }
@@ -357,7 +360,7 @@ auto ValueEqual(Value* v1, Value* v2, int line_num) -> bool {
   }
 }
 
-auto ToInteger(Value* v) -> int {
+auto ToInteger(const Value* v) -> int {
   switch (v->tag) {
     case ValKind::IntV:
       return v->u.integer;
