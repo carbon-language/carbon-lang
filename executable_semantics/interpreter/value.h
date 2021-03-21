@@ -63,7 +63,7 @@ struct Value {
     struct {
       std::string* alt_name;
       std::string* choice_name;
-      const Value* arg;
+      Address argument;
     } alt;
     struct {
       std::vector<std::pair<std::string, Address>>* elts;
@@ -109,7 +109,7 @@ auto MakePtrVal(Address addr) -> const Value*;
 auto MakeStructVal(const Value* type, const Value* inits) -> const Value*;
 auto MakeTupleVal(std::vector<std::pair<std::string, Address>>* elts)
     -> const Value*;
-auto MakeAltVal(std::string alt_name, std::string choice_name, const Value* arg)
+auto MakeAltVal(std::string alt_name, std::string choice_name, Address argument)
     -> const Value*;
 auto MakeAltCons(std::string alt_name, std::string choice_name) -> const Value*;
 
