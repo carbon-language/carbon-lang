@@ -137,12 +137,20 @@ auto MakeYieldStatement(int line_num, Expression* operand) -> Statement*;
 // that produces a continuation.
 auto MakeResumeStatement(int line_num, Expression* operand) -> Statement*;
 // Returns an AST node for a continuation statement give its line number and
-// parts.
+// contituent parts.
+//
+//     __continuation <continuation_variable> {
+//       <body>
+//     }
 auto MakeContinuation(int line_num, std::string continuation_variable,
                       Statement* body) -> Statement*;
 // Returns an AST node for a run statement give its line number and argument.
+//
+//     __run <argument>;
 auto MakeRun(int line_num, Expression* argument) -> Statement*;
 // Returns an AST node for an await statement give its line number.
+//
+//     __await;
 auto MakeAwait(int line_num) -> Statement*;
 
 void PrintStatement(Statement*, int);

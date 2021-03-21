@@ -237,6 +237,58 @@ need to be answered, such as how do delimited continuations interact with
 hole right away. After all, we're not suggesting that delimited continuations
 should appear in Carbon!
 
+## Experimental: Delimited Continuations in the Shift/Reset style
+
+In this experiment we explore delimited continuations similar to the shift/reset
+formulation in the literature, but adapted to an imperative context.
+
+The statement
+
+    __continuation <identifier> <statement>
+
+creates a continuation object from the given statement and binds the
+continuation to the given identifier. The given statement is not yet executed.
+
+The statement
+
+    __run <expression>;
+
+starts or resumes execution of the continuation object that results from the
+given expression.
+
+The statement
+
+    __await;
+
+pauses the current continuation, saving the control state in the continuation
+object. Control is then returned to the statement after the `__run` that
+initiated the current continuation.
+
+These three language features are demonstrated in the following example, where
+we create a continuation and bind it to `k`. We then run the continuation twice.
+The first time increments `x` to `1` and the second time increments `x` to `2`,
+so the expected result of this program is `2`.
+
+```carbon
+fn main() -> Int {
+  var Int: x = 0;
+  __continuation k {
+    x = x + 1;
+    __await;
+    x = x + 1;
+  }
+  __run k;
+  __run k;
+  return x;
+}
+```
+
+Note that the control state of the continuation object bound to `k` mutates as
+the program executes. Upon creation, the control state is at the beginning of
+the continuation. After the first `__run`, the control state is just after the
+`__await`. After the second `__run`, the control state is at the end of the
+continuation.
+
 ## Example Programs (Regression Tests)
 
 The [`testdata/`](testdata/) subdirectory includes some example programs with
