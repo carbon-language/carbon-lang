@@ -890,6 +890,33 @@ auto CopyContinuation(Stack<Frame*> continuation) -> Stack<Frame*> {
   }
 }
 
+// Returns a copy of the continuation from its top down to
+// the first continuation frame.
+auto CopyToContinuation(Stack<Frame*> continuation) -> Stack<Frame*> {
+  Frame* frame = continuation.Top();
+  if (frame->name == "continuation") {
+    Frame* copiedFrame = new Frame(*frame);
+    Stack<Frame*> copiedContinuation;
+    copiedContinuation.Push(copiedFrame);
+    return copiedContinuation;
+  } else {
+    Frame* copiedFrame = new Frame(*frame);
+    continuation.Pop();
+    Stack<Frame*> copiedContinuation = CopyToContinuation(continuation);
+    copiedContinuation.Push(copiedFrame);
+    return copiedContinuation;
+  }
+}
+
+// Pop frames off the stack down to a continuation frame.
+auto PopToContinuation() -> void {
+  // Roll back to the nearest continuation
+  while (!state->stack.IsEmpty() &&
+         state->stack.Top()->name != "continuation") {
+    state->stack.Pop();
+  }
+}
+
 // State transitions for statements.
 
 void StepStmt() {
@@ -1024,24 +1051,35 @@ void StepStmt() {
       Scope* scope = new Scope(CurrentEnv(state), std::list<std::string>());
       Stack<Scope*> scopes;
       scopes.Push(scope);
+      Action* return_action =
+          MakeStmtAct(MakeReturn(stmt->line_num, MakeUnit(stmt->line_num)));
       Action* body_action = MakeStmtAct(stmt->u.continuation.body);
       Stack<Action*> todo;
+      todo.Push(return_action);
       todo.Push(body_action);
+      Frame* continuation_frame = new Frame("continuation", scopes, todo);
       Stack<Frame*> continuation_stack;
-      continuation_stack.Push(new Frame("continuation", scopes, todo));
+      continuation_stack.Push(continuation_frame);
       Value* continuation = MakeContinuation(continuation_stack);
-      CurrentEnv(state).Set(*stmt->u.continuation.continuation_variable,
-                            AllocateValue(continuation));
+      continuation_frame->continuation = continuation;
+      frame->scopes.Top()->env.Set(*stmt->u.continuation.continuation_variable,
+                                   AllocateValue(continuation));
       frame->todo.Pop();
       break;
     }
     case StatementKind::Run:
-      // UNDER CONSTRUCTION
-      exit(-1);
+      frame->todo.Push(MakeExpAct(stmt->u.run.argument));
+      act->pos++;
       break;
     case StatementKind::Await:
-      // UNDER CONSTRUCTION
-      exit(-1);
+      // Pause the current continuation
+      frame->todo.Pop();
+      Stack<Frame*> paused = CopyToContinuation(state->stack);
+      PopToContinuation();
+      // Update the continuation with the paused stack.
+      state->stack.Top()->continuation->u.continuation.stack =
+          new Stack<Frame*>(paused);
+      state->stack.Pop();
       break;
   }
 }
@@ -1163,6 +1201,17 @@ auto PopToDelimit() -> std::optional<Statement*> {
     state->stack.Pop();
   }  // while (!new_stack.IsEmpty())
   return std::nullopt;
+}
+
+// Reinstates a saved continuation onto the current stack.
+auto ReinstateContinuation(Stack<Frame*> continuation) -> void {
+  if (!continuation.IsEmpty()) {
+    Frame* frame = continuation.Top();
+    continuation.Pop();
+    ReinstateContinuation(continuation);
+    Frame* new_frame = new Frame(*frame);
+    state->stack.Push(new_frame);
+  }
 }
 
 // State transition for handling a value.
@@ -1561,7 +1610,17 @@ void HandleValue() {
           break;
         }
         case StatementKind::Run: {
-          // UNDER CONSTRUCTION
+          frame->todo.Pop(2);
+          // Push an expression statement action to ignore the result
+          // value from the continuation.
+          Action* ignore_result = MakeStmtAct(
+              MakeExpStmt(stmt->line_num, MakeUnit(stmt->line_num)));
+          ignore_result->pos = 0;
+          frame->todo.Push(ignore_result);
+          // Push the continuation onto the current stack.
+          Stack<Frame*> stack =
+              ContinuationToStack(val_act->u.val, stmt->line_num);
+          ReinstateContinuation(stack);
           break;
         }
         case StatementKind::Continuation:

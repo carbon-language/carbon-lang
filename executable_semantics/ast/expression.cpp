@@ -158,6 +158,16 @@ auto MakeTuple(int line_num,
   return e;
 }
 
+// Create an AST node for an empty tuple.
+auto MakeUnit(int line_num) -> Expression* {
+  auto* unit = new Expression();
+  unit->line_num = line_num;
+  unit->tag = ExpressionKind::Tuple;
+  auto* args = new std::vector<std::pair<std::string, Expression*>>();
+  unit->u.tuple.fields = args;
+  return unit;
+}
+
 auto MakeIndex(int line_num, Expression* exp, Expression* i) -> Expression* {
   auto* e = new Expression();
   e->line_num = line_num;

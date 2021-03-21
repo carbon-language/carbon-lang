@@ -101,6 +101,8 @@ auto MakeGetField(int line_num, Expression* exp, std::string field)
 auto MakeTuple(int line_num,
                std::vector<std::pair<std::string, Expression*>>* args)
     -> Expression*;
+// Create an AST node for an empty tuple.
+auto MakeUnit(int line_num) -> Expression*;
 auto MakeIndex(int line_num, Expression* exp, Expression* i) -> Expression*;
 
 auto MakeTypeType(int line_num) -> Expression*;

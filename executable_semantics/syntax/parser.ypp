@@ -305,9 +305,9 @@ statement:
     { $$ = Carbon::MakeResumeStatement(yylineno, $2); }
 | CONTINUATION identifier statement
     { $$ = Carbon::MakeContinuation(yylineno, $2, $3); }
-| RUN expression ';'
+| RUN expression ";"
     { $$ = Carbon::MakeRun(yylineno, $2); }
-| AWAIT ';'
+| AWAIT ";"
     { $$ = Carbon::MakeAwait(yylineno); }
 ;
 optional_else:

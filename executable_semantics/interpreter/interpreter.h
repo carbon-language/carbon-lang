@@ -42,9 +42,15 @@ struct Frame {
   // current function call. The top of the stack is the action
   // that is executed first.
   Stack<Action*> todo;
+  // If this frame is the base on a continuation, then it stores a
+  // pointer to the continuation.
+  Value* continuation;
 
   Frame(std::string n, Stack<Scope*> s, Stack<Action*> c)
-      : name(std::move(std::move(n))), scopes(s), todo(c) {}
+      : name(std::move(std::move(n))),
+        scopes(s),
+        todo(c),
+        continuation(nullptr) {}
 };
 
 struct State {
