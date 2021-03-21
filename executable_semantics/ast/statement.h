@@ -127,8 +127,8 @@ auto MakeMatch(int line_num, Expression* exp,
 //      }
 //
 auto MakeDelimitStatement(int source_location, Statement* body,
-                          std::string yieldedValueName,
-                          std::string continuationName, Statement* handler)
+                          std::string yield_variable,
+                          std::string continuation_variable, Statement* handler)
     -> Statement*;
 // Returns an AST node for a yield stament given an expression
 // that produces the yielded value.
