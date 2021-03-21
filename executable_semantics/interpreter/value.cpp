@@ -85,7 +85,7 @@ auto MakeTupleVal(std::vector<std::pair<std::string, Address>>* elts)
 }
 
 auto MakeAltVal(std::string alt_name, std::string choice_name, Address argument)
-    -> Value* {
+    -> const Value* {
   auto* v = new Value();
   v->tag = ValKind::AltV;
   v->u.alt.alt_name = new std::string(std::move(alt_name));
