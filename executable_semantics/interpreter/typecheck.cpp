@@ -538,6 +538,27 @@ auto TypeCheckStmt(Statement* s, TypeEnv env, Env ct_env, Value* ret_type)
       return TCStatement(MakeResumeStatement(s->line_num, operand_result.exp),
                          env);
     }
+    case StatementKind::Continuation: {
+      auto [new_body, body_env] =
+          TypeCheckStmt(s->u.continuation.body, env, ct_env, ret_type);
+      auto new_continuation = MakeContinuation(
+          s->line_num, *s->u.continuation.continuation_variable, new_body);
+      env.Set(*s->u.continuation.continuation_variable,
+              MakeContinuationTypeVal());
+      return TCStatement(new_continuation, env);
+    }
+    case StatementKind::Run: {
+      auto [new_argument, argument_type, _] = TypeCheckExp(
+          s->u.run.argument, env, ct_env, nullptr, TCContext::ValueContext);
+      ExpectType(s->line_num, "argument of `run`", MakeContinuationTypeVal(),
+                 argument_type);
+      auto new_run = MakeRun(s->line_num, new_argument);
+      return TCStatement(new_run, env);
+    }
+    case StatementKind::Await: {
+      // nothing to do here
+      return TCStatement(s, env);
+    }
   }  // switch
 }
 
@@ -596,6 +617,11 @@ auto CheckOrEnsureReturn(Statement* stmt, bool void_return, int line_num)
                               stmt->line_num));
     case StatementKind::Yield:
     case StatementKind::Resume:
+      return stmt;
+    case StatementKind::Continuation:
+    case StatementKind::Run:
+    case StatementKind::Await:
+      // UNDER CONSTRUCTION
       return stmt;
     case StatementKind::Assign:
     case StatementKind::ExpressionStatement:

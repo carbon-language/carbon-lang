@@ -26,8 +26,9 @@ enum class StatementKind {
   Delimit,  // An experimental "try" for delimited continuations.
   Yield,    // Pause the current continuation, return to the enclosing delimit.
   Resume,   // Restart a continuation.
-  Reset,  // The delimiter for the shift/reset style of delimited continuations.
-  Shift,  // Capture the continuation back to the nearest reset.
+  Continuation,  // Create a first-class continuation.
+  Run,           // Run a continuation to the next await or until it finishes..
+  Await,         // Pause execution of the continuation.
 };
 
 struct Statement {
@@ -90,13 +91,13 @@ struct Statement {
     } resume_stmt;
 
     struct {
-      Statement* body;
-    } reset;
-
-    struct {
       std::string* continuation_variable;
       Statement* body;
-    } shift;
+    } continuation;
+
+    struct {
+      Expression* argument;
+    } run;
 
   } u;
 };
@@ -135,11 +136,14 @@ auto MakeYieldStatement(int line_num, Expression* operand) -> Statement*;
 // Returns an AST node for a resume statement given an expression
 // that produces a continuation.
 auto MakeResumeStatement(int line_num, Expression* operand) -> Statement*;
-// Returns an AST node for a reset statement give its line number and body.
-auto MakeReset(int line_num, Statement* body) -> Statement*;
-// Returns an AST node for a shift statement give its line number and body.
-auto MakeShift(int line_num, std::string continuation_variable, Statement* body)
-    -> Statement*;
+// Returns an AST node for a continuation statement give its line number and
+// parts.
+auto MakeContinuation(int line_num, std::string continuation_variable,
+                      Statement* body) -> Statement*;
+// Returns an AST node for a run statement give its line number and argument.
+auto MakeRun(int line_num, Expression* argument) -> Statement*;
+// Returns an AST node for an await statement give its line number.
+auto MakeAwait(int line_num) -> Statement*;
 
 void PrintStatement(Statement*, int);
 

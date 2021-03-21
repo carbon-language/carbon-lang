@@ -1019,11 +1019,29 @@ void StepStmt() {
       frame->todo.Push(MakeExpAct(stmt->u.resume_stmt.operand));
       act->pos++;
       break;
-    case StatementKind::Reset:
+    case StatementKind::Continuation: {
       // UNDER CONSTRUCTION
+      Scope* scope = new Scope(CurrentEnv(state), std::list<std::string>());
+      Stack<Scope*> scopes;
+      scopes.Push(scope);
+      Action* body_action = MakeStmtAct(stmt->u.continuation.body);
+      Stack<Action*> todo;
+      todo.Push(body_action);
+      Stack<Frame*> continuation_stack;
+      continuation_stack.Push(new Frame("continuation", scopes, todo));
+      Value* continuation = MakeContinuation(continuation_stack);
+      CurrentEnv(state).Set(*stmt->u.continuation.continuation_variable,
+                            AllocateValue(continuation));
+      frame->todo.Pop();
       break;
-    case StatementKind::Shift:
+    }
+    case StatementKind::Run:
       // UNDER CONSTRUCTION
+      exit(-1);
+      break;
+    case StatementKind::Await:
+      // UNDER CONSTRUCTION
+      exit(-1);
       break;
   }
 }
@@ -1542,16 +1560,17 @@ void HandleValue() {
           ResumeContinuation(yielded);
           break;
         }
-        case StatementKind::Shift: {
+        case StatementKind::Run: {
           // UNDER CONSTRUCTION
           break;
         }
+        case StatementKind::Continuation:
+        case StatementKind::Await:
         case StatementKind::Block:
         case StatementKind::Sequence:
         case StatementKind::Break:
         case StatementKind::Continue:
         case StatementKind::Delimit:
-        case StatementKind::Reset:
           std::cerr << "internal error in handle_value, unhandled statement ";
           PrintStatement(stmt, 1);
           std::cerr << std::endl;

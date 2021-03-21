@@ -74,6 +74,7 @@ EXAMPLES = [
     "experimental_delimit_block_scope",
     "experimental_delimit_naturals",
     "experimental_delimit_shared_stack_data",
+    "experimental_continuation1",
 ]
 
 [genrule(

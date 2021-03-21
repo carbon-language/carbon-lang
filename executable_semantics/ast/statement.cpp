@@ -144,24 +144,34 @@ auto MakeResumeStatement(int line_num, Expression* operand) -> Statement* {
   return resume_statement;
 }
 
-// Returns an AST node for a reset statement give its line number and body.
-auto MakeReset(int line_num, Statement* body) -> Statement* {
-  auto* reset = new Statement();
-  reset->line_num = line_num;
-  reset->tag = StatementKind::Reset;
-  reset->u.reset.body = body;
-  return reset;
+// Returns an AST node for a continuation statement give its line number and
+// parts.
+auto MakeContinuation(int line_num, std::string continuation_variable,
+                      Statement* body) -> Statement* {
+  auto* continuation = new Statement();
+  continuation->line_num = line_num;
+  continuation->tag = StatementKind::Continuation;
+  continuation->u.continuation.continuation_variable =
+      new std::string(continuation_variable);
+  continuation->u.continuation.body = body;
+  return continuation;
 }
 
-// Returns an AST node for a shift statement give its line number and body.
-auto MakeShift(int line_num, std::string continuation_variable, Statement* body)
-    -> Statement* {
-  auto* shift = new Statement();
-  shift->line_num = line_num;
-  shift->tag = StatementKind::Shift;
-  shift->u.shift.continuation_variable = new std::string(continuation_variable);
-  shift->u.shift.body = body;
-  return shift;
+// Returns an AST node for a run statement give its line number and argument.
+auto MakeRun(int line_num, Expression* argument) -> Statement* {
+  auto* run = new Statement();
+  run->line_num = line_num;
+  run->tag = StatementKind::Run;
+  run->u.run.argument = argument;
+  return run;
+}
+
+// Returns an AST node for an await statement give its line number.
+auto MakeAwait(int line_num) -> Statement* {
+  auto* await = new Statement();
+  await->line_num = line_num;
+  await->tag = StatementKind::Await;
+  return await;
 }
 
 void PrintStatement(Statement* s, int depth) {
@@ -285,25 +295,24 @@ void PrintStatement(Statement* s, int depth) {
       PrintExp(s->u.resume_stmt.operand);
       std::cout << ";";
       break;
-    case StatementKind::Reset:
-      std::cout << "reset";
+    case StatementKind::Continuation:
+      std::cout << "continuation " << *s->u.continuation.continuation_variable
+                << " ";
       if (depth < 0 || depth > 1) {
         std::cout << std::endl;
       }
-      PrintStatement(s->u.reset.body, depth - 1);
+      PrintStatement(s->u.continuation.body, depth - 1);
       if (depth < 0 || depth > 1) {
         std::cout << std::endl;
       }
       break;
-    case StatementKind::Shift:
-      std::cout << "shift " << *s->u.shift.continuation_variable << " ";
-      if (depth < 0 || depth > 1) {
-        std::cout << std::endl;
-      }
-      PrintStatement(s->u.shift.body, depth - 1);
-      if (depth < 0 || depth > 1) {
-        std::cout << std::endl;
-      }
+    case StatementKind::Run:
+      std::cout << "run ";
+      PrintExp(s->u.run.argument);
+      std::cout << ";";
+      break;
+    case StatementKind::Await:
+      std::cout << "await;";
       break;
   }
 }

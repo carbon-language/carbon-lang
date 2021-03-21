@@ -114,9 +114,10 @@ void yy::parser::error(
 %token CATCH
 %token YIELD
 %token RESUME
+%token CONTINUATION_TYPE
 %token CONTINUATION
-%token RESET
-%token SHIFT
+%token RUN
+%token AWAIT
 %token BREAK
 %token CONTINUE
 %token RETURN
@@ -187,7 +188,7 @@ expression:
     { $$ = Carbon::MakeTypeType(yylineno); }
 | AUTO
     { $$ = Carbon::MakeAutoType(yylineno); }
-| CONTINUATION
+| CONTINUATION_TYPE
     { $$ = Carbon::MakeContinuationType(yylineno); }
 | paren_expression { $$ = $1; }
 | expression EQUAL_EQUAL expression
@@ -302,10 +303,12 @@ statement:
     { $$ = Carbon::MakeYieldStatement(yylineno, $2); }
 | RESUME expression ";"
     { $$ = Carbon::MakeResumeStatement(yylineno, $2); }
-| RESET statement
-    { $$ = Carbon::MakeReset(yylineno, $2); }
-| SHIFT identifier statement
-    { $$ = Carbon::MakeShift(yylineno, $2, $3); }
+| CONTINUATION identifier statement
+    { $$ = Carbon::MakeContinuation(yylineno, $2, $3); }
+| RUN expression ';'
+    { $$ = Carbon::MakeRun(yylineno, $2); }
+| AWAIT ';'
+    { $$ = Carbon::MakeAwait(yylineno); }
 ;
 optional_else:
   // Empty
