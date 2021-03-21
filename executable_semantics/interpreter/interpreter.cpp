@@ -177,13 +177,10 @@ void PrintStack(Stack<Frame*> ls, std::ostream& out) {
   }
 }
 
-void PrintHeap(const std::vector<const Value*>& heap, std::ostream& out) {
-  for (auto& iter : heap) {
-    if (iter) {
-      PrintValue(iter, out);
-    } else {
-      out << "_";
-    }
+void PrintHeap(const VectorOfNonNull<Value>& heap, std::ostream& out) {
+  for (auto iter : heap) {
+    assert(iter && "null Value* in heap");
+    PrintValue(iter, out);
     out << ", ";
   }
 }
@@ -496,7 +493,7 @@ auto PatternMatch(const Value* p, const Value* v, Env env,
 void PatternAssignment(const Value* pat, const Value* val, int line_num) {
   switch (pat->tag) {
     case ValKind::PtrV:
-      state->heap[ValToPtr(pat, line_num)] = val;
+      state->heap.SetElement(ValToPtr(pat, line_num), val);
       break;
     case ValKind::TupleV: {
       switch (val->tag) {

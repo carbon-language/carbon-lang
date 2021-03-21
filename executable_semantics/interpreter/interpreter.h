@@ -38,9 +38,41 @@ struct Frame {
       : name(std::move(std::move(n))), scopes(s), todo(c) {}
 };
 
+// Transitional declaration that helps us prove that the heap doesn't need to
+// represent null `Value*`s.  Goes away when const Value* is replaced by Value.
+template <class T>
+struct VectorOfNonNull {
+  VectorOfNonNull() = default;
+  auto push_back(const T* t) {
+    assert(t != nullptr);
+    impl.push_back(t);
+  }
+
+  auto size() -> typename std::vector<const T*>::size_type {
+    return impl.size();
+  }
+  auto begin() const -> typename std::vector<const T*>::const_iterator {
+    return impl.begin();
+  }
+  auto end() const -> typename std::vector<const T*>::const_iterator {
+    return impl.end();
+  }
+  auto operator[](typename std::vector<const T*>::difference_type i)
+      -> const T* {
+    return impl[i];
+  }
+  auto SetElement(typename std::vector<const T*>::difference_type i,
+                  const T* x) {
+    assert(x != nullptr);
+    impl[i] = x;
+  }
+
+  std::vector<const T*> impl;
+};
+
 struct State {
   Stack<Frame*> stack;
-  std::vector<const Value*> heap;
+  VectorOfNonNull<Value> heap;
   std::vector<bool> alive;
 };
 
