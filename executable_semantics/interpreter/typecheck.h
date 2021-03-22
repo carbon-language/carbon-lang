@@ -14,17 +14,18 @@
 
 namespace Carbon {
 
-using TypeEnv = Dictionary<std::string, Value*>;
+using TypeEnv = Dictionary<std::string, const Value*>;
 
 void PrintTypeEnv(TypeEnv env);
 
 enum class TCContext { ValueContext, PatternContext, TypeContext };
 
 struct TCResult {
-  TCResult(Expression* e, Value* t, TypeEnv env) : exp(e), type(t), env(env) {}
+  TCResult(Expression* e, const Value* t, TypeEnv env)
+      : exp(e), type(t), env(env) {}
 
   Expression* exp;
-  Value* type;
+  const Value* type;
   TypeEnv env;
 };
 
@@ -35,17 +36,17 @@ struct TCStatement {
   TypeEnv env;
 };
 
-auto ToType(int line_num, Value* val) -> Value*;
+auto ToType(int line_num, const Value* val) -> const Value*;
 
-auto TypeCheckExp(Expression* e, TypeEnv env, Env ct_env, Value* expected,
+auto TypeCheckExp(Expression* e, TypeEnv env, Env ct_env, const Value* expected,
                   TCContext context) -> TCResult;
 
-auto TypeCheckStmt(Statement*, TypeEnv, Env, Value*) -> TCStatement;
+auto TypeCheckStmt(Statement*, TypeEnv, Env, Value const*&) -> TCStatement;
 
 auto TypeCheckFunDef(struct FunctionDefinition*, TypeEnv)
     -> struct FunctionDefinition*;
 
-auto TopLevel(std::list<Declaration>* fs) -> std::pair<TypeEnv, Env>;
+auto TopLevel(std::list<Declaration>* fs) -> TypeCheckContext;
 
 void PrintErrorString(const std::string& s);
 

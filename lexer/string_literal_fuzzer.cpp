@@ -6,6 +6,7 @@
 #include <cstring>
 
 #include "diagnostics/diagnostic_emitter.h"
+#include "diagnostics/null_diagnostics.h"
 #include "lexer/string_literal.h"
 #include "llvm/ADT/StringRef.h"
 
@@ -14,7 +15,7 @@ namespace Carbon {
 // NOLINTNEXTLINE: Match the documented fuzzer entry point declaration style.
 extern "C" int LLVMFuzzerTestOneInput(const unsigned char* data,
                                       std::size_t size) {
-  auto token = StringLiteralToken::Lex(
+  auto token = LexedStringLiteral::Lex(
       llvm::StringRef(reinterpret_cast<const char*>(data), size));
   if (!token) {
     // Lexically not a string literal.
@@ -26,7 +27,8 @@ extern "C" int LLVMFuzzerTestOneInput(const unsigned char* data,
     __builtin_trap();
   }
 
-  volatile auto value = token->ComputeValue(NullDiagnosticEmitter());
+  volatile auto value =
+      token->ComputeValue(NullDiagnosticEmitter<const char*>());
   (void)value;
 
   return 0;

@@ -22,8 +22,8 @@ namespace Carbon {
 
 State* state = nullptr;
 
-auto PatternMatch(Value* pat, Value* val, Env, std::list<std::string>*, int)
-    -> std::optional<Env>;
+auto PatternMatch(const Value* pat, const Value* val, Env,
+                  std::list<std::string>*, int) -> std::optional<Env>;
 void HandleValue();
 
 template <class T>
@@ -42,33 +42,37 @@ static auto FindField(const std::string& field,
 // Auxiliary Functions
 //
 
-auto AllocateValue(Value* v) -> Address {
+auto AllocateValue(const Value* v) -> Address {
   // Putting the following two side effects together in this function
   // ensures that we don't do anything else in between, which is really bad!
   // Consider whether to include a copy of the input v in this function
   // or to leave it up to the caller.
   Address a = state->heap.size();
-  state->heap.push_back(v);
+  state->heap.push_back(new Value(*v));
+  state->alive.push_back(true);
   return a;
 }
 
-auto CopyVal(Value* val, int line_num) -> Value* {
-  CheckAlive(val, line_num);
+auto CopyVal(const Value* val, int line_num) -> const Value* {
   switch (val->tag) {
     case ValKind::TupleV: {
       auto elts = new std::vector<std::pair<std::string, Address>>();
       for (auto& i : *val->u.tuple.elts) {
-        Value* elt = CopyVal(state->heap[i.second], line_num);
-        elts->push_back(make_pair(i.first, AllocateValue(elt)));
+        CheckAlive(i.second, line_num);
+        const Value* elt = CopyVal(state->heap[i.second], line_num);
+        Address new_address = AllocateValue(elt);
+        elts->push_back(make_pair(i.first, new_address));
       }
       return MakeTupleVal(elts);
     }
     case ValKind::AltV: {
-      Value* arg = CopyVal(val->u.alt.arg, line_num);
-      return MakeAltVal(*val->u.alt.alt_name, *val->u.alt.choice_name, arg);
+      const Value* arg = CopyVal(state->heap[val->u.alt.argument], line_num);
+      Address argument_address = AllocateValue(arg);
+      return MakeAltVal(*val->u.alt.alt_name, *val->u.alt.choice_name,
+                        argument_address);
     }
     case ValKind::StructV: {
-      Value* inits = CopyVal(val->u.struct_val.inits, line_num);
+      const Value* inits = CopyVal(val->u.struct_val.inits, line_num);
       return MakeStructVal(val->u.struct_val.type, inits);
     }
     case ValKind::IntV:
@@ -112,28 +116,35 @@ auto CopyVal(Value* val, int line_num) -> Value* {
   }
 }
 
-void KillValue(Value* val) {
-  val->alive = false;
+void KillObject(Address address);
+
+// Marks all of the sub-objects of this value as dead.
+void KillSubObjects(const Value* val) {
   switch (val->tag) {
     case ValKind::AltV:
-      KillValue(val->u.alt.arg);
+      KillObject(val->u.alt.argument);
       break;
     case ValKind::StructV:
-      KillValue(val->u.struct_val.inits);
+      KillSubObjects(val->u.struct_val.inits);
       break;
     case ValKind::TupleV:
       for (auto& elt : *val->u.tuple.elts) {
-        if (state->heap[elt.second]->alive) {
-          KillValue(state->heap[elt.second]);
-        } else {
-          std::cerr << "runtime error, killing an already dead value"
-                    << std::endl;
-          exit(-1);
-        }
+        KillObject(elt.second);
       }
       break;
     default:
       break;
+  }
+}
+
+// Marks the object at this address, and all of its sub-objects, as dead.
+void KillObject(Address address) {
+  if (state->alive[address]) {
+    state->alive[address] = false;
+    KillSubObjects(state->heap[address]);
+  } else {
+    std::cerr << "runtime error, killing an already dead value" << std::endl;
+    exit(-1);
   }
 }
 
@@ -166,7 +177,7 @@ void PrintStack(Stack<Frame*> ls, std::ostream& out) {
   }
 }
 
-void PrintHeap(const std::vector<Value*>& heap, std::ostream& out) {
+void PrintHeap(const std::vector<const Value*>& heap, std::ostream& out) {
   for (auto& iter : heap) {
     if (iter) {
       PrintValue(iter, out);
@@ -197,8 +208,7 @@ void PrintState(std::ostream& out) {
 // More Auxiliary Functions
 //
 
-auto ValToInt(Value* v, int line_num) -> int {
-  CheckAlive(v, line_num);
+auto ValToInt(const Value* v, int line_num) -> int {
   switch (v->tag) {
     case ValKind::IntV:
       return v->u.integer;
@@ -209,8 +219,7 @@ auto ValToInt(Value* v, int line_num) -> int {
   }
 }
 
-auto ValToBool(Value* v, int line_num) -> int {
-  CheckAlive(v, line_num);
+auto ValToBool(const Value* v, int line_num) -> int {
   switch (v->tag) {
     case ValKind::BoolV:
       return v->u.boolean;
@@ -220,8 +229,8 @@ auto ValToBool(Value* v, int line_num) -> int {
   }
 }
 
-auto ValToPtr(Value* v, int line_num) -> Address {
-  CheckAlive(v, line_num);
+auto ValToPtr(const Value* v, int line_num) -> Address {
+  CheckAlive(v->u.ptr, line_num);
   switch (v->tag) {
     case ValKind::PtrV:
       return v->u.ptr;
@@ -233,8 +242,8 @@ auto ValToPtr(Value* v, int line_num) -> Address {
   }
 }
 
-auto EvalPrim(Operator op, const std::vector<Value*>& args, int line_num)
-    -> Value* {
+auto EvalPrim(Operator op, const std::vector<const Value*>& args, int line_num)
+    -> const Value* {
   switch (op) {
     case Operator::Neg:
       return MakeIntVal(-ValToInt(args[0], line_num));
@@ -316,37 +325,38 @@ auto VariableDeclaration::InitGlobals(Env& globals) const -> void {
 // where C is the body of the function,
 //       E is the environment (functions + parameters + locals)
 //       F is the function
-void CallFunction(int line_num, std::vector<Value*> operas, State* state) {
-  CheckAlive(operas[0], line_num);
+void CallFunction(int line_num, std::vector<const Value*> operas,
+                  State* state) {
   switch (operas[0]->tag) {
     case ValKind::FunV: {
       // Bind arguments to parameters
       std::list<std::string> params;
-      std::optional<Env> envWithMatches = PatternMatch(
+      std::optional<Env> env_with_matches = PatternMatch(
           operas[0]->u.fun.param, operas[1], globals, &params, line_num);
-      if (!envWithMatches) {
+      if (!env_with_matches) {
         std::cerr << "internal error in call_function, pattern match failed"
                   << std::endl;
         exit(-1);
       }
       // Create the new frame and push it on the stack
-      auto* scope = new Scope(*envWithMatches, params);
+      auto* scope = new Scope(*env_with_matches, params);
       auto* frame = new Frame(*operas[0]->u.fun.name, Stack(scope),
                               Stack(MakeStmtAct(operas[0]->u.fun.body)));
       state->stack.Push(frame);
       break;
     }
     case ValKind::StructTV: {
-      Value* arg = CopyVal(operas[1], line_num);
-      Value* sv = MakeStructVal(operas[0], arg);
+      const Value* arg = CopyVal(operas[1], line_num);
+      const Value* sv = MakeStructVal(operas[0], arg);
       Frame* frame = state->stack.Top();
       frame->todo.Push(MakeValAct(sv));
       break;
     }
     case ValKind::AltConsV: {
-      Value* arg = CopyVal(operas[1], line_num);
-      Value* av = MakeAltVal(*operas[0]->u.alt_cons.alt_name,
-                             *operas[0]->u.alt_cons.choice_name, arg);
+      const Value* arg = CopyVal(operas[1], line_num);
+      const Value* av =
+          MakeAltVal(*operas[0]->u.alt_cons.alt_name,
+                     *operas[0]->u.alt_cons.choice_name, AllocateValue(arg));
       Frame* frame = state->stack.Top();
       frame->todo.Push(MakeValAct(av));
       break;
@@ -366,7 +376,7 @@ void KillScope(int line_num, Scope* scope) {
       std::cerr << "internal error in KillScope" << std::endl;
       exit(-1);
     }
-    KillValue(state->heap[*a]);
+    KillObject(*a);
   }
 }
 
@@ -385,31 +395,9 @@ void CreateTuple(Frame* frame, Action* act, Expression* /*exp*/) {
     Address a = AllocateValue(*i);  // copy?
     elts->push_back(make_pair(f->first, a));
   }
-  Value* tv = MakeTupleVal(elts);
+  const Value* tv = MakeTupleVal(elts);
   frame->todo.Pop(1);
   frame->todo.Push(MakeValAct(tv));
-}
-
-auto ToValue(Expression* value) -> Value* {
-  switch (value->tag) {
-    case ExpressionKind::Integer:
-      return MakeIntVal(value->u.integer);
-    case ExpressionKind::Boolean:
-      return MakeBoolVal(value->u.boolean);
-    case ExpressionKind::IntT:
-      return MakeIntTypeVal();
-    case ExpressionKind::BoolT:
-      return MakeBoolTypeVal();
-    case ExpressionKind::TypeT:
-      return MakeTypeTypeVal();
-    case ExpressionKind::FunctionT:
-      // Instead add to patterns?
-    default:
-      std::cerr << "internal error in to_value, didn't expect ";
-      PrintExp(value);
-      std::cerr << std::endl;
-      exit(-1);
-  }
 }
 
 // Returns an updated environment that includes the bindings of
@@ -417,15 +405,9 @@ auto ToValue(Expression* value) -> Value* {
 //
 // The names of the pattern variables are added to the vars parameter.
 // Returns nullopt if the value doesn't match the pattern.
-auto PatternMatch(Value* p, Value* v, Env env, std::list<std::string>* vars,
-                  int line_num) -> std::optional<Env> {
-  if (tracing_output) {
-    std::cout << "pattern_match(";
-    PrintValue(p, std::cout);
-    std::cout << ", ";
-    PrintValue(v, std::cout);
-    std::cout << ")" << std::endl;
-  }
+auto PatternMatch(const Value* p, const Value* v, Env env,
+                  std::list<std::string>* vars, int line_num)
+    -> std::optional<Env> {
   switch (p->tag) {
     case ValKind::VarPatV: {
       Address a = AllocateValue(CopyVal(v, line_num));
@@ -449,12 +431,12 @@ auto PatternMatch(Value* p, Value* v, Env env, std::list<std::string>* vars,
               std::cerr << std::endl;
               exit(-1);
             }
-            std::optional<Env> envWithMatches = PatternMatch(
+            std::optional<Env> env_with_matches = PatternMatch(
                 state->heap[elt.second], state->heap[*a], env, vars, line_num);
-            if (!envWithMatches) {
+            if (!env_with_matches) {
               return std::nullopt;
             }
-            env = *envWithMatches;
+            env = *env_with_matches;
           }  // for
           return env;
         }
@@ -472,12 +454,13 @@ auto PatternMatch(Value* p, Value* v, Env env, std::list<std::string>* vars,
               *p->u.alt.alt_name != *v->u.alt.alt_name) {
             return std::nullopt;
           }
-          std::optional<Env> envWithMatches =
-              PatternMatch(p->u.alt.arg, v->u.alt.arg, env, vars, line_num);
-          if (!envWithMatches) {
+          std::optional<Env> env_with_matches =
+              PatternMatch(state->heap[p->u.alt.argument],
+                           state->heap[v->u.alt.argument], env, vars, line_num);
+          if (!env_with_matches) {
             return std::nullopt;
           }
-          return *envWithMatches;
+          return *env_with_matches;
         }
         default:
           std::cerr
@@ -490,13 +473,13 @@ auto PatternMatch(Value* p, Value* v, Env env, std::list<std::string>* vars,
     case ValKind::FunctionTV:
       switch (v->tag) {
         case ValKind::FunctionTV: {
-          std::optional<Env> envWithMatches = PatternMatch(
+          std::optional<Env> env_with_matches = PatternMatch(
               p->u.fun_type.param, v->u.fun_type.param, env, vars, line_num);
-          if (!envWithMatches) {
+          if (!env_with_matches) {
             return std::nullopt;
           }
           return PatternMatch(p->u.fun_type.ret, v->u.fun_type.ret,
-                              *envWithMatches, vars, line_num);
+                              *env_with_matches, vars, line_num);
         }
         default:
           return std::nullopt;
@@ -510,7 +493,7 @@ auto PatternMatch(Value* p, Value* v, Env env, std::list<std::string>* vars,
   }
 }
 
-void PatternAssignment(Value* pat, Value* val, int line_num) {
+void PatternAssignment(const Value* pat, const Value* val, int line_num) {
   switch (pat->tag) {
     case ValKind::PtrV:
       state->heap[ValToPtr(pat, line_num)] = val;
@@ -554,7 +537,8 @@ void PatternAssignment(Value* pat, Value* val, int line_num) {
             std::cerr << "internal error in pattern assignment" << std::endl;
             exit(-1);
           }
-          PatternAssignment(pat->u.alt.arg, val->u.alt.arg, line_num);
+          PatternAssignment(state->heap[pat->u.alt.argument],
+                            state->heap[val->u.alt.argument], line_num);
           break;
         }
         default:
@@ -597,8 +581,8 @@ void StepLvalue() {
                   << *(exp->u.variable.name) << "`" << std::endl;
         exit(-1);
       }
-      Value* v = MakePtrVal(*pointer);
-      CheckAlive(v, exp->line_num);
+      const Value* v = MakePtrVal(*pointer);
+      CheckAlive(*pointer, exp->line_num);
       frame->todo.Pop();
       frame->todo.Push(MakeValAct(v));
       break;
@@ -694,7 +678,7 @@ void StepExp() {
                   << *(exp->u.variable.name) << "`" << std::endl;
         exit(-1);
       }
-      Value* pointee = state->heap[*pointer];
+      const Value* pointee = state->heap[*pointer];
       frame->todo.Pop(1);
       frame->todo.Push(MakeValAct(pointee));
       break;
@@ -718,7 +702,7 @@ void StepExp() {
       } else {
         //    { {v :: op(]) :: C, E, F} :: S, H}
         // -> { {eval_prim(op, ()) :: C, E, F} :: S, H}
-        Value* v =
+        const Value* v =
             EvalPrim(exp->u.primitive_op.op, act->results, exp->line_num);
         frame->todo.Pop(2);
         frame->todo.Push(MakeValAct(v));
@@ -731,25 +715,25 @@ void StepExp() {
       act->pos++;
       break;
     case ExpressionKind::IntT: {
-      Value* v = MakeIntTypeVal();
+      const Value* v = MakeIntTypeVal();
       frame->todo.Pop(1);
       frame->todo.Push(MakeValAct(v));
       break;
     }
     case ExpressionKind::BoolT: {
-      Value* v = MakeBoolTypeVal();
+      const Value* v = MakeBoolTypeVal();
       frame->todo.Pop(1);
       frame->todo.Push(MakeValAct(v));
       break;
     }
     case ExpressionKind::AutoT: {
-      Value* v = MakeAutoTypeVal();
+      const Value* v = MakeAutoTypeVal();
       frame->todo.Pop(1);
       frame->todo.Push(MakeValAct(v));
       break;
     }
     case ExpressionKind::TypeT: {
-      Value* v = MakeTypeTypeVal();
+      const Value* v = MakeTypeTypeVal();
       frame->todo.Pop(1);
       frame->todo.Push(MakeValAct(v));
       break;
@@ -896,7 +880,7 @@ void StepStmt() {
 }
 
 auto GetMember(Address a, const std::string& f) -> Address {
-  Value* v = state->heap[a];
+  const Value* v = state->heap[a];
   switch (v->tag) {
     case ValKind::StructV: {
       auto a = FindField(f, *v->u.struct_val.inits->u.tuple.elts);
@@ -979,7 +963,7 @@ void HandleValue() {
   }
   switch (act->tag) {
     case ActionKind::DeleteTmpAction: {
-      KillValue(state->heap[act->u.delete_tmp]);
+      KillObject(act->u.delete_tmp);
       frame->todo.Pop(2);
       frame->todo.Push(val_act);
       break;
@@ -998,7 +982,7 @@ void HandleValue() {
         case ExpressionKind::GetField: {
           //    { v :: [].f :: C, E, F} :: S, H}
           // -> { { &v.f :: C, E, F} :: S, H }
-          Value* str = act->results[0];
+          const Value* str = act->results[0];
           Address a =
               GetMember(ValToPtr(str, exp->line_num), *exp->u.get_field.field);
           frame->todo.Pop(2);
@@ -1012,7 +996,7 @@ void HandleValue() {
           } else if (act->pos == 2) {
             //    { v :: [][i] :: C, E, F} :: S, H}
             // -> { { &v[i] :: C, E, F} :: S, H }
-            Value* tuple = act->results[0];
+            const Value* tuple = act->results[0];
             std::string f = std::to_string(ToInteger(act->results[1]));
             auto a = FindField(f, *tuple->u.tuple.elts);
             if (a == std::nullopt) {
@@ -1125,7 +1109,7 @@ void HandleValue() {
           } else {
             //    { {v :: op(vs,[]) :: C, E, F} :: S, H}
             // -> { {eval_prim(op, (vs,v)) :: C, E, F} :: S, H}
-            Value* v =
+            const Value* v =
                 EvalPrim(exp->u.primitive_op.op, act->results, exp->line_num);
             frame->todo.Pop(2);
             frame->todo.Push(MakeValAct(v));
@@ -1154,7 +1138,7 @@ void HandleValue() {
           if (act->pos == 2) {
             //    { { rt :: fn pt -> [] :: C, E, F} :: S, H}
             // -> { fn pt -> rt :: {C, E, F} :: S, H}
-            Value* v = MakeFunTypeVal(act->results[0], act->results[1]);
+            const Value* v = MakeFunTypeVal(act->results[0], act->results[1]);
             frame->todo.Pop(2);
             frame->todo.Push(MakeValAct(v));
           } else {
@@ -1191,20 +1175,20 @@ void HandleValue() {
           } else if (act->pos == 2) {
             //    { { v :: (x = []) :: C, E, F} :: S, H}
             // -> { { C, E(x := a), F} :: S, H(a := copy(v))}
-            Value* v = act->results[0];
-            Value* p = act->results[1];
+            const Value* v = act->results[0];
+            const Value* p = act->results[1];
 
-            std::optional<Env> envWithMatches =
+            std::optional<Env> env_with_matches =
                 PatternMatch(p, v, frame->scopes.Top()->env,
                              &frame->scopes.Top()->locals, stmt->line_num);
-            if (!envWithMatches) {
+            if (!env_with_matches) {
               std::cerr
                   << stmt->line_num
                   << ": internal error in variable definition, match failed"
                   << std::endl;
               exit(-1);
             }
-            frame->scopes.Top()->env = *envWithMatches;
+            frame->scopes.Top()->env = *env_with_matches;
             frame->todo.Pop(2);
           }
           break;
@@ -1288,10 +1272,10 @@ void HandleValue() {
             auto pat = act->results[clause_num + 1];
             auto env = CurrentEnv(state);
             std::list<std::string> vars;
-            std::optional<Env> envWithMatches =
+            std::optional<Env> env_with_matches =
                 PatternMatch(pat, v, env, &vars, stmt->line_num);
-            if (envWithMatches) {  // we have a match, start the body
-              auto* new_scope = new Scope(*envWithMatches, vars);
+            if (env_with_matches) {  // we have a match, start the body
+              auto* new_scope = new Scope(*env_with_matches, vars);
               frame->scopes.Push(new_scope);
               Statement* body_block = MakeBlock(stmt->line_num, c->second);
               Action* body_act = MakeStmtAct(body_block);
@@ -1320,7 +1304,7 @@ void HandleValue() {
         case StatementKind::Return: {
           //    { {v :: return [] :: C, E, F} :: {C', E', F'} :: S, H}
           // -> { {v :: C', E', F'} :: S, H}
-          Value* ret_val = CopyVal(val_act->u.val, stmt->line_num);
+          const Value* ret_val = CopyVal(val_act->u.val, stmt->line_num);
           KillLocals(stmt->line_num, frame);
           state->stack.Pop(1);
           frame = state->stack.Top();
@@ -1407,12 +1391,12 @@ auto InterpProgram(std::list<Declaration>* fs) -> int {
       PrintState(std::cout);
     }
   }
-  Value* v = state->stack.Top()->todo.Top()->u.val;
+  const Value* v = state->stack.Top()->todo.Top()->u.val;
   return ValToInt(v, 0);
 }
 
 // Interpret an expression at compile-time.
-auto InterpExp(Env env, Expression* e) -> Value* {
+auto InterpExp(Env env, Expression* e) -> const Value* {
   auto todo = Stack(MakeExpAct(e));
   auto* scope = new Scope(env, std::list<std::string>());
   auto* frame = new Frame("InterpExp", Stack(scope), todo);
@@ -1423,7 +1407,7 @@ auto InterpExp(Env env, Expression* e) -> Value* {
          state->stack.Top()->todo.Top()->tag != ActionKind::ValAction) {
     Step();
   }
-  Value* v = state->stack.Top()->todo.Top()->u.val;
+  const Value* v = state->stack.Top()->todo.Top()->u.val;
   return v;
 }
 

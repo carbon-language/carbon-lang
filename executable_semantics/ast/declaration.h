@@ -18,20 +18,24 @@ namespace Carbon {
 struct Value;
 
 using Address = unsigned int;
-using TypeEnv = Dictionary<std::string, Value*>;
+using TypeEnv = Dictionary<std::string, const Value*>;
 using Env = Dictionary<std::string, Address>;
 
-/// TODO:explain this. Also name it if necessary. Consult with jsiek.
-using ExecutionEnvironment = std::pair<TypeEnv, Env>;
+struct TypeCheckContext {
+  // Symbol table mapping names of runtime entities to their type.
+  TypeEnv types;
+  // Symbol table mapping names of compile time entities to their value.
+  Env values;
+};
 
-/// An existential AST declaration satisfying the Declaration concept.
+// An existential AST declaration satisfying the Declaration concept.
 class Declaration {
  public:  // ValueSemantic concept API.
   Declaration(const Declaration& other) = default;
   Declaration& operator=(const Declaration& other) = default;
 
-  /// Constructs an instance equivalent to `d`, where `Model` satisfies the
-  /// Declaration concept.
+  // Constructs an instance equivalent to `d`, where `Model` satisfies the
+  // Declaration concept.
   template <class Model>
   Declaration(Model d) : box(std::make_shared<Boxed<Model>>(d)) {}
 
@@ -50,13 +54,11 @@ class Declaration {
   // Add an entry in the runtime global symbol table for this declaration.
   void InitGlobals(Env& globals) const { return box->InitGlobals(globals); }
   // Add an entry in the compile time global symbol tables for this declaration.
-  auto TopLevel(ExecutionEnvironment& e) const -> void {
-    return box->TopLevel(e);
-  }
+  auto TopLevel(TypeCheckContext& e) const -> void { return box->TopLevel(e); }
 
  private:  // types
-  /// A base class that erases the type of a `Boxed<Content>`, where `Content`
-  /// satisfies the Declaration concept.
+  // A base class that erases the type of a `Boxed<Content>`, where `Content`
+  // satisfies the Declaration concept.
   struct Box {
    protected:
     Box() {}
@@ -70,11 +72,11 @@ class Declaration {
     virtual auto Name() const -> std::string = 0;
     virtual auto TypeChecked(TypeEnv env, Env ct_env) const -> Declaration = 0;
     virtual auto InitGlobals(Env& globals) const -> void = 0;
-    virtual auto TopLevel(ExecutionEnvironment&) const -> void = 0;
+    virtual auto TopLevel(TypeCheckContext&) const -> void = 0;
   };
 
-  /// The derived class that holds an instance of `Content` satisfying the
-  /// Declaration concept.
+  // The derived class that holds an instance of `Content` satisfying the
+  // Declaration concept.
   template <class Content>
   struct Boxed final : Box {
     const Content content;
@@ -88,7 +90,7 @@ class Declaration {
     auto InitGlobals(Env& globals) const -> void override {
       content.InitGlobals(globals);
     }
-    auto TopLevel(ExecutionEnvironment& e) const -> void override {
+    auto TopLevel(TypeCheckContext& e) const -> void override {
       content.TopLevel(e);
     }
   };
@@ -107,7 +109,7 @@ struct FunctionDeclaration {
   auto Name() const -> std::string;
   auto TypeChecked(TypeEnv env, Env ct_env) const -> Declaration;
   auto InitGlobals(Env& globals) const -> void;
-  auto TopLevel(ExecutionEnvironment&) const -> void;
+  auto TopLevel(TypeCheckContext&) const -> void;
 };
 
 struct StructDeclaration {
@@ -119,7 +121,7 @@ struct StructDeclaration {
   auto Name() const -> std::string;
   auto TypeChecked(TypeEnv env, Env ct_env) const -> Declaration;
   void InitGlobals(Env& globals) const;
-  auto TopLevel(ExecutionEnvironment&) const -> void;
+  auto TopLevel(TypeCheckContext&) const -> void;
 };
 
 struct ChoiceDeclaration {
@@ -135,15 +137,15 @@ struct ChoiceDeclaration {
   auto Name() const -> std::string;
   auto TypeChecked(TypeEnv env, Env ct_env) const -> Declaration;
   void InitGlobals(Env& globals) const;
-  auto TopLevel(ExecutionEnvironment&) const -> void;
+  auto TopLevel(TypeCheckContext&) const -> void;
 };
 
 // Global variable definition implements the Declaration concept.
 class VariableDeclaration {
  public:
-  VariableDeclaration(int sourceLocation, std::string name, Expression* type,
+  VariableDeclaration(int source_location, std::string name, Expression* type,
                       Expression* initializer)
-      : sourceLocation(sourceLocation),
+      : source_location(source_location),
         name(name),
         type(type),
         initializer(initializer) {}
@@ -152,10 +154,10 @@ class VariableDeclaration {
   auto Name() const -> std::string;
   auto TypeChecked(TypeEnv env, Env ct_env) const -> Declaration;
   void InitGlobals(Env& globals) const;
-  auto TopLevel(ExecutionEnvironment&) const -> void;
+  auto TopLevel(TypeCheckContext&) const -> void;
 
  private:
-  int sourceLocation;
+  int source_location;
   std::string name;
   Expression* type;
   Expression* initializer;

@@ -6,25 +6,12 @@ workspace(name = "carbon")
 
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 
-# We want to use LLVM via an external CMake build, so pull in the Bazel
-# infrastructure that provides direct CMake interfacing support.
-http_archive(
-    name = "rules_foreign_cc",
-    strip_prefix = "rules_foreign_cc-main",
-    url = "https://github.com/bazelbuild/rules_foreign_cc/archive/main.zip",
-)
-
 # Add Bazel's python rules.
 http_archive(
     name = "rules_python",
     sha256 = "b6d46438523a3ec0f3cead544190ee13223a52f6a6765a29eae7b7cc24cc83a0",
     url = "https://github.com/bazelbuild/rules_python/releases/download/0.1.0/rules_python-0.1.0.tar.gz",
 )
-
-# Set up necessary dependencies for working with the foreign C++ rules.
-load("@rules_foreign_cc//:workspace_definitions.bzl", "rules_foreign_cc_dependencies")
-
-rules_foreign_cc_dependencies()
 
 # Bootstrap a Clang and LLVM toolchain.
 load("//bazel/cc_toolchains:clang_bootstrap.bzl", "bootstrap_clang_toolchain")
@@ -69,8 +56,8 @@ llvm_zlib_system(name = "llvm_zlib")
 # Until then, this is pulling from that pull request's commit.
 http_archive(
     name = "rules_m4",
-    strip_prefix = "rules_m4-add-extra-copts",
     sha256 = "4d34917214e8890ad770bdf0c319c41c9201fffd770938b41a1d641d4b27e05c",
+    strip_prefix = "rules_m4-add-extra-copts",
     urls = ["https://github.com/chandlerc/rules_m4/archive/add-extra-copts.zip"],
 )
 
@@ -87,8 +74,8 @@ m4_register_toolchains(extra_copts = ["-w"])
 # Until then, this is pulling from that pull request's commit.
 http_archive(
     name = "rules_flex",
-    strip_prefix = "rules_flex-add-extra-copts",
     sha256 = "fd97c3ae23926507be1b95158a683cd41c628d201e852a325d38b5e9f821b752",
+    strip_prefix = "rules_flex-add-extra-copts",
     urls = ["https://github.com/chandlerc/rules_flex/archive/add-extra-copts.zip"],
 )
 
@@ -105,8 +92,8 @@ flex_register_toolchains(extra_copts = ["-w"])
 # Until then, this is pulling from that pull request's commit.
 http_archive(
     name = "rules_bison",
-    strip_prefix = "rules_bison-add-extra-copts",
     sha256 = "c6e926f15214d903966dc950d759ec69116db67f148be114c119e4def0551eaa",
+    strip_prefix = "rules_bison-add-extra-copts",
     urls = ["https://github.com/chandlerc/rules_bison/archive/add-extra-copts.zip"],
 )
 

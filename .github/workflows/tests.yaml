@@ -41,7 +41,8 @@ jobs:
       # Setup Python and related tools.
       - uses: actions/setup-python@v2
         with:
-          python-version: '3.8.5'
+          # Match the min version listed in docs/project/contribution_tools.md
+          python-version: '3.6'
       - name: Install python modules
         run: |
           pip install gql PyGitHub

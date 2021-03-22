@@ -80,6 +80,7 @@ cc_fuzz_test(
     deps = [
         ":parse_tree",
         "//diagnostics:diagnostic_emitter",
+        "//diagnostics:null_diagnostics",
         "//lexer:tokenized_buffer",
         "@llvm-project//llvm:Support",
     ],
