@@ -17,10 +17,10 @@ let package = Package(
     ],
     dependencies: [
       .package(
-        url: "git@github.com:yassram/SwiParse.git",
+        url: "https://github.com/yassram/SwiParse.git",
         from: "1.0.0"),
       .package(
-        url: "git@github.com:yassram/SwiLex.git",
+        url: "https://github.com/yassram/SwiLex.git",
         from: "1.0.0"),
     ],
     targets: [
