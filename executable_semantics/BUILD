@@ -78,6 +78,8 @@ EXAMPLES = [
     "experimental_continuation2",
     "experimental_continuation3",
     "experimental_continuation4",
+    "experimental_continuation5",
+    "experimental_continuation6",
 ]
 
 [genrule(

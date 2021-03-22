@@ -960,6 +960,7 @@ auto PopToContinuation() -> void {
          state->stack.Top()->name != "continuation") {
     state->stack.Pop();
   }
+  assert(!state->stack.IsEmpty());
 }
 
 // State transitions for statements.
@@ -1092,28 +1093,31 @@ void StepStmt() {
       act->pos++;
       break;
     case StatementKind::Continuation: {
-      // UNDER CONSTRUCTION
+      // Create a continuation object by creating a frame similar the
+      // way one is created in a function call.
       Scope* scope = new Scope(CurrentEnv(state), std::list<std::string>());
       Stack<Scope*> scopes;
       scopes.Push(scope);
-      Action* return_action =
-          MakeStmtAct(MakeReturn(stmt->line_num, MakeUnit(stmt->line_num)));
-      Action* body_action = MakeStmtAct(stmt->u.continuation.body);
       Stack<Action*> todo;
-      todo.Push(return_action);
-      todo.Push(body_action);
+      todo.Push(
+          MakeStmtAct(MakeReturn(stmt->line_num, MakeUnit(stmt->line_num))));
+      todo.Push(MakeStmtAct(stmt->u.continuation.body));
       Frame* continuation_frame = new Frame("continuation", scopes, todo);
       Stack<Frame*> continuation_stack;
       continuation_stack.Push(continuation_frame);
       Address continuation_address =
           AllocateValue(MakeContinuation(continuation_stack));
+      // Store the continuation's address in the frame.
       continuation_frame->continuation = continuation_address;
+      // Bind the continuation object to the continuation variable
       frame->scopes.Top()->env.Set(*stmt->u.continuation.continuation_variable,
                                    continuation_address);
+      // Pop the continuation statement.
       frame->todo.Pop();
       break;
     }
     case StatementKind::Run:
+      // Evaluate the argument of the run statement.
       frame->todo.Push(MakeExpAct(stmt->u.run.argument));
       act->pos++;
       break;
@@ -1123,7 +1127,7 @@ void StepStmt() {
       Stack<Frame*> paused = CopyToContinuation(state->stack);
       PopToContinuation();
       // Update the continuation with the paused stack.
-      state->heap[frame->continuation] = MakeContinuation(paused);
+      state->heap[state->stack.Top()->continuation] = MakeContinuation(paused);
       state->stack.Pop();
       break;
   }

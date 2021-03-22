@@ -47,7 +47,7 @@ struct Frame {
   Address continuation;
 
   Frame(std::string n, Stack<Scope*> s, Stack<Action*> c)
-      : name(std::move(std::move(n))), scopes(s), todo(c), continuation(0) {}
+      : name(std::move(std::move(n))), scopes(s), todo(c), continuation(-1) {}
 };
 
 struct State {
