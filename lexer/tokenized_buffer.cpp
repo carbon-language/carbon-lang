@@ -56,6 +56,28 @@ struct UnrecognizedCharacters : SimpleDiagnostic<UnrecognizedCharacters> {
       "Encountered unrecognized characters while parsing.";
 };
 
+// TODO: Move Overload and VariantMatch somewhere more central.
+
+// Form an overload set from a list of functions. For example:
+//
+// ```
+// auto overloaded = Overload{[] (int) {}, [] (float) {}};
+// ```
+template <typename... Fs>
+struct Overload : Fs... {
+  using Fs::operator()...;
+};
+template <typename... Fs>
+Overload(Fs...) -> Overload<Fs...>;
+
+// Pattern-match against the type of the value stored in the variant `V`. Each
+// element of `fs` should be a function that takes one or more of the variant
+// values in `V`.
+template <typename V, typename... Fs>
+auto VariantMatch(V&& v, Fs&&... fs) -> decltype(auto) {
+  return std::visit(Overload{std::forward<Fs&&>(fs)...}, std::forward<V&&>(v));
+}
+
 // Implementation of the lexer logic itself.
 //
 // The design is that lexing can loop over the source buffer, consuming it into
@@ -203,36 +225,38 @@ class TokenizedBuffer::Lexer {
       set_indent = true;
     }
 
-    LexedNumericLiteral::Parser literal_parser(emitter, *literal);
-
-    if (!literal_parser.Check()) {
-      auto token = buffer.AddToken({
-          .kind = TokenKind::Error(),
-          .token_line = current_line,
-          .column = int_column,
-          .error_length = token_size,
-      });
-      return token;
-    }
-
-    if (literal_parser.IsInteger()) {
-      auto token = buffer.AddToken({.kind = TokenKind::IntegerLiteral(),
-                                    .token_line = current_line,
-                                    .column = int_column});
-      buffer.GetTokenInfo(token).literal_index =
-          buffer.literal_int_storage.size();
-      buffer.literal_int_storage.push_back(literal_parser.GetMantissa());
-      return token;
-    } else {
-      auto token = buffer.AddToken({.kind = TokenKind::RealLiteral(),
-                                    .token_line = current_line,
-                                    .column = int_column});
-      buffer.GetTokenInfo(token).literal_index =
-          buffer.literal_int_storage.size();
-      buffer.literal_int_storage.push_back(literal_parser.GetMantissa());
-      buffer.literal_int_storage.push_back(literal_parser.GetExponent());
-      return token;
-    }
+    return VariantMatch(
+        literal->ComputeValue(emitter),
+        [&](LexedNumericLiteral::IntegerValue&& value) {
+          auto token = buffer.AddToken({.kind = TokenKind::IntegerLiteral(),
+                                        .token_line = current_line,
+                                        .column = int_column});
+          buffer.GetTokenInfo(token).literal_index =
+              buffer.literal_int_storage.size();
+          buffer.literal_int_storage.push_back(std::move(value.value));
+          return token;
+        },
+        [&](LexedNumericLiteral::RealValue&& value) {
+          auto token = buffer.AddToken({.kind = TokenKind::RealLiteral(),
+                                        .token_line = current_line,
+                                        .column = int_column});
+          buffer.GetTokenInfo(token).literal_index =
+              buffer.literal_int_storage.size();
+          buffer.literal_int_storage.push_back(std::move(value.mantissa));
+          buffer.literal_int_storage.push_back(std::move(value.exponent));
+          assert(buffer.GetRealLiteral(token).IsDecimal() ==
+                 (value.radix == 10));
+          return token;
+        },
+        [&](LexedNumericLiteral::UnrecoverableError) {
+          auto token = buffer.AddToken({
+              .kind = TokenKind::Error(),
+              .token_line = current_line,
+              .column = int_column,
+              .error_length = token_size,
+          });
+          return token;
+        });
   }
 
   auto LexStringLiteral(llvm::StringRef& source_text) -> LexResult {
