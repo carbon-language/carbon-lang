@@ -7,51 +7,6 @@ on:
 
 jobs:
 
-    macOS-swift-51:
-        name: macOS (Swift 5.1)
-        runs-on: macOS-latest
-        steps:
-        - name: Checkout
-          uses: actions/checkout@v1
-        - name: Xcode Version
-          run: |
-            sudo xcode-select -s /Applications/Xcode_11.3.1.app
-            xcodebuild -version
-            swift --version
-        - name: Swift Version
-          run: swift --version
-        - name: Build (Debug)
-          run: swift build -v -c debug
-        - name: Build (Release)
-          run: swift build -v -c release
-        - name: Test (Debug)
-          run: swift test -v --configuration debug --enable-test-discovery
-        - name: Test (Release)
-          run: swift test -v --configuration release -Xswiftc -enable-testing
-
-    macOS-swift-52:
-        name: macOS (Swift 5.2)
-        runs-on: macOS-latest
-        steps:
-        - name: Checkout
-          uses: actions/checkout@v1
-        - name: Xcode Version
-          run: |
-            sudo xcode-select -s /Applications/Xcode_11.4.app
-            xcodebuild -version
-            swift --version
-        - name: Swift Version
-          run: swift --version
-        - name: Build (Debug)
-          run: swift build -v -c debug
-        - name: Build (Release)
-          run: swift build -v -c release
-        - name: Test (Debug)
-          run: swift test -v --configuration debug --enable-test-discovery
-        - name: Test (Release)
-          run: swift test -v --configuration release -Xswiftc -enable-testing --enable-test-discovery
-
-
     macOS-swift-53:
         name: macOS (Swift 5.3)
         runs-on: macOS-latest
@@ -74,43 +29,6 @@ jobs:
         - name: Test (Release)
           run: swift test -v --configuration release -Xswiftc -enable-testing --enable-test-discovery
 
-
-    linux-swift-51:
-        name: Linux x86_64 (Swift 5.1)
-        runs-on: ubuntu-18.04
-        container: swift:5.1
-        steps:
-        - name: Checkout
-          uses: actions/checkout@v1
-        - name: Swift Version
-          run: swift --version
-        - name: Build (Debug)
-          run: swift build -v -c debug --enable-test-discovery
-        - name: Build (Release)
-          run: swift build -v -c release --enable-test-discovery
-        - name: Test (Debug)
-          run: swift test -v --configuration debug --enable-test-discovery
-        - name: Test (Release)
-          run: swift test -v --configuration release -Xswiftc -enable-testing --enable-index-store --enable-test-discovery
-
-
-    linux-swift-52:
-        name: Linux x86_64 (Swift 5.2)
-        runs-on: ubuntu-18.04
-        container: swift:5.2.3-bionic
-        steps:
-        - name: Checkout
-          uses: actions/checkout@v1
-        - name: Swift Version
-          run: swift --version
-        - name: Build (Debug)
-          run: swift build -v -c debug --enable-test-discovery
-        - name: Build (Release)
-          run: swift build -v -c release --enable-test-discovery
-        - name: Test (Debug)
-          run: swift test -v --configuration debug --enable-test-discovery
-        - name: Test (Release)
-          run: swift test -v --configuration release -Xswiftc -enable-testing --enable-test-discovery
 
     linux-swift-53:
         name: Linux x86_64 (Swift 5.3)
