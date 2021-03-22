@@ -66,20 +66,15 @@ EXAMPLES = [
     "tuple2",
     "while1",
     "zero",
-    "experimental_delimit1",
-    "experimental_delimit2",
-    "experimental_delimit3",
-    "experimental_delimit4",
-    "experimental_delimit5",
-    "experimental_delimit_block_scope",
-    "experimental_delimit_naturals",
-    "experimental_delimit_shared_stack_data",
     "experimental_continuation1",
     "experimental_continuation2",
     "experimental_continuation3",
     "experimental_continuation4",
     "experimental_continuation5",
     "experimental_continuation6",
+    "experimental_continuation7",
+    "experimental_continuation8",
+    "experimental_continuation9",
 ]
 
 [genrule(

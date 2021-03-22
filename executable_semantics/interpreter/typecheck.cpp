@@ -508,36 +508,6 @@ auto TypeCheckStmt(Statement* s, TypeEnv env, Env ct_env,
       }
       return TCStatement(MakeReturn(s->line_num, res.exp), env);
     }
-    case StatementKind::Delimit: {
-      TCStatement body_result =
-          TypeCheckStmt(s->u.delimit_stmt.body, env, ct_env, ret_type);
-      TypeEnv handler_env = env;
-      handler_env.Set(*s->u.delimit_stmt.yield_variable, MakeIntTypeVal());
-      handler_env.Set(*s->u.delimit_stmt.continuation_variable,
-                      MakeContinuationTypeVal());
-      TCStatement handler_result = TypeCheckStmt(s->u.delimit_stmt.handler,
-                                                 handler_env, ct_env, ret_type);
-      return TCStatement(
-          MakeDelimitStatement(
-              s->line_num, body_result.stmt, *s->u.delimit_stmt.yield_variable,
-              *s->u.delimit_stmt.continuation_variable, handler_result.stmt),
-          env);
-    }
-    case StatementKind::Yield: {
-      TCResult operand_result =
-          TypeCheckExp(s->u.yield_stmt.operand, env, ct_env, nullptr,
-                       TCContext::ValueContext);
-      ExpectType(s->line_num, "yield", MakeIntTypeVal(), operand_result.type);
-      return TCStatement(MakeYieldStatement(s->line_num, operand_result.exp),
-                         env);
-    }
-    case StatementKind::Resume: {
-      TCResult operand_result =
-          TypeCheckExp(s->u.resume_stmt.operand, env, ct_env, nullptr,
-                       TCContext::ValueContext);
-      return TCStatement(MakeResumeStatement(s->line_num, operand_result.exp),
-                         env);
-    }
     case StatementKind::Continuation: {
       auto [new_body, body_env] =
           TypeCheckStmt(s->u.continuation.body, env, ct_env, ret_type);
@@ -606,22 +576,9 @@ auto CheckOrEnsureReturn(Statement* stmt, bool void_return, int line_num)
         return CheckOrEnsureReturn(stmt->u.sequence.stmt, void_return,
                                    stmt->line_num);
       }
-    case StatementKind::Delimit:
-      return MakeDelimitStatement(
-          stmt->line_num,
-          CheckOrEnsureReturn(stmt->u.delimit_stmt.body, void_return,
-                              stmt->line_num),
-          *stmt->u.delimit_stmt.yield_variable,
-          *stmt->u.delimit_stmt.continuation_variable,
-          CheckOrEnsureReturn(stmt->u.delimit_stmt.handler, void_return,
-                              stmt->line_num));
-    case StatementKind::Yield:
-    case StatementKind::Resume:
-      return stmt;
     case StatementKind::Continuation:
     case StatementKind::Run:
     case StatementKind::Await:
-      // UNDER CONSTRUCTION
       return stmt;
     case StatementKind::Assign:
     case StatementKind::ExpressionStatement:

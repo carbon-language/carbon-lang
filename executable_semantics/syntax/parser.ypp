@@ -110,10 +110,6 @@ void yy::parser::error(
 %token IF
 %token ELSE
 %token WHILE
-%token DELIMIT
-%token CATCH
-%token YIELD
-%token RESUME
 %token CONTINUATION_TYPE
 %token CONTINUATION
 %token RUN
@@ -297,12 +293,6 @@ statement:
     { $$ = Carbon::MakeBlock(yylineno, $2); }
 | MATCH "(" expression ")" "{" clause_list "}"
     { $$ = Carbon::MakeMatch(yylineno, $3, $6); }
-| DELIMIT statement CATCH "(" identifier "," identifier ")" statement
-    { $$ = Carbon::MakeDelimitStatement(yylineno, $2, $5, $7, $9); }
-| YIELD expression ";"
-    { $$ = Carbon::MakeYieldStatement(yylineno, $2); }
-| RESUME expression ";"
-    { $$ = Carbon::MakeResumeStatement(yylineno, $2); }
 | CONTINUATION identifier statement
     { $$ = Carbon::MakeContinuation(yylineno, $2, $3); }
 | RUN expression ";"

@@ -148,106 +148,15 @@ representation of what happens next in a computation. In the abstract machine,
 the procedure call stack represents the current continuation. A delimited
 continuation is also about what happens next, but it doesn't go all the way to
 the end of the execution. Instead it represents what happens up until control
-reaches the nearest enclosing `__delimit` statement. A delimited continuation is
-created when a `__yield` statement is executed within the dynamic extent of a
-`__delimit`. The delimited continuation will included everything that comes
-after the `__yield` up until the end of the body of the `__delimit`. After the
-`__yield`, execution continues in the handler of the `__delimit`, which has two
-parameters. The first holds the integer that was yielded and the second holds
-the delimited continuation. Last but not least, the `__resume` statement
-transfers control to the delimited continuation. Once that continuation is
-finished, control transfers to the statement following the `__resume`.
-
-To make this all concrete, let's consider some examples. In the following, the
-body of the `__delimit` never performs a `__yield`, so once the body of the
-`__delimit` is finished, control transfers to the statement after the
-`__delimit`, which in this case is `return x`.
-
-```carbon
-fn main() -> Int {
-  var Int: x = 1;
-  __delimit {
-    x = 0;
-  } __catch (v, k) {
-    return 1;
-  }
-  return x;
-}
-```
-
-In the next example, the body of the `__delimit` immediately invokes `__yield`
-with the argument `0`. This transfers control to the handler (inside the
-`__catch`). The argument `0` is bound to the variable `v`, so this program
-returns `0`.
-
-```carbon
-fn main() -> Int {
-  __delimit {
-    __yield 0;
-    return 1;
-  } __catch (v, k) {
-    return v;
-  }
-}
-```
-
-The `__catch` clause also binds the delimited continuation to the second
-variable `k`, which can then be used in a `__resume` statement. In the following
-program, `x` starts at `0` and is incremented to `1` at the beginning of the
-body of the `__delimit`. The program then yields `3`, which is caught by the
-handler and added to `x`, so it contains `4`. The handler then resumes the
-continuation, so control transfers to the statement after the `__yield`. So we
-add `2` to `x` to make `6`, and then return `x - 6`, which is `0`.
-
-```carbon
-fn main() -> Int {
-  var Int: x = 0;
-  __delimit {
-    x = x + 1;
-    __yield 3;
-    x = x + 2;
-    return x - 6;
-  } __catch (v, k) {
-    x = x + v;
-    __resume k;
-    return 1;
-  }
-}
-```
-
-These three examples are just the tip of the iceberg regarding what can be done
-with delimited continuations. For example, a `__yield` can be separated from a
-`__delimit` by one or more function calls. Also, the delimited continuations are
-first-class in that they have a type, called `Snapshot`, and can be passed to
-functions, returned, and stored in data structures (such as tuples).
-
-However, most of the interesting examples in the literature also use lambda
-expressions, so those examples will come after an experimental lambda is added.
-Also, it is difficult to create good examples without some kind of global side
-effect, such as printing output or global variables. So we should think about
-adding experimental versions of one or both of those.
-
-Finally, the currently implementation is half-baked and not fully tested. In
-particular, the handling of variable scoping is most likely incorrect. Also,
-delimited continuations have historically appeared in expression-oriented
-languages, such as Lisp. The design above is trying to adapt to Carbon, which is
-a statement-oriented language. There are many questions in that context that
-need to be answered, such as how do delimited continuations interact with
-`return` statements. However, we don't want to go all the way down this rabbit
-hole right away. After all, we're not suggesting that delimited continuations
-should appear in Carbon!
-
-## Experimental: Delimited Continuations in the Shift/Reset style
-
-In this experiment we explore delimited continuations similar to the shift/reset
-formulation in the literature, but adapted to an imperative context.
+reaches the nearest enclosing `__continuation` statement.
 
 The statement
 
     __continuation <identifier> <statement>
 
 creates a continuation object from the given statement and binds the
-continuation to the given identifier. The given statement is not yet executed.
+continuation object to the given identifier. The given statement is not yet
+executed.
 
 The statement
 
@@ -288,6 +197,15 @@ the program executes. Upon creation, the control state is at the beginning of
 the continuation. After the first `__run`, the control state is just after the
 `__await`. After the second `__run`, the control state is at the end of the
 continuation.
+
+The delimited continuation feature described here is based on the
+`shift`/`reset` style of delimited continuations created by Danvy and Filinsky
+(Abstracting control, ACM Conference on Lisp and Functional Programming, 1990).
+We adapted the feature to operate in a more imperative manner. The
+`__continuation` feature is equivalent to a `reset` followed immediately by a
+`shift` to pause and capture the continuation object. The `__run` feature is
+equivalent to calling the continuation. The `__await` feature is equivalent to a
+`shift` except that it updates the continuation in place.
 
 ## Example Programs (Regression Tests)
 

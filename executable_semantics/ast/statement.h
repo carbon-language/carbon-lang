@@ -23,9 +23,6 @@ enum class StatementKind {
   Break,
   Continue,
   Match,
-  Delimit,  // An experimental "try" for delimited continuations.
-  Yield,    // Pause the current continuation, return to the enclosing delimit.
-  Resume,   // Restart a continuation.
   Continuation,  // Create a first-class continuation.
   Run,           // Run a continuation to the next await or until it finishes..
   Await,         // Pause execution of the continuation.
@@ -76,21 +73,6 @@ struct Statement {
     } match_stmt;
 
     struct {
-      Statement* body;
-      std::string* yield_variable;
-      std::string* continuation_variable;
-      Statement* handler;
-    } delimit_stmt;
-
-    struct {
-      Expression* operand;
-    } yield_stmt;
-
-    struct {
-      Expression* operand;
-    } resume_stmt;
-
-    struct {
       std::string* continuation_variable;
       Statement* body;
     } continuation;
@@ -116,26 +98,6 @@ auto MakeContinue(int line_num) -> Statement*;
 auto MakeMatch(int line_num, Expression* exp,
                std::list<std::pair<Expression*, Statement*>>* clauses)
     -> Statement*;
-// Returns a delimit statement's AST node, given its source
-// location and constituent parts.
-//
-//      __delimit {
-//         <body>
-//      }
-//      __catch ( <yieldedValueName>, <continuationName> ) {
-//        <handler>
-//      }
-//
-auto MakeDelimitStatement(int source_location, Statement* body,
-                          std::string yield_variable,
-                          std::string continuation_variable, Statement* handler)
-    -> Statement*;
-// Returns an AST node for a yield stament given an expression
-// that produces the yielded value.
-auto MakeYieldStatement(int line_num, Expression* operand) -> Statement*;
-// Returns an AST node for a resume statement given an expression
-// that produces a continuation.
-auto MakeResumeStatement(int line_num, Expression* operand) -> Statement*;
 // Returns an AST node for a continuation statement give its line number and
 // contituent parts.
 //
