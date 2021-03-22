@@ -250,14 +250,14 @@ void PrintStatement(Statement* s, int depth) {
       } else {
         std::cout << " ";
       }
-      PrintStatement(s->u.sequence.next, depth);
+      PrintStatement(s->u.sequence.next, depth - 1);
       break;
     case StatementKind::Block:
       std::cout << "{";
       if (depth < 0 || depth > 1) {
         std::cout << std::endl;
       }
-      PrintStatement(s->u.block.stmt, depth - 1);
+      PrintStatement(s->u.block.stmt, depth);
       if (depth < 0 || depth > 1) {
         std::cout << std::endl;
       }

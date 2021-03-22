@@ -44,6 +44,8 @@ auto MakeStmtAct(Statement* s) -> Action*;
 auto MakeValAct(Value* v) -> Action*;
 auto MakeExpToLvalAct() -> Action*;
 auto MakeDeleteAct(Address a) -> Action*;
+// Returns a new action object that is a copy of the given action.
+auto CopyAction(Action* action) -> Action*;
 
 }  // namespace Carbon
 

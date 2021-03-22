@@ -61,6 +61,7 @@ struct State {
 
 extern State* state;
 
+void PrintStack(Stack<Frame*> ls, std::ostream& out);
 void PrintEnv(Env env);
 auto AllocateValue(Value* v) -> Address;
 auto CopyVal(Value* val, int line_num) -> Value*;

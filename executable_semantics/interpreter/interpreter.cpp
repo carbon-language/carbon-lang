@@ -7,6 +7,7 @@
 #include <cassert>
 #include <iostream>
 #include <iterator>
+#include <list>
 #include <map>
 #include <optional>
 #include <utility>
@@ -53,6 +54,46 @@ auto AllocateValue(Value* v) -> Address {
   return a;
 }
 
+// Returns a deep copy of the frame.
+auto DeepCopyFrame(Frame* frame) -> Frame* {
+  // Reverse the todo list.
+  std::list<Action*> todo_list;
+  for (Action* action : frame->todo) {
+    todo_list.push_front(action);
+  }
+  // Push the todo list onto the copy.
+  Stack<Action*> todo;
+  for (Action* action : todo_list) {
+    todo.Push(CopyAction(action));
+  }
+  // Reverse the scopes list.
+  std::list<Scope*> scopes_list;
+  for (Scope* scope : frame->scopes) {
+    scopes_list.push_front(scope);
+  }
+  // Push the scopes list onto the copy.
+  Stack<Scope*> scopes;
+  for (Scope* scope : scopes_list) {
+    scopes.Push(scope);  // copy the scope?
+  }
+  Frame* copy = new Frame(frame->name, scopes, todo);
+  copy->continuation = frame->continuation;
+  return copy;
+}
+
+// Returns a deep copy of the stack.
+auto DeepCopyStack(Stack<Frame*> stack) -> Stack<Frame*> {
+  if (stack.IsEmpty()) {
+    return Stack<Frame*>();
+  } else {
+    Frame* copiedFrame = DeepCopyFrame(stack.Top());
+    stack.Pop();
+    Stack<Frame*> copiedStack = DeepCopyStack(stack);
+    copiedStack.Push(copiedFrame);
+    return copiedStack;
+  }
+}
+
 auto CopyVal(Value* val, int line_num) -> Value* {
   switch (val->tag) {
     case ValKind::TupleV: {
@@ -84,7 +125,7 @@ auto CopyVal(Value* val, int line_num) -> Value* {
     case ValKind::PtrV:
       return MakePtrVal(val->u.ptr);
     case ValKind::ContinuationV:
-      return MakeContinuation(*val->u.continuation.stack);
+      return MakeContinuation(DeepCopyStack(*val->u.continuation.stack));
     case ValKind::FunctionTV:
       return MakeFunTypeVal(CopyVal(val->u.fun_type.param, line_num),
                             CopyVal(val->u.fun_type.ret, line_num));
@@ -203,8 +244,10 @@ void PrintState(std::ostream& out) {
   PrintStack(state->stack, out);
   out << std::endl << "heap: ";
   PrintHeap(state->heap, out);
-  out << std::endl << "env: ";
-  PrintEnv(CurrentEnv(state), out);
+  if (!state->stack.IsEmpty() && !state->stack.Top()->scopes.IsEmpty()) {
+    out << std::endl << "env: ";
+    PrintEnv(CurrentEnv(state), out);
+  }
   out << std::endl << "}" << std::endl;
 }
 

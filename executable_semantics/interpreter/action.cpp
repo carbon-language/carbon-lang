@@ -106,4 +106,31 @@ auto MakeDeleteAct(Address a) -> Action* {
   return act;
 }
 
+// Returns a new action object that is a copy of the given action.
+auto CopyAction(Action* action) -> Action* {
+  Action* copy = new Action();
+  copy->tag = action->tag;
+  copy->pos = action->pos;
+  copy->results = action->results;
+  switch (action->tag) {
+    case ActionKind::LValAction:
+    case ActionKind::ExpressionAction:
+      copy->u.exp = action->u.exp;
+      break;
+    case ActionKind::StatementAction:
+      copy->u.stmt = action->u.stmt;
+      break;
+    case ActionKind::ValAction:
+      copy->u.val = action->u.val;
+      break;
+    case ActionKind::ExpToLValAction:
+      // nothing to copy
+      break;
+    case ActionKind::DeleteTmpAction:
+      copy->u.delete_tmp = action->u.delete_tmp;
+      break;
+  }
+  return copy;
+}
+
 }  // namespace Carbon

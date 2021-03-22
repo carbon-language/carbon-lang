@@ -308,7 +308,9 @@ void PrintValue(Value* val, std::ostream& out) {
       out << "choice " << *val->u.choice_type.name;
       break;
     case ValKind::ContinuationV:
-      out << "continuation";
+      out << "continuation[[";
+      PrintStack(*val->u.continuation.stack, out);
+      out << "]]";
       break;
   }
 }
