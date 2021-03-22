@@ -93,13 +93,12 @@ generally be used with [static dispatch](#dispatch-control).
 
 Interfaces in C++ are often represented by abstract base classes. Generics
 should offer an alternative that does not rely on inheritance. This means looser
-coupling and none of the problems of multiple inheritance. In fact, Sean Parent
+coupling and none of the problems of multiple inheritance. In fact,
+[Sean Parent](https://sean-parent.stlab.cc/papers-and-presentations/#better-code-runtime-polymorphism)
 (and others) advocate for runtime polymorphism patterns in C++ that avoid
-inheritance, because
-["inheritance is the base class of Evil"](https://sean-parent.stlab.cc/papers-and-presentations/#better-code-runtime-polymorphism)
-and causes a number of runtime performance, correctness, and code maintenance
-problems. Carbon generics will be able to represent this form of polymorphism
-without all the boilerplate and complexity required in C++.
+inheritance, since it causes a number of runtime performance, correctness, and
+code maintenance problems. Carbon generics will be able to represent this form
+of polymorphism without all the boilerplate and complexity required in C++.
 
 This is a case that would use [dynamic dispatch](#dispatch-control).
 
