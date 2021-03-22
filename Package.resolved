@@ -1,0 +1,25 @@
+{
+  "object": {
+    "pins": [
+      {
+        "package": "SwiLex",
+        "repositoryURL": "git@github.com:yassram/SwiLex.git",
+        "state": {
+          "branch": null,
+          "revision": "3649d3326f964f39ffae1e1e5fe81001ecdaea20",
+          "version": "1.1.0"
+        }
+      },
+      {
+        "package": "SwiParse",
+        "repositoryURL": "git@github.com:yassram/SwiParse.git",
+        "state": {
+          "branch": null,
+          "revision": "1e5128c7fbeee963434d9c1bc13dcb6e52b801dd",
+          "version": "1.0.0"
+        }
+      }
+    ]
+  },
+  "version": 1
+}

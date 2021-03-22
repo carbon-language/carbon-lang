@@ -16,8 +16,12 @@ let package = Package(
             targets: ["AST"]),
     ],
     dependencies: [
-        // Dependencies declare other packages that this package depends on.
-        // .package(url: /* package url */, from: "1.0.0"),
+      .package(
+        url: "git@github.com:yassram/SwiParse.git",
+        from: "1.0.0"),
+      .package(
+        url: "git@github.com:yassram/SwiLex.git",
+        from: "1.0.0"),
     ],
     targets: [
         // Targets are the basic building blocks of a package. A target can
