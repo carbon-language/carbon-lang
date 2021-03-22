@@ -11,15 +11,46 @@
 
 namespace Carbon {
 
-// This is used in the parsing of tuples and parenthesized expressions.
-struct FieldList {
-  std::list<std::pair<std::string, Expression*>>* fields;
-  bool has_explicit_comma = false;
+// A FieldInitializer represents the initialization of a single tuple field.
+struct FieldInitializer {
+  // The field name. An empty string indicates that this represents a
+  // positional field.
+  std::string name;
+
+  // The expression that initializes the field.
+  Expression* expression;
 };
 
-auto MakeFieldList(std::list<std::pair<std::string, Expression*>>* fields)
-    -> FieldList*;
-auto MakeConsField(FieldList* e1, FieldList* e2) -> FieldList*;
+// A FieldList represents the syntactic contents of an expression delimited by
+// parentheses. Such expressions can be interpreted as either tuples or
+// arbitrary expressions, depending on their context and the syntax of their
+// contents; this class helps calling code resolve that ambiguity. Since that
+// ambiguity is purely syntactic, this class should only be needed during
+// parsing.
+//
+// FIXME rename to ParenExpressionContents?
+class FieldList {
+ public:
+  // Indicates whether the paren expression's contents end with a comma.
+  enum class HasTrailingComma { kYes, kNo };
+
+  // Constructs a FieldList representing the given contents, with or without a
+  // trailing comma.
+  FieldList(std::vector<FieldInitializer>* fields,
+            HasTrailingComma has_trailing_comma)
+      : fields_(fields), has_trailing_comma_(has_trailing_comma) {}
+
+  // Returns the paren expression, interpreted as a tuple.
+  Expression* AsTuple(int line_number) const;
+
+  // Returns the paren expression, with no external constraints on what kind
+  // of expression it represents.
+  Expression* AsExpression(int line_number) const;
+
+ private:
+  std::vector<FieldInitializer>* fields_;
+  HasTrailingComma has_trailing_comma_;
+};
 
 }  // namespace Carbon
 

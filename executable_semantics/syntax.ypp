@@ -41,6 +41,8 @@ void yyerror(char* error) {
    std::list<Carbon::Declaration>* declaration_list;
    Carbon::Member* member;
    std::list<Carbon::Member*>* member_list;
+   Carbon::FieldInitializer* field_initializer;
+   std::vector<Carbon::FieldInitializer>* field_list_without_trailing_comma;
    Carbon::FieldList* field_list;
    std::pair<std::string, Carbon::Expression*>* alternative;
    std::list<std::pair<std::string, Carbon::Expression*>>* alternative_list;
@@ -66,8 +68,9 @@ void yyerror(char* error) {
 %type <expression> tuple
 %type <member> member
 %type <member_list> member_list
-%type <field_list> field
+%type <field_initializer> field_initializer
 %type <field_list> field_list
+%type <field_list_without_trailing_comma> field_list_without_trailing_comma
 %type <alternative> alternative
 %type <alternative_list> alternative_list
 %type <clause> clause
@@ -161,50 +164,41 @@ expression:
 designator: '.' identifier { $$ = $2; }
 ;
 paren_expression: '(' field_list ')'
-    {
-     if ($2->fields->size() == 1 &&
-         $2->fields->front().first == "" &&
-	 !$2->has_explicit_comma) {
-	$$ = $2->fields->front().second;
-     } else {
-        auto vec = new std::vector<std::pair<std::string,Carbon::Expression*>>(
-            $2->fields->begin(), $2->fields->end());
-        $$ = Carbon::MakeTuple(yylineno, vec);
-      }
-    }
+    { $$ = $2->AsExpression(yylineno); }
 ;
 tuple: '(' field_list ')'
-    {
-     auto vec = new std::vector<std::pair<std::string,Carbon::Expression*>>(
-         $2->fields->begin(), $2->fields->end());
-     $$ = Carbon::MakeTuple(yylineno, vec);
-    }
-field:
+    { $$ = $2->AsTuple(yylineno); }
+;
+field_initializer:
   pattern
-    {
-      auto fields =
-          new std::list<std::pair<std::string, Carbon::Expression*>>();
-      fields->push_back(std::make_pair("", $1));
-      $$ = Carbon::MakeFieldList(fields);
-    }
+    { $$ = new Carbon::FieldInitializer({"", $1}); }
 | designator '=' pattern
-    {
-      auto fields =
-          new std::list<std::pair<std::string, Carbon::Expression*>>();
-      fields->push_back(std::make_pair($1, $3));
-      $$ = Carbon::MakeFieldList(fields);
-    }
+    { $$ = new Carbon::FieldInitializer({$1, $3}); }
 ;
 field_list:
   // Empty
     {
-      $$ = Carbon::MakeFieldList(
-          new std::list<std::pair<std::string, Carbon::Expression*>>());
+      $$ = new Carbon::FieldList(
+          new std::vector<Carbon::FieldInitializer>(),
+	  Carbon::FieldList::HasTrailingComma::kNo);
     }
-| field
-    { $$ = $1; }
-| field ',' field_list
-    { $$ = Carbon::MakeConsField($1, $3); }
+| field_list_without_trailing_comma
+    {
+      $$ = new Carbon::FieldList($1, Carbon::FieldList::HasTrailingComma::kNo);
+    }
+| field_list_without_trailing_comma ','
+    {
+      $$ = new Carbon::FieldList($1, Carbon::FieldList::HasTrailingComma::kYes);
+    }
+;
+field_list_without_trailing_comma:
+  field_initializer
+    { $$ = new std::vector<Carbon::FieldInitializer>({*$1}); }
+| field_list_without_trailing_comma ',' field_initializer
+    {
+      $$ = $1;
+      $$->push_back(*$3);
+    }
 ;
 clause:
   CASE pattern DBLARROW statement

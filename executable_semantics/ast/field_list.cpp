@@ -6,24 +6,21 @@
 
 namespace Carbon {
 
-auto MakeFieldList(std::list<std::pair<std::string, Expression*>>* fields)
-    -> FieldList* {
-  auto e = new FieldList();
-  e->fields = fields;
-  return e;
+Expression* FieldList::AsExpression(int line_number) const {
+  if (fields_->size() == 1 && fields_->front().name == "" &&
+      has_trailing_comma_ == HasTrailingComma::kNo) {
+    return fields_->front().expression;
+  } else {
+    return AsTuple(line_number);
+  }
 }
 
-auto MakeConsField(FieldList* e1, FieldList* e2) -> FieldList* {
-  auto fields = new std::list<std::pair<std::string, Expression*>>();
-  for (auto& field : *e1->fields) {
-    fields->push_back(field);
+Expression* FieldList::AsTuple(int line_number) const {
+  auto vec = new std::vector<std::pair<std::string, Carbon::Expression*>>();
+  for (const FieldInitializer& initializer : *fields_) {
+    vec->push_back({initializer.name, initializer.expression});
   }
-  for (auto& field : *e2->fields) {
-    fields->push_back(field);
-  }
-  auto result = MakeFieldList(fields);
-  result->has_explicit_comma = true;
-  return result;
+  return MakeTuple(line_number, vec);
 }
 
 }  // namespace Carbon
