@@ -14,6 +14,7 @@ namespace Carbon {
 namespace {
 
 using Testing::DiagnosticAt;
+using Testing::DiagnosticLevel;
 using Testing::DiagnosticMessage;
 using Testing::DiagnosticShortName;
 using ::testing::ElementsAre;
@@ -47,12 +48,14 @@ TEST(DiagTest, EmitErrors) {
   Testing::MockDiagnosticConsumer consumer;
   DiagnosticEmitter<int> emitter(translator, consumer);
 
-  EXPECT_CALL(consumer, HandleDiagnostic(AllOf(
-                            DiagnosticAt(1, 1), DiagnosticMessage("error: M1"),
-                            DiagnosticShortName("fake-diagnostic"))));
-  EXPECT_CALL(consumer, HandleDiagnostic(AllOf(
-                            DiagnosticAt(1, 2), DiagnosticMessage("error: M2"),
-                            DiagnosticShortName("fake-diagnostic"))));
+  EXPECT_CALL(consumer, HandleDiagnostic(
+                            AllOf(DiagnosticLevel(Diagnostic::Error),
+                                  DiagnosticAt(1, 1), DiagnosticMessage("M1"),
+                                  DiagnosticShortName("fake-diagnostic"))));
+  EXPECT_CALL(consumer, HandleDiagnostic(
+                            AllOf(DiagnosticLevel(Diagnostic::Error),
+                                  DiagnosticAt(1, 2), DiagnosticMessage("M2"),
+                                  DiagnosticShortName("fake-diagnostic"))));
 
   emitter.EmitError<FakeDiagnostic>(1, {.message = "M1"});
   emitter.EmitError<FakeDiagnostic>(2, {.message = "M2"});
@@ -65,14 +68,14 @@ TEST(DiagTest, EmitWarnings) {
   Testing::MockDiagnosticConsumer consumer;
   DiagnosticEmitter<int> emitter(translator, consumer);
 
-  EXPECT_CALL(consumer,
-              HandleDiagnostic(AllOf(DiagnosticAt(1, 3),
-                                     DiagnosticMessage("warning: M1"),
-                                     DiagnosticShortName("fake-diagnostic"))));
-  EXPECT_CALL(consumer,
-              HandleDiagnostic(AllOf(DiagnosticAt(1, 5),
-                                     DiagnosticMessage("warning: M3"),
-                                     DiagnosticShortName("fake-diagnostic"))));
+  EXPECT_CALL(consumer, HandleDiagnostic(
+                            AllOf(DiagnosticLevel(Diagnostic::Warning),
+                                  DiagnosticAt(1, 3), DiagnosticMessage("M1"),
+                                  DiagnosticShortName("fake-diagnostic"))));
+  EXPECT_CALL(consumer, HandleDiagnostic(
+                            AllOf(DiagnosticLevel(Diagnostic::Warning),
+                                  DiagnosticAt(1, 5), DiagnosticMessage("M3"),
+                                  DiagnosticShortName("fake-diagnostic"))));
 
   emitter.EmitWarningIf<FakeDiagnostic>(3, [](FakeDiagnostic& diagnostic) {
     diagnostic.message = "M1";

@@ -166,13 +166,9 @@ LexedNumericLiteral::Parser::Parser(DiagnosticEmitter<const char*>& emitter,
 
 // Check that the numeric literal token is syntactically valid and meaningful,
 // and diagnose if not.
-auto LexedNumericLiteral::Parser::Check() -> CheckResult {
-  if (!CheckLeadingZero() || !CheckIntPart() || !CheckFractionalPart() ||
-      !CheckExponentPart()) {
-    return UnrecoverableError;
-  }
-
-  return recovered_from_error ? RecoverableError : Valid;
+auto LexedNumericLiteral::Parser::Check() -> bool {
+  return CheckLeadingZero() && CheckIntPart() && CheckFractionalPart() &&
+         CheckExponentPart();
 }
 
 // Parse a string that is known to be a valid base-radix integer into an
@@ -280,7 +276,6 @@ auto LexedNumericLiteral::Parser::CheckDigitSequence(
       if (!allow_digit_separators || i == 0 || text[i - 1] == '_' ||
           i + 1 == n) {
         emitter.EmitError<InvalidDigitSeparator>(text.begin() + i);
-        recovered_from_error = true;
       }
       ++num_digit_separators;
       continue;
@@ -322,7 +317,6 @@ auto LexedNumericLiteral::Parser::CheckDigitSeparatorPlacement(
 
   auto diagnose_irregular_digit_separators = [&]() {
     emitter.EmitError<IrregularDigitSeparators>(text.begin(), {.radix = radix});
-    recovered_from_error = true;
   };
 
   // For decimal and hexadecimal digit sequences, digit separators must form
@@ -372,7 +366,6 @@ auto LexedNumericLiteral::Parser::CheckFractionalPart() -> bool {
   if (radix == 2) {
     emitter.EmitError<BinaryRealLiteral>(literal.text.begin() +
                                          literal.radix_point);
-    recovered_from_error = true;
     // Carry on and parse the binary real literal anyway.
   }
 
