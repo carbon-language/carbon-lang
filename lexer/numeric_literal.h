@@ -57,19 +57,11 @@ class LexedNumericLiteral::Parser {
     return literal.radix_point == static_cast<int>(literal.text.size());
   }
 
-  enum CheckResult {
-    // The token is valid.
-    Valid,
-    // The token is invalid, but we've diagnosed and recovered from the error.
-    RecoverableError,
-    // The token is invalid, and we've diagnosed, but we can't assign meaning
-    // to it.
-    UnrecoverableError,
-  };
-
   // Check that the numeric literal token is syntactically valid and
-  // meaningful, and diagnose if not.
-  auto Check() -> CheckResult;
+  // meaningful, and diagnose if not. Returns `true` if the token was
+  // sufficiently valid that we could determine its meaning. If `false` is
+  // returned, a diagnostic has already been issued.
+  auto Check() -> bool;
 
   // Get the radix of this token. One of 2, 10, or 16.
   auto GetRadix() -> int { return radix; }
@@ -119,9 +111,6 @@ class LexedNumericLiteral::Parser {
 
   // True if we found a `-` before `exponent_part`.
   bool exponent_is_negative = false;
-
-  // True if we produced an error but recovered.
-  bool recovered_from_error = false;
 };
 
 }  // namespace Carbon

@@ -13,6 +13,10 @@ namespace Carbon {
 namespace {
 
 struct StringLiteralTest : ::testing::Test {
+  StringLiteralTest() : error_tracker(ConsoleDiagnosticConsumer()) {}
+
+  ErrorTrackingDiagnosticConsumer error_tracker;
+
   auto Lex(llvm::StringRef text) -> LexedStringLiteral {
     llvm::Optional<LexedStringLiteral> result = LexedStringLiteral::Lex(text);
     assert(result);
@@ -20,11 +24,10 @@ struct StringLiteralTest : ::testing::Test {
     return *result;
   }
 
-  auto Parse(llvm::StringRef text) -> LexedStringLiteral::ExpandedValue {
+  auto Parse(llvm::StringRef text) -> std::string {
     LexedStringLiteral token = Lex(text);
     Testing::SingleTokenDiagnosticTranslator translator(text);
-    DiagnosticEmitter<const char*> emitter(translator,
-                                           ConsoleDiagnosticConsumer());
+    DiagnosticEmitter<const char*> emitter(translator, error_tracker);
     return token.ComputeValue(emitter);
   }
 };
@@ -182,9 +185,10 @@ TEST_F(StringLiteralTest, StringLiteralContents) {
   };
 
   for (auto [test, contents] : testcases) {
+    error_tracker.Reset();
     auto value = Parse(test.trim());
-    EXPECT_FALSE(value.has_errors) << "`" << test << "`";
-    EXPECT_EQ(value.result, contents);
+    EXPECT_FALSE(error_tracker.SeenError()) << "`" << test << "`";
+    EXPECT_EQ(value, contents);
   }
 }
 
@@ -205,9 +209,10 @@ TEST_F(StringLiteralTest, StringLiteralBadIndent) {
   };
 
   for (auto [test, contents] : testcases) {
+    error_tracker.Reset();
     auto value = Parse(test);
-    EXPECT_TRUE(value.has_errors) << "`" << test << "`";
-    EXPECT_EQ(value.result, contents);
+    EXPECT_TRUE(error_tracker.SeenError()) << "`" << test << "`";
+    EXPECT_EQ(value, contents);
   }
 }
 
@@ -253,8 +258,9 @@ TEST_F(StringLiteralTest, StringLiteralBadEscapeSequence) {
   };
 
   for (llvm::StringLiteral test : testcases) {
+    error_tracker.Reset();
     auto value = Parse(test);
-    EXPECT_TRUE(value.has_errors) << "`" << test << "`";
+    EXPECT_TRUE(error_tracker.SeenError()) << "`" << test << "`";
     // TODO: Test value produced by error recovery.
   }
 }
