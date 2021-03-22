@@ -44,18 +44,15 @@ struct Frame {
   Stack<Action*> todo;
   // If this frame is the base on a continuation, then it stores a
   // pointer to the continuation.
-  Value* continuation;
+  Address continuation;
 
   Frame(std::string n, Stack<Scope*> s, Stack<Action*> c)
-      : name(std::move(std::move(n))),
-        scopes(s),
-        todo(c),
-        continuation(nullptr) {}
+      : name(std::move(std::move(n))), scopes(s), todo(c), continuation(0) {}
 };
 
 struct State {
   Stack<Frame*> stack;
-  std::vector<Value*> heap;
+  std::vector<const Value*> heap;
   std::vector<bool> alive;
 };
 
@@ -63,14 +60,14 @@ extern State* state;
 
 void PrintStack(Stack<Frame*> ls, std::ostream& out);
 void PrintEnv(Env env);
-auto AllocateValue(Value* v) -> Address;
-auto CopyVal(Value* val, int line_num) -> Value*;
-auto ToInteger(Value* v) -> int;
+auto AllocateValue(const Value* v) -> Address;
+auto CopyVal(const Value* val, int line_num) -> const Value*;
+auto ToInteger(const Value* v) -> int;
 
 /***** Interpreters *****/
 
 auto InterpProgram(std::list<Declaration>* fs) -> int;
-auto InterpExp(Env env, Expression* e) -> Value*;
+auto InterpExp(Env env, Expression* e) -> const Value*;
 
 }  // namespace Carbon
 

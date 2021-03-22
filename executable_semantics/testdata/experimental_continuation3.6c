@@ -10,7 +10,7 @@ fn main() -> Int {
   __continuation k {
     x = x + 1;
     __await;
-    x = x + 1;
+    x = x + 2;
   }
   __run k;
   __run k;

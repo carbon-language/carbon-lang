@@ -15,9 +15,10 @@ namespace Carbon {
 
 struct Value;
 using Address = unsigned int;
-using VarValues = std::list<std::pair<std::string, Value*>>;
+using VarValues = std::list<std::pair<std::string, const Value*>>;
 
-auto FindInVarValues(const std::string& field, VarValues* inits) -> Value*;
+auto FindInVarValues(const std::string& field, VarValues* inits)
+    -> const Value*;
 auto FieldsEqual(VarValues* ts1, VarValues* ts2) -> bool;
 
 enum class ValKind {
@@ -54,13 +55,13 @@ struct Value {
 
     struct {
       std::string* name;
-      Value* param;
+      const Value* param;
       Statement* body;
     } fun;
 
     struct {
-      Value* type;
-      Value* inits;
+      const Value* type;
+      const Value* inits;
     } struct_val;
 
     struct {
@@ -83,16 +84,16 @@ struct Value {
 
     struct {
       std::string* name;
-      Value* type;
+      const Value* type;
     } var_pat;
 
     struct {
-      Value* param;
-      Value* ret;
+      const Value* param;
+      const Value* ret;
     } fun_type;
 
     struct {
-      Value* type;
+      const Value* type;
     } ptr_type;
 
     struct {
@@ -113,7 +114,7 @@ struct Value {
 
     struct {
       std::list<std::string*>* params;
-      Value* type;
+      const Value* type;
     } implicit;
 
     struct {
@@ -123,42 +124,43 @@ struct Value {
   } u;
 };
 
-auto MakeIntVal(int i) -> Value*;
-auto MakeBoolVal(bool b) -> Value*;
-auto MakeFunVal(std::string name, Value* param, Statement* body) -> Value*;
-auto MakePtrVal(Address addr) -> Value*;
-auto MakeStructVal(Value* type, Value* inits) -> Value*;
-auto MakeTupleVal(std::vector<std::pair<std::string, Address>>* elts) -> Value*;
-auto MakeAltVal(std::string alt_name, std::string choice_name, Address argument)
-    -> Value*;
-auto MakeAltCons(std::string alt_name, std::string choice_name) -> Value*;
-
 // Return a first-class continuation represented by the
 // given stack, down to the first Delimit.
 auto MakeContinuation(Stack<Frame*> stack) -> Value*;
+auto MakeIntVal(int i) -> const Value*;
+auto MakeBoolVal(bool b) -> const Value*;
+auto MakeFunVal(std::string name, const Value* param, Statement* body)
+    -> const Value*;
+auto MakePtrVal(Address addr) -> const Value*;
+auto MakeStructVal(const Value* type, const Value* inits) -> const Value*;
+auto MakeTupleVal(std::vector<std::pair<std::string, Address>>* elts)
+    -> const Value*;
+auto MakeAltVal(std::string alt_name, std::string choice_name, Address argument)
+    -> const Value*;
+auto MakeAltCons(std::string alt_name, std::string choice_name) -> const Value*;
 
-auto MakeVarPatVal(std::string name, Value* type) -> Value*;
+auto MakeVarPatVal(std::string name, const Value* type) -> const Value*;
 
-auto MakeVarTypeVal(std::string name) -> Value*;
-auto MakeIntTypeVal() -> Value*;
-auto MakeAutoTypeVal() -> Value*;
-auto MakeBoolTypeVal() -> Value*;
-auto MakeTypeTypeVal() -> Value*;
-auto MakeContinuationTypeVal() -> Value*;
-auto MakeFunTypeVal(Value* param, Value* ret) -> Value*;
-auto MakePtrTypeVal(Value* type) -> Value*;
+auto MakeVarTypeVal(std::string name) -> const Value*;
+auto MakeIntTypeVal() -> const Value*;
+auto MakeContinuationTypeVal() -> const Value*;
+auto MakeAutoTypeVal() -> const Value*;
+auto MakeBoolTypeVal() -> const Value*;
+auto MakeTypeTypeVal() -> const Value*;
+auto MakeFunTypeVal(const Value* param, const Value* ret) -> const Value*;
+auto MakePtrTypeVal(const Value* type) -> const Value*;
 auto MakeStructTypeVal(std::string name, VarValues* fields, VarValues* methods)
-    -> Value*;
-auto MakeTupleTypeVal(VarValues* fields) -> Value*;
-auto MakeVoidTypeVal() -> Value*;
-auto MakeChoiceTypeVal(std::string name, VarValues* alts) -> Value*;
+    -> const Value*;
+auto MakeTupleTypeVal(VarValues* fields) -> const Value*;
+auto MakeVoidTypeVal() -> const Value*;
+auto MakeChoiceTypeVal(std::string name, VarValues* alts) -> const Value*;
 
-void PrintValue(Value* val, std::ostream& out);
+void PrintValue(const Value* val, std::ostream& out);
 
-auto TypeEqual(Value* t1, Value* t2) -> bool;
-auto ValueEqual(Value* v1, Value* v2, int line_num) -> bool;
+auto TypeEqual(const Value* t1, const Value* t2) -> bool;
+auto ValueEqual(const Value* v1, const Value* v2, int line_num) -> bool;
 
-auto ToInteger(Value* v) -> int;
+auto ToInteger(const Value* v) -> int;
 void CheckAlive(Address a, int line_num);
 
 }  // namespace Carbon
