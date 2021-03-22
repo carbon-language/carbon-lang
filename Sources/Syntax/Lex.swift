@@ -69,7 +69,7 @@ public struct Token: Hashable {
   public let location: RangeOfSourceFile
 }
 
-/// Returns a Token for each lexically significant unit in `sourceText`.
+/// Returns a `Token` for each lexically significant unit in `sourceText`.
 func tokenize(sourceText: String) -> [Token] {
   var r: [Token] = []
   var tokenStart = PositionInSourceFile(line: 1, column: 1)
