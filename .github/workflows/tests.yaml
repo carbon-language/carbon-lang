@@ -1,0 +1,169 @@
+name: test
+
+on:
+    push:
+      branches: [main]
+    pull_request:
+
+jobs:
+
+    macOS-swift-51:
+        name: macOS (Swift 5.1)
+        runs-on: macOS-latest
+        steps:
+        - name: Checkout
+          uses: actions/checkout@v1
+        - name: Xcode Version
+          run: |
+            sudo xcode-select -s /Applications/Xcode_11.3.1.app
+            xcodebuild -version
+            swift --version
+        - name: Swift Version
+          run: swift --version
+        - name: Build (Debug)
+          run: swift build -v -c debug
+        - name: Build (Release)
+          run: swift build -v -c release
+        - name: Test (Debug)
+          run: swift test -v --configuration debug --enable-test-discovery
+        - name: Test (Release)
+          run: swift test -v --configuration release -Xswiftc -enable-testing
+
+    macOS-swift-52:
+        name: macOS (Swift 5.2)
+        runs-on: macOS-latest
+        steps:
+        - name: Checkout
+          uses: actions/checkout@v1
+        - name: Xcode Version
+          run: |
+            sudo xcode-select -s /Applications/Xcode_11.4.app
+            xcodebuild -version
+            swift --version
+        - name: Swift Version
+          run: swift --version
+        - name: Build (Debug)
+          run: swift build -v -c debug
+        - name: Build (Release)
+          run: swift build -v -c release
+        - name: Test (Debug)
+          run: swift test -v --configuration debug --enable-test-discovery
+        - name: Test (Release)
+          run: swift test -v --configuration release -Xswiftc -enable-testing --enable-test-discovery
+
+
+    macOS-swift-53:
+        name: macOS (Swift 5.3)
+        runs-on: macOS-latest
+        steps:
+        - name: Checkout
+          uses: actions/checkout@v1
+        - name: Xcode Version
+          run: |
+            sudo xcode-select -s /Applications/Xcode_12.app
+            xcodebuild -version
+            swift --version
+        - name: Swift Version
+          run: swift --version
+        - name: Build (Debug)
+          run: swift build -v -c debug
+        - name: Build (Release)
+          run: swift build -v -c release
+        - name: Test (Debug)
+          run: swift test -v --configuration debug --enable-test-discovery
+        - name: Test (Release)
+          run: swift test -v --configuration release -Xswiftc -enable-testing --enable-test-discovery
+
+
+    linux-swift-51:
+        name: Linux x86_64 (Swift 5.1)
+        runs-on: ubuntu-18.04
+        container: swift:5.1
+        steps:
+        - name: Checkout
+          uses: actions/checkout@v1
+        - name: Swift Version
+          run: swift --version
+        - name: Build (Debug)
+          run: swift build -v -c debug --enable-test-discovery
+        - name: Build (Release)
+          run: swift build -v -c release --enable-test-discovery
+        - name: Test (Debug)
+          run: swift test -v --configuration debug --enable-test-discovery
+        - name: Test (Release)
+          run: swift test -v --configuration release -Xswiftc -enable-testing --enable-index-store --enable-test-discovery
+
+
+    linux-swift-52:
+        name: Linux x86_64 (Swift 5.2)
+        runs-on: ubuntu-18.04
+        container: swift:5.2.3-bionic
+        steps:
+        - name: Checkout
+          uses: actions/checkout@v1
+        - name: Swift Version
+          run: swift --version
+        - name: Build (Debug)
+          run: swift build -v -c debug --enable-test-discovery
+        - name: Build (Release)
+          run: swift build -v -c release --enable-test-discovery
+        - name: Test (Debug)
+          run: swift test -v --configuration debug --enable-test-discovery
+        - name: Test (Release)
+          run: swift test -v --configuration release -Xswiftc -enable-testing --enable-test-discovery
+
+    linux-swift-53:
+        name: Linux x86_64 (Swift 5.3)
+        runs-on: ubuntu-20.04
+        container: swift:5.3-focal
+        steps:
+        - name: Checkout
+          uses: actions/checkout@v1
+        - name: Swift Version
+          run: swift --version
+        - name: Build (Debug)
+          run: swift build -v -c debug --enable-test-discovery
+        - name: Build (Release)
+          run: swift build -v -c release --enable-test-discovery
+        - name: Test (Debug)
+          run: swift test -v --configuration debug --enable-test-discovery
+        - name: Test (Release)
+          run: swift test -v --configuration release -Xswiftc -enable-testing --enable-test-discovery
+
+    windows-swift-latest:
+        name: Windows (Development Snapshot)
+        runs-on: windows-latest
+        steps:
+            - uses: seanmiddleditch/gha-setup-vsdevenv@master
+
+            - name: Checkout
+              uses: actions/checkout@v2
+
+            - name: Install swift-DEVELOPMENT-SNAPSHOT-2020-11-26
+              run: |
+                  Install-Binary -Url "https://swift.org/builds/development/windows10/swift-DEVELOPMENT-SNAPSHOT-2020-11-26-a/swift-DEVELOPMENT-SNAPSHOT-2020-11-26-a-windows10.exe" -Name "installer.exe" -ArgumentList ("-q")
+            - name: Set Environment Variables
+              run: |
+                  echo "SDKROOT=C:\Library\Developer\Platforms\Windows.platform\Developer\SDKs\Windows.sdk" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+                  echo "DEVELOPER_DIR=C:\Library\Developer" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+            - name: Adjust Paths
+              run: |
+                  echo "C:\Library\Swift-development\bin;C:\Library\icu-67\usr\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+                  echo "C:\Library\Developer\Toolchains\unknown-Asserts-development.xctoolchain\usr\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+            - name: Install Supporting Files
+              run: |
+                  Copy-Item "$env:SDKROOT\usr\share\ucrt.modulemap" -destination "$env:UniversalCRTSdkDir\Include\$env:UCRTVersion\ucrt\module.modulemap"
+                  Copy-Item "$env:SDKROOT\usr\share\visualc.modulemap" -destination "$env:VCToolsInstallDir\include\module.modulemap"
+                  Copy-Item "$env:SDKROOT\usr\share\visualc.apinotes" -destination "$env:VCToolsInstallDir\include\visualc.apinotes"
+                  Copy-Item "$env:SDKROOT\usr\share\winsdk.modulemap" -destination "$env:UniversalCRTSdkDir\Include\$env:UCRTVersion\um\module.modulemap"
+
+            - name: Swift Version
+              run: swift --version
+            - name: Build (Debug)
+              run: swift build -v -c debug
+            - name: Build (Release)
+              run: swift build -v -c release
+            - name: Test (Debug)
+              run: swift test -v --configuration debug
+            - name: Test (Release)
+              run: swift test -v --configuration release -Xswiftc -enable-testing
