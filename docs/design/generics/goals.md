@@ -201,7 +201,7 @@ generic code. This gives us these additional principles:
 -   Users should be able to convert a single template parameter to be generic at
     a time.
 -   Converting from a template parameter to a generic parameter should be safe.
-    It should either fail to compile or work, never silently change semantics.
+    It should either work or fail to compile, never silently change semantics.
 -   We should minimize the effort to convert functions and types from templated
     to generic. Ideally it should just require specifying the type constraints,
     affecting just the signature of the function, not its body.
