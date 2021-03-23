@@ -151,59 +151,59 @@ void yy::parser::error(
 %locations
 %%
 input: declaration_list
-    { parsed_program = $1; }
+    /* { parsed_program = $1; } */
 ;
 pattern:
   expression
-    { $$ = $1; }
+    /* { $$ = $1; } */
 ;
 expression:
   identifier
-    { $$ = Carbon::MakeVar(yylineno, $1); }
+    /* { $$ = Carbon::MakeVar(yylineno, $1); } */
 | expression designator
-    { $$ = Carbon::MakeGetField(yylineno, $1, $2); }
+    /* { $$ = Carbon::MakeGetField(yylineno, $1, $2); } */
 | expression "[" expression "]"
-    { $$ = Carbon::MakeIndex(yylineno, $1, $3); }
+    /* { $$ = Carbon::MakeIndex(yylineno, $1, $3); } */
 | expression ":" identifier
-    { $$ = Carbon::MakeVarPat(yylineno, $3, $1); }
+    /* { $$ = Carbon::MakeVarPat(yylineno, $3, $1); } */
 | integer_literal
-    { $$ = Carbon::MakeInt(yylineno, $1); }
+    /* { $$ = Carbon::MakeInt(yylineno, $1); } */
 | TRUE
-    { $$ = Carbon::MakeBool(yylineno, true); }
+    /* { $$ = Carbon::MakeBool(yylineno, true); } */
 | FALSE
-    { $$ = Carbon::MakeBool(yylineno, false); }
+    /* { $$ = Carbon::MakeBool(yylineno, false); } */
 | INT
-    { $$ = Carbon::MakeIntType(yylineno); }
+    /* { $$ = Carbon::MakeIntType(yylineno); } */
 | BOOL
-    { $$ = Carbon::MakeBoolType(yylineno); }
+    /* { $$ = Carbon::MakeBoolType(yylineno); } */
 | TYPE
-    { $$ = Carbon::MakeTypeType(yylineno); }
+    /* { $$ = Carbon::MakeTypeType(yylineno); } */
 | AUTO
-    { $$ = Carbon::MakeAutoType(yylineno); }
+    /* { $$ = Carbon::MakeAutoType(yylineno); } */
 | paren_expression { $$ = $1; }
 | expression EQUAL_EQUAL expression
-    { $$ = Carbon::MakeBinOp(yylineno, Carbon::Operator::Eq, $1, $3); }
+    /* { $$ = Carbon::MakeBinOp(yylineno, Carbon::Operator::Eq, $1, $3); } */
 | expression "+" expression
-    { $$ = Carbon::MakeBinOp(yylineno, Carbon::Operator::Add, $1, $3); }
+    /* { $$ = Carbon::MakeBinOp(yylineno, Carbon::Operator::Add, $1, $3); } */
 | expression "-" expression
-    { $$ = Carbon::MakeBinOp(yylineno, Carbon::Operator::Sub, $1, $3); }
+    /* { $$ = Carbon::MakeBinOp(yylineno, Carbon::Operator::Sub, $1, $3); } */
 | expression AND expression
-    { $$ = Carbon::MakeBinOp(yylineno, Carbon::Operator::And, $1, $3); }
+    /* { $$ = Carbon::MakeBinOp(yylineno, Carbon::Operator::And, $1, $3); } */
 | expression OR expression
-    { $$ = Carbon::MakeBinOp(yylineno, Carbon::Operator::Or, $1, $3); }
+    /* { $$ = Carbon::MakeBinOp(yylineno, Carbon::Operator::Or, $1, $3); } */
 | NOT expression
-    { $$ = Carbon::MakeUnOp(yylineno, Carbon::Operator::Not, $2); }
+    /* { $$ = Carbon::MakeUnOp(yylineno, Carbon::Operator::Not, $2); } */
 | "-" expression
-    { $$ = Carbon::MakeUnOp(yylineno, Carbon::Operator::Neg, $2); }
+    /* { $$ = Carbon::MakeUnOp(yylineno, Carbon::Operator::Neg, $2); } */
 | expression tuple
-    { $$ = Carbon::MakeCall(yylineno, $1, $2); }
+    /* { $$ = Carbon::MakeCall(yylineno, $1, $2); } */
 | FNTY tuple return_type
-    { $$ = Carbon::MakeFunType(yylineno, $2, $3); }
+    /* { $$ = Carbon::MakeFunType(yylineno, $2, $3); } */
 ;
 designator: "." identifier { $$ = $2; }
 ;
 paren_expression: "(" field_list ")"
-    {
+    /* {
      if ($2->fields->size() == 1 &&
          $2->fields->front().first == "" &&
 	 !$2->has_explicit_comma) {
@@ -213,177 +213,177 @@ paren_expression: "(" field_list ")"
             $2->fields->begin(), $2->fields->end());
         $$ = Carbon::MakeTuple(yylineno, vec);
       }
-    }
+    } */
 ;
 tuple: "(" field_list ")"
-    {
+    /* {
      auto vec = new std::vector<std::pair<std::string,Carbon::Expression*>>(
          $2->fields->begin(), $2->fields->end());
      $$ = Carbon::MakeTuple(yylineno, vec);
-    }
+    } */
 field:
   pattern
-    {
+    /* {
       auto fields =
           new std::list<std::pair<std::string, Carbon::Expression*>>();
       fields->push_back(std::make_pair("", $1));
       $$ = Carbon::MakeFieldList(fields);
-    }
+    } */
 | designator "=" pattern
-    {
+    /* {
       auto fields =
           new std::list<std::pair<std::string, Carbon::Expression*>>();
       fields->push_back(std::make_pair($1, $3));
       $$ = Carbon::MakeFieldList(fields);
-    }
+    } */
 ;
 field_list:
   // Empty
-    {
+    /* {
       $$ = Carbon::MakeFieldList(
           new std::list<std::pair<std::string, Carbon::Expression*>>());
-    }
+    } */
 | field
-    { $$ = $1; }
+    /* { $$ = $1; } */
 | field "," field_list
-    { $$ = Carbon::MakeConsField($1, $3); }
+    /* { $$ = Carbon::MakeConsField($1, $3); } */
 ;
 clause:
   CASE pattern DBLARROW statement
-    { $$ = new std::pair<Carbon::Expression*, Carbon::Statement*>($2, $4); }
+    /* { $$ = new std::pair<Carbon::Expression*, Carbon::Statement*>($2, $4); } */
 | DEFAULT DBLARROW statement
-    {
+    /* {
       auto vp = Carbon::MakeVarPat(yylineno, "_",
                                    Carbon::MakeAutoType(yylineno));
       $$ = new std::pair<Carbon::Expression*, Carbon::Statement*>(vp, $3);
-    }
+    } */
 ;
 clause_list:
   // Empty
-    {
+    /* {
       $$ = new std::list<std::pair<Carbon::Expression*, Carbon::Statement*>>();
-    }
+    } */
 | clause clause_list
-    { $$ = $2; $$->push_front(*$1); }
+    /* { $$ = $2; $$->push_front(*$1); } */
 ;
 statement:
   expression "=" expression ";"
-    { $$ = Carbon::MakeAssign(yylineno, $1, $3); }
+    /* { $$ = Carbon::MakeAssign(yylineno, $1, $3); } */
 | VAR pattern "=" expression ";"
-    { $$ = Carbon::MakeVarDef(yylineno, $2, $4); }
+    /* { $$ = Carbon::MakeVarDef(yylineno, $2, $4); } */
 | expression ";"
-    { $$ = Carbon::MakeExpStmt(yylineno, $1); }
+    /* { $$ = Carbon::MakeExpStmt(yylineno, $1); } */
 | IF "(" expression ")" statement optional_else
-    { $$ = Carbon::MakeIf(yylineno, $3, $5, $6); }
+    /* { $$ = Carbon::MakeIf(yylineno, $3, $5, $6); } */
 | WHILE "(" expression ")" statement
-    { $$ = Carbon::MakeWhile(yylineno, $3, $5); }
+    /* { $$ = Carbon::MakeWhile(yylineno, $3, $5); } */
 | BREAK ";"
-    { $$ = Carbon::MakeBreak(yylineno); }
+    /* { $$ = Carbon::MakeBreak(yylineno); } */
 | CONTINUE ";"
-    { $$ = Carbon::MakeContinue(yylineno); }
+    /* { $$ = Carbon::MakeContinue(yylineno); } */
 | RETURN expression ";"
-    { $$ = Carbon::MakeReturn(yylineno, $2); }
+    /* { $$ = Carbon::MakeReturn(yylineno, $2); } */
 | "{" statement_list "}"
-    { $$ = Carbon::MakeBlock(yylineno, $2); }
+    /* { $$ = Carbon::MakeBlock(yylineno, $2); } */
 | MATCH "(" expression ")" "{" clause_list "}"
-    { $$ = Carbon::MakeMatch(yylineno, $3, $6); }
+    /* { $$ = Carbon::MakeMatch(yylineno, $3, $6); } */
 ;
 optional_else:
   // Empty
-    { $$ = 0; }
+    /* { $$ = 0; } */
 | ELSE statement { $$ = $2; }
 ;
 statement_list:
   // Empty
-    { $$ = 0; }
+    /* { $$ = 0; } */
 | statement statement_list
-    { $$ = Carbon::MakeSeq(yylineno, $1, $2); }
+    /* { $$ = Carbon::MakeSeq(yylineno, $1, $2); } */
 ;
 return_type:
   // Empty
-    {
+    /* {
       $$ = Carbon::MakeTuple(
           yylineno,
           new std::vector<std::pair<std::string, Carbon::Expression*>>());
-    }
+    } */
 | ARROW expression
-    { $$ = $2; }
+    /* { $$ = $2; } */
 ;
 function_definition:
   FN identifier tuple return_type "{" statement_list "}"
-    { $$ = MakeFunDef(yylineno, $2, $4, $3, $6); }
+    /* { $$ = MakeFunDef(yylineno, $2, $4, $3, $6); } */
 | FN identifier tuple DBLARROW expression ";"
-    {
+    /* {
       $$ = Carbon::MakeFunDef(yylineno, $2, Carbon::MakeAutoType(yylineno), $3,
                               Carbon::MakeReturn(yylineno, $5));
-    }
+    } */
 ;
 function_declaration:
   FN identifier tuple return_type ";"
-    { $$ = MakeFunDef(yylineno, $2, $4, $3, 0); }
+    /* { $$ = MakeFunDef(yylineno, $2, $4, $3, 0); } */
 ;
 variable_declaration: expression ":" identifier
-    { $$ = MakeField(yylineno, $3, $1); }
+    /* { $$ = MakeField(yylineno, $3, $1); } */
 ;
 member: VAR variable_declaration ";"
-    { $$ = $2; }
+    /* { $$ = $2; } */
 ;
 member_list:
   // Empty
-    { $$ = new std::list<Carbon::Member*>(); }
+    /* { $$ = new std::list<Carbon::Member*>(); } */
 | member member_list
-    { $$ = $2; $$->push_front($1); }
+    /* { $$ = $2; $$->push_front($1); } */
 ;
 alternative:
   identifier tuple
-    { $$ = new std::pair<std::string, Carbon::Expression*>($1, $2); }
+    /* { $$ = new std::pair<std::string, Carbon::Expression*>($1, $2); } */
 | identifier
-    {
+    /* {
       $$ = new std::pair<std::string, Carbon::Expression*>(
           $1, Carbon::MakeTuple(
             yylineno,
             new std::vector<std::pair<std::string, Carbon::Expression*>>()));
-    }
+    } */
 ;
 alternative_list:
   // Empty
-    { $$ = new std::list<std::pair<std::string, Carbon::Expression*>>(); }
+    /* { $$ = new std::list<std::pair<std::string, Carbon::Expression*>>(); } */
 | alternative
-    {
+    /* {
       $$ = new std::list<std::pair<std::string, Carbon::Expression*>>();
       $$->push_front(*$1);
-    }
+    } */
 | alternative "," alternative_list
-    { $$ = $3; $$->push_front(*$1); }
+    /* { $$ = $3; $$->push_front(*$1); } */
 ;
 declaration:
   function_definition
-    { $$ = new Carbon::Declaration(Carbon::FunctionDeclaration{$1}); }
+    /* { $$ = new Carbon::Declaration(Carbon::FunctionDeclaration{$1}); } */
 | function_declaration
-    { $$ = new Carbon::Declaration(Carbon::FunctionDeclaration{$1}); }
+    /* { $$ = new Carbon::Declaration(Carbon::FunctionDeclaration{$1}); } */
 | STRUCT identifier "{" member_list "}"
-    {
+    /* {
       $$ = new Carbon::Declaration(
         Carbon::StructDeclaration{yylineno, $2, $4});
-    }
+    } */
 | CHOICE identifier "{" alternative_list "}"
-    {
+    /* {
       $$ = new Carbon::Declaration(
         Carbon::ChoiceDeclaration{yylineno, $2, std::list(*$4)});
-    }
+    } */
 | VAR variable_declaration "=" expression ";"
-    {
+    /* {
       $$ = new Carbon::Declaration(
         Carbon::VariableDeclaration(yylineno, *$2->u.field.name, $2->u.field.type, $4));
-    }
+    } */
 ;
 declaration_list:
   // Empty
-    { $$ = new std::list<Carbon::Declaration>(); }
+    /* { $$ = new std::list<Carbon::Declaration>(); } */
 | declaration declaration_list
-    {
+    /* {
       $$ = $2;
       $$->push_front(*$1);
-    }
+    } */
 ;
 %%
