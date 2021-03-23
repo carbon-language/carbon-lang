@@ -2,7 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-// Test copying a continuation.
+// Assignment for continuations is shallow, so `k2` refers to the same
+// continuation as `k1`.
 
 fn main() -> Int {
   var Int: x = 0;

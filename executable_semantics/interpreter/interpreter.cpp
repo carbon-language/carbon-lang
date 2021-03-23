@@ -54,42 +54,6 @@ auto AllocateValue(const Value* v) -> Address {
   return a;
 }
 
-// Returns a deep copy of the frame.
-auto DeepCopyFrame(Frame* frame) -> Frame* {
-  std::list<Action*> reverse_todo;
-  for (Action* action : frame->todo) {
-    reverse_todo.push_front(action);
-  }
-  Stack<Action*> todo;
-  for (Action* action : reverse_todo) {
-    todo.Push(CopyAction(action));
-  }
-  std::list<Scope*> reverse_scopes;
-  for (Scope* scope : frame->scopes) {
-    reverse_scopes.push_front(scope);
-  }
-  Stack<Scope*> scopes;
-  for (Scope* scope : reverse_scopes) {
-    scopes.Push(scope);
-  }
-  Frame* copy = new Frame(frame->name, scopes, todo);
-  copy->continuation = frame->continuation;
-  return copy;
-}
-
-// Returns a deep copy of the stack.
-auto DeepCopyStack(Stack<Frame*> stack) -> Stack<Frame*> {
-  Stack<Frame*> copy;
-  std::list<Frame*> reverse_frames;
-  for (Frame* frame : stack) {
-    reverse_frames.push_front(frame);
-  }
-  for (Frame* frame : reverse_frames) {
-    copy.Push(DeepCopyFrame(frame));
-  }
-  return copy;
-}
-
 auto CopyVal(const Value* val, int line_num) -> const Value* {
   switch (val->tag) {
     case ValKind::TupleV: {
@@ -121,7 +85,8 @@ auto CopyVal(const Value* val, int line_num) -> const Value* {
     case ValKind::PtrV:
       return MakePtrVal(val->u.ptr);
     case ValKind::ContinuationV:
-      return MakeContinuation(DeepCopyStack(*val->u.continuation.stack));
+      // We don't copy continuations.
+      return val;
     case ValKind::FunctionTV:
       return MakeFunTypeVal(CopyVal(val->u.fun_type.param, line_num),
                             CopyVal(val->u.fun_type.ret, line_num));
