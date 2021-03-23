@@ -71,6 +71,7 @@ source_files_query = subprocess.run(
         "query",
         "--keep_going",
         "--output=location",
+        "--incompatible_display_source_file_location",
         'filter(".*\\.(h|cpp|cc|c|cxx)$", kind("source file", deps(//...)))',
     ],
     check=True,
