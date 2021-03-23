@@ -17,6 +17,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
         -   [Generic programming](#generic-programming)
         -   [Upgrade path from C++ abstract interfaces](#upgrade-path-from-c-abstract-interfaces)
         -   [Dependency injection](#dependency-injection)
+        -   [Generics instead of open overloading](#generics-instead-of-open-overloading)
         -   [Use cases that are out of scope](#use-cases-that-are-out-of-scope)
     -   [Performance](#performance)
     -   [Better compiler experience](#better-compiler-experience)
@@ -26,7 +27,6 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Upgrade path from templates](#upgrade-path-from-templates)
     -   [Coherence](#coherence)
     -   [No novel name lookup](#no-novel-name-lookup)
-    -   [Generics instead of open overloading](#generics-instead-of-open-overloading)
     -   [Learn from others](#learn-from-others)
     -   [Interface abstraction](#interface-abstraction)
     -   [Interop and evolution](#interop-and-evolution)
@@ -122,6 +122,27 @@ For example, generics might be used to configure how a library writes logs.
 This would allow you to avoid the runtime overhead of virtual functions, using
 [static dispatch](#dispatch-control) without the
 [poor build experience of templates](#better-compiler-experience).
+
+#### Generics instead of open overloading
+
+One name lookup problem we would like to avoid is caused by open overloading.
+Overloading is where you provide multiple implementations of a function with the
+same name, and the implementation used in a specific context is determined by
+the argument types. Open overloading is overloading where the overload set is
+not restricted to a single file or library.
+
+This is commonly used to provide a type-specific implementation of some
+operation, but doesn't provide any enforcement of consistency across the
+different overloads. It makes the meaning of code dependent on which overloads
+are imported, and is at odds with being able to type check a function
+generically.
+
+Our goal is to address this use case, known as
+[the expression problem](https://eli.thegreenplace.net/2016/the-expression-problem-and-its-solutions),
+with a mechanism within generics that does enforce consistency so that type
+checking is possible without seeing all implementations. This will be Carbon's
+replacement for open overloading. As a result, Carbon generics will need to be
+able to support operator overloading.
 
 #### Use cases that are out of scope
 
@@ -249,14 +270,14 @@ generic code. This gives us these additional principles:
 -   We should minimize the effort to convert functions and types from templated
     to generic. Ideally it should just require specifying the type constraints,
     affecting just the signature of the function, not its body.
--   It should be legal to call templated code from generic code when it would
-    have the same semantics as if called from non-generic code, and an error
-    otherwise. This is to allow more templated functions to be converted to
-    generics, instead of requiring them to be converted specifically in
-    bottom-up order.
--   When defining a new generic interface to replace a template, support
-    providing using the old templated implementation temporarily as a default
-    until types transition.
+-   **Nice to have:** It should be legal to call templated code from generic
+    code when it would have the same semantics as if called from non-generic
+    code, and an error otherwise. This is to allow more templated functions to
+    be converted to generics, instead of requiring them to be converted
+    specifically in bottom-up order.
+-   **Nice to have:** When defining a new generic interface to replace a
+    template, support providing using the old templated implementation
+    temporarily as a default until types transition.
 
 ### Coherence
 
@@ -273,27 +294,6 @@ facilities of the language.
 
 **Nice to have:** For example, if `x` has type `T`, then if you write `x.y` you
 should be able to look up `y` in the definition of `T`.
-
-### Generics instead of open overloading
-
-One name lookup problem we would like to avoid is caused by open overloading.
-Overloading is where you provide multiple implementations of a function with the
-same name, and the implementation used in a specific context is determined by
-the argument types. Open overloading is overloading where the overload set is
-not restricted to a single file or library.
-
-This is commonly used to provide a type-specific implementation of some
-operation, but doesn't provide any enforcement of consistency across the
-different overloads. It makes the meaning of code dependent on which overloads
-are imported, and is at odds with being able to type check a function
-generically.
-
-Our goal is to address this use case, known as
-[the expression problem](https://eli.thegreenplace.net/2016/the-expression-problem-and-its-solutions),
-with a mechanism within generics that does enforce consistency so that type
-checking is possible without seeing all implementations. This will be Carbon's
-replacement for open overloading. As a result, Carbon generics will need to be
-able to support operator overloading.
 
 ### Learn from others
 
@@ -356,7 +356,9 @@ interfaces with associated types that have the same name are aliased.
 
 In addition, we will need mechanisms to support evolution, such as allowing new
 additions to an interface to have default implementations and/or be marked
-"upcoming" to allow for a period of transition.
+"upcoming" to allow for a period of transition. Evolution in particular means
+that the set of names in an interface can change, and so two interfaces that
+don't start with name conflicts can develop them.
 
 ## Non-Goals / Caveats / Limitations / Out of scope
 
