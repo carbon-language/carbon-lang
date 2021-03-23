@@ -27,14 +27,20 @@ enum NonTerminal: SwiParsable {
     declaration_list
 }
 
-typealias Terminal = Token
-
+//
 func makeParser() {
   let parser = try SwiParse<Terminal, NonTerminal>(
     rules: [
       .start => [Word(.declaration_list)],
       .pattern => [Word(.expression)],
-      .expression => [Word(.identifier)]
+      .expression => [Word(.identifier)],
+      .expression => [Word(.designator)],
+      .expression
+        => [Word(.expression),
+            Word(.LEFT_SQUARE_BRACKET)], Word(.expression),
+      Word(.RIGHT_SQUARE_BRACKET)])
+}
+/*  
 expression:
   identifier
     { $$ = Carbon::MakeVar(yylineno, $1); }
@@ -262,7 +268,6 @@ declaration_list:
     {
       $$ = $2;
       $$->push_front(*$1);
-    }
-                                                 ])
-}
+      }*/
+  
 

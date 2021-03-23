@@ -1,7 +1,7 @@
 import SwiLex
 
 /// The SwiLex description of the tokens we can match.
-public enum TokenKind: String, SwiLexable {
+public enum Terminal: String, SwiLexable {
   // We recognize separators explicitly so we can track source location.
   public static let separators: Set<Character> = []
 
@@ -62,7 +62,7 @@ public enum TokenKind: String, SwiLexable {
 /// A unit of source text to be sent to the parser.
 public struct Token: Hashable {
   /// The parser symbol of `self`.
-  public let kind: TokenKind
+  public let kind: Terminal
   /// The actual text recognized as `self`.
   public let text: Substring
   /// The region of the source file covered by this text.
@@ -73,7 +73,7 @@ public struct Token: Hashable {
 func tokenize(sourceText: String) -> [Token] {
   var r: [Token] = []
   var tokenStart = PositionInSourceFile(line: 1, column: 1)
-  var scanner = SwiLex<TokenKind>()
+  var scanner = SwiLex<Terminal>()
   
   for t in try! scanner.lex(input: sourceText) {
     switch t.type {
