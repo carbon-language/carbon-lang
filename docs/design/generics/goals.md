@@ -349,16 +349,19 @@ addition to standard inheritance-and-classes object-oriented language support.
 
 ### Interop and evolution
 
-Interfaces should be separate, isolated namespaces, and we should provide
-mechanisms to allow one type to implement two interfaces that accidentally use
-the same name for different things. Contrast this with Swift protocols, where
-interfaces with associated types that have the same name are aliased.
+[Evolution is a high priority for Carbon](../../project/goals.md#software-and-language-evolution),
+and so will need mechanisms to support evolution when using generics, such as
+allowing new additions to an interface to have default implementations and/or be
+marked "upcoming" to allow for a period of transition. Evolution in particular
+means that the set of names in an interface can change, and so two interfaces
+that don't start with name conflicts can develop them.
 
-In addition, we will need mechanisms to support evolution, such as allowing new
-additions to an interface to have default implementations and/or be marked
-"upcoming" to allow for a period of transition. Evolution in particular means
-that the set of names in an interface can change, and so two interfaces that
-don't start with name conflicts can develop them.
+To handle name conflicts, interfaces should be separate, isolated namespaces. We
+should provide mechanisms to allow one type to implement two interfaces that
+accidentally use the same name for different things, and for functions to use
+interfaces with name conflicts together on a single type. Contrast this with
+Swift's protocols, where interfaces with associated types that have the same
+name are aliased.
 
 ## Non-Goals / Caveats / Limitations / Out of scope
 
