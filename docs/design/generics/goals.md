@@ -340,9 +340,9 @@ languages do?
 -   Cannot defer type checking of generic definitions (an implementation
     strategy used by some C++ compilers where the tokens are stashed and
     replayed on use).
--   We won't support runtime specialization as an implementation strategy. That
+-   We won't consider runtime specialization as an implementation strategy. That
     is, some language runtimes JIT a specialization when it is first needed, but
-    that is out of scope for Carbon.
+    it is not a goal for Carbon to support such an implementation strategy.
 -   We won't support unbounded type families
     ([such as this example from Swift](https://forums.swift.org/t/ergonomics-generic-types-conforming-in-more-than-one-way/34589/71)).
     This is an obstacle to supporting static dispatch.
