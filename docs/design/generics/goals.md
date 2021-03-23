@@ -38,8 +38,8 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 C++ supports
 [parametric polymorphism](https://en.wikipedia.org/wiki/Parametric_polymorphism)
 and [generic programming](https://en.wikipedia.org/wiki/Generic_programming)
-through templates, which use compile-time
-[duck typing](https://en.wikipedia.org/wiki/Duck_typing#Templates_or_generic_types)
+through templates, which use
+[compile-time duck typing](https://en.wikipedia.org/wiki/Duck_typing#Templates_or_generic_types)
 (which might alternatively be described as usage-based
 [structural typing](https://en.wikipedia.org/wiki/Structural_type_system)) to
 determine which arguments are valid. Carbon will support (possibly in addition
