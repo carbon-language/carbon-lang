@@ -1,6 +1,6 @@
 import XCTest
 @testable import AST
-@testable import BarconSyntax
+@testable import Syntax
 
 final class barconTests: XCTestCase {
     func testExample() {
