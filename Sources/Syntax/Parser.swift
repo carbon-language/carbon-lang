@@ -38,12 +38,9 @@ extension NonTerminal {
   static prefix func ^(x:Self) -> Word<Terminal, NonTerminal> { Word(x) }
 }
 
-//
-func makeParser() {
-  print("RUNNING")
-  let parser = try! SwiParse<Terminal, NonTerminal>(
+let parser = try! SwiParse<Terminal, NonTerminal>(
     rules: [
-      .start => [^.declaration_list],
+      .start => [^.declaration_list] >>>> { print($0) },
       .pattern => [^.expression],
       
       .expression => [^.identifier],
@@ -82,14 +79,14 @@ func makeParser() {
       .field => [^.pattern],
       .field => [^.designator, ^.EQUAL, ^.pattern],
 
-      .field_list => [],
+      .field_list => [^.none],
       .field_list => [^.field],
       .field_list => [^.field, ^.COMMA, ^.field_list],
 
       .clause => [^.CASE, ^.pattern, ^.DBLARROW, ^.statement],
       .clause => [^.DEFAULT, ^.DBLARROW, ^.statement],
       
-      .clause_list => [],
+      .clause_list => [^.none],
       .clause_list => [^.clause, ^.clause_list],
       
       .statement => [^.expression, ^.EQUAL, ^.expression, ^.SEMICOLON],
@@ -109,10 +106,10 @@ func makeParser() {
 
       .optional_else => [^.ELSE, ^.statement],
       
-      .statement_list => [],
+      .statement_list => [^.none],
       .statement_list => [^.statement, ^.statement_list],
       
-      .return_type => [],
+      .return_type => [^.none],
       .return_type => [^.ARROW, ^.expression],
       
       .function_definition => [
@@ -127,13 +124,13 @@ func makeParser() {
       
       .member => [^.VAR, ^.variable_declaration],
       
-      .member_list => [],
+      .member_list => [^.none],
       .member_list => [^.member, ^.member_list],
       
       .alternative => [^.identifier, ^.tuple],
       .alternative => [^.identifier],
 
-      .alternative_list => [],
+      .alternative_list => [^.none],
       .alternative_list => [^.alternative],
       .alternative_list => [^.alternative, ^.COMMA, ^.alternative_list],
 
@@ -148,7 +145,17 @@ func makeParser() {
       .declaration => [
         ^.VAR, ^.variable_declaration, ^.EQUAL, ^.expression, ^.SEMICOLON],
       
-      .declaration_list => [],
+      .declaration_list => [^.none],
       .declaration_list => [^.declaration, ^.declaration_list],
-    ])
+    ],
+    priorities: [
+      .left(.OR), .left(.AND),
+      .left(.PLUS), .left(.MINUS),
+      .left(.PERIOD),
+      .left(.ARROW)
+    ]
+  )
+
+public func parse(_ sourceText: String) throws -> Any? {
+  try parser.parse(input: sourceText)
 }

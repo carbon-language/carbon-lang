@@ -3,7 +3,9 @@ import SwiLex
 /// The SwiLex description of the tokens we can match.
 public enum Terminal: String, SwiLexable {
   // We recognize separators explicitly so we can track source location.
-  public static let separators: Set<Character> = []
+  public static let separators: Set<Character> = [
+    " ", "\t", "\r", "\n"
+  ]
 
   // Keywords must precede identifiers.
   case AND =                   #"and"#

@@ -5,6 +5,6 @@ import XCTest
 final class barconTests: XCTestCase {
     func testExample() {
       XCTAssertEqual(Greet().text, "Hello, World!")
-      typealias P = NonTerminal
+      // try! parse("var Int: x;")
     }
 }
