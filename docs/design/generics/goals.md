@@ -97,10 +97,16 @@ Interfaces in C++ are often represented by abstract base classes. Generics
 should offer an alternative that does not rely on inheritance. This means looser
 coupling and none of the problems of multiple inheritance. In fact,
 [Sean Parent](https://sean-parent.stlab.cc/papers-and-presentations/#better-code-runtime-polymorphism)
+
 (and others) advocate for runtime polymorphism patterns in C++ that avoid
-inheritance, since it causes a number of runtime performance, correctness, and
-code maintenance problems. Carbon generics will be able to represent this form
-of polymorphism without all the boilerplate and complexity required in C++.
+inheritance, since it can cause runtime performance, correctness, and code
+maintenance problems in some situations. Carbon generics provide an alternative
+for those situations inheritance doesn't handle as well. In particular, we would
+like Carbon generics to supplant the need to support multiple inheritance in
+Carbon,
+
+will be able to represent this form of polymorphism without all the boilerplate
+and complexity required in C++, to
 
 This is a case that would use [dynamic dispatch](#dispatch-control).
 
@@ -139,10 +145,22 @@ misses.
 
 ### Better compiler experience
 
-Compared to C++ templates:
+Compared to C++ templates, we expect to reduce build times, particularly when
+developing. We also expect the compiler to be able to report clearer errors, and
+report them earlier in the build process.
 
--   Reduce build times, particularly when developing.
--   Clearer and earlier error reporting.
+One source of improvement is that the bodies of generic functions and types can
+be type checked once when they are defined, instead of every time they are used.
+This is both a reduction in the total work done, and how errors can be reported
+earlier. On use, the errors can be a lot clearer since they will be of the form
+"argument did not satisfy function's contract as stated in its signature"
+instead of "substitution failed at this line of the function's implementation."
+
+**Nice to have:** In development builds, we will have the option of using
+[dynamic dispatch](#dispatch-control) to reduce build times. We may also be able
+to reduce the amount of redundant compilation work even with the
+[static strategy](#dispatch-control) by identifying instantiations with the same
+arguments and only generating code for them once.
 
 ### Encapsulation
 
@@ -182,7 +200,9 @@ be code bloat) based on code analysis or profiling.
 In addition, the user may opt in to using the dynamic strategy in specific
 cases. This could be just to control binary size in cases the user knows are not
 performance sensitive, or it could be to get additional support for operating on
-values with dynamic types.
+values with dynamic types. We also anticipate that the user may want to force
+the compiler to use the static strategy in specific cases. This might be to keep
+runtime performance acceptable even when running a development or debug build.
 
 ### Upgrade path from templates
 
