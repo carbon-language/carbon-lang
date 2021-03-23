@@ -13,3 +13,9 @@ public struct SourceLocation {
   public let filename: String
   public let span: RangeOfSourceFile
 }
+
+extension Range {
+  func extended(toCover other: Range) -> Self {
+    min(lowerBound, other.lowerBound) ..< max(upperBound, other.upperBound)
+  }
+}
