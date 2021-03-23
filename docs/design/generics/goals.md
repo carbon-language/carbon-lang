@@ -21,6 +21,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Performance](#performance)
     -   [Better compiler experience](#better-compiler-experience)
     -   [Encapsulation](#encapsulation)
+    -   [Predictability](#predictability)
     -   [Dispatch control](#dispatch-control)
     -   [Upgrade path from templates](#upgrade-path-from-templates)
     -   [Coherence](#coherence)
@@ -114,8 +115,11 @@ This is a case that would use [dynamic dispatch](#dispatch-control).
 
 Similarly, types which only support subclassing for test stubs and mocks, as in
 ["dependency injection"](https://en.wikipedia.org/wiki/Dependency_injection),
-should be able to easily migrate to generics. This would allow you to avoid the
-runtime overhead of virtual functions, using
+should be able to easily migrate to generics. This extends outside the realm of
+testing, allowing general configuration of how dependencies can be satisfied.
+For example, generics might be used to configure how a library writes logs.
+
+This would allow you to avoid the runtime overhead of virtual functions, using
 [static dispatch](#dispatch-control) without the
 [poor build experience of templates](#better-compiler-experience).
 
@@ -172,6 +176,26 @@ use any information that is only known when the function is instantiated (such
 as the exact type). Furthermore, calls to a generic function may be type checked
 using only its declaration, not its body. You should be able to call a generic
 function using only a forward declaration.
+
+### Predictability
+
+A general property of generics is they are more predictable than templates. They
+make clear when a type satisfies the requirements of a function, they have a
+documented contract. Further, that contract is enforced by the compiler, not
+sensitive to implementation details in the function body. This eases evolution
+by reducing the impact of [Hyrum's law](https://www.hyrumslaw.com/).
+
+**Nice to have:** We also want well-defined boundaries between what is legal and
+not. This is "will my code be accepted by the compiler" predictability. We would
+prefer to avoid algorithms in the compiler with the form "run for up to N steps
+and report an error if it isn't resolved by then." For example, C++ compilers
+will typically have a template recursion limit. With generics, these problems
+arise due to trying to reason whether something is legal in all possible
+instantiations, rather than with specific, concrete types. Some of this is
+likely unavoidable (or too costly to avoid), as most existing generics systems
+[have undecidable aspects to their type system](https://3fx.ch/typing-is-hard.html)
+(including [Rust](https://sdleffler.github.io/RustTypeSystemTuringComplete/) and
+[Swift](https://forums.swift.org/t/swift-type-checking-is-undecidable/39024)).
 
 ### Dispatch control
 
