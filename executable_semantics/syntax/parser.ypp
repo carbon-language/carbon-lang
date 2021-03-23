@@ -89,9 +89,9 @@ void yy::parser::error(
 %type <Carbon::Member*> variable_declaration
 %type <Carbon::Member*> member
 %type <std::list<Carbon::Member*>*> member_list
-%type <Carbon::FieldInitializer*> field_initializer;
-%type <std::vector<Carbon::FieldInitializer>*> field_list_without_trailing_comma;
-%type <Carbon::FieldList*> field_list;
+%type <Carbon::FieldInitializer> field_initializer
+%type <Carbon::FieldList> field_list
+%type <std::vector<Carbon::FieldInitializer>> field_list_without_trailing_comma
 %type <std::pair<std::string, Carbon::Expression*>*> alternative
 %type <std::list<std::pair<std::string, Carbon::Expression*>>*> alternative_list
 %type <std::pair<Carbon::Expression*, Carbon::Statement*>*> clause
@@ -204,40 +204,36 @@ expression:
 designator: "." identifier { $$ = $2; }
 ;
 paren_expression: "(" field_list ")"
-    { $$ = $2->AsExpression(yylineno); }
+    { $$ = $2.AsExpression(yylineno); }
 ;
 tuple: "(" field_list ")"
-    { $$ = $2->AsTuple(yylineno); }
+    { $$ = $2.AsTuple(yylineno); }
 ;
 field_initializer:
   pattern
-    { $$ = new Carbon::FieldInitializer({"", $1}); }
+    { $$ = Carbon::FieldInitializer({"", $1}); }
 | designator "=" pattern
-    { $$ = new Carbon::FieldInitializer({$1, $3}); }
+    { $$ = Carbon::FieldInitializer({$1, $3}); }
 ;
 field_list:
   // Empty
-    {
-      $$ = new Carbon::FieldList(
-          new std::vector<Carbon::FieldInitializer>(),
-	  Carbon::FieldList::HasTrailingComma::kNo);
-    }
+    { $$ = Carbon::FieldList(); }
 | field_list_without_trailing_comma
     {
-      $$ = new Carbon::FieldList($1, Carbon::FieldList::HasTrailingComma::kNo);
+      $$ = Carbon::FieldList($1, Carbon::FieldList::HasTrailingComma::kNo);
     }
 | field_list_without_trailing_comma ","
     {
-      $$ = new Carbon::FieldList($1, Carbon::FieldList::HasTrailingComma::kYes);
+      $$ = Carbon::FieldList($1, Carbon::FieldList::HasTrailingComma::kYes);
     }
 ;
 field_list_without_trailing_comma:
   field_initializer
-    { $$ = new std::vector<Carbon::FieldInitializer>({*$1}); }
+    { $$ = {$1}; }
 | field_list_without_trailing_comma "," field_initializer
     {
       $$ = $1;
-      $$->push_back(*$3);
+      $$.push_back($3);
     }
 ;
 clause:

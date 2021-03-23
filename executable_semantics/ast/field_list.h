@@ -34,11 +34,17 @@ class FieldList {
   // Indicates whether the paren expression's contents end with a comma.
   enum class HasTrailingComma { kYes, kNo };
 
+  // Constructs a FieldList representing the contents of "()".
+  FieldList() : fields_({}), has_trailing_comma_(HasTrailingComma::kNo) {}
+
   // Constructs a FieldList representing the given contents, with or without a
   // trailing comma.
-  FieldList(std::vector<FieldInitializer>* fields,
+  FieldList(std::vector<FieldInitializer> fields,
             HasTrailingComma has_trailing_comma)
       : fields_(fields), has_trailing_comma_(has_trailing_comma) {}
+
+  FieldList(const FieldList&) = default;
+  FieldList& operator=(const FieldList&) = default;
 
   // Returns the paren expression, interpreted as a tuple.
   Expression* AsTuple(int line_number) const;
@@ -48,7 +54,7 @@ class FieldList {
   Expression* AsExpression(int line_number) const;
 
  private:
-  std::vector<FieldInitializer>* fields_;
+  std::vector<FieldInitializer> fields_;
   HasTrailingComma has_trailing_comma_;
 };
 
