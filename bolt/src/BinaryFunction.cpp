@@ -795,11 +795,11 @@ BinaryFunction::processIndirectBranch(MCInst &Instruction,
                                       unsigned Size,
                                       uint64_t Offset,
                                       uint64_t &TargetAddress) {
-  const auto PtrSize = BC.AsmInfo->getCodePointerSize();
+  const unsigned PtrSize = BC.AsmInfo->getCodePointerSize();
 
-  // An instruction referencing memory used by jump instruction (directly or
-  // via register). This location could be an array of function pointers
-  // in case of indirect tail call, or a jump table.
+  // The instruction referencing memory used by the branch instruction.
+  // It could be the branch instruction itself or one of the instructions
+  // setting the value of the register used by the branch.
   MCInst *MemLocInstr;
 
   // Address of the table referenced by MemLocInstr. Could be either an
@@ -830,26 +830,27 @@ BinaryFunction::processIndirectBranch(MCInst &Instruction,
     }
   }
 
-  auto Type = BC.MIB->analyzeIndirectBranch(Instruction,
-                                            Begin,
-                                            Instructions.end(),
-                                            PtrSize,
-                                            MemLocInstr,
-                                            BaseRegNum,
-                                            IndexRegNum,
-                                            DispValue,
-                                            DispExpr,
-                                            PCRelBaseInstr);
+  IndirectBranchType BranchType =
+    BC.MIB->analyzeIndirectBranch(Instruction,
+                                  Begin,
+                                  Instructions.end(),
+                                  PtrSize,
+                                  MemLocInstr,
+                                  BaseRegNum,
+                                  IndexRegNum,
+                                  DispValue,
+                                  DispExpr,
+                                  PCRelBaseInstr);
 
-  if (Type == IndirectBranchType::UNKNOWN && !MemLocInstr)
-    return Type;
+  if (BranchType == IndirectBranchType::UNKNOWN && !MemLocInstr)
+    return BranchType;
 
   if (MemLocInstr != &Instruction)
     IndexRegNum = BC.MIB->getNoRegister();
 
   if (BC.isAArch64()) {
-    const auto *Sym = BC.MIB->getTargetSymbol(*PCRelBaseInstr, 1);
-    assert (Sym && "Symbol extraction failed");
+    const MCSymbol *Sym = BC.MIB->getTargetSymbol(*PCRelBaseInstr, 1);
+    assert(Sym && "Symbol extraction failed");
     auto SymValueOrError = BC.getSymbolValue(*Sym);
     if (SymValueOrError) {
       PCRelAddr = *SymValueOrError;
@@ -921,8 +922,8 @@ BinaryFunction::processIndirectBranch(MCInst &Instruction,
     return IndirectBranchType::POSSIBLE_TAIL_CALL;
   }
 
-  if (Type == IndirectBranchType::POSSIBLE_FIXED_BRANCH) {
-    auto Value = BC.getPointerAtAddress(ArrayStart);
+  if (BranchType == IndirectBranchType::POSSIBLE_FIXED_BRANCH) {
+    ErrorOr<uint64_t> Value = BC.getPointerAtAddress(ArrayStart);
     if (!Value)
       return IndirectBranchType::UNKNOWN;
 
@@ -936,63 +937,49 @@ BinaryFunction::processIndirectBranch(MCInst &Instruction,
            << '\n';
 
     TargetAddress = *Value;
-    return Type;
+    return BranchType;
   }
-
-  auto useJumpTableForInstruction = [&](JumpTable::JumpTableType JTType) {
-    const MCSymbol *JTLabel =
-        BC.getOrCreateJumpTable(*this, ArrayStart, JTType);
-
-    BC.MIB->replaceMemOperandDisp(const_cast<MCInst &>(*MemLocInstr),
-                                  JTLabel, BC.Ctx.get());
-    BC.MIB->setJumpTable(Instruction, ArrayStart, IndexRegNum);
-
-    JTSites.emplace_back(Offset, ArrayStart);
-  };
 
   // Check if there's already a jump table registered at this address.
-  // At this point, all jump tables are empty.
-  if (auto *JT = BC.getJumpTableContainingAddress(ArrayStart)) {
-    // Make sure the type of the table matches the code.
-    if (Type == IndirectBranchType::POSSIBLE_PIC_JUMP_TABLE) {
-      assert(JT->Type == JumpTable::JTT_PIC && "PIC jump table expected");
-    } else {
-      assert(JT->Type == JumpTable::JTT_NORMAL && "normal jump table expected");
-      Type = IndirectBranchType::POSSIBLE_JUMP_TABLE;
+  MemoryContentsType MemType;
+  if (JumpTable *JT = BC.getJumpTableContainingAddress(ArrayStart)) {
+    switch (JT->Type) {
+    case JumpTable::JTT_NORMAL:
+      MemType = MemoryContentsType::POSSIBLE_JUMP_TABLE;
+      break;
+    case JumpTable::JTT_PIC:
+      MemType = MemoryContentsType::POSSIBLE_PIC_JUMP_TABLE;
+      break;
     }
-
-    useJumpTableForInstruction(JT->Type);
-
-    return Type;
+  } else {
+    MemType = BC.analyzeMemoryAt(ArrayStart, *this);
   }
 
-  const auto MemType = BC.analyzeMemoryAt(ArrayStart, *this);
-  if (Type == IndirectBranchType::POSSIBLE_PIC_JUMP_TABLE) {
-    assert(MemType == MemoryContentsType::POSSIBLE_PIC_JUMP_TABLE &&
-           "PIC jump table heuristic failure");
-    useJumpTableForInstruction(JumpTable::JTT_PIC);
-    return Type;
+  // Check that jump table type in instruction pattern matches memory contents.
+  JumpTable::JumpTableType JTType;
+  if (BranchType == IndirectBranchType::POSSIBLE_PIC_JUMP_TABLE) {
+    if (MemType != MemoryContentsType::POSSIBLE_PIC_JUMP_TABLE)
+      return IndirectBranchType::UNKNOWN;
+    JTType = JumpTable::JTT_PIC;
+  } else {
+    if (MemType == MemoryContentsType::POSSIBLE_PIC_JUMP_TABLE)
+      return IndirectBranchType::UNKNOWN;
+
+    if (MemType == MemoryContentsType::UNKNOWN)
+      return IndirectBranchType::POSSIBLE_TAIL_CALL;
+
+    BranchType = IndirectBranchType::POSSIBLE_JUMP_TABLE;
+    JTType = JumpTable::JTT_NORMAL;
   }
 
-  if (MemType == MemoryContentsType::POSSIBLE_JUMP_TABLE) {
-    assert(Type == IndirectBranchType::UNKNOWN &&
-          "non-PIC jump table heuristic failure");
-    useJumpTableForInstruction(JumpTable::JTT_NORMAL);
-    return IndirectBranchType::POSSIBLE_JUMP_TABLE;
-  }
+  // Convert the instruction into jump table branch.
+  const MCSymbol *JTLabel = BC.getOrCreateJumpTable(*this, ArrayStart, JTType);
+  BC.MIB->replaceMemOperandDisp(*MemLocInstr, JTLabel, BC.Ctx.get());
+  BC.MIB->setJumpTable(Instruction, ArrayStart, IndexRegNum);
 
-  // We have a possible tail call, so let's add the value read from the possible
-  // memory location as a reference. Only do that if the address we read is sane
-  // enough (is inside an allocatable section). It is possible that we read
-  // garbage if the load instruction we analyzed is in a basic block different
-  // than the one where the indirect jump is. However, later,
-  // postProcessIndirectBranches() is going to mark the function as non-simple
-  // in this case.
-  auto Value = BC.getPointerAtAddress(ArrayStart);
-  if (Value && BC.getSectionForAddress(*Value))
-    InterproceduralReferences.insert(*Value);
+  JTSites.emplace_back(Offset, ArrayStart);
 
-  return IndirectBranchType::POSSIBLE_TAIL_CALL;
+  return BranchType;
 }
 
 MCSymbol *BinaryFunction::getOrCreateLocalLabel(uint64_t Address,
