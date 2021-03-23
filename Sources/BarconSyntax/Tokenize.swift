@@ -17,7 +17,7 @@ public enum Terminal: String, SwiLexable {
   case DBLARROW =              #"=>"#
   case DEFAULT =               #"default"#
   case ELSE =                  #"else"#
-  case EQUAL_equal =           #"="#
+  case EQUAL_EQUAL =           #"="#
   case FALSE =                 #"false"#
   case FN =                    #"fn"#
   case FNTY =                  #"fnty"#

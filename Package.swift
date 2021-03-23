@@ -15,8 +15,8 @@ let package = Package(
             name: "AST",
             targets: ["AST"]),
         .library(
-            name: "Syntax",
-            targets: ["Syntax"]),
+            name: "BarconSyntax",
+            targets: ["BarconSyntax"]),
     ],
     dependencies: [
       .package(
@@ -32,12 +32,12 @@ let package = Package(
         // in this package, and on products in packages this package depends on.
         .target(
             name: "barcon",
-            dependencies: ["AST"]),
+            dependencies: ["AST", "BarconSyntax"]),
         .target(
             name: "AST",
             dependencies: []),
         .target(
-            name: "Syntax",
+            name: "BarconSyntax",
             dependencies: ["SwiLex", "SwiParse"]),
         .testTarget(
             name: "barconTests",
