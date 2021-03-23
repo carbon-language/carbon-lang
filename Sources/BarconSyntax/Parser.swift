@@ -1,4 +1,5 @@
 import SwiParse
+import SwiLex
 
 enum NonTerminal: SwiParsable {
   case
@@ -28,94 +29,83 @@ enum NonTerminal: SwiParsable {
 }
 
 prefix operator ^
-typealias RHS = [Word<Terminal, NonTerminal>]
-protocol RHSElement {
-  static prefix func ^(_: Self) -> RHS
+
+extension Terminal {
+  static prefix func ^(x:Self) -> Word<Terminal, NonTerminal> { Word(x) }
 }
 
-extension RHSElement {
-  static func ^(words: RHS, x: Self) -> RHS {
-    words + ^x
-  }
-}
-
-extension Terminal : RHSElement {
-  static prefix func ^(x: Self) -> RHS { [Word(x)] }
-}
-
-extension NonTerminal : RHSElement {
-  static prefix func ^(x: Self) -> RHS { [Word(x)] }
+extension NonTerminal {
+  static prefix func ^(x:Self) -> Word<Terminal, NonTerminal> { Word(x) }
 }
 
 //
 func makeParser() {
   print("RUNNING")
-  typealias Z = Word<Terminal, NonTerminal>
   let parser = try! SwiParse<Terminal, NonTerminal>(
     rules: [
-      .start => [Z(.declaration_list)],
-      .pattern => [Z(.expression)],
-      .expression => [Z(.identifier)],
-      .expression => [Z(.designator)],
+      .start => [^.declaration_list],
+      .pattern => [^.expression],
+      .expression => [^.identifier],
+      .expression => [^.designator],
       .expression
-        => [Z(.expression),
-            Z(.LEFT_SQUARE_BRACKET), Z(.expression),
-            Z(.RIGHT_SQUARE_BRACKET)],
-      .expression => [Z(.expression), Z(.COLON), Z(.identifier)],
-      .expression => [Z(.integer_literal)],
-      .expression => [Z(.TRUE)],
-      .expression => [Z(.FALSE)],
-      .expression => [Z(.INT)],
-      .expression => [Z(.BOOL)],
-      .expression => [Z(.TYPE)],
-      .expression => [Z(.AUTO)],
-      .expression => [Z(.paren_expression)],
-      .expression => [Z(.expression), Z(.EQUAL_EQUAL), Z(.expression)],
-      .expression => [Z(.expression), Z(.PLUS), Z(.expression)],
-      .expression => [Z(.expression), Z(.MINUS), Z(.expression)],
-      .expression => [Z(.expression), Z(.AND), Z(.expression)],
-      .expression => [Z(.expression), Z(.OR), Z(.expression)],
-      .expression => [Z(.NOT), Z(.expression)],
-      .expression => [Z(.MINUS), Z(.expression)],
-      .expression => [Z(.expression), Z(.tuple)],
-      .expression => [Z(.FNTY), Z(.tuple), Z(.return_type)],
-      .designator => [Z(.PERIOD), Z(.identifier)],
+        => [^.expression,
+            ^.LEFT_SQUARE_BRACKET, ^.expression,
+            ^.RIGHT_SQUARE_BRACKET],
+      .expression => [^.expression, ^.COLON, ^.identifier],
+      .expression => [^.integer_literal],
+      .expression => [^.TRUE],
+      .expression => [^.FALSE],
+      .expression => [^.INT],
+      .expression => [^.BOOL],
+      .expression => [^.TYPE],
+      .expression => [^.AUTO],
+      .expression => [^.paren_expression],
+      .expression => [^.expression, ^.EQUAL_EQUAL, ^.expression],
+      .expression => [^.expression, ^.PLUS, ^.expression],
+      .expression => [^.expression, ^.MINUS, ^.expression],
+      .expression => [^.expression, ^.AND, ^.expression],
+      .expression => [^.expression, ^.OR, ^.expression],
+      .expression => [^.NOT, ^.expression],
+      .expression => [^.MINUS, ^.expression],
+      .expression => [^.expression, ^.tuple],
+      .expression => [^.FNTY, ^.tuple, ^.return_type],
+      .designator => [^.PERIOD, ^.identifier],
       .paren_expression => [
-        Z(.LEFT_PARENTHESIS), Z(.field_list), Z(.RIGHT_PARENTHESIS)],
+        ^.LEFT_PARENTHESIS, ^.field_list, ^.RIGHT_PARENTHESIS],
       .tuple => [
-        Z(.LEFT_PARENTHESIS), Z(.field_list), Z(.RIGHT_PARENTHESIS)],
-      .field => [Z(.pattern)],
-      .field => [Z(.designator), Z(.EQUAL), Z(.pattern)],
+        ^.LEFT_PARENTHESIS, ^.field_list, ^.RIGHT_PARENTHESIS],
+      .field => [^.pattern],
+      .field => [^.designator, ^.EQUAL, ^.pattern],
       .field_list => [],
-      .field_list => [Z(.field)],
-      .field_list => [Z(.field), Z(.COMMA), Z(.field_list)],
-      .clause => [Z(.CASE), Z(.pattern), Z(.DBLARROW), Z(.statement)],
-      .clause => [Z(.DEFAULT), Z(.DBLARROW), Z(.statement)],
+      .field_list => [^.field],
+      .field_list => [^.field, ^.COMMA, ^.field_list],
+      .clause => [^.CASE, ^.pattern, ^.DBLARROW, ^.statement],
+      .clause => [^.DEFAULT, ^.DBLARROW, ^.statement],
       .clause_list => [],
-      .clause_list => [Z(.clause), Z(.clause_list)],
-      .statement => [Z(.expression), Z(.EQUAL), Z(.expression), Z(.SEMICOLON)],
-      .statement => [Z(.VAR), Z(.pattern), Z(.EQUAL), Z(.expression), Z(.SEMICOLON)],
-      .statement => [Z(.expression)],
-      .statement => [Z(.IF), Z(.expression), Z(.statement), Z(.optional_else)],
-      .statement => [Z(.WHILE), Z(.LEFT_PARENTHESIS), Z(.expression), Z(.RIGHT_PARENTHESIS), Z(.statement)],
-      .statement => [Z(.BREAK), Z(.SEMICOLON)],
-      .statement => [Z(.CONTINUE), Z(.SEMICOLON)],
-      .statement => [Z(.RETURN), Z(.expression), Z(.SEMICOLON)],
-      .statement => [Z(.LEFT_CURLY_BRACE), Z(.statement_list), Z(.RIGHT_CURLY_BRACE)],
-      .statement => [Z(.MATCH), Z(.LEFT_PARENTHESIS), Z(.expression), Z(.RIGHT_PARENTHESIS), Z(.LEFT_CURLY_BRACE), Z(.clause_list), Z(.RIGHT_CURLY_BRACE)],
-      .optional_else => [Z(.ELSE), Z(.statement)],
+      .clause_list => [^.clause, ^.clause_list],
+      .statement => [^.expression, ^.EQUAL, ^.expression, ^.SEMICOLON],
+      .statement => [^.VAR, ^.pattern, ^.EQUAL, ^.expression, ^.SEMICOLON],
+      .statement => [^.expression],
+      .statement => [^.IF, ^.expression, ^.statement, ^.optional_else],
+      .statement => [^.WHILE, ^.LEFT_PARENTHESIS, ^.expression, ^.RIGHT_PARENTHESIS, ^.statement],
+      .statement => [^.BREAK, ^.SEMICOLON],
+      .statement => [^.CONTINUE, ^.SEMICOLON],
+      .statement => [^.RETURN, ^.expression, ^.SEMICOLON],
+      .statement => [^.LEFT_CURLY_BRACE, ^.statement_list, ^.RIGHT_CURLY_BRACE],
+      .statement => [^.MATCH, ^.LEFT_PARENTHESIS, ^.expression, ^.RIGHT_PARENTHESIS, ^.LEFT_CURLY_BRACE, ^.clause_list, ^.RIGHT_CURLY_BRACE],
+      .optional_else => [^.ELSE, ^.statement],
       .statement_list => [],
-      .statement_list => [Z(.statement), Z(.statement_list)],
+      .statement_list => [^.statement, ^.statement_list],
       .return_type => [],
-      .return_type => [Z(.ARROW), Z(.expression)],
-      .function_definition => [Z(.FN), Z(.identifier), Z(.tuple), Z(.return_type), Z(.LEFT_CURLY_BRACE), Z(.statement_list), Z(.RIGHT_CURLY_BRACE)],
-      .function_definition => [Z(.FN), Z(.identifier), Z(.tuple), Z(.DBLARROW), Z(.expression)],
-      .function_declaration => [Z(.FN), Z(.identifier), Z(.tuple), Z(.return_type), Z(.SEMICOLON)],
-      .variable_declaration => [Z(.expression), Z(.COLON), Z(.identifier)],
-      .member => [Z(.VAR), Z(.variable_declaration)],
+      .return_type => [^.ARROW, ^.expression],
+      .function_definition => [^.FN, ^.identifier, ^.tuple, ^.return_type, ^.LEFT_CURLY_BRACE, ^.statement_list, ^.RIGHT_CURLY_BRACE],
+      .function_definition => [^.FN, ^.identifier, ^.tuple, ^.DBLARROW, ^.expression],
+      .function_declaration => [^.FN, ^.identifier, ^.tuple, ^.return_type, ^.SEMICOLON],
+      .variable_declaration => [^.expression, ^.COLON, ^.identifier],
+      .member => [^.VAR, ^.variable_declaration],
       .member_list => [],
-      .member_list => [Z(.member), Z(.member_list)],
-      .alternative => [Z(.identifier), Z(.tuple)],
+      .member_list => [^.member, ^.member_list],
+      .alternative => [^.identifier, ^.tuple],
     ])
 }
 /*
