@@ -330,10 +330,10 @@ languages do?
         interface for some particular type to actually expose a _different_
         interface (different set of methods or types within the interface for
         example).
--   Features of generics that for example allow you to put constraints on the
-    types passed in are presented as part of generics since that is where they
-    are most useful, but are still intended to be available for template
-    functions.
+-   Some features are presented as being part of generics because that is where
+    we expect them to be most useful or most used. These features may be allowed
+    and have application outside of generics. For example, we expect to allow
+    type constraints on template parameters in addition to generic parameters.
 -   Cannot add features to generics that inherently require monomorphization (or
     creating differently specialized code) or templating, that would prevent the
     dynamic compilation strategy.
