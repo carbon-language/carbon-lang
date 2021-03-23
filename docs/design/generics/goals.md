@@ -38,8 +38,10 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 C++ supports
 [parametric polymorphism](https://en.wikipedia.org/wiki/Parametric_polymorphism)
 and [generic programming](https://en.wikipedia.org/wiki/Generic_programming)
-through templates, which use
-[structural typing](https://en.wikipedia.org/wiki/Structural_type_system) to
+through templates, which use compile-time
+[duck typing](https://en.wikipedia.org/wiki/Duck_typing#Templates_or_generic_types)
+(which might alternatively be described as usage-based
+[structural typing](https://en.wikipedia.org/wiki/Structural_type_system)) to
 determine which arguments are valid. Carbon will support (possibly in addition
 to a template system) _generics_, which are still a form of parametric
 polymorphism for generic programming, but supports definition checking. This
@@ -47,8 +49,8 @@ means that the body of a function can be type checked when it is defined without
 any information from the call site, such as the actual argument values of
 generic parameters. This is accomplished by using
 [bounded parametric polymorphism](https://en.wikipedia.org/wiki/Parametric_polymorphism#Bounded_parametric_polymorphism)
-instead of structural typing. This means the legal arguments and the legal uses
-of a parameter are both goverened by explicit bounds on the parameter in a
+instead of duck/structural typing. This means the legal arguments and the legal
+uses of a parameter are both goverened by explicit bounds on the parameter in a
 generic function's signature.
 
 ### Semantics
@@ -124,11 +126,16 @@ nice to have.
 
 ### Performance
 
-Generics shall provide better code generation (both code size and speed) in all
-cases over C++ templates.
+Generics shall provide at least as good code generation (both code size and
+speed) in all cases over C++ templates.
 [Performance is the top priority for Carbon](../../project/goals.md#performance-critical-software),
 and we expect to use generics pervasively, and so they can't compromise that
 goal in release builds.
+
+**Nice to have:** There are cases where we should aim to do better than C++
+templates. For example, the additional structure of generics should make it
+easier to reduce generated code duplication, reducing code size and cache
+misses.
 
 ### Better compiler experience
 
@@ -184,9 +191,9 @@ types and interfaces is a better model and experience. Unfortunately, templates
 don't provide many of those benefits to programmers until it's too late (users
 are consuming the API) and with high overhead (template error messages).
 Generally, code should move towards more rigorously type checked constructs.
-However, existing C++ code is full of unrestricted usage of duck-typed
-templates. They are incredibly convenient to write and so likely will continue
-to exist for a long time.
+However, existing C++ code is full of unrestricted usage of compile-time
+duck-typed templates. They are incredibly convenient to write and so likely will
+continue to exist for a long time.
 
 We want there to be a natural, incremental upgrade path from templated code to
 generic code. This gives us these additional principles:
@@ -218,8 +225,10 @@ libraries imported into a given file or being inside a generic function.
 We want to avoid adding rules for name lookup that are specific to generics.
 This is in contrast to Rust which has different lookup rules inside its traits.
 Instead, we should structure generics in a way that reuses existing name lookup
-facilities of the language. For example, if `x` has type `T`, then if you write
-`x.y` you should be able to look up `y` in the definition of `T`.
+facilities of the language.
+
+**Nice to have:** For example, if `x` has type `T`, then if you write `x.y` you
+should be able to look up `y` in the definition of `T`.
 
 ### Generics instead of open overloading
 
@@ -313,8 +322,9 @@ languages do?
 -   Don't need to provide full flexibility of templates from generics.
     -   We still intend to provide templates for those exceptional cases that
         don't fit inside generics.
-    -   If you want [duck](https://en.wikipedia.org/wiki/Duck_typing) /
-        [structural](https://en.wikipedia.org/wiki/Structural_type_system)
+    -   If you want
+        [duck](https://en.wikipedia.org/wiki/Duck_typing#Templates_or_generic_types)
+        / [structural](https://en.wikipedia.org/wiki/Structural_type_system)
         typing, that is available by way of templates.
     -   Notably, there is no need to allow a specialization of some generic
         interface for some particular type to actually expose a _different_
