@@ -159,6 +159,8 @@ auto MakeTuple(int line_num,
 }
 
 // Create an AST node for an empty tuple.
+// TODO(geoffromer): remove this and rewrite its callers to use
+// `MakeTuple(line_num, {})`, once that works.
 auto MakeUnit(int line_num) -> Expression* {
   auto* unit = new Expression();
   unit->line_num = line_num;
