@@ -221,12 +221,12 @@ paren_contents:
 | paren_contents_without_trailing_comma
     {
       $$ = Carbon::ParenContents($1,
-                                 Carbon::ParenContents::HasTrailingComma::kNo);
+                                 Carbon::ParenContents::HasTrailingComma::No);
     }
 | paren_contents_without_trailing_comma ","
     {
       $$ = Carbon::ParenContents($1,
-                                 Carbon::ParenContents::HasTrailingComma::kYes);
+                                 Carbon::ParenContents::HasTrailingComma::Yes);
     }
 ;
 paren_contents_without_trailing_comma:

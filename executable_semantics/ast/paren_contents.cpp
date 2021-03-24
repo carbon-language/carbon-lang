@@ -8,7 +8,7 @@ namespace Carbon {
 
 Expression* ParenContents::AsExpression(int line_number) const {
   if (fields_.size() == 1 && fields_.front().name == "" &&
-      has_trailing_comma_ == HasTrailingComma::kNo) {
+      has_trailing_comma_ == HasTrailingComma::No) {
     return fields_.front().expression;
   } else {
     return AsTuple(line_number);

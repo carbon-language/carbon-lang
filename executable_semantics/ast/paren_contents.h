@@ -30,10 +30,10 @@ struct FieldInitializer {
 class ParenContents {
  public:
   // Indicates whether the paren expression's contents end with a comma.
-  enum class HasTrailingComma { kYes, kNo };
+  enum class HasTrailingComma { Yes, No };
 
   // Constructs a ParenContents representing the contents of "()".
-  ParenContents() : fields_({}), has_trailing_comma_(HasTrailingComma::kNo) {}
+  ParenContents() : fields_({}), has_trailing_comma_(HasTrailingComma::No) {}
 
   // Constructs a ParenContents representing the given list of fields,
   // with or without a trailing comma.
