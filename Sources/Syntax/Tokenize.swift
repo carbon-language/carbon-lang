@@ -1,5 +1,22 @@
 import Foundation
 
+public struct PositionInSourceFile: Comparable, Hashable {
+  public var line: Int
+  public var column: Int
+
+  public static func < (l: Self, r: Self) -> Bool {
+      (l.line, l.column) < (r.line, r.column)
+  }
+}
+
+public typealias RangeOfSourceFile = Range<PositionInSourceFile>
+
+public struct SourceLocation {
+  public let fileName: String
+  public let span: RangeOfSourceFile
+}
+
+
 enum CitronTokenCode: UInt8 {
   case LEFT_CURLY_BRACE               =   1
   case RIGHT_CURLY_BRACE              =   2
@@ -126,74 +143,99 @@ extension String {
 }
 
 struct Tokens: Sequence {
-  public init(in source: String) {
-    self.source = source
+  public init(in sourceText: String, from sourceFileName: String) {
+    self.sourceText = sourceText
+    self.sourceFileName = sourceFileName
   }
   
-  public func makeIterator() -> Iterator { .init(over: source) }
-  
+  public func makeIterator() -> Iterator {
+    .init(over: sourceText, from: sourceFileName)
+  }
+
+  typealias Element = (
+    kind: CitronTokenCode, content: Substring, location: SourceLocation)
+    
+  /// The token streams's iteration state and producer.
   public struct Iterator: IteratorProtocol {
-    public init(over source: String) {
-      self.source = source
-      position = source.startIndex
-      utf16Offset = 0
-      utf16Length = source.utf16.count
+    public init(over sourceText: String, from sourceFileName: String) {
+      self.sourceText = sourceText
+      textPosition = sourceText.startIndex
+      sourceUTF16Length = sourceText.utf16.count
+      self.sourceFileName = sourceFileName
     }
 
-    typealias Element = (
-      kind: CitronTokenCode, content: Substring)//, location: RangeOfSourceFile)
-    
     public mutating func next() -> Element? {
       while true {
         let remainingUTF16 = NSRange(
-          location: utf16Offset, length: utf16Length - utf16Offset)
+          location: utf16Offset, length: sourceUTF16Length - utf16Offset)
         
         if remainingUTF16.length == 0 { return nil }
         
-        let matchUTF16Lengths = matchers.lazy.map { [source] in
+        let matchUTF16Lengths = matchers.lazy.map { [sourceText] in
           $0.matcher.firstMatch(
-            in: source, options: .anchored, range: remainingUTF16
+            in: sourceText, options: .anchored, range: remainingUTF16
           )?.range.length ?? 0
         }
 
         let (bestMatchIndex, bestMatchUTF16Length)
           = matchUTF16Lengths.enumerated().max(by: { $0.1 < $1.1 })!
 
-        let nextPosition = bestMatchUTF16Length == 0
-          ? source[position...].dropFirst().startIndex
-          : source[position...].utf16.dropFirst(bestMatchUTF16Length).startIndex
+        let tokenStart = textPosition
+        
+        textPosition = bestMatchUTF16Length == 0
+          ? sourceText[textPosition...].dropFirst().startIndex
+          : sourceText[textPosition...].utf16
+            .dropFirst(bestMatchUTF16Length).startIndex
 
-        let tokenText = source[position..<nextPosition]
-        position = nextPosition
+        let tokenText = sourceText[tokenStart..<textPosition]
         utf16Offset += tokenText.utf16.count
+
+        let tokenLocationStart = sourceFilePosition
+        let tokenLines = tokenText.split(
+          omittingEmptySubsequences: false, whereSeparator: \.isNewline)
+        let newlineCount = tokenLines.count - 1
+        
+        sourceFilePosition.line += newlineCount
+        sourceFilePosition.column
+          = (newlineCount == 0 ? sourceFilePosition.column : 1)
+          + tokenLines.last!.count
 
         if let matchedKind = bestMatchUTF16Length == 0 ? .ILLEGAL_CHARACTER
              : bestMatchIndex == 0 ? tokenKindForKeyword[String(tokenText)]
              : matchers[bestMatchIndex].nonterminal
         {
-          return (kind: matchedKind, content: tokenText)
+          return (
+            kind: matchedKind, content: tokenText,
+            SourceLocation(
+              fileName: sourceFileName,
+              span: tokenLocationStart..<sourceFilePosition))
         }
       }
     }
-    private let source: String
-    private var position: String.Index
-    private var utf16Offset: Int
-    private let utf16Length: Int
+    private let sourceText: String
+    private let sourceFileName: String
+    private var sourceFilePosition = PositionInSourceFile(line: 1, column: 1)
+    private var textPosition: String.Index
+    private var utf16Offset: Int = 0
+    private let sourceUTF16Length: Int
   }
-  let source: String
+  private let sourceText: String
+  private let sourceFileName: String
 }
 
-let program0 =
+let program =
   """
   an and andey 999 // burp
-  ->=-automobile->otto auto bool break case choice continue=>
-  default/
+    ->=-automobile->otto auto bool break case choice continue=>
+  
+    default/
+  else
   // excuse me
-  else==false fn fnty if\t\tint match not or return struct true type var while
+    ==false fn fnty if\t\tint match not or return struct true type var while
   = - +( ){}[]a.b,;:
   """
 
 //let program = "an and"
-for t in Tokens(in: program0) {
+for t in Tokens(in: program, from: "Z") {
   print(t)
 }
