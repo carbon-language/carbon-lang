@@ -52,11 +52,11 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
         -   [Type bounds](#type-bounds)
             -   [Type bounds on associated types in declarations](#type-bounds-on-associated-types-in-declarations)
             -   [Type bounds on associated types in interfaces](#type-bounds-on-associated-types-in-interfaces)
-            -   [Naming constraints](#naming-constraints)
+            -   [Naming type bound constraints](#naming-type-bound-constraints)
             -   [Type bound with interface argument](#type-bound-with-interface-argument)
-        -   [Two types must be the same](#two-types-must-be-the-same)
+        -   [Same type constraints](#same-type-constraints)
+            -   [Naming same type constraints](#naming-same-type-constraints)
         -   [Combining constraints](#combining-constraints)
-            -   [Naming constraints](#naming-constraints-1)
         -   [Rejected alternative: `ForSome(F)`](#rejected-alternative-forsomef)
         -   [Is a subtype](#is-a-subtype)
         -   [Parameterized type implements interface](#parameterized-type-implements-interface)
@@ -64,6 +64,10 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
         -   [Type inequality](#type-inequality)
     -   [Implicit constraints](#implicit-constraints)
     -   [Generic type equality](#generic-type-equality)
+        -   [Type equality with where clauses](#type-equality-with-where-clauses)
+        -   [Type equality with argument passing](#type-equality-with-argument-passing)
+        -   [Restricted where clauses](#restricted-where-clauses)
+        -   [Manual type equality](#manual-type-equality)
     -   [Options](#options)
 -   [Conditional conformance](#conditional-conformance)
 -   [Templated impls for generic interfaces](#templated-impls-for-generic-interfaces)
@@ -1771,13 +1775,14 @@ TODO: Fix this up a lot
 
 ### Contexts where you might need constraints
 
--   In a declaration, like a function, type, interface, or impl.
--   Within an interface definition.
--   Naming constrained type-types.
+-   In a declaration of a function, type, interface, or impl.
+-   Within the body of an interface definition.
+-   Naming a new type-type that represents the constraint (typically an `alias`
+    or `structural interface` definition).
 
 To handle this last use case, we expand the kinds of requirements that
-type-types can have from just interface requirements to also include the kinds
-of constraints discussed below in this section.
+type-types can have from just interface requirements to also include the various
+kinds of constraints discussed later in this section.
 
 ### Two approaches for expressing constraints
 
@@ -1790,27 +1795,54 @@ This approach is to specify constraints using boolean expressions that are
 required to evaluate to true. These expressions come after the thing they
 constrain since they are written in terms of those names.
 
-Could also be spelled `requires` or `if`, but Swift
+The keyword to introduce these constraints could alternatively be spelled
+`requires` or `if`, but Swift
 ([1](https://docs.swift.org/swift-book/LanguageGuide/Generics.html#ID553),
 [2](https://docs.swift.org/swift-book/ReferenceManual/GenericParametersAndArguments.html#ID408))
 and Rust ([1](https://doc.rust-lang.org/rust-by-example/generics/where.html),
 [2](https://doc.rust-lang.org/book/ch10-02-traits.html#clearer-trait-bounds-with-where-clauses))
 both use `where`. Note Swift also uses `where` to write
-[filter conditions evaluated at runtime](https://medium.com/@shubhamkaliyar255/how-to-use-where-clause-in-for-in-loops-e61d0860debe).
-So far Carbon has been using `if` in those locations.
+[filter conditions evaluated at runtime](https://medium.com/@shubhamkaliyar255/how-to-use-where-clause-in-for-in-loops-e61d0860debe),
+so far Carbon has been using `if` in those locations.
+
+We would attach `where` clauses to individual declarations, following Rust, as
+in:
+
+```
+// Constraints on a function:
+fn F[D:$ V](V: v) where ... { ... }
+
+// Constraints on a type parameter:
+struct S(B:$ T) where ... { ... }
+
+// Constraints on an interface parameter:
+interface A(B:$ T) where ... {
+  // Constraints on an associated type or constant:
+  var C:$ U where ...;
+  // Constraints on a method:
+  method (Self: this) G[D:$ V](V: v) where ...;
+}
+```
+
+If there are multiple constraints on a single declaration, those constraints are
+separated by commas (`,`), following both Rust and Swift.
 
 Advantages:
 
 -   Can express the full range of constraints.
 -   Works uniformly across contexts.
 -   Familiar to users of Rust and Swift.
+-   Keeps the definition of constraints after information that readers generally
+    care about more.
 
 Disadvantages:
 
--   Determining canonical types or type equality in a generic context
-    [becomes undecidable](https://forums.swift.org/t/swift-type-checking-is-undecidable/39024).
-    Algorithms become heuristic and potentially slow. Boundary between
-    acceptable code and rejected code becomes fuzzy and unpredictable.
+-   Given the full generality of constraints expressible using this syntax,
+    determining canonical types or type equality in a generic context
+    [becomes undecidable](#type-equality-with-where-clauses). This means that
+    either the syntax is restricted heavily, or algorithms become heuristic and
+    potentially slow. Further, the boundary between acceptable code and rejected
+    code becomes fuzzy and unpredictable.
 -   Awkward to produce type-types that have specified values for all associated
     types for use with `DynPtr` and `DynBox`.
 -   Can introduce some inconsistency/redundancy with how interface parameters
@@ -1821,19 +1853,15 @@ Disadvantages:
 
 This approach is to constrain the inputs to the thing being constrained. It
 requires that anything that might be constrained be able to be specified as an
-input. In particular this means associated types can be specified as optional
-arguments. In this approach, the constraints come before the thing being
-constrainted.
+input. In particular, this means the associated types of an interface can be
+specified as optional named arguments.
 
-Users of an interface may also want to introduce constraints on an associated
-type, in addition to constraints in the definition of the interface. To support
-this, we automatically make every associated type an optional named parameter to
-the interface.
+In this approach, the constraints come before the thing being constrainted.
 
-Rust supports using this syntax to set associated types to specific values. Used
-for the case of [`dyn` traits](https://doc.rust-lang.org/std/keyword.dyn.html)
-where all associated types must be specified. Also used for parameter trait
-bounds in Rust
+Rust supports using this syntax to set associated types to specific values. This
+is particularly used for the case of
+[`dyn` traits](https://doc.rust-lang.org/std/keyword.dyn.html) where all
+associated types must be specified. Also used for parameter trait bounds in Rust
 ([1](https://doc.rust-lang.org/rust-by-example/generics/bounds.html),
 [2](https://doc.rust-lang.org/book/ch10-02-traits.html#trait-bound-syntax)).
 
@@ -1848,10 +1876,14 @@ Disadvantages:
 
 -   Inventive to use it broadly, beyond
     ["set to a specific value" constraints](#set-to-a-specific-value).
--   Difficulty naming constraints and expressing constraints in interface
+-   More difficulty naming constraints and expressing constraints in interface
     definitions.
--   Some types of constraints are hard to express or need additional syntax,
-    such as `.Self` and `for_some`.
+-   Some types of constraints are hard to express
+    ([1](#parameterized-type-implements-interface), [2](#type-inequality)) or
+    need additional syntax, such as [`.Self`](#recursive-constraints) or "for
+    some" `[...]` inferred variables
+    ([1](#type-bounds-on-associated-types-in-interfaces),
+    [2](#same-type-constraints)).
 
 ### Constraint use cases
 
@@ -2089,7 +2121,7 @@ fn OneAfterBegin[Container:$ T](Ptr(T): c) -> T.IteratorType {
 }
 ```
 
-##### Naming constraints
+##### Naming type bound constraints
 
 Given these definitions (omitting `ElementType` for brevity):
 
@@ -2109,8 +2141,9 @@ We would like to be able to define a `RandomAccessContainer` to be a type-type
 whose types satisfy `ContainerInterface` with an `IteratorType` satisfying
 `RandomAccessIterator`.
 
-**Concern:** We would need to introduce some sort of `for_some` operator to
-support this with argument passing.
+**Concern:** We would need to introduce some sort of "for some" operator to
+support this with argument passing. We might use a `[...]` to indicate that the
+introduced parameter is inferred.
 
 ```
 // Argument passing:
@@ -2127,7 +2160,7 @@ fn F[RandomAccessContainer:$ ContainerType](ContainerType: c);
 
 // Argument passing:
 alias RandomAccessContainer =
-    for_some[RandomAccessIterator:$ IterType]
+    [RandomAccessIterator:$ IterType]
     ContainerInterface(.IteratorType=IterType);
 // versus `where` clause:
 alias RandomAccessContainer = ContainerInterface
@@ -2146,7 +2179,7 @@ fn F[Type:$ R, MutipliesBy(R):$ L](L: x, R: y) {
 }
 ```
 
-#### Two types must be the same
+#### Same type constraints
 
 ```
 interface PairInterface {
@@ -2163,7 +2196,48 @@ fn F[PairInterface:$ MatchedPairType](Ptr(MatchedPairType): x)
     where MatchedPairType.Left == MatchedPairType.Right;
 ```
 
-TODO
+Constraint in an interface definition:
+
+Argument passing approach needs the "for some" `[...]` syntax for inferred
+associated types that don't introduce new names into the interface just to
+represent the constraint.
+
+```
+// Argument passing:
+interface HasEqualPair {
+  [var Type:$ T];
+  var PairInterface(.Left = T, .Right = T):$ P;
+}
+
+// versus `where` clause:
+interface HasEqualPair {
+  var PairInterface:$ P where P.Left == P.Right;
+}
+```
+
+##### Naming same type constraints
+
+Again, the argument passing approach also needs the "for some" `[...]` syntax
+for inferred associated types. Otherwise this first `EqualPair` interface would
+only match types that had a type member named `T`.
+
+```
+// Argument passing:
+alias EqualPair = [var Type:$ T]
+    PairInterface(.Left = T, .Right = T);
+structural interface EqualPair {
+  [var Type:$ T];
+  extends PairInterface(.Left = T, .Right = T);
+}
+
+// versus `where` clause:
+alias EqualPair = PairInterface
+    where EqualPair.Left == EqualPair.Right;
+structural interface EqualPair {
+  extends PairInterface
+      where PairInterface.Left == PairInterface.Right;
+}
+```
 
 #### Combining constraints
 
@@ -2178,35 +2252,29 @@ fn EqualContainers[HasEquality:$ ET,
                    Container(.ElementType = ET):$ CT2]
     (Ptr(CT1): c1, Ptr(CT2): c2) -> Bool;
 
+interface HasEqualContainers {
+  [var HasEquality:$ ET];
+  var Container(.ElementType = ET):$ CT1;
+  var Container(.ElementType = ET):$ CT2;
+}
+
 // versus `where` clause:
 fn EqualContainers[Container:$ CT1, Container:$ CT2]
     (Ptr(CT1): c1, Ptr(CT2): c2) -> Bool
     where CT1.ElementType == CT2.ElementType,
           CT1.ElementType as HasEquality;
-```
 
-##### Naming constraints
-
-A similar problem where we want to constrain two parameters to be the same.
-
-```
-// Given a function `G` defined:
-fn G[Type:$ T, PairInterface(T, T):$ U](U: u);
-// Want to define `Double(T)` so this is equivalent:
-fn G[Type:$ T, Double(T):$ U](U: u);
-
-// The following works if we support `extends` for `structural interface`
-// to mean the same thing as for regular nominal `interface` definitions:
-structural interface Double(Type:$ T) { extends PairInterface(T, T); }
-// Similarly we might support this using an `alias`:
-alias Double(Type:$ T) = PairInterface(T, T);
+interface HasEqualContainers {
+  var Container:$ CT1 where CT1.ElementType as HasEquality;
+  var Container:$ CT2 where CT1.ElementType == CT2.ElementType,
+}
 ```
 
 #### Rejected alternative: `ForSome(F)`
 
 Another way to solve the [type bounds](#type-bounds) and
-[two types must be the same](#two-types-must-be-the-same) use cases using
-argument passing without the `for_some` operator would be to have a `ForSome(F)`
+[same type](#same-type-constraints) constraint use cases using argument passing
+without the "for some" `[...]` operator would be to have a `ForSome(F)`
 construct, where `F` is a function from types to type-types.
 
 > `ForSome(F)`, where `F` is a function from type `T` to type-type `TT`, is a
@@ -2216,7 +2284,8 @@ construct, where `F` is a function from types to type-types.
 written as
 
 ```
-fn F[ForSome(lambda (Type:$ T) => PairInterface(T, T)):$ MatchedPairType]
+fn F[ForSome(lambda (Type:$ T) =>
+        PairInterface(.Left = T, .Right = T)):$ MatchedPairType]
     (Ptr(MatchedPairType): x) { ... }
 ```
 
@@ -2231,8 +2300,9 @@ fn F[Type:$ T, PairInterface(T, T):$ MatchedPairType]
 might be written as:
 
 ```
-fn F[ForSome(lambda (HasEquality:$ T) => Container(T)):$ ContainerType]
-  (Ptr(ContainerType): x) { ... }
+fn F[ForSome(lambda (HasEquality:$ T) =>
+        Container(.ElementType = T)):$ ContainerType]
+    (Ptr(ContainerType): x) { ... }
 ```
 
 This would be equivalent to:
@@ -2270,7 +2340,9 @@ In Swift, you can
 #### Parameterized type implements interface
 
 TODO: This use case was part of the
-[Rust rationale for adding support for `where` clauses](https://rust-lang.github.io/rfcs/0135-where.html)
+[Rust rationale for adding support for `where` clauses](https://rust-lang.github.io/rfcs/0135-where.html).
+
+**Concern:** Right now this is only easily expressed using `where` clauses.
 
 ```
 // Some parametized type.
@@ -2282,7 +2354,7 @@ extend Vector(String) {
 }
 
 // Constraint: `T` such that `Vector(T)` implements `Printable`
-fn PrintThree[Type:$ T](T: a, T: b, T: c) where Printable: Vector(T) {
+fn PrintThree[Type:$ T](T: a, T: b, T: c) where Vector(T) as Printable {
   var Vector(T): v = (a, b, c);
   Print(v);
 }
@@ -2531,14 +2603,19 @@ fn F1[SomeInterface:$ T](T: x) {
 ```
 
 We want to know if the return type of method `T.H` is the same as the parameter
-type of `T.G` in order to typecheck the function. With the full expressive power
-of `where` clauses, determining whether two type expressions are equal is in
-general undecidable, as
+type of `T.G` in order to typecheck the function.
+
+#### Type equality with where clauses
+
+With the full expressive power of `where` clauses, determining whether two type
+expressions are equal is in general undecidable, as
 [has been shown in Swift](https://forums.swift.org/t/swift-type-checking-is-undecidable/39024).
 There is ongoing work in Swift
 ([1](https://forums.swift.org/t/formalizing-swift-generics-as-a-term-rewriting-system/45175),
 [2](https://gist.github.com/slavapestov/75dbec34f9eba5fb4a4a00b1ee520d0b))
 iterating on how to approach this problem.
+
+#### Type equality with argument passing
 
 However, with enough constraints, we can make an efficient decision procedure
 for the argument passing formulation. The way we do this is by assigning every
@@ -2613,15 +2690,53 @@ from their assignments. Furthermore, the assignment to `Y` determines `S`, since
 `B.S = B.Y.W`, so `V.S` also isn't canonical, it is `V.Y.W` (not canonical)
 which is `Z.W` (canonical). Observe that `V.R` is canonical since nothing
 constrains it to equal any other type, even though `V.R.X` is not, since it is
-`V.S == Z.W`. The property that there are no forward references between items in
-interface definitions ensures this process terminates, and when something is
-established as not canonical it is always in terms of an expression for which we
-have or can compute a canonical type for.
+`V.S == Z.W`.
 
-**Note:** Here `A` and `B` recursive and mutually recursive just to emphasize
-that does not pose an issue for this algorithm.
+The property that there are no forward references between items in interface
+definitions ensures that we don't have any cycles that could lead to infinite
+loops. That is, the members of an associated type in an interface definition can
+only be constrained to equal values that don't depend on that member.
 
-If instead we had functions declared like so:
+This is almost enough to ensure that the process terminates, except when an
+associated type bound is the same interface recursively. The bad case is:
+
+```
+interface Broken {
+  var Broken:$ Q;
+  var Broken(.R = Q.Q.R.R):$ R;
+}
+
+fn F[Broken:$ T](T: x) {
+  // T.R.R not canonical
+  // == T.Q.Q.R.R not canonical
+  // == T.Q.Q.Q.Q.R.R not canonical
+  // etc.
+}
+```
+
+The problem here is that while we have a ordering for expressions that guaranees
+there are no loops, we don't have a guarantee that there are only finitely many
+smaller expressions when we have recursion. With recursion, we can create an
+infinite sequence of smaller expressions by allowing their length to grow
+without bound. This means we need to add one more rule to ensure that the
+algorithm terminates:
+
+> It is illegal to constrain a member of an associated type to (transitively)
+> equal a longer expression with the same interface bound.
+
+A few notes on this rule:
+
+-   The word "transitively" is needed if mutual recursion is allowed between
+    interfaces (as in `A` and `B` above).
+-   There is an additional restriction if the expression has the same length
+    that it only refer to earlier names. Without mutual recursion, this is
+    already precluded by the "no forward references" rule.
+-   This never applies to function declarations, since there is no recursion
+    involved in that context.
+
+The last concern is what happens when an expression is assigned twice. This is
+only a problem if it is assigned to two values that resolve to two different
+canonical types. That happens in this example:
 
 ```
 fn F3[A:$ N, A:$ P, B(.S = N, .Y = P):$ Q](...) { ... }
@@ -2642,26 +2757,113 @@ fn F3[A:$ N, A(.Y = N):$ P, B(.S = N, .Y = P):$ Q](...) { ... }
 This resolves the issue, and with this change the compiler can now correctly
 determine canonical types.
 
-**Open question:** Does this algorithm still work with the `.Self` feature from
-the ["recursive constraints" section](#recursive-constraints)?
+**Note:** This algorithm still works with the `.Self` feature from the
+["recursive constraints" section](#recursive-constraints).
 
 **Open question:** Can we relax any of the restrictions? For example, perhaps we
 would like to allow items in an interface to reference each other, as in:
 
 ```
 interface D {
-  var A(.W = F):$ E;
-  var A(.W = E):$ F;
+  var A(.W = V):$ E;
+  var A(.W = E):$ V;
 }
 ```
 
 In this case `D.E.W == D.F` and `D.F.W == D.E` and we would need some way of
-deciding which were canonical (probably `D.E` and `D.F`).
+deciding which were canonical (probably `D.E` and `D.F`). This would have to be
+restricted to cases where the expression on the right has no `.` to avoid cycles
+or type expression that grow without bound. Another concern is if there are type
+constructors involved:
 
-**Open question:** Can we specify constraints on `where` clauses that would
-allow us to use this efficient decision procedure?
+```
+interface Graph {
+  var A(.W = Vector(Verts)):$ Edges;
+  var A(.W = Vector(Edges)):$ Verts;
+}
+```
+
+#### Restricted where clauses
+
+This leads to the question of whether we can describe a set of restrictions on
+`where` clauses that would allow us to directly translate them into the argument
+passing form. If so, we could allow the `where` clause syntax and still use the
+above efficient decision procedure.
+
+Consider an interface with one associate type that has `where` constraints:
+
+```
+interface Foo {
+  // Some associated types
+  var ...:$ A;
+  var ...:$ B;
+  var Z:$ C where C.X == ..., C.Y == ...;
+  var ...:$ D
+}
+```
+
+These forms of `where` clauses are forbidden:
+
+| `where` form                             | Problem                                  |
+| ---------------------------------------- | ---------------------------------------- |
+| `var Z:$ C where C == ...`               | must have a dot on left of `==`          |
+| `var Z:$ C where C.X.Y == ...`           | must have a single dot on left of `==`   |
+| `var Z:$ C where A.X == ...`             | `A != C`                                 |
+| `var Z:$ C where C.X == ..., C.X == ...` | two constraints on same member           |
+| `var Z:$ C where C.X == C.Y`             | right side can't refer to members of `C` |
+| `var Z:$ C where C.X == D`               | no forward reference                     |
+
+These forms of `where` clauses can be rewritten:
+
+| `where` form                   | argument passing form   |
+| ------------------------------ | ----------------------- |
+| `var Z:$ C where C.X == A`     | `var Z(.X = A):$ C`     |
+| `var Z:$ C where C.X == A.T.U` | `var Z(.X = A.T.U):$ C` |
+| `var Z:$ C where C.X == Self`  | `var Z(.X = Self):$ C`  |
+| `var Z:$ C where C.X == C`     | `var Z(.X = .Self):$ C` |
+
+There is some room to rewrite other `where` expressions into these forms. One
+simple example is allowing the two sides of the `==` to be swapped, but more
+complicated rewrites may be possible. For example,
+
+```
+var Z:$ C where C.X == C.Y;
+```
+
+might be rewritten to:
+
+```
+[var ...:$ XY];
+var Z(.X = XY, .Y = XY):$ C;
+```
+
+except it may be tricky in general to find a type for `XY` that satisfies the
+constraints on both `C.X` and `C.Y`. Similarly,
+
+```
+var Z:$ C where C == A.T.U
+```
+
+might be rewritten as:
+
+```
+alias C = A.T.U;
+```
+
+except the type bounds on `A.T.U` might not match the `Z` bound on `C`.
+
+**Open question:** How much rewriting can be done automatically?
+
+**Open question:** Is there a simple set of rules explaining which `where`
+clauses are allowed that we could explain to users?
+
+#### Manual type equality
+
+TODO
 
 ### Options
+
+TODO: Add third manual option
 
 There is one big choice here, whether we want the fully general expressive
 semantics of `where` clauses and the difficult compilation that comes with it,
