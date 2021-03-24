@@ -48,7 +48,7 @@ request:
 -   [0301 - Principle: Errors are values](p0301.md)
 -   [0339 - `var` statement](p0339.md)
 -   [0340 - while loops](p0340.md)
--   [0415 - return](p0415.md)
+-   [0415 - Syntax: `return`](p0415.md)
 -   [0426 - Governance & evolution revamp](p0426.md)
 -   [0444 - GitHub Discussions](p0444.md)
 
