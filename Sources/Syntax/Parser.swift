@@ -474,8 +474,8 @@ class CarbonParser: CitronParser {
     /* 65 */ "declaration_list",
     ]
     let yyRuleText: [String] = [
-        /*   0 */ "input ::= declaration_list",
-        /*   1 */ "pattern ::= expression",
+        /*   0 */ "input ::= declaration_list(d)",
+        /*   1 */ "pattern ::= expression(e)",
         /*   2 */ "expression ::= IDENTIFIER",
         /*   3 */ "expression ::= expression member_designator",
         /*   4 */ "expression ::= expression LEFT_SQUARE_BRACKET expression RIGHT_SQUARE_BRACKET",
@@ -554,12 +554,16 @@ class CarbonParser: CitronParser {
 
     func yyInvokeCodeBlockForRule(ruleNumber: CitronRuleNumber) throws -> CitronSymbol {
         switch (ruleNumber) {
-        case 0: /* input ::= declaration_list */
-            func codeBlockForRule00() throws -> [Declaration] { $0  }
-            return .yy55(try codeBlockForRule00())
-        case 1: /* pattern ::= expression */
-            func codeBlockForRule01() throws -> Expression { $0  }
-            return .yy53(try codeBlockForRule01())
+        case 0: /* input ::= declaration_list(d) */
+            func codeBlockForRule00(d: [Declaration]) throws -> [Declaration] {d }
+            if case .yy55(let d) = yySymbolOnStack(distanceFromTop: 0) {
+                return .yy55(try codeBlockForRule00(d: d))
+            }
+        case 1: /* pattern ::= expression(e) */
+            func codeBlockForRule01(e: Expression) throws -> Expression {e }
+            if case .yy53(let e) = yySymbolOnStack(distanceFromTop: 0) {
+                return .yy53(try codeBlockForRule01(e: e))
+            }
         case 2: /* expression ::= IDENTIFIER */
             func codeBlockForRule02() throws -> Expression { }
             return .yy53(try codeBlockForRule02())
