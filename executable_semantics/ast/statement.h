@@ -104,8 +104,8 @@ auto MakeMatch(int line_num, Expression* exp,
 //     __continuation <continuation_variable> {
 //       <body>
 //     }
-auto MakeContinuation(int line_num, std::string continuation_variable,
-                      Statement* body) -> Statement*;
+auto MakeContinuationStatement(int line_num, std::string continuation_variable,
+                               Statement* body) -> Statement*;
 // Returns an AST node for a run statement give its line number and argument.
 //
 //     __run <argument>;

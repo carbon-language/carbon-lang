@@ -106,8 +106,8 @@ auto MakeMatch(int line_num, Expression* exp,
 
 // Returns an AST node for a continuation statement give its line number and
 // parts.
-auto MakeContinuation(int line_num, std::string continuation_variable,
-                      Statement* body) -> Statement* {
+auto MakeContinuationStatement(int line_num, std::string continuation_variable,
+                               Statement* body) -> Statement* {
   auto* continuation = new Statement();
   continuation->line_num = line_num;
   continuation->tag = StatementKind::Continuation;

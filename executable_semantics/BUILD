@@ -26,6 +26,7 @@ cc_library(
 
 EXAMPLES = [
     "assignment_copy1",
+    "assignment_copy2",
     "block1",
     "block2",
     "break1",

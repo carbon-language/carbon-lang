@@ -294,7 +294,7 @@ statement:
 | MATCH "(" expression ")" "{" clause_list "}"
     { $$ = Carbon::MakeMatch(yylineno, $3, $6); }
 | CONTINUATION identifier statement
-    { $$ = Carbon::MakeContinuation(yylineno, $2, $3); }
+    { $$ = Carbon::MakeContinuationStatement(yylineno, $2, $3); }
 | RUN expression ";"
     { $$ = Carbon::MakeRun(yylineno, $2); }
 | AWAIT ";"

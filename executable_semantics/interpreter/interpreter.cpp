@@ -85,7 +85,7 @@ auto CopyVal(const Value* val, int line_num) -> const Value* {
     case ValKind::PtrV:
       return MakePtrVal(val->u.ptr);
     case ValKind::ContinuationV:
-      // We don't copy continuations.
+      // Copying a continuation is "shallow".
       return val;
     case ValKind::FunctionTV:
       return MakeFunTypeVal(CopyVal(val->u.fun_type.param, line_num),
@@ -250,11 +250,11 @@ auto ValToPtr(const Value* v, int line_num) -> Address {
   }
 }
 
-// Returns *continuation represented as a stack of frames.
+// Returns *continuation represented as a list of frames.
 //
 // - Precondition: continuation->tag == ValKind::ContinuationV.
-auto ContinuationToStack(const Value* continuation, int sourceLocation)
-    -> Stack<Frame*> {
+auto ContinuationToVector(const Value* continuation, int sourceLocation)
+    -> std::vector<Frame*> {
   if (continuation->tag == ValKind::ContinuationV) {
     return *continuation->u.continuation.stack;
   } else {
@@ -803,32 +803,6 @@ auto IsBlockAct(Action* act) -> bool {
   }
 }
 
-// Returns a copy of the continuation from its top down to
-// the first continuation frame.
-auto CopyToContinuation(Stack<Frame*> continuation) -> Stack<Frame*> {
-  Stack<Frame*> copy;
-  std::list<Frame*> reverse_frames;
-  for (Frame* frame : continuation) {
-    reverse_frames.push_front(frame);
-    if (frame->name == "continuation") {
-      break;
-    }
-  }
-  for (Frame* frame : reverse_frames) {
-    copy.Push(frame);
-  }
-  return copy;
-}
-
-// Pop frames off the stack down to a continuation frame.
-auto PopToContinuation() -> void {
-  while (!state->stack.IsEmpty() &&
-         state->stack.Top()->name != "continuation") {
-    state->stack.Pop();
-  }
-  assert(!state->stack.IsEmpty());
-}
-
 // State transitions for statements.
 
 void StepStmt() {
@@ -882,7 +856,7 @@ void StepStmt() {
     case StatementKind::Block: {
       if (act->pos == -1) {
         if (stmt->u.block.stmt) {
-          auto* scope = new Scope(CurrentEnv(state), std::list<std::string>());
+          auto* scope = new Scope(CurrentEnv(state), {});
           frame->scopes.Push(scope);
           frame->todo.Push(MakeStmtAct(stmt->u.block.stmt));
           act->pos++;
@@ -945,11 +919,9 @@ void StepStmt() {
       todo.Push(
           MakeStmtAct(MakeReturn(stmt->line_num, MakeUnit(stmt->line_num))));
       todo.Push(MakeStmtAct(stmt->u.continuation.body));
-      Frame* continuation_frame = new Frame("continuation", scopes, todo);
-      Stack<Frame*> continuation_stack;
-      continuation_stack.Push(continuation_frame);
+      Frame* continuation_frame = new Frame("__continuation", scopes, todo);
       Address continuation_address =
-          AllocateValue(MakeContinuation(continuation_stack));
+          AllocateValue(MakeContinuation({continuation_frame}));
       // Store the continuation's address in the frame.
       continuation_frame->continuation = continuation_address;
       // Bind the continuation object to the continuation variable
@@ -967,10 +939,14 @@ void StepStmt() {
     case StatementKind::Await:
       // Pause the current continuation
       frame->todo.Pop();
-      Stack<Frame*> paused = CopyToContinuation(state->stack);
-      PopToContinuation();
+      std::vector<Frame*> paused;
+      while (!state->stack.Top()->IsContinuation()) {
+        paused.push_back(state->stack.Pop());
+      }
+      paused.push_back(state->stack.Top());
       // Update the continuation with the paused stack.
       state->heap[state->stack.Top()->continuation] = MakeContinuation(paused);
+      // Pop the continuation frame.
       state->stack.Pop();
       break;
   }
@@ -1039,17 +1015,6 @@ void InsertDelete(Action* del, Stack<Action*>& todo) {
     }
   } else {
     todo.Push(del);
-  }
-}
-
-// Reinstates a saved continuation onto the current stack.
-auto ReinstateContinuation(Stack<Frame*> continuation) -> void {
-  std::list<Frame*> reversed_frames;
-  for (Frame* frame : continuation) {
-    reversed_frames.push_front(frame);
-  }
-  for (Frame* frame : reversed_frames) {
-    state->stack.Push(frame);
   }
 }
 
@@ -1429,9 +1394,12 @@ void HandleValue() {
           ignore_result->pos = 0;
           frame->todo.Push(ignore_result);
           // Push the continuation onto the current stack.
-          Stack<Frame*> stack =
-              ContinuationToStack(val_act->u.val, stmt->line_num);
-          ReinstateContinuation(stack);
+          std::vector<Frame*> continuation_vector =
+              ContinuationToVector(val_act->u.val, stmt->line_num);
+          for (auto frame_iter = continuation_vector.rbegin();
+               frame_iter != continuation_vector.rend(); ++frame_iter) {
+            state->stack.Push(*frame_iter);
+          }
           break;
         }
         case StatementKind::Continuation:

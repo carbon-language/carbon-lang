@@ -103,12 +103,12 @@ auto MakeAltCons(std::string alt_name, std::string choice_name)
   return v;
 }
 
-// Return a first-class continuation represented by the
-// given stack, down to the first Delimit.
-auto MakeContinuation(Stack<Frame*> stack) -> Value* {
+// Return a first-class continuation represented a fragment
+// of the stack.
+auto MakeContinuation(std::vector<Frame*> stack) -> Value* {
   auto* v = new Value();
   v->tag = ValKind::ContinuationV;
-  v->u.continuation.stack = new Stack<Frame*>(stack);
+  v->u.continuation.stack = new std::vector<Frame*>(stack);
   return v;
 }
 
@@ -312,7 +312,14 @@ void PrintValue(const Value* val, std::ostream& out) {
       break;
     case ValKind::ContinuationV:
       out << "continuation[[";
+#if 0
       PrintStack(*val->u.continuation.stack, out);
+#else
+      for (Frame* frame : *val->u.continuation.stack) {
+        PrintFrame(frame, out);
+        out << " :: ";
+      }
+#endif
       out << "]]";
       break;
   }

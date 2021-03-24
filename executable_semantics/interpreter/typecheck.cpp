@@ -511,7 +511,7 @@ auto TypeCheckStmt(Statement* s, TypeEnv env, Env ct_env,
     case StatementKind::Continuation: {
       auto [new_body, body_env] =
           TypeCheckStmt(s->u.continuation.body, env, ct_env, ret_type);
-      auto new_continuation = MakeContinuation(
+      Statement* new_continuation = MakeContinuationStatement(
           s->line_num, *s->u.continuation.continuation_variable, new_body);
       env.Set(*s->u.continuation.continuation_variable,
               MakeContinuationTypeVal());
@@ -522,7 +522,7 @@ auto TypeCheckStmt(Statement* s, TypeEnv env, Env ct_env,
           s->u.run.argument, env, ct_env, nullptr, TCContext::ValueContext);
       ExpectType(s->line_num, "argument of `run`", MakeContinuationTypeVal(),
                  argument_type);
-      auto new_run = MakeRun(s->line_num, new_argument);
+      Statement* new_run = MakeRun(s->line_num, new_argument);
       return TCStatement(new_run, env);
     }
     case StatementKind::Await: {

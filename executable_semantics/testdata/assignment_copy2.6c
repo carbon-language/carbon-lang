@@ -2,14 +2,11 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-// Test that `__yield` transfers control to the `__catch` block and binds
-// the yielded value `0` to variable `v`.
+// Test that assignment performs a copy and does not create an alias.
 
 fn main() -> Int {
-  __delimit {
-    __yield 0;
-    return 1;
-  } __catch (v, k) {
-    return v;
-  }
+  var Int: x = 0;
+  var Int: y = x;
+  x = 1;
+  return y;
 }

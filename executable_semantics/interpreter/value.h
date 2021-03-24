@@ -118,15 +118,15 @@ struct Value {
     } implicit;
 
     struct {
-      Stack<Frame*>* stack;
+      std::vector<Frame*>* stack;
     } continuation;
 
   } u;
 };
 
 // Return a first-class continuation represented by the
-// given stack, down to the first Delimit.
-auto MakeContinuation(Stack<Frame*> stack) -> Value*;
+// given stack, down to the nearest enclosing `__continuation`.
+auto MakeContinuation(std::vector<Frame*> stack) -> Value*;
 auto MakeIntVal(int i) -> const Value*;
 auto MakeBoolVal(bool b) -> const Value*;
 auto MakeFunVal(std::string name, const Value* param, Statement* body)
