@@ -940,14 +940,11 @@ void StepStmt() {
       // Pause the current continuation
       frame->todo.Pop();
       std::vector<Frame*> paused;
-      while (!state->stack.Top()->IsContinuation()) {
+      do {
         paused.push_back(state->stack.Pop());
-      }
-      paused.push_back(state->stack.Top());
+      } while (!paused.back()->IsContinuation());
       // Update the continuation with the paused stack.
-      state->heap[state->stack.Top()->continuation] = MakeContinuation(paused);
-      // Pop the continuation frame.
-      state->stack.Pop();
+      state->heap[paused.back()->continuation] = MakeContinuation(paused);
       break;
   }
 }

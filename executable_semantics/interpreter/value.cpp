@@ -312,14 +312,10 @@ void PrintValue(const Value* val, std::ostream& out) {
       break;
     case ValKind::ContinuationV:
       out << "continuation[[";
-#if 0
-      PrintStack(*val->u.continuation.stack, out);
-#else
       for (Frame* frame : *val->u.continuation.stack) {
         PrintFrame(frame, out);
         out << " :: ";
       }
-#endif
       out << "]]";
       break;
   }
