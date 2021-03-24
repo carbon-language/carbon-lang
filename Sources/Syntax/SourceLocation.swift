@@ -10,7 +10,7 @@ public struct PositionInSourceFile: Comparable, Hashable {
 public typealias RangeOfSourceFile = Range<PositionInSourceFile>
 
 public struct SourceLocation {
-  public let filename: String
+  public let fileName: String
   public let span: RangeOfSourceFile
 }
 

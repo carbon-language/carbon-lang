@@ -4,3 +4,4 @@
 /*.xcodeproj
 xcuserdata/
 bin/
+Sources/Syntax/Parser.swift
