@@ -16,6 +16,7 @@ public struct SourceLocation {
 
 extension Range {
   func extended(toCover other: Range) -> Self {
-    Swift.min(lowerBound, other.lowerBound) ..< Swift.max(upperBound, other.upperBound)
+    Swift.min(lowerBound, other.lowerBound)
+      ..< Swift.max(upperBound, other.upperBound)
   }
 }

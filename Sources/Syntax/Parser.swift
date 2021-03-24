@@ -63,32 +63,34 @@ class CarbonParser: CitronParser {
       case FN                             =  40
       case STRUCT                         =  41
       case CHOICE                         =  42
+      case ILLEGAL_CHARACTER              =  43
     }
 
     enum CitronNonTerminalCode: CitronSymbolNumber {
-      case input                          =  43
-      case pattern                        =  44
-      case expression                     =  45
-      case member_designator              =  46
-      case paren_expression               =  47
-      case tuple                          =  48
-      case field                          =  49
-      case field_list                     =  50
-      case match_clause                   =  51
-      case match_clause_list              =  52
-      case statement                      =  53
-      case optional_else                  =  54
-      case statement_list                 =  55
-      case return_type                    =  56
-      case function_definition            =  57
-      case function_declaration           =  58
-      case variable_declaration           =  59
-      case member                         =  60
-      case member_list                    =  61
-      case alternative                    =  62
-      case alternative_list               =  63
-      case declaration                    =  64
-      case declaration_list               =  65
+      case illegal_character              =  44
+      case input                          =  45
+      case pattern                        =  46
+      case expression                     =  47
+      case member_designator              =  48
+      case paren_expression               =  49
+      case tuple                          =  50
+      case field                          =  51
+      case field_list                     =  52
+      case match_clause                   =  53
+      case match_clause_list              =  54
+      case statement                      =  55
+      case optional_else                  =  56
+      case statement_list                 =  57
+      case return_type                    =  58
+      case function_definition            =  59
+      case function_declaration           =  60
+      case variable_declaration           =  61
+      case member                         =  62
+      case member_list                    =  63
+      case alternative                    =  64
+      case alternative_list               =  65
+      case declaration                    =  66
+      case declaration_list               =  67
     }
 
     enum CitronSymbolCode : RawRepresentable, Equatable {
@@ -101,9 +103,9 @@ class CarbonParser: CitronParser {
         init(rawValue: CitronSymbolNumber) {
             if (rawValue == 0) {
                 self = .endOfInput
-            } else if (rawValue < 43) {
+            } else if (rawValue < 44) {
                 self = .token(CitronTokenCode(rawValue: rawValue)!)
-            } else if (rawValue < 66) {
+            } else if (rawValue < 68) {
                 self = .nonterminal(CitronNonTerminalCode(rawValue: rawValue)!)
             } else {
                 fatalError()
@@ -125,49 +127,51 @@ class CarbonParser: CitronParser {
     enum CitronSymbol {
         case yyBaseOfStack
         case yy0(CitronToken)
-        case yy25(MemberDesignator)
-        case yy41([Expression])
-        case yy42(FunctionDeclaration)
-        case yy43(MatchClause)
-        case yy44([Alternative])
+        case yy1([Member])
+        case yy4(Alternative)
+        case yy45([Expression])
         case yy48(TupleLiteral)
+        case yy50(Statement)
         case yy52((name: String, type: Expression))
-        case yy53(Expression)
-        case yy55([Declaration])
-        case yy58([Statement])
-        case yy67(Declaration)
-        case yy84(FunctionDefinition)
-        case yy87(TypeExpression)
-        case yy98(Statement)
-        case yy109(Statement?)
-        case yy116(Alternative)
-        case yy117(Member)
-        case yy125([Member])
-        case yy131([MatchClause])
+        case yy56([Alternative])
+        case yy57(Never)
+        case yy69(Member)
+        case yy71(MatchClause)
+        case yy73(FunctionDeclaration)
+        case yy79([MatchClause])
+        case yy87(Declaration)
+        case yy95([Declaration])
+        case yy97(Expression)
+        case yy102([Statement])
+        case yy117(MemberDesignator)
+        case yy123(TypeExpression)
+        case yy128(FunctionDefinition)
+        case yy133(Statement?)
 
         func typeErasedContent() -> Any {
             switch (self) {
             case .yyBaseOfStack: fatalError()
             case .yy0(let value): return value as Any
-            case .yy25(let value): return value as Any
-            case .yy41(let value): return value as Any
-            case .yy42(let value): return value as Any
-            case .yy43(let value): return value as Any
-            case .yy44(let value): return value as Any
+            case .yy1(let value): return value as Any
+            case .yy4(let value): return value as Any
+            case .yy45(let value): return value as Any
             case .yy48(let value): return value as Any
+            case .yy50(let value): return value as Any
             case .yy52(let value): return value as Any
-            case .yy53(let value): return value as Any
-            case .yy55(let value): return value as Any
-            case .yy58(let value): return value as Any
-            case .yy67(let value): return value as Any
-            case .yy84(let value): return value as Any
+            case .yy56(let value): return value as Any
+            case .yy57(let value): return value as Any
+            case .yy69(let value): return value as Any
+            case .yy71(let value): return value as Any
+            case .yy73(let value): return value as Any
+            case .yy79(let value): return value as Any
             case .yy87(let value): return value as Any
-            case .yy98(let value): return value as Any
-            case .yy109(let value): return value as Any
-            case .yy116(let value): return value as Any
+            case .yy95(let value): return value as Any
+            case .yy97(let value): return value as Any
+            case .yy102(let value): return value as Any
             case .yy117(let value): return value as Any
-            case .yy125(let value): return value as Any
-            case .yy131(let value): return value as Any
+            case .yy123(let value): return value as Any
+            case .yy128(let value): return value as Any
+            case .yy133(let value): return value as Any
             }
         }
     }
@@ -176,113 +180,112 @@ class CarbonParser: CitronParser {
 
     // Counts
 
-    let yyNumberOfSymbols: Int = 66
+    let yyNumberOfSymbols: Int = 68
     let yyNumberOfStates: Int = 99
 
     // Action tables
 
     let yyLookaheadAction: [(CitronSymbolNumber, CitronParsingAction)] = [
-/*   0 */  ( 1, .SH( 5)), (44, .RD(26)), (45, .SH(46)), (46, .SH(93)), (47, .RD(13)),
-/*   5 */  (19, .SH(62)), (49, .SH(92)), (50, .RD(30)), ( 9, .SH(28)), (45, .SH(36)),
-/*  10 */  (11, .SH(27)), (47, .RD(13)), (28, .RD(54)), (14, .SH( 2)), (45, .SH(45)),
-/*  15 */  (31, .RD(54)), (47, .RD(13)), (18, .SR( 2)), ( 1, .SH( 6)), (20, .SR( 6)),
+/*   0 */  ( 1, .SH( 5)), (46, .RD(26)), (47, .SH(46)), (48, .SH(93)), (49, .RD(13)),
+/*   5 */  (19, .SH(62)), (51, .SH(92)), (52, .RD(30)), ( 9, .SH(28)), (47, .SH(36)),
+/*  10 */  (11, .SH(27)), (49, .RD(13)), (28, .RD(54)), (14, .SH( 2)), (47, .SH(45)),
+/*  15 */  (31, .RD(54)), (49, .RD(13)), (18, .SR( 2)), (58, .SH(68)), (20, .SR( 6)),
 /*  20 */  (21, .SR( 7)), (22, .SR( 8)), (23, .SR( 9)), (24, .SR(10)), (25, .SR(11)),
-/*  25 */  (26, .SR(12)), (27, .SH(65)), (45, .SH(37)), (59, .SH(69)), (47, .RD(13)),
+/*  25 */  (26, .SR(12)), (27, .SH(65)), (47, .SH(37)), (61, .SH(69)), (49, .RD(13)),
 /*  30 */  (32, .SH(13)), (32, .SH(16)), (33, .SH(89)), (34, .SH(88)), (35, .SH(87)),
 /*  35 */  (36, .SH(86)), (37, .SH(21)), (38, .SH(84)), (40, .SH(97)), (41, .SH(78)),
 /*  40 */  (42, .SH(73)), ( 9, .SH(28)), (32, .SH(14)), (11, .SH(27)), (12, .SH(95)),
-/*  45 */  (56, .SH(68)), (14, .SH( 2)), (45, .SH(45)), (31, .SR(53)), (47, .RD(13)),
-/*  50 */  (18, .SR( 2)), (14, .SH( 3)), (20, .SR( 6)), (21, .SR( 7)), (22, .SR( 8)),
+/*  45 */  (14, .SH( 3)), (14, .SH( 2)), (47, .SH(45)), (39, .SH(11)), (49, .RD(13)),
+/*  50 */  (18, .SR( 2)), (50, .RD(58)), (20, .SR( 6)), (21, .SR( 7)), (22, .SR( 8)),
 /*  55 */  (23, .SR( 9)), (24, .SR(10)), (25, .SR(11)), (26, .SR(12)), (27, .SH(65)),
-/*  60 */  ( 9, .SH(28)), (59, .SH(75)), (11, .SH(27)), (48, .RD(58)), (46, .RD( 3)),
-/*  65 */  (14, .SH( 2)), (48, .RD(21)), (44, .SH(82)), (45, .SH(46)), (18, .SR( 2)),
-/*  70 */  (47, .RD(13)), (20, .SR( 6)), (21, .SR( 7)), (22, .SR( 8)), (23, .SR( 9)),
+/*  60 */  ( 9, .SH(28)), (61, .SH(75)), (11, .SH(27)), (46, .SH(82)), (47, .SH(46)),
+/*  65 */  (14, .SH( 2)), (49, .RD(13)), (46, .SH(90)), (47, .SH(46)), (18, .SR( 2)),
+/*  70 */  (49, .RD(13)), (20, .SR( 6)), (21, .SR( 7)), (22, .SR( 8)), (23, .SR( 9)),
 /*  75 */  (24, .SR(10)), (25, .SR(11)), (26, .SR(12)), (27, .SH(65)), ( 3, .SH(96)),
-/*  80 */  (51, .SH(54)), (52, .RD(34)), ( 6, .SH(29)), ( 7, .SH(30)), ( 8, .SH(33)),
-/*  85 */  (39, .SH(11)), (10, .SH(32)), (11, .SH(31)), (12, .SH(95)), (12, .SH(95)),
-/*  90 */  (14, .SH( 3)), (14, .SH( 3)), (16, .SH(34)), (16, .SH(34)), (29, .SH(15)),
-/*  95 */  (30, .SH(81)), (54, .RD(38)), (44, .RD(26)), (45, .SH(46)), (46, .SH(93)),
-/* 100 */  (47, .RD(13)), (13, .SH(26)), (49, .SH(92)), (50, .SH(94)), (28, .SH(25)),
-/* 105 */  (51, .SH(54)), (52, .SH(80)), (31, .SR(37)), ( 3, .SH(96)), (62, .SH(71)),
-/* 110 */  (63, .RD(62)), ( 6, .SH(29)), ( 7, .SH(30)), ( 8, .SH(33)), ( 5, .SH(19)),
-/* 115 */  (10, .SH(32)), (11, .SH(31)), (12, .SH(95)), (56, .RD(22)), (14, .SH( 3)),
+/*  80 */  (53, .SH(54)), (54, .RD(34)), ( 6, .SH(29)), ( 7, .SH(30)), ( 8, .SH(33)),
+/*  85 */  (56, .RD(38)), (10, .SH(32)), (11, .SH(31)), (12, .SH(95)), (47, .SH(35)),
+/*  90 */  (14, .SH( 3)), (49, .RD(13)), (16, .SH(34)), (46, .RD(26)), (47, .SH(46)),
+/*  95 */  (48, .SH(93)), (49, .RD(13)), (55, .RD(32)), (51, .SH(92)), (52, .SH(94)),
+/* 100 */  (46, .RD(26)), (47, .SH(46)), (48, .SH(93)), (49, .RD(13)), (28, .SH(25)),
+/* 105 */  (51, .SH(92)), (52, .SH(91)), (31, .SR(37)), ( 3, .SH(96)), (29, .SH(15)),
+/* 110 */  (30, .SH(81)), ( 6, .SH(29)), ( 7, .SH(30)), ( 8, .SH(33)), ( 5, .SH(19)),
+/* 115 */  (10, .SH(32)), (11, .SH(31)), (12, .SH(95)), (58, .RD(22)), (14, .SH( 3)),
 /* 120 */  ( 3, .SH(96)), (16, .SH(34)), (13, .SH(26)), ( 6, .SH(29)), ( 7, .SH(30)),
-/* 125 */  ( 8, .SH(33)), (48, .SH(64)), (10, .SH(32)), (11, .SH(31)), (12, .SH(95)),
-/* 130 */  (48, .SH(61)), (14, .SH( 3)), (43, .ACCEPT),   (16, .SH(34)), (62, .SH(71)),
-/* 135 */  (63, .SH(70)), (31, .SR(67)), (44, .RD(26)), (45, .SH(46)), (46, .SH(93)),
-/* 140 */  (47, .RD(13)), (28, .SH(18)), (49, .SH(92)), (50, .SH(91)), (60, .SH(59)),
-/* 145 */  (61, .RD(57)), (57, .RD(63)), (58, .RD(64)), (31, .SR(52)), (45, .SH(38)),
-/* 150 */  ( 2, .SR(66)), (47, .RD(13)), ( 3, .SH(96)), (64, .SH( 7)), (65, .SH(98)),
-/* 155 */  ( 6, .SH(29)), ( 7, .SH(30)), ( 8, .SH(33)), ( 4, .SH(57)), (10, .SH(32)),
-/* 160 */  (11, .SH(31)), (12, .SH(95)), ( 1, .SH(58)), (14, .SH( 3)), (15, .SH(83)),
-/* 165 */  (16, .SH(34)), (45, .SH(39)), ( 3, .SH(96)), (47, .RD(13)), ( 2, .SR(65)),
-/* 170 */  ( 6, .SH(29)), ( 7, .SH(30)), ( 8, .SH(33)), (31, .SR(55)), (10, .SH(32)),
+/* 125 */  ( 8, .SH(33)), (13, .SH(26)), (10, .SH(32)), (11, .SH(31)), (12, .SH(95)),
+/* 130 */  ( 2, .SR(66)), (14, .SH( 3)), (45, .ACCEPT),   (16, .SH(34)), (53, .SH(54)),
+/* 135 */  (54, .SH(80)), (31, .SR(67)), ( 8, .ERROR ),   (50, .SH(64)), (10, .SH(32)),
+/* 140 */  (11, .SH(31)), (12, .SH(95)), (47, .SH(35)), (14, .SH( 3)), (49, .RD(13)),
+/* 145 */  (16, .SH(34)), (59, .RD(63)), (60, .RD(64)), (31, .SR(52)), (47, .SH(38)),
+/* 150 */  (55, .RD(31)), (49, .RD(13)), ( 3, .SH(96)), (66, .SH( 7)), (67, .SH(98)),
+/* 155 */  ( 6, .SH(29)), ( 7, .SH(30)), ( 8, .SH(33)), (50, .SH(61)), (10, .SH(32)),
+/* 160 */  (11, .SH(31)), (12, .SH(95)), (28, .SH(18)), (14, .SH( 3)), (15, .SH(83)),
+/* 165 */  (16, .SH(34)), (48, .RD( 3)), ( 3, .SH(96)), (50, .RD(21)), ( 4, .SH(57)),
+/* 170 */  ( 6, .SH(29)), ( 7, .SH(30)), ( 8, .SH(33)), ( 1, .SH(58)), (10, .SH(32)),
 /* 175 */  (11, .SH(31)), (12, .SH(95)), (19, .SH(72)), (14, .SH( 3)), ( 3, .SH(96)),
-/* 180 */  (16, .SH(34)), (19, .SH(67)), ( 6, .SH(29)), ( 7, .SH(30)), ( 8, .SH(33)),
-/* 185 */  ( 1, .SH(60)), (10, .SH(32)), (11, .SH(31)), (12, .SH(95)), (19, .SH(77)),
-/* 190 */  (14, .SH( 3)), (15, .SH(10)), (16, .SH(34)), ( 1, .SH(55)), ( 3, .SH(96)),
-/* 195 */  (31, .SR(42)), (14, .SH(20)), ( 6, .SH(29)), ( 7, .SH(30)), ( 8, .SH(33)),
-/* 200 */  ( 5, .SH( 8)), (10, .SH(32)), (11, .SH(31)), (12, .SH(95)), ( 2, .SR(51)),
-/* 205 */  (14, .SH( 3)), (15, .SH(12)), (16, .SH(34)), (31, .SR(41)), ( 3, .SH(96)),
-/* 210 */  (60, .SH(59)), (61, .SH(74)), ( 6, .SH(29)), ( 7, .SH(30)), ( 8, .SH(33)),
-/* 215 */  ( 2, .SR(44)), (10, .SH(32)), (11, .SH(31)), (12, .SH(95)), ( 5, .SH( 9)),
-/* 220 */  (14, .SH( 3)), ( 3, .SH(96)), (16, .SH(34)), ( 2, .SR(43)), ( 6, .SH(29)),
-/* 225 */  ( 7, .SH(30)), ( 8, .SH(33)), (31, .SR(40)), (10, .SH(32)), (11, .SH(31)),
-/* 230 */  (12, .SH(95)), (14, .SH(22)), (14, .SH( 3)), (45, .SH(40)), (16, .SH(34)),
-/* 235 */  (47, .RD(13)), (14, .SH(23)), (31, .SR(36)), ( 8, .ERROR ),   (11, .SH(24)),
-/* 240 */  (10, .SH(32)), (11, .SH(31)), (12, .SH(95)), (45, .SH(35)), (14, .SH( 3)),
-/* 245 */  (47, .RD(13)), (16, .SH(34)), (44, .SH(90)), (45, .SH(46)), (31, .SR(35)),
-/* 250 */  (47, .RD(13)), (53, .RD(32)), (45, .SH(41)), ( 3, .SH(96)), (47, .RD(13)),
-/* 255 */  (15, .SR(25)), ( 6, .SH(29)), ( 7, .SH(30)), ( 8, .SH(33)), ( 4, .SH( 1)),
-/* 260 */  (10, .SH(32)), (11, .SH(31)), (12, .SH(95)), (28, .SH(17)), (14, .SH( 3)),
+/* 180 */  (16, .SH(34)), ( 1, .SH( 6)), ( 6, .SH(29)), ( 7, .SH(30)), ( 8, .SH(33)),
+/* 185 */  ( 2, .SR(65)), (10, .SH(32)), (11, .SH(31)), (12, .SH(95)), (19, .SH(67)),
+/* 190 */  (14, .SH( 3)), (15, .SH(10)), (16, .SH(34)), (31, .SR(55)), ( 3, .SH(96)),
+/* 195 */  (31, .SR(42)), ( 1, .SH(60)), ( 6, .SH(29)), ( 7, .SH(30)), ( 8, .SH(33)),
+/* 200 */  (19, .SH(77)), (10, .SH(32)), (11, .SH(31)), (12, .SH(95)), ( 2, .SR(51)),
+/* 205 */  (14, .SH( 3)), (15, .SH(12)), (16, .SH(34)), (47, .SH(39)), ( 3, .SH(96)),
+/* 210 */  (49, .RD(13)), (31, .SR(53)), ( 6, .SH(29)), ( 7, .SH(30)), ( 8, .SH(33)),
+/* 215 */  ( 2, .SR(44)), (10, .SH(32)), (11, .SH(31)), (12, .SH(95)), ( 5, .SH( 8)),
+/* 220 */  (14, .SH( 3)), ( 3, .SH(96)), (16, .SH(34)), (14, .SH(20)), ( 6, .SH(29)),
+/* 225 */  ( 7, .SH(30)), ( 8, .SH(33)), ( 5, .SH( 9)), (10, .SH(32)), (11, .SH(31)),
+/* 230 */  (12, .SH(95)), (47, .SH(35)), (14, .SH( 3)), (49, .RD(13)), (16, .SH(34)),
+/* 235 */  (64, .SH(71)), (65, .RD(62)), (31, .SR(36)), ( 8, .SH(33)), (55, .RD(39)),
+/* 240 */  (10, .SH(32)), (11, .SH(31)), (12, .SH(95)), (47, .SH(35)), (14, .SH( 3)),
+/* 245 */  (49, .RD(13)), (16, .SH(34)), (59, .RD(63)), (60, .RD(64)), (31, .SR(35)),
+/* 250 */  (47, .SH(40)), (55, .RD(46)), (49, .RD(13)), ( 3, .SH(96)), (66, .SH( 7)),
+/* 255 */  (67, .RD(69)), ( 6, .SH(29)), ( 7, .SH(30)), ( 8, .SH(33)), ( 1, .SH(55)),
+/* 260 */  (10, .SH(32)), (11, .SH(31)), (12, .SH(95)), ( 2, .SR(43)), (14, .SH( 3)),
 /* 265 */  ( 3, .SH(76)), (16, .SH(34)), (17, .SR( 4)), ( 6, .SH(29)), ( 7, .SH(30)),
-/* 270 */  ( 8, .SH(33)), (15, .SR(24)), (10, .SH(32)), (11, .SH(31)), (12, .SH(95)),
-/* 275 */  ( 0, .RD( 0)), (14, .SH( 3)), ( 3, .SH(96)), (16, .SH(34)), (19, .SR(23)),
-/* 280 */  ( 6, .SH(29)), ( 7, .SH(30)), ( 8, .SH(33)), (19, .SR( 5)), (10, .SH(32)),
-/* 285 */  (11, .SH(31)), (12, .SH(95)), (19, .SH(66)), (14, .SH( 3)), ( 8, .SH(33)),
-/* 290 */  (16, .SH(34)), (10, .SH(32)), (11, .SH(31)), (12, .SH(95)), (45, .SH(42)),
-/* 295 */  (14, .SH( 3)), (47, .RD(13)), (16, .SH(34)), (45, .SH(43)), (45, .SH(35)),
-/* 300 */  (47, .RD(13)), (47, .RD(13)), (45, .SH(35)), (45, .SH(35)), (47, .RD(13)),
-/* 305 */  (47, .RD(13)), (45, .SH(35)), (53, .SH( 4)), (47, .RD(13)), (55, .RD(48)),
-/* 310 */  (53, .SH( 4)), (53, .SH( 4)), (55, .SH(85)), (55, .SH(79)), (53, .RD(31)),
-/* 315 */  (66, .RD( 2)), (57, .RD(63)), (58, .RD(64)), (45, .SH(35)), (66, .RD( 2)),
-/* 320 */  (47, .RD(13)), (66, .RD( 2)), (66, .RD( 2)), (64, .SH( 7)), (65, .RD(69)),
-/* 325 */  (66, .RD( 2)), (53, .RD(39)), (45, .SH(35)), (45, .SH(35)), (47, .RD(13)),
-/* 330 */  (47, .RD(13)), (44, .RD(27)), (45, .SH(46)), (66, .RD( 2)), (47, .RD(13)),
-/* 335 */  (53, .RD(46)), (53, .SH(63)), (45, .SH(56)), (45, .SH(51)), (47, .RD(13)),
-/* 340 */  (47, .RD(13)), (45, .SH(47)), (45, .SH(48)), (47, .RD(13)), (47, .RD(13)),
-/* 345 */  (45, .SH(49)), (45, .SH(52)), (47, .RD(13)), (47, .RD(13)), (45, .SH(53)),
-/* 350 */  (45, .SH(50)), (47, .RD(13)), (47, .RD(13)), (45, .SH(44)), (14, .SH( 3)),
-/* 355 */  (47, .RD(13)), (16, .SH(34)),
+/* 270 */  ( 8, .SH(33)), (31, .SR(41)), (10, .SH(32)), (11, .SH(31)), (12, .SH(95)),
+/* 275 */  (31, .SR(40)), (14, .SH( 3)), ( 3, .SH(96)), (16, .SH(34)), (14, .SH(22)),
+/* 280 */  ( 6, .SH(29)), ( 7, .SH(30)), ( 8, .SH(33)), (11, .SH(24)), (10, .SH(32)),
+/* 285 */  (11, .SH(31)), (12, .SH(95)), (19, .SR(23)), (14, .SH( 3)), (47, .SH(35)),
+/* 290 */  (16, .SH(34)), (49, .RD(13)), (47, .SH(35)), (47, .SH(41)), (49, .RD(13)),
+/* 295 */  (49, .RD(13)), (47, .SH(35)), (55, .SH( 4)), (49, .RD(13)), (57, .RD(48)),
+/* 300 */  (55, .SH( 4)), (47, .SH(35)), (57, .SH(85)), (49, .RD(13)), (55, .SH(63)),
+/* 305 */  (46, .RD(27)), (47, .SH(46)), (14, .SH(23)), (49, .RD(13)), (55, .SH( 4)),
+/* 310 */  (12, .SH(95)), (57, .SH(79)), (14, .SH( 3)), (47, .SH(42)), (16, .SH(34)),
+/* 315 */  (49, .RD(13)), (47, .SH(43)), (47, .SH(56)), (49, .RD(13)), (49, .RD(13)),
+/* 320 */  (47, .SH(51)), (14, .SH( 3)), (49, .RD(13)), (16, .SH(34)), (47, .SH(47)),
+/* 325 */  (47, .SH(48)), (49, .RD(13)), (49, .RD(13)), (47, .SH(49)), (47, .SH(52)),
+/* 330 */  (49, .RD(13)), (49, .RD(13)), (47, .SH(53)), (47, .SH(50)), (49, .RD(13)),
+/* 335 */  (49, .RD(13)), (47, .SH(44)), (15, .SR(25)), (49, .RD(13)), (64, .SH(71)),
+/* 340 */  (65, .SH(70)), (62, .SH(59)), (63, .RD(57)), ( 4, .SH( 1)), (28, .SH(17)),
+/* 345 */  (62, .SH(59)), (63, .SH(74)), (15, .SR(24)), (19, .SR( 5)), (19, .SH(66)),
+/* 350 */  ( 0, .RD( 0)),
     ]
 
-    let yyShiftUseDefault: Int = 357
+    let yyShiftUseDefault: Int = 351
     let yyShiftOffsetMin: Int = -16
-    let yyShiftOffsetMax: Int = 340
+    let yyShiftOffsetMax: Int = 350
     let yyShiftOffset: [Int] = [
         /*     0 */    -2,   32,   32,   32,   -1,   -1,   -1,   -2,   -1,   -1,
         /*    10 */    -1,   -1,   -1,   51,   51,   51,   51,   51,   51,   51,
         /*    20 */    51,   51,   51,   51,   51,   51,   51,   51,   51,   51,
         /*    30 */    51,   51,   51,   51,   51,   76,  105,  117,  149,  164,
-        /*    40 */   176,  191,  206,  218,  250,  262,  274,  230,  281,  281,
-        /*    50 */   230,   77,   77,   77,   65,   65,  340,  -14,  -14,   10,
-        /*    60 */    10,  109,   37,   46,   88,   37,   37,  -16,   17,  113,
-        /*    70 */   148,  154,  161,  158,  167,  142,  162,  184,  170,  202,
-        /*    80 */   213,  195,  214,  192,  182,  221,  177,  196,  217,  222,
-        /*    90 */   228,  240,  255,  235,  256,  260,  264,  268,  275,
+        /*    40 */   176,  191,  206,  218,  250,  262,  274,  129,  230,  230,
+        /*    50 */   129,  298,  298,  298,   80,   80,  307,  -14,  -14,   10,
+        /*    60 */    10,  109,   31,    9,  113,   31,   31,  -16,  180,  134,
+        /*    70 */   128,  165,  172,  158,  183,  162,  170,  195,  181,  202,
+        /*    80 */   213,  214,  222,  258,  209,  261,  240,  244,  265,  293,
+        /*    90 */   272,  322,  339,  316,  332,  268,  329,  330,  350,
     ]
 
-    let yyReduceUseDefault: Int = -44
-    let yyReduceOffsetMin: Int =   -43
-    let yyReduceOffsetMax: Int =   308
+    let yyReduceUseDefault: Int = -46
+    let yyReduceOffsetMin: Int =   -45
+    let yyReduceOffsetMax: Int =   289
     let yyReduceOffset: [Int] = [
-        /*     0 */    89,  -43,   53,   93,  254,  257,  258,  259,  198,  261,
-        /*    10 */   273,  282,  283,  -31,    2,   23,  203,  287,  -36,  -18,
-        /*    20 */   104,  121,  188,  207,  249,  253,  292,  293,  296,  297,
-        /*    30 */   300,  301,  304,  305,  308,   18,   18,   18,   18,   18,
-        /*    40 */    18,   18,   18,   18,   18,   18,   18,   18,   18,   18,
-        /*    50 */    18,   18,   18,   18,   29,   54,   18,   47,   72,   84,
-        /*    60 */   150,  -11,   15,   42,   62,   78,   82,
+        /*     0 */    87,  -45,   47,   54,  242,  245,  254,  188,   42,   95,
+        /*    10 */   184,  196,  249,  -33,    0,   17,   21,  259,  -38,  -20,
+        /*    20 */   102,  161,  203,  246,  266,  269,  270,  273,  277,  278,
+        /*    30 */   281,  282,  285,  286,  289,  118,  118,  118,  118,  118,
+        /*    40 */   118,  118,  118,  118,  118,  118,  118,  118,  118,  118,
+        /*    50 */   118,  118,  118,  118,   27,   81,  118,  171,  275,  279,
+        /*    60 */   283,  -40,    1,   29,   60,   88,  108,
     ]
 
     let yyDefaultAction: [CitronParsingAction] = [
@@ -320,76 +323,76 @@ class CarbonParser: CitronParser {
     // Rules
 
     let yyRuleInfo: [(lhs: CitronSymbolNumber, nrhs: UInt)] = [
-        (lhs: 43, nrhs: 1),
-        (lhs: 44, nrhs: 1),
         (lhs: 45, nrhs: 1),
-        (lhs: 45, nrhs: 2),
-        (lhs: 45, nrhs: 4),
-        (lhs: 45, nrhs: 3),
-        (lhs: 45, nrhs: 1),
-        (lhs: 45, nrhs: 1),
-        (lhs: 45, nrhs: 1),
-        (lhs: 45, nrhs: 1),
-        (lhs: 45, nrhs: 1),
-        (lhs: 45, nrhs: 1),
-        (lhs: 45, nrhs: 1),
-        (lhs: 45, nrhs: 1),
-        (lhs: 45, nrhs: 3),
-        (lhs: 45, nrhs: 3),
-        (lhs: 45, nrhs: 3),
-        (lhs: 45, nrhs: 3),
-        (lhs: 45, nrhs: 3),
-        (lhs: 45, nrhs: 2),
-        (lhs: 45, nrhs: 2),
-        (lhs: 45, nrhs: 2),
-        (lhs: 45, nrhs: 3),
-        (lhs: 46, nrhs: 2),
+        (lhs: 46, nrhs: 1),
+        (lhs: 47, nrhs: 1),
+        (lhs: 47, nrhs: 2),
+        (lhs: 47, nrhs: 4),
         (lhs: 47, nrhs: 3),
-        (lhs: 48, nrhs: 3),
-        (lhs: 49, nrhs: 1),
+        (lhs: 47, nrhs: 1),
+        (lhs: 47, nrhs: 1),
+        (lhs: 47, nrhs: 1),
+        (lhs: 47, nrhs: 1),
+        (lhs: 47, nrhs: 1),
+        (lhs: 47, nrhs: 1),
+        (lhs: 47, nrhs: 1),
+        (lhs: 47, nrhs: 1),
+        (lhs: 47, nrhs: 3),
+        (lhs: 47, nrhs: 3),
+        (lhs: 47, nrhs: 3),
+        (lhs: 47, nrhs: 3),
+        (lhs: 47, nrhs: 3),
+        (lhs: 47, nrhs: 2),
+        (lhs: 47, nrhs: 2),
+        (lhs: 47, nrhs: 2),
+        (lhs: 47, nrhs: 3),
+        (lhs: 48, nrhs: 2),
         (lhs: 49, nrhs: 3),
-        (lhs: 50, nrhs: 0),
-        (lhs: 50, nrhs: 1),
         (lhs: 50, nrhs: 3),
-        (lhs: 51, nrhs: 4),
+        (lhs: 51, nrhs: 1),
         (lhs: 51, nrhs: 3),
         (lhs: 52, nrhs: 0),
-        (lhs: 52, nrhs: 2),
+        (lhs: 52, nrhs: 1),
+        (lhs: 52, nrhs: 3),
         (lhs: 53, nrhs: 4),
-        (lhs: 53, nrhs: 5),
-        (lhs: 53, nrhs: 2),
-        (lhs: 53, nrhs: 6),
-        (lhs: 53, nrhs: 5),
-        (lhs: 53, nrhs: 2),
-        (lhs: 53, nrhs: 2),
         (lhs: 53, nrhs: 3),
-        (lhs: 53, nrhs: 3),
-        (lhs: 53, nrhs: 7),
         (lhs: 54, nrhs: 0),
         (lhs: 54, nrhs: 2),
-        (lhs: 55, nrhs: 0),
+        (lhs: 55, nrhs: 4),
+        (lhs: 55, nrhs: 5),
         (lhs: 55, nrhs: 2),
+        (lhs: 55, nrhs: 6),
+        (lhs: 55, nrhs: 5),
+        (lhs: 55, nrhs: 2),
+        (lhs: 55, nrhs: 2),
+        (lhs: 55, nrhs: 3),
+        (lhs: 55, nrhs: 3),
+        (lhs: 55, nrhs: 7),
         (lhs: 56, nrhs: 0),
         (lhs: 56, nrhs: 2),
-        (lhs: 57, nrhs: 7),
-        (lhs: 57, nrhs: 6),
-        (lhs: 58, nrhs: 5),
-        (lhs: 59, nrhs: 3),
-        (lhs: 60, nrhs: 3),
-        (lhs: 61, nrhs: 0),
-        (lhs: 61, nrhs: 2),
-        (lhs: 62, nrhs: 2),
-        (lhs: 62, nrhs: 1),
+        (lhs: 57, nrhs: 0),
+        (lhs: 57, nrhs: 2),
+        (lhs: 58, nrhs: 0),
+        (lhs: 58, nrhs: 2),
+        (lhs: 59, nrhs: 7),
+        (lhs: 59, nrhs: 6),
+        (lhs: 60, nrhs: 5),
+        (lhs: 61, nrhs: 3),
+        (lhs: 62, nrhs: 3),
         (lhs: 63, nrhs: 0),
-        (lhs: 63, nrhs: 1),
-        (lhs: 63, nrhs: 3),
+        (lhs: 63, nrhs: 2),
+        (lhs: 64, nrhs: 2),
         (lhs: 64, nrhs: 1),
-        (lhs: 64, nrhs: 1),
-        (lhs: 64, nrhs: 5),
-        (lhs: 64, nrhs: 5),
-        (lhs: 64, nrhs: 5),
         (lhs: 65, nrhs: 0),
-        (lhs: 65, nrhs: 2),
+        (lhs: 65, nrhs: 1),
+        (lhs: 65, nrhs: 3),
+        (lhs: 66, nrhs: 1),
+        (lhs: 66, nrhs: 1),
+        (lhs: 66, nrhs: 5),
+        (lhs: 66, nrhs: 5),
+        (lhs: 66, nrhs: 5),
+        (lhs: 67, nrhs: 0),
+        (lhs: 67, nrhs: 2),
     ]
 
     // Stack
@@ -449,38 +452,40 @@ class CarbonParser: CitronParser {
     /* 40 */ "FN",
     /* 41 */ "STRUCT",
     /* 42 */ "CHOICE",
-    /* 43 */ "input",
-    /* 44 */ "pattern",
-    /* 45 */ "expression",
-    /* 46 */ "member_designator",
-    /* 47 */ "paren_expression",
-    /* 48 */ "tuple",
-    /* 49 */ "field",
-    /* 50 */ "field_list",
-    /* 51 */ "match_clause",
-    /* 52 */ "match_clause_list",
-    /* 53 */ "statement",
-    /* 54 */ "optional_else",
-    /* 55 */ "statement_list",
-    /* 56 */ "return_type",
-    /* 57 */ "function_definition",
-    /* 58 */ "function_declaration",
-    /* 59 */ "variable_declaration",
-    /* 60 */ "member",
-    /* 61 */ "member_list",
-    /* 62 */ "alternative",
-    /* 63 */ "alternative_list",
-    /* 64 */ "declaration",
-    /* 65 */ "declaration_list",
+    /* 43 */ "ILLEGAL_CHARACTER",
+    /* 44 */ "illegal_character",
+    /* 45 */ "input",
+    /* 46 */ "pattern",
+    /* 47 */ "expression",
+    /* 48 */ "member_designator",
+    /* 49 */ "paren_expression",
+    /* 50 */ "tuple",
+    /* 51 */ "field",
+    /* 52 */ "field_list",
+    /* 53 */ "match_clause",
+    /* 54 */ "match_clause_list",
+    /* 55 */ "statement",
+    /* 56 */ "optional_else",
+    /* 57 */ "statement_list",
+    /* 58 */ "return_type",
+    /* 59 */ "function_definition",
+    /* 60 */ "function_declaration",
+    /* 61 */ "variable_declaration",
+    /* 62 */ "member",
+    /* 63 */ "member_list",
+    /* 64 */ "alternative",
+    /* 65 */ "alternative_list",
+    /* 66 */ "declaration",
+    /* 67 */ "declaration_list",
     ]
     let yyRuleText: [String] = [
         /*   0 */ "input ::= declaration_list(d)",
         /*   1 */ "pattern ::= expression(e)",
-        /*   2 */ "expression ::= IDENTIFIER",
-        /*   3 */ "expression ::= expression member_designator",
-        /*   4 */ "expression ::= expression LEFT_SQUARE_BRACKET expression RIGHT_SQUARE_BRACKET",
-        /*   5 */ "expression ::= expression COLON Identifier",
-        /*   6 */ "expression ::= Integer_literal",
+        /*   2 */ "expression ::= IDENTIFIER(i)",
+        /*   3 */ "expression ::= expression(t) member_designator(m)",
+        /*   4 */ "expression ::= expression(t) LEFT_SQUARE_BRACKET expression(i) RIGHT_SQUARE_BRACKET",
+        /*   5 */ "expression ::= expression(t) COLON Identifier(i)",
+        /*   6 */ "expression ::= Integer_literal(i)",
         /*   7 */ "expression ::= TRUE",
         /*   8 */ "expression ::= FALSE",
         /*   9 */ "expression ::= INT",
@@ -556,218 +561,231 @@ class CarbonParser: CitronParser {
         switch (ruleNumber) {
         case 0: /* input ::= declaration_list(d) */
             func codeBlockForRule00(d: [Declaration]) throws -> [Declaration] {d }
-            if case .yy55(let d) = yySymbolOnStack(distanceFromTop: 0) {
-                return .yy55(try codeBlockForRule00(d: d))
+            if case .yy95(let d) = yySymbolOnStack(distanceFromTop: 0) {
+                return .yy95(try codeBlockForRule00(d: d))
             }
         case 1: /* pattern ::= expression(e) */
             func codeBlockForRule01(e: Expression) throws -> Expression {e }
-            if case .yy53(let e) = yySymbolOnStack(distanceFromTop: 0) {
-                return .yy53(try codeBlockForRule01(e: e))
+            if case .yy97(let e) = yySymbolOnStack(distanceFromTop: 0) {
+                return .yy97(try codeBlockForRule01(e: e))
             }
-        case 2: /* expression ::= IDENTIFIER */
-            func codeBlockForRule02() throws -> Expression { }
-            return .yy53(try codeBlockForRule02())
-        case 3: /* expression ::= expression member_designator */
-            func codeBlockForRule03() throws -> Expression { }
-            return .yy53(try codeBlockForRule03())
-        case 4: /* expression ::= expression LEFT_SQUARE_BRACKET expression RIGHT_SQUARE_BRACKET */
-            func codeBlockForRule04() throws -> Expression { }
-            return .yy53(try codeBlockForRule04())
-        case 5: /* expression ::= expression COLON Identifier */
-            func codeBlockForRule05() throws -> Expression { }
-            return .yy53(try codeBlockForRule05())
-        case 6: /* expression ::= Integer_literal */
-            func codeBlockForRule06() throws -> Expression { }
-            return .yy53(try codeBlockForRule06())
+        case 2: /* expression ::= IDENTIFIER(i) */
+            func codeBlockForRule02(i: (text: String, position: CitronLexerPosition)) throws -> Expression { .variable(i.text)  }
+            if case .yy0(let i) = yySymbolOnStack(distanceFromTop: 0) {
+                return .yy97(try codeBlockForRule02(i: i))
+            }
+        case 3: /* expression ::= expression(t) member_designator(m) */
+            func codeBlockForRule03(t: Expression, m: MemberDesignator) throws -> Expression { .getField(target: t, fieldName: m)  }
+            if case .yy97(let t) = yySymbolOnStack(distanceFromTop: 1),
+               case .yy117(let m) = yySymbolOnStack(distanceFromTop: 0) {
+                return .yy97(try codeBlockForRule03(t: t, m: m))
+            }
+        case 4: /* expression ::= expression(t) LEFT_SQUARE_BRACKET expression(i) RIGHT_SQUARE_BRACKET */
+            func codeBlockForRule04(t: Expression, i: Expression) throws -> Expression { .index(target: t, offset: i  }
+            if case .yy97(let t) = yySymbolOnStack(distanceFromTop: 3),
+               case .yy97(let i) = yySymbolOnStack(distanceFromTop: 1) {
+                return .yy97(try codeBlockForRule04(t: t, i: i))
+            }
+        case 5: /* expression ::= expression(t) COLON Identifier(i) */
+            func codeBlockForRule05(t: Expression, i: (text: String, position: CitronLexerPosition)) throws -> Expression { .patternVariable(name: i, type: t)  }
+            if case .yy97(let t) = yySymbolOnStack(distanceFromTop: 2),
+               case .yy0(let i) = yySymbolOnStack(distanceFromTop: 0) {
+                return .yy97(try codeBlockForRule05(t: t, i: i))
+            }
+        case 6: /* expression ::= Integer_literal(i) */
+            func codeBlockForRule06(i: (text: String, position: CitronLexerPosition)) throws -> Expression { .integerLiteral(Int(i.text)!)  }
+            if case .yy0(let i) = yySymbolOnStack(distanceFromTop: 0) {
+                return .yy97(try codeBlockForRule06(i: i))
+            }
         case 7: /* expression ::= TRUE */
             func codeBlockForRule07() throws -> Expression { }
-            return .yy53(try codeBlockForRule07())
+            return .yy97(try codeBlockForRule07())
         case 8: /* expression ::= FALSE */
             func codeBlockForRule08() throws -> Expression { }
-            return .yy53(try codeBlockForRule08())
+            return .yy97(try codeBlockForRule08())
         case 9: /* expression ::= INT */
             func codeBlockForRule09() throws -> Expression { }
-            return .yy53(try codeBlockForRule09())
+            return .yy97(try codeBlockForRule09())
         case 10: /* expression ::= BOOL */
             func codeBlockForRule10() throws -> Expression { }
-            return .yy53(try codeBlockForRule10())
+            return .yy97(try codeBlockForRule10())
         case 11: /* expression ::= TYPE */
             func codeBlockForRule11() throws -> Expression { }
-            return .yy53(try codeBlockForRule11())
+            return .yy97(try codeBlockForRule11())
         case 12: /* expression ::= AUTO */
             func codeBlockForRule12() throws -> Expression { }
-            return .yy53(try codeBlockForRule12())
+            return .yy97(try codeBlockForRule12())
         case 13: /* expression ::= paren_expression */
             func codeBlockForRule13() throws -> Expression { }
-            return .yy53(try codeBlockForRule13())
+            return .yy97(try codeBlockForRule13())
         case 14: /* expression ::= expression EQUAL_EQUAL expression */
             func codeBlockForRule14() throws -> Expression { }
-            return .yy53(try codeBlockForRule14())
+            return .yy97(try codeBlockForRule14())
         case 15: /* expression ::= expression PLUS expression */
             func codeBlockForRule15() throws -> Expression { }
-            return .yy53(try codeBlockForRule15())
+            return .yy97(try codeBlockForRule15())
         case 16: /* expression ::= expression MINUS expression */
             func codeBlockForRule16() throws -> Expression { }
-            return .yy53(try codeBlockForRule16())
+            return .yy97(try codeBlockForRule16())
         case 17: /* expression ::= expression AND expression */
             func codeBlockForRule17() throws -> Expression { }
-            return .yy53(try codeBlockForRule17())
+            return .yy97(try codeBlockForRule17())
         case 18: /* expression ::= expression OR expression */
             func codeBlockForRule18() throws -> Expression { }
-            return .yy53(try codeBlockForRule18())
+            return .yy97(try codeBlockForRule18())
         case 19: /* expression ::= NOT expression */
             func codeBlockForRule19() throws -> Expression { }
-            return .yy53(try codeBlockForRule19())
+            return .yy97(try codeBlockForRule19())
         case 20: /* expression ::= MINUS expression */
             func codeBlockForRule20() throws -> Expression { }
-            return .yy53(try codeBlockForRule20())
+            return .yy97(try codeBlockForRule20())
         case 21: /* expression ::= expression tuple */
             func codeBlockForRule21() throws -> Expression { }
-            return .yy53(try codeBlockForRule21())
+            return .yy97(try codeBlockForRule21())
         case 22: /* expression ::= FNTY tuple return_type */
             func codeBlockForRule22() throws -> Expression { }
-            return .yy53(try codeBlockForRule22())
+            return .yy97(try codeBlockForRule22())
         case 23: /* member_designator ::= PERIOD Identifier */
             func codeBlockForRule23() throws -> MemberDesignator { }
-            return .yy25(try codeBlockForRule23())
+            return .yy117(try codeBlockForRule23())
         case 24: /* paren_expression ::= LEFT_PARENTHESIS field_list RIGHT_PARENTHESIS */
             func codeBlockForRule24() throws -> Expression { }
-            return .yy53(try codeBlockForRule24())
+            return .yy97(try codeBlockForRule24())
         case 25: /* tuple ::= LEFT_PARENTHESIS field_list RIGHT_PARENTHESIS */
             func codeBlockForRule25() throws -> TupleLiteral { }
             return .yy48(try codeBlockForRule25())
         case 26: /* field ::= pattern */
             func codeBlockForRule26() throws -> Expression { }
-            return .yy53(try codeBlockForRule26())
+            return .yy97(try codeBlockForRule26())
         case 27: /* field ::= member_designator EQUAL pattern */
             func codeBlockForRule27() throws -> Expression { }
-            return .yy53(try codeBlockForRule27())
+            return .yy97(try codeBlockForRule27())
         case 28: /* field_list ::= */
             func codeBlockForRule28() throws -> [Expression] { }
-            return .yy41(try codeBlockForRule28())
+            return .yy45(try codeBlockForRule28())
         case 29: /* field_list ::= field */
             func codeBlockForRule29() throws -> [Expression] { }
-            return .yy41(try codeBlockForRule29())
+            return .yy45(try codeBlockForRule29())
         case 30: /* field_list ::= field COMMA field_list */
             func codeBlockForRule30() throws -> [Expression] { }
-            return .yy41(try codeBlockForRule30())
+            return .yy45(try codeBlockForRule30())
         case 31: /* match_clause ::= CASE pattern DBLARROW statement */
             func codeBlockForRule31() throws -> MatchClause { }
-            return .yy43(try codeBlockForRule31())
+            return .yy71(try codeBlockForRule31())
         case 32: /* match_clause ::= DEFAULT DBLARROW statement */
             func codeBlockForRule32() throws -> MatchClause { }
-            return .yy43(try codeBlockForRule32())
+            return .yy71(try codeBlockForRule32())
         case 33: /* match_clause_list ::= */
             func codeBlockForRule33() throws -> [MatchClause] { }
-            return .yy131(try codeBlockForRule33())
+            return .yy79(try codeBlockForRule33())
         case 34: /* match_clause_list ::= match_clause match_clause_list */
             func codeBlockForRule34() throws -> [MatchClause] { }
-            return .yy131(try codeBlockForRule34())
+            return .yy79(try codeBlockForRule34())
         case 35: /* statement ::= expression EQUAL expression SEMICOLON */
             func codeBlockForRule35() throws -> Statement { }
-            return .yy98(try codeBlockForRule35())
+            return .yy50(try codeBlockForRule35())
         case 36: /* statement ::= VAR pattern MINUS expression SEMICOLON */
             func codeBlockForRule36() throws -> Statement { }
-            return .yy98(try codeBlockForRule36())
+            return .yy50(try codeBlockForRule36())
         case 37: /* statement ::= expression SEMICOLON */
             func codeBlockForRule37() throws -> Statement { }
-            return .yy98(try codeBlockForRule37())
+            return .yy50(try codeBlockForRule37())
         case 38: /* statement ::= IF LEFT_PARENTHESIS expression RIGHT_PARENTHESIS statement optional_else */
             func codeBlockForRule38() throws -> Statement { }
-            return .yy98(try codeBlockForRule38())
+            return .yy50(try codeBlockForRule38())
         case 39: /* statement ::= WHILE LEFT_PARENTHESIS expression RIGHT_PARENTHESIS statement */
             func codeBlockForRule39() throws -> Statement { }
-            return .yy98(try codeBlockForRule39())
+            return .yy50(try codeBlockForRule39())
         case 40: /* statement ::= BREAK SEMICOLON */
             func codeBlockForRule40() throws -> Statement { }
-            return .yy98(try codeBlockForRule40())
+            return .yy50(try codeBlockForRule40())
         case 41: /* statement ::= CONTINUE SEMICOLON */
             func codeBlockForRule41() throws -> Statement { }
-            return .yy98(try codeBlockForRule41())
+            return .yy50(try codeBlockForRule41())
         case 42: /* statement ::= RETURN expression SEMICOLON */
             func codeBlockForRule42() throws -> Statement { }
-            return .yy98(try codeBlockForRule42())
+            return .yy50(try codeBlockForRule42())
         case 43: /* statement ::= LEFT_CURLY_BRACE statement_list RIGHT_CURLY_BRACE */
             func codeBlockForRule43() throws -> Statement { }
-            return .yy98(try codeBlockForRule43())
+            return .yy50(try codeBlockForRule43())
         case 44: /* statement ::= MATCH LEFT_PARENTHESIS expression RIGHT_PARENTHESIS LEFT_CURLY_BRACE match_clause_list RIGHT_CURLY_BRACE */
             func codeBlockForRule44() throws -> Statement { }
-            return .yy98(try codeBlockForRule44())
+            return .yy50(try codeBlockForRule44())
         case 45: /* optional_else ::= */
             func codeBlockForRule45() throws -> Statement? { }
-            return .yy109(try codeBlockForRule45())
+            return .yy133(try codeBlockForRule45())
         case 46: /* optional_else ::= ELSE statement */
             func codeBlockForRule46() throws -> Statement? { }
-            return .yy109(try codeBlockForRule46())
+            return .yy133(try codeBlockForRule46())
         case 47: /* statement_list ::= */
             func codeBlockForRule47() throws -> [Statement] { }
-            return .yy58(try codeBlockForRule47())
+            return .yy102(try codeBlockForRule47())
         case 48: /* statement_list ::= statement statement_list */
             func codeBlockForRule48() throws -> [Statement] { }
-            return .yy58(try codeBlockForRule48())
+            return .yy102(try codeBlockForRule48())
         case 49: /* return_type ::= */
             func codeBlockForRule49() throws -> TypeExpression { }
-            return .yy87(try codeBlockForRule49())
+            return .yy123(try codeBlockForRule49())
         case 50: /* return_type ::= ARROW expression */
             func codeBlockForRule50() throws -> TypeExpression { }
-            return .yy87(try codeBlockForRule50())
+            return .yy123(try codeBlockForRule50())
         case 51: /* function_definition ::= FN Identifier tuple return_type LEFT_CURLY_BRACE statement_list RIGHT_CURLY_BRACE */
             func codeBlockForRule51() throws -> FunctionDefinition { }
-            return .yy84(try codeBlockForRule51())
+            return .yy128(try codeBlockForRule51())
         case 52: /* function_definition ::= FN Identifier tuple DBLARROW expression SEMICOLON */
             func codeBlockForRule52() throws -> FunctionDefinition { }
-            return .yy84(try codeBlockForRule52())
+            return .yy128(try codeBlockForRule52())
         case 53: /* function_declaration ::= FN Identifier tuple return_type SEMICOLON */
             func codeBlockForRule53() throws -> FunctionDeclaration { }
-            return .yy42(try codeBlockForRule53())
+            return .yy73(try codeBlockForRule53())
         case 54: /* variable_declaration ::= expression COLON Identifier */
             func codeBlockForRule54() throws -> (name: String, type: Expression) { }
             return .yy52(try codeBlockForRule54())
         case 55: /* member ::= VAR variable_declaration SEMICOLON */
             func codeBlockForRule55() throws -> Member { }
-            return .yy117(try codeBlockForRule55())
+            return .yy69(try codeBlockForRule55())
         case 56: /* member_list ::= */
             func codeBlockForRule56() throws -> [Member] { }
-            return .yy125(try codeBlockForRule56())
+            return .yy1(try codeBlockForRule56())
         case 57: /* member_list ::= member member_list */
             func codeBlockForRule57() throws -> [Member] { }
-            return .yy125(try codeBlockForRule57())
+            return .yy1(try codeBlockForRule57())
         case 58: /* alternative ::= Identifier tuple */
             func codeBlockForRule58() throws -> Alternative { }
-            return .yy116(try codeBlockForRule58())
+            return .yy4(try codeBlockForRule58())
         case 59: /* alternative ::= Identifier */
             func codeBlockForRule59() throws -> Alternative { }
-            return .yy116(try codeBlockForRule59())
+            return .yy4(try codeBlockForRule59())
         case 60: /* alternative_list ::= */
             func codeBlockForRule60() throws -> [Alternative] { }
-            return .yy44(try codeBlockForRule60())
+            return .yy56(try codeBlockForRule60())
         case 61: /* alternative_list ::= alternative */
             func codeBlockForRule61() throws -> [Alternative] { }
-            return .yy44(try codeBlockForRule61())
+            return .yy56(try codeBlockForRule61())
         case 62: /* alternative_list ::= alternative COMMA alternative_list */
             func codeBlockForRule62() throws -> [Alternative] { }
-            return .yy44(try codeBlockForRule62())
+            return .yy56(try codeBlockForRule62())
         case 63: /* declaration ::= function_definition */
             func codeBlockForRule63() throws -> Declaration { }
-            return .yy67(try codeBlockForRule63())
+            return .yy87(try codeBlockForRule63())
         case 64: /* declaration ::= function_declaration */
             func codeBlockForRule64() throws -> Declaration { }
-            return .yy67(try codeBlockForRule64())
+            return .yy87(try codeBlockForRule64())
         case 65: /* declaration ::= STRUCT Identifier LEFT_CURLY_BRACE member_list RIGHT_CURLY_BRACE */
             func codeBlockForRule65() throws -> Declaration { }
-            return .yy67(try codeBlockForRule65())
+            return .yy87(try codeBlockForRule65())
         case 66: /* declaration ::= CHOICE Identifier LEFT_CURLY_BRACE alternative_list RIGHT_CURLY_BRACE */
             func codeBlockForRule66() throws -> Declaration { }
-            return .yy67(try codeBlockForRule66())
+            return .yy87(try codeBlockForRule66())
         case 67: /* declaration ::= VAR variable_declaration EQUAL expression SEMICOLON */
             func codeBlockForRule67() throws -> Declaration { }
-            return .yy67(try codeBlockForRule67())
+            return .yy87(try codeBlockForRule67())
         case 68: /* declaration_list ::= */
             func codeBlockForRule68() throws -> [Declaration] { }
-            return .yy55(try codeBlockForRule68())
+            return .yy95(try codeBlockForRule68())
         case 69: /* declaration_list ::= declaration declaration_list */
             func codeBlockForRule69() throws -> [Declaration] { }
-            return .yy55(try codeBlockForRule69())
+            return .yy95(try codeBlockForRule69())
         default:
             fatalError("Can't invoke code block for rule number \(ruleNumber) - no such rule")
         }
@@ -780,7 +798,7 @@ class CarbonParser: CitronParser {
     }
 
     func yyUnwrapResultFromSymbol(_ symbol: CitronSymbol) -> CitronResult {
-        if case .yy55(let result) = symbol {
+        if case .yy95(let result) = symbol {
             return result
         } else {
             fatalError("Unexpected mismatch in result type")
@@ -810,7 +828,7 @@ class CarbonParser: CitronParser {
 
     func yySymbolContent(_ symbol: CitronSymbol) -> Any { return symbol.typeErasedContent() }
 
-    let yyStartSymbolNumber: CitronSymbolNumber = 43
+    let yyStartSymbolNumber: CitronSymbolNumber = 45
     let yyEndStateNumber: CitronStateNumber = 98
 
     var yyErrorCaptureSavedError: (error: Error, isLexerError: Bool)? = nil

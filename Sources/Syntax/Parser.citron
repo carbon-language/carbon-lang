@@ -10,6 +10,7 @@
 
 %token_type {(text: String, position: CitronLexerPosition)}
 
+%nonterminal_type illegal_character Never
 %nonterminal_type input {[Declaration]}
 %nonterminal_type pattern Expression
 %nonterminal_type expression Expression
@@ -55,8 +56,8 @@ expression ::= expression(t) LEFT_SQUARE_BRACKET expression(i) RIGHT_SQUARE_BRAC
   { .index(target: t, offset: i } 
 expression ::= expression(t) COLON Identifier(i).
   { .patternVariable(name: i, type: t) }
-expression ::= Integer_literal.
-    {} /* { $$ = Carbon::MakeInt(yylineno, $1); } */
+expression ::= Integer_literal(i).
+    { .integerLiteral(Int(i.text)!) } /* { $$ = Carbon::MakeInt(yylineno, $1); } */
 expression ::= TRUE.
     {} /* { $$ = Carbon::MakeBool(yylineno, true); } */
 expression ::= FALSE.
@@ -168,7 +169,7 @@ statement ::= MATCH LEFT_PARENTHESIS expression RIGHT_PARENTHESIS LEFT_CURLY_BRA
     {} /* { $$ = Carbon::MakeMatch(yylineno, $3, $6); } */
 optional_else ::= /* Empty */.
     {} /* { $$ = 0; } */
-optional_else ::= ELSE statement.
+optional_else ::= ELSE statement. 
    {} /* { $$ = $2; } */
 statement_list ::= /* Empty */.
     {} /* { $$ = 0; } */
@@ -243,3 +244,4 @@ declaration_list ::= declaration declaration_list.
       $$ = $2;
       $$->push_front(*$1);
     } */
+illegal_character ::= ILLEGAL_CHARACTER

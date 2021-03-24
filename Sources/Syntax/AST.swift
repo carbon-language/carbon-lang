@@ -1,29 +1,33 @@
-public indirect enum Declaration {
+public typealias AST<Node> = (Node, location: SourceLocation)
+public typealias Identifier = AST<String>
+
+public indirect enum Declaration_ {
   case
     function(FunctionDefinition),
     `struct`(StructDefinition),
-    choice(name: String, [(String, Expression)]),
-    variable(name: String, type: TypeExpression, initializer: Expression)
+    choice(name: Identifier, [(Identifier, Expression)]),
+    variable(name: Identifier, type: TypeExpression, initializer: Expression)
 }
+public typealias Declaration = AST<Declaration_>
 
 public struct FunctionDefinition {
-  public var name: String
+  public var name: Identifier
   public var parameterPattern: TupleLiteral
   public var returnType: Expression
   public var body: Statement
 }
 
-typealias MemberDesignator = String
+typealias MemberDesignator = Identifier
 
-typealias Alternative (name: String, payload: TupleLiteral)
-public enum Member { case name(String), type(TypeExpression) }
+typealias Alternative = AST<(name: Identifier, payload: TupleLiteral)>
+public enum Member { case name(Identifier), type(TypeExpression) }
 
 public struct StructDefinition {
-  public var name: String
+  public var name: Identifier
   public var members: [Member]
 }
 
-public indirect enum Statement {
+public indirect enum Statement_ {
   case
     expressionStatement(Expression),
     assignment(target: Expression, source: Expression),
@@ -35,8 +39,9 @@ public indirect enum Statement {
     `while`(condition: Expression, body: Statement),
     match(clauses: [MatchClause])
 }
+public typealias Statement = AST<Statement_>
 
-public enum TypeExpression {
+public enum TypeExpression_ {
   case
     int,
     bool,
@@ -44,16 +49,17 @@ public enum TypeExpression {
     auto,
     function(parameterTypes: TupleLiteral, returnType: Expression)
 }
+public typealias TypeExpression = AST<TypeExpression_>
 
-public typealias MatchClause = (pattern: Expression, action: Statement)
-public typealias TupleLiteral = [(name: String?, value: Expression)]
+public typealias MatchClause = AST<(pattern: Expression, action: Statement)>
+public typealias TupleLiteral = AST<[(name: Identifier?, value: Expression)]>
 
-public indirect enum Expression {
+public indirect enum Expression_ {
   case
-    variable(String),
-    getField(target: Expression, fieldName: String),
+    variable(Identifier),
+    getField(target: Expression, fieldName: Identifier),
     index(target: Expression, offset: Expression),
-    patternVariable(name: String, type: TypeExpression),
+    patternVariable(name: Identifier, type: TypeExpression),
     integerLiteral(Int),
     booleanLiteral(Bool),
     tupleLiteral(TupleLiteral),
@@ -62,3 +68,4 @@ public indirect enum Expression {
     functionCall(callee: Expression, arguments: TupleLiteral),
     type(TypeExpression)
 };
+public typealias Expression = AST<Expression_>
