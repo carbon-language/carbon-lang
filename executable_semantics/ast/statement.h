@@ -28,37 +28,47 @@ enum class StatementKind {
 struct Statement {
   int line_num;
   StatementKind tag;
+
   union {
     Expression* exp;
+
     struct {
       Expression* lhs;
       Expression* rhs;
     } assign;
+
     struct {
       Expression* pat;
       Expression* init;
     } variable_definition;
+
     struct {
       Expression* cond;
       Statement* then_stmt;
       Statement* else_stmt;
     } if_stmt;
+
     Expression* return_stmt;
+
     struct {
       Statement* stmt;
       Statement* next;
     } sequence;
+
     struct {
       Statement* stmt;
     } block;
+
     struct {
       Expression* cond;
       Statement* body;
     } while_stmt;
+
     struct {
       Expression* exp;
       std::list<std::pair<Expression*, Statement*>>* clauses;
     } match_stmt;
+
   } u;
 };
 
