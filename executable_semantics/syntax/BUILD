@@ -31,7 +31,7 @@ cc_library(
         "//executable_semantics:tracing_flag",
         "//executable_semantics/ast:declaration",
         "//executable_semantics/ast:expression",
-        "//executable_semantics/ast:field_list",
+        "//executable_semantics/ast:paren_contents",
         "//executable_semantics/interpreter",
     ],
 )

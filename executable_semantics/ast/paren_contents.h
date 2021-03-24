@@ -2,8 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#ifndef EXECUTABLE_SEMANTICS_AST_FIELD_LIST_H_
-#define EXECUTABLE_SEMANTICS_AST_FIELD_LIST_H_
+#ifndef EXECUTABLE_SEMANTICS_AST_PAREN_CONTENTS_H_
+#define EXECUTABLE_SEMANTICS_AST_PAREN_CONTENTS_H_
 
 #include <list>
 
@@ -21,30 +21,28 @@ struct FieldInitializer {
   Expression* expression;
 };
 
-// A FieldList represents the syntactic contents of an expression delimited by
+// Represents the syntactic contents of an expression delimited by
 // parentheses. Such expressions can be interpreted as either tuples or
 // arbitrary expressions, depending on their context and the syntax of their
 // contents; this class helps calling code resolve that ambiguity. Since that
 // ambiguity is purely syntactic, this class should only be needed during
 // parsing.
-//
-// FIXME rename to ParenExpressionContents?
-class FieldList {
+class ParenContents {
  public:
   // Indicates whether the paren expression's contents end with a comma.
   enum class HasTrailingComma { kYes, kNo };
 
-  // Constructs a FieldList representing the contents of "()".
-  FieldList() : fields_({}), has_trailing_comma_(HasTrailingComma::kNo) {}
+  // Constructs a ParenContents representing the contents of "()".
+  ParenContents() : fields_({}), has_trailing_comma_(HasTrailingComma::kNo) {}
 
-  // Constructs a FieldList representing the given contents, with or without a
-  // trailing comma.
-  FieldList(std::vector<FieldInitializer> fields,
-            HasTrailingComma has_trailing_comma)
+  // Constructs a ParenContents representing the given list of fields,
+  // with or without a trailing comma.
+  ParenContents(std::vector<FieldInitializer> fields,
+                HasTrailingComma has_trailing_comma)
       : fields_(fields), has_trailing_comma_(has_trailing_comma) {}
 
-  FieldList(const FieldList&) = default;
-  FieldList& operator=(const FieldList&) = default;
+  ParenContents(const ParenContents&) = default;
+  ParenContents& operator=(const ParenContents&) = default;
 
   // Returns the paren expression, interpreted as a tuple.
   Expression* AsTuple(int line_number) const;
@@ -60,4 +58,4 @@ class FieldList {
 
 }  // namespace Carbon
 
-#endif  // EXECUTABLE_SEMANTICS_AST_FIELD_LIST_H_
+#endif  // EXECUTABLE_SEMANTICS_AST_PAREN_CONTENTS_H_
