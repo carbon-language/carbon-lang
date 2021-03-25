@@ -63,7 +63,9 @@ parameter is a type, the generic function's signature can specify constraints
 that the caller's type must satisfy. For example, a resizable array type (like
 C++'s `std::vector`) might have a generic type parameter with the constraint
 that the type must be movable and have a static size. A sort function might
-apply to any array whose elements are comparable and movable.
+apply to any array whose elements are comparable and movable. A constraint might
+involve multiple generic parameters. For example, a merge function might apply
+to two arbitrary containers so long as their elements have the same type.
 
 ## Goals
 
