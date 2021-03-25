@@ -16,7 +16,7 @@ ${CITRON}: ${CITRON_SRC}/citron.c
 	mkdir -p ${BIN} && ${CC} $^ -o $@
 
 clean:
-	rm ${GRAMMAR}.swift && swift clean
+	rm -rf ${GRAMMAR}.swift ./.build
 
 ${GRAMMAR}.swift: ${CITRON} ${GRAMMAR}.citron
 	rm -f $@
