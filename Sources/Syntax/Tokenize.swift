@@ -88,7 +88,6 @@ extension String {
 public struct Token: Hashable {
   let kind: TokenKind
   let text: String
-  let location: SourceLocation
 }
 
 public struct Tokens: Sequence {
@@ -110,7 +109,7 @@ public struct Tokens: Sequence {
       self.sourceFileName = sourceFileName
     }
 
-    public mutating func next() -> Token? {
+    public mutating func next() -> AST<Token>? {
       while true {
         let remainingUTF16 = NSRange(
           location: utf16Offset, length: sourceUTF16Length - utf16Offset)
@@ -150,8 +149,8 @@ public struct Tokens: Sequence {
              : bestMatchIndex == 0 ? tokenKindForKeyword[String(tokenText)]
              : matchers[bestMatchIndex].nonterminal
         {
-          return .init(
-            kind: TokenKind(matchedKind), text: String(tokenText),
+          return (
+            .init(kind: TokenKind(matchedKind), text: String(tokenText)),
             location: SourceLocation(
               fileName: sourceFileName,
               span: tokenLocationStart..<sourceFilePosition))

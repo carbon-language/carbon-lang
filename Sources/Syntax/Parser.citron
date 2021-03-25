@@ -16,7 +16,7 @@
   }
 }                         
 
-%token_type Token
+%token_type {AST<Token>}
 
 %nonterminal_type illegal_character Never
 %nonterminal_type input {[Declaration]}
@@ -32,7 +32,7 @@
 %nonterminal_type statement Statement
 %nonterminal_type optional_else {Statement?}
 %nonterminal_type statement_list {[Statement]}
-%nonterminal_type return_type TypeExpression
+%nonterminal_type return_type Expression
 %nonterminal_type function_definition FunctionDefinition
 %nonterminal_type function_declaration FunctionDefinition
 %nonterminal_type variable_declaration {(name: String, type: Expression)}
@@ -57,50 +57,50 @@ input ::= declaration_list(d). {d}
 pattern ::= expression(e).     {e}
 
 expression ::= IDENTIFIER(i).  
-  { (.variable(i.identifier), i.location) }
+  { (.variable(i), i.location) }
 expression ::= expression(t) member_designator(m).
-  { (.getField(target: t, fieldName: m), t...m) }
+  { (.getField(target: t, fieldName: m), location: t...m) }
 expression ::= expression(t)
   LEFT_SQUARE_BRACKET expression(i) RIGHT_SQUARE_BRACKET(b).
   { (.index(target: t, offset: i), t...b) } 
 expression ::= expression(t) COLON Identifier(i).
-  { .patternVariable(name: i, type: t) }
+  { (.patternVariable(name: i, type: t), t...i) }
 expression ::= Integer_literal(i).
-    { .integerLiteral(Int(i.text)!) } /* { $$ = Carbon::MakeInt(yylineno, $1); } */
-expression ::= TRUE.
-    {} /* { $$ = Carbon::MakeBool(yylineno, true); } */
-expression ::= FALSE.
-    {} /* { $$ = Carbon::MakeBool(yylineno, false); } */
-expression ::= INT.
-    {} /* { $$ = Carbon::MakeIntType(yylineno); } */
+  { (.integerLiteral(Int(i.body.text)!), i.location) }
+expression ::= TRUE(t).
+  { (.booleanLiteral(true), t.location) }
+expression ::= FALSE(t).
+  { (.booleanLiteral(false), t.location) }
+expression ::= INT(t).
+  { (.intType, t.location) }
 expression ::= BOOL.
-    {} /* { $$ = Carbon::MakeBoolType(yylineno); } */
+  { (.boolType, t.location) }
 expression ::= TYPE.
-    {} /* { $$ = Carbon::MakeTypeType(yylineno); } */
+  { (.typeType, t.location) }
 expression ::= AUTO.
-    {} /* { $$ = Carbon::MakeAutoType(yylineno); } */
-expression ::= paren_expression.
-    {} /*{ $$ = $1; } */
-expression ::= expression EQUAL_EQUAL expression.
-    {} /* { $$ = Carbon::MakeBinOp(yylineno, Carbon::Operator::Eq, $1, $3); } */
-expression ::= expression PLUS expression.
-    {} /* { $$ = Carbon::MakeBinOp(yylineno, Carbon::Operator::Add, $1, $3); } */
-expression ::= expression MINUS expression.
-    {} /* { $$ = Carbon::MakeBinOp(yylineno, Carbon::Operator::Sub, $1, $3); } */
-expression ::= expression AND expression.
-    {} /* { $$ = Carbon::MakeBinOp(yylineno, Carbon::Operator::And, $1, $3); } */
-expression ::= expression OR expression.
-    {} /* { $$ = Carbon::MakeBinOp(yylineno, Carbon::Operator::Or, $1, $3); } */
-expression ::= NOT expression.
-    {} /* { $$ = Carbon::MakeUnOp(yylineno, Carbon::Operator::Not, $2); } */
-expression ::= MINUS expression.
-    {} /* { $$ = Carbon::MakeUnOp(yylineno, Carbon::Operator::Neg, $2); } */
-expression ::= expression tuple.
-    {} /* { $$ = Carbon::MakeCall(yylineno, $1, $2); } */
-expression ::= FNTY tuple return_type.
-    {} /* { $$ = Carbon::MakeFunType(yylineno, $2, $3); } */
+  { (.autoType, t.location) }
+expression ::= paren_expression(x).
+  { x }
+expression ::= expression(l) EQUAL_EQUAL(op) expression(r).
+  {(.binaryOperator(op, l, r), l...r)}
+expression ::= expression(l) PLUS(op) expression(r).
+  {(.binaryOperator(op, l, r), l...r)}
+expression ::= expression(l) MINUS(op) expression(r).
+  {(.binaryOperator(op, l, r), l...r)}
+expression ::= expression(l) AND(op) expression(r).
+  {(.binaryOperator(op, l, r), l...r)}
+expression ::= expression(l) OR(op) expression(r).
+  {(.binaryOperator(op, l, r), l...r)}
+expression ::= NOT(op) expression(r).
+  {(.unaryOperator(op, r), op...r)}
+expression ::= MINUS(op) expression(r).
+  {(.unaryOperator(op, r), op...r)}
+expression ::= expression(f) tuple(a).
+  {(.functionCall(callee: f, arguments: a), f...a)}
+expression ::= FNTY(k) tuple(p) return_type(r).
+  {(.functionTypes(parameterTypes: p, returnType: r), k...r)}
 member_designator ::= PERIOD Identifier.
-    {} /* { $$ = $2; } */
+  {} /* { $$ = $2; } */
 paren_expression ::= LEFT_PARENTHESIS field_list RIGHT_PARENTHESIS.
     {} /* {
      if ($2->fields->size() == 1 &&

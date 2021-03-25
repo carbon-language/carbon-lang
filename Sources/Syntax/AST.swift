@@ -1,16 +1,12 @@
-public typealias AST<Node> = (Node, location: SourceLocation)
-public typealias Identifier = AST<String>
-
-extension Token {
-  var identifier: Identifier { (text, location) }
-}
+public typealias AST<Node> = (body: Node, location: SourceLocation)
+public typealias Identifier = AST<Token>
 
 public indirect enum Declaration_ {
   case
     function(FunctionDefinition),
     `struct`(StructDefinition),
     choice(name: Identifier, [(Identifier, Expression)]),
-    variable(name: Identifier, type: TypeExpression, initializer: Expression)
+    variable(name: Identifier, type: Expression, initializer: Expression)
 }
 public typealias Declaration = AST<Declaration_>
 
@@ -24,7 +20,7 @@ public struct FunctionDefinition {
 typealias MemberDesignator = Identifier
 
 typealias Alternative = AST<(name: Identifier, payload: TupleLiteral)>
-public enum Member { case name(Identifier), type(TypeExpression) }
+public enum Member { case name(Identifier), type(Expression) }
 
 public struct StructDefinition {
   public var name: Identifier
@@ -45,16 +41,6 @@ public indirect enum Statement_ {
 }
 public typealias Statement = AST<Statement_>
 
-public enum TypeExpression_ {
-  case
-    int,
-    bool,
-    typetype,
-    auto,
-    function(parameterTypes: TupleLiteral, returnType: Expression)
-}
-public typealias TypeExpression = AST<TypeExpression_>
-
 public typealias MatchClause = AST<(pattern: Expression, action: Statement)>
 public typealias TupleLiteral = AST<[(name: Identifier?, value: Expression)]>
 
@@ -63,13 +49,17 @@ public indirect enum Expression_ {
     variable(Identifier),
     getField(target: Expression, fieldName: Identifier),
     index(target: Expression, offset: Expression),
-    patternVariable(name: Identifier, type: TypeExpression),
+    patternVariable(name: Identifier, type: Expression),
     integerLiteral(Int),
     booleanLiteral(Bool),
     tupleLiteral(TupleLiteral),
     unaryOperator(operation: Token, operand: Expression),
     binaryOperator(operation: Token, lhs: Expression, rhs: Expression),
     functionCall(callee: Expression, arguments: TupleLiteral),
-    type(TypeExpression)
+    intType,
+    boolType,
+    typeType,
+    autoType,
+    functionType(parameterTypes: TupleLiteral, returnType: Expression)
 };
 public typealias Expression = AST<Expression_>
