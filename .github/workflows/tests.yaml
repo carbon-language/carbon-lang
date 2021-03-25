@@ -37,6 +37,8 @@ jobs:
         runs-on: ubuntu-20.04
         container: swift:5.3-focal
         steps:
+        - name: Install Tools
+          run: sudo apt install build-essential
         - name: Checkout
           uses: actions/checkout@v2
           with:
@@ -44,13 +46,13 @@ jobs:
         - name: Swift Version
           run: swift --version
         - name: Build (Debug)
-          run: make build SWIFT_FLAGS="-v -c debug"
+          run: make CC=gcc build SWIFT_FLAGS="-v -c debug"
         - name: Build (Release)
-          run: make build SWIFT_FLAGS="-v -c release"
+          run: make CC=gcc build SWIFT_FLAGS="-v -c release"
         - name: Test (Debug)
-          run: make test SWIFT_FLAGS="-v -c debug"
+          run: make CC=gcc test SWIFT_FLAGS="-v -c debug"
         - name: Test (Release)
-          run: make test SWIFT_FLAGS="-v -c release  -Xswiftc -enable-testing"
+          run: make CC=gcc test SWIFT_FLAGS="-v -c release  -Xswiftc -enable-testing"
 
     windows-swift-latest:
         name: Windows (Development Snapshot)
