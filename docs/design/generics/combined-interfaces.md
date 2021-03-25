@@ -2796,9 +2796,8 @@ Consider an interface with one associate type that has `where` constraints:
 interface Foo {
   // Some associated types
   var ...:$ A;
-  var ...:$ B;
-  var Z:$ C where C.X == ..., C.Y == ...;
-  var ...:$ D
+  var Z:$ B where B.X == ..., B.Y == ...;
+  var ...:$ C
 }
 ```
 
@@ -2806,51 +2805,54 @@ These forms of `where` clauses are forbidden:
 
 | `where` form                             | Problem                                  |
 | ---------------------------------------- | ---------------------------------------- |
-| `var Z:$ C where C == ...`               | must have a dot on left of `==`          |
-| `var Z:$ C where C.X.Y == ...`           | must have a single dot on left of `==`   |
-| `var Z:$ C where A.X == ...`             | `A != C`                                 |
-| `var Z:$ C where C.X == ..., C.X == ...` | two constraints on same member           |
-| `var Z:$ C where C.X == C.Y`             | right side can't refer to members of `C` |
-| `var Z:$ C where C.X == D`               | no forward reference                     |
+| `var Z:$ B where B == ...`               | must have a dot on left of `==`          |
+| `var Z:$ B where B.X.Y == ...`           | must have a single dot on left of `==`   |
+| `var Z:$ B where A.X == ...`             | `A != B`                                 |
+| `var Z:$ B where B.X == ..., B.X == ...` | two constraints on same member           |
+| `var Z:$ B where B.X == B.Y`             | right side can't refer to members of `B` |
+| `var Z:$ B where B.X == C`               | no forward reference                     |
 
 These forms of `where` clauses can be rewritten:
 
 | `where` form                   | argument passing form   |
 | ------------------------------ | ----------------------- |
-| `var Z:$ C where C.X == A`     | `var Z(.X = A):$ C`     |
-| `var Z:$ C where C.X == A.T.U` | `var Z(.X = A.T.U):$ C` |
-| `var Z:$ C where C.X == Self`  | `var Z(.X = Self):$ C`  |
-| `var Z:$ C where C.X == C`     | `var Z(.X = .Self):$ C` |
+| `var Z:$ B where B.X == A`     | `var Z(.X = A):$ B`     |
+| `var Z:$ B where B.X == A.T.U` | `var Z(.X = A.T.U):$ B` |
+| `var Z:$ B where B.X == Self`  | `var Z(.X = Self):$ B`  |
+| `var Z:$ B where B.X == B`     | `var Z(.X = .Self):$ B` |
+
+Note that the second example would not be allowed if `A.T.U` had type `Foo`, to
+avoid non-terminating recursion.
 
 There is some room to rewrite other `where` expressions into these forms. One
 simple example is allowing the two sides of the `==` to be swapped, but more
 complicated rewrites may be possible. For example,
 
 ```
-var Z:$ C where C.X == C.Y;
+var Z:$ B where B.X == B.Y;
 ```
 
 might be rewritten to:
 
 ```
 [var ...:$ XY];
-var Z(.X = XY, .Y = XY):$ C;
+var Z(.X = XY, .Y = XY):$ B;
 ```
 
 except it may be tricky in general to find a type for `XY` that satisfies the
-constraints on both `C.X` and `C.Y`. Similarly,
+constraints on both `B.X` and `B.Y`. Similarly,
 
 ```
-var Z:$ C where C == A.T.U
+var Z:$ B where B == A.T.U
 ```
 
 might be rewritten as:
 
 ```
-alias C = A.T.U;
+alias B = A.T.U;
 ```
 
-except the type bounds on `A.T.U` might not match the `Z` bound on `C`.
+except the type bounds on `A.T.U` might not match the `Z` bound on `B`.
 
 **Open question:** How much rewriting can be done automatically?
 
