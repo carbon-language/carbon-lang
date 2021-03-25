@@ -86,10 +86,10 @@ jobs:
             - name: Swift Version
               run: swift --version
             - name: Build (Debug)
-              run: make build SWIFT_FLAGS="-v -c debug"
+              run: make build CC=gcc SWIFT_FLAGS="-v -c debug"
             - name: Build (Release)
-              run: make build SWIFT_FLAGS="-v -c release"
+              run: make build CC=gcc SWIFT_FLAGS="-v -c release"
             - name: Test (Debug)
-              run: make test SWIFT_FLAGS="-v -c debug"
+              run: make test CC=gcc SWIFT_FLAGS="-v -c debug"
             - name: Test (Release)
-              run: make test SWIFT_FLAGS="-v -c release -Xswiftc -enable-testing"
+              run: make test CC=gcc SWIFT_FLAGS="-v -c release -Xswiftc -enable-testing"
