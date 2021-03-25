@@ -65,5 +65,7 @@ request:
 -   [0199 - String literals](p0199.md)
     -   [0199 - Decision](p0199_decision.md)
 -   [0253 - 2021 Roadmap](p0253.md)
+    -   [0253 - Decision](p0253_decision.md)
+-   [0285 - if/else](p0285.md)
 
 <!-- endproposals -->

@@ -23,6 +23,13 @@ namespace Carbon {
 // TODO: turn this into a much more reasonable API when we add some actual
 // uses of it.
 struct Diagnostic {
+  enum Level {
+    // A warning diagnostic, indicating a likely problem with the program.
+    Warning,
+    // An error diagnostic, indicating that the program is not valid.
+    Error,
+  };
+
   struct Location {
     // Name of the file or buffer that this diagnostic refers to.
     std::string file_name;
@@ -32,6 +39,7 @@ struct Diagnostic {
     int32_t column_number;
   };
 
+  Level level;
   Location location;
   llvm::StringRef short_name;
   std::string message;
@@ -84,9 +92,10 @@ class DiagnosticEmitter {
   auto EmitError(LocationT location, DiagnosticT diag) -> void {
     // TODO: Encode the diagnostic kind in the Diagnostic object rather than
     // hardcoding an "error: " prefix.
-    consumer_->HandleDiagnostic({.location = translator_->GetLocation(location),
+    consumer_->HandleDiagnostic({.level = Diagnostic::Error,
+                                 .location = translator_->GetLocation(location),
                                  .short_name = DiagnosticT::ShortName,
-                                 .message = "error: " + diag.Format()});
+                                 .message = diag.Format()});
   }
 
   // Emits a stateless error unconditionally.
@@ -107,9 +116,10 @@ class DiagnosticEmitter {
       // TODO: Encode the diagnostic kind in the Diagnostic object rather than
       // hardcoding a "warning: " prefix.
       consumer_->HandleDiagnostic(
-          {.location = translator_->GetLocation(location),
+          {.level = Diagnostic::Warning,
+           .location = translator_->GetLocation(location),
            .short_name = DiagnosticT::ShortName,
-           .message = "warning: " + diag.Format()});
+           .message = diag.Format()});
     }
   }
 
@@ -137,6 +147,29 @@ inline auto ConsoleDiagnosticConsumer() -> DiagnosticConsumer& {
 template <typename Derived>
 struct SimpleDiagnostic {
   static auto Format() -> std::string { return Derived::Message.str(); }
+};
+
+// Diagnostic consumer adaptor that tracks whether any errors have been
+// produced.
+class ErrorTrackingDiagnosticConsumer : public DiagnosticConsumer {
+ public:
+  ErrorTrackingDiagnosticConsumer(DiagnosticConsumer& next_consumer)
+      : next_consumer(&next_consumer) {}
+
+  auto HandleDiagnostic(const Diagnostic& diagnostic) -> void override {
+    seen_error |= diagnostic.level == Diagnostic::Error;
+    next_consumer->HandleDiagnostic(diagnostic);
+  }
+
+  // Returns whether we've seen an error since the last reset.
+  auto SeenError() const -> bool { return seen_error; }
+
+  // Reset whether we've seen an error.
+  auto Reset() -> void { seen_error = false; }
+
+ private:
+  DiagnosticConsumer* next_consumer;
+  bool seen_error = false;
 };
 
 }  // namespace Carbon

@@ -23,16 +23,10 @@ class LexedStringLiteral {
   static auto Lex(llvm::StringRef source_text)
       -> llvm::Optional<LexedStringLiteral>;
 
-  // The result of expanding escape sequences in a string literal.
-  struct ExpandedValue {
-    std::string result;
-    bool has_errors;
-  };
-
   // Expand any escape sequences in the given string literal and compute the
-  // resulting value.
+  // resulting value. This handles error recovery internally and cannot fail.
   auto ComputeValue(DiagnosticEmitter<const char*>& emitter) const
-      -> ExpandedValue;
+      -> std::string;
 
  private:
   LexedStringLiteral(llvm::StringRef text, llvm::StringRef content,
