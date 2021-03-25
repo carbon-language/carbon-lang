@@ -2783,6 +2783,9 @@ interface Graph {
 }
 ```
 
+**Open question:** Is this expressive enough to represent the equality
+constraints needed by users in practice?
+
 #### Restricted where clauses
 
 This leads to the question of whether we can describe a set of restrictions on
