@@ -5,7 +5,7 @@ public indirect enum Declaration_ {
   case
     function(FunctionDefinition),
     `struct`(StructDefinition),
-    choice(name: Identifier, [(Identifier, Expression)]),
+    choice(name: Identifier, alternatives: [(Identifier, Expression)]),
     variable(name: Identifier, type: Expression, initializer: Expression)
 }
 public typealias Declaration = AST<Declaration_>
