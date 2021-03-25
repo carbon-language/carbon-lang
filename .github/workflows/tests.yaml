@@ -90,7 +90,7 @@ jobs:
             - name: Build (Debug)
               run: swift build -v -c debug
             - name: Build (Release)
-              run: swift build -v -c release"
+              run: swift build -v -c release
             - name: Test (Debug)
               run: swift test -v -c debug
             - name: Test (Release)
