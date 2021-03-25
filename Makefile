@@ -6,10 +6,10 @@ CITRON_SRC = ./citron/src
 CITRON = ${BIN}/citron
 
 build: ${GRAMMAR}.swift
-	swift test
+	swift build
 
 test: ${GRAMMAR}.swift
-	swift test
+	swift test --enable-test-discovery
 
 ${CITRON}: ${CITRON_SRC}/citron.c
 	mkdir -p ${BIN} && ${CC} $^ -o $@
