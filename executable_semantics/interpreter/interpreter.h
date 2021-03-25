@@ -11,19 +11,19 @@
 
 #include "executable_semantics/ast/declaration.h"
 #include "executable_semantics/interpreter/action.h"
-#include "executable_semantics/interpreter/assoc_list.h"
+#include "executable_semantics/interpreter/dictionary.h"
 #include "executable_semantics/interpreter/stack.h"
 #include "executable_semantics/interpreter/value.h"
 
 namespace Carbon {
 
-using Env = AssocList<std::string, Address>;
+using Env = Dictionary<std::string, Address>;
 
 /***** Scopes *****/
 
 struct Scope {
-  Scope(Env* e, std::list<std::string> l) : env(e), locals(std::move(l)) {}
-  Env* env;
+  Scope(Env e, std::list<std::string> l) : env(e), locals(std::move(l)) {}
+  Env env;
   std::list<std::string> locals;
 };
 
@@ -40,20 +40,21 @@ struct Frame {
 
 struct State {
   Stack<Frame*> stack;
-  std::vector<Value*> heap;
+  std::vector<const Value*> heap;
+  std::vector<bool> alive;
 };
 
 extern State* state;
 
-void PrintEnv(Env* env);
-auto AllocateValue(Value* v) -> Address;
-auto CopyVal(Value* val, int line_num) -> Value*;
-auto ToInteger(Value* v) -> int;
+void PrintEnv(Env env);
+auto AllocateValue(const Value* v) -> Address;
+auto CopyVal(const Value* val, int line_num) -> const Value*;
+auto ToInteger(const Value* v) -> int;
 
 /***** Interpreters *****/
 
 auto InterpProgram(std::list<Declaration>* fs) -> int;
-auto InterpExp(Env* env, Expression* e) -> Value*;
+auto InterpExp(Env env, Expression* e) -> const Value*;
 
 }  // namespace Carbon
 

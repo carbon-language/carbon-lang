@@ -47,7 +47,7 @@ class ParseTree {
   // Parses the token buffer into a `ParseTree`.
   //
   // This is the factory function which is used to build parse trees.
-  static auto Parse(TokenizedBuffer& tokens, DiagnosticEmitter& emitter)
+  static auto Parse(TokenizedBuffer& tokens, DiagnosticConsumer& consumer)
       -> ParseTree;
 
   // Tests whether there are any errors in the parse tree.

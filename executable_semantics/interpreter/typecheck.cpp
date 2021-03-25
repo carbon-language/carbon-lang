@@ -12,13 +12,12 @@
 #include <vector>
 
 #include "executable_semantics/ast/function_definition.h"
-#include "executable_semantics/interpreter/cons_list.h"
 #include "executable_semantics/interpreter/interpreter.h"
 
 namespace Carbon {
 
-void ExpectType(int line_num, const std::string& context, Value* expected,
-                Value* actual) {
+void ExpectType(int line_num, const std::string& context, const Value* expected,
+                const Value* actual) {
   if (!TypeEqual(expected, actual)) {
     std::cerr << line_num << ": type error in " << context << std::endl;
     std::cerr << "expected: ";
@@ -32,22 +31,21 @@ void ExpectType(int line_num, const std::string& context, Value* expected,
 
 void PrintErrorString(const std::string& s) { std::cerr << s; }
 
-void PrintTypeEnv(TypeEnv* env, std::ostream& out) {
-  if (env) {
-    out << env->key << ": ";
-    PrintValue(env->value, out);
+void PrintTypeEnv(TypeEnv env, std::ostream& out) {
+  for (const auto& [name, value] : env) {
+    out << name << ": ";
+    PrintValue(value, out);
     out << ", ";
-    PrintTypeEnv(env->next, out);
   }
 }
 
 // Convert tuples to tuple types.
-auto ToType(int line_num, Value* val) -> Value* {
+auto ToType(int line_num, const Value* val) -> const Value* {
   switch (val->tag) {
     case ValKind::TupleV: {
       auto fields = new VarValues();
       for (auto& elt : *val->u.tuple.elts) {
-        Value* ty = ToType(line_num, state->heap[elt.second]);
+        const Value* ty = ToType(line_num, state->heap[elt.second]);
         fields->push_back(std::make_pair(elt.first, ty));
       }
       return MakeTupleTypeVal(fields);
@@ -55,7 +53,7 @@ auto ToType(int line_num, Value* val) -> Value* {
     case ValKind::TupleTV: {
       auto fields = new VarValues();
       for (auto& field : *val->u.tuple_type.fields) {
-        Value* ty = ToType(line_num, field.second);
+        const Value* ty = ToType(line_num, field.second);
         fields->push_back(std::make_pair(field.first, ty));
       }
       return MakeTupleTypeVal(fields);
@@ -88,7 +86,7 @@ auto ToType(int line_num, Value* val) -> Value* {
 }
 
 // Reify type to type expression.
-auto ReifyType(Value* t, int line_num) -> Expression* {
+auto ReifyType(const Value* t, int line_num) -> Expression* {
   switch (t->tag) {
     case ValKind::VarTV:
       return MakeVar(0, *t->u.var_type);
@@ -139,7 +137,7 @@ auto ReifyType(Value* t, int line_num) -> Expression* {
 //    and it is used to implement `auto`, otherwise it is null.
 // context says what kind of position this expression is nested in,
 //    whether it's a position that expects a value, a pattern, or a type.
-auto TypeCheckExp(Expression* e, TypeEnv* env, Env* ct_env, Value* expected,
+auto TypeCheckExp(Expression* e, TypeEnv env, Env ct_env, const Value* expected,
                   TCContext context) -> TCResult {
   switch (e->tag) {
     case ExpressionKind::PatternVariable: {
@@ -165,8 +163,8 @@ auto TypeCheckExp(Expression* e, TypeEnv* env, Env* ct_env, Value* expected,
       }
       auto new_e = MakeVarPat(e->line_num, *e->u.pattern_variable.name,
                               ReifyType(t, e->line_num));
-      return TCResult(new_e, t,
-                      new TypeEnv(*e->u.pattern_variable.name, t, env));
+      env.Set(*e->u.pattern_variable.name, t);
+      return TCResult(new_e, t, env);
     }
     case ExpressionKind::Index: {
       auto res = TypeCheckExp(e->u.get_field.aggregate, env, ct_env, nullptr,
@@ -200,7 +198,7 @@ auto TypeCheckExp(Expression* e, TypeEnv* env, Env* ct_env, Value* expected,
       int i = 0;
       for (auto arg = e->u.tuple.fields->begin();
            arg != e->u.tuple.fields->end(); ++arg, ++i) {
-        Value* arg_expected = nullptr;
+        const Value* arg_expected = nullptr;
         if (expected && expected->tag == ValKind::TupleTV) {
           arg_expected =
               FindInVarValues(arg->first, expected->u.tuple_type.fields);
@@ -283,9 +281,14 @@ auto TypeCheckExp(Expression* e, TypeEnv* env, Env* ct_env, Value* expected,
       }
     }
     case ExpressionKind::Variable: {
-      auto t =
-          Lookup(e->line_num, env, *(e->u.variable.name), PrintErrorString);
-      return TCResult(e, t, env);
+      std::optional<const Value*> type = env.Get(*(e->u.variable.name));
+      if (type) {
+        return TCResult(e, *type, env);
+      } else {
+        std::cerr << e->line_num << ": could not find `"
+                  << *(e->u.variable.name) << "`" << std::endl;
+        exit(-1);
+      }
     }
     case ExpressionKind::Integer:
       return TCResult(e, MakeIntTypeVal(), env);
@@ -293,7 +296,7 @@ auto TypeCheckExp(Expression* e, TypeEnv* env, Env* ct_env, Value* expected,
       return TCResult(e, MakeBoolTypeVal(), env);
     case ExpressionKind::PrimitiveOp: {
       auto es = new std::vector<Expression*>();
-      std::vector<Value*> ts;
+      std::vector<const Value*> ts;
       auto new_env = env;
       for (auto& argument : *e->u.primitive_op.arguments) {
         auto res = TypeCheckExp(argument, env, ct_env, nullptr,
@@ -386,8 +389,8 @@ auto TypeCheckExp(Expression* e, TypeEnv* env, Env* ct_env, Value* expected,
   }
 }
 
-auto TypecheckCase(Value* expected, Expression* pat, Statement* body,
-                   TypeEnv* env, Env* ct_env, Value* ret_type)
+auto TypecheckCase(const Value* expected, Expression* pat, Statement* body,
+                   TypeEnv env, Env ct_env, const Value*& ret_type)
     -> std::pair<Expression*, Statement*> {
   auto pat_res =
       TypeCheckExp(pat, env, ct_env, expected, TCContext::PatternContext);
@@ -402,8 +405,8 @@ auto TypecheckCase(Value* expected, Expression* pat, Statement* body,
 // It is the declared return type of the enclosing function definition.
 // If the return type is "auto", then the return type is inferred from
 // the first return statement.
-auto TypeCheckStmt(Statement* s, TypeEnv* env, Env* ct_env, Value* ret_type)
-    -> TCStatement {
+auto TypeCheckStmt(Statement* s, TypeEnv env, Env ct_env,
+                   const Value*& ret_type) -> TCStatement {
   if (!s) {
     return TCStatement(s, env);
   }
@@ -440,7 +443,7 @@ auto TypeCheckStmt(Statement* s, TypeEnv* env, Env* ct_env, Value* ret_type)
     case StatementKind::VariableDefinition: {
       auto res = TypeCheckExp(s->u.variable_definition.init, env, ct_env,
                               nullptr, TCContext::ValueContext);
-      Value* rhs_ty = res.type;
+      const Value* rhs_ty = res.type;
       auto lhs_res = TypeCheckExp(s->u.variable_definition.pat, env, ct_env,
                                   rhs_ty, TCContext::PatternContext);
       Statement* new_s =
@@ -491,7 +494,7 @@ auto TypeCheckStmt(Statement* s, TypeEnv* env, Env* ct_env, Value* ret_type)
         // The following infers the return type from the first 'return'
         // statement. This will get more difficult with subtyping, when we
         // should infer the least-upper bound of all the 'return' statements.
-        *ret_type = *res.type;
+        ret_type = res.type;
       } else {
         ExpectType(s->line_num, "return", ret_type, res.type);
       }
@@ -566,7 +569,7 @@ auto CheckOrEnsureReturn(Statement* stmt, bool void_return, int line_num)
   }
 }
 
-auto TypeCheckFunDef(const FunctionDefinition* f, TypeEnv* env, Env* ct_env)
+auto TypeCheckFunDef(const FunctionDefinition* f, TypeEnv env, Env ct_env)
     -> struct FunctionDefinition* {
   auto param_res = TypeCheckExp(f->param_pattern, env, ct_env, nullptr,
                                 TCContext::PatternContext);
@@ -583,8 +586,8 @@ auto TypeCheckFunDef(const FunctionDefinition* f, TypeEnv* env, Env* ct_env)
                     f->param_pattern, body);
 }
 
-auto TypeOfFunDef(TypeEnv* env, Env* ct_env, const FunctionDefinition* fun_def)
-    -> Value* {
+auto TypeOfFunDef(TypeEnv env, Env ct_env, const FunctionDefinition* fun_def)
+    -> const Value* {
   auto param_res = TypeCheckExp(fun_def->param_pattern, env, ct_env, nullptr,
                                 TCContext::PatternContext);
   auto param_type = ToType(fun_def->line_num, param_res.type);
@@ -596,8 +599,8 @@ auto TypeOfFunDef(TypeEnv* env, Env* ct_env, const FunctionDefinition* fun_def)
   return MakeFunTypeVal(param_type, ret);
 }
 
-auto TypeOfStructDef(const StructDefinition* sd, TypeEnv* /*env*/, Env* ct_top)
-    -> Value* {
+auto TypeOfStructDef(const StructDefinition* sd, TypeEnv /*env*/, Env ct_top)
+    -> const Value* {
   auto fields = new VarValues();
   auto methods = new VarValues();
   for (auto m = sd->members->begin(); m != sd->members->end(); ++m) {
@@ -617,7 +620,10 @@ auto StructDeclaration::Name() const -> std::string { return *definition.name; }
 
 auto ChoiceDeclaration::Name() const -> std::string { return name; }
 
-auto StructDeclaration::TypeChecked(TypeEnv* env, Env* ct_env) const
+// Returns the name of the declared variable.
+auto VariableDeclaration::Name() const -> std::string { return name; }
+
+auto StructDeclaration::TypeChecked(TypeEnv env, Env ct_env) const
     -> Declaration {
   auto fields = new std::list<Member*>();
   for (auto& m : *definition.members) {
@@ -629,18 +635,31 @@ auto StructDeclaration::TypeChecked(TypeEnv* env, Env* ct_env) const
   return StructDeclaration(definition.line_num, *definition.name, fields);
 }
 
-auto FunctionDeclaration::TypeChecked(TypeEnv* env, Env* ct_env) const
+auto FunctionDeclaration::TypeChecked(TypeEnv env, Env ct_env) const
     -> Declaration {
   return FunctionDeclaration(TypeCheckFunDef(definition, env, ct_env));
 }
 
-auto ChoiceDeclaration::TypeChecked(TypeEnv* env, Env* ct_env) const
+auto ChoiceDeclaration::TypeChecked(TypeEnv env, Env ct_env) const
     -> Declaration {
   return *this;  // TODO.
 }
 
-auto TopLevel(std::list<Declaration>* fs) -> std::pair<TypeEnv*, Env*> {
-  ExecutionEnvironment tops = {nullptr, nullptr};
+// Signals a type error if the initializing expression does not have
+// the declared type of the variable, otherwise returns this
+// declaration with annotated types.
+auto VariableDeclaration::TypeChecked(TypeEnv env, Env ct_env) const
+    -> Declaration {
+  TCResult type_checked_initializer =
+      TypeCheckExp(initializer, env, ct_env, nullptr, TCContext::ValueContext);
+  const Value* declared_type = ToType(source_location, InterpExp(ct_env, type));
+  ExpectType(source_location, "initializer of variable", declared_type,
+             type_checked_initializer.type);
+  return *this;
+}
+
+auto TopLevel(std::list<Declaration>* fs) -> TypeCheckContext {
+  TypeCheckContext tops;
   bool found_main = false;
 
   for (auto const& d : *fs) {
@@ -658,30 +677,38 @@ auto TopLevel(std::list<Declaration>* fs) -> std::pair<TypeEnv*, Env*> {
   return tops;
 }
 
-auto FunctionDeclaration::TopLevel(ExecutionEnvironment& tops) const -> void {
-  auto t = TypeOfFunDef(tops.first, tops.second, definition);
-  tops.first = new TypeEnv(Name(), t, tops.first);
+auto FunctionDeclaration::TopLevel(TypeCheckContext& tops) const -> void {
+  auto t = TypeOfFunDef(tops.types, tops.values, definition);
+  tops.types.Set(Name(), t);
 }
 
-auto StructDeclaration::TopLevel(ExecutionEnvironment& tops) const -> void {
-  auto st = TypeOfStructDef(&definition, tops.first, tops.second);
+auto StructDeclaration::TopLevel(TypeCheckContext& tops) const -> void {
+  auto st = TypeOfStructDef(&definition, tops.types, tops.values);
   Address a = AllocateValue(st);
-  tops.second = new Env(Name(), a, tops.second);  // Is this obsolete?
+  tops.values.Set(Name(), a);  // Is this obsolete?
   auto params = MakeTupleTypeVal(st->u.struct_type.fields);
   auto fun_ty = MakeFunTypeVal(params, st);
-  tops.first = new TypeEnv(Name(), fun_ty, tops.first);
+  tops.types.Set(Name(), fun_ty);
 }
 
-auto ChoiceDeclaration::TopLevel(ExecutionEnvironment& tops) const -> void {
+auto ChoiceDeclaration::TopLevel(TypeCheckContext& tops) const -> void {
   auto alts = new VarValues();
   for (auto a : alternatives) {
-    auto t = ToType(line_num, InterpExp(tops.second, a.second));
+    auto t = ToType(line_num, InterpExp(tops.values, a.second));
     alts->push_back(std::make_pair(a.first, t));
   }
   auto ct = MakeChoiceTypeVal(name, alts);
   Address a = AllocateValue(ct);
-  tops.second = new Env(Name(), a, tops.second);  // Is this obsolete?
-  tops.first = new TypeEnv(Name(), ct, tops.first);
+  tops.values.Set(Name(), a);  // Is this obsolete?
+  tops.types.Set(Name(), ct);
+}
+
+// Associate the variable name with it's declared type in the
+// compile-time symbol table.
+auto VariableDeclaration::TopLevel(TypeCheckContext& tops) const -> void {
+  const Value* declared_type =
+      ToType(source_location, InterpExp(tops.values, type));
+  tops.types.Set(Name(), declared_type);
 }
 
 }  // namespace Carbon

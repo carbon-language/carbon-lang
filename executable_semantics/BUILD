@@ -11,60 +11,17 @@ load("//bazel/testing:golden_test.bzl", "golden_test")
 cc_binary(
     name = "executable_semantics",
     srcs = ["main.cpp"],
-    deps = [":syntax"],
+    deps = [
+        "//executable_semantics/syntax",
+        "@llvm-project//llvm:Support",
+    ],
 )
 
 cc_library(
-    name = "syntax",
-    srcs = [
-        "syntax.tab.cpp",
-        "syntax.yy.cpp",
-        "syntax_helpers.cpp",
-        "syntax_helpers.h",
-    ],
-    hdrs = ["syntax.tab.h"],
-    # Disable warnings for generated code.
-    copts = [
-        "-Wno-unneeded-internal-declaration",
-        "-Wno-unused-function",
-        "-Wno-writable-strings",
-    ],
-    deps = [
-        "//executable_semantics/ast:declaration",
-        "//executable_semantics/ast:expression",
-        "//executable_semantics/ast:field_list",
-        "//executable_semantics/interpreter",
-    ],
-)
-
-genrule(
-    name = "syntax_bison_srcs",
-    srcs = ["syntax.ypp"],
-    outs = [
-        "syntax.tab.cpp",
-        "syntax.tab.h",
-    ],
-    cmd = "M4=$(M4) $(BISON) " +
-          "--output=$(location syntax.tab.cpp) " +
-          "--defines=$(location syntax.tab.h) " +
-          "$(location syntax.ypp)",
-    toolchains = [
-        "@rules_bison//bison:current_bison_toolchain",
-        "@rules_m4//m4:current_m4_toolchain",
-    ],
-)
-
-genrule(
-    name = "syntax_flex_srcs",
-    srcs = ["syntax.lpp"],
-    outs = ["syntax.yy.cpp"],
-    cmd = "M4=$(M4) $(FLEX) " +
-          "--outfile=$(location syntax.yy.cpp) " +
-          "$(location syntax.lpp)",
-    toolchains = [
-        "@rules_flex//flex:current_flex_toolchain",
-        "@rules_m4//m4:current_m4_toolchain",
-    ],
+    name = "tracing_flag",
+    srcs = ["tracing_flag.cpp"],
+    hdrs = ["tracing_flag.h"],
+    visibility = ["//executable_semantics:__subpackages__"],
 )
 
 EXAMPLES = [
@@ -80,6 +37,14 @@ EXAMPLES = [
     "fun5",
     "fun6_fail_type",
     "funptr1",
+    "global_variable1",
+    "global_variable2",
+    "global_variable3",
+    "global_variable4",
+    "global_variable5",
+    "global_variable6",
+    "global_variable7",
+    "global_variable8",
     "if1",
     "if2",
     "if3",
@@ -97,8 +62,6 @@ EXAMPLES = [
     "tuple_match",
     "tuple1",
     "tuple2",
-    "undef1",
-    "undef2",
     "while1",
     "zero",
 ]
