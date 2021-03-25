@@ -1,4 +1,4 @@
-// -*- mode: lemon; -*-
+// -*- mode: lemon; tab-width: 2; c-basic-offset: 2; -*-
 // Part of the Carbon Language project, under the Apache License v2.0 with LLVM
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
@@ -9,10 +9,19 @@
   fileprivate func ... <First, Last>(first: AST<First>, last: AST<Last>)
     -> SourceLocation
   {
+    if first.location.span.isEmpty { return last.location }
+    if last.location.span.isEmpty { return first.location }
+    
     assert(first.location.fileName == last.location.fileName)
     return SourceLocation(
       fileName: first.location.fileName,
       span: first.location.span.lowerBound..<last.location.span.upperBound)
+  }
+
+  fileprivate extension Array where Element == Field {
+    func asTupleLiteral_() -> TupleLiteral_ {
+      map { (name: $0.body.0, value: $0.body.1) }
+    }
   }
 }                         
 
@@ -25,10 +34,10 @@
 %nonterminal_type member_designator MemberDesignator
 %nonterminal_type paren_expression Expression
 %nonterminal_type tuple TupleLiteral
-%nonterminal_type field Expression
-%nonterminal_type field_list {[Expression]}
+%nonterminal_type field Field
+%nonterminal_type field_list FieldList
 %nonterminal_type match_clause MatchClause
-%nonterminal_type match_clause_list {[MatchClause]}
+%nonterminal_type match_clause_list MatchClauseList
 %nonterminal_type statement Statement
 %nonterminal_type optional_else {Statement?}
 %nonterminal_type statement_list {[Statement]}
@@ -73,183 +82,162 @@ expression ::= FALSE(t).
   { (.booleanLiteral(false), t.location) }
 expression ::= INT(t).
   { (.intType, t.location) }
-expression ::= BOOL.
+expression ::= BOOL(t).
   { (.boolType, t.location) }
-expression ::= TYPE.
+expression ::= TYPE(t).
   { (.typeType, t.location) }
-expression ::= AUTO.
+expression ::= AUTO(t).
   { (.autoType, t.location) }
 expression ::= paren_expression(x).
   { x }
 expression ::= expression(l) EQUAL_EQUAL(op) expression(r).
-  {(.binaryOperator(op, l, r), l...r)}
+  {(.binaryOperator(operation: op.body, lhs: l, rhs: r), l...r)}
 expression ::= expression(l) PLUS(op) expression(r).
-  {(.binaryOperator(op, l, r), l...r)}
+  {(.binaryOperator(operation: op.body, lhs: l, rhs: r), l...r)}
 expression ::= expression(l) MINUS(op) expression(r).
-  {(.binaryOperator(op, l, r), l...r)}
+  {(.binaryOperator(operation: op.body, lhs: l, rhs: r), l...r)}
 expression ::= expression(l) AND(op) expression(r).
-  {(.binaryOperator(op, l, r), l...r)}
+  {(.binaryOperator(operation: op.body, lhs: l, rhs: r), l...r)}
 expression ::= expression(l) OR(op) expression(r).
-  {(.binaryOperator(op, l, r), l...r)}
+  {(.binaryOperator(operation: op.body, lhs: l, rhs: r), l...r)}
 expression ::= NOT(op) expression(r).
-  {(.unaryOperator(op, r), op...r)}
+  {(.unaryOperator(operation: op.body, operand: r), op...r)}
 expression ::= MINUS(op) expression(r).
-  {(.unaryOperator(op, r), op...r)}
+  {(.unaryOperator(operation: op.body, operand: r), op...r)}
 expression ::= expression(f) tuple(a).
   {(.functionCall(callee: f, arguments: a), f...a)}
 expression ::= FNTY(k) tuple(p) return_type(r).
-  {(.functionTypes(parameterTypes: p, returnType: r), k...r)}
-member_designator ::= PERIOD Identifier.
-  {} /* { $$ = $2; } */
-paren_expression ::= LEFT_PARENTHESIS field_list RIGHT_PARENTHESIS.
-    {} /* {
-     if ($2->fields->size() == 1 &&
-         $2->fields->front().first == "" &&
-	 !$2->has_explicit_comma) {
-	$$ = $2->fields->front().second;
-     } else {
-        auto vec = new std::vector<std::pair<std::string,Carbon::Expression*>>(
-            $2->fields->begin(), $2->fields->end());
-        $$ = Carbon::MakeTuple(yylineno, vec);
-      }
-    } */
-tuple ::= LEFT_PARENTHESIS field_list RIGHT_PARENTHESIS.
-    {} /* {
-     auto vec = new std::vector<std::pair<std::string,Carbon::Expression*>>(
-         $2->fields->begin(), $2->fields->end());
-     $$ = Carbon::MakeTuple(yylineno, vec);
-    } */
-field ::= pattern.
-    {} /* {
-      auto fields =
-          new std::list<std::pair<std::string, Carbon::Expression*>>();
-      fields->push_back(std::make_pair("", $1));
-      $$ = Carbon::MakeFieldList(fields);
-    } */
-field ::= member_designator EQUAL pattern.
-    {} /* {
-      auto fields =
-          new std::list<std::pair<std::string, Carbon::Expression*>>();
-      fields->push_back(std::make_pair($1, $3));
-      $$ = Carbon::MakeFieldList(fields);
-    } */
+  {(.functionType(parameterTypes: p, returnType: r), k...r)}
+member_designator ::= PERIOD(p) Identifier(n).
+  { (n.body, p...n) }
+paren_expression ::= LEFT_PARENTHESIS(l) field_list(f) RIGHT_PARENTHESIS(r).
+  {
+    if !f.body.hasExplicitComma && f.body.fields.count == 1 {
+      let firstField = f.body.fields.first!.body
+      if firstField.0 == nil { return (firstField.1.body, l...r) }
+    }
+    return (.tupleLiteral(f.body.fields.asTupleLiteral_()), l...r)
+  }
+
+tuple ::= LEFT_PARENTHESIS(l) field_list(f) RIGHT_PARENTHESIS(r).
+  { (f.body.fields.asTupleLiteral_(), l...r) }
+
+field ::= pattern(p).
+  { ((nil,  p), p.location) }
+
+field ::= member_designator(m) EQUAL pattern(p).
+  { ((m, p), m...p) }
+
 field_list ::= /* Empty */.
-    {} /* {
-      $$ = Carbon::MakeFieldList(
-          new std::list<std::pair<std::string, Carbon::Expression*>>());
-    } */
-field_list ::= field.
-    {} /* { $$ = $1; } */
-field_list ::= field COMMA field_list.
-    {} /* { $$ = Carbon::MakeConsField($1, $3); } */
-match_clause ::= CASE pattern DBLARROW statement.
-    {} /* { $$ = new std::pair<Carbon::Expression*, Carbon::Statement*>($2, $4); } */
-match_clause ::= DEFAULT DBLARROW statement.
-    {} /* {
-      auto vp = Carbon::MakeVarPat(yylineno, "_",
-                                   Carbon::MakeAutoType(yylineno));
-      $$ = new std::pair<Carbon::Expression*, Carbon::Statement*>(vp, $3);
-    } */
+  { (([], hasExplicitComma: false), .empty) }
+field_list ::= field(f).
+  { (([f], hasExplicitComma: false), f.location) }
+field_list ::= field(f) COMMA(c) field_list(l).
+  {
+    (([f] + l.body.fields, l.body.hasExplicitComma), 
+     location: l.body.fields.isEmpty ? f...c : f...l) 
+  }
+match_clause ::= CASE(c) pattern(p) DBLARROW statement(s).
+  { ((pattern: p, action: s), c...s) }
+match_clause ::= DEFAULT(d) DBLARROW statement(s).
+  { ((pattern: nil, action: s), d...s) }
 match_clause_list ::= /* Empty */.
-    {} /* {
-      $$ = new std::list<std::pair<Carbon::Expression*, Carbon::Statement*>>();
-    } */
-match_clause_list ::= match_clause match_clause_list.
-    {} /* { $$ = $2; $$->push_front(*$1); } */
-statement ::= expression EQUAL expression SEMICOLON.
-    {} /* { $$ = Carbon::MakeAssign(yylineno, $1, $3); } */
-statement ::= VAR pattern MINUS expression SEMICOLON.
-    {} /* { $$ = Carbon::MakeVarDef(yylineno, $2, $4); } */
-statement ::= expression SEMICOLON.
-    {} /* { $$ = Carbon::MakeExpStmt(yylineno, $1); } */
-statement ::= IF LEFT_PARENTHESIS expression RIGHT_PARENTHESIS statement optional_else.
-    {} /* { $$ = Carbon::MakeIf(yylineno, $3, $5, $6); } */
-statement ::= WHILE LEFT_PARENTHESIS expression RIGHT_PARENTHESIS statement.
-    {} /* { $$ = Carbon::MakeWhile(yylineno, $3, $5); } */
-statement ::= BREAK SEMICOLON.
-    {} /* { $$ = Carbon::MakeBreak(yylineno); } */
-statement ::= CONTINUE SEMICOLON.
-    {} /* { $$ = Carbon::MakeContinue(yylineno); } */
-statement ::= RETURN expression SEMICOLON.
-    {} /* { $$ = Carbon::MakeReturn(yylineno, $2); } */
-statement ::= LEFT_CURLY_BRACE statement_list RIGHT_CURLY_BRACE.
-    {} /* { $$ = Carbon::MakeBlock(yylineno, $2); } */
-statement ::= MATCH LEFT_PARENTHESIS expression RIGHT_PARENTHESIS LEFT_CURLY_BRACE match_clause_list RIGHT_CURLY_BRACE.
-    {} /* { $$ = Carbon::MakeMatch(yylineno, $3, $6); } */
+  { ([], .empty) }
+match_clause_list ::= match_clause(c) match_clause_list(l).
+  { ([c] + l.body, c...l) }
+statement ::= expression(l) EQUAL expression(r) SEMICOLON(s).
+  { (.assignment(target: l, source: r), l...s) }
+statement ::= VAR(v) pattern(p) MINUS expression(e) SEMICOLON(s).
+  { (.variableDefinition(pattern: p, initializer: e), v...s) }
+statement ::= expression(e) SEMICOLON(s).
+  { (.expressionStatement(e), e...s) }
+statement ::= IF(i) LEFT_PARENTHESIS expression(c) RIGHT_PARENTHESIS
+  statement(s) optional_else(e).
+  { (.if(condition: c, thenClause: s, elseClause: e), e.map {i...$0} ?? i...s) }
+statement ::= WHILE(w) LEFT_PARENTHESIS expression(c) RIGHT_PARENTHESIS
+  statement(b).
+  { (.while(condition: c, body: b), w...b) }
+statement ::= BREAK(b) SEMICOLON(s).
+  { (.break, b...s) }
+statement ::= CONTINUE(c) SEMICOLON(s).
+  { (.continue, c...s) }
+statement ::= RETURN(r) expression(e) SEMICOLON(s).
+  { (.return(e), r...s) }
+statement ::= LEFT_CURLY_BRACE(l) statement_list(s) RIGHT_CURLY_BRACE(r).
+  { (.block(s), l...r) }
+statement ::= MATCH(m) LEFT_PARENTHESIS expression(e) RIGHT_PARENTHESIS 
+  LEFT_CURLY_BRACE match_clause_list(c) RIGHT_CURLY_BRACE(r).
+  { (.match(subject: e, clauses: c.body), m...r) }
 optional_else ::= /* Empty */.
-    {} /* { $$ = 0; } */
-optional_else ::= ELSE statement. 
-   {} /* { $$ = $2; } */
+  { nil }
+optional_else ::= ELSE(e) statement(s). 
+  { (s.body, e...s) }
 statement_list ::= /* Empty */.
-    {} /* { $$ = 0; } */
-statement_list ::= statement statement_list.
-    {} /* { $$ = Carbon::MakeSeq(yylineno, $1, $2); } */
+  { [] }
+statement_list ::= statement(s) statement_list(l).
+  { [s] + l }
 return_type ::= /* Empty */.
-    {} /* {
-      $$ = Carbon::MakeTuple(
-          yylineno,
-          new std::vector<std::pair<std::string, Carbon::Expression*>>());
-    } */
+  { (.tupleLiteral([]), .empty) } /* {
 return_type ::= ARROW expression.
-    {} /* { $$ = $2; } */
+  {} /* { $$ = $2; } */
 function_definition ::= FN Identifier tuple return_type LEFT_CURLY_BRACE statement_list RIGHT_CURLY_BRACE.
-    {} /* { $$ = MakeFunDef(yylineno, $2, $4, $3, $6); } */
+  {} /* { $$ = MakeFunDef(yylineno, $2, $4, $3, $6); } */
 function_definition ::= FN Identifier tuple DBLARROW expression SEMICOLON.
-    {} /* {
+  {} /* {
       $$ = Carbon::MakeFunDef(yylineno, $2, Carbon::MakeAutoType(yylineno), $3,
                               Carbon::MakeReturn(yylineno, $5));
     } */
 function_declaration ::= FN Identifier tuple return_type SEMICOLON.
-    {} /* { $$ = MakeFunDef(yylineno, $2, $4, $3, 0); } */
+  {} /* { $$ = MakeFunDef(yylineno, $2, $4, $3, 0); } */
 variable_declaration ::= expression COLON Identifier.
-    {} /* { $$ = MakeField(yylineno, $3, $1); } */
+  {} /* { $$ = MakeField(yylineno, $3, $1); } */
 member ::= VAR variable_declaration SEMICOLON.
-    {} /* { $$ = $2; } */
+  {} /* { $$ = $2; } */
 member_list ::= /* Empty */.
-    {} /* { $$ = new std::list<Carbon::Member*>(); } */
+  {} /* { $$ = new std::list<Carbon::Member*>(); } */
 member_list ::= member member_list.
-    {} /* { $$ = $2; $$->push_front($1); } */
+  {} /* { $$ = $2; $$->push_front($1); } */
 alternative ::= Identifier tuple.
-    {} /* { $$ = new std::pair<std::string, Carbon::Expression*>($1, $2); } */
+  {} /* { $$ = new std::pair<std::string, Carbon::Expression*>($1, $2); } */
 alternative ::= Identifier.
-    {} /* {
+  {} /* {
       $$ = new std::pair<std::string, Carbon::Expression*>(
           $1, Carbon::MakeTuple(
             yylineno,
             new std::vector<std::pair<std::string, Carbon::Expression*>>()));
     } */
 alternative_list ::= /* Empty */.
-    {} /* { $$ = new std::list<std::pair<std::string, Carbon::Expression*>>(); } */
+  {} /* { $$ = new std::list<std::pair<std::string, Carbon::Expression*>>(); } */
 alternative_list ::= alternative.
-    {} /* {
+  {} /* {
       $$ = new std::list<std::pair<std::string, Carbon::Expression*>>();
       $$->push_front(*$1);
     } */
 alternative_list ::= alternative COMMA alternative_list.
-    {} /* { $$ = $3; $$->push_front(*$1); } */
+  {} /* { $$ = $3; $$->push_front(*$1); } */
 declaration ::= function_definition.
-    {} /* { $$ = new Carbon::Declaration(Carbon::FunctionDeclaration{$1}); } */
+  {} /* { $$ = new Carbon::Declaration(Carbon::FunctionDeclaration{$1}); } */
 declaration ::= function_declaration.
-    {} /* { $$ = new Carbon::Declaration(Carbon::FunctionDeclaration{$1}); } */
+  {} /* { $$ = new Carbon::Declaration(Carbon::FunctionDeclaration{$1}); } */
 declaration ::= STRUCT Identifier LEFT_CURLY_BRACE member_list RIGHT_CURLY_BRACE.
-    {} /* {
+  {} /* {
       $$ = new Carbon::Declaration(
         Carbon::StructDeclaration{yylineno, $2, $4});
     } */
 declaration ::= CHOICE Identifier LEFT_CURLY_BRACE alternative_list RIGHT_CURLY_BRACE.
-    {} /* {
+  {} /* {
       $$ = new Carbon::Declaration(
         Carbon::ChoiceDeclaration{yylineno, $2, std::list(*$4)});
     } */
 declaration ::= VAR variable_declaration EQUAL expression SEMICOLON.
-    {} /* {
+  {} /* {
       $$ = new Carbon::Declaration(
         Carbon::VariableDeclaration(yylineno, *$2->u.field.name, $2->u.field.type, $4));
     } */
 declaration_list ::= /* Empty */.
-    {} /* { $$ = new std::list<Carbon::Declaration>(); } */
+  {} /* { $$ = new std::list<Carbon::Declaration>(); } */
 declaration_list ::= declaration declaration_list.
-    {} /* {
+  {} /* {
       $$ = $2;
       $$->push_front(*$1);
     } */

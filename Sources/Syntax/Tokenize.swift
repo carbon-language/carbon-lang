@@ -159,7 +159,7 @@ public struct Tokens: Sequence {
     }
     private let sourceText: String
     private let sourceFileName: String
-    private var sourceFilePosition = PositionInSourceFile(line: 1, column: 1)
+    private var sourceFilePosition = PositionInSourceFile.start
     private var textPosition: String.Index
     private var utf16Offset: Int = 0
     private let sourceUTF16Length: Int

@@ -32,17 +32,22 @@ public indirect enum Statement_ {
     expressionStatement(Expression),
     assignment(target: Expression, source: Expression),
     variableDefinition(pattern: Expression, initializer: Expression),
-    `if`(condition: Expression, thenClause: Statement, elseClause: Statement),
+    `if`(condition: Expression, thenClause: Statement, elseClause: Statement?),
     `return`(Expression),
     sequence(Statement, Statement),
-    block(Statement),
+    block([Statement]),
     `while`(condition: Expression, body: Statement),
-    match(clauses: [MatchClause])
+    match(subject: Expression, clauses: [MatchClause]),
+    `break`,
+    `continue`
 }
 public typealias Statement = AST<Statement_>
 
-public typealias MatchClause = AST<(pattern: Expression, action: Statement)>
-public typealias TupleLiteral = AST<[(name: Identifier?, value: Expression)]>
+/// A `nil` `pattern` means this is a default clause.
+public typealias MatchClause = AST<(pattern: Expression?, action: Statement)>
+public typealias MatchClauseList = AST<[MatchClause]>
+public typealias TupleLiteral_ = [(name: Identifier?, value: Expression)]
+public typealias TupleLiteral = AST<TupleLiteral_>
 
 public indirect enum Expression_ {
   case
@@ -52,7 +57,7 @@ public indirect enum Expression_ {
     patternVariable(name: Identifier, type: Expression),
     integerLiteral(Int),
     booleanLiteral(Bool),
-    tupleLiteral(TupleLiteral),
+    tupleLiteral(TupleLiteral_),
     unaryOperator(operation: Token, operand: Expression),
     binaryOperator(operation: Token, lhs: Expression, rhs: Expression),
     functionCall(callee: Expression, arguments: TupleLiteral),
@@ -63,3 +68,6 @@ public indirect enum Expression_ {
     functionType(parameterTypes: TupleLiteral, returnType: Expression)
 };
 public typealias Expression = AST<Expression_>
+
+public typealias Field = AST<(Identifier?, Expression)>
+public typealias FieldList = AST<(fields: [Field], hasExplicitComma: Bool)>
