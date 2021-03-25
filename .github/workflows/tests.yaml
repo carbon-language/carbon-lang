@@ -85,11 +85,13 @@ jobs:
 
             - name: Swift Version
               run: swift --version
+            - name: Generate parser
+              run: make CC=gcc ./Sources/Syntax/Parser.swift
             - name: Build (Debug)
-              run: make build CC=gcc SWIFT_FLAGS="-v -c debug"
+              run: swift build -v -c debug
             - name: Build (Release)
-              run: make build CC=gcc SWIFT_FLAGS="-v -c release"
+              run: swift build -v -c release"
             - name: Test (Debug)
-              run: make test CC=gcc SWIFT_FLAGS="-v -c debug"
+              run: swift test -v -c debug
             - name: Test (Release)
-              run: make test CC=gcc SWIFT_FLAGS="-v -c release -Xswiftc -enable-testing"
+              run: swift test -v -c release -Xswiftc -enable-testing
