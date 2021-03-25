@@ -1553,6 +1553,49 @@ For context, see
 and [Swift](https://docs.swift.org/swift-book/LanguageGuide/Generics.html#ID189)
 support associated types.
 
+**Open question:**
+[Swift allows the value of an associated type to be omitted when it can be determined from the method signatures in the implementation](https://docs.swift.org/swift-book/LanguageGuide/Generics.html#ID190).
+For the above example, this would mean figuring out `ElementType == T` from
+context:
+
+```
+struct DynamicArray(Type:$ T) {
+  // ...
+
+  impl StackAssociatedType {
+    // Not needed: var Type:$ ElementType = T;
+    method (Ptr(Self): this) Push(T: value) { ... }
+    method (Ptr(Self): this) Pop() -> T { ... }
+    method (Ptr(Self): this) IsEmpty() -> Bool { ... }
+  }
+}
+```
+
+Should we do the same thing in Carbon? One concern is this might be a little
+more complicated in the presence of method overloads with
+[default implementations](interface-defaults), since it might not be clear how
+they should match up, as in this example:
+
+```
+interface Has2OverloadsWithDefaults {
+  var StackAssociatedType:$ T;
+  method (Self: this) F(DynamicArray(T): x, T: y) { ... }
+  method (Self: this) F(T: x, T.ElementType: y) { ... }
+}
+
+struct S {
+  impl Has2OverloadsWithDefaults {
+     // Unclear if T == DynamicArray(Int) or
+     // T == DynamicArray(DynamicArray(Int)).
+     method (Self: this) F(
+         DynamicArray(DynamicArray(Int)): x,
+         DynamicArray(Int): y) { ... }
+  }
+}
+```
+
+Not to say this can't be resolved, but it does add complexity.
+
 ### Model
 
 The associated type is modeled by a witness table field in the interface.
