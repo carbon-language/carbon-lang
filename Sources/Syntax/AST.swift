@@ -10,16 +10,17 @@ public indirect enum Declaration_ {
 }
 public typealias Declaration = AST<Declaration_>
 
-public struct FunctionDefinition {
+public struct FunctionDefinition_ {
   public var name: Identifier
   public var parameterPattern: TupleLiteral
   public var returnType: Expression
-  public var body: Statement
+  public var body: Statement?
 }
+public typealias FunctionDefinition = AST<FunctionDefinition_>
 
-typealias MemberDesignator = Identifier
+public typealias MemberDesignator = Identifier
 
-typealias Alternative = AST<(name: Identifier, payload: TupleLiteral)>
+public typealias Alternative = AST<(name: Identifier, payload: TupleLiteral)>
 public enum Member { case name(Identifier), type(Expression) }
 
 public struct StructDefinition {
@@ -71,3 +72,4 @@ public typealias Expression = AST<Expression_>
 
 public typealias Field = AST<(Identifier?, Expression)>
 public typealias FieldList = AST<(fields: [Field], hasExplicitComma: Bool)>
+public typealias VariableDeclaration = AST<(name: Identifier, type: Expression)>

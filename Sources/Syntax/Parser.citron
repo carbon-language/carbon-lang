@@ -44,8 +44,8 @@
 %nonterminal_type return_type Expression
 %nonterminal_type function_definition FunctionDefinition
 %nonterminal_type function_declaration FunctionDefinition
-%nonterminal_type variable_declaration {(name: String, type: Expression)}
-%nonterminal_type member Member
+%nonterminal_type variable_declaration VariableDeclaration
+%nonterminal_type member VariableDeclaration
 %nonterminal_type member_list {[Member]}
 %nonterminal_type alternative Alternative
 %nonterminal_type alternative_list {[Alternative]}
@@ -177,22 +177,39 @@ statement_list ::= /* Empty */.
 statement_list ::= statement(s) statement_list(l).
   { [s] + l }
 return_type ::= /* Empty */.
-  { (.tupleLiteral([]), .empty) } /* {
-return_type ::= ARROW expression.
-  {} /* { $$ = $2; } */
-function_definition ::= FN Identifier tuple return_type LEFT_CURLY_BRACE statement_list RIGHT_CURLY_BRACE.
-  {} /* { $$ = MakeFunDef(yylineno, $2, $4, $3, $6); } */
-function_definition ::= FN Identifier tuple DBLARROW expression SEMICOLON.
-  {} /* {
-      $$ = Carbon::MakeFunDef(yylineno, $2, Carbon::MakeAutoType(yylineno), $3,
-                              Carbon::MakeReturn(yylineno, $5));
-    } */
-function_declaration ::= FN Identifier tuple return_type SEMICOLON.
-  {} /* { $$ = MakeFunDef(yylineno, $2, $4, $3, 0); } */
-variable_declaration ::= expression COLON Identifier.
-  {} /* { $$ = MakeField(yylineno, $3, $1); } */
-member ::= VAR variable_declaration SEMICOLON.
-  {} /* { $$ = $2; } */
+  { (.tupleLiteral([]), .empty) }
+return_type ::= ARROW(a) expression(e).
+  { (e.body, a...e) }
+function_definition ::= FN(f) Identifier(n) tuple(p) return_type(t)
+  LEFT_CURLY_BRACE(l) statement_list(b) RIGHT_CURLY_BRACE(r).
+  {
+    (
+      FunctionDefinition_(
+        name: n, parameterPattern: p, returnType: t, body: (.block(b), l...r)),
+      f...r)
+  }
+function_definition
+  ::= FN(f) Identifier(n) tuple(p) DBLARROW expression(b) SEMICOLON(s).
+  {
+    (
+      FunctionDefinition_(
+        name: n, parameterPattern: p, returnType: (.autoType, .empty),
+        body: (Statement_.return(b), b.location)),
+      f...s)
+  }
+function_declaration
+  ::= FN(f) Identifier(n) tuple(p) return_type(r) SEMICOLON(s).
+  {
+    (
+      FunctionDefinition_(
+        name: n, parameterPattern: p, returnType: r,
+        body: nil),
+      f...s)
+  }
+variable_declaration ::= expression(t) COLON Identifier(n).
+  { ((name: n, type: t), t...n) }
+member ::= VAR(v) variable_declaration(d) SEMICOLON(s).
+  { (d.body, v...s) }
 member_list ::= /* Empty */.
   {} /* { $$ = new std::list<Carbon::Member*>(); } */
 member_list ::= member member_list.
