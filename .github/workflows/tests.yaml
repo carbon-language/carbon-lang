@@ -38,7 +38,7 @@ jobs:
         container: swift:5.3-focal
         steps:
         - name: Install Tools
-          run: apt install build-essential
+          run: apt update; apt install build-essential
         - name: Checkout
           uses: actions/checkout@v2
           with:
