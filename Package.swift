@@ -12,19 +12,8 @@ let package = Package(
             name: "barcon",
             targets: ["barcon"]),
         .library(
-            name: "AST",
-            targets: ["AST"]),
-        .library(
             name: "Syntax",
             targets: ["Syntax"]),
-    ],
-    dependencies: [
-      .package(
-        url: "https://github.com/yassram/SwiParse.git",
-        from: "1.0.0"),
-      .package(
-        url: "https://github.com/yassram/SwiLex.git",
-        from: "1.0.0"),
     ],
     targets: [
         // Targets are the basic building blocks of a package. A target can
@@ -32,13 +21,11 @@ let package = Package(
         // in this package, and on products in packages this package depends on.
         .target(
             name: "barcon",
-            dependencies: ["AST", "Syntax"]),
-        .target(
-            name: "AST",
-            dependencies: []),
+            dependencies: ["Syntax"]),
         .target(
             name: "Syntax",
-            dependencies: ["SwiLex", "SwiParse"]),
+            dependencies: [],
+            exclude: ["Parser.citron"]),
         .testTarget(
             name: "barconTests",
             dependencies: ["barcon"]),
