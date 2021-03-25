@@ -20,7 +20,5 @@ clean:
 
 ${GRAMMAR}.swift: ${CITRON} ${GRAMMAR}.citron
 	rm -f $@
-	if ${CITRON} ${GRAMMAR}.citron -o $@ 2>&1 \
-	  | grep -E -v '[0-9]+ parsing conflicts.' ; then \
-	  rm -f $@; exit 1; fi
+	${CITRON} -i ${GRAMMAR}.citron -o $@
 	chmod -w $@
