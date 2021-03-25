@@ -2018,7 +2018,7 @@ the argument passing framework. For example, the constraint "`NTuple` where `N`
 is at least 2" naturally translates into a `where` clause:
 
 ```
-fn TakesAtLeastAPair[Int:$ N](NTuple(N, Int): x) where (N >= 2) { ... }
+fn TakesAtLeastAPair[Int:$ N](NTuple(N, Int): x) where N >= 2 { ... }
 ```
 
 Similarly for now we only have a `where` clause formulation for constraining the
@@ -2027,7 +2027,7 @@ Similarly for now we only have a `where` clause formulation for constraining the
 
 ```
 fn PrintPoint2Or3[NSpacePoint:$ PointT](PointT: p)
-  where (2 <= PointT.N && PointT.N <= 3) { ... }
+  where 2 <= PointT.N, PointT.N <= 3 { ... }
 ```
 
 The same syntax would be used in an interface definition:
@@ -2512,7 +2512,7 @@ and `T1 != T2`".
 **Concern:** Right now this is only easily expressed using `where` clauses.
 
 ```
-fn G[Type:$ T](T: x) -> T where (T != Bool) { return F(x); }
+fn G[Type:$ T](T: x) -> T where T != Bool { return F(x); }
 ```
 
 ### Implicit constraints
@@ -4064,7 +4064,7 @@ Could the interface be defined on the pair of types of the two arguments
 somehow?
 
 ```
-fn F(A: a, B: b, ..., Addable(A, B):$ T) where (A, B) : Addable(A, B) {
+fn F(A: a, B: b, ..., Addable(A, B):$ T) where (A, B) as Addable(A, B) {
   ((A, B) as T).DoTheAdd(x, y)
 }
 ```
