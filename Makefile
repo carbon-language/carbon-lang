@@ -7,10 +7,10 @@ CITRON = ${BIN}/citron
 SWIFT_FLAGS =
 
 build: ${GRAMMAR}.swift
-	swift build ${SWIFT_FLAGS} 
+	swift build --enable-test-discovery ${SWIFT_FLAGS} 
 
 test: ${GRAMMAR}.swift
-	swift  test --enable-test-discovery ${SWIFT_FLAGS} 
+	swift test --enable-test-discovery ${SWIFT_FLAGS} 
 
 ${CITRON}: ${CITRON_SRC}/citron.c
 	mkdir -p ${BIN} && ${CC} $^ -o $@
