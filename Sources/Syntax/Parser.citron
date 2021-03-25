@@ -15,7 +15,7 @@
     assert(first.location.fileName == last.location.fileName)
     return SourceLocation(
       fileName: first.location.fileName,
-      span: first.location.span.lowerBound..<last.location.span.upperBound)
+      first.location.span.lowerBound..<last.location.span.upperBound)
   }
 
   fileprivate extension Array where Element == Field {

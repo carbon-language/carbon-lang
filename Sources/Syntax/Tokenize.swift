@@ -153,7 +153,7 @@ public struct Tokens: Sequence {
             .init(kind: TokenKind(matchedKind), text: String(tokenText)),
             location: SourceLocation(
               fileName: sourceFileName,
-              span: tokenLocationStart..<sourceFilePosition))
+              tokenLocationStart..<sourceFilePosition))
         }
       }
     }
