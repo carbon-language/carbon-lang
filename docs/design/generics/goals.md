@@ -83,7 +83,7 @@ We in particular want to support
 [generic programming](https://en.wikipedia.org/wiki/Generic_programming),
 including:
 
--   Containers (arrays, maps, lists)
+-   Containers (arrays, maps, lists), and more complicated data structures like trees and graphs.
 -   Algorithms (sort, search)
 -   Wrappers (optional, variant, expected/result, smart pointers)
 -   Parameterized numeric types (`std::complex<T>`)
