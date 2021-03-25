@@ -1,5 +1,5 @@
-import AST
+import Syntax
 
 func main() {
-  print(greeting)
+  print("hi.")
 }

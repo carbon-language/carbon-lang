@@ -5,7 +5,7 @@ public indirect enum Declaration_ {
   case
     function(FunctionDefinition),
     `struct`(StructDefinition),
-    choice(name: Identifier, alternatives: [(Identifier, Expression)]),
+    choice(name: Identifier, alternatives: [Alternative]),
     variable(name: Identifier, type: Expression, initializer: Expression)
 }
 public typealias Declaration = AST<Declaration_>
@@ -21,11 +21,10 @@ public typealias FunctionDefinition = AST<FunctionDefinition_>
 public typealias MemberDesignator = Identifier
 
 public typealias Alternative = AST<(name: Identifier, payload: TupleLiteral)>
-public enum Member { case name(Identifier), type(Expression) }
 
 public struct StructDefinition {
   public var name: Identifier
-  public var members: [Member]
+  public var members: [VariableDeclaration]
 }
 
 public indirect enum Statement_ {
