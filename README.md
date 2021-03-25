@@ -7,7 +7,6 @@ Swift implementation of executable semantics of
 
 1. Have Swift installed and in your path.
 2. `git submodule update --init`
-3. `eval "$(pyenv -)" && pre-commit install --allow-missing-config`
 
 ## To Build
 
