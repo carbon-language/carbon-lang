@@ -1,5 +1,5 @@
 GRAMMAR = ./Sources/Syntax/Parser
-CC = clang
+CC = cc
 SWIFTC = swiftc
 BIN = ./bin
 CITRON_SRC = ./citron/src
