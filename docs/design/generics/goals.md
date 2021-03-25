@@ -83,7 +83,8 @@ We in particular want to support
 [generic programming](https://en.wikipedia.org/wiki/Generic_programming),
 including:
 
--   Containers (arrays, maps, lists), and more complicated data structures like trees and graphs.
+-   Containers (arrays, maps, lists), and more complicated data structures like
+    trees and graphs.
 -   Algorithms (sort, search)
 -   Wrappers (optional, variant, expected/result, smart pointers)
 -   Parameterized numeric types (`std::complex<T>`)
@@ -114,7 +115,7 @@ This is a case that would use [dynamic dispatch](#dispatch-control).
 
 #### Dependency injection
 
-Similarly, types which only support subclassing for test stubs and mocks, as in
+Types which only support subclassing for test stubs and mocks, as in
 ["dependency injection"](https://en.wikipedia.org/wiki/Dependency_injection),
 should be able to easily migrate to generics. This extends outside the realm of
 testing, allowing general configuration of how dependencies can be satisfied.
@@ -159,7 +160,7 @@ nice to have.
 ### Performance
 
 Generics shall provide at least as good code generation (both code size and
-speed) in all cases over C++ templates.
+execution speed) in all cases over C++ templates.
 [Performance is the top priority for Carbon](../../project/goals.md#performance-critical-software),
 and we expect to use generics pervasively, and so they can't compromise that
 goal in release builds.
@@ -202,7 +203,7 @@ function using only a forward declaration.
 ### Predictability
 
 A general property of generics is they are more predictable than templates. They
-make clear when a type satisfies the requirements of a function, they have a
+make clear when a type satisfies the requirements of a function; they have a
 documented contract. Further, that contract is enforced by the compiler, not
 sensitive to implementation details in the function body. This eases evolution
 by reducing the impact of [Hyrum's law](https://www.hyrumslaw.com/).
@@ -245,10 +246,13 @@ be code bloat) based on code analysis or profiling.
 
 In addition, the user may opt in to using the dynamic strategy in specific
 cases. This could be just to control binary size in cases the user knows are not
-performance sensitive, or it could be to get additional support for operating on
-values with dynamic types. We also anticipate that the user may want to force
-the compiler to use the static strategy in specific cases. This might be to keep
-runtime performance acceptable even when running a development or debug build.
+performance sensitive, or it could be to get the additional capability of
+operating on values with dynamic types. We may need to restrict this in various
+ways to maintain efficiency, like Rust does with object-safe traits.
+
+We also anticipate that the user may want to force the compiler to use the
+static strategy in specific cases. This might be to keep runtime performance
+acceptable even when running a development or debug build.
 
 ### Upgrade path from templates
 
