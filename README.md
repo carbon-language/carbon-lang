@@ -18,5 +18,5 @@ Swift implementation of executable semantics of
 
 ## To work on the project in Xcode
 
-    make build || ls Sources/Syntax/Parser.swift
+    make Sources/Syntax/Parser.swift
     open Package.swift
