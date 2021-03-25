@@ -90,6 +90,12 @@ public struct Token: Hashable {
   let text: String
 }
 
+extension Token: CustomStringConvertible {
+  public var description: String {
+    "Token(.\(kind.value), \(String(reflecting: text)))"
+  }
+}
+
 public struct Tokens: Sequence {
   public init(in sourceText: String, from sourceFileName: String) {
     self.sourceText = sourceText

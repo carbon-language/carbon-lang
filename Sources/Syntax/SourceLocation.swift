@@ -24,6 +24,20 @@ public struct SourceLocation: Hashable {
     = SourceLocation(fileName: "", .start ..< .start)
 }
 
+extension PositionInSourceFile: CustomStringConvertible {
+  public var description: String { "\(line):\(column)" }
+}
+
+extension SourceLocation: CustomStringConvertible, CustomDebugStringConvertible {
+  public var description: String {
+    "\(fileName):\(span.lowerBound):{\(span.lowerBound)-\(span.upperBound)})"
+  }
+  
+  public var debugDescription: String {
+    "SourceLocation(fileName: \(String(reflecting: fileName)), \(span))"
+  }
+}
+
 extension Range {
   func extended(toCover other: Range) -> Self {
     Swift.min(lowerBound, other.lowerBound)
