@@ -2,7 +2,7 @@ name: test
 
 on:
     push:
-      branches: [main]
+      branches: [swift-implementation]
     pull_request:
 
 jobs:
