@@ -2,7 +2,7 @@ import Foundation
 
 typealias TokenCode = CarbonParser.CitronTokenCode
 
-public struct TokenKind {
+public struct TokenKind: Hashable {
   init(_ value: TokenCode) { self.value = value }
   let value: TokenCode
 }
@@ -85,8 +85,11 @@ extension String {
   }
 }
 
-public typealias Token = (
-  kind: TokenKind, content: String, location: SourceLocation)
+public struct Token: Hashable {
+  let kind: TokenKind
+  let text: String
+  let location: SourceLocation
+}
 
 public struct Tokens: Sequence {
   public init(in sourceText: String, from sourceFileName: String) {
@@ -147,9 +150,9 @@ public struct Tokens: Sequence {
              : bestMatchIndex == 0 ? tokenKindForKeyword[String(tokenText)]
              : matchers[bestMatchIndex].nonterminal
         {
-          return (
-            kind: .init(matchedKind), content: String(tokenText),
-            SourceLocation(
+          return .init(
+            kind: TokenKind(matchedKind), text: String(tokenText),
+            location: SourceLocation(
               fileName: sourceFileName,
               span: tokenLocationStart..<sourceFilePosition))
         }

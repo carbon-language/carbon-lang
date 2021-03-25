@@ -12,15 +12,9 @@ Swift implementation of executable semantics of
 
     make build
     
-Note: the first build [may fail](https://github.com/roop/citron/issues/3)
-reporting conflicts in the grammar.  Just build again if this happens.
-
 ## To Test
 
     make test
-
-- Note: the first test [may fail](https://github.com/roop/citron/issues/3)
-reporting conflicts in the grammar.  Just test again if this happens.
 
 ## To work on the project in Xcode
 

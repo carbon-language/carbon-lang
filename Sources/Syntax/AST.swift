@@ -1,6 +1,10 @@
 public typealias AST<Node> = (Node, location: SourceLocation)
 public typealias Identifier = AST<String>
 
+extension Token {
+  var identifier: Identifier { (text, location) }
+}
+
 public indirect enum Declaration_ {
   case
     function(FunctionDefinition),

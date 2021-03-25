@@ -6,9 +6,17 @@
 %class_name CarbonParser
 
 %preface {
+  fileprivate func ... <First, Last>(first: AST<First>, last: AST<Last>)
+    -> SourceLocation
+  {
+    assert(first.location.fileName == last.location.fileName)
+    return SourceLocation(
+      fileName: first.location.fileName,
+      span: first.location.span.lowerBound..<last.location.span.upperBound)
+  }
 }                         
 
-%token_type {(text: String, position: CitronLexerPosition)}
+%token_type Token
 
 %nonterminal_type illegal_character Never
 %nonterminal_type input {[Declaration]}
@@ -26,7 +34,7 @@
 %nonterminal_type statement_list {[Statement]}
 %nonterminal_type return_type TypeExpression
 %nonterminal_type function_definition FunctionDefinition
-%nonterminal_type function_declaration FunctionDeclaration
+%nonterminal_type function_declaration FunctionDefinition
 %nonterminal_type variable_declaration {(name: String, type: Expression)}
 %nonterminal_type member Member
 %nonterminal_type member_list {[Member]}
@@ -49,11 +57,12 @@ input ::= declaration_list(d). {d}
 pattern ::= expression(e).     {e}
 
 expression ::= IDENTIFIER(i).  
-  { .variable(i.text) }
+  { (.variable(i.identifier), i.location) }
 expression ::= expression(t) member_designator(m).
-  { .getField(target: t, fieldName: m) }
-expression ::= expression(t) LEFT_SQUARE_BRACKET expression(i) RIGHT_SQUARE_BRACKET.
-  { .index(target: t, offset: i } 
+  { (.getField(target: t, fieldName: m), t...m) }
+expression ::= expression(t)
+  LEFT_SQUARE_BRACKET expression(i) RIGHT_SQUARE_BRACKET(b).
+  { (.index(target: t, offset: i), t...b) } 
 expression ::= expression(t) COLON Identifier(i).
   { .patternVariable(name: i, type: t) }
 expression ::= Integer_literal(i).

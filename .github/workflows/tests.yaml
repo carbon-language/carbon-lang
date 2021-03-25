@@ -12,7 +12,9 @@ jobs:
         runs-on: macOS-latest
         steps:
         - name: Checkout
-          uses: actions/checkout@v1
+          uses: actions/checkout@v2
+          with:
+            submodules: true
         - name: Xcode Version
           run: |
             sudo xcode-select -s /Applications/Xcode_12.app
@@ -21,13 +23,13 @@ jobs:
         - name: Swift Version
           run: swift --version
         - name: Build (Debug)
-          run: swift build -v -c debug
+          run: make build SWIFT_FLAGS="-v -c debug"
         - name: Build (Release)
-          run: swift build -v -c release
+          run: make build SWIFT_FLAGS="-v -c release"
         - name: Test (Debug)
-          run: swift test -v --configuration debug --enable-test-discovery
+          run: make test SWIFT_FLAGS="-v -c debug"
         - name: Test (Release)
-          run: swift test -v --configuration release -Xswiftc -enable-testing --enable-test-discovery
+          run: make test SWIFT_FLAGS="-v -c release -Xswiftc -enable-testing"
 
 
     linux-swift-53:
@@ -36,17 +38,19 @@ jobs:
         container: swift:5.3-focal
         steps:
         - name: Checkout
-          uses: actions/checkout@v1
+          uses: actions/checkout@v2
+          with:
+            submodules: true
         - name: Swift Version
           run: swift --version
         - name: Build (Debug)
-          run: swift build -v -c debug --enable-test-discovery
+          run: make build SWIFT_FLAGS="-v -c debug"
         - name: Build (Release)
-          run: swift build -v -c release --enable-test-discovery
+          run: make build SWIFT_FLAGS="-v -c release"
         - name: Test (Debug)
-          run: swift test -v --configuration debug --enable-test-discovery
+          run: make test SWIFT_FLAGS="-v -c debug"
         - name: Test (Release)
-          run: swift test -v --configuration release -Xswiftc -enable-testing --enable-test-discovery
+          run: make test SWIFT_FLAGS="-v -c release  -Xswiftc -enable-testing"
 
     windows-swift-latest:
         name: Windows (Development Snapshot)
@@ -56,6 +60,8 @@ jobs:
 
             - name: Checkout
               uses: actions/checkout@v2
+              with:
+                submodules: true
 
             - name: Install swift-DEVELOPMENT-SNAPSHOT-2020-11-26
               run: |
@@ -78,10 +84,10 @@ jobs:
             - name: Swift Version
               run: swift --version
             - name: Build (Debug)
-              run: swift build -v -c debug
+              run: make build SWIFT_FLAGS="-v -c debug"
             - name: Build (Release)
-              run: swift build -v -c release
+              run: make build SWIFT_FLAGS="-v -c release"
             - name: Test (Debug)
-              run: swift test -v --configuration debug
+              run: make test SWIFT_FLAGS="-v -c debug"
             - name: Test (Release)
-              run: swift test -v --configuration release -Xswiftc -enable-testing
+              run: make test SWIFT_FLAGS="-v -c release -Xswiftc -enable-testing"
