@@ -30,7 +30,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Learn from others](#learn-from-others)
     -   [Interface abstraction](#interface-abstraction)
     -   [Interop and evolution](#interop-and-evolution)
--   [Non-Goals / Caveats / Limitations / Out of scope](#non-goals--caveats--limitations--out-of-scope)
+-   [Non-goals, caveats, limitations, and out-of-scope issues](#non-goals-caveats-limitations-and-out-of-scope-issues)
 
 <!-- tocstop -->
 
@@ -100,7 +100,6 @@ Interfaces in C++ are often represented by abstract base classes. Generics
 should offer an alternative that does not rely on inheritance. This means looser
 coupling and none of the problems of multiple inheritance. In fact,
 [Sean Parent](https://sean-parent.stlab.cc/papers-and-presentations/#better-code-runtime-polymorphism)
-
 (and others) advocate for runtime polymorphism patterns in C++ that avoid
 inheritance, since it can cause runtime performance, correctness, and code
 maintenance problems in some situations. Carbon generics provide an alternative
@@ -365,7 +364,7 @@ interfaces with name conflicts together on a single type. Contrast this with
 Swift's protocols, where interfaces with associated types that have the same
 name are aliased.
 
-## Non-Goals / Caveats / Limitations / Out of scope
+## Non-goals, caveats, limitations, and out-of-scope issues
 
 What are we **not** doing with generics, particularly things that some other
 languages do?
