@@ -2847,17 +2847,6 @@ interface Foo {
 }
 ```
 
-These forms of `where` clauses are forbidden:
-
-| Rule                                     | Example forbidden `where` form           |
-| ---------------------------------------- | ---------------------------------------- |
-| must have a dot on left of `==`          | `var Z:$ B where B == ...`               |
-| must have a single dot on left of `==`   | `var Z:$ B where B.X.Y == ...`           |
-| `A` ≠ `B` on left of `==`                | `var Z:$ B where A.X == ...`             |
-| no two constraints on same member        | `var Z:$ B where B.X == ..., B.X == ...` |
-| right side can't refer to members of `B` | `var Z:$ B where B.X == B.Y`             |
-| no forward reference                     | `var Z:$ B where B.X == C`               |
-
 These forms of `where` clauses are allowed and can be rewritten into the
 argument passing form:
 
@@ -2870,6 +2859,17 @@ argument passing form:
 
 Note that the second example would not be allowed if `A.T.U` had type `Foo`, to
 avoid non-terminating recursion.
+
+These forms of `where` clauses are forbidden:
+
+| Rule                                     | Example forbidden `where` form           |
+| ---------------------------------------- | ---------------------------------------- |
+| must have a dot on left of `==`          | `var Z:$ B where B == ...`               |
+| must have a single dot on left of `==`   | `var Z:$ B where B.X.Y == ...`           |
+| `A` ≠ `B` on left of `==`                | `var Z:$ B where A.X == ...`             |
+| no two constraints on same member        | `var Z:$ B where B.X == ..., B.X == ...` |
+| right side can't refer to members of `B` | `var Z:$ B where B.X == B.Y`             |
+| no forward reference                     | `var Z:$ B where B.X == C`               |
 
 There is some room to rewrite other `where` expressions into these forms. One
 simple example is allowing the two sides of the `==` to be swapped, but more
