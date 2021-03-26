@@ -2872,8 +2872,9 @@ These forms of `where` clauses are forbidden:
 | `var Z:$ B where B.X == C`               | no forward reference                     |
 
 There is some room to rewrite other `where` expressions into allowed argument
-passing forms. One simple example is allowing the two sides of the `==` to be
-swapped, but more complicated rewrites may be possible. For example,
+passing forms. One simple example is allowing the two sides of the `==` in one
+of the allowed forms to be swapped, but more complicated rewrites may be
+possible. For example,
 
 ```
 var Z:$ B where B.X == B.Y;
