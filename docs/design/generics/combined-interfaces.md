@@ -2862,14 +2862,14 @@ avoid non-terminating recursion.
 
 These forms of `where` clauses are forbidden:
 
-| Rule                                     | Example forbidden `where` form           |
+| Example forbidden `where` form           | Rule                                     |
 | ---------------------------------------- | ---------------------------------------- |
-| must have a dot on left of `==`          | `var Z:$ B where B == ...`               |
-| must have a single dot on left of `==`   | `var Z:$ B where B.X.Y == ...`           |
-| `A` ≠ `B` on left of `==`                | `var Z:$ B where A.X == ...`             |
-| no two constraints on same member        | `var Z:$ B where B.X == ..., B.X == ...` |
-| right side can't refer to members of `B` | `var Z:$ B where B.X == B.Y`             |
-| no forward reference                     | `var Z:$ B where B.X == C`               |
+| `var Z:$ B where B == ...`               | must have a dot on left of `==`          |
+| `var Z:$ B where B.X.Y == ...`           | must have a single dot on left of `==`   |
+| `var Z:$ B where A.X == ...`             | `A` ≠ `B` on left of `==`                |
+| `var Z:$ B where B.X == ..., B.X == ...` | no two constraints on same member        |
+| `var Z:$ B where B.X == B.Y`             | right side can't refer to members of `B` |
+| `var Z:$ B where B.X == C`               | no forward reference                     |
 
 There is some room to rewrite other `where` expressions into allowed argument
 passing forms. One simple example is allowing the two sides of the `==` to be
