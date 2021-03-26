@@ -7,6 +7,7 @@
 #include <cassert>
 #include <iostream>
 #include <iterator>
+#include <list>
 #include <map>
 #include <optional>
 #include <utility>
@@ -83,6 +84,9 @@ auto CopyVal(const Value* val, int line_num) -> const Value* {
       return MakeFunVal(*val->u.fun.name, val->u.fun.param, val->u.fun.body);
     case ValKind::PtrV:
       return MakePtrVal(val->u.ptr);
+    case ValKind::ContinuationV:
+      // Copying a continuation is "shallow".
+      return val;
     case ValKind::FunctionTV:
       return MakeFunTypeVal(CopyVal(val->u.fun_type.param, line_num),
                             CopyVal(val->u.fun_type.ret, line_num));
@@ -99,6 +103,8 @@ auto CopyVal(const Value* val, int line_num) -> const Value* {
       return MakeVarTypeVal(*val->u.var_type);
     case ValKind::AutoTV:
       return MakeAutoTypeVal();
+    case ValKind::ContinuationTV:
+      return MakeContinuationTypeVal();
     case ValKind::TupleTV: {
       auto new_fields = new VarValues();
       for (auto& field : *val->u.tuple_type.fields) {
@@ -199,8 +205,10 @@ void PrintState(std::ostream& out) {
   PrintStack(state->stack, out);
   out << std::endl << "heap: ";
   PrintHeap(state->heap, out);
-  out << std::endl << "env: ";
-  PrintEnv(CurrentEnv(state), out);
+  if (!state->stack.IsEmpty() && !state->stack.Top()->scopes.IsEmpty()) {
+    out << std::endl << "env: ";
+    PrintEnv(CurrentEnv(state), out);
+  }
   out << std::endl << "}" << std::endl;
 }
 
@@ -242,6 +250,20 @@ auto ValToPtr(const Value* v, int line_num) -> Address {
   }
 }
 
+// Returns *continuation represented as a list of frames.
+//
+// - Precondition: continuation->tag == ValKind::ContinuationV.
+auto ContinuationToVector(const Value* continuation, int sourceLocation)
+    -> std::vector<Frame*> {
+  if (continuation->tag == ValKind::ContinuationV) {
+    return *continuation->u.continuation.stack;
+  } else {
+    std::cerr << sourceLocation << ": runtime error: expected an integer"
+              << std::endl;
+    exit(-1);
+  }
+}
+
 auto EvalPrim(Operator op, const std::vector<const Value*>& args, int line_num)
     -> const Value* {
   switch (op) {
@@ -278,7 +300,7 @@ void InitGlobals(std::list<Declaration>* fs) {
 auto ChoiceDeclaration::InitGlobals(Env& globals) const -> void {
   auto alts = new VarValues();
   for (auto kv : alternatives) {
-    auto t = ToType(line_num, InterpExp(Env(), kv.second));
+    auto t = ToType(this->line_num, InterpExp(Env(), kv.second));
     alts->push_back(make_pair(kv.first, t));
   }
   auto ct = MakeChoiceTypeVal(name, alts);
@@ -496,7 +518,7 @@ auto PatternMatch(const Value* p, const Value* v, Env env,
 void PatternAssignment(const Value* pat, const Value* val, int line_num) {
   switch (pat->tag) {
     case ValKind::PtrV:
-      state->heap[ValToPtr(pat, line_num)] = val;
+      state->heap[ValToPtr(pat, line_num)] = CopyVal(val, line_num);
       break;
     case ValKind::TupleV: {
       switch (val->tag) {
@@ -618,6 +640,7 @@ void StepLvalue() {
     case ExpressionKind::TypeT:
     case ExpressionKind::FunctionT:
     case ExpressionKind::AutoT:
+    case ExpressionKind::ContinuationT:
     case ExpressionKind::PatternVariable: {
       frame->todo.Pop();
       frame->todo.Push(MakeExpToLvalAct());
@@ -743,6 +766,12 @@ void StepExp() {
       act->pos++;
       break;
     }
+    case ExpressionKind::ContinuationT: {
+      const Value* v = MakeContinuationTypeVal();
+      frame->todo.Pop(1);
+      frame->todo.Push(MakeValAct(v));
+      break;
+    }
   }  // switch (exp->tag)
 }
 
@@ -826,10 +855,14 @@ void StepStmt() {
       break;
     case StatementKind::Block: {
       if (act->pos == -1) {
-        auto* scope = new Scope(CurrentEnv(state), std::list<std::string>());
-        frame->scopes.Push(scope);
-        frame->todo.Push(MakeStmtAct(stmt->u.block.stmt));
-        act->pos++;
+        if (stmt->u.block.stmt) {
+          auto* scope = new Scope(CurrentEnv(state), {});
+          frame->scopes.Push(scope);
+          frame->todo.Push(MakeStmtAct(stmt->u.block.stmt));
+          act->pos++;
+        } else {
+          frame->todo.Pop();
+        }
       } else {
         Scope* scope = frame->scopes.Top();
         KillScope(stmt->line_num, scope);
@@ -875,6 +908,43 @@ void StepStmt() {
         frame->todo.Push(MakeStmtAct(stmt->u.sequence.next));
       }
       frame->todo.Push(MakeStmtAct(stmt->u.sequence.stmt));
+      break;
+    case StatementKind::Continuation: {
+      // Create a continuation object by creating a frame similar the
+      // way one is created in a function call.
+      Scope* scope = new Scope(CurrentEnv(state), std::list<std::string>());
+      Stack<Scope*> scopes;
+      scopes.Push(scope);
+      Stack<Action*> todo;
+      todo.Push(
+          MakeStmtAct(MakeReturn(stmt->line_num, MakeUnit(stmt->line_num))));
+      todo.Push(MakeStmtAct(stmt->u.continuation.body));
+      Frame* continuation_frame = new Frame("__continuation", scopes, todo);
+      Address continuation_address =
+          AllocateValue(MakeContinuation({continuation_frame}));
+      // Store the continuation's address in the frame.
+      continuation_frame->continuation = continuation_address;
+      // Bind the continuation object to the continuation variable
+      frame->scopes.Top()->env.Set(*stmt->u.continuation.continuation_variable,
+                                   continuation_address);
+      // Pop the continuation statement.
+      frame->todo.Pop();
+      break;
+    }
+    case StatementKind::Run:
+      // Evaluate the argument of the run statement.
+      frame->todo.Push(MakeExpAct(stmt->u.run.argument));
+      act->pos++;
+      break;
+    case StatementKind::Await:
+      // Pause the current continuation
+      frame->todo.Pop();
+      std::vector<Frame*> paused;
+      do {
+        paused.push_back(state->stack.Pop());
+      } while (!paused.back()->IsContinuation());
+      // Update the continuation with the paused stack.
+      state->heap[paused.back()->continuation] = MakeContinuation(paused);
       break;
   }
 }
@@ -1156,6 +1226,7 @@ void HandleValue() {
         case ExpressionKind::BoolT:
         case ExpressionKind::TypeT:
         case ExpressionKind::AutoT:
+        case ExpressionKind::ContinuationT:
           std::cerr << "internal error, bad expression context in handle_value"
                     << std::endl;
           exit(-1);
@@ -1311,6 +1382,25 @@ void HandleValue() {
           frame->todo.Push(MakeValAct(ret_val));
           break;
         }
+        case StatementKind::Run: {
+          frame->todo.Pop(2);
+          // Push an expression statement action to ignore the result
+          // value from the continuation.
+          Action* ignore_result = MakeStmtAct(
+              MakeExpStmt(stmt->line_num, MakeUnit(stmt->line_num)));
+          ignore_result->pos = 0;
+          frame->todo.Push(ignore_result);
+          // Push the continuation onto the current stack.
+          std::vector<Frame*> continuation_vector =
+              ContinuationToVector(val_act->u.val, stmt->line_num);
+          for (auto frame_iter = continuation_vector.rbegin();
+               frame_iter != continuation_vector.rend(); ++frame_iter) {
+            state->stack.Push(*frame_iter);
+          }
+          break;
+        }
+        case StatementKind::Continuation:
+        case StatementKind::Await:
         case StatementKind::Block:
         case StatementKind::Sequence:
         case StatementKind::Break:
