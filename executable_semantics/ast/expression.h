@@ -19,6 +19,7 @@ enum class ExpressionKind {
   GetField,
   Index,
   IntT,
+  ContinuationT,  // The type of a continuation value.
   Integer,
   PatternVariable,
   PrimitiveOp,
@@ -100,6 +101,8 @@ auto MakeGetField(int line_num, Expression* exp, std::string field)
 auto MakeTuple(int line_num,
                std::vector<std::pair<std::string, Expression*>>* args)
     -> Expression*;
+// Create an AST node for an empty tuple.
+auto MakeUnit(int line_num) -> Expression*;
 auto MakeIndex(int line_num, Expression* exp, Expression* i) -> Expression*;
 
 auto MakeTypeType(int line_num) -> Expression*;
@@ -108,6 +111,9 @@ auto MakeBoolType(int line_num) -> Expression*;
 auto MakeFunType(int line_num, Expression* param, Expression* ret)
     -> Expression*;
 auto MakeAutoType(int line_num) -> Expression*;
+// Returns a Continuation type AST node at the given source location,
+// which is the type of a continuation value.
+auto MakeContinuationType(int line_num) -> Expression*;
 
 void PrintExp(const Expression* exp);
 

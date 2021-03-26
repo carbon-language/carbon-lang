@@ -22,7 +22,10 @@ enum class StatementKind {
   While,
   Break,
   Continue,
-  Match
+  Match,
+  Continuation,  // Create a first-class continuation.
+  Run,           // Run a continuation to the next await or until it finishes..
+  Await,         // Pause execution of the continuation.
 };
 
 struct Statement {
@@ -69,6 +72,15 @@ struct Statement {
       std::list<std::pair<Expression*, Statement*>>* clauses;
     } match_stmt;
 
+    struct {
+      std::string* continuation_variable;
+      Statement* body;
+    } continuation;
+
+    struct {
+      Expression* argument;
+    } run;
+
   } u;
 };
 
@@ -86,6 +98,22 @@ auto MakeContinue(int line_num) -> Statement*;
 auto MakeMatch(int line_num, Expression* exp,
                std::list<std::pair<Expression*, Statement*>>* clauses)
     -> Statement*;
+// Returns an AST node for a continuation statement give its line number and
+// contituent parts.
+//
+//     __continuation <continuation_variable> {
+//       <body>
+//     }
+auto MakeContinuationStatement(int line_num, std::string continuation_variable,
+                               Statement* body) -> Statement*;
+// Returns an AST node for a run statement give its line number and argument.
+//
+//     __run <argument>;
+auto MakeRun(int line_num, Expression* argument) -> Statement*;
+// Returns an AST node for an await statement give its line number.
+//
+//     __await;
+auto MakeAwait(int line_num) -> Statement*;
 
 void PrintStatement(Statement*, int);
 
