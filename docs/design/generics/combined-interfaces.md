@@ -2847,7 +2847,7 @@ interface Foo {
 }
 ```
 
-These forms of `where` clauses are allowed and can be rewritten into the
+These forms of `where` clauses are allowed because we can rewrite them into the
 argument passing form:
 
 | `where` form                   | argument passing form   |
