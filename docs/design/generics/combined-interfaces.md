@@ -2858,7 +2858,8 @@ These forms of `where` clauses are forbidden:
 | right side can't refer to members of `B` | `var Z:$ B where B.X == B.Y`             |
 | no forward reference                     | `var Z:$ B where B.X == C`               |
 
-These forms of `where` clauses can be rewritten:
+These forms of `where` clauses are allowed and can be rewritten into the
+argument passing form:
 
 | `where` form                   | argument passing form   |
 | ------------------------------ | ----------------------- |
