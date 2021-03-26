@@ -2849,14 +2849,14 @@ interface Foo {
 
 These forms of `where` clauses are forbidden:
 
-| `where` form                             | Problem                                  |
+| Rule                                     | Example forbidden `where` form           |
 | ---------------------------------------- | ---------------------------------------- |
-| `var Z:$ B where B == ...`               | must have a dot on left of `==`          |
-| `var Z:$ B where B.X.Y == ...`           | must have a single dot on left of `==`   |
-| `var Z:$ B where A.X == ...`             | `A != B`                                 |
-| `var Z:$ B where B.X == ..., B.X == ...` | two constraints on same member           |
-| `var Z:$ B where B.X == B.Y`             | right side can't refer to members of `B` |
-| `var Z:$ B where B.X == C`               | no forward reference                     |
+| must have a dot on left of `==`          | `var Z:$ B where B == ...`               |
+| must have a single dot on left of `==`   | `var Z:$ B where B.X.Y == ...`           |
+| `A` ≠ `B` on left of `==`                | `var Z:$ B where A.X == ...`             |
+| two constraints on same member           | `var Z:$ B where B.X == ..., B.X == ...` |
+| right side can't refer to members of `B` | `var Z:$ B where B.X == B.Y`             |
+| no forward reference                     | `var Z:$ B where B.X == C`               |
 
 These forms of `where` clauses can be rewritten:
 
