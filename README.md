@@ -20,3 +20,6 @@ Swift implementation of executable semantics of
 
     make Sources/Syntax/Parser.swift
     open Package.swift
+
+Note that if you modify Sources/Parser.citron or when you pull new changes from
+GitHub, you'll need to run the `make` command above again before proceeding.

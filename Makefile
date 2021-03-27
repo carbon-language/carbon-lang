@@ -1,4 +1,7 @@
-GRAMMAR = ./Sources/Syntax/Parser
+# This Makefile is a thin layer on top of Swift package manager that handles the
+# building of the citron parser generator binary and the generation of
+# Sources/Parser.swift from Sources/Parser.citron.
+GRAMMAR = ./Sources/Parser
 CC = cc
 SWIFTC = swiftc
 BIN = ./bin

@@ -1,39 +1,39 @@
-public struct PositionInSourceFile: Comparable, Hashable {
-  public var line: Int
-  public var column: Int
+struct PositionInSourceFile: Comparable, Hashable {
+  var line: Int
+  var column: Int
 
-  public static func < (l: Self, r: Self) -> Bool {
+  static func < (l: Self, r: Self) -> Bool {
     (l.line, l.column) < (r.line, r.column)
   }
 
-  public static let start = Self(line: 1, column: 1)
+  static let start = Self(line: 1, column: 1)
 }
 
-public typealias RangeOfSourceFile = Range<PositionInSourceFile>
+typealias RangeOfSourceFile = Range<PositionInSourceFile>
 
-public struct SourceLocation: Hashable {
+struct SourceLocation: Hashable {
   init(fileName: String, _ span: RangeOfSourceFile) {
     self.fileName = fileName
     self.span = span
   }
 
-  public let fileName: String
-  public let span: RangeOfSourceFile
+  let fileName: String
+  let span: RangeOfSourceFile
 
-  public static var empty
+  static var empty
     = SourceLocation(fileName: "", .start ..< .start)
 }
 
 extension PositionInSourceFile: CustomStringConvertible {
-  public var description: String { "\(line):\(column)" }
+  var description: String { "\(line):\(column)" }
 }
 
 extension SourceLocation: CustomStringConvertible, CustomDebugStringConvertible {
-  public var description: String {
+  var description: String {
     "\(fileName):\(span.lowerBound):{\(span.lowerBound)-\(span.upperBound)})"
   }
   
-  public var debugDescription: String {
+  var debugDescription: String {
     "SourceLocation(fileName: \(String(reflecting: fileName)), \(span))"
   }
 }

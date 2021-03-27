@@ -1,5 +1,5 @@
 import XCTest
-@testable import Syntax
+@testable import CarbonInterpreter
 
 final class TokenizerTests: XCTestCase {
   func testExample() {

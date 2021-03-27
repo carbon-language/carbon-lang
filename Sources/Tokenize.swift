@@ -2,7 +2,7 @@ import Foundation
 
 typealias TokenCode = CarbonParser.CitronTokenCode
 
-public struct TokenKind: Hashable {
+struct TokenKind: Hashable {
   init(_ value: TokenCode) { self.value = value }
   let value: TokenCode
 }
@@ -85,37 +85,37 @@ extension String {
   }
 }
 
-public struct Token: Hashable {
+struct Token: Hashable {
   let kind: TokenKind
   let text: String
 }
 
 extension Token: CustomStringConvertible {
-  public var description: String {
+  var description: String {
     "Token(.\(kind.value), \(String(reflecting: text)))"
   }
 }
 
-public struct Tokens: Sequence {
-  public init(in sourceText: String, from sourceFileName: String) {
+struct Tokens: Sequence {
+  init(in sourceText: String, from sourceFileName: String) {
     self.sourceText = sourceText
     self.sourceFileName = sourceFileName
   }
   
-  public func makeIterator() -> Iterator {
+  func makeIterator() -> Iterator {
     .init(over: sourceText, from: sourceFileName)
   }
 
   /// The token streams's iteration state and producer.
-  public struct Iterator: IteratorProtocol {
-    public init(over sourceText: String, from sourceFileName: String) {
+  struct Iterator: IteratorProtocol {
+    init(over sourceText: String, from sourceFileName: String) {
       self.sourceText = sourceText
       textPosition = sourceText.startIndex
       sourceUTF16Length = sourceText.utf16.count
       self.sourceFileName = sourceFileName
     }
 
-    public mutating func next() -> AST<Token>? {
+    mutating func next() -> AST<Token>? {
       while true {
         let remainingUTF16 = NSRange(
           location: utf16Offset, length: sourceUTF16Length - utf16Offset)
