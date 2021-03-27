@@ -728,6 +728,57 @@ var Int: i = F(3);
 var String: s = F("string");
 ```
 
+In general we should support the same kinds of declarations in a
+`structural interface` definitions as in an `interface`. Generally speaking
+declarations in one kind of interface make sense in the other, and there is an
+anology between them. If an `interface` `I` has (non-`alias`) declarations `X`,
+`Y`, and `Z`, like so:
+
+```
+interface I {
+  X;
+  Y;
+  Z;
+}
+```
+
+(Here, `X` could be something like `method (Self: this) F()`.)
+
+Then a type implementing `I` would have `impl I` with definitions for `X`, `Y`,
+and `Z`, as in:
+
+```
+struct ImplementsI {
+  // ...
+  impl I {
+    X { ... }
+    Y { ... }
+    Z { ... }
+  }
+}
+```
+
+But the corresponding `structural interface`, `S`:
+
+```
+interface S {
+  X;
+  Y;
+  Z;
+}
+```
+
+would match any type with definitions for `X`, `Y`, and `Z` directly:
+
+```
+struct ImplementsS {
+  // ...
+  X { ... }
+  Y { ... }
+  Z { ... }
+}
+```
+
 ### Subsumption
 
 Given a generic type `T` with type-type `I1`, it may be implicitly cast to a
