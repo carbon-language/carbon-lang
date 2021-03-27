@@ -28,6 +28,8 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [Combining interfaces by adding type-types](#combining-interfaces-by-adding-type-types)
 -   [Interface requiring other interfaces](#interface-requiring-other-interfaces)
     -   [Interface extension](#interface-extension)
+        -   [Covariant refinement](#covariant-refinement)
+        -   [Diamond dependency issue](#diamond-dependency-issue)
     -   [Use case: overload resolution](#use-case-overload-resolution)
 -   [Type compatibility](#type-compatibility)
 -   [Adapting types](#adapting-types)
@@ -1100,6 +1102,9 @@ are marked as `upcoming` or `deprecated` as in
 practice, since interface extension is a very closely coupled relationship, but
 this may be something we will have to revisit in the future.
 
+**Note:** This feature can be generalized to support implementing a
+`structural interface`. This provides a tool useful for [evolution](#evolution).
+
 **Concern:** Having both `extends` and [`extend`](#external-impl) with different
 meanings is going to be confusing. One should be renamed.
 
@@ -1134,6 +1139,8 @@ interface PreferredConversion {
   extends ConvertibleTo(AssociatedType);
 }
 ```
+
+#### Covariant refinement
 
 **Open question:** Can we redefine associated types in the refined interface as
 long as the new definition is compatible but more specific ("covariance")? Here,
@@ -1183,9 +1190,15 @@ interface BidirectionalContainer {
 }
 ```
 
-**Diamond dependency issue:** Since types can implement interfaces at most once,
-we need to specify what happens in when a type implements interfaces `D1` and
-`D2` both of which extend `B`.
+**Open question:** We may want to support refinement of other items as well,
+such as methods. This would be part of matching the features of C++ `class`
+inheritance.
+
+#### Diamond dependency issue
+
+Since types can implement interfaces at most once, we need to specify what
+happens in when a type implements interfaces `D1` and `D2` both of which extend
+`B`.
 
 ```
 interface B {
