@@ -1102,8 +1102,12 @@ are marked as `upcoming` or `deprecated` as in
 practice, since interface extension is a very closely coupled relationship, but
 this may be something we will have to revisit in the future.
 
-**Note:** This feature can be generalized to support implementing a
-`structural interface`. This provides a tool useful for [evolution](#evolution).
+**Note:** This feature should be generalized to support implementing a
+`structural interface`. The `impl` block would include definitions for any names
+defined by the structural interface, and the result would be that the type
+implements any interfaces that the structural interface requires (assuming this
+doesn't leave any of those interface's requirements unimplemented). This
+provides a tool useful for [evolution](#evolution).
 
 **Concern:** Having both `extends` and [`extend`](#external-impl) with different
 meanings is going to be confusing. One should be renamed.
