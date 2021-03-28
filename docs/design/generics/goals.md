@@ -10,8 +10,11 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 ## Table of contents
 
--   [Definition](#definition)
-    -   [Semantics](#semantics)
+-   [Background](#background)
+    -   [Definition of generics](#definition-of-generics)
+    -   [Generic parameters](#generic-parameters)
+    -   [Interfaces](#interfaces)
+    -   [Relationship to templates](#relationship-to-templates)
 -   [Goals](#goals)
     -   [Use cases](#use-cases)
         -   [Generic programming](#generic-programming)
@@ -28,13 +31,15 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Coherence](#coherence)
     -   [No novel name lookup](#no-novel-name-lookup)
     -   [Learn from others](#learn-from-others)
-    -   [Interface abstraction](#interface-abstraction)
+    -   [Interfaces are nominal](#interfaces-are-nominal)
     -   [Interop and evolution](#interop-and-evolution)
 -   [Non-goals, caveats, limitations, and out-of-scope issues](#non-goals-caveats-limitations-and-out-of-scope-issues)
 
 <!-- tocstop -->
 
-## Definition
+## Background
+
+### Definition of generics
 
 C++ supports
 [parametric polymorphism](https://en.wikipedia.org/wiki/Parametric_polymorphism)
@@ -50,11 +55,11 @@ means that the body of a function can be type checked when it is defined without
 any information from the call site, such as the actual argument values of
 generic parameters. This is accomplished by using
 [bounded parametric polymorphism](https://en.wikipedia.org/wiki/Parametric_polymorphism#Bounded_parametric_polymorphism)
-instead of duck/structural typing. This means the legal arguments and the legal
-uses of a parameter are both goverened by explicit bounds on the parameter in a
-generic function's signature.
+instead of compile-time duck typing. This means the legal arguments and the
+legal uses of a parameter are both goverened by explicit bounds on the parameter
+in a generic function's signature.
 
-### Semantics
+### Generic parameters
 
 A generic function (or type) will take some "generic parameters", which will
 frequently be types, and in some cases will be implicit / inferred from the
@@ -66,6 +71,60 @@ that the type must be movable and have a static size. A sort function might
 apply to any array whose elements are comparable and movable. A constraint might
 involve multiple generic parameters. For example, a merge function might apply
 to two arbitrary containers so long as their elements have the same type.
+
+### Interfaces
+
+We need some way to express the bounds on a generic type parameter. In Carbon we
+express these "type constraints" by saying we restrict to types that implement
+specific _interfaces_. Interfaces describe an API a type could implement. For
+example it might specify a set of functions, including names and signatures. A
+type implementing an interface may be passed as a generic type argument to a
+function that has that interface as a requirement of its generic type parameter.
+And then the functions defined in the interface may be called in the body of the
+function. Further, interfaces have names that allow them to be reused.
+
+This is much like these compile-time and run-time constructs from other
+programming languages:
+
+-   [Rust's traits](https://doc.rust-lang.org/book/ch10-02-traits.html)
+-   [Swift's protocols](https://docs.swift.org/swift-book/LanguageGuide/Protocols.html)
+-   [Java interfaces](<https://en.wikipedia.org/wiki/Interface_(Java)>)
+-   [C++ concepts](<https://en.wikipedia.org/wiki/Concepts_(C%2B%2B)>)
+    (compile-time only)
+-   [Abstract base classes](<https://en.wikipedia.org/wiki/Class_(computer_programming)#Abstract_and_concrete>)
+    in C++, etc. (run-time only)
+-   [Go interfaces](https://gobyexample.com/interfaces) (run-time only)
+
+In addition to specifying the methods available on a type, we may in the future
+expand the role of interfaces to allow other type constraints such as on size,
+prefix of the data layout, specified method implementations, tests that must
+pass, etc. This might be part of making interfaces as expressive as classes, as
+part of a strategy to migrate to a future version of Carbon that uses interfaces
+instead of rather than in addition to standard inheritance-and-classes
+object-oriented language support. For the moment, though, this is out of scope.
+
+### Relationship to templates
+
+The question of whether Carbon has direct support for templates is out of scope
+for this document. The generics design is not completely separate from
+templates, so it is written as if Carbon will have its own templating system. It
+is assumed to be similar to C++ templates with some specific changes:
+
+-   It may have some limitations to be more compatible with generics, much like
+    how we [restrict overloading](#generics-instead-of-open-overloading) below.
+-   We likely will have a different method of selecting between different
+    template instantiations, since SFINAE makes it difficult to deliver high
+    quality compiler diagnostics.
+
+We assume Carbon will have templates for a few different reasons:
+
+-   Carbon generics will definitely have to interact with _C++_ templates, and
+    many of the issues will be similar.
+-   We want to leave room in the design for templates, since it seems like it
+    would be easier to remove templates if they are not pulling their weight
+    than figure out how to add them in if they turn out to be needed.
+-   We may want to have templates in Carbon as a temporary measure, to make it
+    easier for users to transition off of C++ templates.
 
 ## Goals
 
@@ -154,8 +213,10 @@ generics such as
 We expect to address those use cases with metaprogramming or templates in
 Carbon. We will also not require Carbon generics to support
 [expression templates](https://en.wikipedia.org/wiki/Expression_templates) or
-[variadics](https://en.wikipedia.org/wiki/Variadic_function), but they would be
-nice to have.
+[variadics](https://en.wikipedia.org/wiki/Variadic_function), those are both
+non-goals. It would be fine for our generics system to support these features,
+but they won't drive any accommodation in the generics design, at least until we
+have some resolution about templates in Carbon.
 
 ### Performance
 
@@ -287,8 +348,31 @@ generic code. This gives us these additional principles:
 ### Coherence
 
 Also, we want the generics system to have the _coherence_ property. This means
-that the behavior of any type is consistent independent of context, such as the
-libraries imported into a given file or being inside a generic function.
+that there is a single answer to the question:
+
+> What is the implementation of this interface for this type, if any?
+
+independent of context, such as the libraries imported into a given file. Since
+a generic function only depends on interface implementations, they will always
+behave consistently on a given type, independent of context.
+
+There are some capabilities we would like for interfaces which are in tension
+with the coherence property:
+
+-   They should be some way of selecting between multiple implementations of an
+    interface for a given type. For example, a _Song_ might support multiple
+    orderings (by title, by artist, etc.), which would be represented by having
+    multiple implementations of a _Comparable_ interface.
+-   In order to allow libraries to be composed, there must be some way of saying
+    a type implements an interface that is in another package that the authors
+    of the type were unaware of. This is especially important since the library
+    a type is defined in may not be able to see the interface definition without
+    creating a dependency cycle or layering violation.
+
+This means either that the interface implementations are external to types and
+are passed in to generic functions separately, or there is some way to create
+multiple types that are compatible with a given value that you can switch
+between using casts to select different interface implementations.
 
 ### No novel name lookup
 
@@ -307,50 +391,20 @@ experiences. We should copy what works and makes sense in the context of Carbon,
 and change decisions that led to undesirable compromises. We are taking the
 strongest guidance from Rust and Swift, which have the most similar goals.
 
-### Interface abstraction
+### Interfaces are nominal
 
-We write a type constraint in Carbon by saying we restrict to types that
-implement specific _interfaces_. In the spirit of
-[learning from others](#learn-from-others), this is following
-[Rust's traits](https://doc.rust-lang.org/book/ch10-02-traits.html) and
-[Swift's protocols](https://docs.swift.org/swift-book/LanguageGuide/Protocols.html).
-Interfaces serve several purposes:
+Interfaces can either be structural, as in Go, or nominal, as in Rust and Swift.
+Structural interfaces match any type that has the required methods, whereas
+nominal interfaces only match if there is an explicit declaration of that fact
+for that specific type. Carbon will support nominal interfaces, consistent with
+the philosophy of being explicit.
 
--   They specify a set of functions (names and signatures) that must be
-    available for any type being passed to a generic function, and therefore the
-    only functions that may be called in the body of that function.
--   They allow a set of constraints to be given a name so they can be reused.
--   They implicitly specify the intended semantics and invariants of and between
-    those functions. Unlike the function signatures, this contract is between
-    the implementers and the consumers of interfaces and is not enforced by
-    Carbon itself. For example, a _Draw_ method would mean different things when
-    it is part of a _GameResult_ interface versus a _Image2D_ interface, even if
-    those methods happen to have the same signature.
-
-There are some desirable capabilities which are in tension with the coherence
-property:
-
--   They should be some way of selecting between multiple implementations of an
-    interface for a given type. For example, a _Song_ might support multiple
-    orderings (by title, by artist, etc.), which would be represented by having
-    multiple implementations of a _Comparable_ interface.
--   In order to allow libraries to be composed, there must be some way of saying
-    a type implements an interface that is in another package that the authors
-    of the type were unaware of. This is especially important since the library
-    a type is defined in may not be able to see the interface definition without
-    creating a dependency cycle or layering violation.
-
-This means either that the interface implementations are external to types and
-are passed in to generic functions separately, or there is some way to create
-multiple types that are compatible with a given value that you can switch
-between using casts to select different interface implementations.
-
-In addition to the above, we may in the future expand the role of interfaces to
-allow other type constraints such as on size, prefix of the data layout,
-specified method implementations, tests that must pass, etc. This might be part
-of making interfaces as expressive as classes, as part of a strategy to migrate
-to a future version of Carbon that uses interfaces instead of rather than in
-addition to standard inheritance-and-classes object-oriented language support.
+This means that interfaces implicitly specify the intended semantics and
+invariants of and between those functions. Unlike the function signatures, this
+contract is between the implementers and the consumers of interfaces and is not
+enforced by Carbon itself. For example, a _Draw_ method would mean different
+things when it is part of a _GameResult_ interface versus a _Image2D_ interface,
+even if those methods happen to have the same signature.
 
 ### Interop and evolution
 
