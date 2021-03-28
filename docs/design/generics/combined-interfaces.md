@@ -68,6 +68,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Generic type equality](#generic-type-equality)
         -   [Type equality with where clauses](#type-equality-with-where-clauses)
         -   [Type equality with argument passing](#type-equality-with-argument-passing)
+            -   [Canonical types and type checking](#canonical-types-and-type-checking)
         -   [Restricted where clauses](#restricted-where-clauses)
         -   [Manual type equality](#manual-type-equality)
     -   [Options](#options)
@@ -2897,6 +2898,14 @@ interface Graph {
 **Open question:** Is this expressive enough to represent the equality
 constraints needed by users in practice?
 
+##### Canonical types and type checking
+
+TODO: For assignment to type check, argument has to have the same or a more
+restrictive type-type than the parameter. This means that the canonical type
+expression would have the right (most restrictive) type-type to use for all
+expressions equal to it, with the exception of
+[implicit constraints](#implicit-constraints).
+
 #### Restricted where clauses
 
 This leads to the question of whether we can describe a set of restrictions on
@@ -2959,16 +2968,33 @@ except it may be tricky in general to find a type for `XY` that satisfies the
 constraints on both `B.X` and `B.Y`. Similarly,
 
 ```
+var ...:$ A;
 var Z:$ B where B == A.T.U
 ```
 
 might be rewritten as:
 
 ```
+var ...:$ A;
 alias B = A.T.U;
 ```
 
-except the type bounds on `A.T.U` might not match the `Z` bound on `B`.
+unless the type bounds on `A.T.U` do not match the `Z` bound on `B`. In that
+case, we need to find a type-type `Z2` that represents the intersection of the
+two type constraints and a different rewrite:
+
+```
+var Z2:$ B
+[var ...(.U = B):$ AT];
+var ...(.T = AT):$ A;
+```
+
+**Note:** It would be great if the
+['+' operator for type-types](#combining-interfaces-by-adding-type-types) was
+all we needed to define the intersection of two type constraints, but it isn't
+yet defined for two type-types that have the same interface but with different
+constraints. And that requires being able to automatically combine constraints
+of the form `B.X == Foo` and `B.X == Bar`.
 
 **Open question:** How much rewriting can be done automatically?
 
