@@ -16,10 +16,16 @@
 namespace Carbon {
 namespace {
 
+using ::testing::_;
+using ::testing::Field;
+using ::testing::Matcher;
+using ::testing::Property;
+using ::testing::Truly;
+
 struct NumericLiteralTest : ::testing::Test {
-  std::vector<std::unique_ptr<Testing::SingleTokenDiagnosticTranslator>>
-      translators;
-  std::vector<std::unique_ptr<DiagnosticEmitter<const char*>>> emitters;
+  NumericLiteralTest() : error_tracker(ConsoleDiagnosticConsumer()) {}
+
+  ErrorTrackingDiagnosticConsumer error_tracker;
 
   auto Lex(llvm::StringRef text) -> LexedNumericLiteral {
     llvm::Optional<LexedNumericLiteral> result = LexedNumericLiteral::Lex(text);
@@ -28,14 +34,59 @@ struct NumericLiteralTest : ::testing::Test {
     return *result;
   }
 
-  auto Parse(llvm::StringRef text) -> LexedNumericLiteral::Parser {
-    translators.push_back(
-        std::make_unique<Testing::SingleTokenDiagnosticTranslator>(text));
-    emitters.push_back(std::make_unique<DiagnosticEmitter<const char*>>(
-        *translators.back(), ConsoleDiagnosticConsumer()));
-    return LexedNumericLiteral::Parser(*emitters.back(), Lex(text));
+  auto Parse(llvm::StringRef text) -> LexedNumericLiteral::Value {
+    Testing::SingleTokenDiagnosticTranslator translator(text);
+    DiagnosticEmitter<const char*> emitter(translator, error_tracker);
+    return Lex(text).ComputeValue(emitter);
   }
 };
+
+// TODO: Use gmock's VariantWith once it exists.
+template <typename T, typename M>
+auto VariantWith(M value_matcher) -> decltype(auto) {
+  return Truly([=](auto&& variant) {
+    T* value = std::get_if<T>(&variant);
+    return value && ::testing::Matches(value_matcher)(*value);
+  });
+}
+
+// Matcher for signed llvm::APInt.
+auto IsSignedInteger(int64_t value) -> Matcher<llvm::APInt> {
+  return Property(&llvm::APInt::getSExtValue, value);
+}
+
+// Matcher for unsigned llvm::APInt.
+auto IsUnsignedInteger(uint64_t value) -> Matcher<llvm::APInt> {
+  return Property(&llvm::APInt::getZExtValue, value);
+}
+
+// Matcher for an integer literal value.
+template <typename ValueMatcher>
+auto HasIntValue(const ValueMatcher& value_matcher)
+    -> Matcher<LexedNumericLiteral::Value> {
+  return VariantWith<LexedNumericLiteral::IntegerValue>(
+      Field(&LexedNumericLiteral::IntegerValue::value, value_matcher));
+}
+
+struct RealMatcher {
+  Matcher<int> radix = _;
+  Matcher<llvm::APInt> mantissa = _;
+  Matcher<llvm::APInt> exponent = _;
+};
+
+// Matcher for a real literal value.
+auto HasRealValue(RealMatcher real_matcher)
+    -> Matcher<LexedNumericLiteral::Value> {
+  return VariantWith<LexedNumericLiteral::RealValue>(AllOf(
+      Field(&LexedNumericLiteral::RealValue::radix, real_matcher.radix),
+      Field(&LexedNumericLiteral::RealValue::mantissa, real_matcher.mantissa),
+      Field(&LexedNumericLiteral::RealValue::exponent, real_matcher.exponent)));
+}
+
+// Matcher for an unrecoverable parse error.
+auto HasUnrecoverableError() -> Matcher<LexedNumericLiteral::Value> {
+  return VariantWith<LexedNumericLiteral::UnrecoverableError>(_);
+}
 
 TEST_F(NumericLiteralTest, HandlesIntegerLiteral) {
   struct Testcase {
@@ -50,12 +101,11 @@ TEST_F(NumericLiteralTest, HandlesIntegerLiteral) {
       {.token = "1_234_567", .value = 1'234'567, .radix = 10},
   };
   for (Testcase testcase : testcases) {
-    auto parser = Parse(testcase.token);
-    EXPECT_EQ(parser.Check(), parser.Valid) << testcase.token;
-    EXPECT_EQ(parser.IsInteger(), true);
-    EXPECT_EQ(parser.GetMantissa().getZExtValue(), testcase.value);
-    EXPECT_EQ(parser.GetExponent().getSExtValue(), 0);
-    EXPECT_EQ(parser.GetRadix(), testcase.radix);
+    error_tracker.Reset();
+    EXPECT_THAT(Parse(testcase.token),
+                HasIntValue(IsUnsignedInteger(testcase.value)))
+        << testcase.token;
+    EXPECT_FALSE(error_tracker.SeenError()) << testcase.token;
   }
 }
 
@@ -75,8 +125,9 @@ TEST_F(NumericLiteralTest, ValidatesBaseSpecifier) {
       "0b0000000",
   };
   for (llvm::StringLiteral literal : valid) {
-    auto parser = Parse(literal);
-    EXPECT_EQ(parser.Check(), parser.Valid) << literal;
+    error_tracker.Reset();
+    EXPECT_THAT(Parse(literal), HasIntValue(_)) << literal;
+    EXPECT_FALSE(error_tracker.SeenError()) << literal;
   }
 
   llvm::StringLiteral invalid[] = {
@@ -86,8 +137,9 @@ TEST_F(NumericLiteralTest, ValidatesBaseSpecifier) {
       "0x_", "0b_",
   };
   for (llvm::StringLiteral literal : invalid) {
-    auto parser = Parse(literal);
-    EXPECT_EQ(parser.Check(), parser.UnrecoverableError) << literal;
+    error_tracker.Reset();
+    EXPECT_THAT(Parse(literal), HasUnrecoverableError()) << literal;
+    EXPECT_TRUE(error_tracker.SeenError()) << literal;
   }
 }
 
@@ -108,8 +160,9 @@ TEST_F(NumericLiteralTest, ValidatesIntegerDigitSeparators) {
       "0b111_0000",
   };
   for (llvm::StringLiteral literal : valid) {
-    auto parser = Parse(literal);
-    EXPECT_EQ(parser.Check(), parser.Valid) << literal;
+    error_tracker.Reset();
+    EXPECT_THAT(Parse(literal), HasIntValue(_)) << literal;
+    EXPECT_FALSE(error_tracker.SeenError()) << literal;
   }
 
   llvm::StringLiteral invalid[] = {
@@ -134,8 +187,9 @@ TEST_F(NumericLiteralTest, ValidatesIntegerDigitSeparators) {
       "0b1_01_01_",
   };
   for (llvm::StringLiteral literal : invalid) {
-    auto parser = Parse(literal);
-    EXPECT_EQ(parser.Check(), parser.RecoverableError) << literal;
+    error_tracker.Reset();
+    EXPECT_THAT(Parse(literal), HasIntValue(_)) << literal;
+    EXPECT_TRUE(error_tracker.SeenError()) << literal;
   }
 }
 
@@ -186,24 +240,28 @@ TEST_F(NumericLiteralTest, HandlesRealLiteral) {
        .radix = 2},
   };
   for (Testcase testcase : testcases) {
-    auto parser = Parse(testcase.token);
-    EXPECT_EQ(parser.Check(),
-              testcase.radix == 2 ? parser.RecoverableError : parser.Valid)
+    error_tracker.Reset();
+    EXPECT_THAT(Parse(testcase.token),
+                HasRealValue({.radix = (testcase.radix == 10 ? 10 : 2),
+                              .mantissa = IsUnsignedInteger(testcase.mantissa),
+                              .exponent = IsSignedInteger(testcase.exponent)}))
         << testcase.token;
-    EXPECT_EQ(parser.IsInteger(), false);
-    EXPECT_EQ(parser.GetMantissa().getZExtValue(), testcase.mantissa);
-    EXPECT_EQ(parser.GetExponent().getSExtValue(), testcase.exponent);
-    EXPECT_EQ(parser.GetRadix(), testcase.radix);
+    EXPECT_EQ(error_tracker.SeenError(), testcase.radix == 2) << testcase.token;
   }
 }
 
 TEST_F(NumericLiteralTest, HandlesRealLiteralOverflow) {
   llvm::StringLiteral input = "0x1.000001p-9223372036854775800";
-  auto parser = Parse(input);
-  EXPECT_EQ(parser.Check(), parser.Valid);
-  EXPECT_EQ(parser.GetMantissa(), 0x1000001);
-  EXPECT_EQ((parser.GetExponent() + 9223372036854775800).getSExtValue(), -24);
-  EXPECT_EQ(parser.GetRadix(), 16);
+  error_tracker.Reset();
+  EXPECT_THAT(
+      Parse(input),
+      HasRealValue({.radix = 2,
+                    .mantissa = IsUnsignedInteger(0x1000001),
+                    .exponent = Truly([](llvm::APInt exponent) {
+                      return (exponent + 9223372036854775800).getSExtValue() ==
+                             -24;
+                    })}));
+  EXPECT_FALSE(error_tracker.SeenError());
 }
 
 TEST_F(NumericLiteralTest, ValidatesRealLiterals) {
@@ -213,8 +271,9 @@ TEST_F(NumericLiteralTest, ValidatesRealLiterals) {
       "123.4e56_78", "0x12_34.5", "0x12.3_4",  "0x12.34p5_6",
   };
   for (llvm::StringLiteral literal : invalid_digit_separators) {
-    auto parser = Parse(literal);
-    EXPECT_EQ(parser.Check(), parser.RecoverableError) << literal;
+    error_tracker.Reset();
+    EXPECT_THAT(Parse(literal), HasRealValue({})) << literal;
+    EXPECT_TRUE(error_tracker.SeenError()) << literal;
   }
 
   llvm::StringLiteral invalid[] = {
@@ -263,8 +322,9 @@ TEST_F(NumericLiteralTest, ValidatesRealLiterals) {
       "0x0.0p-A",
   };
   for (llvm::StringLiteral literal : invalid) {
-    auto parser = Parse(literal);
-    EXPECT_EQ(parser.Check(), parser.UnrecoverableError) << literal;
+    error_tracker.Reset();
+    EXPECT_THAT(Parse(literal), HasUnrecoverableError()) << literal;
+    EXPECT_TRUE(error_tracker.SeenError()) << literal;
   }
 }
 
