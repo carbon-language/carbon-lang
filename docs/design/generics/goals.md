@@ -449,7 +449,7 @@ languages do?
         exceptional cases that don't fit inside generics.
     -   If you want compile-time duck typing, that is available by way of
         templates.
-    -   Notably, there is no need to allow a specialization of some generic
+    -   There is no need to allow a specialization of some generic
         interface for some particular type to actually expose a _different_
         interface (different set of methods or types within the interface for
         example).
