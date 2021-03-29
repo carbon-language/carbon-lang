@@ -428,12 +428,10 @@ What are we **not** doing with generics, particularly things that some other
 languages do?
 
 -   Don't need to provide full flexibility of templates from generics.
-    -   We still intend to provide templates for those exceptional cases that
-        don't fit inside generics.
-    -   If you want
-        [duck](https://en.wikipedia.org/wiki/Duck_typing#Templates_or_generic_types)
-        / [structural](https://en.wikipedia.org/wiki/Structural_type_system)
-        typing, that is available by way of templates.
+    -   [Templates](#relationship-to-templates) can still cover those
+        exceptional cases that don't fit inside generics.
+    -   If you want compile-time duck typing, that is available by way of
+        templates.
     -   Notably, there is no need to allow a specialization of some generic
         interface for some particular type to actually expose a _different_
         interface (different set of methods or types within the interface for
