@@ -20,7 +20,7 @@
 
   fileprivate extension Array where Element == Field {
     func asTupleLiteral_() -> TupleLiteral_ {
-      map { (name: $0.body.0, value: $0.body.1) }
+      map { .init(name: $0.body.first, value: $0.body.second) }
     }
   }
 }                         
@@ -66,158 +66,162 @@ input ::= declaration_list(d). {d}
 pattern ::= expression(e).     {e}
 
 expression ::= IDENTIFIER(i).  
-  { (.variable(i), i.location) }
+  { AST(.variable(i), i.location) }
 expression ::= expression(t) member_designator(m).
-  { (.getField(target: t, fieldName: m), location: t...m) }
+  { AST(.getField(target: t, fieldName: m), t...m) }
 expression ::= expression(t)
   LEFT_SQUARE_BRACKET expression(i) RIGHT_SQUARE_BRACKET(b).
-  { (.index(target: t, offset: i), t...b) } 
+  { AST(.index(target: t, offset: i), t...b) } 
 expression ::= expression(t) COLON Identifier(i).
-  { (.patternVariable(name: i, type: t), t...i) }
+  { AST(.patternVariable(name: i, type: t), t...i) }
 expression ::= Integer_literal(i).
-  { (.integerLiteral(Int(i.body.text)!), i.location) }
+  { AST(.integerLiteral(Int(i.body.text)!), i.location) }
 expression ::= TRUE(t).
-  { (.booleanLiteral(true), t.location) }
+  { AST(.booleanLiteral(true), t.location) }
 expression ::= FALSE(t).
-  { (.booleanLiteral(false), t.location) }
+  { AST(.booleanLiteral(false), t.location) }
 expression ::= INT(t).
-  { (.intType, t.location) }
+  { AST(.intType, t.location) }
 expression ::= BOOL(t).
-  { (.boolType, t.location) }
+  { AST(.boolType, t.location) }
 expression ::= TYPE(t).
-  { (.typeType, t.location) }
+  { AST(.typeType, t.location) }
 expression ::= AUTO(t).
-  { (.autoType, t.location) }
+  { AST(.autoType, t.location) }
 expression ::= paren_expression(x).
   { x }
 expression ::= expression(l) EQUAL_EQUAL(op) expression(r).
-  {(.binaryOperator(operation: op.body, lhs: l, rhs: r), l...r)}
+  {AST(.binaryOperator(operation: op.body, lhs: l, rhs: r), l...r)}
 expression ::= expression(l) PLUS(op) expression(r).
-  {(.binaryOperator(operation: op.body, lhs: l, rhs: r), l...r)}
+  {AST(.binaryOperator(operation: op.body, lhs: l, rhs: r), l...r)}
 expression ::= expression(l) MINUS(op) expression(r).
-  {(.binaryOperator(operation: op.body, lhs: l, rhs: r), l...r)}
+  {AST(.binaryOperator(operation: op.body, lhs: l, rhs: r), l...r)}
 expression ::= expression(l) AND(op) expression(r).
-  {(.binaryOperator(operation: op.body, lhs: l, rhs: r), l...r)}
+  {AST(.binaryOperator(operation: op.body, lhs: l, rhs: r), l...r)}
 expression ::= expression(l) OR(op) expression(r).
-  {(.binaryOperator(operation: op.body, lhs: l, rhs: r), l...r)}
+  {AST(.binaryOperator(operation: op.body, lhs: l, rhs: r), l...r)}
 expression ::= NOT(op) expression(r).
-  {(.unaryOperator(operation: op.body, operand: r), op...r)}
+  {AST(.unaryOperator(operation: op.body, operand: r), op...r)}
 expression ::= MINUS(op) expression(r).
-  {(.unaryOperator(operation: op.body, operand: r), op...r)}
+  {AST(.unaryOperator(operation: op.body, operand: r), op...r)}
 expression ::= expression(f) tuple(a).
-  {(.functionCall(callee: f, arguments: a), f...a)}
+  {AST(.functionCall(callee: f, arguments: a), f...a)}
 expression ::= FNTY(k) tuple(p) return_type(r).
-  {(.functionType(parameterTypes: p, returnType: r), k...r)}
+  {AST(.functionType(parameterTypes: p, returnType: r), k...r)}
 member_designator ::= PERIOD(p) Identifier(n).
-  { (n.body, p...n) }
+  { AST(n.body, p...n) }
 paren_expression ::= LEFT_PARENTHESIS(l) field_list(f) RIGHT_PARENTHESIS(r).
   {
     if !f.body.hasExplicitComma && f.body.fields.count == 1 {
       let firstField = f.body.fields.first!.body
-      if firstField.0 == nil { return (firstField.1.body, l...r) }
+      if firstField.first == nil { return AST(firstField.second.body, l...r) }
     }
-    return (.tupleLiteral(f.body.fields.asTupleLiteral_()), l...r)
+    return AST(.tupleLiteral(f.body.fields.asTupleLiteral_()), l...r)
   }
 
 tuple ::= LEFT_PARENTHESIS(l) field_list(f) RIGHT_PARENTHESIS(r).
-  { (f.body.fields.asTupleLiteral_(), l...r) }
+  { AST(f.body.fields.asTupleLiteral_(), l...r) }
 
 field ::= pattern(p).
-  { ((nil,  p), p.location) }
+  { AST(Field_(first: nil,  second: p), p.location) }
 
 field ::= member_designator(m) EQUAL pattern(p).
-  { ((m, p), m...p) }
+  { AST(Field_(first: m, second: p), m...p) }
 
 field_list ::= /* Empty */.
-  { (([], hasExplicitComma: false), .empty) }
+  { AST(FieldList_(fields: [], hasExplicitComma: false), .empty) }
 field_list ::= field(f).
-  { (([f], hasExplicitComma: false), f.location) }
+  { AST(.init(fields: [f], hasExplicitComma: false), f.location) }
 field_list ::= field(f) COMMA(c) field_list(l).
   {
-    (([f] + l.body.fields, l.body.hasExplicitComma), 
-     location: l.body.fields.isEmpty ? f...c : f...l) 
+    AST(
+      FieldList_(
+          fields: [f] + l.body.fields,
+          hasExplicitComma: l.body.hasExplicitComma), 
+     l.body.fields.isEmpty ? f...c : f...l)
   }
 match_clause ::= CASE(c) pattern(p) DBLARROW statement(s).
-  { ((pattern: p, action: s), c...s) }
+  { AST(.init(pattern: p, action: s), c...s) }
 match_clause ::= DEFAULT(d) DBLARROW statement(s).
-  { ((pattern: nil, action: s), d...s) }
+  { AST(.init(pattern: nil, action: s), d...s) }
 match_clause_list ::= /* Empty */.
-  { ([], .empty) }
+  { AST([], .empty) }
 match_clause_list ::= match_clause(c) match_clause_list(l).
-  { ([c] + l.body, c...l) }
+  { AST([c] + l.body, c...l) }
 statement ::= expression(l) EQUAL expression(r) SEMICOLON(s).
-  { (.assignment(target: l, source: r), l...s) }
+  { AST(.assignment(target: l, source: r), l...s) }
 statement ::= VAR(v) pattern(p) MINUS expression(e) SEMICOLON(s).
-  { (.variableDefinition(pattern: p, initializer: e), v...s) }
+  { AST(.variableDefinition(pattern: p, initializer: e), v...s) }
 statement ::= expression(e) SEMICOLON(s).
-  { (.expressionStatement(e), e...s) }
+  { AST(.expressionStatement(e), e...s) }
 statement ::= IF(i) LEFT_PARENTHESIS expression(c) RIGHT_PARENTHESIS
   statement(s) optional_else(e).
-  { (.if(condition: c, thenClause: s, elseClause: e), e.map {i...$0} ?? i...s) }
+  { AST(.if(condition: c, thenClause: s, elseClause: e), e.map {i...$0} ?? i...s) }
 statement ::= WHILE(w) LEFT_PARENTHESIS expression(c) RIGHT_PARENTHESIS
   statement(b).
-  { (.while(condition: c, body: b), w...b) }
+  { AST(.while(condition: c, body: b), w...b) }
 statement ::= BREAK(b) SEMICOLON(s).
-  { (.break, b...s) }
+  { AST(.break, b...s) }
 statement ::= CONTINUE(c) SEMICOLON(s).
-  { (.continue, c...s) }
+  { AST(.continue, c...s) }
 statement ::= RETURN(r) expression(e) SEMICOLON(s).
-  { (.return(e), r...s) }
+  { AST(.return(e), r...s) }
 statement ::= LEFT_CURLY_BRACE(l) statement_list(s) RIGHT_CURLY_BRACE(r).
-  { (.block(s), l...r) }
+  { AST(.block(s), l...r) }
 statement ::= MATCH(m) LEFT_PARENTHESIS expression(e) RIGHT_PARENTHESIS 
   LEFT_CURLY_BRACE match_clause_list(c) RIGHT_CURLY_BRACE(r).
-  { (.match(subject: e, clauses: c.body), m...r) }
+  { AST(.match(subject: e, clauses: c.body), m...r) }
 optional_else ::= /* Empty */.
   { nil }
 optional_else ::= ELSE(e) statement(s). 
-  { (s.body, e...s) }
+  { AST(s.body, e...s) }
 statement_list ::= /* Empty */.
   { [] }
 statement_list ::= statement(s) statement_list(l).
   { [s] + l }
 return_type ::= /* Empty */.
-  { (.tupleLiteral([]), .empty) }
+  { AST(.tupleLiteral([]), .empty) }
 return_type ::= ARROW(a) expression(e).
-  { (e.body, a...e) }
+  { AST(e.body, a...e) }
 function_definition ::= FN(f) Identifier(n) tuple(p) return_type(t)
   LEFT_CURLY_BRACE(l) statement_list(b) RIGHT_CURLY_BRACE(r).
   {
-    (
-      FunctionDefinition_(
-        name: n, parameterPattern: p, returnType: t, body: (.block(b), l...r)),
+    FunctionDefinition(
+      .init(
+        name: n, parameterPattern: p, returnType: t,
+        body: Statement(.block(b), l...r)),
       f...r)
   }
 function_definition
   ::= FN(f) Identifier(n) tuple(p) DBLARROW expression(b) SEMICOLON(s).
   {
-    (
-      FunctionDefinition_(
-        name: n, parameterPattern: p, returnType: (.autoType, .empty),
-        body: (Statement_.return(b), b.location)),
+    FunctionDefinition(
+      .init(
+        name: n, parameterPattern: p, returnType: Expression(.autoType, .empty),
+        body: Statement(.return(b), b.location)),
       f...s)
   }
 function_declaration
   ::= FN(f) Identifier(n) tuple(p) return_type(r) SEMICOLON(s).
   {
-    (
-      FunctionDefinition_(
+    FunctionDefinition(
+      .init(
         name: n, parameterPattern: p, returnType: r,
         body: nil),
       f...s)
   }
 variable_declaration ::= expression(t) COLON Identifier(n).
-  { ((name: n, type: t), t...n) }
+  { VariableDeclaration(.init(name: n, type: t), t...n) }
 member ::= VAR(v) variable_declaration(d) SEMICOLON(s).
-  { (d.body, v...s) }
+  { AST(d.body, v...s) }
 member_list ::= /* Empty */.
   { [] }
 member_list ::= member(m) member_list(l).
   { [m] + l }
 alternative ::= Identifier(n) tuple(p).
-  { ((name: n, payload: p), n...p) }
+  { Alternative(.init(name: n, payload: p), n...p) }
 alternative ::= Identifier(n).
-  { ((name: n, payload: ([], .empty)), n.location) }
+  { Alternative(.init(name: n, payload: .init([], .empty)), n.location) }
 alternative_list ::= /* Empty */.
   { [] }
 alternative_list ::= alternative(a).
@@ -225,17 +229,17 @@ alternative_list ::= alternative(a).
 alternative_list ::= alternative(a) COMMA alternative_list(l).
   { [a] + l }
 declaration ::= function_definition(f).
-  { (.function(f), f.location) }
+  { AST(.function(f), f.location) }
 declaration ::= function_declaration(f).
-  { (.function(f), f.location) }
+  { AST(.function(f), f.location) }
 declaration ::=
   STRUCT(s) Identifier(n) LEFT_CURLY_BRACE member_list(m) RIGHT_CURLY_BRACE(r).
-  { (.struct(StructDefinition(name: n, members: m)), s...r) }
+  { AST(.struct(StructDefinition(name: n, members: m)), s...r) }
 declaration ::= CHOICE(c) Identifier(n) 
   LEFT_CURLY_BRACE alternative_list(l) RIGHT_CURLY_BRACE(r).
-  { (.choice(name: n, alternatives: l), c...r) }
+  { AST(.choice(name: n, alternatives: l), c...r) }
 declaration ::= VAR(v) variable_declaration(d) EQUAL expression(i) SEMICOLON(s).
-  { (.variable(name: d.body.name, type: d.body.type, initializer: i), v...s) }
+  { AST(.variable(name: d.body.name, type: d.body.type, initializer: i), v...s) }
 declaration_list ::= /* Empty */.
   { [] }
 declaration_list ::= declaration(d) declaration_list(l).

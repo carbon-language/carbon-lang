@@ -16,71 +16,71 @@ final class TokenizerTests: XCTestCase {
       """    
     let scannedTokens = Tokens(in: program, from: "")
     
-    func tok(_ k: TokenCode, _ text: String) -> Token {
-      Token(kind: .init(k), text: text)
-    }
-    
-    func loc(_ start: (line: Int, column: Int), _ end: (line: Int, column: Int))
-      -> SourceLocation
+    func token(
+      _ k: TokenKind, _ text: String,
+      from startLine: Int, _ startColumn: Int,
+      to endLine: Int, _ endColumn: Int) -> AST<Token>
     {
-      SourceLocation(
-        fileName: "",
-        .init(line: start.line, column: start.column)
-        ..< .init(line: end.line, column: end.column))
+      AST<Token>(
+        Token(k, text),
+        SourceLocation(
+          fileName: "",
+          .init(line: startLine, column: startColumn)
+            ..< .init(line: endLine, column: endColumn)))
     }
     
     typealias L = SourceLocation
     let expectedTokens: [AST<Token>] = [
-      (tok(.Identifier, "an"), loc((1, 1), (1, 3))),
-      (tok(.AND, "and"), loc((1, 4), (1, 7))),
-      (tok(.Identifier, "andey"), loc((1, 8), (1, 13))),
-      (tok(.Integer_literal, "999"), loc((1, 14), (1, 17))),
-      (tok(.ARROW, "->"), loc((2, 3), (2, 5))),
-      (tok(.EQUAL, "="), loc((2, 5), (2, 6))),
-      (tok(.MINUS, "-"), loc((2, 6), (2, 7))),
-      (tok(.Identifier, "automobile"), loc((2, 7), (2, 17))),
-      (tok(.ARROW, "->"), loc((2, 17), (2, 19))),
-      (tok(.Identifier, "otto"), loc((2, 19), (2, 23))),
-      (tok(.AUTO, "auto"), loc((2, 24), (2, 28))),
-      (tok(.BOOL, "bool"), loc((2, 29), (2, 33))),
-      (tok(.BREAK, "break"), loc((2, 34), (2, 39))),
-      (tok(.CASE, "case"), loc((2, 40), (2, 44))),
-      (tok(.CHOICE, "choice"), loc((2, 45), (2, 51))),
-      (tok(.CONTINUE, "continue"), loc((2, 52), (2, 60))),
-      (tok(.DBLARROW, "=>"), loc((2, 60), (2, 62))),
-      (tok(.DEFAULT, "default"), loc((4, 3), (4, 10))),
-      (tok(.ILLEGAL_CHARACTER, "/"), loc((4, 10), (4, 11))),
-      (tok(.ELSE, "else"), loc((5, 1), (5, 5))),
-      (tok(.EQUAL_EQUAL, "=="), loc((7, 3), (7, 5))),
-      (tok(.FALSE, "false"), loc((7, 5), (7, 10))),
-      (tok(.FN, "fn"), loc((7, 11), (7, 13))),
-      (tok(.FNTY, "fnty"), loc((7, 14), (7, 18))),
-      (tok(.IF, "if"), loc((7, 19), (7, 21))),
-      (tok(.INT, "int"), loc((7, 23), (7, 26))),
-      (tok(.MATCH, "match"), loc((7, 27), (7, 32))),
-      (tok(.NOT, "not"), loc((7, 33), (7, 36))),
-      (tok(.OR, "or"), loc((7, 37), (7, 39))),
-      (tok(.RETURN, "return"), loc((7, 40), (7, 46))),
-      (tok(.STRUCT, "struct"), loc((7, 47), (7, 53))),
-      (tok(.TRUE, "true"), loc((7, 54), (7, 58))),
-      (tok(.TYPE, "type"), loc((7, 59), (7, 63))),
-      (tok(.VAR, "var"), loc((7, 64), (7, 67))),
-      (tok(.WHILE, "while"), loc((7, 68), (7, 73))),
-      (tok(.EQUAL, "="), loc((8, 1), (8, 2))),
-      (tok(.MINUS, "-"), loc((8, 3), (8, 4))),
-      (tok(.PLUS, "+"), loc((8, 5), (8, 6))),
-      (tok(.LEFT_PARENTHESIS, "("), loc((8, 6), (8, 7))),
-      (tok(.RIGHT_PARENTHESIS, ")"), loc((8, 8), (8, 9))),
-      (tok(.LEFT_CURLY_BRACE, "{"), loc((8, 9), (8, 10))),
-      (tok(.RIGHT_CURLY_BRACE, "}"), loc((8, 10), (8, 11))),
-      (tok(.LEFT_SQUARE_BRACKET, "["), loc((8, 11), (8, 12))),
-      (tok(.RIGHT_SQUARE_BRACKET, "]"), loc((8, 12), (8, 13))),
-      (tok(.Identifier, "a"), loc((8, 13), (8, 14))),
-      (tok(.PERIOD, "."), loc((8, 14), (8, 15))),
-      (tok(.Identifier, "b"), loc((8, 15), (8, 16))),
-      (tok(.COMMA, ","), loc((8, 16), (8, 17))),
-      (tok(.SEMICOLON, ";"), loc((8, 17), (8, 18))),
-      (tok(.COLON, ":"), loc((8, 18), (8, 19)))
+      token(.Identifier, "an", from: 1, 1, to: 1, 3),
+      token(.AND, "and", from: 1, 4, to: 1, 7),
+      token(.Identifier, "andey", from: 1, 8, to: 1, 13),
+      token(.Integer_literal, "999", from: 1, 14, to: 1, 17),
+      token(.ARROW, "->", from: 2, 3, to: 2, 5),
+      token(.EQUAL, "=", from: 2, 5, to: 2, 6),
+      token(.MINUS, "-", from: 2, 6, to: 2, 7),
+      token(.Identifier, "automobile", from: 2, 7, to: 2, 17),
+      token(.ARROW, "->", from: 2, 17, to: 2, 19),
+      token(.Identifier, "otto", from: 2, 19, to: 2, 23),
+      token(.AUTO, "auto", from: 2, 24, to: 2, 28),
+      token(.BOOL, "bool", from: 2, 29, to: 2, 33),
+      token(.BREAK, "break", from: 2, 34, to: 2, 39),
+      token(.CASE, "case", from: 2, 40, to: 2, 44),
+      token(.CHOICE, "choice", from: 2, 45, to: 2, 51),
+      token(.CONTINUE, "continue", from: 2, 52, to: 2, 60),
+      token(.DBLARROW, "=>", from: 2, 60, to: 2, 62),
+      token(.DEFAULT, "default", from: 4, 3, to: 4, 10),
+      token(.ILLEGAL_CHARACTER, "/", from: 4, 10, to: 4, 11),
+      token(.ELSE, "else", from: 5, 1, to: 5, 5),
+      token(.EQUAL_EQUAL, "==", from: 7, 3, to: 7, 5),
+      token(.FALSE, "false", from: 7, 5, to: 7, 10),
+      token(.FN, "fn", from: 7, 11, to: 7, 13),
+      token(.FNTY, "fnty", from: 7, 14, to: 7, 18),
+      token(.IF, "if", from: 7, 19, to: 7, 21),
+      token(.INT, "int", from: 7, 23, to: 7, 26),
+      token(.MATCH, "match", from: 7, 27, to: 7, 32),
+      token(.NOT, "not", from: 7, 33, to: 7, 36),
+      token(.OR, "or", from: 7, 37, to: 7, 39),
+      token(.RETURN, "return", from: 7, 40, to: 7, 46),
+      token(.STRUCT, "struct", from: 7, 47, to: 7, 53),
+      token(.TRUE, "true", from: 7, 54, to: 7, 58),
+      token(.TYPE, "type", from: 7, 59, to: 7, 63),
+      token(.VAR, "var", from: 7, 64, to: 7, 67),
+      token(.WHILE, "while", from: 7, 68, to: 7, 73),
+      token(.EQUAL, "=", from: 8, 1, to: 8, 2),
+      token(.MINUS, "-", from: 8, 3, to: 8, 4),
+      token(.PLUS, "+", from: 8, 5, to: 8, 6),
+      token(.LEFT_PARENTHESIS, "(", from: 8, 6, to: 8, 7),
+      token(.RIGHT_PARENTHESIS, ")", from: 8, 8, to: 8, 9),
+      token(.LEFT_CURLY_BRACE, "{", from: 8, 9, to: 8, 10),
+      token(.RIGHT_CURLY_BRACE, "}", from: 8, 10, to: 8, 11),
+      token(.LEFT_SQUARE_BRACKET, "[", from: 8, 11, to: 8, 12),
+      token(.RIGHT_SQUARE_BRACKET, "]", from: 8, 12, to: 8, 13),
+      token(.Identifier, "a", from: 8, 13, to: 8, 14),
+      token(.PERIOD, ".", from: 8, 14, to: 8, 15),
+      token(.Identifier, "b", from: 8, 15, to: 8, 16),
+      token(.COMMA, ",", from: 8, 16, to: 8, 17),
+      token(.SEMICOLON, ";", from: 8, 17, to: 8, 18),
+      token(.COLON, ":", from: 8, 18, to: 8, 19)
     ]
     
     for (t, e) in zip(scannedTokens, expectedTokens) {

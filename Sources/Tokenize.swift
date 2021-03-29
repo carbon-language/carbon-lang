@@ -1,14 +1,9 @@
 import Foundation
 
-typealias TokenCode = CarbonParser.CitronTokenCode
+typealias TokenKind = CarbonParser.CitronTokenCode
 
-struct TokenKind: Hashable {
-  init(_ value: TokenCode) { self.value = value }
-  let value: TokenCode
-}
-
-typealias KeywordSpec = (literalText: String, token: TokenCode)
-typealias PatternSpec = (pattern: String, token: TokenCode?)
+typealias KeywordSpec = (literalText: String, token: TokenKind)
+typealias PatternSpec = (pattern: String, token: TokenKind?)
 
 let keywords: [KeywordSpec] = [
   ("and", .AND),
@@ -86,13 +81,17 @@ extension String {
 }
 
 struct Token: Hashable {
+  init(_ kind: TokenKind, _ text: String) {
+    self.kind = kind
+    self.text = text
+  }
   let kind: TokenKind
   let text: String
 }
 
 extension Token: CustomStringConvertible {
   var description: String {
-    "Token(.\(kind.value), \(String(reflecting: text)))"
+    "Token(.\(kind), \(String(reflecting: text)))"
   }
 }
 
@@ -151,13 +150,14 @@ struct Tokens: Sequence {
           = (newlineCount == 0 ? sourceFilePosition.column : 1)
           + tokenLines.last!.count
 
+        let text = String(tokenText)
         if let matchedKind = bestMatchUTF16Length == 0 ? .ILLEGAL_CHARACTER
-             : bestMatchIndex == 0 ? tokenKindForKeyword[String(tokenText)]
+             : bestMatchIndex == 0 ? tokenKindForKeyword[text]
              : matchers[bestMatchIndex].nonterminal
         {
-          return (
-            .init(kind: TokenKind(matchedKind), text: String(tokenText)),
-            location: SourceLocation(
+          return AST(
+            .init(matchedKind, text),
+            SourceLocation(
               fileName: sourceFileName,
               tokenLocationStart..<sourceFilePosition))
         }

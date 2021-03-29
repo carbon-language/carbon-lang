@@ -1,7 +1,16 @@
-typealias AST<Node> = (body: Node, location: SourceLocation)
+struct AST<Node: Hashable>: Hashable {
+  init(_ body: Node, _ location: SourceLocation) {
+    self.body = body
+    self.location = location
+  }
+  
+  var body: Node
+  var location: SourceLocation
+}
+
 typealias Identifier = AST<Token>
 
-indirect enum Declaration_ {
+indirect enum Declaration_: Hashable {
   case
     function(FunctionDefinition),
     `struct`(StructDefinition),
@@ -10,7 +19,7 @@ indirect enum Declaration_ {
 }
 typealias Declaration = AST<Declaration_>
 
-struct FunctionDefinition_ {
+struct FunctionDefinition_: Hashable {
   var name: Identifier
   var parameterPattern: TupleLiteral
   var returnType: Expression
@@ -20,14 +29,19 @@ typealias FunctionDefinition = AST<FunctionDefinition_>
 
 typealias MemberDesignator = Identifier
 
-typealias Alternative = AST<(name: Identifier, payload: TupleLiteral)>
+struct Alternative_: Hashable {
+  var name: Identifier;
+  var payload: TupleLiteral
+}
 
-struct StructDefinition {
+typealias Alternative = AST<Alternative_>
+
+struct StructDefinition: Hashable {
   var name: Identifier
   var members: [VariableDeclaration]
 }
 
-indirect enum Statement_ {
+indirect enum Statement_: Hashable {
   case
     expressionStatement(Expression),
     assignment(target: Expression, source: Expression),
@@ -43,13 +57,23 @@ indirect enum Statement_ {
 }
 typealias Statement = AST<Statement_>
 
-/// A `nil` `pattern` means this is a default clause.
-typealias MatchClause = AST<(pattern: Expression?, action: Statement)>
+struct MatchClause_: Hashable {
+  /// A `nil` `pattern` means this is a default clause.
+  var pattern: Expression?
+  var action: Statement
+}
+
+typealias MatchClause = AST<MatchClause_>
 typealias MatchClauseList = AST<[MatchClause]>
-typealias TupleLiteral_ = [(name: Identifier?, value: Expression)]
+
+struct TupleLiteralElement: Hashable {
+  var name: Identifier?
+  var value: Expression
+}
+typealias TupleLiteral_ = [TupleLiteralElement]
 typealias TupleLiteral = AST<TupleLiteral_>
 
-indirect enum Expression_ {
+indirect enum Expression_: Hashable {
   case
     variable(Identifier),
     getField(target: Expression, fieldName: Identifier),
@@ -69,6 +93,20 @@ indirect enum Expression_ {
 };
 typealias Expression = AST<Expression_>
 
-typealias Field = AST<(Identifier?, Expression)>
-typealias FieldList = AST<(fields: [Field], hasExplicitComma: Bool)>
-typealias VariableDeclaration = AST<(name: Identifier, type: Expression)>
+struct Field_: Hashable {
+  var first: Identifier?
+  var second: Expression
+}
+
+typealias Field = AST<Field_>
+struct FieldList_: Hashable {
+  var fields: [Field]
+  var hasExplicitComma: Bool
+}
+typealias FieldList = AST<FieldList_>
+
+struct VariableDeclaration_: Hashable {
+  var name: Identifier
+  var type: Expression  
+}
+typealias VariableDeclaration = AST<VariableDeclaration_>
