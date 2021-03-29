@@ -65,7 +65,7 @@
 input ::= declaration_list(d). {d}
 pattern ::= expression(e).     {e}
 
-expression ::= IDENTIFIER(i).  
+expression ::= Identifier(i).  
   { AST(.variable(i), i.location) }
 expression ::= expression(t) member_designator(m).
   { AST(.getField(target: t, fieldName: m), t...m) }
