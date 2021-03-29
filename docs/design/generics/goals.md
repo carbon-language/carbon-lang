@@ -62,7 +62,7 @@ in a generic function's signature.
 ### Generic parameters
 
 A generic function (or type) will take some "generic parameters", which will
-frequently be types, and in some cases will be implicit / inferred from the
+frequently be types, and in some cases will be implicit or inferred from the
 types of the values of explicit parameters to the function. If a generic
 parameter is a type, the generic function's signature can specify constraints
 that the caller's type must satisfy. For example, a resizable array type (like
@@ -142,13 +142,12 @@ We in particular want to support
 [generic programming](https://en.wikipedia.org/wiki/Generic_programming),
 including:
 
--   Containers (arrays, maps, lists), and more complicated data structures like
+-   Containers: arrays, maps, lists, and more complicated data structures like
     trees and graphs.
--   Algorithms (sort, search)
--   Wrappers (optional, variant, expected/result, smart pointers)
--   Parameterized numeric types (`std::complex<T>`)
--   Configurable / parametric APIs such as the storage-customized `std::chrono`
-    APIs
+-   Algorithms: sort, search
+-   Wrappers: optional, variant, expected/result, smart pointers
+-   Parameterized numeric types: `std::complex<T>`
+-   Configurable and parametric APIs: the storage-customized `std::chrono` APIs
 -   [Policy-based design](https://en.wikipedia.org/wiki/Modern_C%2B%2B_Design#Policy-based_design)
 
 These would generally involve static, compile-time type arguments, and so would
@@ -292,7 +291,7 @@ generic functions:
     generic parameters must be statically known at the callsite, or known to be
     a generic parameter to the calling function. This can generate separate,
     specialized versions of each combination of generic & template arguments, in
-    order to optimize for those types / values.
+    order to optimize for those types or values.
 -   Dynamic strategy: Unlike template parameters, we require that it be possible
     to generate a single version of the function that uses runtime dispatch to
     get something semantically equivalent to separate instantiation, but likely
@@ -421,11 +420,15 @@ even if those methods happen to have the same signature.
 ### Interop and evolution
 
 [Evolution is a high priority for Carbon](../../project/goals.md#software-and-language-evolution),
-and so will need mechanisms to support evolution when using generics, such as
-allowing new additions to an interface to have default implementations and/or be
-marked "upcoming" to allow for a period of transition. Evolution in particular
-means that the set of names in an interface can change, and so two interfaces
-that don't start with name conflicts can develop them.
+and so will need mechanisms to support evolution when using generics. New
+additions to an interface might:
+
+-   need default implementations
+-   be marked "upcoming" to allow for a period of transition
+-   replace other APIs that need to be marked "deprecated"
+
+Evolution in particular means that the set of names in an interface can change,
+and so two interfaces that don't start with name conflicts can develop them.
 
 To handle name conflicts, interfaces should be separate, isolated namespaces. We
 should provide mechanisms to allow one type to implement two interfaces that
@@ -449,10 +452,9 @@ languages do?
         exceptional cases that don't fit inside generics.
     -   If you want compile-time duck typing, that is available by way of
         templates.
-    -   There is no need to allow a specialization of some generic
-        interface for some particular type to actually expose a _different_
-        interface (different set of methods or types within the interface for
-        example).
+    -   There is no need to allow a specialization of some generic interface for
+        some particular type to actually expose a _different_ interface
+        (different set of methods or types within the interface for example).
 -   Some features are presented as being part of generics because that is where
     we expect them to be most useful or most used. These features may be allowed
     and have application outside of generics. For example, we expect to allow
