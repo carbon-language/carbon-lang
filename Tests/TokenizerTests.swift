@@ -82,10 +82,24 @@ final class TokenizerTests: XCTestCase {
       token(.SEMICOLON, ";", from: 8, 17, to: 8, 18),
       token(.COLON, ":", from: 8, 18, to: 8, 19)
     ]
+
+    let sourceLines = program.split(
+      omittingEmptySubsequences: false, whereSeparator: \.isNewline)
+
+    /// Returns the text denoted by `l` in `program`.
+    func text(_ l: SourceLocation) -> String {
+      let (start, end) = (l.span.lowerBound, l.span.upperBound)
+      let startIndex = sourceLines[start.line - 1].index(
+        sourceLines[start.line - 1].startIndex, offsetBy: start.column - 1)
+      let endIndex = sourceLines[end.line - 1].index(
+        sourceLines[end.line - 1].startIndex, offsetBy: end.column - 1)
+      return String(program[startIndex..<endIndex])
+    }
     
     for (t, e) in zip(scannedTokens, expectedTokens) {
       XCTAssertEqual(t.body, e.body)
       XCTAssertEqual(t.location, e.location)
+      XCTAssertEqual(t.body.text, text(t.location))
     }
   }
 }
