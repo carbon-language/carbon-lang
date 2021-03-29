@@ -358,8 +358,18 @@ behave consistently on a given type, independent of context. For more on this,
 see
 [this description of what coherence is and why Rust enforces it](https://github.com/Ixrec/rust-orphan-rules#what-is-coherence).
 
-There are some capabilities we would like for interfaces which are in tension
-with the coherence property:
+Coherence greatly simplifies the language design, since it reduces the need for
+complicated rules to picking an implementation when there are many candidates.
+It also has a number of benefits for users:
+
+-   It removes a way packages can conflict with each other.
+-   It makes the behavior of code more consistent and predictable.
+-   It means there is no need to provide a disambiguation mechanism.
+    Disambiguation is particularly problematic since the ambiguous call is often
+    in generic code rather than code you control.
+
+The main downside of coherence is that there are some capabilities we would like
+for interfaces which are in tension with the coherence property:
 
 -   They should be some way of selecting between multiple implementations of an
     interface for a given type. For example, a _Song_ might support multiple
