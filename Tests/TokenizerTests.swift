@@ -15,7 +15,10 @@ final class TokenizerTests: XCTestCase {
       = - +( ){}[]a.b,;:
       """    
     let scannedTokens = Tokens(in: program, from: "")
-    
+
+    /// Returns the token with the given contents.
+    ///
+    /// This is just a helper to make `expectedTokens` (below) read nicely.
     func token(
       _ k: TokenKind, _ text: String,
       from startLine: Int, _ startColumn: Int,
@@ -97,9 +100,11 @@ final class TokenizerTests: XCTestCase {
     }
     
     for (t, e) in zip(scannedTokens, expectedTokens) {
-      XCTAssertEqual(t.body, e.body)
-      XCTAssertEqual(t.location, e.location)
-      XCTAssertEqual(t.body.text, text(t.location))
+      XCTAssertEqual(t.body, e.body, "Unexpected token value.")
+      XCTAssertEqual(t.location, e.location, "Unexpected token location.")
+      XCTAssertEqual(
+        t.body.text, text(t.location),
+        "Token text doesn't match source text in token location.")
     }
   }
 }
