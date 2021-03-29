@@ -248,7 +248,7 @@ instead of "substitution failed at this line of the function's implementation."
 [dynamic dispatch](#dispatch-control) to reduce build times. We may also be able
 to reduce the amount of redundant compilation work even with the
 [static strategy](#dispatch-control) by identifying instantiations with the same
-arguments and only generating code for them once.
+arguments or identical implementations and only generating code for them once.
 
 ### Encapsulation
 
@@ -354,7 +354,9 @@ that there is a single answer to the question:
 
 independent of context, such as the libraries imported into a given file. Since
 a generic function only depends on interface implementations, they will always
-behave consistently on a given type, independent of context.
+behave consistently on a given type, independent of context. For more on this,
+see
+[this description of what coherence is and why Rust enforces it](https://github.com/Ixrec/rust-orphan-rules#what-is-coherence).
 
 There are some capabilities we would like for interfaces which are in tension
 with the coherence property:
@@ -421,6 +423,11 @@ accidentally use the same name for different things, and for functions to use
 interfaces with name conflicts together on a single type. Contrast this with
 Swift's protocols, where interfaces with associated types that have the same
 name are aliased.
+
+Note this is possible since [interfaces are nominal](#interfaces-are-nominal).
+The place where types specify that they implement an interface is also the
+vehicle for unambiguously designating which function implementation goes with
+what interface.
 
 ## Non-goals, caveats, limitations, and out-of-scope issues
 
