@@ -32,7 +32,7 @@ final class ParserTests: XCTestCase {
       [
         ^.function(
           ^FunctionDefinition_(
-            name: ^Token(.Identifier, "main"),
+            name: ^"main",
             parameterPattern: ^[],
             returnType: ^.intType,
             body: nil))
@@ -43,7 +43,7 @@ final class ParserTests: XCTestCase {
       [
         ^.function(
           ^FunctionDefinition_(
-            name: ^Token(.Identifier, "main"),
+            name: ^"main",
             parameterPattern: ^[],
             returnType: ^.intType,
             body: ^.block([])))
@@ -52,22 +52,19 @@ final class ParserTests: XCTestCase {
    XCTAssertEqual(
       try! "var Int: x = 0;".parsedAsCarbon(),
       [
-        ^.variable(
-          name: ^Token(.Identifier, "x"),
-          type: ^.intType,
-          initializer: ^.integerLiteral(0))
+        ^.variable(name: ^"x", type: ^.intType, initializer: ^.integerLiteral(0))
       ])
   }
 
   func testParseFailure() {
     XCTAssertThrowsError(try "fn ()".parsedAsCarbon()) { e in
+      print(e)
       XCTAssertTrue(
-        e is _CitronParserUnexpectedTokenError<Identifier, TokenKind>);
+        e is _CitronParserUnexpectedTokenError<AST<Token>, TokenKind>);
     }
 
     XCTAssertThrowsError(try "fn f".parsedAsCarbon()) { e in
-      XCTAssertTrue(
-        e is CitronParserUnexpectedEndOfInputError);
+      XCTAssertTrue(e is CitronParserUnexpectedEndOfInputError);
     }
   }
 }

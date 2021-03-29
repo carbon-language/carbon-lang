@@ -24,7 +24,7 @@ struct AST<Node: Hashable>: Hashable {
   var location: SourceLocation
 }
 
-typealias Identifier = AST<Token>
+typealias Identifier = AST<String>
 
 indirect enum Declaration_: Hashable {
   case

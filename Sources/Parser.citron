@@ -51,6 +51,7 @@
 %nonterminal_type alternative_list {[Alternative]}
 %nonterminal_type declaration Declaration
 %nonterminal_type declaration_list {[Declaration]}
+%nonterminal_type identifier Identifier
 
 %nonassociative LEFT_CURLY_BRACE RIGHT_CURLY_BRACE.
 %nonassociative COLON COMMA DBLARROW.
@@ -65,14 +66,17 @@
 input ::= declaration_list(d). {d}
 pattern ::= expression(e).     {e}
 
-expression ::= Identifier(i).  
+// identifier is just Identifier without the TokenKind
+identifier ::= Identifier(i).
+  { AST(i.body.text, i.location) }
+expression ::= identifier(i).  
   { AST(.variable(i), i.location) }
 expression ::= expression(t) member_designator(m).
   { AST(.getField(target: t, fieldName: m), t...m) }
 expression ::= expression(t)
   LEFT_SQUARE_BRACKET expression(i) RIGHT_SQUARE_BRACKET(b).
   { AST(.index(target: t, offset: i), t...b) } 
-expression ::= expression(t) COLON Identifier(i).
+expression ::= expression(t) COLON identifier(i).
   { AST(.patternVariable(name: i, type: t), t...i) }
 expression ::= Integer_literal(i).
   { AST(.integerLiteral(Int(i.body.text)!), i.location) }
@@ -108,7 +112,7 @@ expression ::= expression(f) tuple(a).
   {AST(.functionCall(callee: f, arguments: a), f...a)}
 expression ::= FNTY(k) tuple(p) return_type(r).
   {AST(.functionType(parameterTypes: p, returnType: r), k...r)}
-member_designator ::= PERIOD(p) Identifier(n).
+member_designator ::= PERIOD(p) identifier(n).
   { AST(n.body, p...n) }
 paren_expression ::= LEFT_PARENTHESIS(l) field_list(f) RIGHT_PARENTHESIS(r).
   {
@@ -183,7 +187,7 @@ return_type ::= /* Empty */.
   { AST(.tupleLiteral([]), .empty) }
 return_type ::= ARROW(a) expression(e).
   { AST(e.body, a...e) }
-function_definition ::= FN(f) Identifier(n) tuple(p) return_type(t)
+function_definition ::= FN(f) identifier(n) tuple(p) return_type(t)
   LEFT_CURLY_BRACE(l) statement_list(b) RIGHT_CURLY_BRACE(r).
   {
     FunctionDefinition(
@@ -193,7 +197,7 @@ function_definition ::= FN(f) Identifier(n) tuple(p) return_type(t)
       f...r)
   }
 function_definition
-  ::= FN(f) Identifier(n) tuple(p) DBLARROW expression(b) SEMICOLON(s).
+  ::= FN(f) identifier(n) tuple(p) DBLARROW expression(b) SEMICOLON(s).
   {
     FunctionDefinition(
       .init(
@@ -202,7 +206,7 @@ function_definition
       f...s)
   }
 function_declaration
-  ::= FN(f) Identifier(n) tuple(p) return_type(r) SEMICOLON(s).
+  ::= FN(f) identifier(n) tuple(p) return_type(r) SEMICOLON(s).
   {
     FunctionDefinition(
       .init(
@@ -210,7 +214,7 @@ function_declaration
         body: nil),
       f...s)
   }
-variable_declaration ::= expression(t) COLON Identifier(n).
+variable_declaration ::= expression(t) COLON identifier(n).
   { VariableDeclaration(.init(name: n, type: t), t...n) }
 member ::= VAR(v) variable_declaration(d) SEMICOLON(s).
   { AST(d.body, v...s) }
@@ -218,9 +222,9 @@ member_list ::= /* Empty */.
   { [] }
 member_list ::= member(m) member_list(l).
   { [m] + l }
-alternative ::= Identifier(n) tuple(p).
+alternative ::= identifier(n) tuple(p).
   { Alternative(.init(name: n, payload: p), n...p) }
-alternative ::= Identifier(n).
+alternative ::= identifier(n).
   { Alternative(.init(name: n, payload: .init([], .empty)), n.location) }
 alternative_list ::= /* Empty */.
   { [] }
@@ -233,9 +237,9 @@ declaration ::= function_definition(f).
 declaration ::= function_declaration(f).
   { AST(.function(f), f.location) }
 declaration ::=
-  STRUCT(s) Identifier(n) LEFT_CURLY_BRACE member_list(m) RIGHT_CURLY_BRACE(r).
+  STRUCT(s) identifier(n) LEFT_CURLY_BRACE member_list(m) RIGHT_CURLY_BRACE(r).
   { AST(.struct(StructDefinition(name: n, members: m)), s...r) }
-declaration ::= CHOICE(c) Identifier(n) 
+declaration ::= CHOICE(c) identifier(n) 
   LEFT_CURLY_BRACE alternative_list(l) RIGHT_CURLY_BRACE(r).
   { AST(.choice(name: n, alternatives: l), c...r) }
 declaration ::= VAR(v) variable_declaration(d) EQUAL expression(i) SEMICOLON(s).
