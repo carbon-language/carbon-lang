@@ -45,6 +45,10 @@ TRUE              "true"
 TYPE              "Type"
 VAR               "var"
 WHILE             "while"
+CONTINUATION_TYPE "__Continuation"
+CONTINUATION      "__continuation"
+RUN               "__run"
+AWAIT             "__await"
 
 identifier    [A-Za-z_][A-Za-z0-9_]*
 integer_literal   [0-9]+
@@ -93,6 +97,10 @@ horizontal_whitespace [ \t\r]
 {TYPE}     { return yy::parser::make_TYPE(context.current_token_position); }
 {VAR}      { return yy::parser::make_VAR(context.current_token_position); }
 {WHILE}    { return yy::parser::make_WHILE(context.current_token_position); }
+{CONTINUATION_TYPE} { return yy::parser::make_CONTINUATION_TYPE(context.current_token_position); }
+{CONTINUATION}    { return yy::parser::make_CONTINUATION(context.current_token_position); }
+{RUN}      { return yy::parser::make_RUN(context.current_token_position); }
+{AWAIT}    { return yy::parser::make_AWAIT(context.current_token_position); }
 
 "=" return yy::parser::make_EQUAL(context.current_token_position);
 "-" return yy::parser::make_MINUS(context.current_token_position);

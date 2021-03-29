@@ -76,6 +76,7 @@ auto ToType(int line_num, const Value* val) -> const Value* {
     case ValKind::BoolTV:
     case ValKind::IntTV:
     case ValKind::AutoTV:
+    case ValKind::ContinuationTV:
       return val;
     default:
       std::cerr << line_num << ": in ToType, expected a type, not ";
@@ -96,6 +97,8 @@ auto ReifyType(const Value* t, int line_num) -> Expression* {
       return MakeBoolType(0);
     case ValKind::TypeTV:
       return MakeTypeType(0);
+    case ValKind::ContinuationTV:
+      return MakeContinuationType(0);
     case ValKind::FunctionTV:
       return MakeFunType(0, ReifyType(t->u.fun_type.param, line_num),
                          ReifyType(t->u.fun_type.ret, line_num));
@@ -382,10 +385,15 @@ auto TypeCheckExp(Expression* e, TypeEnv env, Env ct_env, const Value* expected,
       }
     }
     case ExpressionKind::IntT:
+      return TCResult(e, MakeIntTypeVal(), env);
     case ExpressionKind::BoolT:
+      return TCResult(e, MakeBoolTypeVal(), env);
     case ExpressionKind::TypeT:
-    case ExpressionKind::AutoT:
       return TCResult(e, MakeTypeTypeVal(), env);
+    case ExpressionKind::AutoT:
+      return TCResult(e, MakeAutoTypeVal(), env);
+    case ExpressionKind::ContinuationT:
+      return TCResult(e, MakeContinuationTypeVal(), env);
   }
 }
 
@@ -500,7 +508,29 @@ auto TypeCheckStmt(Statement* s, TypeEnv env, Env ct_env,
       }
       return TCStatement(MakeReturn(s->line_num, res.exp), env);
     }
-  }
+    case StatementKind::Continuation: {
+      TCStatement body_result =
+          TypeCheckStmt(s->u.continuation.body, env, ct_env, ret_type);
+      Statement* new_continuation = MakeContinuationStatement(
+          s->line_num, *s->u.continuation.continuation_variable,
+          body_result.stmt);
+      env.Set(*s->u.continuation.continuation_variable,
+              MakeContinuationTypeVal());
+      return TCStatement(new_continuation, env);
+    }
+    case StatementKind::Run: {
+      TCResult argument_result = TypeCheckExp(s->u.run.argument, env, ct_env,
+                                              nullptr, TCContext::ValueContext);
+      ExpectType(s->line_num, "argument of `run`", MakeContinuationTypeVal(),
+                 argument_result.type);
+      Statement* new_run = MakeRun(s->line_num, argument_result.exp);
+      return TCStatement(new_run, env);
+    }
+    case StatementKind::Await: {
+      // nothing to do here
+      return TCStatement(s, env);
+    }
+  }  // switch
 }
 
 auto CheckOrEnsureReturn(Statement* stmt, bool void_return, int line_num)
@@ -547,6 +577,10 @@ auto CheckOrEnsureReturn(Statement* stmt, bool void_return, int line_num)
         return CheckOrEnsureReturn(stmt->u.sequence.stmt, void_return,
                                    stmt->line_num);
       }
+    case StatementKind::Continuation:
+    case StatementKind::Run:
+    case StatementKind::Await:
+      return stmt;
     case StatementKind::Assign:
     case StatementKind::ExpressionStatement:
     case StatementKind::While:

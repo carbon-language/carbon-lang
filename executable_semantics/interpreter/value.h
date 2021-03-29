@@ -9,6 +9,7 @@
 #include <vector>
 
 #include "executable_semantics/ast/statement.h"
+#include "executable_semantics/interpreter/stack.h"
 
 namespace Carbon {
 
@@ -38,69 +39,94 @@ enum class ValKind {
   TupleTV,
   StructTV,
   ChoiceTV,
+  ContinuationTV,  // The type of a continuation.
   VarPatV,
-  AltConsV
+  AltConsV,
+  ContinuationV  // A first-class continuation value.
 };
+
+struct Frame;  // used by continuation
 
 struct Value {
   ValKind tag;
   union {
     int integer;
     bool boolean;
+
     struct {
       std::string* name;
       const Value* param;
       Statement* body;
     } fun;
+
     struct {
       const Value* type;
       const Value* inits;
     } struct_val;
+
     struct {
       std::string* alt_name;
       std::string* choice_name;
     } alt_cons;
+
     struct {
       std::string* alt_name;
       std::string* choice_name;
       Address argument;
     } alt;
+
     struct {
       std::vector<std::pair<std::string, Address>>* elts;
     } tuple;
+
     Address ptr;
     std::string* var_type;
+
     struct {
       std::string* name;
       const Value* type;
     } var_pat;
+
     struct {
       const Value* param;
       const Value* ret;
     } fun_type;
+
     struct {
       const Value* type;
     } ptr_type;
+
     struct {
       std::string* name;
       VarValues* fields;
       VarValues* methods;
     } struct_type;
+
     struct {
       std::string* name;
       VarValues* fields;
     } tuple_type;
+
     struct {
       std::string* name;
       VarValues* alternatives;
     } choice_type;
+
     struct {
       std::list<std::string*>* params;
       const Value* type;
     } implicit;
+
+    struct {
+      std::vector<Frame*>* stack;
+    } continuation;
+
   } u;
 };
 
+// Return a first-class continuation represented by the
+// given stack, down to the nearest enclosing `__continuation`.
+auto MakeContinuation(std::vector<Frame*> stack) -> Value*;
 auto MakeIntVal(int i) -> const Value*;
 auto MakeBoolVal(bool b) -> const Value*;
 auto MakeFunVal(std::string name, const Value* param, Statement* body)
@@ -117,6 +143,7 @@ auto MakeVarPatVal(std::string name, const Value* type) -> const Value*;
 
 auto MakeVarTypeVal(std::string name) -> const Value*;
 auto MakeIntTypeVal() -> const Value*;
+auto MakeContinuationTypeVal() -> const Value*;
 auto MakeAutoTypeVal() -> const Value*;
 auto MakeBoolTypeVal() -> const Value*;
 auto MakeTypeTypeVal() -> const Value*;
