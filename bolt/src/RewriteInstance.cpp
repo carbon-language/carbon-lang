@@ -57,6 +57,7 @@
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/DataExtractor.h"
 #include "llvm/Support/Errc.h"
+#include "llvm/Support/FileSystem.h"
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/TargetRegistry.h"
 #include "llvm/Support/TargetSelect.h"
@@ -837,6 +838,9 @@ void RewriteInstance::run() {
 
   if (opts::LinuxKernelMode) {
     errs() << "BOLT-WARNING: not writing the output file for Linux Kernel\n";
+    return;
+  } else if (opts::OutputFilename == "/dev/null") {
+    outs() << "BOLT-INFO: skipping writing final binary to disk\n";
     return;
   }
 
@@ -2982,9 +2986,10 @@ void RewriteInstance::emitAndLink() {
 
   // This is an object file, which we keep for debugging purposes.
   // Once we decide it's useless, we should create it in memory.
+  SmallString<128> OutObjectPath;
+  sys::fs::getPotentiallyUniqueTempFileName("output", "o", OutObjectPath);
   std::unique_ptr<ToolOutputFile> TempOut =
-    std::make_unique<ToolOutputFile>(opts::OutputFilename + ".bolt.o",
-                                      EC, sys::fs::OF_None);
+      std::make_unique<ToolOutputFile>(OutObjectPath, EC, sys::fs::OF_None);
   check_error(EC, "cannot create output object file");
 
   std::unique_ptr<buffer_ostream> BOS =
@@ -3094,8 +3099,12 @@ void RewriteInstance::emitAndLink() {
     CacheMetrics::printAll(BC->getSortedFunctions());
   }
 
-  if (opts::KeepTmp)
+  if (opts::KeepTmp) {
     TempOut->keep();
+    outs() << "BOLT-INFO: intermediary output object file saved for debugging "
+              "purposes: "
+           << OutObjectPath << "\n";
+  }
 }
 
 void RewriteInstance::updateMetadata() {
