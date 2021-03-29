@@ -11,7 +11,7 @@ final class TokenizerTests: XCTestCase {
         default/
       else
       // excuse me
-        ==false fn fnty if\t\tint match not or return struct true type var while
+        ==false fn fnty if\t\tInt match not or return struct true type var while
       = - +( ){}[]a.b,;:
       """    
     let scannedTokens = Tokens(in: program, from: "")
@@ -59,7 +59,7 @@ final class TokenizerTests: XCTestCase {
       token(.FN, "fn", from: 7, 11, to: 7, 13),
       token(.FNTY, "fnty", from: 7, 14, to: 7, 18),
       token(.IF, "if", from: 7, 19, to: 7, 21),
-      token(.INT, "int", from: 7, 23, to: 7, 26),
+      token(.INT, "Int", from: 7, 23, to: 7, 26),
       token(.MATCH, "match", from: 7, 27, to: 7, 32),
       token(.NOT, "not", from: 7, 33, to: 7, 36),
       token(.OR, "or", from: 7, 37, to: 7, 39),

@@ -22,7 +22,7 @@ let keywords: [KeywordSpec] = [
   ("fn", .FN),
   ("fnty", .FNTY),
   ("if", .IF),
-  ("int", .INT),
+  ("Int", .INT),
   ("match", .MATCH),
   ("not", .NOT),
   ("or", .OR),
