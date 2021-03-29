@@ -1,10 +1,26 @@
+/// A syntactically valid program fragment in non-textual form, annotated with
+/// its location in an input source file.
+///
+/// - Note: the source location is *incidental* information that is **not
+/// considered part of the AST's value.** In other words, two ASTs whose
+/// contents differ only by source locations will compare as equal.
 struct AST<Node: Hashable>: Hashable {
   init(_ body: Node, _ location: SourceLocation) {
     self.body = body
     self.location = location
   }
+
+  /// Returns `true` iff `l` and `r` are equivalent, i.e. have the same `body`
+  /// value.
+  static func == (l: Self, r: Self) -> Bool { l.body == r.body }
   
+  /// Accumulates the hash value of `self` into `accumulator`.
+  func hash(into accumulator: inout Hasher) { body.hash(into: &accumulator) }
+
+  /// The content of this fragment.
   var body: Node
+
+  /// This fragment's location in the source.
   var location: SourceLocation
 }
 
