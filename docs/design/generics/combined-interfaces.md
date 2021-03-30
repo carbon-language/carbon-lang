@@ -2815,13 +2815,13 @@ associated type bound is the same interface recursively. The bad case is:
 ```
 interface Broken {
   var Broken:$ Q;
-  var Broken(.R = Q.Q.R.R):$ R;
+  var Broken(.R = Q.R.R):$ R;
 }
 
 fn F[Broken:$ T](T: x) {
   // T.R.R not canonical
+  // == T.Q.R.R not canonical
   // == T.Q.Q.R.R not canonical
-  // == T.Q.Q.Q.Q.R.R not canonical
   // etc.
 }
 ```
@@ -2843,8 +2843,30 @@ A few notes on this rule:
 -   There is an additional restriction if the expression has the same length
     that it only refer to earlier names. Without mutual recursion, this is
     already precluded by the "no forward references" rule.
+-   We are relying on there being a finite number of interfaces, so we ignore
+    [interface parameters](#parameterized-interfaces) when checking this
+    condition.
 -   This never applies to function declarations, since there is no recursion
     involved in that context.
+
+The fix for this situation is to introduce new inferred associated types:
+
+```
+interface Fixed {
+  [var Fixed:$ RR];
+  [var Fixed(.R = RR):$ QR];
+  var Fixed(.R = QR):$ Q;
+  var Fixed(.R = RR):$ R;
+}
+
+fn F[Fixed:$ T](T: x) {
+  // T.RR canonical
+  // T.R.R == T.RR
+  // T.Q.R.R == T.Q.RR == T.QR.R == T.RR
+  // T.Q.Q.R.R == T.Q.Q.RR == T.Q.QR.R == T.Q.RR == T.QR.R == T.RR
+  // etc.
+}
+```
 
 The last concern is what happens when an expression is assigned twice. This is
 only a problem if it is assigned to two values that resolve to two different
@@ -2870,7 +2892,10 @@ This resolves the issue, and with this change the compiler can now correctly
 determine canonical types.
 
 **Note:** This algorithm still works with the `.Self` feature from the
-["recursive constraints" section](#recursive-constraints).
+["recursive constraints" section](#recursive-constraints). For example, the
+expression `var A(.X = .Self):$ Y` means `Y.X == Y` and so the `.Self` on the
+right-side represents a shorter and earlier type expression. This precludes
+introducing a loop and so is safe.
 
 **Open question:** Can we relax any of the restrictions? For example, perhaps we
 would like to allow items in an interface to reference each other, as in:
