@@ -65,9 +65,9 @@ in a generic function's signature.
 
 ### Generic parameters
 
-A generic function (or type) will take some "generic parameters", which will
-frequently be types, and in some cases will be implicit or inferred from the
-types of the values of explicit parameters to the function. If a generic
+A generic function, or generic type, will take some "generic parameters", which
+will frequently be types, and in some cases will be implicit or inferred from
+the types of the values of explicit parameters to the function. If a generic
 parameter is a type, the generic function's signature can specify constraints
 that the caller's type must satisfy. For example, a resizable array type (like
 C++'s `std::vector`) might have a generic type parameter with the constraint
@@ -108,6 +108,16 @@ instead of rather than in addition to standard inheritance-and-classes
 object-oriented language support. For the moment, though, this is out of scope.
 
 ### Relationship to templates
+
+The entire idea of statically typed languages is that coding against specific
+types and interfaces is a better model and experience. Unfortunately, templates
+don't provide many of those benefits to programmers until it's too late, when
+users are consuming the API. And templates come with high overhead, such as
+[template error messages](#better-compiler-experience). Generally, code should
+move towards more rigorously type checked constructs. However, existing C++ code
+is full of unrestricted usage of compile-time duck-typed templates. They are
+incredibly convenient to write and so likely will continue to exist for a long
+time.
 
 The question of whether Carbon has direct support for templates is out of scope
 for this document. The generics design is not completely separate from
@@ -161,14 +171,14 @@ generally be used with [static dispatch](#dispatch-control).
 
 Interfaces in C++ are often represented by abstract base classes. Generics
 should offer an alternative that does not rely on inheritance. This means looser
-coupling and none of the problems of multiple inheritance. In fact,
-[Sean Parent](https://sean-parent.stlab.cc/papers-and-presentations/#better-code-runtime-polymorphism)
-(and others) advocate for runtime polymorphism patterns in C++ that avoid
-inheritance, since it can cause runtime performance, correctness, and code
-maintenance problems in some situations. Carbon generics provide an alternative
-for those situations inheritance doesn't handle as well. In particular, we would
-like Carbon generics to supplant the need to support multiple inheritance in
-Carbon,
+coupling and none of the problems of multiple inheritance. In fact some people,
+such as
+[Sean Parent](https://sean-parent.stlab.cc/papers-and-presentations/#better-code-runtime-polymorphism),
+advocate for runtime polymorphism patterns in C++ that avoid inheritance, since
+it can cause runtime performance, correctness, and code maintenance problems in
+some situations. Carbon generics provide an alternative for those situations
+inheritance doesn't handle as well. In particular, we would like Carbon generics
+to supplant the need to support multiple inheritance in Carbon,
 
 will be able to represent this form of polymorphism without all the boilerplate
 and complexity required in C++, to
@@ -223,8 +233,8 @@ have some resolution about templates in Carbon.
 
 ### Performance
 
-Generics shall provide at least as good code generation (both code size and
-execution speed) in all cases over C++ templates.
+Generics shall provide at least as good code generation, in terms of both code
+size and execution speed, in all cases over C++ templates.
 [Performance is the top priority for Carbon](../../project/goals.md#performance-critical-software),
 and we expect to use generics pervasively, and so they can't compromise that
 goal in release builds.
@@ -259,10 +269,10 @@ With a template, the implementation is part of the interface and types are only
 checked when the function is called and the template is instantiated.
 
 A generic function is type checked when it is defined, and type checking can't
-use any information that is only known when the function is instantiated (such
-as the exact type). Furthermore, calls to a generic function may be type checked
-using only its declaration, not its body. You should be able to call a generic
-function using only a forward declaration.
+use any information that is only known when the function is instantiated such as
+the exact argument types. Furthermore, calls to a generic function may be type
+checked using only its declaration, not its body. You should be able to call a
+generic function using only a forward declaration.
 
 ### Predictability
 
@@ -270,7 +280,8 @@ A general property of generics is they are more predictable than templates. They
 make clear when a type satisfies the requirements of a function; they have a
 documented contract. Further, that contract is enforced by the compiler, not
 sensitive to implementation details in the function body. This eases evolution
-by reducing the impact of [Hyrum's law](https://www.hyrumslaw.com/).
+by reducing (but not eliminating) the impact of
+[Hyrum's law](https://www.hyrumslaw.com/).
 
 **Nice to have:** We also want well-defined boundaries between what is legal and
 not. This is "will my code be accepted by the compiler" predictability. We would
@@ -279,10 +290,10 @@ and report an error if it isn't resolved by then." For example, C++ compilers
 will typically have a template recursion limit. With generics, these problems
 arise due to trying to reason whether something is legal in all possible
 instantiations, rather than with specific, concrete types. Some of this is
-likely unavoidable (or too costly to avoid), as most existing generics systems
-[have undecidable aspects to their type system](https://3fx.ch/typing-is-hard.html)
-(including [Rust](https://sdleffler.github.io/RustTypeSystemTuringComplete/) and
-[Swift](https://forums.swift.org/t/swift-type-checking-is-undecidable/39024)).
+likely unavoidable or too costly to avoid, as most existing generics systems
+[have undecidable aspects to their type system](https://3fx.ch/typing-is-hard.html),
+including [Rust](https://sdleffler.github.io/RustTypeSystemTuringComplete/) and
+[Swift](https://forums.swift.org/t/swift-type-checking-is-undecidable/39024).
 
 ### Dispatch control
 
@@ -304,9 +315,9 @@ generic functions:
 By default, we expect the implementation strategy to be controlled by the
 compiler, and not semantically visible to the user. For example, the compiler
 might use the static strategy for release builds and the dynamic strategy for
-development. Or it might choose between them on a more granular level (maybe
-some specific specializations are needed for performance, but others would just
-be code bloat) based on code analysis or profiling.
+development. Or it might choose between them on a more granular level based on
+code analysis or profiling--maybe some specific specializations are needed for
+performance, but others would just be code bloat.
 
 In addition, the user may opt in to using the dynamic strategy in specific
 cases. This could be just to control binary size in cases the user knows are not
@@ -319,15 +330,6 @@ static strategy in specific cases. This might be to keep runtime performance
 acceptable even when running a development or debug build.
 
 ### Upgrade path from templates
-
-The entire idea of statically typed languages is that coding against specific
-types and interfaces is a better model and experience. Unfortunately, templates
-don't provide many of those benefits to programmers until it's too late (users
-are consuming the API) and with high overhead (template error messages).
-Generally, code should move towards more rigorously type checked constructs.
-However, existing C++ code is full of unrestricted usage of compile-time
-duck-typed templates. They are incredibly convenient to write and so likely will
-continue to exist for a long time.
 
 We want there to be a natural, incremental upgrade path from templated code to
 generic code. This gives us these additional principles:
@@ -376,8 +378,8 @@ for interfaces which are in tension with the coherence property:
 
 -   They should be some way of selecting between multiple implementations of an
     interface for a given type. For example, a _Song_ might support multiple
-    orderings (by title, by artist, etc.), which would be represented by having
-    multiple implementations of a _Comparable_ interface.
+    orderings: by title, by artist, and so on. These would be represented by
+    having multiple implementations of a _Comparable_ interface.
 -   In order to allow libraries to be composed, there must be some way of saying
     a type implements an interface that is in another package that the authors
     of the type were unaware of. This is especially important since the library
@@ -459,8 +461,8 @@ We don't need to provide full flexibility of templates from generics:
     cases that don't fit inside generics.
 -   If you want compile-time duck typing, that is available by way of templates.
 -   There is no need to allow a specialization of some generic interface for
-    some particular type to actually expose a _different_ interface (different
-    set of methods or types within the interface for example).
+    some particular type to actually expose a _different_ interface, with
+    different methods or different types in method signatures.
 
 ### Features may be applicable outside generics
 
@@ -479,8 +481,8 @@ definitions.
 
 We want Carbon code to support both
 [static and dynamic dispatch](#dispatch-control). This means we cannot add
-features to generics that inherently require monomorphization (or creating
-differently specialized code) or templating, since that would prevent the
+features to generics that inherently require creating differently specialized
+code by way of monomorphization or templating, since that would prevent the
 dynamic compilation strategy.
 
 We won't support unbounded type families, since they are an obstacle to
