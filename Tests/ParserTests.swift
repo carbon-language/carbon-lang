@@ -77,18 +77,9 @@ final class ParserTests: XCTestCase {
         .appendingPathComponent("testdata")
     
     for f in try! FileManager().contentsOfDirectory(atPath: testdata.path) {
-      let fileName = testdata.appendingPathComponent(f)
-      do {
-        _ = try String(contentsOf: fileName)
-          .parsedAsCarbon(fromFile: fileName.path)
-      }
-      catch let e as _CitronParserUnexpectedTokenError<AST<Token>, TokenKind> {
-        print(e.token, e.tokenCode)
-      }
-      catch let e {
-        print(f)
-        print(e)
-      }
+      let p = testdata.appendingPathComponent(f).path
+      XCTAssertNoThrow(
+        try String(contentsOfFile: p).parsedAsCarbon(fromFile: p))
     }
   }
 }
