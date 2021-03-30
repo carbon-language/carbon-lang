@@ -154,7 +154,7 @@ match_clause_list ::= match_clause(c) match_clause_list(l).
   { AST([c] + l.body, c...l) }
 statement ::= expression(l) EQUAL expression(r) SEMICOLON(s).
   { AST(.assignment(target: l, source: r), l...s) }
-statement ::= VAR(v) pattern(p) MINUS expression(e) SEMICOLON(s).
+statement ::= VAR(v) pattern(p) EQUAL expression(e) SEMICOLON(s).
   { AST(.variableDefinition(pattern: p, initializer: e), v...s) }
 statement ::= expression(e) SEMICOLON(s).
   { AST(.expressionStatement(e), e...s) }
