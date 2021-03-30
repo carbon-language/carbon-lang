@@ -86,7 +86,7 @@ jobs:
             - name: Swift Version
               run: swift --version
             - name: Generate parser
-              run: make CC=gcc ./Sources/Syntax/Parser.swift
+              run: make CC=gcc ./Sources/Parser.swift
             - name: Build (Debug)
               run: swift build -v -c debug
             - name: Build (Release)
