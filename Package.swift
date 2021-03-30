@@ -23,6 +23,6 @@ let package = Package(
             name: "Tests",
             dependencies: ["CarbonInterpreter"],
             path: "Tests",
-            resources: [ .copy("Resources"), ]),
+            resources: [ .copy("testdata"), ]),
     ]
 )

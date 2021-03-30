@@ -1,5 +1,6 @@
 import XCTest
 @testable import CarbonInterpreter
+import Foundation
 
 prefix operator ^
 
@@ -10,9 +11,9 @@ prefix func ^ <T>(x: T) -> AST<T> {
 
 extension String {
   /// Returns `self`, parsed as Carbon.
-  func parsedAsCarbon() throws -> [Declaration] {
+  func parsedAsCarbon(fromFile sourceFile: String = #filePath) throws -> [Declaration] {
     let p = CarbonParser()
-    for t in Tokens(in: self, from: "no file") {
+    for t in Tokens(in: self, from: sourceFile) {
       try p.consume(token: t, code: t.body.kind)
     }
     return try p.endParsing()
@@ -50,10 +51,10 @@ final class ParserTests: XCTestCase {
       ])
 
    XCTAssertEqual(
-      try! "var Int: x = 0;".parsedAsCarbon(),
-      [
-        ^.variable(name: ^"x", type: ^.intType, initializer: ^.integerLiteral(0))
-      ])
+     try! "var Int: x = 0;".parsedAsCarbon(),
+     [
+       ^.variable(name: ^"x", type: ^.intType, initializer: ^.integerLiteral(0))
+     ])
   }
 
   func testParseFailure() {
@@ -65,6 +66,27 @@ final class ParserTests: XCTestCase {
 
     XCTAssertThrowsError(try "fn f".parsedAsCarbon()) { e in
       XCTAssertTrue(e is CitronParserUnexpectedEndOfInputError);
+    }
+  }
+
+  func testExamples() {
+    let testdata = 
+        URL(fileURLWithPath: #filePath).deletingLastPathComponent()
+        .appendingPathComponent("testdata")
+    
+    for f in try! FileManager().contentsOfDirectory(atPath: testdata.path) {
+      let fileName = testdata.appendingPathComponent(f)
+      do {
+        _ = try String(contentsOf: fileName)
+          .parsedAsCarbon(fromFile: fileName.path)
+      }
+      catch let e as _CitronParserUnexpectedTokenError<AST<Token>, TokenKind> {
+        print(e.token, e.tokenCode)
+      }
+      catch let e {
+        print(f)
+        print(e)
+      }
     }
   }
 }
