@@ -11,7 +11,9 @@ prefix func ^ <T>(x: T) -> AST<T> {
 
 extension String {
   /// Returns `self`, parsed as Carbon.
-  func parsedAsCarbon(fromFile sourceFile: String = #filePath) throws -> [Declaration] {
+  func parsedAsCarbon(fromFile sourceFile: String = #filePath) throws
+    -> [Declaration]
+  {
     let p = CarbonParser()
     for t in Tokens(in: self, from: sourceFile) {
       try p.consume(token: t, code: t.body.kind)
