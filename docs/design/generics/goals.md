@@ -34,6 +34,10 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Interfaces are nominal](#interfaces-are-nominal)
     -   [Interop and evolution](#interop-and-evolution)
 -   [Non-goals, caveats, limitations, and out-of-scope issues](#non-goals-caveats-limitations-and-out-of-scope-issues)
+    -   [Not the full flexibility of templates](#not-the-full-flexibility-of-templates)
+    -   [Features may be applicable outside generics](#features-may-be-applicable-outside-generics)
+    -   [Generics will be checked when defined](#generics-will-be-checked-when-defined)
+    -   [Specialization strategy](#specialization-strategy)
 
 <!-- tocstop -->
 
@@ -447,32 +451,43 @@ what interface.
 What are we **not** doing with generics, particularly things that some other
 languages do?
 
--   Don't need to provide full flexibility of templates from generics.
-    -   [Templates](#relationship-to-templates) can still cover those
-        exceptional cases that don't fit inside generics.
-    -   If you want compile-time duck typing, that is available by way of
-        templates.
-    -   There is no need to allow a specialization of some generic interface for
-        some particular type to actually expose a _different_ interface
-        (different set of methods or types within the interface for example).
--   Some features are presented as being part of generics because that is where
-    we expect them to be most useful or most used. These features may be allowed
-    and have application outside of generics. For example, we expect to allow
-    type constraints on template parameters in addition to generic parameters.
--   Cannot add features to generics that inherently require monomorphization (or
-    creating differently specialized code) or templating, that would prevent the
-    dynamic compilation strategy.
--   Cannot defer type checking of generic definitions (an implementation
-    strategy used by some C++ compilers where the tokens are stashed and
-    replayed on use).
--   We won't consider runtime specialization as an implementation strategy. That
-    is, some language runtimes JIT a specialization when it is first needed, but
-    it is not a goal for Carbon to support such an implementation strategy.
--   We won't support unbounded type families
-    ([such as this example from Swift](https://forums.swift.org/t/ergonomics-generic-types-conforming-in-more-than-one-way/34589/71)).
-    This is an obstacle to supporting static dispatch.
+### Not the full flexibility of templates
 
-Another example of unbounded type families:
+We don't need to provide full flexibility of templates from generics:
+
+-   [Templates](#relationship-to-templates) can still cover those exceptional
+    cases that don't fit inside generics.
+-   If you want compile-time duck typing, that is available by way of templates.
+-   There is no need to allow a specialization of some generic interface for
+    some particular type to actually expose a _different_ interface (different
+    set of methods or types within the interface for example).
+
+### Features may be applicable outside generics
+
+Some features are presented as being part of generics because that is where we
+expect them to be most useful or most used. These features may be allowed and
+have application outside of generics. For example, we expect to allow type
+constraints on template parameters in addition to generic parameters.
+
+### Generics will be checked when defined
+
+Some C++ compilers implement checking of generic definitions by stashing the
+tokens and replaying them on use. Carbon will not defer type checking of generic
+definitions.
+
+### Specialization strategy
+
+We want Carbon code to support both
+[static and dynamic dispatch](#dispatch-control). This means we cannot add
+features to generics that inherently require monomorphization (or creating
+differently specialized code) or templating, since that would prevent the
+dynamic compilation strategy.
+
+We won't support unbounded type families, since they are an obstacle to
+supporting static dispatch. Unbounded type families are when recursion creates
+an infinite collection of types, such as in
+[this example from Swift](https://forums.swift.org/t/ergonomics-generic-types-conforming-in-more-than-one-way/34589/71)
+or:
 
 ```
 fn Sort[Comparable T](List(T) list) -> List(T) {
@@ -489,3 +504,7 @@ are themselves `Comparable`, would recursively call itself to produce a set of
 types without bound. That is, calling `Sort` on a `List(Int)` would internally
 call `Sort` on a `List(List(Int))` and so on recursively without any static
 limit.
+
+Lastly, runtime specialization is out of scope as an implementation strategy.
+That is, some language runtimes JIT a specialization when it is first needed,
+but it is not a goal for Carbon to support such an implementation strategy.
