@@ -2,7 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#include "executable_semantics/ast/paren_contents.h"
+#include "executable_semantics/syntax/paren_contents.h"
 
 namespace Carbon {
 

@@ -28,23 +28,6 @@ cc_library(
 )
 
 cc_library(
-    name = "paren_contents",
-    srcs = ["paren_contents.cpp"],
-    hdrs = ["paren_contents.h"],
-    deps = [":expression"],
-)
-
-cc_test(
-    name = "paren_contents_test",
-    srcs = ["paren_contents_test.cpp"],
-    deps = [
-        ":paren_contents",
-        "@llvm-project//llvm:gtest",
-        "@llvm-project//llvm:gtest_main",
-    ],
-)
-
-cc_library(
     name = "function_definition",
     srcs = ["function_definition.cpp"],
     hdrs = ["function_definition.h"],

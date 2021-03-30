@@ -50,8 +50,8 @@
 
 #include "executable_semantics/ast/abstract_syntax_tree.h"
 #include "executable_semantics/ast/declaration.h"
-#include "executable_semantics/ast/paren_contents.h"
 #include "executable_semantics/ast/function_definition.h"
+#include "executable_semantics/syntax/paren_contents.h"
 
 namespace Carbon {
 class ParseAndLexContext;
