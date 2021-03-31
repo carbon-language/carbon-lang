@@ -2725,7 +2725,20 @@ expressions are equal is in general undecidable, as
 There is ongoing work in Swift
 ([1](https://forums.swift.org/t/formalizing-swift-generics-as-a-term-rewriting-system/45175),
 [2](https://gist.github.com/slavapestov/75dbec34f9eba5fb4a4a00b1ee520d0b))
-iterating on how to approach this problem.
+iterating on how to approach this problem. This new approach has the advantage
+of depending less on ad hoc heuristics, and instead formalizes the problem in
+terms of term rewriting and applies the
+[Knuth–Bendix completion algorithm](https://en.wikipedia.org/wiki/Knuth%E2%80%93Bendix_completion_algorithm)
+to convert it into an equivalent convergent term rewrite system that can resolve
+types efficiently and without backtracking. Note that there are
+[cases](https://en.wikipedia.org/wiki/Knuth%E2%80%93Bendix_completion_algorithm#A_non-terminating_example)
+where the algorithm will never terminate, and there exists research into making
+the
+[algorithm faster](https://www.researchgate.net/publication/221521331_Reducing_the_Complexity_of_the_Knuth-Bendix_Completion-Algorithm_A_Unification_of_Different_Approaches)
+and
+[complete successfully more often](https://homepage.divms.uiowa.edu/~astump/papers/thesis-wehrman.pdf).
+This last reference gives running times ranging from 3 seconds for a 10-rule
+completion to about 7 hours for a completing a theory with 21 identities.
 
 #### Type equality with argument passing
 
