@@ -4283,7 +4283,8 @@ Rust has been working toward adding this feature
 [4](https://www.fpcomplete.com/blog/monads-gats-nightly-rust/)). It has been
 proposed for Swift as well
 ([1](https://forums.swift.org/t/idea-generic-associated-types/5422),
-[2](https://forums.swift.org/t/generic-associated-type/17831)). This corresponds
+[2](https://github.com/apple/swift/blob/main/docs/GenericsManifesto.md#generic-associatedtypes),
+[3](https://forums.swift.org/t/generic-associated-type/17831)). This corresponds
 roughly to
 [member templates in C++](https://en.cppreference.com/w/cpp/language/member_template).
 
@@ -4323,9 +4324,10 @@ the same problem in two different contexts. Generic associated types are about
 members of interfaces and higher-ranked types are about function parameters.
 
 Swift proposals:
-[1](https://forums.swift.org/t/higher-kinded-types-monads-functors-etc/4691),
-[2](https://forums.swift.org/t/proposal-higher-kinded-types-monads-functors-etc/559),
-[3](https://github.com/typelift/swift/issues/1). These correspond roughly to
+[1](https://github.com/apple/swift/blob/main/docs/GenericsManifesto.md#higher-kinded-types),
+[2](https://forums.swift.org/t/higher-kinded-types-monads-functors-etc/4691),
+[3](https://forums.swift.org/t/proposal-higher-kinded-types-monads-functors-etc/559),
+[4](https://github.com/typelift/swift/issues/1). These correspond roughly to
 [C++ template template parameters](https://en.cppreference.com/w/cpp/language/template_parameters#Template_template_parameter).
 
 ### Inferring associated types
