@@ -107,6 +107,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Higher-ranked types](#higher-ranked-types)
     -   [Inferring associated types](#inferring-associated-types)
     -   [Field requirements](#field-requirements)
+    -   [Generic type specialization](#generic-type-specialization)
 -   [Notes](#notes)
 -   [Broken links footnote](#broken-links-footnote)
 
@@ -4381,6 +4382,17 @@ Maybe being able to take the address of a member is an opt-in feature? Similarly
 for local variables. Maybe can call function taking a pointer from a member
 function as long as it doesn't capture? We need to firm up design for example
 fields before interfaces for example fields.
+
+### Generic type specialization
+
+TODO: Main idea is that given `MyType(T)` we should be able to derive
+`MyTypeInterface(T)` that captures the interface of `MyType(T)` without its
+implementation. Only that interface should be used to typecheck uses of
+`MyType(T)` in generic functions, so that we can support specializations. For
+example, we could have a specific optimized implementation of `MyType(Bool)` as
+long as it conformed to `MyTypeInteface(Bool)`. Similarly we should support
+partial specializations like `MyType(Ptr(T))`. Main problem is supporting this
+with the dynamic strategy.
 
 ## Notes
 
