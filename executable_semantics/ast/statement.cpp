@@ -104,6 +104,36 @@ auto MakeMatch(int line_num, Expression* exp,
   return s;
 }
 
+// Returns an AST node for a continuation statement give its line number and
+// parts.
+auto MakeContinuationStatement(int line_num, std::string continuation_variable,
+                               Statement* body) -> Statement* {
+  auto* continuation = new Statement();
+  continuation->line_num = line_num;
+  continuation->tag = StatementKind::Continuation;
+  continuation->u.continuation.continuation_variable =
+      new std::string(continuation_variable);
+  continuation->u.continuation.body = body;
+  return continuation;
+}
+
+// Returns an AST node for a run statement give its line number and argument.
+auto MakeRun(int line_num, Expression* argument) -> Statement* {
+  auto* run = new Statement();
+  run->line_num = line_num;
+  run->tag = StatementKind::Run;
+  run->u.run.argument = argument;
+  return run;
+}
+
+// Returns an AST node for an await statement give its line number.
+auto MakeAwait(int line_num) -> Statement* {
+  auto* await = new Statement();
+  await->line_num = line_num;
+  await->tag = StatementKind::Await;
+  return await;
+}
+
 void PrintStatement(Statement* s, int depth) {
   if (!s) {
     return;
@@ -177,13 +207,44 @@ void PrintStatement(Statement* s, int depth) {
       PrintStatement(s->u.sequence.stmt, depth);
       if (depth < 0 || depth > 1) {
         std::cout << std::endl;
+      } else {
+        std::cout << " ";
       }
       PrintStatement(s->u.sequence.next, depth - 1);
       break;
     case StatementKind::Block:
-      std::cout << "{" << std::endl;
-      PrintStatement(s->u.block.stmt, depth - 1);
-      std::cout << std::endl << "}" << std::endl;
+      std::cout << "{";
+      if (depth < 0 || depth > 1) {
+        std::cout << std::endl;
+      }
+      PrintStatement(s->u.block.stmt, depth);
+      if (depth < 0 || depth > 1) {
+        std::cout << std::endl;
+      }
+      std::cout << "}";
+      if (depth < 0 || depth > 1) {
+        std::cout << std::endl;
+      }
+      break;
+    case StatementKind::Continuation:
+      std::cout << "continuation " << *s->u.continuation.continuation_variable
+                << " ";
+      if (depth < 0 || depth > 1) {
+        std::cout << std::endl;
+      }
+      PrintStatement(s->u.continuation.body, depth - 1);
+      if (depth < 0 || depth > 1) {
+        std::cout << std::endl;
+      }
+      break;
+    case StatementKind::Run:
+      std::cout << "run ";
+      PrintExp(s->u.run.argument);
+      std::cout << ";";
+      break;
+    case StatementKind::Await:
+      std::cout << "await;";
+      break;
   }
 }
 }  // namespace Carbon

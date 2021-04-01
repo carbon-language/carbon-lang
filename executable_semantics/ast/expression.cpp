@@ -36,6 +36,14 @@ auto MakeAutoType(int line_num) -> Expression* {
   return t;
 }
 
+// Returns a Continuation type AST node at the given source location.
+auto MakeContinuationType(int line_num) -> Expression* {
+  auto* type = new Expression();
+  type->tag = ExpressionKind::ContinuationT;
+  type->line_num = line_num;
+  return type;
+}
+
 auto MakeFunType(int line_num, Expression* param, Expression* ret)
     -> Expression* {
   auto* t = new Expression();
@@ -150,6 +158,18 @@ auto MakeTuple(int line_num,
   return e;
 }
 
+// Create an AST node for an empty tuple.
+// TODO(geoffromer): remove this and rewrite its callers to use
+// `MakeTuple(line_num, {})`, once that works.
+auto MakeUnit(int line_num) -> Expression* {
+  auto* unit = new Expression();
+  unit->line_num = line_num;
+  unit->tag = ExpressionKind::Tuple;
+  auto* args = new std::vector<std::pair<std::string, Expression*>>();
+  unit->u.tuple.fields = args;
+  return unit;
+}
+
 auto MakeIndex(int line_num, Expression* exp, Expression* i) -> Expression* {
   auto* e = new Expression();
   e->line_num = line_num;
@@ -171,13 +191,13 @@ static void PrintOp(Operator op) {
       std::cout << "-";
       break;
     case Operator::Not:
-      std::cout << "!";
+      std::cout << "not";
       break;
     case Operator::And:
-      std::cout << "&&";
+      std::cout << "and";
       break;
     case Operator::Or:
-      std::cout << "||";
+      std::cout << "or";
       break;
     case Operator::Eq:
       std::cout << "==";
@@ -271,6 +291,9 @@ void PrintExp(const Expression* e) {
       break;
     case ExpressionKind::AutoT:
       std::cout << "auto";
+      break;
+    case ExpressionKind::ContinuationT:
+      std::cout << "Continuation";
       break;
     case ExpressionKind::FunctionT:
       std::cout << "fn ";
