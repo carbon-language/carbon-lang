@@ -52,8 +52,8 @@ let keywords: [KeywordSpec] = [
 let patterns: [PatternSpec] = [
   (#"[A-Za-z_][A-Za-z0-9_]*"#, .Identifier),
   (#"[0-9]+"#, .Integer_literal),
-  (#"//[^\n]*"#, nil),
-  (#"[ \t\r\n]+"#, nil),
+  (#"//(?:.(?<!\R))*"#, nil),
+  (#"\s+"#, nil),
 ]
 
 // A single regex pattern with alternatives for all the keywords

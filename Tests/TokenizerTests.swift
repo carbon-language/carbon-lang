@@ -8,13 +8,13 @@ final class TokenizerTests: XCTestCase {
       an and andey 999 // burp
         ->=-automobile->otto auto bool break case choice continue=>
 
-        default/
-      else
+        default/\r\nelse
       // excuse me
         ==false fn fnty if\t\tInt match not or return struct true type var while
       = - +( ){}[]a.b,;:
+      //\r\n.
       """    
-    let scannedTokens = Tokens(in: program, from: "")
+    let scannedTokens = Array(Tokens(in: program, from: ""))
 
     /// Returns the token with the given contents.
     ///
@@ -83,7 +83,8 @@ final class TokenizerTests: XCTestCase {
       token(.Identifier, "b", from: 8, 15, to: 8, 16),
       token(.COMMA, ",", from: 8, 16, to: 8, 17),
       token(.SEMICOLON, ";", from: 8, 17, to: 8, 18),
-      token(.COLON, ":", from: 8, 18, to: 8, 19)
+      token(.COLON, ":", from: 8, 18, to: 8, 19),
+      token(.PERIOD, ".", from: 10, 1, to: 10, 2)
     ]
 
     let sourceLines = program.split(
@@ -98,7 +99,7 @@ final class TokenizerTests: XCTestCase {
         sourceLines[end.line - 1].startIndex, offsetBy: end.column - 1)
       return String(program[startIndex..<endIndex])
     }
-    
+
     for (t, e) in zip(scannedTokens, expectedTokens) {
       XCTAssertEqual(t.body, e.body, "Unexpected token value.")
       XCTAssertEqual(t.location, e.location, "Unexpected token location.")
@@ -106,5 +107,14 @@ final class TokenizerTests: XCTestCase {
         t.body.text, text(t.location),
         "Token text doesn't match source text in token location.")
     }
+    let extraScanned = scannedTokens.dropFirst(expectedTokens.count)
+    XCTAssert(
+      extraScanned.isEmpty,
+      "Unexpected tokens at end of input: \(Array(extraScanned))")
+    
+    let extraExpected = expectedTokens.dropFirst(scannedTokens.count)
+    XCTAssert(
+      extraExpected.isEmpty,
+      "Expected tokens not found at end of input \(Array(extraExpected))")
   }
 }
