@@ -66,6 +66,6 @@ request:
 -   [0253 - 2021 Roadmap](p0253.md)
     -   [0253 - Decision](p0253_decision.md)
 -   [0285 - if/else](p0285.md)
--   [0423 - Lexical extensibility](p0423.md)
+-   [0423 - Evolution strategies](p0423.md)
 
 <!-- endproposals -->
