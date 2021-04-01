@@ -33,6 +33,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Use case: overload resolution](#use-case-overload-resolution)
 -   [Type compatibility](#type-compatibility)
 -   [Adapting types](#adapting-types)
+    -   [Use case: Using independent libraries together](#use-case-using-independent-libraries-together)
     -   [Example: Defining an impl for use by other types](#example-defining-an-impl-for-use-by-other-types)
 -   [Associated constants](#associated-constants)
 -   [Associated types](#associated-types)
@@ -1420,6 +1421,45 @@ problems, see
 [here](https://doc.rust-lang.org/book/ch19-03-advanced-traits.html#using-the-newtype-pattern-to-implement-external-traits-on-external-types)
 and
 [here](https://github.com/Ixrec/rust-orphan-rules#user-content-why-are-the-orphan-rules-controversial).
+
+### Use case: Using independent libraries together
+
+Imagine we have two packages that are developed independently. Package `A`
+defines an interface `A.I` and a generic algorithm `A.F` that operates on types
+that implement `A.I`. Package `B` defines a type `B.T`. Neither has a dependency
+on the other, so neither package defines an implementation for `A.I` for type
+`B.T`. A user that wants to pass a value of type `B.T` to `A.F` has to define an
+adaptor that provides an implementation of `A.I` for `B.T`:
+
+```
+import A;
+import B;
+
+adaptor T for B.T {
+  impl A.I { ... }
+}
+// Or, to keep the names from A.I out of T's API:
+adaptor T for B.T { }
+extend T {
+  impl A.I { ... }
+}
+```
+
+The caller can either cast `B.T` values to `T` when calling `A.F` or just start
+with `T` values in the first place.
+
+```
+var B.T: bt = ...;
+A.F(bt as T);
+
+var T: t = ...;
+A.F(t);
+```
+
+**Open question:** This case is expected to be common, and to be convenient we
+want it to be easy to retain the type-being-adapted's API, as much as possible.
+We need some syntax for doing this, along with a way to make incremental
+changes, such as to resolve conflicts.
 
 ### Example: Defining an impl for use by other types
 
