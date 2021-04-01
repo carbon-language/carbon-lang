@@ -8,11 +8,11 @@ Swift implementation of executable semantics of
 1. Have Swift installed and in your path.
 2. `git submodule update --init`
 
-## To Build
+## To Build on Mac or Linux
 
     make build
     
-## To Test
+## To Test on Mac or Linux
 
     make test
 
@@ -21,5 +21,15 @@ Swift implementation of executable semantics of
     make Sources/Parser.swift
     open Package.swift
 
-Note that if you modify Sources/Parser.citron or when you pull new changes from
+Note that if you modify Sources/Parser.citron, or when you pull new changes from
 GitHub, you'll need to run the `make` command above again before proceeding.
+
+## On Windows
+
+If you install [MinGW](https://sourceforge.net/projects/mingw/), you can use
+`make Sources/Parser.swift` followed by `swift build` or `swift test`, with the
+same caveat as for Xcode users: if you modify Sources/Parser.citron, and when
+you pull new changes from GitHub, you'll need to run the `make` command again
+before proceeding.  If you don't want to install MinGW, you should be able to
+read the simple Makefile to figure out how to build citron and use it to
+"manually" generate Sources/Parser.swift from Sources/Parser.citron.
