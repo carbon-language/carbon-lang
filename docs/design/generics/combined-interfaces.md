@@ -2696,8 +2696,10 @@ add needed constraints to `KeyType` implied by being used as an argument to a
 parameter with those constraints? Or should we require `KeyType` to name all
 needed constraints as part of its declarations?
 
-In this specific case, Swift will accept the definition and
-[infer the needed constraints on the generic type parameter](https://www.swiftbysundell.com/tips/inferred-generic-type-constraints/).
+In this specific case, Swift will accept the definition and infer the needed
+constraints on the generic type parameter
+([1](https://www.swiftbysundell.com/tips/inferred-generic-type-constraints/),
+[2](https://github.com/apple/swift/blob/main/docs/Generics.rst#constraint-inference)).
 This is both more concise for the author of the code and follows the
 ["don't repeat yourself" principle](https://en.wikipedia.org/wiki/Don%27t_repeat_yourself).
 This redundancy is undesirable since it means if the needed constraints for
