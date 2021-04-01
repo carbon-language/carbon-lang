@@ -391,10 +391,16 @@ cases remain:
     a type is defined in may not be able to see the interface definition without
     creating a dependency cycle or layering violation.
 
-This means either that the interface implementations are external to types and
-are passed in to generic functions separately, or there is some way to create
-multiple types that are compatible with a given value that you can switch
-between using casts to select different interface implementations.
+We should have some mechanism for addressing these use cases. There are multiple
+approaches that could work:
+
+-   Interface implementations coulbe external to types and are passed in to
+    generic functions separately.
+-   There could be some way to create multiple types that are compatible with a
+    given value that you can switch between using casts to select different
+    interface implementations.
+-   Carbon could support
+    [scoped conformances](https://forums.swift.org/t/scoped-conformances/37159).
 
 ### No novel name lookup
 
