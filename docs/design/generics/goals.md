@@ -374,7 +374,12 @@ It also has a number of benefits for users:
     in generic code rather than code you control.
 
 The main downside of coherence is that there are some capabilities we would like
-for interfaces which are in tension with the coherence property:
+for interfaces which are in tension with the coherence property. For example, we
+would like to address
+[the expression problem](https://eli.thegreenplace.net/2016/the-expression-problem-and-its-solutions#another-clojure-solution-using-protocols).
+We can get some of the way there by allowing the implementation of an interface
+for a type to be defined with either the interface or the type. But some use
+cases remain:
 
 -   They should be some way of selecting between multiple implementations of an
     interface for a given type. For example, a _Song_ might support multiple
