@@ -30,6 +30,7 @@
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCInstrInfo.h"
 #include "llvm/MC/MCObjectFileInfo.h"
+#include "llvm/MC/MCObjectWriter.h"
 #include "llvm/MC/MCSectionELF.h"
 #include "llvm/MC/MCSectionMachO.h"
 #include "llvm/MC/MCSymbol.h"
@@ -195,10 +196,26 @@ class BinaryContext {
   /// The runtime library.
   std::unique_ptr<RuntimeLibrary> RtLibrary;
 
+  /// DWP Context.
+  std::shared_ptr<DWARFContext> DWPContext;
+
+  /// A map of DWO Ids to CUs.
+  using DWOIdToCUMapType = std::unordered_map<uint64_t, DWARFUnit *>;
+  DWOIdToCUMapType DWOCUs;
+
+  /// Preprocess DWO debug information.
+  void preprocessDWODebugInfo();
+
 public:
   static std::unique_ptr<BinaryContext>
-  createBinaryContext(ObjectFile *File, bool IsPIC,
+  createBinaryContext(const ObjectFile *File, bool IsPIC,
                       std::unique_ptr<DWARFContext> DwCtx);
+
+  /// Given DWOId returns CU if it existss in DWOCUs.
+  Optional<DWARFUnit *> getDWOCU(uint64_t DWOId);
+
+  /// Get Number of DWOCUs in a map.
+  uint32_t getNumDWOCUs() { return DWOCUs.size(); }
 
   /// [start memory address] -> [segment info] mapping.
   std::map<uint64_t, SegmentInfo> SegmentMapInfo;
@@ -1192,6 +1209,22 @@ public:
     MCEInstance.MCE.reset(
         TheTarget->createMCCodeEmitter(*MII, *MRI, *MCEInstance.LocalCtx));
     return MCEInstance;
+  }
+
+  /// Creating MCStreamer instance.
+  std::unique_ptr<MCStreamer>
+  createStreamer(llvm::raw_pwrite_stream &OS) const {
+    MCCodeEmitter *MCE = TheTarget->createMCCodeEmitter(*MII, *MRI, *Ctx);
+    MCAsmBackend *MAB =
+        TheTarget->createMCAsmBackend(*STI, *MRI, MCTargetOptions());
+    std::unique_ptr<MCObjectWriter> OW = MAB->createObjectWriter(OS);
+    std::unique_ptr<MCStreamer> Streamer(TheTarget->createMCObjectStreamer(
+        *TheTriple, *Ctx, std::unique_ptr<MCAsmBackend>(MAB), std::move(OW),
+        std::unique_ptr<MCCodeEmitter>(MCE), *STI,
+        /* RelaxAll */ false,
+        /* IncrementalLinkerCompatible */ false,
+        /* DWARFMustBeAtTheEnd */ false));
+    return Streamer;
   }
 };
 

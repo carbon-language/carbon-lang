@@ -438,18 +438,8 @@ void MachORewriteInstance::emitAndLink() {
   std::unique_ptr<buffer_ostream> BOS =
       std::make_unique<buffer_ostream>(TempOut->os());
   raw_pwrite_stream *OS = BOS.get();
+  auto Streamer = BC->createStreamer(*OS);
 
-  MCCodeEmitter *MCE =
-      BC->TheTarget->createMCCodeEmitter(*BC->MII, *BC->MRI, *BC->Ctx);
-  MCAsmBackend *MAB =
-      BC->TheTarget->createMCAsmBackend(*BC->STI, *BC->MRI, MCTargetOptions());
-  std::unique_ptr<MCObjectWriter> OW = MAB->createObjectWriter(*OS);
-  std::unique_ptr<MCStreamer> Streamer(BC->TheTarget->createMCObjectStreamer(
-      *BC->TheTriple, *BC->Ctx, std::unique_ptr<MCAsmBackend>(MAB),
-      std::move(OW), std::unique_ptr<MCCodeEmitter>(MCE), *BC->STI,
-      /* RelaxAll */ false,
-      /* IncrementalLinkerCompatible */ false,
-      /* DWARFMustBeAtTheEnd */ false));
   emitBinaryContext(*Streamer, *BC, getOrgSecPrefix());
   Streamer->Finish();
 

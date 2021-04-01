@@ -9,11 +9,17 @@
 //===----------------------------------------------------------------------===//
 
 #include "DebugData.h"
+#include "BinaryBasicBlock.h"
+#include "BinaryFunction.h"
+
+#include "llvm/MC/MCSymbol.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/EndianStream.h"
 #include "llvm/Support/LEB128.h"
 #include <algorithm>
 #include <cassert>
+#include <cstdint>
+#include <limits>
 
 #undef  DEBUG_TYPE
 #define DEBUG_TYPE "bolt-debug-info"
@@ -52,7 +58,7 @@ uint64_t writeAddressRanges(
 
 } // namespace
 
-DebugRangesSectionWriter::DebugRangesSectionWriter(BinaryContext *BC) {
+DebugRangesSectionWriter::DebugRangesSectionWriter() {
   RangesBuffer = std::make_unique<RangesBufferVector>();
   RangesStream = std::make_unique<raw_svector_ostream>(*RangesBuffer);
 
@@ -89,6 +95,11 @@ DebugRangesSectionWriter::addRanges(const DebugAddressRangesVector &Ranges) {
   SectionOffset += writeAddressRanges(*RangesStream.get(), Ranges);
 
   return EntryOffset;
+}
+
+uint64_t DebugRangesSectionWriter::getSectionOffset() {
+  std::lock_guard<std::mutex> Lock(WriterMutex);
+  return SectionOffset;
 }
 
 void DebugARangesSectionWriter::addCURanges(uint64_t CUOffset,
@@ -141,6 +152,109 @@ void DebugARangesSectionWriter::writeARangesSection(
   }
 }
 
+DebugAddrWriter::DebugAddrWriter(BinaryContext *Bc) { BC = Bc; }
+
+void DebugAddrWriter::AddressForDWOCU::dump() {
+  std::vector<IndexAddressPair> SortedMap(indexToAddressBegin(),
+                                          indexToAdddessEnd());
+  // Sorting address in increasing order of indices.
+  std::sort(SortedMap.begin(), SortedMap.end(),
+            [](const IndexAddressPair &A, const IndexAddressPair &B) {
+              return A.first < B.first;
+            });
+  for (auto &Pair : SortedMap)
+    dbgs() << Twine::utohexstr(Pair.second) << "\t" << Pair.first << "\n";
+}
+uint32_t DebugAddrWriter::getIndexFromAddress(uint64_t Address,
+                                              uint64_t DWOId) {
+  if (!AddressMaps.count(DWOId))
+    AddressMaps[DWOId] = AddressForDWOCU();
+
+  AddressForDWOCU &Map = AddressMaps[DWOId];
+  auto Entry = Map.find(Address);
+  if (Entry == Map.end()) {
+    auto Index = Map.getNextIndex();
+    Entry = Map.insert(Address, Index).first;
+  }
+  return Entry->second;
+}
+
+// Case1) Address is not in map insert in to AddresToIndex and IndexToAddres
+// Case2) Address is in the map but Index is higher or equal. Need to update
+// IndexToAddrss. Case3) Address is in the map but Index is lower. Need to
+// update AddressToIndex and IndexToAddress
+void DebugAddrWriter::addIndexAddress(uint64_t Address, uint32_t Index,
+                                      uint64_t DWOId) {
+  AddressForDWOCU &Map = AddressMaps[DWOId];
+  auto Entry = Map.find(Address);
+  if (Entry != Map.end()) {
+    if (Entry->second > Index)
+      Map.updateAddressToIndex(Address, Index);
+    Map.updateIndexToAddrss(Address, Index);
+  } else
+    Map.insert(Address, Index);
+}
+
+AddressSectionBuffer DebugAddrWriter::finalize() {
+  // Need to layout all sections within .debug_addr
+  // Within each section sort Address by index.
+  AddressSectionBuffer Buffer;
+  raw_svector_ostream AddressStream(Buffer);
+  for (std::unique_ptr<DWARFUnit> &CU : BC->DwCtx->compile_units()) {
+    Optional<uint64_t> DWOId = CU->getDWOId();
+    // Handling the case wehre debug information is a mix of Debug fission and
+    // monolitic.
+    if (!DWOId)
+      continue;
+    auto AM = AddressMaps.find(*DWOId);
+    // Adding to map even if it did not contribute to .debug_addr.
+    // The Skeleton CU will still have DW_AT_GNU_addr_base.
+    DWOIdToOffsetMap[*DWOId] = Buffer.size();
+    // If does not exist this CUs DWO section didn't contribute to .debug_addr.
+    if (AM == AddressMaps.end())
+      continue;
+    std::vector<IndexAddressPair> SortedMap(AM->second.indexToAddressBegin(),
+                                            AM->second.indexToAdddessEnd());
+    // Sorting address in increasing order of indices.
+    std::sort(SortedMap.begin(), SortedMap.end(),
+              [](const IndexAddressPair &A, const IndexAddressPair &B) {
+                return A.first < B.first;
+              });
+
+    uint8_t AddrSize = CU->getAddressByteSize();
+    uint32_t Counter = 0;
+    auto WriteAddress = [&](uint64_t Address) -> void {
+      ++Counter;
+      switch (AddrSize) {
+      default:
+        assert(false && "Address Size is invalid.");
+      case 4:
+        support::endian::write(AddressStream, static_cast<uint32_t>(Address),
+                               support::little);
+        break;
+      case 8:
+        support::endian::write(AddressStream, Address, support::little);
+        break;
+      }
+    };
+
+    for (const IndexAddressPair &Val : SortedMap) {
+      while (Val.first > Counter)
+        WriteAddress(0);
+      WriteAddress(Val.second);
+    }
+  }
+
+  return Buffer;
+}
+
+uint64_t DebugAddrWriter::getOffset(uint64_t DWOId) {
+  auto Iter = DWOIdToOffsetMap.find(DWOId);
+  assert(Iter != DWOIdToOffsetMap.end() &&
+         "Offset in to.debug_addr was not found for DWO ID.");
+  return Iter->second;
+}
+
 DebugLocWriter::DebugLocWriter(BinaryContext *BC) {
   LocBuffer = std::make_unique<LocBufferVector>();
   LocStream = std::make_unique<raw_svector_ostream>(*LocBuffer);
@@ -170,6 +284,55 @@ DebugLocWriter::addList(const DebugLocationsVector &LocList) {
   LocStream->write_zeros(16);
   SectionOffset += 16;
 
+  return EntryOffset;
+}
+
+DebugAddrWriter *DebugLoclistWriter::AddrWriter = nullptr;
+void DebugLoclistWriter::finalizePatches() {
+  auto numOfBytes = [](uint32_t Val) -> uint32_t {
+    int LogVal = (int)std::log2(Val) + 1;
+    uint32_t CeilVal = (LogVal + 8 - 1) / 8;
+    return !Val ? 1 : CeilVal;
+  };
+  (void)numOfBytes;
+
+  for (const auto &Patch : IndexPatches) {
+    uint32_t Index = AddrWriter->getIndexFromAddress(Patch.Address, DWOId);
+    assert(numOfBytes(Index) <= DebugLoclistWriter::NumBytesForIndex &&
+           "Index size in DebugLocation too large.");
+    std::string Buff;
+    raw_string_ostream OS(Buff);
+    encodeULEB128(Index, OS, DebugLoclistWriter::NumBytesForIndex);
+    for (uint32_t I = 0; I < DebugLoclistWriter::NumBytesForIndex; ++I) {
+      (*LocBuffer)[Patch.Offset + I] = Buff[I];
+    }
+  }
+}
+
+uint64_t DebugLoclistWriter::addList(const DebugLocationsVector &LocList) {
+  if (LocList.empty())
+    return EmptyListTag;
+  uint64_t EntryOffset = LocBuffer->size();
+
+  for (const DebugLocationEntry &Entry : LocList) {
+    support::endian::write(*LocStream,
+                           static_cast<uint8_t>(dwarf::DW_LLE_startx_length),
+                           support::little);
+    IndexPatches.emplace_back(static_cast<uint32_t>(LocBuffer->size()),
+                              Entry.LowPC);
+    LocStream->write_zeros(DebugLoclistWriter::NumBytesForIndex);
+    // TODO: Support DWARF5
+    support::endian::write(*LocStream,
+                           static_cast<uint32_t>(Entry.HighPC - Entry.LowPC),
+                           support::little);
+    support::endian::write(*LocStream, static_cast<uint16_t>(Entry.Expr.size()),
+                           support::little);
+    *LocStream << StringRef(reinterpret_cast<const char *>(Entry.Expr.data()),
+                            Entry.Expr.size());
+  }
+  support::endian::write(*LocStream,
+                         static_cast<uint8_t>(dwarf::DW_LLE_end_of_list),
+                         support::little);
   return EntryOffset;
 }
 
@@ -221,13 +384,16 @@ void SimpleBinaryPatcher::patchBinary(std::string &BinaryContents) {
 }
 
 void DebugAbbrevPatcher::addAttributePatch(
-    const DWARFAbbreviationDeclaration *Abbrev,
-    dwarf::Attribute AttrTag,
-    uint8_t NewAttrTag,
-    uint8_t NewAttrForm) {
+    const DWARFAbbreviationDeclaration *Abbrev, dwarf::Attribute AttrTag,
+    dwarf::Attribute NewAttrTag, uint8_t NewAttrForm) {
   assert(Abbrev && "no abbreviation specified");
-  AbbrevPatches.emplace(
-      AbbrevAttrPatch{Abbrev, AttrTag, NewAttrTag, NewAttrForm});
+
+  if (std::numeric_limits<uint8_t>::max() >= NewAttrTag)
+    AbbrevPatches.emplace(
+        AbbrevAttrPatch{Abbrev, AttrTag, NewAttrTag, NewAttrForm});
+  else
+    AbbrevNonStandardPatches.emplace_back(
+        AbbrevAttrPatch{Abbrev, AttrTag, NewAttrTag, NewAttrForm});
 }
 
 void DebugAbbrevPatcher::patchBinary(std::string &Contents) {
@@ -238,17 +404,67 @@ void DebugAbbrevPatcher::patchBinary(std::string &Contents) {
         Patch.Abbrev->findAttribute(Patch.Attr);
     assert(Attribute && "Specified attribute doesn't occur in abbreviation.");
 
-    // Because we're only handling standard values (i.e. no DW_FORM_GNU_* or
-    // DW_AT_APPLE_*), they are all small (< 128) and encoded in a single
-    // byte in ULEB128, otherwise it'll be more tricky as we may need to
-    // grow or shrink the section.
-    Patcher.addBytePatch(Attribute->AttrOffset, Patch.NewAttr);
+    Patcher.addBytePatch(Attribute->AttrOffset,
+                         static_cast<uint8_t>(Patch.NewAttr));
     Patcher.addBytePatch(Attribute->FormOffset, Patch.NewForm);
   }
   Patcher.patchBinary(Contents);
+
+  if (AbbrevNonStandardPatches.empty())
+    return;
+
+  std::string Section;
+  Section.reserve(Contents.size() + AbbrevNonStandardPatches.size() / 2);
+
+  const char *Ptr = Contents.c_str();
+  uint32_t Start = 0;
+  std::string Buff;
+  auto Encode = [&](uint16_t Value) -> std::string {
+    Buff.clear();
+    raw_string_ostream OS(Buff);
+    encodeULEB128(Value, OS, 2);
+    return Buff;
+  };
+
+  for (const AbbrevAttrPatch &Patch : AbbrevNonStandardPatches) {
+    const DWARFAbbreviationDeclaration::AttributeSpec *const Attribute =
+        Patch.Abbrev->findAttribute(Patch.Attr);
+    assert(Attribute && "Specified attribute doesn't occur in abbreviation.");
+    assert(Start <= Attribute->AttrOffset &&
+           "Offsets are not in sequential order.");
+    // Assuming old attribute is 1 byte. Otherwise will need to add logic to
+    // determine it's size at runtime.
+    assert(std::numeric_limits<uint8_t>::max() >= Patch.Attr &&
+           "Old attribute is greater then 1 byte.");
+
+    Section.append(Ptr + Start, Attribute->AttrOffset - Start);
+    Section.append(Encode(Patch.NewAttr));
+    Section.append(std::string(1, Patch.NewForm));
+
+    Start = Attribute->FormOffset + 1;
+  }
+  Section.append(Ptr + Start, Contents.size() - Start);
+  Contents = std::move(Section);
 }
 
+void DebugStrWriter::create() {
+  StrBuffer = std::make_unique<DebugStrBufferVector>();
+  StrStream = std::make_unique<raw_svector_ostream>(*StrBuffer);
+}
 
+void DebugStrWriter::initialize() {
+  auto StrSection = BC->DwCtx->getDWARFObj().getStrSection();
+  (*StrStream) << StrSection;
+}
+
+uint32_t DebugStrWriter::addString(StringRef Str) {
+  if (StrBuffer->empty())
+    initialize();
+  auto Offset = StrBuffer->size();
+  (*StrStream) << Str;
+  StrStream->write_zeros(1);
+  return Offset;
+}
 
 } // namespace bolt
 } // namespace llvm

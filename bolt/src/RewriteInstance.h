@@ -343,19 +343,18 @@ public:
   };
 
   /// Debug section to we overwrite while updating the debug info.
-  static constexpr const char *DebugSectionsToOverwrite[] = {
-    ".debug_aranges",
-    ".debug_line",
-    ".debug_loc",
-    ".debug_ranges",
-    ".gdb_index",
-  };
+  static std::vector<std::string> DebugSectionsToOverwrite;
 
   /// Return true if the section holds debug information.
   static bool isDebugSection(StringRef SectionName);
 
   /// Return true if the section holds linux kernel symbol information.
   static bool isKSymtabSection(StringRef SectionName);
+
+  /// Adds Debug section to overwrite.
+  static void addToDebugSectionsToOverwrite(const char *Section) {
+    DebugSectionsToOverwrite.emplace_back(Section);
+  }
 
 private:
   /// Get the contents of the LSDA section for this binary.

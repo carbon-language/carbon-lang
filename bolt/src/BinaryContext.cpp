@@ -50,6 +50,12 @@ extern cl::opt<unsigned> ExecutionCountThreshold;
 
 extern bool processAllFunctions();
 
+static cl::opt<std::string>
+    DWPPath("dwp-path",
+            cl::desc("Path to DWP file. DWP file name must be same as "
+                     "binary name with .dwp extension."),
+            cl::Hidden, cl::ZeroOrMore, cl::cat(BoltCategory));
+
 cl::opt<bool>
 NoHugePages("no-huge-pages",
   cl::desc("use regular size pages for code alignment"),
@@ -161,7 +167,7 @@ MCPlusBuilder *createMCPlusBuilder(const Triple::ArchType Arch,
 /// Create BinaryContext for a given architecture \p ArchName and
 /// triple \p TripleName.
 std::unique_ptr<BinaryContext>
-BinaryContext::createBinaryContext(ObjectFile *File, bool IsPIC,
+BinaryContext::createBinaryContext(const ObjectFile *File, bool IsPIC,
                                    std::unique_ptr<DWARFContext> DwCtx) {
   StringRef ArchName = "";
   StringRef FeaturesStr = "";
@@ -1451,6 +1457,44 @@ std::vector<BinaryFunction *> BinaryContext::getAllBinaryFunctions() {
   return AllFunctions;
 }
 
+Optional<DWARFUnit *> BinaryContext::getDWOCU(uint64_t DWOId) {
+  auto Iter = DWOCUs.find(DWOId);
+  if (Iter == DWOCUs.end())
+    return None;
+
+  return Iter->second;
+}
+
+/// Handles DWO sections that can either be in .o, .dwo or .dwp files.
+void BinaryContext::preprocessDWODebugInfo() {
+  // If DWP file exists use it to populate CU map.
+  if (!opts::DWPPath.empty()) {
+    DWPContext = DwCtx->getDWOContext(opts::DWPPath.c_str());
+    if (!DWPContext)
+      report_error("DWP file not found.",
+                   std::make_error_code(std::errc::no_such_file_or_directory));
+    for (const std::unique_ptr<DWARFUnit> &CU : DwCtx->compile_units()) {
+      DWARFUnit *DwarfUnit = CU.get();
+      if (llvm::Optional<uint64_t> DWOId = DwarfUnit->getDWOId()) {
+        DWARFCompileUnit *DWOCU =
+            DWPContext.get()->getDWOCompileUnitForHash(*DWOId);
+        if (DWOCU)
+          DWOCUs[*DWOId] = DWOCU;
+      }
+    }
+  } else {
+    for (const std::unique_ptr<DWARFUnit> &CU : DwCtx->compile_units()) {
+      DWARFUnit *const DwarfUnit = CU.get();
+      if (llvm::Optional<uint64_t> DWOId = DwarfUnit->getDWOId()) {
+        DWARFUnit *DWOCU =
+            DwarfUnit->getNonSkeletonUnitDIE(false).getDwarfUnit();
+        assert(DWOCU->isDWOUnit() && "No CU for DWO ID.");
+        DWOCUs[*DWOId] = DWOCU;
+      }
+    }
+  }
+}
+
 void BinaryContext::preprocessDebugInfo() {
   struct CURange {
     uint64_t LowPC;
@@ -1528,6 +1572,8 @@ void BinaryContext::preprocessDebugInfo() {
       cantFail(Ctx->getDwarfFile(Dir, FileName, 0, None, None, CUID));
     }
   }
+
+  preprocessDWODebugInfo();
 }
 
 bool BinaryContext::shouldEmit(const BinaryFunction &Function) const {

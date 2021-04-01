@@ -12,8 +12,11 @@
 #define LLVM_TOOLS_LLVM_BOLT_DWARF_REWRITER_H
 
 #include "DebugData.h"
+#include "RewriteInstance.h"
+#include <cstdint>
+#include <map>
+#include <memory>
 #include <mutex>
-#include <set>
 #include <unordered_map>
 #include <vector>
 
@@ -28,11 +31,7 @@ class DWARFRewriter {
 
   BinaryContext &BC;
 
-  SimpleBinaryPatcher *DebugInfoPatcher{nullptr};
-
   std::mutex DebugInfoPatcherMutex;
-
-  DebugAbbrevPatcher *AbbrevPatcher{nullptr};
 
   std::mutex AbbrevPatcherMutex;
 
@@ -44,23 +43,50 @@ class DWARFRewriter {
   /// .debug_aranges DWARF section.
   std::unique_ptr<DebugARangesSectionWriter> ARangesSectionWriter;
 
+  /// Stores and serializes information that will be put into the
+  /// .debug_addr DWARF section.
+  std::unique_ptr<DebugAddrWriter> AddrWriter;
+
+  /// Stores and serializes information that will be put in to the
+  /// .debug_addr DWARF section.
+  /// Does not do de-duplication.
+  std::unique_ptr<DebugStrWriter> StrWriter;
+
+  using LocWriters =
+      std::unordered_map<uint64_t, std::unique_ptr<DebugLocWriter>>;
   /// Use a separate location list writer for each compilation unit
-  std::vector<std::unique_ptr<DebugLocWriter>> LocListWritersByCU;
+  LocWriters LocListWritersByCU;
+
+  using DebugAbbrevDWOPatchers =
+      std::unordered_map<uint64_t, std::unique_ptr<DebugAbbrevPatcher>>;
+  /// Binary patchers for DWO Abbrev sections.
+  DebugAbbrevDWOPatchers BinaryDWOAbbrevPatchers;
+
+  using DebugInfoDWOPatchers =
+      std::unordered_map<uint64_t, std::unique_ptr<SimpleBinaryPatcher>>;
+  /// Binary patchers for DWO debug_info sections.
+  DebugInfoDWOPatchers BinaryDWODebugInfoPatchers;
 
   struct LocListDebugInfoPatchType {
     uint64_t DebugInfoOffset;
     size_t CUIndex;
     uint64_t CUWriterOffset;
   };
-
+  using VectorLocListDebugInfoPatchType =
+      std::vector<LocListDebugInfoPatchType>;
   /// The list of debug info patches to be made once individual
   /// location list writers have been filled
-  std::vector<LocListDebugInfoPatchType> LocListDebugInfoPatches;
+  VectorLocListDebugInfoPatchType LocListDebugInfoPatches;
+
+  std::unordered_map<uint64_t, VectorLocListDebugInfoPatchType>
+      DwoLocListDebugInfoPatches;
 
   std::mutex LocListDebugInfoPatchesMutex;
 
   /// Update debug info for all DIEs in \p Unit.
-  void updateUnitDebugInfo(size_t CUIndex, DWARFUnit *Unit);
+  void updateUnitDebugInfo(uint64_t CUIndex, DWARFUnit &Unit,
+                           SimpleBinaryPatcher &DebugInfoPatcher,
+                           DebugAbbrevPatcher &AbbrevPatcher);
 
   /// Patches the binary for an object's address ranges to be updated.
   /// The object can be a anything that has associated address ranges via either
@@ -70,12 +96,15 @@ class DWARFRewriter {
   /// \p Unit Compile unit the object belongs to.
   /// \p DIE is the object's DIE in the input binary.
   void updateDWARFObjectAddressRanges(const DWARFDie DIE,
-                                      uint64_t DebugRangesOffset);
+                                      uint64_t DebugRangesOffset,
+                                      SimpleBinaryPatcher &DebugInfoPatcher,
+                                      DebugAbbrevPatcher &AbbrevPatcher);
 
-  std::unique_ptr<LocBufferVector> makeFinalLocListsSection();
+  std::unique_ptr<LocBufferVector>
+  makeFinalLocListsSection(SimpleBinaryPatcher &DebugInfoPatcher);
 
   /// Generate new contents for .debug_ranges and .debug_aranges section.
-  void finalizeDebugSections();
+  void finalizeDebugSections(SimpleBinaryPatcher &DebugInfoPatcher);
 
   /// Patches the binary for DWARF address ranges (e.g. in functions and lexical
   /// blocks) to be updated.
@@ -84,6 +113,8 @@ class DWARFRewriter {
   /// Rewrite .gdb_index section if present.
   void updateGdbIndexSection();
 
+  /// Output .dwo files.
+  void writeOutDWOFiles(std::unordered_map<uint64_t, std::string> &DWOIdToName);
   /// Abbreviations that were converted to use DW_AT_ranges.
   std::set<const DWARFAbbreviationDeclaration *> ConvertedRangesAbbrevs;
 
@@ -119,22 +150,52 @@ class DWARFRewriter {
 
   /// Convert \p Abbrev from using a simple DW_AT_(low|high)_pc range to
   /// DW_AT_ranges.
-  void convertToRanges(const DWARFAbbreviationDeclaration *Abbrev);
+  void convertToRanges(const DWARFAbbreviationDeclaration *Abbrev,
+                       DebugAbbrevPatcher &AbbrevPatcher);
 
   /// Update \p DIE that was using DW_AT_(low|high)_pc with DW_AT_ranges offset.
-  void convertToRanges(DWARFDie DIE, uint64_t RangesSectionOffset);
+  void convertToRanges(DWARFDie DIE, uint64_t RangesSectionOffset,
+                       SimpleBinaryPatcher &DebugInfoPatcher);
 
   /// Same as above, but takes a vector of \p Ranges as a parameter.
-  void convertToRanges(DWARFDie DIE, const DebugAddressRangesVector &Ranges);
+  void convertToRanges(DWARFDie DIE, const DebugAddressRangesVector &Ranges,
+                       SimpleBinaryPatcher &DebugInfoPatcher);
 
   /// Patch DW_AT_(low|high)_pc values for the \p DIE based on \p Range.
-  void patchLowHigh(DWARFDie DIE, DebugAddressRange Range);
+  void patchLowHigh(DWARFDie DIE, DebugAddressRange Range,
+                    SimpleBinaryPatcher &DebugInfoPatcher);
 
   /// Convert pending ranges associated with the given \p Abbrev.
-  void convertPending(const DWARFAbbreviationDeclaration *Abbrev);
+  void convertPending(const DWARFAbbreviationDeclaration *Abbrev,
+                      SimpleBinaryPatcher &DebugInfoPatcher,
+                      DebugAbbrevPatcher &AbbrevPatcher);
+
+  /// Adds to Pending Ranges.
+  /// For Debug Fission also adding to .debug_addr to take care of a case where
+  /// some entries are not converted to ranges and left as
+  /// DW_AT_low_pc/DW_AT_high_pc.
+  void addToPendingRanges(const DWARFAbbreviationDeclaration *Abbrev,
+                          DWARFDie DIE, DebugAddressRangesVector &Ranges,
+                          Optional<uint64_t> DWOId);
 
   /// Once all DIEs were seen, update DW_AT_(low|high)_pc values.
-  void flushPendingRanges();
+  void flushPendingRanges(SimpleBinaryPatcher &DebugInfoPatcher);
+
+  /// Helper function for creating and returnning DWO DebugInfo and Abbrev
+  /// patchers.
+  template <class T, class Patcher>
+  Patcher *getBinaryDWOPatcherHelper(T &BinaryPatchers, uint64_t DwoId) {
+    auto Iter = BinaryPatchers.find(DwoId);
+    if (Iter == BinaryPatchers.end()) {
+      // Using make_pair instead of {} to work around bug in older version of
+      // the library. https://timsong-cpp.github.io/lwg-issues/2354
+      Iter = BinaryPatchers
+                 .insert(std::make_pair(DwoId, std::make_unique<Patcher>()))
+                 .first;
+    }
+
+    return static_cast<Patcher *>(Iter->second.get());
+  }
 
 public:
   DWARFRewriter(BinaryContext &BC) : BC(BC) {}
@@ -145,6 +206,21 @@ public:
   /// Computes output .debug_line line table offsets for each compile unit,
   /// and updates stmt_list for a corresponding compile unit.
   void updateLineTableOffsets();
+
+  /// Returns a DWO Debug Info Patcher for DWO ID.
+  /// Creates a new instance if it does not already exist.
+  SimpleBinaryPatcher *getBinaryDWODebugInfoPatcher(uint64_t DwoId) {
+    return getBinaryDWOPatcherHelper<DebugInfoDWOPatchers, SimpleBinaryPatcher>(
+        BinaryDWODebugInfoPatchers, DwoId);
+  }
+
+  /// Returns a DWO Abbrev Patcher for DWO ID.
+  /// Creates a new instance if it's not already exists.
+  DebugAbbrevPatcher *getBinaryDWOAbbrevPatcher(uint64_t DwoId) {
+    return getBinaryDWOPatcherHelper<DebugAbbrevDWOPatchers,
+                                     DebugAbbrevPatcher>(
+        BinaryDWOAbbrevPatchers, DwoId);
+  }
 };
 
 } // namespace bolt

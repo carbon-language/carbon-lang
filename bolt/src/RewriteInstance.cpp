@@ -419,7 +419,9 @@ bool processAllFunctions() {
 } // namespace opts
 
 constexpr const char *RewriteInstance::SectionsToOverwrite[];
-constexpr const char *RewriteInstance::DebugSectionsToOverwrite[];
+std::vector<std::string> RewriteInstance::DebugSectionsToOverwrite = {
+    ".debug_aranges", ".debug_line", ".debug_loc",
+    ".debug_ranges",  ".gdb_index",  ".debug_addr"};
 
 const char RewriteInstance::TimerGroupName[] = "rewrite";
 const char RewriteInstance::TimerGroupDesc[] = "Rewrite passes";
@@ -2996,17 +2998,7 @@ void RewriteInstance::emitAndLink() {
   // Implicitly MCObjectStreamer takes ownership of MCAsmBackend (MAB)
   // and MCCodeEmitter (MCE). ~MCObjectStreamer() will delete these
   // two instances.
-  MCCodeEmitter *MCE =
-      BC->TheTarget->createMCCodeEmitter(*BC->MII, *BC->MRI, *BC->Ctx);
-  MCAsmBackend *MAB =
-      BC->TheTarget->createMCAsmBackend(*BC->STI, *BC->MRI, MCTargetOptions());
-  std::unique_ptr<MCObjectWriter> OW = MAB->createObjectWriter(*OS);
-  std::unique_ptr<MCStreamer> Streamer(BC->TheTarget->createMCObjectStreamer(
-      *BC->TheTriple, *BC->Ctx, std::unique_ptr<MCAsmBackend>(MAB),
-      std::move(OW), std::unique_ptr<MCCodeEmitter>(MCE), *BC->STI,
-      /* RelaxAll */ false,
-      /* IncrementalLinkerCompatible */ false,
-      /* DWARFMustBeAtTheEnd */ false));
+  std::unique_ptr<MCStreamer> Streamer = BC->createStreamer(*OS);
 
   if (EHFrameSection) {
     if (opts::UseOldText || opts::StrictMode) {
@@ -3698,7 +3690,8 @@ void RewriteInstance::rewriteNoteSections() {
 
     // New section size.
     uint64_t Size = 0;
-
+    bool DataWritten = false;
+    uint8_t *SectionData = nullptr;
     // Copy over section contents unless it's one of the sections we overwrite.
     if (!willOverwriteSection(SectionName)) {
       Size = Section.sh_size;
@@ -3706,20 +3699,30 @@ void RewriteInstance::rewriteNoteSections() {
           std::string(InputFile->getData().substr(Section.sh_offset, Size));
       if (BSec && BSec->getPatcher())
         BSec->getPatcher()->patchBinary(Data);
-      OS << Data;
 
-      // Add padding as the section extension might rely on the alignment.
-      Size = appendPadding(OS, Size, Section.sh_addralign);
+      // Section was expanded, so need to treat it as overwrite.
+      if (Size != Data.size()) {
+        BSec = BC->registerOrUpdateNoteSection(SectionName, copyByteArray(Data),
+                                               Data.size());
+        Size = 0;
+      } else {
+        OS << Data;
+        DataWritten = true;
+
+        // Add padding as the section extension might rely on the alignment.
+        Size = appendPadding(OS, Size, Section.sh_addralign);
+      }
     }
 
     // Perform section post-processing.
-    uint8_t *SectionData = nullptr;
     if (BSec && !BSec->isAllocatable()) {
       assert(BSec->getAlignment() <= Section.sh_addralign &&
              "alignment exceeds value in file");
 
       if (BSec->getAllocAddress()) {
+        assert(!DataWritten && "Writing section twice.");
         SectionData = BSec->getOutputData();
+
         LLVM_DEBUG(dbgs() << "BOLT-DEBUG: " << (Size ? "appending" : "writing")
                           << " contents to section " << SectionName << '\n');
         OS.write(reinterpret_cast<char *>(SectionData),
@@ -4779,18 +4782,9 @@ void RewriteInstance::rewriteFile() {
 
   // We obtain an asm-specific writer so that we can emit nops in an
   // architecture-specific way at the end of the function.
-  MCCodeEmitter *MCE =
-      BC->TheTarget->createMCCodeEmitter(*BC->MII, *BC->MRI, *BC->Ctx);
-  MCAsmBackend *MAB =
-      BC->TheTarget->createMCAsmBackend(*BC->STI, *BC->MRI, MCTargetOptions());
-  std::unique_ptr<MCObjectWriter> OW = MAB->createObjectWriter(OS);
-  std::unique_ptr<MCStreamer> Streamer(BC->TheTarget->createMCObjectStreamer(
-      *BC->TheTriple, *BC->Ctx, std::unique_ptr<MCAsmBackend>(MAB),
-      std::move(OW), std::unique_ptr<MCCodeEmitter>(MCE), *BC->STI,
-      /* RelaxAll */ false,
-      /*IncrementalLinkerCompatible */ false,
-      /* DWARFMustBeAtTheEnd */ false));
-
+  std::unique_ptr<MCAsmBackend> MAB(
+      BC->TheTarget->createMCAsmBackend(*BC->STI, *BC->MRI, MCTargetOptions()));
+  auto Streamer = BC->createStreamer(OS);
   // Make sure output stream has enough reserved space, otherwise
   // pwrite() will fail.
   uint64_t Offset = OS.seek(getFileOffsetForAddress(NextAvailableAddress));
@@ -5085,7 +5079,7 @@ bool RewriteInstance::willOverwriteSection(StringRef SectionName) {
     if (SectionName == OverwriteName)
       return true;
   }
-  for (const char *const &OverwriteName : DebugSectionsToOverwrite) {
+  for (std::string &OverwriteName : DebugSectionsToOverwrite) {
     if (SectionName == OverwriteName)
       return true;
   }
