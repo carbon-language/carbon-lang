@@ -440,7 +440,12 @@ Instead, we should structure generics in a way that reuses existing name lookup
 facilities of the language.
 
 **Nice to have:** For example, if `x` has type `T`, then if you write `x.y` you
-should be able to look up `y` in the definition of `T`.
+should be able to look up `y` in the definition of `T`. This might need to be
+somewhat indirect in some cases. For example, if `T` inherits from `U`, the name
+`y` might come from `U` and not be mentioned in the definition of `T` directly.
+We may have similar mechanisms where `T` gets methods that have default
+implementations in interfaces it implements, as long as the names of those
+interfaces are explicitly mentioned in the definition of `T`.
 
 ### Learn from others
 
