@@ -398,6 +398,8 @@ It also has a number of benefits for users:
 -   It means there is no need to provide a disambiguation mechanism.
     Disambiguation is particularly problematic since the ambiguous call is often
     in generic code rather than code you control.
+-   A consistent definition of a type is useful for instantiating a (C++ or
+    Carbon) template on that type.
 
 The main downside of coherence is that there are some capabilities we would like
 for interfaces which are in tension with the coherence property. For example, we
