@@ -9,8 +9,12 @@ on: [pull_request]
 jobs:
   check_dependencies:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     name: check PRs landed
     steps:
+      - uses: styfle/cancel-workflow-action@0.8.0
+        with:
+          access_token: ${{ github.token }}
       - uses: gregsdennis/dependencies-action@main
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          access_token: ${{ github.token }}
