@@ -462,6 +462,13 @@ enforced by Carbon itself. For example, a _Draw_ method would mean different
 things when it is part of a _GameResult_ interface versus a _Image2D_ interface,
 even if those methods happen to have the same signature.
 
+Since C++ concepts are structural, they are
+[hard to evolve](https://www.youtube.com/watch?v=v_yzLe-wnfk). Structural
+interfaces leave little room for strengthening requirements without
+simultaneously updating all types that implement the interface. Weaking
+requirements is also hard without updating all functions using that interface as
+a constraint.
+
 ### Interop and evolution
 
 [Evolution is a high priority for Carbon](../../project/goals.md#software-and-language-evolution),
@@ -471,6 +478,12 @@ additions to an interface might:
 -   need default implementations
 -   be marked "upcoming" to allow for a period of transition
 -   replace other APIs that need to be marked "deprecated"
+
+Another way of supporting evolution is to allow one interface to be
+substitutable for another. For example, a feature that lets you use an
+implementation of `Interface1` for a type to automatically get an implementation
+of `Interface2`, as well as the other way around, would help transitioning
+between those two interfaces.
 
 Evolution in particular means that the set of names in an interface can change,
 and so two interfaces that don't start with name conflicts can develop them.
