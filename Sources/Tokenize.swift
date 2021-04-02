@@ -52,7 +52,11 @@ let keywords: [KeywordSpec] = [
 let patterns: [PatternSpec] = [
   (#"[A-Za-z_][A-Za-z0-9_]*"#, .Identifier),
   (#"[0-9]+"#, .Integer_literal),
-  (#"//(?:.(?<!\R))*"#, nil),
+  // 1-line comment: "//" followed by any number of non-newlines (See
+  // https://unicode-org.github.io/icu/userguide/strings/regexp.html
+  //   #regular-expression-metacharacters
+  // and https://www.unicode.org/reports/tr44/#BC_Values_Table).
+  (#"//\P{Bidi_Class=B}*"#, nil),
   (#"\s+"#, nil),
 ]
 
