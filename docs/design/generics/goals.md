@@ -289,11 +289,37 @@ prefer to avoid algorithms in the compiler with the form "run for up to N steps
 and report an error if it isn't resolved by then." For example, C++ compilers
 will typically have a template recursion limit. With generics, these problems
 arise due to trying to reason whether something is legal in all possible
-instantiations, rather than with specific, concrete types. Some of this is
-likely unavoidable or too costly to avoid, as most existing generics systems
+instantiations, rather than with specific, concrete types.
+
+Some of this is likely unavoidable or too costly to avoid, as most existing
+generics systems
 [have undecidable aspects to their type system](https://3fx.ch/typing-is-hard.html),
 including [Rust](https://sdleffler.github.io/RustTypeSystemTuringComplete/) and
-[Swift](https://forums.swift.org/t/swift-type-checking-is-undecidable/39024).
+[Swift](https://forums.swift.org/t/swift-type-checking-is-undecidable/39024). We
+fully expect there to be metaprogramming facilities in Carbon that will be able
+to execute arbitrary Turing machines, with infinite loops and undecidable
+stopping criteria. We don't see this as a problem though, just like we don't
+worry about trying to make compiler prevent you from writing programs that don't
+terminate. We would like to distinguish "the executed steps are present in the
+program's source" from "the compiler has to search for a proof that the code is
+legal." In the former case, the compiler can surface a problem to the user by
+pointing to lines of code in a trace of execution. The user could employ
+traditional debugging techniques to refine their understanding until they can
+determine a fix. What we want to avoid is the latter case, since it has bad
+properties:
+
+-   Error messages end up in the form: "this was too complicated to figure out,
+    I eventually gave up."
+-   Little in the way of actionable feedback on how to fix problems.
+-   Not much the user can do to debug problems.
+-   If the compiler is currently right at a limit for figuring something out, it
+    is easy to imagine a change to a distant dependency can cause it to suddenly
+    stop compiling.
+
+If we can't find acceptable restrictions to make problems efficiently decidable,
+the next best solution is to require the proof to be in the source instead of
+derived by the compiler. If authoring the proof is too painful for the user, the
+we should invest in putting the proof search into IDEs or other tooling.
 
 ### Dispatch control
 
