@@ -57,6 +57,8 @@ interpreter.
 [InterpProgram()](interpreter/interpreter.h) runs an abstract machine using the
 [interpreter](interpreter/), as described below.
 
+## Abstract Machine
+
 The abstract machine implements a state-transition system. The state is defined
 by the `State` structure, which includes three components: the procedure call
 stack, the heap, and the function definitions. The `Step` function updates the
@@ -114,20 +116,98 @@ Let `n3` be the sum of `n1` and `n2`.
 
     n3 :: ...
 
-The heap is an array of values. It is used not only for `malloc` but also to
-store anything that is mutable, including function parameters and local
-variables. A pointer is simply an index into the array. The `malloc` expression
-causes the heap to grow (at the end) and returns the index of the last slot. The
-dereference expression returns the nth value of the heap, as specified by the
-dereferenced pointer. The assignment operation stores the value of the
-right-hand side into the heap at the index specified by the left-hand side
+The heap is an array of values. It is used to store anything that is mutable,
+including function parameters and local variables. An address is simply an index
+into the array. The assignment operation stores the value of the right-hand side
+into the heap at the index specified by the address of the left-hand side
 lvalue.
 
-As you might expect, function calls push a new frame on the stack and the
-`return` statement pops a frame off the stack. The parameter passing semantics
-is call-by-value, so the machine applies `CopyVal` to the incoming arguments and
-the outgoing return value. Also, the machine is careful to kill the parameters
-and local variables when the function call is complete.
+Function calls push a new frame on the stack and the `return` statement pops a
+frame off the stack. The parameter passing semantics is call-by-value, so the
+machine applies `CopyVal` to the incoming arguments and the outgoing return
+value. Also, the machine kills the values stored in the parameters and local
+variables when the function call is complete.
+
+## Experimental: Delimited Continuations
+
+Delimited continuations provide a kind of resumable exception with first-class
+continuations. The point of experimenting with this feature is not to say that
+we want delimited continuations in Carbon, but this represents a place-holder
+for other powerful control-flow features that might eventually be in Carbon,
+such as coroutines, threads, exceptions, etc. As we refactor the executable
+semantics, having this feature in place will keep us honest and prevent us from
+accidentally simplifying the interpreter to the point where it can't handle
+features like this one.
+
+Instead of delimited continuations, we could have instead done regular
+continuations with callcc. However, there seems to be a consensus amongst the
+experts that delimited continuations are better than regular ones.
+
+So what are delimited continuations? Recall that a continuation is a
+representation of what happens next in a computation. In the abstract machine,
+the procedure call stack represents the current continuation. A delimited
+continuation is also about what happens next, but it doesn't go all the way to
+the end of the execution. Instead it represents what happens up until control
+reaches the nearest enclosing `__continuation` statement.
+
+The statement
+
+    __continuation <identifier> <statement>
+
+creates a continuation object from the given statement and binds the
+continuation object to the given identifier. The given statement is not yet
+executed.
+
+The statement
+
+    __run <expression>;
+
+starts or resumes execution of the continuation object that results from the
+given expression.
+
+The statement
+
+    __await;
+
+pauses the current continuation, saving the control state in the continuation
+object. Control is then returned to the statement after the `__run` that
+initiated the current continuation.
+
+These three language features are demonstrated in the following example, where
+we create a continuation and bind it to `k`. We then run the continuation twice.
+The first time increments `x` to `1` and the second time increments `x` to `2`,
+so the expected result of this program is `2`.
+
+```carbon
+fn main() -> Int {
+  var Int: x = 0;
+  __continuation k {
+    x = x + 1;
+    __await;
+    x = x + 1;
+  }
+  __run k;
+  __run k;
+  return x;
+}
+```
+
+Note that the control state of the continuation object bound to `k` mutates as
+the program executes. Upon creation, the control state is at the beginning of
+the continuation. After the first `__run`, the control state is just after the
+`__await`. After the second `__run`, the control state is at the end of the
+continuation.
+
+The delimited continuation feature described here is based on the
+`shift`/`reset` style of delimited continuations created by Danvy and Filinsky
+(Abstracting control, ACM Conference on Lisp and Functional Programming, 1990).
+We adapted the feature to operate in a more imperative manner. The
+`__continuation` feature is equivalent to a `reset` followed immediately by a
+`shift` to pause and capture the continuation object. The `__run` feature is
+equivalent to calling the continuation. The `__await` feature is equivalent to a
+`shift` except that it updates the continuation in place.
+
+## Example Programs (Regression Tests)
 
 The [`testdata/`](testdata/) subdirectory includes some example programs with
 golden output.

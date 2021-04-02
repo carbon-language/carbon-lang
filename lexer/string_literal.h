@@ -10,7 +10,7 @@
 
 namespace Carbon {
 
-class StringLiteralToken {
+class LexedStringLiteral {
  public:
   // Get the text corresponding to this literal.
   auto Text() const -> llvm::StringRef { return text; }
@@ -21,20 +21,15 @@ class StringLiteralToken {
   // Extract a string literal token from the given text, if it has a suitable
   // form.
   static auto Lex(llvm::StringRef source_text)
-      -> llvm::Optional<StringLiteralToken>;
-
-  // The result of expanding escape sequences in a string literal.
-  struct ExpandedValue {
-    std::string result;
-    bool has_errors;
-  };
+      -> llvm::Optional<LexedStringLiteral>;
 
   // Expand any escape sequences in the given string literal and compute the
-  // resulting value.
-  auto ComputeValue(DiagnosticEmitter& emitter) const -> ExpandedValue;
+  // resulting value. This handles error recovery internally and cannot fail.
+  auto ComputeValue(DiagnosticEmitter<const char*>& emitter) const
+      -> std::string;
 
  private:
-  StringLiteralToken(llvm::StringRef text, llvm::StringRef content,
+  LexedStringLiteral(llvm::StringRef text, llvm::StringRef content,
                      int hash_level, bool multi_line)
       : text(text),
         content(content),

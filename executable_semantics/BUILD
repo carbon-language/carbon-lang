@@ -25,7 +25,10 @@ cc_library(
 )
 
 EXAMPLES = [
+    "assignment_copy1",
+    "assignment_copy2",
     "block1",
+    "block2",
     "break1",
     "choice1",
     "continue1",
@@ -37,6 +40,14 @@ EXAMPLES = [
     "fun5",
     "fun6_fail_type",
     "funptr1",
+    "global_variable1",
+    "global_variable2",
+    "global_variable3",
+    "global_variable4",
+    "global_variable5",
+    "global_variable6",
+    "global_variable7",
+    "global_variable8",
     "if1",
     "if2",
     "if3",
@@ -54,10 +65,16 @@ EXAMPLES = [
     "tuple_match",
     "tuple1",
     "tuple2",
-    "undef1",
-    "undef2",
     "while1",
     "zero",
+    "experimental_continuation1",
+    "experimental_continuation2",
+    "experimental_continuation3",
+    "experimental_continuation4",
+    "experimental_continuation5",
+    "experimental_continuation6",
+    "experimental_continuation7",
+    "experimental_continuation8",
 ]
 
 [genrule(
