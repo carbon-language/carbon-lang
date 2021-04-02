@@ -422,11 +422,13 @@ cases remain:
 We should have some mechanism for addressing these use cases. There are multiple
 approaches that could work:
 
--   Interface implementations coulbe external to types and are passed in to
+-   Interface implementations could be external to types and are passed in to
     generic functions separately.
 -   There could be some way to create multiple types that are compatible with a
     given value that you can switch between using casts to select different
-    interface implementations.
+    interface implementations. This is the approach used by Rust
+    ([1](https://doc.rust-lang.org/book/ch19-03-advanced-traits.html#using-the-newtype-pattern-to-implement-external-traits-on-external-types),
+    [2](https://github.com/Ixrec/rust-orphan-rules#user-content-why-are-the-orphan-rules-controversial)).
 -   Carbon could support
     [scoped conformances](https://forums.swift.org/t/scoped-conformances/37159).
 
