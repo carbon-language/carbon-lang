@@ -16,5 +16,5 @@ jobs:
         with:
           access_token: ${{ github.token }}
       - uses: gregsdennis/dependencies-action@main
-        with:
-          access_token: ${{ github.token }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
