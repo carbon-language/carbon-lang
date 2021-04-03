@@ -218,8 +218,15 @@ Our goal is to address this use case, known as
 [the expression problem](https://eli.thegreenplace.net/2016/the-expression-problem-and-its-solutions),
 with a mechanism within generics that does enforce consistency so that type
 checking is possible without seeing all implementations. This will be Carbon's
-replacement for open overloading. As a result, Carbon generics will need to be
-able to support operator overloading.
+replacement for open overloading. As a consequence, Carbon generics will need to
+be able to support operator overloading.
+
+A specific example is the absolute value function `Abs`. We would like to write
+`Abs(x)` for a variety of types. For some types `T`, such as `Int32` or
+`Float64`, the return type will be the same `T`. For other types, such as
+`Complex64` or `Quaternion`, the return type will be different. The generic
+functions that call `Abs` will need a way to specify whether they only operate
+on `T` such that `Abs` has signature `T -> T`.
 
 #### Use cases that are out of scope
 
