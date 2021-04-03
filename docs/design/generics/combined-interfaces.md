@@ -1459,7 +1459,21 @@ A.F(t);
 **Open question:** This case is expected to be common, and to be convenient we
 want it to be easy to retain the type-being-adapted's API, as much as possible.
 We need some syntax for doing this, along with a way to make incremental
-changes, such as to resolve conflicts.
+changes, such as to resolve conflicts. One idea is to use the `extends` keyword:
+
+```
+adaptor Foo for Bar {
+  // Include all of Bar's API and interface implementations.
+  extends Bar;
+}
+
+adaptor Foo2 for Bar {
+  // As above, but override implementation of `Baz` interface.
+  extends Bar {
+    impl Baz { ... }
+  }
+}
+```
 
 ### Example: Defining an impl for use by other types
 
