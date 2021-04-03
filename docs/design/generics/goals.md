@@ -33,6 +33,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Learn from others](#learn-from-others)
     -   [Interfaces are nominal](#interfaces-are-nominal)
     -   [Interop and evolution](#interop-and-evolution)
+    -   [Bridge for C++ extension points](#bridge-for-c-extension-points)
 -   [Non-goals, caveats, limitations, and out-of-scope issues](#non-goals-caveats-limitations-and-out-of-scope-issues)
     -   [Not the full flexibility of templates](#not-the-full-flexibility-of-templates)
     -   [Features may be applicable outside generics](#features-may-be-applicable-outside-generics)
@@ -144,6 +145,8 @@ We assume Carbon will have templates for a few different reasons:
 
 Our goal for generics support in Carbon is to get most of the expressive
 benefits of C++ templates and open overloading with fewer downsides.
+Additionally we want to support some dynamic dispatch use cases, for example
+cases that inheritance struggles with.
 
 ### Use cases
 
@@ -454,6 +457,11 @@ experiences. We should copy what works and makes sense in the context of Carbon,
 and change decisions that led to undesirable compromises. We are taking the
 strongest guidance from Rust and Swift, which have the most similar goals.
 
+For example, Rust has found that supporting defaults for interface methods is a
+valuable feature. It is useful for [evolution](#interop-and-evolution),
+implementation reuse, and for bridging the gap between the minimal functionality
+a type wants to implement and the rich API that users want to consume.
+
 ### Interfaces are nominal
 
 Interfaces can either be structural, as in Go, or nominal, as in Rust and Swift.
@@ -506,6 +514,20 @@ Note this is possible since [interfaces are nominal](#interfaces-are-nominal).
 The place where types specify that they implement an interface is also the
 vehicle for unambiguously designating which function implementation goes with
 what interface.
+
+### Bridge for C++ extension points
+
+There will need to be some bridge for C++ extension points that currently rely
+on open overloading or
+[ADL](https://en.wikipedia.org/wiki/Argument-dependent_name_lookup). For
+example, we need some way for C++ `swap` calls to work on Carbon types. We might
+define `CPlusPlus.ADL.swap` as a Carbon interface to be that bridge. Carbon
+types could implement that interface to work from C++, and Carbon functions
+could use that interface to invoke `swap` on C++ types.
+
+Similarly, we will want some way to implement Carbon interfaces for C++ types.
+For example, we might have a template implementation of an `Addable` interface
+for any C++ type that implements `operator+`.
 
 ## Non-goals, caveats, limitations, and out-of-scope issues
 
