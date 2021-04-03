@@ -1858,6 +1858,12 @@ and
 Note that Rust further supports defaults for those type parameters (such as
 `Self`).
 
+[Rust uses the term "type parameters"](https://github.com/rust-lang/rfcs/blob/master/text/0195-associated-items.md#clearer-trait-matching)
+both interface type parameters and associated types. The difference is that
+interface parameters are "inputs" since they _determine_ which `impl` to use,
+and associated types are "outputs" since they are determined _by_ the `impl`,
+but play no role in selecting the `impl`.
+
 **Rejected alternative:** We considered and then rejected the idea that we would
 have two kinds of parameters. "Multi" parameters would work as described above.
 "Deducible" type parameters would only allow one implementation of an interface,
