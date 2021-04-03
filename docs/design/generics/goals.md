@@ -179,12 +179,12 @@ such as
 [Sean Parent](https://sean-parent.stlab.cc/papers-and-presentations/#better-code-runtime-polymorphism),
 advocate for runtime polymorphism patterns in C++ that avoid inheritance, since
 it can cause runtime performance, correctness, and code maintenance problems in
-some situations. Carbon generics provide an alternative for those situations
-inheritance doesn't handle as well. In particular, we would like Carbon generics
-to supplant the need to support multiple inheritance in Carbon,
-
-will be able to represent this form of polymorphism without all the boilerplate
-and complexity required in C++, to
+some situations. Those patterns require a lot of boilerplate and complexity in
+C++. It would be nice if those patterns were simpler to express with Carbon
+generics. More generally, Carbon generics will provide an alternative for those
+situations inheritance doesn't handle as well. As a specific example, we would
+like Carbon generics to supplant the need to support multiple inheritance in
+Carbon.
 
 This is a case that would use [dynamic dispatch](#dispatch-control).
 
