@@ -1705,6 +1705,10 @@ struct S {
 ```
 
 Not to say this can't be resolved, but it does add complexity.
+[Swift considered](https://github.com/apple/swift/blob/main/docs/GenericsManifesto.md#associated-type-inference)
+removing this feature because it was the one thing in Swift that required global
+type inference, which they otherwise avoided. They
+[ultimately decided to keep the feature](https://github.com/apple/swift-evolution/blob/main/proposals/0108-remove-assoctype-inference.md).
 
 ### Model
 
