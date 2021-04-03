@@ -22,8 +22,9 @@ using Env = Dictionary<std::string, Address>;
 /***** Scopes *****/
 
 struct Scope {
-  Scope(Env e, std::list<std::string> l) : env(e), locals(std::move(l)) {}
-  Env env;
+  Scope(Env values, std::list<std::string> l)
+      : values(values), locals(std::move(l)) {}
+  Env values;
   std::list<std::string> locals;
 };
 
@@ -68,7 +69,7 @@ extern State* state;
 
 auto PrintFrame(Frame* frame, std::ostream& out) -> void;
 void PrintStack(Stack<Frame*> ls, std::ostream& out);
-void PrintEnv(Env env);
+void PrintEnv(Env values);
 auto AllocateValue(const Value* v) -> Address;
 auto CopyVal(const Value* val, int line_num) -> const Value*;
 auto ToInteger(const Value* v) -> int;
@@ -76,7 +77,7 @@ auto ToInteger(const Value* v) -> int;
 /***** Interpreters *****/
 
 auto InterpProgram(std::list<Declaration>* fs) -> int;
-auto InterpExp(Env env, Expression* e) -> const Value*;
+auto InterpExp(Env values, Expression* e) -> const Value*;
 
 }  // namespace Carbon
 
