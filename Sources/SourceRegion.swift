@@ -1,3 +1,7 @@
+// Part of the Carbon Language project, under the Apache License v2.0 with LLVM
+// Exceptions. See /LICENSE for license information.
+// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+
 /// A position relative to the beginning of a source file, in terms understood
 /// by text editors.
 struct SourcePosition: Comparable, Hashable {
