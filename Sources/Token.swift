@@ -4,7 +4,7 @@
 ///   be implied (e.g. for keywords, which only match one string.)
 typealias TokenID = CarbonParser.CitronTokenCode
 
-struct Token: Hashable {
+struct Token_: Hashable {
   init(_ kind: TokenID, _ text: String) {
     self.kind = kind
     self.text = text
@@ -13,9 +13,10 @@ struct Token: Hashable {
   let text: String
 }
 
-extension Token: CustomStringConvertible {
+extension Token_: CustomStringConvertible {
   var description: String {
-    "Token(.\(kind), \(String(reflecting: text)))"
+    "Token_(.\(kind), \(String(reflecting: text)))"
   }
 }
 
+typealias Token = AST<Token_>

@@ -22,10 +22,10 @@ final class TokenizerTests: XCTestCase {
     func token(
       _ k: TokenID, _ text: String,
       from startLine: Int, _ startColumn: Int,
-      to endLine: Int, _ endColumn: Int) -> AST<Token>
+      to endLine: Int, _ endColumn: Int) -> Token
     {
-      AST<Token>(
-        Token(k, text),
+      Token(
+        .init(k, text),
         SourceRegion(
           fileName: "",
           .init(line: startLine, column: startColumn)
@@ -33,7 +33,7 @@ final class TokenizerTests: XCTestCase {
     }
     
     typealias L = SourceRegion
-    let expectedTokens: [AST<Token>] = [
+    let expectedTokens: [Token] = [
       token(.Identifier, "an", from: 1, 1, to: 1, 3),
       token(.AND, "and", from: 1, 4, to: 1, 7),
       token(.Identifier, "andey", from: 1, 8, to: 1, 13),

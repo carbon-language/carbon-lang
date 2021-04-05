@@ -63,7 +63,7 @@ final class ParserTests: XCTestCase {
     XCTAssertThrowsError(try "fn ()".parsedAsCarbon()) { e in
       print(e)
       XCTAssertTrue(
-        e is _CitronParserUnexpectedTokenError<AST<Token>, TokenID>);
+        e is _CitronParserUnexpectedTokenError<Token, TokenID>);
     }
 
     XCTAssertThrowsError(try "fn f".parsedAsCarbon()) { e in

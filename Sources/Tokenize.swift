@@ -126,7 +126,7 @@ struct Tokens: Sequence {
 
     /// Returns the next token in the source, or `nil` if the source is
     /// exhausted.
-    mutating func next() -> AST<Token>? {
+    mutating func next() -> Token? {
       // Repeat until a non-ignored pattern is matched.
       while utf16Offset < sourceUTF16Length {
         // NSRegularExpression matching region
@@ -172,8 +172,8 @@ struct Tokens: Sequence {
              : bestMatchIndex == 0 ? keywords[matchedText]
              : matchers[bestMatchIndex].nonterminal
         {
-          return AST(
-            Token(matchedID, matchedText),
+          return Token(
+            Token_(matchedID, matchedText),
             SourceRegion(
               fileName: sourceFileName, tokenRegionStart..<sourcePosition))
         }
