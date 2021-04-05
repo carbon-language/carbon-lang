@@ -28,11 +28,28 @@ cc_library(
         "-Wno-writable-strings",
     ],
     deps = [
+        ":paren_contents",
         "//executable_semantics:tracing_flag",
         "//executable_semantics/ast:declaration",
         "//executable_semantics/ast:expression",
-        "//executable_semantics/ast:field_list",
         "//executable_semantics/interpreter",
+    ],
+)
+
+cc_library(
+    name = "paren_contents",
+    srcs = ["paren_contents.cpp"],
+    hdrs = ["paren_contents.h"],
+    deps = ["//executable_semantics/ast:expression"],
+)
+
+cc_test(
+    name = "paren_contents_test",
+    srcs = ["paren_contents_test.cpp"],
+    deps = [
+        ":paren_contents",
+        "@llvm-project//llvm:gtest",
+        "@llvm-project//llvm:gtest_main",
     ],
 )
 
