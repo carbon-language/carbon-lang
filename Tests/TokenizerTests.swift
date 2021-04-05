@@ -20,7 +20,7 @@ final class TokenizerTests: XCTestCase {
     ///
     /// This is just a helper to make `expectedTokens` (below) read nicely.
     func token(
-      _ k: TokenKind, _ text: String,
+      _ k: TokenID, _ text: String,
       from startLine: Int, _ startColumn: Int,
       to endLine: Int, _ endColumn: Int) -> AST<Token>
     {

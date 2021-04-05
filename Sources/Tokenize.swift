@@ -1,9 +1,9 @@
-import Foundation
+import Foundation // for regular expressions
 
-typealias TokenKind = CarbonParser.CitronTokenCode
+typealias TokenID = CarbonParser.CitronTokenCode
 
-typealias KeywordSpec = (literalText: String, token: TokenKind)
-typealias PatternSpec = (pattern: String, token: TokenKind?)
+typealias KeywordSpec = (literalText: String, token: TokenID)
+typealias PatternSpec = (pattern: String, token: TokenID?)
 
 let keywords: [KeywordSpec] = [
   ("and", .AND),
@@ -85,11 +85,11 @@ extension String {
 }
 
 struct Token: Hashable {
-  init(_ kind: TokenKind, _ text: String) {
+  init(_ kind: TokenID, _ text: String) {
     self.kind = kind
     self.text = text
   }
-  let kind: TokenKind
+  let kind: TokenID
   let text: String
 }
 
