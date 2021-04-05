@@ -8,8 +8,8 @@
 /// - Note: the source region is *incidental* information that is **not
 /// considered part of the AST's value.** In other words, two ASTs whose
 /// contents differ only by source regions will compare as equal.
-struct AST<Node: Hashable>: Hashable {
-  init(_ body: Node, _ region: SourceRegion) {
+struct AST<Body: Hashable>: Hashable {
+  init(_ body: Body, _ region: SourceRegion) {
     self.body = body
     self.region = region
   }
@@ -22,14 +22,16 @@ struct AST<Node: Hashable>: Hashable {
   func hash(into accumulator: inout Hasher) { body.hash(into: &accumulator) }
 
   /// The content of this fragment.
-  var body: Node
+  var body: Body
 
   /// This fragment's region in the source.
   var region: SourceRegion
 }
 
+/// An unqualified name.
 typealias Identifier = AST<String>
 
+/// The body of a declaration node.
 indirect enum Declaration_: Hashable {
   case
     function(FunctionDefinition),
@@ -37,6 +39,7 @@ indirect enum Declaration_: Hashable {
     choice(name: Identifier, alternatives: [Alternative]),
     variable(name: Identifier, type: Expression, initializer: Expression)
 }
+/// A declaration
 typealias Declaration = AST<Declaration_>
 
 struct FunctionDefinition_: Hashable {

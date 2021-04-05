@@ -5,7 +5,8 @@
 import Foundation // for regular expressions
 
 // ===== Lexical Analyzer Specification ======
-// This is the region of the file to edit when changing the tokens recognized.
+// This is the region of the file to edit when changing the tokens to be
+// recognized.
 
 /// A mapping from literal strings to be recognized to the corresponding token
 /// ID.
@@ -69,6 +70,8 @@ fileprivate let patterns: [String: TokenID?] = [
 ]
 
 // ===== Lexical Analyzer Implementation ======
+// This is the region of the file to edit in case that you find a bug in the way
+// tokens are recognized.
 
 /// A single regex pattern with alternatives for all the keywords
 fileprivate let keywordPattern = keywords.keys
