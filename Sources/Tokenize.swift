@@ -1,11 +1,12 @@
 import Foundation // for regular expressions
 
+/// A token as recognized by the lexical analyzer.
+///
+/// - Note: TokenID does not include the token's text, except inasmuch as it may
+///   be implied (e.g. for keywords, which only match one string.)
 typealias TokenID = CarbonParser.CitronTokenCode
 
-typealias KeywordSpec = (literalText: String, token: TokenID)
-typealias PatternSpec = (pattern: String, token: TokenID?)
-
-let keywords: [KeywordSpec] = [
+let keywords: [(literalText: String, token: TokenID)] = [
   ("and", .AND),
   ("->", .ARROW),
   ("auto", .AUTO),
@@ -49,7 +50,7 @@ let keywords: [KeywordSpec] = [
   (":", .COLON),
 ]
 
-let patterns: [PatternSpec] = [
+let patterns: [(pattern: String, token: TokenID?)] = [
   (#"[A-Za-z_][A-Za-z0-9_]*"#, .Identifier),
   (#"[0-9]+"#, .Integer_literal),
   // 1-line comment: "//" followed by any number of non-newlines (See
