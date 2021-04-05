@@ -4195,9 +4195,13 @@ Rust supports specifying defaults for
 [methods](https://doc.rust-lang.org/book/ch10-02-traits.html#default-implementations),
 [associated constants](https://doc.rust-lang.org/reference/items/associated-items.html#associated-constants-examples).
 We should support this too. It is helpful for evolution, as well as reducing
-boilerplate.
+boilerplate. Defaults address the gap between the minimum necessary for a type
+to provide the desired functionality of an interface and the breadth of API that
+user's desire. As an example, in Rust the
+[iterator trait](https://doc.rust-lang.org/std/iter/trait.Iterator.html) only
+has one required method but dozens of "provided methods" with defaults.
 
-In fact, this is a generalization of specialization, as observed
+In fact, defaults are a generalization of specialization, as observed
 [here](https://rust-lang.github.io/rfcs/1210-impl-specialization.html#default-impls),
 as long as we allow more specific implementations to be incomplete and reuse
 more general implementations for anything unspecified.
