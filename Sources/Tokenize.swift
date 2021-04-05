@@ -144,14 +144,14 @@ struct Tokens: Sequence {
         let tokenText = sourceText[tokenStart..<textPosition]
         utf16Offset += tokenText.utf16.count
 
-        let tokenLocationStart = sourceFilePosition
+        let tokenLocationStart = sourcePosition
         let tokenLines = tokenText.split(
           omittingEmptySubsequences: false, whereSeparator: \.isNewline)
         let newlineCount = tokenLines.count - 1
         
-        sourceFilePosition.line += newlineCount
-        sourceFilePosition.column
-          = (newlineCount == 0 ? sourceFilePosition.column : 1)
+        sourcePosition.line += newlineCount
+        sourcePosition.column
+          = (newlineCount == 0 ? sourcePosition.column : 1)
           + tokenLines.last!.count
 
         let text = String(tokenText)
@@ -163,13 +163,13 @@ struct Tokens: Sequence {
             .init(matchedKind, text),
             SourceRegion(
               fileName: sourceFileName,
-              tokenLocationStart..<sourceFilePosition))
+              tokenLocationStart..<sourcePosition))
         }
       }
     }
     private let sourceText: String
     private let sourceFileName: String
-    private var sourceFilePosition = SourcePosition.start
+    private var sourcePosition = SourcePosition.start
     private var textPosition: String.Index
     private var utf16Offset: Int = 0
     private let sourceUTF16Length: Int
