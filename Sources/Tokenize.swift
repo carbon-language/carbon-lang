@@ -1,13 +1,10 @@
 import Foundation // for regular expressions
 
-/// A token as recognized by the lexical analyzer.
-///
-/// - Note: TokenID does not include the token's text, except inasmuch as it may
-///   be implied (e.g. for keywords, which only match one string.)
-typealias TokenID = CarbonParser.CitronTokenCode
+// ===== Lexical Analyzer Specification ======
+// This is the region of the file to edit when changing the tokens recognized.
 
-/// A mapping from literal strings that can be matched, to the corresponding
-/// token ID.
+/// A mapping from literal strings to be recognized to the corresponding token
+/// ID.
 fileprivate let keywords: [String: TokenID] = [
   "and": .AND,
   "->": .ARROW,
@@ -52,50 +49,47 @@ fileprivate let keywords: [String: TokenID] = [
   ":": .COLON
 ]
 
-let patterns: [(pattern: String, token: TokenID?)] = [
-  (#"[A-Za-z_][A-Za-z0-9_]*"#, .Identifier),
-  (#"[0-9]+"#, .Integer_literal),
+/// A mapping from regular expression pattern to either a coresponding token ID,
+/// or `nil` if the pattern is to be discarded.
+fileprivate let patterns: [String: TokenID?] = [
+  #"[A-Za-z_][A-Za-z0-9_]*"#: .Identifier,
+  #"[0-9]+"#: .Integer_literal,
   // 1-line comment: "//" followed by any number of non-newlines (See
   // https://unicode-org.github.io/icu/userguide/strings/regexp.html
   //   #regular-expression-metacharacters
   // and https://www.unicode.org/reports/tr44/#BC_Values_Table).
-  (#"//\P{Bidi_Class=B}*"#, nil),
-  (#"\s+"#, nil),
+  #"//\P{Bidi_Class=B}*"#: nil,
+  #"\s+"#: nil
 ]
 
-// A single regex pattern with alternatives for all the keywords
-let keywordPattern = keywords.keys
+// ===== Lexical Analyzer Implementation ======
+
+/// A single regex pattern with alternatives for all the keywords
+fileprivate let keywordPattern = keywords.keys
   .sorted { $0.count > $1.count }
   .lazy.map { NSRegularExpression.escapedPattern(for: $0) }
   .joined(separator: "|")
 
-let allPatterns = [(keywordPattern, nil)] + patterns
-let matchers = allPatterns.map {
+/// The keywords pattern, followed by the user-specified patterns.
+///
+/// The keywords pattern is given the `nil` token ID, but the first element in
+/// this list is treated specially.
+fileprivate let allPatterns = [(keywordPattern, nil)] + patterns
+
+/// A version of allPatterns with compiled regular expressions.
+fileprivate let matchers = allPatterns.map {
   try! (matcher: NSRegularExpression(pattern: $0, options: []), nonterminal: $1)
 }
 
 extension String {
-  subscript(r: NSRange) -> Substring {
+  /// Accesses the slice of `self` specified by the given range of UTF16
+  /// offsets.
+  fileprivate subscript(r: NSRange) -> Substring {
     let start = utf16.index(
       startIndex, offsetBy: r.location, limitedBy: endIndex) ?? endIndex
     let end = utf16.index(start, offsetBy: r.length, limitedBy: endIndex)
       ?? endIndex
     return self[start..<end]
-  }
-}
-
-struct Token: Hashable {
-  init(_ kind: TokenID, _ text: String) {
-    self.kind = kind
-    self.text = text
-  }
-  let kind: TokenID
-  let text: String
-}
-
-extension Token: CustomStringConvertible {
-  var description: String {
-    "Token(.\(kind), \(String(reflecting: text)))"
   }
 }
 
