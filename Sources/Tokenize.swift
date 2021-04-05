@@ -6,48 +6,50 @@ import Foundation // for regular expressions
 ///   be implied (e.g. for keywords, which only match one string.)
 typealias TokenID = CarbonParser.CitronTokenCode
 
-let keywords: [(literalText: String, token: TokenID)] = [
-  ("and", .AND),
-  ("->", .ARROW),
-  ("auto", .AUTO),
-  ("bool", .BOOL),
-  ("break", .BREAK),
-  ("case", .CASE),
-  ("choice", .CHOICE),
-  ("continue", .CONTINUE),
-  ("=>", .DBLARROW),
-  ("default", .DEFAULT),
-  ("else", .ELSE),
-  ("==", .EQUAL_EQUAL),
-  ("false", .FALSE),
-  ("fn", .FN),
-  ("fnty", .FNTY),
-  ("if", .IF),
-  ("Int", .INT),
-  ("match", .MATCH),
-  ("not", .NOT),
-  ("or", .OR),
-  ("return", .RETURN),
-  ("struct", .STRUCT),
-  ("true", .TRUE),
-  ("type", .TYPE),
-  ("var", .VAR),
-  ("while", .WHILE),
-  ("=", .EQUAL),
-  ("-", .MINUS),
-  ("+", .PLUS),
-//  ("*", .STAR),
-//  ("/", .SLASH),
-  ("(", .LEFT_PARENTHESIS),
-  (")", .RIGHT_PARENTHESIS),
-  ("{", .LEFT_CURLY_BRACE),
-  ("}", .RIGHT_CURLY_BRACE),
-  ("[", .LEFT_SQUARE_BRACKET),
-  ("]", .RIGHT_SQUARE_BRACKET),
-  (".", .PERIOD),
-  (",", .COMMA),
-  (";", .SEMICOLON),
-  (":", .COLON),
+/// A mapping from literal strings that can be matched, to the corresponding
+/// token ID.
+fileprivate let keywords: [String: TokenID] = [
+  "and": .AND,
+  "->": .ARROW,
+  "auto": .AUTO,
+  "bool": .BOOL,
+  "break": .BREAK,
+  "case": .CASE,
+  "choice": .CHOICE,
+  "continue": .CONTINUE,
+  "=>": .DBLARROW,
+  "default": .DEFAULT,
+  "else": .ELSE,
+  "==": .EQUAL_EQUAL,
+  "false": .FALSE,
+  "fn": .FN,
+  "fnty": .FNTY,
+  "if": .IF,
+  "Int": .INT,
+  "match": .MATCH,
+  "not": .NOT,
+  "or": .OR,
+  "return": .RETURN,
+  "struct": .STRUCT,
+  "true": .TRUE,
+  "type": .TYPE,
+  "var": .VAR,
+  "while": .WHILE,
+  "=": .EQUAL,
+  "-": .MINUS,
+  "+": .PLUS,
+//  "*": .STAR,
+//  "/": .SLASH,
+  "(": .LEFT_PARENTHESIS,
+  ")": .RIGHT_PARENTHESIS,
+  "{": .LEFT_CURLY_BRACE,
+  "}": .RIGHT_CURLY_BRACE,
+  "[": .LEFT_SQUARE_BRACKET,
+  "]": .RIGHT_SQUARE_BRACKET,
+  ".": .PERIOD,
+  ",": .COMMA,
+  ";": .SEMICOLON,
+  ":": .COLON
 ]
 
 let patterns: [(pattern: String, token: TokenID?)] = [
@@ -62,13 +64,10 @@ let patterns: [(pattern: String, token: TokenID?)] = [
 ]
 
 // A single regex pattern with alternatives for all the keywords
-let keywordPattern = keywords.lazy.map { k in k.literalText }
+let keywordPattern = keywords.keys
   .sorted { $0.count > $1.count }
   .lazy.map { NSRegularExpression.escapedPattern(for: $0) }
   .joined(separator: "|")
-
-// A mapping from matched keyword content to corresponding TokenCode.
-let tokenKindForKeyword = Dictionary(uniqueKeysWithValues: keywords)
 
 let allPatterns = [(keywordPattern, nil)] + patterns
 let matchers = allPatterns.map {
@@ -157,7 +156,7 @@ struct Tokens: Sequence {
 
         let text = String(tokenText)
         if let matchedKind = bestMatchUTF16Length == 0 ? .ILLEGAL_CHARACTER
-             : bestMatchIndex == 0 ? tokenKindForKeyword[text]
+             : bestMatchIndex == 0 ? keywords[text]
              : matchers[bestMatchIndex].nonterminal
         {
           return AST(
