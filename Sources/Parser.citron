@@ -24,10 +24,13 @@
       fileName: first.region.fileName,
       first.region.span.lowerBound..<last.region.span.upperBound)
   }
-
-  fileprivate extension Array where Element == Field {
-    func asTupleLiteral_() -> TupleLiteral_ {
-      map { .init(name: $0.body.first, value: $0.body.second) }
+  
+  fileprivate extension TupleLiteral_ {
+    /// Creates an instance from a (perhaps-too-eagerly parsed) field list.
+    init(_ source: FieldList) {
+      self = source.body.fields.map {
+        TupleLiteralElement(name: $0.body.first, value: $0.body.second)
+      }
     }
   }
 }                         
@@ -127,11 +130,11 @@ paren_expression ::= LEFT_PARENTHESIS(l) field_list(f) RIGHT_PARENTHESIS(r).
       let firstField = f.body.fields.first!.body
       if firstField.first == nil { return AST(firstField.second.body, l...r) }
     }
-    return AST(.tupleLiteral(f.body.fields.asTupleLiteral_()), l...r)
+    return AST(.tupleLiteral(TupleLiteral_(f)), l...r)
   }
 
 tuple ::= LEFT_PARENTHESIS(l) field_list(f) RIGHT_PARENTHESIS(r).
-  { AST(f.body.fields.asTupleLiteral_(), l...r) }
+  { AST(TupleLiteral_(f), l...r) }
 
 field ::= pattern(p).
   { AST(Field_(first: nil,  second: p), p.region) }
