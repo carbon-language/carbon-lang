@@ -161,7 +161,7 @@ struct Tokens: Sequence {
         {
           return AST(
             .init(matchedKind, text),
-            SourceLocation(
+            SourceRegion(
               fileName: sourceFileName,
               tokenLocationStart..<sourceFilePosition))
         }
@@ -169,7 +169,7 @@ struct Tokens: Sequence {
     }
     private let sourceText: String
     private let sourceFileName: String
-    private var sourceFilePosition = PositionInSourceFile.start
+    private var sourceFilePosition = SourcePosition.start
     private var textPosition: String.Index
     private var utf16Offset: Int = 0
     private let sourceUTF16Length: Int

@@ -1,6 +1,6 @@
 /// A position relative to the beginning of a source file, in terms understood
 /// by text editors.
-struct PositionInSourceFile: Comparable, Hashable {
+struct SourcePosition: Comparable, Hashable {
   /// The 1-based line number of the position.
   var line: Int
   /// The 1-based column number of the position.
@@ -16,10 +16,10 @@ struct PositionInSourceFile: Comparable, Hashable {
 }
 
 /// A half-open range of positions in a source file.
-typealias RangeOfSourceFile = Range<PositionInSourceFile>
+typealias RangeOfSourceFile = Range<SourcePosition>
 
 /// A contiguous region of text in a particular source file.
-struct SourceLocation: Hashable {
+struct SourceRegion: Hashable {
   /// Creates an instance that covers `span` in the file named by `f`.
   init(fileName f: String, _ span: RangeOfSourceFile) {
     self.fileName = f
@@ -36,15 +36,15 @@ struct SourceLocation: Hashable {
   /// An empty location instance that can be used for synthesized AST nodes,
   /// etc.
   static var empty
-    = SourceLocation(fileName: "", .start ..< .start)
+    = SourceRegion(fileName: "", .start ..< .start)
 }
 
-extension PositionInSourceFile: CustomStringConvertible {
+extension SourcePosition: CustomStringConvertible {
   /// A textual representation of `self`.
   var description: String { "\(line):\(column)" }
 }
 
-extension SourceLocation: CustomStringConvertible, CustomDebugStringConvertible {
+extension SourceRegion: CustomStringConvertible, CustomDebugStringConvertible {
   /// A textual representation of `self` that is commonly recognized by IDEs.
   var description: String {
     "\(fileName):\(span.lowerBound):{\(span.lowerBound)-\(span.upperBound)})"
@@ -52,7 +52,7 @@ extension SourceLocation: CustomStringConvertible, CustomDebugStringConvertible 
 
   /// A textual representation of `self` suitable for debugging.
   var debugDescription: String {
-    "SourceLocation(fileName: \(String(reflecting: fileName)), \(span))"
+    "SourceRegion(fileName: \(String(reflecting: fileName)), \(span))"
   }
 }
 

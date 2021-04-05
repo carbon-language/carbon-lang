@@ -26,13 +26,13 @@ final class TokenizerTests: XCTestCase {
     {
       AST<Token>(
         Token(k, text),
-        SourceLocation(
+        SourceRegion(
           fileName: "",
           .init(line: startLine, column: startColumn)
             ..< .init(line: endLine, column: endColumn)))
     }
     
-    typealias L = SourceLocation
+    typealias L = SourceRegion
     let expectedTokens: [AST<Token>] = [
       token(.Identifier, "an", from: 1, 1, to: 1, 3),
       token(.AND, "and", from: 1, 4, to: 1, 7),
@@ -91,7 +91,7 @@ final class TokenizerTests: XCTestCase {
       omittingEmptySubsequences: false, whereSeparator: \.isNewline)
 
     /// Returns the text denoted by `l` in `program`.
-    func text(_ l: SourceLocation) -> String {
+    func text(_ l: SourceRegion) -> String {
       let (start, end) = (l.span.lowerBound, l.span.upperBound)
       let startIndex = sourceLines[start.line - 1].index(
         sourceLines[start.line - 1].startIndex, offsetBy: start.column - 1)

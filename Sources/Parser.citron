@@ -7,13 +7,13 @@
 
 %preface {
   fileprivate func ... <First, Last>(first: AST<First>, last: AST<Last>)
-    -> SourceLocation
+    -> SourceRegion
   {
     if first.location.span.isEmpty { return last.location }
     if last.location.span.isEmpty { return first.location }
     
     assert(first.location.fileName == last.location.fileName)
-    return SourceLocation(
+    return SourceRegion(
       fileName: first.location.fileName,
       first.location.span.lowerBound..<last.location.span.upperBound)
   }

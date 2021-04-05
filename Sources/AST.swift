@@ -5,7 +5,7 @@
 /// considered part of the AST's value.** In other words, two ASTs whose
 /// contents differ only by source locations will compare as equal.
 struct AST<Node: Hashable>: Hashable {
-  init(_ body: Node, _ location: SourceLocation) {
+  init(_ body: Node, _ location: SourceRegion) {
     self.body = body
     self.location = location
   }
@@ -21,7 +21,7 @@ struct AST<Node: Hashable>: Hashable {
   var body: Node
 
   /// This fragment's location in the source.
-  var location: SourceLocation
+  var location: SourceRegion
 }
 
 typealias Identifier = AST<String>
