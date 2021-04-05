@@ -467,7 +467,8 @@ strongest guidance from Rust and Swift, which have the most similar goals.
 For example, Rust has found that supporting defaults for interface methods is a
 valuable feature. It is useful for [evolution](#interop-and-evolution),
 implementation reuse, and for bridging the gap between the minimal functionality
-a type wants to implement and the rich API that users want to consume.
+a type wants to implement and the rich API that users want to consume
+([example](https://doc.rust-lang.org/std/iter/trait.Iterator.html)).
 
 ### Interfaces are nominal
 
