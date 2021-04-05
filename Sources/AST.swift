@@ -1,13 +1,13 @@
 /// A syntactically valid program fragment in non-textual form, annotated with
-/// its location in an input source file.
+/// its region in an input source file.
 ///
-/// - Note: the source location is *incidental* information that is **not
+/// - Note: the source region is *incidental* information that is **not
 /// considered part of the AST's value.** In other words, two ASTs whose
-/// contents differ only by source locations will compare as equal.
+/// contents differ only by source regions will compare as equal.
 struct AST<Node: Hashable>: Hashable {
-  init(_ body: Node, _ location: SourceRegion) {
+  init(_ body: Node, _ region: SourceRegion) {
     self.body = body
-    self.location = location
+    self.region = region
   }
 
   /// Returns `true` iff `l` and `r` are equivalent, i.e. have the same `body`
@@ -20,8 +20,8 @@ struct AST<Node: Hashable>: Hashable {
   /// The content of this fragment.
   var body: Node
 
-  /// This fragment's location in the source.
-  var location: SourceRegion
+  /// This fragment's region in the source.
+  var region: SourceRegion
 }
 
 typealias Identifier = AST<String>
