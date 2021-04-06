@@ -90,7 +90,7 @@ fileprivate let allPatterns = [(keywordPattern, nil)] + patterns
 
 /// A version of allPatterns with the patterns compiled to regexp matchers.
 fileprivate let matchers = allPatterns.map {
-  try! (matcher: NSRegularExpression(pattern: $0, options: []), nonterminal: $1)
+  try! (matcher: NSRegularExpression(pattern: $0, options: []), tokenID: $1)
 }
 
 extension String {
@@ -179,7 +179,7 @@ struct Tokens: Sequence {
         let matchedText = String(tokenText)
         if let matchedID = bestMatchUTF16Length == 0 ? .ILLEGAL_CHARACTER
              : bestMatchIndex == 0 ? keywords[matchedText]
-             : matchers[bestMatchIndex].nonterminal
+             : matchers[bestMatchIndex].tokenID
         {
           return Token(
             Token_(matchedID, matchedText),
