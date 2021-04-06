@@ -19,6 +19,12 @@
 // ‘make_YYEOF’, for the end of input.
 %define api.token.constructor
 
+// Make parse error messages more detailed
+%define parse.error verbose
+
+// Enable support for parser debugging
+%define parse.trace true
+
 //
 // Parameters to the parser and lexer
 //
@@ -30,6 +36,18 @@
 
 // "inout" parameter passed to both the parser and the lexer.
 %param {Carbon::ParseAndLexContext& context}
+
+// The following shift-reduce conflicts are expected; any others should be
+// treated as errors:
+// - The "dangling else" ambiguity: `if (b) if (c) x = 1; else x = 2;`
+//   could parse as either `if (b) { if (c) x = 1; else x = 2;}` or
+//   `if (b) { if (c) x = 1; } else x = 2;`. Following C++, we want Carbon
+//   to choose the first option. Resolving this by restructuring the grammar
+//   would make it harder to read, and resolving it by assigning precedence to
+//   `if` and `else` could mask other ambiguities, especially if we allow
+//   `if`/`else` in expressions, so we allow Bison to resolve it through its
+//   default behavior of preferring to shift rather than reduce.
+%expect 1
 
 // -----------------------------------------------------------------------------
 
@@ -145,13 +163,15 @@ void yy::parser::error(
   COLON ":"
 ;
 
-%nonassoc "{" "}"
-%nonassoc ":" "," DBLARROW
+%precedence "{" "}"
+%precedence ":" "," DBLARROW
 %left OR AND
-%nonassoc EQUAL_EQUAL NOT
+%nonassoc EQUAL_EQUAL
 %left "+" "-"
+%precedence NOT UNARY_MINUS
 %left "." ARROW
-%nonassoc "(" ")" "[" "]"
+%precedence "(" ")" "[" "]"
+
 %start input
 %locations
 %%
@@ -200,7 +220,7 @@ expression:
     { $$ = Carbon::MakeBinOp(yylineno, Carbon::Operator::Or, $1, $3); }
 | NOT expression
     { $$ = Carbon::MakeUnOp(yylineno, Carbon::Operator::Not, $2); }
-| "-" expression
+| "-" expression %prec UNARY_MINUS
     { $$ = Carbon::MakeUnOp(yylineno, Carbon::Operator::Neg, $2); }
 | expression tuple
     { $$ = Carbon::MakeCall(yylineno, $1, $2); }
