@@ -31,7 +31,7 @@ struct AST<Body: Hashable>: Hashable {
 /// An unqualified name.
 typealias Identifier = AST<String>
 
-/// The body of a declaration node.
+typealias Declaration = AST<Declaration_>
 indirect enum Declaration_: Hashable {
   case
     function(FunctionDefinition),
@@ -39,31 +39,29 @@ indirect enum Declaration_: Hashable {
     choice(name: Identifier, alternatives: [Alternative]),
     variable(name: Identifier, type: Expression, initializer: Expression)
 }
-/// A declaration
-typealias Declaration = AST<Declaration_>
 
+typealias FunctionDefinition = AST<FunctionDefinition_>
 struct FunctionDefinition_: Hashable {
   var name: Identifier
   var parameterPattern: TupleLiteral
   var returnType: Expression
   var body: Statement?
 }
-typealias FunctionDefinition = AST<FunctionDefinition_>
 
 typealias MemberDesignator = Identifier
 
+typealias Alternative = AST<Alternative_>
 struct Alternative_: Hashable {
   var name: Identifier;
   var payload: TupleLiteral
 }
-
-typealias Alternative = AST<Alternative_>
 
 struct StructDefinition: Hashable {
   var name: Identifier
   var members: [VariableDeclaration]
 }
 
+typealias Statement = AST<Statement_>
 indirect enum Statement_: Hashable {
   case
     expressionStatement(Expression),
@@ -78,24 +76,25 @@ indirect enum Statement_: Hashable {
     `break`,
     `continue`
 }
-typealias Statement = AST<Statement_>
 
+typealias MatchClauseList = AST<[MatchClause]>
+typealias MatchClause = AST<MatchClause_>
 struct MatchClause_: Hashable {
   /// A `nil` `pattern` means this is a default clause.
   var pattern: Expression?
   var action: Statement
 }
 
-typealias MatchClause = AST<MatchClause_>
-typealias MatchClauseList = AST<[MatchClause]>
 
+typealias TupleLiteral = AST<TupleLiteral_>
+typealias TupleLiteral_ = [TupleLiteralElement]
 struct TupleLiteralElement: Hashable {
   var name: Identifier?
   var value: Expression
 }
-typealias TupleLiteral_ = [TupleLiteralElement]
-typealias TupleLiteral = AST<TupleLiteral_>
 
+
+typealias Expression = AST<Expression_>
 indirect enum Expression_: Hashable {
   case
     variable(Identifier),
@@ -114,22 +113,21 @@ indirect enum Expression_: Hashable {
     autoType,
     functionType(parameterTypes: TupleLiteral, returnType: Expression)
 };
-typealias Expression = AST<Expression_>
 
+typealias Field = AST<Field_>
 struct Field_: Hashable {
   var first: Identifier?
   var second: Expression
 }
 
-typealias Field = AST<Field_>
+typealias FieldList = AST<FieldList_>
 struct FieldList_: Hashable {
   var fields: [Field]
   var hasExplicitComma: Bool
 }
-typealias FieldList = AST<FieldList_>
 
+typealias VariableDeclaration = AST<VariableDeclaration_>
 struct VariableDeclaration_: Hashable {
   var name: Identifier
   var type: Expression
 }
-typealias VariableDeclaration = AST<VariableDeclaration_>
