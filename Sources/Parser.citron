@@ -18,13 +18,13 @@
   {
     if first.region.span.isEmpty { return last.region }
     if last.region.span.isEmpty { return first.region }
-    
+
     assert(first.region.fileName == last.region.fileName)
     return SourceRegion(
       fileName: first.region.fileName,
       first.region.span.lowerBound..<last.region.span.upperBound)
   }
-  
+
   fileprivate extension TupleLiteral_ {
     /// Creates an instance from a (perhaps-too-eagerly parsed) field list.
     init(_ source: FieldList) {
@@ -33,7 +33,7 @@
       }
     }
   }
-}                         
+}
 
 %token_type Token
 
@@ -79,13 +79,13 @@ pattern ::= expression(e).     {e}
 // identifier is just Identifier without the TokenID
 identifier ::= Identifier(i).
   { AST(i.body.text, i.region) }
-expression ::= identifier(i).  
+expression ::= identifier(i).
   { AST(.variable(i), i.region) }
 expression ::= expression(t) member_designator(m).
   { AST(.getField(target: t, fieldName: m), t...m) }
 expression ::= expression(t)
   LEFT_SQUARE_BRACKET expression(i) RIGHT_SQUARE_BRACKET(b).
-  { AST(.index(target: t, offset: i), t...b) } 
+  { AST(.index(target: t, offset: i), t...b) }
 expression ::= expression(t) COLON identifier(i).
   { AST(.patternVariable(name: i, type: t), t...i) }
 expression ::= Integer_literal(i).
@@ -151,7 +151,7 @@ field_list ::= field(f) COMMA(c) field_list(l).
     AST(
       FieldList_(
           fields: [f] + l.body.fields,
-          hasExplicitComma: l.body.hasExplicitComma), 
+          hasExplicitComma: l.body.hasExplicitComma),
      l.body.fields.isEmpty ? f...c : f...l)
   }
 match_clause ::= CASE(c) pattern(p) DBLARROW statement(s).
@@ -182,12 +182,12 @@ statement ::= RETURN(r) expression(e) SEMICOLON(s).
   { AST(.return(e), r...s) }
 statement ::= LEFT_CURLY_BRACE(l) statement_list(s) RIGHT_CURLY_BRACE(r).
   { AST(.block(s), l...r) }
-statement ::= MATCH(m) LEFT_PARENTHESIS expression(e) RIGHT_PARENTHESIS 
+statement ::= MATCH(m) LEFT_PARENTHESIS expression(e) RIGHT_PARENTHESIS
   LEFT_CURLY_BRACE match_clause_list(c) RIGHT_CURLY_BRACE(r).
   { AST(.match(subject: e, clauses: c.body), m...r) }
 optional_else ::= /* Empty */.
   { nil }
-optional_else ::= ELSE(e) statement(s). 
+optional_else ::= ELSE(e) statement(s).
   { AST(s.body, e...s) }
 statement_list ::= /* Empty */.
   { [] }
@@ -249,7 +249,7 @@ declaration ::= function_declaration(f).
 declaration ::=
   STRUCT(s) identifier(n) LEFT_CURLY_BRACE member_list(m) RIGHT_CURLY_BRACE(r).
   { AST(.struct(StructDefinition(name: n, members: m)), s...r) }
-declaration ::= CHOICE(c) identifier(n) 
+declaration ::= CHOICE(c) identifier(n)
   LEFT_CURLY_BRACE alternative_list(l) RIGHT_CURLY_BRACE(r).
   { AST(.choice(name: n, alternatives: l), c...r) }
 declaration ::= VAR(v) variable_declaration(d) EQUAL expression(i) SEMICOLON(s).

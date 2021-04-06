@@ -17,7 +17,7 @@ struct AST<Body: Hashable>: Hashable {
   /// Returns `true` iff `l` and `r` are equivalent, i.e. have the same `body`
   /// value.
   static func == (l: Self, r: Self) -> Bool { l.body == r.body }
-  
+
   /// Accumulates the hash value of `self` into `accumulator`.
   func hash(into accumulator: inout Hasher) { body.hash(into: &accumulator) }
 
@@ -130,6 +130,6 @@ typealias FieldList = AST<FieldList_>
 
 struct VariableDeclaration_: Hashable {
   var name: Identifier
-  var type: Expression  
+  var type: Expression
 }
 typealias VariableDeclaration = AST<VariableDeclaration_>

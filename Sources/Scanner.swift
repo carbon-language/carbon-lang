@@ -59,7 +59,7 @@ fileprivate let keywords: [String: TokenID] = [
 fileprivate let patterns: [String: TokenID?] = [
   #"[A-Za-z_][A-Za-z0-9_]*"#: .Identifier,
   #"[0-9]+"#: .Integer_literal,
-  
+
   // "//" followed by any number of non-newlines (See
   // https://unicode-org.github.io/icu/userguide/strings/regexp.html
   //   #regular-expression-metacharacters
@@ -153,7 +153,7 @@ struct Tokens: Sequence {
 
         let tokenStart = textPosition
         let remainingText = sourceText[tokenStart...]
-        
+
         // Advance past the recognized text, or the first character if nothing
         // matched.
         textPosition = bestMatchUTF16Length == 0
@@ -164,7 +164,7 @@ struct Tokens: Sequence {
         utf16Offset += tokenText.utf16.count
 
         let tokenRegionStart = sourcePosition
-        
+
         // Adjust human-readable source position
         let tokenLines = tokenText.split(
           omittingEmptySubsequences: false, whereSeparator: \.isNewline)
@@ -187,14 +187,14 @@ struct Tokens: Sequence {
       }
       return nil
     }
-    
+
     /// The complete text being matched
     private let sourceText: String
     /// The name of the file embedded in each token's source region.
     private let sourceFileName: String
     /// The number of UTF-16 code units in `sourceText`.
     private let sourceUTF16Length: Int
-    
+
     /// Where scanning for the next token will resume (human-readable form).
     private var sourcePosition = SourcePosition.start
     /// Where scanning for the next token will resume (string form).
@@ -202,7 +202,7 @@ struct Tokens: Sequence {
     /// Where scanning for the next token will resume (NSRegularExpression form).
     private var utf16Offset: Int = 0
   }
-  
+
   /// The complete text from which `self`'s tokens will be derived.
   private let sourceText: String
     /// The name of the file embedded in each token's source region.
