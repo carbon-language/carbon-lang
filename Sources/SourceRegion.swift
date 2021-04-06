@@ -49,7 +49,8 @@ extension SourcePosition: CustomStringConvertible {
 }
 
 extension SourceRegion: CustomStringConvertible, CustomDebugStringConvertible {
-  /// A textual representation of `self` that is commonly recognized by IDEs.
+  /// A textual representation of `self` that is commonly recognized by IDEs
+  /// when it shows up at the beginning of a diagnostic.
   var description: String {
     "\(fileName):\(span.lowerBound):{\(span.lowerBound)-\(span.upperBound)})"
   }
