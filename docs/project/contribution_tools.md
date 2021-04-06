@@ -261,7 +261,7 @@ pip install gql
 ./github_tools/pr_comments.py <PR#>
 ```
 
-It may also be run using `bazel`:
+It may also be run using `bazel`, without installing `gql`:
 
 ```bash
 bazel run //github_tools:pr_comments -- <PR#>
