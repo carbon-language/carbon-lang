@@ -21,7 +21,6 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
         -   [Upgrade path from C++ abstract interfaces](#upgrade-path-from-c-abstract-interfaces)
         -   [Dependency injection](#dependency-injection)
         -   [Generics instead of open overloading](#generics-instead-of-open-overloading)
-        -   [Use cases that are out of scope](#use-cases-that-are-out-of-scope)
     -   [Performance](#performance)
     -   [Better compiler experience](#better-compiler-experience)
     -   [Encapsulation](#encapsulation)
@@ -34,9 +33,9 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Interfaces are nominal](#interfaces-are-nominal)
     -   [Interop and evolution](#interop-and-evolution)
     -   [Bridge for C++ extension points](#bridge-for-c-extension-points)
--   [Non-goals, caveats, limitations, and out-of-scope issues](#non-goals-caveats-limitations-and-out-of-scope-issues)
+-   [What we are not doing](#what-we-are-not-doing)
     -   [Not the full flexibility of templates](#not-the-full-flexibility-of-templates)
-    -   [Features may be applicable outside generics](#features-may-be-applicable-outside-generics)
+    -   [Template use cases that are out of scope](#template-use-cases-that-are-out-of-scope)
     -   [Generics will be checked when defined](#generics-will-be-checked-when-defined)
     -   [Specialization strategy](#specialization-strategy)
 
@@ -229,19 +228,6 @@ A specific example is the absolute value function `Abs`. We would like to write
 `Complex64` or `Quaternion`, the return type will be different. The generic
 functions that call `Abs` will need a way to specify whether they only operate
 on `T` such that `Abs` has signature `T -> T`.
-
-#### Use cases that are out of scope
-
-C++ templates are also used for some things that are out of scope for Carbon
-generics such as
-[template metaprogramming](https://en.wikipedia.org/wiki/Template_metaprogramming).
-We expect to address those use cases with metaprogramming or templates in
-Carbon. We will also not require Carbon generics to support
-[expression templates](https://en.wikipedia.org/wiki/Expression_templates) or
-[variadics](https://en.wikipedia.org/wiki/Variadic_function), those are both
-non-goals. It would be fine for our generics system to support these features,
-but they won't drive any accommodation in the generics design, at least until we
-have some resolution about templates in Carbon.
 
 ### Performance
 
@@ -549,28 +535,33 @@ Similarly, we will want some way to implement Carbon interfaces for C++ types.
 For example, we might have a template implementation of an `Addable` interface
 for any C++ type that implements `operator+`.
 
-## Non-goals, caveats, limitations, and out-of-scope issues
+## What we are not doing
 
 What are we **not** doing with generics, particularly things that some other
 languages do?
 
 ### Not the full flexibility of templates
 
-We don't need to provide full flexibility of templates from generics:
+We don't need to provide full flexibility of C++ templates from generics:
 
--   [Templates](#relationship-to-templates) can still cover those exceptional
-    cases that don't fit inside generics.
+-   [Carbon templates](#relationship-to-templates) can still cover those
+    exceptional cases that don't fit inside generics.
 -   If you want compile-time duck typing, that is available by way of templates.
 -   There is no need to allow a specialization of some generic interface for
     some particular type to actually expose a _different_ interface, with
     different methods or different types in method signatures.
+-   [Template metaprogramming](https://en.wikipedia.org/wiki/Template_metaprogramming)
+    will not be supported by Carbon generics. We expect to address those use
+    cases with metaprogramming or templates in Carbon.
 
-### Features may be applicable outside generics
+### Template use cases that are out of scope
 
-Some features are presented as being part of generics because that is where we
-expect them to be most useful or most used. These features may be allowed and
-have application outside of generics. For example, we expect to allow type
-constraints on template parameters in addition to generic parameters.
+We will also not require Carbon generics to support
+[expression templates](https://en.wikipedia.org/wiki/Expression_templates) or
+[variadics](https://en.wikipedia.org/wiki/Variadic_function), those are both out
+of scope. It would be fine for our generics system to support these features,
+but they won't drive any accommodation in the generics design, at least until we
+have some resolution about templates in Carbon.
 
 ### Generics will be checked when defined
 
