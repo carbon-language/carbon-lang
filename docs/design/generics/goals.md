@@ -370,10 +370,12 @@ acceptable even when running a development or debug build.
 ### Upgrade path from templates
 
 We want there to be a natural, incremental upgrade path from templated code to
-generic code. This gives us these additional principles:
+generic code. This gives us these sub-goals:
 
 -   Users should be able to convert a single template parameter to be generic at
-    a time.
+    a time. A hybrid function with both template and generic parameters has all
+    the limitations of a template function: it can't be definition checked, it
+    can't use the dynamic strategy, and so on.
 -   Converting from a template parameter to a generic parameter should be safe.
     It should either work or fail to compile, never silently change semantics.
 -   We should minimize the effort to convert functions and types from templated
