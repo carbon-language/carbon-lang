@@ -466,13 +466,21 @@ interfaces are explicitly mentioned in the definition of `T`.
 Many languages have implemented generics systems, and we should learn from those
 experiences. We should copy what works and makes sense in the context of Carbon,
 and change decisions that led to undesirable compromises. We are taking the
-strongest guidance from Rust and Swift, which have the most similar goals.
+strongest guidance from Rust and Swift, which have the most similar goals. They
+both use nominal interfaces, were designed with generics from the start, and
+produce native code. Contrast with Go which uses structural interfaces, or Java
+which targets a virtual machine that predated its generics feature.
 
 For example, Rust has found that supporting defaults for interface methods is a
 valuable feature. It is useful for [evolution](#interop-and-evolution),
 implementation reuse, and for bridging the gap between the minimal functionality
 a type wants to implement and the rich API that users want to consume
 ([example](https://doc.rust-lang.org/std/iter/trait.Iterator.html)).
+
+We can simplify things that Rust keeps purely to preserve compatibility, like
+the concept of `fundamental`, and explicit control over which methods may be
+specialized. These are complicated and impose coherence restrictions, as
+[discussed here](http://aturon.github.io/tech/2017/02/06/specialization-and-coherence/).
 
 ### Interfaces are nominal
 
