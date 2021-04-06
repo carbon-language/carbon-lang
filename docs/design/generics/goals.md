@@ -49,20 +49,22 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 C++ supports
 [parametric polymorphism](https://en.wikipedia.org/wiki/Parametric_polymorphism)
 and [generic programming](https://en.wikipedia.org/wiki/Generic_programming)
-through templates, which use
+through templates. Templates use
 [compile-time duck typing](https://en.wikipedia.org/wiki/Duck_typing#Templates_or_generic_types)
-(which might alternatively be described as usage-based
-[structural typing](https://en.wikipedia.org/wiki/Structural_type_system)) to
-determine which arguments are valid. Carbon will support (possibly in addition
-to a template system) _generics_, which are still a form of parametric
-polymorphism for generic programming, but supports definition checking. This
-means that the body of a function can be type checked when it is defined without
-any information from the call site, such as the actual argument values of
-generic parameters. This is accomplished by using
+to decide whether arguments are valid. This is a form of
+[structural typing](https://en.wikipedia.org/wiki/Structural_type_system) that
+is usage based.
+
+Carbon will support _generics_ in order to allow definition checking in generic
+programming. Definition checking is accomplished by using
 [bounded parametric polymorphism](https://en.wikipedia.org/wiki/Parametric_polymorphism#Bounded_parametric_polymorphism)
 instead of compile-time duck typing. This means the legal arguments and the
 legal uses of a parameter are both goverened by explicit bounds on the parameter
 in a generic function's signature.
+
+This would be _in addition_ to
+[template support in Carbon](#relationship-to-templates), if we decide to
+support templates in Carbon as well as C++ templates.
 
 ### Generic parameters
 
