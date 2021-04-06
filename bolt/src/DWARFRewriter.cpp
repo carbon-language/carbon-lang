@@ -149,12 +149,16 @@ void DWARFRewriter::updateUnitDebugInfo(size_t CUIndex, DWARFUnit *Unit) {
     DWARFDie DIE(Unit, &Die);
     switch (DIE.getTag()) {
     case dwarf::DW_TAG_compile_unit: {
-      const DWARFAddressRangesVector ModuleRanges =
-          cantFail(DIE.getAddressRanges());
+      auto ModuleRangesOrError = DIE.getAddressRanges();
+      if (!ModuleRangesOrError) {
+        consumeError(ModuleRangesOrError.takeError());
+        break;
+      }
+      DWARFAddressRangesVector ModuleRanges = *ModuleRangesOrError;
       DebugAddressRangesVector OutputRanges =
           BC.translateModuleAddressRanges(ModuleRanges);
       const uint64_t RangesSectionOffset =
-        RangesSectionWriter->addRanges(OutputRanges);
+          RangesSectionWriter->addRanges(OutputRanges);
       ARangesSectionWriter->addCURanges(Unit->getOffset(),
                                         std::move(OutputRanges));
       updateDWARFObjectAddressRanges(DIE, RangesSectionOffset);
@@ -166,7 +170,12 @@ void DWARFRewriter::updateUnitDebugInfo(size_t CUIndex, DWARFUnit *Unit) {
       uint64_t Address;
       uint64_t SectionIndex, HighPC;
       if (!DIE.getLowAndHighPC(Address, HighPC, SectionIndex)) {
-        auto Ranges = cantFail(DIE.getAddressRanges());
+        auto RangesOrError = DIE.getAddressRanges();
+        if (!RangesOrError) {
+          consumeError(RangesOrError.takeError());
+          break;
+        }
+        DWARFAddressRangesVector Ranges = *RangesOrError;
         // Not a function definition.
         if (Ranges.empty())
           break;
@@ -238,6 +247,8 @@ void DWARFRewriter::updateUnitDebugInfo(size_t CUIndex, DWARFUnit *Unit) {
         );
         RangesSectionOffset = RangesSectionWriter->addRanges(
             std::move(OutputRanges), CachedRanges);
+      } else if (!RangesOrError) {
+        consumeError(RangesOrError.takeError());
       }
       updateDWARFObjectAddressRanges(DIE, RangesSectionOffset);
       break;

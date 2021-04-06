@@ -1472,7 +1472,12 @@ void BinaryContext::preprocessDebugInfo() {
   std::vector<CURange> AllRanges;
   AllRanges.reserve(DwCtx->getNumCompileUnits());
   for (const auto &CU : DwCtx->compile_units()) {
-    for (auto &Range : cantFail(CU->getUnitDIE().getAddressRanges())) {
+    auto RangesOrError = CU->getUnitDIE().getAddressRanges();
+    if (!RangesOrError) {
+      consumeError(RangesOrError.takeError());
+      continue;
+    }
+    for (auto &Range : *RangesOrError) {
       // Parts of the debug info could be invalidated due to corresponding code
       // being removed from the binary by the linker. Hence we check if the
       // address is a valid one.
