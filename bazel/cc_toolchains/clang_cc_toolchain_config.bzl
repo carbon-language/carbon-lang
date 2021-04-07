@@ -361,14 +361,15 @@ def _impl(ctx):
             ),
         ],
     )
-    fuzzer = feature(
-        name = "fuzzer",
+
+    asan = feature(
+        name = "asan",
         flag_sets = [
             flag_set(
                 actions = all_compile_actions + all_link_actions,
                 flag_groups = [
                     flag_group(
-                        flags = ["-fsanitize=fuzzer,address"],
+                        flags = ["-fsanitize=address,undefined"],
                     ),
                 ],
             ),
@@ -381,6 +382,21 @@ def _impl(ctx):
                         ],
                     ),
                 ]),
+            ),
+        ],
+    )
+
+    fuzzer = feature(
+        name = "fuzzer",
+        implies = ["asan"],
+        flag_sets = [
+            flag_set(
+                actions = all_compile_actions + all_link_actions,
+                flag_groups = [
+                    flag_group(
+                        flags = ["-fsanitize=fuzzer"],
+                    ),
+                ],
             ),
         ],
     )
@@ -626,6 +642,7 @@ def _impl(ctx):
     features += [
         default_flags_feature,
         sysroot_feature,
+        asan,
         fuzzer,
         layering_check,
         module_maps,
