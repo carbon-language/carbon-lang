@@ -17,8 +17,8 @@ load("@rules_python//python:pip.bzl", "pip_install")
 
 # Create a central repo that knows about the pip dependencies.
 pip_install(
-   name = "py_deps",
-   requirements = "//github_tools:requirements.txt",
+    name = "py_deps",
+    requirements = "//github_tools:requirements.txt",
 )
 
 # Bootstrap a Clang and LLVM toolchain.
