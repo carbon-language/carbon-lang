@@ -99,10 +99,21 @@ def _impl(ctx):
         for name in [ACTION_NAMES.strip]
     ]
 
-    default_compile_flags_feature = feature(
-        name = "default_compile_flags",
+    default_flags_feature = feature(
+        name = "default_flags",
         enabled = True,
         flag_sets = [
+            flag_set(
+                actions = all_compile_actions + all_link_actions,
+                flag_groups = ([
+                    flag_group(
+                        flags = [
+                            "-no-canonical-prefixes",
+                            "-fcolor-diagnostics",
+                        ],
+                    ),
+                ]),
+            ),
             flag_set(
                 actions = all_compile_actions,
                 flag_groups = ([
@@ -117,64 +128,71 @@ def _impl(ctx):
                             # We use partial sets of designated initializers in
                             # test code.
                             "-Wno-missing-field-initializers",
-                            "-fcolor-diagnostics",
+                            # Compile actions shouldn't link anything.
+                            "-c",
+                        ],
+                    ),
+                    flag_group(
+                        expand_if_available = "output_assembly_file",
+                        flags = ["-S"],
+                    ),
+                    flag_group(
+                        expand_if_available = "output_preprocess_file",
+                        flags = ["-E"],
+                    ),
+                    flag_group(
+                        flags = ["-MD", "-MF", "%{dependency_file}"],
+                        expand_if_available = "dependency_file",
+                    ),
+                    flag_group(
+                        flags = ["-frandom-seed=%{output_file}"],
+                        expand_if_available = "output_file",
+                    ),
+                ]),
+            ),
+            flag_set(
+                actions = all_cpp_compile_actions + all_link_actions,
+                flag_groups = ([
+                    flag_group(
+                        flags = [
+                            "-std=c++17",
+                            "-stdlib=libc++",
                         ],
                     ),
                 ]),
             ),
             flag_set(
-                actions = [
-                    ACTION_NAMES.assemble,
-                    ACTION_NAMES.preprocess_assemble,
-                    ACTION_NAMES.c_compile,
-                    ACTION_NAMES.cpp_compile,
-                    ACTION_NAMES.cpp_module_compile,
-                    ACTION_NAMES.cpp_header_parsing,
-                ],
-                flag_groups = [
+                actions = codegen_compile_actions,
+                flag_groups = ([
                     flag_group(
-                        flags = ["-MD", "-MF", "%{dependency_file}"],
-                        expand_if_available = "dependency_file",
+                        flags = [
+                            "-g0",
+                            "-O3",
+                            "-DNDEBUG",
+                            "-ffunction-sections",
+                            "-fdata-sections",
+                            # Even when optimizing, preserve frame pointers for
+                            # profiling.
+                            "-fno-omit-frame-pointer",
+                            "-mno-omit-leaf-frame-pointer",
+                        ],
                     ),
-                ],
+                ]),
+                with_features = [with_feature_set(features = ["opt"])],
             ),
             flag_set(
-                actions = [
-                    ACTION_NAMES.c_compile,
-                    ACTION_NAMES.cpp_compile,
-                    ACTION_NAMES.cpp_module_codegen,
-                    ACTION_NAMES.cpp_module_compile,
-                ],
-                flag_groups = [
+                actions = codegen_compile_actions,
+                flag_groups = ([
                     flag_group(
-                        flags = ["-frandom-seed=%{output_file}"],
-                        expand_if_available = "output_file",
+                        flags = ["-g"],
                     ),
-                ],
+                ]),
+                with_features = [with_feature_set(features = ["dbg"])],
             ),
             flag_set(
-                actions = [
-                    ACTION_NAMES.assemble,
-                    ACTION_NAMES.preprocess_assemble,
-                    ACTION_NAMES.linkstamp_compile,
-                    ACTION_NAMES.c_compile,
-                    ACTION_NAMES.cpp_compile,
-                    ACTION_NAMES.cpp_module_codegen,
-                    ACTION_NAMES.cpp_module_compile,
-                ],
+                actions = codegen_compile_actions,
                 flag_groups = [
                     flag_group(flags = ["-fPIC"], expand_if_available = "pic"),
-                ],
-            ),
-            flag_set(
-                actions = [
-                    ACTION_NAMES.assemble,
-                    ACTION_NAMES.preprocess_assemble,
-                    ACTION_NAMES.c_compile,
-                    ACTION_NAMES.cpp_compile,
-                    ACTION_NAMES.cpp_module_codegen,
-                ],
-                flag_groups = [
                     flag_group(
                         flags = ["-gsplit-dwarf", "-g"],
                         expand_if_available = "per_object_debug_info_file",
@@ -182,48 +200,27 @@ def _impl(ctx):
                 ],
             ),
             flag_set(
-                actions = [
-                    ACTION_NAMES.preprocess_assemble,
-                    ACTION_NAMES.linkstamp_compile,
-                    ACTION_NAMES.c_compile,
-                    ACTION_NAMES.cpp_compile,
-                    ACTION_NAMES.cpp_header_parsing,
-                    ACTION_NAMES.cpp_module_compile,
-                ],
+                actions = preprocessor_compile_actions,
                 flag_groups = [
+                    flag_group(
+                        flags = [
+                            # Disable a warning and override builtin macros to
+                            # ensure a hermetic build.
+                            "-Wno-builtin-macro-redefined",
+                            "-D__DATE__=\"redacted\"",
+                            "-D__TIMESTAMP__=\"redacted\"",
+                            "-D__TIME__=\"redacted\"",
+                        ],
+                    ),
                     flag_group(
                         flags = ["-D%{preprocessor_defines}"],
                         iterate_over = "preprocessor_defines",
                     ),
-                ],
-            ),
-            flag_set(
-                actions = [
-                    ACTION_NAMES.preprocess_assemble,
-                    ACTION_NAMES.linkstamp_compile,
-                    ACTION_NAMES.c_compile,
-                    ACTION_NAMES.cpp_compile,
-                    ACTION_NAMES.cpp_header_parsing,
-                    ACTION_NAMES.cpp_module_compile,
-                ],
-                flag_groups = [
                     flag_group(
                         flags = ["-include", "%{includes}"],
                         iterate_over = "includes",
                         expand_if_available = "includes",
                     ),
-                ],
-            ),
-            flag_set(
-                actions = [
-                    ACTION_NAMES.preprocess_assemble,
-                    ACTION_NAMES.linkstamp_compile,
-                    ACTION_NAMES.c_compile,
-                    ACTION_NAMES.cpp_compile,
-                    ACTION_NAMES.cpp_header_parsing,
-                    ACTION_NAMES.cpp_module_compile,
-                ],
-                flag_groups = [
                     flag_group(
                         flags = ["-iquote", "%{quote_include_paths}"],
                         iterate_over = "quote_include_paths",
@@ -239,157 +236,11 @@ def _impl(ctx):
                 ],
             ),
             flag_set(
-                actions = all_compile_actions,
-                flag_groups = ([
-                    flag_group(
-                        flags = ["-g"],
-                    ),
-                ]),
-                with_features = [with_feature_set(features = ["dbg"])],
-            ),
-            flag_set(
-                actions = all_compile_actions,
-                flag_groups = ([
-                    flag_group(
-                        flags = [
-                            "-g0",
-                            "-O3",
-                            "-DNDEBUG",
-                            "-ffunction-sections",
-                            "-fdata-sections",
-                            # Even when optimizing, preserve frame pointers for profiling.
-                            "-fno-omit-frame-pointer",
-                            "-mno-omit-leaf-frame-pointer",
-                        ],
-                    ),
-                ]),
-                with_features = [with_feature_set(features = ["opt"])],
-            ),
-            flag_set(
-                actions = all_cpp_compile_actions,
-                flag_groups = ([
-                    flag_group(
-                        flags = [
-                            "-std=c++17",
-                            "-stdlib=libc++",
-                        ],
-                    ),
-                ]),
-            ),
-            flag_set(
-                actions = all_compile_actions,
-                flag_groups = [
-                    flag_group(
-                        flags = ["%{user_compile_flags}"],
-                        iterate_over = "user_compile_flags",
-                        expand_if_available = "user_compile_flags",
-                    ),
-                ],
-            ),
-            flag_set(
-                actions = all_compile_actions,
-                flag_groups = ([
-                    flag_group(
-                        flags = [
-                            "-no-canonical-prefixes",
-                            "-Wno-builtin-macro-redefined",
-                            "-D__DATE__=\"redacted\"",
-                            "-D__TIMESTAMP__=\"redacted\"",
-                            "-D__TIME__=\"redacted\"",
-                        ],
-                    ),
-                ]),
-            ),
-            flag_set(
-                actions = all_compile_actions,
-                flag_groups = [
-                    flag_group(
-                        expand_if_available = "source_file",
-                        flags = ["-c", "%{source_file}"],
-                    ),
-                    flag_group(
-                        expand_if_available = "output_assembly_file",
-                        flags = ["-S"],
-                    ),
-                    flag_group(
-                        expand_if_available = "output_preprocess_file",
-                        flags = ["-E"],
-                    ),
-                    flag_group(
-                        expand_if_available = "output_file",
-                        flags = ["-o", "%{output_file}"],
-                    ),
-                ],
-            ),
-        ],
-    )
-
-    linux_link_flags_feature = feature(
-        name = "linux_link_flags",
-        enabled = True,
-        flag_sets = [
-            flag_set(
-                actions = all_link_actions,
-                flag_groups = ([
-                    flag_group(
-                        flags = [
-                            "-fuse-ld=lld",
-                            "-Wl,-no-as-needed",
-                            # Force the C++ standard library to be statically
-                            # linked. This works even with libc++ despite the
-                            # name, however we have to manually link the ABI
-                            # library and libunwind.
-                            "-static-libstdc++",
-                            # Link with libc++.
-                            "-stdlib=libc++",
-                            # Force static linking with libc++abi as well.
-                            "-l:libc++abi.a",
-                            # Link with Clang's runtime library. This is always
-                            # linked statically.
-                            #"-rtlib=compiler-rt",
-                            # Explicitly add LLVM libs to the search path to
-                            # preempt the detected GCC installation's library
-                            # paths. Those might have a system installed libc++
-                            # and we want to find the one next to our Clang.
-                            "-L" + llvm_bindir + "/../lib",
-                            # Link with pthread.
-                            "-lpthread",
-                        ],
-                    ),
-                ]),
-            ),
-        ],
-    )
-
-    default_link_flags_feature = feature(
-        name = "default_link_flags",
-        enabled = True,
-        flag_sets = [
-            flag_set(
                 actions = [
                     ACTION_NAMES.cpp_link_dynamic_library,
                     ACTION_NAMES.cpp_link_nodeps_dynamic_library,
                 ],
                 flag_groups = [flag_group(flags = ["-shared"])],
-            ),
-            flag_set(
-                actions = all_link_actions,
-                flag_groups = [
-                    flag_group(
-                        flags = ["%{linkstamp_paths}"],
-                        iterate_over = "linkstamp_paths",
-                        expand_if_available = "linkstamp_paths",
-                    ),
-                ],
-            ),
-            flag_set(
-                actions = all_link_actions,
-                flag_groups = [
-                    flag_group(
-                        flags = ["-o", "%{output_execpath}"],
-                        expand_if_available = "output_execpath",
-                    ),
-                ],
             ),
             flag_set(
                 actions = [
@@ -406,14 +257,18 @@ def _impl(ctx):
                 actions = all_link_actions,
                 flag_groups = [
                     flag_group(
+                        flags = ["-Wl,--gdb-index"],
+                        expand_if_available = "is_using_fission",
+                    ),
+                    flag_group(
+                        flags = ["-Wl,-S"],
+                        expand_if_available = "strip_debug_symbols",
+                    ),
+                    flag_group(
                         flags = ["-L%{library_search_directories}"],
                         iterate_over = "library_search_directories",
                         expand_if_available = "library_search_directories",
                     ),
-                ],
-            ),
-            flag_set(
-                flag_groups = [
                     flag_group(
                         iterate_over = "runtime_library_search_directories",
                         flags = [
@@ -421,123 +276,6 @@ def _impl(ctx):
                         ],
                         expand_if_available =
                             "runtime_library_search_directories",
-                    ),
-                ],
-                actions = all_link_actions,
-            ),
-            flag_set(
-                actions = all_link_actions,
-                flag_groups = [
-                    flag_group(
-                        flags = ["-Wl,--gdb-index"],
-                        expand_if_available = "is_using_fission",
-                    ),
-                ],
-            ),
-            flag_set(
-                actions = all_link_actions,
-                flag_groups = [
-                    flag_group(
-                        flags = ["-Wl,-S"],
-                        expand_if_available = "strip_debug_symbols",
-                    ),
-                ],
-            ),
-            flag_set(
-                actions = all_link_actions,
-                flag_groups = [
-                    flag_group(
-                        iterate_over = "libraries_to_link",
-                        flag_groups = [
-                            flag_group(
-                                flags = ["-Wl,--start-lib"],
-                                expand_if_equal = variable_with_value(
-                                    name = "libraries_to_link.type",
-                                    value = "object_file_group",
-                                ),
-                            ),
-                            flag_group(
-                                flags = ["-Wl,-whole-archive"],
-                                expand_if_true =
-                                    "libraries_to_link.is_whole_archive",
-                            ),
-                            flag_group(
-                                flags = ["%{libraries_to_link.object_files}"],
-                                iterate_over = "libraries_to_link.object_files",
-                                expand_if_equal = variable_with_value(
-                                    name = "libraries_to_link.type",
-                                    value = "object_file_group",
-                                ),
-                            ),
-                            flag_group(
-                                flags = ["%{libraries_to_link.name}"],
-                                expand_if_equal = variable_with_value(
-                                    name = "libraries_to_link.type",
-                                    value = "object_file",
-                                ),
-                            ),
-                            flag_group(
-                                flags = ["%{libraries_to_link.name}"],
-                                expand_if_equal = variable_with_value(
-                                    name = "libraries_to_link.type",
-                                    value = "interface_library",
-                                ),
-                            ),
-                            flag_group(
-                                flags = ["%{libraries_to_link.name}"],
-                                expand_if_equal = variable_with_value(
-                                    name = "libraries_to_link.type",
-                                    value = "static_library",
-                                ),
-                            ),
-                            flag_group(
-                                flags = ["-l%{libraries_to_link.name}"],
-                                expand_if_equal = variable_with_value(
-                                    name = "libraries_to_link.type",
-                                    value = "dynamic_library",
-                                ),
-                            ),
-                            flag_group(
-                                flags = ["-l:%{libraries_to_link.name}"],
-                                expand_if_equal = variable_with_value(
-                                    name = "libraries_to_link.type",
-                                    value = "versioned_dynamic_library",
-                                ),
-                            ),
-                            flag_group(
-                                flags = ["-Wl,-no-whole-archive"],
-                                expand_if_true = "libraries_to_link.is_whole_archive",
-                            ),
-                            flag_group(
-                                flags = ["-Wl,--end-lib"],
-                                expand_if_equal = variable_with_value(
-                                    name = "libraries_to_link.type",
-                                    value = "object_file_group",
-                                ),
-                            ),
-                        ],
-                        expand_if_available = "libraries_to_link",
-                    ),
-                ],
-            ),
-            flag_set(
-                actions = all_link_actions,
-                flag_groups = [
-                    flag_group(
-                        flags = ["%{user_link_flags}"],
-                        iterate_over = "user_link_flags",
-                        expand_if_available = "user_link_flags",
-                    ),
-                ],
-            ),
-            flag_set(
-                actions = [
-                    ACTION_NAMES.cpp_link_static_library,
-                ] + all_link_actions,
-                flag_groups = [
-                    flag_group(
-                        expand_if_available = "linker_param_file",
-                        flags = ["@%{linker_param_file}"],
                     ),
                 ],
             ),
@@ -554,49 +292,6 @@ def _impl(ctx):
                     flag_group(
                         flags = ["--sysroot=%{sysroot}"],
                         expand_if_available = "sysroot",
-                    ),
-                ],
-            ),
-        ],
-    )
-
-    default_archiver_flags_feature = feature(
-        name = "default_archiver_flags",
-        enabled = True,
-        flag_sets = [
-            flag_set(
-                actions = [ACTION_NAMES.cpp_link_static_library],
-                flag_groups = [
-                    flag_group(flags = ["rcsD"]),
-                    flag_group(
-                        flags = ["%{output_execpath}"],
-                        expand_if_available = "output_execpath",
-                    ),
-                ],
-            ),
-            flag_set(
-                actions = [ACTION_NAMES.cpp_link_static_library],
-                flag_groups = [
-                    flag_group(
-                        iterate_over = "libraries_to_link",
-                        flag_groups = [
-                            flag_group(
-                                flags = ["%{libraries_to_link.name}"],
-                                expand_if_equal = variable_with_value(
-                                    name = "libraries_to_link.type",
-                                    value = "object_file",
-                                ),
-                            ),
-                            flag_group(
-                                flags = ["%{libraries_to_link.object_files}"],
-                                iterate_over = "libraries_to_link.object_files",
-                                expand_if_equal = variable_with_value(
-                                    name = "libraries_to_link.type",
-                                    value = "object_file_group",
-                                ),
-                            ),
-                        ],
-                        expand_if_available = "libraries_to_link",
                     ),
                 ],
             ),
@@ -690,37 +385,269 @@ def _impl(ctx):
         ],
     )
 
-    common_features = [
+    linux_flags_feature = feature(
+        name = "linux_flags",
+        enabled = True,
+        flag_sets = [
+            flag_set(
+                actions = all_link_actions,
+                flag_groups = ([
+                    flag_group(
+                        flags = [
+                            "-fuse-ld=lld",
+                            "-Wl,-no-as-needed",
+                            # Force the C++ standard library to be statically
+                            # linked. This works even with libc++ despite the
+                            # name, however we have to manually link the ABI
+                            # library and libunwind.
+                            "-static-libstdc++",
+                            # Force static linking with libc++abi as well.
+                            "-l:libc++abi.a",
+                            # Link with Clang's runtime library. This is always
+                            # linked statically.
+                            #"-rtlib=compiler-rt",
+                            # Explicitly add LLVM libs to the search path to
+                            # preempt the detected GCC installation's library
+                            # paths. Those might have a system installed libc++
+                            # and we want to find the one next to our Clang.
+                            "-L" + llvm_bindir + "/../lib",
+                            # Link with pthread.
+                            "-lpthread",
+                        ],
+                    ),
+                ]),
+            ),
+        ],
+    )
+
+    default_link_libraries_feature = feature(
+        name = "default_link_libraries",
+        enabled = True,
+        flag_sets = [
+            flag_set(
+                actions = all_link_actions,
+                flag_groups = [
+                    flag_group(
+                        flags = ["%{linkstamp_paths}"],
+                        iterate_over = "linkstamp_paths",
+                        expand_if_available = "linkstamp_paths",
+                    ),
+                    flag_group(
+                        iterate_over = "libraries_to_link",
+                        flag_groups = [
+                            flag_group(
+                                flags = ["-Wl,--start-lib"],
+                                expand_if_equal = variable_with_value(
+                                    name = "libraries_to_link.type",
+                                    value = "object_file_group",
+                                ),
+                            ),
+                            flag_group(
+                                flags = ["-Wl,-whole-archive"],
+                                expand_if_true =
+                                    "libraries_to_link.is_whole_archive",
+                            ),
+                            flag_group(
+                                flags = ["%{libraries_to_link.object_files}"],
+                                iterate_over = "libraries_to_link.object_files",
+                                expand_if_equal = variable_with_value(
+                                    name = "libraries_to_link.type",
+                                    value = "object_file_group",
+                                ),
+                            ),
+                            flag_group(
+                                flags = ["%{libraries_to_link.name}"],
+                                expand_if_equal = variable_with_value(
+                                    name = "libraries_to_link.type",
+                                    value = "object_file",
+                                ),
+                            ),
+                            flag_group(
+                                flags = ["%{libraries_to_link.name}"],
+                                expand_if_equal = variable_with_value(
+                                    name = "libraries_to_link.type",
+                                    value = "interface_library",
+                                ),
+                            ),
+                            flag_group(
+                                flags = ["%{libraries_to_link.name}"],
+                                expand_if_equal = variable_with_value(
+                                    name = "libraries_to_link.type",
+                                    value = "static_library",
+                                ),
+                            ),
+                            flag_group(
+                                flags = ["-l%{libraries_to_link.name}"],
+                                expand_if_equal = variable_with_value(
+                                    name = "libraries_to_link.type",
+                                    value = "dynamic_library",
+                                ),
+                            ),
+                            flag_group(
+                                flags = ["-l:%{libraries_to_link.name}"],
+                                expand_if_equal = variable_with_value(
+                                    name = "libraries_to_link.type",
+                                    value = "versioned_dynamic_library",
+                                ),
+                            ),
+                            flag_group(
+                                flags = ["-Wl,-no-whole-archive"],
+                                expand_if_true = "libraries_to_link.is_whole_archive",
+                            ),
+                            flag_group(
+                                flags = ["-Wl,--end-lib"],
+                                expand_if_equal = variable_with_value(
+                                    name = "libraries_to_link.type",
+                                    value = "object_file_group",
+                                ),
+                            ),
+                        ],
+                        expand_if_available = "libraries_to_link",
+                    ),
+                    # Note that the params file comes at the end, after the
+                    # libraries to link above.
+                    flag_group(
+                        expand_if_available = "linker_param_file",
+                        flags = ["@%{linker_param_file}"],
+                    ),
+                ],
+            ),
+        ],
+    )
+
+    # Place user provided compile flags after all the features so that these
+    # flags can override or customize behavior. The only thing user flags
+    # cannot override is the output file as Bazel depends on that.
+    #
+    # Finally, place the source file (if present) and output file last to make
+    # reading the compile command lines easier for humans.
+    final_flags_feature = feature(
+        name = "final_flags",
+        enabled = True,
+        flag_sets = [
+            flag_set(
+                actions = all_compile_actions,
+                flag_groups = [
+                    flag_group(
+                        flags = ["%{user_compile_flags}"],
+                        iterate_over = "user_compile_flags",
+                        expand_if_available = "user_compile_flags",
+                    ),
+                    flag_group(
+                        flags = ["%{source_file}"],
+                        expand_if_available = "source_file",
+                    ),
+                    flag_group(
+                        expand_if_available = "output_file",
+                        flags = ["-o", "%{output_file}"],
+                    ),
+                ],
+            ),
+            flag_set(
+                actions = all_link_actions,
+                flag_groups = [
+                    flag_group(
+                        flags = ["%{user_link_flags}"],
+                        iterate_over = "user_link_flags",
+                        expand_if_available = "user_link_flags",
+                    ),
+                    flag_group(
+                        flags = ["-o", "%{output_execpath}"],
+                        expand_if_available = "output_execpath",
+                    ),
+                ],
+            ),
+        ],
+    )
+
+    # Archive actions have an entirely independent set of flags and don't
+    # interact with either compiler or link actions.
+    default_archiver_flags_feature = feature(
+        name = "default_archiver_flags",
+        enabled = True,
+        flag_sets = [
+            flag_set(
+                actions = [ACTION_NAMES.cpp_link_static_library],
+                flag_groups = [
+                    flag_group(flags = ["rcsD"]),
+                    flag_group(
+                        flags = ["%{output_execpath}"],
+                        expand_if_available = "output_execpath",
+                    ),
+                    flag_group(
+                        iterate_over = "libraries_to_link",
+                        flag_groups = [
+                            flag_group(
+                                flags = ["%{libraries_to_link.name}"],
+                                expand_if_equal = variable_with_value(
+                                    name = "libraries_to_link.type",
+                                    value = "object_file",
+                                ),
+                            ),
+                            flag_group(
+                                flags = ["%{libraries_to_link.object_files}"],
+                                iterate_over = "libraries_to_link.object_files",
+                                expand_if_equal = variable_with_value(
+                                    name = "libraries_to_link.type",
+                                    value = "object_file_group",
+                                ),
+                            ),
+                        ],
+                        expand_if_available = "libraries_to_link",
+                    ),
+                    flag_group(
+                        expand_if_available = "linker_param_file",
+                        flags = ["@%{linker_param_file}"],
+                    ),
+                ],
+            ),
+        ],
+    )
+
+    # Now that we have built up the constituent feature definitions, compose
+    # them, including configuration based on the target platform. Currently,
+    # the target platform is configured with the "cpu" attribute for legacy
+    # reasons. Further, for legacy reasons the default is a Linux OS target and
+    # the x88-64 CPU name is "k8".
+
+    # First, define features that are simply used to configure others.
+    features = [
         feature(name = "no_legacy_features"),
-        feature(name = "supports_pic", enabled = True),
-        default_compile_flags_feature,
-        default_archiver_flags_feature,
-        default_link_flags_feature,
         feature(name = "dbg"),
+        feature(name = "fastbuild"),
         feature(name = "opt"),
-        sysroot_feature,
-        fuzzer,
-        module_maps,
-        layering_check,
-        use_module_maps,
+        feature(name = "supports_pic", enabled = True),
+        feature(name = "supports_start_end_lib", enabled = ctx.attr.target_cpu == "k8"),
+        feature(name = "supports_dynamic_linker", enabled = ctx.attr.target_cpu == "k8"),
     ]
 
-    # Select the features and builtin include directories based on the target
-    # platform. Currently, this is configured with the "cpu" attribute for
-    # legacy reasons. Further, for legacy reasons the default is a Linux OS
-    # target and the x88-64 CPU name is "k8".
+    # The order of the features determines the relative order of flags used.
+    # Start off adding the baseline features.
+    features += [
+        default_flags_feature,
+        sysroot_feature,
+        fuzzer,
+        layering_check,
+        module_maps,
+        use_module_maps,
+        default_archiver_flags_feature,
+    ]
+
+    # Next, add the features based on the target platform. Here too the
+    # features are order sensitive. We also setup the sysroot here.
     if (ctx.attr.target_cpu == "k8"):
-        features = common_features + [
-            linux_link_flags_feature,
-            feature(name = "supports_start_end_lib", enabled = True),
-            feature(name = "supports_dynamic_linker", enabled = True),
-        ]
+        features += [linux_flags_feature]
         sysroot = None
     elif (ctx.attr.target_cpu == "darwin"):
-        features = common_features
         sysroot = sysroot_dir
     else:
         fail("Unsupported target platform!")
+
+    # Finally append the libraries to link and any final flags.
+    features += [
+        default_link_libraries_feature,
+        final_flags_feature,
+    ]
 
     return cc_common.create_cc_toolchain_config_info(
         ctx = ctx,
