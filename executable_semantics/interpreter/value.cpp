@@ -183,17 +183,10 @@ auto MakeStructTypeVal(std::string name, VarValues* fields, VarValues* methods)
   return v;
 }
 
-auto MakeTupleTypeVal(VarValues* fields) -> const Value* {
-  auto* v = new Value();
-  v->tag = ValKind::TupleTV;
-  v->u.tuple_type.fields = fields;
-  return v;
-}
-
 auto MakeVoidTypeVal() -> const Value* {
   auto* v = new Value();
-  v->tag = ValKind::TupleTV;
-  v->u.tuple_type.fields = new VarValues();
+  v->tag = ValKind::TupleV;
+  v->u.tuple.elts = new std::vector<std::pair<std::string, Address>>();
   return v;
 }
 
@@ -288,22 +281,6 @@ void PrintValue(const Value* val, std::ostream& out) {
     case ValKind::VarTV:
       out << *val->u.var_type;
       break;
-    case ValKind::TupleTV: {
-      out << "Tuple(";
-      bool add_commas = false;
-      for (const auto& elt : *val->u.tuple_type.fields) {
-        if (add_commas) {
-          out << ", ";
-        } else {
-          add_commas = true;
-        }
-
-        out << elt.first << " = ";
-        PrintValue(elt.second, out);
-      }
-      out << ")";
-      break;
-    }
     case ValKind::StructTV:
       out << "struct " << *val->u.struct_type.name;
       break;
@@ -337,32 +314,31 @@ auto TypeEqual(const Value* t1, const Value* t2) -> bool {
       return *t1->u.struct_type.name == *t2->u.struct_type.name;
     case ValKind::ChoiceTV:
       return *t1->u.choice_type.name == *t2->u.choice_type.name;
-    case ValKind::TupleTV:
-      return FieldsEqual(t1->u.tuple_type.fields, t2->u.tuple_type.fields);
+    case ValKind::TupleV: {
+      if (t1->u.tuple.elts->size() != t2->u.tuple.elts->size()) {
+        return false;
+      }
+      for (size_t i = 0; i < t1->u.tuple.elts->size(); ++i) {
+        std::optional<Address> t2_field =
+            FindField((*t1->u.tuple.elts)[i].first, *t2->u.tuple.elts);
+        if (t2_field == std::nullopt) {
+          return false;
+        }
+        if (!TypeEqual(state->heap[(*t1->u.tuple.elts)[i].second],
+                       state->heap[*t2_field])) {
+          return false;
+        }
+      }
+      return true;
+    }
     case ValKind::IntTV:
     case ValKind::BoolTV:
     case ValKind::ContinuationTV:
       return true;
     default:
-      return false;
+      std::cerr << "TypeEqual used to compare non-type values" << std::endl;
+      exit(-1);
   }
-}
-
-static auto FieldsValueEqual(VarValues* ts1, VarValues* ts2, int line_num)
-    -> bool {
-  if (ts1->size() != ts2->size()) {
-    return false;
-  }
-  for (auto& iter1 : *ts1) {
-    auto t2 = FindInVarValues(iter1.first, ts2);
-    if (t2 == nullptr) {
-      return false;
-    }
-    if (!ValueEqual(iter1.second, t2, line_num)) {
-      return false;
-    }
-  }
-  return true;
 }
 
 auto ValueEqual(const Value* v1, const Value* v2, int line_num) -> bool {
@@ -381,8 +357,8 @@ auto ValueEqual(const Value* v1, const Value* v2, int line_num) -> bool {
     case ValKind::FunV:
       return v1->u.fun.body == v2->u.fun.body;
     case ValKind::TupleV:
-      return FieldsValueEqual(v1->u.tuple_type.fields, v2->u.tuple_type.fields,
-                              line_num);
+      // FIXME merge fix from PR 434
+      return false;
     default:
       return TypeEqual(v1, v2);
   }

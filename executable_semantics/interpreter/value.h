@@ -6,6 +6,7 @@
 #define EXECUTABLE_SEMANTICS_INTERPRETER_VALUE_H_
 
 #include <list>
+#include <optional>
 #include <vector>
 
 #include "executable_semantics/ast/statement.h"
@@ -17,9 +18,23 @@ struct Value;
 using Address = unsigned int;
 using VarValues = std::list<std::pair<std::string, const Value*>>;
 
+// FIXME do we need these?
 auto FindInVarValues(const std::string& field, VarValues* inits)
     -> const Value*;
 auto FieldsEqual(VarValues* ts1, VarValues* ts2) -> bool;
+
+// FIXME hide implementation, try making non-template
+template <class T>
+static auto FindField(const std::string& field,
+                      const std::vector<std::pair<std::string, T>>& inits)
+    -> std::optional<T> {
+  for (const auto& i : inits) {
+    if (i.first == field) {
+      return i.second;
+    }
+  }
+  return std::nullopt;
+}
 
 enum class ValKind {
   IntV,
@@ -36,7 +51,6 @@ enum class ValKind {
   FunctionTV,
   PointerTV,
   AutoTV,
-  TupleTV,
   StructTV,
   ChoiceTV,
   ContinuationTV,  // The type of a continuation.
@@ -104,11 +118,6 @@ struct Value {
 
     struct {
       std::string* name;
-      VarValues* fields;
-    } tuple_type;
-
-    struct {
-      std::string* name;
       VarValues* alternatives;
     } choice_type;
 
@@ -151,7 +160,6 @@ auto MakeFunTypeVal(const Value* param, const Value* ret) -> const Value*;
 auto MakePtrTypeVal(const Value* type) -> const Value*;
 auto MakeStructTypeVal(std::string name, VarValues* fields, VarValues* methods)
     -> const Value*;
-auto MakeTupleTypeVal(VarValues* fields) -> const Value*;
 auto MakeVoidTypeVal() -> const Value*;
 auto MakeChoiceTypeVal(std::string name, VarValues* alts) -> const Value*;
 

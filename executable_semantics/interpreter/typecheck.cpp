@@ -41,49 +41,8 @@ void PrintTypeEnv(TypeEnv types, std::ostream& out) {
 
 // Convert tuples to tuple types.
 auto ToType(int line_num, const Value* val) -> const Value* {
-  switch (val->tag) {
-    case ValKind::TupleV: {
-      auto fields = new VarValues();
-      for (auto& elt : *val->u.tuple.elts) {
-        const Value* ty = ToType(line_num, state->heap[elt.second]);
-        fields->push_back(std::make_pair(elt.first, ty));
-      }
-      return MakeTupleTypeVal(fields);
-    }
-    case ValKind::TupleTV: {
-      auto fields = new VarValues();
-      for (auto& field : *val->u.tuple_type.fields) {
-        const Value* ty = ToType(line_num, field.second);
-        fields->push_back(std::make_pair(field.first, ty));
-      }
-      return MakeTupleTypeVal(fields);
-    }
-    case ValKind::PointerTV: {
-      return MakePtrTypeVal(ToType(line_num, val->u.ptr_type.type));
-    }
-    case ValKind::FunctionTV: {
-      return MakeFunTypeVal(ToType(line_num, val->u.fun_type.param),
-                            ToType(line_num, val->u.fun_type.ret));
-    }
-    case ValKind::VarPatV: {
-      return MakeVarPatVal(*val->u.var_pat.name,
-                           ToType(line_num, val->u.var_pat.type));
-    }
-    case ValKind::ChoiceTV:
-    case ValKind::StructTV:
-    case ValKind::TypeTV:
-    case ValKind::VarTV:
-    case ValKind::BoolTV:
-    case ValKind::IntTV:
-    case ValKind::AutoTV:
-    case ValKind::ContinuationTV:
-      return val;
-    default:
-      std::cerr << line_num << ": in ToType, expected a type, not ";
-      PrintValue(val, std::cerr);
-      std::cerr << std::endl;
-      exit(-1);
-  }
+  // FIXME delete this function
+  return val;
 }
 
 // Reify type to type expression.
@@ -102,11 +61,11 @@ auto ReifyType(const Value* t, int line_num) -> Expression* {
     case ValKind::FunctionTV:
       return MakeFunType(0, ReifyType(t->u.fun_type.param, line_num),
                          ReifyType(t->u.fun_type.ret, line_num));
-    case ValKind::TupleTV: {
+    case ValKind::TupleV: {
       auto args = new std::vector<std::pair<std::string, Expression*>>();
-      for (auto& field : *t->u.tuple_type.fields) {
+      for (auto& field : *t->u.tuple.elts) {
         args->push_back(
-            make_pair(field.first, ReifyType(field.second, line_num)));
+            {field.first, ReifyType(state->heap[field.second], line_num)});
       }
       return MakeTuple(0, args);
     }
@@ -174,17 +133,18 @@ auto TypeCheckExp(Expression* e, TypeEnv types, Env values,
                               TCContext::ValueContext);
       auto t = res.type;
       switch (t->tag) {
-        case ValKind::TupleTV: {
+        case ValKind::TupleV: {
           auto i = ToInteger(InterpExp(values, e->u.index.offset));
           std::string f = std::to_string(i);
-          auto field_t = FindInVarValues(f, t->u.tuple_type.fields);
-          if (field_t == nullptr) {
+          std::optional<Address> field_address = FindField(f, *t->u.tuple.elts);
+          if (field_address == std::nullopt) {
             std::cerr << e->line_num << ": compilation error, field " << f
                       << " is not in the tuple ";
             PrintValue(t, std::cerr);
             std::cerr << std::endl;
             exit(-1);
           }
+          auto field_t = state->heap[*field_address];
           auto new_e = MakeIndex(e->line_num, res.exp, MakeInt(e->line_num, i));
           return TCResult(new_e, field_t, res.types);
         }
@@ -196,29 +156,31 @@ auto TypeCheckExp(Expression* e, TypeEnv types, Env values,
     }
     case ExpressionKind::Tuple: {
       auto new_args = new std::vector<std::pair<std::string, Expression*>>();
-      auto arg_types = new VarValues();
+      auto arg_types = new std::vector<std::pair<std::string, Expression*>>();
       auto new_types = types;
       int i = 0;
       for (auto arg = e->u.tuple.fields->begin();
            arg != e->u.tuple.fields->end(); ++arg, ++i) {
         const Value* arg_expected = nullptr;
-        if (expected && expected->tag == ValKind::TupleTV) {
-          arg_expected =
-              FindInVarValues(arg->first, expected->u.tuple_type.fields);
-          if (arg_expected == nullptr) {
+        if (expected && expected->tag == ValKind::TupleV) {
+          std::optional<Address> expected_field =
+              FindField(arg->first, *expected->u.tuple.elts);
+          if (expected_field == std::nullopt) {
             std::cerr << e->line_num << ": compilation error, missing field "
                       << arg->first << std::endl;
             exit(-1);
           }
+          arg_expected = state->heap[*expected_field];
         }
         auto arg_res =
             TypeCheckExp(arg->second, new_types, values, arg_expected, context);
         new_types = arg_res.types;
         new_args->push_back(std::make_pair(arg->first, arg_res.exp));
-        arg_types->push_back(std::make_pair(arg->first, arg_res.type));
+        arg_types->push_back(
+            {arg->first, ReifyType(arg_res.type, e->line_num)});
       }
       auto tuple_e = MakeTuple(e->line_num, new_args);
-      auto tuple_t = MakeTupleTypeVal(arg_types);
+      auto tuple_t = InterpExp(values, MakeTuple(e->line_num, arg_types));
       return TCResult(tuple_e, tuple_t, new_types);
     }
     case ExpressionKind::GetField: {
@@ -247,12 +209,12 @@ auto TypeCheckExp(Expression* e, TypeEnv types, Env values,
                     << *t->u.struct_type.name << " does not have a field named "
                     << *e->u.get_field.field << std::endl;
           exit(-1);
-        case ValKind::TupleTV:
-          for (auto& field : *t->u.tuple_type.fields) {
+        case ValKind::TupleV:
+          for (auto& field : *t->u.tuple.elts) {
             if (*e->u.get_field.field == field.first) {
               auto new_e =
                   MakeGetField(e->line_num, res.exp, *e->u.get_field.field);
-              return TCResult(new_e, field.second, res.types);
+              return TCResult(new_e, state->heap[field.second], res.types);
             }
           }
           std::cerr << e->line_num << ": compilation error, struct "
@@ -723,7 +685,13 @@ auto StructDeclaration::TopLevel(TypeCheckContext& tops) const -> void {
   auto st = TypeOfStructDef(&definition, tops.types, tops.values);
   Address a = AllocateValue(st);
   tops.values.Set(Name(), a);  // Is this obsolete?
-  auto params = MakeTupleTypeVal(st->u.struct_type.fields);
+  auto reified_fields = new std::vector<std::pair<std::string, Expression*>>();
+  for (const auto& [field_name, field_value] : *st->u.struct_type.fields) {
+    reified_fields->push_back(
+        {field_name, ReifyType(field_value, definition.line_num)});
+  }
+  auto params =
+      InterpExp(tops.values, MakeTuple(definition.line_num, reified_fields));
   auto fun_ty = MakeFunTypeVal(params, st);
   tops.types.Set(Name(), fun_ty);
 }

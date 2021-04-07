@@ -27,18 +27,6 @@ auto PatternMatch(const Value* pat, const Value* val, Env,
                   std::list<std::string>*, int) -> std::optional<Env>;
 void HandleValue();
 
-template <class T>
-static auto FindField(const std::string& field,
-                      const std::vector<std::pair<std::string, T>>& inits)
-    -> std::optional<T> {
-  for (const auto& i : inits) {
-    if (i.first == field) {
-      return i.second;
-    }
-  }
-  return std::nullopt;
-}
-
 //
 // Auxiliary Functions
 //
@@ -105,14 +93,6 @@ auto CopyVal(const Value* val, int line_num) -> const Value* {
       return MakeAutoTypeVal();
     case ValKind::ContinuationTV:
       return MakeContinuationTypeVal();
-    case ValKind::TupleTV: {
-      auto new_fields = new VarValues();
-      for (auto& field : *val->u.tuple_type.fields) {
-        auto v = CopyVal(field.second, line_num);
-        new_fields->push_back(make_pair(field.first, v));
-      }
-      return MakeTupleTypeVal(new_fields);
-    }
     case ValKind::StructTV:
     case ValKind::ChoiceTV:
     case ValKind::VarPatV:
