@@ -191,7 +191,7 @@ interface Vector {
 
 An interface defines a type-type, that is a type whose values are types. The
 values of an interface are specifically
-[facet types](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#invoking-interface-methods),
+[facet types](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#facet-type),
 by which we mean types that are declared as specifically implementing
 **exactly** this interface, and which provide definitions for all the functions
 (and other members) declared in the interface.
@@ -241,7 +241,7 @@ we should allow out-of-line impl definitions either in the library that defines
 the interface (`Vector`) or in the library that defines the type (`Point`).
 
 In either case, the impl definition defines a
-[facet type](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#invoking-interface-methods):
+[facet type](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#facet-type):
 `Point as Vector`. While the API of `Point` includes the two fields `x` and `y`,
 the API of `Point as Vector` _only_ has the `Add` and `Scale` methods of the
 `Vector` interface. The facet type `Point as Vector` is
@@ -403,14 +403,14 @@ it too could be passed to `AddAndScale`.
 ## Model
 
 The underlying model here is
-[interfaces are type-types](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#interfaces-are-type-types),
+[interfaces are type-types](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology-extra.md#interfaces-are-type-types),
 in particular
-[facet type-types](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#facet-type-types):
+[facet type-types](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology-extra.md#facet-type-types):
 
 -   [Interfaces](#interfaces) are types of
-    [witness table](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#witness-tables-for-example-swift-and-carbon-generics)s
+    [witness table](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#witness-tables)s
 -   Facet types (defined by [Impls](#implementing-interfaces)) are
-    [witness table](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#witness-tables-for-example-swift-and-carbon-generics)
+    [witness table](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#witness-tables)
     values
 -   The compiler rewrites functions with an implicit type argument
     (`fn Foo[InterfaceName:$ T](...)`) to have an actual argument with type
@@ -2122,7 +2122,7 @@ the brackets (`[`...`]`) to also allow values without a colon (`:`), to (a)
 assert that an expression evaluates to a legal value and (b) have the caller
 pass whatever information is needed to so that same expression can be used
 inside the function (for example a
-[witness table](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#witness-tables-for-example-swift-and-carbon-generics)).
+[witness table](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#witness-tables)).
 
 **Argument against this feature:** It is redundant with `TypeImplements()`, and
 the `TypeImplements()` feature is more broadly applicable / more composable.
@@ -2259,7 +2259,7 @@ Specifically, how does this proposal address
 -   Define how a type
     [implements](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#impls-implementations-of-interfaces)
     an interface
-    ([semantic conformance](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#semantic-versus-structural-interfaces)).
+    ([semantic conformance](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#nominal-versus-structural-interfaces)).
 
     -   [implementing interfaces](#implementing-interfaces)
 
@@ -2273,9 +2273,9 @@ Specifically, how does this proposal address
 
 -   Define a parameterized implementation of an interface for a family of types.
     This is both for
-    [structural conformance](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#semantic-versus-structural-interfaces)
+    [structural conformance](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#nominal-versus-structural-interfaces)
     by way of
-    [templated impls](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#templated-impl),
+    [templated impls](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology-extra.md#templated-impl),
     and
     [conditional conformance](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#conditional-conformance).
     That family of types may have generic or regular parameters, so that for

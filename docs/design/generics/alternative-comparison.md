@@ -45,7 +45,7 @@ A type constraint is called an
 Interfaces can match structurally or you can make there be a separate step to
 explicitly say that there is additional semantic information to say that a type
 conforms to an interface; see
-[Carbon Generics: Terminology: "Semantic versus structural interfaces"](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#semantic-versus-structural-interfaces).
+[Carbon Generics: Terminology: "Semantic versus structural interfaces"](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#nominal-versus-structural-interfaces).
 If interfaces are semantic, then interface implementations can be part of a type
 ("facets") or separate, named entities ("witnesses").
 
@@ -201,9 +201,9 @@ In this model, an interface is a type whose values are "types that conform to
 that interface".
 
 This proposal uses
-[named impls](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#named-impl),
+[named impls](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology-extra.md#named-impl),
 but we'd probably prefer to just have
-[default impls](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#default-impl)
+[default impls](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology-extra.md#default-impl)
 like the next iteration described next.
 
 ```

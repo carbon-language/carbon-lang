@@ -71,7 +71,7 @@ given a function definition, but more checking of the definition is required
 after seeing the call sites (and you know which specializations are needed).
 
 Read more here:
-[Carbon Generics: Terminology and Problem Statement: "Generic versus template arguments" section](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#generic-versus-template-parameters).
+[Carbon Generics: Terminology: "Generic versus template arguments" section](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#generic-versus-template-parameters).
 
 ## Goals: Generics
 

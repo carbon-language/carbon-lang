@@ -232,8 +232,10 @@ those alternate implementations. For more on this, see
 
 ## Interfaces
 
-An interface defines an API that a given type can implement. For example, an
-interface capturing a vector API might have two methods:
+An
+[interface](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#interface),
+defines an API that a given type can implement. For example, an interface
+capturing a vector API might have two methods:
 
 ```
 interface Vector {
@@ -250,19 +252,22 @@ In this example, `Vector` has two associated methods, `Add` and `Scale`.
 
 An interface defines a type-type, that is a type whose values are types. The
 values of an interface are specifically
-[facet types](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#invoking-interface-methods),
+[facet types](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#facet-type),
 by which we mean types that are declared as specifically implementing
 **exactly** this interface, and which provide definitions for all the functions
 (and other members) declared in the interface.
 
 ## Implementing interfaces
 
-Given a type, it can define an "impl" that defines how that interface is
-implemented for that type. Every associated item is given a definition.
-Different types satisfying `Vector` can have different definitions for `Add` and
-`Scale`, so we say their definitions are associated with what type is
-implementing `Vector`. The impl defines what is associated with the type for
-that interface.
+Carbon interfaces are
+["nominal"](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#nominal-versus-structural-interfaces),
+which means that types explicitly describe how they implement interfaces. An
+["impl"](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#impls-implementations-of-interfaces)
+defines how one interface is implemented for a type. Every associated item is
+given a definition. Different types satisfying `Vector` can have different
+definitions for `Add` and `Scale`, so we say their definitions are associated
+with what type is implementing `Vector`. The impl defines what is associated
+with the type for that interface.
 
 Impls may be defined inline inside the type definition:
 
@@ -294,7 +299,7 @@ Assert(p1.Add(p1) == p2);
 ### Facet type
 
 The impl definition defines a
-[facet type](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#invoking-interface-methods):
+[facet type](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#facet-type):
 `Point as Vector`. While the API of `Point` includes the two fields `x` and `y`
 along with the `Add` and `Scale` methods, the API of `Point as Vector` _only_
 has the `Add` and `Scale` methods of the `Vector` interface. The facet type
@@ -325,9 +330,10 @@ z.Add(b);
 var Point: w = z as Point;
 ```
 
-These casts change which names are exposed in the type's API, but as much as
-possible we don't want the meaning of any given name to change. Instead we want
-these casts to simply change the subset of names that are visible.
+These [casts](#subsumption-and-casting) change which names are exposed in the
+type's API, but as much as possible we don't want the meaning of any given name
+to change. Instead we want these casts to simply change the subset of names that
+are visible.
 
 **Note:** In general the above is written assuming that casts are written
 "`a as T`" where `a` is a value and `T` is the type to cast to. When we write
@@ -340,8 +346,8 @@ of selecting an implementation of an interface for a type unambiguous throughout
 the whole program, so for example `Point as Vector` is well defined.
 
 We don't expect users to ordinarily name facet types explicitly in source code.
-Instead, values are cast to a facet type as part of calling a generic function,
-as described in the [Generics](#generics) section.
+Instead, values are implicitly cast to a facet type as part of calling a generic
+function, as described in the [Generics](#generics) section.
 
 ### External impl
 
@@ -519,7 +525,7 @@ var Point: v = AddAndScaleGeneric(a, w, 2.5);
 ```
 
 Here `T` is a type whose type is `Vector`. The `:$` syntax means that `T` is a
-_[generic argument](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#generic-versus-template-parameters)_,
+_[generic parameter](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#generic-versus-template-parameters)_,
 that is it must be known to the caller but we will only use the information
 present in the signature of the function to typecheck the body of
 `AddAndScaleGeneric`'s definition. In this case, we know that any value of type
@@ -527,10 +533,12 @@ present in the signature of the function to typecheck the body of
 
 When we call `AddAndScaleGeneric`, we need to determine the value of `T` to use
 when passed values with type `Point`. Since `T` has type `Vector`, the compiler
-simply sets `T` to `Point as Vector`. This cast erases all of the API of `Point`
-and substitutes the api of `Vector`, without changing anything about the data
-representation. It acts like we called this non-generic function, found by
-setting `T` to `Point as Vector`:
+simply sets `T` to `Point as Vector`. This
+[cast](terminology.md#subsumption-and-casting)
+[erases](terminology.md#type-erasure) all of the API of `Point` and substitutes
+the api of `Vector`, without changing anything about the data representation. It
+acts like we called this non-generic function, found by setting `T` to
+`Point as Vector`:
 
 ```
 fn AddAndScaleForPointAsVector(
@@ -575,15 +583,15 @@ var Point2: v3 = AddAndScaleGeneric(a, w, 2.5);
 
 ### Model
 
-The underlying model here is
-[interfaces are type-types](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#interfaces-are-type-types),
-in particular
-[facet type-types](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#facet-type-types):
+The underlying model here is interfaces are
+[type-types](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#type-type),
+in particular, the type of
+[facet types](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#facet-type):
 
 -   [Interfaces](#interfaces) are types of
-    [witness table](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#witness-tables-for-example-swift-and-carbon-generics)s
+    [witness table](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#witness-tables)s
 -   Facet types (defined by [Impls](#implementing-interfaces)) are
-    [witness table](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#witness-tables-for-example-swift-and-carbon-generics)
+    [witness table](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#witness-tables)
     values
 -   The compiler rewrites functions with an implicit type argument
     (`fn Foo[InterfaceName:$ T](...)`) to have an actual argument with type
@@ -648,29 +656,32 @@ declaration defines a requirement for `impl` that is in turn a capability that
 users can rely on. Typically those declarations also have a name, useful for
 both satisfying the requirement and accessing the capability.
 
-Interfaces are "nominal" which means their name is significant. So two
-interfaces with the same definition but different names are different, just like
-two structs with the same definition but different names are considered
-different types. For example, lets say we define another interface, say
-`LegoFish`, with the same `Add` and `Scale` method signatures. Implementing
-`Vector` would not imply an implementation of `LegoFish` and the other way
-around.
+Interfaces are
+["nominal"](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#nominal-versus-structural-interfaces),
+which means their name is significant. So two interfaces with the same body
+definition but different names are different, just like two structs with the
+same definition but different names are considered different types. For example,
+lets say we define another interface, say `LegoFish`, with the same `Add` and
+`Scale` method signatures. Implementing `Vector` would not imply an
+implementation of `LegoFish`, because the implementation explicitly refers to
+the name `Vector`.
 
 An interface's name may be used in a few different contexts:
 
 -   to define [an `impl` for a type](#implementing-interfaces),
 -   as a namespace name in [a qualified name](#qualified-member-names), and
--   as a type-type for [a generic type parameter](#generics).
+-   as a [type-type](terminology.md#type-type) for
+    [a generic type parameter](#generics).
 
 While interfaces are examples of type-types, type-types are a more general
 concept, for which interfaces are a building block.
 
 ## Type-types and facet types
 
-A type-type consists of a set of requirements and a set of names. Requirements
-are typically a set of interfaces that a type must satisfy (though other kinds
-of requirements are added below). The names are aliases for qualified names in
-those interfaces.
+A [type-type](terminology.md#type-type) consists of a set of requirements and a
+set of names. Requirements are typically a set of interfaces that a type must
+satisfy (though other kinds of requirements are added below). The names are
+aliases for qualified names in those interfaces.
 
 An interface is one particularly simple example of a type-type. For example,
 `Vector` as a type-type has a set of requirements consisting of the single
@@ -786,10 +797,11 @@ struct ImplementsS {
 
 ### Subsumption
 
-Given a generic type `T` with type-type `I1`, it may be implicitly cast to a
-type-type `I2`, resulting in `T as I2`, as long as the requirements of `I1` are
-a superset of the requirements of `I2`. Further, given a value `x` of type `T`,
-it can be implicitly cast to `T as I2`. For example:
+Given a generic type `T` with type-type `I1`, it may be
+[implicitly cast](terminology.md#subsumption-and-casting) to a type-type `I2`,
+resulting in `T as I2`, as long as the requirements of `I1` are a superset of
+the requirements of `I2`. Further, given a value `x` of type `T`, it can be
+implicitly cast to `T as I2`. For example:
 
 ```
 interface A { method (Self: this) AMethod(); }
@@ -1348,7 +1360,7 @@ We also provide a way to create new types
 [compatible with](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#compatible-types)
 existing types with different APIs, in particular with different interface
 implementations, by
-[adapting](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#compatible-types)
+[adapting](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#adapting-a-type)
 them:
 
 ```
@@ -3129,9 +3141,10 @@ TODO: fold in content from
 
 ## Conditional conformance
 
-The problem we are trying to solve here is expressing that we have an impl of
-some interface for some type, but only if some additional type restrictions are
-met. To do this, we leverage [external impl](#external-impl):
+[The problem](terminology.md#conditional-conformance) we are trying to solve
+here is expressing that we have an impl of some interface for some type, but
+only if some additional type restrictions are met. To do this, we leverage
+[external impl](#external-impl):
 
 -   We can provide the same impl argument in two places to constrain them to be
     the same.
@@ -3537,7 +3550,8 @@ single best match. Best is defined using the "more specific" partial ordering:
 -   TODO: others?
 
 The ability to have a more specific implementation used in place of a more
-general is commonly called _specialization_.
+general is commonly called
+_[specialization](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#specialization)_.
 
 TODO: Examples
 
@@ -4201,7 +4215,9 @@ user's desire. As an example, in Rust the
 [iterator trait](https://doc.rust-lang.org/std/iter/trait.Iterator.html) only
 has one required method but dozens of "provided methods" with defaults.
 
-In fact, defaults are a generalization of specialization, as observed
+In fact, defaults are a generalization of
+[specialization](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#specialization),
+as observed
 [here](https://rust-lang.github.io/rfcs/1210-impl-specialization.html#default-impls),
 as long as we allow more specific implementations to be incomplete and reuse
 more general implementations for anything unspecified.
@@ -4454,6 +4470,8 @@ function as long as it doesn't capture? We need to firm up design for example
 fields before interfaces for example fields.
 
 ### Generic type specialization
+
+[Specialization](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#specialization)
 
 TODO: Main idea is that given `MyType(T)` we should be able to derive
 `MyTypeInterface(T)` that captures the interface of `MyType(T)` without its
