@@ -39,12 +39,6 @@ void PrintTypeEnv(TypeEnv types, std::ostream& out) {
   }
 }
 
-// Convert tuples to tuple types.
-auto ToType(int line_num, const Value* val) -> const Value* {
-  // FIXME delete this function
-  return val;
-}
-
 // Reify type to type expression.
 auto ReifyType(const Value* t, int line_num) -> Expression* {
   switch (t->tag) {
@@ -111,8 +105,7 @@ auto TypeCheckExp(Expression* e, TypeEnv types, Env values,
             << std::endl;
         exit(-1);
       }
-      auto t =
-          ToType(e->line_num, InterpExp(values, e->u.pattern_variable.type));
+      auto t = InterpExp(values, e->u.pattern_variable.type);
       if (t->tag == ValKind::AutoTV) {
         if (expected == nullptr) {
           std::cerr << e->line_num
@@ -136,7 +129,7 @@ auto TypeCheckExp(Expression* e, TypeEnv types, Env values,
         case ValKind::TupleV: {
           auto i = ToInteger(InterpExp(values, e->u.index.offset));
           std::string f = std::to_string(i);
-          std::optional<Address> field_address = FindField(f, *t->u.tuple.elts);
+          std::optional<Address> field_address = FindTupleField(f, t);
           if (field_address == std::nullopt) {
             std::cerr << e->line_num << ": compilation error, field " << f
                       << " is not in the tuple ";
@@ -164,7 +157,7 @@ auto TypeCheckExp(Expression* e, TypeEnv types, Env values,
         const Value* arg_expected = nullptr;
         if (expected && expected->tag == ValKind::TupleV) {
           std::optional<Address> expected_field =
-              FindField(arg->first, *expected->u.tuple.elts);
+              FindTupleField(arg->first, expected);
           if (expected_field == std::nullopt) {
             std::cerr << e->line_num << ": compilation error, missing field "
                       << arg->first << std::endl;
@@ -326,10 +319,8 @@ auto TypeCheckExp(Expression* e, TypeEnv types, Env values,
       switch (context) {
         case TCContext::ValueContext:
         case TCContext::TypeContext: {
-          auto pt = ToType(e->line_num,
-                           InterpExp(values, e->u.function_type.parameter));
-          auto rt = ToType(e->line_num,
-                           InterpExp(values, e->u.function_type.return_type));
+          auto pt = InterpExp(values, e->u.function_type.parameter);
+          auto rt = InterpExp(values, e->u.function_type.return_type);
           auto new_e = MakeFunType(e->line_num, ReifyType(pt, e->line_num),
                                    ReifyType(rt, e->line_num));
           return TCResult(new_e, MakeTypeTypeVal(), types);
@@ -572,7 +563,7 @@ auto TypeCheckFunDef(const FunctionDefinition* f, TypeEnv types, Env values)
     -> struct FunctionDefinition* {
   auto param_res = TypeCheckExp(f->param_pattern, types, values, nullptr,
                                 TCContext::PatternContext);
-  auto return_type = ToType(f->line_num, InterpExp(values, f->return_type));
+  auto return_type = InterpExp(values, f->return_type);
   if (f->name == "main") {
     ExpectType(f->line_num, "return type of `main`", MakeIntTypeVal(),
                return_type);
@@ -589,13 +580,12 @@ auto TypeOfFunDef(TypeEnv types, Env values, const FunctionDefinition* fun_def)
     -> const Value* {
   auto param_res = TypeCheckExp(fun_def->param_pattern, types, values, nullptr,
                                 TCContext::PatternContext);
-  auto param_type = ToType(fun_def->line_num, param_res.type);
   auto ret = InterpExp(values, fun_def->return_type);
   if (ret->tag == ValKind::AutoTV) {
     auto f = TypeCheckFunDef(fun_def, types, values);
     ret = InterpExp(values, f->return_type);
   }
-  return MakeFunTypeVal(param_type, ret);
+  return MakeFunTypeVal(param_res.type, ret);
 }
 
 auto TypeOfStructDef(const StructDefinition* sd, TypeEnv /*types*/, Env ct_top)
@@ -604,7 +594,7 @@ auto TypeOfStructDef(const StructDefinition* sd, TypeEnv /*types*/, Env ct_top)
   auto methods = new VarValues();
   for (auto m = sd->members->begin(); m != sd->members->end(); ++m) {
     if ((*m)->tag == MemberKind::FieldMember) {
-      auto t = ToType(sd->line_num, InterpExp(ct_top, (*m)->u.field.type));
+      auto t = InterpExp(ct_top, (*m)->u.field.type);
       fields->push_back(std::make_pair(*(*m)->u.field.name, t));
     }
   }
@@ -651,7 +641,7 @@ auto VariableDeclaration::TypeChecked(TypeEnv types, Env values) const
     -> Declaration {
   TCResult type_checked_initializer = TypeCheckExp(
       initializer, types, values, nullptr, TCContext::ValueContext);
-  const Value* declared_type = ToType(source_location, InterpExp(values, type));
+  const Value* declared_type = InterpExp(values, type);
   ExpectType(source_location, "initializer of variable", declared_type,
              type_checked_initializer.type);
   return *this;
@@ -699,7 +689,7 @@ auto StructDeclaration::TopLevel(TypeCheckContext& tops) const -> void {
 auto ChoiceDeclaration::TopLevel(TypeCheckContext& tops) const -> void {
   auto alts = new VarValues();
   for (auto a : alternatives) {
-    auto t = ToType(line_num, InterpExp(tops.values, a.second));
+    auto t = InterpExp(tops.values, a.second);
     alts->push_back(std::make_pair(a.first, t));
   }
   auto ct = MakeChoiceTypeVal(name, alts);
@@ -711,8 +701,7 @@ auto ChoiceDeclaration::TopLevel(TypeCheckContext& tops) const -> void {
 // Associate the variable name with it's declared type in the
 // compile-time symbol table.
 auto VariableDeclaration::TopLevel(TypeCheckContext& tops) const -> void {
-  const Value* declared_type =
-      ToType(source_location, InterpExp(tops.values, type));
+  const Value* declared_type = InterpExp(tops.values, type);
   tops.types.Set(Name(), declared_type);
 }
 

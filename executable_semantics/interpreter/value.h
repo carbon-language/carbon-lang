@@ -23,18 +23,8 @@ auto FindInVarValues(const std::string& field, VarValues* inits)
     -> const Value*;
 auto FieldsEqual(VarValues* ts1, VarValues* ts2) -> bool;
 
-// FIXME hide implementation, try making non-template
-template <class T>
-static auto FindField(const std::string& field,
-                      const std::vector<std::pair<std::string, T>>& inits)
-    -> std::optional<T> {
-  for (const auto& i : inits) {
-    if (i.first == field) {
-      return i.second;
-    }
-  }
-  return std::nullopt;
-}
+auto FindTupleField(const std::string& field, const Value* tuple)
+    -> std::optional<Address>;
 
 enum class ValKind {
   IntV,

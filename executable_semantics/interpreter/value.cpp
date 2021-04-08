@@ -4,6 +4,7 @@
 
 #include "executable_semantics/interpreter/value.h"
 
+#include <cassert>
 #include <iostream>
 
 #include "executable_semantics/interpreter/interpreter.h"
@@ -35,6 +36,17 @@ auto FieldsEqual(VarValues* ts1, VarValues* ts2) -> bool {
   } else {
     return false;
   }
+}
+
+auto FindTupleField(const std::string& field, const Value* tuple)
+    -> std::optional<Address> {
+  assert(tuple->tag == ValKind::TupleV);
+  for (const auto& i : *tuple->u.tuple.elts) {
+    if (i.first == field) {
+      return i.second;
+    }
+  }
+  return std::nullopt;
 }
 
 auto MakeIntVal(int i) -> const Value* {
@@ -320,7 +332,7 @@ auto TypeEqual(const Value* t1, const Value* t2) -> bool {
       }
       for (size_t i = 0; i < t1->u.tuple.elts->size(); ++i) {
         std::optional<Address> t2_field =
-            FindField((*t1->u.tuple.elts)[i].first, *t2->u.tuple.elts);
+            FindTupleField((*t1->u.tuple.elts)[i].first, t2);
         if (t2_field == std::nullopt) {
           return false;
         }
