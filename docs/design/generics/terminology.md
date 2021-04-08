@@ -22,7 +22,8 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
         -   [Early versus late type checking](#early-versus-late-type-checking)
 -   [Implicit parameter](#implicit-parameter)
 -   [Interface](#interface)
-    -   [Nominal versus structural interfaces](#nominal-versus-structural-interfaces)
+    -   [Structural interfaces](#structural-interfaces)
+    -   [Nominal interfaces](#nominal-interfaces)
 -   [Impls: Implementations of interfaces](#impls-implementations-of-interfaces)
 -   [Compatible types](#compatible-types)
 -   [Subsumption and casting](#subsumption-and-casting)
@@ -264,13 +265,15 @@ function body without knowing anything more about the caller. Callers of the
 function provide a value that has an implementation of the API and the body of
 the function may then use that API (and nothing else).
 
-### Nominal versus structural interfaces
+### Structural interfaces
 
 A "structural" interface is one where we say a type satisfies the interface as
 long as it has members with a specific list of names, and for each name it must
 have some type or signature. A type can satisfy a structural interface without
 ever naming that interface, just by virtue of having members with the right
 form.
+
+### Nominal interfaces
 
 A "nominal" interface is one where we say a type can only satisfy an interface
 if there is some explicit statement saying so, for example by defining an
@@ -482,8 +485,6 @@ conditions on the type argument. For example: `Array(T)` might implement
 
 ## Interface type parameters versus associated types
 
-TODO REVISE
-
 Let's say you have an interface defining a container. Different containers will
 contain different types of values, and the container API will have to refer to
 that "element type" when defining the signature of methods like "insert" or
@@ -542,10 +543,10 @@ express things like "this type parameter is the same for all these interfaces",
 and other type constraints.
 
 If you have an interface with type parameters, there is a question of whether a
-type can have default impls for different combinations of type parameters, or if
-you can only have a single default impl (in which case you can directly infer
-the type parameters given just a type implementing the interface). You can
-always infer associated types.
+type can have multiple impls for different combinations of type parameters, or
+if you can only have a single impl (in which case you can directly infer the
+type parameters given just a type implementing the interface). You can always
+infer associated types.
 
 ## Type constraints
 
@@ -562,9 +563,21 @@ express, for example:
     elements. The iterator type's element type needs to match the container's
     element type.
 -   An interface may define an associated type that needs to be constrained to
-    either implement some interfaces. or be [compatible](#compatible-types) with
-    another type.
+    implement some interfaces.
+-   This type parameter must be [compatible](#compatible-types) with another
+    type. You might use this to define alternate implementations of a single
+    interfaces, such as sorting order, for a single type.
+
+Note that type constraints can be a restriction on one type parameter, or can
+define a relationship between multiple type parameters.
 
 ## Type-type
 
-TODO: may include type constraints, projection to a facet type, anything else?
+A type-type is the type used when declaring some type parameter. It foremost
+determines which types are legal arguments for that type parameter, also known
+as [type constraints](#type-constraints). For template parameters, that is all a
+type-type does. For generic parameters, it also determines the API that is
+available in the body of the function. Calling a function with a type `T` passed
+to a generic type parameter `U` with type-type `I`, ends up setting `U` to the
+facet type `T as I`. This has the API determined by `I`, with the implementation
+of that API coming from `T`.

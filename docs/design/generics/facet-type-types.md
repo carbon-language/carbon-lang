@@ -2259,7 +2259,7 @@ Specifically, how does this proposal address
 -   Define how a type
     [implements](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#impls-implementations-of-interfaces)
     an interface
-    ([semantic conformance](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#nominal-versus-structural-interfaces)).
+    ([conformance to a nominal interface](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#nominal-interfaces)).
 
     -   [implementing interfaces](#implementing-interfaces)
 
@@ -2273,7 +2273,7 @@ Specifically, how does this proposal address
 
 -   Define a parameterized implementation of an interface for a family of types.
     This is both for
-    [structural conformance](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#nominal-versus-structural-interfaces)
+    [structural conformance](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#structural-interfaces)
     by way of
     [templated impls](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology-extra.md#templated-impl),
     and

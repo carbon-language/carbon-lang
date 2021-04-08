@@ -42,12 +42,12 @@ like a function can (for example) call methods defined for values of that type.
 A type constraint is called an
 [interface](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#interface).
 
-Interfaces can match structurally or you can make there be a separate step to
-explicitly say that there is additional semantic information to say that a type
-conforms to an interface; see
-[Carbon Generics: Terminology: "Semantic versus structural interfaces"](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#nominal-versus-structural-interfaces).
-If interfaces are semantic, then interface implementations can be part of a type
-("facets") or separate, named entities ("witnesses").
+Interfaces can match [structurally](terminology.md#structural-interfaces) or you
+can make there be a separate step to explicitly say that there is additional
+semantic information to say that a type conforms to an interface, called
+["nominal interfaces"](terminology.md#nominal-interfaces). If interfaces are
+nominal, then interface implementations can be part of a type ("facets") or
+separate, named entities ("witnesses").
 
 Types can contain interface implementations or implement them. The difference is
 whether the API described by the interface is included in the type's interface,

@@ -260,7 +260,7 @@ by which we mean types that are declared as specifically implementing
 ## Implementing interfaces
 
 Carbon interfaces are
-["nominal"](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#nominal-versus-structural-interfaces),
+["nominal"](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#nominal-interfaces),
 which means that types explicitly describe how they implement interfaces. An
 ["impl"](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#impls-implementations-of-interfaces)
 defines how one interface is implemented for a type. Every associated item is
@@ -657,7 +657,7 @@ users can rely on. Typically those declarations also have a name, useful for
 both satisfying the requirement and accessing the capability.
 
 Interfaces are
-["nominal"](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#nominal-versus-structural-interfaces),
+["nominal"](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#nominal-interfaces),
 which means their name is significant. So two interfaces with the same body
 definition but different names are different, just like two structs with the
 same definition but different names are considered different types. For example,
@@ -699,12 +699,13 @@ described in the rest of this document.
 ## Structural interfaces
 
 If the nominal interfaces discussed above are the building blocks for
-type-types, structural interfaces describe how they may be composed together.
-Unlike nominal interfaces, the name of a structural interface is not a part of
-its value. Two different structural interfaces with the same definition are
-equivalent even if they have different names. This is because types don't
-explicitly specify which structural interfaces they implement, types
-automatically implement any structural interfaces they can satisfy.
+type-types, [structural interfaces](terminology.md#structural-interfaces)
+describe how they may be composed together. Unlike nominal interfaces, the name
+of a structural interface is not a part of its value. Two different structural
+interfaces with the same definition are equivalent even if they have different
+names. This is because types don't explicitly specify which structural
+interfaces they implement, types automatically implement any structural
+interfaces they can satisfy.
 
 A structural interface definition can contain interface requirements using
 `impl` declarations and names using `alias` declarations. Note that this allows
