@@ -32,7 +32,7 @@ std::string RuntimeLibrary::getLibPath(StringRef ToolPath,
     // In some cases we install bolt binary into one level deeper in bin/,
     // we need to go back one more level to find lib directory.
     LibPath =
-        llvm::sys::path::parent_path(llvm::sys::path::parent_path(LibPath));
+        llvm::sys::path::parent_path(llvm::sys::path::parent_path(Dir));
     llvm::sys::path::append(LibPath, "lib");
   }
   llvm::sys::path::append(LibPath, LibFileName);
