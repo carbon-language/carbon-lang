@@ -12,8 +12,11 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 -   [Parameterized language constructs](#parameterized-language-constructs)
 -   [Generic versus template parameters](#generic-versus-template-parameters)
-    -   [Parametric versus Ad Hoc polymorphism](#parametric-versus-ad-hoc-polymorphism)
-    -   [Constrained/bounded versus Unconstrained/unbounded genericity](#constrainedbounded-versus-unconstrainedunbounded-genericity)
+    -   [Polymorphism](#polymorphism)
+        -   [Parametric polymorphism](#parametric-polymorphism)
+        -   [Compile-time duck typing](#compile-time-duck-typing)
+        -   [Ad-hoc polymorphism](#ad-hoc-polymorphism)
+    -   [Constrained genericity](#constrained-genericity)
     -   [Definition checking](#definition-checking)
         -   [Complete definition checking](#complete-definition-checking)
         -   [Early versus late type checking](#early-versus-late-type-checking)
@@ -57,8 +60,8 @@ When we are distinguishing between generics and templates in Carbon, it is on an
 parameter by parameter basis. A single function can take a mix of regular,
 generic, and template parameter.
 
--   **Regular parameters** are designated using "&lt;type>`:` &lt;name>" syntax
-    (or "&lt;value>").
+-   **Regular parameters**, or "dynamic parameters", are designated using the
+    "&lt;type>`:` &lt;name>" syntax (or "&lt;value>").
 -   **Generic parameters** are temporarily designated using an additional `$`
     after the `:` (so it is "&lt;type>`:$` &lt;name>"). However, the `$` symbol
     is not easily typed on non-US keyboards, so we will definitely switch to
@@ -77,15 +80,15 @@ Expected difference between generics and templates:
    </td>
   </tr>
   <tr>
-   <td>parametric polymorphism
+   <td>bounded parametric polymorphism
    </td>
-   <td>ad hoc polymorphism
+   <td>compile-time duck typing and ad-hoc polymorphism
    </td>
   </tr>
   <tr>
-   <td>constrained/bounded genericity
+   <td>constrained genericity
    </td>
-   <td>unconstrained genericity, though you may still specify constraints
+   <td>optional constraints
    </td>
   </tr>
   <tr>
@@ -109,28 +112,57 @@ Expected difference between generics and templates:
   <tr>
    <td>allowed but not required to be implemented using dynamic dispatch
    </td>
-   <td>does not support implementation by way of dynamic dispatch, just static by way of instantiation
+   <td>does not support implementation by way of dynamic dispatch, just static by way of [instantiation](#instantiation)
    </td>
   </tr>
 </table>
 
-### Parametric versus Ad Hoc polymorphism
+### Polymorphism
 
-From [Wikipedia](https://en.wikipedia.org/wiki/Parametric_polymorphism): Using
-parametric polymorphism, a function or a data type can be written generically so
-that it can handle values _identically_ without depending on their type.
-
-From [Wikipedia](https://en.wikipedia.org/wiki/Ad_hoc_polymorphism): ad hoc
-polymorphism is a kind of polymorphism in which polymorphic functions can be
-applied to arguments of different types, because a polymorphic function can
-denote a number of distinct and potentially heterogeneous implementations
-depending on the type of argument(s) to which it is applied. It is also known as
-"function overloading" or "operator overloading".
-
-Contrast with [subtype polymorphism](https://en.wikipedia.org/wiki/Subtyping),
-where different descendants of a base class can provide different
+Generics and templates provide different forms of
+[polymorphism](<https://en.wikipedia.org/wiki/Polymorphism_(computer_science)>)
+than object-oriented programming with inheritance. That uses
+[subtype polymorphism](https://en.wikipedia.org/wiki/Subtyping) where different
+descendants, or "subtypes", of a base class can provide different
 implementations of a method, subject to some compatibility restrictions on the
 signature.
+
+#### Parametric polymorphism
+
+Parametric polymorphism
+([Wikipedia](https://en.wikipedia.org/wiki/Parametric_polymorphism)) is when a
+function or a data type can be written generically so that it can handle values
+_identically_ without depending on their type.
+[Bounded parametric polymorphism](https://en.wikipedia.org/wiki/Parametric_polymorphism#Bounded_parametric_polymorphism)
+is where the allowed types are restricted to satisfy some constraints. Within
+the set of allowed types, different types are treated uniformly.
+
+#### Compile-time duck typing
+
+Duck typing ([Wikipedia](https://en.wikipedia.org/wiki/Duck_typing)) is when the
+legal types for arguments are determined implicitly by the usage of the values
+of those types in the body of the function. Compile-time duck typing is when the
+usages in the body of the function are checked at compile-time, along all code
+paths. Contrast this with ordinary duck typing in a dynamic language such as
+Python where type errors are only diagnosed at runtime when a usage is reached
+dynamically.
+
+#### Ad-hoc polymorphism
+
+Ad-hoc polymorphism
+([Wikipedia](https://en.wikipedia.org/wiki/Ad_hoc_polymorphism)), also known as
+"overloading", is when a single function name has multiple implementations for
+handling different argument types. There is no enforcement of any consistency
+between the implementations. For example, the return type of each overload can
+be arbitrary, rather than being the result of some consistent rule being applied
+to the argument types.
+
+Templates work with ad-hoc polymorphism in two ways:
+
+-   A function with template parameters specialized for specific types is a form
+    of ad-hoc polymorphism.
+-   A function with template parameters can call overloaded functions since it
+    will only resolve that call after the types are known.
 
 In Carbon, we expect there to be a compile error if overloading of some name
 prevents a generic function from being typechecked from its definition alone.
@@ -149,37 +181,35 @@ either overload. (I think it is undecided what to do in the situation where `F`
 is overloaded, but the signatures are consistent and so callers could still
 typecheck calls to `F`.)
 
-### Constrained/bounded versus Unconstrained/unbounded genericity
+### Constrained genericity
 
 We will allow some way of specifying constraints as part of a function (or type
 or other parameterized language construct). These constraints are a limit on
-what callers are allowed to pass in. The distinction between constrained/bounded
-and unconstrained/unbounded genericity is whether the body of the function is
-limited to just those operations that are guaranteed by the constraints.
+what callers are allowed to pass in. The distinction between constrained and
+unconstrained genericity is whether the body of the function is limited to just
+those operations that are guaranteed by the constraints.
 
-With templates using unconstrained/unbounded genericity, you may perform any
-operation in the body of the function, and they will be checked against the
-specific types used in calls. You can still have constraints, but they will only
-be used to resolve overloaded calls to the template and provide clearer error
-messages.
+With templates using unconstrained genericity, you may perform any operation in
+the body of the function, and they will be checked against the specific types
+used in calls. You can still have constraints, but they are optional. They will
+only be used to resolve overloaded calls to the template and provide clearer
+error messages.
 
-With generics using constrained/bounded genericity, the function body can be
-checked against the signature at the time of definition. Note that it is still
-perfectly permissible to have no constraints on a type; that just means that you
-can only perform operations that work for all types (such as manipulate pointers
-to values of that type) in the body of the function.
+With generics using constrained genericity, the function body can be checked
+against the signature at the time of definition. Note that it is still perfectly
+permissible to have no constraints on a type; that just means that you can only
+perform operations that work for all types (such as manipulate pointers to
+values of that type) in the body of the function.
 
 ### Definition checking
 
 Definition checking is the process of semantically checking the definition of
 parameterized code for correctness _independently_ of any particular arguments.
-It includes type checking and other semantic checks. Typically, all
-non-dependent semantics can be checked in the definition, but it is possible to
-add constraints (by way of generics) that increase how much of the definition
-can be checked. If anything remains unchecked (normal for templates),
-instantiating the implementation it requires instantiation (that may fail) is
-required in order to check its correctness once specific arguments can be
-substituted into the parameters.
+It includes type checking and other semantic checks. It is possible, even with
+templates, to check semantics of expressions that are not dependent on any
+template parameter in the definition. As you add constraints, by using generics,
+that increases how much of the definition can be checked. Any remaining checks
+are delayed until [instantiation](#instantiation), which can fail.
 
 #### Complete definition checking
 
@@ -236,7 +266,7 @@ the function may then use that API (and nothing else).
 
 A "structural" interface is one where we say a type satisfies the interface as
 long as it has members with a specific list of names, and for each name it must
-have some type / signature. A type can satisfy a structural interface without
+have some type or signature. A type can satisfy a structural interface without
 ever naming that interface, just by virtue of having members with the right
 form.
 
@@ -333,7 +363,24 @@ of "type erasures" used in Carbon.
 
 ## Facet type
 
-TODO
+A facet type is a [compatible type](#compatible-types) of some original type
+written by the user, that has a specific API. This API might correspond to a
+specific [interface](#interface), or the API required by particular
+[type constraints](#type-constraints). In either case, the API can be specified
+using a [type-type](#type-type). Casting a type to a type-type results in a
+facet type, with data representation matching the original type and API matching
+the type-type.
+
+Casting to a facet type is one way of modeling compile-time
+[type erasure](#type-erasure) when calling a generic function. It is also a way
+of accessing APIs for a type that would otherwise be hidden, possibly to avoid a
+name conflict or because the implementation of that API was external to the
+definition of the type.
+
+A facet type associated with a specific interface, corresponds to the
+[impl](#impls-implementations-of-interfaces) of that interface for the type.
+Using such a facet type removes ambiguity about where to find the declaration
+and definition of any accessed methods.
 
 ## Extending/refining an interface
 

@@ -85,9 +85,9 @@ In one programming model, an interface is thought of as a forward declaration of
 a concrete type. For example, "`interface Comparable(Type:$ T) for T`" means
 that there is a type `Comparable(T)` defined for some types `T`, and for those
 `T` where it is defined, you may implicitly cast between `T` and `Comparable(T)`
-(they are [compatible types](#compatible-types)). Here, `Comparable(T)` is a
-[facet type](#facet-types) for `T`, so `Comparable(T)` has the API defined by
-the interface. You might define a generic function like so:
+(they are [compatible types](terminology.md#compatible-types)). Here,
+`Comparable(T)` is a [facet type](#facet-types) for `T`, so `Comparable(T)` has
+the API defined by the interface. You might define a generic function like so:
 
 ```
 fn F[Type:$ T](Comparable(T): x) ...
@@ -184,12 +184,12 @@ default impl for a particular interface for a type sees the same result, we
 require default impls to be defined either with the interface or the type.
 
 The main benefit of default impls is that it allows
-[subsumption](#subsumption-and-casting) to work. That is, by allowing the
-compiler to look up the impl for a (type, interface) combination automatically,
-you allow passing of values to generic functions transparently, without any
-explicit statement of how to satisfy the parameter's interface requirements.
-This of course means that any given type can have at most one default impl for
-any given interface.
+[subsumption](terminology.md#subsumption-and-casting) to work. That is, by
+allowing the compiler to look up the impl for a (type, interface) combination
+automatically, you allow passing of values to generic functions transparently,
+without any explicit statement of how to satisfy the parameter's interface
+requirements. This of course means that any given type can have at most one
+default impl for any given interface.
 
 ### Named impl
 
@@ -236,8 +236,8 @@ have come up so far.
 ### Facet types
 
 One approach is to cast values to a facet type. A facet type is a
-[compatible type](#compatible-types) to the original type written by the user,
-but has an API exactly matching one interface.
+[compatible type](terminology.md#compatible-types) to the original type written
+by the user, but has an API exactly matching one interface.
 
 A facet type corresponds to a single
 [impl](#impls-implementations-of-interfaces), and so you would have one facet
@@ -541,7 +541,7 @@ We want to be able to say things like:
     but the element types need to match.
 -   An interface may define an associated type that needs to be constrained to
     either implement some (set of) interface(s) or be
-    [compatible](#compatible-types) with another type.
+    [compatible](terminology.md#compatible-types) with another type.
 
 In general there are a number of different type relationships we would like to
 express, and multiple mechanisms we could use to express those constraints:
