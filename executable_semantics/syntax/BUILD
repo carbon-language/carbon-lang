@@ -46,6 +46,10 @@ cc_library(
 cc_test(
     name = "paren_contents_test",
     srcs = ["paren_contents_test.cpp"],
+    env = {
+        # FIXME: Remove this when leaks are fixed.
+        "ASAN_OPTIONS": "detect_leaks=0",
+    },
     deps = [
         ":paren_contents",
         "@llvm-project//llvm:gtest",

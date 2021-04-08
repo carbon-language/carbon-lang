@@ -166,15 +166,9 @@ def _impl(ctx):
                 flag_groups = ([
                     flag_group(
                         flags = [
-                            "-g0",
-                            "-O3",
                             "-DNDEBUG",
                             "-ffunction-sections",
                             "-fdata-sections",
-                            # Even when optimizing, preserve frame pointers for
-                            # profiling.
-                            "-fno-omit-frame-pointer",
-                            "-mno-omit-leaf-frame-pointer",
                         ],
                     ),
                 ]),
@@ -182,21 +176,8 @@ def _impl(ctx):
             ),
             flag_set(
                 actions = codegen_compile_actions,
-                flag_groups = ([
-                    flag_group(
-                        flags = ["-g"],
-                    ),
-                ]),
-                with_features = [with_feature_set(features = ["dbg"])],
-            ),
-            flag_set(
-                actions = codegen_compile_actions,
                 flag_groups = [
                     flag_group(flags = ["-fPIC"], expand_if_available = "pic"),
-                    flag_group(
-                        flags = ["-gsplit-dwarf", "-g"],
-                        expand_if_available = "per_object_debug_info_file",
-                    ),
                 ],
             ),
             flag_set(
@@ -282,6 +263,83 @@ def _impl(ctx):
         ],
     )
 
+    # Handle different levels of optimization with individual features so that
+    # they can be ordered and the defaults can override the minimal settings if
+    # both are enabled.
+    minimal_optimization_flags = feature(
+        name = "minimal_optimization_flags",
+        flag_sets = [flag_set(
+            actions = codegen_compile_actions,
+            flag_groups = [flag_group(flags = [
+                "-O1",
+            ])],
+        )],
+    )
+    default_optimization_flags = feature(
+        name = "default_optimization_flags",
+        enabled = True,
+        requires = [feature_set(["opt"])],
+        flag_sets = [flag_set(
+            actions = codegen_compile_actions,
+            flag_groups = [flag_group(flags = [
+                "-O3",
+            ])],
+        )],
+    )
+
+    # Handle different levels and forms of debug info emission with individual
+    # features so that they can be ordered and the defaults can override the
+    # minimal settings if both are enabled.
+    minimal_debug_info_flags = feature(
+        name = "minimal_debug_info_flags",
+        flag_sets = [flag_set(
+            actions = codegen_compile_actions,
+            flag_groups = [flag_group(flags = [
+                "-gmlt",
+            ])],
+        )],
+    )
+    default_debug_info_flags = feature(
+        name = "default_debug_info_flags",
+        enabled = True,
+        flag_sets = [
+            flag_set(
+                actions = codegen_compile_actions,
+                flag_groups = ([
+                    flag_group(
+                        flags = ["-g"],
+                    ),
+                ]),
+                with_features = [with_feature_set(features = ["dbg"])],
+            ),
+            flag_set(
+                actions = codegen_compile_actions,
+                flag_groups = [
+                    flag_group(
+                        flags = ["-gsplit-dwarf", "-g"],
+                        expand_if_available = "per_object_debug_info_file",
+                    ),
+                ],
+            ),
+        ],
+    )
+
+    # This feature can be enabled in conjunction with any optimizations to
+    # ensure accurate call stacks and backtraces for profilers or errors.
+    preserve_call_stacks = feature(
+        name = "preserve_call_stacks",
+        flag_sets = [flag_set(
+            actions = codegen_compile_actions,
+            flag_groups = [flag_group(flags = [
+                # Ensure good backtraces by preserving frame pointers and
+                # disabling tail call elimination.
+                "-fno-omit-frame-pointer",
+                "-mno-omit-leaf-frame-pointer",
+                "-fno-optimize-sibling-calls",
+            ])],
+        )],
+    )
+
     sysroot_feature = feature(
         name = "sysroot",
         enabled = True,
@@ -361,28 +419,49 @@ def _impl(ctx):
             ),
         ],
     )
+
+    sanitizer_common_flags = feature(
+        name = "sanitizer_common_flags",
+        requires = [feature_set(["nonhost"])],
+        implies = ["minimal_optimization_flags", "minimal_debug_info_flags", "preserve_call_stacks"],
+        flag_sets = [flag_set(
+            actions = all_link_actions,
+            flag_groups = [flag_group(flags = [
+                "-static-libsan",
+            ])],
+        )],
+    )
+
+    asan = feature(
+        name = "asan",
+        requires = [feature_set(["nonhost"])],
+        implies = ["sanitizer_common_flags"],
+        flag_sets = [flag_set(
+            actions = all_compile_actions + all_link_actions,
+            flag_groups = [flag_group(flags = [
+                "-fsanitize=address,undefined",
+                "-fsanitize-address-use-after-scope",
+            ])],
+        )],
+    )
+
+    enable_asan_in_fastbuild = feature(
+        name = "enable_asan_in_fastbuild",
+        enabled = True,
+        requires = [feature_set(["nonhost", "fastbuild"])],
+        implies = ["asan"],
+    )
+
     fuzzer = feature(
         name = "fuzzer",
-        flag_sets = [
-            flag_set(
-                actions = all_compile_actions + all_link_actions,
-                flag_groups = [
-                    flag_group(
-                        flags = ["-fsanitize=fuzzer,address"],
-                    ),
-                ],
-            ),
-            flag_set(
-                actions = all_link_actions,
-                flag_groups = ([
-                    flag_group(
-                        flags = [
-                            "-static-libsan",
-                        ],
-                    ),
-                ]),
-            ),
-        ],
+        requires = [feature_set(["nonhost"])],
+        implies = ["asan"],
+        flag_sets = [flag_set(
+            actions = all_compile_actions + all_link_actions,
+            flag_groups = [flag_group(flags = [
+                "-fsanitize=fuzzer",
+            ])],
+        )],
     )
 
     linux_flags_feature = feature(
@@ -612,20 +691,30 @@ def _impl(ctx):
 
     # First, define features that are simply used to configure others.
     features = [
-        feature(name = "no_legacy_features"),
         feature(name = "dbg"),
         feature(name = "fastbuild"),
+        feature(name = "host"),
+        feature(name = "no_legacy_features"),
+        feature(name = "nonhost"),
         feature(name = "opt"),
+        feature(name = "supports_dynamic_linker", enabled = ctx.attr.target_cpu == "k8"),
         feature(name = "supports_pic", enabled = True),
         feature(name = "supports_start_end_lib", enabled = ctx.attr.target_cpu == "k8"),
-        feature(name = "supports_dynamic_linker", enabled = ctx.attr.target_cpu == "k8"),
     ]
 
     # The order of the features determines the relative order of flags used.
     # Start off adding the baseline features.
     features += [
         default_flags_feature,
+        minimal_optimization_flags,
+        default_optimization_flags,
+        minimal_debug_info_flags,
+        default_debug_info_flags,
+        preserve_call_stacks,
         sysroot_feature,
+        sanitizer_common_flags,
+        asan,
+        enable_asan_in_fastbuild,
         fuzzer,
         layering_check,
         module_maps,
