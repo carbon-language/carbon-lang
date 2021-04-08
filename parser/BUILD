@@ -85,3 +85,25 @@ cc_fuzz_test(
         "@llvm-project//llvm:Support",
     ],
 )
+
+cc_library(
+    name = "precedence",
+    srcs = ["precedence.cpp"],
+    hdrs = ["precedence.h"],
+    deps = [
+        "//lexer:token_kind",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_test(
+    name = "precedence_test",
+    srcs = ["precedence_test.cpp"],
+    deps = [
+        "//lexer:token_kind",
+        ":precedence",
+        "@llvm-project//llvm:gmock",
+        "@llvm-project//llvm:gtest",
+        "@llvm-project//llvm:gtest_main",
+    ],
+)
