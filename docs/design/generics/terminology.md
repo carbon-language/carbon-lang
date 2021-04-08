@@ -35,6 +35,8 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Static-dispatch witness table](#static-dispatch-witness-table)
 -   [Instantiation](#instantiation)
 -   [Specialization](#specialization)
+    -   [Template specialization](#template-specialization)
+    -   [Generic specialization](#generic-specialization)
 -   [Conditional conformance](#conditional-conformance)
 -   [Interface type parameters versus associated types](#interface-type-parameters-versus-associated-types)
 -   [Type constraints](#type-constraints)
@@ -446,6 +448,8 @@ and other errors may only happen for **some** instantiations.
 
 ## Specialization
 
+### Template specialization
+
 Specialization in C++ is essentially overloading in the context of a template.
 The template is overloaded to have a different definition for some subset of the
 possible template argument values. For example, the C++ type `std::vector<T>`
@@ -453,6 +457,8 @@ might have a specialization `std::vector<T*>` that is implemented in terms of
 `std::vector<void*>` to reduce code size. In C++, even the interface of a
 templated type can be changed in a specialization, as happens for
 `std::vector<bool>`.
+
+### Generic specialization
 
 Specialization of generics, or types used by generics, is restricted to changing
 the implementation _without_ affecting the interface. This restriction is needed

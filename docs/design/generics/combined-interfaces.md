@@ -4471,16 +4471,16 @@ fields before interfaces for example fields.
 
 ### Generic type specialization
 
-[Specialization](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#specialization)
+[Generic specialization](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#generic-specialization)
 
 TODO: Main idea is that given `MyType(T)` we should be able to derive
 `MyTypeInterface(T)` that captures the interface of `MyType(T)` without its
 implementation. Only that interface should be used to typecheck uses of
 `MyType(T)` in generic functions, so that we can support specializations. For
 example, we could have a specific optimized implementation of `MyType(Bool)` as
-long as it conformed to `MyTypeInteface(Bool)`. Similarly we should support
-partial specializations like `MyType(Ptr(T))`. Main problem is supporting this
-with the dynamic strategy.
+long as it conformed to `MyTypeInteface(Bool)` or some extension. Similarly we
+should support partial specializations like `MyType(Ptr(T))`. Main problem is
+supporting this with the dynamic strategy.
 
 ## Notes
 
