@@ -343,6 +343,11 @@ development. Or it might choose between them on a more granular level based on
 code analysis or profiling--maybe some specific specializations are needed for
 performance, but others would just be code bloat.
 
+As a result, generic code must satisfy the requirements of both strategies. For
+example, the values for generic parameters must be statically known at the
+callsite to support the static specialization strategy. Other limitations are
+[listed below](#specialization-strategy).
+
 In addition, the user may opt in to using the dynamic strategy in specific
 cases. This could be just to control binary size in cases the user knows are not
 performance sensitive, or it could be to get the additional capability of
@@ -360,8 +365,10 @@ generic code. This gives us these sub-goals:
 
 -   Users should be able to convert a single template parameter to be generic at
     a time. A hybrid function with both template and generic parameters has all
-    the limitations of a template function: it can't be definition checked, it
-    can't use the dynamic strategy, and so on.
+    the limitations of a template function: it can't be completely definition
+    checked, it can't use the dynamic strategy, and so on. Even so, there are
+    still benefits from enforcing the function's declared contract for those
+    parameters that have been converted.
 -   Converting from a template parameter to a generic parameter should be safe.
     It should either work or fail to compile, never silently change semantics.
 -   We should minimize the effort to convert functions and types from templated
@@ -488,7 +495,10 @@ Since C++ concepts are structural, they are
 interfaces leave little room for strengthening requirements without
 simultaneously updating all types that implement the interface. Weaking
 requirements is also hard without updating all functions using that interface as
-a constraint.
+a constraint. With a nominal interfaces, the explicit declaration indicating
+which types implement an interface provides the information needed to implement
+evolution strategies. For example, it lets you identify which types need to
+implement a new function, and provide a default for those types in the interim.
 
 ### Interop and evolution
 
