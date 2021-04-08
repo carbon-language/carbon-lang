@@ -43,9 +43,6 @@ jobs:
         with:
           # Match the min version listed in docs/project/contribution_tools.md
           python-version: '3.6'
-      - name: Install python modules
-        run: |
-          pip install gql PyGitHub
 
       # On macOS we need Go and to use it to install Bazelisk.
       - uses: actions/setup-go@v2
@@ -61,8 +58,6 @@ jobs:
         run: |
           bazelisk --version
           python --version
-          echo gql "$(pip show gql | grep Version)"
-          echo PyGitHub "$(pip show PyGitHub | grep Version)"
 
       # Build all targets first to isolate build failures.
       - name: Build (${{ matrix.build_mode }})
