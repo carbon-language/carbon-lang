@@ -25,7 +25,6 @@ contributions.
     -   [Bazel and Bazelisk](#bazel-and-bazelisk)
     -   [buildifier](#buildifier)
     -   [Clang and LLVM](#clang-and-llvm)
-    -   [Ninja](#ninja)
     -   [pre-commit](#pre-commit)
 -   [Optional tools](#optional-tools)
     -   [Carbon-maintained](#carbon-maintained)
@@ -184,22 +183,43 @@ Our recommended way of installing is:
 ### Clang and LLVM
 
 [Clang](https://clang.llvm.org/) and [LLVM](https://llvm.org/) are used to
-compile and link Carbon, and are provided through git submodules. A complete
-toolchain will be built and cached as part of standard `bazel` execution. This
-can be very slow on less powerful computers or laptops (30 minutes to an hour).
-However, it should only happen when either Bazel or LLVM's submodule is updated,
-which we try to minimize. If you need to force a rebuild of the toolchain, you
-can use `bazel sync --configure`.
+compile and link Carbon as part of its build. Their source code are also
+provided through git submodules for incorporation into Carbon or Carbon tools as
+libraries. While the source submodule tracks upstream LLVM, the project expects
+the LLVM 12 release (or newer) to be installed with Clang and other tools in
+your `PATH` for use in building Carbon itself.
 
-### Ninja
-
-[Ninja](https://ninja-build.org/) is used to build Clang and LLVM.
-
-Our recommended way of installing is:
+Our recommended way of installing is to use Homebrew on both macOS and Linux. At
+the moment few if any Linux distributions package Clang and LLVM in a way that
+we can use; we've tested the Debian packages and those do not work. However,
+Homebrew's installation avoids these issues and so we simply recommend using
+that:
 
 ```bash
-brew install ninja
+brew install llvm
 ```
+
+You may need to add the installed binaries to your `PATH` or use the `CC`
+environment variable to point at the installed `clang`. When building with
+Bazel, it will first try to use the `clang` binary in the `CC` environment
+variable if set, and fall back to looking up a `clang` binary on the system
+`PATH`. It assumes that the rest of the LLVM toolchain is available in the same
+directory.
+
+Various scripts and tools assume that Clang's C++ tools are on the `PATH` such
+as `clang-format`, `clang-tidy`, etc.
+
+You can also build and install `LLVM` yourself if you prefer. The essential
+CMake options to pass in order for this to work reliably include:
+
+```
+-DLLVM_ENABLE_PROJECTS=clang;clang-tools-extra;lld
+-DLLVM_ENABLE_RUNTIMES=compiler-rt;libcxx;libcxxabi;libunwind
+-DRUNTIMES_CMAKE_ARGS=-DLLVM_ENABLE_PER_TARGET_RUNTIME_DIR=OFF;-DCMAKE_POSITION_INDEPENDENT_CODE=ON;-DLIBCXX_ENABLE_STATIC_ABI_LIBRARY=ON;-DLIBCXX_STATICALLY_LINK_ABI_IN_SHARED_LIBRARY=OFF;-DLIBCXX_STATICALLY_LINK_ABI_IN_STATIC_LIBRARY=ON;-DLIBCXX_USE_COMPILER_RT=ON;-DLIBCXXABI_USE_COMPILER_RT=ON;-DLIBCXXABI_USE_LLVM_UNWINDER=ON
+```
+
+However, we primarily test against the Homebrew installation, so if building
+LLVM and Clang yourself you may hit some issues.
 
 ### pre-commit
 

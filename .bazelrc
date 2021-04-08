@@ -16,12 +16,17 @@ build --host_crosstool_top=@bazel_cc_toolchain
 # https://github.com/bazelbuild/bazel/issues/13315
 build --incompatible_dont_enable_host_nonhost_crosstool_features=false
 
+# Default dynamic linking to off. While this can help build performance in some
+# edge cases with very large linked executables and a slow linker, between using
+# fast linkers on all platforms (LLD and the Apple linker), as well as having
+# relatively few such executables, shared objects simply waste too much space in
+# our builds.
+build --dynamic_mode=off
+
 # Completely disable Bazel's automatic stripping of debug information. Removing
 # that information causes unhelpful backtraces from unittest failures and other
 # crashes. Optimized builds already avoid using debug information by default.
 build --strip=never
-
-build:force_local_bootstrap --repo_env=CARBON_FORCE_LOCAL_BOOTSTRAP_BUILD=1
 
 # Configuration for enabling Address Sanitizer. Note that this is enabled by
 # default for fastbuild. The config is provided to enable ASan even in
