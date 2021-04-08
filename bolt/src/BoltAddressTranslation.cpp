@@ -23,8 +23,9 @@ const char* BoltAddressTranslation::SECTION_NAME = ".note.bolt_bat";
 void BoltAddressTranslation::writeEntriesForBB(MapTy &Map,
                                                const BinaryBasicBlock &BB,
                                                uint64_t FuncAddress) {
-  const auto BBOutputOffset = BB.getOutputAddressRange().first - FuncAddress;
-  const auto BBInputOffset = BB.getInputOffset();
+  const uint64_t BBOutputOffset =
+      BB.getOutputAddressRange().first - FuncAddress;
+  const uint32_t BBInputOffset = BB.getInputOffset();
 
   assert(BBInputOffset != BinaryBasicBlock::INVALID_OFFSET &&
          "Every output BB must track back to an input BB for profile "
@@ -43,8 +44,8 @@ void BoltAddressTranslation::writeEntriesForBB(MapTy &Map,
   Map[BBOutputOffset] = BBInputOffset;
 
   for (const auto &IOPair : BB.getOffsetTranslationTable()) {
-    const auto OutputOffset = IOPair.first + BBOutputOffset;
-    const auto InputOffset = IOPair.second;
+    const uint64_t OutputOffset = IOPair.first + BBOutputOffset;
+    const uint32_t InputOffset = IOPair.second;
 
     // Is this the first instruction in the BB? No need to duplicate the entry.
     if (OutputOffset == BBOutputOffset)
@@ -60,7 +61,7 @@ void BoltAddressTranslation::writeEntriesForBB(MapTy &Map,
 void BoltAddressTranslation::write(raw_ostream &OS) {
   LLVM_DEBUG(dbgs() << "BOLT-DEBUG: Writing BOLT Address Translation Tables\n");
   for (auto &BFI : BC.getBinaryFunctions()) {
-    auto &Function = BFI.second;
+    BinaryFunction &Function = BFI.second;
     // We don't need a translation table if the body of the function hasn't
     // changed
     if (!BC.HasRelocations && !Function.isSimple())
@@ -71,7 +72,7 @@ void BoltAddressTranslation::write(raw_ostream &OS) {
                       << Twine::utohexstr(Function.getOutputAddress()) << "\n");
     MapTy Map;
     const bool IsSplit = Function.isSplit();
-    for (const auto &BB : Function.layout()) {
+    for (BinaryBasicBlock *&BB : Function.layout()) {
       if (IsSplit && BB->isCold())
         break;
       writeEntriesForBB(Map, *BB, Function.getOutputAddress());
@@ -84,7 +85,7 @@ void BoltAddressTranslation::write(raw_ostream &OS) {
     // Cold map
     Map.clear();
     LLVM_DEBUG(dbgs() << " Cold part\n");
-    for (const auto &BB : Function.layout()) {
+    for (BinaryBasicBlock *&BB : Function.layout()) {
       if (!BB->isCold())
         continue;
       writeEntriesForBB(Map, *BB, Function.cold().getAddress());
@@ -105,7 +106,7 @@ void BoltAddressTranslation::write(raw_ostream &OS) {
                       << Twine::utohexstr(Address) << ".\n");
     OS.write(reinterpret_cast<const char *>(&Address), 8);
     OS.write(reinterpret_cast<const char *>(&NumEntries), 4);
-    for (auto &KeyVal : Map) {
+    for (std::pair<const uint32_t, uint32_t> &KeyVal : Map) {
       OS.write(reinterpret_cast<const char *>(&KeyVal.first), 4);
       OS.write(reinterpret_cast<const char *>(&KeyVal.second), 4);
     }
@@ -114,7 +115,7 @@ void BoltAddressTranslation::write(raw_ostream &OS) {
   LLVM_DEBUG(dbgs() << "Writing " << NumColdEntries
                     << " cold part mappings.\n");
   OS.write(reinterpret_cast<const char *>(&NumColdEntries), 4);
-  for (auto &ColdEntry : ColdPartSource) {
+  for (std::pair<const uint64_t, uint64_t> &ColdEntry : ColdPartSource) {
     OS.write(reinterpret_cast<const char *>(&ColdEntry.first), 8);
     OS.write(reinterpret_cast<const char *>(&ColdEntry.second), 8);
     LLVM_DEBUG(dbgs() << " " << Twine::utohexstr(ColdEntry.first) << " -> "
@@ -217,7 +218,7 @@ uint64_t BoltAddressTranslation::translate(const BinaryFunction &Func,
   return Offset - KeyVal->first + Val;
 }
 
-Optional<SmallVector<std::pair<uint64_t, uint64_t>, 16>>
+Optional<BoltAddressTranslation::FallthroughListTy>
 BoltAddressTranslation::getFallthroughsInTrace(
     const BinaryFunction &Func, uint64_t From, uint64_t To) const {
   SmallVector<std::pair<uint64_t, uint64_t>, 16> Res;
@@ -254,7 +255,7 @@ BoltAddressTranslation::getFallthroughsInTrace(
     return Res;
 
   for (auto Iter = FromIter; Iter != ToIter; ) {
-    const auto Src = Iter->first;
+    const uint32_t Src = Iter->first;
     if (Iter->second & BRANCHENTRY) {
       ++Iter;
       continue;
@@ -281,9 +282,9 @@ uint64_t BoltAddressTranslation::fetchParentAddress(uint64_t Address) const {
 
 bool BoltAddressTranslation::enabledFor(
     llvm::object::ELFObjectFileBase *InputFile) const {
-  for (const auto &Section : InputFile->sections()) {
-    auto SectionNameOrErr = Section.getName();
-    if (auto E = SectionNameOrErr.takeError())
+  for (const SectionRef &Section : InputFile->sections()) {
+    Expected<StringRef> SectionNameOrErr = Section.getName();
+    if (Error E = SectionNameOrErr.takeError())
       continue;
 
     if (SectionNameOrErr.get() == SECTION_NAME)

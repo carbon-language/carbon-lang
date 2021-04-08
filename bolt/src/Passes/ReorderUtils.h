@@ -33,7 +33,7 @@ public:
   }
 
   template <typename F> void forAllAdjacent(const Cluster *C, F Func) {
-    for (auto I = Bits[C->id()].find_first(); I != -1;
+    for (int I = Bits[C->id()].find_first(); I != -1;
          I = Bits[C->id()].find_next(I)) {
       Func(Clusters[I]);
     }
@@ -46,7 +46,7 @@ public:
     Bits[A->id()][A->id()] = false;
     Bits[A->id()][B->id()] = false;
     Bits[B->id()][A->id()] = false;
-    for (auto I = Bits[B->id()].find_first(); I != -1;
+    for (int I = Bits[B->id()].find_first(); I != -1;
          I = Bits[B->id()].find_next(I)) {
       Bits[I][A->id()] = true;
       Bits[I][B->id()] = false;
@@ -83,15 +83,15 @@ public:
   }
 
   void set(const Cluster *First, const Cluster *Second, ValueType Value) {
-    const auto Index = index(First, Second);
+    const size_t Index = index(First, Second);
     Cache[Index] = Value;
     Valid[Index] = true;
   }
 
   void invalidate(const Cluster *C) {
     Valid.reset(C->id() * Size, (C->id() + 1) * Size);
-    for (size_t id = 0; id < Size; id++) {
-      Valid.reset((id * Size) + C->id());
+    for (size_t Id = 0; Id < Size; Id++) {
+      Valid.reset((Id * Size) + C->id());
     }
   }
 
@@ -125,17 +125,17 @@ public:
   }
 
   void set(const Cluster *First, const Cluster *Second, ValueType Value) {
-    const auto Index = index(First, Second);
+    const size_t Index = index(First, Second);
     Cache[Index] = Value;
     Valid[Index] = true;
   }
 
   void invalidate(const Cluster *C) {
-    for (size_t idx = C->id() * Size; idx < (C->id() + 1) * Size; idx++)
-      Valid[idx] = false;
+    for (size_t Idx = C->id() * Size; Idx < (C->id() + 1) * Size; Idx++)
+      Valid[Idx] = false;
 
-    for (size_t id = 0; id < Size; id++)
-      Valid[(id * Size) + C->id()] = false;
+    for (size_t Id = 0; Id < Size; Id++)
+      Valid[(Id * Size) + C->id()] = false;
   }
 
 private:

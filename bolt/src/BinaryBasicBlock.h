@@ -434,7 +434,7 @@ public:
   void setSuccessorBranchInfo(const BinaryBasicBlock &Succ,
                               uint64_t Count,
                               uint64_t MispredictedCount) {
-    auto &BI = getBranchInfo(Succ);
+    BinaryBranchInfo &BI = getBranchInfo(Succ);
     BI.Count = Count;
     BI.MispredictedCount = MispredictedCount;
   }

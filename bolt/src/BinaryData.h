@@ -66,7 +66,7 @@ protected:
   uint64_t OutputOffset{0};
 
   BinaryData *getRootData() {
-    auto *BD = this;
+    BinaryData *BD = this;
     while (BD->Parent)
       BD = BD->Parent;
     return BD;
@@ -151,21 +151,21 @@ public:
   }
 
   const BinaryData *getRootData() const {
-    auto *BD = this;
+    const BinaryData *BD = this;
     while (BD->Parent)
       BD = BD->Parent;
     return BD;
   }
 
   BinaryData *getAtomicRoot() {
-    auto *BD = this;
+    BinaryData *BD = this;
     while (!BD->isAtomic() && BD->Parent)
       BD = BD->Parent;
     return BD;
   }
 
   const BinaryData *getAtomicRoot() const {
-    auto *BD = this;
+    const BinaryData *BD = this;
     while (!BD->isAtomic() && BD->Parent)
       BD = BD->Parent;
     return BD;
@@ -224,7 +224,7 @@ inline raw_ostream &operator<<(raw_ostream &OS,
 
   const char *Sep = "\n        ";
   uint64_t TotalCount = 0;
-  for (auto &AccessInfo : MAP.AddressAccessInfo) {
+  for (const AddressAccess &AccessInfo : MAP.AddressAccessInfo) {
     SS << Sep << "{ ";
     if (AccessInfo.MemoryObject)
       SS << AccessInfo.MemoryObject->getName() << " + ";

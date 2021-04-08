@@ -48,12 +48,12 @@ void StokeInfo::checkInstr(const BinaryContext &BC, const BinaryFunction &BF,
     StokeFuncInfo &FuncInfo) {
 
   BitVector RegV(NumRegs, false);
-  for (auto *BB : BF.layout()) {
+  for (BinaryBasicBlock *BB : BF.layout()) {
     if (BB->empty()) {
       continue;
     }
-    for (auto &It : *BB) {
-      auto &InstDesc = BC.MII->get(It.getOpcode());
+    for (MCInst &It : *BB) {
+      const MCInstrDesc &InstDesc = BC.MII->get(It.getOpcode());
       if (InstDesc.isPseudo()) {
         continue;
       }
@@ -65,7 +65,7 @@ void StokeInfo::checkInstr(const BinaryContext &BC, const BinaryFunction &BF,
       // check if this function contains call instruction
       if (BC.MIB->isCall(It)) {
         FuncInfo.HasCall = true;
-        const auto *TargetSymbol = BC.MIB->getTargetSymbol(It);
+        const MCSymbol *TargetSymbol = BC.MIB->getTargetSymbol(It);
         // if it is an indirect call, skip
         if (TargetSymbol == nullptr) {
           FuncInfo.Omitted = true;
@@ -74,8 +74,8 @@ void StokeInfo::checkInstr(const BinaryContext &BC, const BinaryFunction &BF,
       }
       // check if this function modify stack or heap
       // TODO: more accurate analysis
-      auto IsPush = BC.MIB->isPush(It);
-      auto IsRipAddr = BC.MIB->hasPCRelOperand(It);
+      bool IsPush = BC.MIB->isPush(It);
+      bool IsRipAddr = BC.MIB->hasPCRelOperand(It);
       if (IsPush) {
         FuncInfo.StackOut = true;
       }
@@ -113,7 +113,7 @@ bool StokeInfo::checkFunction(const BinaryContext &BC, BinaryFunction &BF,
 
   FuncInfo.IsLoopFree = BF.isLoopFree();
   if (!FuncInfo.IsLoopFree) {
-    auto &BLI = BF.getLoopInfo();
+    const BinaryLoopInfo &BLI = BF.getLoopInfo();
     FuncInfo.NumLoops = BLI.OuterLoops;
     FuncInfo.MaxLoopDepth = BLI.MaximumDepth;
   }
@@ -128,18 +128,19 @@ bool StokeInfo::checkFunction(const BinaryContext &BC, BinaryFunction &BF,
   BinaryBasicBlock &EntryBB = BF.front();
   assert(EntryBB.isEntryPoint() && "Weird, this should be the entry block!");
 
-  auto *FirstNonPseudo = EntryBB.getFirstNonPseudoInstr();
+  MCInst *FirstNonPseudo = EntryBB.getFirstNonPseudoInstr();
   if (!FirstNonPseudo) {
     return false;
   }
 
   LLVM_DEBUG(dbgs() << "\t [DefIn]\n\t ");
-  auto LiveInBV = *(DInfo.getLivenessAnalysis().getStateAt(FirstNonPseudo));
+  BitVector LiveInBV =
+      *(DInfo.getLivenessAnalysis().getStateAt(FirstNonPseudo));
   LiveInBV &= DefaultDefInMask;
   getRegNameFromBitVec(BC, LiveInBV, &FuncInfo.DefIn);
 
   LLVM_DEBUG(dbgs() << "\t [LiveOut]\n\t ");
-  auto LiveOutBV = RA.getFunctionClobberList(&BF);
+  BitVector LiveOutBV = RA.getFunctionClobberList(&BF);
   LiveOutBV &= DefaultLiveOutMask;
   getRegNameFromBitVec(BC, LiveOutBV, &FuncInfo.LiveOut);
 
@@ -163,7 +164,7 @@ void StokeInfo::runOnFunctions(BinaryContext &BC) {
   LLVM_DEBUG(dbgs() << "\tTripleName " << BC.TripleName << "\n");
   LLVM_DEBUG(dbgs() << "\tgetNumRegs " << BC.MRI->getNumRegs() << "\n");
 
-  auto CG = buildCallGraph(BC);
+  BinaryFunctionCallGraph CG = buildCallGraph(BC);
   RegAnalysis RA(BC, &BC.getBinaryFunctions(), &CG);
 
   NumRegs = BC.MRI->getNumRegs();

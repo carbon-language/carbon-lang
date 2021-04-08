@@ -53,8 +53,8 @@ protected:
   std::unordered_map<const MCInst *, BinaryBasicBlock *> InsnToBB;
 
   void preflight() {
-    for (auto &BB : this->Func) {
-      for (auto &Inst : BB) {
+    for (BinaryBasicBlock &BB : this->Func) {
+      for (MCInst &Inst : BB) {
         this->Expressions.push_back(&Inst);
         this->ExprToIdx[&Inst] = this->NumInstrs++;
         InsnToBB[&Inst] = &BB;

@@ -42,9 +42,9 @@ void JTFootprintReduction::checkOpportunities(BinaryContext &BC,
                                               DataflowInfoManager &Info) {
   std::map<JumpTable *, uint64_t> AllJTs;
 
-  for (auto &BB : Function) {
-    for (auto &Inst : BB) {
-      auto *JumpTable = Function.getJumpTable(Inst);
+  for (BinaryBasicBlock &BB : Function) {
+    for (MCInst &Inst : BB) {
+      JumpTable *JumpTable = Function.getJumpTable(Inst);
       if (!JumpTable)
         continue;
 
@@ -58,9 +58,10 @@ void JTFootprintReduction::checkOpportunities(BinaryContext &BC,
 
       uint64_t Scale;
       // Try a standard indirect jump matcher
-      auto IndJmpMatcher = BC.MIB->matchIndJmp(
-          BC.MIB->matchAnyOperand(), BC.MIB->matchImm(Scale),
-          BC.MIB->matchReg(), BC.MIB->matchAnyOperand());
+      std::unique_ptr<MCPlusBuilder::MCInstMatcher> IndJmpMatcher =
+          BC.MIB->matchIndJmp(BC.MIB->matchAnyOperand(),
+                              BC.MIB->matchImm(Scale), BC.MIB->matchReg(),
+                              BC.MIB->matchAnyOperand());
       if (!opts::JTFootprintOnlyPIC &&
           IndJmpMatcher->match(*BC.MRI, *BC.MIB,
                                MutableArrayRef<MCInst>(&*BB.begin(), &Inst + 1),
@@ -84,13 +85,16 @@ void JTFootprintReduction::checkOpportunities(BinaryContext &BC,
       MCPhysReg BaseReg1;
       MCPhysReg BaseReg2;
       uint64_t Offset;
-      auto PICIndJmpMatcher = BC.MIB->matchIndJmp(BC.MIB->matchAdd(
-          BC.MIB->matchReg(BaseReg1),
-          BC.MIB->matchLoad(BC.MIB->matchReg(BaseReg2), BC.MIB->matchImm(Scale),
-                            BC.MIB->matchReg(), BC.MIB->matchImm(Offset))));
-      auto PICBaseAddrMatcher = BC.MIB->matchIndJmp(
-          BC.MIB->matchAdd(BC.MIB->matchLoadAddr(BC.MIB->matchSymbol()),
-                           BC.MIB->matchAnyOperand()));
+      std::unique_ptr<MCPlusBuilder::MCInstMatcher> PICIndJmpMatcher =
+          BC.MIB->matchIndJmp(BC.MIB->matchAdd(
+              BC.MIB->matchReg(BaseReg1),
+              BC.MIB->matchLoad(BC.MIB->matchReg(BaseReg2),
+                                BC.MIB->matchImm(Scale), BC.MIB->matchReg(),
+                                BC.MIB->matchImm(Offset))));
+      std::unique_ptr<MCPlusBuilder::MCInstMatcher> PICBaseAddrMatcher =
+          BC.MIB->matchIndJmp(
+              BC.MIB->matchAdd(BC.MIB->matchLoadAddr(BC.MIB->matchSymbol()),
+                               BC.MIB->matchAnyOperand()));
       if (!PICIndJmpMatcher->match(
               *BC.MRI, *BC.MIB,
               MutableArrayRef<MCInst>(&*BB.begin(), &Inst + 1), -1) ||
@@ -108,7 +112,7 @@ void JTFootprintReduction::checkOpportunities(BinaryContext &BC,
 
   // Statistics only
   for (const auto &JTFreq : AllJTs) {
-    auto *JT = JTFreq.first;
+    JumpTable *JT = JTFreq.first;
     uint64_t CurScore = JTFreq.second;
     TotalJTScore += CurScore;
     if (!BlacklistedJTs.count(JT)) {
@@ -132,9 +136,10 @@ bool JTFootprintReduction::tryOptimizeNonPIC(
   uint64_t Scale;
   MCPhysReg Index;
   MCOperand Offset;
-  auto IndJmpMatcher = BC.MIB->matchIndJmp(
-      BC.MIB->matchAnyOperand(Base), BC.MIB->matchImm(Scale),
-      BC.MIB->matchReg(Index), BC.MIB->matchAnyOperand(Offset));
+  std::unique_ptr<MCPlusBuilder::MCInstMatcher> IndJmpMatcher =
+      BC.MIB->matchIndJmp(BC.MIB->matchAnyOperand(Base),
+                          BC.MIB->matchImm(Scale), BC.MIB->matchReg(Index),
+                          BC.MIB->matchAnyOperand(Offset));
   if (!IndJmpMatcher->match(*BC.MRI, *BC.MIB,
                             MutableArrayRef<MCInst>(&*BB.begin(), &*Inst + 1),
                             -1)) {
@@ -146,10 +151,10 @@ bool JTFootprintReduction::tryOptimizeNonPIC(
   Scale = 4;
   IndJmpMatcher->annotate(*BC.MIB, "DeleteMe");
 
-  auto &LA = Info.getLivenessAnalysis();
+  LivenessAnalysis &LA = Info.getLivenessAnalysis();
   MCPhysReg Reg = LA.scavengeRegAfter(&*Inst);
   assert(Reg != 0 && "Register scavenger failed!");
-  auto RegOp = MCOperand::createReg(Reg);
+  MCOperand RegOp = MCOperand::createReg(Reg);
   SmallVector<MCInst, 4> NewFrag;
 
   BC.MIB->createIJmp32Frag(NewFrag, Base, MCOperand::createImm(Scale),
@@ -171,10 +176,12 @@ bool JTFootprintReduction::tryOptimizePIC(
   MCPhysReg Index;
   MCOperand Offset;
   MCOperand JumpTableRef;
-  auto PICIndJmpMatcher = BC.MIB->matchIndJmp(BC.MIB->matchAdd(
-      BC.MIB->matchLoadAddr(BC.MIB->matchAnyOperand(JumpTableRef)),
-      BC.MIB->matchLoad(BC.MIB->matchReg(BaseReg), BC.MIB->matchImm(Scale),
-                        BC.MIB->matchReg(Index), BC.MIB->matchAnyOperand())));
+  std::unique_ptr<MCPlusBuilder::MCInstMatcher> PICIndJmpMatcher =
+      BC.MIB->matchIndJmp(BC.MIB->matchAdd(
+          BC.MIB->matchLoadAddr(BC.MIB->matchAnyOperand(JumpTableRef)),
+          BC.MIB->matchLoad(BC.MIB->matchReg(BaseReg), BC.MIB->matchImm(Scale),
+                            BC.MIB->matchReg(Index),
+                            BC.MIB->matchAnyOperand())));
   if (!PICIndJmpMatcher->match(*BC.MRI, *BC.MIB,
                               MutableArrayRef<MCInst>(&*BB.begin(), &*Inst + 1),
                                -1)) {
@@ -185,7 +192,7 @@ bool JTFootprintReduction::tryOptimizePIC(
 
   PICIndJmpMatcher->annotate(*BC.MIB, "DeleteMe");
 
-  auto RegOp = MCOperand::createReg(BaseReg);
+  MCOperand RegOp = MCOperand::createReg(BaseReg);
   SmallVector<MCInst, 4> NewFrag;
 
   BC.MIB->createIJmp32Frag(NewFrag, MCOperand::createReg(0),
@@ -204,18 +211,18 @@ bool JTFootprintReduction::tryOptimizePIC(
 void JTFootprintReduction::optimizeFunction(BinaryContext &BC,
                                             BinaryFunction &Function,
                                             DataflowInfoManager &Info) {
-  for (auto &BB : Function) {
+  for (BinaryBasicBlock &BB : Function) {
     if (!BB.getNumNonPseudos())
       continue;
 
     auto IndJmpRI = BB.getLastNonPseudo();
     auto IndJmp = std::prev(IndJmpRI.base());
-    const auto JTAddr = BC.MIB->getJumpTable(*IndJmp);
+    const uint64_t JTAddr = BC.MIB->getJumpTable(*IndJmp);
 
     if (!JTAddr)
       continue;
 
-    auto *JumpTable = Function.getJumpTable(*IndJmp);
+    JumpTable *JumpTable = Function.getJumpTable(*IndJmp);
     if (BlacklistedJTs.count(JumpTable))
       continue;
 
@@ -231,7 +238,7 @@ void JTFootprintReduction::optimizeFunction(BinaryContext &BC,
   if (!Modified.count(&Function))
     return;
 
-  for (auto &BB : Function) {
+  for (BinaryBasicBlock &BB : Function) {
     for (auto I = BB.begin(); I != BB.end(); ) {
       if (BC.MIB->hasAnnotation(*I, "DeleteMe"))
         I = BB.eraseInstruction(I);
@@ -252,7 +259,7 @@ void JTFootprintReduction::runOnFunctions(BinaryContext &BC) {
     RA.reset(new RegAnalysis(BC, &BC.getBinaryFunctions(), &*CG));
   }
   for (auto &BFIt : BC.getBinaryFunctions()) {
-    auto &Function = BFIt.second;
+    BinaryFunction &Function = BFIt.second;
 
     if (!Function.isSimple() || Function.isIgnored())
       continue;

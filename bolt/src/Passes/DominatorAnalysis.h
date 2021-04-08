@@ -43,9 +43,9 @@ public:
 
   SmallSetVector<ProgramPoint, 4> getDominanceFrontierFor(const MCInst &Dom) {
     SmallSetVector<ProgramPoint, 4> Result;
-    auto DomIdx = this->ExprToIdx[&Dom];
+    uint64_t DomIdx = this->ExprToIdx[&Dom];
     assert(!Backward && "Post-dom frontier not implemented");
-    for (auto &BB : this->Func) {
+    for (BinaryBasicBlock &BB : this->Func) {
       bool HasDominatedPred = false;
       bool HasNonDominatedPred = false;
       SmallSetVector<ProgramPoint, 4> Candidates;
@@ -111,8 +111,8 @@ private:
   void preflight() {
     // Populate our universe of tracked expressions with all instructions
     // except pseudos
-    for (auto &BB : this->Func) {
-      for (auto &Inst : BB) {
+    for (BinaryBasicBlock &BB : this->Func) {
+      for (MCInst &Inst : BB) {
         this->Expressions.push_back(&Inst);
         this->ExprToIdx[&Inst] = this->NumInstrs++;
       }

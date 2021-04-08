@@ -85,26 +85,26 @@ Error MachORewriteInstance::setProfile(StringRef Filename) {
 void MachORewriteInstance::preprocessProfileData() {
   if (!ProfileReader)
     return;
-  if (auto E = ProfileReader->preprocessProfile(*BC.get()))
+  if (Error E = ProfileReader->preprocessProfile(*BC.get()))
     report_error("cannot pre-process profile", std::move(E));
 }
 
 void MachORewriteInstance::processProfileDataPreCFG() {
   if (!ProfileReader)
     return;
-  if (auto E = ProfileReader->readProfilePreCFG(*BC.get()))
+  if (Error E = ProfileReader->readProfilePreCFG(*BC.get()))
     report_error("cannot read profile pre-CFG", std::move(E));
 }
 
 void MachORewriteInstance::processProfileData() {
   if (!ProfileReader)
     return;
-  if (auto E = ProfileReader->readProfile(*BC.get()))
+  if (Error E = ProfileReader->readProfile(*BC.get()))
     report_error("cannot read profile", std::move(E));
 }
 
 void MachORewriteInstance::readSpecialSections() {
-  for (const auto &Section : InputFile->sections()) {
+  for (const object::SectionRef &Section : InputFile->sections()) {
     Expected<StringRef> SectionName = Section.getName();;
     check_error(SectionName.takeError(), "cannot get section name");
     // Only register sections with names.
@@ -157,7 +157,7 @@ std::vector<DataInCodeRegion> readDataInCode(const MachOObjectFile &O) {
 Optional<uint64_t> readStartAddress(const MachOObjectFile &O) {
   Optional<uint64_t> StartOffset;
   Optional<uint64_t> TextVMAddr;
-  for (const auto &LC : O.load_commands()) {
+  for (const object::MachOObjectFile::LoadCommandInfo &LC : O.load_commands()) {
     switch (LC.C.cmd) {
     case MachO::LC_MAIN: {
       MachO::entry_point_command LCMain = O.getEntryPointCommand(LC);
@@ -206,7 +206,7 @@ void MachORewriteInstance::discoverFileObjects() {
                    });
   for (size_t Index = 0; Index < FunctionSymbols.size(); ++Index) {
     const uint64_t Address = cantFail(FunctionSymbols[Index].getValue());
-    auto Section = BC->getSectionForAddress(Address);
+    ErrorOr<BinarySection &> Section = BC->getSectionForAddress(Address);
     // TODO: It happens for some symbols (e.g. __mh_execute_header).
     // Add proper logic to handle them correctly.
     if (!Section) {
@@ -253,7 +253,7 @@ void MachORewriteInstance::discoverFileObjects() {
     BinaryFunction &Function = BFI.second;
     Function.setMaxSize(Function.getSize());
 
-    auto FunctionData = Function.getData();
+    ErrorOr<ArrayRef<uint8_t>> FunctionData = Function.getData();
     if (!FunctionData) {
       errs() << "BOLT-ERROR: corresponding section is non-executable or "
              << "empty for function " << Function << '\n';
@@ -412,7 +412,7 @@ public:
 
   JITSymbol findSymbol(const std::string &Name) override {
     LLVM_DEBUG(dbgs() << "BOLT: looking for " << Name << "\n");
-    if (auto *I = BC.getBinaryDataByName(Name)) {
+    if (BinaryData *I = BC.getBinaryDataByName(Name)) {
       const uint64_t Address = I->isMoved() && !I->isJumpTable()
                                    ? I->getOutputAddress()
                                    : I->getAddress();
@@ -462,7 +462,7 @@ void MachORewriteInstance::emitAndLink() {
       "error creating in-memory object");
   assert(Obj && "createObjectFile cannot return nullptr");
 
-  auto Resolver = BOLTSymbolResolver(*BC);
+  BOLTSymbolResolver Resolver = BOLTSymbolResolver(*BC);
 
   MCAsmLayout FinalLayout(
       static_cast<MCObjectStreamer *>(Streamer.get())->getAssembler());

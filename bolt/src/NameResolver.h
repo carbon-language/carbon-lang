@@ -30,7 +30,7 @@ class NameResolver {
 public:
   /// Return unique version of the \p Name in the form "Name<Sep><Number>".
   std::string uniquify(StringRef Name) {
-    const auto ID = ++Counters[Name];
+    const uint64_t ID = ++Counters[Name];
     return (Name + Twine(Sep) + Twine(ID)).str();
   }
 

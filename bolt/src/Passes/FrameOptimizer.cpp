@@ -63,10 +63,10 @@ void FrameOptimizerPass::removeUnnecessaryLoads(const RegAnalysis &RA,
   std::deque<std::pair<BinaryBasicBlock *, MCInst *>> ToErase;
   bool Changed = false;
   const auto ExprEnd = SAE.expr_end();
-  for (auto &BB : BF) {
+  for (BinaryBasicBlock &BB : BF) {
     LLVM_DEBUG(dbgs() <<"\tNow at BB " << BB.getName() << "\n");
     const MCInst *Prev = nullptr;
-    for (auto &Inst : BB) {
+    for (MCInst &Inst : BB) {
       LLVM_DEBUG({
         dbgs() << "\t\tNow at ";
         Inst.dump();
@@ -79,7 +79,7 @@ void FrameOptimizerPass::removeUnnecessaryLoads(const RegAnalysis &RA,
       // if Inst is a load from stack and the current available expressions show
       // this value is available in a register or immediate, replace this load
       // with move from register or from immediate.
-      auto FIEX = FA.getFIEFor(Inst);
+      ErrorOr<const FrameIndexEntry &> FIEX = FA.getFIEFor(Inst);
       if (!FIEX) {
         Prev = &Inst;
         continue;
@@ -96,7 +96,7 @@ void FrameOptimizerPass::removeUnnecessaryLoads(const RegAnalysis &RA,
       for (auto I = Prev ? SAE.expr_begin(*Prev) : SAE.expr_begin(BB);
            I != ExprEnd; ++I) {
         const MCInst *AvailableInst = *I;
-        auto FIEY = FA.getFIEFor(*AvailableInst);
+        ErrorOr<const FrameIndexEntry &> FIEY = FA.getFIEFor(*AvailableInst);
         if (!FIEY)
           continue;
         assert(FIEY->IsStore && FIEY->IsSimple);
@@ -152,7 +152,7 @@ void FrameOptimizerPass::removeUnnecessaryLoads(const RegAnalysis &RA,
   }
   // TODO: Implement an interface of eraseInstruction that works out the
   // complete list of elements to remove.
-  for (auto I : ToErase) {
+  for (std::pair<BinaryBasicBlock *, MCInst *> I : ToErase) {
     I.first->eraseInstruction(I.first->findInstruction(I.second));
   }
 }
@@ -166,11 +166,11 @@ void FrameOptimizerPass::removeUnusedStores(const FrameAnalysis &FA,
   LLVM_DEBUG(dbgs() << "Performing unused stores removal\n");
   std::vector<std::pair<BinaryBasicBlock *, MCInst *>> ToErase;
   bool Changed = false;
-  for (auto &BB : BF) {
+  for (BinaryBasicBlock &BB : BF) {
     LLVM_DEBUG(dbgs() <<"\tNow at BB " << BB.getName() << "\n");
     const MCInst *Prev = nullptr;
     for (auto I = BB.rbegin(), E = BB.rend(); I != E; ++I) {
-      auto &Inst = *I;
+      MCInst &Inst = *I;
       LLVM_DEBUG({
         dbgs() << "\t\tNow at ";
         Inst.dump();
@@ -180,7 +180,7 @@ void FrameOptimizerPass::removeUnusedStores(const FrameAnalysis &FA,
           (*I)->dump();
         }
       });
-      auto FIEX = FA.getFIEFor(Inst);
+      ErrorOr<const FrameIndexEntry &> FIEX = FA.getFIEFor(Inst);
       if (!FIEX) {
         Prev = &Inst;
         continue;
@@ -212,7 +212,7 @@ void FrameOptimizerPass::removeUnusedStores(const FrameAnalysis &FA,
     }
   }
 
-  for (auto I : ToErase) {
+  for (std::pair<BinaryBasicBlock *, MCInst *> I : ToErase) {
     I.first->eraseInstruction(I.first->findInstruction(I.second));
   }
   if (Changed) {

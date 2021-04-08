@@ -322,8 +322,8 @@ public:
 
   /// Remove any state annotations left by this analysis
   void cleanAnnotations() {
-    for (auto &BB : Func) {
-      for (auto &Inst : BB) {
+    for (BinaryBasicBlock &BB : Func) {
+      for (MCInst &Inst : BB) {
         BC.MIB->removeAnnotation(Inst, derived().getAnnotationIndex());
       }
     }
@@ -335,11 +335,11 @@ public:
     derived().preflight();
 
     // Initialize state for all points of the function
-    for (auto &BB : Func) {
-      auto &St = getOrCreateStateAt(BB);
+    for (BinaryBasicBlock &BB : Func) {
+      StateTy &St = getOrCreateStateAt(BB);
       St = derived().getStartingStateAtBB(BB);
-      for (auto &Inst : BB) {
-        auto &St = getOrCreateStateAt(Inst);
+      for (MCInst &Inst : BB) {
+        StateTy &St = getOrCreateStateAt(Inst);
         St = derived().getStartingStateAtPoint(Inst);
       }
     }
@@ -349,10 +349,10 @@ public:
     // TODO: Pushing this in a DFS ordering will greatly speed up the dataflow
     // performance.
     if (!Backward) {
-      for (auto &BB : Func) {
+      for (BinaryBasicBlock &BB : Func) {
         Worklist.push(&BB);
         MCInst *Prev = nullptr;
-        for (auto &Inst : BB) {
+        for (MCInst &Inst : BB) {
           PrevPoint[&Inst] = Prev ? ProgramPoint(Prev) : ProgramPoint(&BB);
           Prev = &Inst;
         }
@@ -362,7 +362,7 @@ public:
         Worklist.push(&*I);
         MCInst *Prev = nullptr;
         for (auto J = (*I).rbegin(), E2 = (*I).rend(); J != E2; ++J) {
-          auto &Inst = *J;
+          MCInst &Inst = *J;
           PrevPoint[&Inst] = Prev ? ProgramPoint(Prev) : ProgramPoint(&*I);
           Prev = &Inst;
         }
@@ -371,7 +371,7 @@ public:
 
     // Main dataflow loop
     while (!Worklist.empty()) {
-      auto *BB = Worklist.front();
+      BinaryBasicBlock *BB = Worklist.front();
       Worklist.pop();
 
       // Calculate state at the entry of first instruction in BB
@@ -409,7 +409,7 @@ public:
         StateTy CurState = derived().computeNext(Inst, *PrevState);
 
         if (Backward && BC.MIB->isInvoke(Inst)) {
-          auto *LBB = Func.getLandingPadBBFor(BB, Inst);
+          BinaryBasicBlock *LBB = Func.getLandingPadBBFor(BB, Inst);
           if (LBB) {
             auto First = LBB->begin();
             if (First != LBB->end()) {
@@ -432,7 +432,7 @@ public:
       };
 
       if (!Backward) {
-        for (auto &Inst : *BB) {
+        for (MCInst &Inst : *BB) {
           doNext(Inst, *BB);
         }
       } else {
@@ -443,17 +443,17 @@ public:
 
       if (Changed) {
         if (!Backward) {
-          for (auto Succ : BB->successors()) {
+          for (BinaryBasicBlock *Succ : BB->successors()) {
             Worklist.push(Succ);
           }
-          for (auto LandingPad : BB->landing_pads()) {
+          for (BinaryBasicBlock *LandingPad : BB->landing_pads()) {
             Worklist.push(LandingPad);
           }
         } else {
-          for (auto Pred : BB->predecessors()) {
+          for (BinaryBasicBlock *Pred : BB->predecessors()) {
             Worklist.push(Pred);
           }
-          for (auto Thrower : BB->throwers()) {
+          for (BinaryBasicBlock *Thrower : BB->throwers()) {
             Worklist.push(Thrower);
           }
         }

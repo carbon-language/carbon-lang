@@ -184,7 +184,7 @@ void computeEdgeWeights(BinaryBasicBlock *BB, EdgeWeightMap &EdgeWeights) {
 
 template<class NodeT>
 void computeEdgeWeights(BinaryFunction &BF, EdgeWeightMap &EdgeWeights) {
-  for (auto &BB : BF) {
+  for (BinaryBasicBlock &BB : BF) {
     computeEdgeWeights<NodeT>(&BB, EdgeWeights);
   }
 }
@@ -192,9 +192,9 @@ void computeEdgeWeights(BinaryFunction &BF, EdgeWeightMap &EdgeWeights) {
 /// Make BB count match the sum of all incoming edges. If AllEdges is true,
 /// make it match max(SumPredEdges, SumSuccEdges).
 void recalculateBBCounts(BinaryFunction &BF, bool AllEdges) {
-  for (auto &BB : BF) {
+  for (BinaryBasicBlock &BB : BF) {
     uint64_t TotalPredsEWeight{0};
-    for (auto Pred : BB.predecessors()) {
+    for (BinaryBasicBlock *Pred : BB.predecessors()) {
       TotalPredsEWeight += Pred->getBranchInfo(BB).Count;
     }
 
@@ -206,7 +206,7 @@ void recalculateBBCounts(BinaryFunction &BF, bool AllEdges) {
       continue;
 
     uint64_t TotalSuccsEWeight{0};
-    for (auto &BI : BB.branch_info()) {
+    for (BinaryBasicBlock::BinaryBranchInfo &BI : BB.branch_info()) {
       TotalSuccsEWeight += BI.Count;
     }
 
@@ -226,11 +226,11 @@ void recalculateBBCounts(BinaryFunction &BF, bool AllEdges) {
 void guessEdgeByRelHotness(BinaryFunction &BF, bool UseSucc,
                            EdgeWeightMap &PredEdgeWeights,
                            EdgeWeightMap &SuccEdgeWeights) {
-  for (auto &BB : BF) {
-    for (auto Pred : BB.predecessors()) {
+  for (BinaryBasicBlock &BB : BF) {
+    for (BinaryBasicBlock *Pred : BB.predecessors()) {
       double RelativeExec = PredEdgeWeights[std::make_pair(Pred, &BB)];
       RelativeExec *= BB.getExecutionCount();
-      auto &BI = Pred->getBranchInfo(BB);
+      BinaryBasicBlock::BinaryBranchInfo &BI = Pred->getBranchInfo(BB);
       if (static_cast<uint64_t>(RelativeExec) > BI.Count)
         BI.Count = static_cast<uint64_t>(RelativeExec);
     }
@@ -239,7 +239,7 @@ void guessEdgeByRelHotness(BinaryFunction &BF, bool UseSucc,
       continue;
 
     auto BI = BB.branch_info_begin();
-    for (auto Succ : BB.successors()) {
+    for (BinaryBasicBlock *Succ : BB.successors()) {
       double RelativeExec = SuccEdgeWeights[std::make_pair(&BB, Succ)];
       RelativeExec *= BB.getExecutionCount();
       if (static_cast<uint64_t>(RelativeExec) > BI->Count)
@@ -262,7 +262,7 @@ bool guessPredEdgeCounts(BinaryBasicBlock *BB, ArcSet &GuessedArcs) {
 
   uint64_t TotalPredCount{0};
   unsigned NumGuessedEdges{0};
-  for (auto Pred : BB->predecessors()) {
+  for (BinaryBasicBlock *Pred : BB->predecessors()) {
     if (GuessedArcs.count(std::make_pair(Pred, BB)))
       ++NumGuessedEdges;
     TotalPredCount += Pred->getBranchInfo(*BB).Count;
@@ -276,7 +276,7 @@ bool guessPredEdgeCounts(BinaryBasicBlock *BB, ArcSet &GuessedArcs) {
   if (Guessed < 0)
     Guessed = 0;
 
-  for (auto Pred : BB->predecessors()) {
+  for (BinaryBasicBlock *Pred : BB->predecessors()) {
     if (GuessedArcs.count(std::make_pair(Pred, BB)))
       continue;
 
@@ -297,7 +297,7 @@ bool guessSuccEdgeCounts(BinaryBasicBlock *BB, ArcSet &GuessedArcs) {
   uint64_t TotalSuccCount{0};
   unsigned NumGuessedEdges{0};
   auto BI = BB->branch_info_begin();
-  for (auto Succ : BB->successors()) {
+  for (BinaryBasicBlock *Succ : BB->successors()) {
     if (GuessedArcs.count(std::make_pair(BB, Succ)))
       ++NumGuessedEdges;
     TotalSuccCount += BI->Count;
@@ -313,7 +313,7 @@ bool guessSuccEdgeCounts(BinaryBasicBlock *BB, ArcSet &GuessedArcs) {
     Guessed = 0;
 
   BI = BB->branch_info_begin();
-  for (auto Succ : BB->successors()) {
+  for (BinaryBasicBlock *Succ : BB->successors()) {
     if (GuessedArcs.count(std::make_pair(BB, Succ))) {
       ++BI;
       continue;
@@ -336,24 +336,24 @@ void guessEdgeByIterativeApproach(BinaryFunction &BF) {
 
   do {
     Changed = false;
-    for (auto &BB : BF) {
+    for (BinaryBasicBlock &BB : BF) {
       if (guessPredEdgeCounts(&BB, KnownArcs)) Changed = true;
       if (guessSuccEdgeCounts(&BB, KnownArcs)) Changed = true;
     }
   } while (Changed);
 
   // Guess count for non-inferred edges
-  for (auto &BB : BF) {
-    for (auto Pred : BB.predecessors()) {
+  for (BinaryBasicBlock &BB : BF) {
+    for (BinaryBasicBlock *Pred : BB.predecessors()) {
       if (KnownArcs.count(std::make_pair(Pred, &BB)))
         continue;
-      auto &BI = Pred->getBranchInfo(BB);
+      BinaryBasicBlock::BinaryBranchInfo &BI = Pred->getBranchInfo(BB);
       BI.Count =
         std::min(Pred->getExecutionCount(), BB.getExecutionCount()) / 2;
       KnownArcs.insert(std::make_pair(Pred, &BB));
     }
     auto BI = BB.branch_info_begin();
-    for (auto Succ : BB.successors()) {
+    for (BinaryBasicBlock *Succ : BB.successors()) {
       if (KnownArcs.count(std::make_pair(&BB, Succ))) {
         ++BI;
         continue;
@@ -371,9 +371,9 @@ void guessEdgeByIterativeApproach(BinaryFunction &BF) {
 DenseMap<const BinaryBasicBlock *, const BinaryLoop*>
 createLoopNestLevelMap(BinaryFunction &BF) {
   DenseMap<const BinaryBasicBlock *, const BinaryLoop*> LoopNestLevel;
-  auto &BLI = BF.getLoopInfo();
+  const BinaryLoopInfo &BLI = BF.getLoopInfo();
 
-  for (auto &BB : BF) {
+  for (BinaryBasicBlock &BB : BF) {
     LoopNestLevel[&BB] = BLI[&BB];
   }
 
@@ -386,8 +386,8 @@ createLoopNestLevelMap(BinaryFunction &BF) {
 /// same loop and same loop nesting level.
 void equalizeBBCounts(BinaryFunction &BF) {
   auto Info = DataflowInfoManager(BF.getBinaryContext(), BF, nullptr, nullptr);
-  auto &DA = Info.getDominatorAnalysis();
-  auto &PDA = Info.getPostDominatorAnalysis();
+  DominatorAnalysis<false> &DA = Info.getDominatorAnalysis();
+  DominatorAnalysis<true> &PDA = Info.getPostDominatorAnalysis();
   auto &InsnToBB = Info.getInsnToBBMap();
   // These analyses work at the instruction granularity, but we really only need
   // basic block granularity here. So we'll use a set of visited edges to avoid
@@ -400,19 +400,20 @@ void equalizeBBCounts(BinaryFunction &BF) {
   std::vector<std::vector<BinaryBasicBlock *>> Classes;
 
   BF.calculateLoopInfo();
-  auto LoopNestLevel = createLoopNestLevelMap(BF);
+  DenseMap<const BinaryBasicBlock *, const BinaryLoop *> LoopNestLevel =
+      createLoopNestLevelMap(BF);
 
-  for (auto &BB : BF) {
+  for (BinaryBasicBlock &BB : BF) {
     BBsToEC[&BB] = -1;
   }
 
-  for (auto &BB : BF) {
+  for (BinaryBasicBlock &BB : BF) {
     auto I = BB.begin();
     if (I == BB.end())
       continue;
 
     DA.doForAllDominators(*I, [&](const MCInst &DomInst) {
-      auto *DomBB = InsnToBB[&DomInst];
+      BinaryBasicBlock *DomBB = InsnToBB[&DomInst];
       if (Visited[DomBB].count(&BB))
         return;
       Visited[DomBB].insert(&BB);
@@ -438,10 +439,10 @@ void equalizeBBCounts(BinaryFunction &BF) {
         Classes[BBsToEC[DomBB]].push_back(&BB);
         return;
       }
-      auto BBECNum = BBsToEC[&BB];
-      auto DomEC = Classes[BBsToEC[DomBB]];
-      auto BBEC = Classes[BBECNum];
-      for (auto *Block : DomEC) {
+      signed BBECNum = BBsToEC[&BB];
+      std::vector<BinaryBasicBlock *> DomEC = Classes[BBsToEC[DomBB]];
+      std::vector<BinaryBasicBlock *> BBEC = Classes[BBECNum];
+      for (BinaryBasicBlock *Block : DomEC) {
         BBsToEC[Block] = BBECNum;
         BBEC.push_back(Block);
       }
@@ -449,12 +450,12 @@ void equalizeBBCounts(BinaryFunction &BF) {
     });
   }
 
-  for (auto &Class : Classes) {
+  for (std::vector<BinaryBasicBlock *> &Class : Classes) {
     uint64_t Max{0ULL};
-    for (auto *BB : Class) {
+    for (BinaryBasicBlock *BB : Class) {
       Max = std::max(Max, BB->getExecutionCount());
     }
-    for (auto *BB : Class) {
+    for (BinaryBasicBlock *BB : Class) {
       BB->setExecutionCount(Max);
     }
   }

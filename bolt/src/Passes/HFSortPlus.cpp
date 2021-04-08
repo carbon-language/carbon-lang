@@ -106,7 +106,7 @@ public:
   double density() const { return static_cast<double>(Samples) / Size; }
 
   Edge *getEdge(Chain *Other) const {
-    for (auto It : Edges) {
+    for (std::pair<Chain *, Edge *> It : Edges) {
       if (It.first == Other)
         return It.second;
     }
@@ -223,12 +223,12 @@ public:
 void Chain::mergeEdges(Chain *Other) {
   // Update edges adjacent to chain other
   for (auto EdgeIt : Other->Edges) {
-    const auto DstChain = EdgeIt.first;
-    const auto DstEdge = EdgeIt.second;
-    const auto TargetChain = DstChain == Other ? this : DstChain;
+    Chain *const DstChain = EdgeIt.first;
+    Edge *const DstEdge = EdgeIt.second;
+    Chain *const TargetChain = DstChain == Other ? this : DstChain;
 
     // Find the corresponding edge in the current chain
-    auto CurEdge = getEdge(TargetChain);
+    Edge *CurEdge = getEdge(TargetChain);
     if (CurEdge == nullptr) {
       DstEdge->changeEndpoint(Other, this);
       this->addEdge(TargetChain, DstEdge);
@@ -274,7 +274,7 @@ public:
     // didn't get merged (so their first func is its original func)
     std::vector<Cluster> Clusters;
     Clusters.reserve(HotChains.size());
-    for (auto Chain : HotChains) {
+    for (Chain *Chain : HotChains) {
       Clusters.emplace_back(Cluster(Chain->Nodes, Cg));
     }
     return Clusters;
@@ -297,10 +297,10 @@ private:
       HotChains.push_back(&AllChains.back());
       NodeChain[F] = &AllChains.back();
       TotalSamples += Cg.samples(F);
-      for (auto Succ : Cg.successors(F)) {
+      for (NodeId Succ : Cg.successors(F)) {
         if (F == Succ)
           continue;
-        const auto &Arc = *Cg.findArc(F, Succ);
+        const Arc &Arc = *Cg.findArc(F, Succ);
         OutWeight[F] += Arc.weight();
         InWeight[Succ] += Arc.weight();
       }
@@ -308,16 +308,16 @@ private:
 
     AllEdges.reserve(Cg.numArcs());
     for (NodeId F = 0; F < Cg.numNodes(); ++F) {
-      for (auto Succ : Cg.successors(F)) {
+      for (NodeId Succ : Cg.successors(F)) {
         if (F == Succ)
           continue;
-        const auto &Arc = *Cg.findArc(F, Succ);
+        const Arc &Arc = *Cg.findArc(F, Succ);
         if (Arc.weight() == 0.0 ||
             Arc.weight() / TotalSamples < opts::ArcThreshold) {
           continue;
         }
 
-        auto CurEdge = NodeChain[F]->getEdge(NodeChain[Succ]);
+        Edge *CurEdge = NodeChain[F]->getEdge(NodeChain[Succ]);
         if (CurEdge != nullptr) {
           // This edge is already present in the graph
           assert(NodeChain[Succ]->getEdge(NodeChain[F]) != nullptr);
@@ -331,7 +331,7 @@ private:
       }
     }
 
-    for (auto &Chain : HotChains) {
+    for (Chain *&Chain : HotChains) {
       Chain->ShortCalls = shortCalls(Chain);
       Chain->Score = score(Chain);
     }
@@ -373,12 +373,12 @@ private:
   /// The expected number of calls within a given chain with both endpoints on
   /// the same cache page
   double shortCalls(Chain *Chain) const {
-    auto Edge = Chain->getEdge(Chain);
+    Edge *Edge = Chain->getEdge(Chain);
     if (Edge == nullptr)
       return 0;
 
     double Calls = 0;
-    for (auto Arc : Edge->Arcs) {
+    for (const Arc *Arc : Edge->Arcs) {
       uint64_t SrcAddr = Addr[Arc->src()] + uint64_t(Arc->avgCallOffset());
       uint64_t DstAddr = Addr[Arc->dst()];
       Calls += expectedCalls(SrcAddr, DstAddr, Arc->weight());
@@ -390,8 +390,8 @@ private:
   /// the same i-TLB page, assuming that a given pair of chains gets merged
   double shortCalls(Chain *ChainPred, Chain *ChainSucc, Edge *Edge) const {
     double Calls = 0;
-    for (auto Arc : Edge->Arcs) {
-      auto SrcChain = NodeChain[Arc->src()];
+    for (const Arc *Arc : Edge->Arcs) {
+      Chain *SrcChain = NodeChain[Arc->src()];
       uint64_t SrcAddr;
       uint64_t DstAddr;
       if (SrcChain == ChainPred) {
@@ -449,13 +449,13 @@ private:
   void runPassOne() {
     // Find candidate pairs of chains for merging
     std::vector<const Arc *> ArcsToMerge;
-    for (auto ChainPred : HotChains) {
-      auto F = ChainPred->Nodes.back();
-      for (auto Succ : Cg.successors(F)) {
+    for (Chain *ChainPred : HotChains) {
+      NodeId F = ChainPred->Nodes.back();
+      for (NodeId Succ : Cg.successors(F)) {
         if (F == Succ)
           continue;
 
-        const auto &Arc = *Cg.findArc(F, Succ);
+        const Arc &Arc = *Cg.findArc(F, Succ);
         if (Arc.weight() == 0.0 ||
             Arc.weight() / TotalSamples < opts::ArcThreshold) {
           continue;
@@ -486,9 +486,9 @@ private:
         [](const Arc *L, const Arc *R) { return L->weight() > R->weight(); });
 
     // Merge the pairs of chains
-    for (auto Arc : ArcsToMerge) {
-      auto ChainPred = NodeChain[Arc->src()];
-      auto ChainSucc = NodeChain[Arc->dst()];
+    for (const Arc *Arc : ArcsToMerge) {
+      Chain *ChainPred = NodeChain[Arc->src()];
+      Chain *ChainSucc = NodeChain[Arc->dst()];
       if (ChainPred == ChainSucc)
         continue;
       if (ChainPred->Nodes.back() == Arc->src() &&
@@ -516,10 +516,10 @@ private:
     std::set<Edge *, decltype(GainComparator)> Queue(GainComparator);
 
     // Inserting the edges Into the queue
-    for (auto ChainPred : HotChains) {
+    for (Chain *ChainPred : HotChains) {
       for (auto EdgeIt : ChainPred->Edges) {
-        auto ChainSucc = EdgeIt.first;
-        auto ChainEdge = EdgeIt.second;
+        Chain *ChainSucc = EdgeIt.first;
+        Edge *ChainEdge = EdgeIt.second;
         // Ignore loop edges
         if (ChainPred == ChainSucc)
           continue;
@@ -540,7 +540,7 @@ private:
     // Merge the chains while the gain of merging is positive
     while (!Queue.empty()) {
       // Extract the best (top) edge for merging
-      auto It = *Queue.begin();
+      Edge *It = *Queue.begin();
       Queue.erase(Queue.begin());
       Edge *BestEdge = It;
       Chain *BestChainPred = BestEdge->predChain();
@@ -549,10 +549,10 @@ private:
         continue;
 
       // Remove outdated edges
-      for (auto EdgeIt : BestChainPred->Edges) {
+      for (std::pair<Chain *, Edge *> EdgeIt : BestChainPred->Edges) {
         Queue.erase(EdgeIt.second);
       }
-      for (auto EdgeIt : BestChainSucc->Edges) {
+      for (std::pair<Chain *, Edge *> EdgeIt : BestChainSucc->Edges) {
         Queue.erase(EdgeIt.second);
       }
 
@@ -561,8 +561,8 @@ private:
 
       // Insert newly created edges Into the queue
       for (auto EdgeIt : BestChainPred->Edges) {
-        auto ChainSucc = EdgeIt.first;
-        auto ChainEdge = EdgeIt.second;
+        Chain *ChainSucc = EdgeIt.first;
+        Edge *ChainEdge = EdgeIt.second;
         // Ignore loop edges
         if (BestChainPred == ChainSucc)
           continue;
@@ -585,7 +585,7 @@ private:
 
     // Update the chains and addresses for functions merged from From
     size_t CurAddr = 0;
-    for (auto F : Into->Nodes) {
+    for (NodeId F : Into->Nodes) {
       NodeChain[F] = Into;
       Addr[F] = CurAddr;
       CurAddr += Cg.size(F);

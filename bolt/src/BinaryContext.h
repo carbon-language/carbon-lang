@@ -691,7 +691,7 @@ public:
   /// Return a value of the global \p Symbol or an error if the value
   /// was not set.
   ErrorOr<uint64_t> getSymbolValue(const MCSymbol &Symbol) const {
-    const auto *BD = getBinaryDataByName(Symbol.getName());
+    const BinaryData *BD = getBinaryDataByName(Symbol.getName());
     if (!BD)
       return std::make_error_code(std::errc::bad_address);
     return BD->getAddress();

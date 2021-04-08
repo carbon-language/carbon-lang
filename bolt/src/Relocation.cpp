@@ -153,8 +153,8 @@ uint64_t extractValueAArch64(uint64_t Type, uint64_t Contents, uint64_t PC) {
     // Bits 32:12 of Symbol address goes in bits 30:29 + 23:5 of ADRP
     // instruction
     Contents &= ~0xffffffff9f00001fUll;
-    auto LowBits = (Contents >> 29) & 0x3;
-    auto HighBits = (Contents >> 5) & 0x7ffff;
+    uint64_t LowBits = (Contents >> 29) & 0x3;
+    uint64_t HighBits = (Contents >> 5) & 0x7ffff;
     Contents = LowBits | (HighBits << 2);
     Contents = static_cast<int64_t>(PC) + SignExtend64<32>(Contents << 12);
     Contents &= ~0xfffUll;
@@ -380,10 +380,10 @@ uint64_t Relocation::getPC64() {
 }
 
 size_t Relocation::emit(MCStreamer *Streamer) const {
-  const auto Size = getSizeForType(Type);
-  auto &Ctx = Streamer->getContext();
+  const size_t Size = getSizeForType(Type);
+  MCContext &Ctx = Streamer->getContext();
   if (isPCRelative(Type)) {
-    auto *TempLabel = Ctx.createNamedTempSymbol();
+    MCSymbol *TempLabel = Ctx.createNamedTempSymbol();
     Streamer->emitLabel(TempLabel);
     const MCExpr *Value{nullptr};
     if (Symbol) {

@@ -130,7 +130,7 @@ struct InstrumentationSummary {
 
   uint32_t getFDSize() const {
     uint32_t FuncDescSize = 0;
-    for (const auto &Func : FunctionDescriptions) {
+    for (const FunctionDescription &Func : FunctionDescriptions) {
       // A function description consists of containers of different
       // descriptions. We use vectors to store them and when serializing them,
       // we first output a uint32_t-sized field for the number of elements of

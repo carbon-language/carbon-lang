@@ -120,7 +120,7 @@ DynoStats getDynoStats(const BinaryFunction &BF) {
   // direction.
   BF.updateLayoutIndices();
 
-  for (const auto &BB : BF.layout()) {
+  for (BinaryBasicBlock *const &BB : BF.layout()) {
     // The basic block execution count equals to the sum of incoming branch
     // frequencies. This may deviate from the sum of outgoing branches of the
     // basic block especially since the block may contain a function that
@@ -136,7 +136,7 @@ DynoStats getDynoStats(const BinaryFunction &BF) {
         Stats[DynoStats::VENEER_CALLS_AARCH64] += BF.getKnownExecutionCount();
 
     // Count the number of calls by iterating through all instructions.
-    for (const auto &Instr : *BB) {
+    for (const MCInst &Instr : *BB) {
       if (BC.MIB->isStore(Instr)) {
         Stats[DynoStats::STORES] += BBExecutionCount;
       }
@@ -155,8 +155,8 @@ DynoStats getDynoStats(const BinaryFunction &BF) {
       Stats[DynoStats::FUNCTION_CALLS] += CallFreq;
       if (BC.MIB->isIndirectCall(Instr)) {
         Stats[DynoStats::INDIRECT_CALLS] += CallFreq;
-      } else if (const auto *CallSymbol = BC.MIB->getTargetSymbol(Instr)) {
-        const auto *BF = BC.getFunctionForSymbol(CallSymbol);
+      } else if (const MCSymbol *CallSymbol = BC.MIB->getTargetSymbol(Instr)) {
+        const BinaryFunction *BF = BC.getFunctionForSymbol(CallSymbol);
         if (BF && BF->isPLTFunction()) {
           Stats[DynoStats::PLT_CALLS] += CallFreq;
 
@@ -177,7 +177,7 @@ DynoStats getDynoStats(const BinaryFunction &BF) {
     Stats[DynoStats::INSTRUCTIONS] += BB->getNumNonPseudos() * BBExecutionCount;
 
     // Jump tables.
-    const auto *LastInstr = BB->getLastNonPseudoInstr();
+    const MCInst *LastInstr = BB->getLastNonPseudoInstr();
     if (BC.MIB->getJumpTable(*LastInstr)) {
       Stats[DynoStats::JUMP_TABLE_BRANCHES] += BBExecutionCount;
       LLVM_DEBUG(
@@ -225,11 +225,11 @@ DynoStats getDynoStats(const BinaryFunction &BF) {
     }
 
     // Conditional branch that could be followed by an unconditional branch.
-    auto TakenCount = BB->getTakenBranchInfo().Count;
+    uint64_t TakenCount = BB->getTakenBranchInfo().Count;
     if (TakenCount == BinaryBasicBlock::COUNT_NO_PROFILE)
       TakenCount = 0;
 
-    auto NonTakenCount = BB->getFallthroughBranchInfo().Count;
+    uint64_t NonTakenCount = BB->getFallthroughBranchInfo().Count;
     if (NonTakenCount == BinaryBasicBlock::COUNT_NO_PROFILE)
       NonTakenCount = 0;
 

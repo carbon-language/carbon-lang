@@ -36,14 +36,14 @@ bool isIndifferentToSP(const MCInst &Inst, const BinaryContext &BC) {
   if (BC.MIB->isCFI(Inst))
     return true;
 
-  const auto II = BC.MII->get(Inst.getOpcode());
+  const MCInstrDesc II = BC.MII->get(Inst.getOpcode());
   if (BC.MIB->isTerminator(Inst) ||
       II.hasImplicitDefOfPhysReg(BC.MIB->getStackPointer(), BC.MRI.get()) ||
       II.hasImplicitUseOfPhysReg(BC.MIB->getStackPointer()))
     return false;
 
   for (int I = 0, E = MCPlus::getNumPrimeOperands(Inst); I != E; ++I) {
-    const auto &Operand = Inst.getOperand(I);
+    const MCOperand &Operand = Inst.getOperand(I);
     if (Operand.isReg() && Operand.getReg() == BC.MIB->getStackPointer()) {
       return false;
     }
@@ -58,7 +58,7 @@ bool shouldProcess(const BinaryFunction &Function) {
 void runForAllWeCare(std::map<uint64_t, BinaryFunction> &BFs,
                      std::function<void(BinaryFunction &)> Task) {
   for (auto &It : BFs) {
-    auto &Function = It.second;
+    BinaryFunction &Function = It.second;
     if (shouldProcess(Function))
       Task(Function);
   }
@@ -68,10 +68,10 @@ void runForAllWeCare(std::map<uint64_t, BinaryFunction> &BFs,
 
 void AllocCombinerPass::combineAdjustments(BinaryContext &BC,
                                            BinaryFunction &BF) {
-  for (auto &BB : BF) {
+  for (BinaryBasicBlock &BB : BF) {
     MCInst *Prev = nullptr;
     for (auto I = BB.rbegin(), E = BB.rend(); I != E; ++I) {
-      auto &Inst = *I;
+      MCInst &Inst = *I;
       if (isIndifferentToSP(Inst, BC))
         continue; // Skip updating Prev
 

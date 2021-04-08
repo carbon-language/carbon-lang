@@ -82,7 +82,7 @@ uint32_t Instrumentation::getFunctionNameIndex(const BinaryFunction &Function) {
   auto Iter = FuncToStringIdx.find(&Function);
   if (Iter != FuncToStringIdx.end())
     return Iter->second;
-  auto Idx = Summary->StringTable.size();
+  size_t Idx = Summary->StringTable.size();
   FuncToStringIdx.emplace(std::make_pair(&Function, Idx));
   Summary->StringTable.append(std::string(Function.getOneName()));
   Summary->StringTable.append(1, '\0');
@@ -193,7 +193,7 @@ BinaryBasicBlock::iterator
 insertInstructions(std::vector<MCInst>& Instrs,
                    BinaryBasicBlock &BB,
                    BinaryBasicBlock::iterator Iter) {
-  for (auto &NewInst : Instrs) {
+  for (MCInst &NewInst : Instrs) {
     Iter = BB.insertInstruction(Iter, NewInst);
     ++Iter;
   }
@@ -218,7 +218,7 @@ void Instrumentation::instrumentIndirectTarget(BinaryBasicBlock &BB,
                                                BinaryFunction &FromFunction,
                                                uint32_t From) {
   auto L = FromFunction.getBinaryContext().scopeLock();
-  const auto IndCallSiteID = Summary->IndCallDescriptions.size();
+  const size_t IndCallSiteID = Summary->IndCallDescriptions.size();
   createIndCallDescription(FromFunction, From);
 
   BinaryContext &BC = FromFunction.getBinaryContext();
@@ -357,7 +357,7 @@ void Instrumentation::instrumentFunction(BinaryContext &BC,
       if (Pred)
         STOutSet[Pred].insert(BB);
 
-      for (auto *SuccBB : BB->successors())
+      for (BinaryBasicBlock *SuccBB : BB->successors())
         Stack.push(std::make_pair(BB, SuccBB));
     }
   }
@@ -378,13 +378,13 @@ void Instrumentation::instrumentFunction(BinaryContext &BC,
   }
 
   for (auto BBI = Function.begin(), BBE = Function.end(); BBI != BBE; ++BBI) {
-    auto &BB{*BBI};
+    BinaryBasicBlock &BB{*BBI};
     bool HasUnconditionalBranch{false};
     bool HasJumpTable{false};
     bool IsInvokeBlock = InvokeBlocks.count(&BB) > 0;
 
     for (auto I = BB.begin(); I != BB.end(); ++I) {
-      const auto &Inst = *I;
+      const MCInst &Inst = *I;
       if (!BC.MIB->hasAnnotation(Inst, "Offset"))
         continue;
 
@@ -405,7 +405,8 @@ void Instrumentation::instrumentFunction(BinaryContext &BC,
           TargetBB ? &Function : BC.getFunctionForSymbol(Target);
       if (TargetFunc && BC.MIB->isCall(Inst)) {
         if (opts::InstrumentCalls) {
-          const auto *ForeignBB = TargetFunc->getBasicBlockForLabel(Target);
+          const BinaryBasicBlock *ForeignBB =
+              TargetFunc->getBasicBlockForLabel(Target);
           if (ForeignBB)
             ToOffset = ForeignBB->getInputOffset();
           instrumentOneTarget(SplitWorklist, SplitInstrs, I, Function, BB,
@@ -432,7 +433,7 @@ void Instrumentation::instrumentFunction(BinaryContext &BC,
       }
 
       if (IsJumpTable) {
-        for (auto &Succ : BB.successors()) {
+        for (BinaryBasicBlock *&Succ : BB.successors()) {
           // Do not instrument edges in the spanning tree
           if (STOutSet[&BB].find(&*Succ) != STOutSet[&BB].end()) {
             auto L = BC.scopeLock();
@@ -460,7 +461,7 @@ void Instrumentation::instrumentFunction(BinaryContext &BC,
     // Instrument fallthroughs (when the direct jump instruction is missing)
     if (!HasUnconditionalBranch && !HasJumpTable && BB.succ_size() > 0 &&
         BB.size() > 0) {
-      auto *FTBB = BB.getFallthrough();
+      BinaryBasicBlock *FTBB = BB.getFallthrough();
       assert(FTBB && "expected valid fall-through basic block");
       auto I = BB.begin();
       auto LastInstr = BB.end();
@@ -494,7 +495,7 @@ void Instrumentation::instrumentFunction(BinaryContext &BC,
   // Instrument spanning tree leaves
   if (!opts::ConservativeInstrumentation) {
     for (auto BBI = Function.begin(), BBE = Function.end(); BBI != BBE; ++BBI) {
-      auto &BB{*BBI};
+      BinaryBasicBlock &BB{*BBI};
       if (STOutSet[&BB].size() == 0)
         instrumentLeafNode(BC, BB, BB.begin(), IsLeafFunction, *FuncDesc,
                            BBToID[&BB]);
@@ -504,8 +505,9 @@ void Instrumentation::instrumentFunction(BinaryContext &BC,
   // Consume list of critical edges: split them and add instrumentation to the
   // newly created BBs
   auto Iter = SplitInstrs.begin();
-  for (auto &BBPair : SplitWorklist) {
-    auto *NewBB = Function.splitEdge(BBPair.first, BBPair.second);
+  for (std::pair<BinaryBasicBlock *, BinaryBasicBlock *> &BBPair :
+       SplitWorklist) {
+    BinaryBasicBlock *NewBB = Function.splitEdge(BBPair.first, BBPair.second);
     NewBB->addInstructions(Iter->begin(), Iter->end());
     ++Iter;
   }
@@ -518,9 +520,9 @@ void Instrumentation::runOnFunctions(BinaryContext &BC) {
   if (!BC.isX86())
     return;
 
-  const auto Flags = BinarySection::getFlags(/*IsReadOnly=*/false,
-                                             /*IsText=*/false,
-                                             /*IsAllocatable=*/true);
+  const unsigned Flags = BinarySection::getFlags(/*IsReadOnly=*/false,
+                                                 /*IsText=*/false,
+                                                 /*IsAllocatable=*/true);
   BC.registerOrUpdateSection(".bolt.instr.counters", ELF::SHT_PROGBITS, Flags,
                              nullptr, 0, 1);
 
@@ -633,7 +635,7 @@ void Instrumentation::createAuxiliaryFunctions(BinaryContext &BC) {
 }
 
 void Instrumentation::setupRuntimeLibrary(BinaryContext &BC) {
-  auto FuncDescSize = Summary->getFDSize();
+  uint32_t FuncDescSize = Summary->getFDSize();
 
   outs() << "BOLT-INSTRUMENTER: Number of indirect call site descriptors: "
          << Summary->IndCallDescriptions.size() << "\n";
@@ -662,7 +664,7 @@ void Instrumentation::setupRuntimeLibrary(BinaryContext &BC) {
   outs() << "BOLT-INSTRUMENTER: Profile will be saved to file "
          << opts::InstrumentationFilename << "\n";
 
-  auto *RtLibrary =
+  InstrumentationRuntimeLibrary *RtLibrary =
       static_cast<InstrumentationRuntimeLibrary *>(BC.getRuntimeLibrary());
   assert(RtLibrary && "instrumentation runtime library object must be set");
   RtLibrary->setSummary(std::move(Summary));

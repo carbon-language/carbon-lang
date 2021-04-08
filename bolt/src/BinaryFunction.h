@@ -94,7 +94,7 @@ inline raw_ostream &operator<<(raw_ostream &OS,
   const char *Sep = "\n        ";
   uint64_t TotalCount = 0;
   uint64_t TotalMispreds = 0;
-  for (auto &CSP : ICSP) {
+  for (const IndirectCallProfile &CSP : ICSP) {
     SS << Sep << "{ " << (CSP.Symbol ? CSP.Symbol->getName() : "<unknown>")
        << ": " << CSP.Count << " (" << CSP.Mispreds << " misses) }";
     Sep = ",\n        ";
@@ -178,6 +178,8 @@ public:
 
   /// Mark injected functions
   bool IsInjected = false;
+
+  using LSDATypeTableTy = std::vector<uint64_t>;
 
 private:
   /// Current state of the function.
@@ -496,8 +498,6 @@ private:
   ArrayRef<uint8_t> LSDAActionTable;
   ArrayRef<uint8_t> LSDATypeIndexTable;
 
-  using LSDATypeTableTy = std::vector<uint64_t>;
-
   /// Vector of addresses of types referenced by LSDA.
   LSDATypeTableTy LSDATypeTable;
 
@@ -700,10 +700,10 @@ private:
   /// Release memory allocated for CFG and instructions.
   /// We still keep basic blocks for address translation/mapping purposes.
   void releaseCFG() {
-    for (auto *BB : BasicBlocks) {
+    for (BinaryBasicBlock *BB : BasicBlocks) {
       BB->releaseCFG();
     }
-    for (auto BB : DeletedBasicBlocks) {
+    for (BinaryBasicBlock *BB : DeletedBasicBlocks) {
       BB->releaseCFG();
     }
 
@@ -951,9 +951,9 @@ public:
   BinaryBasicBlock *getLandingPadBBFor(const BinaryBasicBlock &BB,
                                        const MCInst &InvokeInst) const {
     assert(BC.MIB->isInvoke(InvokeInst) && "must be invoke instruction");
-    const auto LP = BC.MIB->getEHInfo(InvokeInst);
+    const Optional<MCPlus::MCLandingPad> LP = BC.MIB->getEHInfo(InvokeInst);
     if (LP && LP->first) {
-      auto *LBB = BB.getLandingPad(LP->first);
+      BinaryBasicBlock *LBB = BB.getLandingPad(LP->first);
       assert (LBB && "Landing pad should be defined");
       return LBB;
     }
@@ -998,7 +998,7 @@ public:
   ///           primary:     <function>/<id>
   ///           alternative: <function>/<file>/<id2>
   std::string getPrintName() const {
-    const auto NumNames = Symbols.size() + Aliases.size();
+    const size_t NumNames = Symbols.size() + Aliases.size();
     return NumNames == 1
         ? getOneName().str()
         : (getOneName().str() + "(*" + std::to_string(NumNames) + ")");
@@ -1022,11 +1022,11 @@ public:
   /// Return the name for which the Callback returned true if any.
   template <typename FType>
   Optional<StringRef> forEachName(FType Callback) const {
-    for (auto *Symbol : Symbols)
+    for (MCSymbol *Symbol : Symbols)
       if (Callback(Symbol->getName()))
         return Symbol->getName();
 
-    for (auto &Name : Aliases)
+    for (const std::string &Name : Aliases)
       if (Callback(StringRef(Name)))
         return StringRef(Name);
 
@@ -1151,7 +1151,7 @@ public:
   /// Return the number of emitted instructions for this function.
   uint32_t getNumNonPseudos() const {
     uint32_t N = 0;
-    for (auto &BB : layout()) {
+    for (BinaryBasicBlock *const &BB : layout()) {
       N += BB->getNumNonPseudos();
     }
     return N;
@@ -1301,7 +1301,7 @@ public:
                      uint64_t Addend, uint64_t Value) {
     assert(Address >= getAddress() && Address < getAddress() + getMaxSize() &&
            "address is outside of the function");
-    auto Offset = Address - getAddress();
+    uint64_t Offset = Address - getAddress();
     switch (RelType) {
     case ELF::R_X86_64_8:
     case ELF::R_X86_64_16:
@@ -1492,12 +1492,12 @@ public:
   }
 
   const JumpTable *getJumpTable(const MCInst &Inst) const {
-    const auto Address = BC.MIB->getJumpTable(Inst);
+    const uint64_t Address = BC.MIB->getJumpTable(Inst);
     return getJumpTableContainingAddress(Address);
   }
 
   JumpTable *getJumpTable(const MCInst &Inst) {
-    const auto Address = BC.MIB->getJumpTable(Inst);
+    const uint64_t Address = BC.MIB->getJumpTable(Inst);
     return getJumpTableContainingAddress(Address);
   }
 
@@ -1609,10 +1609,11 @@ public:
       std::unique_lock<std::shared_timed_mutex> Lock(BC.CtxMutex);
       Label = BC.Ctx->createNamedTempSymbol("BB");
     }
-    auto BBPtr = createBasicBlock(Offset, Label, DeriveAlignment);
+    std::unique_ptr<BinaryBasicBlock> BBPtr =
+        createBasicBlock(Offset, Label, DeriveAlignment);
     BasicBlocks.emplace_back(BBPtr.release());
 
-    auto *BB = BasicBlocks.back();
+    BinaryBasicBlock *BB = BasicBlocks.back();
     BB->setIndex(BasicBlocks.size() - 1);
 
     if (CurrentState == State::Disassembled) {
@@ -1654,7 +1655,7 @@ public:
   /// Return basic block range that originally contained offset \p Offset
   /// from the function start to the function end.
   iterator_range<iterator> getBasicBlockRangeFromOffsetToEnd(uint64_t Offset) {
-    auto *BB = getBasicBlockContainingOffset(Offset);
+    BinaryBasicBlock *BB = getBasicBlockContainingOffset(Offset);
     return BB
       ? iterator_range<iterator>(BasicBlocks.begin() + getIndex(BB), end())
       : iterator_range<iterator>(end(), end());
@@ -1687,7 +1688,7 @@ public:
   /// Make sure basic blocks' indices match the current layout.
   void updateLayoutIndices() const {
     unsigned Index = 0;
-    for (auto *BB : layout()) {
+    for (BinaryBasicBlock *BB : layout()) {
       BB->setLayoutIndex(Index++);
     }
   }
@@ -1817,7 +1818,7 @@ public:
   BinaryBasicBlock::iterator addCFIInstruction(BinaryBasicBlock *BB,
                                                BinaryBasicBlock::iterator Pos,
                                                MCCFIInstruction &&Inst) {
-    auto Idx = FrameInstructions.size();
+    size_t Idx = FrameInstructions.size();
     FrameInstructions.emplace_back(std::forward<MCCFIInstruction>(Inst));
     return addCFIPseudo(BB, Pos, Idx);
   }
@@ -2109,7 +2110,7 @@ public:
     Symbol = BC.getOrCreateGlobalSymbol(Address, "ISLANDat");
 
     // Internal bookkeeping
-    const auto Offset = Address - getAddress();
+    const uint64_t Offset = Address - getAddress();
     assert((!Islands.Offsets.count(Offset) ||
             Islands.Offsets[Offset] == Symbol) &&
            "Inconsistent island symbol management");
@@ -2126,7 +2127,7 @@ public:
   /// function.
   MCSymbol *
   getOrCreateProxyIslandAccess(uint64_t Address, BinaryFunction &Referrer) {
-    auto Symbol = getOrCreateIslandAccess(Address);
+    MCSymbol *Symbol = getOrCreateIslandAccess(Address);
     if (!Symbol)
       return nullptr;
 
@@ -2148,7 +2149,7 @@ public:
     if (Address < getAddress())
       return false;
 
-    auto Offset = Address - getAddress();
+    uint64_t Offset = Address - getAddress();
 
     if (Offset >= getMaxSize())
       return false;
@@ -2191,7 +2192,7 @@ public:
     }
 
     if (!OnBehalfOf) {
-      for (auto *ExternalFunc : Islands.Dependency)
+      for (BinaryFunction *ExternalFunc : Islands.Dependency)
         Size += ExternalFunc->estimateConstantIslandSize(this);
     }
     return Size;
@@ -2431,13 +2432,13 @@ public:
   size_t estimateHotSize(const bool UseSplitSize = true) const {
     size_t Estimate = 0;
     if (UseSplitSize && isSplit()) {
-      for (const auto *BB : BasicBlocksLayout) {
+      for (const BinaryBasicBlock *BB : BasicBlocksLayout) {
         if (!BB->isCold()) {
           Estimate += BC.computeCodeSize(BB->begin(), BB->end());
         }
       }
     } else {
-      for (const auto *BB : BasicBlocksLayout) {
+      for (const BinaryBasicBlock *BB : BasicBlocksLayout) {
         if (BB->getKnownExecutionCount() != 0) {
           Estimate += BC.computeCodeSize(BB->begin(), BB->end());
         }
@@ -2450,7 +2451,7 @@ public:
     if (!isSplit())
       return estimateSize();
     size_t Estimate = 0;
-    for (const auto *BB : BasicBlocksLayout) {
+    for (const BinaryBasicBlock *BB : BasicBlocksLayout) {
       if (BB->isCold()) {
         Estimate += BC.computeCodeSize(BB->begin(), BB->end());
       }
@@ -2460,7 +2461,7 @@ public:
 
   size_t estimateSize() const {
     size_t Estimate = 0;
-    for (const auto *BB : BasicBlocksLayout) {
+    for (const BinaryBasicBlock *BB : BasicBlocksLayout) {
       Estimate += BC.computeCodeSize(BB->begin(), BB->end());
     }
     return Estimate;
@@ -2519,7 +2520,7 @@ public:
 
   /// Mark child fragments as ignored.
   void ignoreFragments() {
-    for (auto *Fragment : Fragments)
+    for (BinaryFunction *Fragment : Fragments)
       Fragment->setIgnored();
   }
 };

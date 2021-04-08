@@ -124,8 +124,8 @@ void ReorderFunctions::reorder(std::vector<Cluster> &&Clusters,
   uint32_t Index = 0;
 
   // Set order of hot functions based on clusters.
-  for (const auto& Cluster : Clusters) {
-    for (const auto FuncId : Cluster.targets()) {
+  for (const Cluster &Cluster : Clusters) {
+    for (const NodeId FuncId : Cluster.targets()) {
       Cg.nodeIdToFunc(FuncId)->setIndex(Index++);
       FuncAddr[FuncId] = TotalSize;
       TotalSize += Cg.size(FuncId);
@@ -161,14 +161,14 @@ void ReorderFunctions::reorder(std::vector<Cluster> &&Clusters,
     outs() << "BOLT-INFO: Function reordering page layout\n"
            << "BOLT-INFO: ============== page 0 ==============\n";
   }
-  for (auto& Cluster : Clusters) {
+  for (Cluster &Cluster : Clusters) {
     if (PrintDetailed) {
       outs() <<
         format("BOLT-INFO: -------- density = %.3lf (%u / %u) --------\n",
                Cluster.density(), Cluster.samples(), Cluster.size());
     }
 
-    for (auto FuncId : Cluster.targets()) {
+    for (NodeId FuncId : Cluster.targets()) {
       if (Cg.samples(FuncId) > 0) {
         Hotfuncs++;
 
@@ -179,13 +179,13 @@ void ReorderFunctions::reorder(std::vector<Cluster> &&Clusters,
 
         uint64_t Dist = 0;
         uint64_t Calls = 0;
-        for (auto Dst : Cg.successors(FuncId)) {
+        for (NodeId Dst : Cg.successors(FuncId)) {
           if (FuncId == Dst) // ignore recursive calls in stats
             continue;
-          const auto& Arc = *Cg.findArc(FuncId, Dst);
+          const Arc &Arc = *Cg.findArc(FuncId, Dst);
           const auto D = std::abs(FuncAddr[Arc.dst()] -
-                                  (FuncAddr[FuncId] + Arc.avgCallOffset()));
-          const auto W = Arc.weight();
+                                      (FuncAddr[FuncId] + Arc.avgCallOffset()));
+          const double W = Arc.weight();
           if (D < 64 && PrintDetailed && opts::Verbosity > 2) {
             outs() << "BOLT-INFO: short (" << D << "B) call:\n"
                    << "BOLT-INFO:   Src: " << *Cg.nodeIdToFunc(FuncId) << "\n"
@@ -218,7 +218,7 @@ void ReorderFunctions::reorder(std::vector<Cluster> &&Clusters,
                            TotalSize,
                            Calls ? Dist / Calls : 0)
                  << Cg.nodeIdToFunc(FuncId)->getPrintName() << '\n';
-          const auto NewPage = TotalSize / HugePageSize;
+          const uint64_t NewPage = TotalSize / HugePageSize;
           if (NewPage != CurPage) {
             CurPage = NewPage;
             outs() <<
@@ -308,8 +308,8 @@ void ReorderFunctions::runOnFunctions(BinaryContext &BC) {
                        [&](const BinaryFunction *A, const BinaryFunction *B) {
                          if (A->isIgnored())
                            return false;
-                         const auto PadA = opts::padFunction(*A);
-                         const auto PadB = opts::padFunction(*B);
+                         const size_t PadA = opts::padFunction(*A);
+                         const size_t PadB = opts::padFunction(*B);
                          if (!PadA || !PadB) {
                            if (PadA)
                              return true;
@@ -320,7 +320,7 @@ void ReorderFunctions::runOnFunctions(BinaryContext &BC) {
                            (B->hasProfile() ||
                             (A->getExecutionCount() > B->getExecutionCount()));
                        });
-      for (auto *BF : SortedFunctions) {
+      for (BinaryFunction *BF : SortedFunctions) {
         if (BF->hasProfile())
           BF->setIndex(Index++);
       }
@@ -342,15 +342,16 @@ void ReorderFunctions::runOnFunctions(BinaryContext &BC) {
   case RT_USER:
     {
       uint32_t Index = 0;
-      for (const auto &Function : readFunctionOrderFile()) {
+      for (const std::string &Function : readFunctionOrderFile()) {
         std::vector<uint64_t> FuncAddrs;
 
-        auto *BD = BC.getBinaryDataByName(Function);
+        BinaryData *BD = BC.getBinaryDataByName(Function);
         if (!BD) {
           uint32_t LocalID = 1;
           while(1) {
             // If we can't find the main symbol name, look for alternates.
-            const auto FuncName = Function + "/" + std::to_string(LocalID);
+            const std::string FuncName =
+                Function + "/" + std::to_string(LocalID);
             BD = BC.getBinaryDataByName(FuncName);
             if (BD)
               FuncAddrs.push_back(BD->getAddress());
@@ -368,11 +369,11 @@ void ReorderFunctions::runOnFunctions(BinaryContext &BC) {
           continue;
         }
 
-        for (const auto FuncAddr : FuncAddrs) {
-          const auto *FuncBD = BC.getBinaryDataAtAddress(FuncAddr);
+        for (const uint64_t FuncAddr : FuncAddrs) {
+          const BinaryData *FuncBD = BC.getBinaryDataAtAddress(FuncAddr);
           assert(FuncBD);
 
-          auto *BF = BC.getFunctionForSymbol(FuncBD->getSymbol());
+          BinaryFunction *BF = BC.getFunctionForSymbol(FuncBD->getSymbol());
           if (!BF) {
             errs() << "BOLT-WARNING: Reorder functions: can't find function for "
                    << Function << ".\n";
@@ -441,7 +442,7 @@ void ReorderFunctions::runOnFunctions(BinaryContext &BC) {
         }
       });
 
-    for (const auto *Func : SortedFunctions) {
+    for (const BinaryFunction *Func : SortedFunctions) {
       if (!Func->hasValidIndex())
         break;
       if (Func->isPLTFunction())
@@ -452,10 +453,10 @@ void ReorderFunctions::runOnFunctions(BinaryContext &BC) {
 
       if (LinkSectionsFile) {
         const char *Indent = "";
-        auto AllNames = Func->getNames();
+        std::vector<StringRef> AllNames = Func->getNames();
         std::sort(AllNames.begin(), AllNames.end());
-        for (auto Name : AllNames) {
-          const auto SlashPos = Name.find('/');
+        for (StringRef Name : AllNames) {
+          const size_t SlashPos = Name.find('/');
           if (SlashPos != std::string::npos) {
             // Avoid duplicates for local functions.
             if (Name.find('/', SlashPos + 1) != std::string::npos)

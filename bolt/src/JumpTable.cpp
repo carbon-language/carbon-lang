@@ -56,8 +56,8 @@ JumpTable::getEntriesForAddress(const uint64_t Addr) const {
     auto LI = Labels.find(Offset);
     if (LI != Labels.end()) {
       const auto NextLI = std::next(LI);
-      const auto NextOffset =
-        NextLI == Labels.end() ? getSize() : NextLI->first;
+      const uint64_t NextOffset =
+          NextLI == Labels.end() ? getSize() : NextLI->first;
       if (InstOffset >= LI->first && InstOffset < NextOffset) {
         StartIndex = I;
         EndIndex = I;
@@ -77,10 +77,10 @@ JumpTable::getEntriesForAddress(const uint64_t Addr) const {
 bool JumpTable::replaceDestination(uint64_t JTAddress, const MCSymbol *OldDest,
                                    MCSymbol *NewDest) {
   bool Patched{false};
-  const auto Range = getEntriesForAddress(JTAddress);
+  const std::pair<size_t, size_t> Range = getEntriesForAddress(JTAddress);
   for (auto I = &Entries[Range.first], E = &Entries[Range.second]; I != E;
        ++I) {
-    auto &Entry = *I;
+    MCSymbol *&Entry = *I;
     if (Entry == OldDest) {
       Patched = true;
       Entry = NewDest;
@@ -95,7 +95,7 @@ void JumpTable::updateOriginal() {
   // overwritten.
   const uint64_t BaseOffset = getAddress() - getSection().getAddress();
   uint64_t Offset = BaseOffset;
-  for (auto *Entry : Entries) {
+  for (MCSymbol *Entry : Entries) {
     const auto RelType =
       Type == JTT_NORMAL ? ELF::R_X86_64_64 : ELF::R_X86_64_PC32;
     const uint64_t RelAddend = (Type == JTT_NORMAL ? 0 : Offset - BaseOffset);
@@ -116,10 +116,10 @@ void JumpTable::print(raw_ostream &OS) const {
   OS << "Jump table " << getName() << " for function " << *Parent << " at 0x"
      << Twine::utohexstr(getAddress()) << " with a total count of " << Count
      << ":\n";
-  for (const auto EntryOffset : OffsetEntries) {
+  for (const uint64_t EntryOffset : OffsetEntries) {
     OS << "  0x" << Twine::utohexstr(EntryOffset) << '\n';
   }
-  for (const auto *Entry : Entries) {
+  for (const MCSymbol *Entry : Entries) {
     auto LI = Labels.find(Offset);
     if (Offset && LI != Labels.end()) {
       OS << "Jump Table " << LI->second->getName() << " at 0x"

@@ -145,8 +145,8 @@ DataflowInfoManager::getInsnToBBMap() {
   if (InsnToBB)
     return *InsnToBB;
   InsnToBB.reset(new std::unordered_map<const MCInst *, BinaryBasicBlock *>());
-  for (auto &BB : BF) {
-    for (auto &Inst : BB)
+  for (BinaryBasicBlock &BB : BF) {
+    for (MCInst &Inst : BB)
       (*InsnToBB)[&Inst] = &BB;
   }
   return *InsnToBB;

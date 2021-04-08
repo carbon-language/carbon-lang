@@ -83,23 +83,24 @@ BinaryFunction *createNewRetpoline(BinaryContext &BC,
                                    const IndirectBranchInfo &BrInfo,
                                    bool R11Available) {
   auto &MIB = *BC.MIB;
-  auto &Ctx = *BC.Ctx.get();
+  MCContext &Ctx = *BC.Ctx.get();
   LLVM_DEBUG(dbgs() << "BOLT-DEBUG: Creating a new retpoline function["
                     << RetpolineTag << "]\n");
 
-  auto *NewRetpoline = BC.createInjectedBinaryFunction(RetpolineTag, true);
+  BinaryFunction *NewRetpoline =
+      BC.createInjectedBinaryFunction(RetpolineTag, true);
   std::vector<std::unique_ptr<BinaryBasicBlock>> NewBlocks(3);
   for (int I = 0; I < 3; I++) {
-    auto Symbol =
+    MCSymbol *Symbol =
         Ctx.createNamedTempSymbol(Twine(RetpolineTag + "_BB" + to_string(I)));
     NewBlocks[I] = NewRetpoline->createBasicBlock(
         BinaryBasicBlock::INVALID_OFFSET, Symbol);
     NewBlocks[I].get()->setCFIState(0);
   }
 
-  auto &BB0 = *NewBlocks[0].get();
-  auto &BB1 = *NewBlocks[1].get();
-  auto &BB2 = *NewBlocks[2].get();
+  BinaryBasicBlock &BB0 = *NewBlocks[0].get();
+  BinaryBasicBlock &BB1 = *NewBlocks[1].get();
+  BinaryBasicBlock &BB2 = *NewBlocks[2].get();
 
   BB0.addSuccessor(&BB2, 0, 0);
   BB1.addSuccessor(&BB1, 0, 0);
@@ -137,7 +138,7 @@ BinaryFunction *createNewRetpoline(BinaryContext &BC,
       BB2.addInstruction(PushR11);
 
       MCInst LoadCalleeAddrs;
-      const auto &MemRef = BrInfo.Memory;
+      const IndirectBranchInfo::MemOpInfo &MemRef = BrInfo.Memory;
       MIB.createLoad(LoadCalleeAddrs, MemRef.BaseRegNum, MemRef.ScaleValue,
                      MemRef.IndexRegNum, MemRef.DispValue, MemRef.DispExpr,
                      MemRef.SegRegNum, MIB.getX86R11(), 8);
@@ -186,7 +187,7 @@ std::string createRetpolineFunctionTag(BinaryContext &BC,
 
   std::string Tag = "__retpoline_mem_";
 
-  const auto &MemRef = BrInfo.Memory;
+  const IndirectBranchInfo::MemOpInfo &MemRef = BrInfo.Memory;
 
   std::string DispExprStr;
   if (MemRef.DispExpr) {
@@ -216,7 +217,7 @@ std::string createRetpolineFunctionTag(BinaryContext &BC,
 
 BinaryFunction *RetpolineInsertion::getOrCreateRetpoline(
     BinaryContext &BC, const IndirectBranchInfo &BrInfo, bool R11Available) {
-  const auto RetpolineTag =
+  const std::string RetpolineTag =
       createRetpolineFunctionTag(BC, BrInfo, R11Available);
 
   if (CreatedRetpolines.count(RetpolineTag))
@@ -234,7 +235,7 @@ void createBranchReplacement(BinaryContext &BC,
   auto &MIB = *BC.MIB;
   // Load the branch address in r11 if available
   if (BrInfo.isMem() && R11Available) {
-    const auto &MemRef = BrInfo.Memory;
+    const IndirectBranchInfo::MemOpInfo &MemRef = BrInfo.Memory;
     MCInst LoadCalleeAddrs;
     MIB.createLoad(LoadCalleeAddrs, MemRef.BaseRegNum, MemRef.ScaleValue,
                    MemRef.IndexRegNum, MemRef.DispValue, MemRef.DispExpr,
@@ -284,10 +285,10 @@ void RetpolineInsertion::runOnFunctions(BinaryContext &BC) {
   auto &MIB = *BC.MIB;
   uint32_t RetpolinedBranches = 0;
   for (auto &It : BC.getBinaryFunctions()) {
-    auto &Function = It.second;
-    for (auto &BB : Function) {
+    BinaryFunction &Function = It.second;
+    for (BinaryBasicBlock &BB : Function) {
       for (auto It = BB.begin(); It != BB.end(); ++It) {
-        auto &Inst = *It;
+        MCInst &Inst = *It;
 
         if (!MIB.isIndirectCall(Inst) && !MIB.isIndirectBranch(Inst))
           continue;
@@ -310,8 +311,8 @@ void RetpolineInsertion::runOnFunctions(BinaryContext &BC) {
         // If the instruction addressing pattern uses rsp and the retpoline
         // loads the callee address then displacement needs to be updated
         if (BrInfo.isMem() && !R11Available) {
-          auto &MemRef = BrInfo.Memory;
-          auto Addend = (BrInfo.isJump() || BrInfo.isTailCall()) ? 8 : 16;
+          IndirectBranchInfo::MemOpInfo &MemRef = BrInfo.Memory;
+          int Addend = (BrInfo.isJump() || BrInfo.isTailCall()) ? 8 : 16;
           if (MemRef.BaseRegNum == MIB.getStackPointer()) {
             MemRef.DispValue += Addend;
           }

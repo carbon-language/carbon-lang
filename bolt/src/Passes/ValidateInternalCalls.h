@@ -89,8 +89,8 @@ private:
 
   void clearAnnotations(BinaryFunction &Function) const {
     const BinaryContext &BC = Function.getBinaryContext();
-    for (auto &BB : Function) {
-      for (auto &Inst : BB) {
+    for (BinaryBasicBlock &BB : Function) {
+      for (MCInst &Inst : BB) {
         BC.MIB->removeAnnotation(Inst, getProcessedICTag());
       }
     }

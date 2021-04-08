@@ -295,7 +295,7 @@ int main(int argc, char **argv) {
   if (!opts::DiffOnly) {
     Expected<OwningBinary<Binary>> BinaryOrErr =
         createBinary(opts::InputFilename);
-    if (auto E = BinaryOrErr.takeError())
+    if (Error E = BinaryOrErr.takeError())
       report_error(opts::InputFilename, std::move(E));
     Binary &Binary = *BinaryOrErr.get().getBinary();
 
@@ -307,11 +307,11 @@ int main(int argc, char **argv) {
             << ": WARNING: reading perf data directly is unsupported, please use "
             "-aggregate-only or perf2bolt.\n!!! Proceed on your own risk. !!!\n";
         }
-        if (auto E = RI.setProfile(opts::PerfData))
+        if (Error E = RI.setProfile(opts::PerfData))
           report_error(opts::PerfData, std::move(E));
       }
       if (!opts::InputDataFilename.empty()) {
-        if (auto E = RI.setProfile(opts::InputDataFilename))
+        if (Error E = RI.setProfile(opts::InputDataFilename))
           report_error(opts::InputDataFilename, std::move(E));
       }
       if (opts::AggregateOnly && opts::PerfData.empty()) {
@@ -324,7 +324,7 @@ int main(int argc, char **argv) {
       MachORewriteInstance MachORI(O, ToolPath);
 
       if (!opts::InputDataFilename.empty())
-        if (auto E = MachORI.setProfile(opts::InputDataFilename))
+        if (Error E = MachORI.setProfile(opts::InputDataFilename))
           report_error(opts::InputDataFilename, std::move(E));
 
       MachORI.run();
@@ -340,19 +340,19 @@ int main(int argc, char **argv) {
       createBinary(opts::InputFilename);
   Expected<OwningBinary<Binary>> BinaryOrErr2 =
       createBinary(opts::InputFilename2);
-  if (auto E = BinaryOrErr1.takeError())
+  if (Error E = BinaryOrErr1.takeError())
     report_error(opts::InputFilename, std::move(E));
-  if (auto E = BinaryOrErr2.takeError())
+  if (Error E = BinaryOrErr2.takeError())
     report_error(opts::InputFilename2, std::move(E));
   Binary &Binary1 = *BinaryOrErr1.get().getBinary();
   Binary &Binary2 = *BinaryOrErr2.get().getBinary();
   if (auto *ELFObj1 = dyn_cast<ELFObjectFileBase>(&Binary1)) {
     if (auto *ELFObj2 = dyn_cast<ELFObjectFileBase>(&Binary2)) {
       RewriteInstance RI1(ELFObj1, argc, argv, ToolPath);
-      if (auto E = RI1.setProfile(opts::InputDataFilename))
+      if (Error E = RI1.setProfile(opts::InputDataFilename))
         report_error(opts::InputDataFilename, std::move(E));
       RewriteInstance RI2(ELFObj2, argc, argv, ToolPath);
-      if (auto E = RI2.setProfile(opts::InputDataFilename2))
+      if (Error E = RI2.setProfile(opts::InputDataFilename2))
         report_error(opts::InputDataFilename2, std::move(E));
       outs() << "BOLT-DIFF: *** Analyzing binary 1: " << opts::InputFilename
              << "\n";

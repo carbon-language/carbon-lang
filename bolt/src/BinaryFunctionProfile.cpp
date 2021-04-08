@@ -101,14 +101,14 @@ void BinaryFunction::postProcessProfile() {
   }
 
   // Compute preliminary execution count for each basic block.
-  for (auto *BB : BasicBlocks) {
+  for (BinaryBasicBlock *BB : BasicBlocks) {
     if ((!BB->isEntryPoint() && !BB->isLandingPad()) ||
         BB->ExecutionCount == BinaryBasicBlock::COUNT_NO_PROFILE)
       BB->ExecutionCount = 0;
   }
-  for (auto *BB : BasicBlocks) {
+  for (BinaryBasicBlock *BB : BasicBlocks) {
     auto SuccBIIter = BB->branch_info_begin();
-    for (auto Succ : BB->successors()) {
+    for (BinaryBasicBlock *Succ : BB->successors()) {
       // All incoming edges to the primary entry have been accounted for, thus
       // we skip the update here.
       if (SuccBIIter->Count != BinaryBasicBlock::COUNT_NO_PROFILE &&
@@ -119,12 +119,12 @@ void BinaryFunction::postProcessProfile() {
   }
 
   if (opts::FixBlockCounts) {
-    for (auto *BB : BasicBlocks) {
+    for (BinaryBasicBlock *BB : BasicBlocks) {
       // Make sure that execution count of a block is at least the branch count
       // of an incoming/outgoing jump.
       auto SuccBIIter = BB->branch_info_begin();
-      for (auto Succ : BB->successors()) {
-        auto Count = SuccBIIter->Count;
+      for (BinaryBasicBlock *Succ : BB->successors()) {
+        uint64_t Count = SuccBIIter->Count;
         if (Count != BinaryBasicBlock::COUNT_NO_PROFILE && Count > 0) {
           Succ->setExecutionCount(std::max(Succ->getExecutionCount(), Count));
           BB->setExecutionCount(std::max(BB->getExecutionCount(), Count));
@@ -133,7 +133,7 @@ void BinaryFunction::postProcessProfile() {
       }
       // Make sure that execution count of a block is at least the number of
       // function calls from the block.
-      for (auto &Inst : *BB) {
+      for (MCInst &Inst : *BB) {
         // Ignore non-call instruction
         if (!BC.MIB->isCall(Inst))
           continue;
@@ -156,19 +156,20 @@ void BinaryFunction::postProcessProfile() {
   }
 
   // Update profile information for jump tables based on CFG branch data.
-  for (auto *BB : BasicBlocks) {
-    const auto *LastInstr = BB->getLastNonPseudoInstr();
+  for (BinaryBasicBlock *BB : BasicBlocks) {
+    const MCInst *LastInstr = BB->getLastNonPseudoInstr();
     if (!LastInstr)
       continue;
-    const auto JTAddress = BC.MIB->getJumpTable(*LastInstr);
+    const uint64_t JTAddress = BC.MIB->getJumpTable(*LastInstr);
     if (!JTAddress)
       continue;
-    auto *JT = getJumpTableContainingAddress(JTAddress);
+    JumpTable *JT = getJumpTableContainingAddress(JTAddress);
     if (!JT)
       continue;
 
     uint64_t TotalBranchCount = 0;
-    for (const auto &BranchInfo : BB->branch_info()) {
+    for (const BinaryBasicBlock::BinaryBranchInfo &BranchInfo :
+         BB->branch_info()) {
       TotalBranchCount += BranchInfo.Count;
     }
     JT->Count += TotalBranchCount;
@@ -180,12 +181,13 @@ void BinaryFunction::postProcessProfile() {
     if (JT->Counts.empty())
       JT->Counts.resize(JT->Entries.size());
     auto EI = JT->Entries.begin();
-    auto Delta = (JTAddress - JT->getAddress()) / JT->EntrySize;
+    uint64_t Delta = (JTAddress - JT->getAddress()) / JT->EntrySize;
     EI += Delta;
     while (EI != JT->Entries.end()) {
-      const auto *TargetBB = getBasicBlockForLabel(*EI);
+      const BinaryBasicBlock *TargetBB = getBasicBlockForLabel(*EI);
       if (TargetBB) {
-        const auto &BranchInfo = BB->getBranchInfo(*TargetBB);
+        const BinaryBasicBlock::BinaryBranchInfo &BranchInfo =
+            BB->getBranchInfo(*TargetBB);
         assert(Delta < JT->Counts.size());
         JT->Counts[Delta].Count += BranchInfo.Count;
         JT->Counts[Delta].Mispreds += BranchInfo.MispredictedCount;
@@ -229,7 +231,7 @@ void BinaryFunction::mergeProfileDataInto(BinaryFunction &BF) const {
     auto BBMergeSI = BBMerge->succ_begin();
     auto BIMergeI = BBMerge->branch_info_begin();
     auto BII = BB->branch_info_begin();
-    for (const auto *BBSucc : BB->successors()) {
+    for (const BinaryBasicBlock *BBSucc : BB->successors()) {
       (void)BBSucc;
       assert(getIndex(BBSucc) == BF.getIndex(*BBMergeSI));
 
@@ -266,7 +268,7 @@ void BinaryFunction::mergeProfileDataInto(BinaryFunction &BF) const {
     if (JTMergeI->second->Counts.empty())
       JTMergeI->second->Counts.resize(JTEntry.second->Counts.size());
     auto CountMergeI = JTMergeI->second->Counts.begin();
-    for (const auto &JI : JTEntry.second->Counts) {
+    for (const JumpTable::JumpInfo &JI : JTEntry.second->Counts) {
       CountMergeI->Count += JI.Count;
       CountMergeI->Mispreds += JI.Mispreds;
       ++CountMergeI;
@@ -282,7 +284,7 @@ void BinaryFunction::inferFallThroughCounts() {
   // Work on a basic block at a time, propagating frequency information
   // forwards.
   // It is important to walk in the layout order.
-  for (auto *BB : BasicBlocks) {
+  for (BinaryBasicBlock *BB : BasicBlocks) {
     const uint64_t BBExecCount = BB->getExecutionCount();
 
     // Propagate this information to successors, filling in fall-through edges
@@ -293,14 +295,14 @@ void BinaryFunction::inferFallThroughCounts() {
     // Calculate frequency of outgoing branches from this node according to
     // LBR data.
     uint64_t ReportedBranches = 0;
-    for (const auto &SuccBI : BB->branch_info()) {
+    for (const BinaryBasicBlock::BinaryBranchInfo &SuccBI : BB->branch_info()) {
       if (SuccBI.Count != BinaryBasicBlock::COUNT_NO_PROFILE)
         ReportedBranches += SuccBI.Count;
     }
 
     // Get taken count of conditional tail call if the block ends with one.
     uint64_t CTCTakenCount = 0;
-    const auto CTCInstr = BB->getLastNonPseudoInstr();
+    const MCInst *CTCInstr = BB->getLastNonPseudoInstr();
     if (CTCInstr && BC.MIB->getConditionalTailCall(*CTCInstr)) {
       CTCTakenCount =
         BC.MIB->getAnnotationWithDefault<uint64_t>(*CTCInstr, "CTCTakenCount");
@@ -311,7 +313,7 @@ void BinaryFunction::inferFallThroughCounts() {
     // for a landing pad to be associated with more than one basic blocks,
     // we may overestimate the frequency of throws for such blocks.
     uint64_t ReportedThrows = 0;
-    for (const auto *LP: BB->landing_pads()) {
+    for (const BinaryBasicBlock *LP : BB->landing_pads()) {
       ReportedThrows += LP->getExecutionCount();
     }
 
@@ -336,7 +338,7 @@ void BinaryFunction::inferFallThroughCounts() {
 
     if (BB->succ_size() <= 2) {
       // Skip if the last instruction is an unconditional jump.
-      const auto *LastInstr = BB->getLastNonPseudoInstr();
+      const MCInst *LastInstr = BB->getLastNonPseudoInstr();
       if (LastInstr &&
           (BC.MIB->isUnconditionalBranch(*LastInstr) ||
            BC.MIB->isIndirectBranch(*LastInstr)))
@@ -358,9 +360,9 @@ void BinaryFunction::inferFallThroughCounts() {
 void BinaryFunction::clearProfile() {
   // Keep function execution profile the same. Only clear basic block and edge
   // counts.
-  for (auto *BB : BasicBlocks) {
+  for (BinaryBasicBlock *BB : BasicBlocks) {
     BB->ExecutionCount = 0;
-    for (auto &BI : BB->branch_info()) {
+    for (BinaryBasicBlock::BinaryBranchInfo &BI : BB->branch_info()) {
       BI.Count = 0;
       BI.MispredictedCount = 0;
     }

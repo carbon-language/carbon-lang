@@ -20,8 +20,8 @@ void StackAllocationAnalysis::preflight() {
   LLVM_DEBUG(dbgs() << "Starting StackAllocationAnalysis on \""
                     << Func.getPrintName() << "\"\n");
 
-  for (auto &BB : this->Func) {
-    for (auto &Inst : BB) {
+  for (BinaryBasicBlock &BB : this->Func) {
+    for (MCInst &Inst : BB) {
       MCPhysReg From, To;
       if (!BC.MIB->isPush(Inst) && (!BC.MIB->isRegToRegMove(Inst, From, To) ||
                                     To != BC.MIB->getStackPointer() ||
@@ -82,7 +82,7 @@ void StackAllocationAnalysis::doConfluenceWithLP(BitVector &StateOut,
                                                  const BitVector &StateIn,
                                                  const MCInst &Invoke) {
   BitVector NewIn = StateIn;
-  const auto GnuArgsSize = BC.MIB->getGnuArgsSize(Invoke);
+  const int64_t GnuArgsSize = BC.MIB->getGnuArgsSize(Invoke);
   if (GnuArgsSize >= 0)
     NewIn = doKill(Invoke, NewIn, GnuArgsSize);
   StateOut |= NewIn;

@@ -160,8 +160,8 @@ callWithDynoStats(FnType &&Func,
   Func();
 
   if (Flag) {
-    const auto DynoStatsAfter = getDynoStats(Funcs);
-    const auto Changed = (DynoStatsAfter != DynoStatsBefore);
+    const DynoStats DynoStatsAfter = getDynoStats(Funcs);
+    const bool Changed = (DynoStatsAfter != DynoStatsBefore);
     outs() << "BOLT-INFO: program-wide dynostats after running "
            << Phase << (Changed ? "" : " (no change)") << ":\n\n"
            << DynoStatsBefore << '\n';

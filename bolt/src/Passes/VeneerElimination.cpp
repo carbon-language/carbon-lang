@@ -46,13 +46,13 @@ void VeneerElimination::runOnFunctions(BinaryContext &BC) {
       VeneersCount++;
       BinaryFunction &VeneerFunction = CurrentIt->second;
 
-      auto &FirstInstruction = *(VeneerFunction.begin()->begin());
+      MCInst &FirstInstruction = *(VeneerFunction.begin()->begin());
       const MCSymbol *VeneerTargetSymbol =
           BC.MIB->getTargetSymbol(FirstInstruction, 1);
 
       // Functions can have multiple symbols
-      for (auto Name : VeneerFunction.getNames()) {
-        auto *Symbol = BC.Ctx->lookupSymbol(Name);
+      for (StringRef Name : VeneerFunction.getNames()) {
+        MCSymbol *Symbol = BC.Ctx->lookupSymbol(Name);
         VeneerDestinations[Symbol] = VeneerTargetSymbol;
         BC.SymbolToFunctionMap.erase(Symbol);
       }
@@ -77,13 +77,13 @@ void VeneerElimination::runOnFunctions(BinaryContext &BC) {
 
   uint64_t VeneerCallers = 0;
   for (auto &It : BFs) {
-    auto &Function = It.second;
-    for (auto &BB : Function) {
-      for (auto &Instr : BB) {
+    BinaryFunction &Function = It.second;
+    for (BinaryBasicBlock &BB : Function) {
+      for (MCInst &Instr : BB) {
         if (!BC.MIB->isCall(Instr) || BC.MIB->isIndirectCall(Instr))
           continue;
 
-        auto *TargetSymbol = BC.MIB->getTargetSymbol(Instr, 0);
+        const MCSymbol *TargetSymbol = BC.MIB->getTargetSymbol(Instr, 0);
         if (VeneerDestinations.find(TargetSymbol) == VeneerDestinations.end())
           continue;
 

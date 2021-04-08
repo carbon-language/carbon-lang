@@ -54,17 +54,17 @@ public:
 using ClusterArcSet = std::unordered_set<ClusterArc, ClusterArcHash>;
 
 void orderFuncs(const CallGraph &Cg, Cluster *C1, Cluster *C2) {
-  auto C1head = C1->targets().front();
-  auto C1tail = C1->targets().back();
-  auto C2head = C2->targets().front();
-  auto C2tail = C2->targets().back();
+  NodeId C1head = C1->targets().front();
+  NodeId C1tail = C1->targets().back();
+  NodeId C2head = C2->targets().front();
+  NodeId C2tail = C2->targets().back();
 
   double C1headC2head = 0;
   double C1headC2tail = 0;
   double C1tailC2head = 0;
   double C1tailC2tail = 0;
 
-  for (const auto &Arc : Cg.arcs()) {
+  for (const Arc &Arc : Cg.arcs()) {
     if ((Arc.src() == C1head && Arc.dst() == C2head) ||
         (Arc.dst() == C1head && Arc.src() == C2head)) {
       C1headC2head += Arc.weight();
@@ -123,11 +123,11 @@ std::vector<Cluster> pettisAndHansen(const CallGraph &Cg) {
 
   // Create a std::vector of cluster arcs
 
-  for (auto &Arc : Cg.arcs()) {
+  for (const Arc &Arc : Cg.arcs()) {
     if (Arc.weight() == 0) continue;
 
-    auto const S = FuncCluster[Arc.src()];
-    auto const D = FuncCluster[Arc.dst()];
+    Cluster *const S = FuncCluster[Arc.src()];
+    Cluster *const D = FuncCluster[Arc.dst()];
 
     // ignore if s or d is nullptr
 
@@ -151,11 +151,11 @@ std::vector<Cluster> pettisAndHansen(const CallGraph &Cg) {
       }
     );
 
-    auto Max = *Maxpos;
+    ClusterArc Max = *Maxpos;
     Carcs.erase(Maxpos);
 
-    auto const C1 = Max.C1;
-    auto const C2 = Max.C2;
+    Cluster *const C1 = Max.C1;
+    Cluster *const C2 = Max.C2;
 
     if (C1->size() + C2->size() > MaxClusterSize) continue;
 
@@ -172,14 +172,14 @@ std::vector<Cluster> pettisAndHansen(const CallGraph &Cg) {
     // update carcs: merge C1arcs to C2arcs
 
     std::unordered_map<ClusterArc, Cluster *, ClusterArcHash> C2arcs;
-    for (auto &Carc : Carcs) {
+    for (const ClusterArc &Carc : Carcs) {
       if (Carc.C1 == C2) C2arcs.emplace(Carc, Carc.C2);
       if (Carc.C2 == C2) C2arcs.emplace(Carc, Carc.C1);
     }
 
     for (auto It : C2arcs) {
-      auto const C = It.second;
-      auto const C2arc = It.first;
+      Cluster *const C = It.second;
+      ClusterArc const C2arc = It.first;
 
       insertOrInc(C, C1, C2arc.Weight);
       Carcs.erase(C2arc);
@@ -187,7 +187,7 @@ std::vector<Cluster> pettisAndHansen(const CallGraph &Cg) {
 
     // update FuncCluster
 
-    for (auto F : C2->targets()) {
+    for (NodeId F : C2->targets()) {
       FuncCluster[F] = C1;
     }
     C1->merge(*C2, Max.Weight);
@@ -200,10 +200,10 @@ std::vector<Cluster> pettisAndHansen(const CallGraph &Cg) {
   std::set<Cluster*> LiveClusters;
   std::vector<Cluster> OutClusters;
 
-  for (auto Fid : Funcs) {
+  for (NodeId Fid : Funcs) {
     LiveClusters.insert(FuncCluster[Fid]);
   }
-  for (auto C : LiveClusters) {
+  for (Cluster *C : LiveClusters) {
     OutClusters.push_back(std::move(*C));
   }
 

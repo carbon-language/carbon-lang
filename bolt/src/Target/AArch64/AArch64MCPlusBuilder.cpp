@@ -179,13 +179,13 @@ public:
   bool isLoadFromStack(const MCInst &Inst) const {
     if (!isLoad(Inst))
       return false;
-    const auto InstInfo = Info->get(Inst.getOpcode());
-    auto NumDefs = InstInfo.getNumDefs();
+    const MCInstrDesc InstInfo = Info->get(Inst.getOpcode());
+    unsigned NumDefs = InstInfo.getNumDefs();
     for (unsigned I = NumDefs, E = InstInfo.getNumOperands(); I < E; ++I) {
-      auto &Operand = Inst.getOperand(I);
+      const MCOperand &Operand = Inst.getOperand(I);
       if (!Operand.isReg())
         continue;
-      auto Reg = Operand.getReg();
+      unsigned Reg = Operand.getReg();
       if (Reg == AArch64::SP || Reg == AArch64::WSP ||
           Reg == AArch64::FP || Reg == AArch64::W29)
         return true;
@@ -225,7 +225,7 @@ public:
       return true;
 
     // Look for literal addressing mode (see C1-143 ARM DDI 0487B.a)
-    const auto MCII = Info->get(Inst.getOpcode());
+    const MCInstrDesc MCII = Info->get(Inst.getOpcode());
     for (unsigned I = 0, E = MCII.getNumOperands(); I != E; ++I) {
       if (MCII.OpInfo[I].OperandType == MCOI::OPERAND_PCREL)
         return true;
@@ -237,7 +237,7 @@ public:
                    const MCExpr **DispExpr) const {
     assert((isADR(Inst) || isADRP(Inst)) && "Not an ADR instruction");
 
-    auto &Label = Inst.getOperand(1);
+    const MCOperand &Label = Inst.getOperand(1);
     if (!Label.isImm()) {
       assert (Label.isExpr() && "Unexpected ADR operand");
       assert (DispExpr && "DispExpr must be set");
@@ -261,7 +261,7 @@ public:
       return evaluateADR(Inst, DispImm, DispExpr);
 
     // Literal addressing mode
-    const auto MCII = Info->get(Inst.getOpcode());
+    const MCInstrDesc MCII = Info->get(Inst.getOpcode());
     for (unsigned I = 0, E = MCII.getNumOperands(); I != E; ++I) {
       if (MCII.OpInfo[I].OperandType != MCOI::OPERAND_PCREL)
         continue;
@@ -306,7 +306,7 @@ public:
              "Unexpected number of operands");
       ++OI;
     } else {
-      const auto MCII = Info->get(Inst.getOpcode());
+      const MCInstrDesc MCII = Info->get(Inst.getOpcode());
       for (unsigned I = 0, E = MCII.getNumOperands(); I != E; ++I) {
         if (MCII.OpInfo[I].OperandType == MCOI::OPERAND_PCREL) {
           break;
@@ -375,7 +375,7 @@ public:
         OpNum = 1;
     }
 
-    auto &Op = Inst.getOperand(OpNum);
+    const MCOperand &Op = Inst.getOperand(OpNum);
     if (!Op.isExpr())
       return nullptr;
 
@@ -457,11 +457,11 @@ public:
     assert(Inst.getOpcode() == AArch64::BR && "Unexpected opcode");
 
     // Match the indirect branch pattern for aarch64
-    auto &UsesRoot = UDChain[&Inst];
+    SmallVector<MCInst *, 4> &UsesRoot = UDChain[&Inst];
     if (UsesRoot.size() == 0 || UsesRoot[0] == nullptr) {
       return false;
     }
-    const auto *DefAdd = UsesRoot[0];
+    const MCInst *DefAdd = UsesRoot[0];
 
     // Now we match an ADD
     if (!isADD(*DefAdd)) {
@@ -497,9 +497,10 @@ public:
            "Failed to match indirect branch!");
 
     // Validate ADD operands
-    auto OperandExtension = DefAdd->getOperand(3).getImm();
-    auto ShiftVal = AArch64_AM::getArithShiftValue(OperandExtension);
-    auto ExtendType = AArch64_AM::getArithExtendType(OperandExtension);
+    int64_t OperandExtension = DefAdd->getOperand(3).getImm();
+    unsigned ShiftVal = AArch64_AM::getArithShiftValue(OperandExtension);
+    AArch64_AM::ShiftExtendType ExtendType =
+        AArch64_AM::getArithExtendType(OperandExtension);
     if (ShiftVal != 2) {
       llvm_unreachable("Failed to match indirect branch! (fragment 2)");
     }
@@ -514,20 +515,20 @@ public:
     }
 
     // Match an ADR to load base address to be used when addressing JT targets
-    auto &UsesAdd = UDChain[DefAdd];
+    SmallVector<MCInst *, 4> &UsesAdd = UDChain[DefAdd];
     if (UsesAdd.size() <= 1 || UsesAdd[1] == nullptr || UsesAdd[2] == nullptr) {
       // This happens when we don't have enough context about this jump table
       // because the jumping code sequence was split in multiple basic blocks.
       // This was observed in the wild in HHVM code (dispatchImpl).
       return false;
     }
-    auto *DefBaseAddr = UsesAdd[1];
+    MCInst *DefBaseAddr = UsesAdd[1];
     assert(DefBaseAddr->getOpcode() == AArch64::ADR &&
            "Failed to match indirect branch pattern! (fragment 3)");
 
     PCRelBase = DefBaseAddr;
     // Match LOAD to load the jump table (relative) target
-    const auto *DefLoad = UsesAdd[2];
+    const MCInst *DefLoad = UsesAdd[2];
     assert(isLoad(*DefLoad) &&
            "Failed to match indirect branch load pattern! (1)");
     assert((ScaleValue != 1LL || isLDRB(*DefLoad)) &&
@@ -536,8 +537,8 @@ public:
            "Failed to match indirect branch load pattern! (3)");
 
     // Match ADD that calculates the JumpTable Base Address (not the offset)
-    auto &UsesLoad = UDChain[DefLoad];
-    const auto *DefJTBaseAdd = UsesLoad[1];
+    SmallVector<MCInst *, 4> &UsesLoad = UDChain[DefLoad];
+    const MCInst *DefJTBaseAdd = UsesLoad[1];
     MCPhysReg From, To;
     if (DefJTBaseAdd == nullptr || isLoadFromStack(*DefJTBaseAdd) ||
         isRegToRegMove(*DefJTBaseAdd, From, To)) {
@@ -552,8 +553,8 @@ public:
 
     if (DefJTBaseAdd->getOperand(2).isImm())
       Offset = DefJTBaseAdd->getOperand(2).getImm();
-    auto &UsesJTBaseAdd = UDChain[DefJTBaseAdd];
-    const auto *DefJTBasePage = UsesJTBaseAdd[1];
+    SmallVector<MCInst *, 4> &UsesJTBaseAdd = UDChain[DefJTBaseAdd];
+    const MCInst *DefJTBasePage = UsesJTBaseAdd[1];
     if (DefJTBasePage == nullptr || isLoadFromStack(*DefJTBasePage)) {
       JumpTable = nullptr;
       return true;
@@ -593,7 +594,7 @@ public:
     LLVM_DEBUG(dbgs() << "computeLocalUDChain\n");
     bool TerminatorSeen = false;
     for (auto II = Begin; II != End; ++II) {
-      auto &Instr = *II;
+      MCInst &Instr = *II;
       // Ignore nops and CFIs
       if (Info->get(Instr.getOpcode()).isPseudo() || isNoop(Instr))
         continue;
@@ -656,7 +657,8 @@ public:
     int64_t       ScaleValue, DispValue;
     const MCExpr *DispExpr;
 
-    auto UDChain = computeLocalUDChain(&Instruction, Begin, End);
+    DenseMap<const MCInst *, SmallVector<llvm::MCInst *, 4>> UDChain =
+        computeLocalUDChain(&Instruction, Begin, End);
     MCInst *PCRelBase;
     if (!analyzeIndirectBranchFragment(Instruction, UDChain, DispExpr,
                                        DispValue, ScaleValue, PCRelBase)) {
@@ -828,7 +830,7 @@ public:
         // unreachable code. Ignore them.
         CondBranch = nullptr;
         UncondBranch = &*I;
-        const auto *Sym = getTargetSymbol(*I);
+        const MCSymbol *Sym = getTargetSymbol(*I);
         assert(Sym != nullptr &&
                "Couldn't extract BB symbol from jump operand");
         TBB = Sym;
@@ -841,7 +843,7 @@ public:
       }
 
       if (CondBranch == nullptr) {
-        const auto *TargetBB = getTargetSymbol(*I);
+        const MCSymbol *TargetBB = getTargetSymbol(*I);
         if (TargetBB == nullptr) {
           // Unrecognized branch target
           return false;

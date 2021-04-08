@@ -68,7 +68,7 @@ void InstrumentationRuntimeLibrary::adjustCommandLineOptions(
 
 void InstrumentationRuntimeLibrary::emitBinary(BinaryContext &BC,
                                                MCStreamer &Streamer) {
-  const auto *StartFunction =
+  const BinaryFunction *StartFunction =
       BC.getBinaryFunctionAtAddress(*BC.StartFunctionAddress);
   assert(!StartFunction->isFragment() && "expected main function fragment");
   if (!StartFunction) {
@@ -76,7 +76,7 @@ void InstrumentationRuntimeLibrary::emitBinary(BinaryContext &BC,
     exit(1);
   }
 
-  const auto *FiniFunction =
+  const BinaryFunction *FiniFunction =
       BC.FiniFunctionAddress
           ? BC.getBinaryFunctionAtAddress(*BC.FiniFunctionAddress)
           : nullptr;
@@ -136,7 +136,7 @@ void InstrumentationRuntimeLibrary::emitBinary(BinaryContext &BC,
   // Label marking start of the memory region containing instrumentation
   // counters, total vector size is Counters.size() 8-byte counters
   EmitLabelByName("__bolt_instr_locations");
-  for (const auto &Label : Summary->Counters) {
+  for (MCSymbol *const &Label : Summary->Counters) {
     EmitLabel(Label, /*IsGlobal*/ false);
     Streamer.emitFill(8, 0);
   }
@@ -185,7 +185,7 @@ void InstrumentationRuntimeLibrary::emitBinary(BinaryContext &BC,
 void InstrumentationRuntimeLibrary::link(
     BinaryContext &BC, StringRef ToolPath, RuntimeDyld &RTDyld,
     std::function<void(RuntimeDyld &)> OnLoad) {
-  auto LibPath = getLibPath(ToolPath, opts::RuntimeInstrumentationLib);
+  std::string LibPath = getLibPath(ToolPath, opts::RuntimeInstrumentationLib);
   loadLibrary(LibPath, RTDyld);
   OnLoad(RTDyld);
   RTDyld.finalizeWithMemoryManagerLocking();
@@ -245,18 +245,19 @@ std::string InstrumentationRuntimeLibrary::buildTables(BinaryContext &BC) {
 
   // Start of the vector with descriptions (one CounterDescription for each
   // counter), vector size is Counters.size() CounterDescription-sized elmts
-  const auto IDSize =
+  const size_t IDSize =
       Summary->IndCallDescriptions.size() * sizeof(IndCallDescription);
   OS.write(reinterpret_cast<const char *>(&IDSize), 4);
-  for (const auto &Desc : Summary->IndCallDescriptions) {
+  for (const IndCallDescription &Desc : Summary->IndCallDescriptions) {
     OS.write(reinterpret_cast<const char *>(&Desc.FromLoc.FuncString), 4);
     OS.write(reinterpret_cast<const char *>(&Desc.FromLoc.Offset), 4);
   }
 
-  const auto ITDSize = Summary->IndCallTargetDescriptions.size() *
-                       sizeof(IndCallTargetDescription);
+  const size_t ITDSize = Summary->IndCallTargetDescriptions.size() *
+                         sizeof(IndCallTargetDescription);
   OS.write(reinterpret_cast<const char *>(&ITDSize), 4);
-  for (const auto &Desc : Summary->IndCallTargetDescriptions) {
+  for (const IndCallTargetDescription &Desc :
+       Summary->IndCallTargetDescriptions) {
     OS.write(reinterpret_cast<const char *>(&Desc.ToLoc.FuncString), 4);
     OS.write(reinterpret_cast<const char *>(&Desc.ToLoc.Offset), 4);
     uint64_t TargetFuncAddress =
@@ -264,18 +265,18 @@ std::string InstrumentationRuntimeLibrary::buildTables(BinaryContext &BC) {
     OS.write(reinterpret_cast<const char *>(&TargetFuncAddress), 8);
   }
 
-  auto FuncDescSize = Summary->getFDSize();
+  uint32_t FuncDescSize = Summary->getFDSize();
   OS.write(reinterpret_cast<const char *>(&FuncDescSize), 4);
-  for (const auto &Desc : Summary->FunctionDescriptions) {
-    const auto LeafNum = Desc.LeafNodes.size();
+  for (const FunctionDescription &Desc : Summary->FunctionDescriptions) {
+    const size_t LeafNum = Desc.LeafNodes.size();
     OS.write(reinterpret_cast<const char *>(&LeafNum), 4);
-    for (const auto &LeafNode : Desc.LeafNodes) {
+    for (const InstrumentedNode &LeafNode : Desc.LeafNodes) {
       OS.write(reinterpret_cast<const char *>(&LeafNode.Node), 4);
       OS.write(reinterpret_cast<const char *>(&LeafNode.Counter), 4);
     }
-    const auto EdgesNum = Desc.Edges.size();
+    const size_t EdgesNum = Desc.Edges.size();
     OS.write(reinterpret_cast<const char *>(&EdgesNum), 4);
-    for (const auto &Edge : Desc.Edges) {
+    for (const EdgeDescription &Edge : Desc.Edges) {
       OS.write(reinterpret_cast<const char *>(&Edge.FromLoc.FuncString), 4);
       OS.write(reinterpret_cast<const char *>(&Edge.FromLoc.Offset), 4);
       OS.write(reinterpret_cast<const char *>(&Edge.FromNode), 4);
@@ -284,9 +285,9 @@ std::string InstrumentationRuntimeLibrary::buildTables(BinaryContext &BC) {
       OS.write(reinterpret_cast<const char *>(&Edge.ToNode), 4);
       OS.write(reinterpret_cast<const char *>(&Edge.Counter), 4);
     }
-    const auto CallsNum = Desc.Calls.size();
+    const size_t CallsNum = Desc.Calls.size();
     OS.write(reinterpret_cast<const char *>(&CallsNum), 4);
-    for (const auto &Call : Desc.Calls) {
+    for (const CallDescription &Call : Desc.Calls) {
       OS.write(reinterpret_cast<const char *>(&Call.FromLoc.FuncString), 4);
       OS.write(reinterpret_cast<const char *>(&Call.FromLoc.Offset), 4);
       OS.write(reinterpret_cast<const char *>(&Call.FromNode), 4);
@@ -297,9 +298,9 @@ std::string InstrumentationRuntimeLibrary::buildTables(BinaryContext &BC) {
           getOutputAddress(*Call.Target, Call.ToLoc.Offset);
       OS.write(reinterpret_cast<const char *>(&TargetFuncAddress), 8);
     }
-    const auto EntryNum = Desc.EntryNodes.size();
+    const size_t EntryNum = Desc.EntryNodes.size();
     OS.write(reinterpret_cast<const char *>(&EntryNum), 4);
-    for (const auto &EntryNode : Desc.EntryNodes) {
+    for (const EntryNode &EntryNode : Desc.EntryNodes) {
       OS.write(reinterpret_cast<const char *>(&EntryNode.Node), 8);
       uint64_t TargetFuncAddress =
           getOutputAddress(*Desc.Function, EntryNode.Address);
@@ -315,7 +316,7 @@ std::string InstrumentationRuntimeLibrary::buildTables(BinaryContext &BC) {
 
 void InstrumentationRuntimeLibrary::emitTablesAsELFNote(BinaryContext &BC) {
   std::string TablesStr = buildTables(BC);
-  const auto BoltInfo = BinarySection::encodeELFNote(
+  const std::string BoltInfo = BinarySection::encodeELFNote(
       "BOLT", TablesStr, BinarySection::NT_BOLT_INSTRUMENTATION_TABLES);
   BC.registerOrUpdateNoteSection(".bolt.instr.tables", copyByteArray(BoltInfo),
                                  BoltInfo.size(),

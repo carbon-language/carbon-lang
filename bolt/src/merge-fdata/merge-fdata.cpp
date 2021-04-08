@@ -146,14 +146,14 @@ void mergeBasicBlockProfile(BinaryBasicBlockProfile &MergedBB,
 
   // Merge calls sites.
   std::unordered_map<uint32_t, CallSiteInfo *> CSByOffset;
-  for (auto &CS : BB.CallSites)
+  for (CallSiteInfo &CS : BB.CallSites)
     CSByOffset.emplace(std::make_pair(CS.Offset, &CS));
 
-  for (auto &MergedCS : MergedBB.CallSites) {
+  for (CallSiteInfo &MergedCS : MergedBB.CallSites) {
     auto CSI = CSByOffset.find(MergedCS.Offset);
     if (CSI == CSByOffset.end())
       continue;
-    auto &CS = *CSI->second;
+    yaml::bolt::CallSiteInfo &CS = *CSI->second;
     if (CS != MergedCS)
       continue;
 
@@ -164,28 +164,28 @@ void mergeBasicBlockProfile(BinaryBasicBlockProfile &MergedBB,
   }
 
   // Append the rest of call sites.
-  for (auto CSI : CSByOffset) {
+  for (std::pair<const uint32_t, CallSiteInfo *> CSI : CSByOffset) {
     MergedBB.CallSites.emplace_back(std::move(*CSI.second));
   }
 
   // Merge successor info.
   std::vector<SuccessorInfo *> SIByIndex(BF.NumBasicBlocks);
-  for (auto &SI : BB.Successors) {
+  for (SuccessorInfo &SI : BB.Successors) {
     if (SI.Index >= BF.NumBasicBlocks)
       report_error(BF.Name, "bad successor index");
     SIByIndex[SI.Index] = &SI;
   }
-  for (auto &MergedSI : MergedBB.Successors) {
+  for (SuccessorInfo &MergedSI : MergedBB.Successors) {
     if (!SIByIndex[MergedSI.Index])
       continue;
-    auto &SI = *SIByIndex[MergedSI.Index];
+    SuccessorInfo &SI = *SIByIndex[MergedSI.Index];
 
     MergedSI.Count += SI.Count;
     MergedSI.Mispreds += SI.Mispreds;
 
     SIByIndex[MergedSI.Index] = nullptr;
   }
-  for (auto *SI : SIByIndex) {
+  for (SuccessorInfo *SI : SIByIndex) {
     if (SI) {
       MergedBB.Successors.emplace_back(std::move(*SI));
     }
@@ -207,16 +207,16 @@ void mergeFunctionProfile(BinaryFunctionProfile &MergedBF,
 
   // Merge basic blocks profile.
   std::vector<BinaryBasicBlockProfile *> BlockByIndex(BF.NumBasicBlocks);
-  for (auto &BB : BF.Blocks) {
+  for (BinaryBasicBlockProfile &BB : BF.Blocks) {
     if (BB.Index >= BF.NumBasicBlocks)
       report_error(BF.Name + " : BB #" + Twine(BB.Index),
                    "bad basic block index");
     BlockByIndex[BB.Index] = &BB;
   }
-  for (auto &MergedBB : MergedBF.Blocks) {
+  for (BinaryBasicBlockProfile &MergedBB : MergedBF.Blocks) {
     if (!BlockByIndex[MergedBB.Index])
       continue;
-    auto &BB = *BlockByIndex[MergedBB.Index];
+    BinaryBasicBlockProfile &BB = *BlockByIndex[MergedBB.Index];
 
     mergeBasicBlockProfile(MergedBB, std::move(BB), MergedBF);
 
@@ -225,7 +225,7 @@ void mergeFunctionProfile(BinaryFunctionProfile &MergedBF,
   }
 
   // Append blocks unique to BF (i.e. those that are not in MergedBF).
-  for (auto *BB : BlockByIndex) {
+  for (BinaryBasicBlockProfile *BB : BlockByIndex) {
     if (BB) {
       MergedBF.Blocks.emplace_back(std::move(*BB));
     }
@@ -233,10 +233,11 @@ void mergeFunctionProfile(BinaryFunctionProfile &MergedBF,
 }
 
 bool isYAML(const StringRef Filename) {
-  auto MB = MemoryBuffer::getFileOrSTDIN(Filename);
+  ErrorOr<std::unique_ptr<MemoryBuffer>> MB =
+      MemoryBuffer::getFileOrSTDIN(Filename);
   if (std::error_code EC = MB.getError())
     report_error(Filename, EC);
-  auto Buffer = MB.get()->getBuffer();
+  StringRef Buffer = MB.get()->getBuffer();
   if (Buffer.startswith("---\n"))
     return true;
   return false;
@@ -246,15 +247,16 @@ void mergeLegacyProfiles(const cl::list<std::string> &Filenames) {
   errs() << "Using legacy profile format.\n";
   bool BoltedCollection{false};
   bool First{true};
-  for (auto &Filename : Filenames) {
+  for (const std::string &Filename : Filenames) {
     if (isYAML(Filename))
       report_error(Filename, "cannot mix YAML and legacy formats");
-    auto MB = MemoryBuffer::getFileOrSTDIN(Filename);
+    ErrorOr<std::unique_ptr<MemoryBuffer>> MB =
+        MemoryBuffer::getFileOrSTDIN(Filename);
     if (std::error_code EC = MB.getError())
       report_error(Filename, EC);
     errs() << "Merging data from " << Filename << "...\n";
 
-    auto Buf = MB.get()->getBuffer();
+    StringRef Buf = MB.get()->getBuffer();
     // Check if the string "boltedcollection" is in the first line
     if (Buf.startswith("boltedcollection\n")) {
       if (!First && !BoltedCollection) {
@@ -307,8 +309,9 @@ int main(int argc, char **argv) {
   // Merged information for all functions.
   StringMap<BinaryFunctionProfile> MergedBFs;
 
-  for (auto &InputDataFilename : opts::InputDataFilenames) {
-    auto MB = MemoryBuffer::getFileOrSTDIN(InputDataFilename);
+  for (std::string &InputDataFilename : opts::InputDataFilenames) {
+    ErrorOr<std::unique_ptr<MemoryBuffer>> MB =
+        MemoryBuffer::getFileOrSTDIN(InputDataFilename);
     if (std::error_code EC = MB.getError())
       report_error(InputDataFilename, EC);
     yaml::Input YamlInput(MB.get()->getBuffer());
@@ -331,13 +334,13 @@ int main(int argc, char **argv) {
     mergeProfileHeaders(MergedHeader, BP.Header);
 
     // Do the function merge.
-    for (auto &BF : BP.Functions) {
+    for (BinaryFunctionProfile &BF : BP.Functions) {
       if (!MergedBFs.count(BF.Name)) {
         MergedBFs.insert(std::make_pair(BF.Name, BF));
         continue;
       }
 
-      auto &MergedBF = MergedBFs.find(BF.Name)->second;
+      BinaryFunctionProfile &MergedBF = MergedBFs.find(BF.Name)->second;
       mergeFunctionProfile(MergedBF, std::move(BF));
     }
   }
@@ -383,8 +386,8 @@ int main(int argc, char **argv) {
         [](const StringMapEntry<BinaryFunctionProfile> &V) {
       // Return total branch count.
       uint64_t BranchCount = 0;
-      for (const auto &BI : V.second.Blocks) {
-        for (const auto &SI : BI.Successors) {
+      for (const BinaryBasicBlockProfile &BI : V.second.Blocks) {
+        for (const SuccessorInfo &SI : BI.Successors) {
           BranchCount += SI.Count;
         }
       }
@@ -405,7 +408,7 @@ int main(int argc, char **argv) {
                 ? "execution"
                 : "total branch")
            << " count:\n";
-    for (auto &FI : FunctionList) {
+    for (std::pair<uint64_t, StringRef> &FI : FunctionList) {
       errs() << FI.second << " : " << FI.first << '\n';
     }
   }

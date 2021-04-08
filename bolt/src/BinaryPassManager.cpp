@@ -320,12 +320,14 @@ const char BinaryFunctionPassManager::TimerGroupDesc[] =
 void BinaryFunctionPassManager::runPasses() {
   auto &BFs = BC.getBinaryFunctions();
   for (size_t PassIdx = 0; PassIdx < Passes.size(); PassIdx++) {
-    const auto &OptPassPair = Passes[PassIdx];
+    const std::pair<const bool, std::unique_ptr<BinaryFunctionPass>>
+        &OptPassPair = Passes[PassIdx];
     if (!OptPassPair.first)
       continue;
 
-    auto &Pass = OptPassPair.second;
-    auto PassIdName = formatv("{0:2}_{1}", PassIdx, Pass->getName()).str();
+    const std::unique_ptr<BinaryFunctionPass> &Pass = OptPassPair.second;
+    std::string PassIdName =
+        formatv("{0:2}_{1}", PassIdx, Pass->getName()).str();
 
     if (opts::Verbosity > 0) {
       outs() << "BOLT-INFO: Starting pass: " << Pass->getName() << "\n";
@@ -382,7 +384,7 @@ void BinaryFunctionPassManager::runPasses() {
 void BinaryFunctionPassManager::runAllPasses(BinaryContext &BC) {
   BinaryFunctionPassManager Manager(BC);
 
-  const auto InitialDynoStats = getDynoStats(BC.getBinaryFunctions());
+  const DynoStats InitialDynoStats = getDynoStats(BC.getBinaryFunctions());
 
   if (opts::Instrument) {
     Manager.registerPass(std::make_unique<Instrumentation>(NeverPrint));

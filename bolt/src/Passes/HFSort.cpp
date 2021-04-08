@@ -76,7 +76,7 @@ Cluster::Cluster(NodeId Id, const Node &Func)
 Cluster::Cluster(const std::vector<NodeId> &Nodes, const CallGraph &Cg) {
   Samples = 0;
   Size = 0;
-  for (auto TargetId : Nodes) {
+  for (NodeId TargetId : Nodes) {
     Targets.push_back(TargetId);
     Samples += Cg.samples(TargetId);
     Size += Cg.size(TargetId);
@@ -89,7 +89,7 @@ std::string Cluster::toString() const {
   raw_string_ostream CS(Str);
   bool PrintComma = false;
   CS << "funcs = [";
-  for (auto &Target : Targets) {
+  for (const NodeId &Target : Targets) {
     if (PrintComma) CS << ", ";
     CS << Target;
     PrintComma = true;
@@ -103,13 +103,13 @@ namespace {
 void freezeClusters(const CallGraph &Cg, std::vector<Cluster> &Clusters) {
   uint32_t TotalSize = 0;
   std::sort(Clusters.begin(), Clusters.end(), compareClustersDensity);
-  for (auto &C : Clusters) {
+  for (Cluster &C : Clusters) {
     uint32_t NewSize = TotalSize + C.size();
     if (NewSize > FrozenPages * HugePageSize) break;
     C.freeze();
     TotalSize = NewSize;
     LLVM_DEBUG(
-      auto Fid = C.target(0);
+      NodeId Fid = C.target(0);
       dbgs() <<
           format("freezing cluster for func %d, size = %u, samples = %lu)\n",
                  Fid, Cg.size(Fid), Cg.samples(Fid)););
@@ -165,7 +165,7 @@ std::vector<Cluster> clusterize(const CallGraph &Cg) {
 
   // The size and order of Clusters is fixed until we reshuffle it immediately
   // before returning.
-  for (auto &Cluster : Clusters) {
+  for (Cluster &Cluster : Clusters) {
     FuncCluster[Cluster.targets().front()] = &Cluster;
   }
 
@@ -173,8 +173,8 @@ std::vector<Cluster> clusterize(const CallGraph &Cg) {
     SortedFuncs.begin(),
     SortedFuncs.end(),
     [&] (const NodeId F1, const NodeId F2) {
-      const auto &Func1 = Cg.getNode(F1);
-      const auto &Func2 = Cg.getNode(F2);
+      const CallGraph::Node &Func1 = Cg.getNode(F1);
+      const CallGraph::Node &Func2 = Cg.getNode(F2);
       return
         Func1.samples() * Func2.size() >  // TODO: is this correct?
         Func2.samples() * Func1.size();
@@ -183,16 +183,16 @@ std::vector<Cluster> clusterize(const CallGraph &Cg) {
 
   // Process each function, and consider merging its cluster with the
   // one containing its most likely predecessor.
-  for (const auto Fid : SortedFuncs) {
-    auto Cluster = FuncCluster[Fid];
+  for (const NodeId Fid : SortedFuncs) {
+    Cluster *Cluster = FuncCluster[Fid];
     if (Cluster->frozen()) continue;
 
     // Find best predecessor.
     NodeId BestPred = CallGraph::InvalidId;
     double BestProb = 0;
 
-    for (const auto Src : Cg.predecessors(Fid)) {
-      const auto &Arc = *Cg.findArc(Src, Fid);
+    for (const NodeId Src : Cg.predecessors(Fid)) {
+      const Arc &Arc = *Cg.findArc(Src, Fid);
       if (BestPred == CallGraph::InvalidId || Arc.normalizedWeight() > BestProb) {
         BestPred = Arc.src();
         BestProb = Arc.normalizedWeight();
@@ -206,7 +206,7 @@ std::vector<Cluster> clusterize(const CallGraph &Cg) {
 
     assert(BestPred != CallGraph::InvalidId);
 
-    auto PredCluster = FuncCluster[BestPred];
+    class Cluster *PredCluster = FuncCluster[BestPred];
 
     // Skip if no predCluster (predecessor w/ no samples), or if same
     // as cluster, of it's frozen.
@@ -236,7 +236,7 @@ std::vector<Cluster> clusterize(const CallGraph &Cg) {
                          Cg.samples(Fid));
       });
 
-    for (auto F : Cluster->targets()) {
+    for (NodeId F : Cluster->targets()) {
       FuncCluster[F] = PredCluster;
     }
 
@@ -248,8 +248,8 @@ std::vector<Cluster> clusterize(const CallGraph &Cg) {
   // didn't get merged (so their first func is its original func).
   std::vector<Cluster> SortedClusters;
   std::unordered_set<Cluster *> Visited;
-  for (const auto Func : SortedFuncs) {
-    auto Cluster = FuncCluster[Func];
+  for (const NodeId Func : SortedFuncs) {
+    Cluster *Cluster = FuncCluster[Func];
     if (!Cluster ||
         Visited.count(Cluster) == 1 ||
         Cluster->target(0) != Func) {
@@ -300,7 +300,7 @@ std::vector<Cluster> randomClusters(const CallGraph &Cg) {
 
   size_t Idx = 0;
   while (Idx < Clusters.size()) {
-    auto MergeIdx = pickMergeCluster(Idx);
+    size_t MergeIdx = pickMergeCluster(Idx);
     if (MergeIdx == Clusters.size()) {
       ++Idx;
     } else {

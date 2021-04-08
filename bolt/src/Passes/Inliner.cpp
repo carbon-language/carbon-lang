@@ -123,7 +123,7 @@ bool inliningEnabled() {
 }
 
 bool mustConsider(const llvm::bolt::BinaryFunction &Function) {
-  for (auto &Name : opts::ForceInlineFunctions) {
+  for (std::string &Name : opts::ForceInlineFunctions) {
     if (Function.hasName(Name))
       return true;
   }
@@ -172,7 +172,7 @@ Inliner::InliningInfo Inliner::getInliningInfo(const BinaryFunction &BF) const {
   if (!shouldOptimize(BF))
     return INL_NONE;
 
-  auto &BC = BF.getBinaryContext();
+  const BinaryContext &BC = BF.getBinaryContext();
   bool DirectSP = false;
   bool HasCFI = false;
   bool IsLeaf = true;
@@ -191,9 +191,9 @@ Inliner::InliningInfo Inliner::getInliningInfo(const BinaryFunction &BF) const {
     if (BF.hasJumpTables())
       return INL_NONE;
 
-    const auto SPReg = BC.MIB->getStackPointer();
-    for (const auto *BB : BF.layout()) {
-      for (auto &Inst : *BB) {
+    const MCPhysReg SPReg = BC.MIB->getStackPointer();
+    for (const BinaryBasicBlock *BB : BF.layout()) {
+      for (const MCInst &Inst : *BB) {
         // Tail calls are marked as implicitly using the stack pointer and they
         // could be inlined.
         if (BC.MIB->isTailCall(Inst))
@@ -227,7 +227,7 @@ Inliner::InliningInfo Inliner::getInliningInfo(const BinaryFunction &BF) const {
 
   InliningInfo Info(DirectSP ? INL_TAILCALL : INL_ANY);
 
-  auto Size = BF.estimateSize();
+  size_t Size = BF.estimateSize();
 
   Info.SizeAfterInlining = Size;
   Info.SizeAfterTailCallInlining = Size;
@@ -236,11 +236,11 @@ Inliner::InliningInfo Inliner::getInliningInfo(const BinaryFunction &BF) const {
   if (BF.size() == 1) {
     // For a regular call the last return instruction could be removed
     // (or converted to a branch).
-    const auto *LastInst = BF.back().getLastNonPseudoInstr();
+    const MCInst *LastInst = BF.back().getLastNonPseudoInstr();
     if (LastInst &&
         BC.MIB->isReturn(*LastInst) &&
         !BC.MIB->isTailCall(*LastInst)) {
-      const auto RetInstSize = BC.computeInstructionSize(*LastInst);
+      const uint64_t RetInstSize = BC.computeInstructionSize(*LastInst);
       assert(Size >= RetInstSize);
       Info.SizeAfterInlining -= RetInstSize;
     }
@@ -252,8 +252,8 @@ Inliner::InliningInfo Inliner::getInliningInfo(const BinaryFunction &BF) const {
 void
 Inliner::findInliningCandidates(BinaryContext &BC) {
   for (const auto &BFI : BC.getBinaryFunctions()) {
-    const auto &Function = BFI.second;
-    const auto InlInfo = getInliningInfo(Function);
+    const BinaryFunction &Function = BFI.second;
+    const InliningInfo InlInfo = getInliningInfo(Function);
     if (InlInfo.Type != INL_NONE)
       InliningCandidates[&Function] = InlInfo;
   }
@@ -263,8 +263,8 @@ std::pair<BinaryBasicBlock *, BinaryBasicBlock::iterator>
 Inliner::inlineCall(BinaryBasicBlock &CallerBB,
                     BinaryBasicBlock::iterator CallInst,
                     const BinaryFunction &Callee) {
-  auto &CallerFunction = *CallerBB.getFunction();
-  auto &BC = CallerFunction.getBinaryContext();
+  BinaryFunction &CallerFunction = *CallerBB.getFunction();
+  BinaryContext &BC = CallerFunction.getBinaryContext();
   auto &MIB = *BC.MIB;
 
   assert(MIB.isCall(*CallInst) && "can only inline a call or a tail call");
@@ -274,10 +274,10 @@ Inliner::inlineCall(BinaryBasicBlock &CallerBB,
          "cannot inline function with jump table(s)");
 
   // Get information about the call site.
-  const auto CSIsInvoke = BC.MIB->isInvoke(*CallInst);
-  const auto CSIsTailCall = BC.MIB->isTailCall(*CallInst);
-  const auto CSGNUArgsSize = BC.MIB->getGnuArgsSize(*CallInst);
-  const auto CSEHInfo = BC.MIB->getEHInfo(*CallInst);
+  const bool CSIsInvoke = BC.MIB->isInvoke(*CallInst);
+  const bool CSIsTailCall = BC.MIB->isTailCall(*CallInst);
+  const int64_t CSGNUArgsSize = BC.MIB->getGnuArgsSize(*CallInst);
+  const Optional<MCPlus::MCLandingPad> CSEHInfo = BC.MIB->getEHInfo(*CallInst);
 
   // Split basic block at the call site if there will be more incoming edges
   // coming from the callee.
@@ -305,20 +305,20 @@ Inliner::inlineCall(BinaryBasicBlock &CallerBB,
   auto InsertII = FirstInlinedBB->eraseInstruction(CallInst);
 
   double ProfileRatio = 0;
-  if (auto CalleeExecCount = Callee.getKnownExecutionCount()) {
+  if (uint64_t CalleeExecCount = Callee.getKnownExecutionCount()) {
     ProfileRatio =
       (double) FirstInlinedBB->getKnownExecutionCount() / CalleeExecCount;
   }
 
   // Save execution count of the first block as we don't want it to change
   // later due to profile adjustment rounding errors.
-  const auto FirstInlinedBBCount = FirstInlinedBB->getKnownExecutionCount();
+  const uint64_t FirstInlinedBBCount = FirstInlinedBB->getKnownExecutionCount();
 
   // Copy basic blocks and maintain a map from their origin.
   std::unordered_map<const BinaryBasicBlock *, BinaryBasicBlock *> InlinedBBMap;
   InlinedBBMap[&Callee.front()] = FirstInlinedBB;
   for (auto BBI = std::next(Callee.begin()); BBI != Callee.end(); ++BBI) {
-    auto *InlinedBB = CallerFunction.addBasicBlock(0);
+    BinaryBasicBlock *InlinedBB = CallerFunction.addBasicBlock(0);
     InlinedBBMap[&*BBI] = InlinedBB;
     InlinedBB->setCFIState(FirstInlinedBB->getCFIState());
     if (Callee.hasValidProfile()) {
@@ -329,14 +329,14 @@ Inliner::inlineCall(BinaryBasicBlock &CallerBB,
   }
 
   // Copy over instructions and edges.
-  for (const auto &BB : Callee) {
-    auto *InlinedBB = InlinedBBMap[&BB];
+  for (const BinaryBasicBlock &BB : Callee) {
+    BinaryBasicBlock *InlinedBB = InlinedBBMap[&BB];
 
     if (InlinedBB != FirstInlinedBB)
       InsertII = InlinedBB->begin();
 
     // Copy over instructions making any necessary mods.
-    for (auto Inst : BB) {
+    for (MCInst Inst : BB) {
       if (MIB.isPseudo(Inst))
         continue;
 
@@ -349,7 +349,7 @@ Inliner::inlineCall(BinaryBasicBlock &CallerBB,
       if (MIB.isBranch(Inst)) {
         assert(!MIB.isIndirectBranch(Inst) &&
                "unexpected indirect branch in callee");
-        const auto *TargetBB =
+        const BinaryBasicBlock *TargetBB =
             Callee.getBasicBlockForLabel(MIB.getTargetSymbol(Inst));
         assert(TargetBB && "cannot find target block in callee");
         MIB.replaceBranchTarget(Inst, InlinedBBMap[TargetBB]->getLabel(),
@@ -434,7 +434,7 @@ Inliner::inlineCall(BinaryBasicBlock &CallerBB,
 }
 
 bool Inliner::inlineCallsInFunction(BinaryFunction &Function) {
-  auto &BC = Function.getBinaryContext();
+  BinaryContext &BC = Function.getBinaryContext();
   std::vector<BinaryBasicBlock *> Blocks(Function.layout().begin(),
                                          Function.layout().end());
   std::sort(Blocks.begin(), Blocks.end(),
@@ -443,21 +443,22 @@ bool Inliner::inlineCallsInFunction(BinaryFunction &Function) {
       });
 
   bool DidInlining = false;
-  for (auto *BB : Blocks) {
+  for (BinaryBasicBlock *BB : Blocks) {
     for (auto InstIt = BB->begin(); InstIt != BB->end(); ) {
-      auto &Inst = *InstIt;
+      MCInst &Inst = *InstIt;
       if (!BC.MIB->isCall(Inst) || MCPlus::getNumPrimeOperands(Inst) != 1 ||
           !Inst.getOperand(0).isExpr()) {
         ++InstIt;
         continue;
       }
 
-      const auto *TargetSymbol = BC.MIB->getTargetSymbol(Inst);
+      const MCSymbol *TargetSymbol = BC.MIB->getTargetSymbol(Inst);
       assert(TargetSymbol && "target symbol expected for direct call");
 
       // Don't inline calls to a secondary entry point in a target function.
       uint64_t EntryID{0};
-      auto *TargetFunction = BC.getFunctionForSymbol(TargetSymbol, &EntryID);
+      BinaryFunction *TargetFunction =
+          BC.getFunctionForSymbol(TargetSymbol, &EntryID);
       if (!TargetFunction || EntryID != 0) {
         ++InstIt;
         continue;
@@ -475,7 +476,7 @@ bool Inliner::inlineCallsInFunction(BinaryFunction &Function) {
         continue;
       }
 
-      const auto IsTailCall = BC.MIB->isTailCall(Inst);
+      const bool IsTailCall = BC.MIB->isTailCall(Inst);
       if (!IsTailCall && IInfo->second.Type == INL_TAILCALL) {
         ++InstIt;
         continue;
@@ -560,7 +561,7 @@ void Inliner::runOnFunctions(BinaryContext &BC) {
 
     std::vector<BinaryFunction *> ConsideredFunctions;
     for (auto &BFI : BC.getBinaryFunctions()) {
-      auto &Function = BFI.second;
+      BinaryFunction &Function = BFI.second;
       if (!shouldOptimize(Function))
         continue;
       ConsideredFunctions.push_back(&Function);
@@ -569,11 +570,11 @@ void Inliner::runOnFunctions(BinaryContext &BC) {
         [](const BinaryFunction *A, const BinaryFunction *B) {
         return B->getKnownExecutionCount() < A->getKnownExecutionCount();
     });
-    for (auto *Function : ConsideredFunctions) {
+    for (BinaryFunction *Function : ConsideredFunctions) {
       if (opts::InlineLimit && NumInlinedCallSites >= opts::InlineLimit)
         break;
 
-      const auto DidInline = inlineCallsInFunction(*Function);
+      const bool DidInline = inlineCallsInFunction(*Function);
 
       if (DidInline)
         Modified.insert(Function);

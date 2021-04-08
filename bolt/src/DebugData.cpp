@@ -42,7 +42,7 @@ uint64_t writeAddressRanges(
     raw_svector_ostream &Stream,
     const DebugAddressRangesVector &AddressRanges,
     const bool WriteRelativeRanges = false) {
-  for (auto &Range : AddressRanges) {
+  for (const DebugAddressRange &Range : AddressRanges) {
     support::endian::write(Stream, Range.LowPC, support::little);
     support::endian::write(
         Stream, WriteRelativeRanges ? Range.HighPC - Range.LowPC : Range.HighPC,
@@ -89,7 +89,7 @@ DebugRangesSectionWriter::addRanges(const DebugAddressRangesVector &Ranges) {
   // Reading the SectionOffset and updating it should be atomic to guarantee
   // unique and correct offsets in patches.
   std::lock_guard<std::mutex> Lock(WriterMutex);
-  const auto EntryOffset = SectionOffset;
+  const uint32_t EntryOffset = SectionOffset;
   SectionOffset += writeAddressRanges(*RangesStream.get(), Ranges);
 
   return EntryOffset;
@@ -107,8 +107,9 @@ void DebugARangesSectionWriter::writeARangesSection(
   // specification, section 6.1.4 Lookup by Address
   // http://www.dwarfstd.org/doc/DWARF4.pdf
   for (const auto &CUOffsetAddressRangesPair : CUAddressRanges) {
-    const auto Offset = CUOffsetAddressRangesPair.first;
-    const auto &AddressRanges = CUOffsetAddressRangesPair.second;
+    const uint64_t Offset = CUOffsetAddressRangesPair.first;
+    const DebugAddressRangesVector &AddressRanges =
+        CUOffsetAddressRangesPair.second;
 
     // Emit header.
 
@@ -157,7 +158,7 @@ DebugLocWriter::addList(const DebugLocationsVector &LocList) {
 
   // Since there is a separate DebugLocWriter for each thread,
   // we don't need a lock to read the SectionOffset and update it.
-  const auto EntryOffset = SectionOffset;
+  const uint32_t EntryOffset = SectionOffset;
 
   for (const DebugLocationEntry &Entry : LocList) {
     support::endian::write(*LocStream, static_cast<uint64_t>(Entry.LowPC),
@@ -236,8 +237,9 @@ void DebugAbbrevPatcher::addAttributePatch(
 void DebugAbbrevPatcher::patchBinary(std::string &Contents) {
   SimpleBinaryPatcher Patcher;
 
-  for (const auto &Patch : AbbrevPatches) {
-    const auto Attribute = Patch.Abbrev->findAttribute(Patch.Attr);
+  for (const AbbrevAttrPatch &Patch : AbbrevPatches) {
+    const DWARFAbbreviationDeclaration::AttributeSpec *const Attribute =
+        Patch.Abbrev->findAttribute(Patch.Attr);
     assert(Attribute && "Specified attribute doesn't occur in abbreviation.");
 
     // Because we're only handling standard values (i.e. no DW_FORM_GNU_* or

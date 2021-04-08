@@ -29,9 +29,9 @@ namespace bolt {
 namespace {
 void
 convert(const BinaryFunction &BF, yaml::bolt::BinaryFunctionProfile &YamlBF) {
-  auto &BC = BF.getBinaryContext();
+  const BinaryContext &BC = BF.getBinaryContext();
 
-  const auto LBRProfile = BF.getProfileFlags() & BinaryFunction::PF_LBR;
+  const uint16_t LBRProfile = BF.getProfileFlags() & BinaryFunction::PF_LBR;
 
   YamlBF.Name = BF.getPrintName();
   YamlBF.Id = BF.getFunctionNumber();
@@ -39,7 +39,7 @@ convert(const BinaryFunction &BF, yaml::bolt::BinaryFunctionProfile &YamlBF) {
   YamlBF.NumBasicBlocks = BF.size();
   YamlBF.ExecCount = BF.getKnownExecutionCount();
 
-  for (const auto *BB : BF.dfs()) {
+  for (const BinaryBasicBlock *BB : BF.dfs()) {
     yaml::bolt::BinaryBasicBlockProfile YamlBB;
     YamlBB.Index = BB->getLayoutIndex();
     YamlBB.NumInstructions = BB->getNumNonPseudos();
@@ -53,7 +53,7 @@ convert(const BinaryFunction &BF, yaml::bolt::BinaryFunctionProfile &YamlBF) {
 
     YamlBB.ExecCount = BB->getKnownExecutionCount();
 
-    for (const auto &Instr : *BB) {
+    for (const MCInst &Instr : *BB) {
       if (!BC.MIB->isCall(Instr) && !BC.MIB->isIndirectBranch(Instr))
         continue;
 
@@ -69,11 +69,11 @@ convert(const BinaryFunction &BF, yaml::bolt::BinaryFunctionProfile &YamlBF) {
                                                               "CallProfile");
         if (!ICSP)
           continue;
-        for (auto &CSP : ICSP.get()) {
+        for (const IndirectCallProfile &CSP : ICSP.get()) {
           CSI.DestId = 0; // designated for unknown functions
           CSI.EntryDiscriminator = 0;
           if (CSP.Symbol) {
-            const auto *Callee = BC.getFunctionForSymbol(CSP.Symbol);
+            const BinaryFunction *Callee = BC.getFunctionForSymbol(CSP.Symbol);
             if (Callee) {
               CSI.DestId = Callee->getFunctionNumber();
             }
@@ -84,8 +84,9 @@ convert(const BinaryFunction &BF, yaml::bolt::BinaryFunctionProfile &YamlBF) {
         }
       } else { // direct call or a tail call
         uint64_t EntryID{0};
-        const auto *CalleeSymbol = BC.MIB->getTargetSymbol(Instr);
-        const auto Callee = BC.getFunctionForSymbol(CalleeSymbol, &EntryID);
+        const MCSymbol *CalleeSymbol = BC.MIB->getTargetSymbol(Instr);
+        const BinaryFunction *const Callee =
+            BC.getFunctionForSymbol(CalleeSymbol, &EntryID);
         if (Callee) {
           CSI.DestId = Callee->getFunctionNumber();;
           CSI.EntryDiscriminator = EntryID;
@@ -120,7 +121,8 @@ convert(const BinaryFunction &BF, yaml::bolt::BinaryFunctionProfile &YamlBF) {
         !BB->isEntryPoint() &&
         !(BB->isLandingPad() && BB->getKnownExecutionCount() != 0)) {
       uint64_t SuccessorExecCount = 0;
-      for (auto &BranchInfo : BB->branch_info()) {
+      for (const BinaryBasicBlock::BinaryBranchInfo &BranchInfo :
+           BB->branch_info()) {
         SuccessorExecCount += BranchInfo.Count;
       }
       if (!SuccessorExecCount)
@@ -128,7 +130,7 @@ convert(const BinaryFunction &BF, yaml::bolt::BinaryFunctionProfile &YamlBF) {
     }
 
     auto BranchInfo = BB->branch_info_begin();
-    for (const auto *Successor : BB->successors()) {
+    for (const BinaryBasicBlock *Successor : BB->successors()) {
       yaml::bolt::SuccessorInfo YamlSI;
       YamlSI.Index = Successor->getLayoutIndex();
       YamlSI.Count = BranchInfo->Count;
@@ -146,7 +148,7 @@ convert(const BinaryFunction &BF, yaml::bolt::BinaryFunctionProfile &YamlBF) {
 
 std::error_code
 YAMLProfileWriter::writeProfile(const RewriteInstance &RI) {
-  auto &BC = RI.getBinaryContext();
+  const BinaryContext &BC = RI.getBinaryContext();
   const auto &Functions = BC.getBinaryFunctions();
 
   std::error_code EC;
@@ -162,14 +164,14 @@ YAMLProfileWriter::writeProfile(const RewriteInstance &RI) {
   // Fill out the header info.
   BP.Header.Version = 1;
   BP.Header.FileName = std::string(BC.getFilename());
-  auto BuildID = BC.getFileBuildID();
+  Optional<StringRef> BuildID = BC.getFileBuildID();
   BP.Header.Id = BuildID ? std::string(*BuildID) : "<unknown>";
   BP.Header.Origin = std::string(RI.getProfileReader()->getReaderName());
 
-  auto EventNames = RI.getProfileReader()->getEventNames();
+  StringSet<> EventNames = RI.getProfileReader()->getEventNames();
   if (!EventNames.empty()) {
     std::string Sep = "";
-    for (const auto &EventEntry : EventNames) {
+    for (const StringMapEntry<NoneType> &EventEntry : EventNames) {
       BP.Header.EventNames += Sep + EventEntry.first().str();
       Sep = ",";
     }
@@ -178,7 +180,7 @@ YAMLProfileWriter::writeProfile(const RewriteInstance &RI) {
   // Make sure the profile is consistent across all functions.
   uint16_t ProfileFlags = BinaryFunction::PF_NONE;
   for (const auto &BFI : Functions) {
-    const auto &BF = BFI.second;
+    const BinaryFunction &BF = BFI.second;
     if (BF.hasProfile() && !BF.empty()) {
       assert(BF.getProfileFlags() != BinaryFunction::PF_NONE);
       if (ProfileFlags == BinaryFunction::PF_NONE) {
@@ -192,7 +194,7 @@ YAMLProfileWriter::writeProfile(const RewriteInstance &RI) {
 
   // Add all function objects.
   for (const auto &BFI : Functions) {
-    const auto &BF = BFI.second;
+    const BinaryFunction &BF = BFI.second;
     if (BF.hasProfile()) {
       if (!BF.hasValidProfile() && !RI.getProfileReader()->isTrustedSource())
         continue;

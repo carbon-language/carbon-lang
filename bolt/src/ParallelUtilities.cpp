@@ -79,7 +79,7 @@ inline unsigned estimateTotalCost(const BinaryContext &BC,
 
   unsigned TotalCost = 0;
   for (auto &BFI : BC.getBinaryFunctions()) {
-    auto &BF = BFI.second;
+    const BinaryFunction &BF = BFI.second;
     TotalCost += computeCostFor(BF, SkipPredicate, SchedPolicy);
   }
 
@@ -118,7 +118,7 @@ void runOnEachFunction(BinaryContext &BC, SchedulingPolicy SchedPolicy,
     LLVM_DEBUG(T.startTimer());
 
     for (auto It = BlockBegin; It != BlockEnd; ++It) {
-      auto &BF = It->second;
+      BinaryFunction &BF = It->second;
       if (SkipPredicate && SkipPredicate(BF))
         continue;
 
@@ -145,7 +145,7 @@ void runOnEachFunction(BinaryContext &BC, SchedulingPolicy SchedPolicy,
 
   for (auto It = BC.getBinaryFunctions().begin();
        It != BC.getBinaryFunctions().end(); ++It) {
-    auto &BF = It->second;
+    BinaryFunction &BF = It->second;
     CurrentCost += computeCostFor(BF, SkipPredicate, SchedPolicy);
 
     if (CurrentCost >= BlockCost) {
@@ -173,7 +173,7 @@ void runOnEachFunctionWithUniqueAllocId(
     LLVM_DEBUG(T.startTimer());
     std::shared_lock<std::shared_timed_mutex> Lock(MainLock);
     for (auto It = BlockBegin; It != BlockEnd; ++It) {
-      auto &BF = It->second;
+      BinaryFunction &BF = It->second;
       if (SkipPredicate && SkipPredicate(BF))
         continue;
 
@@ -202,12 +202,13 @@ void runOnEachFunctionWithUniqueAllocId(
   unsigned AllocId = 1;
   for (auto It = BC.getBinaryFunctions().begin();
        It != BC.getBinaryFunctions().end(); ++It) {
-    auto &BF = It->second;
+    BinaryFunction &BF = It->second;
     CurrentCost += computeCostFor(BF, SkipPredicate, SchedPolicy);
 
     if (CurrentCost >= BlockCost) {
       if (!BC.MIB->checkAllocatorExists(AllocId)) {
-        auto Id = BC.MIB->initializeNewAnnotationAllocator();
+        MCPlusBuilder::AllocatorIdTy Id =
+            BC.MIB->initializeNewAnnotationAllocator();
         assert(AllocId == Id && "unexpected allocator id created");
       }
       Pool.async(runBlock, BlockBegin, std::next(It), AllocId);
@@ -218,7 +219,8 @@ void runOnEachFunctionWithUniqueAllocId(
   }
 
   if (!BC.MIB->checkAllocatorExists(AllocId)) {
-    auto Id = BC.MIB->initializeNewAnnotationAllocator();
+    MCPlusBuilder::AllocatorIdTy Id =
+        BC.MIB->initializeNewAnnotationAllocator();
     assert(AllocId == Id && "unexpected allocator id created");
   }
 

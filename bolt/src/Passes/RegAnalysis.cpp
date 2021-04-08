@@ -75,12 +75,12 @@ RegAnalysis::RegAnalysis(BinaryContext &BC,
 
   // This loop is for computing statistics only
   for (auto &MapEntry : *BFs) {
-    auto *Func = &MapEntry.second;
+    BinaryFunction *Func = &MapEntry.second;
     auto Iter = RegsKilledMap.find(Func);
     assert(Iter != RegsKilledMap.end() &&
            "Failed to compute all clobbers list");
     if (Iter->second.all()) {
-      auto Count = Func->getExecutionCount();
+      uint64_t Count = Func->getExecutionCount();
       if (Count != BinaryFunction::COUNT_NO_PROFILE)
         CountFunctionsAllClobber += Count;
       ++NumFunctionsAllClobber;
@@ -155,14 +155,14 @@ void RegAnalysis::getInstUsedRegsList(const MCInst &Inst, BitVector &RegSet,
     return;
   }
 
-  const auto *TargetSymbol = BC.MIB->getTargetSymbol(Inst);
+  const MCSymbol *TargetSymbol = BC.MIB->getTargetSymbol(Inst);
   // If indirect call, we know nothing
   if (TargetSymbol == nullptr) {
     beConservative(RegSet);
     return;
   }
 
-  const auto *Function = BC.getFunctionForSymbol(TargetSymbol);
+  const BinaryFunction *Function = BC.getFunctionForSymbol(TargetSymbol);
   if (Function == nullptr) {
     // Call to a function without a BinaryFunction object.
     // This should be a call to a PLT entry, and since it is a trampoline to
@@ -200,8 +200,8 @@ BitVector RegAnalysis::getFunctionUsedRegsList(const BinaryFunction *Func) {
     return UsedRegs;
   }
 
-  for (const auto &BB : *Func) {
-    for (const auto &Inst : BB) {
+  for (const BinaryBasicBlock &BB : *Func) {
+    for (const MCInst &Inst : BB) {
       getInstUsedRegsList(Inst, UsedRegs, /*GetClobbers*/false);
       if (UsedRegs.all())
         return UsedRegs;
@@ -219,8 +219,8 @@ BitVector RegAnalysis::getFunctionClobberList(const BinaryFunction *Func) {
     return RegsKilled;
   }
 
-  for (const auto &BB : *Func) {
-    for (const auto &Inst : BB) {
+  for (const BinaryBasicBlock &BB : *Func) {
+    for (const MCInst &Inst : BB) {
       getInstClobberList(Inst, RegsKilled);
       if (RegsKilled.all())
         return RegsKilled;

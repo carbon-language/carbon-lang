@@ -37,9 +37,9 @@ void extractBasicBlockInfo(
   std::unordered_map<BinaryBasicBlock *, uint64_t> &BBAddr,
   std::unordered_map<BinaryBasicBlock *, uint64_t> &BBSize) {
 
-  for (auto BF : BinaryFunctions) {
-    const auto &BC = BF->getBinaryContext();
-    for (auto BB : BF->layout()) {
+  for (BinaryFunction *BF : BinaryFunctions) {
+    const BinaryContext &BC = BF->getBinaryContext();
+    for (BinaryBasicBlock *BB : BF->layout()) {
       if (BF->isSimple() || BC.HasRelocations) {
         // Use addresses/sizes as in the output binary
         BBAddr[BB] = BB->getOutputAddressRange().first;
@@ -61,12 +61,12 @@ double calcTSPScore(
   const std::unordered_map<BinaryBasicBlock *, uint64_t> &BBSize) {
 
   double Score = 0;
-  for (auto BF : BinaryFunctions) {
+  for (BinaryFunction *BF : BinaryFunctions) {
     if (!BF->hasProfile())
       continue;
-    for (auto SrcBB : BF->layout()) {
+    for (BinaryBasicBlock *SrcBB : BF->layout()) {
       auto BI = SrcBB->branch_info_begin();
-      for (auto DstBB : SrcBB->successors()) {
+      for (BinaryBasicBlock *DstBB : SrcBB->successors()) {
         if (SrcBB != DstBB && BI->Count != BinaryBasicBlock::COUNT_NO_PROFILE &&
             BBAddr.at(SrcBB) + BBSize.at(SrcBB) == BBAddr.at(DstBB))
           Score += BI->Count;
@@ -85,12 +85,12 @@ double calcExtTSPScore(
   const std::unordered_map<BinaryBasicBlock *, uint64_t> &BBSize) {
 
   double Score = 0.0;
-  for (auto BF : BinaryFunctions) {
+  for (BinaryFunction *BF : BinaryFunctions) {
     if (!BF->hasProfile())
       continue;
-    for (auto SrcBB : BF->layout()) {
+    for (BinaryBasicBlock *SrcBB : BF->layout()) {
       auto BI = SrcBB->branch_info_begin();
-      for (auto DstBB : SrcBB->successors()) {
+      for (BinaryBasicBlock *DstBB : SrcBB->successors()) {
         if (DstBB != SrcBB) {
           Score += CacheMetrics::extTSPScore(BBAddr.at(SrcBB),
                                              BBSize.at(SrcBB),
@@ -112,22 +112,22 @@ std::unordered_map<const BinaryFunction *, Predecessors>
 extractFunctionCalls(const std::vector<BinaryFunction *> &BinaryFunctions) {
   std::unordered_map<const BinaryFunction *, Predecessors> Calls;
 
-  for (auto SrcFunction : BinaryFunctions) {
-    const auto &BC = SrcFunction->getBinaryContext();
-    for (auto BB : SrcFunction->layout()) {
+  for (BinaryFunction *SrcFunction : BinaryFunctions) {
+    const BinaryContext &BC = SrcFunction->getBinaryContext();
+    for (BinaryBasicBlock *BB : SrcFunction->layout()) {
       // Find call instructions and extract target symbols from each one
-      for (auto &Inst : *BB) {
+      for (MCInst &Inst : *BB) {
         if (!BC.MIB->isCall(Inst))
           continue;
 
         // Call info
         const MCSymbol* DstSym = BC.MIB->getTargetSymbol(Inst);
-        auto Count = BB->getKnownExecutionCount();
+        uint64_t Count = BB->getKnownExecutionCount();
         // Ignore calls w/o information
         if (DstSym == nullptr || Count == 0)
           continue;
 
-        auto DstFunction = BC.getFunctionForSymbol(DstSym);
+        const BinaryFunction *DstFunction = BC.getFunctionForSymbol(DstSym);
         // Ignore recursive calls
         if (DstFunction == nullptr ||
             DstFunction->layout_empty() ||
@@ -161,13 +161,14 @@ double expectedCacheHitRatio(
 
   const double PageSize = opts::ITLBPageSize;
   const uint64_t CacheEntries = opts::ITLBEntries;
-  auto Calls = extractFunctionCalls(BinaryFunctions);
+  std::unordered_map<const BinaryFunction *, Predecessors> Calls =
+      extractFunctionCalls(BinaryFunctions);
   // Compute 'hotness' of the functions
   double TotalSamples = 0;
   std::unordered_map<BinaryFunction *, double> FunctionSamples;
-  for (auto BF : BinaryFunctions) {
+  for (BinaryFunction *BF : BinaryFunctions) {
     double Samples = 0;
-    for (auto Pair : Calls[BF]) {
+    for (std::pair<BinaryFunction *, uint64_t> Pair : Calls[BF]) {
       Samples += Pair.second;
     }
     Samples = std::max(Samples, (double)BF->getKnownExecutionCount());
@@ -177,28 +178,28 @@ double expectedCacheHitRatio(
 
   // Compute 'hotness' of the pages
   std::unordered_map<uint64_t, double> PageSamples;
-  for (auto BF : BinaryFunctions) {
+  for (BinaryFunction *BF : BinaryFunctions) {
     if (BF->layout_empty())
       continue;
-    auto Page = BBAddr.at(BF->layout_front()) / PageSize;
+    double Page = BBAddr.at(BF->layout_front()) / PageSize;
     PageSamples[Page] += FunctionSamples.at(BF);
   }
 
   // Computing the expected number of misses for every function
   double Misses = 0;
-  for (auto BF : BinaryFunctions) {
+  for (BinaryFunction *BF : BinaryFunctions) {
     // Skip the function if it has no samples
     if (BF->layout_empty() || FunctionSamples.at(BF) == 0.0)
       continue;
     double Samples = FunctionSamples.at(BF);
-    auto Page = BBAddr.at(BF->layout_front()) / PageSize;
+    double Page = BBAddr.at(BF->layout_front()) / PageSize;
     // The probability that the page is not present in the cache
     double MissProb = pow(1.0 - PageSamples[Page] / TotalSamples, CacheEntries);
 
     // Processing all callers of the function
-    for (auto Pair : Calls[BF]) {
-      auto SrcFunction = Pair.first;
-      auto SrcPage = BBAddr.at(SrcFunction->layout_front()) / PageSize;
+    for (std::pair<BinaryFunction *, uint64_t> Pair : Calls[BF]) {
+      BinaryFunction *SrcFunction = Pair.first;
+      double SrcPage = BBAddr.at(SrcFunction->layout_front()) / PageSize;
       // Is this a 'long' or a 'short' call?
       if (Page != SrcPage) {
         // This is a miss
@@ -229,7 +230,7 @@ double CacheMetrics::extTSPScore(uint64_t SrcAddr,
   }
   // Forward
   if (SrcAddr + SrcSize < DstAddr) {
-    const auto Dist = DstAddr - (SrcAddr + SrcSize);
+    const uint64_t Dist = DstAddr - (SrcAddr + SrcSize);
     if (Dist <= opts::ForwardDistance) {
       double Prob = 1.0 - static_cast<double>(Dist) / opts::ForwardDistance;
       return opts::ForwardWeight * Prob * Count;
@@ -237,7 +238,7 @@ double CacheMetrics::extTSPScore(uint64_t SrcAddr,
     return 0;
   }
   // Backward
-  const auto Dist = SrcAddr + SrcSize - DstAddr;
+  const uint64_t Dist = SrcAddr + SrcSize - DstAddr;
   if (Dist <= opts::BackwardDistance) {
     double Prob = 1.0 - static_cast<double>(Dist) / opts::BackwardDistance;
     return opts::BackwardWeight * Prob * Count;
@@ -258,13 +259,13 @@ void CacheMetrics::printAll(const std::vector<BinaryFunction *> &BFs) {
   size_t HotCodeMinAddr = std::numeric_limits<size_t>::max();
   size_t HotCodeMaxAddr = 0;
 
-  for (auto BF : BFs) {
+  for (BinaryFunction *BF : BFs) {
     NumFunctions++;
     if (BF->hasProfile())
       NumProfiledFunctions++;
     if (BF->hasValidIndex())
       NumHotFunctions++;
-    for (auto BB : BF->layout()) {
+    for (BinaryBasicBlock *BB : BF->layout()) {
       NumBlocks++;
       size_t BBAddrMin = BB->getOutputAddressRange().first;
       size_t BBAddrMax = BB->getOutputAddressRange().second;

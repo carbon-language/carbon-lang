@@ -54,7 +54,7 @@ void BinaryData::merge(const BinaryData *Other) {
 }
 
 bool BinaryData::hasName(StringRef Name) const {
-  for (const auto *Symbol : Symbols) {
+  for (const MCSymbol *Symbol : Symbols) {
     if (Name == Symbol->getName())
       return true;
   }
@@ -63,7 +63,7 @@ bool BinaryData::hasName(StringRef Name) const {
 
 bool BinaryData::hasNameRegex(StringRef NameRegex) const {
   Regex MatchName(NameRegex);
-  for (const auto *Symbol : Symbols) {
+  for (const MCSymbol *Symbol : Symbols) {
     if (MatchName.match(Symbol->getName()))
       return true;
   }
@@ -71,7 +71,7 @@ bool BinaryData::hasNameRegex(StringRef NameRegex) const {
 }
 
 bool BinaryData::nameStartsWith(StringRef Prefix) const {
-  for (const auto *Symbol : Symbols) {
+  for (const MCSymbol *Symbol : Symbols) {
     if (Symbol->getName().startswith(Prefix))
       return true;
   }

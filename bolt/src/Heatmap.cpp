@@ -87,7 +87,7 @@ void Heatmap::print(raw_ostream &OS) const {
 
   // Calculate the max value for scaling.
   uint64_t MaxValue = 0;
-  for (auto &Entry : Map) {
+  for (const std::pair<const uint64_t, uint64_t> &Entry : Map) {
     MaxValue = std::max<uint64_t>(MaxValue, Entry.second);
   }
 
@@ -95,7 +95,7 @@ void Heatmap::print(raw_ostream &OS) const {
   // the Address.
   auto startLine = [&](uint64_t Address, bool Empty = false) {
     changeColor(DefaultColor);
-    const auto LineAddress = Address / BytesPerLine * BytesPerLine;
+    const uint64_t LineAddress = Address / BytesPerLine * BytesPerLine;
 
     if (MaxAddress > 0xffffffff)
       OS << format("0x%016" PRIx64 ": ", LineAddress);
@@ -104,15 +104,15 @@ void Heatmap::print(raw_ostream &OS) const {
 
     if (Empty)
       Address = LineAddress + BytesPerLine;
-    for (auto Fill = LineAddress; Fill < Address; Fill += BucketSize) {
+    for (uint64_t Fill = LineAddress; Fill < Address; Fill += BucketSize) {
       OS << FillChar;
     }
   };
 
   // Finish line after \p Address was printed.
   auto finishLine = [&](uint64_t Address) {
-    const auto End = alignTo(Address + 1, BytesPerLine);
-    for (auto Fill = Address + BucketSize; Fill < End; Fill += BucketSize)
+    const uint64_t End = alignTo(Address + 1, BytesPerLine);
+    for (uint64_t Fill = Address + BucketSize; Fill < End; Fill += BucketSize)
       OS << FillChar;
     OS << '\n';
   };
@@ -120,7 +120,7 @@ void Heatmap::print(raw_ostream &OS) const {
   // Fill empty space in (Start, End) range.
   auto fillRange = [&](uint64_t Start, uint64_t End) {
     if ((Start / BytesPerLine) == (End / BytesPerLine)) {
-      for (auto Fill = Start + BucketSize; Fill < End; Fill += BucketSize) {
+      for (uint64_t Fill = Start + BucketSize; Fill < End; Fill += BucketSize) {
         changeColor(DefaultColor);
         OS << FillChar;
       }
@@ -189,7 +189,7 @@ void Heatmap::print(raw_ostream &OS) const {
   OS << "Legend:\n";
   uint64_t PrevValue = 0;
   for (unsigned I = 0; I < sizeof(Range) / sizeof(Range[0]); ++I) {
-    const auto Value = Range[I];
+    const uint64_t Value = Range[I];
     OS << "  ";
     printValue(Value, true);
     OS << " : (" << PrevValue << ", " << Value << "]\n";
@@ -203,7 +203,7 @@ void Heatmap::print(raw_ostream &OS) const {
       OS << "        ";
     unsigned PrevValue = unsigned(-1);
     for (unsigned I = 0; I < BytesPerLine; I += BucketSize) {
-      const auto Value = (I & ((1 << Pos * 4) - 1)) >> (Pos - 1) * 4;
+      const unsigned Value = (I & ((1 << Pos * 4) - 1)) >> (Pos - 1) * 4;
       if (Value != PrevValue) {
         OS << Twine::utohexstr(Value);
         PrevValue = Value;
@@ -218,7 +218,7 @@ void Heatmap::print(raw_ostream &OS) const {
 
   uint64_t PrevAddress = 0;
   for (auto MI = Map.begin(), ME = Map.end(); MI != ME; ++MI) {
-    auto &Entry = *MI;
+    const std::pair<const uint64_t, uint64_t> &Entry = *MI;
     uint64_t Address = Entry.first * BucketSize;
 
     if (PrevAddress) {
@@ -252,7 +252,7 @@ void Heatmap::printCDF(raw_ostream &OS) const {
   uint64_t NumTotalCounts{0};
   std::vector<uint64_t> Counts;
 
-  for (const auto &KV : Map) {
+  for (const std::pair<const uint64_t, uint64_t> &KV : Map) {
     Counts.push_back(KV.second);
     NumTotalCounts += KV.second;
   }

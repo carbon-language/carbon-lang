@@ -33,9 +33,9 @@ namespace bolt {
 class LongJmpPass : public BinaryFunctionPass {
   /// Used to implement stub grouping (re-using a stub from one function into
   /// another)
-  using StubGroupsTy =
-      DenseMap<const MCSymbol *,
-               SmallVector<std::pair<uint64_t, BinaryBasicBlock *>, 4>>;
+  using StubTy = std::pair<uint64_t, BinaryBasicBlock *>;
+  using StubGroupTy = SmallVector<StubTy, 4>;
+  using StubGroupsTy = DenseMap<const MCSymbol *, StubGroupTy>;
   StubGroupsTy HotStubGroups;
   StubGroupsTy ColdStubGroups;
   DenseMap<const MCSymbol *, BinaryBasicBlock *> SharedStubs;

@@ -118,7 +118,7 @@ bool filterSymbol(const BinaryData *BD) {
 
   if (!opts::ReorderSymbols.empty()) {
     IsValid = false;
-    for (auto &Name : opts::ReorderSymbols) {
+    for (const std::string &Name : opts::ReorderSymbols) {
       if (BD->hasName(Name)) {
         IsValid = true;
         break;
@@ -130,7 +130,7 @@ bool filterSymbol(const BinaryData *BD) {
     return false;
 
   if (!opts::SkipSymbols.empty()) {
-    for (auto &Name : opts::SkipSymbols) {
+    for (const std::string &Name : opts::SkipSymbols) {
       if (BD->hasName(Name)) {
         IsValid = false;
         break;
@@ -151,7 +151,7 @@ void ReorderData::printOrder(const BinarySection &Section,
   uint64_t TotalSize = 0;
   bool PrintHeader = false;
   while (Begin != End) {
-    const auto *BD = Begin->first;
+    const BinaryData *BD = Begin->first;
 
     if (!PrintHeader) {
       outs() << "BOLT-INFO: Hot global symbols for "
@@ -173,7 +173,7 @@ DataOrder ReorderData::baseOrder(BinaryContext &BC,
                                  const BinarySection &Section) const {
   DataOrder Order;
   for (auto &Entry : BC.getBinaryDataForSection(Section)) {
-    auto *BD = Entry.second;
+    BinaryData *BD = Entry.second;
     if (!BD->isAtomic()) // skip sub-symbols
       continue;
     auto BDCI = BinaryDataCounts.find(BD);
@@ -189,21 +189,23 @@ void ReorderData::assignMemData(BinaryContext &BC) {
   StringMap<uint64_t> JumpTableCounts;
   uint64_t TotalCount{0};
   for (auto &BFI : BC.getBinaryFunctions()) {
-    const auto &BF = BFI.second;
+    const BinaryFunction &BF = BFI.second;
     if (!BF.hasMemoryProfile())
       continue;
 
-    for (const auto &BB : BF) {
-      for (const auto &Inst : BB) {
+    for (const BinaryBasicBlock &BB : BF) {
+      for (const MCInst &Inst : BB) {
         auto ErrorOrMemAccesssProfile =
           BC.MIB->tryGetAnnotationAs<MemoryAccessProfile>(
               Inst, "MemoryAccessProfile");
         if (!ErrorOrMemAccesssProfile)
           continue;
 
-        const auto &MemAccessProfile = ErrorOrMemAccesssProfile.get();
-        for (const auto &AccessInfo : MemAccessProfile.AddressAccessInfo) {
-          if (auto *BD = AccessInfo.MemoryObject) {
+        const MemoryAccessProfile &MemAccessProfile =
+            ErrorOrMemAccesssProfile.get();
+        for (const AddressAccess &AccessInfo :
+             MemAccessProfile.AddressAccessInfo) {
+          if (BinaryData *BD = AccessInfo.MemoryObject) {
             BinaryDataCounts[BD->getAtomicRoot()] += AccessInfo.Count;
             Counts[BD->getSectionName()] += AccessInfo.Count;
             if (BD->getAtomicRoot()->isJumpTable()) {
@@ -220,13 +222,13 @@ void ReorderData::assignMemData(BinaryContext &BC) {
 
   if (!Counts.empty()) {
     outs() << "BOLT-INFO: Memory stats breakdown:\n";
-    for (auto &Entry : Counts) {
+    for (StringMapEntry<uint64_t> &Entry : Counts) {
       StringRef Section = Entry.first();
-      const auto Count = Entry.second;
+      const uint64_t Count = Entry.second;
       outs() << "BOLT-INFO:   " << Section << " = " << Count
              << format(" (%.1f%%)\n", 100.0*Count/TotalCount);
       if (JumpTableCounts.count(Section) != 0) {
-        const auto JTCount = JumpTableCounts[Section];
+        const uint64_t JTCount = JumpTableCounts[Section];
         outs() << "BOLT-INFO:     jump tables = " << JTCount
                << format(" (%.1f%%)\n", 100.0*JTCount/Count);
       }
@@ -247,19 +249,21 @@ std::pair<DataOrder, unsigned> ReorderData::sortedByFunc(
 
   auto dataUses = [&BC](const BinaryFunction &BF, bool OnlyHot) {
     std::set<BinaryData *> Uses;
-    for (const auto &BB : BF) {
+    for (const BinaryBasicBlock &BB : BF) {
       if (OnlyHot && BB.isCold())
         continue;
 
-      for (const auto &Inst : BB) {
+      for (const MCInst &Inst : BB) {
         auto ErrorOrMemAccesssProfile =
           BC.MIB->tryGetAnnotationAs<MemoryAccessProfile>(
               Inst, "MemoryAccessProfile");
         if (!ErrorOrMemAccesssProfile)
           continue;
 
-        const auto &MemAccessProfile = ErrorOrMemAccesssProfile.get();
-        for (const auto &AccessInfo : MemAccessProfile.AddressAccessInfo) {
+        const MemoryAccessProfile &MemAccessProfile =
+            ErrorOrMemAccesssProfile.get();
+        for (const AddressAccess &AccessInfo :
+             MemAccessProfile.AddressAccessInfo) {
           if (AccessInfo.MemoryObject)
             Uses.insert(AccessInfo.MemoryObject);
         }
@@ -269,9 +273,9 @@ std::pair<DataOrder, unsigned> ReorderData::sortedByFunc(
   };
 
   for (auto &Entry : BFs) {
-    auto &BF = Entry.second;
+    BinaryFunction &BF = Entry.second;
     if (BF.hasValidProfile()) {
-      for (auto *BD : dataUses(BF, true)) {
+      for (BinaryData *BD : dataUses(BF, true)) {
         if (!BC.getFunctionForSymbol(BD->getSymbol())) {
           BDtoFunc[BD->getAtomicRoot()].insert(&BF);
           BDtoFuncCount[BD->getAtomicRoot()] += BF.getKnownExecutionCount();
@@ -287,11 +291,11 @@ std::pair<DataOrder, unsigned> ReorderData::sortedByFunc(
             [&](const DataOrder::value_type &A,
                 const DataOrder::value_type &B) {
               // Total execution counts of functions referencing BD.
-              const auto ACount = BDtoFuncCount[A.first];
-              const auto BCount = BDtoFuncCount[B.first];
+              const uint64_t ACount = BDtoFuncCount[A.first];
+              const uint64_t BCount = BDtoFuncCount[B.first];
               // Weight by number of loads/data size.
-              const auto AWeight = double(A.second) / A.first->getSize();
-              const auto BWeight = double(B.second) / B.first->getSize();
+              const double AWeight = double(A.second) / A.first->getSize();
+              const double BWeight = double(B.second) / B.first->getSize();
               return (ACount > BCount ||
                       (ACount == BCount &&
                        (AWeight > BWeight ||
@@ -313,15 +317,15 @@ std::pair<DataOrder, unsigned> ReorderData::sortedByCount(
   BinaryContext &BC,
   const BinarySection &Section
 ) const {
-  auto Order = baseOrder(BC, Section);
+  DataOrder Order = baseOrder(BC, Section);
   unsigned SplitPoint = Order.size();
 
   std::sort(Order.begin(), Order.end(),
             [](const DataOrder::value_type &A,
                const DataOrder::value_type &B) {
               // Weight by number of loads/data size.
-              const auto AWeight = double(A.second) / A.first->getSize();
-              const auto BWeight = double(B.second) / B.first->getSize();
+              const double AWeight = double(A.second) / A.first->getSize();
+              const double BWeight = double(B.second) / B.first->getSize();
               return (AWeight > BWeight ||
                       (AWeight == BWeight &&
                        (A.first->getSize() < B.first->getSize() ||
@@ -361,7 +365,7 @@ void ReorderData::setSectionOrder(BinaryContext &BC,
                     << OutputSection.getName() << "\n");
 
   for (; Begin != End; ++Begin) {
-    auto *BD = Begin->first;
+    BinaryData *BD = Begin->first;
 
     // we can't move certain symbols because they are screwy, see T25076484.
     if (!filterSymbol(BD))
@@ -376,7 +380,7 @@ void ReorderData::setSectionOrder(BinaryContext &BC,
       break;
     }
 
-    auto Alignment = std::max(BD->getAlignment(), MinAlignment);
+    uint16_t Alignment = std::max(BD->getAlignment(), MinAlignment);
     Offset = alignTo(Offset, Alignment);
 
     if ((Offset + BD->getSize()) > opts::ReorderDataMaxBytes) {
@@ -393,9 +397,11 @@ void ReorderData::setSectionOrder(BinaryContext &BC,
     BD->setOutputLocation(OutputSection, Offset);
 
     // reorder sub-symbols
-    for (auto &SubBD : BC.getSubBinaryData(BD)) {
+    for (std::pair<const uint64_t, BinaryData *> &SubBD :
+         BC.getSubBinaryData(BD)) {
       if (!SubBD.second->isJumpTable()) {
-        auto SubOffset = Offset + SubBD.second->getAddress() - BD->getAddress();
+        uint64_t SubOffset =
+            Offset + SubBD.second->getAddress() - BD->getAddress();
         LLVM_DEBUG(dbgs() << "BOLT-DEBUG: SubBD " << SubBD.second->getName()
                           << " @ " << SubOffset << "\n");
         SubBD.second->setOutputLocation(OutputSection, SubOffset);
@@ -428,15 +434,16 @@ bool ReorderData::markUnmoveableSymbols(BinaryContext &BC,
   bool FoundUnmoveable = false;
   for (auto Itr = Range.begin(); Itr != Range.end(); ++Itr) {
     if (Itr->second->getName().startswith("PG.")) {
-      auto *Prev = Itr != Range.begin() ? std::prev(Itr)->second : nullptr;
-      auto *Next = Itr != Range.end() ? std::next(Itr)->second : nullptr;
-      auto PrevIsPrivate = Prev && isPrivate(Prev);
-      auto NextIsPrivate = Next && isPrivate(Next);
+      BinaryData *Prev =
+          Itr != Range.begin() ? std::prev(Itr)->second : nullptr;
+      BinaryData *Next = Itr != Range.end() ? std::next(Itr)->second : nullptr;
+      bool PrevIsPrivate = Prev && isPrivate(Prev);
+      bool NextIsPrivate = Next && isPrivate(Next);
       if (isPrivate(Itr->second) && (PrevIsPrivate || NextIsPrivate))
         Itr->second->setIsMoveable(false);
     } else {
       // check for overlapping symbols.
-      auto *Next = Itr != Range.end() ? std::next(Itr)->second : nullptr;
+      BinaryData *Next = Itr != Range.end() ? std::next(Itr)->second : nullptr;
       if (Next &&
           Itr->second->getEndAddress() != Next->getAddress() &&
           Next->containsAddress(Itr->second->getEndAddress())) {
@@ -471,16 +478,17 @@ void ReorderData::runOnFunctions(BinaryContext &BC) {
 
   std::vector<BinarySection *> Sections;
 
-  for (auto &SectionName : opts::ReorderData) {
+  for (const std::string &SectionName : opts::ReorderData) {
     if (SectionName == "default") {
       for (unsigned I = 0; DefaultSections[I]; ++I) {
-        if (auto Section = BC.getUniqueSectionByName(DefaultSections[I]))
+        if (ErrorOr<BinarySection &> Section =
+                BC.getUniqueSectionByName(DefaultSections[I]))
           Sections.push_back(&*Section);
       }
       continue;
     }
 
-    auto Section = BC.getUniqueSectionByName(SectionName);
+    ErrorOr<BinarySection &> Section = BC.getUniqueSectionByName(SectionName);
     if (!Section) {
       outs() << "BOLT-WARNING: Section " << SectionName
              << " not found, skipping.\n";
@@ -495,7 +503,7 @@ void ReorderData::runOnFunctions(BinaryContext &BC) {
     Sections.push_back(&*Section);
   }
 
-  for (auto *Section : Sections) {
+  for (BinarySection *Section : Sections) {
     const bool FoundUnmoveable = markUnmoveableSymbols(BC, *Section);
 
     DataOrder Order;
@@ -523,14 +531,15 @@ void ReorderData::runOnFunctions(BinaryContext &BC) {
       }
 
       // Copy original section to <section name>.cold.
-      auto &Cold = BC.registerSection(std::string(Section->getName()) + ".cold",
-                                      *Section);
+      BinarySection &Cold = BC.registerSection(
+          std::string(Section->getName()) + ".cold", *Section);
 
       // Reorder contents of original section.
       setSectionOrder(BC, *Section, Order.begin(), SplitPoint);
 
       // This keeps the original data from thinking it has been moved.
-      for (auto &Entry : BC.getBinaryDataForSection(*Section)) {
+      for (std::pair<const uint64_t, BinaryData *> &Entry :
+           BC.getBinaryDataForSection(*Section)) {
         if (!Entry.second->isMoved()) {
           Entry.second->setSection(Cold);
           Entry.second->setOutputSection(Cold);

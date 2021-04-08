@@ -64,7 +64,7 @@ void PatchEntries::runOnFunctions(BinaryContext &BC) {
   }
 
   for (auto &BFI : BC.getBinaryFunctions()) {
-    auto &Function = BFI.second;
+    BinaryFunction &Function = BFI.second;
 
     // Patch original code only for functions that will be emitted.
     if (!BC.shouldEmit(Function))
@@ -116,7 +116,7 @@ void PatchEntries::runOnFunctions(BinaryContext &BC) {
       continue;
     }
 
-    for (auto &Patch : PendingPatches) {
+    for (Patch &Patch : PendingPatches) {
       BinaryFunction *PatchFunction =
           BC.createInjectedBinaryFunction(
               NameResolver::append(Patch.Symbol->getName(), ".org.0"));

@@ -277,7 +277,7 @@ void EliminateUnreachableBlocks::runOnFunction(BinaryFunction& Function) {
     uint64_t Bytes;
     Function.markUnreachableBlocks();
     LLVM_DEBUG({
-      for (auto *BB : Function.layout()) {
+      for (BinaryBasicBlock *BB : Function.layout()) {
         if (!BB->isValid()) {
           dbgs() << "BOLT-INFO: UCE found unreachable block " << BB->getName()
                  << " in function " << Function << "\n";
@@ -301,7 +301,7 @@ void EliminateUnreachableBlocks::runOnFunction(BinaryFunction& Function) {
 
 void EliminateUnreachableBlocks::runOnFunctions(BinaryContext &BC) {
   for (auto &It : BC.getBinaryFunctions()) {
-    auto &Function = It.second;
+    BinaryFunction &Function = It.second;
     if (shouldOptimize(Function)) {
       runOnFunction(Function);
     }
@@ -371,7 +371,7 @@ void ReorderBasicBlocks::runOnFunctions(BinaryContext &BC) {
     for (std::map<uint64_t, BinaryFunction &>::reverse_iterator
              Rit = ScoreMap.rbegin();
          Rit != ScoreMap.rend() && I < opts::PrintFuncStat; ++Rit, ++I) {
-      auto &Function = Rit->second;
+      BinaryFunction &Function = Rit->second;
 
       OS << "           Information for function of top: " << (I + 1) << ": \n";
       OS << "             Function Score is: " << Function.getFunctionScore()
@@ -446,7 +446,7 @@ void ReorderBasicBlocks::modifyFunctionLayout(BinaryFunction &BF,
 
 void FixupBranches::runOnFunctions(BinaryContext &BC) {
   for (auto &It : BC.getBinaryFunctions()) {
-    auto &Function = It.second;
+    BinaryFunction &Function = It.second;
     if (!BC.shouldEmit(Function) || !Function.isSimple())
       continue;
 
@@ -516,13 +516,13 @@ void LowerAnnotations::runOnFunctions(BinaryContext &BC) {
   std::vector<std::pair<MCInst *, uint32_t>> PreservedOffsetAnnotations;
 
   for (auto &It : BC.getBinaryFunctions()) {
-    auto &BF = It.second;
+    BinaryFunction &BF = It.second;
     int64_t CurrentGnuArgsSize = 0;
 
     // Have we crossed hot/cold border for split functions?
     bool SeenCold = false;
 
-    for (auto *BB : BF.layout()) {
+    for (BinaryBasicBlock *BB : BF.layout()) {
       if (BB->isCold() && !SeenCold) {
         SeenCold = true;
         CurrentGnuArgsSize = 0;
@@ -534,7 +534,7 @@ void LowerAnnotations::runOnFunctions(BinaryContext &BC) {
         for (auto II = BB->begin(); II != BB->end(); ++II) {
           if (!BC.MIB->isInvoke(*II))
             continue;
-          const auto NewGnuArgsSize = BC.MIB->getGnuArgsSize(*II);
+          const int64_t NewGnuArgsSize = BC.MIB->getGnuArgsSize(*II);
           assert(NewGnuArgsSize >= 0 && "expected non-negative GNU_args_size");
           if (NewGnuArgsSize != CurrentGnuArgsSize) {
             auto InsertII = BF.addCFIInstruction(BB, II,
@@ -568,7 +568,7 @@ void LowerAnnotations::runOnFunctions(BinaryContext &BC) {
   BC.MIB->freeAnnotations();
 
   // Reinsert preserved annotations we need during code emission.
-  for (const auto &Item : PreservedOffsetAnnotations)
+  for (const std::pair<MCInst *, uint32_t> &Item : PreservedOffsetAnnotations)
     BC.MIB->addAnnotation<uint32_t>(*Item.first, "Offset", Item.second);
 }
 
@@ -592,7 +592,7 @@ uint64_t fixDoubleJumps(BinaryContext &BC,
                         bool MarkInvalid) {
   uint64_t NumDoubleJumps = 0;
 
-  for (auto &BB : Function) {
+  for (BinaryBasicBlock &BB : Function) {
     auto checkAndPatch = [&](BinaryBasicBlock *Pred,
                              BinaryBasicBlock *Succ,
                              const MCSymbol *SuccSym) {
@@ -605,7 +605,7 @@ uint64_t fixDoubleJumps(BinaryContext &BC,
         const MCSymbol *FBB = nullptr;
         MCInst *CondBranch = nullptr;
         MCInst *UncondBranch = nullptr;
-        auto Res = Pred->analyzeBranch(TBB, FBB, CondBranch, UncondBranch);
+        bool Res = Pred->analyzeBranch(TBB, FBB, CondBranch, UncondBranch);
         if(!Res) {
           LLVM_DEBUG(dbgs() << "analyzeBranch failed in peepholes in block:\n";
                      Pred->dump());
@@ -615,7 +615,7 @@ uint64_t fixDoubleJumps(BinaryContext &BC,
 
         // We must patch up any existing branch instructions to match up
         // with the new successor.
-        auto *Ctx = BC.Ctx.get();
+        MCContext *Ctx = BC.Ctx.get();
         assert((CondBranch || (!CondBranch && Pred->succ_size() == 1)) &&
                "Predecessor block has inconsistent number of successors");
         if (CondBranch &&
@@ -632,7 +632,7 @@ uint64_t fixDoubleJumps(BinaryContext &BC,
       } else {
         // Succ will be null in the tail call case.  In this case we
         // need to explicitly add a tail call instruction.
-        auto *Branch = Pred->getLastNonPseudoInstr();
+        MCInst *Branch = Pred->getLastNonPseudoInstr();
         if (Branch && BC.MIB->isUnconditionalBranch(*Branch)) {
           assert(BC.MIB->getTargetSymbol(*Branch) == BB.getLabel());
           Pred->removeSuccessor(&BB);
@@ -655,7 +655,7 @@ uint64_t fixDoubleJumps(BinaryContext &BC,
     if (BB.getNumNonPseudos() != 1 || BB.isLandingPad())
       continue;
 
-    auto *Inst = BB.getFirstNonPseudoInstr();
+    MCInst *Inst = BB.getFirstNonPseudoInstr();
     const bool IsTailCall = BC.MIB->isTailCall(*Inst);
 
     if (!BC.MIB->isUnconditionalBranch(*Inst) && !IsTailCall)
@@ -665,15 +665,15 @@ uint64_t fixDoubleJumps(BinaryContext &BC,
     if (IsTailCall && BC.MIB->isConditionalBranch(*Inst))
       continue;
 
-    const auto *SuccSym = BC.MIB->getTargetSymbol(*Inst);
-    auto *Succ = BB.getSuccessor();
+    const MCSymbol *SuccSym = BC.MIB->getTargetSymbol(*Inst);
+    BinaryBasicBlock *Succ = BB.getSuccessor();
 
     if (((!Succ || &BB == Succ) && !IsTailCall) || (IsTailCall && !SuccSym))
       continue;
 
     std::vector<BinaryBasicBlock *> Preds{BB.pred_begin(), BB.pred_end()};
 
-    for (auto *Pred : Preds) {
+    for (BinaryBasicBlock *Pred : Preds) {
       if (Pred->isLandingPad())
         continue;
 
@@ -716,7 +716,8 @@ bool SimplifyConditionalTailCalls::shouldRewriteBranch(
   if (opts::SctcMode == opts::SctcPreserveDirection)
     return IsForward == DirectionFlag;
 
-  const auto Frequency = PredBB->getBranchStats(BB);
+  const ErrorOr<std::pair<double, double>> Frequency =
+      PredBB->getBranchStats(BB);
 
   // It's ok to rewrite the conditional branch if the new target will be
   // a backward branch.
@@ -755,16 +756,16 @@ uint64_t SimplifyConditionalTailCalls::fixTailCalls(BinaryContext &BC,
             BB->isEntryPoint());
   };
 
-  for (auto *BB : BF.layout()) {
+  for (BinaryBasicBlock *BB : BF.layout()) {
     // Locate BB with a single direct tail-call instruction.
     if (BB->getNumNonPseudos() != 1)
       continue;
 
-    auto *Instr = BB->getFirstNonPseudoInstr();
+    MCInst *Instr = BB->getFirstNonPseudoInstr();
     if (!MIB->isTailCall(*Instr) || BC.MIB->isConditionalBranch(*Instr))
       continue;
 
-    auto *CalleeSymbol = MIB->getTargetSymbol(*Instr);
+    const MCSymbol *CalleeSymbol = MIB->getTargetSymbol(*Instr);
     if (!CalleeSymbol)
       continue;
 
@@ -772,8 +773,8 @@ uint64_t SimplifyConditionalTailCalls::fixTailCalls(BinaryContext &BC,
     const bool IsForwardCTC = BF.isForwardCall(CalleeSymbol);
 
     // Iterate through all predecessors.
-    for (auto *PredBB : BB->predecessors()) {
-      auto *CondSucc = PredBB->getConditionalSuccessor(true);
+    for (BinaryBasicBlock *PredBB : BB->predecessors()) {
+      BinaryBasicBlock *CondSucc = PredBB->getConditionalSuccessor(true);
       if (!CondSucc)
         continue;
 
@@ -783,7 +784,7 @@ uint64_t SimplifyConditionalTailCalls::fixTailCalls(BinaryContext &BC,
       const MCSymbol *FBB = nullptr;
       MCInst *CondBranch = nullptr;
       MCInst *UncondBranch = nullptr;
-      auto Result = PredBB->analyzeBranch(TBB, FBB, CondBranch, UncondBranch);
+      bool Result = PredBB->analyzeBranch(TBB, FBB, CondBranch, UncondBranch);
 
       // analyzeBranch() can fail due to unusual branch instructions, e.g. jrcxz
       if (!Result) {
@@ -862,8 +863,8 @@ uint64_t SimplifyConditionalTailCalls::fixTailCalls(BinaryContext &BC,
   // Add unconditional branches at the end of BBs to new successors
   // as long as the successor is not a fallthrough.
   for (auto &Entry : NeedsUncondBranch) {
-    auto *PredBB = Entry.first;
-    auto *CondSucc = Entry.second;
+    BinaryBasicBlock *PredBB = Entry.first;
+    const BinaryBasicBlock *CondSucc = Entry.second;
 
     const MCSymbol *TBB = nullptr;
     const MCSymbol *FBB = nullptr;
@@ -873,13 +874,13 @@ uint64_t SimplifyConditionalTailCalls::fixTailCalls(BinaryContext &BC,
 
     // Find the next valid block.  Invalid blocks will be deleted
     // so they shouldn't be considered fallthrough targets.
-    const auto *NextBlock = BF.getBasicBlockAfter(PredBB, false);
+    const BinaryBasicBlock *NextBlock = BF.getBasicBlockAfter(PredBB, false);
     while (NextBlock && !isValid(NextBlock)) {
       NextBlock = BF.getBasicBlockAfter(NextBlock, false);
     }
 
     // Get the unconditional successor to this block.
-    const auto *PredSucc = PredBB->getSuccessor();
+    const BinaryBasicBlock *PredSucc = PredBB->getSuccessor();
     assert(PredSucc && "The other branch should be a tail call");
 
     const bool HasFallthrough = (NextBlock && PredSucc == NextBlock);
@@ -901,7 +902,7 @@ uint64_t SimplifyConditionalTailCalls::fixTailCalls(BinaryContext &BC,
   if (NumLocalCTCs > 0) {
     NumDoubleJumps += fixDoubleJumps(BC, BF, true);
     // Clean-up unreachable tail-call blocks.
-    const auto Stats = BF.eraseInvalidBBs();
+    const std::pair<unsigned, uint64_t> Stats = BF.eraseInvalidBBs();
     DeletedBlocks += Stats.first;
     DeletedBytes += Stats.second;
 
@@ -928,7 +929,7 @@ void SimplifyConditionalTailCalls::runOnFunctions(BinaryContext &BC) {
     return;
 
   for (auto &It : BC.getBinaryFunctions()) {
-    auto &Function = It.second;
+    BinaryFunction &Function = It.second;
 
     if (!shouldOptimize(Function))
       continue;
@@ -955,8 +956,8 @@ uint64_t Peepholes::shortenInstructions(BinaryContext &BC,
                                         BinaryFunction &Function) {
   MCInst DebugInst;
   uint64_t Count = 0;
-  for (auto &BB : Function) {
-    for (auto &Inst : BB) {
+  for (BinaryBasicBlock &BB : Function) {
+    for (MCInst &Inst : BB) {
       if (opts::Verbosity > 1) {
         DebugInst = Inst;
       }
@@ -977,8 +978,8 @@ uint64_t Peepholes::shortenInstructions(BinaryContext &BC,
 
 void Peepholes::addTailcallTraps(BinaryContext &BC,
                                  BinaryFunction &Function) {
-  for (auto &BB : Function) {
-    auto *Inst = BB.getLastNonPseudoInstr();
+  for (BinaryBasicBlock &BB : Function) {
+    MCInst *Inst = BB.getLastNonPseudoInstr();
     if (Inst && BC.MIB->isTailCall(*Inst) && BC.MIB->isIndirectBranch(*Inst)) {
       MCInst Trap;
       if (BC.MIB->createTrap(Trap)) {
@@ -991,12 +992,12 @@ void Peepholes::addTailcallTraps(BinaryContext &BC,
 
 void Peepholes::removeUselessCondBranches(BinaryContext &BC,
                                           BinaryFunction &Function) {
-  for (auto &BB : Function) {
+  for (BinaryBasicBlock &BB : Function) {
     if (BB.succ_size() != 2)
       continue;
 
-    auto *CondBB = BB.getConditionalSuccessor(true);
-    auto *UncondBB = BB.getConditionalSuccessor(false);
+    BinaryBasicBlock *CondBB = BB.getConditionalSuccessor(true);
+    BinaryBasicBlock *UncondBB = BB.getConditionalSuccessor(false);
     if (CondBB != UncondBB)
       continue;
 
@@ -1004,7 +1005,7 @@ void Peepholes::removeUselessCondBranches(BinaryContext &BC,
     const MCSymbol *FBB = nullptr;
     MCInst *CondBranch = nullptr;
     MCInst *UncondBranch = nullptr;
-    auto Result = BB.analyzeBranch(TBB, FBB, CondBranch, UncondBranch);
+    bool Result = BB.analyzeBranch(TBB, FBB, CondBranch, UncondBranch);
 
     // analyzeBranch() can fail due to unusual branch instructions,
     // e.g. jrcxz, or jump tables (indirect jump).
@@ -1028,7 +1029,7 @@ void Peepholes::runOnFunctions(BinaryContext &BC) {
     return;
 
   for (auto &It : BC.getBinaryFunctions()) {
-    auto &Function = It.second;
+    BinaryFunction &Function = It.second;
     if (shouldOptimize(Function)) {
       if (Opts & opts::PEEP_SHORTEN)
         NumShortened += shortenInstructions(BC, Function);
@@ -1060,8 +1061,8 @@ bool SimplifyRODataLoads::simplifyRODataLoads(
   uint64_t NumLocalLoadsFound = 0;
   uint64_t NumDynamicLocalLoadsFound = 0;
 
-  for (auto *BB : BF.layout()) {
-    for (auto &Inst : *BB) {
+  for (BinaryBasicBlock *BB : BF.layout()) {
+    for (MCInst &Inst : *BB) {
       unsigned Opcode = Inst.getOpcode();
       const MCInstrDesc &Desc = BC.MII->get(Opcode);
 
@@ -1074,7 +1075,7 @@ bool SimplifyRODataLoads::simplifyRODataLoads(
 
       if (MIB->hasPCRelOperand(Inst)) {
         // Try to find the symbol that corresponds to the PC-relative operand.
-        auto DispOpI = MIB->getMemOperandDisp(Inst);
+        MCOperand *DispOpI = MIB->getMemOperandDisp(Inst);
         assert(DispOpI != Inst.end() && "expected PC-relative displacement");
         assert(DispOpI->isExpr() &&
               "found PC-relative with non-symbolic displacement");
@@ -1091,7 +1092,7 @@ bool SimplifyRODataLoads::simplifyRODataLoads(
 
         // Look up the symbol address in the global symbols map of the binary
         // context object.
-        auto *BD = BC.getBinaryDataByName(DisplSymbol->getName());
+        BinaryData *BD = BC.getBinaryDataByName(DisplSymbol->getName());
         if (!BD)
           continue;
         TargetAddress = BD->getAddress() + DisplOffset;
@@ -1101,7 +1102,8 @@ bool SimplifyRODataLoads::simplifyRODataLoads(
 
       // Get the contents of the section containing the target address of the
       // memory operand. We are only interested in read-only sections.
-      auto DataSection = BC.getSectionForAddress(TargetAddress);
+      ErrorOr<BinarySection &> DataSection =
+          BC.getSectionForAddress(TargetAddress);
       if (!DataSection || !DataSection->isReadOnly())
         continue;
 
@@ -1133,7 +1135,7 @@ bool SimplifyRODataLoads::simplifyRODataLoads(
 
 void SimplifyRODataLoads::runOnFunctions(BinaryContext &BC) {
   for (auto &It : BC.getBinaryFunctions()) {
-    auto &Function = It.second;
+    BinaryFunction &Function = It.second;
     if (shouldOptimize(Function) && simplifyRODataLoads(BC, Function)) {
       Modified.insert(&Function);
     }
@@ -1147,7 +1149,7 @@ void SimplifyRODataLoads::runOnFunctions(BinaryContext &BC) {
 }
 
 void AssignSections::runOnFunctions(BinaryContext &BC) {
-  for (auto *Function : BC.getInjectedBinaryFunctions()) {
+  for (BinaryFunction *Function : BC.getInjectedBinaryFunctions()) {
     Function->setCodeSectionName(BC.getInjectedCodeSectionName());
     Function->setColdCodeSectionName(BC.getInjectedColdCodeSectionName());
   }
@@ -1156,11 +1158,11 @@ void AssignSections::runOnFunctions(BinaryContext &BC) {
   if (!BC.HasRelocations)
     return;
 
-  const auto UseColdSection =
+  const bool UseColdSection =
       BC.NumProfiledFuncs > 0 ||
       opts::ReorderFunctions == ReorderFunctions::RT_USER;
   for (auto &BFI : BC.getBinaryFunctions()) {
-    auto &Function = BFI.second;
+    BinaryFunction &Function = BFI.second;
     if (opts::isHotTextMover(Function)) {
       Function.setCodeSectionName(BC.getHotTextMoverSectionName());
       Function.setColdCodeSectionName(BC.getHotTextMoverSectionName());
@@ -1200,11 +1202,11 @@ void PrintProfileStats::runOnFunctions(BinaryContext &BC) {
       continue;
     FlowMapTy &IncomingMap = TotalIncomingMaps[&Function];
     FlowMapTy &OutgoingMap = TotalOutgoingMaps[&Function];
-    for (const auto &BB : Function) {
-      auto TotalOutgoing = 0ULL;
+    for (const BinaryBasicBlock &BB : Function) {
+      uint64_t TotalOutgoing = 0ULL;
       auto SuccBIIter = BB.branch_info_begin();
-      for (auto Succ : BB.successors()) {
-        auto Count = SuccBIIter->Count;
+      for (BinaryBasicBlock *Succ : BB.successors()) {
+        uint64_t Count = SuccBIIter->Count;
         if (Count == BinaryBasicBlock::COUNT_NO_PROFILE || Count == 0) {
           ++SuccBIIter;
           continue;
@@ -1218,7 +1220,7 @@ void PrintProfileStats::runOnFunctions(BinaryContext &BC) {
 
     size_t NumBlocks = 0;
     double Mean = 0.0;
-    for (const auto &BB : Function) {
+    for (const BinaryBasicBlock &BB : Function) {
       // Do not compute score for low frequency blocks, entry or exit blocks
       if (IncomingMap[&BB] < 100 || OutgoingMap[&BB] == 0 || BB.isEntryPoint())
         continue;
@@ -1249,7 +1251,7 @@ void PrintProfileStats::runOnFunctions(BinaryContext &BC) {
       continue;
     FlowMapTy &IncomingMap = TotalIncomingMaps[&Function];
     FlowMapTy &OutgoingMap = TotalOutgoingMaps[&Function];
-    for (const auto &BB : Function) {
+    for (const BinaryBasicBlock &BB : Function) {
       if (IncomingMap[&BB] < 100 || OutgoingMap[&BB] == 0)
         continue;
       ++NumBlocksConsidered;
@@ -1284,7 +1286,7 @@ PrintProgramStats::runOnFunctions(BinaryContext &BC) {
   std::vector<BinaryFunction *> ProfiledFunctions;
   const char *StaleFuncsHeader = "BOLT-INFO: Functions with stale profile:\n";
   for (auto &BFI : BC.getBinaryFunctions()) {
-    auto &Function = BFI.second;
+    BinaryFunction &Function = BFI.second;
 
     // Ignore PLT functions for stats.
     if (Function.isPLTFunction())
@@ -1311,7 +1313,7 @@ PrintProgramStats::runOnFunctions(BinaryContext &BC) {
     if (!Function.hasProfile())
       continue;
 
-    auto SampleCount = Function.getRawBranchCount();
+    uint64_t SampleCount = Function.getRawBranchCount();
     TotalSampleCount += SampleCount;
 
     if (Function.hasValidProfile()) {
@@ -1328,8 +1330,8 @@ PrintProgramStats::runOnFunctions(BinaryContext &BC) {
   }
   BC.NumProfiledFuncs = ProfiledFunctions.size();
 
-  const auto NumAllProfiledFunctions =
-                            ProfiledFunctions.size() + NumStaleProfileFunctions;
+  const size_t NumAllProfiledFunctions =
+      ProfiledFunctions.size() + NumStaleProfileFunctions;
   outs() << "BOLT-INFO: " << NumAllProfiledFunctions
          << " out of " << NumRegularFunctions << " functions in the binary ("
          << format("%.1f", NumAllProfiledFunctions /
@@ -1371,7 +1373,7 @@ PrintProgramStats::runOnFunctions(BinaryContext &BC) {
     }
   }
 
-  if (const auto NumUnusedObjects = BC.getNumUnusedProfiledObjects()) {
+  if (const uint64_t NumUnusedObjects = BC.getNumUnusedProfiledObjects()) {
     outs() << "BOLT-INFO: profile for " << NumUnusedObjects
            << " objects was ignored\n";
   }
@@ -1386,7 +1388,8 @@ PrintProgramStats::runOnFunctions(BinaryContext &BC) {
                 );
       auto SFI = ProfiledFunctions.begin();
       auto SFIend = ProfiledFunctions.end();
-      for (auto I = 0u; I < opts::TopCalledLimit && SFI != SFIend; ++SFI, ++I) {
+      for (unsigned I = 0u; I < opts::TopCalledLimit && SFI != SFIend;
+           ++SFI, ++I) {
         outs() << "  " << **SFI << " : "
                << (*SFI)->getExecutionCount() << '\n';
       }
@@ -1402,7 +1405,7 @@ PrintProgramStats::runOnFunctions(BinaryContext &BC) {
     std::map<const BinaryFunction *, DynoStats> Stats;
 
     for (const auto &BFI : BC.getBinaryFunctions()) {
-      const auto &BF = BFI.second;
+      const BinaryFunction &BF = BFI.second;
       if (shouldOptimize(BF) && BF.hasValidProfile()) {
         Functions.push_back(&BF);
         Stats.emplace(&BF, getDynoStats(BF));
@@ -1431,8 +1434,8 @@ PrintProgramStats::runOnFunctions(BinaryContext &BC) {
         Functions.begin(),
         Functions.end(),
         [Ascending,&Stats](const BinaryFunction *A, const BinaryFunction *B) {
-          const auto &StatsA = Stats.at(A);
-          const auto &StatsB = Stats.at(B);
+          const DynoStats &StatsA = Stats.at(A);
+          const DynoStats &StatsB = Stats.at(B);
           return Ascending
             ? StatsA.lessThan(StatsB, opts::PrintSortedBy)
             : StatsB.lessThan(StatsA, opts::PrintSortedBy);
@@ -1446,7 +1449,7 @@ PrintProgramStats::runOnFunctions(BinaryContext &BC) {
     } else {
       outs() << "(";
       bool PrintComma = false;
-      for (const auto Category : opts::PrintSortedBy) {
+      for (const DynoStats::Category Category : opts::PrintSortedBy) {
         if (PrintComma) outs() << ", ";
         outs() << DynoStats::Description(Category);
         PrintComma = true;
@@ -1457,12 +1460,12 @@ PrintProgramStats::runOnFunctions(BinaryContext &BC) {
     outs() << " are:\n";
     auto SFI = Functions.begin();
     for (unsigned I = 0; I < 100 && SFI != Functions.end(); ++SFI, ++I) {
-      const auto Stats = getDynoStats(**SFI);
+      const DynoStats Stats = getDynoStats(**SFI);
       outs() << "  " << **SFI;
       if (!SortAll) {
         outs() << " (";
         bool PrintComma = false;
-        for (const auto Category : opts::PrintSortedBy) {
+        for (const DynoStats::Category Category : opts::PrintSortedBy) {
           if (PrintComma) outs() << ", ";
           outs() << dynoStatsOptName(Category) << "=" << Stats[Category];
           PrintComma = true;
@@ -1480,7 +1483,7 @@ PrintProgramStats::runOnFunctions(BinaryContext &BC) {
               " traps.";
     if (opts::Verbosity >= 1 || BC.TrappedFunctions.size() <= 5) {
       errs() << '\n';
-      for (const auto *Function : BC.TrappedFunctions)
+      for (const BinaryFunction *Function : BC.TrappedFunctions)
         errs() << "  " << *Function << '\n';
     } else {
       errs() << " Use -v=1 to see the list.\n";
@@ -1510,14 +1513,14 @@ PrintProgramStats::runOnFunctions(BinaryContext &BC) {
   if (opts::ReportBadLayout) {
     std::vector<const BinaryFunction *> SuboptimalFuncs;
     for (auto &BFI : BC.getBinaryFunctions()) {
-      const auto &BF = BFI.second;
+      const BinaryFunction &BF = BFI.second;
       if (!BF.hasValidProfile())
         continue;
 
-      const auto HotThreshold =
+      const uint64_t HotThreshold =
           std::max<uint64_t>(BF.getKnownExecutionCount(), 1);
       bool HotSeen = false;
-      for (const auto *BB : BF.rlayout()) {
+      for (const BinaryBasicBlock *BB : BF.rlayout()) {
         if (!HotSeen && BB->getKnownExecutionCount() > HotThreshold) {
           HotSeen = true;
           continue;
@@ -1559,8 +1562,8 @@ PrintProgramStats::runOnFunctions(BinaryContext &BC) {
 
 void InstructionLowering::runOnFunctions(BinaryContext &BC) {
   for (auto &BFI : BC.getBinaryFunctions()) {
-    for (auto &BB : BFI.second) {
-      for (auto &Instruction : BB) {
+    for (BinaryBasicBlock &BB : BFI.second) {
+      for (MCInst &Instruction : BB) {
         BC.MIB->lowerTailCall(Instruction);
       }
     }
@@ -1571,7 +1574,7 @@ void StripRepRet::runOnFunctions(BinaryContext &BC) {
   uint64_t NumPrefixesRemoved = 0;
   uint64_t NumBytesSaved = 0;
   for (auto &BFI : BC.getBinaryFunctions()) {
-    for (auto &BB : BFI.second) {
+    for (BinaryBasicBlock &BB : BFI.second) {
       auto LastInstRIter = BB.getLastNonPseudo();
       if (LastInstRIter == BB.rend() ||
           !BC.MIB->isReturn(*LastInstRIter) ||
@@ -1597,24 +1600,25 @@ void InlineMemcpy::runOnFunctions(BinaryContext &BC) {
   uint64_t NumInlined = 0;
   uint64_t NumInlinedDyno = 0;
   for (auto &BFI : BC.getBinaryFunctions()) {
-    for (auto &BB : BFI.second) {
+    for (BinaryBasicBlock &BB : BFI.second) {
       for (auto II = BB.begin(); II != BB.end(); ++II) {
-        auto &Inst = *II;
+        MCInst &Inst = *II;
 
         if (!BC.MIB->isCall(Inst) || MCPlus::getNumPrimeOperands(Inst) != 1 ||
             !Inst.getOperand(0).isExpr())
           continue;
 
-        const auto *CalleeSymbol = BC.MIB->getTargetSymbol(Inst);
+        const MCSymbol *CalleeSymbol = BC.MIB->getTargetSymbol(Inst);
         if (CalleeSymbol->getName() != "memcpy" &&
             CalleeSymbol->getName() != "memcpy@PLT" &&
             CalleeSymbol->getName() != "_memcpy8")
           continue;
 
-        const auto IsMemcpy8 = (CalleeSymbol->getName() == "_memcpy8");
-        const auto IsTailCall = BC.MIB->isTailCall(Inst);
+        const bool IsMemcpy8 = (CalleeSymbol->getName() == "_memcpy8");
+        const bool IsTailCall = BC.MIB->isTailCall(Inst);
 
-        const auto NewCode = BC.MIB->createInlineMemcpy(IsMemcpy8);
+        const std::vector<MCInst> NewCode =
+            BC.MIB->createInlineMemcpy(IsMemcpy8);
         II = BB.replaceInstruction(II, NewCode);
         std::advance(II, NewCode.size() - 1);
         if (IsTailCall) {
@@ -1642,8 +1646,8 @@ bool SpecializeMemcpy1::shouldOptimize(const BinaryFunction &Function) const {
   if (!BinaryFunctionPass::shouldOptimize(Function))
     return false;
 
-  for (auto &FunctionSpec : Spec) {
-    auto FunctionName = StringRef(FunctionSpec).split(':').first;
+  for (const std::string &FunctionSpec : Spec) {
+    StringRef FunctionName = StringRef(FunctionSpec).split(':').first;
     if (Function.hasNameRegex(FunctionName))
       return true;
   }
@@ -1654,7 +1658,7 @@ bool SpecializeMemcpy1::shouldOptimize(const BinaryFunction &Function) const {
 std::set<size_t>
 SpecializeMemcpy1::getCallSitesToOptimize(const BinaryFunction &Function) const{
   StringRef SitesString;
-  for (auto &FunctionSpec : Spec) {
+  for (const std::string &FunctionSpec : Spec) {
     StringRef FunctionName;
     std::tie(FunctionName, SitesString) = StringRef(FunctionSpec).split(':');
     if (Function.hasNameRegex(FunctionName))
@@ -1665,7 +1669,7 @@ SpecializeMemcpy1::getCallSitesToOptimize(const BinaryFunction &Function) const{
   std::set<size_t> Sites;
   SmallVector<StringRef, 4> SitesVec;
   SitesString.split(SitesVec, ':');
-  for (auto SiteString : SitesVec) {
+  for (StringRef SiteString : SitesVec) {
     if (SiteString.empty())
       continue;
     size_t Result;
@@ -1683,26 +1687,26 @@ void SpecializeMemcpy1::runOnFunctions(BinaryContext &BC) {
   uint64_t NumSpecialized = 0;
   uint64_t NumSpecializedDyno = 0;
   for (auto &BFI : BC.getBinaryFunctions()) {
-    auto &Function = BFI.second;
+    BinaryFunction &Function = BFI.second;
     if (!shouldOptimize(Function))
       continue;
 
-    auto CallsToOptimize = getCallSitesToOptimize(Function);
+    std::set<size_t> CallsToOptimize = getCallSitesToOptimize(Function);
     auto shouldOptimize = [&](size_t N) {
       return CallsToOptimize.empty() || CallsToOptimize.count(N);
     };
 
     std::vector<BinaryBasicBlock *> Blocks(Function.pbegin(), Function.pend());
     size_t CallSiteID = 0;
-    for (auto *CurBB : Blocks) {
+    for (BinaryBasicBlock *CurBB : Blocks) {
       for (auto II = CurBB->begin(); II != CurBB->end(); ++II) {
-        auto &Inst = *II;
+        MCInst &Inst = *II;
 
         if (!BC.MIB->isCall(Inst) || MCPlus::getNumPrimeOperands(Inst) != 1 ||
             !Inst.getOperand(0).isExpr())
           continue;
 
-        const auto *CalleeSymbol = BC.MIB->getTargetSymbol(Inst);
+        const MCSymbol *CalleeSymbol = BC.MIB->getTargetSymbol(Inst);
         if (CalleeSymbol->getName() != "memcpy" &&
             CalleeSymbol->getName() != "memcpy@PLT")
           continue;
@@ -1716,9 +1720,9 @@ void SpecializeMemcpy1::runOnFunctions(BinaryContext &BC) {
           continue;
 
         // Create a copy of a call to memcpy(dest, src, size).
-        auto MemcpyInstr = Inst;
+        MCInst MemcpyInstr = Inst;
 
-        auto *OneByteMemcpyBB = CurBB->splitAt(II);
+        BinaryBasicBlock *OneByteMemcpyBB = CurBB->splitAt(II);
 
         BinaryBasicBlock *NextBB{nullptr};
         if (OneByteMemcpyBB->getNumNonPseudos() > 1) {
@@ -1730,11 +1734,11 @@ void SpecializeMemcpy1::runOnFunctions(BinaryContext &BC) {
           assert(NextBB && "unexpected call to memcpy() with no return");
         }
 
-        auto *MemcpyBB = Function.addBasicBlock(CurBB->getInputOffset());
-        auto CmpJCC = BC.MIB->createCmpJE(BC.MIB->getIntArgRegister(2),
-                                          1,
-                                          OneByteMemcpyBB->getLabel(),
-                                          BC.Ctx.get());
+        BinaryBasicBlock *MemcpyBB =
+            Function.addBasicBlock(CurBB->getInputOffset());
+        std::vector<MCInst> CmpJCC =
+            BC.MIB->createCmpJE(BC.MIB->getIntArgRegister(2), 1,
+                                OneByteMemcpyBB->getLabel(), BC.Ctx.get());
         CurBB->addInstructions(CmpJCC);
         CurBB->addSuccessor(MemcpyBB);
 
@@ -1748,7 +1752,7 @@ void SpecializeMemcpy1::runOnFunctions(BinaryContext &BC) {
         if (CurBB->getKnownExecutionCount() > 0)
           MemcpyBB->setExecutionCount(1);
 
-        auto OneByteMemcpy = BC.MIB->createOneByteMemcpy();
+        std::vector<MCInst> OneByteMemcpy = BC.MIB->createOneByteMemcpy();
         OneByteMemcpyBB->addInstructions(OneByteMemcpy);
 
         ++NumSpecialized;

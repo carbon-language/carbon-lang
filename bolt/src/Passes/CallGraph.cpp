@@ -72,7 +72,7 @@ int64_t CallGraph::Arc::Hash::operator()(const Arc &Arc) const {
 }
 
 CallGraph::NodeId CallGraph::addNode(uint32_t Size, uint64_t Samples) {
-  auto Id = Nodes.size();
+  NodeId Id = Nodes.size();
   Nodes.emplace_back(Size, Samples);
   return Id;
 }
@@ -81,7 +81,7 @@ const CallGraph::Arc &CallGraph::incArcWeight(NodeId Src, NodeId Dst, double W,
                                               double Offset) {
   assert(Offset <= size(Src) && "Call offset exceeds function size");
 
-  auto Res = Arcs.emplace(Src, Dst, W);
+  std::pair<ArcIterator, bool> Res = Arcs.emplace(Src, Dst, W);
   if (!Res.second) {
     Res.first->Weight += W;
     Res.first->AvgCallOffset += Offset * W;
@@ -95,9 +95,9 @@ const CallGraph::Arc &CallGraph::incArcWeight(NodeId Src, NodeId Dst, double W,
 
 void CallGraph::normalizeArcWeights() {
   for (NodeId FuncId = 0; FuncId < numNodes(); ++FuncId) {
-    auto& Func = getNode(FuncId);
-    for (auto Caller : Func.predecessors()) {
-      auto Arc = findArc(Caller, FuncId);
+    const Node &Func = getNode(FuncId);
+    for (NodeId Caller : Func.predecessors()) {
+      ArcIterator Arc = findArc(Caller, FuncId);
       Arc->NormalizedWeight = Arc->weight() / Func.samples();
       if (Arc->weight() > 0)
         Arc->AvgCallOffset /= Arc->weight();
@@ -109,10 +109,10 @@ void CallGraph::normalizeArcWeights() {
 
 void CallGraph::adjustArcWeights() {
   for (NodeId FuncId = 0; FuncId < numNodes(); ++FuncId) {
-    auto& Func = getNode(FuncId);
+    const Node &Func = getNode(FuncId);
     uint64_t InWeight = 0;
-    for (auto Caller : Func.predecessors()) {
-      auto Arc = findArc(Caller, FuncId);
+    for (NodeId Caller : Func.predecessors()) {
+      ArcIterator Arc = findArc(Caller, FuncId);
       InWeight += (uint64_t)Arc->weight();
     }
     if (Func.samples() < InWeight)

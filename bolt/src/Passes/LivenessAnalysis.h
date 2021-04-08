@@ -61,7 +61,7 @@ public:
     this->BC.MIB->getGPRegs(GPRegs, /*IncludeAlias=*/false);
     // Ignore the register used for frame pointer even if it is not alive (it
     // may be used by CFI which is not represented in our dataflow).
-    auto FP = BC.MIB->getAliases(BC.MIB->getFramePointer());
+    BitVector FP = BC.MIB->getAliases(BC.MIB->getFramePointer());
     FP.flip();
     BV &= GPRegs;
     BV &= FP;
@@ -105,7 +105,7 @@ protected:
     BitVector Next = Cur;
     bool IsCall = this->BC.MIB->isCall(Point);
     // Kill
-    auto Written = BitVector(NumRegs, false);
+    BitVector Written = BitVector(NumRegs, false);
     if (!IsCall) {
       this->BC.MIB->getWrittenRegs(Point, Written);
     } else {
@@ -120,7 +120,7 @@ protected:
         // If ABI is respected, everything except CSRs should be dead after a
         // call
         if (opts::AssumeABI) {
-          auto CSR = BitVector(NumRegs, false);
+          BitVector CSR = BitVector(NumRegs, false);
           BC.MIB->getCalleeSavedRegs(CSR);
           CSR.flip();
           Written |= CSR;
@@ -134,7 +134,7 @@ protected:
       if (BC.MIB->isCleanRegXOR(Point))
         return Next;
 
-      auto Used = BitVector(NumRegs, false);
+      BitVector Used = BitVector(NumRegs, false);
       if (IsCall) {
         RA.getInstUsedRegsList(Point, Used, /*GetClobbers*/true);
         if (RA.isConservative(Used)) {
@@ -142,7 +142,7 @@ protected:
           BC.MIB->getDefaultLiveOut(Used);
         }
       }
-      const auto InstInfo = BC.MII->get(Point.getOpcode());
+      const MCInstrDesc InstInfo = BC.MII->get(Point.getOpcode());
       for (unsigned I = 0, E = Point.getNumOperands(); I != E; ++I) {
         if (!Point.getOperand(I).isReg() || I < InstInfo.getNumDefs())
           continue;

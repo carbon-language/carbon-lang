@@ -89,11 +89,11 @@ void alignMaxBytes(BinaryFunction &Function) {
 // -- the size of the function
 // -- the specified number of bytes
 void alignCompact(BinaryFunction &Function, const MCCodeEmitter *Emitter) {
-  const auto &BC = Function.getBinaryContext();
+  const BinaryContext &BC = Function.getBinaryContext();
   size_t HotSize = 0;
   size_t ColdSize = 0;
 
-  for (const auto *BB : Function.layout()) {
+  for (const BinaryBasicBlock *BB : Function.layout()) {
     if (BB->isCold())
       ColdSize += BC.computeCodeSize(BB->begin(), BB->end(), Emitter);
     else
@@ -119,13 +119,13 @@ void AlignerPass::alignBlocks(BinaryFunction &Function,
   if (!Function.hasValidProfile() || !Function.isSimple())
     return;
 
-  const auto &BC = Function.getBinaryContext();
+  const BinaryContext &BC = Function.getBinaryContext();
 
-  const auto FuncCount =
+  const uint64_t FuncCount =
       std::max<uint64_t>(1, Function.getKnownExecutionCount());
   BinaryBasicBlock *PrevBB{nullptr};
-  for (auto *BB : Function.layout()) {
-    auto Count = BB->getKnownExecutionCount();
+  for (BinaryBasicBlock *BB : Function.layout()) {
+    uint64_t Count = BB->getKnownExecutionCount();
 
     if (Count <= FuncCount * opts::AlignBlocksThreshold / 100) {
       PrevBB = BB;
@@ -141,8 +141,9 @@ void AlignerPass::alignBlocks(BinaryFunction &Function,
     if (Count < FTCount * 2)
       continue;
 
-    const auto BlockSize = BC.computeCodeSize(BB->begin(), BB->end(), Emitter);
-    const auto BytesToUse =
+    const uint64_t BlockSize =
+        BC.computeCodeSize(BB->begin(), BB->end(), Emitter);
+    const uint64_t BytesToUse =
         std::min<uint64_t>(opts::BlockAlignment - 1, BlockSize);
 
     if (opts::AlignBlocksMinSize && BlockSize < opts::AlignBlocksMinSize)
@@ -168,7 +169,8 @@ void AlignerPass::runOnFunctions(BinaryContext &BC) {
 
   ParallelUtilities::WorkFuncTy WorkFun = [&](BinaryFunction &BF) {
     // Create a separate MCCodeEmitter to allow lock free execution
-    auto Emitter = BC.createIndependentMCCodeEmitter();
+    BinaryContext::IndependentCodeEmitter Emitter =
+        BC.createIndependentMCCodeEmitter();
 
     if (opts::UseCompactAligner)
       alignCompact(BF, Emitter.MCE.get());

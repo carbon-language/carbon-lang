@@ -42,14 +42,14 @@ void RegReAssign::swap(BinaryContext &BC, BinaryFunction &Function, MCPhysReg A,
   const BitVector &AliasB = BC.MIB->getAliases(B, false);
 
   // Regular instructions
-  for (auto &BB : Function) {
-    for (auto &Inst : BB) {
+  for (BinaryBasicBlock &BB : Function) {
+    for (MCInst &Inst : BB) {
       for (int I = 0, E = MCPlus::getNumPrimeOperands(Inst); I != E; ++I) {
-        auto &Operand = Inst.getOperand(I);
+        MCOperand &Operand = Inst.getOperand(I);
         if (!Operand.isReg())
           continue;
 
-        auto Reg = Operand.getReg();
+        unsigned Reg = Operand.getReg();
         if (AliasA.test(Reg)) {
           Operand.setReg(BC.MIB->getAliasSized(B, BC.MIB->getRegSize(Reg)));
           --StaticBytesSaved;
@@ -67,8 +67,8 @@ void RegReAssign::swap(BinaryContext &BC, BinaryFunction &Function, MCPhysReg A,
 
   // CFI
   DenseSet<const MCCFIInstruction *> Changed;
-  for (auto &BB : Function) {
-    for (auto &Inst : BB) {
+  for (BinaryBasicBlock &BB : Function) {
+    for (MCInst &Inst : BB) {
       if (!BC.MIB->isCFI(Inst))
         continue;
       const MCCFIInstruction *CFI = Function.getCFIFor(Inst);
@@ -78,7 +78,7 @@ void RegReAssign::swap(BinaryContext &BC, BinaryFunction &Function, MCPhysReg A,
 
       switch (CFI->getOperation()) {
       case MCCFIInstruction::OpRegister: {
-        const auto CFIReg2 = CFI->getRegister2();
+        const unsigned CFIReg2 = CFI->getRegister2();
         const MCPhysReg Reg2 = *BC.MRI->getLLVMRegNum(CFIReg2, /*isEH=*/false);
         if (AliasA.test(Reg2)) {
           Function.setCFIFor(
@@ -141,13 +141,13 @@ void RegReAssign::rankRegisters(BinaryContext &BC, BinaryFunction &Function) {
   std::fill(RegScore.begin(), RegScore.end(), 0);
   std::fill(RankedRegs.begin(), RankedRegs.end(), 0);
 
-  for (auto &BB : Function) {
-    for (auto &Inst : BB) {
+  for (BinaryBasicBlock &BB : Function) {
+    for (MCInst &Inst : BB) {
       const bool CannotUseREX = BC.MIB->cannotUseREX(Inst);
-      const auto &Desc = BC.MII->get(Inst.getOpcode());
+      const MCInstrDesc &Desc = BC.MII->get(Inst.getOpcode());
 
       // Disallow substituitions involving regs in implicit uses lists
-      const auto *ImplicitUses = Desc.getImplicitUses();
+      const MCPhysReg *ImplicitUses = Desc.getImplicitUses();
       while (ImplicitUses && *ImplicitUses) {
         const size_t RegEC =
             BC.MIB->getAliases(*ImplicitUses, false).find_first();
@@ -157,7 +157,7 @@ void RegReAssign::rankRegisters(BinaryContext &BC, BinaryFunction &Function) {
       }
 
       // Disallow substituitions involving regs in implicit defs lists
-      const auto *ImplicitDefs = Desc.getImplicitDefs();
+      const MCPhysReg *ImplicitDefs = Desc.getImplicitDefs();
       while (ImplicitDefs && *ImplicitDefs) {
         const size_t RegEC =
             BC.MIB->getAliases(*ImplicitDefs, false).find_first();
@@ -167,14 +167,14 @@ void RegReAssign::rankRegisters(BinaryContext &BC, BinaryFunction &Function) {
       }
 
       for (int I = 0, E = MCPlus::getNumPrimeOperands(Inst); I != E; ++I) {
-        const auto &Operand = Inst.getOperand(I);
+        const MCOperand &Operand = Inst.getOperand(I);
         if (!Operand.isReg())
           continue;
 
         if (Desc.getOperandConstraint(I, MCOI::TIED_TO) != -1)
           continue;
 
-        auto Reg = Operand.getReg();
+        unsigned Reg = Operand.getReg();
         size_t RegEC = BC.MIB->getAliases(Reg, false).find_first();
         if (RegEC == 0)
           continue;
@@ -202,7 +202,7 @@ void RegReAssign::rankRegisters(BinaryContext &BC, BinaryFunction &Function) {
             [&](size_t A, size_t B) { return RegScore[A] > RegScore[B]; });
 
   LLVM_DEBUG({
-    for (auto Reg : RankedRegs) {
+    for (size_t Reg : RankedRegs) {
       if (RegScore[Reg] == 0)
         continue;
       dbgs() << Reg << " ";
@@ -251,9 +251,9 @@ void RegReAssign::aggressivePassOverFunction(BinaryContext &BC,
 
   // -- expensive pass -- determine all regs alive during func start
   DataflowInfoManager Info(BC, Function, RA.get(), nullptr);
-  auto AliveAtStart = *Info.getLivenessAnalysis().getStateAt(
+  BitVector AliveAtStart = *Info.getLivenessAnalysis().getStateAt(
       ProgramPoint::getFirstPointAt(*Function.begin()));
-  for (auto &BB : Function) {
+  for (BinaryBasicBlock &BB : Function) {
     if (BB.pred_size() == 0)
       AliveAtStart |= *Info.getLivenessAnalysis().getStateAt(
           ProgramPoint::getFirstPointAt(BB));
@@ -337,7 +337,7 @@ bool RegReAssign::conservativePassOverFunction(BinaryContext &BC,
   // score / utilization rate
   MCPhysReg RBX = 0;
   for (int I = ClassicCSR.find_first(); I != -1; I = ClassicCSR.find_next(I)) {
-    auto ScoreRBX = RegScore[I];
+    int64_t ScoreRBX = RegScore[I];
     if (ScoreRBX <= 0)
       continue;
 
@@ -410,7 +410,7 @@ void RegReAssign::runOnFunctions(BinaryContext &BC) {
     setupConservativePass(BC, BC.getBinaryFunctions());
 
   for (auto &I : BC.getBinaryFunctions()) {
-    auto &Function = I.second;
+    BinaryFunction &Function = I.second;
 
     if (!Function.isSimple() || Function.isIgnored())
       continue;

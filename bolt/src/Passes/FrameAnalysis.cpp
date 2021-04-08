@@ -55,7 +55,7 @@ bool shouldFrameOptimize(const llvm::bolt::BinaryFunction &Function) {
   bool IsValid = true;
   if (!FrameOptFunctionNames.empty()) {
     IsValid = false;
-    for (auto &Name : FrameOptFunctionNames) {
+    for (std::string &Name : FrameOptFunctionNames) {
       if (Function.hasName(Name)) {
         IsValid = true;
         break;
@@ -182,7 +182,7 @@ public:
     // Use CFI information to keep track of which register is being used to
     // access the frame
     if (BC.MIB->isCFI(Inst)) {
-      const auto *CFI = BF.getCFIFor(Inst);
+      const MCCFIInstruction *CFI = BF.getCFIFor(Inst);
       switch (CFI->getOperation()) {
       case MCCFIInstruction::OpDefCfa:
         CfaOffset = CFI->getOffset();
@@ -201,7 +201,7 @@ public:
           dbgs() << "Assertion is about to fail: " << BF.getPrintName() << "\n";
         }
         assert(!CFIStack.empty() && "Corrupt CFI stack");
-        auto &Elem = CFIStack.top();
+        std::pair<int64_t, uint16_t> &Elem = CFIStack.top();
         CFIStack.pop();
         CfaOffset = Elem.first;
         CfaReg = Elem.second;
@@ -231,7 +231,7 @@ public:
 } // end anonymous namespace
 
 void FrameAnalysis::addArgAccessesFor(MCInst &Inst, ArgAccesses &&AA) {
-  if (auto OldAA = getArgAccessesFor(Inst)) {
+  if (ErrorOr<ArgAccesses &> OldAA = getArgAccessesFor(Inst)) {
     if (OldAA->AssumeEverything)
       return;
     *OldAA = std::move(AA);
@@ -249,13 +249,13 @@ void FrameAnalysis::addArgAccessesFor(MCInst &Inst, ArgAccesses &&AA) {
 
 void FrameAnalysis::addArgInStackAccessFor(MCInst &Inst,
                                            const ArgInStackAccess &Arg) {
-  auto AA = getArgAccessesFor(Inst);
+  ErrorOr<ArgAccesses &> AA = getArgAccessesFor(Inst);
   if (!AA) {
     addArgAccessesFor(Inst, ArgAccesses(false));
     AA = getArgAccessesFor(Inst);
     assert(AA && "Object setup failed");
   }
-  auto &Set = AA->Set;
+  std::set<ArgInStackAccess> &Set = AA->Set;
   assert(!AA->AssumeEverything && "Adding arg to AssumeEverything set");
   Set.emplace(Arg);
 }
@@ -302,19 +302,20 @@ void FrameAnalysis::traverseCG(BinaryFunctionCallGraph &CG) {
 
   CGWalker.walk();
 
-  DEBUG_WITH_TYPE("ra",
+  DEBUG_WITH_TYPE("ra", {
     for (auto &MapEntry : ArgsTouchedMap) {
-      const auto *Func = MapEntry.first;
+      const BinaryFunction *Func = MapEntry.first;
       const auto &Set = MapEntry.second;
       dbgs() << "Args accessed for " << Func->getPrintName() << ": ";
       if (!Set.empty() && Set.count(std::make_pair(-1, 0))) {
         dbgs() << "assume everything";
       } else {
-        for (auto &Entry : Set) {
+        for (const std::pair<int64_t, uint8_t> &Entry : Set) {
           dbgs() << "[" << Entry.first << ", " << (int)Entry.second << "] ";
         }
       }
       dbgs() << "\n";
+    }
   });
 }
 
@@ -324,7 +325,7 @@ bool FrameAnalysis::updateArgsTouchedFor(const BinaryFunction &BF, MCInst &Inst,
     return false;
 
   std::set<int64_t> Res;
-  const auto *TargetSymbol = BC.MIB->getTargetSymbol(Inst);
+  const MCSymbol *TargetSymbol = BC.MIB->getTargetSymbol(Inst);
   // If indirect call, we conservatively assume it accesses all stack positions
   if (TargetSymbol == nullptr) {
     addArgAccessesFor(Inst, ArgAccesses(/*AssumeEverything=*/true));
@@ -335,7 +336,7 @@ bool FrameAnalysis::updateArgsTouchedFor(const BinaryFunction &BF, MCInst &Inst,
     return false;
   }
 
-  const auto *Function = BC.getFunctionForSymbol(TargetSymbol);
+  const BinaryFunction *Function = BC.getFunctionForSymbol(TargetSymbol);
   // Call to a function without a BinaryFunction object. Conservatively assume
   // it accesses all stack positions
   if (Function == nullptr) {
@@ -354,7 +355,7 @@ bool FrameAnalysis::updateArgsTouchedFor(const BinaryFunction &BF, MCInst &Inst,
     // Ignore checking CurOffset because we can't always reliably determine the
     // offset specially after an epilogue, where tailcalls happen. It should be
     // -8.
-    for (auto Elem : Iter->second) {
+    for (std::pair<int64_t, uint8_t> Elem : Iter->second) {
       if (ArgsTouchedMap[&BF].find(Elem) == ArgsTouchedMap[&BF].end()) {
         ArgsTouchedMap[&BF].emplace(Elem);
         Changed = true;
@@ -375,7 +376,7 @@ bool FrameAnalysis::updateArgsTouchedFor(const BinaryFunction &BF, MCInst &Inst,
     return Changed;
   }
 
-  for (auto Elem : Iter->second) {
+  for (std::pair<int64_t, uint8_t> Elem : Iter->second) {
     if (Elem.first == -1) {
       addArgAccessesFor(Inst, ArgAccesses(/*AssumeEverything=*/true));
       break;
@@ -407,10 +408,10 @@ bool FrameAnalysis::computeArgsAccessed(BinaryFunction &BF) {
   bool NoInfo = false;
   FrameAccessAnalysis FAA(BC, BF, getSPT(BF));
 
-  for (auto BB : BF.layout()) {
+  for (BinaryBasicBlock *BB : BF.layout()) {
     FAA.enterNewBB();
 
-    for (auto &Inst : *BB) {
+    for (MCInst &Inst : *BB) {
       if (!FAA.doNext(*BB, Inst)) {
         ArgsTouchedMap[&BF].emplace(std::make_pair(-1, 0));
         NoInfo = true;
@@ -452,8 +453,8 @@ bool FrameAnalysis::computeArgsAccessed(BinaryFunction &BF) {
     return true;
   }
 
-  for (auto &BB : BF) {
-    for (auto &Inst : BB) {
+  for (BinaryBasicBlock &BB : BF) {
+    for (MCInst &Inst : BB) {
       if (BC.MIB->requiresAlignedAddress(Inst)) {
         FunctionsRequireAlignment.insert(&BF);
         return true;
@@ -468,11 +469,11 @@ bool FrameAnalysis::restoreFrameIndex(BinaryFunction &BF) {
 
   LLVM_DEBUG(dbgs() << "Restoring frame indices for \"" << BF.getPrintName()
                     << "\"\n");
-  for (auto BB : BF.layout()) {
+  for (BinaryBasicBlock *BB : BF.layout()) {
     LLVM_DEBUG(dbgs() << "\tNow at BB " << BB->getName() << "\n");
     FAA.enterNewBB();
 
-    for (auto &Inst : *BB) {
+    for (MCInst &Inst : *BB) {
       if (!FAA.doNext(*BB, Inst))
         return false;
       LLVM_DEBUG({
@@ -501,8 +502,8 @@ void FrameAnalysis::cleanAnnotations() {
                      "FA breakdown", opts::TimeFA);
 
   ParallelUtilities::WorkFuncTy CleanFunction = [&](BinaryFunction &BF) {
-    for (auto &BB : BF) {
-      for (auto &Inst : BB) {
+    for (BinaryBasicBlock &BB : BF) {
+      for (MCInst &Inst : BB) {
         BC.MIB->removeAnnotation(Inst, "ArgAccessEntry");
         BC.MIB->removeAnnotation(Inst, "FrameAccessEntry");
       }
@@ -533,7 +534,7 @@ FrameAnalysis::FrameAnalysis(BinaryContext &BC, BinaryFunctionCallGraph &CG)
   }
 
   for (auto &I : BC.getBinaryFunctions()) {
-    auto Count = I.second.getExecutionCount();
+    uint64_t Count = I.second.getExecutionCount();
     if (Count != BinaryFunction::COUNT_NO_PROFILE)
       CountDenominator += Count;
 
@@ -551,7 +552,7 @@ FrameAnalysis::FrameAnalysis(BinaryContext &BC, BinaryFunctionCallGraph &CG)
                           "FA breakdown", opts::TimeFA);
       if (!restoreFrameIndex(I.second)) {
         ++NumFunctionsFailedRestoreFI;
-        auto Count = I.second.getExecutionCount();
+        uint64_t Count = I.second.getExecutionCount();
         if (Count != BinaryFunction::COUNT_NO_PROFILE)
           CountFunctionsFailedRestoreFI += Count;
         continue;
@@ -567,7 +568,7 @@ FrameAnalysis::FrameAnalysis(BinaryContext &BC, BinaryFunctionCallGraph &CG)
 
     // Clean up memory allocated for annotation values
     if (!opts::NoThreads) {
-      for (auto Id : SPTAllocatorsId)
+      for (MCPlusBuilder::AllocatorIdTy Id : SPTAllocatorsId)
         BC.MIB->freeValuesAllocator(Id);
     }
   }
@@ -593,7 +594,7 @@ void FrameAnalysis::clearSPTMap() {
   }
 
   ParallelUtilities::WorkFuncTy ClearFunctionSPT = [&](BinaryFunction &BF) {
-    auto &SPTPtr = SPTMap.find(&BF)->second;
+    std::unique_ptr<StackPointerTracking> &SPTPtr = SPTMap.find(&BF)->second;
     SPTPtr.reset();
   };
 
@@ -614,7 +615,7 @@ void FrameAnalysis::preComputeSPT() {
 
   // Create map entries to allow lock-free parallel execution
   for (auto &BFI : BC.getBinaryFunctions()) {
-    auto &BF = BFI.second;
+    BinaryFunction &BF = BFI.second;
     if (!BF.isSimple() || !BF.hasCFG())
       continue;
     SPTMap.emplace(&BF, std::unique_ptr<StackPointerTracking>());
@@ -627,7 +628,8 @@ void FrameAnalysis::preComputeSPT() {
   // Run SPT in parallel
   ParallelUtilities::WorkFuncWithAllocTy ProcessFunction =
       [&](BinaryFunction &BF, MCPlusBuilder::AllocatorIdTy AllocId) {
-        auto &SPTPtr = SPTMap.find(&BF)->second;
+        std::unique_ptr<StackPointerTracking> &SPTPtr =
+            SPTMap.find(&BF)->second;
         SPTPtr = std::make_unique<StackPointerTracking>(BC, BF, AllocId);
         SPTPtr->run();
       };

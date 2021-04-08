@@ -41,21 +41,21 @@ BinarySection::hash(const BinaryData &BD,
 
   Cache[&BD] = 0;
 
-  auto Offset = BD.getAddress() - getAddress();
-  const auto EndOffset = BD.getEndAddress() - getAddress();
+  uint64_t Offset = BD.getAddress() - getAddress();
+  const uint64_t EndOffset = BD.getEndAddress() - getAddress();
   auto Begin = Relocations.lower_bound(Relocation{Offset, 0, 0, 0, 0});
   auto End = Relocations.upper_bound(Relocation{EndOffset, 0, 0, 0, 0});
-  const auto Contents = getContents();
+  const StringRef Contents = getContents();
 
   hash_code Hash = hash_combine(hash_value(BD.getSize()),
                                 hash_value(BD.getSectionName()));
 
   while (Begin != End) {
-    const auto &Rel = *Begin++;
+    const Relocation &Rel = *Begin++;
     Hash = hash_combine(
       Hash,
       hash_value(Contents.substr(Offset, Begin->Offset - Offset)));
-    if (auto *RelBD = BC.getBinaryDataByName(Rel.Symbol->getName())) {
+    if (BinaryData *RelBD = BC.getBinaryDataByName(Rel.Symbol->getName())) {
       Hash = hash_combine(Hash, hash(*RelBD, Cache));
     }
     Offset = Rel.Offset + Rel.getSize();
@@ -73,9 +73,8 @@ BinarySection::hash(const BinaryData &BD,
 void BinarySection::emitAsData(MCStreamer &Streamer, StringRef NewName) const {
   StringRef SectionName = !NewName.empty() ? NewName : getName();
   StringRef SectionContents = getContents();
-  auto *ELFSection = BC.Ctx->getELFSection(SectionName,
-                                           getELFType(),
-                                           getELFFlags());
+  MCSectionELF *ELFSection =
+      BC.Ctx->getELFSection(SectionName, getELFType(), getELFFlags());
 
   Streamer.SwitchSection(ELFSection);
   Streamer.emitValueToAlignment(getAlignment());
@@ -91,7 +90,7 @@ void BinarySection::emitAsData(MCStreamer &Streamer, StringRef NewName) const {
     Streamer.emitBytes(SectionContents);
   } else {
     uint64_t SectionOffset = 0;
-    for (auto &Relocation : relocations()) {
+    for (const Relocation &Relocation : relocations()) {
       assert(Relocation.Offset < SectionContents.size() && "overflow detected");
       // Skip undefined symbols.
       if (BC.UndefinedSymbols.count(Relocation.Symbol))
@@ -108,7 +107,7 @@ void BinarySection::emitAsData(MCStreamer &Streamer, StringRef NewName) const {
                         << " at offset 0x"
                         << Twine::utohexstr(Relocation.Offset) << " with size "
                         << Relocation::getSizeForType(Relocation.Type) << '\n');
-      auto RelocationSize = Relocation.emit(&Streamer);
+      size_t RelocationSize = Relocation.emit(&Streamer);
       SectionOffset += RelocationSize;
     }
     assert(SectionOffset <= SectionContents.size() && "overflow error");
@@ -140,14 +139,14 @@ void BinarySection::flushPendingRelocations(raw_pwrite_stream &OS,
              << "  address: 0x" << Twine::utohexstr(SectionAddress) << '\n'
              << "  offset: 0x" << Twine::utohexstr(SectionFileOffset) << '\n');
 
-  for (auto &Patch : Patches) {
+  for (BinaryPatch &Patch : Patches) {
     OS.pwrite(Patch.Bytes.data(),
               Patch.Bytes.size(),
               SectionFileOffset + Patch.Offset);
   }
 
 
-  for (auto &Reloc : PendingRelocations) {
+  for (Relocation &Reloc : PendingRelocations) {
     uint64_t Value = Reloc.Addend;
     if (Reloc.Symbol)
       Value += Resolver(Reloc.Symbol);
@@ -227,7 +226,7 @@ void BinarySection::print(raw_ostream &OS) const {
     OS << " (tls)";
 
   if (opts::PrintRelocations) {
-    for (auto &R : relocations())
+    for (const Relocation &R : relocations())
       OS << "\n  " << R;
   }
 }
@@ -236,17 +235,17 @@ std::set<Relocation> BinarySection::reorderRelocations(bool Inplace) const {
   assert(PendingRelocations.empty() &&
          "reodering pending relocations not supported");
   std::set<Relocation> NewRelocations;
-  for (const auto &Rel : relocations()) {
-    auto RelAddr = Rel.Offset + getAddress();
-    auto *BD = BC.getBinaryDataContainingAddress(RelAddr);
+  for (const Relocation &Rel : relocations()) {
+    uint64_t RelAddr = Rel.Offset + getAddress();
+    BinaryData *BD = BC.getBinaryDataContainingAddress(RelAddr);
     BD = BD->getAtomicRoot();
     assert(BD);
 
     if ((!BD->isMoved() && !Inplace) || BD->isJumpTable())
       continue;
 
-    auto NewRel(Rel);
-    auto RelOffset = RelAddr - BD->getAddress();
+    Relocation NewRel(Rel);
+    uint64_t RelOffset = RelAddr - BD->getAddress();
     NewRel.Offset = BD->getOutputOffset() + RelOffset;
     assert(NewRel.Offset < getSize());
     LLVM_DEBUG(dbgs() << "BOLT-DEBUG: moving " << Rel << " -> " << NewRel
@@ -266,12 +265,12 @@ void BinarySection::reorderContents(const std::vector<BinaryData *> &Order,
 
   std::string Str;
   raw_string_ostream OS(Str);
-  auto *Src = Contents.data();
+  const char *Src = Contents.data();
   LLVM_DEBUG(dbgs() << "BOLT-DEBUG: reorderContents for " << Name << "\n");
-  for (auto *BD : Order) {
+  for (BinaryData *BD : Order) {
     assert((BD->isMoved() || !Inplace) && !BD->isJumpTable());
     assert(BD->isAtomic() && BD->isMoveable());
-    const auto SrcOffset = BD->getAddress() - getAddress();
+    const uint64_t SrcOffset = BD->getAddress() - getAddress();
     assert(SrcOffset < Contents.size());
     assert(SrcOffset == BD->getOffset());
     while (OS.tell() < BD->getOutputOffset()) {
@@ -285,7 +284,7 @@ void BinarySection::reorderContents(const std::vector<BinaryData *> &Order,
     // If there are no existing relocations, tack a phony one at the end
     // of the reordered segment to force LLVM to recognize and map this
     // section.
-    auto *ZeroSym = BC.registerNameAtAddress("Zero", 0, 0, 0);
+    MCSymbol *ZeroSym = BC.registerNameAtAddress("Zero", 0, 0, 0);
     addRelocation(OS.tell(), ZeroSym, ELF::R_X86_64_64, 0xdeadbeef);
 
     uint64_t Zero = 0;

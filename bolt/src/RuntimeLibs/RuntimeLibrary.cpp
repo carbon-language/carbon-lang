@@ -25,7 +25,7 @@ void RuntimeLibrary::anchor() {}
 
 std::string RuntimeLibrary::getLibPath(StringRef ToolPath,
                                        StringRef LibFileName) {
-  auto Dir = llvm::sys::path::parent_path(ToolPath);
+  StringRef Dir = llvm::sys::path::parent_path(ToolPath);
   SmallString<128> LibPath = llvm::sys::path::parent_path(Dir);
   llvm::sys::path::append(LibPath, "lib");
   if (!llvm::sys::fs::exists(LibPath)) {
@@ -53,9 +53,9 @@ void RuntimeLibrary::loadLibrary(StringRef LibPath, RuntimeDyld &RTDyld) {
   if (Magic == file_magic::archive) {
     Error Err = Error::success();
     object::Archive Archive(B.get()->getMemBufferRef(), Err);
-    for (auto &C : Archive.children(Err)) {
+    for (const object::Archive::Child &C : Archive.children(Err)) {
       std::unique_ptr<object::Binary> Bin = cantFail(C.getAsBinary());
-      if (auto *Obj = dyn_cast<object::ObjectFile>(&*Bin)) {
+      if (object::ObjectFile *Obj = dyn_cast<object::ObjectFile>(&*Bin)) {
         RTDyld.loadObject(*Obj);
       }
     }

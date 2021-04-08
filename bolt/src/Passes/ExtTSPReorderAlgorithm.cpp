@@ -109,7 +109,7 @@ double extTSPScore(uint64_t SrcAddr,
   }
   // Forward
   if (SrcAddr + SrcSize < DstAddr) {
-    const auto Dist = DstAddr - (SrcAddr + SrcSize);
+    const uint64_t Dist = DstAddr - (SrcAddr + SrcSize);
     if (Dist <= opts::ForwardDistance) {
       double Prob = 1.0 - static_cast<double>(Dist) / opts::ForwardDistance;
       return opts::ForwardWeight * Prob * Count;
@@ -117,7 +117,7 @@ double extTSPScore(uint64_t SrcAddr,
     return 0;
   }
   // Backward
-  const auto Dist = SrcAddr + SrcSize - DstAddr;
+  const uint64_t Dist = SrcAddr + SrcSize - DstAddr;
   if (Dist <= opts::BackwardDistance) {
     double Prob = 1.0 - static_cast<double>(Dist) / opts::BackwardDistance;
     return opts::BackwardWeight * Prob * Count;
@@ -215,7 +215,7 @@ public:
   }
 
   bool hasOutJump(const Block *Other) const {
-    for (auto Jump : OutJumps) {
+    for (std::pair<Block *, uint64_t> Jump : OutJumps) {
       if (Jump.first == Other)
         return true;
     }
@@ -223,7 +223,7 @@ public:
   }
 
   bool hasInJump(const Block *Other) const {
-    for (auto Jump : InJumps) {
+    for (std::pair<Block *, uint64_t> Jump : InJumps) {
       if (Jump.first == Other)
         return true;
     }
@@ -284,7 +284,7 @@ public:
   }
 
   Edge *getEdge(Chain *Other) const {
-    for (auto It : Edges) {
+    for (std::pair<Chain *, Edge *> It : Edges) {
       if (It.first == Other)
         return It.second;
     }
@@ -416,12 +416,12 @@ void Chain::mergeEdges(Chain *Other) {
 
   // Update edges adjacent to chain Other
   for (auto EdgeIt : Other->Edges) {
-    const auto DstChain = EdgeIt.first;
-    const auto DstEdge = EdgeIt.second;
-    const auto TargetChain = DstChain == Other ? this : DstChain;
+    Chain *const DstChain = EdgeIt.first;
+    Edge *const DstEdge = EdgeIt.second;
+    Chain *const TargetChain = DstChain == Other ? this : DstChain;
 
     // Find the corresponding edge in the current chain
-    auto curEdge = getEdge(TargetChain);
+    Edge *curEdge = getEdge(TargetChain);
     if (curEdge == nullptr) {
       DstEdge->changeEndpoint(Other, this);
       this->addEdge(TargetChain, DstEdge);
@@ -492,8 +492,8 @@ private:
 /// Deterministically compare pairs of chains
 bool compareChainPairs(const Chain *A1, const Chain *B1,
                        const Chain *A2, const Chain *B2) {
-  const auto Samples1 = A1->executionCount() + B1->executionCount();
-  const auto Samples2 = A2->executionCount() + B2->executionCount();
+  const uint64_t Samples1 = A1->executionCount() + B1->executionCount();
+  const uint64_t Samples2 = A2->executionCount() + B2->executionCount();
   if (Samples1 != Samples2)
     return Samples1 < Samples2;
 
@@ -535,22 +535,23 @@ private:
     // Initialize CFG nodes
     AllBlocks.reserve(BF.layout_size());
     size_t LayoutIndex = 0;
-    for (auto BB : BF.layout()) {
+    for (BinaryBasicBlock *BB : BF.layout()) {
       BB->setLayoutIndex(LayoutIndex++);
-      auto Size = std::max<uint64_t>(BB->estimateSize(Emitter.MCE.get()), 1);
+      uint64_t Size =
+          std::max<uint64_t>(BB->estimateSize(Emitter.MCE.get()), 1);
       AllBlocks.emplace_back(BB, Size);
     }
 
     // Initialize edges for the blocks and compute their total in/out weights
     size_t NumEdges = 0;
-    for (auto &Block : AllBlocks) {
+    for (Block &Block : AllBlocks) {
       auto BI = Block.BB->branch_info_begin();
-      for (auto SuccBB : Block.BB->successors()) {
+      for (BinaryBasicBlock *SuccBB : Block.BB->successors()) {
         assert(BI->Count != BinaryBasicBlock::COUNT_NO_PROFILE &&
                "missing profile for a jump");
         if (SuccBB != Block.BB && BI->Count > 0) {
-          auto &SuccBlock = AllBlocks[SuccBB->getLayoutIndex()];
-          auto Count = BI->Count;
+          class Block &SuccBlock = AllBlocks[SuccBB->getLayoutIndex()];
+          uint64_t Count = BI->Count;
           SuccBlock.InWeight += Count;
           SuccBlock.InJumps.push_back(std::make_pair(&Block, Count));
           Block.OutWeight += Count;
@@ -564,7 +565,7 @@ private:
     // Initialize execution count for every basic block, which is the
     // maximum over the sums of all in and out edge weights.
     // Also execution count of the entry point is set to at least 1
-    for (auto &Block : AllBlocks) {
+    for (Block &Block : AllBlocks) {
       size_t Index = Block.Index;
       Block.ExecutionCount = std::max(Block.ExecutionCount, Block.InWeight);
       Block.ExecutionCount = std::max(Block.ExecutionCount, Block.OutWeight);
@@ -575,7 +576,7 @@ private:
     // Initialize chains
     AllChains.reserve(BF.layout_size());
     HotChains.reserve(BF.layout_size());
-    for (auto &Block : AllBlocks) {
+    for (Block &Block : AllBlocks) {
       AllChains.emplace_back(Block.Index, &Block);
       Block.CurChain = &AllChains.back();
       if (Block.ExecutionCount > 0) {
@@ -585,10 +586,10 @@ private:
 
     // Initialize edges
     AllEdges.reserve(NumEdges);
-    for (auto &Block : AllBlocks) {
-      for (auto &Jump : Block.OutJumps) {
-        const auto SuccBlock = Jump.first;
-        auto CurEdge = Block.CurChain->getEdge(SuccBlock->CurChain);
+    for (Block &Block : AllBlocks) {
+      for (std::pair<class Block *, uint64_t> &Jump : Block.OutJumps) {
+        class Block *const SuccBlock = Jump.first;
+        Edge *CurEdge = Block.CurChain->getEdge(SuccBlock->CurChain);
         // this edge is already present in the graph
         if (CurEdge != nullptr) {
           assert(SuccBlock->CurChain->getEdge(Block.CurChain) != nullptr);
@@ -610,7 +611,7 @@ private:
   /// the method finds and merges such pairs of blocks
   void mergeFallthroughs() {
     // Find fallthroughs based on edge weights
-    for (auto &Block : AllBlocks) {
+    for (Block &Block : AllBlocks) {
       if (Block.BB->succ_size() == 1 &&
           Block.BB->getSuccessor()->pred_size() == 1 &&
           Block.BB->getSuccessor()->getLayoutIndex() != 0) {
@@ -622,8 +623,8 @@ private:
 
       if (Block.OutWeight == 0)
         continue;
-      for (auto &Edge : Block.OutJumps) {
-        const auto SuccBlock = Edge.first;
+      for (std::pair<class Block *, uint64_t> &Edge : Block.OutJumps) {
+        class Block *const SuccBlock = Edge.first;
         // Successor cannot be the first BB, which is pinned
         if (Block.OutWeight == Edge.second &&
             SuccBlock->InWeight == Edge.second &&
@@ -638,11 +639,11 @@ private:
     // There might be 'cycles' in the fallthrough dependencies (since profile
     // data isn't 100% accurate).
     // Break the cycles by choosing the block with smallest index as the tail
-    for (auto &Block : AllBlocks) {
+    for (Block &Block : AllBlocks) {
       if (Block.FallthroughSucc == nullptr || Block.FallthroughPred == nullptr)
         continue;
 
-      auto SuccBlock = Block.FallthroughSucc;
+      class Block *SuccBlock = Block.FallthroughSucc;
       while (SuccBlock != nullptr && SuccBlock != &Block) {
         SuccBlock = SuccBlock->FallthroughSucc;
       }
@@ -654,12 +655,12 @@ private:
     }
 
     // Merge blocks with their fallthrough successors
-    for (auto &Block : AllBlocks) {
+    for (Block &Block : AllBlocks) {
       if (Block.FallthroughPred == nullptr &&
           Block.FallthroughSucc != nullptr) {
-        auto CurBlock = &Block;
+        class Block *CurBlock = &Block;
         while (CurBlock->FallthroughSucc != nullptr) {
-          const auto NextBlock = CurBlock->FallthroughSucc;
+          class Block *const NextBlock = CurBlock->FallthroughSucc;
           mergeChains(Block.CurChain, NextBlock->CurChain, 0, MergeTypeTy::X_Y);
           CurBlock = NextBlock;
         }
@@ -674,17 +675,17 @@ private:
       Chain *BestChainSucc = nullptr;
       auto BestGain = MergeGainTy();
       // Iterate over all pairs of chains
-      for (auto ChainPred : HotChains) {
+      for (Chain *ChainPred : HotChains) {
         // Get candidates for merging with the current chain
         for (auto EdgeIter : ChainPred->edges()) {
-          auto ChainSucc = EdgeIter.first;
-          auto ChainEdge = EdgeIter.second;
+          Chain *ChainSucc = EdgeIter.first;
+          Edge *ChainEdge = EdgeIter.second;
           // Ignore loop edges
           if (ChainPred == ChainSucc)
             continue;
 
           // Compute the gain of merging the two chains
-          auto CurGain = mergeGain(ChainPred, ChainSucc, ChainEdge);
+          MergeGainTy CurGain = mergeGain(ChainPred, ChainSucc, ChainEdge);
           if (CurGain.score() <= EPS)
             continue;
 
@@ -715,15 +716,15 @@ private:
 
   /// Merge cold blocks to reduce code size
   void mergeColdChains() {
-    for (auto SrcBB : BF.layout()) {
+    for (BinaryBasicBlock *SrcBB : BF.layout()) {
       // Iterating in reverse order to make sure original fallthrough jumps are
       // merged first
       for (auto Itr = SrcBB->succ_rbegin(); Itr != SrcBB->succ_rend(); ++Itr) {
         BinaryBasicBlock *DstBB = *Itr;
         size_t SrcIndex = SrcBB->getLayoutIndex();
         size_t DstIndex = DstBB->getLayoutIndex();
-        auto SrcChain = AllBlocks[SrcIndex].CurChain;
-        auto DstChain = AllBlocks[DstIndex].CurChain;
+        Chain *SrcChain = AllBlocks[SrcIndex].CurChain;
+        Chain *DstChain = AllBlocks[DstIndex].CurChain;
         if (SrcChain != DstChain && !DstChain->isEntryPoint() &&
             SrcChain->blocks().back()->Index == SrcIndex &&
             DstChain->blocks().front()->Index == DstIndex) {
@@ -746,9 +747,9 @@ private:
     );
 
     double Score = 0;
-    for (auto &Jump : Jumps) {
-      const auto SrcBlock = Jump.first.first;
-      const auto DstBlock = Jump.first.second;
+    for (const std::pair<std::pair<Block *, Block *>, uint64_t> &Jump : Jumps) {
+      const Block *SrcBlock = Jump.first.first;
+      const Block *DstBlock = Jump.first.second;
       Score += extTSPScore(SrcBlock->EstimatedAddr,
                            SrcBlock->Size,
                            DstBlock->EstimatedAddr,
@@ -769,8 +770,8 @@ private:
     }
 
     // Precompute jumps between ChainPred and ChainSucc
-    auto Jumps = Edge->jumps();
-    auto EdgePP = ChainPred->getEdge(ChainPred);
+    JumpList Jumps = Edge->jumps();
+    class Edge *EdgePP = ChainPred->getEdge(ChainPred);
     if (EdgePP != nullptr)
       Jumps.insert(Jumps.end(), EdgePP->jumps().begin(), EdgePP->jumps().end());
     assert(Jumps.size() > 0 && "trying to merge chains w/o jumps");
@@ -783,8 +784,8 @@ private:
     // Try to break ChainPred in various ways and concatenate with ChainSucc
     if (ChainPred->blocks().size() <= opts::ChainSplitThreshold) {
       for (size_t Offset = 1; Offset < ChainPred->blocks().size(); Offset++) {
-        auto BB1 = ChainPred->blocks()[Offset - 1];
-        auto BB2 = ChainPred->blocks()[Offset];
+        Block *BB1 = ChainPred->blocks()[Offset - 1];
+        Block *BB2 = ChainPred->blocks()[Offset];
         // Does the splitting break FT successors?
         if (BB1->FallthroughSucc != nullptr) {
           assert(BB1->FallthroughSucc == BB2 && "Fallthrough not preserved");
@@ -811,10 +812,8 @@ private:
                                const JumpList &Jumps,
                                size_t MergeOffset,
                                MergeTypeTy MergeType) const {
-    auto MergedBlocks = mergeBlocks(ChainPred->blocks(),
-                                    ChainSucc->blocks(),
-                                    MergeOffset,
-                                    MergeType);
+    MergedChain MergedBlocks = mergeBlocks(
+        ChainPred->blocks(), ChainSucc->blocks(), MergeOffset, MergeType);
 
     // Do not allow a merge that does not preserve the original entry block
     if ((ChainPred->isEntryPoint() || ChainSucc->isEntryPoint()) &&
@@ -822,7 +821,7 @@ private:
       return CurGain;
 
     // The gain for the new chain
-    const auto NewScore = score(MergedBlocks, Jumps) - ChainPred->score();
+    const double NewScore = score(MergedBlocks, Jumps) - ChainPred->score();
     auto NewGain = MergeGainTy(NewScore, MergeOffset, MergeType);
     return CurGain < NewGain ? NewGain : CurGain;
   }
@@ -868,16 +867,14 @@ private:
     assert(Into != From && "a chain cannot be merged with itself");
 
     // Merge the blocks
-    auto MergedBlocks = mergeBlocks(Into->blocks(),
-                                    From->blocks(),
-                                    MergeOffset,
-                                    MergeType);
+    MergedChain MergedBlocks =
+        mergeBlocks(Into->blocks(), From->blocks(), MergeOffset, MergeType);
     Into->merge(From, MergedBlocks.getBlocks());
     Into->mergeEdges(From);
     From->clear();
 
     // Update cached ext-tsp score for the new chain
-    auto SelfEdge = Into->getEdge(Into);
+    Edge *SelfEdge = Into->getEdge(Into);
     if (SelfEdge != nullptr) {
       MergedBlocks = MergedChain(Into->blocks().begin(), Into->blocks().end());
       Into->setScore(score(MergedBlocks, SelfEdge->jumps()));
@@ -888,7 +885,7 @@ private:
     HotChains.erase(Iter, HotChains.end());
 
     // Invalidate caches
-    for (auto EdgeIter : Into->edges()) {
+    for (std::pair<Chain *, Edge *> EdgeIter : Into->edges()) {
       EdgeIter.second->invalidateCache();
     }
   }
@@ -897,7 +894,7 @@ private:
   void concatChains(std::vector<BinaryBasicBlock *> &Order) {
     // Collect chains
     std::vector<Chain *> SortedChains;
-    for (auto &Chain : AllChains) {
+    for (Chain &Chain : AllChains) {
       if (Chain.blocks().size() > 0) {
         SortedChains.push_back(&Chain);
       }
@@ -927,8 +924,8 @@ private:
 
     // Collect the basic blocks in the order specified by their chains
     Order.reserve(BF.layout_size());
-    for (auto Chain : SortedChains) {
-      for (auto Block : Chain->blocks()) {
+    for (Chain *Chain : SortedChains) {
+      for (Block *Block : Chain->blocks()) {
         Order.push_back(Block->BB);
       }
     }
@@ -958,7 +955,7 @@ void ExtTSPReorderAlgorithm::reorderBasicBlocks(
 
   // Do not change layout of functions w/o profile information
   if (!BF.hasValidProfile() || BF.layout_size() <= 2) {
-    for (auto BB : BF.layout()) {
+    for (BinaryBasicBlock *BB : BF.layout()) {
       Order.push_back(BB);
     }
     return;

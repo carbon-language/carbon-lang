@@ -294,8 +294,8 @@ private:
   template <typename... Args>
   void forEachElement(void (*Callback)(MapEntry &, Args...),
                       uint32_t NumEntries, MapEntry *Entries, Args... args) {
-    for (int I = 0; I < NumEntries; ++I) {
-      auto &Entry = Entries[I];
+    for (uint32_t I = 0; I < NumEntries; ++I) {
+      MapEntry &Entry = Entries[I];
       if (Entry.Key == VacantMarker)
         continue;
       if (Entry.Key & FollowUpTableMarker) {
@@ -311,7 +311,7 @@ private:
 
   MapEntry &firstAllocation(uint64_t Key, BumpPtrAllocator &Alloc) {
     TableRoot = new (Alloc, 0) MapEntry[InitialSize];
-    auto &Entry = TableRoot[Key % InitialSize];
+    MapEntry &Entry = TableRoot[Key % InitialSize];
     Entry.Key = Key;
     return Entry;
   }
@@ -321,7 +321,7 @@ private:
     const uint32_t NumEntries = CurLevel == 0 ? InitialSize : IncSize;
     uint64_t Remainder = Selector / NumEntries;
     Selector = Selector % NumEntries;
-    auto &Entry = Entries[Selector];
+    MapEntry &Entry = Entries[Selector];
 
     // A hit
     if (Entry.Key == Key) {
@@ -907,7 +907,7 @@ struct NodeToCallsMap {
       Entries[I].NumCalls = 0;
     }
     for (int I = 0; I < D.NumCalls; ++I) {
-      auto &Entry = Entries[D.Calls[I].FromNode];
+      MapEntry &Entry = Entries[D.Calls[I].FromNode];
       Entry.Calls[Entry.NumCalls++] = I;
     }
   }
@@ -923,17 +923,17 @@ struct NodeToCallsMap {
                            const FunctionDescription &D,
                            const uint64_t *Counters,
                            ProfileWriterContext &Ctx) const {
-    const auto &Entry = Entries[NodeID];
+    const MapEntry &Entry = Entries[NodeID];
     uint64_t MaxValue = 0ull;
     for (int I = 0, E = Entry.NumCalls; I != E; ++I) {
-      const auto CallID = Entry.Calls[I];
+      const uint32_t CallID = Entry.Calls[I];
       DEBUG(reportNumber("  Setting freq for call ID: ", CallID, 10));
-      auto &CallDesc = D.Calls[CallID];
+      const CallDescription &CallDesc = D.Calls[CallID];
       if (CallDesc.Counter == 0xffffffff) {
         CallFreqs[CallID] = Freq;
         DEBUG(reportNumber("  with : ", Freq, 10));
       } else {
-        const auto CounterVal = Counters[CallDesc.Counter];
+        const uint64_t CounterVal = Counters[CallDesc.Counter];
         CallFreqs[CallID] = CounterVal;
         MaxValue = CounterVal > MaxValue ? CounterVal : MaxValue;
         DEBUG(reportNumber("  with (private counter) : ", CounterVal, 10));
@@ -1481,7 +1481,7 @@ extern "C" void __bolt_instr_setup() {
     if (__bolt_instr_wait_forks)
       __setpgid(0, 0);
 
-    if (auto PID = __fork())
+    if (long PID = __fork())
       return;
     watchProcess();
   }

@@ -621,8 +621,8 @@ public:
     if (isPop(Inst))
       return true;
 
-    auto MemOpNo = getMemoryOperandNo(Inst);
-    const auto MCII = Info->get(Inst.getOpcode());
+    int MemOpNo = getMemoryOperandNo(Inst);
+    const MCInstrDesc MCII = Info->get(Inst.getOpcode());
 
     if (MemOpNo == -1)
       return false;
@@ -634,8 +634,8 @@ public:
     if (isPush(Inst))
       return true;
 
-    auto MemOpNo = getMemoryOperandNo(Inst);
-    const auto MCII = Info->get(Inst.getOpcode());
+    int MemOpNo = getMemoryOperandNo(Inst);
+    const MCInstrDesc MCII = Info->get(Inst.getOpcode());
 
     if (MemOpNo == -1)
       return false;
@@ -679,7 +679,7 @@ public:
       if (CurInst->getOpcode() != X86::JMP64m)
         return false;
 
-      auto MemOpNo = MIB.getMemoryOperandNo(*CurInst);
+      int MemOpNo = MIB.getMemoryOperandNo(*CurInst);
       if (MemOpNo == -1)
         return false;
 
@@ -766,7 +766,7 @@ public:
           CurInst->getOpcode() != X86::MOVSX64rm32)
         return false;
 
-      auto MemOpNo = MIB.getMemoryOperandNo(*CurInst);
+      int MemOpNo = MIB.getMemoryOperandNo(*CurInst);
       if (MemOpNo == -1)
         return false;
 
@@ -886,7 +886,7 @@ public:
   }
 
   bool hasPCRelOperand(const MCInst &Inst) const override {
-    for (const auto &Operand : Inst) {
+    for (const MCOperand &Operand : Inst) {
       if (Operand.isReg() && Operand.getReg() == X86::RIP)
         return true;
     }
@@ -894,35 +894,35 @@ public:
   }
 
   int getMemoryOperandNo(const MCInst &Inst) const override {
-    auto Opcode = Inst.getOpcode();
-    auto const &Desc = Info->get(Opcode);
-    auto MemOpNo = X86II::getMemoryOperandNo(Desc.TSFlags);
+    unsigned Opcode = Inst.getOpcode();
+    const MCInstrDesc &Desc = Info->get(Opcode);
+    int MemOpNo = X86II::getMemoryOperandNo(Desc.TSFlags);
     if (MemOpNo >= 0)
       MemOpNo += X86II::getOperandBias(Desc);
     return MemOpNo;
   }
 
   bool hasEVEXEncoding(const MCInst &Inst) const override {
-    auto const &Desc = Info->get(Inst.getOpcode());
+    const MCInstrDesc &Desc = Info->get(Inst.getOpcode());
     return (Desc.TSFlags & X86II::EncodingMask) == X86II::EVEX;
   }
 
   bool isMacroOpFusionPair(ArrayRef<MCInst> Insts) const override {
     // FIXME: the macro-op fusion is triggered under different conditions
     //        on different cores. This implementation is for sandy-bridge+.
-    auto I = Insts.begin();
+    const auto *I = Insts.begin();
     while (I != Insts.end() && isPrefix(*I))
       ++I;
     if (I == Insts.end())
       return false;
 
-    const auto &FirstInst = *I;
+    const MCInst &FirstInst = *I;
     ++I;
     while (I != Insts.end() && isPrefix(*I))
       ++I;
     if (I == Insts.end())
       return false;
-    const auto &SecondInst = *I;
+    const MCInst &SecondInst = *I;
 
     if (!isConditionalBranch(SecondInst))
       return false;
@@ -935,8 +935,8 @@ public:
       return false;
 
     // Cannot fuse if first instruction operands are MEM-IMM.
-    auto const &Desc = Info->get(FirstInst.getOpcode());
-    auto MemOpNo = X86II::getMemoryOperandNo(Desc.TSFlags);
+    const MCInstrDesc &Desc = Info->get(FirstInst.getOpcode());
+    int MemOpNo = X86II::getMemoryOperandNo(Desc.TSFlags);
     if (MemOpNo != -1 && X86II::hasImm(Desc.TSFlags))
       return false;
 
@@ -958,7 +958,8 @@ public:
     if (FirstInstGroup == 0)
       return false;
 
-    const auto CondCode = getCanonicalBranchCondCode(getCondCode(SecondInst));
+    const unsigned CondCode =
+        getCanonicalBranchCondCode(getCondCode(SecondInst));
     switch (CondCode) {
     default:
       llvm_unreachable("unexpected conditional code");
@@ -991,7 +992,7 @@ public:
                                                                 const override {
     assert(BaseRegNum && ScaleImm && IndexRegNum && SegmentRegNum &&
            "one of the input pointers is null");
-    auto MemOpNo = getMemoryOperandNo(Inst);
+    int MemOpNo = getMemoryOperandNo(Inst);
     if (MemOpNo < 0)
       return false;
     unsigned MemOpOffset = static_cast<unsigned>(MemOpNo);
@@ -999,11 +1000,12 @@ public:
     if (MemOpOffset + X86::AddrSegmentReg >= MCPlus::getNumPrimeOperands(Inst))
       return false;
 
-    auto &Base  =   Inst.getOperand(MemOpOffset + X86::AddrBaseReg);
-    auto &Scale =   Inst.getOperand(MemOpOffset + X86::AddrScaleAmt);
-    auto &Index =   Inst.getOperand(MemOpOffset + X86::AddrIndexReg);
-    auto &Disp  =   Inst.getOperand(MemOpOffset + X86::AddrDisp);
-    auto &Segment = Inst.getOperand(MemOpOffset + X86::AddrSegmentReg);
+    const MCOperand &Base = Inst.getOperand(MemOpOffset + X86::AddrBaseReg);
+    const MCOperand &Scale = Inst.getOperand(MemOpOffset + X86::AddrScaleAmt);
+    const MCOperand &Index = Inst.getOperand(MemOpOffset + X86::AddrIndexReg);
+    const MCOperand &Disp = Inst.getOperand(MemOpOffset + X86::AddrDisp);
+    const MCOperand &Segment =
+        Inst.getOperand(MemOpOffset + X86::AddrSegmentReg);
 
     // Make sure it is a well-formed memory operand.
     if (!Base.isReg() || !Scale.isImm() || !Index.isReg() ||
@@ -1061,14 +1063,14 @@ public:
   }
 
   MCInst::iterator getMemOperandDisp(MCInst &Inst) const override {
-    auto MemOpNo = getMemoryOperandNo(Inst);
+    int MemOpNo = getMemoryOperandNo(Inst);
     if (MemOpNo < 0)
       return Inst.end();
     return Inst.begin() + (MemOpNo + X86::AddrDisp);
   }
 
   bool replaceMemOperandDisp(MCInst &Inst, MCOperand Operand) const override {
-    auto OI = getMemOperandDisp(Inst);
+    MCOperand *OI = getMemOperandDisp(Inst);
     if (OI == Inst.end())
       return false;
     *OI = Operand;
@@ -1293,7 +1295,7 @@ public:
       case X86::MOVZX32rr8:
       case X86::TEST8ri:
         for (int I = 0, E = MCPlus::getNumPrimeOperands(Inst); I != E; ++I) {
-          const auto &Operand = Inst.getOperand(I);
+          const MCOperand &Operand = Inst.getOperand(I);
           if (!Operand.isReg())
             continue;
           if (isUpper8BitReg(Operand.getReg()))
@@ -1311,7 +1313,7 @@ public:
                      uint8_t &Size, bool &IsSimple,
                      bool &IsIndexed) const override {
     // Detect simple push/pop cases first
-    if (auto Sz = getPushSize(Inst)) {
+    if (int Sz = getPushSize(Inst)) {
       IsLoad = false;
       IsStore = true;
       IsStoreFromReg = true;
@@ -1328,7 +1330,7 @@ public:
       }
       return true;
     }
-    if (auto Sz = getPopSize(Inst)) {
+    if (int Sz = getPopSize(Inst)) {
       assert(Inst.getOperand(0).isReg() &&
              "Expected register operand for push");
       IsLoad = true;
@@ -1351,8 +1353,8 @@ public:
     };
 
     InstInfo I;
-    auto MemOpNo = getMemoryOperandNo(Inst);
-    const auto MCII = Info->get(Inst.getOpcode());
+    int MemOpNo = getMemoryOperandNo(Inst);
+    const MCInstrDesc MCII = Info->get(Inst.getOpcode());
     // If it is not dealing with a memory operand, we discard it
     if (MemOpNo == -1 || MCII.isCall())
       return false;
@@ -1423,11 +1425,12 @@ public:
     // Retrieve related register in simple MOV from/to stack operations.
     unsigned MemOpOffset = static_cast<unsigned>(MemOpNo);
     if (I.IsLoad) {
-      auto RegOpnd = Inst.getOperand(0);
+      MCOperand RegOpnd = Inst.getOperand(0);
       assert(RegOpnd.isReg() && "unexpected destination operand");
       Reg = RegOpnd.getReg();
     } else if (I.IsStore) {
-      auto SrcOpnd = Inst.getOperand(MemOpOffset + X86::AddrSegmentReg + 1);
+      MCOperand SrcOpnd =
+          Inst.getOperand(MemOpOffset + X86::AddrSegmentReg + 1);
       if (I.StoreFromReg) {
         assert(SrcOpnd.isReg() && "unexpected source operand");
         Reg = SrcOpnd.getReg();
@@ -1493,12 +1496,13 @@ public:
         default:
           assert(false);
       }
-      auto RegOpndNum = Inst.getOperand(0).getReg();
+      unsigned RegOpndNum = Inst.getOperand(0).getReg();
       Inst.clear();
       Inst.setOpcode(NewOpcode);
       Inst.addOperand(MCOperand::createReg(RegOpndNum));
     } else {
-      auto SrcOpnd = Inst.getOperand(MemOpOffset + X86::AddrSegmentReg + 1);
+      MCOperand SrcOpnd =
+          Inst.getOperand(MemOpOffset + X86::AddrSegmentReg + 1);
       if (I.StoreFromReg) {
         switch (I.DataSize) {
           case 2: NewOpcode = X86::PUSH16r; break;
@@ -1508,7 +1512,7 @@ public:
             assert(false);
         }
         assert(SrcOpnd.isReg() && "unexpected source operand");
-        auto RegOpndNum = SrcOpnd.getReg();
+        unsigned RegOpndNum = SrcOpnd.getReg();
         Inst.clear();
         Inst.setOpcode(NewOpcode);
         Inst.addOperand(MCOperand::createReg(RegOpndNum));
@@ -1521,7 +1525,7 @@ public:
             assert(false);
         }
         assert(SrcOpnd.isImm() && "unexpected source operand");
-        auto SrcImm = SrcOpnd.getImm();
+        int64_t SrcImm = SrcOpnd.getImm();
         Inst.clear();
         Inst.setOpcode(NewOpcode);
         Inst.addOperand(MCOperand::createImm(SrcImm));
@@ -1541,9 +1545,9 @@ public:
       break;
     }
 
-    const auto MCII = Info->get(Inst.getOpcode());
+    const MCInstrDesc MCII = Info->get(Inst.getOpcode());
     for (int I = 0, E = MCII.getNumDefs(); I != E; ++I) {
-      const auto &Operand = Inst.getOperand(I);
+      const MCOperand &Operand = Inst.getOperand(I);
       if (Operand.isReg() && Operand.getReg() == X86::RSP) {
         return true;
       }
@@ -1555,7 +1559,7 @@ public:
                       std::pair<MCPhysReg, int64_t> Input1,
                       std::pair<MCPhysReg, int64_t> Input2) const override {
 
-    auto getOperandVal = [&] (MCPhysReg Reg) -> ErrorOr<int64_t> {
+    auto getOperandVal = [&](MCPhysReg Reg) -> ErrorOr<int64_t> {
       if (Reg == Input1.first)
         return Input1.second;
       if (Reg == Input2.first)
@@ -1571,7 +1575,8 @@ public:
     case X86::AND64ri8:
       if (!Inst.getOperand(2).isImm())
         return false;
-      if (auto InputVal = getOperandVal(Inst.getOperand(1).getReg())) {
+      if (ErrorOr<int64_t> InputVal =
+              getOperandVal(Inst.getOperand(1).getReg())) {
         Output = *InputVal & Inst.getOperand(2).getImm();
       } else {
         return false;
@@ -1581,7 +1586,8 @@ public:
     case X86::SUB64ri8:
       if (!Inst.getOperand(2).isImm())
         return false;
-      if (auto InputVal = getOperandVal(Inst.getOperand(1).getReg())) {
+      if (ErrorOr<int64_t> InputVal =
+              getOperandVal(Inst.getOperand(1).getReg())) {
         Output = *InputVal - Inst.getOperand(2).getImm();
       } else {
         return false;
@@ -1591,7 +1597,8 @@ public:
     case X86::ADD64ri8:
       if (!Inst.getOperand(2).isImm())
         return false;
-      if (auto InputVal = getOperandVal(Inst.getOperand(1).getReg())) {
+      if (ErrorOr<int64_t> InputVal =
+              getOperandVal(Inst.getOperand(1).getReg())) {
         Output = *InputVal + Inst.getOperand(2).getImm();
       } else {
         return false;
@@ -1600,7 +1607,7 @@ public:
     case X86::ADD64i32:
       if (!Inst.getOperand(0).isImm())
         return false;
-      if (auto InputVal = getOperandVal(X86::RAX)) {
+      if (ErrorOr<int64_t> InputVal = getOperandVal(X86::RAX)) {
         Output = *InputVal + Inst.getOperand(0).getImm();
       } else {
         return false;
@@ -1625,7 +1632,7 @@ public:
         return false;
       }
 
-      if (auto InputVal = getOperandVal(BaseRegNum)) {
+      if (ErrorOr<int64_t> InputVal = getOperandVal(BaseRegNum)) {
         Output = *InputVal + DispValue;
       } else {
         return false;
@@ -1659,9 +1666,9 @@ public:
   MCPhysReg getFlagsReg() const override { return X86::EFLAGS; }
 
   bool escapesVariable(const MCInst &Inst, bool HasFramePointer) const override {
-    auto MemOpNo = getMemoryOperandNo(Inst);
-    const auto MCII = Info->get(Inst.getOpcode());
-    const auto NumDefs = MCII.getNumDefs();
+    int MemOpNo = getMemoryOperandNo(Inst);
+    const MCInstrDesc MCII = Info->get(Inst.getOpcode());
+    const unsigned NumDefs = MCII.getNumDefs();
     static BitVector SPBPAliases(BitVector(getAliases(X86::RSP)) |=
                                  getAliases(X86::RBP));
     static BitVector SPAliases(getAliases(X86::RSP));
@@ -1686,7 +1693,7 @@ public:
       if (I < static_cast<int>(NumDefs))
         continue;
 
-      const auto &Operand = Inst.getOperand(I);
+      const MCOperand &Operand = Inst.getOperand(I);
       if (HasFramePointer && Operand.isReg() && SPBPAliases[Operand.getReg()]) {
         DoesLeak = true;
         break;
@@ -1700,7 +1707,7 @@ public:
     // If potential leak, check if it is not just writing to itself/sp/bp
     if (DoesLeak) {
       for (int I = 0, E = NumDefs; I != E; ++I) {
-        const auto &Operand = Inst.getOperand(I);
+        const MCOperand &Operand = Inst.getOperand(I);
         if (HasFramePointer && Operand.isReg() &&
             SPBPAliases[Operand.getReg()]) {
           DoesLeak = false;
@@ -1718,7 +1725,7 @@ public:
 
   bool addToImm(MCInst &Inst, int64_t &Amt, MCContext *Ctx) const override {
     unsigned ImmOpNo = -1U;
-    auto MemOpNo = getMemoryOperandNo(Inst);
+    int MemOpNo = getMemoryOperandNo(Inst);
     if (MemOpNo != -1) {
       ImmOpNo = MemOpNo + X86::AddrDisp;
     } else {
@@ -1883,17 +1890,17 @@ public:
 
     // Compute the new opcode.
     unsigned NewOpcode = 0;
-    for (const auto &Check : I.Checks) {
+    for (const std::pair<CheckSignExt, unsigned> &Check : I.Checks) {
       NewOpcode = Check.second;
       if (Check.first == NOCHECK)
         break;
-      else if (Check.first == CHECK8 &&
-               ImmVal >= std::numeric_limits<int8_t>::min() &&
-               ImmVal <= std::numeric_limits<int8_t>::max())
+      if (Check.first == CHECK8 &&
+          ImmVal >= std::numeric_limits<int8_t>::min() &&
+          ImmVal <= std::numeric_limits<int8_t>::max())
         break;
-      else if (Check.first == CHECK32 &&
-               ImmVal >= std::numeric_limits<int32_t>::min() &&
-               ImmVal <= std::numeric_limits<int32_t>::max())
+      if (Check.first == CHECK32 &&
+          ImmVal >= std::numeric_limits<int32_t>::min() &&
+          ImmVal <= std::numeric_limits<int32_t>::max())
         break;
     }
     if (NewOpcode == Inst.getOpcode())
@@ -1988,9 +1995,9 @@ public:
   }
 
   bool requiresAlignedAddress(const MCInst &Inst) const override {
-    auto const &Desc = Info->get(Inst.getOpcode());
+    const MCInstrDesc &Desc = Info->get(Inst.getOpcode());
     for (unsigned int I = 0; I < Desc.getNumOperands(); ++I) {
-      const auto &Op = Desc.OpInfo[I];
+      const MCOperandInfo &Op = Desc.OpInfo[I];
       if (Op.OperandType != MCOI::OPERAND_REGISTER)
         continue;
       if (Op.RegClass == X86::VR128RegClassID)
@@ -2131,9 +2138,9 @@ public:
     // Check and remove EIZ/RIZ. These cases represent ambiguous cases where SIB
     // byte is present, but no index is used and modrm alone shoud have been
     // enough. Converting to NoRegister effectively removes the SIB byte.
-    auto MemOpNo = getMemoryOperandNo(Inst);
+    int MemOpNo = getMemoryOperandNo(Inst);
     if (MemOpNo >= 0) {
-      auto &IndexOp =
+      MCOperand &IndexOp =
           Inst.getOperand(static_cast<unsigned>(MemOpNo) + X86::AddrIndexReg);
       if (IndexOp.getReg() == X86::EIZ ||
           IndexOp.getReg() == X86::RIZ) {
@@ -2145,18 +2152,18 @@ public:
       NewOpcode = getShortBranchOpcode(OldOpcode);
     } else if (OldOpcode == X86::MOV64ri) {
       if (Inst.getOperand(MCPlus::getNumPrimeOperands(Inst) - 1).isImm()) {
-        const auto Imm =
-          Inst.getOperand(MCPlus::getNumPrimeOperands(Inst) - 1).getImm();
+        const int64_t Imm =
+            Inst.getOperand(MCPlus::getNumPrimeOperands(Inst) - 1).getImm();
         if (int64_t(Imm) == int64_t(int32_t(Imm))) {
           NewOpcode = X86::MOV64ri32;
         }
       }
     } else {
       // If it's arithmetic instruction check if signed operand fits in 1 byte.
-      const auto ShortOpcode = getShortArithOpcode(OldOpcode);
+      const unsigned ShortOpcode = getShortArithOpcode(OldOpcode);
       if (ShortOpcode != OldOpcode &&
           Inst.getOperand(MCPlus::getNumPrimeOperands(Inst) - 1).isImm()) {
-        auto Imm =
+        int64_t Imm =
             Inst.getOperand(MCPlus::getNumPrimeOperands(Inst) - 1).getImm();
         if (int64_t(Imm) == int64_t(int8_t(Imm))) {
           NewOpcode = ShortOpcode;
@@ -2185,7 +2192,7 @@ public:
     if (OpNum >= MCPlus::getNumPrimeOperands(Inst))
       return nullptr;
 
-    auto &Op = Inst.getOperand(OpNum);
+    const MCOperand &Op = Inst.getOperand(OpNum);
     if (!Op.isExpr())
       return nullptr;
 
@@ -2234,7 +2241,7 @@ public:
         // unreachable code. Ignore them.
         CondBranch = nullptr;
         UncondBranch = &*I;
-        const auto *Sym = getTargetSymbol(*I);
+        const MCSymbol *Sym = getTargetSymbol(*I);
         assert(Sym != nullptr &&
                "Couldn't extract BB symbol from jump operand");
         TBB = Sym;
@@ -2249,7 +2256,7 @@ public:
       }
 
       if (CondBranch == nullptr) {
-        const auto *TargetBB = getTargetSymbol(*I);
+        const MCSymbol *TargetBB = getTargetSymbol(*I);
         if (TargetBB == nullptr) {
           // Unrecognized branch target
           return false;
@@ -2308,8 +2315,8 @@ public:
     MCInst *MemLocInstr = nullptr;
     const MCInst *MovInstr = nullptr;
     while (++II != IE) {
-      auto &Instr = *II;
-      const auto &InstrDesc = Info->get(Instr.getOpcode());
+      MCInst &Instr = *II;
+      const MCInstrDesc &InstrDesc = Info->get(Instr.getOpcode());
       if (!InstrDesc.hasDefOfPhysReg(Instr, R1, *RegInfo) &&
           !InstrDesc.hasDefOfPhysReg(Instr, R2, *RegInfo)) {
         // Ignore instructions that don't affect R1, R2 registers.
@@ -2324,7 +2331,7 @@ public:
         // Check if it's setting %r1 or %r2. In canonical form it sets %r2.
         // If it sets %r1 - rename the registers so we have to only check
         // a single form.
-        auto MovDestReg = Instr.getOperand(0).getReg();
+        unsigned MovDestReg = Instr.getOperand(0).getReg();
         if (MovDestReg != R2)
           std::swap(R1, R2);
         if (MovDestReg != R2) {
@@ -2443,11 +2450,11 @@ public:
       // If the indirect jump is on register - try to detect if the
       // register value is loaded from a memory location.
       assert(Instruction.getOperand(0).isReg() && "register operand expected");
-      const auto R1 = Instruction.getOperand(0).getReg();
+      const unsigned R1 = Instruction.getOperand(0).getReg();
       // Check if one of the previous instructions defines the jump-on register.
       for (auto PrevII = II; PrevII != IE; ++PrevII) {
-        auto &PrevInstr = *PrevII;
-        const auto &PrevInstrDesc = Info->get(PrevInstr.getOpcode());
+        MCInst &PrevInstr = *PrevII;
+        const MCInstrDesc &PrevInstrDesc = Info->get(PrevInstr.getOpcode());
 
         if (!PrevInstrDesc.hasDefOfPhysReg(PrevInstr, R1, *RegInfo))
           continue;
@@ -2456,7 +2463,7 @@ public:
           MemLocInstr = &PrevInstr;
           break;
         } else if (isADD64rr(PrevInstr)) {
-          auto R2 = PrevInstr.getOperand(2).getReg();
+          unsigned R2 = PrevInstr.getOperand(2).getReg();
           if (R1 == R2)
             return IndirectBranchType::UNKNOWN;
           std::tie(Type, MemLocInstr) = analyzePICJumpTable(PrevII, IE, R1, R2);
@@ -2477,7 +2484,7 @@ public:
       MemLocInstr = &Instruction;
     }
 
-    const auto RIPRegister = RegInfo->getProgramCounter();
+    const MCRegister RIPRegister = RegInfo->getProgramCounter();
 
     // Analyze the memory location.
     unsigned      BaseRegNum, IndexRegNum, SegRegNum;
@@ -2552,7 +2559,7 @@ public:
     std::reverse_iterator<InstructionIterator> Itr(ForwardEnd);
     std::reverse_iterator<InstructionIterator> End(ForwardBegin);
 
-    auto &CallInst = *Itr++;
+    MCInst &CallInst = *Itr++;
     assert(isIndirectBranch(CallInst) || isCall(CallInst));
 
     unsigned BaseReg, IndexReg, SegmentReg;
@@ -2596,8 +2603,8 @@ public:
 
     // find load from vtable, this may or may not include the method offset
     while (Itr != End) {
-      auto &CurInst = *Itr++;
-      const auto &Desc = Info->get(CurInst.getOpcode());
+      MCInst &CurInst = *Itr++;
+      const MCInstrDesc &Desc = Info->get(CurInst.getOpcode());
       if (Desc.hasDefOfPhysReg(CurInst, MethodRegNum, *RegInfo)) {
         if (isLoad(CurInst) &&
             evaluateX86MemoryOperand(CurInst,
@@ -2632,8 +2639,8 @@ public:
 
     // look for any adds affecting the method register.
     while (Itr != End) {
-      auto &CurInst = *Itr++;
-      const auto &Desc = Info->get(CurInst.getOpcode());
+      MCInst &CurInst = *Itr++;
+      const MCInstrDesc &Desc = Info->get(CurInst.getOpcode());
       if (Desc.hasDefOfPhysReg(CurInst, VtableRegNum, *RegInfo)) {
         if (isADDri(CurInst)) {
           assert(!MethodOffset);
@@ -3094,7 +3101,7 @@ public:
   }
 
   bool isBranchOnMem(const MCInst &Inst) const override {
-    auto OpCode = Inst.getOpcode();
+    unsigned OpCode = Inst.getOpcode();
     if (OpCode == X86::CALL64m || (OpCode == X86::JMP32m && isTailCall(Inst)) ||
         OpCode == X86::JMP64m)
       return true;
@@ -3103,7 +3110,7 @@ public:
   }
 
   bool isBranchOnReg(const MCInst &Inst) const override {
-    auto OpCode = Inst.getOpcode();
+    unsigned OpCode = Inst.getOpcode();
     if (OpCode == X86::CALL64r || (OpCode == X86::JMP32r && isTailCall(Inst)) ||
         OpCode == X86::JMP64r)
       return true;
@@ -3204,7 +3211,7 @@ public:
     // Skip defs.
     for (unsigned I = Info->get(CallInst.getOpcode()).getNumDefs(),
          E = MCPlus::getNumPrimeOperands(CallInst); I != E; ++I) {
-      const auto &Operand = CallInst.getOperand(I);
+      const MCOperand &Operand = CallInst.getOperand(I);
       if (Operand.isReg() && SPAliases[Operand.getReg()]) {
         UsesSP = true;
         break;
@@ -3348,8 +3355,8 @@ public:
     if (MinimizeCodeSize && !LoadElim) {
       std::set<unsigned> UsedRegs;
 
-      for (unsigned int i = 0; i < MCPlus::getNumPrimeOperands(CallInst); ++i) {
-        const auto &Op = CallInst.getOperand(i);
+      for (unsigned int I = 0; I < MCPlus::getNumPrimeOperands(CallInst); ++I) {
+        const MCOperand &Op = CallInst.getOperand(I);
         if (Op.isReg()) {
           UsedRegs.insert(Op.getReg());
         }
@@ -3390,7 +3397,7 @@ public:
                                       MCSymbolRefExpr::VK_None,
                                       *Ctx)));
         } else {
-          const auto Addr = Targets[i].second;
+          const uint64_t Addr = Targets[i].second;
           // Immediate address is out of sign extended 32 bit range.
           if (int64_t(Addr) != int64_t(int32_t(Addr))) {
             return BlocksVectorTy();
@@ -3443,8 +3450,9 @@ public:
 
         // Target address.
         if (Targets[i].first || LoadElim) {
-          const auto *Sym = LoadElim ? VtableSyms[i].first : Targets[i].first;
-          const auto Addend = LoadElim ? VtableSyms[i].second : 0;
+          const MCSymbol *Sym =
+              LoadElim ? VtableSyms[i].first : Targets[i].first;
+          const uint64_t Addend = LoadElim ? VtableSyms[i].second : 0;
 
           const MCExpr *Expr = MCSymbolRefExpr::create(Sym, *Ctx);
 
@@ -3456,7 +3464,7 @@ public:
 
           Compare.addOperand(MCOperand::createExpr(Expr));
         } else {
-          const auto Addr = Targets[i].second;
+          const uint64_t Addr = Targets[i].second;
           // Immediate address is out of sign extended 32 bit range.
           if (int64_t(Addr) != int64_t(int32_t(Addr))) {
             return BlocksVectorTy();
@@ -3524,10 +3532,10 @@ public:
         if (isInvoke(CallInst) && !isInvoke(CallOrJmp)) {
           // Copy over any EH or GNU args size information from the original
           // call.
-          auto EHInfo = getEHInfo(CallInst);
+          Optional<MCPlus::MCLandingPad> EHInfo = getEHInfo(CallInst);
           if (EHInfo)
             addEHInfo(CallOrJmp, *EHInfo);
-          auto GnuArgsSize = getGnuArgsSize(CallInst);
+          int64_t GnuArgsSize = getGnuArgsSize(CallInst);
           if (GnuArgsSize >= 0)
             addGnuArgsSize(CallOrJmp, GnuArgsSize);
         }
@@ -3549,7 +3557,7 @@ public:
     // Cold call block.
     Results.push_back(std::make_pair(NextTarget, std::vector<MCInst>()));
     std::vector<MCInst> &NewCall = Results.back().second;
-    for (auto *Inst : MethodFetchInsns) {
+    for (const MCInst *Inst : MethodFetchInsns) {
       if (Inst != &CallInst)
         NewCall.push_back(*Inst);
     }
@@ -3593,7 +3601,7 @@ public:
       CompareInst.setOpcode(X86::CMP64ri32);
       CompareInst.addOperand(MCOperand::createReg(IndexReg));
 
-      const auto CaseIdx = Targets[i].second;
+      const uint64_t CaseIdx = Targets[i].second;
       // Immediate address is out of sign extended 32 bit range.
       if (int64_t(CaseIdx) != int64_t(int32_t(CaseIdx))) {
         return BlocksVectorTy();
@@ -3619,7 +3627,7 @@ public:
     // Cold call block.
     Results.push_back(std::make_pair(NextTarget, std::vector<MCInst>()));
     std::vector<MCInst> &CurBB = Results.back().second;
-    for (auto *Inst : TargetFetchInsns) {
+    for (const MCInst *Inst : TargetFetchInsns) {
       if (Inst != &IJmpInst)
         CurBB.push_back(*Inst);
     }

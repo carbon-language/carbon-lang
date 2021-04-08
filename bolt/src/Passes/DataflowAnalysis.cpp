@@ -17,19 +17,19 @@ namespace llvm {
 raw_ostream &operator<<(raw_ostream &OS, const BitVector &State) {
   LLVM_DEBUG({
     OS << "BitVector(";
-    auto Sep = "";
+    const char *Sep = "";
     if (State.count() > (State.size() >> 1)) {
       OS << "all, except: ";
-      auto BV = State;
+      BitVector BV = State;
       BV.flip();
-      for (auto I = BV.find_first(); I != -1; I = BV.find_next(I)) {
+      for (int I = BV.find_first(); I != -1; I = BV.find_next(I)) {
         OS << Sep << I;
         Sep = " ";
       }
       OS << ")";
       return OS;
     }
-    for (auto I = State.find_first(); I != -1; I = State.find_next(I)) {
+    for (int I = State.find_first(); I != -1; I = State.find_next(I)) {
       OS << Sep << I;
       Sep = " ";
     }
@@ -44,17 +44,17 @@ namespace bolt {
 
 void doForAllPreds(const BinaryContext &BC, const BinaryBasicBlock &BB,
                    std::function<void(ProgramPoint)> Task) {
-  for (auto Pred : BB.predecessors()) {
+  for (BinaryBasicBlock *Pred : BB.predecessors()) {
     if (Pred->isValid())
       Task(ProgramPoint::getLastPointAt(*Pred));
   }
   if (!BB.isLandingPad())
     return;
-  for (auto Thrower : BB.throwers()) {
-    for (auto &Inst : *Thrower) {
+  for (BinaryBasicBlock *Thrower : BB.throwers()) {
+    for (MCInst &Inst : *Thrower) {
       if (!BC.MIB->isInvoke(Inst))
         continue;
-      const auto EHInfo = BC.MIB->getEHInfo(Inst);
+      const Optional<MCPlus::MCLandingPad> EHInfo = BC.MIB->getEHInfo(Inst);
       if (!EHInfo || EHInfo->first != BB.getLabel())
         continue;
       Task(ProgramPoint(&Inst));
@@ -65,7 +65,7 @@ void doForAllPreds(const BinaryContext &BC, const BinaryBasicBlock &BB,
 /// Operates on all successors of a basic block.
 void doForAllSuccs(const BinaryBasicBlock &BB,
                    std::function<void(ProgramPoint)> Task) {
-  for (auto Succ : BB.successors()) {
+  for (BinaryBasicBlock *Succ : BB.successors()) {
     if (Succ->isValid())
       Task(ProgramPoint::getFirstPointAt(*Succ));
   }
@@ -78,14 +78,14 @@ void RegStatePrinter::print(raw_ostream &OS, const BitVector &State) const {
   }
   if (State.count() > (State.size() >> 1)) {
     OS << "all, except: ";
-    auto BV = State;
+    BitVector BV = State;
     BV.flip();
-    for (auto I = BV.find_first(); I != -1; I = BV.find_next(I)) {
+    for (int I = BV.find_first(); I != -1; I = BV.find_next(I)) {
       OS << BC.MRI->getName(I) << " ";
     }
     return;
   }
-  for (auto I = State.find_first(); I != -1; I = State.find_next(I)) {
+  for (int I = State.find_first(); I != -1; I = State.find_next(I)) {
     OS << BC.MRI->getName(I) << " ";
   }
 }

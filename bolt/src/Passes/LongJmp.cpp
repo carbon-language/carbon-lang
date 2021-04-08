@@ -79,8 +79,8 @@ LongJmpPass::createNewStub(BinaryBasicBlock &SourceBB, const MCSymbol *TgtSym,
   BinaryFunction &Func = *SourceBB.getFunction();
   const BinaryContext &BC = Func.getBinaryContext();
   const bool IsCold = SourceBB.isCold();
-  auto *StubSym = BC.Ctx->createNamedTempSymbol("Stub");
-  auto StubBB = Func.createBasicBlock(0, StubSym);
+  MCSymbol *StubSym = BC.Ctx->createNamedTempSymbol("Stub");
+  std::unique_ptr<BinaryBasicBlock> StubBB = Func.createBasicBlock(0, StubSym);
   MCInst Inst;
   BC.MIB->createUncondBranch(Inst, TgtSym, BC.Ctx.get());
   if (TgtIsFunc)
@@ -90,7 +90,7 @@ LongJmpPass::createNewStub(BinaryBasicBlock &SourceBB, const MCSymbol *TgtSym,
 
   // Register this in stubs maps
   auto registerInMap = [&](StubGroupsTy &Map) {
-    auto &StubGroup = Map[TgtSym];
+    StubGroupTy &StubGroup = Map[TgtSym];
     StubGroup.insert(
         std::lower_bound(
             StubGroup.begin(), StubGroup.end(),
@@ -126,23 +126,23 @@ BinaryBasicBlock *LongJmpPass::lookupStubFromGroup(
   auto CandidatesIter = StubGroups.find(TgtSym);
   if (CandidatesIter == StubGroups.end())
     return nullptr;
-  auto &Candidates = CandidatesIter->second;
+  const StubGroupTy &Candidates = CandidatesIter->second;
   if (Candidates.empty())
     return nullptr;
-  auto Cand = std::lower_bound(
+  const StubTy *Cand = std::lower_bound(
       Candidates.begin(), Candidates.end(), std::make_pair(DotAddress, nullptr),
       [&](const std::pair<uint64_t, BinaryBasicBlock *> &LHS,
           const std::pair<uint64_t, BinaryBasicBlock *> &RHS) {
         return LHS.first < RHS.first;
       });
   if (Cand != Candidates.begin()) {
-    auto LeftCand = Cand;
+    const StubTy *LeftCand = Cand;
     --LeftCand;
     if (Cand->first - DotAddress >
         DotAddress - LeftCand->first)
       Cand = LeftCand;
   }
-  auto BitsAvail = BC.MIB->getPCRelEncodingSize(Inst) - 1;
+  int BitsAvail = BC.MIB->getPCRelEncodingSize(Inst) - 1;
   uint64_t Mask = ~((1ULL << BitsAvail) - 1);
   uint64_t PCRelTgtAddress = Cand->first;
   PCRelTgtAddress = DotAddress > PCRelTgtAddress ? DotAddress - PCRelTgtAddress
@@ -188,11 +188,11 @@ LongJmpPass::replaceTargetWithStub(BinaryBasicBlock &BB, MCInst &Inst,
   const BinaryFunction &Func = *BB.getFunction();
   const BinaryContext &BC = Func.getBinaryContext();
   std::unique_ptr<BinaryBasicBlock> NewBB;
-  auto TgtSym = BC.MIB->getTargetSymbol(Inst);
+  const MCSymbol *TgtSym = BC.MIB->getTargetSymbol(Inst);
   assert (TgtSym && "getTargetSymbol failed");
 
   BinaryBasicBlock::BinaryBranchInfo BI{0, 0};
-  auto *TgtBB = BB.getSuccessor(TgtSym, BI);
+  BinaryBasicBlock *TgtBB = BB.getSuccessor(TgtSym, BI);
   auto LocalStubsIter = Stubs.find(&Func);
 
   // If already using stub and the stub is from another function, create a local
@@ -258,7 +258,7 @@ LongJmpPass::replaceTargetWithStub(BinaryBasicBlock &BB, MCInst &Inst,
 void LongJmpPass::updateStubGroups() {
   auto update = [&](StubGroupsTy &StubGroups) {
     for (auto &KeyVal : StubGroups) {
-      for (auto &Elem : KeyVal.second) {
+      for (StubTy &Elem : KeyVal.second) {
         Elem.first = BBAddresses[Elem.second];
       }
       std::sort(KeyVal.second.begin(), KeyVal.second.end(),
@@ -282,7 +282,7 @@ void LongJmpPass::tentativeBBLayout(const BinaryFunction &Func) {
   uint64_t HotDot = HotAddresses[&Func];
   uint64_t ColdDot = ColdAddresses[&Func];
   bool Cold{false};
-  for (auto *BB : Func.layout()) {
+  for (BinaryBasicBlock *BB : Func.layout()) {
     if (Cold || BB->isCold()) {
       Cold = true;
       BBAddresses[BB] = ColdDot;
@@ -297,11 +297,12 @@ void LongJmpPass::tentativeBBLayout(const BinaryFunction &Func) {
 uint64_t LongJmpPass::tentativeLayoutRelocColdPart(
   const BinaryContext &BC, std::vector<BinaryFunction *> &SortedFunctions,
   uint64_t DotAddress) {
-  for (auto Func : SortedFunctions) {
+  for (BinaryFunction *Func : SortedFunctions) {
     if (!Func->isSplit())
       continue;
     DotAddress = alignTo(DotAddress, BinaryFunction::MinAlign);
-    auto Pad = offsetToAlignment(DotAddress, llvm::Align(opts::AlignFunctions));
+    uint64_t Pad =
+        offsetToAlignment(DotAddress, llvm::Align(opts::AlignFunctions));
     if (Pad <= opts::AlignFunctionsMaxBytes)
       DotAddress += Pad;
     ColdAddresses[Func] = DotAddress;
@@ -321,14 +322,14 @@ uint64_t LongJmpPass::tentativeLayoutRelocMode(
   uint32_t LastHotIndex = -1u;
   uint32_t CurrentIndex = 0;
   if (opts::HotFunctionsAtEnd) {
-    for (auto *BF : SortedFunctions) {
+    for (BinaryFunction *BF : SortedFunctions) {
       if (BF->hasValidIndex() && LastHotIndex == -1u) {
         LastHotIndex = CurrentIndex;
       }
       ++CurrentIndex;
     }
   } else {
-    for (auto *BF : SortedFunctions) {
+    for (BinaryFunction *BF : SortedFunctions) {
       if (!BF->hasValidIndex() && LastHotIndex == -1u) {
         LastHotIndex = CurrentIndex;
       }
@@ -339,7 +340,7 @@ uint64_t LongJmpPass::tentativeLayoutRelocMode(
   // Hot
   CurrentIndex = 0;
   bool ColdLayoutDone = false;
-  for (auto Func : SortedFunctions) {
+  for (BinaryFunction *Func : SortedFunctions) {
     if (!ColdLayoutDone && CurrentIndex >= LastHotIndex) {
       DotAddress =
           tentativeLayoutRelocColdPart(BC, SortedFunctions, DotAddress);
@@ -349,7 +350,8 @@ uint64_t LongJmpPass::tentativeLayoutRelocMode(
     }
 
     DotAddress = alignTo(DotAddress, BinaryFunction::MinAlign);
-    auto Pad = offsetToAlignment(DotAddress, llvm::Align(opts::AlignFunctions));
+    uint64_t Pad =
+        offsetToAlignment(DotAddress, llvm::Align(opts::AlignFunctions));
     if (Pad <= opts::AlignFunctionsMaxBytes)
       DotAddress += Pad;
     HotAddresses[Func] = DotAddress;
@@ -363,7 +365,7 @@ uint64_t LongJmpPass::tentativeLayoutRelocMode(
     ++CurrentIndex;
   }
   // BBs
-  for (auto Func : SortedFunctions)
+  for (BinaryFunction *Func : SortedFunctions)
     tentativeBBLayout(*Func);
 
   return DotAddress;
@@ -375,7 +377,7 @@ void LongJmpPass::tentativeLayout(
   uint64_t DotAddress = BC.LayoutStartAddress;
 
   if (!BC.HasRelocations) {
-    for (auto Func : SortedFunctions) {
+    for (BinaryFunction *Func : SortedFunctions) {
       HotAddresses[Func] = Func->getAddress();
       DotAddress = alignTo(DotAddress, ColdFragAlign);
       ColdAddresses[Func] = DotAddress;
@@ -388,12 +390,12 @@ void LongJmpPass::tentativeLayout(
   }
 
   // Relocation mode
-  auto EstimatedTextSize = tentativeLayoutRelocMode(BC, SortedFunctions, 0);
+  uint64_t EstimatedTextSize = tentativeLayoutRelocMode(BC, SortedFunctions, 0);
 
   // Initial padding
   if (opts::UseOldText && EstimatedTextSize <= BC.OldTextSectionSize) {
     DotAddress = BC.OldTextSectionAddress;
-    auto Pad = offsetToAlignment(DotAddress, llvm::Align(BC.PageAlign));
+    uint64_t Pad = offsetToAlignment(DotAddress, llvm::Align(BC.PageAlign));
     if (Pad + EstimatedTextSize <= BC.OldTextSectionSize) {
       DotAddress += Pad;
     }
@@ -406,8 +408,8 @@ void LongJmpPass::tentativeLayout(
 
 bool LongJmpPass::usesStub(const BinaryFunction &Func,
                            const MCInst &Inst) const {
-  auto TgtSym = Func.getBinaryContext().MIB->getTargetSymbol(Inst);
-  auto *TgtBB = Func.getBasicBlockForLabel(TgtSym);
+  const MCSymbol *TgtSym = Func.getBinaryContext().MIB->getTargetSymbol(Inst);
+  const BinaryBasicBlock *TgtBB = Func.getBasicBlockForLabel(TgtSym);
   auto Iter = Stubs.find(&Func);
   if (Iter != Stubs.end())
     return Iter->second.count(TgtBB);
@@ -423,12 +425,12 @@ uint64_t LongJmpPass::getSymbolAddress(const BinaryContext &BC,
     return Iter->second;
   }
   uint64_t EntryID{0};
-  auto *TargetFunc = BC.getFunctionForSymbol(Target, &EntryID);
+  const BinaryFunction *TargetFunc = BC.getFunctionForSymbol(Target, &EntryID);
   auto Iter = HotAddresses.find(TargetFunc);
   if (Iter == HotAddresses.end() || (TargetFunc && EntryID)) {
     // Look at BinaryContext's resolution for this symbol - this is a symbol not
     // mapped to a BinaryFunction
-    auto ValueOrError = BC.getSymbolValue(*Target);
+    ErrorOr<uint64_t> ValueOrError = BC.getSymbolValue(*Target);
     assert(ValueOrError && "Unrecognized symbol");
     return *ValueOrError;
   }
@@ -438,19 +440,19 @@ uint64_t LongJmpPass::getSymbolAddress(const BinaryContext &BC,
 bool LongJmpPass::relaxStub(BinaryBasicBlock &StubBB) {
   const BinaryFunction &Func = *StubBB.getFunction();
   const BinaryContext &BC = Func.getBinaryContext();
-  const auto Bits = StubBits[&StubBB];
+  const int Bits = StubBits[&StubBB];
   // Already working with the largest range?
   if (Bits == static_cast<int>(BC.AsmInfo->getCodePointerSize() * 8))
     return false;
 
-  const static auto RangeShortJmp = BC.MIB->getShortJmpEncodingSize();
-  const static auto RangeSingleInstr = BC.MIB->getUncondBranchEncodingSize();
+  const static int RangeShortJmp = BC.MIB->getShortJmpEncodingSize();
+  const static int RangeSingleInstr = BC.MIB->getUncondBranchEncodingSize();
   const static uint64_t ShortJmpMask = ~((1ULL << RangeShortJmp) - 1);
   const static uint64_t SingleInstrMask =
       ~((1ULL << (RangeSingleInstr - 1)) - 1);
 
-  auto *RealTargetSym = BC.MIB->getTargetSymbol(*StubBB.begin());
-  auto *TgtBB = Func.getBasicBlockForLabel(RealTargetSym);
+  const MCSymbol *RealTargetSym = BC.MIB->getTargetSymbol(*StubBB.begin());
+  const BinaryBasicBlock *TgtBB = Func.getBasicBlockForLabel(RealTargetSym);
   uint64_t TgtAddress = getSymbolAddress(BC, RealTargetSym, TgtBB);
   uint64_t DotAddress = BBAddresses[&StubBB];
   uint64_t PCRelTgtAddress = DotAddress > TgtAddress ? DotAddress - TgtAddress
@@ -489,10 +491,10 @@ bool LongJmpPass::needsStub(const BinaryBasicBlock &BB, const MCInst &Inst,
                             uint64_t DotAddress) const {
   const BinaryFunction &Func = *BB.getFunction();
   const BinaryContext &BC = Func.getBinaryContext();
-  auto TgtSym = BC.MIB->getTargetSymbol(Inst);
+  const MCSymbol *TgtSym = BC.MIB->getTargetSymbol(Inst);
   assert (TgtSym && "getTargetSymbol failed");
 
-  auto *TgtBB = Func.getBasicBlockForLabel(TgtSym);
+  const BinaryBasicBlock *TgtBB = Func.getBasicBlockForLabel(TgtSym);
   // Check for shared stubs from foreign functions
   if (!TgtBB) {
     auto SSIter = SharedStubs.find(TgtSym);
@@ -501,7 +503,7 @@ bool LongJmpPass::needsStub(const BinaryBasicBlock &BB, const MCInst &Inst,
     }
   }
 
-  auto BitsAvail = BC.MIB->getPCRelEncodingSize(Inst) - 1;
+  int BitsAvail = BC.MIB->getPCRelEncodingSize(Inst) - 1;
   uint64_t Mask = ~((1ULL << BitsAvail) - 1);
 
   uint64_t PCRelTgtAddress = getSymbolAddress(BC, TgtSym, TgtBB);
@@ -516,7 +518,7 @@ bool LongJmpPass::relax(BinaryFunction &Func) {
   bool Modified{false};
 
   assert(BC.isAArch64() && "Unsupported arch");
-  constexpr auto InsnSize = 4; // AArch64
+  constexpr int InsnSize = 4; // AArch64
   std::vector<std::pair<BinaryBasicBlock *, std::unique_ptr<BinaryBasicBlock>>>
       Insertions;
 
@@ -527,13 +529,13 @@ bool LongJmpPass::relax(BinaryFunction &Func) {
   }
   // Add necessary stubs for branch targets we know we can't fit in the
   // instruction
-  for (auto &BB : Func) {
+  for (BinaryBasicBlock &BB : Func) {
     uint64_t DotAddress = BBAddresses[&BB];
     // Stubs themselves are relaxed on the next loop
     if (Stubs[&Func].count(&BB))
       continue;
 
-    for (auto &Inst : BB) {
+    for (MCInst &Inst : BB) {
       if (BC.MII->get(Inst.getOpcode()).isPseudo())
         continue;
 
@@ -555,7 +557,7 @@ bool LongJmpPass::relax(BinaryFunction &Func) {
       BinaryBasicBlock *InsertionPoint = &BB;
       if (Func.isSimple() && !BC.MIB->isCall(Inst) && FrontierAddress &&
           !BB.isCold()) {
-        auto BitsAvail = BC.MIB->getPCRelEncodingSize(Inst) - 1;
+        int BitsAvail = BC.MIB->getPCRelEncodingSize(Inst) - 1;
         uint64_t Mask = ~((1ULL << BitsAvail) - 1);
         assert(FrontierAddress > DotAddress &&
                "Hot code should be before the frontier");
@@ -579,14 +581,15 @@ bool LongJmpPass::relax(BinaryFunction &Func) {
   }
 
   // Relax stubs if necessary
-  for (auto &BB : Func) {
+  for (BinaryBasicBlock &BB : Func) {
     if (!Stubs[&Func].count(&BB) || !BB.isValid())
       continue;
 
     Modified |= relaxStub(BB);
   }
 
-  for (auto &Elmt : Insertions) {
+  for (std::pair<BinaryBasicBlock *, std::unique_ptr<BinaryBasicBlock>> &Elmt :
+       Insertions) {
     if (!Elmt.second)
       continue;
     std::vector<std::unique_ptr<BinaryBasicBlock>> NewBBs;
@@ -599,7 +602,7 @@ bool LongJmpPass::relax(BinaryFunction &Func) {
 
 void LongJmpPass::runOnFunctions(BinaryContext &BC) {
   outs() << "BOLT-INFO: Starting stub-insertion pass\n";
-  auto Sorted = BC.getSortedFunctions();
+  std::vector<BinaryFunction *> Sorted = BC.getSortedFunctions();
   bool Modified;
   uint32_t Iterations{0};
   do {
@@ -607,7 +610,7 @@ void LongJmpPass::runOnFunctions(BinaryContext &BC) {
     Modified = false;
     tentativeLayout(BC, Sorted);
     updateStubGroups();
-    for (auto Func : Sorted) {
+    for (BinaryFunction *Func : Sorted) {
       if (relax(*Func)) {
         // Don't ruin non-simple functions, they can't afford to have the layout
         // changed.

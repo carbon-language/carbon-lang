@@ -28,7 +28,7 @@ namespace bolt {
 CallGraph::NodeId BinaryFunctionCallGraph::addNode(BinaryFunction *BF,
                                                    uint32_t Size,
                                                    uint64_t Samples) {
-  auto Id = CallGraph::addNode(Size, Samples);
+  NodeId Id = CallGraph::addNode(Size, Samples);
   assert(size_t(Id) == Funcs.size());
   Funcs.push_back(BF);
   FuncToNodeId[BF] = Id;
@@ -44,14 +44,14 @@ std::deque<BinaryFunction *> BinaryFunctionCallGraph::buildTraversalOrder() {
   std::vector<NodeStatus> NodeStatus(Funcs.size());
   std::stack<NodeId> Worklist;
 
-  for (auto *Func : Funcs) {
-    const auto Id = FuncToNodeId.at(Func);
+  for (BinaryFunction *Func : Funcs) {
+    const NodeId Id = FuncToNodeId.at(Func);
     Worklist.push(Id);
     NodeStatus[Id] = NEW;
   }
 
   while (!Worklist.empty()) {
-    const auto FuncId = Worklist.top();
+    const NodeId FuncId = Worklist.top();
     Worklist.pop();
 
     if (NodeStatus[FuncId] == VISITED)
@@ -66,7 +66,7 @@ std::deque<BinaryFunction *> BinaryFunctionCallGraph::buildTraversalOrder() {
     assert(NodeStatus[FuncId] == NEW);
     NodeStatus[FuncId] = VISITING;
     Worklist.push(FuncId);
-    for (const auto Callee : successors(FuncId)) {
+    for (const NodeId Callee : successors(FuncId)) {
       if (NodeStatus[Callee] == VISITING || NodeStatus[Callee] == VISITED)
         continue;
       Worklist.push(Callee);
@@ -87,7 +87,8 @@ BinaryFunctionCallGraph buildCallGraph(BinaryContext &BC,
   NamedRegionTimer T1("buildcg", "Callgraph construction", "CG breakdown",
                       "CG breakdown", opts::TimeOpts);
   BinaryFunctionCallGraph Cg;
-  static constexpr auto COUNT_NO_PROFILE = BinaryBasicBlock::COUNT_NO_PROFILE;
+  static constexpr uint64_t COUNT_NO_PROFILE =
+      BinaryBasicBlock::COUNT_NO_PROFILE;
 
   // Compute function size
   auto functionSize = [&](const BinaryFunction *Function) {
@@ -98,13 +99,13 @@ BinaryFunctionCallGraph buildCallGraph(BinaryContext &BC,
 
   // Add call graph nodes.
   auto lookupNode = [&](BinaryFunction *Function) {
-    const auto Id = Cg.maybeGetNodeId(Function);
+    const CallGraph::NodeId Id = Cg.maybeGetNodeId(Function);
     if (Id == CallGraph::InvalidId) {
       // It's ok to use the hot size here when the function is split.  This is
       // because emitFunctions will emit the hot part first in the order that is
       // computed by ReorderFunctions.  The cold part will be emitted with the
       // rest of the cold functions and code.
-      const auto Size = functionSize(Function);
+      const size_t Size = functionSize(Function);
       // NOTE: for functions without a profile, we set the number of samples
       // to zero.  This will keep these functions from appearing in the hot
       // section.  This is a little weird because we wouldn't be trying to
@@ -126,19 +127,19 @@ BinaryFunctionCallGraph buildCallGraph(BinaryContext &BC,
   uint64_t NumFallbacks = 0;
   uint64_t RecursiveCallsites = 0;
   for (auto &It : BC.getBinaryFunctions()) {
-    auto *Function = &It.second;
+    BinaryFunction *Function = &It.second;
 
     if (Filter(*Function)) {
       continue;
     }
 
-    const auto SrcId = lookupNode(Function);
+    const CallGraph::NodeId SrcId = lookupNode(Function);
     // Offset of the current basic block from the beginning of the function
     uint64_t Offset = 0;
 
     auto recordCall = [&](const MCSymbol *DestSymbol, const uint64_t Count) {
-      if (auto *DstFunc =
-          DestSymbol ? BC.getFunctionForSymbol(DestSymbol) : nullptr) {
+      if (BinaryFunction *DstFunc =
+              DestSymbol ? BC.getFunctionForSymbol(DestSymbol) : nullptr) {
         if (DstFunc == Function) {
           LLVM_DEBUG(dbgs() << "BOLT-INFO: recursive call detected in "
                             << *DstFunc << "\n");
@@ -149,9 +150,9 @@ BinaryFunctionCallGraph buildCallGraph(BinaryContext &BC,
         if (Filter(*DstFunc)) {
           return false;
         }
-        const auto DstId = lookupNode(DstFunc);
+        const CallGraph::NodeId DstId = lookupNode(DstFunc);
         const bool IsValidCount = Count != COUNT_NO_PROFILE;
-        const auto AdjCount = UseEdgeCounts && IsValidCount ? Count : 1;
+        const uint64_t AdjCount = UseEdgeCounts && IsValidCount ? Count : 1;
         if (!IsValidCount)
           ++NoProfileCallsites;
         Cg.incArcWeight(SrcId, DstId, AdjCount, Offset);
@@ -166,23 +167,27 @@ BinaryFunctionCallGraph buildCallGraph(BinaryContext &BC,
       return false;
     };
 
+    // Pairs of (symbol, count) for each target at this callsite.
+    using TargetDesc = std::pair<const MCSymbol *, uint64_t>;
+    using CallInfoTy = std::vector<TargetDesc>;
+
     // Get pairs of (symbol, count) for each target at this callsite.
     // If the call is to an unknown function the symbol will be nullptr.
     // If there is no profiling data the count will be COUNT_NO_PROFILE.
     auto getCallInfo = [&](const BinaryBasicBlock *BB, const MCInst &Inst) {
-      std::vector<std::pair<const MCSymbol *, uint64_t>> Counts;
-      const auto *DstSym = BC.MIB->getTargetSymbol(Inst);
+      CallInfoTy Counts;
+      const MCSymbol *DstSym = BC.MIB->getTargetSymbol(Inst);
 
       // If this is an indirect call use perf data directly.
       if (!DstSym && BC.MIB->hasAnnotation(Inst, "CallProfile")) {
         const auto &ICSP =
           BC.MIB->getAnnotationAs<IndirectCallSiteProfile>(Inst, "CallProfile");
-        for (const auto &CSI : ICSP) {
+        for (const IndirectCallProfile &CSI : ICSP) {
           if (CSI.Symbol)
             Counts.push_back(std::make_pair(CSI.Symbol, CSI.Count));
         }
       } else {
-        const auto Count = BB->getExecutionCount();
+        const uint64_t Count = BB->getExecutionCount();
         Counts.push_back(std::make_pair(DstSym, Count));
       }
 
@@ -198,8 +203,8 @@ BinaryFunctionCallGraph buildCallGraph(BinaryContext &BC,
           dbgs() << "BOLT-DEBUG: buildCallGraph: Falling back to perf data"
                  << " for " << *Function << "\n");
       ++NumFallbacks;
-      const auto Size = functionSize(Function);
-      for (const auto &CSI : Function->getAllCallSites()) {
+      const size_t Size = functionSize(Function);
+      for (const IndirectCallProfile &CSI : Function->getAllCallSites()) {
         ++TotalCallsites;
 
         if (!CSI.Symbol)
@@ -216,7 +221,7 @@ BinaryFunctionCallGraph buildCallGraph(BinaryContext &BC,
         }
       }
     } else {
-      for (auto *BB : Function->layout()) {
+      for (BinaryBasicBlock *BB : Function->layout()) {
         // Don't count calls from cold blocks unless requested.
         if (BB->isCold() && !IncludeColdCalls)
           continue;
@@ -233,13 +238,13 @@ BinaryFunctionCallGraph buildCallGraph(BinaryContext &BC,
           BBIncludedInFunctionSize = true;
         }
 
-        for (auto &Inst : *BB) {
+        for (MCInst &Inst : *BB) {
           // Find call instructions and extract target symbols from each one.
           if (BC.MIB->isCall(Inst)) {
-            const auto CallInfo = getCallInfo(BB, Inst);
+            const CallInfoTy CallInfo = getCallInfo(BB, Inst);
 
             if (!CallInfo.empty()) {
-              for (const auto &CI : CallInfo) {
+              for (const TargetDesc &CI : CallInfo) {
                 ++TotalCallsites;
                 if (!recordCall(CI.first, CI.second))
                   ++NotProcessed;

@@ -69,7 +69,7 @@ protected:
                           const MCInst &Invoke) {
     int SPVal = StateIn.first;
     if (SPVal != EMPTY && SPVal != SUPERPOSITION) {
-      const auto GnuArgsSize = this->BC.MIB->getGnuArgsSize(Invoke);
+      const int64_t GnuArgsSize = this->BC.MIB->getGnuArgsSize(Invoke);
       if (GnuArgsSize > 0)
         SPVal += GnuArgsSize;
     }

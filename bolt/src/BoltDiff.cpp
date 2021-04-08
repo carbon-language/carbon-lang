@@ -213,11 +213,11 @@ class RewriteInstanceDiff {
   void buildLookupMaps() {
     for (const auto &BFI : RI1.BC->getBinaryFunctions()) {
       StringRef LTOName;
-      const auto &Function = BFI.second;
-      const auto Score = getNormalizedScore(Function, RI1);
+      const BinaryFunction &Function = BFI.second;
+      const double Score = getNormalizedScore(Function, RI1);
       LargestBin1.insert(std::make_pair<>(Score, &Function));
-      for (const auto Name : Function.getNames()) {
-        if (auto OptionalLTOName = getLTOCommonName(Name))
+      for (const StringRef Name : Function.getNames()) {
+        if (Optional<StringRef> OptionalLTOName = getLTOCommonName(Name))
           LTOName = *OptionalLTOName;
         NameLookup[Name] = &Function;
       }
@@ -233,11 +233,11 @@ class RewriteInstanceDiff {
     // Compute LTONameLookup2 and LargestBin2
     for (const auto &BFI : RI2.BC->getBinaryFunctions()) {
       StringRef LTOName;
-      const auto &Function = BFI.second;
-      const auto Score = getNormalizedScore(Function, RI2);
+      const BinaryFunction &Function = BFI.second;
+      const double Score = getNormalizedScore(Function, RI2);
       LargestBin2.insert(std::make_pair<>(Score, &Function));
-      for (const auto Name : Function.getNames()) {
-        if (auto OptionalLTOName = getLTOCommonName(Name))
+      for (const StringRef Name : Function.getNames()) {
+        if (Optional<StringRef> OptionalLTOName = getLTOCommonName(Name))
           LTOName = *OptionalLTOName;
       }
       if (opts::IgnoreLTOSuffix && !LTOName.empty()) {
@@ -255,12 +255,12 @@ class RewriteInstanceDiff {
     std::set<const BinaryFunction *> Bin1ProfiledMapped;
 
     for (const auto &BFI2 : RI2.BC->getBinaryFunctions()) {
-      const auto &Function2 = BFI2.second;
+      const BinaryFunction &Function2 = BFI2.second;
       StringRef LTOName;
       bool Match = false;
-      for (const auto Name : Function2.getNames()) {
+      for (const StringRef Name : Function2.getNames()) {
         auto Iter = NameLookup.find(Name);
-        if (auto OptionalLTOName = getLTOCommonName(Name))
+        if (Optional<StringRef> OptionalLTOName = getLTOCommonName(Name))
           LTOName = *OptionalLTOName;
         if (Iter == NameLookup.end())
           continue;
@@ -312,7 +312,7 @@ class RewriteInstanceDiff {
       outs() << "\nFunctions in profile 1 that are missing in the profile 2:\n";
       std::vector<const BinaryFunction *> Unmapped;
       for (const auto &BFI : RI1.BC->getBinaryFunctions()) {
-        const auto &Function = BFI.second;
+        const BinaryFunction &Function = BFI.second;
         if (!Function.hasValidProfile() || Bin1ProfiledMapped.count(&Function))
           continue;
         Unmapped.emplace_back(&Function);
@@ -321,7 +321,7 @@ class RewriteInstanceDiff {
                 [&](const BinaryFunction *A, const BinaryFunction *B) {
                   return A->getFunctionScore() > B->getFunctionScore();
                 });
-      for (auto Function : Unmapped) {
+      for (const BinaryFunction *Function : Unmapped) {
         outs() << Function->getPrintName() << " : ";
         outs() << Function->getFunctionScore() << "\n";
       }
@@ -357,8 +357,8 @@ class RewriteInstanceDiff {
   /// Also match each edge in binary 2 to the corresponding ones in binary 1.
   void matchBasicBlocks() {
     for (const auto &MapEntry : FuncMap) {
-      const auto &Func1 = MapEntry.second;
-      const auto &Func2 = MapEntry.first;
+      const BinaryFunction *const &Func1 = MapEntry.second;
+      const BinaryFunction *const &Func2 = MapEntry.first;
 
       auto Iter1 = Func1->layout_begin();
       auto Iter2 = Func2->layout_begin();
@@ -386,8 +386,8 @@ class RewriteInstanceDiff {
             Match = false;
             break;
           }
-          const auto ScoreEdge1 = getNormalizedScore(BIIter1, RI1);
-          const auto ScoreEdge2 = getNormalizedScore(BIIter2, RI2);
+          const double ScoreEdge1 = getNormalizedScore(BIIter1, RI1);
+          const double ScoreEdge2 = getNormalizedScore(BIIter2, RI2);
           EMap.insert(std::make_pair<>(
               std::abs(ScoreEdge2 - ScoreEdge1),
               std::make_pair<>(
@@ -422,8 +422,8 @@ class RewriteInstanceDiff {
   void reportHottestBBDiffs() {
     std::map<double, const BinaryBasicBlock *> LargestDiffs;
     for (const auto &MapEntry : BBMap) {
-      const auto *BB2 = MapEntry.first;
-      const auto *BB1 = MapEntry.second;
+      const BinaryBasicBlock *BB2 = MapEntry.first;
+      const BinaryBasicBlock *BB1 = MapEntry.second;
       LargestDiffs.insert(
           std::make_pair<>(std::abs(getNormalizedScore(*BB2, RI2) -
                                     getNormalizedScore(*BB1, RI1)),
@@ -439,9 +439,9 @@ class RewriteInstanceDiff {
     setRegularColor();
     outs() << " * Functions with different contents do not appear here\n\n";
     for (auto I = LargestDiffs.rbegin(), E = LargestDiffs.rend(); I != E; ++I) {
-      const auto *BB2 = I->second;
-      const auto Score2 = getNormalizedScore(*BB2, RI2);
-      const auto Score1 = getNormalizedScore(*BBMap[BB2], RI1);
+      const BinaryBasicBlock *BB2 = I->second;
+      const double Score2 = getNormalizedScore(*BB2, RI2);
+      const double Score1 = getNormalizedScore(*BBMap[BB2], RI1);
       outs() << "BB " << BB2->getName() << " from "
              << BBToFuncMap[BB2]->getDemangledName()
              << "\n\tScore bin1 = " << format("%.4f", Score1 * 100.0)
@@ -470,10 +470,12 @@ class RewriteInstanceDiff {
     setRegularColor();
     outs() << " * Functions with different contents do not appear here\n";
     for (auto I = EdgeMap.rbegin(), E = EdgeMap.rend(); I != E; ++I) {
-      auto &Edge2 = I->second.first;
-      auto &Edge1 = I->second.second;
-      const auto Score2 = std::get<2>(Edge2);
-      const auto Score1 = std::get<2>(Edge1);
+      std::tuple<const BinaryBasicBlock *, const BinaryBasicBlock *, double>
+          &Edge2 = I->second.first;
+      std::tuple<const BinaryBasicBlock *, const BinaryBasicBlock *, double>
+          &Edge1 = I->second.second;
+      const double Score2 = std::get<2>(Edge2);
+      const double Score1 = std::get<2>(Edge1);
       outs() << "Edge (" << std::get<0>(Edge2)->getName() << " -> "
              << std::get<1>(Edge2)->getName() << ") in "
              << BBToFuncMap[std::get<0>(Edge2)]->getDemangledName()
@@ -500,7 +502,7 @@ class RewriteInstanceDiff {
   /// LTO variant 1 to variant 2, even though they represent the same function.
   void computeAggregatedLTOScore() {
     for (const auto &BFI : RI1.BC->getBinaryFunctions()) {
-      const auto &Function = BFI.second;
+      const BinaryFunction &Function = BFI.second;
       double Score = getNormalizedScore(Function, RI1);
       auto Iter = LTOMap1.find(&Function);
       if (Iter == LTOMap1.end())
@@ -510,7 +512,7 @@ class RewriteInstanceDiff {
 
     double UnmappedScore{0};
     for (const auto &BFI : RI2.BC->getBinaryFunctions()) {
-      const auto &Function = BFI.second;
+      const BinaryFunction &Function = BFI.second;
       bool Matched = FuncMap.find(&Function) != FuncMap.end();
       double Score = getNormalizedScore(Function, RI2);
       auto Iter = LTOMap2.find(&Function);
@@ -539,8 +541,8 @@ class RewriteInstanceDiff {
   void reportHottestFuncDiffs() {
     std::multimap<double, decltype(FuncMap)::value_type> LargestDiffs;
     for (const auto &MapEntry : FuncMap) {
-      const auto &Func1 = MapEntry.second;
-      const auto &Func2 = MapEntry.first;
+      const BinaryFunction *const &Func1 = MapEntry.second;
+      const BinaryFunction *const &Func2 = MapEntry.first;
       double Score1 = getNormalizedScore(*Func1, RI1);
       auto Iter1 = LTOMap1.find(Func1);
       if (Iter1 != LTOMap1.end()) {
@@ -565,12 +567,13 @@ class RewriteInstanceDiff {
     outs() << "=========================================================\n";
     setRegularColor();
     for (auto I = LargestDiffs.rbegin(), E = LargestDiffs.rend(); I != E; ++I) {
-      const auto &MapEntry = I->second;
+      const std::pair<const BinaryFunction *const, const BinaryFunction *>
+          &MapEntry = I->second;
       if (opts::IgnoreUnchanged &&
           MapEntry.second->computeHash(/*UseDFS=*/true) ==
           MapEntry.first->computeHash(/*UseDFS=*/true))
         continue;
-      const auto &Scores = ScoreMap[MapEntry.first];
+      const std::pair<double, double> &Scores = ScoreMap[MapEntry.first];
       outs() << "Function " << MapEntry.first->getDemangledName();
       if (MapEntry.first->getDemangledName() !=
           MapEntry.second->getDemangledName())
@@ -609,7 +612,7 @@ class RewriteInstanceDiff {
     outs() << "=====================================\n";
     setRegularColor();
     for (auto I = LargestBin2.rbegin(), E = LargestBin2.rend(); I != E; ++I) {
-      const auto &MapEntry = *I;
+      const std::pair<const double, const BinaryFunction *> &MapEntry = *I;
       outs() << "Function " << MapEntry.second->getDemangledName() << "\n";
       auto Iter = ScoreMap.find(MapEntry.second);
       if (Iter != ScoreMap.end()) {
@@ -629,7 +632,7 @@ class RewriteInstanceDiff {
     outs() << "=====================================\n";
     setRegularColor();
     for (auto I = LargestBin1.rbegin(), E = LargestBin1.rend(); I != E; ++I) {
-      const auto &MapEntry = *I;
+      const std::pair<const double, const BinaryFunction *> &MapEntry = *I;
       outs() << "Function " << MapEntry.second->getDemangledName()
              << "\n\tScore bin1 = " << format("%.2f", MapEntry.first * 100.0)
              << "%\n";
@@ -646,7 +649,7 @@ class RewriteInstanceDiff {
     outs() << "List of functions from binary 2 that were not matched with any "
            << "function in binary 1:\n";
     for (const auto &BFI2 : RI2.BC->getBinaryFunctions()) {
-      const auto &Function2 = BFI2.second;
+      const BinaryFunction &Function2 = BFI2.second;
       if (Bin2MappedFuncs.count(&Function2))
         continue;
       outs() << Function2.getPrintName() << "\n";

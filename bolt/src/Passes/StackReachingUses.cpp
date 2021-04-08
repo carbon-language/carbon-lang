@@ -19,7 +19,7 @@ bool StackReachingUses::isLoadedInDifferentReg(const FrameIndexEntry &StoreFIE,
                                                ExprIterator Candidates) const {
   for (auto I = Candidates; I != expr_end(); ++I) {
     const MCInst *ReachingInst = *I;
-    if (auto FIEY = FA.getFIEFor(*ReachingInst)) {
+    if (ErrorOr<const FrameIndexEntry &> FIEY = FA.getFIEFor(*ReachingInst)) {
       assert(FIEY->IsLoad == 1);
       if (StoreFIE.StackOffset + StoreFIE.Size > FIEY->StackOffset &&
           StoreFIE.StackOffset < FIEY->StackOffset + FIEY->Size &&
@@ -37,7 +37,7 @@ bool StackReachingUses::isStoreUsed(const FrameIndexEntry &StoreFIE,
   for (auto I = Candidates; I != expr_end(); ++I) {
     const MCInst *ReachingInst = *I;
     if (IncludeLocalAccesses) {
-      if (auto FIEY = FA.getFIEFor(*ReachingInst)) {
+      if (ErrorOr<const FrameIndexEntry &> FIEY = FA.getFIEFor(*ReachingInst)) {
         assert(FIEY->IsLoad == 1);
         if (StoreFIE.StackOffset + StoreFIE.Size > FIEY->StackOffset &&
             StoreFIE.StackOffset < FIEY->StackOffset + FIEY->Size) {
@@ -45,13 +45,13 @@ bool StackReachingUses::isStoreUsed(const FrameIndexEntry &StoreFIE,
         }
       }
     }
-    auto Args = FA.getArgAccessesFor(*ReachingInst);
+    ErrorOr<const ArgAccesses &> Args = FA.getArgAccessesFor(*ReachingInst);
     if (!Args)
       continue;
     if (Args->AssumeEverything) {
       return true;
     }
-    for (auto FIEY : Args->Set) {
+    for (ArgInStackAccess FIEY : Args->Set) {
       if (StoreFIE.StackOffset + StoreFIE.Size > FIEY.StackOffset &&
           StoreFIE.StackOffset < FIEY.StackOffset + FIEY.Size) {
         return true;
@@ -68,16 +68,16 @@ void StackReachingUses::preflight() {
   // Populate our universe of tracked expressions. We are interested in
   // tracking reaching loads from frame position at any given point of the
   // program.
-  for (auto &BB : Func) {
-    for (auto &Inst : BB) {
-      if (auto FIE = FA.getFIEFor(Inst)) {
+  for (BinaryBasicBlock &BB : Func) {
+    for (MCInst &Inst : BB) {
+      if (ErrorOr<const FrameIndexEntry &> FIE = FA.getFIEFor(Inst)) {
         if (FIE->IsLoad == true) {
           Expressions.push_back(&Inst);
           ExprToIdx[&Inst] = NumInstrs++;
           continue;
         }
       }
-      auto AA = FA.getArgAccessesFor(Inst);
+      ErrorOr<const ArgAccesses &> AA = FA.getArgAccessesFor(Inst);
       if (AA && (!AA->Set.empty() || AA->AssumeEverything)) {
         Expressions.push_back(&Inst);
         ExprToIdx[&Inst] = NumInstrs++;
@@ -89,8 +89,8 @@ void StackReachingUses::preflight() {
 bool StackReachingUses::doesXKillsY(const MCInst *X, const MCInst *Y) {
   // if X is a store to the same stack location and the bytes fetched is a
   // superset of those bytes affected by the load in Y, return true
-  auto FIEX = FA.getFIEFor(*X);
-  auto FIEY = FA.getFIEFor(*Y);
+  ErrorOr<const FrameIndexEntry &> FIEX = FA.getFIEFor(*X);
+  ErrorOr<const FrameIndexEntry &> FIEY = FA.getFIEFor(*Y);
   if (FIEX && FIEY) {
     if (FIEX->IsSimple == true && FIEY->IsSimple == true &&
         FIEX->IsStore == true && FIEY->IsLoad == true &&
@@ -114,11 +114,11 @@ BitVector StackReachingUses::computeNext(const MCInst &Point,
     }
   };
   // Gen
-  if (auto FIE = FA.getFIEFor(Point)) {
+  if (ErrorOr<const FrameIndexEntry &> FIE = FA.getFIEFor(Point)) {
     if (FIE->IsLoad == true)
       Next.set(ExprToIdx[&Point]);
   }
-  auto AA = FA.getArgAccessesFor(Point);
+  ErrorOr<const ArgAccesses &> AA = FA.getArgAccessesFor(Point);
   if (AA && (!AA->Set.empty() || AA->AssumeEverything))
     Next.set(ExprToIdx[&Point]);
   return Next;

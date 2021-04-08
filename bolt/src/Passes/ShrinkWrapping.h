@@ -228,8 +228,8 @@ public:
       : FA(FA), BC(BC), BF(BF), Info(Info), AllocatorId(AllocId) {}
 
   ~StackLayoutModifier() {
-    for (auto &BB : BF) {
-      for (auto &Inst : BB) {
+    for (BinaryBasicBlock &BB : BF) {
+      for (MCInst &Inst : BB) {
         BC.MIB->removeAnnotation(Inst, getTodoTag());
         BC.MIB->removeAnnotation(Inst, getSlotTag());
         BC.MIB->removeAnnotation(Inst, getOffsetCFIRegTag());
@@ -487,7 +487,7 @@ private:
 
   /// Insert any CFI that should be attached to a register spill save/restore.
   BBIterTy insertCFIsForPushOrPop(BinaryBasicBlock &BB, BBIterTy Pos,
-                                  unsigned Reg, bool isPush, int Sz,
+                                  unsigned Reg, bool IsPush, int Sz,
                                   int64_t NewOffset);
 
   /// Auxiliary function to processInsertionsList, adding a new instruction
@@ -524,8 +524,8 @@ public:
         SLM(FA, BC, BF, Info, AllocId), CSA(FA, BC, BF, Info, AllocId) {}
 
   ~ShrinkWrapping() {
-    for (auto &BB : BF) {
-      for (auto &Inst : BB) {
+    for (BinaryBasicBlock &BB : BF) {
+      for (MCInst &Inst : BB) {
         BC.MIB->removeAnnotation(Inst, getAnnotationIndex());
       }
     }

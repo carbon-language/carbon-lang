@@ -43,7 +43,7 @@ public:
 
   bool isReachedBy(MCPhysReg Reg, ExprIterator Candidates) {
     for (auto I = Candidates; I != this->expr_end(); ++I) {
-      auto BV = BitVector(this->BC.MRI->getNumRegs(), false);
+      BitVector BV = BitVector(this->BC.MRI->getNumRegs(), false);
       if (Def) {
         RA.getInstClobberList(**I, BV);
       } else {
@@ -74,8 +74,8 @@ protected:
   void preflight() {
     // Populate our universe of tracked expressions with all instructions
     // except pseudos
-    for (auto &BB : this->Func) {
-      for (auto &Inst : BB) {
+    for (BinaryBasicBlock &BB : this->Func) {
+      for (MCInst &Inst : BB) {
         this->Expressions.push_back(&Inst);
         this->ExprToIdx[&Inst] = this->NumInstrs++;
       }
@@ -98,8 +98,8 @@ protected:
   /// tracked expression, will be considered to be dead after executing X.
   bool doesXKillsY(const MCInst *X, const MCInst *Y) {
     // getClobberedRegs for X and Y. If they intersect, return true
-    auto XClobbers = BitVector(this->BC.MRI->getNumRegs(), false);
-    auto YClobbers = BitVector(this->BC.MRI->getNumRegs(), false);
+    BitVector XClobbers = BitVector(this->BC.MRI->getNumRegs(), false);
+    BitVector YClobbers = BitVector(this->BC.MRI->getNumRegs(), false);
     RA.getInstClobberList(*X, XClobbers);
     // In defs, write after write -> kills first write
     // In uses, write after access (read or write) -> kills access
@@ -135,7 +135,7 @@ protected:
       }
       else {
         // Track only instructions relevant to TrackingReg
-        auto Regs = BitVector(this->BC.MRI->getNumRegs(), false);
+        BitVector Regs = BitVector(this->BC.MRI->getNumRegs(), false);
         if (Def)
           RA.getInstClobberList(Point, Regs);
         else

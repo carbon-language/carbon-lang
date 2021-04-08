@@ -37,10 +37,11 @@ namespace llvm {
 namespace bolt {
 
 bool YAMLProfileReader::isYAML(const StringRef Filename) {
-  auto MB = MemoryBuffer::getFileOrSTDIN(Filename);
+  ErrorOr<std::unique_ptr<MemoryBuffer>> MB =
+      MemoryBuffer::getFileOrSTDIN(Filename);
   if (std::error_code EC = MB.getError())
     report_error(Filename, EC);
-  auto Buffer = MB.get()->getBuffer();
+  StringRef Buffer = MB.get()->getBuffer();
   if (Buffer.startswith("---\n"))
     return true;
   return false;
@@ -48,20 +49,20 @@ bool YAMLProfileReader::isYAML(const StringRef Filename) {
 
 void YAMLProfileReader::buildNameMaps(
     std::map<uint64_t, BinaryFunction> &Functions) {
-  for (auto &YamlBF : YamlBP.Functions) {
+  for (yaml::bolt::BinaryFunctionProfile &YamlBF : YamlBP.Functions) {
     StringRef Name = YamlBF.Name;
-    const auto Pos = Name.find("(*");
+    const size_t Pos = Name.find("(*");
     if (Pos != StringRef::npos)
       Name = Name.substr(0, Pos);
     ProfileNameToProfile[Name] = &YamlBF;
-    if (const auto CommonName = getLTOCommonName(Name)) {
+    if (const Optional<StringRef> CommonName = getLTOCommonName(Name)) {
       LTOCommonNameMap[*CommonName].push_back(&YamlBF);
     }
   }
   for (auto &BFI : Functions) {
-    const auto &Function = BFI.second;
-    for (auto Name : Function.getNames()) {
-      if (const auto CommonName = getLTOCommonName(Name)) {
+    const BinaryFunction &Function = BFI.second;
+    for (StringRef Name : Function.getNames()) {
+      if (const Optional<StringRef> CommonName = getLTOCommonName(Name)) {
         LTOCommonNameFunctionMap[*CommonName].insert(&Function);
       }
     }
@@ -69,8 +70,9 @@ void YAMLProfileReader::buildNameMaps(
 }
 
 bool YAMLProfileReader::hasLocalsWithFileName() const {
-  for (const auto &KV : ProfileNameToProfile) {
-    const auto &FuncName = KV.getKey();
+  for (const StringMapEntry<yaml::bolt::BinaryFunctionProfile *> &KV :
+       ProfileNameToProfile) {
+    const StringRef &FuncName = KV.getKey();
     if (FuncName.count('/') == 2 && FuncName[0] != '/')
       return true;
   }
@@ -80,7 +82,7 @@ bool YAMLProfileReader::hasLocalsWithFileName() const {
 bool YAMLProfileReader::parseFunctionProfile(
     BinaryFunction &BF,
     const yaml::bolt::BinaryFunctionProfile &YamlBF) {
-  auto &BC = BF.getBinaryContext();
+  BinaryContext &BC = BF.getBinaryContext();
 
   bool ProfileMatched = true;
   uint64_t MismatchedBlocks = 0;
@@ -103,9 +105,9 @@ bool YAMLProfileReader::parseFunctionProfile(
     ProfileMatched = false;
   }
 
-  auto DFSOrder = BF.dfs();
+  std::vector<BinaryBasicBlock *> DFSOrder = BF.dfs();
 
-  for (const auto &YamlBB : YamlBF.Blocks) {
+  for (const yaml::bolt::BinaryBasicBlockProfile &YamlBB : YamlBF.Blocks) {
     if (YamlBB.Index >= DFSOrder.size()) {
       if (opts::Verbosity >= 2)
         errs() << "BOLT-WARNING: index " << YamlBB.Index
@@ -114,7 +116,7 @@ bool YAMLProfileReader::parseFunctionProfile(
       continue;
     }
 
-    auto &BB = *DFSOrder[YamlBB.Index];
+    BinaryBasicBlock &BB = *DFSOrder[YamlBB.Index];
 
     // Basic samples profile (without LBR) does not have branches information
     // and needs a special processing.
@@ -123,7 +125,7 @@ bool YAMLProfileReader::parseFunctionProfile(
         BB.setExecutionCount(0);
         continue;
       }
-      auto NumSamples = YamlBB.EventCount * 1000;
+      uint64_t NumSamples = YamlBB.EventCount * 1000;
       if (NormalizeByInsnCount && BB.getNumNonPseudos()) {
         NumSamples /= BB.getNumNonPseudos();
       } else if (NormalizeByCalls) {
@@ -137,9 +139,10 @@ bool YAMLProfileReader::parseFunctionProfile(
 
     BB.setExecutionCount(YamlBB.ExecCount);
 
-    for (const auto &YamlCSI: YamlBB.CallSites) {
-      auto *Callee = YamlCSI.DestId < YamlProfileToFunction.size() ?
-          YamlProfileToFunction[YamlCSI.DestId] : nullptr;
+    for (const yaml::bolt::CallSiteInfo &YamlCSI : YamlBB.CallSites) {
+      BinaryFunction *Callee = YamlCSI.DestId < YamlProfileToFunction.size()
+                                   ? YamlProfileToFunction[YamlCSI.DestId]
+                                   : nullptr;
       bool IsFunction = Callee ? true : false;
       MCSymbol *CalleeSymbol = nullptr;
       if (IsFunction) {
@@ -156,8 +159,8 @@ bool YAMLProfileReader::parseFunctionProfile(
         continue;
       }
 
-      auto *Instr =
-        BF.getInstructionAtOffset(BB.getInputOffset() + YamlCSI.Offset);
+      MCInst *Instr =
+          BF.getInstructionAtOffset(BB.getInputOffset() + YamlCSI.Offset);
       if (!Instr) {
         if (opts::Verbosity >= 2)
           errs() << "BOLT-WARNING: no instruction at offset " << YamlCSI.Offset
@@ -185,9 +188,8 @@ bool YAMLProfileReader::parseFunctionProfile(
       };
 
       if (BC.MIB->isIndirectCall(*Instr) || BC.MIB->isIndirectBranch(*Instr)) {
-        IndirectCallSiteProfile &CSP =
-          BC.MIB->getOrCreateAnnotationAs<IndirectCallSiteProfile>(
-              *Instr, "CallProfile");
+        auto &CSP = BC.MIB->getOrCreateAnnotationAs<IndirectCallSiteProfile>(
+            *Instr, "CallProfile");
         CSP.emplace_back(CalleeSymbol, YamlCSI.Count, YamlCSI.Mispreds);
       } else if (BC.MIB->getConditionalTailCall(*Instr)) {
         setAnnotation("CTCTakenCount", YamlCSI.Count);
@@ -197,7 +199,7 @@ bool YAMLProfileReader::parseFunctionProfile(
       }
     }
 
-    for (const auto &YamlSI : YamlBB.Successors) {
+    for (const yaml::bolt::SuccessorInfo &YamlSI : YamlBB.Successors) {
       if (YamlSI.Index >= DFSOrder.size()) {
         if (opts::Verbosity >= 1)
           errs() << "BOLT-WARNING: index out of bounds for profiled block\n";
@@ -205,7 +207,7 @@ bool YAMLProfileReader::parseFunctionProfile(
         continue;
       }
 
-      auto &SuccessorBB = *DFSOrder[YamlSI.Index];
+      BinaryBasicBlock &SuccessorBB = *DFSOrder[YamlSI.Index];
       if (!BB.getSuccessor(SuccessorBB.getLabel())) {
         if (opts::Verbosity >= 1)
           errs() << "BOLT-WARNING: no successor for block " << BB.getName()
@@ -215,14 +217,14 @@ bool YAMLProfileReader::parseFunctionProfile(
         continue;
       }
 
-      auto &BI = BB.getBranchInfo(SuccessorBB);
+      BinaryBasicBlock::BinaryBranchInfo &BI = BB.getBranchInfo(SuccessorBB);
       BI.Count += YamlSI.Count;
       BI.MispredictedCount += YamlSI.Mispreds;
     }
   }
 
   // If basic block profile wasn't read it should be 0.
-  for (auto &BB : BF) {
+  for (BinaryBasicBlock &BB : BF) {
     if (BB.getExecutionCount() == BinaryBasicBlock::COUNT_NO_PROFILE)
       BB.setExecutionCount(0);
   }
@@ -247,7 +249,8 @@ bool YAMLProfileReader::parseFunctionProfile(
 }
 
 Error YAMLProfileReader::preprocessProfile(BinaryContext &BC) {
-  auto MB = MemoryBuffer::getFileOrSTDIN(Filename);
+  ErrorOr<std::unique_ptr<MemoryBuffer>> MB =
+      MemoryBuffer::getFileOrSTDIN(Filename);
   if (std::error_code EC = MB.getError()) {
     errs() << "ERROR: cannot open " << Filename << ": " << EC.message() << "\n";
     return errorCodeToError(EC);
@@ -297,7 +300,7 @@ bool YAMLProfileReader::mayHaveProfileData(const BinaryFunction &BF) {
   for (StringRef Name : BF.getNames()) {
     if (ProfileNameToProfile.find(Name) != ProfileNameToProfile.end())
       return true;
-    if (const auto CommonName = getLTOCommonName(Name)) {
+    if (const Optional<StringRef> CommonName = getLTOCommonName(Name)) {
       if (LTOCommonNameMap.find(*CommonName) != LTOCommonNameMap.end()) {
         return true;
       }
@@ -324,7 +327,7 @@ Error YAMLProfileReader::readProfile(BinaryContext &BC) {
   // names. The first pass assigns profiles that match 100% by name and
   // by hash. The second pass allows name ambiguity for LTO private functions.
   for (auto &BFI : BC.getBinaryFunctions()) {
-    auto &Function = BFI.second;
+    BinaryFunction &Function = BFI.second;
 
     // Clear function call count that may have been set while pre-processing
     // the profile.
@@ -334,33 +337,34 @@ Error YAMLProfileReader::readProfile(BinaryContext &BC) {
     if (!opts::IgnoreHash)
       Function.computeHash(/*UseDFS=*/true);
 
-    for (auto FunctionName : Function.getNames()) {
+    for (StringRef FunctionName : Function.getNames()) {
       auto PI = ProfileNameToProfile.find(FunctionName);
       if (PI == ProfileNameToProfile.end()) {
         continue;
       }
-      auto &YamlBF = *PI->getValue();
+      yaml::bolt::BinaryFunctionProfile &YamlBF = *PI->getValue();
       if (profileMatches(YamlBF, Function))
         matchProfileToFunction(YamlBF, Function);
     }
   }
 
   for (auto &BFI : BC.getBinaryFunctions()) {
-    auto &Function = BFI.second;
+    BinaryFunction &Function = BFI.second;
 
     if (ProfiledFunctions.count(&Function))
       continue;
 
-    for (auto FunctionName : Function.getNames()) {
-      const auto CommonName = getLTOCommonName(FunctionName);
+    for (StringRef FunctionName : Function.getNames()) {
+      const Optional<StringRef> CommonName = getLTOCommonName(FunctionName);
       if (CommonName) {
         auto I = LTOCommonNameMap.find(*CommonName);
         if (I == LTOCommonNameMap.end())
           continue;
 
         bool ProfileMatched{false};
-        auto &LTOProfiles = I->getValue();
-        for (auto *YamlBF : LTOProfiles) {
+        std::vector<yaml::bolt::BinaryFunctionProfile *> &LTOProfiles =
+            I->getValue();
+        for (yaml::bolt::BinaryFunctionProfile *YamlBF : LTOProfiles) {
           if (YamlBF->Used)
             continue;
           if ((ProfileMatched = profileMatches(*YamlBF, Function))) {
@@ -384,7 +388,7 @@ Error YAMLProfileReader::readProfile(BinaryContext &BC) {
         if (PI == ProfileNameToProfile.end())
           continue;
 
-        auto &YamlBF = *PI->getValue();
+        yaml::bolt::BinaryFunctionProfile &YamlBF = *PI->getValue();
         if (!YamlBF.Used) {
           matchProfileToFunction(YamlBF, Function);
           break;
@@ -393,7 +397,7 @@ Error YAMLProfileReader::readProfile(BinaryContext &BC) {
     }
   }
 
-  for (auto &YamlBF : YamlBP.Functions) {
+  for (yaml::bolt::BinaryFunctionProfile &YamlBF : YamlBP.Functions) {
     if (!YamlBF.Used && opts::Verbosity >= 1) {
       errs() << "BOLT-WARNING: profile ignored for function " << YamlBF.Name
              << '\n';
@@ -405,13 +409,13 @@ Error YAMLProfileReader::readProfile(BinaryContext &BC) {
   NormalizeByCalls = usesEvent("branches");
 
   uint64_t NumUnused{0};
-  for (auto &YamlBF : YamlBP.Functions) {
+  for (yaml::bolt::BinaryFunctionProfile &YamlBF : YamlBP.Functions) {
     if (YamlBF.Id >= YamlProfileToFunction.size()) {
       // Such profile was ignored.
       ++NumUnused;
       continue;
     }
-    if (auto *BF = YamlProfileToFunction[YamlBF.Id]) {
+    if (BinaryFunction *BF = YamlProfileToFunction[YamlBF.Id]) {
       parseFunctionProfile(*BF, YamlBF);
     } else {
       ++NumUnused;

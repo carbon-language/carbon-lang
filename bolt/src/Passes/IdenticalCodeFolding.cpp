@@ -60,11 +60,11 @@ bool equalJumpTables(const JumpTable &JumpTableA,
     return false;
 
   for (uint64_t Index = 0; Index < JumpTableA.Entries.size(); ++Index) {
-    const auto *LabelA = JumpTableA.Entries[Index];
-    const auto *LabelB = JumpTableB.Entries[Index];
+    const MCSymbol *LabelA = JumpTableA.Entries[Index];
+    const MCSymbol *LabelB = JumpTableB.Entries[Index];
 
-    const auto *TargetA = FunctionA.getBasicBlockForLabel(LabelA);
-    const auto *TargetB = FunctionB.getBasicBlockForLabel(LabelB);
+    const BinaryBasicBlock *TargetA = FunctionA.getBasicBlockForLabel(LabelA);
+    const BinaryBasicBlock *TargetB = FunctionB.getBasicBlockForLabel(LabelB);
 
     if (!TargetA || !TargetB) {
       assert((TargetA || LabelA == FunctionA.getFunctionEndLabel()) &&
@@ -98,7 +98,7 @@ bool isInstrEquivalentWith(const MCInst &InstA, const BinaryBasicBlock &BBA,
     return false;
   }
 
-  const auto &BC = BBA.getFunction()->getBinaryContext();
+  const BinaryContext &BC = BBA.getFunction()->getBinaryContext();
 
   // In this function we check for special conditions:
   //
@@ -110,8 +110,8 @@ bool isInstrEquivalentWith(const MCInst &InstA, const BinaryBasicBlock &BBA,
   // NB: there's no need to compare jump table indirect jump instructions
   //     separately as jump tables are handled by comparing corresponding
   //     symbols.
-  const auto EHInfoA = BC.MIB->getEHInfo(InstA);
-  const auto EHInfoB = BC.MIB->getEHInfo(InstB);
+  const Optional<MCPlus::MCLandingPad> EHInfoA = BC.MIB->getEHInfo(InstA);
+  const Optional<MCPlus::MCLandingPad> EHInfoB = BC.MIB->getEHInfo(InstB);
 
   if (EHInfoA || EHInfoB) {
     if (!EHInfoA && (EHInfoB->first || EHInfoB->second))
@@ -129,8 +129,8 @@ bool isInstrEquivalentWith(const MCInst &InstA, const BinaryBasicBlock &BBA,
         return false;
 
       if (EHInfoA->first && EHInfoB->first) {
-        const auto *LPA = BBA.getLandingPad(EHInfoA->first);
-        const auto *LPB = BBB.getLandingPad(EHInfoB->first);
+        const BinaryBasicBlock *LPA = BBA.getLandingPad(EHInfoA->first);
+        const BinaryBasicBlock *LPB = BBB.getLandingPad(EHInfoB->first);
         assert(LPA && LPB && "cannot locate landing pad(s)");
 
         if (LPA->getLayoutIndex() != LPB->getLayoutIndex())
@@ -166,14 +166,16 @@ bool isIdenticalWith(const BinaryFunction &A, const BinaryFunction &B,
     return false;
 
   // Process both functions in either DFS or existing order.
-  const auto &OrderA = opts::UseDFS ? A.dfs() : A.getLayout();
-  const auto &OrderB = opts::UseDFS ? B.dfs() : B.getLayout();
+  const std::vector<BinaryBasicBlock *> &OrderA =
+      opts::UseDFS ? A.dfs() : A.getLayout();
+  const std::vector<BinaryBasicBlock *> &OrderB =
+      opts::UseDFS ? B.dfs() : B.getLayout();
 
-  const auto &BC = A.getBinaryContext();
+  const BinaryContext &BC = A.getBinaryContext();
 
   auto BBI = OrderB.begin();
-  for (const auto *BB : OrderA) {
-    const auto *OtherBB = *BBI;
+  for (const BinaryBasicBlock *BB : OrderA) {
+    const BinaryBasicBlock *OtherBB = *BBI;
 
     if (BB->getLayoutIndex() != OtherBB->getLayoutIndex())
       return false;
@@ -184,8 +186,8 @@ bool isIdenticalWith(const BinaryFunction &A, const BinaryFunction &B,
       return false;
 
     auto SuccBBI = OtherBB->succ_begin();
-    for (const auto *SuccBB : BB->successors()) {
-      const auto *SuccOtherBB = *SuccBBI;
+    for (const BinaryBasicBlock *SuccBB : BB->successors()) {
+      const BinaryBasicBlock *SuccOtherBB = *SuccBBI;
       if (SuccBB->getLayoutIndex() != SuccOtherBB->getLayoutIndex())
         return false;
       ++SuccBBI;
@@ -212,8 +214,10 @@ bool isIdenticalWith(const BinaryFunction &A, const BinaryFunction &B,
         // Compare symbols as functions.
         uint64_t EntryIDA{0};
         uint64_t EntryIDB{0};
-        const auto *FunctionA = BC.getFunctionForSymbol(SymbolA, &EntryIDA);
-        const auto *FunctionB = BC.getFunctionForSymbol(SymbolB, &EntryIDB);
+        const BinaryFunction *FunctionA =
+            BC.getFunctionForSymbol(SymbolA, &EntryIDA);
+        const BinaryFunction *FunctionB =
+            BC.getFunctionForSymbol(SymbolB, &EntryIDB);
         if (FunctionA && EntryIDA)
           FunctionA = nullptr;
         if (FunctionB && EntryIDB)
@@ -237,23 +241,23 @@ bool isIdenticalWith(const BinaryFunction &A, const BinaryFunction &B,
         }
 
         // Check if symbols are jump tables.
-        auto *SIA = BC.getBinaryDataByName(SymbolA->getName());
+        const BinaryData *SIA = BC.getBinaryDataByName(SymbolA->getName());
         if (!SIA)
           return false;
-        auto *SIB = BC.getBinaryDataByName(SymbolB->getName());
+        const BinaryData *SIB = BC.getBinaryDataByName(SymbolB->getName());
         if (!SIB)
           return false;
 
         assert((SIA->getAddress() != SIB->getAddress()) &&
                "different symbols should not have the same value");
 
-        const auto *JumpTableA =
-           A.getJumpTableContainingAddress(SIA->getAddress());
+        const JumpTable *JumpTableA =
+            A.getJumpTableContainingAddress(SIA->getAddress());
         if (!JumpTableA)
           return false;
 
-        const auto *JumpTableB =
-           B.getJumpTableContainingAddress(SIB->getAddress());
+        const JumpTable *JumpTableB =
+            B.getJumpTableContainingAddress(SIB->getAddress());
         if (!JumpTableB)
           return false;
 
@@ -274,8 +278,8 @@ bool isIdenticalWith(const BinaryFunction &A, const BinaryFunction &B,
 
     // One of the identical blocks may have a trailing unconditional jump that
     // is ignored for CFG purposes.
-    auto *TrailingInstr = (I != E ? &(*I)
-                                  : (OtherI != OtherE ? &(*OtherI) : 0));
+    const MCInst *TrailingInstr =
+        (I != E ? &(*I) : (OtherI != OtherE ? &(*OtherI) : 0));
     if (TrailingInstr && !BC.MIB->isUnconditionalBranch(*TrailingInstr)) {
       return false;
     }
@@ -353,7 +357,7 @@ std::string hashSymbol(BinaryContext &BC, const MCSymbol &Symbol) {
   if (BC.getFunctionForSymbol(&Symbol))
     return HashString;
 
-  auto ErrorOrValue = BC.getSymbolValue(Symbol);
+  llvm::ErrorOr<uint64_t> ErrorOrValue = BC.getSymbolValue(Symbol);
   if (!ErrorOrValue)
     return HashString;
 
@@ -406,7 +410,7 @@ namespace llvm {
 namespace bolt {
 
 void IdenticalCodeFolding::runOnFunctions(BinaryContext &BC) {
-  const auto OriginalFunctionCount = BC.getBinaryFunctions().size();
+  const size_t OriginalFunctionCount = BC.getBinaryFunctions().size();
   uint64_t NumFunctionsFolded{0};
   std::atomic<uint64_t> NumJTFunctionsFolded{0};
   std::atomic<uint64_t> BytesSavedEstimate{0};
@@ -446,7 +450,7 @@ void IdenticalCodeFolding::runOnFunctions(BinaryContext &BC) {
                                            "congruent buckets", "ICF breakdown",
                                            "ICF breakdown", opts::TimeICF);
     for (auto &BFI : BC.getBinaryFunctions()) {
-      auto &BF = BFI.second;
+      BinaryFunction &BF = BFI.second;
       if (!this->shouldOptimize(BF))
         continue;
       CongruentBuckets[&BF].emplace(&BF);
@@ -473,13 +477,13 @@ void IdenticalCodeFolding::runOnFunctions(BinaryContext &BC) {
 
       // Identical functions go into the same bucket.
       IdenticalBucketsMap IdenticalBuckets;
-      for (auto *BF : Candidates) {
+      for (BinaryFunction *BF : Candidates) {
         IdenticalBuckets[BF].emplace_back(BF);
       }
 
       for (auto &IBI : IdenticalBuckets) {
         // Functions identified as identical.
-        auto &Twins = IBI.second;
+        std::vector<BinaryFunction *> &Twins = IBI.second;
         if (Twins.size() < 2)
           continue;
 
@@ -492,8 +496,8 @@ void IdenticalCodeFolding::runOnFunctions(BinaryContext &BC) {
                          });
 
         BinaryFunction *ParentBF = Twins[0];
-        for (unsigned i = 1; i < Twins.size(); ++i) {
-          auto *ChildBF = Twins[i];
+        for (unsigned I = 1; I < Twins.size(); ++I) {
+          BinaryFunction *ChildBF = Twins[I];
           LLVM_DEBUG(dbgs() << "BOLT-DEBUG: folding " << *ChildBF << " into "
                             << *ParentBF << '\n');
 
@@ -521,7 +525,7 @@ void IdenticalCodeFolding::runOnFunctions(BinaryContext &BC) {
 
     // Create a task for each congruent bucket
     for (auto &Entry : CongruentBuckets) {
-      auto &Bucket = Entry.second;
+      std::set<BinaryFunction *> &Bucket = Entry.second;
       if (Bucket.size() < 2)
         continue;
 
@@ -553,16 +557,16 @@ void IdenticalCodeFolding::runOnFunctions(BinaryContext &BC) {
 
   } while (NumFoldedLastIteration > 0);
 
-   LLVM_DEBUG(
+  LLVM_DEBUG({
     // Print functions that are congruent but not identical.
     for (auto &CBI : CongruentBuckets) {
-      auto &Candidates = CBI.second;
+      std::set<BinaryFunction *> &Candidates = CBI.second;
       if (Candidates.size() < 2)
         continue;
       dbgs() << "BOLT-DEBUG: the following " << Candidates.size()
              << " functions (each of size " << (*Candidates.begin())->getSize()
              << " bytes) are congruent but not identical:\n";
-      for (auto *BF : Candidates) {
+      for (BinaryFunction *BF : Candidates) {
         dbgs() << "  " << *BF;
         if (BF->getKnownExecutionCount()) {
           dbgs() << " (executed " << BF->getKnownExecutionCount() << " times)";
@@ -570,7 +574,7 @@ void IdenticalCodeFolding::runOnFunctions(BinaryContext &BC) {
         dbgs() << '\n';
       }
     }
-  );
+  });
 
   if (NumFunctionsFolded) {
     outs() << "BOLT-INFO: ICF folded " << NumFunctionsFolded

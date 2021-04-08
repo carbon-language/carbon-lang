@@ -48,7 +48,7 @@ void PLTCall::runOnFunctions(BinaryContext &BC) {
 
   uint64_t NumCallsOptimized = 0;
   for (auto &It : BC.getBinaryFunctions()) {
-    auto &Function = It.second;
+    BinaryFunction &Function = It.second;
     if (!shouldOptimize(Function))
       continue;
 
@@ -56,17 +56,17 @@ void PLTCall::runOnFunctions(BinaryContext &BC) {
         Function.getExecutionCount() == BinaryFunction::COUNT_NO_PROFILE)
       continue;
 
-    for (auto *BB : Function.layout()) {
+    for (BinaryBasicBlock *BB : Function.layout()) {
       if (opts::PLT == OT_HOT && !BB->getKnownExecutionCount())
         continue;
 
-      for (auto &Instr : *BB) {
+      for (MCInst &Instr : *BB) {
         if (!BC.MIB->isCall(Instr))
           continue;
-        const auto *CallSymbol = BC.MIB->getTargetSymbol(Instr);
+        const MCSymbol *CallSymbol = BC.MIB->getTargetSymbol(Instr);
         if (!CallSymbol)
           continue;
-        const auto *CalleeBF = BC.getFunctionForSymbol(CallSymbol);
+        const BinaryFunction *CalleeBF = BC.getFunctionForSymbol(CallSymbol);
         if (!CalleeBF || !CalleeBF->isPLTFunction())
           continue;
         BC.MIB->convertCallToIndirectCall(Instr,

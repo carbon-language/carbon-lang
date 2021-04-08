@@ -29,9 +29,9 @@ void StackAvailableExpressions::preflight() {
   // Populate our universe of tracked expressions. We are interested in
   // tracking available stores to frame position at any given point of the
   // program.
-  for (auto &BB : Func) {
-    for (auto &Inst : BB) {
-      auto FIE = FA.getFIEFor(Inst);
+  for (BinaryBasicBlock &BB : Func) {
+    for (MCInst &Inst : BB) {
+      ErrorOr<const FrameIndexEntry &> FIE = FA.getFIEFor(Inst);
       if (!FIE)
         continue;
       if (FIE->IsStore == true && FIE->IsSimple == true) {
@@ -80,8 +80,8 @@ bool isLoadRedundant(const FrameIndexEntry &LoadFIE,
 bool StackAvailableExpressions::doesXKillsY(const MCInst *X, const MCInst *Y) {
   // if both are stores, and both store to the same stack location, return
   // true
-  auto FIEX = FA.getFIEFor(*X);
-  auto FIEY = FA.getFIEFor(*Y);
+  ErrorOr<const FrameIndexEntry &> FIEX = FA.getFIEFor(*X);
+  ErrorOr<const FrameIndexEntry &> FIEY = FA.getFIEFor(*Y);
   if (FIEX && FIEY) {
     if (isLoadRedundant(*FIEX, *FIEY))
       return false;
@@ -121,7 +121,7 @@ BitVector StackAvailableExpressions::computeNext(const MCInst &Point,
     }
   }
   // Gen
-  if (auto FIE = FA.getFIEFor(Point)) {
+  if (ErrorOr<const FrameIndexEntry &> FIE = FA.getFIEFor(Point)) {
     if (FIE->IsStore == true && FIE->IsSimple == true)
       Next.set(ExprToIdx[&Point]);
   }

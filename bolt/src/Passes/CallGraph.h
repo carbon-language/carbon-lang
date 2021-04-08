@@ -192,8 +192,8 @@ void CallGraph::printDot(char* FileName, L GetLabel) const {
   }
   for (NodeId F = 0; F < Nodes.size(); F++) {
     if (Nodes[F].samples() == 0) continue;
-    for (auto Dst : Nodes[F].successors()) {
-      auto Arc = findArc(F, Dst);
+    for (NodeId Dst : Nodes[F].successors()) {
+      ArcConstIterator Arc = findArc(F, Dst);
       fprintf(
               File,
               "f%lu -> f%u [label=\"normWgt=%.3lf,weight=%.0lf,callOffset=%.1lf\"];"

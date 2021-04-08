@@ -78,8 +78,8 @@ public:
   }
 
   void runOnFunctions(BinaryContext &BC) override {
-    const auto NewDynoStats = getDynoStats(BC.getBinaryFunctions());
-    const auto Changed = (NewDynoStats != PrevDynoStats);
+    const DynoStats NewDynoStats = getDynoStats(BC.getBinaryFunctions());
+    const bool Changed = (NewDynoStats != PrevDynoStats);
     outs() << "BOLT-INFO: program-wide dynostats "
            << Title << (Changed ? "" : " (no change)") << ":\n\n"
            << PrevDynoStats;
