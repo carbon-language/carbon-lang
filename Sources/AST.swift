@@ -36,7 +36,7 @@ indirect enum Declaration_: Hashable {
   case
     function(FunctionDefinition),
     `struct`(StructDefinition),
-    choice(name: Identifier, alternatives: [Alternative]),
+    choice(ChoiceDefinition),
     variable(name: Identifier, type: Expression, initializer: Expression)
 }
 
@@ -60,6 +60,12 @@ struct StructDefinition: Hashable {
   var name: Identifier
   var members: [VariableDeclaration]
 }
+
+struct ChoiceDefinition: Hashable {
+  var name: Identifier
+  var alternatives: [Alternative]
+}
+
 
 typealias Statement = AST<Statement_>
 indirect enum Statement_: Hashable {

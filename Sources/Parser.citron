@@ -251,7 +251,7 @@ declaration ::=
   { AST(.struct(StructDefinition(name: n, members: m)), s...r) }
 declaration ::= CHOICE(c) identifier(n)
   LEFT_CURLY_BRACE alternative_list(l) RIGHT_CURLY_BRACE(r).
-  { AST(.choice(name: n, alternatives: l), c...r) }
+  { AST(.choice(ChoiceDefinition(name: n, alternatives: l)), c...r) }
 declaration ::= VAR(v) variable_declaration(d) EQUAL expression(i) SEMICOLON(s).
   { AST(.variable(name: d.body.name, type: d.body.type, initializer: i), v...s) }
 declaration_list ::= /* Empty */.

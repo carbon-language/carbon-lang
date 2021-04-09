@@ -8,8 +8,6 @@ protocol Value {
   var type: Type { get }
 }
 
-struct Type: Hashable {}
-
 /// Stops the program with an error exit code and the given message.
 ///
 /// - Note: only works in contexts where the return type can be deduced,
