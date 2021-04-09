@@ -3,15 +3,15 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 /// A syntactically valid program fragment in non-textual form, annotated with
-/// its region in an input source file.
+/// its site in an input source file.
 ///
-/// - Note: the source region is *incidental* information that is **not
+/// - Note: the source site is *incidental* information that is **not
 /// considered part of the AST's value.** In other words, two ASTs whose
-/// contents differ only by source regions will compare as equal.
+/// contents differ only by source sites will compare as equal.
 struct AST<Body: Hashable>: Hashable {
-  init(_ body: Body, _ region: SourceRegion) {
+  init(_ body: Body, _ site: SourceRegion) {
     self.body = body
-    self.region = region
+    self.site = site
   }
 
   /// Returns `true` iff `l` and `r` are equivalent, i.e. have the same `body`
@@ -24,8 +24,8 @@ struct AST<Body: Hashable>: Hashable {
   /// The content of this fragment.
   var body: Body
 
-  /// This fragment's region in the source.
-  var region: SourceRegion
+  /// The textual range of this fragment in the source.
+  var site: SourceRegion
 }
 
 /// An unqualified name.

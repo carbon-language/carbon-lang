@@ -7,22 +7,22 @@
 
 %preface {
   /// Returns the region from the beginning of `first` to the end of `last`,
-  /// unless one of `first` or `last` has an empty region, in which case the
-  /// region of the other one is returned.
+  /// unless one of `first` or `last` has an empty site, in which case the
+  /// site of the other one is returned.
   ///
-  /// - Requires first or last is empty, or `first.region.fileName ==
-  ///   last.region.fileName && first.region.span.lowerBound
-  ///   < last.region.span.upperBound`.
+  /// - Requires first or last is empty, or `first.site.fileName ==
+  ///   last.site.fileName && first.site.span.lowerBound
+  ///   < last.site.span.upperBound`.
   fileprivate func ... <First, Last>(first: AST<First>, last: AST<Last>)
     -> SourceRegion
   {
-    if first.region.span.isEmpty { return last.region }
-    if last.region.span.isEmpty { return first.region }
+    if first.site.span.isEmpty { return last.site }
+    if last.site.span.isEmpty { return first.site }
 
-    assert(first.region.fileName == last.region.fileName)
+    assert(first.site.fileName == last.site.fileName)
     return SourceRegion(
-      fileName: first.region.fileName,
-      first.region.span.lowerBound..<last.region.span.upperBound)
+      fileName: first.site.fileName,
+      first.site.span.lowerBound..<last.site.span.upperBound)
   }
 
   fileprivate extension TupleLiteral_ {
@@ -78,9 +78,9 @@ pattern ::= expression(e).     {e}
 
 // identifier is just Identifier without the TokenID
 identifier ::= Identifier(i).
-  { AST(i.body.text, i.region) }
+  { AST(i.body.text, i.site) }
 expression ::= identifier(i).
-  { AST(.variable(i), i.region) }
+  { AST(.variable(i), i.site) }
 expression ::= expression(t) member_designator(m).
   { AST(.getField(target: t, fieldName: m), t...m) }
 expression ::= expression(t)
@@ -89,19 +89,19 @@ expression ::= expression(t)
 expression ::= expression(t) COLON identifier(i).
   { AST(.patternVariable(name: i, type: t), t...i) }
 expression ::= Integer_literal(i).
-  { AST(.integerLiteral(Int(i.body.text)!), i.region) }
+  { AST(.integerLiteral(Int(i.body.text)!), i.site) }
 expression ::= TRUE(t).
-  { AST(.booleanLiteral(true), t.region) }
+  { AST(.booleanLiteral(true), t.site) }
 expression ::= FALSE(t).
-  { AST(.booleanLiteral(false), t.region) }
+  { AST(.booleanLiteral(false), t.site) }
 expression ::= INT(t).
-  { AST(.intType, t.region) }
+  { AST(.intType, t.site) }
 expression ::= BOOL(t).
-  { AST(.boolType, t.region) }
+  { AST(.boolType, t.site) }
 expression ::= TYPE(t).
-  { AST(.typeType, t.region) }
+  { AST(.typeType, t.site) }
 expression ::= AUTO(t).
-  { AST(.autoType, t.region) }
+  { AST(.autoType, t.site) }
 expression ::= paren_expression(x).
   { x }
 expression ::= expression(l) EQUAL_EQUAL(op) expression(r).
@@ -137,7 +137,7 @@ tuple ::= LEFT_PARENTHESIS(l) field_list(f) RIGHT_PARENTHESIS(r).
   { AST(TupleLiteral_(f), l...r) }
 
 field ::= pattern(p).
-  { AST(Field_(first: nil,  second: p), p.region) }
+  { AST(Field_(first: nil,  second: p), p.site) }
 
 field ::= member_designator(m) EQUAL pattern(p).
   { AST(Field_(first: m, second: p), m...p) }
@@ -145,7 +145,7 @@ field ::= member_designator(m) EQUAL pattern(p).
 field_list ::= /* Empty */.
   { AST(FieldList_(fields: [], hasExplicitComma: false), .empty) }
 field_list ::= field(f).
-  { AST(.init(fields: [f], hasExplicitComma: false), f.region) }
+  { AST(.init(fields: [f], hasExplicitComma: false), f.site) }
 field_list ::= field(f) COMMA(c) field_list(l).
   {
     AST(
@@ -212,7 +212,7 @@ function_definition
     FunctionDefinition(
       .init(
         name: n, parameterPattern: p, returnType: Expression(.autoType, .empty),
-        body: Statement(.return(b), b.region)),
+        body: Statement(.return(b), b.site)),
       f...s)
   }
 function_declaration
@@ -235,7 +235,7 @@ member_list ::= member(m) member_list(l).
 alternative ::= identifier(n) tuple(p).
   { Alternative(.init(name: n, payload: p), n...p) }
 alternative ::= identifier(n).
-  { Alternative(.init(name: n, payload: .init([], .empty)), n.region) }
+  { Alternative(.init(name: n, payload: .init([], .empty)), n.site) }
 alternative_list ::= /* Empty */.
   { [] }
 alternative_list ::= alternative(a).
@@ -243,9 +243,9 @@ alternative_list ::= alternative(a).
 alternative_list ::= alternative(a) COMMA alternative_list(l).
   { [a] + l }
 declaration ::= function_definition(f).
-  { AST(.function(f), f.region) }
+  { AST(.function(f), f.site) }
 declaration ::= function_declaration(f).
-  { AST(.function(f), f.region) }
+  { AST(.function(f), f.site) }
 declaration ::=
   STRUCT(s) identifier(n) LEFT_CURLY_BRACE member_list(m) RIGHT_CURLY_BRACE(r).
   { AST(.struct(StructDefinition(name: n, members: m)), s...r) }
