@@ -490,16 +490,6 @@ enforced by Carbon itself. For example, a _Draw_ method would mean different
 things when it is part of a _GameResult_ interface versus a _Image2D_ interface,
 even if those methods happen to have the same signature.
 
-Since C++ concepts are structural, they are
-[hard to evolve](https://www.youtube.com/watch?v=v_yzLe-wnfk). Structural
-interfaces leave little room for strengthening requirements without
-simultaneously updating all types that implement the interface. Weaking
-requirements is also hard without updating all functions using that interface as
-a constraint. With a nominal interfaces, the explicit declaration indicating
-which types implement an interface provides the information needed to implement
-evolution strategies. For example, it lets you identify which types need to
-implement a new function, and provide a default for those types in the interim.
-
 ### Interop and evolution
 
 [Evolution is a high priority for Carbon](../../project/goals.md#software-and-language-evolution),
@@ -509,6 +499,12 @@ additions to an interface might:
 -   need default implementations
 -   be marked "upcoming" to allow for a period of transition
 -   replace other APIs that need to be marked "deprecated"
+
+Experience with C++ concepts has shown that interfaces are
+[hard to evolve](https://www.youtube.com/watch?v=v_yzLe-wnfk) without these
+kinds of supporting language mechanisms. Otherwise changes to interfaces need to
+made simultaneously with updates to types that implement the interface or
+functions that consume it.
 
 Another way of supporting evolution is to allow one interface to be
 substitutable for another. For example, a feature that lets you use an
@@ -523,7 +519,9 @@ To handle name conflicts, interfaces should be separate, isolated namespaces. We
 should provide mechanisms to allow one type to implement two interfaces that
 accidentally use the same name for different things, and for functions to use
 interfaces with name conflicts together on a single type. Contrast this with
-Swift, where a type can only supply one associated type of a given name and one function of a given name and signature even implementing multiple protocols.
+Swift, where a type can only supply one associated type of a given name even
+when implementing multiple protocols. Similarly a function in Swift with a given
+name and signature can only have a single implementation for a type.
 
 Note this is possible since [interfaces are nominal](#interfaces-are-nominal).
 The place where types specify that they implement an interface is also the
@@ -556,9 +554,10 @@ We don't need to provide full flexibility of C++ templates from generics:
 -   [Carbon templates](#relationship-to-templates) can still cover those
     exceptional cases that don't fit inside generics.
 -   If you want compile-time duck typing, that is available by way of templates.
--   There is no need to allow a specialization of some generic interface for
-    some particular type to actually expose a _different_ interface, with
-    different methods or different types in method signatures.
+-   We won't allow a specialization of some generic interface for some
+    particular type to actually expose a _different_ interface, with different
+    methods or different types in method signatures. This would break modular
+    type checking.
 -   [Template metaprogramming](https://en.wikipedia.org/wiki/Template_metaprogramming)
     will not be supported by Carbon generics. We expect to address those use
     cases with metaprogramming or templates in Carbon.
@@ -566,15 +565,17 @@ We don't need to provide full flexibility of C++ templates from generics:
 ### Template use cases that are out of scope
 
 We will also not require Carbon generics to support
-[expression templates](https://en.wikipedia.org/wiki/Expression_templates) or
-[variadics](https://en.wikipedia.org/wiki/Variadic_function), those are both out
-of scope. It would be fine for our generics system to support these features,
-but they won't drive any accommodation in the generics design, at least until we
-have some resolution about templates in Carbon.
+[expression templates](https://en.wikipedia.org/wiki/Expression_templates),
+[variadics](https://en.wikipedia.org/wiki/Variadic_function), or
+[variadic templates](https://en.wikipedia.org/wiki/Variadic_template). Those are
+all out of scope. It would be fine for our generics system to support these
+features, but they won't drive any accommodation in the generics design, at
+least until we have some resolution about templates in Carbon.
 
 ### Generics will be checked when defined
 
-C++ compilers must defer full type checking of templates until they are instantiated by the user. Carbon will not defer type checking of generic
+C++ compilers must defer full type checking of templates until they are
+instantiated by the user. Carbon will not defer type checking of generic
 definitions.
 
 ### Specialization strategy
