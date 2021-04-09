@@ -348,23 +348,6 @@ auto TypeEqual(const Value* t1, const Value* t2) -> bool {
   }
 }
 
-static auto FieldsValueEqual(VarValues* ts1, VarValues* ts2, int line_num)
-    -> bool {
-  if (ts1->size() != ts2->size()) {
-    return false;
-  }
-  for (auto& iter1 : *ts1) {
-    auto t2 = FindInVarValues(iter1.first, ts2);
-    if (t2 == nullptr) {
-      return false;
-    }
-    if (!ValueEqual(iter1.second, t2, line_num)) {
-      return false;
-    }
-  }
-  return true;
-}
-
 auto ValueEqual(const Value* v1, const Value* v2, int line_num) -> bool {
   if (v1->tag != v2->tag) {
     return false;
@@ -380,11 +363,27 @@ auto ValueEqual(const Value* v1, const Value* v2, int line_num) -> bool {
       return v1->u.ptr == v2->u.ptr;
     case ValKind::FunV:
       return v1->u.fun.body == v2->u.fun.body;
-    case ValKind::TupleV:
-      return FieldsValueEqual(v1->u.tuple_type.fields, v2->u.tuple_type.fields,
-                              line_num);
-    default:
+    case ValKind::VarTV:
+    case ValKind::IntTV:
+    case ValKind::BoolTV:
+    case ValKind::TypeTV:
+    case ValKind::FunctionTV:
+    case ValKind::PointerTV:
+    case ValKind::AutoTV:
+    case ValKind::TupleTV:
+    case ValKind::StructTV:
+    case ValKind::ChoiceTV:
+    case ValKind::ContinuationTV:
       return TypeEqual(v1, v2);
+    case ValKind::TupleV:
+    case ValKind::StructV:
+    case ValKind::AltV:
+    case ValKind::VarPatV:
+    case ValKind::AltConsV:
+    case ValKind::ContinuationV:
+      std::cerr << "ValueEqual does not support this kind of value."
+                << std::endl;
+      exit(-1);
   }
 }
 
