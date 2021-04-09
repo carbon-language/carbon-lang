@@ -3,10 +3,12 @@
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 load("@rules_python//python:defs.bzl", "py_binary", "py_library", "py_test")
+load("@py_deps//:requirements.bzl", "requirement")
 
 py_library(
     name = "github_helpers",
     srcs = ["github_helpers.py"],
+    deps = [requirement("gql")],
 )
 
 py_test(
@@ -34,7 +36,10 @@ py_binary(
     name = "update_label_access",
     srcs = ["update_label_access.py"],
     python_version = "PY3",
-    deps = ["github_helpers"],
+    deps = [
+        "github_helpers",
+        requirement("pygithub"),
+    ],
 )
 
 py_test(

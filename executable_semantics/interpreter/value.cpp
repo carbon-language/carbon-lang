@@ -368,11 +368,26 @@ auto ValueEqual(const Value* v1, const Value* v2, int line_num) -> bool {
       return v1->u.ptr == v2->u.ptr;
     case ValKind::FunV:
       return v1->u.fun.body == v2->u.fun.body;
-    case ValKind::TupleV:
-      // FIXME merge fix from PR 434
-      return false;
-    default:
+    case ValKind::VarTV:
+    case ValKind::IntTV:
+    case ValKind::BoolTV:
+    case ValKind::TypeTV:
+    case ValKind::FunctionTV:
+    case ValKind::PointerTV:
+    case ValKind::AutoTV:
+    case ValKind::StructTV:
+    case ValKind::ChoiceTV:
+    case ValKind::ContinuationTV:
       return TypeEqual(v1, v2);
+    case ValKind::TupleV:
+    case ValKind::StructV:
+    case ValKind::AltV:
+    case ValKind::VarPatV:
+    case ValKind::AltConsV:
+    case ValKind::ContinuationV:
+      std::cerr << "ValueEqual does not support this kind of value."
+                << std::endl;
+      exit(-1);
   }
 }
 
