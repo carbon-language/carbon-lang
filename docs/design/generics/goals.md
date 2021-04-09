@@ -575,8 +575,7 @@ have some resolution about templates in Carbon.
 
 ### Generics will be checked when defined
 
-Some C++ compilers implement checking of generic definitions by stashing the
-tokens and replaying them on use. Carbon will not defer type checking of generic
+C++ compilers must defer full type checking of templates until they are instantiated by the user. Carbon will not defer type checking of generic
 definitions.
 
 ### Specialization strategy
