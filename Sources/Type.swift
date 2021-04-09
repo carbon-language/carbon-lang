@@ -2,6 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
+/// A type value in the interpreter and typesystem.
 indirect enum Type: Hashable {
   case
     int, bool, type,
