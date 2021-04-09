@@ -21,6 +21,10 @@ enum class Precedence : int8_t {
   Higher = 1,
 };
 
+enum class OperatorPriority : int8_t {
+  LeftFirst, RightFirst, Ambiguous
+};
+
 enum class Associativity { LeftToRight, None, RightToLeft };
 
 // A precedence group associated with an operator or expression.
@@ -56,6 +60,28 @@ class PrecedenceGroup {
 
   // Compare the precedence levels for two adjacent operators.
   static auto Compare(PrecedenceGroup a, PrecedenceGroup b) -> Precedence;
+
+  static auto GetPriority(PrecedenceGroup left, PrecedenceGroup right)
+      -> OperatorPriority{
+    if (left == right) {
+      switch (left.GetAssociativity()) {
+        case Associativity::LeftToRight:
+          return OperatorPriority::LeftFirst;
+        case Associativity::RightToLeft:
+          return OperatorPriority::RightFirst;
+        case Associativity::None:
+          return OperatorPriority::Ambiguous;
+      }
+    }
+    switch (Compare(left, right)) {
+      case Precedence::Higher:
+        return OperatorPriority::LeftFirst;
+      case Precedence::Lower:
+        return OperatorPriority::RightFirst;
+      case Precedence::Incomparable:
+        return OperatorPriority::Ambiguous;
+    }
+  }
 
  private:
   // The precedence level.

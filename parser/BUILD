@@ -36,6 +36,7 @@ cc_library(
     hdrs = ["parse_tree.h"],
     deps = [
         ":parse_node_kind",
+        ":precedence",
         "//diagnostics:diagnostic_emitter",
         "//lexer:token_kind",
         "//lexer:tokenized_buffer",

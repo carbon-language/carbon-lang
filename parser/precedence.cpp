@@ -39,11 +39,14 @@ struct PrecedenceComparisonTable {
   constexpr PrecedenceComparisonTable() : table{} {
     // Start with a list of <higher precedence>, <lower precedence>
     // relationships.
-    MarkHigherThan({NumericPrefix, NumericPostfix}, {Modulo, Multiplicative});
+    MarkHigherThan({NumericPrefix, NumericPostfix},
+                   {Modulo, Multiplicative, BitShift});
     MarkHigherThan({Multiplicative}, {Additive});
-    MarkHigherThan({BitwisePrefix}, {BitwiseAnd, BitwiseOr, BitwiseXor});
-    MarkHigherThan({Modulo, Additive, BitwiseAnd, BitwiseOr, BitwiseXor},
-                   {SimpleAssignment, CompoundAssignment, Relational});
+    MarkHigherThan({BitwisePrefix},
+                   {BitwiseAnd, BitwiseOr, BitwiseXor, BitShift});
+    MarkHigherThan(
+        {Modulo, Additive, BitwiseAnd, BitwiseOr, BitwiseXor, BitShift},
+        {SimpleAssignment, CompoundAssignment, Relational});
     MarkHigherThan({Relational, LogicalPrefix}, {LogicalAnd, LogicalOr});
 
     // Compute the transitive closure of the above relationships.

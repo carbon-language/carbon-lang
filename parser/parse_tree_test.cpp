@@ -408,6 +408,30 @@ TEST_F(ParseTreeTest, InvalidDesignators) {
            MatchFileEnd()}));
 }
 
+TEST_F(ParseTreeTest, Operators) {
+  TokenizedBuffer tokens = GetTokenizedBuffer(
+      "fn F() {\n"
+      "  n = a * b + c * d = d * d << e & f - not g;\n"
+      "}");
+  ParseTree tree = ParseTree::Parse(tokens, consumer);
+  EXPECT_FALSE(tree.HasErrors());
+
+  ExpectedNode statement = {.kind = ParseNodeKind::ExpressionStatement(),
+                            .children = {}};
+
+  EXPECT_THAT(
+      tree,
+      MatchParseTreeNodes(
+          {{.kind = ParseNodeKind::FunctionDeclaration(),
+            .children = {{ParseNodeKind::DeclaredName(), "F"},
+                         {.kind = ParseNodeKind::ParameterList(),
+                          .children = {{ParseNodeKind::ParameterListEnd()}}},
+                         {.kind = ParseNodeKind::CodeBlock(),
+                          .children = {statement,
+                                       {ParseNodeKind::CodeBlockEnd()}}}}},
+           {.kind = ParseNodeKind::FileEnd()}}));
+}
+
 auto GetAndDropLine(llvm::StringRef& s) -> std::string {
   auto newline_offset = s.find_first_of('\n');
   llvm::StringRef line = s.slice(0, newline_offset);

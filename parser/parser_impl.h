@@ -11,6 +11,7 @@
 #include "llvm/ADT/Optional.h"
 #include "parser/parse_node_kind.h"
 #include "parser/parse_tree.h"
+#include "parser/precedence.h"
 
 namespace Carbon {
 
@@ -153,6 +154,11 @@ class ParseTree::Parser {
   // -   array indexes (TODO)
   // -   designators
   auto ParsePostfixExpression() -> llvm::Optional<Node>;
+
+  // Parses an expression involving operators, in a context with the given
+  // precedence.
+  auto ParseOperatorExpression(llvm::Optional<PrecedenceGroup> precedence)
+      -> llvm::Optional<Node>;
 
   // Parses an expression.
   auto ParseExpression() -> llvm::Optional<Node>;
