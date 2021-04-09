@@ -523,8 +523,7 @@ To handle name conflicts, interfaces should be separate, isolated namespaces. We
 should provide mechanisms to allow one type to implement two interfaces that
 accidentally use the same name for different things, and for functions to use
 interfaces with name conflicts together on a single type. Contrast this with
-Swift's protocols, where interfaces with associated types that have the same
-name are aliased.
+Swift, where a type can only supply one associated type of a given name and one function of a given name and signature even implementing multiple protocols.
 
 Note this is possible since [interfaces are nominal](#interfaces-are-nominal).
 The place where types specify that they implement an interface is also the
