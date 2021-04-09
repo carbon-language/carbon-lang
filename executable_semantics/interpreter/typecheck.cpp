@@ -149,7 +149,7 @@ auto TypeCheckExp(Expression* e, TypeEnv types, Env values,
     }
     case ExpressionKind::Tuple: {
       auto new_args = new std::vector<std::pair<std::string, Expression*>>();
-      auto arg_types = new std::vector<std::pair<std::string, Expression*>>();
+      auto arg_types = new std::vector<std::pair<std::string, Address>>();
       auto new_types = types;
       int i = 0;
       for (auto arg = e->u.tuple.fields->begin();
@@ -169,11 +169,10 @@ auto TypeCheckExp(Expression* e, TypeEnv types, Env values,
             TypeCheckExp(arg->second, new_types, values, arg_expected, context);
         new_types = arg_res.types;
         new_args->push_back(std::make_pair(arg->first, arg_res.exp));
-        arg_types->push_back(
-            {arg->first, ReifyType(arg_res.type, e->line_num)});
+        arg_types->push_back({arg->first, AllocateValue(arg_res.type)});
       }
       auto tuple_e = MakeTuple(e->line_num, new_args);
-      auto tuple_t = InterpExp(values, MakeTuple(e->line_num, arg_types));
+      auto tuple_t = MakeTupleVal(arg_types);
       return TCResult(tuple_e, tuple_t, new_types);
     }
     case ExpressionKind::GetField: {
@@ -675,14 +674,11 @@ auto StructDeclaration::TopLevel(TypeCheckContext& tops) const -> void {
   auto st = TypeOfStructDef(&definition, tops.types, tops.values);
   Address a = AllocateValue(st);
   tops.values.Set(Name(), a);  // Is this obsolete?
-  auto reified_fields = new std::vector<std::pair<std::string, Expression*>>();
+  auto field_types = new std::vector<std::pair<std::string, Address>>();
   for (const auto& [field_name, field_value] : *st->u.struct_type.fields) {
-    reified_fields->push_back(
-        {field_name, ReifyType(field_value, definition.line_num)});
+    field_types->push_back({field_name, AllocateValue(field_value)});
   }
-  auto params =
-      InterpExp(tops.values, MakeTuple(definition.line_num, reified_fields));
-  auto fun_ty = MakeFunTypeVal(params, st);
+  auto fun_ty = MakeFunTypeVal(MakeTupleVal(field_types), st);
   tops.types.Set(Name(), fun_ty);
 }
 
