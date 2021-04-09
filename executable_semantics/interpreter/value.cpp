@@ -38,11 +38,11 @@ auto FieldsEqual(VarValues* ts1, VarValues* ts2) -> bool {
   }
 }
 
-auto FindTupleField(const std::string& field, const Value* tuple)
+auto FindTupleField(const std::string& name, const Value* tuple)
     -> std::optional<Address> {
   assert(tuple->tag == ValKind::TupleV);
   for (const auto& i : *tuple->u.tuple.elts) {
-    if (i.first == field) {
+    if (i.first == name) {
       return i.second;
     }
   }

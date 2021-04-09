@@ -18,12 +18,13 @@ struct Value;
 using Address = unsigned int;
 using VarValues = std::list<std::pair<std::string, const Value*>>;
 
-// FIXME do we need these?
 auto FindInVarValues(const std::string& field, VarValues* inits)
     -> const Value*;
 auto FieldsEqual(VarValues* ts1, VarValues* ts2) -> bool;
 
-auto FindTupleField(const std::string& field, const Value* tuple)
+// Finds the field in `*tuple` named `name`, and returns its address, or
+// nullopt if there is no such field. `*tuple` must be a tuple value.
+auto FindTupleField(const std::string& name, const Value* tuple)
     -> std::optional<Address>;
 
 enum class ValKind {
