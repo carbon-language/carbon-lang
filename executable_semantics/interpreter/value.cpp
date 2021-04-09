@@ -4,6 +4,7 @@
 
 #include "executable_semantics/interpreter/value.h"
 
+#include <algorithm>
 #include <iostream>
 
 #include "executable_semantics/interpreter/interpreter.h"
@@ -348,23 +349,29 @@ auto TypeEqual(const Value* t1, const Value* t2) -> bool {
   }
 }
 
-static auto FieldsValueEqual(VarValues* ts1, VarValues* ts2, int line_num)
+static auto FieldsValueEqual(VarAddresses* ts1, VarAddresses* ts2, int line_num)
     -> bool {
   if (ts1->size() != ts2->size()) {
     return false;
   }
   for (auto& iter1 : *ts1) {
-    auto t2 = FindInVarValues(iter1.first, ts2);
-    if (t2 == nullptr) {
+    auto iter2 = std::find_if(ts2->begin(), ts2->end(), [=](const auto& p) {
+      return p.first == iter1.first;
+    });
+    if (iter2 == ts2->end()) {
       return false;
     }
-    if (!ValueEqual(iter1.second, t2, line_num)) {
+    if (!ValueEqual(state->heap[iter1.second], state->heap[iter2->second],
+                    line_num)) {
       return false;
     }
   }
   return true;
 }
 
+// Returns true if the two values are equal and returns false otherwise.
+//
+// This function implements the `==` operator of Carbon.
 auto ValueEqual(const Value* v1, const Value* v2, int line_num) -> bool {
   if (v1->tag != v2->tag) {
     return false;
@@ -381,8 +388,7 @@ auto ValueEqual(const Value* v1, const Value* v2, int line_num) -> bool {
     case ValKind::FunV:
       return v1->u.fun.body == v2->u.fun.body;
     case ValKind::TupleV:
-      return FieldsValueEqual(v1->u.tuple_type.fields, v2->u.tuple_type.fields,
-                              line_num);
+      return FieldsValueEqual(v1->u.tuple.elts, v2->u.tuple.elts, line_num);
     default:
       return TypeEqual(v1, v2);
   }
