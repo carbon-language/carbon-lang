@@ -390,7 +390,26 @@ auto ValueEqual(const Value* v1, const Value* v2, int line_num) -> bool {
     case ValKind::TupleV:
       return FieldsValueEqual(v1->u.tuple.elts, v2->u.tuple.elts, line_num);
     default:
+    case ValKind::VarTV:
+    case ValKind::IntTV:
+    case ValKind::BoolTV:
+    case ValKind::TypeTV:
+    case ValKind::FunctionTV:
+    case ValKind::PointerTV:
+    case ValKind::AutoTV:
+    case ValKind::TupleTV:
+    case ValKind::StructTV:
+    case ValKind::ChoiceTV:
+    case ValKind::ContinuationTV:
       return TypeEqual(v1, v2);
+    case ValKind::StructV:
+    case ValKind::AltV:
+    case ValKind::VarPatV:
+    case ValKind::AltConsV:
+    case ValKind::ContinuationV:
+      std::cerr << "ValueEqual does not support this kind of value."
+                << std::endl;
+      exit(-1);
   }
 }
 
