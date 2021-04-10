@@ -349,6 +349,8 @@ auto TypeEqual(const Value* t1, const Value* t2) -> bool {
   }
 }
 
+// Returns true if all the fields of the two tuples contain equal values
+// and returns false otherwise.
 static auto FieldsValueEqual(VarAddresses* ts1, VarAddresses* ts2, int line_num)
     -> bool {
   if (ts1->size() != ts2->size()) {
