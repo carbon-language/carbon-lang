@@ -12,8 +12,12 @@ protocol Value {
 ///
 /// - Note: only works in contexts where the return type can be deduced,
 ///   e.g. dict[k] ?? fatal("key not found").
-func fatal<R>(_ msg: String) -> R {
-  fatalError(msg)
+func fatal<R>(
+  file: StaticString = #filePath, line: UInt = #line, _ msg: String
+) -> R {
+  // Add a newline so the message can also contain a source region (in carbon
+  // code) that's recognized by IDEs.
+  fatalError("\n" + msg, file: (file), line: line)
 }
 
 struct Memory {
