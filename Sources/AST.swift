@@ -9,6 +9,9 @@
 /// considered part of the AST's value.** In other words, two ASTs whose
 /// contents differ only by source sites will compare as equal.
 struct AST<Body: Hashable>: Hashable {
+  /// The type of this fragment's content.
+  public typealias Body = Body
+
   init(_ body: Body, _ site: SourceRegion) {
     self.body = body
     self.site = site
@@ -26,6 +29,21 @@ struct AST<Body: Hashable>: Hashable {
 
   /// The textual range of this fragment in the source.
   var site: SourceRegion
+
+  /// A type that can be used to identify any non-synthesized AST node.
+  ///
+  /// Two nodes have the same identity if they have the same type and source
+  /// range.
+  struct Identity: Hashable {
+    let value: SourceRegion
+  }
+
+  /// Returns the identity of `self`, or `nil` if `self` was synthesized by the
+  /// compiler.
+  var identity: Identity? {
+    // Synthesized AST nodes have an empty source range.
+    site.span.isEmpty ? nil : Identity(value: site)
+  }
 }
 
 /// An unqualified name.
