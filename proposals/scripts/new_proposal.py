@@ -65,6 +65,12 @@ def _parse_args(args=None):
         help="The proposals directory, mainly for testing cross-repository. "
         "Automatically found by default.",
     )
+    parser.add_argument(
+        "--start-point",
+        metavar="START_POINT",
+        default="trunk",
+        help="The starting point for the new branch.",
+    )
     return parser.parse_args(args=args)
 
 
@@ -165,7 +171,7 @@ def main():
         _exit("ERROR: Cancelled")
 
     # Create a proposal branch.
-    _run([git_bin, "checkout", "-b", branch, "trunk"])
+    _run([git_bin, "checkout", "-b", branch, parsed_args.proposals_dir])
     _run([git_bin, "push", "-u", "origin", branch])
 
     # Copy template.md to a temp file.
