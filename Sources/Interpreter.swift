@@ -32,17 +32,7 @@ struct RelativeAddress: Hashable {
 struct Interpreter {
   typealias ExitCode = Int
 
-  let program: [Declaration]
-  /// Maps each identifier to its declaration
-  let declarations: PropertyMap<Identifier.Body, Declaration>
-
-  /// Maps each declaration to an address
-  let address: PropertyMap<Declaration.Body, RelativeAddress>
-
-  /// Maps each function definition (having a body) to the set of types in its
-  /// frame.
-  let frameLayout: PropertyMap<FunctionDefinition.Body, [Type]>
-
+  let program: ExecutableProgram
   var memory: Memory
   var earlyExit: ExitCode?
 
