@@ -9,22 +9,19 @@ protocol Action {
 }
 
 struct RelativeAddress: Hashable {
-  /// The number of enclosing lexical function scopes, relative to that of the
-  /// currently-executing function, we must traverse, to reach the function
-  /// whose frame contains the indicated address.
+  /// The lexical function nesting level of the function whose frame spans
+  /// the indicated address.
   ///
-  /// 0 indicates the frame of the currently-executing function; 1 indicates the
-  /// lexically-enclosing function, and the outermost frame is where globals can
-  /// be found.
+  /// 0 indicates that the address is a global variable, 1 indicates a top-level
+  /// function, 2 indicates a function or lambda nested in a top-level function,
+  /// etc.
   var lexicalFrame: Int
   /// The offset of the indicated address from the lexical frame's base address.
   var offsetInFrame: Int
 
   /// Returns the absolute address corresponding to `self` in `i`.
   func resolved(in i: Interpreter) -> Address {
-    let base = i.lexicalFrameBase.elements.dropLast(lexicalFrame).last ?? fatal(
-      "no such lexical frame resolving \(self) in \(i.lexicalFrameBase).")
-    return base + offsetInFrame
+    return lexicalFrameBase[lexicalFrame] + offsetInFrame
   }
 }
 
@@ -61,4 +58,14 @@ struct Interpreter {
 
   /// The stack of pending actions.
   private var todo: Stack<Action>
+}
+
+struct CallFunction: Action {
+  let callee: FunctionDefinition
+
+  /// Updates the interpreter state and optionally returning an action to be
+  /// pushed onto its todo stack.
+  func run(on i: inout Interpreter) -> Action? {
+    if i.program.nestingLevel[callee] == i.
+  }
 }
