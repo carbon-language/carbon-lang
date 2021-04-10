@@ -114,5 +114,5 @@ struct Memory {
   }
 
   private var storage: [Address: Location] = [:]
-  private var nextAddress = 0
+  private(set) var nextAddress = 0
 }
