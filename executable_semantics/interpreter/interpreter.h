@@ -71,6 +71,8 @@ auto PrintFrame(Frame* frame, std::ostream& out) -> void;
 void PrintStack(Stack<Frame*> ls, std::ostream& out);
 void PrintEnv(Env values);
 auto AllocateValue(const Value* v) -> Address;
+auto ReadFromMemory(Address a, int line_num) -> const Value*;
+auto WriteToMemory(Address a, const Value* v, int line_num) -> void;
 auto CopyVal(const Value* val, int line_num) -> const Value*;
 auto ToInteger(const Value* v) -> int;
 
