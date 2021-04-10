@@ -69,6 +69,7 @@ def _parse_args(args=None):
         "--start-point",
         metavar="START_POINT",
         default="trunk",
+        type=str,
         help="The starting point for the new branch.",
     )
     return parser.parse_args(args=args)
