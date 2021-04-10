@@ -62,10 +62,9 @@ struct Memory {
   ///
   /// - Requires: `a` is an uninitialized address.
   mutating func deallocate(_ a: Address) {
-    let i = storage.index(forKey: a)
-      ?? fatal("deallocating unallocated address \(a).")
-    precondition(
-      storage[i].value.content == nil, "deallocating initialized address \(a)")
+    let v = storage[a] ?? fatal("deallocating unallocated address \(a).")
+    precondition(v.content == nil, "deallocating initialized address \(a)")
+    storage[a] = nil
   }
 
   /// Accesses the value at `a`.
