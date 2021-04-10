@@ -172,7 +172,7 @@ def main():
         _exit("ERROR: Cancelled")
 
     # Create a proposal branch.
-    _run([git_bin, "switch", "--create", branch, parsed_args.proposals_dir])
+    _run([git_bin, "switch", "--create", branch, parsed_args.start_point])
     _run([git_bin, "push", "-u", "origin", branch])
 
     # Copy template.md to a temp file.
