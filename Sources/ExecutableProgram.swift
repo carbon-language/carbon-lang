@@ -55,7 +55,7 @@ fileprivate func unambiguousMain(
       throw CompileError(
         "Multiple main() candidates found.", at: r.body.name.site,
         notes: mainCandidates.dropFirst().map {
-          ("other candidate:", $0.body.name.site)
+          ("other candidate", $0.body.name.site)
         })
     }
     return r
