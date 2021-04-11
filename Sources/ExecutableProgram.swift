@@ -31,6 +31,15 @@ struct ExecutableProgram {
   /// compilation error if the program is ill-formed.
   init(_ parsedProgram: [Declaration]) throws {
     self.ast = parsedProgram
+    self.main = try unambiguousMain(in: parsedProgram)
+  }
+}
+
+/// Returns the unique top-level nullary main() function defined in
+/// `parsedProgram`, or reports a suitable CompileError if that doesn't exist.
+fileprivate func unambiguousMain(
+  in parsedProgram: [Declaration]) throws -> FunctionDefinition
+{
     let mainCandidates: [FunctionDefinition] = parsedProgram.compactMap { d in
       if case .function(let f) = d.body,
          f.body.name.body == "main",
@@ -38,17 +47,16 @@ struct ExecutableProgram {
       return nil
     }
 
-    guard let main0 = mainCandidates.first else {
+    guard let r = mainCandidates.first else {
       throw CompileError("No nullary main() found.", at: .empty)
     }
 
     if mainCandidates.count > 1 {
       throw CompileError(
-        "Multiple main() candidates found.", at: main0.body.name.site,
+        "Multiple main() candidates found.", at: r.body.name.site,
         notes: mainCandidates.dropFirst().map {
           ("other candidate:", $0.body.name.site)
         })
     }
-    self.main = main0
-  }
+    return r
 }
