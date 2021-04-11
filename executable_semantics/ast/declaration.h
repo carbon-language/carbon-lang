@@ -127,10 +127,11 @@ struct StructDeclaration {
 struct ChoiceDeclaration {
   int line_num;
   std::string name;
-  std::list<std::pair<std::string, Expression*>> alternatives;
+  std::list<std::pair<std::string, const Expression*>> alternatives;
 
-  ChoiceDeclaration(int line_num, std::string name,
-                    std::list<std::pair<std::string, Expression*>> alternatives)
+  ChoiceDeclaration(
+      int line_num, std::string name,
+      std::list<std::pair<std::string, const Expression*>> alternatives)
       : line_num(line_num), name(name), alternatives(alternatives) {}
 
   void Print() const;
@@ -143,8 +144,8 @@ struct ChoiceDeclaration {
 // Global variable definition implements the Declaration concept.
 class VariableDeclaration {
  public:
-  VariableDeclaration(int source_location, std::string name, Expression* type,
-                      Expression* initializer)
+  VariableDeclaration(int source_location, std::string name,
+                      const Expression* type, const Expression* initializer)
       : source_location(source_location),
         name(name),
         type(type),
@@ -159,8 +160,8 @@ class VariableDeclaration {
  private:
   int source_location;
   std::string name;
-  Expression* type;
-  Expression* initializer;
+  const Expression* type;
+  const Expression* initializer;
 };
 
 }  // namespace Carbon

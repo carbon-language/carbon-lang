@@ -19,12 +19,13 @@ struct Member {
   union {
     struct {
       std::string* name;
-      Expression* type;
+      const Expression* type;
     } field;
   } u;
 };
 
-auto MakeField(int line_num, std::string name, Expression* type) -> Member*;
+auto MakeField(int line_num, std::string name, const Expression* type)
+    -> Member*;
 
 void PrintMember(Member* m);
 

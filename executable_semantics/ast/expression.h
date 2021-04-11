@@ -47,73 +47,77 @@ struct Expression {
     } variable;
 
     struct {
-      Expression* aggregate;
+      const Expression* aggregate;
       std::string* field;
     } get_field;
 
     struct {
-      Expression* aggregate;
-      Expression* offset;
+      const Expression* aggregate;
+      const Expression* offset;
     } index;
 
     struct {
       std::string* name;
-      Expression* type;
+      const Expression* type;
     } pattern_variable;
 
     int integer;
     bool boolean;
 
     struct {
-      std::vector<std::pair<std::string, Expression*>>* fields;
+      std::vector<std::pair<std::string, const Expression*>>* fields;
     } tuple;
 
     struct {
       Operator op;
-      std::vector<Expression*>* arguments;
+      std::vector<const Expression*>* arguments;
     } primitive_op;
 
     struct {
-      Expression* function;
-      Expression* argument;
+      const Expression* function;
+      const Expression* argument;
     } call;
 
     struct {
-      Expression* parameter;
-      Expression* return_type;
+      const Expression* parameter;
+      const Expression* return_type;
     } function_type;
 
   } u;
 };
 
-auto MakeVar(int line_num, std::string var) -> Expression*;
-auto MakeVarPat(int line_num, std::string var, Expression* type) -> Expression*;
-auto MakeInt(int line_num, int i) -> Expression*;
-auto MakeBool(int line_num, bool b) -> Expression*;
-auto MakeOp(int line_num, Operator op, std::vector<Expression*>* args)
-    -> Expression*;
-auto MakeUnOp(int line_num, enum Operator op, Expression* arg) -> Expression*;
-auto MakeBinOp(int line_num, enum Operator op, Expression* arg1,
-               Expression* arg2) -> Expression*;
-auto MakeCall(int line_num, Expression* fun, Expression* arg) -> Expression*;
-auto MakeGetField(int line_num, Expression* exp, std::string field)
-    -> Expression*;
+auto MakeVar(int line_num, std::string var) -> const Expression*;
+auto MakeVarPat(int line_num, std::string var, const Expression* type)
+    -> const Expression*;
+auto MakeInt(int line_num, int i) -> const Expression*;
+auto MakeBool(int line_num, bool b) -> const Expression*;
+auto MakeOp(int line_num, Operator op, std::vector<const Expression*>* args)
+    -> const Expression*;
+auto MakeUnOp(int line_num, enum Operator op, const Expression* arg)
+    -> const Expression*;
+auto MakeBinOp(int line_num, enum Operator op, const Expression* arg1,
+               const Expression* arg2) -> const Expression*;
+auto MakeCall(int line_num, const Expression* fun, const Expression* arg)
+    -> const Expression*;
+auto MakeGetField(int line_num, const Expression* exp, std::string field)
+    -> const Expression*;
 auto MakeTuple(int line_num,
-               std::vector<std::pair<std::string, Expression*>>* args)
-    -> Expression*;
+               std::vector<std::pair<std::string, const Expression*>>* args)
+    -> const Expression*;
 // Create an AST node for an empty tuple.
-auto MakeUnit(int line_num) -> Expression*;
-auto MakeIndex(int line_num, Expression* exp, Expression* i) -> Expression*;
+auto MakeUnit(int line_num) -> const Expression*;
+auto MakeIndex(int line_num, const Expression* exp, const Expression* i)
+    -> const Expression*;
 
-auto MakeTypeType(int line_num) -> Expression*;
-auto MakeIntType(int line_num) -> Expression*;
-auto MakeBoolType(int line_num) -> Expression*;
-auto MakeFunType(int line_num, Expression* param, Expression* ret)
-    -> Expression*;
-auto MakeAutoType(int line_num) -> Expression*;
+auto MakeTypeType(int line_num) -> const Expression*;
+auto MakeIntType(int line_num) -> const Expression*;
+auto MakeBoolType(int line_num) -> const Expression*;
+auto MakeFunType(int line_num, const Expression* param, const Expression* ret)
+    -> const Expression*;
+auto MakeAutoType(int line_num) -> const Expression*;
 // Returns a Continuation type AST node at the given source location,
 // which is the type of a continuation value.
-auto MakeContinuationType(int line_num) -> Expression*;
+auto MakeContinuationType(int line_num) -> const Expression*;
 
 void PrintExp(const Expression* exp);
 

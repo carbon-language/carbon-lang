@@ -8,8 +8,8 @@
 
 namespace Carbon {
 
-auto MakeFunDef(int line_num, std::string name, Expression* ret_type,
-                Expression* param_pattern, Statement* body)
+auto MakeFunDef(int line_num, std::string name, const Expression* ret_type,
+                const Expression* param_pattern, const Statement* body)
     -> struct FunctionDefinition* {
   auto* f = new struct FunctionDefinition();
   f->line_num = line_num;

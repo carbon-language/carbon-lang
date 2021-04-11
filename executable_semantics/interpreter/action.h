@@ -27,8 +27,8 @@ enum class ActionKind {
 struct Action {
   ActionKind tag;
   union {
-    Expression* exp;  // for LValAction and ExpressionAction
-    Statement* stmt;
+    const Expression* exp;  // for LValAction and ExpressionAction
+    const Statement* stmt;
     const Value* val;  // for finished actions with a value (ValAction)
     Address delete_tmp;
   } u;
@@ -38,9 +38,9 @@ struct Action {
 
 void PrintAct(Action* act, std::ostream& out);
 void PrintActList(Stack<Action*> ls, std::ostream& out);
-auto MakeExpAct(Expression* e) -> Action*;
-auto MakeLvalAct(Expression* e) -> Action*;
-auto MakeStmtAct(Statement* s) -> Action*;
+auto MakeExpAct(const Expression* e) -> Action*;
+auto MakeLvalAct(const Expression* e) -> Action*;
+auto MakeStmtAct(const Statement* s) -> Action*;
 auto MakeValAct(const Value* v) -> Action*;
 auto MakeExpToLvalAct() -> Action*;
 auto MakeDeleteAct(Address a) -> Action*;
