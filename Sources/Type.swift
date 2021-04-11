@@ -10,4 +10,6 @@ indirect enum Type: Hashable {
     tuple([Type]),
     `struct`(StructDefinition, SourceRegion),
     `choice`(ChoiceDefinition, SourceRegion)
+
+  static var void: Type { .tuple([]) }
 }

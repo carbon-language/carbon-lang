@@ -8,8 +8,7 @@ struct Interpreter {
 
   /// The function execution context.
   typealias FunctionContext = (
-    /// The address in memory of the first address allocated to the
-    /// currently-executing function's frame.
+    /// The first address allocated to the currently-executing function's frame.
     frameBase: Address,
     
     /// The place to store the currently-executing function's return value.
@@ -19,14 +18,18 @@ struct Interpreter {
     /// call.
     calleeFrameBase: Address
   )
-  
+
+  init(_ program: ExecutableProgram) {
+    self.program = program
+  }
   let program: ExecutableProgram
-  var memory: Memory
+  var memory = Memory()
   var earlyExit: ExitCode?
-  var functionContext: FunctionContext
+  var functionContext = FunctionContext(
+    frameBase: -1, resultStorage: -1, calleeFrameBase: -1)
   
   /// The stack of pending actions.
-  private var todo: Stack<Action>
+  private var todo = Stack<Action>()
 }
 
 extension Interpreter {
@@ -64,4 +67,3 @@ struct FunctionValue: Value {
   let code: FunctionDefinition
 }
 
-ti

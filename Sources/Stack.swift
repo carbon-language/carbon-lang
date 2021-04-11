@@ -4,6 +4,9 @@
 
 /// A last-in, first-out (LIFO) queue of T.
 struct Stack<T> {
+  /// Creates an empty stack.
+  init() { elements = [] }
+  
   /// Accesses the top element.
   ///
   /// - Requires: !isEmpty
