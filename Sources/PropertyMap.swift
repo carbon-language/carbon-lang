@@ -4,6 +4,8 @@
 
 /// A mapping from AST<Body> nodes, by their identity, to values of type `T`.
 struct PropertyMap<Body: Hashable, Value> {
+  init() { }
+  
   /// Accesses the value associated with `k`.
   subscript(k: AST<Body>.Identity) -> Value {
     get { storage[k] ?? fatal("\(k.value): No such key.") }
@@ -20,5 +22,5 @@ struct PropertyMap<Body: Hashable, Value> {
     }
   }
 
-  private var storage: [AST<Body>.Identity: Value]
+  private var storage: [AST<Body>.Identity: Value] = [:]
 }
