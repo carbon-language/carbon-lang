@@ -2,8 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-/// Evaluates a function call.
-struct Call: Action {
+/// Function call evaluator.
+struct EvaluateCall: Action {
   /// Which function to call.
   let callee: Expression
   /// Argument expressions.

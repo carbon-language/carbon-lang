@@ -2,44 +2,6 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-protocol Action {
-  /// Updates the interpreter state, optionally returning an action to be
-  /// executed as a subpart of this action.
-  ///
-  /// If the result is non-nil, `self` will be run again after the resulting
-  /// action is completed.
-  mutating func run(on i: inout Interpreter) -> Action?
-}
-
-/// The address of a (global or local) symbol, or local temporary, with respect
-/// to the currently-executing function context.
-struct RelativeAddress: Hashable {
-  init(_ base: Context, _ offset: Int) {
-    self.base = base
-    self.offset = offset
-  }
-
-  /// Symbolic base of this address.
-  enum Context {
-    case global // global symbol.
-    case local  // A parameter, local variable, or temporary.
-    case callee // An argument to the callee.
-    // expect to add "this-relative" for lambdas and method access.
-  }
-  
-  let base: Context
-  let offset: Int
-  
-  /// Returns the absolute address corresponding to `self` in `i`.
-  func resolved(in i: Interpreter) -> Address {
-    switch base {
-    case .global: return offset
-    case .local: return offset + i.functionContext.frameBase
-    case .callee: return offset + i.functionContext.calleeFrameBase
-    }
-  }
-}
-
 /// The engine that executes the program
 struct Interpreter {
   typealias ExitCode = Int
@@ -102,46 +64,4 @@ struct FunctionValue: Value {
   let code: FunctionDefinition
 }
 
-struct Evaluate: Action {
-  let source: Expression
-  
-  init(_ source: Expression) {
-    self.source = source
-  }
-  mutating func run(on state: inout Interpreter) -> Action? {
-    fatalError("implement me.")
-  }
-}
-
-struct EvaluateTupleLiteral: Action {
-  let source: TupleLiteral
-  var nextElement: Int = 0
-  
-  init(_ source: TupleLiteral) {
-    self.source = source
-  }
-  
-  mutating func run(on state: inout Interpreter) -> Action? {
-    if nextElement == source.body.count { return nil }
-    defer { nextElement += 1 }
-    return Evaluate(source.body[nextElement].value)
-  }
-}
-
-struct Execute: Action {
-  let source: Statement
-  
-  init(_ source: Statement) {
-    self.source = source
-  }
-  mutating func run(on state: inout Interpreter) -> Action? {
-    fatalError("implement me.")
-  }
-}
-
-/*
-struct NoOp: Action {
-  func run(on state: inout Interpreter) -> Action? { nil }
-}
- */
-
+ti
