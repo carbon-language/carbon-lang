@@ -19,10 +19,11 @@ struct RelativeAddress: Hashable {
     self.offset = offset
   }
 
-  /// The kind of lookup we are doing.
+  /// Symbolic base of this address.
   enum Context {
-    case global // The address of a global symbol.
-    case local  // The address of a parameter, local variable, or temporary.
+    case global // global symbol.
+    case local  // A parameter, local variable, or temporary.
+    case callee // An argument to the callee.
     // expect to add "this-relative" for lambdas and method access.
   }
   
@@ -31,7 +32,11 @@ struct RelativeAddress: Hashable {
   
   /// Returns the absolute address corresponding to `self` in `i`.
   func resolved(in i: Interpreter) -> Address {
-    (base == .global ? 0 : i.frameBase) + offset
+    switch base {
+    case .global: return offset
+    case .local: return offset + i.functionContext.frameBase
+    case .callee: return offset + i.functionContext.calleeFrameBase
+    }
   }
 }
 
@@ -39,10 +44,30 @@ struct RelativeAddress: Hashable {
 struct Interpreter {
   typealias ExitCode = Int
 
+  /// The function execution context.
+  typealias FunctionContext = (
+    /// The address in memory of the first address allocated to the
+    /// currently-executing function's frame.
+    frameBase: Address,
+    
+    /// The place to store the currently-executing function's return value.
+    resultStorage: Address,
+
+    /// Where results should be stored when evaluating arguments to a function
+    /// call.
+    calleeFrameBase: Address
+  )
+  
   let program: ExecutableProgram
   var memory: Memory
   var earlyExit: ExitCode?
+  var functionContext: FunctionContext
+  
+  /// The stack of pending actions.
+  private var todo: Stack<Action>
+}
 
+extension Interpreter {
   /// Progress one step forward in the execution sequence, returning an exit
   /// code if the program terminated.
   mutating func step() -> ExitCode? {
@@ -57,21 +82,66 @@ struct Interpreter {
     return nil
   }
 
-  /// The address in memory of the first address allocated to the
-  /// currently-executing function's frame.
-  var frameBase: Address
+  /// Returns the value an already-evaluated expression valid in the
+  /// currently-executing function context.
+  func value(_ e: Expression) -> Value {
+    memory[program.expressionAddress[e].resolved(in: self)]
+  }
 
-  /// The stack of pending actions.
-  private var todo: Stack<Action>
-}
-
-struct CallFunction: Action {
-  let callee: Expression
-  let arguments: TupleLiteral
-
-  /// Updates the interpreter state, optionally returning an action to be
-  /// pushed onto its todo stack.
-  func run(on i: inout Interpreter) -> Action? {
-    return nil
+  /// Returns the storage for `e` to an uninitialized state.
+  ///
+  /// - Requires: e is an expression valid in the currently-executing function
+  ///   context that has been evaluated and not deinitialized
+  mutating func deinitialize(_ e: Expression) {
+    memory.deinitialize(program.expressionAddress[e].resolved(in: self))
   }
 }
+
+struct FunctionValue: Value {
+  let type: Type
+  let code: FunctionDefinition
+}
+
+struct Evaluate: Action {
+  let source: Expression
+  
+  init(_ source: Expression) {
+    self.source = source
+  }
+  mutating func run(on state: inout Interpreter) -> Action? {
+    fatalError("implement me.")
+  }
+}
+
+struct EvaluateTupleLiteral: Action {
+  let source: TupleLiteral
+  var nextElement: Int = 0
+  
+  init(_ source: TupleLiteral) {
+    self.source = source
+  }
+  
+  mutating func run(on state: inout Interpreter) -> Action? {
+    if nextElement == source.body.count { return nil }
+    defer { nextElement += 1 }
+    return Evaluate(source.body[nextElement].value)
+  }
+}
+
+struct Execute: Action {
+  let source: Statement
+  
+  init(_ source: Statement) {
+    self.source = source
+  }
+  mutating func run(on state: inout Interpreter) -> Action? {
+    fatalError("implement me.")
+  }
+}
+
+/*
+struct NoOp: Action {
+  func run(on state: inout Interpreter) -> Action? { nil }
+}
+ */
+
