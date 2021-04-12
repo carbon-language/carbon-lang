@@ -110,3 +110,13 @@ load("@rules_bison//bison:bison.bzl", "bison_register_toolchains")
 # When building Bison, disable all compiler warnings as we can't realistically
 # fix them anyways.
 bison_register_toolchains(extra_copts = ["-w"])
+
+local_repository(
+    name = "brotli",
+    path = "third_party/brotli/original",
+)
+
+local_repository(
+    name = "woff2",
+    path = "third_party/woff2/original",
+)
