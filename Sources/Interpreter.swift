@@ -43,10 +43,13 @@ extension Interpreter {
       termination = 0
       return
     }
-    if let spawned = current.run(on: &self) {
-      // Keep running `current`, but run `spawned` first.
+    switch current.run(on: &self) {
+    case .done: return
+    case .spawn(let child):
       todo.push(current)
-      todo.push(spawned)
+      todo.push(child)
+    case .chain(to: let successor):
+      todo.push(successor)
     }
   }
 

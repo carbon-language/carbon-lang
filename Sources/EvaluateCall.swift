@@ -41,14 +41,14 @@ struct EvaluateCall: Action {
   private var arity: Int { arguments.body.count }
   
   /// Updates the interpreter state and optionally spawns a sub-action.
-  mutating func run(on state: inout Interpreter) -> Action? {
+  mutating func run(on state: inout Interpreter) -> NextAction {
     defer { // advance to next step automatically upon exit
       if let nextStep = Step(rawValue: step.rawValue + 1) { step = nextStep }
     }
 
     switch step {
     case .nascent:
-      return Evaluate(callee)
+      return .spawn(Evaluate(callee))
       
     case .evaluatingCallee:
       calleeCode = (state[callee] as! FunctionValue).code
@@ -62,14 +62,14 @@ struct EvaluateCall: Action {
         _ = state.memory.allocate(boundTo: type, from: site, mutable: mutable)
       }
       
-      return EvaluateTupleLiteral(arguments)
+      return .spawn(EvaluateTupleLiteral(arguments))
       
     case .evaluatingArguments:
       // Prepare the context for the callee
       state.functionContext.resultStorage = resultStorage
       state.functionContext.frameBase = state.functionContext.calleeFrameBase
       
-      return Execute(calleeCode.body.body!)
+      return .spawn(Execute(calleeCode.body.body!))
 
     case .invoking:
       let calleeFrameBase = state.functionContext.frameBase
@@ -90,7 +90,7 @@ struct EvaluateCall: Action {
       for a in arguments.body {
         state.deinitialize(a.value)
       }
-      return nil
+      return .done
     }
   }
 }
