@@ -73,9 +73,8 @@ def _parse_args(args=None):
         help="The starting point for the new branch.",
     )
     parser.add_argument(
-        "--dry-run",
+        "--dry-run-pr-number",
         metavar="DRY_RUN",
-        default=-1,
         type=int,
         help="Set to a PR# to print but don't execute commands.",
     )
@@ -121,12 +120,12 @@ def _get_proposals_dir(parsed_args):
     )
 
 
-def _run(argv, dry_run=-1, check=True, get_stdout=False):
+def _run(argv, dry_run=None, check=True, get_stdout=False):
     """Runs a command."""
     cmd = " ".join([shlex.quote(x) for x in argv])
     print("\n+ RUNNING: %s" % cmd, file=sys.stderr)
 
-    if dry_run > 0:
+    if dry_run is not None:
         return
 
     stdout_pipe = None
@@ -144,10 +143,10 @@ def _run(argv, dry_run=-1, check=True, get_stdout=False):
         return out
 
 
-def _run_pr_create(argv, dry_run=-1):
+def _run_pr_create(argv, dry_run=None):
     """Runs a command and returns the PR#."""
     out = _run(argv, dry_run=dry_run, get_stdout=True)
-    if dry_run > 0:
+    if dry_run is not None:
         return dry_run
     match = re.search(
         r"^https://github.com/[^/]+/[^/]+/pull/(\d+)$", out, re.MULTILINE
@@ -160,7 +159,7 @@ def _run_pr_create(argv, dry_run=-1):
 def main():
     parsed_args = _parse_args()
     title = parsed_args.title
-    dry_run = parsed_args.dry_run
+    dry_run = parsed_args.dry_run_pr_number
     branch = _calculate_branch(parsed_args)
 
     # Verify tools are available.
@@ -173,7 +172,7 @@ def main():
     os.chdir(proposals_dir)
 
     # Verify there are no uncommitted changes.
-    if dry_run <= 0:
+    if dry_run is None:
         p = subprocess.run([git_bin, "diff-index", "--quiet", "HEAD", "--"])
         if p.returncode != 0:
             _exit("ERROR: There are uncommitted changes in your git repo.")
@@ -195,7 +194,7 @@ def main():
     # Copy template.md to a temp file.
     template_path = os.path.join(proposals_dir, "template.md")
     temp_path = os.path.join(proposals_dir, "new-proposal.tmp.md")
-    if dry_run > 0:
+    if dry_run is not None:
         _run(["cp", template_path, temp_path], dry_run=dry_run)
     else:
         shutil.copyfile(template_path, temp_path)
@@ -238,13 +237,13 @@ def main():
     )
 
     # Remove the temp file, create p####.md, and fill in PR information.
-    if dry_run > 0:
+    if dry_run is not None:
         _run(["rm", temp_path], dry_run=dry_run)
     else:
         os.remove(temp_path)
     final_path = os.path.join(proposals_dir, "p%04d.md" % pr_num)
     content = _fill_template(template_path, title, pr_num)
-    if dry_run > 0:
+    if dry_run is not None:
         print(
             "\n+ RUNNING: echo %s > %s" % (shlex.quote(content), final_path),
             file=sys.stderr,
