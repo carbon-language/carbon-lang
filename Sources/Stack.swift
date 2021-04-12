@@ -16,6 +16,15 @@ struct Stack<T> {
     set { elements[elements.count - 1] = newValue }
   }
 
+  /// Accesses the bottom element.
+  ///
+  /// - Requires: !isEmpty
+  var bottom: T {
+    get { elements.first! }
+    _modify { yield &elements[0] }
+    set { elements[0] = newValue }
+  }
+
   /// The number of elements.
   var count: Int { elements.count }
 

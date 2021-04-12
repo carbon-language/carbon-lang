@@ -12,20 +12,24 @@ struct ExecutableProgram {
   let main: FunctionDefinition
 
   /// A mapping from identifier to its declaration
-  let declaration = PropertyMap<Identifier.Body, Declaration>()
+  var //let
+    declaration = PropertyMap<Identifier.Body, Declaration>()
 
   /// A mapping from (non-function) declarations to their addresses.
-  let declarationAddress = PropertyMap<Declaration.Body, RelativeAddress>()
+  var //let
+    declarationAddress = PropertyMap<Declaration.Body, RelativeAddress>()
 
   /// A mapping from (non-function) expressions to their addresses.
-  let expressionAddress = PropertyMap<Expression.Body, RelativeAddress>()
+  var //let
+    expressionAddress = PropertyMap<Expression.Body, RelativeAddress>()
 
   /// An element of the frame layout
   typealias FrameElement = (type: Type, mutable: Bool, site: SourceRegion)
   
   /// A mapping from function definition to the list of types that are
   /// allocated into its frame.
-  let frameLayout = PropertyMap<FunctionDefinition.Body, [FrameElement]>()
+  var //let
+    frameLayout = PropertyMap<FunctionDefinition.Body, [FrameElement]>()
 
   /// Constructs an instance for the given parser output, or throws some sort of
   /// compilation error if the program is ill-formed.

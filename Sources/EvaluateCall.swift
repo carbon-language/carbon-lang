@@ -13,6 +13,18 @@ struct EvaluateCall: Action {
   /// Where the result of the call shall be stored.
   let resultStorage: Address
 
+  init(
+    callee: Expression,
+    arguments: TupleLiteral,
+    callerContext: Interpreter.FunctionContext,
+    resultStorage: Address)
+  {
+    self.callee = callee
+    self.arguments = arguments
+    self.callerContext = callerContext
+    self.resultStorage = resultStorage
+  }
+
   /// Notional coroutine state.
   ///
   /// A suspended Call action (on the todo list) is either `.nascent`, or it's
@@ -39,7 +51,7 @@ struct EvaluateCall: Action {
       return Evaluate(callee)
       
     case .evaluatingCallee:
-      calleeCode = (state.value(callee) as! FunctionValue).code
+      calleeCode = (state[callee] as! FunctionValue).code
       
       // Prepare the callee's frame
       let frame = state.program.frameLayout[calleeCode]

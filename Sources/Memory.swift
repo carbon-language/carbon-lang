@@ -36,24 +36,24 @@ struct Memory {
     return nextAddress
   }
 
-  /// Initializes the value at `a`.
+  /// Initializes the value at `a` to `v`.
   ///
-  /// - Note: initialization is not considered a mutation
-  /// - Requires: `a` is an allocated address bound to `newValue.type`.
-  mutating func initialize(_ a: Address, to content: Value) {
+  /// - Note: initialization is not considered a mutation of `a`'s value.
+  /// - Requires: `a` is an allocated address bound to `v.type`.
+  mutating func initialize(_ a: Address, to v: Value) {
     let i = storage.index(forKey: a)
       ?? fatal("initializing unallocated address \(a).")
     precondition(
-      storage[i].value.boundType == content.type,
+      storage[i].value.boundType == v.type,
       "initializing location \(a) bound to \(storage[i].value.boundType) with "
-        + "value of type \(content.type)."
+        + "value of type \(v.type)."
     )
-    storage.values[i].content = content
+    storage.values[i].content = v
   }
 
   /// Deinitializes the value at `a`, returning it to an uninitialized state.
   ///
-  /// - Note: deinitialization is not considered a mutation
+  /// - Note: deinitialization is not considered a mutation of `a`'s value.
   /// - Requires: `a` is the address of an initialized value.
   mutating func deinitialize(_ a: Address) {
     let i = storage.index(forKey: a)

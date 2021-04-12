@@ -17,8 +17,14 @@ struct Evaluate: Action {
   init(_ source: Expression) {
     self.source = source
   }
+
   mutating func run(on state: inout Interpreter) -> Action? {
-    fatalError("implement me.")
+    switch source.body {
+    case .variable(let id):
+      state.initialize(source, to: state[id])
+      return nil
+    default: fatalError("implement me.\n\(source)")
+    }
   }
 }
 
@@ -44,7 +50,15 @@ struct Execute: Action {
     self.source = source
   }
   mutating func run(on state: inout Interpreter) -> Action? {
-    fatalError("implement me.")
+    switch source.body {
+    case .block(let substatements):
+      for s in substatements {
+        fatalError("implement me.\n\(s)")
+      }
+      return nil
+    default:
+      fatalError("implement me.\n\(source)")
+    }
   }
 }
 
