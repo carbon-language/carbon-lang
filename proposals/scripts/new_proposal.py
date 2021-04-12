@@ -66,8 +66,8 @@ def _parse_args(args=None):
         "Automatically found by default.",
     )
     parser.add_argument(
-        "--start-point",
-        metavar="START_POINT",
+        "--branch-start-point",
+        metavar="BRANCH_START_POINT",
         default="trunk",
         type=str,
         help="The starting point for the new branch.",
@@ -172,7 +172,9 @@ def main():
         _exit("ERROR: Cancelled")
 
     # Create a proposal branch.
-    _run([git_bin, "switch", "--create", branch, parsed_args.start_point])
+    _run(
+        [git_bin, "switch", "--create", branch, parsed_args.branch_start_point]
+    )
     _run([git_bin, "push", "-u", "origin", branch])
 
     # Copy template.md to a temp file.
