@@ -173,9 +173,10 @@ def main():
     os.chdir(proposals_dir)
 
     # Verify there are no uncommitted changes.
-    p = subprocess.run([git_bin, "diff-index", "--quiet", "HEAD", "--"])
-    if p.returncode != 0:
-        _exit("ERROR: There are uncommitted changes in your git repo.")
+    if dry_run <= 0:
+        p = subprocess.run([git_bin, "diff-index", "--quiet", "HEAD", "--"])
+        if p.returncode != 0:
+            _exit("ERROR: There are uncommitted changes in your git repo.")
 
     # Prompt before proceeding.
     response = "?"
