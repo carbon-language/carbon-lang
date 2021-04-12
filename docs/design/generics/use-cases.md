@@ -1,10 +1,10 @@
+# Carbon: Generics - use cases and problem statement
+
 <!--
 Part of the Carbon Language project, under the Apache License v2.0 with LLVM
 Exceptions. See /LICENSE for license information.
 SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -->
-
-# Carbon: Generics - use cases and problem statement
 
 ## Basic use cases
 
@@ -13,9 +13,9 @@ We want ways of accomplishing the following tasks:
 -   Define an
     [interface](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#interface).
 -   Define an interface with
-    [type parameters](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#interface-type-parameters-vs-associated-types)
+    [type parameters](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#interface-type-parameters-versus-associated-types)
     (maybe) and/or
-    [associated types](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#interface-type-parameters-vs-associated-types)
+    [associated types](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#interface-type-parameters-versus-associated-types)
     (almost certainly).
 -   Define an interface with
     [type constraints](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#type-constraints),
@@ -30,22 +30,22 @@ We want ways of accomplishing the following tasks:
 -   Define how a type
     [implements](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#impls-implementations-of-interfaces)
     an interface
-    ([semantic conformance](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#semantic-vs-structural-interfaces)).
+    ([conformance to a nominal interface](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#nominal-interfaces)).
     It should address
     [the expression problem](https://eli.thegreenplace.net/2016/the-expression-problem-and-its-solutions),
-    e.g. by allowing the impl definition to be completely out of line as long as
-    it is defined with either the type or the interface.
+    for example by allowing the impl definition to be completely out of line as
+    long as it is defined with either the type or the interface.
 -   Define a parameterized implementation of an interface for a family of types.
     This is both for
-    [structural conformance](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#semantic-vs-structural-interfaces)
-    via
-    [templated impls](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#templated-impl),
+    [structural conformance](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#structural-interfaces)
+    by way of
+    [templated impls](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology-extra.md#templated-impl),
     and
     [conditional conformance](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#conditional-conformance).
-    That family of types may have generic or regular parameters, so that e.g.
-    you could implement a `Printable` interface for arrays of `N` elements of
-    `Printable` type `T`, generically for `N` (not separately instantiated for
-    each `N`).
+    That family of types may have generic or regular parameters, so that for
+    example you could implement a `Printable` interface for arrays of `N`
+    elements of `Printable` type `T`, generically for `N` (not separately
+    instantiated for each `N`).
 -   Control how an interface may be used in order to reserve or abandon rights
     to evolve the interface. See
     [the relevant open question in "Carbon closed function overloading proposal" (TODO)](#broken-links-footnote)<!-- T:Carbon closed function overloading proposal --><!-- A:#bookmark=id.hxvlthy3z3g1 -->.
@@ -97,7 +97,7 @@ We want ways of accomplishing the following tasks:
     interface that has more functions (like defining `<`, `>`, `<=`, `>=`, `==`,
     and `!=` in terms of `<=>`, or `++`, `--`, `+`, `-`, and `-=` from `+=`).
     Possibly the "one or few functions" won't even be part of the interface.
--   Define an interface implementation algorithmically -- possibly via a
+-   Define an interface implementation algorithmically -- possibly by way of a
     function returning an impl, or by defining an
     [adapting type](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#adapting-a-type)
     that implements that interface. This could be a solution to the previous
@@ -106,14 +106,14 @@ We want ways of accomplishing the following tasks:
     in a way that makes it easy for new types to adopt one.
 -   Support a way to switch between algorithms based on the capabilities of a
     type. For example, we may want to use different algorithms for random-access
-    vs. bidirectional iterators. Similarly, a way to have specialization based
-    on type information in a generic like you might do in a template function
-    for performance but still would allow type checking. Example: In C++,
-    `std::vector<T>::resize()` can use a more efficient algorithm if `T` has a
-    `noexcept` move constructor. Can this optimization be allowed from generic
-    code since it does not affect the signature of `resize()`, and therefore
-    type checking? In a non-release build, it would be semantically equivalent
-    but slower to ignore the optimized implementation.
+    versus bidirectional iterators. Similarly, a way to have specialization
+    based on type information in a generic like you might do in a template
+    function for performance but still would allow type checking. Example: In
+    C++, `std::vector<T>::resize()` can use a more efficient algorithm if `T`
+    has a `noexcept` move constructor. Can this optimization be allowed from
+    generic code since it does not affect the signature of `resize()`, and
+    therefore type checking? In a non-release build, it would be semantically
+    equivalent but slower to ignore the optimized implementation.
 -   As much as possible, switching a templated function to a generic one should
     involve minimal changes to the function body. It should primarily just
     consist of adding constraints to the signature. When changes are needed, the
@@ -130,7 +130,7 @@ These are more difficult, and possibly optional:
     integer type to one with more bits, or
     `Abs: Complex(SomeIntType) -> SomeFloatType`. One possible strategy is to
     have the return type be represented by an
-    [associated type](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#interface-type-parameters-vs-associated-types).
+    [associated type](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#interface-type-parameters-versus-associated-types).
 -   Define an interface that has multiple related types, like Graph/Nodes/Edges.
     TODO: A concrete combination of `Graph`, `Edge`, and `Node` types that we
     would like to define an interface for. Is the problem when you `Edge` and

@@ -1,17 +1,21 @@
+# Carbon generics: motivating use cases
+
 <!--
 Part of the Carbon Language project, under the Apache License v2.0 with LLVM
 Exceptions. See /LICENSE for license information.
 SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -->
 
-# Carbon generics: motivating use cases
+<!-- toc -->
 
 ## Table of contents
 
-<!-- toc -->
-
 -   [**Intro**](#intro)
 -   [**Motivating use cases**](#motivating-use-cases)
+    -   [Incrementally restricting template code](#incrementally-restricting-template-code)
+    -   [Incrementally erasing or monomorphizing generic interfaces](#incrementally-erasing-or-monomorphizing-generic-interfaces)
+    -   [Non-inheritance support for basic abstract interface & dependency injection](#non-inheritance-support-for-basic-abstract-interface--dependency-injection)
+    -   [Runtime Polymorphism (or Value Semantics and Concept-based Polymorphism)](#runtime-polymorphism-or-value-semantics-and-concept-based-polymorphism)
 
 <!-- tocstop -->
 
@@ -45,7 +49,7 @@ codebases, including:
 However, there are some use cases that are very specific to Carbon that we want
 to highlight, as they help motivate specific aspects of the rest of the design.
 
-**A: Incrementally restricting template code**
+### Incrementally restricting template code
 
 The entire idea of statically typed languages is that coding against specific
 types and interfaces is a better model and experience. Unfortunately, templates
@@ -72,7 +76,7 @@ to support the following incremental evolution sequence for code:
 5. Repeat steps #2 - #4 for each type, interface, or parameter until fully based
    on specific generic interfaces.
 
-**B: Incrementally erasing or monomorphizing generic interfaces**
+### Incrementally erasing or monomorphizing generic interfaces
 
 Templates (and equally generics) often cause significant code size scaling
 issues. A classic technique to address this is to use type erasure and perform
@@ -90,8 +94,7 @@ an incremental change.
 -   Migration ease should be bi-directional to allow incrementally expanding the
     generic interface.
 
-**C: Non-inheritance support for basic abstract interface & dependency
-injection**
+### Non-inheritance support for basic abstract interface & dependency injection
 
 When migrating C++ code to Carbon, programmers should be able to reliably
 convert C++ abstract base classes where there is a single level of hierarchy
@@ -108,7 +111,7 @@ dependency injection.
 Last but not least, we should support automatic construction of loosely coupled
 interfaces as found in Go without reaching for custom infrastructure.
 
-**D: Runtime Polymorphism (or Value Semantics and Concept-based Polymorphism)**
+### Runtime Polymorphism (or Value Semantics and Concept-based Polymorphism)
 
 See:
 

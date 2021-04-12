@@ -1,14 +1,14 @@
+# Comparison of Carbon Generics alternatives
+
 <!--
 Part of the Carbon Language project, under the Apache License v2.0 with LLVM
 Exceptions. See /LICENSE for license information.
 SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -->
 
-# Comparison of Carbon Generics alternatives
+<!-- toc -->
 
 ## Table of contents
-
-<!-- toc -->
 
 -   [Type generics design space](#type-generics-design-space)
     -   [Problem statement](#problem-statement)
@@ -25,7 +25,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Impls are values passed as arguments with defaults](#impls-are-values-passed-as-arguments-with-defaults)
     -   [Type-types parameterized by reprs](#type-types-parameterized-by-reprs)
 -   [Comparisons](#comparisons)
-    -   ["Type-types parameterized by reprs" vs "facet types"](#type-types-parameterized-by-reprs-vs-facet-types)
+    -   ["Type-types parameterized by reprs" versus "facet types"](#type-types-parameterized-by-reprs-versus-facet-types)
     -   [Interfaces are concrete types](#interfaces-are-concrete-types-1)
     -   [Facet type-types](#facet-type-types)
     -   [Combined interfaces](#combined-interfaces)
@@ -42,12 +42,12 @@ like a function can (for example) call methods defined for values of that type.
 A type constraint is called an
 [interface](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#interface).
 
-Interfaces can match structurally or you can make there be a separate step to
-explicitly say that there is additional semantic information to say that a type
-conforms to an interface; see
-[Carbon Generics: Terminology and Problem statement: "Semantic vs. structural interfaces"](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#semantic-vs-structural-interfaces).
-If interfaces are semantic, then interface implementations can be part of a type
-("facets") or separate, named entities ("witnesses").
+Interfaces can match [structurally](terminology.md#structural-interfaces) or you
+can make there be a separate step to explicitly say that there is additional
+semantic information to say that a type conforms to an interface, called
+["nominal interfaces"](terminology.md#nominal-interfaces). If interfaces are
+nominal, then interface implementations can be part of a type ("facets") or
+separate, named entities ("witnesses").
 
 Types can contain interface implementations or implement them. The difference is
 whether the API described by the interface is included in the type's interface,
@@ -201,9 +201,9 @@ In this model, an interface is a type whose values are "types that conform to
 that interface".
 
 This proposal uses
-[named impls](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#named-impl),
+[named impls](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology-extra.md#named-impl),
 but we'd probably prefer to just have
-[default impls](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#default-impl)
+[default impls](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology-extra.md#default-impl)
 like the next iteration described next.
 
 ```
@@ -222,7 +222,7 @@ fn GenericCompileTimeTypeParam[I:$ T](Ptr(T): a) {
 impl FooI(Foo, .implements = I) {
   .F = Foo.F;  // May only name public members of `Foo`.
   fn G(Ptr(Foo): this) {
-    Print("Via interface! ");
+    Print("By way of interface! ");
     this->G();  // Naturally restricted to just the public API of Foo.
   }
 }
@@ -369,7 +369,7 @@ representation and you may cast freely between them. Furthermore, you may call
 `Compare` on two values of type `U`.
 
 This is like
-[the "type-types" model above](#carbon-types-as-function-tables-interfaces-as-type-types),
+[the "type-types" model above](#carbon-types-as-function-tables-interfaces-as-type-types-todo),
 but where the interfaces include a parameter that defines the representation
 type.
 
@@ -383,7 +383,7 @@ Two main concerns (from
 
 ## Comparisons
 
-### "Type-types parameterized by reprs" vs "facet types"
+### "Type-types parameterized by reprs" versus "facet types"
 
 [Carbon Generics meeting Jan 22, 2020 (TODO)](#broken-links-footnote)<!-- T:Carbon Generics meeting Jan 22, 2020 -->
 

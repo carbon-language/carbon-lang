@@ -1,14 +1,14 @@
+# Carbon Generics
+
 <!--
 Part of the Carbon Language project, under the Apache License v2.0 with LLVM
 Exceptions. See /LICENSE for license information.
 SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -->
 
-# Carbon Generics
+<!-- toc -->
 
 ## Table of contents
-
-<!-- toc -->
 
 -   [What are generics?](#what-are-generics)
 -   [Goals: Generics](#goals-generics)
@@ -21,7 +21,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Implicit arguments](#implicit-arguments)
     -   [Mixing](#mixing)
     -   [Local constants](#local-constants)
-    -   [Generic type parameters vs. templated type parameters](#generic-type-parameters-vs-templated-type-parameters)
+    -   [Generic type parameters versus templated type parameters](#generic-type-parameters-versus-templated-type-parameters)
 -   [Proposed programming model](#proposed-programming-model)
     -   [Syntax examples of common use cases](#syntax-examples-of-common-use-cases)
     -   [Calling templated code](#calling-templated-code)
@@ -54,7 +54,7 @@ input and `SortStringArray`.
 Here `Comparable` is the name of an _interface_, which describes the
 requirements for the type `T`. These requirements form the contract that allows
 us to have an API boundary encapsulating the implementation of the function,
-unlike templates. I.e., given that we know `T` satisfies the requirements, we
+unlike templates. That is, given that we know `T` satisfies the requirements, we
 can typecheck the body of the `SortArray` function; similarly, we can typecheck
 that a call to `SortArray` is valid by checking that the type of the member
 elements of the passed-in array satisfy the same requirements, without having to
@@ -71,7 +71,7 @@ given a function definition, but more checking of the definition is required
 after seeing the call sites (and you know which specializations are needed).
 
 Read more here:
-[Carbon Generics: Terminology and Problem Statement: "Generic vs. template arguments" section](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#generic-vs-template-arguments).
+[Carbon Generics: Terminology: "Generic versus template arguments" section](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#generic-versus-template-parameters).
 
 ## Goals: Generics
 
@@ -113,7 +113,7 @@ implementation inheritance.
 ## Glossary / Terminology
 
 See
-[Carbon Generics: Terminology and Problem statement](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#terminology)
+[Carbon Generics: Terminology](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md)
 
 ## Non-type generics
 
@@ -333,7 +333,7 @@ fn PrimesLessThan(Int:$$ N) {
 Interfaces may include requirements that a type have local constants with a
 particular type and name.
 
-### Generic type parameters vs. templated type parameters
+### Generic type parameters versus templated type parameters
 
 Recall, from
 [the "Difference between templates and generics" section above](#difference-between-templates-and-generics),
