@@ -75,7 +75,7 @@ def _parse_args(args=None):
     parser.add_argument(
         "--dry-run",
         metavar="DRY_RUN",
-        default=None,
+        default=-1,
         type=int,
         help="Set to a PR# to print but don't execute commands.",
     )
@@ -126,7 +126,7 @@ def _run(argv, dry_run, check=True, get_stdout=False):
     cmd = " ".join([shlex.quote(x) for x in argv])
     print("\n+ RUNNING: %s" % cmd, file=sys.stderr)
 
-    if dry_run is not None:
+    if dry_run > 0:
         return
 
     stdout_pipe = None
@@ -147,7 +147,7 @@ def _run(argv, dry_run, check=True, get_stdout=False):
 def _run_pr_create(argv, dry_run):
     """Runs a command and returns the PR#."""
     out = _run(argv, dry_run=dry_run, get_stdout=True)
-    if dry_run is not None:
+    if dry_run > 0:
         return dry_run
     match = re.search(
         r"^https://github.com/[^/]+/[^/]+/pull/(\d+)$", out, re.MULTILINE
