@@ -18,7 +18,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Basic templates](#basic-templates)
         -   [Difference between templates and generics](#difference-between-templates-and-generics)
         -   [Substitution failure is an error](#substitution-failure-is-an-error)
-    -   [Implicit arguments](#implicit-arguments)
+    -   [Implicit parameters](#implicit-parameters)
     -   [Mixing](#mixing)
     -   [Local constants](#local-constants)
     -   [Generic type parameters versus templated type parameters](#generic-type-parameters-versus-templated-type-parameters)
@@ -71,16 +71,13 @@ given a function definition, but more checking of the definition is required
 after seeing the call sites (and you know which specializations are needed).
 
 Read more here:
-[Carbon Generics: Terminology: "Generic versus template arguments" section](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#generic-versus-template-parameters).
+[Carbon Generics: Terminology: "Generic versus template arguments" section](terminology.md#generic-versus-template-parameters).
 
 ## Goals: Generics
 
 In general we aim to make Carbon Generics into an alternative to templates for
 writing generic code, with improved software engineering properties at the
-expense of some restrictions. See
-[Carbon principle: Generics](https://github.com/josh11b/carbon-lang/blob/principle-generics/docs/project/principles/principle-generics.md)
-for a detailed discussion of goals. Also see
-[motivational use cases](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/motivation.md).
+expense of some restrictions. See [the detailed discussion of goals](goals.md).
 
 In this proposal we try and define a generics system that has these properties
 to allow migration from templates:
@@ -112,8 +109,7 @@ implementation inheritance.
 
 ## Glossary / Terminology
 
-See
-[Carbon Generics: Terminology](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md)
+See [Carbon Generics: Terminology](terminology.md)
 
 ## Non-type generics
 
@@ -245,12 +241,12 @@ error, that error will be reported to the user instead of trying another
 function body (say for a different overload of the same name that matches but
 isn't preferred, perhaps because it is less specific).
 
-### Implicit arguments
+### Implicit parameters
 
-An implicit argument is a value that is determined by the type of the value
-passed to another argument, and not passed explicitly to the function. Implicit
-arguments are passed using square brackets before the usual parameter list, as
-in:
+An [implicit parameter](terminology.md#implicit-parameter) is a value that is
+determined by the type of the value passed to another parameter, and not passed
+explicitly to the function. Implicit parameters are declared using square
+brackets before the usual parameter list, as in:
 
 ```
 fn PrintArraySize[Int: n](Ptr(FixedArray(String, n)): array) {
@@ -279,11 +275,11 @@ fn PrintStringArray[Int:$ n](Ptr(FixedArray(String, n)): array) {
 ```
 
 Implicit arguments are always determined from the explicit arguments. It is
-illegal not to mention implicit arguments in the explicit argument list and
+illegal not to mention implicit parameters in the explicit parameter list and
 there is no syntax for specifying implicit arguments directly at the call site.
 
 ```
-// ERROR: can't determine `n` from explicit arguments
+// ERROR: can't determine `n` from explicit parameters
 fn Illegal[Int:$ n](Int: i) -> Bool { return i < n; }
 ```
 
@@ -357,8 +353,7 @@ to add to support generic type arguments, beyond what is described in
 ## Proposed programming model
 
 This is described in detail in a separate document,
-["Carbon deep dive: combined interfaces"](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/combined-interfaces.md).
-In summary:
+["Carbon deep dive: combined interfaces"](combined-interfaces.md). In summary:
 
 -   Interfaces have a name and describe functions and other items for types to
     implement.
