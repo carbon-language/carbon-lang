@@ -252,8 +252,7 @@ fn F[Type:$$ T](T: value);
 fn F((Type:$$ T): value);
 ```
 
-See more
-[here](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/overview.md#implicit-arguments).
+See more [here](overview.md#implicit-parameters).
 
 ## Interface
 
