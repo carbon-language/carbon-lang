@@ -245,7 +245,10 @@ def main():
     final_path = os.path.join(proposals_dir, "p%04d.md" % pr_num)
     content = _fill_template(template_path, title, pr_num)
     if dry_run > 0:
-        _run(["cat", content, ">", final_path], dry_run=dry_run)
+        print(
+            "\n+ RUNNING: echo %s > %s" % (shlex.quote(content), final_path),
+            file=sys.stderr,
+        )
     else:
         with open(final_path, "w") as final_file:
             final_file.write(content)
