@@ -2,7 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-enum NextAction {
+enum Followup {
   case done                        // All finished.
   case spawn(_ child: Action)      // Still working, start child.
   case chain(_ successor: Action)  // All finished, start successor.
@@ -14,7 +14,7 @@ protocol Action {
   ///
   /// If the result is non-nil, `self` will be run again after the resulting
   /// action is completed.
-  mutating func run(on i: inout Interpreter) -> NextAction
+  mutating func run(on i: inout Interpreter) -> Followup
 }
 
 struct Evaluate: Action {
@@ -24,7 +24,7 @@ struct Evaluate: Action {
     self.source = source
   }
 
-  mutating func run(on state: inout Interpreter) -> NextAction {
+  mutating func run(on state: inout Interpreter) -> Followup {
     switch source.body {
     case .variable(let id):
       state.initialize(source, to: state[id])
@@ -42,7 +42,7 @@ struct EvaluateTupleLiteral: Action {
     self.source = source
   }
   
-  mutating func run(on state: inout Interpreter) -> NextAction {
+  mutating func run(on state: inout Interpreter) -> Followup {
     if nextElement == source.body.count { return .done }
     defer { nextElement += 1 }
     return .spawn(Evaluate(source.body[nextElement].value))
@@ -56,7 +56,7 @@ struct Execute: Action {
     self.source = source
   }
 
-  mutating func run(on state: inout Interpreter) -> NextAction {
+  mutating func run(on state: inout Interpreter) -> Followup {
     switch source.body {
     case .block(let b):
       return .chain(ExecuteBlock(remaining: b[...]))
@@ -68,7 +68,7 @@ struct Execute: Action {
 
 struct ExecuteBlock: Action {
   var remaining: ArraySlice<Statement>
-  mutating func run(on state: inout Interpreter) -> NextAction {
+  mutating func run(on state: inout Interpreter) -> Followup {
     guard let s = remaining.popFirst() else { return .done }
     return .spawn(Execute(s))
   }

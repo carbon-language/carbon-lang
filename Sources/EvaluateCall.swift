@@ -41,7 +41,7 @@ struct EvaluateCall: Action {
   private var arity: Int { arguments.body.count }
   
   /// Updates the interpreter state and optionally spawns a sub-action.
-  mutating func run(on state: inout Interpreter) -> NextAction {
+  mutating func run(on state: inout Interpreter) -> Followup {
     defer { // advance to next step automatically upon exit
       if let nextStep = Step(rawValue: step.rawValue + 1) { step = nextStep }
     }
