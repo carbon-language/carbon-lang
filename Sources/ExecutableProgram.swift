@@ -40,23 +40,23 @@ struct ExecutableProgram {
 fileprivate func unambiguousMain(
   in parsedProgram: [Declaration]) throws -> FunctionDefinition
 {
-    let mainCandidates: [FunctionDefinition] = parsedProgram.compactMap { d in
-      if case .function(let f) = d.body,
-         f.body.name.body == "main",
-         f.body.parameterPattern.body.isEmpty { return f }
-      return nil
-    }
+  let mainCandidates: [FunctionDefinition] = parsedProgram.compactMap { d in
+    if case .function(let f) = d.body,
+       f.body.name.body == "main",
+       f.body.parameterPattern.body.isEmpty { return f }
+    return nil
+  }
 
-    guard let r = mainCandidates.first else {
-      throw CompileError("No nullary main() found.", at: .empty)
-    }
+  guard let r = mainCandidates.first else {
+    throw CompileError("No nullary main() found.", at: .empty)
+  }
 
-    if mainCandidates.count > 1 {
-      throw CompileError(
-        "Multiple main() candidates found.", at: r.body.name.site,
-        notes: mainCandidates.dropFirst().map {
-          ("other candidate", $0.body.name.site)
-        })
-    }
-    return r
+  if mainCandidates.count > 1 {
+    throw CompileError(
+      "Multiple main() candidates found.", at: r.body.name.site,
+      notes: mainCandidates.dropFirst().map {
+        ("other candidate", $0.body.name.site)
+      })
+  }
+  return r
 }
