@@ -72,12 +72,6 @@ def _parse_args(args=None):
         type=str,
         help="The starting point for the new branch.",
     )
-    parser.add_argument(
-        "--dry-run-pr-number",
-        metavar="DRY_RUN",
-        type=int,
-        help="Set to a PR# to print instead of executing commands.",
-    )
     return parser.parse_args(args=args)
 
 
@@ -120,13 +114,10 @@ def _get_proposals_dir(parsed_args):
     )
 
 
-def _run(argv, dry_run=None, check=True, get_stdout=False):
+def _run(argv, check=True, get_stdout=False):
     """Runs a command."""
     cmd = " ".join([shlex.quote(x) for x in argv])
     print("\n+ RUNNING: %s" % cmd, file=sys.stderr)
-
-    if dry_run is not None:
-        return
 
     stdout_pipe = None
     if get_stdout:
@@ -143,11 +134,9 @@ def _run(argv, dry_run=None, check=True, get_stdout=False):
         return out
 
 
-def _run_pr_create(argv, dry_run=None):
+def _run_pr_create(argv):
     """Runs a command and returns the PR#."""
-    out = _run(argv, dry_run=dry_run, get_stdout=True)
-    if dry_run is not None:
-        return dry_run
+    out = _run(argv, get_stdout=True)
     match = re.search(
         r"^https://github.com/[^/]+/[^/]+/pull/(\d+)$", out, re.MULTILINE
     )
@@ -159,7 +148,6 @@ def _run_pr_create(argv, dry_run=None):
 def main():
     parsed_args = _parse_args()
     title = parsed_args.title
-    dry_run = parsed_args.dry_run_pr_number
     branch = _calculate_branch(parsed_args)
 
     # Verify tools are available.
@@ -172,10 +160,9 @@ def main():
     os.chdir(proposals_dir)
 
     # Verify there are no uncommitted changes.
-    if dry_run is None:
-        p = subprocess.run([git_bin, "diff-index", "--quiet", "HEAD", "--"])
-        if p.returncode != 0:
-            _exit("ERROR: There are uncommitted changes in your git repo.")
+    p = subprocess.run([git_bin, "diff-index", "--quiet", "HEAD", "--"])
+    if p.returncode != 0:
+        _exit("ERROR: There are uncommitted changes in your git repo.")
 
     # Prompt before proceeding.
     response = "?"
@@ -185,27 +172,18 @@ def main():
         _exit("ERROR: Cancelled")
 
     # Create a proposal branch.
-    _run(
-        [git_bin, "switch", "--create", branch, parsed_args.start_point],
-        dry_run=dry_run,
-    )
-    _run([git_bin, "push", "-u", "origin", branch], dry_run=dry_run)
+    _run([git_bin, "switch", "--create", branch, parsed_args.start_point])
+    _run([git_bin, "push", "-u", "origin", branch])
 
     # Copy template.md to a temp file.
     template_path = os.path.join(proposals_dir, "template.md")
     temp_path = os.path.join(proposals_dir, "new-proposal.tmp.md")
-    if dry_run is not None:
-        _run(["cp", template_path, temp_path], dry_run=dry_run)
-    else:
-        shutil.copyfile(template_path, temp_path)
-    _run([git_bin, "add", temp_path], dry_run=dry_run)
-    _run(
-        [git_bin, "commit", "-m", "Creating new proposal: %s" % title],
-        dry_run=dry_run,
-    )
+    shutil.copyfile(template_path, temp_path)
+    _run([git_bin, "add", temp_path])
+    _run([git_bin, "commit", "-m", "Creating new proposal: %s" % title])
 
     # Create a PR with WIP+proposal labels.
-    _run([git_bin, "push"], dry_run=dry_run)
+    _run([git_bin, "push"])
     pr_num = _run_pr_create(
         [
             gh_bin,
@@ -217,8 +195,7 @@ def main():
             title,
             "--body",
             "",
-        ],
-        dry_run=dry_run,
+        ]
     )
 
     # Add links.
@@ -232,32 +209,18 @@ def main():
             "carbon-language/carbon-lang",
             "--body",
             _LINK_TEMPLATE % pr_num,
-        ],
-        dry_run=dry_run,
+        ]
     )
 
     # Remove the temp file, create p####.md, and fill in PR information.
-    if dry_run is not None:
-        _run(["rm", temp_path], dry_run=dry_run)
-    else:
-        os.remove(temp_path)
+    os.remove(temp_path)
     final_path = os.path.join(proposals_dir, "p%04d.md" % pr_num)
     content = _fill_template(template_path, title, pr_num)
-    if dry_run is not None:
-        print(
-            "\n+ RUNNING: echo %s > %s" % (shlex.quote(content), final_path),
-            file=sys.stderr,
-        )
-    else:
-        with open(final_path, "w") as final_file:
-            final_file.write(content)
-    _run([git_bin, "add", temp_path, final_path], dry_run=dry_run)
-    # Needs a ToC update.
-    _run([precommit_bin, "run"], dry_run=dry_run, check=False)
-    _run(
-        [git_bin, "add", final_path, os.path.join(proposals_dir, "README.md")],
-        dry_run=dry_run,
-    )
+    with open(final_path, "w") as final_file:
+        final_file.write(content)
+    _run([git_bin, "add", temp_path, final_path])
+    _run([precommit_bin, "run"], check=False)  # Needs a ToC update.
+    _run([git_bin, "add", final_path, os.path.join(proposals_dir, "README.md")])
     _run(
         [
             git_bin,
@@ -265,12 +228,11 @@ def main():
             "--amend",
             "-m",
             "Filling out template with PR %d" % pr_num,
-        ],
-        dry_run=dry_run,
+        ]
     )
 
     # Push the PR update.
-    _run([git_bin, "push", "--force-with-lease"], dry_run=dry_run)
+    _run([git_bin, "push", "--force-with-lease"])
 
     print(
         "\nCreated PR %d for %s. Make changes to:\n  %s"
