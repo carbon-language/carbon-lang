@@ -195,7 +195,10 @@ def main():
     # Copy template.md to a temp file.
     template_path = os.path.join(proposals_dir, "template.md")
     temp_path = os.path.join(proposals_dir, "new-proposal.tmp.md")
-    shutil.copyfile(template_path, temp_path)
+    if dry_run > 0:
+        _run(["cp", template_path, temp_path], dry_run=dry_run)
+    else:
+        shutil.copyfile(template_path, temp_path)
     _run([git_bin, "add", temp_path], dry_run=dry_run)
     _run(
         [git_bin, "commit", "-m", "Creating new proposal: %s" % title],
@@ -235,11 +238,17 @@ def main():
     )
 
     # Remove the temp file, create p####.md, and fill in PR information.
-    os.remove(temp_path)
+    if dry_run > 0:
+        _run(["rm", temp_path], dry_run=dry_run)
+    else:
+        os.remove(temp_path)
     final_path = os.path.join(proposals_dir, "p%04d.md" % pr_num)
     content = _fill_template(template_path, title, pr_num)
-    with open(final_path, "w") as final_file:
-        final_file.write(content)
+    if dry_run > 0:
+        _run(["cat", content, ">", final_path], dry_run=dry_run)
+    else:
+        with open(final_path, "w") as final_file:
+            final_file.write(content)
     _run([git_bin, "add", temp_path, final_path], dry_run=dry_run)
     # Needs a ToC update.
     _run([precommit_bin, "run"], dry_run=dry_run, check=False)
