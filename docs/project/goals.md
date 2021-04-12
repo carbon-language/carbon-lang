@@ -6,9 +6,9 @@ Exceptions. See /LICENSE for license information.
 SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -->
 
-## Table of contents
-
 <!-- toc -->
+
+## Table of contents
 
 -   [Overview](#overview)
 -   [Project goals](#project-goals)
@@ -19,7 +19,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
         -   [Performance-critical software](#performance-critical-software)
         -   [Software and language evolution](#software-and-language-evolution)
         -   [Code that is easy to read, understand, and write](#code-that-is-easy-to-read-understand-and-write)
-        -   [Practical safety guarantees and testing mechanisms](#practical-safety-guarantees-and-testing-mechanisms)
+        -   [Practical safety and testing mechanisms](#practical-safety-and-testing-mechanisms)
         -   [Fast and scalable development](#fast-and-scalable-development)
         -   [Modern OS platforms, hardware architectures, and environments](#modern-os-platforms-hardware-architectures-and-environments)
         -   [Interoperability with and migration from existing C++ code](#interoperability-with-and-migration-from-existing-c-code)
@@ -157,7 +157,7 @@ We believe Carbon must support:
 1.  Performance-critical software.
 2.  Software and language evolution.
 3.  Code that is easy to read, understand, and write.
-4.  Practical safety guarantees and testing mechanisms.
+4.  Practical safety and testing mechanisms.
 5.  Fast and scalable development.
 6.  Modern OS platforms, hardware architectures, and environments.
 7.  Interoperability with and migration from existing C++ code.
@@ -233,7 +233,7 @@ Titus Winters writes in "Non-Atomic Refactoring and Software Sustainability":
 > compatibility over time, dealing with changes to underlying infrastructure and
 > dependencies, and working with legacy code or data. Fundamentally, it is a
 > different task to produce a programming solution to a problem (that solves the
-> current [instance] of the problem) vs. an engineering solution (that solves
+> current [instance] of the problem) versus an engineering solution (that solves
 > current instances, future instances that we can predict, and - through
 > flexibility - allows updates to solve future instances we may not be able to
 > predict).
@@ -364,8 +364,8 @@ cost.
 **Adhere to the principle of least surprise.** Defaults should match typical
 usage patterns. Implicit features should be unsurprising and expected, while
 explicit syntax should inform the reader about any behavior which might
-otherwise be surprising. The core concepts of implicit vs. explicit syntax are
-well articulated in
+otherwise be surprising. The core concepts of implicit versus explicit syntax
+are well articulated in
 [the Rust community](https://blog.rust-lang.org/2017/03/02/lang-ergonomics.html#implicit-vs-explicit),
 although we may come to different conclusions regarding the principles.
 
@@ -376,7 +376,7 @@ make the features easier to understand. It's also often the best way to ensure
 predictable performance, although supporting peak performance may require
 options for more complex implementation behavior.
 
-#### Practical safety guarantees and testing mechanisms
+#### Practical safety and testing mechanisms
 
 Our goal is to add as much language-level safety and security to Carbon as
 possible, using a hybrid strategy to balance other goals. We will do as many

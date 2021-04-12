@@ -78,9 +78,10 @@ etc. In general, the PR-centric model was favored.
     -   No outdated versions in the old format left behind
 
 -   The technical flow seems on balance better than the Google Docs-based
-    workflow. The proposal does a really good job explaining pros and cons. In
-    summary, the Google Docs-centric workflow has a lot of cons that make it
-    difficult to work with proposals over the long term.
+    workflow. The proposal does a really good job explaining advantages and
+    disadvantages. In summary, the Google Docs-centric workflow has a lot of
+    disadvantages that make it difficult to work with proposals over the long
+    term.
 
 ### Rationale for not requiring tracking issues
 

@@ -1,0 +1,4 @@
+10: type error in return
+expected: Tuple()
+actual: Int
+EXIT CODE: 255

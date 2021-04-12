@@ -1,0 +1,20 @@
+# Part of the Carbon Language project, under the Apache License v2.0 with LLVM
+# Exceptions. See /LICENSE for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+
+name: pre-commit
+
+on:
+  pull_request:
+  push:
+    branches: [trunk]
+
+jobs:
+  pre-commit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v2
+      - uses: pre-commit/action@v2.0.2
+        env:
+          SKIP: bazel-buildifier,clang-format-whole-file
