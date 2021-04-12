@@ -121,7 +121,7 @@ def _get_proposals_dir(parsed_args):
     )
 
 
-def _run(argv, dry_run, check=True, get_stdout=False):
+def _run(argv, dry_run=-1, check=True, get_stdout=False):
     """Runs a command."""
     cmd = " ".join([shlex.quote(x) for x in argv])
     print("\n+ RUNNING: %s" % cmd, file=sys.stderr)
@@ -144,7 +144,7 @@ def _run(argv, dry_run, check=True, get_stdout=False):
         return out
 
 
-def _run_pr_create(argv, dry_run):
+def _run_pr_create(argv, dry_run=-1):
     """Runs a command and returns the PR#."""
     out = _run(argv, dry_run=dry_run, get_stdout=True)
     if dry_run > 0:
