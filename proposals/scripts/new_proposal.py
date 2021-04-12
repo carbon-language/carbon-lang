@@ -76,7 +76,7 @@ def _parse_args(args=None):
         "--dry-run-pr-number",
         metavar="DRY_RUN",
         type=int,
-        help="Set to a PR# to print but don't execute commands.",
+        help="Set to a PR# to print instead of executing commands.",
     )
     return parser.parse_args(args=args)
 
