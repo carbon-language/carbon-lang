@@ -61,14 +61,14 @@ struct EvaluateCall: Action {
       // Prepare the context for the callee
       state.returnValueStorage = returnValueStorage
       // Bind the parameter names to the addresses of the argument values.
-      let parameters = calleeCode^.parameterPattern
+      let parameters = calleeCode.parameterPattern
       state.locals = Dictionary(
-        uniqueKeysWithValues: zip(arguments^, parameters^).compactMap {
+        uniqueKeysWithValues: zip(arguments, parameters).compactMap {
           (a, p) in
           p.name.map { (.functionParameter($0), state.address(of: a.value)) }
         }
       )
-      return .spawn(Execute(calleeCode^.body!))
+      return .spawn(Execute(calleeCode.body!))
 
     case .cleanUpArguments:
       state.functionContext = callerContext

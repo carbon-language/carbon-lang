@@ -51,33 +51,33 @@ private extension TypeChecker {
   }
 
   mutating func define(_ name: Identifier, _ definition: Decl) throws {
-    if scope.top.contains(name^) {
+    if scope.top.contains(name.text) {
       throw CompileError(
-        "'\(name^)' already defined in this scope", at: name.site,
-        notes: [("previous definition", symbolTable[name^]!.top.site)])
+        "'\(name.text)' already defined in this scope", at: name.site,
+        notes: [("previous definition", symbolTable[name.text]!.top.site)])
     }
 
-    scope.top.insert(name^)
-    symbolTable[name^, default: Stack()].push(definition)
+    scope.top.insert(name.text)
+    symbolTable[name.text, default: Stack()].push(definition)
   }
 
-  mutating func visit(_ node: Identifier) throws -> Decl {
-    guard let d = symbolTable[node^]?.elements.last else {
-      throw CompileError("Unknown name '\(node^)'", at: node.site)
+  mutating func visit(_ name: Identifier) throws -> Decl {
+    guard let d = symbolTable[name.text]?.elements.last else {
+      throw CompileError("Unknown name '\(name.text)'", at: name.site)
     }
-    toDeclaration[node] = d
+    toDeclaration[name] = d
     return d
   }
 
   mutating func visit(_ node: Declaration) throws {
-    switch node^ {
+    switch node {
     case let .function(f):
       // Handle forward declarations (they're in the grammar).
-      guard let body = f^.body else { UNIMPLEMENTED }
+      guard let body = f.body else { UNIMPLEMENTED }
 
-      try define(f^.name, .decl(node))
+      try define(f.name, .decl(node))
       enterScope()
-      for p in f^.parameterPattern^ {
+      for p in f.parameterPattern.elements {
         try visit(asFunctionParameter: p)
       }
       try visit(body)
@@ -96,7 +96,7 @@ private extension TypeChecker {
       enterScope()
 
       leaveScope()
-    case let .variable(name: n, type: t, initializer: i): UNIMPLEMENTED
+    case let .variable(name: n, type: t, initializer: i, _): UNIMPLEMENTED
     }
   }
 

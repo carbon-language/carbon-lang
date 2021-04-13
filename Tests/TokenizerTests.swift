@@ -28,7 +28,7 @@ final class TokenizerTests: XCTestCase {
       to endLine: Int, _ endColumn: Int) -> Token
     {
       Token(
-        .init(k, text),
+        k, text,
         SourceRegion(
           fileName: "",
           .init(line: startLine, column: startColumn)
@@ -104,9 +104,9 @@ final class TokenizerTests: XCTestCase {
     }
 
     for (t, e) in zip(scannedTokens, expectedTokens) {
-      XCTAssertEqual(t^, e^, "Unexpected token value.")
+      XCTAssertEqual(t, e, "Unexpected token value.")
       XCTAssertEqual(t.site, e.site, "Unexpected token region.")
-      XCTAssertEqual(t^.text, text(t.site),"Token text doesn't match source.")
+      XCTAssertEqual(t.text, text(t.site),"Token text doesn't match source.")
     }
     let extraScanned = scannedTokens.dropFirst(expectedTokens.count)
     XCTAssert(

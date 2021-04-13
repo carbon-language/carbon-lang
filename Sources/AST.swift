@@ -6,16 +6,15 @@
 /// its site in an input source file.
 ///
 /// - Note: the value of an AST node is determined by its type and source
-///   region.  The `content` is incidental information.
-struct AST<Content>: Hashable {
-  /// The type of this fragment's content.
-  public typealias Content = Content
+///   region.  Any other content is along for the ride, and assumed to be
+///   uniquely identified by the node's value.
+protocol AST: Hashable {
+  typealias Site = SourceRegion
+  /// The textual range of this fragment in the source.
+  var site: Site { get }
+}
 
-  init(_ content: Content, _ site: SourceRegion) {
-    self.content = content
-    self.site = site
-  }
-
+extension AST {
   /// Returns `true` iff `l` and `r` are equivalent, i.e. have the same `content`
   /// value.
   static func == (l: Self, r: Self) -> Bool {
@@ -26,126 +25,174 @@ struct AST<Content>: Hashable {
   func hash(into accumulator: inout Hasher) {
     site.hash(into: &accumulator)
   }
-
-  /// The content of this fragment.
-  let content: Content
-
-  /// Accesses `content`.
-  static postfix func ^(me: Self) -> Content { me.content }
-
-  /// The textual range of this fragment in the source.
-  let site: SourceRegion
 }
 
-postfix operator ^
-
 /// An unqualified name.
-typealias Identifier_ = String
-typealias Identifier = AST<Identifier_>
+struct Identifier: AST {
+  let text: String
+  let site: Site
+}
 
-typealias Declaration = AST<Declaration_>
-indirect enum Declaration_ {
+indirect enum Declaration: AST {
   case
     function(FunctionDefinition),
     `struct`(StructDefinition),
     choice(ChoiceDefinition),
-    variable(name: Identifier, type: Expression, initializer: Expression)
+    variable(name: Identifier, type: Expression, initializer: Expression, Site)
+
+  var site: Site {
+    switch self {
+    case let .function(f): return f.site
+    case let .struct(s): return s.site
+    case let .choice(c): return c.site
+    case let .variable(name:_, type: _, initializer: _, r): return r
+    }
+  }
 }
 
-typealias FunctionDefinition = AST<FunctionDefinition_>
-struct FunctionDefinition_ {
-  var name: Identifier
-  var parameterPattern: TupleLiteral
-  var returnType: Expression
-  var body: Statement?
+struct FunctionDefinition: AST {
+  let name: Identifier
+  let parameterPattern: TupleLiteral
+  let returnType: Expression
+  let body: Statement?
+  let site: Site
 }
 
 typealias MemberDesignator = Identifier
 
-typealias Alternative = AST<Alternative_>
-struct Alternative_ {
-  var name: Identifier;
-  var payload: TupleLiteral
+struct Alternative: AST {
+  let name: Identifier;
+  let payload: TupleLiteral
+  let site: Site
 }
 
-struct StructDefinition: Equatable {
-  var name: Identifier
-  var members: [VariableDeclaration]
+struct StructDefinition: AST {
+  let name: Identifier
+  let members: [VariableDeclaration]
+  let site: Site
 }
 
-struct ChoiceDefinition: Equatable {
-  var name: Identifier
-  var alternatives: [Alternative]
+struct ChoiceDefinition: AST {
+  let name: Identifier
+  let alternatives: [Alternative]
+  let site: Site
 }
 
-
-typealias Statement = AST<Statement_>
-indirect enum Statement_ {
+indirect enum Statement: AST {
   case
-    expressionStatement(Expression),
-    assignment(target: Expression, source: Expression),
-    variableDefinition(pattern: Expression, initializer: Expression),
-    `if`(condition: Expression, thenClause: Statement, elseClause: Statement?),
-    `return`(Expression),
-    sequence(Statement, Statement),
-    block([Statement]),
-    `while`(condition: Expression, body: Statement),
-    match(subject: Expression, clauses: [MatchClause]),
-    `break`,
-    `continue`
+    expressionStatement(Expression, Site),
+    assignment(target: Expression, source: Expression, Site),
+    variableDefinition(pattern: Expression, initializer: Expression, Site),
+    `if`(condition: Expression, thenClause: Statement, elseClause: Statement?, Site),
+    `return`(Expression, Site),
+    sequence(Statement, Statement, Site),
+    block([Statement], Site),
+    `while`(condition: Expression, body: Statement, Site),
+    match(subject: Expression, clauses: [MatchClause], Site),
+    `break`(Site),
+    `continue`(Site)
+
+  var site: Site {
+    switch self {
+    case let .expressionStatement(_, r): return r
+    case let .assignment(target: _, source: _, r): return r
+    case let .variableDefinition(pattern: _, initializer: _, r): return r
+    case let .if(condition: _, thenClause: _, elseClause: _, r): return r
+    case let .return(_, r): return r
+    case let .sequence(_, _, r): return r
+    case let .block(_, r): return r
+    case let .while(condition: _, body: _, r): return r
+    case let .match(subject: _, clauses: _, r): return r
+    case let .break(r): return r
+    case let .continue(r): return r
+    }
+  }
 }
 
-typealias MatchClauseList = AST<[MatchClause]>
-typealias MatchClause = AST<MatchClause_>
-struct MatchClause_: Hashable {
+struct List<T>: AST {
+  init(_ elements: [T], _ site: Site) {
+    self.elements = elements
+    self.site = site
+  }
+
+  let elements: [T]
+  let site: Site
+}
+
+extension List: RandomAccessCollection {
+  var startIndex: Int { 0 }
+  var endIndex: Int { elements.count }
+  subscript(i: Int) -> T { elements[i] }
+}
+
+struct MatchClause: AST {
   /// A `nil` `pattern` means this is a default clause.
-  var pattern: Expression?
-  var action: Statement
+  let pattern: Expression?
+  let action: Statement
+  let site: Site
 }
+typealias MatchClauseList = List<MatchClause>
 
-
-typealias TupleLiteral = AST<TupleLiteral_>
-typealias TupleLiteral_ = [TupleLiteralElement]
 struct TupleLiteralElement: Hashable {
-  var name: Identifier?
-  var value: Expression
+  let name: Identifier?
+  let value: Expression
 }
+typealias TupleLiteral = List<TupleLiteralElement>
 
-
-typealias Expression = AST<Expression_>
-indirect enum Expression_: Hashable {
+indirect enum Expression: AST {
   case
     variable(Identifier),
-    getField(target: Expression, fieldName: Identifier),
-    index(target: Expression, offset: Expression),
-    patternVariable(name: Identifier, type: Expression),
-    integerLiteral(Int),
-    booleanLiteral(Bool),
-    tupleLiteral(TupleLiteral_),
-    unaryOperator(operation: Token, operand: Expression),
-    binaryOperator(operation: Token, lhs: Expression, rhs: Expression),
-    functionCall(callee: Expression, arguments: TupleLiteral),
-    intType,
-    boolType,
-    typeType,
-    autoType,
-    functionType(parameterTypes: TupleLiteral, returnType: Expression)
+    getField(target: Expression, fieldName: Identifier, Site),
+    index(target: Expression, offset: Expression, Site),
+    patternVariable(name: Identifier, type: Expression, Site),
+    integerLiteral(Int, Site),
+    booleanLiteral(Bool, Site),
+    tupleLiteral(TupleLiteral),
+    unaryOperator(operation: Token, operand: Expression, Site),
+    binaryOperator(operation: Token, lhs: Expression, rhs: Expression, Site),
+    functionCall(callee: Expression, arguments: TupleLiteral, Site),
+    intType(Site),
+    boolType(Site),
+    typeType(Site),
+    autoType(Site),
+    functionType(parameterTypes: TupleLiteral, returnType: Expression, Site)
+
+  var site: Site {
+    switch self {
+    case let .variable(v): return v.site
+    case let .getField(_, _, r): return r
+    case let .index(target: _, offset: _, r): return r
+    case let .patternVariable(name: _, type: _, r): return r
+    case let .integerLiteral(_, r): return r
+    case let .booleanLiteral(_, r): return r
+    case let .tupleLiteral(t): return t.site
+    case let .unaryOperator(operation: _, operand: _, r): return r
+    case let .binaryOperator(operation: _, lhs: _, rhs: _, r): return r
+    case let .functionCall(callee: _, arguments: _, r): return r
+    case let .intType(r): return r
+    case let .boolType(r): return r
+    case let .typeType(r): return r
+    case let .autoType(r): return r
+    case let .functionType(parameterTypes: _, returnType: _, r):
+      return r
+    }
+  }
 };
 
-typealias Field = AST<Field_>
-struct Field_: Hashable {
-  var first: Identifier?
-  var second: Expression
+struct Field: AST {
+  let first: Identifier?
+  let second: Expression
+  let site: Site
 }
 
-typealias FieldList = AST<FieldList_>
-struct FieldList_: Hashable {
-  var fields: [Field]
-  var hasExplicitComma: Bool
+struct FieldList: AST {
+  let fields: [Field]
+  let hasExplicitComma: Bool
+  let site: Site
 }
 
-typealias VariableDeclaration = AST<VariableDeclaration_>
-struct VariableDeclaration_: Hashable {
-  var name: Identifier
-  var type: Expression
+struct VariableDeclaration: AST {
+  let name: Identifier
+  let type: Expression
+  let site: Site
 }

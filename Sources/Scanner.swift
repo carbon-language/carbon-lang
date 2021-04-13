@@ -182,7 +182,7 @@ struct Tokens: Sequence {
              : matchers[bestMatchIndex].tokenID
         {
           return Token(
-            Token_(matchedID, matchedText),
+            matchedID, matchedText,
             SourceRegion(
               fileName: sourceFileName, tokenRegionStart..<sourcePosition))
         }

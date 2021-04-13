@@ -12,7 +12,7 @@ extension String {
   {
     let p = CarbonParser()
     for t in Tokens(in: self, from: sourceFile) {
-      try p.consume(token: t, code: t^.kind)
+      try p.consume(token: t, code: t.kind)
     }
     return try p.endParsing()
   }
@@ -29,24 +29,24 @@ final class ParserTests: XCTestCase {
     guard let p = CheckNoThrow(try "fn main() -> Int;".parsedAsCarbon())
     else { return }
     XCTAssertEqual(p.count, 1)
-    let p0 = p[0]^
+    let p0 = p[0]
     guard case .function(let d) = p0 else { XCTFail("\(p0)"); return }
-    XCTAssertEqual(d^.name^, "main")
-    XCTAssertEqual(d^.parameterPattern^, [])
-    XCTAssertEqual(d^.returnType^, .intType)
-    XCTAssertNil(d^.body)
+    XCTAssertEqual(d.name.text, "main")
+    XCTAssertEqual(d.parameterPattern.elements, [])
+    if case .intType(_) = d.returnType {} else { XCTFail("\(d.returnType)") }
+    XCTAssertNil(d.body)
   }
 
   func testBasic1() {
     guard let p = CheckNoThrow(try "fn main() -> Int {}".parsedAsCarbon())
     else { return }
     XCTAssertEqual(p.count, 1)
-    let p0 = p[0]^
+    let p0 = p[0]
     guard case .function(let d) = p0 else { XCTFail("\(p0)"); return }
-    XCTAssertEqual(d^.name^, "main")
-    XCTAssertEqual(d^.parameterPattern^, [])
-    XCTAssertEqual(d^.returnType^, .intType)
-    guard let b = d^.body, case .block(let c) = b^ else {
+    XCTAssertEqual(d.name.text, "main")
+    XCTAssertEqual(d.parameterPattern.elements, [])
+    if case .intType = d.returnType {} else { XCTFail("\(d.returnType)") }
+    guard let b = d.body, case .block(let c, _) = b else {
       XCTFail("\(d)")
       return
     }
@@ -57,14 +57,17 @@ final class ParserTests: XCTestCase {
     guard let p = CheckNoThrow(try "var Int: x = 0;".parsedAsCarbon())
     else { return }
     XCTAssertEqual(p.count, 1)
-    let p0 = p[0]^
-    guard case let .variable(name: n, type: t, initializer: i) = p0 else {
+    let p0 = p[0]
+    guard case let .variable(name: n, type: t, initializer: i, _) = p0 else {
       XCTFail("\(p0)")
       return
     }
-    XCTAssertEqual(n^, "x")
-    XCTAssertEqual(t^, .intType)
-    XCTAssertEqual(i^, .integerLiteral(0))
+    XCTAssertEqual(n.text, "x")
+
+    if case .intType = t {} else { XCTFail("\(t)") }
+
+    if case let .integerLiteral(n, _) = i { XCTAssertEqual(n, 0) }
+    else { XCTFail("\(i)") }
   }
 
   func testParseFailure() {

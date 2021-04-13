@@ -9,14 +9,12 @@
 typealias TokenID = CarbonParser.CitronTokenCode
 
 /// A symbol recognized by the lexical analyzer.
-typealias Token = AST<Token_>
-
-/// The body of a `Token`.
-struct Token_: Hashable {
+struct Token: AST {
   /// Creates an instance of the given token kind and content.
-  init(_ kind: TokenID, _ content: String) {
+  init(_ kind: TokenID, _ content: String, _ site: Site) {
     self.kind = kind
     self.text = content
+    self.site = site
   }
 
   /// The lexical analyzer pattern that matched this token.
@@ -24,12 +22,14 @@ struct Token_: Hashable {
 
   /// The textual content of this token.
   let text: String
+
+  let site: Site
 }
 
-extension Token_: CustomStringConvertible {
+extension Token: CustomStringConvertible {
   /// A textual description of `self`.
   var description: String {
-    "Token_(.\(kind), \(String(reflecting: text)))"
+    "Token(.\(kind), \(String(reflecting: text)), \(String(reflecting: site)))"
   }
 }
 
