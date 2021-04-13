@@ -130,10 +130,21 @@ class ParseTree::Parser {
   // even when a node is returned.
   auto ParseDeclaration() -> llvm::Optional<Node>;
 
+  // Parses a parenthesized expression.
+  auto ParseParenExpression() -> llvm::Optional<Node>;
+
   // Parses a primary expression, which is either a terminal portion of an
   // expression tree, such as an identifier or literal, or a parenthesized
   // expression.
   auto ParsePrimaryExpression() -> llvm::Optional<Node>;
+
+  // Parses a designator expression suffix starting with `.`.
+  auto ParseDesignatorExpression(SubtreeStart start, bool has_errors)
+      -> llvm::Optional<Node>;
+
+  // Parses a call expression suffix starting with `(`.
+  auto ParseCallExpression(SubtreeStart start, bool has_errors)
+      -> llvm::Optional<Node>;
 
   // Parses a postfix expression, which is a primary expression followed by
   // zero or more of the following:

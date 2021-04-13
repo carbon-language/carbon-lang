@@ -445,6 +445,31 @@ auto ParseTree::Parser::ParseDeclaration() -> llvm::Optional<Node> {
   return {};
 }
 
+auto ParseTree::Parser::ParseParenExpression() -> llvm::Optional<Node> {
+  // `(` expression `)`
+  auto start = StartSubtree();
+  TokenizedBuffer::Token open_paren = Consume(TokenKind::OpenParen());
+
+  // TODO: If the next token is a close paren, build an empty tuple literal.
+
+  bool has_errors = !ParseExpression();
+
+  // TODO: If the next token is a comma, build a tuple literal.
+
+  if (tokens.GetKind(*position) != TokenKind::CloseParen()) {
+    if (!has_errors) {
+      emitter.EmitError<ExpectedCloseParen>(*position);
+      has_errors = true;
+    }
+    SkipTo(tokens.GetMatchedClosingToken(open_paren));
+  }
+
+  AddLeafNode(ParseNodeKind::ParenExpressionEnd(),
+              Consume(TokenKind::CloseParen()));
+  return AddNode(ParseNodeKind::ParenExpression(), open_paren, start,
+                 has_errors);
+}
+
 auto ParseTree::Parser::ParsePrimaryExpression() -> llvm::Optional<Node> {
   TokenizedBuffer::Token t = *position;
   TokenKind token_kind = tokens.GetKind(t);
@@ -460,23 +485,8 @@ auto ParseTree::Parser::ParsePrimaryExpression() -> llvm::Optional<Node> {
       kind = ParseNodeKind::Literal();
       break;
 
-    case TokenKind::OpenParen(): {
-      // `(` expression `)`
-      auto start = StartSubtree();
-      TokenizedBuffer::Token open_paren = Consume(TokenKind::OpenParen());
-      bool has_errors = !ParseExpression();
-      if (tokens.GetKind(*position) != TokenKind::CloseParen()) {
-        if (!has_errors) {
-          emitter.EmitError<ExpectedCloseParen>(*position);
-          has_errors = true;
-        }
-        SkipTo(tokens.GetMatchedClosingToken(open_paren));
-      }
-      AddLeafNode(ParseNodeKind::ParenExpressionEnd(),
-                  Consume(TokenKind::CloseParen()));
-      return AddNode(ParseNodeKind::ParenExpression(), open_paren, start,
-                     has_errors);
-    }
+    case TokenKind::OpenParen():
+      return ParseParenExpression();
 
     default:
       emitter.EmitError<ExpectedExpression>(t);
@@ -486,73 +496,80 @@ auto ParseTree::Parser::ParsePrimaryExpression() -> llvm::Optional<Node> {
   return AddLeafNode(*kind, Consume(token_kind));
 }
 
+auto ParseTree::Parser::ParseDesignatorExpression(SubtreeStart start,
+                                                  bool has_errors)
+    -> llvm::Optional<Node> {
+  // `.` identifier
+  auto dot = Consume(TokenKind::Period());
+  auto name = ConsumeIf(TokenKind::Identifier());
+  if (name) {
+    AddLeafNode(ParseNodeKind::DesignatedName(), *name);
+  } else {
+    if (!has_errors) {
+      emitter.EmitError<ExpectedIdentifierAfterDot>(*position);
+    }
+    has_errors = true;
+  }
+  return AddNode(ParseNodeKind::DesignatorExpression(), dot, start, has_errors);
+}
+
+auto ParseTree::Parser::ParseCallExpression(SubtreeStart start, bool has_errors)
+    -> llvm::Optional<Node> {
+  // `(` expression-list[opt] `)`
+  //
+  // expression-list ::= expression
+  //                 ::= expression `,` expression-list
+  TokenizedBuffer::Token open_paren = Consume(TokenKind::OpenParen());
+
+  // Parse arguments, if any are specified.
+  if (tokens.GetKind(*position) != TokenKind::CloseParen()) {
+    while (true) {
+      bool argument_error = !ParseExpression();
+      has_errors |= argument_error;
+
+      if (tokens.GetKind(*position) == TokenKind::CloseParen()) {
+        break;
+      }
+
+      if (tokens.GetKind(*position) != TokenKind::Comma()) {
+        if (!argument_error) {
+          emitter.EmitError<UnexpectedTokenInFunctionArgs>(*position);
+        }
+        has_errors = true;
+
+        auto comma_position = FindNext(TokenKind::Comma());
+        if (!comma_position) {
+          SkipTo(tokens.GetMatchedClosingToken(open_paren));
+          break;
+        }
+        SkipTo(*comma_position);
+        break;
+      }
+
+      AddLeafNode(ParseNodeKind::CallExpressionComma(),
+                  Consume(TokenKind::Comma()));
+    }
+  }
+
+  AddLeafNode(ParseNodeKind::CallExpressionEnd(),
+              Consume(TokenKind::CloseParen()));
+  return AddNode(ParseNodeKind::CallExpression(), open_paren, start,
+                 has_errors);
+}
+
 auto ParseTree::Parser::ParsePostfixExpression() -> llvm::Optional<Node> {
   auto start = StartSubtree();
   llvm::Optional<Node> expression = ParsePrimaryExpression();
 
   while (true) {
-    bool has_errors = !expression;
-
     switch (tokens.GetKind(*position)) {
-      case TokenKind::Period(): {
-        // `.` identifier
-        auto dot = Consume(TokenKind::Period());
-        auto name = ConsumeIf(TokenKind::Identifier());
-        if (name) {
-          AddLeafNode(ParseNodeKind::DesignatedName(), *name);
-        } else {
-          if (!has_errors) {
-            emitter.EmitError<ExpectedIdentifierAfterDot>(*position);
-          }
-          has_errors = true;
-        }
-        expression = AddNode(ParseNodeKind::DesignatorExpression(), dot, start,
-                             has_errors);
+      case TokenKind::Period():
+        expression = ParseDesignatorExpression(start, !expression);
         break;
-      }
 
-      case TokenKind::OpenParen(): {
-        // `(` expression-list[opt] `)`
-        //
-        // expression-list ::= expression
-        //                 ::= expression `,` expression-list
-        TokenizedBuffer::Token open_paren = Consume(TokenKind::OpenParen());
-
-        if (tokens.GetKind(*position) != TokenKind::CloseParen()) {
-          while (true) {
-            bool argument_error = !ParseExpression();
-            has_errors |= argument_error;
-
-            if (tokens.GetKind(*position) == TokenKind::CloseParen()) {
-              break;
-            }
-
-            if (tokens.GetKind(*position) != TokenKind::Comma()) {
-              if (!argument_error) {
-                emitter.EmitError<UnexpectedTokenInFunctionArgs>(*position);
-              }
-              has_errors = true;
-
-              auto comma_position = FindNext(TokenKind::Comma());
-              if (!comma_position) {
-                SkipTo(tokens.GetMatchedClosingToken(open_paren));
-                break;
-              }
-              SkipTo(*comma_position);
-              break;
-            }
-
-            AddLeafNode(ParseNodeKind::CallExpressionComma(),
-                        Consume(TokenKind::Comma()));
-          }
-        }
-
-        AddLeafNode(ParseNodeKind::CallExpressionEnd(),
-                    Consume(TokenKind::CloseParen()));
-        expression = AddNode(ParseNodeKind::CallExpression(), open_paren, start,
-                             has_errors);
+      case TokenKind::OpenParen():
+        expression = ParseCallExpression(start, !expression);
         break;
-      }
 
       default: {
         return expression;
@@ -571,9 +588,10 @@ auto ParseTree::Parser::ParseExpressionStatement() -> llvm::Optional<Node> {
 
   bool has_errors = !ParseExpression();
 
-  if (auto semi = ConsumeIf(TokenKind::Semi()))
+  if (auto semi = ConsumeIf(TokenKind::Semi())) {
     return AddNode(ParseNodeKind::ExpressionStatement(), *semi, start,
                    has_errors);
+  }
 
   if (!has_errors) {
     emitter.EmitError<ExpectedSemiAfterExpression>(*position);

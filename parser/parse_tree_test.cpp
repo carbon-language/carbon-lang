@@ -349,7 +349,7 @@ TEST_F(ParseTreeTest, FunctionDefinitionWithIdenifierInNestedBlock) {
 TEST_F(ParseTreeTest, FunctionDefinitionWithFunctionCall) {
   TokenizedBuffer tokens = GetTokenizedBuffer(
       "fn F() {\n"
-      "  a.b.f(c.d, e).g();\n"
+      "  a.b.f(c.d, (e)).g();\n"
       "}");
   ParseTree tree = ParseTree::Parse(tokens, consumer);
   EXPECT_FALSE(tree.HasErrors());
@@ -361,7 +361,8 @@ TEST_F(ParseTreeTest, FunctionDefinitionWithFunctionCall) {
           MatchDesignatedName("f")),
       MatchDesignatorExpression(MatchNameReference("c"),
                                 MatchDesignatedName("d")),
-      MatchCallExpressionComma(), MatchNameReference("e"),
+      MatchCallExpressionComma(),
+      MatchParenExpression(MatchNameReference("e"), MatchParenExpressionEnd()),
       MatchCallExpressionEnd());
   ExpectedNode statement = MatchExpressionStatement(MatchCallExpression(
       MatchDesignatorExpression(call_to_f, MatchDesignatedName("g")),
