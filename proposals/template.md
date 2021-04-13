@@ -18,6 +18,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [Proposal](#proposal)
 -   [Details](#details)
 -   [Alternatives considered](#alternatives-considered)
+-   [Rationale](#rationale)
 
 <!-- tocstop -->
 
@@ -59,3 +60,8 @@ TODO: Fully explain the details of the proposed solution.
 ## Alternatives considered
 
 TODO: What alternative solutions have you considered?
+
+## Rationale
+
+TODO: What is the rationale to support accepting the proposal? This may evolve
+during review.
