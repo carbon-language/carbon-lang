@@ -42,7 +42,7 @@ final class TestEvaluateCall: XCTestCase {
     // you may see in Interpreter and ExecutableProgram.
     let mainDeclaration = ast[0]
     engine.program.declaration[mainID] = mainDeclaration
-    engine.globals[mainDeclaration.identity!] = mainDeclarationAddress
+    engine.globals[mainDeclaration] = mainDeclarationAddress
 
     // Allocate an address for the return value.
     let resultAddress = engine.memory.allocate(boundTo: .int, from: .empty)

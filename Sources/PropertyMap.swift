@@ -3,24 +3,14 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 /// A mapping from AST<Body> nodes, by their identity, to values of type `T`.
-struct PropertyMap<Body: Hashable, Value> {
+struct PropertyMap<K: Hashable, Value> {
   init() { }
   
   /// Accesses the value associated with `k`.
-  subscript(k: AST<Body>.Identity) -> Value {
-    get { storage[k] ?? fatal("\(k.value): No such key.") }
+  subscript(k: K) -> Value {
+    get { storage[k] ?? fatal("\(k): No such key.") }
     set { storage[k] = newValue }
   }
 
-  /// Accesses the value associated with `n.identity`
-  subscript(n: AST<Body>) -> Value {
-    get {
-      self[n.identity ?? fatal("mapping synthesized AST node.")]
-    }
-    set {
-      self[n.identity ?? fatal("mapping synthesized AST node.")] = newValue
-    }
-  }
-
-  private var storage: [AST<Body>.Identity: Value] = [:]
+  private var storage: [K: Value] = [:]
 }

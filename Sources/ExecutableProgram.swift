@@ -13,7 +13,7 @@ struct ExecutableProgram {
 
   /// A mapping from identifier to its declaration
   var //let
-    declaration = PropertyMap<Identifier_, Declaration>()
+    declaration = PropertyMap<Identifier, Declaration>()
 
   /// Constructs an instance for the given parser output, or throws some sort of
   /// compilation error if the program is ill-formed.

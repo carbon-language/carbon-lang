@@ -5,10 +5,9 @@
 /// A syntactically valid program fragment in non-textual form, annotated with
 /// its site in an input source file.
 ///
-/// - Note: the source site is *incidental* information that is **not
-/// considered part of the AST's value.** In other words, two ASTs whose
-/// contents differ only by source sites will compare as equal.
-struct AST<Content: Hashable>: Hashable {
+/// - Note: the value of an AST node is determined by its type and source
+///   region.  The `content` is incidental information.
+struct AST<Content>: Hashable {
   /// The type of this fragment's content.
   public typealias Content = Content
 
@@ -19,10 +18,14 @@ struct AST<Content: Hashable>: Hashable {
 
   /// Returns `true` iff `l` and `r` are equivalent, i.e. have the same `content`
   /// value.
-  static func == (l: Self, r: Self) -> Bool { l^ == r^ }
+  static func == (l: Self, r: Self) -> Bool {
+    l.site == r.site
+  }
 
   /// Accumulates the hash value of `self` into `accumulator`.
-  func hash(into accumulator: inout Hasher) { content.hash(into: &accumulator) }
+  func hash(into accumulator: inout Hasher) {
+    site.hash(into: &accumulator)
+  }
 
   /// The content of this fragment.
   let content: Content
@@ -32,21 +35,6 @@ struct AST<Content: Hashable>: Hashable {
 
   /// The textual range of this fragment in the source.
   let site: SourceRegion
-
-  /// Values that can be used to identify any non-synthesized AST node.
-  ///
-  /// Two nodes have the same identity if they have the same type and source
-  /// range.
-  struct Identity: Hashable {
-    let value: SourceRegion
-  }
-
-  /// Returns the identity of `self`, or `nil` if `self` was synthesized by the
-  /// compiler.
-  var identity: Identity? {
-    // Synthesized AST nodes have an empty source range.
-    site.span.isEmpty ? nil : Identity(value: site)
-  }
 }
 
 postfix operator ^
@@ -56,7 +44,7 @@ typealias Identifier_ = String
 typealias Identifier = AST<Identifier_>
 
 typealias Declaration = AST<Declaration_>
-indirect enum Declaration_: Hashable {
+indirect enum Declaration_ {
   case
     function(FunctionDefinition),
     `struct`(StructDefinition),
@@ -65,7 +53,7 @@ indirect enum Declaration_: Hashable {
 }
 
 typealias FunctionDefinition = AST<FunctionDefinition_>
-struct FunctionDefinition_: Hashable {
+struct FunctionDefinition_ {
   var name: Identifier
   var parameterPattern: TupleLiteral
   var returnType: Expression
@@ -75,24 +63,24 @@ struct FunctionDefinition_: Hashable {
 typealias MemberDesignator = Identifier
 
 typealias Alternative = AST<Alternative_>
-struct Alternative_: Hashable {
+struct Alternative_ {
   var name: Identifier;
   var payload: TupleLiteral
 }
 
-struct StructDefinition: Hashable {
+struct StructDefinition: Equatable {
   var name: Identifier
   var members: [VariableDeclaration]
 }
 
-struct ChoiceDefinition: Hashable {
+struct ChoiceDefinition: Equatable {
   var name: Identifier
   var alternatives: [Alternative]
 }
 
 
 typealias Statement = AST<Statement_>
-indirect enum Statement_: Hashable {
+indirect enum Statement_ {
   case
     expressionStatement(Expression),
     assignment(target: Expression, source: Expression),

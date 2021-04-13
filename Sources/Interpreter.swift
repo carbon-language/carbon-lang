@@ -40,7 +40,7 @@ struct Interpreter {
 
   /// Mapping from global declaration to addresses.
   // private(set)
-    var globals: [Declaration.Identity: Address] = [:]
+    var globals: [Declaration: Address] = [:]
 
   var memory = Memory()
 
@@ -103,7 +103,7 @@ extension Interpreter {
   /// Accesses the address of the declaration for the given name.
   func address(of name: Identifier) -> Address {
     let d = program.declaration[name]
-    return locals[d.site] ?? globals[d.identity!]!
+    return locals[d.site] ?? globals[d]!
   }
 
   /// Accesses the address where e's value is stored.

@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 /// A type value in the interpreter and typesystem.
-indirect enum Type: Hashable {
+indirect enum Type: Equatable {
   case
     int, bool, type,
     function(parameterTypes: [Type], returnType: Type),
