@@ -9,7 +9,9 @@ indirect enum Type: Equatable {
     function(parameterTypes: [Type], returnType: Type),
     tuple([Type]),
     `struct`(StructDefinition, SourceRegion),
-    `choice`(ChoiceDefinition, SourceRegion)
+    `choice`(ChoiceDefinition, SourceRegion),
+
+    error // Placeholder indicating failed type deduction.
 
   static var void: Type { .tuple([]) }
 }
