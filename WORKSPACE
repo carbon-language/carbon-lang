@@ -116,7 +116,9 @@ local_repository(
     path = "third_party/brotli/original",
 )
 
-local_repository(
+new_local_repository(
     name = "woff2",
+    build_file = "third_party/woff2/BUILD.original",
     path = "third_party/woff2/original",
+    workspace_file = "third_party/woff2/WORKSPACE.original",
 )
