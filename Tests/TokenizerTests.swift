@@ -104,11 +104,9 @@ final class TokenizerTests: XCTestCase {
     }
 
     for (t, e) in zip(scannedTokens, expectedTokens) {
-      XCTAssertEqual(t.body, e.body, "Unexpected token value.")
+      XCTAssertEqual(t^, e^, "Unexpected token value.")
       XCTAssertEqual(t.site, e.site, "Unexpected token region.")
-      XCTAssertEqual(
-        t.body.text, text(t.site),
-        "Token text doesn't match source text in token region.")
+      XCTAssertEqual(t^.text, text(t.site),"Token text doesn't match source.")
     }
     let extraScanned = scannedTokens.dropFirst(expectedTokens.count)
     XCTAssert(

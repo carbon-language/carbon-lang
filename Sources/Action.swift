@@ -28,7 +28,7 @@ struct Evaluate: Action {
   }
 
   mutating func run(on state: inout Interpreter) -> Followup {
-    switch source.body {
+    switch source^ {
     case .variable(let id):
       state.locals[source.site] = state.address(of: id)
       // N.B. of all expressions, this one doesn't need to be destroyed.
@@ -47,9 +47,9 @@ struct EvaluateTupleLiteral: Action {
   }
   
   mutating func run(on state: inout Interpreter) -> Followup {
-    if nextElement == source.body.count { return .done }
+    if nextElement == source^.count { return .done }
     defer { nextElement += 1 }
-    return .spawn(Evaluate(source.body[nextElement].value))
+    return .spawn(Evaluate(source.content[nextElement].value))
   }
 }
 
@@ -74,9 +74,9 @@ struct CleanUpTupleLiteral: Action {
   }
 
   mutating func run(on state: inout Interpreter) -> Followup {
-    if nextElement == target.body.count { return .done }
+    if nextElement == target^.count { return .done }
     defer { nextElement += 1 }
-    return .spawn(CleanUp(target.body[nextElement].value))
+    return .spawn(CleanUp(target.content[nextElement].value))
   }
 }
 
@@ -88,7 +88,7 @@ struct Execute: Action {
   }
 
   mutating func run(on state: inout Interpreter) -> Followup {
-    switch source.body {
+    switch source^ {
     case .block(let b):
       return .chain(ExecuteBlock(remaining: b[...]))
     default:

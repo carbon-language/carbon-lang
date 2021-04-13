@@ -13,7 +13,7 @@ struct ExecutableProgram {
 
   /// A mapping from identifier to its declaration
   var //let
-    declaration = PropertyMap<Identifier.Body, Declaration>()
+    declaration = PropertyMap<Identifier_, Declaration>()
 
   /// Constructs an instance for the given parser output, or throws some sort of
   /// compilation error if the program is ill-formed.
@@ -29,9 +29,8 @@ fileprivate func unambiguousMain(
   in parsedProgram: [Declaration]) throws -> FunctionDefinition
 {
   let mainCandidates: [FunctionDefinition] = parsedProgram.compactMap { d in
-    if case .function(let f) = d.body,
-       f.body.name.body == "main",
-       f.body.parameterPattern.body.isEmpty { return f }
+    if case .function(let f) = d^,
+       f^.name^ == "main" && f^.parameterPattern^.isEmpty { return f }
     return nil
   }
 
@@ -41,10 +40,8 @@ fileprivate func unambiguousMain(
 
   if mainCandidates.count > 1 {
     throw CompileError(
-      "Multiple main() candidates found.", at: r.body.name.site,
-      notes: mainCandidates.dropFirst().map {
-        ("other candidate", $0.body.name.site)
-      })
+      "Multiple main() candidates found.", at: r^.name.site,
+      notes: mainCandidates.dropFirst().map { ("candidate", $0^.name.site) })
   }
   return r
 }

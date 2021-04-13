@@ -19,7 +19,7 @@ extension String {
   {
     let p = CarbonParser()
     for t in Tokens(in: self, from: sourceFile) {
-      try p.consume(token: t, code: t.body.kind)
+      try p.consume(token: t, code: t^.kind)
     }
     return try p.endParsing()
   }

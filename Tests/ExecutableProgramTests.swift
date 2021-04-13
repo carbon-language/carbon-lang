@@ -29,6 +29,6 @@ final class TestSemanticAnalysis: XCTestCase {
     else { return }
     
     // Nothing interesting to check about exe yet.
-    XCTAssertEqual(exe.main.body.name.body, "main")
+    XCTAssertEqual(exe.main^.name^, "main")
   }
 }

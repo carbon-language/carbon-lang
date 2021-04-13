@@ -88,7 +88,7 @@ extension Interpreter {
   /// Destroys any rvalue computed for `e` and removes `e` from `locals`.
   mutating func cleanUp(_ e: Expression) {
     defer { locals[e.site] = nil }
-    if case .variable(_) = e.body { return } // not an rvalue.
+    if case .variable(_) = e^ { return } // not an rvalue.
 
     let a = locals[e.site]!
     memory.deinitialize(a)

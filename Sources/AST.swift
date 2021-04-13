@@ -8,29 +8,32 @@
 /// - Note: the source site is *incidental* information that is **not
 /// considered part of the AST's value.** In other words, two ASTs whose
 /// contents differ only by source sites will compare as equal.
-struct AST<Body: Hashable>: Hashable {
+struct AST<Content: Hashable>: Hashable {
   /// The type of this fragment's content.
-  public typealias Body = Body
+  public typealias Content = Content
 
-  init(_ body: Body, _ site: SourceRegion) {
-    self.body = body
+  init(_ content: Content, _ site: SourceRegion) {
+    self.content = content
     self.site = site
   }
 
-  /// Returns `true` iff `l` and `r` are equivalent, i.e. have the same `body`
+  /// Returns `true` iff `l` and `r` are equivalent, i.e. have the same `content`
   /// value.
-  static func == (l: Self, r: Self) -> Bool { l.body == r.body }
+  static func == (l: Self, r: Self) -> Bool { l^ == r^ }
 
   /// Accumulates the hash value of `self` into `accumulator`.
-  func hash(into accumulator: inout Hasher) { body.hash(into: &accumulator) }
+  func hash(into accumulator: inout Hasher) { content.hash(into: &accumulator) }
 
   /// The content of this fragment.
-  var body: Body
+  let content: Content
+
+  /// Accesses `content`.
+  static postfix func ^(me: Self) -> Content { me.content }
 
   /// The textual range of this fragment in the source.
-  var site: SourceRegion
+  let site: SourceRegion
 
-  /// A type that can be used to identify any non-synthesized AST node.
+  /// Values that can be used to identify any non-synthesized AST node.
   ///
   /// Two nodes have the same identity if they have the same type and source
   /// range.
@@ -46,8 +49,11 @@ struct AST<Body: Hashable>: Hashable {
   }
 }
 
+postfix operator ^
+
 /// An unqualified name.
-typealias Identifier = AST<String>
+typealias Identifier_ = String
+typealias Identifier = AST<Identifier_>
 
 typealias Declaration = AST<Declaration_>
 indirect enum Declaration_: Hashable {
