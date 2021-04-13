@@ -54,6 +54,37 @@ struct UnrecognizedDeclaration : SimpleDiagnostic<UnrecognizedDeclaration> {
       "Unrecognized declaration introducer.";
 };
 
+struct ExpectedExpression : SimpleDiagnostic<ExpectedExpression> {
+  static constexpr llvm::StringLiteral ShortName = "syntax-error";
+  static constexpr llvm::StringLiteral Message =
+      "Expected expression.";
+};
+
+struct ExpectedCloseParen : SimpleDiagnostic<ExpectedCloseParen> {
+  static constexpr llvm::StringLiteral ShortName = "syntax-error";
+  static constexpr llvm::StringLiteral Message =
+      "Unexpected tokens before `)`.";
+};
+
+struct ExpectedSemiAfterExpression : SimpleDiagnostic<ExpectedSemiAfterExpression> {
+  static constexpr llvm::StringLiteral ShortName = "syntax-error";
+  static constexpr llvm::StringLiteral Message =
+      "Expected `;` after expression.";
+};
+
+struct ExpectedIdentifierAfterDot : SimpleDiagnostic<ExpectedIdentifierAfterDot> {
+  static constexpr llvm::StringLiteral ShortName = "syntax-error";
+  static constexpr llvm::StringLiteral Message =
+      "Expected identifier after `.`.";
+};
+
+struct UnexpectedTokenInFunctionArgs
+    : SimpleDiagnostic<UnexpectedTokenInFunctionArgs> {
+  static constexpr llvm::StringLiteral ShortName = "syntax-error";
+  static constexpr llvm::StringLiteral Message =
+      "Unexpected token in function argument list.";
+};
+
 ParseTree::Parser::Parser(ParseTree& tree_arg, TokenizedBuffer& tokens_arg,
                           TokenDiagnosticEmitter& emitter)
     : tree(tree_arg),
@@ -130,16 +161,10 @@ auto ParseTree::Parser::MarkNodeError(Node n) -> void {
 
 // A marker for the start of a node's subtree.
 //
-// This is used to track the size of the node's subtree and ensure at least one
-// parse node is added. It can be used repeatedly if multiple subtrees start at
-// the same position.
+// This is used to track the size of the node's subtree. It can be used
+// repeatedly if multiple subtrees start at the same position.
 struct ParseTree::Parser::SubtreeStart {
   int tree_size;
-  bool node_added = false;
-
-  ~SubtreeStart() {
-    assert(node_added && "Never added a node for a subtree region!");
-  }
 };
 
 auto ParseTree::Parser::StartSubtree() -> SubtreeStart {
@@ -147,7 +172,7 @@ auto ParseTree::Parser::StartSubtree() -> SubtreeStart {
 }
 
 auto ParseTree::Parser::AddNode(ParseNodeKind n_kind, TokenizedBuffer::Token t,
-                                SubtreeStart& start, bool has_error) -> Node {
+                                SubtreeStart start, bool has_error) -> Node {
   // The size of the subtree is the change in size from when we started this
   // subtree to now, but including the node we're about to add.
   int tree_stop_size = static_cast<int>(tree.node_impls.size()) + 1;
@@ -159,7 +184,6 @@ auto ParseTree::Parser::AddNode(ParseNodeKind n_kind, TokenizedBuffer::Token t,
     MarkNodeError(n);
   }
 
-  start.node_added = true;
   return n;
 }
 
@@ -181,8 +205,31 @@ auto ParseTree::Parser::SkipTo(TokenizedBuffer::Token t) -> void {
   assert(position != end && "Skipped past EOF.");
 }
 
-auto ParseTree::Parser::SkipPastLikelyDeclarationEnd(
-    TokenizedBuffer::Token skip_root, bool is_inside_declaration)
+auto ParseTree::Parser::FindNext(TokenKind desired_kind)
+    -> llvm::Optional<TokenizedBuffer::Token> {
+  auto new_position = position;
+  while (true) {
+    TokenizedBuffer::Token token = *new_position;
+    TokenKind kind = tokens.GetKind(token);
+    if (kind == desired_kind) {
+      return token;
+    }
+
+    // Step to the next token at the current bracketing level.
+    if (kind.IsClosingSymbol() || kind == TokenKind::EndOfFile()) {
+      // There are no more tokens at this level.
+      return {};
+    } else if (kind.IsOpeningSymbol()) {
+      new_position =
+          TokenizedBuffer::TokenIterator(tokens.GetMatchedClosingToken(token));
+    } else {
+      ++new_position;
+    }
+  }
+}
+
+auto ParseTree::Parser::SkipPastLikelyEnd(TokenizedBuffer::Token skip_root,
+                                          SemiHandler on_semi)
     -> llvm::Optional<Node> {
   if (AtEndOfFile()) {
     return {};
@@ -211,14 +258,9 @@ auto ParseTree::Parser::SkipPastLikelyDeclarationEnd(
       return {};
     }
 
-    // If we find a semicolon, parse it and add a corresponding node. If we're
-    // inside of a declaration, this is a declaration ending semicolon,
-    // otherwise it simply forms an empty declaration.
-    if (auto end_node = ConsumeAndAddLeafNodeIf(
-            TokenKind::Semi(), is_inside_declaration
-                                   ? ParseNodeKind::DeclarationEnd()
-                                   : ParseNodeKind::EmptyDeclaration())) {
-      return end_node;
+    // If we find a semicolon, parse it and add a corresponding node.
+    if (auto semi = ConsumeIf(TokenKind::Semi())) {
+      return on_semi(*semi);
     }
 
     // Skip over any matching group of tokens.
@@ -266,12 +308,18 @@ auto ParseTree::Parser::ParseCodeBlock() -> Node {
   for (;;) {
     switch (tokens.GetKind(*position)) {
       default:
-        // FIXME: Add support for parsing more expressions & statements.
-        emitter.EmitError<UnexpectedTokenInCodeBlock>(*position);
-        has_errors = true;
+        // A statement with no introducer token can only be an expression
+        // statement.
+        if (ParseExpressionStatement()) {
+          continue;
+        }
 
-        // We can trivially skip to the actual close curly brace from here.
+        // We detected and diagnosed an error of some kind. We can trivially
+        // skip to the actual close curly brace from here.
+        // FIXME: It would be better to skip to the next semicolon, or the next
+        // token at the start of a line with the same indent as this one.
         SkipTo(tokens.GetMatchedClosingToken(open_curly));
+        has_errors = true;
         // Now fall through to the close curly brace handling code.
         LLVM_FALLTHROUGH;
 
@@ -306,21 +354,25 @@ auto ParseTree::Parser::ParseFunctionDeclaration() -> Node {
                    start, /*has_error=*/true);
   };
 
+  auto handle_semi_in_error_recovery = [&](TokenizedBuffer::Token semi) {
+    return AddLeafNode(ParseNodeKind::DeclarationEnd(), semi);
+  };
+
   auto name_n = ConsumeAndAddLeafNodeIf(TokenKind::Identifier(),
-                                        ParseNodeKind::Identifier());
+                                        ParseNodeKind::DeclaredName());
   if (!name_n) {
     emitter.EmitError<ExpectedFunctionName>(*position);
     // FIXME: We could change the lexer to allow us to synthesize certain
     // kinds of tokens and try to "recover" here, but unclear that this is
     // really useful.
-    SkipPastLikelyDeclarationEnd(function_intro_token);
+    SkipPastLikelyEnd(function_intro_token, handle_semi_in_error_recovery);
     return add_error_function_node();
   }
 
   TokenizedBuffer::Token open_paren = *position;
   if (tokens.GetKind(open_paren) != TokenKind::OpenParen()) {
     emitter.EmitError<ExpectedFunctionParams>(open_paren);
-    SkipPastLikelyDeclarationEnd(function_intro_token);
+    SkipPastLikelyEnd(function_intro_token, handle_semi_in_error_recovery);
     return add_error_function_node();
   }
   TokenizedBuffer::Token close_paren =
@@ -333,7 +385,7 @@ auto ParseTree::Parser::ParseFunctionDeclaration() -> Node {
   if (tree.node_impls[signature_n.index].has_error) {
     // Don't try to parse more of the function declaration, but consume a
     // declaration ending semicolon if found (without going to a new line).
-    SkipPastLikelyDeclarationEnd(function_intro_token);
+    SkipPastLikelyEnd(function_intro_token, handle_semi_in_error_recovery);
     return add_error_function_node();
   }
 
@@ -345,7 +397,7 @@ auto ParseTree::Parser::ParseFunctionDeclaration() -> Node {
     emitter.EmitError<ExpectedFunctionBodyOrSemi>(*position);
     if (tokens.GetLine(*position) == tokens.GetLine(close_paren)) {
       // Only need to skip if we've not already found a new line.
-      SkipPastLikelyDeclarationEnd(function_intro_token);
+      SkipPastLikelyEnd(function_intro_token, handle_semi_in_error_recovery);
     }
     return add_error_function_node();
   }
@@ -380,7 +432,9 @@ auto ParseTree::Parser::ParseDeclaration() -> llvm::Optional<Node> {
   // Skip forward past any end of a declaration we simply didn't understand so
   // that we can find the start of the next declaration or the end of a scope.
   if (auto found_semi_n =
-          SkipPastLikelyDeclarationEnd(t, /*is_inside_declaration=*/false)) {
+          SkipPastLikelyEnd(t, [&](TokenizedBuffer::Token semi) {
+            return AddLeafNode(ParseNodeKind::EmptyDeclaration(), semi);
+          })) {
     MarkNodeError(*found_semi_n);
     return *found_semi_n;
   }
@@ -388,6 +442,152 @@ auto ParseTree::Parser::ParseDeclaration() -> llvm::Optional<Node> {
   // Nothing, not even a semicolon found. We still need to mark that an error
   // occurred though.
   tree.has_errors = true;
+  return {};
+}
+
+auto ParseTree::Parser::ParsePrimaryExpression() -> llvm::Optional<Node> {
+  TokenizedBuffer::Token t = *position;
+  TokenKind token_kind = tokens.GetKind(t);
+  llvm::Optional<ParseNodeKind> kind;
+  switch (token_kind) {
+    case TokenKind::Identifier():
+      kind = ParseNodeKind::NameReference();
+      break;
+
+    case TokenKind::IntegerLiteral():
+    case TokenKind::RealLiteral():
+    case TokenKind::StringLiteral():
+      kind = ParseNodeKind::Literal();
+      break;
+
+    case TokenKind::OpenParen(): {
+      // `(` expression `)`
+      auto start = StartSubtree();
+      TokenizedBuffer::Token open_paren = Consume(TokenKind::OpenParen());
+      bool has_errors = !ParseExpression();
+      if (tokens.GetKind(*position) != TokenKind::CloseParen()) {
+        if (!has_errors) {
+          emitter.EmitError<ExpectedCloseParen>(*position);
+          has_errors = true;
+        }
+        SkipTo(tokens.GetMatchedClosingToken(open_paren));
+      }
+      AddLeafNode(ParseNodeKind::ParenExpressionEnd(),
+                  Consume(TokenKind::CloseParen()));
+      return AddNode(ParseNodeKind::ParenExpression(), open_paren, start,
+                     has_errors);
+    }
+
+    default:
+      emitter.EmitError<ExpectedExpression>(t);
+      return {};
+  }
+
+  return AddLeafNode(*kind, Consume(token_kind));
+}
+
+auto ParseTree::Parser::ParsePostfixExpression() -> llvm::Optional<Node> {
+  auto start = StartSubtree();
+  llvm::Optional<Node> expression = ParsePrimaryExpression();
+
+  while (true) {
+    bool has_errors = !expression;
+
+    switch (tokens.GetKind(*position)) {
+      case TokenKind::Period(): {
+        // `.` identifier
+        auto dot = Consume(TokenKind::Period());
+        auto name = ConsumeIf(TokenKind::Identifier());
+        if (name) {
+          AddLeafNode(ParseNodeKind::DesignatedName(), *name);
+        } else {
+          if (!has_errors) {
+            emitter.EmitError<ExpectedIdentifierAfterDot>(*position);
+          }
+          has_errors = true;
+        }
+        expression = AddNode(ParseNodeKind::DesignatorExpression(), dot, start,
+                             has_errors);
+        break;
+      }
+
+      case TokenKind::OpenParen(): {
+        // `(` expression-list[opt] `)`
+        //
+        // expression-list ::= expression
+        //                 ::= expression `,` expression-list
+        TokenizedBuffer::Token open_paren = Consume(TokenKind::OpenParen());
+
+        if (tokens.GetKind(*position) != TokenKind::CloseParen()) {
+          while (true) {
+            bool argument_error = !ParseExpression();
+            has_errors |= argument_error;
+
+            if (tokens.GetKind(*position) == TokenKind::CloseParen()) {
+              break;
+            }
+
+            if (tokens.GetKind(*position) != TokenKind::Comma()) {
+              if (!argument_error) {
+                emitter.EmitError<UnexpectedTokenInFunctionArgs>(*position);
+              }
+              has_errors = true;
+
+              auto comma_position = FindNext(TokenKind::Comma());
+              if (!comma_position) {
+                SkipTo(tokens.GetMatchedClosingToken(open_paren));
+                break;
+              }
+              SkipTo(*comma_position);
+              break;
+            }
+
+            AddLeafNode(ParseNodeKind::CallExpressionComma(),
+                        Consume(TokenKind::Comma()));
+          }
+        }
+
+        AddLeafNode(ParseNodeKind::CallExpressionEnd(),
+                    Consume(TokenKind::CloseParen()));
+        expression = AddNode(ParseNodeKind::CallExpression(), open_paren, start,
+                             has_errors);
+        break;
+      }
+
+      default: {
+        return expression;
+      }
+    }
+  }
+}
+
+auto ParseTree::Parser::ParseExpression() -> llvm::Optional<Node> {
+  return ParsePostfixExpression();
+}
+
+auto ParseTree::Parser::ParseExpressionStatement() -> llvm::Optional<Node> {
+  TokenizedBuffer::Token start_token = *position;
+  auto start = StartSubtree();
+
+  bool has_errors = !ParseExpression();
+
+  if (auto semi = ConsumeIf(TokenKind::Semi()))
+    return AddNode(ParseNodeKind::ExpressionStatement(), *semi, start,
+                   has_errors);
+
+  if (!has_errors) {
+    emitter.EmitError<ExpectedSemiAfterExpression>(*position);
+  }
+
+  if (auto recovery_node =
+          SkipPastLikelyEnd(start_token, [&](TokenizedBuffer::Token semi) {
+            return AddNode(ParseNodeKind::ExpressionStatement(), semi, start,
+                           true);
+          })) {
+    return recovery_node;
+  }
+
+  // Found junk not even followed by a `;`.
   return {};
 }
 
