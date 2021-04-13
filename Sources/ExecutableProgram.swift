@@ -15,22 +15,6 @@ struct ExecutableProgram {
   var //let
     declaration = PropertyMap<Identifier.Body, Declaration>()
 
-  /// A mapping from (non-function) declarations to their addresses.
-  var //let
-    declarationAddress = PropertyMap<Declaration.Body, RelativeAddress>()
-
-  /// A mapping from (non-function) expressions to their addresses.
-  var //let
-    expressionAddress = PropertyMap<Expression.Body, RelativeAddress>()
-
-  /// An element of the frame layout
-  typealias FrameElement = (type: Type, mutable: Bool, site: SourceRegion)
-  
-  /// A mapping from function definition to the list of types that are
-  /// allocated into its frame.
-  var //let
-    frameLayout = PropertyMap<FunctionDefinition.Body, [FrameElement]>()
-
   /// Constructs an instance for the given parser output, or throws some sort of
   /// compilation error if the program is ill-formed.
   init(_ parsedProgram: [Declaration]) throws {

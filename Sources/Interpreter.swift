@@ -4,33 +4,48 @@
 
 /// The engine that executes the program
 struct Interpreter {
-  typealias ExitCode = Int
-
-  /// The function execution context.
-  typealias FunctionContext = (
-    /// The first address allocated to the currently-executing function's frame.
-    frameBase: Address,
-    
-    /// The place to store the currently-executing function's return value.
-    resultStorage: Address,
-
-    /// Where results should be stored when evaluating arguments to a function
-    /// call.
-    calleeFrameBase: Address
-  )
-
+  /// Creates an instance for executing `program`.
   init(_ program: ExecutableProgram) {
     self.program = program
   }
 
+  /// The program being executed.
   var //let
     program: ExecutableProgram
+
+  /// A type that can represent the local variables and expression values.
+  ///
+  /// The expression values include temporaries, but also references to lvalues.
+  // Temporarily using SourceRegion rather than AST node identity to work
+  // around some weaknesses in the grammar.
+  typealias Locals = [SourceRegion: Address]
+
+  /// A mapping from ID of expressions and declarations to local addresses.
+  var locals: Locals = [:]
+
+  /// The address that should be filled in by any `return` statements.
+  var returnValueStorage: Address = -1
+
+  /// A type that captures everything that needs to be restored after a callee
+  /// returns.
+  typealias FunctionContext = (locals: Locals, returnValueStorage: Address)
+
+  /// The function execution context.
+  var functionContext: FunctionContext {
+    get { (locals, returnValueStorage) }
+    set { (locals, returnValueStorage) = newValue }
+  }
+
+  typealias ExitCode = Int
+
+  /// Mapping from global declaration to addresses.
+  // private(set)
+    var globals: [Declaration.Identity: Address] = [:]
+
   var memory = Memory()
+
   private(set) var termination: ExitCode? = nil
 
-  var functionContext = FunctionContext(
-    frameBase: -1, resultStorage: -1, calleeFrameBase: -1)
-  
   /// The stack of pending actions.
   private var todo = Stack<Action>()
 }
@@ -53,36 +68,47 @@ extension Interpreter {
     }
   }
 
-  /// Accesses the value of an already-evaluated expression that is valid in the
-  /// currently-executing function context.
+  /// Accesses or initializes an rvalue for the given expression.
+  ///
+  /// - Requires: `e` comes from the current function context.
   subscript(_ e: Expression) -> Value {
-    memory[program.expressionAddress[e].resolved(in: self)]
+    get {
+      return memory[address(of: e)]
+    }
+    set {
+      precondition(
+        locals[e.site] == nil, "Temporary already initialized.")
+      let a = memory.allocate(
+        boundTo: newValue.type, from: e.site, mutable: false)
+      memory.initialize(a, to: newValue)
+      locals[e.site] = a
+    }
   }
 
-  /// Initializes the storage for `e` to `v`.
-  ///
-  /// - Requires: e is an expression valid in the currently-executing function
-  ///   context that has been allocated, is bound to `v.type`, and is not
-  ///   initialized.
-  mutating func initialize(_ e: Expression, to v: Value) {
-    memory.initialize(program.expressionAddress[e].resolved(in: self), to: v)
-  }
+  /// Destroys any rvalue computed for `e` and removes `e` from `locals`.
+  mutating func cleanUp(_ e: Expression) {
+    defer { locals[e.site] = nil }
+    if case .variable(_) = e.body { return } // not an rvalue.
 
-  /// Returns the storage for `e` to an uninitialized state.
-  ///
-  /// - Requires: e is an expression valid in the currently-executing function
-  ///   context that has been evaluated and not deinitialized
-  mutating func deinitialize(_ e: Expression) {
-    memory.deinitialize(program.expressionAddress[e].resolved(in: self))
+    let a = locals[e.site]!
+    memory.deinitialize(a)
+    memory.deallocate(a)
   }
 
   /// Accesses the value stored for the declaration of the given name.
-  ///
-  /// Every identifier gets mapped to a declaration, and every declaration has a
-  /// corresponding value stored in memory.
-  subscript(_ id: Identifier) -> Value {
-    memory[
-      program.declarationAddress[program.declaration[id]].resolved(in: self)]
+  subscript(_ name: Identifier) -> Value {
+    return memory[address(of: name)]
+  }
+
+  /// Accesses the address of the declaration for the given name.
+  func address(of name: Identifier) -> Address {
+    let d = program.declaration[name]
+    return locals[d.site] ?? globals[d.identity!]!
+  }
+
+  /// Accesses the address where e's value is stored.
+  func address(of e: Expression) -> Address {
+    return locals[e.site]!
   }
 }
 

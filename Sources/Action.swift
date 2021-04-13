@@ -19,15 +19,19 @@ protocol Action {
 
 struct Evaluate: Action {
   let source: Expression
-  
-  init(_ source: Expression) {
+  let target: Address?
+
+  /// Creates an instance that evaluates `source` into the current frame.
+  init(_ source: Expression, into target: Address? = nil) {
     self.source = source
+    self.target = target
   }
 
   mutating func run(on state: inout Interpreter) -> Followup {
     switch source.body {
     case .variable(let id):
-      state.initialize(source, to: state[id])
+      state.locals[source.site] = state.address(of: id)
+      // N.B. of all expressions, this one doesn't need to be destroyed.
       return .done
     default: fatalError("implement me.\n\(source)")
     }
@@ -46,6 +50,33 @@ struct EvaluateTupleLiteral: Action {
     if nextElement == source.body.count { return .done }
     defer { nextElement += 1 }
     return .spawn(Evaluate(source.body[nextElement].value))
+  }
+}
+
+struct CleanUp: Action {
+  init(_ target: Expression) {
+    self.target = target
+  }
+  let target: Expression
+
+  mutating func run(on engine: inout Interpreter) -> Followup {
+    engine.cleanUp(target)
+    return .done
+  }
+}
+
+struct CleanUpTupleLiteral: Action {
+  let target: TupleLiteral
+  var nextElement: Int = 0
+
+  init(_ target: TupleLiteral) {
+    self.target = target
+  }
+
+  mutating func run(on state: inout Interpreter) -> Followup {
+    if nextElement == target.body.count { return .done }
+    defer { nextElement += 1 }
+    return .spawn(CleanUp(target.body[nextElement].value))
   }
 }
 

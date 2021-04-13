@@ -33,31 +33,23 @@ final class TestEvaluateCall: XCTestCase {
     // Store the value of the main function.  All declarations have an address
     // in memory, inlcluding engine.main.
     let mainDeclarationAddress
-      = engine.memory.allocate(boundTo: mainType, from: .empty)
+      = engine.memory.allocate(boundTo: mainType, from: exe.main.site)
     engine.memory.initialize(
       mainDeclarationAddress, to: FunctionValue(type: mainType, code: exe.main))
-
-    // Prepare an address for the main expression's value
-    let mainExpressionAddress
-      = RelativeAddress(
-        .global, engine.memory.allocate(boundTo: mainType, from: .empty))
 
     // Poke in some values that should really be computed by semantic analysis.
     // These pokes are the reason for various temporary `var //let` declarations
     // you may see in Interpreter and ExecutableProgram.
     let mainDeclaration = ast[0]
-    engine.program.declarationAddress[mainDeclaration]
-      = RelativeAddress(.global, mainDeclarationAddress)
     engine.program.declaration[mainID] = mainDeclaration
-    engine.program.expressionAddress[mainExpression] = mainExpressionAddress
-    engine.program.frameLayout[engine.program.main] = []
+    engine.globals[mainDeclaration.identity!] = mainDeclarationAddress
 
     // Allocate an address for the return value.
     let resultAddress = engine.memory.allocate(boundTo: .int, from: .empty)
 
     let call = EvaluateCall(
       callee: mainExpression, arguments: arguments,
-      callerContext: engine.functionContext, resultStorage: resultAddress)
+      callerContext: engine.functionContext, returnValueStorage: resultAddress)
 
     engine.pushTodo_testingOnly(call)
     while engine.termination == nil {

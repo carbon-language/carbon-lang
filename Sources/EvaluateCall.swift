@@ -11,18 +11,18 @@ struct EvaluateCall: Action {
   /// Interpreter context to be restored after call completes.
   let callerContext: Interpreter.FunctionContext
   /// Where the result of the call shall be stored.
-  let resultStorage: Address
+  let returnValueStorage: Address
 
   init(
     callee: Expression,
     arguments: TupleLiteral,
     callerContext: Interpreter.FunctionContext,
-    resultStorage: Address)
+    returnValueStorage: Address)
   {
     self.callee = callee
     self.arguments = arguments
     self.callerContext = callerContext
-    self.resultStorage = resultStorage
+    self.returnValueStorage = returnValueStorage
   }
 
   /// Notional coroutine state.
@@ -30,67 +30,52 @@ struct EvaluateCall: Action {
   /// A suspended Call action (on the todo list) is either `.nascent`, or it's
   /// doing what the step name indicates (via sub-actions).
   private enum Step: Int {
-    case nascent, evaluatingCallee, evaluatingArguments, invoking
+    case evaluateCallee, evaluateArguments,
+         runBody,
+         cleanUpArguments, cleanUpCallee
   }
-  private var step: Step = .nascent
+
+  /// The current activity; `nil` means we haven't been started yet.
+  private var step: Step? = nil
 
   // information stashed across steps.
+  /// The callee.
   private var calleeCode: FunctionDefinition!
-  private var frameSize: Int!
-  
-  private var arity: Int { arguments.body.count }
-  
+
   /// Updates the interpreter state and optionally spawns a sub-action.
   mutating func run(on state: inout Interpreter) -> Followup {
-    defer { // advance to next step automatically upon exit
-      if let nextStep = Step(rawValue: step.rawValue + 1) { step = nextStep }
-    }
+    let nextStep = Step(rawValue: step.map { $0.rawValue + 1 } ?? 0)!
+    // Auto-advance on exit.
+    defer { step = nextStep }
 
-    switch step {
-    case .nascent:
+    switch nextStep {
+    case .evaluateCallee:
       return .spawn(Evaluate(callee))
       
-    case .evaluatingCallee:
+    case .evaluateArguments:
       calleeCode = (state[callee] as! FunctionValue).code
-      
-      // Prepare the callee's frame
-      let frame = state.program.frameLayout[calleeCode]
-      frameSize = frame.count
-      
-      state.functionContext.calleeFrameBase = state.memory.nextAddress
-      for (type, mutable, site) in frame {
-        _ = state.memory.allocate(boundTo: type, from: site, mutable: mutable)
-      }
       
       return .spawn(EvaluateTupleLiteral(arguments))
       
-    case .evaluatingArguments:
+    case .runBody:
       // Prepare the context for the callee
-      state.functionContext.resultStorage = resultStorage
-      state.functionContext.frameBase = state.functionContext.calleeFrameBase
-      
+      state.returnValueStorage = returnValueStorage
+      // Bind the parameter names to the addresses of the argument values.
+      let parameters = calleeCode.body.parameterPattern.body
+      state.locals = Dictionary(
+        uniqueKeysWithValues: zip(arguments.body, parameters).compactMap {
+          (a, p) in
+          p.name.map { (key: $0.site, value: state.address(of: a.value)) }
+        }
+      )
       return .spawn(Execute(calleeCode.body.body!))
 
-    case .invoking:
-      let calleeFrameBase = state.functionContext.frameBase
-      
-      // Restore the caller's context.
+    case .cleanUpArguments:
       state.functionContext = callerContext
-      
-      // Deinitialize parameters.
-      for i in 0..<arity {
-        state.memory.deinitialize(state.functionContext.frameBase + i)
-      }
-      // Deallocate the callee's frame.
-      for a in calleeFrameBase..<(calleeFrameBase + frameSize) {
-        state.memory.deallocate(a)
-      }
-      // Deinitialize subexpression temporaries
-      state.deinitialize(callee)
-      for a in arguments.body {
-        state.deinitialize(a.value)
-      }
-      return .done
+      return .spawn(CleanUpTupleLiteral(arguments))
+
+    case .cleanUpCallee:
+      return .chain(CleanUp(callee))
     }
   }
 }
