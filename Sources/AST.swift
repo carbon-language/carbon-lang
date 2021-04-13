@@ -141,7 +141,7 @@ typealias TupleLiteral = List<TupleLiteralElement>
 
 indirect enum Expression: AST {
   case
-    variable(Identifier),
+    name(Identifier),
     getField(target: Expression, fieldName: Identifier, Site),
     index(target: Expression, offset: Expression, Site),
     patternVariable(name: Identifier, type: Expression, Site),
@@ -159,7 +159,7 @@ indirect enum Expression: AST {
 
   var site: Site {
     switch self {
-    case let .variable(v): return v.site
+    case let .name(v): return v.site
     case let .getField(_, _, r): return r
     case let .index(target: _, offset: _, r): return r
     case let .patternVariable(name: _, type: _, r): return r

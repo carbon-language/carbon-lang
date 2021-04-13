@@ -80,7 +80,7 @@ pattern ::= expression(e).     {e}
 identifier ::= Identifier(i).
   { Identifier(text: i.text, site: i.site) }
 expression ::= identifier(i).
-  { .variable(i) }
+  { .name(i) }
 expression ::= expression(t) member_designator(m).
   { .getField(target: t, fieldName: m, t...m) }
 expression ::= expression(t)

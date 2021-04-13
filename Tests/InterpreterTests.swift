@@ -24,7 +24,7 @@ final class TestEvaluateCall: XCTestCase {
 
     // Prepare AST fragments for a call to main.
     let mainID = Identifier(text: "main", site: topColumns(1...4))
-    let mainExpression = Expression.variable(mainID)
+    let mainExpression = Expression.name(mainID)
     let arguments = TupleLiteral([], topColumns(5...6))
     let mainType = Type.function(parameterTypes: [], returnType: .int)
 
