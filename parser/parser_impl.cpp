@@ -56,8 +56,7 @@ struct UnrecognizedDeclaration : SimpleDiagnostic<UnrecognizedDeclaration> {
 
 struct ExpectedExpression : SimpleDiagnostic<ExpectedExpression> {
   static constexpr llvm::StringLiteral ShortName = "syntax-error";
-  static constexpr llvm::StringLiteral Message =
-      "Expected expression.";
+  static constexpr llvm::StringLiteral Message = "Expected expression.";
 };
 
 struct ExpectedCloseParen : SimpleDiagnostic<ExpectedCloseParen> {
@@ -66,13 +65,15 @@ struct ExpectedCloseParen : SimpleDiagnostic<ExpectedCloseParen> {
       "Unexpected tokens before `)`.";
 };
 
-struct ExpectedSemiAfterExpression : SimpleDiagnostic<ExpectedSemiAfterExpression> {
+struct ExpectedSemiAfterExpression
+    : SimpleDiagnostic<ExpectedSemiAfterExpression> {
   static constexpr llvm::StringLiteral ShortName = "syntax-error";
   static constexpr llvm::StringLiteral Message =
       "Expected `;` after expression.";
 };
 
-struct ExpectedIdentifierAfterDot : SimpleDiagnostic<ExpectedIdentifierAfterDot> {
+struct ExpectedIdentifierAfterDot
+    : SimpleDiagnostic<ExpectedIdentifierAfterDot> {
   static constexpr llvm::StringLiteral ShortName = "syntax-error";
   static constexpr llvm::StringLiteral Message =
       "Expected identifier after `.`.";
