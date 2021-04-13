@@ -22,6 +22,7 @@ namespace {
 
 using Carbon::Testing::IsKeyValueScalars;
 using Carbon::Testing::MatchParseTreeNodes;
+using namespace Carbon::Testing::NodeMatchers;
 using ::testing::Eq;
 using ::testing::Ne;
 using ::testing::NotNull;
@@ -48,7 +49,7 @@ TEST_F(ParseTreeTest, Empty) {
   TokenizedBuffer tokens = GetTokenizedBuffer("");
   ParseTree tree = ParseTree::Parse(tokens, consumer);
   EXPECT_FALSE(tree.HasErrors());
-  EXPECT_THAT(tree, MatchParseTreeNodes({{.kind = ParseNodeKind::FileEnd()}}));
+  EXPECT_THAT(tree, MatchParseTreeNodes({MatchFileEnd()}));
 }
 
 TEST_F(ParseTreeTest, EmptyDeclaration) {
@@ -87,68 +88,55 @@ TEST_F(ParseTreeTest, BasicFunctionDeclaration) {
   TokenizedBuffer tokens = GetTokenizedBuffer("fn F();");
   ParseTree tree = ParseTree::Parse(tokens, consumer);
   EXPECT_FALSE(tree.HasErrors());
-  EXPECT_THAT(
-      tree, MatchParseTreeNodes(
-                {{.kind = ParseNodeKind::FunctionDeclaration(),
-                  .text = "fn",
-                  .children = {{ParseNodeKind::Identifier(), "F"},
-                               {.kind = ParseNodeKind::ParameterList(),
-                                .text = "(",
-                                .children = {{ParseNodeKind::ParameterListEnd(),
-                                              ")"}}},
-                               {ParseNodeKind::DeclarationEnd(), ";"}}},
-                 {.kind = ParseNodeKind::FileEnd()}}));
+  EXPECT_THAT(tree,
+              MatchParseTreeNodes(
+                  {MatchFunctionDeclaration(
+                       "fn", MatchIdentifier("F"),
+                       MatchParameterList("(", MatchParameterListEnd(")")),
+                       MatchDeclarationEnd(";")),
+                   MatchFileEnd()}));
 }
 
 TEST_F(ParseTreeTest, NoDeclarationIntroducerOrSemi) {
   TokenizedBuffer tokens = GetTokenizedBuffer("foo bar baz");
   ParseTree tree = ParseTree::Parse(tokens, consumer);
   EXPECT_TRUE(tree.HasErrors());
-  EXPECT_THAT(tree, MatchParseTreeNodes({{.kind = ParseNodeKind::FileEnd()}}));
+  EXPECT_THAT(tree, MatchParseTreeNodes({MatchFileEnd()}));
 }
 
 TEST_F(ParseTreeTest, NoDeclarationIntroducerWithSemi) {
   TokenizedBuffer tokens = GetTokenizedBuffer("foo;");
   ParseTree tree = ParseTree::Parse(tokens, consumer);
   EXPECT_TRUE(tree.HasErrors());
-  EXPECT_THAT(tree,
-              MatchParseTreeNodes({{.kind = ParseNodeKind::EmptyDeclaration(),
-                                    .text = ";",
-                                    .has_error = true},
-                                   {.kind = ParseNodeKind::FileEnd()}}));
+  EXPECT_THAT(tree, MatchParseTreeNodes({MatchEmptyDeclaration(";", HasError),
+                                         MatchFileEnd()}));
 }
 
 TEST_F(ParseTreeTest, JustFunctionIntroducerAndSemi) {
   TokenizedBuffer tokens = GetTokenizedBuffer("fn;");
   ParseTree tree = ParseTree::Parse(tokens, consumer);
   EXPECT_TRUE(tree.HasErrors());
-  EXPECT_THAT(tree, MatchParseTreeNodes(
-                        {{.kind = ParseNodeKind::FunctionDeclaration(),
-                          .has_error = true,
-                          .children = {{ParseNodeKind::DeclarationEnd()}}},
-                         {.kind = ParseNodeKind::FileEnd()}}));
+  EXPECT_THAT(tree, MatchParseTreeNodes({MatchFunctionDeclaration(
+                                             HasError, MatchDeclarationEnd()),
+                                         MatchFileEnd()}));
 }
 
 TEST_F(ParseTreeTest, RepeatedFunctionIntroducerAndSemi) {
   TokenizedBuffer tokens = GetTokenizedBuffer("fn fn;");
   ParseTree tree = ParseTree::Parse(tokens, consumer);
   EXPECT_TRUE(tree.HasErrors());
-  EXPECT_THAT(tree, MatchParseTreeNodes(
-                        {{.kind = ParseNodeKind::FunctionDeclaration(),
-                          .has_error = true,
-                          .children = {{ParseNodeKind::DeclarationEnd()}}},
-                         {.kind = ParseNodeKind::FileEnd()}}));
+  EXPECT_THAT(tree, MatchParseTreeNodes({MatchFunctionDeclaration(
+                                             HasError, MatchDeclarationEnd()),
+                                         MatchFileEnd()}));
 }
 
 TEST_F(ParseTreeTest, FunctionDeclarationWithNoSignatureOrSemi) {
   TokenizedBuffer tokens = GetTokenizedBuffer("fn foo");
   ParseTree tree = ParseTree::Parse(tokens, consumer);
   EXPECT_TRUE(tree.HasErrors());
-  EXPECT_THAT(tree, MatchParseTreeNodes(
-                        {{.kind = ParseNodeKind::FunctionDeclaration(),
-                          .has_error = true,
-                          .children = {{ParseNodeKind::Identifier(), "foo"}}},
-                         {.kind = ParseNodeKind::FileEnd()}}));
+  EXPECT_THAT(tree, MatchParseTreeNodes({MatchFunctionDeclaration(
+                                             HasError, MatchIdentifier("foo")),
+                                         MatchFileEnd()}));
 }
 
 TEST_F(ParseTreeTest,
@@ -156,12 +144,10 @@ TEST_F(ParseTreeTest,
   TokenizedBuffer tokens = GetTokenizedBuffer("fn foo bar;");
   ParseTree tree = ParseTree::Parse(tokens, consumer);
   EXPECT_TRUE(tree.HasErrors());
-  EXPECT_THAT(tree, MatchParseTreeNodes(
-                        {{.kind = ParseNodeKind::FunctionDeclaration(),
-                          .has_error = true,
-                          .children = {{ParseNodeKind::Identifier(), "foo"},
-                                       {ParseNodeKind::DeclarationEnd()}}},
-                         {.kind = ParseNodeKind::FileEnd()}}));
+  EXPECT_THAT(tree, MatchParseTreeNodes({MatchFunctionDeclaration(
+                                             HasError, MatchIdentifier("foo"),
+                                             MatchDeclarationEnd()),
+                                         MatchFileEnd()}));
 }
 
 TEST_F(ParseTreeTest, FunctionDeclarationWithSingleIdentifierParameterList) {
@@ -170,28 +156,22 @@ TEST_F(ParseTreeTest, FunctionDeclarationWithSingleIdentifierParameterList) {
   // Note: this might become valid depending on the parameter syntax, this test
   // shouldn't be taken as a sign it should remain invalid.
   EXPECT_TRUE(tree.HasErrors());
-  EXPECT_THAT(
-      tree,
-      MatchParseTreeNodes(
-          {{.kind = ParseNodeKind::FunctionDeclaration(),
-            .has_error = true,
-            .children = {{ParseNodeKind::Identifier(), "foo"},
-                         {.kind = ParseNodeKind::ParameterList(),
-                          .has_error = true,
-                          .children = {{ParseNodeKind::ParameterListEnd()}}},
-                         {ParseNodeKind::DeclarationEnd()}}},
-           {.kind = ParseNodeKind::FileEnd()}}));
+  EXPECT_THAT(tree,
+              MatchParseTreeNodes(
+                  {MatchFunctionDeclaration(
+                       HasError, MatchIdentifier("foo"),
+                       MatchParameterList(HasError, MatchParameterListEnd()),
+                       MatchDeclarationEnd()),
+                   MatchFileEnd()}));
 }
 
 TEST_F(ParseTreeTest, FunctionDeclarationWithoutName) {
   TokenizedBuffer tokens = GetTokenizedBuffer("fn ();");
   ParseTree tree = ParseTree::Parse(tokens, consumer);
   EXPECT_TRUE(tree.HasErrors());
-  EXPECT_THAT(tree, MatchParseTreeNodes(
-                        {{.kind = ParseNodeKind::FunctionDeclaration(),
-                          .has_error = true,
-                          .children = {{ParseNodeKind::DeclarationEnd()}}},
-                         {.kind = ParseNodeKind::FileEnd()}}));
+  EXPECT_THAT(tree, MatchParseTreeNodes({MatchFunctionDeclaration(
+                                             HasError, MatchDeclarationEnd()),
+                                         MatchFileEnd()}));
 }
 
 TEST_F(ParseTreeTest,
@@ -200,11 +180,9 @@ TEST_F(ParseTreeTest,
       "fn (a tokens c d e f g h i j k l m n o p q r s t u v w x y z);");
   ParseTree tree = ParseTree::Parse(tokens, consumer);
   EXPECT_TRUE(tree.HasErrors());
-  EXPECT_THAT(tree, MatchParseTreeNodes(
-                        {{.kind = ParseNodeKind::FunctionDeclaration(),
-                          .has_error = true,
-                          .children = {{ParseNodeKind::DeclarationEnd()}}},
-                         {.kind = ParseNodeKind::FileEnd()}}));
+  EXPECT_THAT(tree, MatchParseTreeNodes({MatchFunctionDeclaration(
+                                             HasError, MatchDeclarationEnd()),
+                                         MatchFileEnd()}));
 }
 
 TEST_F(ParseTreeTest, FunctionDeclarationSkipToNewlineWithoutSemi) {
@@ -216,13 +194,11 @@ TEST_F(ParseTreeTest, FunctionDeclarationSkipToNewlineWithoutSemi) {
   EXPECT_THAT(
       tree,
       MatchParseTreeNodes(
-          {{.kind = ParseNodeKind::FunctionDeclaration(), .has_error = true},
-           {.kind = ParseNodeKind::FunctionDeclaration(),
-            .children = {{ParseNodeKind::Identifier(), "F"},
-                         {.kind = ParseNodeKind::ParameterList(),
-                          .children = {{ParseNodeKind::ParameterListEnd()}}},
-                         {ParseNodeKind::DeclarationEnd()}}},
-           {.kind = ParseNodeKind::FileEnd()}}));
+          {MatchFunctionDeclaration(HasError),
+           MatchFunctionDeclaration(MatchIdentifier("F"),
+                                    MatchParameterList(MatchParameterListEnd()),
+                                    MatchDeclarationEnd()),
+           MatchFileEnd()}));
 }
 
 TEST_F(ParseTreeTest, FunctionDeclarationSkipIndentedNewlineWithSemi) {
@@ -236,15 +212,11 @@ TEST_F(ParseTreeTest, FunctionDeclarationSkipIndentedNewlineWithSemi) {
   EXPECT_THAT(
       tree,
       MatchParseTreeNodes(
-          {{.kind = ParseNodeKind::FunctionDeclaration(),
-            .has_error = true,
-            .children = {{ParseNodeKind::DeclarationEnd()}}},
-           {.kind = ParseNodeKind::FunctionDeclaration(),
-            .children = {{ParseNodeKind::Identifier(), "F"},
-                         {.kind = ParseNodeKind::ParameterList(),
-                          .children = {{ParseNodeKind::ParameterListEnd()}}},
-                         {ParseNodeKind::DeclarationEnd()}}},
-           {.kind = ParseNodeKind::FileEnd()}}));
+          {MatchFunctionDeclaration(HasError, MatchDeclarationEnd()),
+           MatchFunctionDeclaration(MatchIdentifier("F"),
+                                    MatchParameterList(MatchParameterListEnd()),
+                                    MatchDeclarationEnd()),
+           MatchFileEnd()}));
 }
 
 TEST_F(ParseTreeTest, FunctionDeclarationSkipIndentedNewlineWithoutSemi) {
@@ -258,13 +230,11 @@ TEST_F(ParseTreeTest, FunctionDeclarationSkipIndentedNewlineWithoutSemi) {
   EXPECT_THAT(
       tree,
       MatchParseTreeNodes(
-          {{.kind = ParseNodeKind::FunctionDeclaration(), .has_error = true},
-           {.kind = ParseNodeKind::FunctionDeclaration(),
-            .children = {{ParseNodeKind::Identifier(), "F"},
-                         {.kind = ParseNodeKind::ParameterList(),
-                          .children = {{ParseNodeKind::ParameterListEnd()}}},
-                         {ParseNodeKind::DeclarationEnd()}}},
-           {.kind = ParseNodeKind::FileEnd()}}));
+          {MatchFunctionDeclaration(HasError),
+           MatchFunctionDeclaration(MatchIdentifier("F"),
+                                    MatchParameterList(MatchParameterListEnd()),
+                                    MatchDeclarationEnd()),
+           MatchFileEnd()}));
 }
 
 TEST_F(ParseTreeTest, FunctionDeclarationSkipIndentedNewlineUntilOutdent) {
@@ -278,13 +248,11 @@ TEST_F(ParseTreeTest, FunctionDeclarationSkipIndentedNewlineUntilOutdent) {
   EXPECT_THAT(
       tree,
       MatchParseTreeNodes(
-          {{.kind = ParseNodeKind::FunctionDeclaration(), .has_error = true},
-           {.kind = ParseNodeKind::FunctionDeclaration(),
-            .children = {{ParseNodeKind::Identifier(), "F"},
-                         {.kind = ParseNodeKind::ParameterList(),
-                          .children = {{ParseNodeKind::ParameterListEnd()}}},
-                         {ParseNodeKind::DeclarationEnd()}}},
-           {.kind = ParseNodeKind::FileEnd()}}));
+          {MatchFunctionDeclaration(HasError),
+           MatchFunctionDeclaration(MatchIdentifier("F"),
+                                    MatchParameterList(MatchParameterListEnd()),
+                                    MatchDeclarationEnd()),
+           MatchFileEnd()}));
 }
 
 TEST_F(ParseTreeTest, FunctionDeclarationSkipWithoutSemiToCurly) {
@@ -306,17 +274,12 @@ TEST_F(ParseTreeTest, BasicFunctionDefinition) {
       "}");
   ParseTree tree = ParseTree::Parse(tokens, consumer);
   EXPECT_FALSE(tree.HasErrors());
-  EXPECT_THAT(
-      tree,
-      MatchParseTreeNodes(
-          {{.kind = ParseNodeKind::FunctionDeclaration(),
-            .children = {{ParseNodeKind::Identifier(), "F"},
-                         {.kind = ParseNodeKind::ParameterList(),
-                          .children = {{ParseNodeKind::ParameterListEnd()}}},
-                         {.kind = ParseNodeKind::CodeBlock(),
-                          .text = "{",
-                          .children = {{ParseNodeKind::CodeBlockEnd(), "}"}}}}},
-           {.kind = ParseNodeKind::FileEnd()}}));
+  EXPECT_THAT(tree, MatchParseTreeNodes(
+                        {MatchFunctionDeclaration(
+                             MatchIdentifier("F"),
+                             MatchParameterList(MatchParameterListEnd()),
+                             MatchCodeBlock("{", MatchCodeBlockEnd("}"))),
+                         MatchFileEnd()}));
 }
 
 TEST_F(ParseTreeTest, FunctionDefinitionWithNestedBlocks) {
@@ -329,25 +292,17 @@ TEST_F(ParseTreeTest, FunctionDefinitionWithNestedBlocks) {
   ParseTree tree = ParseTree::Parse(tokens, consumer);
   EXPECT_FALSE(tree.HasErrors());
   EXPECT_THAT(
-      tree,
-      MatchParseTreeNodes(
-          {{.kind = ParseNodeKind::FunctionDeclaration(),
-            .children =
-                {{ParseNodeKind::Identifier(), "F"},
-                 {.kind = ParseNodeKind::ParameterList(),
-                  .children = {{ParseNodeKind::ParameterListEnd()}}},
-                 {.kind = ParseNodeKind::CodeBlock(),
-                  .children =
-                      {{.kind = ParseNodeKind::CodeBlock(),
-                        .children =
-                            {{.kind = ParseNodeKind::CodeBlock(),
-                              .children = {{.kind = ParseNodeKind::CodeBlock(),
-                                            .children = {{ParseNodeKind::
-                                                              CodeBlockEnd()}}},
-                                           {ParseNodeKind::CodeBlockEnd()}}},
-                             {ParseNodeKind::CodeBlockEnd()}}},
-                       {ParseNodeKind::CodeBlockEnd()}}}}},
-           {.kind = ParseNodeKind::FileEnd()}}));
+      tree, MatchParseTreeNodes(
+                {MatchFunctionDeclaration(
+                     MatchIdentifier("F"),
+                     MatchParameterList(MatchParameterListEnd()),
+                     MatchCodeBlock(
+                         MatchCodeBlock(
+                             MatchCodeBlock(MatchCodeBlock(MatchCodeBlockEnd()),
+                                            MatchCodeBlockEnd()),
+                             MatchCodeBlockEnd()),
+                         MatchCodeBlockEnd())),
+                 MatchFileEnd()}));
 }
 
 TEST_F(ParseTreeTest, FunctionDefinitionWithIdenifierInStatements) {
@@ -359,17 +314,12 @@ TEST_F(ParseTreeTest, FunctionDefinitionWithIdenifierInStatements) {
   // Note: this might become valid depending on the expression syntax. This test
   // shouldn't be taken as a sign it should remain invalid.
   EXPECT_TRUE(tree.HasErrors());
-  EXPECT_THAT(
-      tree,
-      MatchParseTreeNodes(
-          {{.kind = ParseNodeKind::FunctionDeclaration(),
-            .children = {{ParseNodeKind::Identifier(), "F"},
-                         {.kind = ParseNodeKind::ParameterList(),
-                          .children = {{ParseNodeKind::ParameterListEnd()}}},
-                         {.kind = ParseNodeKind::CodeBlock(),
-                          .has_error = true,
-                          .children = {{ParseNodeKind::CodeBlockEnd()}}}}},
-           {.kind = ParseNodeKind::FileEnd()}}));
+  EXPECT_THAT(tree, MatchParseTreeNodes(
+                        {MatchFunctionDeclaration(
+                             MatchIdentifier("F"),
+                             MatchParameterList(MatchParameterListEnd()),
+                             MatchCodeBlock(HasError, MatchCodeBlockEnd())),
+                         MatchFileEnd()}));
 }
 
 TEST_F(ParseTreeTest, FunctionDefinitionWithIdenifierInNestedBlock) {
@@ -384,17 +334,12 @@ TEST_F(ParseTreeTest, FunctionDefinitionWithIdenifierInNestedBlock) {
   EXPECT_THAT(
       tree,
       MatchParseTreeNodes(
-          {{.kind = ParseNodeKind::FunctionDeclaration(),
-            .children =
-                {{ParseNodeKind::Identifier(), "F"},
-                 {.kind = ParseNodeKind::ParameterList(),
-                  .children = {{ParseNodeKind::ParameterListEnd()}}},
-                 {.kind = ParseNodeKind::CodeBlock(),
-                  .children = {{.kind = ParseNodeKind::CodeBlock(),
-                                .has_error = true,
-                                .children = {{ParseNodeKind::CodeBlockEnd()}}},
-                               {ParseNodeKind::CodeBlockEnd()}}}}},
-           {.kind = ParseNodeKind::FileEnd()}}));
+          {MatchFunctionDeclaration(
+               MatchIdentifier("F"),
+               MatchParameterList(MatchParameterListEnd()),
+               MatchCodeBlock(MatchCodeBlock(HasError, MatchCodeBlockEnd()),
+                              MatchCodeBlockEnd())),
+           MatchFileEnd()}));
 }
 
 auto GetAndDropLine(llvm::StringRef& s) -> std::string {
