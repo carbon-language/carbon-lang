@@ -285,16 +285,20 @@ template <typename... Args>
 auto MatchNode(Args... args) -> ExpectedNode {
   struct ArgHandler {
     ExpectedNode expected;
-    void operator()(ParseNodeKind kind) { expected.kind = kind; }
-    void operator()(std::string text) { expected.text = std::move(text); }
-    void operator()(HasErrorTag) { expected.has_error = true; }
-    void operator()(AnyChildrenTag) { expected.skip_subtree = true; }
-    void operator()(ExpectedNode node) {
+    void UpdateExpectationsForArg(ParseNodeKind kind) { expected.kind = kind; }
+    void UpdateExpectationsForArg(std::string text) {
+      expected.text = std::move(text);
+    }
+    void UpdateExpectationsForArg(HasErrorTag) { expected.has_error = true; }
+    void UpdateExpectationsForArg(AnyChildrenTag) {
+      expected.skip_subtree = true;
+    }
+    void UpdateExpectationsForArg(ExpectedNode node) {
       expected.children.push_back(std::move(node));
     }
   };
   ArgHandler handler;
-  (handler(args), ...);
+  (handler.UpdateExpectationsForArg(args), ...);
   return handler.expected;
 }
 
