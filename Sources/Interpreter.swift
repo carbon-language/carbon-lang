@@ -16,9 +16,7 @@ struct Interpreter {
   /// A type that can represent the local variables and expression values.
   ///
   /// The expression values include temporaries, but also references to lvalues.
-  // Temporarily using SourceRegion rather than AST node identity to work
-  // around some weaknesses in the grammar.
-  typealias Locals = [SourceRegion: Address]
+  typealias Locals = [Typed: Address]
 
   /// A mapping from ID of expressions and declarations to local addresses.
   var locals: Locals = [:]
@@ -77,20 +75,20 @@ extension Interpreter {
     }
     set {
       precondition(
-        locals[e.site] == nil, "Temporary already initialized.")
+        locals[.expression(e)] == nil, "Temporary already initialized.")
       let a = memory.allocate(
         boundTo: newValue.type, from: e.site, mutable: false)
       memory.initialize(a, to: newValue)
-      locals[e.site] = a
+      locals[.expression(e)] = a
     }
   }
 
   /// Destroys any rvalue computed for `e` and removes `e` from `locals`.
   mutating func cleanUp(_ e: Expression) {
-    defer { locals[e.site] = nil }
+    defer { locals[.expression(e)] = nil }
     if case .variable(_) = e^ { return } // not an rvalue.
 
-    let a = locals[e.site]!
+    let a = locals[.expression(e)]!
     memory.deinitialize(a)
     memory.deallocate(a)
   }
@@ -103,12 +101,12 @@ extension Interpreter {
   /// Accesses the address of the declaration for the given name.
   func address(of name: Identifier) -> Address {
     let d = program.declaration[name]
-    return locals[d.site] ?? globals[d]!
+    return locals[.declaration(d)] ?? globals[d]!
   }
 
   /// Accesses the address where e's value is stored.
   func address(of e: Expression) -> Address {
-    return locals[e.site]!
+    return locals[.expression(e)]!
   }
 }
 

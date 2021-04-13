@@ -13,3 +13,11 @@ indirect enum Type: Equatable {
 
   static var void: Type { .tuple([]) }
 }
+
+/// A thing that has a type.
+enum Typed: Hashable {
+  case
+    declaration(Declaration),
+    expression(Expression),
+    functionParameter(Identifier)
+}
