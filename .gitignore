@@ -9,3 +9,4 @@
 xcuserdata/
 bin/
 Sources/Parser.swift
+.swiftpm
