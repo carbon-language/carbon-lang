@@ -32,3 +32,9 @@ extension CompileError: CustomStringConvertible {
       }).joined(separator: "\n")
   }
 }
+
+
+/// This will be thrown from executable program construction if there's a
+/// failure.
+typealias ErrorLog = [CompileError]
+extension ErrorLog: Error {}

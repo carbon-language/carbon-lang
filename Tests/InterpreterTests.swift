@@ -7,7 +7,7 @@ import XCTest
 final class TestEvaluateCall: XCTestCase {
   func testMinimal() {
     guard let ast = CheckNoThrow(try "fn main() -> Int {}".parsedAsCarbon()),
-          let exe = CheckNoThrow(try ExecutableProgram(ast))
+          let exe = CheckNoThrow(try ExecutableProgram(_parsedProgram: ast))
     else { return }
 
     /// Return a sourceRegion covering the given columns of line 1 in a mythical

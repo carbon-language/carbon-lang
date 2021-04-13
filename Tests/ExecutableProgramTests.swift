@@ -6,8 +6,10 @@ import XCTest
 
 final class TestSemanticAnalysis: XCTestCase {
   func testNoMain() {
-    CheckThrows(try ExecutableProgram("var Int: x = 3;".parsedAsCarbon())) {
-      (e: CompileError) in XCTAssert(e.message.contains("No nullary main"))
+    CheckThrows(
+      try ExecutableProgram(_parsedProgram: "var Int: x = 3;".parsedAsCarbon())
+    ) {
+      (e: ErrorLog) in XCTAssert(e[0].message.contains("No nullary main"))
     }
   }                      
       
@@ -17,15 +19,17 @@ final class TestSemanticAnalysis: XCTestCase {
       var Int: x = 3;
       fn main() -> Void {}
       """
-    CheckThrows(try ExecutableProgram(source.parsedAsCarbon())) {
-      (e: CompileError) in XCTAssert(e.message.contains("Multiple main"))
+    CheckThrows(try ExecutableProgram(_parsedProgram: source.parsedAsCarbon()))
+    {
+      (e: ErrorLog) in XCTAssert(e[0].message.contains("Multiple main"))
     }
   }                      
       
   func testMinimal() {
     guard let exe = CheckNoThrow(
       try ExecutableProgram(
-	"fn main() -> Int {}".parsedAsCarbon(fromFile: "main.6c")))
+	_parsedProgram: "fn main() -> Int {}"
+          .parsedAsCarbon(fromFile: "main.6c")))
     else { return }
     
     // Nothing interesting to check about exe yet.

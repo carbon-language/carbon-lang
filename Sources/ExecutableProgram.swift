@@ -15,33 +15,39 @@ struct ExecutableProgram {
   var //let
     declaration = PropertyMap<Identifier, Declaration>()
 
-  /// Constructs an instance for the given parser output, or throws some sort of
-  /// compilation error if the program is ill-formed.
-  init(_ parsedProgram: [Declaration]) throws {
-    self.ast = parsedProgram
-    self.main = try unambiguousMain(in: parsedProgram)
+  /// Constructs an instance for the given parser output, or throws `ErrorLog`
+  /// if the program is ill-formed.
+  // should be fileprivate - internal for testing purposes.
+  init(_parsedProgram ast: [Declaration]) throws {
+    self.ast = ast
+    switch unambiguousMain(in: ast) {
+    case let .failure(e): throw [e]
+    case let .success(main): self.main = main
+    }
   }
 }
 
 /// Returns the unique top-level nullary main() function defined in
 /// `parsedProgram`, or reports a suitable CompileError if that doesn't exist.
 fileprivate func unambiguousMain(
-  in parsedProgram: [Declaration]) throws -> FunctionDefinition
+  in parsedProgram: [Declaration]) -> Result<FunctionDefinition, CompileError>
 {
-  let mainCandidates: [FunctionDefinition] = parsedProgram.compactMap { d in
-    if case .function(let f) = d,
-       f.name.text == "main" && f.parameterPattern.elements.isEmpty { return f }
-    return nil
+  let mainCandidates: [FunctionDefinition] = parsedProgram.compactMap {
+    if case .function(let f) = $0,
+       f.name.text == "main",
+       f.parameterPattern.elements.isEmpty
+    { return f } else { return nil }
   }
 
   guard let r = mainCandidates.first else {
-    throw CompileError("No nullary main() found.", at: .empty)
+    return .failure(CompileError("No nullary main() found.", at: .empty))
   }
 
   if mainCandidates.count > 1 {
-    throw CompileError(
+    return .failure(CompileError(
       "Multiple main() candidates found.", at: r.name.site,
-      notes: mainCandidates.dropFirst().map { ("candidate", $0.name.site) })
+      notes: mainCandidates.dropFirst().map { ("candidate", $0.name.site) }))
   }
-  return r
+
+  return .success(r)
 }
