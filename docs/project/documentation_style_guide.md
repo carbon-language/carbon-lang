@@ -99,10 +99,8 @@ For example:
 #### Question for reviewers
 
 "Question for reviewers" indicates a question that needs to be resolved before
-the proposal is accepted. In the Carbon repository, it should appear only in
-numbered proposal documents, with the answer captured in the corresponding
-[formal decision](/docs/project/consensus_decision_making.html#formal-decision-content)
-document. Everywhere else, it should be removed during the code review process.
+the proposal is accepted. Like "FIXME", it should be removed before being
+committed to the Carbon repository.
 
 ```markdown
 > **Question for reviewers:** Which of these directions should we adopt?
