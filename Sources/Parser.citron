@@ -54,9 +54,9 @@
 %nonterminal_type return_type Expression
 %nonterminal_type function_definition FunctionDefinition
 %nonterminal_type function_declaration FunctionDefinition
-%nonterminal_type variable_declaration VariableDeclaration
-%nonterminal_type member VariableDeclaration
-%nonterminal_type member_list {[VariableDeclaration]}
+%nonterminal_type variable_declaration {(name: Identifier, type: Expression)}
+%nonterminal_type member StructMemberDeclaration
+%nonterminal_type member_list {[StructMemberDeclaration]}
 %nonterminal_type alternative Alternative
 %nonterminal_type alternative_list {[Alternative]}
 %nonterminal_type declaration Declaration
@@ -217,9 +217,9 @@ function_declaration
       body: nil, site: f...s)
   }
 variable_declaration ::= expression(t) COLON identifier(n).
-  { VariableDeclaration(name: n, type: t, site: t...n) }
+  { (name: n, type: t) }
 member ::= VAR(v) variable_declaration(d) SEMICOLON(s).
-  { VariableDeclaration(name: d.name, type: d.type, site: v...s) }
+  { StructMemberDeclaration(name: d.name, type: d.type, site: v...s) }
 member_list ::= /* Empty */.
   { [] }
 member_list ::= member(m) member_list(l).

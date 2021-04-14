@@ -33,6 +33,8 @@ struct Identifier: AST {
   let site: Site
 }
 
+/// A declaration, except for pattern variables, struct members, and function
+/// parameters.
 indirect enum Declaration: AST {
   case
     function(FunctionDefinition),
@@ -68,7 +70,7 @@ struct Alternative: AST {
 
 struct StructDefinition: AST {
   let name: Identifier
-  let members: [VariableDeclaration]
+  let members: [StructMemberDeclaration]
   let site: Site
 }
 
@@ -191,7 +193,7 @@ struct FieldList: AST {
   let site: Site
 }
 
-struct VariableDeclaration: AST {
+struct StructMemberDeclaration: AST {
   let name: Identifier
   let type: Expression
   let site: Site
