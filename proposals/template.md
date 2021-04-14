@@ -57,11 +57,11 @@ will that in fact solve it?
 
 TODO: Fully explain the details of the proposed solution.
 
+## Rationale based on Carbon's goals
+
+TODO: How does this proposal effectively advance Carbon's goals? This shouldn't re-state the full motivation, but just connect that motivation back to Carbon's stated goals for the project and/or language. This may evolve
+during review.
+
 ## Alternatives considered
 
 TODO: What alternative solutions have you considered?
-
-## Rationale
-
-TODO: What is the rationale to support accepting the proposal? This may evolve
-during review.
