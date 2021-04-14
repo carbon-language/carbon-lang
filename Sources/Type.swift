@@ -8,8 +8,8 @@ indirect enum Type: Equatable {
     int, bool, type,
     function(parameterTypes: [Type], returnType: Type),
     tuple([Type]),
-    `struct`(StructDefinition, SourceRegion),
-    `choice`(ChoiceDefinition, SourceRegion),
+    `struct`(StructDefinition),
+    `choice`(ChoiceDefinition),
 
     error // Placeholder indicating failed type deduction.
 
