@@ -219,7 +219,7 @@ auto ParseTree::Parser::FindNext(TokenKind desired_kind)
     // Step to the next token at the current bracketing level.
     if (kind.IsClosingSymbol() || kind == TokenKind::EndOfFile()) {
       // There are no more tokens at this level.
-      return {};
+      return llvm::None;
     } else if (kind.IsOpeningSymbol()) {
       new_position =
           TokenizedBuffer::TokenIterator(tokens.GetMatchedClosingToken(token));
@@ -233,7 +233,7 @@ auto ParseTree::Parser::SkipPastLikelyEnd(TokenizedBuffer::Token skip_root,
                                           SemiHandler on_semi)
     -> llvm::Optional<Node> {
   if (AtEndOfFile()) {
-    return {};
+    return llvm::None;
   }
 
   TokenizedBuffer::Line root_line = tokens.GetLine(skip_root);
@@ -256,10 +256,11 @@ auto ParseTree::Parser::SkipPastLikelyEnd(TokenizedBuffer::Token skip_root,
     if (current_kind == TokenKind::CloseCurlyBrace()) {
       // Immediately bail out if we hit an unmatched close curly, this will
       // pop us up a level of the syntax grouping.
-      return {};
+      return llvm::None;
     }
 
-    // If we find a semicolon, parse it and add a corresponding node.
+    // We assume that a semicolon is always intended to be the end of the
+    // current construct.
     if (auto semi = ConsumeIf(TokenKind::Semi())) {
       return on_semi(*semi);
     }
@@ -274,7 +275,7 @@ auto ParseTree::Parser::SkipPastLikelyEnd(TokenizedBuffer::Token skip_root,
   } while (!AtEndOfFile() &&
            is_same_line_or_indent_greater_than_root(*position));
 
-  return {};
+  return llvm::None;
 }
 
 auto ParseTree::Parser::ParseFunctionSignature() -> Node {
@@ -443,7 +444,7 @@ auto ParseTree::Parser::ParseDeclaration() -> llvm::Optional<Node> {
   // Nothing, not even a semicolon found. We still need to mark that an error
   // occurred though.
   tree.has_errors = true;
-  return {};
+  return llvm::None;
 }
 
 auto ParseTree::Parser::ParseParenExpression() -> llvm::Optional<Node> {
@@ -491,7 +492,7 @@ auto ParseTree::Parser::ParsePrimaryExpression() -> llvm::Optional<Node> {
 
     default:
       emitter.EmitError<ExpectedExpression>(t);
-      return {};
+      return llvm::None;
   }
 
   return AddLeafNode(*kind, Consume(token_kind));
@@ -506,9 +507,12 @@ auto ParseTree::Parser::ParseDesignatorExpression(SubtreeStart start,
   if (name) {
     AddLeafNode(ParseNodeKind::DesignatedName(), *name);
   } else {
-    if (!has_errors) {
-      emitter.EmitError<ExpectedIdentifierAfterDot>(*position);
+    // If we see a keyword, assume it was intended to be the designated name.
+    // TODO: Should keywords be valid in designators?
+    if (tokens.GetKind(*position).IsKeyword()) {
+      Consume(tokens.GetKind(*position));
     }
+    emitter.EmitError<ExpectedIdentifierAfterDot>(*position);
     has_errors = true;
   }
   return AddNode(ParseNodeKind::DesignatorExpression(), dot, start, has_errors);
@@ -607,7 +611,7 @@ auto ParseTree::Parser::ParseExpressionStatement() -> llvm::Optional<Node> {
   }
 
   // Found junk not even followed by a `;`.
-  return {};
+  return llvm::None;
 }
 
 }  // namespace Carbon

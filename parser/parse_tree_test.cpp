@@ -376,6 +376,38 @@ TEST_F(ParseTreeTest, FunctionDefinitionWithFunctionCall) {
                          MatchFileEnd()}));
 }
 
+TEST_F(ParseTreeTest, InvalidDesignators) {
+  TokenizedBuffer tokens = GetTokenizedBuffer(
+      "fn F() {\n"
+      "  a.;\n"
+      "  a.fn;\n"
+      "  a.42;\n"
+      "}");
+  ParseTree tree = ParseTree::Parse(tokens, consumer);
+  EXPECT_TRUE(tree.HasErrors());
+
+  EXPECT_THAT(
+      tree,
+      MatchParseTreeNodes(
+          {MatchFunctionDeclaration(
+               MatchDeclaredName("F"),
+               MatchParameterList(MatchParameterListEnd()),
+               MatchCodeBlock(MatchExpressionStatement(
+                                  MatchDesignatorExpression(
+                                      MatchNameReference("a"), ".", HasError),
+                                  ";"),
+                              MatchExpressionStatement(
+                                  MatchDesignatorExpression(
+                                      MatchNameReference("a"), ".", HasError),
+                                  ";"),
+                              MatchExpressionStatement(
+                                  MatchDesignatorExpression(
+                                      MatchNameReference("a"), ".", HasError),
+                                  HasError, ";"),
+                              MatchCodeBlockEnd())),
+           MatchFileEnd()}));
+}
+
 auto GetAndDropLine(llvm::StringRef& s) -> std::string {
   auto newline_offset = s.find_first_of('\n');
   llvm::StringRef line = s.slice(0, newline_offset);
