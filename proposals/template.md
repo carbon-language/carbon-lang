@@ -17,8 +17,8 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [Background](#background)
 -   [Proposal](#proposal)
 -   [Details](#details)
+-   [Rationale based on Carbon's goals](#rationale-based-on-carbons-goals)
 -   [Alternatives considered](#alternatives-considered)
--   [Rationale](#rationale)
 
 <!-- tocstop -->
 
@@ -59,8 +59,10 @@ TODO: Fully explain the details of the proposed solution.
 
 ## Rationale based on Carbon's goals
 
-TODO: How does this proposal effectively advance Carbon's goals? This shouldn't re-state the full motivation, but just connect that motivation back to Carbon's stated goals for the project and/or language. This may evolve
-during review.
+TODO: How does this proposal effectively advance Carbon's goals? Rather than
+re-stating the full motivation, this should connect that motivation back to
+Carbon's stated goals for the project or language. This may evolve during
+review.
 
 ## Alternatives considered
 
