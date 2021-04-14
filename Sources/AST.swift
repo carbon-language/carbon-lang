@@ -198,3 +198,22 @@ struct StructMemberDeclaration: AST {
   let type: Expression
   let site: Site
 }
+
+/// Unifies all declarations
+///
+/// This doesn't actually appear in the AST, but is used by the typechecker and
+/// interpreter as the value type of a name-use -> declaration dictionary.
+enum AnyDeclaration: AST { 
+  case declaration(Declaration),
+       functionParameter(Identifier),
+       structMember(StructMemberDeclaration)
+
+  var site: SourceRegion {
+    switch self {
+    case .declaration(let d): return d.site
+    case .functionParameter(let p): return p.site
+    case .structMember(let m): return m.site
+    }
+  }
+}
+

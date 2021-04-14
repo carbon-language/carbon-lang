@@ -14,29 +14,13 @@ struct TypeChecker {
     }
   }
 
-  /// Unify all declarations (workaround for
-  /// https://github.com/carbon-language/carbon-lang/issues/456).
-  enum Decl {
-    case declaration(Declaration),
-         functionParameter(Identifier),
-         structMember(StructMemberDeclaration)
-
-    var site: SourceRegion {
-      switch self {
-      case .declaration(let d): return d.site
-      case .functionParameter(let p): return p.site
-      case .structMember(let m): return m.site
-      }
-    }
-  }
-
-  var toDeclaration = PropertyMap<Identifier, Decl>()
+  var toDeclaration = PropertyMap<Identifier, AnyDeclaration>()
   var toType = PropertyMap<Typed, Type>()
 
   /// A mapping from names to the stack of declcarations they reference, with
   /// the top of each stack being the declaration referenced in the current
   /// scope.
-  var symbolTable: [String: Stack<Decl>] = [:]
+  var symbolTable: [String: Stack<AnyDeclaration>] = [:]
 
   /// The set of names defined in each scope, with the current scope at the top.
   var activeScopes: Stack<Set<String>>
@@ -65,7 +49,7 @@ private extension TypeChecker {
   }
 
   /// Records that `name.text` refers to `definition` in the current scope.
-  mutating func define(_ name: Identifier, _ definition: Decl) {
+  mutating func define(_ name: Identifier, _ definition: AnyDeclaration) {
     if activeScopes.top.contains(name.text) {
       error(
         "'\(name.text)' already defined in this scope", at: name.site,
@@ -81,7 +65,7 @@ private extension TypeChecker {
   ///
   /// Every identifier should either be declaring a new name, or should be
   /// looked up during type checking.
-  mutating func lookup(_ use: Identifier) -> Decl? {
+  mutating func lookup(_ use: Identifier) -> AnyDeclaration? {
     guard let d = symbolTable[use.text]?.elements.last else {
       error("Un-declared name '\(use.text)'", at: use.site)
       return nil
