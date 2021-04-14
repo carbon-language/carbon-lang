@@ -13,6 +13,18 @@ indirect enum Type: Equatable {
 
     error // Placeholder indicating failed type deduction.
 
+  /// Convenience accessor for `.function` case.
+  var function: (parameterTypes: [Type], returnType: Type)? {
+    if case .function(parameterTypes: let p, returnType: let r) = self {
+      return (p, r)
+    } else { return nil }
+  }
+
+  /// Convenience accessor for `.tuple` case.
+  var tuple: [Type]? {
+    if case .tuple(let r) = self { return r } else { return nil }
+  }
+
   static var void: Type { .tuple([]) }
 }
 

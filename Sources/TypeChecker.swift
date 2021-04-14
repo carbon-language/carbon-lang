@@ -17,12 +17,12 @@ struct TypeChecker {
   /// Unify all declarations (workaround for
   /// https://github.com/carbon-language/carbon-lang/issues/456).
   enum Decl {
-    case decl(Declaration), param(Identifier)
+    case declaration(Declaration), functionParameter(Identifier)
 
     var site: SourceRegion {
       switch self {
-      case .decl(let d): return d.site
-      case .param(let p): return p.site
+      case .declaration(let d): return d.site
+      case .functionParameter(let p): return p.site
       }
     }
   }
@@ -73,13 +73,18 @@ private extension TypeChecker {
     symbolTable[name.text, default: Stack()].push(definition)
   }
 
-  /// Records the declaration associated with the given use.
-  mutating func visit(asUse use: Identifier) {
+  /// Records and returns the declaration associated with the given use, or
+  /// `nil` if the name is not defined in the current scope.
+  ///
+  /// Every identifier should either be declaring a new name, or should be
+  /// looked up during type checking.
+  mutating func lookup(_ use: Identifier) -> Decl? {
     guard let d = symbolTable[use.text]?.elements.last else {
       error("Un-declared name '\(use.text)'", at: use.site)
-      return
+      return nil
     }
     toDeclaration[use] = d
+    return d
   }
 
   /// Typechecks `d` in the current context.
@@ -89,7 +94,7 @@ private extension TypeChecker {
       // TODO: handle forward declarations (they're in the grammar).
       guard let body = f.body else { UNIMPLEMENTED }
 
-      define(f.name, .decl(d))
+      define(f.name, .declaration(d))
       inNewScope {
         for p in f.parameterPattern.elements {
           $0.visit(asFunctionParameter: p)
@@ -98,47 +103,102 @@ private extension TypeChecker {
       }
 
     case let .struct(s):
-      define(s.name, .decl(d))
+      define(s.name, .declaration(d))
       inNewScope {
         for m in s.members { $0.visit(asStructMember: m) }
       }
 
     case let .choice(c):
-      define(c.name, .decl(d))
+      define(c.name, .declaration(d))
       inNewScope {
         for a in c.alternatives { $0.visit(a) }
       }
 
     case let .variable(name: n, type: t, initializer: i, _):
-      define(n, .decl(d))
+      define(n, .declaration(d))
       visit(t)
       visit(i)
-      let t1 = evaluateTypeExpression(t) ?? toType[.expression(i)]
+      let t1 = evaluateTypeExpression(t, assigning: toType[.expression(i)])
+      toType[.declaration(d)] = t1
     }
   }
 
-  /// Returns the type described by `e`, or `nil` if e is `auto`, or .error if
-  /// `e` doesn't describe a type.
-  mutating func evaluateTypeExpression(_ e: Expression) -> Type? {
-    switch e {
-    case let .name(n):
-      visit(asUse: n)
-      return nil
-    case let .getField(_, _, _): return .error
-    case let .index(target: _, offset: _, _): return .error
-    case let .patternVariable(name: _, type: _, _): return .error
-    case let .integerLiteral(_, _): return .error
-    case let .booleanLiteral(_, _): return .error
-    case let .tupleLiteral(t): return .error
-    case let .unaryOperator(operation: _, operand: _, _): return .error
-    case let .binaryOperator(operation: _, lhs: _, rhs: _, _): return .error
-    case let .functionCall(callee: _, arguments: _, _): return .error
-    case let .intType(_): return .error
-    case let .boolType(_): return .error
-    case let .typeType(_): return .error
-    case let .autoType(_): return nil
-    case let .functionType(parameterTypes: _, returnType: _, _): return .error
+  /// Returns the type described by `e`, or `.error` if `e` doesn't describe a
+  /// type, using `rhs`, if supplied, to do any type deduction using the
+  /// semantics of:
+  ///
+  ///   var <e>: x = <rhs>
+  ///
+  /// where <e> `e`, and <rhs> is an expression of type `rhs`.
+  mutating func evaluateTypeExpression(
+    _ e: Expression, assigning rhs: Type? = nil
+  ) -> Type {
+    /// Returns the result of mapping `evaluateTypeExpression` over `zip(e,
+    /// rhs)`, or over `e` if `rhs` is `nil`.
+    func mapped<E: Collection, R: Collection>(_ e: E, _ rhs: R?) -> [Type]
+      where E.Element == Expression, R.Element == Type
+    {
+      guard let r = rhs else { return e.map { evaluateTypeExpression($0) } }
+      return zip(e, r).map { evaluateTypeExpression($0, assigning: $1) }
     }
+
+    /// Returns the type deduced from `e` given r.
+    ///
+    /// Most of the work happens here but a final validation step is needed.
+    func deducedType(_ e: Expression, assigning rhs: Type? = nil) -> Type {
+      func nils(_ n: Int) -> [Type?] { Array(repeating: nil, count: n) }
+
+      switch e {
+      case let .name(n):
+        guard let d = lookup(n) else { return .error } // Name not defined
+        switch d {
+        case .declaration(.struct(let d)):
+          return .struct(d)
+
+        case .declaration(.choice(let d)):
+          return .choice(d)
+
+        case .declaration(.function), .declaration(.variable),
+             .functionParameter:
+          error(
+            "'\(n.text)' does not refer to a type", at: n.site,
+            notes: [("actual definition: \(d)", d.site)])
+          return .error
+        }
+
+        case .intType: return .int
+        case .boolType: return .bool
+        case .typeType: return .type
+        case .autoType:
+          if let r = rhs { return r }
+          error("No initializer from which to deduce type.", at: e.site)
+          return .error
+
+        case .functionType(parameterTypes: let p0, returnType: let r0, _):
+          if rhs != nil && rhs!.function == nil { return .error }
+          let (p1, r1) = rhs?.function ?? (nil, nil)
+
+          return .function(
+            parameterTypes: mapped(p0.lazy.map(\.value), p1),
+            returnType: evaluateTypeExpression(r0, assigning: r1))
+
+        case .tupleLiteral(let t0):
+          if rhs != nil && rhs!.tuple == nil { return .error }
+          return .tuple(mapped(t0.lazy.map(\.value), rhs?.tuple))
+
+        case .getField, .index, .patternVariable, .integerLiteral,
+             .booleanLiteral, .unaryOperator, .binaryOperator, .functionCall:
+          error("Type expression expected", at: e.site)
+          return .error
+      }
+    }
+    let r = deducedType(e, assigning: rhs)
+
+    // Final validation.
+    if let r1 = rhs, r1 != r {
+      error("Initialization value has wrong type: \(r1)", at: e.site)
+    }
+    return r
   }
 
   mutating func visit(asStructMember m: VariableDeclaration) {
