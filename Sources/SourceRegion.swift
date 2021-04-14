@@ -41,6 +41,22 @@ struct SourceRegion: Hashable {
   /// etc.
   static var empty
     = SourceRegion(fileName: "", .start ..< .start)
+
+  /// Returns the region from the beginning of `first` to the end of `last`,
+  /// unless one of `first` or `last` is empty, in which case the other one is
+  /// returned.
+  ///
+  /// - Requires first or last is empty, or `site.fileName ==
+  ///   last.fileName && first.span.lowerBound < last.span.upperBound`.
+  static func ... (first: Self, last: Self) -> Self
+  {
+    if first.span.isEmpty { return last }
+    if last.span.isEmpty { return first }
+
+    assert(first.fileName == last.fileName)
+    return Self(
+      fileName: first.fileName, first.span.lowerBound..<last.span.upperBound)
+  }
 }
 
 extension SourcePosition: CustomStringConvertible {

@@ -77,24 +77,8 @@ private extension TypeChecker {
   /// Typechecks `d` in the current context.
   mutating func visit(_ d: Declaration) {
     switch d {
-    case let .function(f):
-      // TODO: handle forward declarations (they're in the grammar).
-      guard let body = f.body else { UNIMPLEMENTED }
-
-      define(f.name, .declaration(d))
-      inNewScope {
-        for p in f.parameterPattern.elements {
-          $0.visit(asFunctionParameter: p)
-        }
-        $0.visit(body)
-      }
-
-    case let .struct(s):
-      define(s.name, .declaration(d))
-      inNewScope {
-        for m in s.members { $0.visit(m) }
-      }
-
+    case let .function(f): visit(f)
+    case let .struct(s): visit(s)
     case let .choice(c):
       define(c.name, .declaration(d))
       inNewScope {
@@ -197,13 +181,40 @@ private extension TypeChecker {
     return r
   }
 
-  mutating func visit(asFunctionParameter p: TupleLiteralElement) {
+  mutating func visit(_ f: FunctionDefinition) {
+    // TODO: handle forward declarations (they're in the grammar).
+    guard let body = f.body else { UNIMPLEMENTED }
+
+    let df: AnyDeclaration = .declaration(.function(f))
+    define(f.name, df)
+    
+    inNewScope { me in
+      var parameterTypes: [Type] = []
+      
+      for p in f.parameterPattern.elements {
+        if let n = p.name { me.define(n, .functionParameter(p)) }
+        let t = me.evaluateTypeExpression(p.value)
+        me.toType[.functionParameter(p)] = t
+        parameterTypes.append(t)
+      }
+      let r = me.evaluateTypeExpression(f.returnType)
+      me.toType[.declaration(.function(f))]
+        = .function(parameterTypes: parameterTypes, returnType: r)
+      me.visit(body)
+    }
   }
 
-  mutating func visit(_ node: FunctionDefinition) {
-    UNIMPLEMENTED
+  mutating func visit(_ s: StructDefinition) {
+    define(s.name, .declaration(.struct(s)))
+    inNewScope { me in
+      for m in s.members {
+        me.define(m.name, .structMember(m))
+        me.toType[.structMember(m)] = me.evaluateTypeExpression(m.type)
+      }
+    }
   }
 
+  
   mutating func visit(_ node: Alternative) {
     UNIMPLEMENTED
   }

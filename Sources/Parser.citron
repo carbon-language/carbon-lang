@@ -6,23 +6,11 @@
 %class_name CarbonParser
 
 %preface {
-  /// Returns the region from the beginning of `first` to the end of `last`,
-  /// unless one of `first` or `last` has an empty site, in which case the
-  /// site of the other one is returned.
-  ///
-  /// - Requires first or last is empty, or `first.site.fileName ==
-  ///   last.site.fileName && first.site.span.lowerBound
-  ///   < last.site.span.upperBound`.
+  /// Returns `first.site...last.site`
   fileprivate func ... <First: AST, Last: AST>(first: First, last: Last)
     -> SourceRegion
   {
-    if first.site.span.isEmpty { return last.site }
-    if last.site.span.isEmpty { return first.site }
-
-    assert(first.site.fileName == last.site.fileName)
-    return SourceRegion(
-      fileName: first.site.fileName,
-      first.site.span.lowerBound..<last.site.span.upperBound)
+    first.site...last.site
   }
 
   fileprivate extension TupleLiteral {

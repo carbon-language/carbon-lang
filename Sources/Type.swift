@@ -36,6 +36,7 @@ extension Type: Value {
 enum Typed: Hashable {
   case
     declaration(Declaration),
+    structMember(StructMemberDeclaration),
     expression(Expression),
-    functionParameter(Identifier)
+    functionParameter(TupleLiteralElement)
 }
