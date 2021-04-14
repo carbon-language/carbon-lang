@@ -5,6 +5,8 @@
 typealias Address = Int
 
 protocol Value {
+  /// The type of this value.
+  // This is available for diagnostic purposes; semantics mustn't depend on it.
   var type: Type { get }
 }
 
