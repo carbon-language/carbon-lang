@@ -22,7 +22,6 @@ class TestProposal(unittest.TestCase):
                 "p0029.md",
             ),
         )
-        self.assertEqual(p[1], ("0029 - Decision", "p0029_decision.md"))
 
 
 if __name__ == "__main__":
