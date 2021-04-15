@@ -40,10 +40,11 @@ error handling efficient and ergonomic.
 
 ## Applications of these principles
 
-Carbon errors, unlike C++/Java/Python/etc exceptions, will not be propagated
-implicitly. However, Carbon will very likely need to provide some explicit but
-syntactically lightweight means of propagating errors, such as Rust's `?`
-operator.
+Carbon errors, unlike exceptions in C++ and similar languages, will not be
+propagated implicitly. Instead, Carbon will very likely need to provide some
+explicit but syntactically lightweight means of propagating errors, such as
+Rust's `?` operator, so that error-propagation boilerplate doesn't make it hard
+for readers to follow the logic of the success path.
 
 Carbon will not have a special syntax for specifying what kind of errors a
 function can emit, such as `noexcept` or
