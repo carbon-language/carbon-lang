@@ -412,6 +412,8 @@ TEST_F(ParseTreeTest, Operators) {
   TokenizedBuffer tokens = GetTokenizedBuffer(
       "fn F() {\n"
       "  n = a * b + c * d = d * d << e & f - not g;\n"
+      "  ++++n;\n"
+      "  n++++;\n"
       "}");
   ParseTree tree = ParseTree::Parse(tokens, consumer);
   EXPECT_TRUE(tree.HasErrors());
@@ -447,6 +449,12 @@ TEST_F(ParseTreeTest, Operators) {
                                "-",
                                MatchPrefixOperator("not",
                                                    MatchNameReference("g")))))),
+                   MatchExpressionStatement(MatchPrefixOperator(
+                       "++",
+                       MatchPrefixOperator("++", MatchNameReference("n")))),
+                   MatchExpressionStatement(MatchPostfixOperator(
+                       MatchPostfixOperator(MatchNameReference("n"), "++"),
+                       "++")),
                    MatchCodeBlockEnd())),
            MatchFileEnd()}));
 }

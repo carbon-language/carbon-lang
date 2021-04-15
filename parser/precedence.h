@@ -10,29 +10,18 @@
 
 namespace Carbon {
 
-enum class Precedence : int8_t {
-  // The first operator has lower precedence (binds more loosely) than the
-  // second.
-  Lower = -1,
-  // Precedence levels are incomparable.
-  Incomparable = 0,
-  // The first operator has higher precedence (binds more tightly) than the
-  // second.
-  Higher = 1,
-};
-
 // Given two operators `$` and `@`, and an expression `a $ b @ c`, how should
-// the expression be grouped?
+// the expression be parsed?
 enum class OperatorPriority : int8_t {
   // The left operator has higher precedence: `(a $ b) @ c`.
-  LeftFirst,
-  // The right operator has higher precedence: `a $ (b @ c)`.
-  RightFirst,
+  LeftFirst = -1,
   // The expression is ambiguous.
-  Ambiguous
+  Ambiguous = 0,
+  // The right operator has higher precedence: `a $ (b @ c)`.
+  RightFirst = 1,
 };
 
-enum class Associativity { LeftToRight, None, RightToLeft };
+enum class Associativity { LeftToRight = -1, None = 0, RightToLeft = 1 };
 
 // A precedence group associated with an operator or expression.
 class PrecedenceGroup {
@@ -62,32 +51,13 @@ class PrecedenceGroup {
     return lhs.level != rhs.level;
   }
 
-  // Get the associativity of this precedence group.
-  Associativity GetAssociativity() const;
-
   // Compare the precedence levels for two adjacent operators.
-  static auto Compare(PrecedenceGroup a, PrecedenceGroup b) -> Precedence;
-
   static auto GetPriority(PrecedenceGroup left, PrecedenceGroup right)
-      -> OperatorPriority{
-    if (left == right) {
-      switch (left.GetAssociativity()) {
-        case Associativity::LeftToRight:
-          return OperatorPriority::LeftFirst;
-        case Associativity::RightToLeft:
-          return OperatorPriority::RightFirst;
-        case Associativity::None:
-          return OperatorPriority::Ambiguous;
-      }
-    }
-    switch (Compare(left, right)) {
-      case Precedence::Higher:
-        return OperatorPriority::LeftFirst;
-      case Precedence::Lower:
-        return OperatorPriority::RightFirst;
-      case Precedence::Incomparable:
-        return OperatorPriority::Ambiguous;
-    }
+      -> OperatorPriority;
+
+  // Get the associativity of this precedence group.
+  Associativity GetAssociativity() const {
+    return static_cast<Associativity>(GetPriority(*this, *this));
   }
 
  private:

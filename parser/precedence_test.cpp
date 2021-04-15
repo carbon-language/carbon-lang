@@ -36,10 +36,10 @@ TEST_F(PrecedenceTest, OperatorsAreRecognized) {
 TEST_F(PrecedenceTest, Associativity) {
   EXPECT_THAT(
       PrecedenceGroup::ForLeading(TokenKind::Minus())->GetAssociativity(),
-      Eq(Associativity::LeftToRight));
+      Eq(Associativity::RightToLeft));
   EXPECT_THAT(PrecedenceGroup::ForTrailing(TokenKind::PlusPlus())
                   ->level.GetAssociativity(),
-              Eq(Associativity::RightToLeft));
+              Eq(Associativity::LeftToRight));
   EXPECT_THAT(
       PrecedenceGroup::ForTrailing(TokenKind::Plus())->level.GetAssociativity(),
       Eq(Associativity::LeftToRight));
@@ -52,66 +52,66 @@ TEST_F(PrecedenceTest, Associativity) {
 }
 
 TEST_F(PrecedenceTest, DirectRelations) {
-  EXPECT_THAT(PrecedenceGroup::Compare(
+  EXPECT_THAT(PrecedenceGroup::GetPriority(
                   PrecedenceGroup::ForTrailing(TokenKind::Star())->level,
                   PrecedenceGroup::ForTrailing(TokenKind::Plus())->level),
-              Eq(Precedence::Higher));
-  EXPECT_THAT(PrecedenceGroup::Compare(
+              Eq(OperatorPriority::LeftFirst));
+  EXPECT_THAT(PrecedenceGroup::GetPriority(
                   PrecedenceGroup::ForTrailing(TokenKind::Plus())->level,
                   PrecedenceGroup::ForTrailing(TokenKind::Star())->level),
-              Eq(Precedence::Lower));
+              Eq(OperatorPriority::RightFirst));
 
-  EXPECT_THAT(PrecedenceGroup::Compare(
+  EXPECT_THAT(PrecedenceGroup::GetPriority(
                   PrecedenceGroup::ForTrailing(TokenKind::Amp())->level,
                   PrecedenceGroup::ForTrailing(TokenKind::Less())->level),
-              Eq(Precedence::Higher));
-  EXPECT_THAT(PrecedenceGroup::Compare(
+              Eq(OperatorPriority::LeftFirst));
+  EXPECT_THAT(PrecedenceGroup::GetPriority(
                   PrecedenceGroup::ForTrailing(TokenKind::Less())->level,
                   PrecedenceGroup::ForTrailing(TokenKind::Amp())->level),
-              Eq(Precedence::Lower));
+              Eq(OperatorPriority::RightFirst));
 }
 
 TEST_F(PrecedenceTest, IndirectRelations) {
-  EXPECT_THAT(PrecedenceGroup::Compare(
+  EXPECT_THAT(PrecedenceGroup::GetPriority(
                   PrecedenceGroup::ForTrailing(TokenKind::Star())->level,
                   PrecedenceGroup::ForTrailing(TokenKind::OrKeyword())->level),
-              Eq(Precedence::Higher));
-  EXPECT_THAT(PrecedenceGroup::Compare(
+              Eq(OperatorPriority::LeftFirst));
+  EXPECT_THAT(PrecedenceGroup::GetPriority(
                   PrecedenceGroup::ForTrailing(TokenKind::OrKeyword())->level,
                   PrecedenceGroup::ForTrailing(TokenKind::Star())->level),
-              Eq(Precedence::Lower));
+              Eq(OperatorPriority::RightFirst));
 
-  EXPECT_THAT(PrecedenceGroup::Compare(
+  EXPECT_THAT(PrecedenceGroup::GetPriority(
                   *PrecedenceGroup::ForLeading(TokenKind::Tilde()),
                   PrecedenceGroup::ForTrailing(TokenKind::Equal())->level),
-              Eq(Precedence::Higher));
-  EXPECT_THAT(PrecedenceGroup::Compare(
+              Eq(OperatorPriority::LeftFirst));
+  EXPECT_THAT(PrecedenceGroup::GetPriority(
                   PrecedenceGroup::ForTrailing(TokenKind::Equal())->level,
                   *PrecedenceGroup::ForLeading(TokenKind::Tilde())),
-              Eq(Precedence::Lower));
+              Eq(OperatorPriority::RightFirst));
 }
 
 TEST_F(PrecedenceTest, IncomparableOperators) {
-  EXPECT_THAT(PrecedenceGroup::Compare(
+  EXPECT_THAT(PrecedenceGroup::GetPriority(
                   *PrecedenceGroup::ForLeading(TokenKind::Tilde()),
                   *PrecedenceGroup::ForLeading(TokenKind::NotKeyword())),
-              Eq(Precedence::Incomparable));
-  EXPECT_THAT(PrecedenceGroup::Compare(
+              Eq(OperatorPriority::Ambiguous));
+  EXPECT_THAT(PrecedenceGroup::GetPriority(
                   *PrecedenceGroup::ForLeading(TokenKind::Tilde()),
                   *PrecedenceGroup::ForLeading(TokenKind::Minus())),
-              Eq(Precedence::Incomparable));
-  EXPECT_THAT(PrecedenceGroup::Compare(
+              Eq(OperatorPriority::Ambiguous));
+  EXPECT_THAT(PrecedenceGroup::GetPriority(
                   *PrecedenceGroup::ForLeading(TokenKind::Minus()),
                   PrecedenceGroup::ForTrailing(TokenKind::Amp())->level),
-              Eq(Precedence::Incomparable));
-  EXPECT_THAT(PrecedenceGroup::Compare(
+              Eq(OperatorPriority::Ambiguous));
+  EXPECT_THAT(PrecedenceGroup::GetPriority(
                   PrecedenceGroup::ForTrailing(TokenKind::Equal())->level,
                   PrecedenceGroup::ForTrailing(TokenKind::PipeEqual())->level),
-              Eq(Precedence::Incomparable));
-  EXPECT_THAT(PrecedenceGroup::Compare(
+              Eq(OperatorPriority::Ambiguous));
+  EXPECT_THAT(PrecedenceGroup::GetPriority(
                   PrecedenceGroup::ForTrailing(TokenKind::Plus())->level,
                   PrecedenceGroup::ForTrailing(TokenKind::Amp())->level),
-              Eq(Precedence::Incomparable));
+              Eq(OperatorPriority::Ambiguous));
 }
 
 }  // namespace

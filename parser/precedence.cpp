@@ -35,8 +35,8 @@ constexpr int8_t NumPrecedenceLevels = CompoundAssignment + 1;
 
 // A precomputed lookup table determining the relative precedence of two
 // precedence groups.
-struct PrecedenceComparisonTable {
-  constexpr PrecedenceComparisonTable() : table{} {
+struct OperatorPriorityTable {
+  constexpr OperatorPriorityTable() : table{} {
     // Start with a list of <higher precedence>, <lower precedence>
     // relationships.
     MarkHigherThan({NumericPrefix, NumericPostfix},
@@ -49,11 +49,18 @@ struct PrecedenceComparisonTable {
         {SimpleAssignment, CompoundAssignment, Relational});
     MarkHigherThan({Relational, LogicalPrefix}, {LogicalAnd, LogicalOr});
 
-    // Compute the transitive closure of the above relationships.
+    // Compute the transitive closure of the above relationships: if we parse
+    // `a $ b @ c` as `(a $ b) @ c` and parse `b @ c % d` as `(b @ c) % d`,
+    // then we will parse `a $ b @ c % d` as `((a $ b) @ c) % d` and should
+    // also parse `a $ bc % d` as `(a $ bc) % d`.
     MakeTransitivelyClosed();
 
-    // Make the relation symmetric.
+    // Make the relation symmetric. If we parse `a $ b @ c` as `(a $ b) @ c`
+    // then we want to parse `a @ b $ c` as `a @ (b $ c)`.
     MakeSymmetric();
+
+    // Fill in the diagonal, which represents operator associativity.
+    AddAssociativityRules();
   }
 
   constexpr void MarkHigherThan(
@@ -61,7 +68,7 @@ struct PrecedenceComparisonTable {
       std::initializer_list<PrecedenceLevel> lower_group) {
     for (auto higher : higher_group) {
       for (auto lower : lower_group) {
-        table[higher][lower] = Precedence::Higher;
+        table[higher][lower] = OperatorPriority::LeftFirst;
       }
     }
   }
@@ -75,11 +82,11 @@ struct PrecedenceComparisonTable {
       changed = false;
       for (int8_t a = 0; a != NumPrecedenceLevels; ++a) {
         for (int8_t b = 0; b != NumPrecedenceLevels; ++b) {
-          if (table[a][b] == Precedence::Higher) {
+          if (table[a][b] == OperatorPriority::LeftFirst) {
             for (int8_t c = 0; c != NumPrecedenceLevels; ++c) {
-              if (table[b][c] == Precedence::Higher &&
-                  table[a][c] != Precedence::Higher) {
-                table[a][c] = Precedence::Higher;
+              if (table[b][c] == OperatorPriority::LeftFirst &&
+                  table[a][c] != OperatorPriority::LeftFirst) {
+                table[a][c] = OperatorPriority::LeftFirst;
                 changed = true;
               }
             }
@@ -92,17 +99,48 @@ struct PrecedenceComparisonTable {
   constexpr void MakeSymmetric() {
     for (int8_t a = 0; a != NumPrecedenceLevels; ++a) {
       for (int8_t b = 0; b != NumPrecedenceLevels; ++b) {
-        if (table[a][b] == Precedence::Higher) {
-          if (table[b][a] == Precedence::Higher) {
+        if (table[a][b] == OperatorPriority::LeftFirst) {
+          if (table[b][a] == OperatorPriority::LeftFirst) {
             throw "inconsistent lookup table entries";
           }
-          table[b][a] = Precedence::Lower;
+          table[b][a] = OperatorPriority::RightFirst;
         }
       }
     }
   }
 
-  Precedence table[NumPrecedenceLevels][NumPrecedenceLevels];
+  constexpr void AddAssociativityRules() {
+    // Associativity rules occupy the diagonal
+
+    // For prefix operators, RightFirst would mean `@@x` is `@(@x)` and
+    // Ambiguous would mean it's an error. LeftFirst is meaningless. For now we
+    // allow all prefix operators to be repeated.
+    for (PrecedenceLevel prefix : {NumericPrefix, BitwisePrefix, LogicalPrefix}) {
+      table[prefix][prefix] = OperatorPriority::RightFirst;
+    }
+
+    // Postfix operators are symmetric with prefix operators.
+    for (PrecedenceLevel postfix : {NumericPostfix}) {
+      table[postfix][postfix] = OperatorPriority::LeftFirst;
+    }
+
+    // Traditionally-associative operators are given left-to-right
+    // associativity.
+    for (PrecedenceLevel assoc :
+         {Multiplicative, Additive, BitwiseAnd, BitwiseOr, BitwiseXor,
+          LogicalAnd, LogicalOr}) {
+      table[assoc][assoc] = OperatorPriority::LeftFirst;
+    }
+
+    // Assignment is given right-to-left associativity in order to support
+    // chained assignment.
+    table[SimpleAssignment][SimpleAssignment] = OperatorPriority::RightFirst;
+
+    // For other operators, there isn't an obvious answer and we require
+    // explicit parentheses.
+  }
+
+  OperatorPriority table[NumPrecedenceLevels][NumPrecedenceLevels];
 };
 }  // namespace
 
@@ -219,49 +257,10 @@ auto PrecedenceGroup::ForTrailing(TokenKind kind) -> llvm::Optional<Trailing> {
   return llvm::None;
 }
 
-auto PrecedenceGroup::GetAssociativity() const -> Associativity {
-  switch (static_cast<PrecedenceLevel>(level)) {
-    // Prefix operators are modeled as having left-to-right associativity, even
-    // though the question is not really applicable.
-    case NumericPrefix:
-    case BitwisePrefix:
-    case LogicalPrefix:
-      return Associativity::LeftToRight;
-
-    // Postfix operators are modeled as having right-to-left associativity,
-    // even though the question is not really applicable.
-    case NumericPostfix:
-      return Associativity::RightToLeft;
-
-    // Traditionally-associative operators are given left-to-right
-    // associativity.
-    case Multiplicative:
-    case Additive:
-    case BitwiseAnd:
-    case BitwiseOr:
-    case BitwiseXor:
-    case LogicalAnd:
-    case LogicalOr:
-      return Associativity::LeftToRight;
-
-    // Assignment is given right-to-left associativity in order to support
-    // chained assignment.
-    case SimpleAssignment:
-      return Associativity::RightToLeft;
-
-    // If there isn't an obvious answer, we require explicit parentheses.
-    case Modulo:
-    case CompoundAssignment:
-    case BitShift:
-    case Relational:
-      return Associativity::None;
-  }
-}
-
-auto PrecedenceGroup::Compare(PrecedenceGroup a, PrecedenceGroup b)
-    -> Precedence {
-  static constexpr PrecedenceComparisonTable lookup;
-  return lookup.table[a.level][b.level];
+auto PrecedenceGroup::GetPriority(PrecedenceGroup left, PrecedenceGroup right)
+    -> OperatorPriority {
+  static constexpr OperatorPriorityTable lookup;
+  return lookup.table[left.level][right.level];
 }
 
 }  // namespace Carbon
