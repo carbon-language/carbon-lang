@@ -414,22 +414,41 @@ TEST_F(ParseTreeTest, Operators) {
       "  n = a * b + c * d = d * d << e & f - not g;\n"
       "}");
   ParseTree tree = ParseTree::Parse(tokens, consumer);
-  EXPECT_FALSE(tree.HasErrors());
-
-  ExpectedNode statement = {.kind = ParseNodeKind::ExpressionStatement(),
-                            .children = {}};
+  EXPECT_TRUE(tree.HasErrors());
 
   EXPECT_THAT(
       tree,
       MatchParseTreeNodes(
-          {{.kind = ParseNodeKind::FunctionDeclaration(),
-            .children = {{ParseNodeKind::DeclaredName(), "F"},
-                         {.kind = ParseNodeKind::ParameterList(),
-                          .children = {{ParseNodeKind::ParameterListEnd()}}},
-                         {.kind = ParseNodeKind::CodeBlock(),
-                          .children = {statement,
-                                       {ParseNodeKind::CodeBlockEnd()}}}}},
-           {.kind = ParseNodeKind::FileEnd()}}));
+          {MatchFunctionDeclaration(
+               MatchDeclaredName("F"),
+               MatchParameterList(MatchParameterListEnd()),
+               MatchCodeBlock(
+                   MatchExpressionStatement(MatchInfixOperator(
+                       MatchNameReference("n"), "=",
+                       MatchInfixOperator(
+                           MatchInfixOperator(
+                               MatchInfixOperator(MatchNameReference("a"), "*",
+                                                  MatchNameReference("b")),
+                               "+",
+                               MatchInfixOperator(MatchNameReference("c"), "*",
+                                                  MatchNameReference("d"))),
+                           "=",
+                           MatchInfixOperator(
+                               HasError,
+                               MatchInfixOperator(
+                                   HasError,
+                                   MatchInfixOperator(
+                                       HasError,
+                                       MatchInfixOperator(
+                                           MatchNameReference("d"), "*",
+                                           MatchNameReference("d")),
+                                       "<<", MatchNameReference("e")),
+                                   "&", MatchNameReference("f")),
+                               "-",
+                               MatchPrefixOperator("not",
+                                                   MatchNameReference("g")))))),
+                   MatchCodeBlockEnd())),
+           MatchFileEnd()}));
 }
 
 auto GetAndDropLine(llvm::StringRef& s) -> std::string {

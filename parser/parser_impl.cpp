@@ -118,7 +118,11 @@ auto ParseTree::Parser::Parse(TokenizedBuffer& tokens,
 
   Parser parser(tree, tokens, emitter);
   while (!parser.AtEndOfFile()) {
-    parser.ParseDeclaration();
+    if (!parser.ParseDeclaration()) {
+      // We don't have an enclosing parse tree node to mark as erroneous, so
+      // just mark the tree as a whole.
+      tree.has_errors = true;
+    }
   }
 
   parser.AddLeafNode(ParseNodeKind::FileEnd(), *parser.position);
@@ -448,9 +452,7 @@ auto ParseTree::Parser::ParseDeclaration() -> llvm::Optional<Node> {
     return *found_semi_n;
   }
 
-  // Nothing, not even a semicolon found. We still need to mark that an error
-  // occurred though.
-  tree.has_errors = true;
+  // Nothing, not even a semicolon found.
   return llvm::None;
 }
 
@@ -626,17 +628,17 @@ auto ParseTree::Parser::ParseOperatorExpression(
           if (lhs_precedence && PrecedenceGroup::GetPriority(
                                     *lhs_precedence, operator_precedence) !=
                                     OperatorPriority::LeftFirst) {
-            // The LHS can't be an operand of this operator, but needs to be
-            // handled at this level. This can happen if the LHS is a postfix
-            // operator, for example in `a++ | b`.
+            // Either the LHS operator and this operator are ambiguous, or the
+            // LHS operaor is a postfix operator that can't be nested within
+            // this operator. Either way, parentheses are requierd.
             emitter.EmitError<OperatorRequiresParentheses>(*position);
+            lhs = llvm::None;
           }
           break;
 
         case OperatorPriority::Ambiguous:
           // Parse left-to-right for recovery.
-          emitter.EmitError<OperatorRequiresParentheses>(*position);
-          break;
+          return lhs;
 
         case OperatorPriority::LeftFirst:
           // This operator should be handled at a higher level.

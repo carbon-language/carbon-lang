@@ -21,8 +21,15 @@ enum class Precedence : int8_t {
   Higher = 1,
 };
 
+// Given two operators `$` and `@`, and an expression `a $ b @ c`, how should
+// the expression be grouped?
 enum class OperatorPriority : int8_t {
-  LeftFirst, RightFirst, Ambiguous
+  // The left operator has higher precedence: `(a $ b) @ c`.
+  LeftFirst,
+  // The right operator has higher precedence: `a $ (b @ c)`.
+  RightFirst,
+  // The expression is ambiguous.
+  Ambiguous
 };
 
 enum class Associativity { LeftToRight, None, RightToLeft };
