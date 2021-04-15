@@ -101,8 +101,8 @@ cc_test(
     name = "precedence_test",
     srcs = ["precedence_test.cpp"],
     deps = [
-        "//lexer:token_kind",
         ":precedence",
+        "//lexer:token_kind",
         "@llvm-project//llvm:gmock",
         "@llvm-project//llvm:gtest",
         "@llvm-project//llvm:gtest_main",

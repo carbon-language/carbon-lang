@@ -414,6 +414,10 @@ TEST_F(ParseTreeTest, Operators) {
       "  n = a * b + c * d = d * d << e & f - not g;\n"
       "  ++++n;\n"
       "  n++++;\n"
+      "  a and b and c;\n"
+      "  a and b or c;\n"
+      "  a or b and c;\n"
+      "  not a and not b and not c;\n"
       "}");
   ParseTree tree = ParseTree::Parse(tokens, consumer);
   EXPECT_TRUE(tree.HasErrors());
@@ -455,6 +459,27 @@ TEST_F(ParseTreeTest, Operators) {
                    MatchExpressionStatement(MatchPostfixOperator(
                        MatchPostfixOperator(MatchNameReference("n"), "++"),
                        "++")),
+                   MatchExpressionStatement(MatchInfixOperator(
+                       MatchInfixOperator(MatchNameReference("a"), "and",
+                                          MatchNameReference("b")),
+                       "and", MatchNameReference("c"))),
+                   MatchExpressionStatement(MatchInfixOperator(
+                       HasError,
+                       MatchInfixOperator(MatchNameReference("a"), "and",
+                                          MatchNameReference("b")),
+                       "or", MatchNameReference("c"))),
+                   MatchExpressionStatement(MatchInfixOperator(
+                       HasError,
+                       MatchInfixOperator(MatchNameReference("a"), "or",
+                                          MatchNameReference("b")),
+                       "and", MatchNameReference("c"))),
+                   MatchExpressionStatement(MatchInfixOperator(
+                       MatchInfixOperator(
+                           MatchPrefixOperator("not", MatchNameReference("a")),
+                           "and",
+                           MatchPrefixOperator("not", MatchNameReference("b"))),
+                       "and",
+                       MatchPrefixOperator("not", MatchNameReference("c")))),
                    MatchCodeBlockEnd())),
            MatchFileEnd()}));
 }

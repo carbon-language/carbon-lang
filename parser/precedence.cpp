@@ -115,7 +115,8 @@ struct OperatorPriorityTable {
     // For prefix operators, RightFirst would mean `@@x` is `@(@x)` and
     // Ambiguous would mean it's an error. LeftFirst is meaningless. For now we
     // allow all prefix operators to be repeated.
-    for (PrecedenceLevel prefix : {NumericPrefix, BitwisePrefix, LogicalPrefix}) {
+    for (PrecedenceLevel prefix :
+         {NumericPrefix, BitwisePrefix, LogicalPrefix}) {
       table[prefix][prefix] = OperatorPriority::RightFirst;
     }
 
@@ -147,19 +148,19 @@ struct OperatorPriorityTable {
 auto PrecedenceGroup::ForLeading(TokenKind kind)
     -> llvm::Optional<PrecedenceGroup> {
   switch (kind) {
-  case TokenKind::NotKeyword():
-    return PrecedenceGroup(LogicalPrefix);
+    case TokenKind::NotKeyword():
+      return PrecedenceGroup(LogicalPrefix);
 
-  case TokenKind::Minus():
-  case TokenKind::MinusMinus():
-  case TokenKind::PlusPlus():
-    return PrecedenceGroup(NumericPrefix);
+    case TokenKind::Minus():
+    case TokenKind::MinusMinus():
+    case TokenKind::PlusPlus():
+      return PrecedenceGroup(NumericPrefix);
 
-  case TokenKind::Tilde():
-    return PrecedenceGroup(BitwisePrefix);
+    case TokenKind::Tilde():
+      return PrecedenceGroup(BitwisePrefix);
 
-  default:
-    return llvm::None;
+    default:
+      return llvm::None;
   }
 }
 

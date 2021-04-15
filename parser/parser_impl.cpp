@@ -597,53 +597,49 @@ auto ParseTree::Parser::ParseOperatorExpression(
     -> llvm::Optional<Node> {
   auto start = StartSubtree();
 
+  llvm::Optional<Node> lhs;
+  llvm::Optional<PrecedenceGroup> lhs_precedence;
+
   // Check for a prefix operator.
-  if (auto unary_operator =
+  if (auto operator_precedence =
           PrecedenceGroup::ForLeading(tokens.GetKind(*position))) {
-    if (ambient_precedence &&
-        PrecedenceGroup::GetPriority(*ambient_precedence, *unary_operator) !=
-            OperatorPriority::RightFirst) {
+    if (ambient_precedence && PrecedenceGroup::GetPriority(
+                                  *ambient_precedence, *operator_precedence) !=
+                                  OperatorPriority::RightFirst) {
       // The precedence rules don't permit this prefix operator in this
       // context. Diagnose this, but carry on and parse it anyway.
       emitter.EmitError<OperatorRequiresParentheses>(*position);
     }
 
     auto operator_token = Consume(tokens.GetKind(*position));
-    bool has_errors = !ParseOperatorExpression(*unary_operator);
-    return AddNode(ParseNodeKind::PrefixOperator(), operator_token, start, has_errors);
+    bool has_errors = !ParseOperatorExpression(*operator_precedence);
+    lhs = AddNode(ParseNodeKind::PrefixOperator(), operator_token, start,
+                  has_errors);
+    lhs_precedence = *operator_precedence;
+  } else {
+    lhs = ParsePostfixExpression();
   }
-
-  auto lhs = ParsePostfixExpression();
-  llvm::Optional<PrecedenceGroup> lhs_precedence;
 
   // Consume a sequence of infix and postfix operators.
   while (auto trailing_operator =
              PrecedenceGroup::ForTrailing(tokens.GetKind(*position))) {
     auto [operator_precedence, is_binary] = *trailing_operator;
-    if (ambient_precedence) {
-      switch (PrecedenceGroup::GetPriority(*ambient_precedence,
-                                           operator_precedence)) {
-        case OperatorPriority::RightFirst:
-          // This operator should be handled at this level.
-          if (lhs_precedence && PrecedenceGroup::GetPriority(
-                                    *lhs_precedence, operator_precedence) !=
-                                    OperatorPriority::LeftFirst) {
-            // Either the LHS operator and this operator are ambiguous, or the
-            // LHS operaor is a postfix operator that can't be nested within
-            // this operator. Either way, parentheses are requierd.
-            emitter.EmitError<OperatorRequiresParentheses>(*position);
-            lhs = llvm::None;
-          }
-          break;
+    if (ambient_precedence && PrecedenceGroup::GetPriority(
+                                  *ambient_precedence, operator_precedence) !=
+                                  OperatorPriority::RightFirst) {
+      // The precedence rules don't permit this operator in this context. Try
+      // again in the enclosing expression context.
+      return lhs;
+    }
 
-        case OperatorPriority::Ambiguous:
-          // Parse left-to-right for recovery.
-          return lhs;
-
-        case OperatorPriority::LeftFirst:
-          // This operator should be handled at a higher level.
-          return lhs;
-      }
+    if (lhs_precedence &&
+        PrecedenceGroup::GetPriority(*lhs_precedence, operator_precedence) !=
+            OperatorPriority::LeftFirst) {
+      // Either the LHS operator and this operator are ambiguous, or the
+      // LHS operaor is a unary operator that can't be nested within
+      // this operator. Either way, parentheses are required.
+      emitter.EmitError<OperatorRequiresParentheses>(*position);
+      lhs = llvm::None;
     }
 
     auto operator_token = Consume(tokens.GetKind(*position));
