@@ -37,6 +37,14 @@ class PrecedenceGroup {
   // functions below.
   PrecedenceGroup() = delete;
 
+  // Get the sentinel precedence level for a postfix expression. All operators
+  // should have lower precedence than this.
+  static auto ForPostfixExpression() -> PrecedenceGroup;
+
+  // Get the sentinel precedence level for a top-level expression context. All
+  // operators should have higher precedence than this.
+  static auto ForTopLevelExpression() -> PrecedenceGroup;
+
   // Look up the operator information of the given prefix operator token, or
   // return llvm::None if the given token is not a prefix operator.
   static auto ForLeading(TokenKind kind) -> llvm::Optional<PrecedenceGroup>;

@@ -157,7 +157,7 @@ class ParseTree::Parser {
 
   // Parses an expression involving operators, in a context with the given
   // precedence.
-  auto ParseOperatorExpression(llvm::Optional<PrecedenceGroup> precedence)
+  auto ParseOperatorExpression(PrecedenceGroup precedence)
       -> llvm::Optional<Node>;
 
   // Parses an expression.

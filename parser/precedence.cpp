@@ -10,6 +10,8 @@ namespace Carbon {
 
 namespace {
 enum PrecedenceLevel : int8_t {
+  // Sentinel representing the absence of any operator.
+  Highest,
   // Numeric.
   NumericPrefix,
   NumericPostfix,
@@ -30,8 +32,10 @@ enum PrecedenceLevel : int8_t {
   // Assignment.
   SimpleAssignment,
   CompoundAssignment,
+  // Sentinel representing a context in which any operator can appear.
+  Lowest,
 };
-constexpr int8_t NumPrecedenceLevels = CompoundAssignment + 1;
+constexpr int8_t NumPrecedenceLevels = Lowest + 1;
 
 // A precomputed lookup table determining the relative precedence of two
 // precedence groups.
@@ -39,6 +43,8 @@ struct OperatorPriorityTable {
   constexpr OperatorPriorityTable() : table{} {
     // Start with a list of <higher precedence>, <lower precedence>
     // relationships.
+    MarkHigherThan({Highest}, {NumericPrefix, BitwisePrefix, LogicalPrefix,
+                               NumericPostfix});
     MarkHigherThan({NumericPrefix, NumericPostfix},
                    {Modulo, Multiplicative, BitShift});
     MarkHigherThan({Multiplicative}, {Additive});
@@ -48,6 +54,9 @@ struct OperatorPriorityTable {
         {Modulo, Additive, BitwiseAnd, BitwiseOr, BitwiseXor, BitShift},
         {SimpleAssignment, CompoundAssignment, Relational});
     MarkHigherThan({Relational, LogicalPrefix}, {LogicalAnd, LogicalOr});
+    MarkHigherThan(
+        {SimpleAssignment, CompoundAssignment, LogicalAnd, LogicalOr},
+        {Lowest});
 
     // Compute the transitive closure of the above relationships: if we parse
     // `a $ b @ c` as `(a $ b) @ c` and parse `b @ c % d` as `(b @ c) % d`,
@@ -61,6 +70,8 @@ struct OperatorPriorityTable {
 
     // Fill in the diagonal, which represents operator associativity.
     AddAssociativityRules();
+
+    ConsistencyCheck();
   }
 
   constexpr void MarkHigherThan(
@@ -141,9 +152,34 @@ struct OperatorPriorityTable {
     // explicit parentheses.
   }
 
+  constexpr void ConsistencyCheck() {
+    for (int8_t level = 0; level != NumPrecedenceLevels; ++level) {
+      if (level != Highest) {
+        if (table[Highest][level] != OperatorPriority::LeftFirst ||
+            table[level][Highest] != OperatorPriority::RightFirst) {
+          throw "Highest is not highest priority";
+        }
+      }
+      if (level != Lowest) {
+        if (table[Lowest][level] != OperatorPriority::RightFirst ||
+            table[level][Lowest] != OperatorPriority::LeftFirst) {
+          throw "Lowest is not lowest priority";
+        }
+      }
+    }
+  }
+
   OperatorPriority table[NumPrecedenceLevels][NumPrecedenceLevels];
 };
 }  // namespace
+
+auto PrecedenceGroup::ForPostfixExpression() -> PrecedenceGroup {
+  return PrecedenceGroup(Highest);
+}
+
+auto PrecedenceGroup::ForTopLevelExpression() -> PrecedenceGroup {
+  return PrecedenceGroup(Lowest);
+}
 
 auto PrecedenceGroup::ForLeading(TokenKind kind)
     -> llvm::Optional<PrecedenceGroup> {
