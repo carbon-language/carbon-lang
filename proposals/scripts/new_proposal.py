@@ -191,26 +191,15 @@ def main():
             gh_bin,
             "pr",
             "create",
+            "--draft",
             "--label",
-            "WIP,proposal",
+            "proposal",
+            "--project",
+            "Proposals",
             "--title",
             title,
             "--body",
-            "",
-        ]
-    )
-
-    # Add links.
-    _run(
-        [
-            gh_bin,
-            "pr",
-            "comment",
-            str(pr_num),
-            "--repo",
-            "carbon-language/carbon-lang",
-            "--body",
-            _LINK_TEMPLATE % pr_num,
+            "TODO: add summary and links here",
         ]
     )
 
