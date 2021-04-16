@@ -86,6 +86,13 @@ struct UnexpectedTokenInFunctionArgs
       "Unexpected token in function argument list.";
 };
 
+struct OperatorRequiresParentheses
+    : SimpleDiagnostic<OperatorRequiresParentheses> {
+  static constexpr llvm::StringLiteral ShortName = "syntax-error";
+  static constexpr llvm::StringLiteral Message =
+      "Parentheses are required to disambiguate operator precedence.";
+};
+
 ParseTree::Parser::Parser(ParseTree& tree_arg, TokenizedBuffer& tokens_arg,
                           TokenDiagnosticEmitter& emitter)
     : tree(tree_arg),
@@ -111,7 +118,11 @@ auto ParseTree::Parser::Parse(TokenizedBuffer& tokens,
 
   Parser parser(tree, tokens, emitter);
   while (!parser.AtEndOfFile()) {
-    parser.ParseDeclaration();
+    if (!parser.ParseDeclaration()) {
+      // We don't have an enclosing parse tree node to mark as erroneous, so
+      // just mark the tree as a whole.
+      tree.has_errors = true;
+    }
   }
 
   parser.AddLeafNode(ParseNodeKind::FileEnd(), *parser.position);
@@ -441,9 +452,7 @@ auto ParseTree::Parser::ParseDeclaration() -> llvm::Optional<Node> {
     return *found_semi_n;
   }
 
-  // Nothing, not even a semicolon found. We still need to mark that an error
-  // occurred though.
-  tree.has_errors = true;
+  // Nothing, not even a semicolon found.
   return llvm::None;
 }
 
@@ -583,8 +592,75 @@ auto ParseTree::Parser::ParsePostfixExpression() -> llvm::Optional<Node> {
   }
 }
 
+auto ParseTree::Parser::ParseOperatorExpression(
+    llvm::Optional<PrecedenceGroup> ambient_precedence)
+    -> llvm::Optional<Node> {
+  auto start = StartSubtree();
+
+  llvm::Optional<Node> lhs;
+  llvm::Optional<PrecedenceGroup> lhs_precedence;
+
+  // Check for a prefix operator.
+  if (auto operator_precedence =
+          PrecedenceGroup::ForLeading(tokens.GetKind(*position));
+      !operator_precedence) {
+    lhs = ParsePostfixExpression();
+  } else {
+    if (ambient_precedence && PrecedenceGroup::GetPriority(
+                                  *ambient_precedence, *operator_precedence) !=
+                                  OperatorPriority::RightFirst) {
+      // The precedence rules don't permit this prefix operator in this
+      // context. Diagnose this, but carry on and parse it anyway.
+      emitter.EmitError<OperatorRequiresParentheses>(*position);
+    }
+
+    auto operator_token = Consume(tokens.GetKind(*position));
+    bool has_errors = !ParseOperatorExpression(*operator_precedence);
+    lhs = AddNode(ParseNodeKind::PrefixOperator(), operator_token, start,
+                  has_errors);
+    lhs_precedence = *operator_precedence;
+  }
+
+  // Consume a sequence of infix and postfix operators.
+  while (auto trailing_operator =
+             PrecedenceGroup::ForTrailing(tokens.GetKind(*position))) {
+    auto [operator_precedence, is_binary] = *trailing_operator;
+    if (ambient_precedence && PrecedenceGroup::GetPriority(
+                                  *ambient_precedence, operator_precedence) !=
+                                  OperatorPriority::RightFirst) {
+      // The precedence rules don't permit this operator in this context. Try
+      // again in the enclosing expression context.
+      return lhs;
+    }
+
+    if (lhs_precedence &&
+        PrecedenceGroup::GetPriority(*lhs_precedence, operator_precedence) !=
+            OperatorPriority::LeftFirst) {
+      // Either the LHS operator and this operator are ambiguous, or the
+      // LHS operaor is a unary operator that can't be nested within
+      // this operator. Either way, parentheses are required.
+      emitter.EmitError<OperatorRequiresParentheses>(*position);
+      lhs = llvm::None;
+    }
+
+    auto operator_token = Consume(tokens.GetKind(*position));
+
+    if (is_binary) {
+      auto rhs = ParseOperatorExpression(operator_precedence);
+      lhs = AddNode(ParseNodeKind::InfixOperator(), operator_token, start,
+                    /*has_error=*/!lhs || !rhs);
+    } else {
+      lhs = AddNode(ParseNodeKind::PostfixOperator(), operator_token, start,
+                    /*has_error=*/!lhs);
+    }
+    lhs_precedence = operator_precedence;
+  }
+
+  return lhs;
+}
+
 auto ParseTree::Parser::ParseExpression() -> llvm::Optional<Node> {
-  return ParsePostfixExpression();
+  return ParseOperatorExpression(llvm::None);
 }
 
 auto ParseTree::Parser::ParseExpressionStatement() -> llvm::Optional<Node> {
