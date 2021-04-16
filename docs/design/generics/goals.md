@@ -553,7 +553,7 @@ languages do?
 
 ### Not the full flexibility of templates
 
-We don't need to provide full flexibility of C++ templates from generics:
+Generics don't need to provide full flexibility of C++ templates:
 
 -   [Carbon templates](#relationship-to-templates) can still cover those
     exceptional cases that don't fit inside generics.
