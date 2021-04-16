@@ -44,7 +44,7 @@ particular directions.
 
 When there are questions, concerns, or issues with a proposal that need to be
 resolved, Carbon uses its [governance](#governance-structure) system of
-[Carbon leads](#carbon-leads-2) to decide how to move forward. Leads are
+[Carbon leads](#carbon-leads-1) to decide how to move forward. Leads are
 fundamentally responsible for encouraging Carbon's ongoing and healthy evolution
 and so also take on the critical steps of the evolution process for proposals.
 
@@ -208,7 +208,7 @@ regularly:
 
 #### Carbon leads
 
-[Carbon leads](#carbon-leads-2) are responsible for making decisions rapidly and
+[Carbon leads](#carbon-leads-1) are responsible for making decisions rapidly and
 ensuring proposal PRs land:
 
 -   Rapidly resolve all blocking issues raised across any proposals.
