@@ -418,8 +418,7 @@ should broadly understand both the users of Carbon and the project itself in
 order to factor different needs, concerns, and pressures into a
 [consensus decision-making process](https://en.wikipedia.org/wiki/Consensus_decision-making).
 
-Leads approve most proposals individually. When an issue is raised for leads,
-they should be decided using
+While leads may approve proposals individually, they should decide on issues raised to them  using
 [blocking consensus](https://en.wikipedia.org/wiki/Consensus_decision-making#Blocking)
 with a quorum of two.
 
