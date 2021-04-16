@@ -196,6 +196,8 @@ def main():
             "proposal",
             "--project",
             "Proposals",
+            "--reviewer",
+            "carbon-language/carbon-leads",
             "--title",
             title,
             "--body",
