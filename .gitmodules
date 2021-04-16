@@ -12,9 +12,9 @@
 [submodule "third_party/examples/brotli/original"]
 	path = third_party/examples/brotli/original
 	url = https://github.com/google/brotli
-        shallow = true
+	shallow = true
 [submodule "third_party/examples/woff2/original"]
 	path = third_party/examples/woff2/original
 	url = https://github.com/google/woff2
-        shallow = true
+	shallow = true
 	fetchRecurseSubmodules = false
