@@ -595,7 +595,7 @@ an infinite collection of types, such as in
 [this example from Swift](https://forums.swift.org/t/ergonomics-generic-types-conforming-in-more-than-one-way/34589/71)
 or:
 
-```
+```carbon
 fn Sort[Comparable T](List(T) list) -> List(T) {
   if (list.size() == 1) return list;
   var List(List(T)) chunks = FormChunks(list, sqrt(list.size()));
