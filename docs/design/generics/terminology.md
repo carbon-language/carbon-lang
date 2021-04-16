@@ -170,19 +170,20 @@ Templates work with ad-hoc polymorphism in two ways:
 In Carbon, we expect there to be a compile error if overloading of some name
 prevents a generic function from being typechecked from its definition alone.
 For example, let's say we have some overloaded function called `F` that has two
-overloads (note that this is not real proposed Carbon syntax):
+overloads:
 
 ```
-fn F[Type:$$ T, requires T != Int](T: x) -> T;
+fn F[Type:$$ T](Ptr(T): x) -> T;
 fn F(Int: x) -> Bool;
 ```
 
-A generic function `G` can call `F` with a type like `T*` that can not possibly
-call the `F(Int)` overload for `F`, and so it can consistently determine the
-return type of `F`. But `G` can't call `F` with an argument that could match
-either overload. (I think it is undecided what to do in the situation where `F`
-is overloaded, but the signatures are consistent and so callers could still
-typecheck calls to `F`.)
+A generic function `G` can call `F` with a type like `Ptr(T)` that can not
+possibly call the `F(Int)` overload for `F`, and so it can consistently
+determine the return type of `F`. But `G` can't call `F` with an argument that
+could match either overload. (I think it is undecided what to do in the
+situation where `F` is overloaded, but the signatures are consistent and so
+callers could still typecheck calls to `F`. This still poses problems for the
+dynamic strategy for compiling generics.)
 
 ### Constrained genericity
 
