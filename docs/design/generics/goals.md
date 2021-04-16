@@ -67,9 +67,11 @@ support templates in Carbon as well as interoperability with C++ templates.
 
 ### Generic parameters
 
-A generic function, or generic type, will take some "generic parameters", which
+Generic functions and generic types will all take some "generic parameters", which
 will frequently be types, and in some cases will be implicit or inferred from
-the types of the values of explicit parameters to the function. If a generic
+the types of the values of explicit parameters.
+
+If a generic
 parameter is a type, the generic function's signature can specify constraints
 that the caller's type must satisfy. For example, a resizable array type (like
 C++'s `std::vector`) might have a generic type parameter with the constraint
