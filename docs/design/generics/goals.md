@@ -556,7 +556,7 @@ Generics don't need to provide full flexibility of C++ templates:
 
 -   [Carbon templates](#relationship-to-templates) can still cover those
     exceptional cases that don't fit inside generics.
--   If you want compile-time duck typing, that is available by way of templates.
+    -   If you want compile-time duck typing, that is available by way of templates.
 -   We won't allow a specialization of some generic interface for some
     particular type to actually expose a _different_ interface, with different
     methods or different types in method signatures. This would break modular
