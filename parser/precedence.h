@@ -21,7 +21,11 @@ enum class OperatorPriority : int8_t {
   RightFirst = 1,
 };
 
-enum class Associativity { LeftToRight = -1, None = 0, RightToLeft = 1 };
+enum class Associativity : int8_t {
+  LeftToRight = -1,
+  None = 0,
+  RightToLeft = 1
+};
 
 // A precedence group associated with an operator or expression.
 class PrecedenceGroup {

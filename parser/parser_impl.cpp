@@ -602,7 +602,10 @@ auto ParseTree::Parser::ParseOperatorExpression(
 
   // Check for a prefix operator.
   if (auto operator_precedence =
-          PrecedenceGroup::ForLeading(tokens.GetKind(*position))) {
+          PrecedenceGroup::ForLeading(tokens.GetKind(*position));
+      !operator_precedence) {
+    lhs = ParsePostfixExpression();
+  } else {
     if (ambient_precedence && PrecedenceGroup::GetPriority(
                                   *ambient_precedence, *operator_precedence) !=
                                   OperatorPriority::RightFirst) {
@@ -616,8 +619,6 @@ auto ParseTree::Parser::ParseOperatorExpression(
     lhs = AddNode(ParseNodeKind::PrefixOperator(), operator_token, start,
                   has_errors);
     lhs_precedence = *operator_precedence;
-  } else {
-    lhs = ParsePostfixExpression();
   }
 
   // Consume a sequence of infix and postfix operators.
@@ -647,10 +648,10 @@ auto ParseTree::Parser::ParseOperatorExpression(
     if (is_binary) {
       auto rhs = ParseOperatorExpression(operator_precedence);
       lhs = AddNode(ParseNodeKind::InfixOperator(), operator_token, start,
-                    !lhs || !rhs);
+                    /*has_error=*/!lhs || !rhs);
     } else {
       lhs = AddNode(ParseNodeKind::PostfixOperator(), operator_token, start,
-                    !lhs);
+                    /*has_error=*/!lhs);
     }
     lhs_precedence = operator_precedence;
   }

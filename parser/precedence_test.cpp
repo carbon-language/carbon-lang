@@ -14,9 +14,7 @@ namespace {
 using ::testing::Eq;
 using ::testing::Ne;
 
-struct PrecedenceTest : ::testing::Test {};
-
-TEST_F(PrecedenceTest, OperatorsAreRecognized) {
+TEST(PrecedenceTest, OperatorsAreRecognized) {
   EXPECT_TRUE(PrecedenceGroup::ForLeading(TokenKind::Minus()).hasValue());
   EXPECT_TRUE(PrecedenceGroup::ForLeading(TokenKind::Tilde()).hasValue());
   EXPECT_FALSE(PrecedenceGroup::ForLeading(TokenKind::Slash()).hasValue());
@@ -33,7 +31,7 @@ TEST_F(PrecedenceTest, OperatorsAreRecognized) {
       PrecedenceGroup::ForTrailing(TokenKind::MinusMinus())->is_binary);
 }
 
-TEST_F(PrecedenceTest, Associativity) {
+TEST(PrecedenceTest, Associativity) {
   EXPECT_THAT(
       PrecedenceGroup::ForLeading(TokenKind::Minus())->GetAssociativity(),
       Eq(Associativity::RightToLeft));
@@ -51,7 +49,7 @@ TEST_F(PrecedenceTest, Associativity) {
               Eq(Associativity::None));
 }
 
-TEST_F(PrecedenceTest, DirectRelations) {
+TEST(PrecedenceTest, DirectRelations) {
   EXPECT_THAT(PrecedenceGroup::GetPriority(
                   PrecedenceGroup::ForTrailing(TokenKind::Star())->level,
                   PrecedenceGroup::ForTrailing(TokenKind::Plus())->level),
@@ -71,7 +69,7 @@ TEST_F(PrecedenceTest, DirectRelations) {
               Eq(OperatorPriority::RightFirst));
 }
 
-TEST_F(PrecedenceTest, IndirectRelations) {
+TEST(PrecedenceTest, IndirectRelations) {
   EXPECT_THAT(PrecedenceGroup::GetPriority(
                   PrecedenceGroup::ForTrailing(TokenKind::Star())->level,
                   PrecedenceGroup::ForTrailing(TokenKind::OrKeyword())->level),
@@ -91,7 +89,7 @@ TEST_F(PrecedenceTest, IndirectRelations) {
               Eq(OperatorPriority::RightFirst));
 }
 
-TEST_F(PrecedenceTest, IncomparableOperators) {
+TEST(PrecedenceTest, IncomparableOperators) {
   EXPECT_THAT(PrecedenceGroup::GetPriority(
                   *PrecedenceGroup::ForLeading(TokenKind::Tilde()),
                   *PrecedenceGroup::ForLeading(TokenKind::NotKeyword())),
