@@ -416,11 +416,11 @@ Carbon leads are responsible for reviewing proposals and
 [setting Carbon's roadmap](roadmap_process.md) and managing evolution. This team
 should broadly understand both the users of Carbon and the project itself in
 order to factor different needs, concerns, and pressures into a
-[consensus decision-making process](consensus_decision_making.md).
+[consensus decision-making process](https://en.wikipedia.org/wiki/Consensus_decision-making).
 
 Leads approve most proposals individually. When an issue is raised for leads,
 they should be decided using
-[blocking consensus](https://en.wikipedia.org/wiki/Consensus_decision-making)
+[blocking consensus](https://en.wikipedia.org/wiki/Consensus_decision-making#Blocking)
 with a quorum of two.
 
 Carbon's current leads are:
