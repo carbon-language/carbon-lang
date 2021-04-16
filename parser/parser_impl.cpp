@@ -593,12 +593,11 @@ auto ParseTree::Parser::ParsePostfixExpression() -> llvm::Optional<Node> {
 }
 
 auto ParseTree::Parser::ParseOperatorExpression(
-    llvm::Optional<PrecedenceGroup> ambient_precedence)
-    -> llvm::Optional<Node> {
+    PrecedenceGroup ambient_precedence) -> llvm::Optional<Node> {
   auto start = StartSubtree();
 
   llvm::Optional<Node> lhs;
-  llvm::Optional<PrecedenceGroup> lhs_precedence;
+  PrecedenceGroup lhs_precedence = PrecedenceGroup::ForPostfixExpression();
 
   // Check for a prefix operator.
   if (auto operator_precedence =
@@ -606,9 +605,9 @@ auto ParseTree::Parser::ParseOperatorExpression(
       !operator_precedence) {
     lhs = ParsePostfixExpression();
   } else {
-    if (ambient_precedence && PrecedenceGroup::GetPriority(
-                                  *ambient_precedence, *operator_precedence) !=
-                                  OperatorPriority::RightFirst) {
+    if (PrecedenceGroup::GetPriority(ambient_precedence,
+                                     *operator_precedence) !=
+        OperatorPriority::RightFirst) {
       // The precedence rules don't permit this prefix operator in this
       // context. Diagnose this, but carry on and parse it anyway.
       emitter.EmitError<OperatorRequiresParentheses>(*position);
@@ -625,17 +624,15 @@ auto ParseTree::Parser::ParseOperatorExpression(
   while (auto trailing_operator =
              PrecedenceGroup::ForTrailing(tokens.GetKind(*position))) {
     auto [operator_precedence, is_binary] = *trailing_operator;
-    if (ambient_precedence && PrecedenceGroup::GetPriority(
-                                  *ambient_precedence, operator_precedence) !=
-                                  OperatorPriority::RightFirst) {
+    if (PrecedenceGroup::GetPriority(ambient_precedence, operator_precedence) !=
+        OperatorPriority::RightFirst) {
       // The precedence rules don't permit this operator in this context. Try
       // again in the enclosing expression context.
       return lhs;
     }
 
-    if (lhs_precedence &&
-        PrecedenceGroup::GetPriority(*lhs_precedence, operator_precedence) !=
-            OperatorPriority::LeftFirst) {
+    if (PrecedenceGroup::GetPriority(lhs_precedence, operator_precedence) !=
+        OperatorPriority::LeftFirst) {
       // Either the LHS operator and this operator are ambiguous, or the
       // LHS operaor is a unary operator that can't be nested within
       // this operator. Either way, parentheses are required.
@@ -660,7 +657,7 @@ auto ParseTree::Parser::ParseOperatorExpression(
 }
 
 auto ParseTree::Parser::ParseExpression() -> llvm::Optional<Node> {
-  return ParseOperatorExpression(llvm::None);
+  return ParseOperatorExpression(PrecedenceGroup::ForTopLevelExpression());
 }
 
 auto ParseTree::Parser::ParseExpressionStatement() -> llvm::Optional<Node> {
