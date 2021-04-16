@@ -327,40 +327,16 @@ auto ParseTree::Parser::ParseCodeBlock() -> Node {
   bool has_errors = false;
 
   // Loop over all the different possibly nested elements in the code block.
-  for (;;) {
-    switch (tokens.GetKind(*position)) {
-      case TokenKind::VarKeyword():
-        ParseVariableDeclaration();
-        continue;
-
-      default:
-        // A statement with no introducer token can only be an expression
-        // statement.
-        if (ParseExpressionStatement()) {
-          continue;
-        }
-
-        // We detected and diagnosed an error of some kind. We can trivially
-        // skip to the actual close curly brace from here.
-        // FIXME: It would be better to skip to the next semicolon, or the next
-        // token at the start of a line with the same indent as this one.
-        SkipTo(tokens.GetMatchedClosingToken(open_curly));
-        has_errors = true;
-        // Now fall through to the close curly brace handling code.
-        LLVM_FALLTHROUGH;
-
-      case TokenKind::CloseCurlyBrace():
-        break;
-
-      case TokenKind::OpenCurlyBrace():
-        // FIXME: We should consider avoiding recursion here with some side
-        // stack.
-        ParseCodeBlock();
-        continue;
+  while (tokens.GetKind(*position) != TokenKind::CloseCurlyBrace()) {
+    if (!ParseStatement()) {
+      // We detected and diagnosed an error of some kind. We can trivially skip
+      // to the actual close curly brace from here.
+      // FIXME: It would be better to skip to the next semicolon, or the next
+      // token at the start of a line with the same indent as this one.
+      SkipTo(tokens.GetMatchedClosingToken(open_curly));
+      has_errors = true;
+      break;
     }
-
-    // We only continue looping with `continue` above.
-    break;
   }
 
   // We always reach here having set our position in the token stream to the
@@ -734,6 +710,21 @@ auto ParseTree::Parser::ParseExpressionStatement() -> llvm::Optional<Node> {
 
   // Found junk not even followed by a `;`.
   return llvm::None;
+}
+
+auto ParseTree::Parser::ParseStatement() -> llvm::Optional<Node> {
+  switch (tokens.GetKind(*position)) {
+    case TokenKind::VarKeyword():
+      return ParseVariableDeclaration();
+
+    case TokenKind::OpenCurlyBrace():
+      return ParseCodeBlock();
+
+    default:
+      // A statement with no introducer token can only be an expression
+      // statement.
+      return ParseExpressionStatement();
+  }
 }
 
 }  // namespace Carbon
