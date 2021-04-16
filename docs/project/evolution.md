@@ -6,53 +6,88 @@ Exceptions. See /LICENSE for license information.
 SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -->
 
-# Evolution and governance
+<!-- toc -->
 
-<!--
-Part of the Carbon Language project, under the Apache License v2.0 with LLVM
-Exceptions. See /LICENSE for license information.
-SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
--->
+## Table of contents
 
-<!-- toc —>
-<!-- tocstop —>
+-   [Overview](#overview)
+-   [Proposals](#proposals)
+    -   [Life of a proposal](#life-of-a-proposal)
+    -   [Proposal roles](#proposal-roles)
+        -   [Proposal authors](#proposal-authors)
+        -   [Community](#community)
+        -   [Active contributors](#active-contributors)
+        -   [Carbon leads](#carbon-leads)
+    -   [When to write a proposal](#when-to-write-a-proposal)
+    -   [Proposal PRs](#proposal-prs)
+        -   [Open questions](#open-questions)
+    -   [Review and RFC on proposal PRs](#review-and-rfc-on-proposal-prs)
+    -   [Blocking issues](#blocking-issues)
+        -   [Discussion on blocking issues](#discussion-on-blocking-issues)
+-   [Governance structure](#governance-structure)
+    -   [Carbon leads](#carbon-leads-1)
+        -   [Subteams](#subteams)
+    -   [Painter](#painter)
+    -   [Adding and removing governance members](#adding-and-removing-governance-members)
+-   [Acknowledgements](#acknowledgements)
+
+<!-- tocstop -->
 
 ## Overview
 
-Carbon's evolution process uses [proposals](#proposals) to evaluate and approve significant changes to the project or language. The goal is to ensure these kinds of changes can receive feedback from the entire community, and also to resolve questions and decide direction efficiently. We use proposals to create a clear log of rationale for why the project and language have evolved in particular directions.
+Carbon's evolution process uses [proposals](#proposals) to evaluate and approve
+significant changes to the project or language. The goal is to ensure these
+kinds of changes can receive feedback from the entire community, and also to
+resolve questions and decide direction efficiently. We use proposals to create a
+clear log of rationale for why the project and language have evolved in
+particular directions.
 
-When there are questions, concerns, or issues with a proposal that need to be resolved, Carbon uses its [governance](#governance-structure) system of [Carbon leads](#carbon-leads-2) to decide how to move forward. Leads are fundamentally responsible for encouraging Carbon's ongoing and healthy evolution and so also take on the critical steps of the evolution process for proposals.
+When there are questions, concerns, or issues with a proposal that need to be
+resolved, Carbon uses its [governance](#governance-structure) system of
+[Carbon leads](#carbon-leads-2) to decide how to move forward. Leads are
+fundamentally responsible for encouraging Carbon's ongoing and healthy evolution
+and so also take on the critical steps of the evolution process for proposals.
 
 ## Proposals
 
-These are primarily structured as GitHub pull requests that use a somewhat more formal document structure and process to ensure changes to the project or language are well explained, justified, and reviewed by the community.
+These are primarily structured as GitHub pull requests that use a somewhat more
+formal document structure and process to ensure changes to the project or
+language are well explained, justified, and reviewed by the community.
 
 ### Life of a proposal
 
--   We author and review proposals when making [substantive changes to Carbon](#when-to-write-a-proposal).
+-   We author and review proposals when making
+    [substantive changes to Carbon](#when-to-write-a-proposal).
 
--   Proposals consist of a PR (pull request) in GitHub that adds a document
-    to the [`proposals/` directory](/proposals/) following [the template](/proposals/template.md).
+-   Proposals consist of a PR (pull request) in GitHub that adds a document to
+    the [`proposals/` directory](/proposals/) following
+    [the template](/proposals/template.md).
 
--   Proposal PRs start out in draft mode. When proposal PRs are ready, click on ["Ready for review"](https://docs.github.com/en/github/collaborating-with-issues-and-pull-requests/changing-the-stage-of-a-pull-request#marking-a-pull-request-as-ready-for-review) in GitHub.
+-   Proposal PRs start out in draft mode. When proposal PRs are ready, click on
+    ["Ready for review"](https://docs.github.com/en/github/collaborating-with-issues-and-pull-requests/changing-the-stage-of-a-pull-request#marking-a-pull-request-as-ready-for-review)
+    in GitHub.
 
-    - This will result in a Carbon lead being assigned to review the PR.
+    -   This will result in a Carbon lead being assigned to review the PR.
 
-    - This also signifies an RFC (request for comment) from the entire community.
+    -   This also signifies an RFC (request for comment) from the entire
+        community.
 
 -   Contributors should react with a _thumbs-up_ to the proposal PR if they are
     generally interested and supportive of the high level direction based on
     title and summary.
 
--   We use GitHub issues to discuss and track _blocking issues_ with proposals, such as open questions or alternative approaches that may need further consideration. These are assigned to carbon-leads to decide.
+-   We use GitHub issues to discuss and track _blocking issues_ with proposals,
+    such as open questions or alternative approaches that may need further
+    consideration. These are assigned to carbon-leads to decide.
 
--   The lead assigned to review the PR should ensure that at least three contributors (possibly
-    including the lead) are generally supportive and react with thumbs-up. If a
-    proposal doesn't have these thumbs-up, the leads together need to decide
-    whether to move forward, and if so provide those thumbs-up.
+-   The lead assigned to review the PR should ensure that at least three
+    contributors (possibly including the lead) are generally supportive and
+    react with thumbs-up. If a proposal doesn't have these thumbs-up, the leads
+    together need to decide whether to move forward, and if so provide those
+    thumbs-up.
 
--   If the leads choose to defer or reject the proposal, the reviewing lead should explain why
-    and close the PR.
+-   If the leads choose to defer or reject the proposal, the reviewing lead
+    should explain why and close the PR.
 
 -   Once the thumbs-up are present and the assigned lead finishes code review,
     the lead should [approve](/docs/project/code_review.md#approving-the-change)
@@ -60,14 +95,16 @@ These are primarily structured as GitHub pull requests that use a somewhat more 
     issues.
 
 -   Optionally, the assigned lead can file a blocking issue for a one week final
-    comment period when they approve. This is rarely needed, and only when it is both useful and important for the
-    proposal to give extra time for community comments.
+    comment period when they approve. This is rarely needed, and only when it is
+    both useful and important for the proposal to give extra time for community
+    comments.
 
--   The leads are responsible for resolving any blocking issues for a proposal PR, including the one week comment period where resolving it indicates comments arrived which require the proposal to undergo further review.
+-   The leads are responsible for resolving any blocking issues for a proposal
+    PR, including the one week comment period where resolving it indicates
+    comments arrived which require the proposal to undergo further review.
 
--   The proposal PR can be merged once the assigned lead approves, all
-    blocking issues have been decided, and any related decisions are
-    incorporated.
+-   The proposal PR can be merged once the assigned lead approves, all blocking
+    issues have been decided, and any related decisions are incorporated.
 
 ### Proposal roles
 
@@ -80,13 +117,18 @@ easily understood.
 For proposal authors, this should feel like a code review, with some broken out
 issues for longer discussion:
 
--   Create a proposal document and draft PR following [the template](/proposals/template.md).
+-   Create a proposal document and draft PR following
+    [the template](/proposals/template.md).
 
-    - [new_proposal.py](/proposals/scripts/new_proposal.py) helps create templated PRs.
+    -   [new_proposal.py](/proposals/scripts/new_proposal.py) helps create
+        templated PRs.
 
-    - If you have open questions, filing [blocking issues](#blocking-issues) while preparing the PR can help resolve them quickly.
+    -   If you have open questions, filing [blocking issues](#blocking-issues)
+        while preparing the PR can help resolve them quickly.
 
--   When ready, click on ["Ready for review"](https://docs.github.com/en/github/collaborating-with-issues-and-pull-requests/changing-the-stage-of-a-pull-request#marking-a-pull-request-as-ready-for-review) in GitHub.
+-   When ready, click on
+    ["Ready for review"](https://docs.github.com/en/github/collaborating-with-issues-and-pull-requests/changing-the-stage-of-a-pull-request#marking-a-pull-request-as-ready-for-review)
+    in GitHub.
 
     -   This will result in the PR being assigned to an individual for review.
 
@@ -96,8 +138,9 @@ issues for longer discussion:
 
 -   If you don't see an obvious way to address comments, that's OK.
 
-    -   It's great to engage a bit with the commenter to clarify their comment or why you don't see an obvious way
-        to address it, just like you would [in code review](/docs/project/code_review.md#responding-to-review-comments).
+    -   It's great to engage a bit with the commenter to clarify their comment
+        or why you don't see an obvious way to address it, just like you would
+        [in code review](/docs/project/code_review.md#responding-to-review-comments).
 
     -   If the commenter feels this is important, they can move it to a blocking
         issue for a longer discussion and resolution from the leads.
@@ -109,48 +152,64 @@ issues for longer discussion:
     with that direction.
 
 -   When you both have
-    [approval](/docs/project/code_review.md#approving-the-change) from the assigned
-    lead and the last blocking issue is addressed, merge!
+    [approval](/docs/project/code_review.md#approving-the-change) from the
+    assigned lead and the last blocking issue is addressed, merge!
 
     -   If you end up making significant changes when incorporating resolved
-        issues after the approval from the assigned lead, circle back for a fresh
-        approval before merging, just like you would with code review.
+        issues after the approval from the assigned lead, circle back for a
+        fresh approval before merging, just like you would with code review.
 
 #### Community
 
--   We use the [Proposals dashboard](https://github.com/carbon-language/carbon-lang/projects/1) to track proposals that are in RFC.
+-   We use the
+    [Proposals dashboard](https://github.com/carbon-language/carbon-lang/projects/1)
+    to track proposals that are in RFC.
 
-    - Anyone that is interested can participate once a proposal is ready for review and in RFC.
+    -   Anyone that is interested can participate once a proposal is ready for
+        review and in RFC.
 
-    -   It's OK to only comment when particularly interested in a proposal, or when asked by one of the leads to help ensure thorough review. Not everyone needs to participate heavily in every RFC.
+    -   It's OK to only comment when particularly interested in a proposal, or
+        when asked by one of the leads to help ensure thorough review. Not
+        everyone needs to participate heavily in every RFC.
 
-    -   PRs that are in "draft" status in GitHub are considered works-in-progress. Check with the author before spending time reviewing these, and generally avoid distracting the author with comments unless they ask for them. The proposal may be actively undergoing edits.
+    -   PRs that are in "draft" status in GitHub are considered
+        works-in-progress. Check with the author before spending time reviewing
+        these, and generally avoid distracting the author with comments unless
+        they ask for them. The proposal may be actively undergoing edits.
 
--   Read the proposal and leave comments to try to help make the proposal an improvement for Carbon.
+-   Read the proposal and leave comments to try to help make the proposal an
+    improvement for Carbon.
 
-    -   Note that progress and improvement are more important than perfection here!
+    -   Note that progress and improvement are more important than perfection
+        here!
 
--   Try to make comments on proposals [constructive](/docs/project/code_review.md#writing-review-comments). Suggest how the proposal could be better if at all possible.
+-   Try to make comments on proposals
+    [constructive](/docs/project/code_review.md#writing-review-comments).
+    Suggest how the proposal could be better if at all possible.
 
--   If there is an open question or a critical blocking issue that needs to get resolved, move it to its own issue that the PR depends on, and focus the discussion there.
+-   If there is an open question or a critical blocking issue that needs to get
+    resolved, move it to its own issue that the PR depends on, and focus the
+    discussion there.
 
-    -   The issue should focus on surfacing the important aspects of the tradeoff represented by the issue or open question, not on advocacy.
+    -   The issue should focus on surfacing the important aspects of the
+        tradeoff represented by the issue or open question, not on advocacy.
 
 #### Active contributors
 
-Everyone actively contributing to the evolution of
-Carbon should try to regularly:
+Everyone actively contributing to the evolution of Carbon should try to
+regularly:
 
 -   Give a thumbs-up or other reaction on any interesting PRs out for RFC to
     help surface general enthusiasm for the high level idea or direction. Don't
     worry about "approving" or the details here.
 
--   If interested and time permitting, dive into some RFCs and provide [community feedback](#community).
+-   If interested and time permitting, dive into some RFCs and provide
+    [community feedback](#community).
 
 #### Carbon leads
 
-[Carbon leads](#carbon-leads-2) are responsible for making decisions rapidly and ensuring proposal
-PRs land:
+[Carbon leads](#carbon-leads-2) are responsible for making decisions rapidly and
+ensuring proposal PRs land:
 
 -   Rapidly resolve all blocking issues raised across any proposals.
 
@@ -159,9 +218,9 @@ PRs land:
     -   Make sure it gets both constructive general comments and good code
         review.
 
-    -   Ideally, you should directly participate in the code review,
-        but it's fine to ask others to help. However, ultimately you have to
-        review and approve the PR.
+    -   Ideally, you should directly participate in the code review, but it's
+        fine to ask others to help. However, ultimately you have to review and
+        approve the PR.
 
     -   Escalate any blocking issues without a resolution that are slowing down
         the proposal to the other leads.
@@ -172,8 +231,8 @@ PRs land:
 ### When to write a proposal
 
 Any substantive change to Carbon -- whether the language, project,
-infrastructure, or otherwise -- should be done through an evolution proposal. The meaning
-of "substantive" is subjective, but will generally include:
+infrastructure, or otherwise -- should be done through an evolution proposal.
+The meaning of "substantive" is subjective, but will generally include:
 
 -   Any semantic or syntactic language change that isn't fixing a bug.
 -   Major changes to project infrastructure, including additions and removals.
@@ -186,17 +245,17 @@ Changes which generally will not require a proposal are:
 -   Minor infrastructure updates, improvements, setting changes, tweaks.
 
 If you're not sure whether to write a proposal, please err on the side of
-writing a proposal. A team can always ask for a change to be made directly if they
-believe it doesn't need review. Conversely, a reviewer might also ask that a
-pull request instead go through the full evolution process.
+writing a proposal. A team can always ask for a change to be made directly if
+they believe it doesn't need review. Conversely, a reviewer might also ask that
+a pull request instead go through the full evolution process.
 
 ### Proposal PRs
 
 A proposal PR should use the `proposal` label, have a descriptive title, and
 easily understood initial summary comment. Authors and leads are encouraged to
 edit both as necessary to ensure they give the best high-level understanding of
-the proposal possible. The proposals should then use the [template file](/proposals/template.md)
-to describe itself fully.
+the proposal possible. The proposals should then use the
+[template file](/proposals/template.md) to describe itself fully.
 
 When writing a proposal, try to keep it brief and focused to maximize the
 community's engagement in it. Beyond the above structure, try to use
@@ -204,9 +263,11 @@ community's engagement in it. Beyond the above structure, try to use
 or [BLUF](<https://en.wikipedia.org/wiki/BLUF_(communication)>) writing style to
 help readers rapidly skim the material.
 
-Proposal PRs will often lead to related changes to the rest of the Carbon project. These changes may be added to the proposal PR itself, they may be done in other PRs that are referenced for context, or they may be
-stand-alone changes that are implemented through a series of future PRs to the
-rest of the project. All of these options are fine.
+Proposal PRs will often lead to related changes to the rest of the Carbon
+project. These changes may be added to the proposal PR itself, they may be done
+in other PRs that are referenced for context, or they may be stand-alone changes
+that are implemented through a series of future PRs to the rest of the project.
+All of these options are fine.
 
 #### Open questions
 
@@ -215,15 +276,19 @@ to the leads to resolve. You can even do this before sending the proposal for
 review. Even after it's resolved, an open question issue can be reopened if new
 information comes up during the RFC.
 
-When opening issues, add them to the ["Issues for leads" project](https://github.com/carbon-language/carbon-lang/projects/2) under "Questions". Carbon leads use this to locate and prioritize the issue for resolution.
+When opening issues, add them to the
+["Issues for leads" project](https://github.com/carbon-language/carbon-lang/projects/2)
+under "Questions". Carbon leads use this to locate and prioritize the issue for
+resolution.
 
 ### Review and RFC on proposal PRs
 
-When a proposal PR is assigned to the [carbon-leads GitHub group](https://github.com/orgs/carbon-language/teams/carbon-leads), one of them will be assigned
-the PR. They are responsible for helping land that proposal, or explaining why the
-project won't move forward in that direction. The assigned lead is also
-ultimately responsible for the code review on the PR. Proposals sent for review
-are also sent as an RFC to the entire community.
+When a proposal PR is assigned to the
+[carbon-leads GitHub group](https://github.com/orgs/carbon-language/teams/carbon-leads),
+one of them will be assigned the PR. They are responsible for helping land that
+proposal, or explaining why the project won't move forward in that direction.
+The assigned lead is also ultimately responsible for the code review on the PR.
+Proposals sent for review are also sent as an RFC to the entire community.
 
 All active Carbon contributors are strongly encouraged to regularly skim the
 title and summary comment of proposals under RFC that are interesting to them.
@@ -235,20 +300,18 @@ into the proposal. This is not about _approving_ the proposal, or any of its
 details. It is completely fine and coherent to both give a thumbs-up to a
 proposal _and_ provide a serious, blocking issue that needs to be resolved.
 
-_Anyone_ in the community is
-welcome to participate in the RFC in detail if interested. However, not
-everyone needs to participate in every RFC. If a proposal is already getting
-actively and thoroughly reviewed, feel free to focus your time on other
-proposals with fewer commenters. Even if there are issues or problems discovered
-later, we can always fix them with follow-up proposals.
+_Anyone_ in the community is welcome to participate in the RFC in detail if
+interested. However, not everyone needs to participate in every RFC. If a
+proposal is already getting actively and thoroughly reviewed, feel free to focus
+your time on other proposals with fewer commenters. Even if there are issues or
+problems discovered later, we can always fix them with follow-up proposals.
 
 Both code review and high-level design comments are welcome. If an open question
 comes up or a high-level blocking issue is uncovered, feel free to move it to
-its own GitHub issue and assign it to the leads to resolve. That issue is also a good
-place to focus discussion on that specific topic rather than the main PR.
+its own GitHub issue and assign it to the leads to resolve. That issue is also a
+good place to focus discussion on that specific topic rather than the main PR.
 
-The assigned lead should approve proposals once the following
-criteria are met:
+The assigned lead should approve proposals once the following criteria are met:
 
 -   It looks good from a code review perspective.
 
@@ -259,35 +322,40 @@ criteria are met:
 
 -   Any remaining blocking issues are reasonably likely to resolve in a way that
     allows the proposal to move forward. It is fine if some are not fully
-    decided, but a lead shouldn't approve a proposal that's unlikely to
-    move forward.
+    decided, but a lead shouldn't approve a proposal that's unlikely to move
+    forward.
 
 The last two criteria are fundamentally judgement calls for the lead to make,
 and we don't try to formulate a rigid or fixed bar for them. If resolving the
 blocking issues requires significant changes, the author should also get a fresh
-approval from the assigned lead after those changes, just like they would with code
-review.
+approval from the assigned lead after those changes, just like they would with
+code review.
 
 The assigned lead may also request a final comment period for the community when
-approving. This signals to the community that the proposal is likely to
-be merged once the blocking issues are resolved, and any remaining concerns
-need to be surfaced. The goal is to help uncover concerns that were hidden until
-it was clear that the proposal is likely to move forward. However, requesting a final comment period is not the default; the assigned lead should only do this when there is some reason to
-expect further community comment is especially important to solicit. Common
-cases to consider are contentious, complex, or dramatic changes to the language
-or project. Ultimately, whether this is important is a judgement call for the
-lead. This will be modeled by filing a blocking issue that resolves in one week
-when approving. This issue will also explain the motivation for requesting
-a final comment period.
+approving. This signals to the community that the proposal is likely to be
+merged once the blocking issues are resolved, and any remaining concerns need to
+be surfaced. The goal is to help uncover concerns that were hidden until it was
+clear that the proposal is likely to move forward. However, requesting a final
+comment period is not the default; the assigned lead should only do this when
+there is some reason to expect further community comment is especially important
+to solicit. Common cases to consider are contentious, complex, or dramatic
+changes to the language or project. Ultimately, whether this is important is a
+judgement call for the lead. This will be modeled by filing a blocking issue
+that resolves in one week when approving. This issue will also explain the
+motivation for requesting a final comment period.
 
 ### Blocking issues
 
-We use blocking GitHub issues to track open questions or other discussions that the leads are asked to resolve. Any time a blocking issue is filed,
-that issue forms both the primary discussion thread and where the leads signal
-how it is resolved. We use issues both to track that there is a specific
-resolution expected and that there may be dependencies.
+We use blocking GitHub issues to track open questions or other discussions that
+the leads are asked to resolve. Any time a blocking issue is filed, that issue
+forms both the primary discussion thread and where the leads signal how it is
+resolved. We use issues both to track that there is a specific resolution
+expected and that there may be dependencies.
 
-We add blocking issues to the ["Issues for leads" project](https://github.com/carbon-language/carbon-lang/projects/2) under "Blocking issues". Carbon leads use this to locate and prioritize the issue for resolution.
+We add blocking issues to the
+["Issues for leads" project](https://github.com/carbon-language/carbon-lang/projects/2)
+under "Blocking issues". Carbon leads use this to locate and prioritize the
+issue for resolution.
 
 These issues can be created at any time and by any one. Issues can be created
 while the proposal is being drafted in order to help inform specific content
@@ -303,19 +371,19 @@ Avoid using issues for things that are just requests or suggestions on a
 proposal PR. If in doubt, start off with a simple comment on the PR and see if
 there is any disagreement -- everyone may already be aligned and agree. When a
 comment does seem worth turning into an issue, don't worry about that as the
-author or the commenter. Getting the leads to resolve disagreement isn't a
-bad thing for anyone involved. This should be seen as a friendly way to move the
-discussion out to its own forum where it'll get resolved,
-and focus the PR on improving the proposal and getting it ready to merge.
+author or the commenter. Getting the leads to resolve disagreement isn't a bad
+thing for anyone involved. This should be seen as a friendly way to move the
+discussion out to its own forum where it'll get resolved, and focus the PR on
+improving the proposal and getting it ready to merge.
 
 When an issue is created from a discussion on a PR, and after the discussion on
-the _issue_ all the original parties come to a happy agreement, it's
-totally OK to close the issue and move back to the code review in the PR.
-Anyone who would prefer the leads to still chime in can re-open the issue
-and the leads will follow up, even if it's only to get confirmation that everyone
-_did_ end up happy with the resolution. At the end of the day, while it's fine
-to resolve an issue that _everyone_ actually ended up agreeing about (maybe once
-some confusion is addressed), ultimately the leads are responsible for resolving
+the _issue_ all the original parties come to a happy agreement, it's totally OK
+to close the issue and move back to the code review in the PR. Anyone who would
+prefer the leads to still chime in can re-open the issue and the leads will
+follow up, even if it's only to get confirmation that everyone _did_ end up
+happy with the resolution. At the end of the day, while it's fine to resolve an
+issue that _everyone_ actually ended up agreeing about (maybe once some
+confusion is addressed), ultimately the leads are responsible for resolving
 these issues and there is no pressure on anyone else to do so.
 
 #### Discussion on blocking issues
@@ -327,31 +395,33 @@ or persuasion. The goal of the issues shouldn't be to persuade or convince the
 leads to make a specific decision, but to give the leads the information they
 need to make the best decision for Carbon.
 
-It's fine that some people
-have a specific belief of which decision would be best; however, framing
-their contributions to the discussion as surfacing the information that
-underpins that belief will make the discussion more constructive,
-welcoming, and effective. Overall, everyone should strive to minimize their use
-of [rhetoric](https://en.wikipedia.org/wiki/Rhetoric) or other
+It's fine that some people have a specific belief of which decision would be
+best; however, framing their contributions to the discussion as surfacing the
+information that underpins that belief will make the discussion more
+constructive, welcoming, and effective. Overall, everyone should strive to
+minimize their use of [rhetoric](https://en.wikipedia.org/wiki/Rhetoric) or
+other
 [persuasive methods](https://en.wikipedia.org/wiki/Persuasion#List_of_methods)
 to the extent they can.
 
-None of this should preclude gathering
-information like polls of opinion among groups, or signaling agreement. Where
-community members stand and how many agree with that stance on any issue _is_
-information, and useful to surface.
+None of this should preclude gathering information like polls of opinion among
+groups, or signaling agreement. Where community members stand and how many agree
+with that stance on any issue _is_ information, and useful to surface.
 
 ## Governance structure
 
 ### Carbon leads
 
-Carbon leads are responsible for reviewing proposals and [setting Carbon's roadmap](roadmap_process.md)
-and managing evolution. This team should broadly understand both the users of
-Carbon and the project itself in order to factor different needs, concerns, and
-pressures into a
+Carbon leads are responsible for reviewing proposals and
+[setting Carbon's roadmap](roadmap_process.md) and managing evolution. This team
+should broadly understand both the users of Carbon and the project itself in
+order to factor different needs, concerns, and pressures into a
 [consensus decision-making process](consensus_decision_making.md).
 
-Leads approve most proposals individually. When an issue is raised for leads, they should be decided using [blocking consensus](https://en.wikipedia.org/wiki/Consensus_decision-making) with a quorum of two.
+Leads approve most proposals individually. When an issue is raised for leads,
+they should be decided using
+[blocking consensus](https://en.wikipedia.org/wiki/Consensus_decision-making)
+with a quorum of two.
 
 Carbon's current leads are:
 
@@ -361,9 +431,10 @@ Carbon's current leads are:
 
 #### Subteams
 
-As Carbon grows, the leads may decide to form subteams that provide
-leadership for specific areas. These subteams are expected to largely organize
-in a similar fashion to the Carbon leads, with a more narrow focus and scope. Subteam decisions may be escalated to the Carbon leads.
+As Carbon grows, the leads may decide to form subteams that provide leadership
+for specific areas. These subteams are expected to largely organize in a similar
+fashion to the Carbon leads, with a more narrow focus and scope. Subteam
+decisions may be escalated to the Carbon leads.
 
 ### Painter
 
@@ -374,8 +445,8 @@ any particular decision -- all of the options are fine/good and someone simply
 needs to choose which color to paint the bikeshed. The goal of the painter role
 is to have a simple way to quickly decide these points.
 
-Leads and teams may defer a decision to the painter if there is a consensus that it is
-merely a bikeshed in need of paint. They may also open an issue to revisit
+Leads and teams may defer a decision to the painter if there is a consensus that
+it is merely a bikeshed in need of paint. They may also open an issue to revisit
 the color with data and/or user studies of some kind. This allows progress to be
 unblocked while also ensuring we return to issues later and attempt to find more
 definite rationale.
@@ -390,8 +461,8 @@ The current painter is:
 ### Adding and removing governance members
 
 Any member of Carbon governance may step down or be replaced when they are no
-longer able to contribute effectively. The Carbon leads can nominate and decide on
-adding, removing, or replacing members using the usual evolution processes.
+longer able to contribute effectively. The Carbon leads can nominate and decide
+on adding, removing, or replacing members using the usual evolution processes.
 
 ## Acknowledgements
 
