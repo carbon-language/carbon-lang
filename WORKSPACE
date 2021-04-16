@@ -113,12 +113,12 @@ bison_register_toolchains(extra_copts = ["-w"])
 
 local_repository(
     name = "brotli",
-    path = "third_party/brotli/original",
+    path = "third_party/examples/brotli/original",
 )
 
 new_local_repository(
     name = "woff2",
-    build_file = "third_party/woff2/BUILD.original",
-    path = "third_party/woff2/original",
-    workspace_file = "third_party/woff2/WORKSPACE.original",
+    build_file = "third_party/examples/woff2/BUILD.original",
+    path = "third_party/examples/woff2/original",
+    workspace_file = "third_party/examples/woff2/WORKSPACE.original",
 )
