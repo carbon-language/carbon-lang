@@ -81,7 +81,7 @@ class ParseTree::Parser {
 
   // Find the next token of any of the given kinds at the current bracketing
   // level.
-  auto FindNext(std::initializer_list<TokenKind> desired_kinds)
+  auto FindNextOf(std::initializer_list<TokenKind> desired_kinds)
       -> llvm::Optional<TokenizedBuffer::Token>;
 
   // Callback used if we find a semicolon when skipping to the end of a

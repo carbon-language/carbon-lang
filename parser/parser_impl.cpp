@@ -223,7 +223,8 @@ auto ParseTree::Parser::SkipTo(TokenizedBuffer::Token t) -> void {
   assert(position != end && "Skipped past EOF.");
 }
 
-auto ParseTree::Parser::FindNext(std::initializer_list<TokenKind> desired_kinds)
+auto ParseTree::Parser::FindNextOf(
+    std::initializer_list<TokenKind> desired_kinds)
     -> llvm::Optional<TokenizedBuffer::Token> {
   auto new_position = position;
   while (true) {
@@ -443,7 +444,7 @@ auto ParseTree::Parser::ParseVariableDeclaration() -> Node {
                                       ParseNodeKind::DeclaredName());
   if (!name) {
     emitter.EmitError<ExpectedVariableName>(*position);
-    if (auto after_name = FindNext({TokenKind::Equal(), TokenKind::Semi()})) {
+    if (auto after_name = FindNextOf({TokenKind::Equal(), TokenKind::Semi()})) {
       SkipTo(*after_name);
     }
   }
@@ -600,7 +601,7 @@ auto ParseTree::Parser::ParseCallExpression(SubtreeStart start, bool has_errors)
         }
         has_errors = true;
 
-        auto comma_position = FindNext({TokenKind::Comma()});
+        auto comma_position = FindNextOf({TokenKind::Comma()});
         if (!comma_position) {
           SkipTo(tokens.GetMatchedClosingToken(open_paren));
           break;
