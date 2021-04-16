@@ -63,7 +63,7 @@ in a generic function's signature.
 
 This would be _in addition_ to
 [template support in Carbon](#relationship-to-templates), if we decide to
-support templates in Carbon as well as C++ templates.
+support templates in Carbon as well as interoperability with C++ templates.
 
 ### Generic parameters
 
