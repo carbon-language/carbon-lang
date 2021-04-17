@@ -58,16 +58,16 @@ final class ParserTests: XCTestCase {
     else { return }
     XCTAssertEqual(p.count, 1)
     let p0 = p[0]
-    guard case let .variable(name: n, type: t, initializer: i, _) = p0 else {
+    guard case let .variable(v) = p0 else {
       XCTFail("\(p0)")
       return
     }
-    XCTAssertEqual(n.text, "x")
+    XCTAssertEqual(v.name.text, "x")
 
-    if case .intType = t {} else { XCTFail("\(t)") }
+    if case .intType = v.type {} else { XCTFail("\(v.type)") }
 
-    if case let .integerLiteral(n, _) = i { XCTAssertEqual(n, 0) }
-    else { XCTFail("\(i)") }
+    if case let .integerLiteral(n, _) = v.initializer { XCTAssertEqual(n, 0) }
+    else { XCTFail("\(v.initializer)") }
   }
 
   func testParseFailure() {

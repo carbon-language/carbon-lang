@@ -40,16 +40,23 @@ indirect enum TopLevelDeclaration: AST {
     function(FunctionDefinition),
     `struct`(StructDefinition),
     choice(ChoiceDefinition),
-    variable(name: Identifier, type: Expression, initializer: Expression, Site)
+    variable(VariableDefinition)
 
   var site: Site {
     switch self {
     case let .function(f): return f.site
     case let .struct(s): return s.site
     case let .choice(c): return c.site
-    case let .variable(name:_, type: _, initializer: _, r): return r
+    case let .variable(v): return v.site
     }
   }
+}
+
+struct VariableDefinition: AST {
+  let name: Identifier,
+      type: Expression,
+      initializer: Expression,
+      site: Site  
 }
 
 struct FunctionDefinition: AST {

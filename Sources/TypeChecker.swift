@@ -88,12 +88,12 @@ private extension TypeChecker {
         for a in c.alternatives { $0.visit(a) }
       }
 
-    case let .variable(name: n, type: t, initializer: i, _):
-      define(n, .topLevel(d))
-      visit(t)
-      visit(i)
+    case let .variable(v):
+      define(v.name, .topLevel(d))
+      visit(v.type)
+      visit(v.initializer)
       let t1 = evaluateTypeExpression(
-        t, initializingFrom: toType[.expression(i)])
+        v.type, initializingFrom: toType[.expression(v.initializer)])
       toType[.declaration(d)] = t1
     }
   }

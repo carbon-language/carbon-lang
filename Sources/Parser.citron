@@ -234,7 +234,7 @@ top_level_declaration ::= CHOICE(c) identifier(n)
   { .choice(.init(name: n, alternatives: l, site: c...r)) }
 top_level_declaration
   ::= VAR(v) variable_declaration(d) EQUAL expression(i) SEMICOLON(s).
-  { .variable(name: d.name, type: d.type, initializer: i, v...s) }
+  { .variable(.init(name: d.name, type: d.type, initializer: i, site: v...s)) }
 declaration_list ::= /* Empty */.
   { [] }
 declaration_list ::= top_level_declaration(d) declaration_list(l).
