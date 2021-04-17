@@ -110,6 +110,12 @@ class ParseTree::Parser {
   auto SkipPastLikelyEnd(TokenizedBuffer::Token skip_root, SemiHandler on_semi)
       -> llvm::Optional<Node>;
 
+  // Parses a close paren token corresponding to the given open paren token,
+  // possibly skipping forward and diagnosing if necessary. Creates and returns
+  // a parse node of the specified kind if successful.
+  auto ParseCloseParen(TokenizedBuffer::Token open_paren, ParseNodeKind kind)
+      -> llvm::Optional<Node>;
+
   // Parses the signature of the function, consisting of a parameter list and an
   // optional return type. Returns the root node of the signature which must be
   // based on the open parenthesis of the parameter list.
