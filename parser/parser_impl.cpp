@@ -9,6 +9,7 @@
 #include "lexer/token_kind.h"
 #include "lexer/tokenized_buffer.h"
 #include "llvm/ADT/Optional.h"
+#include "llvm/Support/FormatVariadic.h"
 #include "llvm/Support/raw_ostream.h"
 #include "parser/parse_node_kind.h"
 #include "parser/parse_tree.h"
@@ -65,10 +66,24 @@ struct ExpectedExpression : SimpleDiagnostic<ExpectedExpression> {
   static constexpr llvm::StringLiteral Message = "Expected expression.";
 };
 
+struct ExpectedParenAfter : SimpleDiagnostic<ExpectedParenAfter> {
+  static constexpr llvm::StringLiteral ShortName = "syntax-error";
+  static constexpr const char* Message = "Expected `(` after `{0}`.";
+
+  TokenKind introducer;
+
+  auto Format() -> std::string {
+    return llvm::formatv(Message, introducer.GetFixedSpelling()).str();
+  }
+};
+
 struct ExpectedCloseParen : SimpleDiagnostic<ExpectedCloseParen> {
   static constexpr llvm::StringLiteral ShortName = "syntax-error";
   static constexpr llvm::StringLiteral Message =
       "Unexpected tokens before `)`.";
+
+  // TODO: Include the location of the matching open paren in the diagnostic.
+  TokenizedBuffer::Token open_paren;
 };
 
 struct ExpectedSemiAfterExpression
@@ -495,7 +510,8 @@ auto ParseTree::Parser::ParseParenExpression() -> llvm::Optional<Node> {
 
   if (tokens.GetKind(*position) != TokenKind::CloseParen()) {
     if (!has_errors) {
-      emitter.EmitError<ExpectedCloseParen>(*position);
+      emitter.EmitError<ExpectedCloseParen>(*position,
+                                            {.open_paren = open_paren});
       has_errors = true;
     }
     SkipTo(tokens.GetMatchedClosingToken(open_paren));
@@ -712,10 +728,57 @@ auto ParseTree::Parser::ParseExpressionStatement() -> llvm::Optional<Node> {
   return llvm::None;
 }
 
+auto ParseTree::Parser::ParseParenCondition(TokenKind introducer)
+    -> llvm::Optional<Node> {
+  // `(` expression `)`
+  auto start = StartSubtree();
+  auto open_paren = ConsumeIf(TokenKind::OpenParen());
+  if (!open_paren) {
+    emitter.EmitError<ExpectedParenAfter>(*position,
+                                          {.introducer = introducer});
+  }
+
+  auto expr = ParseExpression();
+
+  if (!open_paren) {
+    // Don't expect a matching closing paren if there wasn't an opening paren.
+    return llvm::None;
+  }
+
+  bool has_errors = false;
+  if (tokens.GetKind(*position) != TokenKind::CloseParen()) {
+    emitter.EmitError<ExpectedCloseParen>(*position,
+                                          {.open_paren = *open_paren});
+    SkipTo(tokens.GetMatchedClosingToken(*open_paren));
+    has_errors = true;
+  }
+  AddLeafNode(ParseNodeKind::ConditionEnd(), Consume(TokenKind::CloseParen()));
+
+  return AddNode(ParseNodeKind::Condition(), *open_paren, start,
+                 /*has_errors=*/!expr || has_errors);
+}
+
+auto ParseTree::Parser::ParseIfStatement() -> llvm::Optional<Node> {
+  auto start = StartSubtree();
+  auto if_token = Consume(TokenKind::IfKeyword());
+  auto cond = ParseParenCondition(TokenKind::IfKeyword());
+  auto then_case = ParseStatement();
+  bool else_has_errors = false;
+  if (ConsumeAndAddLeafNodeIf(TokenKind::ElseKeyword(),
+                              ParseNodeKind::IfStatementElse())) {
+    else_has_errors = !ParseStatement();
+  }
+  return AddNode(ParseNodeKind::IfStatement(), if_token, start,
+                 /*has_errors=*/!cond || !then_case || else_has_errors);
+}
+
 auto ParseTree::Parser::ParseStatement() -> llvm::Optional<Node> {
   switch (tokens.GetKind(*position)) {
     case TokenKind::VarKeyword():
       return ParseVariableDeclaration();
+
+    case TokenKind::IfKeyword():
+      return ParseIfStatement();
 
     case TokenKind::OpenCurlyBrace():
       return ParseCodeBlock();

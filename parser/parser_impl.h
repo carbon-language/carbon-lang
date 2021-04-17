@@ -171,6 +171,12 @@ class ParseTree::Parser {
   // Parses an expression statement: an expression followed by a semicolon.
   auto ParseExpressionStatement() -> llvm::Optional<Node>;
 
+  // Parses the parenthesized condition in an if-statement.
+  auto ParseParenCondition(TokenKind introducer) -> llvm::Optional<Node>;
+
+  // Parses an if-statement.
+  auto ParseIfStatement() -> llvm::Optional<Node>;
+
   // Parses a statement.
   auto ParseStatement() -> llvm::Optional<Node>;
 

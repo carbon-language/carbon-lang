@@ -516,6 +516,133 @@ TEST_F(ParseTreeTest, VariableDeclarations) {
            MatchFileEnd()}));
 }
 
+TEST_F(ParseTreeTest, IfNoElse) {
+  TokenizedBuffer tokens = GetTokenizedBuffer(
+      "fn F() {\n"
+      "  if (a)\n"
+      "    if (b)\n"
+      "      if (c)\n"
+      "        d;\n"
+      "}");
+  ParseTree tree = ParseTree::Parse(tokens, consumer);
+  EXPECT_FALSE(tree.HasErrors());
+
+  EXPECT_THAT(tree,
+              MatchParseTreeNodes(
+                  {MatchFunctionDeclaration(
+                       MatchDeclaredName("F"),
+                       MatchParameterList(MatchParameterListEnd()),
+                       MatchCodeBlock(
+                           MatchIfStatement(
+                               MatchCondition(MatchNameReference("a"),
+                                              MatchConditionEnd()),
+                               MatchIfStatement(
+                                   MatchCondition(MatchNameReference("b"),
+                                                  MatchConditionEnd()),
+                                   MatchIfStatement(
+                                       MatchCondition(MatchNameReference("c"),
+                                                      MatchConditionEnd()),
+                                       MatchExpressionStatement(
+                                           MatchNameReference("d"))))),
+                           MatchCodeBlockEnd())),
+                   MatchFileEnd()}));
+}
+
+TEST_F(ParseTreeTest, IfElse) {
+  TokenizedBuffer tokens = GetTokenizedBuffer(
+      "fn F() {\n"
+      "  if (a)\n"
+      "    if (b)\n"
+      "      c;\n"
+      "    else\n"
+      "      d;\n"
+      "  else\n"
+      "    e;\n"
+      "  if (x) { G(1); }\n"
+      "  else if (x) { G(2); }\n"
+      "  else { G(3); }\n"
+      "}");
+  ParseTree tree = ParseTree::Parse(tokens, consumer);
+  EXPECT_FALSE(tree.HasErrors());
+
+  EXPECT_THAT(
+      tree,
+      MatchParseTreeNodes(
+          {MatchFunctionDeclaration(
+               MatchDeclaredName("F"),
+               MatchParameterList(MatchParameterListEnd()),
+               MatchCodeBlock(
+                   MatchIfStatement(
+                       MatchCondition(MatchNameReference("a"),
+                                      MatchConditionEnd()),
+                       MatchIfStatement(
+                           MatchCondition(MatchNameReference("b"),
+                                          MatchConditionEnd()),
+                           MatchExpressionStatement(MatchNameReference("c")),
+                           MatchIfStatementElse(),
+                           MatchExpressionStatement(MatchNameReference("d"))),
+                       MatchIfStatementElse(),
+                       MatchExpressionStatement(MatchNameReference("e"))),
+                   MatchIfStatement(
+                       MatchCondition(MatchNameReference("x"),
+                                      MatchConditionEnd()),
+                       MatchCodeBlock(
+                           MatchExpressionStatement(MatchCallExpression(
+                               MatchNameReference("G"), MatchLiteral("1"),
+                               MatchCallExpressionEnd())),
+                           MatchCodeBlockEnd()),
+                       MatchIfStatementElse(),
+                       MatchIfStatement(
+                           MatchCondition(MatchNameReference("x"),
+                                          MatchConditionEnd()),
+                           MatchCodeBlock(
+                               MatchExpressionStatement(MatchCallExpression(
+                                   MatchNameReference("G"), MatchLiteral("2"),
+                                   MatchCallExpressionEnd())),
+                               MatchCodeBlockEnd()),
+                           MatchIfStatementElse(),
+                           MatchCodeBlock(
+                               MatchExpressionStatement(MatchCallExpression(
+                                   MatchNameReference("G"), MatchLiteral("3"),
+                                   MatchCallExpressionEnd())),
+                               MatchCodeBlockEnd()))),
+                   MatchCodeBlockEnd())),
+           MatchFileEnd()}));
+}
+
+TEST_F(ParseTreeTest, IfError) {
+  TokenizedBuffer tokens = GetTokenizedBuffer(
+      "fn F() {\n"
+      "  if a {}\n"
+      "  if () {}\n"
+      "  if (b c) {}\n"
+      "  if (d)\n"
+      "}");
+  ParseTree tree = ParseTree::Parse(tokens, consumer);
+  EXPECT_TRUE(tree.HasErrors());
+
+  EXPECT_THAT(
+      tree, MatchParseTreeNodes(
+                {MatchFunctionDeclaration(
+                     MatchDeclaredName("F"),
+                     MatchParameterList(MatchParameterListEnd()),
+                     MatchCodeBlock(
+                         MatchIfStatement(HasError, MatchNameReference("a"),
+                                          MatchCodeBlock(MatchCodeBlockEnd())),
+                         MatchIfStatement(
+                             MatchCondition(HasError, MatchConditionEnd()),
+                             MatchCodeBlock(MatchCodeBlockEnd())),
+                         MatchIfStatement(
+                             MatchCondition(HasError, MatchNameReference("b"),
+                                            MatchConditionEnd()),
+                             MatchCodeBlock(MatchCodeBlockEnd())),
+                         MatchIfStatement(
+                             HasError, MatchCondition(MatchNameReference("d"),
+                                                      MatchConditionEnd())),
+                         MatchCodeBlockEnd())),
+                 MatchFileEnd()}));
+}
+
 auto GetAndDropLine(llvm::StringRef& s) -> std::string {
   auto newline_offset = s.find_first_of('\n');
   llvm::StringRef line = s.slice(0, newline_offset);
