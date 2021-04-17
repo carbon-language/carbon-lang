@@ -86,6 +86,17 @@ struct ExpectedSemiAfterExpression
       "Expected `;` after expression.";
 };
 
+struct ExpectedSemiAfter : SimpleDiagnostic<ExpectedSemiAfter> {
+  static constexpr llvm::StringLiteral ShortName = "syntax-error";
+  static constexpr const char* Message = "Expected `;` after `{0}`.";
+
+  TokenKind preceding;
+
+  auto Format() -> std::string {
+    return llvm::formatv(Message, preceding.GetFixedSpelling()).str();
+  }
+};
+
 struct ExpectedIdentifierAfterDot
     : SimpleDiagnostic<ExpectedIdentifierAfterDot> {
   static constexpr llvm::StringLiteral ShortName = "syntax-error";
@@ -758,6 +769,31 @@ auto ParseTree::Parser::ParseIfStatement() -> llvm::Optional<Node> {
                  /*has_errors=*/!cond || !then_case || else_has_errors);
 }
 
+auto ParseTree::Parser::ParseWhileStatement() -> llvm::Optional<Node> {
+  auto start = StartSubtree();
+  auto while_token = Consume(TokenKind::WhileKeyword());
+  auto cond = ParseParenCondition(TokenKind::WhileKeyword());
+  auto body = ParseStatement();
+  return AddNode(ParseNodeKind::WhileStatement(), while_token, start,
+                 /*has_errors=*/!cond || !body);
+}
+
+auto ParseTree::Parser::ParseKeywordStatement(ParseNodeKind kind)
+    -> llvm::Optional<Node> {
+  auto keyword_kind = tokens.GetKind(*position);
+  assert(keyword_kind.IsKeyword());
+
+  auto start = StartSubtree();
+  auto keyword = Consume(keyword_kind);
+  auto semi =
+      ConsumeAndAddLeafNodeIf(TokenKind::Semi(), ParseNodeKind::StatementEnd());
+  if (!semi) {
+    emitter.EmitError<ExpectedSemiAfter>(*position,
+                                         {.preceding = keyword_kind});
+  }
+  return AddNode(kind, keyword, start, /*has_errors=*/!semi);
+}
+
 auto ParseTree::Parser::ParseStatement() -> llvm::Optional<Node> {
   switch (tokens.GetKind(*position)) {
     case TokenKind::VarKeyword():
@@ -765,6 +801,15 @@ auto ParseTree::Parser::ParseStatement() -> llvm::Optional<Node> {
 
     case TokenKind::IfKeyword():
       return ParseIfStatement();
+
+    case TokenKind::WhileKeyword():
+      return ParseWhileStatement();
+
+    case TokenKind::ContinueKeyword():
+      return ParseKeywordStatement(ParseNodeKind::ContinueStatement());
+
+    case TokenKind::BreakKeyword():
+      return ParseKeywordStatement(ParseNodeKind::BreakStatement());
 
     case TokenKind::OpenCurlyBrace():
       return ParseCodeBlock();
