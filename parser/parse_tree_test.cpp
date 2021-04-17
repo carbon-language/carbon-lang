@@ -643,6 +643,42 @@ TEST_F(ParseTreeTest, IfError) {
                  MatchFileEnd()}));
 }
 
+TEST_F(ParseTreeTest, WhileBreakContinue) {
+  TokenizedBuffer tokens = GetTokenizedBuffer(
+      "fn F() {\n"
+      "  while (a) {\n"
+      "    if (b)\n"
+      "      break;\n"
+      "    if (c)\n"
+      "      continue;\n"
+      "}");
+  ParseTree tree = ParseTree::Parse(tokens, consumer);
+  EXPECT_FALSE(tree.HasErrors());
+
+  EXPECT_THAT(
+      tree,
+      MatchParseTreeNodes(
+          {MatchFunctionDeclaration(
+               MatchDeclaredName("F"),
+               MatchParameterList(MatchParameterListEnd()),
+               MatchCodeBlock(
+                   MatchWhileStatement(
+                       MatchCondition(MatchNameReference("a"),
+                                      MatchConditionEnd()),
+                       MatchCodeBlock(
+                           MatchIfStatement(
+                               MatchCondition(MatchNameReference("b"),
+                                              MatchConditionEnd()),
+                               MatchBreakStatement(MatchStatementEnd())),
+                           MatchIfStatement(
+                               MatchCondition(MatchNameReference("c"),
+                                              MatchConditionEnd()),
+                               MatchContinueStatement(MatchStatementEnd())),
+                           MatchCodeBlockEnd())),
+                   MatchCodeBlockEnd())),
+           MatchFileEnd()}));
+}
+
 auto GetAndDropLine(llvm::StringRef& s) -> std::string {
   auto newline_offset = s.find_first_of('\n');
   llvm::StringRef line = s.slice(0, newline_offset);
