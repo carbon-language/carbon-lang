@@ -18,7 +18,8 @@ struct TypeChecker {
   var currentFunction: FunctionDefinition?
 
   var toDeclaration = PropertyMap<Identifier, AnyDeclaration>()
-  var toType = PropertyMap<Typed, Type>()
+  var declaredType = PropertyMap<AnyDeclaration, Type>()
+  var expressionType = PropertyMap<Expression, Type>()
 
   /// A mapping from names to the stack of declcarations they reference, with
   /// the top of each stack being the declaration referenced in the current
@@ -93,8 +94,8 @@ private extension TypeChecker {
       visit(v.type)
       visit(v.initializer)
       let t1 = evaluateTypeExpression(
-        v.type, initializingFrom: toType[.expression(v.initializer)])
-      toType[.declaration(d)] = t1
+        v.type, initializingFrom: expressionType[v.initializer])
+      declaredType[.topLevel(d)] = t1
     }
   }
 
@@ -148,7 +149,7 @@ private extension TypeChecker {
         for (d, t) in zip(t0, types) {
           if let n = d.name {
             define(n, .binding(d))
-            toType[.binding(d)] = t
+            declaredType[.binding(d)] = t
           }
         }
         return .tuple(types)
@@ -204,11 +205,11 @@ private extension TypeChecker {
       for p in f.parameterPattern.elements {
         if let n = p.name { me.define(n, .binding(p)) }
         let t = me.evaluateTypeExpression(p.value)
-        me.toType[.binding(p)] = t
+        me.declaredType[.binding(p)] = t
         parameterTypes.append(t)
       }
       let r = me.evaluateTypeExpression(f.returnType)
-      me.toType[.declaration(.function(f))]
+      me.declaredType[.topLevel(.function(f))]
         = .function(parameterTypes: parameterTypes, returnType: r)
       me.currentFunction = f
       me.visit(body)
@@ -221,7 +222,7 @@ private extension TypeChecker {
     inNewScope { me in
       for m in s.members {
         me.define(m.name, .structMember(m))
-        me.toType[.structMember(m)] = me.evaluateTypeExpression(m.type)
+        me.declaredType[.structMember(m)] = me.evaluateTypeExpression(m.type)
       }
     }
   }
@@ -229,7 +230,8 @@ private extension TypeChecker {
   
   mutating func visit(_ a: Alternative) {
     define(a.name, .alternative(a))
-    toType[.alternative(a)] = .tuple(mapDeducedType(a.payload.map(\.value), nil))
+    declaredType[.alternative(a)]
+      = .tuple(mapDeducedType(a.payload.map(\.value), nil))
   }
 
   mutating func visit(_ s: Statement) {
@@ -238,8 +240,8 @@ private extension TypeChecker {
     case let .assignment(target: t, source: s, _):
       visit(t)
       visit(s)
-      let targetType = toType[.expression(t)]
-      let sourceType = toType[.expression(s)]
+      let targetType = expressionType[t]
+      let sourceType = expressionType[s]
       // TODO: check LHS for lvalue-ness.
       if targetType != sourceType {
         error(
@@ -250,11 +252,11 @@ private extension TypeChecker {
       visit(p)
       visit(i)
       let t = evaluateTypeExpression(
-        p, initializingFrom: toType[.expression(i)])
+        p, initializingFrom: expressionType[i])
 
     case let .if(condition: c, thenClause: then, elseClause: maybeElse, _):
       visit(c)
-      let conditionType = toType[.expression(c)]
+      let conditionType = expressionType[c]
       if conditionType != .bool {
         error(
           "Expecting a bool expression in 'if', got \(conditionType)",
@@ -265,10 +267,10 @@ private extension TypeChecker {
     case let .return(e, _):
       visit(e)
       guard case .function(_, returnType: let r)
-              = toType[.declaration(.function(currentFunction!))] else {
+              = declaredType[.topLevel(.function(currentFunction!))] else {
         fatalError("function without function type")
       }
-      let t = toType[.expression(e)]
+      let t = expressionType[e]
       if t != r {
         error("Expected return type \(r); got \(t)", at: e.site)
       }

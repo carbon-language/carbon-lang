@@ -31,13 +31,3 @@ indirect enum Type: Equatable {
 extension Type: Value {
   var type: Type { .type }
 }
-
-/// A thing that has a type.
-enum Typed: Hashable {
-  case
-    declaration(TopLevelDeclaration),
-    structMember(StructMemberDeclaration),
-    expression(Expression),
-    binding(TupleLiteralElement),
-    alternative(Alternative)
-}
