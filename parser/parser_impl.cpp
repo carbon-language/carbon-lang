@@ -16,13 +16,6 @@
 
 namespace Carbon {
 
-struct UnexpectedTokenInFunctionParams
-    : SimpleDiagnostic<UnexpectedTokenInFunctionParams> {
-  static constexpr llvm::StringLiteral ShortName = "syntax-error";
-  static constexpr llvm::StringLiteral Message =
-      "Unexpected token in function parameter list.";
-};
-
 struct UnexpectedTokenInCodeBlock
     : SimpleDiagnostic<UnexpectedTokenInCodeBlock> {
   static constexpr llvm::StringLiteral ShortName = "syntax-error";
@@ -313,26 +306,33 @@ auto ParseTree::Parser::SkipPastLikelyEnd(TokenizedBuffer::Token skip_root,
   return llvm::None;
 }
 
+auto ParseTree::Parser::ParseCloseParen(TokenizedBuffer::Token open_paren,
+                                        ParseNodeKind kind)
+    -> llvm::Optional<Node> {
+  if (auto close_paren =
+          ConsumeAndAddLeafNodeIf(TokenKind::CloseParen(), kind)) {
+    return close_paren;
+  }
+
+  emitter.EmitError<ExpectedCloseParen>(*position, {.open_paren = open_paren});
+  SkipTo(tokens.GetMatchedClosingToken(open_paren));
+  AddLeafNode(kind, Consume(TokenKind::CloseParen()));
+  return llvm::None;
+}
+
 auto ParseTree::Parser::ParseFunctionSignature() -> Node {
   TokenizedBuffer::Token open_paren = Consume(TokenKind::OpenParen());
   auto start = StartSubtree();
 
   // FIXME: Add support for parsing parameters.
 
-  bool has_errors = false;
-  if (tokens.GetKind(*position) != TokenKind::CloseParen()) {
-    emitter.EmitError<UnexpectedTokenInFunctionParams>(*position);
-    has_errors = true;
-
-    // We can trivially skip to the actual close parenthesis from here.
-    SkipTo(tokens.GetMatchedClosingToken(open_paren));
-  }
-  AddLeafNode(ParseNodeKind::ParameterListEnd(),
-              Consume(TokenKind::CloseParen()));
+  auto close_paren =
+      ParseCloseParen(open_paren, ParseNodeKind::ParameterListEnd());
 
   // FIXME: Implement parsing of a return type.
 
-  return AddNode(ParseNodeKind::ParameterList(), open_paren, start, has_errors);
+  return AddNode(ParseNodeKind::ParameterList(), open_paren, start,
+                 /*has_errors=*/!close_paren);
 }
 
 auto ParseTree::Parser::ParseCodeBlock() -> Node {
@@ -504,23 +504,15 @@ auto ParseTree::Parser::ParseParenExpression() -> llvm::Optional<Node> {
 
   // TODO: If the next token is a close paren, build an empty tuple literal.
 
-  bool has_errors = !ParseExpression();
+  auto expr = ParseExpression();
 
   // TODO: If the next token is a comma, build a tuple literal.
 
-  if (tokens.GetKind(*position) != TokenKind::CloseParen()) {
-    if (!has_errors) {
-      emitter.EmitError<ExpectedCloseParen>(*position,
-                                            {.open_paren = open_paren});
-      has_errors = true;
-    }
-    SkipTo(tokens.GetMatchedClosingToken(open_paren));
-  }
+  auto close_paren =
+      ParseCloseParen(open_paren, ParseNodeKind::ParenExpressionEnd());
 
-  AddLeafNode(ParseNodeKind::ParenExpressionEnd(),
-              Consume(TokenKind::CloseParen()));
   return AddNode(ParseNodeKind::ParenExpression(), open_paren, start,
-                 has_errors);
+                 /*has_errors=*/!expr || !close_paren);
 }
 
 auto ParseTree::Parser::ParsePrimaryExpression() -> llvm::Optional<Node> {
@@ -745,17 +737,11 @@ auto ParseTree::Parser::ParseParenCondition(TokenKind introducer)
     return llvm::None;
   }
 
-  bool has_errors = false;
-  if (tokens.GetKind(*position) != TokenKind::CloseParen()) {
-    emitter.EmitError<ExpectedCloseParen>(*position,
-                                          {.open_paren = *open_paren});
-    SkipTo(tokens.GetMatchedClosingToken(*open_paren));
-    has_errors = true;
-  }
-  AddLeafNode(ParseNodeKind::ConditionEnd(), Consume(TokenKind::CloseParen()));
+  auto close_paren =
+      ParseCloseParen(*open_paren, ParseNodeKind::ConditionEnd());
 
   return AddNode(ParseNodeKind::Condition(), *open_paren, start,
-                 /*has_errors=*/!expr || has_errors);
+                 /*has_errors=*/!expr || !close_paren);
 }
 
 auto ParseTree::Parser::ParseIfStatement() -> llvm::Optional<Node> {
