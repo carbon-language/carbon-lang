@@ -100,7 +100,7 @@ extension Interpreter {
   /// Accesses the address of the declaration for the given name.
   func address(of name: Identifier) -> Address {
     let d = program.declaration[name]
-    return locals[.topLevel(d)] ?? globals[d]!
+    return locals[.init(d)] ?? globals[d]!
   }
 
   /// Accesses the address where e's value is stored.

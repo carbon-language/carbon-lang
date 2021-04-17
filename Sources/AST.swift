@@ -211,15 +211,31 @@ struct StructMemberDeclaration: AST {
 /// This doesn't actually appear in the AST, but is used by the typechecker and
 /// interpreter as the value type of a name-use -> declaration dictionary.
 enum AnyDeclaration: AST { 
-  case topLevel(TopLevelDeclaration),
-       // Function parameters, variable declarations...
-       binding(TupleLiteralElement),
-       structMember(StructMemberDeclaration),
-       alternative(Alternative)
+  case
+    function(FunctionDefinition),
+    `struct`(StructDefinition),
+    choice(ChoiceDefinition),
+    variable(VariableDefinition),
+    // Function parameters, variable declarations...
+    binding(TupleLiteralElement),
+    structMember(StructMemberDeclaration),
+    alternative(Alternative)
 
+  init(_ x: TopLevelDeclaration) {
+    switch x {
+    case let .function(f): self = .function(f)
+    case let .struct(s): self = .struct(s)
+    case let .choice(c): self = .choice(c)
+    case let .variable(v): self = .variable(v)
+    }
+  }
+  
   var site: SourceRegion {
     switch self {
-    case .topLevel(let d): return d.site
+    case let .function(f): return f.site
+    case let .struct(s): return s.site
+    case let .choice(c): return c.site
+    case let .variable(v): return v.site
     case .binding(let p):
       return (p.name?.site ?? .empty)...p.value.site
     case .structMember(let m): return m.site

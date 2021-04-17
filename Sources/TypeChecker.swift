@@ -84,18 +84,18 @@ private extension TypeChecker {
     case let .function(f): visit(f)
     case let .struct(s): visit(s)
     case let .choice(c):
-      define(c.name, .topLevel(d))
+      define(c.name, .init(d))
       inNewScope {
         for a in c.alternatives { $0.visit(a) }
       }
 
     case let .variable(v):
-      define(v.name, .topLevel(d))
+      define(v.name, .init(d))
       visit(v.type)
       visit(v.initializer)
       let t1 = evaluateTypeExpression(
         v.type, initializingFrom: expressionType[v.initializer])
-      declaredType[.topLevel(d)] = t1
+      declaredType[.init(d)] = t1
     }
   }
 
@@ -113,13 +113,13 @@ private extension TypeChecker {
     case let .name(n):
       guard let d = lookup(n) else { return .error } // Name not defined
       switch d {
-      case.topLevel(.struct(let d)):
+      case .struct(let d):
         return .struct(d)
 
-      case.topLevel(.choice(let d)):
+      case .choice(let d):
         return .choice(d)
 
-      case.topLevel(.function),.topLevel(.variable),
+      case .function, .variable,
            .binding, .structMember, .alternative:
         error(
           "'\(n.text)' does not refer to a type", at: n.site,
@@ -196,7 +196,7 @@ private extension TypeChecker {
     // TODO: handle forward declarations (they're in the grammar).
     guard let body = f.body else { UNIMPLEMENTED }
 
-    let df: AnyDeclaration = .topLevel(.function(f))
+    let df = AnyDeclaration.function(f)
     define(f.name, df)
     
     inNewScope { me in
@@ -209,7 +209,7 @@ private extension TypeChecker {
         parameterTypes.append(t)
       }
       let r = me.evaluateTypeExpression(f.returnType)
-      me.declaredType[.topLevel(.function(f))]
+      me.declaredType[.function(f)]
         = .function(parameterTypes: parameterTypes, returnType: r)
       me.currentFunction = f
       me.visit(body)
@@ -218,7 +218,7 @@ private extension TypeChecker {
   }
 
   mutating func visit(_ s: StructDefinition) {
-    define(s.name, .topLevel(.struct(s)))
+    define(s.name, .struct(s))
     inNewScope { me in
       for m in s.members {
         me.define(m.name, .structMember(m))
@@ -267,7 +267,7 @@ private extension TypeChecker {
     case let .return(e, _):
       visit(e)
       guard case .function(_, returnType: let r)
-              = declaredType[.topLevel(.function(currentFunction!))] else {
+              = declaredType[.function(currentFunction!)] else {
         fatalError("function without function type")
       }
       let t = expressionType[e]
