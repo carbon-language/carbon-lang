@@ -35,7 +35,7 @@ struct Identifier: AST {
 
 /// A declaration, except for pattern variables, struct members, and function
 /// parameters.
-indirect enum Declaration: AST {
+indirect enum TopLevelDeclaration: AST {
   case
     function(FunctionDefinition),
     `struct`(StructDefinition),
@@ -204,7 +204,7 @@ struct StructMemberDeclaration: AST {
 /// This doesn't actually appear in the AST, but is used by the typechecker and
 /// interpreter as the value type of a name-use -> declaration dictionary.
 enum AnyDeclaration: AST { 
-  case declaration(Declaration),
+  case topLevel(TopLevelDeclaration),
        // Function parameters, variable declarations...
        binding(TupleLiteralElement),
        structMember(StructMemberDeclaration),
@@ -212,7 +212,7 @@ enum AnyDeclaration: AST {
 
   var site: SourceRegion {
     switch self {
-    case .declaration(let d): return d.site
+    case .topLevel(let d): return d.site
     case .binding(let p):
       return (p.name?.site ?? .empty)...p.value.site
     case .structMember(let m): return m.site

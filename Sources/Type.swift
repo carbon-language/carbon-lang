@@ -35,7 +35,7 @@ extension Type: Value {
 /// A thing that has a type.
 enum Typed: Hashable {
   case
-    declaration(Declaration),
+    declaration(TopLevelDeclaration),
     structMember(StructMemberDeclaration),
     expression(Expression),
     binding(TupleLiteralElement),

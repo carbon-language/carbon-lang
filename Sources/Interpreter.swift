@@ -38,7 +38,7 @@ struct Interpreter {
 
   /// Mapping from global declaration to addresses.
   // private(set)
-    var globals: [Declaration: Address] = [:]
+    var globals: [TopLevelDeclaration: Address] = [:]
 
   var memory = Memory()
 

@@ -6,19 +6,19 @@
 /// the information necessary for execution.
 struct ExecutableProgram {
   /// The result of running the parser
-  let ast: [Declaration]
+  let ast: [TopLevelDeclaration]
 
   /// The entry point for this program.
   let main: FunctionDefinition
 
   /// A mapping from identifier to its declaration
   var //let
-    declaration = PropertyMap<Identifier, Declaration>()
+    declaration = PropertyMap<Identifier, TopLevelDeclaration>()
 
   /// Constructs an instance for the given parser output, or throws `ErrorLog`
   /// if the program is ill-formed.
   // should be fileprivate - internal for testing purposes.
-  init(_parsedProgram ast: [Declaration]) throws {
+  init(_parsedProgram ast: [TopLevelDeclaration]) throws {
     self.ast = ast
     switch unambiguousMain(in: ast) {
     case let .failure(e): throw [e]
@@ -30,8 +30,8 @@ struct ExecutableProgram {
 /// Returns the unique top-level nullary main() function defined in
 /// `parsedProgram`, or reports a suitable CompileError if that doesn't exist.
 fileprivate func unambiguousMain(
-  in parsedProgram: [Declaration]) -> Result<FunctionDefinition, CompileError>
-{
+  in parsedProgram: [TopLevelDeclaration]
+) -> Result<FunctionDefinition, CompileError> {
   let mainCandidates: [FunctionDefinition] = parsedProgram.compactMap {
     if case .function(let f) = $0,
        f.name.text == "main",

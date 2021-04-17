@@ -8,7 +8,7 @@ import Foundation
 extension String {
   /// Returns `self`, parsed as Carbon.
   func parsedAsCarbon(fromFile sourceFile: String = #filePath) throws
-    -> [Declaration]
+    -> [TopLevelDeclaration]
   {
     let p = CarbonParser()
     for t in Tokens(in: self, from: sourceFile) {

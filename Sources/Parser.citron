@@ -26,7 +26,7 @@
 %token_type Token
 
 %nonterminal_type illegal_character Never
-%nonterminal_type input {[Declaration]}
+%nonterminal_type input {[TopLevelDeclaration]}
 %nonterminal_type pattern Expression
 %nonterminal_type expression Expression
 %nonterminal_type member_designator MemberDesignator
@@ -47,8 +47,8 @@
 %nonterminal_type member_list {[StructMemberDeclaration]}
 %nonterminal_type alternative Alternative
 %nonterminal_type alternative_list {[Alternative]}
-%nonterminal_type declaration Declaration
-%nonterminal_type declaration_list {[Declaration]}
+%nonterminal_type top_level_declaration TopLevelDeclaration
+%nonterminal_type declaration_list {[TopLevelDeclaration]}
 %nonterminal_type identifier Identifier
 
 %nonassociative LEFT_CURLY_BRACE RIGHT_CURLY_BRACE.
@@ -222,20 +222,21 @@ alternative_list ::= alternative(a).
   { [a] }
 alternative_list ::= alternative(a) COMMA alternative_list(l).
   { [a] + l }
-declaration ::= function_definition(f).
+top_level_declaration ::= function_definition(f).
   { .function(f) }
-declaration ::= function_declaration(f).
+top_level_declaration ::= function_declaration(f).
   { .function(f) }
-declaration ::=
+top_level_declaration ::=
   STRUCT(s) identifier(n) LEFT_CURLY_BRACE member_list(m) RIGHT_CURLY_BRACE(r).
   { .struct(.init(name: n, members: m, site: s...r)) }
-declaration ::= CHOICE(c) identifier(n)
+top_level_declaration ::= CHOICE(c) identifier(n)
   LEFT_CURLY_BRACE alternative_list(l) RIGHT_CURLY_BRACE(r).
   { .choice(.init(name: n, alternatives: l, site: c...r)) }
-declaration ::= VAR(v) variable_declaration(d) EQUAL expression(i) SEMICOLON(s).
+top_level_declaration
+  ::= VAR(v) variable_declaration(d) EQUAL expression(i) SEMICOLON(s).
   { .variable(name: d.name, type: d.type, initializer: i, v...s) }
 declaration_list ::= /* Empty */.
   { [] }
-declaration_list ::= declaration(d) declaration_list(l).
+declaration_list ::= top_level_declaration(d) declaration_list(l).
   { [d] + l }
 illegal_character ::= ILLEGAL_CHARACTER

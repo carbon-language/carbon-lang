@@ -5,7 +5,7 @@
 var UNIMPLEMENTED: Never { fatalError("unimplemented") }
 
 struct TypeChecker {
-  init(_ program: [Declaration]) {
+  init(_ program: [TopLevelDeclaration]) {
     activeScopes = Stack()
     activeScopes.push([]) // Prepare the global scope
 
@@ -78,18 +78,18 @@ private extension TypeChecker {
   }
 
   /// Typechecks `d` in the current context.
-  mutating func visit(_ d: Declaration) {
+  mutating func visit(_ d: TopLevelDeclaration) {
     switch d {
     case let .function(f): visit(f)
     case let .struct(s): visit(s)
     case let .choice(c):
-      define(c.name, .declaration(d))
+      define(c.name, .topLevel(d))
       inNewScope {
         for a in c.alternatives { $0.visit(a) }
       }
 
     case let .variable(name: n, type: t, initializer: i, _):
-      define(n, .declaration(d))
+      define(n, .topLevel(d))
       visit(t)
       visit(i)
       let t1 = evaluateTypeExpression(
@@ -112,13 +112,13 @@ private extension TypeChecker {
     case let .name(n):
       guard let d = lookup(n) else { return .error } // Name not defined
       switch d {
-      case .declaration(.struct(let d)):
+      case.topLevel(.struct(let d)):
         return .struct(d)
 
-      case .declaration(.choice(let d)):
+      case.topLevel(.choice(let d)):
         return .choice(d)
 
-      case .declaration(.function), .declaration(.variable),
+      case.topLevel(.function),.topLevel(.variable),
            .binding, .structMember, .alternative:
         error(
           "'\(n.text)' does not refer to a type", at: n.site,
@@ -195,7 +195,7 @@ private extension TypeChecker {
     // TODO: handle forward declarations (they're in the grammar).
     guard let body = f.body else { UNIMPLEMENTED }
 
-    let df: AnyDeclaration = .declaration(.function(f))
+    let df: AnyDeclaration = .topLevel(.function(f))
     define(f.name, df)
     
     inNewScope { me in
@@ -217,7 +217,7 @@ private extension TypeChecker {
   }
 
   mutating func visit(_ s: StructDefinition) {
-    define(s.name, .declaration(.struct(s)))
+    define(s.name, .topLevel(.struct(s)))
     inNewScope { me in
       for m in s.members {
         me.define(m.name, .structMember(m))
