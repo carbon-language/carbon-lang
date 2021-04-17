@@ -183,6 +183,12 @@ class ParseTree::Parser {
   // Parses an if-statement.
   auto ParseIfStatement() -> llvm::Optional<Node>;
 
+  // Parses a while-statement.
+  auto ParseWhileStatement() -> llvm::Optional<Node>;
+
+  // Parses a statement of the form `keyword;` such as `break;` or `continue;`.
+  auto ParseKeywordStatement(ParseNodeKind kind) -> llvm::Optional<Node>;
+
   // Parses a statement.
   auto ParseStatement() -> llvm::Optional<Node>;
 
