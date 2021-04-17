@@ -14,6 +14,9 @@ struct TypeChecker {
     }
   }
 
+  /// The function currently being typechecked.
+  var currentFunction: FunctionDefinition?
+
   var toDeclaration = PropertyMap<Identifier, AnyDeclaration>()
   var toType = PropertyMap<Typed, Type>()
 
@@ -116,7 +119,7 @@ private extension TypeChecker {
         return .choice(d)
 
       case .declaration(.function), .declaration(.variable),
-           .functionParameter, .structMember:
+           .binding, .structMember, .alternative:
         error(
           "'\(n.text)' does not refer to a type", at: n.site,
           notes: [("actual definition: \(d)", d.site)])
@@ -141,7 +144,14 @@ private extension TypeChecker {
 
       case .tupleLiteral(let t0):
         if rhs != nil && rhs!.tuple == nil { return .error }
-        return .tuple(mapDeducedType(t0.lazy.map(\.value), rhs?.tuple))
+        let types = mapDeducedType(t0.lazy.map(\.value), rhs?.tuple)
+        for (d, t) in zip(t0, types) {
+          if let n = d.name {
+            define(n, .binding(d))
+            toType[.binding(d)] = t
+          }
+        }
+        return .tuple(types)
 
       case .getField, .index, .patternVariable, .integerLiteral,
            .booleanLiteral, .unaryOperator, .binaryOperator, .functionCall:
@@ -152,10 +162,10 @@ private extension TypeChecker {
 
   /// Returns the result of mapping `deducedType` over `zip(e, rhs)`, or over
   /// `e` if `rhs` is `nil`.
-  private mutating func mapDeducedType<E: Collection, R: Collection>(
-    _ e: E, _ rhs: R?
+  private mutating func mapDeducedType<E: Collection>(
+    _ e: E, _ rhs: [Type]? = nil
   ) -> [Type]
-    where E.Element == Expression, R.Element == Type
+    where E.Element == Expression
   {
     guard let r = rhs else { return e.map { deducedType($0) } }
     return zip(e, r).map { deducedType($0, initializingFrom: $1) }
@@ -192,15 +202,17 @@ private extension TypeChecker {
       var parameterTypes: [Type] = []
       
       for p in f.parameterPattern.elements {
-        if let n = p.name { me.define(n, .functionParameter(p)) }
+        if let n = p.name { me.define(n, .binding(p)) }
         let t = me.evaluateTypeExpression(p.value)
-        me.toType[.functionParameter(p)] = t
+        me.toType[.binding(p)] = t
         parameterTypes.append(t)
       }
       let r = me.evaluateTypeExpression(f.returnType)
       me.toType[.declaration(.function(f))]
         = .function(parameterTypes: parameterTypes, returnType: r)
+      me.currentFunction = f
       me.visit(body)
+      me.currentFunction = nil
     }
   }
 
@@ -215,12 +227,58 @@ private extension TypeChecker {
   }
 
   
-  mutating func visit(_ node: Alternative) {
-    UNIMPLEMENTED
+  mutating func visit(_ a: Alternative) {
+    define(a.name, .alternative(a))
+    toType[.alternative(a)] = .tuple(mapDeducedType(a.payload.map(\.value), nil))
   }
 
-  mutating func visit(_ node: Statement) {
-    UNIMPLEMENTED
+  mutating func visit(_ s: Statement) {
+    switch s {
+    case let .expressionStatement(e, _): visit(e)
+    case let .assignment(target: t, source: s, _):
+      visit(t)
+      visit(s)
+      let targetType = toType[.expression(t)]
+      let sourceType = toType[.expression(s)]
+      // TODO: check LHS for lvalue-ness.
+      if targetType != sourceType {
+        error(
+          "Can't assign expression of type \(sourceType)"
+            + "to lvalue of type \(targetType)", at: t.site...s.site)
+      }
+    case let .variableDefinition(pattern: p, initializer: i, _):
+      visit(p)
+      visit(i)
+      let t = evaluateTypeExpression(
+        p, initializingFrom: toType[.expression(i)])
+
+    case let .if(condition: c, thenClause: then, elseClause: maybeElse, _):
+      visit(c)
+      let conditionType = toType[.expression(c)]
+      if conditionType != .bool {
+        error(
+          "Expecting a bool expression in 'if', got \(conditionType)",
+          at: c.site)
+      }
+      visit(then)
+      if let e = maybeElse { visit(e) }
+    case let .return(e, _):
+      visit(e)
+      guard case .function(_, returnType: let r)
+              = toType[.declaration(.function(currentFunction!))] else {
+        fatalError("function without function type")
+      }
+      let t = toType[.expression(e)]
+      if t != r {
+        error("Expected return type \(r); got \(t)", at: e.site)
+      }
+    case let .sequence(_, _, _): UNIMPLEMENTED
+    case let .block(_, _): UNIMPLEMENTED
+    case let .while(condition: _, body: _, _): UNIMPLEMENTED
+    case let .match(subject: _, clauses: _, _): UNIMPLEMENTED
+    case let .break(r): UNIMPLEMENTED
+    case let .continue(r): UNIMPLEMENTED
+    }
   }
 
   mutating func visit(_ node: MatchClauseList) {

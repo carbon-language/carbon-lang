@@ -38,5 +38,6 @@ enum Typed: Hashable {
     declaration(Declaration),
     structMember(StructMemberDeclaration),
     expression(Expression),
-    functionParameter(TupleLiteralElement)
+    binding(TupleLiteralElement),
+    alternative(Alternative)
 }

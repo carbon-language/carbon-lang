@@ -205,15 +205,18 @@ struct StructMemberDeclaration: AST {
 /// interpreter as the value type of a name-use -> declaration dictionary.
 enum AnyDeclaration: AST { 
   case declaration(Declaration),
-       functionParameter(TupleLiteralElement),
-       structMember(StructMemberDeclaration)
+       // Function parameters, variable declarations...
+       binding(TupleLiteralElement),
+       structMember(StructMemberDeclaration),
+       alternative(Alternative)
 
   var site: SourceRegion {
     switch self {
     case .declaration(let d): return d.site
-    case .functionParameter(let p):
+    case .binding(let p):
       return (p.name?.site ?? .empty)...p.value.site
     case .structMember(let m): return m.site
+    case .alternative(let a): return a.site
     }
   }
 }

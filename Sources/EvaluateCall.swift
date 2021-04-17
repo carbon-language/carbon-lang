@@ -65,8 +65,7 @@ struct EvaluateCall: Action {
       state.locals = Dictionary(
         uniqueKeysWithValues: zip(arguments, parameters).compactMap {
           (a, p) in
-          p.name == nil
-            ? nil : (.functionParameter(p), state.address(of: a.value))
+          p.name == nil ? nil : (.binding(p), state.address(of: a.value))
         }
       )
       return .spawn(Execute(calleeCode.body!))
