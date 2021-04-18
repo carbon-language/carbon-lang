@@ -83,17 +83,18 @@ the same type.
 
 ### Interfaces
 
-We need some way to express the bounds on a generic type parameter. In Carbon we
-express these "type constraints" by saying we restrict to types that implement
-specific _interfaces_. Interfaces describe an API a type could implement; for
-example, it might specify a set of functions, including names and signatures. A
-type implementing an interface may be passed as a generic type argument to a
-function that has that interface as a requirement of its generic type parameter.
-Then, the functions defined in the interface may be called in the body of the
-function. Further, interfaces have names that allow them to be reused.
+We need some way to express the constraints on a generic type parameter. In
+Carbon we express these "type constraints" by saying we restrict to types that
+implement specific _interfaces_. Interfaces describe an API a type could
+implement; for example, it might specify a set of functions, including names and
+signatures. A type implementing an interface may be passed as a generic type
+argument to a function that has that interface as a requirement of its generic
+type parameter. Then, the functions defined in the interface may be called in
+the body of the function. Further, interfaces have names that allow them to be
+reused.
 
-Similar compile-time and run-time constructs may be found in other
-programming languages:
+Similar compile-time and run-time constructs may be found in other programming
+languages:
 
 -   [Rust's traits](https://doc.rust-lang.org/book/ch10-02-traits.html)
 -   [Swift's protocols](https://docs.swift.org/swift-book/LanguageGuide/Protocols.html)
@@ -132,8 +133,9 @@ is assumed to be similar to C++ templates with some specific changes:
 -   It may have some limitations to be more compatible with generics, much like
     how we [restrict overloading](#generics-instead-of-open-overloading).
 -   We likely will have a different method of selecting between different
-    template instantiations, since [SFINAE](https://en.wikipedia.org/wiki/Substitution_failure_is_not_an_error) makes it difficult to deliver high
-    quality compiler diagnostics.
+    template instantiations, since
+    [SFINAE](https://en.wikipedia.org/wiki/Substitution_failure_is_not_an_error)
+    makes it difficult to deliver high quality compiler diagnostics.
 
 We assume Carbon will have templates for a few different reasons:
 
@@ -149,8 +151,8 @@ We assume Carbon will have templates for a few different reasons:
 
 Our goal for generics support in Carbon is to get most of the expressive
 benefits of C++ templates and open overloading with fewer downsides.
-Additionally, we want to support some dynamic dispatch use cases; for example, in
-cases that inheritance struggles with.
+Additionally, we want to support some dynamic dispatch use cases; for example,
+in cases that inheritance struggles with.
 
 ### Use cases
 
@@ -178,8 +180,7 @@ generally be used with [static dispatch](#dispatch-control).
 
 Interfaces in C++ are often represented by abstract base classes. Generics
 should offer an alternative that does not rely on inheritance. This means looser
-coupling and none of the problems of multiple inheritance. Some people,
-such as
+coupling and none of the problems of multiple inheritance. Some people, such as
 [Sean Parent](https://sean-parent.stlab.cc/papers-and-presentations/#better-code-runtime-polymorphism),
 advocate for runtime polymorphism patterns in C++ that avoid inheritance because
 it can cause runtime performance, correctness, and code maintenance problems in
@@ -220,10 +221,10 @@ generically.
 
 Our goal is to address this use case, known as
 [the expression problem](https://eli.thegreenplace.net/2016/the-expression-problem-and-its-solutions),
-with a generics mechanism that does enforce consistency so that type
-checking is possible without seeing all implementations. This will be Carbon's
-replacement for open overloading. As a consequence, Carbon generics will need to
-be able to support operator overloading.
+with a generics mechanism that does enforce consistency so that type checking is
+possible without seeing all implementations. This will be Carbon's replacement
+for open overloading. As a consequence, Carbon generics will need to be able to
+support operator overloading.
 
 A specific example is the absolute value function `Abs`. We would like to write
 `Abs(x)` for a variety of types. For some types `T`, such as `Int32` or
@@ -303,13 +304,12 @@ stopping criteria. We don't see this as a problem though, just like we don't
 worry about trying to make compiler prevent you from writing programs that don't
 terminate.
 
-We _would_ like to distinguish "the executed steps are present in the
-program's source" from "the compiler has to search for a proof that the code is
-legal." In the former case, the compiler can surface a problem to the user by
-pointing to lines of code in a trace of execution. The user could employ
-traditional debugging techniques to refine their understanding until they can
-determine a fix. What we want to avoid is the latter case, since it has bad
-properties:
+We _would_ like to distinguish "the executed steps are present in the program's
+source" from "the compiler has to search for a proof that the code is legal." In
+the former case, the compiler can surface a problem to the user by pointing to
+lines of code in a trace of execution. The user could employ traditional
+debugging techniques to refine their understanding until they can determine a
+fix. What we want to avoid is the latter case, since it has bad properties:
 
 -   Error messages end up in the form: "this was too complicated to figure out,
     I eventually gave up."
@@ -334,8 +334,8 @@ generic functions:
 -   Static specialization strategy: Like template parameters, the values for
     generic parameters must be statically known at the callsite, or known to be
     a generic parameter to the calling function. This can generate separate,
-    specialized versions of each combination of generic and template arguments, in
-    order to optimize for those types or values.
+    specialized versions of each combination of generic and template arguments,
+    in order to optimize for those types or values.
 -   Dynamic strategy: Unlike template parameters, we require that it be possible
     to generate a single version of the function that uses runtime dispatch to
     get something semantically equivalent to separate instantiation, but likely
@@ -371,8 +371,8 @@ generic code. This gives us these sub-goals:
 -   Users should be able to convert a single template parameter to be generic at
     a time. A hybrid function with both template and generic parameters has all
     the limitations of a template function: it can't be completely definition
-    checked, it can't use the dynamic strategy, etc. Even so, there are
-    still benefits from enforcing the function's declared contract for those
+    checked, it can't use the dynamic strategy, etc. Even so, there are still
+    benefits from enforcing the function's declared contract for those
     parameters that have been converted.
 -   Converting from a template parameter to a generic parameter should be safe.
     It should either work or fail to compile, never silently change semantics.
@@ -385,16 +385,17 @@ generic code. This gives us these sub-goals:
     be converted to generics, instead of requiring them to be converted
     specifically in bottom-up order.
 -   **Nice to have:** When defining a new generic interface to replace a
-    template, support providing the old templated implementation
-    temporarily as a default until types transition.
+    template, support providing the old templated implementation temporarily as
+    a default until types transition.
 
 ### Coherence
 
-We want the generics system to have the _coherence_ property. This means
-that there is a single answer to the question "what is the implementation of this interface for this type, if any?" independent of context, such as the libraries imported into a given file. Since
-a generic function only depends on interface implementations, they will always
-behave consistently on a given type, independent of context. For more on this,
-see
+We want the generics system to have the _coherence_ property. This means that
+there is a single answer to the question "what is the implementation of this
+interface for this type, if any?" independent of context, such as the libraries
+imported into a given file. Since a generic function only depends on interface
+implementations, they will always behave consistently on a given type,
+independent of context. For more on this, see
 [this description of what coherence is and why Rust enforces it](https://github.com/Ixrec/rust-orphan-rules#what-is-coherence).
 
 Coherence greatly simplifies the language design, since it reduces the need for
@@ -473,7 +474,8 @@ a type wants to implement and the rich API that users want to consume
 
 We can simplify things that Rust keeps purely to preserve compatibility, like
 the concept of `fundamental`, and explicit control over which methods may be
-specialized. These are complicated and [impose coherence restrictions](http://aturon.github.io/tech/2017/02/06/specialization-and-coherence/).
+specialized. These are complicated and
+[impose coherence restrictions](http://aturon.github.io/tech/2017/02/06/specialization-and-coherence/).
 
 ### Interfaces are nominal
 
@@ -487,8 +489,8 @@ This means that interfaces implicitly specify the intended semantics and
 invariants of and between those functions. Unlike the function signatures, this
 contract is between the implementers and the consumers of interfaces and is not
 enforced by Carbon itself. For example, a `Draw` method would mean different
-things when it is part of a `GameResult` interface versus an `Image2D` interface,
-even if those methods happen to have the same signature.
+things when it is part of a `GameResult` interface versus an `Image2D`
+interface, even if those methods happen to have the same signature.
 
 ### Interop and evolution
 
@@ -553,7 +555,8 @@ Generics don't need to provide full flexibility of C++ templates:
 
 -   [Carbon templates](#relationship-to-templates) can still cover those
     exceptional cases that don't fit inside generics.
-    -   If you want compile-time duck typing, that is available by way of templates.
+    -   If you want compile-time duck typing, that is available by way of
+        templates.
 -   We won't allow a specialization of some generic interface for some
     particular type to actually expose a _different_ interface, with different
     methods or different types in method signatures. This would break modular
