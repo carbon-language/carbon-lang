@@ -21,6 +21,14 @@
         source.site)
     }
   }
+  
+  extension _CitronParserUnexpectedTokenError
+    : CustomDebugStringConvertible
+  {
+    var debugDescription: String {
+      "UnexpectedToken(token: \(token), tokenCode: \(tokenCode))"
+    }
+  }
 }
 
 %token_type Token
