@@ -301,7 +301,9 @@ fully expect there to be metaprogramming facilities in Carbon that will be able
 to execute arbitrary Turing machines, with infinite loops and undecidable
 stopping criteria. We don't see this as a problem though, just like we don't
 worry about trying to make compiler prevent you from writing programs that don't
-terminate. We would like to distinguish "the executed steps are present in the
+terminate.
+
+We _would_ like to distinguish "the executed steps are present in the
 program's source" from "the compiler has to search for a proof that the code is
 legal." In the former case, the compiler can surface a problem to the user by
 pointing to lines of code in a trace of execution. The user could employ
@@ -332,7 +334,7 @@ generic functions:
 -   Static specialization strategy: Like template parameters, the values for
     generic parameters must be statically known at the callsite, or known to be
     a generic parameter to the calling function. This can generate separate,
-    specialized versions of each combination of generic & template arguments, in
+    specialized versions of each combination of generic and template arguments, in
     order to optimize for those types or values.
 -   Dynamic strategy: Unlike template parameters, we require that it be possible
     to generate a single version of the function that uses runtime dispatch to
@@ -343,7 +345,7 @@ By default, we expect the implementation strategy to be controlled by the
 compiler, and not semantically visible to the user. For example, the compiler
 might use the static strategy for release builds and the dynamic strategy for
 development. Or it might choose between them on a more granular level based on
-code analysis or profiling--maybe some specific specializations are needed for
+code analysis or profiling -- maybe some specific specializations are needed for
 performance, but others would just be code bloat.
 
 As a result, generic code must satisfy the requirements of both strategies. For
@@ -369,7 +371,7 @@ generic code. This gives us these sub-goals:
 -   Users should be able to convert a single template parameter to be generic at
     a time. A hybrid function with both template and generic parameters has all
     the limitations of a template function: it can't be completely definition
-    checked, it can't use the dynamic strategy, and so on. Even so, there are
+    checked, it can't use the dynamic strategy, etc. Even so, there are
     still benefits from enforcing the function's declared contract for those
     parameters that have been converted.
 -   Converting from a template parameter to a generic parameter should be safe.
@@ -383,17 +385,13 @@ generic code. This gives us these sub-goals:
     be converted to generics, instead of requiring them to be converted
     specifically in bottom-up order.
 -   **Nice to have:** When defining a new generic interface to replace a
-    template, support providing using the old templated implementation
+    template, support providing the old templated implementation
     temporarily as a default until types transition.
 
 ### Coherence
 
 Also, we want the generics system to have the _coherence_ property. This means
-that there is a single answer to the question:
-
-> What is the implementation of this interface for this type, if any?
-
-independent of context, such as the libraries imported into a given file. Since
+that there is a single answer to the question "what is the implementation of this interface for this type, if any?" independent of context, such as the libraries imported into a given file. Since
 a generic function only depends on interface implementations, they will always
 behave consistently on a given type, independent of context. For more on this,
 see
@@ -408,8 +406,8 @@ It also has a number of benefits for users:
 -   It means there is no need to provide a disambiguation mechanism.
     Disambiguation is particularly problematic since the ambiguous call is often
     in generic code rather than code you control.
--   A consistent definition of a type is useful for instantiating a (C++ or
-    Carbon) template on that type.
+-   A consistent definition of a type is useful for instantiating a C++ or
+    Carbon template on that type.
 
 The main downside of coherence is that there are some capabilities we would like
 for interfaces which are in tension with the coherence property. For example, we
@@ -421,7 +419,7 @@ cases remain:
 
 -   They should be some way of selecting between multiple implementations of an
     interface for a given type. For example, a _Song_ might support multiple
-    orderings: by title, by artist, and so on. These would be represented by
+    orderings, such as by title or by artist. These would be represented by
     having multiple implementations of a _Comparable_ interface.
 -   In order to allow libraries to be composed, there must be some way of saying
     a type implements an interface that is in another package that the authors
