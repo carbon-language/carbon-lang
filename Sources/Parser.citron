@@ -40,7 +40,7 @@
 %nonterminal_type expression Expression
 %nonterminal_type type_specifier Expression
 %nonterminal_type member_designator MemberDesignator
-%nonterminal_type paren_expression Expression
+%nonterminal_type tuple_literal TupleLiteral
 %nonterminal_type tuple TupleLiteral
 %nonterminal_type field Field
 %nonterminal_type field_list FieldList
@@ -59,8 +59,8 @@
 %nonterminal_type top_level_declaration TopLevelDeclaration
 %nonterminal_type declaration_list {[TopLevelDeclaration]}
 %nonterminal_type identifier Identifier
-%nonterminal_type argument_list0 TupleLiteral
 %nonterminal_type argument_list TupleLiteral
+%nonterminal_type expression_list TupleLiteral
 %nonterminal_type record_literal TupleLiteral
 %nonterminal_type record_literal_element_list TupleLiteral
 %nonterminal_type record_literal_element TupleLiteralElement
@@ -106,8 +106,8 @@ expression ::= TYPE(t).
   { .typeType(t.site) }
 type_specifier ::= AUTO(t) COLON.
   { .autoType(t.site) }
-expression ::= paren_expression(x).
-  { x }
+expression ::= LEFT_PARENTHESIS expression(e) RIGHT_PARENTHESIS.
+  { e }
 expression ::= expression(l) EQUAL_EQUAL(op) expression(r).
   { .binaryOperator(operation: op, lhs: l, rhs: r, l...r)}
 expression ::= expression(l) PLUS(op) expression(r).
@@ -123,18 +123,18 @@ expression ::= NOT(op) expression(r).
 expression ::= MINUS(op) expression(r).
   { .unaryOperator(operation: op, operand: r, op...r)}
 expression ::= expression(f)
-  LEFT_PARENTHESIS argument_list0(a) RIGHT_PARENTHESIS(r).
+  LEFT_PARENTHESIS argument_list(a) RIGHT_PARENTHESIS(r).
   { .functionCall(callee: f, arguments: a, f...r)}
 expression ::= expression(f) record_literal(a).
   { .functionCall(callee: f, arguments: a, f...a)}
 
-argument_list0 ::= .
+argument_list ::= .
   { TupleLiteral([], .empty) }
-argument_list0 ::= argument_list(a).
+argument_list ::= expression_list(a).
   {a}
-argument_list ::= expression(e).
+expression_list ::= expression(e).
   { TupleLiteral([.init(name: nil, value: e)], e.site) }
-argument_list ::= expression(e) COMMA argument_list(a).
+expression_list ::= expression(e) COMMA argument_list(a).
   { TupleLiteral([.init(name: nil, value: e)] + a.elements, e.site) }
 
 record_literal ::=
@@ -152,14 +152,17 @@ expression ::= FNTY(k) tuple(p) return_type(r).
   { .functionType(parameterTypes: p, returnType: r, k...r)}
 member_designator ::= PERIOD(p) identifier(n).
   { MemberDesignator(text: n.text, site: p...n) }
-paren_expression ::= LEFT_PARENTHESIS(l) field_list(f) RIGHT_PARENTHESIS(r).
-  {
-    if !f.hasExplicitComma && f.fields.count == 1 {
-      let firstField = f.fields.first!
-      if firstField.first == nil { return firstField.second }
-    }
-    return  .tupleLiteral(TupleLiteral(f))
-  }
+
+expression ::= record_literal(r).
+  { .tupleLiteral(r) }
+expression ::= tuple_literal(t).
+  { .tupleLiteral(t) }
+tuple_literal ::= LEFT_PARENTHESIS(l) RIGHT_PARENTHESIS(r).
+  { TupleLiteral([], l...r) }
+tuple_literal ::= LEFT_PARENTHESIS(l) expression(e) COMMA RIGHT_PARENTHESIS(r).
+  { TupleLiteral([.init(name: nil, value: e)], l...r) }
+tuple_literal ::= LEFT_PARENTHESIS(l) expression(e) COMMA expression_list(t) RIGHT_PARENTHESIS(r).
+  { TupleLiteral([.init(name: nil, value: e)] + t.elements, l...r) }
 
 tuple ::= LEFT_PARENTHESIS(l) field_list(f) RIGHT_PARENTHESIS(r).
   { TupleLiteral(f) }
