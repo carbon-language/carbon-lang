@@ -85,7 +85,7 @@ the same type.
 
 We need some way to express the bounds on a generic type parameter. In Carbon we
 express these "type constraints" by saying we restrict to types that implement
-specific _interfaces_. Interfaces describe an API a type could implement. For
+specific _interfaces_. Interfaces describe an API a type could implement; for
 example it might specify a set of functions, including names and signatures. A
 type implementing an interface may be passed as a generic type argument to a
 function that has that interface as a requirement of its generic type parameter.
