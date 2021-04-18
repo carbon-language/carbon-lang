@@ -264,7 +264,7 @@ void StackLayoutModifier::checkStackPointerRestore(MCInst &Point) {
     return;
   // Check if the definition of SP comes from FP -- in this case, this
   // value may need to be updated depending on our stack layout changes
-  const MCInstrDesc InstInfo = BC.MII->get(Point.getOpcode());
+  const MCInstrDesc &InstInfo = BC.MII->get(Point.getOpcode());
   unsigned NumDefs = InstInfo.getNumDefs();
   bool UsesFP{false};
   for (unsigned I = NumDefs, E = MCPlus::getNumPrimeOperands(Point);

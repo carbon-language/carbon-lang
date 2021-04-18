@@ -622,7 +622,7 @@ public:
       return true;
 
     int MemOpNo = getMemoryOperandNo(Inst);
-    const MCInstrDesc MCII = Info->get(Inst.getOpcode());
+    const MCInstrDesc &MCII = Info->get(Inst.getOpcode());
 
     if (MemOpNo == -1)
       return false;
@@ -635,7 +635,7 @@ public:
       return true;
 
     int MemOpNo = getMemoryOperandNo(Inst);
-    const MCInstrDesc MCII = Info->get(Inst.getOpcode());
+    const MCInstrDesc &MCII = Info->get(Inst.getOpcode());
 
     if (MemOpNo == -1)
       return false;
@@ -1354,7 +1354,7 @@ public:
 
     InstInfo I;
     int MemOpNo = getMemoryOperandNo(Inst);
-    const MCInstrDesc MCII = Info->get(Inst.getOpcode());
+    const MCInstrDesc &MCII = Info->get(Inst.getOpcode());
     // If it is not dealing with a memory operand, we discard it
     if (MemOpNo == -1 || MCII.isCall())
       return false;
@@ -1545,7 +1545,7 @@ public:
       break;
     }
 
-    const MCInstrDesc MCII = Info->get(Inst.getOpcode());
+    const MCInstrDesc &MCII = Info->get(Inst.getOpcode());
     for (int I = 0, E = MCII.getNumDefs(); I != E; ++I) {
       const MCOperand &Operand = Inst.getOperand(I);
       if (Operand.isReg() && Operand.getReg() == X86::RSP) {
@@ -1667,7 +1667,7 @@ public:
 
   bool escapesVariable(const MCInst &Inst, bool HasFramePointer) const override {
     int MemOpNo = getMemoryOperandNo(Inst);
-    const MCInstrDesc MCII = Info->get(Inst.getOpcode());
+    const MCInstrDesc &MCII = Info->get(Inst.getOpcode());
     const unsigned NumDefs = MCII.getNumDefs();
     static BitVector SPBPAliases(BitVector(getAliases(X86::RSP)) |=
                                  getAliases(X86::RBP));

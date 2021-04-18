@@ -142,7 +142,7 @@ protected:
           BC.MIB->getDefaultLiveOut(Used);
         }
       }
-      const MCInstrDesc InstInfo = BC.MII->get(Point.getOpcode());
+      const MCInstrDesc &InstInfo = BC.MII->get(Point.getOpcode());
       for (unsigned I = 0, E = Point.getNumOperands(); I != E; ++I) {
         if (!Point.getOperand(I).isReg() || I < InstInfo.getNumDefs())
           continue;

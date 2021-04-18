@@ -179,7 +179,7 @@ public:
   bool isLoadFromStack(const MCInst &Inst) const {
     if (!isLoad(Inst))
       return false;
-    const MCInstrDesc InstInfo = Info->get(Inst.getOpcode());
+    const MCInstrDesc &InstInfo = Info->get(Inst.getOpcode());
     unsigned NumDefs = InstInfo.getNumDefs();
     for (unsigned I = NumDefs, E = InstInfo.getNumOperands(); I < E; ++I) {
       const MCOperand &Operand = Inst.getOperand(I);
@@ -225,7 +225,7 @@ public:
       return true;
 
     // Look for literal addressing mode (see C1-143 ARM DDI 0487B.a)
-    const MCInstrDesc MCII = Info->get(Inst.getOpcode());
+    const MCInstrDesc &MCII = Info->get(Inst.getOpcode());
     for (unsigned I = 0, E = MCII.getNumOperands(); I != E; ++I) {
       if (MCII.OpInfo[I].OperandType == MCOI::OPERAND_PCREL)
         return true;
@@ -261,7 +261,7 @@ public:
       return evaluateADR(Inst, DispImm, DispExpr);
 
     // Literal addressing mode
-    const MCInstrDesc MCII = Info->get(Inst.getOpcode());
+    const MCInstrDesc &MCII = Info->get(Inst.getOpcode());
     for (unsigned I = 0, E = MCII.getNumOperands(); I != E; ++I) {
       if (MCII.OpInfo[I].OperandType != MCOI::OPERAND_PCREL)
         continue;
@@ -306,7 +306,7 @@ public:
              "Unexpected number of operands");
       ++OI;
     } else {
-      const MCInstrDesc MCII = Info->get(Inst.getOpcode());
+      const MCInstrDesc &MCII = Info->get(Inst.getOpcode());
       for (unsigned I = 0, E = MCII.getNumOperands(); I != E; ++I) {
         if (MCII.OpInfo[I].OperandType == MCOI::OPERAND_PCREL) {
           break;
