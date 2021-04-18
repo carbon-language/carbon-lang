@@ -390,7 +390,7 @@ generic code. This gives us these sub-goals:
 
 ### Coherence
 
-Also, we want the generics system to have the _coherence_ property. This means
+We want the generics system to have the _coherence_ property. This means
 that there is a single answer to the question "what is the implementation of this interface for this type, if any?" independent of context, such as the libraries imported into a given file. Since
 a generic function only depends on interface implementations, they will always
 behave consistently on a given type, independent of context. For more on this,
@@ -473,8 +473,7 @@ a type wants to implement and the rich API that users want to consume
 
 We can simplify things that Rust keeps purely to preserve compatibility, like
 the concept of `fundamental`, and explicit control over which methods may be
-specialized. These are complicated and impose coherence restrictions, as
-[discussed here](http://aturon.github.io/tech/2017/02/06/specialization-and-coherence/).
+specialized. These are complicated and [impose coherence restrictions](http://aturon.github.io/tech/2017/02/06/specialization-and-coherence/).
 
 ### Interfaces are nominal
 
@@ -487,8 +486,8 @@ the philosophy of being explicit.
 This means that interfaces implicitly specify the intended semantics and
 invariants of and between those functions. Unlike the function signatures, this
 contract is between the implementers and the consumers of interfaces and is not
-enforced by Carbon itself. For example, a _Draw_ method would mean different
-things when it is part of a _GameResult_ interface versus a _Image2D_ interface,
+enforced by Carbon itself. For example, a `Draw` method would mean different
+things when it is part of a `GameResult` interface versus an `Image2D` interface,
 even if those methods happen to have the same signature.
 
 ### Interop and evolution
