@@ -37,7 +37,6 @@
 %nonterminal_type match_clause MatchClause
 %nonterminal_type match_clause_list MatchClauseList
 %nonterminal_type statement Statement
-%nonterminal_type optional_else {Statement?}
 %nonterminal_type statement_list {[Statement]}
 %nonterminal_type return_type Expression
 %nonterminal_type function_definition FunctionDefinition
@@ -59,6 +58,7 @@
 %left_associative PERIOD ARROW.
 %nonassociative LEFT_PARENTHESIS RIGHT_PARENTHESIS.
 %nonassociative LEFT_SQUARE_BRACKET RIGHT_SQUARE_BRACKET.
+%right_associative ELSE.
 %start_symbol input
 
 input ::= declaration_list(d). {d}
@@ -155,8 +155,11 @@ statement ::= VAR(v) pattern(p) EQUAL expression(e) SEMICOLON(s).
 statement ::= expression(e) SEMICOLON(s).
   { .expressionStatement(e, e...s) }
 statement ::= IF(i) LEFT_PARENTHESIS expression(c) RIGHT_PARENTHESIS
-  statement(s) optional_else(e).
-  { .if(condition: c, thenClause: s, elseClause: e, e.map {i...$0} ?? i...s) }
+  statement(t) ELSE statement(f).
+  { .if(condition: c, thenClause: t, elseClause: f, i...f) }
+statement ::= IF(i) LEFT_PARENTHESIS expression(c) RIGHT_PARENTHESIS
+  statement(t).
+  { .if(condition: c, thenClause: t, elseClause: nil, i...t) }
 statement ::= WHILE(w) LEFT_PARENTHESIS expression(c) RIGHT_PARENTHESIS
   statement(b).
   { .while(condition: c, body: b, w...b) }
@@ -171,10 +174,6 @@ statement ::= LEFT_CURLY_BRACE(l) statement_list(s) RIGHT_CURLY_BRACE(r).
 statement ::= MATCH(m) LEFT_PARENTHESIS expression(e) RIGHT_PARENTHESIS
   LEFT_CURLY_BRACE match_clause_list(c) RIGHT_CURLY_BRACE(r).
   { .match(subject: e, clauses: c.elements, m...r) }
-optional_else ::= /* Empty */.
-  { nil }
-optional_else ::= ELSE statement(s).
-  { s }
 statement_list ::= /* Empty */.
   { [] }
 statement_list ::= statement(s) statement_list(l).
