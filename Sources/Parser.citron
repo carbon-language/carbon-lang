@@ -37,6 +37,7 @@
 %nonterminal_type input {[TopLevelDeclaration]}
 %nonterminal_type pattern Expression
 %nonterminal_type expression Expression
+%nonterminal_type type_specifier Expression
 %nonterminal_type member_designator MemberDesignator
 %nonterminal_type paren_expression Expression
 %nonterminal_type tuple TupleLiteral
@@ -82,7 +83,9 @@ expression ::= expression(t) member_designator(m).
 expression ::= expression(t)
   LEFT_SQUARE_BRACKET expression(i) RIGHT_SQUARE_BRACKET(b).
   { .index(target: t, offset: i, t...b) }
-expression ::= expression(t) COLON identifier(i).
+type_specifier ::= expression(t) COLON.
+  {t}
+expression ::= type_specifier(t) identifier(i).
   { .patternVariable(name: i, type: t, t...i) }
 expression ::= Integer_literal(i).
   { .integerLiteral(Int(i.text)!, i.site) }
@@ -96,7 +99,7 @@ expression ::= BOOL(t).
   { .boolType(t.site) }
 expression ::= TYPE(t).
   { .typeType(t.site) }
-expression ::= AUTO(t).
+type_specifier ::= AUTO(t) COLON.
   { .autoType(t.site) }
 expression ::= paren_expression(x).
   { x }
@@ -211,7 +214,7 @@ function_declaration
       name: n, parameterPattern: p, returnType: r,
       body: nil, site: f...s)
   }
-variable_declaration ::= expression(t) COLON identifier(n).
+variable_declaration ::= type_specifier(t) identifier(n).
   { (name: n, type: t) }
 member ::= VAR(v) variable_declaration(d) SEMICOLON(s).
   { StructMemberDeclaration(name: d.name, type: d.type, site: v...s) }
