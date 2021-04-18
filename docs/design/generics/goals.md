@@ -89,7 +89,7 @@ specific _interfaces_. Interfaces describe an API a type could implement; for
 example it might specify a set of functions, including names and signatures. A
 type implementing an interface may be passed as a generic type argument to a
 function that has that interface as a requirement of its generic type parameter.
-And then the functions defined in the interface may be called in the body of the
+Then, the functions defined in the interface may be called in the body of the
 function. Further, interfaces have names that allow them to be reused.
 
 This is much like these compile-time and run-time constructs from other
