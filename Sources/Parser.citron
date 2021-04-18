@@ -36,6 +36,7 @@
 %nonterminal_type illegal_character Never
 %nonterminal_type input {[TopLevelDeclaration]}
 %nonterminal_type pattern Expression
+%nonterminal_type pattern_variable_declaration Expression
 %nonterminal_type expression Expression
 %nonterminal_type type_specifier Expression
 %nonterminal_type member_designator MemberDesignator
@@ -85,8 +86,7 @@ expression ::= expression(t)
   { .index(target: t, offset: i, t...b) }
 type_specifier ::= expression(t) COLON.
   {t}
-expression ::= type_specifier(t) identifier(i).
-  { .patternVariable(name: i, type: t, t...i) }
+expression ::= pattern_variable_declaration(b).{b}
 expression ::= Integer_literal(i).
   { .integerLiteral(Int(i.text)!, i.site) }
 expression ::= TRUE(t).
@@ -214,6 +214,8 @@ function_declaration
       name: n, parameterPattern: p, returnType: r,
       body: nil, site: f...s)
   }
+pattern_variable_declaration ::= type_specifier(t) identifier(i).
+  { .patternVariable(name: i, type: t, t...i) }
 variable_declaration ::= type_specifier(t) identifier(n).
   { (name: n, type: t) }
 member ::= VAR(v) variable_declaration(d) SEMICOLON(s).
