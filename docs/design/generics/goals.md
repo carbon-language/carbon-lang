@@ -86,13 +86,13 @@ the same type.
 We need some way to express the bounds on a generic type parameter. In Carbon we
 express these "type constraints" by saying we restrict to types that implement
 specific _interfaces_. Interfaces describe an API a type could implement; for
-example it might specify a set of functions, including names and signatures. A
+example, it might specify a set of functions, including names and signatures. A
 type implementing an interface may be passed as a generic type argument to a
 function that has that interface as a requirement of its generic type parameter.
 Then, the functions defined in the interface may be called in the body of the
 function. Further, interfaces have names that allow them to be reused.
 
-This is much like these compile-time and run-time constructs from other
+Similar compile-time and run-time constructs may be found in other
 programming languages:
 
 -   [Rust's traits](https://doc.rust-lang.org/book/ch10-02-traits.html)
@@ -105,12 +105,12 @@ programming languages:
 -   [Go interfaces](https://gobyexample.com/interfaces) (run-time only)
 
 In addition to specifying the methods available on a type, we may in the future
-expand the role of interfaces to allow other type constraints such as on size,
+expand the role of interfaces to allow other type constraints, such as on size,
 prefix of the data layout, specified method implementations, tests that must
 pass, etc. This might be part of making interfaces as expressive as classes, as
 part of a strategy to migrate to a future version of Carbon that uses interfaces
-instead of rather than in addition to standard inheritance-and-classes
-object-oriented language support. For the moment, though, this is out of scope.
+instead of, rather than in addition to, standard inheritance-and-classes
+object-oriented language support. For the moment, this is out of scope.
 
 ### Relationship to templates
 
@@ -130,9 +130,9 @@ templates, so it is written as if Carbon will have its own templating system. It
 is assumed to be similar to C++ templates with some specific changes:
 
 -   It may have some limitations to be more compatible with generics, much like
-    how we [restrict overloading](#generics-instead-of-open-overloading) below.
+    how we [restrict overloading](#generics-instead-of-open-overloading).
 -   We likely will have a different method of selecting between different
-    template instantiations, since SFINAE makes it difficult to deliver high
+    template instantiations, since [SFINAE](https://en.wikipedia.org/wiki/Substitution_failure_is_not_an_error) makes it difficult to deliver high
     quality compiler diagnostics.
 
 We assume Carbon will have templates for a few different reasons:
@@ -149,7 +149,7 @@ We assume Carbon will have templates for a few different reasons:
 
 Our goal for generics support in Carbon is to get most of the expressive
 benefits of C++ templates and open overloading with fewer downsides.
-Additionally we want to support some dynamic dispatch use cases, for example
+Additionally, we want to support some dynamic dispatch use cases; for example, in
 cases that inheritance struggles with.
 
 ### Use cases
@@ -164,7 +164,7 @@ We in particular want to support
 including:
 
 -   Containers: arrays, maps, lists, and more complicated data structures like
-    trees and graphs.
+    trees and graphs
 -   Algorithms: sort, search
 -   Wrappers: optional, variant, expected/result, smart pointers
 -   Parameterized numeric types: `std::complex<T>`
@@ -178,10 +178,10 @@ generally be used with [static dispatch](#dispatch-control).
 
 Interfaces in C++ are often represented by abstract base classes. Generics
 should offer an alternative that does not rely on inheritance. This means looser
-coupling and none of the problems of multiple inheritance. In fact some people,
+coupling and none of the problems of multiple inheritance. Some people,
 such as
 [Sean Parent](https://sean-parent.stlab.cc/papers-and-presentations/#better-code-runtime-polymorphism),
-advocate for runtime polymorphism patterns in C++ that avoid inheritance, since
+advocate for runtime polymorphism patterns in C++ that avoid inheritance because
 it can cause runtime performance, correctness, and code maintenance problems in
 some situations. Those patterns require a lot of boilerplate and complexity in
 C++. It would be nice if those patterns were simpler to express with Carbon
@@ -220,7 +220,7 @@ generically.
 
 Our goal is to address this use case, known as
 [the expression problem](https://eli.thegreenplace.net/2016/the-expression-problem-and-its-solutions),
-with a mechanism within generics that does enforce consistency so that type
+with a generics mechanism that does enforce consistency so that type
 checking is possible without seeing all implementations. This will be Carbon's
 replacement for open overloading. As a consequence, Carbon generics will need to
 be able to support operator overloading.
