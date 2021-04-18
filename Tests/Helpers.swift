@@ -6,36 +6,37 @@ import XCTest
 func CheckNonNil<T>(
   _ expression: @autoclosure () -> T?,
   _ message: @autoclosure () -> String = "",
-  file: StaticString = (#filePath),
+  filePath: StaticString = #filePath,
   line: UInt = #line
 ) -> T? {
   let r = expression()
-  XCTAssertNotNil(r, message(), file: file, line: line)
+  XCTAssertNotNil(r, message(), file: filePath, line: line)
   return r
 }
 
 func CheckNoThrow<T>(
   _ expression: @autoclosure () throws -> T,
   _ message: @autoclosure () -> String = "",
-  file: StaticString = (#filePath),
+  filePath: StaticString = #filePath,
   line: UInt = #line
 ) -> T? {
   var r: T?
   XCTAssertNoThrow(
-    try { r = try expression() }(), message(), file: file, line: line)
+    try { r = try expression() }(), message(), file: filePath, line: line)
   return r
 }
 
 func CheckThrows<T, E: Error>(
   _ expression: @autoclosure () throws -> T,
   _ message: @autoclosure () -> String = "",
-  file: StaticString = (#filePath),
+  filePath: StaticString = #filePath,
   line: UInt = #line,
   handler: (E) -> Void
 ) {
-  XCTAssertThrowsError(try expression(), message(), file: file, line: line) {
+  XCTAssertThrowsError(try expression(), message(), file: filePath, line: line) {
     let e = $0 as? E
-    XCTAssertNotNil(e, "Unexpected exception kind: \($0)")
-    handler(e!)
+    if let e1 = CheckNonNil(e, "Unexpected exception kind: \($0)") {
+      handler(e1)
+    }
   }
 }
