@@ -59,6 +59,11 @@
 %nonterminal_type top_level_declaration TopLevelDeclaration
 %nonterminal_type declaration_list {[TopLevelDeclaration]}
 %nonterminal_type identifier Identifier
+%nonterminal_type argument_list0 TupleLiteral
+%nonterminal_type argument_list TupleLiteral
+%nonterminal_type record_literal TupleLiteral
+%nonterminal_type record_literal_element_list TupleLiteral
+%nonterminal_type record_literal_element TupleLiteralElement
 
 %nonassociative LEFT_CURLY_BRACE RIGHT_CURLY_BRACE.
 %nonassociative COLON COMMA DBLARROW.
@@ -117,8 +122,32 @@ expression ::= NOT(op) expression(r).
   { .unaryOperator(operation: op, operand: r, op...r)}
 expression ::= MINUS(op) expression(r).
   { .unaryOperator(operation: op, operand: r, op...r)}
-expression ::= expression(f) tuple(a).
+expression ::= expression(f)
+  LEFT_PARENTHESIS argument_list0(a) RIGHT_PARENTHESIS(r).
+  { .functionCall(callee: f, arguments: a, f...r)}
+expression ::= expression(f) record_literal(a).
   { .functionCall(callee: f, arguments: a, f...a)}
+
+argument_list0 ::= .
+  { TupleLiteral([], .empty) }
+argument_list0 ::= argument_list(a).
+  {a}
+argument_list ::= expression(e).
+  { TupleLiteral([.init(name: nil, value: e)], e.site) }
+argument_list ::= expression(e) COMMA argument_list(a).
+  { TupleLiteral([.init(name: nil, value: e)] + a.elements, e.site) }
+
+record_literal ::=
+  LEFT_PARENTHESIS(l) record_literal_element_list(e) RIGHT_PARENTHESIS(r).
+  { TupleLiteral(e.elements, l...r) }
+record_literal_element_list ::= record_literal_element(e).
+  { TupleLiteral([e], e.name!...e.value) }
+record_literal_element_list ::=
+  record_literal_element(e) COMMA record_literal_element_list(l).
+  { TupleLiteral([e] + l.elements, e.name!...l) }
+record_literal_element ::= member_designator(m) EQUAL expression(e).
+  { TupleLiteralElement(name: m, value: e) }
+
 expression ::= FNTY(k) tuple(p) return_type(r).
   { .functionType(parameterTypes: p, returnType: r, k...r)}
 member_designator ::= PERIOD(p) identifier(n).
