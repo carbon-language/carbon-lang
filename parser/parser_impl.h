@@ -174,6 +174,9 @@ class ParseTree::Parser {
   // Parses an expression.
   auto ParseExpression() -> llvm::Optional<Node>;
 
+  // Parses a type expression.
+  auto ParseType() -> llvm::Optional<Node> { return ParseExpression(); }
+
   // Parses an expression statement: an expression followed by a semicolon.
   auto ParseExpressionStatement() -> llvm::Optional<Node>;
 
