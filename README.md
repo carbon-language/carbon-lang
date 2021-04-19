@@ -16,6 +16,10 @@ Swift implementation of executable semantics of
 
     make test
 
+## To translate parse errors so that your IDE will recognize them
+
+    make test 2>&1 | sed -Ee 's/^.*SourceRegion\(fileName: "(.*)", (.*):.*\.\.<(.*)\)\).*$/\1:\2: error:/g'
+
 ## To work on the project in Xcode
 
     make Sources/Parser.swift

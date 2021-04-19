@@ -52,16 +52,26 @@ indirect enum TopLevelDeclaration: AST {
   }
 }
 
-struct VariableDefinition: AST {
-  let type: Expression,
-      name: Identifier,
-      initializer: Expression,
-      site: Site  
+enum VariableDefinition: AST {
+  case
+    uninitialized(Binding, Site),
+    simple(Binding, initializer: Expression, Site),
+    tuplePattern(TuplePattern, initializer: Expression, Site),
+    recordPattern(RecordPattern, initializer: Expression, Site)
+
+  var site: Site {
+    switch self {
+    case let .uninitialized(_, r): return r
+    case let .simple(_, initializer: _, r): return r
+    case let .tuplePattern(_, initializer: _, r): return r
+    case let .recordPattern(_, initializer: _, r): return r
+    }
+  }
 }
 
 struct FunctionDefinition: AST {
   let name: Identifier
-  let parameterPattern: TupleLiteral
+  let parameters: List<Binding>
   let returnType: Expression
   let body: Statement?
   let site: Site
@@ -91,8 +101,7 @@ indirect enum Statement: AST {
   case
     expressionStatement(Expression, Site),
     assignment(target: Expression, source: Expression, Site),
-    patternBinding(pattern: Pattern, initializer: Expression, Site),
-    variableDefinition(pattern: Expression, initializer: Expression, Site),
+    variableDefinition(VariableDefinition),
     `if`(condition: Expression, thenClause: Statement, elseClause: Statement?, Site),
     `return`(Expression, Site),
     sequence(Statement, Statement, Site),
@@ -106,7 +115,7 @@ indirect enum Statement: AST {
     switch self {
     case let .expressionStatement(_, r): return r
     case let .assignment(target: _, source: _, r): return r
-    case let .variableDefinition(pattern: _, initializer: _, r): return r
+    case let .variableDefinition(v): return v.site
     case let .if(condition: _, thenClause: _, elseClause: _, r): return r
     case let .return(_, r): return r
     case let .sequence(_, _, r): return r
@@ -142,17 +151,14 @@ struct MatchClause: AST {
   let site: Site
 }
 typealias MatchClauseList = List<MatchClause>
-
-struct TupleLiteralElement: Hashable {
-  let name: Identifier?
-  let value: Expression
-}
-typealias TupleLiteral = List<TupleLiteralElement>
+typealias TupleLiteral = List<Expression>
 typealias RecordLiteral = List<(fieldName: Identifier, value: Expression)>
 
-struct Binding {
+struct Binding: AST {
   let type: Expression
   let boundName: Identifier
+
+  var site: Site { type.site...boundName.site }
 }
 
 enum TuplePatternElement {
@@ -239,7 +245,7 @@ enum AnyDeclaration: AST {
     choice(ChoiceDefinition),
     variable(VariableDefinition),
     // Function parameters, variable declarations...
-    binding(TupleLiteralElement),
+    binding(Binding),
     structMember(StructMemberDeclaration),
     alternative(Alternative)
 
@@ -258,8 +264,7 @@ enum AnyDeclaration: AST {
     case let .struct(s): return s.site
     case let .choice(c): return c.site
     case let .variable(v): return v.site
-    case .binding(let p):
-      return (p.name?.site ?? .empty)...p.value.site
+    case .binding(let p): return p.site
     case .structMember(let m): return m.site
     case .alternative(let a): return a.site
     }

@@ -50,8 +50,8 @@
 %nonterminal_type identifier Identifier
 %nonterminal_type argument_tuple {List<Expression>}
 %nonterminal_type type_tuple {List<Expression>}
-%nonterminal_type function_parameter_tuple TupleLiteral
-%nonterminal_type function_parameter_list TupleLiteral
+%nonterminal_type function_parameter_tuple {List<Binding>}
+%nonterminal_type function_parameter_list {[Binding]}
 %nonterminal_type expression_list {[Expression]}
 %nonterminal_type record_literal RecordLiteral
 %nonterminal_type record_literal_element_list {[RecordLiteral.Element]}
@@ -61,6 +61,8 @@
 %nonterminal_type record_pattern_element_list {[RecordPattern.Element]}
 %nonterminal_type record_pattern_tail {[RecordPattern.Element]}
 %nonterminal_type record_pattern_element {RecordPattern.Element}
+
+%nonterminal_type variable_definition VariableDefinition
 
 %nonassociative LEFT_CURLY_BRACE RIGHT_CURLY_BRACE.
 %nonassociative COLON COMMA DBLARROW.
@@ -164,9 +166,12 @@ record_pattern_element_list ::=
 record_pattern_element_list ::=
   record_pattern_element(e) COMMA record_pattern_tail(l).
   { [e] + l }
-record_pattern_tail ::= record_literal_element_list.{}
-record_pattern_tail ::= record_pattern_element_list.{}
-record_pattern_element ::= member_designator EQUAL binding.{}
+record_pattern_tail ::= record_literal_element_list(l).
+  { l.map { .literal(fieldName: $0.fieldName, value: $0.value) } }
+record_pattern_tail ::= record_pattern_element_list(l).
+   { l }
+record_pattern_element ::= member_designator(m) EQUAL binding(b).
+   { .binding(fieldName: m, type: b.type, boundName: b.boundName) }
 
 expression ::= FNTY(k) type_tuple(p) return_type(r).
   { .functionType(parameterTypes: p, returnType: r, k...r)}
@@ -220,8 +225,8 @@ match_clause_list ::= match_clause(c) match_clause_list(l).
   { MatchClauseList([c] + l, c...l) }
 statement ::= expression(l) EQUAL expression(r) SEMICOLON(s).
   { .assignment(target: l, source: r, l...s) }
-statement ::= VAR(v) pattern(p) EQUAL expression(e) SEMICOLON(s).
-  { .patternBinding(pattern: p, initializer: e, v...s) }
+statement ::= variable_definition(v).
+  { .variableDefinition(v) }
 statement ::= expression(e) SEMICOLON(s).
   { .expressionStatement(e, e...s) }
 statement ::= IF(i) LEFT_PARENTHESIS expression(c) RIGHT_PARENTHESIS
@@ -257,7 +262,7 @@ function_definition
   LEFT_CURLY_BRACE(l) statement_list(b) RIGHT_CURLY_BRACE(r).
   {
     FunctionDefinition(
-      name: n, parameterPattern: p, returnType: t,
+      name: n, parameters: p, returnType: t,
       body: .block(b, l...r), site: f...r)
   }
 function_definition
@@ -265,7 +270,7 @@ function_definition
   function_parameter_tuple(p) DBLARROW expression(b) SEMICOLON(s).
   {
     FunctionDefinition(
-      name: n, parameterPattern: p, returnType: .autoType(.empty),
+      name: n, parameters: p, returnType: .autoType(.empty),
       body: .return(b, b.site), site: f...s)
   }
 function_declaration
@@ -273,27 +278,24 @@ function_declaration
   function_parameter_tuple(p) return_type(r) SEMICOLON(s).
   {
     FunctionDefinition(
-      name: n, parameterPattern: p, returnType: r,
+      name: n, parameters: p, returnType: r,
       body: nil, site: f...s)
   }
 
 function_parameter_tuple ::= LEFT_PARENTHESIS(l) RIGHT_PARENTHESIS(r).
-  { TupleLiteral([], l...r) }
+  { List([], l...r) }
 function_parameter_tuple
   ::= LEFT_PARENTHESIS(l) function_parameter_list(p) RIGHT_PARENTHESIS(r).
-  { TupleLiteral(p.elements, l...r) }
-function_parameter_list ::= binding(v).
-  { TupleLiteral([.init(name: v.name, value: v.type)], v.type...v.name) }
-function_parameter_list
-  ::= binding(v) COMMA function_parameter_list(p).
-  {
-    TupleLiteral([.init(name: v.name, value: v.type)] + p.elements, v.type...p)
-  }
+  { List(p, l...r) }
+function_parameter_list ::= binding(b).
+  { [b] }
+function_parameter_list ::= binding(b) COMMA function_parameter_list(p).
+  { [b] + p }
 
 binding ::= type_specifier(t) identifier(n).
-  { (type: t, name: n) }
+  { Binding(type: t, boundName: n) }
 member ::= VAR(v) binding(d) SEMICOLON(s).
-  { StructMemberDeclaration(name: d.name, type: d.type, site: v...s) }
+  { StructMemberDeclaration(name: d.boundName, type: d.type, site: v...s) }
 member_list ::= /* Empty */.
   { [] }
 member_list ::= member(m) member_list(l).
@@ -318,11 +320,20 @@ top_level_declaration ::=
 top_level_declaration ::= CHOICE(c) identifier(n)
   LEFT_CURLY_BRACE alternative_list(l) RIGHT_CURLY_BRACE(r).
   { .choice(.init(name: n, alternatives: l, site: c...r)) }
-top_level_declaration
-  ::= VAR(v) binding(d) EQUAL expression(i) SEMICOLON(s).
-  { .variable(.init(type: d.type, name: d.name, initializer: i, site: v...s)) }
+top_level_declaration ::= variable_definition(v).
+  { .variable(v) }
 declaration_list ::= /* Empty */.
   { [] }
 declaration_list ::= top_level_declaration(d) declaration_list(l).
   { [d] + l }
+variable_definition ::= VAR(v) binding(b) SEMICOLON(s).
+  { .uninitialized(b, v...s) }
+variable_definition ::= VAR(v) binding(b) EQUAL expression(i) SEMICOLON(s).
+  { .simple(b, initializer: i, v...s) }
+variable_definition ::= VAR(v) tuple_pattern(p) EQUAL expression(i) SEMICOLON(s).
+  { .tuplePattern(p, initializer: i, v...s) }
+variable_definition ::= VAR(v) record_pattern(p) EQUAL expression(i) SEMICOLON(s).
+  { .recordPattern(p, initializer: i, v...s) }
+
+
 illegal_character ::= ILLEGAL_CHARACTER

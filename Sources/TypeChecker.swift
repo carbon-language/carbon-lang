@@ -90,12 +90,15 @@ private extension TypeChecker {
       }
 
     case let .variable(v):
+      _ = v
+      /*
       define(v.name, .init(d))
       visit(v.type)
       visit(v.initializer)
       let t1 = evaluateTypeExpression(
         v.type, initializingFrom: expressionType[v.initializer])
       declaredType[.init(d)] = t1
+       */
     }
   }
 
@@ -197,9 +200,9 @@ private extension TypeChecker {
     inNewScope { me in
       var parameterTypes: [Type] = []
       
-      for p in f.parameterPattern.elements {
-        if let n = p.name { me.define(n, .binding(p)) }
-        let t = me.evaluateTypeExpression(p.value)
+      for p in f.parameters {
+        me.define(p.boundName, .binding(p))
+        let t = me.evaluateTypeExpression(p.type)
         me.declaredType[.binding(p)] = t
         parameterTypes.append(t)
       }
@@ -242,12 +245,14 @@ private extension TypeChecker {
           "Can't assign expression of type \(sourceType)"
             + "to lvalue of type \(targetType)", at: t.site...s.site)
       }
-    case let .variableDefinition(pattern: p, initializer: i, _):
+    case let .variableDefinition(v):
+      _ = v
+      /*
       visit(p)
       visit(i)
       let t = evaluateTypeExpression(
         p, initializingFrom: expressionType[i])
-      _ = t
+        */
 
     case let .if(condition: c, thenClause: then, elseClause: maybeElse, _):
       visit(c)

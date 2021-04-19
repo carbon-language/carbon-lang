@@ -35,7 +35,7 @@ fileprivate func unambiguousMain(
   let mainCandidates: [FunctionDefinition] = parsedProgram.compactMap {
     if case .function(let f) = $0,
        f.name.text == "main",
-       f.parameterPattern.elements.isEmpty
+       f.parameters.isEmpty
     { return f } else { return nil }
   }
 

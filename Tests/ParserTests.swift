@@ -11,6 +11,7 @@ extension String {
     -> [TopLevelDeclaration]
   {
     let p = CarbonParser()
+    p.isTracingEnabled = true
     for t in Tokens(in: self, from: sourceFile) {
       try p.consume(token: t, code: t.kind)
     }
@@ -32,7 +33,7 @@ final class ParserTests: XCTestCase {
     let p0 = p[0]
     guard case .function(let d) = p0 else { XCTFail("\(p0)"); return }
     XCTAssertEqual(d.name.text, "main")
-    XCTAssertEqual(d.parameterPattern.elements, [])
+    XCTAssertEqual(d.parameters.elements, [])
     if case .intType(_) = d.returnType {} else { XCTFail("\(d.returnType)") }
     XCTAssertNil(d.body)
   }
@@ -44,7 +45,7 @@ final class ParserTests: XCTestCase {
     let p0 = p[0]
     guard case .function(let d) = p0 else { XCTFail("\(p0)"); return }
     XCTAssertEqual(d.name.text, "main")
-    XCTAssertEqual(d.parameterPattern.elements, [])
+    XCTAssertEqual(d.parameters.elements, [])
     if case .intType = d.returnType {} else { XCTFail("\(d.returnType)") }
     guard let b = d.body, case .block(let c, _) = b else {
       XCTFail("\(d)")
@@ -62,12 +63,16 @@ final class ParserTests: XCTestCase {
       XCTFail("\(p0)")
       return
     }
-    XCTAssertEqual(v.name.text, "x")
+    guard case let .simple(b, initializer: initializer, _) = v else {
+      XCTFail("\(v)")
+      return
+    }
+    XCTAssertEqual(b.boundName.text, "x")
 
-    if case .intType = v.type {} else { XCTFail("\(v.type)") }
+    if case .intType = b.type {} else { XCTFail("\(b.type)") }
 
-    if case let .integerLiteral(n, _) = v.initializer { XCTAssertEqual(n, 0) }
-    else { XCTFail("\(v.initializer)") }
+    if case let .integerLiteral(n, _) = initializer { XCTAssertEqual(n, 0) }
+    else { XCTFail("\(initializer)") }
   }
 
   func testParseFailure() {
@@ -86,11 +91,20 @@ final class ParserTests: XCTestCase {
     let testdata = 
         URL(fileURLWithPath: #filePath).deletingLastPathComponent()
         .appendingPathComponent("testdata")
-    
-    for f in try! FileManager().contentsOfDirectory(atPath: testdata.path) {
+
+    let tests = ["choice1.6c"]
+    for f in tests /*try! FileManager().contentsOfDirectory(atPath: testdata.path)*/ {
+      print(">>>>>>", f)
       let p = testdata.appendingPathComponent(f).path
-      XCTAssertNoThrow(
-        try String(contentsOfFile: p).parsedAsCarbon(fromFile: p))
+      if f.hasSuffix("_fail.6c") {
+        let s = try! String(contentsOfFile: p)
+        XCTAssertThrowsError(try s.parsedAsCarbon(fromFile: p))
+      }
+      else {
+        XCTAssertNoThrow(
+          try String(contentsOfFile: p).parsedAsCarbon(fromFile: p))
+      }
+      print("<<<<<<", f)
     }
   }
 }
