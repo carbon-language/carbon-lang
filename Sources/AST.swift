@@ -91,6 +91,7 @@ indirect enum Statement: AST {
   case
     expressionStatement(Expression, Site),
     assignment(target: Expression, source: Expression, Site),
+    patternBinding(pattern: Pattern, initializer: Expression, Site),
     variableDefinition(pattern: Expression, initializer: Expression, Site),
     `if`(condition: Expression, thenClause: Statement, elseClause: Statement?, Site),
     `return`(Expression, Site),
@@ -136,7 +137,7 @@ extension List: RandomAccessCollection {
 
 struct MatchClause: AST {
   /// A `nil` `pattern` means this is a default clause.
-  let pattern: Expression?
+  let pattern: Pattern?
   let action: Statement
   let site: Site
 }
@@ -147,7 +148,7 @@ struct TupleLiteralElement: Hashable {
   let value: Expression
 }
 typealias TupleLiteral = List<TupleLiteralElement>
-typealias RecordLiteral = List<(name: Identifier, value: Expression)>
+typealias RecordLiteral = List<(fieldName: Identifier, value: Expression)>
 
 struct Binding {
   let type: Expression
@@ -155,14 +156,14 @@ struct Binding {
 }
 
 enum TuplePatternElement {
-  case pattern(Binding)
+  case binding(Binding)
   case literal(Expression)
 }
 
 typealias TuplePattern = List<TuplePatternElement>
 
 enum RecordPatternElement {
-  case pattern(fieldName: Identifier, type: Expression, boundName: Identifier)
+  case binding(fieldName: Identifier, type: Expression, boundName: Identifier)
   case literal(fieldName: Identifier, value: Expression)
 }
 
@@ -212,6 +213,14 @@ indirect enum Expression: AST {
     }
   }
 };
+
+enum Pattern {
+  case
+    literal(Expression),
+    tuple(TuplePattern),
+    record(RecordPattern),
+    alternative(identity: Expression, payload: TuplePattern)
+}
 
 struct StructMemberDeclaration: AST {
   let name: Identifier

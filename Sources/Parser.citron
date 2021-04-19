@@ -26,7 +26,7 @@
 
 %nonterminal_type illegal_character Never
 %nonterminal_type input {[TopLevelDeclaration]}
-%nonterminal_type pattern Expression
+%nonterminal_type pattern Pattern
 %nonterminal_type expression Expression
 %nonterminal_type type_specifier Expression
 %nonterminal_type member_designator MemberDesignator
@@ -40,7 +40,7 @@
 %nonterminal_type return_type Expression
 %nonterminal_type function_definition FunctionDefinition
 %nonterminal_type function_declaration FunctionDefinition
-%nonterminal_type binding_declaration {(type: Expression, name: Identifier)}
+%nonterminal_type binding_declaration Binding
 %nonterminal_type member StructMemberDeclaration
 %nonterminal_type member_list {[StructMemberDeclaration]}
 %nonterminal_type alternative Alternative
@@ -73,11 +73,12 @@
 %right_associative ELSE.
 %start_symbol input
 
-input ::= declaration_list(d). {d}
-pattern ::= expression(e).     {e}
-pattern ::= tuple_pattern(t).     {t}
-pattern ::= record_pattern(t).     {r}
-pattern ::= expression(n) record_pattern(t). {t}
+input ::= declaration_list(d).      { d }
+pattern ::= expression(e).          { .literal(e) }
+pattern ::= tuple_pattern(t).       { .tuple(t) }
+pattern ::= record_pattern(r).      { .record(r) }
+pattern ::= expression(n) tuple_pattern(t).
+  { .alternative(identity: n, payload: t) }
 
 // identifier is just Identifier without the TokenID
 identifier ::= Identifier(i).
@@ -150,16 +151,16 @@ record_literal_element_list ::=
   record_literal_element(e) COMMA record_literal_element_list(l).
   { [e] + l }
 record_literal_element ::= member_designator(m) EQUAL expression(e).
-  { (name: m, value: e) }
+  { (fieldName: m, value: e) }
 
 record_pattern ::=
   LEFT_PARENTHESIS(l) record_pattern_element_list(e) RIGHT_PARENTHESIS(r).
-  { RecordLiteral(e, l...r) }
+  { RecordPattern(e, l...r) }
 record_pattern_element_list ::= record_pattern_element(e).
   { [e] }
 record_pattern_element_list ::=
   record_literal_element(e) COMMA record_pattern_element_list(l).
-  { [e] + l }
+  { [RecordPatternElement.literal(fieldName: e.fieldName, value: e.value)] + l }
 record_pattern_element_list ::=
   record_pattern_element(e) COMMA record_pattern_tail(l).
   { [e] + l }
@@ -186,28 +187,28 @@ tuple_literal
   { List([e] + t, l...r) }
 
 tuple_pattern ::= LEFT_PARENTHESIS(l) binding_declaration(e) COMMA RIGHT_PARENTHESIS(r).
-  { .tupleLiteral(e, l...r) }
+  { TuplePattern([.binding(e)], l...r) }
 tuple_pattern
   ::= LEFT_PARENTHESIS(l) binding_declaration(p) COMMA
       expression_list(t) RIGHT_PARENTHESIS(r).
-  { .tupleLiteral([e] + t, l...r) }
+  { TuplePattern([.binding(p)] + t.map {.literal($0)}, l...r) }
 tuple_pattern
   ::= LEFT_PARENTHESIS(l) expression(p) COMMA
       tuple_pattern_element_list(t) RIGHT_PARENTHESIS(r).
-  { .tupleLiteral([e] + t, l...r) }
+  { TuplePattern([.literal(p)] + t, l...r) }
 tuple_pattern
   ::= LEFT_PARENTHESIS(l) binding_declaration(p) COMMA
       tuple_pattern_element_list(t) RIGHT_PARENTHESIS(r).
-  { .tupleLiteral([e] + t, l...r) }
+  { TuplePattern([.binding(p)] + t, l...r) }
 
 tuple_pattern_element_list ::= binding_declaration(e).
-  { [e] }
+  { [.binding(e)] }
 tuple_pattern_element_list ::= binding_declaration(e) COMMA expression_list(a).
-  { [e] + a }
+  { [.binding(e)] + a.map { .literal($0) } }
 tuple_pattern_element_list ::= expression(e) COMMA tuple_pattern_element_list(a).
-  { [e] + a }
+  { [.literal(e)] + a }
 tuple_pattern_element_list ::= binding_declaration(e) COMMA tuple_pattern_element_list(a).
-  { [e] + a }
+  { [.binding(e)] + a }
 
 match_clause ::= CASE(c) pattern(p) DBLARROW statement(s).
   { MatchClause(pattern: p, action: s, site: c...s) }
@@ -220,7 +221,7 @@ match_clause_list ::= match_clause(c) match_clause_list(l).
 statement ::= expression(l) EQUAL expression(r) SEMICOLON(s).
   { .assignment(target: l, source: r, l...s) }
 statement ::= VAR(v) pattern(p) EQUAL expression(e) SEMICOLON(s).
-  { .variableDefinition(pattern: p, initializer: e, v...s) }
+  { .patternBinding(pattern: p, initializer: e, v...s) }
 statement ::= expression(e) SEMICOLON(s).
   { .expressionStatement(e, e...s) }
 statement ::= IF(i) LEFT_PARENTHESIS expression(c) RIGHT_PARENTHESIS
