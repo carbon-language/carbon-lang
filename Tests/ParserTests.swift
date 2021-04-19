@@ -7,11 +7,11 @@ import Foundation
 
 extension String {
   /// Returns `self`, parsed as Carbon.
-  func parsedAsCarbon(fromFile sourceFile: String = #filePath) throws
+  func parsedAsCarbon(fromFile sourceFile: String = #filePath, tracing: Bool = false) throws
     -> [TopLevelDeclaration]
   {
     let p = CarbonParser()
-    p.isTracingEnabled = true
+    p.isTracingEnabled = tracing
     for t in Tokens(in: self, from: sourceFile) {
       try p.consume(token: t, code: t.kind)
     }

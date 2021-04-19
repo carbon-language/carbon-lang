@@ -79,8 +79,9 @@ input ::= declaration_list(d).      { d }
 pattern ::= expression(e).          { .literal(e) }
 pattern ::= tuple_pattern(t).       { .tuple(t) }
 pattern ::= record_pattern(r).      { .record(r) }
-pattern ::= expression(n) tuple_pattern(t).
-  { .alternative(identity: n, payload: t) }
+pattern ::= expression(i)
+  LEFT_PARENTHESIS(l) tuple_pattern_element_list(p) RIGHT_PARENTHESIS(r).
+  { .alternative(identity: i, payload: List(p, l...r)) }
 
 // identifier is just Identifier without the TokenID
 identifier ::= Identifier(i).
