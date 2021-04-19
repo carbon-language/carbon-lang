@@ -27,5 +27,5 @@ clean:
 
 ${GRAMMAR}.swift: ${CITRON} ${GRAMMAR}.citron
 	rm -f $@
-	${CITRON} -i ${GRAMMAR}.citron -o $@
+	${CITRON} ${GRAMMAR}.citron -o $@
 	chmod -w $@
