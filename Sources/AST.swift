@@ -230,6 +230,7 @@ indirect enum Expression: AST {
 enum Pattern {
   case
     literal(Expression),
+    unary(Binding),
     tuple(TuplePattern),
     record(RecordPattern),
     alternative(identity: Expression, payload: TuplePattern),

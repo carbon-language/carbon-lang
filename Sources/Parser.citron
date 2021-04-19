@@ -79,6 +79,7 @@
 
 input ::= declaration_list(d).      { d }
 pattern ::= expression(e).          { .literal(e) }
+pattern ::= binding(b).             { .unary(b) }
 pattern ::= tuple_pattern(t).       { .tuple(t) }
 pattern ::= record_pattern(r).      { .record(r) }
 pattern ::= expression(i) trailing_tuple_pattern(p).

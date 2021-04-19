@@ -9,10 +9,10 @@ fn main() -> Int {
 //    case fnty(Int: x, Int: y): z =>
 //      x = x + 1;
 //  }
-//  match (t) {
-//    case fnty(Int,Int): z =>
-//      x = x + 1;
-//  }
+  match (t) {
+    case fnty(Int,Int): z =>
+      x = x + 1;
+  }
   match (t) {
     case fnty(Int,Type: b) =>
       x = x - 1;
