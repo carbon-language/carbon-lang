@@ -40,7 +40,7 @@
 %nonterminal_type return_type Expression
 %nonterminal_type function_definition FunctionDefinition
 %nonterminal_type function_declaration FunctionDefinition
-%nonterminal_type binding_declaration Binding
+%nonterminal_type binding Binding
 %nonterminal_type member StructMemberDeclaration
 %nonterminal_type member_list {[StructMemberDeclaration]}
 %nonterminal_type alternative Alternative
@@ -166,7 +166,7 @@ record_pattern_element_list ::=
   { [e] + l }
 record_pattern_tail ::= record_literal_element_list.{}
 record_pattern_tail ::= record_pattern_element_list.{}
-record_pattern_element ::= member_designator EQUAL binding_declaration.{}
+record_pattern_element ::= member_designator EQUAL binding.{}
 
 expression ::= FNTY(k) type_tuple(p) return_type(r).
   { .functionType(parameterTypes: p, returnType: r, k...r)}
@@ -186,10 +186,10 @@ tuple_literal
       expression_list(t) RIGHT_PARENTHESIS(r).
   { List([e] + t, l...r) }
 
-tuple_pattern ::= LEFT_PARENTHESIS(l) binding_declaration(e) COMMA RIGHT_PARENTHESIS(r).
+tuple_pattern ::= LEFT_PARENTHESIS(l) binding(e) COMMA RIGHT_PARENTHESIS(r).
   { TuplePattern([.binding(e)], l...r) }
 tuple_pattern
-  ::= LEFT_PARENTHESIS(l) binding_declaration(p) COMMA
+  ::= LEFT_PARENTHESIS(l) binding(p) COMMA
       expression_list(t) RIGHT_PARENTHESIS(r).
   { TuplePattern([.binding(p)] + t.map {.literal($0)}, l...r) }
 tuple_pattern
@@ -197,17 +197,17 @@ tuple_pattern
       tuple_pattern_element_list(t) RIGHT_PARENTHESIS(r).
   { TuplePattern([.literal(p)] + t, l...r) }
 tuple_pattern
-  ::= LEFT_PARENTHESIS(l) binding_declaration(p) COMMA
+  ::= LEFT_PARENTHESIS(l) binding(p) COMMA
       tuple_pattern_element_list(t) RIGHT_PARENTHESIS(r).
   { TuplePattern([.binding(p)] + t, l...r) }
 
-tuple_pattern_element_list ::= binding_declaration(e).
+tuple_pattern_element_list ::= binding(e).
   { [.binding(e)] }
-tuple_pattern_element_list ::= binding_declaration(e) COMMA expression_list(a).
+tuple_pattern_element_list ::= binding(e) COMMA expression_list(a).
   { [.binding(e)] + a.map { .literal($0) } }
 tuple_pattern_element_list ::= expression(e) COMMA tuple_pattern_element_list(a).
   { [.literal(e)] + a }
-tuple_pattern_element_list ::= binding_declaration(e) COMMA tuple_pattern_element_list(a).
+tuple_pattern_element_list ::= binding(e) COMMA tuple_pattern_element_list(a).
   { [.binding(e)] + a }
 
 match_clause ::= CASE(c) pattern(p) DBLARROW statement(s).
@@ -282,17 +282,17 @@ function_parameter_tuple ::= LEFT_PARENTHESIS(l) RIGHT_PARENTHESIS(r).
 function_parameter_tuple
   ::= LEFT_PARENTHESIS(l) function_parameter_list(p) RIGHT_PARENTHESIS(r).
   { TupleLiteral(p.elements, l...r) }
-function_parameter_list ::= binding_declaration(v).
+function_parameter_list ::= binding(v).
   { TupleLiteral([.init(name: v.name, value: v.type)], v.type...v.name) }
 function_parameter_list
-  ::= binding_declaration(v) COMMA function_parameter_list(p).
+  ::= binding(v) COMMA function_parameter_list(p).
   {
     TupleLiteral([.init(name: v.name, value: v.type)] + p.elements, v.type...p)
   }
 
-binding_declaration ::= type_specifier(t) identifier(n).
+binding ::= type_specifier(t) identifier(n).
   { (type: t, name: n) }
-member ::= VAR(v) binding_declaration(d) SEMICOLON(s).
+member ::= VAR(v) binding(d) SEMICOLON(s).
   { StructMemberDeclaration(name: d.name, type: d.type, site: v...s) }
 member_list ::= /* Empty */.
   { [] }
@@ -319,7 +319,7 @@ top_level_declaration ::= CHOICE(c) identifier(n)
   LEFT_CURLY_BRACE alternative_list(l) RIGHT_CURLY_BRACE(r).
   { .choice(.init(name: n, alternatives: l, site: c...r)) }
 top_level_declaration
-  ::= VAR(v) binding_declaration(d) EQUAL expression(i) SEMICOLON(s).
+  ::= VAR(v) binding(d) EQUAL expression(i) SEMICOLON(s).
   { .variable(.init(type: d.type, name: d.name, initializer: i, site: v...s)) }
 declaration_list ::= /* Empty */.
   { [] }
