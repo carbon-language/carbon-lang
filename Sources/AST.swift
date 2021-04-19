@@ -149,6 +149,25 @@ struct TupleLiteralElement: Hashable {
 typealias TupleLiteral = List<TupleLiteralElement>
 typealias RecordLiteral = List<(name: Identifier, value: Expression)>
 
+struct Binding {
+  let type: Expression
+  let boundName: Identifier
+}
+
+enum TuplePatternElement {
+  case pattern(Binding)
+  case literal(Expression)
+}
+
+typealias TuplePattern = List<TuplePatternElement>
+
+enum RecordPatternElement {
+  case pattern(fieldName: Identifier, type: Expression, boundName: Identifier)
+  case literal(fieldName: Identifier, value: Expression)
+}
+
+typealias RecordPattern = List<RecordPatternElement>
+
 indirect enum Expression: AST {
   case
     name(Identifier),
