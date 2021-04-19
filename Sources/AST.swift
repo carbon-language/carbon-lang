@@ -53,8 +53,8 @@ indirect enum TopLevelDeclaration: AST {
 }
 
 struct VariableDefinition: AST {
-  let name: Identifier,
-      type: Expression,
+  let type: Expression,
+      name: Identifier,
       initializer: Expression,
       site: Site  
 }
@@ -154,7 +154,7 @@ indirect enum Expression: AST {
     name(Identifier),
     getField(target: Expression, fieldName: Identifier, Site),
     index(target: Expression, offset: Expression, Site),
-    patternVariable(name: Identifier, type: Expression, Site),
+    patternVariable(type: Expression, name: Identifier, Site),
     integerLiteral(Int, Site),
     booleanLiteral(Bool, Site),
     tupleLiteral(List<Expression>),
@@ -175,7 +175,7 @@ indirect enum Expression: AST {
     case let .name(v): return v.site
     case let .getField(_, _, r): return r
     case let .index(target: _, offset: _, r): return r
-    case let .patternVariable(name: _, type: _, r): return r
+    case let .patternVariable(type: _, name: _, r): return r
     case let .integerLiteral(_, r): return r
     case let .booleanLiteral(_, r): return r
     case let .tupleLiteral(t): return t.site
