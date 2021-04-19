@@ -32,6 +32,7 @@
 %nonterminal_type member_designator MemberDesignator
 %nonterminal_type tuple_literal {List<Expression>}
 %nonterminal_type tuple_pattern TuplePattern
+%nonterminal_type trailing_tuple_pattern TuplePattern
 %nonterminal_type tuple_pattern_element_list {[TuplePattern.Element]}
 %nonterminal_type match_clause MatchClause
 %nonterminal_type match_clause_list MatchClauseList
@@ -49,7 +50,7 @@
 %nonterminal_type declaration_list {[TopLevelDeclaration]}
 %nonterminal_type identifier Identifier
 %nonterminal_type argument_tuple {List<Expression>}
-%nonterminal_type type_tuple {List<Expression>}
+%nonterminal_type trailing_tuple_literal {List<Expression>}
 %nonterminal_type function_parameter_tuple {List<Binding>}
 %nonterminal_type function_parameter_list {[Binding]}
 %nonterminal_type expression_list {[Expression]}
@@ -63,6 +64,7 @@
 %nonterminal_type record_pattern_element {RecordPattern.Element}
 
 %nonterminal_type variable_definition VariableDefinition
+%nonterminal_type function_type_pattern FunctionTypePattern
 
 %nonassociative LEFT_CURLY_BRACE RIGHT_CURLY_BRACE.
 %nonassociative COLON COMMA DBLARROW.
@@ -79,9 +81,9 @@ input ::= declaration_list(d).      { d }
 pattern ::= expression(e).          { .literal(e) }
 pattern ::= tuple_pattern(t).       { .tuple(t) }
 pattern ::= record_pattern(r).      { .record(r) }
-pattern ::= expression(i)
-  LEFT_PARENTHESIS(l) tuple_pattern_element_list(p) RIGHT_PARENTHESIS(r).
-  { .alternative(identity: i, payload: List(p, l...r)) }
+pattern ::= expression(i) trailing_tuple_pattern(p).
+  { .alternative(identity: i, payload: p) }
+pattern ::= function_type_pattern(f). { .functionType(f) }
 
 // identifier is just Identifier without the TokenID
 identifier ::= Identifier(i).
@@ -135,9 +137,10 @@ argument_tuple ::= LEFT_PARENTHESIS(l) RIGHT_PARENTHESIS(r).
 argument_tuple ::= LEFT_PARENTHESIS(l) expression_list(a) RIGHT_PARENTHESIS(r).
   { List(a, l...r) }
 
-type_tuple ::= LEFT_PARENTHESIS(l) RIGHT_PARENTHESIS(r).
+trailing_tuple_literal ::= LEFT_PARENTHESIS(l) RIGHT_PARENTHESIS(r).
   { List([], l...r) }
-type_tuple ::= LEFT_PARENTHESIS(l) expression_list(a) RIGHT_PARENTHESIS(r).
+trailing_tuple_literal
+  ::= LEFT_PARENTHESIS(l) expression_list(a) RIGHT_PARENTHESIS(r).
   { List(a, l...r) }
 
 expression_list ::= expression(e).
@@ -174,7 +177,7 @@ record_pattern_tail ::= record_pattern_element_list(l).
 record_pattern_element ::= member_designator(m) EQUAL binding(b).
    { .binding(fieldName: m, type: b.type, boundName: b.boundName) }
 
-expression ::= FNTY(k) type_tuple(p) return_type(r).
+expression ::= FNTY(k) trailing_tuple_literal(p) return_type(r).
   { .functionType(parameterTypes: p, returnType: r, k...r)}
 member_designator ::= PERIOD(p) identifier(n).
   { MemberDesignator(text: n.text, site: p...n) }
@@ -207,6 +210,9 @@ tuple_pattern
       tuple_pattern_element_list(t) RIGHT_PARENTHESIS(r).
   { TuplePattern([.binding(p)] + t, l...r) }
 
+trailing_tuple_pattern ::=
+  LEFT_PARENTHESIS(l) tuple_pattern_element_list(t) RIGHT_PARENTHESIS(r).
+  { List(t, l...r) }
 tuple_pattern_element_list ::= binding(e).
   { [.binding(e)] }
 tuple_pattern_element_list ::= binding(e) COMMA expression_list(a).
@@ -215,6 +221,21 @@ tuple_pattern_element_list ::= expression(e) COMMA tuple_pattern_element_list(a)
   { [.literal(e)] + a }
 tuple_pattern_element_list ::= binding(e) COMMA tuple_pattern_element_list(a).
   { [.binding(e)] + a }
+
+function_type_pattern ::= FNTY trailing_tuple_pattern(p).
+{
+   FunctionTypePattern(
+     parameters: p, returnType: .literal(.tupleLiteral(List([], .empty))))
+}
+function_type_pattern ::= FNTY trailing_tuple_pattern(p) ARROW expression(r).
+  { FunctionTypePattern(parameters: p, returnType: .literal(r)) }
+function_type_pattern ::= FNTY trailing_tuple_pattern(p) ARROW binding(r).
+  { FunctionTypePattern(parameters: p, returnType: .binding(r)) }
+function_type_pattern ::= FNTY trailing_tuple_literal(p) ARROW binding(r).
+{
+  FunctionTypePattern(
+    parameters: List(p.map { .literal($0) }, p.site), returnType: .binding(r))
+}
 
 match_clause ::= CASE(c) pattern(p) DBLARROW statement(s).
   { MatchClause(pattern: p, action: s, site: c...s) }
@@ -301,7 +322,7 @@ member_list ::= /* Empty */.
   { [] }
 member_list ::= member(m) member_list(l).
   { [m] + l }
-alternative ::= identifier(n) type_tuple(p).
+alternative ::= identifier(n) trailing_tuple_literal(p).
   { Alternative(name: n, payload: p, site: n...p) }
 alternative ::= identifier(n).
   { Alternative(name: n, payload: .init([], .empty), site: n.site) }

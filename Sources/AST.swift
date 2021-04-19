@@ -57,7 +57,8 @@ enum VariableDefinition: AST {
     uninitialized(Binding, Site),
     simple(Binding, initializer: Expression, Site),
     tuplePattern(TuplePattern, initializer: Expression, Site),
-    recordPattern(RecordPattern, initializer: Expression, Site)
+    recordPattern(RecordPattern, initializer: Expression, Site),
+    functionTypePattern(FunctionTypePattern, initializer: Expression, Site)
 
   var site: Site {
     switch self {
@@ -65,6 +66,7 @@ enum VariableDefinition: AST {
     case let .simple(_, initializer: _, r): return r
     case let .tuplePattern(_, initializer: _, r): return r
     case let .recordPattern(_, initializer: _, r): return r
+    case let .functionTypePattern(_, initializer: _, r): return r
     }
   }
 }
@@ -168,6 +170,11 @@ enum TuplePatternElement {
 
 typealias TuplePattern = List<TuplePatternElement>
 
+struct FunctionTypePattern {
+  let parameters: TuplePattern
+  let returnType: TuplePatternElement
+}
+
 enum RecordPatternElement {
   case binding(fieldName: Identifier, type: Expression, boundName: Identifier)
   case literal(fieldName: Identifier, value: Expression)
@@ -225,7 +232,8 @@ enum Pattern {
     literal(Expression),
     tuple(TuplePattern),
     record(RecordPattern),
-    alternative(identity: Expression, payload: TuplePattern)
+    alternative(identity: Expression, payload: TuplePattern),
+    functionType(FunctionTypePattern)
 }
 
 struct StructMemberDeclaration: AST {

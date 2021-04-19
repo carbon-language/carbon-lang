@@ -92,9 +92,7 @@ final class ParserTests: XCTestCase {
         URL(fileURLWithPath: #filePath).deletingLastPathComponent()
         .appendingPathComponent("testdata")
 
-    let tests = ["choice1.6c"]
-    for f in tests /*try! FileManager().contentsOfDirectory(atPath: testdata.path)*/ {
-      print(">>>>>>", f)
+    for f in try! FileManager().contentsOfDirectory(atPath: testdata.path) {
       let p = testdata.appendingPathComponent(f).path
       if f.hasSuffix("_fail.6c") {
         let s = try! String(contentsOfFile: p)
@@ -104,7 +102,6 @@ final class ParserTests: XCTestCase {
         XCTAssertNoThrow(
           try String(contentsOfFile: p).parsedAsCarbon(fromFile: p))
       }
-      print("<<<<<<", f)
     }
   }
 }
