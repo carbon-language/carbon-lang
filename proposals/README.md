@@ -45,5 +45,6 @@ request:
 -   [0253 - 2021 Roadmap](p0253.md)
 -   [0285 - if/else](p0285.md)
 -   [0426 - Governance & evolution revamp](p0426.md)
+-   [0471 - Extending `while` loops with exit-conditional statements](p0471.md)
 
 <!-- endproposals -->
