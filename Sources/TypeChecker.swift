@@ -140,18 +140,12 @@ private extension TypeChecker {
         let (p1, r1) = rhs?.function ?? (nil, nil)
 
         return .function(
-          parameterTypes: mapDeducedType(p0.lazy.map(\.value), p1),
+          parameterTypes: mapDeducedType(p0, p1),
           returnType: evaluateTypeExpression(r0, initializingFrom: r1))
 
       case .tupleLiteral(let t0):
         if rhs != nil && rhs!.tuple == nil { return .error }
-        let types = mapDeducedType(t0.lazy.map(\.value), rhs?.tuple)
-        for (d, t) in zip(t0, types) {
-          if let n = d.name {
-            define(n, .binding(d))
-            declaredType[.binding(d)] = t
-          }
-        }
+        let types = mapDeducedType(t0, rhs?.tuple)
         return .tuple(types)
 
       case .getField, .index, .patternVariable, .integerLiteral,
@@ -231,8 +225,7 @@ private extension TypeChecker {
   
   mutating func visit(_ a: Alternative) {
     define(a.name, .alternative(a))
-    declaredType[.alternative(a)]
-      = .tuple(mapDeducedType(a.payload.map(\.value), nil))
+    declaredType[.alternative(a)] = .tuple(mapDeducedType(a.payload, nil))
   }
 
   mutating func visit(_ s: Statement) {

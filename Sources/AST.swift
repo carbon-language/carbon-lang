@@ -71,7 +71,7 @@ typealias MemberDesignator = Identifier
 
 struct Alternative: AST {
   let name: Identifier;
-  let payload: TupleLiteral
+  let payload: List<Expression>
   let site: Site
 }
 
@@ -157,18 +157,18 @@ indirect enum Expression: AST {
     patternVariable(name: Identifier, type: Expression, Site),
     integerLiteral(Int, Site),
     booleanLiteral(Bool, Site),
-    tupleLiteral(TupleLiteral),
+    tupleLiteral(List<Expression>),
     recordLiteral(RecordLiteral),
     unaryOperator(operation: Token, operand: Expression, Site),
     binaryOperator(operation: Token, lhs: Expression, rhs: Expression, Site),
-    functionCall(callee: Expression, arguments: TupleLiteral, Site),
+    functionCall(callee: Expression, arguments: List<Expression>, Site),
     structInitialization(
       type: Expression, fieldInitializers: RecordLiteral, Site),
     intType(Site),
     boolType(Site),
     typeType(Site),
     autoType(Site),
-    functionType(parameterTypes: TupleLiteral, returnType: Expression, Site)
+    functionType(parameterTypes: List<Expression>, returnType: Expression, Site)
 
   var site: Site {
     switch self {

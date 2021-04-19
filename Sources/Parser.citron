@@ -31,7 +31,7 @@
 %nonterminal_type expression Expression
 %nonterminal_type type_specifier Expression
 %nonterminal_type member_designator MemberDesignator
-%nonterminal_type tuple_literal TupleLiteral
+%nonterminal_type tuple_literal {List<Expression>}
 %nonterminal_type match_clause MatchClause
 %nonterminal_type match_clause_list MatchClauseList
 %nonterminal_type statement Statement
@@ -47,11 +47,11 @@
 %nonterminal_type top_level_declaration TopLevelDeclaration
 %nonterminal_type declaration_list {[TopLevelDeclaration]}
 %nonterminal_type identifier Identifier
-%nonterminal_type argument_tuple TupleLiteral
-%nonterminal_type type_tuple TupleLiteral
+%nonterminal_type argument_tuple {List<Expression>}
+%nonterminal_type type_tuple {List<Expression>}
 %nonterminal_type function_parameter_tuple TupleLiteral
 %nonterminal_type function_parameter_list TupleLiteral
-%nonterminal_type expression_list TupleLiteral
+%nonterminal_type expression_list {[Expression]}
 %nonterminal_type record_literal RecordLiteral
 %nonterminal_type record_literal_element_list {[RecordLiteral.Element]}
 %nonterminal_type record_literal_element {RecordLiteral.Element}
@@ -119,19 +119,19 @@ expression ::= expression(f) record_literal(a).
   { .structInitialization(type: f, fieldInitializers: a, f...a)}
 
 argument_tuple ::= LEFT_PARENTHESIS(l) RIGHT_PARENTHESIS(r).
-  { TupleLiteral([], l...r) }
+  { List([], l...r) }
 argument_tuple ::= LEFT_PARENTHESIS(l) expression_list(a) RIGHT_PARENTHESIS(r).
-  { TupleLiteral(a.elements, l...r) }
+  { List(a, l...r) }
 
 type_tuple ::= LEFT_PARENTHESIS(l) RIGHT_PARENTHESIS(r).
-  { TupleLiteral([], l...r) }
+  { List([], l...r) }
 type_tuple ::= LEFT_PARENTHESIS(l) expression_list(a) RIGHT_PARENTHESIS(r).
-  { TupleLiteral(a.elements, l...r) }
+  { List(a, l...r) }
 
 expression_list ::= expression(e).
-  { TupleLiteral([.init(name: nil, value: e)], e.site) }
+  { [e] }
 expression_list ::= expression(e) COMMA expression_list(a).
-  { TupleLiteral([.init(name: nil, value: e)] + a.elements, e.site) }
+  { [e] + a }
 
 record_literal ::=
   LEFT_PARENTHESIS(l) record_literal_element_list(e) RIGHT_PARENTHESIS(r).
@@ -154,13 +154,13 @@ expression ::= record_literal(r).
 expression ::= tuple_literal(t).
   { .tupleLiteral(t) }
 tuple_literal ::= LEFT_PARENTHESIS(l) RIGHT_PARENTHESIS(r).
-  { TupleLiteral([], l...r) }
+  { List([], l...r) }
 tuple_literal ::= LEFT_PARENTHESIS(l) expression(e) COMMA RIGHT_PARENTHESIS(r).
-  { TupleLiteral([.init(name: nil, value: e)], l...r) }
+  { List([e], l...r) }
 tuple_literal
   ::= LEFT_PARENTHESIS(l) expression(e) COMMA
       expression_list(t) RIGHT_PARENTHESIS(r).
-  { TupleLiteral([.init(name: nil, value: e)] + t.elements, l...r) }
+  { List([e] + t, l...r) }
 
 match_clause ::= CASE(c) pattern(p) DBLARROW statement(s).
   { MatchClause(pattern: p, action: s, site: c...s) }
@@ -201,7 +201,7 @@ statement_list ::= /* Empty */.
 statement_list ::= statement(s) statement_list(l).
   { [s] + l }
 return_type ::= /* Empty */.
-  { .tupleLiteral(TupleLiteral([], .empty)) }
+  { .tupleLiteral(List([], .empty)) }
 return_type ::= ARROW(a) expression(e).
   { e }
 function_definition
