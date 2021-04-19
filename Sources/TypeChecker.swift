@@ -247,6 +247,7 @@ private extension TypeChecker {
       visit(i)
       let t = evaluateTypeExpression(
         p, initializingFrom: expressionType[i])
+      _ = t
 
     case let .if(condition: c, thenClause: then, elseClause: maybeElse, _):
       visit(c)
@@ -268,12 +269,12 @@ private extension TypeChecker {
       if t != r {
         error("Expected return type \(r); got \(t)", at: e.site)
       }
-    case let .sequence(_, _, _): UNIMPLEMENTED
-    case let .block(_, _): UNIMPLEMENTED
-    case let .while(condition: _, body: _, _): UNIMPLEMENTED
-    case let .match(subject: _, clauses: _, _): UNIMPLEMENTED
-    case let .break(r): UNIMPLEMENTED
-    case let .continue(r): UNIMPLEMENTED
+    case /*let*/ .sequence(_, _, _): UNIMPLEMENTED
+    case /*let*/ .block(_, _): UNIMPLEMENTED
+    case /*let*/ .while(condition: _, body: _, _): UNIMPLEMENTED
+    case /*let*/ .match(subject: _, clauses: _, _): UNIMPLEMENTED
+    case /*let*/ .break(_): UNIMPLEMENTED
+    case /*let*/ .continue(_): UNIMPLEMENTED
     }
   }
 
