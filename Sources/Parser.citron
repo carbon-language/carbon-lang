@@ -41,7 +41,6 @@
 %nonterminal_type type_specifier Expression
 %nonterminal_type member_designator MemberDesignator
 %nonterminal_type tuple_literal TupleLiteral
-%nonterminal_type tuple TupleLiteral
 %nonterminal_type field Field
 %nonterminal_type field_list FieldList
 %nonterminal_type match_clause MatchClause
@@ -60,6 +59,9 @@
 %nonterminal_type declaration_list {[TopLevelDeclaration]}
 %nonterminal_type identifier Identifier
 %nonterminal_type argument_tuple TupleLiteral
+%nonterminal_type type_tuple TupleLiteral
+%nonterminal_type function_parameter_tuple TupleLiteral
+%nonterminal_type function_parameter_list TupleLiteral
 %nonterminal_type expression_list TupleLiteral
 %nonterminal_type record_literal TupleLiteral
 %nonterminal_type record_literal_element_list TupleLiteral
@@ -132,6 +134,11 @@ argument_tuple ::= LEFT_PARENTHESIS(l) RIGHT_PARENTHESIS(r).
 argument_tuple ::= LEFT_PARENTHESIS(l) expression_list(a) RIGHT_PARENTHESIS(r).
   { TupleLiteral(a.elements, l...r) }
 
+type_tuple ::= LEFT_PARENTHESIS(l) RIGHT_PARENTHESIS(r).
+  { TupleLiteral([], l...r) }
+type_tuple ::= LEFT_PARENTHESIS(l) expression_list(a) RIGHT_PARENTHESIS(r).
+  { TupleLiteral(a.elements, l...r) }
+
 expression_list ::= expression(e).
   { TupleLiteral([.init(name: nil, value: e)], e.site) }
 expression_list ::= expression(e) COMMA expression_list(a).
@@ -148,7 +155,7 @@ record_literal_element_list ::=
 record_literal_element ::= member_designator(m) EQUAL expression(e).
   { TupleLiteralElement(name: m, value: e) }
 
-expression ::= FNTY(k) tuple(p) return_type(r).
+expression ::= FNTY(k) type_tuple(p) return_type(r).
   { .functionType(parameterTypes: p, returnType: r, k...r)}
 member_designator ::= PERIOD(p) identifier(n).
   { MemberDesignator(text: n.text, site: p...n) }
@@ -164,25 +171,6 @@ tuple_literal ::= LEFT_PARENTHESIS(l) expression(e) COMMA RIGHT_PARENTHESIS(r).
 tuple_literal ::= LEFT_PARENTHESIS(l) expression(e) COMMA expression_list(t) RIGHT_PARENTHESIS(r).
   { TupleLiteral([.init(name: nil, value: e)] + t.elements, l...r) }
 
-tuple ::= LEFT_PARENTHESIS(l) field_list(f) RIGHT_PARENTHESIS(r).
-  { TupleLiteral(f) }
-
-field ::= pattern(p).
-  { Field(first: nil, second: p, site: p.site) }
-
-field ::= member_designator(m) EQUAL pattern(p).
-  { Field(first: m, second: p, site: m...p) }
-
-field_list ::= /* Empty */.
-  { FieldList(fields: [], hasExplicitComma: false, site: .empty) }
-field_list ::= field(f).
-  { FieldList(fields: [f], hasExplicitComma: false, site: f.site) }
-field_list ::= field(f) COMMA(c) field_list(l).
-{
-  FieldList(
-    fields: [f] + l.fields, hasExplicitComma: l.hasExplicitComma,
-    site: l.fields.isEmpty ? f...c : f...l)
-}
 match_clause ::= CASE(c) pattern(p) DBLARROW statement(s).
   { MatchClause(pattern: p, action: s, site: c...s) }
 match_clause ::= DEFAULT(d) DBLARROW statement(s).
@@ -225,7 +213,8 @@ return_type ::= /* Empty */.
   { .tupleLiteral(TupleLiteral([], .empty)) }
 return_type ::= ARROW(a) expression(e).
   { e }
-function_definition ::= FN(f) identifier(n) tuple(p) return_type(t)
+function_definition
+  ::= FN(f) identifier(n) function_parameter_tuple(p) return_type(t)
   LEFT_CURLY_BRACE(l) statement_list(b) RIGHT_CURLY_BRACE(r).
   {
     FunctionDefinition(
@@ -233,19 +222,29 @@ function_definition ::= FN(f) identifier(n) tuple(p) return_type(t)
       body: .block(b, l...r), site: f...r)
   }
 function_definition
-  ::= FN(f) identifier(n) tuple(p) DBLARROW expression(b) SEMICOLON(s).
+  ::= FN(f) identifier(n) function_parameter_tuple(p) DBLARROW expression(b) SEMICOLON(s).
   {
     FunctionDefinition(
       name: n, parameterPattern: p, returnType: .autoType(.empty),
       body: .return(b, b.site), site: f...s)
   }
 function_declaration
-  ::= FN(f) identifier(n) tuple(p) return_type(r) SEMICOLON(s).
+  ::= FN(f) identifier(n) function_parameter_tuple(p) return_type(r) SEMICOLON(s).
   {
     FunctionDefinition(
       name: n, parameterPattern: p, returnType: r,
       body: nil, site: f...s)
   }
+
+function_parameter_tuple ::= LEFT_PARENTHESIS(l) RIGHT_PARENTHESIS(r).
+  { TupleLiteral([], l...r) }
+function_parameter_tuple ::= LEFT_PARENTHESIS(l) function_parameter_list(p) RIGHT_PARENTHESIS(r).
+  { TupleLiteral(p.elements, l...r) }
+function_parameter_list ::= variable_declaration(v).
+  { TupleLiteral([.init(name: v.name, value: v.type)], v.type...v.name) }
+function_parameter_list ::= variable_declaration(v) COMMA function_parameter_list(p).
+  { TupleLiteral([.init(name: v.name, value: v.type)] + p.elements, v.type...p) }
+
 pattern_variable_declaration ::= type_specifier(t) identifier(i).
   { .patternVariable(name: i, type: t, t...i) }
 variable_declaration ::= type_specifier(t) identifier(n).
@@ -256,7 +255,7 @@ member_list ::= /* Empty */.
   { [] }
 member_list ::= member(m) member_list(l).
   { [m] + l }
-alternative ::= identifier(n) tuple(p).
+alternative ::= identifier(n) type_tuple(p).
   { Alternative(name: n, payload: p, site: n...p) }
 alternative ::= identifier(n).
   { Alternative(name: n, payload: .init([], .empty), site: n.site) }
