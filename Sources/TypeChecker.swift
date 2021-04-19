@@ -155,7 +155,8 @@ private extension TypeChecker {
         return .tuple(types)
 
       case .getField, .index, .patternVariable, .integerLiteral,
-           .booleanLiteral, .unaryOperator, .binaryOperator, .functionCall:
+           .booleanLiteral, .unaryOperator, .binaryOperator, .functionCall,
+           .structInitialization, .recordLiteral:
         error("Type expression expected", at: e.site)
         return .error
     }

@@ -147,6 +147,7 @@ struct TupleLiteralElement: Hashable {
   let value: Expression
 }
 typealias TupleLiteral = List<TupleLiteralElement>
+typealias RecordLiteral = List<(name: Identifier, value: Expression)>
 
 indirect enum Expression: AST {
   case
@@ -157,9 +158,12 @@ indirect enum Expression: AST {
     integerLiteral(Int, Site),
     booleanLiteral(Bool, Site),
     tupleLiteral(TupleLiteral),
+    recordLiteral(RecordLiteral),
     unaryOperator(operation: Token, operand: Expression, Site),
     binaryOperator(operation: Token, lhs: Expression, rhs: Expression, Site),
     functionCall(callee: Expression, arguments: TupleLiteral, Site),
+    structInitialization(
+      type: Expression, fieldInitializers: RecordLiteral, Site),
     intType(Site),
     boolType(Site),
     typeType(Site),
@@ -175,9 +179,11 @@ indirect enum Expression: AST {
     case let .integerLiteral(_, r): return r
     case let .booleanLiteral(_, r): return r
     case let .tupleLiteral(t): return t.site
+    case let .recordLiteral(l): return l.site
     case let .unaryOperator(operation: _, operand: _, r): return r
     case let .binaryOperator(operation: _, lhs: _, rhs: _, r): return r
     case let .functionCall(callee: _, arguments: _, r): return r
+    case let .structInitialization(type: _, fieldInitializers: _, r): return r
     case let .intType(r): return r
     case let .boolType(r): return r
     case let .typeType(r): return r

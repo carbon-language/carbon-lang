@@ -63,9 +63,9 @@
 %nonterminal_type function_parameter_tuple TupleLiteral
 %nonterminal_type function_parameter_list TupleLiteral
 %nonterminal_type expression_list TupleLiteral
-%nonterminal_type record_literal TupleLiteral
-%nonterminal_type record_literal_element_list TupleLiteral
-%nonterminal_type record_literal_element TupleLiteralElement
+%nonterminal_type record_literal RecordLiteral
+%nonterminal_type record_literal_element_list {[RecordLiteral.Element]}
+%nonterminal_type record_literal_element {RecordLiteral.Element}
 
 %nonassociative LEFT_CURLY_BRACE RIGHT_CURLY_BRACE.
 %nonassociative COLON COMMA DBLARROW.
@@ -127,7 +127,7 @@ expression ::= MINUS(op) expression(r).
 expression ::= expression(f) argument_tuple(a).
   { .functionCall(callee: f, arguments: a, f...a)}
 expression ::= expression(f) record_literal(a).
-  { .functionCall(callee: f, arguments: a, f...a)}
+  { .structInitialization(type: f, fieldInitializers: a, f...a)}
 
 argument_tuple ::= LEFT_PARENTHESIS(l) RIGHT_PARENTHESIS(r).
   { TupleLiteral([], l...r) }
@@ -146,14 +146,14 @@ expression_list ::= expression(e) COMMA expression_list(a).
 
 record_literal ::=
   LEFT_PARENTHESIS(l) record_literal_element_list(e) RIGHT_PARENTHESIS(r).
-  { TupleLiteral(e.elements, l...r) }
+  { RecordLiteral(e, l...r) }
 record_literal_element_list ::= record_literal_element(e).
-  { TupleLiteral([e], e.name!...e.value) }
+  { [e] }
 record_literal_element_list ::=
   record_literal_element(e) COMMA record_literal_element_list(l).
-  { TupleLiteral([e] + l.elements, e.name!...l) }
+  { [e] + l }
 record_literal_element ::= member_designator(m) EQUAL expression(e).
-  { TupleLiteralElement(name: m, value: e) }
+  { (name: m, value: e) }
 
 expression ::= FNTY(k) type_tuple(p) return_type(r).
   { .functionType(parameterTypes: p, returnType: r, k...r)}
@@ -161,7 +161,7 @@ member_designator ::= PERIOD(p) identifier(n).
   { MemberDesignator(text: n.text, site: p...n) }
 
 expression ::= record_literal(r).
-  { .tupleLiteral(r) }
+  { .recordLiteral(r) }
 expression ::= tuple_literal(t).
   { .tupleLiteral(t) }
 tuple_literal ::= LEFT_PARENTHESIS(l) RIGHT_PARENTHESIS(r).
