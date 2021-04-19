@@ -413,7 +413,15 @@ auto ParseTree::Parser::ParseFunctionSignature() -> bool {
                        has_errors);
       });
 
-  // FIXME: Implement parsing of a return type.
+  auto start_return_type = StartSubtree();
+  if (auto arrow = ConsumeIf(TokenKind::MinusGreater())) {
+    auto return_type = ParseType();
+    AddNode(ParseNodeKind::ReturnType(), *arrow, start_return_type,
+            /*has_error=*/!return_type);
+    if (!return_type) {
+      return false;
+    }
+  }
 
   return params.hasValue();
 }
@@ -478,11 +486,7 @@ auto ParseTree::Parser::ParseFunctionDeclaration() -> Node {
   TokenizedBuffer::Token close_paren =
       tokens.GetMatchedClosingToken(open_paren);
 
-  bool signature_ok = ParseFunctionSignature();
-  assert(*std::prev(position) == close_paren &&
-         "Should have parsed through the close paren, whether successfully "
-         "or with errors.");
-  if (!signature_ok) {
+  if (!ParseFunctionSignature()) {
     // Don't try to parse more of the function declaration, but consume a
     // declaration ending semicolon if found (without going to a new line).
     SkipPastLikelyEnd(function_intro_token, handle_semi_in_error_recovery);
