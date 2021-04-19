@@ -484,6 +484,38 @@ TEST_F(ParseTreeTest, Operators) {
            MatchFileEnd()}));
 }
 
+TEST_F(ParseTreeTest, VariableDeclarations) {
+  TokenizedBuffer tokens = GetTokenizedBuffer(
+      "var Int v = 0;\n"
+      "var Int w;\n"
+      "fn F() {\n"
+      "  var String s = \"hello\";\n"
+      "}");
+  ParseTree tree = ParseTree::Parse(tokens, consumer);
+  EXPECT_FALSE(tree.HasErrors());
+
+  EXPECT_THAT(
+      tree,
+      MatchParseTreeNodes(
+          {MatchVariableDeclaration(MatchNameReference("Int"),
+                                    MatchDeclaredName("v"),
+                                    MatchVariableInitializer(MatchLiteral("0")),
+                                    MatchDeclarationEnd()),
+           MatchVariableDeclaration(MatchNameReference("Int"),
+                                    MatchDeclaredName("w"),
+                                    MatchDeclarationEnd()),
+           MatchFunctionDeclaration(
+               MatchDeclaredName("F"),
+               MatchParameterList(MatchParameterListEnd()),
+               MatchCodeBlock(
+                   MatchVariableDeclaration(
+                       MatchNameReference("String"), MatchDeclaredName("s"),
+                       MatchVariableInitializer(MatchLiteral("\"hello\"")),
+                       MatchDeclarationEnd()),
+                   MatchCodeBlockEnd())),
+           MatchFileEnd()}));
+}
+
 auto GetAndDropLine(llvm::StringRef& s) -> std::string {
   auto newline_offset = s.find_first_of('\n');
   llvm::StringRef line = s.slice(0, newline_offset);

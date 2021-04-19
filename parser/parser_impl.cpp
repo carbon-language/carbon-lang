@@ -48,6 +48,12 @@ struct ExpectedFunctionBodyOrSemi
       "Expected function definition or `;` after function declaration.";
 };
 
+struct ExpectedVariableName : SimpleDiagnostic<ExpectedVariableName> {
+  static constexpr llvm::StringLiteral ShortName = "syntax-error";
+  static constexpr llvm::StringLiteral Message =
+      "Expected variable name after type in `var` declaration.";
+};
+
 struct UnrecognizedDeclaration : SimpleDiagnostic<UnrecognizedDeclaration> {
   static constexpr llvm::StringLiteral ShortName = "syntax-error";
   static constexpr llvm::StringLiteral Message =
@@ -217,14 +223,17 @@ auto ParseTree::Parser::SkipTo(TokenizedBuffer::Token t) -> void {
   assert(position != end && "Skipped past EOF.");
 }
 
-auto ParseTree::Parser::FindNext(TokenKind desired_kind)
+auto ParseTree::Parser::FindNextOf(
+    std::initializer_list<TokenKind> desired_kinds)
     -> llvm::Optional<TokenizedBuffer::Token> {
   auto new_position = position;
   while (true) {
     TokenizedBuffer::Token token = *new_position;
     TokenKind kind = tokens.GetKind(token);
-    if (kind == desired_kind) {
-      return token;
+    for (TokenKind desired_kind : desired_kinds) {
+      if (kind == desired_kind) {
+        return token;
+      }
     }
 
     // Step to the next token at the current bracketing level.
@@ -320,6 +329,10 @@ auto ParseTree::Parser::ParseCodeBlock() -> Node {
   // Loop over all the different possibly nested elements in the code block.
   for (;;) {
     switch (tokens.GetKind(*position)) {
+      case TokenKind::VarKeyword():
+        ParseVariableDeclaration();
+        continue;
+
       default:
         // A statement with no introducer token can only be an expression
         // statement.
@@ -420,6 +433,41 @@ auto ParseTree::Parser::ParseFunctionDeclaration() -> Node {
                  start);
 }
 
+auto ParseTree::Parser::ParseVariableDeclaration() -> Node {
+  // `var` expression identifier [= expression] `;`
+  TokenizedBuffer::Token var_token = Consume(TokenKind::VarKeyword());
+  auto start = StartSubtree();
+
+  auto type = ParseExpression();
+
+  auto name = ConsumeAndAddLeafNodeIf(TokenKind::Identifier(),
+                                      ParseNodeKind::DeclaredName());
+  if (!name) {
+    emitter.EmitError<ExpectedVariableName>(*position);
+    if (auto after_name = FindNextOf({TokenKind::Equal(), TokenKind::Semi()})) {
+      SkipTo(*after_name);
+    }
+  }
+
+  auto start_init = StartSubtree();
+  if (auto equal_token = ConsumeIf(TokenKind::Equal())) {
+    auto init = ParseExpression();
+    AddNode(ParseNodeKind::VariableInitializer(), *equal_token, start_init,
+            /*has_error=*/!init);
+  }
+
+  auto semi = ConsumeAndAddLeafNodeIf(TokenKind::Semi(),
+                                      ParseNodeKind::DeclarationEnd());
+  if (!semi) {
+    SkipPastLikelyEnd(var_token, [&](TokenizedBuffer::Token semi) {
+      return AddLeafNode(ParseNodeKind::DeclarationEnd(), semi);
+    });
+  }
+
+  return AddNode(ParseNodeKind::VariableDeclaration(), var_token, start,
+                 /*has_error=*/!type || !name || !semi);
+}
+
 auto ParseTree::Parser::ParseEmptyDeclaration() -> Node {
   return AddLeafNode(ParseNodeKind::EmptyDeclaration(),
                      Consume(TokenKind::Semi()));
@@ -430,6 +478,8 @@ auto ParseTree::Parser::ParseDeclaration() -> llvm::Optional<Node> {
   switch (tokens.GetKind(t)) {
     case TokenKind::FnKeyword():
       return ParseFunctionDeclaration();
+    case TokenKind::VarKeyword():
+      return ParseVariableDeclaration();
     case TokenKind::Semi():
       return ParseEmptyDeclaration();
     case TokenKind::EndOfFile():
@@ -551,13 +601,12 @@ auto ParseTree::Parser::ParseCallExpression(SubtreeStart start, bool has_errors)
         }
         has_errors = true;
 
-        auto comma_position = FindNext(TokenKind::Comma());
+        auto comma_position = FindNextOf({TokenKind::Comma()});
         if (!comma_position) {
           SkipTo(tokens.GetMatchedClosingToken(open_paren));
           break;
         }
         SkipTo(*comma_position);
-        break;
       }
 
       AddLeafNode(ParseNodeKind::CallExpressionComma(),

@@ -76,11 +76,13 @@ class ParseTree::Parser {
   // returns false.
   auto SkipMatchingGroup() -> bool;
 
-  // Skip forward to the token immediately after the given token.
+  // Skip forward to the given token.
   auto SkipTo(TokenizedBuffer::Token t) -> void;
 
-  // Find the next token of the given kind at the current bracketing level.
-  auto FindNext(TokenKind t) -> llvm::Optional<TokenizedBuffer::Token>;
+  // Find the next token of any of the given kinds at the current bracketing
+  // level.
+  auto FindNextOf(std::initializer_list<TokenKind> desired_kinds)
+      -> llvm::Optional<TokenizedBuffer::Token>;
 
   // Callback used if we find a semicolon when skipping to the end of a
   // declaration or statement.
@@ -122,6 +124,9 @@ class ParseTree::Parser {
   // Parses a function declaration with an optional definition. Returns the
   // function parse node which is based on the `fn` introducer keyword.
   auto ParseFunctionDeclaration() -> Node;
+
+  // Parses a variable declaration with an optional initializer.
+  auto ParseVariableDeclaration() -> Node;
 
   // Parses and returns an empty declaration node from a single semicolon token.
   auto ParseEmptyDeclaration() -> Node;
