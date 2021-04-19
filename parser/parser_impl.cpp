@@ -440,7 +440,7 @@ auto ParseTree::Parser::ParseVariableDeclaration() -> Node {
   TokenizedBuffer::Token var_token = Consume(TokenKind::VarKeyword());
   auto start = StartSubtree();
 
-  auto type = ParseExpression();
+  auto type = ParseType();
 
   auto name = ConsumeAndAddLeafNodeIf(TokenKind::Identifier(),
                                       ParseNodeKind::DeclaredName());
