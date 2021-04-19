@@ -13,15 +13,6 @@
     first.site...last.site
   }
 
-  fileprivate extension TupleLiteral {
-    /// Creates an instance from a (perhaps-too-eagerly parsed) field list.
-    init(_ source: FieldList) {
-      self.init(
-        source.fields.map { .init(name: $0.first, value: $0.second) },
-        source.site)
-    }
-  }
-  
   extension _CitronParserUnexpectedTokenError
     : CustomDebugStringConvertible
   {
@@ -41,8 +32,6 @@
 %nonterminal_type type_specifier Expression
 %nonterminal_type member_designator MemberDesignator
 %nonterminal_type tuple_literal TupleLiteral
-%nonterminal_type field Field
-%nonterminal_type field_list FieldList
 %nonterminal_type match_clause MatchClause
 %nonterminal_type match_clause_list MatchClauseList
 %nonterminal_type statement Statement

@@ -194,18 +194,6 @@ indirect enum Expression: AST {
   }
 };
 
-struct Field: AST {
-  let first: Identifier?
-  let second: Expression
-  let site: Site
-}
-
-struct FieldList: AST {
-  let fields: [Field]
-  let hasExplicitComma: Bool
-  let site: Site
-}
-
 struct StructMemberDeclaration: AST {
   let name: Identifier
   let type: Expression

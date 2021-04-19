@@ -300,14 +300,6 @@ private extension TypeChecker {
     UNIMPLEMENTED
   }
 
-  mutating func visit(_ node: Field) {
-    UNIMPLEMENTED
-  }
-
-  mutating func visit(_ node: FieldList) {
-    UNIMPLEMENTED
-  }
-
   /// Typechecks `m` in the current context.
   mutating func visit(_ m: StructMemberDeclaration) {
     UNIMPLEMENTED
