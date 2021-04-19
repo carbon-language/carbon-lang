@@ -212,19 +212,19 @@ TEST_F(ParseTreeTest, FunctionDeclarationWithReturnType) {
 TEST_F(ParseTreeTest, FunctionDefinitionWithReturnType) {
   TokenizedBuffer tokens = GetTokenizedBuffer(
       "fn foo() -> Int {\n"
-      "  // return 42;\n"
+      "  return 42;\n"
       "}");
   ParseTree tree = ParseTree::Parse(tokens, consumer);
   EXPECT_FALSE(tree.HasErrors());
-  EXPECT_THAT(
-      tree,
-      MatchParseTreeNodes(
-          {MatchFunctionDeclaration(MatchDeclaredName("foo"), MatchParameters(),
-                                    MatchReturnType(MatchNameReference("Int")),
-                                    MatchCodeBlock(
-                                        // TODO: Match a return statement.
-                                        MatchCodeBlockEnd())),
-           MatchFileEnd()}));
+  EXPECT_THAT(tree,
+              MatchParseTreeNodes(
+                  {MatchFunctionDeclaration(
+                       MatchDeclaredName("foo"), MatchParameters(),
+                       MatchReturnType(MatchNameReference("Int")),
+                       MatchCodeBlock(MatchReturnStatement(MatchLiteral("42"),
+                                                           MatchStatementEnd()),
+                                      MatchCodeBlockEnd())),
+                   MatchFileEnd()}));
 }
 
 TEST_F(ParseTreeTest, FunctionDeclarationWithSingleIdentifierParameterList) {
@@ -690,6 +690,35 @@ TEST_F(ParseTreeTest, WhileBreakContinue) {
                                       MatchConditionEnd()),
                        MatchContinueStatement(MatchStatementEnd())),
                    MatchCodeBlockEnd()))),
+           MatchFileEnd()}));
+}
+
+TEST_F(ParseTreeTest, Return) {
+  TokenizedBuffer tokens = GetTokenizedBuffer(
+      "fn F() {\n"
+      "  if (c)\n"
+      "    return;\n"
+      "}\n"
+      "fn G(Int x) -> Int {\n"
+      "  return x;\n"
+      "}");
+  ParseTree tree = ParseTree::Parse(tokens, consumer);
+  EXPECT_FALSE(tree.HasErrors());
+
+  EXPECT_THAT(
+      tree,
+      MatchParseTreeNodes(
+          {MatchFunctionWithBody(MatchIfStatement(
+               MatchCondition(MatchNameReference("c"), MatchConditionEnd()),
+               MatchReturnStatement(MatchStatementEnd()))),
+           MatchFunctionDeclaration(
+               MatchDeclaredName(),
+               MatchParameters(
+                   MatchParameterDeclaration(MatchNameReference("Int"), "x")),
+               MatchReturnType(MatchNameReference("Int")),
+               MatchCodeBlock(MatchReturnStatement(MatchNameReference("x"),
+                                                   MatchStatementEnd()),
+                              MatchCodeBlockEnd())),
            MatchFileEnd()}));
 }
 

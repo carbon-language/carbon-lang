@@ -827,20 +827,30 @@ auto ParseTree::Parser::ParseWhileStatement() -> llvm::Optional<Node> {
                  /*has_errors=*/!cond || !body);
 }
 
-auto ParseTree::Parser::ParseKeywordStatement(ParseNodeKind kind)
+auto ParseTree::Parser::ParseKeywordStatement(ParseNodeKind kind,
+                                              KeywordStatementArgument argument)
     -> llvm::Optional<Node> {
   auto keyword_kind = tokens.GetKind(*position);
   assert(keyword_kind.IsKeyword());
 
   auto start = StartSubtree();
   auto keyword = Consume(keyword_kind);
+
+  bool arg_error = false;
+  if ((argument == KeywordStatementArgument::Optional &&
+       tokens.GetKind(*position) != TokenKind::Semi()) ||
+      argument == KeywordStatementArgument::Mandatory) {
+    arg_error = !ParseExpression();
+  }
+
   auto semi =
       ConsumeAndAddLeafNodeIf(TokenKind::Semi(), ParseNodeKind::StatementEnd());
   if (!semi) {
     emitter.EmitError<ExpectedSemiAfter>(*position,
                                          {.preceding = keyword_kind});
+    // FIXME: Try to skip to a semicolon to recover.
   }
-  return AddNode(kind, keyword, start, /*has_errors=*/!semi);
+  return AddNode(kind, keyword, start, /*has_errors=*/!semi || arg_error);
 }
 
 auto ParseTree::Parser::ParseStatement() -> llvm::Optional<Node> {
@@ -855,10 +865,16 @@ auto ParseTree::Parser::ParseStatement() -> llvm::Optional<Node> {
       return ParseWhileStatement();
 
     case TokenKind::ContinueKeyword():
-      return ParseKeywordStatement(ParseNodeKind::ContinueStatement());
+      return ParseKeywordStatement(ParseNodeKind::ContinueStatement(),
+                                   KeywordStatementArgument::None);
 
     case TokenKind::BreakKeyword():
-      return ParseKeywordStatement(ParseNodeKind::BreakStatement());
+      return ParseKeywordStatement(ParseNodeKind::BreakStatement(),
+                                   KeywordStatementArgument::None);
+
+    case TokenKind::ReturnKeyword():
+      return ParseKeywordStatement(ParseNodeKind::ReturnStatement(),
+                                   KeywordStatementArgument::Optional);
 
     case TokenKind::OpenCurlyBrace():
       return ParseCodeBlock();

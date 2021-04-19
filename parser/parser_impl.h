@@ -199,8 +199,16 @@ class ParseTree::Parser {
   // Parses a while-statement.
   auto ParseWhileStatement() -> llvm::Optional<Node>;
 
+  enum class KeywordStatementArgument {
+    None,
+    Optional,
+    Mandatory,
+  };
+
   // Parses a statement of the form `keyword;` such as `break;` or `continue;`.
-  auto ParseKeywordStatement(ParseNodeKind kind) -> llvm::Optional<Node>;
+  auto ParseKeywordStatement(ParseNodeKind kind,
+                             KeywordStatementArgument argument)
+      -> llvm::Optional<Node>;
 
   // Parses a statement.
   auto ParseStatement() -> llvm::Optional<Node>;

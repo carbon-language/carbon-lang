@@ -38,6 +38,7 @@ CARBON_PARSE_NODE_KIND(Condition)
 CARBON_PARSE_NODE_KIND(ConditionEnd)
 CARBON_PARSE_NODE_KIND(ContinueStatement)
 CARBON_PARSE_NODE_KIND(BreakStatement)
+CARBON_PARSE_NODE_KIND(ReturnStatement)
 CARBON_PARSE_NODE_KIND(StatementEnd)
 
 // Expressions.
