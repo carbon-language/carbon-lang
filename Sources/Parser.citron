@@ -168,7 +168,9 @@ tuple_literal ::= LEFT_PARENTHESIS(l) RIGHT_PARENTHESIS(r).
   { TupleLiteral([], l...r) }
 tuple_literal ::= LEFT_PARENTHESIS(l) expression(e) COMMA RIGHT_PARENTHESIS(r).
   { TupleLiteral([.init(name: nil, value: e)], l...r) }
-tuple_literal ::= LEFT_PARENTHESIS(l) expression(e) COMMA expression_list(t) RIGHT_PARENTHESIS(r).
+tuple_literal
+  ::= LEFT_PARENTHESIS(l) expression(e) COMMA
+      expression_list(t) RIGHT_PARENTHESIS(r).
   { TupleLiteral([.init(name: nil, value: e)] + t.elements, l...r) }
 
 match_clause ::= CASE(c) pattern(p) DBLARROW statement(s).
@@ -222,14 +224,16 @@ function_definition
       body: .block(b, l...r), site: f...r)
   }
 function_definition
-  ::= FN(f) identifier(n) function_parameter_tuple(p) DBLARROW expression(b) SEMICOLON(s).
+  ::= FN(f) identifier(n)
+  function_parameter_tuple(p) DBLARROW expression(b) SEMICOLON(s).
   {
     FunctionDefinition(
       name: n, parameterPattern: p, returnType: .autoType(.empty),
       body: .return(b, b.site), site: f...s)
   }
 function_declaration
-  ::= FN(f) identifier(n) function_parameter_tuple(p) return_type(r) SEMICOLON(s).
+  ::= FN(f) identifier(n)
+  function_parameter_tuple(p) return_type(r) SEMICOLON(s).
   {
     FunctionDefinition(
       name: n, parameterPattern: p, returnType: r,
@@ -238,12 +242,16 @@ function_declaration
 
 function_parameter_tuple ::= LEFT_PARENTHESIS(l) RIGHT_PARENTHESIS(r).
   { TupleLiteral([], l...r) }
-function_parameter_tuple ::= LEFT_PARENTHESIS(l) function_parameter_list(p) RIGHT_PARENTHESIS(r).
+function_parameter_tuple
+  ::= LEFT_PARENTHESIS(l) function_parameter_list(p) RIGHT_PARENTHESIS(r).
   { TupleLiteral(p.elements, l...r) }
 function_parameter_list ::= variable_declaration(v).
   { TupleLiteral([.init(name: v.name, value: v.type)], v.type...v.name) }
-function_parameter_list ::= variable_declaration(v) COMMA function_parameter_list(p).
-  { TupleLiteral([.init(name: v.name, value: v.type)] + p.elements, v.type...p) }
+function_parameter_list
+  ::= variable_declaration(v) COMMA function_parameter_list(p).
+  {
+    TupleLiteral([.init(name: v.name, value: v.type)] + p.elements, v.type...p)
+  }
 
 pattern_variable_declaration ::= type_specifier(t) identifier(i).
   { .patternVariable(name: i, type: t, t...i) }
