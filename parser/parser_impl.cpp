@@ -48,6 +48,12 @@ struct ExpectedVariableName : SimpleDiagnostic<ExpectedVariableName> {
       "Expected variable name after type in `var` declaration.";
 };
 
+struct ExpectedParameterName : SimpleDiagnostic<ExpectedParameterName> {
+  static constexpr llvm::StringLiteral ShortName = "syntax-error";
+  static constexpr llvm::StringLiteral Message =
+      "Expected parameter name after type in parameter declaration.";
+};
+
 struct UnrecognizedDeclaration : SimpleDiagnostic<UnrecognizedDeclaration> {
   static constexpr llvm::StringLiteral ShortName = "syntax-error";
   static constexpr llvm::StringLiteral Message =
@@ -104,11 +110,10 @@ struct ExpectedIdentifierAfterDot
       "Expected identifier after `.`.";
 };
 
-struct UnexpectedTokenInFunctionArgs
-    : SimpleDiagnostic<UnexpectedTokenInFunctionArgs> {
+struct UnexpectedTokenAfterListElement
+    : SimpleDiagnostic<UnexpectedTokenAfterListElement> {
   static constexpr llvm::StringLiteral ShortName = "syntax-error";
-  static constexpr llvm::StringLiteral Message =
-      "Unexpected token in function argument list.";
+  static constexpr llvm::StringLiteral Message = "Expected `,` or `)`.";
 };
 
 struct OperatorRequiresParentheses
@@ -331,19 +336,86 @@ auto ParseTree::Parser::ParseCloseParen(TokenizedBuffer::Token open_paren,
   return llvm::None;
 }
 
-auto ParseTree::Parser::ParseFunctionSignature() -> Node {
+template <typename ListElementParser, typename ListCompletionHandler>
+auto ParseTree::Parser::ParseParenList(ListElementParser list_element_parser,
+                                       ParseNodeKind comma_kind,
+                                       ListCompletionHandler list_handler)
+    -> llvm::Optional<Node> {
+  // `(` element-list[opt] `)`
+  //
+  // element-list ::= element
+  //              ::= element `,` element-list
   TokenizedBuffer::Token open_paren = Consume(TokenKind::OpenParen());
+
+  bool has_errors = false;
+
+  // Parse elements, if any are specified.
+  if (tokens.GetKind(*position) != TokenKind::CloseParen()) {
+    while (true) {
+      bool element_error = !list_element_parser();
+      has_errors |= element_error;
+
+      TokenKind kind = tokens.GetKind(*position);
+      if (kind != TokenKind::CloseParen() && kind != TokenKind::Comma()) {
+        if (!element_error) {
+          emitter.EmitError<UnexpectedTokenAfterListElement>(*position);
+        }
+        has_errors = true;
+
+        auto end_of_element =
+            FindNextOf({TokenKind::Comma(), TokenKind::CloseParen()});
+        // The lexer guarantees that parentheses are balanced.
+        assert(end_of_element && "missing matching `)` for `(`");
+        SkipTo(*end_of_element);
+      }
+
+      if (tokens.GetKind(*position) == TokenKind::CloseParen()) {
+        break;
+      }
+
+      assert(tokens.GetKind(*position) == TokenKind::Comma());
+      AddLeafNode(comma_kind, Consume(TokenKind::Comma()));
+    }
+  }
+
+  return list_handler(open_paren, Consume(TokenKind::CloseParen()), has_errors);
+}
+
+auto ParseTree::Parser::ParseFunctionParameter() -> llvm::Optional<Node> {
+  // A parameter is of the form
+  //   type identifier
   auto start = StartSubtree();
 
-  // FIXME: Add support for parsing parameters.
+  auto type = ParseType();
 
-  auto close_paren =
-      ParseCloseParen(open_paren, ParseNodeKind::ParameterListEnd());
+  // FIXME: We can't use DeclaredName here because we need to use the
+  // identifier token as the root token in the parameter node.
+  auto name = ConsumeIf(TokenKind::Identifier());
+  if (!name) {
+    emitter.EmitError<ExpectedParameterName>(*position);
+    return llvm::None;
+  }
+
+  return AddNode(ParseNodeKind::ParameterDeclaration(), *name, start,
+                 /*has_error=*/!type);
+}
+
+auto ParseTree::Parser::ParseFunctionSignature() -> bool {
+  auto start = StartSubtree();
+
+  auto params = ParseParenList(
+      [&] { return ParseFunctionParameter(); },
+      ParseNodeKind::ParameterListComma(),
+      [&](TokenizedBuffer::Token open_paren, TokenizedBuffer::Token close_paren,
+          bool has_errors) {
+        AddLeafNode(ParseNodeKind::ParameterListEnd(), close_paren);
+        return AddNode(ParseNodeKind::ParameterList(), open_paren, start,
+                       has_errors);
+      });
 
   // FIXME: Implement parsing of a return type.
 
-  return AddNode(ParseNodeKind::ParameterList(), open_paren, start,
-                 /*has_errors=*/!close_paren);
+  return params.hasValue();
 }
 
 auto ParseTree::Parser::ParseCodeBlock() -> Node {
@@ -406,11 +478,11 @@ auto ParseTree::Parser::ParseFunctionDeclaration() -> Node {
   TokenizedBuffer::Token close_paren =
       tokens.GetMatchedClosingToken(open_paren);
 
-  Node signature_n = ParseFunctionSignature();
+  bool signature_ok = ParseFunctionSignature();
   assert(*std::prev(position) == close_paren &&
          "Should have parsed through the close paren, whether successfully "
          "or with errors.");
-  if (tree.node_impls[signature_n.index].has_error) {
+  if (!signature_ok) {
     // Don't try to parse more of the function declaration, but consume a
     // declaration ending semicolon if found (without going to a new line).
     SkipPastLikelyEnd(function_intro_token, handle_semi_in_error_recovery);
@@ -578,41 +650,14 @@ auto ParseTree::Parser::ParseCallExpression(SubtreeStart start, bool has_errors)
   //
   // expression-list ::= expression
   //                 ::= expression `,` expression-list
-  TokenizedBuffer::Token open_paren = Consume(TokenKind::OpenParen());
-
-  // Parse arguments, if any are specified.
-  if (tokens.GetKind(*position) != TokenKind::CloseParen()) {
-    while (true) {
-      bool argument_error = !ParseExpression();
-      has_errors |= argument_error;
-
-      if (tokens.GetKind(*position) == TokenKind::CloseParen()) {
-        break;
-      }
-
-      if (tokens.GetKind(*position) != TokenKind::Comma()) {
-        if (!argument_error) {
-          emitter.EmitError<UnexpectedTokenInFunctionArgs>(*position);
-        }
-        has_errors = true;
-
-        auto comma_position = FindNextOf({TokenKind::Comma()});
-        if (!comma_position) {
-          SkipTo(tokens.GetMatchedClosingToken(open_paren));
-          break;
-        }
-        SkipTo(*comma_position);
-      }
-
-      AddLeafNode(ParseNodeKind::CallExpressionComma(),
-                  Consume(TokenKind::Comma()));
-    }
-  }
-
-  AddLeafNode(ParseNodeKind::CallExpressionEnd(),
-              Consume(TokenKind::CloseParen()));
-  return AddNode(ParseNodeKind::CallExpression(), open_paren, start,
-                 has_errors);
+  return ParseParenList(
+      [&] { return ParseExpression(); }, ParseNodeKind::CallExpressionComma(),
+      [&](TokenizedBuffer::Token open_paren, TokenizedBuffer::Token close_paren,
+          bool has_arg_errors) {
+        AddLeafNode(ParseNodeKind::CallExpressionEnd(), close_paren);
+        return AddNode(ParseNodeKind::CallExpression(), open_paren, start,
+                       has_errors || has_arg_errors);
+      });
 }
 
 auto ParseTree::Parser::ParsePostfixExpression() -> llvm::Optional<Node> {

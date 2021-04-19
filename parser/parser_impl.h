@@ -116,10 +116,20 @@ class ParseTree::Parser {
   auto ParseCloseParen(TokenizedBuffer::Token open_paren, ParseNodeKind kind)
       -> llvm::Optional<Node>;
 
+  // Parses a parenthesized, comma-separated list.
+  template <typename ListElementParser, typename ListCompletionHandler>
+  auto ParseParenList(ListElementParser list_element_parser,
+                      ParseNodeKind comma_kind,
+                      ListCompletionHandler list_handler)
+      -> llvm::Optional<Node>;
+
+  // Parses a single function parameter declaration.
+  auto ParseFunctionParameter() -> llvm::Optional<Node>;
+
   // Parses the signature of the function, consisting of a parameter list and an
   // optional return type. Returns the root node of the signature which must be
   // based on the open parenthesis of the parameter list.
-  auto ParseFunctionSignature() -> Node;
+  auto ParseFunctionSignature() -> bool;
 
   // Parses a block of code: `{ ... }`.
   //
