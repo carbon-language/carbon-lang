@@ -65,6 +65,13 @@ def _parse_args(args=None):
         help="The proposals directory, mainly for testing cross-repository. "
         "Automatically found by default.",
     )
+    parser.add_argument(
+        "--branch-start-point",
+        metavar="BRANCH_START_POINT",
+        default="trunk",
+        type=str,
+        help="The starting point for the new branch.",
+    )
     return parser.parse_args(args=args)
 
 
@@ -165,7 +172,9 @@ def main():
         _exit("ERROR: Cancelled")
 
     # Create a proposal branch.
-    _run([git_bin, "checkout", "-b", branch, "trunk"])
+    _run(
+        [git_bin, "switch", "--create", branch, parsed_args.branch_start_point]
+    )
     _run([git_bin, "push", "-u", "origin", branch])
 
     # Copy template.md to a temp file.
@@ -182,26 +191,17 @@ def main():
             gh_bin,
             "pr",
             "create",
+            "--draft",
             "--label",
-            "WIP,proposal",
+            "proposal",
+            "--project",
+            "Proposals",
+            "--reviewer",
+            "carbon-language/carbon-leads",
             "--title",
             title,
             "--body",
-            "",
-        ]
-    )
-
-    # Add links.
-    _run(
-        [
-            gh_bin,
-            "pr",
-            "comment",
-            str(pr_num),
-            "--repo",
-            "carbon-language/carbon-lang",
-            "--body",
-            _LINK_TEMPLATE % pr_num,
+            "TODO: add summary and links here",
         ]
     )
 

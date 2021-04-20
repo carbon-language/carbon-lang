@@ -27,18 +27,6 @@ auto PatternMatch(const Value* pat, const Value* val, Env,
                   std::list<std::string>*, int) -> std::optional<Env>;
 void HandleValue();
 
-template <class T>
-static auto FindField(const std::string& field,
-                      const std::vector<std::pair<std::string, T>>& inits)
-    -> std::optional<T> {
-  for (const auto& i : inits) {
-    if (i.first == field) {
-      return i.second;
-    }
-  }
-  return std::nullopt;
-}
-
 //
 // Auxiliary Functions
 //
@@ -105,14 +93,6 @@ auto CopyVal(const Value* val, int line_num) -> const Value* {
       return MakeAutoTypeVal();
     case ValKind::ContinuationTV:
       return MakeContinuationTypeVal();
-    case ValKind::TupleTV: {
-      auto new_fields = new VarValues();
-      for (auto& field : *val->u.tuple_type.fields) {
-        auto v = CopyVal(field.second, line_num);
-        new_fields->push_back(make_pair(field.first, v));
-      }
-      return MakeTupleTypeVal(new_fields);
-    }
     case ValKind::StructTV:
     case ValKind::ChoiceTV:
     case ValKind::VarPatV:
@@ -300,7 +280,7 @@ void InitGlobals(std::list<Declaration>* fs) {
 auto ChoiceDeclaration::InitGlobals(Env& globals) const -> void {
   auto alts = new VarValues();
   for (auto kv : alternatives) {
-    auto t = ToType(this->line_num, InterpExp(Env(), kv.second));
+    auto t = InterpExp(Env(), kv.second);
     alts->push_back(make_pair(kv.first, t));
   }
   auto ct = MakeChoiceTypeVal(name, alts);
@@ -315,8 +295,7 @@ auto StructDeclaration::InitGlobals(Env& globals) const -> void {
        ++i) {
     switch ((*i)->tag) {
       case MemberKind::FieldMember: {
-        auto t =
-            ToType(definition.line_num, InterpExp(Env(), (*i)->u.field.type));
+        auto t = InterpExp(Env(), (*i)->u.field.type);
         fields->push_back(make_pair(*(*i)->u.field.name, t));
         break;
       }
@@ -408,7 +387,7 @@ void KillLocals(int line_num, Frame* frame) {
   }
 }
 
-void CreateTuple(Frame* frame, Action* act, Expression* /*exp*/) {
+void CreateTuple(Frame* frame, Action* act, const Expression* /*exp*/) {
   //    { { (v1,...,vn) :: C, E, F} :: S, H}
   // -> { { `(v1,...,vn) :: C, E, F} :: S, H}
   auto elts = new std::vector<std::pair<std::string, Address>>();
@@ -446,7 +425,7 @@ auto PatternMatch(const Value* p, const Value* v, Env values,
             exit(-1);
           }
           for (auto& elt : *p->u.tuple.elts) {
-            auto a = FindField(elt.first, *v->u.tuple.elts);
+            auto a = FindTupleField(elt.first, v);
             if (a == std::nullopt) {
               std::cerr << "runtime error: field " << elt.first << "not in ";
               PrintValue(v, std::cerr);
@@ -530,7 +509,7 @@ void PatternAssignment(const Value* pat, const Value* val, int line_num) {
             exit(-1);
           }
           for (auto& elt : *pat->u.tuple.elts) {
-            auto a = FindField(elt.first, *val->u.tuple.elts);
+            auto a = FindTupleField(elt.first, val);
             if (a == std::nullopt) {
               std::cerr << "runtime error: field " << elt.first << "not in ";
               PrintValue(val, std::cerr);
@@ -587,7 +566,7 @@ void PatternAssignment(const Value* pat, const Value* val, int line_num) {
 void StepLvalue() {
   Frame* frame = state->stack.Top();
   Action* act = frame->todo.Top();
-  Expression* exp = act->u.exp;
+  const Expression* exp = act->u.exp;
   if (tracing_output) {
     std::cout << "--- step lvalue ";
     PrintExp(exp);
@@ -627,7 +606,7 @@ void StepLvalue() {
     case ExpressionKind::Tuple: {
       //    { {(f1=e1,...) :: C, E, F} :: S, H}
       // -> { {e1 :: (f1=[],...) :: C, E, F} :: S, H}
-      Expression* e1 = (*exp->u.tuple.fields)[0].second;
+      const Expression* e1 = (*exp->u.tuple.fields)[0].second;
       frame->todo.Push(MakeLvalAct(e1));
       act->pos++;
       break;
@@ -655,7 +634,7 @@ void StepLvalue() {
 void StepExp() {
   Frame* frame = state->stack.Top();
   Action* act = frame->todo.Top();
-  Expression* exp = act->u.exp;
+  const Expression* exp = act->u.exp;
   if (tracing_output) {
     std::cout << "--- step exp ";
     PrintExp(exp);
@@ -678,7 +657,7 @@ void StepExp() {
       if (exp->u.tuple.fields->size() > 0) {
         //    { {(f1=e1,...) :: C, E, F} :: S, H}
         // -> { {e1 :: (f1=[],...) :: C, E, F} :: S, H}
-        Expression* e1 = (*exp->u.tuple.fields)[0].second;
+        const Expression* e1 = (*exp->u.tuple.fields)[0].second;
         frame->todo.Push(MakeExpAct(e1));
         act->pos++;
       } else {
@@ -809,7 +788,7 @@ auto IsBlockAct(Action* act) -> bool {
 void StepStmt() {
   Frame* frame = state->stack.Top();
   Action* act = frame->todo.Top();
-  Statement* const stmt = act->u.stmt;
+  const Statement* stmt = act->u.stmt;
   assert(stmt != nullptr && "null statement!");
   if (tracing_output) {
     std::cout << "--- step stmt ";
@@ -954,7 +933,7 @@ auto GetMember(Address a, const std::string& f) -> Address {
   const Value* v = state->heap[a];
   switch (v->tag) {
     case ValKind::StructV: {
-      auto a = FindField(f, *v->u.struct_val.inits->u.tuple.elts);
+      auto a = FindTupleField(f, v->u.struct_val.inits);
       if (a == std::nullopt) {
         std::cerr << "runtime error, member " << f << " not in ";
         PrintValue(v, std::cerr);
@@ -964,7 +943,7 @@ auto GetMember(Address a, const std::string& f) -> Address {
       return *a;
     }
     case ValKind::TupleV: {
-      auto a = FindField(f, *v->u.tuple.elts);
+      auto a = FindTupleField(f, v);
       if (a == std::nullopt) {
         std::cerr << "field " << f << " not in ";
         PrintValue(v, std::cerr);
@@ -1048,7 +1027,7 @@ void HandleValue() {
       break;
     }
     case ActionKind::LValAction: {
-      Expression* exp = act->u.exp;
+      const Expression* exp = act->u.exp;
       switch (exp->tag) {
         case ExpressionKind::GetField: {
           //    { v :: [].f :: C, E, F} :: S, H}
@@ -1069,7 +1048,7 @@ void HandleValue() {
             // -> { { &v[i] :: C, E, F} :: S, H }
             const Value* tuple = act->results[0];
             std::string f = std::to_string(ToInteger(act->results[1]));
-            auto a = FindField(f, *tuple->u.tuple.elts);
+            auto a = FindTupleField(f, tuple);
             if (a == std::nullopt) {
               std::cerr << "runtime error: field " << f << "not in ";
               PrintValue(tuple, std::cerr);
@@ -1087,7 +1066,7 @@ void HandleValue() {
             //    H}
             // -> { { ek+1 :: (f1=v1,..., fk=vk, fk+1=[],...) :: C, E, F} :: S,
             // H}
-            Expression* elt = (*exp->u.tuple.fields)[act->pos].second;
+            const Expression* elt = (*exp->u.tuple.fields)[act->pos].second;
             frame->todo.Pop(1);
             frame->todo.Push(MakeLvalAct(elt));
           } else {
@@ -1104,7 +1083,7 @@ void HandleValue() {
       break;
     }
     case ActionKind::ExpressionAction: {
-      Expression* exp = act->u.exp;
+      const Expression* exp = act->u.exp;
       switch (exp->tag) {
         case ExpressionKind::PatternVariable: {
           auto v =
@@ -1119,7 +1098,7 @@ void HandleValue() {
             //    H}
             // -> { { ek+1 :: (f1=v1,..., fk=vk, fk+1=[],...) :: C, E, F} :: S,
             // H}
-            Expression* elt = (*exp->u.tuple.fields)[act->pos].second;
+            const Expression* elt = (*exp->u.tuple.fields)[act->pos].second;
             frame->todo.Pop(1);
             frame->todo.Push(MakeExpAct(elt));
           } else {
@@ -1139,7 +1118,7 @@ void HandleValue() {
                 //    { { v :: [][i] :: C, E, F} :: S, H}
                 // -> { { v_i :: C, E, F} : S, H}
                 std::string f = std::to_string(ToInteger(act->results[1]));
-                auto a = FindField(f, *tuple->u.tuple.elts);
+                auto a = FindTupleField(f, tuple);
                 if (a == std::nullopt) {
                   std::cerr << "runtime error, field " << f << " not in ";
                   PrintValue(tuple, std::cerr);
@@ -1174,7 +1153,7 @@ void HandleValue() {
               static_cast<int>(exp->u.primitive_op.arguments->size())) {
             //    { {v :: op(vs,[],e,es) :: C, E, F} :: S, H}
             // -> { {e :: op(vs,v,[],es) :: C, E, F} :: S, H}
-            Expression* arg = (*exp->u.primitive_op.arguments)[act->pos];
+            const Expression* arg = (*exp->u.primitive_op.arguments)[act->pos];
             frame->todo.Pop(1);
             frame->todo.Push(MakeExpAct(arg));
           } else {
@@ -1235,7 +1214,7 @@ void HandleValue() {
       break;
     }
     case ActionKind::StatementAction: {
-      Statement* stmt = act->u.stmt;
+      const Statement* stmt = act->u.stmt;
       switch (stmt->tag) {
         case StatementKind::ExpressionStatement:
           frame->todo.Pop(2);
@@ -1349,7 +1328,8 @@ void HandleValue() {
             if (matches) {  // we have a match, start the body
               auto* new_scope = new Scope(*matches, vars);
               frame->scopes.Push(new_scope);
-              Statement* body_block = MakeBlock(stmt->line_num, c->second);
+              const Statement* body_block =
+                  MakeBlock(stmt->line_num, c->second);
               Action* body_act = MakeStmtAct(body_block);
               body_act->pos = 0;
               frame->todo.Pop(2);
@@ -1461,9 +1441,9 @@ auto InterpProgram(std::list<Declaration>* fs) -> int {
   }
   InitGlobals(fs);
 
-  Expression* arg =
-      MakeTuple(0, new std::vector<std::pair<std::string, Expression*>>());
-  Expression* call_main = MakeCall(0, MakeVar(0, "main"), arg);
+  const Expression* arg = MakeTuple(
+      0, new std::vector<std::pair<std::string, const Expression*>>());
+  const Expression* call_main = MakeCall(0, MakeVar(0, "main"), arg);
   auto todo = Stack(MakeExpAct(call_main));
   auto* scope = new Scope(globals, std::list<std::string>());
   auto* frame = new Frame("top", Stack(scope), todo);
@@ -1487,7 +1467,7 @@ auto InterpProgram(std::list<Declaration>* fs) -> int {
 }
 
 // Interpret an expression at compile-time.
-auto InterpExp(Env values, Expression* e) -> const Value* {
+auto InterpExp(Env values, const Expression* e) -> const Value* {
   auto todo = Stack(MakeExpAct(e));
   auto* scope = new Scope(values, std::list<std::string>());
   auto* frame = new Frame("InterpExp", Stack(scope), todo);

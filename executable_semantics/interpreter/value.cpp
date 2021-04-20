@@ -4,6 +4,7 @@
 
 #include "executable_semantics/interpreter/value.h"
 
+#include <cassert>
 #include <iostream>
 
 #include "executable_semantics/interpreter/interpreter.h"
@@ -37,6 +38,17 @@ auto FieldsEqual(VarValues* ts1, VarValues* ts2) -> bool {
   }
 }
 
+auto FindTupleField(const std::string& name, const Value* tuple)
+    -> std::optional<Address> {
+  assert(tuple->tag == ValKind::TupleV);
+  for (const auto& i : *tuple->u.tuple.elts) {
+    if (i.first == name) {
+      return i.second;
+    }
+  }
+  return std::nullopt;
+}
+
 auto MakeIntVal(int i) -> const Value* {
   auto* v = new Value();
   v->tag = ValKind::IntV;
@@ -51,7 +63,7 @@ auto MakeBoolVal(bool b) -> const Value* {
   return v;
 }
 
-auto MakeFunVal(std::string name, const Value* param, Statement* body)
+auto MakeFunVal(std::string name, const Value* param, const Statement* body)
     -> const Value* {
   auto* v = new Value();
   v->tag = ValKind::FunV;
@@ -183,17 +195,10 @@ auto MakeStructTypeVal(std::string name, VarValues* fields, VarValues* methods)
   return v;
 }
 
-auto MakeTupleTypeVal(VarValues* fields) -> const Value* {
-  auto* v = new Value();
-  v->tag = ValKind::TupleTV;
-  v->u.tuple_type.fields = fields;
-  return v;
-}
-
 auto MakeVoidTypeVal() -> const Value* {
   auto* v = new Value();
-  v->tag = ValKind::TupleTV;
-  v->u.tuple_type.fields = new VarValues();
+  v->tag = ValKind::TupleV;
+  v->u.tuple.elts = new std::vector<std::pair<std::string, Address>>();
   return v;
 }
 
@@ -288,22 +293,6 @@ void PrintValue(const Value* val, std::ostream& out) {
     case ValKind::VarTV:
       out << *val->u.var_type;
       break;
-    case ValKind::TupleTV: {
-      out << "Tuple(";
-      bool add_commas = false;
-      for (const auto& elt : *val->u.tuple_type.fields) {
-        if (add_commas) {
-          out << ", ";
-        } else {
-          add_commas = true;
-        }
-
-        out << elt.first << " = ";
-        PrintValue(elt.second, out);
-      }
-      out << ")";
-      break;
-    }
     case ValKind::StructTV:
       out << "struct " << *val->u.struct_type.name;
       break;
@@ -337,32 +326,31 @@ auto TypeEqual(const Value* t1, const Value* t2) -> bool {
       return *t1->u.struct_type.name == *t2->u.struct_type.name;
     case ValKind::ChoiceTV:
       return *t1->u.choice_type.name == *t2->u.choice_type.name;
-    case ValKind::TupleTV:
-      return FieldsEqual(t1->u.tuple_type.fields, t2->u.tuple_type.fields);
+    case ValKind::TupleV: {
+      if (t1->u.tuple.elts->size() != t2->u.tuple.elts->size()) {
+        return false;
+      }
+      for (size_t i = 0; i < t1->u.tuple.elts->size(); ++i) {
+        std::optional<Address> t2_field =
+            FindTupleField((*t1->u.tuple.elts)[i].first, t2);
+        if (t2_field == std::nullopt) {
+          return false;
+        }
+        if (!TypeEqual(state->heap[(*t1->u.tuple.elts)[i].second],
+                       state->heap[*t2_field])) {
+          return false;
+        }
+      }
+      return true;
+    }
     case ValKind::IntTV:
     case ValKind::BoolTV:
     case ValKind::ContinuationTV:
       return true;
     default:
-      return false;
+      std::cerr << "TypeEqual used to compare non-type values" << std::endl;
+      exit(-1);
   }
-}
-
-static auto FieldsValueEqual(VarValues* ts1, VarValues* ts2, int line_num)
-    -> bool {
-  if (ts1->size() != ts2->size()) {
-    return false;
-  }
-  for (auto& iter1 : *ts1) {
-    auto t2 = FindInVarValues(iter1.first, ts2);
-    if (t2 == nullptr) {
-      return false;
-    }
-    if (!ValueEqual(iter1.second, t2, line_num)) {
-      return false;
-    }
-  }
-  return true;
 }
 
 auto ValueEqual(const Value* v1, const Value* v2, int line_num) -> bool {
@@ -380,11 +368,26 @@ auto ValueEqual(const Value* v1, const Value* v2, int line_num) -> bool {
       return v1->u.ptr == v2->u.ptr;
     case ValKind::FunV:
       return v1->u.fun.body == v2->u.fun.body;
-    case ValKind::TupleV:
-      return FieldsValueEqual(v1->u.tuple_type.fields, v2->u.tuple_type.fields,
-                              line_num);
-    default:
+    case ValKind::VarTV:
+    case ValKind::IntTV:
+    case ValKind::BoolTV:
+    case ValKind::TypeTV:
+    case ValKind::FunctionTV:
+    case ValKind::PointerTV:
+    case ValKind::AutoTV:
+    case ValKind::StructTV:
+    case ValKind::ChoiceTV:
+    case ValKind::ContinuationTV:
       return TypeEqual(v1, v2);
+    case ValKind::TupleV:
+    case ValKind::StructV:
+    case ValKind::AltV:
+    case ValKind::VarPatV:
+    case ValKind::AltConsV:
+    case ValKind::ContinuationV:
+      std::cerr << "ValueEqual does not support this kind of value."
+                << std::endl;
+      exit(-1);
   }
 }
 
