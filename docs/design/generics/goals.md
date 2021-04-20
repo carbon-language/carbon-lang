@@ -118,8 +118,10 @@ object-oriented language support. For the moment, this is out of scope.
 The entire idea of statically typed languages is that coding against specific
 types and interfaces is a better model and experience. Unfortunately, templates
 don't provide many of those benefits to programmers until it's too late, when
-users are consuming the API. And templates come with high overhead, such as
-[template error messages](#better-compiler-experience). Generally, code should
+users are consuming the API. Templates also come with high overhead, such as
+[template error messages](#better-compiler-experience).
+
+We want Carbon code to
 move towards more rigorously type checked constructs. However, existing C++ code
 is full of unrestricted usage of compile-time duck-typed templates. They are
 incredibly convenient to write and so likely will continue to exist for a long
