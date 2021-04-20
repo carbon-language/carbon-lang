@@ -8,28 +8,28 @@
 
 namespace Carbon {
 
-auto MakeTypeType(int line_num) -> Expression* {
+auto MakeTypeType(int line_num) -> const Expression* {
   auto* t = new Expression();
   t->tag = ExpressionKind::TypeT;
   t->line_num = line_num;
   return t;
 }
 
-auto MakeIntType(int line_num) -> Expression* {
+auto MakeIntType(int line_num) -> const Expression* {
   auto* t = new Expression();
   t->tag = ExpressionKind::IntT;
   t->line_num = line_num;
   return t;
 }
 
-auto MakeBoolType(int line_num) -> Expression* {
+auto MakeBoolType(int line_num) -> const Expression* {
   auto* t = new Expression();
   t->tag = ExpressionKind::BoolT;
   t->line_num = line_num;
   return t;
 }
 
-auto MakeAutoType(int line_num) -> Expression* {
+auto MakeAutoType(int line_num) -> const Expression* {
   auto* t = new Expression();
   t->tag = ExpressionKind::AutoT;
   t->line_num = line_num;
@@ -37,15 +37,15 @@ auto MakeAutoType(int line_num) -> Expression* {
 }
 
 // Returns a Continuation type AST node at the given source location.
-auto MakeContinuationType(int line_num) -> Expression* {
+auto MakeContinuationType(int line_num) -> const Expression* {
   auto* type = new Expression();
   type->tag = ExpressionKind::ContinuationT;
   type->line_num = line_num;
   return type;
 }
 
-auto MakeFunType(int line_num, Expression* param, Expression* ret)
-    -> Expression* {
+auto MakeFunType(int line_num, const Expression* param, const Expression* ret)
+    -> const Expression* {
   auto* t = new Expression();
   t->tag = ExpressionKind::FunctionT;
   t->line_num = line_num;
@@ -54,7 +54,7 @@ auto MakeFunType(int line_num, Expression* param, Expression* ret)
   return t;
 }
 
-auto MakeVar(int line_num, std::string var) -> Expression* {
+auto MakeVar(int line_num, std::string var) -> const Expression* {
   auto* v = new Expression();
   v->line_num = line_num;
   v->tag = ExpressionKind::Variable;
@@ -62,8 +62,8 @@ auto MakeVar(int line_num, std::string var) -> Expression* {
   return v;
 }
 
-auto MakeVarPat(int line_num, std::string var, Expression* type)
-    -> Expression* {
+auto MakeVarPat(int line_num, std::string var, const Expression* type)
+    -> const Expression* {
   auto* v = new Expression();
   v->line_num = line_num;
   v->tag = ExpressionKind::PatternVariable;
@@ -72,7 +72,7 @@ auto MakeVarPat(int line_num, std::string var, Expression* type)
   return v;
 }
 
-auto MakeInt(int line_num, int i) -> Expression* {
+auto MakeInt(int line_num, int i) -> const Expression* {
   auto* e = new Expression();
   e->line_num = line_num;
   e->tag = ExpressionKind::Integer;
@@ -80,7 +80,7 @@ auto MakeInt(int line_num, int i) -> Expression* {
   return e;
 }
 
-auto MakeBool(int line_num, bool b) -> Expression* {
+auto MakeBool(int line_num, bool b) -> const Expression* {
   auto* e = new Expression();
   e->line_num = line_num;
   e->tag = ExpressionKind::Boolean;
@@ -88,8 +88,8 @@ auto MakeBool(int line_num, bool b) -> Expression* {
   return e;
 }
 
-auto MakeOp(int line_num, enum Operator op, std::vector<Expression*>* args)
-    -> Expression* {
+auto MakeOp(int line_num, enum Operator op,
+            std::vector<const Expression*>* args) -> const Expression* {
   auto* e = new Expression();
   e->line_num = line_num;
   e->tag = ExpressionKind::PrimitiveOp;
@@ -98,31 +98,33 @@ auto MakeOp(int line_num, enum Operator op, std::vector<Expression*>* args)
   return e;
 }
 
-auto MakeUnOp(int line_num, enum Operator op, Expression* arg) -> Expression* {
+auto MakeUnOp(int line_num, enum Operator op, const Expression* arg)
+    -> const Expression* {
   auto* e = new Expression();
   e->line_num = line_num;
   e->tag = ExpressionKind::PrimitiveOp;
   e->u.primitive_op.op = op;
-  auto* args = new std::vector<Expression*>();
+  auto* args = new std::vector<const Expression*>();
   args->push_back(arg);
   e->u.primitive_op.arguments = args;
   return e;
 }
 
-auto MakeBinOp(int line_num, enum Operator op, Expression* arg1,
-               Expression* arg2) -> Expression* {
+auto MakeBinOp(int line_num, enum Operator op, const Expression* arg1,
+               const Expression* arg2) -> const Expression* {
   auto* e = new Expression();
   e->line_num = line_num;
   e->tag = ExpressionKind::PrimitiveOp;
   e->u.primitive_op.op = op;
-  auto* args = new std::vector<Expression*>();
+  auto* args = new std::vector<const Expression*>();
   args->push_back(arg1);
   args->push_back(arg2);
   e->u.primitive_op.arguments = args;
   return e;
 }
 
-auto MakeCall(int line_num, Expression* fun, Expression* arg) -> Expression* {
+auto MakeCall(int line_num, const Expression* fun, const Expression* arg)
+    -> const Expression* {
   auto* e = new Expression();
   e->line_num = line_num;
   e->tag = ExpressionKind::Call;
@@ -131,8 +133,8 @@ auto MakeCall(int line_num, Expression* fun, Expression* arg) -> Expression* {
   return e;
 }
 
-auto MakeGetField(int line_num, Expression* exp, std::string field)
-    -> Expression* {
+auto MakeGetField(int line_num, const Expression* exp, std::string field)
+    -> const Expression* {
   auto* e = new Expression();
   e->line_num = line_num;
   e->tag = ExpressionKind::GetField;
@@ -142,8 +144,8 @@ auto MakeGetField(int line_num, Expression* exp, std::string field)
 }
 
 auto MakeTuple(int line_num,
-               std::vector<std::pair<std::string, Expression*>>* args)
-    -> Expression* {
+               std::vector<std::pair<std::string, const Expression*>>* args)
+    -> const Expression* {
   auto* e = new Expression();
   e->line_num = line_num;
   e->tag = ExpressionKind::Tuple;
@@ -161,16 +163,17 @@ auto MakeTuple(int line_num,
 // Create an AST node for an empty tuple.
 // TODO(geoffromer): remove this and rewrite its callers to use
 // `MakeTuple(line_num, {})`, once that works.
-auto MakeUnit(int line_num) -> Expression* {
+auto MakeUnit(int line_num) -> const Expression* {
   auto* unit = new Expression();
   unit->line_num = line_num;
   unit->tag = ExpressionKind::Tuple;
-  auto* args = new std::vector<std::pair<std::string, Expression*>>();
+  auto* args = new std::vector<std::pair<std::string, const Expression*>>();
   unit->u.tuple.fields = args;
   return unit;
 }
 
-auto MakeIndex(int line_num, Expression* exp, Expression* i) -> Expression* {
+auto MakeIndex(int line_num, const Expression* exp, const Expression* i)
+    -> const Expression* {
   auto* e = new Expression();
   e->line_num = line_num;
   e->tag = ExpressionKind::Index;
@@ -206,7 +209,7 @@ static void PrintOp(Operator op) {
 }
 
 static void PrintFields(
-    std::vector<std::pair<std::string, Expression*>>* fields) {
+    std::vector<std::pair<std::string, const Expression*>>* fields) {
   int i = 0;
   for (auto iter = fields->begin(); iter != fields->end(); ++iter, ++i) {
     if (i != 0) {

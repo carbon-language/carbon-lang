@@ -63,7 +63,7 @@ auto MakeBoolVal(bool b) -> const Value* {
   return v;
 }
 
-auto MakeFunVal(std::string name, const Value* param, Statement* body)
+auto MakeFunVal(std::string name, const Value* param, const Statement* body)
     -> const Value* {
   auto* v = new Value();
   v->tag = ValKind::FunV;

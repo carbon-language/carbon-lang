@@ -61,7 +61,7 @@ struct Value {
     struct {
       std::string* name;
       const Value* param;
-      Statement* body;
+      const Statement* body;
     } fun;
 
     struct {
@@ -129,7 +129,7 @@ struct Value {
 auto MakeContinuation(std::vector<Frame*> stack) -> Value*;
 auto MakeIntVal(int i) -> const Value*;
 auto MakeBoolVal(bool b) -> const Value*;
-auto MakeFunVal(std::string name, const Value* param, Statement* body)
+auto MakeFunVal(std::string name, const Value* param, const Statement* body)
     -> const Value*;
 auto MakePtrVal(Address addr) -> const Value*;
 auto MakeStructVal(const Value* type, const Value* inits) -> const Value*;
