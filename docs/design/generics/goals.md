@@ -237,7 +237,11 @@ on `T` such that `Abs` has signature `T -> T`.
 
 For any real-world C++ template, there shall be an idiomatic reformulation in
 Carbon generics that has equal or better performance.
-[Performance is the top priority for Carbon](../../project/goals.md#performance-critical-software),
+
+[Performance is the top priority for Carbon RELATIVE](../../project/goals.md#performance-critical-software),
+
+[Performance is the top priority for Carbon ABSOLUTE](/docs/project/goals.md#performance-critical-software),
+
 and we expect to use generics pervasively, and so they can't compromise that
 goal in release builds.
 
