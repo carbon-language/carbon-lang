@@ -357,13 +357,13 @@ static auto FieldsValueEqual(VarAddresses* ts1, VarAddresses* ts2, int line_num)
     return false;
   }
   for (const auto& [name, address] : *ts1) {
-    auto iter = std::find_if(ts2->begin(), ts2->end(), [=](const auto& p) {
-      return p.first == name;
-    });
+    auto iter =
+        std::find_if(ts2->begin(), ts2->end(),
+                     [name = name](const auto& p) { return p.first == name; });
     if (iter == ts2->end()) {
       return false;
     }
-    if (!ValueEqual(state->heap[address], state->heap[iter2->second],
+    if (!ValueEqual(state->heap[address], state->heap[iter->second],
                     line_num)) {
       return false;
     }
