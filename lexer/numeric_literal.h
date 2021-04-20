@@ -6,6 +6,7 @@
 #define LEXER_NUMERIC_LITERAL_H_
 
 #include <utility>
+#include <variant>
 
 #include "diagnostics/diagnostic_emitter.h"
 #include "llvm/ADT/APInt.h"
@@ -26,10 +27,34 @@ class LexedNumericLiteral {
   static auto Lex(llvm::StringRef source_text)
       -> llvm::Optional<LexedNumericLiteral>;
 
-  class Parser;
+  // Value of an integer literal.
+  struct IntegerValue {
+    // An unsigned literal value.
+    llvm::APInt value;
+  };
+
+  // Value of a real literal.
+  struct RealValue {
+    // The radix of the exponent, either 2 or 10.
+    int radix;
+    // The mantissa, represented as a variable-width unsigned integer.
+    llvm::APInt mantissa;
+    // The exponent, represented as a variable-width signed integer..
+    llvm::APInt exponent;
+  };
+
+  struct UnrecoverableError {};
+
+  using Value = std::variant<IntegerValue, RealValue, UnrecoverableError>;
+
+  // Compute the value of the token, if possible. Emit diagnostics to the given
+  // emitter if the token is not valid.
+  auto ComputeValue(DiagnosticEmitter<const char*>& emitter) const -> Value;
 
  private:
   LexedNumericLiteral() {}
+
+  class Parser;
 
   // The text of the token.
   llvm::StringRef text;
@@ -43,85 +68,6 @@ class LexedNumericLiteral {
   // letter in the invalid token. Always greater than or equal to radix_point.
   // Set to text.size() if none is present.
   int exponent;
-};
-
-// Parser for numeric literal tokens.
-//
-// Responsible for checking that a numeric literal is valid and meaningful and
-// either diagnosing or extracting its meaning.
-class LexedNumericLiteral::Parser {
- public:
-  Parser(DiagnosticEmitter<const char*>& emitter, LexedNumericLiteral literal);
-
-  auto IsInteger() -> bool {
-    return literal.radix_point == static_cast<int>(literal.text.size());
-  }
-
-  enum CheckResult {
-    // The token is valid.
-    Valid,
-    // The token is invalid, but we've diagnosed and recovered from the error.
-    RecoverableError,
-    // The token is invalid, and we've diagnosed, but we can't assign meaning
-    // to it.
-    UnrecoverableError,
-  };
-
-  // Check that the numeric literal token is syntactically valid and
-  // meaningful, and diagnose if not.
-  auto Check() -> CheckResult;
-
-  // Get the radix of this token. One of 2, 10, or 16.
-  auto GetRadix() -> int { return radix; }
-
-  // Get the mantissa of this token's value.
-  auto GetMantissa() -> llvm::APInt;
-
-  // Get the exponent of this token's value. This is always zero for an integer
-  // literal.
-  auto GetExponent() -> llvm::APInt;
-
- private:
-  struct CheckDigitSequenceResult {
-    bool ok;
-    bool has_digit_separators = false;
-  };
-
-  auto CheckDigitSequence(llvm::StringRef text, int radix,
-                          bool allow_digit_separators = true)
-      -> CheckDigitSequenceResult;
-  auto CheckDigitSeparatorPlacement(llvm::StringRef text, int radix,
-                                    int num_digit_separators) -> void;
-  auto CheckLeadingZero() -> bool;
-  auto CheckIntPart() -> bool;
-  auto CheckFractionalPart() -> bool;
-  auto CheckExponentPart() -> bool;
-
- private:
-  DiagnosticEmitter<const char*>& emitter;
-  LexedNumericLiteral literal;
-
-  // The radix of the literal: 2, 10, or 16, for a prefix of '0b', no prefix,
-  // or '0x', respectively.
-  int radix = 10;
-
-  // The various components of a numeric literal:
-  //
-  //     [radix] int_part [. fract_part [[ep] [+-] exponent_part]]
-  llvm::StringRef int_part;
-  llvm::StringRef fract_part;
-  llvm::StringRef exponent_part;
-
-  // Do we need to remove any special characters (digit separator or radix
-  // point) before interpreting the mantissa or exponent as an integer?
-  bool mantissa_needs_cleaning = false;
-  bool exponent_needs_cleaning = false;
-
-  // True if we found a `-` before `exponent_part`.
-  bool exponent_is_negative = false;
-
-  // True if we produced an error but recovered.
-  bool recovered_from_error = false;
 };
 
 }  // namespace Carbon

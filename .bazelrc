@@ -5,9 +5,35 @@
 build --crosstool_top=@bazel_cc_toolchain
 build --host_crosstool_top=@bazel_cc_toolchain
 
+# Allow the toolchain to configure itself differently in the host build from
+# the target build. Even when the host and target platforms are ostensibly the
+# same (and use identical toolchains), it is beneficial to be able to configure
+# the specific toolchain features enabled for the target separately from the
+# host. For example, sanitizers make sense for the target significantly more
+# than for the host.
+#
+# Bazel bug tracking undoing the default here:
+# https://github.com/bazelbuild/bazel/issues/13315
+build --incompatible_dont_enable_host_nonhost_crosstool_features=false
+
+# Completely disable Bazel's automatic stripping of debug information. Removing
+# that information causes unhelpful backtraces from unittest failures and other
+# crashes. Optimized builds already avoid using debug information by default.
+build --strip=never
+
 build:force_local_bootstrap --repo_env=CARBON_FORCE_LOCAL_BOOTSTRAP_BUILD=1
 
+# Configuration for enabling Address Sanitizer. Note that this is enabled by
+# default for fastbuild. The config is provided to enable ASan even in
+# optimized or other build configurations.
+build:asan --features=asan
+
+# Configuration for enabling LibFuzzer (along with ASan).
 build:fuzzer --features=fuzzer
+
+# Always allow tests to symbolize themselves with whatever `llvm-symbolize` is
+# in the users environment.
+test --test_env=ASAN_SYMBOLIZER_PATH
 
 # Force actions to have a UTF-8 language encoding.
 # TODO: Need to investigate what this should be on Windows, but at least for

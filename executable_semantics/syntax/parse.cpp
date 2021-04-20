@@ -29,7 +29,11 @@ auto parse(const std::string& input_file_name)
   std::optional<AST> parsed_input = std::nullopt;
   ParseAndLexContext context(input_file_name);
 
-  auto syntax_error_code = yy::parser(parsed_input, context)();
+  auto parser = yy::parser(parsed_input, context);
+  if (tracing_output) {
+    parser.set_debug_level(1);
+  }
+  auto syntax_error_code = parser();
   if (syntax_error_code != 0) {
     return syntax_error_code;
   }

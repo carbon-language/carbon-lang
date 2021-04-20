@@ -268,6 +268,56 @@ inline auto MatchParseTreeNodes(
       new ExpectedNodesMatcher(std::move(expected_nodes)));
 }
 
+// Node matchers. Intended to be brought in by 'using namespace'.
+namespace NodeMatchers {
+
+// Matcher argument for a node with errors.
+struct HasErrorTag {};
+inline constexpr HasErrorTag HasError;
+
+// Matcher argument to skip checking the children of a node.
+struct AnyChildrenTag {};
+inline constexpr AnyChildrenTag AnyChildren;
+
+// A function to generate ExpectedNodes a little more tersely and readably. The
+// meaning of each argument is inferred from its type.
+template <typename... Args>
+auto MatchNode(Args... args) -> ExpectedNode {
+  struct ArgHandler {
+    ExpectedNode expected;
+    void UpdateExpectationsForArg(ParseNodeKind kind) { expected.kind = kind; }
+    void UpdateExpectationsForArg(std::string text) {
+      expected.text = std::move(text);
+    }
+    void UpdateExpectationsForArg(HasErrorTag) { expected.has_error = true; }
+    void UpdateExpectationsForArg(AnyChildrenTag) {
+      expected.skip_subtree = true;
+    }
+    void UpdateExpectationsForArg(ExpectedNode node) {
+      expected.children.push_back(std::move(node));
+    }
+  };
+  ArgHandler handler;
+  (handler.UpdateExpectationsForArg(args), ...);
+  return handler.expected;
+}
+
+// A MatchFoo function for each parse node Foo. Used to construct ExpectedNodes
+// for use in MatchParseTreeNodes. Example:
+//
+// MatchParseTreeNodes(
+//     {MatchFunctionDeclaration("fn", MatchIdentifier("F"),
+//                               MatchParameterList(MatchParameterListEnd()),
+//                               MatchDeclarationEnd(";")),
+//      MatchFileEnd()});
+#define CARBON_PARSE_NODE_KIND(kind)                  \
+  template <typename... Args>                         \
+  auto Match##kind(Args... args)->ExpectedNode {      \
+    return MatchNode(ParseNodeKind::kind(), args...); \
+  }
+#include "parse_node_kind.def"
+}  // namespace NodeMatchers
+
 }  // namespace Testing
 }  // namespace Carbon
 

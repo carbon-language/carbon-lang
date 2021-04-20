@@ -27,21 +27,21 @@ enum class ActionKind {
 struct Action {
   ActionKind tag;
   union {
-    Expression* exp;  // for LValAction and ExpressionAction
-    Statement* stmt;
-    Value* val;  // for finished actions with a value (ValAction)
+    const Expression* exp;  // for LValAction and ExpressionAction
+    const Statement* stmt;
+    const Value* val;  // for finished actions with a value (ValAction)
     Address delete_tmp;
   } u;
-  int pos;                      // position or state of the action
-  std::vector<Value*> results;  // results from subexpression
+  int pos;                            // position or state of the action
+  std::vector<const Value*> results;  // results from subexpression
 };
 
 void PrintAct(Action* act, std::ostream& out);
 void PrintActList(Stack<Action*> ls, std::ostream& out);
-auto MakeExpAct(Expression* e) -> Action*;
-auto MakeLvalAct(Expression* e) -> Action*;
-auto MakeStmtAct(Statement* s) -> Action*;
-auto MakeValAct(Value* v) -> Action*;
+auto MakeExpAct(const Expression* e) -> Action*;
+auto MakeLvalAct(const Expression* e) -> Action*;
+auto MakeStmtAct(const Statement* s) -> Action*;
+auto MakeValAct(const Value* v) -> Action*;
 auto MakeExpToLvalAct() -> Action*;
 auto MakeDeleteAct(Address a) -> Action*;
 

@@ -71,6 +71,8 @@ source_files_query = subprocess.run(
         "query",
         "--keep_going",
         "--output=location",
+        # Workaround for https://github.com/bazelbuild/bazel/issues/8900
+        "--incompatible_display_source_file_location",
         'filter(".*\\.(h|cpp|cc|c|cxx)$", kind("source file", deps(//...)))',
     ],
     check=True,

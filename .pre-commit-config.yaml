@@ -75,7 +75,7 @@ repos:
     hooks:
       - id: black
   - repo: https://github.com/jlebar/pre-commit-hooks.git
-    rev: 349213c5414e360385e74f04964e6d5c43cdad36
+    rev: 07a539b8db43298f124ace23c90b4b871911b8c4
     hooks:
       - id: bazel-buildifier
       - id: clang-format-whole-file
@@ -87,7 +87,7 @@ repos:
         exclude: ^website/jekyll/theme/
   # Run linters last, as formatters and other checks may fix issues.
   - repo: https://gitlab.com/PyCQA/flake8
-    rev: bb6a530e28acab8d3551043b3e8709db8bcbac6b # frozen: 3.8.4
+    rev: 56370aae451722f9d77a5ccd6fb6e231a4a8e651 # frozen: 3.9.0
     hooks:
       - id: flake8
 

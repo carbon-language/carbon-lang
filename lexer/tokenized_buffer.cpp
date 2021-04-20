@@ -56,6 +56,28 @@ struct UnrecognizedCharacters : SimpleDiagnostic<UnrecognizedCharacters> {
       "Encountered unrecognized characters while parsing.";
 };
 
+// TODO: Move Overload and VariantMatch somewhere more central.
+
+// Form an overload set from a list of functions. For example:
+//
+// ```
+// auto overloaded = Overload{[] (int) {}, [] (float) {}};
+// ```
+template <typename... Fs>
+struct Overload : Fs... {
+  using Fs::operator()...;
+};
+template <typename... Fs>
+Overload(Fs...) -> Overload<Fs...>;
+
+// Pattern-match against the type of the value stored in the variant `V`. Each
+// element of `fs` should be a function that takes one or more of the variant
+// values in `V`.
+template <typename V, typename... Fs>
+auto VariantMatch(V&& v, Fs&&... fs) -> decltype(auto) {
+  return std::visit(Overload{std::forward<Fs&&>(fs)...}, std::forward<V&&>(v));
+}
+
 // Implementation of the lexer logic itself.
 //
 // The design is that lexing can loop over the source buffer, consuming it into
@@ -132,13 +154,11 @@ class TokenizedBuffer::Lexer {
         // Any comment must be the only non-whitespace on the line.
         if (set_indent) {
           emitter.EmitError<TrailingComment>(source_text.begin());
-          buffer.has_errors = true;
         }
         // The introducer '//' must be followed by whitespace or EOF.
         if (source_text.size() > 2 && !IsSpace(source_text[2])) {
           emitter.EmitError<NoWhitespaceAfterCommentIntroducer>(
               source_text.begin() + 2);
-          buffer.has_errors = true;
         }
         while (!source_text.empty() && source_text.front() != '\n') {
           ++current_column;
@@ -205,46 +225,38 @@ class TokenizedBuffer::Lexer {
       set_indent = true;
     }
 
-    LexedNumericLiteral::Parser literal_parser(emitter, *literal);
-
-    switch (literal_parser.Check()) {
-      case LexedNumericLiteral::Parser::UnrecoverableError: {
-        auto token = buffer.AddToken({
-            .kind = TokenKind::Error(),
-            .token_line = current_line,
-            .column = int_column,
-            .error_length = token_size,
+    return VariantMatch(
+        literal->ComputeValue(emitter),
+        [&](LexedNumericLiteral::IntegerValue&& value) {
+          auto token = buffer.AddToken({.kind = TokenKind::IntegerLiteral(),
+                                        .token_line = current_line,
+                                        .column = int_column});
+          buffer.GetTokenInfo(token).literal_index =
+              buffer.literal_int_storage.size();
+          buffer.literal_int_storage.push_back(std::move(value.value));
+          return token;
+        },
+        [&](LexedNumericLiteral::RealValue&& value) {
+          auto token = buffer.AddToken({.kind = TokenKind::RealLiteral(),
+                                        .token_line = current_line,
+                                        .column = int_column});
+          buffer.GetTokenInfo(token).literal_index =
+              buffer.literal_int_storage.size();
+          buffer.literal_int_storage.push_back(std::move(value.mantissa));
+          buffer.literal_int_storage.push_back(std::move(value.exponent));
+          assert(buffer.GetRealLiteral(token).IsDecimal() ==
+                 (value.radix == 10));
+          return token;
+        },
+        [&](LexedNumericLiteral::UnrecoverableError) {
+          auto token = buffer.AddToken({
+              .kind = TokenKind::Error(),
+              .token_line = current_line,
+              .column = int_column,
+              .error_length = token_size,
+          });
+          return token;
         });
-        buffer.has_errors = true;
-        return token;
-      }
-
-      case LexedNumericLiteral::Parser::RecoverableError:
-        buffer.has_errors = true;
-        break;
-
-      case LexedNumericLiteral::Parser::Valid:
-        break;
-    }
-
-    if (literal_parser.IsInteger()) {
-      auto token = buffer.AddToken({.kind = TokenKind::IntegerLiteral(),
-                                    .token_line = current_line,
-                                    .column = int_column});
-      buffer.GetTokenInfo(token).literal_index =
-          buffer.literal_int_storage.size();
-      buffer.literal_int_storage.push_back(literal_parser.GetMantissa());
-      return token;
-    } else {
-      auto token = buffer.AddToken({.kind = TokenKind::RealLiteral(),
-                                    .token_line = current_line,
-                                    .column = int_column});
-      buffer.GetTokenInfo(token).literal_index =
-          buffer.literal_int_storage.size();
-      buffer.literal_int_storage.push_back(literal_parser.GetMantissa());
-      buffer.literal_int_storage.push_back(literal_parser.GetExponent());
-      return token;
-    }
   }
 
   auto LexStringLiteral(llvm::StringRef& source_text) -> LexResult {
@@ -281,16 +293,12 @@ class TokenizedBuffer::Lexer {
       }
     }
 
-    // Determine string literal value.
-    auto expanded = literal->ComputeValue(emitter);
-    buffer.has_errors |= expanded.has_errors;
-
     auto token = buffer.AddToken({.kind = TokenKind::StringLiteral(),
                                   .token_line = string_line,
                                   .column = string_column});
     buffer.GetTokenInfo(token).literal_index =
         buffer.literal_string_storage.size();
-    buffer.literal_string_storage.push_back(std::move(expanded.result));
+    buffer.literal_string_storage.push_back(literal->ComputeValue(emitter));
     return token;
   }
 
@@ -335,7 +343,6 @@ class TokenizedBuffer::Lexer {
     if (open_groups.empty()) {
       closing_token_info.kind = TokenKind::Error();
       closing_token_info.error_length = kind.GetFixedSpelling().size();
-      buffer.has_errors = true;
 
       emitter.EmitError<UnmatchedClosing>(location);
       // Note that this still returns true as we do consume a symbol.
@@ -365,7 +372,6 @@ class TokenizedBuffer::Lexer {
       }
 
       open_groups.pop_back();
-      buffer.has_errors = true;
       token_emitter.EmitError<MismatchedClosing>(opening_token);
 
       // TODO: do a smarter backwards scan for where to put the closing
@@ -460,7 +466,6 @@ class TokenizedBuffer::Lexer {
 
     current_column += error_text.size();
     source_text = source_text.drop_front(error_text.size());
-    buffer.has_errors = true;
     return token;
   }
 
@@ -474,7 +479,8 @@ class TokenizedBuffer::Lexer {
 auto TokenizedBuffer::Lex(SourceBuffer& source, DiagnosticConsumer& consumer)
     -> TokenizedBuffer {
   TokenizedBuffer buffer(source);
-  Lexer lexer(buffer, consumer);
+  ErrorTrackingDiagnosticConsumer error_tracking_consumer(consumer);
+  Lexer lexer(buffer, error_tracking_consumer);
 
   llvm::StringRef source_text = source.Text();
   while (lexer.SkipWhitespace(source_text)) {
@@ -498,6 +504,11 @@ auto TokenizedBuffer::Lex(SourceBuffer& source, DiagnosticConsumer& consumer)
 
   lexer.CloseInvalidOpenGroups(TokenKind::Error());
   lexer.AddEndOfFileToken();
+
+  if (error_tracking_consumer.SeenError()) {
+    buffer.has_errors = true;
+  }
+
   return buffer;
 }
 

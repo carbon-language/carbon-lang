@@ -12,8 +12,6 @@
 #include "llvm/Support/CommandLine.h"
 
 int main(int argc, char* argv[]) {
-  // yydebug = 1;
-
   using llvm::cl::desc;
   using llvm::cl::opt;
   opt<bool> trace_option("trace", desc("Enable tracing"));

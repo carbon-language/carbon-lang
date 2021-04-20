@@ -35,6 +35,10 @@ MATCHER_P2(DiagnosticAt, line, column, "") {
   return true;
 }
 
+auto DiagnosticLevel(Diagnostic::Level level) -> auto {
+  return testing::Field(&Diagnostic::level, level);
+}
+
 template <typename Matcher>
 auto DiagnosticMessage(Matcher&& inner_matcher) -> auto {
   return testing::Field(&Diagnostic::message,

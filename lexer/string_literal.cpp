@@ -168,32 +168,22 @@ static auto ComputeIndentOfFinalLine(llvm::StringRef text) -> llvm::StringRef {
   llvm_unreachable("Given text is required to contain a newline.");
 }
 
-namespace {
-// The leading whitespace in a multi-line string literal.
-struct Indent {
-  llvm::StringRef indent;
-  bool has_errors;
-};
-}  // namespace
-
 // Check the literal is indented properly, if it's a multi-line litera.
 // Find the leading whitespace that should be removed from each line of a
 // multi-line string literal.
 static auto CheckIndent(LexerDiagnosticEmitter& emitter, llvm::StringRef text,
-                        llvm::StringRef content) -> Indent {
+                        llvm::StringRef content) -> llvm::StringRef {
   // Find the leading horizontal whitespace on the final line of this literal.
   // Note that for an empty literal, this might not be inside the content.
   llvm::StringRef indent = ComputeIndentOfFinalLine(text);
-  bool has_errors = false;
 
   // The last line is not permitted to contain any content after its
   // indentation.
   if (indent.end() != content.end()) {
     emitter.EmitError<ContentBeforeStringTerminator>(indent.end());
-    has_errors = true;
   }
 
-  return {.indent = indent, .has_errors = has_errors};
+  return indent;
 }
 
 // Expand a `\u{HHHHHH}` escape sequence into a sequence of UTF-8 code units.
@@ -233,7 +223,7 @@ static auto ExpandUnicodeEscapeSequence(LexerDiagnosticEmitter& emitter,
 // `\n`), and will be updated to remove the leading escape sequence.
 static auto ExpandAndConsumeEscapeSequence(LexerDiagnosticEmitter& emitter,
                                            llvm::StringRef& content,
-                                           std::string& result) -> bool {
+                                           std::string& result) -> void {
   assert(!content.empty() && "should have escaped closing delimiter");
   char first = content.front();
   content = content.drop_front(1);
@@ -241,36 +231,36 @@ static auto ExpandAndConsumeEscapeSequence(LexerDiagnosticEmitter& emitter,
   switch (first) {
     case 't':
       result += '\t';
-      return true;
+      return;
     case 'n':
       result += '\n';
-      return true;
+      return;
     case 'r':
       result += '\r';
-      return true;
+      return;
     case '"':
       result += '"';
-      return true;
+      return;
     case '\'':
       result += '\'';
-      return true;
+      return;
     case '\\':
       result += '\\';
-      return true;
+      return;
     case '0':
       result += '\0';
       if (!content.empty() && IsDecimalDigit(content.front())) {
         emitter.EmitError<DecimalEscapeSequence>(content.begin());
-        return false;
+        return;
       }
-      return true;
+      return;
     case 'x':
       if (content.size() >= 2 && IsUpperHexDigit(content[0]) &&
           IsUpperHexDigit(content[1])) {
         result +=
             static_cast<char>(llvm::hexFromNibbles(content[0], content[1]));
         content = content.drop_front(2);
-        return true;
+        return;
       }
       emitter.EmitError<HexadecimalEscapeMissingDigits>(content.begin());
       break;
@@ -284,7 +274,7 @@ static auto ExpandAndConsumeEscapeSequence(LexerDiagnosticEmitter& emitter,
             break;
           }
           content = remaining;
-          return true;
+          return;
         }
       }
       emitter.EmitError<UnicodeEscapeMissingBracedDigits>(content.begin());
@@ -300,16 +290,14 @@ static auto ExpandAndConsumeEscapeSequence(LexerDiagnosticEmitter& emitter,
   // issued a diagnostic. For error recovery purposes, expand this escape
   // sequence to itself, dropping the introducer (for example, `\q` -> `q`).
   result += first;
-  return false;
 }
 
 // Expand any escape sequences in the given string literal.
 static auto ExpandEscapeSequencesAndRemoveIndent(
     LexerDiagnosticEmitter& emitter, llvm::StringRef contents, int hash_level,
-    llvm::StringRef indent) -> LexedStringLiteral::ExpandedValue {
+    llvm::StringRef indent) -> std::string {
   std::string result;
   result.reserve(contents.size());
-  bool has_errors = false;
 
   llvm::SmallString<16> escape("\\");
   escape.resize(1 + hash_level, '#');
@@ -324,7 +312,6 @@ static auto ExpandEscapeSequencesAndRemoveIndent(
       contents = contents.drop_while(IsHorizontalWhitespace);
       if (!contents.startswith("\n")) {
         emitter.EmitError<MismatchedIndentInString>(line_start);
-        has_errors = true;
       }
     }
 
@@ -335,7 +322,7 @@ static auto ExpandEscapeSequencesAndRemoveIndent(
       contents = contents.substr(end_of_regular_text);
 
       if (contents.empty()) {
-        return {.result = result, .has_errors = has_errors};
+        return result;
       }
 
       if (contents.consume_front("\n")) {
@@ -364,20 +351,17 @@ static auto ExpandEscapeSequencesAndRemoveIndent(
       }
 
       // Handle this escape sequence.
-      if (!ExpandAndConsumeEscapeSequence(emitter, contents, result)) {
-        has_errors = true;
-      }
+      ExpandAndConsumeEscapeSequence(emitter, contents, result);
     }
   }
 }
 
 auto LexedStringLiteral::ComputeValue(LexerDiagnosticEmitter& emitter) const
-    -> ExpandedValue {
-  auto indent = multi_line ? CheckIndent(emitter, text, content) : Indent();
-  auto result = ExpandEscapeSequencesAndRemoveIndent(emitter, content,
-                                                     hash_level, indent.indent);
-  result.has_errors |= indent.has_errors;
-  return result;
+    -> std::string {
+  llvm::StringRef indent =
+      multi_line ? CheckIndent(emitter, text, content) : llvm::StringRef();
+  return ExpandEscapeSequencesAndRemoveIndent(emitter, content, hash_level,
+                                              indent);
 }
 
 }  // namespace Carbon

@@ -22,22 +22,9 @@ extern "C" int LLVMFuzzerTestOneInput(const unsigned char* data,
     return 0;
   }
 
-  LexedNumericLiteral::Parser parser(NullDiagnosticEmitter<const char*>(),
-                                     *token);
-  if (parser.Check() == LexedNumericLiteral::Parser::UnrecoverableError) {
-    // Lexically OK, but token is meaningless.
-    return 0;
-  }
-
-  // Ensure we can exercise the various queries on a valid literal.
-  volatile auto radix = parser.GetRadix();
-  volatile auto mantissa = parser.GetMantissa();
-  volatile auto exponent = parser.GetExponent();
-
-  (void)radix;
-  (void)mantissa;
-  (void)exponent;
-
+  volatile auto value =
+      token->ComputeValue(NullDiagnosticEmitter<const char*>());
+  (void)value;
   return 0;
 }
 
