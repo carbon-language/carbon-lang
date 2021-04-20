@@ -23,13 +23,10 @@ contributions.
         -   [Cargo (optional)](#cargo-optional)
 -   [Main tools](#main-tools)
     -   [Bazel and Bazelisk](#bazel-and-bazelisk)
-    -   [Bison and Flex](#bison-and-flex)
     -   [buildifier](#buildifier)
     -   [Clang and LLVM](#clang-and-llvm)
     -   [Ninja](#ninja)
     -   [pre-commit](#pre-commit)
-    -   [gql](#gql)
-    -   [PyGitHub](#pygithub)
 -   [Optional tools](#optional-tools)
     -   [Carbon-maintained](#carbon-maintained)
         -   [new_proposal.py](#new_proposalpy)
@@ -54,21 +51,26 @@ contributions.
 In order to set up a machine and git repository for developing on Carbon, a
 typical tool setup flow is:
 
+<!-- google-doc-style-ignore -->
+<!-- Need to retain "repo" in "gh repo clone". -->
+
 1.  Install [package managers](#package-managers).
 2.  Install [main tools](#main-tools) and any desired
     [optional tools](#optional-tools).
 3.  Set up the [git](https://git-scm.com/) repository:
     -   In GitHub, create a fork for development at
         https://github.com/carbon-language/carbon-lang.
-    -   `gh repository clone USER/carbon-lang`, or otherwise clone the fork.
+    -   `gh repo clone USER/carbon-lang`, or otherwise clone the fork.
     -   `cd carbon-lang` to go into the cloned fork's directory.
-    -   `git submodule update --init` to sync submodules if you'll be building
-        c++ code or working on the compiler.
+    -   `git submodule update --init --depth=1` to sync submodules if you'll be
+        building c++ code or working on the compiler.
     -   `git config core.fsmonitor rs-git-fsmonitor` to set up
         [rs-git-fsmonitor](#rs-git-fsmonitor-and-watchman) in the clone.
     -   `pre-commit install` to set up [pre-commit](#pre-commit) in the clone.
 4.  Validate your installation by invoking `bazel test //...:all' from the
     project root. All tests should pass.
+
+<!-- google-doc-style-resume -->
 
 ## Package managers
 
@@ -86,6 +88,9 @@ To get the latest version of `brew` packages, it will be necessary to
 periodically run `brew upgrade`.
 
 #### Python using `pyenv`
+
+Carbon requires Python 3.6 or newer. Everything below assumes that `python` or
+`pip` reach the Python 3 tools, not legacy installations of Python 2.
 
 We strongly recommend using [pyenv](https://github.com/pyenv/pyenv) to manage
 [Python](python.org) and Python's `pip` package manager. `pip` should typically
@@ -155,24 +160,6 @@ Our recommended way of installing is:
 ```bash
 brew install bazelisk
 ```
-
-### Bison and Flex
-
-[Bison](https://www.gnu.org/software/bison/) and
-[Flex](https://github.com/westes/flex) are used by executable semantics.
-Although we may
-[switch to a hemertic toolchain later](https://github.com/carbon-language/carbon-lang/issues/266),
-an install is currently required.
-
-Our recommended way of installing is:
-
-```bash
-brew install bison flex
-```
-
-On MacOS, it will be necessary to explicitly add the installed paths to the
-`PATH` environment variable so that the brew-installed versions are used instead
-of Xcode-installed versions. Read `brew` output for instructions.
 
 ### buildifier
 
@@ -245,18 +232,6 @@ git commit
 When modifying or adding pre-commit hooks, please run
 `pre-commit run --all-files` to see what changes.
 
-### gql
-
-```bash
-pip install gql
-```
-
-### PyGitHub
-
-```bash
-pip install PyGitHub
-```
-
 ## Optional tools
 
 ### Carbon-maintained
@@ -283,6 +258,19 @@ Options can be seen with `-h`. A couple key options to be aware of are:
     still need to respond to.
 -   `--comments-from LOGIN`: Only print threads with comments from the given
     user. For example, use when looking for threads that you've commented on.
+
+This script may be run directly if `gql` is installed:
+
+```bash
+pip install gql
+./github_tools/pr_comments.py <PR#>
+```
+
+It may also be run using `bazel`, without installing `gql`:
+
+```bash
+bazel run //github_tools:pr_comments -- <PR#>
+```
 
 ### GitHub
 

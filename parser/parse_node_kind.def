@@ -13,13 +13,42 @@
 #error "Must define the x-macro to use this file."
 #endif
 
-CARBON_PARSE_NODE_KIND(CodeBlockEnd)
-CARBON_PARSE_NODE_KIND(CodeBlock)
+// Declarations.
 CARBON_PARSE_NODE_KIND(DeclarationEnd)
 CARBON_PARSE_NODE_KIND(EmptyDeclaration)
+CARBON_PARSE_NODE_KIND(DeclaredName)
 CARBON_PARSE_NODE_KIND(FunctionDeclaration)
-CARBON_PARSE_NODE_KIND(Identifier)
 CARBON_PARSE_NODE_KIND(ParameterListEnd)
 CARBON_PARSE_NODE_KIND(ParameterList)
+CARBON_PARSE_NODE_KIND(VariableDeclaration)
+CARBON_PARSE_NODE_KIND(VariableInitializer)
+CARBON_PARSE_NODE_KIND(FileEnd)
+
+// Statements.
+CARBON_PARSE_NODE_KIND(CodeBlockEnd)
+CARBON_PARSE_NODE_KIND(CodeBlock)
+CARBON_PARSE_NODE_KIND(ExpressionStatement)
+CARBON_PARSE_NODE_KIND(IfStatement)
+CARBON_PARSE_NODE_KIND(IfStatementElse)
+CARBON_PARSE_NODE_KIND(WhileStatement)
+CARBON_PARSE_NODE_KIND(Condition)
+CARBON_PARSE_NODE_KIND(ConditionEnd)
+CARBON_PARSE_NODE_KIND(ContinueStatement)
+CARBON_PARSE_NODE_KIND(BreakStatement)
+CARBON_PARSE_NODE_KIND(StatementEnd)
+
+// Expressions.
+CARBON_PARSE_NODE_KIND(Literal)
+CARBON_PARSE_NODE_KIND(NameReference)
+CARBON_PARSE_NODE_KIND(ParenExpression)
+CARBON_PARSE_NODE_KIND(ParenExpressionEnd)
+CARBON_PARSE_NODE_KIND(DesignatorExpression)
+CARBON_PARSE_NODE_KIND(DesignatedName)
+CARBON_PARSE_NODE_KIND(CallExpression)
+CARBON_PARSE_NODE_KIND(CallExpressionComma)
+CARBON_PARSE_NODE_KIND(CallExpressionEnd)
+CARBON_PARSE_NODE_KIND(PrefixOperator)
+CARBON_PARSE_NODE_KIND(InfixOperator)
+CARBON_PARSE_NODE_KIND(PostfixOperator)
 
 #undef CARBON_PARSE_NODE_KIND

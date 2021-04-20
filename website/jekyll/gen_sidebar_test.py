@@ -69,10 +69,6 @@ class TestGenSidebar(unittest.TestCase):
                 "/proposals/p0029.md",
             ),
         )
-        self.assertEqual(
-            proposals.files[2],
-            ("0029 - Decision", "/proposals/p0029_decision.md"),
-        )
 
     def test_format(self):
         d = [
