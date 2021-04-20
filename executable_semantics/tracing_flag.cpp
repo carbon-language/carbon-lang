@@ -7,6 +7,6 @@
 namespace Carbon {
 
 // Program option to enable/disable tracing.
-bool tracing_output = true;
+bool tracing_output = false;
 
 }  // namespace Carbon

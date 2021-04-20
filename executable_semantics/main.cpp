@@ -6,33 +6,31 @@
 #include <cstring>
 #include <iostream>
 
-#include "executable_semantics/syntax_helpers.h"
+#include "executable_semantics/syntax/parse.h"
+#include "executable_semantics/syntax/syntax_helpers.h"
 #include "executable_semantics/tracing_flag.h"
 #include "llvm/Support/CommandLine.h"
 
-extern FILE* yyin;
-extern auto yyparse() -> int;  // NOLINT(readability-identifier-naming)
-
 int main(int argc, char* argv[]) {
-  // yydebug = 1;
-
   using llvm::cl::desc;
   using llvm::cl::opt;
-  opt<bool> quiet_option("quiet", desc("Disable tracing"));
-  opt<std::string> input_filename(llvm::cl::Positional, desc("<input file>"));
-  llvm::cl::ParseCommandLineOptions(argc, argv);
+  opt<bool> trace_option("trace", desc("Enable tracing"));
+  opt<std::string> input_file_name(llvm::cl::Positional, desc("<input file>"),
+                                   llvm::cl::Required);
 
-  if (input_filename.getNumOccurrences() > 0) {
-    Carbon::input_filename = input_filename.c_str();
-    yyin = fopen(input_filename.c_str(), "r");
-    if (yyin == nullptr) {
-      std::cerr << "Error opening '" << input_filename
-                << "': " << strerror(errno) << std::endl;
-      return 1;
-    }
+  llvm::cl::ParseCommandLineOptions(argc, argv);
+  if (trace_option) {
+    Carbon::tracing_output = true;
   }
-  if (quiet_option) {
-    Carbon::tracing_output = false;
+
+  std::variant<Carbon::AST, Carbon::SyntaxErrorCode> ast_or_error =
+      Carbon::parse(input_file_name);
+
+  if (auto* error = std::get_if<Carbon::SyntaxErrorCode>(&ast_or_error)) {
+    // Diagnostic already reported to std::cerr; this is just a return code.
+    return *error;
   }
-  return yyparse();
+
+  // Typecheck and run the parsed program.
+  Carbon::ExecProgram(std::get<Carbon::AST>(ast_or_error));
 }
