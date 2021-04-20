@@ -337,22 +337,28 @@ generic functions:
     a generic parameter to the calling function. This can generate separate,
     specialized versions of each combination of generic and template arguments,
     in order to optimize for those types or values.
--   Dynamic strategy: Unlike template parameters, we require that it be possible
-    to generate a single version of the function that uses runtime dispatch to
-    get something semantically equivalent to separate instantiation, but likely
-    with different size, build time, and performance characteristics.
+-   Dynamic strategy: This is when the compiler generates a single version of
+    the function that uses runtime dispatch to get something semantically
+    equivalent to separate instantiation, but likely with different size, build
+    time, and performance characteristics.
 
 By default, we expect the implementation strategy to be controlled by the
 compiler, and not semantically visible to the user. For example, the compiler
 might use the static strategy for release builds and the dynamic strategy for
 development. Or it might choose between them on a more granular level based on
-code analysis or profiling -- maybe some specific specializations are needed for
-performance, but others would just be code bloat.
+code analysis, specific features used in the code, or profiling -- maybe some
+specific specializations are needed for performance, but others would just be
+code bloat.
 
-As a result, generic code must satisfy the requirements of both strategies. For
-example, the values for generic parameters must be statically known at the
-callsite to support the static specialization strategy. Other limitations are
+We require that all generic functions can be compiled using the static
+specialization strategy. For example, the values for generic parameters must be
+statically known at the callsite. Other limitations are
 [listed below](#specialization-strategy).
+
+**Nice to have:** It is desirable that the majority of functions with generic
+parameters also support the dynamic strategy. Specific features may prevent the
+compiler from using the dynamic strategy, but they should ideally be relatively
+rare, and easy to identify.
 
 In addition, the user may opt in to using the dynamic strategy in specific
 cases. This could be just to control binary size in cases the user knows are not
@@ -589,15 +595,9 @@ definitions.
 
 ### Specialization strategy
 
-We want Carbon code to support both
-[static and dynamic dispatch](#dispatch-control). This means we cannot add
-features to generics that inherently require creating differently specialized
-code by way of monomorphization or templating, since that would prevent the
-dynamic compilation strategy.
-
-We won't support unbounded type families, since they are an obstacle to
-supporting static dispatch. Unbounded type families are when recursion creates
-an infinite collection of types, such as in
+We want all generic Carbon code to support [static dispatch](#dispatch-control).
+This means we won't support unbounded type families. Unbounded type families are
+when recursion creates an infinite collection of types, such as in
 [this example from Swift](https://forums.swift.org/t/ergonomics-generic-types-conforming-in-more-than-one-way/34589/71)
 or:
 
@@ -616,6 +616,10 @@ are themselves `Comparable`, would recursively call itself to produce a set of
 types without bound. That is, calling `Sort` on a `List(Int)` would internally
 call `Sort` on a `List(List(Int))` and so on recursively without any static
 limit.
+
+We won't require all generic Carbon code to support dynamic dispatch, but we
+would like it to be an implementation option for the compiler in the majority of
+cases.
 
 Lastly, runtime specialization is out of scope as an implementation strategy.
 That is, some language runtimes JIT a specialization when it is first needed,
