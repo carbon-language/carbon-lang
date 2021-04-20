@@ -73,7 +73,7 @@ auto CopyVal(const Value* val, int line_num) -> const Value* {
       for (auto& i : *val->u.tuple.elts) {
         const Value* elt =
             CopyVal(state->ReadFromMemory(i.second, line_num), line_num);
-        Address new_address = AllocateValue(elt);
+        Address new_address = state->AllocateValue(elt);
         elts->push_back(make_pair(i.first, new_address));
       }
       return MakeTupleVal(elts);
@@ -81,7 +81,7 @@ auto CopyVal(const Value* val, int line_num) -> const Value* {
     case ValKind::AltV: {
       const Value* arg = CopyVal(
           state->ReadFromMemory(val->u.alt.argument, line_num), line_num);
-      Address argument_address = AllocateValue(arg);
+      Address argument_address = state->AllocateValue(arg);
       return MakeAltVal(*val->u.alt.alt_name, *val->u.alt.choice_name,
                         argument_address);
     }
@@ -127,20 +127,18 @@ auto CopyVal(const Value* val, int line_num) -> const Value* {
   }
 }
 
-void KillObject(Address address);
-
 // Marks all of the sub-objects of this value as dead.
 void KillSubObjects(const Value* val) {
   switch (val->tag) {
     case ValKind::AltV:
-      KillObject(val->u.alt.argument);
+      state->KillObject(val->u.alt.argument);
       break;
     case ValKind::StructV:
       KillSubObjects(val->u.struct_val.inits);
       break;
     case ValKind::TupleV:
       for (auto& elt : *val->u.tuple.elts) {
-        KillObject(elt.second);
+        state->KillObject(elt.second);
       }
       break;
     default:
@@ -308,7 +306,7 @@ auto ChoiceDeclaration::InitGlobals(Env& globals) const -> void {
     alts->push_back(make_pair(kv.first, t));
   }
   auto ct = MakeChoiceTypeVal(name, alts);
-  auto a = AllocateValue(ct);
+  auto a = state->AllocateValue(ct);
   globals.Set(name, a);
 }
 
@@ -326,7 +324,7 @@ auto StructDeclaration::InitGlobals(Env& globals) const -> void {
     }
   }
   auto st = MakeStructTypeVal(*definition.name, fields, methods);
-  auto a = AllocateValue(st);
+  auto a = state->AllocateValue(st);
   globals.Set(*definition.name, a);
 }
 
@@ -334,7 +332,7 @@ auto FunctionDeclaration::InitGlobals(Env& globals) const -> void {
   Env values;
   auto pt = InterpExp(values, definition->param_pattern);
   auto f = MakeFunVal(definition->name, pt, definition->body);
-  Address a = AllocateValue(f);
+  Address a = state->AllocateValue(f);
   globals.Set(definition->name, a);
 }
 
@@ -342,7 +340,7 @@ auto FunctionDeclaration::InitGlobals(Env& globals) const -> void {
 // result of evaluating the initializer.
 auto VariableDeclaration::InitGlobals(Env& globals) const -> void {
   auto v = InterpExp(globals, initializer);
-  Address a = AllocateValue(v);
+  Address a = state->AllocateValue(v);
   globals.Set(name, a);
 }
 
@@ -379,9 +377,9 @@ void CallFunction(int line_num, std::vector<const Value*> operas,
     }
     case ValKind::AltConsV: {
       const Value* arg = CopyVal(operas[1], line_num);
-      const Value* av =
-          MakeAltVal(*operas[0]->u.alt_cons.alt_name,
-                     *operas[0]->u.alt_cons.choice_name, AllocateValue(arg));
+      const Value* av = MakeAltVal(*operas[0]->u.alt_cons.alt_name,
+                                   *operas[0]->u.alt_cons.choice_name,
+                                   state->AllocateValue(arg));
       Frame* frame = state->stack.Top();
       frame->todo.Push(MakeValAct(av));
       break;
@@ -401,7 +399,7 @@ void KillScope(int line_num, Scope* scope) {
       std::cerr << "internal error in KillScope" << std::endl;
       exit(-1);
     }
-    KillObject(*a);
+    state->KillObject(*a);
   }
 }
 
@@ -417,7 +415,7 @@ void CreateTuple(Frame* frame, Action* act, Expression* /*exp*/) {
   auto elts = new std::vector<std::pair<std::string, Address>>();
   auto f = act->u.exp->u.tuple.fields->begin();
   for (auto i = act->results.begin(); i != act->results.end(); ++i, ++f) {
-    Address a = AllocateValue(*i);  // copy?
+    Address a = state->AllocateValue(*i);  // copy?
     elts->push_back(make_pair(f->first, a));
   }
   const Value* tv = MakeTupleVal(elts);
@@ -435,7 +433,7 @@ auto PatternMatch(const Value* p, const Value* v, Env values,
     -> std::optional<Env> {
   switch (p->tag) {
     case ValKind::VarPatV: {
-      Address a = AllocateValue(CopyVal(v, line_num));
+      Address a = state->AllocateValue(CopyVal(v, line_num));
       vars->push_back(*p->u.var_pat.name);
       values.Set(*p->u.var_pat.name, a);
       return values;
@@ -927,7 +925,7 @@ void StepStmt() {
       todo.Push(MakeStmtAct(stmt->u.continuation.body));
       Frame* continuation_frame = new Frame("__continuation", scopes, todo);
       Address continuation_address =
-          AllocateValue(MakeContinuation({continuation_frame}));
+          state->AllocateValue(MakeContinuation({continuation_frame}));
       // Store the continuation's address in the frame.
       continuation_frame->continuation = continuation_address;
       // Bind the continuation object to the continuation variable
@@ -987,7 +985,7 @@ auto GetMember(Address a, const std::string& f, int line_num) -> Address {
         exit(-1);
       }
       auto ac = MakeAltCons(f, *v->u.choice_type.name);
-      return AllocateValue(ac);
+      return state->AllocateValue(ac);
     }
     default:
       std::cerr << "field access not allowed for value ";
@@ -1040,13 +1038,13 @@ void HandleValue() {
   }
   switch (act->tag) {
     case ActionKind::DeleteTmpAction: {
-      KillObject(act->u.delete_tmp);
+      state->KillObject(act->u.delete_tmp);
       frame->todo.Pop(2);
       frame->todo.Push(val_act);
       break;
     }
     case ActionKind::ExpToLValAction: {
-      Address a = AllocateValue(act->results[0]);
+      Address a = state->AllocateValue(act->results[0]);
       auto del = MakeDeleteAct(a);
       frame->todo.Pop(2);
       InsertDelete(del, frame->todo);

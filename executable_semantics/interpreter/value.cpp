@@ -343,8 +343,8 @@ auto TypeEqual(const Value* t1, const Value* t2) -> bool {
         if (t2_field == std::nullopt) {
           return false;
         }
-        if (!TypeEqual(state->heap[(*t1->u.tuple.elts)[i].second],
-                       state->heap[*t2_field])) {
+        if (!TypeEqual(state->ReadFromMemory((*t1->u.tuple.elts)[i].second, 0),
+                       state->ReadFromMemory(*t2_field, 0))) {
           return false;
         }
       }

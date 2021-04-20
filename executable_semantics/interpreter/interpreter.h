@@ -80,7 +80,6 @@ extern State* state;
 auto PrintFrame(Frame* frame, std::ostream& out) -> void;
 void PrintStack(Stack<Frame*> ls, std::ostream& out);
 void PrintEnv(Env values);
-auto AllocateValue(const Value* v) -> Address;
 auto CopyVal(const Value* val, int line_num) -> const Value*;
 auto ToInteger(const Value* v) -> int;
 
