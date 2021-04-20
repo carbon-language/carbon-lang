@@ -41,9 +41,9 @@ auto FieldsEqual(VarValues* ts1, VarValues* ts2) -> bool {
 auto FindTupleField(const std::string& name, const Value* tuple)
     -> std::optional<Address> {
   assert(tuple->tag == ValKind::TupleV);
-  for (const auto& i : *tuple->u.tuple.elts) {
-    if (i.first == name) {
-      return i.second;
+  for (const TupleElement& element : *tuple->u.tuple.elements) {
+    if (element.name == name) {
+      return element.address;
     }
   }
   return std::nullopt;
@@ -88,11 +88,10 @@ auto MakeStructVal(const Value* type, const Value* inits) -> const Value* {
   return v;
 }
 
-auto MakeTupleVal(std::vector<std::pair<std::string, Address>>* elts)
-    -> const Value* {
+auto MakeTupleVal(std::vector<TupleElement>* elements) -> const Value* {
   auto* v = new Value();
   v->tag = ValKind::TupleV;
-  v->u.tuple.elts = elts;
+  v->u.tuple.elements = elements;
   return v;
 }
 
@@ -198,7 +197,7 @@ auto MakeStructTypeVal(std::string name, VarValues* fields, VarValues* methods)
 auto MakeVoidTypeVal() -> const Value* {
   auto* v = new Value();
   v->tag = ValKind::TupleV;
-  v->u.tuple.elts = new std::vector<std::pair<std::string, Address>>();
+  v->u.tuple.elements = new std::vector<TupleElement>();
   return v;
 }
 
@@ -238,16 +237,16 @@ void PrintValue(const Value* val, std::ostream& out) {
     case ValKind::TupleV: {
       out << "(";
       bool add_commas = false;
-      for (const auto& elt : *val->u.tuple.elts) {
+      for (const TupleElement& element : *val->u.tuple.elements) {
         if (add_commas) {
           out << ", ";
         } else {
           add_commas = true;
         }
 
-        out << elt.first << " = ";
-        PrintValue(state->heap[elt.second], out);
-        out << "@" << elt.second;
+        out << element.name << " = ";
+        PrintValue(state->heap[element.address], out);
+        out << "@" << element.address;
       }
       out << ")";
       break;
@@ -327,16 +326,16 @@ auto TypeEqual(const Value* t1, const Value* t2) -> bool {
     case ValKind::ChoiceTV:
       return *t1->u.choice_type.name == *t2->u.choice_type.name;
     case ValKind::TupleV: {
-      if (t1->u.tuple.elts->size() != t2->u.tuple.elts->size()) {
+      if (t1->u.tuple.elements->size() != t2->u.tuple.elements->size()) {
         return false;
       }
-      for (size_t i = 0; i < t1->u.tuple.elts->size(); ++i) {
+      for (size_t i = 0; i < t1->u.tuple.elements->size(); ++i) {
         std::optional<Address> t2_field =
-            FindTupleField((*t1->u.tuple.elts)[i].first, t2);
+            FindTupleField((*t1->u.tuple.elements)[i].name, t2);
         if (t2_field == std::nullopt) {
           return false;
         }
-        if (!TypeEqual(state->heap[(*t1->u.tuple.elts)[i].second],
+        if (!TypeEqual(state->heap[(*t1->u.tuple.elements)[i].address],
                        state->heap[*t2_field])) {
           return false;
         }

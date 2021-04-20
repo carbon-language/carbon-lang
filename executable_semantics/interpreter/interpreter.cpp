@@ -45,14 +45,15 @@ auto AllocateValue(const Value* v) -> Address {
 auto CopyVal(const Value* val, int line_num) -> const Value* {
   switch (val->tag) {
     case ValKind::TupleV: {
-      auto elts = new std::vector<std::pair<std::string, Address>>();
-      for (auto& i : *val->u.tuple.elts) {
-        CheckAlive(i.second, line_num);
-        const Value* elt = CopyVal(state->heap[i.second], line_num);
-        Address new_address = AllocateValue(elt);
-        elts->push_back(make_pair(i.first, new_address));
+      auto elements = new std::vector<TupleElement>();
+      for (const TupleElement& element : *val->u.tuple.elements) {
+        CheckAlive(element.address, line_num);
+        const Value* new_element = CopyVal(state->heap[element.address],
+                                           line_num);
+        Address new_address = AllocateValue(new_element);
+        elements->push_back({.name = element.name, .address = new_address});
       }
-      return MakeTupleVal(elts);
+      return MakeTupleVal(elements);
     }
     case ValKind::AltV: {
       const Value* arg = CopyVal(state->heap[val->u.alt.argument], line_num);
@@ -114,8 +115,8 @@ void KillSubObjects(const Value* val) {
       KillSubObjects(val->u.struct_val.inits);
       break;
     case ValKind::TupleV:
-      for (auto& elt : *val->u.tuple.elts) {
-        KillObject(elt.second);
+      for (const TupleElement& element : *val->u.tuple.elements) {
+        KillObject(element.address);
       }
       break;
     default:
@@ -390,13 +391,13 @@ void KillLocals(int line_num, Frame* frame) {
 void CreateTuple(Frame* frame, Action* act, const Expression* /*exp*/) {
   //    { { (v1,...,vn) :: C, E, F} :: S, H}
   // -> { { `(v1,...,vn) :: C, E, F} :: S, H}
-  auto elts = new std::vector<std::pair<std::string, Address>>();
+  auto elements = new std::vector<TupleElement>();
   auto f = act->u.exp->u.tuple.fields->begin();
   for (auto i = act->results.begin(); i != act->results.end(); ++i, ++f) {
     Address a = AllocateValue(*i);  // copy?
-    elts->push_back(make_pair(f->name, a));
+    elements->push_back({.name = f->name, .address = a});
   }
-  const Value* tv = MakeTupleVal(elts);
+  const Value* tv = MakeTupleVal(elements);
   frame->todo.Pop(1);
   frame->todo.Push(MakeValAct(tv));
 }
@@ -419,22 +420,22 @@ auto PatternMatch(const Value* p, const Value* v, Env values,
     case ValKind::TupleV:
       switch (v->tag) {
         case ValKind::TupleV: {
-          if (p->u.tuple.elts->size() != v->u.tuple.elts->size()) {
+          if (p->u.tuple.elements->size() != v->u.tuple.elements->size()) {
             std::cerr << "runtime error: arity mismatch in tuple pattern match"
                       << std::endl;
             exit(-1);
           }
-          for (auto& elt : *p->u.tuple.elts) {
-            auto a = FindTupleField(elt.first, v);
+          for (const TupleElement& element : *p->u.tuple.elements) {
+            auto a = FindTupleField(element.name, v);
             if (a == std::nullopt) {
-              std::cerr << "runtime error: field " << elt.first << "not in ";
+              std::cerr << "runtime error: field " << element.name << "not in ";
               PrintValue(v, std::cerr);
               std::cerr << std::endl;
               exit(-1);
             }
             std::optional<Env> matches =
-                PatternMatch(state->heap[elt.second], state->heap[*a], values,
-                             vars, line_num);
+                PatternMatch(state->heap[element.address], state->heap[*a],
+                             values, vars, line_num);
             if (!matches) {
               return std::nullopt;
             }
@@ -503,20 +504,20 @@ void PatternAssignment(const Value* pat, const Value* val, int line_num) {
     case ValKind::TupleV: {
       switch (val->tag) {
         case ValKind::TupleV: {
-          if (pat->u.tuple.elts->size() != val->u.tuple.elts->size()) {
+          if (pat->u.tuple.elements->size() != val->u.tuple.elements->size()) {
             std::cerr << "runtime error: arity mismatch in tuple pattern match"
                       << std::endl;
             exit(-1);
           }
-          for (auto& elt : *pat->u.tuple.elts) {
-            auto a = FindTupleField(elt.first, val);
+          for (const TupleElement& element : *pat->u.tuple.elements) {
+            auto a = FindTupleField(element.name, val);
             if (a == std::nullopt) {
-              std::cerr << "runtime error: field " << elt.first << "not in ";
+              std::cerr << "runtime error: field " << element.name << "not in ";
               PrintValue(val, std::cerr);
               std::cerr << std::endl;
               exit(-1);
             }
-            PatternAssignment(state->heap[elt.second], state->heap[*a],
+            PatternAssignment(state->heap[element.address], state->heap[*a],
                               line_num);
           }
           break;

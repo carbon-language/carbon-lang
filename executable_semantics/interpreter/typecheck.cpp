@@ -57,10 +57,10 @@ auto ReifyType(const Value* t, int line_num) -> const Expression* {
                          ReifyType(t->u.fun_type.ret, line_num));
     case ValKind::TupleV: {
       auto args = new std::vector<FieldInitializer>();
-      for (auto& field : *t->u.tuple.elts) {
+      for (const TupleElement& field : *t->u.tuple.elements) {
         args->push_back(
-            {.name = field.first,
-             .expression = ReifyType(state->heap[field.second], line_num)});
+            {.name = field.name,
+             .expression = ReifyType(state->heap[field.address], line_num)});
       }
       return MakeTuple(0, args);
     }
@@ -150,7 +150,7 @@ auto TypeCheckExp(const Expression* e, TypeEnv types, Env values,
     }
     case ExpressionKind::Tuple: {
       auto new_args = new std::vector<FieldInitializer>();
-      auto arg_types = new std::vector<std::pair<std::string, Address>>();
+      auto arg_types = new std::vector<TupleElement>();
       auto new_types = types;
       int i = 0;
       for (auto arg = e->u.tuple.fields->begin();
@@ -171,7 +171,8 @@ auto TypeCheckExp(const Expression* e, TypeEnv types, Env values,
                          context);
         new_types = arg_res.types;
         new_args->push_back({.name = arg->name, .expression = arg_res.exp});
-        arg_types->push_back({arg->name, AllocateValue(arg_res.type)});
+        arg_types->push_back({.name = arg->name,
+                              .address = AllocateValue(arg_res.type)});
       }
       auto tuple_e = MakeTuple(e->line_num, new_args);
       auto tuple_t = MakeTupleVal(arg_types);
@@ -204,11 +205,11 @@ auto TypeCheckExp(const Expression* e, TypeEnv types, Env values,
                     << *e->u.get_field.field << std::endl;
           exit(-1);
         case ValKind::TupleV:
-          for (auto& field : *t->u.tuple.elts) {
-            if (*e->u.get_field.field == field.first) {
+          for (const TupleElement& field : *t->u.tuple.elements) {
+            if (*e->u.get_field.field == field.name) {
               auto new_e =
                   MakeGetField(e->line_num, res.exp, *e->u.get_field.field);
-              return TCResult(new_e, state->heap[field.second], res.types);
+              return TCResult(new_e, state->heap[field.address], res.types);
             }
           }
           std::cerr << e->line_num << ": compilation error, struct "
@@ -677,9 +678,10 @@ auto StructDeclaration::TopLevel(TypeCheckContext& tops) const -> void {
   auto st = TypeOfStructDef(&definition, tops.types, tops.values);
   Address a = AllocateValue(st);
   tops.values.Set(Name(), a);  // Is this obsolete?
-  auto field_types = new std::vector<std::pair<std::string, Address>>();
+  auto field_types = new std::vector<TupleElement>();
   for (const auto& [field_name, field_value] : *st->u.struct_type.fields) {
-    field_types->push_back({field_name, AllocateValue(field_value)});
+    field_types->push_back({.name = field_name,
+                            .address = AllocateValue(field_value)});
   }
   auto fun_ty = MakeFunTypeVal(MakeTupleVal(field_types), st);
   tops.types.Set(Name(), fun_ty);
