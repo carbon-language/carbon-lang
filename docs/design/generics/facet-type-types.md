@@ -480,13 +480,13 @@ interface B { method (Self: this) G(); }
 struct C {
   impl A { method (Self: this) F() { Print("CA"); } }
 }
-adaptor D for C {
+adapter D for C {
   impl B { method (Self: this) G() { Print("DB"); } }
 }
-adaptor E for C {
+adapter E for C {
   impl A { method (Self: this) F() { Print("EA"); } }
 }
-adaptor F for C {
+adapter F for C {
   impl A = E as A;  // Possibly we'd allow "impl A = E;" here.
   impl B = D as B;
 }
@@ -509,7 +509,7 @@ implementations from other compatible types (as in `F`). The rules are:
 
 Let's say we want to provide a possible implementation of an interface for use
 by types for which that implementation would be appropriate. We can do that by
-defining an adaptor implementing the interface that is parameterized on the type
+defining an adapter implementing the interface that is parameterized on the type
 it is adapting. That impl may then be pulled in using the `"impl ... = ...;"`
 syntax.
 
@@ -518,7 +518,7 @@ interface Comparable {
   fn operator<(Self: this, Self: that) -> Bool;
   ... // And also for >, <=, etc.
 }
-adaptor ComparableFromDifferenceFn(Type:$ T, fn(T, T)->Int:$ Difference) for T {
+adapter ComparableFromDifferenceFn(Type:$ T, fn(T, T)->Int:$ Difference) for T {
   impl Comparable {
     fn operator<(Self: this, Self: that) -> Bool {
       return Difference(this, that) < 0;
@@ -860,7 +860,7 @@ for the reverse map lookup:
 struct Bijection(Type:$ FromType, Type:$ ToType) {
   impl Map(FromType, ToType) { ... }
 }
-adaptor ReverseLookup(Type:$ FromType, Type:$ ToType)
+adapter ReverseLookup(Type:$ FromType, Type:$ ToType)
     for Bijection(FromType, ToType) {
   impl Map(ToType, FromType) { ... }
 }
@@ -1473,7 +1473,7 @@ Given a type-type `TT` and a type `U`, define the type-type
 > -   `T` and `U` are
 >     [compatible](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#compatible-types).
 >     That is values of types `T` and `U` can be cast back and forth without any
->     change in representation (for example `T` is an [adaptor](#adapting-types)
+>     change in representation (for example `T` is an [adapter](#adapting-types)
 >     for `U`).
 
 **Note:** We require the user to supply `TT` and `U`, they may not be inferred.
@@ -1518,8 +1518,8 @@ Used as:
 
 ```
 struct Song { ... }
-adaptor SongByArtist for Song { impl Comparable { ... } }
-adaptor SongByTitle for Song { impl Comparable { ... } }
+adapter SongByArtist for Song { impl Comparable { ... } }
+adapter SongByTitle for Song { impl Comparable { ... } }
 assert(CombinedLess(Song(...), Song(...), SongByArtist, SongByTitle) == True);
 ```
 
@@ -1548,7 +1548,7 @@ And then to package this functionality as an implementation of `Comparable`, we
 combine `CompatibleWith` with [type adaptation](#adapting-types):
 
 ```
-adaptor ThenCompare(Type:$ T,
+adapter ThenCompare(Type:$ T,
                     List(CompatibleWith(Comparable, T)):$ CompareList) for T {
   impl Comparable {
     method (Self: this) Compare(Self: that) -> CompareResult {
@@ -2061,7 +2061,7 @@ supports zero-runtime-cost casting.
 ```
 // Can pass a T to a function accepting a MaybeBoxed(T) value without boxing by
 // first casting it to NotBoxed(T), as long as T is sized and movable.
-adaptor NotBoxed(Sized(TypeImplements(Movable)):$ T) for T {  // :$ or :$$ here?
+adapter NotBoxed(Sized(TypeImplements(Movable)):$ T) for T {  // :$ or :$$ here?
   impl Movable = T as Movable;
   impl MaybeBoxed(T) {
     fn operator->(Ptr(Self): this) -> Ptr(T) { return this as Ptr(T); }
