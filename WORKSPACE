@@ -17,8 +17,8 @@ load("@rules_python//python:pip.bzl", "pip_install")
 
 # Create a central repo that knows about the pip dependencies.
 pip_install(
-   name = "py_deps",
-   requirements = "//github_tools:requirements.txt",
+    name = "py_deps",
+    requirements = "//github_tools:requirements.txt",
 )
 
 # Bootstrap a Clang and LLVM toolchain.
@@ -110,3 +110,15 @@ load("@rules_bison//bison:bison.bzl", "bison_register_toolchains")
 # When building Bison, disable all compiler warnings as we can't realistically
 # fix them anyways.
 bison_register_toolchains(extra_copts = ["-w"])
+
+local_repository(
+    name = "brotli",
+    path = "third_party/examples/brotli/original",
+)
+
+new_local_repository(
+    name = "woff2",
+    build_file = "third_party/examples/woff2/BUILD.original",
+    path = "third_party/examples/woff2/original",
+    workspace_file = "third_party/examples/woff2/WORKSPACE.original",
+)

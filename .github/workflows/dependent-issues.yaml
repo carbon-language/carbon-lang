@@ -15,6 +15,7 @@ on:
       - opened
       - edited
       - reopened
+      - synchronize
   schedule:
     - cron: '0 0 * * *' # daily
 
