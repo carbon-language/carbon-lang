@@ -121,11 +121,10 @@ don't provide many of those benefits to programmers until it's too late, when
 users are consuming the API. Templates also come with high overhead, such as
 [template error messages](#better-compiler-experience).
 
-We want Carbon code to
-move towards more rigorously type checked constructs. However, existing C++ code
-is full of unrestricted usage of compile-time duck-typed templates. They are
-incredibly convenient to write and so likely will continue to exist for a long
-time.
+We want Carbon code to move towards more rigorously type checked constructs.
+However, existing C++ code is full of unrestricted usage of compile-time
+duck-typed templates. They are incredibly convenient to write and so likely will
+continue to exist for a long time.
 
 The question of whether Carbon has direct support for templates is out of scope
 for this document. The generics design is not completely separate from
@@ -453,13 +452,15 @@ This is in contrast to Rust which has different lookup rules inside its traits.
 Instead, we should structure generics in a way that reuses existing name lookup
 facilities of the language.
 
-**Nice to have:** For example, if `x` has type `T`, then if you write `x.y` you
-should be able to look up `y` in the definition of `T`. This might need to be
-somewhat indirect in some cases. For example, if `T` inherits from `U`, the name
-`y` might come from `U` and not be mentioned in the definition of `T` directly.
-We may have similar mechanisms where `T` gets methods that have default
-implementations in interfaces it implements, as long as the names of those
-interfaces are explicitly mentioned in the definition of `T`.
+**Nice to have:** One application of this that would be nice to have is if the
+names of a type's members were all determined by a type's definition. So if `x`
+has type `T`, then if you write `x.y` you should be able to look up `y` in the
+definition of `T`. This might need to be somewhat indirect in some cases. For
+example, if `T` inherits from `U`, the name `y` might come from `U` and not be
+mentioned in the definition of `T` directly. We may have similar mechanisms
+where `T` gets methods that have default implementations in interfaces it
+implements, as long as the names of those interfaces are explicitly mentioned in
+the definition of `T`.
 
 ### Learn from others
 
@@ -486,9 +487,9 @@ specialized. These are complicated and
 
 Interfaces can either be structural, as in Go, or nominal, as in Rust and Swift.
 Structural interfaces match any type that has the required methods, whereas
-nominal interfaces only match if there is an explicit declaration of that fact
-for that specific type. Carbon will support nominal interfaces, consistent with
-the philosophy of being explicit.
+nominal interfaces only match if there is an explicit declaration stating that
+the interface is implemented for that specific type. Carbon will support nominal
+interfaces, consistent with the philosophy of being explicit.
 
 This means that interfaces implicitly specify the intended semantics and
 invariants of and between those functions. Unlike the function signatures, this
