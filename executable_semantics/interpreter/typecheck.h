@@ -36,8 +36,6 @@ struct TCStatement {
   TypeEnv types;
 };
 
-auto ToType(int line_num, const Value* val) -> const Value*;
-
 auto TypeCheckExp(Expression* e, TypeEnv types, Env values,
                   const Value* expected, TCContext context) -> TCResult;
 

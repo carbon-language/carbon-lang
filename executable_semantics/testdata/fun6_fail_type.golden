@@ -1,4 +1,4 @@
 10: type error in call
-expected: Tuple(0 = Int, 1 = Int)
-actual: Tuple(0 = Tuple(0 = Int, 1 = Int))
+expected: (0 = Int@0, 1 = Int@1)
+actual: (0 = (0 = Int@6, 1 = Int@7)@8)
 EXIT CODE: 255

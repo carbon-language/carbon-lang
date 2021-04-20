@@ -27,18 +27,6 @@ auto PatternMatch(const Value* pat, const Value* val, Env,
                   std::list<std::string>*, int) -> std::optional<Env>;
 void HandleValue();
 
-template <class T>
-static auto FindField(const std::string& field,
-                      const std::vector<std::pair<std::string, T>>& inits)
-    -> std::optional<T> {
-  for (const auto& i : inits) {
-    if (i.first == field) {
-      return i.second;
-    }
-  }
-  return std::nullopt;
-}
-
 //
 // Auxiliary Functions
 //
@@ -130,14 +118,6 @@ auto CopyVal(const Value* val, int line_num) -> const Value* {
       return MakeAutoTypeVal();
     case ValKind::ContinuationTV:
       return MakeContinuationTypeVal();
-    case ValKind::TupleTV: {
-      auto new_fields = new VarValues();
-      for (auto& field : *val->u.tuple_type.fields) {
-        auto v = CopyVal(field.second, line_num);
-        new_fields->push_back(make_pair(field.first, v));
-      }
-      return MakeTupleTypeVal(new_fields);
-    }
     case ValKind::StructTV:
     case ValKind::ChoiceTV:
     case ValKind::VarPatV:
@@ -324,7 +304,7 @@ void InitGlobals(std::list<Declaration>* fs) {
 auto ChoiceDeclaration::InitGlobals(Env& globals) const -> void {
   auto alts = new VarValues();
   for (auto kv : alternatives) {
-    auto t = ToType(this->line_num, InterpExp(Env(), kv.second));
+    auto t = InterpExp(Env(), kv.second);
     alts->push_back(make_pair(kv.first, t));
   }
   auto ct = MakeChoiceTypeVal(name, alts);
@@ -339,8 +319,7 @@ auto StructDeclaration::InitGlobals(Env& globals) const -> void {
        ++i) {
     switch ((*i)->tag) {
       case MemberKind::FieldMember: {
-        auto t =
-            ToType(definition.line_num, InterpExp(Env(), (*i)->u.field.type));
+        auto t = InterpExp(Env(), (*i)->u.field.type);
         fields->push_back(make_pair(*(*i)->u.field.name, t));
         break;
       }
@@ -470,7 +449,7 @@ auto PatternMatch(const Value* p, const Value* v, Env values,
             exit(-1);
           }
           for (auto& elt : *p->u.tuple.elts) {
-            auto a = FindField(elt.first, *v->u.tuple.elts);
+            auto a = FindTupleField(elt.first, v);
             if (a == std::nullopt) {
               std::cerr << "runtime error: field " << elt.first << "not in ";
               PrintValue(v, std::cerr);
@@ -556,7 +535,7 @@ void PatternAssignment(const Value* pat, const Value* val, int line_num) {
             exit(-1);
           }
           for (auto& elt : *pat->u.tuple.elts) {
-            auto a = FindField(elt.first, *val->u.tuple.elts);
+            auto a = FindTupleField(elt.first, val);
             if (a == std::nullopt) {
               std::cerr << "runtime error: field " << elt.first << "not in ";
               PrintValue(val, std::cerr);
@@ -981,7 +960,7 @@ auto GetMember(Address a, const std::string& f, int line_num) -> Address {
   const Value* v = state->ReadFromMemory(a, line_num);
   switch (v->tag) {
     case ValKind::StructV: {
-      auto a = FindField(f, *v->u.struct_val.inits->u.tuple.elts);
+      auto a = FindTupleField(f, v->u.struct_val.inits);
       if (a == std::nullopt) {
         std::cerr << "runtime error, member " << f << " not in ";
         PrintValue(v, std::cerr);
@@ -991,7 +970,7 @@ auto GetMember(Address a, const std::string& f, int line_num) -> Address {
       return *a;
     }
     case ValKind::TupleV: {
-      auto a = FindField(f, *v->u.tuple.elts);
+      auto a = FindTupleField(f, v);
       if (a == std::nullopt) {
         std::cerr << "field " << f << " not in ";
         PrintValue(v, std::cerr);
@@ -1096,7 +1075,7 @@ void HandleValue() {
             // -> { { &v[i] :: C, E, F} :: S, H }
             const Value* tuple = act->results[0];
             std::string f = std::to_string(ToInteger(act->results[1]));
-            auto a = FindField(f, *tuple->u.tuple.elts);
+            auto a = FindTupleField(f, tuple);
             if (a == std::nullopt) {
               std::cerr << "runtime error: field " << f << "not in ";
               PrintValue(tuple, std::cerr);
@@ -1166,7 +1145,7 @@ void HandleValue() {
                 //    { { v :: [][i] :: C, E, F} :: S, H}
                 // -> { { v_i :: C, E, F} : S, H}
                 std::string f = std::to_string(ToInteger(act->results[1]));
-                auto a = FindField(f, *tuple->u.tuple.elts);
+                auto a = FindTupleField(f, tuple);
                 if (a == std::nullopt) {
                   std::cerr << "runtime error, field " << f << " not in ";
                   PrintValue(tuple, std::cerr);
