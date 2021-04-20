@@ -235,8 +235,8 @@ on `T` such that `Abs` has signature `T -> T`.
 
 ### Performance
 
-Generics shall provide at least as good code generation, in terms of both code
-size and execution speed, in all cases over C++ templates.
+For any real-world C++ template, there shall be an idiomatic reformulation in
+Carbon generics that has equal or better performance.
 [Performance is the top priority for Carbon](../../project/goals.md#performance-critical-software),
 and we expect to use generics pervasively, and so they can't compromise that
 goal in release builds.
@@ -384,9 +384,12 @@ generic code. This gives us these sub-goals:
     code, and an error otherwise. This is to allow more templated functions to
     be converted to generics, instead of requiring them to be converted
     specifically in bottom-up order.
--   **Nice to have:** When defining a new generic interface to replace a
-    template, support providing the old templated implementation temporarily as
-    a default until types transition.
+-   **Nice to have:** Provide a way to migrate from a template to a generic
+    without immediately updating all of the types used with the template. For
+    example, if the generic code requires types to implement a new interface,
+    one possible solution would use the original template code to provide an
+    implementation for that interface for any type that structurally has the
+    methods used by the original template.
 
 ### Coherence
 
