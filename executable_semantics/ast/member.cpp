@@ -8,7 +8,8 @@
 
 namespace Carbon {
 
-auto MakeField(int line_num, std::string name, Expression* type) -> Member* {
+auto MakeField(int line_num, std::string name, const Expression* type)
+    -> Member* {
   auto m = new Member();
   m->line_num = line_num;
   m->tag = MemberKind::FieldMember;

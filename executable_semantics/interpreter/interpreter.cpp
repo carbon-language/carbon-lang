@@ -387,7 +387,7 @@ void KillLocals(int line_num, Frame* frame) {
   }
 }
 
-void CreateTuple(Frame* frame, Action* act, Expression* /*exp*/) {
+void CreateTuple(Frame* frame, Action* act, const Expression* /*exp*/) {
   //    { { (v1,...,vn) :: C, E, F} :: S, H}
   // -> { { `(v1,...,vn) :: C, E, F} :: S, H}
   auto elts = new std::vector<std::pair<std::string, Address>>();
@@ -566,7 +566,7 @@ void PatternAssignment(const Value* pat, const Value* val, int line_num) {
 void StepLvalue() {
   Frame* frame = state->stack.Top();
   Action* act = frame->todo.Top();
-  Expression* exp = act->u.exp;
+  const Expression* exp = act->u.exp;
   if (tracing_output) {
     std::cout << "--- step lvalue ";
     PrintExp(exp);
@@ -606,7 +606,7 @@ void StepLvalue() {
     case ExpressionKind::Tuple: {
       //    { {(f1=e1,...) :: C, E, F} :: S, H}
       // -> { {e1 :: (f1=[],...) :: C, E, F} :: S, H}
-      Expression* e1 = (*exp->u.tuple.fields)[0].second;
+      const Expression* e1 = (*exp->u.tuple.fields)[0].second;
       frame->todo.Push(MakeLvalAct(e1));
       act->pos++;
       break;
@@ -634,7 +634,7 @@ void StepLvalue() {
 void StepExp() {
   Frame* frame = state->stack.Top();
   Action* act = frame->todo.Top();
-  Expression* exp = act->u.exp;
+  const Expression* exp = act->u.exp;
   if (tracing_output) {
     std::cout << "--- step exp ";
     PrintExp(exp);
@@ -657,7 +657,7 @@ void StepExp() {
       if (exp->u.tuple.fields->size() > 0) {
         //    { {(f1=e1,...) :: C, E, F} :: S, H}
         // -> { {e1 :: (f1=[],...) :: C, E, F} :: S, H}
-        Expression* e1 = (*exp->u.tuple.fields)[0].second;
+        const Expression* e1 = (*exp->u.tuple.fields)[0].second;
         frame->todo.Push(MakeExpAct(e1));
         act->pos++;
       } else {
@@ -788,7 +788,7 @@ auto IsBlockAct(Action* act) -> bool {
 void StepStmt() {
   Frame* frame = state->stack.Top();
   Action* act = frame->todo.Top();
-  Statement* const stmt = act->u.stmt;
+  const Statement* stmt = act->u.stmt;
   assert(stmt != nullptr && "null statement!");
   if (tracing_output) {
     std::cout << "--- step stmt ";
@@ -1027,7 +1027,7 @@ void HandleValue() {
       break;
     }
     case ActionKind::LValAction: {
-      Expression* exp = act->u.exp;
+      const Expression* exp = act->u.exp;
       switch (exp->tag) {
         case ExpressionKind::GetField: {
           //    { v :: [].f :: C, E, F} :: S, H}
@@ -1066,7 +1066,7 @@ void HandleValue() {
             //    H}
             // -> { { ek+1 :: (f1=v1,..., fk=vk, fk+1=[],...) :: C, E, F} :: S,
             // H}
-            Expression* elt = (*exp->u.tuple.fields)[act->pos].second;
+            const Expression* elt = (*exp->u.tuple.fields)[act->pos].second;
             frame->todo.Pop(1);
             frame->todo.Push(MakeLvalAct(elt));
           } else {
@@ -1083,7 +1083,7 @@ void HandleValue() {
       break;
     }
     case ActionKind::ExpressionAction: {
-      Expression* exp = act->u.exp;
+      const Expression* exp = act->u.exp;
       switch (exp->tag) {
         case ExpressionKind::PatternVariable: {
           auto v =
@@ -1098,7 +1098,7 @@ void HandleValue() {
             //    H}
             // -> { { ek+1 :: (f1=v1,..., fk=vk, fk+1=[],...) :: C, E, F} :: S,
             // H}
-            Expression* elt = (*exp->u.tuple.fields)[act->pos].second;
+            const Expression* elt = (*exp->u.tuple.fields)[act->pos].second;
             frame->todo.Pop(1);
             frame->todo.Push(MakeExpAct(elt));
           } else {
@@ -1153,7 +1153,7 @@ void HandleValue() {
               static_cast<int>(exp->u.primitive_op.arguments->size())) {
             //    { {v :: op(vs,[],e,es) :: C, E, F} :: S, H}
             // -> { {e :: op(vs,v,[],es) :: C, E, F} :: S, H}
-            Expression* arg = (*exp->u.primitive_op.arguments)[act->pos];
+            const Expression* arg = (*exp->u.primitive_op.arguments)[act->pos];
             frame->todo.Pop(1);
             frame->todo.Push(MakeExpAct(arg));
           } else {
@@ -1214,7 +1214,7 @@ void HandleValue() {
       break;
     }
     case ActionKind::StatementAction: {
-      Statement* stmt = act->u.stmt;
+      const Statement* stmt = act->u.stmt;
       switch (stmt->tag) {
         case StatementKind::ExpressionStatement:
           frame->todo.Pop(2);
@@ -1328,7 +1328,8 @@ void HandleValue() {
             if (matches) {  // we have a match, start the body
               auto* new_scope = new Scope(*matches, vars);
               frame->scopes.Push(new_scope);
-              Statement* body_block = MakeBlock(stmt->line_num, c->second);
+              const Statement* body_block =
+                  MakeBlock(stmt->line_num, c->second);
               Action* body_act = MakeStmtAct(body_block);
               body_act->pos = 0;
               frame->todo.Pop(2);
@@ -1440,9 +1441,9 @@ auto InterpProgram(std::list<Declaration>* fs) -> int {
   }
   InitGlobals(fs);
 
-  Expression* arg =
-      MakeTuple(0, new std::vector<std::pair<std::string, Expression*>>());
-  Expression* call_main = MakeCall(0, MakeVar(0, "main"), arg);
+  const Expression* arg = MakeTuple(
+      0, new std::vector<std::pair<std::string, const Expression*>>());
+  const Expression* call_main = MakeCall(0, MakeVar(0, "main"), arg);
   auto todo = Stack(MakeExpAct(call_main));
   auto* scope = new Scope(globals, std::list<std::string>());
   auto* frame = new Frame("top", Stack(scope), todo);
@@ -1466,7 +1467,7 @@ auto InterpProgram(std::list<Declaration>* fs) -> int {
 }
 
 // Interpret an expression at compile-time.
-auto InterpExp(Env values, Expression* e) -> const Value* {
+auto InterpExp(Env values, const Expression* e) -> const Value* {
   auto todo = Stack(MakeExpAct(e));
   auto* scope = new Scope(values, std::list<std::string>());
   auto* frame = new Frame("InterpExp", Stack(scope), todo);

@@ -40,7 +40,7 @@ void PrintTypeEnv(TypeEnv types, std::ostream& out) {
 }
 
 // Reify type to type expression.
-auto ReifyType(const Value* t, int line_num) -> Expression* {
+auto ReifyType(const Value* t, int line_num) -> const Expression* {
   switch (t->tag) {
     case ValKind::VarTV:
       return MakeVar(0, *t->u.var_type);
@@ -56,7 +56,7 @@ auto ReifyType(const Value* t, int line_num) -> Expression* {
       return MakeFunType(0, ReifyType(t->u.fun_type.param, line_num),
                          ReifyType(t->u.fun_type.ret, line_num));
     case ValKind::TupleV: {
-      auto args = new std::vector<std::pair<std::string, Expression*>>();
+      auto args = new std::vector<std::pair<std::string, const Expression*>>();
       for (auto& field : *t->u.tuple.elts) {
         args->push_back(
             {field.first, ReifyType(state->heap[field.second], line_num)});
@@ -93,7 +93,7 @@ auto ReifyType(const Value* t, int line_num) -> Expression* {
 //    and it is used to implement `auto`, otherwise it is null.
 // context says what kind of position this expression is nested in,
 //    whether it's a position that expects a value, a pattern, or a type.
-auto TypeCheckExp(Expression* e, TypeEnv types, Env values,
+auto TypeCheckExp(const Expression* e, TypeEnv types, Env values,
                   const Value* expected, TCContext context) -> TCResult {
   switch (e->tag) {
     case ExpressionKind::PatternVariable: {
@@ -148,7 +148,8 @@ auto TypeCheckExp(Expression* e, TypeEnv types, Env values,
       }
     }
     case ExpressionKind::Tuple: {
-      auto new_args = new std::vector<std::pair<std::string, Expression*>>();
+      auto new_args =
+          new std::vector<std::pair<std::string, const Expression*>>();
       auto arg_types = new std::vector<std::pair<std::string, Address>>();
       auto new_types = types;
       int i = 0;
@@ -184,7 +185,7 @@ auto TypeCheckExp(Expression* e, TypeEnv types, Env values,
           // Search for a field
           for (auto& field : *t->u.struct_type.fields) {
             if (*e->u.get_field.field == field.first) {
-              Expression* new_e =
+              const Expression* new_e =
                   MakeGetField(e->line_num, res.exp, *e->u.get_field.field);
               return TCResult(new_e, field.second, res.types);
             }
@@ -192,7 +193,7 @@ auto TypeCheckExp(Expression* e, TypeEnv types, Env values,
           // Search for a method
           for (auto& method : *t->u.struct_type.methods) {
             if (*e->u.get_field.field == method.first) {
-              Expression* new_e =
+              const Expression* new_e =
                   MakeGetField(e->line_num, res.exp, *e->u.get_field.field);
               return TCResult(new_e, method.second, res.types);
             }
@@ -217,7 +218,7 @@ auto TypeCheckExp(Expression* e, TypeEnv types, Env values,
           for (auto vt = t->u.choice_type.alternatives->begin();
                vt != t->u.choice_type.alternatives->end(); ++vt) {
             if (*e->u.get_field.field == vt->first) {
-              Expression* new_e =
+              const Expression* new_e =
                   MakeGetField(e->line_num, res.exp, *e->u.get_field.field);
               auto fun_ty = MakeFunTypeVal(vt->second, t);
               return TCResult(new_e, fun_ty, res.types);
@@ -252,7 +253,7 @@ auto TypeCheckExp(Expression* e, TypeEnv types, Env values,
     case ExpressionKind::Boolean:
       return TCResult(e, MakeBoolTypeVal(), types);
     case ExpressionKind::PrimitiveOp: {
-      auto es = new std::vector<Expression*>();
+      auto es = new std::vector<const Expression*>();
       std::vector<const Value*> ts;
       auto new_types = types;
       for (auto& argument : *e->u.primitive_op.arguments) {
@@ -350,9 +351,10 @@ auto TypeCheckExp(Expression* e, TypeEnv types, Env values,
   }
 }
 
-auto TypecheckCase(const Value* expected, Expression* pat, Statement* body,
-                   TypeEnv types, Env values, const Value*& ret_type)
-    -> std::pair<Expression*, Statement*> {
+auto TypecheckCase(const Value* expected, const Expression* pat,
+                   const Statement* body, TypeEnv types, Env values,
+                   const Value*& ret_type)
+    -> std::pair<const Expression*, const Statement*> {
   auto pat_res =
       TypeCheckExp(pat, types, values, expected, TCContext::PatternContext);
   auto res = TypeCheckStmt(body, pat_res.types, values, ret_type);
@@ -366,7 +368,7 @@ auto TypecheckCase(const Value* expected, Expression* pat, Statement* body,
 // It is the declared return type of the enclosing function definition.
 // If the return type is "auto", then the return type is inferred from
 // the first return statement.
-auto TypeCheckStmt(Statement* s, TypeEnv types, Env values,
+auto TypeCheckStmt(const Statement* s, TypeEnv types, Env values,
                    const Value*& ret_type) -> TCStatement {
   if (!s) {
     return TCStatement(s, types);
@@ -376,12 +378,13 @@ auto TypeCheckStmt(Statement* s, TypeEnv types, Env values,
       auto res = TypeCheckExp(s->u.match_stmt.exp, types, values, nullptr,
                               TCContext::ValueContext);
       auto res_type = res.type;
-      auto new_clauses = new std::list<std::pair<Expression*, Statement*>>();
+      auto new_clauses =
+          new std::list<std::pair<const Expression*, const Statement*>>();
       for (auto& clause : *s->u.match_stmt.clauses) {
         new_clauses->push_back(TypecheckCase(
             res_type, clause.first, clause.second, types, values, ret_type));
       }
-      Statement* new_s = MakeMatch(s->line_num, res.exp, new_clauses);
+      const Statement* new_s = MakeMatch(s->line_num, res.exp, new_clauses);
       return TCStatement(new_s, types);
     }
     case StatementKind::While: {
@@ -407,7 +410,7 @@ auto TypeCheckStmt(Statement* s, TypeEnv types, Env values,
       const Value* rhs_ty = res.type;
       auto lhs_res = TypeCheckExp(s->u.variable_definition.pat, types, values,
                                   rhs_ty, TCContext::PatternContext);
-      Statement* new_s =
+      const Statement* new_s =
           MakeVarDef(s->line_num, s->u.variable_definition.pat, res.exp);
       return TCStatement(new_s, lhs_res.types);
     }
@@ -466,7 +469,7 @@ auto TypeCheckStmt(Statement* s, TypeEnv types, Env values,
     case StatementKind::Continuation: {
       TCStatement body_result =
           TypeCheckStmt(s->u.continuation.body, types, values, ret_type);
-      Statement* new_continuation = MakeContinuationStatement(
+      const Statement* new_continuation = MakeContinuationStatement(
           s->line_num, *s->u.continuation.continuation_variable,
           body_result.stmt);
       types.Set(*s->u.continuation.continuation_variable,
@@ -478,7 +481,7 @@ auto TypeCheckStmt(Statement* s, TypeEnv types, Env values,
                                               nullptr, TCContext::ValueContext);
       ExpectType(s->line_num, "argument of `run`", MakeContinuationTypeVal(),
                  argument_result.type);
-      Statement* new_run = MakeRun(s->line_num, argument_result.exp);
+      const Statement* new_run = MakeRun(s->line_num, argument_result.exp);
       return TCStatement(new_run, types);
     }
     case StatementKind::Await: {
@@ -488,11 +491,11 @@ auto TypeCheckStmt(Statement* s, TypeEnv types, Env values,
   }  // switch
 }
 
-auto CheckOrEnsureReturn(Statement* stmt, bool void_return, int line_num)
-    -> Statement* {
+auto CheckOrEnsureReturn(const Statement* stmt, bool void_return, int line_num)
+    -> const Statement* {
   if (!stmt) {
     if (void_return) {
-      auto args = new std::vector<std::pair<std::string, Expression*>>();
+      auto args = new std::vector<std::pair<std::string, const Expression*>>();
       return MakeReturn(line_num, MakeTuple(line_num, args));
     } else {
       std::cerr
@@ -503,7 +506,8 @@ auto CheckOrEnsureReturn(Statement* stmt, bool void_return, int line_num)
   }
   switch (stmt->tag) {
     case StatementKind::Match: {
-      auto new_clauses = new std::list<std::pair<Expression*, Statement*>>();
+      auto new_clauses =
+          new std::list<std::pair<const Expression*, const Statement*>>();
       for (auto i = stmt->u.match_stmt.clauses->begin();
            i != stmt->u.match_stmt.clauses->end(); ++i) {
         auto s = CheckOrEnsureReturn(i->second, void_return, stmt->line_num);
@@ -543,7 +547,8 @@ auto CheckOrEnsureReturn(Statement* stmt, bool void_return, int line_num)
     case StatementKind::Continue:
     case StatementKind::VariableDefinition:
       if (void_return) {
-        auto args = new std::vector<std::pair<std::string, Expression*>>();
+        auto args =
+            new std::vector<std::pair<std::string, const Expression*>>();
         return MakeSeq(
             stmt->line_num, stmt,
             MakeReturn(stmt->line_num, MakeTuple(stmt->line_num, args)));

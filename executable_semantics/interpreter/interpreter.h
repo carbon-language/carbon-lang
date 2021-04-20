@@ -77,7 +77,7 @@ auto ToInteger(const Value* v) -> int;
 /***** Interpreters *****/
 
 auto InterpProgram(std::list<Declaration>* fs) -> int;
-auto InterpExp(Env values, Expression* e) -> const Value*;
+auto InterpExp(Env values, const Expression* e) -> const Value*;
 
 }  // namespace Carbon
 

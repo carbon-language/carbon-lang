@@ -18,7 +18,7 @@ struct FieldInitializer {
   std::string name;
 
   // The expression that initializes the field.
-  Expression* expression;
+  const Expression* expression;
 };
 
 // Represents the syntactic contents of an expression delimited by
@@ -45,11 +45,11 @@ class ParenContents {
   ParenContents& operator=(const ParenContents&) = default;
 
   // Returns the paren expression, interpreted as a tuple.
-  Expression* AsTuple(int line_number) const;
+  const Expression* AsTuple(int line_number) const;
 
   // Returns the paren expression, with no external constraints on what kind
   // of expression it represents.
-  Expression* AsExpression(int line_number) const;
+  const Expression* AsExpression(int line_number) const;
 
  private:
   std::vector<FieldInitializer> fields_;
