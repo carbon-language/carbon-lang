@@ -166,13 +166,12 @@ auto TypeCheckExp(const Expression* e, TypeEnv types, Env values,
           }
           arg_expected = state->heap[*expected_field];
         }
-        auto arg_res =
-            TypeCheckExp(arg->expression, new_types, values, arg_expected,
-                         context);
+        auto arg_res = TypeCheckExp(arg->expression, new_types, values,
+                                    arg_expected, context);
         new_types = arg_res.types;
         new_args->push_back({.name = arg->name, .expression = arg_res.exp});
-        arg_types->push_back({.name = arg->name,
-                              .address = AllocateValue(arg_res.type)});
+        arg_types->push_back(
+            {.name = arg->name, .address = AllocateValue(arg_res.type)});
       }
       auto tuple_e = MakeTuple(e->line_num, new_args);
       auto tuple_t = MakeTupleVal(arg_types);
@@ -548,9 +547,8 @@ auto CheckOrEnsureReturn(const Statement* stmt, bool void_return, int line_num)
     case StatementKind::Continue:
     case StatementKind::VariableDefinition:
       if (void_return) {
-        return MakeSeq(
-            stmt->line_num, stmt,
-            MakeReturn(stmt->line_num, MakeUnit(stmt->line_num)));
+        return MakeSeq(stmt->line_num, stmt,
+                       MakeReturn(stmt->line_num, MakeUnit(stmt->line_num)));
       } else {
         std::cerr
             << stmt->line_num
@@ -680,8 +678,8 @@ auto StructDeclaration::TopLevel(TypeCheckContext& tops) const -> void {
   tops.values.Set(Name(), a);  // Is this obsolete?
   auto field_types = new std::vector<TupleElement>();
   for (const auto& [field_name, field_value] : *st->u.struct_type.fields) {
-    field_types->push_back({.name = field_name,
-                            .address = AllocateValue(field_value)});
+    field_types->push_back(
+        {.name = field_name, .address = AllocateValue(field_value)});
   }
   auto fun_ty = MakeFunTypeVal(MakeTupleVal(field_types), st);
   tops.types.Set(Name(), fun_ty);

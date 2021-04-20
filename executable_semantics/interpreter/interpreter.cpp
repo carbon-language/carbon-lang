@@ -48,8 +48,8 @@ auto CopyVal(const Value* val, int line_num) -> const Value* {
       auto elements = new std::vector<TupleElement>();
       for (const TupleElement& element : *val->u.tuple.elements) {
         CheckAlive(element.address, line_num);
-        const Value* new_element = CopyVal(state->heap[element.address],
-                                           line_num);
+        const Value* new_element =
+            CopyVal(state->heap[element.address], line_num);
         Address new_address = AllocateValue(new_element);
         elements->push_back({.name = element.name, .address = new_address});
       }
