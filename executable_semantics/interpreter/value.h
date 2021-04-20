@@ -161,7 +161,6 @@ auto TypeEqual(const Value* t1, const Value* t2) -> bool;
 auto ValueEqual(const Value* v1, const Value* v2, int line_num) -> bool;
 
 auto ToInteger(const Value* v) -> int;
-void CheckAlive(Address a, int line_num);
 
 }  // namespace Carbon
 

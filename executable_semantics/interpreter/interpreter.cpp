@@ -43,27 +43,39 @@ static auto FindField(const std::string& field,
 // Auxiliary Functions
 //
 
-auto AllocateValue(const Value* v) -> Address {
+auto State::AllocateValue(const Value* v) -> Address {
   // Putting the following two side effects together in this function
   // ensures that we don't do anything else in between, which is really bad!
   // Consider whether to include a copy of the input v in this function
   // or to leave it up to the caller.
-  Address a = state->heap.size();
-  state->heap.push_back(new Value(*v));
-  state->alive.push_back(true);
+  Address a = this->heap.size();
+  this->heap.push_back(new Value(*v));
+  this->alive.push_back(true);
   return a;
 }
 
 // Returns the value at the given address in the heap after
 // checking that it is alive.
-auto ReadFromMemory(Address a, int line_num) -> const Value* {
-  CheckAlive(a, line_num);
-  return state->heap[a];
+auto State::ReadFromMemory(Address a, int line_num) -> const Value* {
+  this->CheckAlive(a, line_num);
+  return this->heap[a];
 }
 
-auto WriteToMemory(Address a, const Value* v, int line_num) -> void {
-  CheckAlive(a, line_num);
-  state->heap[a] = v;
+// Writes the given value at the address in the heap after
+// checking that the address is alive.
+auto State::WriteToMemory(Address a, const Value* v, int line_num) -> void {
+  this->CheckAlive(a, line_num);
+  this->heap[a] = v;
+}
+
+// Signal an error if the address is no longer alive.
+void State::CheckAlive(Address address, int line_num) {
+  if (!this->alive[address]) {
+    std::cerr << line_num << ": undefined behavior: access to dead value ";
+    PrintValue(this->heap[address], std::cerr);
+    std::cerr << std::endl;
+    exit(-1);
+  }
 }
 
 auto CopyVal(const Value* val, int line_num) -> const Value* {
@@ -71,17 +83,16 @@ auto CopyVal(const Value* val, int line_num) -> const Value* {
     case ValKind::TupleV: {
       auto elts = new std::vector<std::pair<std::string, Address>>();
       for (auto& i : *val->u.tuple.elts) {
-        CheckAlive(i.second, line_num);
         const Value* elt =
-            CopyVal(ReadFromMemory(i.second, line_num), line_num);
+            CopyVal(state->ReadFromMemory(i.second, line_num), line_num);
         Address new_address = AllocateValue(elt);
         elts->push_back(make_pair(i.first, new_address));
       }
       return MakeTupleVal(elts);
     }
     case ValKind::AltV: {
-      const Value* arg =
-          CopyVal(ReadFromMemory(val->u.alt.argument, line_num), line_num);
+      const Value* arg = CopyVal(
+          state->ReadFromMemory(val->u.alt.argument, line_num), line_num);
       Address argument_address = AllocateValue(arg);
       return MakeAltVal(*val->u.alt.alt_name, *val->u.alt.choice_name,
                         argument_address);
@@ -158,10 +169,10 @@ void KillSubObjects(const Value* val) {
 }
 
 // Marks the object at this address, and all of its sub-objects, as dead.
-void KillObject(Address address) {
-  if (state->alive[address]) {
-    state->alive[address] = false;
-    KillSubObjects(state->heap[address]);
+void State::KillObject(Address address) {
+  if (this->alive[address]) {
+    this->alive[address] = false;
+    KillSubObjects(this->heap[address]);
   } else {
     std::cerr << "runtime error, killing an already dead value" << std::endl;
     exit(-1);
@@ -169,9 +180,9 @@ void KillObject(Address address) {
 }
 
 void PrintEnv(Env values, std::ostream& out) {
-  for (const auto& [name, value] : values) {
+  for (const auto& [name, address] : values) {
     out << name << ": ";
-    PrintValue(state->heap[value], out);
+    state->PrintAddress(address, out);
     out << ", ";
   }
 }
@@ -197,8 +208,8 @@ void PrintStack(Stack<Frame*> ls, std::ostream& out) {
   }
 }
 
-void PrintHeap(const std::vector<const Value*>& heap, std::ostream& out) {
-  for (auto& iter : heap) {
+void State::PrintHeap(std::ostream& out) {
+  for (auto& iter : this->heap) {
     if (iter) {
       PrintValue(iter, out);
     } else {
@@ -218,7 +229,7 @@ void PrintState(std::ostream& out) {
   out << "stack: ";
   PrintStack(state->stack, out);
   out << std::endl << "heap: ";
-  PrintHeap(state->heap, out);
+  state->PrintHeap(out);
   if (!state->stack.IsEmpty() && !state->stack.Top()->scopes.IsEmpty()) {
     out << std::endl << "values: ";
     PrintEnv(CurrentEnv(state), out);
@@ -252,7 +263,6 @@ auto ValToBool(const Value* v, int line_num) -> int {
 }
 
 auto ValToPtr(const Value* v, int line_num) -> Address {
-  CheckAlive(v->u.ptr, line_num);
   switch (v->tag) {
     case ValKind::PtrV:
       return v->u.ptr;
@@ -468,8 +478,8 @@ auto PatternMatch(const Value* p, const Value* v, Env values,
               exit(-1);
             }
             std::optional<Env> matches = PatternMatch(
-                ReadFromMemory(elt.second, line_num),
-                ReadFromMemory(*a, line_num), values, vars, line_num);
+                state->ReadFromMemory(elt.second, line_num),
+                state->ReadFromMemory(*a, line_num), values, vars, line_num);
             if (!matches) {
               return std::nullopt;
             }
@@ -492,9 +502,9 @@ auto PatternMatch(const Value* p, const Value* v, Env values,
             return std::nullopt;
           }
           std::optional<Env> matches =
-              PatternMatch(ReadFromMemory(p->u.alt.argument, line_num),
-                           ReadFromMemory(v->u.alt.argument, line_num), values,
-                           vars, line_num);
+              PatternMatch(state->ReadFromMemory(p->u.alt.argument, line_num),
+                           state->ReadFromMemory(v->u.alt.argument, line_num),
+                           values, vars, line_num);
           if (!matches) {
             return std::nullopt;
           }
@@ -534,7 +544,8 @@ auto PatternMatch(const Value* p, const Value* v, Env values,
 void PatternAssignment(const Value* pat, const Value* val, int line_num) {
   switch (pat->tag) {
     case ValKind::PtrV:
-      WriteToMemory(ValToPtr(pat, line_num), CopyVal(val, line_num), line_num);
+      state->WriteToMemory(ValToPtr(pat, line_num), CopyVal(val, line_num),
+                           line_num);
       break;
     case ValKind::TupleV: {
       switch (val->tag) {
@@ -552,8 +563,8 @@ void PatternAssignment(const Value* pat, const Value* val, int line_num) {
               std::cerr << std::endl;
               exit(-1);
             }
-            PatternAssignment(ReadFromMemory(elt.second, line_num),
-                              ReadFromMemory(*a, line_num), line_num);
+            PatternAssignment(state->ReadFromMemory(elt.second, line_num),
+                              state->ReadFromMemory(*a, line_num), line_num);
           }
           break;
         }
@@ -575,9 +586,9 @@ void PatternAssignment(const Value* pat, const Value* val, int line_num) {
             std::cerr << "internal error in pattern assignment" << std::endl;
             exit(-1);
           }
-          PatternAssignment(ReadFromMemory(pat->u.alt.argument, line_num),
-                            ReadFromMemory(val->u.alt.argument, line_num),
-                            line_num);
+          PatternAssignment(
+              state->ReadFromMemory(pat->u.alt.argument, line_num),
+              state->ReadFromMemory(val->u.alt.argument, line_num), line_num);
           break;
         }
         default:
@@ -621,7 +632,6 @@ void StepLvalue() {
         exit(-1);
       }
       const Value* v = MakePtrVal(*pointer);
-      CheckAlive(*pointer, exp->line_num);
       frame->todo.Pop();
       frame->todo.Push(MakeValAct(v));
       break;
@@ -718,7 +728,7 @@ void StepExp() {
                   << *(exp->u.variable.name) << "`" << std::endl;
         exit(-1);
       }
-      const Value* pointee = ReadFromMemory(*pointer, exp->line_num);
+      const Value* pointee = state->ReadFromMemory(*pointer, exp->line_num);
       frame->todo.Pop(1);
       frame->todo.Push(MakeValAct(pointee));
       break;
@@ -961,14 +971,14 @@ void StepStmt() {
         paused.push_back(state->stack.Pop());
       } while (!paused.back()->IsContinuation());
       // Update the continuation with the paused stack.
-      WriteToMemory(paused.back()->continuation, MakeContinuation(paused),
-                    stmt->line_num);
+      state->WriteToMemory(paused.back()->continuation,
+                           MakeContinuation(paused), stmt->line_num);
       break;
   }
 }
 
 auto GetMember(Address a, const std::string& f, int line_num) -> Address {
-  const Value* v = ReadFromMemory(a, line_num);
+  const Value* v = state->ReadFromMemory(a, line_num);
   switch (v->tag) {
     case ValKind::StructV: {
       auto a = FindField(f, *v->u.struct_val.inits->u.tuple.elts);
@@ -1164,7 +1174,7 @@ void HandleValue() {
                   exit(-1);
                 }
                 frame->todo.Pop(2);
-                const Value* element = ReadFromMemory(*a, exp->line_num);
+                const Value* element = state->ReadFromMemory(*a, exp->line_num);
                 frame->todo.Push(MakeValAct(element));
                 break;
               }
@@ -1183,7 +1193,7 @@ void HandleValue() {
           // -> { { v_f :: C, E, F} : S, H}
           auto a = GetMember(ValToPtr(act->results[0], exp->line_num),
                              *exp->u.get_field.field, exp->line_num);
-          const Value* element = ReadFromMemory(a, exp->line_num);
+          const Value* element = state->ReadFromMemory(a, exp->line_num);
           frame->todo.Pop(2);
           frame->todo.Push(MakeValAct(element));
           break;
