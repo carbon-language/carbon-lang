@@ -56,10 +56,11 @@ auto ReifyType(const Value* t, int line_num) -> const Expression* {
       return MakeFunType(0, ReifyType(t->u.fun_type.param, line_num),
                          ReifyType(t->u.fun_type.ret, line_num));
     case ValKind::TupleV: {
-      auto args = new std::vector<std::pair<std::string, const Expression*>>();
+      auto args = new std::vector<FieldInitializer>();
       for (auto& field : *t->u.tuple.elts) {
         args->push_back(
-            {field.first, ReifyType(state->heap[field.second], line_num)});
+            {.name = field.first,
+             .expression = ReifyType(state->heap[field.second], line_num)});
       }
       return MakeTuple(0, args);
     }
@@ -148,8 +149,7 @@ auto TypeCheckExp(const Expression* e, TypeEnv types, Env values,
       }
     }
     case ExpressionKind::Tuple: {
-      auto new_args =
-          new std::vector<std::pair<std::string, const Expression*>>();
+      auto new_args = new std::vector<FieldInitializer>();
       auto arg_types = new std::vector<std::pair<std::string, Address>>();
       auto new_types = types;
       int i = 0;
@@ -158,19 +158,20 @@ auto TypeCheckExp(const Expression* e, TypeEnv types, Env values,
         const Value* arg_expected = nullptr;
         if (expected && expected->tag == ValKind::TupleV) {
           std::optional<Address> expected_field =
-              FindTupleField(arg->first, expected);
+              FindTupleField(arg->name, expected);
           if (expected_field == std::nullopt) {
             std::cerr << e->line_num << ": compilation error, missing field "
-                      << arg->first << std::endl;
+                      << arg->name << std::endl;
             exit(-1);
           }
           arg_expected = state->heap[*expected_field];
         }
         auto arg_res =
-            TypeCheckExp(arg->second, new_types, values, arg_expected, context);
+            TypeCheckExp(arg->expression, new_types, values, arg_expected,
+                         context);
         new_types = arg_res.types;
-        new_args->push_back(std::make_pair(arg->first, arg_res.exp));
-        arg_types->push_back({arg->first, AllocateValue(arg_res.type)});
+        new_args->push_back({.name = arg->name, .expression = arg_res.exp});
+        arg_types->push_back({arg->name, AllocateValue(arg_res.type)});
       }
       auto tuple_e = MakeTuple(e->line_num, new_args);
       auto tuple_t = MakeTupleVal(arg_types);
@@ -495,8 +496,7 @@ auto CheckOrEnsureReturn(const Statement* stmt, bool void_return, int line_num)
     -> const Statement* {
   if (!stmt) {
     if (void_return) {
-      auto args = new std::vector<std::pair<std::string, const Expression*>>();
-      return MakeReturn(line_num, MakeTuple(line_num, args));
+      return MakeReturn(line_num, MakeUnit(line_num));
     } else {
       std::cerr
           << "control-flow reaches end of non-void function without a return"
@@ -547,11 +547,9 @@ auto CheckOrEnsureReturn(const Statement* stmt, bool void_return, int line_num)
     case StatementKind::Continue:
     case StatementKind::VariableDefinition:
       if (void_return) {
-        auto args =
-            new std::vector<std::pair<std::string, const Expression*>>();
         return MakeSeq(
             stmt->line_num, stmt,
-            MakeReturn(stmt->line_num, MakeTuple(stmt->line_num, args)));
+            MakeReturn(stmt->line_num, MakeUnit(stmt->line_num)));
       } else {
         std::cerr
             << stmt->line_num

@@ -394,7 +394,7 @@ void CreateTuple(Frame* frame, Action* act, const Expression* /*exp*/) {
   auto f = act->u.exp->u.tuple.fields->begin();
   for (auto i = act->results.begin(); i != act->results.end(); ++i, ++f) {
     Address a = AllocateValue(*i);  // copy?
-    elts->push_back(make_pair(f->first, a));
+    elts->push_back(make_pair(f->name, a));
   }
   const Value* tv = MakeTupleVal(elts);
   frame->todo.Pop(1);
@@ -606,7 +606,7 @@ void StepLvalue() {
     case ExpressionKind::Tuple: {
       //    { {(f1=e1,...) :: C, E, F} :: S, H}
       // -> { {e1 :: (f1=[],...) :: C, E, F} :: S, H}
-      const Expression* e1 = (*exp->u.tuple.fields)[0].second;
+      const Expression* e1 = (*exp->u.tuple.fields)[0].expression;
       frame->todo.Push(MakeLvalAct(e1));
       act->pos++;
       break;
@@ -657,7 +657,7 @@ void StepExp() {
       if (exp->u.tuple.fields->size() > 0) {
         //    { {(f1=e1,...) :: C, E, F} :: S, H}
         // -> { {e1 :: (f1=[],...) :: C, E, F} :: S, H}
-        const Expression* e1 = (*exp->u.tuple.fields)[0].second;
+        const Expression* e1 = (*exp->u.tuple.fields)[0].expression;
         frame->todo.Push(MakeExpAct(e1));
         act->pos++;
       } else {
@@ -1066,7 +1066,7 @@ void HandleValue() {
             //    H}
             // -> { { ek+1 :: (f1=v1,..., fk=vk, fk+1=[],...) :: C, E, F} :: S,
             // H}
-            const Expression* elt = (*exp->u.tuple.fields)[act->pos].second;
+            const Expression* elt = (*exp->u.tuple.fields)[act->pos].expression;
             frame->todo.Pop(1);
             frame->todo.Push(MakeLvalAct(elt));
           } else {
@@ -1098,7 +1098,7 @@ void HandleValue() {
             //    H}
             // -> { { ek+1 :: (f1=v1,..., fk=vk, fk+1=[],...) :: C, E, F} :: S,
             // H}
-            const Expression* elt = (*exp->u.tuple.fields)[act->pos].second;
+            const Expression* elt = (*exp->u.tuple.fields)[act->pos].expression;
             frame->todo.Pop(1);
             frame->todo.Push(MakeExpAct(elt));
           } else {
@@ -1441,8 +1441,7 @@ auto InterpProgram(std::list<Declaration>* fs) -> int {
   }
   InitGlobals(fs);
 
-  const Expression* arg = MakeTuple(
-      0, new std::vector<std::pair<std::string, const Expression*>>());
+  const Expression* arg = MakeTuple(0, new std::vector<FieldInitializer>());
   const Expression* call_main = MakeCall(0, MakeVar(0, "main"), arg);
   auto todo = Stack(MakeExpAct(call_main));
   auto* scope = new Scope(globals, std::list<std::string>());

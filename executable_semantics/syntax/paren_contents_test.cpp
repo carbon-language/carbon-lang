@@ -47,10 +47,9 @@ TEST(ParenContentsTest, UnaryNoCommaAsTuple) {
   const Expression* tuple = contents.AsTuple(/*line_num=*/1);
   EXPECT_EQ(tuple->line_num, 1);
   ASSERT_EQ(tuple->tag, ExpressionKind::Tuple);
-  std::vector<std::pair<std::string, const Expression*>> fields =
-      *tuple->u.tuple.fields;
+  std::vector<FieldInitializer> fields = *tuple->u.tuple.fields;
   ASSERT_EQ(fields.size(), 1);
-  EXPECT_EQ(fields[0].second->tag, ExpressionKind::Integer);
+  EXPECT_EQ(fields[0].expression->tag, ExpressionKind::Integer);
 }
 
 TEST(ParenContentsTest, UnaryWithCommaAsExpression) {
@@ -60,10 +59,9 @@ TEST(ParenContentsTest, UnaryWithCommaAsExpression) {
   const Expression* expression = contents.AsExpression(/*line_num=*/1);
   EXPECT_EQ(expression->line_num, 1);
   ASSERT_EQ(expression->tag, ExpressionKind::Tuple);
-  std::vector<std::pair<std::string, const Expression*>> fields =
-      *expression->u.tuple.fields;
+  std::vector<FieldInitializer> fields = *expression->u.tuple.fields;
   ASSERT_EQ(fields.size(), 1);
-  EXPECT_EQ(fields[0].second->tag, ExpressionKind::Integer);
+  EXPECT_EQ(fields[0].expression->tag, ExpressionKind::Integer);
 }
 
 TEST(ParenContentsTest, UnaryWithCommaAsTuple) {
@@ -73,10 +71,9 @@ TEST(ParenContentsTest, UnaryWithCommaAsTuple) {
   const Expression* tuple = contents.AsTuple(/*line_num=*/1);
   EXPECT_EQ(tuple->line_num, 1);
   ASSERT_EQ(tuple->tag, ExpressionKind::Tuple);
-  std::vector<std::pair<std::string, const Expression*>> fields =
-      *tuple->u.tuple.fields;
+  std::vector<FieldInitializer> fields = *tuple->u.tuple.fields;
   ASSERT_EQ(fields.size(), 1);
-  EXPECT_EQ(fields[0].second->tag, ExpressionKind::Integer);
+  EXPECT_EQ(fields[0].expression->tag, ExpressionKind::Integer);
 }
 
 TEST(ParenContentsTest, BinaryAsExpression) {
@@ -87,11 +84,10 @@ TEST(ParenContentsTest, BinaryAsExpression) {
   const Expression* expression = contents.AsExpression(/*line_num=*/1);
   EXPECT_EQ(expression->line_num, 1);
   ASSERT_EQ(expression->tag, ExpressionKind::Tuple);
-  std::vector<std::pair<std::string, const Expression*>> fields =
-      *expression->u.tuple.fields;
+  std::vector<FieldInitializer> fields = *expression->u.tuple.fields;
   ASSERT_EQ(fields.size(), 2);
-  EXPECT_EQ(fields[0].second->tag, ExpressionKind::Integer);
-  EXPECT_EQ(fields[1].second->tag, ExpressionKind::Integer);
+  EXPECT_EQ(fields[0].expression->tag, ExpressionKind::Integer);
+  EXPECT_EQ(fields[1].expression->tag, ExpressionKind::Integer);
 }
 
 TEST(ParenContentsTest, BinaryAsTuple) {
@@ -102,11 +98,10 @@ TEST(ParenContentsTest, BinaryAsTuple) {
   const Expression* tuple = contents.AsTuple(/*line_num=*/1);
   EXPECT_EQ(tuple->line_num, 1);
   ASSERT_EQ(tuple->tag, ExpressionKind::Tuple);
-  std::vector<std::pair<std::string, const Expression*>> fields =
-      *tuple->u.tuple.fields;
+  std::vector<FieldInitializer> fields = *tuple->u.tuple.fields;
   ASSERT_EQ(fields.size(), 2);
-  EXPECT_EQ(fields[0].second->tag, ExpressionKind::Integer);
-  EXPECT_EQ(fields[1].second->tag, ExpressionKind::Integer);
+  EXPECT_EQ(fields[0].expression->tag, ExpressionKind::Integer);
+  EXPECT_EQ(fields[1].expression->tag, ExpressionKind::Integer);
 }
 
 }  // namespace
