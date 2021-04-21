@@ -111,7 +111,8 @@ prefix of the data layout, specified method implementations, tests that must
 pass, etc. This might be part of making interfaces as expressive as classes, as
 part of a strategy to migrate to a future version of Carbon that uses interfaces
 instead of, rather than in addition to, standard inheritance-and-classes
-object-oriented language support. For the moment, everything beyond specifying the _methods_ available is out of scope.
+object-oriented language support. For the moment, everything beyond specifying
+the _methods_ available is out of scope.
 
 ### Relationship to templates
 
@@ -220,8 +221,6 @@ different overloads. It makes the meaning of code dependent on which overloads
 are imported, and is at odds with being able to type check a function
 generically.
 
-The C++ standard library has begun codifying these patterns as [customization points](http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2015/n4381.html).
-
 Our goal is to address this use case, known more generally as
 [the expression problem](https://eli.thegreenplace.net/2016/the-expression-problem-and-its-solutions),
 with a generics mechanism that does enforce consistency so that type checking is
@@ -252,8 +251,8 @@ misses.
 ### Better compiler experience
 
 Compared to C++ templates, we expect to reduce build times, particularly in
-development builds. We also expect the compiler to be able to report clearer errors, and
-report them earlier in the build process.
+development builds. We also expect the compiler to be able to report clearer
+errors, and report them earlier in the build process.
 
 One source of improvement is that the bodies of generic functions and types can
 be type checked once when they are defined, instead of every time they are used.
@@ -304,8 +303,8 @@ including [Rust](https://sdleffler.github.io/RustTypeSystemTuringComplete/) and
 fully expect there to be metaprogramming facilities in Carbon that will be able
 to execute arbitrary Turing machines, with infinite loops and undecidable
 stopping criteria. We don't see this as a problem though, just like we don't
-worry about trying to make the compiler reliably prevent you from writing programs that don't
-terminate.
+worry about trying to make the compiler reliably prevent you from writing
+programs that don't terminate.
 
 We _would_ like to distinguish "the executed steps are present in the program's
 source" from "the compiler has to search for a proof that the code is legal." In
@@ -497,7 +496,8 @@ Interfaces can either be structural, as in Go, or nominal, as in Rust and Swift.
 Structural interfaces match any type that has the required methods, whereas
 nominal interfaces only match if there is an explicit declaration stating that
 the interface is implemented for that specific type. Carbon will support nominal
-interfaces, allowing them to designate _semantics_ beyond the basic structure of the methods.
+interfaces, allowing them to designate _semantics_ beyond the basic structure of
+the methods.
 
 This means that interfaces implicitly specify the intended semantics and
 invariants of and between those functions. Unlike the function signatures, this
@@ -549,10 +549,12 @@ what interface.
 There will need to be some bridge for C++ extension points that currently rely
 on open overloading or
 [ADL](https://en.wikipedia.org/wiki/Argument-dependent_name_lookup). For
-example, we need some way for C++ `swap` calls to work on Carbon types. We might
-define `CPlusPlus.ADL.swap` as a Carbon interface to be that bridge. Carbon
-types could implement that interface to work from C++, and Carbon functions
-could use that interface to invoke `swap` on C++ types.
+example, we need some way for C++
+[customization points](http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2015/n4381.html)
+like `swap` to work on Carbon types. We might define `CPlusPlus.ADL.swap` as a
+Carbon interface to be that bridge. Carbon types could implement that interface
+to work from C++, and Carbon functions could use that interface to invoke `swap`
+on C++ types.
 
 Similarly, we will want some way to implement Carbon interfaces for C++ types.
 For example, we might have a template implementation of an `Addable` interface
