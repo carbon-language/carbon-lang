@@ -36,31 +36,26 @@ auto State::AllocateValue(const Value* v) -> Address {
   // ensures that we don't do anything else in between, which is really bad!
   // Consider whether to include a copy of the input v in this function
   // or to leave it up to the caller.
-  Address a = this->heap.size();
-  this->heap.push_back(new Value(*v));
+  Address a = heap.size();
+  heap.push_back(new Value(*v));
   this->alive.push_back(true);
   return a;
 }
 
-// Returns the value at the given address in the heap after
-// checking that it is alive.
 auto State::ReadFromMemory(Address a, int line_num) -> const Value* {
   this->CheckAlive(a, line_num);
-  return this->heap[a];
+  return heap[a];
 }
 
-// Writes the given value at the address in the heap after
-// checking that the address is alive.
 auto State::WriteToMemory(Address a, const Value* v, int line_num) -> void {
   this->CheckAlive(a, line_num);
-  this->heap[a] = v;
+  heap[a] = v;
 }
 
-// Signal an error if the address is no longer alive.
 void State::CheckAlive(Address address, int line_num) {
   if (!this->alive[address]) {
     std::cerr << line_num << ": undefined behavior: access to dead value ";
-    PrintValue(this->heap[address], std::cerr);
+    PrintValue(heap[address], std::cerr);
     std::cerr << std::endl;
     exit(-1);
   }
@@ -146,11 +141,10 @@ void KillSubObjects(const Value* val) {
   }
 }
 
-// Marks the object at this address, and all of its sub-objects, as dead.
 void State::KillObject(Address address) {
   if (this->alive[address]) {
     this->alive[address] = false;
-    KillSubObjects(this->heap[address]);
+    KillSubObjects(heap[address]);
   } else {
     std::cerr << "runtime error, killing an already dead value" << std::endl;
     exit(-1);
@@ -187,7 +181,7 @@ void PrintStack(Stack<Frame*> ls, std::ostream& out) {
 }
 
 void State::PrintHeap(std::ostream& out) {
-  for (auto& iter : this->heap) {
+  for (auto& iter : heap) {
     if (iter) {
       PrintValue(iter, out);
     } else {
