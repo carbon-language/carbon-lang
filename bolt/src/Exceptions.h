@@ -49,12 +49,6 @@ public:
       std::vector<uint64_t> &FailedAddresses) const;
 
   using FDEsMap = std::map<uint64_t, const dwarf::FDE *>;
-  using fde_iterator = FDEsMap::const_iterator;
-
-  /// Get all FDEs discovered by this reader.
-  iterator_range<fde_iterator> fdes() const {
-    return iterator_range<fde_iterator>(FDEs.begin(), FDEs.end());
-  }
 
   const FDEsMap &getFDEs() const {
     return FDEs;
