@@ -2,12 +2,12 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-// Test matching with a mixture of positional and named fields.
+// Test matching of a tuple inside a tuple.
 
 fn main() -> Int {
-  var auto: t = (.x = 5, 2);
+  var auto: t = ((1,2),(3,4));
   match (t) {
-    case (auto: a, .x = auto: b) =>
-      return a - b + 3;
+    case ((auto: a, auto: b), auto: c) =>
+      return a - b + c[0] - c[1] + 2;
   }
 }

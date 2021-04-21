@@ -67,6 +67,7 @@ EXAMPLES = [
     "tuple_assign",
     "tuple_match",
     "tuple_match2",
+    "tuple_match3",
     "tuple1",
     "tuple2",
     "tuple3",
