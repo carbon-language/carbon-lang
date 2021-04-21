@@ -63,7 +63,7 @@ in a generic function's signature.
 
 This would be _in addition_ to
 [template support in Carbon](#relationship-to-templates), if we decide to
-support templates in Carbon as well as interoperability with C++ templates.
+support templates in Carbon beyond interoperability with C++ templates.
 
 ### Generic parameters
 
@@ -111,7 +111,7 @@ prefix of the data layout, specified method implementations, tests that must
 pass, etc. This might be part of making interfaces as expressive as classes, as
 part of a strategy to migrate to a future version of Carbon that uses interfaces
 instead of, rather than in addition to, standard inheritance-and-classes
-object-oriented language support. For the moment, this is out of scope.
+object-oriented language support. For the moment, everything beyond specifying the _methods_ available is out of scope.
 
 ### Relationship to templates
 
@@ -220,7 +220,9 @@ different overloads. It makes the meaning of code dependent on which overloads
 are imported, and is at odds with being able to type check a function
 generically.
 
-Our goal is to address this use case, known as
+The C++ standard library has begun codifying these patterns as [customization points](http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2015/n4381.html).
+
+Our goal is to address this use case, known more generally as
 [the expression problem](https://eli.thegreenplace.net/2016/the-expression-problem-and-its-solutions),
 with a generics mechanism that does enforce consistency so that type checking is
 possible without seeing all implementations. This will be Carbon's replacement
@@ -249,8 +251,8 @@ misses.
 
 ### Better compiler experience
 
-Compared to C++ templates, we expect to reduce build times, particularly when
-developing. We also expect the compiler to be able to report clearer errors, and
+Compared to C++ templates, we expect to reduce build times, particularly in
+development builds. We also expect the compiler to be able to report clearer errors, and
 report them earlier in the build process.
 
 One source of improvement is that the bodies of generic functions and types can
@@ -302,7 +304,7 @@ including [Rust](https://sdleffler.github.io/RustTypeSystemTuringComplete/) and
 fully expect there to be metaprogramming facilities in Carbon that will be able
 to execute arbitrary Turing machines, with infinite loops and undecidable
 stopping criteria. We don't see this as a problem though, just like we don't
-worry about trying to make compiler prevent you from writing programs that don't
+worry about trying to make the compiler reliably prevent you from writing programs that don't
 terminate.
 
 We _would_ like to distinguish "the executed steps are present in the program's
@@ -495,7 +497,7 @@ Interfaces can either be structural, as in Go, or nominal, as in Rust and Swift.
 Structural interfaces match any type that has the required methods, whereas
 nominal interfaces only match if there is an explicit declaration stating that
 the interface is implemented for that specific type. Carbon will support nominal
-interfaces, consistent with the philosophy of being explicit.
+interfaces, allowing them to designate _semantics_ beyond the basic structure of the methods.
 
 This means that interfaces implicitly specify the intended semantics and
 invariants of and between those functions. Unlike the function signatures, this
