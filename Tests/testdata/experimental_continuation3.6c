@@ -2,8 +2,17 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
+// Test pausing a continuation with `__await` and restarting it with
+// `__run`.
+
 fn main() -> Int {
-  var (Int,): t1 = (5,);
-  var (Int, Int): t2 = (2, 3);
-  return t1[0] - t2[0] - t2[1];
+  var Int: x = 0;
+  __continuation k {
+    x = x + 1;
+    __await;
+    x = x + 2;
+  }
+  __run k;
+  __run k;
+  return x;
 }

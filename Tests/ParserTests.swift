@@ -59,20 +59,19 @@ final class ParserTests: XCTestCase {
     else { return }
     XCTAssertEqual(p.count, 1)
     let p0 = p[0]
-    guard case let .variable(v) = p0 else {
+    guard case let .initialization(i) = p0 else {
       XCTFail("\(p0)")
       return
     }
-    guard case let .simple(b, initializer: initializer, _) = v else {
-      XCTFail("\(v)")
+    guard case let .variable(b) = i.bindings else {
+      XCTFail("\(i)")
       return
     }
     XCTAssertEqual(b.boundName.text, "x")
 
-    if case .intType = b.type {} else { XCTFail("\(b.type)") }
-
-    if case let .integerLiteral(n, _) = initializer { XCTAssertEqual(n, 0) }
-    else { XCTFail("\(initializer)") }
+    if case .literal(.intType) = b.type {} else { XCTFail("\(b.type)") }
+    if case let .integerLiteral(n, _) = i.initializer { XCTAssertEqual(n, 0) }
+    else { XCTFail("\(i.initializer)") }
   }
 
   func testParseFailure() {
@@ -94,6 +93,10 @@ final class ParserTests: XCTestCase {
 
     for f in try! FileManager().contentsOfDirectory(atPath: testdata.path) {
       let p = testdata.appendingPathComponent(f).path
+
+      // Skip experimental syntax for now.
+      if f.hasPrefix("experimental_") { continue }
+
       if f.hasSuffix("_fail.6c") {
         let s = try! String(contentsOfFile: p)
         XCTAssertThrowsError(try s.parsedAsCarbon(fromFile: p))

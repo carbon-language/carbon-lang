@@ -28,6 +28,6 @@ let package = Package(
             name: "Tests",
             dependencies: ["CarbonInterpreter"],
             path: "Tests",
-            resources: [ .copy("testdata"), ]),
+            exclude: [ "testdata"]),
     ]
 )

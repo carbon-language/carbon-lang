@@ -2,8 +2,12 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
+// Test that creating a continuation doesn't do anything.
+
 fn main() -> Int {
-  var (Int,): t1 = (5,);
-  var (Int, Int): t2 = (2, 3);
-  return t1[0] - t2[0] - t2[1];
+  var Int: x = 0;
+  __continuation k {
+    x = x + 1;
+  }
+  return x;
 }

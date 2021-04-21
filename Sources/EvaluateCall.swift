@@ -7,7 +7,7 @@ struct EvaluateCall: Action {
   /// Which function to call.
   let callee: Expression
   /// Argument expressions.
-  let arguments: List<Expression>
+  let arguments: TupleLiteral
   /// Interpreter context to be restored after call completes.
   let callerContext: Interpreter.FunctionContext
   /// Where the result of the call shall be stored.
@@ -15,7 +15,7 @@ struct EvaluateCall: Action {
 
   init(
     callee: Expression,
-    arguments: List<Expression>,
+    arguments: TupleLiteral,
     callerContext: Interpreter.FunctionContext,
     returnValueStorage: Address)
   {
@@ -58,6 +58,7 @@ struct EvaluateCall: Action {
       return .spawn(EvaluateTupleLiteral(arguments))
       
     case .runBody:
+      /*
       // Prepare the context for the callee
       state.returnValueStorage = returnValueStorage
       // Bind the parameter names to the addresses of the argument values.
@@ -69,6 +70,9 @@ struct EvaluateCall: Action {
         }
       )
       return .spawn(Execute(calleeCode.body!))
+
+       */
+      return .done
 
     case .cleanUpArguments:
       state.functionContext = callerContext

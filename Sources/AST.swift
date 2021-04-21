@@ -33,47 +33,134 @@ struct Identifier: AST {
   let site: Site
 }
 
-/// A declaration, except for pattern variables, struct members, and function
-/// parameters.
-indirect enum TopLevelDeclaration: AST {
+/// A declaration that can appear at file scope.
+enum TopLevelDeclaration: AST {
   case
     function(FunctionDefinition),
     `struct`(StructDefinition),
     choice(ChoiceDefinition),
-    variable(VariableDefinition)
+    initialization(Initialization)
 
   var site: Site {
     switch self {
     case let .function(f): return f.site
     case let .struct(s): return s.site
     case let .choice(c): return c.site
-    case let .variable(v): return v.site
+    case let .initialization(v): return v.site
     }
   }
 }
 
-enum VariableDefinition: AST {
+/// A destructurable pattern.
+indirect enum Pattern: AST {
   case
-    uninitialized(Binding, Site),
-    simple(Binding, initializer: Expression, Site),
-    tuplePattern(TuplePattern, initializer: Expression, Site),
-    recordPattern(RecordPattern, initializer: Expression, Site),
-    functionTypePattern(FunctionTypePattern, initializer: Expression, Site)
+    atom(Expression),             // A non-destructurable expression
+    variable(SimpleBinding),     // <Type>: <name>
+    tuple(TuplePattern),
+    functionCall(FunctionCall<PatternElement>),
+    functionType(parameterTypes: TuplePattern, returnType: Pattern, Site)
+
+  init(_ e: Expression) {
+    // Upcast all destructurable things into appropriate pattern buckets
+    switch e {
+    case let .tupleLiteral(t):
+      self = .tuple(TuplePattern(t))
+    case let .functionCall(f):
+      self = .functionCall(.init(f))
+    case let .functionType(parameterTypes: p, returnType: r, site):
+      self = .functionType(
+        parameterTypes: TuplePattern(p), returnType: Pattern(r), site)
+    default: self = .atom(e)
+    }
+  }
 
   var site: Site {
     switch self {
-    case let .uninitialized(_, r): return r
-    case let .simple(_, initializer: _, r): return r
-    case let .tuplePattern(_, initializer: _, r): return r
-    case let .recordPattern(_, initializer: _, r): return r
-    case let .functionTypePattern(_, initializer: _, r): return r
+    case let .atom(x): return x.site
+    case let .variable(x): return x.site
+    case let .tuple(x): return x.site
+    case let .functionCall(x): return x.site
+    case let .functionType(parameterTypes: _, returnType: _, r): return r
     }
+  }
+}
+
+struct TypeSpecifier: AST {
+  let type: Expression
+  init(_ type: Expression) { self.type = type }
+
+  var site: Site { type.site }
+}
+enum LHSTypeSpecifier: AST {
+  case
+    auto(Site),
+    literal(Expression)
+
+  init(_ e: Expression) { self = .literal(e) }
+  
+  var site: Site {
+    switch self {
+    case let .auto(r): return r
+    case let .literal(x): return x.site
+    }
+  }
+}
+
+struct SimpleBinding: AST {
+  let type: LHSTypeSpecifier
+  let boundName: Identifier
+  var site: Site { type.site...boundName.site }
+}
+
+struct FunctionCall<Argument>: AST {
+  let callee: Expression
+  let arguments: Tuple<Argument>
+
+  var site: Site { return callee.site...arguments.site }
+}
+
+extension FunctionCall where Argument == PatternElement {
+  /// "Upcast" from literal to pattern
+  init(_ literal: FunctionCall<LiteralElement>) {
+    self.init(callee: literal.callee, arguments: .init(literal.arguments))
+  }
+}
+
+struct LiteralElement {
+  init(label: Identifier? = nil, _ value: Expression) {
+    self.label = label
+    self.value = value
+  }
+  let label: Identifier?
+  let value: Expression
+}
+typealias TupleLiteral = Tuple<LiteralElement>
+
+struct PatternElement: Equatable {
+  init(label: Identifier? = nil, _ value: Pattern) {
+    self.label = label
+    self.value = value
+  }
+  // "Upcast" from literal element
+  init(_ l: LiteralElement) {
+    self.init(label: l.label, Pattern(l.value))
+  }
+  
+  let label: Identifier?
+  let value: Pattern
+}
+
+typealias TuplePattern = Tuple<PatternElement>
+extension TuplePattern {
+  // "Upcast" from tuple literal.
+  init(_ l: TupleLiteral) {
+    self.init(l.elements.map { PatternElement($0) }, l.site)
   }
 }
 
 struct FunctionDefinition: AST {
   let name: Identifier
-  let parameters: List<Binding>
+  let parameters: TuplePattern
   let returnType: Expression
   let body: Statement?
   let site: Site
@@ -83,13 +170,13 @@ typealias MemberDesignator = Identifier
 
 struct Alternative: AST {
   let name: Identifier;
-  let payload: List<Expression>
+  let payload: TupleLiteral
   let site: Site
 }
 
 struct StructDefinition: AST {
   let name: Identifier
-  let members: [StructMemberDeclaration]
+  let members: [StructMember]
   let site: Site
 }
 
@@ -99,11 +186,23 @@ struct ChoiceDefinition: AST {
   let site: Site
 }
 
+struct StructMember: AST {
+  let type: TypeSpecifier
+  let name: Identifier
+  let site: Site
+}
+
+struct Initialization: AST {
+  let bindings: Pattern
+  let initializer: Expression
+  let site: Site
+}
+
 indirect enum Statement: AST {
   case
     expressionStatement(Expression, Site),
     assignment(target: Expression, source: Expression, Site),
-    variableDefinition(VariableDefinition),
+    initialization(Initialization),
     `if`(condition: Expression, thenClause: Statement, elseClause: Statement?, Site),
     `return`(Expression, Site),
     sequence(Statement, Statement, Site),
@@ -117,7 +216,7 @@ indirect enum Statement: AST {
     switch self {
     case let .expressionStatement(_, r): return r
     case let .assignment(target: _, source: _, r): return r
-    case let .variableDefinition(v): return v.site
+    case let .initialization(v): return v.site
     case let .if(condition: _, thenClause: _, elseClause: _, r): return r
     case let .return(_, r): return r
     case let .sequence(_, _, r): return r
@@ -130,7 +229,7 @@ indirect enum Statement: AST {
   }
 }
 
-struct List<T>: AST {
+struct Tuple<T>: AST {
   init(_ elements: [T], _ site: Site) {
     self.elements = elements
     self.site = site
@@ -140,7 +239,7 @@ struct List<T>: AST {
   let site: Site
 }
 
-extension List: RandomAccessCollection {
+extension Tuple: RandomAccessCollection {
   var startIndex: Int { 0 }
   var endIndex: Int { elements.count }
   subscript(i: Int) -> T { elements[i] }
@@ -152,35 +251,23 @@ struct MatchClause: AST {
   let action: Statement
   let site: Site
 }
-typealias MatchClauseList = List<MatchClause>
-typealias TupleLiteral = List<Expression>
-typealias RecordLiteral = List<(fieldName: Identifier, value: Expression)>
+typealias MatchClauseList = [MatchClause]
 
-struct Binding: AST {
-  let type: Expression
-  let boundName: Identifier
-
-  var site: Site { type.site...boundName.site }
+struct FunctionType<Parameter, Return>: AST {
+  let parameters: Tuple<Parameter>
+  let returnType: Return
+  let site: Site
+}
+extension FunctionType where Parameter == PatternElement, Return == Pattern {
+  /// "Upcast" from literal to pattern
+  init(_ literal: FunctionType<LiteralElement, Expression>) {
+    self.init(
+      parameters: .init(literal.parameters),
+      returnType: .init(literal.returnType),
+      site: literal.site)
+  }
 }
 
-enum TuplePatternElement {
-  case binding(Binding)
-  case literal(Expression)
-}
-
-typealias TuplePattern = List<TuplePatternElement>
-
-struct FunctionTypePattern {
-  let parameters: TuplePattern
-  let returnType: TuplePatternElement
-}
-
-enum RecordPatternElement {
-  case binding(fieldName: Identifier, type: Expression, boundName: Identifier)
-  case literal(fieldName: Identifier, value: Expression)
-}
-
-typealias RecordPattern = List<RecordPatternElement>
 
 indirect enum Expression: AST {
   case
@@ -190,18 +277,15 @@ indirect enum Expression: AST {
     patternVariable(type: Expression, name: Identifier, Site),
     integerLiteral(Int, Site),
     booleanLiteral(Bool, Site),
-    tupleLiteral(List<Expression>),
-    recordLiteral(RecordLiteral),
+    tupleLiteral(TupleLiteral),
     unaryOperator(operation: Token, operand: Expression, Site),
     binaryOperator(operation: Token, lhs: Expression, rhs: Expression, Site),
-    functionCall(callee: Expression, arguments: List<Expression>, Site),
-    structInitialization(
-      type: Expression, fieldInitializers: RecordLiteral, Site),
+    functionCall(FunctionCall<LiteralElement>),
     intType(Site),
     boolType(Site),
     typeType(Site),
     autoType(Site),
-    functionType(parameterTypes: List<Expression>, returnType: Expression, Site)
+    functionType(parameterTypes: TupleLiteral, returnType: Expression, Site)
 
   var site: Site {
     switch self {
@@ -212,11 +296,9 @@ indirect enum Expression: AST {
     case let .integerLiteral(_, r): return r
     case let .booleanLiteral(_, r): return r
     case let .tupleLiteral(t): return t.site
-    case let .recordLiteral(l): return l.site
     case let .unaryOperator(operation: _, operand: _, r): return r
     case let .binaryOperator(operation: _, lhs: _, rhs: _, r): return r
-    case let .functionCall(callee: _, arguments: _, r): return r
-    case let .structInitialization(type: _, fieldInitializers: _, r): return r
+    case let .functionCall(f): return f.site
     case let .intType(r): return r
     case let .boolType(r): return r
     case let .typeType(r): return r
@@ -227,19 +309,9 @@ indirect enum Expression: AST {
   }
 };
 
-enum Pattern {
-  case
-    literal(Expression),
-    unary(Binding),
-    tuple(TuplePattern),
-    record(RecordPattern),
-    alternative(identity: Expression, payload: TuplePattern),
-    functionType(FunctionTypePattern)
-}
-
 struct StructMemberDeclaration: AST {
   let name: Identifier
-  let type: Expression
+  let type: TypeSpecifier
   let site: Site
 }
 
@@ -252,10 +324,8 @@ enum AnyDeclaration: AST {
     function(FunctionDefinition),
     `struct`(StructDefinition),
     choice(ChoiceDefinition),
-    variable(VariableDefinition),
-    // Function parameters, variable declarations...
-    binding(Binding),
-    structMember(StructMemberDeclaration),
+    structMember(StructMember),
+    initialization(Initialization),
     alternative(Alternative)
 
   init(_ x: TopLevelDeclaration) {
@@ -263,7 +333,7 @@ enum AnyDeclaration: AST {
     case let .function(f): self = .function(f)
     case let .struct(s): self = .struct(s)
     case let .choice(c): self = .choice(c)
-    case let .variable(v): self = .variable(v)
+    case let .initialization(v): self = .initialization(v)
     }
   }
   
@@ -272,10 +342,9 @@ enum AnyDeclaration: AST {
     case let .function(f): return f.site
     case let .struct(s): return s.site
     case let .choice(c): return c.site
-    case let .variable(v): return v.site
-    case .binding(let p): return p.site
-    case .structMember(let m): return m.site
-    case .alternative(let a): return a.site
+    case let .structMember(v): return v.site
+    case let .initialization(v): return v.site
+    case let .alternative(a): return a.site
     }
   }
 }

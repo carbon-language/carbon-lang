@@ -89,7 +89,7 @@ private extension TypeChecker {
         for a in c.alternatives { $0.visit(a) }
       }
 
-    case let .variable(v):
+    case let .initialization(v):
       _ = v
       /*
       define(v.name, .init(d))
@@ -122,8 +122,8 @@ private extension TypeChecker {
       case .choice(let d):
         return .choice(d)
 
-      case .function, .variable,
-           .binding, .structMember, .alternative:
+      case .function, .initialization,
+           .structMember, .alternative:
         error(
           "'\(n.text)' does not refer to a type", at: n.site,
           notes: [("actual definition: \(d)", d.site)])
@@ -152,8 +152,7 @@ private extension TypeChecker {
         return .tuple(types)
 
       case .getField, .index, .patternVariable, .integerLiteral,
-           .booleanLiteral, .unaryOperator, .binaryOperator, .functionCall,
-           .structInitialization, .recordLiteral:
+           .booleanLiteral, .unaryOperator, .binaryOperator, .functionCall:
         error("Type expression expected", at: e.site)
         return .error
     }
@@ -164,10 +163,10 @@ private extension TypeChecker {
   private mutating func mapDeducedType<E: Collection>(
     _ e: E, _ rhs: [Type]? = nil
   ) -> [Type]
-    where E.Element == Expression
+    where E.Element == LiteralElement
   {
-    guard let r = rhs else { return e.map { deducedType($0) } }
-    return zip(e, r).map { deducedType($0, initializingFrom: $1) }
+    guard let r = rhs else { return e.map { deducedType($0.value) } }
+    return zip(e, r).map { deducedType($0.value, initializingFrom: $1) }
   }
 
 
@@ -199,12 +198,17 @@ private extension TypeChecker {
     
     inNewScope { me in
       var parameterTypes: [Type] = []
-      
+      parameterTypes.reserveCapacity(0)
+
       for p in f.parameters {
+        _ = p
+        /*
         me.define(p.boundName, .binding(p))
         let t = me.evaluateTypeExpression(p.type)
         me.declaredType[.binding(p)] = t
         parameterTypes.append(t)
+
+         */
       }
       let r = me.evaluateTypeExpression(f.returnType)
       me.declaredType[.function(f)]
@@ -220,7 +224,7 @@ private extension TypeChecker {
     inNewScope { me in
       for m in s.members {
         me.define(m.name, .structMember(m))
-        me.declaredType[.structMember(m)] = me.evaluateTypeExpression(m.type)
+        me.declaredType[.structMember(m)] = me.evaluateTypeExpression(m.type.type)
       }
     }
   }
@@ -245,7 +249,7 @@ private extension TypeChecker {
           "Can't assign expression of type \(sourceType)"
             + "to lvalue of type \(targetType)", at: t.site...s.site)
       }
-    case let .variableDefinition(v):
+    case let .initialization(v):
       _ = v
       /*
       visit(p)

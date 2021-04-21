@@ -39,17 +39,17 @@ struct Evaluate: Action {
 }
 
 struct EvaluateTupleLiteral: Action {
-  let source: List<Expression>
+  let source: TupleLiteral
   var nextElement: Int = 0
   
-  init(_ source: List<Expression>) {
+  init(_ source: TupleLiteral) {
     self.source = source
   }
   
   mutating func run(on state: inout Interpreter) -> Followup {
     if nextElement == source.count { return .done }
     defer { nextElement += 1 }
-    return .spawn(Evaluate(source[nextElement]))
+    return .spawn(Evaluate(source[nextElement].value))
   }
 }
 
@@ -76,7 +76,7 @@ struct CleanUpTupleLiteral: Action {
   mutating func run(on state: inout Interpreter) -> Followup {
     if nextElement == target.count { return .done }
     defer { nextElement += 1 }
-    return .spawn(CleanUp(target[nextElement]))
+    return .spawn(CleanUp(target[nextElement].value))
   }
 }
 

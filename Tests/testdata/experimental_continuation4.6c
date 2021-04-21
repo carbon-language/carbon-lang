@@ -2,20 +2,18 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
+// Assignment for continuations is shallow, so `k2` refers to the same
+// continuation as `k1`.
+
 fn main() -> Int {
-  var auto: t = fnty (Int,Int);
   var Int: x = 0;
-//  match (t) {
-//    case fnty(Int: x, Int: y): z =>
-//      x = x - 1;
-//  }
-  match (t) {
-    case fnty(Int,Int): z =>
-      x = x + 1;
+  __continuation k1 {
+    x = x + 1;
+    __await;
+    x = x + 2;
   }
-  match (t) {
-    case fnty(Type: a,Type: b) =>
-      x = x - 1;
-  }
+  var __Continuation: k2 = k1;
+  __run k1;
+  __run k2;
   return x;
 }
