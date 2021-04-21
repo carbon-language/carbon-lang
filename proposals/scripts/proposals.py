@@ -36,7 +36,4 @@ def get_list(proposals_path):
         number = match[1]
         title = get_title(proposals_path, f)
         proposals.append(("%s - %s" % (number, title), f))
-        decision_file = "p%s_decision.md" % number
-        if decision_file in proposals_list:
-            proposals.append(("%s - Decision" % number, decision_file))
     return proposals
