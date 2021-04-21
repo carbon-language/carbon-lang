@@ -150,13 +150,6 @@ DumpDotAll("dump-dot-all",
   cl::Hidden,
   cl::cat(BoltCategory));
 
-static cl::opt<bool>
-DumpEHFrame("dump-eh-frame",
-  cl::desc("dump parsed .eh_frame (debugging)"),
-  cl::ZeroOrMore,
-  cl::Hidden,
-  cl::cat(BoltCategory));
-
 static cl::list<std::string>
 ForceFunctionNames("funcs",
   cl::CommaSeparated,
@@ -1607,10 +1600,6 @@ void RewriteInstance::readSpecialSections() {
   Expected<const DWARFDebugFrame *> EHFrameOrError = BC->DwCtx->getEHFrame();
   if (!EHFrameOrError)
     report_error("expected valid eh_frame section", EHFrameOrError.takeError());
-  if (opts::DumpEHFrame) {
-    outs() << "BOLT-INFO: Dumping original binary .eh_frame\n";
-    EHFrameOrError.get()->dump(outs(), DIDumpOptions(), &*BC->MRI, NoneType());
-  }
   CFIRdWrt.reset(new CFIReaderWriter(*EHFrameOrError.get()));
 
   // Parse build-id
@@ -5005,22 +4994,6 @@ void RewriteInstance::rewriteFile() {
   EC = sys::fs::setPermissions(opts::OutputFilename,
                                sys::fs::perms::all_all);
   check_error(EC, "cannot set permissions of output file");
-
-  // If requested, open again the binary we just wrote to dump its EH Frame
-  if (opts::DumpEHFrame) {
-    Expected<OwningBinary<Binary>> BinaryOrErr =
-        createBinary(opts::OutputFilename);
-    if (Error E = BinaryOrErr.takeError())
-      report_error(opts::OutputFilename, std::move(E));
-    Binary &Binary = *BinaryOrErr.get().getBinary();
-
-    if (auto *E = dyn_cast<ELFObjectFileBase>(&Binary)) {
-      std::unique_ptr<DWARFContext> DwCtx = DWARFContext::create(*E);
-      const DWARFDebugFrame *EHFrame = cantFail(DwCtx->getEHFrame());
-      outs() << "BOLT-INFO: Dumping rewritten .eh_frame\n";
-      EHFrame->dump(outs(), DIDumpOptions(), &*BC->MRI, NoneType());
-    }
-  }
 }
 
 void RewriteInstance::writeEHFrameHeader() {
