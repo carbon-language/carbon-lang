@@ -26,6 +26,7 @@ jobs:
     steps:
       - name: Label proposals
         uses: Matticusau/projectcard-autolabel@v1.0.0
+        # Only run on proposals.
         if:
           github.event.project_card.project_url ==
           'https://api.github.com/projects/11995172'
@@ -59,5 +60,6 @@ jobs:
                "remove_labels": ["RFC",
                                  "decision: accepted",
                                  "decision: deferred"]}]
-          projectfilter-config: '{"include":["*"]}'
+          # I'm not clear project filters work correctly.
+          projectfilter-config: '{"include": ["*"]}'
           repo-token: ${{ secrets.GITHUB_TOKEN }}
