@@ -59,6 +59,7 @@ struct Frame {
         continuation(UINT_MAX) {}
 };
 
+// TODO(geoffromer): Make this a class, with all members private
 struct State {
   Stack<Frame*> stack;
   std::vector<bool> alive;
