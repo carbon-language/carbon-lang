@@ -9,11 +9,15 @@ package(default_visibility = ["//executable_semantics:__subpackages__"])
 cc_library(
     name = "declaration",
     srcs = ["declaration.cpp"],
-    hdrs = ["declaration.h"],
+    hdrs = [
+        "abstract_syntax_tree.h",
+        "declaration.h",
+    ],
     deps = [
         ":function_definition",
         ":member",
         ":struct_definition",
+        "//executable_semantics/interpreter:containers",
     ],
 )
 
@@ -21,13 +25,6 @@ cc_library(
     name = "expression",
     srcs = ["expression.cpp"],
     hdrs = ["expression.h"],
-)
-
-cc_library(
-    name = "expression_or_field_list",
-    srcs = ["expression_or_field_list.cpp"],
-    hdrs = ["expression_or_field_list.h"],
-    deps = [":expression"],
 )
 
 cc_library(

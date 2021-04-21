@@ -71,7 +71,6 @@ CARBON_SYMBOL_TOKEN(Comma,               ",")
 CARBON_SYMBOL_TOKEN(Equal,               "=")
 CARBON_SYMBOL_TOKEN(Exclaim,             "!")
 CARBON_SYMBOL_TOKEN(Greater,             ">")
-CARBON_SYMBOL_TOKEN(Hash,                "#")
 CARBON_SYMBOL_TOKEN(Less,                "<")
 CARBON_SYMBOL_TOKEN(Minus,               "-")
 CARBON_SYMBOL_TOKEN(Percent,             "%")
@@ -87,11 +86,11 @@ CARBON_SYMBOL_TOKEN(Tilde,               "~")
 // clang-format on
 
 #ifndef CARBON_OPENING_GROUP_SYMBOL_TOKEN
-#define CARBON_OPENING_GROUP_SYMBOL_TOKEN(Name, Spelling, ClosingName)         \
+#define CARBON_OPENING_GROUP_SYMBOL_TOKEN(Name, Spelling, ClosingName) \
   CARBON_SYMBOL_TOKEN(Name, Spelling)
 #endif
 // clang-format on
-CARBON_OPENING_GROUP_SYMBOL_TOKEN(OpenParen,      "(", CloseParen)
+CARBON_OPENING_GROUP_SYMBOL_TOKEN(OpenParen, "(", CloseParen)
 CARBON_OPENING_GROUP_SYMBOL_TOKEN(OpenCurlyBrace, "{", CloseCurlyBrace)
 // clang-format off
 #undef CARBON_OPENING_GROUP_SYMBOL_TOKEN
@@ -101,7 +100,7 @@ CARBON_OPENING_GROUP_SYMBOL_TOKEN(OpenCurlyBrace, "{", CloseCurlyBrace)
   CARBON_SYMBOL_TOKEN(Name, Spelling)
 #endif
 // clang-format on
-CARBON_CLOSING_GROUP_SYMBOL_TOKEN(CloseParen,      ")", OpenParen)
+CARBON_CLOSING_GROUP_SYMBOL_TOKEN(CloseParen, ")", OpenParen)
 CARBON_CLOSING_GROUP_SYMBOL_TOKEN(CloseCurlyBrace, "}", OpenCurlyBrace)
 // clang-format off
 #undef CARBON_CLOSING_GROUP_SYMBOL_TOKEN
@@ -144,7 +143,7 @@ CARBON_KEYWORD_TOKEN(RefKeyword,        "ref")
 CARBON_KEYWORD_TOKEN(ReturnKeyword,     "return")
 CARBON_KEYWORD_TOKEN(StaticKeyword,     "static")
 CARBON_KEYWORD_TOKEN(StructKeyword,     "struct")
-CARBON_KEYWORD_TOKEN(ThroKeyword,       "throw")
+CARBON_KEYWORD_TOKEN(ThrowKeyword,      "throw")
 CARBON_KEYWORD_TOKEN(TryKeyword,        "try")
 CARBON_KEYWORD_TOKEN(UnderscoreKeyword, "_")
 CARBON_KEYWORD_TOKEN(VarKeyword,        "var")
@@ -156,7 +155,9 @@ CARBON_KEYWORD_TOKEN(XorKeyword,        "xor")
 
 CARBON_TOKEN(Identifier)
 CARBON_TOKEN(IntegerLiteral)
-CARBON_TOKEN(DocComment)
+CARBON_TOKEN(RealLiteral)
+CARBON_TOKEN(StringLiteral)
 CARBON_TOKEN(Error)
+CARBON_TOKEN(EndOfFile)
 
 #undef CARBON_TOKEN

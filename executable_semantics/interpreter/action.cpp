@@ -12,6 +12,7 @@
 #include "executable_semantics/ast/expression.h"
 #include "executable_semantics/ast/function_definition.h"
 #include "executable_semantics/interpreter/interpreter.h"
+#include "executable_semantics/interpreter/stack.h"
 #include "executable_semantics/interpreter/typecheck.h"
 
 namespace Carbon {
@@ -48,17 +49,17 @@ void PrintAct(Action* act, std::ostream& out) {
   }
 }
 
-void PrintActList(Cons<Action*>* ls, std::ostream& out) {
-  if (ls) {
-    PrintAct(ls->curr, out);
-    if (ls->next) {
+void PrintActList(Stack<Action*> ls, std::ostream& out) {
+  if (!ls.IsEmpty()) {
+    PrintAct(ls.Pop(), out);
+    if (!ls.IsEmpty()) {
       out << " :: ";
-      PrintActList(ls->next, out);
+      PrintActList(ls, out);
     }
   }
 }
 
-auto MakeExpAct(Expression* e) -> Action* {
+auto MakeExpAct(const Expression* e) -> Action* {
   auto* act = new Action();
   act->tag = ActionKind::ExpressionAction;
   act->u.exp = e;
@@ -66,7 +67,7 @@ auto MakeExpAct(Expression* e) -> Action* {
   return act;
 }
 
-auto MakeLvalAct(Expression* e) -> Action* {
+auto MakeLvalAct(const Expression* e) -> Action* {
   auto* act = new Action();
   act->tag = ActionKind::LValAction;
   act->u.exp = e;
@@ -74,7 +75,7 @@ auto MakeLvalAct(Expression* e) -> Action* {
   return act;
 }
 
-auto MakeStmtAct(Statement* s) -> Action* {
+auto MakeStmtAct(const Statement* s) -> Action* {
   auto* act = new Action();
   act->tag = ActionKind::StatementAction;
   act->u.stmt = s;
@@ -82,7 +83,7 @@ auto MakeStmtAct(Statement* s) -> Action* {
   return act;
 }
 
-auto MakeValAct(Value* v) -> Action* {
+auto MakeValAct(const Value* v) -> Action* {
   auto* act = new Action();
   act->tag = ActionKind::ValAction;
   act->u.val = v;

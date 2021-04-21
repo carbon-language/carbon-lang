@@ -5,12 +5,15 @@
 #include "lexer/tokenized_buffer.h"
 
 #include <algorithm>
-#include <bitset>
+#include <array>
 #include <cmath>
 #include <iterator>
 #include <string>
 
-#include "llvm/ADT/StringExtras.h"
+#include "lexer/character_set.h"
+#include "lexer/numeric_literal.h"
+#include "lexer/string_literal.h"
+#include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/StringSwitch.h"
 #include "llvm/ADT/Twine.h"
@@ -21,122 +24,59 @@
 
 namespace Carbon {
 
-static auto TakeLeadingIntegerLiteral(llvm::StringRef source_text)
-    -> llvm::StringRef {
-  if (source_text.empty() || !llvm::isDigit(source_text.front()))
-    return llvm::StringRef();
+struct TrailingComment : SimpleDiagnostic<TrailingComment> {
+  static constexpr llvm::StringLiteral ShortName = "syntax-comments";
+  static constexpr llvm::StringLiteral Message =
+      "Trailing comments are not permitted.";
+};
 
-  // Greedily consume all following characters that might be part of an integer
-  // literal. This allows us to produce better diagnostics on invalid literals.
-  //
-  // TODO(zygoloid): Update lexical rules to specify that an integer literal
-  // cannot be immediately followed by another integer literal or a word.
-  return source_text.take_while(
-      [](char c) { return llvm::isAlnum(c) || c == '_'; });
-}
+struct NoWhitespaceAfterCommentIntroducer
+    : SimpleDiagnostic<NoWhitespaceAfterCommentIntroducer> {
+  static constexpr llvm::StringLiteral ShortName = "syntax-comments";
+  static constexpr llvm::StringLiteral Message =
+      "Whitespace is required after '//'.";
+};
 
-struct UnmatchedClosing {
+struct UnmatchedClosing : SimpleDiagnostic<UnmatchedClosing> {
   static constexpr llvm::StringLiteral ShortName = "syntax-balanced-delimiters";
   static constexpr llvm::StringLiteral Message =
       "Closing symbol without a corresponding opening symbol.";
-
-  struct Substitutions {};
-  static auto Format(const Substitutions&) -> std::string {
-    return Message.str();
-  }
 };
 
-struct MismatchedClosing {
+struct MismatchedClosing : SimpleDiagnostic<MismatchedClosing> {
   static constexpr llvm::StringLiteral ShortName = "syntax-balanced-delimiters";
   static constexpr llvm::StringLiteral Message =
       "Closing symbol does not match most recent opening symbol.";
-
-  struct Substitutions {};
-  static auto Format(const Substitutions&) -> std::string {
-    return Message.str();
-  }
 };
 
-struct EmptyDigitSequence {
-  static constexpr llvm::StringLiteral ShortName = "syntax-invalid-number";
-  static constexpr llvm::StringLiteral Message =
-      "Empty digit sequence in numeric literal.";
-
-  struct Substitutions {};
-  static auto Format(const Substitutions&) -> std::string {
-    return Message.str();
-  }
-};
-
-struct InvalidDigit {
-  static constexpr llvm::StringLiteral ShortName = "syntax-invalid-number";
-
-  struct Substitutions {
-    char digit;
-    unsigned radix;
-  };
-  static auto Format(const Substitutions& subst) -> std::string {
-    // TODO: Switch Format to using raw_ostream so we can easily use
-    // llvm::format here.
-    llvm::StringRef digit_str(&subst.digit, 1);
-    return (llvm::Twine("Invalid digit '") + digit_str + "' in " +
-            (subst.radix == 2 ? "binary"
-                              : subst.radix == 16 ? "hexadecimal" : "decimal") +
-            " numeric literal.")
-        .str();
-  }
-};
-
-struct InvalidDigitSeparator {
-  static constexpr llvm::StringLiteral ShortName = "syntax-invalid-number";
-  static constexpr llvm::StringLiteral Message =
-      "Misplaced digit separator in numeric literal.";
-
-  struct Substitutions {};
-  static auto Format(const Substitutions&) -> std::string {
-    return Message.str();
-  }
-};
-
-struct IrregularDigitSeparators {
-  static constexpr llvm::StringLiteral ShortName =
-      "syntax-irregular-digit-separators";
-
-  struct Substitutions {
-    unsigned radix;
-  };
-  static auto Format(const Substitutions& subst) -> std::string {
-    assert((subst.radix == 10 || subst.radix == 16) && "unexpected radix");
-    return (llvm::Twine("Digit separators in ") +
-            (subst.radix == 10 ? "decimal" : "hexadecimal") +
-            " should appear every " + (subst.radix == 10 ? "3" : "4") +
-            " characters from the right.")
-        .str();
-  }
-};
-
-struct UnknownBaseSpecifier {
-  static constexpr llvm::StringLiteral ShortName = "syntax-invalid-number";
-  static constexpr llvm::StringLiteral Message =
-      "Unknown base specifier in numeric literal.";
-
-  struct Substitutions {};
-  static auto Format(const Substitutions&) -> std::string {
-    return Message.str();
-  }
-};
-
-struct UnrecognizedCharacters {
+struct UnrecognizedCharacters : SimpleDiagnostic<UnrecognizedCharacters> {
   static constexpr llvm::StringLiteral ShortName =
       "syntax-unrecognized-characters";
   static constexpr llvm::StringLiteral Message =
       "Encountered unrecognized characters while parsing.";
-
-  struct Substitutions {};
-  static auto Format(const Substitutions&) -> std::string {
-    return Message.str();
-  }
 };
+
+// TODO: Move Overload and VariantMatch somewhere more central.
+
+// Form an overload set from a list of functions. For example:
+//
+// ```
+// auto overloaded = Overload{[] (int) {}, [] (float) {}};
+// ```
+template <typename... Fs>
+struct Overload : Fs... {
+  using Fs::operator()...;
+};
+template <typename... Fs>
+Overload(Fs...) -> Overload<Fs...>;
+
+// Pattern-match against the type of the value stored in the variant `V`. Each
+// element of `fs` should be a function that takes one or more of the variant
+// values in `V`.
+template <typename V, typename... Fs>
+auto VariantMatch(V&& v, Fs&&... fs) -> decltype(auto) {
+  return std::visit(Overload{std::forward<Fs&&>(fs)...}, std::forward<V&&>(v));
+}
 
 // Implementation of the lexer logic itself.
 //
@@ -146,7 +86,12 @@ struct UnrecognizedCharacters {
 // tokenized buffer with the lexed tokens.
 class TokenizedBuffer::Lexer {
   TokenizedBuffer& buffer;
-  DiagnosticEmitter& emitter;
+
+  SourceBufferLocationTranslator translator;
+  LexerDiagnosticEmitter emitter;
+
+  TokenLocationTranslator token_translator;
+  TokenDiagnosticEmitter token_emitter;
 
   Line current_line;
   LineInfo* current_line_info;
@@ -157,30 +102,63 @@ class TokenizedBuffer::Lexer {
   llvm::SmallVector<Token, 8> open_groups;
 
  public:
-  Lexer(TokenizedBuffer& buffer, DiagnosticEmitter& emitter)
+  Lexer(TokenizedBuffer& buffer, DiagnosticConsumer& consumer)
       : buffer(buffer),
-        emitter(emitter),
+        translator(buffer),
+        emitter(translator, consumer),
+        token_translator(buffer),
+        token_emitter(token_translator, consumer),
         current_line(buffer.AddLine({0, 0, 0})),
         current_line_info(&buffer.GetLineInfo(current_line)) {}
+
+  // Symbolic result of a lexing action. This indicates whether we successfully
+  // lexed a token, or whether other lexing actions should be attempted.
+  //
+  // While it wraps a simple boolean state, its API both helps make the failures
+  // more self documenting, and by consuming the actual token constructively
+  // when one is produced, it helps ensure the correct result is returned.
+  class LexResult {
+    bool formed_token;
+    explicit LexResult(bool formed_token) : formed_token(formed_token) {}
+
+   public:
+    // Consumes (and discard) a valid token to construct a result
+    // indicating a token has been produced.
+    LexResult(Token) : LexResult(true) {}
+
+    // Returns a result indicating no token was produced.
+    static LexResult NoMatch() { return LexResult(false); }
+
+    // Tests whether a token was produced by the lexing routine, and
+    // the lexer can continue forming tokens.
+    explicit operator bool() const { return formed_token; }
+  };
+
+  // Perform the necessary bookkeeping to step past a newline at the current
+  // line and column.
+  auto HandleNewline() -> void {
+    current_line_info->length = current_column;
+
+    current_line =
+        buffer.AddLine({current_line_info->start + current_column + 1, 0, 0});
+    current_line_info = &buffer.GetLineInfo(current_line);
+    current_column = 0;
+    set_indent = false;
+  }
 
   auto SkipWhitespace(llvm::StringRef& source_text) -> bool {
     while (!source_text.empty()) {
       // We only support line-oriented commenting and lex comments as-if they
-      // were whitespace. Any comment must be the only non-whitespace on the
-      // line.
-      if (source_text.startswith("//") && !set_indent) {
-        // Check if the comment has a special starting sequence of three slashes
-        // followed by a space. This represents a documentation comment that is
-        // preserved as a token in the buffer. When parsing, these comments will
-        // only be accepted in specific parts of the grammar and will be
-        // associated with the parsed constructs as structure documentation. All
-        // other comments are simply treated as whitespace.
-        if (source_text.startswith("///")) {
-          current_line_info->indent = current_column;
-          set_indent = true;
-          buffer.AddToken({.kind = TokenKind::DocComment(),
-                           .token_line = current_line,
-                           .column = current_column});
+      // were whitespace.
+      if (source_text.startswith("//")) {
+        // Any comment must be the only non-whitespace on the line.
+        if (set_indent) {
+          emitter.EmitError<TrailingComment>(source_text.begin());
+        }
+        // The introducer '//' must be followed by whitespace or EOF.
+        if (source_text.size() > 2 && !IsSpace(source_text[2])) {
+          emitter.EmitError<NoWhitespaceAfterCommentIntroducer>(
+              source_text.begin() + 2);
         }
         while (!source_text.empty() && source_text.front() != '\n') {
           ++current_column;
@@ -195,24 +173,20 @@ class TokenizedBuffer::Lexer {
         default:
           // If we find a non-whitespace character without exhausting the
           // buffer, return true to continue lexing.
+          assert(!IsSpace(source_text.front()));
           return true;
 
         case '\n':
-          // New lines are special in order to track line structure.
-          current_line_info->length = current_column;
           // If this is the last character in the source, directly return here
           // to avoid creating an empty line.
           source_text = source_text.drop_front();
           if (source_text.empty()) {
+            current_line_info->length = current_column;
             return false;
           }
 
           // Otherwise, add a line and set up to continue lexing.
-          current_line = buffer.AddLine(
-              {current_line_info->start + current_column + 1, 0, 0});
-          current_line_info = &buffer.GetLineInfo(current_line);
-          current_column = 0;
-          set_indent = false;
+          HandleNewline();
           continue;
 
         case ' ':
@@ -234,181 +208,108 @@ class TokenizedBuffer::Lexer {
     return false;
   }
 
-  auto CheckDigitSeparatorPlacement(llvm::StringRef text, unsigned radix,
-                                    unsigned num_digit_separators) {
-    assert((radix == 10 || radix == 16) &&
-           "unexpected radix for digit separator checks");
-    assert(std::count(text.begin(), text.end(), '_') == num_digit_separators &&
-           "given wrong number of digit separators");
-
-    auto diagnose_irregular_digit_separators = [&] {
-      emitter.EmitError<IrregularDigitSeparators>(
-          [&](IrregularDigitSeparators::Substitutions& subst) {
-            subst.radix = radix;
-          });
-      buffer.has_errors = true;
-    };
-
-    // For decimal and hexadecimal digit sequences, digit separators must form
-    // groups of 3 or 4 digits (4 or 5 characters), respectively.
-    unsigned stride = (radix == 10 ? 4 : 5);
-    unsigned remaining_digit_separators = num_digit_separators;
-    for (auto pos = text.end(); pos - text.begin() >= stride; /*in loop*/) {
-      pos -= stride;
-      if (*pos != '_')
-        return diagnose_irregular_digit_separators();
-
-      --remaining_digit_separators;
-    }
-
-    // Check there weren't any other digit separators.
-    if (remaining_digit_separators)
-      diagnose_irregular_digit_separators();
-  };
-
-  struct CheckDigitSequenceResult {
-    bool ok;
-    bool has_digit_separators = false;
-  };
-
-  auto CheckDigitSequence(llvm::StringRef text, unsigned radix)
-      -> CheckDigitSequenceResult {
-    assert((radix == 2 || radix == 10 || radix == 16) && "unknown radix");
-
-    if (text.empty()) {
-      emitter.EmitError<EmptyDigitSequence>(
-          [&](EmptyDigitSequence::Substitutions&) {});
-      return {.ok = false};
-    }
-
-    std::bitset<256> valid_digits;
-    if (radix == 2) {
-      for (char c : "01")
-        valid_digits[static_cast<unsigned char>(c)] = true;
-    } else if (radix == 10) {
-      for (char c : "0123456789")
-        valid_digits[static_cast<unsigned char>(c)] = true;
-    } else {
-      for (char c : "0123456789ABCDEF")
-        valid_digits[static_cast<unsigned char>(c)] = true;
-    }
-
-    unsigned num_digit_separators = 0;
-
-    for (std::size_t i = 0, n = text.size(); i != n; ++i) {
-      char c = text[i];
-      if (valid_digits[static_cast<unsigned char>(c)]) {
-        continue;
-      }
-
-      if (c == '_') {
-        // A digit separator cannot appear at the start of a digit sequence,
-        // next to another digit separator, or at the end.
-        if (i == 0 || text[i - 1] == '_' || i + 1 == n) {
-          emitter.EmitError<InvalidDigitSeparator>(
-              [&](InvalidDigitSeparator::Substitutions&) {});
-          buffer.has_errors = true;
-        }
-        ++num_digit_separators;
-        continue;
-      }
-
-      emitter.EmitError<InvalidDigit>([&](InvalidDigit::Substitutions& subst) {
-        subst.digit = c;
-        subst.radix = radix;
-      });
-      return {.ok = false};
-    }
-
-    // Check that digit separators occur in exactly the expected positions.
-    if (num_digit_separators && radix != 2)
-      CheckDigitSeparatorPlacement(text, radix, num_digit_separators);
-
-    return {.ok = true, .has_digit_separators = (num_digit_separators != 0)};
-  }
-
-  auto LexIntegerLiteral(llvm::StringRef& source_text) -> bool {
-    llvm::StringRef int_text = TakeLeadingIntegerLiteral(source_text);
-    if (int_text.empty()) {
-      return false;
+  auto LexNumericLiteral(llvm::StringRef& source_text) -> LexResult {
+    llvm::Optional<LexedNumericLiteral> literal =
+        LexedNumericLiteral::Lex(source_text);
+    if (!literal) {
+      return LexResult::NoMatch();
     }
 
     int int_column = current_column;
-    current_column += int_text.size();
-    source_text = source_text.drop_front(int_text.size());
+    int token_size = literal->Text().size();
+    current_column += token_size;
+    source_text = source_text.drop_front(token_size);
 
     if (!set_indent) {
       current_line_info->indent = int_column;
       set_indent = true;
     }
 
-    auto add_error_token_and_continue_lexing = [&] {
-      buffer.AddToken({
-          .kind = TokenKind::Error(),
-          .token_line = current_line,
-          .column = int_column,
-          .error_length = static_cast<int32_t>(int_text.size()),
-      });
-      buffer.has_errors = true;
-      // Indicate to the caller that we consumed a token.
-      return true;
-    };
-
-    unsigned radix = 10;
-    llvm::StringRef digits = int_text;
-    if (int_text.size() >= 2 && int_text[0] == '0') {
-      if (int_text[1] == 'x') {
-        radix = 16;
-        digits = digits.drop_front(2);
-      } else if (int_text[1] == 'b') {
-        radix = 2;
-        digits = digits.drop_front(2);
-      } else {
-        emitter.EmitError<UnknownBaseSpecifier>(
-            [&](UnknownBaseSpecifier::Substitutions& subst) {});
-        return add_error_token_and_continue_lexing();
-      }
-    }
-
-    llvm::APInt int_value;
-
-    auto result = CheckDigitSequence(digits, radix);
-    if (!result.ok) {
-      return add_error_token_and_continue_lexing();
-    }
-
-    if (result.has_digit_separators) {
-      // TODO(zygoloid): Avoid the memory allocation here.
-      std::string cleaned;
-      cleaned.reserve(digits.size());
-      std::remove_copy_if(digits.begin(), digits.end(),
-                          std::back_inserter(cleaned),
-                          [](char c) { return c == '_'; });
-      if (llvm::StringRef(cleaned).getAsInteger(radix, int_value)) {
-        llvm_unreachable("should never fail");
-      }
-    } else {
-      if (digits.getAsInteger(radix, int_value)) {
-        llvm_unreachable("should never fail");
-      }
-    }
-
-    auto token = buffer.AddToken({.kind = TokenKind::IntegerLiteral(),
-                                  .token_line = current_line,
-                                  .column = int_column});
-    buffer.GetTokenInfo(token).literal_index = buffer.int_literals.size();
-    buffer.int_literals.push_back(std::move(int_value));
-    return true;
+    return VariantMatch(
+        literal->ComputeValue(emitter),
+        [&](LexedNumericLiteral::IntegerValue&& value) {
+          auto token = buffer.AddToken({.kind = TokenKind::IntegerLiteral(),
+                                        .token_line = current_line,
+                                        .column = int_column});
+          buffer.GetTokenInfo(token).literal_index =
+              buffer.literal_int_storage.size();
+          buffer.literal_int_storage.push_back(std::move(value.value));
+          return token;
+        },
+        [&](LexedNumericLiteral::RealValue&& value) {
+          auto token = buffer.AddToken({.kind = TokenKind::RealLiteral(),
+                                        .token_line = current_line,
+                                        .column = int_column});
+          buffer.GetTokenInfo(token).literal_index =
+              buffer.literal_int_storage.size();
+          buffer.literal_int_storage.push_back(std::move(value.mantissa));
+          buffer.literal_int_storage.push_back(std::move(value.exponent));
+          assert(buffer.GetRealLiteral(token).IsDecimal() ==
+                 (value.radix == 10));
+          return token;
+        },
+        [&](LexedNumericLiteral::UnrecoverableError) {
+          auto token = buffer.AddToken({
+              .kind = TokenKind::Error(),
+              .token_line = current_line,
+              .column = int_column,
+              .error_length = token_size,
+          });
+          return token;
+        });
   }
 
-  auto LexSymbolToken(llvm::StringRef& source_text) -> bool {
+  auto LexStringLiteral(llvm::StringRef& source_text) -> LexResult {
+    llvm::Optional<LexedStringLiteral> literal =
+        LexedStringLiteral::Lex(source_text);
+    if (!literal) {
+      return LexResult::NoMatch();
+    }
+
+    Line string_line = current_line;
+    int string_column = current_column;
+    int literal_size = literal->Text().size();
+    source_text = source_text.drop_front(literal_size);
+
+    if (!set_indent) {
+      current_line_info->indent = string_column;
+      set_indent = true;
+    }
+
+    // Update line and column information.
+    if (!literal->IsMultiLine()) {
+      current_column += literal_size;
+    } else {
+      for (char c : literal->Text()) {
+        if (c == '\n') {
+          HandleNewline();
+          // The indentation of all lines in a multi-line string literal is
+          // that of the first line.
+          current_line_info->indent = string_column;
+          set_indent = true;
+        } else {
+          ++current_column;
+        }
+      }
+    }
+
+    auto token = buffer.AddToken({.kind = TokenKind::StringLiteral(),
+                                  .token_line = string_line,
+                                  .column = string_column});
+    buffer.GetTokenInfo(token).literal_index =
+        buffer.literal_string_storage.size();
+    buffer.literal_string_storage.push_back(literal->ComputeValue(emitter));
+    return token;
+  }
+
+  auto LexSymbolToken(llvm::StringRef& source_text) -> LexResult {
     TokenKind kind = llvm::StringSwitch<TokenKind>(source_text)
 #define CARBON_SYMBOL_TOKEN(Name, Spelling) \
   .StartsWith(Spelling, TokenKind::Name())
 #include "lexer/token_registry.def"
                          .Default(TokenKind::Error());
     if (kind == TokenKind::Error()) {
-      return false;
+      return LexResult::NoMatch();
     }
 
     if (!set_indent) {
@@ -418,6 +319,7 @@ class TokenizedBuffer::Lexer {
 
     CloseInvalidOpenGroups(kind);
 
+    const char* location = source_text.begin();
     Token token = buffer.AddToken(
         {.kind = kind, .token_line = current_line, .column = current_column});
     current_column += kind.GetFixedSpelling().size();
@@ -426,12 +328,12 @@ class TokenizedBuffer::Lexer {
     // Opening symbols just need to be pushed onto our queue of opening groups.
     if (kind.IsOpeningSymbol()) {
       open_groups.push_back(token);
-      return true;
+      return token;
     }
 
     // Only closing symbols need further special handling.
     if (!kind.IsClosingSymbol()) {
-      return true;
+      return token;
     }
 
     TokenInfo& closing_token_info = buffer.GetTokenInfo(token);
@@ -441,12 +343,10 @@ class TokenizedBuffer::Lexer {
     if (open_groups.empty()) {
       closing_token_info.kind = TokenKind::Error();
       closing_token_info.error_length = kind.GetFixedSpelling().size();
-      buffer.has_errors = true;
 
-      emitter.EmitError<UnmatchedClosing>(
-          [](UnmatchedClosing::Substitutions&) {});
+      emitter.EmitError<UnmatchedClosing>(location);
       // Note that this still returns true as we do consume a symbol.
-      return true;
+      return token;
     }
 
     // Finally can handle a normal closing symbol.
@@ -454,7 +354,7 @@ class TokenizedBuffer::Lexer {
     TokenInfo& opening_token_info = buffer.GetTokenInfo(opening_token);
     opening_token_info.closing_token = token;
     closing_token_info.opening_token = opening_token;
-    return true;
+    return token;
   }
 
   // Closes all open groups that cannot remain open across the symbol `K`.
@@ -472,9 +372,7 @@ class TokenizedBuffer::Lexer {
       }
 
       open_groups.pop_back();
-      buffer.has_errors = true;
-      emitter.EmitError<MismatchedClosing>(
-          [](MismatchedClosing::Substitutions&) {});
+      token_emitter.EmitError<MismatchedClosing>(opening_token);
 
       // TODO: do a smarter backwards scan for where to put the closing
       // token.
@@ -499,9 +397,9 @@ class TokenizedBuffer::Lexer {
     return insert_result.first->second;
   }
 
-  auto LexKeywordOrIdentifier(llvm::StringRef& source_text) -> bool {
-    if (!llvm::isAlpha(source_text.front()) && source_text.front() != '_') {
-      return false;
+  auto LexKeywordOrIdentifier(llvm::StringRef& source_text) -> LexResult {
+    if (!IsAlpha(source_text.front()) && source_text.front() != '_') {
+      return LexResult::NoMatch();
     }
 
     if (!set_indent) {
@@ -510,8 +408,8 @@ class TokenizedBuffer::Lexer {
     }
 
     // Take the valid characters off the front of the source buffer.
-    llvm::StringRef identifier_text = source_text.take_while(
-        [](char c) { return llvm::isAlnum(c) || c == '_'; });
+    llvm::StringRef identifier_text =
+        source_text.take_while([](char c) { return IsAlnum(c) || c == '_'; });
     assert(!identifier_text.empty() && "Must have at least one character!");
     int identifier_column = current_column;
     current_column += identifier_text.size();
@@ -523,23 +421,21 @@ class TokenizedBuffer::Lexer {
 #include "lexer/token_registry.def"
                          .Default(TokenKind::Error());
     if (kind != TokenKind::Error()) {
-      buffer.AddToken({.kind = kind,
-                       .token_line = current_line,
-                       .column = identifier_column});
-      return true;
+      return buffer.AddToken({.kind = kind,
+                              .token_line = current_line,
+                              .column = identifier_column});
     }
 
     // Otherwise we have a generic identifier.
-    buffer.AddToken({.kind = TokenKind::Identifier(),
-                     .token_line = current_line,
-                     .column = identifier_column,
-                     .id = GetOrCreateIdentifier(identifier_text)});
-    return true;
+    return buffer.AddToken({.kind = TokenKind::Identifier(),
+                            .token_line = current_line,
+                            .column = identifier_column,
+                            .id = GetOrCreateIdentifier(identifier_text)});
   }
 
-  auto LexError(llvm::StringRef& source_text) -> void {
+  auto LexError(llvm::StringRef& source_text) -> LexResult {
     llvm::StringRef error_text = source_text.take_while([](char c) {
-      if (llvm::isAlnum(c)) {
+      if (IsAlnum(c)) {
         return false;
       }
       switch (c) {
@@ -566,39 +462,53 @@ class TokenizedBuffer::Lexer {
          .token_line = current_line,
          .column = current_column,
          .error_length = static_cast<int32_t>(error_text.size())});
-    // TODO: #19 - Need to convert to the diagnostics library.
-    llvm::errs() << "ERROR: Line " << buffer.GetLineNumber(token) << ", Column "
-                 << buffer.GetColumnNumber(token)
-                 << ": Unrecognized characters!\n";
+    emitter.EmitError<UnrecognizedCharacters>(error_text.begin());
 
     current_column += error_text.size();
     source_text = source_text.drop_front(error_text.size());
-    buffer.has_errors = true;
+    return token;
+  }
+
+  auto AddEndOfFileToken() -> void {
+    buffer.AddToken({.kind = TokenKind::EndOfFile(),
+                     .token_line = current_line,
+                     .column = current_column});
   }
 };
 
-auto TokenizedBuffer::Lex(SourceBuffer& source, DiagnosticEmitter& emitter)
+auto TokenizedBuffer::Lex(SourceBuffer& source, DiagnosticConsumer& consumer)
     -> TokenizedBuffer {
   TokenizedBuffer buffer(source);
-  Lexer lexer(buffer, emitter);
+  ErrorTrackingDiagnosticConsumer error_tracking_consumer(consumer);
+  Lexer lexer(buffer, error_tracking_consumer);
 
   llvm::StringRef source_text = source.Text();
   while (lexer.SkipWhitespace(source_text)) {
     // Each time we find non-whitespace characters, try each kind of token we
     // support lexing, from simplest to most complex.
-    if (lexer.LexSymbolToken(source_text)) {
-      continue;
+    Lexer::LexResult result = lexer.LexSymbolToken(source_text);
+    if (!result) {
+      result = lexer.LexKeywordOrIdentifier(source_text);
     }
-    if (lexer.LexKeywordOrIdentifier(source_text)) {
-      continue;
+    if (!result) {
+      result = lexer.LexNumericLiteral(source_text);
     }
-    if (lexer.LexIntegerLiteral(source_text)) {
-      continue;
+    if (!result) {
+      result = lexer.LexStringLiteral(source_text);
     }
-    lexer.LexError(source_text);
+    if (!result) {
+      result = lexer.LexError(source_text);
+    }
+    assert(result && "No token was lexed.");
   }
 
   lexer.CloseInvalidOpenGroups(TokenKind::Error());
+  lexer.AddEndOfFileToken();
+
+  if (error_tracking_consumer.SeenError()) {
+    buffer.has_errors = true;
+  }
+
   return buffer;
 }
 
@@ -631,20 +541,31 @@ auto TokenizedBuffer::GetTokenText(Token token) const -> llvm::StringRef {
     return source->Text().substr(token_start, token_info.error_length);
   }
 
-  // Documentation comment tokens refer back to the source text.
-  if (token_info.kind == TokenKind::DocComment()) {
-    auto& line_info = GetLineInfo(token_info.token_line);
-    int64_t token_start = line_info.start + token_info.column;
-    int64_t token_stop = line_info.start + line_info.length;
-    return source->Text().slice(token_start, token_stop);
-  }
-
   // Refer back to the source text to preserve oddities like radix or digit
   // separators the author included.
-  if (token_info.kind == TokenKind::IntegerLiteral()) {
+  if (token_info.kind == TokenKind::IntegerLiteral() ||
+      token_info.kind == TokenKind::RealLiteral()) {
     auto& line_info = GetLineInfo(token_info.token_line);
     int64_t token_start = line_info.start + token_info.column;
-    return TakeLeadingIntegerLiteral(source->Text().substr(token_start));
+    llvm::Optional<LexedNumericLiteral> relexed_token =
+        LexedNumericLiteral::Lex(source->Text().substr(token_start));
+    assert(relexed_token && "Could not reform numeric literal token.");
+    return relexed_token->Text();
+  }
+
+  // Refer back to the source text to find the original spelling, including
+  // escape sequences etc.
+  if (token_info.kind == TokenKind::StringLiteral()) {
+    auto& line_info = GetLineInfo(token_info.token_line);
+    int64_t token_start = line_info.start + token_info.column;
+    llvm::Optional<LexedStringLiteral> relexed_token =
+        LexedStringLiteral::Lex(source->Text().substr(token_start));
+    assert(relexed_token && "Could not reform string literal token.");
+    return relexed_token->Text();
+  }
+
+  if (token_info.kind == TokenKind::EndOfFile()) {
+    return llvm::StringRef();
   }
 
   assert(token_info.kind == TokenKind::Identifier() &&
@@ -659,11 +580,35 @@ auto TokenizedBuffer::GetIdentifier(Token token) const -> Identifier {
   return token_info.id;
 }
 
-auto TokenizedBuffer::GetIntegerLiteral(Token token) const -> llvm::APInt {
+auto TokenizedBuffer::GetIntegerLiteral(Token token) const
+    -> const llvm::APInt& {
   auto& token_info = GetTokenInfo(token);
   assert(token_info.kind == TokenKind::IntegerLiteral() &&
          "The token must be an integer literal!");
-  return int_literals[token_info.literal_index];
+  return literal_int_storage[token_info.literal_index];
+}
+
+auto TokenizedBuffer::GetRealLiteral(Token token) const -> RealLiteralValue {
+  auto& token_info = GetTokenInfo(token);
+  assert(token_info.kind == TokenKind::RealLiteral() &&
+         "The token must be a real literal!");
+
+  // Note that every real literal is at least three characters long, so we can
+  // safely look at the second character to determine whether we have a decimal
+  // or hexadecimal literal.
+  auto& line_info = GetLineInfo(token_info.token_line);
+  int64_t token_start = line_info.start + token_info.column;
+  char second_char = source->Text()[token_start + 1];
+  bool is_decimal = second_char != 'x' && second_char != 'b';
+
+  return RealLiteralValue(this, token_info.literal_index, is_decimal);
+}
+
+auto TokenizedBuffer::GetStringLiteral(Token token) const -> llvm::StringRef {
+  auto& token_info = GetTokenInfo(token);
+  assert(token_info.kind == TokenKind::StringLiteral() &&
+         "The token must be a string literal!");
+  return literal_string_storage[token_info.literal_index];
 }
 
 auto TokenizedBuffer::GetMatchedClosingToken(Token opening_token) const
@@ -783,7 +728,10 @@ auto TokenizedBuffer::PrintToken(llvm::raw_ostream& output_stream, Token token,
     output_stream << ", closing_token: " << GetMatchedClosingToken(token).index;
   } else if (token_info.kind.IsClosingSymbol()) {
     output_stream << ", opening_token: " << GetMatchedOpeningToken(token).index;
+  } else if (token_info.kind == TokenKind::StringLiteral()) {
+    output_stream << ", value: `" << GetStringLiteral(token) << "`";
   }
+  // TODO: Include value for numeric literals.
 
   if (token_info.is_recovery) {
     output_stream << ", recovery: true";
@@ -816,6 +764,62 @@ auto TokenizedBuffer::GetTokenInfo(Token token) const -> const TokenInfo& {
 auto TokenizedBuffer::AddToken(TokenInfo info) -> Token {
   token_infos.push_back(info);
   return Token(static_cast<int>(token_infos.size()) - 1);
+}
+
+auto TokenizedBuffer::SourceBufferLocationTranslator::GetLocation(
+    const char* loc) -> Diagnostic::Location {
+  assert(llvm::is_sorted(std::array{buffer_->source->Text().begin(), loc,
+                                    buffer_->source->Text().end()}) &&
+         "location not within buffer");
+  int64_t offset = loc - buffer_->source->Text().begin();
+
+  // Find the first line starting after the given location. Note that we can't
+  // inspect `line.length` here because it is not necessarily correct for the
+  // final line.
+  auto line_it = std::partition_point(
+      buffer_->line_infos.begin(), buffer_->line_infos.end(),
+      [offset](const LineInfo& line) { return line.start <= offset; });
+  bool incomplete_line_info = line_it == buffer_->line_infos.end();
+
+  // Step back one line to find the line containing the given position.
+  assert(line_it != buffer_->line_infos.begin() &&
+         "location precedes the start of the first line");
+  --line_it;
+  int line_number = line_it - buffer_->line_infos.begin();
+  int column_number = offset - line_it->start;
+
+  // We might still be lexing the last line. If so, check to see if there are
+  // any newline characters between the start of this line and the given
+  // location.
+  if (incomplete_line_info) {
+    column_number = 0;
+    for (int64_t i = line_it->start; i != offset; ++i) {
+      if (buffer_->source->Text()[i] == '\n') {
+        ++line_number;
+        column_number = 0;
+      } else {
+        ++column_number;
+      }
+    }
+  }
+
+  return {.file_name = buffer_->source->Filename().str(),
+          .line_number = line_number + 1,
+          .column_number = column_number + 1};
+}
+
+auto TokenizedBuffer::TokenLocationTranslator::GetLocation(Token token)
+    -> Diagnostic::Location {
+  // Map the token location into a position within the source buffer.
+  auto& token_info = buffer_->GetTokenInfo(token);
+  auto& line_info = buffer_->GetLineInfo(token_info.token_line);
+  const char* token_start =
+      buffer_->source->Text().begin() + line_info.start + token_info.column;
+
+  // Find the corresponding file location.
+  // TODO: Should we somehow indicate in the diagnostic location if this token
+  // is a recovery token that doesn't correspond to the original source?
+  return SourceBufferLocationTranslator(*buffer_).GetLocation(token_start);
 }
 
 }  // namespace Carbon

@@ -1,0 +1,72 @@
+# Part of the Carbon Language project, under the Apache License v2.0 with LLVM
+# Exceptions. See /LICENSE for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+
+name: test
+
+on:
+  push:
+    branches: [trunk]
+    paths:
+      # Conservatively run the tests. However, skip them if the only paths in
+      # the pull request match files that we know don't impact the build.
+      - '**'
+      - '!**/*.md'
+      - '!LICENSE'
+      - '!CODEOWNERS'
+      - '!.git*'
+  pull_request:
+    paths:
+      # Conservatively run the tests. However, skip them if the only paths in
+      # the pull request match files that we know don't impact the build.
+      - '**'
+      - '!**/*.md'
+      - '!LICENSE'
+      - '!CODEOWNERS'
+      - '!.git*'
+
+jobs:
+  test:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+        build_mode: [fastbuild, opt]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          submodules: true
+
+      # Setup Python and related tools.
+      - uses: actions/setup-python@v2
+        with:
+          # Match the min version listed in docs/project/contribution_tools.md
+          python-version: '3.6'
+
+      # On macOS we need Go and to use it to install Bazelisk.
+      - uses: actions/setup-go@v2
+        if: matrix.os == 'macos-latest'
+      - name: Install bazelisk
+        if: matrix.os == 'macos-latest'
+        run: |
+          go get github.com/bazelbuild/bazelisk
+          echo "$(go env GOPATH)/bin" >> $GITHUB_PATH
+
+      # Print the various tool versions to help in debugging.
+      - name: Print tool versions
+        run: |
+          bazelisk --version
+          python --version
+
+      # Build all targets first to isolate build failures.
+      - name: Build (${{ matrix.build_mode }})
+        run: |
+          bazelisk build -c ${{ matrix.build_mode }} --verbose_failures \
+            //...:all
+
+      # Run all test targets.
+      - name: Test (${{ matrix.build_mode }})
+        run: |
+          bazelisk test -c ${{ matrix.build_mode }} --test_output errors \
+            --verbose_failures //...:all

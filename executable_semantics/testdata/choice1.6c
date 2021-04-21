@@ -3,9 +3,9 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 choice Ints {
-  None();
-  One(Int);
-  Two(Int,Int);
+  None,
+  One(Int),
+  Two(Int,Int)
 }
 
 fn main() -> Int {
@@ -13,7 +13,7 @@ fn main() -> Int {
   var auto: y = Ints.One(42);
   var auto: n = 0;
   match (y) {
-    case Ints.None() =>
+    case Ints.None =>
       n = n + 2;
     case Ints.One(auto: x) =>
       n = x + 1 - 42;
@@ -29,4 +29,11 @@ fn main() -> Int {
       n = 5;
   }
   return n;
+}
+
+// Test some alternate syntaxes
+choice MoreInts {
+  None(),
+  One(Int),
+  Two(Int,Int),
 }

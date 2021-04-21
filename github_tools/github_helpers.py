@@ -48,9 +48,7 @@ class Client(object):
             url="https://api.github.com/graphql",
             headers={"Authorization": "bearer %s" % parsed_args.access_token},
         )
-        self._client = gql.Client(
-            transport=transport, fetch_schema_from_transport=True
-        )
+        self._client = gql.Client(transport=transport)
 
     def execute(self, query):
         """Runs a query."""

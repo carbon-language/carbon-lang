@@ -36,6 +36,7 @@ cc_library(
     hdrs = ["parse_tree.h"],
     deps = [
         ":parse_node_kind",
+        ":precedence",
         "//diagnostics:diagnostic_emitter",
         "//lexer:token_kind",
         "//lexer:tokenized_buffer",
@@ -80,7 +81,30 @@ cc_fuzz_test(
     deps = [
         ":parse_tree",
         "//diagnostics:diagnostic_emitter",
+        "//diagnostics:null_diagnostics",
         "//lexer:tokenized_buffer",
         "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_library(
+    name = "precedence",
+    srcs = ["precedence.cpp"],
+    hdrs = ["precedence.h"],
+    deps = [
+        "//lexer:token_kind",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_test(
+    name = "precedence_test",
+    srcs = ["precedence_test.cpp"],
+    deps = [
+        ":precedence",
+        "//lexer:token_kind",
+        "@llvm-project//llvm:gmock",
+        "@llvm-project//llvm:gtest",
+        "@llvm-project//llvm:gtest_main",
     ],
 )

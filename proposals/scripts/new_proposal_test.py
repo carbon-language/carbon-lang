@@ -44,8 +44,11 @@ class TestNewProposal(unittest.TestCase):
         self.assertEqual(new_proposal._calculate_branch(parsed_args), "wiz")
 
     def test_fill_template(self):
+        parsed_args = new_proposal._parse_args(["foo"])
         content = new_proposal._fill_template(
-            os.path.join(new_proposal._get_proposals_dir(), "template.md"),
+            os.path.join(
+                new_proposal._get_proposals_dir(parsed_args), "template.md"
+            ),
             "TITLE",
             123,
         )
