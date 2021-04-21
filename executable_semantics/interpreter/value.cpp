@@ -214,13 +214,6 @@ auto MakeChoiceTypeVal(std::string name,
   return v;
 }
 
-auto State::PrintAddress(Address a, std::ostream& out) -> void {
-  if (!this->alive[a]) {
-    out << "!!";
-  }
-  PrintValue(this->heap[a], out);
-}
-
 auto PrintValue(const Value* val, std::ostream& out) -> void {
   switch (val->tag) {
     case ValKind::AltConsV: {

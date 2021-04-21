@@ -36,26 +36,26 @@ auto State::AllocateValue(const Value* v) -> Address {
   // ensures that we don't do anything else in between, which is really bad!
   // Consider whether to include a copy of the input v in this function
   // or to leave it up to the caller.
-  Address a = heap.size();
-  heap.push_back(new Value(*v));
+  Address a = heap_.size();
+  heap_.push_back(new Value(*v));
   this->alive.push_back(true);
   return a;
 }
 
 auto State::ReadFromMemory(Address a, int line_num) -> const Value* {
   this->CheckAlive(a, line_num);
-  return heap[a];
+  return heap_[a];
 }
 
 auto State::WriteToMemory(Address a, const Value* v, int line_num) -> void {
   this->CheckAlive(a, line_num);
-  heap[a] = v;
+  heap_[a] = v;
 }
 
 void State::CheckAlive(Address address, int line_num) {
   if (!this->alive[address]) {
     std::cerr << line_num << ": undefined behavior: access to dead value ";
-    PrintValue(heap[address], std::cerr);
+    PrintValue(heap_[address], std::cerr);
     std::cerr << std::endl;
     exit(-1);
   }
@@ -144,7 +144,7 @@ void KillSubObjects(const Value* val) {
 void State::KillObject(Address address) {
   if (this->alive[address]) {
     this->alive[address] = false;
-    KillSubObjects(heap[address]);
+    KillSubObjects(heap_[address]);
   } else {
     std::cerr << "runtime error, killing an already dead value" << std::endl;
     exit(-1);
@@ -181,7 +181,7 @@ void PrintStack(Stack<Frame*> ls, std::ostream& out) {
 }
 
 void State::PrintHeap(std::ostream& out) {
-  for (auto& iter : heap) {
+  for (auto& iter : heap_) {
     if (iter) {
       PrintValue(iter, out);
     } else {
@@ -189,6 +189,13 @@ void State::PrintHeap(std::ostream& out) {
     }
     out << ", ";
   }
+}
+
+auto State::PrintAddress(Address a, std::ostream& out) -> void {
+  if (!this->alive[a]) {
+    out << "!!";
+  }
+  PrintValue(this->heap_[a], out);
 }
 
 auto CurrentEnv(State* state) -> Env {

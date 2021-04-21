@@ -82,7 +82,7 @@ struct State {
   auto PrintHeap(std::ostream& out) -> void;
 
  private:
-  std::vector<const Value*> heap;
+  std::vector<const Value*> heap_;
 };
 
 extern State* state;
