@@ -288,8 +288,7 @@ auto TypeCheckExp(const Expression* e, TypeEnv types, Env values,
           ExpectType(e->line_num, "!", MakeBoolTypeVal(), ts[0]);
           return TCResult(new_e, MakeBoolTypeVal(), new_types);
         case Operator::Eq:
-          ExpectType(e->line_num, "==(1)", MakeIntTypeVal(), ts[0]);
-          ExpectType(e->line_num, "==(2)", MakeIntTypeVal(), ts[1]);
+          ExpectType(e->line_num, "==", ts[0], ts[1]);
           return TCResult(new_e, MakeBoolTypeVal(), new_types);
       }
       break;

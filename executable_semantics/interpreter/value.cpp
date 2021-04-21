@@ -4,6 +4,7 @@
 
 #include "executable_semantics/interpreter/value.h"
 
+#include <algorithm>
 #include <cassert>
 #include <iostream>
 
@@ -360,6 +361,31 @@ auto TypeEqual(const Value* t1, const Value* t2) -> bool {
   }
 }
 
+// Returns true if all the fields of the two tuples contain equal values
+// and returns false otherwise.
+static auto FieldsValueEqual(VarAddresses* ts1, VarAddresses* ts2, int line_num)
+    -> bool {
+  if (ts1->size() != ts2->size()) {
+    return false;
+  }
+  for (const auto& [name, address] : *ts1) {
+    auto iter =
+        std::find_if(ts2->begin(), ts2->end(),
+                     [name = name](const auto& p) { return p.first == name; });
+    if (iter == ts2->end()) {
+      return false;
+    }
+    if (!ValueEqual(state->heap[address], state->heap[iter->second],
+                    line_num)) {
+      return false;
+    }
+  }
+  return true;
+}
+
+// Returns true if the two values are equal and returns false otherwise.
+//
+// This function implements the `==` operator of Carbon.
 auto ValueEqual(const Value* v1, const Value* v2, int line_num) -> bool {
   if (v1->tag != v2->tag) {
     return false;
@@ -373,6 +399,9 @@ auto ValueEqual(const Value* v1, const Value* v2, int line_num) -> bool {
       return v1->u.ptr == v2->u.ptr;
     case ValKind::FunV:
       return v1->u.fun.body == v2->u.fun.body;
+    case ValKind::TupleV:
+      return FieldsValueEqual(v1->u.tuple.elts, v2->u.tuple.elts, line_num);
+    default:
     case ValKind::VarTV:
     case ValKind::IntTV:
     case ValKind::BoolTV:
@@ -384,7 +413,6 @@ auto ValueEqual(const Value* v1, const Value* v2, int line_num) -> bool {
     case ValKind::ChoiceTV:
     case ValKind::ContinuationTV:
       return TypeEqual(v1, v2);
-    case ValKind::TupleV:
     case ValKind::StructV:
     case ValKind::AltV:
     case ValKind::VarPatV:

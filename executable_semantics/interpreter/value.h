@@ -17,6 +17,7 @@ namespace Carbon {
 struct Value;
 using Address = unsigned int;
 using VarValues = std::list<std::pair<std::string, const Value*>>;
+using VarAddresses = std::vector<std::pair<std::string, Address>>;
 
 auto FindInVarValues(const std::string& field, VarValues* inits)
     -> const Value*;
@@ -81,7 +82,7 @@ struct Value {
     } alt;
 
     struct {
-      std::vector<std::pair<std::string, Address>>* elts;
+      VarAddresses* elts;
     } tuple;
 
     Address ptr;
