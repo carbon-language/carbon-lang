@@ -375,8 +375,8 @@ static auto FieldsValueEqual(VarAddresses* ts1, VarAddresses* ts2, int line_num)
     if (iter == ts2->end()) {
       return false;
     }
-    if (!ValueEqual(state->heap[address], state->heap[iter->second],
-                    line_num)) {
+    if (!ValueEqual(state->ReadFromMemory(address, line_num),
+                    state->ReadFromMemory(iter->second, line_num), line_num)) {
       return false;
     }
   }
