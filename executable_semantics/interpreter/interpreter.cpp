@@ -45,7 +45,7 @@ auto AllocateValue(const Value* v) -> Address {
 auto CopyVal(const Value* val, int line_num) -> const Value* {
   switch (val->tag) {
     case ValKind::TupleV: {
-      auto elements = new std::vector<TupleElement>();
+      auto* elements = new std::vector<TupleElement>();
       for (const TupleElement& element : *val->u.tuple.elements) {
         CheckAlive(element.address, line_num);
         const Value* new_element =

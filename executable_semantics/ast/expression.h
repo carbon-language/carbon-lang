@@ -14,8 +14,7 @@ struct Expression;
 
 // A FieldInitializer represents the initialization of a single tuple field.
 struct FieldInitializer {
-  // The field name. An empty string indicates that this represents a
-  // positional field.
+  // The field name. For a positional field, this may be empty.
   std::string name;
 
   // The expression that initializes the field.
