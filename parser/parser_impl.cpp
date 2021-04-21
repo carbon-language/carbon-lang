@@ -209,7 +209,7 @@ struct ParseTree::Parser::SubtreeStart {
   int tree_size;
 };
 
-auto ParseTree::Parser::StartSubtree() -> SubtreeStart {
+auto ParseTree::Parser::GetSubtreeStartPosition() -> SubtreeStart {
   return {static_cast<int>(tree.node_impls.size())};
 }
 
@@ -379,7 +379,7 @@ auto ParseTree::Parser::ParseParenList(ListElementParser list_element_parser,
 auto ParseTree::Parser::ParseFunctionParameter() -> llvm::Optional<Node> {
   // A parameter is of the form
   //   type identifier
-  auto start = StartSubtree();
+  auto start = GetSubtreeStartPosition();
 
   auto type = ParseType();
 
@@ -396,7 +396,7 @@ auto ParseTree::Parser::ParseFunctionParameter() -> llvm::Optional<Node> {
 }
 
 auto ParseTree::Parser::ParseFunctionSignature() -> bool {
-  auto start = StartSubtree();
+  auto start = GetSubtreeStartPosition();
 
   auto params = ParseParenList(
       [&] { return ParseFunctionParameter(); },
@@ -408,7 +408,7 @@ auto ParseTree::Parser::ParseFunctionSignature() -> bool {
                        has_errors);
       });
 
-  auto start_return_type = StartSubtree();
+  auto start_return_type = GetSubtreeStartPosition();
   if (auto arrow = ConsumeIf(TokenKind::MinusGreater())) {
     auto return_type = ParseType();
     AddNode(ParseNodeKind::ReturnType(), *arrow, start_return_type,
@@ -423,7 +423,7 @@ auto ParseTree::Parser::ParseFunctionSignature() -> bool {
 
 auto ParseTree::Parser::ParseCodeBlock() -> Node {
   TokenizedBuffer::Token open_curly = Consume(TokenKind::OpenCurlyBrace());
-  auto start = StartSubtree();
+  auto start = GetSubtreeStartPosition();
 
   bool has_errors = false;
 
@@ -450,7 +450,7 @@ auto ParseTree::Parser::ParseCodeBlock() -> Node {
 
 auto ParseTree::Parser::ParseFunctionDeclaration() -> Node {
   TokenizedBuffer::Token function_intro_token = Consume(TokenKind::FnKeyword());
-  auto start = StartSubtree();
+  auto start = GetSubtreeStartPosition();
 
   auto add_error_function_node = [&] {
     return AddNode(ParseNodeKind::FunctionDeclaration(), function_intro_token,
@@ -509,7 +509,7 @@ auto ParseTree::Parser::ParseFunctionDeclaration() -> Node {
 auto ParseTree::Parser::ParseVariableDeclaration() -> Node {
   // `var` expression identifier [= expression] `;`
   TokenizedBuffer::Token var_token = Consume(TokenKind::VarKeyword());
-  auto start = StartSubtree();
+  auto start = GetSubtreeStartPosition();
 
   auto type = ParseType();
 
@@ -522,7 +522,7 @@ auto ParseTree::Parser::ParseVariableDeclaration() -> Node {
     }
   }
 
-  auto start_init = StartSubtree();
+  auto start_init = GetSubtreeStartPosition();
   if (auto equal_token = ConsumeIf(TokenKind::Equal())) {
     auto init = ParseExpression();
     AddNode(ParseNodeKind::VariableInitializer(), *equal_token, start_init,
@@ -580,7 +580,7 @@ auto ParseTree::Parser::ParseDeclaration() -> llvm::Optional<Node> {
 
 auto ParseTree::Parser::ParseParenExpression() -> llvm::Optional<Node> {
   // `(` expression `)`
-  auto start = StartSubtree();
+  auto start = GetSubtreeStartPosition();
   TokenizedBuffer::Token open_paren = Consume(TokenKind::OpenParen());
 
   // TODO: If the next token is a close paren, build an empty tuple literal.
@@ -657,7 +657,7 @@ auto ParseTree::Parser::ParseCallExpression(SubtreeStart start, bool has_errors)
 }
 
 auto ParseTree::Parser::ParsePostfixExpression() -> llvm::Optional<Node> {
-  auto start = StartSubtree();
+  auto start = GetSubtreeStartPosition();
   llvm::Optional<Node> expression = ParsePrimaryExpression();
 
   while (true) {
@@ -679,7 +679,7 @@ auto ParseTree::Parser::ParsePostfixExpression() -> llvm::Optional<Node> {
 
 auto ParseTree::Parser::ParseOperatorExpression(
     PrecedenceGroup ambient_precedence) -> llvm::Optional<Node> {
-  auto start = StartSubtree();
+  auto start = GetSubtreeStartPosition();
 
   llvm::Optional<Node> lhs;
   PrecedenceGroup lhs_precedence = PrecedenceGroup::ForPostfixExpression();
@@ -746,7 +746,7 @@ auto ParseTree::Parser::ParseExpression() -> llvm::Optional<Node> {
 
 auto ParseTree::Parser::ParseExpressionStatement() -> llvm::Optional<Node> {
   TokenizedBuffer::Token start_token = *position;
-  auto start = StartSubtree();
+  auto start = GetSubtreeStartPosition();
 
   bool has_errors = !ParseExpression();
 
@@ -774,7 +774,7 @@ auto ParseTree::Parser::ParseExpressionStatement() -> llvm::Optional<Node> {
 auto ParseTree::Parser::ParseParenCondition(TokenKind introducer)
     -> llvm::Optional<Node> {
   // `(` expression `)`
-  auto start = StartSubtree();
+  auto start = GetSubtreeStartPosition();
   auto open_paren = ConsumeIf(TokenKind::OpenParen());
   if (!open_paren) {
     emitter.EmitError<ExpectedParenAfter>(*position,
@@ -796,7 +796,7 @@ auto ParseTree::Parser::ParseParenCondition(TokenKind introducer)
 }
 
 auto ParseTree::Parser::ParseIfStatement() -> llvm::Optional<Node> {
-  auto start = StartSubtree();
+  auto start = GetSubtreeStartPosition();
   auto if_token = Consume(TokenKind::IfKeyword());
   auto cond = ParseParenCondition(TokenKind::IfKeyword());
   auto then_case = ParseStatement();
@@ -810,7 +810,7 @@ auto ParseTree::Parser::ParseIfStatement() -> llvm::Optional<Node> {
 }
 
 auto ParseTree::Parser::ParseWhileStatement() -> llvm::Optional<Node> {
-  auto start = StartSubtree();
+  auto start = GetSubtreeStartPosition();
   auto while_token = Consume(TokenKind::WhileKeyword());
   auto cond = ParseParenCondition(TokenKind::WhileKeyword());
   auto body = ParseStatement();
@@ -824,7 +824,7 @@ auto ParseTree::Parser::ParseKeywordStatement(ParseNodeKind kind,
   auto keyword_kind = NextTokenKind();
   assert(keyword_kind.IsKeyword());
 
-  auto start = StartSubtree();
+  auto start = GetSubtreeStartPosition();
   auto keyword = Consume(keyword_kind);
 
   bool arg_error = false;
