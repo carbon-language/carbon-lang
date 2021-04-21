@@ -1603,13 +1603,15 @@ void RewriteInstance::readSpecialSections() {
            << "relocation mode\n";
   }
 
-  // Process debug sections.
-  EHFrame = cantFail(BC->DwCtx->getEHFrame());
+  // Read EH frame for function boundaries info.
+  Expected<const DWARFDebugFrame *> EHFrameOrError = BC->DwCtx->getEHFrame();
+  if (!EHFrameOrError)
+    report_error("expected valid eh_frame section", EHFrameOrError.takeError());
   if (opts::DumpEHFrame) {
     outs() << "BOLT-INFO: Dumping original binary .eh_frame\n";
-    EHFrame->dump(outs(), DIDumpOptions(), &*BC->MRI, NoneType());
+    EHFrameOrError.get()->dump(outs(), DIDumpOptions(), &*BC->MRI, NoneType());
   }
-  CFIRdWrt.reset(new CFIReaderWriter(*EHFrame));
+  CFIRdWrt.reset(new CFIReaderWriter(*EHFrameOrError.get()));
 
   // Parse build-id
   parseBuildID();
@@ -5014,7 +5016,7 @@ void RewriteInstance::rewriteFile() {
 
     if (auto *E = dyn_cast<ELFObjectFileBase>(&Binary)) {
       std::unique_ptr<DWARFContext> DwCtx = DWARFContext::create(*E);
-      const DWARFDebugFrame *const &EHFrame = cantFail(DwCtx->getEHFrame());
+      const DWARFDebugFrame *EHFrame = cantFail(DwCtx->getEHFrame());
       outs() << "BOLT-INFO: Dumping rewritten .eh_frame\n";
       EHFrame->dump(outs(), DIDumpOptions(), &*BC->MRI, NoneType());
     }

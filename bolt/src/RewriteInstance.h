@@ -446,7 +446,6 @@ private:
 
   /// Exception handling and stack unwinding information in this binary.
   ErrorOr<BinarySection &> LSDASection{std::errc::bad_address};
-  const llvm::DWARFDebugFrame *EHFrame{nullptr};
   ErrorOr<BinarySection &> EHFrameSection{std::errc::bad_address};
 
   /// .plt section.
