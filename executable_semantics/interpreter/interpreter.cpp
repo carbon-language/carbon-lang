@@ -183,8 +183,8 @@ void PrintStack(Stack<Frame*> ls, std::ostream& out) {
 }
 
 void Heap::PrintHeap(std::ostream& out) {
-  for (const Value* iter : heap_) {
-    PrintValue(iter, out);
+  for (Address i = 0; i < heap_.size(); ++i) {
+    PrintAddress(i, out);
     out << ", ";
   }
 }
@@ -193,7 +193,7 @@ auto Heap::PrintAddress(Address a, std::ostream& out) -> void {
   if (!alive_[a]) {
     out << "!!";
   }
-  PrintValue(this->heap_[a], out);
+  PrintValue(heap_[a], out);
 }
 
 auto CurrentEnv(State* state) -> Env {
