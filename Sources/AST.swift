@@ -311,7 +311,7 @@ indirect enum Expression: AST {
   }
 };
 
-struct StructMemberDeclaration: AST {
+struct StructMemberDeclaration: AST, Declaration {
   let name: Identifier
   let type: TypeSpecifier
   let site: Site
