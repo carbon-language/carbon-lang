@@ -36,8 +36,9 @@ auto State::AllocateValue(const Value* v) -> Address {
   // ensures that we don't do anything else in between, which is really bad!
   // Consider whether to include a copy of the input v in this function
   // or to leave it up to the caller.
+  assert(v != nullptr);
   Address a = heap_.size();
-  heap_.push_back(new Value(*v));
+  heap_.push_back(v);
   alive_.push_back(true);
   return a;
 }
@@ -48,6 +49,7 @@ auto State::ReadFromMemory(Address a, int line_num) -> const Value* {
 }
 
 auto State::WriteToMemory(Address a, const Value* v, int line_num) -> void {
+  assert(v != nullptr);
   this->CheckAlive(a, line_num);
   heap_[a] = v;
 }
@@ -181,12 +183,8 @@ void PrintStack(Stack<Frame*> ls, std::ostream& out) {
 }
 
 void State::PrintHeap(std::ostream& out) {
-  for (auto& iter : heap_) {
-    if (iter) {
-      PrintValue(iter, out);
-    } else {
-      out << "_";
-    }
+  for (const Value* iter : heap_) {
+    PrintValue(iter, out);
     out << ", ";
   }
 }
