@@ -10,6 +10,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 ## Table of contents
 
+-   [Purpose of this document](#purpose-of-this-document)
 -   [Background](#background)
     -   [Definition of generics](#definition-of-generics)
     -   [Generic parameters](#generic-parameters)
@@ -20,7 +21,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
         -   [Generic programming](#generic-programming)
         -   [Upgrade path from C++ abstract interfaces](#upgrade-path-from-c-abstract-interfaces)
         -   [Dependency injection](#dependency-injection)
-        -   [Generics instead of open overloading](#generics-instead-of-open-overloading)
+        -   [Generics instead of open overloading and ADL](#generics-instead-of-open-overloading-and-adl)
     -   [Performance](#performance)
     -   [Better compiler experience](#better-compiler-experience)
     -   [Encapsulation](#encapsulation)
@@ -32,7 +33,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Learn from others](#learn-from-others)
     -   [Interfaces are nominal](#interfaces-are-nominal)
     -   [Interop and evolution](#interop-and-evolution)
-    -   [Bridge for C++ extension points](#bridge-for-c-extension-points)
+    -   [Bridge for C++ customization points](#bridge-for-c-customization-points)
 -   [What we are not doing](#what-we-are-not-doing)
     -   [Not the full flexibility of templates](#not-the-full-flexibility-of-templates)
     -   [Template use cases that are out of scope](#template-use-cases-that-are-out-of-scope)
@@ -41,9 +42,20 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 <!-- tocstop -->
 
+## Purpose of this document
+
+This document attempts to clarify our goals for the design of the generics
+feature for Carbon. While these are not strict requirements, they represent the
+yardstick by which we evaluate design decisions. We do expect to achieve most of
+these goals, though some of these goals are somewhat aspirational or
+forward-looking.
+
 ## Background
 
 ### Definition of generics
+
+**TODO** This should be replaced with a link to a terminology doc, once that is
+accepted.
 
 C++ supports
 [parametric polymorphism](https://en.wikipedia.org/wiki/Parametric_polymorphism)
@@ -207,13 +219,18 @@ This would allow you to avoid the runtime overhead of virtual functions, using
 [static dispatch](#dispatch-control) without the
 [poor build experience of templates](#better-compiler-experience).
 
-#### Generics instead of open overloading
+#### Generics instead of open overloading and ADL
 
 One name lookup problem we would like to avoid is caused by open overloading.
 Overloading is where you provide multiple implementations of a function with the
 same name, and the implementation used in a specific context is determined by
 the argument types. Open overloading is overloading where the overload set is
-not restricted to a single file or library.
+not restricted to a single file or library. This works with
+[Argument-dependent lookup](https://en.wikipedia.org/wiki/Argument-dependent_name_lookup),
+or [ADL](https://en.cppreference.com/w/cpp/language/adl), a mechanism for
+enabling open overloading without having to reopen the namespace where the
+function was originally defined. Together these enable
+[C++ customization points](http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2015/n4381.html).
 
 This is commonly used to provide a type-specific implementation of some
 operation, but doesn't provide any enforcement of consistency across the
@@ -234,6 +251,10 @@ A specific example is the absolute value function `Abs`. We would like to write
 `Complex64` or `Quaternion`, the return type will be different. The generic
 functions that call `Abs` will need a way to specify whether they only operate
 on `T` such that `Abs` has signature `T -> T`.
+
+This does create an issue when interoperating with C++ code using open
+overloading, which will
+[need to be addressed](#bridge-for-c-customization-points).
 
 ### Performance
 
@@ -545,7 +566,7 @@ The place where types specify that they implement an interface is also the
 vehicle for unambiguously designating which function implementation goes with
 what interface.
 
-### Bridge for C++ extension points
+### Bridge for C++ customization points
 
 There will need to be some bridge for C++ extension points that currently rely
 on open overloading or
