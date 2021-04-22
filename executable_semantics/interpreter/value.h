@@ -17,6 +17,7 @@ namespace Carbon {
 struct Value;
 using Address = unsigned int;
 using VarValues = std::list<std::pair<std::string, const Value*>>;
+using VarAddresses = std::vector<std::pair<std::string, Address>>;
 
 auto FindInVarValues(const std::string& field, VarValues* inits)
     -> const Value*;
@@ -81,7 +82,7 @@ struct Value {
     } alt;
 
     struct {
-      std::vector<std::pair<std::string, Address>>* elts;
+      VarAddresses* elts;
     } tuple;
 
     Address ptr;
@@ -160,7 +161,6 @@ auto TypeEqual(const Value* t1, const Value* t2) -> bool;
 auto ValueEqual(const Value* v1, const Value* v2, int line_num) -> bool;
 
 auto ToInteger(const Value* v) -> int;
-void CheckAlive(Address a, int line_num);
 
 }  // namespace Carbon
 
