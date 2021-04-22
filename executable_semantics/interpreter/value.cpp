@@ -4,6 +4,7 @@
 
 #include "executable_semantics/interpreter/value.h"
 
+#include <algorithm>
 #include <cassert>
 #include <iostream>
 
@@ -212,7 +213,14 @@ auto MakeChoiceTypeVal(std::string name,
   return v;
 }
 
-void PrintValue(const Value* val, std::ostream& out) {
+auto State::PrintAddress(Address a, std::ostream& out) -> void {
+  if (!this->alive[a]) {
+    out << "!!";
+  }
+  PrintValue(this->heap[a], out);
+}
+
+auto PrintValue(const Value* val, std::ostream& out) -> void {
   switch (val->tag) {
     case ValKind::AltConsV: {
       out << *val->u.alt_cons.choice_name << "." << *val->u.alt_cons.alt_name;
@@ -226,7 +234,7 @@ void PrintValue(const Value* val, std::ostream& out) {
     case ValKind::AltV: {
       out << "alt " << *val->u.alt.choice_name << "." << *val->u.alt.alt_name
           << " ";
-      PrintValue(state->heap[val->u.alt.argument], out);
+      state->PrintAddress(val->u.alt.argument, out);
       break;
     }
     case ValKind::StructV: {
@@ -245,7 +253,7 @@ void PrintValue(const Value* val, std::ostream& out) {
         }
 
         out << element.name << " = ";
-        PrintValue(state->heap[element.address], out);
+        state->PrintAddress(element.address, out);
         out << "@" << element.address;
       }
       out << ")";
@@ -335,8 +343,9 @@ auto TypeEqual(const Value* t1, const Value* t2) -> bool {
         if (t2_field == std::nullopt) {
           return false;
         }
-        if (!TypeEqual(state->heap[(*t1->u.tuple.elements)[i].address],
-                       state->heap[*t2_field])) {
+        if (!TypeEqual(
+                state->ReadFromMemory((*t1->u.tuple.elements)[i].address, 0),
+                state->ReadFromMemory(*t2_field, 0))) {
           return false;
         }
       }
@@ -352,6 +361,32 @@ auto TypeEqual(const Value* t1, const Value* t2) -> bool {
   }
 }
 
+// Returns true if all the fields of the two tuples contain equal values
+// and returns false otherwise.
+static auto FieldsValueEqual(std::vector<TupleElement>* ts1,
+                             std::vector<TupleElement>* ts2, int line_num)
+    -> bool {
+  if (ts1->size() != ts2->size()) {
+    return false;
+  }
+  for (const TupleElement& element : *ts1) {
+    auto iter = std::find_if(
+        ts2->begin(), ts2->end(),
+        [&](const TupleElement& e2) { return e2.name == element.name; });
+    if (iter == ts2->end()) {
+      return false;
+    }
+    if (!ValueEqual(state->ReadFromMemory(element.address, line_num),
+                    state->ReadFromMemory(iter->address, line_num), line_num)) {
+      return false;
+    }
+  }
+  return true;
+}
+
+// Returns true if the two values are equal and returns false otherwise.
+//
+// This function implements the `==` operator of Carbon.
 auto ValueEqual(const Value* v1, const Value* v2, int line_num) -> bool {
   if (v1->tag != v2->tag) {
     return false;
@@ -362,11 +397,13 @@ auto ValueEqual(const Value* v1, const Value* v2, int line_num) -> bool {
     case ValKind::BoolV:
       return v1->u.boolean == v2->u.boolean;
     case ValKind::PtrV:
-      CheckAlive(v1->u.ptr, line_num);
-      CheckAlive(v2->u.ptr, line_num);
       return v1->u.ptr == v2->u.ptr;
     case ValKind::FunV:
       return v1->u.fun.body == v2->u.fun.body;
+    case ValKind::TupleV:
+      return FieldsValueEqual(v1->u.tuple.elements, v2->u.tuple.elements,
+                              line_num);
+    default:
     case ValKind::VarTV:
     case ValKind::IntTV:
     case ValKind::BoolTV:
@@ -378,7 +415,6 @@ auto ValueEqual(const Value* v1, const Value* v2, int line_num) -> bool {
     case ValKind::ChoiceTV:
     case ValKind::ContinuationTV:
       return TypeEqual(v1, v2);
-    case ValKind::TupleV:
     case ValKind::StructV:
     case ValKind::AltV:
     case ValKind::VarPatV:
@@ -398,15 +434,6 @@ auto ToInteger(const Value* v) -> int {
       std::cerr << "expected an integer, not ";
       PrintValue(v, std::cerr);
       exit(-1);
-  }
-}
-
-void CheckAlive(Address address, int line_num) {
-  if (!state->alive[address]) {
-    std::cerr << line_num << ": undefined behavior: access to dead value ";
-    PrintValue(state->heap[address], std::cerr);
-    std::cerr << std::endl;
-    exit(-1);
   }
 }
 
