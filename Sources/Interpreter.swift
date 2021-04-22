@@ -14,7 +14,7 @@ struct Interpreter {
     program: ExecutableProgram
 
   /// A mapping from local name declarations to addresses.
-  var locals: ASTDictionary<AnyDeclaration, Address> = .init()
+  var locals: ASTDictionary<SimpleBinding, Address> = .init()
   /// A mapping from local expressions to addresses
   var temporaries: ASTDictionary<Expression, Address> = .init()
   
@@ -24,7 +24,7 @@ struct Interpreter {
   /// A type that captures everything that needs to be restored after a callee
   /// returns.
   typealias FunctionContext = (
-    locals: ASTDictionary<AnyDeclaration, Address>,
+    locals: ASTDictionary<SimpleBinding, Address>,
     temporaries: ASTDictionary<Expression, Address>,
     returnValueStorage: Address)
 
@@ -100,7 +100,9 @@ extension Interpreter {
   /// Accesses the address of the declaration for the given name.
   func address(of name: Identifier) -> Address {
     let d = program.declaration[name] ?? fatal("\(name) not declared")
-    return locals[AnyDeclaration(d)] ?? globals[d] ?? fatal("\(d) has no value")
+    _ = d
+    UNIMPLEMENTED
+    //return locals[AnyDeclaration(d)] ?? globals[d] ?? fatal("\(d) has no value")
   }
 
   /// Accesses the address where e's value is stored.

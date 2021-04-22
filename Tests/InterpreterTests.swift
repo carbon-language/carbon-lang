@@ -4,6 +4,7 @@
 import XCTest
 @testable import CarbonInterpreter
 
+/*
 final class TestEvaluateCall: XCTestCase {
   func testMinimal() {
     guard let ast = CheckNoThrow(try "fn main() -> Int {}".parsedAsCarbon()),
@@ -62,3 +63,4 @@ final class TestEvaluateCall: XCTestCase {
 final class InterpreterTests: XCTestCase {
   
 }
+*/

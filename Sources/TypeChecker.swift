@@ -17,14 +17,14 @@ struct TypeChecker {
   /// The function currently being typechecked.
   var currentFunction: FunctionDefinition?
 
-  var toDeclaration = ASTDictionary<Identifier, AnyDeclaration>()
-  var declaredType = ASTDictionary<AnyDeclaration, Type>()
+  var toDeclaration = ASTDictionary<Identifier, Declaration>()
+  var declaredType = Dictionary<Declaration.Identity, Type>()
   var expressionType = ASTDictionary<Expression, Type>()
 
   /// A mapping from names to the stack of declcarations they reference, with
   /// the top of each stack being the declaration referenced in the current
   /// scope.
-  var symbolTable: StackDictionary<String, AnyDeclaration> = .init()
+  var symbolTable: StackDictionary<String, Declaration> = .init()
 
   /// The set of names defined in each scope, with the current scope at the top.
   var activeScopes: Stack<Set<String>>
@@ -53,11 +53,12 @@ private extension TypeChecker {
   }
 
   /// Records that `name.text` refers to `definition` in the current scope.
-  mutating func define(_ name: Identifier, _ definition: AnyDeclaration) {
+  mutating func define(_ name: Identifier, _ definition: Declaration) {
     if activeScopes.top.contains(name.text) {
       error(
         "'\(name.text)' already defined in this scope", at: name.site,
-        notes: [("previous definition", symbolTable[name.text].site)])
+        notes:
+          [("previous definition", symbolTable[name.text].site)])
     }
 
     activeScopes.top.insert(name.text)
@@ -69,7 +70,7 @@ private extension TypeChecker {
   ///
   /// Every identifier should either be declaring a new name, or should be
   /// looked up during type checking.
-  mutating func lookup(_ use: Identifier) -> AnyDeclaration? {
+  mutating func lookup(_ use: Identifier) -> Declaration? {
     guard let d = symbolTable[query: use.text] else {
       error("Un-declared name '\(use.text)'", at: use.site)
       return nil
@@ -84,7 +85,7 @@ private extension TypeChecker {
     case let .function(f): visit(f)
     case let .struct(s): visit(s)
     case let .choice(c):
-      define(c.name, .init(d))
+      define(c.name, c)
       inNewScope {
         for a in c.alternatives { $0.visit(a) }
       }
@@ -116,14 +117,13 @@ private extension TypeChecker {
     case let .name(n):
       guard let d = lookup(n) else { return .error } // Name not defined
       switch d {
-      case .struct(let d):
+      case let d as StructDefinition:
         return .struct(d)
 
-      case .choice(let d):
+      case let d as ChoiceDefinition:
         return .choice(d)
 
-      case .function, .initialization,
-           .structMember, .alternative:
+      default:
         error(
           "'\(n.text)' does not refer to a type", at: n.site,
           notes: [("actual definition: \(d)", d.site)])
@@ -193,8 +193,7 @@ private extension TypeChecker {
     // TODO: handle forward declarations (they're in the grammar).
     guard let body = f.body else { UNIMPLEMENTED }
 
-    let df = AnyDeclaration.function(f)
-    define(f.name, df)
+    define(f.name, f)
     
     inNewScope { me in
       var parameterTypes: [Type] = []
@@ -211,8 +210,7 @@ private extension TypeChecker {
          */
       }
       let r = me.evaluateTypeExpression(f.returnType)
-      me.declaredType[AnyDeclaration.function(f)]
-        = .function(parameterTypes: parameterTypes, returnType: r)
+      me.declaredType[f.identity] = .function(parameterTypes: parameterTypes, returnType: r)
       me.currentFunction = f
       me.visit(body)
       me.currentFunction = nil
@@ -220,21 +218,19 @@ private extension TypeChecker {
   }
 
   mutating func visit(_ s: StructDefinition) {
-    define(s.name, .struct(s))
+    define(s.name, s)
     inNewScope { me in
       for m in s.members {
-        me.define(m.name, .structMember(m))
-        me.declaredType[
-          AnyDeclaration.structMember(m)
-        ] = me.evaluateTypeExpression(m.type.type)
+        me.define(m.name, m)
+        me.declaredType[m.identity] = me.evaluateTypeExpression(m.type.type)
       }
     }
   }
 
   
   mutating func visit(_ a: Alternative) {
-    define(a.name, .alternative(a))
-    declaredType[AnyDeclaration.alternative(a)] = .tuple(mapDeducedType(a.payload, nil))
+    define(a.name, a)
+    declaredType[a.identity] = .tuple(mapDeducedType(a.payload, nil))
   }
 
   mutating func visit(_ s: Statement) {
@@ -273,7 +269,7 @@ private extension TypeChecker {
     case let .return(e, _):
       visit(e)
       guard case .function(_, returnType: let r)
-              = declaredType[AnyDeclaration.function(currentFunction!)]
+              = declaredType[currentFunction!.identity]
       else {
         fatalError("function without function type")
       }

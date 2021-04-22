@@ -13,7 +13,7 @@ struct ExecutableProgram {
 
   /// A mapping from identifier to its declaration
   var //let
-    declaration = ASTDictionary<Identifier, TopLevelDeclaration>()
+    declaration = ASTDictionary<Identifier, Declaration>()
 
   /// Constructs an instance for the given parser output, or throws `ErrorLog`
   /// if the program is ill-formed.

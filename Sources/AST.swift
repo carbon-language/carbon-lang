@@ -104,7 +104,7 @@ enum LHSTypeSpecifier: AST {
   }
 }
 
-struct SimpleBinding: AST {
+struct SimpleBinding: AST, Declaration {
   let type: LHSTypeSpecifier
   let name: Identifier
   var site: Site { type.site...name.site }
@@ -156,7 +156,7 @@ extension TuplePattern {
   }
 }
 
-struct FunctionDefinition: AST {
+struct FunctionDefinition: AST, Declaration {
   let name: Identifier
   let parameters: TuplePattern
   let returnType: Expression
@@ -166,25 +166,25 @@ struct FunctionDefinition: AST {
 
 typealias MemberDesignator = Identifier
 
-struct Alternative: AST {
+struct Alternative: AST, Declaration {
   let name: Identifier;
   let payload: TupleLiteral
   let site: Site
 }
 
-struct StructDefinition: AST {
+struct StructDefinition: AST, Declaration {
   let name: Identifier
   let members: [StructMember]
   let site: Site
 }
 
-struct ChoiceDefinition: AST {
+struct ChoiceDefinition: AST, Declaration {
   let name: Identifier
   let alternatives: [Alternative]
   let site: Site
 }
 
-struct StructMember: AST {
+struct StructMember: AST, Declaration {
   let type: TypeSpecifier
   let name: Identifier
   let site: Site
@@ -313,38 +313,15 @@ struct StructMemberDeclaration: AST {
   let site: Site
 }
 
-/// Unifies all declarations
-///
-/// This doesn't actually appear in the AST, but is used by the typechecker and
-/// interpreter as the value type of a name-use -> declaration dictionary.
-enum AnyDeclaration: AST {
-  case
-    function(FunctionDefinition),
-    `struct`(StructDefinition),
-    choice(ChoiceDefinition),
-    structMember(StructMember),
-    initialization(Initialization),
-    alternative(Alternative)
+protocol Declaration {
+  typealias Identity = AnyASTIdentity
+  var identity: Identity { get }
+  var name: Identifier { get }
+  var site: ASTSite { get }
+}
 
-  init(_ x: TopLevelDeclaration) {
-    switch x {
-    case let .function(f): self = .function(f)
-    case let .struct(s): self = .struct(s)
-    case let .choice(c): self = .choice(c)
-    case let .initialization(v): self = .initialization(v)
-    }
-  }
-  
-  var site: Site {
-    switch self {
-    case let .function(f): return f.site
-    case let .struct(s): return s.site
-    case let .choice(c): return c.site
-    case let .structMember(v): return v.site
-    case let .initialization(v): return v.site
-    case let .alternative(a): return a.site
-    }
-  }
+extension Declaration where Self: AST {
+  var identity: AnyASTIdentity { AnyASTIdentity(of: self) }
 }
 
 /// An annotation that indicates the SourceRegion of an AST node.
@@ -384,7 +361,7 @@ struct AnyASTIdentity: Hashable {
     self.structure = node
   }
 
-  /// The source code covered by the identified node
+  /// The source code covered by the identified node.
   let placement: SourceRegion
 
   /// The type and (incidental) structure of the identified node.
