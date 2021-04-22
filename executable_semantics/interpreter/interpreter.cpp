@@ -407,7 +407,7 @@ void CreateTuple(Frame* frame, Action* act, const Expression* /*exp*/) {
   //    { { (v1,...,vn) :: C, E, F} :: S, H}
   // -> { { `(v1,...,vn) :: C, E, F} :: S, H}
   auto elts = new std::vector<std::pair<std::string, Address>>();
-  auto f = act->u.exp->u.tuple.fields->begin();
+  auto f = act->u.exp->GetTuple().fields->begin();
   for (auto i = act->results.begin(); i != act->results.end(); ++i, ++f) {
     Address a = state->AllocateValue(*i);  // copy?
     elts->push_back(make_pair(f->first, a));
@@ -596,10 +596,10 @@ void StepLvalue() {
       //    { {x :: C, E, F} :: S, H}
       // -> { {E(x) :: C, E, F} :: S, H}
       std::optional<Address> pointer =
-          CurrentEnv(state).Get(*(exp->u.variable.name));
+          CurrentEnv(state).Get(*(exp->GetVariable().name));
       if (!pointer) {
         std::cerr << exp->line_num << ": could not find `"
-                  << *(exp->u.variable.name) << "`" << std::endl;
+                  << *(exp->GetVariable().name) << "`" << std::endl;
         exit(-1);
       }
       const Value* v = MakePtrVal(*pointer);
@@ -610,21 +610,21 @@ void StepLvalue() {
     case ExpressionKind::GetField: {
       //    { {e.f :: C, E, F} :: S, H}
       // -> { e :: [].f :: C, E, F} :: S, H}
-      frame->todo.Push(MakeLvalAct(exp->u.get_field.aggregate));
+      frame->todo.Push(MakeLvalAct(exp->GetFieldAccess().aggregate));
       act->pos++;
       break;
     }
     case ExpressionKind::Index: {
       //    { {e[i] :: C, E, F} :: S, H}
       // -> { e :: [][i] :: C, E, F} :: S, H}
-      frame->todo.Push(MakeExpAct(exp->u.index.aggregate));
+      frame->todo.Push(MakeExpAct(exp->GetIndex().aggregate));
       act->pos++;
       break;
     }
     case ExpressionKind::Tuple: {
       //    { {(f1=e1,...) :: C, E, F} :: S, H}
       // -> { {e1 :: (f1=[],...) :: C, E, F} :: S, H}
-      const Expression* e1 = (*exp->u.tuple.fields)[0].second;
+      const Expression* e1 = (*exp->GetTuple().fields)[0].second;
       frame->todo.Push(MakeLvalAct(e1));
       act->pos++;
       break;
@@ -660,22 +660,22 @@ void StepExp() {
   }
   switch (exp->tag) {
     case ExpressionKind::PatternVariable: {
-      frame->todo.Push(MakeExpAct(exp->u.pattern_variable.type));
+      frame->todo.Push(MakeExpAct(exp->GetPatternVariable().type));
       act->pos++;
       break;
     }
     case ExpressionKind::Index: {
       //    { { e[i] :: C, E, F} :: S, H}
       // -> { { e :: [][i] :: C, E, F} :: S, H}
-      frame->todo.Push(MakeExpAct(exp->u.index.aggregate));
+      frame->todo.Push(MakeExpAct(exp->GetIndex().aggregate));
       act->pos++;
       break;
     }
     case ExpressionKind::Tuple: {
-      if (exp->u.tuple.fields->size() > 0) {
+      if (exp->GetTuple().fields->size() > 0) {
         //    { {(f1=e1,...) :: C, E, F} :: S, H}
         // -> { {e1 :: (f1=[],...) :: C, E, F} :: S, H}
-        const Expression* e1 = (*exp->u.tuple.fields)[0].second;
+        const Expression* e1 = (*exp->GetTuple().fields)[0].second;
         frame->todo.Push(MakeExpAct(e1));
         act->pos++;
       } else {
@@ -686,17 +686,17 @@ void StepExp() {
     case ExpressionKind::GetField: {
       //    { { e.f :: C, E, F} :: S, H}
       // -> { { e :: [].f :: C, E, F} :: S, H}
-      frame->todo.Push(MakeLvalAct(exp->u.get_field.aggregate));
+      frame->todo.Push(MakeLvalAct(exp->GetFieldAccess().aggregate));
       act->pos++;
       break;
     }
     case ExpressionKind::Variable: {
       // { {x :: C, E, F} :: S, H} -> { {H(E(x)) :: C, E, F} :: S, H}
       std::optional<Address> pointer =
-          CurrentEnv(state).Get(*(exp->u.variable.name));
+          CurrentEnv(state).Get(*(exp->GetVariable().name));
       if (!pointer) {
         std::cerr << exp->line_num << ": could not find `"
-                  << *(exp->u.variable.name) << "`" << std::endl;
+                  << *(exp->GetVariable().name) << "`" << std::endl;
         exit(-1);
       }
       const Value* pointee = state->ReadFromMemory(*pointer, exp->line_num);
@@ -707,24 +707,25 @@ void StepExp() {
     case ExpressionKind::Integer:
       // { {n :: C, E, F} :: S, H} -> { {n' :: C, E, F} :: S, H}
       frame->todo.Pop(1);
-      frame->todo.Push(MakeValAct(MakeIntVal(exp->u.integer)));
+      frame->todo.Push(MakeValAct(MakeIntVal(exp->GetInteger())));
       break;
     case ExpressionKind::Boolean:
       // { {n :: C, E, F} :: S, H} -> { {n' :: C, E, F} :: S, H}
       frame->todo.Pop(1);
-      frame->todo.Push(MakeValAct(MakeBoolVal(exp->u.boolean)));
+      frame->todo.Push(MakeValAct(MakeBoolVal(exp->GetBoolean())));
       break;
     case ExpressionKind::PrimitiveOp:
-      if (exp->u.primitive_op.arguments->size() > 0) {
+      if (exp->GetPrimitiveOperator().arguments->size() > 0) {
         //    { {op(e :: es) :: C, E, F} :: S, H}
         // -> { e :: op([] :: es) :: C, E, F} :: S, H}
-        frame->todo.Push(MakeExpAct(exp->u.primitive_op.arguments->front()));
+        frame->todo.Push(
+            MakeExpAct(exp->GetPrimitiveOperator().arguments->front()));
         act->pos++;
       } else {
         //    { {v :: op(]) :: C, E, F} :: S, H}
         // -> { {eval_prim(op, ()) :: C, E, F} :: S, H}
-        const Value* v =
-            EvalPrim(exp->u.primitive_op.op, act->results, exp->line_num);
+        const Value* v = EvalPrim(exp->GetPrimitiveOperator().op, act->results,
+                                  exp->line_num);
         frame->todo.Pop(2);
         frame->todo.Push(MakeValAct(v));
       }
@@ -732,7 +733,7 @@ void StepExp() {
     case ExpressionKind::Call:
       //    { {e1(e2) :: C, E, F} :: S, H}
       // -> { {e1 :: [](e2) :: C, E, F} :: S, H}
-      frame->todo.Push(MakeExpAct(exp->u.call.function));
+      frame->todo.Push(MakeExpAct(exp->GetCall().function));
       act->pos++;
       break;
     case ExpressionKind::IntT: {
@@ -760,7 +761,7 @@ void StepExp() {
       break;
     }
     case ExpressionKind::FunctionT: {
-      frame->todo.Push(MakeExpAct(exp->u.function_type.parameter));
+      frame->todo.Push(MakeExpAct(exp->GetFunctionType().parameter));
       act->pos++;
       break;
     }
@@ -1053,7 +1054,7 @@ void HandleValue() {
           // -> { { &v.f :: C, E, F} :: S, H }
           const Value* str = act->results[0];
           Address a = GetMember(ValToPtr(str, exp->line_num),
-                                *exp->u.get_field.field, exp->line_num);
+                                *exp->GetFieldAccess().field, exp->line_num);
           frame->todo.Pop(2);
           frame->todo.Push(MakeValAct(MakePtrVal(a)));
           break;
@@ -1061,7 +1062,7 @@ void HandleValue() {
         case ExpressionKind::Index: {
           if (act->pos == 1) {
             frame->todo.Pop(1);
-            frame->todo.Push(MakeExpAct(exp->u.index.offset));
+            frame->todo.Push(MakeExpAct(exp->GetIndex().offset));
           } else if (act->pos == 2) {
             //    { v :: [][i] :: C, E, F} :: S, H}
             // -> { { &v[i] :: C, E, F} :: S, H }
@@ -1080,12 +1081,12 @@ void HandleValue() {
           break;
         }
         case ExpressionKind::Tuple: {
-          if (act->pos != static_cast<int>(exp->u.tuple.fields->size())) {
+          if (act->pos != static_cast<int>(exp->GetTuple().fields->size())) {
             //    { { vk :: (f1=v1,..., fk=[],fk+1=ek+1,...) :: C, E, F} :: S,
             //    H}
             // -> { { ek+1 :: (f1=v1,..., fk=vk, fk+1=[],...) :: C, E, F} :: S,
             // H}
-            const Expression* elt = (*exp->u.tuple.fields)[act->pos].second;
+            const Expression* elt = (*exp->GetTuple().fields)[act->pos].second;
             frame->todo.Pop(1);
             frame->todo.Push(MakeLvalAct(elt));
           } else {
@@ -1106,18 +1107,18 @@ void HandleValue() {
       switch (exp->tag) {
         case ExpressionKind::PatternVariable: {
           auto v =
-              MakeVarPatVal(*exp->u.pattern_variable.name, act->results[0]);
+              MakeVarPatVal(*exp->GetPatternVariable().name, act->results[0]);
           frame->todo.Pop(2);
           frame->todo.Push(MakeValAct(v));
           break;
         }
         case ExpressionKind::Tuple: {
-          if (act->pos != static_cast<int>(exp->u.tuple.fields->size())) {
+          if (act->pos != static_cast<int>(exp->GetTuple().fields->size())) {
             //    { { vk :: (f1=v1,..., fk=[],fk+1=ek+1,...) :: C, E, F} :: S,
             //    H}
             // -> { { ek+1 :: (f1=v1,..., fk=vk, fk+1=[],...) :: C, E, F} :: S,
             // H}
-            const Expression* elt = (*exp->u.tuple.fields)[act->pos].second;
+            const Expression* elt = (*exp->GetTuple().fields)[act->pos].second;
             frame->todo.Pop(1);
             frame->todo.Push(MakeExpAct(elt));
           } else {
@@ -1129,7 +1130,7 @@ void HandleValue() {
         case ExpressionKind::Index: {
           if (act->pos == 1) {
             frame->todo.Pop(1);
-            frame->todo.Push(MakeExpAct(exp->u.index.offset));
+            frame->todo.Push(MakeExpAct(exp->GetIndex().offset));
           } else if (act->pos == 2) {
             auto tuple = act->results[0];
             switch (tuple->tag) {
@@ -1163,7 +1164,7 @@ void HandleValue() {
           //    { { v :: [].f :: C, E, F} :: S, H}
           // -> { { v_f :: C, E, F} : S, H}
           auto a = GetMember(ValToPtr(act->results[0], exp->line_num),
-                             *exp->u.get_field.field, exp->line_num);
+                             *exp->GetFieldAccess().field, exp->line_num);
           const Value* element = state->ReadFromMemory(a, exp->line_num);
           frame->todo.Pop(2);
           frame->todo.Push(MakeValAct(element));
@@ -1171,17 +1172,18 @@ void HandleValue() {
         }
         case ExpressionKind::PrimitiveOp: {
           if (act->pos !=
-              static_cast<int>(exp->u.primitive_op.arguments->size())) {
+              static_cast<int>(exp->GetPrimitiveOperator().arguments->size())) {
             //    { {v :: op(vs,[],e,es) :: C, E, F} :: S, H}
             // -> { {e :: op(vs,v,[],es) :: C, E, F} :: S, H}
-            const Expression* arg = (*exp->u.primitive_op.arguments)[act->pos];
+            const Expression* arg =
+                (*exp->GetPrimitiveOperator().arguments)[act->pos];
             frame->todo.Pop(1);
             frame->todo.Push(MakeExpAct(arg));
           } else {
             //    { {v :: op(vs,[]) :: C, E, F} :: S, H}
             // -> { {eval_prim(op, (vs,v)) :: C, E, F} :: S, H}
-            const Value* v =
-                EvalPrim(exp->u.primitive_op.op, act->results, exp->line_num);
+            const Value* v = EvalPrim(exp->GetPrimitiveOperator().op,
+                                      act->results, exp->line_num);
             frame->todo.Pop(2);
             frame->todo.Push(MakeValAct(v));
           }
@@ -1192,7 +1194,7 @@ void HandleValue() {
             //    { { v :: [](e) :: C, E, F} :: S, H}
             // -> { { e :: v([]) :: C, E, F} :: S, H}
             frame->todo.Pop(1);
-            frame->todo.Push(MakeExpAct(exp->u.call.argument));
+            frame->todo.Push(MakeExpAct(exp->GetCall().argument));
           } else if (act->pos == 2) {
             //    { { v2 :: v1([]) :: C, E, F} :: S, H}
             // -> { {C',E',F'} :: {C, E, F} :: S, H}
@@ -1216,7 +1218,7 @@ void HandleValue() {
             //    { { pt :: fn [] -> e :: C, E, F} :: S, H}
             // -> { { e :: fn pt -> []) :: C, E, F} :: S, H}
             frame->todo.Pop(1);
-            frame->todo.Push(MakeExpAct(exp->u.function_type.return_type));
+            frame->todo.Push(MakeExpAct(exp->GetFunctionType().return_type));
           }
           break;
         }

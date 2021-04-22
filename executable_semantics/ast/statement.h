@@ -107,6 +107,13 @@ struct Statement {
   } u;
 
   // TODO: replace these constructors functions with real constructors
+  //
+  // RANT: The following long list of friend declarations is an
+  // example of a problem in the design of C++. It is so focused on
+  // classes and objects that it fails for modular procedural
+  // programming. There are better ways to control access, for
+  // example, going back to the module system of in CLU programming
+  // language in the 1970's. -Jeremy
   friend auto MakeExpStmt(int line_num, const Expression* exp)
       -> const Statement*;
   friend auto MakeAssign(int line_num, const Expression* lhs,
