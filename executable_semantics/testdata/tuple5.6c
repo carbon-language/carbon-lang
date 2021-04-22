@@ -2,12 +2,9 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
+// Test the that field order matters for tuples.
+
 fn main() -> Int {
-  var (Int,Int): t1 = (5, 2);
-  var (Int,): t2 = (5,);
-  if (t1 == t2) {
-    return 1;
-  } else {
-    return 0;
-  }
+  var (.x = Int, .y = Int): t = (.y = 2, .x = 3);
+  return 0;
 }

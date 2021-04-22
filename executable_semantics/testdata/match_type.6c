@@ -5,12 +5,8 @@
 fn main() -> Int {
   var auto: t = fnty (Int,Int);
   var Int: x = 0;
-//  match (t) {
-//    case fnty(Int: x, Int: y): z =>
-//      x = x - 1;
-//  }
   match (t) {
-    case fnty(Int,Int): z =>
+    case Type: z =>
       x = x + 1;
   }
   match (t) {
