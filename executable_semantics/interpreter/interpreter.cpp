@@ -125,17 +125,17 @@ auto CopyVal(const Value* val, int line_num) -> const Value* {
 }
 
 // Marks all of the sub-objects of this value as dead.
-void DeallocateSubObjects(const Value* val) {
+void Heap::DeallocateSubObjects(const Value* val) {
   switch (val->tag) {
     case ValKind::AltV:
-      state->heap.Deallocate(val->u.alt.argument);
+      Deallocate(val->u.alt.argument);
       break;
     case ValKind::StructV:
       DeallocateSubObjects(val->u.struct_val.inits);
       break;
     case ValKind::TupleV:
       for (auto& elt : *val->u.tuple.elts) {
-        state->heap.Deallocate(elt.second);
+        Deallocate(elt.second);
       }
       break;
     default:

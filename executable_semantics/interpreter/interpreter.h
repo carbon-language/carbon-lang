@@ -79,6 +79,7 @@ class Heap {
  private:
   // Signal an error if the address is no longer alive.
   void CheckAlive(Address address, int line_num);
+  void DeallocateSubObjects(const Value* val);
 
   std::vector<const Value*> heap_;
   std::vector<bool> alive_;
