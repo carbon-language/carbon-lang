@@ -37,27 +37,27 @@ auto Heap::AllocateValue(const Value* v) -> Address {
   // Consider whether to include a copy of the input v in this function
   // or to leave it up to the caller.
   assert(v != nullptr);
-  Address a = heap_.size();
-  heap_.push_back(v);
+  Address a = values_.size();
+  values_.push_back(v);
   alive_.push_back(true);
   return a;
 }
 
 auto Heap::Read(Address a, int line_num) -> const Value* {
   this->CheckAlive(a, line_num);
-  return heap_[a];
+  return values_[a];
 }
 
 auto Heap::Write(Address a, const Value* v, int line_num) -> void {
   assert(v != nullptr);
   this->CheckAlive(a, line_num);
-  heap_[a] = v;
+  values_[a] = v;
 }
 
 void Heap::CheckAlive(Address address, int line_num) {
   if (!alive_[address]) {
     std::cerr << line_num << ": undefined behavior: access to dead value ";
-    PrintValue(heap_[address], std::cerr);
+    PrintValue(values_[address], std::cerr);
     std::cerr << std::endl;
     exit(-1);
   }
@@ -145,7 +145,7 @@ void Heap::DeallocateSubObjects(const Value* val) {
 void Heap::Deallocate(Address address) {
   if (alive_[address]) {
     alive_[address] = false;
-    DeallocateSubObjects(heap_[address]);
+    DeallocateSubObjects(values_[address]);
   } else {
     std::cerr << "runtime error, deallocating an already dead value"
               << std::endl;
@@ -183,7 +183,7 @@ void PrintStack(Stack<Frame*> ls, std::ostream& out) {
 }
 
 void Heap::PrintHeap(std::ostream& out) {
-  for (Address i = 0; i < heap_.size(); ++i) {
+  for (Address i = 0; i < values_.size(); ++i) {
     PrintAddress(i, out);
     out << ", ";
   }
@@ -193,7 +193,7 @@ auto Heap::PrintAddress(Address a, std::ostream& out) -> void {
   if (!alive_[a]) {
     out << "!!";
   }
-  PrintValue(heap_[a], out);
+  PrintValue(values_[a], out);
 }
 
 auto CurrentEnv(State* state) -> Env {

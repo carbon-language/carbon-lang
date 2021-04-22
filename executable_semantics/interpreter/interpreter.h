@@ -95,7 +95,7 @@ class Heap {
   // Marks all sub-objects of this value as dead.
   void DeallocateSubObjects(const Value* val);
 
-  std::vector<const Value*> heap_;
+  std::vector<const Value*> values_;
   std::vector<bool> alive_;
 };
 
