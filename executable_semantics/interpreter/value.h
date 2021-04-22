@@ -53,76 +53,140 @@ enum class ValKind {
 
 struct Frame;  // used by continuation
 
+struct Function {
+  std::string* name;
+  const Value* param;
+  const Statement* body;
+};
+
+struct StructConstructor {
+  const Value* type;
+  const Value* inits;
+};
+
+struct AlternativeConstructor {
+  std::string* alt_name;
+  std::string* choice_name;
+};
+
+struct Alternative {
+  std::string* alt_name;
+  std::string* choice_name;
+  Address argument;
+};
+
+struct TupleValue {
+  VarAddresses* elts;
+};
+
+struct VariablePatternValue {
+  std::string* name;
+  const Value* type;
+};
+
+struct FunctionTypeValue {
+  const Value* param;
+  const Value* ret;
+};
+
+struct PointerType {
+  const Value* type;
+};
+
+struct StructType {
+  std::string* name;
+  VarValues* fields;
+  VarValues* methods;
+};
+
+struct ChoiceType {
+  std::string* name;
+  VarValues* alternatives;
+};
+
+struct ContinuationValue {
+  std::vector<Frame*>* stack;
+};
+
 struct Value {
   ValKind tag;
+
+  int GetInteger() const;
+  bool GetBoolean() const;
+  Function GetFunction() const;
+  StructConstructor GetStruct() const;
+  AlternativeConstructor GetAlternativeConstructor() const;
+  Alternative GetAlternative() const;
+  TupleValue GetTuple() const;
+  Address GetPointer() const;
+  std::string* GetVariableType() const;
+  VariablePatternValue GetVariablePattern() const;
+  FunctionTypeValue GetFunctionType() const;
+  PointerType GetPointerType() const;
+  StructType GetStructType() const;
+  ChoiceType GetChoiceType() const;
+  ContinuationValue GetContinuation() const;
+
+ private:
   union {
     int integer;
     bool boolean;
-
-    struct {
-      std::string* name;
-      const Value* param;
-      const Statement* body;
-    } fun;
-
-    struct {
-      const Value* type;
-      const Value* inits;
-    } struct_val;
-
-    struct {
-      std::string* alt_name;
-      std::string* choice_name;
-    } alt_cons;
-
-    struct {
-      std::string* alt_name;
-      std::string* choice_name;
-      Address argument;
-    } alt;
-
-    struct {
-      VarAddresses* elts;
-    } tuple;
-
+    Function fun;
+    StructConstructor struct_val;
+    AlternativeConstructor alt_cons;
+    Alternative alt;
+    TupleValue tuple;
     Address ptr;
     std::string* var_type;
-
-    struct {
-      std::string* name;
-      const Value* type;
-    } var_pat;
-
-    struct {
-      const Value* param;
-      const Value* ret;
-    } fun_type;
-
-    struct {
-      const Value* type;
-    } ptr_type;
-
-    struct {
-      std::string* name;
-      VarValues* fields;
-      VarValues* methods;
-    } struct_type;
-
-    struct {
-      std::string* name;
-      VarValues* alternatives;
-    } choice_type;
-
-    struct {
-      std::list<std::string*>* params;
-      const Value* type;
-    } implicit;
-
-    struct {
-      std::vector<Frame*>* stack;
-    } continuation;
-
+    VariablePatternValue var_pat;
+    FunctionTypeValue fun_type;
+    PointerType ptr_type;
+    StructType struct_type;
+    ChoiceType choice_type;
+    ContinuationValue continuation;
   } u;
+
+  // TODO: replace these constructors functions with real constructors
+  //
+  // RANT: The following long list of friend declarations is an
+  // example of a problem in the design of C++. It is so focused on
+  // classes and objects that it fails for modular procedural
+  // programming. There are better ways to control access, for
+  // example, going back to the module system of in CLU programming
+  // language in the 1970's. -Jeremy
+
+  friend auto MakeContinuation(std::vector<Frame*> stack) -> Value*;
+  friend auto MakeIntVal(int i) -> const Value*;
+  friend auto MakeBoolVal(bool b) -> const Value*;
+  friend auto MakeFunVal(std::string name, const Value* param,
+                         const Statement* body) -> const Value*;
+  friend auto MakePtrVal(Address addr) -> const Value*;
+  friend auto MakeStructVal(const Value* type, const Value* inits)
+      -> const Value*;
+  friend auto MakeTupleVal(std::vector<std::pair<std::string, Address>>* elts)
+      -> const Value*;
+  friend auto MakeAltVal(std::string alt_name, std::string choice_name,
+                         Address argument) -> const Value*;
+  friend auto MakeAltCons(std::string alt_name, std::string choice_name)
+      -> const Value*;
+
+  friend auto MakeVarPatVal(std::string name, const Value* type)
+      -> const Value*;
+
+  friend auto MakeVarTypeVal(std::string name) -> const Value*;
+  friend auto MakeIntTypeVal() -> const Value*;
+  friend auto MakeContinuationTypeVal() -> const Value*;
+  friend auto MakeAutoTypeVal() -> const Value*;
+  friend auto MakeBoolTypeVal() -> const Value*;
+  friend auto MakeTypeTypeVal() -> const Value*;
+  friend auto MakeFunTypeVal(const Value* param, const Value* ret)
+      -> const Value*;
+  friend auto MakePtrTypeVal(const Value* type) -> const Value*;
+  friend auto MakeStructTypeVal(std::string name, VarValues* fields,
+                                VarValues* methods) -> const Value*;
+  friend auto MakeVoidTypeVal() -> const Value*;
+  friend auto MakeChoiceTypeVal(std::string name, VarValues* alts)
+      -> const Value*;
 };
 
 // Return a first-class continuation represented by the

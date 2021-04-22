@@ -12,6 +12,81 @@
 
 namespace Carbon {
 
+int Value::GetInteger() const {
+  assert(tag == ValKind::IntV);
+  return u.integer;
+}
+
+bool Value::GetBoolean() const {
+  assert(tag == ValKind::BoolV);
+  return u.boolean;
+}
+
+Function Value::GetFunction() const {
+  assert(tag == ValKind::FunV);
+  return u.fun;
+}
+
+StructConstructor Value::GetStruct() const {
+  assert(tag == ValKind::StructV);
+  return u.struct_val;
+}
+
+AlternativeConstructor Value::GetAlternativeConstructor() const {
+  assert(tag == ValKind::AltConsV);
+  return u.alt_cons;
+}
+
+Alternative Value::GetAlternative() const {
+  assert(tag == ValKind::AltV);
+  return u.alt;
+}
+
+TupleValue Value::GetTuple() const {
+  assert(tag == ValKind::TupleV);
+  return u.tuple;
+}
+
+Address Value::GetPointer() const {
+  assert(tag == ValKind::PtrV);
+  return u.ptr;
+}
+
+std::string* Value::GetVariableType() const {
+  assert(tag == ValKind::VarTV);
+  return u.var_type;
+}
+
+VariablePatternValue Value::GetVariablePattern() const {
+  assert(tag == ValKind::VarPatV);
+  return u.var_pat;
+}
+
+FunctionTypeValue Value::GetFunctionType() const {
+  assert(tag == ValKind::FunctionTV);
+  return u.fun_type;
+}
+
+PointerType Value::GetPointerType() const {
+  assert(tag == ValKind::PointerTV);
+  return u.ptr_type;
+}
+
+StructType Value::GetStructType() const {
+  assert(tag == ValKind::StructTV);
+  return u.struct_type;
+}
+
+ChoiceType Value::GetChoiceType() const {
+  assert(tag == ValKind::ChoiceTV);
+  return u.choice_type;
+}
+
+ContinuationValue Value::GetContinuation() const {
+  assert(tag == ValKind::ContinuationV);
+  return u.continuation;
+}
+
 auto FindInVarValues(const std::string& field, VarValues* inits)
     -> const Value* {
   for (auto& i : *inits) {
@@ -42,7 +117,7 @@ auto FieldsEqual(VarValues* ts1, VarValues* ts2) -> bool {
 auto FindTupleField(const std::string& name, const Value* tuple)
     -> std::optional<Address> {
   assert(tuple->tag == ValKind::TupleV);
-  for (const auto& i : *tuple->u.tuple.elts) {
+  for (const auto& i : *tuple->GetTuple().elts) {
     if (i.first == name) {
       return i.second;
     }
@@ -224,29 +299,30 @@ auto State::PrintAddress(Address a, std::ostream& out) -> void {
 auto PrintValue(const Value* val, std::ostream& out) -> void {
   switch (val->tag) {
     case ValKind::AltConsV: {
-      out << *val->u.alt_cons.choice_name << "." << *val->u.alt_cons.alt_name;
+      out << *val->GetAlternativeConstructor().choice_name << "."
+          << *val->GetAlternativeConstructor().alt_name;
       break;
     }
     case ValKind::VarPatV: {
-      PrintValue(val->u.var_pat.type, out);
-      out << ": " << *val->u.var_pat.name;
+      PrintValue(val->GetVariablePattern().type, out);
+      out << ": " << *val->GetVariablePattern().name;
       break;
     }
     case ValKind::AltV: {
-      out << "alt " << *val->u.alt.choice_name << "." << *val->u.alt.alt_name
-          << " ";
-      state->PrintAddress(val->u.alt.argument, out);
+      out << "alt " << *val->GetAlternative().choice_name << "."
+          << *val->GetAlternative().alt_name << " ";
+      state->PrintAddress(val->GetAlternative().argument, out);
       break;
     }
     case ValKind::StructV: {
-      out << *val->u.struct_val.type->u.struct_type.name;
-      PrintValue(val->u.struct_val.inits, out);
+      out << *val->GetStruct().type->GetStructType().name;
+      PrintValue(val->GetStruct().inits, out);
       break;
     }
     case ValKind::TupleV: {
       out << "(";
       bool add_commas = false;
-      for (const auto& elt : *val->u.tuple.elts) {
+      for (const auto& elt : *val->GetTuple().elts) {
         if (add_commas) {
           out << ", ";
         } else {
@@ -261,16 +337,16 @@ auto PrintValue(const Value* val, std::ostream& out) -> void {
       break;
     }
     case ValKind::IntV:
-      out << val->u.integer;
+      out << val->GetInteger();
       break;
     case ValKind::BoolV:
-      out << std::boolalpha << val->u.boolean;
+      out << std::boolalpha << val->GetBoolean();
       break;
     case ValKind::FunV:
-      out << "fun<" << *val->u.fun.name << ">";
+      out << "fun<" << *val->GetFunction().name << ">";
       break;
     case ValKind::PtrV:
-      out << "ptr<" << val->u.ptr << ">";
+      out << "ptr<" << val->GetPointer() << ">";
       break;
     case ValKind::BoolTV:
       out << "Bool";
@@ -289,27 +365,27 @@ auto PrintValue(const Value* val, std::ostream& out) -> void {
       break;
     case ValKind::PointerTV:
       out << "Ptr(";
-      PrintValue(val->u.ptr_type.type, out);
+      PrintValue(val->GetPointerType().type, out);
       out << ")";
       break;
     case ValKind::FunctionTV:
       out << "fn ";
-      PrintValue(val->u.fun_type.param, out);
+      PrintValue(val->GetFunctionType().param, out);
       out << " -> ";
-      PrintValue(val->u.fun_type.ret, out);
+      PrintValue(val->GetFunctionType().ret, out);
       break;
     case ValKind::VarTV:
-      out << *val->u.var_type;
+      out << *val->GetVariableType();
       break;
     case ValKind::StructTV:
-      out << "struct " << *val->u.struct_type.name;
+      out << "struct " << *val->GetStructType().name;
       break;
     case ValKind::ChoiceTV:
-      out << "choice " << *val->u.choice_type.name;
+      out << "choice " << *val->GetChoiceType().name;
       break;
     case ValKind::ContinuationV:
       out << "continuation[[";
-      for (Frame* frame : *val->u.continuation.stack) {
+      for (Frame* frame : *val->GetContinuation().stack) {
         PrintFrame(frame, out);
         out << " :: ";
       }
@@ -324,28 +400,30 @@ auto TypeEqual(const Value* t1, const Value* t2) -> bool {
   }
   switch (t1->tag) {
     case ValKind::VarTV:
-      return *t1->u.var_type == *t2->u.var_type;
+      return *t1->GetVariableType() == *t2->GetVariableType();
     case ValKind::PointerTV:
-      return TypeEqual(t1->u.ptr_type.type, t2->u.ptr_type.type);
+      return TypeEqual(t1->GetPointerType().type, t2->GetPointerType().type);
     case ValKind::FunctionTV:
-      return TypeEqual(t1->u.fun_type.param, t2->u.fun_type.param) &&
-             TypeEqual(t1->u.fun_type.ret, t2->u.fun_type.ret);
+      return TypeEqual(t1->GetFunctionType().param,
+                       t2->GetFunctionType().param) &&
+             TypeEqual(t1->GetFunctionType().ret, t2->GetFunctionType().ret);
     case ValKind::StructTV:
-      return *t1->u.struct_type.name == *t2->u.struct_type.name;
+      return *t1->GetStructType().name == *t2->GetStructType().name;
     case ValKind::ChoiceTV:
-      return *t1->u.choice_type.name == *t2->u.choice_type.name;
+      return *t1->GetChoiceType().name == *t2->GetChoiceType().name;
     case ValKind::TupleV: {
-      if (t1->u.tuple.elts->size() != t2->u.tuple.elts->size()) {
+      if (t1->GetTuple().elts->size() != t2->GetTuple().elts->size()) {
         return false;
       }
-      for (size_t i = 0; i < t1->u.tuple.elts->size(); ++i) {
+      for (size_t i = 0; i < t1->GetTuple().elts->size(); ++i) {
         std::optional<Address> t2_field =
-            FindTupleField((*t1->u.tuple.elts)[i].first, t2);
+            FindTupleField((*t1->GetTuple().elts)[i].first, t2);
         if (t2_field == std::nullopt) {
           return false;
         }
-        if (!TypeEqual(state->ReadFromMemory((*t1->u.tuple.elts)[i].second, 0),
-                       state->ReadFromMemory(*t2_field, 0))) {
+        if (!TypeEqual(
+                state->ReadFromMemory((*t1->GetTuple().elts)[i].second, 0),
+                state->ReadFromMemory(*t2_field, 0))) {
           return false;
         }
       }
@@ -392,15 +470,16 @@ auto ValueEqual(const Value* v1, const Value* v2, int line_num) -> bool {
   }
   switch (v1->tag) {
     case ValKind::IntV:
-      return v1->u.integer == v2->u.integer;
+      return v1->GetInteger() == v2->GetInteger();
     case ValKind::BoolV:
-      return v1->u.boolean == v2->u.boolean;
+      return v1->GetBoolean() == v2->GetBoolean();
     case ValKind::PtrV:
-      return v1->u.ptr == v2->u.ptr;
+      return v1->GetPointer() == v2->GetPointer();
     case ValKind::FunV:
-      return v1->u.fun.body == v2->u.fun.body;
+      return v1->GetFunction().body == v2->GetFunction().body;
     case ValKind::TupleV:
-      return FieldsValueEqual(v1->u.tuple.elts, v2->u.tuple.elts, line_num);
+      return FieldsValueEqual(v1->GetTuple().elts, v2->GetTuple().elts,
+                              line_num);
     default:
     case ValKind::VarTV:
     case ValKind::IntTV:
@@ -427,7 +506,7 @@ auto ValueEqual(const Value* v1, const Value* v2, int line_num) -> bool {
 auto ToInteger(const Value* v) -> int {
   switch (v->tag) {
     case ValKind::IntV:
-      return v->u.integer;
+      return v->GetInteger();
     default:
       std::cerr << "expected an integer, not ";
       PrintValue(v, std::cerr);

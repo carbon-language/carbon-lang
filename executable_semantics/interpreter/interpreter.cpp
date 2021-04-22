@@ -65,7 +65,7 @@ auto CopyVal(const Value* val, int line_num) -> const Value* {
   switch (val->tag) {
     case ValKind::TupleV: {
       auto elts = new std::vector<std::pair<std::string, Address>>();
-      for (auto& i : *val->u.tuple.elts) {
+      for (auto& i : *val->GetTuple().elts) {
         const Value* elt =
             CopyVal(state->ReadFromMemory(i.second, line_num), line_num);
         Address new_address = state->AllocateValue(elt);
@@ -75,32 +75,34 @@ auto CopyVal(const Value* val, int line_num) -> const Value* {
     }
     case ValKind::AltV: {
       const Value* arg = CopyVal(
-          state->ReadFromMemory(val->u.alt.argument, line_num), line_num);
+          state->ReadFromMemory(val->GetAlternative().argument, line_num),
+          line_num);
       Address argument_address = state->AllocateValue(arg);
-      return MakeAltVal(*val->u.alt.alt_name, *val->u.alt.choice_name,
-                        argument_address);
+      return MakeAltVal(*val->GetAlternative().alt_name,
+                        *val->GetAlternative().choice_name, argument_address);
     }
     case ValKind::StructV: {
-      const Value* inits = CopyVal(val->u.struct_val.inits, line_num);
-      return MakeStructVal(val->u.struct_val.type, inits);
+      const Value* inits = CopyVal(val->GetStruct().inits, line_num);
+      return MakeStructVal(val->GetStruct().type, inits);
     }
     case ValKind::IntV:
-      return MakeIntVal(val->u.integer);
+      return MakeIntVal(val->GetInteger());
     case ValKind::BoolV:
-      return MakeBoolVal(val->u.boolean);
+      return MakeBoolVal(val->GetBoolean());
     case ValKind::FunV:
-      return MakeFunVal(*val->u.fun.name, val->u.fun.param, val->u.fun.body);
+      return MakeFunVal(*val->GetFunction().name, val->GetFunction().param,
+                        val->GetFunction().body);
     case ValKind::PtrV:
-      return MakePtrVal(val->u.ptr);
+      return MakePtrVal(val->GetPointer());
     case ValKind::ContinuationV:
       // Copying a continuation is "shallow".
       return val;
     case ValKind::FunctionTV:
-      return MakeFunTypeVal(CopyVal(val->u.fun_type.param, line_num),
-                            CopyVal(val->u.fun_type.ret, line_num));
+      return MakeFunTypeVal(CopyVal(val->GetFunctionType().param, line_num),
+                            CopyVal(val->GetFunctionType().ret, line_num));
 
     case ValKind::PointerTV:
-      return MakePtrTypeVal(CopyVal(val->u.ptr_type.type, line_num));
+      return MakePtrTypeVal(CopyVal(val->GetPointerType().type, line_num));
     case ValKind::IntTV:
       return MakeIntTypeVal();
     case ValKind::BoolTV:
@@ -108,7 +110,7 @@ auto CopyVal(const Value* val, int line_num) -> const Value* {
     case ValKind::TypeTV:
       return MakeTypeTypeVal();
     case ValKind::VarTV:
-      return MakeVarTypeVal(*val->u.var_type);
+      return MakeVarTypeVal(*val->GetVariableType());
     case ValKind::AutoTV:
       return MakeAutoTypeVal();
     case ValKind::ContinuationTV:
@@ -126,13 +128,13 @@ auto CopyVal(const Value* val, int line_num) -> const Value* {
 void KillSubObjects(const Value* val) {
   switch (val->tag) {
     case ValKind::AltV:
-      state->KillObject(val->u.alt.argument);
+      state->KillObject(val->GetAlternative().argument);
       break;
     case ValKind::StructV:
-      KillSubObjects(val->u.struct_val.inits);
+      KillSubObjects(val->GetStruct().inits);
       break;
     case ValKind::TupleV:
-      for (auto& elt : *val->u.tuple.elts) {
+      for (auto& elt : *val->GetTuple().elts) {
         state->KillObject(elt.second);
       }
       break;
@@ -216,7 +218,7 @@ void PrintState(std::ostream& out) {
 auto ValToInt(const Value* v, int line_num) -> int {
   switch (v->tag) {
     case ValKind::IntV:
-      return v->u.integer;
+      return v->GetInteger();
     default:
       std::cerr << line_num << ": runtime error: expected an integer"
                 << std::endl;
@@ -227,7 +229,7 @@ auto ValToInt(const Value* v, int line_num) -> int {
 auto ValToBool(const Value* v, int line_num) -> int {
   switch (v->tag) {
     case ValKind::BoolV:
-      return v->u.boolean;
+      return v->GetBoolean();
     default:
       std::cerr << "runtime type error: expected a Boolean" << std::endl;
       exit(-1);
@@ -237,7 +239,7 @@ auto ValToBool(const Value* v, int line_num) -> int {
 auto ValToPtr(const Value* v, int line_num) -> Address {
   switch (v->tag) {
     case ValKind::PtrV:
-      return v->u.ptr;
+      return v->GetPointer();
     default:
       std::cerr << "runtime type error: expected a pointer, not ";
       PrintValue(v, std::cerr);
@@ -252,7 +254,7 @@ auto ValToPtr(const Value* v, int line_num) -> Address {
 auto ContinuationToVector(const Value* continuation, int sourceLocation)
     -> std::vector<Frame*> {
   if (continuation->tag == ValKind::ContinuationV) {
-    return *continuation->u.continuation.stack;
+    return *continuation->GetContinuation().stack;
   } else {
     std::cerr << sourceLocation << ": runtime error: expected an integer"
               << std::endl;
@@ -348,8 +350,9 @@ void CallFunction(int line_num, std::vector<const Value*> operas,
     case ValKind::FunV: {
       // Bind arguments to parameters
       std::list<std::string> params;
-      std::optional<Env> matches = PatternMatch(
-          operas[0]->u.fun.param, operas[1], globals, &params, line_num);
+      std::optional<Env> matches =
+          PatternMatch(operas[0]->GetFunction().param, operas[1], globals,
+                       &params, line_num);
       if (!matches) {
         std::cerr << "internal error in call_function, pattern match failed"
                   << std::endl;
@@ -357,8 +360,9 @@ void CallFunction(int line_num, std::vector<const Value*> operas,
       }
       // Create the new frame and push it on the stack
       auto* scope = new Scope(*matches, params);
-      auto* frame = new Frame(*operas[0]->u.fun.name, Stack(scope),
-                              Stack(MakeStmtAct(operas[0]->u.fun.body)));
+      auto* frame =
+          new Frame(*operas[0]->GetFunction().name, Stack(scope),
+                    Stack(MakeStmtAct(operas[0]->GetFunction().body)));
       state->stack.Push(frame);
       break;
     }
@@ -371,9 +375,10 @@ void CallFunction(int line_num, std::vector<const Value*> operas,
     }
     case ValKind::AltConsV: {
       const Value* arg = CopyVal(operas[1], line_num);
-      const Value* av = MakeAltVal(*operas[0]->u.alt_cons.alt_name,
-                                   *operas[0]->u.alt_cons.choice_name,
-                                   state->AllocateValue(arg));
+      const Value* av =
+          MakeAltVal(*operas[0]->GetAlternativeConstructor().alt_name,
+                     *operas[0]->GetAlternativeConstructor().choice_name,
+                     state->AllocateValue(arg));
       Frame* frame = state->stack.Top();
       frame->todo.Push(MakeValAct(av));
       break;
@@ -428,19 +433,19 @@ auto PatternMatch(const Value* p, const Value* v, Env values,
   switch (p->tag) {
     case ValKind::VarPatV: {
       Address a = state->AllocateValue(CopyVal(v, line_num));
-      vars->push_back(*p->u.var_pat.name);
-      values.Set(*p->u.var_pat.name, a);
+      vars->push_back(*p->GetVariablePattern().name);
+      values.Set(*p->GetVariablePattern().name, a);
       return values;
     }
     case ValKind::TupleV:
       switch (v->tag) {
         case ValKind::TupleV: {
-          if (p->u.tuple.elts->size() != v->u.tuple.elts->size()) {
+          if (p->GetTuple().elts->size() != v->GetTuple().elts->size()) {
             std::cerr << "runtime error: arity mismatch in tuple pattern match"
                       << std::endl;
             exit(-1);
           }
-          for (auto& elt : *p->u.tuple.elts) {
+          for (auto& elt : *p->GetTuple().elts) {
             auto a = FindTupleField(elt.first, v);
             if (a == std::nullopt) {
               std::cerr << "runtime error: field " << elt.first << "not in ";
@@ -468,14 +473,15 @@ auto PatternMatch(const Value* p, const Value* v, Env values,
     case ValKind::AltV:
       switch (v->tag) {
         case ValKind::AltV: {
-          if (*p->u.alt.choice_name != *v->u.alt.choice_name ||
-              *p->u.alt.alt_name != *v->u.alt.alt_name) {
+          if (*p->GetAlternative().choice_name !=
+                  *v->GetAlternative().choice_name ||
+              *p->GetAlternative().alt_name != *v->GetAlternative().alt_name) {
             return std::nullopt;
           }
-          std::optional<Env> matches =
-              PatternMatch(state->ReadFromMemory(p->u.alt.argument, line_num),
-                           state->ReadFromMemory(v->u.alt.argument, line_num),
-                           values, vars, line_num);
+          std::optional<Env> matches = PatternMatch(
+              state->ReadFromMemory(p->GetAlternative().argument, line_num),
+              state->ReadFromMemory(v->GetAlternative().argument, line_num),
+              values, vars, line_num);
           if (!matches) {
             return std::nullopt;
           }
@@ -492,13 +498,15 @@ auto PatternMatch(const Value* p, const Value* v, Env values,
     case ValKind::FunctionTV:
       switch (v->tag) {
         case ValKind::FunctionTV: {
-          std::optional<Env> matches = PatternMatch(
-              p->u.fun_type.param, v->u.fun_type.param, values, vars, line_num);
+          std::optional<Env> matches =
+              PatternMatch(p->GetFunctionType().param,
+                           v->GetFunctionType().param, values, vars, line_num);
           if (!matches) {
             return std::nullopt;
           }
-          return PatternMatch(p->u.fun_type.ret, v->u.fun_type.ret, *matches,
-                              vars, line_num);
+          return PatternMatch(p->GetFunctionType().ret,
+                              v->GetFunctionType().ret, *matches, vars,
+                              line_num);
         }
         default:
           return std::nullopt;
@@ -521,12 +529,12 @@ void PatternAssignment(const Value* pat, const Value* val, int line_num) {
     case ValKind::TupleV: {
       switch (val->tag) {
         case ValKind::TupleV: {
-          if (pat->u.tuple.elts->size() != val->u.tuple.elts->size()) {
+          if (pat->GetTuple().elts->size() != val->GetTuple().elts->size()) {
             std::cerr << "runtime error: arity mismatch in tuple pattern match"
                       << std::endl;
             exit(-1);
           }
-          for (auto& elt : *pat->u.tuple.elts) {
+          for (auto& elt : *pat->GetTuple().elts) {
             auto a = FindTupleField(elt.first, val);
             if (a == std::nullopt) {
               std::cerr << "runtime error: field " << elt.first << "not in ";
@@ -552,14 +560,17 @@ void PatternAssignment(const Value* pat, const Value* val, int line_num) {
     case ValKind::AltV: {
       switch (val->tag) {
         case ValKind::AltV: {
-          if (*pat->u.alt.choice_name != *val->u.alt.choice_name ||
-              *pat->u.alt.alt_name != *val->u.alt.alt_name) {
+          if (*pat->GetAlternative().choice_name !=
+                  *val->GetAlternative().choice_name ||
+              *pat->GetAlternative().alt_name !=
+                  *val->GetAlternative().alt_name) {
             std::cerr << "internal error in pattern assignment" << std::endl;
             exit(-1);
           }
           PatternAssignment(
-              state->ReadFromMemory(pat->u.alt.argument, line_num),
-              state->ReadFromMemory(val->u.alt.argument, line_num), line_num);
+              state->ReadFromMemory(pat->GetAlternative().argument, line_num),
+              state->ReadFromMemory(val->GetAlternative().argument, line_num),
+              line_num);
           break;
         }
         default:
@@ -953,7 +964,7 @@ auto GetMember(Address a, const std::string& f, int line_num) -> Address {
   const Value* v = state->ReadFromMemory(a, line_num);
   switch (v->tag) {
     case ValKind::StructV: {
-      auto a = FindTupleField(f, v->u.struct_val.inits);
+      auto a = FindTupleField(f, v->GetStruct().inits);
       if (a == std::nullopt) {
         std::cerr << "runtime error, member " << f << " not in ";
         PrintValue(v, std::cerr);
@@ -973,13 +984,13 @@ auto GetMember(Address a, const std::string& f, int line_num) -> Address {
       return *a;
     }
     case ValKind::ChoiceTV: {
-      if (FindInVarValues(f, v->u.choice_type.alternatives) == nullptr) {
+      if (FindInVarValues(f, v->GetChoiceType().alternatives) == nullptr) {
         std::cerr << "alternative " << f << " not in ";
         PrintValue(v, std::cerr);
         std::cerr << std::endl;
         exit(-1);
       }
-      auto ac = MakeAltCons(f, *v->u.choice_type.name);
+      auto ac = MakeAltCons(f, *v->GetChoiceType().name);
       return state->AllocateValue(ac);
     }
     default:

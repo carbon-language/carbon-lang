@@ -43,7 +43,7 @@ void PrintTypeEnv(TypeEnv types, std::ostream& out) {
 auto ReifyType(const Value* t, int line_num) -> const Expression* {
   switch (t->tag) {
     case ValKind::VarTV:
-      return MakeVar(0, *t->u.var_type);
+      return MakeVar(0, *t->GetVariableType());
     case ValKind::IntTV:
       return MakeIntType(0);
     case ValKind::BoolTV:
@@ -53,11 +53,11 @@ auto ReifyType(const Value* t, int line_num) -> const Expression* {
     case ValKind::ContinuationTV:
       return MakeContinuationType(0);
     case ValKind::FunctionTV:
-      return MakeFunType(0, ReifyType(t->u.fun_type.param, line_num),
-                         ReifyType(t->u.fun_type.ret, line_num));
+      return MakeFunType(0, ReifyType(t->GetFunctionType().param, line_num),
+                         ReifyType(t->GetFunctionType().ret, line_num));
     case ValKind::TupleV: {
       auto args = new std::vector<std::pair<std::string, const Expression*>>();
-      for (auto& field : *t->u.tuple.elts) {
+      for (auto& field : *t->GetTuple().elts) {
         args->push_back({field.first, ReifyType(state->ReadFromMemory(
                                                     field.second, line_num),
                                                 line_num)});
@@ -65,9 +65,9 @@ auto ReifyType(const Value* t, int line_num) -> const Expression* {
       return MakeTuple(0, args);
     }
     case ValKind::StructTV:
-      return MakeVar(0, *t->u.struct_type.name);
+      return MakeVar(0, *t->GetStructType().name);
     case ValKind::ChoiceTV:
-      return MakeVar(0, *t->u.choice_type.name);
+      return MakeVar(0, *t->GetChoiceType().name);
     default:
       std::cerr << line_num << ": expected a type, not ";
       PrintValue(t, std::cerr);
@@ -184,7 +184,7 @@ auto TypeCheckExp(const Expression* e, TypeEnv types, Env values,
       switch (t->tag) {
         case ValKind::StructTV:
           // Search for a field
-          for (auto& field : *t->u.struct_type.fields) {
+          for (auto& field : *t->GetStructType().fields) {
             if (*e->GetFieldAccess().field == field.first) {
               const Expression* new_e = MakeGetField(
                   e->line_num, res.exp, *e->GetFieldAccess().field);
@@ -192,7 +192,7 @@ auto TypeCheckExp(const Expression* e, TypeEnv types, Env values,
             }
           }
           // Search for a method
-          for (auto& method : *t->u.struct_type.methods) {
+          for (auto& method : *t->GetStructType().methods) {
             if (*e->GetFieldAccess().field == method.first) {
               const Expression* new_e = MakeGetField(
                   e->line_num, res.exp, *e->GetFieldAccess().field);
@@ -200,11 +200,12 @@ auto TypeCheckExp(const Expression* e, TypeEnv types, Env values,
             }
           }
           std::cerr << e->line_num << ": compilation error, struct "
-                    << *t->u.struct_type.name << " does not have a field named "
+                    << *t->GetStructType().name
+                    << " does not have a field named "
                     << *e->GetFieldAccess().field << std::endl;
           exit(-1);
         case ValKind::TupleV:
-          for (auto& field : *t->u.tuple.elts) {
+          for (auto& field : *t->GetTuple().elts) {
             if (*e->GetFieldAccess().field == field.first) {
               auto new_e = MakeGetField(e->line_num, res.exp,
                                         *e->GetFieldAccess().field);
@@ -214,12 +215,13 @@ auto TypeCheckExp(const Expression* e, TypeEnv types, Env values,
             }
           }
           std::cerr << e->line_num << ": compilation error, struct "
-                    << *t->u.struct_type.name << " does not have a field named "
+                    << *t->GetStructType().name
+                    << " does not have a field named "
                     << *e->GetFieldAccess().field << std::endl;
           exit(-1);
         case ValKind::ChoiceTV:
-          for (auto vt = t->u.choice_type.alternatives->begin();
-               vt != t->u.choice_type.alternatives->end(); ++vt) {
+          for (auto vt = t->GetChoiceType().alternatives->begin();
+               vt != t->GetChoiceType().alternatives->end(); ++vt) {
             if (*e->GetFieldAccess().field == vt->first) {
               const Expression* new_e = MakeGetField(
                   e->line_num, res.exp, *e->GetFieldAccess().field);
@@ -228,7 +230,8 @@ auto TypeCheckExp(const Expression* e, TypeEnv types, Env values,
             }
           }
           std::cerr << e->line_num << ": compilation error, struct "
-                    << *t->u.struct_type.name << " does not have a field named "
+                    << *t->GetStructType().name
+                    << " does not have a field named "
                     << *e->GetFieldAccess().field << std::endl;
           exit(-1);
 
@@ -299,12 +302,13 @@ auto TypeCheckExp(const Expression* e, TypeEnv types, Env values,
       switch (fun_res.type->tag) {
         case ValKind::FunctionTV: {
           auto fun_t = fun_res.type;
-          auto arg_res = TypeCheckExp(e->GetCall().argument, fun_res.types,
-                                      values, fun_t->u.fun_type.param, context);
-          ExpectType(e->line_num, "call", fun_t->u.fun_type.param,
+          auto arg_res =
+              TypeCheckExp(e->GetCall().argument, fun_res.types, values,
+                           fun_t->GetFunctionType().param, context);
+          ExpectType(e->line_num, "call", fun_t->GetFunctionType().param,
                      arg_res.type);
           auto new_e = MakeCall(e->line_num, fun_res.exp, arg_res.exp);
-          return TCResult(new_e, fun_t->u.fun_type.ret, arg_res.types);
+          return TCResult(new_e, fun_t->GetFunctionType().ret, arg_res.types);
         }
         default: {
           std::cerr << e->line_num
@@ -684,7 +688,7 @@ auto StructDeclaration::TopLevel(TypeCheckContext& tops) const -> void {
   Address a = state->AllocateValue(st);
   tops.values.Set(Name(), a);  // Is this obsolete?
   auto field_types = new std::vector<std::pair<std::string, Address>>();
-  for (const auto& [field_name, field_value] : *st->u.struct_type.fields) {
+  for (const auto& [field_name, field_value] : *st->GetStructType().fields) {
     field_types->push_back({field_name, state->AllocateValue(field_value)});
   }
   auto fun_ty = MakeFunTypeVal(MakeTupleVal(field_types), st);
