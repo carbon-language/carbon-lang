@@ -24,7 +24,7 @@ struct TypeChecker {
   /// A mapping from names to the stack of declcarations they reference, with
   /// the top of each stack being the declaration referenced in the current
   /// scope.
-  var symbolTable: [String: Stack<AnyDeclaration>] = [:]
+  var symbolTable: StackDictionary<String, AnyDeclaration> = .init()
 
   /// The set of names defined in each scope, with the current scope at the top.
   var activeScopes: Stack<Set<String>>
@@ -47,7 +47,7 @@ private extension TypeChecker {
     activeScopes.push([])
     let r = body(&self)
     for name in activeScopes.pop()! {
-      _ = symbolTable[name]!.pop()
+      symbolTable.pop(at: name)
     }
     return r
   }
@@ -57,11 +57,11 @@ private extension TypeChecker {
     if activeScopes.top.contains(name.text) {
       error(
         "'\(name.text)' already defined in this scope", at: name.site,
-        notes: [("previous definition", symbolTable[name.text]!.top.site)])
+        notes: [("previous definition", symbolTable[name.text].site)])
     }
 
     activeScopes.top.insert(name.text)
-    symbolTable[name.text, default: Stack()].push(definition)
+    symbolTable.push(definition, at: name.text)
   }
 
   /// Records and returns the declaration associated with the given use, or
@@ -70,7 +70,7 @@ private extension TypeChecker {
   /// Every identifier should either be declaring a new name, or should be
   /// looked up during type checking.
   mutating func lookup(_ use: Identifier) -> AnyDeclaration? {
-    guard let d = symbolTable[use.text]?.elements.last else {
+    guard let d = symbolTable[query: use.text] else {
       error("Un-declared name '\(use.text)'", at: use.site)
       return nil
     }

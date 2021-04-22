@@ -7,7 +7,7 @@ struct Stack<T> {
   /// Creates an empty stack.
   init() { elements = [] }
   
-  /// Accesses the top element.
+  /// The top element.
   ///
   /// - Requires: !isEmpty
   var top: T {
@@ -16,7 +16,12 @@ struct Stack<T> {
     set { elements[elements.count - 1] = newValue }
   }
 
-  /// Accesses the bottom element.
+  /// The top element, or `nil` if `self.isEmpty`
+  ///
+  /// - Requires: !isEmpty
+  var queryTop: T? { elements.last }
+
+  /// The bottom element.
   ///
   /// - Requires: !isEmpty
   var bottom: T {
@@ -40,7 +45,7 @@ struct Stack<T> {
   /// Removes the top `n` elements.
   ///
   /// - Requires: `count >= n`.
-  mutating func pop(_ n: Int) { elements.removeLast(n) }
+  mutating func removeTop(_ n: Int = 1) { elements.removeLast(n) }
 
   /// The elements, starting with the bottom element and ending with the top one.
   private(set) var elements: [T]
