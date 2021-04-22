@@ -150,10 +150,10 @@ auto MakeTuple(int line_num,
   e->line_num = line_num;
   e->tag = ExpressionKind::Tuple;
   int i = 0;
-  bool after_named_member = false;
+  bool seen_named_member = false;
   for (auto& arg : *args) {
     if (arg.first == "") {
-      if (after_named_member) {
+      if (seen_named_member) {
         std::cerr << line_num
                   << ": positional members must come before named members"
                   << std::endl;
@@ -162,7 +162,7 @@ auto MakeTuple(int line_num,
       arg.first = std::to_string(i);
       ++i;
     } else {
-      after_named_member = true;
+      seen_named_member = true;
     }
   }
   e->u.tuple.fields = args;
