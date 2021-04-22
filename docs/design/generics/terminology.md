@@ -61,13 +61,13 @@ instead of a single one.
 
 When we are distinguishing between generics and templates in Carbon, it is on an
 parameter by parameter basis. A single function can take a mix of regular,
-generic, and template parameter.
+generic, and template parameters.
 
 -   **Regular parameters**, or "dynamic parameters", are designated using the
     "&lt;type>`:` &lt;name>" syntax (or "&lt;value>").
 -   **Generic parameters** are temporarily designated using an additional `$`
     after the `:` (so it is "&lt;type>`:$` &lt;name>"). However, the `$` symbol
-    is not easily typed on non-US keyboards, so we will definitely switch to
+    is not easily typed on non-US keyboards, so we intend to switch to
     some other syntax. Some possibilities that have been suggested are: `:!`,
     `:@`, `:#`, and `::`.
 -   **Template parameters** are temporarily designated using "&lt;type> `:$$`
@@ -180,7 +180,7 @@ fn F(Int: x) -> Bool;
 A generic function `G` can call `F` with a type like `Ptr(T)` that can not
 possibly call the `F(Int)` overload for `F`, and so it can consistently
 determine the return type of `F`. But `G` can't call `F` with an argument that
-could match either overload. (I think it is undecided what to do in the
+could match either overload. (It is undecided what to do in the
 situation where `F` is overloaded, but the signatures are consistent and so
 callers could still typecheck calls to `F`. This still poses problems for the
 dynamic strategy for compiling generics.)
@@ -350,7 +350,7 @@ and as a workaround for Rust's orphan rules for coherence.
 
 ## Type erasure
 
-"Type erasure" is where a type's API is replaced a subset. Everything outside of
+"Type erasure" is where a type's API is replaced by a subset. Everything outside of
 the preserved subset is said to have been "erased". This can happen in a variety
 of contexts including both generics and runtime polymorphism. For generics, type
 erasure restricts a type to just the API required by the constraints on a
@@ -364,7 +364,7 @@ those methods still come from the derived type.
 The term "type erasure" can also refer to
 [the specific strategy used by Java to implement generics](https://en.wikipedia.org/wiki/Generics_in_Java).
 which includes erasing the identity of type parameters. This is not the meaning
-of "type erasures" used in Carbon.
+of "type erasure" used in Carbon.
 
 ## Facet type
 
