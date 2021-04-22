@@ -150,6 +150,83 @@ TEST_F(ParseTreeTest,
                                          MatchFileEnd()}));
 }
 
+TEST_F(ParseTreeTest, FunctionDeclarationWithParameterList) {
+  TokenizedBuffer tokens = GetTokenizedBuffer("fn foo(Int bar, Int baz);");
+  ParseTree tree = ParseTree::Parse(tokens, consumer);
+  EXPECT_FALSE(tree.HasErrors());
+  EXPECT_THAT(
+      tree,
+      MatchParseTreeNodes(
+          {MatchFunctionDeclaration(
+               MatchDeclaredName("foo"),
+               MatchParameterList(
+                   MatchParameterDeclaration(MatchNameReference("Int"), "bar"),
+                   MatchParameterListComma(),
+                   MatchParameterDeclaration(MatchNameReference("Int"), "baz"),
+                   MatchParameterListEnd()),
+               MatchDeclarationEnd()),
+           MatchFileEnd()}));
+}
+
+TEST_F(ParseTreeTest, FunctionDefinitionWithParameterList) {
+  TokenizedBuffer tokens = GetTokenizedBuffer(
+      "fn foo(Int bar, Int baz) {\n"
+      "  foo(baz, bar + baz);\n"
+      "}");
+  ParseTree tree = ParseTree::Parse(tokens, consumer);
+  EXPECT_FALSE(tree.HasErrors());
+  EXPECT_THAT(
+      tree,
+      MatchParseTreeNodes(
+          {MatchFunctionDeclaration(
+               MatchDeclaredName("foo"),
+               MatchParameterList(
+                   MatchParameterDeclaration(MatchNameReference("Int"), "bar"),
+                   MatchParameterListComma(),
+                   MatchParameterDeclaration(MatchNameReference("Int"), "baz"),
+                   MatchParameterListEnd()),
+               MatchCodeBlock(
+                   MatchExpressionStatement(MatchCallExpression(
+                       MatchNameReference("foo"), MatchNameReference("baz"),
+                       MatchCallExpressionComma(),
+                       MatchInfixOperator(MatchNameReference("bar"), "+",
+                                          MatchNameReference("baz")),
+                       MatchCallExpressionEnd())),
+                   MatchCodeBlockEnd())),
+           MatchFileEnd()}));
+}
+
+TEST_F(ParseTreeTest, FunctionDeclarationWithReturnType) {
+  TokenizedBuffer tokens = GetTokenizedBuffer("fn foo() -> Int;");
+  ParseTree tree = ParseTree::Parse(tokens, consumer);
+  EXPECT_FALSE(tree.HasErrors());
+  EXPECT_THAT(
+      tree,
+      MatchParseTreeNodes(
+          {MatchFunctionDeclaration(MatchDeclaredName("foo"), MatchParameters(),
+                                    MatchReturnType(MatchNameReference("Int")),
+                                    MatchDeclarationEnd()),
+           MatchFileEnd()}));
+}
+
+TEST_F(ParseTreeTest, FunctionDefinitionWithReturnType) {
+  TokenizedBuffer tokens = GetTokenizedBuffer(
+      "fn foo() -> Int {\n"
+      "  return 42;\n"
+      "}");
+  ParseTree tree = ParseTree::Parse(tokens, consumer);
+  EXPECT_FALSE(tree.HasErrors());
+  EXPECT_THAT(tree,
+              MatchParseTreeNodes(
+                  {MatchFunctionDeclaration(
+                       MatchDeclaredName("foo"), MatchParameters(),
+                       MatchReturnType(MatchNameReference("Int")),
+                       MatchCodeBlock(MatchReturnStatement(MatchLiteral("42"),
+                                                           MatchStatementEnd()),
+                                      MatchCodeBlockEnd())),
+                   MatchFileEnd()}));
+}
+
 TEST_F(ParseTreeTest, FunctionDeclarationWithSingleIdentifierParameterList) {
   TokenizedBuffer tokens = GetTokenizedBuffer("fn foo(bar);");
   ParseTree tree = ParseTree::Parse(tokens, consumer);
@@ -159,8 +236,9 @@ TEST_F(ParseTreeTest, FunctionDeclarationWithSingleIdentifierParameterList) {
   EXPECT_THAT(tree,
               MatchParseTreeNodes(
                   {MatchFunctionDeclaration(
-                       HasError, MatchDeclaredName("foo"),
-                       MatchParameterList(HasError, MatchParameterListEnd()),
+                       MatchDeclaredName("foo"),
+                       MatchParameterList(MatchNameReference("bar"), HasError,
+                                          MatchParameterListEnd()),
                        MatchDeclarationEnd()),
                    MatchFileEnd()}));
 }
@@ -612,6 +690,35 @@ TEST_F(ParseTreeTest, WhileBreakContinue) {
                                       MatchConditionEnd()),
                        MatchContinueStatement(MatchStatementEnd())),
                    MatchCodeBlockEnd()))),
+           MatchFileEnd()}));
+}
+
+TEST_F(ParseTreeTest, Return) {
+  TokenizedBuffer tokens = GetTokenizedBuffer(
+      "fn F() {\n"
+      "  if (c)\n"
+      "    return;\n"
+      "}\n"
+      "fn G(Int x) -> Int {\n"
+      "  return x;\n"
+      "}");
+  ParseTree tree = ParseTree::Parse(tokens, consumer);
+  EXPECT_FALSE(tree.HasErrors());
+
+  EXPECT_THAT(
+      tree,
+      MatchParseTreeNodes(
+          {MatchFunctionWithBody(MatchIfStatement(
+               MatchCondition(MatchNameReference("c"), MatchConditionEnd()),
+               MatchReturnStatement(MatchStatementEnd()))),
+           MatchFunctionDeclaration(
+               MatchDeclaredName(),
+               MatchParameters(
+                   MatchParameterDeclaration(MatchNameReference("Int"), "x")),
+               MatchReturnType(MatchNameReference("Int")),
+               MatchCodeBlock(MatchReturnStatement(MatchNameReference("x"),
+                                                   MatchStatementEnd()),
+                              MatchCodeBlockEnd())),
            MatchFileEnd()}));
 }
 
