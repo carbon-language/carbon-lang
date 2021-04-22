@@ -25,53 +25,56 @@ final class ParserTests: XCTestCase {
     _ = CarbonParser()
   }
 
+  let o = ASTSite.empty
+  
   func testBasic0() {
     // Parse a few tiny programs
     guard let p = CheckNoThrow(try "fn main() -> Int;".parsedAsCarbon())
     else { return }
-    XCTAssertEqual(p.count, 1)
-    let p0 = p[0]
-    guard case .function(let d) = p0 else { XCTFail("\(p0)"); return }
-    XCTAssertEqual(d.name.text, "main")
-    XCTAssertEqual(d.parameters.elements, [])
-    if case .intType(_) = d.returnType {} else { XCTFail("\(d.returnType)") }
-    XCTAssertNil(d.body)
+    
+    XCTAssertEqual(
+      p,
+      [
+        .function(
+          FunctionDefinition(
+            name: Identifier(text: "main", site: o),
+            parameters: Tuple([], o),
+            returnType: .intType(o),
+            body: nil,
+            site: o))])
   }
 
   func testBasic1() {
     guard let p = CheckNoThrow(try "fn main() -> Int {}".parsedAsCarbon())
     else { return }
-    XCTAssertEqual(p.count, 1)
-    let p0 = p[0]
-    guard case .function(let d) = p0 else { XCTFail("\(p0)"); return }
-    XCTAssertEqual(d.name.text, "main")
-    XCTAssertEqual(d.parameters.elements, [])
-    if case .intType = d.returnType {} else { XCTFail("\(d.returnType)") }
-    guard let b = d.body, case .block(let c, _) = b else {
-      XCTFail("\(d)")
-      return
-    }
-    XCTAssertEqual(c, [])
+    
+    XCTAssertEqual(
+      p,
+      [
+        .function(
+          FunctionDefinition(
+            name: Identifier(text: "main", site: o),
+            parameters: Tuple([], o),
+            returnType: .intType(o),
+            body: .block([], o),
+            site: o))])
   }
 
   func testBasic2() {
     guard let p = CheckNoThrow(try "var Int: x = 0;".parsedAsCarbon())
     else { return }
-    XCTAssertEqual(p.count, 1)
-    let p0 = p[0]
-    guard case let .initialization(i) = p0 else {
-      XCTFail("\(p0)")
-      return
-    }
-    guard case let .variable(b) = i.bindings else {
-      XCTFail("\(i)")
-      return
-    }
-    XCTAssertEqual(b.boundName.text, "x")
-
-    if case .literal(.intType) = b.type {} else { XCTFail("\(b.type)") }
-    if case let .integerLiteral(n, _) = i.initializer { XCTAssertEqual(n, 0) }
-    else { XCTFail("\(i.initializer)") }
+    
+    XCTAssertEqual(
+      p,
+      [
+        .initialization(
+          Initialization(
+            bindings: .variable(
+              SimpleBinding(
+                type: .literal(.intType(o)),
+                boundName: Identifier(text: "x", site: o))),
+            initializer: .integerLiteral(0, o),
+            site: o))])
   }
 
   func testParseFailure() {
