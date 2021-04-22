@@ -337,9 +337,8 @@ auto TypeEqual(const Value* t1, const Value* t2) -> bool {
         if (t2_field == std::nullopt) {
           return false;
         }
-        if (!TypeEqual(
-                state->heap.ReadFromMemory((*t1->u.tuple.elts)[i].second, 0),
-                state->heap.ReadFromMemory(*t2_field, 0))) {
+        if (!TypeEqual(state->heap.Read((*t1->u.tuple.elts)[i].second, 0),
+                       state->heap.Read(*t2_field, 0))) {
           return false;
         }
       }
@@ -369,9 +368,8 @@ static auto FieldsValueEqual(VarAddresses* ts1, VarAddresses* ts2, int line_num)
     if (iter == ts2->end()) {
       return false;
     }
-    if (!ValueEqual(state->heap.ReadFromMemory(address, line_num),
-                    state->heap.ReadFromMemory(iter->second, line_num),
-                    line_num)) {
+    if (!ValueEqual(state->heap.Read(address, line_num),
+                    state->heap.Read(iter->second, line_num), line_num)) {
       return false;
     }
   }

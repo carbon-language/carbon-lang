@@ -58,9 +58,9 @@ auto ReifyType(const Value* t, int line_num) -> const Expression* {
     case ValKind::TupleV: {
       auto args = new std::vector<std::pair<std::string, const Expression*>>();
       for (auto& field : *t->u.tuple.elts) {
-        args->push_back({field.first, ReifyType(state->heap.ReadFromMemory(
-                                                    field.second, line_num),
-                                                line_num)});
+        args->push_back(
+            {field.first,
+             ReifyType(state->heap.Read(field.second, line_num), line_num)});
       }
       return MakeTuple(0, args);
     }
@@ -138,8 +138,7 @@ auto TypeCheckExp(const Expression* e, TypeEnv types, Env values,
             std::cerr << std::endl;
             exit(-1);
           }
-          auto field_t =
-              state->heap.ReadFromMemory(*field_address, e->line_num);
+          auto field_t = state->heap.Read(*field_address, e->line_num);
           auto new_e = MakeIndex(e->line_num, res.exp, MakeInt(e->line_num, i));
           return TCResult(new_e, field_t, res.types);
         }
@@ -166,8 +165,7 @@ auto TypeCheckExp(const Expression* e, TypeEnv types, Env values,
                       << arg->first << std::endl;
             exit(-1);
           }
-          arg_expected =
-              state->heap.ReadFromMemory(*expected_field, e->line_num);
+          arg_expected = state->heap.Read(*expected_field, e->line_num);
         }
         auto arg_res =
             TypeCheckExp(arg->second, new_types, values, arg_expected, context);
@@ -211,9 +209,9 @@ auto TypeCheckExp(const Expression* e, TypeEnv types, Env values,
             if (*e->u.get_field.field == field.first) {
               auto new_e =
                   MakeGetField(e->line_num, res.exp, *e->u.get_field.field);
-              return TCResult(
-                  new_e, state->heap.ReadFromMemory(field.second, e->line_num),
-                  res.types);
+              return TCResult(new_e,
+                              state->heap.Read(field.second, e->line_num),
+                              res.types);
             }
           }
           std::cerr << e->line_num << ": compilation error, struct "

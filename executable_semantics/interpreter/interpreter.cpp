@@ -43,12 +43,12 @@ auto Heap::AllocateValue(const Value* v) -> Address {
   return a;
 }
 
-auto Heap::ReadFromMemory(Address a, int line_num) -> const Value* {
+auto Heap::Read(Address a, int line_num) -> const Value* {
   this->CheckAlive(a, line_num);
   return heap_[a];
 }
 
-auto Heap::WriteToMemory(Address a, const Value* v, int line_num) -> void {
+auto Heap::Write(Address a, const Value* v, int line_num) -> void {
   assert(v != nullptr);
   this->CheckAlive(a, line_num);
   heap_[a] = v;
@@ -69,15 +69,15 @@ auto CopyVal(const Value* val, int line_num) -> const Value* {
       auto elts = new std::vector<std::pair<std::string, Address>>();
       for (auto& i : *val->u.tuple.elts) {
         const Value* elt =
-            CopyVal(state->heap.ReadFromMemory(i.second, line_num), line_num);
+            CopyVal(state->heap.Read(i.second, line_num), line_num);
         Address new_address = state->heap.AllocateValue(elt);
         elts->push_back(make_pair(i.first, new_address));
       }
       return MakeTupleVal(elts);
     }
     case ValKind::AltV: {
-      const Value* arg = CopyVal(
-          state->heap.ReadFromMemory(val->u.alt.argument, line_num), line_num);
+      const Value* arg =
+          CopyVal(state->heap.Read(val->u.alt.argument, line_num), line_num);
       Address argument_address = state->heap.AllocateValue(arg);
       return MakeAltVal(*val->u.alt.alt_name, *val->u.alt.choice_name,
                         argument_address);
@@ -125,17 +125,17 @@ auto CopyVal(const Value* val, int line_num) -> const Value* {
 }
 
 // Marks all of the sub-objects of this value as dead.
-void KillSubObjects(const Value* val) {
+void DeallocateSubObjects(const Value* val) {
   switch (val->tag) {
     case ValKind::AltV:
-      state->heap.KillObject(val->u.alt.argument);
+      state->heap.Deallocate(val->u.alt.argument);
       break;
     case ValKind::StructV:
-      KillSubObjects(val->u.struct_val.inits);
+      DeallocateSubObjects(val->u.struct_val.inits);
       break;
     case ValKind::TupleV:
       for (auto& elt : *val->u.tuple.elts) {
-        state->heap.KillObject(elt.second);
+        state->heap.Deallocate(elt.second);
       }
       break;
     default:
@@ -143,12 +143,13 @@ void KillSubObjects(const Value* val) {
   }
 }
 
-void Heap::KillObject(Address address) {
+void Heap::Deallocate(Address address) {
   if (alive_[address]) {
     alive_[address] = false;
-    KillSubObjects(heap_[address]);
+    DeallocateSubObjects(heap_[address]);
   } else {
-    std::cerr << "runtime error, killing an already dead value" << std::endl;
+    std::cerr << "runtime error, deallocating an already dead value"
+              << std::endl;
     exit(-1);
   }
 }
@@ -391,20 +392,20 @@ void CallFunction(int line_num, std::vector<const Value*> operas,
   }
 }
 
-void KillScope(int line_num, Scope* scope) {
+void DeallocateScope(int line_num, Scope* scope) {
   for (const auto& l : scope->locals) {
     std::optional<Address> a = scope->values.Get(l);
     if (!a) {
-      std::cerr << "internal error in KillScope" << std::endl;
+      std::cerr << "internal error in DeallocateScope" << std::endl;
       exit(-1);
     }
-    state->heap.KillObject(*a);
+    state->heap.Deallocate(*a);
   }
 }
 
-void KillLocals(int line_num, Frame* frame) {
+void DeallocateLocals(int line_num, Frame* frame) {
   for (auto scope : frame->scopes) {
-    KillScope(line_num, scope);
+    DeallocateScope(line_num, scope);
   }
 }
 
@@ -453,10 +454,9 @@ auto PatternMatch(const Value* p, const Value* v, Env values,
               std::cerr << std::endl;
               exit(-1);
             }
-            std::optional<Env> matches =
-                PatternMatch(state->heap.ReadFromMemory(elt.second, line_num),
-                             state->heap.ReadFromMemory(*a, line_num), values,
-                             vars, line_num);
+            std::optional<Env> matches = PatternMatch(
+                state->heap.Read(elt.second, line_num),
+                state->heap.Read(*a, line_num), values, vars, line_num);
             if (!matches) {
               return std::nullopt;
             }
@@ -478,10 +478,10 @@ auto PatternMatch(const Value* p, const Value* v, Env values,
               *p->u.alt.alt_name != *v->u.alt.alt_name) {
             return std::nullopt;
           }
-          std::optional<Env> matches = PatternMatch(
-              state->heap.ReadFromMemory(p->u.alt.argument, line_num),
-              state->heap.ReadFromMemory(v->u.alt.argument, line_num), values,
-              vars, line_num);
+          std::optional<Env> matches =
+              PatternMatch(state->heap.Read(p->u.alt.argument, line_num),
+                           state->heap.Read(v->u.alt.argument, line_num),
+                           values, vars, line_num);
           if (!matches) {
             return std::nullopt;
           }
@@ -521,8 +521,8 @@ auto PatternMatch(const Value* p, const Value* v, Env values,
 void PatternAssignment(const Value* pat, const Value* val, int line_num) {
   switch (pat->tag) {
     case ValKind::PtrV:
-      state->heap.WriteToMemory(ValToPtr(pat, line_num), CopyVal(val, line_num),
-                                line_num);
+      state->heap.Write(ValToPtr(pat, line_num), CopyVal(val, line_num),
+                        line_num);
       break;
     case ValKind::TupleV: {
       switch (val->tag) {
@@ -540,9 +540,8 @@ void PatternAssignment(const Value* pat, const Value* val, int line_num) {
               std::cerr << std::endl;
               exit(-1);
             }
-            PatternAssignment(state->heap.ReadFromMemory(elt.second, line_num),
-                              state->heap.ReadFromMemory(*a, line_num),
-                              line_num);
+            PatternAssignment(state->heap.Read(elt.second, line_num),
+                              state->heap.Read(*a, line_num), line_num);
           }
           break;
         }
@@ -564,10 +563,9 @@ void PatternAssignment(const Value* pat, const Value* val, int line_num) {
             std::cerr << "internal error in pattern assignment" << std::endl;
             exit(-1);
           }
-          PatternAssignment(
-              state->heap.ReadFromMemory(pat->u.alt.argument, line_num),
-              state->heap.ReadFromMemory(val->u.alt.argument, line_num),
-              line_num);
+          PatternAssignment(state->heap.Read(pat->u.alt.argument, line_num),
+                            state->heap.Read(val->u.alt.argument, line_num),
+                            line_num);
           break;
         }
         default:
@@ -707,8 +705,7 @@ void StepExp() {
                   << *(exp->u.variable.name) << "`" << std::endl;
         exit(-1);
       }
-      const Value* pointee =
-          state->heap.ReadFromMemory(*pointer, exp->line_num);
+      const Value* pointee = state->heap.Read(*pointer, exp->line_num);
       frame->todo.Pop(1);
       frame->todo.Push(MakeValAct(pointee));
       break;
@@ -841,7 +838,7 @@ void StepStmt() {
       frame->todo.Pop(1);
       while (!frame->todo.IsEmpty() && !IsWhileAct(frame->todo.Top())) {
         if (IsBlockAct(frame->todo.Top())) {
-          KillScope(stmt->line_num, frame->scopes.Top());
+          DeallocateScope(stmt->line_num, frame->scopes.Top());
           frame->scopes.Pop(1);
         }
         frame->todo.Pop(1);
@@ -854,7 +851,7 @@ void StepStmt() {
       frame->todo.Pop(1);
       while (!frame->todo.IsEmpty() && !IsWhileAct(frame->todo.Top())) {
         if (IsBlockAct(frame->todo.Top())) {
-          KillScope(stmt->line_num, frame->scopes.Top());
+          DeallocateScope(stmt->line_num, frame->scopes.Top());
           frame->scopes.Pop(1);
         }
         frame->todo.Pop(1);
@@ -872,7 +869,7 @@ void StepStmt() {
         }
       } else {
         Scope* scope = frame->scopes.Top();
-        KillScope(stmt->line_num, scope);
+        DeallocateScope(stmt->line_num, scope);
         frame->scopes.Pop(1);
         frame->todo.Pop(1);
       }
@@ -951,14 +948,14 @@ void StepStmt() {
         paused.push_back(state->stack.Pop());
       } while (!paused.back()->IsContinuation());
       // Update the continuation with the paused stack.
-      state->heap.WriteToMemory(paused.back()->continuation,
-                                MakeContinuation(paused), stmt->line_num);
+      state->heap.Write(paused.back()->continuation, MakeContinuation(paused),
+                        stmt->line_num);
       break;
   }
 }
 
 auto GetMember(Address a, const std::string& f, int line_num) -> Address {
-  const Value* v = state->heap.ReadFromMemory(a, line_num);
+  const Value* v = state->heap.Read(a, line_num);
   switch (v->tag) {
     case ValKind::StructV: {
       auto a = FindTupleField(f, v->u.struct_val.inits);
@@ -1041,7 +1038,7 @@ void HandleValue() {
   }
   switch (act->tag) {
     case ActionKind::DeleteTmpAction: {
-      state->heap.KillObject(act->u.delete_tmp);
+      state->heap.Deallocate(act->u.delete_tmp);
       frame->todo.Pop(2);
       frame->todo.Push(val_act);
       break;
@@ -1154,8 +1151,7 @@ void HandleValue() {
                   exit(-1);
                 }
                 frame->todo.Pop(2);
-                const Value* element =
-                    state->heap.ReadFromMemory(*a, exp->line_num);
+                const Value* element = state->heap.Read(*a, exp->line_num);
                 frame->todo.Push(MakeValAct(element));
                 break;
               }
@@ -1174,7 +1170,7 @@ void HandleValue() {
           // -> { { v_f :: C, E, F} : S, H}
           auto a = GetMember(ValToPtr(act->results[0], exp->line_num),
                              *exp->u.get_field.field, exp->line_num);
-          const Value* element = state->heap.ReadFromMemory(a, exp->line_num);
+          const Value* element = state->heap.Read(a, exp->line_num);
           frame->todo.Pop(2);
           frame->todo.Push(MakeValAct(element));
           break;
@@ -1388,7 +1384,7 @@ void HandleValue() {
           //    { {v :: return [] :: C, E, F} :: {C', E', F'} :: S, H}
           // -> { {v :: C', E', F'} :: S, H}
           const Value* ret_val = CopyVal(val_act->u.val, stmt->line_num);
-          KillLocals(stmt->line_num, frame);
+          DeallocateLocals(stmt->line_num, frame);
           state->stack.Pop(1);
           frame = state->stack.Top();
           frame->todo.Push(MakeValAct(ret_val));
