@@ -59,10 +59,8 @@ struct Frame {
         continuation(UINT_MAX) {}
 };
 
-// TODO(geoffromer): Make this a class, with all members private
-struct State {
-  Stack<Frame*> stack;
-
+class Heap {
+ public:
   // Returns the value at the given address in the heap after
   // checking that it is alive.
   auto ReadFromMemory(Address a, int line_num) -> const Value*;
@@ -84,6 +82,11 @@ struct State {
 
   std::vector<const Value*> heap_;
   std::vector<bool> alive_;
+};
+
+struct State {
+  Stack<Frame*> stack;
+  Heap heap;
 };
 
 extern State* state;

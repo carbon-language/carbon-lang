@@ -31,7 +31,7 @@ void HandleValue();
 // Auxiliary Functions
 //
 
-auto State::AllocateValue(const Value* v) -> Address {
+auto Heap::AllocateValue(const Value* v) -> Address {
   // Putting the following two side effects together in this function
   // ensures that we don't do anything else in between, which is really bad!
   // Consider whether to include a copy of the input v in this function
@@ -43,18 +43,18 @@ auto State::AllocateValue(const Value* v) -> Address {
   return a;
 }
 
-auto State::ReadFromMemory(Address a, int line_num) -> const Value* {
+auto Heap::ReadFromMemory(Address a, int line_num) -> const Value* {
   this->CheckAlive(a, line_num);
   return heap_[a];
 }
 
-auto State::WriteToMemory(Address a, const Value* v, int line_num) -> void {
+auto Heap::WriteToMemory(Address a, const Value* v, int line_num) -> void {
   assert(v != nullptr);
   this->CheckAlive(a, line_num);
   heap_[a] = v;
 }
 
-void State::CheckAlive(Address address, int line_num) {
+void Heap::CheckAlive(Address address, int line_num) {
   if (!alive_[address]) {
     std::cerr << line_num << ": undefined behavior: access to dead value ";
     PrintValue(heap_[address], std::cerr);
@@ -69,16 +69,16 @@ auto CopyVal(const Value* val, int line_num) -> const Value* {
       auto elts = new std::vector<std::pair<std::string, Address>>();
       for (auto& i : *val->u.tuple.elts) {
         const Value* elt =
-            CopyVal(state->ReadFromMemory(i.second, line_num), line_num);
-        Address new_address = state->AllocateValue(elt);
+            CopyVal(state->heap.ReadFromMemory(i.second, line_num), line_num);
+        Address new_address = state->heap.AllocateValue(elt);
         elts->push_back(make_pair(i.first, new_address));
       }
       return MakeTupleVal(elts);
     }
     case ValKind::AltV: {
       const Value* arg = CopyVal(
-          state->ReadFromMemory(val->u.alt.argument, line_num), line_num);
-      Address argument_address = state->AllocateValue(arg);
+          state->heap.ReadFromMemory(val->u.alt.argument, line_num), line_num);
+      Address argument_address = state->heap.AllocateValue(arg);
       return MakeAltVal(*val->u.alt.alt_name, *val->u.alt.choice_name,
                         argument_address);
     }
@@ -128,14 +128,14 @@ auto CopyVal(const Value* val, int line_num) -> const Value* {
 void KillSubObjects(const Value* val) {
   switch (val->tag) {
     case ValKind::AltV:
-      state->KillObject(val->u.alt.argument);
+      state->heap.KillObject(val->u.alt.argument);
       break;
     case ValKind::StructV:
       KillSubObjects(val->u.struct_val.inits);
       break;
     case ValKind::TupleV:
       for (auto& elt : *val->u.tuple.elts) {
-        state->KillObject(elt.second);
+        state->heap.KillObject(elt.second);
       }
       break;
     default:
@@ -143,7 +143,7 @@ void KillSubObjects(const Value* val) {
   }
 }
 
-void State::KillObject(Address address) {
+void Heap::KillObject(Address address) {
   if (alive_[address]) {
     alive_[address] = false;
     KillSubObjects(heap_[address]);
@@ -156,7 +156,7 @@ void State::KillObject(Address address) {
 void PrintEnv(Env values, std::ostream& out) {
   for (const auto& [name, address] : values) {
     out << name << ": ";
-    state->PrintAddress(address, out);
+    state->heap.PrintAddress(address, out);
     out << ", ";
   }
 }
@@ -182,14 +182,14 @@ void PrintStack(Stack<Frame*> ls, std::ostream& out) {
   }
 }
 
-void State::PrintHeap(std::ostream& out) {
+void Heap::PrintHeap(std::ostream& out) {
   for (const Value* iter : heap_) {
     PrintValue(iter, out);
     out << ", ";
   }
 }
 
-auto State::PrintAddress(Address a, std::ostream& out) -> void {
+auto Heap::PrintAddress(Address a, std::ostream& out) -> void {
   if (!alive_[a]) {
     out << "!!";
   }
@@ -206,7 +206,7 @@ void PrintState(std::ostream& out) {
   out << "stack: ";
   PrintStack(state->stack, out);
   out << std::endl << "heap: ";
-  state->PrintHeap(out);
+  state->heap.PrintHeap(out);
   if (!state->stack.IsEmpty() && !state->stack.Top()->scopes.IsEmpty()) {
     out << std::endl << "values: ";
     PrintEnv(CurrentEnv(state), out);
@@ -305,7 +305,7 @@ auto ChoiceDeclaration::InitGlobals(Env& globals) const -> void {
     alts->push_back(make_pair(kv.first, t));
   }
   auto ct = MakeChoiceTypeVal(name, alts);
-  auto a = state->AllocateValue(ct);
+  auto a = state->heap.AllocateValue(ct);
   globals.Set(name, a);
 }
 
@@ -323,7 +323,7 @@ auto StructDeclaration::InitGlobals(Env& globals) const -> void {
     }
   }
   auto st = MakeStructTypeVal(*definition.name, fields, methods);
-  auto a = state->AllocateValue(st);
+  auto a = state->heap.AllocateValue(st);
   globals.Set(*definition.name, a);
 }
 
@@ -331,7 +331,7 @@ auto FunctionDeclaration::InitGlobals(Env& globals) const -> void {
   Env values;
   auto pt = InterpExp(values, definition->param_pattern);
   auto f = MakeFunVal(definition->name, pt, definition->body);
-  Address a = state->AllocateValue(f);
+  Address a = state->heap.AllocateValue(f);
   globals.Set(definition->name, a);
 }
 
@@ -339,7 +339,7 @@ auto FunctionDeclaration::InitGlobals(Env& globals) const -> void {
 // result of evaluating the initializer.
 auto VariableDeclaration::InitGlobals(Env& globals) const -> void {
   auto v = InterpExp(globals, initializer);
-  Address a = state->AllocateValue(v);
+  Address a = state->heap.AllocateValue(v);
   globals.Set(name, a);
 }
 
@@ -378,7 +378,7 @@ void CallFunction(int line_num, std::vector<const Value*> operas,
       const Value* arg = CopyVal(operas[1], line_num);
       const Value* av = MakeAltVal(*operas[0]->u.alt_cons.alt_name,
                                    *operas[0]->u.alt_cons.choice_name,
-                                   state->AllocateValue(arg));
+                                   state->heap.AllocateValue(arg));
       Frame* frame = state->stack.Top();
       frame->todo.Push(MakeValAct(av));
       break;
@@ -398,7 +398,7 @@ void KillScope(int line_num, Scope* scope) {
       std::cerr << "internal error in KillScope" << std::endl;
       exit(-1);
     }
-    state->KillObject(*a);
+    state->heap.KillObject(*a);
   }
 }
 
@@ -414,7 +414,7 @@ void CreateTuple(Frame* frame, Action* act, const Expression* /*exp*/) {
   auto elts = new std::vector<std::pair<std::string, Address>>();
   auto f = act->u.exp->u.tuple.fields->begin();
   for (auto i = act->results.begin(); i != act->results.end(); ++i, ++f) {
-    Address a = state->AllocateValue(*i);  // copy?
+    Address a = state->heap.AllocateValue(*i);  // copy?
     elts->push_back(make_pair(f->first, a));
   }
   const Value* tv = MakeTupleVal(elts);
@@ -432,7 +432,7 @@ auto PatternMatch(const Value* p, const Value* v, Env values,
     -> std::optional<Env> {
   switch (p->tag) {
     case ValKind::VarPatV: {
-      Address a = state->AllocateValue(CopyVal(v, line_num));
+      Address a = state->heap.AllocateValue(CopyVal(v, line_num));
       vars->push_back(*p->u.var_pat.name);
       values.Set(*p->u.var_pat.name, a);
       return values;
@@ -453,9 +453,10 @@ auto PatternMatch(const Value* p, const Value* v, Env values,
               std::cerr << std::endl;
               exit(-1);
             }
-            std::optional<Env> matches = PatternMatch(
-                state->ReadFromMemory(elt.second, line_num),
-                state->ReadFromMemory(*a, line_num), values, vars, line_num);
+            std::optional<Env> matches =
+                PatternMatch(state->heap.ReadFromMemory(elt.second, line_num),
+                             state->heap.ReadFromMemory(*a, line_num), values,
+                             vars, line_num);
             if (!matches) {
               return std::nullopt;
             }
@@ -477,10 +478,10 @@ auto PatternMatch(const Value* p, const Value* v, Env values,
               *p->u.alt.alt_name != *v->u.alt.alt_name) {
             return std::nullopt;
           }
-          std::optional<Env> matches =
-              PatternMatch(state->ReadFromMemory(p->u.alt.argument, line_num),
-                           state->ReadFromMemory(v->u.alt.argument, line_num),
-                           values, vars, line_num);
+          std::optional<Env> matches = PatternMatch(
+              state->heap.ReadFromMemory(p->u.alt.argument, line_num),
+              state->heap.ReadFromMemory(v->u.alt.argument, line_num), values,
+              vars, line_num);
           if (!matches) {
             return std::nullopt;
           }
@@ -520,8 +521,8 @@ auto PatternMatch(const Value* p, const Value* v, Env values,
 void PatternAssignment(const Value* pat, const Value* val, int line_num) {
   switch (pat->tag) {
     case ValKind::PtrV:
-      state->WriteToMemory(ValToPtr(pat, line_num), CopyVal(val, line_num),
-                           line_num);
+      state->heap.WriteToMemory(ValToPtr(pat, line_num), CopyVal(val, line_num),
+                                line_num);
       break;
     case ValKind::TupleV: {
       switch (val->tag) {
@@ -539,8 +540,9 @@ void PatternAssignment(const Value* pat, const Value* val, int line_num) {
               std::cerr << std::endl;
               exit(-1);
             }
-            PatternAssignment(state->ReadFromMemory(elt.second, line_num),
-                              state->ReadFromMemory(*a, line_num), line_num);
+            PatternAssignment(state->heap.ReadFromMemory(elt.second, line_num),
+                              state->heap.ReadFromMemory(*a, line_num),
+                              line_num);
           }
           break;
         }
@@ -563,8 +565,9 @@ void PatternAssignment(const Value* pat, const Value* val, int line_num) {
             exit(-1);
           }
           PatternAssignment(
-              state->ReadFromMemory(pat->u.alt.argument, line_num),
-              state->ReadFromMemory(val->u.alt.argument, line_num), line_num);
+              state->heap.ReadFromMemory(pat->u.alt.argument, line_num),
+              state->heap.ReadFromMemory(val->u.alt.argument, line_num),
+              line_num);
           break;
         }
         default:
@@ -704,7 +707,8 @@ void StepExp() {
                   << *(exp->u.variable.name) << "`" << std::endl;
         exit(-1);
       }
-      const Value* pointee = state->ReadFromMemory(*pointer, exp->line_num);
+      const Value* pointee =
+          state->heap.ReadFromMemory(*pointer, exp->line_num);
       frame->todo.Pop(1);
       frame->todo.Push(MakeValAct(pointee));
       break;
@@ -924,7 +928,7 @@ void StepStmt() {
       todo.Push(MakeStmtAct(stmt->u.continuation.body));
       Frame* continuation_frame = new Frame("__continuation", scopes, todo);
       Address continuation_address =
-          state->AllocateValue(MakeContinuation({continuation_frame}));
+          state->heap.AllocateValue(MakeContinuation({continuation_frame}));
       // Store the continuation's address in the frame.
       continuation_frame->continuation = continuation_address;
       // Bind the continuation object to the continuation variable
@@ -947,14 +951,14 @@ void StepStmt() {
         paused.push_back(state->stack.Pop());
       } while (!paused.back()->IsContinuation());
       // Update the continuation with the paused stack.
-      state->WriteToMemory(paused.back()->continuation,
-                           MakeContinuation(paused), stmt->line_num);
+      state->heap.WriteToMemory(paused.back()->continuation,
+                                MakeContinuation(paused), stmt->line_num);
       break;
   }
 }
 
 auto GetMember(Address a, const std::string& f, int line_num) -> Address {
-  const Value* v = state->ReadFromMemory(a, line_num);
+  const Value* v = state->heap.ReadFromMemory(a, line_num);
   switch (v->tag) {
     case ValKind::StructV: {
       auto a = FindTupleField(f, v->u.struct_val.inits);
@@ -984,7 +988,7 @@ auto GetMember(Address a, const std::string& f, int line_num) -> Address {
         exit(-1);
       }
       auto ac = MakeAltCons(f, *v->u.choice_type.name);
-      return state->AllocateValue(ac);
+      return state->heap.AllocateValue(ac);
     }
     default:
       std::cerr << "field access not allowed for value ";
@@ -1037,13 +1041,13 @@ void HandleValue() {
   }
   switch (act->tag) {
     case ActionKind::DeleteTmpAction: {
-      state->KillObject(act->u.delete_tmp);
+      state->heap.KillObject(act->u.delete_tmp);
       frame->todo.Pop(2);
       frame->todo.Push(val_act);
       break;
     }
     case ActionKind::ExpToLValAction: {
-      Address a = state->AllocateValue(act->results[0]);
+      Address a = state->heap.AllocateValue(act->results[0]);
       auto del = MakeDeleteAct(a);
       frame->todo.Pop(2);
       InsertDelete(del, frame->todo);
@@ -1150,7 +1154,8 @@ void HandleValue() {
                   exit(-1);
                 }
                 frame->todo.Pop(2);
-                const Value* element = state->ReadFromMemory(*a, exp->line_num);
+                const Value* element =
+                    state->heap.ReadFromMemory(*a, exp->line_num);
                 frame->todo.Push(MakeValAct(element));
                 break;
               }
@@ -1169,7 +1174,7 @@ void HandleValue() {
           // -> { { v_f :: C, E, F} : S, H}
           auto a = GetMember(ValToPtr(act->results[0], exp->line_num),
                              *exp->u.get_field.field, exp->line_num);
-          const Value* element = state->ReadFromMemory(a, exp->line_num);
+          const Value* element = state->heap.ReadFromMemory(a, exp->line_num);
           frame->todo.Pop(2);
           frame->todo.Push(MakeValAct(element));
           break;

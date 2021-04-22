@@ -228,7 +228,7 @@ auto PrintValue(const Value* val, std::ostream& out) -> void {
     case ValKind::AltV: {
       out << "alt " << *val->u.alt.choice_name << "." << *val->u.alt.alt_name
           << " ";
-      state->PrintAddress(val->u.alt.argument, out);
+      state->heap.PrintAddress(val->u.alt.argument, out);
       break;
     }
     case ValKind::StructV: {
@@ -247,7 +247,7 @@ auto PrintValue(const Value* val, std::ostream& out) -> void {
         }
 
         out << elt.first << " = ";
-        state->PrintAddress(elt.second, out);
+        state->heap.PrintAddress(elt.second, out);
         out << "@" << elt.second;
       }
       out << ")";
@@ -337,8 +337,9 @@ auto TypeEqual(const Value* t1, const Value* t2) -> bool {
         if (t2_field == std::nullopt) {
           return false;
         }
-        if (!TypeEqual(state->ReadFromMemory((*t1->u.tuple.elts)[i].second, 0),
-                       state->ReadFromMemory(*t2_field, 0))) {
+        if (!TypeEqual(
+                state->heap.ReadFromMemory((*t1->u.tuple.elts)[i].second, 0),
+                state->heap.ReadFromMemory(*t2_field, 0))) {
           return false;
         }
       }
@@ -368,8 +369,9 @@ static auto FieldsValueEqual(VarAddresses* ts1, VarAddresses* ts2, int line_num)
     if (iter == ts2->end()) {
       return false;
     }
-    if (!ValueEqual(state->ReadFromMemory(address, line_num),
-                    state->ReadFromMemory(iter->second, line_num), line_num)) {
+    if (!ValueEqual(state->heap.ReadFromMemory(address, line_num),
+                    state->heap.ReadFromMemory(iter->second, line_num),
+                    line_num)) {
       return false;
     }
   }
