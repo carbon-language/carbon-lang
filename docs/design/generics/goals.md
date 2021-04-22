@@ -399,7 +399,11 @@ acceptable even when running a development or debug build.
 ### Upgrade path from templates
 
 We want there to be a natural, incremental upgrade path from templated code to
-generic code. This gives us these sub-goals:
+generic code.
+[Assuming Carbon will support templates directly](#relationship-to-templates),
+the first step of migrating C++ template code would be to first convert it to a
+Carbon template. The problem is then how to convert templates to generics within
+Carbon. This gives us these sub-goals:
 
 -   Users should be able to convert a single template parameter to be generic at
     a time. A hybrid function with both template and generic parameters has all
@@ -423,6 +427,9 @@ generic code. This gives us these sub-goals:
     one possible solution would use the original template code to provide an
     implementation for that interface for any type that structurally has the
     methods used by the original template.
+
+If Carbon does not end up having direct support for templates, the transition
+will necessarily be less incremental.
 
 ### Coherence
 
@@ -499,10 +506,11 @@ the definition of `T`.
 Many languages have implemented generics systems, and we should learn from those
 experiences. We should copy what works and makes sense in the context of Carbon,
 and change decisions that led to undesirable compromises. We are taking the
-strongest guidance from Rust and Swift, which have the most similar goals. They
-both use nominal interfaces, were designed with generics from the start, and
-produce native code. Contrast with Go which uses structural interfaces, or Java
-which targets a virtual machine that predated its generics feature.
+strongest guidance from Rust and Swift, which have similar goals and significant
+experience with the implementation and usability of generics. They both use
+nominal interfaces, were designed with generics from the start, and produce
+native code. Contrast with Go which uses structural interfaces, or Java which
+targets a virtual machine that predated its generics feature.
 
 For example, Rust has found that supporting defaults for interface methods is a
 valuable feature. It is useful for [evolution](#interop-and-evolution),
@@ -595,10 +603,10 @@ languages do?
 
 Generics don't need to provide full flexibility of C++ templates:
 
--   [Carbon templates](#relationship-to-templates) can still cover those
-    exceptional cases that don't fit inside generics.
-    -   If you want compile-time duck typing, that is available by way of
-        templates.
+-   The current assumption is that
+    [Carbon templates](#relationship-to-templates) will cover those cases that
+    don't fit inside generics, such as code that relies on compile-time duck
+    typing.
 -   We won't allow a specialization of some generic interface for some
     particular type to actually expose a _different_ interface, with different
     methods or different types in method signatures. This would break modular
