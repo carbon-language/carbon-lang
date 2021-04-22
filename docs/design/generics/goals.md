@@ -485,9 +485,10 @@ implementation reuse, and for bridging the gap between the minimal functionality
 a type wants to implement and the rich API that users want to consume
 ([example](https://doc.rust-lang.org/std/iter/trait.Iterator.html)).
 
-We can simplify things that Rust keeps purely to preserve compatibility, like
-the concept of `fundamental`, and explicit control over which methods may be
-specialized. These are complicated and
+We still have the flexibility to make simplifications that Rust cannot because
+they need to maintain compatibility. We could remove the concept of
+`fundamental` and explicit control over which methods may be specialized. These
+are complicated and
 [impose coherence restrictions](http://aturon.github.io/tech/2017/02/06/specialization-and-coherence/).
 
 ### Interfaces are nominal
