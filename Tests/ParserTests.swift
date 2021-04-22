@@ -79,7 +79,6 @@ final class ParserTests: XCTestCase {
 
   func testParseFailure() {
     XCTAssertThrowsError(try "fn ()".parsedAsCarbon()) { e in
-      print(e)
       XCTAssertTrue(
         e is _CitronParserUnexpectedTokenError<Token, TokenID>);
     }
