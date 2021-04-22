@@ -313,10 +313,18 @@ struct StructMemberDeclaration: AST {
   let site: Site
 }
 
+/// The declaration of a name.
 protocol Declaration {
+  /// A type that can be used to uniquely identify declarations in the source.
   typealias Identity = AnyASTIdentity
+
+  /// A unique identifier of this declaration, not based on its structure.
   var identity: Identity { get }
+
+  /// The name being declared.
   var name: Identifier { get }
+
+  /// The region of source covered by this declaration.
   var site: ASTSite { get }
 }
 
