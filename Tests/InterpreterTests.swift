@@ -42,7 +42,7 @@ final class TestEvaluateCall: XCTestCase {
     // These pokes are the reason for various temporary `var //let` declarations
     // you may see in Interpreter and ExecutableProgram.
     let mainDeclaration = ast[0]
-    engine.program.declaration[mainID] = mainDeclaration
+    engine.program.declaration[mainID.identity] = mainDeclaration
     engine.globals[mainDeclaration.identity] = mainDeclarationAddress
 
     // Allocate an address for the return value.

@@ -7,7 +7,7 @@
 ///
 /// - Note: the value of an AST node is determined by its structure.  The site
 ///   of the node in source is incidental/non-salient information.
-protocol AST: Hashable {
+protocol AST: Equatable {
   /// A value-free representation of `self`'s source region
   typealias Site = ASTSite
 
@@ -109,7 +109,7 @@ struct SimpleBinding: AST {
   var site: Site { type.site...boundName.site }
 }
 
-struct FunctionCall<Argument: Hashable>: AST {
+struct FunctionCall<Argument: Equatable>: AST {
   let callee: Expression
   let arguments: Tuple<Argument>
 
@@ -123,7 +123,7 @@ extension FunctionCall where Argument == PatternElement {
   }
 }
 
-struct LiteralElement: Hashable {
+struct LiteralElement: Equatable {
   init(label: Identifier? = nil, _ value: Expression) {
     self.label = label
     self.value = value
@@ -133,7 +133,7 @@ struct LiteralElement: Hashable {
 }
 typealias TupleLiteral = Tuple<LiteralElement>
 
-struct PatternElement: Hashable {
+struct PatternElement: Equatable {
   init(label: Identifier? = nil, _ value: Pattern) {
     self.label = label
     self.value = value
@@ -226,7 +226,7 @@ indirect enum Statement: AST {
   }
 }
 
-struct Tuple<T: Hashable>: AST {
+struct Tuple<T: Equatable>: AST {
   init(_ elements: [T], _ site: Site) {
     self.elements = elements
     self.site = site
@@ -250,7 +250,7 @@ struct MatchClause: AST {
 }
 typealias MatchClauseList = [MatchClause]
 
-struct FunctionType<Parameter: Hashable, Return: Hashable>: AST {
+struct FunctionType<Parameter: Equatable, Return: Equatable>: AST {
   let parameters: Tuple<Parameter>
   let returnType: Return
   let site: Site
@@ -351,7 +351,7 @@ enum AnyDeclaration: AST {
 /// Instances of ASTSite always compare ==, allowing us to include location
 /// information in the AST while still letting the compiler synthesize node
 /// equality based on structure.
-struct ASTSite: Hashable {
+struct ASTSite: Equatable {
   /// Creates an instance storing `r` without making it part of the value of
   /// `self`.
   init(devaluing r: SourceRegion) { self.region = r }
@@ -359,7 +359,6 @@ struct ASTSite: Hashable {
   let region: SourceRegion
 
   static func == (_: Self, _: Self) -> Bool { true }
-  func hash(into _: inout Hasher) {}
 
   static var empty: ASTSite { ASTSite(devaluing: SourceRegion.empty) }
 

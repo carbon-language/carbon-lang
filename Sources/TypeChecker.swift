@@ -17,9 +17,9 @@ struct TypeChecker {
   /// The function currently being typechecked.
   var currentFunction: FunctionDefinition?
 
-  var toDeclaration = PropertyMap<Identifier, AnyDeclaration>()
-  var declaredType = PropertyMap<AnyDeclaration, Type>()
-  var expressionType = PropertyMap<Expression, Type>()
+  var toDeclaration = PropertyMap<Identifier.Identity, AnyDeclaration>()
+  var declaredType = PropertyMap<AnyDeclaration.Identity, Type>()
+  var expressionType = PropertyMap<Expression.Identity, Type>()
 
   /// A mapping from names to the stack of declcarations they reference, with
   /// the top of each stack being the declaration referenced in the current
@@ -74,7 +74,7 @@ private extension TypeChecker {
       error("Un-declared name '\(use.text)'", at: use.site)
       return nil
     }
-    toDeclaration[use] = d
+    toDeclaration[use.identity] = d
     return d
   }
 
@@ -211,7 +211,7 @@ private extension TypeChecker {
          */
       }
       let r = me.evaluateTypeExpression(f.returnType)
-      me.declaredType[.function(f)]
+      me.declaredType[AnyDeclaration.function(f).identity]
         = .function(parameterTypes: parameterTypes, returnType: r)
       me.currentFunction = f
       me.visit(body)
@@ -224,7 +224,9 @@ private extension TypeChecker {
     inNewScope { me in
       for m in s.members {
         me.define(m.name, .structMember(m))
-        me.declaredType[.structMember(m)] = me.evaluateTypeExpression(m.type.type)
+        me.declaredType[
+          AnyDeclaration.structMember(m).identity
+        ] = me.evaluateTypeExpression(m.type.type)
       }
     }
   }
@@ -232,7 +234,7 @@ private extension TypeChecker {
   
   mutating func visit(_ a: Alternative) {
     define(a.name, .alternative(a))
-    declaredType[.alternative(a)] = .tuple(mapDeducedType(a.payload, nil))
+    declaredType[AnyDeclaration.alternative(a).identity] = .tuple(mapDeducedType(a.payload, nil))
   }
 
   mutating func visit(_ s: Statement) {
@@ -241,8 +243,8 @@ private extension TypeChecker {
     case let .assignment(target: t, source: s, _):
       visit(t)
       visit(s)
-      let targetType = expressionType[t]
-      let sourceType = expressionType[s]
+      let targetType = expressionType[t.identity]
+      let sourceType = expressionType[s.identity]
       // TODO: check LHS for lvalue-ness.
       if targetType != sourceType {
         error(
@@ -260,7 +262,7 @@ private extension TypeChecker {
 
     case let .if(condition: c, thenClause: then, elseClause: maybeElse, _):
       visit(c)
-      let conditionType = expressionType[c]
+      let conditionType = expressionType[c.identity]
       if conditionType != .bool {
         error(
           "Expecting a bool expression in 'if', got \(conditionType)",
@@ -271,10 +273,11 @@ private extension TypeChecker {
     case let .return(e, _):
       visit(e)
       guard case .function(_, returnType: let r)
-              = declaredType[.function(currentFunction!)] else {
+              = declaredType[AnyDeclaration.function(currentFunction!).identity]
+      else {
         fatalError("function without function type")
       }
-      let t = expressionType[e]
+      let t = expressionType[e.identity]
       if t != r {
         error("Expected return type \(r); got \(t)", at: e.site)
       }

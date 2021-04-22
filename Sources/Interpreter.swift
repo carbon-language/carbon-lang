@@ -99,7 +99,7 @@ extension Interpreter {
 
   /// Accesses the address of the declaration for the given name.
   func address(of name: Identifier) -> Address {
-    let d = program.declaration[name]
+    let d = program.declaration[name.identity]
     return locals[AnyDeclaration(d).identity] ?? globals[d.identity]!
   }
 
