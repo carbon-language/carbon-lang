@@ -2,11 +2,12 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-/// A syntactically valid program fragment in non-textual form, annotated with
-/// its site in an input source file.
+/// Types representing syntactically valid program fragments in non-textual
+/// form.
 ///
 /// - Note: the value of an AST node is determined by its structure.  The site
-///   of the node in source is incidental/non-salient information.
+///   of the node in source is an incidental/non-salient annotation that does
+///   not contribute to its value.
 protocol AST: Equatable {
   /// A value-free representation of `self`'s source region
   typealias Site = ASTSite
@@ -373,15 +374,43 @@ struct ASTSite: Equatable {
   }
 }
 
-/// The identity of an AST node in a program's source, based on its region.
+/// The identity, in a program's source, of any `AST` node.
 ///
-/// NodeIdentity additionally carries the structure of the AST node as
+/// A useful dictionary key for mappings from the identities of heterogeneous
+/// `AST` nodes.
+struct AnyASTIdentity: Hashable {
+  init<Node: AST>(of node: Node) {
+    self.placement = node.site.region
+    self.structure = node
+  }
+
+  /// The source code covered by the identified node
+  let placement: SourceRegion
+
+  /// The type and (incidental) structure of the identified node.
+  let structure: Any
+
+  static func == (l: Self, r: Self) -> Bool {
+    l.placement == r.placement && type(of: l.structure) == type(of: r.structure)
+  }
+
+  func hash(into h: inout Hasher) {
+    placement.hash(into: &h)
+    // Can't hash types directly; "upcast" to ObjectIdentifer first.
+    ObjectIdentifier(type(of: structure)).hash(into: &h)
+  }
+}
+
+/// The identity, in a program's source, of a `Node` instance.
+///
+/// `ASTIdentity` additionally carries the structure of the AST node as
 /// auxilliary information for debugging purposes.  Otherwise it is equivalent
 /// to SourceRegion.
 struct ASTIdentity<Node: AST>: Hashable {
-  fileprivate init(of n: Node) {
+  init(of n: Node) {
     self.structure = n
   }
+  /// The (incidental) structure of the identified node.
   let structure: Node
 
   static func == (l: Self, r: Self) -> Bool {

@@ -14,9 +14,9 @@ struct Interpreter {
     program: ExecutableProgram
 
   /// A mapping from local name declarations to addresses.
-  var locals: [AnyDeclaration.Identity: Address] = [:]
+  var locals: ASTDictionary<AnyDeclaration, Address> = .init()
   /// A mapping from local expressions to addresses
-  var temporaries: [Expression.Identity: Address] = [:]
+  var temporaries: ASTDictionary<Expression, Address> = .init()
   
   /// The address that should be filled in by any `return` statements.
   var returnValueStorage: Address = -1
@@ -24,8 +24,8 @@ struct Interpreter {
   /// A type that captures everything that needs to be restored after a callee
   /// returns.
   typealias FunctionContext = (
-    locals: [AnyDeclaration.Identity: Address],
-    temporaries: [Expression.Identity: Address],
+    locals: ASTDictionary<AnyDeclaration, Address>,
+    temporaries: ASTDictionary<Expression, Address>,
     returnValueStorage: Address)
 
   /// The function execution context.
@@ -38,7 +38,7 @@ struct Interpreter {
 
   /// Mapping from global declaration to addresses.
   // private(set)
-  var globals: [TopLevelDeclaration.Identity: Address] = [:]
+  var globals: ASTDictionary<TopLevelDeclaration, Address> = .init()
 
   var memory = Memory()
 
@@ -74,20 +74,20 @@ extension Interpreter {
       return memory[address(of: e)]
     }
     set {
-      precondition(temporaries[e.identity] == nil, "Temporary already initialized.")
+      precondition(temporaries[e] == nil, "Temporary already initialized.")
       let a = memory.allocate(
         boundTo: newValue.type, from: e.site.region, mutable: false)
       memory.initialize(a, to: newValue)
-      temporaries[e.identity] = a
+      temporaries[e] = a
     }
   }
 
   /// Destroys any rvalue computed for `e` and removes `e` from `locals`.
   mutating func cleanUp(_ e: Expression) {
-    defer { temporaries[e.identity] = nil }
+    defer { temporaries[e] = nil }
     if case .name(_) = e { return } // not an rvalue.
 
-    let a = temporaries[e.identity]!
+    let a = temporaries[e]!
     memory.deinitialize(a)
     memory.deallocate(a)
   }
@@ -99,13 +99,13 @@ extension Interpreter {
 
   /// Accesses the address of the declaration for the given name.
   func address(of name: Identifier) -> Address {
-    let d = program.declaration[name.identity]
-    return locals[AnyDeclaration(d).identity] ?? globals[d.identity]!
+    let d = program.declaration[name] ?? fatal("\(name) not declared")
+    return locals[AnyDeclaration(d)] ?? globals[d] ?? fatal("\(d) has no value")
   }
 
   /// Accesses the address where e's value is stored.
   func address(of e: Expression) -> Address {
-    return temporaries[e.identity]!
+    return temporaries[e]!
   }
 }
 
