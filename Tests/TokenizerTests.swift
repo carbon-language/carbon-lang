@@ -29,10 +29,11 @@ final class TokenizerTests: XCTestCase {
     {
       Token(
         k, text,
-        SourceRegion(
-          fileName: "",
-          .init(line: startLine, column: startColumn)
-            ..< .init(line: endLine, column: endColumn)))
+        ASTSite(
+          devaluing: SourceRegion(
+            fileName: "",
+            .init(line: startLine, column: startColumn)
+              ..< .init(line: endLine, column: endColumn))))
     }
     
     typealias L = SourceRegion
@@ -93,9 +94,9 @@ final class TokenizerTests: XCTestCase {
     let sourceLines = program.split(
       omittingEmptySubsequences: false, whereSeparator: \.isNewline)
 
-    /// Returns the text denoted by `l` in `program`.
-    func text(_ l: SourceRegion) -> String {
-      let (start, end) = (l.span.lowerBound, l.span.upperBound)
+    /// Returns the text denoted by `s` in `program`.
+    func text(_ l: ASTSite) -> String {
+      let (start, end) = (l.region.span.lowerBound, l.region.span.upperBound)
       let startIndex = sourceLines[start.line - 1].index(
         sourceLines[start.line - 1].startIndex, offsetBy: start.column - 1)
       let endIndex = sourceLines[end.line - 1].index(

@@ -183,8 +183,9 @@ struct Tokens: Sequence {
         {
           return Token(
             matchedID, matchedText,
-            SourceRegion(
-              fileName: sourceFileName, tokenRegionStart..<sourcePosition))
+            ASTSite(
+              devaluing: SourceRegion(
+                fileName: sourceFileName, tokenRegionStart..<sourcePosition)))
         }
       }
       return nil

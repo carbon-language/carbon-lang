@@ -5,17 +5,17 @@
 /// An error produced at compile-time.
 struct CompileError: Error {
   /// An additional informative note to go with the error message.
-  typealias Note = (message: String, site: SourceRegion)
+  typealias Note = (message: String, site: ASTSite)
 
   /// A human-readable description of the problem.
   let message: String
   /// Where to point in the source code
-  let site: SourceRegion
+  let site: ASTSite
   /// Any additional notes
   let notes: [Note]
 
   /// Creates an instance with the given properties.
-  init(_ message: String, at site: SourceRegion, notes: [Note] = []) {
+  init(_ message: String, at site: ASTSite, notes: [Note] = []) {
     self.message = message
     self.site = site
     self.notes = notes

@@ -53,7 +53,7 @@ struct SourceRegion: Hashable {
     if first.span.isEmpty { return last }
     if last.span.isEmpty { return first }
 
-    assert(first.fileName == last.fileName)
+    precondition(first.fileName == last.fileName)
     return Self(
       fileName: first.fileName, first.span.lowerBound..<last.span.upperBound)
   }

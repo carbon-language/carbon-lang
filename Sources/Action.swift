@@ -30,7 +30,7 @@ struct Evaluate: Action {
   mutating func run(on state: inout Interpreter) -> Followup {
     switch source {
     case .name(let id):
-      state.temporaries[source] = state.address(of: id)
+      state.temporaries[source.identity] = state.address(of: id)
       // N.B. of all expressions, this one doesn't need to be destroyed.
       return .done
     default: fatalError("implement me.\n\(source)")

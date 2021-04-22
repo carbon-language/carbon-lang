@@ -36,7 +36,7 @@ struct TypeChecker {
 private extension TypeChecker {
   /// Adds the given error to the error log.
   mutating func error(
-    _ message: String, at site: SourceRegion, notes: [CompileError.Note] = []
+    _ message: String, at site: ASTSite, notes: [CompileError.Note] = []
   ) {
     errors.append(CompileError(message, at: site, notes: notes))
   }

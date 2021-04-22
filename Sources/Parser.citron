@@ -8,7 +8,7 @@
 %preface {
   /// Returns `first.site...last.site`
   fileprivate func ... <First: AST, Last: AST>(first: First, last: Last)
-    -> SourceRegion
+    -> ASTSite
   {
     first.site...last.site
   }

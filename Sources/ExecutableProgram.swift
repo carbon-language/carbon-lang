@@ -44,9 +44,10 @@ fileprivate func unambiguousMain(
   }
 
   if mainCandidates.count > 1 {
-    return .failure(CompileError(
-      "Multiple main() candidates found.", at: r.name.site,
-      notes: mainCandidates.dropFirst().map { ("candidate", $0.name.site) }))
+    return .failure(
+      CompileError(
+        "Multiple main() candidates found.", at: r.name.site,
+        notes: mainCandidates.dropFirst().map { ("candidate", $0.name.site) }))
   }
 
   return .success(r)

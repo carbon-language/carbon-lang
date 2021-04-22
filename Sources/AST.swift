@@ -5,26 +5,23 @@
 /// A syntactically valid program fragment in non-textual form, annotated with
 /// its site in an input source file.
 ///
-/// - Note: the value of an AST node is determined by its type and source
-///   region.  Any other content is along for the ride, and assumed to be
-///   uniquely identified by the node's value.
+/// - Note: the value of an AST node is determined by its structure.  The site
+///   of the node in source is incidental/non-salient information.
 protocol AST: Hashable {
-  typealias Site = SourceRegion
+  /// A value-free representation of `self`'s source region
+  typealias Site = ASTSite
+
+  /// A value-ful representation of `self`'s source region, carrying `self` as
+  /// non-salient data for debugging purposes.
+  typealias Identity = ASTIdentity<Self>
+
   /// The textual range of this fragment in the source.
   var site: Site { get }
 }
 
 extension AST {
-  /// Returns `true` iff `l` and `r` are equivalent, i.e. have the same `content`
-  /// value.
-  static func == (l: Self, r: Self) -> Bool {
-    l.site == r.site
-  }
-
-  /// Accumulates the hash value of `self` into `accumulator`.
-  func hash(into accumulator: inout Hasher) {
-    site.hash(into: &accumulator)
-  }
+  /// An identifier of this node by its source location.
+  var identity: Identity { Identity(of: self) }
 }
 
 /// An unqualified name.
@@ -112,7 +109,7 @@ struct SimpleBinding: AST {
   var site: Site { type.site...boundName.site }
 }
 
-struct FunctionCall<Argument>: AST {
+struct FunctionCall<Argument: Hashable>: AST {
   let callee: Expression
   let arguments: Tuple<Argument>
 
@@ -126,7 +123,7 @@ extension FunctionCall where Argument == PatternElement {
   }
 }
 
-struct LiteralElement {
+struct LiteralElement: Hashable {
   init(label: Identifier? = nil, _ value: Expression) {
     self.label = label
     self.value = value
@@ -136,7 +133,7 @@ struct LiteralElement {
 }
 typealias TupleLiteral = Tuple<LiteralElement>
 
-struct PatternElement: Equatable {
+struct PatternElement: Hashable {
   init(label: Identifier? = nil, _ value: Pattern) {
     self.label = label
     self.value = value
@@ -229,7 +226,7 @@ indirect enum Statement: AST {
   }
 }
 
-struct Tuple<T>: AST {
+struct Tuple<T: Hashable>: AST {
   init(_ elements: [T], _ site: Site) {
     self.elements = elements
     self.site = site
@@ -253,7 +250,7 @@ struct MatchClause: AST {
 }
 typealias MatchClauseList = [MatchClause]
 
-struct FunctionType<Parameter, Return>: AST {
+struct FunctionType<Parameter: Hashable, Return: Hashable>: AST {
   let parameters: Tuple<Parameter>
   let returnType: Return
   let site: Site
@@ -319,7 +316,7 @@ struct StructMemberDeclaration: AST {
 ///
 /// This doesn't actually appear in the AST, but is used by the typechecker and
 /// interpreter as the value type of a name-use -> declaration dictionary.
-enum AnyDeclaration: AST { 
+enum AnyDeclaration: AST {
   case
     function(FunctionDefinition),
     `struct`(StructDefinition),
@@ -337,7 +334,7 @@ enum AnyDeclaration: AST {
     }
   }
   
-  var site: SourceRegion {
+  var site: Site {
     switch self {
     case let .function(f): return f.site
     case let .struct(s): return s.site
@@ -349,3 +346,50 @@ enum AnyDeclaration: AST {
   }
 }
 
+/// An annotation that indicates the SourceRegion of an AST node.
+///
+/// Instances of ASTSite always compare ==, allowing us to include location
+/// information in the AST while still letting the compiler synthesize node
+/// equality based on structure.
+struct ASTSite: Hashable {
+  /// Creates an instance storing `r` without making it part of the value of
+  /// `self`.
+  init(devaluing r: SourceRegion) { self.region = r }
+
+  let region: SourceRegion
+
+  static func == (_: Self, _: Self) -> Bool { true }
+  func hash(into _: inout Hasher) {}
+
+  static var empty: ASTSite { ASTSite(devaluing: SourceRegion.empty) }
+
+  /// Returns the site from the beginning of `first` to the end of `last`,
+  /// unless one of `first` or `last` is empty, in which case the other one is
+  /// returned.
+  ///
+  /// - Requires first or last is empty, or `site.fileName ==
+  ///   last.fileName && first.span.lowerBound < last.span.upperBound`.
+  static func ... (first: Self, last: Self) -> Self {
+    .init(devaluing: first.region...last.region)
+  }
+}
+
+/// The identity of an AST node in a program's source, based on its region.
+///
+/// NodeIdentity additionally carries the structure of the AST node as
+/// auxilliary information for debugging purposes.  Otherwise it is equivalent
+/// to SourceRegion.
+struct ASTIdentity<Node: AST>: Hashable {
+  fileprivate init(of n: Node) {
+    self.structure = n
+  }
+  let structure: Node
+
+  static func == (l: Self, r: Self) -> Bool {
+    l.structure.site.region == r.structure.site.region
+  }
+
+  func hash(into h: inout Hasher) {
+    structure.site.region.hash(into: &h)
+  }
+}

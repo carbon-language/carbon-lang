@@ -10,13 +10,14 @@ final class TestEvaluateCall: XCTestCase {
           let exe = CheckNoThrow(try ExecutableProgram(_parsedProgram: ast))
     else { return }
 
-    /// Return a sourceRegion covering the given columns of line 1 in a mythical
+    /// Return the site covering the given columns of line 1 in a mythical
     /// file called "<TOP>".
-    func topColumns(_ r: ClosedRange<Int>) -> SourceRegion {
-      SourceRegion(
-        fileName: "<TOP>",
-        .init(line: 1, column: r.lowerBound)
-          ..< .init(line: 1, column: r.upperBound + 1))
+    func topColumns(_ r: ClosedRange<Int>) -> ASTSite {
+      ASTSite(
+        devaluing: SourceRegion(
+          fileName: "<TOP>",
+          .init(line: 1, column: r.lowerBound)
+            ..< .init(line: 1, column: r.upperBound + 1)))
     }
 
     // Much of the following code will eventually be centralized in Interpreter,
@@ -33,7 +34,7 @@ final class TestEvaluateCall: XCTestCase {
     // Store the value of the main function.  All declarations have an address
     // in memory, inlcluding engine.main.
     let mainDeclarationAddress
-      = engine.memory.allocate(boundTo: mainType, from: exe.main.site)
+      = engine.memory.allocate(boundTo: mainType, from: exe.main.site.region)
     engine.memory.initialize(
       mainDeclarationAddress, to: FunctionValue(type: mainType, code: exe.main))
 
@@ -42,7 +43,7 @@ final class TestEvaluateCall: XCTestCase {
     // you may see in Interpreter and ExecutableProgram.
     let mainDeclaration = ast[0]
     engine.program.declaration[mainID] = mainDeclaration
-    engine.globals[mainDeclaration] = mainDeclarationAddress
+    engine.globals[mainDeclaration.identity] = mainDeclarationAddress
 
     // Allocate an address for the return value.
     let resultAddress = engine.memory.allocate(boundTo: .int, from: .empty)
