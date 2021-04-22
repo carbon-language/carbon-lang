@@ -72,7 +72,7 @@ final class ParserTests: XCTestCase {
             bindings: .variable(
               SimpleBinding(
                 type: .literal(.intType(o)),
-                boundName: Identifier(text: "x", site: o))),
+                name: Identifier(text: "x", site: o))),
             initializer: .integerLiteral(0, o),
             site: o))])
   }

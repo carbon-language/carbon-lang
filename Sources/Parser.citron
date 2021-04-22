@@ -88,9 +88,9 @@ binding ::= function_type_binding(f). { f }
 
 // binding for a single variable.
 simple_binding ::= expression(t) COLON identifier(n).
-  { SimpleBinding(type: .literal(t), boundName: n) }
+  { SimpleBinding(type: .literal(t), name: n) }
 simple_binding ::= AUTO(t) COLON identifier(n).
-  { SimpleBinding(type: .auto(t.site), boundName: n) }
+  { SimpleBinding(type: .auto(t.site), name: n) }
 
 // alternatives, struct constructions, etc.
 function_call_binding ::= expression(i) trailing_tuple_binding(a).

@@ -106,8 +106,8 @@ enum LHSTypeSpecifier: AST {
 
 struct SimpleBinding: AST {
   let type: LHSTypeSpecifier
-  let boundName: Identifier
-  var site: Site { type.site...boundName.site }
+  let name: Identifier
+  var site: Site { type.site...name.site }
 }
 
 struct FunctionCall<Argument: Equatable>: AST {

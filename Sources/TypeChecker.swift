@@ -203,7 +203,7 @@ private extension TypeChecker {
       for p in f.parameters {
         _ = p
         /*
-        me.define(p.boundName, .binding(p))
+        me.define(p.name, .binding(p))
         let t = me.evaluateTypeExpression(p.type)
         me.declaredType[.binding(p)] = t
         parameterTypes.append(t)
