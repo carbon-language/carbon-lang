@@ -71,8 +71,6 @@ struct State {
   auto WriteToMemory(Address a, const Value* v, int line_num) -> void;
   // Print the value at the given address to the stream `out`.
   auto PrintAddress(Address a, std::ostream& out) -> void;
-  // Signal an error if the address is no longer alive.
-  void CheckAlive(Address address, int line_num);
   // Put the given value on the heap and mark it as alive.
   auto AllocateValue(const Value* v) -> Address;
   // Marks the object at this address, and all of its sub-objects, as dead.
@@ -81,6 +79,9 @@ struct State {
   auto PrintHeap(std::ostream& out) -> void;
 
  private:
+  // Signal an error if the address is no longer alive.
+  void CheckAlive(Address address, int line_num);
+
   std::vector<const Value*> heap_;
   std::vector<bool> alive_;
 };
