@@ -60,6 +60,7 @@ jobs:
                "remove_labels": ["RFC",
                                  "decision: accepted",
                                  "decision: deferred"]}]
-          # I'm not clear project filters work correctly.
+          # I tried making the project filter work, but when I tried to put the
+          # project into the filter it didn't work, so I used the `if` instead.
           projectfilter-config: '{"include": ["*"]}'
           repo-token: ${{ secrets.GITHUB_TOKEN }}
