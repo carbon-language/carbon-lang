@@ -172,16 +172,20 @@ struct Alternative: AST, Declaration {
   let site: Site
 }
 
-struct StructDefinition: AST, Declaration {
+struct StructDefinition: AST, TypeDeclaration {
   let name: Identifier
   let members: [StructMember]
   let site: Site
+
+  var declaredType: Type { .struct(self) }
 }
 
-struct ChoiceDefinition: AST, Declaration {
+struct ChoiceDefinition: AST, TypeDeclaration {
   let name: Identifier
   let alternatives: [Alternative]
   let site: Site
+
+  var declaredType: Type { .choice(self) }
 }
 
 struct StructMember: AST, Declaration {
@@ -330,6 +334,11 @@ protocol Declaration {
 
 extension Declaration where Self: AST {
   var identity: AnyASTIdentity { AnyASTIdentity(of: self) }
+}
+
+protocol TypeDeclaration: Declaration {
+  /// Returns the type value created by this declaration
+  var declaredType: Type { get }
 }
 
 /// An annotation that indicates the SourceRegion of an AST node.

@@ -116,45 +116,37 @@ private extension TypeChecker {
     switch e {
     case let .name(n):
       guard let d = lookup(n) else { return .error } // Name not defined
-      switch d {
-      case let d as StructDefinition:
-        return .struct(d)
+      if let r = (d as? TypeDeclaration)?.declaredType { return r }
+      error(
+        "'\(n.text)' does not refer to a type",
+        at: n.site, notes: [("actual definition: \(d)", d.site)])
+      return .error
 
-      case let d as ChoiceDefinition:
-        return .choice(d)
+    case .intType: return .int
+    case .boolType: return .bool
+    case .typeType: return .type
+    case .autoType:
+      if let r = rhs { return r }
+      error("No initializer from which to deduce type.", at: e.site)
+      return .error
 
-      default:
-        error(
-          "'\(n.text)' does not refer to a type", at: n.site,
-          notes: [("actual definition: \(d)", d.site)])
-        return .error
-      }
+    case .functionType(parameterTypes: let p0, returnType: let r0, _):
+      if rhs != nil && rhs!.function == nil { return .error }
+      let (p1, r1) = rhs?.function ?? (nil, nil)
 
-      case .intType: return .int
-      case .boolType: return .bool
-      case .typeType: return .type
-      case .autoType:
-        if let r = rhs { return r }
-        error("No initializer from which to deduce type.", at: e.site)
-        return .error
+      return .function(
+        parameterTypes: mapDeducedType(p0, p1),
+        returnType: evaluateTypeExpression(r0, initializingFrom: r1))
 
-      case .functionType(parameterTypes: let p0, returnType: let r0, _):
-        if rhs != nil && rhs!.function == nil { return .error }
-        let (p1, r1) = rhs?.function ?? (nil, nil)
+    case .tupleLiteral(let t0):
+      if rhs != nil && rhs!.tuple == nil { return .error }
+      let types = mapDeducedType(t0, rhs?.tuple)
+      return .tuple(types)
 
-        return .function(
-          parameterTypes: mapDeducedType(p0, p1),
-          returnType: evaluateTypeExpression(r0, initializingFrom: r1))
-
-      case .tupleLiteral(let t0):
-        if rhs != nil && rhs!.tuple == nil { return .error }
-        let types = mapDeducedType(t0, rhs?.tuple)
-        return .tuple(types)
-
-      case .getField, .index, .patternVariable, .integerLiteral,
-           .booleanLiteral, .unaryOperator, .binaryOperator, .functionCall:
-        error("Type expression expected", at: e.site)
-        return .error
+    case .getField, .index, .patternVariable, .integerLiteral,
+         .booleanLiteral, .unaryOperator, .binaryOperator, .functionCall:
+      error("Type expression expected", at: e.site)
+      return .error
     }
   }
 
