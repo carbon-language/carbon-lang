@@ -377,12 +377,12 @@ auto TypeCheckStmt(const Statement* s, TypeEnv types, Env values,
   }
   switch (s->tag) {
     case StatementKind::Match: {
-      auto res = TypeCheckExp(s->u.match_stmt.exp, types, values, nullptr,
+      auto res = TypeCheckExp(s->GetMatch().exp, types, values, nullptr,
                               TCContext::ValueContext);
       auto res_type = res.type;
       auto new_clauses =
           new std::list<std::pair<const Expression*, const Statement*>>();
-      for (auto& clause : *s->u.match_stmt.clauses) {
+      for (auto& clause : *s->GetMatch().clauses) {
         new_clauses->push_back(TypecheckCase(
             res_type, clause.first, clause.second, types, values, ret_type));
       }
@@ -390,12 +390,12 @@ auto TypeCheckStmt(const Statement* s, TypeEnv types, Env values,
       return TCStatement(new_s, types);
     }
     case StatementKind::While: {
-      auto cnd_res = TypeCheckExp(s->u.while_stmt.cond, types, values, nullptr,
+      auto cnd_res = TypeCheckExp(s->GetWhile().cond, types, values, nullptr,
                                   TCContext::ValueContext);
       ExpectType(s->line_num, "condition of `while`", MakeBoolTypeVal(),
                  cnd_res.type);
       auto body_res =
-          TypeCheckStmt(s->u.while_stmt.body, types, values, ret_type);
+          TypeCheckStmt(s->GetWhile().body, types, values, ret_type);
       auto new_s = MakeWhile(s->line_num, cnd_res.exp, body_res.stmt);
       return TCStatement(new_s, types);
     }
@@ -403,34 +403,35 @@ auto TypeCheckStmt(const Statement* s, TypeEnv types, Env values,
     case StatementKind::Continue:
       return TCStatement(s, types);
     case StatementKind::Block: {
-      auto stmt_res = TypeCheckStmt(s->u.block.stmt, types, values, ret_type);
+      auto stmt_res =
+          TypeCheckStmt(s->GetBlock().stmt, types, values, ret_type);
       return TCStatement(MakeBlock(s->line_num, stmt_res.stmt), types);
     }
     case StatementKind::VariableDefinition: {
-      auto res = TypeCheckExp(s->u.variable_definition.init, types, values,
+      auto res = TypeCheckExp(s->GetVariableDefinition().init, types, values,
                               nullptr, TCContext::ValueContext);
       const Value* rhs_ty = res.type;
-      auto lhs_res = TypeCheckExp(s->u.variable_definition.pat, types, values,
+      auto lhs_res = TypeCheckExp(s->GetVariableDefinition().pat, types, values,
                                   rhs_ty, TCContext::PatternContext);
       const Statement* new_s =
-          MakeVarDef(s->line_num, s->u.variable_definition.pat, res.exp);
+          MakeVarDef(s->line_num, s->GetVariableDefinition().pat, res.exp);
       return TCStatement(new_s, lhs_res.types);
     }
     case StatementKind::Sequence: {
       auto stmt_res =
-          TypeCheckStmt(s->u.sequence.stmt, types, values, ret_type);
+          TypeCheckStmt(s->GetSequence().stmt, types, values, ret_type);
       auto types2 = stmt_res.types;
       auto next_res =
-          TypeCheckStmt(s->u.sequence.next, types2, values, ret_type);
+          TypeCheckStmt(s->GetSequence().next, types2, values, ret_type);
       auto types3 = next_res.types;
       return TCStatement(MakeSeq(s->line_num, stmt_res.stmt, next_res.stmt),
                          types3);
     }
     case StatementKind::Assign: {
-      auto rhs_res = TypeCheckExp(s->u.assign.rhs, types, values, nullptr,
+      auto rhs_res = TypeCheckExp(s->GetAssign().rhs, types, values, nullptr,
                                   TCContext::ValueContext);
       auto rhs_t = rhs_res.type;
-      auto lhs_res = TypeCheckExp(s->u.assign.lhs, types, values, rhs_t,
+      auto lhs_res = TypeCheckExp(s->GetAssign().lhs, types, values, rhs_t,
                                   TCContext::ValueContext);
       auto lhs_t = lhs_res.type;
       ExpectType(s->line_num, "assign", lhs_t, rhs_t);
@@ -438,25 +439,25 @@ auto TypeCheckStmt(const Statement* s, TypeEnv types, Env values,
       return TCStatement(new_s, lhs_res.types);
     }
     case StatementKind::ExpressionStatement: {
-      auto res = TypeCheckExp(s->u.exp, types, values, nullptr,
+      auto res = TypeCheckExp(s->GetExpression(), types, values, nullptr,
                               TCContext::ValueContext);
       auto new_s = MakeExpStmt(s->line_num, res.exp);
       return TCStatement(new_s, types);
     }
     case StatementKind::If: {
-      auto cnd_res = TypeCheckExp(s->u.if_stmt.cond, types, values, nullptr,
+      auto cnd_res = TypeCheckExp(s->GetIf().cond, types, values, nullptr,
                                   TCContext::ValueContext);
       ExpectType(s->line_num, "condition of `if`", MakeBoolTypeVal(),
                  cnd_res.type);
       auto thn_res =
-          TypeCheckStmt(s->u.if_stmt.then_stmt, types, values, ret_type);
+          TypeCheckStmt(s->GetIf().then_stmt, types, values, ret_type);
       auto els_res =
-          TypeCheckStmt(s->u.if_stmt.else_stmt, types, values, ret_type);
+          TypeCheckStmt(s->GetIf().else_stmt, types, values, ret_type);
       auto new_s = MakeIf(s->line_num, cnd_res.exp, thn_res.stmt, els_res.stmt);
       return TCStatement(new_s, types);
     }
     case StatementKind::Return: {
-      auto res = TypeCheckExp(s->u.return_stmt, types, values, nullptr,
+      auto res = TypeCheckExp(s->GetReturn(), types, values, nullptr,
                               TCContext::ValueContext);
       if (ret_type->tag == ValKind::AutoTV) {
         // The following infers the return type from the first 'return'
@@ -470,17 +471,18 @@ auto TypeCheckStmt(const Statement* s, TypeEnv types, Env values,
     }
     case StatementKind::Continuation: {
       TCStatement body_result =
-          TypeCheckStmt(s->u.continuation.body, types, values, ret_type);
+          TypeCheckStmt(s->GetContinuation().body, types, values, ret_type);
       const Statement* new_continuation = MakeContinuationStatement(
-          s->line_num, *s->u.continuation.continuation_variable,
+          s->line_num, *s->GetContinuation().continuation_variable,
           body_result.stmt);
-      types.Set(*s->u.continuation.continuation_variable,
+      types.Set(*s->GetContinuation().continuation_variable,
                 MakeContinuationTypeVal());
       return TCStatement(new_continuation, types);
     }
     case StatementKind::Run: {
-      TCResult argument_result = TypeCheckExp(s->u.run.argument, types, values,
-                                              nullptr, TCContext::ValueContext);
+      TCResult argument_result =
+          TypeCheckExp(s->GetRun().argument, types, values, nullptr,
+                       TCContext::ValueContext);
       ExpectType(s->line_num, "argument of `run`", MakeContinuationTypeVal(),
                  argument_result.type);
       const Statement* new_run = MakeRun(s->line_num, argument_result.exp);
@@ -510,32 +512,32 @@ auto CheckOrEnsureReturn(const Statement* stmt, bool void_return, int line_num)
     case StatementKind::Match: {
       auto new_clauses =
           new std::list<std::pair<const Expression*, const Statement*>>();
-      for (auto i = stmt->u.match_stmt.clauses->begin();
-           i != stmt->u.match_stmt.clauses->end(); ++i) {
+      for (auto i = stmt->GetMatch().clauses->begin();
+           i != stmt->GetMatch().clauses->end(); ++i) {
         auto s = CheckOrEnsureReturn(i->second, void_return, stmt->line_num);
         new_clauses->push_back(std::make_pair(i->first, s));
       }
-      return MakeMatch(stmt->line_num, stmt->u.match_stmt.exp, new_clauses);
+      return MakeMatch(stmt->line_num, stmt->GetMatch().exp, new_clauses);
     }
     case StatementKind::Block:
-      return MakeBlock(
-          stmt->line_num,
-          CheckOrEnsureReturn(stmt->u.block.stmt, void_return, stmt->line_num));
+      return MakeBlock(stmt->line_num,
+                       CheckOrEnsureReturn(stmt->GetBlock().stmt, void_return,
+                                           stmt->line_num));
     case StatementKind::If:
-      return MakeIf(stmt->line_num, stmt->u.if_stmt.cond,
-                    CheckOrEnsureReturn(stmt->u.if_stmt.then_stmt, void_return,
+      return MakeIf(stmt->line_num, stmt->GetIf().cond,
+                    CheckOrEnsureReturn(stmt->GetIf().then_stmt, void_return,
                                         stmt->line_num),
-                    CheckOrEnsureReturn(stmt->u.if_stmt.else_stmt, void_return,
+                    CheckOrEnsureReturn(stmt->GetIf().else_stmt, void_return,
                                         stmt->line_num));
     case StatementKind::Return:
       return stmt;
     case StatementKind::Sequence:
-      if (stmt->u.sequence.next) {
-        return MakeSeq(stmt->line_num, stmt->u.sequence.stmt,
-                       CheckOrEnsureReturn(stmt->u.sequence.next, void_return,
-                                           stmt->line_num));
+      if (stmt->GetSequence().next) {
+        return MakeSeq(stmt->line_num, stmt->GetSequence().stmt,
+                       CheckOrEnsureReturn(stmt->GetSequence().next,
+                                           void_return, stmt->line_num));
       } else {
-        return CheckOrEnsureReturn(stmt->u.sequence.stmt, void_return,
+        return CheckOrEnsureReturn(stmt->GetSequence().stmt, void_return,
                                    stmt->line_num);
       }
     case StatementKind::Continuation:

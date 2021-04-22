@@ -28,60 +28,113 @@ enum class StatementKind {
   Await,         // Pause execution of the continuation.
 };
 
+struct Statement;
+
+struct Assignment {
+  const Expression* lhs;
+  const Expression* rhs;
+};
+
+struct VariableDefinition {
+  const Expression* pat;
+  const Expression* init;
+};
+
+struct IfStatement {
+  const Expression* cond;
+  const Statement* then_stmt;
+  const Statement* else_stmt;
+};
+
+struct Sequence {
+  const Statement* stmt;
+  const Statement* next;
+};
+
+struct Block {
+  const Statement* stmt;
+};
+
+struct While {
+  const Expression* cond;
+  const Statement* body;
+};
+
+struct Match {
+  const Expression* exp;
+  std::list<std::pair<const Expression*, const Statement*>>* clauses;
+};
+
+struct Continuation {
+  std::string* continuation_variable;
+  const Statement* body;
+};
+
+struct Run {
+  const Expression* argument;
+};
+
 struct Statement {
+  // TODO: change Statement to a class and make all members private
   int line_num;
   StatementKind tag;
 
+  const Expression* GetExpression() const;
+  Assignment GetAssign() const;
+  VariableDefinition GetVariableDefinition() const;
+  IfStatement GetIf() const;
+  const Expression* GetReturn() const;
+  Sequence GetSequence() const;
+  Block GetBlock() const;
+  While GetWhile() const;
+  Match GetMatch() const;
+  Continuation GetContinuation() const;
+  Run GetRun() const;
+
+ private:
   union {
     const Expression* exp;
-
-    struct {
-      const Expression* lhs;
-      const Expression* rhs;
-    } assign;
-
-    struct {
-      const Expression* pat;
-      const Expression* init;
-    } variable_definition;
-
-    struct {
-      const Expression* cond;
-      const Statement* then_stmt;
-      const Statement* else_stmt;
-    } if_stmt;
-
+    Assignment assign;
+    VariableDefinition variable_definition;
+    IfStatement if_stmt;
     const Expression* return_stmt;
-
-    struct {
-      const Statement* stmt;
-      const Statement* next;
-    } sequence;
-
-    struct {
-      const Statement* stmt;
-    } block;
-
-    struct {
-      const Expression* cond;
-      const Statement* body;
-    } while_stmt;
-
-    struct {
-      const Expression* exp;
-      std::list<std::pair<const Expression*, const Statement*>>* clauses;
-    } match_stmt;
-
-    struct {
-      std::string* continuation_variable;
-      const Statement* body;
-    } continuation;
-
-    struct {
-      const Expression* argument;
-    } run;
-
+    Sequence sequence;
+    Block block;
+    While while_stmt;
+    Match match_stmt;
+    Continuation continuation;
+    Run run;
   } u;
+
+  // TODO: replace these constructors functions with real constructors
+  friend auto MakeExpStmt(int line_num, const Expression* exp)
+      -> const Statement*;
+  friend auto MakeAssign(int line_num, const Expression* lhs,
+                         const Expression* rhs) -> const Statement*;
+  friend auto MakeVarDef(int line_num, const Expression* pat,
+                         const Expression* init) -> const Statement*;
+  friend auto MakeIf(int line_num, const Expression* cond,
+                     const Statement* then_stmt, const Statement* else_stmt)
+      -> const Statement*;
+  friend auto MakeReturn(int line_num, const Expression* e) -> const Statement*;
+  friend auto MakeSeq(int line_num, const Statement* s1, const Statement* s2)
+      -> const Statement*;
+  friend auto MakeBlock(int line_num, const Statement* s) -> const Statement*;
+  friend auto MakeWhile(int line_num, const Expression* cond,
+                        const Statement* body) -> const Statement*;
+  friend auto MakeBreak(int line_num) -> const Statement*;
+  friend auto MakeContinue(int line_num) -> const Statement*;
+  friend auto MakeMatch(
+      int line_num, const Expression* exp,
+      std::list<std::pair<const Expression*, const Statement*>>* clauses)
+      -> const Statement*;
+  friend auto MakeContinuationStatement(int line_num,
+                                        std::string continuation_variable,
+                                        const Statement* body)
+      -> const Statement*;
+  friend auto MakeRun(int line_num, const Expression* argument)
+      -> const Statement*;
+  friend auto MakeAwait(int line_num) -> const Statement*;
 };
 
 auto MakeExpStmt(int line_num, const Expression* exp) -> const Statement*;

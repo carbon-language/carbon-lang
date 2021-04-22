@@ -817,13 +817,13 @@ void StepStmt() {
     case StatementKind::Match:
       //    { { (match (e) ...) :: C, E, F} :: S, H}
       // -> { { e :: (match ([]) ...) :: C, E, F} :: S, H}
-      frame->todo.Push(MakeExpAct(stmt->u.match_stmt.exp));
+      frame->todo.Push(MakeExpAct(stmt->GetMatch().exp));
       act->pos++;
       break;
     case StatementKind::While:
       //    { { (while (e) s) :: C, E, F} :: S, H}
       // -> { { e :: (while ([]) s) :: C, E, F} :: S, H}
-      frame->todo.Push(MakeExpAct(stmt->u.while_stmt.cond));
+      frame->todo.Push(MakeExpAct(stmt->GetWhile().cond));
       act->pos++;
       break;
     case StatementKind::Break:
@@ -853,10 +853,10 @@ void StepStmt() {
       break;
     case StatementKind::Block: {
       if (act->pos == -1) {
-        if (stmt->u.block.stmt) {
+        if (stmt->GetBlock().stmt) {
           auto* scope = new Scope(CurrentEnv(state), {});
           frame->scopes.Push(scope);
-          frame->todo.Push(MakeStmtAct(stmt->u.block.stmt));
+          frame->todo.Push(MakeStmtAct(stmt->GetBlock().stmt));
           act->pos++;
         } else {
           frame->todo.Pop();
@@ -872,40 +872,40 @@ void StepStmt() {
     case StatementKind::VariableDefinition:
       //    { {(var x = e) :: C, E, F} :: S, H}
       // -> { {e :: (var x = []) :: C, E, F} :: S, H}
-      frame->todo.Push(MakeExpAct(stmt->u.variable_definition.init));
+      frame->todo.Push(MakeExpAct(stmt->GetVariableDefinition().init));
       act->pos++;
       break;
     case StatementKind::ExpressionStatement:
       //    { {e :: C, E, F} :: S, H}
       // -> { {e :: C, E, F} :: S, H}
-      frame->todo.Push(MakeExpAct(stmt->u.exp));
+      frame->todo.Push(MakeExpAct(stmt->GetExpression()));
       break;
     case StatementKind::Assign:
       //    { {(lv = e) :: C, E, F} :: S, H}
       // -> { {lv :: ([] = e) :: C, E, F} :: S, H}
-      frame->todo.Push(MakeLvalAct(stmt->u.assign.lhs));
+      frame->todo.Push(MakeLvalAct(stmt->GetAssign().lhs));
       act->pos++;
       break;
     case StatementKind::If:
       //    { {(if (e) then_stmt else else_stmt) :: C, E, F} :: S, H}
       // -> { { e :: (if ([]) then_stmt else else_stmt) :: C, E, F} :: S, H}
-      frame->todo.Push(MakeExpAct(stmt->u.if_stmt.cond));
+      frame->todo.Push(MakeExpAct(stmt->GetIf().cond));
       act->pos++;
       break;
     case StatementKind::Return:
       //    { {return e :: C, E, F} :: S, H}
       // -> { {e :: return [] :: C, E, F} :: S, H}
-      frame->todo.Push(MakeExpAct(stmt->u.return_stmt));
+      frame->todo.Push(MakeExpAct(stmt->GetReturn()));
       act->pos++;
       break;
     case StatementKind::Sequence:
       //    { { (s1,s2) :: C, E, F} :: S, H}
       // -> { { s1 :: s2 :: C, E, F} :: S, H}
       frame->todo.Pop(1);
-      if (stmt->u.sequence.next) {
-        frame->todo.Push(MakeStmtAct(stmt->u.sequence.next));
+      if (stmt->GetSequence().next) {
+        frame->todo.Push(MakeStmtAct(stmt->GetSequence().next));
       }
-      frame->todo.Push(MakeStmtAct(stmt->u.sequence.stmt));
+      frame->todo.Push(MakeStmtAct(stmt->GetSequence().stmt));
       break;
     case StatementKind::Continuation: {
       // Create a continuation object by creating a frame similar the
@@ -916,7 +916,7 @@ void StepStmt() {
       Stack<Action*> todo;
       todo.Push(
           MakeStmtAct(MakeReturn(stmt->line_num, MakeUnit(stmt->line_num))));
-      todo.Push(MakeStmtAct(stmt->u.continuation.body));
+      todo.Push(MakeStmtAct(stmt->GetContinuation().body));
       Frame* continuation_frame = new Frame("__continuation", scopes, todo);
       Address continuation_address =
           state->AllocateValue(MakeContinuation({continuation_frame}));
@@ -924,14 +924,14 @@ void StepStmt() {
       continuation_frame->continuation = continuation_address;
       // Bind the continuation object to the continuation variable
       frame->scopes.Top()->values.Set(
-          *stmt->u.continuation.continuation_variable, continuation_address);
+          *stmt->GetContinuation().continuation_variable, continuation_address);
       // Pop the continuation statement.
       frame->todo.Pop();
       break;
     }
     case StatementKind::Run:
       // Evaluate the argument of the run statement.
-      frame->todo.Push(MakeExpAct(stmt->u.run.argument));
+      frame->todo.Push(MakeExpAct(stmt->GetRun().argument));
       act->pos++;
       break;
     case StatementKind::Await:
@@ -1243,7 +1243,7 @@ void HandleValue() {
         case StatementKind::VariableDefinition: {
           if (act->pos == 1) {
             frame->todo.Pop(1);
-            frame->todo.Push(MakeExpAct(stmt->u.variable_definition.pat));
+            frame->todo.Push(MakeExpAct(stmt->GetVariableDefinition().pat));
           } else if (act->pos == 2) {
             //    { { v :: (x = []) :: C, E, F} :: S, H}
             // -> { { C, E(x := a), F} :: S, H(a := copy(v))}
@@ -1270,7 +1270,7 @@ void HandleValue() {
             //    { { a :: ([] = e) :: C, E, F} :: S, H}
             // -> { { e :: (a = []) :: C, E, F} :: S, H}
             frame->todo.Pop(1);
-            frame->todo.Push(MakeExpAct(stmt->u.assign.rhs));
+            frame->todo.Push(MakeExpAct(stmt->GetAssign().rhs));
           } else if (act->pos == 2) {
             //    { { v :: (a = []) :: C, E, F} :: S, H}
             // -> { { C, E, F} :: S, H(a := v)}
@@ -1286,13 +1286,13 @@ void HandleValue() {
             //      S, H}
             // -> { { then_stmt :: C, E, F } :: S, H}
             frame->todo.Pop(2);
-            frame->todo.Push(MakeStmtAct(stmt->u.if_stmt.then_stmt));
-          } else if (stmt->u.if_stmt.else_stmt) {
+            frame->todo.Push(MakeStmtAct(stmt->GetIf().then_stmt));
+          } else if (stmt->GetIf().else_stmt) {
             //    { {false :: if ([]) then_stmt else else_stmt :: C, E, F} ::
             //      S, H}
             // -> { { else_stmt :: C, E, F } :: S, H}
             frame->todo.Pop(2);
-            frame->todo.Push(MakeStmtAct(stmt->u.if_stmt.else_stmt));
+            frame->todo.Push(MakeStmtAct(stmt->GetIf().else_stmt));
           } else {
             frame->todo.Pop(2);
           }
@@ -1304,7 +1304,7 @@ void HandleValue() {
             frame->todo.Pop(1);
             frame->todo.Top()->pos = -1;
             frame->todo.Top()->results.clear();
-            frame->todo.Push(MakeStmtAct(stmt->u.while_stmt.body));
+            frame->todo.Push(MakeStmtAct(stmt->GetWhile().body));
           } else {
             //    { {false :: (while ([]) s) :: C, E, F} :: S, H}
             // -> { { C, E, F } :: S, H}
@@ -1326,11 +1326,11 @@ void HandleValue() {
           // * ...
           auto clause_num = (act->pos - 1) / 2;
           if (clause_num >=
-              static_cast<int>(stmt->u.match_stmt.clauses->size())) {
+              static_cast<int>(stmt->GetMatch().clauses->size())) {
             frame->todo.Pop(2);
             break;
           }
-          auto c = stmt->u.match_stmt.clauses->begin();
+          auto c = stmt->GetMatch().clauses->begin();
           std::advance(c, clause_num);
 
           if (act->pos % 2 == 1) {
@@ -1361,9 +1361,9 @@ void HandleValue() {
               act->pos++;
               clause_num = (act->pos - 1) / 2;
               if (clause_num <
-                  static_cast<int>(stmt->u.match_stmt.clauses->size())) {
+                  static_cast<int>(stmt->GetMatch().clauses->size())) {
                 // interpret the next clause
-                c = stmt->u.match_stmt.clauses->begin();
+                c = stmt->GetMatch().clauses->begin();
                 std::advance(c, clause_num);
                 frame->todo.Pop(1);
                 frame->todo.Push(MakeExpAct(c->first));
