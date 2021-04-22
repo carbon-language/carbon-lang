@@ -380,7 +380,11 @@ statically known at the callsite. Other limitations are
 **Nice to have:** It is desirable that the majority of functions with generic
 parameters also support the dynamic strategy. Specific features may prevent the
 compiler from using the dynamic strategy, but they should ideally be relatively
-rare, and easy to identify.
+rare, and easy to identify. Language features should avoid making it observable
+whether function code generated once or many times. For example, you should not
+be able to take the address of a function with generic parameters, or determine
+if a function was instantiated more than once using function-local static
+variables.
 
 In addition, the user may opt in to using the dynamic strategy in specific
 cases. This could be just to control binary size in cases the user knows are not
