@@ -71,7 +71,7 @@ given a function definition, but more checking of the definition is required
 after seeing the call sites (and you know which specializations are needed).
 
 Read more here:
-[Carbon Generics: Terminology: "Generic versus template arguments" section](terminology.md#generic-versus-template-parameters).
+[Carbon Generics: Terminology: "Generic versus template parameters" section](terminology.md#generic-versus-template-parameters).
 
 ## Goals: Generics
 
@@ -83,7 +83,7 @@ In this proposal we try and define a generics system that has these properties
 to allow migration from templates:
 
 -   Templated code (perhaps migrated from C++) can be converted to generics
-    incrementally, one function or argument at a time. Typically this would
+    incrementally, one function or parameter at a time. Typically this would
     involve determining the interfaces that generic types need to implement to
     call the function, proving the API the function expects.
 -   It should be legal to call templated code from generic code when it would
@@ -91,8 +91,8 @@ to allow migration from templates:
     otherwise. This is to allow more templated functions to be converted to
     generics, instead of requiring them to be converted specifically in
     bottom-up order.
--   Converting from a template to a generic argument should be safe -- it should
-    either fail to compile or work, never silently change semantics.
+-   Converting from a template to a generic parameter should be safe -- it
+    should either fail to compile or work, never silently change semantics.
 -   We should minimize the effort to convert from template code to generic code.
     Ideally it should just require specifying the type constraints, affecting
     just the signature of the function, not its body.
@@ -132,7 +132,7 @@ PrintXs_Regular(n); // Prints: XXX
 
 ### Basic generics
 
-What would it mean to change the argument to be a generic argument?
+What would it mean to change the parameter to be a generic parameter?
 
 ```
 fn PrintXs_Generic(Int:$ n) {
@@ -145,13 +145,13 @@ fn PrintXs_Generic(Int:$ n) {
 
 PrintXs_Generic(1);  // Prints: X
 PrintXs_Generic(2);  // Prints: XX
-var Int: n = 3;
-PrintXs_Generic(n);  // Compile error: value for generic argument `n`
+var Int: m = 3;
+PrintXs_Generic(m);  // Compile error: value for generic parameter `n`
                      // unknown at compile time.
 ```
 
 For the definition of the function there is only one difference: we added a `$`
-to indicate that the argument named `n` is generic. The body of the function
+to indicate that the parameter named `n` is generic. The body of the function
 type checks using the same logic as `PrintXs_Regular`. However, callers must be
 able to know the value of the argument at compile time. This allows the compiler
 to adopt a code generation strategy that creates a _specialization_ of the
@@ -166,11 +166,11 @@ Print("X");
 Print("X");
 ```
 
-Since a function with a generic argument can have many different addresses, we
+Since a function with a generic parameter can have many different addresses, we
 have this rule:
 
 **Rule:** It is illegal to take the address of any function with generic
-arguments (similarly template arguments).
+parameters (similarly template parameters).
 
 This rule also makes the difference between the compiler generating separate
 specializations or using a single generated function with runtime dynamic
@@ -189,9 +189,9 @@ constructs.
 
 ### Basic templates
 
-For this function, we could change the argument to be a template argument by
+For this function, we could change the parameter to be a template parameter by
 replacing "`Int:$ n`" with "`Int:$$ n`", but there would not be a difference
-that you would observe. However, with template arguments we would have more
+that you would observe. However, with template parameters we would have more
 capabilities inside the function, so we could write this:
 
 ```
@@ -207,8 +207,8 @@ fn PrintXs_Template(Int:$$ n) {
 
 PrintXs_Template(1);  // Prints: X (using Print(Char))
 PrintXs_Template(2);  // Prints: XX (using Print(String))
-var Int: n = 3;
-PrintXs_Template(n);  // Compile error: value for template argument `n`
+var Int: m = 3;
+PrintXs_Template(m);  // Compile error: value for template parameter `n`
                       // unknown at compile time.
 PrintXs_Template(3);  // Compile error: NumXs(3) undefined.
 ```
@@ -257,14 +257,14 @@ var FixedArray(String, 3): a = ...;
 PrintArraySize(&a);  // Prints: 3
 ```
 
-What happens here is the type for the `array` argument is determined from the
+What happens here is the type for the `array` parameter is determined from the
 value passed in, and the pattern-matching process used to see if the types match
 finds that it does match if `n` is set to `3`.
 
-Normally you would pass in an implicit argument as a generic or template, not as
-a regular argument. This avoids overhead from having to support types (like the
-type of `array` inside the `PrintArraySize` function body) that are only fully
-known with dynamic information. For example:
+Normally you would pass in an implicit parameter as a generic or template, not
+as a regular parameter. This avoids overhead from having to support types (like
+the type of `array` inside the `PrintArraySize` function body) that are only
+fully known with dynamic information. For example:
 
 ```
 fn PrintStringArray[Int:$ n](Ptr(FixedArray(String, n)): array) {
@@ -285,7 +285,7 @@ fn Illegal[Int:$ n](Int: i) -> Bool { return i < n; }
 
 ### Mixing
 
--   A function can have a mix of generic, template, and regular arguments.
+-   A function can have a mix of generic, template, and regular parameters.
 -   Can pass a template or generic value to a generic or regular parameter.
 -   There are restrictions passing a generic value to a template parameter,
     discussed in a (dedicated
@@ -297,7 +297,7 @@ You may also have local generic constants as members of types. Just like generic
 parameters, they have compile-time, not runtime, storage. You may also have
 template constant members, with the difference that template constant members
 can use the actual value of the member in type checking. In both cases, these
-can be initialized with values computed from generic/template arguments, or
+can be initialized with values computed from generic/template parameters, or
 other things that are effectively constant and/or available at compile time.
 
 We also support local generic constants in functions:
@@ -333,8 +333,8 @@ particular type and name.
 
 Recall, from
 [the "Difference between templates and generics" section above](#difference-between-templates-and-generics),
-that we fully check functions with generic arguments at the time they are
-defined, while functions with template arguments can use information from the
+that we fully check functions with generic parameters at the time they are
+defined, while functions with template parameters can use information from the
 caller.
 
 If you have a value of a generic type, you need to provide constraints on that
@@ -345,9 +345,9 @@ type doesn't support that operation, but that will be reported at the call site
 not the function body; other call sites that call the same function with
 different types may be fine.
 
-So while you can define constraints for template type arguments, they are needed
-for generic type arguments. In fact type constraints are the main thing we need
-to add to support generic type arguments, beyond what is described in
+So while you can define constraints for template type parameters, they are
+needed for generic type parameters. In fact type constraints are the main thing
+we need to add to support generic type parameters, beyond what is described in
 [the "non-type generics" section above](#non-type-generics).
 
 ## Proposed programming model
