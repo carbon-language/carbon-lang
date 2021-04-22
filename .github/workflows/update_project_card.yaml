@@ -61,6 +61,7 @@ jobs:
                                  "decision: accepted",
                                  "decision: deferred"]}]
           # I tried making the project filter work, but when I tried to put the
-          # project into the filter it didn't work, so I used the `if` instead.
+          # project into the filter the action stopped matching, so I used the
+          # `if` instead.
           projectfilter-config: '{"include": ["*"]}'
           repo-token: ${{ secrets.GITHUB_TOKEN }}
