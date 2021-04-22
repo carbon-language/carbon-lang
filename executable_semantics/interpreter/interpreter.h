@@ -59,26 +59,40 @@ struct Frame {
         continuation(UINT_MAX) {}
 };
 
+// A Heap represents the abstract machine's dynamically allocated memory.
 class Heap {
  public:
+  // Constructs an empty Heap.
+  Heap() = default;
+
+  Heap(const Heap&) = delete;
+  Heap& operator=(const Heap&) = delete;
+
   // Returns the value at the given address in the heap after
   // checking that it is alive.
   auto Read(Address a, int line_num) -> const Value*;
+
   // Writes the given value at the address in the heap after
   // checking that the address is alive.
   auto Write(Address a, const Value* v, int line_num) -> void;
-  // Print the value at the given address to the stream `out`.
-  auto PrintAddress(Address a, std::ostream& out) -> void;
+
   // Put the given value on the heap and mark it as alive.
   auto AllocateValue(const Value* v) -> Address;
+
   // Marks the object at this address, and all of its sub-objects, as dead.
   auto Deallocate(Address address) -> void;
+
+  // Print the value at the given address to the stream `out`.
+  auto PrintAddress(Address a, std::ostream& out) -> void;
+
   // Print all the values on the heap to the stream `out`.
   auto PrintHeap(std::ostream& out) -> void;
 
  private:
   // Signal an error if the address is no longer alive.
   void CheckAlive(Address address, int line_num);
+
+  // Marks all sub-objects of this value as dead.
   void DeallocateSubObjects(const Value* val);
 
   std::vector<const Value*> heap_;

@@ -124,7 +124,6 @@ auto CopyVal(const Value* val, int line_num) -> const Value* {
   }
 }
 
-// Marks all of the sub-objects of this value as dead.
 void Heap::DeallocateSubObjects(const Value* val) {
   switch (val->tag) {
     case ValKind::AltV:
