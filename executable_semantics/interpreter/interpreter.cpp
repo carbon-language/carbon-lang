@@ -38,7 +38,7 @@ auto State::AllocateValue(const Value* v) -> Address {
   // or to leave it up to the caller.
   Address a = heap_.size();
   heap_.push_back(new Value(*v));
-  this->alive.push_back(true);
+  alive_.push_back(true);
   return a;
 }
 
@@ -53,7 +53,7 @@ auto State::WriteToMemory(Address a, const Value* v, int line_num) -> void {
 }
 
 void State::CheckAlive(Address address, int line_num) {
-  if (!this->alive[address]) {
+  if (!alive_[address]) {
     std::cerr << line_num << ": undefined behavior: access to dead value ";
     PrintValue(heap_[address], std::cerr);
     std::cerr << std::endl;
@@ -142,8 +142,8 @@ void KillSubObjects(const Value* val) {
 }
 
 void State::KillObject(Address address) {
-  if (this->alive[address]) {
-    this->alive[address] = false;
+  if (alive_[address]) {
+    alive_[address] = false;
     KillSubObjects(heap_[address]);
   } else {
     std::cerr << "runtime error, killing an already dead value" << std::endl;
@@ -192,7 +192,7 @@ void State::PrintHeap(std::ostream& out) {
 }
 
 auto State::PrintAddress(Address a, std::ostream& out) -> void {
-  if (!this->alive[a]) {
+  if (!alive_[a]) {
     out << "!!";
   }
   PrintValue(this->heap_[a], out);

@@ -62,7 +62,6 @@ struct Frame {
 // TODO(geoffromer): Make this a class, with all members private
 struct State {
   Stack<Frame*> stack;
-  std::vector<bool> alive;
 
   // Returns the value at the given address in the heap after
   // checking that it is alive.
@@ -83,6 +82,7 @@ struct State {
 
  private:
   std::vector<const Value*> heap_;
+  std::vector<bool> alive_;
 };
 
 extern State* state;
