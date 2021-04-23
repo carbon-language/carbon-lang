@@ -338,14 +338,13 @@ auto TypeEqual(const Value* t1, const Value* t2) -> bool {
         return false;
       }
       for (size_t i = 0; i < t1->u.tuple.elements->size(); ++i) {
-        std::optional<Address> t2_field =
-            FindTupleField((*t1->u.tuple.elements)[i].name, t2);
-        if (t2_field == std::nullopt) {
+        if ((*t1->u.tuple.elements)[i].name !=
+            (*t2->u.tuple.elements)[i].name) {
           return false;
         }
         if (!TypeEqual(
                 state->ReadFromMemory((*t1->u.tuple.elements)[i].address, 0),
-                state->ReadFromMemory(*t2_field, 0))) {
+                state->ReadFromMemory((*t2->u.tuple.elements)[i].address, 0))) {
           return false;
         }
       }
@@ -354,9 +353,13 @@ auto TypeEqual(const Value* t1, const Value* t2) -> bool {
     case ValKind::IntTV:
     case ValKind::BoolTV:
     case ValKind::ContinuationTV:
+    case ValKind::TypeTV:
       return true;
     default:
       std::cerr << "TypeEqual used to compare non-type values" << std::endl;
+      PrintValue(t1, std::cerr);
+      std::cerr << std::endl;
+      PrintValue(t2, std::cerr);
       exit(-1);
   }
 }

@@ -149,10 +149,19 @@ auto MakeTuple(int line_num, std::vector<FieldInitializer>* args)
   e->line_num = line_num;
   e->tag = ExpressionKind::Tuple;
   int i = 0;
+  bool seen_named_member = false;
   for (auto& arg : *args) {
     if (arg.name == "") {
+      if (seen_named_member) {
+        std::cerr << line_num
+                  << ": positional members must come before named members"
+                  << std::endl;
+        exit(-1);
+      }
       arg.name = std::to_string(i);
       ++i;
+    } else {
+      seen_named_member = true;
     }
   }
   e->u.tuple.fields = args;

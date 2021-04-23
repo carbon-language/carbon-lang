@@ -13,6 +13,7 @@
 
 #include "executable_semantics/ast/function_definition.h"
 #include "executable_semantics/interpreter/interpreter.h"
+#include "executable_semantics/tracing_flag.h"
 
 namespace Carbon {
 
@@ -97,6 +98,26 @@ auto ReifyType(const Value* t, int line_num) -> const Expression* {
 //    whether it's a position that expects a value, a pattern, or a type.
 auto TypeCheckExp(const Expression* e, TypeEnv types, Env values,
                   const Value* expected, TCContext context) -> TCResult {
+  if (tracing_output) {
+    switch (context) {
+      case TCContext::ValueContext:
+        std::cout << "checking expression ";
+        break;
+      case TCContext::PatternContext:
+        std::cout << "checking pattern, ";
+        if (expected) {
+          std::cout << "expecting ";
+          PrintValue(expected, std::cerr);
+        }
+        std::cout << ", ";
+        break;
+      case TCContext::TypeContext:
+        std::cout << "checking type ";
+        break;
+    }
+    PrintExp(e);
+    std::cout << std::endl;
+  }
   switch (e->tag) {
     case ExpressionKind::PatternVariable: {
       if (context != TCContext::PatternContext) {
@@ -117,6 +138,8 @@ auto TypeCheckExp(const Expression* e, TypeEnv types, Env values,
         } else {
           t = expected;
         }
+      } else if (expected) {
+        ExpectType(e->line_num, "pattern variable", t, expected);
       }
       auto new_e = MakeVarPat(e->line_num, *e->u.pattern_variable.name,
                               ReifyType(t, e->line_num));
@@ -153,19 +176,32 @@ auto TypeCheckExp(const Expression* e, TypeEnv types, Env values,
       auto new_args = new std::vector<FieldInitializer>();
       auto arg_types = new std::vector<TupleElement>();
       auto new_types = types;
+      if (expected && expected->tag != ValKind::TupleV) {
+        std::cerr << e->line_num << ": compilation error, didn't expect a tuple"
+                  << std::endl;
+        exit(-1);
+      }
+      if (expected &&
+          e->u.tuple.fields->size() != expected->u.tuple.elements->size()) {
+        std::cerr << e->line_num
+                  << ": compilation error, tuples of different length"
+                  << std::endl;
+        exit(-1);
+      }
       int i = 0;
       for (auto arg = e->u.tuple.fields->begin();
            arg != e->u.tuple.fields->end(); ++arg, ++i) {
         const Value* arg_expected = nullptr;
         if (expected && expected->tag == ValKind::TupleV) {
-          std::optional<Address> expected_field =
-              FindTupleField(arg->name, expected);
-          if (expected_field == std::nullopt) {
-            std::cerr << e->line_num << ": compilation error, missing field "
-                      << arg->name << std::endl;
+          if ((*expected->u.tuple.elements)[i].name != arg->name) {
+            std::cerr << e->line_num
+                      << ": compilation error, field names do not match, "
+                      << "expected " << (*expected->u.tuple.elements)[i].name
+                      << " but got " << arg->name << std::endl;
             exit(-1);
           }
-          arg_expected = state->ReadFromMemory(*expected_field, e->line_num);
+          arg_expected = state->ReadFromMemory(
+              (*expected->u.tuple.elements)[i].address, e->line_num);
         }
         auto arg_res = TypeCheckExp(arg->expression, new_types, values,
                                     arg_expected, context);

@@ -1,0 +1,4 @@
+8: type error in pattern variable
+expected: (x = Int@2, y = Int@3)
+actual: (y = Int@0, x = Int@1)
+EXIT CODE: 255
