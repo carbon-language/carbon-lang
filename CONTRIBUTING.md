@@ -143,8 +143,7 @@ the Code of Conduct.
         [accept link](https://github.com/orgs/carbon-language/invitation?via_email=1)
         if you don't see the email.
 
--   [Discord](https://discord.com/app) is used for chat. **To
-    join:**
+-   [Discord](https://discord.com/app) is used for chat. **To join:**
 
     1.  Ask [an admin](docs/project/groups.md#admins) for an invite link.
         -   Please do not re-share the invite links: they're our only way to
