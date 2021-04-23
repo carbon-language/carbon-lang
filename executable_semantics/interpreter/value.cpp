@@ -332,13 +332,12 @@ auto TypeEqual(const Value* t1, const Value* t2) -> bool {
         return false;
       }
       for (size_t i = 0; i < t1->u.tuple.elts->size(); ++i) {
-        std::optional<Address> t2_field =
-            FindTupleField((*t1->u.tuple.elts)[i].first, t2);
-        if (t2_field == std::nullopt) {
+        if ((*t1->u.tuple.elts)[i].first != (*t2->u.tuple.elts)[i].first) {
           return false;
         }
-        if (!TypeEqual(state->heap.Read((*t1->u.tuple.elts)[i].second, 0),
-                       state->heap.Read(*t2_field, 0))) {
+        if (!TypeEqual(
+                state->heap.Read((*t1->u.tuple.elts)[i].second, 0),
+                state->heap.Read((*t2->u.tuple.elts)[i].second, 0))) {
           return false;
         }
       }
@@ -347,9 +346,13 @@ auto TypeEqual(const Value* t1, const Value* t2) -> bool {
     case ValKind::IntTV:
     case ValKind::BoolTV:
     case ValKind::ContinuationTV:
+    case ValKind::TypeTV:
       return true;
     default:
       std::cerr << "TypeEqual used to compare non-type values" << std::endl;
+      PrintValue(t1, std::cerr);
+      std::cerr << std::endl;
+      PrintValue(t2, std::cerr);
       exit(-1);
   }
 }
