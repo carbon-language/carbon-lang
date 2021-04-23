@@ -17,7 +17,7 @@ struct TypeChecker {
   /// The function currently being typechecked.
   var currentFunction: FunctionDefinition?
 
-  var toDeclaration = ASTDictionary<Identifier, Declaration>()
+  var declaration = ASTDictionary<Identifier, Declaration>()
   var declaredType = Dictionary<Declaration.Identity, Type>()
   var expressionType = ASTDictionary<Expression, Type>()
 
@@ -40,7 +40,7 @@ private extension TypeChecker {
     errors.append(CompileError(message, at: site, notes: notes))
   }
 
-  /// Returns the result of running `body(&self` in a new sub-scope of the
+  /// Returns the result of running `body(&self)` in a new sub-scope of the
   /// current one.
   mutating func inNewScope<R>(do body: (inout TypeChecker)->R) -> R {
     activeScopes.push([])
@@ -74,7 +74,7 @@ private extension TypeChecker {
       error("Un-declared name '\(use.text)'", at: use.site)
       return nil
     }
-    toDeclaration[use] = d
+    declaration[use] = d
     return d
   }
 
