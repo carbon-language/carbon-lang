@@ -335,9 +335,8 @@ auto TypeEqual(const Value* t1, const Value* t2) -> bool {
         if ((*t1->u.tuple.elts)[i].first != (*t2->u.tuple.elts)[i].first) {
           return false;
         }
-        if (!TypeEqual(
-                state->heap.Read((*t1->u.tuple.elts)[i].second, 0),
-                state->heap.Read((*t2->u.tuple.elts)[i].second, 0))) {
+        if (!TypeEqual(state->heap.Read((*t1->u.tuple.elts)[i].second, 0),
+                       state->heap.Read((*t2->u.tuple.elts)[i].second, 0))) {
           return false;
         }
       }

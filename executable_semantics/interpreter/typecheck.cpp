@@ -200,8 +200,8 @@ auto TypeCheckExp(const Expression* e, TypeEnv types, Env values,
                       << " but got " << arg->first << std::endl;
             exit(-1);
           }
-          arg_expected = state->heap.Read(
-              (*expected->u.tuple.elts)[i].second, e->line_num);
+          arg_expected = state->heap.Read((*expected->u.tuple.elts)[i].second,
+                                          e->line_num);
         }
         auto arg_res =
             TypeCheckExp(arg->second, new_types, values, arg_expected, context);
