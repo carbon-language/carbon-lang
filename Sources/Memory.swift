@@ -23,13 +23,10 @@ func fatal<R>(
 }
 
 struct Memory {
-  /// Returns the next uninitialized address bound to `t`.
+  /// Returns an uninitialized address bound to `t`.
   ///
   /// - Parameter `mutable`: `true` iff mutations of the Value at this address
   ///   will be allowed.
-  ///
-  /// - Note: if the last address allocated was `x`, the next one will be `x +
-  ///   1`.
   mutating func allocate(
     boundTo t: Type, from site: SourceRegion, mutable: Bool = false
   ) -> Address {
