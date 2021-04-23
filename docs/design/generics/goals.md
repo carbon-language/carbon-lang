@@ -387,14 +387,14 @@ if a function was instantiated more than once using function-local static
 variables.
 
 There are a few obstacles to supporting dynamic dispatch efficiently, which may
-limit the extent it is used automatically by implementations. For example, the following features would benefit
-substantially from guaranteed monomorphization:
+limit the extent it is used automatically by implementations. For example, the
+following features would benefit substantially from guaranteed monomorphization:
 
--   Field packing in struct layout. For example, packing a Bool into the lower
+-   Field packing in struct layout. For example, packing a `Bool` into the lower
     bits of a pointer, or packing bit-fields with generic widths.
--   Allocating local variables in stack storage. Without monomorphization, we would need to
-    perform dynamic memory allocation -- whether on the stack or the heap -- for
-    local variables whose sizes depend on generic parameters.
+-   Allocating local variables in stack storage. Without monomorphization, we
+    would need to perform dynamic memory allocation -- whether on the stack or
+    the heap -- for local variables whose sizes depend on generic parameters.
 -   Passing parameters to functions. We cannot pass values of generic types in
     registers.
 
@@ -402,11 +402,12 @@ While it is possible to address these with dynamic dispatch, handling some of
 them might have far-reaching and surprising performance implications. We don't
 want to compromise our goal for predictable performance.
 
-We will allow the user to explicitly opt-in to using the dynamic strategy in specific
-cases. This could be just to control binary size in cases the user knows are not
-performance sensitive, or it could be to get the additional capability of
-operating on values with dynamic types. We may need to restrict this in various
-ways to maintain efficiency, like Rust does with object-safe traits.
+We will allow the user to explicitly opt-in to using the dynamic strategy in
+specific cases. This could be just to control binary size in cases the user
+knows are not performance sensitive, or it could be to get the additional
+capability of operating on values with dynamic types. We may need to restrict
+this in various ways to maintain efficiency, like Rust does with object-safe
+traits.
 
 We also anticipate that the user may want to force the compiler to use the
 static strategy in specific cases. This might be to keep runtime performance
