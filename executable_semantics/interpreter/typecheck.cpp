@@ -13,6 +13,7 @@
 
 #include "executable_semantics/ast/function_definition.h"
 #include "executable_semantics/interpreter/interpreter.h"
+#include "executable_semantics/tracing_flag.h"
 
 namespace Carbon {
 
@@ -58,9 +59,9 @@ auto ReifyType(const Value* t, int line_num) -> const Expression* {
     case ValKind::TupleV: {
       auto args = new std::vector<std::pair<std::string, const Expression*>>();
       for (auto& field : *t->u.tuple.elts) {
-        args->push_back({field.first, ReifyType(state->ReadFromMemory(
-                                                    field.second, line_num),
-                                                line_num)});
+        args->push_back(
+            {field.first,
+             ReifyType(state->heap.Read(field.second, line_num), line_num)});
       }
       return MakeTuple(0, args);
     }
@@ -96,6 +97,26 @@ auto ReifyType(const Value* t, int line_num) -> const Expression* {
 //    whether it's a position that expects a value, a pattern, or a type.
 auto TypeCheckExp(const Expression* e, TypeEnv types, Env values,
                   const Value* expected, TCContext context) -> TCResult {
+  if (tracing_output) {
+    switch (context) {
+      case TCContext::ValueContext:
+        std::cout << "checking expression ";
+        break;
+      case TCContext::PatternContext:
+        std::cout << "checking pattern, ";
+        if (expected) {
+          std::cout << "expecting ";
+          PrintValue(expected, std::cerr);
+        }
+        std::cout << ", ";
+        break;
+      case TCContext::TypeContext:
+        std::cout << "checking type ";
+        break;
+    }
+    PrintExp(e);
+    std::cout << std::endl;
+  }
   switch (e->tag) {
     case ExpressionKind::PatternVariable: {
       if (context != TCContext::PatternContext) {
@@ -116,6 +137,8 @@ auto TypeCheckExp(const Expression* e, TypeEnv types, Env values,
         } else {
           t = expected;
         }
+      } else if (expected) {
+        ExpectType(e->line_num, "pattern variable", t, expected);
       }
       auto new_e = MakeVarPat(e->line_num, *e->u.pattern_variable.name,
                               ReifyType(t, e->line_num));
@@ -138,7 +161,7 @@ auto TypeCheckExp(const Expression* e, TypeEnv types, Env values,
             std::cerr << std::endl;
             exit(-1);
           }
-          auto field_t = state->ReadFromMemory(*field_address, e->line_num);
+          auto field_t = state->heap.Read(*field_address, e->line_num);
           auto new_e = MakeIndex(e->line_num, res.exp, MakeInt(e->line_num, i));
           return TCResult(new_e, field_t, res.types);
         }
@@ -153,25 +176,39 @@ auto TypeCheckExp(const Expression* e, TypeEnv types, Env values,
           new std::vector<std::pair<std::string, const Expression*>>();
       auto arg_types = new std::vector<std::pair<std::string, Address>>();
       auto new_types = types;
+      if (expected && expected->tag != ValKind::TupleV) {
+        std::cerr << e->line_num << ": compilation error, didn't expect a tuple"
+                  << std::endl;
+        exit(-1);
+      }
+      if (expected &&
+          e->u.tuple.fields->size() != expected->u.tuple.elts->size()) {
+        std::cerr << e->line_num
+                  << ": compilation error, tuples of different length"
+                  << std::endl;
+        exit(-1);
+      }
       int i = 0;
       for (auto arg = e->u.tuple.fields->begin();
            arg != e->u.tuple.fields->end(); ++arg, ++i) {
         const Value* arg_expected = nullptr;
         if (expected && expected->tag == ValKind::TupleV) {
-          std::optional<Address> expected_field =
-              FindTupleField(arg->first, expected);
-          if (expected_field == std::nullopt) {
-            std::cerr << e->line_num << ": compilation error, missing field "
-                      << arg->first << std::endl;
+          if ((*expected->u.tuple.elts)[i].first != arg->first) {
+            std::cerr << e->line_num
+                      << ": compilation error, field names do not match, "
+                      << "expected " << (*expected->u.tuple.elts)[i].first
+                      << " but got " << arg->first << std::endl;
             exit(-1);
           }
-          arg_expected = state->ReadFromMemory(*expected_field, e->line_num);
+          arg_expected = state->heap.Read((*expected->u.tuple.elts)[i].second,
+                                          e->line_num);
         }
         auto arg_res =
             TypeCheckExp(arg->second, new_types, values, arg_expected, context);
         new_types = arg_res.types;
         new_args->push_back(std::make_pair(arg->first, arg_res.exp));
-        arg_types->push_back({arg->first, state->AllocateValue(arg_res.type)});
+        arg_types->push_back(
+            {arg->first, state->heap.AllocateValue(arg_res.type)});
       }
       auto tuple_e = MakeTuple(e->line_num, new_args);
       auto tuple_t = MakeTupleVal(arg_types);
@@ -209,7 +246,7 @@ auto TypeCheckExp(const Expression* e, TypeEnv types, Env values,
               auto new_e =
                   MakeGetField(e->line_num, res.exp, *e->u.get_field.field);
               return TCResult(new_e,
-                              state->ReadFromMemory(field.second, e->line_num),
+                              state->heap.Read(field.second, e->line_num),
                               res.types);
             }
           }
@@ -679,11 +716,12 @@ auto FunctionDeclaration::TopLevel(TypeCheckContext& tops) const -> void {
 
 auto StructDeclaration::TopLevel(TypeCheckContext& tops) const -> void {
   auto st = TypeOfStructDef(&definition, tops.types, tops.values);
-  Address a = state->AllocateValue(st);
+  Address a = state->heap.AllocateValue(st);
   tops.values.Set(Name(), a);  // Is this obsolete?
   auto field_types = new std::vector<std::pair<std::string, Address>>();
   for (const auto& [field_name, field_value] : *st->u.struct_type.fields) {
-    field_types->push_back({field_name, state->AllocateValue(field_value)});
+    field_types->push_back(
+        {field_name, state->heap.AllocateValue(field_value)});
   }
   auto fun_ty = MakeFunTypeVal(MakeTupleVal(field_types), st);
   tops.types.Set(Name(), fun_ty);
@@ -696,7 +734,7 @@ auto ChoiceDeclaration::TopLevel(TypeCheckContext& tops) const -> void {
     alts->push_back(std::make_pair(a.first, t));
   }
   auto ct = MakeChoiceTypeVal(name, alts);
-  Address a = state->AllocateValue(ct);
+  Address a = state->heap.AllocateValue(ct);
   tops.values.Set(Name(), a);  // Is this obsolete?
   tops.types.Set(Name(), ct);
 }
