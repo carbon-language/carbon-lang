@@ -21,25 +21,26 @@ void PrintTypeEnv(TypeEnv types);
 enum class TCContext { ValueContext, PatternContext, TypeContext };
 
 struct TCResult {
-  TCResult(Expression* e, const Value* t, TypeEnv types)
+  TCResult(const Expression* e, const Value* t, TypeEnv types)
       : exp(e), type(t), types(types) {}
 
-  Expression* exp;
+  const Expression* exp;
   const Value* type;
   TypeEnv types;
 };
 
 struct TCStatement {
-  TCStatement(Statement* s, TypeEnv types) : stmt(s), types(types) {}
+  TCStatement(const Statement* s, TypeEnv types) : stmt(s), types(types) {}
 
-  Statement* stmt;
+  const Statement* stmt;
   TypeEnv types;
 };
 
-auto TypeCheckExp(Expression* e, TypeEnv types, Env values,
+auto TypeCheckExp(const Expression* e, TypeEnv types, Env values,
                   const Value* expected, TCContext context) -> TCResult;
 
-auto TypeCheckStmt(Statement*, TypeEnv, Env, Value const*&) -> TCStatement;
+auto TypeCheckStmt(const Statement*, TypeEnv, Env, Value const*&)
+    -> TCStatement;
 
 auto TypeCheckFunDef(struct FunctionDefinition*, TypeEnv)
     -> struct FunctionDefinition*;

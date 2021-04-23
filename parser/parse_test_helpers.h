@@ -310,12 +310,33 @@ auto MatchNode(Args... args) -> ExpectedNode {
 //                               MatchParameterList(MatchParameterListEnd()),
 //                               MatchDeclarationEnd(";")),
 //      MatchFileEnd()});
-#define CARBON_PARSE_NODE_KIND(kind)                  \
-  template <typename... Args>                         \
-  auto Match##kind(Args... args)->ExpectedNode {      \
-    return MatchNode(ParseNodeKind::kind(), args...); \
+#define CARBON_PARSE_NODE_KIND(kind)                             \
+  template <typename... Args>                                    \
+  auto Match##kind(Args... args)->ExpectedNode {                 \
+    return MatchNode(ParseNodeKind::kind(), std::move(args)...); \
   }
 #include "parse_node_kind.def"
+
+// Helper for matching a designator `lhs.rhs`.
+auto MatchDesignator(ExpectedNode lhs, std::string rhs) -> ExpectedNode {
+  return MatchDesignatorExpression(std::move(lhs), MatchDesignatedName(rhs));
+}
+
+// Helper for matching a function parameter list.
+template <typename... Args>
+auto MatchParameters(Args... args) -> ExpectedNode {
+  return MatchParameterList("(", std::move(args)..., MatchParameterListEnd());
+}
+
+// Helper for matching the statements in the body of a simple function
+// definition with no parameters.
+template <typename... Args>
+auto MatchFunctionWithBody(Args... args) -> ExpectedNode {
+  return MatchFunctionDeclaration(
+      MatchDeclaredName(), MatchParameters(),
+      MatchCodeBlock(std::move(args)..., MatchCodeBlockEnd()));
+}
+
 }  // namespace NodeMatchers
 
 }  // namespace Testing
