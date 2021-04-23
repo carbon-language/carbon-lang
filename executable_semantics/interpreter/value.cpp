@@ -213,13 +213,6 @@ auto MakeChoiceTypeVal(std::string name,
   return v;
 }
 
-auto State::PrintAddress(Address a, std::ostream& out) -> void {
-  if (!this->alive[a]) {
-    out << "!!";
-  }
-  PrintValue(this->heap[a], out);
-}
-
 auto PrintValue(const Value* val, std::ostream& out) -> void {
   switch (val->tag) {
     case ValKind::AltConsV: {
@@ -234,7 +227,7 @@ auto PrintValue(const Value* val, std::ostream& out) -> void {
     case ValKind::AltV: {
       out << "alt " << *val->u.alt.choice_name << "." << *val->u.alt.alt_name
           << " ";
-      state->PrintAddress(val->u.alt.argument, out);
+      state->heap.PrintAddress(val->u.alt.argument, out);
       break;
     }
     case ValKind::StructV: {
@@ -253,7 +246,7 @@ auto PrintValue(const Value* val, std::ostream& out) -> void {
         }
 
         out << element.name << " = ";
-        state->PrintAddress(element.address, out);
+        state->heap.PrintAddress(element.address, out);
         out << "@" << element.address;
       }
       out << ")";
@@ -343,8 +336,8 @@ auto TypeEqual(const Value* t1, const Value* t2) -> bool {
           return false;
         }
         if (!TypeEqual(
-                state->ReadFromMemory((*t1->u.tuple.elements)[i].address, 0),
-                state->ReadFromMemory((*t2->u.tuple.elements)[i].address, 0))) {
+                state->heap.Read((*t1->u.tuple.elements)[i].address, 0),
+                state->heap.Read((*t2->u.tuple.elements)[i].address, 0))) {
           return false;
         }
       }
@@ -379,8 +372,8 @@ static auto FieldsValueEqual(std::vector<TupleElement>* ts1,
     if (iter == ts2->end()) {
       return false;
     }
-    if (!ValueEqual(state->ReadFromMemory(element.address, line_num),
-                    state->ReadFromMemory(iter->address, line_num), line_num)) {
+    if (!ValueEqual(state->heap.Read(element.address, line_num),
+                    state->heap.Read(iter->address, line_num), line_num)) {
       return false;
     }
   }

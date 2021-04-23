@@ -61,8 +61,8 @@ auto ReifyType(const Value* t, int line_num) -> const Expression* {
       for (const TupleElement& field : *t->u.tuple.elements) {
         args->push_back(
             {.name = field.name,
-             .expression = ReifyType(
-                 state->ReadFromMemory(field.address, line_num), line_num)});
+             .expression = ReifyType(state->heap.Read(field.address, line_num),
+                                     line_num)});
       }
       return MakeTuple(0, args);
     }
@@ -162,7 +162,7 @@ auto TypeCheckExp(const Expression* e, TypeEnv types, Env values,
             std::cerr << std::endl;
             exit(-1);
           }
-          auto field_t = state->ReadFromMemory(*field_address, e->line_num);
+          auto field_t = state->heap.Read(*field_address, e->line_num);
           auto new_e = MakeIndex(e->line_num, res.exp, MakeInt(e->line_num, i));
           return TCResult(new_e, field_t, res.types);
         }
@@ -200,7 +200,7 @@ auto TypeCheckExp(const Expression* e, TypeEnv types, Env values,
                       << " but got " << arg->name << std::endl;
             exit(-1);
           }
-          arg_expected = state->ReadFromMemory(
+          arg_expected = state->heap.Read(
               (*expected->u.tuple.elements)[i].address, e->line_num);
         }
         auto arg_res = TypeCheckExp(arg->expression, new_types, values,
@@ -208,7 +208,8 @@ auto TypeCheckExp(const Expression* e, TypeEnv types, Env values,
         new_types = arg_res.types;
         new_args->push_back({.name = arg->name, .expression = arg_res.exp});
         arg_types->push_back(
-            {.name = arg->name, .address = state->AllocateValue(arg_res.type)});
+            {.name = arg->name,
+             .address = state->heap.AllocateValue(arg_res.type)});
       }
       auto tuple_e = MakeTuple(e->line_num, new_args);
       auto tuple_t = MakeTupleVal(arg_types);
@@ -246,7 +247,7 @@ auto TypeCheckExp(const Expression* e, TypeEnv types, Env values,
               auto new_e =
                   MakeGetField(e->line_num, res.exp, *e->u.get_field.field);
               return TCResult(new_e,
-                              state->ReadFromMemory(field.address, e->line_num),
+                              state->heap.Read(field.address, e->line_num),
                               res.types);
             }
           }
@@ -712,12 +713,12 @@ auto FunctionDeclaration::TopLevel(TypeCheckContext& tops) const -> void {
 
 auto StructDeclaration::TopLevel(TypeCheckContext& tops) const -> void {
   auto st = TypeOfStructDef(&definition, tops.types, tops.values);
-  Address a = state->AllocateValue(st);
+  Address a = state->heap.AllocateValue(st);
   tops.values.Set(Name(), a);  // Is this obsolete?
   auto field_types = new std::vector<TupleElement>();
   for (const auto& [field_name, field_value] : *st->u.struct_type.fields) {
-    field_types->push_back(
-        {.name = field_name, .address = state->AllocateValue(field_value)});
+    field_types->push_back({.name = field_name,
+                            .address = state->heap.AllocateValue(field_value)});
   }
   auto fun_ty = MakeFunTypeVal(MakeTupleVal(field_types), st);
   tops.types.Set(Name(), fun_ty);
@@ -730,7 +731,7 @@ auto ChoiceDeclaration::TopLevel(TypeCheckContext& tops) const -> void {
     alts->push_back(std::make_pair(a.first, t));
   }
   auto ct = MakeChoiceTypeVal(name, alts);
-  Address a = state->AllocateValue(ct);
+  Address a = state->heap.AllocateValue(ct);
   tops.values.Set(Name(), a);  // Is this obsolete?
   tops.types.Set(Name(), ct);
 }
