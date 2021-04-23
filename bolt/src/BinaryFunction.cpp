@@ -1246,6 +1246,13 @@ bool BinaryFunction::disassemble() {
         const bool IsCondBranch = MIB->isConditionalBranch(Instruction);
         MCSymbol *TargetSymbol = nullptr;
 
+        if (BC.MIB->isUnsupportedBranch(Instruction.getOpcode())) {
+          setIgnored();
+          if (BinaryFunction *TargetFunc =
+              BC.getBinaryFunctionContainingAddress(TargetAddress))
+            TargetFunc->setIgnored();
+        }
+
         if (IsCall && containsAddress(TargetAddress)) {
           if (TargetAddress == getAddress()) {
             // Recursive call.

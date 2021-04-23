@@ -14,11 +14,19 @@
 # CHECK: BOLT-INFO
 
   .text
+  .section .text.startup,"ax",@progbits
+  .p2align 5,,31
   .globl main
   .type main, %function
-  .size main, .Lend1-main
 main:
-# FDATA: 0 [unknown] 0 1 main 0 0 510
+  jmp test_function
+
+.globl test_function
+.hidden test_function
+.type test_function,@function
+.align 32
+test_function:
+# FDATA: 0 main 0 1 test_function 0 0 510
   xorq %rcx, %rcx
   andq $3, %rdi
   jmpq *jumptbl(,%rdi,8)
@@ -33,8 +41,8 @@ main:
   movl $0x0, %eax
 .J1:
   jrcxz .BBend
-# FDATA: 1 main #.J1# 1 main #.BB2# 0 10
-# FDATA: 1 main #.J1# 1 main #.BBend# 0 500
+# FDATA: 1 test_function #.J1# 1 test_function #.BB2# 0 10
+# FDATA: 1 test_function #.J1# 1 test_function #.BBend# 0 500
 .BB2:
   movl $0x2, %eax
   jmp .BBend
