@@ -387,22 +387,22 @@ if a function was instantiated more than once using function-local static
 variables.
 
 There are a few obstacles to supporting dynamic dispatch efficiently, which may
-limit the extent this is supported. We expect the following to benefit
+limit the extent it is used automatically by implementations. For example, the following features would benefit
 substantially from guaranteed monomorphization:
 
--   field packing in struct layout (for example, packing a Bool into the lower
-    bits of a pointer, or packing bit-fields with generic widths),
--   local variables in stack storage (without monomorphization, we would need to
+-   Field packing in struct layout. For example, packing a Bool into the lower
+    bits of a pointer, or packing bit-fields with generic widths.
+-   Allocating local variables in stack storage. Without monomorphization, we would need to
     perform dynamic memory allocation -- whether on the stack or the heap -- for
-    local variables whose sizes depend on generic parameters),
--   function call interfaces (we cannot pass values of generic types in
-    registers).
+    local variables whose sizes depend on generic parameters.
+-   Passing parameters to functions. We cannot pass values of generic types in
+    registers.
 
 While it is possible to address these with dynamic dispatch, handling some of
 them might have far-reaching and surprising performance implications. We don't
 want to compromise our goal for predictable performance.
 
-We will allow the user may opt in to using the dynamic strategy in specific
+We will allow the user to explicitly opt-in to using the dynamic strategy in specific
 cases. This could be just to control binary size in cases the user knows are not
 performance sensitive, or it could be to get the additional capability of
 operating on values with dynamic types. We may need to restrict this in various
