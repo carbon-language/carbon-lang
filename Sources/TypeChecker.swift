@@ -21,8 +21,7 @@ struct TypeChecker {
   var declaredType = Dictionary<Declaration.Identity, Type>()
   var expressionType = ASTDictionary<Expression, Type>()
 
-  /// A mapping from names to the stack of declcarations they reference, with
-  /// the top of each stack being the declaration referenced in the current
+  /// A mapping from names to the declarations they reference in the current
   /// scope.
   var symbolTable: StackDictionary<String, Declaration> = .init()
 

@@ -2,7 +2,6 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-/*
 /// Function call evaluator.
 struct EvaluateCall: Action {
   /// Which function to call.
@@ -84,4 +83,3 @@ struct EvaluateCall: Action {
     }
   }
 }
-*/
