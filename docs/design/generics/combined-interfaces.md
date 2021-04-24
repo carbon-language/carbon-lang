@@ -109,6 +109,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Inferring associated types](#inferring-associated-types)
     -   [Field requirements](#field-requirements)
     -   [Generic type specialization](#generic-type-specialization)
+    -   [Bridge for C++ customization points](#bridge-for-c-customization-points)
 -   [Notes](#notes)
 -   [Broken links footnote](#broken-links-footnote)
 
@@ -4480,6 +4481,10 @@ example, we could have a specific optimized implementation of `MyType(Bool)` as
 long as it conformed to `MyTypeInteface(Bool)` or some extension. Similarly we
 should support partial specializations like `MyType(Ptr(T))`. Main problem is
 supporting this with the dynamic strategy.
+
+### Bridge for C++ customization points
+
+See details in [the goals document](goals.md#bridge-for-c-customization-points).
 
 ## Notes
 
