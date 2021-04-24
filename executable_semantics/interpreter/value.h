@@ -6,6 +6,7 @@
 #define EXECUTABLE_SEMANTICS_INTERPRETER_VALUE_H_
 
 #include <list>
+#include <optional>
 #include <vector>
 
 #include "executable_semantics/ast/statement.h"
@@ -16,10 +17,16 @@ namespace Carbon {
 struct Value;
 using Address = unsigned int;
 using VarValues = std::list<std::pair<std::string, const Value*>>;
+using VarAddresses = std::vector<std::pair<std::string, Address>>;
 
 auto FindInVarValues(const std::string& field, VarValues* inits)
     -> const Value*;
 auto FieldsEqual(VarValues* ts1, VarValues* ts2) -> bool;
+
+// Finds the field in `*tuple` named `name`, and returns its address, or
+// nullopt if there is no such field. `*tuple` must be a tuple value.
+auto FindTupleField(const std::string& name, const Value* tuple)
+    -> std::optional<Address>;
 
 enum class ValKind {
   IntV,
@@ -36,7 +43,6 @@ enum class ValKind {
   FunctionTV,
   PointerTV,
   AutoTV,
-  TupleTV,
   StructTV,
   ChoiceTV,
   ContinuationTV,  // The type of a continuation.
@@ -56,7 +62,7 @@ struct Value {
     struct {
       std::string* name;
       const Value* param;
-      Statement* body;
+      const Statement* body;
     } fun;
 
     struct {
@@ -76,7 +82,7 @@ struct Value {
     } alt;
 
     struct {
-      std::vector<std::pair<std::string, Address>>* elts;
+      VarAddresses* elts;
     } tuple;
 
     Address ptr;
@@ -104,11 +110,6 @@ struct Value {
 
     struct {
       std::string* name;
-      VarValues* fields;
-    } tuple_type;
-
-    struct {
-      std::string* name;
       VarValues* alternatives;
     } choice_type;
 
@@ -129,7 +130,7 @@ struct Value {
 auto MakeContinuation(std::vector<Frame*> stack) -> Value*;
 auto MakeIntVal(int i) -> const Value*;
 auto MakeBoolVal(bool b) -> const Value*;
-auto MakeFunVal(std::string name, const Value* param, Statement* body)
+auto MakeFunVal(std::string name, const Value* param, const Statement* body)
     -> const Value*;
 auto MakePtrVal(Address addr) -> const Value*;
 auto MakeStructVal(const Value* type, const Value* inits) -> const Value*;
@@ -151,7 +152,6 @@ auto MakeFunTypeVal(const Value* param, const Value* ret) -> const Value*;
 auto MakePtrTypeVal(const Value* type) -> const Value*;
 auto MakeStructTypeVal(std::string name, VarValues* fields, VarValues* methods)
     -> const Value*;
-auto MakeTupleTypeVal(VarValues* fields) -> const Value*;
 auto MakeVoidTypeVal() -> const Value*;
 auto MakeChoiceTypeVal(std::string name, VarValues* alts) -> const Value*;
 
@@ -161,7 +161,6 @@ auto TypeEqual(const Value* t1, const Value* t2) -> bool;
 auto ValueEqual(const Value* v1, const Value* v2, int line_num) -> bool;
 
 auto ToInteger(const Value* v) -> int;
-void CheckAlive(Address a, int line_num);
 
 }  // namespace Carbon
 

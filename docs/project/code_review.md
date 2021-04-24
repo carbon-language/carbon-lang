@@ -422,11 +422,11 @@ There are two techniques to use to resolve these situations that should be tried
 early on:
 
 1. Bring another person into the review to help address the specific issue.
-   Typically they should at least be a code owner, and may usefully be a member
-   of the [core team](groups.md#core-team).
+   Typically they should at least be a code owner, and may usefully be a
+   [Carbon lead](groups.md#carbon-leads-1).
 
-2. Ask the specific question in a broader forum, such as Discord Chat, in order
-   to get a broad set of perspectives on a particular area or issue.
+2. Ask the specific question in a broader forum, such as Discord, in order to
+   get a broad set of perspectives on a particular area or issue.
 
 The goal of these steps isn't to override the author or the reviewer, but to get
 more perspectives and voices involved. Often this will clarify the issue and its
@@ -453,11 +453,11 @@ essential skill is the ability to
 
 ## Escalation
 
-At the explicit request of any member of the [core team](evolution.md#core-team)
-or to resolve any fundamental impasse in a review, the change should move to the
-formal [evolution process](evolution.md#evolution-process). Ultimately, the
-Carbon project [governance](evolution.md#governance-structure) structure is
-always available as an escalation path.
+At the explicit request of any [Carbon lead](evolution.md#carbon-leads-1) or to
+resolve any fundamental impasse in a review, the change should move to a formal
+[proposal](evolution.md#proposals). Ultimately, the Carbon project
+[governance](evolution.md#governance-structure) structure is always available as
+an escalation path.
 
 Before escalating an impasse or conflict in code review, try asking another
 reviewer to help resolve the issue or bridge any communication gaps. Consider

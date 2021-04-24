@@ -178,7 +178,7 @@ def crawl(top):
         rel_dir = os.path.relpath(parent_dir, top)
         readme, files = list(_filter_files(parent_dir, rel_dir, raw_files))
         if readme is None:
-            assert not files
+            assert not files, "Every directory under docs/ needs a README.md."
             continue
 
         # Sort and put the README first when setting up the dir.
