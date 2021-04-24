@@ -1,4 +1,2 @@
-10: type error in call
-expected: Tuple(0 = Int, 1 = Int)
-actual: Tuple(0 = Tuple(0 = Int, 1 = Int))
+10: compilation error, tuples of different length
 EXIT CODE: 255

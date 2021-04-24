@@ -4,6 +4,8 @@
 
 #include "executable_semantics/interpreter/value.h"
 
+#include <algorithm>
+#include <cassert>
 #include <iostream>
 
 #include "executable_semantics/interpreter/interpreter.h"
@@ -37,6 +39,17 @@ auto FieldsEqual(VarValues* ts1, VarValues* ts2) -> bool {
   }
 }
 
+auto FindTupleField(const std::string& name, const Value* tuple)
+    -> std::optional<Address> {
+  assert(tuple->tag == ValKind::TupleV);
+  for (const auto& i : *tuple->u.tuple.elts) {
+    if (i.first == name) {
+      return i.second;
+    }
+  }
+  return std::nullopt;
+}
+
 auto MakeIntVal(int i) -> const Value* {
   auto* v = new Value();
   v->tag = ValKind::IntV;
@@ -51,7 +64,7 @@ auto MakeBoolVal(bool b) -> const Value* {
   return v;
 }
 
-auto MakeFunVal(std::string name, const Value* param, Statement* body)
+auto MakeFunVal(std::string name, const Value* param, const Statement* body)
     -> const Value* {
   auto* v = new Value();
   v->tag = ValKind::FunV;
@@ -183,17 +196,10 @@ auto MakeStructTypeVal(std::string name, VarValues* fields, VarValues* methods)
   return v;
 }
 
-auto MakeTupleTypeVal(VarValues* fields) -> const Value* {
-  auto* v = new Value();
-  v->tag = ValKind::TupleTV;
-  v->u.tuple_type.fields = fields;
-  return v;
-}
-
 auto MakeVoidTypeVal() -> const Value* {
   auto* v = new Value();
-  v->tag = ValKind::TupleTV;
-  v->u.tuple_type.fields = new VarValues();
+  v->tag = ValKind::TupleV;
+  v->u.tuple.elts = new std::vector<std::pair<std::string, Address>>();
   return v;
 }
 
@@ -208,7 +214,7 @@ auto MakeChoiceTypeVal(std::string name,
   return v;
 }
 
-void PrintValue(const Value* val, std::ostream& out) {
+auto PrintValue(const Value* val, std::ostream& out) -> void {
   switch (val->tag) {
     case ValKind::AltConsV: {
       out << *val->u.alt_cons.choice_name << "." << *val->u.alt_cons.alt_name;
@@ -222,7 +228,7 @@ void PrintValue(const Value* val, std::ostream& out) {
     case ValKind::AltV: {
       out << "alt " << *val->u.alt.choice_name << "." << *val->u.alt.alt_name
           << " ";
-      PrintValue(state->heap[val->u.alt.argument], out);
+      state->heap.PrintAddress(val->u.alt.argument, out);
       break;
     }
     case ValKind::StructV: {
@@ -241,7 +247,7 @@ void PrintValue(const Value* val, std::ostream& out) {
         }
 
         out << elt.first << " = ";
-        PrintValue(state->heap[elt.second], out);
+        state->heap.PrintAddress(elt.second, out);
         out << "@" << elt.second;
       }
       out << ")";
@@ -288,22 +294,6 @@ void PrintValue(const Value* val, std::ostream& out) {
     case ValKind::VarTV:
       out << *val->u.var_type;
       break;
-    case ValKind::TupleTV: {
-      out << "Tuple(";
-      bool add_commas = false;
-      for (const auto& elt : *val->u.tuple_type.fields) {
-        if (add_commas) {
-          out << ", ";
-        } else {
-          add_commas = true;
-        }
-
-        out << elt.first << " = ";
-        PrintValue(elt.second, out);
-      }
-      out << ")";
-      break;
-    }
     case ValKind::StructTV:
       out << "struct " << *val->u.struct_type.name;
       break;
@@ -337,17 +327,60 @@ auto TypeEqual(const Value* t1, const Value* t2) -> bool {
       return *t1->u.struct_type.name == *t2->u.struct_type.name;
     case ValKind::ChoiceTV:
       return *t1->u.choice_type.name == *t2->u.choice_type.name;
-    case ValKind::TupleTV:
-      return FieldsEqual(t1->u.tuple_type.fields, t2->u.tuple_type.fields);
+    case ValKind::TupleV: {
+      if (t1->u.tuple.elts->size() != t2->u.tuple.elts->size()) {
+        return false;
+      }
+      for (size_t i = 0; i < t1->u.tuple.elts->size(); ++i) {
+        if ((*t1->u.tuple.elts)[i].first != (*t2->u.tuple.elts)[i].first) {
+          return false;
+        }
+        if (!TypeEqual(state->heap.Read((*t1->u.tuple.elts)[i].second, 0),
+                       state->heap.Read((*t2->u.tuple.elts)[i].second, 0))) {
+          return false;
+        }
+      }
+      return true;
+    }
     case ValKind::IntTV:
     case ValKind::BoolTV:
     case ValKind::ContinuationTV:
+    case ValKind::TypeTV:
       return true;
     default:
-      return false;
+      std::cerr << "TypeEqual used to compare non-type values" << std::endl;
+      PrintValue(t1, std::cerr);
+      std::cerr << std::endl;
+      PrintValue(t2, std::cerr);
+      exit(-1);
   }
 }
 
+// Returns true if all the fields of the two tuples contain equal values
+// and returns false otherwise.
+static auto FieldsValueEqual(VarAddresses* ts1, VarAddresses* ts2, int line_num)
+    -> bool {
+  if (ts1->size() != ts2->size()) {
+    return false;
+  }
+  for (const auto& [name, address] : *ts1) {
+    auto iter =
+        std::find_if(ts2->begin(), ts2->end(),
+                     [name = name](const auto& p) { return p.first == name; });
+    if (iter == ts2->end()) {
+      return false;
+    }
+    if (!ValueEqual(state->heap.Read(address, line_num),
+                    state->heap.Read(iter->second, line_num), line_num)) {
+      return false;
+    }
+  }
+  return true;
+}
+
+// Returns true if the two values are equal and returns false otherwise.
+//
+// This function implements the `==` operator of Carbon.
 auto ValueEqual(const Value* v1, const Value* v2, int line_num) -> bool {
   if (v1->tag != v2->tag) {
     return false;
@@ -358,11 +391,12 @@ auto ValueEqual(const Value* v1, const Value* v2, int line_num) -> bool {
     case ValKind::BoolV:
       return v1->u.boolean == v2->u.boolean;
     case ValKind::PtrV:
-      CheckAlive(v1->u.ptr, line_num);
-      CheckAlive(v2->u.ptr, line_num);
       return v1->u.ptr == v2->u.ptr;
     case ValKind::FunV:
       return v1->u.fun.body == v2->u.fun.body;
+    case ValKind::TupleV:
+      return FieldsValueEqual(v1->u.tuple.elts, v2->u.tuple.elts, line_num);
+    default:
     case ValKind::VarTV:
     case ValKind::IntTV:
     case ValKind::BoolTV:
@@ -370,12 +404,10 @@ auto ValueEqual(const Value* v1, const Value* v2, int line_num) -> bool {
     case ValKind::FunctionTV:
     case ValKind::PointerTV:
     case ValKind::AutoTV:
-    case ValKind::TupleTV:
     case ValKind::StructTV:
     case ValKind::ChoiceTV:
     case ValKind::ContinuationTV:
       return TypeEqual(v1, v2);
-    case ValKind::TupleV:
     case ValKind::StructV:
     case ValKind::AltV:
     case ValKind::VarPatV:
@@ -395,15 +427,6 @@ auto ToInteger(const Value* v) -> int {
       std::cerr << "expected an integer, not ";
       PrintValue(v, std::cerr);
       exit(-1);
-  }
-}
-
-void CheckAlive(Address address, int line_num) {
-  if (!state->alive[address]) {
-    std::cerr << line_num << ": undefined behavior: access to dead value ";
-    PrintValue(state->heap[address], std::cerr);
-    std::cerr << std::endl;
-    exit(-1);
   }
 }
 

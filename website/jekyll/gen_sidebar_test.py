@@ -65,13 +65,16 @@ class TestGenSidebar(unittest.TestCase):
         self.assertEqual(
             proposals.files[1],
             (
-                "0029 - Linear, rebase, and pull-request GitHub workflow",
-                "/proposals/p0029.md",
+                "0024 - Generics goals",
+                "/proposals/p0024.md",
             ),
         )
         self.assertEqual(
             proposals.files[2],
-            ("0029 - Decision", "/proposals/p0029_decision.md"),
+            (
+                "0029 - Linear, rebase, and pull-request GitHub workflow",
+                "/proposals/p0029.md",
+            ),
         )
 
     def test_format(self):
