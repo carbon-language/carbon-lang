@@ -125,22 +125,22 @@ auto FindTupleField(const std::string& name, const Value* tuple)
   return std::nullopt;
 }
 
-auto MakeIntVal(int i) -> const Value* {
+auto Value::MakeIntVal(int i) -> const Value* {
   auto* v = new Value();
   v->tag = ValKind::IntV;
   v->u.integer = i;
   return v;
 }
 
-auto MakeBoolVal(bool b) -> const Value* {
+auto Value::MakeBoolVal(bool b) -> const Value* {
   auto* v = new Value();
   v->tag = ValKind::BoolV;
   v->u.boolean = b;
   return v;
 }
 
-auto MakeFunVal(std::string name, const Value* param, const Statement* body)
-    -> const Value* {
+auto Value::MakeFunVal(std::string name, const Value* param,
+                       const Statement* body) -> const Value* {
   auto* v = new Value();
   v->tag = ValKind::FunV;
   v->u.fun.name = new std::string(std::move(name));
@@ -149,14 +149,15 @@ auto MakeFunVal(std::string name, const Value* param, const Statement* body)
   return v;
 }
 
-auto MakePtrVal(Address addr) -> const Value* {
+auto Value::MakePtrVal(Address addr) -> const Value* {
   auto* v = new Value();
   v->tag = ValKind::PtrV;
   v->u.ptr = addr;
   return v;
 }
 
-auto MakeStructVal(const Value* type, const Value* inits) -> const Value* {
+auto Value::MakeStructVal(const Value* type, const Value* inits)
+    -> const Value* {
   auto* v = new Value();
   v->tag = ValKind::StructV;
   v->u.struct_val.type = type;
@@ -164,7 +165,7 @@ auto MakeStructVal(const Value* type, const Value* inits) -> const Value* {
   return v;
 }
 
-auto MakeTupleVal(std::vector<std::pair<std::string, Address>>* elts)
+auto Value::MakeTupleVal(std::vector<std::pair<std::string, Address>>* elts)
     -> const Value* {
   auto* v = new Value();
   v->tag = ValKind::TupleV;
@@ -172,8 +173,8 @@ auto MakeTupleVal(std::vector<std::pair<std::string, Address>>* elts)
   return v;
 }
 
-auto MakeAltVal(std::string alt_name, std::string choice_name, Address argument)
-    -> const Value* {
+auto Value::MakeAltVal(std::string alt_name, std::string choice_name,
+                       Address argument) -> const Value* {
   auto* v = new Value();
   v->tag = ValKind::AltV;
   v->u.alt.alt_name = new std::string(std::move(alt_name));
@@ -182,7 +183,7 @@ auto MakeAltVal(std::string alt_name, std::string choice_name, Address argument)
   return v;
 }
 
-auto MakeAltCons(std::string alt_name, std::string choice_name)
+auto Value::MakeAltCons(std::string alt_name, std::string choice_name)
     -> const Value* {
   auto* v = new Value();
   v->tag = ValKind::AltConsV;
@@ -193,14 +194,14 @@ auto MakeAltCons(std::string alt_name, std::string choice_name)
 
 // Return a first-class continuation represented a fragment
 // of the stack.
-auto MakeContinuation(std::vector<Frame*> stack) -> Value* {
+auto Value::MakeContinuation(std::vector<Frame*> stack) -> Value* {
   auto* v = new Value();
   v->tag = ValKind::ContinuationV;
   v->u.continuation.stack = new std::vector<Frame*>(stack);
   return v;
 }
 
-auto MakeVarPatVal(std::string name, const Value* type) -> const Value* {
+auto Value::MakeVarPatVal(std::string name, const Value* type) -> const Value* {
   auto* v = new Value();
   v->tag = ValKind::VarPatV;
   v->u.var_pat.name = new std::string(std::move(name));
@@ -208,45 +209,46 @@ auto MakeVarPatVal(std::string name, const Value* type) -> const Value* {
   return v;
 }
 
-auto MakeVarTypeVal(std::string name) -> const Value* {
+auto Value::MakeVarTypeVal(std::string name) -> const Value* {
   auto* v = new Value();
   v->tag = ValKind::VarTV;
   v->u.var_type = new std::string(std::move(name));
   return v;
 }
 
-auto MakeIntTypeVal() -> const Value* {
+auto Value::MakeIntTypeVal() -> const Value* {
   auto* v = new Value();
   v->tag = ValKind::IntTV;
   return v;
 }
 
-auto MakeBoolTypeVal() -> const Value* {
+auto Value::MakeBoolTypeVal() -> const Value* {
   auto* v = new Value();
   v->tag = ValKind::BoolTV;
   return v;
 }
 
-auto MakeTypeTypeVal() -> const Value* {
+auto Value::MakeTypeTypeVal() -> const Value* {
   auto* v = new Value();
   v->tag = ValKind::TypeTV;
   return v;
 }
 
 // Return a Continuation type.
-auto MakeContinuationTypeVal() -> const Value* {
+auto Value::MakeContinuationTypeVal() -> const Value* {
   auto* v = new Value();
   v->tag = ValKind::ContinuationTV;
   return v;
 }
 
-auto MakeAutoTypeVal() -> const Value* {
+auto Value::MakeAutoTypeVal() -> const Value* {
   auto* v = new Value();
   v->tag = ValKind::AutoTV;
   return v;
 }
 
-auto MakeFunTypeVal(const Value* param, const Value* ret) -> const Value* {
+auto Value::MakeFunTypeVal(const Value* param, const Value* ret)
+    -> const Value* {
   auto* v = new Value();
   v->tag = ValKind::FunctionTV;
   v->u.fun_type.param = param;
@@ -254,15 +256,15 @@ auto MakeFunTypeVal(const Value* param, const Value* ret) -> const Value* {
   return v;
 }
 
-auto MakePtrTypeVal(const Value* type) -> const Value* {
+auto Value::MakePtrTypeVal(const Value* type) -> const Value* {
   auto* v = new Value();
   v->tag = ValKind::PointerTV;
   v->u.ptr_type.type = type;
   return v;
 }
 
-auto MakeStructTypeVal(std::string name, VarValues* fields, VarValues* methods)
-    -> const Value* {
+auto Value::MakeStructTypeVal(std::string name, VarValues* fields,
+                              VarValues* methods) -> const Value* {
   auto* v = new Value();
   v->tag = ValKind::StructTV;
   v->u.struct_type.name = new std::string(std::move(name));
@@ -271,15 +273,15 @@ auto MakeStructTypeVal(std::string name, VarValues* fields, VarValues* methods)
   return v;
 }
 
-auto MakeVoidTypeVal() -> const Value* {
+auto Value::MakeVoidTypeVal() -> const Value* {
   auto* v = new Value();
   v->tag = ValKind::TupleV;
   v->u.tuple.elts = new std::vector<std::pair<std::string, Address>>();
   return v;
 }
 
-auto MakeChoiceTypeVal(std::string name,
-                       std::list<std::pair<std::string, const Value*>>* alts)
+auto Value::MakeChoiceTypeVal(
+    std::string name, std::list<std::pair<std::string, const Value*>>* alts)
     -> const Value* {
   auto* v = new Value();
   v->tag = ValKind::ChoiceTV;

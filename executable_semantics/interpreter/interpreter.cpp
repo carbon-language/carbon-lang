@@ -71,50 +71,54 @@ auto CopyVal(const Value* val, int line_num) -> const Value* {
         Address new_address = state->AllocateValue(elt);
         elts->push_back(make_pair(i.first, new_address));
       }
-      return MakeTupleVal(elts);
+      return Value::MakeTupleVal(elts);
     }
     case ValKind::AltV: {
       const Value* arg = CopyVal(
           state->ReadFromMemory(val->GetAlternative().argument, line_num),
           line_num);
       Address argument_address = state->AllocateValue(arg);
-      return MakeAltVal(*val->GetAlternative().alt_name,
-                        *val->GetAlternative().choice_name, argument_address);
+      return Value::MakeAltVal(*val->GetAlternative().alt_name,
+                               *val->GetAlternative().choice_name,
+                               argument_address);
     }
     case ValKind::StructV: {
       const Value* inits = CopyVal(val->GetStruct().inits, line_num);
-      return MakeStructVal(val->GetStruct().type, inits);
+      return Value::MakeStructVal(val->GetStruct().type, inits);
     }
     case ValKind::IntV:
-      return MakeIntVal(val->GetInteger());
+      return Value::MakeIntVal(val->GetInteger());
     case ValKind::BoolV:
-      return MakeBoolVal(val->GetBoolean());
+      return Value::MakeBoolVal(val->GetBoolean());
     case ValKind::FunV:
-      return MakeFunVal(*val->GetFunction().name, val->GetFunction().param,
-                        val->GetFunction().body);
+      return Value::MakeFunVal(*val->GetFunction().name,
+                               val->GetFunction().param,
+                               val->GetFunction().body);
     case ValKind::PtrV:
-      return MakePtrVal(val->GetPointer());
+      return Value::MakePtrVal(val->GetPointer());
     case ValKind::ContinuationV:
       // Copying a continuation is "shallow".
       return val;
     case ValKind::FunctionTV:
-      return MakeFunTypeVal(CopyVal(val->GetFunctionType().param, line_num),
-                            CopyVal(val->GetFunctionType().ret, line_num));
+      return Value::MakeFunTypeVal(
+          CopyVal(val->GetFunctionType().param, line_num),
+          CopyVal(val->GetFunctionType().ret, line_num));
 
     case ValKind::PointerTV:
-      return MakePtrTypeVal(CopyVal(val->GetPointerType().type, line_num));
+      return Value::MakePtrTypeVal(
+          CopyVal(val->GetPointerType().type, line_num));
     case ValKind::IntTV:
-      return MakeIntTypeVal();
+      return Value::MakeIntTypeVal();
     case ValKind::BoolTV:
-      return MakeBoolTypeVal();
+      return Value::MakeBoolTypeVal();
     case ValKind::TypeTV:
-      return MakeTypeTypeVal();
+      return Value::MakeTypeTypeVal();
     case ValKind::VarTV:
-      return MakeVarTypeVal(*val->GetVariableType());
+      return Value::MakeVarTypeVal(*val->GetVariableType());
     case ValKind::AutoTV:
-      return MakeAutoTypeVal();
+      return Value::MakeAutoTypeVal();
     case ValKind::ContinuationTV:
-      return MakeContinuationTypeVal();
+      return Value::MakeContinuationTypeVal();
     case ValKind::StructTV:
     case ValKind::ChoiceTV:
     case ValKind::VarPatV:
@@ -266,23 +270,23 @@ auto EvalPrim(Operator op, const std::vector<const Value*>& args, int line_num)
     -> const Value* {
   switch (op) {
     case Operator::Neg:
-      return MakeIntVal(-ValToInt(args[0], line_num));
+      return Value::MakeIntVal(-ValToInt(args[0], line_num));
     case Operator::Add:
-      return MakeIntVal(ValToInt(args[0], line_num) +
-                        ValToInt(args[1], line_num));
+      return Value::MakeIntVal(ValToInt(args[0], line_num) +
+                               ValToInt(args[1], line_num));
     case Operator::Sub:
-      return MakeIntVal(ValToInt(args[0], line_num) -
-                        ValToInt(args[1], line_num));
+      return Value::MakeIntVal(ValToInt(args[0], line_num) -
+                               ValToInt(args[1], line_num));
     case Operator::Not:
-      return MakeBoolVal(!ValToBool(args[0], line_num));
+      return Value::MakeBoolVal(!ValToBool(args[0], line_num));
     case Operator::And:
-      return MakeBoolVal(ValToBool(args[0], line_num) &&
-                         ValToBool(args[1], line_num));
+      return Value::MakeBoolVal(ValToBool(args[0], line_num) &&
+                                ValToBool(args[1], line_num));
     case Operator::Or:
-      return MakeBoolVal(ValToBool(args[0], line_num) ||
-                         ValToBool(args[1], line_num));
+      return Value::MakeBoolVal(ValToBool(args[0], line_num) ||
+                                ValToBool(args[1], line_num));
     case Operator::Eq:
-      return MakeBoolVal(ValueEqual(args[0], args[1], line_num));
+      return Value::MakeBoolVal(ValueEqual(args[0], args[1], line_num));
   }
 }
 
@@ -301,7 +305,7 @@ auto ChoiceDeclaration::InitGlobals(Env& globals) const -> void {
     auto t = InterpExp(Env(), kv.second);
     alts->push_back(make_pair(kv.first, t));
   }
-  auto ct = MakeChoiceTypeVal(name, alts);
+  auto ct = Value::MakeChoiceTypeVal(name, alts);
   auto a = state->AllocateValue(ct);
   globals.Set(name, a);
 }
@@ -319,7 +323,7 @@ auto StructDeclaration::InitGlobals(Env& globals) const -> void {
       }
     }
   }
-  auto st = MakeStructTypeVal(*definition.name, fields, methods);
+  auto st = Value::MakeStructTypeVal(*definition.name, fields, methods);
   auto a = state->AllocateValue(st);
   globals.Set(*definition.name, a);
 }
@@ -327,7 +331,7 @@ auto StructDeclaration::InitGlobals(Env& globals) const -> void {
 auto FunctionDeclaration::InitGlobals(Env& globals) const -> void {
   Env values;
   auto pt = InterpExp(values, definition->param_pattern);
-  auto f = MakeFunVal(definition->name, pt, definition->body);
+  auto f = Value::MakeFunVal(definition->name, pt, definition->body);
   Address a = state->AllocateValue(f);
   globals.Set(definition->name, a);
 }
@@ -368,7 +372,7 @@ void CallFunction(int line_num, std::vector<const Value*> operas,
     }
     case ValKind::StructTV: {
       const Value* arg = CopyVal(operas[1], line_num);
-      const Value* sv = MakeStructVal(operas[0], arg);
+      const Value* sv = Value::MakeStructVal(operas[0], arg);
       Frame* frame = state->stack.Top();
       frame->todo.Push(MakeValAct(sv));
       break;
@@ -376,9 +380,9 @@ void CallFunction(int line_num, std::vector<const Value*> operas,
     case ValKind::AltConsV: {
       const Value* arg = CopyVal(operas[1], line_num);
       const Value* av =
-          MakeAltVal(*operas[0]->GetAlternativeConstructor().alt_name,
-                     *operas[0]->GetAlternativeConstructor().choice_name,
-                     state->AllocateValue(arg));
+          Value::MakeAltVal(*operas[0]->GetAlternativeConstructor().alt_name,
+                            *operas[0]->GetAlternativeConstructor().choice_name,
+                            state->AllocateValue(arg));
       Frame* frame = state->stack.Top();
       frame->todo.Push(MakeValAct(av));
       break;
@@ -417,7 +421,7 @@ void CreateTuple(Frame* frame, Action* act, const Expression* /*exp*/) {
     Address a = state->AllocateValue(*i);  // copy?
     elts->push_back(make_pair(f->first, a));
   }
-  const Value* tv = MakeTupleVal(elts);
+  const Value* tv = Value::MakeTupleVal(elts);
   frame->todo.Pop(1);
   frame->todo.Push(MakeValAct(tv));
 }
@@ -613,7 +617,7 @@ void StepLvalue() {
                   << *(exp->GetVariable().name) << "`" << std::endl;
         exit(-1);
       }
-      const Value* v = MakePtrVal(*pointer);
+      const Value* v = Value::MakePtrVal(*pointer);
       frame->todo.Pop();
       frame->todo.Push(MakeValAct(v));
       break;
@@ -718,12 +722,12 @@ void StepExp() {
     case ExpressionKind::Integer:
       // { {n :: C, E, F} :: S, H} -> { {n' :: C, E, F} :: S, H}
       frame->todo.Pop(1);
-      frame->todo.Push(MakeValAct(MakeIntVal(exp->GetInteger())));
+      frame->todo.Push(MakeValAct(Value::MakeIntVal(exp->GetInteger())));
       break;
     case ExpressionKind::Boolean:
       // { {n :: C, E, F} :: S, H} -> { {n' :: C, E, F} :: S, H}
       frame->todo.Pop(1);
-      frame->todo.Push(MakeValAct(MakeBoolVal(exp->GetBoolean())));
+      frame->todo.Push(MakeValAct(Value::MakeBoolVal(exp->GetBoolean())));
       break;
     case ExpressionKind::PrimitiveOp:
       if (exp->GetPrimitiveOperator().arguments->size() > 0) {
@@ -748,25 +752,25 @@ void StepExp() {
       act->pos++;
       break;
     case ExpressionKind::IntT: {
-      const Value* v = MakeIntTypeVal();
+      const Value* v = Value::MakeIntTypeVal();
       frame->todo.Pop(1);
       frame->todo.Push(MakeValAct(v));
       break;
     }
     case ExpressionKind::BoolT: {
-      const Value* v = MakeBoolTypeVal();
+      const Value* v = Value::MakeBoolTypeVal();
       frame->todo.Pop(1);
       frame->todo.Push(MakeValAct(v));
       break;
     }
     case ExpressionKind::AutoT: {
-      const Value* v = MakeAutoTypeVal();
+      const Value* v = Value::MakeAutoTypeVal();
       frame->todo.Pop(1);
       frame->todo.Push(MakeValAct(v));
       break;
     }
     case ExpressionKind::TypeT: {
-      const Value* v = MakeTypeTypeVal();
+      const Value* v = Value::MakeTypeTypeVal();
       frame->todo.Pop(1);
       frame->todo.Push(MakeValAct(v));
       break;
@@ -777,7 +781,7 @@ void StepExp() {
       break;
     }
     case ExpressionKind::ContinuationT: {
-      const Value* v = MakeContinuationTypeVal();
+      const Value* v = Value::MakeContinuationTypeVal();
       frame->todo.Pop(1);
       frame->todo.Push(MakeValAct(v));
       break;
@@ -926,12 +930,12 @@ void StepStmt() {
       Stack<Scope*> scopes;
       scopes.Push(scope);
       Stack<Action*> todo;
-      todo.Push(
-          MakeStmtAct(MakeReturn(stmt->line_num, MakeUnit(stmt->line_num))));
+      todo.Push(MakeStmtAct(Statement::MakeReturn(
+          stmt->line_num, Expression::MakeUnit(stmt->line_num))));
       todo.Push(MakeStmtAct(stmt->GetContinuation().body));
       Frame* continuation_frame = new Frame("__continuation", scopes, todo);
       Address continuation_address =
-          state->AllocateValue(MakeContinuation({continuation_frame}));
+          state->AllocateValue(Value::MakeContinuation({continuation_frame}));
       // Store the continuation's address in the frame.
       continuation_frame->continuation = continuation_address;
       // Bind the continuation object to the continuation variable
@@ -955,7 +959,7 @@ void StepStmt() {
       } while (!paused.back()->IsContinuation());
       // Update the continuation with the paused stack.
       state->WriteToMemory(paused.back()->continuation,
-                           MakeContinuation(paused), stmt->line_num);
+                           Value::MakeContinuation(paused), stmt->line_num);
       break;
   }
 }
@@ -990,7 +994,7 @@ auto GetMember(Address a, const std::string& f, int line_num) -> Address {
         std::cerr << std::endl;
         exit(-1);
       }
-      auto ac = MakeAltCons(f, *v->GetChoiceType().name);
+      auto ac = Value::MakeAltCons(f, *v->GetChoiceType().name);
       return state->AllocateValue(ac);
     }
     default:
@@ -1054,7 +1058,7 @@ void HandleValue() {
       auto del = MakeDeleteAct(a);
       frame->todo.Pop(2);
       InsertDelete(del, frame->todo);
-      frame->todo.Push(MakeValAct(MakePtrVal(a)));
+      frame->todo.Push(MakeValAct(Value::MakePtrVal(a)));
       break;
     }
     case ActionKind::LValAction: {
@@ -1067,7 +1071,7 @@ void HandleValue() {
           Address a = GetMember(ValToPtr(str, exp->line_num),
                                 *exp->GetFieldAccess().field, exp->line_num);
           frame->todo.Pop(2);
-          frame->todo.Push(MakeValAct(MakePtrVal(a)));
+          frame->todo.Push(MakeValAct(Value::MakePtrVal(a)));
           break;
         }
         case ExpressionKind::Index: {
@@ -1087,7 +1091,7 @@ void HandleValue() {
               exit(-1);
             }
             frame->todo.Pop(2);
-            frame->todo.Push(MakeValAct(MakePtrVal(*a)));
+            frame->todo.Push(MakeValAct(Value::MakePtrVal(*a)));
           }
           break;
         }
@@ -1117,8 +1121,8 @@ void HandleValue() {
       const Expression* exp = act->u.exp;
       switch (exp->tag) {
         case ExpressionKind::PatternVariable: {
-          auto v =
-              MakeVarPatVal(*exp->GetPatternVariable().name, act->results[0]);
+          auto v = Value::MakeVarPatVal(*exp->GetPatternVariable().name,
+                                        act->results[0]);
           frame->todo.Pop(2);
           frame->todo.Push(MakeValAct(v));
           break;
@@ -1222,7 +1226,8 @@ void HandleValue() {
           if (act->pos == 2) {
             //    { { rt :: fn pt -> [] :: C, E, F} :: S, H}
             // -> { fn pt -> rt :: {C, E, F} :: S, H}
-            const Value* v = MakeFunTypeVal(act->results[0], act->results[1]);
+            const Value* v =
+                Value::MakeFunTypeVal(act->results[0], act->results[1]);
             frame->todo.Pop(2);
             frame->todo.Push(MakeValAct(v));
           } else {
@@ -1363,7 +1368,7 @@ void HandleValue() {
               auto* new_scope = new Scope(*matches, vars);
               frame->scopes.Push(new_scope);
               const Statement* body_block =
-                  MakeBlock(stmt->line_num, c->second);
+                  Statement::MakeBlock(stmt->line_num, c->second);
               Action* body_act = MakeStmtAct(body_block);
               body_act->pos = 0;
               frame->todo.Pop(2);
@@ -1401,8 +1406,8 @@ void HandleValue() {
           frame->todo.Pop(2);
           // Push an expression statement action to ignore the result
           // value from the continuation.
-          Action* ignore_result = MakeStmtAct(
-              MakeExpStmt(stmt->line_num, MakeUnit(stmt->line_num)));
+          Action* ignore_result = MakeStmtAct(Statement::MakeExpStmt(
+              stmt->line_num, Expression::MakeUnit(stmt->line_num)));
           ignore_result->pos = 0;
           frame->todo.Push(ignore_result);
           // Push the continuation onto the current stack.
@@ -1475,9 +1480,10 @@ auto InterpProgram(std::list<Declaration>* fs) -> int {
   }
   InitGlobals(fs);
 
-  const Expression* arg = MakeTuple(
+  const Expression* arg = Expression::MakeTuple(
       0, new std::vector<std::pair<std::string, const Expression*>>());
-  const Expression* call_main = MakeCall(0, MakeVar(0, "main"), arg);
+  const Expression* call_main =
+      Expression::MakeCall(0, Expression::MakeVar(0, "main"), arg);
   auto todo = Stack(MakeExpAct(call_main));
   auto* scope = new Scope(globals, std::list<std::string>());
   auto* frame = new Frame("top", Stack(scope), todo);

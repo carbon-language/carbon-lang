@@ -111,6 +111,42 @@ struct ContinuationValue {
 struct Value {
   ValKind tag;
 
+  // Constructors
+
+  // Return a first-class continuation represented by the
+  // given stack, down to the nearest enclosing `__continuation`.
+  static auto MakeContinuation(std::vector<Frame*> stack) -> Value*;
+  static auto MakeIntVal(int i) -> const Value*;
+  static auto MakeBoolVal(bool b) -> const Value*;
+  static auto MakeFunVal(std::string name, const Value* param,
+                         const Statement* body) -> const Value*;
+  static auto MakePtrVal(Address addr) -> const Value*;
+  static auto MakeStructVal(const Value* type, const Value* inits)
+      -> const Value*;
+  static auto MakeTupleVal(std::vector<std::pair<std::string, Address>>* elts)
+      -> const Value*;
+  static auto MakeAltVal(std::string alt_name, std::string choice_name,
+                         Address argument) -> const Value*;
+  static auto MakeAltCons(std::string alt_name, std::string choice_name)
+      -> const Value*;
+  static auto MakeVarPatVal(std::string name, const Value* type)
+      -> const Value*;
+  static auto MakeVarTypeVal(std::string name) -> const Value*;
+  static auto MakeIntTypeVal() -> const Value*;
+  static auto MakeContinuationTypeVal() -> const Value*;
+  static auto MakeAutoTypeVal() -> const Value*;
+  static auto MakeBoolTypeVal() -> const Value*;
+  static auto MakeTypeTypeVal() -> const Value*;
+  static auto MakeFunTypeVal(const Value* param, const Value* ret)
+      -> const Value*;
+  static auto MakePtrTypeVal(const Value* type) -> const Value*;
+  static auto MakeStructTypeVal(std::string name, VarValues* fields,
+                                VarValues* methods) -> const Value*;
+  static auto MakeVoidTypeVal() -> const Value*;
+  static auto MakeChoiceTypeVal(std::string name, VarValues* alts)
+      -> const Value*;
+
+  // Access to alternatives
   int GetInteger() const;
   bool GetBoolean() const;
   Function GetFunction() const;
@@ -145,79 +181,7 @@ struct Value {
     ChoiceType choice_type;
     ContinuationValue continuation;
   } u;
-
-  // TODO: replace these constructors functions with real constructors
-  //
-  // RANT: The following long list of friend declarations is an
-  // example of a problem in the design of C++. It is so focused on
-  // classes and objects that it fails for modular procedural
-  // programming. There are better ways to control access, for
-  // example, going back to the module system of in CLU programming
-  // language in the 1970's. -Jeremy
-
-  friend auto MakeContinuation(std::vector<Frame*> stack) -> Value*;
-  friend auto MakeIntVal(int i) -> const Value*;
-  friend auto MakeBoolVal(bool b) -> const Value*;
-  friend auto MakeFunVal(std::string name, const Value* param,
-                         const Statement* body) -> const Value*;
-  friend auto MakePtrVal(Address addr) -> const Value*;
-  friend auto MakeStructVal(const Value* type, const Value* inits)
-      -> const Value*;
-  friend auto MakeTupleVal(std::vector<std::pair<std::string, Address>>* elts)
-      -> const Value*;
-  friend auto MakeAltVal(std::string alt_name, std::string choice_name,
-                         Address argument) -> const Value*;
-  friend auto MakeAltCons(std::string alt_name, std::string choice_name)
-      -> const Value*;
-
-  friend auto MakeVarPatVal(std::string name, const Value* type)
-      -> const Value*;
-
-  friend auto MakeVarTypeVal(std::string name) -> const Value*;
-  friend auto MakeIntTypeVal() -> const Value*;
-  friend auto MakeContinuationTypeVal() -> const Value*;
-  friend auto MakeAutoTypeVal() -> const Value*;
-  friend auto MakeBoolTypeVal() -> const Value*;
-  friend auto MakeTypeTypeVal() -> const Value*;
-  friend auto MakeFunTypeVal(const Value* param, const Value* ret)
-      -> const Value*;
-  friend auto MakePtrTypeVal(const Value* type) -> const Value*;
-  friend auto MakeStructTypeVal(std::string name, VarValues* fields,
-                                VarValues* methods) -> const Value*;
-  friend auto MakeVoidTypeVal() -> const Value*;
-  friend auto MakeChoiceTypeVal(std::string name, VarValues* alts)
-      -> const Value*;
 };
-
-// Return a first-class continuation represented by the
-// given stack, down to the nearest enclosing `__continuation`.
-auto MakeContinuation(std::vector<Frame*> stack) -> Value*;
-auto MakeIntVal(int i) -> const Value*;
-auto MakeBoolVal(bool b) -> const Value*;
-auto MakeFunVal(std::string name, const Value* param, const Statement* body)
-    -> const Value*;
-auto MakePtrVal(Address addr) -> const Value*;
-auto MakeStructVal(const Value* type, const Value* inits) -> const Value*;
-auto MakeTupleVal(std::vector<std::pair<std::string, Address>>* elts)
-    -> const Value*;
-auto MakeAltVal(std::string alt_name, std::string choice_name, Address argument)
-    -> const Value*;
-auto MakeAltCons(std::string alt_name, std::string choice_name) -> const Value*;
-
-auto MakeVarPatVal(std::string name, const Value* type) -> const Value*;
-
-auto MakeVarTypeVal(std::string name) -> const Value*;
-auto MakeIntTypeVal() -> const Value*;
-auto MakeContinuationTypeVal() -> const Value*;
-auto MakeAutoTypeVal() -> const Value*;
-auto MakeBoolTypeVal() -> const Value*;
-auto MakeTypeTypeVal() -> const Value*;
-auto MakeFunTypeVal(const Value* param, const Value* ret) -> const Value*;
-auto MakePtrTypeVal(const Value* type) -> const Value*;
-auto MakeStructTypeVal(std::string name, VarValues* fields, VarValues* methods)
-    -> const Value*;
-auto MakeVoidTypeVal() -> const Value*;
-auto MakeChoiceTypeVal(std::string name, VarValues* alts) -> const Value*;
 
 void PrintValue(const Value* val, std::ostream& out);
 

@@ -64,7 +64,8 @@ Run Statement::GetRun() const {
   return u.run;
 }
 
-auto MakeExpStmt(int line_num, const Expression* exp) -> const Statement* {
+auto Statement::MakeExpStmt(int line_num, const Expression* exp)
+    -> const Statement* {
   auto* s = new Statement();
   s->line_num = line_num;
   s->tag = StatementKind::ExpressionStatement;
@@ -72,8 +73,8 @@ auto MakeExpStmt(int line_num, const Expression* exp) -> const Statement* {
   return s;
 }
 
-auto MakeAssign(int line_num, const Expression* lhs, const Expression* rhs)
-    -> const Statement* {
+auto Statement::MakeAssign(int line_num, const Expression* lhs,
+                           const Expression* rhs) -> const Statement* {
   auto* s = new Statement();
   s->line_num = line_num;
   s->tag = StatementKind::Assign;
@@ -82,8 +83,8 @@ auto MakeAssign(int line_num, const Expression* lhs, const Expression* rhs)
   return s;
 }
 
-auto MakeVarDef(int line_num, const Expression* pat, const Expression* init)
-    -> const Statement* {
+auto Statement::MakeVarDef(int line_num, const Expression* pat,
+                           const Expression* init) -> const Statement* {
   auto* s = new Statement();
   s->line_num = line_num;
   s->tag = StatementKind::VariableDefinition;
@@ -92,8 +93,9 @@ auto MakeVarDef(int line_num, const Expression* pat, const Expression* init)
   return s;
 }
 
-auto MakeIf(int line_num, const Expression* cond, const Statement* then_stmt,
-            const Statement* else_stmt) -> const Statement* {
+auto Statement::MakeIf(int line_num, const Expression* cond,
+                       const Statement* then_stmt, const Statement* else_stmt)
+    -> const Statement* {
   auto* s = new Statement();
   s->line_num = line_num;
   s->tag = StatementKind::If;
@@ -103,8 +105,8 @@ auto MakeIf(int line_num, const Expression* cond, const Statement* then_stmt,
   return s;
 }
 
-auto MakeWhile(int line_num, const Expression* cond, const Statement* body)
-    -> const Statement* {
+auto Statement::MakeWhile(int line_num, const Expression* cond,
+                          const Statement* body) -> const Statement* {
   auto* s = new Statement();
   s->line_num = line_num;
   s->tag = StatementKind::While;
@@ -113,21 +115,22 @@ auto MakeWhile(int line_num, const Expression* cond, const Statement* body)
   return s;
 }
 
-auto MakeBreak(int line_num) -> const Statement* {
+auto Statement::MakeBreak(int line_num) -> const Statement* {
   auto* s = new Statement();
   s->line_num = line_num;
   s->tag = StatementKind::Break;
   return s;
 }
 
-auto MakeContinue(int line_num) -> const Statement* {
+auto Statement::MakeContinue(int line_num) -> const Statement* {
   auto* s = new Statement();
   s->line_num = line_num;
   s->tag = StatementKind::Continue;
   return s;
 }
 
-auto MakeReturn(int line_num, const Expression* e) -> const Statement* {
+auto Statement::MakeReturn(int line_num, const Expression* e)
+    -> const Statement* {
   auto* s = new Statement();
   s->line_num = line_num;
   s->tag = StatementKind::Return;
@@ -135,7 +138,7 @@ auto MakeReturn(int line_num, const Expression* e) -> const Statement* {
   return s;
 }
 
-auto MakeSeq(int line_num, const Statement* s1, const Statement* s2)
+auto Statement::MakeSeq(int line_num, const Statement* s1, const Statement* s2)
     -> const Statement* {
   auto* s = new Statement();
   s->line_num = line_num;
@@ -145,7 +148,8 @@ auto MakeSeq(int line_num, const Statement* s1, const Statement* s2)
   return s;
 }
 
-auto MakeBlock(int line_num, const Statement* stmt) -> const Statement* {
+auto Statement::MakeBlock(int line_num, const Statement* stmt)
+    -> const Statement* {
   auto* s = new Statement();
   s->line_num = line_num;
   s->tag = StatementKind::Block;
@@ -153,7 +157,7 @@ auto MakeBlock(int line_num, const Statement* stmt) -> const Statement* {
   return s;
 }
 
-auto MakeMatch(
+auto Statement::MakeMatch(
     int line_num, const Expression* exp,
     std::list<std::pair<const Expression*, const Statement*>>* clauses)
     -> const Statement* {
@@ -167,8 +171,9 @@ auto MakeMatch(
 
 // Returns an AST node for a continuation statement give its line number and
 // parts.
-auto MakeContinuationStatement(int line_num, std::string continuation_variable,
-                               const Statement* body) -> const Statement* {
+auto Statement::MakeContinuation(int line_num,
+                                 std::string continuation_variable,
+                                 const Statement* body) -> const Statement* {
   auto* continuation = new Statement();
   continuation->line_num = line_num;
   continuation->tag = StatementKind::Continuation;
@@ -179,7 +184,8 @@ auto MakeContinuationStatement(int line_num, std::string continuation_variable,
 }
 
 // Returns an AST node for a run statement give its line number and argument.
-auto MakeRun(int line_num, const Expression* argument) -> const Statement* {
+auto Statement::MakeRun(int line_num, const Expression* argument)
+    -> const Statement* {
   auto* run = new Statement();
   run->line_num = line_num;
   run->tag = StatementKind::Run;
@@ -188,7 +194,7 @@ auto MakeRun(int line_num, const Expression* argument) -> const Statement* {
 }
 
 // Returns an AST node for an await statement give its line number.
-auto MakeAwait(int line_num) -> const Statement* {
+auto Statement::MakeAwait(int line_num) -> const Statement* {
   auto* await = new Statement();
   await->line_num = line_num;
   await->tag = StatementKind::Await;

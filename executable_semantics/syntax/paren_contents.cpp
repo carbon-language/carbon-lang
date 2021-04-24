@@ -21,7 +21,7 @@ const Expression* ParenContents::AsTuple(int line_number) const {
   for (const FieldInitializer& initializer : fields_) {
     vec->push_back({initializer.name, initializer.expression});
   }
-  return MakeTuple(line_number, vec);
+  return Expression::MakeTuple(line_number, vec);
 }
 
 }  // namespace Carbon
