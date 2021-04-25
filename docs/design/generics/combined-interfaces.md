@@ -15,6 +15,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [Interfaces](#interfaces)
 -   [Implementing interfaces](#implementing-interfaces)
     -   [Facet type](#facet-type)
+    -   [Implementing multiple interfaces](#implementing-multiple-interfaces)
     -   [External impl](#external-impl)
     -   [Rejected: out-of-line impl](#rejected-out-of-line-impl)
     -   [Qualified member names](#qualified-member-names)
@@ -349,6 +350,62 @@ the whole program, so for example `Point as Vector` is well defined.
 We don't expect users to ordinarily name facet types explicitly in source code.
 Instead, values are implicitly cast to a facet type as part of calling a generic
 function, as described in the [Generics](#generics) section.
+
+### Implementing multiple interfaces
+
+To implement more than one interface when defining a type, simply include an
+`impl` block per interface.
+
+```
+struct Point {
+  var Double: x;
+  var Double: y;
+  impl Vector {
+    method (Self: a) Add(Self: b) -> Self { ... }
+    method (Self: a) Scale(Double: v) -> Self { ... }
+  }
+  impl Drawable {
+    method (Self: a) Draw() { ... }
+  }
+}
+```
+
+In this case, all the functions `Add`, `Scale`, and `Draw` end up a part of the
+API for `Point`. This means you can't implement two interfaces that have a name
+in common.
+
+```
+struct GameBoard {
+  impl Drawable {
+    method (Self: this) Draw() { ... }
+  }
+  impl EndOfGame {
+    // Error: `GameBoard` has two methods named
+    // `Draw` with the same signature.
+    method (Self: this) Draw() { ... }
+    method (Self: this) Winner(Int: player) { ... }
+  }
+}
+```
+
+**Open question:** Should we have some syntax for the case where you want both
+names to be given the same implementation? It seems like that might be a common
+case, but we won't really know if this is an important case until we get more
+experience.
+
+```
+struct Player {
+  var String: name;
+  impl Icon {
+    method (Self: this) Name() -> String { return this.name; }
+    // ...
+  }
+  impl GameUnit {
+    alias Name = Icon.Name;
+    // ...
+  }
+}
+```
 
 ### External impl
 
