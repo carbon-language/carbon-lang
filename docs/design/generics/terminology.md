@@ -283,6 +283,10 @@ by the compiler. For example, knowing whether the "Draw" function means "render
 an image to the screen" or "take a card from the top of a deck of cards"; or
 that a `+` operator is commutative (and not, say, string concatenation).
 
+We use the "structural" versus "nominal" terminology as a generalization of the
+same terms being used in a
+[subtyping context](https://en.wikipedia.org/wiki/Subtyping#Subtyping_schemes).
+
 ## Impls: Implementations of interfaces
 
 An _impl_ is an implementation of an interface for a specific type. It is the
