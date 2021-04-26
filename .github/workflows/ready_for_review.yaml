@@ -13,7 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Update project column
-        uses: carbon-language/action-update-project@v1.0
+        uses: jonmeow/action-update-project@v1.0
         with:
           project_url: https://github.com/carbon-language/carbon-lang/projects/1
           column_name: RFC
