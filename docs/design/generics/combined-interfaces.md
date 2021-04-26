@@ -804,6 +804,14 @@ var Int: i = F(3);
 var String: s = F("string");
 ```
 
+**Aside:** We can define `auto` as syntactic sugar for `(Type:$$ _)`. This
+definition allows you to use `auto` as the type for a local variable whose type
+can be statically determined by the compiler. It also allows you to use `auto`
+as the type of a function parameter, to mean "accepts a value of any type, and
+this function will be instantiated separately for every different type." This is
+consistent with the
+[use of `auto` in the C++20 Abbreviated function template feature](https://en.cppreference.com/w/cpp/language/function_template#Abbreviated_function_template).
+
 In general we should support the same kinds of declarations in a
 `structural interface` definitions as in an `interface`. Generally speaking
 declarations in one kind of interface make sense in the other, and there is an
