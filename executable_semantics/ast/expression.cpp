@@ -196,17 +196,25 @@ auto Expression::MakeGetField(int line_num, const Expression* exp,
   return e;
 }
 
-auto Expression::MakeTuple(
-    int line_num, std::vector<std::pair<std::string, const Expression*>>* args)
+auto Expression::MakeTuple(int line_num, std::vector<FieldInitializer>* args)
     -> const Expression* {
   auto* e = new Expression();
   e->line_num = line_num;
   e->tag = ExpressionKind::Tuple;
   int i = 0;
+  bool seen_named_member = false;
   for (auto& arg : *args) {
-    if (arg.first == "") {
-      arg.first = std::to_string(i);
+    if (arg.name == "") {
+      if (seen_named_member) {
+        std::cerr << line_num
+                  << ": positional members must come before named members"
+                  << std::endl;
+        exit(-1);
+      }
+      arg.name = std::to_string(i);
       ++i;
+    } else {
+      seen_named_member = true;
     }
   }
   e->u.tuple.fields = args;
@@ -220,7 +228,7 @@ auto Expression::MakeUnit(int line_num) -> const Expression* {
   auto* unit = new Expression();
   unit->line_num = line_num;
   unit->tag = ExpressionKind::Tuple;
-  auto* args = new std::vector<std::pair<std::string, const Expression*>>();
+  auto* args = new std::vector<FieldInitializer>();
   unit->u.tuple.fields = args;
   return unit;
 }
@@ -261,15 +269,14 @@ static void PrintOp(Operator op) {
   }
 }
 
-static void PrintFields(
-    std::vector<std::pair<std::string, const Expression*>>* fields) {
+static void PrintFields(std::vector<FieldInitializer>* fields) {
   int i = 0;
   for (auto iter = fields->begin(); iter != fields->end(); ++iter, ++i) {
     if (i != 0) {
       std::cout << ", ";
     }
-    std::cout << iter->first << " = ";
-    PrintExp(iter->second);
+    std::cout << iter->name << " = ";
+    PrintExp(iter->expression);
   }
 }
 

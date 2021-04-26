@@ -74,6 +74,8 @@ EXAMPLES = [
     "tuple1",
     "tuple2",
     "tuple3",
+    "tuple4",
+    "tuple5",
     "while1",
     "zero",
     "experimental_continuation1",

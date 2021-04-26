@@ -31,31 +31,33 @@ void HandleValue();
 // Auxiliary Functions
 //
 
-auto State::AllocateValue(const Value* v) -> Address {
+auto Heap::AllocateValue(const Value* v) -> Address {
   // Putting the following two side effects together in this function
   // ensures that we don't do anything else in between, which is really bad!
   // Consider whether to include a copy of the input v in this function
   // or to leave it up to the caller.
-  Address a = heap.size();
-  heap.push_back(new Value(*v));
-  this->alive.push_back(true);
+  assert(v != nullptr);
+  Address a = values_.size();
+  values_.push_back(v);
+  alive_.push_back(true);
   return a;
 }
 
-auto State::ReadFromMemory(Address a, int line_num) -> const Value* {
+auto Heap::Read(Address a, int line_num) -> const Value* {
   this->CheckAlive(a, line_num);
-  return heap[a];
+  return values_[a];
 }
 
-auto State::WriteToMemory(Address a, const Value* v, int line_num) -> void {
+auto Heap::Write(Address a, const Value* v, int line_num) -> void {
+  assert(v != nullptr);
   this->CheckAlive(a, line_num);
-  heap[a] = v;
+  values_[a] = v;
 }
 
-void State::CheckAlive(Address address, int line_num) {
-  if (!this->alive[address]) {
+void Heap::CheckAlive(Address address, int line_num) {
+  if (!alive_[address]) {
     std::cerr << line_num << ": undefined behavior: access to dead value ";
-    PrintValue(heap[address], std::cerr);
+    PrintValue(values_[address], std::cerr);
     std::cerr << std::endl;
     exit(-1);
   }
@@ -64,20 +66,19 @@ void State::CheckAlive(Address address, int line_num) {
 auto CopyVal(const Value* val, int line_num) -> const Value* {
   switch (val->tag) {
     case ValKind::TupleV: {
-      auto elts = new std::vector<std::pair<std::string, Address>>();
-      for (auto& i : *val->GetTuple().elts) {
-        const Value* elt =
-            CopyVal(state->ReadFromMemory(i.second, line_num), line_num);
-        Address new_address = state->AllocateValue(elt);
-        elts->push_back(make_pair(i.first, new_address));
+      auto* elements = new std::vector<TupleElement>();
+      for (const TupleElement& element : *val->GetTuple().elements) {
+        const Value* new_element =
+            CopyVal(state->heap.Read(element.address, line_num), line_num);
+        Address new_address = state->heap.AllocateValue(new_element);
+        elements->push_back({.name = element.name, .address = new_address});
       }
-      return Value::MakeTupleVal(elts);
+      return Value::MakeTupleVal(elements);
     }
     case ValKind::AltV: {
       const Value* arg = CopyVal(
-          state->ReadFromMemory(val->GetAlternative().argument, line_num),
-          line_num);
-      Address argument_address = state->AllocateValue(arg);
+          state->heap.Read(val->GetAlternative().argument, line_num), line_num);
+      Address argument_address = state->heap.AllocateValue(arg);
       return Value::MakeAltVal(*val->GetAlternative().alt_name,
                                *val->GetAlternative().choice_name,
                                argument_address);
@@ -128,18 +129,17 @@ auto CopyVal(const Value* val, int line_num) -> const Value* {
   }
 }
 
-// Marks all of the sub-objects of this value as dead.
-void KillSubObjects(const Value* val) {
+void Heap::DeallocateSubObjects(const Value* val) {
   switch (val->tag) {
     case ValKind::AltV:
-      state->KillObject(val->GetAlternative().argument);
+      Deallocate(val->GetAlternative().argument);
       break;
     case ValKind::StructV:
-      KillSubObjects(val->GetStruct().inits);
+      DeallocateSubObjects(val->GetStruct().inits);
       break;
     case ValKind::TupleV:
-      for (auto& elt : *val->GetTuple().elts) {
-        state->KillObject(elt.second);
+      for (const TupleElement& element : *val->GetTuple().elements) {
+        Deallocate(element.address);
       }
       break;
     default:
@@ -147,12 +147,13 @@ void KillSubObjects(const Value* val) {
   }
 }
 
-void State::KillObject(Address address) {
-  if (this->alive[address]) {
-    this->alive[address] = false;
-    KillSubObjects(heap[address]);
+void Heap::Deallocate(Address address) {
+  if (alive_[address]) {
+    alive_[address] = false;
+    DeallocateSubObjects(values_[address]);
   } else {
-    std::cerr << "runtime error, killing an already dead value" << std::endl;
+    std::cerr << "runtime error, deallocating an already dead value"
+              << std::endl;
     exit(-1);
   }
 }
@@ -160,7 +161,7 @@ void State::KillObject(Address address) {
 void PrintEnv(Env values, std::ostream& out) {
   for (const auto& [name, address] : values) {
     out << name << ": ";
-    state->PrintAddress(address, out);
+    state->heap.PrintAddress(address, out);
     out << ", ";
   }
 }
@@ -186,15 +187,18 @@ void PrintStack(Stack<Frame*> ls, std::ostream& out) {
   }
 }
 
-void State::PrintHeap(std::ostream& out) {
-  for (auto& iter : heap) {
-    if (iter) {
-      PrintValue(iter, out);
-    } else {
-      out << "_";
-    }
+void Heap::PrintHeap(std::ostream& out) {
+  for (Address i = 0; i < values_.size(); ++i) {
+    PrintAddress(i, out);
     out << ", ";
   }
+}
+
+auto Heap::PrintAddress(Address a, std::ostream& out) -> void {
+  if (!alive_[a]) {
+    out << "!!";
+  }
+  PrintValue(values_[a], out);
 }
 
 auto CurrentEnv(State* state) -> Env {
@@ -207,7 +211,7 @@ void PrintState(std::ostream& out) {
   out << "stack: ";
   PrintStack(state->stack, out);
   out << std::endl << "heap: ";
-  state->PrintHeap(out);
+  state->heap.PrintHeap(out);
   if (!state->stack.IsEmpty() && !state->stack.Top()->scopes.IsEmpty()) {
     out << std::endl << "values: ";
     PrintEnv(CurrentEnv(state), out);
@@ -306,7 +310,7 @@ auto ChoiceDeclaration::InitGlobals(Env& globals) const -> void {
     alts->push_back(make_pair(kv.first, t));
   }
   auto ct = Value::MakeChoiceTypeVal(name, alts);
-  auto a = state->AllocateValue(ct);
+  auto a = state->heap.AllocateValue(ct);
   globals.Set(name, a);
 }
 
@@ -324,7 +328,7 @@ auto StructDeclaration::InitGlobals(Env& globals) const -> void {
     }
   }
   auto st = Value::MakeStructTypeVal(*definition.name, fields, methods);
-  auto a = state->AllocateValue(st);
+  auto a = state->heap.AllocateValue(st);
   globals.Set(*definition.name, a);
 }
 
@@ -332,7 +336,7 @@ auto FunctionDeclaration::InitGlobals(Env& globals) const -> void {
   Env values;
   auto pt = InterpExp(values, definition->param_pattern);
   auto f = Value::MakeFunVal(definition->name, pt, definition->body);
-  Address a = state->AllocateValue(f);
+  Address a = state->heap.AllocateValue(f);
   globals.Set(definition->name, a);
 }
 
@@ -340,7 +344,7 @@ auto FunctionDeclaration::InitGlobals(Env& globals) const -> void {
 // result of evaluating the initializer.
 auto VariableDeclaration::InitGlobals(Env& globals) const -> void {
   auto v = InterpExp(globals, initializer);
-  Address a = state->AllocateValue(v);
+  Address a = state->heap.AllocateValue(v);
   globals.Set(name, a);
 }
 
@@ -382,7 +386,7 @@ void CallFunction(int line_num, std::vector<const Value*> operas,
       const Value* av =
           Value::MakeAltVal(*operas[0]->GetAlternativeConstructor().alt_name,
                             *operas[0]->GetAlternativeConstructor().choice_name,
-                            state->AllocateValue(arg));
+                            state->heap.AllocateValue(arg));
       Frame* frame = state->stack.Top();
       frame->todo.Push(MakeValAct(av));
       break;
@@ -395,33 +399,33 @@ void CallFunction(int line_num, std::vector<const Value*> operas,
   }
 }
 
-void KillScope(int line_num, Scope* scope) {
+void DeallocateScope(int line_num, Scope* scope) {
   for (const auto& l : scope->locals) {
     std::optional<Address> a = scope->values.Get(l);
     if (!a) {
-      std::cerr << "internal error in KillScope" << std::endl;
+      std::cerr << "internal error in DeallocateScope" << std::endl;
       exit(-1);
     }
-    state->KillObject(*a);
+    state->heap.Deallocate(*a);
   }
 }
 
-void KillLocals(int line_num, Frame* frame) {
+void DeallocateLocals(int line_num, Frame* frame) {
   for (auto scope : frame->scopes) {
-    KillScope(line_num, scope);
+    DeallocateScope(line_num, scope);
   }
 }
 
 void CreateTuple(Frame* frame, Action* act, const Expression* /*exp*/) {
   //    { { (v1,...,vn) :: C, E, F} :: S, H}
   // -> { { `(v1,...,vn) :: C, E, F} :: S, H}
-  auto elts = new std::vector<std::pair<std::string, Address>>();
+  auto elements = new std::vector<TupleElement>();
   auto f = act->u.exp->GetTuple().fields->begin();
   for (auto i = act->results.begin(); i != act->results.end(); ++i, ++f) {
-    Address a = state->AllocateValue(*i);  // copy?
-    elts->push_back(make_pair(f->first, a));
+    Address a = state->heap.AllocateValue(*i);  // copy?
+    elements->push_back({.name = f->name, .address = a});
   }
-  const Value* tv = Value::MakeTupleVal(elts);
+  const Value* tv = Value::MakeTupleVal(elements);
   frame->todo.Pop(1);
   frame->todo.Push(MakeValAct(tv));
 }
@@ -436,7 +440,7 @@ auto PatternMatch(const Value* p, const Value* v, Env values,
     -> std::optional<Env> {
   switch (p->tag) {
     case ValKind::VarPatV: {
-      Address a = state->AllocateValue(CopyVal(v, line_num));
+      Address a = state->heap.AllocateValue(CopyVal(v, line_num));
       vars->push_back(*p->GetVariablePattern().name);
       values.Set(*p->GetVariablePattern().name, a);
       return values;
@@ -444,22 +448,23 @@ auto PatternMatch(const Value* p, const Value* v, Env values,
     case ValKind::TupleV:
       switch (v->tag) {
         case ValKind::TupleV: {
-          if (p->GetTuple().elts->size() != v->GetTuple().elts->size()) {
+          if (p->GetTuple().elements->size() !=
+              v->GetTuple().elements->size()) {
             std::cerr << "runtime error: arity mismatch in tuple pattern match"
                       << std::endl;
             exit(-1);
           }
-          for (auto& elt : *p->GetTuple().elts) {
-            auto a = FindTupleField(elt.first, v);
+          for (const TupleElement& element : *p->GetTuple().elements) {
+            auto a = FindTupleField(element.name, v);
             if (a == std::nullopt) {
-              std::cerr << "runtime error: field " << elt.first << "not in ";
+              std::cerr << "runtime error: field " << element.name << "not in ";
               PrintValue(v, std::cerr);
               std::cerr << std::endl;
               exit(-1);
             }
             std::optional<Env> matches = PatternMatch(
-                state->ReadFromMemory(elt.second, line_num),
-                state->ReadFromMemory(*a, line_num), values, vars, line_num);
+                state->heap.Read(element.address, line_num),
+                state->heap.Read(*a, line_num), values, vars, line_num);
             if (!matches) {
               return std::nullopt;
             }
@@ -483,9 +488,9 @@ auto PatternMatch(const Value* p, const Value* v, Env values,
             return std::nullopt;
           }
           std::optional<Env> matches = PatternMatch(
-              state->ReadFromMemory(p->GetAlternative().argument, line_num),
-              state->ReadFromMemory(v->GetAlternative().argument, line_num),
-              values, vars, line_num);
+              state->heap.Read(p->GetAlternative().argument, line_num),
+              state->heap.Read(v->GetAlternative().argument, line_num), values,
+              vars, line_num);
           if (!matches) {
             return std::nullopt;
           }
@@ -527,27 +532,28 @@ auto PatternMatch(const Value* p, const Value* v, Env values,
 void PatternAssignment(const Value* pat, const Value* val, int line_num) {
   switch (pat->tag) {
     case ValKind::PtrV:
-      state->WriteToMemory(ValToPtr(pat, line_num), CopyVal(val, line_num),
-                           line_num);
+      state->heap.Write(ValToPtr(pat, line_num), CopyVal(val, line_num),
+                        line_num);
       break;
     case ValKind::TupleV: {
       switch (val->tag) {
         case ValKind::TupleV: {
-          if (pat->GetTuple().elts->size() != val->GetTuple().elts->size()) {
+          if (pat->GetTuple().elements->size() !=
+              val->GetTuple().elements->size()) {
             std::cerr << "runtime error: arity mismatch in tuple pattern match"
                       << std::endl;
             exit(-1);
           }
-          for (auto& elt : *pat->GetTuple().elts) {
-            auto a = FindTupleField(elt.first, val);
+          for (const TupleElement& element : *pat->GetTuple().elements) {
+            auto a = FindTupleField(element.name, val);
             if (a == std::nullopt) {
-              std::cerr << "runtime error: field " << elt.first << "not in ";
+              std::cerr << "runtime error: field " << element.name << "not in ";
               PrintValue(val, std::cerr);
               std::cerr << std::endl;
               exit(-1);
             }
-            PatternAssignment(state->ReadFromMemory(elt.second, line_num),
-                              state->ReadFromMemory(*a, line_num), line_num);
+            PatternAssignment(state->heap.Read(element.address, line_num),
+                              state->heap.Read(*a, line_num), line_num);
           }
           break;
         }
@@ -572,8 +578,8 @@ void PatternAssignment(const Value* pat, const Value* val, int line_num) {
             exit(-1);
           }
           PatternAssignment(
-              state->ReadFromMemory(pat->GetAlternative().argument, line_num),
-              state->ReadFromMemory(val->GetAlternative().argument, line_num),
+              state->heap.Read(pat->GetAlternative().argument, line_num),
+              state->heap.Read(val->GetAlternative().argument, line_num),
               line_num);
           break;
         }
@@ -639,7 +645,7 @@ void StepLvalue() {
     case ExpressionKind::Tuple: {
       //    { {(f1=e1,...) :: C, E, F} :: S, H}
       // -> { {e1 :: (f1=[],...) :: C, E, F} :: S, H}
-      const Expression* e1 = (*exp->GetTuple().fields)[0].second;
+      const Expression* e1 = (*exp->GetTuple().fields)[0].expression;
       frame->todo.Push(MakeLvalAct(e1));
       act->pos++;
       break;
@@ -690,7 +696,7 @@ void StepExp() {
       if (exp->GetTuple().fields->size() > 0) {
         //    { {(f1=e1,...) :: C, E, F} :: S, H}
         // -> { {e1 :: (f1=[],...) :: C, E, F} :: S, H}
-        const Expression* e1 = (*exp->GetTuple().fields)[0].second;
+        const Expression* e1 = (*exp->GetTuple().fields)[0].expression;
         frame->todo.Push(MakeExpAct(e1));
         act->pos++;
       } else {
@@ -714,7 +720,7 @@ void StepExp() {
                   << *(exp->GetVariable().name) << "`" << std::endl;
         exit(-1);
       }
-      const Value* pointee = state->ReadFromMemory(*pointer, exp->line_num);
+      const Value* pointee = state->heap.Read(*pointer, exp->line_num);
       frame->todo.Pop(1);
       frame->todo.Push(MakeValAct(pointee));
       break;
@@ -848,7 +854,7 @@ void StepStmt() {
       frame->todo.Pop(1);
       while (!frame->todo.IsEmpty() && !IsWhileAct(frame->todo.Top())) {
         if (IsBlockAct(frame->todo.Top())) {
-          KillScope(stmt->line_num, frame->scopes.Top());
+          DeallocateScope(stmt->line_num, frame->scopes.Top());
           frame->scopes.Pop(1);
         }
         frame->todo.Pop(1);
@@ -861,7 +867,7 @@ void StepStmt() {
       frame->todo.Pop(1);
       while (!frame->todo.IsEmpty() && !IsWhileAct(frame->todo.Top())) {
         if (IsBlockAct(frame->todo.Top())) {
-          KillScope(stmt->line_num, frame->scopes.Top());
+          DeallocateScope(stmt->line_num, frame->scopes.Top());
           frame->scopes.Pop(1);
         }
         frame->todo.Pop(1);
@@ -879,7 +885,7 @@ void StepStmt() {
         }
       } else {
         Scope* scope = frame->scopes.Top();
-        KillScope(stmt->line_num, scope);
+        DeallocateScope(stmt->line_num, scope);
         frame->scopes.Pop(1);
         frame->todo.Pop(1);
       }
@@ -934,8 +940,8 @@ void StepStmt() {
           stmt->line_num, Expression::MakeUnit(stmt->line_num))));
       todo.Push(MakeStmtAct(stmt->GetContinuation().body));
       Frame* continuation_frame = new Frame("__continuation", scopes, todo);
-      Address continuation_address =
-          state->AllocateValue(Value::MakeContinuation({continuation_frame}));
+      Address continuation_address = state->heap.AllocateValue(
+          Value::MakeContinuation({continuation_frame}));
       // Store the continuation's address in the frame.
       continuation_frame->continuation = continuation_address;
       // Bind the continuation object to the continuation variable
@@ -958,14 +964,14 @@ void StepStmt() {
         paused.push_back(state->stack.Pop());
       } while (!paused.back()->IsContinuation());
       // Update the continuation with the paused stack.
-      state->WriteToMemory(paused.back()->continuation,
-                           Value::MakeContinuation(paused), stmt->line_num);
+      state->heap.Write(paused.back()->continuation,
+                        Value::MakeContinuation(paused), stmt->line_num);
       break;
   }
 }
 
 auto GetMember(Address a, const std::string& f, int line_num) -> Address {
-  const Value* v = state->ReadFromMemory(a, line_num);
+  const Value* v = state->heap.Read(a, line_num);
   switch (v->tag) {
     case ValKind::StructV: {
       auto a = FindTupleField(f, v->GetStruct().inits);
@@ -995,7 +1001,7 @@ auto GetMember(Address a, const std::string& f, int line_num) -> Address {
         exit(-1);
       }
       auto ac = Value::MakeAltCons(f, *v->GetChoiceType().name);
-      return state->AllocateValue(ac);
+      return state->heap.AllocateValue(ac);
     }
     default:
       std::cerr << "field access not allowed for value ";
@@ -1048,13 +1054,13 @@ void HandleValue() {
   }
   switch (act->tag) {
     case ActionKind::DeleteTmpAction: {
-      state->KillObject(act->u.delete_tmp);
+      state->heap.Deallocate(act->u.delete_tmp);
       frame->todo.Pop(2);
       frame->todo.Push(val_act);
       break;
     }
     case ActionKind::ExpToLValAction: {
-      Address a = state->AllocateValue(act->results[0]);
+      Address a = state->heap.AllocateValue(act->results[0]);
       auto del = MakeDeleteAct(a);
       frame->todo.Pop(2);
       InsertDelete(del, frame->todo);
@@ -1101,7 +1107,8 @@ void HandleValue() {
             //    H}
             // -> { { ek+1 :: (f1=v1,..., fk=vk, fk+1=[],...) :: C, E, F} :: S,
             // H}
-            const Expression* elt = (*exp->GetTuple().fields)[act->pos].second;
+            const Expression* elt =
+                (*exp->GetTuple().fields)[act->pos].expression;
             frame->todo.Pop(1);
             frame->todo.Push(MakeLvalAct(elt));
           } else {
@@ -1133,7 +1140,8 @@ void HandleValue() {
             //    H}
             // -> { { ek+1 :: (f1=v1,..., fk=vk, fk+1=[],...) :: C, E, F} :: S,
             // H}
-            const Expression* elt = (*exp->GetTuple().fields)[act->pos].second;
+            const Expression* elt =
+                (*exp->GetTuple().fields)[act->pos].expression;
             frame->todo.Pop(1);
             frame->todo.Push(MakeExpAct(elt));
           } else {
@@ -1161,7 +1169,7 @@ void HandleValue() {
                   exit(-1);
                 }
                 frame->todo.Pop(2);
-                const Value* element = state->ReadFromMemory(*a, exp->line_num);
+                const Value* element = state->heap.Read(*a, exp->line_num);
                 frame->todo.Push(MakeValAct(element));
                 break;
               }
@@ -1180,7 +1188,7 @@ void HandleValue() {
           // -> { { v_f :: C, E, F} : S, H}
           auto a = GetMember(ValToPtr(act->results[0], exp->line_num),
                              *exp->GetFieldAccess().field, exp->line_num);
-          const Value* element = state->ReadFromMemory(a, exp->line_num);
+          const Value* element = state->heap.Read(a, exp->line_num);
           frame->todo.Pop(2);
           frame->todo.Push(MakeValAct(element));
           break;
@@ -1396,7 +1404,7 @@ void HandleValue() {
           //    { {v :: return [] :: C, E, F} :: {C', E', F'} :: S, H}
           // -> { {v :: C', E', F'} :: S, H}
           const Value* ret_val = CopyVal(val_act->u.val, stmt->line_num);
-          KillLocals(stmt->line_num, frame);
+          DeallocateLocals(stmt->line_num, frame);
           state->stack.Pop(1);
           frame = state->stack.Top();
           frame->todo.Push(MakeValAct(ret_val));
@@ -1480,8 +1488,8 @@ auto InterpProgram(std::list<Declaration>* fs) -> int {
   }
   InitGlobals(fs);
 
-  const Expression* arg = Expression::MakeTuple(
-      0, new std::vector<std::pair<std::string, const Expression*>>());
+  const Expression* arg =
+      Expression::MakeTuple(0, new std::vector<FieldInitializer>());
   const Expression* call_main =
       Expression::MakeCall(0, Expression::MakeVar(0, "main"), arg);
   auto todo = Stack(MakeExpAct(call_main));
