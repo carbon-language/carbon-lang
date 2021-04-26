@@ -111,6 +111,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Field requirements](#field-requirements)
     -   [Generic type specialization](#generic-type-specialization)
     -   [Bridge for C++ customization points](#bridge-for-c-customization-points)
+    -   [Reverse generics for return types](#reverse-generics-for-return-types)
 -   [Notes](#notes)
 -   [Broken links footnote](#broken-links-footnote)
 
@@ -4542,6 +4543,13 @@ supporting this with the dynamic strategy.
 ### Bridge for C++ customization points
 
 See details in [the goals document](goals.md#bridge-for-c-customization-points).
+
+### Reverse generics for return types
+
+In Rust this is
+[return type of "`impl Trait`"](https://rust-lang.github.io/rfcs/1522-conservative-impl-trait.html).
+In Swift,
+[this feature is in discussion](https://forums.swift.org/t/improving-the-ui-of-generics/22814#heading--reverse-generics).
 
 ## Notes
 
