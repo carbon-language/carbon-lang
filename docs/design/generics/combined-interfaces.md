@@ -2119,6 +2119,7 @@ is particularly used for the case of
 associated types must be specified. Also used for parameter trait bounds in Rust
 ([1](https://doc.rust-lang.org/rust-by-example/generics/bounds.html),
 [2](https://doc.rust-lang.org/book/ch10-02-traits.html#trait-bound-syntax)).
+[Swift is considering adopting a similar syntax as well](https://forums.swift.org/t/improving-the-ui-of-generics/22814#heading--directly-expressing-constraints).
 
 Advantages:
 
@@ -4558,6 +4559,7 @@ In Rust this is
 [return type of "`impl Trait`"](https://rust-lang.github.io/rfcs/1522-conservative-impl-trait.html).
 In Swift,
 [this feature is in discussion](https://forums.swift.org/t/improving-the-ui-of-generics/22814#heading--reverse-generics).
+Swift is considering spelling this `<V: Collection> V` or `some Collection`.
 
 ## Notes
 
