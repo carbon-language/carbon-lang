@@ -11,16 +11,6 @@
 
 namespace Carbon {
 
-// A FieldInitializer represents the initialization of a single tuple field.
-struct FieldInitializer {
-  // The field name. An empty string indicates that this represents a
-  // positional field.
-  std::string name;
-
-  // The expression that initializes the field.
-  const Expression* expression;
-};
-
 // Represents the syntactic contents of an expression delimited by
 // parentheses. Such expressions can be interpreted as either tuples or
 // arbitrary expressions, depending on their context and the syntax of their

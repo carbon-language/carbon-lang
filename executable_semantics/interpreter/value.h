@@ -17,7 +17,6 @@ namespace Carbon {
 struct Value;
 using Address = unsigned int;
 using VarValues = std::list<std::pair<std::string, const Value*>>;
-using VarAddresses = std::vector<std::pair<std::string, Address>>;
 
 auto FindInVarValues(const std::string& field, VarValues* inits)
     -> const Value*;
@@ -27,6 +26,15 @@ auto FieldsEqual(VarValues* ts1, VarValues* ts2) -> bool;
 // nullopt if there is no such field. `*tuple` must be a tuple value.
 auto FindTupleField(const std::string& name, const Value* tuple)
     -> std::optional<Address>;
+
+// A TupleElement represents the value of a single tuple field.
+struct TupleElement {
+  // The field name.
+  std::string name;
+
+  // Location of the field's value.
+  Address address;
+};
 
 enum class ValKind {
   IntV,
@@ -82,7 +90,7 @@ struct Value {
     } alt;
 
     struct {
-      VarAddresses* elts;
+      std::vector<TupleElement>* elements;
     } tuple;
 
     Address ptr;
@@ -134,8 +142,7 @@ auto MakeFunVal(std::string name, const Value* param, const Statement* body)
     -> const Value*;
 auto MakePtrVal(Address addr) -> const Value*;
 auto MakeStructVal(const Value* type, const Value* inits) -> const Value*;
-auto MakeTupleVal(std::vector<std::pair<std::string, Address>>* elts)
-    -> const Value*;
+auto MakeTupleVal(std::vector<TupleElement>* elts) -> const Value*;
 auto MakeAltVal(std::string alt_name, std::string choice_name, Address argument)
     -> const Value*;
 auto MakeAltCons(std::string alt_name, std::string choice_name) -> const Value*;

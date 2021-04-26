@@ -10,6 +10,17 @@
 
 namespace Carbon {
 
+struct Expression;
+
+// A FieldInitializer represents the initialization of a single tuple field.
+struct FieldInitializer {
+  // The field name. For a positional field, this may be empty.
+  std::string name;
+
+  // The expression that initializes the field.
+  const Expression* expression;
+};
+
 enum class ExpressionKind {
   AutoT,
   BoolT,
@@ -65,7 +76,7 @@ struct Expression {
     bool boolean;
 
     struct {
-      std::vector<std::pair<std::string, const Expression*>>* fields;
+      std::vector<FieldInitializer>* fields;
     } tuple;
 
     struct {
@@ -101,8 +112,7 @@ auto MakeCall(int line_num, const Expression* fun, const Expression* arg)
     -> const Expression*;
 auto MakeGetField(int line_num, const Expression* exp, std::string field)
     -> const Expression*;
-auto MakeTuple(int line_num,
-               std::vector<std::pair<std::string, const Expression*>>* args)
+auto MakeTuple(int line_num, std::vector<FieldInitializer>* args)
     -> const Expression*;
 // Create an AST node for an empty tuple.
 auto MakeUnit(int line_num) -> const Expression*;
