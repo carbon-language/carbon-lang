@@ -25,7 +25,7 @@
 %token_type Token
 
 %nonterminal_type illegal_character Never
-%nonterminal_type input {[TopLevelDeclaration]}
+%nonterminal_type input {AbstractSyntaxTree}
 %nonterminal_type pattern Pattern
 %nonterminal_type binding Pattern
 %nonterminal_type function_call_binding {FunctionCall<PatternElement>}
@@ -47,7 +47,7 @@
 %nonterminal_type alternative Alternative
 %nonterminal_type alternative_list {[Alternative]}
 %nonterminal_type top_level_declaration TopLevelDeclaration
-%nonterminal_type declaration_list {[TopLevelDeclaration]}
+%nonterminal_type declaration_list {AbstractSyntaxTree}
 %nonterminal_type identifier Identifier
 %nonterminal_type trailing_tuple_literal TupleLiteral
 %nonterminal_type function_parameter_tuple {Tuple<Pattern>}

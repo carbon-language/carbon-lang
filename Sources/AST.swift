@@ -49,6 +49,9 @@ enum TopLevelDeclaration: AST {
   }
 }
 
+/// The whole abstractsyntax tree is just a bunch of top-level declarations.
+typealias AbstractSyntaxTree = [TopLevelDeclaration]
+
 /// A destructurable pattern.
 indirect enum Pattern: AST {
   case
