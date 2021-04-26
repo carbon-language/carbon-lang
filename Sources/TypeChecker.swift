@@ -129,13 +129,13 @@ private extension TypeChecker {
       error("No initializer from which to deduce type.", at: e.site)
       return .error
 
-    case .functionType(parameterTypes: let p0, returnType: let r0, _):
+    case .functionType(let f0):
       if rhs != nil && rhs!.function == nil { return .error }
       let (p1, r1) = rhs?.function ?? (nil, nil)
 
       return .function(
-        parameterTypes: mapDeducedType(p0, p1),
-        returnType: evaluateTypeExpression(r0, initializingFrom: r1))
+        parameterTypes: mapDeducedType(f0.parameters, p1),
+        returnType: evaluateTypeExpression(f0.returnType, initializingFrom: r1))
 
     case .tupleLiteral(let t0):
       if rhs != nil && rhs!.tuple == nil { return .error }

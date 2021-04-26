@@ -56,18 +56,14 @@ indirect enum Pattern: AST {
     variable(SimpleBinding),     // <Type>: <name>
     tuple(TuplePattern),
     functionCall(FunctionCall<PatternElement>),
-    functionType(parameterTypes: TuplePattern, returnType: Pattern, Site)
+    functionType(FunctionTypePattern)
 
   init(_ e: Expression) {
     // Upcast all destructurable things into appropriate pattern buckets
     switch e {
-    case let .tupleLiteral(t):
-      self = .tuple(TuplePattern(t))
-    case let .functionCall(f):
-      self = .functionCall(.init(f))
-    case let .functionType(parameterTypes: p, returnType: r, site):
-      self = .functionType(
-        parameterTypes: TuplePattern(p), returnType: Pattern(r), site)
+    case let .tupleLiteral(t): self = .tuple(TuplePattern(t))
+    case let .functionCall(f): self = .functionCall(.init(f))
+    case let .functionType(f): self = .functionType(.init(f))
     default: self = .atom(e)
     }
   }
@@ -78,7 +74,7 @@ indirect enum Pattern: AST {
     case let .variable(x): return x.site
     case let .tuple(x): return x.site
     case let .functionCall(x): return x.site
-    case let .functionType(parameterTypes: _, returnType: _, r): return r
+    case let .functionType(x): return x.site
     }
   }
 }
@@ -260,9 +256,11 @@ struct FunctionType<Parameter: Equatable, Return: Equatable>: AST {
   let returnType: Return
   let site: Site
 }
-extension FunctionType where Parameter == PatternElement, Return == Pattern {
+typealias FunctionTypePattern = FunctionType<PatternElement, Pattern>
+typealias FunctionTypeLiteral = FunctionType<LiteralElement, Expression>
+extension FunctionTypePattern {
   /// "Upcast" from literal to pattern
-  init(_ literal: FunctionType<LiteralElement, Expression>) {
+  init(_ literal: FunctionTypeLiteral) {
     self.init(
       parameters: .init(literal.parameters),
       returnType: .init(literal.returnType),
@@ -287,7 +285,7 @@ indirect enum Expression: AST {
     boolType(Site),
     typeType(Site),
     autoType(Site),
-    functionType(parameterTypes: TupleLiteral, returnType: Expression, Site)
+    functionType(FunctionTypeLiteral)
 
   var site: Site {
     switch self {
@@ -305,8 +303,7 @@ indirect enum Expression: AST {
     case let .boolType(r): return r
     case let .typeType(r): return r
     case let .autoType(r): return r
-    case let .functionType(parameterTypes: _, returnType: _, r):
-      return r
+    case let .functionType(t): return t.site
     }
   }
 };

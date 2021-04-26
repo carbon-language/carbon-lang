@@ -138,7 +138,7 @@ expression ::= MINUS(op) expression(r).
 expression ::= expression(f) trailing_tuple_literal(a).
   { .functionCall(FunctionCall(callee: f, arguments: a)) }
 expression ::= FNTY(k) trailing_tuple_literal(p) return_type(r).
-  { .functionType(parameterTypes: p, returnType: r, k...r)}
+  { .functionType(.init(parameters: p, returnType: r, site: k...r))}
 expression ::= tuple_literal(t).
   { .tupleLiteral(t) }
 
@@ -240,20 +240,21 @@ member_designator ::= PERIOD(p) identifier(n).
 function_type_binding ::= FNTY(f) trailing_tuple_binding(p).
 {
    .functionType(
-     parameterTypes: p,
-     returnType: .init(.tupleLiteral(Tuple([], .empty))), f...p)
+     .init(
+        parameters: p,
+        returnType: .init(.tupleLiteral(Tuple([], .empty))), site: f...p))
 }
 function_type_binding ::= FNTY(f) trailing_tuple_binding(p) ARROW expression(r).
 {
-  .functionType(parameterTypes: p, returnType: .init(r), f...r)
+  .functionType(.init(parameters: p, returnType: .init(r), site: f...r))
 }
 function_type_binding ::= FNTY(f) trailing_tuple_binding(p) ARROW binding(r).
 {
-  .functionType(parameterTypes: p, returnType: r, f...r)
+  .functionType(.init(parameters: p, returnType: r, site: f...r))
 }
 function_type_binding ::= FNTY(f) trailing_tuple_literal(p) ARROW binding(r).
 {
-  .functionType(parameterTypes: .init(p), returnType: r, f...r)
+  .functionType(.init(parameters: .init(p), returnType: r, site: f...r))
 }
 
 match_clause ::= CASE(c) pattern(p) DBLARROW statement(s).
