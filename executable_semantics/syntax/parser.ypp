@@ -323,11 +323,7 @@ statement_list:
 ;
 return_type:
   // Empty
-    {
-      $$ = Carbon::MakeTuple(
-          yylineno,
-          new std::vector<std::pair<std::string, const Carbon::Expression*>>());
-    }
+    { $$ = Carbon::MakeUnit(yylineno); }
 | ARROW expression
     { $$ = $2; }
 ;
@@ -362,9 +358,7 @@ alternative:
 | identifier
     {
       $$ = new std::pair<std::string, const Carbon::Expression*>(
-          $1, Carbon::MakeTuple(
-            yylineno,
-            new std::vector<std::pair<std::string, const Carbon::Expression*>>()));
+          $1, Carbon::MakeUnit(yylineno));
     }
 ;
 alternative_list:

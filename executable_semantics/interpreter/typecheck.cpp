@@ -57,11 +57,12 @@ auto ReifyType(const Value* t, int line_num) -> const Expression* {
       return MakeFunType(0, ReifyType(t->u.fun_type.param, line_num),
                          ReifyType(t->u.fun_type.ret, line_num));
     case ValKind::TupleV: {
-      auto args = new std::vector<std::pair<std::string, const Expression*>>();
-      for (auto& field : *t->u.tuple.elts) {
+      auto args = new std::vector<FieldInitializer>();
+      for (const TupleElement& field : *t->u.tuple.elements) {
         args->push_back(
-            {field.first,
-             ReifyType(state->heap.Read(field.second, line_num), line_num)});
+            {.name = field.name,
+             .expression = ReifyType(state->heap.Read(field.address, line_num),
+                                     line_num)});
       }
       return MakeTuple(0, args);
     }
@@ -172,9 +173,8 @@ auto TypeCheckExp(const Expression* e, TypeEnv types, Env values,
       }
     }
     case ExpressionKind::Tuple: {
-      auto new_args =
-          new std::vector<std::pair<std::string, const Expression*>>();
-      auto arg_types = new std::vector<std::pair<std::string, Address>>();
+      auto new_args = new std::vector<FieldInitializer>();
+      auto arg_types = new std::vector<TupleElement>();
       auto new_types = types;
       if (expected && expected->tag != ValKind::TupleV) {
         std::cerr << e->line_num << ": compilation error, didn't expect a tuple"
@@ -182,7 +182,7 @@ auto TypeCheckExp(const Expression* e, TypeEnv types, Env values,
         exit(-1);
       }
       if (expected &&
-          e->u.tuple.fields->size() != expected->u.tuple.elts->size()) {
+          e->u.tuple.fields->size() != expected->u.tuple.elements->size()) {
         std::cerr << e->line_num
                   << ": compilation error, tuples of different length"
                   << std::endl;
@@ -193,22 +193,23 @@ auto TypeCheckExp(const Expression* e, TypeEnv types, Env values,
            arg != e->u.tuple.fields->end(); ++arg, ++i) {
         const Value* arg_expected = nullptr;
         if (expected && expected->tag == ValKind::TupleV) {
-          if ((*expected->u.tuple.elts)[i].first != arg->first) {
+          if ((*expected->u.tuple.elements)[i].name != arg->name) {
             std::cerr << e->line_num
                       << ": compilation error, field names do not match, "
-                      << "expected " << (*expected->u.tuple.elts)[i].first
-                      << " but got " << arg->first << std::endl;
+                      << "expected " << (*expected->u.tuple.elements)[i].name
+                      << " but got " << arg->name << std::endl;
             exit(-1);
           }
-          arg_expected = state->heap.Read((*expected->u.tuple.elts)[i].second,
-                                          e->line_num);
+          arg_expected = state->heap.Read(
+              (*expected->u.tuple.elements)[i].address, e->line_num);
         }
-        auto arg_res =
-            TypeCheckExp(arg->second, new_types, values, arg_expected, context);
+        auto arg_res = TypeCheckExp(arg->expression, new_types, values,
+                                    arg_expected, context);
         new_types = arg_res.types;
-        new_args->push_back(std::make_pair(arg->first, arg_res.exp));
+        new_args->push_back({.name = arg->name, .expression = arg_res.exp});
         arg_types->push_back(
-            {arg->first, state->heap.AllocateValue(arg_res.type)});
+            {.name = arg->name,
+             .address = state->heap.AllocateValue(arg_res.type)});
       }
       auto tuple_e = MakeTuple(e->line_num, new_args);
       auto tuple_t = MakeTupleVal(arg_types);
@@ -241,12 +242,12 @@ auto TypeCheckExp(const Expression* e, TypeEnv types, Env values,
                     << *e->u.get_field.field << std::endl;
           exit(-1);
         case ValKind::TupleV:
-          for (auto& field : *t->u.tuple.elts) {
-            if (*e->u.get_field.field == field.first) {
+          for (const TupleElement& field : *t->u.tuple.elements) {
+            if (*e->u.get_field.field == field.name) {
               auto new_e =
                   MakeGetField(e->line_num, res.exp, *e->u.get_field.field);
               return TCResult(new_e,
-                              state->heap.Read(field.second, e->line_num),
+                              state->heap.Read(field.address, e->line_num),
                               res.types);
             }
           }
@@ -534,8 +535,7 @@ auto CheckOrEnsureReturn(const Statement* stmt, bool void_return, int line_num)
     -> const Statement* {
   if (!stmt) {
     if (void_return) {
-      auto args = new std::vector<std::pair<std::string, const Expression*>>();
-      return MakeReturn(line_num, MakeTuple(line_num, args));
+      return MakeReturn(line_num, MakeUnit(line_num));
     } else {
       std::cerr
           << "control-flow reaches end of non-void function without a return"
@@ -586,11 +586,8 @@ auto CheckOrEnsureReturn(const Statement* stmt, bool void_return, int line_num)
     case StatementKind::Continue:
     case StatementKind::VariableDefinition:
       if (void_return) {
-        auto args =
-            new std::vector<std::pair<std::string, const Expression*>>();
-        return MakeSeq(
-            stmt->line_num, stmt,
-            MakeReturn(stmt->line_num, MakeTuple(stmt->line_num, args)));
+        return MakeSeq(stmt->line_num, stmt,
+                       MakeReturn(stmt->line_num, MakeUnit(stmt->line_num)));
       } else {
         std::cerr
             << stmt->line_num
@@ -718,10 +715,10 @@ auto StructDeclaration::TopLevel(TypeCheckContext& tops) const -> void {
   auto st = TypeOfStructDef(&definition, tops.types, tops.values);
   Address a = state->heap.AllocateValue(st);
   tops.values.Set(Name(), a);  // Is this obsolete?
-  auto field_types = new std::vector<std::pair<std::string, Address>>();
+  auto field_types = new std::vector<TupleElement>();
   for (const auto& [field_name, field_value] : *st->u.struct_type.fields) {
-    field_types->push_back(
-        {field_name, state->heap.AllocateValue(field_value)});
+    field_types->push_back({.name = field_name,
+                            .address = state->heap.AllocateValue(field_value)});
   }
   auto fun_ty = MakeFunTypeVal(MakeTupleVal(field_types), st);
   tops.types.Set(Name(), fun_ty);

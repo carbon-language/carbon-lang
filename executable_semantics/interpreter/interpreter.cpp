@@ -66,14 +66,14 @@ void Heap::CheckAlive(Address address, int line_num) {
 auto CopyVal(const Value* val, int line_num) -> const Value* {
   switch (val->tag) {
     case ValKind::TupleV: {
-      auto elts = new std::vector<std::pair<std::string, Address>>();
-      for (auto& i : *val->u.tuple.elts) {
-        const Value* elt =
-            CopyVal(state->heap.Read(i.second, line_num), line_num);
-        Address new_address = state->heap.AllocateValue(elt);
-        elts->push_back(make_pair(i.first, new_address));
+      auto* elements = new std::vector<TupleElement>();
+      for (const TupleElement& element : *val->u.tuple.elements) {
+        const Value* new_element =
+            CopyVal(state->heap.Read(element.address, line_num), line_num);
+        Address new_address = state->heap.AllocateValue(new_element);
+        elements->push_back({.name = element.name, .address = new_address});
       }
-      return MakeTupleVal(elts);
+      return MakeTupleVal(elements);
     }
     case ValKind::AltV: {
       const Value* arg =
@@ -133,8 +133,8 @@ void Heap::DeallocateSubObjects(const Value* val) {
       DeallocateSubObjects(val->u.struct_val.inits);
       break;
     case ValKind::TupleV:
-      for (auto& elt : *val->u.tuple.elts) {
-        Deallocate(elt.second);
+      for (const TupleElement& element : *val->u.tuple.elements) {
+        Deallocate(element.address);
       }
       break;
     default:
@@ -411,13 +411,13 @@ void DeallocateLocals(int line_num, Frame* frame) {
 void CreateTuple(Frame* frame, Action* act, const Expression* /*exp*/) {
   //    { { (v1,...,vn) :: C, E, F} :: S, H}
   // -> { { `(v1,...,vn) :: C, E, F} :: S, H}
-  auto elts = new std::vector<std::pair<std::string, Address>>();
+  auto elements = new std::vector<TupleElement>();
   auto f = act->u.exp->u.tuple.fields->begin();
   for (auto i = act->results.begin(); i != act->results.end(); ++i, ++f) {
     Address a = state->heap.AllocateValue(*i);  // copy?
-    elts->push_back(make_pair(f->first, a));
+    elements->push_back({.name = f->name, .address = a});
   }
-  const Value* tv = MakeTupleVal(elts);
+  const Value* tv = MakeTupleVal(elements);
   frame->todo.Pop(1);
   frame->todo.Push(MakeValAct(tv));
 }
@@ -440,21 +440,21 @@ auto PatternMatch(const Value* p, const Value* v, Env values,
     case ValKind::TupleV:
       switch (v->tag) {
         case ValKind::TupleV: {
-          if (p->u.tuple.elts->size() != v->u.tuple.elts->size()) {
+          if (p->u.tuple.elements->size() != v->u.tuple.elements->size()) {
             std::cerr << "runtime error: arity mismatch in tuple pattern match"
                       << std::endl;
             exit(-1);
           }
-          for (auto& elt : *p->u.tuple.elts) {
-            auto a = FindTupleField(elt.first, v);
+          for (const TupleElement& element : *p->u.tuple.elements) {
+            auto a = FindTupleField(element.name, v);
             if (a == std::nullopt) {
-              std::cerr << "runtime error: field " << elt.first << "not in ";
+              std::cerr << "runtime error: field " << element.name << "not in ";
               PrintValue(v, std::cerr);
               std::cerr << std::endl;
               exit(-1);
             }
             std::optional<Env> matches = PatternMatch(
-                state->heap.Read(elt.second, line_num),
+                state->heap.Read(element.address, line_num),
                 state->heap.Read(*a, line_num), values, vars, line_num);
             if (!matches) {
               return std::nullopt;
@@ -526,20 +526,20 @@ void PatternAssignment(const Value* pat, const Value* val, int line_num) {
     case ValKind::TupleV: {
       switch (val->tag) {
         case ValKind::TupleV: {
-          if (pat->u.tuple.elts->size() != val->u.tuple.elts->size()) {
+          if (pat->u.tuple.elements->size() != val->u.tuple.elements->size()) {
             std::cerr << "runtime error: arity mismatch in tuple pattern match"
                       << std::endl;
             exit(-1);
           }
-          for (auto& elt : *pat->u.tuple.elts) {
-            auto a = FindTupleField(elt.first, val);
+          for (const TupleElement& element : *pat->u.tuple.elements) {
+            auto a = FindTupleField(element.name, val);
             if (a == std::nullopt) {
-              std::cerr << "runtime error: field " << elt.first << "not in ";
+              std::cerr << "runtime error: field " << element.name << "not in ";
               PrintValue(val, std::cerr);
               std::cerr << std::endl;
               exit(-1);
             }
-            PatternAssignment(state->heap.Read(elt.second, line_num),
+            PatternAssignment(state->heap.Read(element.address, line_num),
                               state->heap.Read(*a, line_num), line_num);
           }
           break;
@@ -629,7 +629,7 @@ void StepLvalue() {
     case ExpressionKind::Tuple: {
       //    { {(f1=e1,...) :: C, E, F} :: S, H}
       // -> { {e1 :: (f1=[],...) :: C, E, F} :: S, H}
-      const Expression* e1 = (*exp->u.tuple.fields)[0].second;
+      const Expression* e1 = (*exp->u.tuple.fields)[0].expression;
       frame->todo.Push(MakeLvalAct(e1));
       act->pos++;
       break;
@@ -680,7 +680,7 @@ void StepExp() {
       if (exp->u.tuple.fields->size() > 0) {
         //    { {(f1=e1,...) :: C, E, F} :: S, H}
         // -> { {e1 :: (f1=[],...) :: C, E, F} :: S, H}
-        const Expression* e1 = (*exp->u.tuple.fields)[0].second;
+        const Expression* e1 = (*exp->u.tuple.fields)[0].expression;
         frame->todo.Push(MakeExpAct(e1));
         act->pos++;
       } else {
@@ -1090,7 +1090,7 @@ void HandleValue() {
             //    H}
             // -> { { ek+1 :: (f1=v1,..., fk=vk, fk+1=[],...) :: C, E, F} :: S,
             // H}
-            const Expression* elt = (*exp->u.tuple.fields)[act->pos].second;
+            const Expression* elt = (*exp->u.tuple.fields)[act->pos].expression;
             frame->todo.Pop(1);
             frame->todo.Push(MakeLvalAct(elt));
           } else {
@@ -1122,7 +1122,7 @@ void HandleValue() {
             //    H}
             // -> { { ek+1 :: (f1=v1,..., fk=vk, fk+1=[],...) :: C, E, F} :: S,
             // H}
-            const Expression* elt = (*exp->u.tuple.fields)[act->pos].second;
+            const Expression* elt = (*exp->u.tuple.fields)[act->pos].expression;
             frame->todo.Pop(1);
             frame->todo.Push(MakeExpAct(elt));
           } else {
@@ -1467,8 +1467,7 @@ auto InterpProgram(std::list<Declaration>* fs) -> int {
   }
   InitGlobals(fs);
 
-  const Expression* arg = MakeTuple(
-      0, new std::vector<std::pair<std::string, const Expression*>>());
+  const Expression* arg = MakeTuple(0, new std::vector<FieldInitializer>());
   const Expression* call_main = MakeCall(0, MakeVar(0, "main"), arg);
   auto todo = Stack(MakeExpAct(call_main));
   auto* scope = new Scope(globals, std::list<std::string>());
