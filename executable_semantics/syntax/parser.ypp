@@ -47,10 +47,7 @@
 //   `if` and `else` could mask other ambiguities, especially if we allow
 //   `if`/`else` in expressions, so we allow Bison to resolve it through its
 //   default behavior of preferring to shift rather than reduce.
-// - "expression identifier" ambiguities: This supports variables in parameter
-//   lists, but adds 8 ambiguities. We currently allow Bison to resolve these
-//   through default behavior.
-%expect 9
+%expect 1
 
 // -----------------------------------------------------------------------------
 
@@ -174,6 +171,7 @@ void yy::parser::error(
 %precedence NOT UNARY_MINUS
 %left "." ARROW
 %precedence "(" ")" "[" "]"
+%precedence identifier
 
 %start input
 %locations
