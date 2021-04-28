@@ -169,9 +169,9 @@ private extension TypeChecker {
   ///
   /// where <e> `e`, and <rhs> is an expression of type `rhs`.
   mutating func evaluateTypeExpression(
-    _ e: Expression, initializingFrom rhs: Type? = nil
+    _ e: TypeExpression, initializingFrom rhs: Type? = nil
   ) -> Type {
-    let r = deducedType(e, initializingFrom: rhs)
+    let r = deducedType(e.body, initializingFrom: rhs)
 
     // Final validation.
     if let r1 = rhs, r1 != r {
@@ -200,11 +200,12 @@ private extension TypeChecker {
 
          */
       }
-      let r = me.evaluateTypeExpression(f.returnType)
-      me.declaredType[f.identity] = .function(parameterTypes: parameterTypes, returnType: r)
+//      let r = me.evaluateTypeExpression(f.returnType)
+//      me.declaredType[f.identity] = .function(parameterTypes: parameterTypes, returnType: r)
       me.currentFunction = f
       me.visit(body)
       me.currentFunction = nil
+      UNIMPLEMENTED
     }
   }
 
@@ -213,7 +214,7 @@ private extension TypeChecker {
     inNewScope { me in
       for m in s.members {
         me.define(m.name, m)
-        me.declaredType[m.identity] = me.evaluateTypeExpression(m.type.type)
+        me.declaredType[m.identity] = me.evaluateTypeExpression(m.type)
       }
     }
   }

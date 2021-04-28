@@ -82,18 +82,15 @@ indirect enum Pattern: AST {
   }
 }
 
-struct TypeSpecifier: AST {
-  let type: Expression
-  init(_ type: Expression) { self.type = type }
-
-  var site: Site { type.site }
-}
-enum LHSTypeSpecifier: AST {
+/// Either a literal type expression, or `.auto(site)` which denotes a type that
+/// should be deduced from another expression in an initialization or pattern
+/// match.
+enum TypeSpecifier: AST {
   case
     auto(Site),
-    literal(Expression)
+    literal(TypeExpression)
 
-  init(_ e: Expression) { self = .literal(e) }
+  init(_ e: TypeExpression) { self = .literal(e) }
   
   var site: Site {
     switch self {
@@ -104,7 +101,7 @@ enum LHSTypeSpecifier: AST {
 }
 
 struct SimpleBinding: AST, Declaration {
-  let type: LHSTypeSpecifier
+  let type: TypeSpecifier
   let name: Identifier
   var site: Site { type.site...name.site }
 }
@@ -158,7 +155,7 @@ extension TuplePattern {
 struct FunctionDefinition: AST, Declaration {
   let name: Identifier
   let parameters: TuplePattern
-  let returnType: Expression
+  let returnType: TypeSpecifier
   let body: Statement?
   let site: Site
 }
@@ -188,7 +185,7 @@ struct ChoiceDefinition: AST, TypeDeclaration {
 }
 
 struct StructMember: AST, Declaration {
-  let type: TypeSpecifier
+  let type: TypeExpression
   let name: Identifier
   let site: Site
 }
@@ -260,14 +257,14 @@ struct FunctionType<Parameter: Equatable, Return: Equatable>: AST {
   let site: Site
 }
 typealias FunctionTypePattern = FunctionType<PatternElement, Pattern>
-typealias FunctionTypeLiteral = FunctionType<LiteralElement, Expression>
+typealias FunctionTypeLiteral = FunctionType<LiteralElement, TypeExpression>
 extension FunctionTypePattern {
   /// "Upcast" from literal to pattern
-  init(_ literal: FunctionTypeLiteral) {
+  init(_ source: FunctionTypeLiteral) {
     self.init(
-      parameters: .init(literal.parameters),
-      returnType: .init(literal.returnType),
-      site: literal.site)
+      parameters: .init(source.parameters),
+      returnType: .init(source.returnType.body),
+      site: source.site)
   }
 }
 
@@ -277,7 +274,7 @@ indirect enum Expression: AST {
     name(Identifier),
     getField(target: Expression, fieldName: Identifier, Site),
     index(target: Expression, offset: Expression, Site),
-    patternVariable(type: Expression, name: Identifier, Site),
+    patternVariable(type: TypeExpression, name: Identifier, Site),
     integerLiteral(Int, Site),
     booleanLiteral(Bool, Site),
     tupleLiteral(TupleLiteral),
@@ -311,9 +308,26 @@ indirect enum Expression: AST {
   }
 };
 
+/// An expression whose value will be used as a type in type-checking.
+///
+/// You can think of this as an un-canonicalized `Type` value.  An instance is
+/// created by the parser for all expressions in a syntactic position that
+/// indicates a type.
+struct TypeExpression: AST {
+  /// Creates an instance containing `body`.
+  init(_ body: Expression) {
+    self.body = body
+  }
+
+  /// The computation that produces the type value.
+  let body: Expression
+
+  var site: Site { body.site }
+}
+
 struct StructMemberDeclaration: AST, Declaration {
   let name: Identifier
-  let type: TypeSpecifier
+  let type: TypeExpression
   let site: Site
 }
 

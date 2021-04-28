@@ -31,7 +31,6 @@
 %nonterminal_type function_call_binding {FunctionCall<PatternElement>}
 %nonterminal_type function_type_binding Pattern
 %nonterminal_type expression Expression
-%nonterminal_type lhs_type_specifier LHSTypeSpecifier
 %nonterminal_type member_designator MemberDesignator
 %nonterminal_type tuple_literal TupleLiteral
 %nonterminal_type tuple_binding TuplePattern
@@ -40,7 +39,7 @@
 %nonterminal_type match_clause_list MatchClauseList
 %nonterminal_type statement Statement
 %nonterminal_type statement_list {[Statement]}
-%nonterminal_type return_type Expression
+%nonterminal_type return_type TypeExpression
 %nonterminal_type function_definition FunctionDefinition
 %nonterminal_type function_declaration FunctionDefinition
 %nonterminal_type struct_member_list {[StructMember]}
@@ -88,7 +87,7 @@ binding ::= function_type_binding(f). { f }
 
 // binding for a single variable.
 simple_binding ::= expression(t) COLON identifier(n).
-  { SimpleBinding(type: .literal(t), name: n) }
+  { SimpleBinding(type: .literal(TypeExpression(t)), name: n) }
 simple_binding ::= AUTO(t) COLON identifier(n).
   { SimpleBinding(type: .auto(t.site), name: n) }
 
@@ -99,7 +98,8 @@ function_call_binding ::= expression(i) trailing_tuple_binding(a).
 // identifier is just Identifier without the TokenID
 identifier ::= Identifier(i). { Identifier(text: i.text, site: i.site) }
 
-expression ::= identifier(i).                                       { .name(i) }
+expression ::= identifier(i).
+  { .name(i) }
 expression ::= expression(t) member_designator(m).
   { .getField(target: t, fieldName: m, t...m) }
 expression ::=
@@ -298,16 +298,16 @@ statement_list ::= statement(s) statement_list(l).
   { [s] + l }
 
 return_type ::= /* Empty */.
-  { .tupleLiteral(Tuple([], .empty)) }
+  { TypeExpression(.tupleLiteral(Tuple([], .empty))) }
 return_type ::= ARROW(a) expression(e).
-  { e }
+  { TypeExpression(e) }
 
 function_definition
   ::= FN(f) identifier(n) trailing_tuple_pattern(p) return_type(t)
   LEFT_CURLY_BRACE(l) statement_list(b) RIGHT_CURLY_BRACE(r).
   {
     FunctionDefinition(
-      name: n, parameters: p, returnType: t,
+      name: n, parameters: p, returnType: .literal(t),
       body: .block(b, l...r), site: f...r)
   }
 function_definition
@@ -315,7 +315,7 @@ function_definition
       trailing_tuple_pattern(p) DBLARROW expression(b) SEMICOLON(s).
   {
     FunctionDefinition(
-      name: n, parameters: p, returnType: .autoType(.empty),
+      name: n, parameters: p, returnType: .auto(.empty),
       body: .return(b, b.site), site: f...s)
   }
 function_declaration
@@ -323,7 +323,7 @@ function_declaration
      trailing_tuple_pattern(p) return_type(r) SEMICOLON(s).
   {
     FunctionDefinition(
-      name: n, parameters: p, returnType: r,
+      name: n, parameters: p, returnType: .literal(r),
       body: nil, site: f...s)
   }
 
