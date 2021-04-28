@@ -26,7 +26,7 @@ update as appropriate.
 
 ## Overview
 
-Right now we expect variable syntax like: `Int: x`.
+Right now we expect variable syntax like: `Int x`.
 
 There are probably other syntactic conventions that can be added here, too.
 
@@ -42,10 +42,10 @@ position, the identifier is first and the type follows. However, that ordering
 would be very _inconsistent_ with C++.
 
 One very important consideration here is the fundamental approach to type
-inference. Languages which use the syntax `<identifier>: <type>` typically allow
+inference. Languages which use the syntax `<identifier> <type>` typically allow
 completely omitting the colon and the type to signify inference. With C++,
 inference is achieved with a placeholder keyword `auto`, and Carbon is currently
-being consistent there as well with `auto: <identifier>`. For languages which
+being consistent there as well with `auto <identifier>`. For languages which
 simply allow omission, this seems an intentional incentive to encourage
 inference. On the other hand, there has been strong advocacy in the C++
 community to not overly rely on inference and to write the explicit type
@@ -55,7 +55,7 @@ approach to type inference. What should be the default that we teach? Teaching
 to avoid inference unless it specifically helps readability by avoiding a
 confusing or unhelpfully complex type name, and incentivizing that by requiring
 `auto` or another placeholder, may cause as much or more inconsistency with
-languages that use `<identifier>: <type>` as retaining the C++ ordering.
+languages that use `<identifier> <type>` as retaining the C++ ordering.
 
 That said, all of this is largely unknown. It will require a significant
 exploration of the trade-offs and consistency differences. It should also factor

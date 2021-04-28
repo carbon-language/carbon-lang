@@ -164,7 +164,7 @@ package ExampleUser;
 
 import Geometry library("OneSide");
 
-fn Foo(var Geometry.Shapes.Flat.Circle: circle) { ... }
+fn Foo(var Geometry.Shapes.Flat.Circle circle) { ... }
 ```
 
 ### Names and scopes
@@ -282,7 +282,7 @@ Some common expressions in Carbon include:
 Functions are the core unit of behavior. For example:
 
 ```carbon
-fn Sum(Int: a, Int: b) -> Int;
+fn Sum(Int a, Int b) -> Int;
 ```
 
 Breaking this apart:
@@ -333,7 +333,7 @@ For example:
 
 ```carbon
 fn Foo() {
-  var Int: x = 42;
+  var Int x = 42;
 }
 ```
 
@@ -371,7 +371,7 @@ conditional execution of statements.
 For example:
 
 ```carbon
-fn Foo(Int: x) {
+fn Foo(Int x) {
   if (x < 42) {
     Bar();
   } else if (x > 77) {
@@ -400,7 +400,7 @@ For example:
 
 ```carbon
 fn Foo() {
-  var Int: x = 0;
+  var Int x = 0;
   while (x < 42) {
     if (ShouldStop()) break;
     if (ShouldSkip(x)) {
@@ -435,7 +435,7 @@ value is provided by an expression in the return statement. This allows us to
 complete the definition of our `Sum` function from earlier as:
 
 ```carbon
-fn Sum(Int: a, Int: b) -> Int {
+fn Sum(Int a, Int b) -> Int {
   return a + b;
 }
 ```
@@ -502,7 +502,7 @@ tuple. In formal type theory, tuples are product types.
 An example use of tuples is:
 
 ```carbon
-fn DoubleBoth(Int: x, Int: y) -> (Int, Int) {
+fn DoubleBoth(Int x, Int y) -> (Int, Int) {
   return (2 * x, 2 * y);
 }
 ```
@@ -519,7 +519,7 @@ expression: one is a tuple of types, the other a tuple of values.
 Element access uses subscript syntax:
 
 ```carbon
-fn DoubleTuple((Int, Int): x) -> (Int, Int) {
+fn DoubleTuple((Int, Int) x) -> (Int, Int) {
   return (2 * x[0], 2 * x[1]);
 }
 ```
@@ -528,12 +528,12 @@ Tuples also support multiple indices and slicing to restructure tuple elements:
 
 ```carbon
 // This reverses the tuple using multiple indices.
-fn Reverse((Int, Int, Int): x) -> (Int, Int, Int) {
+fn Reverse((Int, Int, Int) x) -> (Int, Int, Int) {
   return x[2, 1, 0];
 }
 
 // This slices the tuple by extracting elements [0, 2).
-fn RemoveLast((Int, Int, Int): x) -> (Int, Int) {
+fn RemoveLast((Int, Int, Int) x) -> (Int, Int) {
   return x[0 .. 2];
 }
 ```
@@ -565,11 +565,11 @@ For example:
 
 ```carbon
 struct Widget {
-  var Int: x;
-  var Int: y;
-  var Int: z;
+  var Int x;
+  var Int y;
+  var Int z;
 
-  var String: payload;
+  var String payload;
 }
 ```
 
@@ -584,18 +584,18 @@ More advanced `struct`s may be created:
 ```carbon
 struct AdvancedWidget {
   // Do a thing!
-  fn DoSomething(AdvancedWidget: self, Int: x, Int: y);
+  fn DoSomething(AdvancedWidget self, Int x, Int y);
 
   // A nested type.
   struct Nestedtype {
     // ...
   }
 
-  private var Int: x;
-  private var Int: y;
+  private var Int x;
+  private var Int y;
 }
 
-fn Foo(AdvancedWidget: thing) {
+fn Foo(AdvancedWidget thing) {
   thing.DoSomething(1, 2);
 }
 ```
@@ -667,13 +667,13 @@ fn Bar() -> (Int, (Float, Float));
 
 fn Foo() -> Float {
   match (Bar()...) {
-    case (42, (Float: x, Float: y)) => {
+    case (42, (Float x, Float y)) => {
       return x - y;
     }
-    case (Int: p, (Float: x, Float: _)) if (p < 13) => {
+    case (Int p, (Float x, Float _)) if (p < 13) => {
       return p * x;
     }
-    case (Int: p, auto: _) if (p > 3) => {
+    case (Int p, auto _) if (p > 3) => {
       return p * Pi;
     }
     default => {
@@ -690,7 +690,7 @@ Breaking apart this `match`:
     -   It then will find the _first_ `case` that matches this value, and
         execute that block.
     -   If none match, then it executes the default block.
--   Each `case` pattern contains a value pattern, such as `(Int: p, auto: _)`,
+-   Each `case` pattern contains a value pattern, such as `(Int p, auto _)`,
     followed by an optional boolean predicate introduced by the `if` keyword.
     -   The value pattern must first match, and then the predicate must also
         evaluate to true for the overall `case` pattern to match.
@@ -704,7 +704,7 @@ Value patterns may be composed of the following:
     -   The special identifier `_` may be used to discard the value once
         matched.
 -   A destructuring pattern containing a sequence of value patterns, such as
-    `(Float: x, Float: y)`, which match against tuples and tuple-like values by
+    `(Float x, Float y)`, which match against tuples and tuple-like values by
     recursively matching on their elements.
 -   An unwrapping pattern containing a nested value pattern which matches
     against a variant or variant-like value by unwrapping it.
@@ -724,7 +724,7 @@ An example use is:
 ```carbon
 fn Bar() -> (Int, (Float, Float));
 fn Foo() -> Int {
-  var (Int: p, auto: _) = Bar();
+  var (Int p, auto _) = Bar();
   return p;
 }
 ```
@@ -733,7 +733,7 @@ To break this apart:
 
 -   The `Int` returned by `Bar()` matches and is bound to `p`, then returned.
 -   The `(Float, Float)` returned by `Bar()` matches and is discarded by
-    `auto: _`.
+    `auto _`.
 
 ### Pattern matching as function overload resolution
 
@@ -775,10 +775,10 @@ be used to instantiate the parameterized definition with the provided arguments
 in order to produce a complete type. For example:
 
 ```carbon
-struct Stack(Type:$$ T) {
-  var Array(T): storage;
+struct Stack(Type$$ T) {
+  var Array(T) storage;
 
-  fn Push(T: value);
+  fn Push(T value);
   fn Pop() -> T;
 }
 ```
@@ -805,12 +805,12 @@ arguments. The runtime call then passes the remaining arguments to the resulting
 complete definition.
 
 ```carbon
-fn Convert[Type:$$ T](T: source, Type:$$ U) -> U {
-  var U: converted = source;
+fn Convert[Type$$ T](T source, Type$$ U) -> U {
+  var U converted = source;
   return converted;
 }
 
-fn Foo(Int: i) -> Float {
+fn Foo(Int i) -> Float {
   // Instantiates with the `T` implicit argument set to `Int` and the `U`
   // explicit argument set to `Float`, then calls with the runtime value `i`.
   return Convert(i, Float);
