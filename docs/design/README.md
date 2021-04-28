@@ -164,7 +164,7 @@ package ExampleUser;
 
 import Geometry library("OneSide");
 
-fn Foo(var Geometry.Shapes.Flat.Circle circle) { ... }
+fn Foo(Geometry.Shapes.Flat.Circle circle) { ... }
 ```
 
 ### Names and scopes
