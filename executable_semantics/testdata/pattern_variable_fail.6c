@@ -4,6 +4,6 @@
 
 fn main() -> Int {
   // error
-  Int : x;
+  Int x;
   return 1;
 }
