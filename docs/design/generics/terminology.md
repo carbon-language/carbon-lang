@@ -26,7 +26,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Nominal interfaces](#nominal-interfaces)
 -   [Impls: Implementations of interfaces](#impls-implementations-of-interfaces)
 -   [Compatible types](#compatible-types)
--   [Subsumption and casting](#subsumption-and-casting)
+-   [Subtyping and casting](#subtyping-and-casting)
 -   [Adapting a type](#adapting-a-type)
 -   [Type erasure](#type-erasure)
 -   [Facet type](#facet-type)
@@ -307,7 +307,7 @@ invariants, such as implementing the API of the new type by calling (public)
 methods of the original API, instead of accessing any private implementation
 details.
 
-## Subsumption and casting
+## Subtyping and casting
 
 Both subsumption and casting are different names for changing the type of a
 value to a compatible type.

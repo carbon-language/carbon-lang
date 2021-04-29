@@ -79,7 +79,7 @@ We want ways of accomplishing the following tasks:
     generic function may be passed to the function without additional syntax
     beyond passing the same value to a non-generic function expecting the exact
     type of the value
-    ([subsumption](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#subsumption-and-casting)).
+    ([subsumption](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/terminology.md#subtyping-and-casting)).
     This should be true for values with types only known generically, as long as
     it is generically known that the type implements a sufficient set of
     interfaces.

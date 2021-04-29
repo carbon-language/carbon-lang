@@ -593,7 +593,7 @@ present in the signature of the function to typecheck the body of
 When we call `AddAndScaleGeneric`, we need to determine the value of `T` to use
 when passed values with type `Point`. Since `T` has type `Vector`, the compiler
 simply sets `T` to `Point as Vector`. This
-[cast](terminology.md#subsumption-and-casting)
+[cast](terminology.md#subtyping-and-casting)
 [erases](terminology.md#type-erasure) all of the API of `Point` and substitutes
 the api of `Vector`, without changing anything about the data representation. It
 acts like we called this non-generic function, found by setting `T` to
@@ -866,7 +866,7 @@ struct ImplementsS {
 ### Subsumption
 
 Given a generic type `T` with type-type `I1`, it may be
-[implicitly cast](terminology.md#subsumption-and-casting) to a type-type `I2`,
+[implicitly cast](terminology.md#subtyping-and-casting) to a type-type `I2`,
 resulting in `T as I2`, as long as the requirements of `I1` are a superset of
 the requirements of `I2`. Further, given a value `x` of type `T`, it can be
 implicitly cast to `T as I2`. For example:

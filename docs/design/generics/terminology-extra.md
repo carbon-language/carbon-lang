@@ -184,7 +184,7 @@ default impl for a particular interface for a type sees the same result, we
 require default impls to be defined either with the interface or the type.
 
 The main benefit of default impls is that it allows
-[subsumption](terminology.md#subsumption-and-casting) to work. That is, by
+[subsumption](terminology.md#subtyping-and-casting) to work. That is, by
 allowing the compiler to look up the impl for a (type, interface) combination
 automatically, you allow passing of values to generic functions transparently,
 without any explicit statement of how to satisfy the parameter's interface
