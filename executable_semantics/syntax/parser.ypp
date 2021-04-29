@@ -164,14 +164,13 @@ void yy::parser::error(
 ;
 
 %precedence "{" "}"
-%precedence ":" "," DBLARROW
+%precedence VAR_BINDING "," DBLARROW
 %left OR AND
 %nonassoc EQUAL_EQUAL
 %left "+" "-"
 %precedence NOT UNARY_MINUS
 %left "." ARROW
 %precedence "(" ")" "[" "]"
-%precedence identifier
 
 %start input
 %locations
@@ -190,7 +189,7 @@ expression:
     { $$ = Carbon::Expression::MakeGetField(yylineno, $1, $2); }
 | expression "[" expression "]"
     { $$ = Carbon::Expression::MakeIndex(yylineno, $1, $3); }
-| expression identifier
+| expression VAR_BINDING identifier
     { $$ = Carbon::Expression::MakeVarPat(yylineno, $2, $1); }
 | integer_literal
     { $$ = Carbon::Expression::MakeInt(yylineno, $1); }
@@ -341,8 +340,8 @@ function_declaration:
   FN identifier tuple return_type ";"
     { $$ = MakeFunDef(yylineno, $2, $4, $3, 0); }
 ;
-variable_declaration: expression identifier
-    { $$ = MakeField(yylineno, $2, $1); }
+variable_declaration: expression VAR_BINDING identifier
+    { $$ = MakeField(yylineno, $3, $1); }
 ;
 member: VAR variable_declaration ";"
     { $$ = $2; }
