@@ -288,9 +288,4 @@ private extension TypeChecker {
   mutating func visit(_ node: Expression) {
     UNIMPLEMENTED
   }
-
-  /// Typechecks `m` in the current context.
-  mutating func visit(_ m: StructMemberDeclaration) {
-    UNIMPLEMENTED
-  }
 }

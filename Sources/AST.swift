@@ -319,12 +319,6 @@ struct TypeExpression: AST {
   var site: Site { body.site }
 }
 
-struct StructMemberDeclaration: AST, Declaration {
-  let name: Identifier
-  let type: TypeExpression
-  let site: Site
-}
-
 /// The declaration of a name.
 protocol Declaration {
   /// A type that can be used to uniquely identify declarations in the source.
