@@ -189,7 +189,7 @@ expression:
     { $$ = Carbon::Expression::MakeGetField(yylineno, $1, $2); }
 | expression "[" expression "]"
     { $$ = Carbon::Expression::MakeIndex(yylineno, $1, $3); }
-| expression VAR_BINDING identifier
+| expression identifier %prec VAR_BINDING
     { $$ = Carbon::Expression::MakeVarPat(yylineno, $2, $1); }
 | integer_literal
     { $$ = Carbon::Expression::MakeInt(yylineno, $1); }
@@ -340,8 +340,8 @@ function_declaration:
   FN identifier tuple return_type ";"
     { $$ = MakeFunDef(yylineno, $2, $4, $3, 0); }
 ;
-variable_declaration: expression VAR_BINDING identifier
-    { $$ = MakeField(yylineno, $3, $1); }
+variable_declaration: expression identifier %prec VAR_BINDING
+    { $$ = MakeField(yylineno, $2, $1); }
 ;
 member: VAR variable_declaration ";"
     { $$ = $2; }
