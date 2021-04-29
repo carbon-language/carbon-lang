@@ -203,7 +203,6 @@ indirect enum Statement: AST {
     initialization(Initialization),
     `if`(condition: Expression, thenClause: Statement, elseClause: Statement?, Site),
     `return`(Expression, Site),
-    sequence(Statement, Statement, Site),
     block([Statement], Site),
     `while`(condition: Expression, body: Statement, Site),
     match(subject: Expression, clauses: [MatchClause], Site),
@@ -217,7 +216,6 @@ indirect enum Statement: AST {
     case let .initialization(v): return v.site
     case let .if(condition: _, thenClause: _, elseClause: _, r): return r
     case let .return(_, r): return r
-    case let .sequence(_, _, r): return r
     case let .block(_, r): return r
     case let .while(condition: _, body: _, r): return r
     case let .match(subject: _, clauses: _, r): return r

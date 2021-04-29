@@ -265,7 +265,6 @@ private extension TypeChecker {
       if t != r {
         error("Expected return type \(r); got \(t)", at: e.site)
       }
-    case /*let*/ .sequence(_, _, _): UNIMPLEMENTED
     case /*let*/ .block(_, _): UNIMPLEMENTED
     case /*let*/ .while(condition: _, body: _, _): UNIMPLEMENTED
     case /*let*/ .match(subject: _, clauses: _, _): UNIMPLEMENTED
