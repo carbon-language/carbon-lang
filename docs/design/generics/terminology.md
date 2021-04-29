@@ -26,7 +26,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Nominal interfaces](#nominal-interfaces)
 -   [Impls: Implementations of interfaces](#impls-implementations-of-interfaces)
 -   [Compatible types](#compatible-types)
--   [Subsumption and casting](#subsumption-and-casting)
+-   [Subtyping and casting](#subtyping-and-casting)
 -   [Adapting a type](#adapting-a-type)
 -   [Type erasure](#type-erasure)
 -   [Facet type](#facet-type)
@@ -311,14 +311,36 @@ invariants, such as implementing the API of the new type by calling (public)
 methods of the original API, instead of accessing any private implementation
 details.
 
-## Subsumption and casting
+## Subtyping and casting
 
-Both subsumption and casting are different names for changing the type of a
-value to a compatible type.
+Both subtyping and casting are different names for changing the type of a value
+to a compatible type.
 
-Subsumption is an automatic or implicit conversion that happens to argument
-values when calling a function or when assigning a value to a variable of a
-different type.
+[Subtyping](https://en.wikipedia.org/wiki/Subtyping) is a relationship between
+two types where you can safely operate on a value of one type using a variable
+of another. For example, using C++'s object-oriented features, you can operate
+on a value of a derived class using a pointer to the base class.
+[Contravariance](<https://en.wikipedia.org/wiki/Covariance_and_contravariance_(computer_science)>)
+means you can pass a more specific type to a function that can handle a more
+general type.
+[Covariance](<https://en.wikipedia.org/wiki/Covariance_and_contravariance_(computer_science)>)
+means a function can return a more specific type to a caller prepared to handle
+a more general type.
+
+In a generics context, we are specifically interested in the subtyping
+relationships between [type-types](#type-type). In particular, a type-type
+encompasses a set of [type constraints](#type-constraints), and you can convert
+a type from a more-restrictive type-type to another type-type whose constraints
+are implied by the first. C++ concepts terminology uses the term
+["subsumes"](https://en.cppreference.com/w/cpp/language/constraints#Partial_ordering_of_constraints)
+to talk about this partial ordering of constraints, but we avoid that term since
+it is at odds with the use of the term in
+[object-oriented subtyping terminology](https://en.wikipedia.org/wiki/Subtyping#Subsumption).
+
+Note that subtyping is a bit like
+[coercion](https://en.wikipedia.org/wiki/Type_conversion), except we want to
+make it clear that the data representation of the value is not changing, just
+its type as reflected in the API available to manipulate the value.
 
 Casting is indicated explicitly by way of some syntax in the source code. You
 might use a cast to switch between [type adaptations](#adapting-a-type), or to
@@ -326,11 +348,6 @@ be explicit where an implicit cast would otherwise occur. For now, we are saying
 "`x as y`" is the provisional syntax in Carbon for casting the value `x` to the
 type `y`. Note that outside of generics, the term "casting" includes any
 explicit type change, including those that change the data representation.
-
-Note that subsumption is a bit like
-[coercion](https://en.wikipedia.org/wiki/Type_conversion), except we want to
-make it clear that the data representation of the value is not changing, just
-its type as reflected in the API available to manipulate the value.
 
 ## Adapting a type
 
@@ -341,7 +358,7 @@ different implementations of the same interfaces.
 
 Unlike extending a type (as with C++ class inheritance), you are not allowed to
 add new data fields onto the end of the representation -- you may only change
-the API. This means that it is safe to [cast](#subsumption-and-casting) a value
+the API. This means that it is safe to [cast](#subtyping-and-casting) a value
 between those two types without any dynamic checks or danger of
 [object slicing](https://en.wikipedia.org/wiki/Object_slicing).
 
