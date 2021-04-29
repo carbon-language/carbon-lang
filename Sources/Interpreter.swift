@@ -99,7 +99,7 @@ extension Interpreter {
 
   /// Accesses the address of the declaration for the given name.
   func address(of name: Identifier) -> Address {
-    let d = program.declaration[name] ?? fatal("\(name) not declared")
+    let d = program.definition[name] ?? fatal("\(name) not defined")
     _ = d
     UNIMPLEMENTED
     //return locals[AnyDeclaration(d)] ?? globals[d] ?? fatal("\(d) has no value")

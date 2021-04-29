@@ -18,7 +18,7 @@ Swift implementation of executable semantics of
 
 ## To translate parse errors so that your IDE will recognize them
 
-    make test 2>&1 | sed -Ee 's/^.*SourceRegion\(fileName: "(.*)", (.*):.*\.\.<(.*)\)\).*$/\1:\2: error:/g'
+    make test 2>&1 | sed -Ee 's/.*"(.*)", (.*)\.\.<(.*)\)\).*/\1:\2:{\2-\3}/g'
 
 ## To work on the project in Xcode
 

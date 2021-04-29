@@ -35,7 +35,7 @@ fileprivate let keywords: [String: TokenID] = [
   "return": .RETURN,
   "struct": .STRUCT,
   "true": .TRUE,
-  "type": .TYPE,
+  "Type": .TYPE,
   "var": .VAR,
   "while": .WHILE,
   "=": .EQUAL,

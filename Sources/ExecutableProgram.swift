@@ -11,15 +11,17 @@ struct ExecutableProgram {
   /// The entry point for this program.
   let main: FunctionDefinition
 
-  /// A mapping from identifier to its declaration
-  var //let
-    declaration = ASTDictionary<Identifier, Declaration>()
+  /// A mapping from identifier to its definition.
+  let definition: ASTDictionary<Identifier, Declaration>
 
   /// Constructs an instance for the given parser output, or throws `ErrorLog`
   /// if the program is ill-formed.
-  // should be fileprivate - internal for testing purposes.
-  init(_parsedProgram ast: AbstractSyntaxTree) throws {
-    self.ast = ast
+  init(_ program: AbstractSyntaxTree) throws {
+    self.ast = program
+    let r = NameResolution(program)
+    definition = r.definition
+
+    if !r.errors.isEmpty { throw r.errors }
     switch unambiguousMain(in: ast) {
     case let .failure(e): throw [e]
     case let .success(main): self.main = main
@@ -39,16 +41,12 @@ fileprivate func unambiguousMain(
     { return f } else { return nil }
   }
 
+  assert(
+    mainCandidates.count <= 1,
+    "name resolution should have ruled out duplicate definitions.")
+
   guard let r = mainCandidates.first else {
     return .failure(CompileError("No nullary main() found.", at: .empty))
   }
-
-  if mainCandidates.count > 1 {
-    return .failure(
-      CompileError(
-        "Multiple main() candidates found.", at: r.name.site,
-        notes: mainCandidates.dropFirst().map { ("candidate", $0.name.site) }))
-  }
-
   return .success(r)
 }

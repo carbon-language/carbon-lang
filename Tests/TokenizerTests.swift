@@ -13,7 +13,7 @@ final class TokenizerTests: XCTestCase {
 
         default/\r\nelse
       // excuse me
-        ==false fn fnty if\t\tInt match not or return struct true type var while
+        ==false fn fnty if\t\tInt match not or return struct true Type var while
       = - +( ){}[]a.b,;:
       //\r\n.
       """    
@@ -70,7 +70,7 @@ final class TokenizerTests: XCTestCase {
       token(.RETURN, "return", from: 7, 40, to: 7, 46),
       token(.STRUCT, "struct", from: 7, 47, to: 7, 53),
       token(.TRUE, "true", from: 7, 54, to: 7, 58),
-      token(.TYPE, "type", from: 7, 59, to: 7, 63),
+      token(.TYPE, "Type", from: 7, 59, to: 7, 63),
       token(.VAR, "var", from: 7, 64, to: 7, 67),
       token(.WHILE, "while", from: 7, 68, to: 7, 73),
       token(.EQUAL, "=", from: 8, 1, to: 8, 2),
