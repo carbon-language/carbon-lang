@@ -47,7 +47,8 @@
 //   `if` and `else` could mask other ambiguities, especially if we allow
 //   `if`/`else` in expressions, so we allow Bison to resolve it through its
 //   default behavior of preferring to shift rather than reduce.
-%expect 1
+// - Variable expressions (expression identifier) lead to 8 conflicts.
+%expect 9
 
 // -----------------------------------------------------------------------------
 
