@@ -124,10 +124,6 @@ private extension TypeChecker {
     case .intType: return .int
     case .boolType: return .bool
     case .typeType: return .type
-    case .autoType:
-      if let r = rhs { return r }
-      error("No initializer from which to deduce type.", at: e.site)
-      return .error
 
     case .functionType(let f0):
       if rhs != nil && rhs!.function == nil { return .error }

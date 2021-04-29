@@ -283,7 +283,6 @@ indirect enum Expression: AST {
     intType(Site),
     boolType(Site),
     typeType(Site),
-    autoType(Site),
     functionType(FunctionTypeLiteral)
 
   var site: Site {
@@ -300,7 +299,6 @@ indirect enum Expression: AST {
     case let .intType(r): return r
     case let .boolType(r): return r
     case let .typeType(r): return r
-    case let .autoType(r): return r
     case let .functionType(t): return t.site
     }
   }
