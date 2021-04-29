@@ -142,7 +142,7 @@ private extension TypeChecker {
       let types = mapDeducedType(t0, rhs?.tuple)
       return .tuple(types)
 
-    case .getField, .index, .patternVariable, .integerLiteral,
+    case .getField, .index, .integerLiteral,
          .booleanLiteral, .unaryOperator, .binaryOperator, .functionCall:
       error("Type expression expected", at: e.site)
       return .error
