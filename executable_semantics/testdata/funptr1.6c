@@ -7,6 +7,6 @@ fn add1(Int x) -> Int {
 }
 
 fn main() -> Int {
-  var (fnty(Int)->Int) f = add1;
+  var fnty(Int)->Int f = add1;
   return f(-1);
 }
