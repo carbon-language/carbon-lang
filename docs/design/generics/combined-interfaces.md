@@ -2596,7 +2596,7 @@ In Swift, you can
 #### Parameterized type implements interface
 
 TODO: This use case was part of the
-[Rust rationale for adding support for `where` clauses](https://rust-lang.github.io/rfcs/0135-where.html).
+[Rust rationale for adding support for `where` clauses](https://rust-lang.github.io/rfcs/0135-where.html#motivation).
 
 **Concern:** Right now this is only easily expressed using `where` clauses.
 
