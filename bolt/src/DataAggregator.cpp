@@ -2056,27 +2056,30 @@ std::error_code DataAggregator::parseMMapEvents() {
 
   auto Range = GlobalMMapInfo.equal_range(NameToUse);
   for (auto I = Range.first; I != Range.second; ++I) {
-    if (BC->HasFixedLoadAddress && I->second.BaseAddress) {
+    const MMapInfo &MMapInfo = I->second;
+    if (BC->HasFixedLoadAddress && MMapInfo.BaseAddress) {
       // Check that the binary mapping matches one of the segments.
-      bool MatchFound{false};
+      bool MatchFound = false;
       for (auto &KV : BC->SegmentMapInfo) {
         SegmentInfo &SegInfo = KV.second;
-        const uint64_t MapAddress =
-            alignDown(SegInfo.Address, SegInfo.Alignment);
-        if (I->second.BaseAddress == MapAddress ||
-            I->second.BaseAddress == SegInfo.Address) {
+        // The mapping is page-aligned and hence the BaseAddress could be
+        // different from the segment start address. We cannot know the page
+        // size of the mapping, but we know it should not exceed the segment
+        // alignment value. Hence we are performing an approximate check.
+        if (SegInfo.Address >= MMapInfo.BaseAddress &&
+            SegInfo.Address - MMapInfo.BaseAddress < SegInfo.Alignment) {
           MatchFound = true;
           break;
         }
       }
       if (!MatchFound) {
         errs() << "PERF2BOLT-WARNING: ignoring mapping of " << NameToUse
-               << " at 0x" << Twine::utohexstr(I->second.BaseAddress) << '\n';
+               << " at 0x" << Twine::utohexstr(MMapInfo.BaseAddress) << '\n';
         continue;
       }
     }
 
-    BinaryMMapInfo.insert(std::make_pair(I->second.PID, I->second));
+    BinaryMMapInfo.insert(std::make_pair(MMapInfo.PID, MMapInfo));
   }
 
   if (BinaryMMapInfo.empty()) {
