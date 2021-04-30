@@ -65,12 +65,12 @@ generic, and template parameters.
 
 -   **Regular parameters**, or "dynamic parameters", are designated using the
     "&lt;type>`:` &lt;name>" syntax (or "&lt;value>").
--   **Generic parameters** are temporarily designated using an additional `$`
-    after the `:` (so it is "&lt;type>`:$` &lt;name>"). However, the `$` symbol
-    is not easily typed on non-US keyboards, so we intend to switch to some
-    other syntax. Some possibilities that have been suggested are: `:!`, `:@`,
-    `:#`, and `::`.
--   **Template parameters** are temporarily designated using "&lt;type> `:$$`
+-   **Generic parameters** are temporarily designated using a `$` between the
+    type and the name (so it is "&lt;type>`$` &lt;name>"). However, the `$`
+    symbol is not easily typed on non-US keyboards, so we intend to switch to
+    some other syntax. Some possibilities that have been suggested are: `!`,
+    `@`, `#`, and `:`.
+-   **Template parameters** are temporarily designated using "&lt;type> `$$`
     &lt;name>", for similar reasons.
 
 Expected difference between generics and templates:
@@ -115,7 +115,13 @@ Expected difference between generics and templates:
   <tr>
    <td>allowed but not required to be implemented using dynamic dispatch
    </td>
-   <td>does not support implementation by way of dynamic dispatch, just static by way of [instantiation](#instantiation)
+   <td>does not support implementation by way of dynamic dispatch, just static by way of <a href="#instantiation">instantiation</a>
+   </td>
+  </tr>
+  <tr>
+   <td>monomorphization is an optional optimization that cannot render the program invalid
+   </td>
+   <td>monomorphization is mandatory and can fail, resulting in the program being invalid
    </td>
   </tr>
 </table>
@@ -162,8 +168,10 @@ to the argument types.
 
 Templates work with ad-hoc polymorphism in two ways:
 
--   A function with template parameters specialized for specific types is a form
-    of ad-hoc polymorphism.
+-   A function with template parameters can be
+    [specialized](#template-specialization) in
+    [C++](https://en.cppreference.com/w/cpp/language/template_specialization) as
+    a form of ad-hoc polymorphism.
 -   A function with template parameters can call overloaded functions since it
     will only resolve that call after the types are known.
 
@@ -173,8 +181,8 @@ For example, let's say we have some overloaded function called `F` that has two
 overloads:
 
 ```
-fn F[Type:$$ T](Ptr(T): x) -> T;
-fn F(Int: x) -> Bool;
+fn F[Type$$ T](Ptr(T) x) -> T;
+fn F(Int x) -> Bool;
 ```
 
 A generic function `G` can call `F` with a type like `Ptr(T)` that can not
@@ -211,9 +219,10 @@ Definition checking is the process of semantically checking the definition of
 parameterized code for correctness _independently_ of any particular arguments.
 It includes type checking and other semantic checks. It is possible, even with
 templates, to check semantics of expressions that are not dependent on any
-template parameter in the definition. As you add constraints, by using generics,
-that increases how much of the definition can be checked. Any remaining checks
-are delayed until [instantiation](#instantiation), which can fail.
+template parameter in the definition. Adding constraints to template parameters
+and/or switching them to be generic allows the compiler to increase how much of
+the definition can be checked. Any remaining checks are delayed until
+[instantiation](#instantiation), which can fail.
 
 #### Complete definition checking
 
@@ -248,9 +257,9 @@ Note that function signatures can typically be rewritten to avoid using implicit
 parameters:
 
 ```
-fn F[Type:$$ T](T: value);
+fn F[Type$$ T](T value);
 // is equivalent to:
-fn F((Type:$$ T): value);
+fn F((Type$$ T) value);
 ```
 
 See more [here](overview.md#implicit-parameters).
@@ -515,9 +524,9 @@ say it is a type parameter; if it is an output, we say it is an associated type.
 Type parameter example:
 
 ```
-interface Stack(Type:$ ElementType) {
-  fn Push(Self*: this, ElementType: value);
-  fn Pop(Self*: this) -> ElementType;
+interface Stack(Type$ ElementType) {
+  fn Push(Self* this, ElementType value);
+  fn Pop(Self* this) -> ElementType;
 }
 ```
 
@@ -525,9 +534,9 @@ Associated type example:
 
 ```
 interface Stack {
-  var Type:$ ElementType;
-  fn Push(Self*: this, ElementType: value);
-  fn Pop(Self*: this) -> ElementType;
+  var Type$ ElementType;
+  fn Push(Self* this, ElementType value);
+  fn Pop(Self* this) -> ElementType;
 }
 ```
 
@@ -541,18 +550,18 @@ interface Iterator { ... }
 interface Container {
   // This does not make sense as an parameter to the container interface,
   // since this type is determined from the container type.
-  var Iterator:$ IteratorType;
+  var Iterator$ IteratorType;
   ...
-  fn Insert(Self*: this, IteratorType: position, ElementType: value);
+  fn Insert(Self* this, IteratorType position, ElementType value);
 }
-struct ListIterator(Type:$ ElementType) {
+struct ListIterator(Type$ ElementType) {
   ...
   impl Iterator;
 }
-struct List(Type:$ ElementType) {
+struct List(Type$ ElementType) {
   // Iterator type is determined by the container type.
-  var Iterator:$ IteratorType = ListIterator(ElementType);
-  fn Insert(Self*: this, IteratorType: position, ElementType: value) {
+  var Iterator$ IteratorType = ListIterator(ElementType);
+  fn Insert(Self* this, IteratorType position, ElementType value) {
     ...
   }
   impl Container;
