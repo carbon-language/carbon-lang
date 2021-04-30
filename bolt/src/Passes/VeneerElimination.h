@@ -11,10 +11,7 @@
 #ifndef LLVM_TOOLS_LLVM_BOLT_VENEER_ELIMINATION_H
 #define LLVM_TOOLS_LLVM_BOLT_VENEER_ELIMINATION_H
 
-#include "BinaryFunctionCallGraph.h"
 #include "BinaryPasses.h"
-#include "MCPlus.h"
-#include "MCPlusBuilder.h"
 
 namespace llvm {
 namespace bolt {

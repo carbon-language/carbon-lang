@@ -9,7 +9,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "StackPointerTracking.h"
-#include "llvm/Support/Errc.h"
 
 namespace llvm {
 namespace bolt {

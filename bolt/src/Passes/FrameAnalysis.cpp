@@ -10,7 +10,7 @@
 #include "FrameAnalysis.h"
 #include "CallGraphWalker.h"
 #include "ParallelUtilities.h"
-#include "llvm/Support/ThreadPool.h"
+#include "llvm/Support/Timer.h"
 #include <fstream>
 #include <stack>
 

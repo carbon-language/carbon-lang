@@ -9,7 +9,6 @@
 //===----------------------------------------------------------------------===//
 #include "BoltAddressTranslation.h"
 #include "BinaryFunction.h"
-#include "llvm/MC/MCAsmLayout.h"
 #include "llvm/Support/DataExtractor.h"
 #include "llvm/Support/Errc.h"
 

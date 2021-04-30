@@ -20,7 +20,6 @@
 // default and can be controlled by the user using retpoline-lfence option.
 //===----------------------------------------------------------------------===//
 #include "RetpolineInsertion.h"
-#include "RewriteInstance.h"
 #include "llvm/Support/raw_ostream.h"
 
 #define DEBUG_TYPE "bolt-retpoline"

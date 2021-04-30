@@ -12,11 +12,11 @@
 #define LLVM_TOOLS_LLVM_BOLT_PASSES_FRAMEOPTIMIZER_H
 
 #include "BinaryPasses.h"
-#include "FrameAnalysis.h"
-#include "RegAnalysis.h"
 
 namespace llvm {
 namespace bolt {
+class FrameAnalysis;
+class RegAnalysis;
 
 /// FrameOptimizerPass strives for removing or moving stack frame accesses to
 /// less frequently executed basic blocks, reducing the pressure on icache

@@ -15,19 +15,18 @@
 #include "Relocation.h"
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/STLExtras.h"
-#include "llvm/ADT/Triple.h"
 #include "llvm/BinaryFormat/ELF.h"
-#include "llvm/MC/MCSymbol.h"
 #include "llvm/Object/ELFObjectFile.h"
 #include "llvm/Object/MachO.h"
 #include "llvm/Object/ObjectFile.h"
-#include "llvm/Support/ErrorOr.h"
 #include "llvm/Support/raw_ostream.h"
 #include <map>
 #include <memory>
 #include <set>
 
 namespace llvm {
+class MCStreamer;
+class MCSymbol;
 
 using namespace object;
 

@@ -13,12 +13,10 @@
 #include "BinaryBasicBlock.h"
 #include "BinaryFunction.h"
 #include "llvm/ADT/StringRef.h"
-#include "llvm/MC/MCInst.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
 #include <algorithm>
-#include <numeric>
 #include <string>
 
 #undef  DEBUG_TYPE

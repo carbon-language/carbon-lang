@@ -18,15 +18,13 @@
 #include "JumpTable.h"
 #include "Passes/Instrumentation.h"
 #include "Passes/PatchEntries.h"
+#include "RuntimeLibs/InstrumentationRuntimeLibrary.h"
 #include "Utils.h"
-#include "llvm/ExecutionEngine/Orc/RTDyldObjectLinkingLayer.h"
 #include "llvm/MC/MCAsmBackend.h"
-#include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCAsmLayout.h"
 #include "llvm/MC/MCObjectStreamer.h"
 #include "llvm/MC/MCObjectWriter.h"
 #include "llvm/Support/FileSystem.h"
-#include "llvm/Support/Timer.h"
 #include "llvm/Support/ToolOutputFile.h"
 
 namespace opts {

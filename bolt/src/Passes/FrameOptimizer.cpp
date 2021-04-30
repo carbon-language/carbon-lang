@@ -9,12 +9,14 @@
 //===----------------------------------------------------------------------===//
 
 #include "FrameOptimizer.h"
+#include "BinaryFunctionCallGraph.h"
+#include "DataflowInfoManager.h"
 #include "ParallelUtilities.h"
 #include "ShrinkWrapping.h"
 #include "StackAvailableExpressions.h"
 #include "StackReachingUses.h"
 #include "llvm/Support/Timer.h"
-#include <queue>
+#include <deque>
 #include <unordered_map>
 
 #define DEBUG_TYPE "fop"

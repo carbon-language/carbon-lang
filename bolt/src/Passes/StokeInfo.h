@@ -27,10 +27,11 @@
 
 #include <fstream>
 #include "BinaryPasses.h"
-#include "DataflowInfoManager.h"
 
 namespace llvm {
 namespace bolt {
+class DataflowInfoManager;
+class RegAnalysis;
 
 /// Structure to hold information needed by Stoke for a function
 struct StokeFuncInfo {

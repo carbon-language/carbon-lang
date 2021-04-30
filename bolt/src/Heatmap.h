@@ -11,10 +11,13 @@
 #ifndef LLVM_TOOLS_LLVM_BOLT_HEATMAP_H
 #define LLVM_TOOLS_LLVM_BOLT_HEATMAP_H
 
-#include "llvm/Support/raw_ostream.h"
+#include "llvm/ADT/StringRef.h"
+#include <cstdint>
 #include <map>
 
 namespace llvm {
+class raw_ostream;
+
 namespace bolt {
 
 class Heatmap {

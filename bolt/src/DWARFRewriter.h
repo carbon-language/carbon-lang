@@ -12,16 +12,16 @@
 #define LLVM_TOOLS_LLVM_BOLT_DWARF_REWRITER_H
 
 #include "DebugData.h"
-#include "RewriteInstance.h"
-#include <map>
 #include <mutex>
+#include <set>
+#include <unordered_map>
 #include <vector>
 
 namespace llvm {
 
 namespace bolt {
 
-class BinaryFunction;
+class BinaryContext;
 
 class DWARFRewriter {
   DWARFRewriter() = delete;

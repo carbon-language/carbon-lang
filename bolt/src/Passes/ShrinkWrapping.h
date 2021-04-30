@@ -11,12 +11,11 @@
 #ifndef LLVM_TOOLS_LLVM_BOLT_PASSES_SHRINKWRAPPING_H
 #define LLVM_TOOLS_LLVM_BOLT_PASSES_SHRINKWRAPPING_H
 
-#include "BinaryPasses.h"
 #include "FrameAnalysis.h"
-#include "DataflowInfoManager.h"
 
 namespace llvm {
 namespace bolt {
+class DataflowInfoManager;
 
 /// Encapsulates logic required to analyze a binary function and detect which
 /// registers are being saved as callee-saved, where are these saves and where

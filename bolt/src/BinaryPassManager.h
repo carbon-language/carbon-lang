@@ -13,14 +13,13 @@
 #ifndef LLVM_TOOLS_LLVM_BOLT_BINARY_FUNCTION_PASS_MANAGER_H
 #define LLVM_TOOLS_LLVM_BOLT_BINARY_FUNCTION_PASS_MANAGER_H
 
-#include "BinaryFunction.h"
 #include "Passes/BinaryPasses.h"
-#include <map>
 #include <memory>
 #include <vector>
 
 namespace llvm {
 namespace bolt {
+class BinaryContext;
 
 /// Simple class for managing analyses and optimizations on BinaryFunctions.
 class BinaryFunctionPassManager {

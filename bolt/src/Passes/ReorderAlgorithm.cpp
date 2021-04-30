@@ -14,7 +14,6 @@
 #include "BinaryBasicBlock.h"
 #include "BinaryFunction.h"
 #include "llvm/Support/CommandLine.h"
-#include <functional>
 #include <queue>
 #include <random>
 #include <stack>

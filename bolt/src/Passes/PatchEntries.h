@@ -14,8 +14,6 @@
 #define LLVM_TOOLS_LLVM_BOLT_PASSES_PATCH_ENTRIES_H
 
 #include "Passes/BinaryPasses.h"
-#include "Relocation.h"
-#include "llvm/ADT/SmallString.h"
 
 namespace llvm {
 namespace bolt {

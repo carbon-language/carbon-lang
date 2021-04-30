@@ -11,14 +11,13 @@
 #ifndef LLVM_TOOLS_LLVM_BOLT_DYNO_STATS_H
 #define LLVM_TOOLS_LLVM_BOLT_DYNO_STATS_H
 
-#include "BinaryFunction.h"
 #include "llvm/ADT/ArrayRef.h"
-#include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
 
 namespace llvm {
 
 namespace bolt {
+class BinaryFunction;
 
 /// Class encapsulating runtime statistics about an execution unit.
 class DynoStats {

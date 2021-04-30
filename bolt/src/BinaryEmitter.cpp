@@ -8,11 +8,12 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "BinaryContext.h"
 #include "BinaryEmitter.h"
+#include "BinaryContext.h"
 #include "BinaryFunction.h"
 #include "Utils.h"
 #include "llvm/MC/MCSection.h"
+#include "llvm/MC/MCStreamer.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/LEB128.h"
 #include "llvm/Support/SMLoc.h"

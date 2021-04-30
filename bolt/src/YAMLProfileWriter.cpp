@@ -9,15 +9,13 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "YAMLProfileWriter.h"
 #include "BinaryBasicBlock.h"
 #include "BinaryFunction.h"
-#include "DataAggregator.h"
+#include "ProfileReaderBase.h"
 #include "ProfileYAMLMapping.h"
-#include "YAMLProfileWriter.h"
-#include "llvm/ADT/STLExtras.h"
-#include "llvm/Support/CommandLine.h"
-#include "llvm/Support/Debug.h"
-#include "llvm/Support/MemoryBuffer.h"
+#include "RewriteInstance.h"
+#include "llvm/Support/FileSystem.h"
 #include "llvm/Support/raw_ostream.h"
 
 #undef  DEBUG_TYPE

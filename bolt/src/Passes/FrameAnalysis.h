@@ -11,12 +11,11 @@
 #ifndef LLVM_TOOLS_LLVM_BOLT_PASSES_FRAMEANALYSIS_H
 #define LLVM_TOOLS_LLVM_BOLT_PASSES_FRAMEANALYSIS_H
 
-#include "BinaryFunctionCallGraph.h"
-#include "BinaryPasses.h"
 #include "StackPointerTracking.h"
 
 namespace llvm {
 namespace bolt {
+class BinaryFunctionCallGraph;
 
 /// Alias analysis information attached to each instruction that accesses a
 /// frame position. This is called a "frame index" by LLVM Target libs when

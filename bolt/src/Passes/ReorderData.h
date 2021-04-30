@@ -12,7 +12,6 @@
 #define LLVM_TOOLS_LLVM_BOLT_PASSES_REORDER_DATA_H
 
 #include "BinaryPasses.h"
-#include "BinarySection.h"
 #include <unordered_map>
 
 namespace llvm {

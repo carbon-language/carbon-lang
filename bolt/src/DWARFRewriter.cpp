@@ -17,26 +17,20 @@
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/BinaryFormat/Dwarf.h"
 #include "llvm/DebugInfo/DWARF/DWARFContext.h"
-#include "llvm/DebugInfo/DWARF/DWARFDebugLine.h"
 #include "llvm/DebugInfo/DWARF/DWARFFormValue.h"
 #include "llvm/MC/MCAsmBackend.h"
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCDwarf.h"
 #include "llvm/MC/MCObjectWriter.h"
 #include "llvm/MC/MCSection.h"
-#include "llvm/MC/MCSectionELF.h"
-#include "llvm/MC/MCStreamer.h"
 #include "llvm/MC/MCSymbol.h"
 #include "llvm/Object/ObjectFile.h"
 #include "llvm/Support/Casting.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/Endian.h"
-#include "llvm/Support/Errc.h"
-#include "llvm/Support/ManagedStatic.h"
-#include "llvm/Support/Timer.h"
+#include "llvm/Support/ThreadPool.h"
 #include <algorithm>
-#include <llvm/Support/Error.h>
 
 #undef  DEBUG_TYPE
 #define DEBUG_TYPE "bolt"

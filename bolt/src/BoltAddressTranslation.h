@@ -11,12 +11,24 @@
 #ifndef LLVM_TOOLS_LLVM_BOLT_BOLTADDRESSTRANSLATION_H
 #define LLVM_TOOLS_LLVM_BOLT_BOLTADDRESSTRANSLATION_H
 
-#include "BinaryContext.h"
-#include "llvm/Object/ELFObjectFile.h"
+#include "llvm/ADT/Optional.h"
+#include "llvm/ADT/SmallVector.h"
+#include "llvm/ADT/StringRef.h"
+#include <cstdint>
+#include <map>
+#include <system_error>
 
 namespace llvm {
+class raw_ostream;
+
+namespace object {
+class ELFObjectFileBase;
+} // namespace object
 
 namespace bolt {
+class BinaryBasicBlock;
+class BinaryContext;
+class BinaryFunction;
 
 /// The map of output addresses to input ones to be used when translating
 /// samples collected in a binary that was already processed by BOLT. We do not

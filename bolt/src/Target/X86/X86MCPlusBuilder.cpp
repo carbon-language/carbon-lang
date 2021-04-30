@@ -11,29 +11,19 @@
 //===----------------------------------------------------------------------===//
 
 #include "MCPlusBuilder.h"
-#include "llvm/ADT/Triple.h"
-#include "llvm/DebugInfo/CodeView/CodeView.h"
+#include "MCTargetDesc/X86BaseInfo.h"
+#include "MCTargetDesc/X86MCTargetDesc.h"
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCFixupKindInfo.h"
 #include "llvm/MC/MCInstBuilder.h"
-#include "llvm/MC/MCInstrAnalysis.h"
 #include "llvm/MC/MCInstrInfo.h"
 #include "llvm/MC/MCRegisterInfo.h"
-#include "llvm/MC/MCStreamer.h"
-#include "llvm/MC/MCSubtargetInfo.h"
-#include "llvm/MC/MachineLocation.h"
 #include "llvm/Support/DataExtractor.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/Errc.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/ErrorOr.h"
-#include "llvm/Support/Host.h"
-#include "llvm/Support/TargetRegistry.h"
-#include "MCTargetDesc/X86ATTInstPrinter.h"
-#include "MCTargetDesc/X86IntelInstPrinter.h"
-#include "MCTargetDesc/X86MCTargetDesc.h"
-#include "MCTargetDesc/X86BaseInfo.h"
-#include "MCTargetDesc/X86MCAsmInfo.h"
+#include <set>
 
 #define DEBUG_TYPE "bolt-x86"
 

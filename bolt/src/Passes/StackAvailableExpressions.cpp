@@ -10,6 +10,7 @@
 
 #include "StackAvailableExpressions.h"
 #include "FrameAnalysis.h"
+#include "RegAnalysis.h"
 
 #define DEBUG_TYPE "sae"
 

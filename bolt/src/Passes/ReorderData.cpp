@@ -13,7 +13,6 @@
 // - estimate temporal locality by looking at CFG?
 
 #include "ReorderData.h"
-#include <numeric>
 #include <algorithm>
 
 #undef  DEBUG_TYPE

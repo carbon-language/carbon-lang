@@ -11,15 +11,9 @@
 #include "BinaryBasicBlock.h"
 #include "BinaryContext.h"
 #include "BinaryFunction.h"
-#include "ParallelUtilities.h"
-#include "llvm/ADT/StringRef.h"
-#include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCAsmLayout.h"
-#include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCInst.h"
 #include "llvm/Support/Errc.h"
-#include <limits>
-#include <string>
 
 #undef  DEBUG_TYPE
 #define DEBUG_TYPE "bolt"

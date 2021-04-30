@@ -10,7 +10,7 @@
 
 #include "Instrumentation.h"
 #include "ParallelUtilities.h"
-#include "Passes/DataflowInfoManager.h"
+#include "RuntimeLibs/InstrumentationRuntimeLibrary.h"
 #include "llvm/Support/CommandLine.h"
 #include <stack>
 

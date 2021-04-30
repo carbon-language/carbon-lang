@@ -16,6 +16,7 @@
 
 namespace llvm {
 namespace bolt {
+class Cluster;
 
 /// Modify function order for streaming based on hotness.
 class ReorderFunctions : public BinaryFunctionPass {

@@ -16,13 +16,11 @@
 #include "BinaryContext.h"
 #include "BinaryFunction.h"
 #include "DynoStats.h"
-#include "HFSort.h"
 #include "llvm/Support/CommandLine.h"
 #include <atomic>
 #include <map>
 #include <set>
 #include <string>
-#include <unordered_map>
 #include <unordered_set>
 
 namespace llvm {

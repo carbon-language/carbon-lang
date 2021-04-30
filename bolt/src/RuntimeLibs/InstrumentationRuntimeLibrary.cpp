@@ -11,7 +11,8 @@
 #include "InstrumentationRuntimeLibrary.h"
 #include "BinaryFunction.h"
 #include "JumpTable.h"
-#include "llvm/ExecutionEngine/Orc/RTDyldObjectLinkingLayer.h"
+#include "llvm/ExecutionEngine/RuntimeDyld.h"
+#include "llvm/MC/MCStreamer.h"
 #include "llvm/Support/Alignment.h"
 #include "llvm/Support/CommandLine.h"
 

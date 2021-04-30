@@ -9,6 +9,9 @@
 //===----------------------------------------------------------------------===//
 
 #include "ParallelUtilities.h"
+#include "BinaryContext.h"
+#include "BinaryFunction.h"
+#include "llvm/Support/ThreadPool.h"
 #include "llvm/Support/Timer.h"
 #include <mutex>
 #include <shared_mutex>

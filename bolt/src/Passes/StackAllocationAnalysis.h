@@ -12,9 +12,7 @@
 #define LLVM_TOOLS_LLVM_BOLT_PASSES_STACKALLOCATIONANALYSIS_H
 
 #include "DataflowAnalysis.h"
-#include "StackPointerTracking.h"
 #include "llvm/Support/CommandLine.h"
-#include "llvm/Support/Timer.h"
 
 namespace opts {
 extern llvm::cl::opt<bool> TimeOpts;
@@ -22,6 +20,7 @@ extern llvm::cl::opt<bool> TimeOpts;
 
 namespace llvm {
 namespace bolt {
+class StackPointerTracking;
 
 /// Perform a dataflow analysis to track the value of SP as an offset relative
 /// to the CFA.

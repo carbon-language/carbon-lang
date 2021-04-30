@@ -20,29 +20,28 @@
 #include "llvm/ADT/Optional.h"
 #include "llvm/ADT/StringMap.h"
 #include "llvm/MC/MCAsmBackend.h"
-#include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCInst.h"
 #include "llvm/MC/MCInstrAnalysis.h"
 #include "llvm/MC/MCInstrDesc.h"
 #include "llvm/MC/MCInstrInfo.h"
-#include "llvm/MC/MCRegisterInfo.h"
-#include "llvm/MC/MCSymbol.h"
 #include "llvm/Support/Allocator.h"
-#include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/ErrorOr.h"
 #include <cassert>
 #include <cstdint>
 #include <map>
-#include <mutex>
-#include <set>
-#include <shared_mutex>
 #include <system_error>
 #include <unordered_map>
 #include <unordered_set>
 
 namespace llvm {
+class MCContext;
+class MCFixup;
+class MCRegisterInfo;
+class MCSymbol;
+class raw_ostream;
+
 namespace bolt {
 
 /// Different types of indirect branches encountered during disassembly.

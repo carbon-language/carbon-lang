@@ -11,8 +11,6 @@
 #include "JumpTable.h"
 #include "BinaryFunction.h"
 #include "BinarySection.h"
-#include "Relocation.h"
-#include "llvm/MC/MCStreamer.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 

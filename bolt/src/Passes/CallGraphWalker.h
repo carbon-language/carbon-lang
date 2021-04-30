@@ -11,16 +11,14 @@
 #ifndef LLVM_TOOLS_LLVM_BOLT_PASSES_CALLGRAPHWALKER_H
 #define LLVM_TOOLS_LLVM_BOLT_PASSES_CALLGRAPHWALKER_H
 
-#include "BinaryContext.h"
-#include "BinaryFunction.h"
-#include "BinaryFunctionCallGraph.h"
-#include <queue>
-#include <map>
-#include <set>
+#include <deque>
+#include <functional>
 #include <vector>
 
 namespace llvm {
 namespace bolt {
+class BinaryFunction;
+class BinaryFunctionCallGraph;
 
 /// Perform a bottom-up walk of the call graph with the intent of computing
 /// a property that depends on callees. In the event of a CG cycles, this will

@@ -11,6 +11,7 @@
 #include "BinarySection.h"
 #include "BinaryContext.h"
 #include "Utils.h"
+#include "llvm/MC/MCStreamer.h"
 #include "llvm/Support/CommandLine.h"
 
 #undef  DEBUG_TYPE

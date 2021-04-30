@@ -11,7 +11,10 @@
 //===----------------------------------------------------------------------===//
 
 #include "CacheMetrics.h"
+#include "BinaryBasicBlock.h"
+#include "BinaryFunction.h"
 #include "llvm/Support/CommandLine.h"
+#include <unordered_map>
 
 using namespace llvm;
 using namespace bolt;

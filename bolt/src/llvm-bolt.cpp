@@ -24,7 +24,6 @@
 #include "llvm/Support/Signals.h"
 #include "llvm/Support/TargetSelect.h"
 #include "llvm/Support/TargetRegistry.h"
-#include "llvm/Support/ThreadPool.h"
 
 #undef  DEBUG_TYPE
 #define DEBUG_TYPE "bolt"

@@ -12,17 +12,17 @@
 #define LLVM_TOOLS_LLVM_BOLT_PASSES_DATAFLOWINFOMANAGER_H
 
 #include "DominatorAnalysis.h"
-#include "FrameAnalysis.h"
 #include "LivenessAnalysis.h"
 #include "ReachingDefOrUse.h"
 #include "ReachingInsns.h"
-#include "RegAnalysis.h"
 #include "StackAllocationAnalysis.h"
 #include "StackPointerTracking.h"
 #include "StackReachingUses.h"
 
 namespace llvm {
 namespace bolt {
+class FrameAnalysis;
+class RegAnalysis;
 
 /// Manages instances for dataflow analyses and try to preserve the data
 /// calculated by each analysis as much as possible, saving the need to

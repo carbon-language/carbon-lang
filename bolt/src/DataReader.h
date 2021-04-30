@@ -16,13 +16,8 @@
 
 #include "ProfileReaderBase.h"
 #include "llvm/ADT/DenseMap.h"
-#include "llvm/ADT/Optional.h"
-#include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/StringSet.h"
-#include "llvm/MC/MCSymbol.h"
-#include "llvm/Support/Allocator.h"
-#include "llvm/Support/Errc.h"
 #include "llvm/Support/ErrorOr.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/raw_ostream.h"
@@ -30,6 +25,8 @@
 #include <vector>
 
 namespace llvm {
+class MCSymbol;
+
 namespace bolt {
 
 class BinaryFunction;

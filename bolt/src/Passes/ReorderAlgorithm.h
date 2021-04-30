@@ -14,7 +14,6 @@
 #define LLVM_TOOLS_LLVM_BOLT_PASSES_REORDER_ALGORITHM_H
 
 #include "BinaryFunction.h"
-#include "llvm/Support/ErrorHandling.h"
 #include <unordered_map>
 #include <memory>
 #include <vector>
@@ -27,8 +26,6 @@ class raw_ostream;
 
 namespace bolt {
 
-class BinaryBasicBlock;
-class BinaryFunction;
 
 /// Objects of this class implement various basic block clustering algorithms.
 /// Basic block clusters are chains of basic blocks that should be laid out

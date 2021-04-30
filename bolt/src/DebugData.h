@@ -14,7 +14,6 @@
 #define LLVM_TOOLS_LLVM_BOLT_DEBUG_DATA_H
 
 #include "llvm/ADT/SmallVector.h"
-#include "llvm/DebugInfo/DWARF/DWARFCompileUnit.h"
 #include "llvm/DebugInfo/DWARF/DWARFContext.h"
 #include "llvm/Support/SMLoc.h"
 #include "llvm/Support/raw_ostream.h"
@@ -27,13 +26,9 @@
 
 namespace llvm {
 
-class DWARFCompileUnit;
-class MCObjectWriter;
-
 namespace bolt {
 
 class BinaryContext;
-class BinaryFunction;
 
 /// Address range representation. Takes less space than DWARFAddressRange.
 struct DebugAddressRange {

@@ -11,7 +11,6 @@
 
 #include "BinaryBasicBlock.h"
 #include "BinaryFunction.h"
-#include "DataReader.h"
 #include "Passes/MCF.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"

@@ -11,11 +11,14 @@
 #ifndef LLVM_TOOLS_LLVM_BOLT_BINARY_EMITTER_H
 #define LLVM_TOOLS_LLVM_BOLT_BINARY_EMITTER_H
 
-#include "BinaryContext.h"
-#include "llvm/MC/MCStreamer.h"
+#include "llvm/ADT/StringRef.h"
 
 namespace llvm {
+class MCStreamer;
+
 namespace bolt {
+class BinaryContext;
+class BinaryFunction;
 
 /// Emit all code and data in the BinaryContext \p BC.
 ///

@@ -17,10 +17,7 @@
 #define LLVM_TOOLS_LLVM_BOLT_PASSES_INSTRUMENTATION_H
 
 #include "BinaryPasses.h"
-#include "RuntimeLibs/InstrumentationRuntimeLibrary.h"
-#include "llvm/MC/MCSection.h"
-#include "llvm/MC/MCStreamer.h"
-#include "llvm/MC/MCSymbol.h"
+#include "Passes/InstrumentationSummary.h"
 
 namespace llvm {
 namespace bolt {

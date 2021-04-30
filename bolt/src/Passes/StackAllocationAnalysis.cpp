@@ -9,6 +9,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "StackAllocationAnalysis.h"
+#include "StackPointerTracking.h"
 #include "llvm/Support/Debug.h"
 
 #define DEBUG_TYPE "saa"

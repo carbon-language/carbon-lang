@@ -16,7 +16,6 @@
 #include <unordered_map>
 #include <functional>
 #include <deque>
-#include <map>
 
 namespace llvm {
 namespace bolt {

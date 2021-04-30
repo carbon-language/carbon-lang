@@ -11,15 +11,15 @@
 #ifndef LLVM_TOOLS_LLVM_BOLT_EXECUTABLE_FILE_MEMORY_MANAGER_H
 #define LLVM_TOOLS_LLVM_BOLT_EXECUTABLE_FILE_MEMORY_MANAGER_H
 
-#include "BinaryContext.h"
 #include "llvm/ADT/StringRef.h"
-#include "llvm/ADT/Twine.h"
 #include "llvm/ExecutionEngine/SectionMemoryManager.h"
-#include "llvm/Support/raw_ostream.h"
+#include <cstdint>
+#include <string>
 
 namespace llvm {
 
 namespace bolt {
+class BinaryContext;
 
 /// Class responsible for allocating and managing code and data sections.
 class ExecutableFileMemoryManager : public SectionMemoryManager {

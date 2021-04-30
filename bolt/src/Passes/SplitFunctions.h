@@ -11,8 +11,6 @@
 #ifndef LLVM_TOOLS_LLVM_BOLT_PASSES_SPLIT_FUNCTIONS_H
 #define LLVM_TOOLS_LLVM_BOLT_PASSES_SPLIT_FUNCTIONS_H
 
-#include "BinaryContext.h"
-#include "BinaryFunction.h"
 #include "Passes/BinaryPasses.h"
 #include "llvm/Support/CommandLine.h"
 #include <atomic>

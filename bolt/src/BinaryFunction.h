@@ -23,21 +23,15 @@
 #include "MCPlus.h"
 #include "NameResolver.h"
 #include "llvm/ADT/StringRef.h"
-#include "llvm/ADT/ilist.h"
 #include "llvm/ADT/iterator.h"
 #include "llvm/BinaryFormat/Dwarf.h"
-#include "llvm/MC/MCCodeEmitter.h"
 #include "llvm/MC/MCContext.h"
-#include "llvm/MC/MCDisassembler/MCDisassembler.h"
 #include "llvm/MC/MCDwarf.h"
 #include "llvm/MC/MCInst.h"
-#include "llvm/MC/MCSubtargetInfo.h"
 #include "llvm/MC/MCSymbol.h"
 #include "llvm/Object/ObjectFile.h"
-#include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
 #include <algorithm>
-#include <functional>
 #include <limits>
 #include <unordered_map>
 #include <unordered_set>
@@ -48,7 +42,6 @@ using namespace llvm::object;
 namespace llvm {
 
 class DWARFUnit;
-class DWARFDebugInfoEntryMinimal;
 
 namespace bolt {
 

@@ -15,7 +15,6 @@
 #include "BinaryFunction.h"
 #include "BoltAddressTranslation.h"
 #include "DataAggregator.h"
-#include "ExecutableFileMemoryManager.h"
 #include "Heatmap.h"
 #include "Utils.h"
 #include "llvm/Support/CommandLine.h"
@@ -27,7 +26,6 @@
 #include "llvm/Support/Regex.h"
 #include "llvm/Support/Timer.h"
 #include <map>
-#include <sstream>
 #include <unordered_map>
 
 #include <unistd.h>

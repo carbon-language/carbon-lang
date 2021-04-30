@@ -13,17 +13,15 @@
 
 #include "llvm/ADT/GraphTraits.h"
 #include "llvm/ADT/StringRef.h"
-#include "llvm/MC/MCCodeEmitter.h"
 #include "llvm/MC/MCInst.h"
 #include "llvm/MC/MCSymbol.h"
-#include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorOr.h"
 #include "llvm/Support/raw_ostream.h"
 #include <limits>
-#include <set>
 #include <utility>
 
 namespace llvm {
+class MCCodeEmitter;
 
 namespace bolt {
 

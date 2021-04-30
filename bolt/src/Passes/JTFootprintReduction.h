@@ -14,10 +14,10 @@
 #define LLVM_TOOLS_LLVM_BOLT_PASSES_JT_FOOTPRINT_REDUCTION_H
 
 #include "BinaryPasses.h"
-#include "DataflowInfoManager.h"
 
 namespace llvm {
 namespace bolt {
+class DataflowInfoManager;
 
 /// This pass identify indirect jumps to jump tables and reduce their entries
 /// size from 8 to 4 bytes. For PIC jump tables, it will remove the PIC code

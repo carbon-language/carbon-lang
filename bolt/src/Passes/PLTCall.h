@@ -11,8 +11,6 @@
 #ifndef LLVM_TOOLS_LLVM_BOLT_PASSES_PLTCALL_H
 #define LLVM_TOOLS_LLVM_BOLT_PASSES_PLTCALL_H
 
-#include "BinaryContext.h"
-#include "BinaryFunction.h"
 #include "BinaryPasses.h"
 
 namespace llvm {

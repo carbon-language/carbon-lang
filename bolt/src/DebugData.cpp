@@ -9,10 +9,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "DebugData.h"
-#include "BinaryBasicBlock.h"
-#include "BinaryFunction.h"
-#include "llvm/MC/MCSymbol.h"
-#include "llvm/MC/MCObjectWriter.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/EndianStream.h"
 #include "llvm/Support/LEB128.h"

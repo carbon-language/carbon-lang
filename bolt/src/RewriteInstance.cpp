@@ -9,7 +9,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "RewriteInstance.h"
-#include "BinaryBasicBlock.h"
 #include "BinaryContext.h"
 #include "BinaryEmitter.h"
 #include "BinaryFunction.h"
@@ -27,31 +26,22 @@
 #include "Passes/ReorderFunctions.h"
 #include "Relocation.h"
 #include "RuntimeLibs/HugifyRuntimeLibrary.h"
+#include "RuntimeLibs/InstrumentationRuntimeLibrary.h"
 #include "Utils.h"
 #include "YAMLProfileReader.h"
 #include "YAMLProfileWriter.h"
 #include "llvm/ADT/Optional.h"
-#include "llvm/ADT/STLExtras.h"
-#include "llvm/BinaryFormat/Magic.h"
 #include "llvm/DebugInfo/DWARF/DWARFContext.h"
-#include "llvm/ExecutionEngine/RTDyldMemoryManager.h"
 #include "llvm/ExecutionEngine/RuntimeDyld.h"
 #include "llvm/MC/MCAsmBackend.h"
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCAsmLayout.h"
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCDisassembler/MCDisassembler.h"
-#include "llvm/MC/MCInstPrinter.h"
-#include "llvm/MC/MCInstrAnalysis.h"
-#include "llvm/MC/MCInstrInfo.h"
-#include "llvm/MC/MCObjectFileInfo.h"
 #include "llvm/MC/MCObjectStreamer.h"
 #include "llvm/MC/MCObjectWriter.h"
-#include "llvm/MC/MCRegisterInfo.h"
 #include "llvm/MC/MCStreamer.h"
-#include "llvm/MC/MCSubtargetInfo.h"
 #include "llvm/MC/MCSymbol.h"
-#include "llvm/Object/Archive.h"
 #include "llvm/Object/ObjectFile.h"
 #include "llvm/Support/Alignment.h"
 #include "llvm/Support/Casting.h"
@@ -61,17 +51,12 @@
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/TargetRegistry.h"
-#include "llvm/Support/TargetSelect.h"
 #include "llvm/Support/Timer.h"
 #include "llvm/Support/ToolOutputFile.h"
 #include "llvm/Support/raw_ostream.h"
-#include "llvm/Target/TargetMachine.h"
 #include <algorithm>
 #include <fstream>
-#include <llvm/Support/Error.h>
-#include <stack>
 #include <system_error>
-#include <thread>
 
 #undef  DEBUG_TYPE
 #define DEBUG_TYPE "bolt"

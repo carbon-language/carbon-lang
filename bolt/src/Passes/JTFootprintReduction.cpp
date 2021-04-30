@@ -9,6 +9,8 @@
 //===----------------------------------------------------------------------===//
 
 #include "JTFootprintReduction.h"
+#include "BinaryFunctionCallGraph.h"
+#include "DataflowInfoManager.h"
 #include "llvm/Support/CommandLine.h"
 
 #define DEBUG_TYPE "JT"

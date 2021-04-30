@@ -12,11 +12,11 @@
 #define LLVM_TOOLS_LLVM_BOLT_RELOCATION_H
 
 #include "llvm/ADT/Triple.h"
-#include "llvm/MC/MCSymbol.h"
-#include "llvm/BinaryFormat/ELF.h"
-#include "llvm/Support/raw_ostream.h"
 
 namespace llvm {
+class MCStreamer;
+class MCSymbol;
+class raw_ostream;
 
 namespace ELF {
 /// Relocation type mask that was accidentally output by bfd 2.30 linker.

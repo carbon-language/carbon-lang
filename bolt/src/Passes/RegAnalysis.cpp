@@ -9,6 +9,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "RegAnalysis.h"
+#include "BinaryFunction.h"
 #include "CallGraphWalker.h"
 #include "llvm/Support/CommandLine.h"
 

@@ -11,7 +11,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "ProfileReaderBase.h"
-#include "BinaryFunction.h"
 
 namespace llvm {
 namespace bolt {

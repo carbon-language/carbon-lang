@@ -11,8 +11,9 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "RewriteInstance.h"
 #include "Passes/IdenticalCodeFolding.h"
+#include "ProfileReaderBase.h"
+#include "RewriteInstance.h"
 #include "llvm/Support/CommandLine.h"
 
 #undef  DEBUG_TYPE

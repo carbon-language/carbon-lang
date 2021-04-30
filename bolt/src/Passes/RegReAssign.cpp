@@ -8,10 +8,11 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "RegReAssign.h"
+#include "BinaryFunctionCallGraph.h"
 #include "DataflowAnalysis.h"
 #include "DataflowInfoManager.h"
 #include "MCPlus.h"
-#include "RegReAssign.h"
 #include "Utils.h"
 #include <numeric>
 

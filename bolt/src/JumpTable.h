@@ -12,13 +12,13 @@
 #define LLVM_TOOLS_LLVM_BOLT_JUMP_TABLE_H
 
 #include "BinaryData.h"
-#include "llvm/MC/MCSection.h"
-#include "llvm/MC/MCStreamer.h"
-#include "llvm/MC/MCSymbol.h"
 #include <map>
 #include <vector>
 
 namespace llvm {
+class MCSymbol;
+class raw_ostream;
+
 namespace bolt {
 
 enum JumpTableSupportLevel : char {

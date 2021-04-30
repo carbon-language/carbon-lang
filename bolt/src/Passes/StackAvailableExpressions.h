@@ -12,9 +12,7 @@
 #define LLVM_TOOLS_LLVM_BOLT_PASSES_STACKAVAILABLEEXPRESSIONS_H
 
 #include "DataflowAnalysis.h"
-#include "RegAnalysis.h"
 #include "llvm/Support/CommandLine.h"
-#include "llvm/Support/Timer.h"
 
 namespace opts {
 extern llvm::cl::opt<bool> TimeOpts;
@@ -24,6 +22,7 @@ namespace llvm {
 namespace bolt {
 
 class FrameAnalysis;
+class RegAnalysis;
 
 class StackAvailableExpressions
     : public InstrsDataflowAnalysis<StackAvailableExpressions> {

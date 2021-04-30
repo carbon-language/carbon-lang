@@ -14,7 +14,6 @@
 #include "BinaryContext.h"
 #include "BinaryFunction.h"
 #include "llvm/Support/Errc.h"
-#include "llvm/Support/Timer.h"
 #include <queue>
 
 namespace llvm {

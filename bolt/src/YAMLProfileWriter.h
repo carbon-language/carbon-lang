@@ -13,17 +13,12 @@
 #ifndef LLVM_TOOLS_LLVM_BOLT_YAML_PROFILE_WRITER_H
 #define LLVM_TOOLS_LLVM_BOLT_YAML_PROFILE_WRITER_H
 
-#include "BinaryBasicBlock.h"
-#include "BinaryContext.h"
-#include "BinaryFunction.h"
-#include "ProfileYAMLMapping.h"
-#include "RewriteInstance.h"
-#include "llvm/Support/ErrorOr.h"
 #include "llvm/Support/raw_ostream.h"
 #include <system_error>
 
 namespace llvm {
 namespace bolt {
+class RewriteInstance;
 
 class YAMLProfileWriter {
   YAMLProfileWriter() = delete;

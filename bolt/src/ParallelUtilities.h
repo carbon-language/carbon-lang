@@ -15,11 +15,8 @@
 #ifndef LLVM_TOOLS_LLVM_BOLT_PARALLEL_UTILITIES_H
 #define LLVM_TOOLS_LLVM_BOLT_PARALLEL_UTILITIES_H
 
-#include "BinaryContext.h"
-#include "BinaryFunction.h"
 #include "MCPlusBuilder.h"
 #include "llvm/Support/CommandLine.h"
-#include "llvm/Support/ThreadPool.h"
 
 using namespace llvm;
 
@@ -30,7 +27,12 @@ extern cl::opt<unsigned> TaskCount;
 }
 
 namespace llvm {
+class ThreadPool;
+
 namespace bolt {
+class BinaryContext;
+class BinaryFunction;
+
 namespace ParallelUtilities {
 
 using WorkFuncWithAllocTy =

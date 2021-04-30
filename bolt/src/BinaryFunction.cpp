@@ -8,27 +8,23 @@
 //
 //===----------------------------------------------------------------------===//
 
-
-#include "BinaryBasicBlock.h"
 #include "BinaryFunction.h"
+#include "BinaryBasicBlock.h"
 #include "DynoStats.h"
 #include "MCPlusBuilder.h"
 #include "NameResolver.h"
 #include "NameShortener.h"
 #include "Utils.h"
-#include "llvm/ADT/edit_distance.h"
 #include "llvm/ADT/SmallSet.h"
 #include "llvm/ADT/StringRef.h"
-#include "llvm/DebugInfo/DWARF/DWARFContext.h"
+#include "llvm/ADT/edit_distance.h"
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCAsmLayout.h"
 #include "llvm/MC/MCContext.h"
+#include "llvm/MC/MCDisassembler/MCDisassembler.h"
 #include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCInst.h"
 #include "llvm/MC/MCInstPrinter.h"
-#include "llvm/MC/MCSection.h"
-#include "llvm/MC/MCSectionELF.h"
-#include "llvm/MC/MCStreamer.h"
 #include "llvm/Object/ObjectFile.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
@@ -37,12 +33,10 @@
 #include "llvm/Support/Regex.h"
 #include "llvm/Support/Timer.h"
 #include "llvm/Support/raw_ostream.h"
-#include "llvm/Support/Regex.h"
 #include <cxxabi.h>
 #include <functional>
 #include <limits>
 #include <numeric>
-#include <queue>
 #include <string>
 
 #undef  DEBUG_TYPE

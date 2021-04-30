@@ -13,7 +13,6 @@
 #include "SplitFunctions.h"
 #include "llvm/Support/CommandLine.h"
 
-#include <numeric>
 #include <vector>
 
 #define DEBUG_TYPE "bolt-opts"

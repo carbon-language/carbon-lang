@@ -9,6 +9,8 @@
 //===----------------------------------------------------------------------===//
 
 #include "StokeInfo.h"
+#include "BinaryFunctionCallGraph.h"
+#include "DataflowInfoManager.h"
 #include "llvm/Support/CommandLine.h"
 
 #undef DEBUG_TYPE

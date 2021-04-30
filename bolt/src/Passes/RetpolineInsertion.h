@@ -12,7 +12,6 @@
 #define LLVM_TOOLS_LLVM_BOLT_RETPOLINE_INSERTION_H
 
 #include "BinaryPasses.h"
-#include "BinarySection.h"
 #include <string>
 #include <unordered_map>
 

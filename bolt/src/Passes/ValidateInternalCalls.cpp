@@ -9,7 +9,9 @@
 //===----------------------------------------------------------------------===//
 
 #include "ValidateInternalCalls.h"
+#include "FrameAnalysis.h"
 #include "Passes/DataflowInfoManager.h"
+#include "llvm/MC/MCInstPrinter.h"
 
 #define DEBUG_TYPE "bolt-internalcalls"
 

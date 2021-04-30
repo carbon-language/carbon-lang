@@ -9,9 +9,9 @@
 //===----------------------------------------------------------------------===//
 
 #include "IndirectCallPromotion.h"
+#include "BinaryFunctionCallGraph.h"
 #include "DataflowInfoManager.h"
 #include "llvm/Support/CommandLine.h"
-#include <numeric>
 
 #define DEBUG_TYPE "ICP"
 #define DEBUG_VERBOSE(Level, X) if (opts::Verbosity >= (Level)) { X; }

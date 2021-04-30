@@ -10,15 +10,11 @@
 
 #include "MCF.h"
 #include "BinaryFunction.h"
-#include "BinaryPassManager.h"
 #include "Passes/DataflowInfoManager.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/Support/CommandLine.h"
-#include "llvm/Support/Timer.h"
-#include <vector>
-#include <limits>
 #include <algorithm>
-#include <cmath>
+#include <vector>
 
 #undef  DEBUG_TYPE
 #define DEBUG_TYPE "mcf"

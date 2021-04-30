@@ -15,12 +15,9 @@
 #define LLVM_TOOLS_LLVM_BOLT_DATA_AGGREGATOR_H
 
 #include "DataReader.h"
-#include "llvm/ADT/DenseSet.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/Error.h"
-#include "llvm/Support/Path.h"
 #include "llvm/Support/Program.h"
-#include <map>
 #include <unordered_map>
 
 namespace llvm {

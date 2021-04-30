@@ -14,7 +14,6 @@
 #include "DataflowAnalysis.h"
 #include "RegAnalysis.h"
 #include "llvm/Support/CommandLine.h"
-#include "llvm/Support/Timer.h"
 
 namespace opts {
 extern llvm::cl::opt<bool> AssumeABI;

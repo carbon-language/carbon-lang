@@ -13,8 +13,6 @@
 #ifndef LLVM_TOOLS_LLVM_BOLT_PASSES_INLINER_H
 #define LLVM_TOOLS_LLVM_BOLT_PASSES_INLINER_H
 
-#include "BinaryContext.h"
-#include "BinaryFunction.h"
 #include "BinaryPasses.h"
 
 namespace llvm {

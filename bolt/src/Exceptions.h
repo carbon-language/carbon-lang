@@ -11,20 +11,22 @@
 #ifndef LLVM_TOOLS_LLVM_BOLT_EXCEPTIONS_H
 #define LLVM_TOOLS_LLVM_BOLT_EXCEPTIONS_H
 
-#include "BinaryContext.h"
-#include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/DebugInfo/DWARF/DWARFDataExtractor.h"
-#include "llvm/DebugInfo/DWARF/DWARFDebugFrame.h"
-#include "llvm/Support/Casting.h"
 #include "llvm/Support/Error.h"
+#include <cstdint>
 #include <map>
+#include <vector>
 
 namespace llvm {
+class DWARFDebugFrame;
+namespace dwarf {
+class FDE;
+} // namespace dwarf
+
 namespace bolt {
 
 class BinaryFunction;
-class RewriteInstance;
 
 /// \brief Wraps up information to read all CFI instructions and feed them to a
 /// BinaryFunction, as well as rewriting CFI sections.

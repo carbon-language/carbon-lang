@@ -11,14 +11,17 @@
 #ifndef LLVM_TOOLS_LLVM_BOLT_PASSES_REGANALYSIS_H
 #define LLVM_TOOLS_LLVM_BOLT_PASSES_REGANALYSIS_H
 
-#include "BinaryContext.h"
-#include "BinaryFunction.h"
-#include "BinaryFunctionCallGraph.h"
 #include "llvm/ADT/BitVector.h"
+#include <cstdint>
 #include <map>
 
 namespace llvm {
+class MCInst;
+
 namespace bolt {
+class BinaryContext;
+class BinaryFunction;
+class BinaryFunctionCallGraph;
 
 /// Determine the set of registers read or clobbered for each instruction
 /// in a BinaryFunction. If the instruction is a call, this analysis rely on

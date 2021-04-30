@@ -11,7 +11,6 @@
 #ifndef LLVM_TOOLS_LLVM_BOLT_PASSES_IDENTICAL_CODE_FOLDING_H
 #define LLVM_TOOLS_LLVM_BOLT_PASSES_IDENTICAL_CODE_FOLDING_H
 
-#include "BinaryContext.h"
 #include "BinaryFunction.h"
 #include "Passes/BinaryPasses.h"
 

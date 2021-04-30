@@ -11,7 +11,6 @@
 #ifndef LLVM_TOOLS_LLVM_BOLT_YAML_PROFILE_READER_H
 #define LLVM_TOOLS_LLVM_BOLT_YAML_PROFILE_READER_H
 
-#include "BinaryFunction.h"
 #include "ProfileReaderBase.h"
 #include "ProfileYAMLMapping.h"
 #include <unordered_set>

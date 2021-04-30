@@ -14,26 +14,21 @@
 #define LLVM_TOOLS_LLVM_BOLT_MACHO_REWRITE_INSTANCE_H
 
 #include "NameResolver.h"
-#include "ProfileReaderBase.h"
-#include "llvm/ExecutionEngine/Orc/RTDyldObjectLinkingLayer.h"
-#include "llvm/Object/MachO.h"
+#include "llvm/Support/Error.h"
 #include <memory>
 
 namespace llvm {
-
 class ToolOutputFile;
-
-namespace orc {
-
-class SymbolStringPool;
-class ExecutionSession;
-class RTDyldObjectLinkingLayer;
-
-} // namespace orc
+class RuntimeDyld;
+class raw_pwrite_stream;
+namespace object {
+class MachOObjectFile;
+} // namespace object
 
 namespace bolt {
 
 class BinaryContext;
+class ProfileReaderBase;
 
 class MachORewriteInstance {
   object::MachOObjectFile *InputFile;

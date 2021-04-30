@@ -9,8 +9,11 @@
 //===----------------------------------------------------------------------===//
 
 #include "CallGraphWalker.h"
+#include "BinaryFunctionCallGraph.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Timer.h"
+#include <queue>
+#include <set>
 
 namespace opts {
 extern llvm::cl::opt<bool> TimeOpts;

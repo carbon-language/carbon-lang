@@ -12,10 +12,11 @@
 #define LLVM_TOOLS_LLVM_BOLT_PASSES_FRAMEDEFRAG_H
 
 #include "BinaryPasses.h"
-#include "DataflowInfoManager.h"
 
 namespace llvm {
 namespace bolt {
+class DataflowInfoManager;
+class FrameAnalysis;
 
 class AllocCombinerPass : public BinaryFunctionPass {
   /// Stats aggregating variables

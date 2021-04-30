@@ -13,11 +13,12 @@
 #ifndef LLVM_TOOLS_LLVM_BOLT_CACHEMETRICS_H
 #define LLVM_TOOLS_LLVM_BOLT_CACHEMETRICS_H
 
-#include "BinaryFunction.h"
+#include <cstdint>
 #include <vector>
 
 namespace llvm {
 namespace bolt {
+class BinaryFunction;
 namespace CacheMetrics {
 
 /// Calculate various metrics related to instruction cache performance.
