@@ -31,8 +31,8 @@ struct Evaluate: Action {
     switch source {
     case .name(let id):
       switch state.program.definition[id] {
-      case let function as FunctionDefinition:
-        state[source] = FunctionValue(type: .error, code: function)
+      case let f as FunctionDefinition:
+        state[source] = FunctionValue(type: .error, code: f)
         return .done
       case is SimpleBinding:
         state.temporaries[source] = state.address(of: id)
