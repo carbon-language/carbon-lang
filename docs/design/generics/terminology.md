@@ -307,11 +307,12 @@ defined.
 
 ## Compatible types
 
-Two types are compatible if they have the same representation, even if they
-expose different APIs. The representation of a type includes a bunch of facts
-about how the bits of a value of that type are represented in memory. It also
-includes things that the compiler can't see directly that involve the
-interpretation of those bits, such as the invariants that the type maintains.
+Two types are compatible if they have the same notional set of values and
+represent those values in the same way, even if they expose different APIs. The
+representation of a type describes how the values of that type are represented
+as a sequence of bits in memory. The set of values of a type includes properties
+that the compiler can't directly see, such as invariants that the type
+maintains.
 
 We can't just say two types are compatible based on structural reasons. Instead,
 we have specific constructs that create compatible types from existing types in
