@@ -42,7 +42,7 @@ position, the identifier is first and the type follows. However, that ordering
 would be very _inconsistent_ with C++.
 
 One very important consideration here is the fundamental approach to type
-inference. Languages which use the syntax `<identifier> <type>` typically allow
+inference. Languages which use the syntax `<identifier>: <type>` typically allow
 completely omitting the colon and the type to signify inference. With C++,
 inference is achieved with a placeholder keyword `auto`, and Carbon is currently
 being consistent there as well with `auto <identifier>`. For languages which
