@@ -255,7 +255,9 @@ auto PrintValue(const Value* val, std::ostream& out) -> void {
 
         out << elt.first << " = ";
         state->PrintAddress(elt.second, out);
+#if 0
         out << "@" << elt.second;
+#endif
       }
       out << ")";
       break;

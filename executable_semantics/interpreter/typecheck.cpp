@@ -377,15 +377,15 @@ auto TypeCheckExp(const Expression* e, TypeEnv types, Env values,
       }
     }
     case ExpressionKind::IntT:
-      return TCResult(e, MakeIntTypeVal(), types);
+      return TCResult(e, MakeTypeTypeVal(), types);
     case ExpressionKind::BoolT:
-      return TCResult(e, MakeBoolTypeVal(), types);
+      return TCResult(e, MakeTypeTypeVal(), types);
     case ExpressionKind::TypeT:
       return TCResult(e, MakeTypeTypeVal(), types);
     case ExpressionKind::AutoT:
-      return TCResult(e, MakeAutoTypeVal(), types);
+      return TCResult(e, MakeTypeTypeVal(), types);
     case ExpressionKind::ContinuationT:
-      return TCResult(e, MakeContinuationTypeVal(), types);
+      return TCResult(e, MakeTypeTypeVal(), types);
   }
 }
 
@@ -711,6 +711,7 @@ auto TopLevel(std::list<Declaration>* fs) -> TypeCheckContext {
 auto FunctionDeclaration::TopLevel(TypeCheckContext& tops) const -> void {
   auto t = TypeOfFunDef(tops.types, tops.values, definition);
   tops.types.Set(Name(), t);
+  InitGlobals(tops.values);
 }
 
 auto StructDeclaration::TopLevel(TypeCheckContext& tops) const -> void {

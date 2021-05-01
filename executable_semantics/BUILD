@@ -76,6 +76,7 @@ EXAMPLES = [
     "tuple3",
     "tuple4",
     "tuple5",
+    "type_compute",
     "while1",
     "zero",
     "experimental_continuation1",
