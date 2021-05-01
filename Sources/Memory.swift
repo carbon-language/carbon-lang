@@ -4,12 +4,6 @@
 
 typealias Address = Int
 
-protocol Value {
-  /// The type of this value.
-  // This is available for diagnostic purposes; semantics mustn't depend on it.
-  var type: Type { get }
-}
-
 /// Stops the program with an error exit code and the given message.
 ///
 /// - Note: only works in contexts where the return type can be deduced,

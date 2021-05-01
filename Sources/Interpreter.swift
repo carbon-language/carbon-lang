@@ -111,11 +111,6 @@ extension Interpreter {
   }
 }
 
-struct FunctionValue: Value {
-  let type: Type
-  let code: FunctionDefinition
-}
-
 extension Interpreter {
   mutating func pushTodo_testingOnly(_ a: Action) { todo.push(a) }
 }
