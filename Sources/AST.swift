@@ -208,16 +208,16 @@ indirect enum Statement: AST {
   }
 }
 
-struct Tuple<Value: AST>: AST {
+struct Tuple<Payload: AST>: AST {
   struct Element: AST {
-    init(label: Identifier? = nil, _ value: Value) {
+    init(label: Identifier? = nil, _ payload: Payload) {
       self.label = label
-      self.value = value
+      self.payload = payload
     }
     let label: Identifier?
-    let value: Value
+    let payload: Payload
 
-    var site: Site { label.map { $0.site...value.site } ?? value.site }
+    var site: Site { label.map { $0.site...payload.site } ?? payload.site }
   }
 
   init(_ elements: [Element], _ site: Site) {
@@ -236,12 +236,12 @@ typealias TypeTuple = Tuple<TypeExpression>
 extension PatternElement {
   // "Upcast" from literal element
   init(_ l: LiteralElement) {
-    self.init(label: l.label, Pattern(l.value))
+    self.init(label: l.label, Pattern(l.payload))
   }
 
   // "Upcast" from literal element
   init(_ l: Tuple<TypeExpression>.Element) {
-    self.init(label: l.label, Pattern(l.value.body))
+    self.init(label: l.label, Pattern(l.payload.body))
   }
 }
 

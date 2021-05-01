@@ -119,7 +119,7 @@ private extension NameResolution {
   }
 
   mutating func defineVariables(declaredBy bindings: TuplePattern) {
-    for p in bindings { defineVariables(declaredBy: p.value) }
+    for p in bindings { defineVariables(declaredBy: p.payload) }
   }
 
   mutating func resolveNames(usedIn f: FunctionDefinition) {
@@ -153,15 +153,15 @@ private extension NameResolution {
   }
 
   mutating func resolveNames(usedIn t: TupleLiteral) {
-    for e in t { resolveNames(usedIn: e.value) }
+    for e in t { resolveNames(usedIn: e.payload) }
   }
 
   mutating func resolveNames(usedIn t: Tuple<TypeExpression>) {
-    for e in t { resolveNames(usedIn: e.value) }
+    for e in t { resolveNames(usedIn: e.payload) }
   }
 
   mutating func resolveNames(usedIn t: TuplePattern) {
-    for e in t { resolveNames(usedIn: e.value) }
+    for e in t { resolveNames(usedIn: e.payload) }
   }
 
   mutating func resolveNames(usedIn i: Initialization) {

@@ -153,8 +153,8 @@ private extension TypeChecker {
   ) -> [Type]
     where E.Element == LiteralElement
   {
-    guard let r = rhs else { return e.map { deducedType($0.value) } }
-    return zip(e, r).map { deducedType($0.value, initializingFrom: $1) }
+    guard let r = rhs else { return e.map { deducedType($0.payload) } }
+    return zip(e, r).map { deducedType($0.payload, initializingFrom: $1) }
   }
 
 
