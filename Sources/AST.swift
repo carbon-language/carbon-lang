@@ -259,9 +259,9 @@ struct MatchClause: AST {
 }
 typealias MatchClauseList = [MatchClause]
 
-struct FunctionType<ParameterType: AST>: AST {
-  let parameters: Tuple<ParameterType>
-  let returnType: ParameterType
+struct FunctionType<Parameter: AST>: AST {
+  let parameters: Tuple<Parameter>
+  let returnType: Parameter
   let site: Site
 }
 typealias FunctionTypePattern = FunctionType<Pattern>
