@@ -61,16 +61,6 @@ indirect enum Pattern: AST {
     functionCall(FunctionCall<Pattern>),
     functionType(FunctionTypePattern)
 
-  init(_ e: Expression) {
-    // Upcast all destructurable things into appropriate pattern buckets
-    switch e {
-    case let .tupleLiteral(t): self = .tuple(TuplePattern(t))
-    case let .functionCall(f): self = .functionCall(.init(f))
-    case let .functionType(f): self = .functionType(.init(f))
-    default: self = .atom(e)
-    }
-  }
-
   var site: Site {
     switch self {
     case let .atom(x): return x.site
@@ -236,12 +226,12 @@ typealias TypeTuple = Tuple<TypeExpression>
 extension PatternElement {
   // "Upcast" from literal element
   init(_ l: LiteralElement) {
-    self.init(label: l.label, Pattern(l.payload))
+    self.init(label: l.label, .atom(l.payload))
   }
 
   // "Upcast" from literal element
   init(_ l: Tuple<TypeExpression>.Element) {
-    self.init(label: l.label, Pattern(l.payload.body))
+    self.init(label: l.label, .atom(l.payload.body))
   }
 }
 
@@ -272,7 +262,7 @@ extension FunctionTypePattern {
   init(_ source: FunctionTypeLiteral) {
     self.init(
       parameters: .init(source.parameters),
-      returnType: .init(source.returnType),
+      returnType: .atom(source.returnType),
       site: source.site)
   }
 }

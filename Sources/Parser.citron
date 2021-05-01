@@ -76,7 +76,7 @@
 
 input ::= declaration_list(d).      { d }
 
-pattern ::= expression(e).          { Pattern(e) }
+pattern ::= expression(e).          { .atom(e) }
 pattern ::= binding(p).             { p }
 
 // A pattern that binds at least one variable.
@@ -242,11 +242,11 @@ function_type_binding ::= FNTY(f) trailing_tuple_binding(p).
    .functionType(
      .init(
         parameters: p,
-        returnType: .init(.tupleLiteral(Tuple([], .empty))), site: f...p))
+        returnType: .atom(.tupleLiteral(Tuple([], .empty))), site: f...p))
 }
 function_type_binding ::= FNTY(f) trailing_tuple_binding(p) ARROW expression(r).
 {
-  .functionType(.init(parameters: p, returnType: .init(r), site: f...r))
+  .functionType(.init(parameters: p, returnType: .atom(r), site: f...r))
 }
 function_type_binding ::= FNTY(f) trailing_tuple_binding(p) ARROW binding(r).
 {
