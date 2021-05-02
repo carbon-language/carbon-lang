@@ -865,6 +865,9 @@ struct ImplementsS {
 
 ### Subsumption
 
+**TODO** Rewrite in terms of "subtyping" since the word "subsumes" is ambiguous
+in this context.
+
 Given a generic type `T` with type-type `I1`, it may be
 [implicitly cast](terminology.md#subtyping-and-casting) to a type-type `I2`,
 resulting in `T as I2`, as long as the requirements of `I1` are a superset of
@@ -1552,6 +1555,17 @@ adapter Foo2 extends Bar {
   impl Baz { ... }
 }
 ```
+
+**Open question:** Rust also uses the newtype idiom to create types with
+additional invariants or other information encoded in the type
+([1](https://doc.rust-lang.org/rust-by-example/generics/new_types.html),
+[2](https://doc.rust-lang.org/book/ch19-04-advanced-types.html#using-the-newtype-pattern-for-type-safety-and-abstraction),
+[3](https://www.worthe-it.co.za/blog/2020-10-31-newtype-pattern-in-rust.html)).
+This is used to record in the type system that some data has passed validation
+checks, like `ValidDate` with the same data layout as `Date`. Or to record the
+units associated with a value, such as `Seconds` versus `Milliseconds` or `Feet`
+versus `Meters`. Perhaps only adapters that use `extends` should support
+convenient casting?
 
 ### Example: Defining an impl for use by other types
 
