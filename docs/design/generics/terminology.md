@@ -329,13 +329,12 @@ to a compatible type.
 [Subtyping](https://en.wikipedia.org/wiki/Subtyping) is a relationship between
 two types where you can safely operate on a value of one type using a variable
 of another. For example, using C++'s object-oriented features, you can operate
-on a value of a derived class using a pointer to the base class.
-[Contravariance](<https://en.wikipedia.org/wiki/Covariance_and_contravariance_(computer_science)>)
-means you can pass a more specific type to a function that can handle a more
-general type.
-[Covariance](<https://en.wikipedia.org/wiki/Covariance_and_contravariance_(computer_science)>)
-means a function can return a more specific type to a caller prepared to handle
-a more general type.
+on a value of a derived class using a pointer to the base class. In most cases,
+you can pass a more specific type to a function that can handle a more general
+type. Return types work the opposite way, a function can return a more specific
+type to a caller prepared to handle a more general type. This determines how
+function signatures can change from base class to derived class, see
+[covariance and contravariance in Wikipedia](<https://en.wikipedia.org/wiki/Covariance_and_contravariance_(computer_science)>).
 
 In a generics context, we are specifically interested in the subtyping
 relationships between [type-types](#type-type). In particular, a type-type
