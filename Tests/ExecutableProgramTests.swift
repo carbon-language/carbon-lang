@@ -31,7 +31,12 @@ final class TestSemanticAnalysis: XCTestCase {
 	"fn main() -> Int {}".parsedAsCarbon(fromFile: "main.6c")))
     else { return }
     
+    guard case let .name(name) = exe.mainCall.callee else {
+      XCTFail("Callee is not an identifier: \(exe.mainCall.callee)")
+      return
+    }
+    
     // Nothing interesting to check about exe yet.
-    XCTAssertEqual(exe.main.name.text, "main")
+    XCTAssertEqual(name.text, "main")
   }
 }
