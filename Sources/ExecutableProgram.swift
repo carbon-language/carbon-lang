@@ -9,7 +9,7 @@ struct ExecutableProgram {
   let ast: AbstractSyntaxTree
 
   /// The entry point for this program.
-  let mainCall: FunctionCall<LiteralElement>
+  let main: FunctionDefinition
 
   /// A mapping from identifier to its definition.
   let definition: ASTDictionary<Identifier, Declaration>
@@ -19,31 +19,14 @@ struct ExecutableProgram {
   init(_ program: AbstractSyntaxTree) throws {
     self.ast = program
     let r = NameResolution(program)
+    definition = r.definition
 
     if !r.errors.isEmpty { throw r.errors }
     switch unambiguousMain(in: ast) {
     case let .failure(e): throw [e]
-    case let .success(main):
-      // Synthesize a call to `main` to act as the entry point for the program
-      let mainID = Identifier(text: "main", site: topColumns(1...4))
-      var definition = r.definition
-      definition[mainID] = main
-      self.definition = definition
-      let mainExpression = Expression.name(mainID)
-      let arguments = TupleLiteral([], topColumns(5...6))
-      self.mainCall = FunctionCall<LiteralElement>(callee: mainExpression, arguments: arguments)
+    case let .success(main): self.main = main
     }
   }
-}
-
-/// Return the site covering the given columns of line 1 in a mythical
-/// file called "<TOP>".
-fileprivate func topColumns(_ r: ClosedRange<Int>) -> ASTSite {
-  ASTSite(
-    devaluing: SourceRegion(
-      fileName: "<TOP>",
-      .init(line: 1, column: r.lowerBound)
-        ..< .init(line: 1, column: r.upperBound + 1)))
 }
 
 /// Returns the unique top-level nullary main() function defined in

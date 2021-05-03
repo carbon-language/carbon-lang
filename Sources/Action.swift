@@ -30,18 +30,9 @@ struct Evaluate: Action {
   mutating func run(on state: inout Interpreter) -> Followup {
     switch source {
     case .name(let id):
-      switch state.program.definition[id] {
-      case let f as FunctionDefinition:
-        state[source] = FunctionValue(type: .error, code: f)
-        return .done
-      case is SimpleBinding:
-        state.temporaries[source] = state.address(of: id)
-        // N.B. of all expressions, this one doesn't need to be destroyed.
-        return .done
-      case nil:
-        fatalError("No definition for '\(id.text)'")
-      default: UNIMPLEMENTED
-      }
+      state.temporaries[source] = state.address(of: id)
+      // N.B. of all expressions, this one doesn't need to be destroyed.
+      return .done
     default: fatalError("implement me.\n\(source)")
     }
   }
