@@ -26,7 +26,7 @@ extension AST {
 }
 
 /// An unqualified name.
-struct Identifier: AST {
+struct Identifier: AST, Hashable {
   let text: String
   let site: Site
 }
@@ -349,8 +349,8 @@ protocol TypeDeclaration: Declaration {
 ///
 /// Instances of ASTSite always compare ==, allowing us to include location
 /// information in the AST while still letting the compiler synthesize node
-/// equality based on structure.
-struct ASTSite: Equatable {
+/// equality and hashability based on structure.
+struct ASTSite: Hashable {
   /// Creates an instance storing `r` without making it part of the value of
   /// `self`.
   init(devaluing r: SourceRegion) { self.region = r }
@@ -358,6 +358,7 @@ struct ASTSite: Equatable {
   let region: SourceRegion
 
   static func == (_: Self, _: Self) -> Bool { true }
+  func hash(into h: inout Hasher) {}
 
   static var empty: ASTSite { ASTSite(devaluing: SourceRegion.empty) }
 

@@ -7,7 +7,7 @@ indirect enum Type: Equatable {
   case
     int, bool, type,
     function(parameterTypes: [Type], returnType: Type),
-    tuple([Type]),
+    tuple(TupleType),
     `struct`(StructDefinition),
     `choice`(ChoiceDefinition),
 
@@ -21,11 +21,11 @@ indirect enum Type: Equatable {
   }
 
   /// Convenience accessor for `.tuple` case.
-  var tuple: [Type]? {
+  var tuple: TupleType? {
     if case .tuple(let r) = self { return r } else { return nil }
   }
 
-  static var void: Type { .tuple([]) }
+  static var void: Type { .tuple([:]) }
 }
 
 extension Type: Value {
