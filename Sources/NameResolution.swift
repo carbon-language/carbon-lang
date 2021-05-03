@@ -2,6 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
+/// The name resolution algorithm and associated data.
 struct NameResolution {
   init(_ program: AbstractSyntaxTree) {
     activeScopes = Stack()
@@ -16,7 +17,6 @@ struct NameResolution {
       resolveNames(usedIn: d)
     }
   }
-
 
   /// The ultimate result of name resolution; a mapping from identifier use to
   /// the declared entity referenced.
@@ -119,7 +119,7 @@ private extension NameResolution {
   }
 
   mutating func defineVariables(declaredBy bindings: TuplePattern) {
-    for p in bindings { defineVariables(declaredBy: p.value) }
+    for p in bindings { defineVariables(declaredBy: p.payload) }
   }
 
   mutating func resolveNames(usedIn f: FunctionDefinition) {
@@ -153,15 +153,15 @@ private extension NameResolution {
   }
 
   mutating func resolveNames(usedIn t: TupleLiteral) {
-    for e in t { resolveNames(usedIn: e.value) }
+    for e in t { resolveNames(usedIn: e.payload) }
+  }
+
+  mutating func resolveNames(usedIn t: Tuple<TypeExpression>) {
+    for e in t { resolveNames(usedIn: e.payload) }
   }
 
   mutating func resolveNames(usedIn t: TuplePattern) {
-    for e in t { resolveNames(usedIn: e.value) }
-  }
-
-  mutating func resolveNames(usedIn t: Tuple<Expression>) {
-    for e in t { resolveNames(usedIn: e) }
+    for e in t { resolveNames(usedIn: e.payload) }
   }
 
   mutating func resolveNames(usedIn i: Initialization) {
@@ -268,12 +268,12 @@ private extension NameResolution {
     }
   }
 
-  mutating func resolveNames(usedIn f: FunctionCall<LiteralElement>) {
+  mutating func resolveNames(usedIn f: FunctionCall<Expression>) {
     resolveNames(usedIn: f.callee)
     resolveNames(usedIn: f.arguments)
   }
 
-  mutating func resolveNames(usedIn f: FunctionCall<PatternElement>) {
+  mutating func resolveNames(usedIn f: FunctionCall<Pattern>) {
     resolveNames(usedIn: f.callee)
     resolveNames(usedIn: f.arguments)
   }

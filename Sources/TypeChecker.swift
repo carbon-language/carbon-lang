@@ -131,7 +131,8 @@ private extension TypeChecker {
 
       return .function(
         parameterTypes: mapDeducedType(f0.parameters, p1),
-        returnType: evaluateTypeExpression(f0.returnType, initializingFrom: r1))
+        returnType: evaluateTypeExpression(
+          TypeExpression(f0.returnType), initializingFrom: r1))
 
     case .tupleLiteral(let t0):
       if rhs != nil && rhs!.tuple == nil { return .error }
@@ -152,8 +153,8 @@ private extension TypeChecker {
   ) -> [Type]
     where E.Element == LiteralElement
   {
-    guard let r = rhs else { return e.map { deducedType($0.value) } }
-    return zip(e, r).map { deducedType($0.value, initializingFrom: $1) }
+    guard let r = rhs else { return e.map { deducedType($0.payload) } }
+    return zip(e, r).map { deducedType($0.payload, initializingFrom: $1) }
   }
 
 

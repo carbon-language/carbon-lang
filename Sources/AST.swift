@@ -58,7 +58,7 @@ indirect enum Pattern: AST {
     atom(Expression),             // A non-destructurable expression
     variable(SimpleBinding),     // <Type>: <name>
     tuple(TuplePattern),
-    functionCall(FunctionCall<PatternElement>),
+    functionCall(FunctionCall<Pattern>),
     functionType(FunctionTypePattern)
 
   init(_ e: Expression) {
@@ -106,48 +106,31 @@ struct SimpleBinding: AST, Declaration {
   var site: Site { type.site...name.site }
 }
 
-struct FunctionCall<Argument: Equatable>: AST {
+struct FunctionCall<Argument: AST>: AST {
   let callee: Expression
   let arguments: Tuple<Argument>
 
   var site: Site { return callee.site...arguments.site }
 }
 
-extension FunctionCall where Argument == PatternElement {
+extension FunctionCall where Argument == Pattern {
   /// "Upcast" from literal to pattern
-  init(_ literal: FunctionCall<LiteralElement>) {
+  init(_ literal: FunctionCall<Expression>) {
     self.init(callee: literal.callee, arguments: .init(literal.arguments))
   }
 }
 
-struct LiteralElement: Equatable {
-  init(label: Identifier? = nil, _ value: Expression) {
-    self.label = label
-    self.value = value
-  }
-  let label: Identifier?
-  let value: Expression
-}
-typealias TupleLiteral = Tuple<LiteralElement>
+typealias TupleLiteral = Tuple<Expression>
+typealias TuplePattern = Tuple<Pattern>
 
-struct PatternElement: Equatable {
-  init(label: Identifier? = nil, _ value: Pattern) {
-    self.label = label
-    self.value = value
-  }
-  // "Upcast" from literal element
-  init(_ l: LiteralElement) {
-    self.init(label: l.label, Pattern(l.value))
-  }
-  
-  let label: Identifier?
-  let value: Pattern
-}
-
-typealias TuplePattern = Tuple<PatternElement>
 extension TuplePattern {
   // "Upcast" from tuple literal.
   init(_ l: TupleLiteral) {
+    self.init(l.elements.map { PatternElement($0) }, l.site)
+  }
+
+  // "Upcast" from tuple literal.
+  init(_ l: TypeTuple) {
     self.init(l.elements.map { PatternElement($0) }, l.site)
   }
 }
@@ -225,20 +208,47 @@ indirect enum Statement: AST {
   }
 }
 
-struct Tuple<T: Equatable>: AST {
-  init(_ elements: [T], _ site: Site) {
+struct Tuple<Payload: AST>: AST {
+  struct Element: AST {
+    init(label: Identifier? = nil, _ payload: Payload) {
+      self.label = label
+      self.payload = payload
+    }
+    let label: Identifier?
+    let payload: Payload
+
+    var site: Site { label.map { $0.site...payload.site } ?? payload.site }
+  }
+
+  init(_ elements: [Element], _ site: Site) {
     self.elements = elements
     self.site = site
   }
 
-  let elements: [T]
+  let elements: [Element]
   let site: Site
+}
+typealias LiteralElement = Tuple<Expression>.Element
+typealias PatternElement = Tuple<Pattern>.Element
+
+typealias TypeTuple = Tuple<TypeExpression>
+
+extension PatternElement {
+  // "Upcast" from literal element
+  init(_ l: LiteralElement) {
+    self.init(label: l.label, Pattern(l.payload))
+  }
+
+  // "Upcast" from literal element
+  init(_ l: Tuple<TypeExpression>.Element) {
+    self.init(label: l.label, Pattern(l.payload.body))
+  }
 }
 
 extension Tuple: RandomAccessCollection {
   var startIndex: Int { 0 }
   var endIndex: Int { elements.count }
-  subscript(i: Int) -> T { elements[i] }
+  subscript(i: Int) -> Element { elements[i] }
 }
 
 struct MatchClause: AST {
@@ -249,23 +259,23 @@ struct MatchClause: AST {
 }
 typealias MatchClauseList = [MatchClause]
 
-struct FunctionType<Parameter: Equatable, Return: Equatable>: AST {
+struct FunctionType<Parameter: AST>: AST {
   let parameters: Tuple<Parameter>
-  let returnType: Return
+  let returnType: Parameter
   let site: Site
 }
-typealias FunctionTypePattern = FunctionType<PatternElement, Pattern>
-typealias FunctionTypeLiteral = FunctionType<LiteralElement, TypeExpression>
+typealias FunctionTypePattern = FunctionType<Pattern>
+typealias FunctionTypeLiteral = FunctionType<Expression>
+
 extension FunctionTypePattern {
   /// "Upcast" from literal to pattern
   init(_ source: FunctionTypeLiteral) {
     self.init(
       parameters: .init(source.parameters),
-      returnType: .init(source.returnType.body),
+      returnType: .init(source.returnType),
       site: source.site)
   }
 }
-
 
 indirect enum Expression: AST {
   case
@@ -277,7 +287,7 @@ indirect enum Expression: AST {
     tupleLiteral(TupleLiteral),
     unaryOperator(operation: Token, operand: Expression, Site),
     binaryOperator(operation: Token, lhs: Expression, rhs: Expression, Site),
-    functionCall(FunctionCall<LiteralElement>),
+    functionCall(FunctionCall<Expression>),
     intType(Site),
     boolType(Site),
     typeType(Site),
@@ -307,6 +317,8 @@ indirect enum Expression: AST {
 /// You can think of this as an un-canonicalized `Type` value.  An instance is
 /// created by the parser for all expressions in a syntactic position that
 /// indicates a type.
+///
+/// TypeExpression(s) must be evaluated at compile-time.
 struct TypeExpression: AST {
   /// Creates an instance containing `body`.
   init(_ body: Expression) {

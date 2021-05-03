@@ -28,7 +28,7 @@
 %nonterminal_type input {AbstractSyntaxTree}
 %nonterminal_type pattern Pattern
 %nonterminal_type binding Pattern
-%nonterminal_type function_call_binding {FunctionCall<PatternElement>}
+%nonterminal_type function_call_binding {FunctionCall<Pattern>}
 %nonterminal_type function_type_binding Pattern
 %nonterminal_type expression Expression
 %nonterminal_type member_designator MemberDesignator
@@ -39,7 +39,7 @@
 %nonterminal_type match_clause_list MatchClauseList
 %nonterminal_type statement Statement
 %nonterminal_type statement_list {[Statement]}
-%nonterminal_type return_type TypeExpression
+%nonterminal_type return_type Expression
 %nonterminal_type function_definition FunctionDefinition
 %nonterminal_type function_declaration FunctionDefinition
 %nonterminal_type struct_member_list {[StructMember]}
@@ -298,16 +298,16 @@ statement_list ::= statement(s) statement_list(l).
   { [s] + l }
 
 return_type ::= /* Empty */.
-  { TypeExpression(.tupleLiteral(Tuple([], .empty))) }
+  { .tupleLiteral(Tuple([], .empty)) }
 return_type ::= ARROW(a) expression(e).
-  { TypeExpression(e) }
+  { e }
 
 function_definition
   ::= FN(f) identifier(n) trailing_tuple_pattern(p) return_type(t)
   LEFT_CURLY_BRACE(l) statement_list(b) RIGHT_CURLY_BRACE(r).
   {
     FunctionDefinition(
-      name: n, parameters: p, returnType: .literal(t),
+      name: n, parameters: p, returnType: .literal(TypeExpression(t)),
       body: .block(b, l...r), site: f...r)
   }
 function_definition
@@ -323,7 +323,7 @@ function_declaration
      trailing_tuple_pattern(p) return_type(r) SEMICOLON(s).
   {
     FunctionDefinition(
-      name: n, parameters: p, returnType: .literal(r),
+      name: n, parameters: p, returnType: .literal(TypeExpression(r)),
       body: nil, site: f...s)
   }
 
