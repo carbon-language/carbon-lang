@@ -39,7 +39,7 @@ final class ParserTests: XCTestCase {
           FunctionDefinition(
             name: Identifier(text: "main", site: o),
             parameters: TupleSyntax([], o),
-            returnType: .literal(TypeExpression(.intType(o))),
+            returnType: .expression(TypeExpression(.intType(o))),
             body: nil,
             site: o))])
   }
@@ -55,7 +55,7 @@ final class ParserTests: XCTestCase {
           FunctionDefinition(
             name: Identifier(text: "main", site: o),
             parameters: TupleSyntax([], o),
-            returnType: .literal(TypeExpression(.intType(o))),
+            returnType: .expression(TypeExpression(.intType(o))),
             body: .block([], o),
             site: o))])
   }
@@ -71,7 +71,7 @@ final class ParserTests: XCTestCase {
           Initialization(
             bindings: .variable(
               SimpleBinding(
-                type: .literal(TypeExpression(.intType(o))),
+                type: .expression(TypeExpression(.intType(o))),
                 name: Identifier(text: "x", site: o))),
             initializer: .integerLiteral(0, o),
             site: o))])

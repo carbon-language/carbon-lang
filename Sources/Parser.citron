@@ -87,7 +87,7 @@ binding ::= function_type_binding(f). { f }
 
 // binding for a single variable.
 simple_binding ::= expression(t) COLON identifier(n).
-  { SimpleBinding(type: .literal(TypeExpression(t)), name: n) }
+  { SimpleBinding(type: .expression(TypeExpression(t)), name: n) }
 simple_binding ::= AUTO(t) COLON identifier(n).
   { SimpleBinding(type: .auto(t.site), name: n) }
 
@@ -307,7 +307,7 @@ function_definition
   LEFT_CURLY_BRACE(l) statement_list(b) RIGHT_CURLY_BRACE(r).
   {
     FunctionDefinition(
-      name: n, parameters: p, returnType: .literal(TypeExpression(t)),
+      name: n, parameters: p, returnType: .expression(TypeExpression(t)),
       body: .block(b, l...r), site: f...r)
   }
 function_definition
@@ -323,7 +323,7 @@ function_declaration
      trailing_tuple_pattern(p) return_type(r) SEMICOLON(s).
   {
     FunctionDefinition(
-      name: n, parameters: p, returnType: .literal(TypeExpression(r)),
+      name: n, parameters: p, returnType: .expression(TypeExpression(r)),
       body: nil, site: f...s)
   }
 

@@ -78,14 +78,14 @@ indirect enum Pattern: AST {
 enum TypeSpecifier: AST {
   case
     auto(Site),
-    literal(TypeExpression)
+    expression(TypeExpression)
 
-  init(_ e: TypeExpression) { self = .literal(e) }
+  init(_ e: TypeExpression) { self = .expression(e) }
   
   var site: Site {
     switch self {
     case let .auto(r): return r
-    case let .literal(x): return x.site
+    case let .expression(x): return x.site
     }
   }
 }
