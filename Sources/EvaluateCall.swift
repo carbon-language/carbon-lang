@@ -4,23 +4,19 @@
 
 /// Function call evaluator.
 struct EvaluateCall: Action {
-  /// Which function to call.
-  let callee: Expression
-  /// Argument expressions.
-  let arguments: TupleLiteral
+  /// Function call expression being evaluated
+  let call: FunctionCall<LiteralElement>
   /// Interpreter context to be restored after call completes.
   let callerContext: Interpreter.FunctionContext
   /// Where the result of the call shall be stored.
   let returnValueStorage: Address
 
   init(
-    callee: Expression,
-    arguments: TupleLiteral,
+    call: FunctionCall<LiteralElement>,
     callerContext: Interpreter.FunctionContext,
     returnValueStorage: Address)
   {
-    self.callee = callee
-    self.arguments = arguments
+    self.call = call
     self.callerContext = callerContext
     self.returnValueStorage = returnValueStorage
   }
@@ -50,12 +46,12 @@ struct EvaluateCall: Action {
 
     switch nextStep {
     case .evaluateCallee:
-      return .spawn(Evaluate(callee))
+      return .spawn(Evaluate(call.callee))
       
     case .evaluateArguments:
-      calleeCode = (state[callee] as! FunctionValue).code
+      calleeCode = (state[call.callee] as! FunctionValue).code
       
-      return .spawn(EvaluateTupleLiteral(arguments))
+      return .spawn(EvaluateTupleLiteral(call.arguments))
       
     case .runBody:
       /*
@@ -76,10 +72,10 @@ struct EvaluateCall: Action {
 
     case .cleanUpArguments:
       state.functionContext = callerContext
-      return .spawn(CleanUpTupleLiteral(arguments))
+      return .spawn(CleanUpTupleLiteral(call.arguments))
 
     case .cleanUpCallee:
-      return .chain(CleanUp(callee))
+      return .chain(CleanUp(call.callee))
     }
   }
 }
