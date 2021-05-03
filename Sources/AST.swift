@@ -98,7 +98,7 @@ struct SimpleBinding: AST, Declaration {
 
 struct FunctionCall<Argument: AST>: AST {
   let callee: Expression
-  let arguments: Tuple<Argument>
+  let arguments: TupleSyntax<Argument>
 
   var site: Site { return callee.site...arguments.site }
 }
@@ -110,8 +110,8 @@ extension FunctionCall where Argument == Pattern {
   }
 }
 
-typealias TupleLiteral = Tuple<Expression>
-typealias TuplePattern = Tuple<Pattern>
+typealias TupleLiteral = TupleSyntax<Expression>
+typealias TuplePattern = TupleSyntax<Pattern>
 
 extension TuplePattern {
   // "Upcast" from tuple literal.
@@ -198,7 +198,7 @@ indirect enum Statement: AST {
   }
 }
 
-struct Tuple<Payload: AST>: AST {
+struct TupleSyntax<Payload: AST>: AST {
   struct Element: AST {
     init(label: Identifier? = nil, _ payload: Payload) {
       self.label = label
@@ -218,10 +218,10 @@ struct Tuple<Payload: AST>: AST {
   let elements: [Element]
   let site: Site
 }
-typealias LiteralElement = Tuple<Expression>.Element
-typealias PatternElement = Tuple<Pattern>.Element
+typealias LiteralElement = TupleSyntax<Expression>.Element
+typealias PatternElement = TupleSyntax<Pattern>.Element
 
-typealias TypeTuple = Tuple<TypeExpression>
+typealias TypeTuple = TupleSyntax<TypeExpression>
 
 extension PatternElement {
   // "Upcast" from literal element
@@ -230,12 +230,12 @@ extension PatternElement {
   }
 
   // "Upcast" from literal element
-  init(_ l: Tuple<TypeExpression>.Element) {
+  init(_ l: TupleSyntax<TypeExpression>.Element) {
     self.init(label: l.label, .atom(l.payload.body))
   }
 }
 
-extension Tuple: RandomAccessCollection {
+extension TupleSyntax: RandomAccessCollection {
   var startIndex: Int { 0 }
   var endIndex: Int { elements.count }
   subscript(i: Int) -> Element { elements[i] }
@@ -250,7 +250,7 @@ struct MatchClause: AST {
 typealias MatchClauseList = [MatchClause]
 
 struct FunctionType<Parameter: AST>: AST {
-  let parameters: Tuple<Parameter>
+  let parameters: TupleSyntax<Parameter>
   let returnType: Parameter
   let site: Site
 }

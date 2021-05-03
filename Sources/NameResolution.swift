@@ -156,7 +156,7 @@ private extension NameResolution {
     for e in t { resolveNames(usedIn: e.payload) }
   }
 
-  mutating func resolveNames(usedIn t: Tuple<TypeExpression>) {
+  mutating func resolveNames(usedIn t: TupleSyntax<TypeExpression>) {
     for e in t { resolveNames(usedIn: e.payload) }
   }
 

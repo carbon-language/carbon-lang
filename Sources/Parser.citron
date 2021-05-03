@@ -49,7 +49,7 @@
 %nonterminal_type declaration_list {AbstractSyntaxTree}
 %nonterminal_type identifier Identifier
 %nonterminal_type trailing_tuple_literal TupleLiteral
-%nonterminal_type function_parameter_tuple {Tuple<Pattern>}
+%nonterminal_type function_parameter_tuple {TupleSyntax<Pattern>}
 %nonterminal_type function_parameter_list {[Pattern]}
 %nonterminal_type expression_list {[Expression]}
 %nonterminal_type literal_element_list {[LiteralElement]}
@@ -145,11 +145,11 @@ expression ::= tuple_literal(t).
 // A syntactic tuple of element patterns that is known not to be an expression
 // and thus does not admit the unary tuple form (x,).
 trailing_tuple_pattern ::= LEFT_PARENTHESIS(l) RIGHT_PARENTHESIS(r).
-  { Tuple([], l...r) }
+  { TupleSyntax([], l...r) }
 trailing_tuple_pattern
   ::= LEFT_PARENTHESIS(l) pattern_element_list(a) RIGHT_PARENTHESIS(r).
 {
-  Tuple(a, l...r)
+  TupleSyntax(a, l...r)
 }
 
 // A list of tuple pattern elements; may or may not bind anything.
@@ -167,22 +167,22 @@ pattern_element ::= member_designator(k) EQUAL pattern(p).
 // A syntactic tuple of element that is known not to be an expression and thus
 // does not admit the unary tuple form (x,).
 trailing_tuple_literal ::= LEFT_PARENTHESIS(l) RIGHT_PARENTHESIS(r).
-  { Tuple([], l...r) }
+  { TupleSyntax([], l...r) }
 trailing_tuple_literal ::= LEFT_PARENTHESIS(l) literal_element_list(e) RIGHT_PARENTHESIS(r).
-  { Tuple(e, l...r) }
+  { TupleSyntax(e, l...r) }
 
 literal_element_list ::= literal_element(e).                               { [e] }
 literal_element_list ::= literal_element(e) COMMA literal_element_list(l). { [e] + l}
 
 // ()   (<e0>,)   (<e0>, <e1>)   (<e0>, <e1>, <e2>)   ...
 tuple_literal ::= LEFT_PARENTHESIS(l) RIGHT_PARENTHESIS(r).
-  { Tuple([], l...r) }
+  { TupleSyntax([], l...r) }
 tuple_literal ::= LEFT_PARENTHESIS(l) literal_element(e) COMMA RIGHT_PARENTHESIS(r).
-  { Tuple([e], l...r) }
+  { TupleSyntax([e], l...r) }
 tuple_literal ::= LEFT_PARENTHESIS(l) literal_element(h) COMMA
   literal_element_list(t) RIGHT_PARENTHESIS(r).
 {
-  Tuple([h] + t, l...r)
+  TupleSyntax([h] + t, l...r)
 }
 
 literal_element ::= expression(e).
@@ -195,19 +195,19 @@ literal_element ::= member_designator(m) EQUAL expression(e).
 tuple_binding ::=
   LEFT_PARENTHESIS(l) binding_element(b) COMMA RIGHT_PARENTHESIS(r).
 {
-  Tuple([b], l...r)
+  TupleSyntax([b], l...r)
 }
 tuple_binding ::=
   LEFT_PARENTHESIS(l) binding_element(h) COMMA
   pattern_element_list(t) RIGHT_PARENTHESIS(r).
 {
-  Tuple([h] + t, l...r)
+  TupleSyntax([h] + t, l...r)
 }
 tuple_binding ::=
   LEFT_PARENTHESIS(l) literal_element(h) COMMA
   binding_element_list(t) RIGHT_PARENTHESIS(r).
 {
-  Tuple([PatternElement(h)] + t, l...r)
+  TupleSyntax([PatternElement(h)] + t, l...r)
 }
 
 // A binding of one or more variables in trailing tuple form. Just like
@@ -215,7 +215,7 @@ tuple_binding ::=
 trailing_tuple_binding ::=
   LEFT_PARENTHESIS(l) binding_element_list(b) RIGHT_PARENTHESIS(r).
 {
-  Tuple(b, l...r)
+  TupleSyntax(b, l...r)
 }
 
 // A list of tuple pattern elements that binds at least one variable
@@ -242,7 +242,7 @@ function_type_binding ::= FNTY(f) trailing_tuple_binding(p).
    .functionType(
      .init(
         parameters: p,
-        returnType: .atom(.tupleLiteral(Tuple([], .empty))), site: f...p))
+        returnType: .atom(.tupleLiteral(TupleSyntax([], .empty))), site: f...p))
 }
 function_type_binding ::= FNTY(f) trailing_tuple_binding(p) ARROW expression(r).
 {
@@ -298,7 +298,7 @@ statement_list ::= statement(s) statement_list(l).
   { [s] + l }
 
 return_type ::= /* Empty */.
-  { .tupleLiteral(Tuple([], .empty)) }
+  { .tupleLiteral(TupleSyntax([], .empty)) }
 return_type ::= ARROW(a) expression(e).
   { e }
 
