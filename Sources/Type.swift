@@ -6,7 +6,7 @@
 indirect enum Type: Equatable {
   case
     int, bool, type,
-    function(parameterTypes: [Type], returnType: Type),
+    function(parameterTypes: TupleType, returnType: Type),
     tuple(TupleType),
     `struct`(StructDefinition),
     `choice`(ChoiceDefinition),
@@ -14,7 +14,7 @@ indirect enum Type: Equatable {
     error // Placeholder indicating failed type deduction.
 
   /// Convenience accessor for `.function` case.
-  var function: (parameterTypes: [Type], returnType: Type)? {
+  var function: (parameterTypes: TupleType, returnType: Type)? {
     if case .function(parameterTypes: let p, returnType: let r) = self {
       return (p, r)
     } else { return nil }
