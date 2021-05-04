@@ -112,16 +112,39 @@ extension FunctionCall where Argument == Pattern {
 
 typealias TupleLiteral = TupleSyntax<Expression>
 typealias TuplePattern = TupleSyntax<Pattern>
+typealias TupleTypeLiteral = TupleSyntax<TypeExpression>
 
+extension TupleLiteral {
+  /// "Upcast" from tuple type literal.
+  init(_ l: TupleTypeLiteral) {
+    // This tuple has been discovered in type position.
+    self.init(l.elements.map { Element($0) }, l.site)
+  }
+}
 extension TuplePattern {
-  // "Upcast" from tuple literal.
+  /// "Upcast" from tuple literal.
   init(_ l: TupleLiteral) {
     self.init(l.elements.map { PatternElement($0) }, l.site)
   }
 
-  // "Upcast" from tuple literal.
-  init(_ l: TypeTuple) {
+  /// "Upcast" from tuple type literal.
+  init(_ l: TupleTypeLiteral) {
     self.init(l.elements.map { PatternElement($0) }, l.site)
+  }
+}
+
+extension TupleTypeLiteral {
+  /// "Downcast" from tuple literal.
+  init(_ l: TupleLiteral) {
+    // This tuple has been discovered in type position.
+    self.init(l.elements.map { Element($0) }, l.site)
+  }
+}
+
+extension TypeLiteralElement {
+  /// "Downcast" from tuple literal.
+  init(_ e: LiteralElement) {
+    self.init(label: e.label, TypeExpression(e.payload))
   }
 }
 
@@ -137,7 +160,7 @@ typealias MemberDesignator = Identifier
 
 struct Alternative: AST, Declaration {
   let name: Identifier;
-  let payload: TupleLiteral
+  let payload: TupleTypeLiteral
   let site: Site
 }
 
@@ -210,18 +233,27 @@ struct TupleSyntax<Payload: AST>: AST {
     var site: Site { label.map { $0.site...payload.site } ?? payload.site }
   }
 
-  init(_ elements: [Element], _ site: Site) {
-    self.elements = elements
+  init<E: Collection>(_ elements: E, _ site: Site)
+    where E.Element == Element
+  {
+    self.elements = .init(elements)
     self.site = site
   }
 
   let elements: [Element]
   let site: Site
 }
+
+typealias TypeLiteralElement = TupleSyntax<TypeExpression>.Element
 typealias LiteralElement = TupleSyntax<Expression>.Element
 typealias PatternElement = TupleSyntax<Pattern>.Element
 
-typealias TypeTuple = TupleSyntax<TypeExpression>
+extension LiteralElement {
+  // "Downcast" from type literal element
+  init(_ l: TypeLiteralElement) {
+    self.init(label: l.label, l.payload.body)
+  }
+}
 
 extension PatternElement {
   // "Upcast" from literal element
@@ -230,7 +262,7 @@ extension PatternElement {
   }
 
   // "Upcast" from literal element
-  init(_ l: TupleSyntax<TypeExpression>.Element) {
+  init(_ l: TypeLiteralElement) {
     self.init(label: l.label, .atom(l.payload.body))
   }
 }
@@ -255,14 +287,14 @@ struct FunctionType<Parameter: AST>: AST {
   let site: Site
 }
 typealias FunctionTypePattern = FunctionType<Pattern>
-typealias FunctionTypeLiteral = FunctionType<Expression>
+typealias FunctionTypeLiteral = FunctionType<TypeExpression>
 
 extension FunctionTypePattern {
   /// "Upcast" from literal to pattern
   init(_ source: FunctionTypeLiteral) {
     self.init(
       parameters: .init(source.parameters),
-      returnType: .atom(source.returnType),
+      returnType: .atom(source.returnType.body),
       site: source.site)
   }
 }
@@ -313,6 +345,11 @@ struct TypeExpression: AST {
   /// Creates an instance containing `body`.
   init(_ body: Expression) {
     self.body = body
+  }
+
+  /// Creates an instance from a tuple of TypeExpressions.
+  init(_ t: TupleTypeLiteral) {
+    self.body = .tupleLiteral(TupleLiteral(t))
   }
 
   /// The computation that produces the type value.
