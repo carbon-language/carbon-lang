@@ -6,8 +6,7 @@ import XCTest
 
 final class TestEvaluateCall: XCTestCase {
   func testMinimal() throws {
-    let ast = try checkNoThrow(try "fn main() -> Int {}".parsedAsCarbon())
-    let exe = try checkNoThrow(try ExecutableProgram(ast))
+    let exe = try "fn main() -> Int {}".checkExecutable()
 
     var engine = Interpreter(exe)
 

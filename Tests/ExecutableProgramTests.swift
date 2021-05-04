@@ -6,9 +6,7 @@ import XCTest
 
 final class TestSemanticAnalysis: XCTestCase {
   func testNoMain() throws {
-    let executable
-      = try checkNoThrow(try ExecutableProgram("var Int: x = 3;".parsedAsCarbon()))
-
+    let executable = try "var Int: x = 3;".checkExecutable()
     XCTAssertNil(executable.entryPoint)
   }
       
@@ -25,9 +23,7 @@ final class TestSemanticAnalysis: XCTestCase {
   }                      
       
   func testMinimal() throws {
-    let exe = try checkNoThrow(
-      try ExecutableProgram(
-	"fn main() -> Int {}".parsedAsCarbon(fromFile: "main.6c")))
+    let exe = try "fn main() -> Int {}".checkExecutable()
 
     guard let entryPoint = checkNonNil(exe.entryPoint) else {
       XCTFail("Missing unambiguous main()")
