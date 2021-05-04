@@ -29,7 +29,7 @@ final class ParserTests: XCTestCase {
   
   func testBasic0() {
     // Parse a few tiny programs
-    guard let p = CheckNoThrow(try "fn main() -> Int;".parsedAsCarbon())
+    guard let p = checkNoThrow(try "fn main() -> Int;".parsedAsCarbon())
     else { return }
     
     XCTAssertEqual(
@@ -45,7 +45,7 @@ final class ParserTests: XCTestCase {
   }
 
   func testBasic1() {
-    guard let p = CheckNoThrow(try "fn main() -> Int {}".parsedAsCarbon())
+    guard let p = checkNoThrow(try "fn main() -> Int {}".parsedAsCarbon())
     else { return }
     
     XCTAssertEqual(
@@ -61,7 +61,7 @@ final class ParserTests: XCTestCase {
   }
 
   func testBasic2() {
-    guard let p = CheckNoThrow(try "var Int: x = 0;".parsedAsCarbon())
+    guard let p = checkNoThrow(try "var Int: x = 0;".parsedAsCarbon())
     else { return }
     
     XCTAssertEqual(

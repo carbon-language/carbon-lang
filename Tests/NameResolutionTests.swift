@@ -23,10 +23,10 @@ final class NameResolutionTests: XCTestCase {
       if f.hasPrefix("experimental_") { continue }
 
       if !f.hasSuffix("_fail.6c") {
-        if let ast = CheckNoThrow(
+        if let ast = checkNoThrow(
              try String(contentsOfFile: p).parsedAsCarbon(fromFile: p)) {
 
-          let executable = CheckNoThrow(try ExecutableProgram(ast))
+          let executable = checkNoThrow(try ExecutableProgram(ast))
           _ = executable
         }
       }

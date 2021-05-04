@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 import XCTest
 
-func CheckNonNil<T>(
+func checkNonNil<T>(
   _ expression: @autoclosure () -> T?,
   _ message: @autoclosure () -> String = "",
   filePath: StaticString = #filePath,
@@ -14,7 +14,7 @@ func CheckNonNil<T>(
   return r
 }
 
-func CheckNoThrow<T>(
+func checkNoThrow<T>(
   _ expression: @autoclosure () throws -> T,
   _ message: @autoclosure () -> String = "",
   filePath: StaticString = #filePath,
@@ -26,7 +26,7 @@ func CheckNoThrow<T>(
   return r
 }
 
-func CheckThrows<T, E: Error>(
+func checkThrows<T, E: Error>(
   _ expression: @autoclosure () throws -> T,
   _ message: @autoclosure () -> String = "",
   filePath: StaticString = #filePath,
@@ -35,7 +35,7 @@ func CheckThrows<T, E: Error>(
 ) {
   XCTAssertThrowsError(try expression(), message(), file: filePath, line: line) {
     let e = $0 as? E
-    if let e1 = CheckNonNil(e, "Unexpected exception kind: \($0)") {
+    if let e1 = checkNonNil(e, "Unexpected exception kind: \($0)") {
       handler(e1)
     }
   }
