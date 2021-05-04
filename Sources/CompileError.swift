@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 /// An error produced at compile-time.
-struct CompileError: Error {
+struct CompileError: Error, Equatable {
   /// An additional informative note to go with the error message.
   typealias Note = (message: String, site: ASTSite)
 
@@ -19,6 +19,12 @@ struct CompileError: Error {
     self.message = message
     self.site = site
     self.notes = notes
+  }
+
+  static func == (l: Self, r: Self) -> Bool {
+    l.message == r.message && l.site == r.site
+    && l.notes.lazy.map(\.message) == r.notes.lazy.map(\.message)
+      && l.notes.lazy.map(\.site) == r.notes.lazy.map(\.site)
   }
 }
 

@@ -202,7 +202,7 @@ private extension NameResolution {
   }
 
   mutating func resolveNames(usedIn t: TypeSpecifier) {
-    if case let .literal(e) = t { resolveNames(usedIn: e) }
+    if case let .expression(e) = t { resolveNames(usedIn: e) }
   }
 
   mutating func resolveNames(usedIn s: Statement) {

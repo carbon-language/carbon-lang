@@ -5,20 +5,6 @@ import XCTest
 @testable import CarbonInterpreter
 import Foundation
 
-extension String {
-  /// Returns `self`, parsed as Carbon.
-  func parsedAsCarbon(fromFile sourceFile: String = #filePath, tracing: Bool = false) throws
-    -> [TopLevelDeclaration]
-  {
-    let p = CarbonParser()
-    p.isTracingEnabled = tracing
-    for t in Tokens(in: self, from: sourceFile) {
-      try p.consume(token: t, code: t.kind)
-    }
-    return try p.endParsing()
-  }
-}
-
 final class ParserTests: XCTestCase {
   func testInit() {
     // Make sure we can even create one.
@@ -27,11 +13,10 @@ final class ParserTests: XCTestCase {
 
   let o = ASTSite.empty
   
-  func testBasic0() {
+  func testBasic0() throws {
     // Parse a few tiny programs
-    guard let p = CheckNoThrow(try "fn main() -> Int;".parsedAsCarbon())
-    else { return }
-    
+    let p = try "fn main() -> Int;".checkParsed()
+
     XCTAssertEqual(
       p,
       [
@@ -39,15 +24,14 @@ final class ParserTests: XCTestCase {
           FunctionDefinition(
             name: Identifier(text: "main", site: o),
             parameters: TupleSyntax([], o),
-            returnType: .literal(TypeExpression(.intType(o))),
+            returnType: .expression(TypeExpression(.intType(o))),
             body: nil,
             site: o))])
   }
 
-  func testBasic1() {
-    guard let p = CheckNoThrow(try "fn main() -> Int {}".parsedAsCarbon())
-    else { return }
-    
+  func testBasic1() throws {
+    let p = try "fn main() -> Int {}".checkParsed()
+
     XCTAssertEqual(
       p,
       [
@@ -55,15 +39,14 @@ final class ParserTests: XCTestCase {
           FunctionDefinition(
             name: Identifier(text: "main", site: o),
             parameters: TupleSyntax([], o),
-            returnType: .literal(TypeExpression(.intType(o))),
+            returnType: .expression(TypeExpression(.intType(o))),
             body: .block([], o),
             site: o))])
   }
 
-  func testBasic2() {
-    guard let p = CheckNoThrow(try "var Int: x = 0;".parsedAsCarbon())
-    else { return }
-    
+  func testBasic2() throws {
+    let p = try "var Int: x = 0;".checkParsed()
+
     XCTAssertEqual(
       p,
       [
@@ -71,7 +54,7 @@ final class ParserTests: XCTestCase {
           Initialization(
             bindings: .variable(
               SimpleBinding(
-                type: .literal(TypeExpression(.intType(o))),
+                type: .expression(TypeExpression(.intType(o))),
                 name: Identifier(text: "x", site: o))),
             initializer: .integerLiteral(0, o),
             site: o))])

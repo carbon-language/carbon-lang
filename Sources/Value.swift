@@ -13,7 +13,12 @@ struct FunctionValue: Value {
   let code: FunctionDefinition
 }
 
-struct IntValue : Value {
-  let type: Type
-  let value: Int
+typealias IntValue = Int
+extension IntValue: Value {
+  var type: Type { .int }
+}
+
+typealias BoolValue = Bool
+extension BoolValue: Value {
+  var type: Type { .bool }
 }

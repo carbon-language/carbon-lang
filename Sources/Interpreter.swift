@@ -55,7 +55,7 @@ extension Interpreter {
     exitCodeStorage = memory.allocate(boundTo: .int, from: .empty)
 
     todo.push(EvaluateCall(
-      call: program.mainCall,
+      call: program.entryPoint!,
       callerContext: functionContext, returnValueStorage: exitCodeStorage))
   }
 
@@ -63,7 +63,7 @@ extension Interpreter {
   /// code if the program terminated.
   mutating func step() -> ExitCode? {
     guard var current = todo.pop() else {
-      return (memory[exitCodeStorage] as! IntValue).value
+      return (memory[exitCodeStorage] as! IntValue)
     }
     switch current.run(on: &self) {
     case .done: break

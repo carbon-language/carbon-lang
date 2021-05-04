@@ -8,8 +8,9 @@ struct ExecutableProgram {
   /// The result of running the parser
   let ast: AbstractSyntaxTree
 
-  /// The entry point for this program.
-  let mainCall: FunctionCall<Expression>
+  /// A synthesized call to this program's unique main, or nil if none can be
+  /// found.
+  let entryPoint: FunctionCall<Expression>?
 
   /// A mapping from identifier to its definition.
   let definition: ASTDictionary<Identifier, Declaration>
@@ -19,20 +20,21 @@ struct ExecutableProgram {
   init(_ program: AbstractSyntaxTree) throws {
     self.ast = program
     let r = NameResolution(program)
-
     if !r.errors.isEmpty { throw r.errors }
-    switch unambiguousMain(in: ast) {
-    case let .failure(e): throw [e]
-    case let .success(main):
-      // Synthesize a call to `main` to act as the entry point for the program
+    var definitions = r.definition
+
+    if let main = unambiguousMain(in: ast) {
+      // Synthesize a call to main()
       let mainID = Identifier(text: "main", site: topColumns(1...4))
-      var definition = r.definition
-      definition[mainID] = main
-      self.definition = definition
-      let mainExpression = Expression.name(mainID)
       let arguments = TupleLiteral([], topColumns(5...6))
-      self.mainCall = FunctionCall<Expression>(callee: mainExpression, arguments: arguments)
+      entryPoint = FunctionCall(callee: .name(mainID), arguments: arguments)
+      // Make sure the identifier can be looked up.
+      definitions[mainID] = main
     }
+    else {
+      entryPoint = nil
+    }
+    self.definition = definitions
   }
 }
 
@@ -49,21 +51,19 @@ fileprivate func topColumns(_ r: ClosedRange<Int>) -> ASTSite {
 /// Returns the unique top-level nullary main() function defined in
 /// `parsedProgram`, or reports a suitable CompileError if that doesn't exist.
 fileprivate func unambiguousMain(
-  in parsedProgram: AbstractSyntaxTree
-) -> Result<FunctionDefinition, CompileError> {
-  let mainCandidates: [FunctionDefinition] = parsedProgram.compactMap {
-    if case .function(let f) = $0,
-       f.name.text == "main",
-       f.parameters.isEmpty
+  in parsedProgram: AbstractSyntaxTree) -> FunctionDefinition?
+{
+  // The nullary main functions defined at global scope
+  var candidates = parsedProgram.compactMap { (x)->FunctionDefinition? in
+    if case .function(let f) = x, f.name.text == "main", f.parameters.isEmpty
     { return f } else { return nil }
-  }
+  }[...]
 
+  guard let main = candidates.popFirst() else {
+    return nil
+  }
   assert(
-    mainCandidates.count <= 1,
-    "name resolution should have ruled out duplicate definitions.")
-
-  guard let r = mainCandidates.first else {
-    return .failure(CompileError("No nullary main() found.", at: .empty))
-  }
-  return .success(r)
+    candidates.isEmpty,
+    "Duplicate definitions should have been ruled out by name resolution.")
+  return main
 }

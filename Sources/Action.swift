@@ -48,7 +48,7 @@ struct Evaluate: Action {
     case .getField(_, _, _): UNIMPLEMENTED
     case .index(target: _, offset: _, _): UNIMPLEMENTED
     case .integerLiteral(let value, _):
-      state.memory.initialize(target, to: IntValue(type: .int, value: value))
+      state.memory.initialize(target, to: value)
       return .done
     case .booleanLiteral(_, _): UNIMPLEMENTED
     case .tupleLiteral(_): UNIMPLEMENTED

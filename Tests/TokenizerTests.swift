@@ -9,7 +9,7 @@ final class TokenizerTests: XCTestCase {
     let program =
       """
       an and andey 999 // burp
-        ->=-automobile->otto auto bool break case choice continue=>
+        ->=-automobile->otto auto Bool break case choice continue=>
 
         default/\r\nelse
       // excuse me
@@ -49,7 +49,7 @@ final class TokenizerTests: XCTestCase {
       token(.ARROW, "->", from: 2, 17, to: 2, 19),
       token(.Identifier, "otto", from: 2, 19, to: 2, 23),
       token(.AUTO, "auto", from: 2, 24, to: 2, 28),
-      token(.BOOL, "bool", from: 2, 29, to: 2, 33),
+      token(.BOOL, "Bool", from: 2, 29, to: 2, 33),
       token(.BREAK, "break", from: 2, 34, to: 2, 39),
       token(.CASE, "case", from: 2, 40, to: 2, 44),
       token(.CHOICE, "choice", from: 2, 45, to: 2, 51),

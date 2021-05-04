@@ -15,7 +15,7 @@ fileprivate let keywords: [String: TokenID] = [
   "and": .AND,
   "->": .ARROW,
   "auto": .AUTO,
-  "bool": .BOOL,
+  "Bool": .BOOL,
   "break": .BREAK,
   "case": .CASE,
   "choice": .CHOICE,
