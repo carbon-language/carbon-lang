@@ -8,10 +8,18 @@ indirect enum Type: Equatable {
     int, bool, type,
     function(parameterTypes: TupleType, returnType: Type),
     tuple(TupleType),
-    `struct`(StructDefinition),
-    `choice`(ChoiceDefinition),
+    `struct`(ASTIdentity<StructDefinition>),
+    `choice`(ASTIdentity<ChoiceDefinition>),
 
     error // Placeholder indicating failed type deduction.
+
+  /// Creates an instance corresponding to `d` if it declares a type, or `nil`
+  /// otherwise.
+  init?(_ d: Declaration) {
+    if let s = d as? StructDefinition { self = .struct(s.identity) }
+    else if let c = d as? ChoiceDefinition { self = .choice(c.identity) }
+    return nil
+  }
 
   /// Convenience accessor for `.function` case.
   var function: (parameterTypes: TupleType, returnType: Type)? {

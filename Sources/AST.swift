@@ -88,6 +88,13 @@ enum TypeSpecifier: AST {
     case let .expression(x): return x.site
     }
   }
+
+  var expression: TypeExpression? {
+    if case .expression(let x) = self { return x } else { return nil }
+  }
+  var isAuto: Bool {
+    if case .auto = self { return true } else { return false }
+  }
 }
 
 struct SimpleBinding: AST, Declaration {
@@ -169,7 +176,7 @@ struct StructDefinition: AST, TypeDeclaration {
   let members: [StructMember]
   let site: Site
 
-  var declaredType: Type { .struct(self) }
+  var declaredType: Type { .struct(self.identity) }
 }
 
 struct ChoiceDefinition: AST, TypeDeclaration {
@@ -177,7 +184,7 @@ struct ChoiceDefinition: AST, TypeDeclaration {
   let alternatives: [Alternative]
   let site: Site
 
-  var declaredType: Type { .choice(self) }
+  var declaredType: Type { .choice(self.identity) }
 }
 
 struct StructMember: AST, Declaration {
