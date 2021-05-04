@@ -15,6 +15,9 @@ struct ASTDictionary<KeyNode: AST, Value> {
     set { storage[n.identity] = newValue }
   }
 
+  /// The number of distinct `KeyNode`s registered in `self`.
+  var count: Int { storage.count }
+
   /// Underlying dictionary storage
   private var storage: [KeyNode.Identity: Value] = [:]
 }

@@ -9,7 +9,88 @@ final class NameResolutionTests: XCTestCase {
   func testNoMain() throws {
     let ast = try "var Int: x = 1;".checkParsed()
     let n = NameResolution(ast)
+    XCTAssertEqual(n.definition.count, 0)
     XCTAssertEqual(n.errors, [])
+  }
+
+  func testUndeclaredName0() throws {
+    let ast = try "var Y: x = 1;".checkParsed()
+    let n = NameResolution(ast)
+    XCTAssertEqual(n.definition.count, 0)
+    XCTAssert(
+      n.errors.contains { $0.message.contains("Un-declared name 'Y'") },
+      String(describing: n.errors))
+  }
+
+  func testDeclaredNameUse() throws {
+    let ast = try """
+      var Int: x = 1;
+      var Int: y = x;
+      """.checkParsed()
+    let n = NameResolution(ast)
+    XCTAssertEqual(n.definition.count, 1)
+    XCTAssertEqual(n.errors, [])
+  }
+
+  func testOrderIndependence() throws {
+    let ast = try """
+      var Int: y = x;
+      var Int: x = 1;
+      """.checkParsed()
+    let n = NameResolution(ast)
+    XCTAssertEqual(n.definition.count, 1)
+    XCTAssertEqual(n.errors, [])
+  }
+
+  func testScopeEnds() throws {
+    let ast = try """
+      struct X { var Int: a; }
+      var Int: y = a;
+      """.checkParsed()
+    let n = NameResolution(ast)
+    XCTAssert(
+      n.errors.contains { $0.message.contains("Un-declared name 'a'") },
+      String(describing: n.errors))
+  }
+
+  func testRedeclaredMember() throws {
+    let ast = try """
+      struct X {
+        var Int: a;
+        var Bool: a;
+      }
+      """.checkParsed()
+    let n = NameResolution(ast)
+    XCTAssert(
+      n.errors.contains { $0.message.contains("'a' already defined") },
+      String(describing: n.errors))
+  }
+
+  func testSelfReference() throws {
+    let ast = try """
+      struct X {
+        var Int: a;
+        var fnty ()->X: b;
+      }
+      """.checkParsed()
+    let n = NameResolution(ast)
+    XCTAssertEqual(n.definition.count, 1)
+    XCTAssertEqual(n.errors, [])
+  }
+
+  func testRedeclaredAlternative() throws {
+    let ast = try """
+      choice X {
+        Box,
+        Car(Int),
+        Children(Int, Bool),
+        Car
+      }
+      """.checkParsed()
+    let n = NameResolution(ast)
+    XCTAssert(
+      n.errors.contains { $0.message.contains("'Car' already defined") },
+      String(describing: n.errors))
   }
 
   func testExamples() throws {

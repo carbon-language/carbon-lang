@@ -13,7 +13,17 @@ final class TypeCheckNominalTypeDeclaration: XCTestCase {
     XCTAssertEqual(typeChecker.errors, [])
   }
 
-  func testStructNonTypeExpression() throws {
+  func testStructStructMember() throws {
+    let executable = try """
+      struct X { var Int: y; }
+      struct Z { var X: a; }
+      """.checkExecutable()
+
+    let typeChecker = TypeChecker(executable)
+    XCTAssertEqual(typeChecker.errors, [])
+  }
+
+  func testStructNonTypeExpression0() throws {
     let executable = try "struct X { var 42: y; }".checkExecutable()
 
     let typeChecker = TypeChecker(executable)
@@ -24,6 +34,47 @@ final class TypeCheckNominalTypeDeclaration: XCTestCase {
     )
   }
 
+  /*
+  func testChoice() throws {
+    let executable = try """
+      choice X {
+        Box,
+        Car(Int),
+        Children(Int, Bool)
+      }
+      """.checkExecutable()
+
+    let typeChecker = TypeChecker(executable)
+    XCTAssertEqual(typeChecker.errors, [])
+  }
+
+  func testChoiceChoiceMember() throws {
+    let executable = try """
+      choice Y {
+        Fork, Knife(X), Spoon(X, X)
+      }
+      choice X {
+        Box,
+        Car(Int),
+        Children(Int, Bool)
+      }
+      """.checkExecutable()
+
+    let typeChecker = TypeChecker(executable)
+    XCTAssertEqual(typeChecker.errors, [])
+  }
+
+  func testChoiceNonTypeExpression() throws {
+    let executable = try "choice X { Bog(42); }".checkExecutable()
+    let typeChecker = TypeChecker(executable)
+    XCTAssert(
+      typeChecker.errors.contains {
+        $0.message.contains("Not a type expression") },
+      String(describing: typeChecker.errors)
+    )
+  }
+  */
+  
   /*
   func testExamples() {
     let testdata =

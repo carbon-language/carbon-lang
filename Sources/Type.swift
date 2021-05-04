@@ -18,7 +18,7 @@ indirect enum Type: Equatable {
   init?(_ d: Declaration) {
     if let s = d as? StructDefinition { self = .struct(s.identity) }
     else if let c = d as? ChoiceDefinition { self = .choice(c.identity) }
-    return nil
+    else { return nil }
   }
 
   /// Convenience accessor for `.function` case.
