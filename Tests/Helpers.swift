@@ -52,16 +52,36 @@ func checkThrows<T, E: Error>(
 
 extension String {
   /// Returns `self` parsed as Carbon, throwing an error if parsing fails.
+  ///
+  /// - Parameter sourceFile: the source file name used to label regions in the
+  ///   resulting AST.
+  /// - Parameter tracing: `true` iff Citron parser tracing should be enabled.
   func parsedAsCarbon(
-    fromFile sourceFile: String = #filePath, tracing: Bool = false) throws
-    -> [TopLevelDeclaration]
-  {
+    fromFile sourceFile: String = #filePath, tracing: Bool = false
+  ) throws -> AbstractSyntaxTree {
     let p = CarbonParser()
     p.isTracingEnabled = tracing
     for t in Tokens(in: self, from: sourceFile) {
       try p.consume(token: t, code: t.kind)
     }
     return try p.endParsing()
+  }
+
+  /// Returns `self` parsed as Carbon, throwing an error and causing an XCTest
+  /// failure if parsing fails.
+  ///
+  /// - Parameter sourceFile: the source file name used to label regions in the
+  ///   resulting AST.
+  /// - Parameter tracing: `true` iff Citron parser tracing should be enabled.
+  func checkParsed(
+    fromFile sourceFile: String = #filePath, tracing: Bool = false,
+    _ message: @autoclosure () -> String = "",
+    filePath: StaticString = #filePath,
+    line: UInt = #line
+  ) throws -> AbstractSyntaxTree {
+    try checkNoThrow(
+      self.parsedAsCarbon(fromFile: sourceFile, tracing: tracing),
+      message(), filePath: filePath, line: line)
   }
 }
 
