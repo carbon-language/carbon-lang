@@ -2,6 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 import XCTest
+@testable import CarbonInterpreter
 
 func checkNonNil<T>(
   _ expression: @autoclosure () -> T?,
@@ -46,5 +47,37 @@ func checkThrows<T, E: Error>(
     if let e1 = checkNonNil(e, "Unexpected exception kind: \($0)") {
       handler(e1)
     }
+  }
+}
+
+extension String {
+  /// Returns `self` parsed as Carbon, throwing an error if parsing fails.
+  func parsedAsCarbon(
+    fromFile sourceFile: String = #filePath, tracing: Bool = false) throws
+    -> [TopLevelDeclaration]
+  {
+    let p = CarbonParser()
+    p.isTracingEnabled = tracing
+    for t in Tokens(in: self, from: sourceFile) {
+      try p.consume(token: t, code: t.kind)
+    }
+    return try p.endParsing()
+  }
+}
+
+
+extension String {
+  /// The carbon executable corresponding to `self`, without type checking, or
+  /// `nil`, also causing an XCTest failure, if errors occurred in parsing or
+  /// name lookup.
+  func checkExecutable(
+    _ message: @autoclosure () -> String = "",
+    filePath: StaticString = #filePath,
+    line: UInt = #line
+  ) throws -> ExecutableProgram {
+    try checkNoThrow(
+      try ExecutableProgram(
+        self.parsedAsCarbon(fromFile: String(describing: filePath))),
+      message(), filePath: filePath, line: line)
   }
 }

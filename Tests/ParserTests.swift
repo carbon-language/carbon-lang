@@ -5,20 +5,6 @@ import XCTest
 @testable import CarbonInterpreter
 import Foundation
 
-extension String {
-  /// Returns `self`, parsed as Carbon.
-  func parsedAsCarbon(fromFile sourceFile: String = #filePath, tracing: Bool = false) throws
-    -> [TopLevelDeclaration]
-  {
-    let p = CarbonParser()
-    p.isTracingEnabled = tracing
-    for t in Tokens(in: self, from: sourceFile) {
-      try p.consume(token: t, code: t.kind)
-    }
-    return try p.endParsing()
-  }
-}
-
 final class ParserTests: XCTestCase {
   func testInit() {
     // Make sure we can even create one.
