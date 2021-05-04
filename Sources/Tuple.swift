@@ -35,9 +35,10 @@ extension TupleSyntax {
         = e.label.map { .label($0) } ?? .position(positionalCount)
       if case .position = key { positionalCount += 1 }
       if let other = r[key] {
-        CompileError(
-          "Duplicate label \(e.label!)", at: e.label!.site,
-          notes: [("other definition", other.site)])
+        errors.append(
+          CompileError(
+            "Duplicate label \(e.label!)", at: e.label!.site,
+            notes: [("other definition", other.site)]))
       }
       else {
         r[key] = e.payload
