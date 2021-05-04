@@ -22,7 +22,7 @@ final class NameResolutionTests: XCTestCase {
       // Skip experimental syntax for now.
       if f.hasPrefix("experimental_") { continue }
 
-      if !f.hasSuffix("_fail.6cx") {
+      if !f.hasSuffix("_fail.6c") {
         let ast = try checkNoThrow(
           try String(contentsOfFile: p).parsedAsCarbon(fromFile: p))
 
