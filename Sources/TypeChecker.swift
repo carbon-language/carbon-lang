@@ -94,8 +94,8 @@ private extension TypeChecker {
     case let .integerLiteral(r, _): return r
     case let .booleanLiteral(r, _): return r
     case let .tupleLiteral(t):
-      if let e = t.duplicateLabelError { errors.append(e) }
-      return t.fields.mapValues { self.evaluate($0) }
+      return t.fields(reportingDuplicatesIn: &errors)
+        .mapValues { self.evaluate($0) }
     case .unaryOperator(operation: _, operand: _, _): UNIMPLEMENTED
     case .binaryOperator(operation: _, lhs: _, rhs: _, _): UNIMPLEMENTED
     case .functionCall(_): UNIMPLEMENTED
@@ -103,7 +103,6 @@ private extension TypeChecker {
     case .boolType: return Type.bool
     case .typeType: return Type.type
     case let .functionType(f):
-      if let e = f.parameters.duplicateLabelError { errors.append(e) }
       // Treat the tuple of parameters as a type expression so we'll get the
       // benefit of
       let parametersType = TypeExpression(f.parameters)
@@ -111,4 +110,5 @@ private extension TypeChecker {
       return Type.function(
         parameterTypes: p, returnType: evaluate(f.returnType))
     }
-  }}
+  }
+}

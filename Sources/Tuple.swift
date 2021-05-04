@@ -23,28 +23,26 @@ extension TupleValue: CarbonInterpreter.Value {
 
 extension TupleSyntax {
   /// Returns a form of this AST node that is agnostic to the ordering of
-  /// labeled fields.
-  var fields: [FieldID: Payload] {
+  /// labeled fields, adding an error to errors if there are any duplicate
+  /// fields.
+  func fields(
+    reportingDuplicatesIn errors: inout ErrorLog
+  ) -> [FieldID: Payload] {
     var r: [FieldID: Payload] = [:]
     var positionalCount = 0
     for e in elements {
       let key: FieldID
         = e.label.map { .label($0) } ?? .position(positionalCount)
       if case .position = key { positionalCount += 1 }
-      r[key] = e.payload
+      if let other = r[key] {
+        CompileError(
+          "Duplicate label \(e.label!)", at: e.label!.site,
+          notes: [("other definition", other.site)])
+      }
+      else {
+        r[key] = e.payload
+      }
     }
     return r
-  }
-
-  /// `nil` for tuples with no duplicate labels; otherwise, a suitable error.
-  var duplicateLabelError: CompileError? {
-    let labels = elements.compactMap { $0.label }
-    let histogram = Dictionary(grouping: labels, by: {$0})
-    guard let duplicates = histogram.values.lazy.filter({ $0.count > 1 }).first
-    else { return nil }
-
-    return CompileError(
-      "Duplicate label \(duplicates[0].text)", at: duplicates[0].site,
-      notes: duplicates.dropFirst().map { ("other instance", $0.site) })
   }
 }
