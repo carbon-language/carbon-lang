@@ -11,7 +11,7 @@ final class NameResolutionTests: XCTestCase {
     _ = CarbonParser()
   }
 
-  func testExamples() {
+  func testExamples() throws {
     let testdata = 
         URL(fileURLWithPath: #filePath).deletingLastPathComponent()
         .appendingPathComponent("testdata")
@@ -22,13 +22,12 @@ final class NameResolutionTests: XCTestCase {
       // Skip experimental syntax for now.
       if f.hasPrefix("experimental_") { continue }
 
-      if !f.hasSuffix("_fail.6c") {
-        if let ast = checkNoThrow(
-             try String(contentsOfFile: p).parsedAsCarbon(fromFile: p)) {
+      if !f.hasSuffix("_fail.6cx") {
+        let ast = try checkNoThrow(
+          try String(contentsOfFile: p).parsedAsCarbon(fromFile: p))
 
-          let executable = checkNoThrow(try ExecutableProgram(ast))
-          _ = executable
-        }
+        let executable = try checkNoThrow(try ExecutableProgram(ast))
+        _ = executable
       }
     }
   }

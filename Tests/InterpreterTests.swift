@@ -5,11 +5,9 @@ import XCTest
 @testable import CarbonInterpreter
 
 final class TestEvaluateCall: XCTestCase {
-  func testMinimal() {
-    guard let ast = checkNoThrow(
-            try "fn main() -> Int {}".parsedAsCarbon()),
-          let exe = checkNoThrow(try ExecutableProgram(ast))
-    else { return }
+  func testMinimal() throws {
+    let ast = try checkNoThrow(try "fn main() -> Int {}".parsedAsCarbon())
+    let exe = try checkNoThrow(try ExecutableProgram(ast))
 
     var engine = Interpreter(exe)
 

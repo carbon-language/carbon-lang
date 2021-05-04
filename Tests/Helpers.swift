@@ -14,16 +14,24 @@ func checkNonNil<T>(
   return r
 }
 
+/// Returns `expression()`, creating an XCTest failure and propagating the error
+/// if the evaluation throws.
+///
+/// Use this in cases where the test can't proceed if `expression()` throws.
 func checkNoThrow<T>(
   _ expression: @autoclosure () throws -> T,
   _ message: @autoclosure () -> String = "",
   filePath: StaticString = #filePath,
   line: UInt = #line
-) -> T? {
-  var r: T?
-  XCTAssertNoThrow(
-    try { r = try expression() }(), message(), file: filePath, line: line)
-  return r
+) throws -> T {
+  do {
+    return try expression()
+  }
+  catch {
+    XCTAssertNoThrow(
+      try { throw error }(), message(), file: filePath, line: line)
+    throw XCTSkip() // Don't report another failure
+  }
 }
 
 func checkThrows<T, E: Error>(
