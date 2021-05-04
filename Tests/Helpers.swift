@@ -50,6 +50,22 @@ func checkThrows<T, E: Error>(
   }
 }
 
+extension ErrorLog {
+  func checkForMessageExcerpt(
+    _ excerpt: String,
+    _ message: @autoclosure () -> String? = nil,
+    filePath: StaticString = #filePath,
+    line: UInt = #line
+  ) {
+    XCTAssert(
+      self.contains { $0.message.contains(excerpt) },
+      message()
+        ?? "expecting message \(String(reflecting: excerpt)) in \(self)",
+      file: filePath,
+      line: line)
+  }
+}
+
 extension String {
   /// Returns `self` parsed as Carbon, throwing an error if parsing fails.
   ///

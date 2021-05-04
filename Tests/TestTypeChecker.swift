@@ -27,11 +27,7 @@ final class TypeCheckNominalTypeDeclaration: XCTestCase {
     let executable = try "struct X { var 42: y; }".checkExecutable()
 
     let typeChecker = TypeChecker(executable)
-    XCTAssert(
-      typeChecker.errors.contains {
-        $0.message.contains("Not a type expression") },
-      String(describing: typeChecker.errors)
-    )
+    typeChecker.errors.checkForMessageExcerpt("Not a type expression")
   }
 
   /*
@@ -67,11 +63,7 @@ final class TypeCheckNominalTypeDeclaration: XCTestCase {
   func testChoiceNonTypeExpression() throws {
     let executable = try "choice X { Bog(42); }".checkExecutable()
     let typeChecker = TypeChecker(executable)
-    XCTAssert(
-      typeChecker.errors.contains {
-        $0.message.contains("Not a type expression") },
-      String(describing: typeChecker.errors)
-    )
+    typeChecker.errors.checkForMessageExcerpt("Not a type expression")
   }
   */
   

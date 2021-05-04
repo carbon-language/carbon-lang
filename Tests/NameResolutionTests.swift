@@ -17,9 +17,7 @@ final class NameResolutionTests: XCTestCase {
     let ast = try "var Y: x = 1;".checkParsed()
     let n = NameResolution(ast)
     XCTAssertEqual(n.definition.count, 0)
-    XCTAssert(
-      n.errors.contains { $0.message.contains("Un-declared name 'Y'") },
-      String(describing: n.errors))
+    n.errors.checkForMessageExcerpt("Un-declared name 'Y'")
   }
 
   func testDeclaredNameUse() throws {
@@ -48,9 +46,7 @@ final class NameResolutionTests: XCTestCase {
       var Int: y = a;
       """.checkParsed()
     let n = NameResolution(ast)
-    XCTAssert(
-      n.errors.contains { $0.message.contains("Un-declared name 'a'") },
-      String(describing: n.errors))
+    n.errors.checkForMessageExcerpt("Un-declared name 'a'")
   }
 
   func testRedeclaredMember() throws {
@@ -61,9 +57,7 @@ final class NameResolutionTests: XCTestCase {
       }
       """.checkParsed()
     let n = NameResolution(ast)
-    XCTAssert(
-      n.errors.contains { $0.message.contains("'a' already defined") },
-      String(describing: n.errors))
+    n.errors.checkForMessageExcerpt("'a' already defined")
   }
 
   func testSelfReference() throws {
@@ -88,9 +82,7 @@ final class NameResolutionTests: XCTestCase {
       }
       """.checkParsed()
     let n = NameResolution(ast)
-    XCTAssert(
-      n.errors.contains { $0.message.contains("'Car' already defined") },
-      String(describing: n.errors))
+    n.errors.checkForMessageExcerpt("'Car' already defined")
   }
 
   func testExamples() throws {
