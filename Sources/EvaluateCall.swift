@@ -10,6 +10,8 @@ struct EvaluateCall: Action {
   let callerContext: Interpreter.FunctionContext
   /// Where the result of the call shall be stored.
   let returnValueStorage: Address
+  /// Where the callee value is stored
+  var calleeStorage: Address = -1
 
   init(
     call: FunctionCall<Expression>,
@@ -46,29 +48,20 @@ struct EvaluateCall: Action {
 
     switch nextStep {
     case .evaluateCallee:
-      return .spawn(Evaluate(call.callee))
+      calleeStorage = state.allocateTemporary(
+        for: call.callee, boundTo: .error, mutable: false)
+      return .spawn(Evaluate(call.callee, into: calleeStorage))
       
     case .evaluateArguments:
-      calleeCode = (state[call.callee] as! FunctionValue).code
+      calleeCode = (state.memory[calleeStorage] as! FunctionValue).code
       
       return .spawn(EvaluateTupleLiteral(call.arguments))
       
     case .runBody:
-      /*
       // Prepare the context for the callee
       state.returnValueStorage = returnValueStorage
-      // Bind the parameter names to the addresses of the argument values.
-      let parameters = calleeCode.parameters
-      state.locals = Dictionary(
-        uniqueKeysWithValues: zip(arguments, parameters).map {
-          (a, p) in
-          (.binding(p), state.address(of: a))
-        }
-      )
+      if (calleeCode.parameters.elements.count > 0) { UNIMPLEMENTED }
       return .spawn(Execute(calleeCode.body!))
-
-       */
-      return .done
 
     case .cleanUpArguments:
       state.functionContext = callerContext

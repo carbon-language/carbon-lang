@@ -13,6 +13,8 @@ struct Interpreter {
   var //let
     program: ExecutableProgram
 
+  // TODO(geoffromer): Replace these with explicit modeling of scopes
+  // as part of the todo stack.
   /// A mapping from local name declarations to addresses.
   var locals: ASTDictionary<SimpleBinding, Address> = .init()
   /// A mapping from local expressions to addresses
@@ -42,44 +44,49 @@ struct Interpreter {
 
   var memory = Memory()
 
-  private(set) var termination: ExitCode? = nil
+  private var exitCodeStorage: Address = -1
 
   /// The stack of pending actions.
   private var todo = Stack<Action>()
 }
 
 extension Interpreter {
+  mutating func start() {
+    exitCodeStorage = memory.allocate(boundTo: .int, from: .empty)
+
+    todo.push(EvaluateCall(
+      call: program.mainCall,
+      callerContext: functionContext, returnValueStorage: exitCodeStorage))
+  }
+
   /// Progress one step forward in the execution sequence, returning an exit
   /// code if the program terminated.
-  mutating func step() {
+  mutating func step() -> ExitCode? {
     guard var current = todo.pop() else {
-      termination = 0
-      return
+      return (memory[exitCodeStorage] as! IntValue).value
     }
     switch current.run(on: &self) {
-    case .done: return
+    case .done: break
     case .spawn(let child):
       todo.push(current)
       todo.push(child)
     case .chain(to: let successor):
       todo.push(successor)
+    case .unwind(let isSuccessor):
+      while (!isSuccessor(todo.top)) { _ = todo.pop() }
     }
+    return nil
   }
 
-  /// Accesses or initializes an rvalue for the given expression.
-  ///
-  /// - Requires: `e` comes from the current function context.
-  subscript(_ e: Expression) -> Value {
-    get {
-      return memory[address(of: e)]
-    }
-    set {
-      precondition(temporaries[e] == nil, "Temporary already initialized.")
-      let a = memory.allocate(
-        boundTo: newValue.type, from: e.site.region, mutable: false)
-      memory.initialize(a, to: newValue)
-      temporaries[e] = a
-    }
+  /// Allocates storage for a temporary that will hold the value of `e`
+  mutating func allocateTemporary(
+    `for` e: Expression, boundTo t: Type, mutable: Bool = false
+  ) -> Address{
+    precondition(temporaries[e] == nil, "Temporary already initialized.")
+    let a = memory.allocate(
+      boundTo: t, from: e.site.region, mutable: false)
+    temporaries[e] = a
+    return a
   }
 
   /// Destroys any rvalue computed for `e` and removes `e` from `locals`.
@@ -103,11 +110,6 @@ extension Interpreter {
     _ = d
     UNIMPLEMENTED
     //return locals[AnyDeclaration(d)] ?? globals[d] ?? fatal("\(d) has no value")
-  }
-
-  /// Accesses the address where e's value is stored.
-  func address(of e: Expression) -> Address {
-    return temporaries[e]!
   }
 }
 

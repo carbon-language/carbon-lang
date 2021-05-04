@@ -12,3 +12,8 @@ struct FunctionValue: Value {
   let type: Type
   let code: FunctionDefinition
 }
+
+struct IntValue : Value {
+  let type: Type
+  let value: Int
+}

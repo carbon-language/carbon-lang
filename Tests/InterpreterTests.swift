@@ -6,22 +6,18 @@ import XCTest
 
 final class TestEvaluateCall: XCTestCase {
   func testMinimal() {
-    guard let ast = CheckNoThrow(try "fn main() -> Int {}".parsedAsCarbon()),
+    guard let ast = CheckNoThrow(try "fn main() -> Int { return 0; }".parsedAsCarbon()),
           let exe = CheckNoThrow(try ExecutableProgram(ast))
     else { return }
 
     var engine = Interpreter(exe)
-
-    // Allocate an address for the return value.
-    let resultAddress = engine.memory.allocate(boundTo: .int, from: .empty)
-
-    let call = EvaluateCall(
-      call: engine.program.mainCall,
-      callerContext: engine.functionContext, returnValueStorage: resultAddress)
-
-    engine.pushTodo_testingOnly(call)
-    while engine.termination == nil {
-      engine.step()
+    engine.start()
+    
+    while true {
+      if let exitCode = engine.step() {
+        XCTAssertEqual(0, exitCode)
+        break
+      }
     }
   }
 }
