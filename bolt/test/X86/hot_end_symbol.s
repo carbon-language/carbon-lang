@@ -8,7 +8,7 @@
 # RUN: llvm-mc -filetype=obj -triple x86_64-unknown-unknown \
 # RUN:   %s -o %t.o
 # RUN: link_fdata %s %t.o %t.fdata
-# RUN: strip --strip-unneeded %t.o
+# RUN: llvm-strip --strip-unneeded %t.o
 # RUN: %host_cc %t.o -o %t.exe -Wl,-q
 
 # RUN: llvm-bolt %t.exe -relocs=1 -hot-text -reorder-functions=hfsort \
@@ -18,8 +18,8 @@
 
 # CHECK: BOLT-INFO: setting __hot_end to
 
-# RUN: nm -n %t.exe | FileCheck %s --check-prefix=CHECK-INPUT
-# RUN: nm -n %t.out | FileCheck %s --check-prefix=CHECK-OUTPUT
+# RUN: llvm-nm -n %t.exe | FileCheck %s --check-prefix=CHECK-INPUT
+# RUN: llvm-nm -n %t.out | FileCheck %s --check-prefix=CHECK-OUTPUT
 
 # CHECK-INPUT:       __hot_start
 # CHECK-INPUT-NEXT:  main

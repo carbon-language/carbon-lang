@@ -8,7 +8,7 @@
 # RUN:   %s -o %t.o
 # RUN: link_fdata %s %t.o %t.fdata
 # Delete our BB symbols so BOLT doesn't mark them as entry points
-# RUN: strip --strip-unneeded %t.o
+# RUN: llvm-strip --strip-unneeded %t.o
 # RUN: %host_cc %t.o -o %t.exe -Wl,-q
 
 # RUN: llvm-bolt %t.exe -relocs=1 -frame-opt=all -print-fop \

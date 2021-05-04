@@ -5,7 +5,7 @@
 # RUN: llvm-mc -filetype=obj -triple x86_64-unknown-unknown \
 # RUN:   %s -o %t.o
 # RUN: link_fdata %s %t.o %t.fdata
-# RUN: strip --strip-unneeded %t.o
+# RUN: llvm-strip --strip-unneeded %t.o
 # RUN: %host_cc %t.o -o %t.exe -Wl,-q
 # RUN: llvm-bolt %t.exe -relocs=1 -reorder-blocks=cache+ -print-finalized \
 # RUN:    -o %t.out -data %t.fdata | FileCheck %s

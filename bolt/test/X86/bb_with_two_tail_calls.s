@@ -6,7 +6,7 @@
 # RUN: llvm-mc -filetype=obj -triple x86_64-unknown-unknown \
 # RUN:   %s -o %t.o
 # RUN: link_fdata %s %t.o %t.fdata
-# RUN: strip --strip-unneeded %t.o
+# RUN: llvm-strip --strip-unneeded %t.o
 # RUN: %host_cc %t.o -o %t.exe -Wl,-q -nostdlib
 # RUN: llvm-bolt %t.exe -o %t.out -data %t.fdata -lite=0 -dyno-stats \
 # RUN:    -print-sctc 2>&1 | FileCheck %s

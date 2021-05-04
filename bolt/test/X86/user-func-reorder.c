@@ -29,9 +29,10 @@ REQUIRES: system-linux
 
 RUN: %host_cc %s -o %t.exe -Wl,-q
 
-RUN: llvm-bolt %t.exe -relocs=1 -lite -reorder-functions=user  \
+RUN: llvm-bolt %t.exe -relocs=1 -lite -reorder-functions=user \
 RUN:   -hugify -function-order=%p/Inputs/user_func_order.txt -o %t
-RUN: nm -ns %t | FileCheck %s -check-prefix=CHECK-NM
+RUN: llvm-nm --numeric-sort --print-armap %t | \
+RUN:   FileCheck %s -check-prefix=CHECK-NM
 RUN: %t 1 2 3 | FileCheck %s -check-prefix=CHECK-OUTPUT
 
 CHECK-NM:      W  __hot_start

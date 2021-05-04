@@ -19,6 +19,7 @@ list(APPEND BOLT_TEST_DEPS
   llvm-objdump
   llvm-readobj
   yaml2obj
+  llvm-strip
   )
 
 add_custom_target(bolt-test-depends DEPENDS ${BOLT_TEST_DEPS})
