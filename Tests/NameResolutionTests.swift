@@ -6,9 +6,12 @@ import XCTest
 import Foundation
 
 final class NameResolutionTests: XCTestCase {
-  func testDuplicateName0() {
-
+  func testNoMain() throws {
+    let ast = try "var Int: x = 1;".checkParsed()
+    let n = NameResolution(ast)
+    XCTAssertEqual(n.errors, [])
   }
+
   func testExamples() throws {
     let testdata = 
         URL(fileURLWithPath: #filePath).deletingLastPathComponent()
