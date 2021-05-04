@@ -6,12 +6,12 @@ import XCTest
 
 final class TestSemanticAnalysis: XCTestCase {
   func testNoMain() {
-    CheckThrows(
-      try ExecutableProgram("var Int: x = 3;".parsedAsCarbon())
-    ) {
-      (e: ErrorLog) in XCTAssert(e[0].message.contains("No nullary main"))
-    }
-  }                      
+    guard let executable
+      = CheckNoThrow(try ExecutableProgram("var Int: x = 3;".parsedAsCarbon()))
+    else { return }
+
+    XCTAssertNil(executable.entryPoint)
+  }
       
   func testMultiMain() {
     let source = """
@@ -31,8 +31,12 @@ final class TestSemanticAnalysis: XCTestCase {
 	"fn main() -> Int {}".parsedAsCarbon(fromFile: "main.6c")))
     else { return }
     
-    guard case let .name(name) = exe.mainCall.callee else {
-      XCTFail("Callee is not an identifier: \(exe.mainCall.callee)")
+    guard let entryPoint = CheckNonNil(exe.entryPoint) else {
+      XCTFail("Missing unambiguous main()")
+      return
+    }
+    guard case let .name(name) = entryPoint.callee else {
+      XCTFail("Callee is not an identifier: \(entryPoint.callee)")
       return
     }
     
