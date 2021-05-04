@@ -59,8 +59,7 @@ private extension TypeChecker {
 
   mutating func checkBody(_ c: ChoiceDefinition) {
     for a in c.alternatives {
-      types[a.identity] = .error
-      UNIMPLEMENTED
+      types[a.identity] = evaluate(TypeExpression(a.payload))
     }
   }
 
@@ -105,7 +104,10 @@ private extension TypeChecker {
     case .typeType: return Type.type
     case let .functionType(f):
       if let e = f.parameters.duplicateLabelError { errors.append(e) }
-      let p = evaluate(TypeExpression(f.parameters)).tuple!
+      // Treat the tuple of parameters as a type expression so we'll get the
+      // benefit of
+      let parametersType = TypeExpression(f.parameters)
+      let p = evaluate(parametersType).tuple!
       return Type.function(
         parameterTypes: p, returnType: evaluate(f.returnType))
     }

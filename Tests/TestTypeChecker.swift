@@ -30,7 +30,6 @@ final class TypeCheckNominalTypeDeclaration: XCTestCase {
     typeChecker.errors.checkForMessageExcerpt("Not a type expression")
   }
 
-  /*
   func testChoice() throws {
     let executable = try """
       choice X {
@@ -61,12 +60,11 @@ final class TypeCheckNominalTypeDeclaration: XCTestCase {
   }
 
   func testChoiceNonTypeExpression() throws {
-    let executable = try "choice X { Bog(42); }".checkExecutable()
+    let executable = try "choice X { Bog(42) }".checkExecutable()
     let typeChecker = TypeChecker(executable)
     typeChecker.errors.checkForMessageExcerpt("Not a type expression")
   }
-  */
-  
+
   /*
   func testExamples() {
     let testdata =
