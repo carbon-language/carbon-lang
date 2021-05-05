@@ -441,6 +441,9 @@ def _impl(ctx):
             flag_groups = [flag_group(flags = [
                 "-fsanitize=address,undefined",
                 "-fsanitize-address-use-after-scope",
+                # Needed due to clang AST issues, such as in
+                # clang/AST/Redeclarable.h line 199.
+                "-fno-sanitize=vptr",
             ])],
         )],
     )
