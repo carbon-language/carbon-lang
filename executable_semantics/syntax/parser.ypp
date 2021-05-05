@@ -47,8 +47,7 @@
 //   `if` and `else` could mask other ambiguities, especially if we allow
 //   `if`/`else` in expressions, so we allow Bison to resolve it through its
 //   default behavior of preferring to shift rather than reduce.
-// - Variable expressions (expression identifier) lead to 8 conflicts.
-%expect 9
+%expect 1
 
 // -----------------------------------------------------------------------------
 
@@ -105,6 +104,7 @@ void yy::parser::error(
 %type <const Carbon::Expression*> return_type
 %type <const Carbon::Expression*> paren_expression
 %type <const Carbon::Expression*> tuple
+%type <const Carbon::Expression*> var_compatible_expression
 %type <Carbon::Member*> variable_declaration
 %type <Carbon::Member*> member
 %type <std::list<Carbon::Member*>*> member_list
@@ -165,7 +165,7 @@ void yy::parser::error(
 ;
 
 %precedence "{" "}"
-%precedence VAR_BINDING "," DBLARROW
+%precedence "," DBLARROW
 %left OR AND
 %nonassoc EQUAL_EQUAL
 %left "+" "-"
@@ -184,31 +184,15 @@ pattern:
     { $$ = $1; }
 ;
 expression:
-  identifier
-    { $$ = Carbon::Expression::MakeVar(yylineno, $1); }
+  var_compatible_expression
 | expression designator
     { $$ = Carbon::Expression::MakeGetField(yylineno, $1, $2); }
 | expression "[" expression "]"
     { $$ = Carbon::Expression::MakeIndex(yylineno, $1, $3); }
-| expression identifier %prec VAR_BINDING
+| var_compatible_expression identifier
     { $$ = Carbon::Expression::MakeVarPat(yylineno, $2, $1); }
 | integer_literal
     { $$ = Carbon::Expression::MakeInt(yylineno, $1); }
-| TRUE
-    { $$ = Carbon::Expression::MakeBool(yylineno, true); }
-| FALSE
-    { $$ = Carbon::Expression::MakeBool(yylineno, false); }
-| INT
-    { $$ = Carbon::Expression::MakeIntType(yylineno); }
-| BOOL
-    { $$ = Carbon::Expression::MakeBoolType(yylineno); }
-| TYPE
-    { $$ = Carbon::Expression::MakeTypeType(yylineno); }
-| AUTO
-    { $$ = Carbon::Expression::MakeAutoType(yylineno); }
-| CONTINUATION_TYPE
-    { $$ = Carbon::Expression::MakeContinuationType(yylineno); }
-| paren_expression { $$ = $1; }
 | expression EQUAL_EQUAL expression
     { $$ = Carbon::Expression::MakeBinOp(yylineno, Carbon::Operator::Eq, $1, $3); }
 | expression "+" expression
@@ -229,6 +213,26 @@ expression:
     { $$ = Carbon::Expression::MakeFunType(yylineno, $2, $3); }
 ;
 designator: "." identifier { $$ = $2; }
+;
+var_compatible_expression:
+  paren_expression
+    { $$ = $1; }
+| identifier
+    { $$ = Carbon::Expression::MakeVar(yylineno, $1); }
+| TRUE
+    { $$ = Carbon::Expression::MakeBool(yylineno, true); }
+| FALSE
+    { $$ = Carbon::Expression::MakeBool(yylineno, false); }
+| INT
+    { $$ = Carbon::Expression::MakeIntType(yylineno); }
+| BOOL
+    { $$ = Carbon::Expression::MakeBoolType(yylineno); }
+| TYPE
+    { $$ = Carbon::Expression::MakeTypeType(yylineno); }
+| AUTO
+    { $$ = Carbon::Expression::MakeAutoType(yylineno); }
+| CONTINUATION_TYPE
+    { $$ = Carbon::Expression::MakeContinuationType(yylineno); }
 ;
 paren_expression: "(" paren_contents ")"
     { $$ = $2.AsExpression(yylineno); }
@@ -341,7 +345,7 @@ function_declaration:
   FN identifier tuple return_type ";"
     { $$ = MakeFunDef(yylineno, $2, $4, $3, 0); }
 ;
-variable_declaration: expression identifier %prec VAR_BINDING
+variable_declaration: var_compatible_expression identifier
     { $$ = MakeField(yylineno, $2, $1); }
 ;
 member: VAR variable_declaration ";"
