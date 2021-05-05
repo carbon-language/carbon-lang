@@ -33,11 +33,14 @@ struct TypeChecker {
 }
 
 private extension TypeChecker {
-  /// Adds an error at the site of `offender` to the error log.
+  /// Adds an error at the site of `offender` to the error log, returning
+  /// `Type.error` for convenience.
+  @discardableResult
   mutating func error<Node: AST>(
     _ offender: Node, _ message: String , notes: [CompileError.Note] = []
-  ) {
+  ) -> Type {
     errors.append(CompileError(message, at: offender.site, notes: notes))
+    return .error
   }
 }
 
@@ -76,8 +79,7 @@ private extension TypeChecker {
       }
     }
 
-    error(e, "Not a type expression (value has type \(v.type)).")
-    return .error
+    return error(e, "Not a type expression (value has type \(v.type)).")
   }
 
   mutating func evaluate(_ e: Expression) -> Value {
