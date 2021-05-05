@@ -309,7 +309,7 @@ extension FunctionTypePattern {
 indirect enum Expression: AST {
   case
     name(Identifier),
-    getField(target: Expression, fieldName: Identifier, Site),
+    getField(GetFieldExpression),
     index(target: Expression, offset: Expression, Site),
     integerLiteral(Int, Site),
     booleanLiteral(Bool, Site),
@@ -325,7 +325,7 @@ indirect enum Expression: AST {
   var site: Site {
     switch self {
     case let .name(v): return v.site
-    case let .getField(_, _, r): return r
+    case let .getField(x): return x.site
     case let .index(target: _, offset: _, r): return r
     case let .integerLiteral(_, r): return r
     case let .booleanLiteral(_, r): return r
@@ -340,6 +340,13 @@ indirect enum Expression: AST {
     }
   }
 };
+
+struct GetFieldExpression: AST {
+  let target: Expression
+  let fieldName: Identifier
+
+  var site: ASTSite { target.site...fieldName.site }
+}
 
 /// An expression whose value will be used as a type in type-checking.
 ///

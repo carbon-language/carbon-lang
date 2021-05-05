@@ -174,8 +174,8 @@ private extension NameResolution {
     case let .name(v):
       use(v)
 
-    case let .getField(target: t, _, _):
-      resolveNames(usedIn: t)
+    case let .getField(e):
+      resolveNames(usedIn: e.target)
       // Only unqualified names get resolved, so we skip the field name.
       // resolve(n)
 

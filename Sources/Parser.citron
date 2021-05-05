@@ -101,7 +101,7 @@ identifier ::= Identifier(i). { Identifier(text: i.text, site: i.site) }
 expression ::= identifier(i).
   { .name(i) }
 expression ::= expression(t) member_designator(m).
-  { .getField(target: t, fieldName: m, t...m) }
+  { .getField(GetFieldExpression(target: t, fieldName: m)) }
 expression ::=
   expression(t) LEFT_SQUARE_BRACKET expression(i) RIGHT_SQUARE_BRACKET(b).
 {

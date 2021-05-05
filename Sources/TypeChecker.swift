@@ -89,7 +89,7 @@ private extension TypeChecker {
         return r
       }
       UNIMPLEMENTED
-    case .getField(_, _, _): UNIMPLEMENTED
+    case .getField(_): UNIMPLEMENTED
     case .index(target: _, offset: _, _): UNIMPLEMENTED
     case let .integerLiteral(r, _): return r
     case let .booleanLiteral(r, _): return r
