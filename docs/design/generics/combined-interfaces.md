@@ -2154,6 +2154,8 @@ Disadvantages:
     some" `[...]` inferred variables
     ([1](#type-bounds-on-associated-types-in-interfaces),
     [2](#same-type-constraints)).
+-   Type-types would become callable, and when called would return a type-type
+    that could then be called again.
 
 ### Constraint use cases
 
