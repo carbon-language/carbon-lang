@@ -33,6 +33,20 @@ class ParseTree::Parser {
     return tokens.GetKind(*position) == TokenKind::EndOfFile();
   }
 
+  // Gets the kind of the next token to be consumed.
+  auto NextTokenKind() const -> TokenKind { return tokens.GetKind(*position); }
+
+  // Tests whether the next token to be consumed is of the specified kind.
+  auto NextTokenIs(TokenKind kind) const -> bool {
+    return NextTokenKind() == kind;
+  }
+
+  // Tests whether the next token to be consumed is of any of the specified
+  // kinds.
+  auto NextTokenIsOneOf(std::initializer_list<TokenKind> kinds) const -> bool {
+    return NextTokenKind().IsOneOf(kinds);
+  }
+
   // Requires (and asserts) that the current position matches the provide
   // `Kind`. Returns the current token and advances to the next position.
   auto Consume(TokenKind kind) -> TokenizedBuffer::Token;
@@ -57,11 +71,12 @@ class ParseTree::Parser {
   // a node with a parse error.
   auto MarkNodeError(Node n) -> void;
 
-  // Start parsing one (or more) subtrees of nodes.
+  // Tracks the current location as a potential start of a subtree.
   //
-  // This returns a marker representing start position. Multiple nodes can be
-  // added if they share a start position.
-  auto StartSubtree() -> SubtreeStart;
+  // This returns a marker representing the current position, which can later
+  // be used in a call to `AddNode` to mark all nodes created since this
+  // position as children of the added node.
+  auto GetSubtreeStartPosition() -> SubtreeStart;
 
   // Add a node to the parse tree that potentially has a subtree larger than
   // itself.
