@@ -333,8 +333,7 @@ auto StructDeclaration::InitGlobals(Env& globals) const -> void {
 }
 
 auto FunctionDeclaration::InitGlobals(Env& globals) const -> void {
-  Env values;
-  auto pt = InterpExp(values, definition->param_pattern);
+  auto pt = InterpExp(globals, definition->param_pattern);
   auto f = Value::MakeFunVal(definition->name, pt, definition->body);
   Address a = state->heap.AllocateValue(f);
   globals.Set(definition->name, a);
