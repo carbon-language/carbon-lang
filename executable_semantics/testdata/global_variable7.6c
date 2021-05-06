@@ -8,7 +8,7 @@ fn f() -> Int {
   return 0;
 }
 
-var Int: y = f();
+var Int y = f();
 
 fn main() -> Int {
   return y;
