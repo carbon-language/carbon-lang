@@ -205,8 +205,8 @@ expression:
 | FNTY tuple return_type
     { $$ = Carbon::Expression::MakeFunType(yylineno, $2, $3); }
 ;
-// This is the subset of `expression` which can act as the type part of
-// a variable declaration without creating ambiguity
+// This is the subset of `expression` which can act as the type part of a
+// variable declaration without creating ambiguity.
 var_compatible_expression:
   paren_expression
     { $$ = $1; }
