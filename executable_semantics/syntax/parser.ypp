@@ -185,6 +185,7 @@ pattern:
 ;
 expression:
   var_compatible_expression
+    { $$ = $1; }
 | var_compatible_expression identifier
     { $$ = Carbon::Expression::MakeVarPat(yylineno, $2, $1); }
 | expression EQUAL_EQUAL expression
