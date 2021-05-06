@@ -4,47 +4,53 @@
 import XCTest
 @testable import CarbonInterpreter
 
+extension String {
+  /// Returns the results of parsing, name lookup, and typechecking `self`.
+  func typeChecked() throws
+    -> (ExecutableProgram, typeChecker: TypeChecker, errors: ErrorLog)
+  {
+    let executable = try self.checkExecutable()
+    let typeChecker = TypeChecker(executable)
+    return (executable, typeChecker, typeChecker.errors)
+  }
+}
+
 final class TypeCheckNominalTypeDeclaration: XCTestCase {
 
   func testStruct() throws {
-    let executable = try "struct X { var Int: y; }".checkExecutable()
-
-    let typeChecker = TypeChecker(executable)
-    XCTAssertEqual(typeChecker.errors, [])
+    try XCTAssertEqual(
+      "struct X { var Int: y; }"
+        .typeChecked().errors, [])
   }
 
   func testStructStructMember() throws {
-    let executable = try """
+    try XCTAssertEqual(
+      """
       struct X { var Int: y; }
       struct Z { var X: a; }
-      """.checkExecutable()
-
-    let typeChecker = TypeChecker(executable)
-    XCTAssertEqual(typeChecker.errors, [])
+      """
+        .typeChecked().errors, [])
   }
 
   func testStructNonTypeExpression0() throws {
-    let executable = try "struct X { var 42: y; }".checkExecutable()
-
-    let typeChecker = TypeChecker(executable)
-    typeChecker.errors.checkForMessageExcerpt("Not a type expression")
+    try "struct X { var 42: y; }"
+      .typeChecked().errors.checkForMessageExcerpt("Not a type expression")
   }
 
   func testChoice() throws {
-    let executable = try """
+    try XCTAssertEqual(
+      """
       choice X {
         Box,
         Car(Int),
         Children(Int, Bool)
       }
-      """.checkExecutable()
-
-    let typeChecker = TypeChecker(executable)
-    XCTAssertEqual(typeChecker.errors, [])
+      """.typeChecked().errors, [])
   }
 
   func testChoiceChoiceMember() throws {
-    let executable = try """
+    try XCTAssertEqual(
+      """
       choice Y {
         Fork, Knife(X), Spoon(X, X)
       }
@@ -53,18 +59,16 @@ final class TypeCheckNominalTypeDeclaration: XCTestCase {
         Car(Int),
         Children(Int, Bool)
       }
-      """.checkExecutable()
-
-    let typeChecker = TypeChecker(executable)
-    XCTAssertEqual(typeChecker.errors, [])
+      """.typeChecked().errors, [])
   }
 
   func testChoiceNonTypeExpression() throws {
-    let executable = try "choice X { Bog(42) }".checkExecutable()
-    let typeChecker = TypeChecker(executable)
-    typeChecker.errors.checkForMessageExcerpt("Not a type expression")
+    try "choice X { Bog(42) }"
+      .typeChecked().errors.checkForMessageExcerpt("Not a type expression")
   }
+}
 
+final class TypeCheckExamples: XCTestCase {
   /*
   func testExamples() {
     let testdata =
