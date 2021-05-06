@@ -21,6 +21,26 @@ indirect enum Type: Equatable {
     else { return nil }
   }
 
+  /// Creates an instance corresponding to `v` if it is a type value, or `nil`
+  /// otherwise.
+  init?(_ v: Value) {
+    if let r = (v as? Type) {
+      self = r
+      return
+    }
+
+    // If the value is a tuple, check that all its elements are types.
+    if let elements = (v as? TupleValue) {
+      let typeElements = elements.compactMapValues { $0 as? Type }
+      if typeElements.count == elements.count {
+        self = .tuple(typeElements)
+        return
+      }
+    }
+
+    return nil
+  }
+
   /// Convenience accessor for `.function` case.
   var function: (parameterTypes: TupleType, returnType: Type)? {
     if case .function(parameterTypes: let p, returnType: let r) = self {

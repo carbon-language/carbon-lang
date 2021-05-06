@@ -55,7 +55,7 @@ typealias AbstractSyntaxTree = [TopLevelDeclaration]
 /// A destructurable pattern.
 indirect enum Pattern: AST {
   case
-    atom(Expression),             // A non-destructurable expression
+    atom(Expression),             // An expression containing no bindings.
     variable(SimpleBinding),     // <Type>: <name>
     tuple(TuplePattern),
     functionCall(FunctionCall<Pattern>),
