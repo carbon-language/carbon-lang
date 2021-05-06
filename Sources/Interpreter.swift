@@ -59,11 +59,16 @@ extension Interpreter {
       callerContext: functionContext, returnValueStorage: exitCodeStorage))
   }
 
+  enum Status {
+    case running
+    case exited(_ exitCode: ExitCode)
+  }
+
   /// Progress one step forward in the execution sequence, returning an exit
   /// code if the program terminated.
-  mutating func step() -> ExitCode? {
+  mutating func step() -> Status {
     guard var current = todo.pop() else {
-      return (memory[exitCodeStorage] as! IntValue)
+      return .exited(memory[exitCodeStorage] as! IntValue)
     }
     switch current.run(on: &self) {
     case .done: break
@@ -72,17 +77,17 @@ extension Interpreter {
       todo.push(child)
     case .chain(to: let successor):
       todo.push(successor)
-    case .unwind(let isSuccessor):
-      while (!isSuccessor(todo.top)) { _ = todo.pop() }
+    case .unwindToFunctionCall:
+      while (!(todo.top is EvaluateCall)) { _ = todo.pop() }
     }
-    return nil
+    return .running
   }
 
   /// Allocates storage for a temporary that will hold the value of `e`
   mutating func allocateTemporary(
     `for` e: Expression, boundTo t: Type, mutable: Bool = false
   ) -> Address{
-    precondition(temporaries[e] == nil, "Temporary already initialized.")
+    precondition(temporaries[e] == nil, "Temporary already allocated.")
     let a = memory.allocate(
       boundTo: t, from: e.site.region, mutable: false)
     temporaries[e] = a

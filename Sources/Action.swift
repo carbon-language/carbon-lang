@@ -8,7 +8,7 @@ enum Followup {
   case chain(_ successor: Action)  // All finished, start successor.
   // All finished with this action *and* all actions between it and
   // the nearest lower action on the stack that matches `isSuccessor`
-  case unwind(_ isSuccessor: (Action)->Bool)
+  case unwindToFunctionCall
 }
 
 protocol Action {
@@ -164,7 +164,7 @@ struct ExecuteReturn: Action {
       return .spawn(Evaluate(operand, into: state.returnValueStorage))
     case .evaluateOperand:
       step = .transferControl
-      return .unwind({ $0 is EvaluateCall })
+      return .unwindToFunctionCall
     case .transferControl:
       fatalError("Unreachable")
     }
