@@ -2,6 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
+/// A marker for code that needs to be implemented.  Eventually all of these
+/// should be eliminated from the codebase.
 var UNIMPLEMENTED: Never { fatalError("unimplemented") }
 
 /// A marker for code that should never be reached.
@@ -11,6 +13,9 @@ struct TypeChecker {
   init(_ program: ExecutableProgram) {
     self.program = program
 
+    for d in program.ast {
+      registerParentage(d)
+    }
     for d in program.ast {
       checkNominalTypeBody(d)
     }
@@ -25,6 +30,9 @@ struct TypeChecker {
   }
 
   private let program: ExecutableProgram
+
+  /// Mapping from choice alternatives to the enclosing choice.
+  private var parent = ASTDictionary<Alternative, ChoiceDefinition>()
 
   /// Mapping from Declarations to type of thing they declare.
   private(set) var types = Dictionary<Declaration.Identity, Type>()
@@ -49,6 +57,15 @@ private extension TypeChecker {
 }
 
 private extension TypeChecker {
+  /// Records references from child declarations to their enclosing parents.
+  mutating func registerParentage(_ d: TopLevelDeclaration) {
+    switch d {
+    case let .choice(c):
+      for a in c.alternatives { parent[a] = c }
+    case .struct, .function, .initialization: ()
+    }
+  }
+
   /// Typechecks the body of `d` if it declares a nominal type, recording the
   /// types of any interior declarations in `self.types` (and any errors in
   /// `self.errors`).
@@ -128,11 +145,23 @@ private extension TypeChecker {
 
     let r: Type
     switch d {
-    case let x as TypeDeclaration:  r = x.declaredType
-    case let x as SimpleBinding: r = evaluate(x.type.expression!)
-    case let x as FunctionDefinition: r = type(x)
-    case let x as Alternative: r = evaluate(TypeExpression(x.payload))
-    case let x as StructMember: r = evaluate(x.type)
+    case let x as TypeDeclaration:
+      r = x.declaredType
+
+    case let x as SimpleBinding:
+      r = evaluate(x.type.expression!)
+
+    case let x as FunctionDefinition:
+      r = type(x)
+
+    case let a as Alternative:
+      let payload = evaluate(TypeExpression(a.payload))
+      let payloadTuple = payload == .error ? .void : payload.tuple!
+      r = .alternative(parent: ASTIdentity(of: parent[a]!), payload: payloadTuple)
+
+    case let x as StructMember:
+      r = evaluate(x.type)
+
     default: UNREACHABLE // All possible cases should be handled.
     }
     return memoizedType(of: d, r)

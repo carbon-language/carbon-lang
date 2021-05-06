@@ -21,6 +21,10 @@ extension TupleValue: CarbonInterpreter.Value {
   }
 }
 
+extension TupleType {
+  static let void: Self = [:]
+}
+
 extension TupleSyntax {
   /// Returns a form of this AST node that is agnostic to the ordering of
   /// labeled fields, adding an error to errors if there are any duplicate

@@ -8,6 +8,7 @@ indirect enum Type: Equatable {
     int, bool, type,
     function(parameterTypes: TupleType, returnType: Type),
     tuple(TupleType),
+    alternative(parent: ASTIdentity<ChoiceDefinition>, payload: TupleType),
     `struct`(ASTIdentity<StructDefinition>),
     `choice`(ASTIdentity<ChoiceDefinition>),
 
