@@ -631,9 +631,10 @@ k.IsEqual(k);
 TODO: Also include covariant refinement of individual associated types of the
 refined interface.
 
-We say an interface `C` consists of other interfaces `A` and `B`
-[_structurally_](terminology.md#structural-interfaces)) if the criteria for
-whether `C` is implemented is whether both `A` and `B` are.
+A [`structural interface`](terminology.md#structural-interfaces) allows you to
+express a combination of nominal interfaces without introducing a new nominal
+interface. The structural interface is implemented for exactly those types that
+implement the nominal interface requirements.
 
 ```
 // `PrintableMedia` has all names from `Printable` and `Media`,
@@ -646,8 +647,8 @@ structural interface PrintableMedia {
 }
 
 // `PrintableMedia2` is exactly equivalent to `PrintableMedia`.
-// `extends` means require the interface be implemented
-// (like `impl`), and `alias` all of the names.
+// `extends` means require the interface be implemented,
+// just like `impl`, and `alias` all of the names.
 structural interface PrintableMedia2 {
   impl Printable;
   alias Print = Printable.Print;
@@ -667,10 +668,16 @@ fn PrintAndPlay2[PrintableMedia:$ T](Ptr(T): p) {
 // declaration. Anything that implements both `Printable`
 // and `Media` implements `PrintableMedia`.
 PrintAndPlay2(&song);
+```
 
-// Can implement `PrintableMedia` as long as it has aliases
-// for every name we need to implement for its required
-// interfaces.
+You may implement a structural interface as long as it has aliases for every
+name we need to implement for its required interfaces. Implementing the
+structural interface is equivalent to implementing all the interfaces it
+requires.
+
+```
+// Can implement `PrintableMedia` since it has aliases for all
+// the names in `Printable` and `Media`.
 struct Playlist {
   // ...
   impl PrintableMedia {
@@ -710,8 +717,11 @@ interface EndOfGame {
 // or `EndOfGame` even if there is a conflict.
 structural interface Combined1 {
   extends Renderable + EndOfGame;
+  alias Draw_Renderable = Renderable.Draw;
+  alias Draw_EndOfGame = EndOfGame.Draw;
 }
-// `Combined2` only has names mentioned explicitly.
+// `Combined2` uses `impl` and so only has names that are
+// mentioned explicitly in its definition.
 // Can use qualification (`x.(Renderable.Center)()`) to access
 // any names from `Renderable` or `EndOfGame` even if they are
 // not mentioned in `Combined2`.
