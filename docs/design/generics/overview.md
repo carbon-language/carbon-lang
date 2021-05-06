@@ -70,7 +70,8 @@ differences between generics and templates:
 
 Contrast with a template function, where you may be able to do some checking
 given a function definition, but more checking of the definition is required
-after seeing the call sites (and you know which specializations are needed).
+after seeing the call sites (and you know which
+[instantiations](terminology.md#instantiation) are needed).
 
 The [generics terminology document](terminology.md) goes into more detail about
 the
@@ -129,12 +130,12 @@ For the definition of the function there is only one difference: we added a `$`
 to indicate that the parameter named `n` is generic. The body of the function
 type checks using the same logic as `PrintXs_Regular`. However, callers must be
 able to know the value of the argument at compile time. This allows the compiler
-to adopt a code generation strategy that creates a
-[_specialization_](terminology.md#generic-specialization) function
-`PrintXs_Generic` for each combination of values of the generic (and template)
-arguments. In this case, this means that the compiler can generate different
-binary code for the calls passing `n==1` and `n==2`. Knowing the value of `n` at
-code generation time allows the optimizer to unroll the loop, so that the call
+to adopt a code generation strategy that creates a separate copy of the
+`PrintXs_Generic` function for each combination of values of the generic (and
+template) arguments, called [static specialization](goals.md#dispatch-control).
+In this case, this means that the compiler can generate different binary code
+for the calls passing `n==1` and `n==2`. Knowing the value of `n` at code
+generation time allows the optimizer to unroll the loop, so that the call
 `PrintXs_Generic(2)` could be transformed into:
 
 ```
@@ -143,8 +144,8 @@ Print("X");
 ```
 
 Since we know the generic parameter is restricted to values known at compile
-time, we can use the generic parameter in places we would expect a constant
-value, such as in types.
+time, we can use the generic parameter in places we would expect a compile-time
+constant value, such as in types.
 
 ```
 fn CreateArray(UInt:$ N, Int: value) -> FixedArray(Int, N) {
@@ -170,9 +171,15 @@ have this rule:
 parameters (similarly template parameters).
 
 This rule also makes the difference between the compiler generating separate
-specializations or using a single generated function with runtime dynamic
+static specializations or using a single generated function with runtime dynamic
 dispatch harder to observe, enabling the compiler to switch between those
 strategies without danger of accidentally changing the semantics of the program.
+
+Generally speaking, we should hide the differences between the
+[static and dynamic dispatch strategies](#dispatch-control). This includes how
+many instances of a
+[static local function variable](https://en.wikipedia.org/wiki/Local_variable#Static_local_variables)
+are created, if we support them.
 
 ### Generic syntax is temporary
 
