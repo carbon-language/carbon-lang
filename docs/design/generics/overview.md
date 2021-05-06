@@ -11,10 +11,12 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 ## Table of contents
 
 -   [What are generics?](#what-are-generics)
--   [Goals: Generics](#goals-generics)
--   [Glossary / Terminology](#glossary--terminology)
+-   [Goals](#goals)
+-   [Terminology](#terminology)
 -   [Non-type generics](#non-type-generics)
     -   [Basic generics](#basic-generics)
+    -   [No address of a function with generic parameters](#no-address-of-a-function-with-generic-parameters)
+    -   [Generic syntax is temporary](#generic-syntax-is-temporary)
     -   [Basic templates](#basic-templates)
         -   [Difference between templates and generics](#difference-between-templates-and-generics)
         -   [Substitution failure is an error](#substitution-failure-is-an-error)
@@ -24,7 +26,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Generic type parameters versus templated type parameters](#generic-type-parameters-versus-templated-type-parameters)
 -   [Proposed programming model](#proposed-programming-model)
     -   [Syntax examples of common use cases](#syntax-examples-of-common-use-cases)
-    -   [Calling templated code](#calling-templated-code)
+    -   [FIXME: Calling templated code](#fixme-calling-templated-code)
 
 <!-- tocstop -->
 
@@ -36,29 +38,29 @@ like templates. For example, instead of having one function per
 type-you-can-sort:
 
 ```
-fn SortInt32Array(Ptr(Array(Int32)): a) { ... }
-fn SortStringArray(Ptr(Array(String)): a) { ... }
+fn SortInt32Vector(Ptr(Vector(Int32)): a) { ... }
+fn SortStringVector(Ptr(Vector(String)): a) { ... }
 ...
 ```
 
 you might have one function that could sort any array with comparable elements:
 
 ```
-fn SortArray[Comparable:$ T](Ptr(Array(T)): a) { ... }
+fn SortVector[Comparable:$ T](Ptr(Vector(T)): a) { ... }
 ```
 
-Where the `SortArray` function applied to an `Array(Int32)*` input is
-semantically identical to `SortInt32Array`, and similarly for `Array(String)*`
-input and `SortStringArray`.
+Where the `SortVector` function applied to a `Ptr(Vector(Int32))` input is
+semantically identical to `SortInt32Vector`, and similarly for
+`Ptr(Vector(String))` input and `SortStringVector`.
 
 Here `Comparable` is the name of an _interface_, which describes the
 requirements for the type `T`. These requirements form the contract that allows
 us to have an API boundary encapsulating the implementation of the function,
 unlike templates. That is, given that we know `T` satisfies the requirements, we
-can typecheck the body of the `SortArray` function; similarly, we can typecheck
-that a call to `SortArray` is valid by checking that the type of the member
+can typecheck the body of the `SortVector` function; similarly, we can typecheck
+that a call to `SortVector` is valid by checking that the type of the member
 elements of the passed-in array satisfy the same requirements, without having to
-look at the body of the `SortArray` function. These are in fact the main
+look at the body of the `SortVector` function. These are in fact the main
 differences between generics and templates:
 
 -   We can completely typecheck a generic definition without information from
@@ -70,46 +72,19 @@ Contrast with a template function, where you may be able to do some checking
 given a function definition, but more checking of the definition is required
 after seeing the call sites (and you know which specializations are needed).
 
-Read more here:
-[Carbon Generics: Terminology: "Generic versus template parameters" section](terminology.md#generic-versus-template-parameters).
+The [generics terminology document](terminology.md) goes into more detail about
+the
+[difference between generics and templates](terminology.md#generic-versus-template-parameters).
 
-## Goals: Generics
+## Goals
 
 In general we aim to make Carbon Generics into an alternative to templates for
 writing generic code, with improved software engineering properties at the
 expense of some restrictions. See [the detailed discussion of goals](goals.md).
 
-In this proposal we try and define a generics system that has these properties
-to allow migration from templates:
+## Terminology
 
--   Templated code (perhaps migrated from C++) can be converted to generics
-    incrementally, one function or parameter at a time. Typically this would
-    involve determining the interfaces that generic types need to implement to
-    call the function, proving the API the function expects.
--   It should be legal to call templated code from generic code when it would
-    have the same semantics as if called from non-generic code, and an error
-    otherwise. This is to allow more templated functions to be converted to
-    generics, instead of requiring them to be converted specifically in
-    bottom-up order.
--   Converting from a template to a generic parameter should be safe -- it
-    should either fail to compile or work, never silently change semantics.
--   We should minimize the effort to convert from template code to generic code.
-    Ideally it should just require specifying the type constraints, affecting
-    just the signature of the function, not its body.
-
-Also we would like to support:
-
--   Selecting between a dynamic and a static strategy for the generated code, to
-    give the user control over performance, binary sizes, build speed, etc.
--   Use of generic functions with types defined in different libraries from
-    those defining the interface requirements for those types.
-
-MAYBE: migration to generics from inheritance, to disentangle subtyping from
-implementation inheritance.
-
-## Glossary / Terminology
-
-See [Carbon Generics: Terminology](terminology.md)
+Terminology is described in the [generics terminology document](terminology.md)
 
 ## Non-type generics
 
@@ -135,9 +110,9 @@ PrintXs_Regular(n); // Prints: XXX
 What would it mean to change the parameter to be a generic parameter?
 
 ```
-fn PrintXs_Generic(Int:$ n) {
+fn PrintXs_Generic(Int:$ N) {
   var Int: i = 0;
-  while (i < n) {
+  while (i < N) {
     Print("X");
     i += 1;
   }
@@ -154,17 +129,39 @@ For the definition of the function there is only one difference: we added a `$`
 to indicate that the parameter named `n` is generic. The body of the function
 type checks using the same logic as `PrintXs_Regular`. However, callers must be
 able to know the value of the argument at compile time. This allows the compiler
-to adopt a code generation strategy that creates a _specialization_ of the
-function `PrintXs_Generic` for each combination of values of the generic (and
-template) arguments. In this case, this means that the compiler can generate
-different binary code for the calls passing `n==1` and `n==2`. Knowing the value
-of `n` at code generation time allows the optimizer to unroll the loop, so that
-the call `PrintXs_Generic(2)` could be transformed into:
+to adopt a code generation strategy that creates a
+[_specialization_](terminology.md#generic-specialization) function
+`PrintXs_Generic` for each combination of values of the generic (and template)
+arguments. In this case, this means that the compiler can generate different
+binary code for the calls passing `n==1` and `n==2`. Knowing the value of `n` at
+code generation time allows the optimizer to unroll the loop, so that the call
+`PrintXs_Generic(2)` could be transformed into:
 
 ```
 Print("X");
 Print("X");
 ```
+
+Since we know the generic parameter is restricted to values known at compile
+time, we can use the generic parameter in places we would expect a constant
+value, such as in types.
+
+```
+fn CreateArray(UInt:$ N, Int: value) -> FixedArray(Int, N) {
+  var FixedArray(Int, N): ret;
+  var Int: i = 0;
+  while (i < N) {
+    ret[i] = value;
+    i += 1;
+  }
+  return ret;
+}
+```
+
+**Comparison with other languages:** This feature is part of
+[const generics in Rust](https://blog.rust-lang.org/2021/02/26/const-generics-mvp-beta.html).
+
+### No address of a function with generic parameters
 
 Since a function with a generic parameter can have many different addresses, we
 have this rule:
@@ -177,22 +174,41 @@ specializations or using a single generated function with runtime dynamic
 dispatch harder to observe, enabling the compiler to switch between those
 strategies without danger of accidentally changing the semantics of the program.
 
-**NOTE:** The `$` syntax is temporary and won't be the final syntax we use,
-since it is not easy to type `$` from non-US keyboards. Instead of `:$`, we are
-considering: `:!`, `:@`, `:#`, and `::`. We might use the same character here as
-we decide for
+### Generic syntax is temporary
+
+**NOTE:** The `$` syntax is temporary, since it is not easy to type `$` from
+non-US keyboards, so we intend to switch to some other syntax. Instead of `:$`,
+we are considering: `:!`, `:@`, `:#`, and `::`. We might use the same character
+here as we decide for FIXME: metaprogramming
 [Carbon metaprogramming](https://github.com/josh11b/carbon-lang/blob/metaprogramming/docs/design/metaprogramming.md)
 constructs.
 
-**Comparison with other languages:** This feature is part of
-[const generics in Rust](https://blog.rust-lang.org/2021/02/26/const-generics-mvp-beta.html).
-
 ### Basic templates
 
-For this function, we could change the parameter to be a template parameter by
-replacing "`Int:$ n`" with "`Int:$$ n`", but there would not be a difference
-that you would observe. However, with template parameters we would have more
-capabilities inside the function, so we could write this:
+For `CreateArray` function, we could change the parameter to be a template
+parameter by replacing "`UInt:$ N`" with "`UInt:$$ N`", but there would not be a
+difference that you would observe. However, a generic function would not be able
+to type check if the parameter was changed to an array size that could be
+negative, as in "`Int:$ N`". For a template, this would only be a problem when a
+negative value was passed in.
+
+```
+// Compile error: array size can't be negative.
+fn CreateArray_Error(Int:$ N, Int: value) -> FixedArray(Int, N) { ... }
+
+// No compile error.
+fn CreateArray_Template(Int:$$ N, Int: value) -> FixedArray(Int, N) { ... }
+
+// No compile error.
+CreateArray_Template(3, 7);
+CreateArray_Template(6, 12);
+
+// Compile error: array size can't be negative.
+CreateArray_Template(-2, 12);
+```
+
+Similarly, we could call an overloaded function from a templated version of
+`PrintXs`:
 
 ```
 fn NumXs(1) -> Char {
@@ -241,6 +257,10 @@ error, that error will be reported to the user instead of trying another
 function body (say for a different overload of the same name that matches but
 isn't preferred, perhaps because it is less specific).
 
+**Open question:** Determine an alternative mechanism for determining when a
+templated function is applicable, to replace the use cases of
+[SFINAE in C++](https://en.wikipedia.org/wiki/Substitution_failure_is_not_an_error).
+
 ### Implicit parameters
 
 An [implicit parameter](terminology.md#implicit-parameter) is a value that is
@@ -256,6 +276,9 @@ fn PrintArraySize[Int: n](Ptr(FixedArray(String, n)): array) {
 var FixedArray(String, 3): a = ...;
 PrintArraySize(&a);  // Prints: 3
 ```
+
+**Open question:** Are regular dynamic parameters like `n` here allowed to be
+used in type expressions like `FixedArray(String, n)`?
 
 What happens here is the type for the `array` parameter is determined from the
 value passed in, and the pattern-matching process used to see if the types match
@@ -287,9 +310,9 @@ fn Illegal[Int:$ n](Int: i) -> Bool { return i < n; }
 
 -   A function can have a mix of generic, template, and regular parameters.
 -   Can pass a template or generic value to a generic or regular parameter.
--   There are restrictions passing a generic value to a template parameter,
-    discussed in a (dedicated
-    document)[https://github.com/josh11b/carbon-lang/blob/generic-to-template/docs/design/generics/generic-to-template.md].
+-   Passing a generic value to a template parameter is future work.
+-   FIXME: There are restrictions passing a generic value to a template
+    parameter, discussed in a [dedicated document](generic-to-template.md).
 
 ### Local constants
 
@@ -326,8 +349,9 @@ fn PrimesLessThan(Int:$$ N) {
 }
 ```
 
-Interfaces may include requirements that a type have local constants with a
-particular type and name.
+Interfaces may include requirements that a type's implementation of that
+interface have local constants with a particular type and name. These are called
+FIXME: [associated constants](combined-interfaces.md#associated-constants).
 
 ### Generic type parameters versus templated type parameters
 
@@ -352,23 +376,26 @@ we need to add to support generic type parameters, beyond what is described in
 
 ## Proposed programming model
 
-This is described in detail in a separate document,
+FIXME: This is described in detail in a separate document,
 ["Carbon deep dive: combined interfaces"](combined-interfaces.md). In summary:
 
--   Interfaces have a name and describe functions and other items for types to
-    implement.
+-   Interfaces have a name and describe methods, functions, and other items for
+    types to implement.
 -   Types may implement interfaces at most once.
 -   Implementations may be part of the type's definition, in which case you can
-    directly call functions on those types. Or they may be external, in which
-    case the implementation is allowed to be defined in the library defining the
-    interface. The goal is that methods for interfaces implemented with the type
-    are generally available without qualification, and a function with a generic
-    type parameter can have the same function body as an unparameterized one.
+    directly call the interface's methods on those types. Or they may be
+    external, in which case the implementation is allowed to be defined in the
+    library defining the interface. The goal is that methods for interfaces
+    implemented with the type are generally available without qualification, and
+    a function with a generic type parameter can have the same function body as
+    an unparameterized one.
 -   Interfaces are usable as type-types, meaning you can define a generic
     function that have a type parameter satisfying the interface by saying the
     type of the type parameter is the interface. Inside such a generic function,
-    the API of the type is erased, except for the names of the interface.
--   You may also declare type-types, called "structural interfaces", that
+    the API of the type is [erased](terminology.md#type-erasure), except for the
+    names defined in the interface.
+-   You may also declare type-types, called
+    ["structural interfaces"](terminology.md#structural-interfaces), that
     require multiple interfaces to be implemented, and give you control over how
     name conflicts are handled.
 -   Alternatively, you may use a qualified syntax to directly call a function
@@ -376,8 +403,8 @@ This is described in detail in a separate document,
 -   The `+` operation on type-types allows you conveniently combine interfaces.
     It gives you all the names that don't conflict. Names with conflicts can be
     accessed using the qualified syntax.
--   Interfaces can require other interfaces be implemented, or extend/refine
-    them.
+-   Interfaces can require other interfaces be implemented, or
+    [extend/refine](terminology.md#extendingrefining-an-interface) them.
 
 Future work:
 
@@ -407,85 +434,111 @@ Future work:
 Interface definition
 
 ```
-interface Foo {
-  // `F` is an associated method.
-  method (Ptr(Self): this) F();
+interface Printable {
+  // `Print` is an associated method.
+  method (Self: this) Print();
+  // Method syntax here is a placeholder, should match
+  // whatever syntax is used to define methods in a struct.
+}
+
+interface Launchable {
+  // `Launch` is an associated method that can mutate `this`.
+  method (Ptr(Self): this) Launch();
 }
 ```
 
-Interface with associated type conforming to an interface
+Type that implements an interface:
 
 ```
-interface Bar {
-  var Foo:$ U;
-
-  method (Ptr(Self): this) G() -> U;
-}
-```
-
-Type that implements an interface
-
-```
-struct Baz {
+struct Song {
   // ...
 
-  // Implementing `Foo` for `Baz` inside the definition of `Baz`
-  // means all names of `Foo`, such as `F`, are included as a part
-  // of the `Baz` API.
-  impl Foo {
-    // Could use `Self` in place of `Baz` here.
-    method (Ptr(Baz): this) F() { ... }
+  // Implementing `Printable` for `Song` inside the definition of `Song`
+  // means all names of `Printable`, such as `F`, are included as a part
+  // of the `Song` API.
+  impl Printable {
+    // Could use `Self` in place of `Song` here.
+    method (Song: this) Print() { ... }
   }
 }
-// Implement `Bar` for `Baz` without changing the API of `Baz`
+// Implement `Launchable` for `Song` without changing the API of `Song`
 // using an `extend` declaration. This may be defined in either
-// the library defining `Baz` or `Bar`.
-extend Baz {
-  impl Bar {
-    var Foo:$ U = ...;
-    method (Ptr(Self): this) G() -> U { ... }
+// the library defining `Song` or `Launchable`.
+extend Song {
+  impl Launchable {
+    // Could use either `Self` or `Song` here.
+    method (Ptr(Self): this) Launch() { ... }
   }
 }
 
-var Baz: x;
-// `x.F()` is allowed, unlike `x.G()`.
-x.F();
-// To call `G` on `x`, use the qualified syntax:
-x.(Bar.G)();
-// Can also call `F` using the qualified syntax:
-x.(Foo.F)();
+var Song: song;
+// `song.Print()` is allowed, unlike `song.Launch()`.
+song.Print();
+// To call `Launch` on `song`, use the qualified syntax:
+song.(Launchable.Launch)();
+// Can also call `Print` using the qualified syntax:
+song.(Printable.Print)();
 ```
 
 Function taking a value with type conforming to an interface
 
 ```
-fn H1(Ptr(Foo:$ T): y) {
-  y->F();
+fn PrintIt1(Ptr(Printable:$ T): y) {
+  y->Print();
 }
-fn H2[Foo:$ T](Ptr(T): y) {
-  y->F();
+fn PrintIt2[Printable:$ T](Ptr(T): y) {
+  y->Print();
 }
-H1(&x); H2(&x);
+PrintIt1(&song);
+PrintIt2(&song);
 ```
 
 Function taking a value with type conforming to two different interfaces
 
 ```
-fn Ha[Foo + Bar:$ T](Ptr(T): y) {
-  // `T` has all the names of `Foo` and `Bar` that don't conflict.
-  y->F();
-  // Can call `G` here, even though `x.G()` isn't allowed since
-  // `Bar` is external.
-  y->G();
-  // Qualified syntax works even if there is a name conflict between
-  // Foo and Bar.
-  y->(Bar.G)();
+fn PrintAndLaunch[Printable + Launchable:$ T](Ptr(T): p) {
+  // `T` has all the names of `Printable` and `Launchable`
+  // that don't conflict.
+  p->Print();
+  // Can call `Launch` here, even though `song.Launch()`
+  // isn't allowed since `Launchable` is external.
+  p->Launch();
+  // Qualified syntax works even if there is a name
+  // conflict between Printable and Launchable.
+  p->(Launchable.Launch)();
 }
-Ha(&x);
+PrintAndLaunch(&song);
 ```
 
-Function taking a value with a list of implementations for a single interface,
-all compatible with a single representation type
+FIXME: Interface with associated types
+
+```
+interface Container {
+  // Element can be any type.
+  var Type:$ Element;
+  // Iter is an associated type that
+  // must conform to the `Iter` interface.
+  var Iterable:$ Iter;
+
+  method (Ptr(Self): this) Begin() -> Iter;
+  method (Ptr(Self): this) Insert(Iter: pos, Element: value);
+}
+
+struct SomeStrings {
+  // ...
+  impl Container {
+    // FIXME: Is this needed?
+    // FIXME: Or maybe use `alias` here?
+    var Type:$ Element = String;
+    var Iterable:$ Iter = Int;
+    method (Ptr(Self): this) Begin() -> Int { ... }
+    method (Ptr(Self): this) Insert(Int: pos String: value) { ... }
+  }
+}
+```
+
+FIXME: Function taking a value with a list of implementations for a single
+interface, all compatible with a single representation type
 
 ```
 // Compares `*a` with `*b`, returning the result of the first
@@ -496,8 +549,8 @@ fn IsGreater[Type:$ T](Ptr(T): a, Ptr(T): b,
     -> Bool { ... }
 ```
 
-Function taking a list of values with different types that all implement a
-single interface
+FIXME: Function taking a list of values with different types that all implement
+a single interface
 
 ```
 // `NTuple(N, ToString)` is `(ToString, ..., ToString)`, the tuple
@@ -511,43 +564,56 @@ fn StringConcat[Int:$ N, NTuple(N, ToString):$ Ts](Ts...: input)
 Interface semantically containing other interfaces
 
 ```
-interface Inner {
-  method (Self: this) K();
+interface Equatable {
+  method (Self: this) IsEqual(Self: that) -> Bool;
 }
 
-// `Outer1` requires that `Inner` is implemented.
-interface Outer1 {
-  impl Inner;
+// `Iterable` requires that `Equatable` is implemented.
+interface Iterable {
+  impl Equatable;
+  method (Ptr(Self): this) Advance();
 }
-struct S {
+
+struct SomeStringsIterator {
   // ...
-  impl Inner {
-    method (S: this) K() { ... }
+  impl Iterable {
+    method (Ptr(Self): this) Advance() { ... }
   }
-  impl Outer1 { }
-}
-var S: y = ...;
-y.K();
+  impl Equatable {
+    method (Self: this) IsEqual(Self: that) -> Bool { ... }
+  }
+  // If the definition of `Equatable` was deleted, you would get
+  // Error: Missing implementation of interface `Equatable`
+  //        required by `Iterable`
 
-// `Outer2` refines `Inner`.
-interface Outer2 {
-  extends Inner;
 }
-// `Outer2` is equivalent to:
-interface Outer2 {
-  impl Inner;
-  alias K = Inner.K;
+var SomeStringsIterator: i = ...;
+i.Advance();
+i.IsEqual(i);
+
+// `Hashable` refines `Inner`.
+interface Hashable {
+  extends Equatable;
+  method (Self: this) Hash() -> UInt64;
+}
+// `Hashable` is equivalent to:
+interface Hashable {
+  impl Equatable;
+  alias IsEqual = Equatable.IsEqual;
+  method (Self: this) Hash() -> UInt64;
 }
 
-struct T {
+struct Key {
   // ...
-  impl Outer2 {
-    method (T: this) K() { ... }
+  impl Hashable {
+    method (Key: this) IsEqual(Key: that) -> Bool { ... }
+    method (Key: this) Hash() -> UInt64 { ... }
   }
-  // No need to separately implement `Inner`.
+  // No need to separately implement `Equatable`.
 }
-var S: z = ...;
-z.K();
+var Key: k = ...;
+k.Hash();
+k.IsEqual(k);
 ```
 
 Interface structurally consisting of other interfaces
@@ -556,7 +622,7 @@ Interface structurally consisting of other interfaces
 interface A { ... }
 interface B { ... }
 
-// Combined1 has all names from A and B, must not conflict.
+// Combined1 has all names from A and B, which must not conflict.
 // Can use qualification (`x.(A.F)()`), but not required.
 structural interface Combined1 {
   extends A;
@@ -587,6 +653,6 @@ fn F3[Combined3:$ T](T: x) { ... }
 fn FPlus[A + B:$ T](T: x) { ... }
 ```
 
-### Calling templated code
+### FIXME: Calling templated code
 
-["Passing generic arguments to template parameter"](https://github.com/josh11b/carbon-lang/blob/generic-to-template/docs/design/generics/generic-to-template.md)
+See ["Passing generic arguments to template parameter"](generic-to-template.md).

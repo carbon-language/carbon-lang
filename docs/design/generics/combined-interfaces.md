@@ -3885,8 +3885,16 @@ allocate anything with a dynamic size on the heap using something like
 
 **Question:** Should we prevent interfaces that have functions that accept
 `Self` parameters or return `Self` values (and therefore violate the unsized
-restriction) from being used as the type of runtime type parameters, or should
-just those functions be blacklisted?
+restriction) from being used as the type of runtime type parameters, as
+[Rust requires](https://doc.rust-lang.org/book/ch17-02-trait-objects.html#object-safety-is-required-for-trait-objects),
+or should just those functions be blocked?
+
+Note that Swift is switching its approach from blocking interfaces to blocking
+individual methods
+([1](https://forums.swift.org/t/accepted-se-0309-unlock-existentials-for-all-protocols/47902),
+[2](https://github.com/apple/swift-evolution/blob/main/proposals/0309-unlock-existential-types-for-all-protocols.md)).
+Rust made the transition in the other direction
+[in 2014](https://rust-lang.github.io/rfcs/0255-object-safety.html).
 
 **Restriction:**
 [Rust requires](https://rust-lang.github.io/rfcs/0195-associated-items.html#constraining-associated-types)
