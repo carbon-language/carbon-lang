@@ -50,5 +50,6 @@ request:
 -   [0340 - while loops](p0340.md)
 -   [0426 - Governance & evolution revamp](p0426.md)
 -   [0444 - GitHub Discussions](p0444.md)
+-   [0524 - Generics overview](p0524.md)
 
 <!-- endproposals -->
