@@ -1276,7 +1276,7 @@ another uses a [`where` clause](#where-clauses):
 ```
 interface BidirectionalContainer {
   extends ForwardContainer
-      where ForwardContainer.IteratorType as BidirectionalIterator;
+      where ForwardContainer.IteratorType is BidirectionalIterator;
 }
 ```
 
@@ -2341,14 +2341,14 @@ To do this with a `where` clause, we need some way of saying a type bound, which
 unfortunately is likely to be redundant and inconsistent with how it is said
 outside of a `where` clause.
 
-**Open question:** How do you spell that? This proposal provisionally uses `as`,
-which is our casting operator, but maybe we should have another operator that
-more clearly returns a boolean like `has_type`?
+**Open question:** How do you spell that? This proposal provisionally uses `is`,
+which matches Swift, but maybe we should have another operator that more clearly
+returns a boolean like `has_type`?
 
 ```
 fn SortContainer[Container:$ ContainerType]
     (Ptr(ContainerType): container_to_sort)
-    where ContainerType.ElementType as Comparable;
+    where ContainerType.ElementType is Comparable;
 ```
 
 **Note:** `Container` defines `ElementType` as having type `Type`, but
@@ -2424,7 +2424,7 @@ fn F[RandomAccessIterator:$ IterType,
     (ContainerType: c);
 // versus `where` clause:
 fn F[ContainerInterface:$ ContainerType](ContainerType: c)
-    where ContainerType.IteratorType as RandomAccessIterator;
+    where ContainerType.IteratorType is RandomAccessIterator;
 
 // WANT a definition of RandomAccessContainer such that the above
 // is equivalent to:
@@ -2436,7 +2436,7 @@ alias RandomAccessContainer =
     ContainerInterface(.IteratorType=IterType);
 // versus `where` clause:
 alias RandomAccessContainer = ContainerInterface
-    where RandomAccessContainer.IteratorType as RandomAccessIterator;
+    where RandomAccessContainer.IteratorType is RandomAccessIterator;
 ```
 
 ##### Type bound with interface argument
@@ -2626,7 +2626,7 @@ extend Vector(String) {
 }
 
 // Constraint: `T` such that `Vector(T)` implements `Printable`
-fn PrintThree[Type:$ T](T: a, T: b, T: c) where Vector(T) as Printable {
+fn PrintThree[Type:$ T](T: a, T: b, T: c) where Vector(T) is Printable {
   var Vector(T): v = (a, b, c);
   Print(v);
 }
@@ -4427,7 +4427,7 @@ Could the interface be defined on the pair of types of the two arguments
 somehow?
 
 ```
-fn F(A: a, B: b, ..., Addable(A, B):$ T) where (A, B) as Addable(A, B) {
+fn F(A: a, B: b, ..., Addable(A, B):$ T) where (A, B) is Addable(A, B) {
   ((A, B) as T).DoTheAdd(x, y)
 }
 ```
