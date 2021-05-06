@@ -431,7 +431,7 @@ Future work:
 
 ### Syntax examples of common use cases
 
-Interface definition
+Here are some examples of writing an interface definition:
 
 ```
 interface Printable {
@@ -441,13 +441,15 @@ interface Printable {
   // whatever syntax is used to define methods in a struct.
 }
 
-interface Launchable {
-  // `Launch` is an associated method that can mutate `this`.
-  method (Ptr(Self): this) Launch();
+interface Media {
+  // `Play` is an associated method that can mutate `this`.
+  method (Ptr(Self): this) Play();
 }
 ```
 
-Type that implements an interface:
+The `interface` keyword is used to define a
+[_nominal interface_](terminology.md#nominal-interfaces). That means that types
+need to explicitly implement them, using an `impl` block:
 
 ```
 struct Song {
@@ -461,28 +463,29 @@ struct Song {
     method (Song: this) Print() { ... }
   }
 }
-// Implement `Launchable` for `Song` without changing the API of `Song`
+// Implement `Media` for `Song` without changing the API of `Song`
 // using an `extend` declaration. This may be defined in either
-// the library defining `Song` or `Launchable`.
+// the library defining `Song` or `Media`.
 extend Song {
-  impl Launchable {
+  impl Media {
     // Could use either `Self` or `Song` here.
-    method (Ptr(Self): this) Launch() { ... }
+    method (Ptr(Self): this) Play() { ... }
   }
 }
 
 var Song: song;
-// `song.Print()` is allowed, unlike `song.Launch()`.
+// `song.Print()` is allowed, unlike `song.Play()`.
 song.Print();
-// To call `Launch` on `song`, use the qualified syntax:
-song.(Launchable.Launch)();
+// To call `Play` on `song`, use the qualified syntax:
+song.(Media.Play)();
 // Can also call `Print` using the qualified syntax:
 song.(Printable.Print)();
 ```
 
-Function taking a value with type conforming to an interface
+Here are some functions taking a value with type conforming to an interface:
 
 ```
+// These definitions are completely equivalent.
 fn PrintIt1(Ptr(Printable:$ T): y) {
   y->Print();
 }
@@ -493,21 +496,22 @@ PrintIt1(&song);
 PrintIt2(&song);
 ```
 
-Function taking a value with type conforming to two different interfaces
+The `+` operator is the common way of combining interfaces, used here to express
+a function taking a value with type conforming to two different interfaces:
 
 ```
-fn PrintAndLaunch[Printable + Launchable:$ T](Ptr(T): p) {
-  // `T` has all the names of `Printable` and `Launchable`
+fn PrintAndPlay[Printable + Media:$ T](Ptr(T): p) {
+  // `T` has all the names of `Printable` and `Media`
   // that don't conflict.
   p->Print();
-  // Can call `Launch` here, even though `song.Launch()`
-  // isn't allowed since `Launchable` is external.
-  p->Launch();
+  // Can call `Play` here, even though `song.Play()`
+  // isn't allowed since `Media` is external.
+  p->Play();
   // Qualified syntax works even if there is a name
-  // conflict between Printable and Launchable.
-  p->(Launchable.Launch)();
+  // conflict between Printable and Media.
+  p->(Media.Play)();
 }
-PrintAndLaunch(&song);
+PrintAndPlay(&song);
 ```
 
 FIXME: Interface with associated types
@@ -561,7 +565,8 @@ fn StringConcat[Int:$ N, NTuple(N, ToString):$ Ts](Ts...: input)
     -> String { ... }
 ```
 
-Interface semantically containing other interfaces
+The `impl` keyword is also used to express that an interface requires another
+interface to be implemented:
 
 ```
 interface Equatable {
@@ -590,8 +595,15 @@ struct SomeStringsIterator {
 var SomeStringsIterator: i = ...;
 i.Advance();
 i.IsEqual(i);
+```
 
-// `Hashable` refines `Inner`.
+The `extends` keyword is used to
+[extend/refine](terminology.md#extendingrefining-an-interface) another
+interface. This means the refined interface is both required and all its methods
+are included in the refining interface.
+
+```
+// `Hashable` refines `Equatable`.
 interface Hashable {
   extends Equatable;
   method (Self: this) Hash() -> UInt64;
@@ -616,41 +628,106 @@ k.Hash();
 k.IsEqual(k);
 ```
 
-Interface structurally consisting of other interfaces
+TODO: Also include covariant refinement of individual associated types of the
+refined interface.
+
+We say an interface `C` consists of other interfaces `A` and `B`
+[_structurally_](terminology.md#structural-interfaces)) if the criteria for
+whether `C` is implemented is whether both `A` and `B` are.
 
 ```
-interface A { ... }
-interface B { ... }
+// `PrintableMedia` has all names from `Printable` and `Media`,
+// which must not conflict. As long as there are no name
+// conflicts, this definition is equivalent to
+// `Printable + Media`.
+structural interface PrintableMedia {
+  extends Printable;
+  extends Media;
+}
 
-// Combined1 has all names from A and B, which must not conflict.
-// Can use qualification (`x.(A.F)()`), but not required.
+// `PrintableMedia2` is exactly equivalent to `PrintableMedia`.
+// `extends` means require the interface be implemented
+// (like `impl`), and `alias` all of the names.
+structural interface PrintableMedia2 {
+  impl Printable;
+  alias Print = Printable.Print;
+  impl Media;
+  alias Play = Media.Play.
+}
+
+// `PrintAndPlay2` is equivalent to `PrintAndPlay` above.
+fn PrintAndPlay2[PrintableMedia:$ T](Ptr(T): p) {
+  p->Print();
+  p->Play();
+  // Qualified syntax also works.
+  p->(Media.Play)();
+}
+
+// Song implements `PrintableMedia` without an explicit
+// declaration. Anything that implements both `Printable`
+// and `Media` implements `PrintableMedia`.
+PrintAndPlay2(&song);
+
+// Can implement `PrintableMedia` as long as it has aliases
+// for every name we need to implement for its required
+// interfaces.
+struct Playlist {
+  // ...
+  impl PrintableMedia {
+    method (Self: this) Print() { ... }
+    method (Ptr(Self): this) Play() { ... }
+  }
+}
+
+// The above is equivalent to:
+struct Playlist2 {
+  // ...
+  impl Printable {
+    method (Self: this) Print() { ... }
+  }
+  impl Media {
+    method (Ptr(Self): this) Play() { ... }
+  }
+}
+```
+
+Structural interfaces can be used to combine two interfaces even when they have
+name conflicts.
+
+```
+interface Renderable {
+  method (Self: this) Center() -> (Int, Int);
+  method (Self: this) Draw();
+}
+interface EndOfGame {
+  method (Self: this) Draw();
+  method (Self: this) Winner(Int: player);
+}
+
+// `Combined1` has all names from `Renderable` and `EndOfGame`
+// that do not conflict. Can use qualification, like
+// `x.(Renderable.Draw)()`, to get any names from `Renderable`
+// or `EndOfGame` even if there is a conflict.
 structural interface Combined1 {
-  extends A;
-  extends B;
+  extends Renderable + EndOfGame;
 }
-// Combined2 has all names from A and B that do not conflict.
-// Can use qualification (`x.(A.F)()`) to get any names from
-// `A` or `B` even if there is a conflict.
+// `Combined2` only has names mentioned explicitly.
+// Can use qualification (`x.(Renderable.Center)()`) to access
+// any names from `Renderable` or `EndOfGame` even if they are
+// not mentioned in `Combined2`.
 structural interface Combined2 {
-  extends A + B;
-}
-// Combined3 only has names mentioned explicitly.
-// Can use qualification (`x.(A.F)()`) to get any names from
-// `A` or `B` even if they are not mentioned in `Combined3`.
-structural interface Combined3 {
-  impl A;
-  impl B;
-  alias F = A.F;
-  alias G_A = A.G;
-  alias G_B = B.G;
+  impl Renderable;
+  impl EndOfGame;
+  alias Draw_Renderable = Renderable.Draw;
+  alias Draw_EndOfGame = EndOfGame.Draw;
+  alias Winner = EndOfGame.Winner;
 }
 
 // All of these functions accept the same values, namely anything
-// with a type implementing both `A` and `B`.
+// with a type implementing both `Renderable` and `EndOfGame`.
 fn F1[Combined1:$ T](T: x) { ... }
 fn F2[Combined2:$ T](T: x) { ... }
-fn F3[Combined3:$ T](T: x) { ... }
-fn FPlus[A + B:$ T](T: x) { ... }
+fn FPlus[Renderable + EndOfGame:$ T](T: x) { ... }
 ```
 
 ### FIXME: Calling templated code
