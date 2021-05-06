@@ -31,7 +31,7 @@ struct TypeChecker {
 
   private let program: ExecutableProgram
 
-  /// Mapping from choice alternatives to the enclosing choice.
+  /// Mapping from alternative declaration to the choice in which it is defined.
   private var parent = ASTDictionary<Alternative, ChoiceDefinition>()
 
   /// Mapping from Declarations to type of thing they declare.
@@ -76,7 +76,10 @@ private extension TypeChecker {
     case let .struct(s):
       for m in s.members { _ = type(m) }
     case let .choice(c):
-      for a in c.alternatives { _ = type(a) }
+      for a in c.alternatives {
+        parent[a] = c
+        _ = type(a)
+      }
     case .function, .initialization: ()
     }
   }
@@ -157,7 +160,8 @@ private extension TypeChecker {
     case let a as Alternative:
       let payload = evaluate(TypeExpression(a.payload))
       let payloadTuple = payload == .error ? .void : payload.tuple!
-      r = .alternative(parent: ASTIdentity(of: parent[a]!), payload: payloadTuple)
+      r = .alternative(
+        parent: ASTIdentity(of: parent[a]!), payload: payloadTuple)
 
     case let x as StructMember:
       r = evaluate(x.type)
@@ -196,19 +200,19 @@ private extension TypeChecker {
 
   /// Returns the type of the value computed by `e`, logging errors if `e`
   /// doesn't typecheck.
-  mutating func type(_ call: FunctionCall<Expression>) -> Type {
-    let calleeType = type(call.callee)
-    let argumentTypes = type(.tupleLiteral(call.arguments))
+  mutating func type(_ e: FunctionCall<Expression>) -> Type {
+    let calleeType = type(e.callee)
+    let argumentTypes = type(.tupleLiteral(e.arguments))
     switch calleeType {
     case let .function(parameterTypes: p, returnType: r):
       if argumentTypes != .tuple(p) {
         error(
-          call.arguments,
+          e.arguments,
           "argument types \(argumentTypes) do not match parameter types \(p)")
       }
       return r
     default:
-      return error(call.callee, "value of type \(calleeType) is not callable.")
+      return error(e.callee, "value of type \(calleeType) is not callable.")
     }
   }
 
@@ -284,9 +288,56 @@ private extension TypeChecker {
 
   mutating func type(_ p: FunctionCall<Pattern>) -> Type {
     // Because p is a pattern, it must be a destructurable thing containing
-    // bindings, which means the callee can only be a choice alternative or
-    // struct type.
-    UNIMPLEMENTED
+    // bindings, which means the callee can only be a choice alternative
+    // or struct type.
+    let calleeType = type(p.callee)
+    let argumentTypes = type(.tuple(p.arguments)).tuple!
+
+    switch calleeType {
+    case .type:
+      let calleeValue = Type(evaluate(p.callee))!
+
+      guard case .struct(let resultStructID) = calleeValue else {
+        return error(
+          p.callee, "Called type must be a struct, not '\(calleeValue)'.")
+      }
+
+      let resultStructure = resultStructID.structure
+
+      if argumentTypes.count != resultStructure.members.count {
+        error(
+          p.arguments,
+          "struct '\(calleeValue)' initialization requires"
+            + " \(resultStructure.members.count) arguments;"
+            + " \(argumentTypes.count) provided.")
+      }
+
+      for m in resultStructure.members {
+        guard let argumentType = argumentTypes[.label(m.name)] else {
+          error(p, "Missing intializer argument for member '\(m.name)'")
+          continue
+        }
+        let memberType = type(m)
+        if memberType != argumentType {
+          error(
+            p.arguments.first { $0.label == m.name }!,
+            "Expected initializer of type \(memberType), not \(argumentType)")
+        }
+      }
+      return .struct(resultStructID)
+
+    case let .alternative(parent: resultID, payload: payload):
+      if argumentTypes != payload {
+        error(
+          p.arguments,
+          "Argument tuple type \(argumentTypes) doesn't match"
+            + " alternative payload type \(payload)")
+      }
+      return .choice(resultID)
+
+    default:
+      return error(p.callee, "instance of type \(calleeType) is not callable.")
+    }
   }
 
   mutating func type(_ c: FunctionType<Pattern>) -> Type {
