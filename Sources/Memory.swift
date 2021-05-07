@@ -109,3 +109,15 @@ struct Memory {
   private var storage: [Address: Location] = [:]
   private(set) var nextAddress = 0
 }
+
+extension Memory {
+  func assertCleanupDone(except expectedLive: Set<Address>) {
+    var unexpectedLiveStorage: [Address: Location] = [:]
+    for (address, location) in storage {
+      if location.content != nil && !expectedLive.contains(address) {
+        unexpectedLiveStorage[address] = location
+      }
+    }
+    assert(unexpectedLiveStorage.isEmpty, "Incomplete cleanup")
+  }
+}

@@ -13,27 +13,50 @@ struct Interpreter {
   var //let
     program: ExecutableProgram
 
-  // TODO(geoffromer): Replace these with explicit modeling of scopes
-  // as part of the todo stack.
-  /// A mapping from local name declarations to addresses.
-  var locals: ASTDictionary<SimpleBinding, Address> = .init()
-  /// A mapping from local expressions to addresses
-  var temporaries: ASTDictionary<Expression, Address> = .init()
+  struct Scope {    
+    var actionIndex: Int
+    var owned: [Address] = []
+  }
   
-  /// The address that should be filled in by any `return` statements.
-  var returnValueStorage: Address = -1
+  private var scopes: Stack<Scope> = .init()
+  private var returnAddresses: Stack<(actionIndex: Int, Address)> = .init()
+  
+  var returnValueStorage: Address {
+    get { returnAddresses.top.1 }
+  }
 
-  /// A type that captures everything that needs to be restored after a callee
-  /// returns.
-  typealias FunctionContext = (
-    locals: ASTDictionary<SimpleBinding, Address>,
-    temporaries: ASTDictionary<Expression, Address>,
-    returnValueStorage: Address)
-
-  /// The function execution context.
-  var functionContext: FunctionContext {
-    get { (locals, temporaries, returnValueStorage) }
-    set { (locals, temporaries, returnValueStorage) = newValue }
+  mutating func beginScope() {
+    scopes.push(Scope(actionIndex: todo.count))
+  }
+  
+  mutating func endScope() {
+    let scope = scopes.pop()!
+    assert(scope.actionIndex == todo.count, "Can't end scope started by another Action")
+    for a in scope.owned {
+      memory.deinitialize(a)
+      memory.deallocate(a)
+    }
+  }
+  
+  private mutating func endScopes() {
+    while case .some(let scope) = scopes.queryTop,
+          scope.actionIndex >= todo.count {
+      endScope()
+    }
+    while case .some((let actionIndex, _)) = returnAddresses.queryTop,
+          actionIndex >= todo.count {
+      _ = returnAddresses.pop()
+    }
+  }
+  
+  mutating func beginFunctionScope(returnValueStorage: Address) {
+    beginScope()
+    returnAddresses.push((actionIndex: todo.count, returnValueStorage))
+  }
+  
+  mutating func endFunctionScope() {
+    let (actionIndex, _) = returnAddresses.pop()!
+    assert(actionIndex == todo.count)
   }
 
   typealias ExitCode = Int
@@ -52,28 +75,35 @@ struct Interpreter {
 
 extension Interpreter {
   mutating func start() {
+    todo.push(NoopAction())
+    beginScope()
+    // FIXME: should this be part of the scope?
     exitCodeStorage = memory.allocate(boundTo: .int, from: .empty)
 
     todo.push(EvaluateCall(
-      call: program.entryPoint!,
-      callerContext: functionContext, returnValueStorage: exitCodeStorage))
+      call: program.entryPoint!, returnValueStorage: exitCodeStorage))
   }
 
   /// Progress one step forward in the execution sequence, returning an exit
   /// code if the program terminated.
   mutating func step() -> ExitCode? {
     guard var current = todo.pop() else {
-      return (memory[exitCodeStorage] as! IntValue)
+      let exitCode = memory[exitCodeStorage] as! IntValue
+      memory.assertCleanupDone(except: [exitCodeStorage])
+      return exitCode
     }
     switch current.run(on: &self) {
-    case .done: break
+    case .done:
+      endScopes()
     case .spawn(let child):
       todo.push(current)
       todo.push(child)
     case .chain(to: let successor):
+      // FIXME: explain why we don't endScopes() here
       todo.push(successor)
     case .unwind(let isSuccessor):
       while (!isSuccessor(todo.top)) { _ = todo.pop() }
+      endScopes()
     }
     return nil
   }
@@ -82,21 +112,10 @@ extension Interpreter {
   mutating func allocateTemporary(
     `for` e: Expression, boundTo t: Type, mutable: Bool = false
   ) -> Address{
-    precondition(temporaries[e] == nil, "Temporary already initialized.")
     let a = memory.allocate(
       boundTo: t, from: e.site.region, mutable: false)
-    temporaries[e] = a
+    scopes.top.owned.append(a)
     return a
-  }
-
-  /// Destroys any rvalue computed for `e` and removes `e` from `locals`.
-  mutating func cleanUp(_ e: Expression) {
-    defer { temporaries[e] = nil }
-    if case .name(_) = e { return } // not an rvalue.
-
-    let a = temporaries[e]!
-    memory.deinitialize(a)
-    memory.deallocate(a)
   }
 
   /// Accesses the value stored for the declaration of the given name.
