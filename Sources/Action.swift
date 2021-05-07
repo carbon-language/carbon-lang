@@ -2,29 +2,6 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-/*
- Possible state transitions:
- Todo stack:
- - done, resume enclosing action
- - done, unwind to some outer action
- + add subaction
- +- replace with successor action
- 0 no-op?
- 
- Scope stack:
- 0 no-op
- + New local/function scope
- + New temporary scope
- - End temporary scope
- - End local/function scope
- - Unwind to some outer scope
-
- Two basic options for scope stack: procedural (run() calls operations on Interpreter)
- and functional (run() returns values that specify updates). Overall design seems to push for
- functional, but makes Followup potentially complicated
- 
- Want to keep two stacks in sync, so Followup can't be fully arbitrary cross product.
- */
 enum Followup {
   case done                        // All finished.
   case spawn(_ child: Action)      // Still working, start child.
@@ -101,34 +78,6 @@ struct EvaluateTupleLiteral: Action {
     return .spawn(Evaluate(e, into: a))
   }
 }
-/*
-struct CleanUp: Action {
-  init(_ target: Expression) {
-    self.target = target
-  }
-  let target: Expression
-
-  mutating func run(on engine: inout Interpreter) -> Followup {
-    engine.cleanUp(target)
-    return .done
-  }
-}
-
-struct CleanUpTupleLiteral: Action {
-  let target: TupleLiteral
-  var nextElement: Int = 0
-
-  init(_ target: TupleLiteral) {
-    self.target = target
-  }
-
-  mutating func run(on state: inout Interpreter) -> Followup {
-    if nextElement == target.count { return .done }
-    defer { nextElement += 1 }
-    return .spawn(CleanUp(target[nextElement].payload))
-  }
-}
-*/
 
 struct NoopAction: Action {
   mutating func run(on state: inout Interpreter) -> Followup {
