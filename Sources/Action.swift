@@ -6,9 +6,7 @@ enum Followup {
   case done                        // All finished.
   case spawn(_ child: Action)      // Still working, start child.
   case chain(_ successor: Action)  // All finished, start successor.
-  // All finished with this action *and* all actions between it and
-  // the nearest lower action on the stack that matches `isSuccessor`
-  case unwindToFunctionCall
+  case unwindToFunctionCall        // All finished with current function call
 }
 
 protocol Action {
@@ -161,7 +159,7 @@ struct ExecuteReturn: Action {
     switch step {
     case .start:
       step = .evaluateOperand
-      return .spawn(Evaluate(operand, into: state.returnValueStorage))
+      return .spawn(Evaluate(operand, into: state.returnValueStorage!))
     case .evaluateOperand:
       step = .transferControl
       return .unwindToFunctionCall

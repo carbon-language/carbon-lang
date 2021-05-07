@@ -21,14 +21,14 @@ struct Interpreter {
   var temporaries: ASTDictionary<Expression, Address> = .init()
   
   /// The address that should be filled in by any `return` statements.
-  var returnValueStorage: Address = -1
+  var returnValueStorage: Address? = nil
 
   /// A type that captures everything that needs to be restored after a callee
   /// returns.
   typealias FunctionContext = (
     locals: ASTDictionary<SimpleBinding, Address>,
     temporaries: ASTDictionary<Expression, Address>,
-    returnValueStorage: Address)
+    returnValueStorage: Address?)
 
   /// The function execution context.
   var functionContext: FunctionContext {
@@ -44,7 +44,7 @@ struct Interpreter {
 
   var memory = Memory()
 
-  private var exitCodeStorage: Address = -1
+  private var exitCodeStorage: Address? = nil
 
   /// The stack of pending actions.
   private var todo = Stack<Action>()
@@ -56,7 +56,7 @@ extension Interpreter {
 
     todo.push(EvaluateCall(
       call: program.entryPoint!,
-      callerContext: functionContext, returnValueStorage: exitCodeStorage))
+      callerContext: functionContext, returnValueStorage: exitCodeStorage!))
   }
 
   enum Status {
@@ -68,7 +68,7 @@ extension Interpreter {
   /// code if the program terminated.
   mutating func step() -> Status {
     guard var current = todo.pop() else {
-      return .exited(memory[exitCodeStorage] as! IntValue)
+      return .exited(memory[exitCodeStorage!] as! IntValue)
     }
     switch current.run(on: &self) {
     case .done: break
