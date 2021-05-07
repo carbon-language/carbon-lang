@@ -1247,13 +1247,15 @@ interface ForwardContainer {
   method (Ptr(Self): this) Begin() -> IteratorType;
   method (Ptr(Self): this) End() -> IteratorType;
 }
+// Note: This should probably give a compile error complaining
+// about an `IteratorType` name collision.
 interface BidirectionalContainer {
   // Redeclaration of `IteratorType` with a more specific bound.
   var BidirectionalIterator:$ IteratorType;
 
   // Question: does this cause any weird shadowing?
-  // Question: do we have to have a constraint equating IteratorType
-  // with ForwardContainer.IteratorType?
+  // Question: do we have to have a constraint equating
+  // `IteratorType` and `ForwardContainer.IteratorType`?
   extends ForwardContainer;
 }
 ```
@@ -1277,6 +1279,19 @@ another uses a [`where` clause](#where-clauses):
 interface BidirectionalContainer {
   extends ForwardContainer
       where ForwardContainer.IteratorType is BidirectionalIterator;
+}
+```
+
+or the argument passing approach would use an inferred variable:
+
+```
+interface BidirectionalContainer {
+  // `Refined` is some new name so we don't collide with
+  // `IteratorType`. The `[...]` mean this new name is
+  // only used as a constraint, and is not part of the
+  // `BidirectionalContainer` API.
+  [var BidirectionalIterator:$ Refined];
+  extends ForwardContainer(.IteratorType = Refined);
 }
 ```
 
