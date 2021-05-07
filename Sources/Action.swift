@@ -43,7 +43,7 @@ struct Evaluate: Action {
         fatalError("No definition for '\(id.text)'")
       default: UNIMPLEMENTED
       }
-    case .getField(_, _, _): UNIMPLEMENTED
+    case .memberAccess(_): UNIMPLEMENTED
     case .index(target: _, offset: _, _): UNIMPLEMENTED
     case .integerLiteral(let value, _):
       state.memory.initialize(target, to: value)

@@ -270,7 +270,7 @@ private extension TypeChecker {
 
   mutating func type(_ f: FunctionDefinition) -> Type {
     if let r = types[f.identity] { return r }
-    let parameterTypes = parameterTypes(f.parameters)
+    let parameterTypes = self.parameterTypes(f.parameters)
 
     let returnType: Type
     if case .expression(let t) = f.returnType {
