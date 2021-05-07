@@ -55,7 +55,7 @@ typealias AbstractSyntaxTree = [TopLevelDeclaration]
 /// A destructurable pattern.
 indirect enum Pattern: AST {
   case
-    atom(Expression),             // A non-destructurable expression
+    atom(Expression),             // An expression containing no bindings.
     variable(SimpleBinding),     // <Type>: <name>
     tuple(TuplePattern),
     functionCall(FunctionCall<Pattern>),
@@ -175,6 +175,15 @@ struct StructDefinition: AST, TypeDeclaration {
   let name: Identifier
   let members: [StructMember]
   let site: Site
+
+  /// The parameter type tuple used to initialize instances of the struct being
+  /// defined.
+  ///
+  /// - Note: this node is synthesized; its `site` will match that of `self`.
+  var initializerTuple: TupleSyntax<TypeExpression> {
+    return TupleSyntax(
+      members.map { .init(label: $0.name, $0.type) }, site)
+  }
 
   var declaredType: Type { .struct(self.identity) }
 }
@@ -309,7 +318,7 @@ extension FunctionTypePattern {
 indirect enum Expression: AST {
   case
     name(Identifier),
-    getField(target: Expression, fieldName: Identifier, Site),
+    memberAccess(MemberAccessExpression),
     index(target: Expression, offset: Expression, Site),
     integerLiteral(Int, Site),
     booleanLiteral(Bool, Site),
@@ -325,7 +334,7 @@ indirect enum Expression: AST {
   var site: Site {
     switch self {
     case let .name(v): return v.site
-    case let .getField(_, _, r): return r
+    case let .memberAccess(x): return x.site
     case let .index(target: _, offset: _, r): return r
     case let .integerLiteral(_, r): return r
     case let .booleanLiteral(_, r): return r
@@ -340,6 +349,13 @@ indirect enum Expression: AST {
     }
   }
 };
+
+struct MemberAccessExpression: AST {
+  let base: Expression
+  let member: Identifier
+
+  var site: ASTSite { base.site...member.site }
+}
 
 /// An expression whose value will be used as a type in type-checking.
 ///

@@ -7,64 +7,148 @@ import XCTest
 final class TypeCheckNominalTypeDeclaration: XCTestCase {
 
   func testStruct() throws {
-    let executable = try "struct X { var Int: y; }".checkExecutable()
-
-    let typeChecker = TypeChecker(executable)
-    XCTAssertEqual(typeChecker.errors, [])
+    "struct X { var Int: y; }".checkTypeChecks()
   }
 
   func testStructStructMember() throws {
-    let executable = try """
-      struct X { var Int: y; }
-      struct Z { var X: a; }
-      """.checkExecutable()
-
-    let typeChecker = TypeChecker(executable)
-    XCTAssertEqual(typeChecker.errors, [])
+    """
+    struct X { var Int: y; }
+    struct Z { var X: a; }
+    """.checkTypeChecks()
   }
 
   func testStructNonTypeExpression0() throws {
-    let executable = try "struct X { var 42: y; }".checkExecutable()
-
-    let typeChecker = TypeChecker(executable)
-    typeChecker.errors.checkForMessageExcerpt("Not a type expression")
+    try "struct X { var 42: y; }"
+      .typeChecked().errors.checkForMessageExcerpt("Not a type expression")
   }
 
   func testChoice() throws {
-    let executable = try """
-      choice X {
-        Box,
-        Car(Int),
-        Children(Int, Bool)
-      }
-      """.checkExecutable()
-
-    let typeChecker = TypeChecker(executable)
-    XCTAssertEqual(typeChecker.errors, [])
+    """
+    choice X {
+      Box,
+      Car(Int),
+      Children(Int, Bool)
+    }
+    """.checkTypeChecks()
   }
 
   func testChoiceChoiceMember() throws {
-    let executable = try """
-      choice Y {
-        Fork, Knife(X), Spoon(X, X)
-      }
-      choice X {
-        Box,
-        Car(Int),
-        Children(Int, Bool)
-      }
-      """.checkExecutable()
-
-    let typeChecker = TypeChecker(executable)
-    XCTAssertEqual(typeChecker.errors, [])
+    """
+    choice Y {
+      Fork, Knife(X), Spoon(X, X)
+    }
+    choice X {
+      Box,
+      Car(Int),
+      Children(Int, Bool)
+    }
+    """.checkTypeChecks()
   }
 
   func testChoiceNonTypeExpression() throws {
-    let executable = try "choice X { Bog(42) }".checkExecutable()
-    let typeChecker = TypeChecker(executable)
-    typeChecker.errors.checkForMessageExcerpt("Not a type expression")
+    try "choice X { Bog(42) }"
+      .typeChecked().errors.checkForMessageExcerpt("Not a type expression")
+  }
+}
+
+final class TypeCheckFunctionSignatures: XCTestCase {
+  //
+  // Simplest test cases.
+  //
+
+  func testTrivial() throws {
+    "fn f() {}".checkTypeChecks()
   }
 
+  func testOneParameter() throws {
+    "fn f(Int: x) {}".checkTypeChecks()
+  }
+
+  func testOneResult() throws {
+    "fn f() -> Int { return 3; }".checkTypeChecks()
+  }
+
+  func testDoubleArrow() throws {
+    "fn f() => 3;".checkTypeChecks()
+  }
+
+  func testDoubleArrowIdentity() throws {
+    "fn f(Int: x) => x;".checkTypeChecks()
+  }
+
+  func testEvaluateTupleLiteral() throws {
+    "fn f((Int, Int): x) => (x, x);".checkTypeChecks()
+  }
+
+  func testEvaluateFunctionType() throws {
+    """
+    fn g(Int: a, Int: b)->Int { return a; }
+    fn f(fnty (Int, Int)->Int: x) => x;
+    fn h() => f(g)(3, 4);
+    """.checkTypeChecks()
+  }
+
+  func testFunctionCallArityMismatch() throws {
+    try """
+      fn g(Int: a, Int: b) => a;
+      fn f(Bool: x) => g(x);
+      """.typeChecked().errors.checkForMessageExcerpt(
+      "do not match parameter types")
+  }
+
+  func testFunctionCallParameterTypeMismatch() throws {
+    try """
+      fn g(Int: a, Int: b) => a;
+      fn f(Bool: x) => g(1, x);
+      """.typeChecked().errors.checkForMessageExcerpt(
+      "do not match parameter types")
+  }
+
+  func testFunctionCallLabelMismatch() throws {
+    try """
+      fn g(.first = Int: a, Int: b) => a;
+      fn f(Bool: x) => g(.last = 1, 2);
+      """.typeChecked().errors.checkForMessageExcerpt(
+      "do not match parameter types")
+  }
+
+  func testFunctionCallLabel() throws {
+    """
+  fn g(.first = Int: a, .second = Int: b) => a;
+  fn f(Bool: x) => g(.first = 1, .second = 2);
+  """.checkTypeChecks()
+}
+
+
+  //
+  // Exercising code paths that return the type of a declared entity.
+  //
+
+  func testDeclaredTypeStruct() throws {
+    """
+    struct X {}
+    fn f() -> X { return X(); }
+    fn g(X) {}
+    """.checkTypeChecks()
+  }
+
+  func testDeclaredTypeChoice() throws {
+    """
+    choice X { Bonk }
+    fn f() -> X { return X.Bonk; }
+    fn g(X) {}
+    """.checkTypeChecks()
+  }
+
+  func testDeclaredTypeAlternative() throws {
+    """
+    choice X { Bonk(Int) }
+    fn f() => X.Bonk(3);
+    """.checkTypeChecks()
+  }
+}
+
+final class TypeCheckExamples: XCTestCase {
   /*
   func testExamples() {
     let testdata =

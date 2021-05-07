@@ -8,6 +8,7 @@ indirect enum Type: Equatable {
     int, bool, type,
     function(parameterTypes: TupleType, returnType: Type),
     tuple(TupleType),
+    alternative(parent: ASTIdentity<ChoiceDefinition>, payload: TupleType),
     `struct`(ASTIdentity<StructDefinition>),
     `choice`(ASTIdentity<ChoiceDefinition>),
 
@@ -19,6 +20,26 @@ indirect enum Type: Equatable {
     if let s = d as? StructDefinition { self = .struct(s.identity) }
     else if let c = d as? ChoiceDefinition { self = .choice(c.identity) }
     else { return nil }
+  }
+
+  /// Creates an instance corresponding to `v` if it is a type value, or `nil`
+  /// otherwise.
+  init?(_ v: Value) {
+    if let r = (v as? Type) {
+      self = r
+      return
+    }
+
+    // If the value is a tuple, check that all its elements are types.
+    if let elements = (v as? TupleValue) {
+      let typeElements = elements.compactMapValues { $0 as? Type }
+      if typeElements.count == elements.count {
+        self = .tuple(typeElements)
+        return
+      }
+    }
+
+    return nil
   }
 
   /// Convenience accessor for `.function` case.

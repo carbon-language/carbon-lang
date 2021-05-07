@@ -21,6 +21,10 @@ extension TupleValue: CarbonInterpreter.Value {
   }
 }
 
+extension TupleType {
+  static let void: Self = [:]
+}
+
 extension TupleSyntax {
   /// Returns a form of this AST node that is agnostic to the ordering of
   /// labeled fields, adding an error to errors if there are any duplicate
@@ -35,9 +39,10 @@ extension TupleSyntax {
         = e.label.map { .label($0) } ?? .position(positionalCount)
       if case .position = key { positionalCount += 1 }
       if let other = r[key] {
-        CompileError(
-          "Duplicate label \(e.label!)", at: e.label!.site,
-          notes: [("other definition", other.site)])
+        errors.append(
+          CompileError(
+            "Duplicate label \(e.label!)", at: e.label!.site,
+            notes: [("other definition", other.site)]))
       }
       else {
         r[key] = e.payload
