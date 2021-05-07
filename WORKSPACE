@@ -122,3 +122,8 @@ new_local_repository(
     path = "third_party/examples/woff2/original",
     workspace_file = "third_party/examples/woff2/WORKSPACE.original",
 )
+
+local_repository(
+    name = "woff2_carbon",
+    path = "third_party/examples/woff2/carbon",
+)

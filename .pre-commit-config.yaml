@@ -17,7 +17,11 @@ repos:
       - id: check-executables-have-shebangs
       - id: check-merge-conflict
       - id: check-symlinks
-        exclude: '^(website/jekyll/site/_includes|bazel-(clang-toolchain|execroot))$'
+        exclude: |
+          (?x)^(
+              website/jekyll/site/_includes|
+              bazel-(clang-toolchain|execroot)
+          )$
       - id: check-yaml
       - id: detect-private-key
       - id: end-of-file-fixer
@@ -25,7 +29,6 @@ repos:
         args: ['--fix=lf']
       - id: trailing-whitespace
         exclude: '^(.*/testdata/.*\.golden)$'
-
   - repo: https://github.com/google/pre-commit-tool-hooks
     rev: 1d04a2848ac54d64bd6474ccec69aac45fa88414 # frozen: v1.1.1
     hooks:
@@ -51,7 +54,15 @@ repos:
           - ''
           - '// '
           - ''
-        exclude: '^(website/(firebase/.firebaserc|jekyll/(Gemfile.lock|theme/.*))|.bazelversion|compile_flags.txt|.*\.def|.*/testdata/.*\.golden)$'
+        exclude: |
+          (?x)^(
+              .bazelversion|
+              compile_flags.txt|
+              third_party/examples/.*/compile_flags.carbon.txt|
+              website/(firebase/.firebaserc|jekyll/(Gemfile.lock|theme/.*))|
+              .*\.def|
+              .*/testdata/.*\.golden
+          )$
       - id: check-google-doc-style
       - id: markdown-toc
   - repo: https://github.com/codespell-project/codespell
@@ -91,5 +102,10 @@ repos:
     hooks:
       - id: flake8
 
+# Most third-party code is in submodules; local commits are excluded here.
 # We fully exclude fuzzer corpus directories as they are generated binary data.
-exclude: '^(.*/fuzzer_corpus/.*)$'
+exclude: |
+  (?x)^(
+      third_party/examples/.*/carbon/.*|
+      .*/fuzzer_corpus/.*
+  )$

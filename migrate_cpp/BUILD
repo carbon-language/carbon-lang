@@ -7,7 +7,9 @@ load("@rules_python//python:defs.bzl", "py_binary")
 py_binary(
     name = "migrate_cpp",
     srcs = ["migrate_cpp.py"],
-    python_version = "PY3",
-    deps = [
+    data = [
+        ":clang_tidy.yaml",
+        "@bootstrap_clang_toolchain//:bin/clang-tidy",
     ],
+    python_version = "PY3",
 )
