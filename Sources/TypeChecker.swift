@@ -34,8 +34,11 @@ struct TypeChecker {
   /// Mapping from alternative declaration to the choice in which it is defined.
   private var parent = ASTDictionary<Alternative, ChoiceDefinition>()
 
-  /// Mapping from Declarations to type of thing they declare.
+  /// Mapping from Declaration to type of thing it declares.
   private(set) var types = Dictionary<Declaration.Identity, Type>()
+
+  /// Mapping from struct to the parameter tuple type that initializes it.
+  private var initializerTuples = ASTDictionary<StructDefinition, TupleType>()
 
   /// Return type of function currently being checked, if any.
   private var returnType: Type?
@@ -87,16 +90,7 @@ private extension TypeChecker {
   /// Returns the type defined by `t` or `.error` if `d` doesn't define a type.
   mutating func evaluate(_ e: TypeExpression) -> Type {
     let v = evaluate(e.body)
-    if let r = (v as? Type) { return r }
-
-    // If the value is a tuple, check that all its elements are types.
-    if let elements = (v as? TupleValue) {
-      let typeElements = elements.compactMapValues { $0 as? Type }
-      if typeElements.count == elements.count {
-        return .tuple(typeElements)
-      }
-    }
-
+    if let r = Type(v) { return r }
     return error(e, "Not a type expression (value has type \(v.type)).")
   }
 
@@ -148,8 +142,8 @@ private extension TypeChecker {
 
     let r: Type
     switch d {
-    case let x as TypeDeclaration:
-      r = x.declaredType
+    case is TypeDeclaration:
+      r = .type
 
     case let x as SimpleBinding:
       r = evaluate(x.type.expression!)
@@ -211,6 +205,32 @@ private extension TypeChecker {
           "argument types \(argumentTypes) do not match parameter types \(p)")
       }
       return r
+
+    case let .alternative(parent: resultID, payload: payload):
+      if argumentTypes != .tuple(payload) {
+        error(
+          e.arguments,
+          "argument types \(argumentTypes)"
+            + " do not match payload type \(payload)")
+      }
+      return .choice(resultID)
+
+    case .type:
+      let calleeValue = evaluate(TypeExpression(e.callee))
+      guard case .struct(let s) = calleeValue else {
+        return error(e.callee, "type \(calleeValue) is not callable.")
+      }
+
+      let initializerType = initializerParameters(s)
+
+      if argumentTypes != .tuple(initializerType) {
+        error(
+          e.arguments,
+          "argument types \(argumentTypes) do"
+            + " not match required initializer arguments \(initializerType)")
+      }
+      return calleeValue
+
     default:
       return error(e.callee, "value of type \(calleeType) is not callable.")
     }
@@ -286,6 +306,10 @@ private extension TypeChecker {
     }
   }
 
+  // FIXME: There is significant code duplication between pattern and expression
+  // type deduction.  Perhaps upgrade expressions to patterns and use the same
+  // code to check?
+
   mutating func type(_ p: FunctionCall<Pattern>) -> Type {
     // Because p is a pattern, it must be a destructurable thing containing
     // bindings, which means the callee can only be a choice alternative
@@ -297,34 +321,19 @@ private extension TypeChecker {
     case .type:
       let calleeValue = Type(evaluate(p.callee))!
 
-      guard case .struct(let resultStructID) = calleeValue else {
+      guard case .struct(let resultID) = calleeValue else {
         return error(
           p.callee, "Called type must be a struct, not '\(calleeValue)'.")
       }
 
-      let resultStructure = resultStructID.structure
-
-      if argumentTypes.count != resultStructure.members.count {
+      let parameterTypes = initializerParameters(resultID)
+      if argumentTypes != parameterTypes {
         error(
           p.arguments,
-          "struct '\(calleeValue)' initialization requires"
-            + " \(resultStructure.members.count) arguments;"
-            + " \(argumentTypes.count) provided.")
+          "Argument tuple type \(argumentTypes) doesn't match"
+            + " struct initializer type \(parameterTypes)")
       }
-
-      for m in resultStructure.members {
-        guard let argumentType = argumentTypes[.label(m.name)] else {
-          error(p, "Missing intializer argument for member '\(m.name)'")
-          continue
-        }
-        let memberType = type(m)
-        if memberType != argumentType {
-          error(
-            p.arguments.first { $0.label == m.name }!,
-            "Expected initializer of type \(memberType), not \(argumentType)")
-        }
-      }
-      return .struct(resultStructID)
+      return calleeValue
 
     case let .alternative(parent: resultID, payload: payload):
       if argumentTypes != payload {
@@ -338,6 +347,17 @@ private extension TypeChecker {
     default:
       return error(p.callee, "instance of type \(calleeType) is not callable.")
     }
+  }
+
+  /// Returns the initializer parameter list for the given struct
+  mutating func initializerParameters(
+    _ s: ASTIdentity<StructDefinition>
+  ) -> TupleType {
+    if let r = initializerTuples[s.structure] { return r }
+    let r = s.structure.initializerTuple.fields(reportingDuplicatesIn: &errors)
+      .mapValues { evaluate($0) }
+    initializerTuples[s.structure] = r
+    return r
   }
 
   mutating func type(_ c: FunctionType<Pattern>) -> Type {

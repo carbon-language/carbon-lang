@@ -103,8 +103,10 @@ extension String {
 
 
 extension String {
-  /// The carbon executable corresponding to `self`, without type checking, or
-  /// `nil`, also causing an XCTest failure, if errors occurred in parsing or
+  /// Returns the carbon executable corresponding to `self`, without type
+  /// checking.
+  ///
+  /// Throws and causes an XCTest failure if errors occurred in parsing or
   /// name lookup.
   func checkExecutable(
     _ message: @autoclosure () -> String = "",
@@ -115,5 +117,23 @@ extension String {
       try ExecutableProgram(
         self.parsedAsCarbon(fromFile: String(describing: filePath))),
       message(), filePath: filePath, line: line)
+  }
+}
+
+extension String {
+  /// Returns the results of parsing, name lookup, and typechecking `self`.
+  ///
+  /// Throws and causes an XCTest failure if errors occurred in parsing or
+  /// name lookup.
+  func typeChecked(
+    _ message: @autoclosure () -> String = "",
+    filePath: StaticString = #filePath,
+    line: UInt = #line
+  ) throws -> (ExecutableProgram, typeChecker: TypeChecker, errors: ErrorLog)
+  {
+    let executable = try self.checkExecutable(
+      message(), filePath: filePath, line: line)
+    let typeChecker = TypeChecker(executable)
+    return (executable, typeChecker, typeChecker.errors)
   }
 }

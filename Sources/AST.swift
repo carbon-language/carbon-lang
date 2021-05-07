@@ -176,6 +176,15 @@ struct StructDefinition: AST, TypeDeclaration {
   let members: [StructMember]
   let site: Site
 
+  /// The parameter type tuple used to initialize instances of the struct being
+  /// defined.
+  ///
+  /// - Note: this node is synthesized; its `site` will match that of `self`.
+  var initializerTuple: TupleSyntax<TypeExpression> {
+    return TupleSyntax(
+      members.map { .init(label: $0.name, $0.type) }, site)
+  }
+
   var declaredType: Type { .struct(self.identity) }
 }
 

@@ -4,17 +4,6 @@
 import XCTest
 @testable import CarbonInterpreter
 
-extension String {
-  /// Returns the results of parsing, name lookup, and typechecking `self`.
-  func typeChecked() throws
-    -> (ExecutableProgram, typeChecker: TypeChecker, errors: ErrorLog)
-  {
-    let executable = try self.checkExecutable()
-    let typeChecker = TypeChecker(executable)
-    return (executable, typeChecker, typeChecker.errors)
-  }
-}
-
 final class TypeCheckNominalTypeDeclaration: XCTestCase {
 
   func testStruct() throws {
@@ -65,6 +54,66 @@ final class TypeCheckNominalTypeDeclaration: XCTestCase {
   func testChoiceNonTypeExpression() throws {
     try "choice X { Bog(42) }"
       .typeChecked().errors.checkForMessageExcerpt("Not a type expression")
+  }
+}
+
+final class TypeCheckFunctionSignatures: XCTestCase {
+  //
+  // Simplest test cases.
+  //
+
+  func testTrivial() throws {
+    try XCTAssertEqual("fn f() {}".typeChecked().errors, [])
+  }
+
+  func testOneParameter() throws {
+    try XCTAssertEqual("fn f(Int: x) {}".typeChecked().errors, [])
+  }
+
+  func testOneResult() throws {
+    try XCTAssertEqual("fn f() -> Int { return 3; }".typeChecked().errors, [])
+  }
+
+  func testDoubleArrow() throws {
+    try XCTAssertEqual("fn f() => 3;".typeChecked().errors, [])
+  }
+
+  func testDoubleArrowIdentity() throws {
+    try XCTAssertEqual("fn f(Int: x) => x;".typeChecked().errors, [])
+  }
+
+  func testEvaluateTupleLiteral() throws {
+    try XCTAssertEqual("fn f((Int, Int): x) => x;".typeChecked().errors, [])
+  }
+
+  //
+  // Exercising code paths that return the type of a declared entity.
+  //
+
+  func testDeclaredTypeStruct() throws {
+    try XCTAssertEqual(
+      """
+      struct X {}
+      fn f() -> X { return X(); }
+      fn g(X) {}
+      """.typeChecked().errors, [])
+  }
+
+  func testDeclaredTypeChoice() throws {
+    try XCTAssertEqual(
+      """
+      choice X { Bonk }
+      fn f() -> X { return X.Bonk; }
+      fn g(X) {}
+      """.typeChecked().errors, [])
+  }
+
+  func testDeclaredTypeAlternative() throws {
+    try XCTAssertEqual(
+      """
+      choice X { Bonk(Int) }
+      fn f() => X.Bonk(3);
+      """.typeChecked().errors, [])
   }
 }
 
