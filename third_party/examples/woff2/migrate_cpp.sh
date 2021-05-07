@@ -4,17 +4,18 @@
 # Exceptions. See /LICENSE for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
-# Runs an example migration of the Brotli C++ code.
+# Runs an example migration of woff2 C++ code.
 
 # cd to the carbon-lang root.
 cd "$(dirname "$0")/../../.."
 
 EXAMPLE=third_party/examples/woff2
 
-# Remove any previous conversion.
+# Remove any previous conversion. Each time this is run, it should demonstrate
+# on a fresh copy of woff2.
 rm -rf "${EXAMPLE}/carbon/"
 
-# Initialize the converted directory, omitting unnecessary subdirectories.
+# Initialize the carbon directory, omitting unnecessary subdirectories.
 rsync -a \
   "${EXAMPLE}/original/" \
   "${EXAMPLE}/carbon/" \
@@ -22,7 +23,7 @@ rsync -a \
   --exclude .gitmodules \
   --exclude cmake
 
-# Create a compile_flags.txt for the `carbon` directory.
+# Copy files into the carbon directory to simplify the setup.
 cp "${EXAMPLE}/BUILD.original" \
   "${EXAMPLE}/carbon/BUILD"
 cp "${EXAMPLE}/WORKSPACE.original" \
@@ -30,7 +31,7 @@ cp "${EXAMPLE}/WORKSPACE.original" \
 cp "${EXAMPLE}/compile_flags.carbon.txt" \
   "${EXAMPLE}/carbon/compile_flags.txt"
 
-# Run migration on the copy.
+# Run the migration tool.
 bazel build //migrate_cpp
 ./bazel-bin/migrate_cpp/migrate_cpp \
   "${EXAMPLE}/carbon"
