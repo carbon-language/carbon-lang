@@ -13,20 +13,22 @@ struct Interpreter {
   var //let
     program: ExecutableProgram
 
+  // TODO(geoffromer): Replace these with explicit modeling of scopes
+  // as part of the todo stack.
   /// A mapping from local name declarations to addresses.
   var locals: ASTDictionary<SimpleBinding, Address> = .init()
   /// A mapping from local expressions to addresses
   var temporaries: ASTDictionary<Expression, Address> = .init()
   
   /// The address that should be filled in by any `return` statements.
-  var returnValueStorage: Address = -1
+  var returnValueStorage: Address? = nil
 
   /// A type that captures everything that needs to be restored after a callee
   /// returns.
   typealias FunctionContext = (
     locals: ASTDictionary<SimpleBinding, Address>,
     temporaries: ASTDictionary<Expression, Address>,
-    returnValueStorage: Address)
+    returnValueStorage: Address?)
 
   /// The function execution context.
   var functionContext: FunctionContext {
@@ -42,44 +44,54 @@ struct Interpreter {
 
   var memory = Memory()
 
-  private(set) var termination: ExitCode? = nil
+  private var exitCodeStorage: Address? = nil
 
   /// The stack of pending actions.
   private var todo = Stack<Action>()
 }
 
 extension Interpreter {
+  mutating func start() {
+    exitCodeStorage = memory.allocate(boundTo: .int, from: .empty)
+
+    todo.push(EvaluateCall(
+      call: program.entryPoint!,
+      callerContext: functionContext, returnValueStorage: exitCodeStorage!))
+  }
+
+  enum Status {
+    case running
+    case exited(_ exitCode: ExitCode)
+  }
+
   /// Progress one step forward in the execution sequence, returning an exit
   /// code if the program terminated.
-  mutating func step() {
+  mutating func step() -> Status {
     guard var current = todo.pop() else {
-      termination = 0
-      return
+      return .exited(memory[exitCodeStorage!] as! IntValue)
     }
     switch current.run(on: &self) {
-    case .done: return
+    case .done: break
     case .spawn(let child):
       todo.push(current)
       todo.push(child)
     case .chain(to: let successor):
       todo.push(successor)
+    case .unwindToFunctionCall:
+      while (!(todo.top is EvaluateCall)) { _ = todo.pop() }
     }
+    return .running
   }
 
-  /// Accesses or initializes an rvalue for the given expression.
-  ///
-  /// - Requires: `e` comes from the current function context.
-  subscript(_ e: Expression) -> Value {
-    get {
-      return memory[address(of: e)]
-    }
-    set {
-      precondition(temporaries[e] == nil, "Temporary already initialized.")
-      let a = memory.allocate(
-        boundTo: newValue.type, from: e.site.region, mutable: false)
-      memory.initialize(a, to: newValue)
-      temporaries[e] = a
-    }
+  /// Allocates storage for a temporary that will hold the value of `e`
+  mutating func allocateTemporary(
+    `for` e: Expression, boundTo t: Type, mutable: Bool = false
+  ) -> Address{
+    precondition(temporaries[e] == nil, "Temporary already allocated.")
+    let a = memory.allocate(
+      boundTo: t, from: e.site.region, mutable: false)
+    temporaries[e] = a
+    return a
   }
 
   /// Destroys any rvalue computed for `e` and removes `e` from `locals`.
@@ -103,11 +115,6 @@ extension Interpreter {
     _ = d
     UNIMPLEMENTED
     //return locals[AnyDeclaration(d)] ?? globals[d] ?? fatal("\(d) has no value")
-  }
-
-  /// Accesses the address where e's value is stored.
-  func address(of e: Expression) -> Address {
-    return temporaries[e]!
   }
 }
 
