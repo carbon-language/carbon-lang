@@ -12,7 +12,7 @@ final class TestEvaluateCall: XCTestCase {
     engine.start()
   
     while true {
-      if let exitCode = engine.step() {
+      if case .exited(let exitCode) = engine.step() {
         XCTAssertEqual(0, exitCode)
         break
       }

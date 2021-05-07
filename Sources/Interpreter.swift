@@ -67,7 +67,7 @@ struct Interpreter {
 
   var memory = Memory()
 
-  private var exitCodeStorage: Address = -1
+  private var exitCodeStorage: Address? = nil
 
   /// The stack of pending actions.
   private var todo = Stack<Action>()
@@ -81,16 +81,21 @@ extension Interpreter {
     exitCodeStorage = memory.allocate(boundTo: .int, from: .empty)
 
     todo.push(EvaluateCall(
-      call: program.entryPoint!, returnValueStorage: exitCodeStorage))
+      call: program.entryPoint!, returnValueStorage: exitCodeStorage!))
+  }
+
+  enum Status {
+    case running
+    case exited(_ exitCode: ExitCode)
   }
 
   /// Progress one step forward in the execution sequence, returning an exit
   /// code if the program terminated.
-  mutating func step() -> ExitCode? {
+  mutating func step() -> Status {
     guard var current = todo.pop() else {
-      let exitCode = memory[exitCodeStorage] as! IntValue
-      memory.assertCleanupDone(except: [exitCodeStorage])
-      return exitCode
+      let exitCode = memory[exitCodeStorage!] as! IntValue
+      memory.assertCleanupDone(except: [exitCodeStorage!])
+      return .exited(exitCode)
     }
     switch current.run(on: &self) {
     case .done:
@@ -101,11 +106,11 @@ extension Interpreter {
     case .chain(to: let successor):
       // FIXME: explain why we don't endScopes() here
       todo.push(successor)
-    case .unwind(let isSuccessor):
-      while (!isSuccessor(todo.top)) { _ = todo.pop() }
+    case .unwindToFunctionCall:
+      while (!(todo.top is EvaluateCall)) { _ = todo.pop() }
       endScopes()
     }
-    return nil
+    return .running
   }
 
   /// Allocates storage for a temporary that will hold the value of `e`

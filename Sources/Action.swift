@@ -29,10 +29,7 @@ enum Followup {
   case done                        // All finished.
   case spawn(_ child: Action)      // Still working, start child.
   case chain(_ successor: Action)  // All finished, start successor.
-  // All finished with this action *and* all actions between it and
-  // the nearest lower action on the stack that matches `isSuccessor`
-  // FIXME unwind to a given kind of scope rather than action?
-  case unwind(_ isSuccessor: (Action)->Bool)
+  case unwindToFunctionCall        // All finished with current function call
 }
 
 protocol Action {
@@ -69,7 +66,7 @@ struct Evaluate: Action {
         fatalError("No definition for '\(id.text)'")
       default: UNIMPLEMENTED
       }
-    case .getField(_, _, _): UNIMPLEMENTED
+    case .memberAccess(_): UNIMPLEMENTED
     case .index(target: _, offset: _, _): UNIMPLEMENTED
     case .integerLiteral(let value, _):
       state.memory.initialize(target, to: value)
@@ -195,7 +192,7 @@ struct ExecuteReturn: Action {
       return .spawn(Evaluate(operand, into: state.returnValueStorage))
     case .evaluateOperand:
       step = .transferControl
-      return .unwind({ $0 is EvaluateCall })
+      return .unwindToFunctionCall
     case .transferControl:
       fatalError("Unreachable")
     }
