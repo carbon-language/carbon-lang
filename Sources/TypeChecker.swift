@@ -105,7 +105,7 @@ private extension TypeChecker {
         return r
       }
       UNIMPLEMENTED
-    case .getField(_): UNIMPLEMENTED
+    case .memberAccess(_): UNIMPLEMENTED
     case .index(target: _, offset: _, _): UNIMPLEMENTED
     case let .integerLiteral(r, _): return r
     case let .booleanLiteral(r, _): return r
@@ -174,7 +174,7 @@ private extension TypeChecker {
     case .intType, .boolType, .typeType, .functionType:
       return .type
 
-    case .getField(let e): return type(e)
+    case .memberAccess(let e): return type(e)
 
     case .index(target: _, offset: _, _): UNIMPLEMENTED
 
@@ -236,39 +236,35 @@ private extension TypeChecker {
     }
   }
 
-  mutating func type(_ access: GetFieldExpression) -> Type {
-    let target = access.target
-    let fieldName = access.fieldName
+  mutating func type(_ e: MemberAccessExpression) -> Type {
+    let baseType = type(e.base)
 
-    let targetType = type(target)
-
-    switch targetType {
-    case let .struct(targetID):
-      let s = targetID.structure
-      if let m = s.members.first(where: { $0.name == fieldName }) {
+    switch baseType {
+    case let .struct(baseID):
+      let s = baseID.structure
+      if let m = s.members.first(where: { $0.name == e.member }) {
         return type(m)
       }
-      return error(fieldName, "struct \(s.name) has no field \(fieldName.text)")
+      return error(e.member, "struct \(s.name) has no member '\(e.member.text)'")
 
     case let .tuple(t):
-      if let r = t[.label(fieldName)] { return r }
-      return error(fieldName, "tuple type \(t) has no field \(fieldName.text)")
+      if let r = t[.label(e.member)] { return r }
+      return error(e.member, "tuple type \(t) has no field '\(e.member.text)'")
 
     case .type:
-      // See if this is a choice member (or more generally, a member of the
-      // type rather than of instances of the type, e.g. static members in
-      // C++).
-      if case let .choice(id) = evaluate(TypeExpression(target)) {
-        let c = id.structure
-        if let a = c.alternatives.first(
-             where: { $0.name == fieldName }) { return type(a) }
-        return error(
-          fieldName, "choice \(c.name) has no alternative \(fieldName.text)")
+      // Handle access to a type member, like a static member in C++.
+      if case let .choice(id) = evaluate(TypeExpression(e.base)) {
+        let c: ChoiceDefinition = id.structure
+        return c.alternatives
+          .first(where: { $0.name == e.member }).map { type($0) }
+          ?? error(
+            e.member, "choice \(c.name) has no alternative \(e.member.text)")
       }
+      // No other types have members.
       fallthrough
     default:
       return error(
-        target, "expression of type \(targetType) does not have named fields")
+        e.base, "expression of type \(baseType) does not have named fields")
     }
   }
 

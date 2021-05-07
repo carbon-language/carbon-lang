@@ -174,10 +174,10 @@ private extension NameResolution {
     case let .name(v):
       use(v)
 
-    case let .getField(e):
-      resolveNames(usedIn: e.target)
-      // Only unqualified names get resolved, so we skip the field name.
-      // resolve(n)
+    case let .memberAccess(e):
+      resolveNames(usedIn: e.base)
+      // Only unqualified names get resolved; member lookups can only be
+      // done by the typechecker, once the type of the base is known.
 
     case let .index(target: t, offset: o, _):
       resolveNames(usedIn: t)
