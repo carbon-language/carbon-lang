@@ -317,7 +317,6 @@ fn Illegal[Int:$ n](Int: i) -> Bool { return i < n; }
 
 -   A function can have a mix of generic, template, and regular parameters.
 -   Can pass a template or generic value to a generic or regular parameter.
--   Passing a generic value to a template parameter is future work.
 -   FIXME: There are restrictions passing a generic value to a template
     parameter, discussed in a [dedicated document](generic-to-template.md).
 
