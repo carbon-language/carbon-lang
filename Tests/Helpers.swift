@@ -136,4 +136,16 @@ extension String {
     let typeChecker = TypeChecker(executable)
     return (executable, typeChecker, typeChecker.errors)
   }
+
+  /// Causes an XCTest failure if errors occur in parsing or
+  /// name lookup, or type checking.
+  func checkTypeChecks(
+    _ message: @autoclosure () -> String = "",
+    filePath: StaticString = #filePath,
+    line: UInt = #line
+  ) {
+    XCTAssertEqual(
+      try self.typeChecked(
+        message(), filePath: filePath, line: line).errors, [])
+  }
 }
