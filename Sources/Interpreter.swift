@@ -13,50 +13,65 @@ struct Interpreter {
   var //let
     program: ExecutableProgram
 
-  struct Scope {    
-    var actionIndex: Int
+  // FIXME comment all the things
+  struct Scope {
+    // FIXME pull out to top level?
+    enum Kind {
+      case temporary, local, function
+    }
+
+    let kind: Kind
+    let actionIndex: Int
     var owned: [Address] = []
   }
   
   private var scopes: Stack<Scope> = .init()
+  // FIXME can we/should we integrate this into `scopes`?
   private var returnAddresses: Stack<(actionIndex: Int, Address)> = .init()
   
   var returnValueStorage: Address {
     get { returnAddresses.top.1 }
   }
 
-  mutating func beginScope() {
-    scopes.push(Scope(actionIndex: todo.count))
+  // FIXME re-think code organization (extensions, order, etc)
+  mutating func beginScope(kind: Scope.Kind) {
+    scopes.push(Scope(kind: kind, actionIndex: todo.count))
   }
   
   mutating func endScope() {
+    assert(scopes.top.actionIndex == todo.count,
+           "Can't end scope started by another Action")
+    endScopeUnchecked()
+  }
+
+  private mutating func endScopeUnchecked() {
     let scope = scopes.pop()!
-    assert(scope.actionIndex == todo.count, "Can't end scope started by another Action")
     for a in scope.owned {
       memory.deinitialize(a)
       memory.deallocate(a)
     }
   }
-  
-  private mutating func endScopes() {
+
+  private mutating func endObsoleteScopes() {
     while case .some(let scope) = scopes.queryTop,
           scope.actionIndex >= todo.count {
-      endScope()
+      endScopeUnchecked()
     }
     while case .some((let actionIndex, _)) = returnAddresses.queryTop,
           actionIndex >= todo.count {
       _ = returnAddresses.pop()
     }
   }
-  
+
+  // FIXME can we unify this with begin/endScope e.g. using the Kind enum?
   mutating func beginFunctionScope(returnValueStorage: Address) {
-    beginScope()
+    beginScope(kind: .function)
     returnAddresses.push((actionIndex: todo.count, returnValueStorage))
   }
   
   mutating func endFunctionScope() {
     let (actionIndex, _) = returnAddresses.pop()!
-    assert(actionIndex == todo.count)
+    // assert(actionIndex == todo.count)
   }
 
   typealias ExitCode = Int
@@ -75,8 +90,9 @@ struct Interpreter {
 
 extension Interpreter {
   mutating func start() {
+    // FIXME: integrate scope handling into action?
     todo.push(NoopAction())
-    beginScope()
+    beginScope(kind: .temporary)
     // FIXME: should this be part of the scope?
     exitCodeStorage = memory.allocate(boundTo: .int, from: .empty)
 
@@ -99,16 +115,23 @@ extension Interpreter {
     }
     switch current.run(on: &self) {
     case .done:
-      endScopes()
+      endObsoleteScopes()
     case .spawn(let child):
       todo.push(current)
       todo.push(child)
     case .chain(to: let successor):
-      // FIXME: explain why we don't endScopes() here
+      // FIXME: explain why we don't endObsoleteScopes():
+      // chaining is delegation, but is it always?
       todo.push(successor)
     case .unwindToFunctionCall:
-      while (!(todo.top is EvaluateCall)) { _ = todo.pop() }
-      endScopes()
+      while scopes.top.kind != .function {
+        endScopeUnchecked()
+      }
+      endFunctionScope()
+
+      while todo.count > scopes.top.actionIndex {
+        _ = todo.pop()
+      }
     }
     return .running
   }

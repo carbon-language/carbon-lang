@@ -24,8 +24,7 @@ struct EvaluateCall: Action {
   /// A suspended Call action (on the todo list) is either `.nascent`, or it's
   /// doing what the step name indicates (via sub-actions).
   private enum Step: Int {
-    case evaluateCallee, evaluateArguments,
-         runBody, done
+    case evaluateCallee, evaluateArguments, runBody
   }
 
   /// The current activity; `nil` means we haven't been started yet.
@@ -56,10 +55,7 @@ struct EvaluateCall: Action {
       // Prepare the context for the callee
       state.beginFunctionScope(returnValueStorage: returnValueStorage)
       if (calleeCode.parameters.elements.count > 0) { UNIMPLEMENTED }
-      return .spawn(Execute(calleeCode.body!))
-    case .done:
-      // FIXME do we need this state? If so, explain
-      return .done
+      return .chain(Execute(calleeCode.body!))
     }
   }
 }

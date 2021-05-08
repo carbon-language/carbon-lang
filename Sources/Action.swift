@@ -6,6 +6,7 @@ enum Followup {
   case done                        // All finished.
   case spawn(_ child: Action)      // Still working, start child.
   case chain(_ successor: Action)  // All finished, start successor.
+  // FIXME parameterize by Scope.Kind?
   case unwindToFunctionCall        // All finished with current function call
 }
 
