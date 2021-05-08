@@ -21,23 +21,42 @@ struct Interpreter {
     }
 
     let kind: Kind
+
+    /// The index in `todo` of the action that created this scope
     let actionIndex: Int
+
+    /// The storage owned by this scope
     var owned: [Address] = []
+
+    /// The value that `returnValueStorage` should be restored
+    /// to when this scope is unwound. Should be non-nil only for function
+    /// scopes.
+    let callerReturnValueStorage: Address?
   }
   
   private var scopes: Stack<Scope> = .init()
-  // FIXME can we/should we integrate this into `scopes`?
-  private var returnAddresses: Stack<(actionIndex: Int, Address)> = .init()
   
-  var returnValueStorage: Address {
-    get { returnAddresses.top.1 }
+  private(set) var returnValueStorage: Address? = nil
+
+  /// Begins a new scope of the specified kind (which should not be `.function`).
+  /// The scope will automatically end and be cleaned up when control is returned to `todo.top`,
+  /// but it can also be ended explicitly by calling `endScope`.
+  mutating func beginScope(kind: Scope.Kind) {
+    assert(kind != .function, "Use beginFunctionScope instead")
+    scopes.push(Scope(kind: kind, actionIndex: todo.count,
+                      callerReturnValueStorage: nil))
   }
 
-  // FIXME re-think code organization (extensions, order, etc)
-  mutating func beginScope(kind: Scope.Kind) {
-    scopes.push(Scope(kind: kind, actionIndex: todo.count))
+  /// Begins a scope for a new function call, whose return value will be stored in
+  /// `returnValueStorage`.
+  mutating func beginFunctionScope(returnValueStorage: Address) {
+    scopes.push(Scope(kind: .function, actionIndex: todo.count,
+                      callerReturnValueStorage: self.returnValueStorage))
+    self.returnValueStorage = returnValueStorage
   }
-  
+
+  /// Explicitly ends the current innermost scope, which must have been
+  /// started by the action currently being processed.
   mutating func endScope() {
     assert(scopes.top.actionIndex == todo.count,
            "Can't end scope started by another Action")
@@ -50,28 +69,9 @@ struct Interpreter {
       memory.deinitialize(a)
       memory.deallocate(a)
     }
-  }
-
-  private mutating func endObsoleteScopes() {
-    while case .some(let scope) = scopes.queryTop,
-          scope.actionIndex >= todo.count {
-      endScopeUnchecked()
+    if scope.kind == .function {
+      returnValueStorage = scope.callerReturnValueStorage
     }
-    while case .some((let actionIndex, _)) = returnAddresses.queryTop,
-          actionIndex >= todo.count {
-      _ = returnAddresses.pop()
-    }
-  }
-
-  // FIXME can we unify this with begin/endScope e.g. using the Kind enum?
-  mutating func beginFunctionScope(returnValueStorage: Address) {
-    beginScope(kind: .function)
-    returnAddresses.push((actionIndex: todo.count, returnValueStorage))
-  }
-  
-  mutating func endFunctionScope() {
-    let (actionIndex, _) = returnAddresses.pop()!
-    // assert(actionIndex == todo.count)
   }
 
   typealias ExitCode = Int
@@ -115,19 +115,23 @@ extension Interpreter {
     }
     switch current.run(on: &self) {
     case .done:
-      endObsoleteScopes()
+      while case .some(let scope) = scopes.queryTop,
+            // FIXME why isn't this actionIndex == todo.count?
+            scope.actionIndex >= todo.count {
+        endScopeUnchecked()
+      }
     case .spawn(let child):
       todo.push(current)
       todo.push(child)
     case .chain(to: let successor):
-      // FIXME: explain why we don't endObsoleteScopes():
-      // chaining is delegation, but is it always?
+      // FIXME: explain why we don't end scopes:
+      // chaining can be delegation, but is it always?
       todo.push(successor)
     case .unwindToFunctionCall:
       while scopes.top.kind != .function {
         endScopeUnchecked()
       }
-      endFunctionScope()
+      endScopeUnchecked()
 
       while todo.count > scopes.top.actionIndex {
         _ = todo.pop()
@@ -142,6 +146,7 @@ extension Interpreter {
   ) -> Address{
     let a = memory.allocate(
       boundTo: t, from: e.site.region, mutable: false)
+    assert(scopes.top.kind == .temporary)
     scopes.top.owned.append(a)
     return a
   }

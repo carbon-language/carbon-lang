@@ -139,7 +139,7 @@ struct ExecuteReturn: Action {
     switch step {
     case .start:
       step = .evaluateOperand
-      return .spawn(Evaluate(operand, into: state.returnValueStorage))
+      return .spawn(Evaluate(operand, into: state.returnValueStorage!))
     case .evaluateOperand:
       step = .transferControl
       return .unwindToFunctionCall
