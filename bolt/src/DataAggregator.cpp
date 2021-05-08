@@ -969,7 +969,7 @@ bool DataAggregator::recordTrace(
       } else {
         Offset = BB->getOffset();
       }
-      Branches->emplace_back(std::make_pair(Offset, NextBB->getOffset()));
+      Branches->emplace_back(Offset, NextBB->getOffset());
     }
 
     BB = NextBB;

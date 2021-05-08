@@ -1326,15 +1326,14 @@ void BinaryContext::fixBinaryDataHoles() {
     while (Itr != End) {
       if (Itr->second->getAddress() > EndAddress) {
         uint64_t Gap = Itr->second->getAddress() - EndAddress;
-        Holes.push_back(std::make_pair(EndAddress, Gap));
+        Holes.emplace_back(EndAddress, Gap);
       }
       EndAddress = Itr->second->getEndAddress();
       ++Itr;
     }
 
     if (EndAddress < Section.getEndAddress()) {
-      Holes.push_back(std::make_pair(EndAddress,
-                                     Section.getEndAddress() - EndAddress));
+      Holes.emplace_back(EndAddress, Section.getEndAddress() - EndAddress);
     }
 
     // If there is already a symbol at the start of the hole, grow that symbol

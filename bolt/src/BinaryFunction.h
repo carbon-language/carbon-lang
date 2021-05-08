@@ -1610,7 +1610,7 @@ public:
     BB->setIndex(BasicBlocks.size() - 1);
 
     if (CurrentState == State::Disassembled) {
-      BasicBlockOffsets.emplace_back(std::make_pair(Offset, BB));
+      BasicBlockOffsets.emplace_back(Offset, BB);
     } else if (CurrentState == State::CFG) {
       BB->setLayoutIndex(layout_size());
       BasicBlocksLayout.emplace_back(BB);

@@ -138,7 +138,7 @@ extractFunctionCalls(const std::vector<BinaryFunction *> &BinaryFunctions) {
           continue;
 
         // Record the call
-        Calls[DstFunction].push_back(std::make_pair(SrcFunction, Count));
+        Calls[DstFunction].emplace_back(SrcFunction, Count);
       }
     }
   }

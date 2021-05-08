@@ -572,11 +572,11 @@ bool LongJmpPass::relax(BinaryFunction &Func) {
         InsertionPoint = &*std::prev(Func.end());
 
       // Create a stub to handle a far-away target
-      Insertions.emplace_back(std::make_pair(
-          InsertionPoint,
-          replaceTargetWithStub(BB, Inst, DotAddress,
-                                InsertionPoint == Frontier ? FrontierAddress
-                                                           : DotAddress)));
+      Insertions.emplace_back(InsertionPoint,
+                              replaceTargetWithStub(BB, Inst, DotAddress,
+                                                    InsertionPoint == Frontier
+                                                        ? FrontierAddress
+                                                        : DotAddress));
     }
   }
 

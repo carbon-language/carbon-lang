@@ -286,7 +286,7 @@ bool Instrumentation::instrumentOneTarget(
     return true;
   }
   // Critical edge, create BB and put counter there
-  SplitWorklist.emplace_back(std::make_pair(&FromBB, TargetBB));
+  SplitWorklist.emplace_back(&FromBB, TargetBB);
   SplitInstrs.emplace_back(std::move(CounterInstrs));
   return true;
 }

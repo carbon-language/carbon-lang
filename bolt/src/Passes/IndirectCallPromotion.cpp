@@ -657,7 +657,7 @@ IndirectCallPromotion::findCallTargetSymbols(
       assert(Target.To.Sym && "All ICP targets must be to known symbols");
       assert(!Target.JTIndices.empty() && "Jump tables must have indices");
       for (uint64_t Idx : Target.JTIndices) {
-        SymTargets.push_back(std::make_pair(Target.To.Sym, Idx));
+        SymTargets.emplace_back(Target.To.Sym, Idx);
         ++I;
       }
     }
@@ -667,7 +667,7 @@ IndirectCallPromotion::findCallTargetSymbols(
              "All ICP targets must be to known symbols");
       assert(Targets[I].JTIndices.empty() &&
              "Can't have jump table indices for non-jump tables");
-      SymTargets.push_back(std::make_pair(Targets[I].To.Sym, 0));
+      SymTargets.emplace_back(Targets[I].To.Sym, 0);
     }
   }
 
@@ -773,7 +773,7 @@ IndirectCallPromotion::maybeGetVtableSyms(
     if (Itr != MethodToVtable.end()) {
       if (BinaryData *BD = BC.getBinaryDataContainingAddress(Itr->second)) {
         const uint64_t Addend = Itr->second - BD->getAddress();
-        VtableSyms.push_back(std::make_pair(BD->getSymbol(), Addend));
+        VtableSyms.emplace_back(BD->getSymbol(), Addend);
         continue;
       }
     }

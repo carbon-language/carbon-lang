@@ -123,9 +123,7 @@ public:
     }
   }
 
-  void addEdge(Chain *Other, Edge *Edge) {
-    Edges.push_back(std::make_pair(Other, Edge));
-  }
+  void addEdge(Chain *Other, Edge *Edge) { Edges.emplace_back(Other, Edge); }
 
   void merge(Chain *Other) {
     Nodes.insert(Nodes.end(), Other->Nodes.begin(), Other->Nodes.end());

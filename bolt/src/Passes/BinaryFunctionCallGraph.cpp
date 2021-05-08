@@ -184,11 +184,11 @@ BinaryFunctionCallGraph buildCallGraph(BinaryContext &BC,
           BC.MIB->getAnnotationAs<IndirectCallSiteProfile>(Inst, "CallProfile");
         for (const IndirectCallProfile &CSI : ICSP) {
           if (CSI.Symbol)
-            Counts.push_back(std::make_pair(CSI.Symbol, CSI.Count));
+            Counts.emplace_back(CSI.Symbol, CSI.Count);
         }
       } else {
         const uint64_t Count = BB->getExecutionCount();
-        Counts.push_back(std::make_pair(DstSym, Count));
+        Counts.emplace_back(DstSym, Count);
       }
 
       return Counts;

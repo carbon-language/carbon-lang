@@ -3887,14 +3887,14 @@ std::vector<ELFShdrTy> RewriteInstance::getOutputSections(
   auto addSection = [&](const std::string &Name, const ELFShdrTy &Section) {
     ELFShdrTy NewSection = Section;
     NewSection.sh_name = SHStrTab.getOffset(Name);
-    OutputSections.emplace_back(std::make_pair(Name, std::move(NewSection)));
+    OutputSections.emplace_back(Name, std::move(NewSection));
   };
 
   // Copy over entries for original allocatable sections using modified name.
   for (const ELFShdrTy &Section : Sections) {
     // Always ignore this section.
     if (Section.sh_type == ELF::SHT_NULL) {
-      OutputSections.emplace_back(std::make_pair("", Section));
+      OutputSections.emplace_back("", Section);
       continue;
     }
 

@@ -209,7 +209,7 @@ void FrameOptimizerPass::removeUnusedStores(const FrameAnalysis &FA,
       LLVM_DEBUG(dbgs() << "FIE offset = " << FIEX->StackOffset
                    << " size = " << (int)FIEX->Size << "\n");
       // Delete it!
-      ToErase.push_back(std::make_pair(&BB, &Inst));
+      ToErase.emplace_back(&BB, &Inst);
       Prev = &Inst;
     }
   }

@@ -175,11 +175,11 @@ DebugLocWriter::addList(const DebugLocationsVector &LocList) {
 
 void SimpleBinaryPatcher::addBinaryPatch(uint32_t Offset,
                                          const std::string &NewValue) {
-  Patches.emplace_back(std::make_pair(Offset, NewValue));
+  Patches.emplace_back(Offset, NewValue);
 }
 
 void SimpleBinaryPatcher::addBytePatch(uint32_t Offset, uint8_t Value) {
-  Patches.emplace_back(std::make_pair(Offset, std::string(1, Value)));
+  Patches.emplace_back(Offset, std::string(1, Value));
 }
 
 void SimpleBinaryPatcher::addLEPatch(uint32_t Offset, uint64_t NewValue,
@@ -189,7 +189,7 @@ void SimpleBinaryPatcher::addLEPatch(uint32_t Offset, uint64_t NewValue,
     LE64[I] = NewValue & 0xff;
     NewValue >>= 8;
   }
-  Patches.emplace_back(std::make_pair(Offset, LE64));
+  Patches.emplace_back(Offset, LE64);
 }
 
 void SimpleBinaryPatcher::addUDataPatch(uint32_t Offset, uint64_t Value, uint64_t Size) {

@@ -177,7 +177,7 @@ DataOrder ReorderData::baseOrder(BinaryContext &BC,
       continue;
     auto BDCI = BinaryDataCounts.find(BD);
     uint64_t BDCount = BDCI == BinaryDataCounts.end() ? 0 : BDCI->second;
-    Order.push_back(std::make_pair(BD, BDCount));
+    Order.emplace_back(BD, BDCount);
   }
   return Order;
 }

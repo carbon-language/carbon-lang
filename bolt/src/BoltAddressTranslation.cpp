@@ -266,7 +266,7 @@ BoltAddressTranslation::getFallthroughsInTrace(
     }
     if (Iter->second & BRANCHENTRY)
       break;
-    Res.emplace_back(std::make_pair(Src, Iter->first));
+    Res.emplace_back(Src, Iter->first);
   }
 
   return Res;

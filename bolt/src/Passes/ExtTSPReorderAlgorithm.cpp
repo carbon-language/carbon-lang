@@ -301,9 +301,7 @@ public:
     }
   }
 
-  void addEdge(Chain *Other, Edge *Edge) {
-    Edges.push_back(std::make_pair(Other, Edge));
-  }
+  void addEdge(Chain *Other, Edge *Edge) { Edges.emplace_back(Other, Edge); }
 
   void merge(Chain *Other, const std::vector<Block *> &MergedBlocks) {
     Blocks = MergedBlocks;
@@ -364,7 +362,7 @@ public:
   }
 
   void appendJump(Block *SrcBlock, Block *DstBlock, uint64_t EC) {
-    Jumps.push_back(std::make_pair(std::make_pair(SrcBlock, DstBlock), EC));
+    Jumps.emplace_back(std::make_pair(SrcBlock, DstBlock), EC);
   }
 
   void moveJumps(Edge *Other) {
@@ -552,9 +550,9 @@ private:
           class Block &SuccBlock = AllBlocks[SuccBB->getLayoutIndex()];
           uint64_t Count = BI->Count;
           SuccBlock.InWeight += Count;
-          SuccBlock.InJumps.push_back(std::make_pair(&Block, Count));
+          SuccBlock.InJumps.emplace_back(&Block, Count);
           Block.OutWeight += Count;
-          Block.OutJumps.push_back(std::make_pair(&SuccBlock, Count));
+          Block.OutJumps.emplace_back(&SuccBlock, Count);
           NumEdges++;
         }
         ++BI;

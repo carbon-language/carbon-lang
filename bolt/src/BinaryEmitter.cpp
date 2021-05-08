@@ -461,7 +461,7 @@ void BinaryEmitter::emitFunctionBody(BinaryFunction &BF, bool EmitColdPart,
         const auto Offset = BC.MIB->getAnnotationAs<uint32_t>(Instr, "Offset");
         MCSymbol *LocSym = BC.Ctx->createTempSymbol();
         Streamer.emitLabel(LocSym);
-        BB->getLocSyms().emplace_back(std::make_pair(Offset, LocSym));
+        BB->getLocSyms().emplace_back(Offset, LocSym);
       }
 
       Streamer.emitInstruction(Instr, *BC.STI);

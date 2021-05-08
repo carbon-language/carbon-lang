@@ -549,8 +549,8 @@ void LowerAnnotations::runOnFunctions(BinaryContext &BC) {
       for (auto II = BB->begin(); II != BB->end(); ++II) {
         if (BF.requiresAddressTranslation() &&
             BC.MIB->hasAnnotation(*II, "Offset")) {
-          PreservedOffsetAnnotations.push_back(std::make_pair(
-              &(*II), BC.MIB->getAnnotationAs<uint32_t>(*II, "Offset")));
+          PreservedOffsetAnnotations.emplace_back(
+              &(*II), BC.MIB->getAnnotationAs<uint32_t>(*II, "Offset"));
         }
         BC.MIB->stripAnnotations(*II);
       }
@@ -823,7 +823,7 @@ uint64_t SimplifyConditionalTailCalls::fixTailCalls(BinaryContext &BC,
         // the target for the unconditional branch or add a unconditional
         // branch to the old target.  This has to be done manually since
         // fixupBranches is not called after SCTC.
-        NeedsUncondBranch.emplace_back(std::make_pair(PredBB, CondSucc));
+        NeedsUncondBranch.emplace_back(PredBB, CondSucc);
         Count = PredBB->getFallthroughBranchInfo().Count;
       } else {
         // Change destination of the conditional branch.
