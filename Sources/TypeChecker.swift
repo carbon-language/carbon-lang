@@ -105,19 +105,29 @@ private extension TypeChecker {
         return r
       }
       UNIMPLEMENTED
-    case .memberAccess(_): UNIMPLEMENTED
-    case .index(target: _, offset: _, _): UNIMPLEMENTED
-    case let .integerLiteral(r, _): return r
-    case let .booleanLiteral(r, _): return r
+    case .memberAccess(_):
+      UNIMPLEMENTED
+    case .index(target: _, offset: _, _):
+      UNIMPLEMENTED
+    case let .integerLiteral(r, _):
+      return r
+    case let .booleanLiteral(r, _):
+      return r
     case let .tupleLiteral(t):
       return t.fields(reportingDuplicatesIn: &errors)
         .mapValues { self.evaluate($0) }
-    case .unaryOperator(operation: _, operand: _, _): UNIMPLEMENTED
-    case .binaryOperator(operation: _, lhs: _, rhs: _, _): UNIMPLEMENTED
-    case .functionCall(_): UNIMPLEMENTED
-    case .intType: return Type.int
-    case .boolType: return Type.bool
-    case .typeType: return Type.type
+    case .unaryOperator(operation: _, operand: _, _):
+      UNIMPLEMENTED
+    case .binaryOperator(operation: _, lhs: _, rhs: _, _):
+      UNIMPLEMENTED
+    case .functionCall(_):
+      UNIMPLEMENTED
+    case .intType:
+      return Type.int
+    case .boolType:
+      return Type.bool
+    case .typeType:
+      return Type.type
     case let .functionType(f):
       // Evaluate `f.parameters` as a type expression so we'll get a diagnostic
       // if it isn't a type.
@@ -169,26 +179,42 @@ private extension TypeChecker {
   /// doesn't typecheck.
   mutating func type(_ e: Expression) -> Type {
     switch e {
-    case .name(let v): return type(program.definition[v]!)
+    case .name(let v):
+      return type(program.definition[v]!)
 
-    case .intType, .boolType, .typeType, .functionType:
+    case let .functionType(f):
+      // PARTIALLY UNIMPLEMENTED
+      // _ = type(FunctionType<Pattern>(f))
+
       return .type
 
-    case .memberAccess(let e): return type(e)
+    case .intType, .boolType, .typeType:
+      return .type
 
-    case .index(target: _, offset: _, _): UNIMPLEMENTED
+    case .memberAccess(let e):
+      return type(e)
 
-    case .integerLiteral: return .int
-    case .booleanLiteral: return .bool
+    case .index(target: _, offset: _, _):
+      UNIMPLEMENTED
+
+    case .integerLiteral:
+      return .int
+
+    case .booleanLiteral:
+      return .bool
 
     case let .tupleLiteral(t):
       return .tuple(
         t.fields(reportingDuplicatesIn: &errors).mapValues { type($0) })
 
-    case .unaryOperator(operation: _, operand: _, _): UNIMPLEMENTED
-    case .binaryOperator(operation: _, lhs: _, rhs: _, _): UNIMPLEMENTED
+    case .unaryOperator(operation: _, operand: _, _):
+      UNIMPLEMENTED
 
-    case .functionCall(let f): return type(f)
+    case .binaryOperator(operation: _, lhs: _, rhs: _, _):
+      UNIMPLEMENTED
+
+    case .functionCall(let f):
+      return type(f)
     }
   }
 
@@ -227,7 +253,7 @@ private extension TypeChecker {
         error(
           e.arguments,
           "argument types \(argumentTypes) do"
-            + " not match required initializer arguments \(initializerType)")
+            + " not match required initializer parameters \(initializerType)")
       }
       return calleeValue
 
@@ -258,13 +284,14 @@ private extension TypeChecker {
         return c.alternatives
           .first(where: { $0.name == e.member }).map { type($0) }
           ?? error(
-            e.member, "choice \(c.name) has no alternative \(e.member.text)")
+            e.member,
+            "choice \(c.name.text) has no alternative '\(e.member.text)'")
       }
       // No other types have members.
       fallthrough
     default:
       return error(
-        e.base, "expression of type \(baseType) does not have named fields")
+        e.base, "expression of type \(baseType) does not have named members")
     }
   }
 
@@ -292,13 +319,17 @@ private extension TypeChecker {
 
   mutating func type(_ p: Pattern) -> Type {
     switch p {
-    case let .atom(e): return type(e)
-    case let .variable(v): return evaluate(v.type.expression!)
+    case let .atom(e):
+      return type(e)
+    case let .variable(v):
+      return evaluate(v.type.expression!)
     case let .tuple(t):
       return .tuple(
         t.fields(reportingDuplicatesIn: &errors).mapValues { type($0) })
-    case let .functionCall(c):  return type(c)
-    case let .functionType(f): return type(f)
+    case let .functionCall(c):
+      return type(c)
+    case let .functionType(f):
+      return type(f)
     }
   }
 
@@ -356,7 +387,19 @@ private extension TypeChecker {
     return r
   }
 
-  mutating func type(_ c: FunctionType<Pattern>) -> Type {
+  mutating func type(_ t: FunctionType<Pattern>) -> Type {
     UNIMPLEMENTED
+    /*
+    if Type(type(t.parameters)) == nil {
+      return error(
+        t.parameters, "function type parameter list is not a tuple of types")
+    }
+    if Type(type(t.returnType)) == nil {
+      return error(
+        t.returnType, "function type return type is not a type.")
+    }
+    return .type
+
+     */
   }
 }

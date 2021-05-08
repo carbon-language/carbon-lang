@@ -145,7 +145,7 @@ extension String {
     line: UInt = #line
   ) {
     XCTAssertEqual(
-      try self.typeChecked(
-        message(), filePath: filePath, line: line).errors, [])
+      try self.typeChecked(filePath: filePath, line: line).errors, [],
+      message(), file: filePath, line: line)
   }
 }
