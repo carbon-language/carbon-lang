@@ -60,3 +60,22 @@ indirect enum Type: Equatable {
 extension Type: Value {
   var type: Type { .type }
 }
+
+extension Type: CustomStringConvertible {
+  var description: String {
+    switch self {
+    case .int: return "Int"
+    case .bool: return "Bool"
+    case .type: return "Type"
+    case let .function(parameterTypes: p, returnType: r):
+      return "fnty \(p) -> \(r)"
+    case let .tuple(t): return "\(t)"
+    case let .alternative(parent: parent, payload: payload):
+      return "<alternative> \(payload) -> \(parent.structure)"
+    case let .struct(d): return d.structure.name.text
+    case let .choice(d): return d.structure.name.text
+    case .error:
+      return "<<error type>>"
+    }
+  }
+}
