@@ -115,7 +115,7 @@ private extension TypeChecker {
       return r
     case let .tupleLiteral(t):
       return t.fields(reportingDuplicatesIn: &errors)
-        .mapValues { self.evaluate($0) }
+        .mapFields { self.evaluate($0) }
     case .unaryOperator(operation: _, operand: _, _):
       UNIMPLEMENTED
     case .binaryOperator(operation: _, lhs: _, rhs: _, _):
@@ -205,7 +205,7 @@ private extension TypeChecker {
 
     case let .tupleLiteral(t):
       return .tuple(
-        t.fields(reportingDuplicatesIn: &errors).mapValues { type($0) })
+        t.fields(reportingDuplicatesIn: &errors).mapFields { type($0) })
 
     case .unaryOperator(operation: _, operand: _, _):
       UNIMPLEMENTED
@@ -314,7 +314,7 @@ private extension TypeChecker {
   }
 
   mutating func parameterTypes(_ p: TuplePattern) -> TupleType {
-    return p.fields(reportingDuplicatesIn: &errors).mapValues { type($0) }
+    return p.fields(reportingDuplicatesIn: &errors).mapFields { type($0) }
   }
 
   mutating func type(_ p: Pattern) -> Type {
@@ -325,7 +325,7 @@ private extension TypeChecker {
       return evaluate(v.type.expression!)
     case let .tuple(t):
       return .tuple(
-        t.fields(reportingDuplicatesIn: &errors).mapValues { type($0) })
+        t.fields(reportingDuplicatesIn: &errors).mapFields { type($0) })
     case let .functionCall(c):
       return type(c)
     case let .functionType(f):
@@ -382,7 +382,7 @@ private extension TypeChecker {
   ) -> TupleType {
     if let r = initializerTuples[s.structure] { return r }
     let r = s.structure.initializerTuple.fields(reportingDuplicatesIn: &errors)
-      .mapValues { evaluate($0) }
+      .mapFields { evaluate($0) }
     initializerTuples[s.structure] = r
     return r
   }

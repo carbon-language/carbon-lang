@@ -32,7 +32,7 @@ indirect enum Type: Equatable {
 
     // If the value is a tuple, check that all its elements are types.
     if let elements = (v as? TupleValue) {
-      let typeElements = elements.compactMapValues { $0 as? Type }
+      let typeElements = elements.compactMapFields { $0 as? Type }
       if typeElements.count == elements.count {
         self = .tuple(typeElements)
         return

@@ -12,45 +12,47 @@ enum FieldID: Hashable {
   case position(Int)
 }
 
-/// A tuple value (or type, which is also a tuple value).
-struct Tuple<T> {
+/// A tuple value (or type, which is also a tuple value) of the given field.
+struct Tuple<Field> {
   /// The number of fields in `self`.
-  var count: Int { fields.count }
+  var count: Int { storage.count }
 
   /// Returns a Tuple containing the keys of `self` with the corresponding
   /// values mapped through `transform`.
-  func mapValues<U>(_ transform: (T) throws -> U) rethrows -> Tuple<U> {
-    return .init(try fields.mapValues(transform))
+  func mapFields<U>(_ transform: (Field) throws -> U) rethrows -> Tuple<U> {
+    return .init(try storage.mapValues(transform))
   }
 
   /// Returns a Tuple containing the keys of `self` with the corresponding
   /// values mapped through `transform`, except for any `nil` results.
-  func compactMapValues<U>(_ transform: (T) throws -> U?) rethrows -> Tuple<U> {
-    return .init(try fields.compactMapValues(transform))
+  func compactMapFields<U>(
+    _ transform: (Field) throws -> U?) rethrows -> Tuple<U>
+  {
+    return .init(try storage.compactMapValues(transform))
   }
 
   /// Creates an instance using the given underlying storage.
-  fileprivate init(_ fields: [FieldID: T]) { self.fields = fields }
+  fileprivate init(_ storage: [FieldID: Field]) { self.storage = storage }
 
   /// Returns the field with the given name, or `nil` if no such name exists.
-  subscript(fieldName: Identifier) -> T? { fields[.label(fieldName)] }
+  subscript(fieldName: Identifier) -> Field? { storage[.label(fieldName)] }
 
   /// Returns the given positional field.
-  subscript(position: Int) -> T? { fields[.position(position)] }
+  subscript(position: Int) -> Field? { storage[.position(position)] }
 
-  private let fields: [FieldID: T]
+  private let storage: [FieldID: Field]
 }
-extension Tuple: Equatable where T: Equatable {}
+extension Tuple: Equatable where Field: Equatable {}
 
 extension Tuple: CustomStringConvertible {
   var description: String {
-    let labeled = fields.lazy.compactMap { (k, v) -> (String, T)? in
+    let labeled = storage.lazy.compactMap { (k, v) -> (String, Field)? in
       guard case let .label(l) = k else { return nil }
       return (l.text, v)
     }
       .sorted { $0.0 < $1.0 }.map { ".\($0.0) = \($0.1)" }
 
-    let positional = fields.compactMap { (k, v) -> (Int, T)? in
+    let positional = storage.lazy.compactMap { (k, v) -> (Int, Field)? in
       guard case let .position(p) = k else { return nil }
       return (p, v)
     }
@@ -65,7 +67,7 @@ typealias TupleValue = Tuple<Value>
 
 extension TupleValue: CarbonInterpreter.Value {
   var type: Type {
-    .tuple(self.mapValues { $0.type })
+    .tuple(self.mapFields { $0.type })
   }
 }
 
