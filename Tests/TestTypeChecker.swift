@@ -380,15 +380,44 @@ final class TypeCheckFunctionSignatures: XCTestCase {
       "instance of type Int is not callable")
   }
 
-  /*
-   TBD
-  func testFunctionTypePatternType() {
+  func testFunctionTypePatternType() throws {
     """
-    fn f(fnty(true)->1) => 0;
+    fn f(fnty(Type: x)) => 0;
     """.checkTypeChecks()
-  }
 
-   */
+    """
+    fn f(fnty(Type: x)->Bool) => 0;
+    """.checkTypeChecks()
+
+    """
+    fn f(fnty(Type: x)->Type: y) => 0;
+    """.checkTypeChecks()
+
+    """
+    fn f(fnty(Int)->Type: y) => 0;
+    """.checkTypeChecks()
+
+    try """
+    fn f(fnty(4)->Type: y) => 0;
+    """.typeChecked().errors.checkForMessageExcerpt(
+      "Not a type expression (value has type (Int))")
+
+    try """
+    fn f(fnty(Int: x)) => 0;
+    """.typeChecked().errors.checkForMessageExcerpt(
+      "x must be bound to a type value (not to a value of type Int) "
+        + "in this context")
+
+    // A tuple of types is a valid type.
+    """
+    fn f(fnty((Int, Int): x)->Type: y) => 0;
+    """.checkTypeChecks()
+
+    try """
+    fn f(fnty(Type: x)->2);
+    """.typeChecked().errors.checkForMessageExcerpt(
+      "Not a type expression (value has type Int)")
+  }
 }
 
 final class TypeCheckExamples: XCTestCase {

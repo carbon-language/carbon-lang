@@ -40,6 +40,9 @@ struct Tuple<Field> {
   /// Returns the given positional field.
   subscript(position: Int) -> Field? { storage[.position(position)] }
 
+  /// An arbitrarily-ordered collection of the contained fields, sans ID.
+  var fields: Dictionary<FieldID, Field>.Values { storage.values }
+
   private let storage: [FieldID: Field]
 }
 extension Tuple: Equatable where Field: Equatable {}

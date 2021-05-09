@@ -131,7 +131,7 @@ private extension TypeChecker {
     case let .functionType(f):
       // Evaluate `f.parameters` as a type expression so we'll get a diagnostic
       // if it isn't a type.
-      let p = evaluate(TypeExpression(f.parameters)).tuple!
+      let p = evaluate(TypeExpression(f.parameters)).tuple ?? .void
       return Type.function(
         parameterTypes: p, returnType: evaluate(f.returnType))
     }
@@ -185,7 +185,7 @@ private extension TypeChecker {
     case let .functionType(f):
       // PARTIALLY UNIMPLEMENTED
       // _ = type(FunctionType<Pattern>(f))
-
+      _ = f
       return .type
 
     case .intType, .boolType, .typeType:
@@ -388,18 +388,46 @@ private extension TypeChecker {
   }
 
   mutating func type(_ t: FunctionType<Pattern>) -> Type {
-    UNIMPLEMENTED
-    /*
-    if Type(type(t.parameters)) == nil {
-      return error(
-        t.parameters, "function type parameter list is not a tuple of types")
-    }
-    if Type(type(t.returnType)) == nil {
-      return error(
-        t.returnType, "function type return type is not a type.")
-    }
+    requireTypeValue(.tuple(t.parameters))
+    requireTypeValue(t.returnType)
+    // FIXME: we need type subtyping relationships.
     return .type
+  }
 
-     */
+  mutating func requireTypeValue(_ p: Pattern) {
+    switch p {
+    case let .atom(x):
+      _ = evaluate(TypeExpression(x))
+
+    case let .variable(x):
+      guard let e = x.type.expression else {
+        error(x.type, "No initializer available to deduce type for auto")
+        return
+      }
+
+      let t = evaluate(e)
+      switch t {
+      case .type:
+        return
+      case .tuple:
+        return
+      default:
+        error(
+          x.name,
+          "\(x.name) must be bound to a type value "
+            + "(not to a value of type \(t)) in this context")
+      }
+
+    case let .tuple(x):
+      for f in x {
+        requireTypeValue(f.payload)
+      }
+
+    case let .functionCall(x):
+      _ = type(x)
+
+    case let .functionType(x):
+      _ = type(x)
+    }
   }
 }
