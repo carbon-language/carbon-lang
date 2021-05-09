@@ -274,7 +274,7 @@ private extension TypeChecker {
       return error(e.member, "struct \(s.name) has no member '\(e.member.text)'")
 
     case let .tuple(t):
-      if let r = t[.label(e.member)] { return r }
+      if let r = t[e.member] { return r }
       return error(e.member, "tuple type \(t) has no field '\(e.member.text)'")
 
     case .type:

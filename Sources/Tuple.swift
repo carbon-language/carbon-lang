@@ -12,8 +12,38 @@ enum FieldID: Hashable {
   case position(Int)
 }
 
-typealias TupleValue = [FieldID: Value]
-typealias TupleType = [FieldID: Type]
+/// A tuple value (or type, which is also a tuple value).
+struct Tuple<T> {
+  /// The number of fields in `self`.
+  var count: Int { fields.count }
+
+  /// Returns a Tuple containing the keys of `self` with the corresponding
+  /// values mapped through `transform`.
+  func mapValues<U>(_ transform: (T) throws -> U) rethrows -> Tuple<U> {
+    return .init(try fields.mapValues(transform))
+  }
+
+  /// Returns a Tuple containing the keys of `self` with the corresponding
+  /// values mapped through `transform`, except for any `nil` results.
+  func compactMapValues<U>(_ transform: (T) throws -> U?) rethrows -> Tuple<U> {
+    return .init(try fields.compactMapValues(transform))
+  }
+
+  /// Creates an instance using the given underlying storage.
+  fileprivate init(_ fields: [FieldID: T]) { self.fields = fields }
+
+  /// Returns the field with the given name, or `nil` if no such name exists.
+  subscript(fieldName: Identifier) -> T? { fields[.label(fieldName)] }
+
+  /// Returns the given positional field.
+  subscript(position: Int) -> T? { fields[.position(position)] }
+
+  private let fields: [FieldID: T]
+}
+extension Tuple: Equatable where T: Equatable {}
+
+typealias TupleType = Tuple<Type>
+typealias TupleValue = Tuple<Value>
 
 extension TupleValue: CarbonInterpreter.Value {
   var type: Type {
@@ -22,7 +52,7 @@ extension TupleValue: CarbonInterpreter.Value {
 }
 
 extension TupleType {
-  static let void: Self = [:]
+  static let void: Self = .init([:])
 }
 
 extension TupleSyntax {
@@ -31,7 +61,7 @@ extension TupleSyntax {
   /// fields.
   func fields(
     reportingDuplicatesIn errors: inout ErrorLog
-  ) -> [FieldID: Payload] {
+  ) -> Tuple<Payload> {
     var r: [FieldID: Payload] = [:]
     var positionalCount = 0
     for e in elements {
@@ -48,6 +78,6 @@ extension TupleSyntax {
         r[key] = e.payload
       }
     }
-    return r
+    return Tuple(r)
   }
 }

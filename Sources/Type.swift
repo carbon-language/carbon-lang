@@ -54,7 +54,7 @@ indirect enum Type: Equatable {
     if case .tuple(let r) = self { return r } else { return nil }
   }
 
-  static var void: Type { .tuple([:]) }
+  static var void: Type { .tuple(.void) }
 }
 
 extension Type: Value {
