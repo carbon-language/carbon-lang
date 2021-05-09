@@ -338,13 +338,42 @@ final class TypeCheckFunctionSignatures: XCTestCase {
     """.checkTypeChecks()
   }
 
-  func testFunctionCallPatternType() {
+  func testFunctionCallPatternType() throws {
     """
     choice X { One(Int, Bool), Two }
     fn f(X.One(Int: a, Bool: b), X.Two()) => b;
     fn g(Bool: _) => 1;
     fn h() => g(f(X.One(3, true), X.Two()));
     """.checkTypeChecks()
+
+    """
+    struct X { var Int: a; var Bool: b; }
+    fn f(X(.a = Int: a, .b = Bool: b)) => b;
+    fn g(Bool: _) => 1;
+    fn h() => g(f(X(.a = 3, .b = false)));
+    """.checkTypeChecks()
+
+    try """
+    fn f(Int(Bool: _));
+    """.typeChecked().errors.checkForMessageExcerpt(
+      "Called type must be a struct, not 'Int'")
+
+    try """
+    struct X { var Int: a; var Bool: b; }
+    fn f(X(.a = Bool: a, .b = Bool: b)) => b;
+    """.typeChecked().errors.checkForMessageExcerpt(
+      "doesn't match struct initializer type")
+
+    try """
+    choice X { One(Int, Bool), Two }
+    fn f(X.One(Bool: a, Bool: b), X.Two()) => b;
+    """.typeChecked().errors.checkForMessageExcerpt(
+      "doesn't match alternative payload type")
+
+    try """
+    fn f(1(Bool: _));
+    """.typeChecked().errors.checkForMessageExcerpt(
+      "instance of type Int is not callable")
   }
 
   /*
