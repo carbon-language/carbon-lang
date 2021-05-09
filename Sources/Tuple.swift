@@ -42,6 +42,24 @@ struct Tuple<T> {
 }
 extension Tuple: Equatable where T: Equatable {}
 
+extension Tuple: CustomStringConvertible {
+  var description: String {
+    let labeled = fields.lazy.compactMap { (k, v) -> (String, T)? in
+      guard case let .label(l) = k else { return nil }
+      return (l.text, v)
+    }
+      .sorted { $0.0 < $1.0 }.map { ".\($0.0) = \($0.1)" }
+
+    let positional = fields.compactMap { (k, v) -> (Int, T)? in
+      guard case let .position(p) = k else { return nil }
+      return (p, v)
+    }
+      .sorted { $0.0 < $1.0 }.map { "\($0.1)" }
+
+    return "(\((labeled + positional).joined(separator: ", ")))"
+  }
+}
+
 typealias TupleType = Tuple<Type>
 typealias TupleValue = Tuple<Value>
 

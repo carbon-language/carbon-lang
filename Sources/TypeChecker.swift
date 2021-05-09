@@ -271,11 +271,11 @@ private extension TypeChecker {
       if let m = s.members.first(where: { $0.name == e.member }) {
         return type(m)
       }
-      return error(e.member, "struct \(s.name) has no member '\(e.member.text)'")
+      return error(e.member, "struct \(s.name) has no member '\(e.member)'")
 
     case let .tuple(t):
       if let r = t[e.member] { return r }
-      return error(e.member, "tuple type \(t) has no field '\(e.member.text)'")
+      return error(e.member, "tuple type \(t) has no field '\(e.member)'")
 
     case .type:
       // Handle access to a type member, like a static member in C++.
@@ -285,7 +285,7 @@ private extension TypeChecker {
           .first(where: { $0.name == e.member }).map { type($0) }
           ?? error(
             e.member,
-            "choice \(c.name.text) has no alternative '\(e.member.text)'")
+            "choice \(c.name) has no alternative '\(e.member)'")
       }
       // No other types have members.
       fallthrough

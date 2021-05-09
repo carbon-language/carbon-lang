@@ -31,6 +31,10 @@ struct Identifier: AST, Hashable {
   let site: Site
 }
 
+extension Identifier: CustomStringConvertible {
+  var description: String { text }
+}
+
 /// A declaration that can appear at file scope.
 enum TopLevelDeclaration: AST {
   case

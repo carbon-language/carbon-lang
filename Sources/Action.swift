@@ -40,7 +40,7 @@ struct Evaluate: Action {
         // N.B. of all expressions, this one doesn't need to be destroyed.
         return .done
       case nil:
-        fatalError("No definition for '\(id.text)'")
+        fatalError("No definition for '\(id)'")
       default: UNIMPLEMENTED
       }
     case .memberAccess(_): UNIMPLEMENTED

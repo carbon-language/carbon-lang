@@ -251,7 +251,7 @@ final class TypeCheckFunctionSignatures: XCTestCase {
     try """
     fn f() => (fnty ()->Int)();
     """.typeChecked()
-    .errors.checkForMessageExcerpt("is not callable.")
+    .errors.checkForMessageExcerpt("type fnty () -> Int is not callable.")
   }
 
   func testTypeOfStructConstruction() {
@@ -267,7 +267,8 @@ final class TypeCheckFunctionSignatures: XCTestCase {
     struct X {}
     fn f() => X(1);
     """.typeChecked().errors
-    .checkForMessageExcerpt("do not match required initializer parameters")
+      .checkForMessageExcerpt(
+        "argument types (Int) do not match required initializer parameters ()")
   }
 
   func testNonCallableNonTypeValues() throws {
@@ -306,13 +307,14 @@ final class TypeCheckFunctionSignatures: XCTestCase {
     try """
     fn f() => (.x = 0, .y = false).c;
     """.typeChecked()
-    .errors.checkForMessageExcerpt("has no field 'c'")
+      .errors.checkForMessageExcerpt(
+        "tuple type (.x = Int, .y = Bool) has no field 'c'")
 
     try """
     struct X { var Int: a; var Bool: b; }
     fn f(X: y) => (y.a, y.c);
     """.typeChecked()
-    .errors.checkForMessageExcerpt("has no member 'c'")
+    .errors.checkForMessageExcerpt("struct X has no member 'c'")
 
     try """
     choice X {}
@@ -362,13 +364,15 @@ final class TypeCheckFunctionSignatures: XCTestCase {
     struct X { var Int: a; var Bool: b; }
     fn f(X(.a = Bool: a, .b = Bool: b)) => b;
     """.typeChecked().errors.checkForMessageExcerpt(
-      "doesn't match struct initializer type")
+      "Argument tuple type (.a = Bool, .b = Bool) doesn't match"
+        + " struct initializer type (.a = Int, .b = Bool)")
 
     try """
     choice X { One(Int, Bool), Two }
     fn f(X.One(Bool: a, Bool: b), X.Two()) => b;
     """.typeChecked().errors.checkForMessageExcerpt(
-      "doesn't match alternative payload type")
+      "Argument tuple type (Bool, Bool) doesn't match"
+        + " alternative payload type (Int, Bool)")
 
     try """
     fn f(1(Bool: _));

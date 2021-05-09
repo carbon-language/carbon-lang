@@ -51,7 +51,7 @@ private extension NameResolution {
   mutating func define(_ name: Identifier, _ definition: Declaration) {
     if activeScopes.top.contains(name.text) {
       error(
-        name, "'\(name.text)' already defined in this scope",
+        name, "'\(name)' already defined in this scope",
         notes:
           [("previous definition", symbolTable[name.text].site)])
     }
@@ -67,7 +67,7 @@ private extension NameResolution {
       definition[name] = d
       return
     }
-    error(name, "Un-declared name '\(name.text)'")
+    error(name, "Un-declared name '\(name)'")
   }
 
   /// Adds an error at the site of `offender` to the error log.
