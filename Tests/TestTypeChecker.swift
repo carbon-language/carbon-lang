@@ -468,6 +468,30 @@ final class TypeCheckFunctionSignatures: XCTestCase {
     """.typeChecked().errors.checkForMessageExcerpt(
       "Tuple type (.x = Int, Int, Bool) has no value at position 3")
   }
+
+  func testTypeOfUnaryOperator() throws {
+    """
+    fn f() => -3;
+    fn g(Int: _) => 0;
+    fn h() => g(f());
+    """.checkTypeChecks("unary minus")
+
+    """
+    fn f() => not false;
+    fn g(Bool: _) => 0;
+    fn h() => g(f());
+    """.checkTypeChecks("logical not")
+
+    try """
+    fn f() => -false;
+    """.typeChecked().errors.checkForMessageExcerpt(
+      "Expected expression of type Int, not Bool")
+
+    try """
+    fn f() => not 3;
+    """.typeChecked().errors.checkForMessageExcerpt(
+      "Expected expression of type Bool, not Int")
+  }
 }
 
 final class TypeCheckExamples: XCTestCase {

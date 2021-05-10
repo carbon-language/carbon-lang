@@ -2,17 +2,6 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-/// A marker for code that needs to be implemented.  Eventually all of these
-/// should be eliminated from the codebase.
-func UNIMPLEMENTED(filePath: StaticString = #filePath, line: UInt = #line) -> Never {
-  fatalError("unimplemented", file: (filePath), line: line)
-}
-
-/// A marker for code that should never be reached.
-func UNREACHABLE(filePath: StaticString = #filePath, line: UInt = #line) -> Never {
-  fatalError("unimplemented", file: (filePath), line: line)
-}
-
 struct TypeChecker {
   init(_ program: ExecutableProgram) {
     self.program = program
@@ -28,7 +17,7 @@ struct TypeChecker {
     }
     /*
     for d in program.ast {
-      checkFunctionBody(d)
+      checkFunctionBodiesAndTopLevelInitializations(d)
     }
     */
   }
@@ -210,9 +199,7 @@ private extension TypeChecker {
       guard indexType == .int else {
         return error(index, "Index type must be Int, not \(indexType)")
       }
-      guard let indexValue = evaluate(index) as? Int else {
-        return .error
-      }
+      let indexValue = evaluate(index) as! Int
       if let r = types[indexValue] { return r }
       return error(
         index, "Tuple type \(types) has no value at position \(indexValue)")
@@ -227,14 +214,56 @@ private extension TypeChecker {
       return .tuple(
         t.fields(reportingDuplicatesIn: &errors).mapFields { type($0) })
 
-    case .unaryOperator(_):
-      UNIMPLEMENTED()
+    case let .unaryOperator(u):
+      return type(u)
 
-    case .binaryOperator(_):
-      UNIMPLEMENTED()
+    case let .binaryOperator(b):
+      return type(b)
 
     case .functionCall(let f):
       return type(f)
+    }
+  }
+
+  /// Logs an error unless the type of `e` is `t`.
+  mutating func expectType(_ e: Expression, toBe expected: Type) {
+    let actual = type(e)
+    if actual != expected {
+      error(e, "Expected expression of type \(expected), not \(actual).")
+    }
+  }
+
+  mutating func type(_ u: UnaryOperatorExpression) -> Type {
+    switch u.operation.kind {
+    case .MINUS:
+      expectType(u.operand, toBe: .int)
+      return .int
+    case .NOT:
+      expectType(u.operand, toBe: .bool)
+      return .bool
+    default:
+      UNREACHABLE(u.operation.text)
+    }
+  }
+  
+  mutating func type(_ b: BinaryOperatorExpression) -> Type {
+    switch b.operation.kind {
+    case .EQUAL_EQUAL:
+      expectType(b.rhs, toBe: type(b.lhs))
+      return .bool
+
+    case .PLUS, .MINUS:
+      expectType(b.lhs, toBe: .int)
+      expectType(b.rhs, toBe: .int)
+      return .int
+
+    case .AND, .OR:
+      expectType(b.lhs, toBe: .bool)
+      expectType(b.rhs, toBe: .bool)
+      return .bool
+
+    default:
+      UNREACHABLE(b.operation.text)
     }
   }
 
@@ -255,8 +284,7 @@ private extension TypeChecker {
     case let .alternative(parent: resultID, payload: payload):
       if argumentTypes != .tuple(payload) {
         error(
-          e.arguments,
-          "argument types \(argumentTypes)"
+          e.arguments, "argument types \(argumentTypes)"
             + " do not match payload type \(payload)")
       }
       return .choice(resultID)
@@ -271,9 +299,8 @@ private extension TypeChecker {
 
       if argumentTypes != .tuple(initializerType) {
         error(
-          e.arguments,
-          "argument types \(argumentTypes) do"
-            + " not match required initializer parameters \(initializerType)")
+          e.arguments, "argument types \(argumentTypes) do not match"
+            + " required initializer parameters \(initializerType)")
       }
       return calleeValue
 
@@ -425,4 +452,19 @@ private extension TypeChecker {
     }
     return t
   }
+}
+
+/// A marker for code that needs to be implemented.  Eventually all of these
+/// should be eliminated from the codebase.
+func UNIMPLEMENTED(
+  _ message: String? = nil, filePath: StaticString = #filePath,
+  line: UInt = #line) -> Never {
+  fatalError(message ?? "unimplemented", file: (filePath), line: line)
+}
+
+/// A marker for code that should never be reached.
+func UNREACHABLE(
+  _ message: String? = nil,
+  filePath: StaticString = #filePath, line: UInt = #line) -> Never {
+  fatalError(message ?? "unreachable", file: (filePath), line: line)
 }
