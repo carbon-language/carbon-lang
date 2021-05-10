@@ -51,5 +51,6 @@ request:
 -   [0415 - Syntax: `return`](p0415.md)
 -   [0426 - Governance & evolution revamp](p0426.md)
 -   [0444 - GitHub Discussions](p0444.md)
+-   [0447 - Generics terminology](p0447.md)
 
 <!-- endproposals -->
