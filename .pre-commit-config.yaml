@@ -91,5 +91,10 @@ repos:
     hooks:
       - id: flake8
 
+# Most third-party code is in submodules; local commits are excluded here.
 # We fully exclude fuzzer corpus directories as they are generated binary data.
-exclude: '^(.*/fuzzer_corpus/.*)$'
+exclude: |
+  (?x)^(
+      third_party/examples/.*/carbon/.*|
+      .*/fuzzer_corpus/.*
+  )$
