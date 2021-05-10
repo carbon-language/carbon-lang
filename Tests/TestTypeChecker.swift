@@ -405,18 +405,22 @@ final class TypeCheckFunctionSignatures: XCTestCase {
     try """
     fn f(fnty(Int: x)) => 0;
     """.typeChecked().errors.checkForMessageExcerpt(
-      "x must be bound to a type value (not to a value of type Int) "
-        + "in this context")
+      "Pattern in this context must match type values, not Int values")
+
+    try """
+    fn f(fnty(auto: x)) => 0;
+    """.typeChecked().errors.checkForMessageExcerpt(
+      "No initializer available to deduce type for auto")
 
     // A tuple of types is a valid type.
     """
-    fn f(fnty((Int, Int): x)->Type: y) => 0;
+    fn f(fnty((Type, Type): x)->Type: y) => 0;
     """.checkTypeChecks()
 
     try """
-    fn f(fnty(Type: x)->2);
+    fn f(fnty((Int, Int): x)->Type: y) => 0;
     """.typeChecked().errors.checkForMessageExcerpt(
-      "Not a type expression (value has type Int)")
+      "Pattern in this context must match type values, not (Int, Int) values")
   }
 }
 

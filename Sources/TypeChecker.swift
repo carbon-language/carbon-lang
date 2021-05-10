@@ -322,7 +322,8 @@ private extension TypeChecker {
     case let .atom(e):
       return type(e)
     case let .variable(v):
-      return evaluate(v.type.expression!)
+      return v.type.expression.map { evaluate($0) } ??
+        error(v.type, "No initializer available to deduce type for auto")
     case let .tuple(t):
       return .tuple(
         t.fields(reportingDuplicatesIn: &errors).mapFields { type($0) })
@@ -388,46 +389,20 @@ private extension TypeChecker {
   }
 
   mutating func type(_ t: FunctionType<Pattern>) -> Type {
-    requireTypeValue(.tuple(t.parameters))
-    requireTypeValue(t.returnType)
-    // FIXME: we need type subtyping relationships.
+    _ = t.parameters.fields(reportingDuplicatesIn: &errors)
+      .mapFields { metatype($0) }
+    _ = metatype(t.returnType)
     return .type
   }
 
-  mutating func requireTypeValue(_ p: Pattern) {
-    switch p {
-    case let .atom(x):
-      _ = evaluate(TypeExpression(x))
-
-    case let .variable(x):
-      guard let e = x.type.expression else {
-        error(x.type, "No initializer available to deduce type for auto")
-        return
-      }
-
-      let t = evaluate(e)
-      switch t {
-      case .type:
-        return
-      case .tuple:
-        return
-      default:
-        error(
-          x.name,
-          "\(x.name) must be bound to a type value "
-            + "(not to a value of type \(t)) in this context")
-      }
-
-    case let .tuple(x):
-      for f in x {
-        requireTypeValue(f.payload)
-      }
-
-    case let .functionCall(x):
-      _ = type(x)
-
-    case let .functionType(x):
-      _ = type(x)
+  /// Returns the type of the type value matched by `p`, logging errors if `p`
+  /// does not match type values.
+  mutating func metatype(_ p: Pattern) -> Type {
+    let t = type(p)
+    if !t.isMetatype {
+      error(
+        p, "Pattern in this context must match type values, not \(t) values")
     }
+    return t
   }
 }

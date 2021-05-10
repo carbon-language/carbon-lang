@@ -42,6 +42,18 @@ indirect enum Type: Equatable {
     return nil
   }
 
+  /// `true` iff instances of this type are themselves types.
+  var isMetatype: Bool {
+    switch self {
+    case .type:
+      return true
+    case .tuple(let t):
+      return t.fields.allSatisfy(\.isMetatype)
+    default:
+      return false
+    }
+  }
+
   /// Convenience accessor for `.function` case.
   var function: (parameterTypes: TupleType, returnType: Type)? {
     if case .function(parameterTypes: let p, returnType: let r) = self {
