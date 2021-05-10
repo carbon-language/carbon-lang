@@ -226,6 +226,13 @@ final class TypeCheckFunctionSignatures: XCTestCase {
     """.checkTypeChecks()
   }
 
+  func testDeclaredTypeFunctionDefinition() throws {
+    """
+    fn g() => f();
+    fn f() => 1;
+    """.checkTypeChecks()
+  }
+
   func testNonStructTypeValueIsNotCallable() throws {
     try """
     choice X { One(Int) }
