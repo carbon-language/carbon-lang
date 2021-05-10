@@ -93,9 +93,12 @@ private extension TypeChecker {
 
   /// Returns the type defined by `t` or `.error` if `d` doesn't define a type.
   mutating func evaluate(_ e: TypeExpression) -> Type {
+    let t = type(e.body)
+    if !t.isMetatype {
+      return error(e, "Not a type expression (value has type \(t))")
+    }
     let v = evaluate(e.body)
-    if let r = Type(v) { return r }
-    return error(e, "Not a type expression (value has type \(v.type)).")
+    return Type(v)!
   }
 
   /// Returns the result of evaluating `e`, logging an error if `e` doesn't
