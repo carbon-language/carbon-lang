@@ -198,8 +198,21 @@ private extension TypeChecker {
     case .memberAccess(let e):
       return type(e)
 
-    case .index(target: _, offset: _, _):
-      UNIMPLEMENTED()
+    case let .index(target: base, offset: index, _):
+      let baseType = type(base)
+      guard case .tuple(let types) = baseType else {
+        return error(base, "Can't index non-tuple type \(baseType)")
+      }
+      let indexType = type(index)
+      guard indexType == .int else {
+        return error(index, "Index type must be Int, not \(indexType)")
+      }
+      guard let indexValue = evaluate(index) as? Int else {
+        return .error
+      }
+      if let r = types[indexValue] { return r }
+      return error(
+        index, "Tuple type \(types) has no value at position \(indexValue)")
 
     case .integerLiteral:
       return .int

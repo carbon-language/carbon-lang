@@ -421,6 +421,45 @@ final class TypeCheckFunctionSignatures: XCTestCase {
     fn f(fnty((Int, Int): x)->Type: y) => 0;
     """.typeChecked().errors.checkForMessageExcerpt(
       "Pattern in this context must match type values, not (Int, Int) values")
+
+    try """
+    fn g(Int: x) => Int;
+    fn f(fnty((Int, Int): x)->g(3)) => 0;
+    """.typeChecked().errors.checkForMessageExcerpt(
+      "Pattern in this context must match type values, not (Int, Int) values")
+  }
+
+  func testIndexExpression() throws {
+    """
+    fn f((Int,): r) => r[0];
+    """.checkTypeChecks()
+
+    """
+    fn f((Int, Bool): r) => r[0];
+    fn g(Int: _) => 1;
+    fn h() => g(f((1, false)));
+    """.checkTypeChecks()
+
+    """
+    fn f((Int, Bool): r) => r[1];
+    fn g(Bool: _) => 1;
+    fn h() => g(f((1, false)));
+    """.checkTypeChecks()
+
+    try """
+    fn f(Int: x) => x[0];
+    """.typeChecked().errors.checkForMessageExcerpt(
+      "Can't index non-tuple type Int")
+
+    try """
+    fn f((Int,): x) => x[Int];
+    """.typeChecked().errors.checkForMessageExcerpt(
+      "Index type must be Int, not Type")
+
+    try """
+    fn f((.x = Int, Int, Bool): r) => r[3];
+    """.typeChecked().errors.checkForMessageExcerpt(
+      "Tuple type (.x = Int, Int, Bool) has no value at position 3")
   }
 }
 
