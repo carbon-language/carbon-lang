@@ -4,10 +4,14 @@
 
 /// A marker for code that needs to be implemented.  Eventually all of these
 /// should be eliminated from the codebase.
-var UNIMPLEMENTED: Never { fatalError("unimplemented") }
+func UNIMPLEMENTED(filePath: StaticString = #filePath, line: UInt = #line) -> Never {
+  fatalError("unimplemented", file: (filePath), line: line)
+}
 
 /// A marker for code that should never be reached.
-var UNREACHABLE: Never { fatalError("unreachable.") }
+func UNREACHABLE(filePath: StaticString = #filePath, line: UInt = #line) -> Never {
+  fatalError("unimplemented", file: (filePath), line: line)
+}
 
 struct TypeChecker {
   init(_ program: ExecutableProgram) {
@@ -104,11 +108,11 @@ private extension TypeChecker {
       if let r = Type(program.definition[v]!) {
         return r
       }
-      UNIMPLEMENTED
+      UNIMPLEMENTED()
     case .memberAccess(_):
-      UNIMPLEMENTED
+      UNIMPLEMENTED()
     case .index(target: _, offset: _, _):
-      UNIMPLEMENTED
+      UNIMPLEMENTED()
     case let .integerLiteral(r, _):
       return r
     case let .booleanLiteral(r, _):
@@ -117,11 +121,11 @@ private extension TypeChecker {
       return t.fields(reportingDuplicatesIn: &errors)
         .mapFields { self.evaluate($0) }
     case .unaryOperator(operation: _, operand: _, _):
-      UNIMPLEMENTED
+      UNIMPLEMENTED()
     case .binaryOperator(operation: _, lhs: _, rhs: _, _):
-      UNIMPLEMENTED
+      UNIMPLEMENTED()
     case .functionCall(_):
-      UNIMPLEMENTED
+      UNIMPLEMENTED()
     case .intType:
       return Type.int
     case .boolType:
@@ -170,7 +174,7 @@ private extension TypeChecker {
     case let x as StructMember:
       r = evaluate(x.type)
 
-    default: UNREACHABLE // All possible cases should be handled.
+    default: UNREACHABLE() // All possible cases should be handled.
     }
     return memoizedType(of: d, r)
   }
@@ -183,7 +187,7 @@ private extension TypeChecker {
       return type(program.definition[v]!)
 
     case let .functionType(f):
-      // PARTIALLY UNIMPLEMENTED
+      // PARTIALLY UNIMPLEMENTED()
       // _ = type(FunctionType<Pattern>(f))
       _ = f
       return .type
@@ -195,7 +199,7 @@ private extension TypeChecker {
       return type(e)
 
     case .index(target: _, offset: _, _):
-      UNIMPLEMENTED
+      UNIMPLEMENTED()
 
     case .integerLiteral:
       return .int
@@ -208,10 +212,10 @@ private extension TypeChecker {
         t.fields(reportingDuplicatesIn: &errors).mapFields { type($0) })
 
     case .unaryOperator(operation: _, operand: _, _):
-      UNIMPLEMENTED
+      UNIMPLEMENTED()
 
     case .binaryOperator(operation: _, lhs: _, rhs: _, _):
-      UNIMPLEMENTED
+      UNIMPLEMENTED()
 
     case .functionCall(let f):
       return type(f)
@@ -306,7 +310,7 @@ private extension TypeChecker {
     else if case .some(.return(let e, _)) = f.body {
       returnType = type(e)
     }
-    else { UNREACHABLE } // auto return type without return statement body(?)
+    else { UNREACHABLE() } // auto return type without return statement body(?)
 
     let r = Type.function(parameterTypes: parameterTypes, returnType: returnType)
     types[f.identity] = r

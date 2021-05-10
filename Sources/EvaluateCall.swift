@@ -60,7 +60,7 @@ struct EvaluateCall: Action {
     case .runBody:
       // Prepare the context for the callee
       state.returnValueStorage = returnValueStorage
-      if (calleeCode.parameters.elements.count > 0) { UNIMPLEMENTED }
+      if (calleeCode.parameters.elements.count > 0) { UNIMPLEMENTED() }
       return .spawn(Execute(calleeCode.body!))
 
     case .cleanUpArguments:
