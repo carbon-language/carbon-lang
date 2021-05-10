@@ -325,7 +325,6 @@ auto PrintValue(const Value* val, std::ostream& out) -> void {
 
         out << element.name << " = ";
         state->heap.PrintAddress(element.address, out);
-        out << "@" << element.address;
       }
       out << ")";
       break;

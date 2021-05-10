@@ -2,8 +2,11 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-fn f(Int x, .d = Int y) => x + y;
+fn Id(Type t) => t;
+
+// Test non-trivial type expression in variable declaration statement.
 
 fn main() -> Int {
-  return f(1, .d = 2) - 3;
+  var Id(Int) x = 0;
+  return x;
 }
