@@ -492,6 +492,38 @@ final class TypeCheckFunctionSignatures: XCTestCase {
     """.typeChecked().errors.checkForMessageExcerpt(
       "Expected expression of type Bool, not Int")
   }
+
+  func testTypeOfBinaryOperator() throws {
+    """
+    fn f(Int: a, Int: b) => a == b;
+    fn g(Bool: _) => 0;
+    fn h() => g(f(1, 2));
+    """.checkTypeChecks()
+
+    """
+    fn f(Int: a, Int: b) => a + b;
+    fn g(Int: _) => 0;
+    fn h() => g(f(1, 2));
+    """.checkTypeChecks()
+
+    """
+    fn f(Int: a, Int: b) => a - b;
+    fn g(Int: _) => 0;
+    fn h() => g(f(1, 2));
+    """.checkTypeChecks()
+
+    """
+    fn f(Bool: a, Bool: b) => a and b;
+    fn g(Bool: _) => 0;
+    fn h() => g(f(true, false));
+    """.checkTypeChecks()
+
+    """
+    fn f(Bool: a, Bool: b) => a or b;
+    fn g(Bool: _) => 0;
+    fn h() => g(f(true, false));
+    """.checkTypeChecks()
+  }
 }
 
 final class TypeCheckExamples: XCTestCase {
