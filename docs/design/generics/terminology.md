@@ -54,8 +54,8 @@ may want to support parameterizing other language constructs like
 [interfaces](#interface-type-parameters-versus-associated-types).
 
 This parameter broadens the scope of the language construct on an axis defined
-by that parameter, effectively defining a family of functions (or whatever)
-instead of a single one.
+by that parameter, for example it could define a family of functions instead of
+a single one.
 
 ## Generic versus template parameters
 
