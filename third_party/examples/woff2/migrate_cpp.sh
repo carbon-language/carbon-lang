@@ -15,13 +15,11 @@ EXAMPLE=third_party/examples/woff2
 # on a fresh copy of woff2.
 rm -rf "${EXAMPLE}/carbon/"
 
-# Initialize the carbon directory, omitting unnecessary subdirectories.
-rsync -a \
-  "${EXAMPLE}/original/" \
-  "${EXAMPLE}/carbon/" \
-  --exclude .git \
-  --exclude .gitmodules \
-  --exclude cmake
+# Initialize the carbon directory with C++ code only.
+mkdir -p "${EXAMPLE}/carbon/"
+for x in LICENSE include src; do
+  cp -R "${EXAMPLE}/original/${x}" "${EXAMPLE}/carbon/${x}"
+done
 
 # Copy files into the carbon directory to simplify the setup.
 cp "${EXAMPLE}/BUILD.original" \
