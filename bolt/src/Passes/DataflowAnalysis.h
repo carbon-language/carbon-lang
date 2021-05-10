@@ -71,10 +71,6 @@ public:
     return ProgramPoint(&BB);
   }
 
-  void operator=(const ProgramPoint &PP) {
-    ID = PP.ID;
-    Data.BB = PP.Data.BB;
-  }
   bool operator<(const ProgramPoint &PP) const { return Data.BB < PP.Data.BB; }
   bool operator==(const ProgramPoint &PP) const {
     return Data.BB == PP.Data.BB;
