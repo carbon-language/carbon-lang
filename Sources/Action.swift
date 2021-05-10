@@ -50,8 +50,8 @@ struct Evaluate: Action {
       return .done
     case .booleanLiteral(_, _): UNIMPLEMENTED()
     case .tupleLiteral(_): UNIMPLEMENTED()
-    case .unaryOperator(operation: _, operand: _, _): UNIMPLEMENTED()
-    case .binaryOperator(operation: _, lhs: _, rhs: _, _): UNIMPLEMENTED()
+    case .unaryOperator(_): UNIMPLEMENTED()
+    case .binaryOperator(_): UNIMPLEMENTED()
     case .functionCall(_): UNIMPLEMENTED()
     case .intType(_): UNIMPLEMENTED()
     case .boolType(_): UNIMPLEMENTED()

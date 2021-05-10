@@ -123,9 +123,9 @@ private extension TypeChecker {
     case let .tupleLiteral(t):
       return t.fields(reportingDuplicatesIn: &errors)
         .mapFields { self.evaluate($0) }
-    case .unaryOperator(operation: _, operand: _, _):
+    case .unaryOperator(_):
       UNIMPLEMENTED()
-    case .binaryOperator(operation: _, lhs: _, rhs: _, _):
+    case .binaryOperator(_):
       UNIMPLEMENTED()
     case .functionCall(_):
       UNIMPLEMENTED()
@@ -227,10 +227,10 @@ private extension TypeChecker {
       return .tuple(
         t.fields(reportingDuplicatesIn: &errors).mapFields { type($0) })
 
-    case .unaryOperator(operation: _, operand: _, _):
+    case .unaryOperator(_):
       UNIMPLEMENTED()
 
-    case .binaryOperator(operation: _, lhs: _, rhs: _, _):
+    case .binaryOperator(_):
       UNIMPLEMENTED()
 
     case .functionCall(let f):

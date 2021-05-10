@@ -183,14 +183,21 @@ private extension NameResolution {
       resolveNames(usedIn: t)
       resolveNames(usedIn: o)
 
-    case let .tupleLiteral(t): resolveNames(usedIn: t)
-    case let .unaryOperator(_, operand: x, _): resolveNames(usedIn: x)
-    case let .binaryOperator(_, lhs: l, rhs: r, _):
-      resolveNames(usedIn: l)
-      resolveNames(usedIn: r)
+    case let .tupleLiteral(t):
+      resolveNames(usedIn: t)
 
-    case let .functionCall(f): resolveNames(usedIn: f)
-    case let .functionType(t): resolveNames(usedIn: t)
+    case let .unaryOperator(x):
+      resolveNames(usedIn: x.operand)
+
+    case let .binaryOperator(x):
+      resolveNames(usedIn: x.lhs)
+      resolveNames(usedIn: x.rhs)
+
+    case let .functionCall(f):
+      resolveNames(usedIn: f)
+
+    case let .functionType(t):
+      resolveNames(usedIn: t)
 
     case .integerLiteral, .booleanLiteral,
          .intType, .boolType, .typeType: ()
