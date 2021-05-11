@@ -12,6 +12,8 @@
 #define LLVM_TOOLS_LLVM_BOLT_PASSES_CALLGRAPH_H
 
 #include <cassert>
+#include <cstdint>
+#include <cstdio>
 #include <unordered_set>
 #include <vector>
 
