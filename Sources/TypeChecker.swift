@@ -14,7 +14,7 @@ struct TypeChecker {
     }
     for d in program.ast {
       if case .function(let f) = d {
-        _ = typeOfName(declaredBy: f)
+        _ = typeOfName(declaredBy: f as Declaration)
       }
     }
     /*
@@ -24,13 +24,19 @@ struct TypeChecker {
     */
   }
 
+  private enum Memo<T: Equatable>: Equatable {
+    case beingComputed, final(T)
+  }
+
   private let program: ExecutableProgram
 
   /// Mapping from alternative declaration to the choice in which it is defined.
   private var parent = ASTDictionary<Alternative, ChoiceDefinition>()
 
-  /// Mapping from Declaration to type of thing it declares.
-  private(set) var types = Dictionary<Declaration.Identity, Type>()
+  /// Memoized result of computing the type of the expression consisting of the
+  /// name of each declared entity.
+  private var typeOfNameDeclaredBy
+    = Dictionary<Declaration.Identity, Memo<Type>>()
 
   /// Mapping from struct to the parameter tuple type that initializes it.
   private var initializerTuples = ASTDictionary<StructDefinition, TupleType>()
@@ -135,18 +141,20 @@ private extension TypeChecker {
     }
   }
 
-  /// Registers `t` as the type declared by `d`, returning `t`
-  mutating func memoizedType(of d: Declaration, _ t: Type) -> Type {
-    types[d.identity] = t
-    return t
-  }
-
   /// Returns the type of the entity declared by `d`.
   ///
   /// - Requires: if `d` declares a binding, its type has already been memoized
   ///   or is declared as a type expression rather than with `auto`.
   mutating func typeOfName(declaredBy d: Declaration) -> Type {
-    if let r = types[d.identity] { return r }
+    switch typeOfNameDeclaredBy[d.identity] {
+    case .beingComputed:
+      return error(d.name, "type dependency loop")
+    case let .final(t):
+      return t
+    case nil: ()
+    }
+
+    typeOfNameDeclaredBy[d.identity] = .beingComputed
 
     let r: Type
     switch d {
@@ -170,7 +178,8 @@ private extension TypeChecker {
 
     default: UNREACHABLE() // All possible cases should be handled.
     }
-    return memoizedType(of: d, r)
+    typeOfNameDeclaredBy[d.identity] = .final(r)
+    return r
   }
 
   /// Returns the type of the value computed by `e`, logging errors if `e`
@@ -343,8 +352,12 @@ private extension TypeChecker {
     }
   }
 
-  mutating func typeOfName(declaredBy f: FunctionDefinition) -> Type {
-    if let r = types[f.identity] { return r }
+  private mutating func typeOfName(declaredBy f: FunctionDefinition) -> Type {
+    // Make sure we don't bypass memoization.
+    if typeOfNameDeclaredBy[f.identity] != .beingComputed {
+      return typeOfName(declaredBy: f as Declaration)
+    }
+
     let parameterTypes = self.parameterTypes(f.parameters)
 
     let returnType: Type
@@ -356,9 +369,7 @@ private extension TypeChecker {
     }
     else { UNREACHABLE() } // auto return type without return statement body(?)
 
-    let r = Type.function(parameterTypes: parameterTypes, returnType: returnType)
-    types[f.identity] = r
-    return r
+    return .function(parameterTypes: parameterTypes, returnType: returnType)
   }
 
   mutating func parameterTypes(_ p: TuplePattern) -> TupleType {

@@ -472,6 +472,13 @@ final class TypeCheckFunctionSignatures: XCTestCase {
     fn h() => g(f(true, false));
     """.checkTypeChecks()
   }
+
+  func testTypeDependencyLoop() {
+    """
+    fn f() => g();
+    fn g() => f();
+    """.checkFailsToTypeCheck(withMessage: "type dependency loop")
+  }
 }
 
 final class TypeCheckExamples: XCTestCase {
