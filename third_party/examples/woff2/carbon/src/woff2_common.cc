@@ -15,7 +15,11 @@
 namespace woff2 {
 
 
+<<<<<<< HEAD
 auto ComputeULongSum(const uint8_t* buf, size_t size) -> uint32_t {
+=======
+uint32_t ComputeULongSum(const uint8_t* buf, size_t size) {
+>>>>>>> trunk
   uint32_t checksum = 0;
   size_t aligned_size = size & ~3;
   for (size_t i = 0; i < aligned_size; i += 4) {
@@ -43,7 +47,11 @@ auto ComputeULongSum(const uint8_t* buf, size_t size) -> uint32_t {
   return checksum;
 }
 
+<<<<<<< HEAD
 auto CollectionHeaderSize(uint32_t header_version, uint32_t num_fonts) -> size_t {
+=======
+size_t CollectionHeaderSize(uint32_t header_version, uint32_t num_fonts) {
+>>>>>>> trunk
   size_t size = 0;
   if (header_version == 0x00020000) {
     size += 12;  // ulDsig{Tag,Length,Offset}

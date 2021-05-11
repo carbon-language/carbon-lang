@@ -30,6 +30,7 @@ const size_t kDefaultMaxSize = 30 * 1024 * 1024;
  */
 class WOFF2Out {
  public:
+<<<<<<< HEAD
   virtual ~WOFF2Out() = default;
 
   // Append n bytes of data from buf.
@@ -41,6 +42,19 @@ class WOFF2Out {
   virtual auto Write(const void *buf, size_t offset, size_t n) -> bool = 0;
 
   virtual auto Size() -> size_t = 0;
+=======
+  virtual ~WOFF2Out(void) {}
+
+  // Append n bytes of data from buf.
+  // Return true if all written, false otherwise.
+  virtual bool Write(const void *buf, size_t n) = 0;
+
+  // Write n bytes of data from buf at offset.
+  // Return true if all written, false otherwise.
+  virtual bool Write(const void *buf, size_t offset, size_t n) = 0;
+
+  virtual size_t Size() = 0;
+>>>>>>> trunk
 };
 
 /**
@@ -53,10 +67,17 @@ class WOFF2StringOut : public WOFF2Out {
   // buf may be sized (e.g. using EstimateWOFF2FinalSize) or empty.
   explicit WOFF2StringOut(std::string* buf);
 
+<<<<<<< HEAD
   auto Write(const void *buf, size_t n) -> bool override;
   auto Write(const void *buf, size_t offset, size_t n) -> bool override;
   auto Size() -> size_t override { return offset_; }
   auto MaxSize() -> size_t { return max_size_; }
+=======
+  bool Write(const void *buf, size_t n) override;
+  bool Write(const void *buf, size_t offset, size_t n) override;
+  size_t Size() override { return offset_; }
+  size_t MaxSize() { return max_size_; }
+>>>>>>> trunk
   void SetMaxSize(size_t max_size);
  private:
   std::string* buf_;
@@ -72,9 +93,15 @@ class WOFF2MemoryOut : public WOFF2Out {
   // Create a writer that writes its data to buf.
   WOFF2MemoryOut(uint8_t* buf, size_t buf_size);
 
+<<<<<<< HEAD
   auto Write(const void *buf, size_t n) -> bool override;
   auto Write(const void *buf, size_t offset, size_t n) -> bool override;
   auto Size() -> size_t override { return offset_; }
+=======
+  bool Write(const void *buf, size_t n) override;
+  bool Write(const void *buf, size_t offset, size_t n) override;
+  size_t Size() override { return offset_; }
+>>>>>>> trunk
  private:
   uint8_t* buf_;
   size_t buf_size_;

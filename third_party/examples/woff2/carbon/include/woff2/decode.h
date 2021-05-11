@@ -9,27 +9,46 @@
 #ifndef WOFF2_WOFF2_DEC_H_
 #define WOFF2_WOFF2_DEC_H_
 
+<<<<<<< HEAD
 #include <cstddef>
 #include <cinttypes>
+=======
+#include <stddef.h>
+#include <inttypes.h>
+>>>>>>> trunk
 #include <woff2/output.h>
 
 namespace woff2 {
 
 // Compute the size of the final uncompressed font, or 0 on error.
+<<<<<<< HEAD
 auto ComputeWOFF2FinalSize(const uint8_t *data, size_t length) -> size_t;
+=======
+size_t ComputeWOFF2FinalSize(const uint8_t *data, size_t length);
+>>>>>>> trunk
 
 // Decompresses the font into the target buffer. The result_length should
 // be the same as determined by ComputeFinalSize(). Returns true on successful
 // decompression.
 // DEPRECATED; please prefer the version that takes a WOFF2Out*
+<<<<<<< HEAD
 auto ConvertWOFF2ToTTF(uint8_t *result, size_t result_length,
                        const uint8_t *data, size_t length) -> bool;
+=======
+bool ConvertWOFF2ToTTF(uint8_t *result, size_t result_length,
+                       const uint8_t *data, size_t length);
+>>>>>>> trunk
 
 // Decompresses the font into out. Returns true on success.
 // Works even if WOFF2Header totalSfntSize is wrong.
 // Please prefer this API.
+<<<<<<< HEAD
 auto ConvertWOFF2ToTTF(const uint8_t *data, size_t length,
                        WOFF2Out* out) -> bool;
+=======
+bool ConvertWOFF2ToTTF(const uint8_t *data, size_t length,
+                       WOFF2Out* out);
+>>>>>>> trunk
 
 } // namespace woff2
 

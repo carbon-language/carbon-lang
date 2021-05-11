@@ -12,7 +12,11 @@
 #include <woff2/encode.h>
 
 
+<<<<<<< HEAD
 auto main(int argc, char **argv) -> int {
+=======
+int main(int argc, char **argv) {
+>>>>>>> trunk
   using std::string;
 
   if (argc != 2) {
@@ -21,15 +25,26 @@ auto main(int argc, char **argv) -> int {
   }
 
   string filename(argv[1]);
+<<<<<<< HEAD
   string outfilename = filename.substr(0, filename.find_last_of('.')) + ".woff2";
+=======
+  string outfilename = filename.substr(0, filename.find_last_of(".")) + ".woff2";
+>>>>>>> trunk
   fprintf(stdout, "Processing %s => %s\n",
     filename.c_str(), outfilename.c_str());
   string input = woff2::GetFileContent(filename);
 
+<<<<<<< HEAD
   const auto* input_data = reinterpret_cast<const uint8_t*>(input.data());
   size_t output_size = woff2::MaxWOFF2CompressedSize(input_data, input.size());
   string output(output_size, 0);
   auto* output_data = reinterpret_cast<uint8_t*>(&output[0]);
+=======
+  const uint8_t* input_data = reinterpret_cast<const uint8_t*>(input.data());
+  size_t output_size = woff2::MaxWOFF2CompressedSize(input_data, input.size());
+  string output(output_size, 0);
+  uint8_t* output_data = reinterpret_cast<uint8_t*>(&output[0]);
+>>>>>>> trunk
 
   woff2::WOFF2Params params;
   if (!woff2::ConvertTTFToWOFF2(input_data, input.size(),
