@@ -47,6 +47,10 @@ bazel-execroot/external/llvm-project
 -iquote
 bazel-bin/external/llvm-project
 -iquote
+bazel-execroot/external/llvm-project/clang/include
+-iquote
+bazel-bin/external/llvm-project/clang/include
+-iquote
 bazel-execroot/external/llvm_terminfo
 -iquote
 bazel-bin/external/llvm_terminfo

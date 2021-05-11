@@ -11,6 +11,7 @@ cc_binary(
     srcs = ["main.cpp"],
     deps = [
         "@llvm-project//clang:tooling",
-        "@llvm-project//llvm:Support",
+        "@llvm-project//clang:ast_matchers",
+        # "@llvm-project//llvm:Support",
     ],
 )
