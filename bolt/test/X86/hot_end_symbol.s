@@ -9,7 +9,7 @@
 # RUN:   %s -o %t.o
 # RUN: link_fdata %s %t.o %t.fdata
 # RUN: llvm-strip --strip-unneeded %t.o
-# RUN: %host_cc %t.o -o %t.exe -Wl,-q
+# RUN: %host_cc %cflags %t.o -o %t.exe -Wl,-q
 
 # RUN: llvm-bolt %t.exe -relocs=1 -hot-text -reorder-functions=hfsort \
 # RUN:    -data %t.fdata -o %t.out | FileCheck %s

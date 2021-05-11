@@ -10,7 +10,7 @@
 # RUN: link_fdata %s %t.o %t.fdata
 # Delete our BB symbols so BOLT doesn't mark them as entry points
 # RUN: llvm-strip --strip-unneeded %t.o
-# RUN: %host_cc %t.o -o %t.exe -Wl,-q
+# RUN: %host_cc %cflags %t.o -o %t.exe -Wl,-q
 
 # RUN: llvm-bolt %t.exe -relocs=1 -frame-opt=all -print-finalized \
 # RUN:    -print-only=main -data %t.fdata -o %t.out | FileCheck %s

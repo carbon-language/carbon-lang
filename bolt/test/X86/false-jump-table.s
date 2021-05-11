@@ -5,7 +5,7 @@
 
 # RUN: llvm-mc -filetype=obj -triple x86_64-unknown-unknown \
 # RUN:   %s -o %t.o
-# RUN: %host_cc %t.o -o %t.exe -Wl,-q
+# RUN: %host_cc %cflags %t.o -o %t.exe -Wl,-q
 
 # RUN: llvm-bolt %t.exe -print-cfg \
 # RUN:    -print-only=inc_dup -o %t.out | FileCheck %s

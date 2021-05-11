@@ -7,7 +7,7 @@
 # RUN:   %s -o %t.o
 # RUN: link_fdata %s %t.o %t.fdata
 # RUN: llvm-strip --strip-unneeded %t.o
-# RUN: %host_cc %t.o -o %t.exe -Wl,-q -nostdlib
+# RUN: %host_cc %cflags %t.o -o %t.exe -Wl,-q -nostdlib
 # RUN: llvm-bolt %t.exe -o %t.out -data %t.fdata -lite=0 -dyno-stats \
 # RUN:    -print-sctc 2>&1 | FileCheck %s
 # CHECK-NOT: Assertion `BranchInfo.size() == 2 && "could only be called for blocks with 2 successors"' failed.
