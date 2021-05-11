@@ -9,8 +9,8 @@
 #ifndef WOFF2_WOFF2_COMMON_H_
 #define WOFF2_WOFF2_COMMON_H_
 
-#include <stddef.h>
-#include <inttypes.h>
+#include <cstddef>
+#include <cinttypes>
 
 #include <string>
 
@@ -45,7 +45,7 @@ struct Table {
   uint32_t dst_length;
   const uint8_t* dst_data;
 
-  bool operator<(const Table& other) const {
+  auto operator<(const Table& other) const -> bool {
     return tag < other.tag;
   }
 };
@@ -54,10 +54,10 @@ struct Table {
 // Size of the collection header. 0 if version indicates this isn't a
 // collection. Ref http://www.microsoft.com/typography/otspec/otff.htm,
 // True Type Collections
-size_t CollectionHeaderSize(uint32_t header_version, uint32_t num_fonts);
+auto CollectionHeaderSize(uint32_t header_version, uint32_t num_fonts) -> size_t;
 
 // Compute checksum over size bytes of buf
-uint32_t ComputeULongSum(const uint8_t* buf, size_t size);
+auto ComputeULongSum(const uint8_t* buf, size_t size) -> uint32_t;
 
 } // namespace woff2
 
