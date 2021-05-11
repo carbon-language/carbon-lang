@@ -8,7 +8,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "BinaryFunction.h"
 #include "BinaryPasses.h"
 #include "ParallelUtilities.h"
 #include "Passes/ReorderAlgorithm.h"
@@ -150,39 +149,30 @@ PrintUnknownCFG("print-unknown-cfg",
   cl::cat(BoltCategory),
   cl::ReallyHidden);
 
-static cl::opt<bolt::ReorderBasicBlocks::LayoutType>
-ReorderBlocks("reorder-blocks",
-  cl::desc("change layout of basic blocks in a function"),
-  cl::init(bolt::ReorderBasicBlocks::LT_NONE),
-  cl::values(
-    clEnumValN(bolt::ReorderBasicBlocks::LT_NONE,
-      "none",
-      "do not reorder basic blocks"),
-    clEnumValN(bolt::ReorderBasicBlocks::LT_REVERSE,
-      "reverse",
-      "layout blocks in reverse order"),
-    clEnumValN(bolt::ReorderBasicBlocks::LT_OPTIMIZE,
-      "normal",
-      "perform optimal layout based on profile"),
-    clEnumValN(bolt::ReorderBasicBlocks::LT_OPTIMIZE_BRANCH,
-      "branch-predictor",
-      "perform optimal layout prioritizing branch "
-      "predictions"),
-    clEnumValN(bolt::ReorderBasicBlocks::LT_OPTIMIZE_CACHE,
-      "cache",
-      "perform optimal layout prioritizing I-cache "
-      "behavior"),
-    clEnumValN(bolt::ReorderBasicBlocks::LT_OPTIMIZE_EXT_TSP,
-      "cache+",
-      "perform layout optimizing I-cache behavior"),
-    clEnumValN(bolt::ReorderBasicBlocks::LT_OPTIMIZE_EXT_TSP,
-      "ext-tsp",
-      "perform layout optimizing I-cache behavior"),
-    clEnumValN(bolt::ReorderBasicBlocks::LT_OPTIMIZE_SHUFFLE,
-      "cluster-shuffle",
-      "perform random layout of clusters")),
-  cl::ZeroOrMore,
-  cl::cat(BoltOptCategory));
+cl::opt<bolt::ReorderBasicBlocks::LayoutType> ReorderBlocks(
+    "reorder-blocks", cl::desc("change layout of basic blocks in a function"),
+    cl::init(bolt::ReorderBasicBlocks::LT_NONE),
+    cl::values(
+        clEnumValN(bolt::ReorderBasicBlocks::LT_NONE, "none",
+                   "do not reorder basic blocks"),
+        clEnumValN(bolt::ReorderBasicBlocks::LT_REVERSE, "reverse",
+                   "layout blocks in reverse order"),
+        clEnumValN(bolt::ReorderBasicBlocks::LT_OPTIMIZE, "normal",
+                   "perform optimal layout based on profile"),
+        clEnumValN(bolt::ReorderBasicBlocks::LT_OPTIMIZE_BRANCH,
+                   "branch-predictor",
+                   "perform optimal layout prioritizing branch "
+                   "predictions"),
+        clEnumValN(bolt::ReorderBasicBlocks::LT_OPTIMIZE_CACHE, "cache",
+                   "perform optimal layout prioritizing I-cache "
+                   "behavior"),
+        clEnumValN(bolt::ReorderBasicBlocks::LT_OPTIMIZE_EXT_TSP, "cache+",
+                   "perform layout optimizing I-cache behavior"),
+        clEnumValN(bolt::ReorderBasicBlocks::LT_OPTIMIZE_EXT_TSP, "ext-tsp",
+                   "perform layout optimizing I-cache behavior"),
+        clEnumValN(bolt::ReorderBasicBlocks::LT_OPTIMIZE_SHUFFLE,
+                   "cluster-shuffle", "perform random layout of clusters")),
+    cl::ZeroOrMore, cl::cat(BoltOptCategory));
 
 cl::opt<unsigned>
 ExecutionCountThreshold("execution-count-threshold",

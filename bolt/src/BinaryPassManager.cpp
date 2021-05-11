@@ -18,6 +18,7 @@
 #include "Passes/Instrumentation.h"
 #include "Passes/JTFootprintReduction.h"
 #include "Passes/LongJmp.h"
+#include "Passes/LoopInversionPass.h"
 #include "Passes/PLTCall.h"
 #include "Passes/PatchEntries.h"
 #include "Passes/RegReAssign.h"
@@ -445,6 +446,8 @@ void BinaryFunctionPassManager::runAllPasses(BinaryContext &BC) {
     opts::EliminateUnreachable);
 
   Manager.registerPass(std::make_unique<SplitFunctions>(PrintSplit));
+
+  Manager.registerPass(std::make_unique<LoopInversionPass>());
 
   // This pass syncs local branches with CFG. If any of the following
   // passes breaks the sync - they either need to re-run the pass or

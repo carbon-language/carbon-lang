@@ -1,6 +1,8 @@
 #!/bin/bash -e
 
-grep -e '^# FDATA:' < "$1" | cut -c10- > "$3"
+prefix=${4:-"FDATA"}
+
+grep -e "^# ${prefix}:" < "$1" | sed -E "s/# ${prefix}: //g" > "$3"
 mapfile -t symbols < <(nm --defined-only "$2")
 
 for line in "${symbols[@]}"; do
