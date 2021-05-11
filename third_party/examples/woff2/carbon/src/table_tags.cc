@@ -11,11 +11,7 @@
 namespace woff2 {
 
 // Note that the byte order is big-endian, not the same as ots.cc
-<<<<<<< HEAD
 #define TAG(a, b, c, d) (((a) << 24) | ((b) << 16) | ((c) << 8) | (d))
-=======
-#define TAG(a, b, c, d) ((a << 24) | (b << 16) | (c << 8) | d)
->>>>>>> trunk
 
 const uint32_t kKnownTags[63] = {
   TAG('c', 'm', 'a', 'p'),  // 0

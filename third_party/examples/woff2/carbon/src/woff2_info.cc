@@ -15,11 +15,7 @@
 #include "./table_tags.h"
 #include "./variable_length.h"
 
-<<<<<<< HEAD
 auto PrintTag(int tag) -> std::string {
-=======
-std::string PrintTag(int tag) {
->>>>>>> trunk
   if (tag & 0x80808080) {
     return std::string("_xfm");  // print _xfm for xform tables (else garbage)
   }
@@ -32,11 +28,7 @@ std::string PrintTag(int tag) {
   return std::string(printable, 4);
 }
 
-<<<<<<< HEAD
 auto main(int argc, char **argv) -> int {
-=======
-int main(int argc, char **argv) {
->>>>>>> trunk
   using std::string;
 
   if (argc != 2) {
@@ -45,11 +37,7 @@ int main(int argc, char **argv) {
   }
 
   string filename(argv[1]);
-<<<<<<< HEAD
   string outfilename = filename.substr(0, filename.find_last_of('.')) + ".woff2";
-=======
-  string outfilename = filename.substr(0, filename.find_last_of(".")) + ".woff2";
->>>>>>> trunk
   fprintf(stdout, "Processing %s => %s\n",
     filename.c_str(), outfilename.c_str());
   string input = woff2::GetFileContent(filename);
@@ -61,7 +49,6 @@ int main(int argc, char **argv) {
   uint32_t signature, flavor, length, totalSfntSize, totalCompressedSize;
   uint32_t metaOffset, metaLength, metaOrigLength, privOffset, privLength;
   uint16_t num_tables, reserved, major, minor;
-<<<<<<< HEAD
   if (!file.ReadU32(&signature)) { return 1;
 }
   if (!file.ReadU32(&flavor)) { return 1;
@@ -90,22 +77,6 @@ int main(int argc, char **argv) {
 }
   if (!file.ReadU32(&privLength)) { return 1;
 }
-=======
-  if (!file.ReadU32(&signature)) return 1;
-  if (!file.ReadU32(&flavor)) return 1;
-  if (!file.ReadU32(&length)) return 1;
-  if (!file.ReadU16(&num_tables)) return 1;
-  if (!file.ReadU16(&reserved)) return 1;
-  if (!file.ReadU32(&totalSfntSize)) return 1;
-  if (!file.ReadU32(&totalCompressedSize)) return 1;
-  if (!file.ReadU16(&major)) return 1;
-  if (!file.ReadU16(&minor)) return 1;
-  if (!file.ReadU32(&metaOffset)) return 1;
-  if (!file.ReadU32(&metaLength)) return 1;
-  if (!file.ReadU32(&metaOrigLength)) return 1;
-  if (!file.ReadU32(&privOffset)) return 1;
-  if (!file.ReadU32(&privLength)) return 1;
->>>>>>> trunk
 
   if (signature != 0x774F4632) {
     printf("Invalid signature: %08x\n", signature);
@@ -133,27 +104,17 @@ int main(int argc, char **argv) {
     size_t offset = file.offset();
     uint8_t flags;
     uint32_t tag, origLength, transformLength;
-<<<<<<< HEAD
     if (!file.ReadU8(&flags)) { return 1;
 }
     if ((flags & 0x3f) == 0x3f) {
       if (!file.ReadU32(&tag)) { return 1;
 }
-=======
-    if (!file.ReadU8(&flags)) return 1;
-    if ((flags & 0x3f) == 0x3f) {
-      if (!file.ReadU32(&tag)) return 1;
->>>>>>> trunk
     } else {
       tag = woff2::kKnownTags[flags & 0x3f];
     }
     table_tags.push_back(tag);
-<<<<<<< HEAD
     if (!ReadBase128(&file, &origLength)) { return 1;
 }
-=======
-    if (!ReadBase128(&file, &origLength)) return 1;
->>>>>>> trunk
 
     printf("%5d %6zu  0x%02x %s %10d", i, offset, flags,
         PrintTag(tag).c_str(), origLength);
@@ -161,7 +122,6 @@ int main(int argc, char **argv) {
     uint8_t xform_version = (flags >> 6) & 0x3;
     if (tag == woff2::kGlyfTableTag || tag == woff2::kLocaTableTag) {
       if (xform_version == 0) {
-<<<<<<< HEAD
         if (!ReadBase128(&file, &transformLength)) { return 1;
 }
         printf(" %8d", transformLength);
@@ -169,13 +129,6 @@ int main(int argc, char **argv) {
     } else if (xform_version > 0) {
       if (!ReadBase128(&file, &transformLength)) { return 1;
 }
-=======
-        if (!ReadBase128(&file, &transformLength)) return 1;
-        printf(" %8d", transformLength);
-      }
-    } else if (xform_version > 0) {
-      if (!ReadBase128(&file, &transformLength)) return 1;
->>>>>>> trunk
       printf(" %8d", transformLength);
     }
     printf("\n");
@@ -184,41 +137,26 @@ int main(int argc, char **argv) {
   // Collection header
   if (flavor == woff2::kTtcFontFlavor) {
     uint32_t version, numFonts;
-<<<<<<< HEAD
     if (!file.ReadU32(&version)) { return 1;
 }
     if (!woff2::Read255UShort(&file, &numFonts)) { return 1;
 }
-=======
-    if (!file.ReadU32(&version)) return 1;
-    if (!woff2::Read255UShort(&file, &numFonts)) return 1;
->>>>>>> trunk
     printf("CollectionHeader 0x%08x %d fonts\n", version, numFonts);
 
     for (auto i = 0; i < numFonts; i++) {
       uint32_t numTables, flavor;
-<<<<<<< HEAD
       if (!woff2::Read255UShort(&file, &numTables)) { return 1;
 }
       if (!file.ReadU32(&flavor)) { return 1;
 }
-=======
-      if (!woff2::Read255UShort(&file, &numTables)) return 1;
-      if (!file.ReadU32(&flavor)) return 1;
->>>>>>> trunk
       printf("CollectionFontEntry %d flavor 0x%08x %d tables\n", i, flavor,
           numTables);
       for (auto j = 0; j < numTables; j++) {
         uint32_t table_idx;
-<<<<<<< HEAD
         if (!woff2::Read255UShort(&file, &table_idx)) { return 1;
 }
         if (table_idx >= table_tags.size()) { return 1;
 }
-=======
-        if (!woff2::Read255UShort(&file, &table_idx)) return 1;
-        if (table_idx >= table_tags.size()) return 1;
->>>>>>> trunk
         printf("  %d %s (idx %d)\n", j,
             PrintTag(table_tags[table_idx]).c_str(), table_idx);
       }

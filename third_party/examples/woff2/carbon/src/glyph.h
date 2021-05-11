@@ -10,13 +10,8 @@
 #ifndef WOFF2_GLYPH_H_
 #define WOFF2_GLYPH_H_
 
-<<<<<<< HEAD
 #include <cstddef>
 #include <cinttypes>
-=======
-#include <stddef.h>
-#include <inttypes.h>
->>>>>>> trunk
 #include <vector>
 
 namespace woff2 {
@@ -27,11 +22,7 @@ namespace woff2 {
 // is around.
 class Glyph {
  public:
-<<<<<<< HEAD
   Glyph()  {}
-=======
-  Glyph() : instructions_size(0), composite_data_size(0) {}
->>>>>>> trunk
 
   // Bounding box.
   int16_t x_min;
@@ -40,11 +31,7 @@ class Glyph {
   int16_t y_max;
 
   // Instructions.
-<<<<<<< HEAD
   uint16_t instructions_size{0};
-=======
-  uint16_t instructions_size;
->>>>>>> trunk
   const uint8_t* instructions_data;
 
   // Data model for simple glyphs.
@@ -57,31 +44,19 @@ class Glyph {
 
   // Data for composite glyphs.
   const uint8_t* composite_data;
-<<<<<<< HEAD
   uint32_t composite_data_size{0};
-=======
-  uint32_t composite_data_size;
->>>>>>> trunk
   bool have_instructions;
 };
 
 // Parses the glyph from the given data. Returns false on parsing failure or
 // buffer overflow. The glyph is valid only so long the input data pointer is
 // valid.
-<<<<<<< HEAD
 auto ReadGlyph(const uint8_t* data, size_t len, Glyph* glyph) -> bool;
-=======
-bool ReadGlyph(const uint8_t* data, size_t len, Glyph* glyph);
->>>>>>> trunk
 
 // Stores the glyph into the specified dst buffer. The *dst_size is the buffer
 // size on entry and is set to the actual (unpadded) stored size on exit.
 // Returns false on buffer overflow.
-<<<<<<< HEAD
 auto StoreGlyph(const Glyph& glyph, uint8_t* dst, size_t* dst_size) -> bool;
-=======
-bool StoreGlyph(const Glyph& glyph, uint8_t* dst, size_t* dst_size);
->>>>>>> trunk
 
 } // namespace woff2
 

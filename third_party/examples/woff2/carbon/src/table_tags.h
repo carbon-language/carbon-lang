@@ -9,11 +9,7 @@
 #ifndef WOFF2_TABLE_TAGS_H_
 #define WOFF2_TABLE_TAGS_H_
 
-<<<<<<< HEAD
 #include <cinttypes>
-=======
-#include <inttypes.h>
->>>>>>> trunk
 
 namespace woff2 {
 

@@ -15,11 +15,7 @@ namespace woff2 {
 
 // Round a value up to the nearest multiple of 4. Don't round the value in the
 // case that rounding up overflows.
-<<<<<<< HEAD
 template<typename T> auto Round4(T value) -> T {
-=======
-template<typename T> T Round4(T value) {
->>>>>>> trunk
   if (std::numeric_limits<T>::max() - value < 3) {
     return value;
   }
