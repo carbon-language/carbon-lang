@@ -13,7 +13,7 @@ import subprocess
 import sys
 
 _CLANG_TIDY = "../external/bootstrap_clang_toolchain/bin/clang-tidy"
-_CPP_EXTS = (".h", ".c", ".cc", ".cpp", ".cxx")
+_CPP_EXTS = {".h", ".c", ".cc", ".cpp", ".cxx"}
 
 
 def _data_file(relative_path):
