@@ -55,7 +55,7 @@ struct EvaluateCall: Action {
       // Prepare the context for the callee
       state.beginFunctionScope(returnValueStorage: returnValueStorage)
       if (calleeCode.parameters.elements.count > 0) { UNIMPLEMENTED }
-      return .chain(Execute(calleeCode.body!))
+      return .delegate(Execute(calleeCode.body!))
     }
   }
 }

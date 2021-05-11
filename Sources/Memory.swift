@@ -111,6 +111,8 @@ struct Memory {
 }
 
 extension Memory {
+  // Asserts that all addresses have been cleaned up, other than the
+  // ones in `expectedLive`.
   func assertCleanupDone(except expectedLive: Set<Address>) {
     var unexpectedLiveStorage: [Address: Location] = [:]
     for (address, location) in storage {

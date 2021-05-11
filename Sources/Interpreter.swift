@@ -13,16 +13,20 @@ struct Interpreter {
   var //let
     program: ExecutableProgram
 
-  // FIXME comment all the things
+
   struct Scope {
-    // FIXME pull out to top level?
     enum Kind {
-      case temporary, local, function
+      // TODO: we'll eventually want at least 3 kinds of
+      // local scope as well: loop (the scope of a `break`),
+      // loop body (the scope of a `continue`), and block.
+      case temporary, function
     }
 
     let kind: Kind
 
-    /// The index in `todo` of the action that created this scope
+    /// The index in `todo` of the `Action` this scope is associated with. That's
+    /// normally the `Action` that created this scope, but the association can
+    /// be transferred using `Followup.delegate`.
     let actionIndex: Int
 
     /// The storage owned by this scope
@@ -33,22 +37,38 @@ struct Interpreter {
     /// scopes.
     let callerReturnValueStorage: Address?
   }
-  
+
+  /// The stack of scopes that execution has entered, and not yet left.
   private var scopes: Stack<Scope> = .init()
   
   private(set) var returnValueStorage: Address? = nil
 
-  /// Begins a new scope of the specified kind (which should not be `.function`).
-  /// The scope will automatically end and be cleaned up when control is returned to `todo.top`,
-  /// but it can also be ended explicitly by calling `endScope`.
+  /// Begins a new scope of the specified kind, associated with the currently-running `Action`.
+  /// The interpreter will automatically end the scope when the associated `Action` is
+  /// done, but it can also be ended explicitly by calling `endScope`. Conversely, the
+  /// interpreter will discard the associated `Action` if the scope is unwound.
+  /// To begin a function scope, use `beginFunctionScope` instead of this method.
   mutating func beginScope(kind: Scope.Kind) {
     assert(kind != .function, "Use beginFunctionScope instead")
-    scopes.push(Scope(kind: kind, actionIndex: todo.count,
+    let actionIndex = todo.count
+
+    // TODO: It isn't necessarily a bug for a single action to be
+    // associated with multiple nested scopes, and in fact it may
+    // be necessary for e.g. loop actions to create separate scopes
+    // to distinguish `break` and `continue`. When and if those
+    // situations arise, we will need a more careful rule about which
+    // actions are discarded during unwinding, and possibly some
+    // mechanism for notifying an action when some but not all of its
+    // scopes have been unwound. In the meantime, we forbid those
+    // situations for simplicity.
+    assert(scopes.isEmpty || actionIndex != scopes.top.actionIndex)
+
+    scopes.push(Scope(kind: kind, actionIndex: actionIndex,
                       callerReturnValueStorage: nil))
   }
 
   /// Begins a scope for a new function call, whose return value will be stored in
-  /// `returnValueStorage`.
+  /// `returnValueStorage`. Otherwise equivalent to `beginScope`.
   mutating func beginFunctionScope(returnValueStorage: Address) {
     scopes.push(Scope(kind: .function, actionIndex: todo.count,
                       callerReturnValueStorage: self.returnValueStorage))
@@ -90,12 +110,15 @@ struct Interpreter {
 
 extension Interpreter {
   mutating func start() {
-    // FIXME: integrate scope handling into action?
-    todo.push(NoopAction())
-    beginScope(kind: .temporary)
-    // FIXME: should this be part of the scope?
-    exitCodeStorage = memory.allocate(boundTo: .int, from: .empty)
+    // EvaluateCall expects to be executed in a temporary scope,
+    // which owns the results of evaluating the callee and argument
+    // expressions, so we provide one here. Every scope is associated
+    // with an action, so we put a no-op action on the todo stack.
 
+    beginScope(kind: .temporary)
+    todo.push(NoopAction())
+
+    exitCodeStorage = memory.allocate(boundTo: .int, from: .empty)
     todo.push(EvaluateCall(
       call: program.entryPoint!, returnValueStorage: exitCodeStorage!))
   }
@@ -116,24 +139,26 @@ extension Interpreter {
     switch current.run(on: &self) {
     case .done:
       while case .some(let scope) = scopes.queryTop,
-            // FIXME why isn't this actionIndex == todo.count?
-            scope.actionIndex >= todo.count {
+            scope.actionIndex == todo.count {
         endScopeUnchecked()
       }
     case .spawn(let child):
       todo.push(current)
       todo.push(child)
-    case .chain(to: let successor):
-      // FIXME: explain why we don't end scopes:
-      // chaining can be delegation, but is it always?
+    case .delegate(to: let successor):
       todo.push(successor)
     case .unwindToFunctionCall:
+      // End all scopes within the current function scope
       while scopes.top.kind != .function {
         endScopeUnchecked()
       }
+
+      // End the current function scope
+      let outermostUnwoundAction = scopes.top.actionIndex
       endScopeUnchecked()
 
-      while todo.count > scopes.top.actionIndex {
+      // Discard actions associated with the ended scopes
+      while todo.count - 1 >= outermostUnwoundAction {
         _ = todo.pop()
       }
     }
