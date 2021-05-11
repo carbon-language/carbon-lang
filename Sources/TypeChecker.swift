@@ -13,7 +13,9 @@ struct TypeChecker {
       checkNominalTypeBody(d)
     }
     for d in program.ast {
-      if case .function(let f) = d { _ = type(f) }
+      if case .function(let f) = d {
+        _ = typeOfName(declaredBy: f)
+      }
     }
     /*
     for d in program.ast {
@@ -70,11 +72,11 @@ private extension TypeChecker {
     // change the name of this method because those must be checked later.
     switch d {
     case let .struct(s):
-      for m in s.members { _ = type(m) }
+      for m in s.members { _ = typeOfName(declaredBy: m) }
     case let .choice(c):
       for a in c.alternatives {
         parent[a] = c
-        _ = type(a)
+        _ = typeOfName(declaredBy: a)
       }
     case .function, .initialization: ()
     }
@@ -143,7 +145,7 @@ private extension TypeChecker {
   ///
   /// - Requires: if `d` declares a binding, its type has already been memoized
   ///   or is declared as a type expression rather than with `auto`.
-  mutating func type(_ d: Declaration) -> Type {
+  mutating func typeOfName(declaredBy d: Declaration) -> Type {
     if let r = types[d.identity] { return r }
 
     let r: Type
@@ -155,7 +157,7 @@ private extension TypeChecker {
       r = evaluate(x.type.expression!)
 
     case let x as FunctionDefinition:
-      r = type(x)
+      r = typeOfName(declaredBy: x)
 
     case let a as Alternative:
       let payload = evaluate(TypeExpression(a.payload))
@@ -176,7 +178,7 @@ private extension TypeChecker {
   mutating func type(_ e: Expression) -> Type {
     switch e {
     case .name(let v):
-      return type(program.definition[v]!)
+      return typeOfName(declaredBy: program.definition[v]!)
 
     case let .functionType(f):
       // PARTIALLY UNIMPLEMENTED()
@@ -316,7 +318,7 @@ private extension TypeChecker {
     case let .struct(baseID):
       let s = baseID.structure
       if let m = s.members.first(where: { $0.name == e.member }) {
-        return type(m)
+        return typeOfName(declaredBy: m)
       }
       return error(e.member, "struct \(s.name) has no member '\(e.member)'")
 
@@ -329,10 +331,9 @@ private extension TypeChecker {
       if case let .choice(id) = evaluate(TypeExpression(e.base)) {
         let c: ChoiceDefinition = id.structure
         return c.alternatives
-          .first(where: { $0.name == e.member }).map { type($0) }
-          ?? error(
-            e.member,
-            "choice \(c.name) has no alternative '\(e.member)'")
+          .first { $0.name == e.member }
+          .map { typeOfName(declaredBy: $0) } ?? error(
+            e.member, "choice \(c.name) has no alternative '\(e.member)'")
       }
       // No other types have members.
       fallthrough
@@ -342,7 +343,7 @@ private extension TypeChecker {
     }
   }
 
-  mutating func type(_ f: FunctionDefinition) -> Type {
+  mutating func typeOfName(declaredBy f: FunctionDefinition) -> Type {
     if let r = types[f.identity] { return r }
     let parameterTypes = self.parameterTypes(f.parameters)
 
