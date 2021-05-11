@@ -43,7 +43,7 @@ def _gather_files(parsed_args):
         sys.exit(
             "%r doesn't contain any C++ files to convert." % parsed_args.dir
         )
-    return cpp_files
+    return sorted(cpp_files)
 
 
 def _clang_tidy(parsed_args, cpp_files):
