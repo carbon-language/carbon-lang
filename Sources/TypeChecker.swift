@@ -2,7 +2,9 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
+/// The type checking algorithm and associated data.
 struct TypeChecker {
+  /// Creates an instance that reflects the type-checking of `program`.
   init(_ program: ExecutableProgram) {
     self.program = program
 
@@ -24,10 +26,13 @@ struct TypeChecker {
     */
   }
 
+  /// The state of memoization of a computation, including an "in progress"
+  /// state that allows us to detect dependency cycles.
   private enum Memo<T: Equatable>: Equatable {
     case beingComputed, final(T)
   }
 
+  /// The program being typechecked.
   private let program: ExecutableProgram
 
   /// Mapping from alternative declaration to the choice in which it is defined.
