@@ -112,7 +112,7 @@ auto WithSign(int flag, int baseval) -> int {
   return (flag & 1) ? baseval : -baseval;
 }
 
-auto SafeIntAddition(int a, int b, int* result) -> bool {
+auto _SafeIntAddition(int a, int b, int* result) -> bool {
   if (PREDICT_FALSE(
           ((a > 0) && (b > std::numeric_limits<int>::max() - a)) ||
           ((a < 0) && (b < std::numeric_limits<int>::min() - a)))) {
@@ -177,10 +177,10 @@ auto TripletDecode(const uint8_t* flags_in, const uint8_t* in, size_t in_size,
           (in[triplet_index + 2] << 8) + in[triplet_index + 3]);
     }
     triplet_index += n_data_bytes;
-    if (!SafeIntAddition(x, dx, &x)) {
+    if (!_SafeIntAddition(x, dx, &x)) {
       return false;
     }
-    if (!SafeIntAddition(y, dy, &y)) {
+    if (!_SafeIntAddition(y, dy, &y)) {
       return false;
     }
     *result++ = {x, y, on_curve};

@@ -8,9 +8,9 @@
 
 ---
 Checks:
-  -*, bugprone-*, google-*, -google-readability-todo,
-  misc-definitions-in-headers, misc-misplaced-const, misc-redundant-expression,
-  misc-static-assert, misc-unconventional-assign-operator,
-  misc-uniqueptr-reset-release, misc-unused-*, modernize-*,
-  -modernize-avoid-c-arrays, performance-*,
-  readability-braces-around-statements, readability-identifier-naming
+  -*, bugprone-*, -bugprone-reserved-identifier, google-*,
+  -google-readability-todo, misc-definitions-in-headers, misc-misplaced-const,
+  misc-redundant-expression, misc-static-assert,
+  misc-unconventional-assign-operator, misc-uniqueptr-reset-release,
+  misc-unused-*, modernize-*, -modernize-avoid-c-arrays, performance-*,
+  readability-braces-around-statements
