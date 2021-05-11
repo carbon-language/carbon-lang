@@ -15,7 +15,7 @@ final class ParserTests: XCTestCase {
   
   func testBasic0() throws {
     // Parse a few tiny programs
-    let p = try "fn main() -> Int;".checkParsed()
+    let p = "fn main() -> Int;".checkParsed()
 
     XCTAssertEqual(
       p,
@@ -30,7 +30,7 @@ final class ParserTests: XCTestCase {
   }
 
   func testBasic1() throws {
-    let p = try "fn main() -> Int {}".checkParsed()
+    let p = "fn main() -> Int {}".checkParsed()
 
     XCTAssertEqual(
       p,
@@ -45,7 +45,7 @@ final class ParserTests: XCTestCase {
   }
 
   func testBasic2() throws {
-    let p = try "var Int: x = 0;".checkParsed()
+    let p = "var Int: x = 0;".checkParsed()
 
     XCTAssertEqual(
       p,

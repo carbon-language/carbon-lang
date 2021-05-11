@@ -33,14 +33,39 @@ extension CompileError: CustomStringConvertible {
   /// should be recognized by IDEs.
   var description: String {
     return (
-      ["\(site): \(message)"] + notes.enumerated().lazy.map {
+      ["\(site): error: \(message)"] + notes.enumerated().lazy.map {
         (i, n) in "\(n.site): note(\(i)): \(n.message)"
       }).joined(separator: "\n")
   }
 }
 
+extension CompileError {
+  /// Returns `l` offset by `r`.
+  static func + (l: Self, r: SourcePosition.Offset) -> Self {
+    Self(
+      l.message, at: ASTSite(devaluing: l.site.region + r),
+      notes: l.notes.map {
+        ($0.message, ASTSite(devaluing: $0.site.region + r))
+      })
+  }
+
+  /// Returns `r` offset by `l`.
+  static func + (l: SourcePosition.Offset, r: Self) -> Self {
+    Self(
+      r.message, at: ASTSite(devaluing: r.site.region + l),
+      notes: r.notes.map {
+        ($0.message, ASTSite(devaluing: $0.site.region + l))
+      })
+  }
+}
 
 /// This will be thrown from executable program construction if there's a
 /// failure.
+/*
+struct ErrorLog {
+  var contents: [CompileError]
+}
+ */
 typealias ErrorLog = [CompileError]
 extension ErrorLog: Error {}
+

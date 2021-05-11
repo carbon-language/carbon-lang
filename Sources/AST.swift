@@ -445,6 +445,10 @@ struct ASTSite: Hashable {
   }
 }
 
+extension ASTSite: CustomStringConvertible {
+  var description: String { "\(region)" }
+}
+
 /// The identity, in a program's source, of any `AST` node.
 ///
 /// A useful dictionary key for mappings from the identities of heterogeneous
