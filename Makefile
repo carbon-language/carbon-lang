@@ -16,7 +16,7 @@ LCOV_FILE = ./.build/coverage.lcov
 SHELL=/bin/bash
 
 build: ${GRAMMAR}.swift
-	swift build ${SWIFT_FLAGS}
+	swift build --enable-test-discovery ${SWIFT_FLAGS}
 
 test: ${GRAMMAR}.swift
 	swift test --enable-test-discovery ${SWIFT_FLAGS}
