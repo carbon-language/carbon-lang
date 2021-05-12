@@ -13,7 +13,7 @@ final class ParserTests: XCTestCase {
 
   let o = ASTSite.empty
   
-  func testBasic0() throws {
+  func testBasic0() {
     // Parse a few tiny programs
     let p = "fn main() -> Int;".checkParsed()
 
@@ -29,7 +29,7 @@ final class ParserTests: XCTestCase {
             site: o))])
   }
 
-  func testBasic1() throws {
+  func testBasic1() {
     let p = "fn main() -> Int {}".checkParsed()
 
     XCTAssertEqual(
@@ -44,7 +44,7 @@ final class ParserTests: XCTestCase {
             site: o))])
   }
 
-  func testBasic2() throws {
+  func testBasic2() {
     let p = "var Int: x = 0;".checkParsed()
 
     XCTAssertEqual(
@@ -56,6 +56,50 @@ final class ParserTests: XCTestCase {
               SimpleBinding(
                 type: .expression(TypeExpression(.intType(o))),
                 name: Identifier(text: "x", site: o))),
+            initializer: .integerLiteral(0, o),
+            site: o))])
+  }
+
+  func testFunctionTypePattern() {
+    // Even though the C++ implementation isn't parsing this way, Jeremy likes
+    // this parse better, without parens.
+    let p = "var fnty()->Type: x = 0;".checkParsed()
+
+    XCTAssertEqual(
+      p,
+      [
+        .initialization(
+          Initialization(
+            bindings: .variable(
+              SimpleBinding(
+                type:
+                  .expression(
+                    TypeExpression(
+                      .functionType(
+                        FunctionType(
+                          parameters: TupleSyntax([], o),
+                          returnType: TypeExpression(.typeType(o)),
+                          site: o)))),
+                name: Identifier(text: "x", site: o))),
+            initializer: .integerLiteral(0, o),
+            site: o))])
+  }
+
+  func testParenthesizedPattern() {
+    let p = "var fnty()->(Type: x) = 0;".checkParsed()
+
+    XCTAssertEqual(
+      p,
+      [
+        .initialization(
+          Initialization(
+            bindings: .functionType(
+              FunctionType(
+                parameters: TupleSyntax([], o),
+                returnType: .variable(
+                  SimpleBinding(
+                    type: .expression(TypeExpression(.typeType(o))),
+                    name: Identifier(text: "x", site: o))), site: o)),
             initializer: .integerLiteral(0, o),
             site: o))])
   }

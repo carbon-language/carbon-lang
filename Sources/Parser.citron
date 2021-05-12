@@ -84,6 +84,7 @@ binding ::= simple_binding(b).        { .variable(b) }
 binding ::= tuple_binding(t).         { .tuple(t) }
 binding ::= function_call_binding(f). { .functionCall(f) }
 binding ::= function_type_binding(f). { f }
+binding ::= LEFT_PARENTHESIS binding(b) RIGHT_PARENTHESIS. { b }
 
 // binding for a single variable.
 simple_binding ::= expression(t) COLON identifier(n).
