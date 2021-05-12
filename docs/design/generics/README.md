@@ -14,6 +14,7 @@ feature of Carbon:
     topics.
 -   [Goals](goals.md) - The motivation and principles guiding the design
     direction.
--   ~~Terminology~~ - not implemented yet
+-   [Terminology](terminology.md) - A glossary establishing common terminology
+    for describing the design.
 -   ~~Detailed design~~ - not implemented yet
 -   ~~Rejected alternatives~~ - not implemented yet
