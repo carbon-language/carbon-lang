@@ -54,23 +54,23 @@ may want to support parameterizing other language constructs like
 [interfaces](#interface-type-parameters-versus-associated-types).
 
 This parameter broadens the scope of the language construct on an axis defined
-by that parameter, effectively defining a family of functions (or whatever)
-instead of a single one.
+by that parameter, for example it could define a family of functions instead of
+a single one.
 
 ## Generic versus template parameters
 
 When we are distinguishing between generics and templates in Carbon, it is on an
 parameter by parameter basis. A single function can take a mix of regular,
-generic, and template parameter.
+generic, and template parameters.
 
 -   **Regular parameters**, or "dynamic parameters", are designated using the
     "&lt;type>`:` &lt;name>" syntax (or "&lt;value>").
--   **Generic parameters** are temporarily designated using an additional `$`
-    after the `:` (so it is "&lt;type>`:$` &lt;name>"). However, the `$` symbol
-    is not easily typed on non-US keyboards, so we will definitely switch to
-    some other syntax. Some possibilities that have been suggested are: `:!`,
-    `:@`, `:#`, and `::`.
--   **Template parameters** are temporarily designated using "&lt;type> `:$$`
+-   **Generic parameters** are temporarily designated using a `$` between the
+    type and the name (so it is "&lt;type>`$` &lt;name>"). However, the `$`
+    symbol is not easily typed on non-US keyboards, so we intend to switch to
+    some other syntax. Some possibilities that have been suggested are: `!`,
+    `@`, `#`, and `:`.
+-   **Template parameters** are temporarily designated using "&lt;type> `$$`
     &lt;name>", for similar reasons.
 
 Expected difference between generics and templates:
@@ -115,7 +115,13 @@ Expected difference between generics and templates:
   <tr>
    <td>allowed but not required to be implemented using dynamic dispatch
    </td>
-   <td>does not support implementation by way of dynamic dispatch, just static by way of [instantiation](#instantiation)
+   <td>does not support implementation by way of dynamic dispatch, just static by way of <a href="#instantiation">instantiation</a>
+   </td>
+  </tr>
+  <tr>
+   <td>monomorphization is an optional optimization that cannot render the program invalid
+   </td>
+   <td>monomorphization is mandatory and can fail, resulting in the program being invalid
    </td>
   </tr>
 </table>
@@ -162,27 +168,30 @@ to the argument types.
 
 Templates work with ad-hoc polymorphism in two ways:
 
--   A function with template parameters specialized for specific types is a form
-    of ad-hoc polymorphism.
+-   A function with template parameters can be
+    [specialized](#template-specialization) in
+    [C++](https://en.cppreference.com/w/cpp/language/template_specialization) as
+    a form of ad-hoc polymorphism.
 -   A function with template parameters can call overloaded functions since it
     will only resolve that call after the types are known.
 
 In Carbon, we expect there to be a compile error if overloading of some name
 prevents a generic function from being typechecked from its definition alone.
 For example, let's say we have some overloaded function called `F` that has two
-overloads (note that this is not real proposed Carbon syntax):
+overloads:
 
 ```
-fn F[Type:$$ T, requires T != Int](T: x) -> T;
-fn F(Int: x) -> Bool;
+fn F[Type$$ T](Ptr(T) x) -> T;
+fn F(Int x) -> Bool;
 ```
 
-A generic function `G` can call `F` with a type like `T*` that can not possibly
-call the `F(Int)` overload for `F`, and so it can consistently determine the
-return type of `F`. But `G` can't call `F` with an argument that could match
-either overload. (I think it is undecided what to do in the situation where `F`
-is overloaded, but the signatures are consistent and so callers could still
-typecheck calls to `F`.)
+A generic function `G` can call `F` with a type like `Ptr(T)` that can not
+possibly call the `F(Int)` overload for `F`, and so it can consistently
+determine the return type of `F`. But `G` can't call `F` with an argument that
+could match either overload. (It is undecided what to do in the situation where
+`F` is overloaded, but the signatures are consistent and so callers could still
+typecheck calls to `F`. This still poses problems for the dynamic strategy for
+compiling generics.)
 
 ### Constrained genericity
 
@@ -210,9 +219,10 @@ Definition checking is the process of semantically checking the definition of
 parameterized code for correctness _independently_ of any particular arguments.
 It includes type checking and other semantic checks. It is possible, even with
 templates, to check semantics of expressions that are not dependent on any
-template parameter in the definition. As you add constraints, by using generics,
-that increases how much of the definition can be checked. Any remaining checks
-are delayed until [instantiation](#instantiation), which can fail.
+template parameter in the definition. Adding constraints to template parameters
+and/or switching them to be generic allows the compiler to increase how much of
+the definition can be checked. Any remaining checks are delayed until
+[instantiation](#instantiation), which can fail.
 
 #### Complete definition checking
 
@@ -247,13 +257,12 @@ Note that function signatures can typically be rewritten to avoid using implicit
 parameters:
 
 ```
-fn F[Type:$$ T](T: value);
+fn F[Type$$ T](T value);
 // is equivalent to:
-fn F((Type:$$ T): value);
+fn F((Type$$ T) value);
 ```
 
-See more
-[here](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/overview.md#implicit-arguments).
+See more [here](overview.md#implicit-parameters).
 
 ## Interface
 
@@ -283,6 +292,10 @@ by the compiler. For example, knowing whether the "Draw" function means "render
 an image to the screen" or "take a card from the top of a deck of cards"; or
 that a `+` operator is commutative (and not, say, string concatenation).
 
+We use the "structural" versus "nominal" terminology as a generalization of the
+same terms being used in a
+[subtyping context](https://en.wikipedia.org/wiki/Subtyping#Subtyping_schemes).
+
 ## Impls: Implementations of interfaces
 
 An _impl_ is an implementation of an interface for a specific type. It is the
@@ -294,11 +307,12 @@ defined.
 
 ## Compatible types
 
-Two types are compatible if they have the same representation, even if they
-expose different APIs. The representation of a type includes a bunch of facts
-about how the bits of a value of that type are represented in memory. It also
-includes things that the compiler can't see directly that involve the
-interpretation of those bits, such as the invariants that the type maintains.
+Two types are compatible if they have the same notional set of values and
+represent those values in the same way, even if they expose different APIs. The
+representation of a type describes how the values of that type are represented
+as a sequence of bits in memory. The set of values of a type includes properties
+that the compiler can't directly see, such as invariants that the type
+maintains.
 
 We can't just say two types are compatible based on structural reasons. Instead,
 we have specific constructs that create compatible types from existing types in
@@ -309,12 +323,33 @@ details.
 
 ## Subtyping and casting
 
-Both subsumption and casting are different names for changing the type of a
-value to a compatible type.
+Both subtyping and casting are different names for changing the type of a value
+to a compatible type.
 
-Subsumption is an automatic or implicit conversion that happens to argument
-values when calling a function or when assigning a value to a variable of a
-different type.
+[Subtyping](https://en.wikipedia.org/wiki/Subtyping) is a relationship between
+two types where you can safely operate on a value of one type using a variable
+of another. For example, using C++'s object-oriented features, you can operate
+on a value of a derived class using a pointer to the base class. In most cases,
+you can pass a more specific type to a function that can handle a more general
+type. Return types work the opposite way, a function can return a more specific
+type to a caller prepared to handle a more general type. This determines how
+function signatures can change from base class to derived class, see
+[covariance and contravariance in Wikipedia](<https://en.wikipedia.org/wiki/Covariance_and_contravariance_(computer_science)>).
+
+In a generics context, we are specifically interested in the subtyping
+relationships between [type-types](#type-type). In particular, a type-type
+encompasses a set of [type constraints](#type-constraints), and you can convert
+a type from a more-restrictive type-type to another type-type whose constraints
+are implied by the first. C++ concepts terminology uses the term
+["subsumes"](https://en.cppreference.com/w/cpp/language/constraints#Partial_ordering_of_constraints)
+to talk about this partial ordering of constraints, but we avoid that term since
+it is at odds with the use of the term in
+[object-oriented subtyping terminology](https://en.wikipedia.org/wiki/Subtyping#Subsumption).
+
+Note that subtyping is a bit like
+[coercion](https://en.wikipedia.org/wiki/Type_conversion), except we want to
+make it clear that the data representation of the value is not changing, just
+its type as reflected in the API available to manipulate the value.
 
 Casting is indicated explicitly by way of some syntax in the source code. You
 might use a cast to switch between [type adaptations](#adapting-a-type), or to
@@ -322,11 +357,6 @@ be explicit where an implicit cast would otherwise occur. For now, we are saying
 "`x as y`" is the provisional syntax in Carbon for casting the value `x` to the
 type `y`. Note that outside of generics, the term "casting" includes any
 explicit type change, including those that change the data representation.
-
-Note that subsumption is a bit like
-[coercion](https://en.wikipedia.org/wiki/Type_conversion), except we want to
-make it clear that the data representation of the value is not changing, just
-its type as reflected in the API available to manipulate the value.
 
 ## Adapting a type
 
@@ -337,7 +367,7 @@ different implementations of the same interfaces.
 
 Unlike extending a type (as with C++ class inheritance), you are not allowed to
 add new data fields onto the end of the representation -- you may only change
-the API. This means that it is safe to [cast](#subsumption-and-casting) a value
+the API. This means that it is safe to [cast](#subtyping-and-casting) a value
 between those two types without any dynamic checks or danger of
 [object slicing](https://en.wikipedia.org/wiki/Object_slicing).
 
@@ -350,11 +380,11 @@ and as a workaround for Rust's orphan rules for coherence.
 
 ## Type erasure
 
-"Type erasure" is where a type's API is replaced a subset. Everything outside of
-the preserved subset is said to have been "erased". This can happen in a variety
-of contexts including both generics and runtime polymorphism. For generics, type
-erasure restricts a type to just the API required by the constraints on a
-generic function.
+"Type erasure" is where a type's API is replaced by a subset. Everything outside
+of the preserved subset is said to have been "erased". This can happen in a
+variety of contexts including both generics and runtime polymorphism. For
+generics, type erasure restricts a type to just the API required by the
+constraints on a generic function.
 
 An example of type erasure in runtime polymorphism in C++ is casting from a
 pointer of a derived type to a pointer to an abstract base type. Only the API of
@@ -364,7 +394,7 @@ those methods still come from the derived type.
 The term "type erasure" can also refer to
 [the specific strategy used by Java to implement generics](https://en.wikipedia.org/wiki/Generics_in_Java).
 which includes erasing the identity of type parameters. This is not the meaning
-of "type erasures" used in Carbon.
+of "type erasure" used in Carbon.
 
 ## Facet type
 
@@ -494,9 +524,9 @@ say it is a type parameter; if it is an output, we say it is an associated type.
 Type parameter example:
 
 ```
-interface Stack(Type:$ ElementType) {
-  fn Push(Self*: this, ElementType: value);
-  fn Pop(Self*: this) -> ElementType;
+interface Stack(Type$ ElementType) {
+  fn Push(Self* this, ElementType value);
+  fn Pop(Self* this) -> ElementType;
 }
 ```
 
@@ -504,9 +534,9 @@ Associated type example:
 
 ```
 interface Stack {
-  var Type:$ ElementType;
-  fn Push(Self*: this, ElementType: value);
-  fn Pop(Self*: this) -> ElementType;
+  var Type$ ElementType;
+  fn Push(Self* this, ElementType value);
+  fn Pop(Self* this) -> ElementType;
 }
 ```
 
@@ -520,18 +550,18 @@ interface Iterator { ... }
 interface Container {
   // This does not make sense as an parameter to the container interface,
   // since this type is determined from the container type.
-  var Iterator:$ IteratorType;
+  var Iterator$ IteratorType;
   ...
-  fn Insert(Self*: this, IteratorType: position, ElementType: value);
+  fn Insert(Self* this, IteratorType position, ElementType value);
 }
-struct ListIterator(Type:$ ElementType) {
+struct ListIterator(Type$ ElementType) {
   ...
   impl Iterator;
 }
-struct List(Type:$ ElementType) {
+struct List(Type$ ElementType) {
   // Iterator type is determined by the container type.
-  var Iterator:$ IteratorType = ListIterator(ElementType);
-  fn Insert(Self*: this, IteratorType: position, ElementType: value) {
+  var Iterator$ IteratorType = ListIterator(ElementType);
+  fn Insert(Self* this, IteratorType position, ElementType value) {
     ...
   }
   impl Container;

@@ -12,7 +12,6 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 -   [Purpose of this document](#purpose-of-this-document)
 -   [Background](#background)
-    -   [Definition of generics](#definition-of-generics)
     -   [Generic parameters](#generic-parameters)
     -   [Interfaces](#interfaces)
     -   [Relationship to templates](#relationship-to-templates)
@@ -52,36 +51,25 @@ forward-looking.
 
 ## Background
 
-### Definition of generics
+Carbon will support
+[generics](terminology.md#generic-versus-template-parameters) to support generic
+programming by way of
+[parameterization of language constructs](terminology.md#parameterized-language-constructs)
+with [early type checking](terminology.md#early-versus-late-type-checking) and
+[complete definition checking](terminology.md#complete-definition-checking).
 
-**TODO** This should be replaced with a link to a terminology doc, once that is
-accepted.
-
-C++ supports
-[parametric polymorphism](https://en.wikipedia.org/wiki/Parametric_polymorphism)
-and [generic programming](https://en.wikipedia.org/wiki/Generic_programming)
-through templates. Templates use
+This is in contrast with the
 [compile-time duck typing](https://en.wikipedia.org/wiki/Duck_typing#Templates_or_generic_types)
-to decide whether arguments are valid. This is a form of
-[structural typing](https://en.wikipedia.org/wiki/Structural_type_system) that
-is usage based.
-
-Carbon will support _generics_ in order to allow definition checking in generic
-programming. Definition checking is accomplished by using
-[bounded parametric polymorphism](https://en.wikipedia.org/wiki/Parametric_polymorphism#Bounded_parametric_polymorphism)
-instead of compile-time duck typing. This means the legal arguments and the
-legal uses of a parameter are both goverened by explicit bounds on the parameter
-in a generic function's signature.
-
-This would be _in addition_ to
+approach of C++ templates, and _in addition_ to
 [template support in Carbon](#relationship-to-templates), if we decide to
 support templates in Carbon beyond interoperability with C++ templates.
 
 ### Generic parameters
 
 Generic functions and generic types will all take some "generic parameters",
-which will frequently be types, and in some cases will be implicit or inferred
-from the types of the values of explicit parameters.
+which will frequently be types, and in some cases will be
+[implicit or inferred](terminology.md#implicit-parameter) from the types of the
+values of explicit parameters.
 
 If a generic parameter is a type, the generic function's signature can specify
 constraints that the caller's type must satisfy. For example, a resizable array
@@ -97,13 +85,13 @@ the same type.
 
 We need some way to express the constraints on a generic type parameter. In
 Carbon we express these "type constraints" by saying we restrict to types that
-implement specific _interfaces_. Interfaces describe an API a type could
-implement; for example, it might specify a set of functions, including names and
-signatures. A type implementing an interface may be passed as a generic type
-argument to a function that has that interface as a requirement of its generic
-type parameter. Then, the functions defined in the interface may be called in
-the body of the function. Further, interfaces have names that allow them to be
-reused.
+implement specific [_interfaces_](terminology.md#interface). Interfaces describe
+an API a type could implement; for example, it might specify a set of functions,
+including names and signatures. A type implementing an interface may be passed
+as a generic type argument to a function that has that interface as a
+requirement of its generic type parameter. Then, the functions defined in the
+interface may be called in the body of the function. Further, interfaces have
+names that allow them to be reused.
 
 Similar compile-time and run-time constructs may be found in other programming
 languages:
