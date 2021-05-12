@@ -10,8 +10,7 @@ cc_binary(
     name = "cpp_refactoring",
     srcs = ["main.cpp"],
     deps = [
-        "@llvm-project//clang:tooling",
         "@llvm-project//clang:ast_matchers",
-        # "@llvm-project//llvm:Support",
+        "@llvm-project//clang:tooling",
     ],
 )

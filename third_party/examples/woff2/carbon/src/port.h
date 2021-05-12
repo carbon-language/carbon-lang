@@ -15,7 +15,7 @@ namespace woff2 {
 
 using uint32 = unsigned int;
 
-inline auto Log2Floor(uint32 n) -> int {
+fn auto Log2Floor(uint32 n) -> int {
 #if defined(__GNUC__)
   return n == 0 ? -1 : 31 ^ __builtin_clz(n);
 #else
