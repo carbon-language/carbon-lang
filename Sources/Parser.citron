@@ -334,8 +334,9 @@ function_declaration
       body: nil, site: f...s)
   }
 
-struct_member ::= VAR(v) expression(type) invisible_colon identifier(d) SEMICOLON(s).
-  { StructMember(type: .init(type), name: d, site: v...s) }
+struct_member
+  ::= VAR(v) expression(type) invisible_colon identifier(d) SEMICOLON(s).
+{ StructMember(type: .init(type), name: d, site: v...s) }
 
 struct_member_list ::= /* Empty */.
   { [] }
