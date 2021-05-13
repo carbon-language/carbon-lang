@@ -198,6 +198,12 @@ struct ChoiceDefinition: AST, TypeDeclaration {
   let site: Site
 
   var declaredType: Type { .choice(self.identity) }
+
+  /// Returns the alternative with the given name, or `nil` if no such
+  /// alternative exists.
+  subscript(alternativeName: Identifier) -> Alternative? {
+    alternatives.first { $0.name == alternativeName }
+  }
 }
 
 struct StructMember: AST, Declaration {

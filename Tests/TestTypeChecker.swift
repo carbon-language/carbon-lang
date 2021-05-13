@@ -395,6 +395,174 @@ final class TypeCheckFunctionSignatures: XCTestCase {
         "Pattern in this context must match type values, not (Int, Int) values")
   }
 
+  func testSimpleInitializer() {
+    """
+    var Int: x = 1;
+    var Int: y = x;
+    """.checkTypeChecks()
+
+    """
+    var Int: y = x;
+    var Int: x = 1;
+    """.checkTypeChecks()
+
+    """
+    var auto: x = 1;
+    var Int: y = x;
+    """.checkTypeChecks()
+
+    """
+    var Int: y = x;
+    var auto: x = 1;
+    """.checkTypeChecks()
+
+    """
+    var auto: x = true;
+    var Int: y = x;
+    """.checkFailsToTypeCheck(
+      withMessage: "Pattern type Int does not match initializer type Bool")
+  }
+
+  func testTuplePatternInitializer() {
+    """
+    var ((1, Int: x), Bool: y) = ((1, 2), true);
+    var (Int, Bool): a = (x, y);
+    """.checkTypeChecks()
+
+    """
+    var ((1, Int: x), auto: y) = ((1, 2), true);
+    var (Int, Bool): a = (x, y);
+    """.checkTypeChecks()
+  }
+
+  func testFunctionCallPatternInitializer() {
+    """
+    choice X { One(Int, Bool), Two }
+    var (X.One(Int: a, Bool: b), X.Two()) = (X.One(3, true), X.Two());
+    """.checkTypeChecks()
+    
+    """
+    choice X { One(Int, Bool), Two }
+    var X.One(Int: a, auto: b) = X.One(3, true);
+    """.checkTypeChecks()
+
+    """
+    choice X { One(Int, (Bool, Int)), Two }
+    var (X.One(Int: a, (auto: b, 4)), X.Two()) = (X.One(3, (true, 4)), X.Two());
+    """.checkTypeChecks()
+
+    """
+    struct X { var Int: a; var Bool: b; }
+    var X(.a = Int: a, .b = Bool: b) = X(.a = 3, .b = false);
+    """.checkTypeChecks()
+
+    """
+    struct X { var Int: a; var Bool: b; }
+    var X(.a = auto: a, .b = Bool: b) = X(.a = 3, .b = false);
+    """.checkTypeChecks()
+
+    "var Int(Bool: _) = 1;".checkFailsToTypeCheck(
+      withMessage: "Called type must be a struct, not 'Int'")
+
+    """
+    struct X { var Int: a; var Bool: b; }
+    var X(.a = Bool: a, .b = Bool: b) = X(.a = 3, .b = true);
+    """.checkFailsToTypeCheck(withMessage:
+      "Argument tuple type (.a = Bool, .b = Bool) doesn't match"
+        + " struct initializer type (.a = Int, .b = Bool)")
+
+    """
+    choice X { One(Int, Bool), Two }
+    var (X.One(Bool: a, Bool: b), X.Two()) = (X.One(5, true), X.Two);
+    """.checkFailsToTypeCheck(withMessage:
+      "Argument tuple type (Bool, Bool) doesn't match"
+        + " alternative payload type (Int, Bool)")
+
+    """
+    var 1(Bool: _) = 1;
+    """.checkFailsToTypeCheck(withMessage:
+      "instance of type Int is not callable")
+  }
+
+  func testFunctionTypeInitializer() {
+    """
+    fn g(Int: _)->Bool{}
+    var fnty(Int)->Bool: y = g;
+    """.checkTypeChecks()
+  }
+
+  func testFunctionTypePatternInitializer() {
+    "var fnty(Type: x) = fnty(Int);".checkTypeChecks()
+
+    "var fnty(Type: x)->Bool = fnty(Int)->Bool;".checkTypeChecks()
+
+    // This one not handled by C++ implementation as of 2021-05-12
+    "var fnty(Type: x)->Type = fnty(Int)->Int;".checkTypeChecks()
+
+    "var fnty(Int)->(Type: y) = fnty(Int)->Bool;".checkTypeChecks()
+
+    "var fnty(4)->Type: y = fnty(Int)->Int;".checkFailsToTypeCheck(
+      withMessage: "Not a type expression (value has type (Int))")
+
+    "var fnty(Int: x) = fnty(Int);".checkFailsToTypeCheck(
+      withMessage:
+        "Pattern in this context must match type values, not Int values")
+
+    "var fnty(auto: x) = 3;".checkFailsToTypeCheck(
+      withMessage: "No initializer available to deduce type for auto")
+
+    // A tuple of types is a valid type.
+    """
+    var fnty((Type, Type): x)->Type: y
+      = fnty((Int, Int))->Bool;
+    """.checkTypeChecks()
+
+    """
+    var fnty((Int, Int): x)->(Type: y)
+      = fnty((Int, Int))->Bool;
+    """.checkFailsToTypeCheck(
+      withMessage:
+        "Pattern in this context must match type values, not (Int, Int) values")
+
+    """
+    fn g(Int: x) => Int;
+    var fnty((Int, Int): x)->g(3)
+       = fnty((Int, Int))->Bool;
+    """.checkFailsToTypeCheck(
+      withMessage:
+        "Pattern in this context must match type values, not (Int, Int) values")
+  }
+
+  func testInvalidFunctionType() {
+    "fn g(fnty(1)->Int: x) => x;".checkFailsToTypeCheck(
+      withMessage: "Not a type expression (value has type (Int))")
+
+    "fn g(fnty(Int)->true: x) => x;".checkFailsToTypeCheck(
+      withMessage: "Not a type expression (value has type Bool)")
+  }
+
+  func DO_NOT_testInitializationsRequiringSubMetatypes() {
+    // These tests require interesting metatypes and subtype relationships,
+    // and are not supported by the C++ implementation either.
+    "var fnty(auto: x) = fnty(Int);".checkTypeChecks()
+    "var fnty(auto: y)->Bool = fnty(Int)->Bool;".checkTypeChecks()
+    "var fnty(Int)->(auto: z) = fnty(Int)->Bool;".checkTypeChecks()
+    """
+    var fnty((Type, auto: z))->(Type: y)
+      = fnty((Int, Int))->Bool;
+    """.checkTypeChecks()
+  }
+
+  func DO_NOT_testBindingToCalleeStructType() {
+    // This test requires parser/AST changes, and is not supported by the C++
+    // implementation either.
+    """
+    struct X {}
+    var  auto: t0 () = X() // a
+    var (auto: t1)() = X() // b
+    """.checkTypeChecks()
+  }
+
   func testIndexExpression() {
     "fn f((Int,): r) => r[0];".checkTypeChecks()
 

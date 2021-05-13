@@ -19,6 +19,11 @@ struct TypeChecker {
         _ = typeOfName(declaredBy: f as Declaration)
       }
     }
+    for d in program.ast {
+      if case .initialization(let i) = d {
+        check(i)
+      }
+    }
     /*
     for d in program.ast {
       checkFunctionBodiesAndTopLevelInitializations(d)
@@ -36,12 +41,20 @@ struct TypeChecker {
   private let program: ExecutableProgram
 
   /// Mapping from alternative declaration to the choice in which it is defined.
-  private var parent = ASTDictionary<Alternative, ChoiceDefinition>()
+  private var parentChoice = ASTDictionary<Alternative, ChoiceDefinition>()
+
+  /// Mapping from variable declaration to the initialization in which it is
+  /// defined.
+  private var parentInitialization
+    = ASTDictionary<SimpleBinding, Initialization>()
 
   /// Memoized result of computing the type of the expression consisting of the
   /// name of each declared entity.
   private var typeOfNameDeclaredBy
     = Dictionary<Declaration.Identity, Memo<Type>>()
+  
+  /// The set of initializations that have been completely typechecked.
+  private var checkedInitializations = Set<Initialization.Identity>()
 
   /// Mapping from struct to the parameter tuple type that initializes it.
   private var initializerTuples = ASTDictionary<StructDefinition, TupleType>()
@@ -70,8 +83,26 @@ private extension TypeChecker {
   mutating func registerParentage(_ d: TopLevelDeclaration) {
     switch d {
     case let .choice(c):
-      for a in c.alternatives { parent[a] = c }
-    case .struct, .function, .initialization: ()
+      for a in c.alternatives { parentChoice[a] = c }
+    case let .initialization(i):
+      registerParent(in: i.bindings, as: i)
+    case .struct, .function: ()
+    }
+  }
+
+  /// Records references from variable declarations in children to the given
+  /// parent initialization.
+  mutating func registerParent(in children: Pattern, as parent: Initialization) {
+    switch children {
+    case .atom: return
+    case let .variable(x): parentInitialization[x] = parent
+    case let .tuple(x):
+      for a in x { registerParent(in: a.payload, as: parent) }
+    case let .functionCall(x):
+      for a in x.arguments { registerParent(in: a.payload, as: parent) }
+    case let .functionType(x):
+      for a in x.parameters { registerParent(in: a.payload, as: parent) }
+      registerParent(in: x.returnType, as: parent)
     }
   }
 
@@ -86,7 +117,7 @@ private extension TypeChecker {
       for m in s.members { _ = typeOfName(declaredBy: m) }
     case let .choice(c):
       for a in c.alternatives {
-        parent[a] = c
+        parentChoice[a] = c
         _ = typeOfName(declaredBy: a)
       }
     case .function, .initialization: ()
@@ -167,7 +198,14 @@ private extension TypeChecker {
       r = .type
 
     case let x as SimpleBinding:
-      r = evaluate(x.type.expression!)
+      if let e = x.type.expression {
+        r = evaluate(e)
+      }
+      else {
+        check(parentInitialization[x]!)
+        if case let .final(r0) = typeOfNameDeclaredBy[d.identity]! { r = r0 }
+        else { UNREACHABLE() }
+      }
 
     case let x as FunctionDefinition:
       r = typeOfName(declaredBy: x)
@@ -176,7 +214,7 @@ private extension TypeChecker {
       let payload = evaluate(TypeExpression(a.payload))
       let payloadTuple = payload == .error ? .void : payload.tuple!
       r = .alternative(
-        parent: ASTIdentity(of: parent[a]!), payload: payloadTuple)
+        parent: ASTIdentity(of: parentChoice[a]!), payload: payloadTuple)
 
     case let x as StructMember:
       r = evaluate(x.type)
@@ -195,9 +233,9 @@ private extension TypeChecker {
       return typeOfName(declaredBy: program.definition[v]!)
 
     case let .functionType(f):
-      // PARTIALLY UNIMPLEMENTED()
-      // _ = type(FunctionType<Pattern>(f))
-      _ = f
+      let p = evaluate(TypeExpression(f.parameters))
+      assert(p == .error || p.tuple != nil)
+      _ = evaluate(f.returnType)
       return .type
 
     case .intType, .boolType, .typeType:
@@ -238,6 +276,15 @@ private extension TypeChecker {
 
     case .functionCall(let f):
       return type(f)
+    }
+  }
+
+  /// Logs an error pointing at `source` unless the type of `t` is a metatype.
+  mutating func expectMetatype<Node: AST>(_ t: Type, at source: Node) {
+    if !t.isMetatype {
+      error(
+        source,
+        "Pattern in this context must match type values, not \(t) values")
     }
   }
 
@@ -344,9 +391,8 @@ private extension TypeChecker {
       // Handle access to a type member, like a static member in C++.
       if case let .choice(id) = evaluate(TypeExpression(e.base)) {
         let c: ChoiceDefinition = id.structure
-        return c.alternatives
-          .first { $0.name == e.member }
-          .map { typeOfName(declaredBy: $0) } ?? error(
+        return c[e.member].map { typeOfName(declaredBy: $0) }
+          ?? error(
             e.member, "choice \(c.name) has no alternative '\(e.member)'")
       }
       // No other types have members.
@@ -357,13 +403,16 @@ private extension TypeChecker {
     }
   }
 
+  /// Returns the type of the function declared by `f`, logging any errors in
+  /// its signature, and, if `f` was declared with `=>`, its body expression.
   private mutating func typeOfName(declaredBy f: FunctionDefinition) -> Type {
     // Make sure we don't bypass memoization.
     if typeOfNameDeclaredBy[f.identity] != .beingComputed {
       return typeOfName(declaredBy: f as Declaration)
     }
 
-    let parameterTypes = self.parameterTypes(f.parameters)
+    let parameterTypes = f.parameters.fields(reportingDuplicatesIn: &errors)
+      .mapFields { patternType($0) }
 
     let returnType: Type
     if case .expression(let t) = f.returnType {
@@ -372,42 +421,79 @@ private extension TypeChecker {
     else if case .some(.return(let e, _)) = f.body {
       returnType = type(e)
     }
-    else { UNREACHABLE() } // auto return type without return statement body(?)
+    else { UNREACHABLE("auto return type without return statement body") }
 
     return .function(parameterTypes: parameterTypes, returnType: returnType)
   }
 
-  mutating func parameterTypes(_ p: TuplePattern) -> TupleType {
-    return p.fields(reportingDuplicatesIn: &errors).mapFields { type($0) }
-  }
-
-  mutating func type(_ p: Pattern) -> Type {
-    switch p {
+  /// Returns the type matched by `p`, using `rhs`, if supplied, to deduce `auto`
+  /// types, and logging any errors.
+  ///
+  /// - Note: DOES NOT verify that `rhs` is a subtype of the result; you must
+  ///   check that separately.
+  mutating func patternType(
+    _ p: Pattern, initializerType rhs: Type? = nil) -> Type
+  {
+    switch (p) {
     case let .atom(e):
       return type(e)
-    case let .variable(v):
-      return v.type.expression.map { evaluate($0) } ??
-        error(v.type, "No initializer available to deduce type for auto")
+
+    case let .variable(binding):
+      let r = binding.type.expression.map { evaluate($0) }
+        ?? rhs ?? error(
+          binding.type, "No initializer available to deduce type for auto")
+      typeOfNameDeclaredBy[binding.identity] = .final(r)
+      return r
+      // Hack for metatype subtyping---replace with real subtyping.
+      // return rhs.map { r == .type && $0.isMetatype ? $0 : r } ?? r
+      
     case let .tuple(t):
       return .tuple(
-        t.fields(reportingDuplicatesIn: &errors).mapFields { type($0) })
+        t.fields(reportingDuplicatesIn: &errors).mapElements { (id, f) in
+          patternType(f, initializerType: rhs?.tuple?.elements[id])
+        })
+
     case let .functionCall(c):
-      return type(c)
+      return patternType(c, initializerType: rhs)
+
     case let .functionType(f):
-      return type(f)
+      return patternType(f, initializerType: rhs?.function)
     }
+  }
+
+  /// Returns the type matched by `p`, using `rhs`, if supplied, to deduce `auto`
+  /// types, and logging any errors.
+  ///
+  /// - Note: DOES NOT verify that `rhs` is a subtype of the result; you must
+  ///   check that separately.
+  mutating func patternType(
+    _ p: TupleSyntax<Pattern>, initializerType rhs: TupleType?,
+    requireMetatype: Bool = false
+  ) -> Type {
+    return .tuple(
+      p.fields(reportingDuplicatesIn: &errors).mapElements { (id, f) in
+        let t = patternType(f, initializerType: rhs?.elements[id])
+        if requireMetatype { expectMetatype(t, at: f) }
+        return t
+      })
   }
 
   // FIXME: There is significant code duplication between pattern and expression
   // type deduction.  Perhaps upgrade expressions to patterns and use the same
   // code to check?
 
-  mutating func type(_ p: FunctionCall<Pattern>) -> Type {
+  /// Returns the type matched by `p`, using `rhs`, if supplied, to deduce `auto`
+  /// types, and logging any errors.
+  ///
+  /// - Note: DOES NOT verify that `rhs` is a subtype of the result; you must
+  ///   check that separately.
+  mutating func patternType(
+    _ p: FunctionCall<Pattern>, initializerType rhs: Type?) -> Type
+  {
     // Because p is a pattern, it must be a destructurable thing containing
     // bindings, which means the callee can only be a choice alternative
     // or struct type.
     let calleeType = type(p.callee)
-    let argumentTypes = type(.tuple(p.arguments)).tuple!
 
     switch calleeType {
     case .type:
@@ -417,8 +503,9 @@ private extension TypeChecker {
         return error(
           p.callee, "Called type must be a struct, not '\(calleeValue)'.")
       }
-
       let parameterTypes = initializerParameters(resultID)
+      let argumentTypes = patternType(p.arguments, initializerType: parameterTypes).tuple!
+
       if argumentTypes != parameterTypes {
         error(
           p.arguments,
@@ -428,6 +515,7 @@ private extension TypeChecker {
       return calleeValue
 
     case let .alternative(parent: resultID, payload: payload):
+      let argumentTypes = patternType(p.arguments, initializerType: payload).tuple!
       if argumentTypes != payload {
         error(
           p.arguments,
@@ -438,6 +526,18 @@ private extension TypeChecker {
 
     default:
       return error(p.callee, "instance of type \(calleeType) is not callable.")
+    }
+  }
+
+  /// Ensures that `i` has been type-checked.
+  mutating func check(_ i: Initialization) {
+    if checkedInitializations.contains(i.identity) { return }
+    defer { checkedInitializations.insert(i.identity) }
+    
+    let rhs = type(i.initializer)
+    let lhs = patternType(i.bindings, initializerType: rhs)
+    if lhs != rhs {
+      error(i, "Pattern type \(lhs) does not match initializer type \(rhs).")
     }
   }
 
@@ -452,22 +552,22 @@ private extension TypeChecker {
     return r
   }
 
-  mutating func type(_ t: FunctionType<Pattern>) -> Type {
-    _ = t.parameters.fields(reportingDuplicatesIn: &errors)
-      .mapFields { metatype($0) }
-    _ = metatype(t.returnType)
-    return .type
-  }
+  /// Returns the type matched by `p`, using `rhs`, if supplied, to deduce `auto`
+  /// types, and logging any errors.
+  ///
+  /// - Note: DOES NOT verify that `rhs` is a subtype of the result; you must
+  ///   check that separately.
+  mutating func patternType(
+    _ t: FunctionType<Pattern>,
+    initializerType rhs: (parameterTypes: TupleType, returnType: Type)?
+  ) -> Type {
+    _ = patternType(
+      t.parameters, initializerType: rhs?.parameterTypes,
+      requireMetatype: true)
 
-  /// Returns the type of the type value matched by `p`, logging errors if `p`
-  /// does not match type values.
-  mutating func metatype(_ p: Pattern) -> Type {
-    let t = type(p)
-    if !t.isMetatype {
-      error(
-        p, "Pattern in this context must match type values, not \(t) values")
-    }
-    return t
+    let r = patternType(t.returnType, initializerType: rhs?.returnType)
+    expectMetatype(r, at: t.returnType)
+    return .type
   }
 }
 
