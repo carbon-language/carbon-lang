@@ -496,8 +496,19 @@ final class TypeCheckFunctionSignatures: XCTestCase {
 
     "var fnty(Type: x)->Bool = fnty(Int)->Bool;".checkTypeChecks()
 
-    // This one not handled by C++ implementation as of 2021-05-12
+    // This one typechecks but will have to trap at runtime because the return
+    // types don't match.
     "var fnty(Type: x)->Type = fnty(Int)->Int;".checkTypeChecks()
+
+    // Same with this one; in both cases the return type of the rhs is a runtime
+    // expression.  However, we have not implemented the compile-time evaluation
+    // of variables yet.  This case would hit an UNIMPLEMENTED() call.
+    /*
+    """
+    var auto: t = Int;
+    var fnty(Type: x)->Type = fnty(Int)->t;
+    """.checkTypeChecks()
+     */
 
     "var fnty(Int)->(Type: y) = fnty(Int)->Bool;".checkTypeChecks()
 
@@ -638,6 +649,18 @@ final class TypeCheckFunctionSignatures: XCTestCase {
     fn f(Bool: a, Bool: b) => a or b;
     fn g(Bool: _) => 0;
     fn h() => g(f(true, false));
+    """.checkTypeChecks()
+  }
+
+  func testRuntimeTypeExpressions() {
+    // This case is rejected by the C++ implementation's typechecker because it
+    // expects all type expressions (like `t` in the 2nd line) to be computed at
+    // compile-time.  Jeremy agrees that's a bug.
+    """
+    fn g(Type: t) -> Type {
+       var fnty(Type: x)->Type = fnty(Int)->t;
+       return x;
+    }
     """.checkTypeChecks()
   }
 
