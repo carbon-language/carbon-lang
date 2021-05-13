@@ -403,6 +403,10 @@ private extension TypeChecker {
     }
   }
 
+  private mutating func checkBody(_ f: FunctionDefinition) {
+
+  }
+  
   /// Returns the type of the function declared by `f`, logging any errors in
   /// its signature, and, if `f` was declared with `=>`, its body expression.
   private mutating func typeOfName(declaredBy f: FunctionDefinition) -> Type {
