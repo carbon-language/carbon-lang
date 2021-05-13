@@ -83,7 +83,7 @@ extension Type: CustomStringConvertible {
       return "fnty \(p) -> \(r)"
     case let .tuple(t): return "\(t)"
     case let .alternative(parent: parent, payload: payload):
-      return "<alternative> \(payload) -> \(parent.structure)"
+      return "<alternative> \(payload) -> \(parent.structure.name.text)"
     case let .struct(d): return d.structure.name.text
     case let .choice(d): return d.structure.name.text
     case .error:

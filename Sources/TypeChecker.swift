@@ -59,7 +59,10 @@ struct TypeChecker {
   private var initializerTuples = ASTDictionary<StructDefinition, TupleType>()
 
   /// Return type of function currently being checked, if any.
-  private var returnType: Type?
+  private var expectedReturnType: Type? = nil
+
+  /// True iff currently checking the body of a loop.
+  private var inLoop: Bool = false
 
   /// A record of the errors encountered during type-checking.
   var errors: ErrorLog = []
@@ -225,9 +228,30 @@ private extension TypeChecker {
     return r
   }
 
-  /// Returns the type of the value computed by `e`, logging errors if `e`
-  /// doesn't typecheck.
+  /// Returns the type of the value computed by `e` when NOT in the callee
+  /// position of a function call expression, logging errors if `e` doesn't
+  /// typecheck.
+  ///
+  /// Nullary alternative types are implicitly converted to their parent
+  /// `choice`.
   mutating func type(_ e: Expression) -> Type {
+    let r = calleeType(e)
+    if case let .alternative(parent: choiceID, payload: arguments) = r,
+       arguments == .void
+    {
+      return .choice(choiceID)
+    }
+    else {
+      return r
+    }
+  }
+
+  /// Returns the type of the value computed by `e` when in the callee position
+  /// of a function call expression, logging errors if `e` doesn't typecheck.
+  ///
+  /// Nullary alternative types are returned directly rather being implicitly
+  /// converted to their parent `choice` as in `type()`, above.
+  mutating func calleeType(_ e: Expression) -> Type {
     switch e {
     case .name(let v):
       return typeOfName(declaredBy: program.definition[v]!)
@@ -333,9 +357,10 @@ private extension TypeChecker {
   /// Returns the type of the value computed by `e`, logging errors if `e`
   /// doesn't typecheck.
   mutating func type(_ e: FunctionCall<Expression>) -> Type {
-    let calleeType = type(e.callee)
+    let callee = calleeType(e.callee)
     let argumentTypes = type(.tupleLiteral(e.arguments))
-    switch calleeType {
+
+    switch callee {
     case let .function(parameterTypes: p, returnType: r):
       if argumentTypes != .tuple(p) {
         error(
@@ -368,7 +393,7 @@ private extension TypeChecker {
       return calleeValue
 
     default:
-      return error(e.callee, "value of type \(calleeType) is not callable.")
+      return error(e.callee, "value of type \(callee) is not callable.")
     }
   }
 
@@ -403,10 +428,6 @@ private extension TypeChecker {
     }
   }
 
-  private mutating func checkBody(_ f: FunctionDefinition) {
-
-  }
-  
   /// Returns the type of the function declared by `f`, logging any errors in
   /// its signature, and, if `f` was declared with `=>`, in its body expression.
   private mutating func typeOfName(declaredBy f: FunctionDefinition) -> Type {
@@ -572,6 +593,88 @@ private extension TypeChecker {
     let r = patternType(t.returnType, initializerType: rhs?.returnType)
     expectMetatype(r, at: t.returnType)
     return .type
+  }
+}
+
+/// Statement checking.
+extension TypeChecker {
+  /// pass `self` to action with `inLoop` temporarily set to `newValue`
+  private mutating func withInLoop<R>(
+    _ newValue: Bool, _ action: (inout Self)->R) -> R
+  {
+    let saved = inLoop
+    self.inLoop = newValue
+    defer { self.inLoop = saved }
+
+    return action(&self)
+  }
+
+  private mutating func checkBody(_ f: FunctionDefinition) {
+    // auto-returning bodies have already been checked as part of function
+    // signature checking.
+    if case .auto = f.returnType { return }
+
+    guard let body = f.body else { return }
+
+    self.expectedReturnType = typeOfName(declaredBy: f).function!.returnType
+    withInLoop(false) { me in
+      me.check(body)
+    }
+  }
+
+  private mutating func check(_ s: Statement) {
+    switch s {
+    case let .expressionStatement(e, _):
+      _ = type(e)
+
+    case let .assignment(target: t, source: s, _):
+      // TODO: formalize rvalues vs. lvalues and check that type(t) is an
+      // lvalue.
+      expectType(of: t, toBe: type(s))
+
+    case let .initialization(i):
+      check(i)
+
+    case let .if(condition: c, thenClause: thenClause, elseClause: maybeElse, _):
+      expectType(of: c, toBe: .bool)
+      check(thenClause)
+      if let elseClause = maybeElse {
+        check(elseClause)
+      }
+
+    case let .return(e, _):
+      expectType(of: e, toBe: expectedReturnType!)
+
+    case let .block(statements, _):
+      for s in statements {
+        check(s)
+      }
+
+    case let .while(condition: c, body: body, _):
+      expectType(of: c, toBe: .bool)
+
+      withInLoop(true) { me in
+        me.check(body)
+      }
+
+    case let .match(subject: subject, clauses: clauses, _):
+      let subjectType = type(subject)
+      for c in clauses {
+        if let nonDefault = c.pattern {
+          let p = patternType(nonDefault, initializerType: subjectType)
+          if p != subjectType {
+            error(
+              subject, "Pattern type \(p) incompatible with matched "
+                   + "expression type \(subjectType).",
+              notes: [("Matched expression", subject.site)])
+          }
+        }
+        check(c.action)
+      }
+
+    case .break, .continue:
+      if !inLoop { error(s, "invalid outside loop body") }
+    }
   }
 }
 

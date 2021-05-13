@@ -7,7 +7,7 @@
 var Int x = 1;
 
 fn identity(Int x) {
-  return x;
+  return x; // Error expected.
 }
 
 fn main() -> Int {

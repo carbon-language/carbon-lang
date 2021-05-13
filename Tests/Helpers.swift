@@ -91,17 +91,19 @@ extension String {
   ///   resulting AST.
   /// - Parameter tracing: `true` iff Citron parser tracing should be enabled.
   func checkParsed(
-    fromFile sourceFile: String = #filePath, tracing: Bool = false,
+    fromFile sourceFile: String? = nil, tracing: Bool = false,
     _ message: @autoclosure () -> String = "",
     filePath: StaticString = #filePath,
     line: UInt = #line, column: Int = #column,
     topLevelCheckFunction: StaticString? = nil
   ) -> AbstractSyntaxTree {
     do {
-      return try self.parsedAsCarbon(fromFile: sourceFile, tracing: tracing)
+      return try self.parsedAsCarbon(
+        fromFile: sourceFile ?? filePath.description, tracing: tracing)
     }
     catch let errors as ErrorLog {
       failWithUnexpectedErrors(
+        fromFile: sourceFile,
         "Unexpected parsing errors", errors,
         filePath: filePath, line: line, column: column,
         topLevelCheckFunction: topLevelCheckFunction ?? #function)
@@ -119,7 +121,9 @@ extension String {
 extension String {
   /// Returns the carbon executable corresponding to `self`, without type
   /// checking, or `nil` (logging an XCTest failure) if errors occurred.
+  ///
   func checkExecutable(
+    fromFile sourceFile: String? = nil,
     _ message: @autoclosure () -> String = "",
     filePath: StaticString = #filePath,
     line: UInt = #line, column: Int = #column,
@@ -127,10 +131,11 @@ extension String {
   ) -> ExecutableProgram? {
     do {
       return try ExecutableProgram(
-        self.parsedAsCarbon(fromFile: String(describing: filePath)))
+        self.parsedAsCarbon(fromFile: sourceFile ?? filePath.description))
     }
     catch let errors as ErrorLog {
       failWithUnexpectedErrors(
+        fromFile: sourceFile,
         "Unexpected parsing errors", errors,
         filePath: filePath, line: line, column: column,
         topLevelCheckFunction: topLevelCheckFunction ?? #function)
@@ -145,24 +150,28 @@ extension String {
 
 
 extension String {
-  /// Interpreting `self` as string literal source code in a test file followed
-  /// by a method call (see checkTypeChecks below), returns a string
-  /// representing `errors` formatted in Gnu style, referring to the appropriate
-  /// places in the test file.
+  /// Returns a string representing `errors` formatted in Gnu style, referring
+  /// to the appropriate places in filePath.
+  ///
   fileprivate func failWithUnexpectedErrors(
+    fromFile sourceFile: String? = nil,
     _ message: String,
     _ errors: ErrorLog,
     filePath: StaticString,
-    line: UInt, column: Int, topLevelCheckFunction: StaticString = #function
+    line: UInt, column: Int,
+    topLevelCheckFunction: StaticString = #function
   ) {
-    let baseNameLength = String(describing: topLevelCheckFunction)
-      .enumerated().first { $1 == "(" }!.0
+    var offset = (line: 0, column: 0)
 
-    let lines = self.split(separator: "\n")
-    let offset = (
-      line: Int(line) - (lines.count == 1 ? 0 : lines.count) - 1,
-      column: column - baseNameLength
-        - (lines.count == 1 ? self.count + 3 : 5))
+    if sourceFile == nil {
+      let baseNameLength = String(describing: topLevelCheckFunction)
+        .enumerated().first { $1 == "(" }!.0
+      let lineCount = self.split(separator: "\n").count
+      offset = lineCount <= 1
+        ? (Int(line) - 1,             column - baseNameLength - self.count + 3)
+        : (Int(line) - lineCount - 1, column - baseNameLength - 5)
+    }
+
     XCTFail(
       "\(message):\n" +
         errors.lazy.map { "\($0 + offset)" }.joined(separator: "\n"),
@@ -172,6 +181,7 @@ extension String {
   /// Returns the results of parsing, name lookup, and typechecking `self`, or
   /// `nil` (logging an XCTest failure) if there are errors before type checking.
   func typeChecked(
+    fromFile sourceFile: String? = nil,
     _ message: @autoclosure () -> String = "",
     filePath: StaticString = #filePath,
     line: UInt = #line, column: Int = #column,
@@ -179,6 +189,7 @@ extension String {
   ) -> (ExecutableProgram, typeChecker: TypeChecker, errors: ErrorLog)?
   {
     guard let executable = self.checkExecutable(
+            fromFile: sourceFile,
             message(), filePath: filePath, line: line, column: column,
             topLevelCheckFunction: topLevelCheckFunction ?? #function
           ) else { return nil }
@@ -203,17 +214,20 @@ extension String {
   ///     """.checkTypeChecks()
   ///
   func checkTypeChecks(
+    fromFile sourceFile: String? = nil,
     _ message: @autoclosure () -> String = "",
     filePath: StaticString = #filePath,
     line: UInt = #line, column: Int = #column,
     topLevelCheckFunction: StaticString? = nil
   ) {
     if case let .some((_, _, errors)) = self.typeChecked(
+         fromFile: sourceFile,
          filePath: filePath, line: line, column: column,
          topLevelCheckFunction: topLevelCheckFunction ?? #function),
        !errors.isEmpty
     {
       failWithUnexpectedErrors(
+        fromFile: sourceFile,
         "Unexpected compilation errors", errors,
         filePath: filePath, line: line, column: column,
         topLevelCheckFunction: topLevelCheckFunction ?? #function)
@@ -236,24 +250,30 @@ extension String {
   ///     """.checkFailsToTypeCheck(withMessage: "No such thang")
   ///
   func checkFailsToTypeCheck(
+    fromFile sourceFile: String? = nil,
     withMessage excerpt: String,
     filePath: StaticString = #filePath,
     line: UInt = #line, column: Int = #column
   ) {
     guard case let .some((_, _, errors)) = self.typeChecked(
-            filePath: filePath, line: line, column: #column,
-            topLevelCheckFunction: #function),
-          !(errors.contains { e in e.message.contains(excerpt) })
+            fromFile: sourceFile,
+            filePath: filePath, line: line, column: #column),
+          !(errors.contains { e in
+              excerpt.isEmpty // Work around wrong semantics of Foundation.
+                || e.message.contains(excerpt) })
     else { return }
 
     let prefix
       = "Expected type checking error message \(String(reflecting: excerpt)) "
 
     if errors.isEmpty {
-      XCTFail(prefix + "but none found", file: (filePath), line: line)
+      XCTFail(
+        prefix + "but none found" + (sourceFile.map { " in \($0)" } ?? ""),
+        file: (filePath), line: line)
     }
     else {
       failWithUnexpectedErrors(
+        fromFile: sourceFile,
         prefix + "not found. Actual errors",
         errors, filePath: filePath, line: line, column: column)
     }

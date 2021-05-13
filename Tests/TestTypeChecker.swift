@@ -665,22 +665,33 @@ final class TypeCheckFunctionSignatures: XCTestCase {
 }
 
 final class TypeCheckExamples: XCTestCase {
-  func DO_NOT_testExamples() throws {
+  func testExamples() throws {
     let testdata =
         URL(fileURLWithPath: #filePath).deletingLastPathComponent()
         .appendingPathComponent("testdata")
 
     for f in try FileManager().contentsOfDirectory(atPath: testdata.path) {
-      let p = testdata.appendingPathComponent(f).path
+      let sourcePath = testdata.appendingPathComponent(f).path
 
       // Skip experimental syntax for now.
       if f.hasPrefix("experimental_") { continue }
 
-      let source = try String(contentsOfFile: p)
-      if f.hasSuffix("_fail.6c") {
-        source.checkFailsToTypeCheck(withMessage: "")
+      let source = try String(contentsOfFile: sourcePath)
+      if f.contains("pattern_variable_fail.6c") || f.contains("tuple2_fail"){
+        XCTAssertThrowsError(try source.parsedAsCarbon(fromFile: sourcePath))
+      }
+      else if f.contains("type_compute") {
+        // Skip for now; we don't handle nontrivial type computation.
+      }
+      else if f.contains("_fail")
+                || source.contains("Error expected.")
+      // This file's error is about declaration order dependency, which we don't
+      // enforce.
+                && !f.contains("global_variable8.6c")
+      {
+        source.checkFailsToTypeCheck(fromFile: sourcePath, withMessage: "")
       } else {
-        source.checkTypeChecks()
+        source.checkTypeChecks(fromFile: sourcePath)
       }
     }
   }
