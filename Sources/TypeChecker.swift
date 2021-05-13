@@ -408,7 +408,7 @@ private extension TypeChecker {
   }
   
   /// Returns the type of the function declared by `f`, logging any errors in
-  /// its signature, and, if `f` was declared with `=>`, its body expression.
+  /// its signature, and, if `f` was declared with `=>`, in its body expression.
   private mutating func typeOfName(declaredBy f: FunctionDefinition) -> Type {
     // Make sure we don't bypass memoization.
     if typeOfNameDeclaredBy[f.identity] != .beingComputed {
