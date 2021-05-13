@@ -364,7 +364,7 @@ class RewriteInstanceDiff {
       auto Iter1 = Func1->layout_begin();
       auto Iter2 = Func2->layout_begin();
 
-      bool Match{true};
+      bool Match = true;
       std::map<const BinaryBasicBlock *, const BinaryBasicBlock *> Map;
       std::map<double, std::pair<EdgeTy, EdgeTy>> EMap;
       while (Iter1 != Func1->layout_end()) {
@@ -431,7 +431,7 @@ class RewriteInstanceDiff {
                            BB2));
     }
 
-    unsigned Printed{0};
+    unsigned Printed = 0;
     setTitleColor();
     outs()
         << "\nTop " << opts::DisplayCount
@@ -462,7 +462,7 @@ class RewriteInstanceDiff {
 
   /// Print the largest differences in edge counts from one binary to another
   void reportHottestEdgeDiffs() {
-    unsigned Printed{0};
+    unsigned Printed = 0;
     setTitleColor();
     outs()
         << "\nTop " << opts::DisplayCount
@@ -511,7 +511,7 @@ class RewriteInstanceDiff {
       LTOAggregatedScore1[Iter->second] += Score;
     }
 
-    double UnmappedScore{0};
+    double UnmappedScore = 0;
     for (const auto &BFI : RI2.BC->getBinaryFunctions()) {
       const BinaryFunction &Function = BFI.second;
       bool Matched = FuncMap.find(&Function) != FuncMap.end();
@@ -561,7 +561,7 @@ class RewriteInstanceDiff {
       ScoreMap[Func2] = std::make_pair<>(Score1, Score2);
     }
 
-    unsigned Printed{0};
+    unsigned Printed = 0;
     setTitleColor();
     outs() << "\nTop " << opts::DisplayCount
            << " largest differences in performance bin 2 -> bin 1:\n";
@@ -606,7 +606,7 @@ class RewriteInstanceDiff {
 
   /// Print hottest functions from each binary
   void reportHottestFuncs() {
-    unsigned Printed{0};
+    unsigned Printed = 0;
     setTitleColor();
     outs() << "\nTop " << opts::DisplayCount
            << " hottest functions in binary 2:\n";

@@ -273,7 +273,7 @@ public:
                                 uint64_t Address,
                                 uint64_t Size) const override {
     int64_t       DispValue;
-    const MCExpr* DispExpr{nullptr};
+    const MCExpr *DispExpr = nullptr;
     if (!evaluateAArch64MemoryOperand(Inst, DispValue, &DispExpr))
       return false;
 

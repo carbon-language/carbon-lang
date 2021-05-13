@@ -361,7 +361,7 @@ Error YAMLProfileReader::readProfile(BinaryContext &BC) {
         if (I == LTOCommonNameMap.end())
           continue;
 
-        bool ProfileMatched{false};
+        bool ProfileMatched = false;
         std::vector<yaml::bolt::BinaryFunctionProfile *> &LTOProfiles =
             I->getValue();
         for (yaml::bolt::BinaryFunctionProfile *YamlBF : LTOProfiles) {
@@ -408,7 +408,7 @@ Error YAMLProfileReader::readProfile(BinaryContext &BC) {
   NormalizeByInsnCount = usesEvent("cycles") || usesEvent("instructions");
   NormalizeByCalls = usesEvent("branches");
 
-  uint64_t NumUnused{0};
+  uint64_t NumUnused = 0;
   for (yaml::bolt::BinaryFunctionProfile &YamlBF : YamlBP.Functions) {
     if (YamlBF.Id >= YamlProfileToFunction.size()) {
       // Such profile was ignored.

@@ -231,8 +231,8 @@ LongJmpPass::replaceTargetWithStub(BinaryBasicBlock &BB, MCInst &Inst,
 
   // Local branch
   if (TgtBB) {
-    uint64_t OrigCount{BI.Count};
-    uint64_t OrigMispreds{BI.MispredictedCount};
+    uint64_t OrigCount = BI.Count;
+    uint64_t OrigMispreds = BI.MispredictedCount;
     BB.replaceSuccessor(TgtBB, StubBB, OrigCount, OrigMispreds);
     StubBB->setExecutionCount(StubBB->getExecutionCount() + OrigCount);
     if (NewBB) {
@@ -281,7 +281,7 @@ void LongJmpPass::tentativeBBLayout(const BinaryFunction &Func) {
   const BinaryContext &BC = Func.getBinaryContext();
   uint64_t HotDot = HotAddresses[&Func];
   uint64_t ColdDot = ColdAddresses[&Func];
-  bool Cold{false};
+  bool Cold = false;
   for (BinaryBasicBlock *BB : Func.layout()) {
     if (Cold || BB->isCold()) {
       Cold = true;
@@ -424,7 +424,7 @@ uint64_t LongJmpPass::getSymbolAddress(const BinaryContext &BC,
     assert (Iter != BBAddresses.end() && "Unrecognized BB");
     return Iter->second;
   }
-  uint64_t EntryID{0};
+  uint64_t EntryID = 0;
   const BinaryFunction *TargetFunc = BC.getFunctionForSymbol(Target, &EntryID);
   auto Iter = HotAddresses.find(TargetFunc);
   if (Iter == HotAddresses.end() || (TargetFunc && EntryID)) {
@@ -515,7 +515,7 @@ bool LongJmpPass::needsStub(const BinaryBasicBlock &BB, const MCInst &Inst,
 
 bool LongJmpPass::relax(BinaryFunction &Func) {
   const BinaryContext &BC = Func.getBinaryContext();
-  bool Modified{false};
+  bool Modified = false;
 
   assert(BC.isAArch64() && "Unsupported arch");
   constexpr int InsnSize = 4; // AArch64
@@ -604,7 +604,7 @@ void LongJmpPass::runOnFunctions(BinaryContext &BC) {
   outs() << "BOLT-INFO: Starting stub-insertion pass\n";
   std::vector<BinaryFunction *> Sorted = BC.getSortedFunctions();
   bool Modified;
-  uint32_t Iterations{0};
+  uint32_t Iterations = 0;
   do {
     ++Iterations;
     Modified = false;

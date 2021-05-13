@@ -385,7 +385,7 @@ size_t Relocation::emit(MCStreamer *Streamer) const {
   if (isPCRelative(Type)) {
     MCSymbol *TempLabel = Ctx.createNamedTempSymbol();
     Streamer->emitLabel(TempLabel);
-    const MCExpr *Value{nullptr};
+    const MCExpr *Value = nullptr;
     if (Symbol) {
       Value = MCSymbolRefExpr::create(Symbol, Ctx);
       if (Addend) {

@@ -249,7 +249,7 @@ void Heatmap::printCDF(StringRef FileName) const {
 }
 
 void Heatmap::printCDF(raw_ostream &OS) const {
-  uint64_t NumTotalCounts{0};
+  uint64_t NumTotalCounts = 0;
   std::vector<uint64_t> Counts;
 
   for (const std::pair<const uint64_t, uint64_t> &KV : Map) {
@@ -263,7 +263,7 @@ void Heatmap::printCDF(raw_ostream &OS) const {
   assert(NumTotalCounts > 0 &&
          "total number of heatmap buckets should be greater than 0");
   double RatioRightInPercent = 100.0 / NumTotalCounts;
-  uint64_t RunningCount{0};
+  uint64_t RunningCount = 0;
 
   OS << "Bucket counts, Size (KB), CDF (%)\n";
   for (uint64_t I = 0; I < Counts.size(); I++) {

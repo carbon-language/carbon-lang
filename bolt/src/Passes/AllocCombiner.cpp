@@ -75,7 +75,7 @@ void AllocCombinerPass::combineAdjustments(BinaryContext &BC,
       if (isIndifferentToSP(Inst, BC))
         continue; // Skip updating Prev
 
-      int64_t Adjustment{0LL};
+      int64_t Adjustment = 0LL;
       if (!Prev || !BC.MIB->isStackAdjustment(Inst) ||
           !BC.MIB->isStackAdjustment(*Prev) ||
           !getStackAdjustmentSize(BC, *Prev, Adjustment)) {

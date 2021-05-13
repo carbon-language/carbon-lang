@@ -243,8 +243,8 @@ bool isYAML(const StringRef Filename) {
 
 void mergeLegacyProfiles(const cl::list<std::string> &Filenames) {
   errs() << "Using legacy profile format.\n";
-  bool BoltedCollection{false};
-  bool First{true};
+  bool BoltedCollection = false;
+  bool First = true;
   for (const std::string &Filename : Filenames) {
     if (isYAML(Filename))
       report_error(Filename, "cannot mix YAML and legacy formats");

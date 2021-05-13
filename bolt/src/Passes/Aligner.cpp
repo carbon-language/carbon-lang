@@ -123,7 +123,7 @@ void AlignerPass::alignBlocks(BinaryFunction &Function,
 
   const uint64_t FuncCount =
       std::max<uint64_t>(1, Function.getKnownExecutionCount());
-  BinaryBasicBlock *PrevBB{nullptr};
+  BinaryBasicBlock *PrevBB = nullptr;
   for (BinaryBasicBlock *BB : Function.layout()) {
     uint64_t Count = BB->getKnownExecutionCount();
 

@@ -1031,7 +1031,7 @@ public:
     unsigned      IndexRegNum;
     int64_t       DispValue;
     unsigned      SegRegNum;
-    const MCExpr* DispExpr{nullptr};
+    const MCExpr *DispExpr = nullptr;
     if (!evaluateX86MemoryOperand(Inst, &BaseRegNum, &ScaleValue, &IndexRegNum,
                                   &DispValue, &SegRegNum, &DispExpr)) {
       return false;
@@ -1610,7 +1610,7 @@ public:
       unsigned IndexRegNum;
       int64_t DispValue;
       unsigned SegRegNum;
-      const MCExpr *DispExpr{nullptr};
+      const MCExpr *DispExpr = nullptr;
       if (!evaluateX86MemoryOperand(Inst, &BaseRegNum, &ScaleValue,
                                     &IndexRegNum, &DispValue, &SegRegNum,
                                     &DispExpr)) {
@@ -1898,7 +1898,7 @@ public:
 
     // Modify the instruction.
     MCOperand ImmOp = MCOperand::createImm(ImmVal);
-    uint32_t TargetOpNum{0};
+    uint32_t TargetOpNum = 0;
     // Test instruction does not follow the regular pattern of putting the
     // memory reference of a load (5 MCOperands) last in the list of operands.
     // Since it is not modifying the register operand, it is not treated as
@@ -3197,7 +3197,7 @@ public:
     // Check if the target address expression used in the original indirect call
     // uses the stack pointer, which we are going to clobber.
     static BitVector SPAliases(getAliases(X86::RSP));
-    bool UsesSP{false};
+    bool UsesSP = false;
     // Skip defs.
     for (unsigned I = Info->get(CallInst.getOpcode()).getNumDefs(),
          E = MCPlus::getNumPrimeOperands(CallInst); I != E; ++I) {

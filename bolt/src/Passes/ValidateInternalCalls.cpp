@@ -134,7 +134,7 @@ bool ValidateInternalCalls::fixCFGForIC(BinaryFunction &Function) const {
   // We use the InsnToBB map that DataflowInfoManager provides us
   DataflowInfoManager Info(BC, Function, nullptr, nullptr);
 
-  bool Updated{false};
+  bool Updated = false;
 
   auto processReturns = [&] (BinaryBasicBlock &BB, MCInst &Return) {
     // Check all reaching internal calls
@@ -217,10 +217,10 @@ bool ValidateInternalCalls::analyzeFunction(BinaryFunction &Function) const {
       }
 
       FrameIndexEntry FIE;
-      int32_t SrcImm{0};
-      MCPhysReg Reg{0};
-      int64_t StackOffset{0};
-      bool IsIndexed{false};
+      int32_t SrcImm = 0;
+      MCPhysReg Reg = 0;
+      int64_t StackOffset = 0;
+      bool IsIndexed = false;
       MCInst *TargetInst = ProgramPoint::getFirstPointAt(*Target).getInst();
       if (!BC.MIB->isStackAccess(*TargetInst, FIE.IsLoad, FIE.IsStore,
                                  FIE.IsStoreFromReg, Reg, SrcImm,
@@ -248,7 +248,7 @@ bool ValidateInternalCalls::analyzeFunction(BinaryFunction &Function) const {
       RU.run();
 
       int64_t Offset = static_cast<int64_t>(Target->getInputOffset());
-      bool UseDetected{false};
+      bool UseDetected = false;
       for (auto I = RU.expr_begin(*RU.getStateBefore(*TargetInst)),
                 E = RU.expr_end();
            I != E; ++I) {

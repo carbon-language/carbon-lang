@@ -81,7 +81,7 @@ convert(const BinaryFunction &BF, yaml::bolt::BinaryFunctionProfile &YamlBF) {
           YamlBB.CallSites.push_back(CSI);
         }
       } else { // direct call or a tail call
-        uint64_t EntryID{0};
+        uint64_t EntryID = 0;
         const MCSymbol *CalleeSymbol = BC.MIB->getTargetSymbol(Instr);
         const BinaryFunction *const Callee =
             BC.getFunctionForSymbol(CalleeSymbol, &EntryID);

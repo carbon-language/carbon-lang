@@ -242,7 +242,7 @@ bool Instrumentation::instrumentOneTarget(
     FunctionDescription *FuncDesc, uint32_t FromNodeID, uint32_t ToNodeID) {
   {
     auto L = FromFunction.getBinaryContext().scopeLock();
-    bool Created{true};
+    bool Created = true;
     if (!TargetBB)
       Created = createCallDescription(*FuncDesc, FromFunction, From, FromNodeID,
                                       ToFunc, ToOffset, IsInvoke);
@@ -364,7 +364,7 @@ void Instrumentation::instrumentFunction(BinaryContext &BC,
 
   // Determine whether this is a leaf function, which needs special
   // instructions to protect the red zone
-  bool IsLeafFunction{true};
+  bool IsLeafFunction = true;
   DenseSet<const BinaryBasicBlock *> InvokeBlocks;
   for (auto BBI = Function.begin(), BBE = Function.end(); BBI != BBE; ++BBI) {
     for (auto I = BBI->begin(), E = BBI->end(); I != E; ++I) {
@@ -378,9 +378,9 @@ void Instrumentation::instrumentFunction(BinaryContext &BC,
   }
 
   for (auto BBI = Function.begin(), BBE = Function.end(); BBI != BBE; ++BBI) {
-    BinaryBasicBlock &BB{*BBI};
-    bool HasUnconditionalBranch{false};
-    bool HasJumpTable{false};
+    BinaryBasicBlock &BB = *BBI;
+    bool HasUnconditionalBranch = false;
+    bool HasJumpTable = false;
     bool IsInvokeBlock = InvokeBlocks.count(&BB) > 0;
 
     for (auto I = BB.begin(); I != BB.end(); ++I) {
@@ -495,7 +495,7 @@ void Instrumentation::instrumentFunction(BinaryContext &BC,
   // Instrument spanning tree leaves
   if (!opts::ConservativeInstrumentation) {
     for (auto BBI = Function.begin(), BBE = Function.end(); BBI != BBE; ++BBI) {
-      BinaryBasicBlock &BB{*BBI};
+      BinaryBasicBlock &BB = *BBI;
       if (STOutSet[&BB].size() == 0)
         instrumentLeafNode(BC, BB, BB.begin(), IsLeafFunction, *FuncDesc,
                            BBToID[&BB]);

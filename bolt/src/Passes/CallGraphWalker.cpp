@@ -38,7 +38,7 @@ void CallGraphWalker::traverseCG() {
     Queue.pop();
     InQueue.erase(Func);
 
-    bool Changed{false};
+    bool Changed = false;
     for (CallbackTy Visitor : Visitors) {
       bool CurVisit = Visitor(Func);
       Changed = Changed || CurVisit;

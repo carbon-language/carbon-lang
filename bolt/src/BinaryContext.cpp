@@ -425,7 +425,7 @@ BinaryContext::getSubBinaryData(BinaryData *BD) {
 std::pair<const MCSymbol *, uint64_t>
 BinaryContext::handleAddressRef(uint64_t Address, BinaryFunction &BF,
                                 bool IsPCRel) {
-  uint64_t Addend{0};
+  uint64_t Addend = 0;
 
   if (isAArch64()) {
     // Check if this is an access to a constant island and create bookkeeping
@@ -541,10 +541,10 @@ bool BinaryContext::analyzeJumpTable(const uint64_t Address,
                                      const uint64_t NextJTAddress,
                                      JumpTable::OffsetsType *Offsets) {
   // Is one of the targets __builtin_unreachable?
-  bool HasUnreachable{false};
+  bool HasUnreachable = false;
 
   // Number of targets other than __builtin_unreachable.
-  uint64_t NumRealEntries{0};
+  uint64_t NumRealEntries = 0;
 
   constexpr uint64_t INVALID_OFFSET = std::numeric_limits<uint64_t>::max();
   auto addOffset = [&](uint64_t Offset) {
@@ -712,7 +712,7 @@ void BinaryContext::populateJumpTables() {
     if (!BF.isSimple())
       continue;
 
-    uint64_t NextJTAddress{0};
+    uint64_t NextJTAddress = 0;
     auto NextJTI = std::next(JTI);
     if (NextJTI != JTE) {
       NextJTAddress = NextJTI->second->getAddress();
@@ -818,7 +818,7 @@ BinaryContext::getOrCreateJumpTable(BinaryFunction &Function, uint64_t Address,
   }
 
   // Re-use the existing symbol if possible.
-  MCSymbol *JTLabel{nullptr};
+  MCSymbol *JTLabel = nullptr;
   if (BinaryData *Object = getBinaryDataAtAddress(Address)) {
     if (!isInternalSymbolName(Object->getSymbol()->getName()))
       JTLabel = Object->getSymbol();
@@ -905,7 +905,7 @@ bool BinaryContext::hasValidCodePadding(const BinaryFunction &BF) {
 
   uint64_t Offset = BF.getSize();
   MCInst Instr;
-  uint64_t InstrSize{0};
+  uint64_t InstrSize = 0;
   uint64_t InstrAddress = BF.getAddress() + Offset;
   using std::placeholders::_1;
 
@@ -947,7 +947,7 @@ bool BinaryContext::hasValidCodePadding(const BinaryFunction &BF) {
   // Some functions have a jump to the next function or to the padding area
   // inserted after the body.
   auto isSkipJump = [&](const MCInst &Instr) {
-    uint64_t TargetAddress{0};
+    uint64_t TargetAddress = 0;
     if (MIB->isUnconditionalBranch(Instr) &&
         MIB->evaluateBranch(Instr, InstrAddress, InstrSize, TargetAddress)) {
       if (TargetAddress >= InstrAddress + InstrSize &&
@@ -2052,7 +2052,7 @@ bool BinaryContext::validateEncoding(const MCInst &Inst,
 }
 
 uint64_t BinaryContext::getHotThreshold() const {
-  static uint64_t Threshold{0};
+  static uint64_t Threshold = 0;
   if (Threshold == 0) {
     Threshold = std::max((uint64_t)opts::ExecutionCountThreshold,
         NumProfiledFuncs ? SumExecutionCount / (2 * NumProfiledFuncs) : 1);
@@ -2093,7 +2093,7 @@ BinaryContext::getBinaryFunctionAtAddress(uint64_t Address) {
   // registered at the original address. The new function (the one that the
   // original was folded into) will hold the symbol.
   if (const BinaryData *BD = getBinaryDataAtAddress(Address)) {
-    uint64_t EntryID{0};
+    uint64_t EntryID = 0;
     BinaryFunction *BF = getFunctionForSymbol(BD->getSymbol(), &EntryID);
     if (BF && EntryID == 0)
       return BF;

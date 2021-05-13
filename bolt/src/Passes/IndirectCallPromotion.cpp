@@ -606,7 +606,7 @@ IndirectCallPromotion::findCallTargetSymbols(
       const size_t TopN = opts::IndirectCallPromotionJumpTablesTopN != 0
                               ? opts::IndirectCallPromotionTopN
                               : opts::IndirectCallPromotionTopN;
-      size_t I{0};
+      size_t I = 0;
       for (; I < HotTargets.size(); ++I) {
         const uint64_t MemAccesses = HotTargets[I].first;
         if (100 * MemAccesses <

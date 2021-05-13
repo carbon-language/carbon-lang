@@ -186,7 +186,7 @@ void ReorderData::assignMemData(BinaryContext &BC) {
   // Map of sections (or heap/stack) to count/size.
   StringMap<uint64_t> Counts;
   StringMap<uint64_t> JumpTableCounts;
-  uint64_t TotalCount{0};
+  uint64_t TotalCount = 0;
   for (auto &BFI : BC.getBinaryFunctions()) {
     const BinaryFunction &BF = BFI.second;
     if (!BF.hasMemoryProfile())

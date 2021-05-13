@@ -315,7 +315,7 @@ void BinaryBasicBlock::addPredecessor(BinaryBasicBlock *Pred) {
 void BinaryBasicBlock::removePredecessor(BinaryBasicBlock *Pred,
                                          bool Multiple) {
   // Note: the predecessor could be listed multiple times.
-  bool Erased{false};
+  bool Erased = false;
   for (auto PredI = Predecessors.begin(); PredI != Predecessors.end(); ) {
     if (*PredI == Pred) {
       Erased = true;
@@ -423,7 +423,7 @@ MCInst *BinaryBasicBlock::getTerminatorBefore(MCInst *Pos) {
   BinaryContext &BC = Function->getBinaryContext();
   auto Itr = rbegin();
   bool Check = Pos ? false : true;
-  MCInst *FirstTerminator{nullptr};
+  MCInst *FirstTerminator = nullptr;
   while (Itr != rend()) {
     if (!Check) {
       if (&*Itr == Pos)
@@ -477,7 +477,7 @@ void BinaryBasicBlock::addTailCallInstruction(const MCSymbol *Target) {
 }
 
 uint32_t BinaryBasicBlock::getNumCalls() const {
-  uint32_t N{0};
+  uint32_t N = 0;
   BinaryContext &BC = Function->getBinaryContext();
   for (const MCInst &Instr : Instructions) {
     if (BC.MIB->isCall(Instr))

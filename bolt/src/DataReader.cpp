@@ -119,7 +119,7 @@ void FuncBranchData::appendFrom(const FuncBranchData &FBD, uint64_t Offset) {
 }
 
 uint64_t FuncBranchData::getNumExecutedBranches() const {
-  uint64_t ExecutedBranches{0};
+  uint64_t ExecutedBranches = 0;
   for (const BranchInfo &BI : Data) {
     int64_t BranchCount = BI.Branches;
     assert(BranchCount >= 0 && "branch execution count should not be negative");
@@ -148,7 +148,7 @@ FuncSampleData::getSamples(uint64_t Start, uint64_t End) const {
       return Val < SI.Loc.Offset;
     }
   };
-  uint64_t Result{0};
+  uint64_t Result = 0;
   for (auto I = std::lower_bound(Data.begin(), Data.end(), Start, Compare()),
             E = std::lower_bound(Data.begin(), Data.end(), End, Compare());
        I != E; ++I) {
@@ -327,7 +327,7 @@ Error DataReader::readProfilePreCFG(BinaryContext &BC) {
       auto &MemAccessProfile =
         BC.MIB->getOrCreateAnnotationAs<MemoryAccessProfile>(
             II->second, "MemoryAccessProfile");
-      BinaryData *BD{nullptr};
+      BinaryData *BD = nullptr;
       if (MI.Addr.IsSymbol) {
         BD = BC.getBinaryDataByName(MI.Addr.Name);
       }
@@ -352,7 +352,7 @@ Error DataReader::readProfile(BinaryContext &BC) {
     readProfile(Function);
   }
 
-  uint64_t NumUnused{0};
+  uint64_t NumUnused = 0;
   for (const StringMapEntry<FuncBranchData> &FuncData : NamesToBranches)
     if (!FuncData.getValue().Used)
       ++NumUnused;
@@ -513,8 +513,8 @@ bool DataReader::fetchProfileForOtherEntryPoints(BinaryFunction &BF) {
     return false;
 
   // Check if we are missing profiling data for secondary entry points
-  bool First{true};
-  bool Updated{false};
+  bool First = true;
+  bool Updated = false;
   for (BinaryBasicBlock *BB : BF.BasicBlocks) {
     if (First) {
       First = false;
@@ -610,7 +610,7 @@ void DataReader::readSampleData(BinaryFunction &BF) {
   BF.removeTagsFromProfile();
   bool NormalizeByInsnCount = usesEvent("cycles") || usesEvent("instructions");
   bool NormalizeByCalls = usesEvent("branches");
-  static bool NagUser{true};
+  static bool NagUser = true;
   if (NagUser) {
     outs()
         << "BOLT-INFO: operating with basic samples profiling data (no LBR).\n";
@@ -622,7 +622,7 @@ void DataReader::readSampleData(BinaryFunction &BF) {
     NagUser = false;
   }
   uint64_t LastOffset = BF.getSize();
-  uint64_t TotalEntryCount{0};
+  uint64_t TotalEntryCount = 0;
   for (auto I = BF.BasicBlockOffsets.rbegin(), E = BF.BasicBlockOffsets.rend();
        I != E; ++I) {
     uint64_t CurOffset = I->first;
@@ -690,7 +690,7 @@ void DataReader::convertBranchData(BinaryFunction &BF) const {
       IndirectCallSiteProfile &CSP =
         BC.MIB->getOrCreateAnnotationAs<IndirectCallSiteProfile>(
             *Instr, "CallProfile");
-      MCSymbol *CalleeSymbol{nullptr};
+      MCSymbol *CalleeSymbol = nullptr;
       if (BI.To.IsSymbol) {
         if (BinaryData *BD = BC.getBinaryDataByName(BI.To.Name)) {
           CalleeSymbol = BD->getSymbol();

@@ -113,7 +113,7 @@ void computeEdgeWeights(BinaryBasicBlock *BB, EdgeWeightMap &EdgeWeights) {
   typedef GraphTraits<NodeT> GraphT;
   typedef GraphTraits<Inverse<NodeT> > InvTraits;
 
-  double TotalChildrenCount{0.0};
+  double TotalChildrenCount = 0.0;
   SmallVector<double, 4> ChildrenExecCount;
   // First pass computes total children execution count that directly
   // contribute to this BB.
@@ -150,7 +150,7 @@ void computeEdgeWeights(BinaryBasicBlock *BB, EdgeWeightMap &EdgeWeights) {
     TotalChildrenCount += ChildExecCount;
   }
   // Second pass fixes the weight of a possible self-reference edge
-  uint32_t ChildIndex{0};
+  uint32_t ChildIndex = 0;
   for (typename GraphT::ChildIteratorType CI = GraphT::child_begin(BB),
          E = GraphT::child_end(BB); CI != E; ++CI) {
     typename GraphT::NodeRef Child = *CI;
@@ -189,7 +189,7 @@ void computeEdgeWeights(BinaryFunction &BF, EdgeWeightMap &EdgeWeights) {
 /// make it match max(SumPredEdges, SumSuccEdges).
 void recalculateBBCounts(BinaryFunction &BF, bool AllEdges) {
   for (BinaryBasicBlock &BB : BF) {
-    uint64_t TotalPredsEWeight{0};
+    uint64_t TotalPredsEWeight = 0;
     for (BinaryBasicBlock *Pred : BB.predecessors()) {
       TotalPredsEWeight += Pred->getBranchInfo(BB).Count;
     }
@@ -201,7 +201,7 @@ void recalculateBBCounts(BinaryFunction &BF, bool AllEdges) {
     if (!AllEdges)
       continue;
 
-    uint64_t TotalSuccsEWeight{0};
+    uint64_t TotalSuccsEWeight = 0;
     for (BinaryBasicBlock::BinaryBranchInfo &BI : BB.branch_info()) {
       TotalSuccsEWeight += BI.Count;
     }
@@ -256,8 +256,8 @@ bool guessPredEdgeCounts(BinaryBasicBlock *BB, ArcSet &GuessedArcs) {
   if (BB->pred_size() == 0)
     return false;
 
-  uint64_t TotalPredCount{0};
-  unsigned NumGuessedEdges{0};
+  uint64_t TotalPredCount = 0;
+  unsigned NumGuessedEdges = 0;
   for (BinaryBasicBlock *Pred : BB->predecessors()) {
     if (GuessedArcs.count(std::make_pair(Pred, BB)))
       ++NumGuessedEdges;
@@ -290,8 +290,8 @@ bool guessSuccEdgeCounts(BinaryBasicBlock *BB, ArcSet &GuessedArcs) {
   if (BB->succ_size() == 0)
     return false;
 
-  uint64_t TotalSuccCount{0};
-  unsigned NumGuessedEdges{0};
+  uint64_t TotalSuccCount = 0;
+  unsigned NumGuessedEdges = 0;
   auto BI = BB->branch_info_begin();
   for (BinaryBasicBlock *Succ : BB->successors()) {
     if (GuessedArcs.count(std::make_pair(BB, Succ)))
@@ -328,7 +328,7 @@ bool guessSuccEdgeCounts(BinaryBasicBlock *BB, ArcSet &GuessedArcs) {
 /// change.
 void guessEdgeByIterativeApproach(BinaryFunction &BF) {
   ArcSet KnownArcs;
-  bool Changed{false};
+  bool Changed = false;
 
   do {
     Changed = false;
@@ -447,7 +447,7 @@ void equalizeBBCounts(BinaryFunction &BF) {
   }
 
   for (std::vector<BinaryBasicBlock *> &Class : Classes) {
-    uint64_t Max{0ULL};
+    uint64_t Max = 0ULL;
     for (BinaryBasicBlock *BB : Class) {
       Max = std::max(Max, BB->getExecutionCount());
     }

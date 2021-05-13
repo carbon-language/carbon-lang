@@ -212,8 +212,8 @@ bool isIdenticalWith(const BinaryFunction &A, const BinaryFunction &B,
           return true;
 
         // Compare symbols as functions.
-        uint64_t EntryIDA{0};
-        uint64_t EntryIDB{0};
+        uint64_t EntryIDA = 0;
+        uint64_t EntryIDB = 0;
         const BinaryFunction *FunctionA =
             BC.getFunctionForSymbol(SymbolA, &EntryIDA);
         const BinaryFunction *FunctionB =
@@ -411,7 +411,7 @@ namespace bolt {
 
 void IdenticalCodeFolding::runOnFunctions(BinaryContext &BC) {
   const size_t OriginalFunctionCount = BC.getBinaryFunctions().size();
-  uint64_t NumFunctionsFolded{0};
+  uint64_t NumFunctionsFolded = 0;
   std::atomic<uint64_t> NumJTFunctionsFolded{0};
   std::atomic<uint64_t> BytesSavedEstimate{0};
   std::atomic<uint64_t> CallsSavedEstimate{0};

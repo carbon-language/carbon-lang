@@ -222,7 +222,7 @@ void BinaryEmitter::emitFunctions() {
                         << "\" : " << Function->getFunctionNumber() << '\n');
 
       // Was any part of the function emitted.
-      bool Emitted{false};
+      bool Emitted = false;
 
       // Turn off Intel JCC Erratum mitigation for cold code if requested
       if (HasProfile && opts::X86AlignBranchBoundaryHotOnly &&

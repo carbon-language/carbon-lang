@@ -74,7 +74,7 @@ JumpTable::getEntriesForAddress(const uint64_t Addr) const {
 
 bool JumpTable::replaceDestination(uint64_t JTAddress, const MCSymbol *OldDest,
                                    MCSymbol *NewDest) {
-  bool Patched{false};
+  bool Patched = false;
   const std::pair<size_t, size_t> Range = getEntriesForAddress(JTAddress);
   for (auto I = &Entries[Range.first], E = &Entries[Range.second]; I != E;
        ++I) {

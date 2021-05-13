@@ -782,8 +782,8 @@ bool DataAggregator::doInterBranch(BinaryFunction *FromFunc,
                                    BinaryFunction *ToFunc, uint64_t From,
                                    uint64_t To, uint64_t Count,
                                    uint64_t Mispreds) {
-  FuncBranchData *FromAggrData{nullptr};
-  FuncBranchData *ToAggrData{nullptr};
+  FuncBranchData *FromAggrData = nullptr;
+  FuncBranchData *ToAggrData = nullptr;
   StringRef SrcFunc;
   StringRef DstFunc;
   if (FromFunc) {
@@ -963,7 +963,7 @@ bool DataAggregator::recordTrace(
 
     if (Branches) {
       const MCInst *Instr = BB->getLastNonPseudoInstr();
-      uint64_t Offset{0};
+      uint64_t Offset = 0;
       if (Instr) {
         Offset = BC.MIB->getAnnotationWithDefault<uint32_t>(*Instr, "Offset");
       } else {
@@ -1289,7 +1289,7 @@ DataAggregator::parseAggregatedLBREntry() {
   if (std::error_code EC = Frequency.getError())
     return EC;
 
-  uint64_t Mispreds{0};
+  uint64_t Mispreds = 0;
   if (Type == AggregatedLBREntry::BRANCH) {
     while (checkAndConsumeFS()) {}
     ErrorOr<int64_t> MispredsOrErr = parseNumberField(FieldSeparator, true);
@@ -1331,7 +1331,7 @@ std::error_code DataAggregator::printLBRHeatMap() {
   }
   Heatmap HM(opts::HeatmapBlock, opts::HeatmapMinAddress,
              opts::HeatmapMaxAddress);
-  uint64_t NumTotalSamples{0};
+  uint64_t NumTotalSamples = 0;
 
   while (hasData()) {
     ErrorOr<PerfBranchSample> SampleRes = parseBranchSample();
@@ -1345,7 +1345,7 @@ std::error_code DataAggregator::printLBRHeatMap() {
 
     // LBRs are stored in reverse execution order. NextLBR refers to the next
     // executed branch record.
-    const LBREntry *NextLBR{nullptr};
+    const LBREntry *NextLBR = nullptr;
     for (const LBREntry &LBR : Sample.LBR) {
       if (NextLBR) {
         // Record fall-through trace.
@@ -1402,12 +1402,12 @@ std::error_code DataAggregator::parseBranchEvents() {
   NamedRegionTimer T("parseBranch", "Parsing branch events", TimerGroupName,
                      TimerGroupDesc, opts::TimeAggregator);
 
-  uint64_t NumTotalSamples{0};
-  uint64_t NumEntries{0};
-  uint64_t NumSamples{0};
-  uint64_t NumSamplesNoLBR{0};
-  uint64_t NumTraces{0};
-  bool NeedsSkylakeFix{false};
+  uint64_t NumTotalSamples = 0;
+  uint64_t NumEntries = 0;
+  uint64_t NumSamples = 0;
+  uint64_t NumSamplesNoLBR = 0;
+  uint64_t NumTraces = 0;
+  bool NeedsSkylakeFix = false;
 
   while (hasData() && NumTotalSamples < opts::MaxSamples) {
     ++NumTotalSamples;
@@ -1438,7 +1438,7 @@ std::error_code DataAggregator::parseBranchEvents() {
     // LBRs are stored in reverse execution order. NextPC refers to the next
     // recorded executed PC.
     uint64_t NextPC = opts::UseEventPC ? Sample.PC : 0;
-    uint32_t NumEntry{0};
+    uint32_t NumEntry = 0;
     for (const LBREntry &LBR : Sample.LBR) {
       ++NumEntry;
       // Hardware bug workaround: Intel Skylake (which has 32 LBR entries)
@@ -1560,7 +1560,7 @@ std::error_code DataAggregator::parseBranchEvents() {
   }
   outs() << "PERF2BOLT: traces mismatching disassembled function contents: "
          << NumInvalidTraces;
-  float Perc{0.0f};
+  float Perc = 0.0f;
   if (NumTraces > 0) {
     Perc = NumInvalidTraces * 100.0f / NumTraces;
     printColored(outs(), Perc, 5, 10);
@@ -1648,8 +1648,8 @@ void DataAggregator::processBasicEvents() {
   outs() << "PERF2BOLT: processing basic events (without LBR)...\n";
   NamedRegionTimer T("processBasic", "Processing basic events",
                      TimerGroupName, TimerGroupDesc, opts::TimeAggregator);
-  uint64_t OutOfRangeSamples{0};
-  uint64_t NumSamples{0};
+  uint64_t OutOfRangeSamples = 0;
+  uint64_t NumSamples = 0;
   for (auto &Sample : BasicSamples) {
     const uint64_t PC = Sample.first;
     const uint64_t HitCount = Sample.second;
@@ -1666,7 +1666,7 @@ void DataAggregator::processBasicEvents() {
 
   outs() << "PERF2BOLT: out of range samples recorded in unknown regions: "
          << OutOfRangeSamples;
-  float Perc{0.0f};
+  float Perc = 0.0f;
   if (NumSamples > 0) {
     outs() << " (";
     Perc = OutOfRangeSamples * 100.0f / NumSamples;
@@ -1779,7 +1779,7 @@ void DataAggregator::processPreAggregated() {
   NamedRegionTimer T("processAggregated", "Processing aggregated branch events",
                      TimerGroupName, TimerGroupDesc, opts::TimeAggregator);
 
-  uint64_t NumTraces{0};
+  uint64_t NumTraces = 0;
   for (const AggregatedLBREntry &AggrEntry : AggregatedLBRs) {
     switch (AggrEntry.EntryType) {
     case AggregatedLBREntry::BRANCH:
@@ -1804,7 +1804,7 @@ void DataAggregator::processPreAggregated() {
          << " aggregated LBR entries\n";
   outs() << "PERF2BOLT: traces mismatching disassembled function contents: "
          << NumInvalidTraces;
-  float Perc{0.0f};
+  float Perc = 0.0f;
   if (NumTraces > 0) {
     outs() << " (";
     Perc = NumInvalidTraces * 100.0f / NumTraces;
@@ -2206,8 +2206,8 @@ DataAggregator::writeAggregatedFile(StringRef OutputFilename) const {
             << FieldSeparator;
   };
 
-  uint64_t BranchValues{0};
-  uint64_t MemValues{0};
+  uint64_t BranchValues = 0;
+  uint64_t MemValues = 0;
 
   if (BAT)
     OutFile << "boltedcollection\n";

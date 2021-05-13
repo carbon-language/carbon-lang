@@ -1143,7 +1143,7 @@ void RewriteInstance::discoverFileObjects() {
       }
     }
 
-    BinaryFunction *BF{nullptr};
+    BinaryFunction *BF = nullptr;
     // Since function may not have yet obtained its real size, do a search
     // using the list of registered functions instead of calling
     // getBinaryFunctionAtAddress().
@@ -1365,7 +1365,7 @@ void RewriteInstance::adjustFunctionBoundaries() {
             BFE = BC->getBinaryFunctions().end();
        BFI != BFE; ++BFI) {
     BinaryFunction &Function = BFI->second;
-    const BinaryFunction *NextFunction{nullptr};
+    const BinaryFunction *NextFunction = nullptr;
     if (std::next(BFI) != BFE)
       NextFunction = &std::next(BFI)->second;
 
@@ -2373,7 +2373,7 @@ void RewriteInstance::readRelocations(const SectionRef &Section) {
               BC->getBinaryFunctionAtAddress(Address + 1)) {
         // Do an extra check that the function was referenced previously.
         // It's a linear search, but it should rarely happen.
-        bool Found{false};
+        bool Found = false;
         for (const auto &RelKV : ContainingBF->Relocations) {
           const Relocation &Rel = RelKV.second;
           if (Rel.Symbol == RogueBF->getSymbol() &&
@@ -3270,7 +3270,7 @@ void RewriteInstance::mapCodeSections(RuntimeDyld &RTDyld) {
         dbgs() << Section->getName() << '\n';
       });
 
-    uint64_t PaddingSize{0}; // size of padding required at the end
+    uint64_t PaddingSize = 0; // size of padding required at the end
 
     // Allocate sections starting at a given Address.
     auto allocateAt = [&](uint64_t Address) {
@@ -3294,7 +3294,7 @@ void RewriteInstance::mapCodeSections(RuntimeDyld &RTDyld) {
     };
 
     // Check if we can fit code in the original .text
-    bool AllocationDone{false};
+    bool AllocationDone = false;
     if (opts::UseOldText) {
       const uint64_t CodeSize =
           allocateAt(BC->OldTextSectionAddress) - BC->OldTextSectionAddress;
@@ -4989,7 +4989,7 @@ void RewriteInstance::writeEHFrameHeader() {
       BC->AsmInfo->getCodePointerSize()));
   check_error(std::move(E), "failed to parse EH frame");
 
-  uint64_t OldEHFrameAddress{0};
+  uint64_t OldEHFrameAddress = 0;
   StringRef OldEHFrameContents;
   ErrorOr<BinarySection &> OldEHFrameSection =
       BC->getUniqueSectionByName(Twine(getOrgSecPrefix(), ".eh_frame").str());

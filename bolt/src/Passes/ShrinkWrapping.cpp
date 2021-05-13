@@ -267,7 +267,7 @@ void StackLayoutModifier::checkStackPointerRestore(MCInst &Point) {
   // value may need to be updated depending on our stack layout changes
   const MCInstrDesc &InstInfo = BC.MII->get(Point.getOpcode());
   unsigned NumDefs = InstInfo.getNumDefs();
-  bool UsesFP{false};
+  bool UsesFP = false;
   for (unsigned I = NumDefs, E = MCPlus::getNumPrimeOperands(Point);
        I < E; ++I) {
     MCOperand &Operand = Point.getOperand(I);
@@ -367,8 +367,8 @@ void StackLayoutModifier::classifyStackAccesses() {
 
 void StackLayoutModifier::classifyCFIs() {
   std::stack<std::pair<int64_t, uint16_t>> CFIStack;
-  int64_t CfaOffset{-8};
-  uint16_t CfaReg{7};
+  int64_t CfaOffset = -8;
+  uint16_t CfaReg = 7;
 
   auto recordAccess = [&](MCInst *Inst, int64_t Offset) {
     const uint16_t Reg = *BC.MRI->getLLVMRegNum(CfaReg, /*isEH=*/false);
@@ -673,17 +673,17 @@ void StackLayoutModifier::performChanges() {
         BF.mutateCFIOffsetFor(Inst, CFI->getOffset() + Adjustment);
         continue;
       }
-      int32_t SrcImm{0};
-      MCPhysReg Reg{0};
-      MCPhysReg StackPtrReg{0};
-      int64_t StackOffset{0};
-      bool IsIndexed{false};
-      bool IsLoad{false};
-      bool IsStore{false};
-      bool IsSimple{false};
-      bool IsStoreFromReg{false};
-      uint8_t Size{0};
-      bool Success{false};
+      int32_t SrcImm = 0;
+      MCPhysReg Reg = 0;
+      MCPhysReg StackPtrReg = 0;
+      int64_t StackOffset = 0;
+      bool IsIndexed = false;
+      bool IsLoad = false;
+      bool IsStore = false;
+      bool IsSimple = false;
+      bool IsStoreFromReg = false;
+      uint8_t Size = 0;
+      bool Success = false;
       Success = BC.MIB->isStackAccess(Inst, IsLoad, IsStore, IsStoreFromReg,
                                       Reg, SrcImm, StackPtrReg, StackOffset,
                                       Size, IsSimple, IsIndexed);
@@ -897,7 +897,7 @@ bool ShrinkWrapping::isBestSavePosCold(unsigned CSR, MCInst *&BestPosSave,
 
   uint64_t BestCount = BestSaveCount[CSR];
   BestPosSave = BestSavePos[CSR];
-  bool ShouldMove{false};
+  bool ShouldMove = false;
   if (BestCount != std::numeric_limits<uint64_t>::max() &&
       BestCount < (opts::ShrinkWrappingThreshold / 100.0) * CurSavingCost) {
     LLVM_DEBUG({
@@ -983,7 +983,7 @@ ShrinkWrapping::doRestorePlacement(MCInst *BestPosSave, unsigned CSR,
                                    uint64_t TotalEstimatedWin) {
   SmallVector<ProgramPoint, 4> Frontier;
   SmallVector<bool, 4> IsCritEdge;
-  bool CannotPlace{false};
+  bool CannotPlace = false;
   DominatorAnalysis<false> &DA = Info.getDominatorAnalysis();
 
   SmallVector<BinaryBasicBlock *, 4> CritEdgesFrom;
@@ -1004,7 +1004,7 @@ ShrinkWrapping::doRestorePlacement(MCInst *BestPosSave, unsigned CSR,
     }
   });
   for (ProgramPoint &PP : Frontier) {
-    bool HasCritEdges{false};
+    bool HasCritEdges = false;
     if (PP.isInst() && BC.MIB->isTerminator(*PP.getInst()) &&
         doesInstUsesCSR(*PP.getInst(), CSR)) {
       CannotPlace = true;
@@ -1260,7 +1260,7 @@ void ShrinkWrapping::scheduleSaveRestoreInsertions(
         FrontierBB->getTerminatorBefore(PP.isInst() ? PP.getInst() : nullptr);
     if (Term)
       PP = Term;
-    bool PrecededByPrefix{false};
+    bool PrecededByPrefix = false;
     if (PP.isInst()) {
       auto Iter = FrontierBB->findInstruction(PP.getInst());
       if (Iter != FrontierBB->end() && Iter != FrontierBB->begin()) {
@@ -1285,15 +1285,15 @@ void ShrinkWrapping::scheduleSaveRestoreInsertions(
 }
 
 void ShrinkWrapping::moveSaveRestores() {
-  bool DisablePushPopMode{false};
-  bool UsedPushPopMode{false};
+  bool DisablePushPopMode = false;
+  bool UsedPushPopMode = false;
   // Keeps info about successfully moved regs: reg index, save position and
   // save size
   std::vector<std::tuple<unsigned, MCInst *, size_t>> MovedRegs;
 
   for (unsigned I = 0, E = BC.MRI->getNumRegs(); I != E; ++I) {
-    MCInst *BestPosSave{nullptr};
-    uint64_t TotalEstimatedWin{0};
+    MCInst *BestPosSave = nullptr;
+    uint64_t TotalEstimatedWin = 0;
     if (!isBestSavePosCold(I, BestPosSave, TotalEstimatedWin))
       continue;
     SmallVector<ProgramPoint, 4> RestorePoints =
@@ -1421,7 +1421,7 @@ bool isIdenticalSplitEdgeBB(const BinaryContext &BC,
 }
 
 bool ShrinkWrapping::foldIdenticalSplitEdges() {
-  bool Changed{false};
+  bool Changed = false;
   for (auto Iter = BF.begin(); Iter != BF.end(); ++Iter) {
     BinaryBasicBlock &BB = *Iter;
     if (!BB.getName().startswith(".LSplitEdge"))
@@ -1436,8 +1436,8 @@ bool ShrinkWrapping::foldIdenticalSplitEdges() {
         continue;
       assert(RBB.pred_size() == 1 && "Invalid split edge BB");
       BinaryBasicBlock *Pred = *RBB.pred_begin();
-      uint64_t OrigCount{Pred->branch_info_begin()->Count};
-      uint64_t OrigMispreds{Pred->branch_info_begin()->MispredictedCount};
+      uint64_t OrigCount = Pred->branch_info_begin()->Count;
+      uint64_t OrigMispreds = Pred->branch_info_begin()->MispredictedCount;
       BF.replaceJumpTableEntryIn(Pred, &RBB, &BB);
       Pred->replaceSuccessor(&RBB, &BB, OrigCount, OrigMispreds);
       Changed = true;
@@ -1535,20 +1535,20 @@ public:
 
 void ShrinkWrapping::insertUpdatedCFI(unsigned CSR, int SPValPush,
                                       int SPValPop) {
-  MCInst *SavePoint{nullptr};
+  MCInst *SavePoint = nullptr;
   for (BinaryBasicBlock &BB : BF) {
     for (auto InstIter = BB.rbegin(), EndIter = BB.rend(); InstIter != EndIter;
          ++InstIter) {
-      int32_t SrcImm{0};
-      MCPhysReg Reg{0};
-      MCPhysReg StackPtrReg{0};
-      int64_t StackOffset{0};
-      bool IsIndexed{false};
-      bool IsLoad{false};
-      bool IsStore{false};
-      bool IsSimple{false};
-      bool IsStoreFromReg{false};
-      uint8_t Size{0};
+      int32_t SrcImm = 0;
+      MCPhysReg Reg = 0;
+      MCPhysReg StackPtrReg = 0;
+      int64_t StackOffset = 0;
+      bool IsIndexed = false;
+      bool IsLoad = false;
+      bool IsStore = false;
+      bool IsSimple = false;
+      bool IsStoreFromReg = false;
+      uint8_t Size = 0;
       if (!BC.MIB->isStackAccess(*InstIter, IsLoad, IsStore, IsStoreFromReg,
                                  Reg, SrcImm, StackPtrReg, StackOffset,
                                  Size, IsSimple, IsIndexed))
@@ -1566,8 +1566,8 @@ void ShrinkWrapping::insertUpdatedCFI(unsigned CSR, int SPValPush,
     dbgs() << "Now using as save point for reg " << CSR << " :";
     SavePoint->dump();
   });
-  bool PrevAffectedZone{false};
-  BinaryBasicBlock *PrevBB{nullptr};
+  bool PrevAffectedZone = false;
+  BinaryBasicBlock *PrevBB = nullptr;
   DominatorAnalysis<false> &DA = Info.getDominatorAnalysis();
   for (BinaryBasicBlock *BB : BF.layout()) {
     if (BB->size() == 0)
@@ -1623,8 +1623,8 @@ void ShrinkWrapping::rebuildCFIForSP() {
     }
   }
 
-  int PrevSPVal{-8};
-  BinaryBasicBlock *PrevBB{nullptr};
+  int PrevSPVal = -8;
+  BinaryBasicBlock *PrevBB = nullptr;
   StackPointerTracking &SPT = Info.getStackPointerTracking();
   for (BinaryBasicBlock *BB : BF.layout()) {
     if (BB->size() == 0)
@@ -1812,7 +1812,7 @@ BBIterTy ShrinkWrapping::processInsertion(BBIterTy InsertionPoint,
 BBIterTy ShrinkWrapping::processInsertionsList(
     BBIterTy InsertionPoint, BinaryBasicBlock *CurBB,
     std::vector<WorklistItem> &TodoList, int64_t SPVal, int64_t FPVal) {
-  bool HasInsertions{false};
+  bool HasInsertions = false;
   for (WorklistItem &Item : TodoList) {
     if (Item.Action == WorklistItem::Erase ||
         Item.Action == WorklistItem::ChangeToAdjustment)
@@ -1881,7 +1881,7 @@ bool ShrinkWrapping::processInsertions() {
   PredictiveStackPointerTracking PSPT(BC, BF, Todo, Info, AllocatorId);
   PSPT.run();
 
-  bool Changes{false};
+  bool Changes = false;
   for (BinaryBasicBlock &BB : BF) {
     // Process insertions before some inst.
     for (auto I = BB.begin(); I != BB.end(); ++I) {

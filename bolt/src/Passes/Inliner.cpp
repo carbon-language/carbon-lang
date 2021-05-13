@@ -456,7 +456,7 @@ bool Inliner::inlineCallsInFunction(BinaryFunction &Function) {
       assert(TargetSymbol && "target symbol expected for direct call");
 
       // Don't inline calls to a secondary entry point in a target function.
-      uint64_t EntryID{0};
+      uint64_t EntryID = 0;
       BinaryFunction *TargetFunction =
           BC.getFunctionForSymbol(TargetSymbol, &EntryID);
       if (!TargetFunction || EntryID != 0) {
