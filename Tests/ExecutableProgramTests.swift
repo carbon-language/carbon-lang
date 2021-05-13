@@ -6,14 +6,14 @@ import XCTest
 
 final class TestSemanticAnalysis: XCTestCase {
   func testNoMain() {
-    guard let executable = "var Int: x = 3;".checkExecutable() else { return }
+    guard let executable = "var Int x = 3;".checkExecutable() else { return }
     XCTAssertNil(executable.entryPoint)
   }
       
   func testMultiMain() {
     let source = """
       fn main() -> Int {}
-      var Int: x = 3;
+      var Int x = 3;
       fn main() -> Void {}
       """
     checkThrows(try ExecutableProgram(source.parsedAsCarbon()))
@@ -30,7 +30,7 @@ final class TestSemanticAnalysis: XCTestCase {
       return
     }
     guard case let .name(name) = entryPoint.callee else {
-      XCTFail("Callee is not an identifier: \(entryPoint.callee)")
+      XCTFail("Callee is not an identifier \(entryPoint.callee)")
       return
     }
     

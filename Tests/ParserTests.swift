@@ -45,7 +45,7 @@ final class ParserTests: XCTestCase {
   }
 
   func testBasic2() {
-    let p = "var Int: x = 0;".checkParsed()
+    let p = "var Int x = 0;".checkParsed()
 
     XCTAssertEqual(
       p,
@@ -63,7 +63,7 @@ final class ParserTests: XCTestCase {
   func testFunctionTypePattern() {
     // Even though the C++ implementation isn't parsing this way, Jeremy likes
     // this parse better, without parens.
-    let p = "var fnty()->Type: x = 0;".checkParsed()
+    let p = "var fnty()->Type x = 0;".checkParsed()
 
     XCTAssertEqual(
       p,
@@ -86,7 +86,7 @@ final class ParserTests: XCTestCase {
   }
 
   func testParenthesizedPattern() {
-    let p = "var fnty()->(Type: x) = 0;".checkParsed()
+    let p = "var fnty()->(Type x) = 0;".checkParsed()
 
     XCTAssertEqual(
       p,

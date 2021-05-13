@@ -62,6 +62,7 @@
 %nonterminal_type binding_element_list {[PatternElement]}
 %nonterminal_type simple_binding SimpleBinding
 %nonterminal_type initialization Initialization
+%nonterminal_type invisible_colon Void
 
 %nonassociative LEFT_CURLY_BRACE RIGHT_CURLY_BRACE.
 %nonassociative COLON COMMA DBLARROW.
@@ -76,6 +77,8 @@
 
 input ::= declaration_list(d).      { d }
 
+invisible_colon ::= . [COLON] {}
+
 pattern ::= expression(e).          { .atom(e) }
 pattern ::= binding(p).             { p }
 
@@ -87,9 +90,9 @@ binding ::= function_type_binding(f). { f }
 binding ::= LEFT_PARENTHESIS binding(b) RIGHT_PARENTHESIS. { b }
 
 // binding for a single variable.
-simple_binding ::= expression(t) COLON identifier(n).
+simple_binding ::= expression(t) invisible_colon identifier(n).
   { SimpleBinding(type: .expression(TypeExpression(t)), name: n) }
-simple_binding ::= AUTO(t) COLON identifier(n).
+simple_binding ::= AUTO(t) invisible_colon identifier(n).
   { SimpleBinding(type: .auto(t.site), name: n) }
 
 // alternatives, struct constructions, etc.
@@ -331,7 +334,7 @@ function_declaration
       body: nil, site: f...s)
   }
 
-struct_member ::= VAR(v) expression(type) COLON identifier(d) SEMICOLON(s).
+struct_member ::= VAR(v) expression(type) invisible_colon identifier(d) SEMICOLON(s).
   { StructMember(type: .init(type), name: d, site: v...s) }
 
 struct_member_list ::= /* Empty */.

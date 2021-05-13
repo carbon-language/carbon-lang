@@ -7,14 +7,14 @@ import Foundation
 
 final class NameResolutionTests: XCTestCase {
   func testNoMain() {
-    let ast = "var Int: x = 1;".checkParsed()
+    let ast = "var Int x = 1;".checkParsed()
     let n = NameResolution(ast)
     XCTAssertEqual(n.definition.count, 0)
     XCTAssertEqual(n.errors, [])
   }
 
   func testUndeclaredName0() {
-    let ast = "var Y: x = 1;".checkParsed()
+    let ast = "var Y x = 1;".checkParsed()
     let n = NameResolution(ast)
     XCTAssertEqual(n.definition.count, 0)
     n.errors.checkForMessageExcerpt("Un-declared name 'Y'")
@@ -22,8 +22,8 @@ final class NameResolutionTests: XCTestCase {
 
   func testDeclaredNameUse() {
     let ast = """
-      var Int: x = 1;
-      var Int: y = x;
+      var Int x = 1;
+      var Int y = x;
       """.checkParsed()
     let n = NameResolution(ast)
     XCTAssertEqual(n.definition.count, 1)
@@ -32,8 +32,8 @@ final class NameResolutionTests: XCTestCase {
 
   func testOrderIndependence() {
     let ast = """
-      var Int: y = x;
-      var Int: x = 1;
+      var Int y = x;
+      var Int x = 1;
       """.checkParsed()
     let n = NameResolution(ast)
     XCTAssertEqual(n.definition.count, 1)
@@ -42,8 +42,8 @@ final class NameResolutionTests: XCTestCase {
 
   func testScopeEnds() {
     let ast = """
-      struct X { var Int: a; }
-      var Int: y = a;
+      struct X { var Int a; }
+      var Int y = a;
       """.checkParsed()
     let n = NameResolution(ast)
     n.errors.checkForMessageExcerpt("Un-declared name 'a'")
@@ -52,8 +52,8 @@ final class NameResolutionTests: XCTestCase {
   func testRedeclaredMember() {
     let ast = """
       struct X {
-        var Int: a;
-        var Bool: a;
+        var Int a;
+        var Bool a;
       }
       """.checkParsed()
     let n = NameResolution(ast)
@@ -63,8 +63,8 @@ final class NameResolutionTests: XCTestCase {
   func testSelfReference() {
     let ast = """
       struct X {
-        var Int: a;
-        var fnty ()->X: b;
+        var Int a;
+        var fnty ()->X b;
       }
       """.checkParsed()
     let n = NameResolution(ast)
