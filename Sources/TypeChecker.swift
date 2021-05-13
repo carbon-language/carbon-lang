@@ -279,7 +279,7 @@ private extension TypeChecker {
     }
   }
 
-  /// Logs an error pointing at `source` unless the type of `t` is a metatype.
+  /// Logs an error pointing at `source` unless `t` is a metatype.
   mutating func expectMetatype<Node: AST>(_ t: Type, at source: Node) {
     if !t.isMetatype {
       error(
@@ -289,7 +289,7 @@ private extension TypeChecker {
   }
 
   /// Logs an error unless the type of `e` is `t`.
-  mutating func expectType(_ e: Expression, toBe expected: Type) {
+  mutating func expectType(of e: Expression, toBe expected: Type) {
     let actual = type(e)
     if actual != expected {
       error(e, "Expected expression of type \(expected), not \(actual).")
@@ -299,10 +299,10 @@ private extension TypeChecker {
   mutating func type(_ u: UnaryOperatorExpression) -> Type {
     switch u.operation.kind {
     case .MINUS:
-      expectType(u.operand, toBe: .int)
+      expectType(of: u.operand, toBe: .int)
       return .int
     case .NOT:
-      expectType(u.operand, toBe: .bool)
+      expectType(of: u.operand, toBe: .bool)
       return .bool
     default:
       UNREACHABLE(u.operation.text)
@@ -312,17 +312,17 @@ private extension TypeChecker {
   mutating func type(_ b: BinaryOperatorExpression) -> Type {
     switch b.operation.kind {
     case .EQUAL_EQUAL:
-      expectType(b.rhs, toBe: type(b.lhs))
+      expectType(of: b.rhs, toBe: type(b.lhs))
       return .bool
 
     case .PLUS, .MINUS:
-      expectType(b.lhs, toBe: .int)
-      expectType(b.rhs, toBe: .int)
+      expectType(of: b.lhs, toBe: .int)
+      expectType(of: b.rhs, toBe: .int)
       return .int
 
     case .AND, .OR:
-      expectType(b.lhs, toBe: .bool)
-      expectType(b.rhs, toBe: .bool)
+      expectType(of: b.lhs, toBe: .bool)
+      expectType(of: b.rhs, toBe: .bool)
       return .bool
 
     default:
