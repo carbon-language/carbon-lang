@@ -2,33 +2,32 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-/// The type checking algorithm and associated data.
+/// The type-checking algorithm and associated data.
 struct TypeChecker {
-  /// Creates an instance that reflects the type-checking of `program`.
+  /// Type-checks `program`, creating an instance that reflects the result.
   init(_ program: ExecutableProgram) {
     self.program = program
 
-    for d in program.ast {
-      registerParentage(d)
-    }
-    for d in program.ast {
-      checkNominalTypeBody(d)
-    }
+    // Create "external parent links" for the AST in our parentXXX properties.
+    for d in program.ast { registerParentage(d) }
+
+    // Check the bodies of nominal types.
+    for d in program.ast { checkNominalTypeBody(d) }
+
+    // Check function signatures.
     for d in program.ast {
       if case .function(let f) = d {
         _ = typeOfName(declaredBy: f as Declaration)
       }
     }
+    // Check top-level initializations
     for d in program.ast {
-      if case .initialization(let i) = d {
-        check(i)
-      }
+      if case .initialization(let i) = d { check(i) }
     }
-    /*
+    // Check function bodies.
     for d in program.ast {
-      checkFunctionBodiesAndTopLevelInitializations(d)
+      if case .function(let f) = d { checkBody(f) }
     }
-    */
   }
 
   /// The state of memoization of a computation, including an "in progress"
@@ -62,7 +61,7 @@ struct TypeChecker {
   /// Return type of function currently being checked, if any.
   private var returnType: Type?
 
-  /// A record of the collected errors.
+  /// A record of the errors encountered during type-checking.
   var errors: ErrorLog = []
 }
 
@@ -124,7 +123,8 @@ private extension TypeChecker {
     }
   }
 
-  /// Returns the type defined by `t` or `.error` if `d` doesn't define a type.
+  /// Returns the that `e` evaluates to, or `Type.error` if `e` doesn't evaluate
+  /// to a type.
   mutating func evaluate(_ e: TypeExpression) -> Type {
     let t = type(e.body)
     if !t.isMetatype {
