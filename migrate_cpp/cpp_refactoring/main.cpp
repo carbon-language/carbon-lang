@@ -10,6 +10,8 @@
 namespace cam = ::clang::ast_matchers;
 namespace ct = ::clang::tooling;
 
+namespace carbon {
+
 class Matcher : public cam::MatchFinder::MatchCallback {
  public:
   explicit Matcher(std::map<std::string, ct::Replacements>* in_replacements)
@@ -41,9 +43,8 @@ class Matcher : public cam::MatchFinder::MatchCallback {
         ct::Replacement(sm, sm.getExpansionRange(range), replacement_text);
     auto err = (*replacements)[std::string(rep.getFilePath())].add(rep);
     if (err) {
-      llvm::errs() << "Error with replacement `" << rep.toString()
-                   << "`: " << err << "\n";
-      exit(1);
+      llvm::report_fatal_error("Error with replacement `" + rep.toString() +
+                               "`: " + llvm::toString(std::move(err)) + "\n");
     }
   }
 
@@ -66,8 +67,7 @@ class FnInserter : public Matcher {
     // The matched 'if' statement was bound to 'ifStmt'.
     const auto* decl = result.Nodes.getNodeAs<clang::FunctionDecl>(Label);
     if (!decl) {
-      llvm::errs() << "getNodeAs failed for " << Label;
-      exit(1);
+      llvm::report_fatal_error(std::string("getNodeAs failed for ") + Label);
     }
     auto begin = decl->getBeginLoc();
     // Replace the first token in the range, `auto`.
@@ -79,6 +79,8 @@ class FnInserter : public Matcher {
   static constexpr char Label[] = "FnInserter";
 };
 
+}  // namespace carbon
+
 auto main(int argc, const char** argv) -> int {
   llvm::cl::OptionCategory category("C++ refactoring options");
   clang::tooling::CommonOptionsParser op(argc, argv, category);
@@ -87,7 +89,7 @@ auto main(int argc, const char** argv) -> int {
 
   // Set up AST matcher callbacks.
   cam::MatchFinder finder;
-  FnInserter fn_inserter(&tool.getReplacements(), &finder);
+  carbon::FnInserter fn_inserter(&tool.getReplacements(), &finder);
 
   return tool.runAndSave(
       clang::tooling::newFrontendActionFactory(&finder).get());
