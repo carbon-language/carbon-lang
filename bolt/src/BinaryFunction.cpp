@@ -1786,19 +1786,6 @@ void BinaryFunction::postProcessJumpTables() {
           registerReferencedOffset(TargetOffset);
       }
 
-      // Take ownership of jump table relocations.
-      if (BC.HasRelocations) {
-        uint64_t EntryAddress = JT->getAddress() + EntryOffset;
-        bool Res = BC.removeRelocationAt(EntryAddress);
-        (void)Res;
-        LLVM_DEBUG(ErrorOr<BinarySection &> Section =
-                       BC.getSectionForAddress(EntryAddress);
-                   uint64_t Offset = EntryAddress - Section->getAddress();
-                   dbgs() << "BOLT-DEBUG: removing relocation from section "
-                          << Section->getName() << " at offset 0x"
-                          << Twine::utohexstr(Offset) << " = " << Res << '\n');
-      }
-
       EntryOffset += JT->EntrySize;
 
       // A label at the next entry means the end of this jump table.

@@ -88,22 +88,20 @@ bool JumpTable::replaceDestination(uint64_t JTAddress, const MCSymbol *OldDest,
 }
 
 void JumpTable::updateOriginal() {
-  // In non-relocation mode we have to emit jump tables in local sections.
-  // This way we only overwrite them when a corresponding function is
-  // overwritten.
+  BinaryContext &BC = getSection().getBinaryContext();
   const uint64_t BaseOffset = getAddress() - getSection().getAddress();
-  uint64_t Offset = BaseOffset;
+  uint64_t EntryOffset = BaseOffset;
   for (MCSymbol *Entry : Entries) {
-    const auto RelType =
-      Type == JTT_NORMAL ? ELF::R_X86_64_64 : ELF::R_X86_64_PC32;
-    const uint64_t RelAddend = (Type == JTT_NORMAL ? 0 : Offset - BaseOffset);
-    LLVM_DEBUG(dbgs() << "BOLT-DEBUG: adding relocation to section "
-                      << getSectionName() << " at offset 0x"
-                      << Twine::utohexstr(Offset) << " for symbol "
-                      << Entry->getName() << " with addend "
-                      << Twine::utohexstr(RelAddend) << '\n');
-    getOutputSection().addRelocation(Offset, Entry, RelType, RelAddend);
-    Offset += EntrySize;
+    const uint64_t RelType =
+        Type == JTT_NORMAL ? ELF::R_X86_64_64 : ELF::R_X86_64_PC32;
+    const uint64_t RelAddend =
+        Type == JTT_NORMAL ? 0 : EntryOffset - BaseOffset;
+    // Replace existing relocation with the new one to allow any modifications
+    // to the original jump table.
+    if (BC.HasRelocations)
+      getOutputSection().removeRelocationAt(EntryOffset);
+    getOutputSection().addRelocation(EntryOffset, Entry, RelType, RelAddend);
+    EntryOffset += EntrySize;
   }
 }
 

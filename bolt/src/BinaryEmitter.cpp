@@ -684,6 +684,9 @@ void BinaryEmitter::emitJumpTables(const BinaryFunction &BF) {
     } else {
       MCSection *HotSection, *ColdSection;
       if (opts::JumpTables == JTS_BASIC) {
+        // In non-relocation mode we have to emit jump tables in local sections.
+        // This way we only overwrite them when the corresponding function is
+        // overwritten.
         std::string Name = ".local." + JT.Labels[0]->getName().str();
         std::replace(Name.begin(), Name.end(), '/', '.');
         BinarySection &Section =
