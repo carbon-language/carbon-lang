@@ -52,7 +52,7 @@ class BinarySection {
 
   // Relocations associated with this section. Relocation offsets are
   // wrt. to the original section address and size.
-  using RelocationSetType = std::set<Relocation>;
+  using RelocationSetType = std::set<Relocation, std::less<>>;
   RelocationSetType Relocations;
 
   // Dynamic relocations associated with this section. Relocation offsets are
@@ -119,7 +119,7 @@ class BinarySection {
   /// Get the set of relocations refering to data in this section that
   /// has been reordered.  The relocation offsets will be modified to
   /// reflect the new data locations.
-  std::set<Relocation> reorderRelocations(bool Inplace) const;
+  RelocationSetType reorderRelocations(bool Inplace) const;
 
   /// Set output info for this section.
   void update(uint8_t *NewData,
@@ -341,8 +341,7 @@ public:
 
   /// Remove non-pending relocation with the given /p Offset.
   bool removeRelocationAt(uint64_t Offset) {
-    Relocation Key{Offset, 0, 0, 0, 0};
-    auto Itr = Relocations.find(Key);
+    auto Itr = Relocations.find(Offset);
     if (Itr != Relocations.end()) {
       Relocations.erase(Itr);
       return true;
@@ -352,8 +351,7 @@ public:
 
   void clearRelocations();
 
-  /// Add a new relocation at the given /p Offset.  Note: pending relocations
-  /// are only used by .debug_info and should eventually go away.
+  /// Add a new relocation at the given /p Offset.
   void addRelocation(uint64_t Offset,
                      MCSymbol *Symbol,
                      uint64_t Type,
@@ -399,8 +397,7 @@ public:
 
   /// Lookup the relocation (if any) at the given /p Offset.
   const Relocation *getRelocationAt(uint64_t Offset) const {
-    Relocation Key{Offset, 0, 0, 0, 0};
-    auto Itr = Relocations.find(Key);
+    auto Itr = Relocations.find(Offset);
     return Itr != Relocations.end() ? &*Itr : nullptr;
   }
 

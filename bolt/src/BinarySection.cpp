@@ -232,10 +232,11 @@ void BinarySection::print(raw_ostream &OS) const {
   }
 }
 
-std::set<Relocation> BinarySection::reorderRelocations(bool Inplace) const {
+BinarySection::RelocationSetType
+BinarySection::reorderRelocations(bool Inplace) const {
   assert(PendingRelocations.empty() &&
          "reodering pending relocations not supported");
-  std::set<Relocation> NewRelocations;
+  RelocationSetType NewRelocations;
   for (const Relocation &Rel : relocations()) {
     uint64_t RelAddr = Rel.Offset + getAddress();
     BinaryData *BD = BC.getBinaryDataContainingAddress(RelAddr);

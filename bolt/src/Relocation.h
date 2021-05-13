@@ -99,6 +99,10 @@ inline bool operator<(const Relocation &A, const Relocation &B) {
   return A.Offset < B.Offset;
 }
 
+inline bool operator<(const Relocation &A, uint64_t B) { return A.Offset < B; }
+
+inline bool operator<(uint64_t A, const Relocation &B) { return A < B.Offset; }
+
 inline raw_ostream &operator<<(raw_ostream &OS, const Relocation &Rel) {
   Rel.print(OS);
   return OS;
