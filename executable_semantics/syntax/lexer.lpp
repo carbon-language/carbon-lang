@@ -18,6 +18,13 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 */
 %option yylineno
 
+/* Lexing a token immediately after consuming some whitespace. */
+%s AFTER_WHITESPACE
+/* Lexing a token immediately after consuming an operand-ending token:
+ * a closing bracket, identifier, or literal.
+ */
+%s AFTER_OPERAND
+
 AND               "and"
 ARROW             "->"
 AUTO              "auto"
@@ -53,13 +60,20 @@ AWAIT             "__await"
 identifier    [A-Za-z_][A-Za-z0-9_]*
 integer_literal   [0-9]+
 horizontal_whitespace [ \t\r]
+whitespace [ \t\r\n]
+operand_start [(A-Za-z0-9_"]
 
 %{
   // This macro is expanded to run each time a token is recognized.
   //
   // Advances the current token position by yyleng columns without changing
-  // the line number.
-  # define YY_USER_ACTION context.current_token_position.columns(yyleng);
+  // the line number, and takes us out of the after-whitespace state.
+  # define YY_USER_ACTION \
+      context.current_token_position.columns(yyleng); \
+      if (YY_START == AFTER_WHITESPACE || \
+          YY_START == AFTER_OPERAND) { \
+        BEGIN(INITIAL); \
+      }
 %}
 
 %%
@@ -105,20 +119,38 @@ horizontal_whitespace [ \t\r]
 "=" return yy::parser::make_EQUAL(context.current_token_position);
 "-" return yy::parser::make_MINUS(context.current_token_position);
 "+" return yy::parser::make_PLUS(context.current_token_position);
-"*" return yy::parser::make_STAR(context.current_token_position);
 "/" return yy::parser::make_SLASH(context.current_token_position);
 "(" return yy::parser::make_LEFT_PARENTHESIS(context.current_token_position);
-")" return yy::parser::make_RIGHT_PARENTHESIS(context.current_token_position);
+")" { BEGIN(AFTER_OPERAND); return yy::parser::make_RIGHT_PARENTHESIS(context.current_token_position); }
 "{" return yy::parser::make_LEFT_CURLY_BRACE(context.current_token_position);
-"}" return yy::parser::make_RIGHT_CURLY_BRACE(context.current_token_position);
+"}" { BEGIN(AFTER_OPERAND); return yy::parser::make_RIGHT_CURLY_BRACE(context.current_token_position); }
 "[" return yy::parser::make_LEFT_SQUARE_BRACKET(context.current_token_position);
-"]" return yy::parser::make_RIGHT_SQUARE_BRACKET(context.current_token_position);
+"]" { BEGIN(AFTER_OPERAND); return yy::parser::make_RIGHT_SQUARE_BRACKET(context.current_token_position); }
 "." return yy::parser::make_PERIOD(context.current_token_position);
 "," return yy::parser::make_COMMA(context.current_token_position);
 ";" return yy::parser::make_SEMICOLON(context.current_token_position);
 ":" return yy::parser::make_COLON(context.current_token_position);
 
+<INITIAL,AFTER_OPERAND>"*" {
+  return yy::parser::make_UNARY_STAR(context.current_token_position);
+}
+<AFTER_WHITESPACE>"*" {
+  return yy::parser::make_PREFIX_STAR(context.current_token_position);
+}
+<INITIAL,AFTER_OPERAND>"*"{whitespace}* {
+  BEGIN(AFTER_WHITESPACE);
+  return yy::parser::make_POSTFIX_STAR(context.current_token_position);
+}
+<AFTER_WHITESPACE>"*"{whitespace}* {
+  BEGIN(AFTER_WHITESPACE);
+  return yy::parser::make_BINARY_STAR(context.current_token_position);
+}
+<AFTER_OPERAND>"*"/{operand_start} {
+  return yy::parser::make_BINARY_STAR(context.current_token_position);
+}
+
 {identifier} {
+  BEGIN(AFTER_OPERAND);
   int n = strlen(yytext);
   auto r = reinterpret_cast<char*>(malloc((n + 1) * sizeof(char)));
   strncpy(r, yytext, n + 1);
@@ -126,6 +158,7 @@ horizontal_whitespace [ \t\r]
 }
 
 {integer_literal} {
+  BEGIN(AFTER_OPERAND);
   auto r = atof(yytext);
   return yy::parser::make_integer_literal(r, context.current_token_position);
 }
@@ -140,6 +173,7 @@ horizontal_whitespace [ \t\r]
 {horizontal_whitespace}+ {
   // Make the span empty by setting start to end.
   context.current_token_position.step();
+  BEGIN(AFTER_WHITESPACE);
 }
 
 \n+ {
@@ -147,6 +181,7 @@ horizontal_whitespace [ \t\r]
   context.current_token_position.lines(yyleng);
   // Make the span empty by setting start to end.
   context.current_token_position.step();
+  BEGIN(AFTER_WHITESPACE);
 }
 
 . {

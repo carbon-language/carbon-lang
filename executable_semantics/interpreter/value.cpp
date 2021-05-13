@@ -357,9 +357,8 @@ auto PrintValue(const Value* val, std::ostream& out) -> void {
       out << "Continuation";
       break;
     case ValKind::PointerTV:
-      out << "Ptr(";
       PrintValue(val->GetPointerType().type, out);
-      out << ")";
+      out << "*";
       break;
     case ValKind::FunctionTV:
       out << "fn ";

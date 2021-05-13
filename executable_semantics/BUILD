@@ -61,6 +61,7 @@ EXAMPLES = [
     "pattern_init",
     "pattern_variable_fail",
     "record1",
+    "star",
     "struct1",
     "struct2",
     "struct3",
