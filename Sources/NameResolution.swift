@@ -51,7 +51,7 @@ private extension NameResolution {
   mutating func define(_ name: Identifier, _ definition: Declaration) {
     if activeScopes.top.contains(name.text) {
       error(
-        name, "'\(name.text)' already defined in this scope",
+        name, "'\(name)' already defined in this scope",
         notes:
           [("previous definition", symbolTable[name.text].site)])
     }
@@ -67,7 +67,7 @@ private extension NameResolution {
       definition[name] = d
       return
     }
-    error(name, "Un-declared name '\(name.text)'")
+    error(name, "Un-declared name '\(name)'")
   }
 
   /// Adds an error at the site of `offender` to the error log.
@@ -183,14 +183,21 @@ private extension NameResolution {
       resolveNames(usedIn: t)
       resolveNames(usedIn: o)
 
-    case let .tupleLiteral(t): resolveNames(usedIn: t)
-    case let .unaryOperator(_, operand: x, _): resolveNames(usedIn: x)
-    case let .binaryOperator(_, lhs: l, rhs: r, _):
-      resolveNames(usedIn: l)
-      resolveNames(usedIn: r)
+    case let .tupleLiteral(t):
+      resolveNames(usedIn: t)
 
-    case let .functionCall(f): resolveNames(usedIn: f)
-    case let .functionType(t): resolveNames(usedIn: t)
+    case let .unaryOperator(x):
+      resolveNames(usedIn: x.operand)
+
+    case let .binaryOperator(x):
+      resolveNames(usedIn: x.lhs)
+      resolveNames(usedIn: x.rhs)
+
+    case let .functionCall(f):
+      resolveNames(usedIn: f)
+
+    case let .functionType(t):
+      resolveNames(usedIn: t)
 
     case .integerLiteral, .booleanLiteral,
          .intType, .boolType, .typeType: ()

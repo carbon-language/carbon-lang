@@ -31,6 +31,10 @@ struct Identifier: AST, Hashable {
   let site: Site
 }
 
+extension Identifier: CustomStringConvertible {
+  var description: String { text }
+}
+
 /// A declaration that can appear at file scope.
 enum TopLevelDeclaration: AST {
   case
@@ -323,8 +327,8 @@ indirect enum Expression: AST {
     integerLiteral(Int, Site),
     booleanLiteral(Bool, Site),
     tupleLiteral(TupleLiteral),
-    unaryOperator(operation: Token, operand: Expression, Site),
-    binaryOperator(operation: Token, lhs: Expression, rhs: Expression, Site),
+    unaryOperator(UnaryOperatorExpression),
+    binaryOperator(BinaryOperatorExpression),
     functionCall(FunctionCall<Expression>),
     intType(Site),
     boolType(Site),
@@ -339,8 +343,8 @@ indirect enum Expression: AST {
     case let .integerLiteral(_, r): return r
     case let .booleanLiteral(_, r): return r
     case let .tupleLiteral(t): return t.site
-    case let .unaryOperator(operation: _, operand: _, r): return r
-    case let .binaryOperator(operation: _, lhs: _, rhs: _, r): return r
+    case let .unaryOperator(x): return x.site
+    case let .binaryOperator(x): return x.site
     case let .functionCall(f): return f.site
     case let .intType(r): return r
     case let .boolType(r): return r
@@ -349,6 +353,14 @@ indirect enum Expression: AST {
     }
   }
 };
+
+struct UnaryOperatorExpression: AST {
+  let operation: Token, operand: Expression, site: Site;
+}
+
+struct BinaryOperatorExpression: AST {
+  let operation: Token, lhs: Expression, rhs: Expression, site: Site;
+}
 
 struct MemberAccessExpression: AST {
   let base: Expression
@@ -431,6 +443,10 @@ struct ASTSite: Hashable {
   static func ... (first: Self, last: Self) -> Self {
     .init(devaluing: first.region...last.region)
   }
+}
+
+extension ASTSite: CustomStringConvertible {
+  var description: String { "\(region)" }
 }
 
 /// The identity, in a program's source, of any `AST` node.

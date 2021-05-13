@@ -32,7 +32,7 @@ indirect enum Type: Equatable {
 
     // If the value is a tuple, check that all its elements are types.
     if let elements = (v as? TupleValue) {
-      let typeElements = elements.compactMapValues { $0 as? Type }
+      let typeElements = elements.compactMapFields { $0 as? Type }
       if typeElements.count == elements.count {
         self = .tuple(typeElements)
         return
@@ -40,6 +40,18 @@ indirect enum Type: Equatable {
     }
 
     return nil
+  }
+
+  /// `true` iff instances of this type are themselves types.
+  var isMetatype: Bool {
+    switch self {
+    case .type:
+      return true
+    case .tuple(let t):
+      return t.fields.allSatisfy(\.isMetatype)
+    default:
+      return false
+    }
   }
 
   /// Convenience accessor for `.function` case.
@@ -54,9 +66,28 @@ indirect enum Type: Equatable {
     if case .tuple(let r) = self { return r } else { return nil }
   }
 
-  static var void: Type { .tuple([:]) }
+  static var void: Type { .tuple(.void) }
 }
 
 extension Type: Value {
   var type: Type { .type }
+}
+
+extension Type: CustomStringConvertible {
+  var description: String {
+    switch self {
+    case .int: return "Int"
+    case .bool: return "Bool"
+    case .type: return "Type"
+    case let .function(parameterTypes: p, returnType: r):
+      return "fnty \(p) -> \(r)"
+    case let .tuple(t): return "\(t)"
+    case let .alternative(parent: parent, payload: payload):
+      return "<alternative> \(payload) -> \(parent.structure)"
+    case let .struct(d): return d.structure.name.text
+    case let .choice(d): return d.structure.name.text
+    case .error:
+      return "<<error type>>"
+    }
+  }
 }

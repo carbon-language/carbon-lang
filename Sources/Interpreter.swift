@@ -185,7 +185,7 @@ extension Interpreter {
   func address(of name: Identifier) -> Address {
     let d = program.definition[name] ?? fatal("\(name) not defined")
     _ = d
-    UNIMPLEMENTED
+    UNIMPLEMENTED()
     //return locals[AnyDeclaration(d)] ?? globals[d] ?? fatal("\(d) has no value")
   }
 }

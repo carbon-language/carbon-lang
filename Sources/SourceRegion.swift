@@ -15,6 +15,18 @@ struct SourcePosition: Comparable, Hashable {
     (l.line, l.column) < (r.line, r.column)
   }
 
+  typealias Offset = (line: Int, column: Int)
+
+  /// Returns `l` offset by `r`
+  static func + (l: Self, r: Offset) -> Self {
+    return .init(line: l.line + r.line, column: l.column + r.column)
+  }
+
+  /// Returns `r` offset by `l`
+  static func + (l: Offset, r: Self) -> Self {
+    return .init(line: l.line + r.line, column: l.column + r.column)
+  }
+
   /// The first position in any file.
   static let start = Self(line: 1, column: 1)
 }
@@ -57,18 +69,30 @@ struct SourceRegion: Hashable {
     return Self(
       fileName: first.fileName, first.span.lowerBound..<last.span.upperBound)
   }
+
+  /// Returns `l` offset by `r`.
+  static func + (l: Self, r: SourcePosition.Offset) -> Self {
+    return .init(
+      fileName: l.fileName, (l.span.lowerBound + r)..<(l.span.upperBound + r))
+  }
+
+  /// Returns `r` offset by `l`.
+  static func + (l: SourcePosition.Offset, r: Self) -> Self {
+    return .init(
+      fileName: r.fileName, (r.span.lowerBound + l)..<(r.span.upperBound + l))
+  }
 }
 
 extension SourcePosition: CustomStringConvertible {
   /// A textual representation of `self`.
-  var description: String { "\(line):\(column)" }
+  var description: String { "\(line).\(column)" }
 }
 
 extension SourceRegion: CustomStringConvertible, CustomDebugStringConvertible {
   /// A textual representation of `self` that is commonly recognized by IDEs
   /// when it shows up at the beginning of a diagnostic.
   var description: String {
-    "\(fileName):\(span.lowerBound):{\(span.lowerBound)-\(span.upperBound)})"
+    "\(fileName):\(span.lowerBound)-\(span.upperBound + (line: 0, column: -1))"
   }
 
   /// A textual representation of `self` suitable for debugging.

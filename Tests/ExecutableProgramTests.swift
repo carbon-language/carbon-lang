@@ -5,8 +5,8 @@ import XCTest
 @testable import CarbonInterpreter
 
 final class TestSemanticAnalysis: XCTestCase {
-  func testNoMain() throws {
-    let executable = try "var Int: x = 3;".checkExecutable()
+  func testNoMain() {
+    guard let executable = "var Int: x = 3;".checkExecutable() else { return }
     XCTAssertNil(executable.entryPoint)
   }
       
@@ -22,8 +22,8 @@ final class TestSemanticAnalysis: XCTestCase {
     }
   }                      
       
-  func testMinimal() throws {
-    let exe = try "fn main() -> Int {}".checkExecutable()
+  func testMinimal() {
+    guard let exe = "fn main() -> Int {}".checkExecutable() else { return }
 
     guard let entryPoint = checkNonNil(exe.entryPoint) else {
       XCTFail("Missing unambiguous main()")

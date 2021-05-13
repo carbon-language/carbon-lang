@@ -6,22 +6,22 @@ import XCTest
 import Foundation
 
 final class NameResolutionTests: XCTestCase {
-  func testNoMain() throws {
-    let ast = try "var Int: x = 1;".checkParsed()
+  func testNoMain() {
+    let ast = "var Int: x = 1;".checkParsed()
     let n = NameResolution(ast)
     XCTAssertEqual(n.definition.count, 0)
     XCTAssertEqual(n.errors, [])
   }
 
-  func testUndeclaredName0() throws {
-    let ast = try "var Y: x = 1;".checkParsed()
+  func testUndeclaredName0() {
+    let ast = "var Y: x = 1;".checkParsed()
     let n = NameResolution(ast)
     XCTAssertEqual(n.definition.count, 0)
     n.errors.checkForMessageExcerpt("Un-declared name 'Y'")
   }
 
-  func testDeclaredNameUse() throws {
-    let ast = try """
+  func testDeclaredNameUse() {
+    let ast = """
       var Int: x = 1;
       var Int: y = x;
       """.checkParsed()
@@ -30,8 +30,8 @@ final class NameResolutionTests: XCTestCase {
     XCTAssertEqual(n.errors, [])
   }
 
-  func testOrderIndependence() throws {
-    let ast = try """
+  func testOrderIndependence() {
+    let ast = """
       var Int: y = x;
       var Int: x = 1;
       """.checkParsed()
@@ -40,8 +40,8 @@ final class NameResolutionTests: XCTestCase {
     XCTAssertEqual(n.errors, [])
   }
 
-  func testScopeEnds() throws {
-    let ast = try """
+  func testScopeEnds() {
+    let ast = """
       struct X { var Int: a; }
       var Int: y = a;
       """.checkParsed()
@@ -49,8 +49,8 @@ final class NameResolutionTests: XCTestCase {
     n.errors.checkForMessageExcerpt("Un-declared name 'a'")
   }
 
-  func testRedeclaredMember() throws {
-    let ast = try """
+  func testRedeclaredMember() {
+    let ast = """
       struct X {
         var Int: a;
         var Bool: a;
@@ -60,8 +60,8 @@ final class NameResolutionTests: XCTestCase {
     n.errors.checkForMessageExcerpt("'a' already defined")
   }
 
-  func testSelfReference() throws {
-    let ast = try """
+  func testSelfReference() {
+    let ast = """
       struct X {
         var Int: a;
         var fnty ()->X: b;
@@ -72,8 +72,8 @@ final class NameResolutionTests: XCTestCase {
     XCTAssertEqual(n.errors, [])
   }
 
-  func testRedeclaredAlternative() throws {
-    let ast = try """
+  func testRedeclaredAlternative() {
+    let ast = """
       choice X {
         Box,
         Car(Int),

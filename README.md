@@ -28,6 +28,25 @@ Swift implementation of executable semantics of
 Note that if you modify Sources/Parser.citron, or when you pull new changes from
 GitHub, you'll need to run the `make` command above again before proceeding.
 
+## Test coverage
+
+Try to ensure you've tested all the interesting code paths!
+
+Use [these
+instructions](https://www.swiftbysundell.com/tips/gathering-test-coverage-in-xcode/)
+from Xcode, or from the command-line
+
+    make test-lcov
+    
+to generate `.build/coverage.lcov` which you can inspect in Emacs using the
+[coverlay](https://github.com/twada/coverlay.el) package.  If you have a
+different tool that reads the json format created by the `swift test` command by
+default, it's
+
+    make test-jcov
+
+You'll find the output in `.build/debug/codecov/CarbonInterpreter.json`.
+
 ## On Windows
 
 If you install [MinGW](https://sourceforge.net/projects/mingw/), you can use

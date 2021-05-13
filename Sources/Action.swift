@@ -52,23 +52,23 @@ struct Evaluate: Action {
         // N.B. of all expressions, this one doesn't need to be destroyed.
         return .done
       case nil:
-        fatalError("No definition for '\(id.text)'")
-      default: UNIMPLEMENTED
+        fatalError("No definition for '\(id)'")
+      default: UNIMPLEMENTED()
       }
-    case .memberAccess(_): UNIMPLEMENTED
-    case .index(target: _, offset: _, _): UNIMPLEMENTED
+    case .memberAccess(_): UNIMPLEMENTED()
+    case .index(target: _, offset: _, _): UNIMPLEMENTED()
     case .integerLiteral(let value, _):
       state.memory.initialize(target, to: value)
       return .done
-    case .booleanLiteral(_, _): UNIMPLEMENTED
-    case .tupleLiteral(_): UNIMPLEMENTED
-    case .unaryOperator(operation: _, operand: _, _): UNIMPLEMENTED
-    case .binaryOperator(operation: _, lhs: _, rhs: _, _): UNIMPLEMENTED
-    case .functionCall(_): UNIMPLEMENTED
-    case .intType(_): UNIMPLEMENTED
-    case .boolType(_): UNIMPLEMENTED
-    case .typeType(_): UNIMPLEMENTED
-    case .functionType(_): UNIMPLEMENTED
+    case .booleanLiteral(_, _): UNIMPLEMENTED()
+    case .tupleLiteral(_): UNIMPLEMENTED()
+    case .unaryOperator(_): UNIMPLEMENTED()
+    case .binaryOperator(_): UNIMPLEMENTED()
+    case .functionCall(_): UNIMPLEMENTED()
+    case .intType(_): UNIMPLEMENTED()
+    case .boolType(_): UNIMPLEMENTED()
+    case .typeType(_): UNIMPLEMENTED()
+    case .functionType(_): UNIMPLEMENTED()
     }
   }
 }
@@ -106,18 +106,18 @@ struct Execute: Action {
 
   mutating func run(on state: inout Interpreter) -> Followup {
     switch source {
-    case .expressionStatement(_, _): UNIMPLEMENTED
-    case .assignment(target: _, source: _, _): UNIMPLEMENTED
-    case .initialization(_): UNIMPLEMENTED
-    case .if(condition: _, thenClause: _, elseClause: _, _): UNIMPLEMENTED
+    case .expressionStatement(_, _): UNIMPLEMENTED()
+    case .assignment(target: _, source: _, _): UNIMPLEMENTED()
+    case .initialization(_): UNIMPLEMENTED()
+    case .if(condition: _, thenClause: _, elseClause: _, _): UNIMPLEMENTED()
     case .return(let operand, _):
       return .delegate(ExecuteReturn(operand))
     case .block(let b, _):
       return .delegate(ExecuteBlock(remaining: b[...]))
-    case .while(condition: _, body: _, _): UNIMPLEMENTED
-    case .match(subject: _, clauses: _, _): UNIMPLEMENTED
-    case .break(_): UNIMPLEMENTED
-    case .continue(_): UNIMPLEMENTED
+    case .while(condition: _, body: _, _): UNIMPLEMENTED()
+    case .match(subject: _, clauses: _, _): UNIMPLEMENTED()
+    case .break(_): UNIMPLEMENTED()
+    case .continue(_): UNIMPLEMENTED()
     }
   }
 }
