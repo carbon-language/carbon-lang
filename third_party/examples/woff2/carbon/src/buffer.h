@@ -62,11 +62,11 @@ class Buffer {
         length_(len),
         offset_(0) { }
 
-  auto Skip(size_t n_bytes) -> bool {
+  fn Skip(size_t n_bytes) -> bool {
     return Read(nullptr, n_bytes);
   }
 
-  auto Read(uint8_t *data, size_t n_bytes) -> bool {
+  fn Read(uint8_t *data, size_t n_bytes) -> bool {
     if (n_bytes > 1024 * 1024 * 1024) {
       return FONT_COMPRESSION_FAILURE();
     }
@@ -81,7 +81,7 @@ class Buffer {
     return true;
   }
 
-  inline auto ReadU8(uint8_t *value) -> bool {
+  fn auto ReadU8(uint8_t *value) -> bool {
     if (offset_ + 1 > length_) {
       return FONT_COMPRESSION_FAILURE();
     }
@@ -90,7 +90,7 @@ class Buffer {
     return true;
   }
 
-  auto ReadU16(uint16_t *value) -> bool {
+  fn ReadU16(uint16_t *value) -> bool {
     if (offset_ + 2 > length_) {
       return FONT_COMPRESSION_FAILURE();
     }
@@ -100,11 +100,11 @@ class Buffer {
     return true;
   }
 
-  auto ReadS16(int16_t *value) -> bool {
+  fn ReadS16(int16_t *value) -> bool {
     return ReadU16(reinterpret_cast<uint16_t*>(value));
   }
 
-  auto ReadU24(uint32_t *value) -> bool {
+  fn ReadU24(uint32_t *value) -> bool {
     if (offset_ + 3 > length_) {
       return FONT_COMPRESSION_FAILURE();
     }
@@ -115,7 +115,7 @@ class Buffer {
     return true;
   }
 
-  auto ReadU32(uint32_t *value) -> bool {
+  fn ReadU32(uint32_t *value) -> bool {
     if (offset_ + 4 > length_) {
       return FONT_COMPRESSION_FAILURE();
     }
@@ -125,11 +125,11 @@ class Buffer {
     return true;
   }
 
-  auto ReadS32(int32_t *value) -> bool {
+  fn ReadS32(int32_t *value) -> bool {
     return ReadU32(reinterpret_cast<uint32_t*>(value));
   }
 
-  auto ReadTag(uint32_t *value) -> bool {
+  fn ReadTag(uint32_t *value) -> bool {
     if (offset_ + 4 > length_) {
       return FONT_COMPRESSION_FAILURE();
     }
@@ -138,7 +138,7 @@ class Buffer {
     return true;
   }
 
-  auto ReadR64(uint64_t *value) -> bool {
+  fn ReadR64(uint64_t *value) -> bool {
     if (offset_ + 8 > length_) {
       return FONT_COMPRESSION_FAILURE();
     }
@@ -147,9 +147,9 @@ class Buffer {
     return true;
   }
 
-  [[nodiscard]] auto buffer() const -> const uint8_t * { return buffer_; }
-  [[nodiscard]] auto offset() const -> size_t { return offset_; }
-  [[nodiscard]] auto length() const -> size_t { return length_; }
+  [[nodiscard]] fn buffer() const -> const uint8_t * { return buffer_; }
+  [[nodiscard]] fn offset() const -> size_t { return offset_; }
+  [[nodiscard]] fn length() const -> size_t { return length_; }
 
   void set_offset(size_t newoffset) { offset_ = newoffset; }
 

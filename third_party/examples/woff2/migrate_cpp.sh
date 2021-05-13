@@ -30,6 +30,9 @@ cp "${EXAMPLE}/compile_flags.carbon.txt" \
   "${EXAMPLE}/carbon/compile_flags.txt"
 
 # Run the migration tool.
-bazel build //migrate_cpp
-./bazel-bin/migrate_cpp/migrate_cpp \
-  "${EXAMPLE}/carbon"
+bazel build -c opt //migrate_cpp
+# Not sure why, but execution of cpp_refactoring fails while saving refactorings
+# if not in the directory. Ideally shouldn't be required, passing the path to
+# migrate_cpp should work.
+cd "${EXAMPLE}/carbon"
+../../../../bazel-bin/migrate_cpp/migrate_cpp .

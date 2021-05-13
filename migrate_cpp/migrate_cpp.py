@@ -13,6 +13,7 @@ import subprocess
 import sys
 
 _CLANG_TIDY = "../external/bootstrap_clang_toolchain/bin/clang-tidy"
+_CPP_REFACTORING = "./cpp_refactoring/cpp_refactoring"
 _CPP_EXTS = {".h", ".c", ".cc", ".cpp", ".cxx"}
 
 
@@ -55,6 +56,13 @@ def _clang_tidy(parsed_args, cpp_files):
     subprocess.run([clang_tidy, "--fix", "--config", config] + cpp_files)
 
 
+def _cpp_refactoring(parsed_args, cpp_files):
+    """Runs cpp_refactoring to migrate C++ files towards Carbon syntax."""
+    print("Running cpp_refactoring...")
+    cpp_refactoring = _data_file(_CPP_REFACTORING)
+    subprocess.run([cpp_refactoring] + cpp_files)
+
+
 def _main():
     """Main program execution."""
     parsed_args = _parse_args()
@@ -65,6 +73,7 @@ def _main():
 
     cpp_files = _gather_files(parsed_args)
     _clang_tidy(parsed_args, cpp_files)
+    _cpp_refactoring(parsed_args, cpp_files)
     print("Done!")
 
 
