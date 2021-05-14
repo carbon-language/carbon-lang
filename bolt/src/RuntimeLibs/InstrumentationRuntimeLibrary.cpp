@@ -105,71 +105,100 @@ void InstrumentationRuntimeLibrary::emitBinary(BinaryContext &BC,
   Section->setAlignment(llvm::Align(BC.RegularPageSize));
   Streamer.SwitchSection(Section);
 
-  auto EmitLabel = [&](MCSymbol *Symbol, bool IsGlobal = true) {
+  // EmitOffset is used to determine padding size for data alignment
+  uint64_t EmitOffset = 0;
+
+  auto emitLabel = [&Streamer](MCSymbol *Symbol, bool IsGlobal = true) {
     Streamer.emitLabel(Symbol);
     if (IsGlobal)
       Streamer.emitSymbolAttribute(Symbol, MCSymbolAttr::MCSA_Global);
   };
 
-  auto EmitLabelByName = [&](StringRef Name, bool IsGlobal = true) {
+  auto emitLabelByName = [&BC, emitLabel](StringRef Name,
+                                          bool IsGlobal = true) {
     MCSymbol *Symbol = BC.Ctx->getOrCreateSymbol(Name);
-    EmitLabel(Symbol, IsGlobal);
+    emitLabel(Symbol, IsGlobal);
   };
 
-  auto EmitValue = [&](MCSymbol *Symbol, const MCExpr *Value) {
-    EmitLabel(Symbol);
-    Streamer.emitValue(Value, /*Size*/ 8);
+  auto emitPadding = [&Streamer, &EmitOffset](unsigned Size) {
+    const uint64_t Padding = alignTo(EmitOffset, Size) - EmitOffset;
+    if (Padding) {
+      Streamer.emitFill(Padding, 0);
+      EmitOffset += Padding;
+    }
   };
 
-  auto EmitIntValue = [&](StringRef Name, uint64_t Value, unsigned Size = 4) {
-    EmitLabelByName(Name);
+  auto emitDataSize = [&EmitOffset](unsigned Size) { EmitOffset += Size; };
+
+  auto emitDataPadding = [emitPadding, emitDataSize](unsigned Size) {
+    emitPadding(Size);
+    emitDataSize(Size);
+  };
+
+  auto emitFill = [&Streamer, emitDataSize,
+                   emitLabel](unsigned Size, MCSymbol *Symbol = nullptr,
+                              uint8_t Byte = 0) {
+    emitDataSize(Size);
+    if (Symbol)
+      emitLabel(Symbol, /*IsGlobal*/ false);
+    Streamer.emitFill(Size, Byte);
+  };
+
+  auto emitValue = [&BC, &Streamer, emitDataPadding,
+                    emitLabel](MCSymbol *Symbol, const MCExpr *Value) {
+    const unsigned Psize = BC.AsmInfo->getCodePointerSize();
+    emitDataPadding(Psize);
+    emitLabel(Symbol);
+    Streamer.emitValue(Value, Psize);
+  };
+
+  auto emitIntValue = [&Streamer, emitDataPadding, emitLabelByName](
+                          StringRef Name, uint64_t Value, unsigned Size = 4) {
+    emitDataPadding(Size);
+    emitLabelByName(Name);
     Streamer.emitIntValue(Value, Size);
   };
 
-  auto EmitString = [&](StringRef Name, StringRef Contents) {
-    EmitLabelByName(Name);
+  auto emitString = [&Streamer, emitDataSize, emitLabelByName,
+                     emitFill](StringRef Name, StringRef Contents) {
+    emitDataSize(Contents.size());
+    emitLabelByName(Name);
     Streamer.emitBytes(Contents);
-    Streamer.emitFill(1, 0);
+    emitFill(1);
   };
 
   // All of the following symbols will be exported as globals to be used by the
   // instrumentation runtime library to dump the instrumentation data to disk.
   // Label marking start of the memory region containing instrumentation
   // counters, total vector size is Counters.size() 8-byte counters
-  EmitLabelByName("__bolt_instr_locations");
-  for (MCSymbol *const &Label : Summary->Counters) {
-    EmitLabel(Label, /*IsGlobal*/ false);
-    Streamer.emitFill(8, 0);
-  }
-  const uint64_t Padding =
-      alignTo(8 * Summary->Counters.size(), BC.RegularPageSize) -
-      8 * Summary->Counters.size();
-  if (Padding)
-    Streamer.emitFill(Padding, 0);
+  emitLabelByName("__bolt_instr_locations");
+  for (MCSymbol *const &Label : Summary->Counters)
+    emitFill(sizeof(uint64_t), Label);
 
-  EmitIntValue("__bolt_instr_sleep_time", opts::InstrumentationSleepTime);
-  EmitIntValue("__bolt_instr_no_counters_clear",
+  emitPadding(BC.RegularPageSize);
+  emitIntValue("__bolt_instr_sleep_time", opts::InstrumentationSleepTime);
+  emitIntValue("__bolt_instr_no_counters_clear",
                !!opts::InstrumentationNoCountersClear, 1);
-  EmitIntValue("__bolt_instr_wait_forks", !!opts::InstrumentationWaitForks, 1);
-  EmitIntValue("__bolt_num_counters", Summary->Counters.size());
-  EmitValue(Summary->IndCallHandlerFunc,
+  emitIntValue("__bolt_instr_wait_forks", !!opts::InstrumentationWaitForks, 1);
+  emitIntValue("__bolt_num_counters", Summary->Counters.size());
+  emitValue(Summary->IndCallHandlerFunc,
             MCSymbolRefExpr::create(
                 Summary->InitialIndCallHandlerFunction->getSymbol(), *BC.Ctx));
-  EmitValue(
+  emitValue(
       Summary->IndTailCallHandlerFunc,
       MCSymbolRefExpr::create(
           Summary->InitialIndTailCallHandlerFunction->getSymbol(), *BC.Ctx));
-  EmitIntValue("__bolt_instr_num_ind_calls",
+  emitIntValue("__bolt_instr_num_ind_calls",
                Summary->IndCallDescriptions.size());
-  EmitIntValue("__bolt_instr_num_ind_targets",
+  emitIntValue("__bolt_instr_num_ind_targets",
                Summary->IndCallTargetDescriptions.size());
-  EmitIntValue("__bolt_instr_num_funcs", Summary->FunctionDescriptions.size());
-  EmitString("__bolt_instr_filename", opts::InstrumentationFilename);
-  EmitIntValue("__bolt_instr_use_pid", !!opts::InstrumentationFileAppendPID, 1);
-  EmitValue(BC.Ctx->getOrCreateSymbol("__bolt_instr_init_ptr"),
+  emitIntValue("__bolt_instr_num_funcs", Summary->FunctionDescriptions.size());
+  emitString("__bolt_instr_filename", opts::InstrumentationFilename);
+  emitIntValue("__bolt_instr_use_pid", !!opts::InstrumentationFileAppendPID, 1);
+  emitValue(BC.Ctx->getOrCreateSymbol("__bolt_instr_init_ptr"),
             MCSymbolRefExpr::create(StartFunction->getSymbol(), *BC.Ctx));
   if (FiniFunction) {
-    EmitValue(BC.Ctx->getOrCreateSymbol("__bolt_instr_fini_ptr"),
+    emitValue(BC.Ctx->getOrCreateSymbol("__bolt_instr_fini_ptr"),
               MCSymbolRefExpr::create(FiniFunction->getSymbol(), *BC.Ctx));
   }
 
@@ -179,7 +208,7 @@ void InstrumentationRuntimeLibrary::emitBinary(BinaryContext &BC,
                                  SectionKind::getData());
     TablesSection->setAlignment(llvm::Align(BC.RegularPageSize));
     Streamer.SwitchSection(TablesSection);
-    EmitString("__bolt_instr_tables", buildTables(BC));
+    emitString("__bolt_instr_tables", buildTables(BC));
   }
 }
 
