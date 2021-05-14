@@ -295,8 +295,10 @@ fully known with dynamic information. For example:
 
 ```
 fn PrintStringArray[Int:$ n](Ptr(FixedArray(String, n)): array) {
-  for (var Int: i = 0; i < n; ++i) {
+  var Int: i = 0;
+  while (i < n) {
     Print(array->get(i));
+    ++i;
   }
 }
 ```
@@ -401,7 +403,7 @@ In summary:
     name conflicts are handled.
 -   Alternatively, you may use a qualified syntax to directly call a function
     from a specific interface.
--   The `+` operation on type-types allows you conveniently combine interfaces.
+-   The `&` operation on type-types allows you conveniently combine interfaces.
     It gives you all the names that don't conflict. Names with conflicts can be
     accessed using the qualified syntax.
 -   Interfaces can require other interfaces be implemented, or
@@ -497,11 +499,11 @@ PrintIt1(&song);
 PrintIt2(&song);
 ```
 
-The `+` operator is the common way of combining interfaces, used here to express
+The `&` operator is the common way of combining interfaces, used here to express
 a function taking a value with type conforming to two different interfaces:
 
 ```
-fn PrintAndPlay[Printable + Media:$ T](Ptr(T): p) {
+fn PrintAndPlay[Printable & Media:$ T](Ptr(T): p) {
   // `T` has all the names of `Printable` and `Media`
   // that don't conflict.
   p->Print();
@@ -590,7 +592,7 @@ implement the nominal interface requirements.
 // `PrintableMedia` has all names from `Printable` and `Media`,
 // which must not conflict. As long as there are no name
 // conflicts, this definition is equivalent to
-// `Printable + Media`.
+// `Printable & Media`.
 structural interface PrintableMedia {
   extends Printable;
   extends Media;
@@ -666,7 +668,7 @@ interface EndOfGame {
 // `x.(Renderable.Draw)()`, to get any names from `Renderable`
 // or `EndOfGame` even if there is a conflict.
 structural interface Combined1 {
-  extends Renderable + EndOfGame;
+  extends Renderable & EndOfGame;
   alias Draw_Renderable = Renderable.Draw;
   alias Draw_EndOfGame = EndOfGame.Draw;
 }
@@ -687,5 +689,5 @@ structural interface Combined2 {
 // with a type implementing both `Renderable` and `EndOfGame`.
 fn F1[Combined1:$ T](T: x) { ... }
 fn F2[Combined2:$ T](T: x) { ... }
-fn FPlus[Renderable + EndOfGame:$ T](T: x) { ... }
+fn FPlus[Renderable & EndOfGame:$ T](T: x) { ... }
 ```
