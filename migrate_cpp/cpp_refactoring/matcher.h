@@ -21,6 +21,7 @@ class Matcher : public clang::ast_matchers::MatchFinder::MatchCallback {
       : replacements(&in_replacements) {}
 
  protected:
+  // Replaces the given range with the specified text.
   void AddReplacement(const clang::SourceManager& sm,
                       clang::CharSourceRange range,
                       llvm::StringRef replacement_text);

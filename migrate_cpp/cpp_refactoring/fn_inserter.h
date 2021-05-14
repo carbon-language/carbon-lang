@@ -9,6 +9,7 @@
 
 namespace Carbon {
 
+// Inserts `fn` for functions and methods.
 class FnInserter : public Matcher {
  public:
   explicit FnInserter(std::map<std::string, Replacements>& in_replacements,

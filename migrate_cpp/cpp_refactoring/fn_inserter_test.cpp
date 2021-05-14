@@ -55,7 +55,7 @@ TEST_F(FnInserterTest, Methods) {
       double radius_;
     };
   )cpp";
-  constexpr char After[] = R"cpp(
+  constexpr char After[] = R"(
     class Shape {
      public:
       virtual void Draw() = 0;
@@ -65,13 +65,13 @@ TEST_F(FnInserterTest, Methods) {
     class Circle : public Shape {
      public:
       void Draw() override;
-      fn NumSides()->int override;
-      fn Radius()->double { return radius_; }
+      fn NumSides() -> int override;
+      fn Radius() -> double { return radius_; }
 
      private:
       double radius_;
     };
-  )cpp";
+  )";
   ExpectReplacement(Before, After);
 }
 
