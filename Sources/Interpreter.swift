@@ -75,8 +75,10 @@ struct Interpreter {
     self.returnValueStorage = returnValueStorage
   }
 
-  /// Explicitly ends the current innermost scope, which must have been
+  /// Explicitly ends the innermost scope, which must have been
   /// started by the action currently being processed.
+  // TODO: consider removing this if it's still unused once we
+  // have more of the interpreter implemented.
   mutating func endScope() {
     assert(scopes.top.actionIndex == todo.count,
            "Can't end scope started by another Action")

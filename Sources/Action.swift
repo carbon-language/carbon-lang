@@ -3,19 +3,22 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 enum Followup {
-  // All finished. Any scopes associated with the current Action will
-  // be cleaned up.
+  /// All finished. Any scopes associated with the current Action will
+  /// be cleaned up.
   case done
-  // Still working, start child.
+
+  /// Still working, start child.
   case spawn(_ child: Action)
-  // Stop running this action, and have `successor` take its place.
-  // Any scopes associated with the current Action will be transferred
-  // to `successor`.
+
+  /// Stop running this action, and have `successor` take its place.
+  /// Any scopes associated with the current Action will be transferred
+  /// to `successor`.
   case delegate(_ successor: Action)
-  // All finished with the current function call. All scopes down to
-  // and including the uppermost function scope will be cleaned up,
-  // and execution will resume with the action associated with the
-  // uppermost remaining scope.
+
+  /// All finished with the current function call. All scopes down to
+  /// and including the uppermost function scope will be cleaned up,
+  /// and execution will resume with the action associated with the
+  /// uppermost remaining scope.
   // TODO: Should this be parameterized by Scope.Kind, rather than
   // function-specific?
   case unwindToFunctionCall
