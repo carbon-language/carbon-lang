@@ -68,6 +68,7 @@ struct TypeChecker {
   var errors: ErrorLog = []
 }
 
+/// Diagnostic utilities.
 private extension TypeChecker {
   /// Adds an error at the site of `offender` to the error log, returning
   /// `Type.error` for convenience.
@@ -77,6 +78,23 @@ private extension TypeChecker {
   ) -> Type {
     errors.append(CompileError(message, at: offender.site, notes: notes))
     return .error
+  }
+
+  /// Logs an error pointing at `source` unless `t` is a metatype.
+  mutating func expectMetatype<Node: AST>(_ t: Type, at source: Node) {
+    if !t.isMetatype {
+      error(
+        source,
+        "Pattern in this context must match type values, not \(t) values")
+    }
+  }
+
+  /// Logs an error unless the type of `e` is `t`.
+  mutating func expectType(of e: Expression, toBe expected: Type) {
+    let actual = type(e)
+    if actual != expected {
+      error(e, "Expected expression of type \(expected), not \(actual).")
+    }
   }
 }
 
@@ -300,23 +318,6 @@ private extension TypeChecker {
 
     case .functionCall(let f):
       return type(f)
-    }
-  }
-
-  /// Logs an error pointing at `source` unless `t` is a metatype.
-  mutating func expectMetatype<Node: AST>(_ t: Type, at source: Node) {
-    if !t.isMetatype {
-      error(
-        source,
-        "Pattern in this context must match type values, not \(t) values")
-    }
-  }
-
-  /// Logs an error unless the type of `e` is `t`.
-  mutating func expectType(of e: Expression, toBe expected: Type) {
-    let actual = type(e)
-    if actual != expected {
-      error(e, "Expected expression of type \(expected), not \(actual).")
     }
   }
 
