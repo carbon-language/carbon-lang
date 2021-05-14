@@ -305,7 +305,7 @@ fn EqualContainers[HasEquality:$ ElementType,
 **Concern:** Does not represent binary relationships between two types like "A
 is comparable to B (and therefore B is comparable to A)".
 
-#### [Carbon deep dive: combined interfaces](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/combined-interfaces.md)
+#### [Carbon deep dive: combined interfaces](https://github.com/josh11b/carbon-lang/blob/generics-docs/docs/design/generics/details.md)
 
 This is a modification of
 [interfaces as facet type-types](#carbon-deep-dive-interfaces-as-facet-type-types)

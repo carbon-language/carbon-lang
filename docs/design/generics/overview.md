@@ -357,7 +357,7 @@ fn PrimesLessThan(Int:$$ N) {
 
 Interfaces may include requirements that a type's implementation of that
 interface have local constants with a particular type and name. These are called
-FIXME: [associated constants](combined-interfaces.md#associated-constants).
+FIXME: [associated constants](details.md#associated-constants).
 
 ### Generic type parameters versus templated type parameters
 
@@ -383,7 +383,7 @@ we need to add to support generic type parameters, beyond what is described in
 ## Proposed programming model
 
 FIXME: This is described in detail in a separate document,
-["Carbon deep dive: combined interfaces"](combined-interfaces.md). In summary:
+["Carbon deep dive: combined interfaces"](details.md). In summary:
 
 -   Interfaces have a name and describe methods, functions, and other items for
     types to implement.
