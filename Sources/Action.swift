@@ -91,7 +91,8 @@ struct EvaluateTupleLiteral: Action {
   }
 }
 
-struct NoopAction: Action {
+/// An action that just provides a reference-point for a scope.
+struct NoOpAction: Action {
   mutating func run(on state: inout Interpreter) -> Followup {
     return .done
   }
