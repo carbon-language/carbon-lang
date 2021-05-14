@@ -143,7 +143,10 @@ private extension TypeChecker {
     case .function, .initialization: ()
     }
   }
+}
 
+/// Compile-time expression evaluation.
+private extension TypeChecker {
   /// Type-checks `e` and returns its compile-time type value, or `Type.error`
   /// if `e` does not describe a type that can be computed at compile-time.
   mutating func value(_ e: TypeExpression) -> Type {
@@ -151,13 +154,14 @@ private extension TypeChecker {
     if !t.isMetatype {
       return error(e, "Not a type expression (value has type \(t))")
     }
-    let v = value(e.body)
-    return Type(v)!
+    return Type(value(e.body, checkType: false))!
   }
 
-  /// Type-checks `e` and returns its compile-time value, logging an error if
-  /// the value can't be computed at compile-time.
-  mutating func value(_ e: Expression) -> Value {
+  /// Returns the compile-time value of `e` (typechecking it too iff `checkType
+  /// == true`) or logs an error if `e` can't be evaluated at compile-time.
+  mutating func value(_ e: Expression, checkType: Bool = true) -> Value {
+    if checkType { _ = type(e) }
+
     // Temporarily evaluating the easy subset of type expressions until we have
     // an interpreter.
     switch e {
@@ -195,7 +199,9 @@ private extension TypeChecker {
       return Type.function(parameterTypes: p, returnType: value(f.returnType))
     }
   }
+}
 
+private extension TypeChecker {
   /// Returns the type of the entity declared by `d`.
   ///
   /// - Requires: if `d` declares a binding, its type has already been memoized
@@ -246,6 +252,43 @@ private extension TypeChecker {
     return r
   }
 
+  /// Returns the type of the function declared by `f`, logging any errors in
+  /// its signature, and, if `f` was declared with `=>`, in its body expression.
+  mutating func typeOfName(declaredBy f: FunctionDefinition) -> Type {
+    // Don't bypass memoization in case we are called directly.
+    if typeOfNameDeclaredBy[f.identity] != .beingComputed {
+      return typeOfName(declaredBy: f as Declaration)
+    }
+
+    let parameterTypes = f.parameters.fields(reportingDuplicatesIn: &errors)
+      .mapFields { patternType($0) }
+
+    let returnType: Type
+    if case .expression(let t) = f.returnType {
+      returnType = value(t)
+    }
+    else if case .some(.return(let e, _)) = f.body {
+      returnType = type(e)
+    }
+    else { UNREACHABLE("auto return type without return statement body") }
+
+    return .function(parameterTypes: parameterTypes, returnType: returnType)
+  }
+}
+
+/// Expression checking.
+private extension TypeChecker {
+  /// Returns the initializer parameter list for the given struct
+  mutating func initializerParameters(
+    _ s: ASTIdentity<StructDefinition>
+  ) -> TupleType {
+    if let r = initializerTuples[s.structure] { return r }
+    let r = s.structure.initializerTuple.fields(reportingDuplicatesIn: &errors)
+      .mapFields { value($0) }
+    initializerTuples[s.structure] = r
+    return r
+  }
+
   /// Returns the type of the value computed by `e` when NOT in the callee
   /// position of a function call expression, logging errors if `e` doesn't
   /// typecheck.
@@ -276,7 +319,7 @@ private extension TypeChecker {
 
     case let .functionType(f):
       let p = value(TypeExpression(f.parameters))
-      assert(p == .error || p.tuple != nil)
+      if p != .error { assert(p.tuple != nil) }
       _ = value(f.returnType)
       return .type
 
@@ -428,30 +471,15 @@ private extension TypeChecker {
         e.base, "expression of type \(baseType) does not have named members")
     }
   }
+}
 
-  /// Returns the type of the function declared by `f`, logging any errors in
-  /// its signature, and, if `f` was declared with `=>`, in its body expression.
-  private mutating func typeOfName(declaredBy f: FunctionDefinition) -> Type {
-    // Make sure we don't bypass memoization.
-    if typeOfNameDeclaredBy[f.identity] != .beingComputed {
-      return typeOfName(declaredBy: f as Declaration)
-    }
+// FIXME: There is significant code duplication between pattern and expression
+// type computation.  Perhaps upgrade expressions to patterns and use the same
+// code to check?
 
-    let parameterTypes = f.parameters.fields(reportingDuplicatesIn: &errors)
-      .mapFields { patternType($0) }
 
-    let returnType: Type
-    if case .expression(let t) = f.returnType {
-      returnType = value(t)
-    }
-    else if case .some(.return(let e, _)) = f.body {
-      returnType = type(e)
-    }
-    else { UNREACHABLE("auto return type without return statement body") }
-
-    return .function(parameterTypes: parameterTypes, returnType: returnType)
-  }
-
+/// Pattern checking and type deduction.
+private extension TypeChecker {
   /// Returns the type matched by `p`, using `rhs`, if supplied, to deduce `auto`
   /// types, and logging any errors.
   ///
@@ -504,10 +532,6 @@ private extension TypeChecker {
       })
   }
 
-  // FIXME: There is significant code duplication between pattern and expression
-  // type deduction.  Perhaps upgrade expressions to patterns and use the same
-  // code to check?
-
   /// Returns the type matched by `p`, using `rhs`, if supplied, to deduce `auto`
   /// types, and logging any errors.
   ///
@@ -530,7 +554,8 @@ private extension TypeChecker {
           p.callee, "Called type must be a struct, not '\(calleeValue)'.")
       }
       let parameterTypes = initializerParameters(resultID)
-      let argumentTypes = patternType(p.arguments, initializerType: parameterTypes).tuple!
+      let argumentTypes = patternType(
+        p.arguments, initializerType: parameterTypes).tuple!
 
       if argumentTypes != parameterTypes {
         error(
@@ -555,29 +580,6 @@ private extension TypeChecker {
     }
   }
 
-  /// Ensures that `i` has been type-checked.
-  mutating func check(_ i: Initialization) {
-    if checkedInitializations.contains(i.identity) { return }
-    defer { checkedInitializations.insert(i.identity) }
-    
-    let rhs = type(i.initializer)
-    let lhs = patternType(i.bindings, initializerType: rhs)
-    if lhs != rhs {
-      error(i, "Pattern type \(lhs) does not match initializer type \(rhs).")
-    }
-  }
-
-  /// Returns the initializer parameter list for the given struct
-  mutating func initializerParameters(
-    _ s: ASTIdentity<StructDefinition>
-  ) -> TupleType {
-    if let r = initializerTuples[s.structure] { return r }
-    let r = s.structure.initializerTuple.fields(reportingDuplicatesIn: &errors)
-      .mapFields { value($0) }
-    initializerTuples[s.structure] = r
-    return r
-  }
-
   /// Returns the type matched by `p`, using `rhs`, if supplied, to deduce `auto`
   /// types, and logging any errors.
   ///
@@ -597,10 +599,10 @@ private extension TypeChecker {
   }
 }
 
-/// Statement checking.
-extension TypeChecker {
+/// Statement and top-level initialization checking.
+private extension TypeChecker {
   /// pass `self` to action with `inLoop` temporarily set to `newValue`
-  private mutating func withInLoop<R>(
+  mutating func withInLoop<R>(
     _ newValue: Bool, _ action: (inout Self)->R) -> R
   {
     let saved = inLoop
@@ -610,7 +612,8 @@ extension TypeChecker {
     return action(&self)
   }
 
-  private mutating func checkBody(_ f: FunctionDefinition) {
+  /// Typechecks the body of `f`.
+  mutating func checkBody(_ f: FunctionDefinition) {
     // auto-returning bodies have already been checked as part of function
     // signature checking.
     if case .auto = f.returnType { return }
@@ -623,7 +626,8 @@ extension TypeChecker {
     }
   }
 
-  private mutating func check(_ s: Statement) {
+  /// Typechecks `s`.
+  mutating func check(_ s: Statement) {
     switch s {
     case let .expressionStatement(e, _):
       _ = type(e)
@@ -677,6 +681,18 @@ extension TypeChecker {
       if !inLoop {
         error(s, "invalid outside loop body")
       }
+    }
+  }
+
+  /// Ensures that `i` has been type-checked.
+  mutating func check(_ i: Initialization) {
+    if checkedInitializations.contains(i.identity) { return }
+    defer { checkedInitializations.insert(i.identity) }
+
+    let rhs = type(i.initializer)
+    let lhs = patternType(i.bindings, initializerType: rhs)
+    if lhs != rhs {
+      error(i, "Pattern type \(lhs) does not match initializer type \(rhs).")
     }
   }
 }
