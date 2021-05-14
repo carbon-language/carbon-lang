@@ -13,27 +13,94 @@ struct Interpreter {
   var //let
     program: ExecutableProgram
 
-  // TODO(geoffromer): Replace these with explicit modeling of scopes
-  // as part of the todo stack.
-  /// A mapping from local name declarations to addresses.
-  var locals: ASTDictionary<SimpleBinding, Address> = .init()
-  /// A mapping from local expressions to addresses
-  var temporaries: ASTDictionary<Expression, Address> = .init()
+
+  struct Scope {
+    enum Kind {
+      // TODO: we'll eventually want at least 3 kinds of
+      // local scope as well: loop (the scope of a `break`),
+      // loop body (the scope of a `continue`), and block.
+      case temporary, function
+    }
+
+    let kind: Kind
+
+    /// The index in `todo` of the `Action` this scope is associated with. 
+    ///
+    /// That's normally the `Action` that created this scope, but the association
+    /// can be transferred using `Followup.delegate`.
+    let actionIndex: Int
+
+    /// The storage owned by this scope
+    var owned: [Address] = []
+
+    /// The value that `returnValueStorage` should be restored
+    /// to when this scope is unwound. 
+    ///
+    /// Should be non-nil only for function scopes.
+    let callerReturnValueStorage: Address?
+  }
+
+  /// The stack of scopes that execution has entered, and not yet left.
+  private var scopes: Stack<Scope> = .init()
   
-  /// The address that should be filled in by any `return` statements.
-  var returnValueStorage: Address? = nil
+  private(set) var returnValueStorage: Address? = nil
 
-  /// A type that captures everything that needs to be restored after a callee
-  /// returns.
-  typealias FunctionContext = (
-    locals: ASTDictionary<SimpleBinding, Address>,
-    temporaries: ASTDictionary<Expression, Address>,
-    returnValueStorage: Address?)
+  /// Begins a new scope of the specified kind, associated with the currently-running `Action`.
+  ///
+  /// The interpreter will automatically end the scope when the associated `Action` is
+  /// done, but it can also be ended explicitly by calling `endScope`. Conversely, the
+  /// interpreter will discard the associated `Action` if the scope is unwound.
+  /// To begin a function scope, use `beginFunctionScope` instead of this method.
+  mutating func beginScope(kind: Scope.Kind) {
+    assert(kind != .function, "Use beginFunctionScope instead")
+    let actionIndex = todo.count
 
-  /// The function execution context.
-  var functionContext: FunctionContext {
-    get { (locals, temporaries, returnValueStorage) }
-    set { (locals, temporaries, returnValueStorage) = newValue }
+    // TODO: It isn't necessarily a bug for a single action to be
+    // associated with multiple nested scopes, and in fact it may
+    // be necessary for e.g. loop actions to create separate scopes
+    // to distinguish `break` and `continue`. When and if those
+    // situations arise, we will need a more careful rule about which
+    // actions are discarded during unwinding, and possibly some
+    // mechanism for notifying an action when some but not all of its
+    // scopes have been unwound. In the meantime, we forbid those
+    // situations for simplicity.
+    assert(scopes.isEmpty || actionIndex != scopes.top.actionIndex)
+
+    scopes.push(Scope(kind: kind, actionIndex: actionIndex,
+                      callerReturnValueStorage: nil))
+  }
+
+  /// Begins a scope for a new function call, whose return value will be stored in
+  /// `returnValueStorage`.
+  ///
+  /// The interpreter will automatically end the scope when the associated `Action` is
+  /// done, but it can also be ended explicitly by calling `endScope`. Conversely, the
+  /// interpreter will discard the associated `Action` if the scope is unwound.
+  mutating func beginFunctionScope(returnValueStorage: Address) {
+    scopes.push(Scope(kind: .function, actionIndex: todo.count,
+                      callerReturnValueStorage: self.returnValueStorage))
+    self.returnValueStorage = returnValueStorage
+  }
+
+  /// Explicitly ends the innermost scope, which must have been
+  /// started by the action currently being processed.
+  // TODO: consider removing this if it's still unused once we
+  // have more of the interpreter implemented.
+  mutating func endScope() {
+    assert(scopes.top.actionIndex == todo.count,
+           "Can't end scope started by another Action")
+    endScopeUnchecked()
+  }
+
+  private mutating func endScopeUnchecked() {
+    let scope = scopes.pop()!
+    for a in scope.owned {
+      memory.deinitialize(a)
+      memory.deallocate(a)
+    }
+    if scope.kind == .function {
+      returnValueStorage = scope.callerReturnValueStorage
+    }
   }
 
   typealias ExitCode = Int
@@ -52,11 +119,17 @@ struct Interpreter {
 
 extension Interpreter {
   mutating func start() {
-    exitCodeStorage = memory.allocate(boundTo: .int, from: .empty)
+    // EvaluateCall expects to be executed in a temporary scope,
+    // which owns the results of evaluating the callee and argument
+    // expressions, so we provide one here. Every scope is associated
+    // with an action, so we put a no-op action on the todo stack.
 
+    beginScope(kind: .temporary)
+    todo.push(NoOpAction())
+
+    exitCodeStorage = memory.allocate(boundTo: .int, from: .empty)
     todo.push(EvaluateCall(
-      call: program.entryPoint!,
-      callerContext: functionContext, returnValueStorage: exitCodeStorage!))
+      call: program.entryPoint!, returnValueStorage: exitCodeStorage!))
   }
 
   enum Status {
@@ -68,17 +141,35 @@ extension Interpreter {
   /// code if the program terminated.
   mutating func step() -> Status {
     guard var current = todo.pop() else {
-      return .exited(memory[exitCodeStorage!] as! IntValue)
+      let exitCode = memory[exitCodeStorage!] as! IntValue
+      memory.assertCleanupDone(except: [exitCodeStorage!])
+      return .exited(exitCode)
     }
     switch current.run(on: &self) {
-    case .done: break
+    case .done:
+      while let scope = scopes.queryTop,
+            scope.actionIndex == todo.count {
+        endScopeUnchecked()
+      }
     case .spawn(let child):
       todo.push(current)
       todo.push(child)
-    case .chain(to: let successor):
+    case .delegate(to: let successor):
       todo.push(successor)
     case .unwindToFunctionCall:
-      while (!(todo.top is EvaluateCall)) { _ = todo.pop() }
+      // End all scopes within the current function scope
+      while scopes.top.kind != .function {
+        endScopeUnchecked()
+      }
+
+      // End the current function scope
+      let outermostUnwoundAction = scopes.top.actionIndex
+      endScopeUnchecked()
+
+      // Discard actions associated with the ended scopes
+      while todo.count - 1 >= outermostUnwoundAction {
+        _ = todo.pop()
+      }
     }
     return .running
   }
@@ -87,21 +178,11 @@ extension Interpreter {
   mutating func allocateTemporary(
     `for` e: Expression, boundTo t: Type, mutable: Bool = false
   ) -> Address{
-    precondition(temporaries[e] == nil, "Temporary already allocated.")
     let a = memory.allocate(
       boundTo: t, from: e.site.region, mutable: false)
-    temporaries[e] = a
+    assert(scopes.top.kind == .temporary)
+    scopes.top.owned.append(a)
     return a
-  }
-
-  /// Destroys any rvalue computed for `e` and removes `e` from `locals`.
-  mutating func cleanUp(_ e: Expression) {
-    defer { temporaries[e] = nil }
-    if case .name(_) = e { return } // not an rvalue.
-
-    let a = temporaries[e]!
-    memory.deinitialize(a)
-    memory.deallocate(a)
   }
 
   /// Accesses the value stored for the declaration of the given name.

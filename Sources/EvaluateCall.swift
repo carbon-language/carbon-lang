@@ -6,8 +6,6 @@
 struct EvaluateCall: Action {
   /// Function call expression being evaluated
   let call: FunctionCall<Expression>
-  /// Interpreter context to be restored after call completes.
-  let callerContext: Interpreter.FunctionContext
   /// Where the result of the call shall be stored.
   let returnValueStorage: Address
   /// Where the callee value is stored
@@ -15,11 +13,9 @@ struct EvaluateCall: Action {
 
   init(
     call: FunctionCall<Expression>,
-    callerContext: Interpreter.FunctionContext,
     returnValueStorage: Address)
   {
     self.call = call
-    self.callerContext = callerContext
     self.returnValueStorage = returnValueStorage
   }
 
@@ -28,9 +24,7 @@ struct EvaluateCall: Action {
   /// A suspended Call action on the todo list is either nascent (with a `nil`
   /// step), or it's doing what the step name indicates (via sub-actions).
   private enum Step: Int {
-    case evaluateCallee, evaluateArguments,
-         runBody,
-         cleanUpArguments, cleanUpCallee
+    case evaluateCallee, evaluateArguments, runBody
   }
 
   /// The current activity; `nil` means we haven't been started yet.
@@ -59,16 +53,9 @@ struct EvaluateCall: Action {
       
     case .runBody:
       // Prepare the context for the callee
-      state.returnValueStorage = returnValueStorage
+      state.beginFunctionScope(returnValueStorage: returnValueStorage)
       if (calleeCode.parameters.elements.count > 0) { UNIMPLEMENTED() }
-      return .spawn(Execute(calleeCode.body!))
-
-    case .cleanUpArguments:
-      state.functionContext = callerContext
-      return .spawn(CleanUpTupleLiteral(call.arguments))
-
-    case .cleanUpCallee:
-      return .chain(CleanUp(call.callee))
+      return .delegate(Execute(calleeCode.body!))
     }
   }
 }

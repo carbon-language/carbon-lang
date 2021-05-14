@@ -3,10 +3,25 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 enum Followup {
-  case done                        // All finished.
-  case spawn(_ child: Action)      // Still working, start child.
-  case chain(_ successor: Action)  // All finished, start successor.
-  case unwindToFunctionCall        // All finished with current function call
+  /// All finished. Any scopes associated with the current Action will
+  /// be cleaned up.
+  case done
+
+  /// Still working, start child.
+  case spawn(_ child: Action)
+
+  /// Stop running this action, and have `successor` take its place.
+  /// Any scopes associated with the current Action will be transferred
+  /// to `successor`.
+  case delegate(_ successor: Action)
+
+  /// All finished with the current function call. All scopes down to
+  /// and including the uppermost function scope will be cleaned up,
+  /// and execution will resume with the action associated with the
+  /// uppermost remaining scope.
+  // TODO: Should this be parameterized by Scope.Kind, rather than
+  // function-specific?
+  case unwindToFunctionCall
 }
 
 protocol Action {
@@ -79,30 +94,10 @@ struct EvaluateTupleLiteral: Action {
   }
 }
 
-struct CleanUp: Action {
-  init(_ target: Expression) {
-    self.target = target
-  }
-  let target: Expression
-
-  mutating func run(on engine: inout Interpreter) -> Followup {
-    engine.cleanUp(target)
-    return .done
-  }
-}
-
-struct CleanUpTupleLiteral: Action {
-  let target: TupleLiteral
-  var nextElement: Int = 0
-
-  init(_ target: TupleLiteral) {
-    self.target = target
-  }
-
+/// An action that just provides a reference-point for a scope.
+struct NoOpAction: Action {
   mutating func run(on state: inout Interpreter) -> Followup {
-    if nextElement == target.count { return .done }
-    defer { nextElement += 1 }
-    return .spawn(CleanUp(target[nextElement].payload))
+    return .done
   }
 }
 
@@ -120,9 +115,9 @@ struct Execute: Action {
     case .initialization(_): UNIMPLEMENTED()
     case .if(condition: _, thenClause: _, elseClause: _, _): UNIMPLEMENTED()
     case .return(let operand, _):
-      return .chain(ExecuteReturn(operand))
+      return .delegate(ExecuteReturn(operand))
     case .block(let b, _):
-      return .chain(ExecuteBlock(remaining: b[...]))
+      return .delegate(ExecuteBlock(remaining: b[...]))
     case .while(condition: _, body: _, _): UNIMPLEMENTED()
     case .match(subject: _, clauses: _, _): UNIMPLEMENTED()
     case .break(_): UNIMPLEMENTED()
