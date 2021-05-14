@@ -9,8 +9,6 @@
 #include "gtest/gtest.h"
 
 namespace ct = ::clang::tooling;
-using ::testing::ContainerEq;
-using ::testing::StrEq;
 
 namespace Carbon {
 
@@ -28,10 +26,10 @@ void MatcherTestBase::ExpectReplacement(const char* before, const char* after) {
     llvm::SplitString(*actual, actual_lines, "\n");
     llvm::SmallVector<llvm::StringRef, 0> after_lines;
     llvm::SplitString(after, after_lines, "\n");
-    EXPECT_THAT(actual_lines, ContainerEq(after_lines));
+    EXPECT_THAT(actual_lines, testing::ContainerEq(after_lines));
   } else {
     // No replacements; before and after should match.
-    EXPECT_THAT(before, StrEq(after));
+    EXPECT_THAT(before, testing::StrEq(after));
   }
 }
 
