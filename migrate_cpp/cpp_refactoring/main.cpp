@@ -10,14 +10,14 @@
 namespace cam = ::clang::ast_matchers;
 namespace ct = ::clang::tooling;
 
-namespace carbon {
+namespace Carbon {
 
 class Matcher : public cam::MatchFinder::MatchCallback {
  public:
-  explicit Matcher(std::map<std::string, ct::Replacements>* in_replacements)
-      : replacements(in_replacements) {}
+  explicit Matcher(std::map<std::string, ct::Replacements>& in_replacements)
+      : replacements(&in_replacements) {}
 
-  virtual ~Matcher() {}
+  ~Matcher() override = default;
 
   void AddReplacement(const clang::SourceManager& sm,
                       clang::CharSourceRange range,
@@ -54,7 +54,7 @@ class Matcher : public cam::MatchFinder::MatchCallback {
 
 class FnInserter : public Matcher {
  public:
-  explicit FnInserter(std::map<std::string, ct::Replacements>* in_replacements,
+  explicit FnInserter(std::map<std::string, ct::Replacements>& in_replacements,
                       cam::MatchFinder* finder)
       : Matcher(in_replacements) {
     finder->addMatcher(cam::functionDecl(cam::isExpansionInMainFile(),
@@ -79,7 +79,7 @@ class FnInserter : public Matcher {
   static constexpr char Label[] = "FnInserter";
 };
 
-}  // namespace carbon
+}  // namespace Carbon
 
 auto main(int argc, const char** argv) -> int {
   llvm::cl::OptionCategory category("C++ refactoring options");
@@ -89,7 +89,7 @@ auto main(int argc, const char** argv) -> int {
 
   // Set up AST matcher callbacks.
   cam::MatchFinder finder;
-  carbon::FnInserter fn_inserter(&tool.getReplacements(), &finder);
+  Carbon::FnInserter fn_inserter(tool.getReplacements(), &finder);
 
   return tool.runAndSave(
       clang::tooling::newFrontendActionFactory(&finder).get());
