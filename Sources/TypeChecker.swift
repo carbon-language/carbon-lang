@@ -40,11 +40,11 @@ struct TypeChecker {
   private let program: ExecutableProgram
 
   /// Mapping from alternative declaration to the choice in which it is defined.
-  private var parentChoice = ASTDictionary<Alternative, ChoiceDefinition>()
+  private var enclosingChoice = ASTDictionary<Alternative, ChoiceDefinition>()
 
   /// Mapping from variable declaration to the initialization in which it is
   /// defined.
-  private var parentInitialization
+  private var enclosingInitialization
     = ASTDictionary<SimpleBinding, Initialization>()
 
   /// Memoized result of computing the type of the expression consisting of the
@@ -80,12 +80,13 @@ private extension TypeChecker {
   }
 }
 
+/// Computation of notional “ancestor node links” for the AST.
 private extension TypeChecker {
   /// Records references from child declarations to their enclosing parents.
   mutating func registerParentage(_ d: TopLevelDeclaration) {
     switch d {
     case let .choice(c):
-      for a in c.alternatives { parentChoice[a] = c }
+      for a in c.alternatives { enclosingChoice[a] = c }
     case let .initialization(i):
       registerParent(in: i.bindings, as: i)
     case .struct, .function: ()
@@ -97,7 +98,7 @@ private extension TypeChecker {
   mutating func registerParent(in children: Pattern, as parent: Initialization) {
     switch children {
     case .atom: return
-    case let .variable(x): parentInitialization[x] = parent
+    case let .variable(x): enclosingInitialization[x] = parent
     case let .tuple(x):
       for a in x { registerParent(in: a.payload, as: parent) }
     case let .functionCall(x):
@@ -107,27 +108,26 @@ private extension TypeChecker {
       registerParent(in: x.returnType, as: parent)
     }
   }
+}
 
+private extension TypeChecker {
   /// Typechecks the body of `d` if it declares a nominal type, recording the
   /// types of any interior declarations in `self.types` (and any errors in
   /// `self.errors`).
   mutating func checkNominalTypeBody(_ d: TopLevelDeclaration) {
-    // Note: when nominal types gain methods and/or initializations, we'll need to
-    // change the name of this method because those must be checked later.
+    // Note: when nominal types gain methods and/or initializations, we'll need
+    // to change the name of this method because those must be checked later.
     switch d {
     case let .struct(s):
       for m in s.members { _ = typeOfName(declaredBy: m) }
     case let .choice(c):
-      for a in c.alternatives {
-        parentChoice[a] = c
-        _ = typeOfName(declaredBy: a)
-      }
+      for a in c.alternatives { _ = typeOfName(declaredBy: a) }
     case .function, .initialization: ()
     }
   }
 
-  /// Returns the that `e` evaluates to, or `Type.error` if `e` doesn't evaluate
-  /// to a type.
+  /// Returns the type that `e` evaluates to, or `Type.error` if `e` doesn't
+  /// evaluate to a type.
   mutating func evaluate(_ e: TypeExpression) -> Type {
     let t = type(e.body)
     if !t.isMetatype {
@@ -205,7 +205,7 @@ private extension TypeChecker {
         r = evaluate(e)
       }
       else {
-        check(parentInitialization[x]!)
+        check(enclosingInitialization[x]!)
         if case let .final(r0) = typeOfNameDeclaredBy[d.identity]! { r = r0 }
         else { UNREACHABLE() }
       }
@@ -217,7 +217,7 @@ private extension TypeChecker {
       let payload = evaluate(TypeExpression(a.payload))
       let payloadTuple = payload == .error ? .void : payload.tuple!
       r = .alternative(
-        parent: ASTIdentity(of: parentChoice[a]!), payload: payloadTuple)
+        parent: ASTIdentity(of: enclosingChoice[a]!), payload: payloadTuple)
 
     case let x as StructMember:
       r = evaluate(x.type)
