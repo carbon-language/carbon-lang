@@ -143,7 +143,7 @@ extension Interpreter {
     }
     switch current.run(on: &self) {
     case .done:
-      while case .some(let scope) = scopes.queryTop,
+      while let scope = scopes.queryTop,
             scope.actionIndex == todo.count {
         endScopeUnchecked()
       }
