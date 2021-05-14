@@ -71,7 +71,11 @@ struct Interpreter {
   }
 
   /// Begins a scope for a new function call, whose return value will be stored in
-  /// `returnValueStorage`. Otherwise equivalent to `beginScope`.
+  /// `returnValueStorage`.
+  ///
+  /// The interpreter will automatically end the scope when the associated `Action` is
+  /// done, but it can also be ended explicitly by calling `endScope`. Conversely, the
+  /// interpreter will discard the associated `Action` if the scope is unwound.
   mutating func beginFunctionScope(returnValueStorage: Address) {
     scopes.push(Scope(kind: .function, actionIndex: todo.count,
                       callerReturnValueStorage: self.returnValueStorage))
