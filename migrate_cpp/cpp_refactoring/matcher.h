@@ -14,13 +14,11 @@ namespace Carbon {
 class Matcher : public clang::ast_matchers::MatchFinder::MatchCallback {
  public:
   // Alias these to elide the namespaces in subclass headers.
-  typedef clang::ast_matchers::MatchFinder MatchFinder;
-  typedef clang::tooling::Replacements Replacements;
+  using MatchFinder = clang::ast_matchers::MatchFinder;
+  using Replacements = clang::tooling::Replacements;
 
   explicit Matcher(std::map<std::string, Replacements>& in_replacements)
       : replacements(&in_replacements) {}
-
-  virtual ~Matcher() {}
 
  protected:
   void AddReplacement(const clang::SourceManager& sm,

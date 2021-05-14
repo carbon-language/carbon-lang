@@ -27,9 +27,8 @@ cc_test(
     srcs = ["fn_inserter_test.cpp"],
     deps = [
         ":fn_inserter",
+        ":matcher_test_base",
         "@llvm-project//clang:tooling",
-        "@llvm-project//llvm:gmock",
-        "@llvm-project//llvm:gtest",
         "@llvm-project//llvm:gtest_main",
     ],
 )
@@ -41,5 +40,18 @@ cc_library(
     deps = [
         "@llvm-project//clang:ast_matchers",
         "@llvm-project//clang:tooling_core",
+    ],
+)
+
+cc_library(
+    name = "matcher_test_base",
+    testonly = 1,
+    srcs = ["matcher_test_base.cpp"],
+    hdrs = ["matcher_test_base.h"],
+    deps = [
+        "@llvm-project//clang:ast_matchers",
+        "@llvm-project//clang:tooling",
+        "@llvm-project//llvm:gmock",
+        "@llvm-project//llvm:gtest",
     ],
 )

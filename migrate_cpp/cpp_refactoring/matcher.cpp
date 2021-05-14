@@ -4,7 +4,6 @@
 
 #include "migrate_cpp/cpp_refactoring/matcher.h"
 
-namespace cam = ::clang::ast_matchers;
 namespace ct = ::clang::tooling;
 
 namespace Carbon {
