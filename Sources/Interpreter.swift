@@ -24,17 +24,19 @@ struct Interpreter {
 
     let kind: Kind
 
-    /// The index in `todo` of the `Action` this scope is associated with. That's
-    /// normally the `Action` that created this scope, but the association can
-    /// be transferred using `Followup.delegate`.
+    /// The index in `todo` of the `Action` this scope is associated with. 
+    ///
+    /// That's normally the `Action` that created this scope, but the association
+    /// can be transferred using `Followup.delegate`.
     let actionIndex: Int
 
     /// The storage owned by this scope
     var owned: [Address] = []
 
     /// The value that `returnValueStorage` should be restored
-    /// to when this scope is unwound. Should be non-nil only for function
-    /// scopes.
+    /// to when this scope is unwound. 
+    ///
+    /// Should be non-nil only for function scopes.
     let callerReturnValueStorage: Address?
   }
 
@@ -44,6 +46,7 @@ struct Interpreter {
   private(set) var returnValueStorage: Address? = nil
 
   /// Begins a new scope of the specified kind, associated with the currently-running `Action`.
+  ///
   /// The interpreter will automatically end the scope when the associated `Action` is
   /// done, but it can also be ended explicitly by calling `endScope`. Conversely, the
   /// interpreter will discard the associated `Action` if the scope is unwound.
