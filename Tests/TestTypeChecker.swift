@@ -394,7 +394,11 @@ final class TypeCheckFunctionSignatures: XCTestCase {
       withMessage:
         "Pattern in this context must match type values, not (Int, Int) values")
   }
+}
 
+/// Tests that go along with having implemented typechecking of initializations
+/// at global scope.
+final class TypeCheckTopLevelInitializations: XCTestCase {
   func testSimpleInitializer() {
     """
     var Int x = 1;
@@ -577,7 +581,10 @@ final class TypeCheckFunctionSignatures: XCTestCase {
     var (auto t1)() = X() // b
     """.checkTypeChecks()
   }
+}
 
+/// Tests of indexing and operator expression typechecking.
+final class TypeCheckOperatorAndIndexExpressions: XCTestCase {
   func testIndexExpression() {
     "fn f((Int,) r) => r[0];".checkTypeChecks()
 
@@ -661,6 +668,255 @@ final class TypeCheckFunctionSignatures: XCTestCase {
     fn f() => g();
     fn g() => f();
     """.checkFailsToTypeCheck(withMessage: "type dependency loop")
+  }
+}
+
+/// Tests of statement typechecking.
+final class TypeCheckStatements: XCTestCase {
+  func testExpressionStatement() {
+    """
+    fn f(Bool a, Int b) {
+      not a;
+    }
+    """.checkTypeChecks()
+
+    """
+    fn f(Bool a, Int b) {
+      not b;
+    }
+    """.checkFailsToTypeCheck(
+      withMessage: "Expected expression of type Bool, not Int")
+  }
+
+  func testInitialization() {
+    """
+    fn f(Bool a, Int b) -> Int {
+      var auto x = b;
+      return x;
+    }
+    """.checkTypeChecks()
+
+    """
+    fn f(Bool a, Int b) -> Bool {
+      var Bool x = b;
+      return x;
+    }
+    """.checkFailsToTypeCheck(
+      withMessage: "Pattern type Bool does not match initializer type Int")
+  }
+
+  func testAssignment() {
+    """
+    fn f(Int b) {
+      var Int x = b;
+      x = b;
+    }
+    """.checkTypeChecks()
+
+    """
+    var Int x = 3;
+    fn f(Bool a, Int b) {
+      x = b;
+    }
+    """.checkTypeChecks()
+
+    """
+    fn f(Bool a) {
+      var Int x = 3;
+      x = a;
+    }
+    """.checkFailsToTypeCheck(
+      withMessage: "Expected expression of type Bool, not Int")
+
+    """
+    var Int x = 3;
+    fn f(Bool a) {
+      x = a;
+    }
+    """.checkFailsToTypeCheck(
+      withMessage: "Expected expression of type Bool, not Int")
+  }
+
+  func testIf() {
+    """
+    fn f(Int b) -> Bool {
+      if (b == 0) {
+        return true;
+      }
+      else {
+        return false;
+      }
+    }
+    """.checkTypeChecks()
+
+    """
+    fn f(Int b) -> Bool {
+      if (b == 0) {
+        return true;
+      }
+      return false;
+    }
+    """.checkTypeChecks()
+
+    """
+    fn f(Int b) -> Bool {
+      if (b) {
+        return true;
+      }
+      else {
+        return false;
+      }
+    }
+    """.checkFailsToTypeCheck(
+      withMessage: "Expected expression of type Bool, not Int")
+
+    """
+    fn f(Int b) -> Bool {
+      if (b) {
+        return true;
+      }
+      return false;
+    }
+    """.checkFailsToTypeCheck(
+      withMessage: "Expected expression of type Bool, not Int")
+
+    """
+    fn f(Int b) -> Int {
+      if (b == 0) {
+        return b;
+      }
+      else {
+        return true;
+      }
+      return b;
+    }
+    """.checkFailsToTypeCheck(
+      withMessage: "Expected expression of type Int, not Bool")
+
+    """
+    fn f(Int b) -> Int {
+      if (b == 0) {
+        return true;
+      }
+      return b;
+    }
+    """.checkFailsToTypeCheck(
+      withMessage: "Expected expression of type Int, not Bool")
+  }
+
+  func testWhile() {
+    """
+    fn f(Int b) -> Int {
+      while (not (b == 0)) {
+        b = b - 1;
+      }
+      return b;
+    }
+    """.checkTypeChecks()
+
+    """
+    fn f(Int b) -> Int {
+      while (b) {
+        b = b - 1;
+      }
+      return b;
+    }
+    """.checkFailsToTypeCheck(
+      withMessage: "Expected expression of type Bool, not Int")
+
+    """
+    fn f(Int b) -> Int {
+      while (b) {
+        b = not b;
+      }
+      return b;
+    }
+    """.checkFailsToTypeCheck(
+      withMessage: "Expected expression of type Bool, not Int")
+  }
+
+  func testMatch() {
+    """
+    fn f(Int x) -> Int {
+      match (x) {
+        case 5 =>
+          return 0;
+        default =>
+          return 1;
+      }
+    }
+    """.checkTypeChecks()
+
+    """
+    fn f(Int x) -> Int {
+      match (x) {
+        case (Int, Int) =>
+          return 0;
+        default =>
+          return 1;
+      }
+    }
+    """.checkFailsToTypeCheck(
+      withMessage: "Pattern type (Type, Type) incompatible"
+        + " with matched expression type Int")
+
+    """
+    fn f(Int x) -> Int {
+      match (x) {
+        case 5 =>
+          return (false, false);
+        default =>
+          return 1;
+      }
+    }
+    """.checkFailsToTypeCheck(
+      withMessage: "Expected expression of type Int, not (Bool, Bool)")
+  }
+
+  func testBreak() {
+    """
+    fn f(Int b) -> Int {
+      while (not (b == 0)) {
+        b = b - 1;
+        if (b == 4) { break; }
+      }
+      return b;
+    }
+    """.checkTypeChecks()
+
+    """
+    fn f(Int b) -> Int {
+      while (not (b == 0)) {
+        b = b - 1;
+      }
+      break;
+      return b;
+    }
+    """.checkFailsToTypeCheck(
+      withMessage: "invalid outside loop body")
+  }
+
+  func testContinue() {
+    """
+    fn f(Int b) -> Int {
+      while (not (b == 0)) {
+        b = b - 1;
+        if (b == 4) { continue; }
+      }
+      return b;
+    }
+    """.checkTypeChecks()
+
+    """
+    fn f(Int b) -> Int {
+      while (not (b == 0)) {
+        b = b - 1;
+      }
+      continue;
+      return b;
+    }
+    """.checkFailsToTypeCheck(
+      withMessage: "invalid outside loop body")
   }
 }
 

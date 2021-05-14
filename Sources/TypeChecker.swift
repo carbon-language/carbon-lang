@@ -673,7 +673,9 @@ extension TypeChecker {
       }
 
     case .break, .continue:
-      if !inLoop { error(s, "invalid outside loop body") }
+      if !inLoop {
+        error(s, "invalid outside loop body")
+      }
     }
   }
 }
