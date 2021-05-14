@@ -6,6 +6,7 @@
 #define LEXER_TOKEN_KIND_H_
 
 #include <cstdint>
+#include <initializer_list>
 #include <iterator>
 
 #include "llvm/ADT/StringRef.h"
@@ -77,6 +78,17 @@ class TokenKind {
   // If this token kind has a fixed spelling when in source code, returns it.
   // Otherwise returns an empty string.
   [[nodiscard]] auto GetFixedSpelling() const -> llvm::StringRef;
+
+  // Test whether this token kind is in the provided list.
+  [[nodiscard]] auto IsOneOf(std::initializer_list<TokenKind> kinds) const
+      -> bool {
+    for (TokenKind kind : kinds) {
+      if (*this == kind) {
+        return true;
+      }
+    }
+    return false;
+  }
 
   // Enable conversion to our private enum, including in a `constexpr` context,
   // to enable usage in `switch` and `case`. The enum remains private and

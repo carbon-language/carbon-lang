@@ -17,7 +17,6 @@ namespace Carbon {
 struct Value;
 using Address = unsigned int;
 using VarValues = std::list<std::pair<std::string, const Value*>>;
-using VarAddresses = std::vector<std::pair<std::string, Address>>;
 
 auto FindInVarValues(const std::string& field, VarValues* inits)
     -> const Value*;
@@ -27,6 +26,15 @@ auto FieldsEqual(VarValues* ts1, VarValues* ts2) -> bool;
 // nullopt if there is no such field. `*tuple` must be a tuple value.
 auto FindTupleField(const std::string& name, const Value* tuple)
     -> std::optional<Address>;
+
+// A TupleElement represents the value of a single tuple field.
+struct TupleElement {
+  // The field name.
+  std::string name;
+
+  // Location of the field's value.
+  Address address;
+};
 
 enum class ValKind {
   IntV,
@@ -53,107 +61,134 @@ enum class ValKind {
 
 struct Frame;  // used by continuation
 
+struct Function {
+  std::string* name;
+  const Value* param;
+  const Statement* body;
+};
+
+struct StructConstructor {
+  const Value* type;
+  const Value* inits;
+};
+
+struct AlternativeConstructor {
+  std::string* alt_name;
+  std::string* choice_name;
+};
+
+struct Alternative {
+  std::string* alt_name;
+  std::string* choice_name;
+  Address argument;
+};
+
+struct TupleValue {
+  std::vector<TupleElement>* elements;
+};
+
+struct VariablePatternValue {
+  std::string* name;
+  const Value* type;
+};
+
+struct FunctionTypeValue {
+  const Value* param;
+  const Value* ret;
+};
+
+struct PointerType {
+  const Value* type;
+};
+
+struct StructType {
+  std::string* name;
+  VarValues* fields;
+  VarValues* methods;
+};
+
+struct ChoiceType {
+  std::string* name;
+  VarValues* alternatives;
+};
+
+struct ContinuationValue {
+  std::vector<Frame*>* stack;
+};
+
 struct Value {
   ValKind tag;
+
+  // Constructors
+
+  // Return a first-class continuation represented by the
+  // given stack, down to the nearest enclosing `__continuation`.
+  static auto MakeContinuation(std::vector<Frame*> stack) -> Value*;
+  static auto MakeIntVal(int i) -> const Value*;
+  static auto MakeBoolVal(bool b) -> const Value*;
+  static auto MakeFunVal(std::string name, const Value* param,
+                         const Statement* body) -> const Value*;
+  static auto MakePtrVal(Address addr) -> const Value*;
+  static auto MakeStructVal(const Value* type, const Value* inits)
+      -> const Value*;
+  static auto MakeTupleVal(std::vector<TupleElement>* elts) -> const Value*;
+  static auto MakeAltVal(std::string alt_name, std::string choice_name,
+                         Address argument) -> const Value*;
+  static auto MakeAltCons(std::string alt_name, std::string choice_name)
+      -> const Value*;
+  static auto MakeVarPatVal(std::string name, const Value* type)
+      -> const Value*;
+  static auto MakeVarTypeVal(std::string name) -> const Value*;
+  static auto MakeIntTypeVal() -> const Value*;
+  static auto MakeContinuationTypeVal() -> const Value*;
+  static auto MakeAutoTypeVal() -> const Value*;
+  static auto MakeBoolTypeVal() -> const Value*;
+  static auto MakeTypeTypeVal() -> const Value*;
+  static auto MakeFunTypeVal(const Value* param, const Value* ret)
+      -> const Value*;
+  static auto MakePtrTypeVal(const Value* type) -> const Value*;
+  static auto MakeStructTypeVal(std::string name, VarValues* fields,
+                                VarValues* methods) -> const Value*;
+  static auto MakeVoidTypeVal() -> const Value*;
+  static auto MakeChoiceTypeVal(std::string name, VarValues* alts)
+      -> const Value*;
+
+  // Access to alternatives
+  int GetInteger() const;
+  bool GetBoolean() const;
+  Function GetFunction() const;
+  StructConstructor GetStruct() const;
+  AlternativeConstructor GetAlternativeConstructor() const;
+  Alternative GetAlternative() const;
+  TupleValue GetTuple() const;
+  Address GetPointer() const;
+  std::string* GetVariableType() const;
+  VariablePatternValue GetVariablePattern() const;
+  FunctionTypeValue GetFunctionType() const;
+  PointerType GetPointerType() const;
+  StructType GetStructType() const;
+  ChoiceType GetChoiceType() const;
+  ContinuationValue GetContinuation() const;
+
+ private:
   union {
     int integer;
     bool boolean;
-
-    struct {
-      std::string* name;
-      const Value* param;
-      const Statement* body;
-    } fun;
-
-    struct {
-      const Value* type;
-      const Value* inits;
-    } struct_val;
-
-    struct {
-      std::string* alt_name;
-      std::string* choice_name;
-    } alt_cons;
-
-    struct {
-      std::string* alt_name;
-      std::string* choice_name;
-      Address argument;
-    } alt;
-
-    struct {
-      VarAddresses* elts;
-    } tuple;
-
+    Function fun;
+    StructConstructor struct_val;
+    AlternativeConstructor alt_cons;
+    Alternative alt;
+    TupleValue tuple;
     Address ptr;
     std::string* var_type;
-
-    struct {
-      std::string* name;
-      const Value* type;
-    } var_pat;
-
-    struct {
-      const Value* param;
-      const Value* ret;
-    } fun_type;
-
-    struct {
-      const Value* type;
-    } ptr_type;
-
-    struct {
-      std::string* name;
-      VarValues* fields;
-      VarValues* methods;
-    } struct_type;
-
-    struct {
-      std::string* name;
-      VarValues* alternatives;
-    } choice_type;
-
-    struct {
-      std::list<std::string*>* params;
-      const Value* type;
-    } implicit;
-
-    struct {
-      std::vector<Frame*>* stack;
-    } continuation;
-
+    VariablePatternValue var_pat;
+    FunctionTypeValue fun_type;
+    PointerType ptr_type;
+    StructType struct_type;
+    ChoiceType choice_type;
+    ContinuationValue continuation;
   } u;
 };
-
-// Return a first-class continuation represented by the
-// given stack, down to the nearest enclosing `__continuation`.
-auto MakeContinuation(std::vector<Frame*> stack) -> Value*;
-auto MakeIntVal(int i) -> const Value*;
-auto MakeBoolVal(bool b) -> const Value*;
-auto MakeFunVal(std::string name, const Value* param, const Statement* body)
-    -> const Value*;
-auto MakePtrVal(Address addr) -> const Value*;
-auto MakeStructVal(const Value* type, const Value* inits) -> const Value*;
-auto MakeTupleVal(std::vector<std::pair<std::string, Address>>* elts)
-    -> const Value*;
-auto MakeAltVal(std::string alt_name, std::string choice_name, Address argument)
-    -> const Value*;
-auto MakeAltCons(std::string alt_name, std::string choice_name) -> const Value*;
-
-auto MakeVarPatVal(std::string name, const Value* type) -> const Value*;
-
-auto MakeVarTypeVal(std::string name) -> const Value*;
-auto MakeIntTypeVal() -> const Value*;
-auto MakeContinuationTypeVal() -> const Value*;
-auto MakeAutoTypeVal() -> const Value*;
-auto MakeBoolTypeVal() -> const Value*;
-auto MakeTypeTypeVal() -> const Value*;
-auto MakeFunTypeVal(const Value* param, const Value* ret) -> const Value*;
-auto MakePtrTypeVal(const Value* type) -> const Value*;
-auto MakeStructTypeVal(std::string name, VarValues* fields, VarValues* methods)
-    -> const Value*;
-auto MakeVoidTypeVal() -> const Value*;
-auto MakeChoiceTypeVal(std::string name, VarValues* alts) -> const Value*;
 
 void PrintValue(const Value* val, std::ostream& out);
 
