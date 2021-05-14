@@ -25,8 +25,8 @@ struct EvaluateCall: Action {
 
   /// Notional coroutine state.
   ///
-  /// A suspended Call action (on the todo list) is either `.nascent`, or it's
-  /// doing what the step name indicates (via sub-actions).
+  /// A suspended Call action on the todo list is either nascent (with a `nil`
+  /// step), or it's doing what the step name indicates (via sub-actions).
   private enum Step: Int {
     case evaluateCallee, evaluateArguments,
          runBody,
