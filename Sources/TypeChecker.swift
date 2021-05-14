@@ -126,20 +126,20 @@ private extension TypeChecker {
     }
   }
 
-  /// Returns the type that `e` evaluates to, or `Type.error` if `e` doesn't
-  /// evaluate to a type.
-  mutating func evaluate(_ e: TypeExpression) -> Type {
+  /// Type-checks `e` and returns its compile-time type value, or `Type.error`
+  /// if `e` does not describe a type that can be computed at compile-time.
+  mutating func value(_ e: TypeExpression) -> Type {
     let t = type(e.body)
     if !t.isMetatype {
       return error(e, "Not a type expression (value has type \(t))")
     }
-    let v = evaluate(e.body)
+    let v = value(e.body)
     return Type(v)!
   }
 
-  /// Returns the result of evaluating `e`, logging an error if `e` doesn't
-  /// have a value that can be computed at compile-time.
-  mutating func evaluate(_ e: Expression) -> Value {
+  /// Type-checks `e` and returns its compile-time value, logging an error if
+  /// the value can't be computed at compile-time.
+  mutating func value(_ e: Expression) -> Value {
     // Temporarily evaluating the easy subset of type expressions until we have
     // an interpreter.
     switch e {
@@ -157,8 +157,7 @@ private extension TypeChecker {
     case let .booleanLiteral(r, _):
       return r
     case let .tupleLiteral(t):
-      return t.fields(reportingDuplicatesIn: &errors)
-        .mapFields { self.evaluate($0) }
+      return t.fields(reportingDuplicatesIn: &errors).mapFields { value($0) }
     case .unaryOperator(_):
       UNIMPLEMENTED()
     case .binaryOperator(_):
@@ -173,10 +172,9 @@ private extension TypeChecker {
       return Type.type
     case let .functionType(f):
       // Evaluate `f.parameters` as a type expression so we'll get a diagnostic
-      // if it isn't a type.
-      let p = evaluate(TypeExpression(f.parameters)).tuple ?? .void
-      return Type.function(
-        parameterTypes: p, returnType: evaluate(f.returnType))
+      // if it isn't a type.  Fall back to void if the result was `Type.error`.
+      let p = value(TypeExpression(f.parameters)).tuple ?? .void
+      return Type.function(parameterTypes: p, returnType: value(f.returnType))
     }
   }
 
@@ -185,6 +183,7 @@ private extension TypeChecker {
   /// - Requires: if `d` declares a binding, its type has already been memoized
   ///   or is declared as a type expression rather than with `auto`.
   mutating func typeOfName(declaredBy d: Declaration) -> Type {
+    // Check the memo
     switch typeOfNameDeclaredBy[d.identity] {
     case .beingComputed:
       return error(d.name, "type dependency loop")
@@ -192,17 +191,16 @@ private extension TypeChecker {
       return t
     case nil: ()
     }
-
     typeOfNameDeclaredBy[d.identity] = .beingComputed
 
     let r: Type
-    switch d {
+    switch d { // Initialize r.
     case is TypeDeclaration:
       r = .type
 
     case let x as SimpleBinding:
       if let e = x.type.expression {
-        r = evaluate(e)
+        r = value(e)
       }
       else {
         check(enclosingInitialization[x]!)
@@ -214,16 +212,18 @@ private extension TypeChecker {
       r = typeOfName(declaredBy: x)
 
     case let a as Alternative:
-      let payload = evaluate(TypeExpression(a.payload))
+      let payload = value(TypeExpression(a.payload))
       let payloadTuple = payload == .error ? .void : payload.tuple!
       r = .alternative(
         parent: ASTIdentity(of: enclosingChoice[a]!), payload: payloadTuple)
 
     case let x as StructMember:
-      r = evaluate(x.type)
+      r = value(x.type)
 
-    default: UNREACHABLE() // All possible cases should be handled.
+    default: UNREACHABLE()
     }
+
+    // memoize the result.
     typeOfNameDeclaredBy[d.identity] = .final(r)
     return r
   }
@@ -257,9 +257,9 @@ private extension TypeChecker {
       return typeOfName(declaredBy: program.definition[v]!)
 
     case let .functionType(f):
-      let p = evaluate(TypeExpression(f.parameters))
+      let p = value(TypeExpression(f.parameters))
       assert(p == .error || p.tuple != nil)
-      _ = evaluate(f.returnType)
+      _ = value(f.returnType)
       return .type
 
     case .intType, .boolType, .typeType:
@@ -277,7 +277,7 @@ private extension TypeChecker {
       guard indexType == .int else {
         return error(index, "Index type must be Int, not \(indexType)")
       }
-      let indexValue = evaluate(index) as! Int
+      let indexValue = value(index) as! Int
       if let r = types[indexValue] { return r }
       return error(
         index, "Tuple type \(types) has no value at position \(indexValue)")
@@ -378,7 +378,7 @@ private extension TypeChecker {
       return .choice(resultID)
 
     case .type:
-      let calleeValue = evaluate(TypeExpression(e.callee))
+      let calleeValue = value(TypeExpression(e.callee))
       guard case .struct(let s) = calleeValue else {
         return error(e.callee, "type \(calleeValue) is not callable.")
       }
@@ -414,7 +414,7 @@ private extension TypeChecker {
 
     case .type:
       // Handle access to a type member, like a static member in C++.
-      if case let .choice(id) = evaluate(TypeExpression(e.base)) {
+      if case let .choice(id) = value(TypeExpression(e.base)) {
         let c: ChoiceDefinition = id.structure
         return c[e.member].map { typeOfName(declaredBy: $0) }
           ?? error(
@@ -441,7 +441,7 @@ private extension TypeChecker {
 
     let returnType: Type
     if case .expression(let t) = f.returnType {
-      returnType = evaluate(t)
+      returnType = value(t)
     }
     else if case .some(.return(let e, _)) = f.body {
       returnType = type(e)
@@ -464,7 +464,7 @@ private extension TypeChecker {
       return type(e)
 
     case let .variable(binding):
-      let r = binding.type.expression.map { evaluate($0) }
+      let r = binding.type.expression.map { value($0) }
         ?? rhs ?? error(
           binding.type, "No initializer available to deduce type for auto")
       typeOfNameDeclaredBy[binding.identity] = .final(r)
@@ -522,7 +522,7 @@ private extension TypeChecker {
 
     switch calleeType {
     case .type:
-      let calleeValue = Type(evaluate(p.callee))!
+      let calleeValue = Type(value(p.callee))!
 
       guard case .struct(let resultID) = calleeValue else {
         return error(
@@ -572,7 +572,7 @@ private extension TypeChecker {
   ) -> TupleType {
     if let r = initializerTuples[s.structure] { return r }
     let r = s.structure.initializerTuple.fields(reportingDuplicatesIn: &errors)
-      .mapFields { evaluate($0) }
+      .mapFields { value($0) }
     initializerTuples[s.structure] = r
     return r
   }
