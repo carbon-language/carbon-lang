@@ -13,6 +13,9 @@ namespace Carbon {
 FnInserter::FnInserter(std::map<std::string, Replacements>& in_replacements,
                        cam::MatchFinder* finder)
     : Matcher(in_replacements) {
+  // TODO: Switch from isExpansionInMainFile to isDefinition. That should then
+  // include `for (const auto* redecl : func->redecls())` to generate
+  // replacements.
   finder->addMatcher(
       cam::functionDecl(cam::isExpansionInMainFile(), cam::hasTrailingReturn())
           .bind(Label),
