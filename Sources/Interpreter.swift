@@ -121,7 +121,7 @@ extension Interpreter {
     // with an action, so we put a no-op action on the todo stack.
 
     beginScope(kind: .temporary)
-    todo.push(NoopAction())
+    todo.push(NoOpAction())
 
     exitCodeStorage = memory.allocate(boundTo: .int, from: .empty)
     todo.push(EvaluateCall(
