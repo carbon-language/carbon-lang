@@ -23,7 +23,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [Interfaces recap](#interfaces-recap)
 -   [Type-types and facet types](#type-types-and-facet-types)
 -   [Structural interfaces](#structural-interfaces)
-    -   [Subsumption](#subsumption)
+    -   [Subtyping between type-types](#subtyping-between-type-types)
     -   [Future work: method constraints](#future-work-method-constraints)
 -   [Combining interfaces by adding type-types](#combining-interfaces-by-adding-type-types)
 -   [Interface requiring other interfaces](#interface-requiring-other-interfaces)
@@ -118,6 +118,8 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 ## Overview
 
+This document goes into the details of the design of generic type parameters.
+
 Imagine we want to write a function parameterized by a type argument. Maybe our
 function is `PrintToStdout` and let's say we want to operate on values that have
 a type for which we have an implementation of the `ConvertibleToString`
@@ -161,7 +163,7 @@ a separate function body for every different type passed in) by using the
 argument syntax (just a colon, `:`, see
 [the runtime type parameters section](#runtime-type-parameters) below). Either
 way, the interface contains enough information to
-[type/definition check](terminology.md#complete-definition-checking) the
+[type and definition check](terminology.md#complete-definition-checking) the
 function body -- you can only call functions defined in the interface in the
 function body. Contrast this with making the type a template argument, where you
 could just use `Type` instead of an interface and it will work as long as the
@@ -169,9 +171,9 @@ function is only called with types that allow the definition of the function to
 compile. You are still allowed to declare templated type arguments as having an
 interface type, and this will add a requirement that the type satisfy the
 interface independent of whether that is needed to compile the function body,
-but it is strictly optional (you might do this to get clearer error messages,
-document expectations, or express that a type has certain semantics beyond what
-is captured in its member function names and signatures).
+but it is strictly optional. You might still do this to get clearer error
+messages, document expectations, or express that a type has certain semantics
+beyond what is captured in its member function names and signatures).
 
 The last piece of the puzzle is how the caller of the function can produce a
 value with the right type. Let's say the user has a value of type `Widget`, and
@@ -220,8 +222,8 @@ those alternate implementations. For more on this, see
 ## Interfaces
 
 An [interface](terminology.md#interface), defines an API that a given type can
-implement. For example, an interface capturing a vector API might have two
-methods:
+implement. For example, an interface capturing a linear-algebra vector API might
+have two methods:
 
 ```
 interface Vector {
@@ -313,10 +315,10 @@ z.Add(b);
 var Point: w = z as Point;
 ```
 
-These [casts](#subsumption-and-casting) change which names are exposed in the
-type's API, but as much as possible we don't want the meaning of any given name
-to change. Instead we want these casts to simply change the subset of names that
-are visible.
+These [casts](terminology.md#subtyping-and-casting) change which names are
+exposed in the type's API, but as much as possible we don't want the meaning of
+any given name to change. Instead we want these casts to simply change the
+subset of names that are visible.
 
 **Note:** In general the above is written assuming that casts are written
 "`a as T`" where `a` is a value and `T` is the type to cast to. When we write
@@ -382,6 +384,8 @@ struct Player {
     // ...
   }
   impl GameUnit {
+    // Possible syntax for defining `GameUnit.Name` as
+    // the same as `Icon.Name`:
     alias Name = Icon.Name;
     // ...
   }
@@ -400,8 +404,8 @@ struct Point2 {
 }
 
 extend Point2 {
+  // In this scope, "Self" is an alias for "Point2".
   impl Vector {
-    // In this scope, "Self" is an alias for "Point2".
     method (Self: a) Add(Self: b) -> Self {
       return Point2(.x = a.x + b.x, .y = a.y + b.y);
     }
@@ -531,20 +535,31 @@ Assert(p1.(Vector.Add)(p1) == p2);
 ```
 
 Note that the name in the parens is looked up in the containing scope, not in
-the names of members of `Point2`. So if there was another interface
-`MyInterface` with method `MyMember` defined in the `MyPackage` package also
-implemented for `Point2`, you could access `MyMember` with a qualified name:
+the names of members of `Point2`. So if there was another interface `Drawable`
+with method `Draw` defined in the `Plot` package also implemented for `Point2`,
+as in:
 
 ```
-import MyPackage;
+package Plot;
+import Points;
 
-struct Point2 {
-  ...
-  impl MyPackage.MyInterface { ... }
+interface Drawable {
+  method (Self this) Draw();
 }
 
-var Point2: p = (.x = 1.0, .y = 2.0);
-p.(MyPackage.MyInterface.MyMember)();
+extend Points.Point2 {
+  impl Drawable { ... }
+}
+```
+
+You could access `Draw` with a qualified name:
+
+```
+import Plot;
+import Points;
+
+var Points.Point2: p = (.x = 1.0, .y = 2.0);
+p.(Plot.Drawable.Draw)();
 ```
 
 **Comparison with other languages:** This is intended to be analogous to, in
@@ -627,7 +642,7 @@ The underlying model here is interfaces are
 [facet types](terminology.md#facet-type):
 
 -   [Interfaces](#interfaces) are types of
-    [witness table](terminology.md#witness-tables)s
+    [witness tables](terminology.md#witness-tables)
 -   Facet types (defined by [Impls](#implementing-interfaces)) are
     [witness table](terminology.md#witness-tables) values
 -   The compiler rewrites functions with an implicit type argument
@@ -635,17 +650,16 @@ The underlying model here is interfaces are
     determined by the interface, and supplied at the callsite using a value
     determined by the impl.
 
-Context:
-[Carbon: types as function tables, interfaces as type-types (TODO)](#broken-links-footnote)<!-- T:Carbon: types as function tables, interfaces as type-types -->
-
 For the example above, [the Vector interface](#interfaces) could be thought of
 defining a witness table type like:
 
 ```
 struct Vector {
-  var Type:$ Self;  // Self is the representation type.
-  // Self is a member, not a parameter, so there is a single witness table type
-  // across different `Self` types.
+  // Self is the representation type.
+  var Type:$ Self;
+  // `fnty` is **placeholder** syntax for a "function type",
+  // so `Add` is a function that takes two `Self` parameters
+  // and returns a value of type `Self`.
   var fnty(Self: a, Self: b) -> Self : Add;
   var fnty(Self: a, Double: v) -> Self : Scale;
 }
@@ -657,26 +671,28 @@ this type:
 ```
 var Vector : VectorForPoint = (
     .Self = Point,
-    .Add = fnty(Point: a, Point: b) -> Point {
+    // `lambda` is **placeholder** syntax for defining a
+    // function value.
+    .Add = lambda(Point: a, Point: b) -> Point {
       return Point(.x = a.x + b.x, .y = a.y + b.y);
     },
-    .Scale = fnty(Point: a, Double: v) -> Point {
+    .Scale = lambda(Point: a, Double: v) -> Point {
       return Point(.x = a.x * v, .y = a.y * v);
     },
 );
 ```
 
 Finally we can define a generic function and call it, like
-<code>[AddAndScaleGeneric from the "Generics" section above](#generics)</code>
-by making the witness table a regular argument to the function:
+[`AddAndScaleGeneric` from the "Generics" section](#generics) by making the
+witness table an explicit argument to the function:
 
 ```
-fn AddAndScaleGeneric[Type:$ T]
-    (T: a, T: b, Double: s, Ptr(Vector(T)):$ impl) -> T {
-  return impl->Scale(impl->Add(a, b), s);
+fn AddAndScaleGeneric
+    (Vector:$ impl, impl.Self: a, impl.Self: b, Double: s) -> impl.Self {
+  return impl.Scale(impl.Add(a, b), s);
 }
 // Point implements Vector.
-var Point: v = AddAndScaleGeneric(a, w, 2.5, &VectorForPoint);
+var Point: v = AddAndScaleGeneric(VectorForPoint, a, w, 2.5);
 ```
 
 The rule is that generic arguments (declared using `:$`) are passed at compile
@@ -689,9 +705,10 @@ the code for `AddAndScaleGeneric`. So `AddAndScaleGeneric` is using a
 Interfaces have a name and a definition.
 
 The definition of an interface consists of a set of declarations. Each
-declaration defines a requirement for `impl` that is in turn a capability that
-users can rely on. Typically those declarations also have a name, useful for
-both satisfying the requirement and accessing the capability.
+declaration defines a requirement for any `impl` that is in turn a capability
+that consumers of that `impl` can rely on. Typically those declarations also
+have names, useful for both saying how the `impl` satisfies the requirement and
+accessing the capability.
 
 Interfaces are ["nominal"](terminology.md#nominal-interfaces), which means their
 name is significant. So two interfaces with the same body definition but
@@ -699,7 +716,8 @@ different names are different, just like two structs with the same definition
 but different names are considered different types. For example, lets say we
 define another interface, say `LegoFish`, with the same `Add` and `Scale` method
 signatures. Implementing `Vector` would not imply an implementation of
-`LegoFish`, because the implementation explicitly refers to the name `Vector`.
+`LegoFish`, because the `impl` definition explicitly refers to the name
+`Vector`.
 
 An interface's name may be used in a few different contexts:
 
@@ -770,14 +788,14 @@ That is, `Type` is the type-type with no requirements (so matches every type),
 and defines no names.
 
 ```
-fn F[Type:$ T](T: x) -> T {
+fn Identity[Type:$ T](T: x) -> T {
   // Can accept values of any type. But, since we no nothing about the
   // type, we don't know about any operations on `x` inside this function.
   return x;
 }
 
-var Int: i = F(3);
-var String: s = F("string");
+var Int: i = Identity(3);
+var String: s = Identity("string");
 ```
 
 **Aside:** We can define `auto` as syntactic sugar for `(Type:$$ _)`. This
@@ -821,7 +839,7 @@ struct ImplementsI {
 But the corresponding `structural interface`, `S`:
 
 ```
-interface S {
+structural interface S {
   X;
   Y;
   Z;
@@ -839,10 +857,11 @@ struct ImplementsS {
 }
 ```
 
-### Subsumption
+### Subtyping between type-types
 
-**TODO** Rewrite in terms of "subtyping" since the word "subsumes" is ambiguous
-in this context.
+There is a subtyping relationship between type-types that allows you to call one
+generic function from another as long as you are calling a function with a
+subset of your requirements.
 
 Given a generic type `T` with type-type `I1`, it may be
 [implicitly cast](terminology.md#subtyping-and-casting) to a type-type `I2`,
@@ -851,23 +870,27 @@ the requirements of `I2`. Further, given a value `x` of type `T`, it can be
 implicitly cast to `T as I2`. For example:
 
 ```
-interface A { method (Self: this) AMethod(); }
-interface B { method (Self: this) BMethod(); }
-structural interface I1 {
-  impl A;
-  impl B;
+interface Printable { method (Self: this) Print(); }
+interface Renderable { method (Self: this) Draw(); }
+structural interface PrintAndRender {
+  impl Printable;
+  impl Renderable;
 }
-structural interface I2 {
-  impl A;
+structural interface JustPrint {
+  impl Printable;
 }
-fn F2[I2:$ T2](T2: x2) {
-  x2.(A.AMethod)();
+fn PrintIt[JustPrint:$ T2](T2: x2) {
+  x2.(Printable.Print)();
 }
-fn F1[I1:$ T1](T1: x1) {
-  x1.(A.AMethod)();
-  x1.(B.BMethod)();
-  // Calls `F2` with `T2 == T1 as I2` and `x2 == x1 as T2`.
-  F2(x1);
+fn PrintDrawPrint[PrintAndRender:$ T1](T1: x1) {
+  // x1 implements `Printable` and `Renderable`.
+  x1.(Printable.Print)();
+  x1.(Renderable.Draw)();
+  // Can call `PrintIt` since `T1` satisfies `JustPrint` since
+  // it implements `Printable` (in addition to `Renderable`).
+  // This calls `PrintIt` with `T2 == T1 as JustPrint` and
+  // `x2 == x1 as T2`.
+  PrintIt(x1);
 }
 ```
 
