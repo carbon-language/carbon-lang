@@ -260,9 +260,10 @@ def _bootstrap_clang_toolchain_impl(repository_ctx):
         # Fallback to a local build.
         _local_cmake_build_clang_toolchain(repository_ctx)
 
-    # Create an empty BUILD file to mark the package. The files are used without
-    # Bazel labels directly pointing at them.
-    repository_ctx.file("BUILD")
+    # Create a BUILD file to mark the package. The files are usually used
+    # without Bazel labels, but the export allows dependencies; for example, to
+    # use clang-tidy.
+    repository_ctx.file("BUILD", 'exports_files(glob(["bin/*"]))')
 
 bootstrap_clang_toolchain = repository_rule(
     implementation = _bootstrap_clang_toolchain_impl,

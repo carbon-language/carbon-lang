@@ -28,97 +28,125 @@ enum class StatementKind {
   Await,         // Pause execution of the continuation.
 };
 
+struct Statement;
+
+struct Assignment {
+  const Expression* lhs;
+  const Expression* rhs;
+};
+
+struct VariableDefinition {
+  const Expression* pat;
+  const Expression* init;
+};
+
+struct IfStatement {
+  const Expression* cond;
+  const Statement* then_stmt;
+  const Statement* else_stmt;
+};
+
+struct Sequence {
+  const Statement* stmt;
+  const Statement* next;
+};
+
+struct Block {
+  const Statement* stmt;
+};
+
+struct While {
+  const Expression* cond;
+  const Statement* body;
+};
+
+struct Match {
+  const Expression* exp;
+  std::list<std::pair<const Expression*, const Statement*>>* clauses;
+};
+
+struct Continuation {
+  std::string* continuation_variable;
+  const Statement* body;
+};
+
+struct Run {
+  const Expression* argument;
+};
+
 struct Statement {
+  // TODO: change Statement to a class and make all members private
   int line_num;
   StatementKind tag;
 
+  // Constructors
+  static auto MakeExpStmt(int line_num, const Expression* exp)
+      -> const Statement*;
+  static auto MakeAssign(int line_num, const Expression* lhs,
+                         const Expression* rhs) -> const Statement*;
+  static auto MakeVarDef(int line_num, const Expression* pat,
+                         const Expression* init) -> const Statement*;
+  static auto MakeIf(int line_num, const Expression* cond,
+                     const Statement* then_stmt, const Statement* else_stmt)
+      -> const Statement*;
+  static auto MakeReturn(int line_num, const Expression* e) -> const Statement*;
+  static auto MakeSeq(int line_num, const Statement* s1, const Statement* s2)
+      -> const Statement*;
+  static auto MakeBlock(int line_num, const Statement* s) -> const Statement*;
+  static auto MakeWhile(int line_num, const Expression* cond,
+                        const Statement* body) -> const Statement*;
+  static auto MakeBreak(int line_num) -> const Statement*;
+  static auto MakeContinue(int line_num) -> const Statement*;
+  static auto MakeMatch(
+      int line_num, const Expression* exp,
+      std::list<std::pair<const Expression*, const Statement*>>* clauses)
+      -> const Statement*;
+  // Returns an AST node for a continuation statement give its line number and
+  // contituent parts.
+  //
+  //     __continuation <continuation_variable> {
+  //       <body>
+  //     }
+  static auto MakeContinuation(int line_num, std::string continuation_variable,
+                               const Statement* body) -> const Statement*;
+  // Returns an AST node for a run statement give its line number and argument.
+  //
+  //     __run <argument>;
+  static auto MakeRun(int line_num, const Expression* argument)
+      -> const Statement*;
+  // Returns an AST node for an await statement give its line number.
+  //
+  //     __await;
+  static auto MakeAwait(int line_num) -> const Statement*;
+
+  // Access to the alternatives
+  const Expression* GetExpression() const;
+  Assignment GetAssign() const;
+  VariableDefinition GetVariableDefinition() const;
+  IfStatement GetIf() const;
+  const Expression* GetReturn() const;
+  Sequence GetSequence() const;
+  Block GetBlock() const;
+  While GetWhile() const;
+  Match GetMatch() const;
+  Continuation GetContinuation() const;
+  Run GetRun() const;
+
+ private:
   union {
     const Expression* exp;
-
-    struct {
-      const Expression* lhs;
-      const Expression* rhs;
-    } assign;
-
-    struct {
-      const Expression* pat;
-      const Expression* init;
-    } variable_definition;
-
-    struct {
-      const Expression* cond;
-      const Statement* then_stmt;
-      const Statement* else_stmt;
-    } if_stmt;
-
+    Assignment assign;
+    VariableDefinition variable_definition;
+    IfStatement if_stmt;
     const Expression* return_stmt;
-
-    struct {
-      const Statement* stmt;
-      const Statement* next;
-    } sequence;
-
-    struct {
-      const Statement* stmt;
-    } block;
-
-    struct {
-      const Expression* cond;
-      const Statement* body;
-    } while_stmt;
-
-    struct {
-      const Expression* exp;
-      std::list<std::pair<const Expression*, const Statement*>>* clauses;
-    } match_stmt;
-
-    struct {
-      std::string* continuation_variable;
-      const Statement* body;
-    } continuation;
-
-    struct {
-      const Expression* argument;
-    } run;
-
+    Sequence sequence;
+    Block block;
+    While while_stmt;
+    Match match_stmt;
+    Continuation continuation;
+    Run run;
   } u;
 };
-
-auto MakeExpStmt(int line_num, const Expression* exp) -> const Statement*;
-auto MakeAssign(int line_num, const Expression* lhs, const Expression* rhs)
-    -> const Statement*;
-auto MakeVarDef(int line_num, const Expression* pat, const Expression* init)
-    -> const Statement*;
-auto MakeIf(int line_num, const Expression* cond, const Statement* then_stmt,
-            const Statement* else_stmt) -> const Statement*;
-auto MakeReturn(int line_num, const Expression* e) -> const Statement*;
-auto MakeSeq(int line_num, const Statement* s1, const Statement* s2)
-    -> const Statement*;
-auto MakeBlock(int line_num, const Statement* s) -> const Statement*;
-auto MakeWhile(int line_num, const Expression* cond, const Statement* body)
-    -> const Statement*;
-auto MakeBreak(int line_num) -> const Statement*;
-auto MakeContinue(int line_num) -> const Statement*;
-auto MakeMatch(
-    int line_num, const Expression* exp,
-    std::list<std::pair<const Expression*, const Statement*>>* clauses)
-    -> const Statement*;
-// Returns an AST node for a continuation statement give its line number and
-// contituent parts.
-//
-//     __continuation <continuation_variable> {
-//       <body>
-//     }
-auto MakeContinuationStatement(int line_num, std::string continuation_variable,
-                               const Statement* body) -> const Statement*;
-// Returns an AST node for a run statement give its line number and argument.
-//
-//     __run <argument>;
-auto MakeRun(int line_num, const Expression* argument) -> const Statement*;
-// Returns an AST node for an await statement give its line number.
-//
-//     __await;
-auto MakeAwait(int line_num) -> const Statement*;
 
 void PrintStatement(const Statement*, int);
 

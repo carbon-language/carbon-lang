@@ -1,4 +1,4 @@
 8: type error in ==
-expected: (0 = Int@2, 1 = Int@3)
-actual: (0 = Int@5)
+expected: (0 = Int, 1 = Int)
+actual: (0 = Int)
 EXIT CODE: 255
