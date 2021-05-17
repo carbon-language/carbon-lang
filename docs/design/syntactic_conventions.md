@@ -26,7 +26,7 @@ update as appropriate.
 
 ## Overview
 
-Right now we expect variable syntax like: `Int: x`.
+Right now we expect variable syntax like: `Int x`.
 
 There are probably other syntactic conventions that can be added here, too.
 
@@ -45,7 +45,7 @@ One very important consideration here is the fundamental approach to type
 inference. Languages which use the syntax `<identifier>: <type>` typically allow
 completely omitting the colon and the type to signify inference. With C++,
 inference is achieved with a placeholder keyword `auto`, and Carbon is currently
-being consistent there as well with `auto: <identifier>`. For languages which
+being consistent there as well with `auto <identifier>`. For languages which
 simply allow omission, this seems an intentional incentive to encourage
 inference. On the other hand, there has been strong advocacy in the C++
 community to not overly rely on inference and to write the explicit type
