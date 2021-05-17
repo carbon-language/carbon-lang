@@ -94,7 +94,7 @@ EXAMPLES = [
 
 [genrule(
     name = "%s_out" % e,
-    srcs = ["testdata/%s.6c" % e],
+    srcs = ["testdata/%s.carbon" % e],
     outs = ["testdata/%s.out" % e],
     # Suppress command errors.
     cmd = "$(location executable_semantics) $< > $@ 2>&1 || echo EXIT CODE: $$? >> $@",
