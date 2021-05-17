@@ -17,15 +17,16 @@ func fatal<R>(
 }
 
 struct Memory {
-  /// Returns an uninitialized address bound to `t`.
+  /// Returns an uninitialized address.
   ///
-  /// - Parameter `mutable`: `true` iff mutations of the Value at this address
+  /// - Parameter site: the region of the code that triggered the allocation.
+  /// - Parameter mutable: `true` iff mutations of the Value at this address
   ///   will be allowed.
   mutating func allocate(
-    boundTo t: Type, from site: SourceRegion, mutable: Bool = false
+    from site: SourceRegion, mutable: Bool = false
   ) -> Address {
     defer { nextAddress += 1 }
-    storage[nextAddress] = Location(boundType: t, site: site, mutable: mutable)
+    storage[nextAddress] = Location(site: site, mutable: mutable)
     return nextAddress
   }
 
@@ -36,11 +37,6 @@ struct Memory {
   mutating func initialize(_ a: Address, to v: Value) {
     let i = storage.index(forKey: a)
       ?? fatal("initializing unallocated address \(a).")
-    precondition(
-      storage[i].value.boundType == v.type,
-      "initializing location \(a) bound to \(storage[i].value.boundType) with "
-        + "value of type \(v.type)."
-    )
     storage.values[i].content = v
   }
 
@@ -91,12 +87,7 @@ struct Memory {
   /// An allocated element of memory.
   private struct Location {
     /// The value stored in this location, if initialized.
-    ///
-    /// - Invariant: `stored == nil || stored!.type == boundType`.
     var content: Value? = nil
-
-    /// The type that this location is bound to.
-    let boundType: Type
 
     /// Where the storage was declared (if a variable), computed (if a
     /// temporary), or dynamically allocated.

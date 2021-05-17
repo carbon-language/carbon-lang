@@ -15,7 +15,9 @@ struct Interpreter {
 
   /// A mapping from local name declarations to addresses.
   var locals: ASTDictionary<SimpleBinding, Address> = .init()
-
+  /// A mapping from local expressions to addresses
+  var temporaries: ASTDictionary<Expression, Address> = .init()
+  
   /// The address that should be filled in by any `return` statements.
   var returnValueStorage: Address? = nil
 
@@ -48,7 +50,7 @@ struct Interpreter {
 
 extension Interpreter {
   mutating func start() {
-    exitCodeStorage = memory.allocate(boundTo: .int, from: .empty)
+    exitCodeStorage = memory.allocate(from: .empty)
 
     todo.push(EvaluateCall(
       call: program.entryPoint!,
@@ -84,8 +86,7 @@ extension Interpreter {
     `for` e: Expression, boundTo t: Type, mutable: Bool = false
   ) -> Address{
     precondition(temporaries[e] == nil, "Temporary already allocated.")
-    let a = memory.allocate(
-      boundTo: t, from: e.site.region, mutable: false)
+    let a = memory.allocate(from: e.site.region, mutable: false)
     temporaries[e] = a
     return a
   }
