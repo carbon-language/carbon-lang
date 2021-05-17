@@ -25,7 +25,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [Structural interfaces](#structural-interfaces)
     -   [Subtyping between type-types](#subtyping-between-type-types)
     -   [Future work: method constraints](#future-work-method-constraints)
--   [Combining interfaces by adding type-types](#combining-interfaces-by-adding-type-types)
+-   [Combining interfaces by anding type-types](#combining-interfaces-by-anding-type-types)
 -   [Interface requiring other interfaces](#interface-requiring-other-interfaces)
     -   [Interface extension](#interface-extension)
         -   [Covariant refinement](#covariant-refinement)
@@ -949,7 +949,7 @@ We could similarly support associated constant and
 [instance data field](#field-requirements) requirements. This is future work
 though, as it does not directly impact generics in Carbon.
 
-## Combining interfaces by adding type-types
+## Combining interfaces by anding type-types
 
 In order to support functions that require more than one interface to be
 implemented, we provide an addition operator on type-types. This operator gives
@@ -959,7 +959,7 @@ minus any conflicts.
 ```
 interface A { method (Self: this) AMethod(); }
 interface B { method (Self: this) BMethod(); }
-// `A + B` is syntactic sugar for this type-type:
+// `A & B` is syntactic sugar for this type-type:
 structural interface {
   impl A;
   impl B;
@@ -967,7 +967,7 @@ structural interface {
   alias BMethod = B.BMethod;
 }
 
-fn F[A + B:$ T](T: x) {
+fn F[A & B:$ T](T: x) {
   // Can use methods of `A` or `B` on `x` here.
   x.AMethod();  // Same as `x.(A.AMethod)();`.
   x.BMethod();  // Same as `x.(B.BMethod)();`.
@@ -994,7 +994,7 @@ interface D {
   method (Self: this) Two();
   method (Self: this) Three();
 }
-// `C + D` is syntactic sugar for this type-type:
+// `C & D` is syntactic sugar for this type-type:
 structural interface {
   impl C;
   impl D;
@@ -1026,37 +1026,38 @@ fn F[CAndD:$ T](T: x) {
 
 Reserving the name when there is a conflict is part of resolving what happens
 when you add more than two type-types. If `x` is forbidden in `A`, it is
-forbidden in `A + B`, whether or not `B` defines the name `x`. This makes `+`
+forbidden in `A & B`, whether or not `B` defines the name `x`. This makes `&`
 associative and commutative, and so it is well defined on sets of interfaces, or
 other type-types, independent of order.
 
 Note that we do _not_ consider two type-types using the same name to mean the
 same thing to be a conflict. For example, the adding a type-type to itself gives
-itself, `MyTypeType + MyTypeType == MyTypeType`. Also, given two
+itself, `MyTypeType & MyTypeType == MyTypeType`. Also, given two
 [interface extensions](#interface-extension) of a common base interface, the sum
 should not conflict on any names in the common base.
 
-**Open syntax question:** Instead of using `+` as the combining operator, we
-could use `&`. I'm using `+` in this proposal since it is
-[consistent with Rust](https://rust-lang.github.io/rfcs/0087-trait-bounds-with-plus.html),
+**Open syntax question:** Instead of using `&` as the combining operator, we
+could use `+`. I'm using `&` in this proposal since it is
+[consistent with Swift](https://docs.swift.org/swift-book/LanguageGuide/Protocols.html#ID282),
 but
-[Swift uses `&`](https://docs.swift.org/swift-book/LanguageGuide/Protocols.html#ID282).
+[Rust uses `+`](https://rust-lang.github.io/rfcs/0087-trait-bounds-with-plus.html).
+See [#531](https://github.com/carbon-language/carbon-lang/issues/531).
 
-**Future work:** We may want to define the `&` operator on type-types as well.
-This operator would be for adding requirements to a type-type without affecting
-the names, and so avoid the possibility of name conflicts. Note this means the
-operation is not commutative: `A & B` has the names of `A` and `B & A` has the
-names of `B`.
+**Future work:** We may want to define another operator on type-types for adding
+requirements to a type-type without affecting the names, and so avoid the
+possibility of name conflicts. Note this means the operation is not commutative.
+If we call this operator `[&]`, then `A [&] B` has the names of `A` and
+`B [&] A` has the names of `B`.
 
 ```
-// `A & B` is syntactic sugar for this type-type:
+// `A [&] B` is syntactic sugar for this type-type:
 structural interface {
   impl A;
   impl B;
   alias AMethod = A.AMethod;
 }
 
-// `C & D` is syntactic sugar for this type-type:
+// `C [&] D` is syntactic sugar for this type-type:
 structural interface {
   impl C;
   impl D;
@@ -1065,21 +1066,21 @@ structural interface {
 }
 ```
 
-Note that all three expressions `A + B`, `A & B`, and `B & A` have the same
+Note that all three expressions `A & B`, `A [&] B`, and `B [&] A` have the same
 requirements, and so you would be able to switch a function declaration between
 them without affecting callers.
 
-Nothing in this design depends on the `&` operator, and having both `+` and `&`
-might be confusing for users, so it makes sense to postpone implementing `&`
-until we have a demonstrated need. The `&` operator seems most useful for adding
-requirements for interfaces used for
+Nothing in this design depends on the `[&]` operator, and having both `&` and
+`[&]` might be confusing for users, so it makes sense to postpone implementing
+`[&]` until we have a demonstrated need. The `[&]` operator seems most useful
+for adding requirements for interfaces used for
 [operator overloading](#operator-overloading), where merely implementing the
 interface is enough to be able to use the operator to access the functionality.
 
 **Alternatives considered:** See
 [Carbon: Access to interface methods](https://docs.google.com/document/d/1u_i_s31OMI_apPur7WmVxcYq6MUXsG3oCiKwH893GRI/edit?usp=sharing&resourcekey=0-0lzSNebBMtUBi4lStL825g).
 
-**Comparison with other languages:** This `+` operation on interfaces works very
+**Comparison with other languages:** This `&` operation on interfaces works very
 similarly to Rust, with the main difference being how you
 [qualify names when there is a conflict](https://doc.rust-lang.org/rust-by-example/trait/disambiguating.html).
 
@@ -1423,7 +1424,7 @@ all of these types are equal:
 -   `HashMap(String, Int)`
 -   `HashMap(String as Hashable, Int as Type)`
 -   `HashMap((String as Printable) as Hashable, Int)`
--   `HashMap((String as Printable + Hashable) as Hashable, Int)`
+-   `HashMap((String as Printable & Hashable) as Hashable, Int)`
 
 This means we don't generally need to worry about getting the wrong facet type
 as the argument for a generic type. This means we don't get type mismatches when
@@ -1432,7 +1433,7 @@ constraints than the type requires:
 
 ```
 fn PrintValue[
-    Printable + Hashable:$ KeyT,
+    Printable & Hashable:$ KeyT,
     Printable:$ ValueT](HashMap(KeyT, ValueT): map, KeyT: key) { ... }
 
 var HashMap(String, Int): m;
@@ -2808,7 +2809,7 @@ fn LookUp[Type:$ KeyType](Ptr(HashMap(KeyType, Int)): hm,
                           KeyType: k) -> Int;
 
 fn PrintValueOrDefault[Printable:$ KeyType,
-                       Printable + HasDefault:$ ValueT]
+                       Printable & HasDefault:$ ValueT]
     (HashMap(KeyType, ValueT): map, KeyT: key);
 ```
 
@@ -2818,7 +2819,7 @@ others like `Sized`, `EqualityComparable`, `Movable`, and so on.
 
 ```
 struct HashMap(
-    Hashable + Sized + EqualityComparable + Movable:$ KeyType,
+    Hashable & Sized & EqualityComparable & Movable:$ KeyType,
     ...) { ... }
 ```
 
@@ -3202,7 +3203,7 @@ var ...(.T = AT):$ A;
 ```
 
 **Note:** It would be great if the
-['+' operator for type-types](#combining-interfaces-by-adding-type-types) was
+['&' operator for type-types](#combining-interfaces-by-anding-type-types) was
 all we needed to define the intersection of two type constraints, but it isn't
 yet defined for two type-types that have the same interface but with different
 constraints. And that requires being able to automatically combine constraints
@@ -3640,7 +3641,7 @@ single best match. Best is defined using the "more specific" partial ordering:
 -   A more restrictive constraint is more specific. In particular, a type-type
     `T` is more restrictive than a type-type `U` if the set of restrictions for
     `T` is a superset of those for `U`. So `Foo(T)` for
-    `Comparable + Printable:$ T` is more specific than `Comparable:$ T`, which
+    `Comparable & Printable:$ T` is more specific than `Comparable:$ T`, which
     is more specific than `Type:$ T`.
 -   TODO: others?
 
@@ -3714,8 +3715,8 @@ interface Comparable {
   method (Self: this) Compare(Self: that) -> CompareResult;
 }
 fn CombinedLess[Type:$ T](T: a, T: b,
-                          CompatibleWith(T) + Comparable:$ U,
-                          CompatibleWith(T) + Comparable:$ V) -> Bool {
+                          CompatibleWith(T) & Comparable:$ U,
+                          CompatibleWith(T) & Comparable:$ V) -> Bool {
   match ((a as U).Compare(b)) {
     case CompareResult.Less => { return True; }
     case CompareResult.Greater => { return False; }
@@ -3739,7 +3740,7 @@ We might generalize this to a list of implementations:
 
 ```
 fn CombinedCompare[Type:$ T]
-    (T: a, T: b, List(CompatibleWith(T) + Comparable):$ CompareList)
+    (T: a, T: b, List(CompatibleWith(T) & Comparable):$ CompareList)
     -> CompareResult {
   for (auto: U) in CompareList {
     var CompareResult: result = (a as U).Compare(b);
@@ -3761,7 +3762,7 @@ combine `CompatibleWith` with [type adaptation](#adapting-types):
 
 ```
 adapter ThenCompare(Type:$ T,
-                    List(CompatibleWith(T) + Comparable):$ CompareList) for T {
+                    List(CompatibleWith(T) & Comparable):$ CompareList) for T {
   impl Comparable {
     method (Self: this) Compare(Self: that) -> CompareResult {
       for (auto : U) in CompareList {
@@ -3825,7 +3826,7 @@ fn F[Foo: T](Ptr(T): x) {  // T is unsized.
   var T: y;  // Illegal: T is unsized.
 }
 // T is sized, but its size is only known generically.
-fn G[Foo + Sized: T](Ptr(T): x) {
+fn G[Foo & Sized: T](Ptr(T): x) {
   var T: y = *x;  // Allowed: T is sized and default constructible.
 }
 var Bar: z;
@@ -4117,7 +4118,7 @@ implementing `Printable` or a `DynPtr(Printable)`:
 ```
 // This is equivalent to `fn PrintIt[Printable:$ T](T*: x) ...`,
 // except it also accepts `DynPtr(Printable)` arguments.
-fn PrintIt[Printable:$ T, Deref(T) + Sized: PtrT](PtrT: x) {
+fn PrintIt[Printable:$ T, Deref(T) & Sized: PtrT](PtrT: x) {
   x->Print();
 }
 PrintIt(&i); // T == (AnInt as Printable), PtrT == T*
@@ -4257,7 +4258,7 @@ supports zero-runtime-cost casting.
 ```
 // Can pass a T to a function accepting a MaybeBoxed(T) value without boxing by
 // first casting it to NotBoxed(T), as long as T is sized and movable.
-adapter NotBoxed(Movable + Sized:$ T) for T {  // :$ or :$$ here?
+adapter NotBoxed(Movable & Sized:$ T) for T {  // :$ or :$$ here?
   impl Movable = T as Movable;
   impl MaybeBoxed(T) {
     fn operator->(Ptr(Self): this) -> Ptr(T) { return this as Ptr(T); }
@@ -4271,11 +4272,11 @@ extend NotBoxed(ConstructibleFrom(...:$$ Args):$ T) {
 
 // This allows you to create a NotBoxed(T) value inferring T so you don't have
 // to say it explicitly. TODO: Could probably replace "Type:$$ T" with
-// "Movable + Sized:$ T", here.
+// "Movable & Sized:$ T", here.
 fn DontBox[Type:$$ T](T: x) -> NotBoxed(T) inline { return x as NotBoxed(T); }
 // Use NotBoxed as the default implementation of MaybeBoxed for small & movable
 // types. TODO: Not sure how to write a size <= 16 bytes constraint here.
-extend[Movable + Sized:$$ T] T if (sizeof(T) <= 16) {
+extend[Movable & Sized:$$ T] T if (sizeof(T) <= 16) {
   impl MaybBoxed(T) = NotBoxed(T);
 }
 ```
@@ -4399,7 +4400,7 @@ only have to be written once, and would serve both a documentation function and
 give assurance that types implementing an interface satisfy expected properites.
 
 Inevitably we will need some mechanism for generating values of the type. So an
-interface's test suite would actually be parameterized by the `+` of two
+interface's test suite would actually be parameterized by the `&` of two
 interfaces: the interface being tested and a testing-specific interface for
 generating values. In some cases, the test suite might be able to use a standard
 generate-values-for-tests interface (of which there may be only a few). In
