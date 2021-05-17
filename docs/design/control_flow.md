@@ -41,7 +41,7 @@ control flow constructs are mostly similar to those in C, C++, and other
 languages.
 
 ```
-fn Foo(Int: x) {
+fn Foo(Int x) {
   if (x < 42) {
     Bar();
   } else if (x > 77) {
@@ -60,7 +60,7 @@ an expression in the return statement. This allows us to complete the definition
 of our `Sum` function from earlier as:
 
 ```
-fn Sum(Int: a, Int: b) -> Int {
+fn Sum(Int a, Int b) -> Int {
   return a + b;
 }
 ```
