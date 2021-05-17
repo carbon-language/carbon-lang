@@ -48,7 +48,9 @@ struct Evaluate: Action {
     case .integerLiteral(let value, _):
       state.memory.initialize(target, to: value)
       return .done
-    case .booleanLiteral(_, _): UNIMPLEMENTED()
+    case .booleanLiteral(let value, _):
+      state.memory.initialize(target, to: value)
+      return .done
     case .tupleLiteral(_): UNIMPLEMENTED()
     case .unaryOperator(_): UNIMPLEMENTED()
     case .binaryOperator(_): UNIMPLEMENTED()

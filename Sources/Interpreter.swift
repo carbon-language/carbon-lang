@@ -13,13 +13,9 @@ struct Interpreter {
   var //let
     program: ExecutableProgram
 
-  // TODO(geoffromer): Replace these with explicit modeling of scopes
-  // as part of the todo stack.
   /// A mapping from local name declarations to addresses.
   var locals: ASTDictionary<SimpleBinding, Address> = .init()
-  /// A mapping from local expressions to addresses
-  var temporaries: ASTDictionary<Expression, Address> = .init()
-  
+
   /// The address that should be filled in by any `return` statements.
   var returnValueStorage: Address? = nil
 
