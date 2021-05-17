@@ -55,7 +55,7 @@ approach to type inference. What should be the default that we teach? Teaching
 to avoid inference unless it specifically helps readability by avoiding a
 confusing or unhelpfully complex type name, and incentivizing that by requiring
 `auto` or another placeholder, may cause as much or more inconsistency with
-languages that use `<identifier> <type>` as retaining the C++ ordering.
+languages that use `<identifier>: <type>` as retaining the C++ ordering.
 
 That said, all of this is largely unknown. It will require a significant
 exploration of the trade-offs and consistency differences. It should also factor
