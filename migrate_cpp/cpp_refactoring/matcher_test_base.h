@@ -16,7 +16,7 @@ class MatcherTestBase : public ::testing::Test {
  protected:
   // Expects that that the replacements produced by running the finder result in
   // the specified code transformation.
-  void ExpectReplacement(const char* before, const char* after);
+  void ExpectReplacement(llvm::StringRef before, llvm::StringRef after);
 
   std::map<std::string, clang::tooling::Replacements> replacements;
   clang::ast_matchers::MatchFinder finder;

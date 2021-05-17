@@ -23,7 +23,6 @@ FnInserter::FnInserter(std::map<std::string, Replacements>& in_replacements,
 }
 
 void FnInserter::run(const cam::MatchFinder::MatchResult& result) {
-  // The matched 'if' statement was bound to 'ifStmt'.
   const auto* decl = result.Nodes.getNodeAs<clang::FunctionDecl>(Label);
   if (!decl) {
     llvm::report_fatal_error(std::string("getNodeAs failed for ") + Label);

@@ -12,15 +12,17 @@ namespace ct = ::clang::tooling;
 
 namespace Carbon {
 
-void MatcherTestBase::ExpectReplacement(const char* before, const char* after) {
+void MatcherTestBase::ExpectReplacement(llvm::StringRef before,
+                                        llvm::StringRef after) {
   auto factory = ct::newFrontendActionFactory(&finder);
   constexpr char Filename[] = "test.cc";
   ASSERT_TRUE(ct::runToolOnCodeWithArgs(
       factory->create(), before, {}, Filename, "clang-tool",
       std::make_shared<clang::PCHContainerOperations>(),
       ct::FileContentMappings()));
-  if (replacements.find(Filename) != replacements.end()) {
-    auto actual = ct::applyAllReplacements(before, replacements[Filename]);
+  auto it = replacements.find(Filename);
+  if (it != replacements.end()) {
+    auto actual = ct::applyAllReplacements(before, it->second);
     // Split lines to get gmock to get an easier-to-read error.
     llvm::SmallVector<llvm::StringRef, 0> actual_lines;
     llvm::SplitString(*actual, actual_lines, "\n");
@@ -29,7 +31,7 @@ void MatcherTestBase::ExpectReplacement(const char* before, const char* after) {
     EXPECT_THAT(actual_lines, testing::ContainerEq(after_lines));
   } else {
     // No replacements; before and after should match.
-    EXPECT_THAT(before, testing::StrEq(after));
+    EXPECT_THAT(before, testing::Eq(after));
   }
 }
 
