@@ -16,28 +16,48 @@ class FnInserterTest : public MatcherTestBase {
   Carbon::FnInserter fn_inserter;
 };
 
-TEST_F(FnInserterTest, TrailingReturn) {
+TEST_F(FnInserterTest, DeclarationOnly) {
+  // Expected to be missed because we only work on definitions.
   constexpr char Before[] = "auto A() -> int;";
-  constexpr char After[] = "fn A() -> int;";
+  ExpectReplacement(Before, Before);
+}
+
+TEST_F(FnInserterTest, DeclarationAndDefinition) {
+  // Expected to be missed because we only work on definitions.
+  constexpr char Before[] = R"cpp(
+    auto A() -> int;
+    auto A() -> int { return 0; }
+  )cpp";
+  constexpr char After[] = R"(
+    fn A() -> int;
+    fn A() -> int { return 0; }
+  )";
+  ExpectReplacement(Before, After);
+}
+
+TEST_F(FnInserterTest, TrailingReturn) {
+  constexpr char Before[] = "auto A() -> int { return 0; }";
+  constexpr char After[] = "fn A() -> int { return 0; }";
   ExpectReplacement(Before, After);
 }
 
 TEST_F(FnInserterTest, Inline) {
   // TODO: Need to re-lex tokens, this should probably be "fn inline" for now.
-  constexpr char Before[] = "inline auto A() -> int;";
-  constexpr char After[] = "fn auto A() -> int;";
+  constexpr char Before[] = "inline auto A() -> int { return 0; }";
+  constexpr char After[] = "fn auto A() -> int { return 0; }";
   ExpectReplacement(Before, After);
 }
 
 TEST_F(FnInserterTest, Void) {
   // TODO: void needs to be handled.
-  constexpr char Before[] = "void A();";
+  constexpr char Before[] = "void A() {}";
   ExpectReplacement(Before, Before);
 }
 
 TEST_F(FnInserterTest, Methods) {
   // TODO: void needs to be handled.
   // TODO: Need to re-lex tokens, this should probably be "fn virtual" for now.
+  // TODO: Abstract declarations need to be handled.
   constexpr char Before[] = R"cpp(
     class Shape {
      public:
@@ -47,8 +67,8 @@ TEST_F(FnInserterTest, Methods) {
 
     class Circle : public Shape {
      public:
-      void Draw() override;
-      auto NumSides() -> int override;
+      void Draw() override {}
+      auto NumSides() -> int override { return 0; }
       auto Radius() -> double { return radius_; }
 
      private:
@@ -59,13 +79,13 @@ TEST_F(FnInserterTest, Methods) {
     class Shape {
      public:
       virtual void Draw() = 0;
-      fn auto NumSides() -> int = 0;
+      virtual auto NumSides() -> int = 0;
     };
 
     class Circle : public Shape {
      public:
-      void Draw() override;
-      fn NumSides() -> int override;
+      void Draw() override {}
+      fn NumSides() -> int override { return 0; }
       fn Radius() -> double { return radius_; }
 
      private:
@@ -78,7 +98,7 @@ TEST_F(FnInserterTest, Methods) {
 TEST_F(FnInserterTest, LegacyReturn) {
   // Code should be migrated to trailing returns by clang-tidy, so this is okay
   // to miss.
-  constexpr char Before[] = "int A();";
+  constexpr char Before[] = "int A() {}";
   ExpectReplacement(Before, Before);
 }
 

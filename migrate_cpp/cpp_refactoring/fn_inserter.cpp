@@ -17,20 +17,29 @@ FnInserter::FnInserter(std::map<std::string, Replacements>& in_replacements,
   // include `for (const auto* redecl : func->redecls())` to generate
   // replacements.
   finder->addMatcher(
-      cam::functionDecl(cam::isExpansionInMainFile(), cam::hasTrailingReturn())
+      cam::functionDecl(cam::isDefinition(), cam::hasTrailingReturn())
           .bind(Label),
       this);
 }
 
-void FnInserter::run(const cam::MatchFinder::MatchResult& result) {
-  const auto* decl = result.Nodes.getNodeAs<clang::FunctionDecl>(Label);
-  if (!decl) {
-    llvm::report_fatal_error(std::string("getNodeAs failed for ") + Label);
-  }
-  auto begin = decl->getBeginLoc();
+void FnInserter::Process(const clang::SourceManager& sm,
+                         const clang::FunctionDecl& func) {
+  auto begin = func.getBeginLoc();
   // Replace the first token in the range, `auto`.
   auto range = clang::CharSourceRange::getTokenRange(begin, begin);
-  AddReplacement(*(result.SourceManager), range, "fn");
+  AddReplacement(sm, range, "fn");
+}
+
+void FnInserter::run(const cam::MatchFinder::MatchResult& result) {
+  const auto* func = result.Nodes.getNodeAs<clang::FunctionDecl>(Label);
+  if (!func) {
+    llvm::report_fatal_error(std::string("getNodeAs failed for ") + Label);
+  }
+  const auto& sm = *(result.SourceManager);
+  Process(sm, *func);
+  for (const auto* redecl : func->redecls()) {
+    Process(sm, *redecl);
+  }
 }
 
 }  // namespace Carbon
