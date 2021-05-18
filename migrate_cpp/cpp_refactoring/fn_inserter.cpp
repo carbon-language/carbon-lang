@@ -13,21 +13,8 @@ namespace Carbon {
 FnInserter::FnInserter(std::map<std::string, Replacements>& in_replacements,
                        cam::MatchFinder* finder)
     : Matcher(in_replacements) {
-  // TODO: Switch from isExpansionInMainFile to isDefinition. That should then
-  // include `for (const auto* redecl : func->redecls())` to generate
-  // replacements.
-  finder->addMatcher(
-      cam::functionDecl(cam::isDefinition(), cam::hasTrailingReturn())
-          .bind(Label),
-      this);
-}
-
-void FnInserter::Process(const clang::SourceManager& sm,
-                         const clang::FunctionDecl& func) {
-  auto begin = func.getBeginLoc();
-  // Replace the first token in the range, `auto`.
-  auto range = clang::CharSourceRange::getTokenRange(begin, begin);
-  AddReplacement(sm, range, "fn");
+  finder->addMatcher(cam::functionDecl(cam::hasTrailingReturn()).bind(Label),
+                     this);
 }
 
 void FnInserter::run(const cam::MatchFinder::MatchResult& result) {
@@ -36,10 +23,10 @@ void FnInserter::run(const cam::MatchFinder::MatchResult& result) {
     llvm::report_fatal_error(std::string("getNodeAs failed for ") + Label);
   }
   const auto& sm = *(result.SourceManager);
-  Process(sm, *func);
-  for (const auto* redecl : func->redecls()) {
-    Process(sm, *redecl);
-  }
+  auto begin = func->getBeginLoc();
+  // Replace the first token in the range, `auto`.
+  auto range = clang::CharSourceRange::getTokenRange(begin, begin);
+  AddReplacement(sm, range, "fn");
 }
 
 }  // namespace Carbon
