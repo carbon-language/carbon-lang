@@ -18,15 +18,14 @@ FnInserter::FnInserter(std::map<std::string, Replacements>& in_replacements,
 }
 
 void FnInserter::run(const cam::MatchFinder::MatchResult& result) {
-  const auto* func = result.Nodes.getNodeAs<clang::FunctionDecl>(Label);
-  if (!func) {
+  const auto* decl = result.Nodes.getNodeAs<clang::FunctionDecl>(Label);
+  if (!decl) {
     llvm::report_fatal_error(std::string("getNodeAs failed for ") + Label);
   }
-  const auto& sm = *(result.SourceManager);
   auto begin = func->getBeginLoc();
   // Replace the first token in the range, `auto`.
   auto range = clang::CharSourceRange::getTokenRange(begin, begin);
-  AddReplacement(sm, range, "fn");
+  AddReplacement(*(result.SourceManager), range, "fn");
 }
 
 }  // namespace Carbon
