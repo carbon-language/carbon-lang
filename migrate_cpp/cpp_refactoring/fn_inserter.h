@@ -18,10 +18,6 @@ class FnInserter : public Matcher {
   void run(const MatchFinder::MatchResult& result) override;
 
  private:
-  // Decides whether to replace a specific function signature, either
-  // declaration or definition.
-  void Process(const clang::SourceManager& sm, const clang::FunctionDecl& func);
-
   static constexpr char Label[] = "FnInserter";
 };
 

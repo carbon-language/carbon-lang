@@ -22,7 +22,7 @@ void FnInserter::run(const cam::MatchFinder::MatchResult& result) {
   if (!decl) {
     llvm::report_fatal_error(std::string("getNodeAs failed for ") + Label);
   }
-  auto begin = func->getBeginLoc();
+  auto begin = decl->getBeginLoc();
   // Replace the first token in the range, `auto`.
   auto range = clang::CharSourceRange::getTokenRange(begin, begin);
   AddReplacement(*(result.SourceManager), range, "fn");
