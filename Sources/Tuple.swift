@@ -44,7 +44,7 @@ struct Tuple<Field> {
   }
 
   /// Creates an instance using the given underlying storage.
-  fileprivate init(_ storage: [FieldID: Field]) { self.elements = storage }
+  init(_ storage: [FieldID: Field] = [:]) { self.elements = storage }
 
   /// Returns the field with the given name, or `nil` if no such name exists.
   subscript(fieldName: Identifier) -> Field? { elements[.label(fieldName)] }
@@ -87,6 +87,8 @@ extension TupleValue: CarbonInterpreter.Value {
   var type: Type {
     .tuple(self.mapFields { $0.type })
   }
+
+  var parts: Tuple<Value> { self }
 }
 
 extension TupleType {

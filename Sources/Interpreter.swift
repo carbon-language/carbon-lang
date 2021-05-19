@@ -50,7 +50,7 @@ struct Interpreter {
 
 extension Interpreter {
   mutating func start() {
-    exitCodeStorage = memory.allocate(from: .empty)
+    exitCodeStorage = memory.allocate()
 
     todo.push(EvaluateCall(
       call: program.entryPoint!,
@@ -86,7 +86,7 @@ extension Interpreter {
     `for` e: Expression, boundTo t: Type, mutable: Bool = false
   ) -> Address{
     precondition(temporaries[e] == nil, "Temporary already allocated.")
-    let a = memory.allocate(from: e.site.region, mutable: false)
+    let a = memory.allocate(mutable: false)
     temporaries[e] = a
     return a
   }

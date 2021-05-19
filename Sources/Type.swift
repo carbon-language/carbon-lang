@@ -71,6 +71,17 @@ indirect enum Type: Equatable {
 
 extension Type: Value {
   var type: Type { .type }
+
+  var parts: Tuple<Value> {
+    switch self {
+    case .int, .bool, .type, .struct, .choice, .alternative, .error:
+      return .init()
+    case let .function(parameterTypes: p, returnType: r):
+      return Tuple<Value>([.position(0): p.mapFields { $0 }, .position(1): r])
+    case let .tuple(t):
+      return t.mapFields { $0 }
+    }
+  }
 }
 
 extension Type: CustomStringConvertible {

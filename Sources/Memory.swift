@@ -19,25 +19,33 @@ func fatal<R>(
 struct Memory {
   /// Returns an uninitialized address.
   ///
-  /// - Parameter site: the region of the code that triggered the allocation.
   /// - Parameter mutable: `true` iff mutations of the Value at this address
   ///   will be allowed.
-  mutating func allocate(
-    from site: SourceRegion, mutable: Bool = false
-  ) -> Address {
+  mutating func allocate(mutable: Bool = false) -> Address {
     defer { nextAddress += 1 }
-    storage[nextAddress] = Location(site: site, mutable: mutable)
+    storage[nextAddress] = Location(mutable: mutable)
     return nextAddress
   }
 
   /// Initializes the value at `a` to `v`.
   ///
   /// - Note: initialization is not considered a mutation of `a`'s value.
-  /// - Requires: `a` is an allocated address bound to `v.type`.
+  /// - Requires: `a` is an allocated address.
   mutating func initialize(_ a: Address, to v: Value) {
     let i = storage.index(forKey: a)
       ?? fatal("initializing unallocated address \(a).")
+
+    if let x = storage.values[i].content {
+      fatalError("address \(a) already initialized to \(x).")
+    }
+
     storage.values[i].content = v
+    let isMutable = storage.values[i].mutable
+    storage[a]!.substructure = v.parts.mapFields {
+      let l = allocate(mutable: isMutable)
+      initialize(l, to: $0)
+      return l
+    }
   }
 
   /// Deinitializes the value at `a`, returning it to an uninitialized state.
@@ -48,6 +56,7 @@ struct Memory {
     let i = storage.index(forKey: a)
       ?? fatal("deinitializing unallocated address \(a).")
     precondition(storage[i].value.content != nil)
+    for a1 in storage.values[i].substructure.fields { deinitialize(a1) }
     storage.values[i].content = nil
   }
 
@@ -84,14 +93,18 @@ struct Memory {
     }
   }
 
+  /// Returns the substructure of the value stored at `a`
+  func substructure(at a: Address) -> Tuple<Address> {
+    storage[a]!.substructure
+  }
+
   /// An allocated element of memory.
   private struct Location {
     /// The value stored in this location, if initialized.
-    var content: Value? = nil
+    var content: Value?
 
-    /// Where the storage was declared (if a variable), computed (if a
-    /// temporary), or dynamically allocated.
-    let site: SourceRegion
+    /// The addresses of subparts of this value.
+    var substructure = Tuple<Address>()
 
     /// True iff the value at this location can be mutated.
     let mutable: Bool
