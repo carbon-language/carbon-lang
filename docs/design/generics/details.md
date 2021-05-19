@@ -872,6 +872,7 @@ implicitly cast to `T as I2`. For example:
 ```
 interface Printable { method (Self: this) Print(); }
 interface Renderable { method (Self: this) Draw(); }
+
 structural interface PrintAndRender {
   impl Printable;
   impl Renderable;
@@ -879,6 +880,7 @@ structural interface PrintAndRender {
 structural interface JustPrint {
   impl Printable;
 }
+
 fn PrintIt[JustPrint:$ T2](T2: x2) {
   x2.(Printable.Print)();
 }
@@ -904,45 +906,45 @@ generics, since "the method with a given name and signature" can change when
 casting to a facet type. For example:
 
 ```
-structural interface SA {
-  impl A;
-  alias F = A.AMethod;
+structural interface ShowPrintable {
+  impl Printable;
+  alias Show = Printable.Print;
 }
 
-structural interface SB {
-  impl B;
-  alias F = B.BMethod;
+structural interface ShowRenderable {
+  impl Renderable;
+  alias Show = Renderable.Draw;
 }
 
-structural interface HasF {
-  method (Self: this) F();
+structural interface HasShow {
+  method (Self: this) Show();
 }
 
 // Template, not generic, since this relies on structural typing.
-fn CallF[HasF:$$ T](T: x) {
-  x.F();
+fn CallShow[HasShow:$$ T](T: x) {
+  x.Show();
 }
 
-fn ViaA[SA:$ T](T: x) {
-  // Calls A.AMethod().
-  CallF(x);
+fn ViaPrintable[ShowPrintable:$ T](T: x) {
+  // Calls Printable.Print().
+  CallShow(x);
 }
 
-fn ViaB[SB:$ T](T: x) {
-  // Calls B.BMethod().
-  CallF(x);
+fn ViaRenderable[ShowRenderable:$ T](T: x) {
+  // Calls Renderable.Draw().
+  CallShow(x);
 }
 
-struct S {
-  impl A { ... }
-  impl B { ... }
+struct Sprite {
+  impl Printable { ... }
+  impl Renderable { ... }
 }
 
-var S: x = ();
-ViaA(x);
-ViaB(x);
-// Not allowed, no method `F`:
-CallF(x);
+var Sprite: x = ();
+ViaPrintable(x);
+ViaRenderable(x);
+// Not allowed, no method `Show`:
+CallShow(x);
 ```
 
 We could similarly support associated constant and
@@ -957,50 +959,64 @@ the type-type with the union of all the requirements and the union of the names
 minus any conflicts.
 
 ```
-interface A { method (Self: this) AMethod(); }
-interface B { method (Self: this) BMethod(); }
-// `A & B` is syntactic sugar for this type-type:
+interface Printable {
+  method (Self: this) Print();
+}
+interface Renderable {
+  method (Self: this) Center() -> (Int, Int);
+  method (Self: this) Draw();
+}
+
+// `Printable & Renderable` is syntactic sugar for this type-type:
 structural interface {
-  impl A;
-  impl B;
-  alias AMethod = A.AMethod;
-  alias BMethod = B.BMethod;
+  impl Printable;
+  impl Renderable;
+  alias Print = Printable.Print;
+  alias Center = Renderable.Center;
+  alias Draw = Renderable.Draw;
 }
 
-fn F[A & B:$ T](T: x) {
-  // Can use methods of `A` or `B` on `x` here.
-  x.AMethod();  // Same as `x.(A.AMethod)();`.
-  x.BMethod();  // Same as `x.(B.BMethod)();`.
+fn PrintThenDraw[Printable & Renderable:$ T](T: x) {
+  // Can use methods of `Printable` or `Renderable` on `x` here.
+  x.Print();  // Same as `x.(Printable.Print)();`.
+  x.Draw();  // Same as `x.(Renderable.Draw)();`.
 }
 
-struct S {
-  impl A { method (Self: this) AMethod() { Carbon.Print("A"); } }
-  impl B { method (Self: this) BMethod() { Carbon.Print("B"); } }
+struct Sprite {
+  // ...
+  impl Printable {
+    method (Self: this) Print() { ... }
+  }
+  impl Renderable {
+    method (Self: this) Center() -> (Int, Int) { ... }
+    method (Self: this) Draw() { ... }
+  }
 }
 
-var S: s = ();
-F(s);
+var Sprite: s = ...;
+PrintThenDraw(s);
 ```
 
 Any conflicting names between the two types are replaced with a name that is an
 error to use.
 
 ```
-interface C {
-  method (Self: this) One();
-  method (Self: this) Two();
+interface Renderable {
+  method (Self: this) Center() -> (Int, Int);
+  method (Self: this) Draw();
 }
-interface D {
-  method (Self: this) Two();
-  method (Self: this) Three();
+interface EndOfGame {
+  method (Self: this) Draw();
+  method (Self: this) Winner(Int: player);
 }
-// `C & D` is syntactic sugar for this type-type:
+// `Renderable & EndOfGame` is syntactic sugar for this type-type:
 structural interface {
-  impl C;
-  impl D;
-  alias One = C.One;
-  forbidden Two "Ambiguous, use either `(C.Two)` or `(D.Two)`.";
-  alias Three = D.Three;
+  impl Renderable;
+  impl EndOfGame;
+  alias Center = Renderable.Center;
+  forbidden Draw
+    message "Ambiguous, use either `(Renderable.Draw)` or `(EndOfGame.Draw)`.";
+  alias Winner = EndOfGame.Winner;
 }
 ```
 
@@ -1009,18 +1025,18 @@ Conflicts can be resolved at the call site using
 structural interface explicitly and renaming the methods:
 
 ```
-structural interface CAndD {
-  impl C;
-  impl D;
-  alias One = C.One;
-  alias CTwo = C.Two;
-  alias DTwo = D.Two;
-  alias Three = D.Three;
+structural interface RenderableAndEndOfGame {
+  impl Renderable;
+  impl EndOfGame;
+  alias Center = Renderable.Center;
+  alias RenderableDraw = Renderable.Draw;
+  alias TieGame = EndOfGame.Draw;
+  alias Winner = EndOfGame.Winner;
 }
 
-fn F[CAndD:$ T](T: x) {
-  x.CTwo();
-  x.DTwo();
+fn RenderTieGame[RenderableAndEndOfGame:$ T](T: x) {
+  x.RenderableDraw();
+  x.TieGame();
 }
 ```
 
@@ -1050,19 +1066,19 @@ If we call this operator `[&]`, then `A [&] B` has the names of `A` and
 `B [&] A` has the names of `B`.
 
 ```
-// `A [&] B` is syntactic sugar for this type-type:
+// `Printable [&] Renderable` is syntactic sugar for this type-type:
 structural interface {
-  impl A;
-  impl B;
-  alias AMethod = A.AMethod;
+  impl Printable;
+  impl Renderable;
+  alias Print = Printable.Print;
 }
 
-// `C [&] D` is syntactic sugar for this type-type:
+// `Renderable [&] EndOfGame` is syntactic sugar for this type-type:
 structural interface {
-  impl C;
-  impl D;
-  alias One = C.One;
-  alias Two = C.Two;
+  impl Renderable;
+  impl EndOfGame;
+  alias Center = Renderable.Center;
+  alias Draw = Renderable.Draw;
 }
 ```
 
