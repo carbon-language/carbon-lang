@@ -1052,12 +1052,11 @@ itself, `MyTypeType & MyTypeType == MyTypeType`. Also, given two
 [interface extensions](#interface-extension) of a common base interface, the sum
 should not conflict on any names in the common base.
 
-**Open syntax question:** Instead of using `&` as the combining operator, we
-could use `+`. I'm using `&` in this proposal since it is
-[consistent with Swift](https://docs.swift.org/swift-book/LanguageGuide/Protocols.html#ID282),
-but
-[Rust uses `+`](https://rust-lang.github.io/rfcs/0087-trait-bounds-with-plus.html).
-See [#531](https://github.com/carbon-language/carbon-lang/issues/531).
+**Rejected alternative:** Instead of using `&` as the combining operator, we
+considered using `+`,
+[like Rust](https://rust-lang.github.io/rfcs/0087-trait-bounds-with-plus.html).
+See [#531](https://github.com/carbon-language/carbon-lang/issues/531) for the
+discussion.
 
 **Future work:** We may want to define another operator on type-types for adding
 requirements to a type-type without affecting the names, and so avoid the
