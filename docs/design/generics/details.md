@@ -74,7 +74,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
         -   [Manual type equality](#manual-type-equality)
     -   [Options](#options)
 -   [Conditional conformance](#conditional-conformance)
--   [Templated impls for generic interfaces](#templated-impls-for-generic-interfaces)
+-   [Parameterized impls](#parameterized-impls)
     -   [Structural conformance](#structural-conformance)
     -   [Bridge for C++ templates](#bridge-for-c-templates)
         -   [Calling C++ template code from Carbon](#calling-c-template-code-from-carbon)
@@ -3437,12 +3437,21 @@ struct FixedArray(Type:$ T, Int:$ N) {
 // FixedArray(T, N) has a `Print()` method if `T` is `Printable`.
 ```
 
-## Templated impls for generic interfaces
+## Parameterized impls
 
 TODO: This section should be rewritten to be about parameterized `impl` in
 general, not just templated. For example, the
 ["lookup resolution and specialization" section](#lookup-resolution-and-specialization)
 is applicable broadly.
+
+TODO: Clarify the difference between a `structural interface SI` that requires
+an interface `I` and a nominal `interface NI` that has a blanket implementation
+for any type implementing `I`:
+
+-   You can implement `NI` without implementing `I`, but you can't implement
+    `SI` without implementing `I`.
+-   You can provide a more specialized implementation of `NI` that overrides the
+    blanket implementation.
 
 Some things going on here:
 
