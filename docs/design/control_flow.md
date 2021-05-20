@@ -10,71 +10,153 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 ## Table of contents
 
--   [TODO](#todo)
 -   [Overview](#overview)
--   [Open questions](#open-questions)
-    -   [`if` blocks](#if-blocks)
-    -   [`break` and `continue`](#break-and-continue)
+    -   [`if` and `else`](#if-and-else)
+    -   [Loops](#loops)
+        -   [`while`](#while)
+        -   [`for`](#for)
+        -   [`break`](#break)
+        -   [`continue`](#continue)
+    -   [`return`](#return)
+-   [Relevant proposals](#relevant-proposals)
 
 <!-- tocstop -->
-
-## TODO
-
-This is a skeletal design, added to support [the overview](README.md). It should
-not be treated as accepted by the core team; rather, it is a placeholder until
-we have more time to examine this detail. Please feel welcome to rewrite and
-update as appropriate.
-
-At least summarize `if` and `else` to cover basics. Especially important to
-surface the idea of using basic conditionals as both expressions and statements
-to avoid needing conditional operators.
-
-Looping is an especially interesting topic to explore as there are lots of
-challenges posed by the C++ loop structure. Even C++ itself has been seeing
-significant interest and pressure to improve its looping facilities.
 
 ## Overview
 
 Blocks of statements are generally executed linearly. However, statements are
-the primary place where this flow of execution can be controlled. Carbon's
-control flow constructs are mostly similar to those in C, C++, and other
-languages.
+the primary place where this flow of execution can be controlled.
 
-```
-fn Foo(Int x) {
-  if (x < 42) {
-    Bar();
-  } else if (x > 77) {
-    Baz();
-  }
+Carbon's flow control statements are:
+
+-   [`if` and `else`](#if-and-else) provides conditional execution of
+    statements.
+-   Loops:
+    -   [`while`](#while) executes the loop body for as long as the loop
+        expression returns `True`.
+    -   [`for`](#for) iterates over an object, such as elements in an array.
+    -   [`break`](#break) exits loops.
+    -   [`continue`](#continue) goes to the next iteration of a loop.
+-   [`return`](#return) ends the flow of execution within a function, returning
+    it to the caller.
+
+### `if` and `else`
+
+`if` and `else` provide conditional execution of statements. For example:
+
+```carbon
+if (fruit.IsYellow()) {
+  Print("Banana!");
+} else if (fruit.IsOrange()) {
+  Print("Orange!");
+} else {
+  Print("Vegetable!");
 }
 ```
 
-Loops will at least be supported with a low-level primitive `while` statement,
-with `break` and `continue` statements which work the same as in C++.
+This code will:
 
-Last but not least, for the basics we need to include the `return` statement.
-This statement ends the flow of execution within a function, returning it to the
-caller. If the function returns a value to the caller, that value is provided by
-an expression in the return statement. This allows us to complete the definition
-of our `Sum` function from earlier as:
+-   Print `Banana!` if `fruit.IsYellow()` is `True`.
+-   Print `Orange!` if `fruit.IsYellow()` is `False` and `fruit.IsOrange()` is
+    `True`.
+-   Print `Vegetable!` if both of the above return `False`.
 
+> TODO: Flesh out text (currently just overview)
+
+### Loops
+
+#### `while`
+
+`while` statements loop for as long as the passed expression returns `True`. For
+example, this prints `0`, `1`, `2`, then `Done!`:
+
+```carbon
+var Int x = 0;
+while (x < 3) {
+  Print(x);
+  ++x;
+}
+Print("Done!");
 ```
+
+> TODO: Flesh out text (currently just overview)
+
+#### `for`
+
+`for` statements support range-based looping, typically over containers. For
+example, this prints all names in `names`:
+
+```carbon
+for (var String name : names) {
+  Print(name);
+}
+```
+
+`PrintNames()` prints each `String` in the `names` `List` in iteration order.
+
+> TODO: Flesh out text (currently just overview)
+
+#### `break`
+
+The `break` statement immediately ends a `while` or `for` loop. Execution will
+resume at the end of the loop's scope. For example, this processes steps until a
+manual step is hit (if no manual step is hit, all steps are processed):
+
+```carbon
+for (var Step step : steps) {
+  if (step.IsManual()) {
+    Print("Reached manual step!");
+    break;
+  }
+  step.Process();
+}
+```
+
+> TODO: Flesh out text (currently just overview)
+
+#### `continue`
+
+The `continue` statement immediately goes to the next loop of a `while` or
+`for`. In a `while`, execution continues with the `while` expression. For
+example, this prints all non-empty lines of a file, using `continue` to skip
+empty lines:
+
+```carbon
+File f = OpenFile(path);
+while (!f.EOF()) {
+  String line = f.ReadLine();
+  if (line.IsEmpty()) {
+    continue;
+  }
+  Print(line);
+}
+```
+
+> TODO: Flesh out text (currently just overview)
+
+### `return`
+
+The `return` statement ends the flow of execution within a function, returning
+execution to the caller. If the function returns a value to the caller, that
+value is provided by an expression in the return statement. For example:
+
+```carbon
 fn Sum(Int a, Int b) -> Int {
   return a + b;
 }
 ```
 
-## Open questions
+> TODO: Flesh out text (currently just overview)
 
-### `if` blocks
+## Relevant proposals
 
-It is an open question whether a block is required or a single statement may be
-nested in an `if` statement. Similarly, it is an open question whether `else if`
-is a single keyword versus a nested `if` statement, and if it is a single
-construct whether it should be spelled `elif` or something else.
+Most discussion of design choices and alternatives may be found in relevant
+proposals.
 
-### `break` and `continue`
-
-If and how to support a "labeled break" or "labeled continue" is still a point
-of open discussion.
+-   [`if` and `else`](/proposals/p0285.md)
+-   Loops:
+    -   [`while`](/proposals/p0340.md)
+    -   [`for`](/proposals/p0353.md)
+-   `return`:
+    -   [Initial syntax](/proposals/p0415.md)
+    -   [`return` with no argument](/proposals/p0538.md)
