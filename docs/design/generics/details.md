@@ -954,9 +954,9 @@ though, as it does not directly impact generics in Carbon.
 ## Combining interfaces by anding type-types
 
 In order to support functions that require more than one interface to be
-implemented, we provide an addition operator on type-types. This operator gives
-the type-type with the union of all the requirements and the union of the names
-minus any conflicts.
+implemented, we provide a combination operator on type-types, written `&`. This
+operator gives the type-type with the union of all the requirements and the
+union of the names minus any conflicts.
 
 ```
 interface Printable {
@@ -1014,6 +1014,7 @@ structural interface {
   impl Renderable;
   impl EndOfGame;
   alias Center = Renderable.Center;
+  // Open question: `forbidden`, `invalid`, or something else?
   forbidden Draw
     message "Ambiguous, use either `(Renderable.Draw)` or `(EndOfGame.Draw)`.";
   alias Winner = EndOfGame.Winner;
@@ -1035,20 +1036,22 @@ structural interface RenderableAndEndOfGame {
 }
 
 fn RenderTieGame[RenderableAndEndOfGame:$ T](T: x) {
+  // Calls Renderable.Draw()
   x.RenderableDraw();
+  // Calls EndOfGame.Draw()
   x.TieGame();
 }
 ```
 
 Reserving the name when there is a conflict is part of resolving what happens
-when you add more than two type-types. If `x` is forbidden in `A`, it is
+when you combine more than two type-types. If `x` is forbidden in `A`, it is
 forbidden in `A & B`, whether or not `B` defines the name `x`. This makes `&`
 associative and commutative, and so it is well defined on sets of interfaces, or
 other type-types, independent of order.
 
 Note that we do _not_ consider two type-types using the same name to mean the
-same thing to be a conflict. For example, the adding a type-type to itself gives
-itself, `MyTypeType & MyTypeType == MyTypeType`. Also, given two
+same thing to be a conflict. For example, combining a type-type with itself
+gives itself, `MyTypeType & MyTypeType == MyTypeType`. Also, given two
 [interface extensions](#interface-extension) of a common base interface, the sum
 should not conflict on any names in the common base.
 
@@ -1112,25 +1115,26 @@ use the same semantics and syntax as we do for
 [structural interfaces](#structural-interfaces):
 
 ```
-interface B { method (Self: this) BMethod(); }
+interface Equatable { method (Self: this) Equals(Self: that) -> Bool; }
 
-interface A {
-  method (Self: this) AMethod();
-  impl B;
+interface Iterable {
+  method (Ptr(Self): this) Advance() -> Bool;
+  impl Equatable;
 }
 
-def F[A:$ T](T: x) {
-  // `x` has type `T` that implements `A`, and so has `AMethod`.
-  x.AMethod();
-  // `A` requires an implementation of `B`, so `T` also implements `B`.
-  x.(B.BMethod)();
+def F[Iterable:$ T](T: x) {
+  // `x` has type `T` that implements `Iterable`, and so has `Advance`.
+  x.Advance();
+  // `Iterable` requires an implementation of `Equatable`,
+  // so `T` also implements `Equatable`.
+  x.(Equatable.Equals)(x);
 }
 
-struct S {
-  impl A { method (Self: this) AMethod() { ... } }
-  impl B { method (Self: this) BMethod() { ... } }
+struct Iota {
+  impl Iterable { method (Self: this) Advance() { ... } }
+  impl Equatable { method (Self: this) Equals(Self: that) -> Bool { ... } }
 }
-var S: x;
+var Iota: x;
 F(x);
 ```
 
@@ -1139,16 +1143,16 @@ by itself add any names to the interface, but again those can be added with
 `alias` declarations:
 
 ```
-interface D {
-  method (Self: this) DMethod();
-  impl B;
-  alias BMethod = B.BMethod;
+interface Hashable {
+  method (Self: this) Hash() -> UInt64;
+  impl Equatable;
+  alias Equals = Equatable.Equals;
 }
 
-def G[D:$ T](T: x) {
-  // Now both `DMethod` and `BMethod` are available directly:
-  x.DMethod();
-  x.BMethod();
+def DoHashAndEquals[Hashable:$ T](T: x) {
+  // Now both `Hash` and `Equals` are available directly:
+  x.Hash();
+  x.Equals(x);
 }
 ```
 
@@ -1158,47 +1162,48 @@ def G[D:$ T](T: x) {
 ### Interface extension
 
 When implementing an interface, we should allow implementing the aliased names
-as well. In the case of `D` above, this includes all the members of `B`,
-obviating the need to implement `B` itself:
+as well. In the case of `Hashable` above, this includes all the members of
+`Equatable`, obviating the need to implement `Equatable` itself:
 
 ```
-struct T {
-  impl D {
-    method (Self: this) DMethod() { ... }
-    method (Self: this) BMethod() { ... }
+struct Song {
+  impl Hashable {
+    method (Self: this) Hash() -> UInt64 { ... }
+    method (Self: this) Equals(Self: that) -> Bool { ... }
   }
 }
-var T: y;
-G(y);
+var Song: y;
+DoHashAndEquals(y);
 ```
 
-This allows us to say that `D`
-["extends" or "refines"](terminology.md#extendingrefining-an-interface) `B`,
-with some benefits:
+This allows us to say that `Hashable`
+["extends" or "refines"](terminology.md#extendingrefining-an-interface)
+`Equatable`, with some benefits:
 
--   This allows `B` to be an implementation detail of `D`.
--   This allows types implementing `D` to implement all of its API in one place.
--   This reduces the boilerplate for types implementing `D`.
+-   This allows `Equatable` to be an implementation detail of `Hashable`.
+-   This allows types implementing `Hashable` to implement all of its API in one
+    place.
+-   This reduces the boilerplate for types implementing `Hashable`.
 
 We expect this concept to be common enough to warrant dedicated syntax:
 
 ```
-interface B { method (Self: this) BMethod(); }
+interface Equatable { method (Self: this) Equals(Self: that) -> Bool; }
 
-interface D {
-  extends B;
-  method (Self: this) DMethod();
+interface Hashable {
+  extends Equatable;
+  method (Self: this) Hash() -> UInt64;
 }
-// is equivalent to the definition of D from before:
-// interface D {
-//   impl B;
-//   alias BMethod = B.BMethod;
-//   method (Self: this) DMethod();
+// is equivalent to the definition of Hashable from before:
+// interface Hashable {
+//   impl Equatable;
+//   alias Equals = Equatable.Equals;
+//   method (Self: this) Hash() -> UInt64;
 // }
 ```
 
-No names in `D` are allowed to conflict with names in `B` (unless those names
-are marked as `upcoming` or `deprecated` as in
+No names in `Hashable` are allowed to conflict with names in `Equatable` (unless
+those names are marked as `upcoming` or `deprecated` as in
 [evolution future work](#evolution)). Hopefully this won't be a problem in
 practice, since interface extension is a very closely coupled relationship, but
 this may be something we will have to revisit in the future.
@@ -3533,7 +3538,7 @@ fn CallsFooAndBar[HasFooAndBar:$$ T]
 
 One downside of this approach is that it nails down the type of `this`, even
 though multiple options would work in a template. We might need to introduce
-additional optiion in the syntax only for use with templates:
+additional option in the syntax only for use with templates:
 
 ```
 structural interface HasFooAndBar {
