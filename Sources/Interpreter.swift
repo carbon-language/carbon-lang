@@ -10,8 +10,7 @@ struct Interpreter {
   }
 
   /// The program being executed.
-  var //let
-    program: ExecutableProgram
+  let program: ExecutableProgram
 
   /// A mapping from local name declarations to addresses.
   var locals: ASTDictionary<SimpleBinding, Address> = .init()
@@ -20,6 +19,8 @@ struct Interpreter {
   
   /// The address that should be filled in by any `return` statements.
   var returnValueStorage: Address? = nil
+
+
 
   /// A type that captures everything that needs to be restored after a callee
   /// returns.
