@@ -93,11 +93,7 @@ struct Interpreter {
 
     frame = CallFrame(
       resultAddress: memory.allocate(),
-      onReturn: Task { me in
-        // When main returns, the program is finished.
-        me.running = false
-        return Task { _ in fatalError("Terminated program can't continue.") }
-      })
+      onReturn: Task { me in me.terminate() })
 
     // First step runs the body of `main`
     nextStep = Task { [main = program.main!] me in
@@ -120,13 +116,22 @@ struct Interpreter {
     return memory[frame.resultAddress] as! (Int?)
   }
 
+  /// Notionally exits the running program.
+  mutating func terminate() -> Task {
+    running = false
+    return Task { _ in fatalError("Terminated program can't continue.") }
+  }
+
   /// Adds an error at the site of `offender` to the error log and marks the
   /// program as terminated.
+  ///
+  /// Returns a non-executable task for convenience.
+  @discardableResult
   mutating func error<Node: AST>(
-    _ offender: Node, _ message: String , notes: [CarbonError.Note] = [])
-  {
+    _ offender: Node, _ message: String , notes: [CarbonError.Note] = []
+  ) -> Task {
     errors.append(CarbonError(message, at: offender.site, notes: notes))
-    running = false
+    return terminate()
   }
 }
 
@@ -149,7 +154,17 @@ extension Interpreter {
       UNIMPLEMENTED(t, s)
 
     case let .initialization(i):
-      UNIMPLEMENTED(i)
+      // This can only be cleaned up completely on scope exit because variables
+      // are being bound to (parts of) the value.  Whether it's possible to tear
+      // down unused *parts* of the value earlier is unknown.
+      let rhsAddress = memory.allocate(mutable: true)
+      return evaluate(i.initializer, into: rhsAddress) { me in
+        let rhs = me.memory[rhsAddress]
+        return me.match(i.bindings, to: rhs) { matched, me in
+          matched ? followup : me.error(
+            i.bindings, "Initialization pattern not matched by \(rhs)")
+        }
+      }
 
     case let .if(condition: c, thenClause: trueClause, elseClause: maybeFalse, _):
       UNIMPLEMENTED(c, trueClause, maybeFalse as Any)
@@ -159,10 +174,11 @@ extension Interpreter {
         e, into: frame.resultAddress, then: frame.onReturn)
 
     case let .block(children, _):
-      let bottomOfBlock=frame.allocations.count
       return runBlockContent(
         children[...],
-        then: Task { $0.cleanAllocations(above: bottomOfBlock, then: followup)})
+        then: Task { [mark=frame.allocations.count] me in
+          me.delete(me.frame.allocations.count - mark, then: followup)
+        })
 
     case let .while(condition: c, body: body, _):
       UNIMPLEMENTED(c, body)
@@ -178,12 +194,14 @@ extension Interpreter {
     }
   }
 
+  /// Notionally runs `s` and follows up with `followup`.
+  ///
   /// A convenience wrapper for `run(_:then:)` that supports cleaner syntax.
   mutating func run(_ s: Statement, followup: @escaping Task.Code) -> Task {
     run(s, then: Task(followup))
   }
 
-  /// Notionally executes the statements of `content` in order… then `followup`.
+  /// Notionally executes the statements of `content` in order, then `followup`.
   mutating func runBlockContent(
     _ content: ArraySlice<Statement>, then followup: Task
   ) -> Task {
@@ -193,12 +211,12 @@ extension Interpreter {
         }
   }
 
-  /// Destroys and reclaims memory of zero or more locally-allocated values at
-  /// the top of the allocation stack.
-  mutating func cleanAllocations(above mark: Int, then followup: Task) -> Task {
+  /// Destroys and reclaims memory of the `n` locally-allocated values at the
+  /// top of the allocation stack.
+  mutating func delete(_ n: Int, then followup: Task) -> Task {
     // Note memory allocations/deallocations are not currently considered units
     // of work so we can do them all at once here.
-    while frame.allocations.count > mark {
+    for _ in 0..<n {
       switch frame.allocations.pop()! {
       case let .variable(v):
         memory.delete(frame.locals[v]!)
@@ -209,7 +227,6 @@ extension Interpreter {
     }
     return followup
   }
-
 }
 
 extension Interpreter {
@@ -231,8 +248,23 @@ extension Interpreter {
       memory.initialize(destination, to: r)
     case let .tupleLiteral(t):
       UNIMPLEMENTED(t)
+
     case let .unaryOperator(x):
-      UNIMPLEMENTED(x)
+      return allocate(x.operand) { opAddress, me in
+        me.evaluate(x.operand, into: opAddress) { me in
+          switch x.operation.text {
+          case "-":
+            me.memory.initialize(
+              destination, to: -(me.memory[opAddress] as! Int))
+          case "not":
+            me.memory.initialize(
+              destination, to: !(me.memory[opAddress] as! Bool))
+          default: UNREACHABLE()
+          }
+          // Reclaim opAddress
+          return me.delete(1, then: followup)
+        }
+      }
     case let .binaryOperator(x):
       UNIMPLEMENTED(x)
     case let .functionCall(x):
@@ -243,5 +275,67 @@ extension Interpreter {
       UNIMPLEMENTED(f)
     }
     return followup
+  }
+
+  /// Notationally evaluates `e`, placing the result in `destination`, and
+  /// continues with `followup`.
+  ///
+  /// A convenience wrapper for `run(_:then:)` that supports cleaner syntax.
+  mutating func evaluate(
+    _ e: Expression, into destination: Address, followup: @escaping Task.Code
+  ) -> Task {
+    evaluate(e, into: destination, then: Task(followup))
+  }
+
+  /// Allocates an address for the result of evaluating `e`, passing it on to
+  /// `followup` along with `self`.
+  mutating func allocate(
+    _ e: Expression, followup: @escaping (Address, inout Self)->Task
+  ) -> Task {
+    let a = memory.allocate(mutable: false)
+    frame.allocations.push(.temporary(e, a))
+    return Task { me in followup(a, &me) }
+  }
+}
+
+func areEqual(_ l: Value, _ r: Value) -> Bool {
+  switch (l as Any, r as Any) {
+  case let (lh as AnyHashable, rh as AnyHashable):
+    return lh == rh
+  case let (lt as TupleValue, rt as TupleValue):
+    return lt.count == rt.count && lt.elements.allSatisfy { k, v0 in
+      rt.elements[k].map { v1 in areEqual(v0, v1) } ?? false
+    }
+  case let (lt as TupleType, rt as TupleType):
+    return lt == rt
+  default:
+    // All things that aren't equatable are considered equal if their types
+    // match and unequal otherwise, to preserve reflexivity.
+    return type(of: l) == type(of: r)
+  }
+}
+
+extension Interpreter {
+  /// Notionally matches `p` to `x`, binding variables in `p` to the
+  /// corresponding parts of `x`, calling `followup` with an indication of
+  /// whether the match was successful.
+  mutating func match(
+    _ p: Pattern, to x: Value,
+    followup: @escaping (_ matched: Bool, inout Self)->Task
+  ) -> Task {
+    switch p {
+    case let .atom(e):
+      return allocate(e) { eAddress, me in
+        me.evaluate(e, into: eAddress) { me in
+          let matched = areEqual(me.memory[eAddress], x)
+          return me.delete(1, then: Task { me in followup(matched, &me) })
+        }
+      }
+
+    case let .variable(x): UNIMPLEMENTED(x)
+    case let .tuple(x): UNIMPLEMENTED(x)
+    case let .functionCall(x): UNIMPLEMENTED(x)
+    case let .functionType(x): UNIMPLEMENTED(x)
+    }
   }
 }
