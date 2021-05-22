@@ -41,13 +41,13 @@ final class InterpreterTests: XCTestCase {
   }
 
   func testExamples() {
-    XCTAssertEqual(run("assignment_copy1.6c", tracing: true), 0)
-    XCTAssertEqual(run("assignment_copy2.6c", tracing: true), 0)
-    XCTAssertEqual(run("block1.6c", tracing: true), 0)
-    XCTAssertEqual(run("block2.6c", tracing: true), 0)
-    // XCTAssertEqual(run("break1.6c"), 0)
+    XCTAssertEqual(run("assignment_copy1.6c"), 0)
+    XCTAssertEqual(run("assignment_copy2.6c"), 0)
+    XCTAssertEqual(run("block1.6c"), 0)
+    XCTAssertEqual(run("block2.6c"), 0)
+    XCTAssertEqual(run("break1.6c"), 0)
     // XCTAssertEqual(run("choice1.6c"), 0)
-    // XCTAssertEqual(run("continue1.6c"), 0)
+    XCTAssertEqual(run("continue1.6c"), 0)
     // XCTAssertEqual(run("experimental_continuation1.6c"), 0)
     // XCTAssertEqual(run("experimental_continuation2.6c"), 0)
     // XCTAssertEqual(run("experimental_continuation3.6c"), 0)
@@ -75,9 +75,9 @@ final class InterpreterTests: XCTestCase {
     // XCTAssertEqual(run("global_variable6.6c"), 0)
     // XCTAssertEqual(run("global_variable7.6c"), 0)
     // XCTAssertEqual(run("global_variable8.6c"), 0)
-    // XCTAssertEqual(run("if1.6c"), 0)
-    // XCTAssertEqual(run("if2.6c"), 0)
-    // XCTAssertEqual(run("if3.6c"), 0)
+    XCTAssertEqual(run("if1.6c"), 0)
+    XCTAssertEqual(run("if2.6c"), 0)
+    XCTAssertEqual(run("if3.6c"), 0)
     // XCTAssertEqual(run("match_any_int.6c"), 0)
     // XCTAssertEqual(run("match_int.6c"), 0)
     // XCTAssertEqual(run("match_int_default.6c"), 0)
@@ -105,7 +105,7 @@ final class InterpreterTests: XCTestCase {
     // XCTAssertEqual(run("type_compute.6c"), 0)
     // XCTAssertEqual(run("type_compute2.6c"), 0)
     // XCTAssertEqual(run("type_compute3.6c"), 0)
-    // XCTAssertEqual(run("while1.6c"), 0)
-    // XCTAssertEqual(run("zero.6c"), 0)
+    XCTAssertEqual(run("while1.6c"), 0)
+    XCTAssertEqual(run("zero.6c"), 0)
   }
 }

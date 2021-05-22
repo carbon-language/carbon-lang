@@ -164,8 +164,12 @@ extension Interpreter {
 
     case let .assignment(target: t, source: s, _):
       return evaluate(t) { target, me in
-        me.deinitialize(valueAt: target) { me in
-          me.evaluate(s, into: target, then: dropResult(followup))
+        // Can't evaluate source into target because target may be referenced in
+        // source (e.g. x = x - 1)
+        me.evaluate(s) { source, me in
+          me.deinitialize(valueAt: target) { me in
+            me.copy(from: source, to: target, then: dropResult(followup))
+          }
         }
       }
 
@@ -181,8 +185,15 @@ extension Interpreter {
         }
       }
 
-    case let .if(condition: c, thenClause: trueClause, elseClause: maybeFalse, _):
-      UNIMPLEMENTED(c, trueClause, maybeFalse as Any)
+    case let .if(condition: c, thenClause: t, elseClause: f, _):
+      return evaluate(c) { condition, me in
+        let clause = me[condition] as! Bool
+        // TODO: deallocate temporaries.
+        return clause
+          ? me.run(t, then: followup)
+          : f.map { me.run($0, then: followup) }
+            ?? followup
+      }
 
     case let .return(e, _):
       return evaluate(
@@ -197,16 +208,26 @@ extension Interpreter {
         })
 
     case let .while(condition: c, body: body, _):
-      UNIMPLEMENTED(c, body)
+      // TODO: put a scope around the while body.
+      let saved = (frame.onBreak, frame.onContinue)
+
+      let onBreak = Task { me in
+        (me.frame.onBreak, me.frame.onContinue) = saved
+        return followup
+      }
+      let onContinue = Task { $0.while(c, run: body, then: onBreak) }
+
+      (frame.onBreak, frame.onContinue) = (onBreak, onContinue)
+      return onContinue(&self)
 
     case let .match(subject: subject, clauses: clauses, _):
       UNIMPLEMENTED(subject, clauses)
 
     case .break:
-      UNIMPLEMENTED()
+      return frame.onBreak!
 
     case .continue:
-      UNIMPLEMENTED()
+      return frame.onContinue!
     }
   }
 
@@ -226,6 +247,19 @@ extension Interpreter {
           me.runBlockContent(content.dropFirst(), then: followup)
         }
   }
+
+  mutating func `while`(
+    _ c: Expression, run body: Statement, then followup: Task) -> Task
+  {
+    return evaluate(c) { condition, me in
+      let runBody = me[condition] as! Bool
+      // TODO: deallocate temporaries.
+      return runBody
+        ? me.run(
+          body, then: Task { me in me.while(c, run: body, then: followup)})
+        : followup
+    }
+  }
 }
 
 /// Values and memory.
@@ -236,6 +270,9 @@ extension Interpreter {
     _ e: Expression, then followup: @escaping FollowupWith<Address>
   ) -> Task {
     let a = memory.allocate(mutable: false)
+    if tracing {
+      print("\(e.site): info: allocated @\(a)")
+    }
     frame.allocations.push(.temporary(e, a))
     return Task { me in followup(a, &me) }
   }
@@ -248,9 +285,15 @@ extension Interpreter {
     for _ in 0..<n {
       switch frame.allocations.pop()! {
       case let .variable(v):
+        if tracing {
+          print("\(v.site): info: deleting @\(frame.locals[v]!)")
+        }
         memory.delete(frame.locals[v]!)
         frame.locals[v] = nil
-      case let .temporary(_, address):
+      case let .temporary(e, address):
+        if tracing {
+          print("\(e.site): info: deleting @\(address)")
+        }
         memory.delete(address)
       }
     }
@@ -260,15 +303,18 @@ extension Interpreter {
   /// Copies the value at `source` into the `target` address and continues with
   /// `followup`.
   mutating func copy(
-    from source: Address, to target: Address, then followup: Task
+    from source: Address, to target: Address,
+    then followup: @escaping FollowupWith<Address>
   ) -> Task {
-    memory.initialize(target, to: self[source])
-    return followup
+    return initialize(target, to: self[source], then: followup)
   }
 
   mutating func deinitialize(
     valueAt target: Address, then followup: @escaping Task.Code) -> Task
   {
+    if tracing {
+      print("  info: deinitializing @\(target)")
+    }
     memory.deinitialize(target)
     return Task(followup)
   }
@@ -277,6 +323,9 @@ extension Interpreter {
     _ target: Address, to v: Value,
     then followup: @escaping FollowupWith<Address>) -> Task
   {
+    if tracing {
+      print("  info: initializing @\(target) = \(v)")
+    }
     memory.initialize(target, to: v)
     return Task { me in followup(target, &me) }
   }
@@ -292,6 +341,8 @@ extension Interpreter {
 }
 
 typealias FollowupWith<T> = (T, inout Interpreter)->Task
+
+/// Returns a followup that drops its argument and invokes f.
 fileprivate func dropResult<T>(_ f: Task) -> FollowupWith<T>
 { { _, me in f(&me) } }
 
@@ -312,19 +363,8 @@ extension Interpreter {
       }
 
     switch e {
-    case let .name(v):
-      let d = program.definition[v]
-
-      switch d {
-      case let b as SimpleBinding:
-        let source = (frame.locals[b] ?? globals[b])!
-        let result = destination ?? source
-        let useResult = Task { me in followup(result, &me) }
-        return source == result ? useResult
-          : copy(from: source, to: result, then: useResult)
-      default:
-        UNIMPLEMENTED(d as Any)
-      }
+    case let .name(n):
+      return evaluate(n, into: destination, then: followup)
 
     case let .memberAccess(m):
       UNIMPLEMENTED(m)
@@ -345,23 +385,9 @@ extension Interpreter {
       UNIMPLEMENTED(t)
 
     case let .unaryOperator(x):
-      return evaluate(x.operand) { operand, me in
-        let output: Value
-        switch x.operation.text {
-        case "-": output = -(me[operand] as! Int)
-        case "not": output = !(me[operand] as! Bool)
-        default: UNREACHABLE()
-        }
-
-        return me.temporary(e, at: destination) { result, me in
-          me.initialize(result, to: output) { _, me in
-            me.deleteAllocations(
-              1, then: Task { me in followup(result, &me) })
-          }
-        }
-      }
+      return evaluate(x, into: destination, then: followup)
     case let .binaryOperator(x):
-      UNIMPLEMENTED(x)
+      return evaluate(x, into: destination, then: followup)
     case let .functionCall(x):
       UNIMPLEMENTED(x)
     case .intType, .boolType, .typeType:
@@ -370,17 +396,113 @@ extension Interpreter {
       UNIMPLEMENTED(f)
     }
   }
-/*
-  /// Evaluates `e`, placing the result in `destination`, and
-  /// continues with `followup`.
-  ///
-  /// A convenience wrapper for `run(_:then:)` that supports cleaner syntax.
-  mutating func evaluate(
-    _ e: Expression, into destination: Address, followup: @escaping Task.Code
+
+  /// Evaluates `e` as an lvalue and passes the resulting address on to
+  /// `followup_`.
+  mutating func evaluateLValue(
+    _ e: Expression,
+    then followup_: @escaping FollowupWith<Address>
   ) -> Task {
-    evaluate(e, into: destination, then: followup)
+    if tracing {
+      print("\(e.site): info: evaluating lvalue")
+    }
+
+    let followup = tracing ? { a, me in
+      print("\(e.site): info: location = @\(a)")
+      return followup_(a, &me)
+    } : followup_
+
+    switch e {
+    case let .name(name):
+      let d = program.definition[name]
+      switch d {
+      case let b as SimpleBinding:
+        let a = (frame.locals[b] ?? globals[b])!
+        return Task { me in followup(a, &me) }
+      default:
+        UNIMPLEMENTED(d as Any)
+      }
+
+    case let .memberAccess(m):
+      UNIMPLEMENTED(m)
+    case let .index(target: t, offset: i, _):
+      UNIMPLEMENTED(t, i)
+
+    case .integerLiteral, .booleanLiteral, .tupleLiteral, .unaryOperator,
+         .binaryOperator, .functionCall, .intType, .boolType, .typeType,
+         .functionType:
+      UNREACHABLE("\(e)")
+    }
   }
- */
+
+  /// Evaluates `name` (into `destination`, if supplied) and passes the address
+  /// of the result on to `followup`.
+  mutating func evaluate(
+    _ name: Identifier, into destination: Address? = nil,
+    then followup: @escaping FollowupWith<Address>
+  ) -> Task {
+    let d = program.definition[name]
+
+    switch d {
+    case let b as SimpleBinding:
+      let source = (frame.locals[b] ?? globals[b])!
+      return destination != nil
+        ? copy(from: source, to: destination!, then: followup)
+        : Task { me in followup(source, &me) }
+    default:
+      UNIMPLEMENTED(d as Any)
+    }
+  }
+
+  /// Evaluates `e` (into `destination`, if supplied) and passes the address of
+  /// the result on to `followup`.
+  mutating func evaluate(
+    _ e: UnaryOperatorExpression, into destination: Address? = nil,
+    then followup: @escaping FollowupWith<Address>
+  ) -> Task {
+    evaluate(e.operand) { operand, me in
+      let output: Value
+      switch e.operation.text {
+      case "-": output = -(me[operand] as! Int)
+      case "not": output = !(me[operand] as! Bool)
+      default: UNREACHABLE()
+      }
+
+      return me.temporary(.unaryOperator(e), at: destination) { result, me in
+        me.initialize(result, to: output, then: followup)
+      }
+    }
+  }
+
+  /// Evaluates `e` (into `destination`, if supplied) and passes the address of
+  /// the result on to `followup`.
+  mutating func evaluate(
+    _ e: BinaryOperatorExpression, into destination: Address? = nil,
+    then followup: @escaping FollowupWith<Address>
+  ) -> Task {
+    temporary(.binaryOperator(e), at: destination) { result, me in
+      me.evaluate(e.lhs) { lhs, me in
+        if e.operation.text == "and" && (me[lhs] as! Bool == false) {
+          return me.copy(from: lhs, to: result, then: followup)
+        }
+        else if e.operation.text == "or" && (me[lhs] as! Bool == true) {
+          return me.copy(from: lhs, to: result, then: followup)
+        }
+        return me.evaluate(e.rhs) { rhs, me in
+          switch e.operation.text {
+          case "==":
+            return me.initialize(
+              result, to: areEqual(me[lhs], me[rhs]), then: followup)
+          case "-":
+            return me.initialize(
+              result, to: (me[lhs] as! Int) - (me[rhs] as! Int), then: followup)
+          default:
+            UNIMPLEMENTED(e)
+          }
+        }
+      }
+    }
+  }
 }
 
 func areEqual(_ l: Value, _ r: Value) -> Bool {
