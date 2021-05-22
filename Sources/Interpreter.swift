@@ -82,9 +82,14 @@ struct Interpreter {
   /// True iff the program is still running.
   var running: Bool = true
 
-  /// Creates an instance that runs `program`
-  init(_ program: ExecutableProgram) {
-    self.program = program
+  /// A record of any errors encountered.
+  var errors: ErrorLog = []
+
+  /// Creates an instance that runs `p`.
+  ///
+  /// - Requires: `p.main != nil`
+  init(_ p: ExecutableProgram) {
+    self.program = p
 
     frame = CallFrame(
       resultAddress: memory.allocate(),
@@ -113,6 +118,15 @@ struct Interpreter {
   mutating func run() -> Int? {
     while step() {}
     return memory[frame.resultAddress] as! (Int?)
+  }
+
+  /// Adds an error at the site of `offender` to the error log and marks the
+  /// program as terminated.
+  mutating func error<Node: AST>(
+    _ offender: Node, _ message: String , notes: [CarbonError.Note] = [])
+  {
+    errors.append(CarbonError(message, at: offender.site, notes: notes))
+    running = false
   }
 }
 
