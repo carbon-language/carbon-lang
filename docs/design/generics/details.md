@@ -1122,7 +1122,7 @@ interface Iterable {
   impl Equatable;
 }
 
-def F[Iterable:$ T](T: x) {
+def DoAdvanceAndEquals[Iterable:$ T](T: x) {
   // `x` has type `T` that implements `Iterable`, and so has `Advance`.
   x.Advance();
   // `Iterable` requires an implementation of `Equatable`,
@@ -1135,7 +1135,7 @@ struct Iota {
   impl Equatable { method (Self: this) Equals(Self: that) -> Bool { ... } }
 }
 var Iota: x;
-F(x);
+DoAdvanceAndEquals(x);
 ```
 
 Like with structural interfaces, an interface implementation requirement doesn't
@@ -1218,23 +1218,37 @@ provides a tool useful for [evolution](#evolution).
 **Concern:** Having both `extends` and [`extend`](#external-impl) with different
 meanings is going to be confusing. One should be renamed.
 
-TODO Use cases:
-[Boost.Graph](https://www.boost.org/doc/libs/1_74_0/libs/graph/doc/) concepts,
-see , C++ iterator concepts. See
-[Carbon generics use case: graph library](https://docs.google.com/document/d/1xk0GLtpBl2OOnf3F_6Z-A3DtTt-r7wdOZ5wPipYUSO0/edit?usp=sharing&resourcekey=0-mBSmwn6b6jwbLaQw2WG6OA).
+Examples:
+
+-   The C++
+    [Boost.Graph library](https://www.boost.org/doc/libs/1_74_0/libs/graph/doc/)
+    [graph concepts](https://www.boost.org/doc/libs/1_74_0/libs/graph/doc/graph_concepts.html#fig:graph-concepts)
+    has many refining relationships between concepts.
+    [Carbon generics use case: graph library](https://docs.google.com/document/d/1xk0GLtpBl2OOnf3F_6Z-A3DtTt-r7wdOZ5wPipYUSO0/edit?usp=sharing&resourcekey=0-mBSmwn6b6jwbLaQw2WG6OA)
+    shows how those concepts might be translated into Carbon interfaces.
+-   The [C++ concepts](https://en.cppreference.com/w/cpp/named_req) for
+    containers, iterators, and concurrency include many refinement
+    relationships.
+-   Swift protocols, such as
+    [`Collection](https://developer.apple.com/documentation/swift/collection).
 
 To write an interface extending multiple interfaces, use multiple `extends`
-declarations:
+declarations. For example, the
+[`BinaryInteger` protocol in Swift](https://developer.apple.com/documentation/swift/binaryinteger)
+inherits from `CustomStringConvertible`, `Hashable`, `Numeric`, and `Stridable`.
+The [`SetAlgeba` protocol](https://swiftdoc.org/v5.1/protocol/setalgebra/)
+extends `Equatable` and `ExpressibleByArrayLiteral`, which would be declared in
+Carbon:
 
 ```
-interface RefinesTwo {
-  extends B1;
-  extends B2;
+interface SetAlgebra {
+  extends Equatable;
+  extends ExpressibleByArrayLiteral;
 }
 ```
 
-The `extends` declarations are in the body of the `interface` definition instead
-of the header so we can use
+**Alternative considered:** The `extends` declarations are in the body of the
+`interface` definition instead of the header so we can use
 [associated types (defined below)](#associated-types) also defined in the body
 in parameters or constraints of the interface being extended.
 
