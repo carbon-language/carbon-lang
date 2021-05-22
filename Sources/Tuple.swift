@@ -110,7 +110,7 @@ extension TupleSyntax {
       if case .position = key { positionalCount += 1 }
       if let other = r[key] {
         errors.append(
-          CompileError(
+          CarbonError(
             "Duplicate label \(e.label!)", at: e.label!.site,
             notes: [("other definition", other.site)]))
       }

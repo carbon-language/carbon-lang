@@ -72,9 +72,9 @@ private extension NameResolution {
 
   /// Adds an error at the site of `offender` to the error log.
   mutating func error<Node: AST>(
-    _ offender: Node, _ message: String , notes: [CompileError.Note] = []
+    _ offender: Node, _ message: String , notes: [CarbonError.Note] = []
   ) {
-    errors.append(CompileError(message, at: offender.site, notes: notes))
+    errors.append(CarbonError(message, at: offender.site, notes: notes))
   }
 }
 

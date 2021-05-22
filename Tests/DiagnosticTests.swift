@@ -18,7 +18,7 @@ final class GnuFormattingTests: XCTestCase {
     XCTAssertEqual("\(sample)", "someFile:2.7-9.1")
   }
 
-  func testCompileError() {
+  func testCarbonError() {
     let r0 = SourceRegion(
       fileName: "someFile",
       .init(line: 3, column: 2) ..< .init(line: 4, column: 9))
@@ -27,7 +27,7 @@ final class GnuFormattingTests: XCTestCase {
       fileName: "otherFile",
       .init(line: 5, column: 1) ..< .init(line: 9, column: 2))
 
-    let sample = CompileError(
+    let sample = CarbonError(
       "heck problem", at: ASTSite(devaluing: r0),
       notes: [(message: "this also", site: ASTSite(devaluing: r1))])
 

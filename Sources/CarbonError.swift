@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 /// An error produced at compile-time.
-struct CompileError: Error, Equatable {
+struct CarbonError: Error, Equatable {
   /// An additional informative note to go with the error message.
   typealias Note = (message: String, site: ASTSite)
 
@@ -28,7 +28,7 @@ struct CompileError: Error, Equatable {
   }
 }
 
-extension CompileError: CustomStringConvertible {
+extension CarbonError: CustomStringConvertible {
   /// String representation that, if printed at the beginning of the line,
   /// should be recognized by IDEs.
   var description: String {
@@ -39,7 +39,7 @@ extension CompileError: CustomStringConvertible {
   }
 }
 
-extension CompileError {
+extension CarbonError {
   /// Returns `l` offset by `r`.
   static func + (l: Self, r: SourcePosition.Offset) -> Self {
     Self(
@@ -63,9 +63,9 @@ extension CompileError {
 /// failure.
 /*
 struct ErrorLog {
-  var contents: [CompileError]
+  var contents: [CarbonError]
 }
  */
-typealias ErrorLog = [CompileError]
+typealias ErrorLog = [CarbonError]
 extension ErrorLog: Error {}
 
