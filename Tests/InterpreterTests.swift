@@ -23,7 +23,7 @@ final class InterpreterTests: XCTestCase {
     XCTAssertEqual(42, engine.run())
   }
 
-  func run(_ testFile: String) -> Int? {
+  func run(_ testFile: String, tracing: Bool = false) -> Int? {
     let testdata =
         URL(fileURLWithPath: #filePath).deletingLastPathComponent()
         .appendingPathComponent("testdata")
@@ -36,14 +36,15 @@ final class InterpreterTests: XCTestCase {
     else { return nil }
     XCTAssert(errors.isEmpty)
     var engine = Interpreter(program)
+    engine.tracing = tracing
     return engine.run()
   }
 
   func testExamples() {
-    XCTAssertEqual(run("assignment_copy1.6c"), 0)
-    XCTAssertEqual(run("assignment_copy2.6c"), 0)
-    XCTAssertEqual(run("block1.6c"), 0)
-    XCTAssertEqual(run("block2.6c"), 0)
+    XCTAssertEqual(run("assignment_copy1.6c", tracing: true), 0)
+    XCTAssertEqual(run("assignment_copy2.6c", tracing: true), 0)
+    XCTAssertEqual(run("block1.6c", tracing: true), 0)
+    XCTAssertEqual(run("block2.6c", tracing: true), 0)
     // XCTAssertEqual(run("break1.6c"), 0)
     // XCTAssertEqual(run("choice1.6c"), 0)
     // XCTAssertEqual(run("continue1.6c"), 0)

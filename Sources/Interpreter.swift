@@ -85,6 +85,9 @@ struct Interpreter {
   /// A record of any errors encountered.
   var errors: ErrorLog = []
 
+  /// True iff we are printing an evaluation trace to stdout
+  var tracing: Bool = false
+
   /// Creates an instance that runs `p`.
   ///
   /// - Requires: `p.main != nil`
@@ -152,6 +155,9 @@ extension Interpreter {
   /// rest of executing `s` (if any), and whatever follows that, into the
   /// returned `Task`.
   mutating func run(_ s: Statement, then followup: Task) -> Task {
+    if tracing {
+      print("\(s.site): info: running statement")
+    }
     switch s {
     case let .expressionStatement(e, _):
       UNIMPLEMENTED(e)
@@ -291,11 +297,20 @@ fileprivate func dropResult<T>(_ f: Task) -> FollowupWith<T>
 
 extension Interpreter {
   /// Evaluates `e` (into `destination`, if supplied) and passes
-  /// the address of the result on to `followup`.
+  /// the address of the result on to `followup_`.
   mutating func evaluate(
     _ e: Expression, into destination: Address? = nil,
-    then followup: @escaping FollowupWith<Address>
+    then followup_: @escaping FollowupWith<Address>
   ) -> Task {
+    if tracing {
+      print("\(e.site): info: evaluating")
+    }
+    let followup = !tracing ? followup_
+      : { a, me in
+        print("\(e.site): info: result = \(me[a])")
+        return followup_(a, &me)
+      }
+
     switch e {
     case let .name(v):
       let d = program.definition[v]
