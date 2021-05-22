@@ -41,9 +41,9 @@ final class InterpreterTests: XCTestCase {
 
   func testExamples() {
     XCTAssertEqual(run("assignment_copy1.6c"), 0)
-    // XCTAssertEqual(run("assignment_copy2.6c"), 0)
-    // XCTAssertEqual(run("block1.6c"), 0)
-    // XCTAssertEqual(run("block2.6c"), 0)
+    XCTAssertEqual(run("assignment_copy2.6c"), 0)
+    XCTAssertEqual(run("block1.6c"), 0)
+    XCTAssertEqual(run("block2.6c"), 0)
     // XCTAssertEqual(run("break1.6c"), 0)
     // XCTAssertEqual(run("choice1.6c"), 0)
     // XCTAssertEqual(run("continue1.6c"), 0)
