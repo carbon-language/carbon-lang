@@ -92,12 +92,11 @@ struct Memory {
       return r
     }
     set {
-      let i = storage.index(forKey: a)
-        ?? fatal("writing to unallocated address \(a).")
-      precondition(
-        storage[i].value.content != nil,
-        "modifying uninitialized address \(a).")
-      storage.values[i].content = newValue
+      precondition(self[a].type == newValue.type)
+      // TODO: user-defined assignment, for which deinit/init won't work
+      deinitialize(a)
+      // TODO: subpart address stability.
+      initialize(a, to: newValue)
     }
   }
 
