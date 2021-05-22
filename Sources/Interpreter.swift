@@ -397,44 +397,6 @@ extension Interpreter {
     }
   }
 
-  /// Evaluates `e` as an lvalue and passes the resulting address on to
-  /// `followup_`.
-  mutating func evaluateLValue(
-    _ e: Expression,
-    then followup_: @escaping FollowupWith<Address>
-  ) -> Task {
-    if tracing {
-      print("\(e.site): info: evaluating lvalue")
-    }
-
-    let followup = tracing ? { a, me in
-      print("\(e.site): info: location = @\(a)")
-      return followup_(a, &me)
-    } : followup_
-
-    switch e {
-    case let .name(name):
-      let d = program.definition[name]
-      switch d {
-      case let b as SimpleBinding:
-        let a = (frame.locals[b] ?? globals[b])!
-        return Task { me in followup(a, &me) }
-      default:
-        UNIMPLEMENTED(d as Any)
-      }
-
-    case let .memberAccess(m):
-      UNIMPLEMENTED(m)
-    case let .index(target: t, offset: i, _):
-      UNIMPLEMENTED(t, i)
-
-    case .integerLiteral, .booleanLiteral, .tupleLiteral, .unaryOperator,
-         .binaryOperator, .functionCall, .intType, .boolType, .typeType,
-         .functionType:
-      UNREACHABLE("\(e)")
-    }
-  }
-
   /// Evaluates `name` (into `destination`, if supplied) and passes the address
   /// of the result on to `followup`.
   mutating func evaluate(
