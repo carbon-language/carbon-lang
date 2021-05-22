@@ -7,7 +7,7 @@ import XCTest
 final class TestSemanticAnalysis: XCTestCase {
   func testNoMain() {
     guard let executable = "var Int x = 3;".checkExecutable() else { return }
-    XCTAssertNil(executable.entryPoint)
+    XCTAssertNil(executable.main)
   }
       
   func testMultiMain() {
@@ -25,16 +25,12 @@ final class TestSemanticAnalysis: XCTestCase {
   func testMinimal() {
     guard let exe = "fn main() -> Int {}".checkExecutable() else { return }
 
-    guard let entryPoint = checkNonNil(exe.entryPoint) else {
+    guard let main = exe.main else {
       XCTFail("Missing unambiguous main()")
       return
     }
-    guard case let .name(name) = entryPoint.callee else {
-      XCTFail("Callee is not an identifier \(entryPoint.callee)")
-      return
-    }
-    
+
     // Nothing interesting to check about exe yet.
-    XCTAssertEqual(name.text, "main")
+    XCTAssertEqual(main.name.text, "main")
   }
 }

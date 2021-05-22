@@ -700,9 +700,14 @@ private extension TypeChecker {
 /// A marker for code that needs to be implemented.  Eventually all of these
 /// should be eliminated from the codebase.
 func UNIMPLEMENTED(
-  _ message: String? = nil, filePath: StaticString = #filePath,
-  line: UInt = #line) -> Never {
-  fatalError(message ?? "unimplemented", file: (filePath), line: line)
+  _ vars: Any...,
+  filePath: StaticString = #filePath,
+  line: UInt = #line
+) -> Never {
+  fatalError(
+    "UNIMPLEMENTED\n"
+      + vars.lazy.map(String.init(describing:)).joined(separator: "\n"),
+    file: (filePath), line: line)
 }
 
 /// A marker for code that should never be reached.

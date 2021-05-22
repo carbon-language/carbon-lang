@@ -48,7 +48,7 @@ struct Memory {
     }
   }
 
-  /// Deinitializes the value at `a`, returning it to an uninitialized state.
+  /// Deinitializes the storage at `a`, returning it to an uninitialized state.
   ///
   /// - Note: deinitialization is not considered a mutation of `a`'s value.
   /// - Requires: `a` is the address of an initialized value.
@@ -67,6 +67,14 @@ struct Memory {
     let v = storage[a] ?? fatal("deallocating unallocated address \(a).")
     precondition(v.content == nil, "deallocating initialized address \(a)")
     storage[a] = nil
+  }
+
+  /// Deintializes and then deallocates the memory at `a`
+  ///
+  /// - Requires: `a` is the address of an initialized value.
+  mutating func delete(_ a: Address) {
+    deinitialize(a)
+    deallocate(a)
   }
 
   /// Accesses the value at `a`.

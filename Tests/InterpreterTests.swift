@@ -11,14 +11,7 @@ final class TestEvaluateCall: XCTestCase {
     }
 
     var engine = Interpreter(exe)
-    engine.start()
-  
-    while true {
-      if case .exited(let exitCode) = engine.step() {
-        XCTAssertEqual(0, exitCode)
-        break
-      }
-    }
+    XCTAssertEqual(0, engine.run())
   }
 }
 
