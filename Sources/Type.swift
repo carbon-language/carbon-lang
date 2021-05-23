@@ -8,7 +8,8 @@ indirect enum Type: Equatable {
     int, bool, type,
     function(parameterTypes: TupleType, returnType: Type),
     tuple(TupleType),
-    alternative(parent: ASTIdentity<ChoiceDefinition>, payload: TupleType),
+    alternative(
+      ASTIdentity<Alternative>, parent: ASTIdentity<ChoiceDefinition>),
     `struct`(ASTIdentity<StructDefinition>),
     `choice`(ASTIdentity<ChoiceDefinition>),
 
@@ -93,8 +94,8 @@ extension Type: CustomStringConvertible {
     case let .function(parameterTypes: p, returnType: r):
       return "fnty \(p) -> \(r)"
     case let .tuple(t): return "\(t)"
-    case let .alternative(parent: parent, payload: payload):
-      return "<alternative> \(payload) -> \(parent.structure.name.text)"
+    case let .alternative(id, parent: parent):
+      return "\(parent.structure.name.text).\(id.structure.name.text)"
     case let .struct(d): return d.structure.name.text
     case let .choice(d): return d.structure.name.text
     case .error:

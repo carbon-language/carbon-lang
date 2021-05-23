@@ -51,7 +51,10 @@ struct TypeChecker {
   /// name of each declared entity.
   private var typeOfNameDeclaredBy
     = Dictionary<Declaration.Identity, Memo<Type>>()
-  
+
+  /// The payload tuple type for each alternative.
+  private var payloadType: [ASTIdentity<Alternative>: TupleType] = [:]
+
   /// The set of initializations that have been completely typechecked.
   private var checkedInitializations = Set<Initialization.Identity>()
 
@@ -237,9 +240,8 @@ private extension TypeChecker {
 
     case let a as Alternative:
       let payload = value(TypeExpression(a.payload))
-      let payloadTuple = payload == .error ? .void : payload.tuple!
-      r = .alternative(
-        parent: ASTIdentity(of: enclosingChoice[a]!), payload: payloadTuple)
+      payloadType[a.identity] = payload == .error ? .void : payload.tuple!
+      r = .alternative(a.identity, parent: enclosingChoice[a]!.identity)
 
     case let x as StructMember:
       r = value(x.type)
@@ -297,8 +299,8 @@ private extension TypeChecker {
   /// `choice`.
   mutating func type(_ e: Expression) -> Type {
     let r = calleeType(e)
-    if case let .alternative(parent: choiceID, payload: arguments) = r,
-       arguments == .void
+    if case let .alternative(id, parent: choiceID) = r,
+       id.structure.payload.isEmpty
     {
       return .choice(choiceID)
     }
@@ -413,7 +415,8 @@ private extension TypeChecker {
       }
       return r
 
-    case let .alternative(parent: resultID, payload: payload):
+    case let .alternative(id, parent: resultID):
+      let payload = payloadType[id]!
       if argumentTypes != .tuple(payload) {
         error(
           e.arguments, "argument types \(argumentTypes)"
@@ -565,8 +568,10 @@ private extension TypeChecker {
       }
       return calleeValue
 
-    case let .alternative(parent: resultID, payload: payload):
-      let argumentTypes = patternType(p.arguments, initializerType: payload).tuple!
+    case let .alternative(id, parent: resultID):
+      let payload = payloadType[id]!
+      let argumentTypes = patternType(
+        p.arguments, initializerType: payload).tuple!
       if argumentTypes != payload {
         error(
           p.arguments,
