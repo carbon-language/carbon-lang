@@ -271,7 +271,7 @@ extension Interpreter {
   ) -> Task {
     let a = memory.allocate(mutable: false)
     if tracing {
-      print("\(e.site): info: allocated @\(a)")
+      print("\(e.site): info: allocated \(a)")
     }
     frame.allocations.push(.temporary(e, a))
     return Task { me in followup(a, &me) }
@@ -286,13 +286,13 @@ extension Interpreter {
       switch frame.allocations.pop()! {
       case let .variable(v):
         if tracing {
-          print("\(v.site): info: deleting @\(frame.locals[v]!)")
+          print("\(v.site): info: deleting \(frame.locals[v]!)")
         }
         memory.delete(frame.locals[v]!)
         frame.locals[v] = nil
       case let .temporary(e, address):
         if tracing {
-          print("\(e.site): info: deleting @\(address)")
+          print("\(e.site): info: deleting \(address)")
         }
         memory.delete(address)
       }
@@ -313,7 +313,7 @@ extension Interpreter {
     valueAt target: Address, then followup: @escaping Task.Code) -> Task
   {
     if tracing {
-      print("  info: deinitializing @\(target)")
+      print("  info: deinitializing \(target)")
     }
     memory.deinitialize(target)
     return Task(followup)
@@ -324,7 +324,7 @@ extension Interpreter {
     then followup: @escaping FollowupWith<Address>) -> Task
   {
     if tracing {
-      print("  info: initializing @\(target) = \(v)")
+      print("  info: initializing \(target) = \(v)")
     }
     memory.initialize(target, to: v)
     return Task { me in followup(target, &me) }

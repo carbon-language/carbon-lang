@@ -2,7 +2,11 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-typealias Address = Int
+struct Address: Hashable, CustomStringConvertible {
+  fileprivate init(_ offset: Int) { self.offset = offset }
+  var description: String { "@\(offset)" }
+  private let offset: Int
+}
 
 /// Stops the program with an error exit code and the given message.
 ///
@@ -22,9 +26,9 @@ struct Memory {
   /// - Parameter mutable: `true` iff mutations of the Value at this address
   ///   will be allowed.
   mutating func allocate(mutable: Bool = false) -> Address {
-    defer { nextAddress += 1 }
-    storage[nextAddress] = Location(mutable: mutable)
-    return nextAddress
+    defer { nextOffset += 1 }
+    storage[Address(nextOffset)] = Location(mutable: mutable)
+    return Address(nextOffset)
   }
 
   /// Initializes the value at `a` to `v`.
@@ -118,5 +122,5 @@ struct Memory {
   }
 
   private var storage: [Address: Location] = [:]
-  private(set) var nextAddress = 0
+  private(set) var nextOffset = 0
 }
