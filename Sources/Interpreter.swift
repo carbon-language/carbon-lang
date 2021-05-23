@@ -161,10 +161,9 @@ extension Interpreter {
         // Can't evaluate source into target because target may be referenced in
         // source (e.g. x = x - 1)
         me.evaluate(s) { source, me in
-        me.deinitialize(valueAt: target) { me in
-        me.copy(from: source, to: target) { _, me in
+        me.assign(target, from: source) { me in
         me.deleteAnyEphemeral(at: source, then: followup)
-        }}}}
+        }}}
 
     case let .initialization(i):
       // Storage must be allocated for the initializer value even if it's an
@@ -317,6 +316,16 @@ extension Interpreter {
     then followup: @escaping FollowupWith<Address>
   ) -> Task {
     return initialize(target, to: self[source], then: followup)
+  }
+
+  /// Copies the value at `source` into the `target` address and continues with
+  /// `followup`.
+  mutating func assign(
+    _ target: Address, from source: Address,
+    then followup: @escaping Task.Code
+  ) -> Task {
+    memory[target] = memory[source]
+    return Task(followup)
   }
 
   mutating func deinitialize(
