@@ -159,10 +159,11 @@ extension Interpreter {
       UNIMPLEMENTED(e)
 
     case let .assignment(target: t, source: s, _):
-      return evaluateLValue(t) { target, me in
+      return evaluate(t) { target, me in
+        assert(me.frame.ephemeralAllocations.isEmpty, "\(t) not an lvalue?")
         // Can't evaluate source into target because target may be referenced in
         // source (e.g. x = x - 1)
-        me.evaluate(s) { source, me in
+        return me.evaluate(s) { source, me in
         me.assign(target, from: source) { me in
         me.deleteAnyEphemeral(at: source, then: followup)
         }}}
@@ -369,41 +370,6 @@ fileprivate func dropResult<T>(_ f: Task) -> FollowupWith<T>
 { { _, me in f(&me) } }
 
 extension Interpreter {
-  /// Evaluates the lvalue expression `e` and passes the address of the result
-  /// on to `followup_`.
-  mutating func evaluateLValue(
-    _ e: Expression, then followup_: @escaping FollowupWith<Address>
-  ) -> Task {
-    if tracing {
-      print("\(e.site): info: lvalue")
-    }
-    let followup = !tracing ? followup_
-      : { a, me in
-        print("\(e.site): info: result \(a) contains \(me[a])")
-        return followup_(a, &me)
-      }
-
-    switch e {
-    case let .name(n):
-      let d = program.definition[n]
-      guard let b = d as? SimpleBinding else { UNREACHABLE() }
-      let source = (frame.locals[b] ?? globals[b])!
-      return Task { me in followup(source, &me) }
-
-    case let .memberAccess(m):
-      UNIMPLEMENTED(m)
-    case let .index(target: t, offset: i, _):
-      UNIMPLEMENTED(t, i)
-
-    case .integerLiteral, .booleanLiteral, .tupleLiteral,
-         .unaryOperator, .binaryOperator, .functionCall,
-         .intType, .boolType, .typeType, .functionType:
-      UNREACHABLE("\(e)")
-    }
-  }
-}
-
-extension Interpreter {
   mutating func evaluateAndConsume<T>(
     _ e: Expression, in followup: @escaping FollowupWith<T>) -> Task {
     evaluate(e) { p, me in
@@ -432,7 +398,8 @@ extension Interpreter {
       return evaluate(n, into: destination, then: followup)
 
     case let .memberAccess(m):
-      UNIMPLEMENTED(m)
+      return evaluate(m, into: destination, then: followup)
+
     case let .index(target: t, offset: i, _):
       UNIMPLEMENTED(t, i)
 
@@ -458,7 +425,9 @@ extension Interpreter {
         me.evaluate(x, into: result, then: followup)
       }
     case let .functionCall(x):
-      UNIMPLEMENTED(x)
+      return allocate(e, unlessNonNil: destination) { result, me in
+        me.evaluate(x, into: result, then: followup)
+      }
     case .intType, .boolType, .typeType:
       UNIMPLEMENTED()
     case let .functionType(f):
@@ -539,6 +508,33 @@ extension Interpreter {
           })
       }
     }
+  }
+
+  /// Evaluates `e` (into `output`, if supplied) and passes the address of
+  /// the result on to `followup`.
+  mutating func evaluate(
+    _ e: FunctionCall<Expression>, into output: Address,
+    then followup: @escaping FollowupWith<Address>
+  ) -> Task {
+    evaluate(e.callee) { callee, me in
+      switch me[callee].type {
+      case .function:
+        UNIMPLEMENTED(e)
+      case .alternative:
+        UNIMPLEMENTED(e)
+      default:
+        UNREACHABLE()
+      }
+    }
+  }
+
+  /// Evaluates `e` (into `output`, if supplied) and passes the address of
+  /// the result on to `followup`.
+  mutating func evaluate(
+    _ e: MemberAccessExpression, into output: Address? = nil,
+    then followup: @escaping FollowupWith<Address>
+  ) -> Task {
+    UNIMPLEMENTED()
   }
 }
 

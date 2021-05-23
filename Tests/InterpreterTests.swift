@@ -40,6 +40,10 @@ final class InterpreterTests: XCTestCase {
     return engine.run()
   }
 
+  func test1() {
+    // XCTAssertEqual(run("choice1.6c", tracing: true), 0)
+  }
+
   func testExamples() {
     XCTAssertEqual(run("assignment_copy1.6c"), 0)
     XCTAssertEqual(run("assignment_copy2.6c"), 0)
