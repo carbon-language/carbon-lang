@@ -19,6 +19,12 @@ namespace Carbon {
 // This currently includes '0'..'9'.
 inline bool IsDecimalDigit(char c) { return llvm::isDigit(c); }
 
+// Is this an alphabetical character according to Carbon's lexical rules?
+//
+// Alphabetical characters are permitted at the start of identifiers. This
+// currently includes 'A'..'Z' and 'a'..'z'.
+inline bool IsAlpha(char c) { return llvm::isAlpha(c); }
+
 // Is this an alphanumeric character according to Carbon's lexical rules?
 //
 // Alphanumeric characters are permitted as trailing characters in identifiers
