@@ -308,7 +308,8 @@ extension Interpreter {
         then: Task { $0.cleanUpPersistentAllocations(above: n, then: followup)})
   }
 
-  /// If `a` was allocated to a temporary, deinitializes and destroys it.
+  /// If `a` was allocated to an ephemeral temporary, deinitializes and destroys
+  /// it.
   mutating func deleteAnyEphemeral(at a: Address, then followup: Task) -> Task {
     if let _ = frame.ephemeralAllocations.removeValue(forKey: a) {
       if tracing {
@@ -317,6 +318,19 @@ extension Interpreter {
       memory.delete(a)
     }
     return followup
+  }
+
+  /// Deinitializes and destroys any addresses in `a` that were allocated to an
+  /// ephemeral temporary.
+  mutating func deleteAnyEphemerals<C: Collection>(at a: C, then followup: Task)
+    -> Task
+    where C.Element == Address
+  {
+    guard let a0 = a.first else { return followup }
+    return deleteAnyEphemeral(
+      at: a0,
+      then: Task {
+        me in me.deleteAnyEphemerals(at: a.dropFirst(), then: followup) })
   }
 
   /// Copies the value at `source` into the `target` address and continues with
@@ -380,8 +394,13 @@ extension Interpreter {
 
   /// Evaluates `e` (into `destination`, if supplied) and passes
   /// the address of the result on to `followup_`.
+  ///
+  /// - Parameter asCallee: `true` if `e` is in callee position in a function
+  /// call expression.
   mutating func evaluate(
-    _ e: Expression, into destination: Address? = nil,
+    _ e: Expression,
+    asCallee: Bool = false,
+    into destination: Address? = nil,
     then followup_: @escaping FollowupWith<Address>
   ) -> Task {
     if tracing {
@@ -393,45 +412,42 @@ extension Interpreter {
         return followup_(a, &me)
       }
 
+    // Handle all possible lvalue expressions
     switch e {
     case let .name(n):
       return evaluate(n, into: destination, then: followup)
 
     case let .memberAccess(m):
-      return evaluate(m, into: destination, then: followup)
+      return evaluate(m, asCallee: asCallee, into: destination, then: followup)
 
     case let .index(target: t, offset: i, _):
       UNIMPLEMENTED(t, i)
 
-    case let .integerLiteral(r, _):
+    case .integerLiteral, .booleanLiteral, .tupleLiteral,
+         .unaryOperator, .binaryOperator, .functionCall, .intType, .boolType,
+         .typeType, .functionType:
       return allocate(e, unlessNonNil: destination) { result, me in
-        me.initialize(result, to: r, then: followup)
+        switch e {
+        case let .integerLiteral(r, _):
+          return me.initialize(result, to: r, then: followup)
+        case let .booleanLiteral(r, _):
+          return me.initialize(result, to: r, then: followup)
+        case let .tupleLiteral(t):
+          return me.evaluate(t.elements[...], into: result, then: followup)
+        case let .unaryOperator(x):
+          return me.evaluate(x, into: result, then: followup)
+        case let .binaryOperator(x):
+          return me.evaluate(x, into: result, then: followup)
+        case let .functionCall(x):
+          return me.evaluate(x, into: result, then: followup)
+        case .intType, .boolType, .typeType:
+          UNIMPLEMENTED()
+        case let .functionType(f):
+          UNIMPLEMENTED(f)
+        case .name, .memberAccess, .index:
+          UNREACHABLE()
+        }
       }
-
-    case let .booleanLiteral(r, _):
-      return allocate(e, unlessNonNil: destination) { result, me in
-        me.initialize(result, to: r, then: followup)
-      }
-
-    case let .tupleLiteral(t):
-      UNIMPLEMENTED(t)
-
-    case let .unaryOperator(x):
-      return allocate(e, unlessNonNil: destination) { result, me in
-        me.evaluate(x, into: result, then: followup)
-      }
-    case let .binaryOperator(x):
-      return allocate(e, unlessNonNil: destination) { result, me in
-        me.evaluate(x, into: result, then: followup)
-      }
-    case let .functionCall(x):
-      return allocate(e, unlessNonNil: destination) { result, me in
-        me.evaluate(x, into: result, then: followup)
-      }
-    case .intType, .boolType, .typeType:
-      UNIMPLEMENTED()
-    case let .functionType(f):
-      UNIMPLEMENTED(f)
     }
   }
 
@@ -444,18 +460,33 @@ extension Interpreter {
     let d = program.definition[name]
 
     switch d {
+    case let t as TypeDeclaration:
+      return allocate(.name(name), unlessNonNil: destination) { output, me in
+        me.initialize(output, to: t.declaredType, then: followup)
+      }
+
     case let b as SimpleBinding:
       let source = (frame.locals[b] ?? globals[b])!
       return destination != nil
         ? copy(from: source, to: destination!, then: followup)
         : Task { me in followup(source, &me) }
+
+    case let f as FunctionDefinition:
+      UNIMPLEMENTED(f)
+
+    case let a as Alternative:
+      UNIMPLEMENTED(a)
+
+    case let m as StructMember:
+      UNIMPLEMENTED(m)
+
     default:
       UNIMPLEMENTED(d as Any)
     }
   }
 
-  /// Evaluates `e` (into `output`, if supplied) and passes the address of
-  /// the result on to `followup`.
+  /// Evaluates `e` into `output` and passes the address of the result on to
+  /// `followup`.
   mutating func evaluate(
     _ e: UnaryOperatorExpression, into output: Address,
     then followup: @escaping FollowupWith<Address>
@@ -475,8 +506,8 @@ extension Interpreter {
     }
   }
 
-  /// Evaluates `e` (into `output`, if supplied) and passes the address of
-  /// the result on to `followup`.
+  /// Evaluates `e` into `output` and passes the address of the result on to
+  /// `followup`.
   mutating func evaluate(
     _ e: BinaryOperatorExpression, into output: Address,
     then followup: @escaping FollowupWith<Address>
@@ -497,14 +528,51 @@ extension Interpreter {
         case "and", "or": result = me[rhs] as! Bool
         default: UNIMPLEMENTED(e)
         }
-        return me.deleteAnyEphemeral(
-          at: lhs,
+        return me.deleteAnyEphemerals(
+          at: [lhs, rhs],
           then: Task { me in
-            me.deleteAnyEphemeral(
-              at: rhs,
-              then: Task { me in
-                me.initialize(output, to: result, then: followup)
-              })
+            me.initialize(output, to: result, then: followup)
+          })
+      }
+    }
+  }
+
+  /// Evaluates `e` into `output` and passes the address of the result on to
+  /// `followup`.
+  mutating func evaluate(
+    _ e: FunctionCall<Expression>, into output: Address,
+    then followup: @escaping FollowupWith<Address>
+  ) -> Task {
+    evaluate(e.callee, asCallee: true) { callee, me in
+      me.evaluate(.tupleLiteral(e.arguments)) { arguments, me in
+        let result: Value
+        switch me[callee].type {
+        case .function:
+          UNIMPLEMENTED(e)
+
+        case .type:
+          switch Type(me[callee])! {
+          case let .alternative(discriminator, parent: resultType):
+            // FIXME: there will be an extra copy of the payload; the result
+            // should adopt the payload in memory.
+            result = ChoiceValue(
+              type_: resultType,
+              discriminator: discriminator,
+              payload: me[arguments] as! Tuple<Value>)
+
+          case .struct:
+            UNIMPLEMENTED()
+          case .int, .bool, .type, .function, .tuple, .choice, .error:
+            UNREACHABLE()
+          }
+
+        case .int, .bool, .tuple, .choice, .error, .alternative, .struct:
+          UNREACHABLE()
+        }
+        return me.deleteAnyEphemerals(
+          at: [callee, arguments],
+          then: Task { me in
+            me.initialize(output, to: result, then: followup)
           })
       }
     }
@@ -513,28 +581,75 @@ extension Interpreter {
   /// Evaluates `e` (into `output`, if supplied) and passes the address of
   /// the result on to `followup`.
   mutating func evaluate(
-    _ e: FunctionCall<Expression>, into output: Address,
+    _ e: MemberAccessExpression, asCallee: Bool, into output: Address?,
     then followup: @escaping FollowupWith<Address>
   ) -> Task {
-    evaluate(e.callee) { callee, me in
-      switch me[callee].type {
-      case .function:
-        UNIMPLEMENTED(e)
-      case .alternative:
-        UNIMPLEMENTED(e)
+    evaluate(e.base) { base, me in
+      switch me[base].type {
+      case .struct:
+        UNIMPLEMENTED()
+      case .tuple:
+        UNIMPLEMENTED()
+      case .type:
+        // Handle access to a type member, like a static member in C++.
+        switch Type(me[base])! {
+        case let .choice(parentID):
+          return me.allocate(.memberAccess(e), unlessNonNil: output)
+          { output, me in
+
+            let id: ASTIdentity<Alternative>
+              = parentID.structure[e.member]!.identity
+            let result: Value = asCallee
+              ? Type.alternative(id, parent: parentID)
+              : ChoiceValue(
+                type_: parentID, discriminator: id, payload: .init())
+
+            return me.deleteAnyEphemeral(
+              at: base,
+              then: Task { me in
+                me.initialize(output, to: result, then: followup)
+              })
+          }
+        default: UNREACHABLE()
+        }
+        fallthrough
       default:
-        UNREACHABLE()
+        UNREACHABLE("\(e)")
       }
     }
   }
 
-  /// Evaluates `e` (into `output`, if supplied) and passes the address of
-  /// the result on to `followup`.
+
+  /// Evaluates `e` into `output` and passes the address of the result on to
+  /// `followup`.
   mutating func evaluate(
-    _ e: MemberAccessExpression, into output: Address? = nil,
+    _ e: ArraySlice<TupleLiteral.Element>,
+    into output: Address,
+    parts: [FieldID: Address] = [:],
+    positionalCount: Int = 0,
     then followup: @escaping FollowupWith<Address>
   ) -> Task {
-    UNIMPLEMENTED()
+    // FIXME: too many copies
+    if e.isEmpty {
+      return initialize(output, to: Tuple(parts).mapFields { self[$0] })
+      { output, me in
+        me.deleteAnyEphemerals(
+          at: parts.values, then: Task { me in followup(output, &me) })
+      }
+    }
+    else {
+      let e0 = e.first!
+      return evaluate(e0.payload) { payload, me in
+        let key: FieldID = e0.label.map { .label($0) }
+          ?? .position(positionalCount)
+        var p = parts
+        p[key] = payload
+        return me.evaluate(
+          e.dropFirst(), into: output, parts: p,
+          positionalCount: positionalCount + (e0.label == nil ? 1 : 0),
+          then: followup)
+      }
+    }
   }
 }
 
@@ -580,3 +695,5 @@ extension Interpreter {
     }
   }
 }
+
+// TODO: UNREACHABLE variadic signature

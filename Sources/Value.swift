@@ -11,24 +11,37 @@ protocol Value {
   var parts: Tuple<Value> { get }
 }
 
-extension Value {
-  /// The parts of this value that can be individually bound to variables.
-  ///
-  /// By default, values are indivisible.
-  var parts: Tuple<Value> { Tuple() }
-}
-
 struct FunctionValue: Value, Equatable {
   let type: Type
   let code: FunctionDefinition
+  var parts: Tuple<Value> { Tuple() }
 }
 
 typealias IntValue = Int
 extension IntValue: Value {
   var type: Type { .int }
+  var parts: Tuple<Value> { Tuple() }
 }
 
 typealias BoolValue = Bool
 extension BoolValue: Value {
   var type: Type { .bool }
+  var parts: Tuple<Value> { Tuple() }
 }
+
+struct ChoiceValue: Value {
+  let type_: ASTIdentity<ChoiceDefinition>
+  let discriminator: ASTIdentity<Alternative>
+  let payload: Tuple<Value>
+
+  var type: Type { .choice(type_) }
+  var parts: Tuple<Value> { payload }
+}
+
+extension ChoiceValue: CustomStringConvertible {
+  var description: String {
+    "\(type).\(discriminator.structure.name)\(payload)"
+  }
+}
+
+// TODO: Alternative => AlternativeDefinition?

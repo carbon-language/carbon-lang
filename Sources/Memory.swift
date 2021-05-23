@@ -130,3 +130,5 @@ struct Memory {
   private var storage: [Address: Location] = [:]
   private(set) var nextOffset = 0
 }
+
+// TODO: initialize memory with a Value type and a Tuple<Address>.
