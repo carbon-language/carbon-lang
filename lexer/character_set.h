@@ -14,12 +14,6 @@ namespace Carbon {
 // rules we pick. The function interfaces will need to change to accommodate
 // multi-byte characters.
 
-// Is this an alphabetical character according to Carbon's lexical rules?
-//
-// Alphabetical characters are permitted at the start of identifiers. This
-// currently includes 'A'..'Z' and 'a'..'z'.
-inline bool IsAlpha(char c) { return llvm::isAlpha(c); }
-
 // Is this a decimal digit according to Carbon's lexical rules?
 //
 // This currently includes '0'..'9'.
