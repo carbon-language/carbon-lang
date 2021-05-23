@@ -126,19 +126,19 @@ expression ::= TYPE(t).
 expression ::= LEFT_PARENTHESIS expression(e) RIGHT_PARENTHESIS.
   { e }
 expression ::= expression(l) EQUAL_EQUAL(op) expression(r).
-  { .binaryOperator(.init(operation: op, lhs: l, rhs: r, site: l...r))}
+  { .binaryOperator(.init(operation: op, lhs: l, rhs: r))}
 expression ::= expression(l) PLUS(op) expression(r).
-  { .binaryOperator(.init(operation: op, lhs: l, rhs: r, site: l...r))}
+  { .binaryOperator(.init(operation: op, lhs: l, rhs: r))}
 expression ::= expression(l) MINUS(op) expression(r).
-  { .binaryOperator(.init(operation: op, lhs: l, rhs: r, site: l...r))}
+  { .binaryOperator(.init(operation: op, lhs: l, rhs: r))}
 expression ::= expression(l) AND(op) expression(r).
-  { .binaryOperator(.init(operation: op, lhs: l, rhs: r, site: l...r))}
+  { .binaryOperator(.init(operation: op, lhs: l, rhs: r))}
 expression ::= expression(l) OR(op) expression(r).
-  { .binaryOperator(.init(operation: op, lhs: l, rhs: r, site: l...r))}
+  { .binaryOperator(.init(operation: op, lhs: l, rhs: r))}
 expression ::= NOT(op) expression(r).
-  { .unaryOperator(.init(operation: op, operand: r, site: op...r))}
+  { .unaryOperator(.init(operation: op, operand: r))}
 expression ::= MINUS(op) expression(r).
-  { .unaryOperator(.init(operation: op, operand: r, site: op...r))}
+  { .unaryOperator(.init(operation: op, operand: r))}
 expression ::= expression(f) trailing_tuple_literal(a).
   { .functionCall(FunctionCall(callee: f, arguments: a)) }
 expression ::= FNTY(k) trailing_tuple_literal(p) return_type(r).

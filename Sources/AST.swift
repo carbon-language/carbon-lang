@@ -361,11 +361,13 @@ indirect enum Expression: AST {
 };
 
 struct UnaryOperatorExpression: AST {
-  let operation: Token, operand: Expression, site: Site;
+  let operation: Token, operand: Expression
+  var site: Site { operation.site...operand.site }
 }
 
 struct BinaryOperatorExpression: AST {
-  let operation: Token, lhs: Expression, rhs: Expression, site: Site;
+  let operation: Token, lhs: Expression, rhs: Expression
+  var site: Site { lhs.site...rhs.site }
 }
 
 struct MemberAccessExpression: AST {
