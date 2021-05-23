@@ -149,6 +149,8 @@ extension Interpreter {
   /// rest of executing `s` (if any), and whatever follows that, into the
   /// returned `Task`.
   mutating func run(_ s: Statement, then followup: Task) -> Task {
+    assert(frame.ephemeralAllocations.isEmpty,
+           "leaked \(frame.ephemeralAllocations)")
     if tracing {
       print("\(s.site): info: running statement")
     }
@@ -227,7 +229,11 @@ extension Interpreter {
     let mark=frame.persistentAllocations.count
     return body(
       &self,
-      Task { $0.cleanUpPersistentAllocations(above: mark, then: followup) })
+      Task { me in
+        assert(me.frame.ephemeralAllocations.isEmpty,
+               "leaked \(me.frame.ephemeralAllocations)")
+        return me.cleanUpPersistentAllocations(above: mark, then: followup)
+      })
   }
 
   /// Runs `s` and follows up with `followup`.
@@ -304,6 +310,9 @@ extension Interpreter {
   /// If `a` was allocated to a temporary, deinitializes and destroys it.
   mutating func deleteAnyEphemeral(at a: Address, then followup: Task) -> Task {
     if let _ = frame.ephemeralAllocations.removeValue(forKey: a) {
+      if tracing {
+        print("  info: deleting \(a)")
+      }
       memory.delete(a)
     }
     return followup
@@ -315,6 +324,9 @@ extension Interpreter {
     from source: Address, to target: Address,
     then followup: @escaping FollowupWith<Address>
   ) -> Task {
+    if tracing {
+      print("  info: copying \(self[source]) into \(target)")
+    }
     return initialize(target, to: self[source], then: followup)
   }
 
@@ -473,10 +485,10 @@ extension Interpreter {
     }
   }
 
-  /// Evaluates `e` (into `destination`, if supplied) and passes the address of
+  /// Evaluates `e` (into `output`, if supplied) and passes the address of
   /// the result on to `followup`.
   mutating func evaluate(
-    _ e: UnaryOperatorExpression, into destination: Address,
+    _ e: UnaryOperatorExpression, into output: Address,
     then followup: @escaping FollowupWith<Address>
   ) -> Task {
     evaluate(e.operand) { operand, me in
@@ -489,35 +501,42 @@ extension Interpreter {
       return me.deleteAnyEphemeral(
         at: operand,
         then: Task { me in
-          me.initialize(destination, to: result, then: followup)
+          me.initialize(output, to: result, then: followup)
         })
     }
   }
 
-  /// Evaluates `e` (into `destination`, if supplied) and passes the address of
+  /// Evaluates `e` (into `output`, if supplied) and passes the address of
   /// the result on to `followup`.
   mutating func evaluate(
-    _ e: BinaryOperatorExpression, into result: Address,
+    _ e: BinaryOperatorExpression, into output: Address,
     then followup: @escaping FollowupWith<Address>
   ) -> Task {
     evaluate(e.lhs) { lhs, me in
       if e.operation.text == "and" && (me[lhs] as! Bool == false) {
-        return me.copy(from: lhs, to: result, then: followup)
+        return me.copy(from: lhs, to: output, then: followup)
       }
       else if e.operation.text == "or" && (me[lhs] as! Bool == true) {
-        return me.copy(from: lhs, to: result, then: followup)
+        return me.copy(from: lhs, to: output, then: followup)
       }
+
       return me.evaluate(e.rhs) { rhs, me in
+        let result: Value
         switch e.operation.text {
-        case "==":
-          return me.initialize(
-            result, to: areEqual(me[lhs], me[rhs]), then: followup)
-        case "-":
-          return me.initialize(
-            result, to: (me[lhs] as! Int) - (me[rhs] as! Int), then: followup)
-        default:
-          UNIMPLEMENTED(e)
+        case "==": result = areEqual(me[lhs], me[rhs])
+        case "-": result = (me[lhs] as! Int) - (me[rhs] as! Int)
+        case "and", "or": result = me[rhs] as! Bool
+        default: UNIMPLEMENTED(e)
         }
+        return me.deleteAnyEphemeral(
+          at: lhs,
+          then: Task { me in
+            me.deleteAnyEphemeral(
+              at: rhs,
+              then: Task { me in
+                me.initialize(output, to: result, then: followup)
+              })
+          })
       }
     }
   }
