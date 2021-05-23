@@ -104,6 +104,12 @@ struct Memory {
     }
   }
 
+  /// Returns the value at `a` or nil if `a` is not an initialized address.
+  func value(at a: Address) -> Value? {
+    guard let i = storage.index(forKey: a) else { return nil }
+    return storage[i].value.content
+  }
+
   /// Returns the substructure of the value stored at `a`
   func substructure(at a: Address) -> Tuple<Address> {
     storage[a]!.substructure
