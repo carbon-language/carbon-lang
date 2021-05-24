@@ -39,8 +39,6 @@ struct CallFrame {
   var ephemeralAllocations: [Address: Expression] = [:]
 
   /// A mapping from local bindings to addresses.
-  ///
-  /// Entries are cleared when the allocations are cleaned up.
   var locals: ASTDictionary<SimpleBinding, Address> = .init()
 
   /// The place where the result of this call is to be written.
@@ -433,7 +431,7 @@ extension Interpreter {
         case let .booleanLiteral(r, _):
           return me.initialize(result, to: r, then: followup)
         case let .tupleLiteral(t):
-          return me.evaluate(t.elements[...], into: result, then: followup)
+          return me.evaluateTuple(t.elements[...], into: result, then: followup)
         case let .unaryOperator(x):
           return me.evaluate(x, into: result, then: followup)
         case let .binaryOperator(x):
@@ -622,7 +620,7 @@ extension Interpreter {
 
   /// Evaluates `e` into `output` and passes the address of the result on to
   /// `followup`.
-  mutating func evaluate(
+  mutating func evaluateTuple(
     _ e: ArraySlice<TupleLiteral.Element>,
     into output: Address,
     parts: [FieldID: Address] = [:],
@@ -644,7 +642,7 @@ extension Interpreter {
           ?? .position(positionalCount)
         var p = parts
         p[key] = payload
-        return me.evaluate(
+        return me.evaluateTuple(
           e.dropFirst(), into: output, parts: p,
           positionalCount: positionalCount + (e0.label == nil ? 1 : 0),
           then: followup)
