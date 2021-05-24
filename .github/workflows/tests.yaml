@@ -33,6 +33,11 @@ jobs:
         build_mode: [fastbuild, opt]
     runs-on: ${{ matrix.os }}
     steps:
+      - name: Create environment variables
+        run: |
+          echo "BAZEL_OUTPUT_BASE_PATH=$HOME/.cache/bazel-output-base" >> $GITHUB_ENV
+          echo "BAZEL=bazelisk --output_base=$HOME/.cache/bazel-output-base" >> $GITHUB_ENV
+
       - name: Checkout
         uses: actions/checkout@v2
         with:
@@ -59,16 +64,71 @@ jobs:
           bazelisk --version
           python --version
 
+      # Make the date available to subsequent steps.
+      - name: Get date
+        id: date
+        shell: bash
+        run: |
+          echo "::set-output name=date::$(/bin/date -u "+%Y%m%d")"
+
+      # Preserve and restore the Bazel cache across builds.
+      #
+      # These cached entries are keyed on this file (which configures the
+      # command and other inputs) as well as the date. Because Bazel is
+      # hermetic, it doesn't matter if we get a "stale" entry here, but it makes
+      # the cache less efficient. So we use the date to get a fresh baseline
+      # cache once per day. We include this file so that changing the build
+      # structure itself returns us to a clean state. We can also increment the
+      # counter in this comment to forcibly rotate this hash in the event we get
+      # a corrupted cache that breaks Bazel. This is a risk because we very
+      # selectively prune directories out of the internals of the Bazel output
+      # base to reduce the storage of the cache. At any point, this might break
+      # invariants and require us to clear our caches. There is no way to
+      # actually delete them and so instead we can simply bump the counter here.
+      #
+      # Current cache version: 1
+      - name: Cache Bazel build data
+        uses: actions/cache@v2
+        with:
+          # We exclude the install symlink so that Bazel reconnects to the
+          # current installation. This helps repair any damage done by other
+          # exclusions as well. Then we exclude the `external` tree because
+          # those are all downloaded and rapidly rebuilt, so no benefit from
+          # downloading them with the cached state.
+          path: |
+            ${{ env.BAZEL_OUTPUT_BASE_PATH }}
+            !${{ env.BAZEL_OUTPUT_BASE_PATH }}/install
+            !${{ env.BAZEL_OUTPUT_BASE_PATH }}/external
+          key: |
+            bazel-${{ matrix.os }}-${{ matrix.build_mode }}-${{ hashFiles('.github/workflows/tests.yaml')
+            }}-${{ steps.date.outputs.date }}
+          # When we get a cache miss, try finding the most recent previous day's
+          # cache to start.
+          restore-keys: |
+            bazel-${{ matrix.os }}-${{ matrix.build_mode }}-${{ hashFiles('.github/workflows/tests.yaml')
+            }}-
+
+      # Print Bazel diagnostics to make debugging easier.
+      - name: Print Bazel info
+        run: |
+          ${{ env.BAZEL }} info
+
       # Build all targets first to isolate build failures.
       - name: Build (${{ matrix.build_mode }})
         run: |
-          bazelisk build -c ${{ matrix.build_mode }} --verbose_failures \
+          ${{ env.BAZEL }} build -c ${{ matrix.build_mode }} --verbose_failures \
             --deleted_packages=migrate_cpp,migrate_cpp/cpp_refactoring \
             //...:all
 
       # Run all test targets.
       - name: Test (${{ matrix.build_mode }})
         run: |
-          bazelisk test -c ${{ matrix.build_mode }} --test_output errors \
+          ${{ env.BAZEL }} test -c ${{ matrix.build_mode }} --test_output errors \
             --deleted_packages=migrate_cpp,migrate_cpp/cpp_refactoring \
             --verbose_failures //...:all
+
+      # We manually shut down the Bazel server to make sure the cached files
+      # don't interact with it.
+      - name: Shutdown Bazel
+        run: |
+          ${{ env.BAZEL }} shutdown
