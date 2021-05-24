@@ -178,8 +178,8 @@ extension Interpreter {
       // lvalue, so the vars bound to it have distinct values.  Because vars
       // will be bound to parts of the initializer and are mutable, it must
       // persist through the current scope.
-      return allocate(i.initializer, mutable: true, persist: true) { rhs, me in
-        me.evaluate(i.initializer, into: rhs) { rhs, me in
+      return allocate(i.initializer, mutable: true, persist: true) { rhsArea, me in
+        me.evaluate(i.initializer, into: rhsArea) { rhs, me in
           me.match(i.bindings, toValueAt: rhs) { matched, me in
             matched ? followup : me.error(
               i.bindings, "Initialization pattern not matched by \(me[rhs])")
@@ -220,8 +220,8 @@ extension Interpreter {
 
     case let .match(subject: s, clauses: clauses, _):
       return inScope(then: followup) { me, innerFollowup in
-        me.allocate(s, persist: true) { subject, me in
-        me.evaluate(s, into: subject) { subject, me in
+        me.allocate(s, persist: true) { subjectArea, me in
+        me.evaluate(s, into: subjectArea) { subject, me in
         me.runMatch(s, at: subject, against: clauses[...], then: innerFollowup)
       }}}
 
@@ -387,7 +387,7 @@ extension Interpreter {
     then followup: @escaping Task.Code
   ) -> Task {
     if tracing {
-      print("  info: assigning \(me[source])\(source) into \(target)")
+      print("  info: assigning \(self[source])\(source) into \(target)")
     }
     memory.assign(from: source, into: target)
     return Task(followup)
@@ -442,7 +442,10 @@ extension Interpreter {
     then followup_: @escaping FollowupWith<Address>
   ) -> Task {
     if tracing {
-      print("\(e.site): info: evaluating")
+      print(
+        "\(e.site): info: evaluating "
+          + (asCallee ? "as callee " : "")
+          + (destination != nil ? "into \(destination!)" : ""))
     }
     let followup = !tracing ? followup_
       : { a, me in
@@ -459,7 +462,7 @@ extension Interpreter {
       return evaluate(m, asCallee: asCallee, into: destination, then: followup)
 
     case let .index(target: t, offset: i, _):
-      UNIMPLEMENTED(t, i)
+      return evaluateIndex(target: t, offset: i, into: destination, then: followup)
 
     case .integerLiteral, .booleanLiteral, .tupleLiteral,
          .unaryOperator, .binaryOperator, .functionCall, .intType, .boolType,
@@ -655,6 +658,31 @@ extension Interpreter {
     }
   }
 
+  mutating func evaluateIndex(
+    target t: Expression, offset i: Expression, into output: Address?,
+    then followup: @escaping FollowupWith<Address>
+  ) -> Task {
+    evaluate(t, into: output) { targetAddress, me in
+      me.evaluate(i) { indexAddress, me in
+        let index = me[indexAddress] as! Int
+        guard let resultAddress
+                = me.memory.substructure(at: targetAddress)[index]
+        else {
+          return me.error(
+            i, "crazy bad index \(index) for tuple \(me[targetAddress])")
+        }
+
+        return me.deleteAnyEphemeral(at: indexAddress) { me in
+          output == nil ? followup(resultAddress, &me)
+            : me.copy(from: resultAddress, to: output!) { _, me in
+              me.deleteAnyEphemeral(at: targetAddress) { me in
+                followup(output!, &me)
+              }
+            }
+        }
+      }
+    }
+  }
 
   /// Evaluates `e` into `output` and passes the address of the result on to
   /// `followup`.
@@ -829,3 +857,4 @@ fileprivate extension TupleSyntax {
 // TODO: enums for unary and binary operators.
 // TODO: drive matching from source value type.
 // TODO: break assign down into subtasks.
+// TODO: output vs. destination?
