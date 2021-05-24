@@ -23,6 +23,20 @@ final class InterpreterTests: XCTestCase {
     XCTAssertEqual(42, engine.run())
   }
 
+  func testExpressionStatement1() {
+    guard let exe = "fn main() -> Int { 777; return 42; }".checkExecutable()
+    else { return }
+    var engine = Interpreter(exe)
+    XCTAssertEqual(42, engine.run())
+  }
+
+  func testExpressionStatement2() {
+    guard let exe = "fn main() -> Int { var Int x = 777; x + 1; return 42; }".checkExecutable()
+    else { return }
+    var engine = Interpreter(exe)
+    XCTAssertEqual(42, engine.run())
+  }
+
   func run(_ testFile: String, tracing: Bool = false) -> Int? {
     let testdata =
         URL(fileURLWithPath: #filePath).deletingLastPathComponent()
