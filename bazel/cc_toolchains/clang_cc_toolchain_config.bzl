@@ -441,6 +441,13 @@ def _impl(ctx):
             flag_groups = [flag_group(flags = [
                 "-fsanitize=address,undefined",
                 "-fsanitize-address-use-after-scope",
+                # We don't need the recovery behavior of UBSan as we expect
+                # builds to be clean. Not recoverying is a bit cheaper.
+                "-fno-sanitize-recover=undefined",
+                # Force some expensive UBSan checks to the cheaper trap mode.
+                # The dedicated debugging message is unlikely to be critical for
+                # these.
+                "-fsanitize-trap=alignment,null,return,unreachable",
                 # Needed due to clang AST issues, such as in
                 # clang/AST/Redeclarable.h line 199.
                 "-fno-sanitize=vptr",
