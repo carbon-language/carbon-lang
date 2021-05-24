@@ -195,7 +195,7 @@ extension Interpreter {
 
     case let .block(children, _):
       return inScope(then: followup) { me, rest in
-        me.runBlockContent(children[...], then: rest)
+        me.runBlock(children[...], then: rest)
       }
 
     case let .while(condition: c, body: body, _):
@@ -243,12 +243,12 @@ extension Interpreter {
   }
 
   /// Executes the statements of `content` in order, then `followup`.
-  mutating func runBlockContent(
-    _ content: ArraySlice<Statement>, then followup: Task
-  ) -> Task {
+  mutating func runBlock(_ content: ArraySlice<Statement>, then followup: Task)
+    -> Task
+  {
     return content.isEmpty ? followup
       : run(content.first!) { me in
-          me.runBlockContent(content.dropFirst(), then: followup)
+          me.runBlock(content.dropFirst(), then: followup)
         }
   }
 
