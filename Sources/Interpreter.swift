@@ -386,6 +386,9 @@ extension Interpreter {
     _ target: Address, from source: Address,
     then followup: @escaping Task.Code
   ) -> Task {
+    if tracing {
+      print("  info: assigning \(me[source])\(source) into \(target)")
+    }
     memory.assign(from: source, into: target)
     return Task(followup)
   }
