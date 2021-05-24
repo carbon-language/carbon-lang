@@ -31,6 +31,7 @@ final class InterpreterTests: XCTestCase {
     let sourcePath = testdata.appendingPathComponent(testFile).path
     let source = try! String(contentsOfFile: sourcePath)
 
+    print(sourcePath)
     guard let (program, _, errors)
             = checkNonNil(source.typeChecked(fromFile: sourcePath))
     else { return nil }
@@ -41,7 +42,7 @@ final class InterpreterTests: XCTestCase {
   }
 
   func test1() {
-    //XCTAssertEqual(run("choice1.6c", tracing: true), 0)
+    //XCTAssertEqual(run("record1.6c", tracing: true), 0)
   }
 
   func testExamples() {
@@ -89,7 +90,7 @@ final class InterpreterTests: XCTestCase {
     // XCTAssertEqual(run("next.6c"), 0)
     XCTAssertEqual(run("pattern_init.6c"), 0)
     // XCTAssertEqual(run("pattern_variable_fail.6c"), 0)
-    // XCTAssertEqual(run("record1.6c"), 0)
+    XCTAssertEqual(run("record1.6c"), 0)
     // XCTAssertEqual(run("struct1.6c"), 0)
     // XCTAssertEqual(run("struct2.6c"), 0)
     // XCTAssertEqual(run("struct3.6c"), 0)

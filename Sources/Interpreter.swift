@@ -614,8 +614,13 @@ extension Interpreter {
       switch me[base].type {
       case .struct:
         UNIMPLEMENTED()
+
       case .tuple:
-        UNIMPLEMENTED()
+        let source = me.memory.substructure(at: base)[e.member]!
+        return output != nil
+          ? me.copy(from: source, to: output!, then: followup)
+          : Task { me in followup(source, &me) }
+
       case .type:
         // Handle access to a type member, like a static member in C++.
         switch Type(me[base])! {
