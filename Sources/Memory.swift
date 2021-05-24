@@ -88,19 +88,33 @@ struct Memory {
   ///   the existing value at `a`.
   /// - Requires: (`set`) `a` was allocated with `mutable = true`.
   subscript(a: Address) -> Value {
-    get {
-      let i = storage.index(forKey: a)
-        ?? fatal("reading from unallocated address \(a).")
-      let r = storage[i].value.content
-        ?? fatal("reading from uninitialized address \(a).")
-      return r
-    }
-    set {
-      precondition(self[a].type == newValue.type)
-      // TODO: user-defined assignment, for which deinit/init won't work
-      deinitialize(a)
-      // TODO: subpart address stability.
-      initialize(a, to: newValue)
+    let i = storage.index(forKey: a)
+      ?? fatal("reading from unallocated address \(a).")
+    let r = storage[i].value.content
+      ?? fatal("reading from uninitialized address \(a).")
+    return r
+  }
+
+  mutating func assign(from source: Address, into target: Address) {
+    precondition(self[source].type == self[target].type)
+    uncheckedAssign(from: source, into: target)
+
+    // Only check the top level type because choices of a single type can have
+    // different payload types.
+    func uncheckedAssign(from source: Address, into target: Address) {
+      let sourceMap = substructure(at: source).elements
+      let targetMap = substructure(at: target).elements
+      if !sourceMap.isEmpty && sourceMap.count == targetMap.count
+           && sourceMap.keys.allSatisfy({ targetMap[$0] != nil })
+      {
+        for (field, s) in sourceMap {
+          assign(from: s, into: targetMap[field]!)
+        }
+      }
+      else {
+        deinitialize(target)
+        initialize(target, to: self[source])
+      }
     }
   }
 

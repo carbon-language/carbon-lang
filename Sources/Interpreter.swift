@@ -165,7 +165,11 @@ extension Interpreter {
         // Can't evaluate source into target because target may be referenced in
         // source (e.g. x = x - 1)
         return me.evaluate(s) { source, me in
-        me.assign(target, from: source) { me in
+        if me.tracing {
+          print(
+            "\(t.site): info: assigning \(me[source])\(source) into \(target)")
+        }
+        return me.assign(target, from: source) { me in
         me.deleteAnyEphemeral(at: source, then: followup.code)
         }}}
 
@@ -382,7 +386,7 @@ extension Interpreter {
     _ target: Address, from source: Address,
     then followup: @escaping Task.Code
   ) -> Task {
-    memory[target] = memory[source]
+    memory.assign(from: source, into: target)
     return Task(followup)
   }
 
@@ -729,6 +733,9 @@ extension Interpreter {
       }
 
     case let .variable(b):
+      if tracing {
+        print("\(b.name.site): info: binding \(self[source])\(source)")
+      }
       frame.locals[b] = source
       return Task { me in followup(true, &me) }
 
@@ -818,3 +825,4 @@ fileprivate extension TupleSyntax {
 // TODO: UNREACHABLE variadic signature
 // TODO: enums for unary and binary operators.
 // TODO: drive matching from source value type.
+// TODO: break assign down into subtasks.

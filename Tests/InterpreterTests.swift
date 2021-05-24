@@ -42,7 +42,7 @@ final class InterpreterTests: XCTestCase {
   }
 
   func test1() {
-    //XCTAssertEqual(run("record1.6c", tracing: true), 0)
+    // XCTAssertEqual(run("tuple1.6c", tracing: true), 0)
   }
 
   func testExamples() {
