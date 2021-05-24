@@ -1413,20 +1413,30 @@ could be used to provide different implementations of an algorithm depending on
 the capabilities of the iterator being passed in:
 
 ```
-interface ForwardIterator(Type:$ T) { ... }
-interface BidirectionalIterator(Type:$ T) {
-  extends ForwardIterator(T);  ...
+interface ForwardIterator {
+  var Type:$ Element;
+  method (Ptr(Self): this) Advance();
+  method (Self: this) Get() -> Element;
 }
-interface RandomAccessIterator(Type:$ T) {
-  extends BidirectionalIterator(T); ...
+interface BidirectionalIterator {
+  extends ForwardIterator;
+  method (Ptr(Self): this) Back();
+}
+interface RandomAccessIterator {
+  extends BidirectionalIterator;
+  method (Ptr(Self): this) Skip(Int: offset);
+  method (Self: this) Difference(Self: that) -> Int;
 }
 
-fn SearchInSortedList[Comparable:$ T, ForwardIterator(T): IterT]
+fn SearchInSortedList
+    [Comparable:$ T, ForwardIterator(.Element = T): IterT]
     (IterT: begin, IterT: end, T: needle) -> Bool {
   // does linear search
 }
-// Will prefer the following overload when it matches since it is more specific.
-fn SearchInSortedList[Comparable:$ T, RandomAccessIterator(T): IterT]
+// Will prefer the following overload when it matches
+// since it is more specific.
+fn SearchInSortedList
+    [Comparable:$ T, RandomAccessIterator(.Element = T): IterT]
     (IterT: begin, IterT: end, T: needle) -> Bool {
   // does binary search
 }
