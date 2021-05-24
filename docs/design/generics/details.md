@@ -28,7 +28,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [Combining interfaces by anding type-types](#combining-interfaces-by-anding-type-types)
 -   [Interface requiring other interfaces](#interface-requiring-other-interfaces)
     -   [Interface extension](#interface-extension)
-        -   [Extending and implementing structural interfaces](#extending-and-implementing-structural-interfaces)
+        -   [`extends` and `impl` with structural interfaces](#extends-and-impl-with-structural-interfaces)
         -   [Diamond dependency issue](#diamond-dependency-issue)
     -   [Use case: overload resolution](#use-case-overload-resolution)
 -   [Type compatibility](#type-compatibility)
@@ -1258,17 +1258,67 @@ interface PreferredConversion {
 }
 ```
 
-#### Extending and implementing structural interfaces
+#### `extends` and `impl` with structural interfaces
 
 The `extends` declaration makes sense with the same meaning inside a
 [`structural interface`](#structural-interfaces), and should also be supported.
 
-**Note:** This feature should be generalized to support implementing a
-`structural interface`. The `impl` block would include definitions for any names
-defined by the structural interface, and the result would be that the type
-implements any interfaces that the structural interface requires (assuming this
-doesn't leave any of those interface's requirements unimplemented). This
-provides a tool useful for [evolution](#evolution).
+```
+interface Media {
+  method (Self this) Play();
+}
+interface Job {
+  method (Self this) Run();
+}
+
+structural interface Combined {
+  extends Media;
+  extends Job;
+}
+```
+
+This definition of `Combined` is equivalent to requiring both the `Media` and
+`Job` interfaces being implemented, and aliases their methods.
+
+```
+// Equivalent
+structural interface Combined {
+  impl Media;
+  alias Play = Media.Play;
+  impl Job;
+  alias Run = Job.Run;
+}
+```
+
+Notice how `Combined` has aliases for all the methods in the interfaces it
+requires. That condition is sufficient to allow a type to `impl` the structural
+interface:
+
+```
+struct Song {
+  impl Combined {
+    method (Self this) Play() { ... }
+    method (Self this) Run() { ... }
+  }
+}
+```
+
+This is equivalent to implementing the required interfaces directly:
+
+```
+struct Song {
+  impl Media {
+    method (Self this) Play() { ... }
+  }
+  impl Job {
+    method (Self this) Run() { ... }
+  }
+}
+```
+
+This is just like you get an implementation of `Equatable` by implementing
+`Hashable` when `Hashable` extends `Equatable`. This provides a tool useful for
+[evolution](#evolution).
 
 #### Diamond dependency issue
 
