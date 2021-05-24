@@ -28,7 +28,6 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [Combining interfaces by anding type-types](#combining-interfaces-by-anding-type-types)
 -   [Interface requiring other interfaces](#interface-requiring-other-interfaces)
     -   [Interface extension](#interface-extension)
-        -   [Covariant refinement](#covariant-refinement)
         -   [Diamond dependency issue](#diamond-dependency-issue)
     -   [Use case: overload resolution](#use-case-overload-resolution)
 -   [Type compatibility](#type-compatibility)
@@ -66,6 +65,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
         -   [Recursive constraints](#recursive-constraints)
         -   [Type inequality](#type-inequality)
     -   [Implicit constraints](#implicit-constraints)
+    -   [Covariant refinement](#covariant-refinement)
     -   [Generic type equality](#generic-type-equality)
         -   [Type equality with where clauses](#type-equality-with-where-clauses)
         -   [Type equality with argument passing](#type-equality-with-argument-passing)
@@ -1263,75 +1263,6 @@ interface PreferredConversion {
   extends ConvertibleTo(AssociatedType);
 }
 ```
-
-#### Covariant refinement
-
-**Open question:** Can we redefine associated types in the refined interface as
-long as the new definition is compatible but more specific ("covariance")? Here,
-more specific means that the requirements and the name-to-binding map are
-supersets (extending/refining the interface is sufficient).
-
-```
-interface ForwardIterator { ... }
-interface BidirectionalIterator {
-  extends ForwardIterator;
-}
-interface ForwardContainer {
-  var ForwardIterator:$ IteratorType;
-  method (Ptr(Self): this) Begin() -> IteratorType;
-  method (Ptr(Self): this) End() -> IteratorType;
-}
-// Note: This should probably give a compile error complaining
-// about an `IteratorType` name collision.
-interface BidirectionalContainer {
-  // Redeclaration of `IteratorType` with a more specific bound.
-  var BidirectionalIterator:$ IteratorType;
-
-  // Question: does this cause any weird shadowing?
-  // Question: do we have to have a constraint equating
-  // `IteratorType` and `ForwardContainer.IteratorType`?
-  extends ForwardContainer;
-}
-```
-
-One possible syntax would be to allow a block of these kinds of refinements in
-place of a terminating semicolon (`;`) for `impl` and `extends` declarations in
-an interface, as in:
-
-```
-interface BidirectionalContainer {
-  extends ForwardContainer {
-    // Redeclaration of `IteratorType` with a more specific bound.
-    var BidirectionalIterator:$ IteratorType;
-  }
-}
-```
-
-another uses a [`where` clause](#where-clauses):
-
-```
-interface BidirectionalContainer {
-  extends ForwardContainer
-      where ForwardContainer.IteratorType is BidirectionalIterator;
-}
-```
-
-or the argument passing approach would use an inferred variable:
-
-```
-interface BidirectionalContainer {
-  // `Refined` is some new name so we don't collide with
-  // `IteratorType`. The `[...]` mean this new name is
-  // only used as a constraint, and is not part of the
-  // `BidirectionalContainer` API.
-  [var BidirectionalIterator:$ Refined];
-  extends ForwardContainer(.IteratorType = Refined);
-}
-```
-
-**Open question:** We may want to support refinement of other items as well,
-such as methods. This would be part of matching the features of C++ `class`
-inheritance.
 
 #### Diamond dependency issue
 
@@ -2912,6 +2843,101 @@ constraints.
 Furthermore, inferring that two types are equal (in contrast to the type bound
 constraints described so far) introduces additional problems for establishing
 which types are equal in a generic context.
+
+### Covariant refinement
+
+Under C++ type inheritance, there are some changes allowed to the members of the
+supertype in the subtype. For example, the signatures of functions can change as
+long as the result is compatible, see
+[covariance and contravariance on Wikipedia](<https://en.wikipedia.org/wiki/Covariance_and_contravariance_(computer_science)>).
+For interfaces, the analogous thing is to [extend](#interface-extension) a
+constrained interface.
+
+For containers, imagine that we have a `ForwardContainer` interface that
+supports iteration in one direction, represented by having an `IteratorType`
+implementing `ForwardIterator`. To define a `BidirectionalContainer` refinement
+of `ForwardContainer` that supports iteration in the reverse direction, we would
+need to:
+
+-   define `BidirectionalIterator` refining `ForwardIterator`, and
+-   enforce that the `IteratorType` of a `BidirectionalContainer` implements
+    `BidirectionalIterator`.
+
+Since `BidirectionalIterator` refines `ForwardIterator`, any type satisfying
+`BidirectionalIterator` can be used as the `IteratorType` of a
+`ForwardContainer`.
+
+```
+interface ForwardIterator {
+  // ...
+  method (Ptr(Self): this) Advance();
+}
+
+interface BidirectionalIterator {
+  extends ForwardIterator;
+  method (Ptr(Self): this) Back();
+}
+
+interface ForwardContainer {
+  var ForwardIterator:$ IteratorType;
+  method (Ptr(Self): this) Begin() -> IteratorType;
+  method (Ptr(Self): this) End() -> IteratorType;
+  // ...
+}
+
+```
+
+To define `BidirectionalContainer`, we need to use a
+[type bound constraint](#type-bounds) on `IteratorType. Using the argument
+passing approach, you would use an inferred variable:
+
+```
+interface BidirectionalContainer {
+  // `Refined` is some new name so we don't collide with
+  // `IteratorType`. The `[...]` mean this new name is
+  // only used as a constraint, and is not part of the
+  // `BidirectionalContainer` API.
+  [var BidirectionalIterator:$ Refined];
+  extends ForwardContainer(.IteratorType = Refined);
+}
+```
+
+To do this with a a [`where` clause](#where-clauses):
+
+```
+interface BidirectionalContainer {
+  extends ForwardContainer
+      where ForwardContainer.IteratorType is BidirectionalIterator;
+}
+```
+
+With C++ type inheritance, you might define implementations of parent methods in
+the child type. The analogous thing for interfaces would be to provide
+[default implementations](#interface-defaults) of parent methods or
+[a blanket impl](#parameterized-impls) of the parent interface, however the
+specifics of how this would be done are future work.
+
+**Open question:** We may want to support refinement of other items as well,
+such as methods. This would be part of matching the features of C++ `class`
+inheritance.
+
+**Open question:** We might support a dedicated syntax for this kind of
+refinement when extending an interface, if we observe it to be a common case or
+otherwise cumbersome. One possibility would be to allow a block of these kinds
+of refinements in place of a terminating semicolon (`;`) for `impl` and
+`extends` declarations in an interface, as in:
+
+```
+interface BidirectionalContainer {
+  extends ForwardContainer {
+    // Redeclaration of `IteratorType` with a more specific bound.
+    var BidirectionalIterator:$ IteratorType;
+  }
+}
+```
+
+This syntax would more naturally support adding default implementations of
+parent methods and refining parent method signatures.
 
 ### Generic type equality
 
