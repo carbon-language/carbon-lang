@@ -88,7 +88,10 @@ struct Interpreter {
 
     frame = CallFrame(
       resultAddress: memory.allocate(),
-      onReturn: Task { me in me.terminate() })
+      onReturn: Task { me in
+        me.cleanUpPersistentAllocations(
+          above: 0, then: Task { me in me.terminate() })
+      })
 
     // First step runs the body of `main`
     nextStep = Task { [main = program.main!] me in
@@ -206,14 +209,18 @@ extension Interpreter {
       }
 
     case let .while(condition: c, body: body, _):
-      // TODO: put a scope around the while body.
       let saved = (frame.onBreak, frame.onContinue)
+      let mark=frame.persistentAllocations.count
 
       let onBreak = Task { me in
         (me.frame.onBreak, me.frame.onContinue) = saved
-        return followup
+        return me.cleanUpPersistentAllocations(above: mark, then: followup)
       }
-      let onContinue = Task { $0.while(c, run: body, then: onBreak) }
+
+      let onContinue = Task { me in
+        return me.cleanUpPersistentAllocations(
+          above: mark, then: Task { $0.while(c, run: body, then: onBreak) })
+      }
 
       (frame.onBreak, frame.onContinue) = (onBreak, onContinue)
       return onContinue(&self)
@@ -337,9 +344,17 @@ extension Interpreter {
     above n: Int, then followup: Task
   ) -> Task {
     frame.persistentAllocations.count == n ? followup
-      : deleteAnyEphemeral(at: frame.persistentAllocations.pop()!) { me in
-        me.cleanUpPersistentAllocations(above: n, then: followup)
-        }
+      : deleteLocalValue_doNotCallDirectly(
+        at: frame.persistentAllocations.pop()!
+      ) { me in me.cleanUpPersistentAllocations(above: n, then: followup) }
+  }
+
+  mutating func deleteLocalValue_doNotCallDirectly(
+    at a: Address, then followup: @escaping Task.Code
+  ) -> Task {
+    if tracing { print("  info: deleting \(a)") }
+    memory.delete(a)
+    return Task(followup)
   }
 
   /// If `a` was allocated to an ephemeral temporary, deinitializes and destroys
@@ -347,10 +362,7 @@ extension Interpreter {
   mutating func deleteAnyEphemeral(
     at a: Address, then followup: @escaping Task.Code) -> Task {
     if let _ = frame.ephemeralAllocations.removeValue(forKey: a) {
-      if tracing {
-        print("  info: deleting \(a)")
-      }
-      memory.delete(a)
+      return deleteLocalValue_doNotCallDirectly(at: a, then: followup)
     }
     return Task(followup)
   }
