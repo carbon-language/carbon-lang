@@ -41,7 +41,7 @@ final class InterpreterTests: XCTestCase {
   }
 
   func test1() {
-    // XCTAssertEqual(run("choice1.6c", tracing: true), 0)
+    //XCTAssertEqual(run("choice1.6c", tracing: true), 0)
   }
 
   func testExamples() {
@@ -50,7 +50,7 @@ final class InterpreterTests: XCTestCase {
     XCTAssertEqual(run("block1.6c"), 0)
     XCTAssertEqual(run("block2.6c"), 0)
     XCTAssertEqual(run("break1.6c"), 0)
-    // XCTAssertEqual(run("choice1.6c"), 0)
+    XCTAssertEqual(run("choice1.6c"), 0)
     XCTAssertEqual(run("continue1.6c"), 0)
     // XCTAssertEqual(run("experimental_continuation1.6c"), 0)
     // XCTAssertEqual(run("experimental_continuation2.6c"), 0)
@@ -82,12 +82,12 @@ final class InterpreterTests: XCTestCase {
     XCTAssertEqual(run("if1.6c"), 0)
     XCTAssertEqual(run("if2.6c"), 0)
     XCTAssertEqual(run("if3.6c"), 0)
-    // XCTAssertEqual(run("match_any_int.6c"), 0)
-    // XCTAssertEqual(run("match_int.6c"), 0)
-    // XCTAssertEqual(run("match_int_default.6c"), 0)
+    XCTAssertEqual(run("match_any_int.6c"), 0)
+    XCTAssertEqual(run("match_int.6c"), 0)
+    XCTAssertEqual(run("match_int_default.6c"), 0)
     // XCTAssertEqual(run("match_type.6c"), 0)
     // XCTAssertEqual(run("next.6c"), 0)
-    // XCTAssertEqual(run("pattern_init.6c"), 0)
+    XCTAssertEqual(run("pattern_init.6c"), 0)
     // XCTAssertEqual(run("pattern_variable_fail.6c"), 0)
     // XCTAssertEqual(run("record1.6c"), 0)
     // XCTAssertEqual(run("struct1.6c"), 0)

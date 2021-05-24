@@ -34,8 +34,15 @@ struct ChoiceValue: Value {
   let discriminator: ASTIdentity<Alternative>
   let payload: Tuple<Value>
 
+  var alternativeType: Type { .alternative(discriminator, parent: type_) }
+
   var type: Type { .choice(type_) }
-  var parts: Tuple<Value> { payload }
+  var parts: Tuple<Value> {
+    Tuple(
+      [.position(0): type,
+       .position(1): Type.alternative(discriminator, parent: type_),
+       .position(2): payload])
+  }
 }
 
 extension ChoiceValue: CustomStringConvertible {

@@ -11,17 +11,17 @@ struct Task {
   typealias Code = (inout Interpreter)->Task
 
   /// Creates an instance with the semantics of `implementation`.
-  init(_ implementation: @escaping Code) {
-    self.implementation = implementation
+  init(_ code: @escaping Code) {
+    self.code = code
   }
 
   /// Executes `self` in `context`.
   func callAsFunction(_ context: inout Interpreter) -> Task {
-    implementation(&context)
+    code(&context)
   }
 
   /// The underlying implementation.
-  private let implementation: Code
+  let code: Code
 }
 
 /// All the data that needs to be saved and restored across function call
@@ -147,8 +147,10 @@ extension Interpreter {
   /// rest of executing `s` (if any), and whatever follows that, into the
   /// returned `Task`.
   mutating func run(_ s: Statement, then followup: Task) -> Task {
-    assert(frame.ephemeralAllocations.isEmpty,
-           "leaked \(frame.ephemeralAllocations)")
+    sanityCheck(
+      frame.ephemeralAllocations.isEmpty,
+      "leaked \(frame.ephemeralAllocations)")
+
     if tracing {
       print("\(s.site): info: running statement")
     }
@@ -158,12 +160,13 @@ extension Interpreter {
 
     case let .assignment(target: t, source: s, _):
       return evaluate(t) { target, me in
-        assert(me.frame.ephemeralAllocations.isEmpty, "\(t) not an lvalue?")
+        sanityCheck(
+          me.frame.ephemeralAllocations.isEmpty, "\(t) not an lvalue?")
         // Can't evaluate source into target because target may be referenced in
         // source (e.g. x = x - 1)
         return me.evaluate(s) { source, me in
         me.assign(target, from: source) { me in
-        me.deleteAnyEphemeral(at: source, then: followup)
+        me.deleteAnyEphemeral(at: source, then: followup.code)
         }}}
 
     case let .initialization(i):
@@ -211,8 +214,12 @@ extension Interpreter {
       (frame.onBreak, frame.onContinue) = (onBreak, onContinue)
       return onContinue(&self)
 
-    case let .match(subject: subject, clauses: clauses, _):
-      UNIMPLEMENTED(subject, clauses)
+    case let .match(subject: s, clauses: clauses, _):
+      return inScope(then: followup) { me, innerFollowup in
+        me.allocate(s, persist: true) { subject, me in
+        me.evaluate(s, into: subject) { subject, me in
+        me.runMatch(s, at: subject, against: clauses[...], then: innerFollowup)
+      }}}
 
     case .break:
       return frame.onBreak!
@@ -229,7 +236,7 @@ extension Interpreter {
     return body(
       &self,
       Task { me in
-        assert(me.frame.ephemeralAllocations.isEmpty,
+        sanityCheck(me.frame.ephemeralAllocations.isEmpty,
                "leaked \(me.frame.ephemeralAllocations)")
         return me.cleanUpPersistentAllocations(above: mark, then: followup)
       })
@@ -250,6 +257,29 @@ extension Interpreter {
       : run(content.first!) { me in
           me.runBlock(content.dropFirst(), then: followup)
         }
+  }
+
+  mutating func runMatch(
+    _ subject: Expression, at subjectLocation: Address,
+    against clauses: ArraySlice<MatchClause>,
+    then followup: Task) -> Task
+  {
+    guard let clause = clauses.first else {
+      return error(subject, "no pattern matches \(self[subjectLocation])")
+    }
+
+    let onMatch = Task { me in
+      me.inScope(then: followup) { me, innerFollowup in
+        me.run(clause.action, then: innerFollowup)
+      }
+    }
+    guard let p = clause.pattern else { return onMatch }
+
+    return match(p, toValueAt: subjectLocation) { matched, me in
+      matched ? onMatch : me.runMatch(
+        subject, at: subjectLocation, against: clauses.dropFirst(),
+        then: followup)
+    }
   }
 
   mutating func `while`(
@@ -274,7 +304,9 @@ extension Interpreter {
   ) -> Task {
     let a = memory.allocate(mutable: mutable)
     if tracing {
-      print("\(e.site): info: allocated \(a)")
+      print(
+        "\(e.site): info: allocated \(a)"
+          + " (\(persist ? "persistent" : "ephemeral"))")
     }
     if persist {
       frame.persistentAllocations.push(a)
@@ -301,34 +333,35 @@ extension Interpreter {
     above n: Int, then followup: Task
   ) -> Task {
     frame.persistentAllocations.count == n ? followup
-      : deleteAnyEphemeral(
-        at: frame.persistentAllocations.pop()!,
-        then: Task { $0.cleanUpPersistentAllocations(above: n, then: followup)})
+      : deleteAnyEphemeral(at: frame.persistentAllocations.pop()!) { me in
+        me.cleanUpPersistentAllocations(above: n, then: followup)
+        }
   }
 
   /// If `a` was allocated to an ephemeral temporary, deinitializes and destroys
   /// it.
-  mutating func deleteAnyEphemeral(at a: Address, then followup: Task) -> Task {
+  mutating func deleteAnyEphemeral(
+    at a: Address, then followup: @escaping Task.Code) -> Task {
     if let _ = frame.ephemeralAllocations.removeValue(forKey: a) {
       if tracing {
         print("  info: deleting \(a)")
       }
       memory.delete(a)
     }
-    return followup
+    return Task(followup)
   }
 
-  /// Deinitializes and destroys any addresses in `a` that were allocated to an
-  /// ephemeral temporary.
-  mutating func deleteAnyEphemerals<C: Collection>(at a: C, then followup: Task)
-    -> Task
+  /// Deinitializes and destroys any addresses in `locations` that were
+  /// allocated to an ephemeral temporary.
+  mutating func deleteAnyEphemerals<C: Collection>(
+    at locations: C, then followup: @escaping Task.Code
+  ) -> Task
     where C.Element == Address
   {
-    guard let a0 = a.first else { return followup }
-    return deleteAnyEphemeral(
-      at: a0,
-      then: Task {
-        me in me.deleteAnyEphemerals(at: a.dropFirst(), then: followup) })
+    guard let a0 = locations.first else { return Task(followup) }
+    return deleteAnyEphemeral(at: a0) { me in
+      me.deleteAnyEphemerals(at: locations.dropFirst(), then: followup)
+    }
   }
 
   /// Copies the value at `source` into the `target` address and continues with
@@ -386,7 +419,7 @@ extension Interpreter {
     _ e: Expression, in followup: @escaping FollowupWith<T>) -> Task {
     evaluate(e) { p, me in
       let v = me[p] as! T
-      return me.deleteAnyEphemeral(at: p, then: Task { me in followup(v, &me) })
+      return me.deleteAnyEphemeral(at: p) { me in followup(v, &me) }
     }
   }
 
@@ -496,11 +529,9 @@ extension Interpreter {
       case "not": result = !(me[operand] as! Bool)
       default: UNREACHABLE()
       }
-      return me.deleteAnyEphemeral(
-        at: operand,
-        then: Task { me in
-          me.initialize(output, to: result, then: followup)
-        })
+      return me.deleteAnyEphemeral(at: operand) { me in
+        me.initialize(output, to: result, then: followup)
+      }
     }
   }
 
@@ -523,14 +554,13 @@ extension Interpreter {
         switch e.operation.text {
         case "==": result = areEqual(me[lhs], me[rhs])
         case "-": result = (me[lhs] as! Int) - (me[rhs] as! Int)
+        case "+": result = (me[lhs] as! Int) + (me[rhs] as! Int)
         case "and", "or": result = me[rhs] as! Bool
         default: UNIMPLEMENTED(e)
         }
-        return me.deleteAnyEphemerals(
-          at: [lhs, rhs],
-          then: Task { me in
-            me.initialize(output, to: result, then: followup)
-          })
+        return me.deleteAnyEphemerals(at: [lhs, rhs]) { me in
+          me.initialize(output, to: result, then: followup)
+        }
       }
     }
   }
@@ -567,11 +597,9 @@ extension Interpreter {
         case .int, .bool, .tuple, .choice, .error, .alternative, .struct:
           UNREACHABLE()
         }
-        return me.deleteAnyEphemerals(
-          at: [callee, arguments],
-          then: Task { me in
-            me.initialize(output, to: result, then: followup)
-          })
+        return me.deleteAnyEphemerals(at: [callee, arguments]) { me in
+          me.initialize(output, to: result, then: followup)
+        }
       }
     }
   }
@@ -602,11 +630,9 @@ extension Interpreter {
               : ChoiceValue(
                 type_: parentID, discriminator: id, payload: .init())
 
-            return me.deleteAnyEphemeral(
-              at: base,
-              then: Task { me in
-                me.initialize(output, to: result, then: followup)
-              })
+            return me.deleteAnyEphemeral(at: base) { me in
+              me.initialize(output, to: result, then: followup)
+            }
           }
         default: UNREACHABLE()
         }
@@ -631,8 +657,9 @@ extension Interpreter {
     if e.isEmpty {
       return initialize(output, to: Tuple(parts).mapFields { self[$0] })
       { output, me in
-        me.deleteAnyEphemerals(
-          at: parts.values, then: Task { me in followup(output, &me) })
+        me.deleteAnyEphemerals(at: parts.values) { me in
+          followup(output, &me)
+        }
       }
     }
     else {
@@ -653,14 +680,22 @@ extension Interpreter {
 
 func areEqual(_ l: Value, _ r: Value) -> Bool {
   switch (l as Any, r as Any) {
+
   case let (lh as AnyHashable, rh as AnyHashable):
     return lh == rh
+
   case let (lt as TupleValue, rt as TupleValue):
     return lt.count == rt.count && lt.elements.allSatisfy { k, v0 in
       rt.elements[k].map { v1 in areEqual(v0, v1) } ?? false
     }
+
+  case let (lc as ChoiceValue, rc as ChoiceValue):
+    return lc.discriminator == rc.discriminator
+      && areEqual(lc.payload, rc.payload)
+
   case let (lt as TupleType, rt as TupleType):
     return lt == rt
+
   default:
     // All things that aren't equatable are considered equal if their types
     // match and unequal otherwise, to preserve reflexivity.
@@ -674,24 +709,107 @@ extension Interpreter {
   /// indication of whether the match was successful.
   mutating func match(
     _ p: Pattern, toValueAt source: Address,
-    followup: @escaping FollowupWith<Bool>
+    then followup: @escaping FollowupWith<Bool>
   ) -> Task {
+    if tracing {
+      print("\(p.site): info: matching against value \(self[source])")
+    }
     switch p {
     case let .atom(t):
       return evaluate(t) { target, me in
         let matched = areEqual(me[target], me[source])
-        return Task { me in followup(matched, &me) }
+        return me.deleteAnyEphemeral(at: target) { me in
+          followup(matched, &me)
+        }
       }
 
     case let .variable(b):
       frame.locals[b] = source
       return Task { me in followup(true, &me) }
 
-    case let .tuple(x): UNIMPLEMENTED(x)
-    case let .functionCall(x): UNIMPLEMENTED(x)
+    case let .tuple(x):
+      return match(x, toValueAt: source, then: followup)
+
+    case let .functionCall(x):
+      return match(x, toValueAt: source, then: followup)
+
     case let .functionType(x): UNIMPLEMENTED(x)
+    }
+  }
+
+  mutating func match(
+    _ p: FunctionCall<Pattern>, toValueAt source: Address,
+    then followup: @escaping FollowupWith<Bool>
+  ) -> Task {
+    return evaluate(p.callee, asCallee: true) { callee, me in
+      switch me[source].type {
+      case .struct:
+        UNIMPLEMENTED()
+      case .choice:
+        let c = me[source] as! ChoiceValue
+        let calleeMatched = Type(me[callee]) == c.alternativeType
+
+        return me.deleteAnyEphemeral(at: callee) { me in
+          if !calleeMatched { return followup(false, &me) }
+
+          let payload = me.memory.substructure(at: source)[2]!
+          return me.match(p.arguments, toValueAt: payload, then: followup)
+        }
+      case .int, .bool, .type, .function, .tuple, .error, .alternative:
+        UNREACHABLE()
+      }
+    }
+  }
+
+  mutating func match(
+    _ p: TuplePattern, toValueAt source: Address,
+    then followup: @escaping FollowupWith<Bool>
+  ) -> Task {
+    if self[source] is TupleValue {
+      let sourceStructure = self.memory.substructure(at: source)
+      if p.count == sourceStructure.count {
+        return matchElements(
+          p.fields().elements[...], toValuesAt: sourceStructure, then: followup)
+      }
+    }
+    return Task { me in followup(false, &me) }
+  }
+
+  mutating func matchElements(
+    _ p: Tuple<Pattern>.Elements.SubSequence, toValuesAt source: Tuple<Address>,
+    then followup: @escaping FollowupWith<Bool>
+  ) -> Task {
+    guard let (k0, p0) = p.first
+    else { return Task { me in followup(true, &me) } }
+    return match(p0, toValueAt: source.elements[k0]!) { matched, me in
+      matched
+        ? me.matchElements(p.dropFirst(), toValuesAt: source, then: followup)
+        : Task { me in followup(false, &me) }
     }
   }
 }
 
+// TODO: move this
+/// Just like the built-in assert except that it prints the full path to the
+/// file.
+///
+/// Better for IDEs.
+func sanityCheck(
+  _ condition: @autoclosure () -> Bool,
+  _ message: @autoclosure () -> String = String(),
+  filePath: StaticString = #filePath, line: UInt = #line
+) {
+  Swift.assert(condition(), message(), file: (filePath), line: line)
+}
+
+fileprivate extension TupleSyntax {
+  func fields() -> Tuple<Payload> {
+    var l = ErrorLog()
+    let r = fields(reportingDuplicatesIn: &l)
+    assert(l.isEmpty)
+    return r
+  }
+}
 // TODO: UNREACHABLE variadic signature
+// TODO: enums for unary and binary operators.
+// TODO: drive matching from source value type.

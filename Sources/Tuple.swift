@@ -46,10 +46,13 @@ struct Tuple<Field> {
   /// Creates an instance using the given underlying storage.
   init(_ storage: [FieldID: Field] = [:]) { self.elements = storage }
 
-  /// Returns the field with the given name, or `nil` if no such name exists.
+  /// Returns the field with the given id, or `nil` if no such field exists.
+  subscript(k: FieldID) -> Field? { elements[k] }
+
+  /// Returns the field with the given name, or `nil` if no such field exists.
   subscript(fieldName: Identifier) -> Field? { elements[.label(fieldName)] }
 
-  /// Returns the given positional field.
+  /// Returns the given positional field, or `nil` if no such field exists.
   subscript(position: Int) -> Field? { elements[.position(position)] }
 
   typealias Elements = [FieldID: Field]
