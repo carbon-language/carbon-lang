@@ -28,6 +28,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [Combining interfaces by anding type-types](#combining-interfaces-by-anding-type-types)
 -   [Interface requiring other interfaces](#interface-requiring-other-interfaces)
     -   [Interface extension](#interface-extension)
+        -   [Extending and implementing structural interfaces](#extending-and-implementing-structural-interfaces)
         -   [Diamond dependency issue](#diamond-dependency-issue)
     -   [Use case: overload resolution](#use-case-overload-resolution)
 -   [Type compatibility](#type-compatibility)
@@ -1208,13 +1209,6 @@ those names are marked as `upcoming` or `deprecated` as in
 practice, since interface extension is a very closely coupled relationship, but
 this may be something we will have to revisit in the future.
 
-**Note:** This feature should be generalized to support implementing a
-`structural interface`. The `impl` block would include definitions for any names
-defined by the structural interface, and the result would be that the type
-implements any interfaces that the structural interface requires (assuming this
-doesn't leave any of those interface's requirements unimplemented). This
-provides a tool useful for [evolution](#evolution).
-
 **Concern:** Having both `extends` and [`extend`](#external-impl) with different
 meanings is going to be confusing. One should be renamed.
 
@@ -1264,69 +1258,102 @@ interface PreferredConversion {
 }
 ```
 
-#### Diamond dependency issue
-
-Since types can implement interfaces at most once, we need to specify what
-happens in when a type implements interfaces `D1` and `D2` both of which extend
-`B`.
-
-```
-interface B {
-  method (Self: this) B1();
-  method (Self: this) B2();
-}
-interface D1 { extends B; ... }
-interface D2 { extends B; ... }
-struct U {
-  impl D1 { ... }
-  impl D2 { ... }
-}
-```
-
-We can only have one definition of each method of `B`. Each method though could
-be defined in `D1`, `D2`, or `B`. These would all be valid:
-
--   `D1` implements all methods of `B`, `D2` implements none of them.
-
-```
-struct U {
-  impl D1 {
-    method (Self: this) B1() { ... }
-    method (Self: this) B2() { ... }
-  }
-  impl D2 { ... }
-}
-```
-
--   `D1` and `D2` implement all methods of `B` between them, but with no
-    overlap.
-
-```
-struct U {
-  impl D1 {
-    method (Self: this) B1() { ... }
-  }
-  impl D2 {
-    method (Self: this) B2() { ... }
-  }
-}
-```
-
--   We explicitly implement `B`.
-
-```
-struct U {
-  impl B {
-    method (Self: this) B1() { ... }
-    method (Self: this) B2() { ... }
-  }
-  impl D1 { ... }
-  impl D2 { ... }
-}
-```
+#### Extending and implementing structural interfaces
 
 The `extends` declaration makes sense with the same meaning inside a
 [`structural interface`](#structural-interfaces), and should also be supported.
+
+**Note:** This feature should be generalized to support implementing a
+`structural interface`. The `impl` block would include definitions for any names
+defined by the structural interface, and the result would be that the type
+implements any interfaces that the structural interface requires (assuming this
+doesn't leave any of those interface's requirements unimplemented). This
+provides a tool useful for [evolution](#evolution).
+
+#### Diamond dependency issue
+
+Consider this set of interfaces, simplified from
+[this example generic graph library doc](https://docs.google.com/document/d/1xk0GLtpBl2OOnf3F_6Z-A3DtTt-r7wdOZ5wPipYUSO0/edit?resourcekey=0-mBSmwn6b6jwbLaQw2WG6OA#):
+
+```
+interface Graph {
+  method (Ptr(Self): this) Source(EdgeDescriptor: e) -> VertexDescriptor;
+  method (Ptr(Self): this) Target(EdgeDescriptor: e) -> VertexDescriptor;
+}
+
+interface IncidenceGraph {
+  extends Graph;
+  method (Ptr(Self): this) OutEdges(VertexDescriptor: u)
+    -> (EdgeIterator, EdgeIterator);
+}
+
+interface EdgeListGraph {
+  extends Graph;
+  method (Ptr(Self): this) Edges() -> (EdgeIterator, EdgeIterator);
+}
+```
+
+We need to specify what happens how a graph type would implement both
+`IncidenceGraph` and `EdgeListGraph`, since both interfaces extend the `Graph`
+interface.
+
+```
+struct MyEdgeListIncidenceGraph {
+  impl IncidenceGraph { ... }
+  impl EdgeListGraph { ... }
+}
+```
+
+The rule is that we need one definition of each method of `Graph`. Each method
+though could be defined in the `impl` block of `IncidenceGraph`,
+`EdgeListGraph`, or `Graph`. These would all be valid:
+
+-   `IncidenceGraph` implements all methods of `Graph`, `EdgeListGraph`
+    implements none of them.
+
+```
+struct U {
+  impl IncidenceGraph {
+    method (Self: this) Source(EdgeDescriptor: e) -> VertexDescriptor { ... }
+    method (Self: this) Target(EdgeDescriptor: e) -> VertexDescriptor { ... }
+    method (Ptr(Self): this) OutEdges(VertexDescriptor: u)
+        -> (EdgeIterator, EdgeIterator) { ... }
+  }
+  impl EdgeListGraph {
+    method (Ptr(Self): this) Edges() -> (EdgeIterator, EdgeIterator) { ... }
+  }
+}
+```
+
+-   `IncidenceGraph` and `EdgeListGraph` implement all methods of `Graph`
+    between them, but with no overlap.
+
+```
+struct U {
+  impl IncidenceGraph {
+    method (Self: this) Source(EdgeDescriptor: e) -> VertexDescriptor { ... }
+    method (Ptr(Self): this) OutEdges(VertexDescriptor: u)
+        -> (EdgeIterator, EdgeIterator) { ... }
+  }
+  impl EdgeListGraph {
+    method (Self: this) Target(EdgeDescriptor: e) -> VertexDescriptor { ... }
+    method (Ptr(Self): this) Edges() -> (EdgeIterator, EdgeIterator) { ... }
+  }
+}
+```
+
+-   We explicitly implement `Graph`.
+
+```
+struct U {
+  impl Graph {
+    method (Self: this) Source(EdgeDescriptor: e) -> VertexDescriptor { ... }
+    method (Self: this) Target(EdgeDescriptor: e) -> VertexDescriptor { ... }
+  }
+  impl IncidenceGraph { ... }
+  impl EdgeListGraph { ... }
+}
+```
 
 ### Use case: overload resolution
 
