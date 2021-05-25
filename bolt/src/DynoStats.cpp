@@ -37,6 +37,14 @@ DynoStatsScale("dyno-stats-scale",
   cl::Hidden,
   cl::cat(BoltCategory));
 
+static cl::opt<uint32_t>
+PrintDynoOpcodeStat("print-dyno-opcode-stats",
+  cl::desc("print per instruction opcode dyno stats and the function"
+              "names:BB offsets of the nth highest execution counts"),
+  cl::init(0),
+  cl::Hidden,
+  cl::cat(BoltCategory));
+
 } // namespace opts
 
 namespace llvm {
@@ -69,7 +77,8 @@ bool DynoStats::lessThan(const DynoStats &Other,
   );
 }
 
-void DynoStats::print(raw_ostream &OS, const DynoStats *Other) const {
+void DynoStats::print(raw_ostream &OS, const DynoStats *Other,
+                      MCInstPrinter *Printer) const {
   auto printStatWithDelta = [&](const std::string &Name, uint64_t Stat,
                                 uint64_t OtherStat) {
     OS << format("%'20lld : ", Stat * opts::DynoStatsScale) << Name;
@@ -95,6 +104,35 @@ void DynoStats::print(raw_ostream &OS, const DynoStats *Other) const {
 
     printStatWithDelta(Desc[Stat], Stats[Stat], Other ? (*Other)[Stat] : 0);
   }
+  if (opts::PrintDynoOpcodeStat && Printer) {
+    outs() << "\nProgram-wide opcode histogram:\n";
+    OS << "              Opcode,   Execution Count,     Max Exec Count, "
+          "Function Name:Offset ...\n";
+    std::vector<std::pair<uint64_t, unsigned>> SortedHistogram;
+    for (const OpcodeStatTy &Stat : OpcodeHistogram)
+      SortedHistogram.emplace_back(Stat.second.first, Stat.first);
+
+    // Sort using lexicographic ordering
+    std::sort(SortedHistogram.begin(), SortedHistogram.end());
+
+    // Dump in ascending order: Start with Opcode with Highest execution
+    // count.
+    for (auto Stat = SortedHistogram.rbegin(); Stat != SortedHistogram.rend();
+         ++Stat) {
+      OS << format("%20s,%'18lld",
+                   Printer->getOpcodeName(Stat->second).data(),
+                   Stat->first * opts::DynoStatsScale);
+
+      MaxOpcodeHistogramTy MaxMultiMap =
+          OpcodeHistogram.at(Stat->second).second;
+      // Start with function name:BB offset with highest execution count.
+      for (auto Max = MaxMultiMap.rbegin(); Max != MaxMultiMap.rend(); ++Max) {
+        OS << format(", %'18lld, ", Max->first * opts::DynoStatsScale)
+           << Max->second.first.str() << ':' << Max->second.second;
+      }
+      OS << '\n';
+    }
+  }
 }
 
 void DynoStats::operator+=(const DynoStats &Other) {
@@ -102,6 +140,29 @@ void DynoStats::operator+=(const DynoStats &Other) {
        Stat < DynoStats::LAST_DYNO_STAT;
        ++Stat) {
     Stats[Stat] += Other[Stat];
+  }
+  for (const OpcodeStatTy &Stat : Other.OpcodeHistogram) {
+    auto I = OpcodeHistogram.find(Stat.first);
+    if (I == OpcodeHistogram.end()) {
+      OpcodeHistogram.emplace(Stat);
+    } else {
+      // Merge Other Historgrams, log only the opts::PrintDynoOpcodeStat'th
+      // maximum counts.
+      I->second.first += Stat.second.first;
+      auto &MMap = I->second.second;
+      auto &OtherMMap = Stat.second.second;
+      auto Size = MMap.size();
+      assert(Size <= opts::PrintDynoOpcodeStat);
+      for (auto Iter = OtherMMap.rbegin(); Iter != OtherMMap.rend(); ++Iter) {
+        if (Size++ >= opts::PrintDynoOpcodeStat) {
+          auto First = MMap.begin();
+          if (Iter->first <= First->first)
+            break;
+          MMap.erase(First);
+        }
+        MMap.emplace(*Iter);
+      }
+    }
   }
 }
 
@@ -133,15 +194,43 @@ DynoStats getDynoStats(const BinaryFunction &BF) {
     if(BF.isAArch64Veneer())
         Stats[DynoStats::VENEER_CALLS_AARCH64] += BF.getKnownExecutionCount();
 
-    // Count the number of calls by iterating through all instructions.
+    // Count various instruction types by iterating through all instructions.
+    // When -print-dyno-opcode-stats is on, count per each opcode and record
+    // maximum execution counts.
     for (const MCInst &Instr : *BB) {
+      if (opts::PrintDynoOpcodeStat) {
+        unsigned Opcode = Instr.getOpcode();
+        auto I = Stats.OpcodeHistogram.find(Opcode);
+        if (I == Stats.OpcodeHistogram.end()) {
+          DynoStats::MaxOpcodeHistogramTy MMap;
+          MMap.emplace(BBExecutionCount,
+                       std::make_pair(BF.getOneName(), BB->getOffset()));
+          Stats.OpcodeHistogram.emplace(Opcode,
+              std::make_pair(BBExecutionCount, MMap));
+        } else {
+          I->second.first += BBExecutionCount;
+          bool Insert = true;
+          if (I->second.second.size() == opts::PrintDynoOpcodeStat) {
+            auto First = I->second.second.begin();
+            if (First->first < BBExecutionCount)
+              I->second.second.erase(First);
+            else
+              Insert = false;
+          }
+          if (Insert) {
+            I->second.second.emplace(
+                BBExecutionCount,
+                std::make_pair(BF.getOneName(), BB->getOffset()));
+          }
+        }
+      }
+
       if (BC.MIB->isStore(Instr)) {
         Stats[DynoStats::STORES] += BBExecutionCount;
       }
       if (BC.MIB->isLoad(Instr)) {
         Stats[DynoStats::LOADS] += BBExecutionCount;
       }
-
       if (!BC.MIB->isCall(Instr))
         continue;
 

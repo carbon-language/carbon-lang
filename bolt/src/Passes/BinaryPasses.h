@@ -83,7 +83,7 @@ public:
            << PrevDynoStats;
     if (Changed) {
       outs() << '\n';
-      NewDynoStats.print(outs(), &PrevDynoStats);
+      NewDynoStats.print(outs(), &PrevDynoStats, BC.InstPrinter.get());
     }
     outs() << '\n';
   }

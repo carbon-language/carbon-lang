@@ -12,7 +12,10 @@
 #define LLVM_TOOLS_LLVM_BOLT_DYNO_STATS_H
 
 #include "llvm/ADT/ArrayRef.h"
+#include "llvm/MC/MCInstPrinter.h"
 #include "llvm/Support/raw_ostream.h"
+#include <map>
+#include <unordered_map>
 
 namespace llvm {
 
@@ -102,7 +105,8 @@ public:
     return 0;
   }
 
-  void print(raw_ostream &OS, const DynoStats *Other = nullptr) const;
+  void print(raw_ostream &OS, const DynoStats *Other = nullptr,
+             MCInstPrinter *Printer = nullptr) const;
 
   void operator+=(const DynoStats &Other);
   bool operator<(const DynoStats &Other) const;
@@ -113,6 +117,19 @@ public:
   static const char* Description(const Category C) {
     return Desc[C];
   }
+
+  /// Maps instruction opcodes to:
+  /// 1. Accumulated executed instruction counts.
+  /// 2. a multimap that records highest execution counts, function names,
+  /// and BB offsets where intructions of these opcodes occur.
+  using MaxOpcodeHistogramTy =
+      std::multimap<uint64_t, std::pair<StringRef, uint32_t>>;
+  using OpcodeStatTy =
+      std::pair<unsigned, std::pair<uint64_t, MaxOpcodeHistogramTy>>;
+  using OpcodeHistogramTy =
+      std::unordered_map<unsigned, std::pair<uint64_t, MaxOpcodeHistogramTy>>;
+
+  OpcodeHistogramTy OpcodeHistogram;
 };
 
 inline raw_ostream &operator<<(raw_ostream &OS, const DynoStats &Stats) {
