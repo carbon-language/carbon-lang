@@ -11,8 +11,9 @@ namespace ct = ::clang::tooling;
 
 auto main(int argc, const char** argv) -> int {
   llvm::cl::OptionCategory category("C++ refactoring options");
-  ct::CommonOptionsParser op(argc, argv, category);
-  ct::RefactoringTool tool(op.getCompilations(), op.getSourcePathList());
+  auto parser = ct::CommonOptionsParser::create(argc, argv, category);
+  ct::RefactoringTool tool(parser->getCompilations(),
+                           parser->getSourcePathList());
 
   // Set up AST matcher callbacks.
   cam::MatchFinder finder;
