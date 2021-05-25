@@ -15,9 +15,6 @@ jobs:
           uses: actions/checkout@v2
           with:
             submodules: true
-        - uses: fwal/setup-swift@v1
-          with:
-            swift-version: "5.4"
         - name: Swift Version
           run: |
             xcodebuild -version
