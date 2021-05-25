@@ -47,13 +47,13 @@ under active investigation for C++. Carbon's `match` can be used as follows:
 fn Bar() -> (Int, (Float, Float));
 fn Foo() -> Float {
   match (Bar()) {
-    case (42, (Float: x, Float: y)) => {
+    case (42, (Float x, Float y)) => {
       return x - y;
     }
-    case (Int: p, (Float: x, Float: _)) if (p < 13) => {
+    case (Int p, (Float x, Float _)) if (p < 13) => {
       return p * x;
     }
-    case (Int: p, auto: _) if (p > 3) => {
+    case (Int p, auto _) if (p > 3) => {
       return p * Pi;
     }
     default => {
@@ -70,7 +70,7 @@ value, and execute that block. If none match, then it executes the default
 block.
 
 Each `case` contains a pattern. The first part is a value pattern
-(`(Int: p, auto: _)` for example) followed by an optional boolean predicate
+(`(Int p, auto _)` for example) followed by an optional boolean predicate
 introduced by the `if` keyword. The value pattern has to match, and then the
 predicate has to evaluate to true for the overall pattern to match. Value
 patterns can be composed of the following:
@@ -80,14 +80,13 @@ patterns can be composed of the following:
     identifier to bind to the value or the special identifier `_` to discard the
     value once matched.
 -   A destructuring pattern containing a sequence of value patterns
-    (`(Float: x, Float: y)`) which match against tuples and tuple like values by
+    (`(Float x, Float y)`) which match against tuples and tuple like values by
     recursively matching on their elements.
 -   An unwrapping pattern containing a nested value pattern which matches
     against a variant or variant-like value by unwrapping it.
 
 In order to match a value, whatever is specified in the pattern must match.
-Using `auto` for a type will always match, making `auto: _` the wildcard
-pattern.
+Using `auto` for a type will always match, making `auto _` the wildcard pattern.
 
 ### Pattern matching in local variables
 
@@ -99,7 +98,7 @@ directly.
 ```
 fn Bar() -> (Int, (Float, Float));
 fn Foo() -> Int {
-  var (Int: p, auto: _) = Bar();
+  var (Int p, auto _) = Bar();
   return p;
 }
 ```

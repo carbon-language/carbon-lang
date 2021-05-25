@@ -36,11 +36,11 @@ structuring data:
 
 ```
 struct Widget {
-  var Int: x;
-  var Int: y;
-  var Int: z;
+  var Int x;
+  var Int y;
+  var Int z;
 
-  var String: payload;
+  var String payload;
 }
 ```
 
@@ -50,18 +50,18 @@ often using different syntax:
 ```
 struct AdvancedWidget {
   // Do a thing!
-  fn DoSomething(AdvancedWidget: self, Int: x, Int: y);
+  fn DoSomething(AdvancedWidget self, Int x, Int y);
 
   // A nested type.
   struct NestedType {
     // ...
   }
 
-  private var Int: x;
-  private var Int: y;
+  private var Int x;
+  private var Int y;
 }
 
-fn Foo(AdvancedWidget: thing) {
+fn Foo(AdvancedWidget thing) {
   thing.DoSomething(1, 2);
 }
 ```

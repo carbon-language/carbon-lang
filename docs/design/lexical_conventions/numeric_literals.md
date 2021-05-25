@@ -440,8 +440,8 @@ Disadvantages:
 Advantages:
 
 -   Simpler, more flexible rule, that may allow some groupings that are
-    conventional in a specific domain. For example, `var Date: d = 01_12_1983;`,
-    or `var Int64: time_in_microseconds = 123456_000000;`.
+    conventional in a specific domain. For example, `var Date d = 01_12_1983;`,
+    or `var Int64 time_in_microseconds = 123456_000000;`.
 -   Culturally agnostic. For example, the Indian convention for digit separators
     would group the last three digits, and then every two digits before that
     (1,23,45,678 could be written `1_23_45_678`).
@@ -466,7 +466,7 @@ Disadvantages:
     be desirable. For example:
 
     ```carbon
-    var Float32: flt_max =
+    var Float32 flt_max =
       BitCast(Float32, 0b0_11111110_11111111111111111111111);
     ```
 
