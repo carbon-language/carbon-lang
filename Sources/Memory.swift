@@ -96,8 +96,6 @@ struct Memory {
   }
 
   mutating func assign(from source: Address, into target: Address) {
-    precondition(self[source].type == self[target].type)
-    uncheckedAssign(from: source, into: target)
 
     // Only check the top level type because choices of a single type can have
     // different payload types.
@@ -118,6 +116,9 @@ struct Memory {
         initialize(target, to: self[source])
       }
     }
+
+    precondition(self[source].type == self[target].type)
+    uncheckedAssign(from: source, into: target)
   }
 
   /// Returns the value at `a` or nil if `a` is not an initialized address.
