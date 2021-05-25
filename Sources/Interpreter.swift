@@ -6,7 +6,7 @@
 ///
 /// Swift doesn't allow a recursive function type to be declared directly, but
 /// we can indirect through `Onward`.
-fileprivate typealias Forth = (inout Interpreter)->Onward
+fileprivate typealias Next = (inout Interpreter)->Onward
 
 /// A notional “self-returning function” type, to be returned from continuations.
 ///
@@ -15,7 +15,7 @@ fileprivate typealias Forth = (inout Interpreter)->Onward
 fileprivate struct Onward {
 
   /// Creates an instance with the semantics of `implementation`.
-  init(_ code: @escaping Forth) {
+  init(_ code: @escaping Next) {
     self.code = code
   }
 
@@ -25,7 +25,7 @@ fileprivate struct Onward {
   }
 
   /// The underlying implementation.
-  let code: Forth
+  let code: Next
 }
 
 /// A continuation function that takes an input.
@@ -158,7 +158,7 @@ fileprivate extension Interpreter {
   /// In fact this function only executes one “unit of work” and packages the
   /// rest of executing `s` (if any), and whatever follows that, into the
   /// returned `Onward`.
-  mutating func run(_ s: Statement, then proceed: @escaping Forth) -> Onward {
+  mutating func run(_ s: Statement, then proceed: @escaping Next) -> Onward {
     if tracing {
       print("\(s.site): info: running statement")
     }
@@ -253,9 +253,9 @@ fileprivate extension Interpreter {
   }
 
   mutating func inScope(
-    do body: (inout Self, @escaping Forth)->Onward,
-    then proceed: @escaping Forth
-  ) -> Onward {
+    do body: (inout Self, @escaping Next)->Onward,
+    then proceed: @escaping Next) -> Onward
+  {
     let mark=frame.persistentAllocations.count
     return body(&self) { me in
       sanityCheck(
@@ -268,8 +268,8 @@ fileprivate extension Interpreter {
 
   /// Executes the statements of `content` in order, then `proceed`.
   mutating func runBlock(
-    _ content: ArraySlice<Statement>, then proceed: @escaping Forth
-  ) -> Onward {
+    _ content: ArraySlice<Statement>, then proceed: @escaping Next) -> Onward
+  {
     return content.isEmpty ? Onward(proceed)
       : run(content.first!) { me in
           me.runBlock(content.dropFirst(), then: proceed)
@@ -279,8 +279,8 @@ fileprivate extension Interpreter {
   mutating func runMatch(
     _ subject: Expression, at subjectLocation: Address,
     against clauses: ArraySlice<MatchClause>,
-    then proceed: @escaping Forth
-  ) -> Onward {
+    then proceed: @escaping Next) -> Onward
+  {
     guard let clause = clauses.first else {
       return error(subject, "no pattern matches \(self[subjectLocation])")
     }
@@ -300,7 +300,7 @@ fileprivate extension Interpreter {
   }
 
   mutating func `while`(
-    _ c: Expression, run body: Statement, then proceed: @escaping Forth
+    _ c: Expression, run body: Statement, then proceed: @escaping Next
   ) -> Onward {
     return evaluateAndConsume(c) { (runBody: Bool, me) in
       return runBody
@@ -312,12 +312,12 @@ fileprivate extension Interpreter {
 
 /// Values and memory.
 fileprivate extension Interpreter {
-  /// Allocates an address for the result of evaluating `e`, passing it on to
-  /// `proceed` along with `self`.
+  /// Allocates an address earmarked for the eventual result of evaluating `e`,
+  /// passing it on to `proceed` along with `self`.
   mutating func allocate(
     _ e: Expression, mutable: Bool = false, persist: Bool = false,
-    then proceed: @escaping With<Address>
-  ) -> Onward {
+    then proceed: @escaping With<Address>) -> Onward
+  {
     let a = memory.allocate(mutable: mutable)
     if tracing {
       print(
@@ -337,8 +337,8 @@ fileprivate extension Interpreter {
   /// `proceed` along with `self`.
   mutating func allocate(
     _ e: Expression, unlessNonNil destination: Address?,
-    then proceed: @escaping With<Address>
-  ) -> Onward {
+    then proceed: @escaping With<Address>) -> Onward
+  {
     if let a = destination { return Onward { me in proceed(a, &me) } }
     return allocate(e, then: proceed)
   }
@@ -346,8 +346,8 @@ fileprivate extension Interpreter {
   /// Destroys and reclaims memory of the `n` locally-allocated values at the
   /// top of the allocation stack.
   mutating func cleanUpPersistentAllocations(
-    above n: Int, then proceed: @escaping Forth
-  ) -> Onward {
+    above n: Int, then proceed: @escaping Next) -> Onward
+  {
     frame.persistentAllocations.count == n ? Onward(proceed)
       : deleteLocalValue_doNotCallDirectly(
         at: frame.persistentAllocations.pop()!
@@ -355,8 +355,8 @@ fileprivate extension Interpreter {
   }
 
   mutating func deleteLocalValue_doNotCallDirectly(
-    at a: Address, then proceed: @escaping Forth
-  ) -> Onward {
+    at a: Address, then proceed: @escaping Next) -> Onward
+  {
     if tracing { print("  info: deleting \(a)") }
     memory.delete(a)
     return Onward(proceed)
@@ -365,8 +365,8 @@ fileprivate extension Interpreter {
   /// If `a` was allocated to an ephemeral temporary, deinitializes and destroys
   /// it.
   mutating func deleteAnyEphemeral(
-    at a: Address, then proceed: @escaping Forth
-  ) -> Onward {
+    at a: Address, then proceed: @escaping Next) -> Onward
+  {
     if let _ = frame.ephemeralAllocations.removeValue(forKey: a) {
       return deleteLocalValue_doNotCallDirectly(at: a, then: proceed)
     }
@@ -376,8 +376,7 @@ fileprivate extension Interpreter {
   /// Deinitializes and destroys any addresses in `locations` that were
   /// allocated to an ephemeral temporary.
   mutating func deleteAnyEphemerals<C: Collection>(
-    at locations: C, then proceed: @escaping Forth
-  ) -> Onward
+    at locations: C, then proceed: @escaping Next) -> Onward
     where C.Element == Address
   {
     guard let a0 = locations.first else { return Onward(proceed) }
@@ -390,8 +389,8 @@ fileprivate extension Interpreter {
   /// `proceed`.
   mutating func copy(
     from source: Address, to target: Address,
-    then proceed: @escaping With<Address>
-  ) -> Onward {
+    then proceed: @escaping With<Address>) -> Onward
+  {
     if tracing {
       print("  info: copying \(self[source]) into \(target)")
     }
@@ -401,8 +400,9 @@ fileprivate extension Interpreter {
   /// Copies the value at `source` into the `target` address and continues with
   /// `proceed`.
   mutating func assign(
-    _ target: Address, from source: Address, then proceed: @escaping Forth
-  ) -> Onward {
+    _ target: Address, from source: Address,
+    then proceed: @escaping Next) -> Onward
+  {
     if tracing {
       print("  info: assigning \(self[source])\(source) into \(target)")
     }
@@ -411,8 +411,8 @@ fileprivate extension Interpreter {
   }
 
   mutating func deinitialize(
-    valueAt target: Address, then proceed: @escaping Forth
-  ) -> Onward {
+    valueAt target: Address, then proceed: @escaping Next) -> Onward
+  {
     if tracing {
       print("  info: deinitializing \(target)")
     }
@@ -421,8 +421,9 @@ fileprivate extension Interpreter {
   }
 
   mutating func initialize(
-    _ target: Address, to v: Value, then proceed: @escaping With<Address>
-  ) -> Onward {
+    _ target: Address, to v: Value,
+    then proceed: @escaping With<Address>) -> Onward
+  {
     if tracing {
       print("  info: initializing \(target) = \(v)")
     }
@@ -446,11 +447,9 @@ fileprivate extension Interpreter {
   /// - Parameter asCallee: `true` if `e` is in callee position in a function
   /// call expression.
   mutating func evaluate(
-    _ e: Expression,
-    asCallee: Bool = false,
-    into destination: Address? = nil,
-    then proceed_: @escaping With<Address>
-  ) -> Onward {
+    _ e: Expression, asCallee: Bool = false, into destination: Address? = nil,
+    then proceed_: @escaping With<Address>) -> Onward
+  {
     if tracing {
       print(
         "\(e.site): info: evaluating "
@@ -506,8 +505,8 @@ fileprivate extension Interpreter {
   /// of the result on to `proceed`.
   mutating func evaluate(
     _ name: Identifier, into destination: Address? = nil,
-    then proceed: @escaping With<Address>
-  ) -> Onward {
+    then proceed: @escaping With<Address>) -> Onward
+  {
     let d = program.definition[name]
 
     switch d {
@@ -551,8 +550,8 @@ fileprivate extension Interpreter {
   /// `proceed`.
   mutating func evaluate(
     _ e: UnaryOperatorExpression, into output: Address,
-    then proceed: @escaping With<Address>
-  ) -> Onward {
+    then proceed: @escaping With<Address>) -> Onward
+  {
     evaluate(e.operand) { operand, me in
       let result: Value
       switch e.operation.text {
@@ -570,8 +569,8 @@ fileprivate extension Interpreter {
   /// `proceed`.
   mutating func evaluate(
     _ e: BinaryOperatorExpression, into output: Address,
-    then proceed: @escaping With<Address>
-  ) -> Onward {
+    then proceed: @escaping With<Address>) -> Onward
+  {
     evaluate(e.lhs) { lhs, me in
       if e.operation.text == "and" && (me[lhs] as! Bool == false) {
         return me.copy(from: lhs, to: output, then: proceed)
@@ -600,8 +599,8 @@ fileprivate extension Interpreter {
   /// `proceed`.
   mutating func evaluate(
     _ e: FunctionCall<Expression>, into output: Address,
-    then proceed: @escaping With<Address>
-  ) -> Onward {
+    then proceed: @escaping With<Address>) -> Onward
+  {
     evaluate(e.callee, asCallee: true) { callee, me in
       me.evaluate(.tupleLiteral(e.arguments)) { arguments, me in
         // TODO: instead of using the callee value's type to dispatch, use the
@@ -662,8 +661,8 @@ fileprivate extension Interpreter {
   /// the result on to `proceed`.
   mutating func evaluate(
     _ e: MemberAccessExpression, asCallee: Bool, into output: Address?,
-    then proceed: @escaping With<Address>
-  ) -> Onward {
+    then proceed: @escaping With<Address>) -> Onward
+  {
     evaluate(e.base) { base, me in
       switch me[base].type {
       case .struct:
@@ -704,8 +703,8 @@ fileprivate extension Interpreter {
 
   mutating func evaluateIndex(
     target t: Expression, offset i: Expression, into output: Address?,
-    then proceed: @escaping With<Address>
-  ) -> Onward {
+    then proceed: @escaping With<Address>) -> Onward
+  {
     evaluate(t, into: output) { targetAddress, me in
       me.evaluate(i) { indexAddress, me in
         let index = me[indexAddress] as! Int
@@ -735,8 +734,8 @@ fileprivate extension Interpreter {
     into output: Address,
     parts: [FieldID: Address] = [:],
     positionalCount: Int = 0,
-    then proceed: @escaping With<Address>
-  ) -> Onward {
+    then proceed: @escaping With<Address>) -> Onward
+  {
     // FIXME: too many copies
     if e.isEmpty {
       return initialize(output, to: Tuple(parts).mapFields { self[$0] })
@@ -793,8 +792,8 @@ fileprivate extension Interpreter {
   /// indication of whether the match was successful.
   mutating func match(
     _ p: Pattern, toValueAt source: Address,
-    then proceed: @escaping With<Bool>
-  ) -> Onward {
+    then proceed: @escaping With<Bool>) -> Onward
+  {
     if tracing {
       print("\(p.site): info: matching against value \(self[source])")
     }
@@ -826,9 +825,9 @@ fileprivate extension Interpreter {
 
   mutating func match(
     _ p: FunctionCall<Pattern>, toValueAt source: Address,
-    then proceed: @escaping With<Bool>
-  ) -> Onward {
-    return evaluate(p.callee, asCallee: true) { callee, me in
+    then proceed: @escaping With<Bool>) -> Onward
+  {
+    evaluate(p.callee, asCallee: true) { callee, me in
       switch me[source].type {
       case .struct:
         UNIMPLEMENTED()
@@ -850,8 +849,8 @@ fileprivate extension Interpreter {
 
   mutating func match(
     _ p: TuplePattern, toValueAt source: Address,
-    then proceed: @escaping With<Bool>
-  ) -> Onward {
+    then proceed: @escaping With<Bool>) -> Onward
+  {
     if self[source] is TupleValue {
       let sourceStructure = self.memory.substructure(at: source)
       if p.count == sourceStructure.count {
@@ -864,8 +863,8 @@ fileprivate extension Interpreter {
 
   mutating func matchElements(
     _ p: Tuple<Pattern>.Elements.SubSequence, toValuesAt source: Tuple<Address>,
-    then proceed: @escaping With<Bool>
-  ) -> Onward {
+    then proceed: @escaping With<Bool>) -> Onward
+  {
     guard let (k0, p0) = p.first
     else { return Onward { me in proceed(true, &me) } }
     return match(p0, toValueAt: source.elements[k0]!) { matched, me in
