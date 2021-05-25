@@ -19,8 +19,6 @@ jobs:
           run: |
             xcodebuild -version
             swift --version
-        - name: Swift Version
-          run: swift --version
         - name: Build (Debug)
           run: make build SWIFT_FLAGS="-v -c debug"
         - name: Build (Release)
