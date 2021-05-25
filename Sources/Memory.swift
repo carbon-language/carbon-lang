@@ -102,6 +102,7 @@ struct Memory {
     // Only check the top level type because choices of a single type can have
     // different payload types.
     func uncheckedAssign(from source: Address, into target: Address) {
+      sanityCheck(storage[target]!.mutable)
       let sourceMap = substructure(at: source).elements
       let targetMap = substructure(at: target).elements
       if !sourceMap.isEmpty && sourceMap.count == targetMap.count
@@ -110,6 +111,7 @@ struct Memory {
         for (field, s) in sourceMap {
           assign(from: s, into: targetMap[field]!)
         }
+        storage[target]!.content = storage[source]!.content
       }
       else {
         deinitialize(target)

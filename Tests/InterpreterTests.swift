@@ -23,33 +23,6 @@ final class InterpreterTests: XCTestCase {
     XCTAssertEqual(42, engine.run())
   }
 
-  /*
-  func testScopes() {
-    guard let exe = """
-            fn main() -> Int {
-              var auto n = 0;
-              while (not(n == 2)) {
-                while (true) {
-                  match (3) {
-                    case auto xxxxx => {
-                      n = n + 0;
-                      if (n == 0) continue;
-                      break;
-                    }
-                  }
-                  n = n + 1;
-                }
-              }
-              return 0;
-            }
-
-    """.checkExecutable() else { return }
-    var engine = Interpreter(exe)
-    engine.tracing = true
-    _ = engine.run()
-  }
-   */
-
   func run(_ testFile: String, tracing: Bool = false) -> Int? {
     let testdata =
         URL(fileURLWithPath: #filePath).deletingLastPathComponent()
@@ -69,9 +42,8 @@ final class InterpreterTests: XCTestCase {
   }
 
   func test1() {
-    // XCTAssertEqual(run("tuple1.6c", tracing: true), 0)
-    XCTAssertEqual(run("scopes1.6c", tracing: true), 0)
-    XCTAssertEqual(run("scopes2.6c", tracing: true), 0)
+    // XCTAssertEqual(run("scopes1.6c", tracing: true), 0)
+    // XCTAssertEqual(run("scopes2.6c", tracing: true), 0)
   }
 
   func testExamples() {
