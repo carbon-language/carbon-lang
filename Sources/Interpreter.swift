@@ -96,13 +96,12 @@ struct Interpreter {
     frame = CallFrame(
       resultAddress: memory.allocate(),
       onReturn: Onward { me in
-        me.cleanUpPersistentAllocations(
-          above: 0, then: Onward { me in me.terminate() })
+        me.cleanUpPersistentAllocations(above: 0) { me in me.terminate() }
       })
 
     // First step runs the body of `main`
     nextStep = Onward { [main = program.main!] me in
-      me.run(main.body!, then: me.frame.onReturn)
+      me.run(main.body!, then: me.frame.onReturn.code)
     }
   }
 
@@ -159,7 +158,7 @@ fileprivate extension Interpreter {
   /// In fact this function only executes one “unit of work” and packages the
   /// rest of executing `s` (if any), and whatever follows that, into the
   /// returned `Onward`.
-  mutating func run(_ s: Statement, then proceed: Onward) -> Onward {
+  mutating func run(_ s: Statement, then proceed: @escaping Continue) -> Onward {
     if tracing {
       print("\(s.site): info: running statement")
     }
@@ -170,7 +169,7 @@ fileprivate extension Interpreter {
     switch s {
     case let .expressionStatement(e, _):
       return evaluate(e) { resultAddress, me in
-        me.deleteAnyEphemeral(at: resultAddress, then: proceed.code)
+        me.deleteAnyEphemeral(at: resultAddress, then: proceed)
       }
 
     case let .assignment(target: t, source: s, _):
@@ -185,7 +184,7 @@ fileprivate extension Interpreter {
             "\(t.site): info: assigning \(me[source])\(source) into \(target)")
         }
         return me.assign(target, from: source) { me in
-        me.deleteAnyEphemeral(at: source, then: proceed.code)
+        me.deleteAnyEphemeral(at: source, then: proceed)
         }}}
 
     case let .initialization(i):
@@ -196,18 +195,18 @@ fileprivate extension Interpreter {
       return allocate(i.initializer, mutable: true, persist: true) { rhsArea, me in
         me.evaluate(i.initializer, into: rhsArea) { rhs, me in
           me.match(i.bindings, toValueAt: rhs) { matched, me in
-            matched ? proceed : me.error(
+            matched ? Onward(proceed) : me.error(
               i.bindings, "Initialization pattern not matched by \(me[rhs])")
           }
         }
       }
 
-    case let .if(
-           condition: c, thenClause: trueClause, elseClause: falseClause, _):
+    case let .if(condition: c, thenClause: true_, elseClause: false_, _):
+
       return evaluateAndConsume(c) { (condition: Bool, me) in
         return condition
-          ? me.run(trueClause, then: proceed)
-          : falseClause.map { me.run($0, then: proceed) } ?? proceed
+          ? me.run(true_, then: proceed)
+          : false_.map { me.run($0, then: proceed) } ?? Onward(proceed)
       }
 
     case let .return(e, _):
@@ -217,8 +216,8 @@ fileprivate extension Interpreter {
 
     case let .block(children, _):
       return inScope(
-        do: { me, proceed1 in me.runBlock(children[...], then: Onward(proceed1)) },
-        then: proceed.code)
+        do: { me, proceed1 in me.runBlock(children[...], then: proceed1) },
+        then: proceed)
 
     case let .while(condition: c, body: body, _):
       let saved = (frame.onBreak, frame.onContinue)
@@ -230,8 +229,9 @@ fileprivate extension Interpreter {
       }
 
       let onContinue = Onward { me in
-        return me.cleanUpPersistentAllocations(
-          above: mark, then: Onward { $0.while(c, run: body, then: onBreak) })
+        return me.cleanUpPersistentAllocations(above: mark) {
+          $0.while(c, run: body, then: onBreak.code)
+        }
       }
 
       (frame.onBreak, frame.onContinue) = (onBreak, onContinue)
@@ -241,8 +241,8 @@ fileprivate extension Interpreter {
       return inScope(do: { me, proceed1 in
         me.allocate(s, persist: true) { subjectArea, me in
         me.evaluate(s, into: subjectArea) { subject, me in
-        me.runMatch(s, at: subject, against: clauses[...], then: Onward(proceed1))
-        }}}, then: proceed.code)
+        me.runMatch(s, at: subject, against: clauses[...], then: proceed1)
+        }}}, then: proceed)
 
     case .break:
       return frame.onBreak!
@@ -262,22 +262,16 @@ fileprivate extension Interpreter {
         me.frame.ephemeralAllocations.isEmpty,
         "leaked \(me.frame.ephemeralAllocations)")
 
-      return me.cleanUpPersistentAllocations(above: mark, then: Onward(proceed))
+      return me.cleanUpPersistentAllocations(above: mark, then: proceed)
     }
   }
 
-  /// Runs `s` and follows up with `proceed`.
-  ///
-  /// A convenience wrapper for `run(_:then:)` that supports cleaner syntax.
-  mutating func run(_ s: Statement, proceed: @escaping Continue) -> Onward {
-    run(s, then: Onward(proceed))
-  }
-
   /// Executes the statements of `content` in order, then `proceed`.
-  mutating func runBlock(_ content: ArraySlice<Statement>, then proceed: Onward)
-    -> Onward
+  mutating func runBlock(
+    _ content: ArraySlice<Statement>,
+    then proceed: @escaping Continue) -> Onward
   {
-    return content.isEmpty ? proceed
+    return content.isEmpty ? Onward(proceed)
       : run(content.first!) { me in
           me.runBlock(content.dropFirst(), then: proceed)
         }
@@ -286,7 +280,7 @@ fileprivate extension Interpreter {
   mutating func runMatch(
     _ subject: Expression, at subjectLocation: Address,
     against clauses: ArraySlice<MatchClause>,
-    then proceed: Onward) -> Onward
+    then proceed: @escaping Continue) -> Onward
   {
     guard let clause = clauses.first else {
       return error(subject, "no pattern matches \(self[subjectLocation])")
@@ -294,9 +288,8 @@ fileprivate extension Interpreter {
 
     let onMatch = Onward { me in
       me.inScope(
-        do: { me, proceed1 in
-        me.run(clause.action, then: Onward(proceed1)) },
-        then: proceed.code)
+        do: { me, proceed in me.run(clause.action, then: proceed) },
+        then: proceed)
     }
     guard let p = clause.pattern else { return onMatch }
 
@@ -308,13 +301,12 @@ fileprivate extension Interpreter {
   }
 
   mutating func `while`(
-    _ c: Expression, run body: Statement, then proceed: Onward) -> Onward
+    _ c: Expression, run body: Statement, then proceed: @escaping Continue) -> Onward
   {
     return evaluateAndConsume(c) { (runBody: Bool, me) in
       return runBody
-        ? me.run(
-          body, then: Onward { me in me.while(c, run: body, then: proceed)})
-        : proceed
+        ? me.run(body) { me in me.while(c, run: body, then: proceed)}
+        : Onward(proceed)
     }
   }
 }
@@ -355,9 +347,9 @@ fileprivate extension Interpreter {
   /// Destroys and reclaims memory of the `n` locally-allocated values at the
   /// top of the allocation stack.
   mutating func cleanUpPersistentAllocations(
-    above n: Int, then proceed: Onward
+    above n: Int, then proceed: @escaping Continue
   ) -> Onward {
-    frame.persistentAllocations.count == n ? proceed
+    frame.persistentAllocations.count == n ? Onward(proceed)
       : deleteLocalValue_doNotCallDirectly(
         at: frame.persistentAllocations.pop()!
       ) { me in me.cleanUpPersistentAllocations(above: n, then: proceed) }
@@ -624,21 +616,19 @@ fileprivate extension Interpreter {
             CallFrame(locals: ASTDictionary<SimpleBinding, Address>(),
                       resultAddress: output,
                       onReturn: Onward { me in
-                        me.cleanUpPersistentAllocations(
-                          above: 0,
-                          then: Onward{ me in
-                            me.frame = old_frame
-                            return me.deleteAnyEphemeral(at: arguments) { me in
-                              proceed(output, &me) } }) })
+                        me.cleanUpPersistentAllocations(above: 0) { me in
+                          me.frame = old_frame
+                          return me.deleteAnyEphemeral(at: arguments) { me in
+                            proceed(output, &me) } }})
           me.frame = new_frame
           return me.match(function.code.parameters, toValueAt: arguments) { matched, me in
             if matched {
-              return me.run(function.code.body!,
-                            then: Onward { me in
-                              // Return an empty tuple when the function falls off the end.
-                              me.initialize(me.frame.resultAddress, to: Tuple() ,
-                                            then: { _, me in me.frame.onReturn })
-                            })
+              return me.run(function.code.body!) { me in
+                // Return an empty tuple when the function falls off the end.
+                me.initialize(me.frame.resultAddress, to: Tuple()) {
+                  _, me in me.frame.onReturn
+                }
+              }
             } else {
               return me.error(e, "failed to match parameters and arguments in function call")
             }
