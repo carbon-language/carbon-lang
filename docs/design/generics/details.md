@@ -33,6 +33,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Use case: overload resolution](#use-case-overload-resolution)
 -   [Type compatibility](#type-compatibility)
 -   [Adapting types](#adapting-types)
+    -   [Adapter compatibility](#adapter-compatibility)
     -   [Use case: Using independent libraries together](#use-case-using-independent-libraries-together)
     -   [Example: Defining an impl for use by other types](#example-defining-an-impl-for-use-by-other-types)
 -   [Associated constants](#associated-constants)
@@ -1362,7 +1363,7 @@ though could be defined in the `impl` block of `IncidenceGraph`,
     implements none of them.
 
 ```
-struct U {
+struct MyEdgeListIncidenceGraph {
   impl IncidenceGraph {
     method (Self: this) Source(EdgeDescriptor: e) -> VertexDescriptor { ... }
     method (Self: this) Target(EdgeDescriptor: e) -> VertexDescriptor { ... }
@@ -1379,7 +1380,7 @@ struct U {
     between them, but with no overlap.
 
 ```
-struct U {
+struct MyEdgeListIncidenceGraph {
   impl IncidenceGraph {
     method (Self: this) Source(EdgeDescriptor: e) -> VertexDescriptor { ... }
     method (Ptr(Self): this) OutEdges(VertexDescriptor: u)
@@ -1395,7 +1396,7 @@ struct U {
 -   We explicitly implement `Graph`.
 
 ```
-struct U {
+struct MyEdgeListIncidenceGraph {
   impl Graph {
     method (Self: this) Source(EdgeDescriptor: e) -> VertexDescriptor { ... }
     method (Self: this) Target(EdgeDescriptor: e) -> VertexDescriptor { ... }
@@ -1431,14 +1432,14 @@ interface RandomAccessIterator {
 fn SearchInSortedList
     [Comparable:$ T, ForwardIterator(.Element = T): IterT]
     (IterT: begin, IterT: end, T: needle) -> Bool {
-  // does linear search
+  ... // does linear search
 }
 // Will prefer the following overload when it matches
 // since it is more specific.
 fn SearchInSortedList
     [Comparable:$ T, RandomAccessIterator(.Element = T): IterT]
     (IterT: begin, IterT: end, T: needle) -> Bool {
-  // does binary search
+  ... // does binary search
 }
 ```
 
@@ -1484,9 +1485,9 @@ calling functions as in this example, where the type parameters have different
 constraints than the type requires:
 
 ```
-fn PrintValue[
-    Printable & Hashable:$ KeyT,
-    Printable:$ ValueT](HashMap(KeyT, ValueT): map, KeyT: key) { ... }
+fn PrintValue
+    [Printable & Hashable:$ KeyT, Printable:$ ValueT]
+    (HashMap(KeyT, ValueT): map, KeyT: key) { ... }
 
 var HashMap(String, Int): m;
 PrintValue(m, "key");
@@ -1500,68 +1501,43 @@ APIs, in particular with different interface implementations, by
 [adapting](terminology.md#adapting-a-type) them:
 
 ```
-interface A { method (Self: this) F(); }
-interface B { method (Self: this) G(); }
-struct C {
-  impl A { method (Self: this) F() { Print("CA"); } }
+interface Printable {
+  method (Self: this) Print();
 }
-adapter D for C {
-  impl B { method (Self: this) G() { Print("DB"); } }
+interface Comparable {
+  method (Self: this) Less(Self: that) -> Bool;
 }
-adapter E for C {
-  impl A { method (Self: this) F() { Print("EA"); } }
+struct Song {
+  impl Printable { method (Self: this) Print() { ... } }
 }
-adapter F for C {
-  impl A = E as A;  // Possibly we'd allow "impl A = E;" here.
-  impl B = D as B;
+adapter SongByTitle for Song {
+  impl Comparable {
+    method (Self: this) Less(Self: that) -> Bool { ... }
+  }
+}
+adapter FormattedSong for Song {
+  impl Printable { method (Self: this) Print() { Print("EA"); } }
+}
+adapter FormattedSongByTitle for Song {
+  // Open question: Allow "impl Printable = FormattedSong;" here?
+  impl Printable = FormattedSong as Printable;
+  impl Comparable = SongByTitle as Comparable;
 }
 ```
 
-This allows us to provide implementations of new interfaces (as in `D`), provide
-different implementations of the same interface (as in `E`), or mix and match
-implementations from other compatible types (as in `F`). The rules are:
+This allows us to provide implementations of new interfaces (as in
+`SongByTitle`), provide different implementations of the same interface (as in
+`FormattedSong`), or mix and match implementations from other compatible types
+(as in `FormattedSongByTitle`). The rules are:
 
 -   You may only add APIs, not change the representation of the type, unlike
     extending a type where you may add fields.
 -   The adapted type is compatible with the original type, and that relationship
-    is an equivalence class, so all of `C`, `D`, `E`, and `F` end up compatible
-    with each other.
+    is an equivalence class, so all of `Song`, `SongByTitle`, `FormattedSong`,
+    and `FormattedSongByTitle` end up compatible with each other.
 -   Since adapted types are compatible with the original type, you may
     explicitly cast between them, but there is no implicit casting between these
     types (unlike between a type and one of its facet types / impls).
-
-The framework from the previous
-[type compatibility section](#type-compatibility) allows us to evaluate when we
-can cast between two different arguments to a parameterized type. Consider three
-compatible types, all of which implement `Hashable`:
-
-```
-struct X {
-  impl Hashable { ... }
-  impl A { ... }
-}
-adapter Y for X {
-  impl Hashable { ... }
-}
-adapter Z for X {
-  impl Hashable = X as Hashable;
-  impl B { ... }
-}
-```
-
-Observe that `X as Hashable` is different from `Y as Hashable`, since they have
-different definitions of the `Hashable` interface even though they are
-compatible types since they use the same data representation. However
-`X as Hashable` and `Z as Hashable` are almost the same. In addition to using
-the same data representation, they both implement one interface, `Hashable`, and
-use the same implementation for that interface. The one difference between them
-is that `X as Hashable` may be implicitly cast to `X`, which implements
-interface `A`, and `Z as Hashable` may be implicilty cast to `Z`, which
-implements interface `B`. This means that it is safe to cast between
-`HashMap(X, Int)` and `HashMap(Z, Int)` (though maybe only with an explicit
-cast) but `HashMap(Y, Int)` is incompatible. This is a relief, because we know
-that in practice the invariants of a `HashMap` implementation rely on the
-hashing function staying the same.
 
 **Comparison with other languages:** This matches the Rust construct called
 `newtype`, which is used to implement traits on types while avoiding coherence
@@ -1569,6 +1545,42 @@ problems, see
 [here](https://doc.rust-lang.org/book/ch19-03-advanced-traits.html#using-the-newtype-pattern-to-implement-external-traits-on-external-types)
 and
 [here](https://github.com/Ixrec/rust-orphan-rules#user-content-why-are-the-orphan-rules-controversial).
+
+### Adapter compatibility
+
+The framework from the [type compatibility section](#type-compatibility) allows
+us to evaluate when we can cast between two different arguments to a
+parameterized type. Consider three compatible types, all of which implement
+`Hashable`:
+
+```
+struct Song {
+  impl Hashable { ... }
+  impl Printable { ... }
+}
+adapter SongHashedByTitle for Song {
+  impl Hashable { ... }
+}
+adapter PlayableSong for Song {
+  impl Hashable = Song as Hashable;
+  impl Media { ... }
+}
+```
+
+Observe that `Song as Hashable` is different from
+`SongHashedByTitle as Hashable`, since they have different definitions of the
+`Hashable` interface even though they are compatible types. However
+`Song as Hashable` and `PlayableSong as Hashable` are almost the same. In
+addition to using the same data representation, they both implement one
+interface, `Hashable`, and use the same implementation for that interface. The
+one difference between them is that `Song as Hashable` may be implicitly cast to
+`Song`, which implements interface `Printable`, and `PlayableSong as Hashable`
+may be implicilty cast to `PlayableSong`, which implements interface `Media`.
+This means that it is safe to cast between `HashMap(Song, Int)` and
+`HashMap(PlayableSong, Int)` (though maybe only with an explicit cast) but
+`HashMap(SongHashedByTitle, Int)` is incompatible. This is a relief, because we
+know that in practice the invariants of a `HashMap` implementation rely on the
+hashing function staying the same.
 
 ### Use case: Using independent libraries together
 
