@@ -1662,8 +1662,6 @@ CompareLib.Sort((song,));
 
 ### Adapter with stricter invariants
 
-FIXME
-
 **Open question:** Rust also uses the newtype idiom to create types with
 additional invariants or other information encoded in the type
 ([1](https://doc.rust-lang.org/rust-by-example/generics/new_types.html),
@@ -1672,8 +1670,8 @@ additional invariants or other information encoded in the type
 This is used to record in the type system that some data has passed validation
 checks, like `ValidDate` with the same data layout as `Date`. Or to record the
 units associated with a value, such as `Seconds` versus `Milliseconds` or `Feet`
-versus `Meters`. Perhaps only adapters that use `extends` should support
-convenient casting?
+versus `Meters`. We should have some way of restricting the casts between a type
+and an adapter to address this use case.
 
 ### Example: Defining an impl for use by other types
 
@@ -1685,23 +1683,21 @@ syntax.
 
 ```
 interface Comparable {
-  fn operator<(Self: this, Self: that) -> Bool;
-  ... // And also for >, <=, etc.
+  method (Self: this) Less(Self: that) -> Bool;
 }
-adapter ComparableFromDifferenceFn(Type:$ T,
-                                   fnty(T, T)->Int:$ Difference)
-    for T {
+adapter ComparableFromDifferenceFn
+    (Type:$ T, fnty(T, T)->Int:$ Difference) for T {
   impl Comparable {
-    fn operator<(Self: this, Self: that) -> Bool {
+    method (Self: this) Less(Self: that) -> Bool {
       return Difference(this, that) < 0;
     }
-    ... // And also for >, <=, etc.
   }
 }
-struct MyType {
+struct IntWrapper {
   var Int: x;
   fn Difference(Self: this, Self: that) { return that.x - this.x; }
-  impl Comparable = ComparableFromDifferenceFn(MyType, Difference) as Comparable;
+  impl Comparable = ComparableFromDifferenceFn(IntWrapper, Difference)
+      as Comparable;
 }
 ```
 
