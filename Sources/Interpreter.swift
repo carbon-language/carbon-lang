@@ -6,9 +6,9 @@
 ///
 /// Swift doesn't allow that function type to be declared directly, but we can
 /// indirect through this struct.
-struct Task {
+struct Onward {
   /// A type representing the underlying implementation.
-  typealias Code = (inout Interpreter)->Task
+  typealias Code = (inout Interpreter)->Onward
 
   /// Creates an instance with the semantics of `implementation`.
   init(_ code: @escaping Code) {
@@ -16,7 +16,7 @@ struct Task {
   }
 
   /// Executes `self` in `context`.
-  func callAsFunction(_ context: inout Interpreter) -> Task {
+  func callAsFunction(_ context: inout Interpreter) -> Onward {
     code(&context)
   }
 
@@ -45,13 +45,13 @@ struct CallFrame {
   var resultAddress: Address
 
   /// The code to execute when this call exits
-  var onReturn: Task
+  var onReturn: Onward
 
   /// The code to execute when the current loop exits.
-  var onBreak: Task? = nil
+  var onBreak: Onward? = nil
 
   /// Code that returns to the top of the current loop, if any.
-  var onContinue: Task? = nil
+  var onContinue: Onward? = nil
 }
 
 /// The engine that executes the program.
@@ -69,7 +69,7 @@ struct Interpreter {
   var memory = Memory()
 
   /// The next execution step.
-  var nextStep: Task
+  var nextStep: Onward
 
   /// True iff the program is still running.
   var running: Bool = true
@@ -88,13 +88,13 @@ struct Interpreter {
 
     frame = CallFrame(
       resultAddress: memory.allocate(),
-      onReturn: Task { me in
+      onReturn: Onward { me in
         me.cleanUpPersistentAllocations(
-          above: 0, then: Task { me in me.terminate() })
+          above: 0, then: Onward { me in me.terminate() })
       })
 
     // First step runs the body of `main`
-    nextStep = Task { [main = program.main!] me in
+    nextStep = Onward { [main = program.main!] me in
       me.run(main.body!, then: me.frame.onReturn)
     }
   }
@@ -115,9 +115,9 @@ struct Interpreter {
   }
 
   /// Exits the running program.
-  mutating func terminate() -> Task {
+  mutating func terminate() -> Onward {
     running = false
-    return Task { _ in fatalError("Terminated program can't continue.") }
+    return Onward { _ in fatalError("Terminated program can't continue.") }
   }
 
   /// Adds an error at the site of `offender` to the error log and marks the
@@ -127,7 +127,7 @@ struct Interpreter {
   @discardableResult
   mutating func error<Node: AST>(
     _ offender: Node, _ message: String , notes: [CarbonError.Note] = []
-  ) -> Task {
+  ) -> Onward {
     errors.append(CarbonError(message, at: offender.site, notes: notes))
     return terminate()
   }
@@ -148,8 +148,8 @@ extension Interpreter {
   ///
   /// In fact this function only executes one “unit of work” and packages the
   /// rest of executing `s` (if any), and whatever follows that, into the
-  /// returned `Task`.
-  mutating func run(_ s: Statement, then followup: Task) -> Task {
+  /// returned `Onward`.
+  mutating func run(_ s: Statement, then followup: Onward) -> Onward {
     if tracing {
       print("\(s.site): info: running statement")
     }
@@ -214,14 +214,14 @@ extension Interpreter {
       let saved = (frame.onBreak, frame.onContinue)
       let mark=frame.persistentAllocations.count
 
-      let onBreak = Task { me in
+      let onBreak = Onward { me in
         (me.frame.onBreak, me.frame.onContinue) = saved
         return me.cleanUpPersistentAllocations(above: mark, then: followup)
       }
 
-      let onContinue = Task { me in
+      let onContinue = Onward { me in
         return me.cleanUpPersistentAllocations(
-          above: mark, then: Task { $0.while(c, run: body, then: onBreak) })
+          above: mark, then: Onward { $0.while(c, run: body, then: onBreak) })
       }
 
       (frame.onBreak, frame.onContinue) = (onBreak, onContinue)
@@ -243,12 +243,12 @@ extension Interpreter {
   }
 
   mutating func inScope(
-    then followup: Task, do body: (inout Self, Task)->Task
-  ) -> Task {
+    then followup: Onward, do body: (inout Self, Onward)->Onward
+  ) -> Onward {
     let mark=frame.persistentAllocations.count
     return body(
       &self,
-      Task { me in
+      Onward { me in
         sanityCheck(me.frame.ephemeralAllocations.isEmpty,
                "leaked \(me.frame.ephemeralAllocations)")
         return me.cleanUpPersistentAllocations(above: mark, then: followup)
@@ -258,13 +258,13 @@ extension Interpreter {
   /// Runs `s` and follows up with `followup`.
   ///
   /// A convenience wrapper for `run(_:then:)` that supports cleaner syntax.
-  mutating func run(_ s: Statement, followup: @escaping Task.Code) -> Task {
-    run(s, then: Task(followup))
+  mutating func run(_ s: Statement, followup: @escaping Onward.Code) -> Onward {
+    run(s, then: Onward(followup))
   }
 
   /// Executes the statements of `content` in order, then `followup`.
-  mutating func runBlock(_ content: ArraySlice<Statement>, then followup: Task)
-    -> Task
+  mutating func runBlock(_ content: ArraySlice<Statement>, then followup: Onward)
+    -> Onward
   {
     return content.isEmpty ? followup
       : run(content.first!) { me in
@@ -275,13 +275,13 @@ extension Interpreter {
   mutating func runMatch(
     _ subject: Expression, at subjectLocation: Address,
     against clauses: ArraySlice<MatchClause>,
-    then followup: Task) -> Task
+    then followup: Onward) -> Onward
   {
     guard let clause = clauses.first else {
       return error(subject, "no pattern matches \(self[subjectLocation])")
     }
 
-    let onMatch = Task { me in
+    let onMatch = Onward { me in
       me.inScope(then: followup) { me, innerFollowup in
         me.run(clause.action, then: innerFollowup)
       }
@@ -296,12 +296,12 @@ extension Interpreter {
   }
 
   mutating func `while`(
-    _ c: Expression, run body: Statement, then followup: Task) -> Task
+    _ c: Expression, run body: Statement, then followup: Onward) -> Onward
   {
     return evaluateAndConsume(c) { (runBody: Bool, me) in
       return runBody
         ? me.run(
-          body, then: Task { me in me.while(c, run: body, then: followup)})
+          body, then: Onward { me in me.while(c, run: body, then: followup)})
         : followup
     }
   }
@@ -314,7 +314,7 @@ extension Interpreter {
   mutating func allocate(
     _ e: Expression, mutable: Bool = false, persist: Bool = false,
     then followup: @escaping FollowupWith<Address>
-  ) -> Task {
+  ) -> Onward {
     let a = memory.allocate(mutable: mutable)
     if tracing {
       print(
@@ -327,7 +327,7 @@ extension Interpreter {
     else {
       frame.ephemeralAllocations[a] = e
     }
-    return Task { me in followup(a, &me) }
+    return Onward { me in followup(a, &me) }
   }
 
   /// Allocates an address for the result of evaluating `e`, passing it on to
@@ -335,16 +335,16 @@ extension Interpreter {
   mutating func allocate(
     _ e: Expression, unlessNonNil destination: Address?,
     then followup: @escaping FollowupWith<Address>
-  ) -> Task {
-    if let a = destination { return Task { me in followup(a, &me) } }
+  ) -> Onward {
+    if let a = destination { return Onward { me in followup(a, &me) } }
     return allocate(e, then: followup)
   }
 
   /// Destroys and reclaims memory of the `n` locally-allocated values at the
   /// top of the allocation stack.
   mutating func cleanUpPersistentAllocations(
-    above n: Int, then followup: Task
-  ) -> Task {
+    above n: Int, then followup: Onward
+  ) -> Onward {
     frame.persistentAllocations.count == n ? followup
       : deleteLocalValue_doNotCallDirectly(
         at: frame.persistentAllocations.pop()!
@@ -352,31 +352,31 @@ extension Interpreter {
   }
 
   mutating func deleteLocalValue_doNotCallDirectly(
-    at a: Address, then followup: @escaping Task.Code
-  ) -> Task {
+    at a: Address, then followup: @escaping Onward.Code
+  ) -> Onward {
     if tracing { print("  info: deleting \(a)") }
     memory.delete(a)
-    return Task(followup)
+    return Onward(followup)
   }
 
   /// If `a` was allocated to an ephemeral temporary, deinitializes and destroys
   /// it.
   mutating func deleteAnyEphemeral(
-    at a: Address, then followup: @escaping Task.Code) -> Task {
+    at a: Address, then followup: @escaping Onward.Code) -> Onward {
     if let _ = frame.ephemeralAllocations.removeValue(forKey: a) {
       return deleteLocalValue_doNotCallDirectly(at: a, then: followup)
     }
-    return Task(followup)
+    return Onward(followup)
   }
 
   /// Deinitializes and destroys any addresses in `locations` that were
   /// allocated to an ephemeral temporary.
   mutating func deleteAnyEphemerals<C: Collection>(
-    at locations: C, then followup: @escaping Task.Code
-  ) -> Task
+    at locations: C, then followup: @escaping Onward.Code
+  ) -> Onward
     where C.Element == Address
   {
-    guard let a0 = locations.first else { return Task(followup) }
+    guard let a0 = locations.first else { return Onward(followup) }
     return deleteAnyEphemeral(at: a0) { me in
       me.deleteAnyEphemerals(at: locations.dropFirst(), then: followup)
     }
@@ -387,7 +387,7 @@ extension Interpreter {
   mutating func copy(
     from source: Address, to target: Address,
     then followup: @escaping FollowupWith<Address>
-  ) -> Task {
+  ) -> Onward {
     if tracing {
       print("  info: copying \(self[source]) into \(target)")
     }
@@ -398,46 +398,46 @@ extension Interpreter {
   /// `followup`.
   mutating func assign(
     _ target: Address, from source: Address,
-    then followup: @escaping Task.Code
-  ) -> Task {
+    then followup: @escaping Onward.Code
+  ) -> Onward {
     if tracing {
       print("  info: assigning \(self[source])\(source) into \(target)")
     }
     memory.assign(from: source, into: target)
-    return Task(followup)
+    return Onward(followup)
   }
 
   mutating func deinitialize(
-    valueAt target: Address, then followup: @escaping Task.Code) -> Task
+    valueAt target: Address, then followup: @escaping Onward.Code) -> Onward
   {
     if tracing {
       print("  info: deinitializing \(target)")
     }
     memory.deinitialize(target)
-    return Task(followup)
+    return Onward(followup)
   }
 
   mutating func initialize(
     _ target: Address, to v: Value,
-    then followup: @escaping FollowupWith<Address>) -> Task
+    then followup: @escaping FollowupWith<Address>) -> Onward
   {
     if tracing {
       print("  info: initializing \(target) = \(v)")
     }
     memory.initialize(target, to: v)
-    return Task { me in followup(target, &me) }
+    return Onward { me in followup(target, &me) }
   }
 }
 
-typealias FollowupWith<T> = (T, inout Interpreter)->Task
+typealias FollowupWith<T> = (T, inout Interpreter)->Onward
 
 /// Returns a followup that drops its argument and invokes f.
-fileprivate func dropResult<T>(_ f: Task) -> FollowupWith<T>
+fileprivate func dropResult<T>(_ f: Onward) -> FollowupWith<T>
 { { _, me in f(&me) } }
 
 extension Interpreter {
   mutating func evaluateAndConsume<T>(
-    _ e: Expression, in followup: @escaping FollowupWith<T>) -> Task {
+    _ e: Expression, in followup: @escaping FollowupWith<T>) -> Onward {
     evaluate(e) { p, me in
       let v = me[p] as! T
       return me.deleteAnyEphemeral(at: p) { me in followup(v, &me) }
@@ -454,7 +454,7 @@ extension Interpreter {
     asCallee: Bool = false,
     into destination: Address? = nil,
     then followup_: @escaping FollowupWith<Address>
-  ) -> Task {
+  ) -> Onward {
     if tracing {
       print(
         "\(e.site): info: evaluating "
@@ -511,7 +511,7 @@ extension Interpreter {
   mutating func evaluate(
     _ name: Identifier, into destination: Address? = nil,
     then followup: @escaping FollowupWith<Address>
-  ) -> Task {
+  ) -> Onward {
     let d = program.definition[name]
 
     switch d {
@@ -524,7 +524,7 @@ extension Interpreter {
       let source = (frame.locals[b] ?? globals[b])!
       return destination != nil
         ? copy(from: source, to: destination!, then: followup)
-        : Task { me in followup(source, &me) }
+        : Onward { me in followup(source, &me) }
 
     case let f as FunctionDefinition:
       // Bogus parameterTypes and returnType until I figure out how to get those.  -Jeremy
@@ -556,7 +556,7 @@ extension Interpreter {
   mutating func evaluate(
     _ e: UnaryOperatorExpression, into output: Address,
     then followup: @escaping FollowupWith<Address>
-  ) -> Task {
+  ) -> Onward {
     evaluate(e.operand) { operand, me in
       let result: Value
       switch e.operation.text {
@@ -575,7 +575,7 @@ extension Interpreter {
   mutating func evaluate(
     _ e: BinaryOperatorExpression, into output: Address,
     then followup: @escaping FollowupWith<Address>
-  ) -> Task {
+  ) -> Onward {
     evaluate(e.lhs) { lhs, me in
       if e.operation.text == "and" && (me[lhs] as! Bool == false) {
         return me.copy(from: lhs, to: output, then: followup)
@@ -605,7 +605,7 @@ extension Interpreter {
   mutating func evaluate(
     _ e: FunctionCall<Expression>, into output: Address,
     then followup: @escaping FollowupWith<Address>
-  ) -> Task {
+  ) -> Onward {
     evaluate(e.callee, asCallee: true) { callee, me in
       me.evaluate(.tupleLiteral(e.arguments)) { arguments, me in
         // TODO: instead of using the callee value's type to dispatch, use the
@@ -669,7 +669,7 @@ extension Interpreter {
   mutating func evaluate(
     _ e: MemberAccessExpression, asCallee: Bool, into output: Address?,
     then followup: @escaping FollowupWith<Address>
-  ) -> Task {
+  ) -> Onward {
     evaluate(e.base) { base, me in
       switch me[base].type {
       case .struct:
@@ -679,7 +679,7 @@ extension Interpreter {
         let source = me.memory.substructure(at: base)[e.member]!
         return output != nil
           ? me.copy(from: source, to: output!, then: followup)
-          : Task { me in followup(source, &me) }
+          : Onward { me in followup(source, &me) }
 
       case .type:
         // Handle access to a type member, like a static member in C++.
@@ -711,7 +711,7 @@ extension Interpreter {
   mutating func evaluateIndex(
     target t: Expression, offset i: Expression, into output: Address?,
     then followup: @escaping FollowupWith<Address>
-  ) -> Task {
+  ) -> Onward {
     evaluate(t, into: output) { targetAddress, me in
       me.evaluate(i) { indexAddress, me in
         let index = me[indexAddress] as! Int
@@ -742,7 +742,7 @@ extension Interpreter {
     parts: [FieldID: Address] = [:],
     positionalCount: Int = 0,
     then followup: @escaping FollowupWith<Address>
-  ) -> Task {
+  ) -> Onward {
     // FIXME: too many copies
     if e.isEmpty {
       return initialize(output, to: Tuple(parts).mapFields { self[$0] })
@@ -800,7 +800,7 @@ extension Interpreter {
   mutating func match(
     _ p: Pattern, toValueAt source: Address,
     then followup: @escaping FollowupWith<Bool>
-  ) -> Task {
+  ) -> Onward {
     if tracing {
       print("\(p.site): info: matching against value \(self[source])")
     }
@@ -818,7 +818,7 @@ extension Interpreter {
         print("\(b.name.site): info: binding \(self[source])\(source)")
       }
       frame.locals[b] = source
-      return Task { me in followup(true, &me) }
+      return Onward { me in followup(true, &me) }
 
     case let .tuple(x):
       return match(x, toValueAt: source, then: followup)
@@ -833,7 +833,7 @@ extension Interpreter {
   mutating func match(
     _ p: FunctionCall<Pattern>, toValueAt source: Address,
     then followup: @escaping FollowupWith<Bool>
-  ) -> Task {
+  ) -> Onward {
     return evaluate(p.callee, asCallee: true) { callee, me in
       switch me[source].type {
       case .struct:
@@ -857,7 +857,7 @@ extension Interpreter {
   mutating func match(
     _ p: TuplePattern, toValueAt source: Address,
     then followup: @escaping FollowupWith<Bool>
-  ) -> Task {
+  ) -> Onward {
     if self[source] is TupleValue {
       let sourceStructure = self.memory.substructure(at: source)
       if p.count == sourceStructure.count {
@@ -865,19 +865,19 @@ extension Interpreter {
           p.fields().elements[...], toValuesAt: sourceStructure, then: followup)
       }
     }
-    return Task { me in followup(false, &me) }
+    return Onward { me in followup(false, &me) }
   }
 
   mutating func matchElements(
     _ p: Tuple<Pattern>.Elements.SubSequence, toValuesAt source: Tuple<Address>,
     then followup: @escaping FollowupWith<Bool>
-  ) -> Task {
+  ) -> Onward {
     guard let (k0, p0) = p.first
-    else { return Task { me in followup(true, &me) } }
+    else { return Onward { me in followup(true, &me) } }
     return match(p0, toValueAt: source.elements[k0]!) { matched, me in
       matched
         ? me.matchElements(p.dropFirst(), toValuesAt: source, then: followup)
-        : Task { me in followup(false, &me) }
+        : Onward { me in followup(false, &me) }
     }
   }
 }
