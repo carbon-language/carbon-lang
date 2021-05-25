@@ -216,9 +216,9 @@ fileprivate extension Interpreter {
       }
 
     case let .block(children, _):
-      return inScope(then: proceed) { me, rest in
-        me.runBlock(children[...], then: rest)
-      }
+      return inScope(
+        do: { me, proceed1 in me.runBlock(children[...], then: Onward(proceed1)) },
+        then: proceed.code)
 
     case let .while(condition: c, body: body, _):
       let saved = (frame.onBreak, frame.onContinue)
@@ -238,11 +238,11 @@ fileprivate extension Interpreter {
       return onContinue(&self)
 
     case let .match(subject: s, clauses: clauses, _):
-      return inScope(then: proceed) { me, innerFollowup in
+      return inScope(do: { me, proceed1 in
         me.allocate(s, persist: true) { subjectArea, me in
         me.evaluate(s, into: subjectArea) { subject, me in
-        me.runMatch(s, at: subject, against: clauses[...], then: innerFollowup)
-      }}}
+        me.runMatch(s, at: subject, against: clauses[...], then: Onward(proceed1))
+        }}}, then: proceed.code)
 
     case .break:
       return frame.onBreak!
@@ -253,16 +253,17 @@ fileprivate extension Interpreter {
   }
 
   mutating func inScope(
-    then proceed: Onward, do body: (inout Self, Onward)->Onward
+    do body: (inout Self, @escaping Continue)->Onward,
+    then proceed: @escaping Continue
   ) -> Onward {
     let mark=frame.persistentAllocations.count
-    return body(
-      &self,
-      Onward { me in
-        sanityCheck(me.frame.ephemeralAllocations.isEmpty,
-               "leaked \(me.frame.ephemeralAllocations)")
-        return me.cleanUpPersistentAllocations(above: mark, then: proceed)
-      })
+    return body(&self) { me in
+      sanityCheck(
+        me.frame.ephemeralAllocations.isEmpty,
+        "leaked \(me.frame.ephemeralAllocations)")
+
+      return me.cleanUpPersistentAllocations(above: mark, then: Onward(proceed))
+    }
   }
 
   /// Runs `s` and follows up with `proceed`.
@@ -292,9 +293,10 @@ fileprivate extension Interpreter {
     }
 
     let onMatch = Onward { me in
-      me.inScope(then: proceed) { me, innerFollowup in
-        me.run(clause.action, then: innerFollowup)
-      }
+      me.inScope(
+        do: { me, proceed1 in
+        me.run(clause.action, then: Onward(proceed1)) },
+        then: proceed.code)
     }
     guard let p = clause.pattern else { return onMatch }
 
