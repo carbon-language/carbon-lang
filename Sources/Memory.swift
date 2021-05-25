@@ -59,13 +59,9 @@ struct Memory {
   mutating func deinitialize(_ a: Address) {
     let i = storage.index(forKey: a)
       ?? fatal("deinitializing unallocated address \(a).")
-    // The following precondition dies on an empty tuple. See fun4.6c.
-    // I added the if statement. -Jeremy
-    //precondition(storage[i].value.content != nil)
-    if storage[i].value.content != nil {
-      for a1 in storage.values[i].substructure.fields { deinitialize(a1) }
-      storage.values[i].content = nil
-    }
+    precondition(storage[i].value.content != nil)
+    for a1 in storage.values[i].substructure.fields { deinitialize(a1) }
+    storage.values[i].content = nil
   }
 
   /// Deallocates the storage at `a`.

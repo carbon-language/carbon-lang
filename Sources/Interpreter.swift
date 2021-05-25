@@ -529,12 +529,17 @@ extension Interpreter {
     case let f as FunctionDefinition:
       // Bogus parameterTypes and returnType until I figure out how to get those.  -Jeremy
       let function = FunctionValue(type: .function(parameterTypes: Tuple(), returnType: .int), code: f)
+      /* This commented version causes a leak. -Jeremy
+      return allocate(.name(name), unlessNonNil: destination) { output, me in
+        me.initialize(output, to: function, then: followup) }
+       */
       if destination == nil {
         let address = memory.allocate(mutable: false)
         return initialize(address, to: function, then: followup)
       } else {
         return initialize(destination!, to: function, then: followup)
       }
+
     case let a as Alternative:
       UNIMPLEMENTED(a)
 
@@ -603,6 +608,8 @@ extension Interpreter {
   ) -> Task {
     evaluate(e.callee, asCallee: true) { callee, me in
       me.evaluate(.tupleLiteral(e.arguments)) { arguments, me in
+        // TODO: instead of using the callee value's type to dispatch, use the
+        // static type of the e.callee expression.
         switch me[callee].type {
         case .function:
           let function = me[callee] as! FunctionValue
@@ -619,12 +626,13 @@ extension Interpreter {
                               followup(output, &me) } }) })
           me.frame = new_frame
           return me.match(function.code.parameters, toValueAt: arguments) { matched, me in
-            // I would have prefered to delete the arguments here, but they're
-            // in the old frame, not the new one, and the match function is hard
-            // coded to puts its bindings into the current frame. -Jeremy
             if matched {
               return me.run(function.code.body!,
-                            then: me.frame.onReturn) // this feels redundant. -Jeremy
+                            then: Task { me in
+                              // Return an empty tuple when the function falls off the end. 
+                              me.initialize(me.frame.resultAddress, to: Tuple() ,
+                                            then: { _, me in me.frame.onReturn })
+                            })
             } else {
               return me.error(e, "failed to match parameters and arguments in function call")
             }
