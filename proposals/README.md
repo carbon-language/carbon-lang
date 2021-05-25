@@ -54,5 +54,6 @@ request:
 -   [0438 - Functions](p0438.md)
 -   [0444 - GitHub Discussions](p0444.md)
 -   [0447 - Generics terminology](p0447.md)
+-   [0553 - Generics details part 1](p0553.md)
 
 <!-- endproposals -->
