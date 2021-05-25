@@ -96,8 +96,7 @@ struct Memory {
   }
 
   mutating func assign(from source: Address, into target: Address) {
-    precondition(self[source].type == self[target].type)
-
+    
     // Only check the top level type because choices of a single type can have
     // different payload types.
     func uncheckedAssign(from source: Address, into target: Address) {
@@ -118,6 +117,7 @@ struct Memory {
       }
     }
 
+    precondition(self[source].type == self[target].type)
     uncheckedAssign(from: source, into: target)
   }
 
