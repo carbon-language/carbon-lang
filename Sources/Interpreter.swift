@@ -150,13 +150,13 @@ extension Interpreter {
   /// rest of executing `s` (if any), and whatever follows that, into the
   /// returned `Task`.
   mutating func run(_ s: Statement, then followup: Task) -> Task {
+    if tracing {
+      print("\(s.site): info: running statement")
+    }
     sanityCheck(
       frame.ephemeralAllocations.isEmpty,
       "leaked \(frame.ephemeralAllocations)")
 
-    if tracing {
-      print("\(s.site): info: running statement")
-    }
     switch s {
     case let .expressionStatement(e, _):
       return evaluate(e) { resultAddress, me in
@@ -527,8 +527,14 @@ extension Interpreter {
         : Task { me in followup(source, &me) }
 
     case let f as FunctionDefinition:
-      UNIMPLEMENTED(f)
-
+      // Bogus parameterTypes and returnType until I figure out how to get those.  -Jeremy
+      let function = FunctionValue(type: .function(parameterTypes: Tuple(), returnType: .int), code: f)
+      if destination == nil {
+        let address = memory.allocate(mutable: false)
+        return initialize(address, to: function, then: followup)
+      } else {
+        return initialize(destination!, to: function, then: followup)
+      }
     case let a as Alternative:
       UNIMPLEMENTED(a)
 
@@ -597,20 +603,45 @@ extension Interpreter {
   ) -> Task {
     evaluate(e.callee, asCallee: true) { callee, me in
       me.evaluate(.tupleLiteral(e.arguments)) { arguments, me in
-        let result: Value
         switch me[callee].type {
         case .function:
-          UNIMPLEMENTED(e)
+          let function = me[callee] as! FunctionValue
+          let old_frame = me.frame
+          let new_frame =
+            CallFrame(locals: ASTDictionary<SimpleBinding, Address>(),
+                      resultAddress: output,
+                      onReturn: Task { me in
+                        me.cleanUpPersistentAllocations(
+                          above: 0,
+                          then: Task{ me in
+                            me.frame = old_frame
+                            return me.deleteAnyEphemeral(at: arguments) { me in
+                              followup(output, &me) } }) })
+          me.frame = new_frame
+          return me.match(function.code.parameters, toValueAt: arguments) { matched, me in
+            // I would have prefered to delete the arguments here, but they're
+            // in the old frame, not the new one, and the match function is hard
+            // coded to puts its bindings into the current frame. -Jeremy
+            if matched {
+              return me.run(function.code.body!,
+                            then: me.frame.onReturn) // this feels redundant. -Jeremy
+            } else {
+              return me.error(e, "failed to match parameters and arguments in function call")
+            }
+          }
 
         case .type:
           switch Type(me[callee])! {
           case let .alternative(discriminator, parent: resultType):
             // FIXME: there will be an extra copy of the payload; the result
             // should adopt the payload in memory.
-            result = ChoiceValue(
+            let result = ChoiceValue(
               type_: resultType,
               discriminator: discriminator,
               payload: me[arguments] as! Tuple<Value>)
+            return me.deleteAnyEphemerals(at: [callee, arguments]) { me in
+              me.initialize(output, to: result, then: followup)
+            }
 
           case .struct:
             UNIMPLEMENTED()
@@ -620,9 +651,6 @@ extension Interpreter {
 
         case .int, .bool, .tuple, .choice, .error, .alternative, .struct:
           UNREACHABLE()
-        }
-        return me.deleteAnyEphemerals(at: [callee, arguments]) { me in
-          me.initialize(output, to: result, then: followup)
         }
       }
     }

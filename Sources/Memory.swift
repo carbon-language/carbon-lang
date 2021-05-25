@@ -59,9 +59,13 @@ struct Memory {
   mutating func deinitialize(_ a: Address) {
     let i = storage.index(forKey: a)
       ?? fatal("deinitializing unallocated address \(a).")
-    precondition(storage[i].value.content != nil)
-    for a1 in storage.values[i].substructure.fields { deinitialize(a1) }
-    storage.values[i].content = nil
+    // The following precondition dies on an empty tuple. See fun4.6c.
+    // I added the if statement. -Jeremy
+    //precondition(storage[i].value.content != nil)
+    if storage[i].value.content != nil {
+      for a1 in storage.values[i].substructure.fields { deinitialize(a1) }
+      storage.values[i].content = nil
+    }
   }
 
   /// Deallocates the storage at `a`.
@@ -97,7 +101,6 @@ struct Memory {
 
   mutating func assign(from source: Address, into target: Address) {
     precondition(self[source].type == self[target].type)
-    uncheckedAssign(from: source, into: target)
 
     // Only check the top level type because choices of a single type can have
     // different payload types.
@@ -118,6 +121,8 @@ struct Memory {
         initialize(target, to: self[source])
       }
     }
+
+    uncheckedAssign(from: source, into: target)
   }
 
   /// Returns the value at `a` or nil if `a` is not an initialized address.
