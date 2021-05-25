@@ -2,16 +2,20 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-/// A notional “self-returning function” type.
+/// A notional “self-returning function” type, to be used as a continuation.
 ///
-/// Swift doesn't allow that function type to be declared directly, but we can
-/// indirect through this struct.
+/// Swift doesn't allow a recursive function type to be declared directly, but
+/// we can indirect through `Onward`.
+fileprivate typealias Continue = (inout Interpreter)->Onward
+
+/// A notional “self-returning function” type, to be returned from continuations.
+///
+/// Swift doesn't allow a recursive function type to be declared directly, but
+/// we can indirect through this struct.
 fileprivate struct Onward {
-  /// A type representing the underlying implementation.
-  typealias Code = (inout Interpreter)->Onward
 
   /// Creates an instance with the semantics of `implementation`.
-  init(_ code: @escaping Code) {
+  init(_ code: @escaping Continue) {
     self.code = code
   }
 
@@ -21,7 +25,7 @@ fileprivate struct Onward {
   }
 
   /// The underlying implementation.
-  let code: Code
+  let code: Continue
 }
 
 /// A continuation function that takes an input.
@@ -264,7 +268,7 @@ fileprivate extension Interpreter {
   /// Runs `s` and follows up with `proceed`.
   ///
   /// A convenience wrapper for `run(_:then:)` that supports cleaner syntax.
-  mutating func run(_ s: Statement, proceed: @escaping Onward.Code) -> Onward {
+  mutating func run(_ s: Statement, proceed: @escaping Continue) -> Onward {
     run(s, then: Onward(proceed))
   }
 
@@ -358,7 +362,7 @@ fileprivate extension Interpreter {
   }
 
   mutating func deleteLocalValue_doNotCallDirectly(
-    at a: Address, then proceed: @escaping Onward.Code
+    at a: Address, then proceed: @escaping Continue
   ) -> Onward {
     if tracing { print("  info: deleting \(a)") }
     memory.delete(a)
@@ -368,7 +372,7 @@ fileprivate extension Interpreter {
   /// If `a` was allocated to an ephemeral temporary, deinitializes and destroys
   /// it.
   mutating func deleteAnyEphemeral(
-    at a: Address, then proceed: @escaping Onward.Code) -> Onward {
+    at a: Address, then proceed: @escaping Continue) -> Onward {
     if let _ = frame.ephemeralAllocations.removeValue(forKey: a) {
       return deleteLocalValue_doNotCallDirectly(at: a, then: proceed)
     }
@@ -378,7 +382,7 @@ fileprivate extension Interpreter {
   /// Deinitializes and destroys any addresses in `locations` that were
   /// allocated to an ephemeral temporary.
   mutating func deleteAnyEphemerals<C: Collection>(
-    at locations: C, then proceed: @escaping Onward.Code
+    at locations: C, then proceed: @escaping Continue
   ) -> Onward
     where C.Element == Address
   {
@@ -404,7 +408,7 @@ fileprivate extension Interpreter {
   /// `proceed`.
   mutating func assign(
     _ target: Address, from source: Address,
-    then proceed: @escaping Onward.Code
+    then proceed: @escaping Continue
   ) -> Onward {
     if tracing {
       print("  info: assigning \(self[source])\(source) into \(target)")
@@ -414,7 +418,7 @@ fileprivate extension Interpreter {
   }
 
   mutating func deinitialize(
-    valueAt target: Address, then proceed: @escaping Onward.Code) -> Onward
+    valueAt target: Address, then proceed: @escaping Continue) -> Onward
   {
     if tracing {
       print("  info: deinitializing \(target)")
