@@ -6,7 +6,7 @@
 ///
 /// Swift doesn't allow that function type to be declared directly, but we can
 /// indirect through this struct.
-struct Onward {
+fileprivate struct Onward {
   /// A type representing the underlying implementation.
   typealias Code = (inout Interpreter)->Onward
 
@@ -26,7 +26,7 @@ struct Onward {
 
 /// All the data that needs to be saved and restored across function call
 /// boundaries.
-struct CallFrame {
+fileprivate struct CallFrame {
   /// The locations of temporaries that persist to the ends of their scopes and
   /// thus can't be cleaned up in the course of expression evaluation.
   var persistentAllocations: Stack<Address> = .init()
@@ -57,28 +57,28 @@ struct CallFrame {
 /// The engine that executes the program.
 struct Interpreter {
   /// The program being executed.
-  let program: ExecutableProgram
+  fileprivate let program: ExecutableProgram
 
   /// The frame for the current function.
-  var frame: CallFrame
+  fileprivate var frame: CallFrame
 
   /// Mapping from global bindings to address.
-  var globals: ASTDictionary<SimpleBinding, Address> = .init()
+  fileprivate var globals: ASTDictionary<SimpleBinding, Address> = .init()
 
   /// Storage for all addressable values.
-  var memory = Memory()
+  fileprivate var memory = Memory()
 
   /// The next execution step.
-  var nextStep: Onward
+  fileprivate var nextStep: Onward
 
   /// True iff the program is still running.
-  var running: Bool = true
+  fileprivate var running: Bool = true
 
   /// A record of any errors encountered.
-  var errors: ErrorLog = []
+  fileprivate var errors: ErrorLog = []
 
   /// True iff we are printing an evaluation trace to stdout
-  var tracing: Bool = false
+  public var tracing: Bool = false
 
   /// Creates an instance that runs `p`.
   ///
@@ -99,6 +99,15 @@ struct Interpreter {
     }
   }
 
+  /// Runs the program to completion and returns the exit code, if any.
+  mutating func run() -> Int? {
+    while step() {}
+    return memory.value(at: frame.resultAddress) as? Int
+  }
+}
+
+fileprivate extension Interpreter {
+
   /// Advances execution by one unit of work, returning `true` iff the program
   /// is still running and `false` otherwise.
   mutating func step() -> Bool {
@@ -106,12 +115,6 @@ struct Interpreter {
       nextStep = nextStep(&self)
     }
     return running
-  }
-
-  /// Runs the program to completion and returns the exit code, if any.
-  mutating func run() -> Int? {
-    while step() {}
-    return memory.value(at: frame.resultAddress) as? Int
   }
 
   /// Exits the running program.
@@ -139,7 +142,7 @@ struct Interpreter {
   }
 }
 
-extension Interpreter {
+fileprivate extension Interpreter {
   /// Executes `s`, and then, absent interesting control flow,
   /// `proceed`.
   ///
@@ -308,7 +311,7 @@ extension Interpreter {
 }
 
 /// Values and memory.
-extension Interpreter {
+fileprivate extension Interpreter {
   /// Allocates an address for the result of evaluating `e`, passing it on to
   /// `proceed` along with `self`.
   mutating func allocate(
@@ -429,13 +432,9 @@ extension Interpreter {
   }
 }
 
-typealias FollowupWith<T> = (T, inout Interpreter)->Onward
+fileprivate typealias FollowupWith<T> = (T, inout Interpreter)->Onward
 
-/// Returns a proceed that drops its argument and invokes f.
-fileprivate func dropResult<T>(_ f: Onward) -> FollowupWith<T>
-{ { _, me in f(&me) } }
-
-extension Interpreter {
+fileprivate extension Interpreter {
   mutating func evaluateAndConsume<T>(
     _ e: Expression, in proceed: @escaping FollowupWith<T>) -> Onward {
     evaluate(e) { p, me in
@@ -793,7 +792,7 @@ func areEqual(_ l: Value, _ r: Value) -> Bool {
   }
 }
 
-extension Interpreter {
+fileprivate extension Interpreter {
   /// Matches `p` to the value at `source`, binding variables in `p` to
   /// the corresponding parts of the value, and calling `proceed` with an
   /// indication of whether the match was successful.
