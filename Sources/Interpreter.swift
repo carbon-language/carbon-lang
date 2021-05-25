@@ -6,7 +6,7 @@
 ///
 /// Swift doesn't allow a recursive function type to be declared directly, but
 /// we can indirect through `Onward`.
-fileprivate typealias Continue = (inout Interpreter)->Onward
+fileprivate typealias Forth = (inout Interpreter)->Onward
 
 /// A notional “self-returning function” type, to be returned from continuations.
 ///
@@ -15,7 +15,7 @@ fileprivate typealias Continue = (inout Interpreter)->Onward
 fileprivate struct Onward {
 
   /// Creates an instance with the semantics of `implementation`.
-  init(_ code: @escaping Continue) {
+  init(_ code: @escaping Forth) {
     self.code = code
   }
 
@@ -25,7 +25,7 @@ fileprivate struct Onward {
   }
 
   /// The underlying implementation.
-  let code: Continue
+  let code: Forth
 }
 
 /// A continuation function that takes an input.
@@ -158,7 +158,7 @@ fileprivate extension Interpreter {
   /// In fact this function only executes one “unit of work” and packages the
   /// rest of executing `s` (if any), and whatever follows that, into the
   /// returned `Onward`.
-  mutating func run(_ s: Statement, then proceed: @escaping Continue) -> Onward {
+  mutating func run(_ s: Statement, then proceed: @escaping Forth) -> Onward {
     if tracing {
       print("\(s.site): info: running statement")
     }
@@ -253,8 +253,8 @@ fileprivate extension Interpreter {
   }
 
   mutating func inScope(
-    do body: (inout Self, @escaping Continue)->Onward,
-    then proceed: @escaping Continue
+    do body: (inout Self, @escaping Forth)->Onward,
+    then proceed: @escaping Forth
   ) -> Onward {
     let mark=frame.persistentAllocations.count
     return body(&self) { me in
@@ -268,9 +268,8 @@ fileprivate extension Interpreter {
 
   /// Executes the statements of `content` in order, then `proceed`.
   mutating func runBlock(
-    _ content: ArraySlice<Statement>,
-    then proceed: @escaping Continue) -> Onward
-  {
+    _ content: ArraySlice<Statement>, then proceed: @escaping Forth
+  ) -> Onward {
     return content.isEmpty ? Onward(proceed)
       : run(content.first!) { me in
           me.runBlock(content.dropFirst(), then: proceed)
@@ -280,8 +279,8 @@ fileprivate extension Interpreter {
   mutating func runMatch(
     _ subject: Expression, at subjectLocation: Address,
     against clauses: ArraySlice<MatchClause>,
-    then proceed: @escaping Continue) -> Onward
-  {
+    then proceed: @escaping Forth
+  ) -> Onward {
     guard let clause = clauses.first else {
       return error(subject, "no pattern matches \(self[subjectLocation])")
     }
@@ -301,8 +300,8 @@ fileprivate extension Interpreter {
   }
 
   mutating func `while`(
-    _ c: Expression, run body: Statement, then proceed: @escaping Continue) -> Onward
-  {
+    _ c: Expression, run body: Statement, then proceed: @escaping Forth
+  ) -> Onward {
     return evaluateAndConsume(c) { (runBody: Bool, me) in
       return runBody
         ? me.run(body) { me in me.while(c, run: body, then: proceed)}
@@ -347,7 +346,7 @@ fileprivate extension Interpreter {
   /// Destroys and reclaims memory of the `n` locally-allocated values at the
   /// top of the allocation stack.
   mutating func cleanUpPersistentAllocations(
-    above n: Int, then proceed: @escaping Continue
+    above n: Int, then proceed: @escaping Forth
   ) -> Onward {
     frame.persistentAllocations.count == n ? Onward(proceed)
       : deleteLocalValue_doNotCallDirectly(
@@ -356,7 +355,7 @@ fileprivate extension Interpreter {
   }
 
   mutating func deleteLocalValue_doNotCallDirectly(
-    at a: Address, then proceed: @escaping Continue
+    at a: Address, then proceed: @escaping Forth
   ) -> Onward {
     if tracing { print("  info: deleting \(a)") }
     memory.delete(a)
@@ -366,7 +365,8 @@ fileprivate extension Interpreter {
   /// If `a` was allocated to an ephemeral temporary, deinitializes and destroys
   /// it.
   mutating func deleteAnyEphemeral(
-    at a: Address, then proceed: @escaping Continue) -> Onward {
+    at a: Address, then proceed: @escaping Forth
+  ) -> Onward {
     if let _ = frame.ephemeralAllocations.removeValue(forKey: a) {
       return deleteLocalValue_doNotCallDirectly(at: a, then: proceed)
     }
@@ -376,7 +376,7 @@ fileprivate extension Interpreter {
   /// Deinitializes and destroys any addresses in `locations` that were
   /// allocated to an ephemeral temporary.
   mutating func deleteAnyEphemerals<C: Collection>(
-    at locations: C, then proceed: @escaping Continue
+    at locations: C, then proceed: @escaping Forth
   ) -> Onward
     where C.Element == Address
   {
@@ -401,8 +401,7 @@ fileprivate extension Interpreter {
   /// Copies the value at `source` into the `target` address and continues with
   /// `proceed`.
   mutating func assign(
-    _ target: Address, from source: Address,
-    then proceed: @escaping Continue
+    _ target: Address, from source: Address, then proceed: @escaping Forth
   ) -> Onward {
     if tracing {
       print("  info: assigning \(self[source])\(source) into \(target)")
@@ -412,8 +411,8 @@ fileprivate extension Interpreter {
   }
 
   mutating func deinitialize(
-    valueAt target: Address, then proceed: @escaping Continue) -> Onward
-  {
+    valueAt target: Address, then proceed: @escaping Forth
+  ) -> Onward {
     if tracing {
       print("  info: deinitializing \(target)")
     }
@@ -422,9 +421,8 @@ fileprivate extension Interpreter {
   }
 
   mutating func initialize(
-    _ target: Address, to v: Value,
-    then proceed: @escaping With<Address>) -> Onward
-  {
+    _ target: Address, to v: Value, then proceed: @escaping With<Address>
+  ) -> Onward {
     if tracing {
       print("  info: initializing \(target) = \(v)")
     }
