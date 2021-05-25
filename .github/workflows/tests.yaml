@@ -15,9 +15,11 @@ jobs:
           uses: actions/checkout@v2
           with:
             submodules: true
-        - name: Xcode Version
+        - name: Swift Version
+          uses: fwal/setup-swift@v1
+          with:
+            swift-version: "5.4"
           run: |
-            sudo xcode-select -s /Applications/Xcode_12.5.app
             xcodebuild -version
             swift --version
         - name: Swift Version
