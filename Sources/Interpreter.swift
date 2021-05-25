@@ -24,6 +24,9 @@ fileprivate struct Onward {
   let code: Code
 }
 
+/// A continuation function that takes an input.
+fileprivate typealias With<T> = (T, inout Interpreter)->Onward
+
 /// All the data that needs to be saved and restored across function call
 /// boundaries.
 fileprivate struct CallFrame {
@@ -316,7 +319,7 @@ fileprivate extension Interpreter {
   /// `proceed` along with `self`.
   mutating func allocate(
     _ e: Expression, mutable: Bool = false, persist: Bool = false,
-    then proceed: @escaping FollowupWith<Address>
+    then proceed: @escaping With<Address>
   ) -> Onward {
     let a = memory.allocate(mutable: mutable)
     if tracing {
@@ -337,7 +340,7 @@ fileprivate extension Interpreter {
   /// `proceed` along with `self`.
   mutating func allocate(
     _ e: Expression, unlessNonNil destination: Address?,
-    then proceed: @escaping FollowupWith<Address>
+    then proceed: @escaping With<Address>
   ) -> Onward {
     if let a = destination { return Onward { me in proceed(a, &me) } }
     return allocate(e, then: proceed)
@@ -389,7 +392,7 @@ fileprivate extension Interpreter {
   /// `proceed`.
   mutating func copy(
     from source: Address, to target: Address,
-    then proceed: @escaping FollowupWith<Address>
+    then proceed: @escaping With<Address>
   ) -> Onward {
     if tracing {
       print("  info: copying \(self[source]) into \(target)")
@@ -422,7 +425,7 @@ fileprivate extension Interpreter {
 
   mutating func initialize(
     _ target: Address, to v: Value,
-    then proceed: @escaping FollowupWith<Address>) -> Onward
+    then proceed: @escaping With<Address>) -> Onward
   {
     if tracing {
       print("  info: initializing \(target) = \(v)")
@@ -432,11 +435,9 @@ fileprivate extension Interpreter {
   }
 }
 
-fileprivate typealias FollowupWith<T> = (T, inout Interpreter)->Onward
-
 fileprivate extension Interpreter {
   mutating func evaluateAndConsume<T>(
-    _ e: Expression, in proceed: @escaping FollowupWith<T>) -> Onward {
+    _ e: Expression, in proceed: @escaping With<T>) -> Onward {
     evaluate(e) { p, me in
       let v = me[p] as! T
       return me.deleteAnyEphemeral(at: p) { me in proceed(v, &me) }
@@ -452,7 +453,7 @@ fileprivate extension Interpreter {
     _ e: Expression,
     asCallee: Bool = false,
     into destination: Address? = nil,
-    then proceed_: @escaping FollowupWith<Address>
+    then proceed_: @escaping With<Address>
   ) -> Onward {
     if tracing {
       print(
@@ -509,7 +510,7 @@ fileprivate extension Interpreter {
   /// of the result on to `proceed`.
   mutating func evaluate(
     _ name: Identifier, into destination: Address? = nil,
-    then proceed: @escaping FollowupWith<Address>
+    then proceed: @escaping With<Address>
   ) -> Onward {
     let d = program.definition[name]
 
@@ -554,7 +555,7 @@ fileprivate extension Interpreter {
   /// `proceed`.
   mutating func evaluate(
     _ e: UnaryOperatorExpression, into output: Address,
-    then proceed: @escaping FollowupWith<Address>
+    then proceed: @escaping With<Address>
   ) -> Onward {
     evaluate(e.operand) { operand, me in
       let result: Value
@@ -573,7 +574,7 @@ fileprivate extension Interpreter {
   /// `proceed`.
   mutating func evaluate(
     _ e: BinaryOperatorExpression, into output: Address,
-    then proceed: @escaping FollowupWith<Address>
+    then proceed: @escaping With<Address>
   ) -> Onward {
     evaluate(e.lhs) { lhs, me in
       if e.operation.text == "and" && (me[lhs] as! Bool == false) {
@@ -603,7 +604,7 @@ fileprivate extension Interpreter {
   /// `proceed`.
   mutating func evaluate(
     _ e: FunctionCall<Expression>, into output: Address,
-    then proceed: @escaping FollowupWith<Address>
+    then proceed: @escaping With<Address>
   ) -> Onward {
     evaluate(e.callee, asCallee: true) { callee, me in
       me.evaluate(.tupleLiteral(e.arguments)) { arguments, me in
@@ -667,7 +668,7 @@ fileprivate extension Interpreter {
   /// the result on to `proceed`.
   mutating func evaluate(
     _ e: MemberAccessExpression, asCallee: Bool, into output: Address?,
-    then proceed: @escaping FollowupWith<Address>
+    then proceed: @escaping With<Address>
   ) -> Onward {
     evaluate(e.base) { base, me in
       switch me[base].type {
@@ -709,7 +710,7 @@ fileprivate extension Interpreter {
 
   mutating func evaluateIndex(
     target t: Expression, offset i: Expression, into output: Address?,
-    then proceed: @escaping FollowupWith<Address>
+    then proceed: @escaping With<Address>
   ) -> Onward {
     evaluate(t, into: output) { targetAddress, me in
       me.evaluate(i) { indexAddress, me in
@@ -740,7 +741,7 @@ fileprivate extension Interpreter {
     into output: Address,
     parts: [FieldID: Address] = [:],
     positionalCount: Int = 0,
-    then proceed: @escaping FollowupWith<Address>
+    then proceed: @escaping With<Address>
   ) -> Onward {
     // FIXME: too many copies
     if e.isEmpty {
@@ -798,7 +799,7 @@ fileprivate extension Interpreter {
   /// indication of whether the match was successful.
   mutating func match(
     _ p: Pattern, toValueAt source: Address,
-    then proceed: @escaping FollowupWith<Bool>
+    then proceed: @escaping With<Bool>
   ) -> Onward {
     if tracing {
       print("\(p.site): info: matching against value \(self[source])")
@@ -831,7 +832,7 @@ fileprivate extension Interpreter {
 
   mutating func match(
     _ p: FunctionCall<Pattern>, toValueAt source: Address,
-    then proceed: @escaping FollowupWith<Bool>
+    then proceed: @escaping With<Bool>
   ) -> Onward {
     return evaluate(p.callee, asCallee: true) { callee, me in
       switch me[source].type {
@@ -855,7 +856,7 @@ fileprivate extension Interpreter {
 
   mutating func match(
     _ p: TuplePattern, toValueAt source: Address,
-    then proceed: @escaping FollowupWith<Bool>
+    then proceed: @escaping With<Bool>
   ) -> Onward {
     if self[source] is TupleValue {
       let sourceStructure = self.memory.substructure(at: source)
@@ -869,7 +870,7 @@ fileprivate extension Interpreter {
 
   mutating func matchElements(
     _ p: Tuple<Pattern>.Elements.SubSequence, toValuesAt source: Tuple<Address>,
-    then proceed: @escaping FollowupWith<Bool>
+    then proceed: @escaping With<Bool>
   ) -> Onward {
     guard let (k0, p0) = p.first
     else { return Onward { me in proceed(true, &me) } }
