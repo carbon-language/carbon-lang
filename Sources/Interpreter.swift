@@ -141,15 +141,15 @@ struct Interpreter {
 
 extension Interpreter {
   /// Executes `s`, and then, absent interesting control flow,
-  /// `followup`.
+  /// `proceed`.
   ///
   /// An example of interesting control flow is a return statement, which
-  /// ignores any `followup` and exits the current function instead.
+  /// ignores any `proceed` and exits the current function instead.
   ///
   /// In fact this function only executes one “unit of work” and packages the
   /// rest of executing `s` (if any), and whatever follows that, into the
   /// returned `Onward`.
-  mutating func run(_ s: Statement, then followup: Onward) -> Onward {
+  mutating func run(_ s: Statement, then proceed: Onward) -> Onward {
     if tracing {
       print("\(s.site): info: running statement")
     }
@@ -160,7 +160,7 @@ extension Interpreter {
     switch s {
     case let .expressionStatement(e, _):
       return evaluate(e) { resultAddress, me in
-        me.deleteAnyEphemeral(at: resultAddress, then: followup.code)
+        me.deleteAnyEphemeral(at: resultAddress, then: proceed.code)
       }
 
     case let .assignment(target: t, source: s, _):
@@ -175,7 +175,7 @@ extension Interpreter {
             "\(t.site): info: assigning \(me[source])\(source) into \(target)")
         }
         return me.assign(target, from: source) { me in
-        me.deleteAnyEphemeral(at: source, then: followup.code)
+        me.deleteAnyEphemeral(at: source, then: proceed.code)
         }}}
 
     case let .initialization(i):
@@ -186,7 +186,7 @@ extension Interpreter {
       return allocate(i.initializer, mutable: true, persist: true) { rhsArea, me in
         me.evaluate(i.initializer, into: rhsArea) { rhs, me in
           me.match(i.bindings, toValueAt: rhs) { matched, me in
-            matched ? followup : me.error(
+            matched ? proceed : me.error(
               i.bindings, "Initialization pattern not matched by \(me[rhs])")
           }
         }
@@ -196,8 +196,8 @@ extension Interpreter {
            condition: c, thenClause: trueClause, elseClause: falseClause, _):
       return evaluateAndConsume(c) { (condition: Bool, me) in
         return condition
-          ? me.run(trueClause, then: followup)
-          : falseClause.map { me.run($0, then: followup) } ?? followup
+          ? me.run(trueClause, then: proceed)
+          : falseClause.map { me.run($0, then: proceed) } ?? proceed
       }
 
     case let .return(e, _):
@@ -206,7 +206,7 @@ extension Interpreter {
       }
 
     case let .block(children, _):
-      return inScope(then: followup) { me, rest in
+      return inScope(then: proceed) { me, rest in
         me.runBlock(children[...], then: rest)
       }
 
@@ -216,7 +216,7 @@ extension Interpreter {
 
       let onBreak = Onward { me in
         (me.frame.onBreak, me.frame.onContinue) = saved
-        return me.cleanUpPersistentAllocations(above: mark, then: followup)
+        return me.cleanUpPersistentAllocations(above: mark, then: proceed)
       }
 
       let onContinue = Onward { me in
@@ -228,7 +228,7 @@ extension Interpreter {
       return onContinue(&self)
 
     case let .match(subject: s, clauses: clauses, _):
-      return inScope(then: followup) { me, innerFollowup in
+      return inScope(then: proceed) { me, innerFollowup in
         me.allocate(s, persist: true) { subjectArea, me in
         me.evaluate(s, into: subjectArea) { subject, me in
         me.runMatch(s, at: subject, against: clauses[...], then: innerFollowup)
@@ -243,7 +243,7 @@ extension Interpreter {
   }
 
   mutating func inScope(
-    then followup: Onward, do body: (inout Self, Onward)->Onward
+    then proceed: Onward, do body: (inout Self, Onward)->Onward
   ) -> Onward {
     let mark=frame.persistentAllocations.count
     return body(
@@ -251,38 +251,38 @@ extension Interpreter {
       Onward { me in
         sanityCheck(me.frame.ephemeralAllocations.isEmpty,
                "leaked \(me.frame.ephemeralAllocations)")
-        return me.cleanUpPersistentAllocations(above: mark, then: followup)
+        return me.cleanUpPersistentAllocations(above: mark, then: proceed)
       })
   }
 
-  /// Runs `s` and follows up with `followup`.
+  /// Runs `s` and follows up with `proceed`.
   ///
   /// A convenience wrapper for `run(_:then:)` that supports cleaner syntax.
-  mutating func run(_ s: Statement, followup: @escaping Onward.Code) -> Onward {
-    run(s, then: Onward(followup))
+  mutating func run(_ s: Statement, proceed: @escaping Onward.Code) -> Onward {
+    run(s, then: Onward(proceed))
   }
 
-  /// Executes the statements of `content` in order, then `followup`.
-  mutating func runBlock(_ content: ArraySlice<Statement>, then followup: Onward)
+  /// Executes the statements of `content` in order, then `proceed`.
+  mutating func runBlock(_ content: ArraySlice<Statement>, then proceed: Onward)
     -> Onward
   {
-    return content.isEmpty ? followup
+    return content.isEmpty ? proceed
       : run(content.first!) { me in
-          me.runBlock(content.dropFirst(), then: followup)
+          me.runBlock(content.dropFirst(), then: proceed)
         }
   }
 
   mutating func runMatch(
     _ subject: Expression, at subjectLocation: Address,
     against clauses: ArraySlice<MatchClause>,
-    then followup: Onward) -> Onward
+    then proceed: Onward) -> Onward
   {
     guard let clause = clauses.first else {
       return error(subject, "no pattern matches \(self[subjectLocation])")
     }
 
     let onMatch = Onward { me in
-      me.inScope(then: followup) { me, innerFollowup in
+      me.inScope(then: proceed) { me, innerFollowup in
         me.run(clause.action, then: innerFollowup)
       }
     }
@@ -291,18 +291,18 @@ extension Interpreter {
     return match(p, toValueAt: subjectLocation) { matched, me in
       matched ? onMatch : me.runMatch(
         subject, at: subjectLocation, against: clauses.dropFirst(),
-        then: followup)
+        then: proceed)
     }
   }
 
   mutating func `while`(
-    _ c: Expression, run body: Statement, then followup: Onward) -> Onward
+    _ c: Expression, run body: Statement, then proceed: Onward) -> Onward
   {
     return evaluateAndConsume(c) { (runBody: Bool, me) in
       return runBody
         ? me.run(
-          body, then: Onward { me in me.while(c, run: body, then: followup)})
-        : followup
+          body, then: Onward { me in me.while(c, run: body, then: proceed)})
+        : proceed
     }
   }
 }
@@ -310,10 +310,10 @@ extension Interpreter {
 /// Values and memory.
 extension Interpreter {
   /// Allocates an address for the result of evaluating `e`, passing it on to
-  /// `followup` along with `self`.
+  /// `proceed` along with `self`.
   mutating func allocate(
     _ e: Expression, mutable: Bool = false, persist: Bool = false,
-    then followup: @escaping FollowupWith<Address>
+    then proceed: @escaping FollowupWith<Address>
   ) -> Onward {
     let a = memory.allocate(mutable: mutable)
     if tracing {
@@ -327,125 +327,125 @@ extension Interpreter {
     else {
       frame.ephemeralAllocations[a] = e
     }
-    return Onward { me in followup(a, &me) }
+    return Onward { me in proceed(a, &me) }
   }
 
   /// Allocates an address for the result of evaluating `e`, passing it on to
-  /// `followup` along with `self`.
+  /// `proceed` along with `self`.
   mutating func allocate(
     _ e: Expression, unlessNonNil destination: Address?,
-    then followup: @escaping FollowupWith<Address>
+    then proceed: @escaping FollowupWith<Address>
   ) -> Onward {
-    if let a = destination { return Onward { me in followup(a, &me) } }
-    return allocate(e, then: followup)
+    if let a = destination { return Onward { me in proceed(a, &me) } }
+    return allocate(e, then: proceed)
   }
 
   /// Destroys and reclaims memory of the `n` locally-allocated values at the
   /// top of the allocation stack.
   mutating func cleanUpPersistentAllocations(
-    above n: Int, then followup: Onward
+    above n: Int, then proceed: Onward
   ) -> Onward {
-    frame.persistentAllocations.count == n ? followup
+    frame.persistentAllocations.count == n ? proceed
       : deleteLocalValue_doNotCallDirectly(
         at: frame.persistentAllocations.pop()!
-      ) { me in me.cleanUpPersistentAllocations(above: n, then: followup) }
+      ) { me in me.cleanUpPersistentAllocations(above: n, then: proceed) }
   }
 
   mutating func deleteLocalValue_doNotCallDirectly(
-    at a: Address, then followup: @escaping Onward.Code
+    at a: Address, then proceed: @escaping Onward.Code
   ) -> Onward {
     if tracing { print("  info: deleting \(a)") }
     memory.delete(a)
-    return Onward(followup)
+    return Onward(proceed)
   }
 
   /// If `a` was allocated to an ephemeral temporary, deinitializes and destroys
   /// it.
   mutating func deleteAnyEphemeral(
-    at a: Address, then followup: @escaping Onward.Code) -> Onward {
+    at a: Address, then proceed: @escaping Onward.Code) -> Onward {
     if let _ = frame.ephemeralAllocations.removeValue(forKey: a) {
-      return deleteLocalValue_doNotCallDirectly(at: a, then: followup)
+      return deleteLocalValue_doNotCallDirectly(at: a, then: proceed)
     }
-    return Onward(followup)
+    return Onward(proceed)
   }
 
   /// Deinitializes and destroys any addresses in `locations` that were
   /// allocated to an ephemeral temporary.
   mutating func deleteAnyEphemerals<C: Collection>(
-    at locations: C, then followup: @escaping Onward.Code
+    at locations: C, then proceed: @escaping Onward.Code
   ) -> Onward
     where C.Element == Address
   {
-    guard let a0 = locations.first else { return Onward(followup) }
+    guard let a0 = locations.first else { return Onward(proceed) }
     return deleteAnyEphemeral(at: a0) { me in
-      me.deleteAnyEphemerals(at: locations.dropFirst(), then: followup)
+      me.deleteAnyEphemerals(at: locations.dropFirst(), then: proceed)
     }
   }
 
   /// Copies the value at `source` into the `target` address and continues with
-  /// `followup`.
+  /// `proceed`.
   mutating func copy(
     from source: Address, to target: Address,
-    then followup: @escaping FollowupWith<Address>
+    then proceed: @escaping FollowupWith<Address>
   ) -> Onward {
     if tracing {
       print("  info: copying \(self[source]) into \(target)")
     }
-    return initialize(target, to: self[source], then: followup)
+    return initialize(target, to: self[source], then: proceed)
   }
 
   /// Copies the value at `source` into the `target` address and continues with
-  /// `followup`.
+  /// `proceed`.
   mutating func assign(
     _ target: Address, from source: Address,
-    then followup: @escaping Onward.Code
+    then proceed: @escaping Onward.Code
   ) -> Onward {
     if tracing {
       print("  info: assigning \(self[source])\(source) into \(target)")
     }
     memory.assign(from: source, into: target)
-    return Onward(followup)
+    return Onward(proceed)
   }
 
   mutating func deinitialize(
-    valueAt target: Address, then followup: @escaping Onward.Code) -> Onward
+    valueAt target: Address, then proceed: @escaping Onward.Code) -> Onward
   {
     if tracing {
       print("  info: deinitializing \(target)")
     }
     memory.deinitialize(target)
-    return Onward(followup)
+    return Onward(proceed)
   }
 
   mutating func initialize(
     _ target: Address, to v: Value,
-    then followup: @escaping FollowupWith<Address>) -> Onward
+    then proceed: @escaping FollowupWith<Address>) -> Onward
   {
     if tracing {
       print("  info: initializing \(target) = \(v)")
     }
     memory.initialize(target, to: v)
-    return Onward { me in followup(target, &me) }
+    return Onward { me in proceed(target, &me) }
   }
 }
 
 typealias FollowupWith<T> = (T, inout Interpreter)->Onward
 
-/// Returns a followup that drops its argument and invokes f.
+/// Returns a proceed that drops its argument and invokes f.
 fileprivate func dropResult<T>(_ f: Onward) -> FollowupWith<T>
 { { _, me in f(&me) } }
 
 extension Interpreter {
   mutating func evaluateAndConsume<T>(
-    _ e: Expression, in followup: @escaping FollowupWith<T>) -> Onward {
+    _ e: Expression, in proceed: @escaping FollowupWith<T>) -> Onward {
     evaluate(e) { p, me in
       let v = me[p] as! T
-      return me.deleteAnyEphemeral(at: p) { me in followup(v, &me) }
+      return me.deleteAnyEphemeral(at: p) { me in proceed(v, &me) }
     }
   }
 
   /// Evaluates `e` (into `destination`, if supplied) and passes
-  /// the address of the result on to `followup_`.
+  /// the address of the result on to `proceed_`.
   ///
   /// - Parameter asCallee: `true` if `e` is in callee position in a function
   /// call expression.
@@ -453,7 +453,7 @@ extension Interpreter {
     _ e: Expression,
     asCallee: Bool = false,
     into destination: Address? = nil,
-    then followup_: @escaping FollowupWith<Address>
+    then proceed_: @escaping FollowupWith<Address>
   ) -> Onward {
     if tracing {
       print(
@@ -461,22 +461,22 @@ extension Interpreter {
           + (asCallee ? "as callee " : "")
           + (destination != nil ? "into \(destination!)" : ""))
     }
-    let followup = !tracing ? followup_
+    let proceed = !tracing ? proceed_
       : { a, me in
         print("\(e.site): info: result = \(me[a])")
-        return followup_(a, &me)
+        return proceed_(a, &me)
       }
 
     // Handle all possible lvalue expressions
     switch e {
     case let .name(n):
-      return evaluate(n, into: destination, then: followup)
+      return evaluate(n, into: destination, then: proceed)
 
     case let .memberAccess(m):
-      return evaluate(m, asCallee: asCallee, into: destination, then: followup)
+      return evaluate(m, asCallee: asCallee, into: destination, then: proceed)
 
     case let .index(target: t, offset: i, _):
-      return evaluateIndex(target: t, offset: i, into: destination, then: followup)
+      return evaluateIndex(target: t, offset: i, into: destination, then: proceed)
 
     case .integerLiteral, .booleanLiteral, .tupleLiteral,
          .unaryOperator, .binaryOperator, .functionCall, .intType, .boolType,
@@ -484,17 +484,17 @@ extension Interpreter {
       return allocate(e, unlessNonNil: destination) { result, me in
         switch e {
         case let .integerLiteral(r, _):
-          return me.initialize(result, to: r, then: followup)
+          return me.initialize(result, to: r, then: proceed)
         case let .booleanLiteral(r, _):
-          return me.initialize(result, to: r, then: followup)
+          return me.initialize(result, to: r, then: proceed)
         case let .tupleLiteral(t):
-          return me.evaluateTuple(t.elements[...], into: result, then: followup)
+          return me.evaluateTuple(t.elements[...], into: result, then: proceed)
         case let .unaryOperator(x):
-          return me.evaluate(x, into: result, then: followup)
+          return me.evaluate(x, into: result, then: proceed)
         case let .binaryOperator(x):
-          return me.evaluate(x, into: result, then: followup)
+          return me.evaluate(x, into: result, then: proceed)
         case let .functionCall(x):
-          return me.evaluate(x, into: result, then: followup)
+          return me.evaluate(x, into: result, then: proceed)
         case .intType, .boolType, .typeType:
           UNIMPLEMENTED()
         case let .functionType(f):
@@ -507,37 +507,37 @@ extension Interpreter {
   }
 
   /// Evaluates `name` (into `destination`, if supplied) and passes the address
-  /// of the result on to `followup`.
+  /// of the result on to `proceed`.
   mutating func evaluate(
     _ name: Identifier, into destination: Address? = nil,
-    then followup: @escaping FollowupWith<Address>
+    then proceed: @escaping FollowupWith<Address>
   ) -> Onward {
     let d = program.definition[name]
 
     switch d {
     case let t as TypeDeclaration:
       return allocate(.name(name), unlessNonNil: destination) { output, me in
-        me.initialize(output, to: t.declaredType, then: followup)
+        me.initialize(output, to: t.declaredType, then: proceed)
       }
 
     case let b as SimpleBinding:
       let source = (frame.locals[b] ?? globals[b])!
       return destination != nil
-        ? copy(from: source, to: destination!, then: followup)
-        : Onward { me in followup(source, &me) }
+        ? copy(from: source, to: destination!, then: proceed)
+        : Onward { me in proceed(source, &me) }
 
     case let f as FunctionDefinition:
       // Bogus parameterTypes and returnType until I figure out how to get those.  -Jeremy
       let function = FunctionValue(type: .function(parameterTypes: Tuple(), returnType: .int), code: f)
       /* This commented version causes a leak. -Jeremy
       return allocate(.name(name), unlessNonNil: destination) { output, me in
-        me.initialize(output, to: function, then: followup) }
+        me.initialize(output, to: function, then: proceed) }
        */
       if destination == nil {
         let address = memory.allocate(mutable: false)
-        return initialize(address, to: function, then: followup)
+        return initialize(address, to: function, then: proceed)
       } else {
-        return initialize(destination!, to: function, then: followup)
+        return initialize(destination!, to: function, then: proceed)
       }
 
     case let a as Alternative:
@@ -552,10 +552,10 @@ extension Interpreter {
   }
 
   /// Evaluates `e` into `output` and passes the address of the result on to
-  /// `followup`.
+  /// `proceed`.
   mutating func evaluate(
     _ e: UnaryOperatorExpression, into output: Address,
-    then followup: @escaping FollowupWith<Address>
+    then proceed: @escaping FollowupWith<Address>
   ) -> Onward {
     evaluate(e.operand) { operand, me in
       let result: Value
@@ -565,23 +565,23 @@ extension Interpreter {
       default: UNREACHABLE()
       }
       return me.deleteAnyEphemeral(at: operand) { me in
-        me.initialize(output, to: result, then: followup)
+        me.initialize(output, to: result, then: proceed)
       }
     }
   }
 
   /// Evaluates `e` into `output` and passes the address of the result on to
-  /// `followup`.
+  /// `proceed`.
   mutating func evaluate(
     _ e: BinaryOperatorExpression, into output: Address,
-    then followup: @escaping FollowupWith<Address>
+    then proceed: @escaping FollowupWith<Address>
   ) -> Onward {
     evaluate(e.lhs) { lhs, me in
       if e.operation.text == "and" && (me[lhs] as! Bool == false) {
-        return me.copy(from: lhs, to: output, then: followup)
+        return me.copy(from: lhs, to: output, then: proceed)
       }
       else if e.operation.text == "or" && (me[lhs] as! Bool == true) {
-        return me.copy(from: lhs, to: output, then: followup)
+        return me.copy(from: lhs, to: output, then: proceed)
       }
 
       return me.evaluate(e.rhs) { rhs, me in
@@ -594,17 +594,17 @@ extension Interpreter {
         default: UNIMPLEMENTED(e)
         }
         return me.deleteAnyEphemerals(at: [lhs, rhs]) { me in
-          me.initialize(output, to: result, then: followup)
+          me.initialize(output, to: result, then: proceed)
         }
       }
     }
   }
 
   /// Evaluates `e` into `output` and passes the address of the result on to
-  /// `followup`.
+  /// `proceed`.
   mutating func evaluate(
     _ e: FunctionCall<Expression>, into output: Address,
-    then followup: @escaping FollowupWith<Address>
+    then proceed: @escaping FollowupWith<Address>
   ) -> Onward {
     evaluate(e.callee, asCallee: true) { callee, me in
       me.evaluate(.tupleLiteral(e.arguments)) { arguments, me in
@@ -617,19 +617,19 @@ extension Interpreter {
           let new_frame =
             CallFrame(locals: ASTDictionary<SimpleBinding, Address>(),
                       resultAddress: output,
-                      onReturn: Task { me in
+                      onReturn: Onward { me in
                         me.cleanUpPersistentAllocations(
                           above: 0,
-                          then: Task{ me in
+                          then: Onward{ me in
                             me.frame = old_frame
                             return me.deleteAnyEphemeral(at: arguments) { me in
-                              followup(output, &me) } }) })
+                              proceed(output, &me) } }) })
           me.frame = new_frame
           return me.match(function.code.parameters, toValueAt: arguments) { matched, me in
             if matched {
               return me.run(function.code.body!,
-                            then: Task { me in
-                              // Return an empty tuple when the function falls off the end. 
+                            then: Onward { me in
+                              // Return an empty tuple when the function falls off the end.
                               me.initialize(me.frame.resultAddress, to: Tuple() ,
                                             then: { _, me in me.frame.onReturn })
                             })
@@ -648,7 +648,7 @@ extension Interpreter {
               discriminator: discriminator,
               payload: me[arguments] as! Tuple<Value>)
             return me.deleteAnyEphemerals(at: [callee, arguments]) { me in
-              me.initialize(output, to: result, then: followup)
+              me.initialize(output, to: result, then: proceed)
             }
 
           case .struct:
@@ -665,10 +665,10 @@ extension Interpreter {
   }
 
   /// Evaluates `e` (into `output`, if supplied) and passes the address of
-  /// the result on to `followup`.
+  /// the result on to `proceed`.
   mutating func evaluate(
     _ e: MemberAccessExpression, asCallee: Bool, into output: Address?,
-    then followup: @escaping FollowupWith<Address>
+    then proceed: @escaping FollowupWith<Address>
   ) -> Onward {
     evaluate(e.base) { base, me in
       switch me[base].type {
@@ -678,8 +678,8 @@ extension Interpreter {
       case .tuple:
         let source = me.memory.substructure(at: base)[e.member]!
         return output != nil
-          ? me.copy(from: source, to: output!, then: followup)
-          : Onward { me in followup(source, &me) }
+          ? me.copy(from: source, to: output!, then: proceed)
+          : Onward { me in proceed(source, &me) }
 
       case .type:
         // Handle access to a type member, like a static member in C++.
@@ -696,7 +696,7 @@ extension Interpreter {
                 type_: parentID, discriminator: id, payload: .init())
 
             return me.deleteAnyEphemeral(at: base) { me in
-              me.initialize(output, to: result, then: followup)
+              me.initialize(output, to: result, then: proceed)
             }
           }
         default: UNREACHABLE()
@@ -710,7 +710,7 @@ extension Interpreter {
 
   mutating func evaluateIndex(
     target t: Expression, offset i: Expression, into output: Address?,
-    then followup: @escaping FollowupWith<Address>
+    then proceed: @escaping FollowupWith<Address>
   ) -> Onward {
     evaluate(t, into: output) { targetAddress, me in
       me.evaluate(i) { indexAddress, me in
@@ -723,10 +723,10 @@ extension Interpreter {
         }
 
         return me.deleteAnyEphemeral(at: indexAddress) { me in
-          output == nil ? followup(resultAddress, &me)
+          output == nil ? proceed(resultAddress, &me)
             : me.copy(from: resultAddress, to: output!) { _, me in
               me.deleteAnyEphemeral(at: targetAddress) { me in
-                followup(output!, &me)
+                proceed(output!, &me)
               }
             }
         }
@@ -735,20 +735,20 @@ extension Interpreter {
   }
 
   /// Evaluates `e` into `output` and passes the address of the result on to
-  /// `followup`.
+  /// `proceed`.
   mutating func evaluateTuple(
     _ e: ArraySlice<TupleLiteral.Element>,
     into output: Address,
     parts: [FieldID: Address] = [:],
     positionalCount: Int = 0,
-    then followup: @escaping FollowupWith<Address>
+    then proceed: @escaping FollowupWith<Address>
   ) -> Onward {
     // FIXME: too many copies
     if e.isEmpty {
       return initialize(output, to: Tuple(parts).mapFields { self[$0] })
       { output, me in
         me.deleteAnyEphemerals(at: parts.values) { me in
-          followup(output, &me)
+          proceed(output, &me)
         }
       }
     }
@@ -762,7 +762,7 @@ extension Interpreter {
         return me.evaluateTuple(
           e.dropFirst(), into: output, parts: p,
           positionalCount: positionalCount + (e0.label == nil ? 1 : 0),
-          then: followup)
+          then: proceed)
       }
     }
   }
@@ -795,11 +795,11 @@ func areEqual(_ l: Value, _ r: Value) -> Bool {
 
 extension Interpreter {
   /// Matches `p` to the value at `source`, binding variables in `p` to
-  /// the corresponding parts of the value, and calling `followup` with an
+  /// the corresponding parts of the value, and calling `proceed` with an
   /// indication of whether the match was successful.
   mutating func match(
     _ p: Pattern, toValueAt source: Address,
-    then followup: @escaping FollowupWith<Bool>
+    then proceed: @escaping FollowupWith<Bool>
   ) -> Onward {
     if tracing {
       print("\(p.site): info: matching against value \(self[source])")
@@ -809,7 +809,7 @@ extension Interpreter {
       return evaluate(t) { target, me in
         let matched = areEqual(me[target], me[source])
         return me.deleteAnyEphemeral(at: target) { me in
-          followup(matched, &me)
+          proceed(matched, &me)
         }
       }
 
@@ -818,13 +818,13 @@ extension Interpreter {
         print("\(b.name.site): info: binding \(self[source])\(source)")
       }
       frame.locals[b] = source
-      return Onward { me in followup(true, &me) }
+      return Onward { me in proceed(true, &me) }
 
     case let .tuple(x):
-      return match(x, toValueAt: source, then: followup)
+      return match(x, toValueAt: source, then: proceed)
 
     case let .functionCall(x):
-      return match(x, toValueAt: source, then: followup)
+      return match(x, toValueAt: source, then: proceed)
 
     case let .functionType(x): UNIMPLEMENTED(x)
     }
@@ -832,7 +832,7 @@ extension Interpreter {
 
   mutating func match(
     _ p: FunctionCall<Pattern>, toValueAt source: Address,
-    then followup: @escaping FollowupWith<Bool>
+    then proceed: @escaping FollowupWith<Bool>
   ) -> Onward {
     return evaluate(p.callee, asCallee: true) { callee, me in
       switch me[source].type {
@@ -843,10 +843,10 @@ extension Interpreter {
         let calleeMatched = Type(me[callee]) == c.alternativeType
 
         return me.deleteAnyEphemeral(at: callee) { me in
-          if !calleeMatched { return followup(false, &me) }
+          if !calleeMatched { return proceed(false, &me) }
 
           let payload = me.memory.substructure(at: source)[2]!
-          return me.match(p.arguments, toValueAt: payload, then: followup)
+          return me.match(p.arguments, toValueAt: payload, then: proceed)
         }
       case .int, .bool, .type, .function, .tuple, .error, .alternative:
         UNREACHABLE()
@@ -856,28 +856,28 @@ extension Interpreter {
 
   mutating func match(
     _ p: TuplePattern, toValueAt source: Address,
-    then followup: @escaping FollowupWith<Bool>
+    then proceed: @escaping FollowupWith<Bool>
   ) -> Onward {
     if self[source] is TupleValue {
       let sourceStructure = self.memory.substructure(at: source)
       if p.count == sourceStructure.count {
         return matchElements(
-          p.fields().elements[...], toValuesAt: sourceStructure, then: followup)
+          p.fields().elements[...], toValuesAt: sourceStructure, then: proceed)
       }
     }
-    return Onward { me in followup(false, &me) }
+    return Onward { me in proceed(false, &me) }
   }
 
   mutating func matchElements(
     _ p: Tuple<Pattern>.Elements.SubSequence, toValuesAt source: Tuple<Address>,
-    then followup: @escaping FollowupWith<Bool>
+    then proceed: @escaping FollowupWith<Bool>
   ) -> Onward {
     guard let (k0, p0) = p.first
-    else { return Onward { me in followup(true, &me) } }
+    else { return Onward { me in proceed(true, &me) } }
     return match(p0, toValueAt: source.elements[k0]!) { matched, me in
       matched
-        ? me.matchElements(p.dropFirst(), toValuesAt: source, then: followup)
-        : Onward { me in followup(false, &me) }
+        ? me.matchElements(p.dropFirst(), toValuesAt: source, then: proceed)
+        : Onward { me in proceed(false, &me) }
     }
   }
 }
