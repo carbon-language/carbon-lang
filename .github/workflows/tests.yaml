@@ -86,7 +86,7 @@ jobs:
       # invariants and require us to clear our caches. There is no way to
       # actually delete them and so instead we can simply bump the counter here.
       #
-      # Current cache version: 1
+      # Current cache version: 2
       - name: Cache Bazel build data
         uses: actions/cache@v2
         with:
