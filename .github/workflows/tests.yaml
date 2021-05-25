@@ -7,8 +7,8 @@ on:
 
 jobs:
 
-    macOS-swift-53:
-        name: macOS (Swift 5.3)
+    macOS-swift-54:
+        name: macOS (Swift 5.4)
         runs-on: macOS-latest
         steps:
         - name: Checkout
@@ -17,7 +17,7 @@ jobs:
             submodules: true
         - name: Xcode Version
           run: |
-            sudo xcode-select -s /Applications/Xcode_12.app
+            sudo xcode-select -s /Applications/Xcode_12.5.app
             xcodebuild -version
             swift --version
         - name: Swift Version
@@ -33,9 +33,9 @@ jobs:
 
 
     linux-swift-53:
-        name: Linux x86_64 (Swift 5.3)
+        name: Linux x86_64 (Swift 5.4)
         runs-on: ubuntu-20.04
-        container: swift:5.3-focal
+        container: swift:5.4-focal
         steps:
         - name: Install Tools
           run: apt update; apt install -y build-essential
