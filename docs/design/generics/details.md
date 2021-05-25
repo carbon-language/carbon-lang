@@ -34,7 +34,9 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [Type compatibility](#type-compatibility)
 -   [Adapting types](#adapting-types)
     -   [Adapter compatibility](#adapter-compatibility)
+    -   [Extending adapter](#extending-adapter)
     -   [Use case: Using independent libraries together](#use-case-using-independent-libraries-together)
+    -   [Adapter with stricter invariants](#adapter-with-stricter-invariants)
     -   [Example: Defining an impl for use by other types](#example-defining-an-impl-for-use-by-other-types)
 -   [Associated constants](#associated-constants)
 -   [Associated types](#associated-types)
@@ -1538,9 +1540,12 @@ This allows us to provide implementations of new interfaces (as in
 -   Since adapted types are compatible with the original type, you may
     explicitly cast between them, but there is no implicit casting between these
     types (unlike between a type and one of its facet types / impls).
+-   For the purposes of generics, we only need to support adding interface
+    implementations. But this `adapter` feature could be used more generally,
+    for example to add methods as well.
 
-**Comparison with other languages:** This matches the Rust construct called
-`newtype`, which is used to implement traits on types while avoiding coherence
+**Comparison with other languages:** This matches the Rust idiom called
+"newtype", which is used to implement traits on types while avoiding coherence
 problems, see
 [here](https://doc.rust-lang.org/book/ch19-03-advanced-traits.html#using-the-newtype-pattern-to-implement-external-traits-on-external-types)
 and
@@ -1582,6 +1587,40 @@ This means that it is safe to cast between `HashMap(Song, Int)` and
 know that in practice the invariants of a `HashMap` implementation rely on the
 hashing function staying the same.
 
+### Extending adapter
+
+Frequently we expect that the adapter type will want to preserve most or all of
+the API of the original type. The two most common cases expected are adding and
+replacing an interface implementation. Users would indicate that an adapter
+starts from the original type's existing API by using the `extends` keyword
+instead of `for`:
+
+```
+struct Song {
+  impl Hashable { ... }
+  impl Printable { ... }
+}
+
+adapter SongByArtist extends Song {
+  // Add an implementation of a new interface
+  impl Comparable { ... }
+
+  // Replace an existing implementation of an interface
+  // with an alternative.
+  impl Hashable { ... }
+}
+```
+
+The result would be `SongByArtist` would:
+
+-   implement `Comparable`, unlike `Song`,
+-   implement `Hashable`, but differently than `Song`, and
+-   implement `Printable`, inherited from `Song`.
+
+**Open question:** We may need additional mechanisms for changing the API in the
+adapter. For example, to resolve conflicts we might want to be able to move the
+implementation of a specific interface into an [external impl](#external-impl).
+
 ### Use case: Using independent libraries together
 
 Imagine we have two packages that are developed independently. Package `A`
@@ -1616,22 +1655,9 @@ var T: t = ...;
 A.F(t);
 ```
 
-**Open question:** This case is expected to be common, and to be convenient we
-want it to be easy to retain the type-being-adapted's API, as much as possible.
-We need some syntax for doing this, along with a way to make incremental
-changes, such as to resolve conflicts. One idea is to use the `extends` keyword
-instead of `for`:
+### Adapter with stricter invariants
 
-```
-adapter Foo extends Bar {
-  // Include all of Bar's API and interface implementations.
-}
-
-adapter Foo2 extends Bar {
-  // As above, but override implementation of `Baz` interface.
-  impl Baz { ... }
-}
-```
+FIXME
 
 **Open question:** Rust also uses the newtype idiom to create types with
 additional invariants or other information encoded in the type
