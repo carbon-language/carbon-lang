@@ -165,6 +165,7 @@ struct FunctionDefinition: AST, Declaration {
   let returnType: TypeSpecifier
   let body: Statement?
   let site: Site
+  // Why no declaredType? -Jeremy
 }
 
 typealias MemberDesignator = Identifier

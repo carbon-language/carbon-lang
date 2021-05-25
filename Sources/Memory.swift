@@ -96,7 +96,7 @@ struct Memory {
   }
 
   mutating func assign(from source: Address, into target: Address) {
-
+    
     // Only check the top level type because choices of a single type can have
     // different payload types.
     func uncheckedAssign(from source: Address, into target: Address) {
