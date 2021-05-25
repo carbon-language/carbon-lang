@@ -1623,36 +1623,41 @@ implementation of a specific interface into an [external impl](#external-impl).
 
 ### Use case: Using independent libraries together
 
-Imagine we have two packages that are developed independently. Package `A`
-defines an interface `A.I` and a generic algorithm `A.F` that operates on types
-that implement `A.I`. Package `B` defines a type `B.T`. Neither has a dependency
-on the other, so neither package defines an implementation for `A.I` for type
-`B.T`. A user that wants to pass a value of type `B.T` to `A.F` has to define an
-adapter that provides an implementation of `A.I` for `B.T`:
+Imagine we have two packages that are developed independently. Package
+`CompareLib` defines an interface `CompareLib.Comparable` and a generic
+algorithm `CompareLib.Sort` that operates on types that implement
+`CompareLib.Comparable`. Package `SongLib` defines a type `SongLib.Song`.
+Neither has a dependency on the other, so neither package defines an
+implementation for `CompareLib.Comparable` for type `SongLib.Song`. A user that
+wants to pass a value of type `SongLib.Song` to `CompareLib.Sort` has to define
+an adapter that provides an implementation of `CompareLib.Comparable` for
+`SongLib.Song`. This adapter will probably use the
+[`extends` facility of adapters](#extending-adapter) to preserve the
+`SongLib.Song` API.
 
 ```
-import A;
-import B;
+import CompareLib;
+import SongLib;
 
-adapter T for B.T {
-  impl A.I { ... }
+adapter Song extends SongLib.Song {
+  impl CompareLib.Comparable { ... }
 }
-// Or, to keep the names from A.I out of T's API:
-adapter T for B.T { }
-extend T {
-  impl A.I { ... }
+// Or, to keep the names from CompareLib.Comparable out of Song's API:
+adapter Song extends SongLib.Song { }
+extend Song {
+  impl CompareLib.Comparable { ... }
 }
 ```
 
-The caller can either cast `B.T` values to `T` when calling `A.F` or just start
-with `T` values in the first place.
+The caller can either cast `SongLib.Song` values to `Song` when calling
+`CompareLib.Sort` or just start with `Song` values in the first place.
 
 ```
-var B.T: bt = ...;
-A.F(bt as T);
+var SongLib.Song: lib_song = ...;
+CompareLib.Sort((lib_song as Song,));
 
-var T: t = ...;
-A.F(t);
+var Song: song = ...;
+CompareLib.Sort((song,));
 ```
 
 ### Adapter with stricter invariants
