@@ -159,7 +159,9 @@ extension Interpreter {
     }
     switch s {
     case let .expressionStatement(e, _):
-      UNIMPLEMENTED(e)
+      return evaluate(e) { resultAddress, me in
+        me.deleteAnyEphemeral(at: resultAddress, then: followup.code)
+      }
 
     case let .assignment(target: t, source: s, _):
       return evaluate(t) { target, me in
