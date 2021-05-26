@@ -4,6 +4,6 @@
 
 fn main () -> Int
 {
-  var Int x = 0;
+  var Int: x = 0;
   return x;
 }

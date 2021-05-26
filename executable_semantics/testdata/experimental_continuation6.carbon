@@ -4,9 +4,9 @@
 
 // Test recursive functions inside continuations.
 
-var Int current = 0;
+var Int: current = 0;
 
-fn CountUpTo(Int x) -> Int {
+fn CountUpTo(Int: x) -> Int {
   if (x == 0) {
     current = 0;
     __await;
@@ -22,8 +22,8 @@ fn main() -> Int {
   __continuation k {
     CountUpTo(5);
   }
-  var Int sum = 0;
-  var Int count = 5;
+  var Int: sum = 0;
+  var Int: count = 5;
   while (not (count == 0)) {
     __run k;
     sum = sum + current;

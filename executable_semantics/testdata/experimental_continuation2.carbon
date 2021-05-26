@@ -5,7 +5,7 @@
 // Test creating and running a continuation.
 
 fn main() -> Int {
-  var Int x = 0;
+  var Int: x = 0;
   __continuation k {
     x = x + 1;
   }
