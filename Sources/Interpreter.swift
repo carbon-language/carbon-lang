@@ -216,7 +216,7 @@ fileprivate extension Interpreter {
       return allocate(i.initializer, mutable: true, persist: true) { rhsArea, me in
         me.evaluate(i.initializer, into: rhsArea) { rhs, me in
           me.match(i.bindings, toValueAt: rhs) { matched, me in
-            matched ? Onward(proceed) : me.error(
+            matched ? =>proceed : me.error(
               i.bindings, "Initialization pattern not matched by \(me[rhs])")
           }
         }
@@ -227,7 +227,7 @@ fileprivate extension Interpreter {
       return evaluateAndConsume(c) { (condition: Bool, me) in
         return condition
           ? me.run(true_, then: proceed)
-          : false_.map { me.run($0, then: proceed) } ?? Onward(proceed)
+          : false_.map { me.run($0, then: proceed) } ?? =>proceed
       }
 
     case let .return(e, _):
@@ -291,7 +291,7 @@ fileprivate extension Interpreter {
   mutating func runBlock(
     _ content: ArraySlice<Statement>, then proceed: @escaping Next) -> Onward
   {
-    return content.isEmpty ? Onward(proceed)
+    return content.isEmpty ? =>proceed
       : run(content.first!) { me in
           me.runBlock(content.dropFirst(), then: proceed)
         }
@@ -326,7 +326,7 @@ fileprivate extension Interpreter {
     return evaluateAndConsume(c) { (runBody: Bool, me) in
       return runBody
         ? me.run(body) { me in me.while(c, run: body, then: proceed)}
-        : Onward(proceed)
+        : =>proceed
     }
   }
 }
@@ -369,7 +369,7 @@ fileprivate extension Interpreter {
   mutating func cleanUpPersistentAllocations(
     above n: Int, then proceed: @escaping Next) -> Onward
   {
-    frame.persistentAllocations.count == n ? Onward(proceed)
+    frame.persistentAllocations.count == n ? =>proceed
       : deleteLocalValue_doNotCallDirectly(
         at: frame.persistentAllocations.pop()!
       ) { me in me.cleanUpPersistentAllocations(above: n, then: proceed) }
@@ -380,7 +380,7 @@ fileprivate extension Interpreter {
   {
     if tracing { print("  info: deleting \(a)") }
     memory.delete(a)
-    return Onward(proceed)
+    return =>proceed
   }
 
   /// If `a` was allocated to an ephemeral temporary, deinitializes and destroys
@@ -391,7 +391,7 @@ fileprivate extension Interpreter {
     if let _ = frame.ephemeralAllocations.removeValue(forKey: a) {
       return deleteLocalValue_doNotCallDirectly(at: a, then: proceed)
     }
-    return Onward(proceed)
+    return =>proceed
   }
 
   /// Deinitializes and destroys any addresses in `locations` that were
@@ -400,7 +400,7 @@ fileprivate extension Interpreter {
     at locations: C, then proceed: @escaping Next) -> Onward
     where C.Element == Address
   {
-    guard let a0 = locations.first else { return Onward(proceed) }
+    guard let a0 = locations.first else { return =>proceed }
     return deleteAnyEphemeral(at: a0) { me in
       me.deleteAnyEphemerals(at: locations.dropFirst(), then: proceed)
     }
@@ -428,7 +428,7 @@ fileprivate extension Interpreter {
       print("  info: assigning \(self[source])\(source) into \(target)")
     }
     memory.assign(from: source, into: target)
-    return Onward(proceed)
+    return =>proceed
   }
 
   mutating func deinitialize(
@@ -438,7 +438,7 @@ fileprivate extension Interpreter {
       print("  info: deinitializing \(target)")
     }
     memory.deinitialize(target)
-    return Onward(proceed)
+    return =>proceed
   }
 
   mutating func initialize(
