@@ -609,25 +609,29 @@ fileprivate extension Interpreter {
         case .function:
           let function = me[callee] as! FunctionValue
           let old_frame = me.frame
-          let new_frame =
-            CallFrame(locals: ASTDictionary<SimpleBinding, Address>(),
-                      resultAddress: output,
-                      onReturn: Onward { me in
-                        me.cleanUpPersistentAllocations(above: 0) { me in
-                          me.frame = old_frame
-                          return me.deleteAnyEphemeral(at: arguments) { me in
-                            proceed(output, &me) } }})
+
+          let new_frame = CallFrame(
+            locals: ASTDictionary<SimpleBinding, Address>(),
+            resultAddress: output,
+            onReturn: Onward { me in
+              me.cleanUpPersistentAllocations(above: 0) { me in
+                me.frame = old_frame
+                return me.deleteAnyEphemeral(at: arguments) { me in
+                  proceed(output, &me) } }})
+
           me.frame = new_frame
-          return me.match(function.code.parameters, toValueAt: arguments) { matched, me in
-            if matched {
-              return me.run(function.code.body!) { me in
-                // Return an empty tuple when the function falls off the end.
+
+          return me.match(function.code.parameters, toValueAt: arguments) {
+            matched, me in
+            matched
+              ? me.run(function.code.body!) { me in
+              // Return an empty tuple when the function falls off the end.
                 me.initialize(me.frame.resultAddress, to: Tuple()) {
                   _, me in me.frame.onReturn
                 }
               }
-            } else {
-              return me.error(e, "failed to match parameters and arguments in function call")
+              : me.error(
+                e, "failed to match parameters and arguments in function call")
             }
           }
 
