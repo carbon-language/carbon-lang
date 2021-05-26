@@ -31,6 +31,25 @@ fileprivate struct Onward {
 /// A continuation function that takes an input.
 fileprivate typealias With<T> = (T, inout Interpreter)->Onward
 
+/// An operator for constructing a continuation result from a `Next` function.
+prefix operator =>
+
+/// An operator for constructing a continuation result from a `With<T>`
+/// function.
+infix operator => : AssignmentPrecedence
+
+/// Creates a continuation result corresponding to `followup`.
+///
+/// You can think of `=>f` or `=>{ me in ... }` as a way of coercing the
+/// function to the right type when `Onward` is required.
+prefix func =>(followup: Next) -> Onward { Onward(followup) }
+
+/// Creates a continuation result notionally corresponding to `followup(x)`.
+///
+/// You can think of `a=>f` or `a=>{ a, me in ... }` as a way of binding `a` to
+/// the function and the coercing it to `Onward`.
+func => <T>(x: T, followup: With<T>) -> Onward { me in =>{ followup(x, me) } }
+
 /// All the data that needs to be saved and restored across function call
 /// boundaries.
 fileprivate struct CallFrame {
@@ -95,7 +114,7 @@ struct Interpreter {
 
     frame = CallFrame(
       resultAddress: memory.allocate(),
-      onReturn: Onward { me in
+      onReturn: =>{ me in
         me.cleanUpPersistentAllocations(above: 0) { me in me.terminate() }
       })
 
@@ -126,7 +145,7 @@ fileprivate extension Interpreter {
   /// Exits the running program.
   mutating func terminate() -> Onward {
     running = false
-    return Onward { _ in fatalError("Terminated program can't continue.") }
+    return =>{ _ in fatalError("Terminated program can't continue.") }
   }
 
   /// Adds an error at the site of `offender` to the error log and marks the
@@ -223,12 +242,12 @@ fileprivate extension Interpreter {
       let saved = (frame.onBreak, frame.onContinue)
       let mark=frame.persistentAllocations.count
 
-      let onBreak = Onward { me in
+      let onBreak = =>{ me in
         (me.frame.onBreak, me.frame.onContinue) = saved
         return me.cleanUpPersistentAllocations(above: mark, then: proceed)
       }
 
-      let onContinue = Onward { me in
+      let onContinue = =>{ me in
         return me.cleanUpPersistentAllocations(above: mark) {
           $0.while(c, run: body, then: onBreak.code)
         }
@@ -285,7 +304,7 @@ fileprivate extension Interpreter {
       return error(subject, "no pattern matches \(self[subjectLocation])")
     }
 
-    let onMatch = Onward { me in
+    let onMatch = =>{ me in
       me.inScope(
         do: { me, proceed in me.run(clause.action, then: proceed) },
         then: proceed)
@@ -330,7 +349,7 @@ fileprivate extension Interpreter {
     else {
       frame.ephemeralAllocations[a] = e
     }
-    return Onward { me in proceed(a, &me) }
+    return a => proceed
   }
 
   /// Allocates an address for the result of evaluating `e`, passing it on to
@@ -339,7 +358,7 @@ fileprivate extension Interpreter {
     _ e: Expression, unlessNonNil destination: Address?,
     then proceed: @escaping With<Address>) -> Onward
   {
-    if let a = destination { return Onward { me in proceed(a, &me) } }
+    if let a = destination { return a => proceed }
     return allocate(e, then: proceed)
   }
 
@@ -428,7 +447,7 @@ fileprivate extension Interpreter {
       print("  info: initializing \(target) = \(v)")
     }
     memory.initialize(target, to: v)
-    return Onward { me in proceed(target, &me) }
+    return target => proceed
   }
 }
 
@@ -519,7 +538,7 @@ fileprivate extension Interpreter {
       let source = (frame.locals[b] ?? globals[b])!
       return destination != nil
         ? copy(from: source, to: destination!, then: proceed)
-        : Onward { me in proceed(source, &me) }
+        : source => proceed
 
     case let f as FunctionDefinition:
       // Bogus parameterTypes and returnType until Dave preserves the
@@ -609,7 +628,7 @@ fileprivate extension Interpreter {
 
             me.frame = CallFrame(
               resultAddress: output,
-              onReturn: Onward { me in
+              onReturn: =>{ me in
                 me.cleanUpPersistentAllocations(above: 0) { me in
                   me.frame = old_frame
                   return me.deleteAnyEphemeral(at: arguments) { me in
@@ -679,7 +698,7 @@ fileprivate extension Interpreter {
         let source = me.memory.substructure(at: base)[e.member]!
         return output != nil
           ? me.copy(from: source, to: output!, then: proceed)
-          : Onward { me in proceed(source, &me) }
+          : source => proceed
 
       case .type:
         // Handle access to a type member, like a static member in C++.
@@ -818,7 +837,7 @@ fileprivate extension Interpreter {
         print("\(b.name.site): info: binding \(self[source])\(source)")
       }
       frame.locals[b] = source
-      return Onward { me in proceed(true, &me) }
+      return true => proceed
 
     case let .tuple(x):
       return match(x, toValueAt: source, then: proceed)
@@ -858,26 +877,25 @@ fileprivate extension Interpreter {
     _ p: TuplePattern, toValueAt source: Address,
     then proceed: @escaping With<Bool>) -> Onward
   {
-    if self[source] is TupleValue {
-      let sourceStructure = self.memory.substructure(at: source)
-      if p.count == sourceStructure.count {
-        return matchElements(
-          p.fields().elements[...], toValuesAt: sourceStructure, then: proceed)
-      }
+    guard self[source] is TupleValue else { return false => proceed }
+
+    let sourceStructure = self.memory.substructure(at: source)
+    if p.count == sourceStructure.count {
+      return matchElements(
+        p.fields().elements[...], toValuesAt: sourceStructure, then: proceed)
     }
-    return Onward { me in proceed(false, &me) }
   }
 
   mutating func matchElements(
     _ p: Tuple<Pattern>.Elements.SubSequence, toValuesAt source: Tuple<Address>,
     then proceed: @escaping With<Bool>) -> Onward
   {
-    guard let (k0, p0) = p.first
-    else { return Onward { me in proceed(true, &me) } }
+    guard let (k0, p0) = p.first else { return true => proceed }
+
     return match(p0, toValueAt: source.elements[k0]!) { matched, me in
       matched
         ? me.matchElements(p.dropFirst(), toValuesAt: source, then: proceed)
-        : Onward { me in proceed(false, &me) }
+        : false => proceed
     }
   }
 }
