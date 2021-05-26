@@ -4,7 +4,7 @@
 
 // Test global variable initialization and read.
 
-var Int zero = 0;
+var Int: zero = 0;
 
 fn main() -> Int {
   return zero;

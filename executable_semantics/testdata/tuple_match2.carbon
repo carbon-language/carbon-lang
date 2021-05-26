@@ -5,9 +5,9 @@
 // Test matching with a mixture of positional and named fields.
 
 fn main() -> Int {
-  var auto t = (2, .x = 5);
+  var auto: t = (2, .x = 5);
   match (t) {
-    case (auto a, .x = auto b) =>
+    case (auto: a, .x = auto: b) =>
       return a - b + 3;
   }
 }
