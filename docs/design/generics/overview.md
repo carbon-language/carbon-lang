@@ -16,8 +16,8 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [Non-type generics](#non-type-generics)
     -   [Basic generics](#basic-generics)
     -   [No address of a function with generic parameters](#no-address-of-a-function-with-generic-parameters)
-    -   [Generic syntax is temporary](#generic-syntax-is-temporary)
-    -   [Basic templates](#basic-templates)
+    -   [Generic syntax is a placeholder](#generic-syntax-is-a-placeholder)
+    -   [FIXME Basic templates](#fixme-basic-templates)
         -   [Difference between templates and generics](#difference-between-templates-and-generics)
         -   [Substitution failure is an error](#substitution-failure-is-an-error)
     -   [Implicit parameters](#implicit-parameters)
@@ -181,16 +181,15 @@ many instances of a
 [static local function variable](https://en.wikipedia.org/wiki/Local_variable#Static_local_variables)
 are created, if we support them.
 
-### Generic syntax is temporary
+### Generic syntax is a placeholder
 
-**NOTE:** The `$` syntax is temporary, since it is not easy to type `$` from
-non-US keyboards, so we intend to switch to some other syntax. Instead of `:$`,
-we are considering: `:!`, `:@`, `:#`, and `::`. We might use the same character
-here as we decide for FIXME: metaprogramming
+**NOTE:** The `$` syntax is a placeholder. In addition to `:$`, we are
+considering: `:!`, `:@`, `:#`, and `::`. We might use the same character here as
+we decide for FIXME: metaprogramming
 [Carbon metaprogramming](https://github.com/josh11b/carbon-lang/blob/metaprogramming/docs/design/metaprogramming.md)
 constructs.
 
-### Basic templates
+### FIXME Basic templates
 
 For `CreateArray` function, we could change the parameter to be a template
 parameter by replacing "`UInt:$ N`" with "`UInt:$$ N`", but there would not be a
@@ -343,7 +342,7 @@ fn PrintOddNumbers(Int:$ N) {
 }
 ```
 
-Local template constants may be used in type checking:
+FIXME Local template constants may be used in type checking:
 
 ```
 fn PrimesLessThan(Int:$$ N) {
@@ -361,24 +360,24 @@ FIXME: [associated constants](details.md#associated-constants).
 
 ### Generic type parameters versus templated type parameters
 
-Recall, from
+FIXME: Recall, from
 [the "Difference between templates and generics" section above](#difference-between-templates-and-generics),
 that we fully check functions with generic parameters at the time they are
 defined, while functions with template parameters can use information from the
 caller.
 
 If you have a value of a generic type, you need to provide constraints on that
-type that define what you can do with values of that type. However when using a
-templated type, you can perform any operation on values of that type, and what
-happens will be resolved once that type is known. This may be an error if that
-type doesn't support that operation, but that will be reported at the call site
-not the function body; other call sites that call the same function with
-different types may be fine.
+type that define what you can do with values of that type. FIXME: However when
+using a templated type, you can perform any operation on values of that type,
+and what happens will be resolved once that type is known. This may be an error
+if that type doesn't support that operation, but that will be reported at the
+call site not the function body; other call sites that call the same function
+with different types may be fine.
 
-So while you can define constraints for template type parameters, they are
-needed for generic type parameters. In fact type constraints are the main thing
-we need to add to support generic type parameters, beyond what is described in
-[the "non-type generics" section above](#non-type-generics).
+FIXME: So while you can define constraints for template type parameters, they
+are needed for generic type parameters. In fact, type constraints are the main
+thing we need to add to support generic type parameters, beyond what is
+described in [the "non-type generics" section above](#non-type-generics).
 
 ## Proposed programming model
 
