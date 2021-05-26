@@ -3037,7 +3037,7 @@ void RewriteInstance::emitAndLink() {
         static_cast<MCObjectStreamer *>(Streamer.get())->getAssembler());
 
   RTDyld.reset(new decltype(RTDyld)::element_type(*BC->EFMM, Resolver));
-  RTDyld->setProcessAllSections(true);
+  RTDyld->setProcessAllSections(false);
   RTDyld->loadObject(*Obj);
 
   // Assign addresses to all sections. If key corresponds to the object
