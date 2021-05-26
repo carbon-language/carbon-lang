@@ -40,6 +40,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Example: Defining an impl for use by other types](#example-defining-an-impl-for-use-by-other-types)
 -   [Associated constants](#associated-constants)
 -   [Associated types](#associated-types)
+    -   [Inferring associated types](#inferring-associated-types)
     -   [Model](#model-1)
 -   [Parameterized interfaces](#parameterized-interfaces)
     -   [Impl lookup](#impl-lookup)
@@ -110,7 +111,6 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Impls with state](#impls-with-state)
     -   [Generic associated types](#generic-associated-types)
     -   [Higher-ranked types](#higher-ranked-types)
-    -   [Inferring associated types](#inferring-associated-types)
     -   [Field requirements](#field-requirements)
     -   [Generic type specialization](#generic-type-specialization)
     -   [Bridge for C++ customization points](#bridge-for-c-customization-points)
@@ -1497,7 +1497,10 @@ PrintValue(m, "key");
 
 ## Adapting types
 
-We also provide a way to create new types
+Since interfaces may only be implemented for a type once, and we limit where
+implementations may be added to a type, there is a need to allow the user to
+switch the type of a value to access different interface implementations. We
+therefore provide a way to create new types
 [compatible with](terminology.md#compatible-types) existing types with different
 APIs, in particular with different interface implementations, by
 [adapting](terminology.md#adapting-a-type) them:
@@ -1873,6 +1876,8 @@ For context, see
 and [Swift](https://docs.swift.org/swift-book/LanguageGuide/Generics.html#ID189)
 support associated types.
 
+### Inferring associated types
+
 **Open question:**
 [Swift allows the value of an associated type to be omitted when it can be determined from the method signatures in the implementation](https://docs.swift.org/swift-book/LanguageGuide/Generics.html#ID190).
 For the above example, this would mean figuring out `ElementType == T` from
@@ -1919,6 +1924,36 @@ Not to say this can't be resolved, but it does add complexity.
 removing this feature because it was the one thing in Swift that required global
 type inference, which they otherwise avoided. They
 [ultimately decided to keep the feature](https://github.com/apple/swift-evolution/blob/main/proposals/0108-remove-assoctype-inference.md).
+
+FIXME: Alternate text!
+
+Imagine we have an interface that has an associated type used in the signature
+of one of its methods:
+
+```
+interface A {
+  var Type:$ T;
+  method (Self: this) F() -> T;
+}
+```
+
+And we have a type implementing that interface:
+
+```
+struct S {
+  impl A {
+    // var Type:$ T = Int;
+    method (Self: this) F() -> Int { return 3; }
+  }
+}
+```
+
+The compiler could infer the type to assign to the associated type by matching
+the definition of `F`. This is
+[supported in Swift](https://docs.swift.org/swift-book/LanguageGuide/Generics.html#ID190),
+but may be tricky in the presence of function overloading or something where we
+would prefer the user to be explicit (so, for example, the name `T` was visible
+in the definition of `S`).
 
 ### Model
 
@@ -2110,6 +2145,12 @@ arguments.
     ensure they can be deduced unambiguously.
 
 ### Impl lookup
+
+FIXME: More in depth discussion of coherence, possibly including the links from
+[this thread](https://github.com/carbon-language/carbon-lang/pull/24#discussion_r603497457).
+[JSiek is interested](https://discord.com/channels/655572317891461132/708431657849585705/827165506443673610).
+Include [this thread](https://forums.swift.org/t/scoped-conformances/37159) as
+an alternative considered.
 
 Let's say you have some interface `I(T, U(V))` being implemented for some type
 `A(B(C(D), E))`. That impl must be defined in the same library that defines the
@@ -3610,7 +3651,11 @@ struct FixedArray(Type:$ T, Int:$ N) {
 
 ## Parameterized impls
 
-TODO: This section should be rewritten to be about parameterized `impl` in
+Also known as "blanket `impl`s", these are when you have an `impl` definition
+that is parameterized so it applies to more than a single type and interface
+combination.
+
+FIXME: This section should be rewritten to be about parameterized `impl` in
 general, not just templated. For example, the
 ["lookup resolution and specialization" section](#lookup-resolution-and-specialization)
 is applicable broadly.
@@ -3872,6 +3917,9 @@ implementations.
 
 ## Other constraints as type-types
 
+There are some constraints that we will naturally represent as named type-types
+that the user can specify.
+
 ### Type compatible with another type
 
 Given a type `U`, define the type-type `CompatibleWith(U)` as follows:
@@ -4049,7 +4097,11 @@ symbolically.
 
 ## Dynamic types
 
-Two different goals here:
+Generics provide enough structure to support runtime dispatch for values with
+types that vary at runtime, without giving up type safety. Both Rust and Swift
+have demonstrated the value of this feature.
+
+There are two different goals here:
 
 -   Reducing code size at the expense of more runtime dispatch.
 -   Increasing expressivity by allowing types to vary at runtime, AKA
@@ -4069,6 +4121,10 @@ instead of the
 used with generic type values.
 
 ### Runtime type parameters
+
+This feature is about allowing a function's type parameter to be passed in as a
+dynamic (non-generic) parameter. All values of that type would still be required
+to have the same type.
 
 If we pass in a type as an ordinary parameter (using `:` instead of `:$`), this
 means passing the witness table as an ordinary parameter -- that is a
@@ -4497,7 +4553,7 @@ UseBoxed(DontBox(Bar()));
 
 ### Abstract return types
 
-This lets you return am anonymous type implementing an interface from a
+This lets you return an anonymous type implementing an interface from a
 function.
 [Rust has this feature](https://rust-lang.github.io/rfcs/1522-conservative-impl-trait.html).
 Also see:
@@ -4553,6 +4609,10 @@ interface RandomAccessContainer {
 
 ### Evolution
 
+There are a collection of use cases for making different changes to interfaces
+that are already in use. These should be addressed either by describing how they
+can be accomplished with existing generics features, or by adding features.
+
 Being able to decorate associated items with `upcoming`, `deprecated`, etc. to
 allow for transition periods when items are being added or removed.
 
@@ -4603,6 +4663,9 @@ others, a particular interface's test suite might have specific requirements and
 so require a custom testing interface.
 
 ### Operator overloading
+
+We will need a story for defining how an operation is overloaded for a type by
+implementing an interface for that type.
 
 TODO: Basically same approach as Rust, implement specific standardized
 interfaces for each operator, or family of operators. See
@@ -4680,11 +4743,11 @@ roughly to
 
 ### Higher-ranked types
 
-A solution to the problem posed
-[here (TODO)](#broken-links-footnote)<!-- T:Carbon: types as function tables, interfaces as type-types --><!-- A:#heading=h.qvhzlz54obmt -->,
-where we need a representation for a way to go from a type to an implementation
-of an interface parameterized by that type. Examples of things we might want to
-express:
+This would be some solution for when a function signature specifies that there
+is a way to go from a type to an implementation of an interface parameterized by
+that type. This problem was posed
+[here (TODO)](#broken-links-footnote)<!-- T:Carbon: types as function tables, interfaces as type-types --><!-- A:#heading=h.qvhzlz54obmt -->.
+Examples of things we might want to express:
 
 -   This priority queue's second argument (`QueueLike`) is a function that takes
     a type `U` and returns a type that implements `QueueInterface(U)`:
@@ -4720,46 +4783,17 @@ Swift proposals:
 [4](https://github.com/typelift/swift/issues/1). These correspond roughly to
 [C++ template template parameters](https://en.cppreference.com/w/cpp/language/template_parameters#Template_template_parameter).
 
-### Inferring associated types
-
-Imagine we have an interface that has an associated type used in the signature
-of one of its methods:
-
-```
-interface A {
-  var Type:$ T;
-  method (Self: this) F() -> T;
-}
-```
-
-And we have a type implementing that interface:
-
-```
-struct S {
-  impl A {
-    // var Type:$ T = Int;
-    method (Self: this) F() -> Int { return 3; }
-  }
-}
-```
-
-The compiler could infer the type to assign to the associated type by matching
-the definition of `F`. This is
-[supported in Swift](https://docs.swift.org/swift-book/LanguageGuide/Generics.html#ID190),
-but may be tricky in the presence of function overloading or something where we
-would prefer the user to be explicit (so, for example, the name `T` was visible
-in the definition of `S`).
-
 ### Field requirements
 
-To match the expressivity of inheritance, we might want to allow interfaces to
-express the requirement that any implementing type has a particular field. We
-might want to restrict what can be done with that field, using capabilities like
-"read", "write", and "address of" (which implies read and write). Swift also has
-a "modify" capability implemented using coroutines, without requiring there be a
-value of the right type we can take the address of. If we do expose an "address
-of" capability, it will have to be a real address since we don't expect any sort
-of proxy to be able to be used instead.
+We might want to allow interfaces to express the requirement that any
+implementing type has a particular field. This would be to match the
+expressivity of inheritance, which can express "all subtypes start with this
+list of fields." We might want to restrict what can be done with that field,
+using capabilities like "read", "write", and "address of" (which implies read
+and write). Swift also has a "modify" capability implemented using coroutines,
+without requiring there be a value of the right type we can take the address of.
+If we do expose an "address of" capability, it will have to be a real address
+since we don't expect any sort of proxy to be able to be used instead.
 
 **Question:** C++ maybe gets wrong that you can take address of any member. If
 you couldn't it would:
