@@ -622,16 +622,17 @@ fileprivate extension Interpreter {
 
           return me.match(callee.code.parameters, toValueAt: arguments) {
             matched, me in
-            guard matched else {
+            if matched {
+              return me.run(callee.code.body!) { me in
+                // Return an empty tuple when the function falls off the end.
+                me.initialize(me.frame.resultAddress, to: Tuple()) {
+                  _, me in me.frame.onReturn
+                }
+              }
+            }
+            else {
               return me.error(
                 e, "failed to match parameters and arguments in function call")
-            }
-
-            return me.run(callee.code.body!) { me in
-              // Return an empty tuple when the function falls off the end.
-              me.initialize(me.frame.resultAddress, to: Tuple()) {
-                _, me in me.frame.onReturn
-              }
             }
           }
 
@@ -644,10 +645,10 @@ fileprivate extension Interpreter {
               type_: resultType,
               discriminator: discriminator,
               payload: me[arguments] as! Tuple<Value>)
-            return me.deleteAnyEphemerals(at: [calleeAddress, arguments])
-            { me in
-              me.initialize(output, to: result, then: proceed)
-            }
+            return
+              me.deleteAnyEphemerals(at: [calleeAddress, arguments]) { me in
+                me.initialize(output, to: result, then: proceed)
+              }
 
           case .struct:
             UNIMPLEMENTED()
