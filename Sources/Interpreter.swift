@@ -601,42 +601,42 @@ fileprivate extension Interpreter {
     _ e: FunctionCall<Expression>, into output: Address,
     then proceed: @escaping With<Address>) -> Onward
   {
-    evaluate(e.callee, asCallee: true) { callee, me in
+    evaluate(e.callee, asCallee: true) { calleeAddress, me in
       me.evaluate(.tupleLiteral(e.arguments)) { arguments, me in
         // TODO: instead of using the callee value's type to dispatch, use the
         // static type of the e.callee expression.
-        switch me[callee].type {
-        case .function:
-          let function = me[callee] as! FunctionValue
+        switch me[calleeAddress] {
+        case let callee as FunctionValue:
           let old_frame = me.frame
 
-          let new_frame = CallFrame(
-            locals: ASTDictionary<SimpleBinding, Address>(),
+          me.frame = CallFrame(
             resultAddress: output,
             onReturn: Onward { me in
               me.cleanUpPersistentAllocations(above: 0) { me in
                 me.frame = old_frame
                 return me.deleteAnyEphemeral(at: arguments) { me in
-                  proceed(output, &me) } }})
-
-          me.frame = new_frame
-
-          return me.match(function.code.parameters, toValueAt: arguments) {
-            matched, me in
-            matched
-              ? me.run(function.code.body!) { me in
-              // Return an empty tuple when the function falls off the end.
-                me.initialize(me.frame.resultAddress, to: Tuple()) {
-                  _, me in me.frame.onReturn
+                  proceed(output, &me)
                 }
               }
-              : me.error(
+            })
+
+          return me.match(callee.code.parameters, toValueAt: arguments) {
+            matched, me in
+            guard matched else {
+              return me.error(
                 e, "failed to match parameters and arguments in function call")
+            }
+
+            return me.run(callee.code.body!) { me in
+              // Return an empty tuple when the function falls off the end.
+              me.initialize(me.frame.resultAddress, to: Tuple()) {
+                _, me in me.frame.onReturn
+              }
             }
           }
 
-        case .type:
-          switch Type(me[callee])! {
+        case let callee as Type:
+          switch callee {
           case let .alternative(discriminator, parent: resultType):
             // FIXME: there will be an extra copy of the payload; the result
             // should adopt the payload in memory.
@@ -644,7 +644,8 @@ fileprivate extension Interpreter {
               type_: resultType,
               discriminator: discriminator,
               payload: me[arguments] as! Tuple<Value>)
-            return me.deleteAnyEphemerals(at: [callee, arguments]) { me in
+            return me.deleteAnyEphemerals(at: [calleeAddress, arguments])
+            { me in
               me.initialize(output, to: result, then: proceed)
             }
 
@@ -654,7 +655,7 @@ fileprivate extension Interpreter {
             UNREACHABLE()
           }
 
-        case .int, .bool, .tuple, .choice, .error, .alternative, .struct:
+        default:
           UNREACHABLE()
         }
       }
