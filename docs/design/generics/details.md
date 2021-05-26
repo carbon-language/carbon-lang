@@ -24,7 +24,6 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [Type-types and facet types](#type-types-and-facet-types)
 -   [Structural interfaces](#structural-interfaces)
     -   [Subtyping between type-types](#subtyping-between-type-types)
-    -   [Future work: method constraints](#future-work-method-constraints)
 -   [Combining interfaces by anding type-types](#combining-interfaces-by-anding-type-types)
 -   [Interface requiring other interfaces](#interface-requiring-other-interfaces)
     -   [Interface extension](#interface-extension)
@@ -115,12 +114,12 @@ function body -- you can only call functions defined in the interface in the
 function body. Contrast this with making the type a template argument, where you
 could just use `Type` instead of an interface and it will work as long as the
 function is only called with types that allow the definition of the function to
-compile. You are still allowed to declare templated type arguments as having an
-interface type, and this will add a requirement that the type satisfy the
-interface independent of whether that is needed to compile the function body,
-but it is strictly optional. You might still do this to get clearer error
-messages, document expectations, or express that a type has certain semantics
-beyond what is captured in its member function names and signatures).
+compile. The interface bound has other benefits:
+
+-   allows the compiler to deliver clearer error messages,
+-   documents expectations, and
+-   expresses that a type has certain semantics beyond what is captured in its
+    member function names and signatures.
 
 The last piece of the puzzle is how the caller of the function can produce a
 value with the right type. Let's say the user has a value of type `Widget`, and
@@ -842,61 +841,6 @@ fn PrintDrawPrint[PrintAndRender:$ T1](T1: x1) {
   PrintIt(x1);
 }
 ```
-
-### Future work: method constraints
-
-Structural interfaces are a reasonable mechanism for describing other structural
-type constraints, which we will likely want for template constraints. For
-example, a method definition in a structural interface would match any type that
-has a method with that name and signature. This is only for templates, not
-generics, since "the method with a given name and signature" can change when
-casting to a facet type. For example:
-
-```
-structural interface ShowPrintable {
-  impl Printable;
-  alias Show = Printable.Print;
-}
-
-structural interface ShowRenderable {
-  impl Renderable;
-  alias Show = Renderable.Draw;
-}
-
-structural interface HasShow {
-  method (Self: this) Show();
-}
-
-// Template, not generic, since this relies on structural typing.
-fn CallShow[HasShow:$$ T](T: x) {
-  x.Show();
-}
-
-fn ViaPrintable[ShowPrintable:$ T](T: x) {
-  // Calls Printable.Print().
-  CallShow(x);
-}
-
-fn ViaRenderable[ShowRenderable:$ T](T: x) {
-  // Calls Renderable.Draw().
-  CallShow(x);
-}
-
-struct Sprite {
-  impl Printable { ... }
-  impl Renderable { ... }
-}
-
-var Sprite: x = ();
-ViaPrintable(x);
-ViaRenderable(x);
-// Not allowed, no method `Show`:
-CallShow(x);
-```
-
-We could similarly support associated constant and
-[instance data field](#field-requirements) requirements. This is future work
-though, as it does not directly impact generics in Carbon.
 
 ## Combining interfaces by anding type-types
 
