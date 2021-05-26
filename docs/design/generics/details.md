@@ -172,10 +172,10 @@ function body -- you can only call functions defined in the interface in the
 function body. Contrast this with making the type a template argument, where you
 could just use `Type` instead of an interface and it will work as long as the
 function is only called with types that allow the definition of the function to
-compile. You are still allowed to declare templated type arguments as having an
-interface type, and this will add a requirement that the type satisfy the
-interface independent of whether that is needed to compile the function body,
-but it is strictly optional. You might still do this to get clearer error
+compile. FIXME: You are still allowed to declare templated type arguments as
+having an interface type, and this will add a requirement that the type satisfy
+the interface independent of whether that is needed to compile the function
+body, but it is strictly optional. You might still do this to get clearer error
 messages, document expectations, or express that a type has certain semantics
 beyond what is captured in its member function names and signatures).
 
@@ -901,6 +901,8 @@ fn PrintDrawPrint[PrintAndRender:$ T1](T1: x1) {
 ```
 
 ### Future work: method constraints
+
+FIXME: skipped for now
 
 Structural interfaces are a reasonable mechanism for describing other structural
 type constraints, which we will likely want for template constraints. For
