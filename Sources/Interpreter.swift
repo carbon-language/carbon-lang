@@ -36,19 +36,21 @@ prefix operator =>
 
 /// An operator for constructing a continuation result from a `With<T>`
 /// function.
-infix operator => : AssignmentPrecedence
+infix operator => : DefaultPrecedence
 
 /// Creates a continuation result corresponding to `followup`.
 ///
 /// You can think of `=>f` or `=>{ me in ... }` as a way of coercing the
 /// function to the right type when `Onward` is required.
-prefix func =>(followup: Next) -> Onward { Onward(followup) }
+fileprivate prefix func =>(followup: @escaping Next) -> Onward { Onward(followup) }
 
 /// Creates a continuation result notionally corresponding to `followup(x)`.
 ///
 /// You can think of `a=>f` or `a=>{ a, me in ... }` as a way of binding `a` to
 /// the function and the coercing it to `Onward`.
-func => <T>(x: T, followup: With<T>) -> Onward { me in =>{ followup(x, me) } }
+fileprivate func => <T>(x: T, followup: @escaping With<T>) -> Onward {
+  =>{ me in followup(x, &me) }
+}
 
 /// All the data that needs to be saved and restored across function call
 /// boundaries.
@@ -877,13 +879,14 @@ fileprivate extension Interpreter {
     _ p: TuplePattern, toValueAt source: Address,
     then proceed: @escaping With<Bool>) -> Onward
   {
-    guard self[source] is TupleValue else { return false => proceed }
-
-    let sourceStructure = self.memory.substructure(at: source)
-    if p.count == sourceStructure.count {
-      return matchElements(
-        p.fields().elements[...], toValuesAt: sourceStructure, then: proceed)
+    if self[source] is TupleValue {
+      let sourceStructure = self.memory.substructure(at: source)
+      if p.count == sourceStructure.count {
+        return matchElements(
+          p.fields().elements[...], toValuesAt: sourceStructure, then: proceed)
+      }
     }
+    return false => proceed
   }
 
   mutating func matchElements(
