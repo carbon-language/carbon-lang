@@ -28,7 +28,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 ## What are generics?
 
-Generics are a mechanism for writing more abstract code that applies more
+Generics are a mechanism for writing parameterized code that applies more
 generally instead of making near duplicates for very similar situations, much
 like templates. For example, instead of having one function per
 type-you-can-sort:
@@ -39,17 +39,17 @@ fn SortStringVector(Ptr(Vector(String)): a) { ... }
 ...
 ```
 
-you might have one function that could sort any array with comparable elements:
+you might have one generic function that could sort any array with comparable elements:
 
 ```
 fn SortVector[Comparable:$ T](Ptr(Vector(T)): a) { ... }
 ```
 
-Where the `SortVector` function applied to a `Ptr(Vector(Int32))` input is
+The `SortVector` function applied to a `Ptr(Vector(Int32))` input is
 semantically identical to `SortInt32Vector`, and similarly for
 `Ptr(Vector(String))` input and `SortStringVector`.
 
-Here `Comparable` is the name of an _interface_, which describes the
+In `SortVector`, `Comparable` is the name of an _interface_ which describes the
 requirements for the type `T`. These requirements form the contract that allows
 us to have an API boundary encapsulating the implementation of the function,
 unlike templates. That is, given that we know `T` satisfies the requirements, we
@@ -69,7 +69,7 @@ given a function definition, but more checking of the definition is required
 after seeing the call sites (and you know which
 [instantiations](terminology.md#instantiation) are needed).
 
-The [generics terminology document](terminology.md) goes into more detail about
+[Generics terminology](terminology.md) goes into more detail about
 the
 [difference between generics and templates](terminology.md#generic-versus-template-parameters).
 
@@ -123,14 +123,14 @@ PrintXs_Generic(m);  // Compile error: value for generic parameter `n`
 ```
 
 For the definition of the function there is only one difference: we added a `$`
-to indicate that the parameter named `n` is generic. The body of the function
+to indicate that the parameter named `N` is generic. The body of the function
 type checks using the same logic as `PrintXs_Regular`. However, callers must be
 able to know the value of the argument at compile time. This allows the compiler
 to adopt a code generation strategy that creates a separate copy of the
 `PrintXs_Generic` function for each combination of values of the generic (and
 template) arguments, called [static specialization](goals.md#dispatch-control).
 In this case, this means that the compiler can generate different binary code
-for the calls passing `n==1` and `n==2`. Knowing the value of `n` at code
+for the calls passing `1` or `2` for `N`. Knowing the value of `N` at code
 generation time allows the optimizer to unroll the loop, so that the call
 `PrintXs_Generic(2)` could be transformed into:
 
