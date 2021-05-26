@@ -56,7 +56,7 @@ final class InterpreterTests: XCTestCase {
   }
 
   func test1() {
-    // XCTAssertEqual(run("scopes1.6c", tracing: true), 0)
+    // XCTAssertEqual(run("fun2.6c", tracing: true), 0)
     // XCTAssertEqual(run("scopes2.6c", tracing: true), 0)
   }
 

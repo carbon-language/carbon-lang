@@ -522,17 +522,13 @@ fileprivate extension Interpreter {
         : Onward { me in proceed(source, &me) }
 
     case let f as FunctionDefinition:
-      // Bogus parameterTypes and returnType until I figure out how to get those.  -Jeremy
-      let function = FunctionValue(type: .function(parameterTypes: Tuple(), returnType: .int), code: f)
-      /* This commented version causes a leak. -Jeremy
+      // Bogus parameterTypes and returnType until Dave preserves the
+      // typechecker's work. -Jeremy
+      let result = FunctionValue(
+        type: .function(parameterTypes: Tuple(), returnType: .int), code: f)
+
       return allocate(.name(name), unlessNonNil: destination) { output, me in
-        me.initialize(output, to: function, then: proceed) }
-       */
-      if destination == nil {
-        let address = memory.allocate(mutable: false)
-        return initialize(address, to: function, then: proceed)
-      } else {
-        return initialize(destination!, to: function, then: proceed)
+        me.initialize(output, to: result, then: proceed)
       }
 
     case let a as Alternative:
@@ -606,33 +602,38 @@ fileprivate extension Interpreter {
         // TODO: instead of using the callee value's type to dispatch, use the
         // static type of the e.callee expression.
         switch me[calleeAddress] {
+
         case let callee as FunctionValue:
-          let old_frame = me.frame
+          return me.deleteAnyEphemeral(at: calleeAddress) { me in
+            let old_frame = me.frame
 
-          me.frame = CallFrame(
-            resultAddress: output,
-            onReturn: Onward { me in
-              me.cleanUpPersistentAllocations(above: 0) { me in
-                me.frame = old_frame
-                return me.deleteAnyEphemeral(at: arguments) { me in
-                  proceed(output, &me)
+            me.frame = CallFrame(
+              resultAddress: output,
+              onReturn: Onward { me in
+                me.cleanUpPersistentAllocations(above: 0) { me in
+                  me.frame = old_frame
+                  return me.deleteAnyEphemeral(at: arguments) { me in
+                    proceed(output, &me)
+                  }
+                }
+              })
+
+            return me.match(callee.code.parameters, toValueAt: arguments) {
+              matched, me in
+              if matched {
+                return me.run(callee.code.body!) { me in
+                  // Return an empty tuple when the function falls off the end.
+                  me.initialize(me.frame.resultAddress, to: Tuple()) {
+                    _, me in me.frame.onReturn
+                  }
                 }
               }
-            })
-
-          return me.match(callee.code.parameters, toValueAt: arguments) {
-            matched, me in
-            if matched {
-              return me.run(callee.code.body!) { me in
-                // Return an empty tuple when the function falls off the end.
-                me.initialize(me.frame.resultAddress, to: Tuple()) {
-                  _, me in me.frame.onReturn
-                }
+              else {
+                return me.error(
+                  e.arguments,
+                  "arguments don't match literal values in parameter list",
+                  notes: [("parameter list", callee.code.parameters.site)])
               }
-            }
-            else {
-              return me.error(
-                e, "failed to match parameters and arguments in function call")
             }
           }
 
