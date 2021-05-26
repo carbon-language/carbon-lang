@@ -291,10 +291,9 @@ fileprivate extension Interpreter {
   mutating func runBlock(
     _ content: ArraySlice<Statement>, then proceed: @escaping Next) -> Onward
   {
-    return content.isEmpty ? =>proceed
-      : run(content.first!) { me in
-          me.runBlock(content.dropFirst(), then: proceed)
-        }
+    content.isEmpty ? =>proceed : run(content.first!) { me in
+      me.runBlock(content.dropFirst(), then: proceed)
+    }
   }
 
   mutating func runMatch(
@@ -360,12 +359,11 @@ fileprivate extension Interpreter {
     _ e: Expression, unlessNonNil destination: Address?,
     then proceed: @escaping With<Address>) -> Onward
   {
-    if let a = destination { return a => proceed }
-    return allocate(e, then: proceed)
+    destination.map { $0 => proceed } ?? allocate(e, then: proceed)
   }
 
-  /// Destroys and reclaims memory of the `n` locally-allocated values at the
-  /// top of the allocation stack.
+  /// Destroys and reclaims memory of locally-allocated values at the top of the
+  /// allocation stack until the stack's count is `n`.
   mutating func cleanUpPersistentAllocations(
     above n: Int, then proceed: @escaping Next) -> Onward
   {
