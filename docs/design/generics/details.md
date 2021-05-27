@@ -1905,10 +1905,14 @@ struct DynamicArray(Type:$ T) {
 }
 ```
 
-Should we do the same thing in Carbon? One concern is this might be a little
-more complicated in the presence of method overloads with
-[default implementations](interface-defaults), since it might not be clear how
-they should match up, as in this example:
+Should we do the same thing in Carbon?
+
+One benefit is that it allows an interface to evolve by adding an associated
+type, without having to then modify all implementations of that interface.
+
+One concern is this might be a little more complicated in the presence of method
+overloads with [default implementations](interface-defaults), since it might not
+be clear how they should match up, as in this example:
 
 ```
 interface Has2OverloadsWithDefaults {
