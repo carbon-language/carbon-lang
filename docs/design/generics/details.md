@@ -1435,14 +1435,14 @@ interface RandomAccessIterator {
 }
 
 fn SearchInSortedList
-    [Comparable:$ T, ForwardIterator(.Element = T): IterT]
+    [Comparable:$ T, ForwardIterator(.Element = T):$ IterT]
     (IterT: begin, IterT: end, T: needle) -> Bool {
   ... // does linear search
 }
 // Will prefer the following overload when it matches
 // since it is more specific.
 fn SearchInSortedList
-    [Comparable:$ T, RandomAccessIterator(.Element = T): IterT]
+    [Comparable:$ T, RandomAccessIterator(.Element = T):$ IterT]
     (IterT: begin, IterT: end, T: needle) -> Bool {
   ... // does binary search
 }
