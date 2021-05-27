@@ -356,14 +356,14 @@ Breaking this apart:
 
 ### Control flow
 
-> References: [Control flow](control_flow.md)
+> References: [Control flow](control_flow/README.md)
 
 Blocks of statements are generally executed sequentially. However, statements
 are the primary place where this flow of execution can be controlled.
 
 #### `if` and `else`
 
-> References: [Control flow](control_flow.md#if-and-else)
+> References: [Control flow](control_flow/conditionals.md)
 
 `if` and `else` provide conditional execution of statements. For example:
 
@@ -388,7 +388,7 @@ This code will:
 
 ##### `while`
 
-> References: [Control flow](control_flow.md#while)
+> References: [Control flow](control_flow/loops.md#while)
 
 `while` statements loop for as long as the passed expression returns `True`. For
 example, this prints `0`, `1`, `2`, then `Done!`:
@@ -404,7 +404,7 @@ Print("Done!");
 
 ##### `for`
 
-> References: [Control flow](control_flow.md#for)
+> References: [Control flow](control_flow/loops.md#for)
 
 `for` statements support range-based looping, typically over containers. For
 example, this prints all names in `names`:
@@ -419,7 +419,7 @@ for (var String name : names) {
 
 ##### `break`
 
-> References: [Control flow](control_flow.md#break)
+> References: [Control flow](control_flow/loops.md#break)
 
 The `break` statement immediately ends a `while` or `for` loop. Execution will
 resume at the end of the loop's scope. For example, this processes steps until a
@@ -437,7 +437,7 @@ for (var Step step : steps) {
 
 ##### `continue`
 
-> References: [Control flow](control_flow.md#continue)
+> References: [Control flow](control_flow/loops.md#continue)
 
 The `continue` statement immediately goes to the next loop of a `while` or
 `for`. In a `while`, execution continues with the `while` expression. For
@@ -457,7 +457,7 @@ while (!f.EOF()) {
 
 #### `return`
 
-> References: [Control flow](control_flow.md#return)
+> References: [Control flow](control_flow/return.md)
 
 The `return` statement ends the flow of execution within a function, returning
 execution to the caller. If the function returns a value to the caller, that
