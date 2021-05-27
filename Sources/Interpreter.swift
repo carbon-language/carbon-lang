@@ -619,11 +619,11 @@ fileprivate extension Interpreter {
   {
     evaluate(e.callee, asCallee: true) { calleeAddress, me in
       me.evaluate(.tupleLiteral(e.arguments)) { arguments, me in
-        // TODO: instead of using the callee value's type to dispatch, use the
-        // static type of the e.callee expression.
-        switch me[calleeAddress] {
+        switch me.staticType[e.callee]! {
 
-        case let callee as FunctionValue:
+        case .function:
+          let callee = me[calleeAddress] as! FunctionValue
+
           return me.deleteAnyEphemeral(at: calleeAddress) { me in
             let old_frame = me.frame
 
@@ -658,27 +658,21 @@ fileprivate extension Interpreter {
             }
           }
 
-        case let callee as Type:
-          switch callee {
-          case let .alternative(discriminator, parent: resultType):
-            // FIXME: there will be an extra copy of the payload; the result
-            // should adopt the payload in memory.
-            let result = ChoiceValue(
-              dynamic_type_: resultType,
-              discriminator: discriminator,
-              payload: me[arguments] as! Tuple<Value>)
-            return
-              me.deleteAnyEphemerals(at: [calleeAddress, arguments]) { me in
-                me.initialize(output, to: result, then: proceed)
-              }
+        case let .alternative(discriminator, parent: resultType):
+          // FIXME: there will be an extra copy of the payload; the result
+          // should adopt the payload in memory.
+          let result = ChoiceValue(
+            dynamic_type_: resultType,
+            discriminator: discriminator,
+            payload: me[arguments] as! Tuple<Value>)
+          return
+            me.deleteAnyEphemerals(at: [calleeAddress, arguments]) { me in
+              me.initialize(output, to: result, then: proceed)
+            }
 
-          case .struct:
-            UNIMPLEMENTED()
-          case .int, .bool, .type, .function, .tuple, .choice, .error:
-            UNREACHABLE()
-          }
-
-        default:
+        case .struct:
+          UNIMPLEMENTED()
+        case .int, .bool, .type, .tuple, .choice, .error:
           UNREACHABLE()
         }
       }
