@@ -174,8 +174,8 @@ have two methods:
 ```
 interface Vector {
   // Here "Self" means "the type implementing this interface".
-  method (Self: a) Add(Self: b) -> Self;
-  method (Self: a) Scale(Double: v) -> Self;
+  method (a: Self) Add(b: Self) -> Self;
+  method (a: Self) Scale(v: Double) -> Self;
 }
 ```
 
@@ -206,14 +206,14 @@ Impls may be defined inline inside the type definition:
 
 ```
 struct Point {
-  var Double: x;
-  var Double: y;
+  var x: Double;
+  var y: Double;
   impl Vector {
     // In this scope, "Self" is an alias for "Point".
-    method (Self: a) Add(Self: b) -> Self {
+    method (a: Self) Add(b: Self) -> Self {
       return Point(.x = a.x + b.x, .y = a.y + b.y);
     }
-    method (Self: a) Scale(Double: v) -> Self {
+    method (a: Self) Scale(v: Double) -> Self {
       return Point(.x = a.x * v, .y = a.y * v);
     }
   }
@@ -223,8 +223,8 @@ struct Point {
 Interfaces that are implemented inline contribute to the type's API:
 
 ```
-var Point: p1 = (.x = 1.0, .y = 2.0);
-var Point: p2 = (.x = 2.0, .y = 4.0);
+var p1: Point = (.x = 1.0, .y = 2.0);
+var p2: Point = (.x = 2.0, .y = 4.0);
 Assert(p1.Scale(2.0) == p2);
 Assert(p1.Add(p1) == p2);
 ```
@@ -240,25 +240,25 @@ meaning their data representations are the same, so we allow you to cast between
 the two freely:
 
 ```
-var Point: a = (.x = 1.0, .y = 2.0);
+var a: Point = (.x = 1.0, .y = 2.0);
 // `a` has `Add` and `Scale` methods:
 a.Add(a.Scale(2.0));
 
 // Cast from Point implicitly
-var Point as Vector: b = a;
+var b: Point as Vector = a;
 // `b` has `Add` and `Scale` methods:
 b.Add(b.Scale(2.0));
 
 // Will also implicitly cast when calling functions:
-fn F(Point as Vector: c, Point: d) {
+fn F(c: Point as Vector, d: Point) {
   d.Add(c.Scale(2.0));
 }
 F(a, b);
 
 // Explicit casts
-var Point as Vector: z = (a as (Point as Vector)).Scale(3.0);
+var z: Point as Vector = (a as (Point as Vector)).Scale(3.0);
 z.Add(b);
-var Point: w = z as Point;
+var w: Point = z as Point;
 ```
 
 These [casts](terminology.md#subtyping-and-casting) change which names are
@@ -287,14 +287,14 @@ To implement more than one interface when defining a type, simply include an
 
 ```
 struct Point {
-  var Double: x;
-  var Double: y;
+  var x: Double;
+  var y: Double;
   impl Vector {
-    method (Self: a) Add(Self: b) -> Self { ... }
-    method (Self: a) Scale(Double: v) -> Self { ... }
+    method (a: Self) Add(b: Self) -> Self { ... }
+    method (a: Self) Scale(v: Double) -> Self { ... }
   }
   impl Drawable {
-    method (Self: a) Draw() { ... }
+    method (a: Self) Draw() { ... }
   }
 }
 ```
@@ -306,13 +306,13 @@ in common.
 ```
 struct GameBoard {
   impl Drawable {
-    method (Self: this) Draw() { ... }
+    method (this: Self) Draw() { ... }
   }
   impl EndOfGame {
     // Error: `GameBoard` has two methods named
     // `Draw` with the same signature.
-    method (Self: this) Draw() { ... }
-    method (Self: this) Winner(Int: player) { ... }
+    method (this: Self) Draw() { ... }
+    method (this: Self) Winner(player: Int) { ... }
   }
 }
 ```
@@ -324,9 +324,9 @@ experience.
 
 ```
 struct Player {
-  var String: name;
+  var name: String;
   impl Icon {
-    method (Self: this) Name() -> String { return this.name; }
+    method (this: Self) Name() -> String { return this.name; }
     // ...
   }
   impl GameUnit {
@@ -345,17 +345,17 @@ construct which takes the name of an existing type:
 
 ```
 struct Point2 {
-  var Double: x;
-  var Double: y;
+  var x: Double;
+  var y: Double;
 }
 
 extend Point2 {
   // In this scope, "Self" is an alias for "Point2".
   impl Vector {
-    method (Self: a) Add(Self: b) -> Self {
+    method (a: Self) Add(b: Self) -> Self {
       return Point2(.x = a.x + b.x, .y = a.y + b.y);
     }
-    method (Self: a) Scale(Double: v) -> Self {
+    method (a: Self) Scale(v: Double) -> Self {
       return Point2(.x = a.x * v, .y = a.y * v);
     }
   }
@@ -382,16 +382,16 @@ On the other hand, if we cast to the facet type, those methods do become
 visible:
 
 ```
-var Point2: a = (.x = 1.0, .y = 2.0);
+var a: Point2 = (.x = 1.0, .y = 2.0);
 // `a` does *not* have `Add` and `Scale` methods:
 // Error: a.Add(a.Scale(2.0));
 
 // Cast from Point2 implicitly
-var Point2 as Vector: b = a;
+var b: Point2 as Vector = a;
 // `b` does have `Add` and `Scale` methods:
 b.Add(b.Scale(2.0));
 
-fn F(Point2 as Vector: c) {
+fn F(c: Point2 as Vector) {
   // Can call `Add` and `Scale` on `c` even though we can't on `a`.
   c.Add(c.Scale(2.0));
 }
@@ -405,9 +405,9 @@ needed:
 
 ```
 struct Point3 {
-  var Double: x;
-  var Double: y;
-  method (Self: a) Add(Self: b) -> Self {
+  var x: Double;
+  var y: Double;
+  method (a: Self) Add(b: Self) -> Self {
     return Point3(.x = a.x + b.x, .y = a.y + b.y);
   }
 }
@@ -415,7 +415,7 @@ struct Point3 {
 extend Point3 {
   impl Vector {
     alias Add = Point3.Add;  // Syntax TBD
-    method (Self: a) Scale(Double: v) -> Self {
+    method (a: Self) Scale(v: Double) -> Self {
       return Point3(.x = a.x * v, .y = a.y * v);
     }
   }
@@ -474,8 +474,8 @@ _qualified name_, whether or not the implementation is done externally with an
 `extend` statement:
 
 ```
-var Point2: p1 = (.x = 1.0, .y = 2.0);
-var Point2: p2 = (.x = 2.0, .y = 4.0);
+var p1: Point2 = (.x = 1.0, .y = 2.0);
+var p2: Point2 = (.x = 2.0, .y = 4.0);
 Assert(p1.(Vector.Scale)(2.0) == p2);
 Assert(p1.(Vector.Add)(p1) == p2);
 ```
@@ -504,7 +504,7 @@ You could access `Draw` with a qualified name:
 import Plot;
 import Points;
 
-var Points.Point2: p = (.x = 1.0, .y = 2.0);
+var p: Points.Point2 = (.x = 1.0, .y = 2.0);
 p.(Plot.Drawable.Draw)();
 ```
 
@@ -518,10 +518,10 @@ Now let us write a function that can accept values of any type that has
 implemented the `Vector` interface:
 
 ```
-fn AddAndScaleGeneric[Vector:$ T](T: a, T: b, Double: s) -> T {
+fn AddAndScaleGeneric[T:$ Vector](a: T, b: T, s: Double) -> T {
   return a.Add(b).Scale(s);
 }
-var Point: v = AddAndScaleGeneric(a, w, 2.5);
+var v: Point = AddAndScaleGeneric(a, w, 2.5);
 ```
 
 Here `T` is a type whose type is `Vector`. The `:$` syntax means that `T` is a
@@ -542,20 +542,20 @@ acts like we called this non-generic function, found by setting `T` to
 
 ```
 fn AddAndScaleForPointAsVector(
-      Point as Vector: a, Point as Vector: b, Double: s)
+      Point as Vector: a, b: Point as Vector, s: Double)
       -> Point as Vector {
   return a.Add(b).Scale(s);
 }
 // May still be called with Point arguments, due to implicit casts.
 // Similarly the return value can be implicitly cast to a Point.
-var Point: v2 = AddAndScaleForPointAsVector(a, w, 2.5);
+var v2: Point = AddAndScaleForPointAsVector(a, w, 2.5);
 ```
 
 Since `Point` implements `Vector` inline, `Point` also has definitions for `Add`
 and `Scale`:
 
 ```
-fn AddAndScaleForPoint(Point: a, Point: b, Double: s) -> Point {
+fn AddAndScaleForPoint(a: Point, b: Point, s: Double) -> Point {
   return a.Add(b).Scale(s);
 }
 
@@ -566,7 +566,7 @@ However, for another type implementing `Vector` but out-of-line using an
 `extend` statement, such as `Point2`, the situation is different:
 
 ```
-fn AddAndScaleForPoint2(Point2: a, Point2: b, Double: s) -> Point2 {
+fn AddAndScaleForPoint2(a: Point2, b: Point2, s: Double) -> Point2 {
   // ERROR: `Point2` doesn't have `Add` or `Scale` methods.
   return a.Add(b).Scale(s);
 }
@@ -576,9 +576,9 @@ Even though `Point2` doesn't have `Add` and `Scale` methods, it still implements
 `Vector` and so can still call `AddAndScaleGeneric`:
 
 ```
-var Point2: a2 = (.x = 1.0, .y = 2.0);
-var Point2: w2 = (.x = 3.0, .y = 4.0);
-var Point2: v3 = AddAndScaleGeneric(a, w, 2.5);
+var a2: Point2 = (.x = 1.0, .y = 2.0);
+var w2: Point2 = (.x = 3.0, .y = 4.0);
+var v3: Point2 = AddAndScaleGeneric(a, w, 2.5);
 ```
 
 ### Model
@@ -602,12 +602,12 @@ defining a witness table type like:
 ```
 struct Vector {
   // Self is the representation type.
-  var Type:$ Self;
+  var Self:$ Type;
   // `fnty` is **placeholder** syntax for a "function type",
   // so `Add` is a function that takes two `Self` parameters
   // and returns a value of type `Self`.
-  var fnty(Self: a, Self: b) -> Self : Add;
-  var fnty(Self: a, Double: v) -> Self : Scale;
+  var Add: fnty(a: Self, b: Self) -> Self;
+  var Scale: fnty(a: Self, v: Double) -> Self;
 }
 ```
 
@@ -615,14 +615,14 @@ The [impl of Vector for Point](#implementing-interfaces) would be a value of
 this type:
 
 ```
-var Vector : VectorForPoint = (
+var VectorForPoint: Vector  = (
     .Self = Point,
     // `lambda` is **placeholder** syntax for defining a
     // function value.
-    .Add = lambda(Point: a, Point: b) -> Point {
+    .Add = lambda(a: Point, b: Point) -> Point {
       return Point(.x = a.x + b.x, .y = a.y + b.y);
     },
-    .Scale = lambda(Point: a, Double: v) -> Point {
+    .Scale = lambda(a: Point, v: Double) -> Point {
       return Point(.x = a.x * v, .y = a.y * v);
     },
 );
@@ -634,11 +634,11 @@ witness table an explicit argument to the function:
 
 ```
 fn AddAndScaleGeneric
-    (Vector:$ impl, impl.Self: a, impl.Self: b, Double: s) -> impl.Self {
+    (impl:$ Vector, a: impl.Self, b: impl.Self, s: Double) -> impl.Self {
   return impl.Scale(impl.Add(a, b), s);
 }
 // Point implements Vector.
-var Point: v = AddAndScaleGeneric(VectorForPoint, a, w, 2.5);
+var v: Point = AddAndScaleGeneric(VectorForPoint, a, w, 2.5);
 ```
 
 The rule is that generic arguments (declared using `:$`) are passed at compile
@@ -734,17 +734,17 @@ That is, `Type` is the type-type with no requirements (so matches every type),
 and defines no names.
 
 ```
-fn Identity[Type:$ T](T: x) -> T {
+fn Identity[T:$ Type](x: T) -> T {
   // Can accept values of any type. But, since we no nothing about the
   // type, we don't know about any operations on `x` inside this function.
   return x;
 }
 
-var Int: i = Identity(3);
-var String: s = Identity("string");
+var i: Int = Identity(3);
+var s: String = Identity("string");
 ```
 
-**Aside:** We can define `auto` as syntactic sugar for `(Type:$$ _)`. This
+**Aside:** We can define `auto` as syntactic sugar for `(_:$$ Type)`. This
 definition allows you to use `auto` as the type for a local variable whose type
 can be statically determined by the compiler. It also allows you to use `auto`
 as the type of a function parameter, to mean "accepts a value of any type, and
@@ -816,8 +816,8 @@ the requirements of `I2`. Further, given a value `x` of type `T`, it can be
 implicitly cast to `T as I2`. For example:
 
 ```
-interface Printable { method (Self: this) Print(); }
-interface Renderable { method (Self: this) Draw(); }
+interface Printable { method (this: Self) Print(); }
+interface Renderable { method (this: Self) Draw(); }
 
 structural interface PrintAndRender {
   impl Printable;
@@ -827,10 +827,10 @@ structural interface JustPrint {
   impl Printable;
 }
 
-fn PrintIt[JustPrint:$ T2](T2: x2) {
+fn PrintIt[T2:$ JustPrint](x2: T2) {
   x2.(Printable.Print)();
 }
-fn PrintDrawPrint[PrintAndRender:$ T1](T1: x1) {
+fn PrintDrawPrint[T1:$ PrintAndRender](x1: T1) {
   // x1 implements `Printable` and `Renderable`.
   x1.(Printable.Print)();
   x1.(Renderable.Draw)();
@@ -851,11 +851,11 @@ union of the names minus any conflicts.
 
 ```
 interface Printable {
-  method (Self: this) Print();
+  method (this: Self) Print();
 }
 interface Renderable {
-  method (Self: this) Center() -> (Int, Int);
-  method (Self: this) Draw();
+  method (this: Self) Center() -> (Int, Int);
+  method (this: Self) Draw();
 }
 
 // `Printable & Renderable` is syntactic sugar for this type-type:
@@ -867,7 +867,7 @@ structural interface {
   alias Draw = Renderable.Draw;
 }
 
-fn PrintThenDraw[Printable & Renderable:$ T](T: x) {
+fn PrintThenDraw[T:$ Printable & Renderable](x: T) {
   // Can use methods of `Printable` or `Renderable` on `x` here.
   x.Print();  // Same as `x.(Printable.Print)();`.
   x.Draw();  // Same as `x.(Renderable.Draw)();`.
@@ -876,15 +876,15 @@ fn PrintThenDraw[Printable & Renderable:$ T](T: x) {
 struct Sprite {
   // ...
   impl Printable {
-    method (Self: this) Print() { ... }
+    method (this: Self) Print() { ... }
   }
   impl Renderable {
-    method (Self: this) Center() -> (Int, Int) { ... }
-    method (Self: this) Draw() { ... }
+    method (this: Self) Center() -> (Int, Int) { ... }
+    method (this: Self) Draw() { ... }
   }
 }
 
-var Sprite: s = ...;
+var s: Sprite = ...;
 PrintThenDraw(s);
 ```
 
@@ -893,12 +893,12 @@ error to use.
 
 ```
 interface Renderable {
-  method (Self: this) Center() -> (Int, Int);
-  method (Self: this) Draw();
+  method (this: Self) Center() -> (Int, Int);
+  method (this: Self) Draw();
 }
 interface EndOfGame {
-  method (Self: this) Draw();
-  method (Self: this) Winner(Int: player);
+  method (this: Self) Draw();
+  method (this: Self) Winner(player: Int);
 }
 // `Renderable & EndOfGame` is syntactic sugar for this type-type:
 structural interface {
@@ -926,7 +926,7 @@ structural interface RenderableAndEndOfGame {
   alias Winner = EndOfGame.Winner;
 }
 
-fn RenderTieGame[RenderableAndEndOfGame:$ T](T: x) {
+fn RenderTieGame[T:$ RenderableAndEndOfGame](x: T) {
   // Calls Renderable.Draw()
   x.RenderableDraw();
   // Calls EndOfGame.Draw()
@@ -1006,14 +1006,14 @@ use the same semantics and syntax as we do for
 [structural interfaces](#structural-interfaces):
 
 ```
-interface Equatable { method (Self: this) Equals(Self: that) -> Bool; }
+interface Equatable { method (this: Self) Equals(that: Self) -> Bool; }
 
 interface Iterable {
-  method (Ptr(Self): this) Advance() -> Bool;
+  method (this: Self*) Advance() -> Bool;
   impl Equatable;
 }
 
-def DoAdvanceAndEquals[Iterable:$ T](T: x) {
+def DoAdvanceAndEquals[T:$ Iterable](x: T) {
   // `x` has type `T` that implements `Iterable`, and so has `Advance`.
   x.Advance();
   // `Iterable` requires an implementation of `Equatable`,
@@ -1022,10 +1022,10 @@ def DoAdvanceAndEquals[Iterable:$ T](T: x) {
 }
 
 struct Iota {
-  impl Iterable { method (Self: this) Advance() { ... } }
-  impl Equatable { method (Self: this) Equals(Self: that) -> Bool { ... } }
+  impl Iterable { method (this: Self) Advance() { ... } }
+  impl Equatable { method (this: Self) Equals(that: Self) -> Bool { ... } }
 }
-var Iota: x;
+var x: Iota;
 DoAdvanceAndEquals(x);
 ```
 
@@ -1035,12 +1035,12 @@ by itself add any names to the interface, but again those can be added with
 
 ```
 interface Hashable {
-  method (Self: this) Hash() -> UInt64;
+  method (this: Self) Hash() -> UInt64;
   impl Equatable;
   alias Equals = Equatable.Equals;
 }
 
-def DoHashAndEquals[Hashable:$ T](T: x) {
+def DoHashAndEquals[T:$ Hashable](x: T) {
   // Now both `Hash` and `Equals` are available directly:
   x.Hash();
   x.Equals(x);
@@ -1059,11 +1059,11 @@ as well. In the case of `Hashable` above, this includes all the members of
 ```
 struct Song {
   impl Hashable {
-    method (Self: this) Hash() -> UInt64 { ... }
-    method (Self: this) Equals(Self: that) -> Bool { ... }
+    method (this: Self) Hash() -> UInt64 { ... }
+    method (this: Self) Equals(that: Self) -> Bool { ... }
   }
 }
-var Song: y;
+var y: Song;
 DoHashAndEquals(y);
 ```
 
@@ -1079,17 +1079,17 @@ This allows us to say that `Hashable`
 We expect this concept to be common enough to warrant dedicated syntax:
 
 ```
-interface Equatable { method (Self: this) Equals(Self: that) -> Bool; }
+interface Equatable { method (this: Self) Equals(that: Self) -> Bool; }
 
 interface Hashable {
   extends Equatable;
-  method (Self: this) Hash() -> UInt64;
+  method (this: Self) Hash() -> UInt64;
 }
 // is equivalent to the definition of Hashable from before:
 // interface Hashable {
 //   impl Equatable;
 //   alias Equals = Equatable.Equals;
-//   method (Self: this) Hash() -> UInt64;
+//   method (this: Self) Hash() -> UInt64;
 // }
 ```
 
@@ -1139,11 +1139,11 @@ in parameters or constraints of the interface being extended.
 ```
 // A type can implement `ConvertibleTo` many times, using
 // different values of `T`.
-interface ConvertibleTo(Type:$ T) { ... }
+interface ConvertibleTo(T:$ Type) { ... }
 
 // A type can only implement `PreferredConversion` once.
 interface PreferredConversion {
-  var Type:$ AssociatedType;
+  var AssociatedType:$ Type;
   extends ConvertibleTo(AssociatedType);
 }
 ```
@@ -1217,19 +1217,19 @@ Consider this set of interfaces, simplified from
 
 ```
 interface Graph {
-  method (Ptr(Self): this) Source(EdgeDescriptor: e) -> VertexDescriptor;
-  method (Ptr(Self): this) Target(EdgeDescriptor: e) -> VertexDescriptor;
+  method (this: Self*) Source(e: EdgeDescriptor) -> VertexDescriptor;
+  method (this: Self*) Target(e: EdgeDescriptor) -> VertexDescriptor;
 }
 
 interface IncidenceGraph {
   extends Graph;
-  method (Ptr(Self): this) OutEdges(VertexDescriptor: u)
+  method (this: Self*) OutEdges(u: VertexDescriptor)
     -> (EdgeIterator, EdgeIterator);
 }
 
 interface EdgeListGraph {
   extends Graph;
-  method (Ptr(Self): this) Edges() -> (EdgeIterator, EdgeIterator);
+  method (this: Self*) Edges() -> (EdgeIterator, EdgeIterator);
 }
 ```
 
@@ -1254,13 +1254,13 @@ though could be defined in the `impl` block of `IncidenceGraph`,
 ```
 struct MyEdgeListIncidenceGraph {
   impl IncidenceGraph {
-    method (Self: this) Source(EdgeDescriptor: e) -> VertexDescriptor { ... }
-    method (Self: this) Target(EdgeDescriptor: e) -> VertexDescriptor { ... }
-    method (Ptr(Self): this) OutEdges(VertexDescriptor: u)
+    method (this: Self) Source(e: EdgeDescriptor) -> VertexDescriptor { ... }
+    method (this: Self) Target(e: EdgeDescriptor) -> VertexDescriptor { ... }
+    method (this: Self*) OutEdges(u: VertexDescriptor)
         -> (EdgeIterator, EdgeIterator) { ... }
   }
   impl EdgeListGraph {
-    method (Ptr(Self): this) Edges() -> (EdgeIterator, EdgeIterator) { ... }
+    method (this: Self*) Edges() -> (EdgeIterator, EdgeIterator) { ... }
   }
 }
 ```
@@ -1271,13 +1271,13 @@ struct MyEdgeListIncidenceGraph {
 ```
 struct MyEdgeListIncidenceGraph {
   impl IncidenceGraph {
-    method (Self: this) Source(EdgeDescriptor: e) -> VertexDescriptor { ... }
-    method (Ptr(Self): this) OutEdges(VertexDescriptor: u)
+    method (this: Self) Source(e: EdgeDescriptor) -> VertexDescriptor { ... }
+    method (this: Self*) OutEdges(u: VertexDescriptor)
         -> (EdgeIterator, EdgeIterator) { ... }
   }
   impl EdgeListGraph {
-    method (Self: this) Target(EdgeDescriptor: e) -> VertexDescriptor { ... }
-    method (Ptr(Self): this) Edges() -> (EdgeIterator, EdgeIterator) { ... }
+    method (this: Self) Target(e: EdgeDescriptor) -> VertexDescriptor { ... }
+    method (this: Self*) Edges() -> (EdgeIterator, EdgeIterator) { ... }
   }
 }
 ```
@@ -1287,8 +1287,8 @@ struct MyEdgeListIncidenceGraph {
 ```
 struct MyEdgeListIncidenceGraph {
   impl Graph {
-    method (Self: this) Source(EdgeDescriptor: e) -> VertexDescriptor { ... }
-    method (Self: this) Target(EdgeDescriptor: e) -> VertexDescriptor { ... }
+    method (this: Self) Source(e: EdgeDescriptor) -> VertexDescriptor { ... }
+    method (this: Self) Target(e: EdgeDescriptor) -> VertexDescriptor { ... }
   }
   impl IncidenceGraph { ... }
   impl EdgeListGraph { ... }
@@ -1304,30 +1304,30 @@ the capabilities of the iterator being passed in:
 
 ```
 interface ForwardIterator {
-  var Type:$ Element;
-  method (Ptr(Self): this) Advance();
-  method (Self: this) Get() -> Element;
+  var Element:$ Type;
+  method (this: Self*) Advance();
+  method (this: Self) Get() -> Element;
 }
 interface BidirectionalIterator {
   extends ForwardIterator;
-  method (Ptr(Self): this) Back();
+  method (this: Self*) Back();
 }
 interface RandomAccessIterator {
   extends BidirectionalIterator;
-  method (Ptr(Self): this) Skip(Int: offset);
-  method (Self: this) Difference(Self: that) -> Int;
+  method (this: Self*) Skip(offset: Int);
+  method (this: Self) Difference(that: Self) -> Int;
 }
 
 fn SearchInSortedList
-    [Comparable:$ T, ForwardIterator(.Element = T): IterT]
-    (IterT: begin, IterT: end, T: needle) -> Bool {
+    [T:$ Comparable, IterT:$ ForwardIterator(.Element = T)]
+    (begin: IterT, end: IterT, needle: T) -> Bool {
   ... // does linear search
 }
 // Will prefer the following overload when it matches
 // since it is more specific.
 fn SearchInSortedList
-    [Comparable:$ T, RandomAccessIterator(.Element = T): IterT]
-    (IterT: begin, IterT: end, T: needle) -> Bool {
+    [T:$ Comparable, IterT:$ RandomAccessIterator(.Element = T)]
+    (begin: IterT, end: IterT, needle: T) -> Bool {
   ... // does binary search
 }
 ```
@@ -1351,7 +1351,7 @@ Now consider a type with a generic type parameter, like a hash map type:
 
 ```
 interface Hashable { ... }
-struct HashMap(Hashable:$ KeyT, Type:$ ValueT) { ... }
+struct HashMap(KeyT:$ Hashable, ValueT:$ Type) { ... }
 ```
 
 If we write something like `HashMap(String, Int)` the type we actually get is:
@@ -1375,10 +1375,10 @@ constraints than the type requires:
 
 ```
 fn PrintValue
-    [Printable & Hashable:$ KeyT, Printable:$ ValueT]
-    (HashMap(KeyT, ValueT): map, KeyT: key) { ... }
+    [KeyT:$ Printable & Hashable, ValueT:$ Printable]
+    (map: HashMap(KeyT, ValueT), key: KeyT) { ... }
 
-var HashMap(String, Int): m;
+var m: HashMap(String, Int);
 PrintValue(m, "key");
 ```
 
