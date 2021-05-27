@@ -538,7 +538,8 @@ fileprivate extension Interpreter {
       // Bogus parameterTypes and returnType until Dave preserves the
       // typechecker's work. -Jeremy
       let result = FunctionValue(
-        type: .function(parameterTypes: Tuple(), returnType: .int), code: f)
+        dynamic_type: .function(parameterTypes: Tuple(), returnType: .int),
+        code: f)
 
       return allocate(.name(name), unlessNonNil: destination) { output, me in
         me.initialize(output, to: result, then: proceed)
@@ -656,7 +657,7 @@ fileprivate extension Interpreter {
             // FIXME: there will be an extra copy of the payload; the result
             // should adopt the payload in memory.
             let result = ChoiceValue(
-              type_: resultType,
+              dynamic_type_: resultType,
               discriminator: discriminator,
               payload: me[arguments] as! Tuple<Value>)
             return
@@ -684,7 +685,7 @@ fileprivate extension Interpreter {
     then proceed: @escaping Consumer<Address>) -> Onward
   {
     evaluate(e.base) { base, me in
-      switch me[base].type {
+      switch me[base].dynamic_type {
       case .struct:
         UNIMPLEMENTED()
 
@@ -706,7 +707,7 @@ fileprivate extension Interpreter {
             let result: Value = asCallee
               ? Type.alternative(id, parent: parentID)
               : ChoiceValue(
-                type_: parentID, discriminator: id, payload: .init())
+                dynamic_type_: parentID, discriminator: id, payload: .init())
 
             return me.deleteAnyEphemeral(at: base) { me in
               me.initialize(output, to: result, then: proceed)
@@ -848,7 +849,7 @@ fileprivate extension Interpreter {
     then proceed: @escaping Consumer<Bool>) -> Onward
   {
     evaluate(p.callee, asCallee: true) { callee, me in
-      switch me[source].type {
+      switch me[source].dynamic_type {
       case .struct:
         UNIMPLEMENTED()
       case .choice:

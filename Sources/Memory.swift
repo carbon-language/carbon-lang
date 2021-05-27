@@ -117,7 +117,7 @@ struct Memory {
       }
     }
 
-    precondition(self[source].type == self[target].type)
+    precondition(self[source].dynamic_type == self[target].dynamic_type)
     uncheckedAssign(from: source, into: target)
   }
 

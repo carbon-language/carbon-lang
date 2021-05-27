@@ -87,8 +87,8 @@ typealias TupleType = Tuple<Type>
 typealias TupleValue = Tuple<Value>
 
 extension TupleValue: CarbonInterpreter.Value {
-  var type: Type {
-    .tuple(self.mapFields { $0.type })
+  var dynamic_type: Type {
+    .tuple(self.mapFields { $0.dynamic_type })
   }
 
   var parts: Tuple<Value> { self }

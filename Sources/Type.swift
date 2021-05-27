@@ -71,7 +71,7 @@ indirect enum Type: Equatable {
 }
 
 extension Type: Value {
-  var type: Type { .type }
+  var dynamic_type: Type { .type }
 
   var parts: Tuple<Value> {
     switch self {

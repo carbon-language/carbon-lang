@@ -35,7 +35,7 @@ final class MemoryTests: XCTestCase {
     let a = m.allocate()
 
     let v = FunctionValue(
-      type: .function(parameterTypes: Tuple(), returnType: .void),
+      dynamic_type: .function(parameterTypes: Tuple(), returnType: .void),
       code: FunctionDefinition(
         name: Identifier(text: "main", site: o),
         parameters: TupleSyntax([], o),
