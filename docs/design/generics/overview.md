@@ -34,20 +34,21 @@ like templates. For example, instead of having one function per
 type-you-can-sort:
 
 ```
-fn SortInt32Vector(Ptr(Vector(Int32)): a) { ... }
-fn SortStringVector(Ptr(Vector(String)): a) { ... }
+fn SortInt32Vector(a: Vector(Int32)*) { ... }
+fn SortStringVector(a: Vector(String)*) { ... }
 ...
 ```
 
-you might have one generic function that could sort any array with comparable elements:
+you might have one generic function that could sort any array with comparable
+elements:
 
 ```
-fn SortVector[Comparable:$ T](Ptr(Vector(T)): a) { ... }
+fn SortVector[T:$ Comparable](a: Vector(T)*) { ... }
 ```
 
-The `SortVector` function applied to a `Ptr(Vector(Int32))` input is
-semantically identical to `SortInt32Vector`, and similarly for
-`Ptr(Vector(String))` input and `SortStringVector`.
+The `SortVector` function applied to a `Vector(Int32)*` input is semantically
+identical to `SortInt32Vector`, and similarly for `Vector(String)*` input and
+`SortStringVector`.
 
 In `SortVector`, `Comparable` is the name of an _interface_ which describes the
 requirements for the type `T`. These requirements form the contract that allows
@@ -69,8 +70,7 @@ given a function definition, but more checking of the definition is required
 after seeing the call sites (and you know which
 [instantiations](terminology.md#instantiation) are needed).
 
-[Generics terminology](terminology.md) goes into more detail about
-the
+[Generics terminology](terminology.md) goes into more detail about the
 [difference between generics and templates](terminology.md#generic-versus-template-parameters).
 
 ## Goals
@@ -88,8 +88,8 @@ Terminology is described in the [generics terminology document](terminology.md)
 Imagine we had a regular function that printed some number of 'X' characters:
 
 ```
-fn PrintXs_Regular(Int: n) {
-  var Int: i = 0;
+fn PrintXs_Regular(n: Int) {
+  var i: Int = 0;
   while (i < n) {
     Print("X");
     i += 1;
@@ -98,7 +98,7 @@ fn PrintXs_Regular(Int: n) {
 
 PrintXs_Regular(1); // Prints: X
 PrintXs_Regular(2); // Prints: XX
-var Int: n = 3;
+var n: Int = 3;
 PrintXs_Regular(n); // Prints: XXX
 ```
 
@@ -107,8 +107,8 @@ PrintXs_Regular(n); // Prints: XXX
 What would it mean to change the parameter to be a generic parameter?
 
 ```
-fn PrintXs_Generic(Int:$ N) {
-  var Int: i = 0;
+fn PrintXs_Generic(N:$ Int) {
+  var i: Int = 0;
   while (i < N) {
     Print("X");
     i += 1;
@@ -117,7 +117,7 @@ fn PrintXs_Generic(Int:$ N) {
 
 PrintXs_Generic(1);  // Prints: X
 PrintXs_Generic(2);  // Prints: XX
-var Int: m = 3;
+var m: Int = 3;
 PrintXs_Generic(m);  // Compile error: value for generic parameter `n`
                      // unknown at compile time.
 ```
@@ -144,9 +144,9 @@ time, we can use the generic parameter in places we would expect a compile-time
 constant value, such as in types.
 
 ```
-fn CreateArray(UInt:$ N, Int: value) -> FixedArray(Int, N) {
-  var FixedArray(Int, N): ret;
-  var Int: i = 0;
+fn CreateArray(N:$ UInt, value: Int) -> FixedArray(Int, N) {
+  var ret: FixedArray(Int, N);
+  var i: Int = 0;
   while (i < N) {
     ret[i] = value;
     i += 1;
@@ -191,11 +191,11 @@ explicitly to the function. Implicit parameters are declared using square
 brackets before the usual parameter list, as in:
 
 ```
-fn PrintArraySize[Int: n](Ptr(FixedArray(String, n)): array) {
+fn PrintArraySize[n: Int](array: FixedArray(String, n)*) {
   Print(n);
 }
 
-var FixedArray(String, 3): a = ...;
+var a: FixedArray(String, 3) = ...;
 PrintArraySize(&a);  // Prints: 3
 ```
 
@@ -212,8 +212,8 @@ the type of `array` inside the `PrintArraySize` function body) that are only
 fully known with dynamic information. For example:
 
 ```
-fn PrintStringArray[Int:$ n](Ptr(FixedArray(String, n)): array) {
-  var Int: i = 0;
+fn PrintStringArray[n:$ Int](array: FixedArray(String, n)*) {
+  var i: Int = 0;
   while (i < n) {
     Print(array->get(i));
     ++i;
@@ -227,7 +227,7 @@ there is no syntax for specifying implicit arguments directly at the call site.
 
 ```
 // ERROR: can't determine `n` from explicit parameters
-fn Illegal[Int:$ n](Int: i) -> Bool { return i < n; }
+fn Illegal[n:$ Int](i: Int) -> Bool { return i < n; }
 ```
 
 ### Mixing
@@ -248,10 +248,10 @@ other things that are effectively constant and/or available at compile time.
 We also support local generic constants in functions:
 
 ```
-fn PrintOddNumbers(Int:$ N) {
+fn PrintOddNumbers(N:$ Int) {
   // last_odd is computed and stored at compile time.
-  var Int:$ LastOdd = 2 * N - 1;
-  var Int: i = 1;
+  var LastOdd:$ Int = 2 * N - 1;
+  var i: Int = 1;
   while (i <= LastOdd) {
     Print(i);
     i += 2;
@@ -334,14 +334,14 @@ Here are some examples of writing an interface definition:
 ```
 interface Printable {
   // `Print` is an associated method.
-  method (Self: this) Print();
+  method (this: Self) Print();
   // Method syntax here is a placeholder, should match
   // whatever syntax is used to define methods in a struct.
 }
 
 interface Media {
   // `Play` is an associated method that can mutate `this`.
-  method (Ptr(Self): this) Play();
+  method (this: Self*) Play();
 }
 ```
 
@@ -358,7 +358,7 @@ struct Song {
   // of the `Song` API.
   impl Printable {
     // Could use `Self` in place of `Song` here.
-    method (Song: this) Print() { ... }
+    method (this: Song) Print() { ... }
   }
 }
 // Implement `Media` for `Song` without changing the API of `Song`
@@ -367,11 +367,11 @@ struct Song {
 extend Song {
   impl Media {
     // Could use either `Self` or `Song` here.
-    method (Ptr(Self): this) Play() { ... }
+    method (this: Self*) Play() { ... }
   }
 }
 
-var Song: song;
+var song: Song;
 // `song.Print()` is allowed, unlike `song.Play()`.
 song.Print();
 // To call `Play` on `song`, use the qualified syntax:
@@ -384,10 +384,10 @@ Here are some functions taking a value with type conforming to an interface:
 
 ```
 // These definitions are completely equivalent.
-fn PrintIt1(Ptr(Printable:$ T): y) {
+fn PrintIt1(y: (T:$ Printable)*) {
   y->Print();
 }
-fn PrintIt2[Printable:$ T](Ptr(T): y) {
+fn PrintIt2[T:$ Printable](y: T*) {
   y->Print();
 }
 PrintIt1(&song);
@@ -398,7 +398,7 @@ The `&` operator is the common way of combining interfaces, used here to express
 a function taking a value with type conforming to two different interfaces:
 
 ```
-fn PrintAndPlay[Printable & Media:$ T](Ptr(T): p) {
+fn PrintAndPlay[T:$ Printable & Media](p: T*) {
   // `T` has all the names of `Printable` and `Media`
   // that don't conflict.
   p->Print();
@@ -417,29 +417,29 @@ interface to be implemented:
 
 ```
 interface Equatable {
-  method (Self: this) IsEqual(Self: that) -> Bool;
+  method (this: Self) IsEqual(that: Self) -> Bool;
 }
 
 // `Iterable` requires that `Equatable` is implemented.
 interface Iterable {
   impl Equatable;
-  method (Ptr(Self): this) Advance();
+  method (this: Self*) Advance();
 }
 
 struct SomeStringsIterator {
   // ...
   impl Iterable {
-    method (Ptr(Self): this) Advance() { ... }
+    method (this: Self*) Advance() { ... }
   }
   impl Equatable {
-    method (Self: this) IsEqual(Self: that) -> Bool { ... }
+    method (this: Self) IsEqual(that: Self) -> Bool { ... }
   }
   // If the definition of `Equatable` was deleted, you would get
   // Error: Missing implementation of interface `Equatable`
   //        required by `Iterable`
 
 }
-var SomeStringsIterator: i = ...;
+var i: SomeStringsIterator = ...;
 i.Advance();
 i.IsEqual(i);
 ```
@@ -453,24 +453,24 @@ are included in the refining interface.
 // `Hashable` refines `Equatable`.
 interface Hashable {
   extends Equatable;
-  method (Self: this) Hash() -> UInt64;
+  method (this: Self) Hash() -> UInt64;
 }
 // `Hashable` is equivalent to:
 interface Hashable {
   impl Equatable;
   alias IsEqual = Equatable.IsEqual;
-  method (Self: this) Hash() -> UInt64;
+  method (this: Self) Hash() -> UInt64;
 }
 
 struct Key {
   // ...
   impl Hashable {
-    method (Key: this) IsEqual(Key: that) -> Bool { ... }
-    method (Key: this) Hash() -> UInt64 { ... }
+    method (this: Key) IsEqual(that: Key) -> Bool { ... }
+    method (this: Key) Hash() -> UInt64 { ... }
   }
   // No need to separately implement `Equatable`.
 }
-var Key: k = ...;
+var k: Key = ...;
 k.Hash();
 k.IsEqual(k);
 ```
@@ -504,7 +504,7 @@ structural interface PrintableMedia2 {
 }
 
 // `PrintAndPlay2` is equivalent to `PrintAndPlay` above.
-fn PrintAndPlay2[PrintableMedia:$ T](Ptr(T): p) {
+fn PrintAndPlay2[T:$ PrintableMedia](p: T*) {
   p->Print();
   p->Play();
   // Qualified syntax also works.
@@ -528,8 +528,8 @@ requires.
 struct Playlist {
   // ...
   impl PrintableMedia {
-    method (Self: this) Print() { ... }
-    method (Ptr(Self): this) Play() { ... }
+    method (this: Self) Print() { ... }
+    method (this: Self*) Play() { ... }
   }
 }
 
@@ -537,10 +537,10 @@ struct Playlist {
 struct Playlist2 {
   // ...
   impl Printable {
-    method (Self: this) Print() { ... }
+    method (this: Self) Print() { ... }
   }
   impl Media {
-    method (Ptr(Self): this) Play() { ... }
+    method (this: Self*) Play() { ... }
   }
 }
 ```
@@ -550,12 +550,12 @@ name conflicts.
 
 ```
 interface Renderable {
-  method (Self: this) Center() -> (Int, Int);
-  method (Self: this) Draw();
+  method (this: Self) Center() -> (Int, Int);
+  method (this: Self) Draw();
 }
 interface EndOfGame {
-  method (Self: this) Draw();
-  method (Self: this) Winner(Int: player);
+  method (this: Self) Draw();
+  method (this: Self) Winner(player: Int);
 }
 
 // `Combined1` has all names from `Renderable` and `EndOfGame`
@@ -582,7 +582,7 @@ structural interface Combined2 {
 
 // All of these functions accept the same values, namely anything
 // with a type implementing both `Renderable` and `EndOfGame`.
-fn F1[Combined1:$ T](T: x) { ... }
-fn F2[Combined2:$ T](T: x) { ... }
-fn FPlus[Renderable & EndOfGame:$ T](T: x) { ... }
+fn F1[T:$ Combined1](x: T) { ... }
+fn F2[T:$ Combined2](x: T) { ... }
+fn FPlus[T:$ Renderable & EndOfGame](x: T) { ... }
 ```
