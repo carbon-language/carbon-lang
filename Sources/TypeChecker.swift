@@ -40,7 +40,7 @@ struct TypeChecker {
   private let definition: ASTDictionary<Identifier, Declaration>
 
   /// The static type of each expression
-  private var expressionType = ASTDictionary<Expression, Type>()
+  private(set) var expressionType = ASTDictionary<Expression, Type>()
 
   /// Mapping from alternative declaration to the choice in which it is defined.
   private var enclosingChoice = ASTDictionary<Alternative, ChoiceDefinition>()

@@ -11,6 +11,9 @@ struct ExecutableProgram {
   /// A mapping from identifier to its definition.
   let definition: ASTDictionary<Identifier, Declaration>
 
+  /// Mapping from expression to the static type of that expression.
+  let staticType: ASTDictionary<Expression, Type>
+
   /// The unique top-level nullary main() function defined in `ast`,
   /// or `nil` if that doesn't exist.
   var main: FunctionDefinition? {
@@ -36,5 +39,6 @@ struct ExecutableProgram {
     self.definition = nameLookup.definition
     let typeChecking = TypeChecker(parsedProgram, nameLookup: nameLookup)
     if !typeChecking.errors.isEmpty { throw typeChecking.errors }
+    staticType = typeChecking.expressionType
   }
 }
