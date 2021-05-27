@@ -291,45 +291,23 @@ private extension TypeChecker {
     return r
   }
 
-  /// Returns the type of the value computed by `e` when NOT in the callee
-  /// position of a function call expression, logging errors if `e` doesn't
-  /// typecheck.
+  /// Returns the type of the value computed by `e`, logging errors if `e`
+  /// doesn't typecheck.
   ///
-  /// Nullary alternative types are implicitly converted to their parent
-  /// `choice`.
-  mutating func type(_ e: Expression) -> Type {
-    let r = calleeType(e)
-    if case let .alternative(id, parent: choiceID) = r,
-       id.structure.payload.isEmpty
-    {
-      return .choice(choiceID)
-    }
-    else {
-      return r
-    }
-  }
-
-  /// Returns the type of the value computed by `e` when in the callee position
-  /// of a function call expression, logging errors if `e` doesn't typecheck.
-  ///
-  /// Nullary alternative types are returned directly rather being implicitly
-  /// converted to their parent `choice` as in `type()`, above.
-  mutating func calleeType(_ e: Expression) -> Type {
+  /// - Parameter isCallee: indicates `e` is being evaluated in callee position
+  ///   of a function call expression.
+  mutating func type(_ e: Expression, isCallee: Bool = false) -> Type {
+    let r: Type
     switch e {
     case .name(let v):
-      return typeOfName(declaredBy: program.definition[v]!)
+      r = typeOfName(declaredBy: program.definition[v]!)
 
     case let .functionType(f):
       let p = value(TypeExpression(f.parameters))
       if p != .error { assert(p.tuple != nil) }
       _ = value(f.returnType)
-      return .type
+      r = .type
 
-    case .intType, .boolType, .typeType:
-      return .type
-
-    case .memberAccess(let e):
-      return type(e)
 
     case let .index(target: base, offset: index, _):
       let baseType = type(base)
@@ -341,29 +319,31 @@ private extension TypeChecker {
         return error(index, "Index type must be Int, not \(indexType)")
       }
       let indexValue = value(index) as! Int
-      if let r = types[indexValue] { return r }
-      return error(
+      r = types[indexValue] ?? error(
         index, "Tuple type \(types) has no value at position \(indexValue)")
 
-    case .integerLiteral:
-      return .int
-
-    case .booleanLiteral:
-      return .bool
-
     case let .tupleLiteral(t):
-      return .tuple(
+      r = .tuple(
         t.fields(reportingDuplicatesIn: &errors).mapFields { type($0) })
 
-    case let .unaryOperator(u):
-      return type(u)
-
-    case let .binaryOperator(b):
-      return type(b)
-
-    case .functionCall(let f):
-      return type(f)
+    case .intType, .boolType, .typeType: r = .type
+    case .memberAccess(let e): r = type(e)
+    case .integerLiteral: r = .int
+    case .booleanLiteral: r = .bool
+    case let .unaryOperator(u): r = type(u)
+    case let .binaryOperator(b): r = type(b)
+    case .functionCall(let f): r = type(f)
     }
+
+    /// nullary alternative types are implicitly converted to their parent
+    /// `choice` unless they are in callee position.
+    if !isCallee,
+       case let .alternative(id, parent: choiceID) = r,
+       id.structure.payload.isEmpty
+    {
+      return .choice(choiceID)
+    }
+    return r
   }
 
   mutating func type(_ u: UnaryOperatorExpression) -> Type {
@@ -403,7 +383,7 @@ private extension TypeChecker {
   /// Returns the type of the value computed by `e`, logging errors if `e`
   /// doesn't typecheck.
   mutating func type(_ e: FunctionCall<Expression>) -> Type {
-    let callee = calleeType(e.callee)
+    let callee = type(e.callee, isCallee: true)
     let argumentTypes = type(.tupleLiteral(e.arguments))
 
     switch callee {
