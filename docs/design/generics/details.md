@@ -39,6 +39,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Adapter with stricter invariants](#adapter-with-stricter-invariants)
     -   [Example: Defining an impl for use by other types](#example-defining-an-impl-for-use-by-other-types)
 -   [Associated constants](#associated-constants)
+    -   [Associated functions](#associated-functions)
 -   [Associated types](#associated-types)
     -   [Inferring associated types](#inferring-associated-types)
     -   [Model](#model-1)
@@ -1720,7 +1721,9 @@ interface NSpacePoint {
   var Int:$ N;
   // The following require: 0 <= i < N.
   method (Ptr(Self): this) Get(Int: i) -> Float64;
-  method (Ptr(Self): this) Set(Int: i, Float64 : value);
+  method (Ptr(Self): this) Set(Int: i, Float64: value);
+  // Associated constants may be used in signatures:
+  method (Ptr(Self): this) SetAll(Array(Float64, N): value);
 }
 ```
 
@@ -1733,6 +1736,7 @@ struct Point2D {
     var Int:$ N = 2;
     method (Ptr(Self): this) Get(Int: i) -> Float64 { ... }
     method (Ptr(Self): this) Set(Int: i, Float64: value) { ... }
+    method (Ptr(Self): this) SetAll(Array(Float64, 2): value) { ... }
   }
 }
 
@@ -1741,6 +1745,7 @@ struct Point3D {
     var Int:$ N = 3;
     method (Ptr(Self): this) Get(Int: i) -> Float64 { ... }
     method (Ptr(Self): this) Set(Int: i, Float64: value) { ... }
+    method (Ptr(Self): this) SetAll(Array(Float64, 3): value) { ... }
   }
 }
 ```
@@ -1766,6 +1771,8 @@ fn ExtractPoint[NSpacePoint:$ PointT](
   }
 }
 ```
+
+### Associated functions
 
 To be consistent with normal function declaration syntax, function constants are
 written:
