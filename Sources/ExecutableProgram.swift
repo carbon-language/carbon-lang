@@ -14,6 +14,9 @@ struct ExecutableProgram {
   /// Mapping from expression to the static type of that expression.
   let staticType: ASTDictionary<Expression, Type>
 
+  /// The payload tuple type for each alternative.
+  let payloadType: [ASTIdentity<Alternative>: TupleType]
+
   /// The unique top-level nullary main() function defined in `ast`,
   /// or `nil` if that doesn't exist.
   var main: FunctionDefinition? {
@@ -40,5 +43,6 @@ struct ExecutableProgram {
     let typeChecking = TypeChecker(parsedProgram, nameLookup: nameLookup)
     if !typeChecking.errors.isEmpty { throw typeChecking.errors }
     staticType = typeChecking.expressionType
+    payloadType = typeChecking.payloadType
   }
 }

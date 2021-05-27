@@ -56,7 +56,7 @@ struct TypeChecker {
     = Dictionary<Declaration.Identity, Memo<Type>>()
 
   /// The payload tuple type for each alternative.
-  private var payloadType: [ASTIdentity<Alternative>: TupleType] = [:]
+  private(set) var payloadType: [ASTIdentity<Alternative>: TupleType] = [:]
 
   /// The set of initializations that have been completely typechecked.
   private var checkedInitializations = Set<Initialization.Identity>()

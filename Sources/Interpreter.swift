@@ -99,6 +99,11 @@ struct Interpreter {
   /// True iff we are printing an evaluation trace to stdout
   public var tracing: Bool = false
 
+  /// Mapping from expression to its static type.
+  fileprivate var staticType: ASTDictionary<Expression, Type> {
+    program.staticType
+  }
+
   /// Creates an instance that runs `p`.
   ///
   /// - Requires: `p.main != nil`
@@ -125,7 +130,6 @@ struct Interpreter {
 }
 
 fileprivate extension Interpreter {
-
   /// Advances execution by one unit of work, returning `true` iff the program
   /// is still running and `false` otherwise.
   mutating func step() -> Bool {
@@ -209,7 +213,9 @@ fileprivate extension Interpreter {
       // persist through the current scope.
       return allocate(i.initializer, mutable: true, persist: true) { rhsArea, me in
         me.evaluate(i.initializer, into: rhsArea) { rhs, me in
-          me.match(i.bindings, toValueAt: rhs) { matched, me in
+          me.match(
+            i.bindings, toValueOfType: me.staticType[i.initializer]!, at: rhs)
+          { matched, me in
             matched ? Onward(proceed) : me.error(
               i.bindings, "Initialization pattern not matched by \(me[rhs])")
           }
@@ -252,12 +258,12 @@ fileprivate extension Interpreter {
       (frame.onBreak, frame.onContinue) = (onBreak, onContinue)
       return onContinue(&self)
 
-    case let .match(subject: s, clauses: clauses, _):
+    case let .match(subject: e, clauses: clauses, _):
       return inScope(do: { me, proceed1 in
-        me.allocate(s, persist: true) { subjectArea, me in
-        me.evaluate(s, into: subjectArea) { subject, me in
-        me.runMatch(s, at: subject, against: clauses[...], then: proceed1)
-        }}}, then: proceed)
+        me.allocate(e, persist: true) { subjectArea, me in
+          me.evaluate(e, into: subjectArea) { subject, me in
+            me.runMatch(e, at: subject, against: clauses[...], then: proceed1)
+          }}}, then: proceed)
 
     case .break:
       return frame.onBreak!
@@ -291,12 +297,12 @@ fileprivate extension Interpreter {
   }
 
   mutating func runMatch(
-    _ subject: Expression, at subjectLocation: Address,
+    _ e: Expression, at subject: Address,
     against clauses: ArraySlice<MatchClause>,
     then proceed: @escaping Next) -> Onward
   {
     guard let clause = clauses.first else {
-      return error(subject, "no pattern matches \(self[subjectLocation])")
+      return error(e, "no pattern matches \(self[subject])")
     }
 
     let onMatch = Onward { me in
@@ -306,10 +312,10 @@ fileprivate extension Interpreter {
     }
     guard let p = clause.pattern else { return onMatch }
 
-    return match(p, toValueAt: subjectLocation) { matched, me in
-      matched ? onMatch : me.runMatch(
-        subject, at: subjectLocation, against: clauses.dropFirst(),
-        then: proceed)
+    return match(p, toValueOfType: staticType[e]!, at: subject) { matched, me in
+      if matched { return onMatch }
+      return me.runMatch(
+        e, at: subject, against: clauses.dropFirst(), then: proceed)
     }
   }
 
@@ -632,8 +638,11 @@ fileprivate extension Interpreter {
                 }
               })
 
-            return me.match(callee.code.parameters, toValueAt: arguments) {
-              matched, me in
+            let argumentsType = me.staticType[.tupleLiteral(e.arguments)]!
+            return me.match(
+              callee.code.parameters,
+              toValueOfType: argumentsType, at: arguments
+            ) { matched, me in
               if matched {
                 return me.run(callee.code.body!) { me in
                   // Return an empty tuple when the function falls off the end.
@@ -642,12 +651,10 @@ fileprivate extension Interpreter {
                   }
                 }
               }
-              else {
-                return me.error(
-                  e.arguments,
-                  "arguments don't match literal values in parameter list",
-                  notes: [("parameter list", callee.code.parameters.site)])
-              }
+              return me.error(
+                e.arguments,
+                "arguments don't match literal values in parameter list",
+                notes: [("parameter list", callee.code.parameters.site)])
             }
           }
 
@@ -685,7 +692,7 @@ fileprivate extension Interpreter {
     then proceed: @escaping Consumer<Address>) -> Onward
   {
     evaluate(e.base) { base, me in
-      switch me[base].dynamic_type {
+      switch me.program.staticType[e.base] {
       case .struct:
         UNIMPLEMENTED()
 
@@ -812,7 +819,8 @@ fileprivate extension Interpreter {
   /// the corresponding parts of the value, and calling `proceed` with an
   /// indication of whether the match was successful.
   mutating func match(
-    _ p: Pattern, toValueAt source: Address,
+    _ p: Pattern,
+    toValueOfType sourceType: Type, at source: Address,
     then proceed: @escaping Consumer<Bool>) -> Onward
   {
     if tracing {
@@ -835,63 +843,72 @@ fileprivate extension Interpreter {
       return true => proceed
 
     case let .tuple(x):
-      return match(x, toValueAt: source, then: proceed)
+      return match(x, toValueOfType: sourceType, at: source, then: proceed)
 
     case let .functionCall(x):
-      return match(x, toValueAt: source, then: proceed)
+      return match(x, toValueOfType: sourceType, at: source, then: proceed)
 
     case let .functionType(x): UNIMPLEMENTED(x)
     }
   }
 
   mutating func match(
-    _ p: FunctionCall<Pattern>, toValueAt source: Address,
+    _ p: FunctionCall<Pattern>,
+    toValueOfType subjectType: Type, at subject: Address,
     then proceed: @escaping Consumer<Bool>) -> Onward
   {
-    evaluate(p.callee, asCallee: true) { callee, me in
-      switch me[source].dynamic_type {
-      case .struct:
-        UNIMPLEMENTED()
-      case .choice:
-        let c = me[source] as! ChoiceValue
-        let calleeMatched = Type(me[callee]) == c.alternativeType
+    switch subjectType {
+    case .struct:
+      UNIMPLEMENTED()
 
-        return me.deleteAnyEphemeral(at: callee) { me in
-          if !calleeMatched { return proceed(false, &me) }
+    case .choice(let subjectChoiceID):
+      let subjectAlternative = (self[subject] as! ChoiceValue).discriminator
 
-          let payload = me.memory.substructure(at: source)[2]!
-          return me.match(p.arguments, toValueAt: payload, then: proceed)
-        }
-      case .int, .bool, .type, .function, .tuple, .error, .alternative:
-        UNREACHABLE()
+      if staticType[p.callee]
+           != .alternative(subjectAlternative, parent: subjectChoiceID) {
+        return false => proceed
       }
+
+      return match(
+        p.arguments,
+        toValueOfType: .tuple(program.payloadType[subjectAlternative]!),
+        at: memory.substructure(at: subject)[2]!, then: proceed)
+
+    case .int, .bool, .type, .function, .tuple, .error, .alternative:
+      UNREACHABLE()
     }
   }
 
   mutating func match(
-    _ p: TuplePattern, toValueAt source: Address,
+    _ p: TuplePattern,
+    toValueOfType subjectType: Type, at subject: Address,
     then proceed: @escaping Consumer<Bool>) -> Onward
   {
-    if self[source] is TupleValue {
-      let sourceStructure = self.memory.substructure(at: source)
-      if p.count == sourceStructure.count {
-        return matchElements(
-          p.fields().elements[...], toValuesAt: sourceStructure, then: proceed)
-      }
+    guard case let .tuple(subjectTypes) = subjectType else {
+      return false => proceed
     }
-    return false => proceed
+
+    let subjectStructure = self.memory.substructure(at: subject)
+    if p.count != subjectStructure.count { return false => proceed }
+
+    return matchElements(
+      p.fields().elements[...],
+      toValuesOfType: subjectTypes, at: subjectStructure, then: proceed)
   }
 
   mutating func matchElements(
-    _ p: Tuple<Pattern>.Elements.SubSequence, toValuesAt source: Tuple<Address>,
+    _ p: Tuple<Pattern>.Elements.SubSequence,
+    toValuesOfType subjectTypes: Tuple<Type>, at subjects: Tuple<Address>,
     then proceed: @escaping Consumer<Bool>) -> Onward
   {
     guard let (k0, p0) = p.first else { return true => proceed }
-
-    return match(p0, toValueAt: source.elements[k0]!) { matched, me in
-      matched
-        ? me.matchElements(p.dropFirst(), toValuesAt: source, then: proceed)
-        : false => proceed
+    return match(
+      p0, toValueOfType: subjectTypes[k0]!, at: subjects[k0]!
+    ) { matched, me in
+      if !matched { return false => proceed }
+      return me.matchElements(
+        p.dropFirst(),
+        toValuesOfType: subjectTypes, at: subjects, then: proceed)
     }
   }
 }

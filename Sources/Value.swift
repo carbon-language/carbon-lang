@@ -40,10 +40,6 @@ struct ChoiceValue: Value {
   let discriminator: ASTIdentity<Alternative>
   let payload: Tuple<Value>
 
-  var alternativeType: Type {
-    .alternative(discriminator, parent: dynamic_type_)
-  }
-
   var dynamic_type: Type { .choice(dynamic_type_) }
 
   var parts: Tuple<Value> {
