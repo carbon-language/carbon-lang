@@ -4,28 +4,28 @@
 
 /// The type-checking algorithm and associated data.
 struct TypeChecker {
-  /// Type-checks `program`, creating an instance that reflects the result.
-  init(_ program: ExecutableProgram) {
-    self.program = program
+  /// Type-checks `parsedProgram` given its name resolution results.
+  init(_ parsedProgram: AbstractSyntaxTree, nameLookup: NameResolution) {
+    self.definition = nameLookup.definition
 
     // Create "external parent links" for the AST in our parentXXX properties.
-    for d in program.ast { registerParentage(d) }
+    for d in parsedProgram { registerParentage(d) }
 
     // Check the bodies of nominal types.
-    for d in program.ast { checkNominalTypeBody(d) }
+    for d in parsedProgram { checkNominalTypeBody(d) }
 
     // Check function signatures.
-    for d in program.ast {
+    for d in parsedProgram {
       if case .function(let f) = d {
         _ = typeOfName(declaredBy: f as Declaration)
       }
     }
     // Check top-level initializations
-    for d in program.ast {
+    for d in parsedProgram {
       if case .initialization(let i) = d { check(i) }
     }
     // Check function bodies.
-    for d in program.ast {
+    for d in parsedProgram {
       if case .function(let f) = d { checkBody(f) }
     }
   }
@@ -36,8 +36,8 @@ struct TypeChecker {
     case beingComputed, final(T)
   }
 
-  /// The program being typechecked.
-  private let program: ExecutableProgram
+  // Mapping from names to their definitions
+  private let definition: ASTDictionary<Identifier, Declaration>
 
   /// The static type of each expression
   private var expressionType = ASTDictionary<Expression, Type>()
@@ -172,7 +172,7 @@ private extension TypeChecker {
     // an interpreter.
     switch e {
     case let .name(v):
-      if let r = Type(program.definition[v]!) {
+      if let r = Type(definition[v]!) {
         return r
       }
       UNIMPLEMENTED()
@@ -305,7 +305,7 @@ private extension TypeChecker {
     func rawResult() -> Type {
       switch e {
       case .name(let v):
-        return typeOfName(declaredBy: program.definition[v]!)
+        return typeOfName(declaredBy: definition[v]!)
 
       case let .functionType(f):
         let p = value(TypeExpression(f.parameters))

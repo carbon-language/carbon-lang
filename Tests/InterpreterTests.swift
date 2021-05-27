@@ -45,11 +45,8 @@ final class InterpreterTests: XCTestCase {
     let sourcePath = testdata.appendingPathComponent(testFile).path
     let source = try! String(contentsOfFile: sourcePath)
 
-    print(sourcePath)
-    guard let (program, _, errors)
-            = checkNonNil(source.typeChecked(fromFile: sourcePath))
+    guard let program = source.checkExecutable(fromFile: sourcePath)
     else { return nil }
-    XCTAssert(errors.isEmpty)
     var engine = Interpreter(program)
     engine.tracing = tracing
     return engine.run()

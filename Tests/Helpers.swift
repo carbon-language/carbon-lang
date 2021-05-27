@@ -119,9 +119,8 @@ extension String {
 
 
 extension String {
-  /// Returns the carbon executable corresponding to `self`, without type
-  /// checking, or `nil` (logging an XCTest failure) if errors occurred.
-  ///
+  /// Returns the carbon executable corresponding to `self`, or `nil` (logging
+  /// an XCTest failure) if errors occurred.
   func checkExecutable(
     fromFile sourceFile: String? = nil,
     _ message: @autoclosure () -> String = "",
@@ -132,6 +131,36 @@ extension String {
     do {
       return try ExecutableProgram(
         self.parsedAsCarbon(fromFile: sourceFile ?? filePath.description))
+    }
+    catch let errors as ErrorLog {
+      failWithUnexpectedErrors(
+        fromFile: sourceFile,
+        "Unexpected errors", errors,
+        filePath: filePath, line: line, column: column,
+        topLevelCheckFunction: topLevelCheckFunction ?? #function)
+    }
+    catch let e {
+      XCTFail(
+        "Unknown error: \(e)", file: (filePath), line: line)
+    }
+    return nil
+  }
+
+  /// Returns the AST corresponding to `self` with its name resolution results,
+  /// or `nil` (logging an XCTest failure) if errors occurred.
+  func checkNameResolution(
+    fromFile sourceFile: String? = nil,
+    _ message: @autoclosure () -> String = "",
+    filePath: StaticString = #filePath,
+    line: UInt = #line, column: Int = #column,
+    topLevelCheckFunction: StaticString? = nil
+  ) -> (parsedProgram: AbstractSyntaxTree, nameResolution: NameResolution)? {
+    do {
+      let parsedProgram
+        = try self.parsedAsCarbon(fromFile: sourceFile ?? filePath.description)
+      let nameResolution = NameResolution(parsedProgram)
+      if !nameResolution.errors.isEmpty { throw nameResolution.errors }
+      return (parsedProgram, nameResolution)
     }
     catch let errors as ErrorLog {
       failWithUnexpectedErrors(
@@ -178,24 +207,24 @@ extension String {
       file: (filePath), line: line)
   }
 
-  /// Returns the results of parsing, name lookup, and typechecking `self`, or
-  /// `nil` (logging an XCTest failure) if there are errors before type checking.
-  func typeChecked(
+  /// Returns the errors from type checking, or `nil` (logging an XCTest
+  /// failure) if there are errors before type checking.
+  func typeCheckingErrors(
     fromFile sourceFile: String? = nil,
     _ message: @autoclosure () -> String = "",
     filePath: StaticString = #filePath,
     line: UInt = #line, column: Int = #column,
     topLevelCheckFunction: StaticString? = nil
-  ) -> (ExecutableProgram, typeChecker: TypeChecker, errors: ErrorLog)?
+  ) -> ErrorLog?
   {
-    guard let executable = self.checkExecutable(
+    guard let (parsedProgram, nameLookup) = self.checkNameResolution(
             fromFile: sourceFile,
             message(), filePath: filePath, line: line, column: column,
             topLevelCheckFunction: topLevelCheckFunction ?? #function
           ) else { return nil }
 
-    let typeChecker = TypeChecker(executable)
-    return (executable, typeChecker, typeChecker.errors)
+    let typeChecker = TypeChecker(parsedProgram, nameLookup: nameLookup)
+    return typeChecker.errors
   }
 
   /// Causes an XCTest failure if errors occur in parsing, name lookup, or type
@@ -220,7 +249,7 @@ extension String {
     line: UInt = #line, column: Int = #column,
     topLevelCheckFunction: StaticString? = nil
   ) {
-    if case let .some((_, _, errors)) = self.typeChecked(
+    if let errors = self.typeCheckingErrors(
          fromFile: sourceFile,
          filePath: filePath, line: line, column: column,
          topLevelCheckFunction: topLevelCheckFunction ?? #function),
@@ -255,7 +284,7 @@ extension String {
     filePath: StaticString = #filePath,
     line: UInt = #line, column: Int = #column
   ) {
-    guard case let .some((_, _, errors)) = self.typeChecked(
+    guard let errors = self.typeCheckingErrors(
             fromFile: sourceFile,
             filePath: filePath, line: line, column: #column),
           !(errors.contains { e in
@@ -279,3 +308,7 @@ extension String {
     }
   }
 }
+
+// TODO: Large-scale cleanups in this file: factor out the expected/unexpected
+// error handling; remove checkTypeChecks, ...
+// TODO: Translate parsing exceptions into CarbonErrors.

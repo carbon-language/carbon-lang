@@ -31,8 +31,10 @@ struct ExecutableProgram {
   /// if the program is ill-formed.
   init(_ parsedProgram: AbstractSyntaxTree) throws {
     self.ast = parsedProgram
-    let r = NameResolution(ast)
-    if !r.errors.isEmpty { throw r.errors }
-    self.definition = r.definition
+    let nameLookup = NameResolution(ast)
+    if !nameLookup.errors.isEmpty { throw nameLookup.errors }
+    self.definition = nameLookup.definition
+    let typeChecking = TypeChecker(parsedProgram, nameLookup: nameLookup)
+    if !typeChecking.errors.isEmpty { throw typeChecking.errors }
   }
 }

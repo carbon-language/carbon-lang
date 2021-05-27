@@ -97,11 +97,7 @@ final class NameResolutionTests: XCTestCase {
       if f.hasPrefix("experimental_") { continue }
 
       if !f.hasSuffix("_fail.6c") {
-        let ast = try checkNoThrow(
-          try String(contentsOfFile: p).parsedAsCarbon(fromFile: p))
-
-        let executable = try checkNoThrow(try ExecutableProgram(ast))
-        _ = executable
+        _ = try String(contentsOfFile: p).checkNameResolution(fromFile: p)
       }
     }
   }
