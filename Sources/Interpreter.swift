@@ -29,26 +29,26 @@ fileprivate struct Onward {
 }
 
 /// A continuation function that takes an input.
-fileprivate typealias With<T> = (T, inout Interpreter)->Onward
+fileprivate typealias Consumer<T> = (T, inout Interpreter)->Onward
 
 /// An operator for constructing a continuation result from a `Next` function.
 prefix operator =>
 
-/// An operator for constructing a continuation result from a `With<T>`
-/// function.
+/// An operator for constructing a continuation result from a `Consumer<T>`
+/// function and an input value.
 infix operator => : DefaultPrecedence
 
 /// Creates a continuation result corresponding to `followup`.
 ///
 /// You can think of `=>f` or `=>{ me in ... }` as a way of coercing the
 /// function to the right type when `Onward` is required.
-fileprivate prefix func =>(followup: @escaping Next) -> Onward { Onward(followup) }
+fileprivate prefix func =>(proceed: @escaping Next) -> Onward { .init(proceed) }
 
 /// Creates a continuation result notionally corresponding to `followup(x)`.
 ///
 /// You can think of `a=>f` or `a=>{ a, me in ... }` as a way of binding `a` to
 /// the function and the coercing it to `Onward`.
-fileprivate func => <T>(x: T, followup: @escaping With<T>) -> Onward {
+fileprivate func => <T>(x: T, followup: @escaping Consumer<T>) -> Onward {
   =>{ me in followup(x, &me) }
 }
 
@@ -251,7 +251,7 @@ fileprivate extension Interpreter {
 
       let onContinue = =>{ me in
         return me.cleanUpPersistentAllocations(above: mark) {
-          $0.while(c, run: body, then: onBreak.code)
+          $0.runWhile(c, run: body, then: onBreak.code)
         }
       }
 
@@ -319,12 +319,12 @@ fileprivate extension Interpreter {
     }
   }
 
-  mutating func `while`(
+  mutating func runWhile(
     _ c: Expression, run body: Statement, then proceed: @escaping Next
   ) -> Onward {
     return evaluateAndConsume(c) { (runBody: Bool, me) in
       return runBody
-        ? me.run(body) { me in me.while(c, run: body, then: proceed)}
+        ? me.run(body) { me in me.runWhile(c, run: body, then: proceed)}
         : =>proceed
     }
   }
@@ -336,7 +336,7 @@ fileprivate extension Interpreter {
   /// passing it on to `proceed` along with `self`.
   mutating func allocate(
     _ e: Expression, mutable: Bool = false, persist: Bool = false,
-    then proceed: @escaping With<Address>) -> Onward
+    then proceed: @escaping Consumer<Address>) -> Onward
   {
     let a = memory.allocate(mutable: mutable)
     if tracing {
@@ -357,7 +357,7 @@ fileprivate extension Interpreter {
   /// `proceed` along with `self`.
   mutating func allocate(
     _ e: Expression, unlessNonNil destination: Address?,
-    then proceed: @escaping With<Address>) -> Onward
+    then proceed: @escaping Consumer<Address>) -> Onward
   {
     destination.map { $0 => proceed } ?? allocate(e, then: proceed)
   }
@@ -408,7 +408,7 @@ fileprivate extension Interpreter {
   /// `proceed`.
   mutating func copy(
     from source: Address, to target: Address,
-    then proceed: @escaping With<Address>) -> Onward
+    then proceed: @escaping Consumer<Address>) -> Onward
   {
     if tracing {
       print("  info: copying \(self[source]) into \(target)")
@@ -441,7 +441,7 @@ fileprivate extension Interpreter {
 
   mutating func initialize(
     _ target: Address, to v: Value,
-    then proceed: @escaping With<Address>) -> Onward
+    then proceed: @escaping Consumer<Address>) -> Onward
   {
     if tracing {
       print("  info: initializing \(target) = \(v)")
@@ -453,7 +453,7 @@ fileprivate extension Interpreter {
 
 fileprivate extension Interpreter {
   mutating func evaluateAndConsume<T>(
-    _ e: Expression, in proceed: @escaping With<T>) -> Onward {
+    _ e: Expression, in proceed: @escaping Consumer<T>) -> Onward {
     evaluate(e) { p, me in
       let v = me[p] as! T
       return me.deleteAnyEphemeral(at: p) { me in proceed(v, &me) }
@@ -467,7 +467,7 @@ fileprivate extension Interpreter {
   /// call expression.
   mutating func evaluate(
     _ e: Expression, asCallee: Bool = false, into destination: Address? = nil,
-    then proceed_: @escaping With<Address>) -> Onward
+    then proceed_: @escaping Consumer<Address>) -> Onward
   {
     if tracing {
       print(
@@ -524,7 +524,7 @@ fileprivate extension Interpreter {
   /// of the result on to `proceed`.
   mutating func evaluate(
     _ name: Identifier, into destination: Address? = nil,
-    then proceed: @escaping With<Address>) -> Onward
+    then proceed: @escaping Consumer<Address>) -> Onward
   {
     let d = program.definition[name]
 
@@ -565,7 +565,7 @@ fileprivate extension Interpreter {
   /// `proceed`.
   mutating func evaluate(
     _ e: UnaryOperatorExpression, into output: Address,
-    then proceed: @escaping With<Address>) -> Onward
+    then proceed: @escaping Consumer<Address>) -> Onward
   {
     evaluate(e.operand) { operand, me in
       let result: Value
@@ -584,7 +584,7 @@ fileprivate extension Interpreter {
   /// `proceed`.
   mutating func evaluate(
     _ e: BinaryOperatorExpression, into output: Address,
-    then proceed: @escaping With<Address>) -> Onward
+    then proceed: @escaping Consumer<Address>) -> Onward
   {
     evaluate(e.lhs) { lhs, me in
       if e.operation.text == "and" && (me[lhs] as! Bool == false) {
@@ -614,7 +614,7 @@ fileprivate extension Interpreter {
   /// `proceed`.
   mutating func evaluate(
     _ e: FunctionCall<Expression>, into output: Address,
-    then proceed: @escaping With<Address>) -> Onward
+    then proceed: @escaping Consumer<Address>) -> Onward
   {
     evaluate(e.callee, asCallee: true) { calleeAddress, me in
       me.evaluate(.tupleLiteral(e.arguments)) { arguments, me in
@@ -687,7 +687,7 @@ fileprivate extension Interpreter {
   /// the result on to `proceed`.
   mutating func evaluate(
     _ e: MemberAccessExpression, asCallee: Bool, into output: Address?,
-    then proceed: @escaping With<Address>) -> Onward
+    then proceed: @escaping Consumer<Address>) -> Onward
   {
     evaluate(e.base) { base, me in
       switch me[base].type {
@@ -729,7 +729,7 @@ fileprivate extension Interpreter {
 
   mutating func evaluateIndex(
     target t: Expression, offset i: Expression, into output: Address?,
-    then proceed: @escaping With<Address>) -> Onward
+    then proceed: @escaping Consumer<Address>) -> Onward
   {
     evaluate(t, into: output) { targetAddress, me in
       me.evaluate(i) { indexAddress, me in
@@ -760,7 +760,7 @@ fileprivate extension Interpreter {
     into output: Address,
     parts: [FieldID: Address] = [:],
     positionalCount: Int = 0,
-    then proceed: @escaping With<Address>) -> Onward
+    then proceed: @escaping Consumer<Address>) -> Onward
   {
     // FIXME: too many copies
     if e.isEmpty {
@@ -818,7 +818,7 @@ fileprivate extension Interpreter {
   /// indication of whether the match was successful.
   mutating func match(
     _ p: Pattern, toValueAt source: Address,
-    then proceed: @escaping With<Bool>) -> Onward
+    then proceed: @escaping Consumer<Bool>) -> Onward
   {
     if tracing {
       print("\(p.site): info: matching against value \(self[source])")
@@ -851,7 +851,7 @@ fileprivate extension Interpreter {
 
   mutating func match(
     _ p: FunctionCall<Pattern>, toValueAt source: Address,
-    then proceed: @escaping With<Bool>) -> Onward
+    then proceed: @escaping Consumer<Bool>) -> Onward
   {
     evaluate(p.callee, asCallee: true) { callee, me in
       switch me[source].type {
@@ -875,7 +875,7 @@ fileprivate extension Interpreter {
 
   mutating func match(
     _ p: TuplePattern, toValueAt source: Address,
-    then proceed: @escaping With<Bool>) -> Onward
+    then proceed: @escaping Consumer<Bool>) -> Onward
   {
     if self[source] is TupleValue {
       let sourceStructure = self.memory.substructure(at: source)
@@ -889,7 +889,7 @@ fileprivate extension Interpreter {
 
   mutating func matchElements(
     _ p: Tuple<Pattern>.Elements.SubSequence, toValuesAt source: Tuple<Address>,
-    then proceed: @escaping With<Bool>) -> Onward
+    then proceed: @escaping Consumer<Bool>) -> Onward
   {
     guard let (k0, p0) = p.first else { return true => proceed }
 
