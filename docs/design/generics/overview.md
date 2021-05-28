@@ -186,7 +186,7 @@ we decide for metaprogramming constructs.
 ### Implicit parameters
 
 An [implicit parameter](terminology.md#implicit-parameter) is a value that is
-determined by the type of the value passed to another parameter, and not passed
+automatically deduced rather than being passed
 explicitly to the function. Implicit parameters are declared using square
 brackets before the usual parameter list, as in:
 
@@ -206,7 +206,7 @@ What happens here is the type for the `array` parameter is determined from the
 value passed in, and the pattern-matching process used to see if the types match
 finds that it does match if `n` is set to `3`.
 
-Normally you would pass in an implicit parameter as a generic or template, not
+Normally you would declare an implicit parameter as a generic or template, not
 as a regular parameter. This avoids overhead from having to support types (like
 the type of `array` inside the `PrintArraySize` function body) that are only
 fully known with dynamic information. For example:
@@ -221,9 +221,8 @@ fn PrintStringArray[n:$ Int](array: FixedArray(String, n)*) {
 }
 ```
 
-Implicit arguments are always determined from the explicit arguments. It is
-illegal not to mention implicit parameters in the explicit parameter list and
-there is no syntax for specifying implicit arguments directly at the call site.
+Implicit arguments are always determined from the call and its explicit arguments.
+There is no syntax for specifying implicit arguments directly at the call site.
 
 ```
 // ERROR: can't determine `n` from explicit parameters
@@ -288,12 +287,12 @@ In summary:
     a function with a generic type parameter can have the same function body as
     an unparameterized one.
 -   Interfaces are usable as type-types, meaning you can define a generic
-    function that have a type parameter satisfying the interface by saying the
-    type of the type parameter is the interface. Inside such a generic function,
+    function that has a type parameter satisfying the interface by declaring the
+    type *of the type parameter* is the interface. Inside such a generic function,
     the API of the type is [erased](terminology.md#type-erasure), except for the
     names defined in the interface.
--   You may also declare type-types, called
-    ["structural interfaces"](terminology.md#structural-interfaces), that
+-   You may also declare
+    ["structural interfaces"](terminology.md#structural-interfaces) which are type-types that
     require multiple interfaces to be implemented, and give you control over how
     name conflicts are handled.
 -   Alternatively, you may use a qualified syntax to directly call a function
