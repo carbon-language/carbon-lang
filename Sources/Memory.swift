@@ -21,6 +21,36 @@ func fatal<R>(
 }
 
 struct Memory {
+  /// An allocated element of memory.
+  private struct Location {
+    enum Storage {
+      /// The value is stored directly.
+      case atom(AtomicValue)
+
+      /// The parts of the value are stored indirectly
+      case compound(type: Type, parts: Tuple<Address>)
+    }
+
+    /// A representation of the stored value, with respect to the rest of memory.
+    var occupant: Storage?
+
+    var atom: AtomicValue? {
+      if case let .atom(r) = occupant { return r }
+      else { return nil }
+    }
+
+    var compound: (type: Type, parts: Tuple<Address>)? {
+      if case let .compound(type: t, parts: p) = occupant { return (t, p) }
+      else { return nil }
+    }
+    let mutable: Bool
+  }
+
+  private var storage: [Address: Location] = [:]
+  private(set) var nextOffset = 0
+}
+
+extension Memory {
   /// Returns an uninitialized address.
   ///
   /// - Parameter mutable: `true` iff mutations of the Value at this address
@@ -188,34 +218,6 @@ struct Memory {
   func atom(at a: Address) -> AtomicValue {
     return storage[a]!.atom!
   }
-
-  /// An allocated element of memory.
-  private struct Location {
-    enum Storage {
-      /// The value is stored directly.
-      case atom(AtomicValue)
-
-      /// The parts of the value are stored indirectly
-      case compound(type: Type, parts: Tuple<Address>)
-    }
-
-    /// A representation of the stored value, with respect to the rest of memory.
-    var occupant: Storage?
-
-    var atom: AtomicValue? {
-      if case let .atom(r) = occupant { return r }
-      else { return nil }
-    }
-
-    var compound: (type: Type, parts: Tuple<Address>)? {
-      if case let .compound(type: t, parts: p) = occupant { return (t, p) }
-      else { return nil }
-    }
-    let mutable: Bool
-  }
-
-  private var storage: [Address: Location] = [:]
-  private(set) var nextOffset = 0
 }
 
 // TODO: Stop using tuples of addresses as a storage substrate (I think).

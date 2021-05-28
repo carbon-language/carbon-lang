@@ -174,5 +174,4 @@ extension Type: CustomStringConvertible {
   }
 }
 
-// TODO: remove parent from alternative type
 // TODO: make most subscripts require validity to reduce unwrapping.
