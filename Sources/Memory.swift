@@ -31,6 +31,20 @@ struct Memory {
     return Address(nextOffset)
   }
 
+  /// Initializes the value at `a` to a new instance of `type` with the given
+  /// substructure.
+  ///
+  /// Use this function to adopt storage of already-computed parts into
+  /// newly-initialized values.
+  ///
+  /// - Note: initialization is not considered a mutation of `a`'s value.
+  /// - Requires: `a` is an allocated address.
+  mutating func initialize(
+    _ a: Address, as type: Type, adoptingParts parts: Tuple<Address>
+  ) {
+    storage[a]!.occupant = .compound(type: type, parts: parts)
+  }
+
   /// Initializes the value at `a` to `v`.
   ///
   /// - Note: initialization is not considered a mutation of `a`'s value.
@@ -50,7 +64,7 @@ struct Memory {
     }
     else {
       let isMutable = storage.values[i].mutable
-      
+
       // This creates new dictionary entries so will invalidate the index i
       storage[a]!.occupant = Location.Storage.compound(
         type: v.dynamic_type,
@@ -172,7 +186,7 @@ struct Memory {
 
   /// Returns the value at `a`.
   func atom(at a: Address) -> AtomicValue {
-    fatalError(file: #filePath)
+    return storage[a]!.atom!
   }
 
   /// An allocated element of memory.

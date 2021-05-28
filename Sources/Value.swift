@@ -76,9 +76,9 @@ struct ChoiceValue: CompoundValue {
 
   init(parts: Tuple<Value>) {
     guard
-      case let .choice(parent) = parts[0] as! Type,
-      case let .alternative(
-            discriminator, parent: parent) = parts[1] as! Type
+      case .choice(let parent) = parts[0] as! Type,
+      case .alternative(
+            let discriminator, parent: parent) = parts[1] as! Type
     else {
       UNREACHABLE()
     }
