@@ -14,7 +14,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [Goals](#goals)
 -   [Terminology](#terminology)
 -   [Non-type generics](#non-type-generics)
-    -   [Basic generics](#basic-generics)
+    -   [Generics foundations](#generics-foundations)
     -   [No address of a function with generic parameters](#no-address-of-a-function-with-generic-parameters)
     -   [Generic syntax is a placeholder](#generic-syntax-is-a-placeholder)
     -   [Implicit parameters](#implicit-parameters)
@@ -102,7 +102,7 @@ var n: Int = 3;
 PrintXs_Regular(n); // Prints: XXX
 ```
 
-### Basic generics
+### Generics foundations
 
 What would it mean to change the parameter to be a generic parameter?
 
@@ -186,9 +186,9 @@ we decide for metaprogramming constructs.
 ### Implicit parameters
 
 An [implicit parameter](terminology.md#implicit-parameter) is a value that is
-automatically deduced rather than being passed
-explicitly to the function. Implicit parameters are declared using square
-brackets before the usual parameter list, as in:
+automatically deduced rather than being passed explicitly to the function.
+Implicit parameters are declared using square brackets before the usual
+parameter list, as in:
 
 ```
 fn PrintArraySize[n: Int](array: FixedArray(String, n)*) {
@@ -221,8 +221,9 @@ fn PrintStringArray[n:$ Int](array: FixedArray(String, n)*) {
 }
 ```
 
-Implicit arguments are always determined from the call and its explicit arguments.
-There is no syntax for specifying implicit arguments directly at the call site.
+Implicit arguments are always determined from the call and its explicit
+arguments. There is no syntax for specifying implicit arguments directly at the
+call site.
 
 ```
 // ERROR: can't determine `n` from explicit parameters
@@ -288,13 +289,13 @@ In summary:
     an unparameterized one.
 -   Interfaces are usable as type-types, meaning you can define a generic
     function that has a type parameter satisfying the interface by declaring the
-    type *of the type parameter* is the interface. Inside such a generic function,
-    the API of the type is [erased](terminology.md#type-erasure), except for the
-    names defined in the interface.
+    type _of the type parameter_ is the interface. Inside such a generic
+    function, the API of the type is [erased](terminology.md#type-erasure),
+    except for the names defined in the interface.
 -   You may also declare
-    ["structural interfaces"](terminology.md#structural-interfaces) which are type-types that
-    require multiple interfaces to be implemented, and give you control over how
-    name conflicts are handled.
+    ["structural interfaces"](terminology.md#structural-interfaces) which are
+    type-types that require multiple interfaces to be implemented, and give you
+    control over how name conflicts are handled.
 -   Alternatively, you may use a qualified syntax to directly call a function
     from a specific interface.
 -   The `&` operation on type-types allows you conveniently combine interfaces.
