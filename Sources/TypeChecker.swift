@@ -9,7 +9,7 @@ struct TypeChecker {
     self.definition = nameLookup.definition
 
     // Create "external parent links" for the AST in our parentXXX properties.
-    for d in parsedProgram { registerParentage(d) }
+    for d in parsedProgram { registerParentage(in: d) }
 
     // Check the bodies of nominal types.
     for d in parsedProgram { checkNominalTypeBody(d) }
@@ -108,7 +108,7 @@ private extension TypeChecker {
 /// Computation of notional “ancestor node links” for the AST.
 private extension TypeChecker {
   /// Records references from child declarations to their enclosing parents.
-  mutating func registerParentage(_ d: TopLevelDeclaration) {
+  mutating func registerParentage(in d: TopLevelDeclaration) {
     switch d {
     case let .choice(c):
       for a in c.alternatives { enclosingChoice[a] = c }
