@@ -281,10 +281,10 @@ statement ::= expression(e) SEMICOLON(s).
   { .expressionStatement(e, e...s) }
 statement ::= IF(i) LEFT_PARENTHESIS expression(c) RIGHT_PARENTHESIS
   statement(t) ELSE statement(f).
-  { .if(condition: c, thenClause: t, elseClause: f, i...f) }
+  { .if(c, t, else: f, i...f) }
 statement ::= IF(i) LEFT_PARENTHESIS expression(c) RIGHT_PARENTHESIS
   statement(t).
-  { .if(condition: c, thenClause: t, elseClause: nil, i...t) }
+  { .if(c, t, else: nil, i...t) }
 statement ::= WHILE(w) LEFT_PARENTHESIS expression(c) RIGHT_PARENTHESIS
   statement(b).
   { .while(condition: c, body: b, w...b) }

@@ -645,12 +645,10 @@ private extension TypeChecker {
     case let .initialization(i):
       check(i)
 
-    case let .if(condition: c, thenClause: thenClause, elseClause: maybeElse, _):
+    case let .if(c, s0, else: s1, _):
       expectType(of: c, toBe: .bool)
-      check(thenClause)
-      if let elseClause = maybeElse {
-        check(elseClause)
-      }
+      check(s0)
+      if let s1 = s1 { check(s1) }
 
     case let .return(e, _):
       expectType(of: e, toBe: expectedReturnType!)

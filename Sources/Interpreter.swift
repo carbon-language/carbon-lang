@@ -222,12 +222,15 @@ fileprivate extension Interpreter {
         }
       }
 
-    case let .if(condition: c, thenClause: true_, elseClause: false_, _):
-
+    case let .if(c, s0, else: s1, _):
       return evaluateAndConsume(c) { (condition: Bool, me) in
-        return condition
-          ? me.run(true_, then: proceed)
-          : false_.map { me.run($0, then: proceed) } ?? Onward(proceed)
+        if condition {
+          return me.run(s0, then: proceed)
+        }
+        else {
+          if let s1 = s1 { return me.run(s1, then: proceed) }
+          else { return Onward(proceed) }
+        }
       }
 
     case let .return(e, _):

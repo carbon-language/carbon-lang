@@ -234,7 +234,7 @@ indirect enum Statement: AST {
     expressionStatement(Expression, Site),
     assignment(target: Expression, source: Expression, Site),
     initialization(Initialization),
-    `if`(condition: Expression, thenClause: Statement, elseClause: Statement?, Site),
+    `if`(Expression, Statement, else: Statement?, Site),
     `return`(Expression, Site),
     block([Statement], Site),
     `while`(condition: Expression, body: Statement, Site),
@@ -247,7 +247,7 @@ indirect enum Statement: AST {
     case let .expressionStatement(_, r): return r
     case let .assignment(target: _, source: _, r): return r
     case let .initialization(v): return v.site
-    case let .if(condition: _, thenClause: _, elseClause: _, r): return r
+    case let .if(_, _, else: _, r): return r
     case let .return(_, r): return r
     case let .block(_, r): return r
     case let .while(condition: _, body: _, r): return r

@@ -221,11 +221,11 @@ private extension NameResolution {
       resolveNames(usedIn: s)
     case let .initialization(v):
       resolveNames(usedIn: v)
-    case let .if(condition: c, thenClause: t, elseClause: e, _):
-      resolveNames(usedIn: c)
-      resolveNames(usedIn: t)
-      if let elseClause = e {
-         resolveNames(usedIn: elseClause)
+    case let .if(condition, s0, else: s1, _):
+      resolveNames(usedIn: condition)
+      resolveNames(usedIn: s0)
+      if let s1 = s1 {
+         resolveNames(usedIn: s1)
       }
     case let .return(e, _):
       resolveNames(usedIn: e)
