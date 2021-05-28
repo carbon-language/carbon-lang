@@ -17,6 +17,9 @@ struct ExecutableProgram {
   /// The payload tuple type for each alternative.
   let payloadType: [ASTIdentity<Alternative>: TupleType]
 
+  /// Mapping from alternative declaration to the choice in which it is defined.
+  let enclosingChoice: ASTDictionary<Alternative, ChoiceDefinition>
+
   /// The unique top-level nullary main() function defined in `ast`,
   /// or `nil` if that doesn't exist.
   var main: FunctionDefinition? {
@@ -44,5 +47,6 @@ struct ExecutableProgram {
     if !typeChecking.errors.isEmpty { throw typeChecking.errors }
     staticType = typeChecking.expressionType
     payloadType = typeChecking.payloadType
+    enclosingChoice = typeChecking.enclosingChoice
   }
 }

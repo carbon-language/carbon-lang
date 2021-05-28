@@ -658,11 +658,11 @@ fileprivate extension Interpreter {
             }
           }
 
-        case let .alternative(discriminator, parent: resultType):
+        case let .alternative(discriminator):
           // FIXME: there will be an extra copy of the payload; the result
           // should adopt the payload in memory.
           let result = ChoiceValue(
-            type: resultType,
+            type: me.program.enclosingChoice[discriminator.structure]!.identity,
             discriminator: discriminator,
             payload: me[arguments] as! Tuple<Value>)
           return
@@ -686,7 +686,7 @@ fileprivate extension Interpreter {
     then proceed: @escaping Consumer<Address>) -> Onward
   {
     evaluate(e.base) { base, me in
-      switch me.program.staticType[e.base] {
+      switch me.staticType[e.base] {
       case .struct:
         UNIMPLEMENTED()
 
@@ -706,7 +706,7 @@ fileprivate extension Interpreter {
             let id: ASTIdentity<Alternative>
               = parentID.structure[e.member]!.identity
             let result: Value = asCallee
-              ? Type.alternative(id, parent: parentID)
+              ? Type.alternative(id)
               : ChoiceValue(type: parentID, discriminator: id, payload: .init())
 
             return me.deleteAnyEphemeral(at: base) { me in
@@ -854,11 +854,10 @@ fileprivate extension Interpreter {
     case .struct:
       UNIMPLEMENTED()
 
-    case .choice(let subjectChoiceID):
+    case .choice:
       let subjectAlternative = (self[subject] as! ChoiceValue).discriminator
 
-      if staticType[p.callee]
-           != .alternative(subjectAlternative, parent: subjectChoiceID) {
+      if staticType[p.callee] != .alternative(subjectAlternative) {
         return false => proceed
       }
 

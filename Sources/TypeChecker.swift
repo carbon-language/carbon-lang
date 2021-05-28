@@ -43,7 +43,8 @@ struct TypeChecker {
   private(set) var expressionType = ASTDictionary<Expression, Type>()
 
   /// Mapping from alternative declaration to the choice in which it is defined.
-  private var enclosingChoice = ASTDictionary<Alternative, ChoiceDefinition>()
+  private(set) var enclosingChoice
+    = ASTDictionary<Alternative, ChoiceDefinition>()
 
   /// Mapping from variable declaration to the initialization in which it is
   /// defined.
@@ -244,7 +245,7 @@ private extension TypeChecker {
     case let a as Alternative:
       let payload = value(TypeExpression(a.payload))
       payloadType[a.identity] = payload == .error ? .void : payload.tuple!
-      r = .alternative(a.identity, parent: enclosingChoice[a]!.identity)
+      r = .alternative(a.identity)
 
     case let x as StructMember:
       r = value(x.type)
@@ -342,14 +343,11 @@ private extension TypeChecker {
     }
 
     var r  = rawResult()
-
     // Adjust the result: nullary alternative types are implicitly converted to
     // their parent `choice` type unless they are in callee position.
-    if !isCallee,
-       case let .alternative(id, parent: choiceID) = r,
-       id.structure.payload.isEmpty
+    if !isCallee, case let .alternative(a) = r, a.structure.payload.isEmpty
     {
-      r = .choice(choiceID)
+      r = .choice(enclosingChoice[a.structure]!.identity)
     }
 
     expressionType[e] = r
@@ -405,14 +403,14 @@ private extension TypeChecker {
       }
       return r
 
-    case let .alternative(id, parent: resultID):
-      let payload = payloadType[id]!
+    case let .alternative(a):
+      let payload = payloadType[a]!
       if argumentTypes != .tuple(payload) {
         error(
           e.arguments, "argument types \(argumentTypes)"
             + " do not match payload type \(payload)")
       }
-      return .choice(resultID)
+      return .choice(enclosingChoice[a.structure]!.identity)
 
     case .type:
       let calleeValue = value(TypeExpression(e.callee))
@@ -558,8 +556,8 @@ private extension TypeChecker {
       }
       return calleeValue
 
-    case let .alternative(id, parent: resultID):
-      let payload = payloadType[id]!
+    case let .alternative(a):
+      let payload = payloadType[a]!
       let argumentTypes = patternType(
         p.arguments, initializerType: payload).tuple!
       if argumentTypes != payload {
@@ -568,7 +566,7 @@ private extension TypeChecker {
           "Argument tuple type \(argumentTypes) doesn't match"
             + " alternative payload type \(payload)")
       }
-      return .choice(resultID)
+      return .choice(enclosingChoice[a.structure]!.identity)
 
     default:
       return error(p.callee, "instance of type \(calleeType) is not callable.")

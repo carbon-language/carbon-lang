@@ -8,8 +8,7 @@ indirect enum Type: Equatable {
     int, bool, type,
     function(parameterTypes: TupleType, returnType: Type),
     tuple(TupleType),
-    alternative(
-      ASTIdentity<Alternative>, parent: ASTIdentity<ChoiceDefinition>),
+    alternative(ASTIdentity<Alternative>),
     `struct`(ASTIdentity<StructDefinition>),
     choice(ASTIdentity<ChoiceDefinition>),
 
@@ -112,10 +111,9 @@ extension Type: CompoundValue {
     case .int, .bool, .type, .error:
       return .init([.position(0): kind.rawValue])
 
-    case let .alternative(discriminator, parent: parent):
+    case let .alternative(discriminator):
       return Tuple<Value>(
-        [.position(0): kind.rawValue,
-         .position(1): discriminator.structure, .position(2): parent.structure])
+        [.position(0): kind.rawValue, .position(1): discriminator.structure])
 
     case let .struct(id):
       return .init([.position(0): kind.rawValue, .position(1): id.structure])
@@ -140,9 +138,7 @@ extension Type: CompoundValue {
     case .bool: self = .bool
     case .type: self = .type
     case .alternative:
-      self = .alternative(
-        (parts[1] as! Alternative).identity,
-        parent: (parts[2] as! ChoiceDefinition).identity)
+      self = .alternative((parts[1] as! Alternative).identity)
     case .error: self = .error
     case .struct:
       self = .struct((parts[1] as! StructDefinition).identity)
@@ -168,8 +164,8 @@ extension Type: CustomStringConvertible {
     case let .function(parameterTypes: p, returnType: r):
       return "fnty \(p) -> \(r)"
     case let .tuple(t): return "\(t)"
-    case let .alternative(id, parent: parent):
-      return "\(parent.structure.name.text).\(id.structure.name.text)"
+    case let .alternative(id):
+      return "<Choice>.\(id.structure.name.text)"
     case let .struct(d): return d.structure.name.text
     case let .choice(d): return d.structure.name.text
     case .error:
