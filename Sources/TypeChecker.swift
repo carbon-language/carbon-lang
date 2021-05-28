@@ -71,6 +71,9 @@ struct TypeChecker {
   /// True iff currently checking the body of a loop.
   private var inLoop: Bool = false
 
+  /// True iff tracing output
+  public var tracing: Bool = false
+
   /// A record of the errors encountered during type-checking.
   var errors: ErrorLog = []
 }
@@ -83,7 +86,9 @@ private extension TypeChecker {
   mutating func error<Node: AST>(
     _ offender: Node, _ message: String , notes: [CarbonError.Note] = []
   ) -> Type {
-    errors.append(CarbonError(message, at: offender.site, notes: notes))
+    let e = CarbonError(message, at: offender.site, notes: notes)
+    if tracing { print(e) }
+    errors.append(e)
     return .error
   }
 
@@ -147,7 +152,7 @@ private extension TypeChecker {
       for m in s.members { _ = typeOfName(declaredBy: m) }
     case let .choice(c):
       for a in c.alternatives { _ = typeOfName(declaredBy: a) }
-    case .function, .initialization: ()
+    case .function, .initialization: break
     }
   }
 }
@@ -222,6 +227,7 @@ private extension TypeChecker {
       return t
     case nil: ()
     }
+    if tracing { print("\(d.site): info: \(#function)") }
     typeOfNameDeclaredBy[d.identity] = .beingComputed
 
     let r: Type
@@ -255,6 +261,7 @@ private extension TypeChecker {
 
     // memoize the result.
     typeOfNameDeclaredBy[d.identity] = .final(r)
+    if tracing { print("\(d.site): info: \(#function) = \(r)") }
     return r
   }
 
@@ -302,6 +309,7 @@ private extension TypeChecker {
   ///   of a function call expression.
   mutating func type(_ e: Expression, isCallee: Bool = false) -> Type {
     if let r = expressionType[e] { return r }
+    if tracing { print("\(e.site): info: type") }
 
     func rawResult() -> Type {
       switch e {
@@ -350,6 +358,7 @@ private extension TypeChecker {
       r = .choice(enclosingChoice[a.structure]!.identity)
     }
 
+    if tracing { print("\(e.site): info: type = \(r)") }
     expressionType[e] = r
     return r
   }
@@ -479,6 +488,8 @@ private extension TypeChecker {
   mutating func patternType(
     _ p: Pattern, initializerType rhs: Type? = nil) -> Type
   {
+    if tracing { print("\(p.site): info: pattern type") }
+
     switch (p) {
     case let .atom(e):
       return type(e)
@@ -621,6 +632,7 @@ private extension TypeChecker {
 
   /// Typechecks `s`.
   mutating func check(_ s: Statement) {
+    if tracing { print("\(s.site): info: check(_:Statement)") }
     switch s {
     case let .expressionStatement(e, _):
       _ = type(e)
