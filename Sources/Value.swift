@@ -15,32 +15,77 @@ protocol Value {
 
   /// The parts of this value that can be individually bound to variables.
   var parts: Tuple<Value> { get }
+
+  /// Deserializes a new instance from `memory` at `location`.
+  init(from location: Address, in memory: Memory)
 }
 
-struct FunctionValue: Value, Equatable {
+protocol CompoundValue: Value {
+  /// Creates an instance from the given parts.
+  init(parts: Tuple<Value>)
+}
+
+extension CompoundValue {
+  /// Deserializes a new instance from `memory` at `location`.
+  init(from location: Address, in memory: Memory) {
+    self.init(parts: memory.substructure(at: location).mapFields { memory[$0] })
+  }
+}
+
+protocol AtomicValue: Value {}
+extension AtomicValue {
+  var parts: Tuple<Value> { Tuple() }
+
+  /// Returns the value stored at the given location
+  init(from location: Address, in memory: Memory) {
+    self = memory.atom(at: location) as! Self
+  }
+}
+
+struct FunctionValue: AtomicValue, Equatable {
   let dynamic_type: Type
   let code: FunctionDefinition
-  var parts: Tuple<Value> { Tuple() }
 }
 
 typealias IntValue = Int
-extension IntValue: Value {
+extension IntValue: AtomicValue {
   var dynamic_type: Type { .int }
-  var parts: Tuple<Value> { Tuple() }
 }
 
 typealias BoolValue = Bool
-extension BoolValue: Value {
+extension BoolValue: AtomicValue {
   var dynamic_type: Type { .bool }
-  var parts: Tuple<Value> { Tuple() }
 }
 
-struct ChoiceValue: Value {
+struct ChoiceValue: CompoundValue {
   let dynamic_type_: ASTIdentity<ChoiceDefinition>
   let discriminator: ASTIdentity<Alternative>
   let payload: Tuple<Value>
 
   var dynamic_type: Type { .choice(dynamic_type_) }
+
+  init(
+    type: ASTIdentity<ChoiceDefinition>,
+    discriminator: ASTIdentity<Alternative>,
+    payload: Tuple<Value>
+  ) {
+    dynamic_type_ = type
+    self.discriminator = discriminator
+    self.payload = payload
+  }
+
+  init(parts: Tuple<Value>) {
+    guard
+      case let .choice(parent) = parts[0] as! Type,
+      case let .alternative(
+            discriminator, parent: parent) = parts[1] as! Type
+    else {
+      UNREACHABLE()
+    }
+    self.dynamic_type_ = parent
+    self.discriminator = discriminator
+    self.payload = parts[2] as! Tuple<Value>
+ }
 
   var parts: Tuple<Value> {
     Tuple(

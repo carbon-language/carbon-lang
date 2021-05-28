@@ -170,13 +170,19 @@ struct FunctionDefinition: AST, Declaration {
 
 typealias MemberDesignator = Identifier
 
-struct Alternative: AST, Declaration {
+// Note: AtomicValue conformance is so that this can be serialized to/from
+// memory as part of the corresponding type.
+struct Alternative: AST, Declaration, AtomicValue {
   let name: Identifier;
   let payload: TupleTypeLiteral
   let site: Site
+
+  var dynamic_type: Type { .type }
 }
 
-struct StructDefinition: AST, TypeDeclaration {
+// Note: AtomicValue conformance is so that this can be serialized to/from
+// memory as part of the corresponding type.
+struct StructDefinition: AST, TypeDeclaration, AtomicValue {
   let name: Identifier
   let members: [StructMember]
   let site: Site
@@ -191,9 +197,12 @@ struct StructDefinition: AST, TypeDeclaration {
   }
 
   var declaredType: Type { .struct(self.identity) }
+  var dynamic_type: Type { .type }
 }
 
-struct ChoiceDefinition: AST, TypeDeclaration {
+// Note: AtomicValue conformance is so that this can be serialized to/from
+// memory as part of the corresponding type.
+struct ChoiceDefinition: AST, TypeDeclaration, AtomicValue {
   let name: Identifier
   let alternatives: [Alternative]
   let site: Site
@@ -205,6 +214,7 @@ struct ChoiceDefinition: AST, TypeDeclaration {
   subscript(alternativeName: Identifier) -> Alternative? {
     alternatives.first { $0.name == alternativeName }
   }
+  var dynamic_type: Type { .type }
 }
 
 struct StructMember: AST, Declaration {

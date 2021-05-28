@@ -80,7 +80,7 @@ final class MemoryTests: XCTestCase {
     m.initialize(a, to: v)
     if let x = checkNonNil(m[a] as? Type) {
       XCTAssertEqual(x, v)
-      XCTAssertEqual(m.substructure(at: a), Tuple())
+      XCTAssertEqual(m.substructure(at: a).count, 1)
     }
   }
 
@@ -92,7 +92,7 @@ final class MemoryTests: XCTestCase {
     m.initialize(a, to: v)
     if let x = checkNonNil(m[a] as? Type) {
       XCTAssertEqual(x, v)
-      XCTAssertEqual(m.substructure(at: a), Tuple())
+      XCTAssertEqual(m.substructure(at: a).count, 1)
     }
   }
 
@@ -104,7 +104,7 @@ final class MemoryTests: XCTestCase {
     m.initialize(a, to: v)
     if let x = checkNonNil(m[a] as? Type) {
       XCTAssertEqual(x, v)
-      XCTAssertEqual(m.substructure(at: a), Tuple())
+      XCTAssertEqual(m.substructure(at: a).count, 1)
     }
   }
 
@@ -112,18 +112,27 @@ final class MemoryTests: XCTestCase {
     var m = Memory()
     let a = m.allocate()
 
-    let v = Type.tuple(Tuple([.position(0): .int, .label(foo): .bool]))
+    let v = Type.tuple(Tuple([.position(0): .int, .label(foo): .bool, .label(bar): .type]))
     m.initialize(a, to: v)
     if let x = checkNonNil(m[a] as? Type) {
       XCTAssertEqual(x, v)
-      let s = m.substructure(at: a)
-      XCTAssertEqual(s.count, 2)
+      let top = m.substructure(at: a)
+      XCTAssertEqual(top.count, 2)
+      guard let discriminatorAddress = checkNonNil(top[0]) else { return }
+      guard let tupleAddress = checkNonNil(top[1]) else { return }
+      XCTAssertEqual(m[discriminatorAddress] as? Int, Type.Kind.tuple.rawValue)
+
+      let s = m.substructure(at: tupleAddress)
+      XCTAssertEqual(s.count, 3)
       guard let fooPartAddress = checkNonNil(s[foo]) else { return }
+      guard let barPartAddress = checkNonNil(s[bar]) else { return }
       guard let zeroPartAddress = checkNonNil(s[0]) else { return }
       XCTAssertEqual(m[fooPartAddress] as? Type, .bool)
-      XCTAssertEqual(m.substructure(at: fooPartAddress).count, 0)
+      XCTAssertEqual(m.substructure(at: fooPartAddress).count, 1)
       XCTAssertEqual(m[zeroPartAddress] as? Type, .int)
-      XCTAssertEqual(m.substructure(at: zeroPartAddress).count, 0)
+      XCTAssertEqual(m.substructure(at: zeroPartAddress).count, 1)
+      XCTAssertEqual(m[barPartAddress] as? Type, .type)
+      XCTAssertEqual(m.substructure(at: barPartAddress).count, 1)
     }
   }
 
@@ -140,8 +149,9 @@ final class MemoryTests: XCTestCase {
       XCTAssertEqual(x, v)
 
       let s0 = m.substructure(at: a)
-      XCTAssertEqual(s0.count, 2)
-      guard let parameterPartAddress = checkNonNil(s0[0]) else { return }
+      XCTAssertEqual(s0.count, 3)
+      // Discriminator is at 0
+      guard let parameterPartAddress = checkNonNil(s0[1]) else { return }
 
       guard let parameterPart
         = checkNonNil(m[parameterPartAddress] as? TupleValue) else { return }
@@ -149,15 +159,15 @@ final class MemoryTests: XCTestCase {
       XCTAssertEqual(parameterPart.count, 1)
       XCTAssertEqual(parameterPart[0] as? Type, .int)
 
-      guard let returnPartAddress = checkNonNil(s0[1]) else { return }
+      guard let returnPartAddress = checkNonNil(s0[2]) else { return }
       XCTAssertEqual(m[returnPartAddress] as? Type, r)
-      XCTAssertEqual(m.substructure(at: returnPartAddress).count, 0)
+      XCTAssertEqual(m.substructure(at: returnPartAddress).count, 1)
 
       let s1 = m.substructure(at: parameterPartAddress)
       XCTAssertEqual(s1.count, 1)
       guard let p0Part = checkNonNil(s1[0]) else { return }
       XCTAssertEqual(m[p0Part] as? Type, .int)
-      XCTAssertEqual(m.substructure(at: p0Part).count, 0)
+      XCTAssertEqual(m.substructure(at: p0Part).count, 1)
     }
   }
 }

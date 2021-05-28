@@ -20,6 +20,9 @@ struct Tuple<Field> {
   /// The number of fields in `self`.
   var count: Int { elements.count }
 
+  /// True iff `count == 0`
+  var isEmpty: Bool { elements.isEmpty }
+
   /// Returns a Tuple with the field IDs of `self` and the corresponding
   /// fields mapped through `transform`.
   func mapFields<U>(_ transform: (Field) throws -> U) rethrows -> Tuple<U> {
@@ -86,12 +89,13 @@ extension Tuple: CustomStringConvertible {
 typealias TupleType = Tuple<Type>
 typealias TupleValue = Tuple<Value>
 
-extension TupleValue: CarbonInterpreter.Value {
+extension TupleValue: Value, CompoundValue {
   var dynamic_type: Type {
     .tuple(self.mapFields { $0.dynamic_type })
   }
 
   var parts: Tuple<Value> { self }
+  init(parts: Tuple<Value>) { self = parts }
 }
 
 extension TupleType {

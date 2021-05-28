@@ -662,7 +662,7 @@ fileprivate extension Interpreter {
           // FIXME: there will be an extra copy of the payload; the result
           // should adopt the payload in memory.
           let result = ChoiceValue(
-            dynamic_type_: resultType,
+            type: resultType,
             discriminator: discriminator,
             payload: me[arguments] as! Tuple<Value>)
           return
@@ -707,8 +707,7 @@ fileprivate extension Interpreter {
               = parentID.structure[e.member]!.identity
             let result: Value = asCallee
               ? Type.alternative(id, parent: parentID)
-              : ChoiceValue(
-                dynamic_type_: parentID, discriminator: id, payload: .init())
+              : ChoiceValue(type: parentID, discriminator: id, payload: .init())
 
             return me.deleteAnyEphemeral(at: base) { me in
               me.initialize(output, to: result, then: proceed)
