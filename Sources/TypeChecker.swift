@@ -607,7 +607,7 @@ private extension TypeChecker {
 private extension TypeChecker {
   /// pass `self` to action with `inLoop` temporarily set to `newValue`
   mutating func withInLoop<R>(
-    _ newValue: Bool, _ action: (inout Self)->R) -> R
+    setTo newValue: Bool, _ action: (inout Self)->R) -> R
   {
     let saved = inLoop
     self.inLoop = newValue
@@ -625,7 +625,7 @@ private extension TypeChecker {
     guard let body = f.body else { return }
 
     self.expectedReturnType = typeOfName(declaredBy: f).function!.returnType
-    withInLoop(false) { me in
+    withInLoop(setTo: false) { me in
       me.check(body)
     }
   }
@@ -658,10 +658,9 @@ private extension TypeChecker {
         check(s)
       }
 
-    case let .while(condition: c, body: body, _):
-      expectType(of: c, toBe: .bool)
-
-      withInLoop(true) { me in
+    case let .while(condition, body, _):
+      expectType(of: condition, toBe: .bool)
+      withInLoop(setTo: true) { me in
         me.check(body)
       }
 

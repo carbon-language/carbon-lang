@@ -287,7 +287,7 @@ statement ::= IF(i) LEFT_PARENTHESIS expression(c) RIGHT_PARENTHESIS
   { .if(c, t, else: nil, i...t) }
 statement ::= WHILE(w) LEFT_PARENTHESIS expression(c) RIGHT_PARENTHESIS
   statement(b).
-  { .while(condition: c, body: b, w...b) }
+  { .while(c, b, w...b) }
 statement ::= BREAK(b) SEMICOLON(s).
   { .break(b...s) }
 statement ::= CONTINUE(c) SEMICOLON(s).

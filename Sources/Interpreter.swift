@@ -243,7 +243,7 @@ fileprivate extension Interpreter {
         do: { me, proceed1 in me.runBlock(children[...], then: proceed1) },
         then: proceed)
 
-    case let .while(condition: c, body: body, _):
+    case let .while(condition, body, _):
       let savedLoopContext = (frame.onBreak, frame.onContinue)
       let mark=frame.persistentAllocations.count
 
@@ -254,7 +254,7 @@ fileprivate extension Interpreter {
 
       let onContinue = Onward { me in
         return me.cleanUpPersistentAllocations(above: mark) {
-          $0.runWhile(c, run: body, then: onBreak.code)
+          $0.runWhile(condition, body, then: onBreak.code)
         }
       }
 
@@ -323,11 +323,11 @@ fileprivate extension Interpreter {
   }
 
   mutating func runWhile(
-    _ c: Expression, run body: Statement, then proceed: @escaping Next
+    _ c: Expression, _ body: Statement, then proceed: @escaping Next
   ) -> Onward {
     return evaluateAndConsume(c) { (runBody: Bool, me) in
       return runBody
-        ? me.run(body) { me in me.runWhile(c, run: body, then: proceed)}
+        ? me.run(body) { me in me.runWhile(c, body, then: proceed)}
         : Onward(proceed)
     }
   }

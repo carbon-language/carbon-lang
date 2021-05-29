@@ -241,9 +241,9 @@ private extension NameResolution {
           me.resolveNames(usedIn: substatement)
         }
       }
-    case let .while(condition: c, body: b, _):
-      resolveNames(usedIn: c)
-      resolveNames(usedIn: b)
+    case let .while(condition, body, _):
+      resolveNames(usedIn: condition)
+      resolveNames(usedIn: body)
     case let .match(subject: s, clauses: clauses, _):
       resolveNames(usedIn: s)
       for clause in clauses { resolveNames(usedIn: clause) }
