@@ -47,6 +47,14 @@ struct FunctionValue: AtomicValue, Equatable {
   let code: FunctionDefinition
 }
 
+/*
+struct StructConstructorValue: AtomicValue, Equatable {
+  let dynamic_type: Type
+  let def: StructDefinition
+}
+*]
+ */
+
 typealias IntValue = Int
 extension IntValue: AtomicValue {
   var dynamic_type: Type { .int }
@@ -101,3 +109,34 @@ extension ChoiceValue: CustomStringConvertible {
 }
 
 // TODO: Alternative => AlternativeDefinition?
+
+struct StructValue: CompoundValue {
+  let dynamic_type_: ASTIdentity<StructDefinition>
+  let payload: Tuple<Value>
+
+  var dynamic_type: Type { .struct(dynamic_type_) }
+
+  init(
+    type: ASTIdentity<StructDefinition>,
+    payload: Tuple<Value>
+  ) {
+    dynamic_type_ = type
+    self.payload = payload
+  }
+
+  init(parts: Tuple<Value>) {
+    guard
+      case .struct(let parent) = parts[0] as! Type
+    else {
+      UNREACHABLE()
+    }
+    self.dynamic_type_ = parent
+    self.payload = parts[1] as! Tuple<Value>
+ }
+
+  var parts: Tuple<Value> {
+    Tuple(
+      [.position(0): dynamic_type,
+       .position(1): payload])
+  }
+}
