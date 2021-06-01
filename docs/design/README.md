@@ -26,8 +26,12 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Variables](#variables)
     -   [Lifetime and move semantics](#lifetime-and-move-semantics)
     -   [Control flow](#control-flow)
-        -   [`if`/`else`](#ifelse)
-        -   [`while`, `break`, and `continue`](#while-break-and-continue)
+        -   [`if` and `else`](#if-and-else)
+        -   [Loops](#loops)
+            -   [`while`](#while)
+            -   [`for`](#for)
+            -   [`break`](#break)
+            -   [`continue`](#continue)
         -   [`return`](#return)
 -   [Types](#types)
     -   [Primitive types](#primitive-types)
@@ -352,87 +356,112 @@ Breaking this apart:
 
 ### Control flow
 
-> References: [Control flow](control_flow.md)
->
-> **TODO:** References need to be evolved.
+> References: [Control flow](control_flow/README.md)
 
 Blocks of statements are generally executed sequentially. However, statements
 are the primary place where this flow of execution can be controlled.
 
-#### `if`/`else`
+#### `if` and `else`
 
-> References: [Control flow](control_flow.md)
->
-> **TODO:** References need to be evolved.
+> References: [Control flow](control_flow/conditionals.md)
 
-`if` and `else` are common flow control keywords, which can result in
-conditional execution of statements.
-
-For example:
+`if` and `else` provide conditional execution of statements. For example:
 
 ```carbon
-fn Foo(Int x) {
-  if (x < 42) {
-    Bar();
-  } else if (x > 77) {
-    Baz();
-  }
+if (fruit.IsYellow()) {
+  Print("Banana!");
+} else if (fruit.IsOrange()) {
+  Print("Orange!");
+} else {
+  Print("Vegetable!");
 }
 ```
 
-Breaking the `Foo` function apart:
+This code will:
 
--   `Bar()` is invoked if `x` is less than `42`.
--   `Baz()` is invoked if `x` is greater than `77`.
--   Nothing happens if `x` is between `42` and `77`.
+-   Print `Banana!` if `fruit.IsYellow()` is `True`.
+-   Print `Orange!` if `fruit.IsYellow()` is `False` and `fruit.IsOrange()` is
+    `True`.
+-   Print `Vegetable!` if both of the above return `False`.
 
-#### `while`, `break`, and `continue`
+#### Loops
 
-> References: [Control flow](control_flow.md)
->
-> **TODO:** References need to be evolved.
+##### `while`
 
-Loops will be supported with a low-level primitive `while` statement. `break`
-will be a way to exit the `while` directly, while `continue` will skip the rest
-of the current loop iteration.
+> References: [Control flow](control_flow/loops.md#while)
 
-For example:
+`while` statements loop for as long as the passed expression returns `True`. For
+example, this prints `0`, `1`, `2`, then `Done!`:
 
 ```carbon
-fn Foo() {
-  var Int x = 0;
-  while (x < 42) {
-    if (ShouldStop()) break;
-    if (ShouldSkip(x)) {
-      ++x;
-      continue;
-    }
-    Bar(x);
-    ++x;
-  }
+var Int x = 0;
+while (x < 3) {
+  Print(x);
+  ++x;
+}
+Print("Done!");
+```
+
+##### `for`
+
+> References: [Control flow](control_flow/loops.md#for)
+
+`for` statements support range-based looping, typically over containers. For
+example, this prints all names in `names`:
+
+```carbon
+for (var String name : names) {
+  Print(name);
 }
 ```
 
-Breaking the `Foo` function apart:
+`PrintNames()` prints each `String` in the `names` `List` in iteration order.
 
--   The while body is normally executed for all values of `x` in [0, 42).
-    -   The increment of x at the end causes this.
--   If `ShouldStop()` returns true, the `break` causes the `while` to exit
-    early.
--   If `ShouldSkip()` returns true, the `continue` causes the `while` to restart
-    early.
--   Otherwise, `Bar(x)` is called for values of `x` in [0, 42).
+##### `break`
+
+> References: [Control flow](control_flow/loops.md#break)
+
+The `break` statement immediately ends a `while` or `for` loop. Execution will
+resume at the end of the loop's scope. For example, this processes steps until a
+manual step is hit (if no manual step is hit, all steps are processed):
+
+```carbon
+for (var Step step : steps) {
+  if (step.IsManual()) {
+    Print("Reached manual step!");
+    break;
+  }
+  step.Process();
+}
+```
+
+##### `continue`
+
+> References: [Control flow](control_flow/loops.md#continue)
+
+The `continue` statement immediately goes to the next loop of a `while` or
+`for`. In a `while`, execution continues with the `while` expression. For
+example, this prints all non-empty lines of a file, using `continue` to skip
+empty lines:
+
+```carbon
+File f = OpenFile(path);
+while (!f.EOF()) {
+  String line = f.ReadLine();
+  if (line.IsEmpty()) {
+    continue;
+  }
+  Print(line);
+}
+```
 
 #### `return`
 
-> References: [Control flow](control_flow.md)
->
-> **TODO:** References need to be evolved.
+> References: [Control flow](control_flow/return.md)
 
 The `return` statement ends the flow of execution within a function, returning
 execution to the caller. If the function returns a value to the caller, that
-value is provided by an expression in the return statement. This allows us to
-complete the definition of our `Sum` function from earlier as:
+value is provided by an expression in the return statement. For example:
 
 ```carbon
 fn Sum(Int a, Int b) -> Int {
