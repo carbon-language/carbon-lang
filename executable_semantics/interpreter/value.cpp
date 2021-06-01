@@ -4,11 +4,88 @@
 
 #include "executable_semantics/interpreter/value.h"
 
+#include <algorithm>
+#include <cassert>
 #include <iostream>
 
 #include "executable_semantics/interpreter/interpreter.h"
 
 namespace Carbon {
+
+int Value::GetInteger() const {
+  assert(tag == ValKind::IntV);
+  return u.integer;
+}
+
+bool Value::GetBoolean() const {
+  assert(tag == ValKind::BoolV);
+  return u.boolean;
+}
+
+Function Value::GetFunction() const {
+  assert(tag == ValKind::FunV);
+  return u.fun;
+}
+
+StructConstructor Value::GetStruct() const {
+  assert(tag == ValKind::StructV);
+  return u.struct_val;
+}
+
+AlternativeConstructor Value::GetAlternativeConstructor() const {
+  assert(tag == ValKind::AltConsV);
+  return u.alt_cons;
+}
+
+Alternative Value::GetAlternative() const {
+  assert(tag == ValKind::AltV);
+  return u.alt;
+}
+
+TupleValue Value::GetTuple() const {
+  assert(tag == ValKind::TupleV);
+  return u.tuple;
+}
+
+Address Value::GetPointer() const {
+  assert(tag == ValKind::PtrV);
+  return u.ptr;
+}
+
+std::string* Value::GetVariableType() const {
+  assert(tag == ValKind::VarTV);
+  return u.var_type;
+}
+
+VariablePatternValue Value::GetVariablePattern() const {
+  assert(tag == ValKind::VarPatV);
+  return u.var_pat;
+}
+
+FunctionTypeValue Value::GetFunctionType() const {
+  assert(tag == ValKind::FunctionTV);
+  return u.fun_type;
+}
+
+PointerType Value::GetPointerType() const {
+  assert(tag == ValKind::PointerTV);
+  return u.ptr_type;
+}
+
+StructType Value::GetStructType() const {
+  assert(tag == ValKind::StructTV);
+  return u.struct_type;
+}
+
+ChoiceType Value::GetChoiceType() const {
+  assert(tag == ValKind::ChoiceTV);
+  return u.choice_type;
+}
+
+ContinuationValue Value::GetContinuation() const {
+  assert(tag == ValKind::ContinuationV);
+  return u.continuation;
+}
 
 auto FindInVarValues(const std::string& field, VarValues* inits)
     -> const Value* {
@@ -37,22 +114,33 @@ auto FieldsEqual(VarValues* ts1, VarValues* ts2) -> bool {
   }
 }
 
-auto MakeIntVal(int i) -> const Value* {
+auto FindTupleField(const std::string& name, const Value* tuple)
+    -> std::optional<Address> {
+  assert(tuple->tag == ValKind::TupleV);
+  for (const TupleElement& element : *tuple->GetTuple().elements) {
+    if (element.name == name) {
+      return element.address;
+    }
+  }
+  return std::nullopt;
+}
+
+auto Value::MakeIntVal(int i) -> const Value* {
   auto* v = new Value();
   v->tag = ValKind::IntV;
   v->u.integer = i;
   return v;
 }
 
-auto MakeBoolVal(bool b) -> const Value* {
+auto Value::MakeBoolVal(bool b) -> const Value* {
   auto* v = new Value();
   v->tag = ValKind::BoolV;
   v->u.boolean = b;
   return v;
 }
 
-auto MakeFunVal(std::string name, const Value* param, Statement* body)
-    -> const Value* {
+auto Value::MakeFunVal(std::string name, const Value* param,
+                       const Statement* body) -> const Value* {
   auto* v = new Value();
   v->tag = ValKind::FunV;
   v->u.fun.name = new std::string(std::move(name));
@@ -61,14 +149,15 @@ auto MakeFunVal(std::string name, const Value* param, Statement* body)
   return v;
 }
 
-auto MakePtrVal(Address addr) -> const Value* {
+auto Value::MakePtrVal(Address addr) -> const Value* {
   auto* v = new Value();
   v->tag = ValKind::PtrV;
   v->u.ptr = addr;
   return v;
 }
 
-auto MakeStructVal(const Value* type, const Value* inits) -> const Value* {
+auto Value::MakeStructVal(const Value* type, const Value* inits)
+    -> const Value* {
   auto* v = new Value();
   v->tag = ValKind::StructV;
   v->u.struct_val.type = type;
@@ -76,16 +165,15 @@ auto MakeStructVal(const Value* type, const Value* inits) -> const Value* {
   return v;
 }
 
-auto MakeTupleVal(std::vector<std::pair<std::string, Address>>* elts)
-    -> const Value* {
+auto Value::MakeTupleVal(std::vector<TupleElement>* elements) -> const Value* {
   auto* v = new Value();
   v->tag = ValKind::TupleV;
-  v->u.tuple.elts = elts;
+  v->u.tuple.elements = elements;
   return v;
 }
 
-auto MakeAltVal(std::string alt_name, std::string choice_name, Address argument)
-    -> const Value* {
+auto Value::MakeAltVal(std::string alt_name, std::string choice_name,
+                       Address argument) -> const Value* {
   auto* v = new Value();
   v->tag = ValKind::AltV;
   v->u.alt.alt_name = new std::string(std::move(alt_name));
@@ -94,7 +182,7 @@ auto MakeAltVal(std::string alt_name, std::string choice_name, Address argument)
   return v;
 }
 
-auto MakeAltCons(std::string alt_name, std::string choice_name)
+auto Value::MakeAltCons(std::string alt_name, std::string choice_name)
     -> const Value* {
   auto* v = new Value();
   v->tag = ValKind::AltConsV;
@@ -105,14 +193,14 @@ auto MakeAltCons(std::string alt_name, std::string choice_name)
 
 // Return a first-class continuation represented a fragment
 // of the stack.
-auto MakeContinuation(std::vector<Frame*> stack) -> Value* {
+auto Value::MakeContinuation(std::vector<Frame*> stack) -> Value* {
   auto* v = new Value();
   v->tag = ValKind::ContinuationV;
   v->u.continuation.stack = new std::vector<Frame*>(stack);
   return v;
 }
 
-auto MakeVarPatVal(std::string name, const Value* type) -> const Value* {
+auto Value::MakeVarPatVal(std::string name, const Value* type) -> const Value* {
   auto* v = new Value();
   v->tag = ValKind::VarPatV;
   v->u.var_pat.name = new std::string(std::move(name));
@@ -120,45 +208,46 @@ auto MakeVarPatVal(std::string name, const Value* type) -> const Value* {
   return v;
 }
 
-auto MakeVarTypeVal(std::string name) -> const Value* {
+auto Value::MakeVarTypeVal(std::string name) -> const Value* {
   auto* v = new Value();
   v->tag = ValKind::VarTV;
   v->u.var_type = new std::string(std::move(name));
   return v;
 }
 
-auto MakeIntTypeVal() -> const Value* {
+auto Value::MakeIntTypeVal() -> const Value* {
   auto* v = new Value();
   v->tag = ValKind::IntTV;
   return v;
 }
 
-auto MakeBoolTypeVal() -> const Value* {
+auto Value::MakeBoolTypeVal() -> const Value* {
   auto* v = new Value();
   v->tag = ValKind::BoolTV;
   return v;
 }
 
-auto MakeTypeTypeVal() -> const Value* {
+auto Value::MakeTypeTypeVal() -> const Value* {
   auto* v = new Value();
   v->tag = ValKind::TypeTV;
   return v;
 }
 
 // Return a Continuation type.
-auto MakeContinuationTypeVal() -> const Value* {
+auto Value::MakeContinuationTypeVal() -> const Value* {
   auto* v = new Value();
   v->tag = ValKind::ContinuationTV;
   return v;
 }
 
-auto MakeAutoTypeVal() -> const Value* {
+auto Value::MakeAutoTypeVal() -> const Value* {
   auto* v = new Value();
   v->tag = ValKind::AutoTV;
   return v;
 }
 
-auto MakeFunTypeVal(const Value* param, const Value* ret) -> const Value* {
+auto Value::MakeFunTypeVal(const Value* param, const Value* ret)
+    -> const Value* {
   auto* v = new Value();
   v->tag = ValKind::FunctionTV;
   v->u.fun_type.param = param;
@@ -166,15 +255,15 @@ auto MakeFunTypeVal(const Value* param, const Value* ret) -> const Value* {
   return v;
 }
 
-auto MakePtrTypeVal(const Value* type) -> const Value* {
+auto Value::MakePtrTypeVal(const Value* type) -> const Value* {
   auto* v = new Value();
   v->tag = ValKind::PointerTV;
   v->u.ptr_type.type = type;
   return v;
 }
 
-auto MakeStructTypeVal(std::string name, VarValues* fields, VarValues* methods)
-    -> const Value* {
+auto Value::MakeStructTypeVal(std::string name, VarValues* fields,
+                              VarValues* methods) -> const Value* {
   auto* v = new Value();
   v->tag = ValKind::StructTV;
   v->u.struct_type.name = new std::string(std::move(name));
@@ -183,22 +272,15 @@ auto MakeStructTypeVal(std::string name, VarValues* fields, VarValues* methods)
   return v;
 }
 
-auto MakeTupleTypeVal(VarValues* fields) -> const Value* {
+auto Value::MakeUnitTypeVal() -> const Value* {
   auto* v = new Value();
-  v->tag = ValKind::TupleTV;
-  v->u.tuple_type.fields = fields;
+  v->tag = ValKind::TupleV;
+  v->u.tuple.elements = new std::vector<TupleElement>();
   return v;
 }
 
-auto MakeVoidTypeVal() -> const Value* {
-  auto* v = new Value();
-  v->tag = ValKind::TupleTV;
-  v->u.tuple_type.fields = new VarValues();
-  return v;
-}
-
-auto MakeChoiceTypeVal(std::string name,
-                       std::list<std::pair<std::string, const Value*>>* alts)
+auto Value::MakeChoiceTypeVal(
+    std::string name, std::list<std::pair<std::string, const Value*>>* alts)
     -> const Value* {
   auto* v = new Value();
   v->tag = ValKind::ChoiceTV;
@@ -208,56 +290,56 @@ auto MakeChoiceTypeVal(std::string name,
   return v;
 }
 
-void PrintValue(const Value* val, std::ostream& out) {
+auto PrintValue(const Value* val, std::ostream& out) -> void {
   switch (val->tag) {
     case ValKind::AltConsV: {
-      out << *val->u.alt_cons.choice_name << "." << *val->u.alt_cons.alt_name;
+      out << *val->GetAlternativeConstructor().choice_name << "."
+          << *val->GetAlternativeConstructor().alt_name;
       break;
     }
     case ValKind::VarPatV: {
-      PrintValue(val->u.var_pat.type, out);
-      out << ": " << *val->u.var_pat.name;
+      PrintValue(val->GetVariablePattern().type, out);
+      out << ": " << *val->GetVariablePattern().name;
       break;
     }
     case ValKind::AltV: {
-      out << "alt " << *val->u.alt.choice_name << "." << *val->u.alt.alt_name
-          << " ";
-      PrintValue(state->heap[val->u.alt.argument], out);
+      out << "alt " << *val->GetAlternative().choice_name << "."
+          << *val->GetAlternative().alt_name << " ";
+      state->heap.PrintAddress(val->GetAlternative().argument, out);
       break;
     }
     case ValKind::StructV: {
-      out << *val->u.struct_val.type->u.struct_type.name;
-      PrintValue(val->u.struct_val.inits, out);
+      out << *val->GetStruct().type->GetStructType().name;
+      PrintValue(val->GetStruct().inits, out);
       break;
     }
     case ValKind::TupleV: {
       out << "(";
       bool add_commas = false;
-      for (const auto& elt : *val->u.tuple.elts) {
+      for (const TupleElement& element : *val->GetTuple().elements) {
         if (add_commas) {
           out << ", ";
         } else {
           add_commas = true;
         }
 
-        out << elt.first << " = ";
-        PrintValue(state->heap[elt.second], out);
-        out << "@" << elt.second;
+        out << element.name << " = ";
+        state->heap.PrintAddress(element.address, out);
       }
       out << ")";
       break;
     }
     case ValKind::IntV:
-      out << val->u.integer;
+      out << val->GetInteger();
       break;
     case ValKind::BoolV:
-      out << std::boolalpha << val->u.boolean;
+      out << std::boolalpha << val->GetBoolean();
       break;
     case ValKind::FunV:
-      out << "fun<" << *val->u.fun.name << ">";
+      out << "fun<" << *val->GetFunction().name << ">";
       break;
     case ValKind::PtrV:
-      out << "ptr<" << val->u.ptr << ">";
+      out << "ptr<" << val->GetPointer() << ">";
       break;
     case ValKind::BoolTV:
       out << "Bool";
@@ -276,43 +358,27 @@ void PrintValue(const Value* val, std::ostream& out) {
       break;
     case ValKind::PointerTV:
       out << "Ptr(";
-      PrintValue(val->u.ptr_type.type, out);
+      PrintValue(val->GetPointerType().type, out);
       out << ")";
       break;
     case ValKind::FunctionTV:
       out << "fn ";
-      PrintValue(val->u.fun_type.param, out);
+      PrintValue(val->GetFunctionType().param, out);
       out << " -> ";
-      PrintValue(val->u.fun_type.ret, out);
+      PrintValue(val->GetFunctionType().ret, out);
       break;
     case ValKind::VarTV:
-      out << *val->u.var_type;
+      out << *val->GetVariableType();
       break;
-    case ValKind::TupleTV: {
-      out << "Tuple(";
-      bool add_commas = false;
-      for (const auto& elt : *val->u.tuple_type.fields) {
-        if (add_commas) {
-          out << ", ";
-        } else {
-          add_commas = true;
-        }
-
-        out << elt.first << " = ";
-        PrintValue(elt.second, out);
-      }
-      out << ")";
-      break;
-    }
     case ValKind::StructTV:
-      out << "struct " << *val->u.struct_type.name;
+      out << "struct " << *val->GetStructType().name;
       break;
     case ValKind::ChoiceTV:
-      out << "choice " << *val->u.choice_type.name;
+      out << "choice " << *val->GetChoiceType().name;
       break;
     case ValKind::ContinuationV:
       out << "continuation[[";
-      for (Frame* frame : *val->u.continuation.stack) {
+      for (Frame* frame : *val->GetContinuation().stack) {
         PrintFrame(frame, out);
         out << " :: ";
       }
@@ -327,84 +393,121 @@ auto TypeEqual(const Value* t1, const Value* t2) -> bool {
   }
   switch (t1->tag) {
     case ValKind::VarTV:
-      return *t1->u.var_type == *t2->u.var_type;
+      return *t1->GetVariableType() == *t2->GetVariableType();
     case ValKind::PointerTV:
-      return TypeEqual(t1->u.ptr_type.type, t2->u.ptr_type.type);
+      return TypeEqual(t1->GetPointerType().type, t2->GetPointerType().type);
     case ValKind::FunctionTV:
-      return TypeEqual(t1->u.fun_type.param, t2->u.fun_type.param) &&
-             TypeEqual(t1->u.fun_type.ret, t2->u.fun_type.ret);
+      return TypeEqual(t1->GetFunctionType().param,
+                       t2->GetFunctionType().param) &&
+             TypeEqual(t1->GetFunctionType().ret, t2->GetFunctionType().ret);
     case ValKind::StructTV:
-      return *t1->u.struct_type.name == *t2->u.struct_type.name;
+      return *t1->GetStructType().name == *t2->GetStructType().name;
     case ValKind::ChoiceTV:
-      return *t1->u.choice_type.name == *t2->u.choice_type.name;
-    case ValKind::TupleTV:
-      return FieldsEqual(t1->u.tuple_type.fields, t2->u.tuple_type.fields);
+      return *t1->GetChoiceType().name == *t2->GetChoiceType().name;
+    case ValKind::TupleV: {
+      if (t1->GetTuple().elements->size() != t2->GetTuple().elements->size()) {
+        return false;
+      }
+      for (size_t i = 0; i < t1->GetTuple().elements->size(); ++i) {
+        if ((*t1->GetTuple().elements)[i].name !=
+            (*t2->GetTuple().elements)[i].name) {
+          return false;
+        }
+        if (!TypeEqual(
+                state->heap.Read((*t1->GetTuple().elements)[i].address, 0),
+                state->heap.Read((*t2->GetTuple().elements)[i].address, 0))) {
+          return false;
+        }
+      }
+      return true;
+    }
     case ValKind::IntTV:
     case ValKind::BoolTV:
     case ValKind::ContinuationTV:
+    case ValKind::TypeTV:
       return true;
     default:
-      return false;
+      std::cerr << "TypeEqual used to compare non-type values" << std::endl;
+      PrintValue(t1, std::cerr);
+      std::cerr << std::endl;
+      PrintValue(t2, std::cerr);
+      exit(-1);
   }
 }
 
-static auto FieldsValueEqual(VarValues* ts1, VarValues* ts2, int line_num)
+// Returns true if all the fields of the two tuples contain equal values
+// and returns false otherwise.
+static auto FieldsValueEqual(std::vector<TupleElement>* ts1,
+                             std::vector<TupleElement>* ts2, int line_num)
     -> bool {
   if (ts1->size() != ts2->size()) {
     return false;
   }
-  for (auto& iter1 : *ts1) {
-    auto t2 = FindInVarValues(iter1.first, ts2);
-    if (t2 == nullptr) {
+  for (const TupleElement& element : *ts1) {
+    auto iter = std::find_if(
+        ts2->begin(), ts2->end(),
+        [&](const TupleElement& e2) { return e2.name == element.name; });
+    if (iter == ts2->end()) {
       return false;
     }
-    if (!ValueEqual(iter1.second, t2, line_num)) {
+    if (!ValueEqual(state->heap.Read(element.address, line_num),
+                    state->heap.Read(iter->address, line_num), line_num)) {
       return false;
     }
   }
   return true;
 }
 
+// Returns true if the two values are equal and returns false otherwise.
+//
+// This function implements the `==` operator of Carbon.
 auto ValueEqual(const Value* v1, const Value* v2, int line_num) -> bool {
   if (v1->tag != v2->tag) {
     return false;
   }
   switch (v1->tag) {
     case ValKind::IntV:
-      return v1->u.integer == v2->u.integer;
+      return v1->GetInteger() == v2->GetInteger();
     case ValKind::BoolV:
-      return v1->u.boolean == v2->u.boolean;
+      return v1->GetBoolean() == v2->GetBoolean();
     case ValKind::PtrV:
-      CheckAlive(v1->u.ptr, line_num);
-      CheckAlive(v2->u.ptr, line_num);
-      return v1->u.ptr == v2->u.ptr;
+      return v1->GetPointer() == v2->GetPointer();
     case ValKind::FunV:
-      return v1->u.fun.body == v2->u.fun.body;
+      return v1->GetFunction().body == v2->GetFunction().body;
     case ValKind::TupleV:
-      return FieldsValueEqual(v1->u.tuple_type.fields, v2->u.tuple_type.fields,
+      return FieldsValueEqual(v1->GetTuple().elements, v2->GetTuple().elements,
                               line_num);
     default:
+    case ValKind::VarTV:
+    case ValKind::IntTV:
+    case ValKind::BoolTV:
+    case ValKind::TypeTV:
+    case ValKind::FunctionTV:
+    case ValKind::PointerTV:
+    case ValKind::AutoTV:
+    case ValKind::StructTV:
+    case ValKind::ChoiceTV:
+    case ValKind::ContinuationTV:
       return TypeEqual(v1, v2);
+    case ValKind::StructV:
+    case ValKind::AltV:
+    case ValKind::VarPatV:
+    case ValKind::AltConsV:
+    case ValKind::ContinuationV:
+      std::cerr << "ValueEqual does not support this kind of value."
+                << std::endl;
+      exit(-1);
   }
 }
 
 auto ToInteger(const Value* v) -> int {
   switch (v->tag) {
     case ValKind::IntV:
-      return v->u.integer;
+      return v->GetInteger();
     default:
       std::cerr << "expected an integer, not ";
       PrintValue(v, std::cerr);
       exit(-1);
-  }
-}
-
-void CheckAlive(Address address, int line_num) {
-  if (!state->alive[address]) {
-    std::cerr << line_num << ": undefined behavior: access to dead value ";
-    PrintValue(state->heap[address], std::cerr);
-    std::cerr << std::endl;
-    exit(-1);
   }
 }
 

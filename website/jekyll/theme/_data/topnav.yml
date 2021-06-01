@@ -4,9 +4,7 @@
 topnav:
   - title: Topnav
     items:
-      - title: Discourse Forums
-        external_url: https://forums.carbon-lang.dev
-      - title: Discord Chat
+      - title: Discord
         external_url: https://discord.com/channels/655572317891461132/655577725347561492
       - title: Google Drive
         external_url: https://drive.google.com/corp/drive/folders/0ALTu5Y6kc39XUk9PVA

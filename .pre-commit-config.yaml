@@ -17,7 +17,11 @@ repos:
       - id: check-executables-have-shebangs
       - id: check-merge-conflict
       - id: check-symlinks
-        exclude: '^(website/jekyll/site/_includes|bazel-(clang-toolchain|execroot))$'
+        exclude: |
+          (?x)^(
+              website/jekyll/site/_includes|
+              bazel-(clang-toolchain|execroot)
+          )$
       - id: check-yaml
       - id: detect-private-key
       - id: end-of-file-fixer
@@ -25,7 +29,6 @@ repos:
         args: ['--fix=lf']
       - id: trailing-whitespace
         exclude: '^(.*/testdata/.*\.golden)$'
-
   - repo: https://github.com/google/pre-commit-tool-hooks
     rev: 1d04a2848ac54d64bd6474ccec69aac45fa88414 # frozen: v1.1.1
     hooks:
@@ -37,7 +40,7 @@ repos:
             Exceptions. See /LICENSE for license information.
             SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
           - --custom_format
-          - '\.6c$'
+          - '\.carbon$'
           - ''
           - '// '
           - ''
@@ -51,7 +54,15 @@ repos:
           - ''
           - '// '
           - ''
-        exclude: '^(website/(firebase/.firebaserc|jekyll/(Gemfile.lock|theme/.*))|.bazelversion|compile_flags.txt|.*\.def|.*/testdata/.*\.golden)$'
+        exclude: |
+          (?x)^(
+              .bazelversion|
+              compile_flags.txt|
+              third_party/examples/.*/compile_flags.carbon.txt|
+              website/(firebase/.firebaserc|jekyll/(Gemfile.lock|theme/.*))|
+              .*\.def|
+              .*/testdata/.*\.golden
+          )$
       - id: check-google-doc-style
       - id: markdown-toc
   - repo: https://github.com/codespell-project/codespell
@@ -75,7 +86,7 @@ repos:
     hooks:
       - id: black
   - repo: https://github.com/jlebar/pre-commit-hooks.git
-    rev: 349213c5414e360385e74f04964e6d5c43cdad36
+    rev: 07a539b8db43298f124ace23c90b4b871911b8c4
     hooks:
       - id: bazel-buildifier
       - id: clang-format-whole-file
@@ -87,9 +98,14 @@ repos:
         exclude: ^website/jekyll/theme/
   # Run linters last, as formatters and other checks may fix issues.
   - repo: https://gitlab.com/PyCQA/flake8
-    rev: bb6a530e28acab8d3551043b3e8709db8bcbac6b # frozen: 3.8.4
+    rev: 56370aae451722f9d77a5ccd6fb6e231a4a8e651 # frozen: 3.9.0
     hooks:
       - id: flake8
 
+# Most third-party code is in submodules; local commits are excluded here.
 # We fully exclude fuzzer corpus directories as they are generated binary data.
-exclude: '^(.*/fuzzer_corpus/.*)$'
+exclude: |
+  (?x)^(
+      third_party/examples/.*/carbon/.*|
+      .*/fuzzer_corpus/.*
+  )$

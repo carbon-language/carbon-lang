@@ -28,13 +28,6 @@ cc_library(
 )
 
 cc_library(
-    name = "field_list",
-    srcs = ["field_list.cpp"],
-    hdrs = ["field_list.h"],
-    deps = [":expression"],
-)
-
-cc_library(
     name = "function_definition",
     srcs = ["function_definition.cpp"],
     hdrs = ["function_definition.h"],
