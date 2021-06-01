@@ -503,7 +503,6 @@ available through the [prelude package](#name-lookup-for-common-types).
 
 Primitive types fall into the following categories:
 
--   `Void` - a type with only one possible value: empty.
 -   `Bool` - a boolean type with two possible values: `True` and `False`.
 -   `Int` and `UInt` - signed and unsigned 64-bit integer types.
     -   Standard sizes are available, both signed and unsigned, including

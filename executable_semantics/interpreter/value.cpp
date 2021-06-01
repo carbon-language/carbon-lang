@@ -272,7 +272,7 @@ auto Value::MakeStructTypeVal(std::string name, VarValues* fields,
   return v;
 }
 
-auto Value::MakeVoidTypeVal() -> const Value* {
+auto Value::MakeUnitTypeVal() -> const Value* {
   auto* v = new Value();
   v->tag = ValKind::TupleV;
   v->u.tuple.elements = new std::vector<TupleElement>();
