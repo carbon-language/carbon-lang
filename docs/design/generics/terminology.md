@@ -64,14 +64,13 @@ parameter by parameter basis. A single function can take a mix of regular,
 generic, and template parameters.
 
 -   **Regular parameters**, or "dynamic parameters", are designated using the
-    "&lt;type>`:` &lt;name>" syntax (or "&lt;value>").
+    "&lt;name>`:` &lt;type>" syntax (or "&lt;value>").
 -   **Generic parameters** are temporarily designated using a `$` between the
-    type and the name (so it is "&lt;type>`$` &lt;name>"). However, the `$`
-    symbol is not easily typed on non-US keyboards, so we intend to switch to
-    some other syntax. Some possibilities that have been suggested are: `!`,
-    `@`, `#`, and `:`.
--   **Template parameters** are temporarily designated using "&lt;type> `$$`
-    &lt;name>", for similar reasons.
+    type and the name (so it is "&lt;name>`:$` &lt;type>"). However, this is a
+    placeholder syntax, subject to change. Some possibilities that have been
+    suggested are: `:!`, `:@`, `:#`, and `::`.
+-   **Template parameters** are temporarily designated using "&lt;name>`:$$`
+    &lt;type>", for similar reasons.
 
 Expected difference between generics and templates:
 
@@ -181,15 +180,15 @@ For example, let's say we have some overloaded function called `F` that has two
 overloads:
 
 ```
-fn F[Type$$ T](Ptr(T) x) -> T;
-fn F(Int x) -> Bool;
+fn F[T:$$ Type](x: T*) -> T;
+fn F(x: Int) -> Bool;
 ```
 
-A generic function `G` can call `F` with a type like `Ptr(T)` that can not
-possibly call the `F(Int)` overload for `F`, and so it can consistently
-determine the return type of `F`. But `G` can't call `F` with an argument that
-could match either overload. (It is undecided what to do in the situation where
-`F` is overloaded, but the signatures are consistent and so callers could still
+A generic function `G` can call `F` with a type like `T*` that can not possibly
+call the `F(Int)` overload for `F`, and so it can consistently determine the
+return type of `F`. But `G` can't call `F` with an argument that could match
+either overload. (It is undecided what to do in the situation where `F` is
+overloaded, but the signatures are consistent and so callers could still
 typecheck calls to `F`. This still poses problems for the dynamic strategy for
 compiling generics.)
 
@@ -257,9 +256,9 @@ Note that function signatures can typically be rewritten to avoid using implicit
 parameters:
 
 ```
-fn F[Type$$ T](T value);
+fn F[T:$$ Type](value: T);
 // is equivalent to:
-fn F((Type$$ T) value);
+fn F(value: (T:$$ Type));
 ```
 
 See more [here](overview.md#implicit-parameters).
@@ -524,9 +523,9 @@ say it is a type parameter; if it is an output, we say it is an associated type.
 Type parameter example:
 
 ```
-interface Stack(Type$ ElementType) {
-  fn Push(Self* this, ElementType value);
-  fn Pop(Self* this) -> ElementType;
+interface Stack(ElementType:$ Type)
+  fn Push(this: Self*, value: ElementType);
+  fn Pop(this: Self*) -> ElementType;
 }
 ```
 
@@ -534,9 +533,9 @@ Associated type example:
 
 ```
 interface Stack {
-  var Type$ ElementType;
-  fn Push(Self* this, ElementType value);
-  fn Pop(Self* this) -> ElementType;
+  var ElementType:$ Type;
+  fn Push(this: Self*, value: ElementType);
+  fn Pop(this: Self*) -> ElementType;
 }
 ```
 
@@ -550,18 +549,18 @@ interface Iterator { ... }
 interface Container {
   // This does not make sense as an parameter to the container interface,
   // since this type is determined from the container type.
-  var Iterator$ IteratorType;
+  var IteratorType:$ Iterator;
   ...
-  fn Insert(Self* this, IteratorType position, ElementType value);
+  fn Insert(this: Self*, position: IteratorType, value: ElementType);
 }
-struct ListIterator(Type$ ElementType) {
+struct ListIterator(ElementType:$ Type) {
   ...
   impl Iterator;
 }
-struct List(Type$ ElementType) {
+struct List(ElementType:$ Type) {
   // Iterator type is determined by the container type.
-  var Iterator$ IteratorType = ListIterator(ElementType);
-  fn Insert(Self* this, IteratorType position, ElementType value) {
+  var IteratorType:$ Iterator = ListIterator(ElementType);
+  fn Insert(this: Self*, position: IteratorType, value: ElementType) {
     ...
   }
   impl Container;
