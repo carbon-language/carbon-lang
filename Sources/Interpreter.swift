@@ -673,10 +673,19 @@ fileprivate extension Interpreter {
               me.initialize(output, to: result, then: proceed)
             }
 
-        case .struct:
-          UNIMPLEMENTED()
-        case .int, .bool, .type, .tuple, .choice, .error:
-          UNREACHABLE()
+        case .type:
+          guard case .struct(let id) = me[calleeAddress] as! Type else {
+            UNREACHABLE()
+          }
+          let result = StructValue(
+            type: id,
+            payload: me[arguments] as! Tuple<Value>)
+          return 
+            me.deleteAnyEphemerals(at: [calleeAddress, arguments]) { me in
+              me.initialize(output, to: result, then: proceed)
+            }
+          case .int, .bool, .choice, .struct, .tuple, .error:
+            UNREACHABLE()
         }
       }
     }
@@ -691,8 +700,12 @@ fileprivate extension Interpreter {
     evaluate(e.base) { base, me in
       switch me.staticType[e.base] {
       case .struct:
-        UNIMPLEMENTED()
-
+        let payloadAddress = me.memory.substructure(at: base)[1]!
+        let source = me.memory.substructure(at: payloadAddress)[e.member]!
+        return output != nil
+          ? me.copy(from: source, to: output!, then: proceed)
+          : source => proceed
+        
       case .tuple:
         let source = me.memory.substructure(at: base)[e.member]!
         return output != nil

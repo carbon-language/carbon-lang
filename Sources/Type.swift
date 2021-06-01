@@ -94,7 +94,7 @@ indirect enum Type: Equatable {
     case .function: return FunctionValue.self
     case .tuple: return Tuple<Value>.self
     case .alternative: return Type.self
-    case .struct: UNIMPLEMENTED()
+    case .struct: return StructValue.self
     case .choice: return ChoiceValue.self
     case .error: return Type.self
     }
