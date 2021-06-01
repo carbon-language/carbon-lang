@@ -47,14 +47,6 @@ struct FunctionValue: AtomicValue, Equatable {
   let code: FunctionDefinition
 }
 
-/*
-struct StructConstructorValue: AtomicValue, Equatable {
-  let dynamic_type: Type
-  let def: StructDefinition
-}
-*]
- */
-
 typealias IntValue = Int
 extension IntValue: AtomicValue {
   var dynamic_type: Type { .int }

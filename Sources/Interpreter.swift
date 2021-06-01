@@ -554,16 +554,6 @@ fileprivate extension Interpreter {
     case let a as Alternative:
       UNIMPLEMENTED(a)
 
-      /*
-    case let s as StructDefinition:
-      let result = StructConstructorValue(
-        dynamic_type: .struct(s.identity), // Not quite right
-        def: s)
-      return allocate(.name(name), unlessNonNil: destination) { output, me in
-        me.initialize(output, to: result, then: proceed)
-      }
-       */
-      
     case let m as StructMember:
       UNIMPLEMENTED(m)
 
