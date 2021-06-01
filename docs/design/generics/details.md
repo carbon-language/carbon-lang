@@ -1216,7 +1216,8 @@ practice, since interface extension is a very closely coupled relationship, but
 this may be something we will have to revisit in the future.
 
 **Concern:** Having both `extends` and [`extend`](#external-impl) with different
-meanings is going to be confusing. One should be renamed.
+meanings is going to be confusing. One should be renamed. Perhaps `extends`
+would be better replaced by `provides`?
 
 Examples:
 
