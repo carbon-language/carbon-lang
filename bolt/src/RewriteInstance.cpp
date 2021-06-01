@@ -4616,13 +4616,11 @@ void
 RewriteInstance::patchELFAllocatableRelaSections(ELFObjectFile<ELFT> *File) {
   using Elf_Rela = typename ELFT::Rela;
   raw_fd_ostream &OS = Out->os();
-  if (!BC->isX86())
-    return;
 
   for (BinarySection &RelaSection : BC->allocatableRelaSections()) {
     for (const RelocationRef &Rel : RelaSection.getSectionRef().relocations()) {
-      if (Rel.getType() == ELF::R_X86_64_IRELATIVE ||
-          Rel.getType() == ELF::R_X86_64_RELATIVE) {
+      uint64_t RType = Rel.getType();
+      if (Relocation::isRelative(RType) || Relocation::isIRelative(RType)) {
         DataRefImpl DRI = Rel.getRawDataRefImpl();
         const Elf_Rela *RelA = File->getRela(DRI);
         auto Address = RelA->r_addend;

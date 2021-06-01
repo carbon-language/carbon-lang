@@ -72,6 +72,12 @@ struct Relocation {
   /// Return true if relocation type is NONE
   static bool isNone(uint64_t Type);
 
+  /// Return true if relocation type is RELATIVE
+  static bool isRelative(uint64_t Type);
+
+  /// Return true if relocation type is IRELATIVE
+  static bool isIRelative(uint64_t Type);
+
   /// Return true if relocation type is for thread local storage.
   static bool isTLS(uint64_t Type);
 

@@ -355,6 +355,18 @@ bool Relocation::isNone(uint64_t Type) {
   return Type == ELF::R_X86_64_NONE;
 }
 
+bool Relocation::isRelative(uint64_t Type) {
+  if (Arch == Triple::aarch64)
+    return Type == ELF::R_AARCH64_RELATIVE;
+  return Type == ELF::R_X86_64_RELATIVE;
+}
+
+bool Relocation::isIRelative(uint64_t Type) {
+  if (Arch == Triple::aarch64)
+    return Type == ELF::R_AARCH64_IRELATIVE;
+  return Type == ELF::R_X86_64_IRELATIVE;
+}
+
 bool Relocation::isTLS(uint64_t Type) {
   if (Arch == Triple::aarch64)
     return isTLSAArch64(Type);
