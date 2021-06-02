@@ -56,5 +56,6 @@ request:
 -   [0444 - GitHub Discussions](p0444.md)
 -   [0447 - Generics terminology](p0447.md)
 -   [0538 - `return` with no argument](p0538.md)
+-   [0561 - Basic structs (v2)](p0561.md)
 
 <!-- endproposals -->
