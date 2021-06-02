@@ -25,9 +25,9 @@ LBB0:
 LBB1:
   leaq JUMP_TABLE(%rip), %r8
   movzbl %cl, %ecx
-  movq (%r8,%rcx,8), %rax
-  addq %r8, %rax
-  jmpq *%rax
+  movslq (%r8,%rcx,4), %rax
+  addq %rax, %r8
+  jmpq *%r8
 
 LBB2:
   xorq %rax, %rax
@@ -51,7 +51,7 @@ LBB4:
 # jmp table, entries must be R_X86_64_PC32 relocs
   .globl JUMP_TABLE
 JUMP_TABLE:
-  .quad LBB2-JUMP_TABLE
-  .quad LBB3-JUMP_TABLE
-  .quad LBB4-JUMP_TABLE
-  .quad LBB3-JUMP_TABLE
+  .long LBB2-JUMP_TABLE
+  .long LBB3-JUMP_TABLE
+  .long LBB4-JUMP_TABLE
+  .long LBB3-JUMP_TABLE
