@@ -7,6 +7,33 @@ struct TypeID<T>: Hashable {
 }
 
 @dynamicMemberLookup
+protocol FieldAccess {
+  associatedtype Field
+  subscript(_: FieldID) -> Field { get set }
+  func hasField(_: FieldID) -> Bool
+}
+
+extension FieldAccess {
+  subscript(dynamicMember fieldName: String) -> Field {
+    get {
+      self[Identifier(text: fieldName, site: .empty)]
+    }
+    set {
+      self[Identifier(text: fieldName, site: .empty)] = newValue
+    }
+  }
+
+  subscript(n: Int) -> Field {
+    get { self[.position(n)] }
+    set { self[.position(n)] = newValue }
+  }
+
+  subscript(fieldName: Identifier) -> Field {
+    get { self[.label(fieldName)] }
+    set { self[.label(fieldName)] = newValue }
+  }
+}
+
 protocol Value {
   /// The actual type of this value.
   ///
@@ -17,40 +44,10 @@ protocol Value {
   /// This name uses `snake_case` because `.dynamicType` is a deprecated
   /// built-in property name.
   var dynamic_type: Type { get }
-
   subscript(_: FieldID) -> Value { get set }
-  var fieldIDs: [FieldID] { get }
 }
 
 extension Value {
-  subscript(dynamicMember fieldName: String) -> Value {
-    get {
-      self[Identifier(text: fieldName, site: .empty)]
-    }
-    set {
-      self[Identifier(text: fieldName, site: .empty)] = newValue
-    }
-  }
-
-  subscript(n: Int) -> Value {
-    get { self[.position(n)] }
-    set { self[.position(n)] = newValue }
-  }
-
-  subscript(fieldName: Identifier) -> Value {
-    get { self[.label(fieldName)] }
-    set { self[.label(fieldName)] = newValue }
-  }
-
-  subscript(field: FieldID) -> Value {
-    get {
-       fatal("Value \(self) has no field \(field)")
-    }
-    set {
-      fatal("Value \(self) has no field \(field)") ?? ()
-    }
-  }
-
   subscript<T: Value>(downcastTo _: TypeID<T>) -> T {
     get { self as! T }
     set {
@@ -64,29 +61,47 @@ extension Value {
       self = newValue as! Self
     }
   }
-
-  var fieldIDs: [FieldID] { [] }
 }
 
-struct FunctionValue: Value, Equatable {
+protocol AtomicValue: Value, FieldAccess {}
+
+extension AtomicValue {
+  subscript(field: FieldID) -> Value {
+    get {
+      fatal("Value \(self) of atomic type"
+              + " \(self.dynamic_type) has no field \(field)")
+    }
+    set {
+      fatal("Value \(self) of atomic type"
+              + " \(self.dynamic_type) has no field \(field)")
+    }
+  }
+
+  func hasField(_: FieldID) -> Bool { false }
+}
+
+protocol CompoundValue: Value, FieldAccess {
+}
+
+struct FunctionValue: AtomicValue, Equatable {
   let dynamic_type: Type
   let code: FunctionDefinition
 }
 
 typealias IntValue = Int
-extension IntValue: Value {
+extension IntValue: AtomicValue {
   var dynamic_type: Type { .int }
 }
 
 typealias BoolValue = Bool
-extension BoolValue: Value {
+extension BoolValue: AtomicValue {
   var dynamic_type: Type { .bool }
 }
 
-struct ChoiceValue: Value {
+struct ChoiceValue: CompoundValue {
   let dynamic_type_: ASTIdentity<ChoiceDefinition>
   let discriminator: ASTIdentity<Alternative>
-  let payload: Tuple<Value>
+  var payload: Tuple<Value>
 
   var dynamic_type: Type { .choice(dynamic_type_) }
 
@@ -99,6 +114,13 @@ struct ChoiceValue: Value {
     self.discriminator = discriminator
     self.payload = payload
   }
+
+  subscript(field: FieldID) -> Value {
+    get { payload[field] }
+    set { payload[field] = newValue }
+  }
+
+  func hasField(_ f: FieldID) -> Bool { payload.hasField(f) }
 }
 
 extension ChoiceValue: CustomStringConvertible {
@@ -107,9 +129,9 @@ extension ChoiceValue: CustomStringConvertible {
   }
 }
 
-struct StructValue: Value {
+struct StructValue: CompoundValue {
   let dynamic_type_: ASTIdentity<StructDefinition>
-  let payload: Tuple<Value>
+  var payload: Tuple<Value>
 
   var dynamic_type: Type { .struct(dynamic_type_) }
 
@@ -120,16 +142,23 @@ struct StructValue: Value {
     dynamic_type_ = type
     self.payload = payload
   }
+
+  subscript(field: FieldID) -> Value {
+    get { payload[field] }
+    set { payload[field] = newValue }
+  }
+
+  func hasField(_ f: FieldID) -> Bool { payload.hasField(f) }
 }
 
-struct AlternativeValue: Value {
+struct AlternativeValue: AtomicValue {
   init(_ t: ASTIdentity<Alternative>) { dynamic_type_ = t }
 
   let dynamic_type_: ASTIdentity<Alternative>
   var dynamic_type: Type { .alternative(dynamic_type_) }
 }
 
-struct Uninitialized: Value {
+struct Uninitialized: AtomicValue {
   let dynamic_type: Type
 }
 

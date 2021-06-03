@@ -30,11 +30,6 @@ struct TypeChecker {
     }
   }
 
-  /// The state of memoization of a computation, including an "in progress"
-  /// state that allows us to detect dependency cycles.
-  private enum Memo<T: Equatable>: Equatable {
-    case beingComputed, final(T)
-  }
 
   // Mapping from names to their definitions
   private let definition: ASTDictionary<Identifier, Declaration>
@@ -53,7 +48,7 @@ struct TypeChecker {
 
   /// Memoized result of computing the type of the expression consisting of the
   /// name of each declared entity.
-  private var typeOfNameDeclaredBy
+  private(set) var typeOfNameDeclaredBy
     = Dictionary<Declaration.Identity, Memo<Type>>()
 
   /// The payload tuple type for each alternative.
@@ -208,7 +203,8 @@ private extension TypeChecker {
       // Evaluate `f.parameters` as a type expression so we'll get a diagnostic
       // if it isn't a type.  Fall back to void if the result was `Type.error`.
       let p = value(TypeExpression(f.parameters)).tuple ?? .void
-      return Type.function(parameterTypes: p, returnType: value(f.returnType))
+      return Type.function(
+        .init(parameterTypes: p, returnType: value(f.returnType)))
     }
   }
 }
@@ -285,7 +281,8 @@ private extension TypeChecker {
     }
     else { UNREACHABLE("auto return type without return statement body") }
 
-    return .function(parameterTypes: parameterTypes, returnType: returnType)
+    return .function(
+      .init(parameterTypes: parameterTypes, returnType: returnType))
   }
 }
 
@@ -333,8 +330,10 @@ private extension TypeChecker {
           return error(index, "Index type must be Int, not \(indexType)")
         }
         let indexValue = value(index) as! Int
-        return types[indexValue] ?? error(
-          index, "Tuple type \(types) has no value at position \(indexValue)")
+
+        return types.hasField(.init(indexValue)) ? types[indexValue]
+          : error(
+            index, "Tuple type \(types) has no value at position \(indexValue)")
 
       case let .tupleLiteral(t):
         return .tuple(
@@ -404,13 +403,14 @@ private extension TypeChecker {
     let argumentTypes = type(.tupleLiteral(e.arguments))
 
     switch callee {
-    case let .function(parameterTypes: p, returnType: r):
-      if argumentTypes != .tuple(p) {
+    case let .function(f):
+      if argumentTypes != .tuple(f.parameterTypes) {
         error(
           e.arguments,
-          "argument types \(argumentTypes) do not match parameter types \(p)")
+          "argument types \(argumentTypes)"
+            + " do not match parameter types \(f.parameterTypes)")
       }
-      return r
+      return f.returnType
 
     case let .alternative(a):
       let payload = payloadType[a]!
@@ -453,8 +453,8 @@ private extension TypeChecker {
       return error(e.member, "struct \(s.name) has no member '\(e.member)'")
 
     case let .tuple(t):
-      if let r = t[e.member] { return r }
-      return error(e.member, "tuple type \(t) has no field '\(e.member)'")
+      return t.hasField(.label(e.member)) ? t[e.member]
+        : error(e.member, "tuple type \(t) has no field '\(e.member)'")
 
     case .type:
       // Handle access to a type member, like a static member in C++.
@@ -591,7 +591,7 @@ private extension TypeChecker {
   ///   check that separately.
   mutating func patternType(
     _ t: FunctionType<Pattern>,
-    initializerType rhs: (parameterTypes: TupleType, returnType: Type)?
+    initializerType rhs: FunctionType_?
   ) -> Type {
     _ = patternType(
       t.parameters, initializerType: rhs?.parameterTypes,

@@ -54,7 +54,7 @@ final class InterpreterTests: XCTestCase {
   }
 
   func test1() {
-    XCTAssertEqual(run("choice1.6c", tracing: true), 0)
+    // XCTAssertEqual(run("fun1.6c", tracing: true), 0)
   }
 
   func testExamples() {

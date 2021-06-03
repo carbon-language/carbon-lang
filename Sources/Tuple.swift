@@ -10,6 +10,9 @@ enum FieldID: Hashable {
   case label(Identifier)
   /// field identified by its offset in the sequence of positional fields.
   case position(Int)
+
+  init(_ name: String) { self = .label(.init(text: name, site: .empty)) }
+  init(_ position: Int) { self = .position(position) }
 }
 
 /// A tuple value (or type, which is also a tuple value) of the given `Field`.
@@ -17,7 +20,7 @@ enum FieldID: Hashable {
 /// The `fields` of a tuple are instances of `Field`, while the The `element`s
 /// are `(FieldID, Field)` pairs.
 @dynamicMemberLookup
-struct Tuple<Field> {
+struct Tuple<Field> : FieldAccess {
   /// The number of fields in `self`.
   var count: Int { elements.count }
 
@@ -50,18 +53,16 @@ struct Tuple<Field> {
   /// Creates an instance using the given underlying storage.
   init(_ storage: [FieldID: Field] = [:]) { self.elements = storage }
 
-  /// Returns the field with the given id, or `nil` if no such field exists.
-  subscript(k: FieldID) -> Field? { elements[k] }
-
-  /// Returns the field with the given name, or `nil` if no such field exists.
-  subscript(fieldName: Identifier) -> Field? { elements[.label(fieldName)] }
-
-  subscript(dynamicMember fieldName: String) -> Field {
-    elements[.label(Identifier(text: fieldName, site: .empty))]!
+  /// Accesses the field with the given id
+  subscript(k: FieldID) -> Field {
+    get { elements[k]! }
+    set {
+      sanityCheck(elements[k] != nil)
+      elements[k] = newValue
+    }
   }
 
-  /// Returns the given positional field, or `nil` if no such field exists.
-  subscript(position: Int) -> Field? { elements[.position(position)] }
+  func hasField(_ f: FieldID) -> Bool { elements[f] != nil }
 
   typealias Elements = [FieldID: Field]
 
@@ -101,7 +102,7 @@ extension Tuple: CustomStringConvertible {
 typealias TupleType = Tuple<Type>
 typealias TupleValue = Tuple<Value>
 
-extension TupleValue: Value {
+extension TupleValue: Value, CompoundValue {
   var dynamic_type: Type {
     .tuple(self.mapFields { $0.dynamic_type })
   }
@@ -115,6 +116,11 @@ extension TupleType {
   var asType: Type {
     get { .tuple(self) }
     set { self = newValue.tuple! }
+  }
+
+  var asValue: Value {
+    get { self.mapFields { $0 } }
+    set { self = (newValue as! TupleValue).mapFields { Type($0)! } }
   }
 }
 

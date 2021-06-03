@@ -2,14 +2,26 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-struct Address: Hashable {
+struct Address: Hashable, CustomStringConvertible {
   let allocation: Int
   let part: WritableKeyPath<Value, Value>
+  let description: String
 }
+
+infix operator .^^
 
 extension Address {
   static func .^ (l: Address, r: FieldID) -> Address {
-    Address(allocation: l.allocation, part: l.part.appending(path: \.self[r]))
+    Address(
+      allocation: l.allocation,
+      part: l.part.appending(path: \.self[r]),
+      description: l.description + {
+        switch r {
+        case let .position(x): return "[\(x)]"
+        case let .label(x): return ".\(x.text)"
+        }
+      }()
+    )
   }
 
   static func .^ (l: Address, r: Identifier) -> Address {
@@ -27,10 +39,10 @@ extension Address {
       allocation: l.allocation,
       part: l.part
         .appending(path: \.self[downcastTo: TypeID<T>()])
-        .appending(path: r))
+        .appending(path: r), description: l.description)
   }
 
-  static func .^ <T: Value, U: Value>(
+  static func .^^ <T: Value, U: Value>(
     l: Address, r: WritableKeyPath<T, U>
   ) -> Address {
     Address(
@@ -38,7 +50,8 @@ extension Address {
       part: l.part
         .appending(path: \.self[downcastTo: TypeID<T>()])
         .appending(path: r)
-        .appending(path: \.self.upcastToValue))
+        .appending(path: \.self.upcastToValue),
+      description: l.description)
   }
 }
 
@@ -94,7 +107,9 @@ extension Memory {
     defer { nextAllocation += 1 }
     storage.insert((nextAllocation, Uninitialized(dynamic_type: type)))
     if mutable { mutableAllocations.insert(nextAllocation) }
-    return Address(allocation: nextAllocation, part: \.self)
+    return Address(
+      allocation: nextAllocation, part: \.self,
+      description: "@\(nextAllocation)")
   }
 
   /// Initializes the value at `a` to `v`.

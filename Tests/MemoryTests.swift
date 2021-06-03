@@ -27,8 +27,9 @@ final class MemoryTests: XCTestCase {
   func testStoreFunctionValue() {
     var m = Memory()
     let t = Type.function(
-      parameterTypes: Tuple([.position(0): .int, .position(1): .bool]),
-      returnType: .void)
+      .init(
+        parameterTypes: Tuple([.position(0): .int, .position(1): .bool]),
+        returnType: .void))
     let a = m.allocate(boundTo: t)
 
     let v = FunctionValue(
@@ -121,14 +122,15 @@ final class MemoryTests: XCTestCase {
 
     let p: TupleType = .init([.position(0): .int])
     let r = Type.bool
-    let v = Type.function(parameterTypes: p, returnType: r)
+    let v = Type.function(.init(parameterTypes: p, returnType: r))
 
     m.initialize(a, to: v)
     if let x = checkNonNil(m[a] as? Type) {
       XCTAssertEqual(x, v)
-      XCTAssertEqual(
-        m[a .^ \Type.function!.parameterTypes.asType] as! Type, .tuple(p))
-      XCTAssertEqual(m[a .^ \Type.function!.returnType] as! Type, r)
+      let a1 = a .^ \Type.function!.parameterTypes.asValue
+      let p1 = m[a1]
+      XCTAssertEqual(Type(p1), .tuple(p))
+      XCTAssertEqual(m[a .^^ \Type.function!.returnType] as! Type, r)
     }
   }
 }

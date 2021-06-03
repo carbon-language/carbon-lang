@@ -6,7 +6,7 @@
 indirect enum Type: Equatable {
   case
     int, bool, type,
-    function(parameterTypes: TupleType, returnType: Type),
+    function(FunctionType_),
     tuple(TupleType),
     alternative(ASTIdentity<Alternative>),
     `struct`(ASTIdentity<StructDefinition>),
@@ -74,16 +74,15 @@ indirect enum Type: Equatable {
   }
 
   /// Convenience accessor for `.function` case.
-  var function: (parameterTypes: TupleType, returnType: Type)? {
+  var function: FunctionType_? {
     get {
-      if case .function(parameterTypes: let p, returnType: let r) = self {
-        return (p, r)
+      if case let .function(f) = self {
+        return f
       } else { return nil }
     }
     set {
-      guard let n = newValue else { return }
-      self = .function(
-        parameterTypes: n.parameterTypes, returnType: n.returnType)
+      guard let f = newValue else { return }
+      self = .function(f)
     }
   }
 
@@ -116,8 +115,65 @@ indirect enum Type: Equatable {
   static var void: Type { .tuple(.void) }
 }
 
-extension Type: Value {
+extension Type: CompoundValue {
   var dynamic_type: Type { .type }
+
+  func hasField(_ f: FieldID) -> Bool {
+    switch self {
+    case .function:
+      return f == .init("parameterTypes") || f == .init("returnType")
+
+    case let .tuple(t):
+      return t.hasField(f)
+
+    case .int, .bool, .type, .alternative, .struct, .error, .choice:
+      return false
+    }
+  }
+
+  subscript(field: FieldID) -> Value {
+    get {
+      switch self {
+
+      case let .function(f):
+        if field == .init("parameterTypes") {
+          return Type.tuple(f.parameterTypes)
+        }
+        if field == .init("returnType") { return f.returnType }
+
+      case let .tuple(t): return t[field]
+
+      case .int, .bool, .type, .alternative, .struct, .error, .choice: break
+      }
+      fatal("Value \(self) has no field \(field)")
+    }
+    set {
+      switch self {
+
+      case .function(var f):
+        if field == .init("parameterTypes") {
+          f.parameterTypes = Type(newValue)!.tuple!
+        }
+        else if field == .init("returnType") { f.returnType = Type(newValue)! }
+        else { break }
+        self = .function(f)
+        return
+
+      case .tuple(var t):
+        t[field] = Type(newValue)!
+        self = .tuple(t)
+        return
+
+      case .int, .bool, .type, .alternative, .struct, .error, .choice: break
+      }
+      fatal("Value \(self) has no field \(field)") ?? ()
+    }
+  }
+}
+
+struct FunctionType_: Equatable {
+  var parameterTypes: TupleType
+  var returnType: Type
 }
 
 extension Type: CustomStringConvertible {
@@ -126,8 +182,8 @@ extension Type: CustomStringConvertible {
     case .int: return "Int"
     case .bool: return "Bool"
     case .type: return "Type"
-    case let .function(parameterTypes: p, returnType: r):
-      return "fnty \(p) -> \(r)"
+    case let .function(f):
+      return "fnty \(f.parameterTypes) -> \(f.returnType)"
     case let .tuple(t): return "\(t)"
     case let .alternative(id):
       return "<Choice>.\(id.structure.name.text)"

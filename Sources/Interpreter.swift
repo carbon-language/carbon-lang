@@ -341,10 +341,11 @@ fileprivate extension Interpreter {
     _ e: Expression, mutable: Bool = false, persist: Bool = false,
     then proceed: @escaping Consumer<Address>) -> Onward
   {
-    let a = memory.allocate(boundTo: staticType[e]!, mutable: mutable)
+    let t = staticType[e]!
+    let a = memory.allocate(boundTo: t, mutable: mutable)
     if tracing {
       print(
-        "\(e.site): info: allocated \(a)"
+        "\(e.site): info: allocated \(a) bound to \(t)"
           + " (\(persist ? "persistent" : "ephemeral"))")
     }
     if persist {
@@ -544,11 +545,8 @@ fileprivate extension Interpreter {
         : source => proceed
 
     case let f as FunctionDefinition:
-      // Bogus parameterTypes and returnType until Dave preserves the
-      // typechecker's work. -Jeremy
       let result = FunctionValue(
-        dynamic_type: .function(parameterTypes: Tuple(), returnType: .int),
-        code: f)
+        dynamic_type: program.typeOfNameDeclaredBy[f.identity]!.final!, code: f)
 
       return allocate(.name(name), unlessNonNil: destination) { output, me in
         me.initialize(output, to: result, then: proceed)
@@ -877,7 +875,7 @@ fileprivate extension Interpreter {
       return match(
         p.arguments,
         toValueOfType: program.payloadType[subjectAlternative]!,
-        at: subject.^2, then: proceed)
+        at: subject, then: proceed)
 
     case .int, .bool, .type, .function, .tuple, .error, .alternative:
       UNREACHABLE()
@@ -904,7 +902,7 @@ fileprivate extension Interpreter {
   {
     guard let (k0, p0) = p.first else { return true => proceed }
     return match(
-      p0, toValueOfType: subjectTypes[k0]!, at: subject.^k0
+      p0, toValueOfType: subjectTypes[k0], at: subject.^k0
     ) { matched, me in
       if !matched { return false => proceed }
       return me.matchElements(

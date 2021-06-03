@@ -20,6 +20,8 @@ struct ExecutableProgram {
   /// Mapping from alternative declaration to the choice in which it is defined.
   let enclosingChoice: ASTDictionary<Alternative, ChoiceDefinition>
 
+  let typeOfNameDeclaredBy: Dictionary<Declaration.Identity, Memo<Type>>
+
   /// The unique top-level nullary main() function defined in `ast`,
   /// or `nil` if that doesn't exist.
   var main: FunctionDefinition? {
@@ -48,5 +50,6 @@ struct ExecutableProgram {
     staticType = typeChecking.expressionType
     payloadType = typeChecking.payloadType
     enclosingChoice = typeChecking.enclosingChoice
+    typeOfNameDeclaredBy = typeChecking.typeOfNameDeclaredBy
   }
 }
