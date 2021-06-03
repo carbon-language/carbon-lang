@@ -144,7 +144,7 @@ expression ::= expression(f) trailing_tuple_literal(a).
 expression ::= FNTY(k) trailing_tuple_literal(p) return_type(r).
 {
   .functionType(
-    FunctionType(parameters: TupleTypeLiteral(p), returnType: r, site: k...r))
+    FunctionTypeSyntax(parameters: TupleTypeLiteral(p), returnType: r, site: k...r))
 }
 expression ::= tuple_literal(t).
   { .tupleLiteral(t) }

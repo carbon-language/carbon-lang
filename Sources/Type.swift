@@ -6,7 +6,7 @@
 indirect enum Type: Equatable {
   case
     int, bool, type,
-    function(FunctionType_),
+    function(FunctionType),
     tuple(TupleType),
     alternative(ASTIdentity<Alternative>),
     `struct`(ASTIdentity<StructDefinition>),
@@ -74,7 +74,7 @@ indirect enum Type: Equatable {
   }
 
   /// Convenience accessor for `.function` case.
-  var function: FunctionType_? {
+  var function: FunctionType? {
     get {
       if case let .function(f) = self {
         return f
@@ -120,13 +120,10 @@ extension Type: CompoundValue {
 
   func hasField(_ f: FieldID) -> Bool {
     switch self {
-    case .function:
-      return f == .init("parameterTypes") || f == .init("returnType")
-
     case let .tuple(t):
       return t.hasField(f)
 
-    case .int, .bool, .type, .alternative, .struct, .error, .choice:
+    case .int, .bool, .type, .alternative, .struct, .error, .choice, .function:
       return false
     }
   }
@@ -134,44 +131,25 @@ extension Type: CompoundValue {
   subscript(field: FieldID) -> Value {
     get {
       switch self {
-
-      case let .function(f):
-        if field == .init("parameterTypes") {
-          return Type.tuple(f.parameterTypes)
-        }
-        if field == .init("returnType") { return f.returnType }
-
       case let .tuple(t): return t[field]
-
-      case .int, .bool, .type, .alternative, .struct, .error, .choice: break
+      case .int, .bool, .type, .alternative, .struct, .error, .choice, .function:
+        fatal("Value \(self) has no field \(field)")
       }
-      fatal("Value \(self) has no field \(field)")
     }
     set {
       switch self {
-
-      case .function(var f):
-        if field == .init("parameterTypes") {
-          f.parameterTypes = Type(newValue)!.tuple!
-        }
-        else if field == .init("returnType") { f.returnType = Type(newValue)! }
-        else { break }
-        self = .function(f)
-        return
-
       case .tuple(var t):
         t[field] = Type(newValue)!
         self = .tuple(t)
         return
-
-      case .int, .bool, .type, .alternative, .struct, .error, .choice: break
+      case .int, .bool, .type, .alternative, .struct, .error, .choice, .function:
+        fatal("Value \(self) has no field \(field)")
       }
-      fatal("Value \(self) has no field \(field)") ?? ()
     }
   }
 }
 
-struct FunctionType_: Equatable {
+struct FunctionType: Equatable {
   var parameterTypes: TupleType
   var returnType: Type
 }

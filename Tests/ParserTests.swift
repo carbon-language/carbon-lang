@@ -76,7 +76,7 @@ final class ParserTests: XCTestCase {
                   .expression(
                     TypeExpression(
                       .functionType(
-                        FunctionType(
+                        FunctionTypeSyntax(
                           parameters: TupleSyntax([], o),
                           returnType: TypeExpression(.typeType(o)),
                           site: o)))),
@@ -94,7 +94,7 @@ final class ParserTests: XCTestCase {
         .initialization(
           Initialization(
             bindings: .functionType(
-              FunctionType(
+              FunctionTypeSyntax(
                 parameters: TupleSyntax([], o),
                 returnType: .variable(
                   SimpleBinding(

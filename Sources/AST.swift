@@ -318,13 +318,13 @@ struct MatchClause: AST {
 }
 typealias MatchClauseList = [MatchClause]
 
-struct FunctionType<Parameter: AST>: AST {
+struct FunctionTypeSyntax<Parameter: AST>: AST {
   let parameters: TupleSyntax<Parameter>
   let returnType: Parameter
   let site: Site
 }
-typealias FunctionTypePattern = FunctionType<Pattern>
-typealias FunctionTypeLiteral = FunctionType<TypeExpression>
+typealias FunctionTypePattern = FunctionTypeSyntax<Pattern>
+typealias FunctionTypeLiteral = FunctionTypeSyntax<TypeExpression>
 
 extension FunctionTypePattern {
   /// "Upcast" from literal to pattern

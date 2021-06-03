@@ -590,8 +590,8 @@ private extension TypeChecker {
   /// - Note: DOES NOT verify that `rhs` is a subtype of the result; you must
   ///   check that separately.
   mutating func patternType(
-    _ t: FunctionType<Pattern>,
-    initializerType rhs: FunctionType_?
+    _ t: FunctionTypeSyntax<Pattern>,
+    initializerType rhs: FunctionType?
   ) -> Type {
     _ = patternType(
       t.parameters, initializerType: rhs?.parameterTypes,
