@@ -24,70 +24,22 @@ extern uint64_t __hot_start;
 extern uint64_t __hot_end;
 
 #ifdef MADV_HUGEPAGE
-/// Starting from character at \p buf, find the longest consecutive sequence
-/// of digits (0-9) and convert it to uint32_t. The converted value
-/// is put into \p ret. \p end marks the end of the buffer to avoid buffer
-/// overflow. The function \returns whether a valid uint32_t value is found.
-/// \p buf will be updated to the next character right after the digits.
-static bool scanUInt32(const char *&buf, const char *end, uint32_t &ret) {
-  uint64_t result = 0;
-  const char *oldBuf = buf;
-  while (buf < end && ((*buf) >= '0' && (*buf) <= '9')) {
-    result = result * 10 + (*buf) - '0';
-    ++buf;
-  }
-  if (oldBuf != buf && result <= 0xFFFFFFFFu) {
-    ret = static_cast<uint32_t>(result);
-    return true;
-  }
-  return false;
-}
-
-/// Check whether the kernel supports THP by checking the kernel version.
-/// Only fb kernel 5.2 and latter supports it.
+/// Check whether the kernel supports THP via corresponding sysfs entry.
 static bool has_pagecache_thp_support() {
-  struct utsname u;
-  int ret = __uname(&u);
-  if (ret) {
-    return false;
-  }
+  char buf[256] = {0};
+  const char *madviseStr = "always [madvise] never";
 
-  const char *buf = u.release;
-#ifdef ENABLE_DEBUG
-  report("[hugify] uname release: ");
-  report(buf);
-  report("\n");
-#endif
-  const char *end = buf + strLen(buf);
-  uint32_t nums[5];
-  char delims[4][5] = {".", ".", "-", "_fbk"};
-  // release should be in the format: %d.%d.%d-%d_fbk%d
-  // they represent: major, minor, release, build, fbk.
-  for (int i = 0; i < 5; ++i) {
-    if (!scanUInt32(buf, end, nums[i])) {
-      return false;
-    }
-    if (i < 4) {
-      const char *ptr = delims[i];
-      while (*ptr != '\0') {
-        if (*ptr != *buf) {
-          return false;
-        }
-        ++ptr;
-        ++buf;
-      }
-    }
-  }
-  if (nums[0] > 5) {
-    // Major is > 5.
-    return true;
-  }
-  if (nums[0] < 5) {
-    // Major is < 5.
+  int fd = __open("/sys/kernel/mm/transparent_hugepage/enabled",
+                  0 /* O_RDONLY */, 0);
+  if (fd < 0)
     return false;
-  }
-  // minor > 2 || fbk >= 5.
-  return nums[1] > 2 || nums[4] >= 5;
+
+  size_t res = __read(fd, buf, 256);
+  if (res < 0)
+    return false;
+
+  int cmp = strnCmp(buf, madviseStr, strLen(madviseStr));
+  return cmp == 0;
 }
 
 static void hugify_for_old_kernel(uint8_t *from, uint8_t *to) {

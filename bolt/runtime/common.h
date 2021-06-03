@@ -86,6 +86,20 @@ constexpr uint32_t BufSize = 10240;
 #define _STRINGIFY(x) #x
 #define STRINGIFY(x) _STRINGIFY(x)
 
+uint64_t __read(uint64_t fd, const void *buf, uint64_t count) {
+  uint64_t ret;
+#if defined(__APPLE__)
+#define READ_SYSCALL 0x2000003
+#else
+#define READ_SYSCALL 0
+#endif
+  __asm__ __volatile__("movq $" STRINGIFY(READ_SYSCALL) ", %%rax\n"
+                       "syscall\n"
+                       : "=a"(ret)
+                       : "D"(fd), "S"(buf), "d"(count)
+                       : "cc", "rcx", "r11", "memory");
+  return ret;
+}
 
 uint64_t __write(uint64_t fd, const void *buf, uint64_t count) {
   uint64_t ret;
@@ -101,7 +115,6 @@ uint64_t __write(uint64_t fd, const void *buf, uint64_t count) {
                        : "cc", "rcx", "r11", "memory");
   return ret;
 }
-
 
 void *__mmap(uint64_t addr, uint64_t size, uint64_t prot, uint64_t flags,
              uint64_t fd, uint64_t offset) {
@@ -186,6 +199,18 @@ char *strCopy(char *OutBuf, const char *Str, int32_t Size = BufSize) {
   return OutBuf;
 }
 
+/// Compare two strings, at most Num bytes.
+int strnCmp(const char *Str1, const char *Str2, size_t Num) {
+  while (Num && *Str1 && (*Str1 == *Str2)) {
+    Num--;
+    Str1++;
+    Str2++;
+  }
+  if (Num == 0)
+    return 0;
+  return *(unsigned char *)Str1 - *(unsigned char *)Str2;
+}
+
 void memSet(char *Buf, char C, uint32_t Size) {
   for (int I = 0; I < Size; ++I)
     *Buf++ = C;
@@ -261,29 +286,6 @@ int __madvise(void *addr, size_t length, int advice) {
                        "syscall\n"
                        : "=a"(ret)
                        : "D"(addr), "S"(length), "d"(advice)
-                       : "cc", "rcx", "r11", "memory");
-  return ret;
-}
-
-/* Length of the entries in `struct utsname' is 65.  */
-#define _UTSNAME_LENGTH 65
-
-struct utsname {
-  char sysname[_UTSNAME_LENGTH];  /* Operating system name (e.g., "Linux") */
-  char nodename[_UTSNAME_LENGTH]; /* Name within "some implementation-defined
-                      network" */
-  char release[_UTSNAME_LENGTH]; /* Operating system release (e.g., "2.6.28") */
-  char version[_UTSNAME_LENGTH]; /* Operating system version */
-  char machine[_UTSNAME_LENGTH]; /* Hardware identifier */
-  char domainname[_UTSNAME_LENGTH]; /* NIS or YP domain name */
-};
-
-int __uname(struct utsname *buf) {
-  int ret;
-  __asm__ __volatile__("movq $63, %%rax\n"
-                       "syscall\n"
-                       : "=a"(ret)
-                       : "D"(buf)
                        : "cc", "rcx", "r11", "memory");
   return ret;
 }
