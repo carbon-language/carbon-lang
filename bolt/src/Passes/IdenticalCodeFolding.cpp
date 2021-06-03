@@ -43,6 +43,7 @@ TimeICF("time-icf",
 } // namespace opts
 
 namespace {
+using JumpTable = bolt::JumpTable;
 
 /// Compare two jump tables in 2 functions. The function relies on consistent
 /// ordering of basic blocks in both binary functions (e.g. DFS).

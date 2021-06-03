@@ -123,6 +123,7 @@ size_t padFunction(const BinaryFunction &Function) {
 } // namespace opts
 
 namespace {
+using JumpTable = bolt::JumpTable;
 
 class BinaryEmitter {
 private:

@@ -20,28 +20,21 @@
 using namespace llvm;
 using namespace bolt;
 
+using JumpTable = bolt::JumpTable;
+
 namespace opts {
 extern cl::opt<JumpTableSupportLevel> JumpTables;
 extern cl::opt<unsigned> Verbosity;
 }
 
-JumpTable::JumpTable(MCSymbol &Symbol,
-                     uint64_t Address,
-                     size_t EntrySize,
-                     JumpTableType Type,
-                     LabelMapType &&Labels,
-                     BinaryFunction &BF,
-                     BinarySection &Section)
-  : BinaryData(Symbol, Address, 0, EntrySize, Section),
-    EntrySize(EntrySize),
-    OutputEntrySize(EntrySize),
-    Type(Type),
-    Labels(Labels),
-    Parent(&BF) {
-}
+bolt::JumpTable::JumpTable(MCSymbol &Symbol, uint64_t Address, size_t EntrySize,
+                           JumpTableType Type, LabelMapType &&Labels,
+                           BinaryFunction &BF, BinarySection &Section)
+    : BinaryData(Symbol, Address, 0, EntrySize, Section), EntrySize(EntrySize),
+      OutputEntrySize(EntrySize), Type(Type), Labels(Labels), Parent(&BF) {}
 
 std::pair<size_t, size_t>
-JumpTable::getEntriesForAddress(const uint64_t Addr) const {
+bolt::JumpTable::getEntriesForAddress(const uint64_t Addr) const {
   // Check if this is not an address, but a cloned JT id
   if ((int64_t)Addr < 0ll)
     return std::make_pair(0, Entries.size());
@@ -72,8 +65,9 @@ JumpTable::getEntriesForAddress(const uint64_t Addr) const {
   return std::make_pair(StartIndex, EndIndex);
 }
 
-bool JumpTable::replaceDestination(uint64_t JTAddress, const MCSymbol *OldDest,
-                                   MCSymbol *NewDest) {
+bool bolt::JumpTable::replaceDestination(uint64_t JTAddress,
+                                         const MCSymbol *OldDest,
+                                         MCSymbol *NewDest) {
   bool Patched = false;
   const std::pair<size_t, size_t> Range = getEntriesForAddress(JTAddress);
   for (auto I = &Entries[Range.first], E = &Entries[Range.second]; I != E;
@@ -87,7 +81,7 @@ bool JumpTable::replaceDestination(uint64_t JTAddress, const MCSymbol *OldDest,
   return Patched;
 }
 
-void JumpTable::updateOriginal() {
+void bolt::JumpTable::updateOriginal() {
   BinaryContext &BC = getSection().getBinaryContext();
   const uint64_t BaseOffset = getAddress() - getSection().getAddress();
   uint64_t EntryOffset = BaseOffset;
@@ -105,7 +99,7 @@ void JumpTable::updateOriginal() {
   }
 }
 
-void JumpTable::print(raw_ostream &OS) const {
+void bolt::JumpTable::print(raw_ostream &OS) const {
   uint64_t Offset = 0;
   if (Type == JTT_PIC)
     OS << "PIC ";
