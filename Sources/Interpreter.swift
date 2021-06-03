@@ -902,7 +902,7 @@ fileprivate extension Interpreter {
   {
     guard let (k0, p0) = p.first else { return true => proceed }
     return match(
-      p0, toValueOfType: subjectTypes[k0], at: subject.^k0
+      p0, toValueOfType: subjectTypes[k0]!, at: subject.^k0
     ) { matched, me in
       if !matched { return false => proceed }
       return me.matchElements(

@@ -330,10 +330,8 @@ private extension TypeChecker {
           return error(index, "Index type must be Int, not \(indexType)")
         }
         let indexValue = value(index) as! Int
-
-        return types.hasField(.init(indexValue)) ? types[indexValue]
-          : error(
-            index, "Tuple type \(types) has no value at position \(indexValue)")
+        return types[indexValue] ?? error(
+          index, "Tuple type \(types) has no value at position \(indexValue)")
 
       case let .tupleLiteral(t):
         return .tuple(
@@ -453,8 +451,8 @@ private extension TypeChecker {
       return error(e.member, "struct \(s.name) has no member '\(e.member)'")
 
     case let .tuple(t):
-      return t.hasField(.label(e.member)) ? t[e.member]
-        : error(e.member, "tuple type \(t) has no field '\(e.member)'")
+      return t[e.member]
+        ?? error(e.member, "tuple type \(t) has no field '\(e.member)'")
 
     case .type:
       // Handle access to a type member, like a static member in C++.

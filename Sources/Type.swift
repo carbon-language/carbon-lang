@@ -118,28 +118,19 @@ indirect enum Type: Equatable {
 extension Type: CompoundValue {
   var dynamic_type: Type { .type }
 
-  func hasField(_ f: FieldID) -> Bool {
-    switch self {
-    case let .tuple(t):
-      return t.hasField(f)
-
-    case .int, .bool, .type, .alternative, .struct, .error, .choice, .function:
-      return false
-    }
-  }
-
-  subscript(field: FieldID) -> Value {
+  subscript(field: FieldID) -> Value? {
     get {
       switch self {
       case let .tuple(t): return t[field]
       case .int, .bool, .type, .alternative, .struct, .error, .choice, .function:
-        fatal("Value \(self) has no field \(field)")
+        return nil
       }
     }
     set {
+      if newValue == nil { return }
       switch self {
       case .tuple(var t):
-        t[field] = Type(newValue)!
+        t[field] = Type(newValue!)!
         self = .tuple(t)
         return
       case .int, .bool, .type, .alternative, .struct, .error, .choice, .function:

@@ -8,13 +8,11 @@ struct Address: Hashable, CustomStringConvertible {
   let description: String
 }
 
-infix operator .^^
-
 extension Address {
   static func .^ (l: Address, r: FieldID) -> Address {
     Address(
       allocation: l.allocation,
-      part: l.part.appending(path: \.self[r]),
+      part: l.part.appending(path: \.self[r]!),
       description: l.description + {
         switch r {
         case let .position(x): return "[\(x)]"
@@ -38,20 +36,8 @@ extension Address {
     Address(
       allocation: l.allocation,
       part: l.part
-        .appending(path: \.self[downcastTo: TypeID<T>()])
+        .appending(path: \.self[downcastTo: TypeID<T>()]!)
         .appending(path: r), description: l.description)
-  }
-
-  static func .^^ <T: Value, U: Value>(
-    l: Address, r: WritableKeyPath<T, U>
-  ) -> Address {
-    Address(
-      allocation: l.allocation,
-      part: l.part
-        .appending(path: \.self[downcastTo: TypeID<T>()])
-        .appending(path: r)
-        .appending(path: \.self.upcastToValue),
-      description: l.description)
   }
 }
 

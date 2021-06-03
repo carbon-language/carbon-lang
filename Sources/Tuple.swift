@@ -54,15 +54,14 @@ struct Tuple<Field> : FieldAccess {
   init(_ storage: [FieldID: Field] = [:]) { self.elements = storage }
 
   /// Accesses the field with the given id
-  subscript(k: FieldID) -> Field {
-    get { elements[k]! }
+  subscript(k: FieldID) -> Field? {
+    get { elements[k] }
     set {
+      sanityCheck(newValue != nil)
       sanityCheck(elements[k] != nil)
       elements[k] = newValue
     }
   }
-
-  func hasField(_ f: FieldID) -> Bool { elements[f] != nil }
 
   typealias Elements = [FieldID: Field]
 
@@ -118,7 +117,7 @@ extension TupleType {
     set { self = newValue.tuple! }
   }
 
-  var asValue: Value {
+  var upcastToValue: Value {
     get { self.mapFields { $0 } }
     set { self = (newValue as! TupleValue).mapFields { Type($0)! } }
   }

@@ -9,12 +9,11 @@ struct TypeID<T>: Hashable {
 @dynamicMemberLookup
 protocol FieldAccess {
   associatedtype Field
-  subscript(_: FieldID) -> Field { get set }
-  func hasField(_: FieldID) -> Bool
+  subscript(_: FieldID) -> Field? { get set }
 }
 
 extension FieldAccess {
-  subscript(dynamicMember fieldName: String) -> Field {
+  subscript(dynamicMember fieldName: String) -> Field? {
     get {
       self[Identifier(text: fieldName, site: .empty)]
     }
@@ -23,12 +22,12 @@ extension FieldAccess {
     }
   }
 
-  subscript(n: Int) -> Field {
+  subscript(n: Int) -> Field? {
     get { self[.position(n)] }
     set { self[.position(n)] = newValue }
   }
 
-  subscript(fieldName: Identifier) -> Field {
+  subscript(fieldName: Identifier) -> Field? {
     get { self[.label(fieldName)] }
     set { self[.label(fieldName)] = newValue }
   }
@@ -44,12 +43,12 @@ protocol Value {
   /// This name uses `snake_case` because `.dynamicType` is a deprecated
   /// built-in property name.
   var dynamic_type: Type { get }
-  subscript(_: FieldID) -> Value { get set }
+  subscript(_: FieldID) -> Value? { get set }
 }
 
 extension Value {
-  subscript<T: Value>(downcastTo _: TypeID<T>) -> T {
-    get { self as! T }
+  subscript<T: Value>(downcastTo _: TypeID<T>) -> T? {
+    get { self as? T }
     set {
       self = newValue as! Self
     }
@@ -57,27 +56,22 @@ extension Value {
 
   var upcastToValue: Value {
     get { self }
-    set {
-      self = newValue as! Self
-    }
+    set { self = newValue as! Self }
   }
 }
 
 protocol AtomicValue: Value, FieldAccess {}
 
 extension AtomicValue {
-  subscript(field: FieldID) -> Value {
-    get {
-      fatal("Value \(self) of atomic type"
-              + " \(self.dynamic_type) has no field \(field)")
-    }
+  subscript(field: FieldID) -> Value? {
+    get { nil }
     set {
-      fatal("Value \(self) of atomic type"
-              + " \(self.dynamic_type) has no field \(field)")
+      if newValue != nil {
+        fatal("Value \(self) of atomic type"
+                + " \(self.dynamic_type) has no field \(field)")
+      }
     }
   }
-
-  func hasField(_: FieldID) -> Bool { false }
 }
 
 protocol CompoundValue: Value, FieldAccess {
@@ -115,12 +109,10 @@ struct ChoiceValue: CompoundValue {
     self.payload = payload
   }
 
-  subscript(field: FieldID) -> Value {
+  subscript(field: FieldID) -> Value? {
     get { payload[field] }
-    set { payload[field] = newValue }
+    set { payload[field] = newValue! }
   }
-
-  func hasField(_ f: FieldID) -> Bool { payload.hasField(f) }
 }
 
 extension ChoiceValue: CustomStringConvertible {
@@ -143,12 +135,10 @@ struct StructValue: CompoundValue {
     self.payload = payload
   }
 
-  subscript(field: FieldID) -> Value {
+  subscript(field: FieldID) -> Value? {
     get { payload[field] }
-    set { payload[field] = newValue }
+    set { payload[field] = newValue! }
   }
-
-  func hasField(_ f: FieldID) -> Bool { payload.hasField(f) }
 }
 
 struct AlternativeValue: AtomicValue {
