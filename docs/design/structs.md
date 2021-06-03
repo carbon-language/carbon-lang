@@ -17,6 +17,16 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Polymorphic types](#polymorphic-types)
 -   [Background](#background)
 -   [Overview](#overview-1)
+-   [Fields have an order](#fields-have-an-order)
+-   [Anonymous structs](#anonymous-structs)
+    -   [Literals](#literals)
+    -   [Type declarations](#type-declarations)
+    -   [Anonymous to named conversion](#anonymous-to-named-conversion)
+    -   [Order is ignored on assignment](#order-is-ignored-on-assignment)
+-   [Fields may have defaults](#fields-may-have-defaults)
+-   [Member type](#member-type)
+-   [Self](#self)
+-   [Alias](#alias)
 -   [Future work](#future-work)
     -   [Method syntax](#method-syntax)
     -   [Constant members](#constant-members)
@@ -24,6 +34,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Operator overloading](#operator-overloading)
     -   [Inheritance](#inheritance)
     -   [Memory layout](#memory-layout)
+    -   [No `static` variables](#no-static-variables)
 
 <!-- tocstop -->
 
@@ -44,9 +55,16 @@ or assign values to named struct variables.
 
 ## Use cases
 
-FIXME
+The use cases for structs fall under three main categories: data types, object
+types, and polymorphic types.
 
 ### Data types
+
+Characterized by: public data fields, few if any methods.
+
+Example: Key and value pair returned from a `SortedMap` or `HashMap`.
+
+Properties:
 
 FIXME
 
@@ -54,7 +72,23 @@ FIXME
 
 FIXME
 
+Characterized by: private data fields, non-overridable methods.
+
+Examples: strings, containers, iterators, types with invariants like `Date`
+
+Include:
+
+-   RAII types that are movable but not copyable like C++'s `std::unique_ptr` or
+    a file handle
+-   non-movable types like `Mutex`
+
 ### Polymorphic types
+
+Characterized by: inheritance, private data in a base type, overridable/virtual
+methods with dynamic dispatch, accessed through a pointer to "type extending
+base"
+
+Excluding complex multiple inheritance schemes, virtual inheritance, etc.
 
 FIXME
 
@@ -124,15 +158,92 @@ struct Widget {
 The type itself is a compile-time constant value. All name access is done with
 the `.` notation.
 
-Other members and member functions needing an object parameter (or "methods")
-must be accessed from an object of the type.
+## Fields have an order
 
-Some things in C++ are notably absent or orthogonally handled:
+FIXME
 
--   No need for `static` functions, they simply don't take an initial `self`
-    parameter.
--   No `static` variables because there are no global variables. Instead, can
-    have scoped constants.
+## Anonymous structs
+
+FIXME
+
+### Literals
+
+FIXME
+
+```
+{.key = "the", .value: 27}
+```
+
+### Type declarations
+
+FIXME
+
+```
+struct {.key: String, .value: Int}
+```
+
+### Anonymous to named conversion
+
+FIXME
+
+### Order is ignored on assignment
+
+FIXME
+
+## Fields may have defaults
+
+FIXME
+
+## Member type
+
+```
+struct StringCounts {
+  struct Node {
+    var key: String;
+    var count: Int;
+  }
+  var counts: Vector(Node);
+}
+```
+
+The inner type is given the name `StringCounts.Node`.
+
+## Self
+
+Allowed to reference your own name inside a struct, but in limited ways, similar
+to an incomplete type.
+
+```
+struct IntListNode {
+  var data: Int;
+  var next: IntListNode*;
+}
+```
+
+`Self` is an alias for the current type:
+
+```
+struct IntListNode {
+  var data: Int;
+  var next: Self*;
+}
+```
+
+`Self` refers to the innermost type declaration:
+
+```
+struct IntList {
+  struct IntListNode {
+    var data: Int;
+    var next: Self*;
+  }
+  var first: IntListNode*;
+}
+```
+
+## Alias
+
+FIXME
 
 ## Future work
 
@@ -145,9 +256,9 @@ question is being tracked in
 
 ### Constant members
 
-We need some syntax for defining constant members. These include:
+We need some syntax for defining constant members beyond
+[member types](#member-type). These include:
 
--   Member types, like an iterator type
 -   Constant member values, like C++'s `std::string::npos`
 -   Functions that don't take a receiver, like
     [C++'s static methods](<https://en.wikipedia.org/wiki/Static_(keyword)#Static_method>)
@@ -174,3 +285,7 @@ FIXME: no multiple inheritance
 ### Memory layout
 
 FIXME: Order, packing, alignment
+
+### No `static` variables
+
+FIXME: No `static` variables because there are no global variables.
