@@ -64,7 +64,7 @@ func fatal(
 
 struct Memory {
   /// An allocated element of memory.
-  typealias Storage = KnownDictionary<Int, Value>
+  typealias Storage = [Int: Value]
 
   private var storage: Storage = .init()
   private var mutableAllocations: Set<Int> = []
@@ -73,7 +73,7 @@ struct Memory {
 
 extension Memory {
   func isInitialized(at a: Address) -> Bool {
-    !(storage[a.allocation][keyPath: a.part] is Uninitialized)
+    !(storage[a.allocation]![keyPath: a.part] is Uninitialized)
   }
 
   func isMutable(at a: Address) -> Bool {
@@ -81,7 +81,7 @@ extension Memory {
   }
 
   func boundType(at a: Address) -> Type? {
-    storage[a.allocation][keyPath: a.part].dynamic_type
+    storage[a.allocation]![keyPath: a.part].dynamic_type
   }
 
   /// Returns an uninitialized address earmarked for storing instances of the
@@ -91,7 +91,7 @@ extension Memory {
   ///   will be allowed.
   mutating func allocate(boundTo type: Type, mutable: Bool = false) -> Address {
     defer { nextAllocation += 1 }
-    storage.insert((nextAllocation, Uninitialized(dynamic_type: type)))
+    storage[nextAllocation] = Uninitialized(dynamic_type: type)
     if mutable { mutableAllocations.insert(nextAllocation) }
     return Address(
       allocation: nextAllocation, part: \.self,
@@ -106,7 +106,7 @@ extension Memory {
     sanityCheck(!isInitialized(at: a))
     sanityCheck(boundType(at: a) == v.dynamic_type,
                 "\(boundType(at: a)!) != \(v.dynamic_type)")
-    storage[a.allocation][keyPath: a.part] = v
+    storage[a.allocation]![keyPath: a.part] = v
   }
 
   /// Deinitializes the storage at `a`, returning it to an uninitialized state.
@@ -115,7 +115,7 @@ extension Memory {
   /// - Requires: `a` is the address of an initialized value.
   mutating func deinitialize(_ a: Address) {
     sanityCheck(isInitialized(at: a))
-    storage[a.allocation][keyPath: a.part]
+    storage[a.allocation]![keyPath: a.part]
       = Uninitialized(dynamic_type: boundType(at: a)!)
   }
 
@@ -141,7 +141,7 @@ extension Memory {
   ///
   /// - Requires: The value at `a` is initialized.
   subscript(a: Address) -> Value {
-    storage[a.allocation][keyPath: a.part]
+    storage[a.allocation]![keyPath: a.part]
   }
 
   /// Copies the value at `target` into `source`.
@@ -157,6 +157,6 @@ extension Memory {
     sanityCheck(isInitialized(at: source))
     sanityCheck(isInitialized(at: target))
     sanityCheck(boundType(at: source) == boundType(at: target))
-    storage[target.allocation][keyPath: target.part] = self[source]
+    storage[target.allocation]![keyPath: target.part] = self[source]
   }
 }
