@@ -45,6 +45,7 @@ final class InterpreterTests: XCTestCase {
     let sourcePath = testdata.appendingPathComponent(testFile).path
     let source = try! String(contentsOfFile: sourcePath)
 
+    print(sourcePath)
     guard let program = source.checkExecutable(fromFile: sourcePath)
     else { return nil }
     var engine = Interpreter(program)
@@ -53,8 +54,7 @@ final class InterpreterTests: XCTestCase {
   }
 
   func test1() {
-    // XCTAssertEqual(run("fun2.6c", tracing: true), 0)
-    // XCTAssertEqual(run("scopes2.6c", tracing: true), 0)
+    XCTAssertEqual(run("choice1.6c", tracing: true), 0)
   }
 
   func testExamples() {

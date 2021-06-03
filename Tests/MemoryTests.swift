@@ -12,30 +12,27 @@ final class MemoryTests: XCTestCase {
 
   func testStoreInt() {
     var m = Memory()
-    let a = m.allocate()
+    let a = m.allocate(boundTo: .int)
     m.initialize(a, to: 3)
-    if let x = checkNonNil(m[a] as? Int) {
-      XCTAssertEqual(x, 3)
-      XCTAssertEqual(m.substructure(at: a), Tuple())
-    }
+    XCTAssertEqual(m[a] as? Int, 3)
   }
 
   func testStoreBool() {
     var m = Memory()
-    let a = m.allocate()
+    let a = m.allocate(boundTo: .bool)
     m.initialize(a, to: false)
-    if let x = checkNonNil(m[a] as? Bool) {
-      XCTAssertEqual(x, false)
-      XCTAssertEqual(m.substructure(at: a), Tuple())
-    }
+    XCTAssertEqual(m[a] as? Bool, false)
   }
 
   func testStoreFunctionValue() {
     var m = Memory()
-    let a = m.allocate()
+    let t = Type.function(
+      parameterTypes: Tuple([.position(0): .int, .position(1): .bool]),
+      returnType: .void)
+    let a = m.allocate(boundTo: t)
 
     let v = FunctionValue(
-      dynamic_type: .function(parameterTypes: Tuple(), returnType: .void),
+      dynamic_type: t,
       code: FunctionDefinition(
         name: Identifier(text: "main", site: o),
         parameters: TupleSyntax([], o),
@@ -44,16 +41,17 @@ final class MemoryTests: XCTestCase {
         site: o))
 
     m.initialize(a, to: v)
+
     if let x = checkNonNil(m[a] as? FunctionValue) {
       XCTAssertEqual(x, v)
-      XCTAssertEqual(m.substructure(at: a), Tuple())
     }
   }
 
   func testStoreTupleValue() {
     var m = Memory()
-    let a = m.allocate()
-
+    let t = TupleType(
+      [.label(foo): .int, .label(bar): .bool, .position(0): .int])
+    let a = m.allocate(boundTo: .tuple(t))
     let v = TupleValue([.label(foo): 3, .label(bar): false, .position(0): 7])
 
     m.initialize(a, to: v)
@@ -61,84 +59,65 @@ final class MemoryTests: XCTestCase {
       XCTAssertEqual(x[foo] as? Int, 3)
       XCTAssertEqual(x[bar] as? Bool, false)
       XCTAssertEqual(x[0] as? Int, 7)
-      let s = m.substructure(at: a)
-      XCTAssertEqual(s.count, 3)
-      guard let fooPartAddress = checkNonNil(s[foo]) else { return }
-      guard let barPartAddress = checkNonNil(s[bar]) else { return }
-      guard let zeroPartAddress = checkNonNil(s[0]) else { return }
-      XCTAssertEqual(m[fooPartAddress] as? Int, 3)
-      XCTAssertEqual(m[barPartAddress] as? Bool, false)
-      XCTAssertEqual(m[zeroPartAddress] as? Int, 7)
+
+      XCTAssertEqual(m[a.^foo] as? Int, 3)
+      XCTAssertEqual(m[a.^bar] as? Bool, false)
+      XCTAssertEqual(m[a.^0] as? Int, 7)
     }
   }
 
   func testStoreIntType() {
     var m = Memory()
-    let a = m.allocate()
+    let a = m.allocate(boundTo: .type)
 
     let v = Type.int
     m.initialize(a, to: v)
     if let x = checkNonNil(m[a] as? Type) {
       XCTAssertEqual(x, v)
-      XCTAssertEqual(m.substructure(at: a).count, 1)
     }
   }
 
   func testStoreBoolType() {
     var m = Memory()
-    let a = m.allocate()
+    let a = m.allocate(boundTo: .type)
 
     let v = Type.bool
     m.initialize(a, to: v)
     if let x = checkNonNil(m[a] as? Type) {
       XCTAssertEqual(x, v)
-      XCTAssertEqual(m.substructure(at: a).count, 1)
     }
   }
 
   func testStoreTypeType() {
     var m = Memory()
-    let a = m.allocate()
+    let a = m.allocate(boundTo: .type)
 
     let v = Type.type
     m.initialize(a, to: v)
     if let x = checkNonNil(m[a] as? Type) {
       XCTAssertEqual(x, v)
-      XCTAssertEqual(m.substructure(at: a).count, 1)
     }
   }
 
   func testStoreTupleType() {
     var m = Memory()
-    let a = m.allocate()
+    let a = m.allocate(boundTo: .type)
 
     let v = Type.tuple(Tuple([.position(0): .int, .label(foo): .bool, .label(bar): .type]))
     m.initialize(a, to: v)
     if let x = checkNonNil(m[a] as? Type) {
       XCTAssertEqual(x, v)
-      let top = m.substructure(at: a)
-      XCTAssertEqual(top.count, 2)
-      guard let discriminatorAddress = checkNonNil(top[0]) else { return }
-      guard let tupleAddress = checkNonNil(top[1]) else { return }
-      XCTAssertEqual(m[discriminatorAddress] as? Int, Type.Kind.tuple.rawValue)
+      XCTAssertNotNil(x.tuple)
 
-      let s = m.substructure(at: tupleAddress)
-      XCTAssertEqual(s.count, 3)
-      guard let fooPartAddress = checkNonNil(s[foo]) else { return }
-      guard let barPartAddress = checkNonNil(s[bar]) else { return }
-      guard let zeroPartAddress = checkNonNil(s[0]) else { return }
-      XCTAssertEqual(m[fooPartAddress] as? Type, .bool)
-      XCTAssertEqual(m.substructure(at: fooPartAddress).count, 1)
-      XCTAssertEqual(m[zeroPartAddress] as? Type, .int)
-      XCTAssertEqual(m.substructure(at: zeroPartAddress).count, 1)
-      XCTAssertEqual(m[barPartAddress] as? Type, .type)
-      XCTAssertEqual(m.substructure(at: barPartAddress).count, 1)
+      XCTAssertEqual(m[a.^foo] as? Type, .bool)
+      XCTAssertEqual(m[a.^bar] as? Type, .type)
+      XCTAssertEqual(m[a.^0] as? Type, .int)
     }
   }
 
   func testStoreFunctionType() {
     var m = Memory()
-    let a = m.allocate()
+    let a = m.allocate(boundTo: .type)
 
     let p: TupleType = .init([.position(0): .int])
     let r = Type.bool
@@ -147,27 +126,9 @@ final class MemoryTests: XCTestCase {
     m.initialize(a, to: v)
     if let x = checkNonNil(m[a] as? Type) {
       XCTAssertEqual(x, v)
-
-      let s0 = m.substructure(at: a)
-      XCTAssertEqual(s0.count, 3)
-      // Discriminator is at 0
-      guard let parameterPartAddress = checkNonNil(s0[1]) else { return }
-
-      guard let parameterPart
-        = checkNonNil(m[parameterPartAddress] as? TupleValue) else { return }
-
-      XCTAssertEqual(parameterPart.count, 1)
-      XCTAssertEqual(parameterPart[0] as? Type, .int)
-
-      guard let returnPartAddress = checkNonNil(s0[2]) else { return }
-      XCTAssertEqual(m[returnPartAddress] as? Type, r)
-      XCTAssertEqual(m.substructure(at: returnPartAddress).count, 1)
-
-      let s1 = m.substructure(at: parameterPartAddress)
-      XCTAssertEqual(s1.count, 1)
-      guard let p0Part = checkNonNil(s1[0]) else { return }
-      XCTAssertEqual(m[p0Part] as? Type, .int)
-      XCTAssertEqual(m.substructure(at: p0Part).count, 1)
+      XCTAssertEqual(
+        m[a .^ \Type.function!.parameterTypes.asType] as! Type, .tuple(p))
+      XCTAssertEqual(m[a .^ \Type.function!.returnType] as! Type, r)
     }
   }
 }

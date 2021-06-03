@@ -2,6 +2,11 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
+struct TypeID<T>: Hashable {
+  func hash(into h: inout Hasher) { ObjectIdentifier(T.self).hash(into: &h) }
+}
+
+@dynamicMemberLookup
 protocol Value {
   /// The actual type of this value.
   ///
@@ -13,51 +18,72 @@ protocol Value {
   /// built-in property name.
   var dynamic_type: Type { get }
 
-  /// The parts of this value that can be individually bound to variables.
-  var parts: Tuple<Value> { get }
-
-  /// Deserializes a new instance from `memory` at `location`.
-  init(from location: Address, in memory: Memory)
+  subscript(_: FieldID) -> Value { get set }
+  var fieldIDs: [FieldID] { get }
 }
 
-protocol CompoundValue: Value {
-  /// Creates an instance from the given parts.
-  init(parts: Tuple<Value>)
-}
-
-extension CompoundValue {
-  /// Deserializes a new instance from `memory` at `location`.
-  init(from location: Address, in memory: Memory) {
-    self.init(parts: memory.substructure(at: location).mapFields { memory[$0] })
+extension Value {
+  subscript(dynamicMember fieldName: String) -> Value {
+    get {
+      self[Identifier(text: fieldName, site: .empty)]
+    }
+    set {
+      self[Identifier(text: fieldName, site: .empty)] = newValue
+    }
   }
-}
 
-protocol AtomicValue: Value {}
-extension AtomicValue {
-  var parts: Tuple<Value> { Tuple() }
-
-  /// Returns the value stored at the given location
-  init(from location: Address, in memory: Memory) {
-    self = memory.atom(at: location) as! Self
+  subscript(n: Int) -> Value {
+    get { self[.position(n)] }
+    set { self[.position(n)] = newValue }
   }
+
+  subscript(fieldName: Identifier) -> Value {
+    get { self[.label(fieldName)] }
+    set { self[.label(fieldName)] = newValue }
+  }
+
+  subscript(field: FieldID) -> Value {
+    get {
+       fatal("Value \(self) has no field \(field)")
+    }
+    set {
+      fatal("Value \(self) has no field \(field)") ?? ()
+    }
+  }
+
+  subscript<T: Value>(downcastTo _: TypeID<T>) -> T {
+    get { self as! T }
+    set {
+      self = newValue as! Self
+    }
+  }
+
+  var upcastToValue: Value {
+    get { self }
+    set {
+      self = newValue as! Self
+    }
+  }
+
+  var fieldIDs: [FieldID] { [] }
 }
 
-struct FunctionValue: AtomicValue, Equatable {
+struct FunctionValue: Value, Equatable {
   let dynamic_type: Type
   let code: FunctionDefinition
 }
 
 typealias IntValue = Int
-extension IntValue: AtomicValue {
+extension IntValue: Value {
   var dynamic_type: Type { .int }
 }
 
 typealias BoolValue = Bool
-extension BoolValue: AtomicValue {
+extension BoolValue: Value {
   var dynamic_type: Type { .bool }
 }
 
-struct ChoiceValue: CompoundValue {
+struct ChoiceValue: Value {
   let dynamic_type_: ASTIdentity<ChoiceDefinition>
   let discriminator: ASTIdentity<Alternative>
   let payload: Tuple<Value>
@@ -73,25 +99,6 @@ struct ChoiceValue: CompoundValue {
     self.discriminator = discriminator
     self.payload = payload
   }
-
-  init(parts: Tuple<Value>) {
-    guard
-      case .choice(let parent) = parts[0] as! Type,
-      case .alternative(let discriminator) = parts[1] as! Type
-    else {
-      UNREACHABLE()
-    }
-    self.dynamic_type_ = parent
-    self.discriminator = discriminator
-    self.payload = parts[2] as! Tuple<Value>
- }
-
-  var parts: Tuple<Value> {
-    Tuple(
-      [.position(0): dynamic_type,
-       .position(1): Type.alternative(discriminator),
-       .position(2): payload])
-  }
 }
 
 extension ChoiceValue: CustomStringConvertible {
@@ -100,9 +107,7 @@ extension ChoiceValue: CustomStringConvertible {
   }
 }
 
-// TODO: Alternative => AlternativeDefinition?
-
-struct StructValue: CompoundValue {
+struct StructValue: Value {
   let dynamic_type_: ASTIdentity<StructDefinition>
   let payload: Tuple<Value>
 
@@ -115,20 +120,17 @@ struct StructValue: CompoundValue {
     dynamic_type_ = type
     self.payload = payload
   }
-
-  init(parts: Tuple<Value>) {
-    guard
-      case .struct(let parent) = parts[0] as! Type
-    else {
-      UNREACHABLE()
-    }
-    self.dynamic_type_ = parent
-    self.payload = parts[1] as! Tuple<Value>
- }
-
-  var parts: Tuple<Value> {
-    Tuple(
-      [.position(0): dynamic_type,
-       .position(1): payload])
-  }
 }
+
+struct AlternativeValue: Value {
+  init(_ t: ASTIdentity<Alternative>) { dynamic_type_ = t }
+
+  let dynamic_type_: ASTIdentity<Alternative>
+  var dynamic_type: Type { .alternative(dynamic_type_) }
+}
+
+struct Uninitialized: Value {
+  let dynamic_type: Type
+}
+
+// TODO: Alternative => AlternativeDefinition?

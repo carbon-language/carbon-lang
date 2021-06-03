@@ -75,14 +75,27 @@ indirect enum Type: Equatable {
 
   /// Convenience accessor for `.function` case.
   var function: (parameterTypes: TupleType, returnType: Type)? {
-    if case .function(parameterTypes: let p, returnType: let r) = self {
-      return (p, r)
-    } else { return nil }
+    get {
+      if case .function(parameterTypes: let p, returnType: let r) = self {
+        return (p, r)
+      } else { return nil }
+    }
+    set {
+      guard let n = newValue else { return }
+      self = .function(
+        parameterTypes: n.parameterTypes, returnType: n.returnType)
+    }
   }
 
   /// Convenience accessor for `.tuple` case.
   var tuple: TupleType? {
-    if case .tuple(let r) = self { return r } else { return nil }
+    get {
+      if case .tuple(let r) = self { return r } else { return nil }
+    }
+    set {
+      guard let n = newValue else { return }
+      self = .tuple(n)
+    }
   }
 
   /// The Swift type used to represent values of this type
@@ -103,56 +116,8 @@ indirect enum Type: Equatable {
   static var void: Type { .tuple(.void) }
 }
 
-extension Type: CompoundValue {
+extension Type: Value {
   var dynamic_type: Type { .type }
-
-  var parts: Tuple<Value> {
-    switch self {
-    case .int, .bool, .type, .error:
-      return .init([.position(0): kind.rawValue])
-
-    case let .alternative(discriminator):
-      return Tuple<Value>(
-        [.position(0): kind.rawValue, .position(1): discriminator.structure])
-
-    case let .struct(id):
-      return .init([.position(0): kind.rawValue, .position(1): id.structure])
-
-    case let .choice(id):
-      return .init([.position(0): kind.rawValue, .position(1): id.structure])
-
-    case let .function(parameterTypes: p, returnType: r):
-      return Tuple<Value>(
-        [.position(0): kind.rawValue,
-         .position(1): p.mapFields { $0 }, .position(2): r])
-
-    case let .tuple(t):
-      return Tuple<Value>(
-        [.position(0): kind.rawValue, .position(1): t.mapFields { $0 }])
-    }
-  }
-
-  init(parts: Tuple<Value>) {
-    switch Kind(rawValue: parts[0] as! Int)! {
-    case .int: self = .int
-    case .bool: self = .bool
-    case .type: self = .type
-    case .alternative:
-      self = .alternative((parts[1] as! Alternative).identity)
-    case .error: self = .error
-    case .struct:
-      self = .struct((parts[1] as! StructDefinition).identity)
-    case .choice:
-      self = .choice((parts[1] as! ChoiceDefinition).identity)
-    case .function:
-      self = .function(
-        parameterTypes: (parts[1] as! TupleValue).mapFields { Type($0)! },
-        returnType: Type(parts[2]!)!)
-
-    case .tuple:
-      self = .tuple((parts[1] as! TupleValue).mapFields { Type($0)! })
-    }
-  }
 }
 
 extension Type: CustomStringConvertible {

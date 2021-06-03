@@ -16,6 +16,7 @@ enum FieldID: Hashable {
 ///
 /// The `fields` of a tuple are instances of `Field`, while the The `element`s
 /// are `(FieldID, Field)` pairs.
+@dynamicMemberLookup
 struct Tuple<Field> {
   /// The number of fields in `self`.
   var count: Int { elements.count }
@@ -55,6 +56,10 @@ struct Tuple<Field> {
   /// Returns the field with the given name, or `nil` if no such field exists.
   subscript(fieldName: Identifier) -> Field? { elements[.label(fieldName)] }
 
+  subscript(dynamicMember fieldName: String) -> Field {
+    elements[.label(Identifier(text: fieldName, site: .empty))]!
+  }
+
   /// Returns the given positional field, or `nil` if no such field exists.
   subscript(position: Int) -> Field? { elements[.position(position)] }
 
@@ -68,6 +73,13 @@ struct Tuple<Field> {
 }
 extension Tuple: Equatable where Field: Equatable {}
 
+extension Tuple {
+  func isCongruent<OtherPayload>(to other: Tuple<OtherPayload>) -> Bool {
+    count == other.count && elements.keys.allSatisfy {
+      other.elements[$0] != nil
+    }
+  }
+}
 extension Tuple: CustomStringConvertible {
   var description: String {
     let labeled = elements.lazy.compactMap { (k, v) -> (String, Field)? in
@@ -89,7 +101,7 @@ extension Tuple: CustomStringConvertible {
 typealias TupleType = Tuple<Type>
 typealias TupleValue = Tuple<Value>
 
-extension TupleValue: Value, CompoundValue {
+extension TupleValue: Value {
   var dynamic_type: Type {
     .tuple(self.mapFields { $0.dynamic_type })
   }
@@ -100,6 +112,10 @@ extension TupleValue: Value, CompoundValue {
 
 extension TupleType {
   static let void: Self = .init([:])
+  var asType: Type {
+    get { .tuple(self) }
+    set { self = newValue.tuple! }
+  }
 }
 
 extension TupleSyntax {
