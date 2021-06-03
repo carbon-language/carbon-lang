@@ -335,7 +335,7 @@ public:
   static void setAddressWriter(DebugAddrWriter *AddrW) { AddrWriter = AddrW; }
 
   /// Writes out locationList, with index in to .debug_addr to be patched later.
-  virtual uint64_t addList(const DebugLocationsVector &LocList);
+  uint64_t addList(const DebugLocationsVector &LocList) override;
 
   /// Finalizes all the location by patching correct index in to .debug_addr.
   void finalizePatches();
