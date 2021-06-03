@@ -10,24 +10,101 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 ## Table of contents
 
--   [TODO](#todo)
 -   [Overview](#overview)
--   [Open questions](#open-questions)
-    -   [`self` type](#self-type)
-    -   [Default access control level](#default-access-control-level)
+-   [Use cases](#use-cases)
+    -   [Data types](#data-types)
+    -   [Object types](#object-types)
+    -   [Polymorphic types](#polymorphic-types)
+-   [Background](#background)
+-   [Overview](#overview-1)
+-   [Future work](#future-work)
+    -   [Method syntax](#method-syntax)
+    -   [Constant members](#constant-members)
+    -   [Access control](#access-control)
+    -   [Operator overloading](#operator-overloading)
+    -   [Inheritance](#inheritance)
+    -   [Memory layout](#memory-layout)
 
 <!-- tocstop -->
 
-## TODO
+## Overview
 
-This is a skeletal design, added to support [the overview](README.md). It should
-not be treated as accepted by the core team; rather, it is a placeholder until
-we have more time to examine this detail. Please feel welcome to rewrite and
-update as appropriate.
+A Carbon `struct` is a user-defined
+[record type](<https://en.wikipedia.org/wiki/Record_(computer_science)>). This
+is the primary mechanism for users to define new types in Carbon. A `struct` has
+members that are referenced by their names, in contrast to a
+[Carbon tuple](tuples.md) which defines a
+[product type](https://en.wikipedia.org/wiki/Product_type) whose members are
+referenced positionally.
+
+Carbon supports both named, or "nominal", and unnamed, or "anonymous", struct
+types. Named struct types are all distinct, but unnamed types are equal if they
+have the same list of members. Unnamed struct literals may be used to initialize
+or assign values to named struct variables.
+
+## Use cases
+
+FIXME
+
+### Data types
+
+FIXME
+
+### Object types
+
+FIXME
+
+### Polymorphic types
+
+FIXME
+
+## Background
+
+See how other languages tackle this problem:
+
+-   [Swift](https://docs.swift.org/swift-book/LanguageGuide/ClassesAndStructures.html)
+    -   has two different concepts: classes support
+        [inheritance](https://docs.swift.org/swift-book/LanguageGuide/Inheritance.html)
+        and use
+        [reference counting](https://docs.swift.org/swift-book/LanguageGuide/AutomaticReferenceCounting.html)
+        while structs have value semantics
+    -   may have
+        [constructor functions called "initializers"](https://docs.swift.org/swift-book/LanguageGuide/Initialization.html)
+        and
+        [destructors called "deinitializers"](https://docs.swift.org/swift-book/LanguageGuide/Deinitialization.html)
+    -   supports
+        [properties](https://docs.swift.org/swift-book/LanguageGuide/Properties.html),
+        including computed & lazy properties
+    -   methods are const by default
+        [unless marked mutating](https://docs.swift.org/swift-book/LanguageGuide/Methods.html#ID239)
+    -   supports
+        [extensions](https://docs.swift.org/swift-book/LanguageGuide/Extensions.html)
+    -   has per-field
+        [access control](https://docs.swift.org/swift-book/LanguageGuide/AccessControl.html)
+-   [Rust](https://doc.rust-lang.org/book/ch05-01-defining-structs.html)
+    -   has no support for inheritance
+    -   has no special constructor functions, instead has literal syntax
+    -   has some convenience syntax for common cases:
+        [variable and field names matching](https://doc.rust-lang.org/book/ch05-01-defining-structs.html#using-the-field-init-shorthand-when-variables-and-fields-have-the-same-name),
+        [updating a subset of fields](https://doc.rust-lang.org/book/ch05-01-defining-structs.html#creating-instances-from-other-instances-with-struct-update-syntax)
+    -   [can have unnamed fields](https://doc.rust-lang.org/book/ch05-01-defining-structs.html#using-tuple-structs-without-named-fields-to-create-different-types)
+    -   [supports structs with size 0](https://doc.rust-lang.org/book/ch05-01-defining-structs.html#unit-like-structs-without-any-fields)
+-   [Zig](https://ziglang.org/documentation/0.6.0/#struct)
+    -   [explicitly mark structs as packed to manually control layout](https://ziglang.org/documentation/0.6.0/#packed-struct)
+    -   has a struct literal syntax,
+        [including for anonymous structs](https://ziglang.org/documentation/0.6.0/#Anonymous-Struct-Literals)
+    -   no special constructor functions
+    -   supports fields with undefined values
+    -   supports structs with size 0
+    -   supports generics by way of memoized compile time functions accepting
+        and returning types
+    -   [supports default field values](https://ziglang.org/documentation/0.6.0/#toc-Default-Field-Values)
+    -   [has no properties or operator overloading -- Zig does not like hidden control flow](https://ziglang.org/#Small-simple-language)
 
 ## Overview
 
-Beyond simple tuples, Carbon of course allows defining named product types. This
+Beyond simple tuples, Carbon of course allows defining
+[record types](<https://en.wikipedia.org/wiki/Record_(computer_science)>). This
 is the primary mechanism for users to extend the Carbon type system and
 fundamentally is deeply rooted in C++ and its history (C and Simula). We simply
 call them `struct`s rather than other terms as it is both familiar to existing
@@ -36,51 +113,19 @@ structuring data:
 
 ```
 struct Widget {
-  var Int x;
-  var Int y;
-  var Int z;
+  var x: Int;
+  var y: Int;
+  var z: Int;
 
-  var String payload;
+  var payload: String;
 }
 ```
-
-Most of the core features of structures from C++ remain present in Carbon, but
-often using different syntax:
-
-```
-struct AdvancedWidget {
-  // Do a thing!
-  fn DoSomething(AdvancedWidget self, Int x, Int y);
-
-  // A nested type.
-  struct NestedType {
-    // ...
-  }
-
-  private var Int x;
-  private var Int y;
-}
-
-fn Foo(AdvancedWidget thing) {
-  thing.DoSomething(1, 2);
-}
-```
-
-Here we provide a public object method and two private data members. The method
-explicitly indicates how the object parameter is passed to it, and there is no
-automatic scoping - you have to use `self` here. The `self` name is also a
-keyword, though, that explains how to invoke this method on an object. This
-member function accepts the object _by value_, which is easily expressed here
-along with other constraints on the object parameter. Private members work the
-same as in C++, providing a layer of easy validation of the most basic interface
-constraints.
 
 The type itself is a compile-time constant value. All name access is done with
-the `.` notation. Constant members (including member types and member functions
-which do not need an implicit object parameter) can be accessed by way of that
-constant: `AdvancedWidget.NestedType`. Other members and member functions
-needing an object parameter (or "methods") must be accessed from an object of
-the type.
+the `.` notation.
+
+Other members and member functions needing an object parameter (or "methods")
+must be accessed from an object of the type.
 
 Some things in C++ are notably absent or orthogonally handled:
 
@@ -89,25 +134,43 @@ Some things in C++ are notably absent or orthogonally handled:
 -   No `static` variables because there are no global variables. Instead, can
     have scoped constants.
 
-## Open questions
+## Future work
 
-### `self` type
+### Method syntax
 
-Requiring the type of `self` makes method declarations quite verbose. Unclear
-what is the best way to mitigate this, there are many options. One is to have a
-special `Self` type.
+We will need some way of defining methods on structs. The big concern is how we
+designate the different ways the receiver can be passed into the method. This
+question is being tracked in
+[question-for-leads issue #494](https://github.com/carbon-language/carbon-lang/issues/494).
 
-It may be interesting to consider separating the `self` syntax from the rest of
-the parameter pattern as it doesn't seem necessary to inject all of the special
-rules (covariance versus contravariance, special pointer handling) for `self`
-into the general pattern matching system.
+### Constant members
 
-### Default access control level
+We need some syntax for defining constant members. These include:
 
-The default access control level, and the options for access control, are pretty
-large open questions. Swift and C++ (especially w/ modules) provide a lot of
-options and a pretty wide space to explore here. If the default isn't right most
-of the time, access control runs the risk of becoming a significant ceremony
-burden that we may want to alleviate with grouped access regions instead of
-per-entity specifiers. Grouped access regions have some other advantages in
-terms of pulling the public interface into a specific area of the type.
+-   Member types, like an iterator type
+-   Constant member values, like C++'s `std::string::npos`
+-   Functions that don't take a receiver, like
+    [C++'s static methods](<https://en.wikipedia.org/wiki/Static_(keyword)#Static_method>)
+
+All of these may be accessed as members of the type itself, without a value of
+that type.
+
+### Access control
+
+We will need some way of controlling access to the members of structs. For now,
+we assume all members are fully publicly accessible.
+
+### Operator overloading
+
+This includes destructors, copy and move operations, as well as other Carbon
+operators such as `+` and `/`. We expect types to implement these operations by
+implementing corresponding interfaces, see
+[the generics overview](generics/overview.md).
+
+### Inheritance
+
+FIXME: no multiple inheritance
+
+### Memory layout
+
+FIXME: Order, packing, alignment
