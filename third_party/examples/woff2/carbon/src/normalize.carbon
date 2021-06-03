@@ -19,20 +19,20 @@ struct FontCollection;
 // Changes the offset fields of the table headers so that the data for the
 // tables will be written in order of increasing tag values, without any gaps
 // other than the 4-byte padding.
-bool NormalizeOffsets(Font* font);
+fn NormalizeOffsets(Font* font) -> bool;
 
 // Changes the checksum fields of the table headers and the checksum field of
 // the head table so that it matches the current data.
-bool FixChecksums(Font* font);
+fn FixChecksums(Font* font) -> bool;
 
 // Parses each of the glyphs in the font and writes them again to the glyf
 // table in normalized form, as defined by the StoreGlyph() function. Changes
 // the loca table accordigly.
-bool NormalizeGlyphs(Font* font);
+fn NormalizeGlyphs(Font* font) -> bool;
 
 // Performs all of the normalization steps above.
-bool NormalizeFont(Font* font);
-bool NormalizeFontCollection(FontCollection* font_collection);
+fn NormalizeFont(Font* font) -> bool;
+fn NormalizeFontCollection(FontCollection* font_collection) -> bool;
 
 } // namespace woff2
 

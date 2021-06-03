@@ -9,13 +9,13 @@
 #ifndef WOFF2_PORT_H_
 #define WOFF2_PORT_H_
 
-#include <assert.h>
+#include <cassert>
 
 namespace woff2 {
 
-typedef unsigned int       uint32;
+using uint32 = unsigned int;
 
-inline int Log2Floor(uint32 n) {
+fn auto Log2Floor(uint32 n) -> int {
 #if defined(__GNUC__)
   return n == 0 ? -1 : 31 ^ __builtin_clz(n);
 #else
