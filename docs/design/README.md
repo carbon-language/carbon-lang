@@ -583,8 +583,6 @@ fn RemoveLast(x: (Int, Int, Int)) -> (Int, Int) {
 #### Structs
 
 > References: [Structs](structs.md)
->
-> **TODO:** References need to be evolved.
 
 `struct`s are a way for users to define their own data strutures or named
 product types.
@@ -607,50 +605,26 @@ Breaking apart `Widget`:
 -   `Widget` has one `String` member: `payload`.
 -   Given an instance `dial`, a member can be referenced with `dial.paylod`.
 
-More advanced `struct`s may be created:
-
-```carbon
-struct AdvancedWidget {
-  // Do a thing!
-  fn DoSomething(self: AdvancedWidget, x: Int, y: Int);
-
-  // A nested type.
-  struct Nestedtype {
-    // ...
-  }
-
-  private var x: Int;
-  private var y: Int;
-}
-
-fn Foo(thing: AdvancedWidget) {
-  thing.DoSomething(1, 2);
-}
-```
-
-Breaking apart `AdvancedWidget`:
-
--   `AdvancedWidget` has a public object method `DoSomething`.
-    -   `DoSomething` explicitly indicates how the `AdvancedWidget` is passed to
-        it, and there is no automatic scoping - `self` must be specified as the
-        first input. The `self` name is also a keyword that explains how to
-        invoke this method on an object.
-    -   `DoSomething` accepts `AdvancedWidget` _by value_, which is easily
-        expressed here along with other constraints on the object parameter.
--   `AdvancedWidget` has two private data members: `x` and `y`.
-    -   Private methods and data members are restricted to use by
-        `AdvancedWidget` only, providing a layer of easy validation of the most
-        basic interface constraints.
--   `Nestedtype` is a nested type, and can be accessed as
-    `AdvancedWidget.Nestedtype`.
-
 ##### Allocation, construction, and destruction
 
 > **TODO:** Needs a feature design and a high level summary provided inline.
 
 ##### Assignment, copying, and moving
 
-> **TODO:** Needs a feature design and a high level summary provided inline.
+You may use an anonymous struct literal to assign or initialize a `struct`
+variable.
+
+```carbon
+var sprocket: Widget = {.x = 3, .y = 4, .z = 5, .payload = "Sproing"};
+sprocket = {.x = 2, .y = 1, .z = 0, .payload = "Bounce"};
+```
+
+You may also copy one struct into another of the same type.
+
+```carbon
+var thingy: Widget = sprocket;
+sprocket = thingy;
+```
 
 ##### Comparison
 
