@@ -4,7 +4,7 @@
 
 // Test mutation of a global variable.
 
-var Int zero = 1;
+var zero: Int = 1;
 
 fn main() -> Int {
   zero = 0;

@@ -5,6 +5,6 @@
 // Test the that field order matters for tuples.
 
 fn main() -> Int {
-  var (.x = Int, .y = Int) t = (.y = 2, .x = 3);
+  var t: (.x = Int, .y = Int) = (.y = 2, .x = 3);
   return 0;
 }

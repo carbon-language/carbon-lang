@@ -4,7 +4,7 @@
 
 // Test type checking of global variable. Error expected.
 
-var Int flag = true;
+var flag: Int = true;
 
 fn main() -> Int {
   return 0;

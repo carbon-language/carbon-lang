@@ -2,7 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-fn f(Int x) -> Int {
+fn f(x: Int) -> Int {
   return x - 1;
 }
 
