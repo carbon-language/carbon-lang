@@ -20,6 +20,7 @@ struct ExecutableProgram {
   /// Mapping from alternative declaration to the choice in which it is defined.
   let enclosingChoice: ASTDictionary<Alternative, ChoiceDefinition>
 
+  /// The type of the expression consisting of the name of each declared entity.
   let typeOfNameDeclaredBy: Dictionary<Declaration.Identity, Memo<Type>>
 
   /// The unique top-level nullary main() function defined in `ast`,
