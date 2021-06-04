@@ -16,7 +16,6 @@ enum FieldID: Hashable {
 ///
 /// The `fields` of a tuple are instances of `Field`, while the The `element`s
 /// are `(FieldID, Field)` pairs.
-@dynamicMemberLookup
 struct Tuple<Field> : FieldAccess {
   /// The number of fields in `self`.
   var count: Int { elements.count }

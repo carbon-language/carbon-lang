@@ -6,22 +6,12 @@ struct TypeID<T>: Hashable {
   func hash(into h: inout Hasher) { ObjectIdentifier(T.self).hash(into: &h) }
 }
 
-@dynamicMemberLookup
 protocol FieldAccess {
   associatedtype Field
   subscript(_: FieldID) -> Field? { get set }
 }
 
 extension FieldAccess {
-  subscript(dynamicMember fieldName: String) -> Field? {
-    get {
-      self[Identifier(text: fieldName, site: .empty)]
-    }
-    set {
-      self[Identifier(text: fieldName, site: .empty)] = newValue
-    }
-  }
-
   subscript(n: Int) -> Field? {
     get { self[.position(n)] }
     set { self[.position(n)] = newValue }
