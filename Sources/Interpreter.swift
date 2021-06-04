@@ -381,7 +381,8 @@ fileprivate extension Interpreter {
     at a: Address, then proceed: @escaping Next) -> Onward
   {
     if tracing { print("  info: deleting \(a)") }
-    memory.delete(a)
+    memory.deinitialize(a)
+    memory.deallocate(a)
     return Onward(proceed)
   }
 

@@ -95,26 +95,13 @@ struct Memory {
 }
 
 extension Memory {
-  func isInitialized(at a: Address) -> Bool {
-    !(allocations[a.allocation]![keyPath: a.subObject] is Uninitialized)
-  }
-
-  func isMutable(at a: Address) -> Bool {
-    mutableAllocations.contains(a.allocation)
-  }
-
-  func boundType(at a: Address) -> Type? {
-    allocations[a.allocation]![keyPath: a.subObject].dynamic_type
-  }
-
-  /// Returns an uninitialized address earmarked for storing instances of the
-  /// given type.
+  /// Returns an uninitialized address earmarked for storing values of type `t`.
   ///
   /// - Parameter mutable: `true` iff mutations of the value at this address
   ///   will be allowed.
-  mutating func allocate(boundTo type: Type, mutable: Bool = false) -> Address {
+  mutating func allocate(boundTo t: Type, mutable: Bool = false) -> Address {
     defer { nextAllocation += 1 }
-    allocations[nextAllocation] = Uninitialized(dynamic_type: type)
+    allocations[nextAllocation] = Uninitialized(dynamic_type: t)
     if mutable { mutableAllocations.insert(nextAllocation) }
     return Address(
       allocation: nextAllocation, subObject: \.self,
@@ -124,7 +111,7 @@ extension Memory {
   /// Initializes the value at `a` to `v`.
   ///
   /// - Note: initialization is not considered a mutation of `a`'s value.
-  /// - Requires: `a` is an allocated address.
+  /// - Requires: `a` is an allocated but uninitialized address.
   mutating func initialize(_ a: Address, to v: Value) {
     sanityCheck(!isInitialized(at: a))
     sanityCheck(boundType(at: a) == v.dynamic_type,
@@ -135,7 +122,7 @@ extension Memory {
   /// Deinitializes the storage at `a`, returning it to an uninitialized state.
   ///
   /// - Note: deinitialization is not considered a mutation of `a`'s value.
-  /// - Requires: `a` is the address of an initialized value.
+  /// - Requires: `a` is the address of an allocated, initialized value.
   mutating func deinitialize(_ a: Address) {
     sanityCheck(isInitialized(at: a))
     allocations[a.allocation]![keyPath: a.subObject]
@@ -144,21 +131,13 @@ extension Memory {
 
   /// Deallocates the storage at `a`.
   ///
-  /// - Requires: `a` is an uninitialized address.
+  /// - Requires: `a` is an allocated but uninitialized address.
   mutating func deallocate(_ a: Address) {
     sanityCheck(
       !isInitialized(at: a), "\(self[a]) at \(a) must be deinitialized")
     sanityCheck(
       a.subObject == \.self, "Can't deallocate subObject \(a.subObject)")
     _ = allocations.removeValue(forKey: a.allocation)
-  }
-
-  /// Deintializes and then deallocates the memory at `a`
-  ///
-  /// - Requires: `a` is the address of an initialized value.
-  mutating func delete(_ a: Address) {
-    deinitialize(a)
-    deallocate(a)
   }
 
   /// Accesses the value at `a`.
@@ -168,11 +147,11 @@ extension Memory {
     allocations[a.allocation]![keyPath: a.subObject]
   }
 
-  /// Copies the value at `target` into `source`.
+  /// Assigns the value at `target` into `source`.
   ///
-  /// - Requires: The type of the new value must match that of
-  ///   the existing value at `a`.
-  /// - Requires: `a` is in memory allocated with `mutable = true`.
+  /// - Requires: The type of the value at `source` must match that of
+  ///   the existing value at `target`.
+  /// - Requires: `target` was allocated with `mutable = true`.
   mutating func assign(from source: Address, into target: Address) {
     sanityCheck(
       mutableAllocations.contains(target.allocation),
@@ -182,5 +161,23 @@ extension Memory {
     sanityCheck(isInitialized(at: target))
     sanityCheck(boundType(at: source) == boundType(at: target))
     allocations[target.allocation]![keyPath: target.subObject] = self[source]
+  }
+}
+
+/// Private Helpers
+extension Memory {
+  /// Returns `true` iff `a` has been initialized with a value.
+  private func isInitialized(at a: Address) -> Bool {
+    !(allocations[a.allocation]![keyPath: a.subObject] is Uninitialized)
+  }
+
+  /// Returns `true` iff `a` was allocated as mutable.
+  private func isMutable(at a: Address) -> Bool {
+    mutableAllocations.contains(a.allocation)
+  }
+
+  /// Returns the type to which `a` was bound at allocation.
+  private func boundType(at a: Address) -> Type? {
+    allocations[a.allocation]![keyPath: a.subObject].dynamic_type
   }
 }
