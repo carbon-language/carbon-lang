@@ -127,11 +127,16 @@ final class MemoryTests: XCTestCase {
     m.initialize(a, to: v)
     if let x = checkNonNil(m[a] as? Type) {
       XCTAssertEqual(x, v)
-      let a1 = a .^ \Type.function!.parameterTypes.upcastToValue
+      let a1 = a.addresseePart(
+        \Type.function!.parameterTypes.upcastToValue, ".<parameterTypes>")
+
       let p1 = m[a1]
       XCTAssertEqual(Type(p1), .tuple(p))
-      XCTAssertEqual(
-        m[a .^ \Type.function!.returnType.upcastToValue] as! Type, r)
+
+      let a2 = a.addresseePart(
+        \Type.function!.returnType.upcastToValue, ".<returnType>")
+
+      XCTAssertEqual(m[a2] as! Type, r)
     }
   }
 }

@@ -873,8 +873,7 @@ fileprivate extension Interpreter {
       }
 
       return match(
-        p.arguments,
-        toValueOfType: program.payloadType[subjectAlternative]!,
+        p.arguments, toValueOfType: program.payloadType[subjectAlternative]!,
         at: subject, then: proceed)
 
     case .int, .bool, .type, .function, .tuple, .error, .alternative:

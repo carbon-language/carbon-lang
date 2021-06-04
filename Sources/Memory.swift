@@ -2,19 +2,29 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
+/// The location of a `Value` in `Memory`, often a sub-part of some other
+/// `Value`.
 struct Address: Hashable, CustomStringConvertible {
+  /// The allocation that created this address.
   let allocation: Int
-  let part: WritableKeyPath<Value, Value>
+
+  /// Which part of the Value at the top level of the allocation the address
+  /// refers to.
+  let subObject: WritableKeyPath<Value, Value>
+
+  /// A string representation for diagnostic purposes.
   let description: String
 }
 
+/// Address composition.
 extension Address {
-  static func .^ (l: Address, r: FieldID) -> Address {
+  /// Returns an address that accesses the given field of the value at `base`.
+  static func .^ (base: Address, field: FieldID) -> Address {
     Address(
-      allocation: l.allocation,
-      part: l.part.appending(path: \.self[r]!),
-      description: l.description + {
-        switch r {
+      allocation: base.allocation,
+      subObject: base.subObject.appending(path: \.self[field]!),
+      description: base.description + {
+        switch field {
         case let .position(x): return "[\(x)]"
         case let .label(x): return ".\(x.text)"
         }
@@ -22,22 +32,32 @@ extension Address {
     )
   }
 
-  static func .^ (l: Address, r: Identifier) -> Address {
-    l .^ .label(r)
+  /// Returns an address that accesses the given field of the value at `base`.
+  static func .^ (base: Address, field: Identifier) -> Address {
+    base .^ .label(field)
   }
 
-  static func .^ (l: Address, r: Int) -> Address {
-    l .^ .position(r)
+  /// Returns an address that accesses the given field of the value at `base`.
+  static func .^ (base: Address, field: Int) -> Address {
+    base .^ .position(field)
   }
 
-  static func .^ <T: Value>(
-    l: Address, r: WritableKeyPath<T, Value>
+  /// Assuming the value at `self` has concrete type `T`, returns the address of
+  /// the given part of that value, using `partDescription` to extend the
+  /// textual representation.
+  ///
+  /// Used to access parts that can't be addressed directly in carbon, e.g. the
+  /// `returnType` part of a `FunctionType`, which has no carbon name, but whose
+  /// address must be bound to variables as part of pattern matching.
+  func addresseePart<T: Value>(
+    _ part: WritableKeyPath<T, Value>, _ partDescription: String
   ) -> Address {
     Address(
-      allocation: l.allocation,
-      part: l.part
+      allocation: self.allocation,
+      subObject: self.subObject
         .appending(path: \.self[downcastTo: TypeID<T>()]!)
-        .appending(path: r), description: l.description)
+        .appending(path: part),
+      description: self.description + partDescription)
   }
 }
 
