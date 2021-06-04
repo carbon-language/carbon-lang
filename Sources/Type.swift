@@ -76,9 +76,7 @@ indirect enum Type: Equatable {
   /// Convenience accessor for `.function` case.
   var function: FunctionType? {
     get {
-      if case let .function(f) = self {
-        return f
-      } else { return nil }
+      if case let .function(f) = self { return f } else { return nil }
     }
     set {
       guard let f = newValue else { return }
