@@ -62,18 +62,21 @@ func fatal(
   fatalError("\n" + msg, file: (file), line: line)
 }
 
+/// Storage for every value handled by the interpreter.
 struct Memory {
-  /// An allocated element of memory.
-  typealias Storage = [Int: Value]
+  /// Everything stored in memory, accessed via its allocation value.
+  private var allocations: [Int: Value] = [:]
 
-  private var storage: Storage = .init()
+  /// The allocated addresses that contain mutable values.
   private var mutableAllocations: Set<Int> = []
-  private(set) var nextAllocation = 0
+
+  /// The base of the next address to be allocated.
+  private var nextAllocation = 0
 }
 
 extension Memory {
   func isInitialized(at a: Address) -> Bool {
-    !(storage[a.allocation]![keyPath: a.part] is Uninitialized)
+    !(allocations[a.allocation]![keyPath: a.subObject] is Uninitialized)
   }
 
   func isMutable(at a: Address) -> Bool {
@@ -81,7 +84,7 @@ extension Memory {
   }
 
   func boundType(at a: Address) -> Type? {
-    storage[a.allocation]![keyPath: a.part].dynamic_type
+    allocations[a.allocation]![keyPath: a.subObject].dynamic_type
   }
 
   /// Returns an uninitialized address earmarked for storing instances of the
@@ -91,10 +94,10 @@ extension Memory {
   ///   will be allowed.
   mutating func allocate(boundTo type: Type, mutable: Bool = false) -> Address {
     defer { nextAllocation += 1 }
-    storage[nextAllocation] = Uninitialized(dynamic_type: type)
+    allocations[nextAllocation] = Uninitialized(dynamic_type: type)
     if mutable { mutableAllocations.insert(nextAllocation) }
     return Address(
-      allocation: nextAllocation, part: \.self,
+      allocation: nextAllocation, subObject: \.self,
       description: "@\(nextAllocation)")
   }
 
@@ -106,7 +109,7 @@ extension Memory {
     sanityCheck(!isInitialized(at: a))
     sanityCheck(boundType(at: a) == v.dynamic_type,
                 "\(boundType(at: a)!) != \(v.dynamic_type)")
-    storage[a.allocation]![keyPath: a.part] = v
+    allocations[a.allocation]![keyPath: a.subObject] = v
   }
 
   /// Deinitializes the storage at `a`, returning it to an uninitialized state.
@@ -115,7 +118,7 @@ extension Memory {
   /// - Requires: `a` is the address of an initialized value.
   mutating func deinitialize(_ a: Address) {
     sanityCheck(isInitialized(at: a))
-    storage[a.allocation]![keyPath: a.part]
+    allocations[a.allocation]![keyPath: a.subObject]
       = Uninitialized(dynamic_type: boundType(at: a)!)
   }
 
@@ -125,8 +128,9 @@ extension Memory {
   mutating func deallocate(_ a: Address) {
     sanityCheck(
       !isInitialized(at: a), "\(self[a]) at \(a) must be deinitialized")
-    sanityCheck(a.part == \.self, "Can't deallocate subpart \(a.part)")
-    _ = storage.removeValue(forKey: a.allocation)
+    sanityCheck(
+      a.subObject == \.self, "Can't deallocate subObject \(a.subObject)")
+    _ = allocations.removeValue(forKey: a.allocation)
   }
 
   /// Deintializes and then deallocates the memory at `a`
@@ -141,7 +145,7 @@ extension Memory {
   ///
   /// - Requires: The value at `a` is initialized.
   subscript(a: Address) -> Value {
-    storage[a.allocation]![keyPath: a.part]
+    allocations[a.allocation]![keyPath: a.subObject]
   }
 
   /// Copies the value at `target` into `source`.
@@ -157,6 +161,6 @@ extension Memory {
     sanityCheck(isInitialized(at: source))
     sanityCheck(isInitialized(at: target))
     sanityCheck(boundType(at: source) == boundType(at: target))
-    storage[target.allocation]![keyPath: target.part] = self[source]
+    allocations[target.allocation]![keyPath: target.subObject] = self[source]
   }
 }
