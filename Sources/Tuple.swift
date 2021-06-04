@@ -112,8 +112,8 @@ extension TupleType {
 
   /// Accesses the `Value` corresponding to `self`.
   ///
-  /// Writing anything other than a tuple of types into this property will cause
-  /// a trap.
+  /// Writing anything other than a tuple of types into this property is a
+  /// precondition violation.
   var upcastToValue: Value {
     get { self.mapFields { $0 } }
     set { self = (newValue as! TupleValue).mapFields { Type($0)! } }
