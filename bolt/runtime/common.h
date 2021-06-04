@@ -151,6 +151,28 @@ uint64_t __munmap(void *addr, uint64_t size) {
   return ret;
 }
 
+#define SIG_BLOCK 0
+#define SIG_UNBLOCK 1
+#define SIG_SETMASK 2
+
+static const uint64_t MaskAllSignals[] = {-1ULL};
+
+uint64_t __sigprocmask(int how, const void *set, void *oldset) {
+#if defined(__APPLE__)
+#define SIGPROCMASK_SYSCALL 0x2000030
+#else
+#define SIGPROCMASK_SYSCALL 14
+#endif
+  uint64_t ret;
+  register long r10 asm("r10") = sizeof(uint64_t);
+  __asm__ __volatile__("movq $" STRINGIFY(SIGPROCMASK_SYSCALL) ", %%rax\n"
+                                                               "syscall\n"
+                       : "=a"(ret)
+                       : "D"(how), "S"(set), "d"(oldset), "r"(r10)
+                       : "cc", "rcx", "r11", "memory");
+  return ret;
+}
+
 uint64_t __exit(uint64_t code) {
 #if defined(__APPLE__)
 #define EXIT_SYSCALL 0x2000001
@@ -409,13 +431,19 @@ public:
 /// RAII wrapper for Mutex
 class Lock {
   Mutex &M;
+  uint64_t SignalMask[1] = {};
 
 public:
   Lock(Mutex &M) : M(M) {
+    __sigprocmask(SIG_BLOCK, MaskAllSignals, SignalMask);
     while (!M.acquire()) {
     }
   }
-  ~Lock() { M.release(); }
+
+  ~Lock() {
+    M.release();
+    __sigprocmask(SIG_SETMASK, SignalMask, nullptr);
+  }
 };
 
 inline uint64_t alignTo(uint64_t Value, uint64_t Align) {
