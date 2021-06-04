@@ -10,9 +10,6 @@ enum FieldID: Hashable {
   case label(Identifier)
   /// field identified by its offset in the sequence of positional fields.
   case position(Int)
-
-  init(_ name: String) { self = .label(.init(text: name, site: .empty)) }
-  init(_ position: Int) { self = .position(position) }
 }
 
 /// A tuple value (or type, which is also a tuple value) of the given `Field`.
