@@ -118,6 +118,10 @@ indirect enum Type: Equatable {
 extension Type: CompoundValue {
   var dynamic_type: Type { .type }
 
+  /// Accesses the named subparts of this value, or `nil` if no such subpart
+  /// exists.
+  ///
+  /// Writing `nil` into an existing subpart is a precondition violation.
   subscript(field: FieldID) -> Value? {
     get {
       switch self {
@@ -127,10 +131,14 @@ extension Type: CompoundValue {
       }
     }
     set {
-      if newValue == nil { return }
+      guard let v = newValue else {
+        sanityCheck(self[field] == nil)
+        return
+      }
+
       switch self {
       case .tuple(var t):
-        t[field] = Type(newValue!)!
+        t[field] = Type(v)!
         self = .tuple(t)
         return
       case .int, .bool, .type, .alternative, .struct, .error, .choice, .function:
@@ -140,6 +148,7 @@ extension Type: CompoundValue {
   }
 }
 
+/// Representation for the `Type.function` case.
 struct FunctionType: Equatable {
   var parameterTypes: TupleType
   var returnType: Type
@@ -164,4 +173,4 @@ extension Type: CustomStringConvertible {
   }
 }
 
-// TODO: make most subscripts require validity to reduce unwrapping.
+// TODO: make most subscripts require validity to reduce unwrapping? discuss.
