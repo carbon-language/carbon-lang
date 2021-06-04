@@ -15,6 +15,8 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Data types](#data-types)
     -   [Object types](#object-types)
     -   [Polymorphic types](#polymorphic-types)
+    -   [Abstract base classes](#abstract-base-classes)
+    -   [Other cases](#other-cases)
 -   [Background](#background)
 -   [Overview](#overview-1)
 -   [Fields have an order](#fields-have-an-order)
@@ -29,7 +31,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [Alias](#alias)
 -   [Future work](#future-work)
     -   [Method syntax](#method-syntax)
-    -   [Constant members](#constant-members)
+    -   [Destructuring, pattern matching, and extract](#destructuring-pattern-matching-and-extract)
     -   [Access control](#access-control)
     -   [Operator overloading](#operator-overloading)
     -   [Inheritance](#inheritance)
@@ -60,7 +62,7 @@ types, and polymorphic types.
 
 ### Data types
 
-Characterized by: public data fields, few if any methods.
+Characterized by: public data fields, few if any methods, final.
 
 Example: Key and value pair returned from a `SortedMap` or `HashMap`.
 
@@ -72,7 +74,7 @@ FIXME
 
 FIXME
 
-Characterized by: private data fields, non-overridable methods.
+Characterized by: private data fields, non-overridable methods, final.
 
 Examples: strings, containers, iterators, types with invariants like `Date`
 
@@ -82,15 +84,49 @@ Include:
     a file handle
 -   non-movable types like `Mutex`
 
+Extending this design to support object types is future work.
+
+FIXME: public API and private helper API
+
 ### Polymorphic types
 
 Characterized by: inheritance, private data in a base type, overridable/virtual
 methods with dynamic dispatch, accessed through a pointer to "type extending
 base"
 
-Excluding complex multiple inheritance schemes, virtual inheritance, etc.
+Excluding complex multiple inheritance schemes, virtual inheritance, etc. One
+base class for purposes of subtyping. Can have other parents as "mixins".
+
+FIXME: Talk about the external API versus the APIs for communicating between
+base and derived.
 
 FIXME
+
+Extending this design to support polymorphic types is future work.
+
+### Abstract base classes
+
+Can we use interfaces as the model for C++ ABCs to support implementing
+multiple? Can we skip supporting derived-to-base conversions in this case?
+
+How do you pass something implementing this from Carbon to C++?
+
+Maybe we can say: you can inherit from multiple base classes but only the first
+can have any data?
+
+### Other cases
+
+inheritance without virtual: intrusive linked list, need to be able to get from
+the intrusive linked list type to the main type; type can be part of another
+inheritance hierarchy. Could be handled in Carbon by giving mix-ins the
+capability to go from their pointer to the pointer to the containing object.
+
+iostream, virtual multiple inheritance, and base class has state; some uses of
+streams are ifstream, ofstream; hard cases are the bidirectional ones: fstream,
+stringstream. very few uses of fstream; one quarter are ostringstream, most
+could be.
+
+Do we want to expose Carbon interfaces to C++ as ABCs?
 
 ## Background
 
@@ -253,23 +289,28 @@ We will need some way of defining methods on structs. The big concern is how we
 designate the different ways the receiver can be passed into the method. This
 question is being tracked in
 [question-for-leads issue #494](https://github.com/carbon-language/carbon-lang/issues/494).
+As an example, we need some way to distinguish methods that don't take a
+receiver at all, like
+[C++'s static methods](<https://en.wikipedia.org/wiki/Static_(keyword)#Static_method>)
 
-### Constant members
+We do not expect to have implicit member access in methods.
 
-We need some syntax for defining constant members beyond
-[member types](#member-type). These include:
+### Destructuring, pattern matching, and extract
 
--   Constant member values, like C++'s `std::string::npos`
--   Functions that don't take a receiver, like
-    [C++'s static methods](<https://en.wikipedia.org/wiki/Static_(keyword)#Static_method>)
-
-All of these may be accessed as members of the type itself, without a value of
-that type.
+FIXME
 
 ### Access control
 
 We will need some way of controlling access to the members of structs. For now,
 we assume all members are fully publicly accessible.
+
+The default access control level, and the options for access control, are pretty
+large open questions. Swift and C++ (especially w/ modules) provide a lot of
+options and a pretty wide space to explore here. If the default isn't right most
+of the time, access control runs the risk of becoming a significant ceremony
+burden that we may want to alleviate with grouped access regions instead of
+per-entity specifiers. Grouped access regions have some other advantages in
+terms of pulling the public interface into a specific area of the type.
 
 ### Operator overloading
 
@@ -280,7 +321,10 @@ implementing corresponding interfaces, see
 
 ### Inheritance
 
-FIXME: no multiple inheritance
+FIXME: limited multiple inheritance
+
+FIXME:
+[doc with constructor options for inheritance](https://docs.google.com/document/d/1GyrBIFyUbuLJGItmTAYUf9sqSDQjry_kjZKm5INl-84/edit)
 
 ### Memory layout
 
