@@ -2,6 +2,11 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
+/// The Swift representation of uninitialized Carbon values.
+fileprivate struct Uninitialized: AtomicValue {
+  let dynamic_type: Type
+}
+
 /// The location of a `Value` in `Memory`, often a sub-part of some other
 /// `Value`.
 struct Address: Hashable, CustomStringConvertible {
