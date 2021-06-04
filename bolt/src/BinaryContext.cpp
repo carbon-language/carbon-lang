@@ -1689,25 +1689,31 @@ void BinaryContext::printInstruction(raw_ostream &OS,
 
   MIB->printAnnotations(Instruction, OS);
 
-  const DWARFDebugLine::LineTable *LineTable =
-    Function && opts::PrintDebugInfo ? Function->getDWARFLineTable()
-                                     : nullptr;
-
-  if (LineTable) {
+  if (opts::PrintDebugInfo) {
     DebugLineTableRowRef RowRef =
         DebugLineTableRowRef::fromSMLoc(Instruction.getLoc());
-
     if (RowRef != DebugLineTableRowRef::NULL_ROW) {
+      const DWARFDebugLine::LineTable *LineTable;
+      if (Function && Function->getDWARFUnit() &&
+          Function->getDWARFUnit()->getOffset() == RowRef.DwCompileUnitIndex) {
+        LineTable = Function->getDWARFLineTable();
+      } else {
+        LineTable = DwCtx->getLineTableForUnit(
+            DwCtx->getCompileUnitForOffset(RowRef.DwCompileUnitIndex));
+      }
+      assert(LineTable &&
+             "line table expected for instruction with debug info");
+
       const DWARFDebugLine::Row &Row = LineTable->Rows[RowRef.RowIndex - 1];
       StringRef FileName = "";
       if (Optional<const char *> FName =
               dwarf::toString(LineTable->Prologue.FileNames[Row.File - 1].Name))
         FileName = *FName;
       OS << " # debug line " << FileName << ":" << Row.Line;
-
-      if (Row.Column) {
+      if (Row.Column)
         OS << ":" << Row.Column;
-      }
+      if (Row.Discriminator)
+        OS << " discriminator:" << Row.Discriminator;
     }
   }
 

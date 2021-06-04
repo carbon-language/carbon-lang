@@ -57,6 +57,7 @@ tools = [
     ToolSubst('yaml2obj', unresolved='fatal'),
     ToolSubst('llvm-mc', unresolved='fatal'),
     ToolSubst('llvm-nm', unresolved='fatal'),
+    ToolSubst('llvm-objdump', unresolved='fatal'),
     ToolSubst('llvm-strip', unresolved='fatal'),
     ToolSubst('link_fdata', command=FindTool('link_fdata.sh'), unresolved='fatal'),
 ]
