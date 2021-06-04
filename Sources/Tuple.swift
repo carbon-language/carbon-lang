@@ -70,6 +70,7 @@ struct Tuple<Field> : FieldAccess {
 extension Tuple: Equatable where Field: Equatable {}
 
 extension Tuple {
+  /// Returns `true` iff `self` has the same set of fieldIDs as `other`.
   func isCongruent<OtherPayload>(to other: Tuple<OtherPayload>) -> Bool {
     count == other.count && elements.keys.allSatisfy {
       other.elements[$0] != nil
@@ -108,11 +109,11 @@ extension TupleValue: Value, CompoundValue {
 
 extension TupleType {
   static let void: Self = .init([:])
-  var asType: Type {
-    get { .tuple(self) }
-    set { self = newValue.tuple! }
-  }
 
+  /// Accesses the `Value` corresponding to `self`.
+  ///
+  /// Writing anything other than a tuple of types into this property will cause
+  /// a trap.
   var upcastToValue: Value {
     get { self.mapFields { $0 } }
     set { self = (newValue as! TupleValue).mapFields { Type($0)! } }
