@@ -123,6 +123,16 @@ FunctionNamesFile("funcs-file",
   cl::Hidden,
   cl::cat(BoltCategory));
 
+static cl::list<std::string> ForceFunctionNamesNR(
+    "funcs-no-regex", cl::CommaSeparated,
+    cl::desc("limit optimizations to functions from the list (non-regex)"),
+    cl::value_desc("func1,func2,func3,..."), cl::Hidden, cl::cat(BoltCategory));
+
+static cl::opt<std::string> FunctionNamesFileNR(
+    "funcs-file-no-regex",
+    cl::desc("file with list of functions to optimize (non-regex)"), cl::Hidden,
+    cl::cat(BoltCategory));
+
 cl::opt<bool>
 KeepTmp("keep-tmp",
   cl::desc("preserve intermediate .o file"),
@@ -2547,8 +2557,15 @@ void RewriteInstance::selectFunctionsToProcess() {
   };
   populateFunctionNames(opts::FunctionNamesFile, opts::ForceFunctionNames);
   populateFunctionNames(opts::SkipFunctionNamesFile, opts::SkipFunctionNames);
+  populateFunctionNames(opts::FunctionNamesFileNR, opts::ForceFunctionNamesNR);
 
-  if (!opts::ForceFunctionNames.empty() && !opts::SkipFunctionNames.empty()) {
+  // Make a set of functions to process to speed up lookups.
+  std::unordered_set<std::string> ForceFunctionsNR(
+      opts::ForceFunctionNamesNR.begin(), opts::ForceFunctionNamesNR.end());
+
+  if ((!opts::ForceFunctionNames.empty() ||
+       !opts::ForceFunctionNamesNR.empty()) &&
+      !opts::SkipFunctionNames.empty()) {
     errs() << "BOLT-ERROR: cannot select functions to process and skip at the "
               "same time. Please use only one type of selection.\n";
     exit(1);
@@ -2589,13 +2606,19 @@ void RewriteInstance::selectFunctionsToProcess() {
     }
 
     // If the list is not empty, only process functions from the list.
-    if (!opts::ForceFunctionNames.empty()) {
+    if (!opts::ForceFunctionNames.empty() || !ForceFunctionsNR.empty()) {
+      // Regex check (-funcs and -funcs-file options).
       for (std::string &Name : opts::ForceFunctionNames) {
         if (Function.hasNameRegex(Name)) {
           return true;
         }
       }
-      return false;
+      // Non-regex check (-funcs-no-regex and -funcs-file-no-regex).
+      Optional<StringRef> Match =
+          Function.forEachName([&ForceFunctionsNR](StringRef Name) {
+            return ForceFunctionsNR.count(Name.str());
+          });
+      return Match.hasValue();
     }
 
     for (std::string &Name : opts::SkipFunctionNames) {
