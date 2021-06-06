@@ -4,9 +4,9 @@
 
 // Test a global variable depending on another global.
 
-var Int x = 0;
+var x: Int = 0;
 
-var Int y = x;
+var y: Int = x;
 
 fn main() -> Int {
   return y;

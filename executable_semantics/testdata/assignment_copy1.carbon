@@ -5,9 +5,9 @@
 // Test that assignment performs a copy and does not create an alias.
 
 fn main() -> Int {
-  var Int x = -1;
+  var x: Int = -1;
   {
-     var Int y = 0;
+     var y: Int = 0;
      x = y;
      // y dies here
   }

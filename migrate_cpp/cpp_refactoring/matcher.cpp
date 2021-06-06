@@ -29,7 +29,14 @@ void Matcher::AddReplacement(const clang::SourceManager& sm,
   }
 
   auto rep = ct::Replacement(sm, sm.getExpansionRange(range), replacement_text);
-  auto err = (*replacements)[std::string(rep.getFilePath())].add(rep);
+  auto entry = replacements->find(std::string(rep.getFilePath()));
+  if (entry == replacements->end()) {
+    // The replacement was in a file which isn't being updated, such as a system
+    // header.
+    return;
+  }
+
+  auto err = entry->second.add(rep);
   if (err) {
     llvm::report_fatal_error("Error with replacement `" + rep.toString() +
                              "`: " + llvm::toString(std::move(err)) + "\n");

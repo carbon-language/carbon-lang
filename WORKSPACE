@@ -45,6 +45,10 @@ llvm_configure(
     name = "llvm-project",
     src_path = "third_party/llvm-project",
     src_workspace = "@carbon//:WORKSPACE",
+    targets = [
+        "AArch64",
+        "X86",
+    ],
 )
 
 load("@llvm_bazel//:terminfo.bzl", "llvm_terminfo_system")

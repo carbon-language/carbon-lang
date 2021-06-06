@@ -45,7 +45,7 @@ struct NumericLiteralTest : ::testing::Test {
 template <typename T, typename M>
 auto VariantWith(M value_matcher) -> decltype(auto) {
   return Truly([=](auto&& variant) {
-    T* value = std::get_if<T>(&variant);
+    const T* value = std::get_if<T>(&variant);
     return value && ::testing::Matches(value_matcher)(*value);
   });
 }
