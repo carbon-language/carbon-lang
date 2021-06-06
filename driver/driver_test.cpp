@@ -51,13 +51,11 @@ class RawTestOstream : public llvm::raw_ostream {
   }
 };
 
-struct DriverTest : ::testing::Test {
+TEST(DriverTest, FullCommandErrors) {
   RawTestOstream test_output_stream;
   RawTestOstream test_error_stream;
   Driver driver = Driver(test_output_stream, test_error_stream);
-};
 
-TEST_F(DriverTest, FullCommandErrors) {
   EXPECT_FALSE(driver.RunFullCommand({}));
   EXPECT_THAT(test_error_stream.TakeStr(), HasSubstr("ERROR"));
 
@@ -68,7 +66,11 @@ TEST_F(DriverTest, FullCommandErrors) {
   EXPECT_THAT(test_error_stream.TakeStr(), HasSubstr("ERROR"));
 }
 
-TEST_F(DriverTest, Help) {
+TEST(DriverTest, Help) {
+  RawTestOstream test_output_stream;
+  RawTestOstream test_error_stream;
+  Driver driver = Driver(test_output_stream, test_error_stream);
+
   EXPECT_TRUE(driver.RunHelpSubcommand({}));
   EXPECT_THAT(test_error_stream.TakeStr(), StrEq(""));
   auto help_text = test_output_stream.TakeStr();
@@ -84,7 +86,11 @@ TEST_F(DriverTest, Help) {
   EXPECT_THAT(test_output_stream.TakeStr(), StrEq(help_text));
 }
 
-TEST_F(DriverTest, HelpErrors) {
+TEST(DriverTest, HelpErrors) {
+  RawTestOstream test_output_stream;
+  RawTestOstream test_error_stream;
+  Driver driver = Driver(test_output_stream, test_error_stream);
+
   EXPECT_FALSE(driver.RunHelpSubcommand({"foo"}));
   EXPECT_THAT(test_output_stream.TakeStr(), StrEq(""));
   EXPECT_THAT(test_error_stream.TakeStr(), HasSubstr("ERROR"));
@@ -114,7 +120,11 @@ auto CreateTestFile(llvm::StringRef text) -> std::string {
   return path.str().str();
 }
 
-TEST_F(DriverTest, DumpTokens) {
+TEST(DriverTest, DumpTokens) {
+  RawTestOstream test_output_stream;
+  RawTestOstream test_error_stream;
+  Driver driver = Driver(test_output_stream, test_error_stream);
+
   auto test_file_path = CreateTestFile("Hello World");
   EXPECT_TRUE(driver.RunDumpTokensSubcommand({test_file_path}));
   EXPECT_THAT(test_error_stream.TakeStr(), StrEq(""));
@@ -213,7 +223,11 @@ TEST_F(DriverTest, DumpTokens) {
   EXPECT_THAT(test_output_stream.TakeStr(), StrEq(tokenized_text));
 }
 
-TEST_F(DriverTest, DumpTokenErrors) {
+TEST(DriverTest, DumpTokenErrors) {
+  RawTestOstream test_output_stream;
+  RawTestOstream test_error_stream;
+  Driver driver = Driver(test_output_stream, test_error_stream);
+
   EXPECT_FALSE(driver.RunDumpTokensSubcommand({}));
   EXPECT_THAT(test_output_stream.TakeStr(), StrEq(""));
   EXPECT_THAT(test_error_stream.TakeStr(), HasSubstr("ERROR"));
