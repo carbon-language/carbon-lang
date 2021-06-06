@@ -2,7 +2,9 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// FIXME: Teach the driver to support stdin rather than using a temporary file.
+// FIXME: We need to figure out how to integrate this style of integration
+// testing with Bazel.
+//
 // RUN: driver/carbon dump-tokens %s | FileCheck %s --check-prefix=TOKENS
 
 fn run(String program) {
