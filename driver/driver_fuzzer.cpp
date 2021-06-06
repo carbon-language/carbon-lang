@@ -14,7 +14,8 @@
 
 namespace Carbon {
 
-static auto Read(const unsigned char*& data, size_t& size, int& output) -> bool {
+static auto Read(const unsigned char*& data, size_t& size, int& output)
+    -> bool {
   if (size < sizeof(output)) {
     return false;
   }

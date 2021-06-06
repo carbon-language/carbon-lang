@@ -23,7 +23,7 @@ class Driver {
  public:
   // Default constructed driver uses stderr for all error and informational
   // output.
-  Driver() : output_stream(llvm::outs()), error_stream(llvm::errs()) {};
+  Driver() : output_stream(llvm::outs()), error_stream(llvm::errs()) {}
 
   // Constructs a driver with any error or informational output directed to a
   // specified stream.
@@ -32,26 +32,26 @@ class Driver {
 
   // Parses the given arguments into both a subcommand to select the operation
   // to perform and any arguments to that subcommand.
-  // 
+  //
   // Returns true if the operation succeeds. If the operation fails, returns
   // false and any information about the failure is printed to the registered
   // error stream (stderr by default).
   auto RunFullCommand(llvm::ArrayRef<llvm::StringRef> args) -> bool;
 
   // Subcommand that prints available help text to the error stream.
-  // 
+  //
   // Optionally one positional parameter may be provided to select a particular
   // subcommand or detailed section of help to print.
-  // 
+  //
   // Returns true if appropriate help text was found and printed. If an invalid
   // positional parameter (or flag) is provided, returns false.
   auto RunHelpSubcommand(llvm::ArrayRef<llvm::StringRef> args) -> bool;
 
   // Subcommand that dumps the token information for the provided source file.
-  // 
+  //
   // Requires exactly one positional parameter to designate the source file to
   // read. May be `-` to read from stdin.
-  // 
+  //
   // Returns true if the operation succeeds. If the operation fails, this
   // returns false and any information about the failure is printed to the
   // registered error stream (stderr by default).
