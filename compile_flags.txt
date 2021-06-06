@@ -79,6 +79,8 @@ bazel-bin/external/llvm-project/llvm/utils/unittest/googletest/include
 -nostdinc++
 -isystem
 bazel-clang-toolchain/include/c++/v1
+-isystem
+bazel-clang-toolchain/lib/clang/12.0.0/include
 -no-canonical-prefixes
 -Wno-builtin-macro-redefined
 -D__DATE__="redacted"
