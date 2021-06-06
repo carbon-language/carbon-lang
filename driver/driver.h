@@ -14,55 +14,55 @@
 
 namespace Carbon {
 
-/// Command line interface driver.
-///
-/// This class provides a simple API to parse and run command lines for Carbon.
-/// It is generally expected to be used to implement command line tools for
-/// working with the language.
+// Command line interface driver.
+//
+// Provides simple API to parse and run command lines for Carbon.  It is
+// generally expected to be used to implement command line tools for working
+// with the language.
 class Driver {
  public:
-  /// Default constructed driver uses stderr for all error and
-  /// informational output.
-  Driver() = default;
+  // Default constructed driver uses stderr for all error and informational
+  // output.
+  Driver() : output_stream(llvm::outs()), error_stream(llvm::errs()) {};
 
-  /// Constructs a driver with any error or informational output directed to
-  /// a specified stream.
+  // Constructs a driver with any error or informational output directed to a
+  // specified stream.
   Driver(llvm::raw_ostream& output_stream, llvm::raw_ostream& error_stream)
       : output_stream(output_stream), error_stream(error_stream) {}
 
-  /// Parses the given arguments into both a subcommand to select the
-  /// operation to perform and any arguments to that subcommand.
-  ///
-  /// Returns true if the operation succeeds. If the operation fails,
-  /// returns false and any information about the failure is printed to the
-  /// registered error stream (stderr by default).
+  // Parses the given arguments into both a subcommand to select the operation
+  // to perform and any arguments to that subcommand.
+  // 
+  // Returns true if the operation succeeds. If the operation fails, returns
+  // false and any information about the failure is printed to the registered
+  // error stream (stderr by default).
   auto RunFullCommand(llvm::ArrayRef<llvm::StringRef> args) -> bool;
 
-  /// Subcommand that prints available help text to the error stream.
-  ///
-  /// Optionally one positional parameter may be provided to select a particular
-  /// subcommand or detailed section of help to print.
-  ///
-  /// Returns true if appropriate help text was found and printed. If an invalid
-  /// positional parameter (or flag) is provided, returns false.
+  // Subcommand that prints available help text to the error stream.
+  // 
+  // Optionally one positional parameter may be provided to select a particular
+  // subcommand or detailed section of help to print.
+  // 
+  // Returns true if appropriate help text was found and printed. If an invalid
+  // positional parameter (or flag) is provided, returns false.
   auto RunHelpSubcommand(llvm::ArrayRef<llvm::StringRef> args) -> bool;
 
-  /// Subcommand that dumps the token information for the provided source file.
-  ///
-  /// Requires exactly one positional parameter to designate the source file to
-  /// read. May be `-` to read from stdin.
-  ///
-  /// Returns true if the operation succeeds. If the operation fails, this
-  /// returns false and any information about the failure is printed to the
-  /// registered error stream (stderr by default).
+  // Subcommand that dumps the token information for the provided source file.
+  // 
+  // Requires exactly one positional parameter to designate the source file to
+  // read. May be `-` to read from stdin.
+  // 
+  // Returns true if the operation succeeds. If the operation fails, this
+  // returns false and any information about the failure is printed to the
+  // registered error stream (stderr by default).
   auto RunDumpTokensSubcommand(llvm::ArrayRef<llvm::StringRef> args) -> bool;
 
  private:
-  llvm::raw_ostream& output_stream = llvm::outs();
-  llvm::raw_ostream& error_stream = llvm::errs();
-
   auto ReportExtraArgs(llvm::StringRef subcommand_text,
                        llvm::ArrayRef<llvm::StringRef> args) -> void;
+
+  llvm::raw_ostream& output_stream;
+  llvm::raw_ostream& error_stream;
 };
 
 }  // namespace Carbon
