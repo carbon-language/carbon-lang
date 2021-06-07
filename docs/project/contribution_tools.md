@@ -201,7 +201,7 @@ it's not part of the standard Homebrew path. Read the output of `brew install`
 for the necessary path changes, or add something to your `PATH` like:
 
 ```bash
-export PATH="$(brew --prefix llvm)/opt/llvm/bin:${PATH}"
+export PATH="$(brew --prefix llvm)/bin:${PATH}"
 ```
 
 Carbon expects the `PATH` to include the installed tooling. If set, `CC` should
