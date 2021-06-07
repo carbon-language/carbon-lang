@@ -214,11 +214,7 @@ assume that the LLVM toolchain will be in `PATH`, particularly for tools like
 > TODO: We'd like to use `apt`, but standard LLVM Debian packages are not
 > configured correctly for our needs. We are currently aware of two libc++
 > issues, [43604](https://bugs.llvm.org/show_bug.cgi?id=43604) and
-> [46321](https://bugs.llvm.org/show_bug.cgi?id=46321). environment variable to
-> point at the installed `clang`. When building with Bazel, it will first try to
-> use the `clang` binary in the `CC` environment variable if set, and fall back
-> to looking up a `clang` binary on the system `PATH`. It assumes that the rest
-> of the LLVM toolchain is available in the same directory.
+> [46321](https://bugs.llvm.org/show_bug.cgi?id=46321).
 
 #### Manual installations (not recommended)
 
