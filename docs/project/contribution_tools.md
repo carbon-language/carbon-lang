@@ -195,26 +195,29 @@ Our recommended way of installing is:
 brew install llvm
 ```
 
+`llvm` is keg-only; bear in mind this requires updating `PATH` for it because
+it's not part of the standard Homebrew path. Read the output of `brew install`
+for the necessary path changes, or add something to your `PATH` like:
 
-`llvm` is keg-only; bear in mind this requires updating `PATH` for it because it's not part of the standard Homebrew path. Read the output of `brew install` for the necessary path changes, or add something to your `PATH` like:
+```bash
+export PATH="$(brew --prefix llvm)/opt/llvm/bin:${PATH}"
+```
 
-``bash
-export PATH="$(brew config | grep HOMEBREW_PREFIX | cut -d ' ' -f2)/opt/llvm/bin:${PATH}"
-# Optional, ignored by Carbon but may be used by other tooling:
-export LDFLAGS="-L$(brew config | grep HOMEBREW_PREFIX | cut -d ' ' -f2)/opt/llvm/lib"
-export CPPFLAGS="-I$(brew config | grep HOMEBREW_PREFIX | cut -d ' ' -f2)/opt/llvm/include"
-``
+Carbon expects the `PATH` to include the installed tooling. If set, `CC` should
+also point at `clang`. Our build environment will detect the `clang` binary
+using `CC` then `PATH`, and will expect the rest of the LLVM toolchain to be
+available in the same directory as `clang`. However, various scripts and tools
+assume that the LLVM toolchain will be in `PATH`, particularly for tools like
+`clang-format` and `clang-tidy`.
 
-Carbon expects the `PATH` to include the installed tooling. If set, `CC`  should also point at `clang`. Our build environment will detect the `clang` binary using `CC` then `PATH`, and  will expect the rest of the LLVM toolchain to be available in the same directory as `clang`. However, various scripts and tools assume that the LLVM toolchain will be in `PATH`, particularly for tools like `clang-format` and `clang-tidy`.
-
-> TODO: We'd like to use `apt`, but standard LLVM Debian packages are not configured correctly for our needs. We are currently aware of two libc++ issues, [43604](https://bugs.llvm.org/show_bug.cgi?id=43604) and [46321](https://bugs.llvm.org/show_bug.cgi?id=46321).
-environment variable to point at the installed `clang`. When building with
-Bazel, it will first try to use the `clang` binary in the `CC` environment
-variable if set, and fall back to looking up a `clang` binary on the system
-`PATH`. It assumes that the rest of the LLVM toolchain is available in the same
-directory.
-
-
+> TODO: We'd like to use `apt`, but standard LLVM Debian packages are not
+> configured correctly for our needs. We are currently aware of two libc++
+> issues, [43604](https://bugs.llvm.org/show_bug.cgi?id=43604) and
+> [46321](https://bugs.llvm.org/show_bug.cgi?id=46321). environment variable to
+> point at the installed `clang`. When building with Bazel, it will first try to
+> use the `clang` binary in the `CC` environment variable if set, and fall back
+> to looking up a `clang` binary on the system `PATH`. It assumes that the rest
+> of the LLVM toolchain is available in the same directory.
 
 #### Manual installations (not recommended)
 
