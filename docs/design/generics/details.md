@@ -3549,10 +3549,10 @@ recursion are allowed.
 
 **Open question:** We could also have a syntax for defining these impls inline
 in the struct definition, but I haven't found a syntax that works as well as the
-`extend` statement constructs shown above. We have a choice between two evils:
-either the meaning of the names defined in the outer struct change inside the
-conditional impl, or we end up having to give new names to the same values. This
-was discussed in
+`extend` statement constructs shown above. We have a choice between two
+undesirable properties: either the meaning of the names defined in the outer
+struct change inside the conditional impl, or we end up having to give new names
+to the same values. This was discussed in
 [Carbon meeting Nov 27, 2019 on Generics & Interfaces (TODO)](#broken-links-footnote)<!-- T:Carbon meeting Nov 27, 2019 on Generics & Interfaces --><!-- A:#heading=h.gebr4cdi0y8o -->.
 
 The best idea I've had so far is to include an `extend` statement inside the
@@ -4322,6 +4322,9 @@ only in situations where you know the type isn't dynamic.
 [Existential types](https://en.wikipedia.org/wiki/Type_system#Existential_types)
 or
 [Dependent pair types](https://en.wikipedia.org/wiki/Dependent_type'%22%60UNIQ--postMath-00000012-QINU%60%22_type).
+Also see
+[this discussion](https://forums.swift.org/t/unlock-existential-types-for-all-protocols/40665)
+about reducing restrictions in Swift.
 
 ##### Model
 
