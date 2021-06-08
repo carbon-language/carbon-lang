@@ -355,14 +355,13 @@ Carbon development. Some settings changes must be made separately:
 Our recommended way of installing is to use
 [the canonical download](https://code.visualstudio.com/Download).
 
-> **WARNING:** Visual Studio Code's Remote Development mode modifies the `PATH`
-> environment variable, particularly in the terminals it creates. The `PATH`
-> difference can cause `bazel` to detect different startup options, discarding
-> its build cache. In order to avoid this issue, you can add to your rc file:
->
-> ```bash
-> export PATH=$(echo "${PATH}" | sed -e 's/:[^:]*\/.vscode-server\/[^:]*:/:/g')
-> ```
+> **WARNING:** Visual Studio Code modifies the `PATH` environment variable,
+> particularly in the terminals it creates. The `PATH` difference can cause
+> `bazel` to detect different startup options, discarding its build cache. As a
+> consequence, it's recommended to use **either** normal terminals **or** Visual
+> Studio Code to run `bazel`, not both in combination. Visual Studio Code can
+> still be used for other purposes, such as editing files, without interfering
+> with `bazel`.
 
 ### pre-commit enabled tools
 
