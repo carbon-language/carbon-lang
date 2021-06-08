@@ -106,7 +106,8 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [Future work](#future-work)
     -   [Abstract return types](#abstract-return-types)
     -   [Interface defaults](#interface-defaults)
-    -   [Evolution](#evolution)
+    -   [Interface evolution](#interface-evolution)
+    -   [Evolution from templates to generics](#evolution-from-templates-to-generics)
     -   [Testing](#testing)
     -   [Operator overloading](#operator-overloading)
     -   [Impls with state](#impls-with-state)
@@ -1211,9 +1212,9 @@ interface Hashable {
 
 No names in `Hashable` are allowed to conflict with names in `Equatable` (unless
 those names are marked as `upcoming` or `deprecated` as in
-[evolution future work](#evolution)). Hopefully this won't be a problem in
-practice, since interface extension is a very closely coupled relationship, but
-this may be something we will have to revisit in the future.
+[evolution future work](#interface-evolution)). Hopefully this won't be a
+problem in practice, since interface extension is a very closely coupled
+relationship, but this may be something we will have to revisit in the future.
 
 **Concern:** Having both `extends` and [`extend`](#external-impl) with different
 meanings is going to be confusing. One should be renamed. Perhaps `extends`
@@ -1325,7 +1326,7 @@ struct Song {
 
 This is just like you get an implementation of `Equatable` by implementing
 `Hashable` when `Hashable` extends `Equatable`. This provides a tool useful for
-[evolution](#evolution).
+[evolution](#interface-evolution).
 
 #### Diamond dependency issue
 
@@ -4624,7 +4625,7 @@ interface RandomAccessContainer {
 }
 ```
 
-### Evolution
+### Interface evolution
 
 There are a collection of use cases for making different changes to interfaces
 that are already in use. These should be addressed either by describing how they
@@ -4663,6 +4664,76 @@ automatically also implement `Foo`. Further, implementing `Foo` implements
 implementation of either `Foo` or `Foo2` is satisfied by any type implementing
 either of those. This would allow an incremental transition from `Foo` to
 `Foo2`.
+
+### Evolution from templates to generics
+
+There are several components to supporting a function's transition from template
+to generic, described in
+[the generic goals](goals.md#upgrade-path-from-templates). In short, we want
+both safety and incrementality.
+
+Imagine that we have a function that we want to transition between having a
+template type parameter `T` to a generic parameter with a constraint that the
+type implement a specific interface, say `Printable`:
+
+```
+// Before transition:
+fn PrintIt[T:$$ Type](p: T*) {
+  p->Print();
+}
+
+// After transition:
+fn PrintIt[T:$ Printable](p: T*) {
+  p->Print();
+}
+```
+
+The problem is that the name lookup rules might pick different a different
+`Print` function after the transition, in the case when the calling type has an
+[external implementation](#external-impl) of `Printable`. For example, imagine
+we had a `Song` type with two slightly different `Print` definitions:
+
+```
+struct Song {
+  // ...
+  impl ConvertibleToString {
+    method (me: Self) ToString() -> String { ... }
+  }
+  method (me: Self) Print() {
+    StdOut.Print("Song: ", me.ToString());
+  }
+}
+
+// This could be in a different file from the definition
+// of `Song` above, in the same file as the `Printable`
+// interface definition.
+external impl (T:$ ConvertibleToString) as Printable {
+  method (me: Self) Print() {
+    StdOut.Print(me.ToString());
+  }
+}
+```
+
+In this case, the `Printable.Print` definition would come from a
+[blanket implementation](#parameterized-impls) of `Printable` for any type
+implementing `ConvertibleToString`. For safety, we need an intermediate step
+where the compiler would detect the change in semantics so the user could update
+their code. A library might have a release with this intermediate step so their
+clients could detect problems before a later release when the transition
+completes. Our best idea for this intermediate step is to combine the template
+with [the interface bound on the type](#type-bounds).
+
+```
+// Middle of transition:
+fn PrintIt[T:$$ Printable](p: T*) {
+  p->Print();
+}
+```
+
+The compiler would report an error for any caller where `T.Print` was different
+from `T.(Printable.Print)`. In effect, the `T` template parameter would have the
+API of `T` plus the API of `Printable`, except for any names where those two
+APIs conflict, that is have different definitions for the same name.
 
 ### Testing
 
