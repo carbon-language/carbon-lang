@@ -42,13 +42,13 @@ struct Font {
     uint8_t flag_byte;
 
     // Is this table reused by a TTC
-    [[nodiscard]] fn IsReused() const -> bool;
+    [[nodiscard]] auto IsReused() const -> bool;
   };
   std::map<uint32_t, Table> tables;
-  [[nodiscard]] fn OutputOrderedTags() const -> std::vector<uint32_t>;
+  [[nodiscard]] auto OutputOrderedTags() const -> std::vector<uint32_t>;
 
-  fn FindTable(uint32_t tag) -> Table*;
-  [[nodiscard]] fn FindTable(uint32_t tag) const -> const Table*;
+  auto FindTable(uint32_t tag) -> Table*;
+  [[nodiscard]] auto FindTable(uint32_t tag) const -> const Table*;
 };
 
 // Accomodates both singular (OTF, TTF) and collection (TTC) fonts
@@ -63,42 +63,42 @@ struct FontCollection {
 // Parses the font from the given data. Returns false on parsing failure or
 // buffer overflow. The font is valid only so long the input data pointer is
 // valid. Does NOT support collections.
-fn ReadFont(const uint8_t* data, size_t len, Font* font) -> bool;
+auto ReadFont(const uint8_t* data, size_t len, Font* font) -> bool;
 
 // Parses the font from the given data. Returns false on parsing failure or
 // buffer overflow. The font is valid only so long the input data pointer is
 // valid. Supports collections.
-fn ReadFontCollection(const uint8_t* data, size_t len, FontCollection* fonts) -> bool;
+auto ReadFontCollection(const uint8_t* data, size_t len, FontCollection* fonts) -> bool;
 
 // Returns the file size of the font.
-fn FontFileSize(const Font& font) -> size_t;
-fn FontCollectionFileSize(const FontCollection& font) -> size_t;
+auto FontFileSize(const Font& font) -> size_t;
+auto FontCollectionFileSize(const FontCollection& font) -> size_t;
 
 // Writes the font into the specified dst buffer. The dst_size should be the
 // same as returned by FontFileSize(). Returns false upon buffer overflow (which
 // should not happen if dst_size was computed by FontFileSize()).
-fn WriteFont(const Font& font, uint8_t* dst, size_t dst_size) -> bool;
+auto WriteFont(const Font& font, uint8_t* dst, size_t dst_size) -> bool;
 // Write the font at a specific offset
-fn WriteFont(const Font& font, size_t* offset, uint8_t* dst, size_t dst_size) -> bool;
+auto WriteFont(const Font& font, size_t* offset, uint8_t* dst, size_t dst_size) -> bool;
 
-fn WriteFontCollection(const FontCollection& font_collection, uint8_t* dst,
+auto WriteFontCollection(const FontCollection& font_collection, uint8_t* dst,
                          size_t dst_size) -> bool;
 
 // Returns the number of glyphs in the font.
 // NOTE: Currently this works only for TrueType-flavored fonts, will return
 // zero for CFF-flavored fonts.
-fn NumGlyphs(const Font& font) -> int;
+auto NumGlyphs(const Font& font) -> int;
 
 // Returns the index format of the font
-fn IndexFormat(const Font& font) -> int;
+auto IndexFormat(const Font& font) -> int;
 
 // Sets *glyph_data and *glyph_size to point to the location of the glyph data
 // with the given index. Returns false if the glyph is not found.
-fn GetGlyphData(const Font& font, int glyph_index,
+auto GetGlyphData(const Font& font, int glyph_index,
                   const uint8_t** glyph_data, size_t* glyph_size) -> bool;
 
 // Removes the digital signature (DSIG) table
-fn RemoveDigitalSignature(Font* font) -> bool;
+auto RemoveDigitalSignature(Font* font) -> bool;
 
 } // namespace woff2
 

@@ -36,7 +36,7 @@ void StoreLoca(int index_fmt, uint32_t value, size_t* offset, uint8_t* dst) {
 
 namespace {
 
-fn WriteNormalizedLoca(int index_fmt, int num_glyphs, Font* font) -> bool {
+auto WriteNormalizedLoca(int index_fmt, int num_glyphs, Font* font) -> bool {
   Font::Table* glyf_table = font->FindTable(kGlyfTableTag);
   Font::Table* loca_table = font->FindTable(kLocaTableTag);
 
@@ -85,7 +85,7 @@ fn WriteNormalizedLoca(int index_fmt, int num_glyphs, Font* font) -> bool {
 
 namespace {
 
-fn MakeEditableBuffer(Font* font, int tableTag) -> bool {
+auto MakeEditableBuffer(Font* font, int tableTag) -> bool {
   Font::Table* table = font->FindTable(tableTag);
   if (table == nullptr) {
     return FONT_COMPRESSION_FAILURE();
@@ -106,7 +106,7 @@ fn MakeEditableBuffer(Font* font, int tableTag) -> bool {
 
 }  // namespace
 
-fn NormalizeGlyphs(Font* font) -> bool {
+auto NormalizeGlyphs(Font* font) -> bool {
   Font::Table* head_table = font->FindTable(kHeadTableTag);
   Font::Table* glyf_table = font->FindTable(kGlyfTableTag);
   Font::Table* loca_table = font->FindTable(kLocaTableTag);
@@ -163,7 +163,7 @@ fn NormalizeGlyphs(Font* font) -> bool {
   return true;
 }
 
-fn NormalizeOffsets(Font* font) -> bool {
+auto NormalizeOffsets(Font* font) -> bool {
   uint32_t offset = 12 + 16 * font->num_tables;
   for (auto tag : font->OutputOrderedTags()) {
     auto& table = font->tables[tag];
@@ -175,7 +175,7 @@ fn NormalizeOffsets(Font* font) -> bool {
 
 namespace {
 
-fn ComputeHeaderChecksum(const Font& font) -> uint32_t {
+auto ComputeHeaderChecksum(const Font& font) -> uint32_t {
   uint32_t checksum = font.flavor;
   uint16_t max_pow2 = font.num_tables ? Log2Floor(font.num_tables) : 0;
   uint16_t search_range = max_pow2 ? 1 << (max_pow2 + 4) : 0;
@@ -197,7 +197,7 @@ fn ComputeHeaderChecksum(const Font& font) -> uint32_t {
 
 }  // namespace
 
-fn FixChecksums(Font* font) -> bool {
+auto FixChecksums(Font* font) -> bool {
   Font::Table* head_table = font->FindTable(kHeadTableTag);
   if (head_table == nullptr) {
     return FONT_COMPRESSION_FAILURE();
@@ -235,7 +235,7 @@ fn FixChecksums(Font* font) -> bool {
 }
 
 namespace {
-fn MarkTransformed(Font* font) -> bool {
+auto MarkTransformed(Font* font) -> bool {
   Font::Table* head_table = font->FindTable(kHeadTableTag);
   if (head_table == nullptr) {
     return FONT_COMPRESSION_FAILURE();
@@ -255,7 +255,7 @@ fn MarkTransformed(Font* font) -> bool {
 }  // namespace
 
 
-fn NormalizeWithoutFixingChecksums(Font* font) -> bool {
+auto NormalizeWithoutFixingChecksums(Font* font) -> bool {
   return (MakeEditableBuffer(font, kHeadTableTag) &&
           RemoveDigitalSignature(font) &&
           MarkTransformed(font) &&
@@ -263,12 +263,12 @@ fn NormalizeWithoutFixingChecksums(Font* font) -> bool {
           NormalizeOffsets(font));
 }
 
-fn NormalizeFont(Font* font) -> bool {
+auto NormalizeFont(Font* font) -> bool {
   return (NormalizeWithoutFixingChecksums(font) &&
           FixChecksums(font));
 }
 
-fn NormalizeFontCollection(FontCollection* font_collection) -> bool {
+auto NormalizeFontCollection(FontCollection* font_collection) -> bool {
   if (font_collection->fonts.size() == 1) {
     return NormalizeFont(&font_collection->fonts[0]);
   }

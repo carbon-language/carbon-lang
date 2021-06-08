@@ -51,12 +51,12 @@ class Glyph {
 // Parses the glyph from the given data. Returns false on parsing failure or
 // buffer overflow. The glyph is valid only so long the input data pointer is
 // valid.
-fn ReadGlyph(const uint8_t* data, size_t len, Glyph* glyph) -> bool;
+auto ReadGlyph(const uint8_t* data, size_t len, Glyph* glyph) -> bool;
 
 // Stores the glyph into the specified dst buffer. The *dst_size is the buffer
 // size on entry and is set to the actual (unpadded) stored size on exit.
 // Returns false on buffer overflow.
-fn StoreGlyph(const Glyph& glyph, uint8_t* dst, size_t* dst_size) -> bool;
+auto StoreGlyph(const Glyph& glyph, uint8_t* dst, size_t* dst_size) -> bool;
 
 } // namespace woff2
 

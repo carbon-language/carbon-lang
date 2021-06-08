@@ -12,7 +12,7 @@
 #include <woff2/encode.h>
 
 
-fn main(int argc, char **argv) -> int {
+auto main(int argc, char **argv) -> int {
   using std::string;
 
   if (argc != 2) {

@@ -38,7 +38,7 @@ using std::vector;
 const size_t kWoff2HeaderSize = 48;
 const size_t kWoff2EntrySize = 20;
 
-fn Compress(const uint8_t* data, const size_t len, uint8_t* result,
+auto Compress(const uint8_t* data, const size_t len, uint8_t* result,
               uint32_t* result_len, BrotliEncoderMode mode, int quality) -> bool {
   size_t compressed_len = *result_len;
   if (BrotliEncoderCompress(quality, BROTLI_DEFAULT_WINDOW, mode, len, data,
@@ -49,21 +49,21 @@ fn Compress(const uint8_t* data, const size_t len, uint8_t* result,
   return true;
 }
 
-fn Woff2Compress(const uint8_t* data, const size_t len,
+auto Woff2Compress(const uint8_t* data, const size_t len,
                    uint8_t* result, uint32_t* result_len,
                    int quality) -> bool {
   return Compress(data, len, result, result_len,
                   BROTLI_MODE_FONT, quality);
 }
 
-fn TextCompress(const uint8_t* data, const size_t len,
+auto TextCompress(const uint8_t* data, const size_t len,
                   uint8_t* result, uint32_t* result_len,
                   int quality) -> bool {
   return Compress(data, len, result, result_len,
                   BROTLI_MODE_TEXT, quality);
 }
 
-fn KnownTableIndex(uint32_t tag) -> int {
+auto KnownTableIndex(uint32_t tag) -> int {
   for (int i = 0; i < 63; ++i) {
     if (tag == kKnownTags[i]) { return i;
 }
@@ -86,7 +86,7 @@ void StoreTableEntry(const Table& table, size_t* offset, uint8_t* dst) {
   }
 }
 
-fn TableEntrySize(const Table& table) -> size_t {
+auto TableEntrySize(const Table& table) -> size_t {
   uint8_t flag_byte = KnownTableIndex(table.tag);
   size_t size = ((flag_byte & 0x3f) != 0x3f) ? 1 : 5;
   size += Base128Size(table.src_length);
@@ -96,7 +96,7 @@ fn TableEntrySize(const Table& table) -> size_t {
   return size;
 }
 
-fn ComputeWoff2Length(const FontCollection& font_collection,
+auto ComputeWoff2Length(const FontCollection& font_collection,
                           const std::vector<Table>& tables,
                           std::map<std::pair<uint32_t, uint32_t>, uint16_t>
                             index_by_tag_offset,
@@ -138,7 +138,7 @@ fn ComputeWoff2Length(const FontCollection& font_collection,
   return size;
 }
 
-fn ComputeUncompressedLength(const Font& font) -> size_t {
+auto ComputeUncompressedLength(const Font& font) -> size_t {
   // sfnt header + offset table
   size_t size = 12 + 16 * font.num_tables;
   for (const auto& entry : font.tables) {
@@ -152,7 +152,7 @@ fn ComputeUncompressedLength(const Font& font) -> size_t {
   return size;
 }
 
-fn ComputeUncompressedLength(const FontCollection& font_collection) -> size_t {
+auto ComputeUncompressedLength(const FontCollection& font_collection) -> size_t {
   if (font_collection.flavor != kTtcFontFlavor) {
     return ComputeUncompressedLength(font_collection.fonts[0]);
   }
@@ -164,7 +164,7 @@ fn ComputeUncompressedLength(const FontCollection& font_collection) -> size_t {
   return size;
 }
 
-fn ComputeTotalTransformLength(const Font& font) -> size_t {
+auto ComputeTotalTransformLength(const Font& font) -> size_t {
   size_t total = 0;
   for (const auto& i : font.tables) {
     const Font::Table& table = i.second;
@@ -182,11 +182,11 @@ fn ComputeTotalTransformLength(const Font& font) -> size_t {
 
 }  // namespace
 
-fn MaxWOFF2CompressedSize(const uint8_t* data, size_t length) -> size_t {
+auto MaxWOFF2CompressedSize(const uint8_t* data, size_t length) -> size_t {
   return MaxWOFF2CompressedSize(data, length, "");
 }
 
-fn MaxWOFF2CompressedSize(const uint8_t*  /*data*/, size_t length,
+auto MaxWOFF2CompressedSize(const uint8_t*  /*data*/, size_t length,
     const string& extended_metadata) -> size_t {
   // Except for the header size, which is 32 bytes larger in woff2 format,
   // all other parts should be smaller (table header in short format,
@@ -195,11 +195,11 @@ fn MaxWOFF2CompressedSize(const uint8_t*  /*data*/, size_t length,
   return length + 1024 + extended_metadata.length();
 }
 
-fn CompressedBufferSize(uint32_t original_size) -> uint32_t {
+auto CompressedBufferSize(uint32_t original_size) -> uint32_t {
   return 1.2 * original_size + 10240;
 }
 
-fn TransformFontCollection(FontCollection* font_collection) -> bool {
+auto TransformFontCollection(FontCollection* font_collection) -> bool {
   for (auto& font : font_collection->fonts) {
     if (!TransformGlyfAndLocaTables(&font)) {
 #ifdef FONT_COMPRESSION_BIN
@@ -212,14 +212,14 @@ fn TransformFontCollection(FontCollection* font_collection) -> bool {
   return true;
 }
 
-fn ConvertTTFToWOFF2(const uint8_t *data, size_t length,
+auto ConvertTTFToWOFF2(const uint8_t *data, size_t length,
                        uint8_t *result, size_t *result_length) -> bool {
   WOFF2Params params;
   return ConvertTTFToWOFF2(data, length, result, result_length,
                            params);
 }
 
-fn ConvertTTFToWOFF2(const uint8_t *data, size_t length,
+auto ConvertTTFToWOFF2(const uint8_t *data, size_t length,
                        uint8_t *result, size_t *result_length,
                        const WOFF2Params& params) -> bool {
   FontCollection font_collection;

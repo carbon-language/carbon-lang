@@ -24,12 +24,16 @@ void MatcherTestBase::ExpectReplacement(llvm::StringRef before,
       ct::FileContentMappings()));
   EXPECT_THAT(replacements, testing::ElementsAre(testing::Key(Filename)));
   auto actual = ct::applyAllReplacements(before, replacements[Filename]);
-  // Split lines to get gmock to get an easier-to-read error.
-  llvm::SmallVector<llvm::StringRef, 0> actual_lines;
-  llvm::SplitString(*actual, actual_lines, "\n");
-  llvm::SmallVector<llvm::StringRef, 0> after_lines;
-  llvm::SplitString(after, after_lines, "\n");
-  EXPECT_THAT(actual_lines, testing::ContainerEq(after_lines));
+  if (after.find('\n') == std::string::npos) {
+    EXPECT_THAT(*actual, testing::Eq(after.str()));
+  } else {
+    // Split lines to get gmock to get an easier-to-read error.
+    llvm::SmallVector<llvm::StringRef, 0> actual_lines;
+    llvm::SplitString(*actual, actual_lines, "\n");
+    llvm::SmallVector<llvm::StringRef, 0> after_lines;
+    llvm::SplitString(after, after_lines, "\n");
+    EXPECT_THAT(actual_lines, testing::ContainerEq(after_lines));
+  }
 }
 
 }  // namespace Carbon

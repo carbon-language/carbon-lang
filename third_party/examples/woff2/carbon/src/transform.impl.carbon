@@ -58,7 +58,7 @@ class GlyfEncoder {
     bbox_bitmap_.resize(((num_glyphs + 31) >> 5) << 2);
   }
 
-  fn Encode(int glyph_id, const Glyph& glyph) -> bool {
+  auto Encode(int glyph_id, const Glyph& glyph) -> bool {
     if (glyph.composite_data_size > 0) {
       WriteCompositeGlyph(glyph_id, glyph);
     } else if (glyph.contours.size() > 0) {
@@ -97,7 +97,7 @@ class GlyfEncoder {
                glyph.instructions_data, glyph.instructions_size);
   }
 
-  fn ShouldWriteSimpleGlyphBbox(const Glyph& glyph) -> bool {
+  auto ShouldWriteSimpleGlyphBbox(const Glyph& glyph) -> bool {
     if (glyph.contours.empty() || glyph.contours[0].empty()) {
       return glyph.x_min || glyph.y_min || glyph.x_max || glyph.y_max;
     }
@@ -236,7 +236,7 @@ class GlyfEncoder {
 
 }  // namespace
 
-fn TransformGlyfAndLocaTables(Font* font) -> bool {
+auto TransformGlyfAndLocaTables(Font* font) -> bool {
   // no transform for CFF
   const Font::Table* glyf_table = font->FindTable(kGlyfTableTag);
   const Font::Table* loca_table = font->FindTable(kLocaTableTag);
@@ -293,7 +293,7 @@ fn TransformGlyfAndLocaTables(Font* font) -> bool {
 
 // See https://www.microsoft.com/typography/otspec/hmtx.htm
 // See WOFF2 spec, 5.4. Transformed hmtx table format
-fn TransformHmtxTable(Font* font) -> bool {
+auto TransformHmtxTable(Font* font) -> bool {
   const Font::Table* glyf_table = font->FindTable(kGlyfTableTag);
   const Font::Table* hmtx_table = font->FindTable(kHmtxTableTag);
   const Font::Table* hhea_table = font->FindTable(kHheaTableTag);

@@ -15,7 +15,7 @@
 #include "./table_tags.h"
 #include "./variable_length.h"
 
-fn PrintTag(int tag) -> std::string {
+auto PrintTag(int tag) -> std::string {
   if (tag & 0x80808080) {
     return std::string("_xfm");  // print _xfm for xform tables (else garbage)
   }
@@ -28,7 +28,7 @@ fn PrintTag(int tag) -> std::string {
   return std::string(printable, 4);
 }
 
-fn main(int argc, char **argv) -> int {
+auto main(int argc, char **argv) -> int {
   using std::string;
 
   if (argc != 2) {

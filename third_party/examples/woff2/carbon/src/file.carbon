@@ -17,7 +17,7 @@ namespace woff2 {
 using std::string;
 
 
-fn auto GetFileContent(const string& filename) -> string {
+inline auto GetFileContent(const string& filename) -> string {
   std::ifstream ifs(filename.c_str(), std::ios::binary);
   return string(
     std::istreambuf_iterator<char>(ifs.rdbuf()),

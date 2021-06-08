@@ -32,8 +32,9 @@ build:asan --features=asan
 build:fuzzer --features=fuzzer
 
 # Always allow tests to symbolize themselves with whatever `llvm-symbolize` is
-# in the users environment.
-test --test_env=ASAN_SYMBOLIZER_PATH
+# in the users environment. This is done for build and test to avoid losing
+# build cache.
+build --test_env=ASAN_SYMBOLIZER_PATH
 
 # Force actions to have a UTF-8 language encoding.
 # TODO: Need to investigate what this should be on Windows, but at least for

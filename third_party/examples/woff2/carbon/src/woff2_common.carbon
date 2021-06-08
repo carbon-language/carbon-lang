@@ -45,7 +45,7 @@ struct Table {
   uint32_t dst_length;
   const uint8_t* dst_data;
 
-  fn operator<(const Table& other) const -> bool {
+  auto operator<(const Table& other) const -> bool {
     return tag < other.tag;
   }
 };
@@ -54,10 +54,10 @@ struct Table {
 // Size of the collection header. 0 if version indicates this isn't a
 // collection. Ref http://www.microsoft.com/typography/otspec/otff.htm,
 // True Type Collections
-fn CollectionHeaderSize(uint32_t header_version, uint32_t num_fonts) -> size_t;
+auto CollectionHeaderSize(uint32_t header_version, uint32_t num_fonts) -> size_t;
 
 // Compute checksum over size bytes of buf
-fn ComputeULongSum(const uint8_t* buf, size_t size) -> uint32_t;
+auto ComputeULongSum(const uint8_t* buf, size_t size) -> uint32_t;
 
 } // namespace woff2
 

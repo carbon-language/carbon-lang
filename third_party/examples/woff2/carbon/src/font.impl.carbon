@@ -18,17 +18,17 @@
 
 namespace woff2 {
 
-fn Font::FindTable(uint32_t tag) -> Font::Table* {
+auto Font::FindTable(uint32_t tag) -> Font::Table* {
   auto it = tables.find(tag);
   return it == tables.end() ? nullptr : &it->second;
 }
 
-fn Font::FindTable(uint32_t tag) const -> const Font::Table* {
+auto Font::FindTable(uint32_t tag) const -> const Font::Table* {
   auto it = tables.find(tag);
   return it == tables.end() ? nullptr : &it->second;
 }
 
-fn Font::OutputOrderedTags() const -> std::vector<uint32_t> {
+auto Font::OutputOrderedTags() const -> std::vector<uint32_t> {
   std::vector<uint32_t> output_order;
 
   for (const auto& i : tables) {
@@ -55,7 +55,7 @@ fn Font::OutputOrderedTags() const -> std::vector<uint32_t> {
   return output_order;
 }
 
-fn ReadTrueTypeFont(Buffer* file, const uint8_t* data, size_t len,
+auto ReadTrueTypeFont(Buffer* file, const uint8_t* data, size_t len,
                       Font* font) -> bool {
   // We don't care about the search_range, entry_selector and range_shift
   // fields, they will always be computed upon writing the font.
@@ -106,7 +106,7 @@ fn ReadTrueTypeFont(Buffer* file, const uint8_t* data, size_t len,
   return true;
 }
 
-fn ReadCollectionFont(Buffer* file, const uint8_t* data, size_t len,
+auto ReadCollectionFont(Buffer* file, const uint8_t* data, size_t len,
                         Font* font,
                         std::map<uint32_t, Font::Table*>* all_tables) -> bool {
   if (!file->ReadU32(&font->flavor)) {
@@ -132,7 +132,7 @@ fn ReadCollectionFont(Buffer* file, const uint8_t* data, size_t len,
   return true;
 }
 
-fn ReadTrueTypeCollection(Buffer* file, const uint8_t* data, size_t len,
+auto ReadTrueTypeCollection(Buffer* file, const uint8_t* data, size_t len,
                             FontCollection* font_collection) -> bool {
     uint32_t num_fonts;
 
@@ -165,7 +165,7 @@ fn ReadTrueTypeCollection(Buffer* file, const uint8_t* data, size_t len,
     return true;
 }
 
-fn ReadFont(const uint8_t* data, size_t len, Font* font) -> bool {
+auto ReadFont(const uint8_t* data, size_t len, Font* font) -> bool {
   Buffer file(data, len);
 
   if (!file.ReadU32(&font->flavor)) {
@@ -178,7 +178,7 @@ fn ReadFont(const uint8_t* data, size_t len, Font* font) -> bool {
   return ReadTrueTypeFont(&file, data, len, font);
 }
 
-fn ReadFontCollection(const uint8_t* data, size_t len,
+auto ReadFontCollection(const uint8_t* data, size_t len,
                         FontCollection* font_collection) -> bool {
   Buffer file(data, len);
 
@@ -195,7 +195,7 @@ fn ReadFontCollection(const uint8_t* data, size_t len,
   return ReadTrueTypeCollection(&file, data, len, font_collection);
 }
 
-fn FontFileSize(const Font& font) -> size_t {
+auto FontFileSize(const Font& font) -> size_t {
   size_t max_offset = 12ULL + 16ULL * font.num_tables;
   for (const auto& i : font.tables) {
     const Font::Table& table = i.second;
@@ -206,7 +206,7 @@ fn FontFileSize(const Font& font) -> size_t {
   return max_offset;
 }
 
-fn FontCollectionFileSize(const FontCollection& font_collection) -> size_t {
+auto FontCollectionFileSize(const FontCollection& font_collection) -> size_t {
   size_t max_offset = 0;
   for (auto& font : font_collection.fonts) {
     // font file size actually just finds max offset
@@ -215,12 +215,12 @@ fn FontCollectionFileSize(const FontCollection& font_collection) -> size_t {
   return max_offset;
 }
 
-fn WriteFont(const Font& font, uint8_t* dst, size_t dst_size) -> bool {
+auto WriteFont(const Font& font, uint8_t* dst, size_t dst_size) -> bool {
   size_t offset = 0;
   return WriteFont(font, &offset, dst, dst_size);
 }
 
-fn WriteTableRecord(const Font::Table* table, size_t* offset, uint8_t* dst,
+auto WriteTableRecord(const Font::Table* table, size_t* offset, uint8_t* dst,
                       size_t dst_size) -> bool {
   if (dst_size < *offset + kSfntEntrySize) {
     return FONT_COMPRESSION_FAILURE();
@@ -235,7 +235,7 @@ fn WriteTableRecord(const Font::Table* table, size_t* offset, uint8_t* dst,
   return true;
 }
 
-fn WriteTable(const Font::Table& table, size_t* offset, uint8_t* dst,
+auto WriteTable(const Font::Table& table, size_t* offset, uint8_t* dst,
                 size_t dst_size) -> bool {
   if (!WriteTableRecord(&table, offset, dst, dst_size)) {
     return false;
@@ -258,7 +258,7 @@ fn WriteTable(const Font::Table& table, size_t* offset, uint8_t* dst,
   return true;
 }
 
-fn WriteFont(const Font& font, size_t* offset, uint8_t* dst,
+auto WriteFont(const Font& font, size_t* offset, uint8_t* dst,
                size_t dst_size) -> bool {
   if (dst_size < 12ULL + 16ULL * font.num_tables) {
     return FONT_COMPRESSION_FAILURE();
@@ -281,7 +281,7 @@ fn WriteFont(const Font& font, size_t* offset, uint8_t* dst,
   return true;
 }
 
-fn WriteFontCollection(const FontCollection& font_collection, uint8_t* dst,
+auto WriteFontCollection(const FontCollection& font_collection, uint8_t* dst,
                          size_t dst_size) -> bool {
   size_t offset = 0;
 
@@ -318,7 +318,7 @@ fn WriteFontCollection(const FontCollection& font_collection, uint8_t* dst,
   return true;
 }
 
-fn NumGlyphs(const Font& font) -> int {
+auto NumGlyphs(const Font& font) -> int {
   const Font::Table* head_table = font.FindTable(kHeadTableTag);
   const Font::Table* loca_table = font.FindTable(kLocaTableTag);
   if (head_table == nullptr || loca_table == nullptr || head_table->length < 52) {
@@ -332,7 +332,7 @@ fn NumGlyphs(const Font& font) -> int {
   return (loca_table->length / loca_record_size) - 1;
 }
 
-fn IndexFormat(const Font& font) -> int {
+auto IndexFormat(const Font& font) -> int {
   const Font::Table* head_table = font.FindTable(kHeadTableTag);
   if (head_table == nullptr) {
     return 0;
@@ -340,11 +340,11 @@ fn IndexFormat(const Font& font) -> int {
   return head_table->data[51];
 }
 
-fn Font::Table::IsReused() const -> bool {
+auto Font::Table::IsReused() const -> bool {
   return this->reuse_of != nullptr;
 }
 
-fn GetGlyphData(const Font& font, int glyph_index,
+auto GetGlyphData(const Font& font, int glyph_index,
                   const uint8_t** glyph_data, size_t* glyph_size) -> bool {
   if (glyph_index < 0) {
     return FONT_COMPRESSION_FAILURE();
@@ -386,7 +386,7 @@ fn GetGlyphData(const Font& font, int glyph_index,
   return true;
 }
 
-fn RemoveDigitalSignature(Font* font) -> bool {
+auto RemoveDigitalSignature(Font* font) -> bool {
   auto it =
       font->tables.find(kDsigTableTag);
   if (it != font->tables.end()) {

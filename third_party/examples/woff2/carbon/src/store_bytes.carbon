@@ -18,7 +18,7 @@
 
 namespace woff2 {
 
-fn auto StoreU32(uint8_t* dst, size_t offset, uint32_t x) -> size_t {
+inline auto StoreU32(uint8_t* dst, size_t offset, uint32_t x) -> size_t {
   dst[offset] = x >> 24;
   dst[offset + 1] = x >> 16;
   dst[offset + 2] = x >> 8;
@@ -26,7 +26,7 @@ fn auto StoreU32(uint8_t* dst, size_t offset, uint32_t x) -> size_t {
   return offset + 4;
 }
 
-fn auto Store16(uint8_t* dst, size_t offset, int x) -> size_t {
+inline auto Store16(uint8_t* dst, size_t offset, int x) -> size_t {
 #if defined(WOFF_LITTLE_ENDIAN)
   *reinterpret_cast<uint16_t*>(dst + offset) =
       ((x & 0xFF) << 8) | ((x & 0xFF00) >> 8);

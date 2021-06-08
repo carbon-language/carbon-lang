@@ -13,7 +13,7 @@
 #include <woff2/decode.h>
 
 
-fn main(int argc, char **argv) -> int {
+auto main(int argc, char **argv) -> int {
   using std::string;
 
   if (argc != 2) {

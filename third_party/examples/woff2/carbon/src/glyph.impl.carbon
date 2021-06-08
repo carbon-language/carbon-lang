@@ -28,7 +28,7 @@ static const int32_t kFLAG_WE_HAVE_AN_X_AND_Y_SCALE = 1 << 6;
 static const int32_t kFLAG_WE_HAVE_A_TWO_BY_TWO = 1 << 7;
 static const int32_t kFLAG_WE_HAVE_INSTRUCTIONS = 1 << 8;
 
-fn ReadCompositeGlyphData(Buffer* buffer, Glyph* glyph) -> bool {
+auto ReadCompositeGlyphData(Buffer* buffer, Glyph* glyph) -> bool {
   glyph->have_instructions = false;
   glyph->composite_data = buffer->buffer() + buffer->offset();
   size_t start_offset = buffer->offset();
@@ -62,7 +62,7 @@ fn ReadCompositeGlyphData(Buffer* buffer, Glyph* glyph) -> bool {
   return true;
 }
 
-fn ReadGlyph(const uint8_t* data, size_t len, Glyph* glyph) -> bool {
+auto ReadGlyph(const uint8_t* data, size_t len, Glyph* glyph) -> bool {
   Buffer buffer(data, len);
 
   int16_t num_contours;
@@ -224,7 +224,7 @@ void StoreInstructions(const Glyph& glyph, size_t* offset, uint8_t* dst) {
   StoreBytes(glyph.instructions_data, glyph.instructions_size, offset, dst);
 }
 
-fn StoreEndPtsOfContours(const Glyph& glyph, size_t* offset, uint8_t* dst) -> bool {
+auto StoreEndPtsOfContours(const Glyph& glyph, size_t* offset, uint8_t* dst) -> bool {
   int end_point = -1;
   for (const auto& contour : glyph.contours) {
     end_point += contour.size();
@@ -237,7 +237,7 @@ fn StoreEndPtsOfContours(const Glyph& glyph, size_t* offset, uint8_t* dst) -> bo
   return true;
 }
 
-fn StorePoints(const Glyph& glyph, size_t* offset,
+auto StorePoints(const Glyph& glyph, size_t* offset,
                  uint8_t* dst, size_t dst_size) -> bool {
   int last_flag = -1;
   int repeat_count = 0;
@@ -333,7 +333,7 @@ fn StorePoints(const Glyph& glyph, size_t* offset,
 
 }  // namespace
 
-fn StoreGlyph(const Glyph& glyph, uint8_t* dst, size_t* dst_size) -> bool {
+auto StoreGlyph(const Glyph& glyph, uint8_t* dst, size_t* dst_size) -> bool {
   size_t offset = 0;
   if (glyph.composite_data_size > 0) {
     // Composite glyph.
