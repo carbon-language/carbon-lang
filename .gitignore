@@ -8,7 +8,7 @@
 # Directories created by python.
 **/__pycache__/
 
-# VSCode creates this directory in ways that are hard to prevent.
+# Ignore the user's VSCode settings.
 /.vscode/settings.json
 
 # Directories created by clangd
