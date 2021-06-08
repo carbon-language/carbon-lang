@@ -3,7 +3,7 @@
     "bazelbuild.vscode-bazel",
     "esbenp.prettier-vscode",
     "ms-python.python",
-    "shd101wyy.markdown-preview-enhanced",
-    "ms-vscode.cpptools"
+    "ms-vscode.cpptools",
+    "shd101wyy.markdown-preview-enhanced"
   ]
 }
