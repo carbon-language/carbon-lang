@@ -4735,6 +4735,11 @@ from `T.(Printable.Print)`. In effect, the `T` template parameter would have the
 API of `T` plus the API of `Printable`, except for any names where those two
 APIs conflict, that is have different definitions for the same name.
 
+These sorts of transitions will be significantly easier for users if Carbon has
+support for
+[calling template code from generic functions](generic-to-template.md)
+([TODO: fix link](#broken-links-footnote)).
+
 ### Testing
 
 The idea is that you would write tests alongside an interface that validate the
