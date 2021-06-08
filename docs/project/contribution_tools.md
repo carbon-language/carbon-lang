@@ -37,11 +37,10 @@ contributions.
     -   [`rs-git-fsmonitor` and Watchman](#rs-git-fsmonitor-and-watchman)
     -   [Vim](#vim)
         -   [vim-prettier](#vim-prettier)
-    -   [Atom](#atom)
+    -   [Visual Studio Code](#visual-studio-code)
     -   [pre-commit enabled tools](#pre-commit-enabled-tools)
         -   [black](#black)
         -   [codespell](#codespell)
-        -   [markdown-toc](#markdown-toc)
         -   [Prettier](#prettier)
 
 <!-- tocstop -->
@@ -82,7 +81,10 @@ instructions will try to rely on a minimum of managers.
 #### Homebrew
 
 [Homebrew](https://brew.sh/) is a package manager, and can help install several
-tools that we recommend. See the [installation instructions](https://brew.sh/).
+tools that we recommend. See the
+
+Our recommended way of installing is to run
+[the canonical install command](https://brew.sh/).
 
 To get the latest version of `brew` packages, it will be necessary to
 periodically run `brew upgrade`.
@@ -96,7 +98,7 @@ We strongly recommend using [pyenv](https://github.com/pyenv/pyenv) to manage
 [Python](python.org) and Python's `pip` package manager. `pip` should typically
 be used for Python package installation rather than other package managers.
 
-These can be installed together through `brew`:
+Our recommended way of installing is:
 
 ```bash
 brew install pyenv
@@ -138,8 +140,10 @@ re-run the original `go get ...` command used to install the package.
 #### Cargo (optional)
 
 Rust's [Cargo](https://doc.rust-lang.org/cargo/) package manager is used to
-install a couple tools on Linux. See the
-[installation instructions](https://rustup.rs/).
+install a couple tools on Linux.
+
+Our recommended way of installing is to run
+[the canonical install command](https://rustup.rs/).
 
 To get the latest version of `cargo` packages, it will be necessary to
 periodically re-run the original `cargo install ...` command used.
@@ -207,8 +211,7 @@ We use [pre-commit](https://pre-commit.com) to run
 [various checks](/.pre-commit-config.yaml). This will automatically run
 important checks, including formatting.
 
-To set up pre-commit, see the
-[installation instructions](https://pre-commit.com/#installation), or:
+Our recommended way of installing is:
 
 ```bash
 pip install pre-commit
@@ -216,6 +219,10 @@ pip install pre-commit
 # From within each carbon-language git repository:
 pre-commit install
 ```
+
+> NOTE: There are other ways of installing listed at
+> [pre-commit.com](https://pre-commit.com/#installation), but `pip` is
+> recommended for reliability.
 
 When you have changes to commit to git, a standard pre-commit workflow can look
 like:
@@ -235,6 +242,9 @@ When modifying or adding pre-commit hooks, please run
 ## Optional tools
 
 ### Carbon-maintained
+
+Carbon-maintained tools are provided by the `carbon-lang` repository, rather
+than a separate install. They are noted here mainly to help findability.
 
 #### new_proposal.py
 
@@ -279,7 +289,7 @@ bazel run //github_tools:pr_comments -- <PR#>
 [The gh CLI](https://github.com/cli/cli) supports some GitHub queries, and is
 used by some scripts.
 
-To install gh, run:
+Our recommended way of installing is:
 
 ```bash
 brew install github/gh/gh
@@ -331,34 +341,45 @@ If you use vim-prettier, the `.prettierrc.yaml` should still apply as long as
 to add additional settings where the `vim-prettier` default diverges from
 `prettier`, as we notice them.
 
-### Atom
+Our recommended way of installing is to use
+[the canonical instructions](https://github.com/prettier/vim-prettier#install).
 
-[Atom](https://atom.io/) is an IDE that's mainly mentioned here for its Markdown
-support. See the page for installation instructions.
+### Visual Studio Code
 
-Some packages that may be helpful are:
+[Visual Studio Code](https://code.visualstudio.com/) is an IDE used by several
+of us. We provide [recommended extensions](/.vscode/extensions.json) to assist
+Carbon development. Some settings changes must be made separately:
 
--   [markdown-preview-enhanced](https://atom.io/packages/markdown-preview-enhanced):
-    An improvement over the default-installed `markdown-preview` package. If
-    using this:
-    -   Disable `markdown-preview`.
-    -   In the package settings, turn off 'Break On Single New Line' -- this is
-        consistent with [carbon-lang.dev](https://carbon-lang.dev) and
-        [Prettier](#prettier).
--   [prettier-atom](https://atom.io/packages/prettier-atom): For
-    [Prettier](#prettier) integration.
--   [python-black](https://atom.io/packages/python-black): For [black](#black)
-    integration.
+-   Python › Formatting: Provider: `black`
+
+Our recommended way of installing is to use
+[the canonical download](https://code.visualstudio.com/Download).
+
+> **WARNING:** Visual Studio Code modifies the `PATH` environment variable,
+> particularly in the terminals it creates. The `PATH` difference can cause
+> `bazel` to detect different startup options, discarding its build cache. As a
+> consequence, it's recommended to use **either** normal terminals **or** Visual
+> Studio Code to run `bazel`, not both in combination. Visual Studio Code can
+> still be used for other purposes, such as editing files, without interfering
+> with `bazel`.
 
 ### pre-commit enabled tools
 
 If you're using pre-commit, it will run these tools. Installing and running them
-manually is optional, but may be helpful.
+manually is _entirely optional_, as they can be run without being installed
+through `pre-commit run`, but install instructions are still noted here for
+direct execution.
 
 #### black
 
 We use [Black](https://github.com/psf/black) to format Python code. Although
 [Prettier](#prettier) is used for most languages, it doesn't support Python.
+
+Our recommended way of installing is:
+
+```bash
+pip install black
+```
 
 #### codespell
 
@@ -366,15 +387,16 @@ We use [codespell](https://github.com/codespell-project/codespell) to spellcheck
 common errors. This won't catch every error; we're trying to balance true and
 false positives.
 
-#### markdown-toc
+Our recommended way of installing is:
 
-We use [markdown-toc](https://github.com/jonschlinkert/markdown-toc) to provide
-GitHub-compatible tables of contents for some documents.
-
-If run manually, specify `--bullets=-` to use Prettier-compatible bullets, or
-always run Prettier after markdown-toc.
+```bash
+pip install codespell
+```
 
 #### Prettier
 
 We use [Prettier](https://prettier.io/) for formatting. There is an
 [rc file](/.prettierrc.yaml) for configuration.
+
+Our recommended way of installing is to use
+[the canonical instructions](https://prettier.io/docs/en/install.html).
