@@ -410,7 +410,7 @@ Print("Done!");
 example, this prints all names in `names`:
 
 ```carbon
-for (var name: String : names) {
+for (var name: String in names) {
   Print(name);
 }
 ```
@@ -426,7 +426,7 @@ resume at the end of the loop's scope. For example, this processes steps until a
 manual step is hit (if no manual step is hit, all steps are processed):
 
 ```carbon
-for (var step: Step : steps) {
+for (var step: Step in steps) {
   if (step.IsManual()) {
     Print("Reached manual step!");
     break;
