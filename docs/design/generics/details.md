@@ -2953,10 +2953,10 @@ Imagine we have a generic function that accepts a arbitrary `HashMap`:
 
 ```
 fn LookUp[KeyType:$ Type](hm: HashMap(KeyType, Int)*,
-                          KeyType: k) -> Int;
+                          k: KeyType) -> Int;
 
 fn PrintValueOrDefault[KeyType:$ Printable,
-                       Printable & HasDefault:$ ValueT]
+                       ValueT:$ Printable & HasDefault]
     (map: HashMap(KeyType, ValueT), key: KeyT);
 ```
 
@@ -2966,7 +2966,7 @@ others like `Sized`, `EqualityComparable`, `Movable`, and so on.
 
 ```
 struct HashMap(
-    Hashable & Sized & EqualityComparable & Movable:$ KeyType,
+    KeyType:$ Hashable & Sized & EqualityComparable & Movable,
     ...) { ... }
 ```
 
@@ -2991,6 +2991,19 @@ will have already satisfied these constraints.
 generic type parameter, but not the _names_. This way you can always look at the
 declaration to see how name resolution works, without having to look up the
 definitions of everything it is used as an argument to.
+
+**Alternative:** As an alternative, we could make it so the user would need to
+explicitly opt in to this behavior by adding `& auto` to their type constraint,
+as in:
+
+```
+fn LookUp[KeyType:$ Type & auto](hm: HashMap(KeyType, Int)*,
+                                 k: KeyType) -> Int;
+
+fn PrintValueOrDefault[KeyType:$ Printable & auto,
+                       ValueT:$ Printable & HasDefault]
+    (map: HashMap(KeyType, ValueT), key: KeyT);
+```
 
 **Caveat:** These constraints can be obscured:
 
