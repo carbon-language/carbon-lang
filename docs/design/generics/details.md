@@ -59,6 +59,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Generic type specialization](#generic-type-specialization)
     -   [Bridge for C++ customization points](#bridge-for-c-customization-points)
     -   [Reverse generics for return types](#reverse-generics-for-return-types)
+    -   [Variadic arguments](#variadic-arguments)
 
 <!-- tocstop -->
 
@@ -1490,6 +1491,9 @@ There are a collection of use cases for making different changes to interfaces
 that are already in use. These should be addressed either by describing how they
 can be accomplished with existing generics features, or by adding features.
 
+In addition, evolution from (C++ or Carbon) templates to generics needs to be
+supported and made safe.
+
 ### Testing
 
 The idea is that you would write tests alongside an interface that validate the
@@ -1541,3 +1545,8 @@ In Rust this is
 In Swift,
 [this feature is in discussion](https://forums.swift.org/t/improving-the-ui-of-generics/22814#heading--reverse-generics).
 Swift is considering spelling this `<V: Collection> V` or `some Collection`.
+
+### Variadic arguments
+
+Some facility for allowing a function to generically take a variable number of
+arguments.
