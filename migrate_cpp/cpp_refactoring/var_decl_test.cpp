@@ -24,14 +24,14 @@ TEST_F(VarDeclTest, Declaration) {
 
 TEST_F(VarDeclTest, Assignment) {
   constexpr char Before[] = "int i = 0;";
-  constexpr char After[] = "var i: int = 0;";
+  constexpr char After[] = "var i: int;";
   ExpectReplacement(Before, After);
 }
 
 TEST_F(VarDeclTest, Const) {
   // TODO: Handle const appropriately.
   constexpr char Before[] = "const int i = 0;";
-  constexpr char After[] = "var i: const int = 0;";
+  constexpr char After[] = "var i: const int;";
   ExpectReplacement(Before, After);
 }
 
@@ -43,7 +43,7 @@ TEST_F(VarDeclTest, Params) {
 
 TEST_F(VarDeclTest, ParamsDefault) {
   constexpr char Before[] = "auto Foo(int i = 0) -> int;";
-  constexpr char After[] = "auto Foo(i: int = 0) -> int;";
+  constexpr char After[] = "auto Foo(i: int) -> int;";
   ExpectReplacement(Before, After);
 }
 
@@ -52,6 +52,16 @@ TEST_F(VarDeclTest, ParamsConst) {
   constexpr char Before[] = "auto Foo(const int i) -> int;";
   constexpr char After[] = "auto Foo(i: const int) -> int;";
   ExpectReplacement(Before, After);
+}
+
+TEST_F(VarDeclTest, Member) {
+  // TODO: Handle member variables.
+  constexpr char Before[] = R"cpp(
+    struct Circle {
+      double radius;
+    };
+  )cpp";
+  ExpectReplacement(Before, Before);
 }
 
 }  // namespace

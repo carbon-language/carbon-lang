@@ -21,6 +21,7 @@ void VarDecl::run(const cam::MatchFinder::MatchResult& result) {
   if (!decl) {
     llvm::report_fatal_error(std::string("getNodeAs failed for ") + Label);
   }
+
   // Replace the full declaration.
   auto range = clang::CharSourceRange::getTokenRange(decl->getBeginLoc(),
                                                      decl->getEndLoc());
