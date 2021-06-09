@@ -1,0 +1,9 @@
+{
+  "recommendations": [
+    "bazelbuild.vscode-bazel",
+    "esbenp.prettier-vscode",
+    "ms-python.python",
+    "ms-vscode.cpptools",
+    "shd101wyy.markdown-preview-enhanced"
+  ]
+}
