@@ -1488,7 +1488,17 @@ void BinaryContext::preprocessDWODebugInfo() {
       if (llvm::Optional<uint64_t> DWOId = DwarfUnit->getDWOId()) {
         DWARFUnit *DWOCU =
             DwarfUnit->getNonSkeletonUnitDIE(false).getDwarfUnit();
-        assert(DWOCU->isDWOUnit() && "No CU for DWO ID.");
+        if (!DWOCU->isDWOUnit()) {
+          std::string DWOName = dwarf::toString(
+              DwarfUnit->getUnitDIE().find(
+                  {dwarf::DW_AT_dwo_name, dwarf::DW_AT_GNU_dwo_name}),
+              "");
+          outs() << "BOLT-WARNING: Debug Fission: DWO debug information for "
+                 << DWOName
+                 << " was not retrieved and won't be updated. Please check "
+                    "relative path.\n";
+          continue;
+        }
         DWOCUs[*DWOId] = DWOCU;
       }
     }
