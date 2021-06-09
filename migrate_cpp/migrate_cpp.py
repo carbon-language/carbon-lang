@@ -12,7 +12,6 @@ import os
 import subprocess
 import sys
 
-_CLANG_TIDY = "../external/bootstrap_clang_toolchain/bin/clang-tidy"
 _CPP_REFACTORING = "./cpp_refactoring/cpp_refactoring"
 _H_EXTS = {".h", ".hpp"}
 _CPP_EXTS = {".c", ".cc", ".cpp", ".cxx"}
@@ -73,11 +72,10 @@ class _Workflow(object):
     def _clang_tidy(self):
         """Runs clang-tidy to fix C++ files in a directory."""
         self._print_header("Running clang-tidy...")
-        clang_tidy = self._data_file(_CLANG_TIDY)
         with open(self._data_file("clang_tidy.yaml")) as f:
             config = f.read()
         subprocess.run(
-            [clang_tidy, "--fix", "--config", config] + self._cpp_files
+            ["clang-tidy", "--fix", "--config", config] + self._cpp_files
         )
 
     def _cpp_refactoring(self):
