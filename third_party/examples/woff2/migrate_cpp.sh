@@ -43,8 +43,9 @@ bazel build -c opt //migrate_cpp
 # Not sure why, but execution of cpp_refactoring fails while saving refactorings
 # if not in the directory. Ideally shouldn't be required, passing the path to
 # migrate_cpp should work.
-cd "${EXAMPLE}/carbon"
+pushd "${EXAMPLE}/carbon"
 ../../../../bazel-bin/migrate_cpp/migrate_cpp .
+popd
 
 # Don't save the compile flags.
 rm "${EXAMPLE}/carbon/compile_flags.txt"
