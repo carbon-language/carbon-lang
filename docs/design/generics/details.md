@@ -117,6 +117,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Generic type specialization](#generic-type-specialization)
     -   [Bridge for C++ customization points](#bridge-for-c-customization-points)
     -   [Reverse generics for return types](#reverse-generics-for-return-types)
+    -   [Variadic arguments](#variadic-arguments)
 -   [Notes](#notes)
 -   [Broken links footnote](#broken-links-footnote)
 
@@ -4936,6 +4937,84 @@ In Rust this is
 In Swift,
 [this feature is in discussion](https://forums.swift.org/t/improving-the-ui-of-generics/22814#heading--reverse-generics).
 Swift is considering spelling this `<V: Collection> V` or `some Collection`.
+
+### Variadic arguments
+
+Background:
+
+-   C++ [variadic templates](http://www.jot.fm/issues/issue_2008_02/article2/)
+    and
+    [parameter packs](https://en.cppreference.com/w/cpp/language/parameter_pack)
+-   Swift "variadic generics"
+    [manifesto](https://github.com/apple/swift/blob/main/docs/GenericsManifesto.md#variadic-generics)
+    and [pitch](https://forums.swift.org/t/variadic-generics/20320)
+-   [C# `params` keyword](https://docs.microsoft.com/en-us/dotnet/csharp/language-reference/keywords/params)
+-   Rust
+    [supports variadics by way of macros](https://doc.rust-lang.org/rust-by-example/macros/variadics.html),
+    [but has thought about supporting them through generics](https://gist.github.com/PoignardAzur/aea33f28e2c58ffe1a93b8f8d3c58667)
+-   [D variadic templates](https://dlang.org/articles/variadic-function-templates.html)
+
+We have so far been talking about a syntax using `...` to indicate a parameter
+could match multiple arguments, like:
+
+```
+fn StrCat(args: SOMETHING...) -> String { ... }
+```
+
+There are four use cases to support:
+
+-   `SumInts`: All matching arguments are a specific, concrete type like `Int`.
+-   `Min`: All matching arguments are the same type, but that type is a generic
+    type parameter.
+-   `StaticStrCat`: All matching arguments have a generic type satisfying a
+    type-type, but may all be different.
+-   `DynamicStrCat`: All matching arguments have types satisfying a type-type,
+    those types may be different, and we use dynamic dispatch to access the
+    methods of those types.
+
+Examples:
+
+```
+fn SumInts(args: Span(Int)...) -> Int {
+  var sum: Int = 0;
+  for (var i: Int in args) {
+    sum += i;
+  }
+  return sum;
+}
+
+// Concern: Can't deduce `T` unless there is at least one argument.
+// fn Min[T:$ Comparable & Value](args: Span(T)...) -> Optional(T)
+fn Min[T:$ Comparable & Value](args: NonEmptySpan(T)...) -> T {
+  // Safe since args non-empty
+  var result: T = args[0];
+  for (var x: T in args[1..]) {
+    if (x < result) {
+      result = x;
+    }
+  }
+  return result;
+}
+
+fn StaticStrCat[T:$ GenericArray(ConvertibleToString)](args: T...) -> String {
+  // Instantiated once per tuple of argument types.
+  var len: Int = 0;
+  for (var gr: auto in args) {
+    len += gr->Length();
+  }
+  var result: String = "";
+  result.Reserve(len);
+  // Loop is unrolled, `gr` has a different type for each iteration.
+  for (var gr: auto in args) {
+    result += gr->ToString();
+  }
+  return result;
+}
+
+fn DynamicStrCat(args: Array(DynPtr(ConvertibleToString))...) -> String {
+  // Same body as above, but only instantiated once and no loop unrolling.
+}
+```
 
 ## Notes
 
