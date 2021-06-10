@@ -45,3 +45,6 @@ bazel build -c opt //migrate_cpp
 # migrate_cpp should work.
 cd "${EXAMPLE}/carbon"
 ../../../../bazel-bin/migrate_cpp/migrate_cpp .
+
+# Don't save the compile flags.
+rm "${EXAMPLE}/carbon/compile_flags.txt"
