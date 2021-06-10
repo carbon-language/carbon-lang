@@ -50,3 +50,7 @@
 -Wno-unused-variable
 -Wno-unused-const-variable
 -Wno-sign-compare
+-isystem
+/usr/local/google/home/jperkins/.linuxbrew/Cellar/llvm/12.0.0_4/bin/../include/c++/v1
+-isystem
+/usr/local/google/home/jperkins/.linuxbrew/Cellar/llvm/12.0.0_4/lib/clang/12.0.0/include

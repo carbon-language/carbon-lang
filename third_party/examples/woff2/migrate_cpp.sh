@@ -29,6 +29,15 @@ cp "${EXAMPLE}/WORKSPACE.original" \
 cp "${EXAMPLE}/compile_flags.carbon.txt" \
   "${EXAMPLE}/carbon/compile_flags.txt"
 
+# Kludge for adding LLVM include paths into the compile flags.
+# TODO: Find better solution.
+for x in $(
+    clang++ -Wp,-v -xc++ -stdlib=libc++ - -fsyntax-only < /dev/null 2>&1 |
+    grep /llvm/); do
+  echo "-isystem" >> "${EXAMPLE}/carbon/compile_flags.txt"
+  echo "${x}" >> "${EXAMPLE}/carbon/compile_flags.txt"
+done
+
 # Run the migration tool.
 bazel build -c opt //migrate_cpp
 # Not sure why, but execution of cpp_refactoring fails while saving refactorings
