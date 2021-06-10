@@ -24,16 +24,15 @@ const int FLAG_ARG_1_AND_2_ARE_WORDS = 1 << 0;
 const int FLAG_WE_HAVE_INSTRUCTIONS = 1 << 8;
 
 void WriteBytes(std::vector<uint8_t>* out, const uint8_t* data, size_t len) {
-  if (len == 0) { return;
-}
+  if (len == 0) return;
   size_t offset = out->size();
   out->resize(offset + len);
   memcpy(&(*out)[offset], data, len);
 }
 
 void WriteBytes(std::vector<uint8_t>* out, const std::vector<uint8_t>& in) {
-  for (unsigned char i : in) {
-    out->push_back(i);
+  for (size_t i = 0; i < in.size(); ++i) {
+    out->push_back(in[i]);
   }
 }
 
@@ -58,7 +57,7 @@ class GlyfEncoder {
     bbox_bitmap_.resize(((num_glyphs + 31) >> 5) << 2);
   }
 
-  auto Encode(int glyph_id, const Glyph& glyph) -> bool {
+  bool Encode(int glyph_id, const Glyph& glyph) {
     if (glyph.composite_data_size > 0) {
       WriteCompositeGlyph(glyph_id, glyph);
     } else if (glyph.contours.size() > 0) {
@@ -97,7 +96,7 @@ class GlyfEncoder {
                glyph.instructions_data, glyph.instructions_size);
   }
 
-  auto ShouldWriteSimpleGlyphBbox(const Glyph& glyph) -> bool {
+  bool ShouldWriteSimpleGlyphBbox(const Glyph& glyph) {
     if (glyph.contours.empty() || glyph.contours[0].empty()) {
       return glyph.x_min || glyph.y_min || glyph.x_max || glyph.y_max;
     }
@@ -108,29 +107,21 @@ class GlyfEncoder {
     int16_t y_max = y_min;
     for (const auto& contour : glyph.contours) {
       for (const auto& point : contour) {
-        if (point.x < x_min) { x_min = point.x;
-}
-        if (point.x > x_max) { x_max = point.x;
-}
-        if (point.y < y_min) { y_min = point.y;
-}
-        if (point.y > y_max) { y_max = point.y;
-}
+        if (point.x < x_min) x_min = point.x;
+        if (point.x > x_max) x_max = point.x;
+        if (point.y < y_min) y_min = point.y;
+        if (point.y > y_max) y_max = point.y;
       }
     }
 
-    if (glyph.x_min != x_min) {
+    if (glyph.x_min != x_min)
       return true;
-}
-    if (glyph.y_min != y_min) {
+    if (glyph.y_min != y_min)
       return true;
-}
-    if (glyph.x_max != x_max) {
+    if (glyph.x_max != x_max)
       return true;
-}
-    if (glyph.y_max != y_max) {
+    if (glyph.y_max != y_max)
       return true;
-}
 
     return false;
   }
@@ -236,17 +227,17 @@ class GlyfEncoder {
 
 }  // namespace
 
-auto TransformGlyfAndLocaTables(Font* font) -> bool {
+bool TransformGlyfAndLocaTables(Font* font) {
   // no transform for CFF
   const Font::Table* glyf_table = font->FindTable(kGlyfTableTag);
   const Font::Table* loca_table = font->FindTable(kLocaTableTag);
 
   // If you don't have glyf/loca this transform isn't very interesting
-  if (loca_table == nullptr && glyf_table == nullptr) {
+  if (loca_table == NULL && glyf_table == NULL) {
     return true;
   }
   // It would be best if you didn't have just one of glyf/loca
-  if ((glyf_table == nullptr) != (loca_table == nullptr)) {
+  if ((glyf_table == NULL) != (loca_table == NULL)) {
     return FONT_COMPRESSION_FAILURE();
   }
   // Must share neither or both loca & glyf
@@ -275,7 +266,7 @@ auto TransformGlyfAndLocaTables(Font* font) -> bool {
   encoder.GetTransformedGlyfBytes(&transformed_glyf->buffer);
 
   const Font::Table* head_table = font->FindTable(kHeadTableTag);
-  if (head_table == nullptr || head_table->length < 52) {
+  if (head_table == NULL || head_table->length < 52) {
     return FONT_COMPRESSION_FAILURE();
   }
   transformed_glyf->buffer[7] = head_table->data[51];  // index_format
@@ -286,25 +277,25 @@ auto TransformGlyfAndLocaTables(Font* font) -> bool {
 
   transformed_loca->tag = kLocaTableTag ^ 0x80808080;
   transformed_loca->length = 0;
-  transformed_loca->data = nullptr;
+  transformed_loca->data = NULL;
 
   return true;
 }
 
 // See https://www.microsoft.com/typography/otspec/hmtx.htm
 // See WOFF2 spec, 5.4. Transformed hmtx table format
-auto TransformHmtxTable(Font* font) -> bool {
+bool TransformHmtxTable(Font* font) {
   const Font::Table* glyf_table = font->FindTable(kGlyfTableTag);
   const Font::Table* hmtx_table = font->FindTable(kHmtxTableTag);
   const Font::Table* hhea_table = font->FindTable(kHheaTableTag);
 
   // If you don't have hmtx or a glyf not much is going to happen here
-  if (hmtx_table == nullptr || glyf_table == nullptr) {
+  if (hmtx_table == NULL || glyf_table == NULL) {
     return true;
   }
 
   // hmtx without hhea doesn't make sense
-  if (hhea_table == nullptr) {
+  if (hhea_table == NULL) {
     return FONT_COMPRESSION_FAILURE();
   }
 

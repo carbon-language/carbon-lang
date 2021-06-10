@@ -37,11 +37,15 @@ class _Workflow(object):
 
     def run(self):
         """Runs the migration workflow."""
-        self._gather_files()
-        self._clang_tidy()
-        self._cpp_refactoring()
-        self._rename_files()
-        self._print_header("Done!")
+        try:
+            self._gather_files()
+            self._clang_tidy()
+            self._cpp_refactoring()
+            self._rename_files()
+            self._print_header("Done!")
+        except subprocess.CalledProcessError as e:
+            # Discard the stack for subprocess errors.
+            sys.exit(e)
 
     def _data_file(self, relative_path):
         """Returns the path to a data file."""
@@ -75,14 +79,15 @@ class _Workflow(object):
         with open(self._data_file("clang_tidy.yaml")) as f:
             config = f.read()
         subprocess.run(
-            ["clang-tidy", "--fix", "--config", config] + self._cpp_files
+            ["clang-tidy", "--fix", "--config", config] + self._cpp_files,
+            check=True,
         )
 
     def _cpp_refactoring(self):
         """Runs cpp_refactoring to migrate C++ files towards Carbon syntax."""
         self._print_header("Running cpp_refactoring...")
         cpp_refactoring = self._data_file(_CPP_REFACTORING)
-        subprocess.run([cpp_refactoring] + self._cpp_files)
+        subprocess.run([cpp_refactoring] + self._cpp_files, check=True)
 
     def _rename_files(self):
         """Renames C++ files to the destination Carbon filenames."""

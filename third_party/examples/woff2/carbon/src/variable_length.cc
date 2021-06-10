@@ -10,7 +10,7 @@
 
 namespace woff2 {
 
-auto Size255UShort(uint16_t value) -> size_t {
+size_t Size255UShort(uint16_t value) {
   size_t result = 3;
   if (value < 253) {
     result = 1;
@@ -47,7 +47,7 @@ void Store255UShort(int val, size_t* offset, uint8_t* dst) {
 }
 
 // Based on section 6.1.1 of MicroType Express draft spec
-auto Read255UShort(Buffer* buf, unsigned int* value) -> bool {
+bool Read255UShort(Buffer* buf, unsigned int* value) {
   static const int kWordCode = 253;
   static const int kOneMoreByteCode2 = 254;
   static const int kOneMoreByteCode1 = 255;
@@ -83,7 +83,7 @@ auto Read255UShort(Buffer* buf, unsigned int* value) -> bool {
   }
 }
 
-auto ReadBase128(Buffer* buf, uint32_t* value) -> bool {
+bool ReadBase128(Buffer* buf, uint32_t* value) {
   uint32_t result = 0;
   for (size_t i = 0; i < 5; ++i) {
     uint8_t code = 0;
@@ -108,10 +108,9 @@ auto ReadBase128(Buffer* buf, uint32_t* value) -> bool {
   return FONT_COMPRESSION_FAILURE();
 }
 
-auto Base128Size(size_t n) -> size_t {
+size_t Base128Size(size_t n) {
   size_t size = 1;
-  for (; n >= 128; n >>= 7) { ++size;
-}
+  for (; n >= 128; n >>= 7) ++size;
   return size;
 }
 

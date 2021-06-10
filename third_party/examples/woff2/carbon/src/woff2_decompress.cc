@@ -13,7 +13,7 @@
 #include <woff2/decode.h>
 
 
-auto main(int argc, char **argv) -> int {
+int main(int argc, char **argv) {
   using std::string;
 
   if (argc != 2) {
@@ -22,11 +22,11 @@ auto main(int argc, char **argv) -> int {
   }
 
   string filename(argv[1]);
-  string outfilename = filename.substr(0, filename.find_last_of('.')) + ".ttf";
+  string outfilename = filename.substr(0, filename.find_last_of(".")) + ".ttf";
 
   // Note: update woff2_dec_fuzzer_new_entry.cc if this pattern changes.
   string input = woff2::GetFileContent(filename);
-  const auto* raw_input = reinterpret_cast<const uint8_t*>(input.data());
+  const uint8_t* raw_input = reinterpret_cast<const uint8_t*>(input.data());
   string output(std::min(woff2::ComputeWOFF2FinalSize(raw_input, input.size()),
                          woff2::kDefaultMaxSize), 0);
   woff2::WOFF2StringOut out(&output);

@@ -9,7 +9,7 @@
 #ifndef WOFF2_TABLE_TAGS_H_
 #define WOFF2_TABLE_TAGS_H_
 
-#include <cinttypes>
+#include <inttypes.h>
 
 namespace woff2 {
 

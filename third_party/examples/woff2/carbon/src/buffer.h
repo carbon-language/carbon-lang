@@ -26,7 +26,7 @@ typedef unsigned __int64 uint64_t;
 #define htons(x) _byteswap_ushort (x)
 #else
 #include <arpa/inet.h>
-#include <cstdint>
+#include <stdint.h>
 #endif
 
 #include <cstdio>
@@ -62,11 +62,11 @@ class Buffer {
         length_(len),
         offset_(0) { }
 
-  auto Skip(size_t n_bytes) -> bool {
-    return Read(nullptr, n_bytes);
+  bool Skip(size_t n_bytes) {
+    return Read(NULL, n_bytes);
   }
 
-  auto Read(uint8_t *data, size_t n_bytes) -> bool {
+  bool Read(uint8_t *data, size_t n_bytes) {
     if (n_bytes > 1024 * 1024 * 1024) {
       return FONT_COMPRESSION_FAILURE();
     }
@@ -81,7 +81,7 @@ class Buffer {
     return true;
   }
 
-  inline auto ReadU8(uint8_t *value) -> bool {
+  inline bool ReadU8(uint8_t *value) {
     if (offset_ + 1 > length_) {
       return FONT_COMPRESSION_FAILURE();
     }
@@ -90,7 +90,7 @@ class Buffer {
     return true;
   }
 
-  auto ReadU16(uint16_t *value) -> bool {
+  bool ReadU16(uint16_t *value) {
     if (offset_ + 2 > length_) {
       return FONT_COMPRESSION_FAILURE();
     }
@@ -100,11 +100,11 @@ class Buffer {
     return true;
   }
 
-  auto ReadS16(int16_t *value) -> bool {
+  bool ReadS16(int16_t *value) {
     return ReadU16(reinterpret_cast<uint16_t*>(value));
   }
 
-  auto ReadU24(uint32_t *value) -> bool {
+  bool ReadU24(uint32_t *value) {
     if (offset_ + 3 > length_) {
       return FONT_COMPRESSION_FAILURE();
     }
@@ -115,7 +115,7 @@ class Buffer {
     return true;
   }
 
-  auto ReadU32(uint32_t *value) -> bool {
+  bool ReadU32(uint32_t *value) {
     if (offset_ + 4 > length_) {
       return FONT_COMPRESSION_FAILURE();
     }
@@ -125,11 +125,11 @@ class Buffer {
     return true;
   }
 
-  auto ReadS32(int32_t *value) -> bool {
+  bool ReadS32(int32_t *value) {
     return ReadU32(reinterpret_cast<uint32_t*>(value));
   }
 
-  auto ReadTag(uint32_t *value) -> bool {
+  bool ReadTag(uint32_t *value) {
     if (offset_ + 4 > length_) {
       return FONT_COMPRESSION_FAILURE();
     }
@@ -138,7 +138,7 @@ class Buffer {
     return true;
   }
 
-  auto ReadR64(uint64_t *value) -> bool {
+  bool ReadR64(uint64_t *value) {
     if (offset_ + 8 > length_) {
       return FONT_COMPRESSION_FAILURE();
     }
@@ -147,9 +147,9 @@ class Buffer {
     return true;
   }
 
-  [[nodiscard]] auto buffer() const -> const uint8_t * { return buffer_; }
-  [[nodiscard]] auto offset() const -> size_t { return offset_; }
-  [[nodiscard]] auto length() const -> size_t { return length_; }
+  const uint8_t *buffer() const { return buffer_; }
+  size_t offset() const { return offset_; }
+  size_t length() const { return length_; }
 
   void set_offset(size_t newoffset) { offset_ = newoffset; }
 

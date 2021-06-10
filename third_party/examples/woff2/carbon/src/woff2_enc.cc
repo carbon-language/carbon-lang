@@ -8,7 +8,7 @@
 
 #include <woff2/encode.h>
 
-#include <cstdlib>
+#include <stdlib.h>
 #include <complex>
 #include <cstring>
 #include <limits>
@@ -38,8 +38,8 @@ using std::vector;
 const size_t kWoff2HeaderSize = 48;
 const size_t kWoff2EntrySize = 20;
 
-auto Compress(const uint8_t* data, const size_t len, uint8_t* result,
-              uint32_t* result_len, BrotliEncoderMode mode, int quality) -> bool {
+bool Compress(const uint8_t* data, const size_t len, uint8_t* result,
+              uint32_t* result_len, BrotliEncoderMode mode, int quality) {
   size_t compressed_len = *result_len;
   if (BrotliEncoderCompress(quality, BROTLI_DEFAULT_WINDOW, mode, len, data,
                             &compressed_len, result) == 0) {
@@ -49,24 +49,23 @@ auto Compress(const uint8_t* data, const size_t len, uint8_t* result,
   return true;
 }
 
-auto Woff2Compress(const uint8_t* data, const size_t len,
+bool Woff2Compress(const uint8_t* data, const size_t len,
                    uint8_t* result, uint32_t* result_len,
-                   int quality) -> bool {
+                   int quality) {
   return Compress(data, len, result, result_len,
                   BROTLI_MODE_FONT, quality);
 }
 
-auto TextCompress(const uint8_t* data, const size_t len,
+bool TextCompress(const uint8_t* data, const size_t len,
                   uint8_t* result, uint32_t* result_len,
-                  int quality) -> bool {
+                  int quality) {
   return Compress(data, len, result, result_len,
                   BROTLI_MODE_TEXT, quality);
 }
 
-auto KnownTableIndex(uint32_t tag) -> int {
+int KnownTableIndex(uint32_t tag) {
   for (int i = 0; i < 63; ++i) {
-    if (tag == kKnownTags[i]) { return i;
-}
+    if (tag == kKnownTags[i]) return i;
   }
   return 63;
 }
@@ -86,7 +85,7 @@ void StoreTableEntry(const Table& table, size_t* offset, uint8_t* dst) {
   }
 }
 
-auto TableEntrySize(const Table& table) -> size_t {
+size_t TableEntrySize(const Table& table) {
   uint8_t flag_byte = KnownTableIndex(table.tag);
   size_t size = ((flag_byte & 0x3f) != 0x3f) ? 1 : 5;
   size += Base128Size(table.src_length);
@@ -96,12 +95,12 @@ auto TableEntrySize(const Table& table) -> size_t {
   return size;
 }
 
-auto ComputeWoff2Length(const FontCollection& font_collection,
+size_t ComputeWoff2Length(const FontCollection& font_collection,
                           const std::vector<Table>& tables,
                           std::map<std::pair<uint32_t, uint32_t>, uint16_t>
                             index_by_tag_offset,
                           size_t compressed_data_length,
-                          size_t extended_metadata_length) -> size_t {
+                          size_t extended_metadata_length) {
   size_t size = kWoff2HeaderSize;
 
   for (const auto& table : tables) {
@@ -120,8 +119,7 @@ auto ComputeWoff2Length(const FontCollection& font_collection,
       for (const auto& entry : font.tables) {
         const Font::Table& table = entry.second;
         // no collection entry for xform table
-        if (table.tag & 0x80808080) { continue;
-}
+        if (table.tag & 0x80808080) continue;
 
         std::pair<uint32_t, uint32_t> tag_offset(table.tag, table.offset);
         uint16_t table_index = index_by_tag_offset[tag_offset];
@@ -138,21 +136,19 @@ auto ComputeWoff2Length(const FontCollection& font_collection,
   return size;
 }
 
-auto ComputeUncompressedLength(const Font& font) -> size_t {
+size_t ComputeUncompressedLength(const Font& font) {
   // sfnt header + offset table
   size_t size = 12 + 16 * font.num_tables;
   for (const auto& entry : font.tables) {
     const Font::Table& table = entry.second;
-    if (table.tag & 0x80808080) { continue;  // xform tables don't stay
-}
-    if (table.IsReused()) { continue;  // don't have to pay twice
-}
+    if (table.tag & 0x80808080) continue;  // xform tables don't stay
+    if (table.IsReused()) continue;  // don't have to pay twice
     size += Round4(table.length);
   }
   return size;
 }
 
-auto ComputeUncompressedLength(const FontCollection& font_collection) -> size_t {
+size_t ComputeUncompressedLength(const FontCollection& font_collection) {
   if (font_collection.flavor != kTtcFontFlavor) {
     return ComputeUncompressedLength(font_collection.fonts[0]);
   }
@@ -164,7 +160,7 @@ auto ComputeUncompressedLength(const FontCollection& font_collection) -> size_t 
   return size;
 }
 
-auto ComputeTotalTransformLength(const Font& font) -> size_t {
+size_t ComputeTotalTransformLength(const Font& font) {
   size_t total = 0;
   for (const auto& i : font.tables) {
     const Font::Table& table = i.second;
@@ -182,12 +178,12 @@ auto ComputeTotalTransformLength(const Font& font) -> size_t {
 
 }  // namespace
 
-auto MaxWOFF2CompressedSize(const uint8_t* data, size_t length) -> size_t {
+size_t MaxWOFF2CompressedSize(const uint8_t* data, size_t length) {
   return MaxWOFF2CompressedSize(data, length, "");
 }
 
-auto MaxWOFF2CompressedSize(const uint8_t*  /*data*/, size_t length,
-    const string& extended_metadata) -> size_t {
+size_t MaxWOFF2CompressedSize(const uint8_t* data, size_t length,
+    const string& extended_metadata) {
   // Except for the header size, which is 32 bytes larger in woff2 format,
   // all other parts should be smaller (table header in short format,
   // transformations and compression). Just to be sure, we will give some
@@ -195,11 +191,11 @@ auto MaxWOFF2CompressedSize(const uint8_t*  /*data*/, size_t length,
   return length + 1024 + extended_metadata.length();
 }
 
-auto CompressedBufferSize(uint32_t original_size) -> uint32_t {
+uint32_t CompressedBufferSize(uint32_t original_size) {
   return 1.2 * original_size + 10240;
 }
 
-auto TransformFontCollection(FontCollection* font_collection) -> bool {
+bool TransformFontCollection(FontCollection* font_collection) {
   for (auto& font : font_collection->fonts) {
     if (!TransformGlyfAndLocaTables(&font)) {
 #ifdef FONT_COMPRESSION_BIN
@@ -212,16 +208,16 @@ auto TransformFontCollection(FontCollection* font_collection) -> bool {
   return true;
 }
 
-auto ConvertTTFToWOFF2(const uint8_t *data, size_t length,
-                       uint8_t *result, size_t *result_length) -> bool {
+bool ConvertTTFToWOFF2(const uint8_t *data, size_t length,
+                       uint8_t *result, size_t *result_length) {
   WOFF2Params params;
   return ConvertTTFToWOFF2(data, length, result, result_length,
                            params);
 }
 
-auto ConvertTTFToWOFF2(const uint8_t *data, size_t length,
+bool ConvertTTFToWOFF2(const uint8_t *data, size_t length,
                        uint8_t *result, size_t *result_length,
-                       const WOFF2Params& params) -> bool {
+                       const WOFF2Params& params) {
   FontCollection font_collection;
   if (!ReadFontCollection(data, length, &font_collection)) {
 #ifdef FONT_COMPRESSION_BIN
@@ -270,13 +266,10 @@ auto ConvertTTFToWOFF2(const uint8_t *data, size_t length,
   for (const auto& font : font_collection.fonts) {
     for (const auto tag : font.OutputOrderedTags()) {
       const Font::Table& original = font.tables.at(tag);
-      if (original.IsReused()) { continue;
-}
-      if (tag & 0x80808080) { continue;
-}
+      if (original.IsReused()) continue;
+      if (tag & 0x80808080) continue;
       const Font::Table* table_to_store = font.FindTable(tag ^ 0x80808080);
-      if (table_to_store == nullptr) { table_to_store = &original;
-}
+      if (table_to_store == NULL) table_to_store = &original;
 
       StoreBytes(table_to_store->data, table_to_store->length,
                  &transform_offset, &transform_buf[0]);
@@ -306,7 +299,7 @@ auto ConvertTTFToWOFF2(const uint8_t *data, size_t length,
   std::vector<uint8_t> compressed_metadata_buf(compressed_metadata_buf_length);
 
   if (params.extended_metadata.length() > 0) {
-    if (!TextCompress(reinterpret_cast<const uint8_t*>(params.extended_metadata.data()),
+    if (!TextCompress((const uint8_t*)params.extended_metadata.data(),
                       params.extended_metadata.length(),
                       compressed_metadata_buf.data(),
                       &compressed_metadata_buf_length,
@@ -346,7 +339,7 @@ auto ConvertTTFToWOFF2(const uint8_t *data, size_t length,
       const uint8_t* transformed_data = src_table.data;
       const Font::Table* transformed_table =
           font.FindTable(src_table.tag ^ 0x80808080);
-      if (transformed_table != nullptr) {
+      if (transformed_table != NULL) {
         table.flags = transformed_table->flag_byte;
         table.flags |= kWoff2FlagsTransform;
         table.transform_length = transformed_table->length;
@@ -417,8 +410,7 @@ auto ConvertTTFToWOFF2(const uint8_t *data, size_t length,
       uint16_t num_tables = 0;
       for (const auto& entry : font.tables) {
         const Font::Table& table = entry.second;
-        if (table.tag & 0x80808080) { continue;  // don't write xform tables
-}
+        if (table.tag & 0x80808080) continue;  // don't write xform tables
         num_tables++;
       }
       Store255UShort(num_tables, &offset, result);
@@ -426,8 +418,7 @@ auto ConvertTTFToWOFF2(const uint8_t *data, size_t length,
       StoreU32(font.flavor, &offset, result);
       for (const auto& entry : font.tables) {
         const Font::Table& table = entry.second;
-        if (table.tag & 0x80808080) { continue;  // don't write xform tables
-}
+        if (table.tag & 0x80808080) continue;  // don't write xform tables
 
         // for reused tables, only the original has an updated offset
         uint32_t table_offset =

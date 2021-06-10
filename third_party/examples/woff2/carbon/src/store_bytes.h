@@ -10,15 +10,15 @@
 #ifndef WOFF2_STORE_BYTES_H_
 #define WOFF2_STORE_BYTES_H_
 
-#include <cinttypes>
-#include <cstddef>
-#include <cstring>
+#include <inttypes.h>
+#include <stddef.h>
+#include <string.h>
 
 #include "./port.h"
 
 namespace woff2 {
 
-inline auto StoreU32(uint8_t* dst, size_t offset, uint32_t x) -> size_t {
+inline size_t StoreU32(uint8_t* dst, size_t offset, uint32_t x) {
   dst[offset] = x >> 24;
   dst[offset + 1] = x >> 16;
   dst[offset + 2] = x >> 8;
@@ -26,7 +26,7 @@ inline auto StoreU32(uint8_t* dst, size_t offset, uint32_t x) -> size_t {
   return offset + 4;
 }
 
-inline auto Store16(uint8_t* dst, size_t offset, int x) -> size_t {
+inline size_t Store16(uint8_t* dst, size_t offset, int x) {
 #if defined(WOFF_LITTLE_ENDIAN)
   *reinterpret_cast<uint16_t*>(dst + offset) =
       ((x & 0xFF) << 8) | ((x & 0xFF00) >> 8);

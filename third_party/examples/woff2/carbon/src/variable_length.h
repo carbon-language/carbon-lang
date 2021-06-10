@@ -9,19 +9,19 @@
 #ifndef WOFF2_VARIABLE_LENGTH_H_
 #define WOFF2_VARIABLE_LENGTH_H_
 
-#include <cinttypes>
+#include <inttypes.h>
 #include <vector>
 #include "./buffer.h"
 
 namespace woff2 {
 
-auto Size255UShort(uint16_t value) -> size_t;
-auto Read255UShort(Buffer* buf, unsigned int* value) -> bool;
+size_t Size255UShort(uint16_t value);
+bool Read255UShort(Buffer* buf, unsigned int* value);
 void Write255UShort(std::vector<uint8_t>* out, int value);
 void Store255UShort(int val, size_t* offset, uint8_t* dst);
 
-auto Base128Size(size_t n) -> size_t;
-auto ReadBase128(Buffer* buf, uint32_t* value) -> bool;
+size_t Base128Size(size_t n);
+bool ReadBase128(Buffer* buf, uint32_t* value);
 void StoreBase128(size_t len, size_t* offset, uint8_t* dst);
 
 } // namespace woff2

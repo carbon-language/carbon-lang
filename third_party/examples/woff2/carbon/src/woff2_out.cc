@@ -17,11 +17,11 @@ WOFF2StringOut::WOFF2StringOut(string* buf)
     max_size_(kDefaultMaxSize),
     offset_(0) {}
 
-auto WOFF2StringOut::Write(const void *buf, size_t n) -> bool {
+bool WOFF2StringOut::Write(const void *buf, size_t n) {
   return Write(buf, offset_, n);
 }
 
-auto WOFF2StringOut::Write(const void *buf, size_t offset, size_t n) -> bool {
+bool WOFF2StringOut::Write(const void *buf, size_t offset, size_t n) {
   if (offset > max_size_ || n > max_size_ - offset) {
     return false;
   }
@@ -50,11 +50,11 @@ WOFF2MemoryOut::WOFF2MemoryOut(uint8_t* buf, size_t buf_size)
     buf_size_(buf_size),
     offset_(0) {}
 
-auto WOFF2MemoryOut::Write(const void *buf, size_t n) -> bool {
+bool WOFF2MemoryOut::Write(const void *buf, size_t n) {
   return Write(buf, offset_, n);
 }
 
-auto WOFF2MemoryOut::Write(const void *buf, size_t offset, size_t n) -> bool {
+bool WOFF2MemoryOut::Write(const void *buf, size_t offset, size_t n) {
   if (offset > buf_size_ || n > buf_size_ - offset) {
     return false;
   }

@@ -8,7 +8,7 @@
 
 #include "./glyph.h"
 
-#include <cstdlib>
+#include <stdlib.h>
 #include <limits>
 #include "./buffer.h"
 #include "./store_bytes.h"
@@ -28,7 +28,7 @@ static const int32_t kFLAG_WE_HAVE_AN_X_AND_Y_SCALE = 1 << 6;
 static const int32_t kFLAG_WE_HAVE_A_TWO_BY_TWO = 1 << 7;
 static const int32_t kFLAG_WE_HAVE_INSTRUCTIONS = 1 << 8;
 
-auto ReadCompositeGlyphData(Buffer* buffer, Glyph* glyph) -> bool {
+bool ReadCompositeGlyphData(Buffer* buffer, Glyph* glyph) {
   glyph->have_instructions = false;
   glyph->composite_data = buffer->buffer() + buffer->offset();
   size_t start_offset = buffer->offset();
@@ -62,7 +62,7 @@ auto ReadCompositeGlyphData(Buffer* buffer, Glyph* glyph) -> bool {
   return true;
 }
 
-auto ReadGlyph(const uint8_t* data, size_t len, Glyph* glyph) -> bool {
+bool ReadGlyph(const uint8_t* data, size_t len, Glyph* glyph) {
   Buffer buffer(data, len);
 
   int16_t num_contours;
@@ -224,7 +224,7 @@ void StoreInstructions(const Glyph& glyph, size_t* offset, uint8_t* dst) {
   StoreBytes(glyph.instructions_data, glyph.instructions_size, offset, dst);
 }
 
-auto StoreEndPtsOfContours(const Glyph& glyph, size_t* offset, uint8_t* dst) -> bool {
+bool StoreEndPtsOfContours(const Glyph& glyph, size_t* offset, uint8_t* dst) {
   int end_point = -1;
   for (const auto& contour : glyph.contours) {
     end_point += contour.size();
@@ -237,8 +237,8 @@ auto StoreEndPtsOfContours(const Glyph& glyph, size_t* offset, uint8_t* dst) -> 
   return true;
 }
 
-auto StorePoints(const Glyph& glyph, size_t* offset,
-                 uint8_t* dst, size_t dst_size) -> bool {
+bool StorePoints(const Glyph& glyph, size_t* offset,
+                 uint8_t* dst, size_t dst_size) {
   int last_flag = -1;
   int repeat_count = 0;
   int last_x = 0;
@@ -333,7 +333,7 @@ auto StorePoints(const Glyph& glyph, size_t* offset,
 
 }  // namespace
 
-auto StoreGlyph(const Glyph& glyph, uint8_t* dst, size_t* dst_size) -> bool {
+bool StoreGlyph(const Glyph& glyph, uint8_t* dst, size_t* dst_size) {
   size_t offset = 0;
   if (glyph.composite_data_size > 0) {
     // Composite glyph.
