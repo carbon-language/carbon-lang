@@ -184,44 +184,43 @@ messages, document expectations, or express that a type has certain semantics
 beyond what is captured in its member function names and signatures).
 
 The last piece of the puzzle is how the caller of the function can produce a
-value with the right type. Let's say the user has a value of type `Widget`, and
-of course widgets have all sorts of functionality. If we want a `Widget` to be
-printed using the `PrintToStdout` function, it needs to implement the
-`ConvertibleToString` interface. Note that we _don't_ say that `Widget` is of
-type `ConvertibleToString` but instead that it has a "facet type". This means
-there is another type, called `Widget as ConvertibleToString`, with the
-following properties:
+value with the right type. Let's say the user has a value of type `Song`, and of
+course songs have all sorts of functionality. If we want a `Song` to be printed
+using the `PrintToStdout` function, it needs to implement the
+`ConvertibleToString` interface. Note that we _don't_ say that `Song` is of type
+`ConvertibleToString` but instead that it has a "facet type". This means there
+is another type, called `Song as ConvertibleToString`, with the following
+properties:
 
--   `Widget as ConvertibleToString` has the same _data representation_ as
-    `Widget`.
--   `Widget as ConvertibleToString` is an implementation of the interface
-    `ConvertibleToString`. The functions of `Widget as ConvertibleToString` are
+-   `Song as ConvertibleToString` has the same _data representation_ as `Song`.
+-   `Song as ConvertibleToString` is an implementation of the interface
+    `ConvertibleToString`. The functions of `Song as ConvertibleToString` are
     just implementations of the names and signatures defined in the
     `ConvertibleToString` interface, like `ToString`, and not the functions
-    defined on `Widget` values.
--   Carbon will implicitly cast values from type `Widget` to type
-    `Widget as ConvertibleToString` when calling a function that can only accept
+    defined on `Song` values.
+-   Carbon will implicitly cast values from type `Song` to type
+    `Song as ConvertibleToString` when calling a function that can only accept
     types of type `ConvertibleToString`.
--   Typically, `Widget` would also have definitions for the methods of
+-   Typically, `Song` would also have definitions for the methods of
     `ConvertibleToString`, such as `ToString`, unless the implementation of
-    `ConvertibleToString` for `Widget` was defined as `external`.
--   You may access the `ToString` function for a `Widget` value `w` by writing a
+    `ConvertibleToString` for `Song` was defined as `external`.
+-   You may access the `ToString` function for a `Song` value `w` by writing a
     _qualified_ function call, like `w.(ConvertibleToString.ToString)()`. This
     qualified syntax is available whether or not the implementation is defined
     as `external`.
--   If other interfaces are implemented for `Widget`, they are also implemented
-    for `Widget as ConvertibleToString` as well. The only thing that changes
-    when casting a `Widget` `w` to `Widget as ConvertibleToString` are the names
-    that are accessible without using the qualification syntax.
+-   If other interfaces are implemented for `Song`, they are also implemented
+    for `Song as ConvertibleToString` as well. The only thing that changes when
+    casting a `Song` `w` to `Song as ConvertibleToString` are the names that are
+    accessible without using the qualification syntax.
 
 We define these facet types (alternatively, interface implementations) either
 with the type, with the interface, or somewhere else where Carbon can be
 guaranteed to see when needed. For more on this, see
 [the implementing interfaces section](#implementing-interfaces) below.
 
-If `Widget` doesn't implement an interface or we would like to use a different
+If `Song` doesn't implement an interface or we would like to use a different
 implementation of that interface, we can define another type that also has the
-same data representation as `Widget` that has whatever different interface
+same data representation as `Song` that has whatever different interface
 implementations we want. However, Carbon won't implicitly cast to that other
 type, the user will have to explicitly cast to that type in order to select
 those alternate implementations. For more on this, see
