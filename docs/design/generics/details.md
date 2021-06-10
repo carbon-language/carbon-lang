@@ -91,6 +91,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Type compatible with another type](#type-compatible-with-another-type)
         -   [Example: Multiple implementations of the same interface](#example-multiple-implementations-of-the-same-interface)
         -   [Example: Creating an impl out of other impls](#example-creating-an-impl-out-of-other-impls)
+    -   [Type facet of another type](#type-facet-of-another-type)
     -   [Sized types and type-types](#sized-types-and-type-types)
         -   [Model](#model-2)
 -   [Dynamic types](#dynamic-types)
@@ -3961,6 +3962,10 @@ Given a type `U`, define the type-type `CompatibleWith(U)` as follows:
 To support this, we extend the requirements that type-types are allowed to have
 to include a "data representation requirement" option.
 
+`CompatibleWith` determines an equivalence relationship between types.
+Specifically, given two types `T1` and `T2`, they are equivalent if
+`T1 is CompatibleWith(T2)`. That is, if `T1` has the type `CompatibleWith(T2)`.
+
 **Note:** Just like interface parameters, we require the user to supply `U`,
 they may not be inferred. Specifically, this code would be illegal:
 
@@ -4053,6 +4058,12 @@ var song: Song = ...;
 var song2: SongByArtistThenTitle = Song(...) as SongByArtistThenTitle;
 assert((song as SongByArtistThenTitle).Compare(song2) == CaompareResult.Less);
 ```
+
+### Type facet of another type
+
+Similar to `CompatibleWith(T)`, `FacetOf(T)` introduces an equivalence
+relationship between types. `T1 is FacetOf(T2)` if both `T1` and `T2` are facets
+of the same type.
 
 ### Sized types and type-types
 
