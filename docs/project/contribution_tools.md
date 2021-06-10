@@ -104,12 +104,19 @@ Our recommended way of installing is:
 brew install pyenv
 pyenv install 3.8.5
 pyenv global 3.8.5
-
-# Add 'eval "$(pyenv init -)"' to your shell rc file, for example zshrc.
-echo 'eval "$(pyenv init -)"' >> ~/.zshrc
-# Load the shell rc file changes.
-exec $SHELL
 ```
+
+You will also need to update your rc file to add pyenv to your `PATH`; this
+should look like:
+
+```bash
+export PYENV_ROOT="$HOME/.pyenv"
+export PATH="$PYENV_ROOT/bin:$PATH"
+eval "$(pyenv init --path)"
+```
+
+Restart the shell (for example, `exec $SHELL`) to get `PATH` updates. If there
+are still issues, check instructions using `pyenv init`.
 
 To get the latest version of `pip` packages, it will be necessary to
 periodically run `pip list --outdated`, then `pip install -U <package>` to
@@ -200,9 +207,10 @@ Our recommended way of installing is:
 brew install llvm
 ```
 
-`llvm` is keg-only; bear in mind this requires updating `PATH` for it because
-it's not part of the standard Homebrew path. Read the output of `brew install`
-for the necessary path changes, or add something to your `PATH` like:
+On **MacOS only** (not Linux), `llvm` is keg-only; bear in mind this requires
+updating `PATH` for it because it's not part of the standard Homebrew path. Read
+the output of `brew install` for the necessary path changes, or add something to
+your `PATH` like:
 
 ```bash
 export PATH="$(brew --prefix llvm)/bin:${PATH}"
