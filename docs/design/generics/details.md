@@ -119,6 +119,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Bridge for C++ customization points](#bridge-for-c-customization-points)
     -   [Reverse generics for return types](#reverse-generics-for-return-types)
     -   [Variadic arguments](#variadic-arguments)
+    -   [Interaction with inheritance](#interaction-with-inheritance)
 -   [Notes](#notes)
 -   [Broken links footnote](#broken-links-footnote)
 
@@ -5025,6 +5026,19 @@ fn DynamicStrCat(args: Array(DynPtr(ConvertibleToString))...) -> String {
   // Same body as above, but only instantiated once and no loop unrolling.
 }
 ```
+
+### Interaction with inheritance
+
+Would like to make object-safe interfaces and abstract base classes (ABCs)
+interchangeable to a degree. This is particularly important for C++ interop.
+
+-   Should be able to inherit from an object-safe interface, and the result
+    should be considered to implement that interface.
+-   An ABC should be considered an object-safe interface.
+-   You should be able to construct an object from a "pointer to type `T`
+    implementing `MyInterface`" that inherits from `MyInterface` as an ABC.
+    Ideally, this object would have type
+    [`DynPtr(MyInterface)'](#dynamic-pointer-type).
 
 ## Notes
 
