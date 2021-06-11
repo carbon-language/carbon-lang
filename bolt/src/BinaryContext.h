@@ -31,6 +31,7 @@
 #include "llvm/MC/MCInstrInfo.h"
 #include "llvm/MC/MCObjectFileInfo.h"
 #include "llvm/MC/MCObjectWriter.h"
+#include "llvm/MC/MCPseudoProbe.h"
 #include "llvm/MC/MCSectionELF.h"
 #include "llvm/MC/MCSectionMachO.h"
 #include "llvm/MC/MCSymbol.h"
@@ -590,6 +591,9 @@ public:
   /// Map linux kernel program locations/instructions to their pointers in
   /// special linux kernel sections
   std::unordered_map<uint64_t, std::vector<LKInstructionMarkerInfo>> LKMarkers;
+
+  /// PseudoProbe decoder
+  MCPseudoProbeDecoder ProbeDecoder;
 
   /// DWARF encoding. Available encoding types defined in BinaryFormat/Dwarf.h
   /// enum Constants, e.g. DW_EH_PE_omit.

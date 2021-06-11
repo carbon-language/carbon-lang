@@ -272,6 +272,11 @@ PrintSDTMarkers("print-sdt",
   cl::Hidden,
   cl::cat(BoltCategory));
 
+static cl::opt<bool>
+    PrintPseudoProbe("print-pseudo-probe",
+                     cl::desc("print pseudo probe related info"),
+                     cl::ZeroOrMore, cl::Hidden, cl::cat(BoltCategory));
+
 static cl::opt<cl::boolOrDefault>
 RelocationMode("relocs",
   cl::desc("use relocations in the binary (default=autodetect)"),
@@ -682,6 +687,40 @@ void RewriteInstance::parseSDTNotes() {
 
   if (opts::PrintSDTMarkers)
     printSDTMarkers();
+}
+
+void RewriteInstance::parsePseudoProbe() {
+  if (!PseudoProbeDescSection && !PseudoProbeSection)
+    // pesudo probe is not added to binary. It is normal and no warning needed.
+    return;
+  // If only one section is found, it might mean the ELF is corrupted.
+  if (!PseudoProbeDescSection) {
+    errs() << "BOLT-WARNING: fail in reading .pseudo_probe_desc binary\n";
+    return;
+  } else if (!PseudoProbeSection) {
+    errs() << "BOLT-WARNING: fail in reading .pseudo_probe binary\n";
+    return;
+  }
+
+  StringRef Contents = PseudoProbeDescSection->getContents();
+  if (!BC->ProbeDecoder.buildGUID2FuncDescMap(
+          reinterpret_cast<const uint8_t *>(Contents.data()),
+          Contents.size())) {
+    errs() << "BOLT-WARNING: fail in building GUID2FuncDescMap\n";
+    return;
+  }
+  Contents = PseudoProbeSection->getContents();
+  if (!BC->ProbeDecoder.buildAddress2ProbeMap(
+          reinterpret_cast<const uint8_t *>(Contents.data()),
+          Contents.size())) {
+    errs() << "BOLT-WARNING: fail in building Address2ProbeMap\n";
+    return;
+  }
+
+  if (opts::PrintPseudoProbe) {
+    BC->ProbeDecoder.printGUID2FuncDescMap(outs());
+    BC->ProbeDecoder.printProbesForAllAddresses(outs());
+  }
 }
 
 void RewriteInstance::printSDTMarkers() {
@@ -1546,6 +1585,8 @@ void RewriteInstance::readSpecialSections() {
   RelaDynSection = BC->getUniqueSectionByName(".rela.dyn");
   BuildIDSection = BC->getUniqueSectionByName(".note.gnu.build-id");
   SDTSection = BC->getUniqueSectionByName(".note.stapsdt");
+  PseudoProbeDescSection = BC->getUniqueSectionByName(".pseudo_probe_desc");
+  PseudoProbeSection = BC->getUniqueSectionByName(".pseudo_probe");
 
   if (ErrorOr<BinarySection &> BATSec =
           BC->getUniqueSectionByName(BoltAddressTranslation::SECTION_NAME)) {
@@ -1596,6 +1637,8 @@ void RewriteInstance::readSpecialSections() {
   }
 
   parseSDTNotes();
+
+  parsePseudoProbe();
 
   // Read .dynamic/PT_DYNAMIC.
   readELFDynamic();

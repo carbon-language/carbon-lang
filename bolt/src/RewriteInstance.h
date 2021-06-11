@@ -331,6 +331,10 @@ private:
   /// Parse .note.stapsdt section
   void parseSDTNotes();
 
+  /// Parse .pseudo_probe_desc section and .pseudo_probe section
+  /// Setup Pseudo probe decoder
+  void parsePseudoProbe();
+
   /// Print all SDT markers
   void printSDTMarkers();
 
@@ -460,6 +464,15 @@ private:
   /// .note.stapsdt section.
   /// Contains information about statically defined tracing points
   ErrorOr<BinarySection &> SDTSection{std::errc::bad_address};
+
+  /// .pseudo_probe_desc section.
+  /// Contains information about pseudo probe description, like its related
+  /// function
+  ErrorOr<BinarySection &> PseudoProbeDescSection{std::errc::bad_address};
+
+  /// .pseudo_probe section.
+  /// Contains information about pseudo probe details, like its address
+  ErrorOr<BinarySection &> PseudoProbeSection{std::errc::bad_address};
 
   /// A reference to the build-id bytes in the original binary
   StringRef BuildID;
