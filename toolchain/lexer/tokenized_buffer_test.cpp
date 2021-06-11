@@ -543,6 +543,40 @@ TEST_F(LexerTest, MismatchedGroups) {
       }));
 }
 
+TEST_F(LexerTest, Whitespace) {
+  auto buffer = Lex("{( } {(");
+
+  // Whether there should be whitespace before/after each token.
+  bool space[] = {true,
+                  // {
+                  false,
+                  // (
+                  true,
+                  // inserted )
+                  true,
+                  // }
+                  true,
+                  // {
+                  false,
+                  // (
+                  true,
+                  // inserted )
+                  true,
+                  // inserted }
+                  true,
+                  // EOF
+                  false};
+  int pos = 0;
+  for (TokenizedBuffer::Token token : buffer.Tokens()) {
+    ASSERT_LT(pos, std::size(space));
+    EXPECT_THAT(buffer.HasLeadingWhitespace(token), Eq(space[pos]));
+    ++pos;
+    ASSERT_LT(pos, std::size(space));
+    EXPECT_THAT(buffer.HasTrailingWhitespace(token), Eq(space[pos]));
+  }
+  ASSERT_EQ(pos + 1, std::size(space));
+}
+
 TEST_F(LexerTest, Keywords) {
   auto buffer = Lex("   fn");
   EXPECT_FALSE(buffer.HasErrors());
@@ -570,7 +604,7 @@ TEST_F(LexerTest, Keywords) {
                           {TokenKind::UnderscoreKeyword()},
                           {TokenKind::EndOfFile()},
                       }));
-}
+  }
 
 TEST_F(LexerTest, Comments) {
   auto buffer = Lex(" ;\n  // foo\n  ;\n");
@@ -861,7 +895,7 @@ TEST_F(LexerTest, Printing) {
   llvm::StringRef print = print_stream.str();
   EXPECT_THAT(GetAndDropLine(print),
               StrEq("token: { index: 0, kind:      'Semi', line: 1, column: 1, "
-                    "indent: 1, spelling: ';' }"));
+                    "indent: 1, spelling: ';', has_trailing_space: true }"));
   EXPECT_THAT(GetAndDropLine(print),
               StrEq("token: { index: 1, kind: 'EndOfFile', line: 1, column: 2, "
                     "indent: 1, spelling: '' }"));
@@ -887,7 +921,8 @@ TEST_F(LexerTest, Printing) {
                     "6, indent: 1, spelling: ';' }"));
   EXPECT_THAT(GetAndDropLine(print),
               StrEq("token: { index: 4, kind: 'CloseParen', line: 1, column: "
-                    "7, indent: 1, spelling: ')', opening_token: 0 }"));
+                    "7, indent: 1, spelling: ')', opening_token: 0, "
+                    "has_trailing_space: true }"));
   EXPECT_THAT(GetAndDropLine(print),
               StrEq("token: { index: 5, kind:  'EndOfFile', line: 1, column: "
                     "8, indent: 1, spelling: '' }"));
@@ -902,7 +937,7 @@ TEST_F(LexerTest, Printing) {
   EXPECT_THAT(
       GetAndDropLine(print),
       StrEq("token: { index: 0, kind:      'Semi', line:  1, column:  1, "
-            "indent: 1, spelling: ';' }"));
+            "indent: 1, spelling: ';', has_trailing_space: true }"));
   EXPECT_THAT(
       GetAndDropLine(print),
       StrEq("token: { index: 1, kind:      'Semi', line: 11, column:  9, "
@@ -910,7 +945,7 @@ TEST_F(LexerTest, Printing) {
   EXPECT_THAT(
       GetAndDropLine(print),
       StrEq("token: { index: 2, kind:      'Semi', line: 11, column: 10, "
-            "indent: 9, spelling: ';' }"));
+            "indent: 9, spelling: ';', has_trailing_space: true }"));
   EXPECT_THAT(
       GetAndDropLine(print),
       StrEq("token: { index: 3, kind: 'EndOfFile', line: 11, column: 11, "
@@ -958,6 +993,8 @@ TEST_F(LexerTest, PrintingAsYaml) {
   EXPECT_THAT(&*token_it, IsKeyValueScalars("indent", "2"));
   ++token_it;
   EXPECT_THAT(&*token_it, IsKeyValueScalars("spelling", ";"));
+  ++token_it;
+  EXPECT_THAT(&*token_it, IsKeyValueScalars("has_trailing_space", "true"));
   EXPECT_THAT(++token_it, Eq(token_value_node->end()));
 
   ++mapping_it;
@@ -981,6 +1018,8 @@ TEST_F(LexerTest, PrintingAsYaml) {
   EXPECT_THAT(&*token_it, IsKeyValueScalars("indent", "1"));
   ++token_it;
   EXPECT_THAT(&*token_it, IsKeyValueScalars("spelling", ";"));
+  ++token_it;
+  EXPECT_THAT(&*token_it, IsKeyValueScalars("has_trailing_space", "true"));
   EXPECT_THAT(++token_it, Eq(token_value_node->end()));
 
   ++mapping_it;
@@ -1004,6 +1043,8 @@ TEST_F(LexerTest, PrintingAsYaml) {
   EXPECT_THAT(&*token_it, IsKeyValueScalars("indent", "1"));
   ++token_it;
   EXPECT_THAT(&*token_it, IsKeyValueScalars("spelling", ";"));
+  ++token_it;
+  EXPECT_THAT(&*token_it, IsKeyValueScalars("has_trailing_space", "true"));
   EXPECT_THAT(++token_it, Eq(token_value_node->end()));
 
   ++mapping_it;

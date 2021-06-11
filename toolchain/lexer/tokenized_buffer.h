@@ -166,7 +166,7 @@ class TokenizedBuffer {
   // Random-access iterator over tokens within the buffer.
   class TokenIterator
       : public llvm::iterator_facade_base<
-            TokenIterator, std::random_access_iterator_tag, Token, int> {
+            TokenIterator, std::random_access_iterator_tag, const Token, int> {
    public:
     TokenIterator() = default;
 
@@ -180,7 +180,6 @@ class TokenizedBuffer {
     }
 
     auto operator*() const -> const Token& { return token; }
-    auto operator*() -> Token& { return token; }
 
     auto operator-(const TokenIterator& rhs) const -> int {
       return token.index - rhs.token.index;
@@ -303,6 +302,11 @@ class TokenizedBuffer {
   // The given token must be a closing token kind.
   [[nodiscard]] auto GetMatchedOpeningToken(Token closing_token) const -> Token;
 
+  // Returns whether the given token has leading whitespace.
+  [[nodiscard]] auto HasLeadingWhitespace(Token token) const -> bool;
+  // Returns whether the given token has trailing whitespace.
+  [[nodiscard]] auto HasTrailingWhitespace(Token token) const -> bool;
+
   // Returns whether the token was created as part of an error recovery effort.
   //
   // For example, a closing paren inserted to match an unmatched paren.
@@ -379,6 +383,9 @@ class TokenizedBuffer {
 
   struct TokenInfo {
     TokenKind kind;
+
+    // Whether the token has trailing whitespace.
+    bool has_trailing_space = false;
 
     // Whether the token was injected artificially during error recovery.
     bool is_recovery = false;
