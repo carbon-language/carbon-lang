@@ -45,13 +45,13 @@ struct ExpectedFunctionBodyOrSemi
 struct ExpectedVariableName : SimpleDiagnostic<ExpectedVariableName> {
   static constexpr llvm::StringLiteral ShortName = "syntax-error";
   static constexpr llvm::StringLiteral Message =
-      "Expected variable name after type in `var` declaration.";
+      "Expected pattern in `var` declaration.";
 };
 
 struct ExpectedParameterName : SimpleDiagnostic<ExpectedParameterName> {
   static constexpr llvm::StringLiteral ShortName = "syntax-error";
   static constexpr llvm::StringLiteral Message =
-      "Expected parameter name after type in parameter declaration.";
+      "Expected parameter declaration.";
 };
 
 struct UnrecognizedDeclaration : SimpleDiagnostic<UnrecognizedDeclaration> {
@@ -376,23 +376,34 @@ auto ParseTree::Parser::ParseParenList(ListElementParser list_element_parser,
   return list_handler(open_paren, Consume(TokenKind::CloseParen()), has_errors);
 }
 
-auto ParseTree::Parser::ParseFunctionParameter() -> llvm::Optional<Node> {
-  // A parameter is of the form
-  //   type identifier
-  auto start = GetSubtreeStartPosition();
-
-  auto type = ParseType();
-
-  // FIXME: We can't use DeclaredName here because we need to use the
-  // identifier token as the root token in the parameter node.
-  auto name = ConsumeIf(TokenKind::Identifier());
-  if (!name) {
-    emitter.EmitError<ExpectedParameterName>(*position);
-    return llvm::None;
+auto ParseTree::Parser::ParsePattern(PatternKind kind) -> llvm::Optional<Node> {
+  if (NextTokenIs(TokenKind::Identifier()) &&
+      tokens.GetKind(*(position + 1)) == TokenKind::Colon()) {
+    // identifier `:` type
+    auto start = GetSubtreeStartPosition();
+    AddLeafNode(ParseNodeKind::DeclaredName(),
+                Consume(TokenKind::Identifier()));
+    auto colon = Consume(TokenKind::Colon());
+    auto type = ParseType();
+    return AddNode(ParseNodeKind::Binding(), colon, start,
+                   /*has_error=*/!type);
   }
 
-  return AddNode(ParseNodeKind::ParameterDeclaration(), *name, start,
-                 /*has_error=*/!type);
+  switch (kind) {
+    case PatternKind::Parameter:
+      emitter.EmitError<ExpectedParameterName>(*position);
+      break;
+
+    case PatternKind::Variable:
+      emitter.EmitError<ExpectedVariableName>(*position);
+      break;
+  }
+
+  return llvm::None;
+}
+
+auto ParseTree::Parser::ParseFunctionParameter() -> llvm::Optional<Node> {
+  return ParsePattern(PatternKind::Parameter);
 }
 
 auto ParseTree::Parser::ParseFunctionSignature() -> bool {
@@ -507,18 +518,15 @@ auto ParseTree::Parser::ParseFunctionDeclaration() -> Node {
 }
 
 auto ParseTree::Parser::ParseVariableDeclaration() -> Node {
-  // `var` expression identifier [= expression] `;`
+  // `var` pattern [= expression] `;`
   TokenizedBuffer::Token var_token = Consume(TokenKind::VarKeyword());
   auto start = GetSubtreeStartPosition();
 
-  auto type = ParseType();
-
-  auto name = ConsumeAndAddLeafNodeIf(TokenKind::Identifier(),
-                                      ParseNodeKind::DeclaredName());
-  if (!name) {
-    emitter.EmitError<ExpectedVariableName>(*position);
-    if (auto after_name = FindNextOf({TokenKind::Equal(), TokenKind::Semi()})) {
-      SkipTo(*after_name);
+  auto pattern = ParsePattern(PatternKind::Variable);
+  if (!pattern) {
+    if (auto after_pattern =
+            FindNextOf({TokenKind::Equal(), TokenKind::Semi()})) {
+      SkipTo(*after_pattern);
     }
   }
 
@@ -538,7 +546,7 @@ auto ParseTree::Parser::ParseVariableDeclaration() -> Node {
   }
 
   return AddNode(ParseNodeKind::VariableDeclaration(), var_token, start,
-                 /*has_error=*/!type || !name || !semi);
+                 /*has_error=*/!pattern || !semi);
 }
 
 auto ParseTree::Parser::ParseEmptyDeclaration() -> Node {
@@ -742,6 +750,10 @@ auto ParseTree::Parser::ParseOperatorExpression(
 
 auto ParseTree::Parser::ParseExpression() -> llvm::Optional<Node> {
   return ParseOperatorExpression(PrecedenceGroup::ForTopLevelExpression());
+}
+
+auto ParseTree::Parser::ParseType() -> llvm::Optional<Node> {
+  return ParseOperatorExpression(PrecedenceGroup::ForType());
 }
 
 auto ParseTree::Parser::ParseExpressionStatement() -> llvm::Optional<Node> {
