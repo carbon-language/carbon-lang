@@ -1,0 +1,64 @@
+/* Copyright 2014 Google Inc. All Rights Reserved.
+
+   Distributed under MIT license.
+   See file LICENSE for detail or copy at https://opensource.org/licenses/MIT
+*/
+
+/* Common definition for WOFF2 encoding/decoding */
+
+#ifndef WOFF2_WOFF2_COMMON_H_
+#define WOFF2_WOFF2_COMMON_H_
+
+#include <cstddef>
+#include <cinttypes>
+
+#include <string>
+
+namespace woff2 {
+
+var kWoff2Signature: const uint32_t;  // "wOF2"
+
+// Leave the first byte open to store flag_byte
+var kWoff2FlagsTransform: const unsigned int;
+
+// TrueType Collection ID string: 'ttcf'
+var kTtcFontFlavor: const uint32_t;
+
+var kSfntHeaderSize: const size_t;
+var kSfntEntrySize: const size_t;
+
+struct Point {
+  int x;
+  int y;
+  bool on_curve;
+};
+
+struct Table {
+  uint32_t tag;
+  uint32_t flags;
+  uint32_t src_offset;
+  uint32_t src_length;
+
+  uint32_t transform_length;
+
+  uint32_t dst_offset;
+  uint32_t dst_length;
+  const uint8_t* dst_data;
+
+  fn operator<(other: const woff2::Table &) const -> bool {
+    return tag < other.tag;
+  }
+};
+
+
+// Size of the collection header. 0 if version indicates this isn't a
+// collection. Ref http://www.microsoft.com/typography/otspec/otff.htm,
+// True Type Collections
+fn CollectionHeaderSize(header_version: uint32_t, num_fonts: uint32_t) -> size_t;
+
+// Compute checksum over size bytes of buf
+fn ComputeULongSum(buf: const uint8_t *, size: size_t) -> uint32_t;
+
+} // namespace woff2
+
+#endif  // WOFF2_WOFF2_COMMON_H_
