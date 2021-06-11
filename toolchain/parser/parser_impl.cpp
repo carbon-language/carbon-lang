@@ -385,7 +385,7 @@ auto ParseTree::Parser::ParsePattern(PatternKind kind) -> llvm::Optional<Node> {
                 Consume(TokenKind::Identifier()));
     auto colon = Consume(TokenKind::Colon());
     auto type = ParseType();
-    return AddNode(ParseNodeKind::Binding(), colon, start,
+    return AddNode(ParseNodeKind::PatternBinding(), colon, start,
                    /*has_error=*/!type);
   }
 

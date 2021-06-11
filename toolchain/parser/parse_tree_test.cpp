@@ -154,19 +154,19 @@ TEST_F(ParseTreeTest, FunctionDeclarationWithParameterList) {
   TokenizedBuffer tokens = GetTokenizedBuffer("fn foo(bar: Int, baz: Int);");
   ParseTree tree = ParseTree::Parse(tokens, consumer);
   EXPECT_FALSE(tree.HasErrors());
-  EXPECT_THAT(
-      tree,
-      MatchParseTreeNodes(
-          {MatchFunctionDeclaration(
-               MatchDeclaredName("foo"),
-               MatchParameterList(MatchBinding(MatchDeclaredName("bar"), ":",
+  EXPECT_THAT(tree,
+              MatchParseTreeNodes(
+                  {MatchFunctionDeclaration(
+                       MatchDeclaredName("foo"),
+                       MatchParameterList(
+                           MatchPatternBinding(MatchDeclaredName("bar"), ":",
                                                MatchNameReference("Int")),
-                                  MatchParameterListComma(),
-                                  MatchBinding(MatchDeclaredName("baz"), ":",
+                           MatchParameterListComma(),
+                           MatchPatternBinding(MatchDeclaredName("baz"), ":",
                                                MatchNameReference("Int")),
-                                  MatchParameterListEnd()),
-               MatchDeclarationEnd()),
-           MatchFileEnd()}));
+                           MatchParameterListEnd()),
+                       MatchDeclarationEnd()),
+                   MatchFileEnd()}));
 }
 
 TEST_F(ParseTreeTest, FunctionDefinitionWithParameterList) {
@@ -181,12 +181,13 @@ TEST_F(ParseTreeTest, FunctionDefinitionWithParameterList) {
       MatchParseTreeNodes(
           {MatchFunctionDeclaration(
                MatchDeclaredName("foo"),
-               MatchParameterList(MatchBinding(MatchDeclaredName("bar"), ":",
-                                               MatchNameReference("Int")),
-                                  MatchParameterListComma(),
-                                  MatchBinding(MatchDeclaredName("baz"), ":",
-                                               MatchNameReference("Int")),
-                                  MatchParameterListEnd()),
+               MatchParameterList(
+                   MatchPatternBinding(MatchDeclaredName("bar"), ":",
+                                       MatchNameReference("Int")),
+                   MatchParameterListComma(),
+                   MatchPatternBinding(MatchDeclaredName("baz"), ":",
+                                       MatchNameReference("Int")),
+                   MatchParameterListEnd()),
                MatchCodeBlock(
                    MatchExpressionStatement(MatchCallExpression(
                        MatchNameReference("foo"), MatchNameReference("baz"),
@@ -539,22 +540,23 @@ TEST_F(ParseTreeTest, VariableDeclarations) {
   ParseTree tree = ParseTree::Parse(tokens, consumer);
   EXPECT_FALSE(tree.HasErrors());
 
-  EXPECT_THAT(
-      tree,
-      MatchParseTreeNodes(
-          {MatchVariableDeclaration(MatchBinding(MatchDeclaredName("v"), ":",
-                                                 MatchNameReference("Int")),
-                                    MatchVariableInitializer(MatchLiteral("0")),
-                                    MatchDeclarationEnd()),
-           MatchVariableDeclaration(MatchBinding(MatchDeclaredName("w"), ":",
-                                                 MatchNameReference("Int")),
-                                    MatchDeclarationEnd()),
-           MatchFunctionWithBody(MatchVariableDeclaration(
-               MatchBinding(MatchDeclaredName("s"), ":",
-                            MatchNameReference("String")),
-               MatchVariableInitializer(MatchLiteral("\"hello\"")),
-               MatchDeclarationEnd())),
-           MatchFileEnd()}));
+  EXPECT_THAT(tree,
+              MatchParseTreeNodes(
+                  {MatchVariableDeclaration(
+                       MatchPatternBinding(MatchDeclaredName("v"), ":",
+                                           MatchNameReference("Int")),
+                       MatchVariableInitializer(MatchLiteral("0")),
+                       MatchDeclarationEnd()),
+                   MatchVariableDeclaration(
+                       MatchPatternBinding(MatchDeclaredName("w"), ":",
+                                           MatchNameReference("Int")),
+                       MatchDeclarationEnd()),
+                   MatchFunctionWithBody(MatchVariableDeclaration(
+                       MatchPatternBinding(MatchDeclaredName("s"), ":",
+                                           MatchNameReference("String")),
+                       MatchVariableInitializer(MatchLiteral("\"hello\"")),
+                       MatchDeclarationEnd())),
+                   MatchFileEnd()}));
 }
 
 TEST_F(ParseTreeTest, IfNoElse) {
@@ -716,8 +718,8 @@ TEST_F(ParseTreeTest, Return) {
                MatchReturnStatement(MatchStatementEnd()))),
            MatchFunctionDeclaration(
                MatchDeclaredName(),
-               MatchParameters(MatchBinding(MatchDeclaredName("x"), ":",
-                                            MatchNameReference("Int"))),
+               MatchParameters(MatchPatternBinding(MatchDeclaredName("x"), ":",
+                                                   MatchNameReference("Int"))),
                MatchReturnType(MatchNameReference("Int")),
                MatchCodeBlock(MatchReturnStatement(MatchNameReference("x"),
                                                    MatchStatementEnd()),
