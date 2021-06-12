@@ -153,7 +153,7 @@ class TokenizedBuffer::Lexer {
   }
 
   auto SkipWhitespace(llvm::StringRef& source_text) -> bool {
-    const char *const whitespace_start = source_text.begin();
+    const char* const whitespace_start = source_text.begin();
 
     while (!source_text.empty()) {
       // We only support line-oriented commenting and lex comments as-if they

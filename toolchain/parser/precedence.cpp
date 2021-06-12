@@ -24,6 +24,10 @@ enum PrecedenceLevel : int8_t {
   BitwiseOr,
   BitwiseXor,
   BitShift,
+  // Type formation.
+  TypePostfix,
+  // Sentinel representing a type context.
+  Type,
   // Logical.
   LogicalPrefix,
   Relational,
@@ -32,8 +36,6 @@ enum PrecedenceLevel : int8_t {
   // Assignment.
   SimpleAssignment,
   CompoundAssignment,
-  // Sentinel representing a type context.
-  Type,
   // Sentinel representing a context in which any operator can appear.
   Lowest,
 };
@@ -46,29 +48,20 @@ struct OperatorPriorityTable {
     // Start with a list of <higher precedence>, <lower precedence>
     // relationships.
     MarkHigherThan({Highest}, {NumericPrefix, BitwisePrefix, LogicalPrefix,
-                               NumericPostfix});
+                               NumericPostfix, TypePostfix});
     MarkHigherThan({NumericPrefix, NumericPostfix},
                    {Modulo, Multiplicative, BitShift});
     MarkHigherThan({Multiplicative}, {Additive});
     MarkHigherThan({BitwisePrefix},
                    {BitwiseAnd, BitwiseOr, BitwiseXor, BitShift});
+    MarkHigherThan({TypePostfix}, {Type});
     MarkHigherThan(
-        {Modulo, Additive, BitwiseAnd, BitwiseOr, BitwiseXor, BitShift},
+        {Modulo, Additive, BitwiseAnd, BitwiseOr, BitwiseXor, BitShift, Type},
         {SimpleAssignment, CompoundAssignment, Relational});
     MarkHigherThan({Relational, LogicalPrefix}, {LogicalAnd, LogicalOr});
     MarkHigherThan(
         {SimpleAssignment, CompoundAssignment, LogicalAnd, LogicalOr},
         {Lowest});
-
-    // FIXME: Decide upon a precedence level to use for types. It's important
-    // that this is no higher than simple assignment, otherwise
-    //   var x: T = y;
-    // would be parsed as
-    //   var x: (T = y);
-    // For now, we have no type operators and no operator overloading, so we
-    // only parse primary expressions in types.
-    MarkHigherThan({Highest}, {Type});
-    MarkHigherThan({Type}, {Lowest});
 
     // Compute the transitive closure of the above relationships: if we parse
     // `a $ b @ c` as `(a $ b) @ c` and parse `b @ c % d` as `(b @ c) % d`,
@@ -144,7 +137,7 @@ struct OperatorPriorityTable {
     }
 
     // Postfix operators are symmetric with prefix operators.
-    for (PrecedenceLevel postfix : {NumericPostfix}) {
+    for (PrecedenceLevel postfix : {NumericPostfix, TypePostfix}) {
       table[postfix][postfix] = OperatorPriority::LeftFirst;
     }
 
@@ -216,7 +209,8 @@ auto PrecedenceGroup::ForLeading(TokenKind kind)
   }
 }
 
-auto PrecedenceGroup::ForTrailing(TokenKind kind) -> llvm::Optional<Trailing> {
+auto PrecedenceGroup::ForTrailing(TokenKind kind, bool infix)
+    -> llvm::Optional<Trailing> {
   switch (kind) {
     // Assignment operators.
     case TokenKind::Equal():
@@ -265,11 +259,15 @@ auto PrecedenceGroup::ForTrailing(TokenKind kind) -> llvm::Optional<Trailing> {
       return Trailing{.level = Additive, .is_binary = true};
 
     // Multiplicative operators.
-    case TokenKind::Star():
     case TokenKind::Slash():
       return Trailing{.level = Multiplicative, .is_binary = true};
     case TokenKind::Percent():
       return Trailing{.level = Modulo, .is_binary = true};
+
+    // `*` could be multiplication or pointer type formation.
+    case TokenKind::Star():
+      return infix ? Trailing{.level = Multiplicative, .is_binary = true}
+                   : Trailing{.level = TypePostfix, .is_binary = false};
 
     // Postfix operators.
     case TokenKind::MinusMinus():

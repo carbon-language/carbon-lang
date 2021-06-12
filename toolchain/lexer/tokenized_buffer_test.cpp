@@ -604,7 +604,7 @@ TEST_F(LexerTest, Keywords) {
                           {TokenKind::UnderscoreKeyword()},
                           {TokenKind::EndOfFile()},
                       }));
-  }
+}
 
 TEST_F(LexerTest, Comments) {
   auto buffer = Lex(" ;\n  // foo\n  ;\n");
