@@ -32,6 +32,8 @@ enum PrecedenceLevel : int8_t {
   // Assignment.
   SimpleAssignment,
   CompoundAssignment,
+  // Sentinel representing a type context.
+  Type,
   // Sentinel representing a context in which any operator can appear.
   Lowest,
 };
@@ -57,6 +59,16 @@ struct OperatorPriorityTable {
     MarkHigherThan(
         {SimpleAssignment, CompoundAssignment, LogicalAnd, LogicalOr},
         {Lowest});
+
+    // FIXME: Decide upon a precedence level to use for types. It's important
+    // that this is no higher than simple assignment, otherwise
+    //   var x: T = y;
+    // would be parsed as
+    //   var x: (T = y);
+    // For now, we have no type operators and no operator overloading, so we
+    // only parse primary expressions in types.
+    MarkHigherThan({Highest}, {Type});
+    MarkHigherThan({Type}, {Lowest});
 
     // Compute the transitive closure of the above relationships: if we parse
     // `a $ b @ c` as `(a $ b) @ c` and parse `b @ c % d` as `(b @ c) % d`,
@@ -179,6 +191,10 @@ auto PrecedenceGroup::ForPostfixExpression() -> PrecedenceGroup {
 
 auto PrecedenceGroup::ForTopLevelExpression() -> PrecedenceGroup {
   return PrecedenceGroup(Lowest);
+}
+
+auto PrecedenceGroup::ForType() -> PrecedenceGroup {
+  return PrecedenceGroup(Type);
 }
 
 auto PrecedenceGroup::ForLeading(TokenKind kind)

@@ -200,7 +200,7 @@ class ParseTree::Parser {
   auto ParseExpression() -> llvm::Optional<Node>;
 
   // Parses a type expression.
-  auto ParseType() -> llvm::Optional<Node> { return ParseExpression(); }
+  auto ParseType() -> llvm::Optional<Node>;
 
   // Parses an expression statement: an expression followed by a semicolon.
   auto ParseExpressionStatement() -> llvm::Optional<Node>;
@@ -227,6 +227,14 @@ class ParseTree::Parser {
 
   // Parses a statement.
   auto ParseStatement() -> llvm::Optional<Node>;
+
+  enum class PatternKind {
+    Parameter,
+    Variable,
+  };
+
+  // Parses a pattern.
+  auto ParsePattern(PatternKind kind) -> llvm::Optional<Node>;
 
   ParseTree& tree;
   TokenizedBuffer& tokens;

@@ -45,6 +45,10 @@ class PrecedenceGroup {
   // operators should have higher precedence than this.
   static auto ForTopLevelExpression() -> PrecedenceGroup;
 
+  // Get the precedence level at which to parse a type expression. All type
+  // operators should have higher precedence than this.
+  static auto ForType() -> PrecedenceGroup;
+
   // Look up the operator information of the given prefix operator token, or
   // return llvm::None if the given token is not a prefix operator.
   static auto ForLeading(TokenKind kind) -> llvm::Optional<PrecedenceGroup>;
