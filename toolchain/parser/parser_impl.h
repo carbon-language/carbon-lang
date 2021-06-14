@@ -34,16 +34,19 @@ class ParseTree::Parser {
   }
 
   // Gets the kind of the next token to be consumed.
-  auto NextTokenKind() const -> TokenKind { return tokens.GetKind(*position); }
+  [[nodiscard]] auto NextTokenKind() const -> TokenKind {
+    return tokens.GetKind(*position);
+  }
 
   // Tests whether the next token to be consumed is of the specified kind.
-  auto NextTokenIs(TokenKind kind) const -> bool {
+  [[nodiscard]] auto NextTokenIs(TokenKind kind) const -> bool {
     return NextTokenKind() == kind;
   }
 
   // Tests whether the next token to be consumed is of any of the specified
   // kinds.
-  auto NextTokenIsOneOf(std::initializer_list<TokenKind> kinds) const -> bool {
+  [[nodiscard]] auto NextTokenIsOneOf(
+      std::initializer_list<TokenKind> kinds) const -> bool {
     return NextTokenKind().IsOneOf(kinds);
   }
 

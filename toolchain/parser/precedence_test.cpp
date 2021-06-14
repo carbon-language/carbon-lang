@@ -12,7 +12,6 @@ namespace Carbon {
 namespace {
 
 using ::testing::Eq;
-using ::testing::Ne;
 
 TEST(PrecedenceTest, OperatorsAreRecognized) {
   EXPECT_TRUE(PrecedenceGroup::ForLeading(TokenKind::Minus()).hasValue());

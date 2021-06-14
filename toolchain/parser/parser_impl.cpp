@@ -593,7 +593,7 @@ auto ParseTree::Parser::ParseParenExpression() -> llvm::Optional<Node> {
       ParseCloseParen(open_paren, ParseNodeKind::ParenExpressionEnd());
 
   return AddNode(ParseNodeKind::ParenExpression(), open_paren, start,
-                 /*has_errors=*/!expr || !close_paren);
+                 /*has_error=*/!expr || !close_paren);
 }
 
 auto ParseTree::Parser::ParsePrimaryExpression() -> llvm::Optional<Node> {
@@ -792,7 +792,7 @@ auto ParseTree::Parser::ParseParenCondition(TokenKind introducer)
       ParseCloseParen(*open_paren, ParseNodeKind::ConditionEnd());
 
   return AddNode(ParseNodeKind::Condition(), *open_paren, start,
-                 /*has_errors=*/!expr || !close_paren);
+                 /*has_error=*/!expr || !close_paren);
 }
 
 auto ParseTree::Parser::ParseIfStatement() -> llvm::Optional<Node> {
@@ -806,7 +806,7 @@ auto ParseTree::Parser::ParseIfStatement() -> llvm::Optional<Node> {
     else_has_errors = !ParseStatement();
   }
   return AddNode(ParseNodeKind::IfStatement(), if_token, start,
-                 /*has_errors=*/!cond || !then_case || else_has_errors);
+                 /*has_error=*/!cond || !then_case || else_has_errors);
 }
 
 auto ParseTree::Parser::ParseWhileStatement() -> llvm::Optional<Node> {
@@ -815,7 +815,7 @@ auto ParseTree::Parser::ParseWhileStatement() -> llvm::Optional<Node> {
   auto cond = ParseParenCondition(TokenKind::WhileKeyword());
   auto body = ParseStatement();
   return AddNode(ParseNodeKind::WhileStatement(), while_token, start,
-                 /*has_errors=*/!cond || !body);
+                 /*has_error=*/!cond || !body);
 }
 
 auto ParseTree::Parser::ParseKeywordStatement(ParseNodeKind kind,
@@ -841,7 +841,7 @@ auto ParseTree::Parser::ParseKeywordStatement(ParseNodeKind kind,
                                          {.preceding = keyword_kind});
     // FIXME: Try to skip to a semicolon to recover.
   }
-  return AddNode(kind, keyword, start, /*has_errors=*/!semi || arg_error);
+  return AddNode(kind, keyword, start, /*has_error=*/!semi || arg_error);
 }
 
 auto ParseTree::Parser::ParseStatement() -> llvm::Optional<Node> {
