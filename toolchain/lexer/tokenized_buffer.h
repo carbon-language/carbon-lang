@@ -181,6 +181,7 @@ class TokenizedBuffer {
 
     auto operator*() const -> const Token& { return token; }
 
+    using iterator_facade_base::operator-;
     auto operator-(const TokenIterator& rhs) const -> int {
       return token.index - rhs.token.index;
     }

@@ -424,7 +424,7 @@ auto ParseTree::Parser::ParseParenList(ListElementParser list_element_parser,
 
 auto ParseTree::Parser::ParsePattern(PatternKind kind) -> llvm::Optional<Node> {
   if (NextTokenIs(TokenKind::Identifier()) &&
-      tokens.GetKind(position[1]) == TokenKind::Colon()) {
+      tokens.GetKind(*(position + 1)) == TokenKind::Colon()) {
     // identifier `:` type
     auto start = GetSubtreeStartPosition();
     AddLeafNode(ParseNodeKind::DeclaredName(),
@@ -778,8 +778,8 @@ auto ParseTree::Parser::IsLexicallyValidInfixOperator() -> bool {
   // bracket, identifier, or literal and the next token must be an open paren,
   // identifier, or literal.
   if (position == tokens.Tokens().begin() ||
-      !IsAssumedEndOfOperand(tokens.GetKind(position[-1])) ||
-      !IsAssumedStartOfOperand(tokens.GetKind(position[1]))) {
+      !IsAssumedEndOfOperand(tokens.GetKind(*(position - 1))) ||
+      !IsAssumedStartOfOperand(tokens.GetKind(*(position + 1)))) {
     return false;
   }
 
@@ -824,7 +824,7 @@ auto ParseTree::Parser::IsTrailingOperatorInfix() -> bool {
   // An operator that follows the infix operator rules is parsed as
   // infix, unless the next token means that it can't possibly be.
   if (IsLexicallyValidInfixOperator() &&
-      IsPossibleStartOfOperand(tokens.GetKind(position[1]))) {
+      IsPossibleStartOfOperand(tokens.GetKind(*(position + 1)))) {
     return true;
   }
 
@@ -833,7 +833,7 @@ auto ParseTree::Parser::IsTrailingOperatorInfix() -> bool {
   // then parse as infix, otherwise as postfix. Either way we'll produce a
   // diagnostic later on.
   if (tokens.HasLeadingWhitespace(*position) &&
-      IsAssumedStartOfOperand(tokens.GetKind(position[1]))) {
+      IsAssumedStartOfOperand(tokens.GetKind(*(position + 1)))) {
     return true;
   }
 

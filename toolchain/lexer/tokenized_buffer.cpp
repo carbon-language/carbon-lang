@@ -647,7 +647,7 @@ auto TokenizedBuffer::GetMatchedOpeningToken(Token closing_token) const
 
 auto TokenizedBuffer::HasLeadingWhitespace(Token token) const -> bool {
   auto it = TokenIterator(token);
-  return it == Tokens().begin() || GetTokenInfo(it[-1]).has_trailing_space;
+  return it == Tokens().begin() || GetTokenInfo(*(it - 1)).has_trailing_space;
 }
 
 auto TokenizedBuffer::HasTrailingWhitespace(Token token) const -> bool {
