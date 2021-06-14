@@ -127,11 +127,13 @@ struct BinaryOperatorRequiresWhitespace
 
   auto Format() -> std::string {
     const char* where = "around";
+    // clang-format off
     if (has_leading_space) {
       where = "after";
     } else if (has_trailing_space) {
       where = "before";
     }
+    // clang-format on
     return llvm::formatv(Message, where);
   }
 };
