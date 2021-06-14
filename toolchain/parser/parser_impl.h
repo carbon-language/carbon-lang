@@ -191,6 +191,20 @@ class ParseTree::Parser {
   // -   designators
   auto ParsePostfixExpression() -> llvm::Optional<Node>;
 
+  enum class OperatorFixity { Prefix, Infix, Postfix };
+
+  // Determines whether the current token satisfies the lexical validity rules
+  // for an infix operator.
+  auto IsLexicallyValidInfixOperator() -> bool;
+
+  // Diagnoses if the current token is not written properly for the given
+  // fixity, for example because mandatory whitespace is missing.
+  auto DiagnoseOperatorFixity(OperatorFixity fixity) -> void;
+
+  // Determines whether the current trailing operator should be treated as
+  // infix.
+  auto IsTrailingOperatorInfix() -> bool;
+
   // Parses an expression involving operators, in a context with the given
   // precedence.
   auto ParseOperatorExpression(PrecedenceGroup precedence)
