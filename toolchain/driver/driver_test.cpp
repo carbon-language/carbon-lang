@@ -164,6 +164,8 @@ TEST(DriverTest, DumpTokens) {
   EXPECT_THAT(&*token_it, IsKeyValueScalars("spelling", "Hello"));
   ++token_it;
   EXPECT_THAT(&*token_it, IsKeyValueScalars("identifier", "0"));
+  ++token_it;
+  EXPECT_THAT(&*token_it, IsKeyValueScalars("has_trailing_space", "true"));
   EXPECT_THAT(++token_it, Eq(token_value_node->end()));
 
   ++mapping_it;
@@ -189,6 +191,8 @@ TEST(DriverTest, DumpTokens) {
   EXPECT_THAT(&*token_it, IsKeyValueScalars("spelling", "World"));
   ++token_it;
   EXPECT_THAT(&*token_it, IsKeyValueScalars("identifier", "1"));
+  ++token_it;
+  EXPECT_THAT(&*token_it, IsKeyValueScalars("has_trailing_space", "true"));
   EXPECT_THAT(++token_it, Eq(token_value_node->end()));
 
   ++mapping_it;

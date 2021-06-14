@@ -57,8 +57,11 @@ class PrecedenceGroup {
 
   // Look up the operator information of the given infix or postfix operator
   // token, or return llvm::None if the given token is not an infix or postfix
-  // operator.
-  static auto ForTrailing(TokenKind kind) -> llvm::Optional<Trailing>;
+  // operator. `infix` indicates whether this is a valid infix operator, but is
+  // only considered if the same operator symbol is available as both infix and
+  // postfix.
+  static auto ForTrailing(TokenKind kind, bool infix)
+      -> llvm::Optional<Trailing>;
 
   friend auto operator==(PrecedenceGroup lhs, PrecedenceGroup rhs) -> bool {
     return lhs.level == rhs.level;

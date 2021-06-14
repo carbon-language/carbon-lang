@@ -146,7 +146,15 @@ class TokenizedBuffer::Lexer {
     set_indent = false;
   }
 
+  auto NoteWhitespace() -> void {
+    if (!buffer.token_infos.empty()) {
+      buffer.token_infos.back().has_trailing_space = true;
+    }
+  }
+
   auto SkipWhitespace(llvm::StringRef& source_text) -> bool {
+    const char* const whitespace_start = source_text.begin();
+
     while (!source_text.empty()) {
       // We only support line-oriented commenting and lex comments as-if they
       // were whitespace.
@@ -174,6 +182,9 @@ class TokenizedBuffer::Lexer {
           // If we find a non-whitespace character without exhausting the
           // buffer, return true to continue lexing.
           assert(!IsSpace(source_text.front()));
+          if (whitespace_start != source_text.begin()) {
+            NoteWhitespace();
+          }
           return true;
 
         case '\n':
@@ -374,13 +385,17 @@ class TokenizedBuffer::Lexer {
       open_groups.pop_back();
       token_emitter.EmitError<MismatchedClosing>(opening_token);
 
+      assert(!buffer.Tokens().empty() && "Must have a prior opening token!");
+      Token prev_token = buffer.Tokens().end()[-1];
+
       // TODO: do a smarter backwards scan for where to put the closing
       // token.
-      Token closing_token =
-          buffer.AddToken({.kind = opening_kind.GetClosingSymbol(),
-                           .is_recovery = true,
-                           .token_line = current_line,
-                           .column = current_column});
+      Token closing_token = buffer.AddToken(
+          {.kind = opening_kind.GetClosingSymbol(),
+           .has_trailing_space = buffer.HasTrailingWhitespace(prev_token),
+           .is_recovery = true,
+           .token_line = current_line,
+           .column = current_column});
       TokenInfo& opening_token_info = buffer.GetTokenInfo(opening_token);
       TokenInfo& closing_token_info = buffer.GetTokenInfo(closing_token);
       opening_token_info.closing_token = closing_token;
@@ -501,6 +516,9 @@ auto TokenizedBuffer::Lex(SourceBuffer& source, DiagnosticConsumer& consumer)
     }
     assert(result && "No token was lexed.");
   }
+
+  // The end-of-file token is always considered to be whitespace.
+  lexer.NoteWhitespace();
 
   lexer.CloseInvalidOpenGroups(TokenKind::Error());
   lexer.AddEndOfFileToken();
@@ -627,6 +645,15 @@ auto TokenizedBuffer::GetMatchedOpeningToken(Token closing_token) const
   return closing_token_info.opening_token;
 }
 
+auto TokenizedBuffer::HasLeadingWhitespace(Token token) const -> bool {
+  auto it = TokenIterator(token);
+  return it == Tokens().begin() || GetTokenInfo(*(it - 1)).has_trailing_space;
+}
+
+auto TokenizedBuffer::HasTrailingWhitespace(Token token) const -> bool {
+  return GetTokenInfo(token).has_trailing_space;
+}
+
 auto TokenizedBuffer::IsRecoveryToken(Token token) const -> bool {
   return GetTokenInfo(token).is_recovery;
 }
@@ -733,6 +760,9 @@ auto TokenizedBuffer::PrintToken(llvm::raw_ostream& output_stream, Token token,
   }
   // TODO: Include value for numeric literals.
 
+  if (token_info.has_trailing_space) {
+    output_stream << ", has_trailing_space: true";
+  }
   if (token_info.is_recovery) {
     output_stream << ", recovery: true";
   }
