@@ -79,7 +79,7 @@ struct MismatchedIndentInString : SimpleDiagnostic<MismatchedIndentInString> {
 static auto TakeMultiLineStringLiteralPrefix(llvm::StringRef source_text)
     -> llvm::StringRef {
   llvm::StringRef remaining = source_text;
-  if (!remaining.consume_front("\"\"\"")) {
+  if (!remaining.consume_front(R"(""")")) {
     return llvm::StringRef();
   }
 
@@ -113,7 +113,7 @@ auto LexedStringLiteral::Lex(llvm::StringRef source_text)
   bool multi_line = !multi_line_prefix.empty();
   if (multi_line) {
     source_text = source_text.drop_front(multi_line_prefix.size());
-    terminator = "\"\"\"";
+    terminator = R"(""")";
   } else if (!source_text.consume_front("\"")) {
     return llvm::None;
   }

@@ -19,7 +19,7 @@ namespace Carbon {
 class LexedNumericLiteral {
  public:
   // Get the text corresponding to this literal.
-  auto Text() const -> llvm::StringRef { return text; }
+  [[nodiscard]] auto Text() const -> llvm::StringRef { return text; }
 
   // Extract a numeric literal from the given text, if it has a suitable form.
   //
@@ -52,7 +52,7 @@ class LexedNumericLiteral {
   auto ComputeValue(DiagnosticEmitter<const char*>& emitter) const -> Value;
 
  private:
-  LexedNumericLiteral() {}
+  LexedNumericLiteral() = default;
 
   class Parser;
 

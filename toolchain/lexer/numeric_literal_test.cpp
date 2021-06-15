@@ -75,7 +75,7 @@ struct RealMatcher {
 };
 
 // Matcher for a real literal value.
-auto HasRealValue(RealMatcher real_matcher)
+auto HasRealValue(const RealMatcher& real_matcher)
     -> Matcher<LexedNumericLiteral::Value> {
   return VariantWith<LexedNumericLiteral::RealValue>(AllOf(
       Field(&LexedNumericLiteral::RealValue::radix, real_matcher.radix),

@@ -30,6 +30,9 @@ enum class Associativity : int8_t {
 // A precedence group associated with an operator or expression.
 class PrecedenceGroup {
  private:
+  // We rely on implicit conversions via `int8_t` for enumerators defined in the
+  // implementation.
+  // NOLINTNEXTLINE(google-explicit-constructor)
   PrecedenceGroup(int8_t level) : level(level) {}
 
  public:
@@ -75,7 +78,7 @@ class PrecedenceGroup {
       -> OperatorPriority;
 
   // Get the associativity of this precedence group.
-  Associativity GetAssociativity() const {
+  [[nodiscard]] auto GetAssociativity() const -> Associativity {
     return static_cast<Associativity>(GetPriority(*this, *this));
   }
 

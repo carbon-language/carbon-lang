@@ -13,8 +13,7 @@
 #include "llvm/Support/FormatVariadic.h"
 #include "toolchain/diagnostics/diagnostic_emitter.h"
 
-namespace Carbon {
-namespace Testing {
+namespace Carbon::Testing {
 
 // A diagnostic translator for tests that lex a single token. Produces
 // locations such as "`12.5`:1:3" to refer to the third character in the token.
@@ -23,7 +22,8 @@ class SingleTokenDiagnosticTranslator
  public:
   // Form a translator for a given token. The string provided here must refer
   // to the same character array that we are going to lex.
-  SingleTokenDiagnosticTranslator(llvm::StringRef token) : token(token) {}
+  explicit SingleTokenDiagnosticTranslator(llvm::StringRef token)
+      : token(token) {}
 
   auto GetLocation(const char* pos) -> Diagnostic::Location override {
     assert(llvm::is_sorted(std::array{token.begin(), pos, token.end()}) &&
@@ -47,14 +47,13 @@ class SingleTokenDiagnosticTranslator
   }
 
  private:
-  auto SynthesizeFilename() const -> std::string {
+  [[nodiscard]] auto SynthesizeFilename() const -> std::string {
     return llvm::formatv("`{0}`", token);
   }
 
   llvm::StringRef token;
 };
 
-}  // namespace Testing
-}  // namespace Carbon
+}  // namespace Carbon::Testing
 
 #endif  // TOOLCHAIN_LEXER_TOKENIZED_BUFFER_TEST_HELPERS_H_

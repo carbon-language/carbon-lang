@@ -215,16 +215,16 @@ class TokenizedBuffer {
 
    public:
     // The mantissa, represented as an unsigned integer.
-    auto Mantissa() const -> const llvm::APInt& {
+    [[nodiscard]] auto Mantissa() const -> const llvm::APInt& {
       return buffer->literal_int_storage[literal_index];
     }
     // The exponent, represented as a signed integer.
-    auto Exponent() const -> const llvm::APInt& {
+    [[nodiscard]] auto Exponent() const -> const llvm::APInt& {
       return buffer->literal_int_storage[literal_index + 1];
     }
     // If false, the value is mantissa * 2^exponent.
     // If true, the value is mantissa * 10^exponent.
-    auto IsDecimal() const -> bool { return is_decimal; }
+    [[nodiscard]] auto IsDecimal() const -> bool { return is_decimal; }
 
    private:
     friend class TokenizedBuffer;
@@ -291,7 +291,7 @@ class TokenizedBuffer {
   [[nodiscard]] auto GetRealLiteral(Token token) const -> RealLiteralValue;
 
   // Returns the value of a `StringLiteral()` token.
-  auto GetStringLiteral(Token token) const -> llvm::StringRef;
+  [[nodiscard]] auto GetStringLiteral(Token token) const -> llvm::StringRef;
 
   // Returns the closing token matched with the given opening token.
   //
