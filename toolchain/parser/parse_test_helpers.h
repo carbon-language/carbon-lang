@@ -7,6 +7,7 @@
 
 #include <ostream>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "gmock/gmock.h"
@@ -318,8 +319,9 @@ auto MatchNode(Args... args) -> ExpectedNode {
 #include "parse_node_kind.def"
 
 // Helper for matching a designator `lhs.rhs`.
-auto MatchDesignator(ExpectedNode lhs, std::string rhs) -> ExpectedNode {
-  return MatchDesignatorExpression(std::move(lhs), MatchDesignatedName(rhs));
+inline auto MatchDesignator(ExpectedNode lhs, std::string rhs) -> ExpectedNode {
+  return MatchDesignatorExpression(std::move(lhs),
+                                   MatchDesignatedName(std::move(rhs)));
 }
 
 // Helper for matching a function parameter list.

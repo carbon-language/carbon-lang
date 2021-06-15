@@ -123,11 +123,12 @@ class TokenizedBuffer::Lexer {
 
    public:
     // Consumes (and discard) a valid token to construct a result
-    // indicating a token has been produced.
+    // indicating a token has been produced. Relies on implicit conversions.
+    // NOLINTNEXTLINE(google-explicit-constructor)
     LexResult(Token) : LexResult(true) {}
 
     // Returns a result indicating no token was produced.
-    static LexResult NoMatch() { return LexResult(false); }
+    static auto NoMatch() -> LexResult { return LexResult(false); }
 
     // Tests whether a token was produced by the lexing routine, and
     // the lexer can continue forming tokens.

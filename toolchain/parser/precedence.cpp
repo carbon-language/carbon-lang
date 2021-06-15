@@ -44,7 +44,7 @@ constexpr int8_t NumPrecedenceLevels = Lowest + 1;
 // A precomputed lookup table determining the relative precedence of two
 // precedence groups.
 struct OperatorPriorityTable {
-  constexpr OperatorPriorityTable() : table{} {
+  constexpr OperatorPriorityTable() : table() {
     // Start with a list of <higher precedence>, <lower precedence>
     // relationships.
     MarkHigherThan({Highest}, {NumericPrefix, BitwisePrefix, LogicalPrefix,
@@ -310,8 +310,8 @@ auto PrecedenceGroup::ForTrailing(TokenKind kind, bool infix)
 
 auto PrecedenceGroup::GetPriority(PrecedenceGroup left, PrecedenceGroup right)
     -> OperatorPriority {
-  static constexpr OperatorPriorityTable lookup;
-  return lookup.table[left.level][right.level];
+  static constexpr OperatorPriorityTable Lookup;
+  return Lookup.table[left.level][right.level];
 }
 
 }  // namespace Carbon
