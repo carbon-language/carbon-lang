@@ -536,7 +536,7 @@ bool LongJmpPass::relax(BinaryFunction &Func) {
       continue;
 
     for (MCInst &Inst : BB) {
-      if (BC.MII->get(Inst.getOpcode()).isPseudo())
+      if (BC.MIB->isPseudo(Inst))
         continue;
 
       if (!shouldInsertStub(BC, Inst)) {

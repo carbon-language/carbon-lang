@@ -3685,7 +3685,7 @@ size_t BinaryFunction::computeHash(bool UseDFS,
     for (const MCInst &Inst : *BB) {
       unsigned Opcode = Inst.getOpcode();
 
-      if (BC.MII->get(Opcode).isPseudo())
+      if (BC.MIB->isPseudo(Inst))
         continue;
 
       // Ignore unconditional jumps since we check CFG consistency by processing

@@ -55,10 +55,8 @@ void StokeInfo::checkInstr(const BinaryContext &BC, const BinaryFunction &BF,
       continue;
     }
     for (MCInst &It : *BB) {
-      const MCInstrDesc &InstDesc = BC.MII->get(It.getOpcode());
-      if (InstDesc.isPseudo()) {
+      if (BC.MIB->isPseudo(It))
         continue;
-      }
       // skip function with exception handling yet
       if (BC.MIB->isEHLabel(It) || BC.MIB->isInvoke(It)) {
         FuncInfo.Omitted = true;

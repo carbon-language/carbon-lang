@@ -2212,7 +2212,7 @@ public:
       --I;
 
       // Ignore nops and CFIs
-      if (Info->get(I->getOpcode()).isPseudo())
+      if (isPseudo(*I))
         continue;
 
       // Stop when we find the first non-terminator

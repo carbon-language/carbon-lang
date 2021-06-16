@@ -436,7 +436,7 @@ void BinaryEmitter::emitFunctionBody(BinaryFunction &BF, bool EmitColdPart,
     for (auto I = BB->begin(), E = BB->end(); I != E; ++I) {
       MCInst &Instr = *I;
 
-      if (EmitCodeOnly && BC.MII->get(Instr.getOpcode()).isPseudo())
+      if (EmitCodeOnly && BC.MIB->isPseudo(Instr))
         continue;
 
       // Handle pseudo instructions.

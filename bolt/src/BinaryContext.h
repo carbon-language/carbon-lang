@@ -1122,7 +1122,7 @@ public:
                            const MCCodeEmitter *Emitter = nullptr) const {
     uint64_t Size = 0;
     while (Beg != End) {
-      if (!MII->get(Beg->getOpcode()).isPseudo())
+      if (!MIB->isPseudo(*Beg))
         Size += computeInstructionSize(*Beg, Emitter);
       ++Beg;
     }

@@ -41,14 +41,14 @@ bool BinaryBasicBlock::hasInstructions() const {
 
 void BinaryBasicBlock::adjustNumPseudos(const MCInst &Inst, int Sign) {
   BinaryContext &BC = Function->getBinaryContext();
-  if (BC.MII->get(Inst.getOpcode()).isPseudo())
+  if (BC.MIB->isPseudo(Inst))
     NumPseudos += Sign;
 }
 
 BinaryBasicBlock::iterator BinaryBasicBlock::getFirstNonPseudo() {
   const BinaryContext &BC = Function->getBinaryContext();
   for (auto II = Instructions.begin(), E = Instructions.end(); II != E; ++II) {
-    if (!BC.MII->get(II->getOpcode()).isPseudo())
+    if (!BC.MIB->isPseudo(*II))
       return II;
   }
   return end();
@@ -58,7 +58,7 @@ BinaryBasicBlock::reverse_iterator BinaryBasicBlock::getLastNonPseudo() {
   const BinaryContext &BC = Function->getBinaryContext();
   for (auto RII = Instructions.rbegin(), E = Instructions.rend();
        RII != E; ++RII) {
-    if (!BC.MII->get(RII->getOpcode()).isPseudo())
+    if (!BC.MIB->isPseudo(*RII))
       return RII;
   }
   return rend();
@@ -491,7 +491,7 @@ uint32_t BinaryBasicBlock::getNumPseudos() const {
   BinaryContext &BC = Function->getBinaryContext();
   uint32_t N = 0;
   for (const MCInst &Instr : Instructions) {
-    if (BC.MII->get(Instr.getOpcode()).isPseudo())
+    if (BC.MIB->isPseudo(Instr))
       ++N;
   }
   if (N != NumPseudos) {

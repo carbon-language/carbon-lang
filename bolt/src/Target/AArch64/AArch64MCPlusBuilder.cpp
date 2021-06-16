@@ -586,7 +586,7 @@ public:
     for (auto II = Begin; II != End; ++II) {
       MCInst &Instr = *II;
       // Ignore nops and CFIs
-      if (Info->get(Instr.getOpcode()).isPseudo() || isNoop(Instr))
+      if (isPseudo(Instr) || isNoop(Instr))
         continue;
       if (TerminatorSeen) {
         RegAliasTable.clear();
@@ -807,7 +807,7 @@ public:
       --I;
 
       // Ignore nops and CFIs
-      if (Info->get(I->getOpcode()).isPseudo() || isNoop(*I))
+      if (isPseudo(*I) || isNoop(*I))
         continue;
 
       // Stop when we find the first non-terminator
