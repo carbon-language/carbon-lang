@@ -33,7 +33,7 @@ subject_cmd = subprocess.run(
     args=subject_cmd_args,
     stdout=subprocess.PIPE,
     stderr=subprocess.STDOUT,
-    text=True,
+    universal_newlines=True,
 )
 
 subject = subject_cmd.stdout
