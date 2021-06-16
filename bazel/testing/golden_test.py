@@ -46,7 +46,9 @@ if len(sys.argv) == 4 and sys.argv[3] == "--update":
         sys.exit(0)
 
 diff_cmd = subprocess.run(
-    args=["diff", "-u", golden_path, "-"], input=subject, text=True
+    args=["diff", "-u", golden_path, "-"],
+    input=subject,
+    universal_newlines=True,
 )
 if diff_cmd.returncode == 0:
     print("PASS")
