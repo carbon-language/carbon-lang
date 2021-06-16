@@ -12,6 +12,11 @@ the command will be run and its output stored in the golden file.
 Otherwise, the command will be run and its output compared against
 the contents of the golden file.
 
+For these purposes, the command's output consists of the interleaved
+contents of stdout and stderr, as well as the command's exit code. Thus,
+golden tests can provide coverage of cases where the command is expected
+to fail, as well as cases where it's expected to succeed.
+
 This script is designed to be run by a `golden_test` Bazel rule,
 and may not work when run outside that context.
 """
@@ -31,8 +36,8 @@ subject_cmd_args = sys.argv[2].split()
 
 subject_cmd = subprocess.run(
     args=subject_cmd_args,
-    stdout=subprocess.PIPE,
-    stderr=subprocess.STDOUT,
+    stdout=subprocess.PIPE,  # Capture stdout as a string
+    stderr=subprocess.STDOUT,  # Send stderr to the same place as stdout
     universal_newlines=True,
 )
 
