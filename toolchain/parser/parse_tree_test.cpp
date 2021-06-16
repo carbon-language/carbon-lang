@@ -537,6 +537,7 @@ TEST_F(ParseTreeTest, OperatorFixity) {
       "  var t: Type = Int*;\n"
       "  t = t**;\n"
       "  n = n * n;\n"
+      "  n = n * *p;\n"
       "  n = n*n;\n"
       "  G(Int*, n * n);\n"
       "}");
@@ -577,6 +578,11 @@ TEST_F(ParseTreeTest, OperatorFixity) {
                        MatchNameReference("n"), "=",
                        MatchInfixOperator(MatchNameReference("n"), "*",
                                           MatchNameReference("n")))),
+                   MatchExpressionStatement(MatchInfixOperator(
+                       MatchNameReference("n"), "=",
+                       MatchInfixOperator(
+                           MatchNameReference("n"), "*",
+                           MatchPrefixOperator("*", MatchNameReference("p"))))),
                    MatchExpressionStatement(MatchInfixOperator(
                        MatchNameReference("n"), "=",
                        MatchInfixOperator(MatchNameReference("n"), "*",
