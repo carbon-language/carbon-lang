@@ -31,12 +31,12 @@ PatternVariable Expression::GetPatternVariable() const {
 
 int Expression::GetInteger() const {
   assert(tag == ExpressionKind::Integer);
-  return std::get<int>(value);
+  return std::get<IntLiteral>(value).value;
 }
 
 bool Expression::GetBoolean() const {
   assert(tag == ExpressionKind::Boolean);
-  return std::get<bool>(value);
+  return std::get<BoolLiteral>(value).value;
 }
 
 Tuple Expression::GetTuple() const {
@@ -126,7 +126,7 @@ auto Expression::MakeInt(int line_num, int i) -> const Expression* {
   auto* e = new Expression();
   e->line_num = line_num;
   e->tag = ExpressionKind::Integer;
-  e->value = i;
+  e->value = IntLiteral({.value = i});
   return e;
 }
 
@@ -134,7 +134,7 @@ auto Expression::MakeBool(int line_num, bool b) -> const Expression* {
   auto* e = new Expression();
   e->line_num = line_num;
   e->tag = ExpressionKind::Boolean;
-  e->value = b;
+  e->value = BoolLiteral({.value = b});
   return e;
 }
 

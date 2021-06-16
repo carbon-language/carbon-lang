@@ -71,6 +71,14 @@ struct PatternVariable {
   const Expression* type;
 };
 
+struct IntLiteral {
+  int value;
+};
+
+struct BoolLiteral {
+  bool value;
+};
+
 struct Tuple {
   std::vector<FieldInitializer>* fields;
 };
@@ -88,6 +96,21 @@ struct Call {
 struct FunctionType {
   const Expression* parameter;
   const Expression* return_type;
+};
+
+struct AutoT {
+};
+
+struct BoolT {
+};
+
+struct IntT {
+};
+
+struct ContinuationT {
+};
+
+struct TypeT {
 };
 
 struct Expression {
@@ -139,12 +162,17 @@ struct Expression {
     FieldAccess,
     Index,
     PatternVariable,
-    int,
-    bool,
+    IntLiteral,
+    BoolLiteral,
     Tuple,
     PrimitiveOperator,
     Call,
-    FunctionType
+    FunctionType,
+    AutoT,
+    BoolT,
+    IntT,
+    ContinuationT,
+    TypeT
   > value;
 };
 
