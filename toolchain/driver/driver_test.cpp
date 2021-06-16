@@ -179,5 +179,59 @@ TEST(DriverTest, DumpTokenErrors) {
   EXPECT_THAT(test_error_stream.TakeStr(), HasSubstr("ERROR"));
 }
 
+TEST(DriverTest, DumpParseTree) {
+  RawTestOstream test_output_stream;
+  RawTestOstream test_error_stream;
+  Driver driver = Driver(test_output_stream, test_error_stream);
+
+  auto test_file_path = CreateTestFile("var v: Int = 42;");
+  EXPECT_TRUE(driver.RunDumpParseTreeSubcommand({test_file_path}));
+  EXPECT_THAT(test_error_stream.TakeStr(), StrEq(""));
+  auto tokenized_text = test_output_stream.TakeStr();
+
+  EXPECT_THAT(
+      Yaml::Value::FromText(tokenized_text),
+      ElementsAre(Yaml::Sequence(ElementsAre(
+          Yaml::Mapping(ElementsAre(
+              Pair("node_index", "6"), Pair("kind", "VariableDeclaration"),
+              Pair("text", "var"), Pair("subtree_size", "7"),
+              Pair("children",
+                   Yaml::Sequence(ElementsAre(
+                       Yaml::Mapping(ElementsAre(
+                           Pair("node_index", "2"),
+                           Pair("kind", "PatternBinding"), Pair("text", ":"),
+                           Pair("subtree_size", "3"),
+                           Pair("children",
+                                Yaml::Sequence(ElementsAre(
+                                    Yaml::Mapping(ElementsAre(
+                                        Pair("node_index", "0"),
+                                        Pair("kind", "DeclaredName"),
+                                        Pair("text", "v"))),
+                                    Yaml::Mapping(ElementsAre(
+                                        Pair("node_index", "1"),
+                                        Pair("kind", "NameReference"),
+                                        Pair("text", "Int")))))))),
+                       Yaml::Mapping(ElementsAre(
+                           Pair("node_index", "4"),
+                           Pair("kind", "VariableInitializer"),
+                           Pair("text", "="), Pair("subtree_size", "2"),
+                           Pair("children",
+                                Yaml::Sequence(ElementsAre(Yaml::Mapping(
+                                    ElementsAre(Pair("node_index", "3"),
+                                                Pair("kind", "Literal"),
+                                                Pair("text", "42")))))))),
+                       Yaml::Mapping(ElementsAre(Pair("node_index", "5"),
+                                                 Pair("kind", "DeclarationEnd"),
+                                                 Pair("text", ";")))))))),
+          Yaml::Mapping(ElementsAre(Pair("node_index", "7"),
+                                    Pair("kind", "FileEnd"),
+                                    Pair("text", "")))))));
+
+  // Check that the subcommand dispatch works.
+  EXPECT_TRUE(driver.RunFullCommand({"dump-parse-tree", test_file_path}));
+  EXPECT_THAT(test_error_stream.TakeStr(), StrEq(""));
+  EXPECT_THAT(test_output_stream.TakeStr(), StrEq(tokenized_text));
+}
+
 }  // namespace
 }  // namespace Carbon
