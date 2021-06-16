@@ -45,6 +45,7 @@ if len(sys.argv) == 4 and sys.argv[3] == "--update":
         golden.write(subject)
         sys.exit(0)
 
+# TODO: consider using difflib instead of a subprocess
 diff_cmd = subprocess.run(
     args=["diff", "-u", golden_path, "-"],
     input=subject,
