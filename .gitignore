@@ -14,6 +14,9 @@
 # Directories created by clangd
 /.cache/clangd
 
+# User-specific Bazel configuration.
+/user.bazelrc
+
 # Compilation database used by clangd
 compile_commands.json
 
