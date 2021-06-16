@@ -11,52 +11,52 @@ namespace Carbon {
 
 Variable Expression::GetVariable() const {
   assert(tag == ExpressionKind::Variable);
-  return u.variable;
+  return std::get<Variable>(value);
 }
 
 FieldAccess Expression::GetFieldAccess() const {
   assert(tag == ExpressionKind::GetField);
-  return u.get_field;
+  return std::get<FieldAccess>(value);
 }
 
 Index Expression::GetIndex() const {
   assert(tag == ExpressionKind::Index);
-  return u.index;
+  return std::get<Index>(value);
 }
 
 PatternVariable Expression::GetPatternVariable() const {
   assert(tag == ExpressionKind::PatternVariable);
-  return u.pattern_variable;
+  return std::get<PatternVariable>(value);
 }
 
 int Expression::GetInteger() const {
   assert(tag == ExpressionKind::Integer);
-  return u.integer;
+  return std::get<int>(value);
 }
 
 bool Expression::GetBoolean() const {
   assert(tag == ExpressionKind::Boolean);
-  return u.boolean;
+  return std::get<bool>(value);
 }
 
 Tuple Expression::GetTuple() const {
   assert(tag == ExpressionKind::Tuple);
-  return u.tuple;
+  return std::get<Tuple>(value);
 }
 
 PrimitiveOperator Expression::GetPrimitiveOperator() const {
   assert(tag == ExpressionKind::PrimitiveOp);
-  return u.primitive_op;
+  return std::get<PrimitiveOperator>(value);
 }
 
 Call Expression::GetCall() const {
   assert(tag == ExpressionKind::Call);
-  return u.call;
+  return std::get<Call>(value);
 }
 
 FunctionType Expression::GetFunctionType() const {
   assert(tag == ExpressionKind::FunctionT);
-  return u.function_type;
+  return std::get<FunctionType>(value);
 }
 
 auto Expression::MakeTypeType(int line_num) -> const Expression* {
@@ -100,8 +100,7 @@ auto Expression::MakeFunType(int line_num, const Expression* param,
   auto* t = new Expression();
   t->tag = ExpressionKind::FunctionT;
   t->line_num = line_num;
-  t->u.function_type.parameter = param;
-  t->u.function_type.return_type = ret;
+  t->value = FunctionType({.parameter = param, .return_type = ret});
   return t;
 }
 
@@ -109,7 +108,7 @@ auto Expression::MakeVar(int line_num, std::string var) -> const Expression* {
   auto* v = new Expression();
   v->line_num = line_num;
   v->tag = ExpressionKind::Variable;
-  v->u.variable.name = new std::string(std::move(var));
+  v->value = Variable({.name = new std::string(std::move(var))});
   return v;
 }
 
@@ -118,8 +117,8 @@ auto Expression::MakeVarPat(int line_num, std::string var,
   auto* v = new Expression();
   v->line_num = line_num;
   v->tag = ExpressionKind::PatternVariable;
-  v->u.pattern_variable.name = new std::string(std::move(var));
-  v->u.pattern_variable.type = type;
+  v->value = PatternVariable({.name = new std::string(std::move(var)),
+                          .type = type});
   return v;
 }
 
@@ -127,7 +126,7 @@ auto Expression::MakeInt(int line_num, int i) -> const Expression* {
   auto* e = new Expression();
   e->line_num = line_num;
   e->tag = ExpressionKind::Integer;
-  e->u.integer = i;
+  e->value = i;
   return e;
 }
 
@@ -135,7 +134,7 @@ auto Expression::MakeBool(int line_num, bool b) -> const Expression* {
   auto* e = new Expression();
   e->line_num = line_num;
   e->tag = ExpressionKind::Boolean;
-  e->u.boolean = b;
+  e->value = b;
   return e;
 }
 
@@ -145,8 +144,7 @@ auto Expression::MakeOp(int line_num, enum Operator op,
   auto* e = new Expression();
   e->line_num = line_num;
   e->tag = ExpressionKind::PrimitiveOp;
-  e->u.primitive_op.op = op;
-  e->u.primitive_op.arguments = args;
+  e->value = PrimitiveOperator({.op = op, .arguments = args});
   return e;
 }
 
@@ -155,10 +153,7 @@ auto Expression::MakeUnOp(int line_num, enum Operator op, const Expression* arg)
   auto* e = new Expression();
   e->line_num = line_num;
   e->tag = ExpressionKind::PrimitiveOp;
-  e->u.primitive_op.op = op;
-  auto* args = new std::vector<const Expression*>();
-  args->push_back(arg);
-  e->u.primitive_op.arguments = args;
+  e->value = PrimitiveOperator({.op = op, .arguments = new std::vector<const Expression*>{arg}});
   return e;
 }
 
@@ -168,11 +163,7 @@ auto Expression::MakeBinOp(int line_num, enum Operator op,
   auto* e = new Expression();
   e->line_num = line_num;
   e->tag = ExpressionKind::PrimitiveOp;
-  e->u.primitive_op.op = op;
-  auto* args = new std::vector<const Expression*>();
-  args->push_back(arg1);
-  args->push_back(arg2);
-  e->u.primitive_op.arguments = args;
+  e->value = PrimitiveOperator({.op = op, .arguments = new std::vector<const Expression*>{arg1, arg2}});
   return e;
 }
 
@@ -181,8 +172,7 @@ auto Expression::MakeCall(int line_num, const Expression* fun,
   auto* e = new Expression();
   e->line_num = line_num;
   e->tag = ExpressionKind::Call;
-  e->u.call.function = fun;
-  e->u.call.argument = arg;
+  e->value = Call({.function = fun, .argument = arg});
   return e;
 }
 
@@ -191,8 +181,7 @@ auto Expression::MakeGetField(int line_num, const Expression* exp,
   auto* e = new Expression();
   e->line_num = line_num;
   e->tag = ExpressionKind::GetField;
-  e->u.get_field.aggregate = exp;
-  e->u.get_field.field = new std::string(std::move(field));
+  e->value = FieldAccess({.aggregate = exp, .field = new std::string(std::move(field))});
   return e;
 }
 
@@ -217,7 +206,7 @@ auto Expression::MakeTuple(int line_num, std::vector<FieldInitializer>* args)
       seen_named_member = true;
     }
   }
-  e->u.tuple.fields = args;
+  e->value = Tuple({.fields = args});
   return e;
 }
 
@@ -229,7 +218,7 @@ auto Expression::MakeUnit(int line_num) -> const Expression* {
   unit->line_num = line_num;
   unit->tag = ExpressionKind::Tuple;
   auto* args = new std::vector<FieldInitializer>();
-  unit->u.tuple.fields = args;
+  unit->value = Tuple({.fields = args});
   return unit;
 }
 
@@ -238,8 +227,7 @@ auto Expression::MakeIndex(int line_num, const Expression* exp,
   auto* e = new Expression();
   e->line_num = line_num;
   e->tag = ExpressionKind::Index;
-  e->u.index.aggregate = exp;
-  e->u.index.offset = i;
+  e->value = Index({.aggregate = exp, .offset = i});
   return e;
 }
 

@@ -6,6 +6,7 @@
 #define EXECUTABLE_SEMANTICS_AST_EXPRESSION_H_
 
 #include <string>
+#include <variant>
 #include <vector>
 
 namespace Carbon {
@@ -133,18 +134,18 @@ struct Expression {
   FunctionType GetFunctionType() const;
 
  private:
-  union {
-    Variable variable;
-    FieldAccess get_field;
-    Index index;
-    PatternVariable pattern_variable;
-    int integer;
-    bool boolean;
-    Tuple tuple;
-    PrimitiveOperator primitive_op;
-    Call call;
-    FunctionType function_type;
-  } u;
+  std::variant<
+    Variable,
+    FieldAccess,
+    Index,
+    PatternVariable,
+    int,
+    bool,
+    Tuple,
+    PrimitiveOperator,
+    Call,
+    FunctionType
+  > value;
 };
 
 void PrintExp(const Expression* exp);
