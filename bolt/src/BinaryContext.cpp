@@ -50,12 +50,6 @@ extern cl::opt<unsigned> ExecutionCountThreshold;
 
 extern bool processAllFunctions();
 
-static cl::opt<std::string>
-    DWPPath("dwp-path",
-            cl::desc("Path to DWP file. DWP file name must be same as "
-                     "binary name with .dwp extension."),
-            cl::Hidden, cl::ZeroOrMore, cl::cat(BoltCategory));
-
 cl::opt<bool>
 NoHugePages("no-huge-pages",
   cl::desc("use regular size pages for code alignment"),
@@ -1467,40 +1461,22 @@ Optional<DWARFUnit *> BinaryContext::getDWOCU(uint64_t DWOId) {
 
 /// Handles DWO sections that can either be in .o, .dwo or .dwp files.
 void BinaryContext::preprocessDWODebugInfo() {
-  // If DWP file exists use it to populate CU map.
-  if (!opts::DWPPath.empty()) {
-    DWPContext = DwCtx->getDWOContext(opts::DWPPath.c_str());
-    if (!DWPContext)
-      report_error("DWP file not found.",
-                   std::make_error_code(std::errc::no_such_file_or_directory));
-    for (const std::unique_ptr<DWARFUnit> &CU : DwCtx->compile_units()) {
-      DWARFUnit *DwarfUnit = CU.get();
-      if (llvm::Optional<uint64_t> DWOId = DwarfUnit->getDWOId()) {
-        DWARFCompileUnit *DWOCU =
-            DWPContext.get()->getDWOCompileUnitForHash(*DWOId);
-        if (DWOCU)
-          DWOCUs[*DWOId] = DWOCU;
+  for (const std::unique_ptr<DWARFUnit> &CU : DwCtx->compile_units()) {
+    DWARFUnit *const DwarfUnit = CU.get();
+    if (llvm::Optional<uint64_t> DWOId = DwarfUnit->getDWOId()) {
+      DWARFUnit *DWOCU = DwarfUnit->getNonSkeletonUnitDIE(false).getDwarfUnit();
+      if (!DWOCU->isDWOUnit()) {
+        std::string DWOName = dwarf::toString(
+            DwarfUnit->getUnitDIE().find(
+                {dwarf::DW_AT_dwo_name, dwarf::DW_AT_GNU_dwo_name}),
+            "");
+        outs() << "BOLT-WARNING: Debug Fission: DWO debug information for "
+               << DWOName
+               << " was not retrieved and won't be updated. Please check "
+                  "relative path.\n";
+        continue;
       }
-    }
-  } else {
-    for (const std::unique_ptr<DWARFUnit> &CU : DwCtx->compile_units()) {
-      DWARFUnit *const DwarfUnit = CU.get();
-      if (llvm::Optional<uint64_t> DWOId = DwarfUnit->getDWOId()) {
-        DWARFUnit *DWOCU =
-            DwarfUnit->getNonSkeletonUnitDIE(false).getDwarfUnit();
-        if (!DWOCU->isDWOUnit()) {
-          std::string DWOName = dwarf::toString(
-              DwarfUnit->getUnitDIE().find(
-                  {dwarf::DW_AT_dwo_name, dwarf::DW_AT_GNU_dwo_name}),
-              "");
-          outs() << "BOLT-WARNING: Debug Fission: DWO debug information for "
-                 << DWOName
-                 << " was not retrieved and won't be updated. Please check "
-                    "relative path.\n";
-          continue;
-        }
-        DWOCUs[*DWOId] = DWOCU;
-      }
+      DWOCUs[*DWOId] = DWOCU;
     }
   }
 }
