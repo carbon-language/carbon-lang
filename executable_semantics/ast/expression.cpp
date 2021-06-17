@@ -9,41 +9,31 @@
 
 namespace Carbon {
 
-Variable Expression::GetVariable() const {
-  return std::get<Variable>(value);
-}
+Variable Expression::GetVariable() const { return std::get<Variable>(value); }
 
 FieldAccess Expression::GetFieldAccess() const {
   return std::get<FieldAccess>(value);
 }
 
-Index Expression::GetIndex() const {
-  return std::get<Index>(value);
-}
+Index Expression::GetIndex() const { return std::get<Index>(value); }
 
 PatternVariable Expression::GetPatternVariable() const {
   return std::get<PatternVariable>(value);
 }
 
-int Expression::GetInteger() const {
-  return std::get<IntLiteral>(value).value;
-}
+int Expression::GetInteger() const { return std::get<IntLiteral>(value).value; }
 
 bool Expression::GetBoolean() const {
   return std::get<BoolLiteral>(value).value;
 }
 
-Tuple Expression::GetTuple() const {
-  return std::get<Tuple>(value);
-}
+Tuple Expression::GetTuple() const { return std::get<Tuple>(value); }
 
 PrimitiveOperator Expression::GetPrimitiveOperator() const {
   return std::get<PrimitiveOperator>(value);
 }
 
-Call Expression::GetCall() const {
-  return std::get<Call>(value);
-}
+Call Expression::GetCall() const { return std::get<Call>(value); }
 
 FunctionType Expression::GetFunctionType() const {
   return std::get<FunctionType>(value);
@@ -104,8 +94,8 @@ auto Expression::MakeVarPat(int line_num, std::string var,
                             const Expression* type) -> const Expression* {
   auto* v = new Expression();
   v->line_num = line_num;
-  v->value = PatternVariable({.name = new std::string(std::move(var)),
-                          .type = type});
+  v->value =
+      PatternVariable({.name = new std::string(std::move(var)), .type = type});
   return v;
 }
 
@@ -136,7 +126,8 @@ auto Expression::MakeUnOp(int line_num, enum Operator op, const Expression* arg)
     -> const Expression* {
   auto* e = new Expression();
   e->line_num = line_num;
-  e->value = PrimitiveOperator({.op = op, .arguments = new std::vector<const Expression*>{arg}});
+  e->value = PrimitiveOperator(
+      {.op = op, .arguments = new std::vector<const Expression*>{arg}});
   return e;
 }
 
@@ -145,7 +136,8 @@ auto Expression::MakeBinOp(int line_num, enum Operator op,
     -> const Expression* {
   auto* e = new Expression();
   e->line_num = line_num;
-  e->value = PrimitiveOperator({.op = op, .arguments = new std::vector<const Expression*>{arg1, arg2}});
+  e->value = PrimitiveOperator(
+      {.op = op, .arguments = new std::vector<const Expression*>{arg1, arg2}});
   return e;
 }
 
@@ -161,7 +153,8 @@ auto Expression::MakeGetField(int line_num, const Expression* exp,
                               std::string field) -> const Expression* {
   auto* e = new Expression();
   e->line_num = line_num;
-  e->value = FieldAccess({.aggregate = exp, .field = new std::string(std::move(field))});
+  e->value = FieldAccess(
+      {.aggregate = exp, .field = new std::string(std::move(field))});
   return e;
 }
 

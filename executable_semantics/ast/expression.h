@@ -172,23 +172,10 @@ struct Expression {
   FunctionType GetFunctionType() const;
 
  private:
-  std::variant<
-    Variable,
-    FieldAccess,
-    Index,
-    PatternVariable,
-    IntLiteral,
-    BoolLiteral,
-    Tuple,
-    PrimitiveOperator,
-    Call,
-    FunctionType,
-    AutoT,
-    BoolT,
-    IntT,
-    ContinuationT,
-    TypeT
-  > value;
+  std::variant<Variable, FieldAccess, Index, PatternVariable, IntLiteral,
+               BoolLiteral, Tuple, PrimitiveOperator, Call, FunctionType, AutoT,
+               BoolT, IntT, ContinuationT, TypeT>
+      value;
 };
 
 void PrintExp(const Expression* exp);
@@ -203,8 +190,8 @@ struct TagVisitor {
 };
 
 auto Expression::tag() const -> ExpressionKind {
-    return std::visit(TagVisitor(), value);
-  }
+  return std::visit(TagVisitor(), value);
+}
 
 }  // namespace Carbon
 
