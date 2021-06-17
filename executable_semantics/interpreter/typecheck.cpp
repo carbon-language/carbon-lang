@@ -149,8 +149,8 @@ auto TypeCheckExp(const Expression* e, TypeEnv types, Env values,
       return TCResult(new_e, t, types);
     }
     case ExpressionKind::Index: {
-      auto res = TypeCheckExp(e->GetIndex().aggregate, types, values,
-                              nullptr, TCContext::ValueContext);
+      auto res = TypeCheckExp(e->GetIndex().aggregate, types, values, nullptr,
+                              TCContext::ValueContext);
       auto t = res.type;
       switch (t->tag) {
         case ValKind::TupleV: {

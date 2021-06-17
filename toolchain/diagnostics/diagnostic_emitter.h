@@ -153,7 +153,7 @@ struct SimpleDiagnostic {
 // produced.
 class ErrorTrackingDiagnosticConsumer : public DiagnosticConsumer {
  public:
-  ErrorTrackingDiagnosticConsumer(DiagnosticConsumer& next_consumer)
+  explicit ErrorTrackingDiagnosticConsumer(DiagnosticConsumer& next_consumer)
       : next_consumer(&next_consumer) {}
 
   auto HandleDiagnostic(const Diagnostic& diagnostic) -> void override {

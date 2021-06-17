@@ -35,8 +35,7 @@ jobs:
     steps:
       - name: Create environment variables
         run: |
-          echo "BAZEL_OUTPUT_BASE_PATH=$HOME/.cache/bazel-output-base" >> $GITHUB_ENV
-          echo "BAZEL=bazelisk --output_base=$HOME/.cache/bazel-output-base" >> $GITHUB_ENV
+          echo "BAZEL_DISK_CACHE_PATH=$HOME/.cache/carbon-lang-build-cache" >> $GITHUB_ENV
 
       - name: Checkout
         uses: actions/checkout@v2
@@ -108,58 +107,50 @@ jobs:
           echo "::set-output name=date::$(/bin/date -u "+%Y%m%d")"
 
       # Preserve and restore the Bazel cache across builds.
-      #
-      # These cached entries are keyed on this file (which configures the
-      # command and other inputs) as well as the date. Because Bazel is
-      # hermetic, it doesn't matter if we get a "stale" entry here, but it makes
-      # the cache less efficient. So we use the date to get a fresh baseline
-      # cache once per day. We include this file so that changing the build
-      # structure itself returns us to a clean state. We can also increment the
-      # counter in this comment to forcibly rotate this hash in the event we get
-      # a corrupted cache that breaks Bazel. This is a risk because we very
-      # selectively prune directories out of the internals of the Bazel output
-      # base to reduce the storage of the cache. At any point, this might break
-      # invariants and require us to clear our caches. There is no way to
-      # actually delete them and so instead we can simply bump the counter here.
-      #
-      # Current cache version: 2
       - name: Cache Bazel build data
         uses: actions/cache@v2
         with:
-          # We exclude the install symlink so that Bazel reconnects to the
-          # current installation. This helps repair any damage done by other
-          # exclusions as well. Then we exclude the `external` tree because
-          # those are all downloaded and rapidly rebuilt, so no benefit from
-          # downloading them with the cached state.
           path: |
-            ${{ env.BAZEL_OUTPUT_BASE_PATH }}
-            !${{ env.BAZEL_OUTPUT_BASE_PATH }}/install
-            !${{ env.BAZEL_OUTPUT_BASE_PATH }}/external
+            ${{ env.BAZEL_DISK_CACHE_PATH }}
+          # The `bazel-1` string here and below in the key acts as a counter
+          # that can be incremented to rebase the cache in the event of
+          # persistent corruption or other rare bug. The `-1-` prefix to the
+          # date can be incremented when adding new targets or updating this
+          # configuration and a new cache should be created but there is no
+          # reason to discard prior caches.
           key: |
-            bazel-${{ matrix.os }}-${{ matrix.build_mode }}-${{ hashFiles('.github/workflows/tests.yaml')
-            }}-${{ steps.date.outputs.date }}
+            bazel-1-${{ matrix.os }}-${{ matrix.build_mode }}-1-${{ steps.date.outputs.date }}
           # When we get a cache miss, try finding the most recent previous day's
           # cache to start.
           restore-keys: |
-            bazel-${{ matrix.os }}-${{ matrix.build_mode }}-${{ hashFiles('.github/workflows/tests.yaml')
-            }}-
+            bazel-1-${{ matrix.os }}-${{ matrix.build_mode }}-
+
+      # Reset all the access-times for the bazel disk cache to 1984. We really
+      # just need a time far in the past to ensure even with `relatime` or
+      # similar, the filesystem will track how much of the disk cache is
+      # actually still *used* in the course of the build. This lets us GC
+      # anything unused before potentially creating a new cache entry.
+      - name: Reset Bazel disk cache atimes
+        run: |
+          mkdir -p ${{ env.BAZEL_DISK_CACHE_PATH }}
+          find ${{ env.BAZEL_DISK_CACHE_PATH }}/ -type f -exec touch -a -t 198401010000 '{}' '+'
 
       # Print Bazel diagnostics to make debugging easier.
       - name: Print Bazel info
         run: |
-          ${{ env.BAZEL }} info
+          bazelisk info
 
       # Build all targets first to isolate build failures.
       - name: Build (${{ matrix.build_mode }})
         run: |
-          ${{ env.BAZEL }} build -c ${{ matrix.build_mode }} --verbose_failures \
+          bazelisk build -c ${{ matrix.build_mode }} --verbose_failures \
             --deleted_packages=migrate_cpp,migrate_cpp/cpp_refactoring \
             //...:all
 
       # Run all test targets.
       - name: Test (${{ matrix.build_mode }})
         run: |
-          ${{ env.BAZEL }} test -c ${{ matrix.build_mode }} --test_output errors \
+          bazelisk test -c ${{ matrix.build_mode }} --test_output errors \
             --deleted_packages=migrate_cpp,migrate_cpp/cpp_refactoring \
             --verbose_failures //...:all
 
@@ -167,4 +158,14 @@ jobs:
       # don't interact with it.
       - name: Shutdown Bazel
         run: |
-          ${{ env.BAZEL }} shutdown
+          bazelisk shutdown
+
+      # Since we reset the `atime`s of the disk cache to ancient history,
+      # everything that ended up accessed by the build and test should have a
+      # recent `atime`. Delete any files whose `atime` is more than 7 days old.
+      # We print some statistics to try to help with any debugging later on.
+      - name: Remove unused disk cache files
+        run: |
+          find ${{ env.BAZEL_DISK_CACHE_PATH }}/ -type f | wc -l
+          find ${{ env.BAZEL_DISK_CACHE_PATH }}/ -type f -atime +7 | wc -l
+          find ${{ env.BAZEL_DISK_CACHE_PATH }}/ -type f -atime +7 -delete

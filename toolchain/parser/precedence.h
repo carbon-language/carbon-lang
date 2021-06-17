@@ -30,6 +30,9 @@ enum class Associativity : int8_t {
 // A precedence group associated with an operator or expression.
 class PrecedenceGroup {
  private:
+  // We rely on implicit conversions via `int8_t` for enumerators defined in the
+  // implementation.
+  // NOLINTNEXTLINE(google-explicit-constructor)
   PrecedenceGroup(int8_t level) : level(level) {}
 
  public:
@@ -45,6 +48,10 @@ class PrecedenceGroup {
   // operators should have higher precedence than this.
   static auto ForTopLevelExpression() -> PrecedenceGroup;
 
+  // Get the precedence level at which to parse a type expression. All type
+  // operators should have higher precedence than this.
+  static auto ForType() -> PrecedenceGroup;
+
   // Look up the operator information of the given prefix operator token, or
   // return llvm::None if the given token is not a prefix operator.
   static auto ForLeading(TokenKind kind) -> llvm::Optional<PrecedenceGroup>;
@@ -53,8 +60,11 @@ class PrecedenceGroup {
 
   // Look up the operator information of the given infix or postfix operator
   // token, or return llvm::None if the given token is not an infix or postfix
-  // operator.
-  static auto ForTrailing(TokenKind kind) -> llvm::Optional<Trailing>;
+  // operator. `infix` indicates whether this is a valid infix operator, but is
+  // only considered if the same operator symbol is available as both infix and
+  // postfix.
+  static auto ForTrailing(TokenKind kind, bool infix)
+      -> llvm::Optional<Trailing>;
 
   friend auto operator==(PrecedenceGroup lhs, PrecedenceGroup rhs) -> bool {
     return lhs.level == rhs.level;
@@ -68,7 +78,7 @@ class PrecedenceGroup {
       -> OperatorPriority;
 
   // Get the associativity of this precedence group.
-  Associativity GetAssociativity() const {
+  [[nodiscard]] auto GetAssociativity() const -> Associativity {
     return static_cast<Associativity>(GetPriority(*this, *this));
   }
 

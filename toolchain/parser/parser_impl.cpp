@@ -45,13 +45,13 @@ struct ExpectedFunctionBodyOrSemi
 struct ExpectedVariableName : SimpleDiagnostic<ExpectedVariableName> {
   static constexpr llvm::StringLiteral ShortName = "syntax-error";
   static constexpr llvm::StringLiteral Message =
-      "Expected variable name after type in `var` declaration.";
+      "Expected pattern in `var` declaration.";
 };
 
 struct ExpectedParameterName : SimpleDiagnostic<ExpectedParameterName> {
   static constexpr llvm::StringLiteral ShortName = "syntax-error";
   static constexpr llvm::StringLiteral Message =
-      "Expected parameter name after type in parameter declaration.";
+      "Expected parameter declaration.";
 };
 
 struct UnrecognizedDeclaration : SimpleDiagnostic<UnrecognizedDeclaration> {
@@ -114,6 +114,54 @@ struct UnexpectedTokenAfterListElement
     : SimpleDiagnostic<UnexpectedTokenAfterListElement> {
   static constexpr llvm::StringLiteral ShortName = "syntax-error";
   static constexpr llvm::StringLiteral Message = "Expected `,` or `)`.";
+};
+
+struct BinaryOperatorRequiresWhitespace
+    : SimpleDiagnostic<BinaryOperatorRequiresWhitespace> {
+  static constexpr llvm::StringLiteral ShortName = "syntax-error";
+  static constexpr const char* Message =
+      "Whitespace missing {0} binary operator.";
+
+  bool has_leading_space;
+  bool has_trailing_space;
+
+  auto Format() -> std::string {
+    const char* where = "around";
+    // clang-format off
+    if (has_leading_space) {
+      where = "after";
+    } else if (has_trailing_space) {
+      where = "before";
+    }
+    // clang-format on
+    return llvm::formatv(Message, where);
+  }
+};
+
+struct UnaryOperatorHasWhitespace
+    : SimpleDiagnostic<UnaryOperatorHasWhitespace> {
+  static constexpr llvm::StringLiteral ShortName = "syntax-error";
+  static constexpr const char* Message =
+      "Whitespace is not allowed {0} this unary operator.";
+
+  bool prefix;
+
+  auto Format() -> std::string {
+    return llvm::formatv(Message, prefix ? "after" : "before");
+  }
+};
+
+struct UnaryOperatorRequiresWhitespace
+    : SimpleDiagnostic<UnaryOperatorRequiresWhitespace> {
+  static constexpr llvm::StringLiteral ShortName = "syntax-error";
+  static constexpr const char* Message =
+      "Whitespace is required {0} this unary operator.";
+
+  bool prefix;
+
+  auto Format() -> std::string {
+    return llvm::formatv(Message, prefix ? "before" : "after");
+  }
 };
 
 struct OperatorRequiresParentheses
@@ -376,23 +424,34 @@ auto ParseTree::Parser::ParseParenList(ListElementParser list_element_parser,
   return list_handler(open_paren, Consume(TokenKind::CloseParen()), has_errors);
 }
 
-auto ParseTree::Parser::ParseFunctionParameter() -> llvm::Optional<Node> {
-  // A parameter is of the form
-  //   type identifier
-  auto start = GetSubtreeStartPosition();
-
-  auto type = ParseType();
-
-  // FIXME: We can't use DeclaredName here because we need to use the
-  // identifier token as the root token in the parameter node.
-  auto name = ConsumeIf(TokenKind::Identifier());
-  if (!name) {
-    emitter.EmitError<ExpectedParameterName>(*position);
-    return llvm::None;
+auto ParseTree::Parser::ParsePattern(PatternKind kind) -> llvm::Optional<Node> {
+  if (NextTokenIs(TokenKind::Identifier()) &&
+      tokens.GetKind(*(position + 1)) == TokenKind::Colon()) {
+    // identifier `:` type
+    auto start = GetSubtreeStartPosition();
+    AddLeafNode(ParseNodeKind::DeclaredName(),
+                Consume(TokenKind::Identifier()));
+    auto colon = Consume(TokenKind::Colon());
+    auto type = ParseType();
+    return AddNode(ParseNodeKind::PatternBinding(), colon, start,
+                   /*has_error=*/!type);
   }
 
-  return AddNode(ParseNodeKind::ParameterDeclaration(), *name, start,
-                 /*has_error=*/!type);
+  switch (kind) {
+    case PatternKind::Parameter:
+      emitter.EmitError<ExpectedParameterName>(*position);
+      break;
+
+    case PatternKind::Variable:
+      emitter.EmitError<ExpectedVariableName>(*position);
+      break;
+  }
+
+  return llvm::None;
+}
+
+auto ParseTree::Parser::ParseFunctionParameter() -> llvm::Optional<Node> {
+  return ParsePattern(PatternKind::Parameter);
 }
 
 auto ParseTree::Parser::ParseFunctionSignature() -> bool {
@@ -507,18 +566,15 @@ auto ParseTree::Parser::ParseFunctionDeclaration() -> Node {
 }
 
 auto ParseTree::Parser::ParseVariableDeclaration() -> Node {
-  // `var` expression identifier [= expression] `;`
+  // `var` pattern [= expression] `;`
   TokenizedBuffer::Token var_token = Consume(TokenKind::VarKeyword());
   auto start = GetSubtreeStartPosition();
 
-  auto type = ParseType();
-
-  auto name = ConsumeAndAddLeafNodeIf(TokenKind::Identifier(),
-                                      ParseNodeKind::DeclaredName());
-  if (!name) {
-    emitter.EmitError<ExpectedVariableName>(*position);
-    if (auto after_name = FindNextOf({TokenKind::Equal(), TokenKind::Semi()})) {
-      SkipTo(*after_name);
+  auto pattern = ParsePattern(PatternKind::Variable);
+  if (!pattern) {
+    if (auto after_pattern =
+            FindNextOf({TokenKind::Equal(), TokenKind::Semi()})) {
+      SkipTo(*after_pattern);
     }
   }
 
@@ -532,13 +588,14 @@ auto ParseTree::Parser::ParseVariableDeclaration() -> Node {
   auto semi = ConsumeAndAddLeafNodeIf(TokenKind::Semi(),
                                       ParseNodeKind::DeclarationEnd());
   if (!semi) {
+    emitter.EmitError<ExpectedSemiAfterExpression>(*position);
     SkipPastLikelyEnd(var_token, [&](TokenizedBuffer::Token semi) {
       return AddLeafNode(ParseNodeKind::DeclarationEnd(), semi);
     });
   }
 
   return AddNode(ParseNodeKind::VariableDeclaration(), var_token, start,
-                 /*has_error=*/!type || !name || !semi);
+                 /*has_error=*/!pattern || !semi);
 }
 
 auto ParseTree::Parser::ParseEmptyDeclaration() -> Node {
@@ -593,7 +650,7 @@ auto ParseTree::Parser::ParseParenExpression() -> llvm::Optional<Node> {
       ParseCloseParen(open_paren, ParseNodeKind::ParenExpressionEnd());
 
   return AddNode(ParseNodeKind::ParenExpression(), open_paren, start,
-                 /*has_errors=*/!expr || !close_paren);
+                 /*has_error=*/!expr || !close_paren);
 }
 
 auto ParseTree::Parser::ParsePrimaryExpression() -> llvm::Optional<Node> {
@@ -677,6 +734,114 @@ auto ParseTree::Parser::ParsePostfixExpression() -> llvm::Optional<Node> {
   }
 }
 
+// Determines whether the given token is considered to be the start of an
+// operand according to the rules for infix operator parsing.
+static auto IsAssumedStartOfOperand(TokenKind kind) -> bool {
+  return kind.IsOneOf({TokenKind::OpenParen(), TokenKind::Identifier(),
+                       TokenKind::IntegerLiteral(), TokenKind::RealLiteral(),
+                       TokenKind::StringLiteral()});
+}
+
+// Determines whether the given token is considered to be the end of an operand
+// according to the rules for infix operator parsing.
+static auto IsAssumedEndOfOperand(TokenKind kind) -> bool {
+  return kind.IsOneOf({TokenKind::CloseParen(), TokenKind::CloseCurlyBrace(),
+                       TokenKind::CloseSquareBracket(), TokenKind::Identifier(),
+                       TokenKind::IntegerLiteral(), TokenKind::RealLiteral(),
+                       TokenKind::StringLiteral()});
+}
+
+// Determines whether the given token could possibly be the start of an operand.
+// This is conservatively correct, and will never incorrectly return `false`,
+// but can incorrectly return `true`.
+static auto IsPossibleStartOfOperand(TokenKind kind) -> bool {
+  return !kind.IsOneOf({TokenKind::CloseParen(), TokenKind::CloseCurlyBrace(),
+                        TokenKind::CloseSquareBracket(), TokenKind::Comma(),
+                        TokenKind::Semi(), TokenKind::Colon()});
+}
+
+auto ParseTree::Parser::IsLexicallyValidInfixOperator() -> bool {
+  assert(!AtEndOfFile() && "Expected an operator token.");
+
+  bool leading_space = tokens.HasLeadingWhitespace(*position);
+  bool trailing_space = tokens.HasTrailingWhitespace(*position);
+
+  // If there's whitespace on both sides, it's an infix operator.
+  if (leading_space && trailing_space) {
+    return true;
+  }
+
+  // If there's whitespace on exactly one side, it's not an infix operator.
+  if (leading_space || trailing_space) {
+    return false;
+  }
+
+  // Otherwise, for an infix operator, the preceding token must be any close
+  // bracket, identifier, or literal and the next token must be an open paren,
+  // identifier, or literal.
+  if (position == tokens.Tokens().begin() ||
+      !IsAssumedEndOfOperand(tokens.GetKind(*(position - 1))) ||
+      !IsAssumedStartOfOperand(tokens.GetKind(*(position + 1)))) {
+    return false;
+  }
+
+  return true;
+}
+
+auto ParseTree::Parser::DiagnoseOperatorFixity(OperatorFixity fixity) -> void {
+  bool is_valid_as_infix = IsLexicallyValidInfixOperator();
+
+  if (fixity == OperatorFixity::Infix) {
+    // Infix operators must satisfy the infix operator rules.
+    if (!is_valid_as_infix) {
+      emitter.EmitError<BinaryOperatorRequiresWhitespace>(
+          *position,
+          {.has_leading_space = tokens.HasLeadingWhitespace(*position),
+           .has_trailing_space = tokens.HasTrailingWhitespace(*position)});
+    }
+  } else {
+    bool prefix = fixity == OperatorFixity::Prefix;
+
+    // Whitespace is not permitted between a symbolic pre/postfix operator and
+    // its operand.
+    if (NextTokenKind().IsSymbol() &&
+        (prefix ? tokens.HasTrailingWhitespace(*position)
+                : tokens.HasLeadingWhitespace(*position))) {
+      emitter.EmitError<UnaryOperatorHasWhitespace>(*position,
+                                                    {.prefix = prefix});
+    }
+    // Pre/postfix operators must not satisfy the infix operator rules.
+    if (is_valid_as_infix) {
+      emitter.EmitError<UnaryOperatorRequiresWhitespace>(*position,
+                                                         {.prefix = prefix});
+    }
+  }
+}
+
+auto ParseTree::Parser::IsTrailingOperatorInfix() -> bool {
+  if (AtEndOfFile()) {
+    return false;
+  }
+
+  // An operator that follows the infix operator rules is parsed as
+  // infix, unless the next token means that it can't possibly be.
+  if (IsLexicallyValidInfixOperator() &&
+      IsPossibleStartOfOperand(tokens.GetKind(*(position + 1)))) {
+    return true;
+  }
+
+  // A trailing operator with leading whitespace that's not valid as infix is
+  // not valid at all. If the next token looks like the start of an operand,
+  // then parse as infix, otherwise as postfix. Either way we'll produce a
+  // diagnostic later on.
+  if (tokens.HasLeadingWhitespace(*position) &&
+      IsAssumedStartOfOperand(tokens.GetKind(*(position + 1)))) {
+    return true;
+  }
+
+  return false;
+}
+
 auto ParseTree::Parser::ParseOperatorExpression(
     PrecedenceGroup ambient_precedence) -> llvm::Optional<Node> {
   auto start = GetSubtreeStartPosition();
@@ -695,6 +860,9 @@ auto ParseTree::Parser::ParseOperatorExpression(
       // The precedence rules don't permit this prefix operator in this
       // context. Diagnose this, but carry on and parse it anyway.
       emitter.EmitError<OperatorRequiresParentheses>(*position);
+    } else {
+      // Check that this operator follows the proper whitespace rules.
+      DiagnoseOperatorFixity(OperatorFixity::Prefix);
     }
 
     auto operator_token = Consume(NextTokenKind());
@@ -705,9 +873,13 @@ auto ParseTree::Parser::ParseOperatorExpression(
   }
 
   // Consume a sequence of infix and postfix operators.
-  while (auto trailing_operator =
-             PrecedenceGroup::ForTrailing(NextTokenKind())) {
+  while (auto trailing_operator = PrecedenceGroup::ForTrailing(
+             NextTokenKind(), IsTrailingOperatorInfix())) {
     auto [operator_precedence, is_binary] = *trailing_operator;
+
+    // FIXME: If this operator is ambiguous with either the ambient precedence
+    // or the LHS precedence, and there's a variant with a different fixity
+    // that would work, use that one instead for error recovery.
     if (PrecedenceGroup::GetPriority(ambient_precedence, operator_precedence) !=
         OperatorPriority::RightFirst) {
       // The precedence rules don't permit this operator in this context. Try
@@ -722,6 +894,9 @@ auto ParseTree::Parser::ParseOperatorExpression(
       // this operator. Either way, parentheses are required.
       emitter.EmitError<OperatorRequiresParentheses>(*position);
       lhs = llvm::None;
+    } else {
+      DiagnoseOperatorFixity(is_binary ? OperatorFixity::Infix
+                                       : OperatorFixity::Postfix);
     }
 
     auto operator_token = Consume(NextTokenKind());
@@ -742,6 +917,10 @@ auto ParseTree::Parser::ParseOperatorExpression(
 
 auto ParseTree::Parser::ParseExpression() -> llvm::Optional<Node> {
   return ParseOperatorExpression(PrecedenceGroup::ForTopLevelExpression());
+}
+
+auto ParseTree::Parser::ParseType() -> llvm::Optional<Node> {
+  return ParseOperatorExpression(PrecedenceGroup::ForType());
 }
 
 auto ParseTree::Parser::ParseExpressionStatement() -> llvm::Optional<Node> {
@@ -792,7 +971,7 @@ auto ParseTree::Parser::ParseParenCondition(TokenKind introducer)
       ParseCloseParen(*open_paren, ParseNodeKind::ConditionEnd());
 
   return AddNode(ParseNodeKind::Condition(), *open_paren, start,
-                 /*has_errors=*/!expr || !close_paren);
+                 /*has_error=*/!expr || !close_paren);
 }
 
 auto ParseTree::Parser::ParseIfStatement() -> llvm::Optional<Node> {
@@ -806,7 +985,7 @@ auto ParseTree::Parser::ParseIfStatement() -> llvm::Optional<Node> {
     else_has_errors = !ParseStatement();
   }
   return AddNode(ParseNodeKind::IfStatement(), if_token, start,
-                 /*has_errors=*/!cond || !then_case || else_has_errors);
+                 /*has_error=*/!cond || !then_case || else_has_errors);
 }
 
 auto ParseTree::Parser::ParseWhileStatement() -> llvm::Optional<Node> {
@@ -815,7 +994,7 @@ auto ParseTree::Parser::ParseWhileStatement() -> llvm::Optional<Node> {
   auto cond = ParseParenCondition(TokenKind::WhileKeyword());
   auto body = ParseStatement();
   return AddNode(ParseNodeKind::WhileStatement(), while_token, start,
-                 /*has_errors=*/!cond || !body);
+                 /*has_error=*/!cond || !body);
 }
 
 auto ParseTree::Parser::ParseKeywordStatement(ParseNodeKind kind,
@@ -841,7 +1020,7 @@ auto ParseTree::Parser::ParseKeywordStatement(ParseNodeKind kind,
                                          {.preceding = keyword_kind});
     // FIXME: Try to skip to a semicolon to recover.
   }
-  return AddNode(kind, keyword, start, /*has_errors=*/!semi || arg_error);
+  return AddNode(kind, keyword, start, /*has_error=*/!semi || arg_error);
 }
 
 auto ParseTree::Parser::ParseStatement() -> llvm::Optional<Node> {

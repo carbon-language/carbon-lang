@@ -61,6 +61,9 @@ auto SourceBuffer::CreateFromFile(llvm::StringRef filename)
                            MAP_PRIVATE | MAP_POPULATE,
 #endif
                            file_descriptor, /*offset=*/0);
+  // The `MAP_FAILED` macro may expand to a cast to pointer that `clang-tidy`
+  // complains about.
+  // NOLINTNEXTLINE(performance-no-int-to-ptr)
   if (mapped_text == MAP_FAILED) {
     return ErrnoToError(errno);
   }

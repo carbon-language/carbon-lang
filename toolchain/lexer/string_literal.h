@@ -13,10 +13,10 @@ namespace Carbon {
 class LexedStringLiteral {
  public:
   // Get the text corresponding to this literal.
-  auto Text() const -> llvm::StringRef { return text; }
+  [[nodiscard]] auto Text() const -> llvm::StringRef { return text; }
 
   // Determine whether this is a multi-line string literal.
-  auto IsMultiLine() const -> bool { return multi_line; }
+  [[nodiscard]] auto IsMultiLine() const -> bool { return multi_line; }
 
   // Extract a string literal token from the given text, if it has a suitable
   // form.

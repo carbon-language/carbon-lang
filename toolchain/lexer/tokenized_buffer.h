@@ -166,7 +166,7 @@ class TokenizedBuffer {
   // Random-access iterator over tokens within the buffer.
   class TokenIterator
       : public llvm::iterator_facade_base<
-            TokenIterator, std::random_access_iterator_tag, Token, int> {
+            TokenIterator, std::random_access_iterator_tag, const Token, int> {
    public:
     TokenIterator() = default;
 
@@ -180,8 +180,8 @@ class TokenizedBuffer {
     }
 
     auto operator*() const -> const Token& { return token; }
-    auto operator*() -> Token& { return token; }
 
+    using iterator_facade_base::operator-;
     auto operator-(const TokenIterator& rhs) const -> int {
       return token.index - rhs.token.index;
     }
@@ -215,16 +215,16 @@ class TokenizedBuffer {
 
    public:
     // The mantissa, represented as an unsigned integer.
-    auto Mantissa() const -> const llvm::APInt& {
+    [[nodiscard]] auto Mantissa() const -> const llvm::APInt& {
       return buffer->literal_int_storage[literal_index];
     }
     // The exponent, represented as a signed integer.
-    auto Exponent() const -> const llvm::APInt& {
+    [[nodiscard]] auto Exponent() const -> const llvm::APInt& {
       return buffer->literal_int_storage[literal_index + 1];
     }
     // If false, the value is mantissa * 2^exponent.
     // If true, the value is mantissa * 10^exponent.
-    auto IsDecimal() const -> bool { return is_decimal; }
+    [[nodiscard]] auto IsDecimal() const -> bool { return is_decimal; }
 
    private:
     friend class TokenizedBuffer;
@@ -291,7 +291,7 @@ class TokenizedBuffer {
   [[nodiscard]] auto GetRealLiteral(Token token) const -> RealLiteralValue;
 
   // Returns the value of a `StringLiteral()` token.
-  auto GetStringLiteral(Token token) const -> llvm::StringRef;
+  [[nodiscard]] auto GetStringLiteral(Token token) const -> llvm::StringRef;
 
   // Returns the closing token matched with the given opening token.
   //
@@ -302,6 +302,11 @@ class TokenizedBuffer {
   //
   // The given token must be a closing token kind.
   [[nodiscard]] auto GetMatchedOpeningToken(Token closing_token) const -> Token;
+
+  // Returns whether the given token has leading whitespace.
+  [[nodiscard]] auto HasLeadingWhitespace(Token token) const -> bool;
+  // Returns whether the given token has trailing whitespace.
+  [[nodiscard]] auto HasTrailingWhitespace(Token token) const -> bool;
 
   // Returns whether the token was created as part of an error recovery effort.
   //
@@ -379,6 +384,9 @@ class TokenizedBuffer {
 
   struct TokenInfo {
     TokenKind kind;
+
+    // Whether the token has trailing whitespace.
+    bool has_trailing_space = false;
 
     // Whether the token was injected artificially during error recovery.
     bool is_recovery = false;
