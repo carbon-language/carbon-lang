@@ -8,6 +8,10 @@ build --host_crosstool_top=@bazel_cc_toolchain
 # Default to using a disk cache to minimize re-building LLVM and Clang which we
 # try to avoid updating too frequently to minimize rebuild cost. The location
 # here can be overridden in the user configuration where needed.
+#
+# Note that this cache will grow without bound currently. You should
+# periodically run the `scripts/clean_disk_cache.sh` script or some equivalent.
+# https://github.com/bazelbuild/bazel/issues/5139 tracks fixing this in Bazel.
 build --disk_cache=~/.cache/carbon-lang-build-cache
 
 # Enable some safety when using the build cache, likely to be defaulted in
