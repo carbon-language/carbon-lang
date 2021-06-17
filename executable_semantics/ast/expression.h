@@ -53,69 +53,90 @@ enum class Operator {
 struct Expression;
 
 struct Variable {
+  static constexpr ExpressionKind Kind = ExpressionKind::Variable;
   std::string* name;
 };
 
 struct FieldAccess {
+  static constexpr ExpressionKind Kind = ExpressionKind::GetField;
   const Expression* aggregate;
   std::string* field;
 };
 
 struct Index {
+  static constexpr ExpressionKind Kind = ExpressionKind::Index;
   const Expression* aggregate;
   const Expression* offset;
 };
 
 struct PatternVariable {
+  static constexpr ExpressionKind Kind = ExpressionKind::PatternVariable;
   std::string* name;
   const Expression* type;
 };
 
 struct IntLiteral {
+  static constexpr ExpressionKind Kind = ExpressionKind::Integer;
   int value;
 };
 
 struct BoolLiteral {
+  static constexpr ExpressionKind Kind = ExpressionKind::Boolean;
   bool value;
 };
 
 struct Tuple {
+  static constexpr ExpressionKind Kind = ExpressionKind::Tuple;
   std::vector<FieldInitializer>* fields;
 };
 
 struct PrimitiveOperator {
+  static constexpr ExpressionKind Kind = ExpressionKind::PrimitiveOp;
   Operator op;
   std::vector<const Expression*>* arguments;
 };
 
 struct Call {
+  static constexpr ExpressionKind Kind = ExpressionKind::Call;
   const Expression* function;
   const Expression* argument;
 };
 
 struct FunctionType {
+  static constexpr ExpressionKind Kind = ExpressionKind::FunctionT;
   const Expression* parameter;
   const Expression* return_type;
 };
 
 struct AutoT {
+  static constexpr ExpressionKind Kind = ExpressionKind::AutoT;
 };
 
 struct BoolT {
+  static constexpr ExpressionKind Kind = ExpressionKind::BoolT;
 };
 
 struct IntT {
+  static constexpr ExpressionKind Kind = ExpressionKind::IntT;
 };
 
 struct ContinuationT {
+  static constexpr ExpressionKind Kind = ExpressionKind::ContinuationT;
 };
 
 struct TypeT {
+  static constexpr ExpressionKind Kind = ExpressionKind::TypeT;
 };
 
 struct Expression {
   int line_num;
   ExpressionKind tag;
+  ExpressionKind tag_() const {
+    // FIXME don't pass by value
+    return std::visit([](auto alternative) {
+      return decltype(alternative)::Kind;
+    }, value);
+  }
 
   static auto MakeVar(int line_num, std::string var) -> const Expression*;
   static auto MakeVarPat(int line_num, std::string var, const Expression* type)
@@ -157,6 +178,7 @@ struct Expression {
   FunctionType GetFunctionType() const;
 
  private:
+  // FIXME ensure this is always initialized
   std::variant<
     Variable,
     FieldAccess,
