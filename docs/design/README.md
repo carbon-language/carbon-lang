@@ -286,7 +286,7 @@ Some common expressions in Carbon include:
 Functions are the core unit of behavior. For example:
 
 ```carbon
-fn Sum(Int a, Int b) -> Int;
+fn Sum(a: Int, b: Int) -> Int;
 ```
 
 Breaking this apart:
@@ -337,7 +337,7 @@ For example:
 
 ```carbon
 fn Foo() {
-  var Int x = 42;
+  var x: Int = 42;
 }
 ```
 
@@ -394,7 +394,7 @@ This code will:
 example, this prints `0`, `1`, `2`, then `Done!`:
 
 ```carbon
-var Int x = 0;
+var x: Int = 0;
 while (x < 3) {
   Print(x);
   ++x;
@@ -410,7 +410,7 @@ Print("Done!");
 example, this prints all names in `names`:
 
 ```carbon
-for (var String name : names) {
+for (var name: String in names) {
   Print(name);
 }
 ```
@@ -426,7 +426,7 @@ resume at the end of the loop's scope. For example, this processes steps until a
 manual step is hit (if no manual step is hit, all steps are processed):
 
 ```carbon
-for (var Step step : steps) {
+for (var step: Step in steps) {
   if (step.IsManual()) {
     Print("Reached manual step!");
     break;
@@ -445,9 +445,9 @@ example, this prints all non-empty lines of a file, using `continue` to skip
 empty lines:
 
 ```carbon
-File f = OpenFile(path);
+var f: File = OpenFile(path);
 while (!f.EOF()) {
-  String line = f.ReadLine();
+  var line: String = f.ReadLine();
   if (line.IsEmpty()) {
     continue;
   }
@@ -464,7 +464,7 @@ execution to the caller. If the function returns a value to the caller, that
 value is provided by an expression in the return statement. For example:
 
 ```carbon
-fn Sum(Int a, Int b) -> Int {
+fn Sum(a: Int, b: Int) -> Int {
   return a + b;
 }
 ```
@@ -530,7 +530,7 @@ tuple. In formal type theory, tuples are product types.
 An example use of tuples is:
 
 ```carbon
-fn DoubleBoth(Int x, Int y) -> (Int, Int) {
+fn DoubleBoth(x: Int, y: Int) -> (Int, Int) {
   return (2 * x, 2 * y);
 }
 ```
@@ -547,7 +547,7 @@ expression: one is a tuple of types, the other a tuple of values.
 Element access uses subscript syntax:
 
 ```carbon
-fn DoubleTuple((Int, Int) x) -> (Int, Int) {
+fn DoubleTuple(x: (Int, Int)) -> (Int, Int) {
   return (2 * x[0], 2 * x[1]);
 }
 ```
@@ -556,12 +556,12 @@ Tuples also support multiple indices and slicing to restructure tuple elements:
 
 ```carbon
 // This reverses the tuple using multiple indices.
-fn Reverse((Int, Int, Int) x) -> (Int, Int, Int) {
+fn Reverse(x: (Int, Int, Int)) -> (Int, Int, Int) {
   return x[2, 1, 0];
 }
 
 // This slices the tuple by extracting elements [0, 2).
-fn RemoveLast((Int, Int, Int) x) -> (Int, Int) {
+fn RemoveLast(x: (Int, Int, Int)) -> (Int, Int) {
   return x[0 .. 2];
 }
 ```
@@ -593,11 +593,11 @@ For example:
 
 ```carbon
 struct Widget {
-  var Int x;
-  var Int y;
-  var Int z;
+  var x: Int;
+  var y: Int;
+  var z: Int;
 
-  var String payload;
+  var payload: String;
 }
 ```
 
@@ -612,18 +612,18 @@ More advanced `struct`s may be created:
 ```carbon
 struct AdvancedWidget {
   // Do a thing!
-  fn DoSomething(AdvancedWidget self, Int x, Int y);
+  fn DoSomething(self: AdvancedWidget, x: Int, y: Int);
 
   // A nested type.
   struct Nestedtype {
     // ...
   }
 
-  private var Int x;
-  private var Int y;
+  private var x: Int;
+  private var y: Int;
 }
 
-fn Foo(AdvancedWidget thing) {
+fn Foo(thing: AdvancedWidget) {
   thing.DoSomething(1, 2);
 }
 ```
@@ -695,13 +695,13 @@ fn Bar() -> (Int, (Float, Float));
 
 fn Foo() -> Float {
   match (Bar()...) {
-    case (42, (Float x, Float y)) => {
+    case (42, (x: Float, y: Float)) => {
       return x - y;
     }
-    case (Int p, (Float x, Float _)) if (p < 13) => {
+    case (p: Int, (x: Float, _: Float)) if (p < 13) => {
       return p * x;
     }
-    case (Int p, auto _) if (p > 3) => {
+    case (p: Int, _: auto) if (p > 3) => {
       return p * Pi;
     }
     default => {
@@ -727,12 +727,12 @@ Breaking apart this `match`:
 Value patterns may be composed of the following:
 
 -   An expression, such as `42`, whose value must be equal to match.
--   An optional type, such as `Int`, followed by a `:` and an identifier to bind
-    the value.
+-   An identifier to bind the value, followed by a `:` and followed by a type,
+    such as `Int`.
     -   The special identifier `_` may be used to discard the value once
         matched.
 -   A destructuring pattern containing a sequence of value patterns, such as
-    `(Float x, Float y)`, which match against tuples and tuple-like values by
+    `(x: Float, y: Float)`, which match against tuples and tuple-like values by
     recursively matching on their elements.
 -   An unwrapping pattern containing a nested value pattern which matches
     against a variant or variant-like value by unwrapping it.
@@ -752,7 +752,7 @@ An example use is:
 ```carbon
 fn Bar() -> (Int, (Float, Float));
 fn Foo() -> Int {
-  var (Int p, auto _) = Bar();
+  var (p: Int, _: auto) = Bar();
   return p;
 }
 ```
@@ -761,7 +761,7 @@ To break this apart:
 
 -   The `Int` returned by `Bar()` matches and is bound to `p`, then returned.
 -   The `(Float, Float)` returned by `Bar()` matches and is discarded by
-    `auto _`.
+    `_: auto`.
 
 ### Pattern matching as function overload resolution
 
@@ -803,10 +803,10 @@ be used to instantiate the parameterized definition with the provided arguments
 in order to produce a complete type. For example:
 
 ```carbon
-struct Stack(Type$$ T) {
-  var Array(T) storage;
+struct Stack(T:$$ Type) {
+  var storage: Array(T);
 
-  fn Push(T value);
+  fn Push(value: T);
   fn Pop() -> T;
 }
 ```
@@ -816,7 +816,7 @@ Breaking apart the template use in `Stack`:
 -   `Stack` is a paremeterized type accepting a type `T`.
 -   `T` may be used within the definition of `Stack` anywhere a normal type
     would be used, and will only be type checked on instantiation.
--   `var Array(T)` instantiates a parameterized type `Array` when `Stack` is
+-   `var ... Array(T)` instantiates a parameterized type `Array` when `Stack` is
     instantiated.
 
 #### Functions with template parameters
@@ -833,12 +833,12 @@ arguments. The runtime call then passes the remaining arguments to the resulting
 complete definition.
 
 ```carbon
-fn Convert[Type$$ T](T source, Type$$ U) -> U {
-  var U converted = source;
+fn Convert[T:$$ Type](source: T, U:$$ Type) -> U {
+  var converted: U = source;
   return converted;
 }
 
-fn Foo(Int i) -> Float {
+fn Foo(i: Int) -> Float {
   // Instantiates with the `T` implicit argument set to `Int` and the `U`
   // explicit argument set to `Float`, then calls with the runtime value `i`.
   return Convert(i, Float);

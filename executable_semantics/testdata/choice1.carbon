@@ -9,23 +9,23 @@ choice Ints {
 }
 
 fn main() -> Int {
-  var auto x = Ints.None();
-  var auto y = Ints.One(42);
-  var auto n = 0;
+  var x: auto = Ints.None();
+  var y: auto = Ints.One(42);
+  var n: auto = 0;
   match (y) {
     case Ints.None =>
       n = n + 2;
-    case Ints.One(auto x) =>
+    case Ints.One(x: auto) =>
       n = x + 1 - 42;
-    case Ints.Two(auto a, auto b) =>
+    case Ints.Two(a: auto, b: auto) =>
       n = 2;
   }
   match (x) {
-    case Ints.One(auto x) =>
+    case Ints.One(x: auto) =>
       n = x + 2;
     case Ints.None() =>
       n = n - 1;
-    case Ints.Two(auto x, auto y) =>
+    case Ints.Two(x: auto, y: auto) =>
       n = 5;
   }
   return n;

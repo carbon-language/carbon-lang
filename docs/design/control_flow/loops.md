@@ -24,7 +24,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 example, this prints `0`, `1`, `2`, then `Done!`:
 
 ```carbon
-var Int x = 0;
+var x: Int = 0;
 while (x < 3) {
   Print(x);
   ++x;
@@ -40,7 +40,7 @@ Print("Done!");
 example, this prints all names in `names`:
 
 ```carbon
-for (var String name : names) {
+for (var name: String in names) {
   Print(name);
 }
 ```
@@ -56,7 +56,7 @@ resume at the end of the loop's scope. For example, this processes steps until a
 manual step is hit (if no manual step is hit, all steps are processed):
 
 ```carbon
-for (var Step step : steps) {
+for (var step: Step in steps) {
   if (step.IsManual()) {
     Print("Reached manual step!");
     break;
@@ -75,9 +75,9 @@ example, this prints all non-empty lines of a file, using `continue` to skip
 empty lines:
 
 ```carbon
-File f = OpenFile(path);
+var f: File = OpenFile(path);
 while (!f.EOF()) {
-  String line = f.ReadLine();
+  var line: String = f.ReadLine();
   if (line.IsEmpty()) {
     continue;
   }

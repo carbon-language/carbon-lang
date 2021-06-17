@@ -3,8 +3,8 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 fn main() -> Int {
-  var auto x = 0;
-  var auto y = 1;
+  var x: auto = 0;
+  var y: auto = 1;
   (x, y) = (5, -5);
   return x + y;
 }

@@ -5,7 +5,7 @@
 // Test that mutations to a global variable in one function is visible
 // in another function.
 
-var Int flag = 1;
+var flag: Int = 1;
 
 fn flipFlag() -> () {
   flag = 0;

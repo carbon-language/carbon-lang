@@ -3,14 +3,14 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 fn main() -> Int {
-  var auto t = fnty (Int,Int);
-  var Int x = 0;
+  var t: auto = fnty (Int,Int);
+  var x: Int = 0;
   match (t) {
-    case Type z =>
+    case z: Type =>
       x = x + 1;
   }
   match (t) {
-    case fnty(Type a,Type b) =>
+    case fnty(a: Type,b: Type) =>
       x = x - 1;
   }
   return x;

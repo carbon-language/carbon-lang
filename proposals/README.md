@@ -55,5 +55,6 @@ request:
 -   [0438 - Functions](p0438.md)
 -   [0444 - GitHub Discussions](p0444.md)
 -   [0447 - Generics terminology](p0447.md)
+-   [0538 - `return` with no argument](p0538.md)
 
 <!-- endproposals -->

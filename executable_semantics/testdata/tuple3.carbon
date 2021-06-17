@@ -3,6 +3,6 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 fn main() -> Int {
-  var (Int, .x = Int) t = (3, .x = 2);
+  var t: (Int, .x = Int) = (3, .x = 2);
   return t.x + 1 - t[0];
 }
