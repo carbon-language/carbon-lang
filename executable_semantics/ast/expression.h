@@ -130,12 +130,7 @@ struct TypeT {
 
 struct Expression {
   int line_num;
-  ExpressionKind tag() const {
-    // FIXME don't pass by value
-    return std::visit([](auto alternative) {
-      return decltype(alternative)::Kind;
-    }, value);
-  }
+  inline auto tag() const -> ExpressionKind;
 
   static auto MakeVar(int line_num, std::string var) -> const Expression*;
   static auto MakeVarPat(int line_num, std::string var, const Expression* type)
@@ -177,7 +172,6 @@ struct Expression {
   FunctionType GetFunctionType() const;
 
  private:
-  // FIXME ensure this is always initialized
   std::variant<
     Variable,
     FieldAccess,
@@ -198,6 +192,19 @@ struct Expression {
 };
 
 void PrintExp(const Expression* exp);
+
+// Implementation details only beyond this point
+
+struct TagVisitor {
+  template <typename Alternative>
+  auto operator()(const Alternative&) -> ExpressionKind {
+    return Alternative::Kind;
+  }
+};
+
+auto Expression::tag() const -> ExpressionKind {
+    return std::visit(TagVisitor(), value);
+  }
 
 }  // namespace Carbon
 
