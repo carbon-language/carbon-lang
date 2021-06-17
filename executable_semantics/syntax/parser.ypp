@@ -150,10 +150,13 @@ void yy::parser::error(
   EQUAL  "="
   MINUS  "-"
   PLUS   "+"
-  UNARY_STAR   "unary *"
-  PREFIX_STAR   "prefix *"
-  POSTFIX_STAR   "postfix *"
-  BINARY_STAR   "binary *"
+  // The lexer determines the arity and fixity of each `*` based on whitespace
+  // and adjacent tokens. UNARY_STAR indicates that the operator is unary but
+  // could be either prefix or postfix.
+  UNARY_STAR "unary *"
+  PREFIX_STAR "prefix *"
+  POSTFIX_STAR "postfix *"
+  BINARY_STAR "binary *"
   SLASH  "/"
   LEFT_PARENTHESIS "("
   RIGHT_PARENTHESIS ")"
@@ -175,6 +178,11 @@ void yy::parser::error(
 %left "+" "-"
 %left BINARY_STAR
 %precedence NOT UNARY_MINUS PREFIX_STAR
+// We need to give the `UNARY_STAR` token a precedence, rather than overriding
+// the precedence of the `expression UNARY_STAR` rule below, because bison
+// compares the precedence of the final token (for a shift) to the precedence
+// of the other rule (for a reduce) when attempting to resolve a shift-reduce
+// conflict. See https://stackoverflow.com/a/26188429/1041090
 %precedence POSTFIX_STAR UNARY_STAR
 %left "." ARROW
 %precedence "(" ")" "[" "]"

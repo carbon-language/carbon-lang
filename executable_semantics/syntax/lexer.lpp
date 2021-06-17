@@ -64,10 +64,11 @@ whitespace [ \t\r\n]
 operand_start [(A-Za-z0-9_"]
 
 %{
-  // This macro is expanded to run each time a token is recognized.
+  // This macro is expanded immediately before each action specified below.
   //
   // Advances the current token position by yyleng columns without changing
-  // the line number, and takes us out of the after-whitespace state.
+  // the line number, and takes us out of the after-whitespace / after-operand
+  // state.
   # define YY_USER_ACTION \
       context.current_token_position.columns(yyleng); \
       if (YY_START == AFTER_WHITESPACE || \
@@ -131,22 +132,42 @@ operand_start [(A-Za-z0-9_"]
 ";" return yy::parser::make_SEMICOLON(context.current_token_position);
 ":" return yy::parser::make_COLON(context.current_token_position);
 
-<INITIAL,AFTER_OPERAND>"*" {
-  return yy::parser::make_UNARY_STAR(context.current_token_position);
+ /*
+For a `*` operator, we look at whitespace and local context to determine the
+arity and fixity. There are two ways to write a binary operator:
+
+ 1) Whitespace on both sides.
+ 2) Whitespace on neither side, and the previous token is considered to be
+    the end of an operand, and the next token is considered to be the start
+    of an operand.
+
+Otherwise, the operator is unary, but we also check for whitespace to help
+the parser enforce the rule that whitespace is not permitted between the
+operator and its operand, laeding to three more cases:
+
+ 3) Whitespace before (but implicitly not after, because that would give a
+    longer match and hit case 1): this can only be a prefix operator.
+ 4) Whitespace after and not before: this can only be a postfix operator.
+ 5) No whitespace on either side (otherwise the longest match would take us
+    to case 4): this is a unary operator and could be either prefix or
+    postfix.
+*/
+<AFTER_WHITESPACE>"*"{whitespace}+ /*case 1*/ {
+  BEGIN(AFTER_WHITESPACE);
+  return yy::parser::make_BINARY_STAR(context.current_token_position);
 }
-<AFTER_WHITESPACE>"*" {
+<AFTER_OPERAND>"*"/{operand_start} /*case 2*/ {
+  return yy::parser::make_BINARY_STAR(context.current_token_position);
+}
+<AFTER_WHITESPACE>"*" /*case 3*/ {
   return yy::parser::make_PREFIX_STAR(context.current_token_position);
 }
-<INITIAL,AFTER_OPERAND>"*"{whitespace}* {
+<INITIAL,AFTER_OPERAND>"*"{whitespace}+ /*case 4*/ {
   BEGIN(AFTER_WHITESPACE);
   return yy::parser::make_POSTFIX_STAR(context.current_token_position);
 }
-<AFTER_WHITESPACE>"*"{whitespace}* {
-  BEGIN(AFTER_WHITESPACE);
-  return yy::parser::make_BINARY_STAR(context.current_token_position);
-}
-<AFTER_OPERAND>"*"/{operand_start} {
-  return yy::parser::make_BINARY_STAR(context.current_token_position);
+<INITIAL,AFTER_OPERAND>"*" /*case 5*/ {
+  return yy::parser::make_UNARY_STAR(context.current_token_position);
 }
 
 {identifier} {
