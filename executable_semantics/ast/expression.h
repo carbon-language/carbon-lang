@@ -130,8 +130,7 @@ struct TypeT {
 
 struct Expression {
   int line_num;
-  ExpressionKind tag;
-  ExpressionKind tag_() const {
+  ExpressionKind tag() const {
     // FIXME don't pass by value
     return std::visit([](auto alternative) {
       return decltype(alternative)::Kind;
