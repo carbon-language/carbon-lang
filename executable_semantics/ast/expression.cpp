@@ -9,15 +9,15 @@
 
 namespace Carbon {
 
-Variable Expression::GetVariable() const { return std::get<Variable>(value); }
+const Variable& Expression::GetVariable() const { return std::get<Variable>(value); }
 
-FieldAccess Expression::GetFieldAccess() const {
+const FieldAccess& Expression::GetFieldAccess() const {
   return std::get<FieldAccess>(value);
 }
 
-Index Expression::GetIndex() const { return std::get<Index>(value); }
+const Index& Expression::GetIndex() const { return std::get<Index>(value); }
 
-PatternVariable Expression::GetPatternVariable() const {
+const PatternVariable& Expression::GetPatternVariable() const {
   return std::get<PatternVariable>(value);
 }
 
@@ -27,15 +27,15 @@ bool Expression::GetBoolean() const {
   return std::get<BoolLiteral>(value).value;
 }
 
-Tuple Expression::GetTuple() const { return std::get<Tuple>(value); }
+const Tuple& Expression::GetTuple() const { return std::get<Tuple>(value); }
 
-PrimitiveOperator Expression::GetPrimitiveOperator() const {
+const PrimitiveOperator& Expression::GetPrimitiveOperator() const {
   return std::get<PrimitiveOperator>(value);
 }
 
-Call Expression::GetCall() const { return std::get<Call>(value); }
+const Call& Expression::GetCall() const { return std::get<Call>(value); }
 
-FunctionType Expression::GetFunctionType() const {
+const FunctionType& Expression::GetFunctionType() const {
   return std::get<FunctionType>(value);
 }
 

@@ -160,16 +160,16 @@ struct Expression {
   static auto MakeAutoType(int line_num) -> const Expression*;
   static auto MakeContinuationType(int line_num) -> const Expression*;
 
-  Variable GetVariable() const;
-  FieldAccess GetFieldAccess() const;
-  Index GetIndex() const;
-  PatternVariable GetPatternVariable() const;
+  const Variable& GetVariable() const;
+  const FieldAccess& GetFieldAccess() const;
+  const Index& GetIndex() const;
+  const PatternVariable& GetPatternVariable() const;
   int GetInteger() const;
   bool GetBoolean() const;
-  Tuple GetTuple() const;
-  PrimitiveOperator GetPrimitiveOperator() const;
-  Call GetCall() const;
-  FunctionType GetFunctionType() const;
+  const Tuple& GetTuple() const;
+  const PrimitiveOperator& GetPrimitiveOperator() const;
+  const Call& GetCall() const;
+  const FunctionType& GetFunctionType() const;
 
  private:
   std::variant<Variable, FieldAccess, Index, PatternVariable, IntLiteral,
