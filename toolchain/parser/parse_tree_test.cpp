@@ -897,20 +897,21 @@ TEST_F(ParseTreeTest, PrintingAsYAML) {
                    Yaml::MappingValue{{"node_index", "0"},
                                       {"kind", "DeclaredName"},
                                       {"text", "F"}},
-                   Yaml::MappingValue{
-                       {"node_index", "2"},
-                       {"kind", "ParameterList"},
-                       {"text", "("},
-                       {"subtree_size", "2"},
-                       {"children", Yaml::SequenceValue{Yaml::MappingValue{
-                                        {"node_index", "1"},
-                                        {"kind", "ParameterListEnd"},
-                                        {"text", ")"}}}}},
+                   Yaml::MappingValue{{"node_index", "2"},
+                                      {"kind", "ParameterList"},
+                                      {"text", "("},
+                                      {"subtree_size", "2"},
+                                      {"children",  //
+                                       Yaml::SequenceValue{Yaml::MappingValue{
+                                           {"node_index", "1"},
+                                           {"kind", "ParameterListEnd"},
+                                           {"text", ")"}}}}},
                    Yaml::MappingValue{{"node_index", "3"},
                                       {"kind", "DeclarationEnd"},
                                       {"text", ";"}}}}},
-          Yaml::MappingValue{
-              {"node_index", "5"}, {"kind", "FileEnd"}, {"text", ""}}}));
+          Yaml::MappingValue{{"node_index", "5"},  //
+                             {"kind", "FileEnd"},
+                             {"text", ""}}}));
 }
 
 }  // namespace
