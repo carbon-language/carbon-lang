@@ -143,7 +143,7 @@ arity and fixity. There are two ways to write a binary operator:
 
 Otherwise, the operator is unary, but we also check for whitespace to help
 the parser enforce the rule that whitespace is not permitted between the
-operator and its operand, laeding to three more cases:
+operator and its operand, leading to three more cases:
 
  3) Whitespace before (but implicitly not after, because that would give a
     longer match and hit case 1): this can only be a prefix operator.

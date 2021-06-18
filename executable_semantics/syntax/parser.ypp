@@ -182,7 +182,9 @@ void yy::parser::error(
 // the precedence of the `expression UNARY_STAR` rule below, because bison
 // compares the precedence of the final token (for a shift) to the precedence
 // of the other rule (for a reduce) when attempting to resolve a shift-reduce
-// conflict. See https://stackoverflow.com/a/26188429/1041090
+// conflict. See https://stackoverflow.com/a/26188429/1041090. When UNARY_STAR
+// is the final token of a rule, it must be a postfix usage, so we give it the
+// same precedence as POSTFIX_STAR.
 %precedence POSTFIX_STAR UNARY_STAR
 %left "." ARROW
 %precedence "(" ")" "[" "]"
