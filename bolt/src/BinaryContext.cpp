@@ -1284,6 +1284,7 @@ void BinaryContext::foldFunction(BinaryFunction &ChildBF,
     assert(&ChildBF == &FI->second && "function mismatch");
 
     WriteBfsLock.lock();
+    ChildBF.clearDisasmState();
     FI = BinaryFunctions.erase(FI);
     WriteBfsLock.unlock();
 
