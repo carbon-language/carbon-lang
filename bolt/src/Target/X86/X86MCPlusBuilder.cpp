@@ -3399,9 +3399,7 @@ public:
         NewCall->push_back(CallInst);
         MCInst &Compare = NewCall->back();
         Compare.clear();
-        if (CallInst.getOpcode() == X86::CALL64r ||
-            CallInst.getOpcode() == X86::JMP64r ||
-            CallInst.getOpcode() == X86::TAILJMPr) {
+        if (isBranchOnReg(CallInst)) {
           Compare.setOpcode(X86::CMP64rr);
         } else if (CallInst.getOpcode() == X86::CALL64pcrel32) {
           Compare.setOpcode(X86::CMP64ri32);
@@ -3422,9 +3420,7 @@ public:
         NewCall->push_back(CallInst);
         MCInst &Compare = NewCall->back();
         Compare.clear();
-        if (CallInst.getOpcode() == X86::CALL64r ||
-            CallInst.getOpcode() == X86::JMP64r ||
-            CallInst.getOpcode() == X86::TAILJMPr) {
+        if (isBranchOnReg(CallInst)) {
           Compare.setOpcode(X86::CMP64ri32);
         } else {
           Compare.setOpcode(X86::CMP64mi32);

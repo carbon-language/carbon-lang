@@ -569,12 +569,13 @@ public:
            OpNum != OpEnd; ++OpNum) {
         if (!Instr.getOperand(OpNum).isReg())
           continue;
-        Uses[&Instr].push_back(RegAliasTable[Instr.getOperand(OpNum).getReg()]);
+        unsigned Reg = Instr.getOperand(OpNum).getReg();
+        MCInst* AliasInst = RegAliasTable[Reg];
+        Uses[&Instr].push_back(AliasInst);
         LLVM_DEBUG({
-          dbgs() << "Adding reg operand " << Instr.getOperand(OpNum).getReg()
-                 << " refs ";
-          if (RegAliasTable[Instr.getOperand(OpNum).getReg()] != nullptr)
-            RegAliasTable[Instr.getOperand(OpNum).getReg()]->dump();
+          dbgs() << "Adding reg operand " << Reg << " refs ";
+          if (AliasInst != nullptr)
+            AliasInst->dump();
           else
             dbgs() << "\n";
         });
