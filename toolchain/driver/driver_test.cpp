@@ -18,7 +18,6 @@ using ::testing::ElementsAre;
 using ::testing::Eq;
 using ::testing::HasSubstr;
 using ::testing::NotNull;
-using ::testing::Pair;
 using ::testing::StrEq;
 namespace Yaml = Carbon::Testing::Yaml;
 
@@ -131,25 +130,30 @@ TEST(DriverTest, DumpTokens) {
   EXPECT_THAT(test_error_stream.TakeStr(), StrEq(""));
   auto tokenized_text = test_output_stream.TakeStr();
 
-  EXPECT_THAT(
-      Yaml::Value::FromText(tokenized_text),
-      ElementsAre(Yaml::Mapping(ElementsAre(
-          Pair("token",
-               Yaml::Mapping(ElementsAre(
-                   Pair("index", "0"), Pair("kind", "Identifier"),
-                   Pair("line", "1"), Pair("column", "1"), Pair("indent", "1"),
-                   Pair("spelling", "Hello"), Pair("identifier", "0"),
-                   Pair("has_trailing_space", "true")))),
-          Pair("token",
-               Yaml::Mapping(ElementsAre(
-                   Pair("index", "1"), Pair("kind", "Identifier"),
-                   Pair("line", "1"), Pair("column", "7"), Pair("indent", "1"),
-                   Pair("spelling", "World"), Pair("identifier", "1"),
-                   Pair("has_trailing_space", "true")))),
-          Pair("token", Yaml::Mapping(ElementsAre(
-                            Pair("index", "2"), Pair("kind", "EndOfFile"),
-                            Pair("line", "1"), Pair("column", "12"),
-                            Pair("indent", "1"), Pair("spelling", ""))))))));
+  EXPECT_THAT(Yaml::Value::FromText(tokenized_text),
+              ElementsAre(Yaml::MappingValue{
+                  {"token", Yaml::MappingValue{{"index", "0"},
+                                               {"kind", "Identifier"},
+                                               {"line", "1"},
+                                               {"column", "1"},
+                                               {"indent", "1"},
+                                               {"spelling", "Hello"},
+                                               {"identifier", "0"},
+                                               {"has_trailing_space", "true"}}},
+                  {"token", Yaml::MappingValue{{"index", "1"},
+                                               {"kind", "Identifier"},
+                                               {"line", "1"},
+                                               {"column", "7"},
+                                               {"indent", "1"},
+                                               {"spelling", "World"},
+                                               {"identifier", "1"},
+                                               {"has_trailing_space", "true"}}},
+                  {"token", Yaml::MappingValue{{"index", "2"},
+                                               {"kind", "EndOfFile"},
+                                               {"line", "1"},
+                                               {"column", "12"},
+                                               {"indent", "1"},
+                                               {"spelling", ""}}}}));
 
   // Check that the subcommand dispatch works.
   EXPECT_TRUE(driver.RunFullCommand({"dump-tokens", test_file_path}));

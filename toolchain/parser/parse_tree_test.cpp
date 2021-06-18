@@ -26,7 +26,6 @@ using ::testing::ElementsAre;
 using ::testing::Eq;
 using ::testing::Ne;
 using ::testing::NotNull;
-using ::testing::Pair;
 using ::testing::StrEq;
 namespace Yaml = Carbon::Testing::Yaml;
 
@@ -887,31 +886,31 @@ TEST_F(ParseTreeTest, PrintingAsYAML) {
 
   EXPECT_THAT(
       Yaml::Value::FromText(print_output),
-      ElementsAre(Yaml::Sequence(ElementsAre(
-          Yaml::Mapping(ElementsAre(
-              Pair("node_index", "4"), Pair("kind", "FunctionDeclaration"),
-              Pair("text", "fn"), Pair("subtree_size", "5"),
-              Pair(
-                  "children",
-                  Yaml::Sequence(ElementsAre(
-                      Yaml::Mapping(ElementsAre(Pair("node_index", "0"),
-                                                Pair("kind", "DeclaredName"),
-                                                Pair("text", "F"))),
-                      Yaml::Mapping(ElementsAre(
-                          Pair("node_index", "2"),
-                          Pair("kind", "ParameterList"), Pair("text", "("),
-                          Pair("subtree_size", "2"),
-                          Pair("children",
-                               Yaml::Sequence(ElementsAre(Yaml::Mapping(
-                                   ElementsAre(Pair("node_index", "1"),
-                                               Pair("kind", "ParameterListEnd"),
-                                               Pair("text", ")")))))))),
-                      Yaml::Mapping(ElementsAre(Pair("node_index", "3"),
-                                                Pair("kind", "DeclarationEnd"),
-                                                Pair("text", ";")))))))),
-          Yaml::Mapping(ElementsAre(Pair("node_index", "5"),
-                                    Pair("kind", "FileEnd"),
-                                    Pair("text", "")))))));
+      ElementsAre(Yaml::SequenceValue{
+          Yaml::MappingValue{
+              {"node_index", "4"},
+              {"kind", "FunctionDeclaration"},
+              {"text", "fn"},
+              {"subtree_size", "5"},
+              {"children",
+               Yaml::SequenceValue{
+                   Yaml::MappingValue{{"node_index", "0"},
+                                      {"kind", "DeclaredName"},
+                                      {"text", "F"}},
+                   Yaml::MappingValue{
+                       {"node_index", "2"},
+                       {"kind", "ParameterList"},
+                       {"text", "("},
+                       {"subtree_size", "2"},
+                       {"children", Yaml::SequenceValue{Yaml::MappingValue{
+                                        {"node_index", "1"},
+                                        {"kind", "ParameterListEnd"},
+                                        {"text", ")"}}}}},
+                   Yaml::MappingValue{{"node_index", "3"},
+                                      {"kind", "DeclarationEnd"},
+                                      {"text", ";"}}}}},
+          Yaml::MappingValue{
+              {"node_index", "5"}, {"kind", "FileEnd"}, {"text", ""}}}));
 }
 
 }  // namespace

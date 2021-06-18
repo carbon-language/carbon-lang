@@ -31,7 +31,6 @@ using ::testing::ElementsAre;
 using ::testing::Eq;
 using ::testing::HasSubstr;
 using ::testing::NotNull;
-using ::testing::Pair;
 using ::testing::StrEq;
 namespace Yaml = Carbon::Testing::Yaml;
 
@@ -964,28 +963,35 @@ TEST_F(LexerTest, PrintingAsYaml) {
   buffer.Print(print_stream);
   print_stream.flush();
 
-  EXPECT_THAT(
-      Yaml::Value::FromText(print_output),
-      ElementsAre(Yaml::Mapping(ElementsAre(
-          Pair("token",
-               Yaml::Mapping(ElementsAre(
-                   Pair("index", "0"), Pair("kind", "Semi"), Pair("line", "2"),
-                   Pair("column", "2"), Pair("indent", "2"),
-                   Pair("spelling", ";"), Pair("has_trailing_space", "true")))),
-          Pair("token",
-               Yaml::Mapping(ElementsAre(
-                   Pair("index", "1"), Pair("kind", "Semi"), Pair("line", "5"),
-                   Pair("column", "1"), Pair("indent", "1"),
-                   Pair("spelling", ";"), Pair("has_trailing_space", "true")))),
-          Pair("token",
-               Yaml::Mapping(ElementsAre(
-                   Pair("index", "2"), Pair("kind", "Semi"), Pair("line", "5"),
-                   Pair("column", "3"), Pair("indent", "1"),
-                   Pair("spelling", ";"), Pair("has_trailing_space", "true")))),
-          Pair("token", Yaml::Mapping(ElementsAre(
-                            Pair("index", "3"), Pair("kind", "EndOfFile"),
-                            Pair("line", "15"), Pair("column", "1"),
-                            Pair("indent", "1"), Pair("spelling", ""))))))));
+  EXPECT_THAT(Yaml::Value::FromText(print_output),
+              ElementsAre(Yaml::MappingValue{
+                  {"token", Yaml::MappingValue{{"index", "0"},
+                                               {"kind", "Semi"},
+                                               {"line", "2"},
+                                               {"column", "2"},
+                                               {"indent", "2"},
+                                               {"spelling", ";"},
+                                               {"has_trailing_space", "true"}}},
+                  {"token", Yaml::MappingValue{{"index", "1"},
+                                               {"kind", "Semi"},
+                                               {"line", "5"},
+                                               {"column", "1"},
+                                               {"indent", "1"},
+                                               {"spelling", ";"},
+                                               {"has_trailing_space", "true"}}},
+                  {"token", Yaml::MappingValue{{"index", "2"},
+                                               {"kind", "Semi"},
+                                               {"line", "5"},
+                                               {"column", "3"},
+                                               {"indent", "1"},
+                                               {"spelling", ";"},
+                                               {"has_trailing_space", "true"}}},
+                  {"token", Yaml::MappingValue{{"index", "3"},
+                                               {"kind", "EndOfFile"},
+                                               {"line", "15"},
+                                               {"column", "1"},
+                                               {"indent", "1"},
+                                               {"spelling", ""}}}}));
 }
 
 }  // namespace

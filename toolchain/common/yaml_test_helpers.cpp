@@ -8,7 +8,7 @@
 
 namespace Carbon::Testing::Yaml {
 
-static Value Parse(llvm::yaml::Node* node) {
+static auto Parse(llvm::yaml::Node* node) -> Value {
   if (!node) {
     return Value{ErrorValue()};
   }
@@ -56,26 +56,28 @@ static Value Parse(llvm::yaml::Node* node) {
   llvm_unreachable("unknown yaml node kind");
 }
 
-std::vector<Value> Value::FromText(llvm::StringRef text) {
+auto Value::FromText(llvm::StringRef text) -> SequenceValue {
   llvm::SourceMgr sm;
   llvm::yaml::Stream yaml_stream(text, sm);
 
-  std::vector<Value> result;
+  SequenceValue result;
   for (llvm::yaml::Document& document : yaml_stream) {
     result.push_back(Parse(document.getRoot()));
   }
   return result;
 }
 
-std::ostream& operator<<(std::ostream& os, const Value& v) {
+auto operator<<(std::ostream& os, const Value& v) -> std::ostream& {
+  // Variant visitor that prints the value in the form of code to recreate the
+  // value.
   struct Printer {
     std::ostream& out;
-    void operator()(NullValue) { out << "null"; }
-    void operator()(AliasValue) { out << "alias"; }
-    void operator()(ErrorValue) { out << "error"; }
-    void operator()(const ScalarValue& v) { out << std::quoted(v); }
-    void operator()(const MappingValue& v) {
-      out << "{";
+    auto operator()(NullValue) -> void { out << "Yaml::NullValue()"; }
+    auto operator()(AliasValue) -> void { out << "Yaml::AliasValue()"; }
+    auto operator()(ErrorValue) -> void { out << "Yaml::ErrorValue()"; }
+    auto operator()(const ScalarValue& v) -> void { out << std::quoted(v); }
+    auto operator()(const MappingValue& v) -> void {
+      out << "Yaml::MappingValue{";
       bool first = true;
       for (auto& [key, value] : v) {
         if (first) {
@@ -83,12 +85,12 @@ std::ostream& operator<<(std::ostream& os, const Value& v) {
         } else {
           out << ", ";
         }
-        out << key << ": " << value;
+        out << "{" << key << ", " << value << "}";
       }
       out << "}";
     }
-    void operator()(const SequenceValue& v) {
-      out << "{";
+    auto operator()(const SequenceValue& v) -> void {
+      out << "Yaml::SequenceValue{";
       bool first = true;
       for (auto& value : v) {
         if (first) {
@@ -101,7 +103,7 @@ std::ostream& operator<<(std::ostream& os, const Value& v) {
       out << "}";
     }
   };
-  std::visit(Printer{os}, v.value);
+  std::visit(Printer{os}, v);
   return os;
 }
 
