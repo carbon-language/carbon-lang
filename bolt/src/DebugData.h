@@ -364,7 +364,8 @@ class BinaryPatcher {
 public:
   virtual ~BinaryPatcher() {}
   /// Applies in-place modifications to the binary string \p BinaryContents .
-  virtual void patchBinary(std::string &BinaryContents) = 0;
+  /// \p DWPOffset used to correctly patch sections that come from DWP file.
+  virtual void patchBinary(std::string &BinaryContents, uint32_t DWPOffset) = 0;
 };
 
 /// Applies simple modifications to a binary string, such as directly replacing
@@ -424,7 +425,8 @@ public:
   /// Proxy for if we broke up low_pc/high_pc to ranges.
   bool getWasRangBasedUsed() const { return WasRangeBaseUsed; }
 
-  virtual void patchBinary(std::string &BinaryContents) override;
+  virtual void patchBinary(std::string &BinaryContents,
+                           uint32_t DWPOffset) override;
 };
 
 /// Apply small modifications to the .debug_abbrev DWARF section.
@@ -468,7 +470,7 @@ public:
                          dwarf::Attribute AttrTag, dwarf::Attribute NewAttrTag,
                          uint8_t NewAttrForm);
 
-  virtual void patchBinary(std::string &Contents) override;
+  virtual void patchBinary(std::string &Contents, uint32_t DWPOffset) override;
 
   /// Finds an abbreviation patch.
   /// \p AbbrevDecl the abbreviation declaration.

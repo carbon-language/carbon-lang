@@ -3843,7 +3843,7 @@ void RewriteInstance::rewriteNoteSections() {
       std::string Data =
           std::string(InputFile->getData().substr(Section.sh_offset, Size));
       if (BSec && BSec->getPatcher())
-        BSec->getPatcher()->patchBinary(Data);
+        BSec->getPatcher()->patchBinary(Data, 0);
 
       // Section was expanded, so need to treat it as overwrite.
       if (Size != Data.size()) {

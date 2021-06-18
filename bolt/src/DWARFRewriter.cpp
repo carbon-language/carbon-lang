@@ -824,11 +824,34 @@ void DWARFRewriter::finalizeDebugSections(
 void DWARFRewriter::writeOutDWOFiles(
     std::unordered_map<uint64_t, std::string> &DWOIdToName) {
   std::string DebugData = "";
-  auto ApplyPatch = [&](BinaryPatcher *Patcher, StringRef Data) -> StringRef {
+  auto applyPatch = [&](BinaryPatcher *Patcher, StringRef Data,
+                        uint32_t Offset) -> StringRef {
     DebugData = Data.str();
-    Patcher->patchBinary(DebugData);
+    Patcher->patchBinary(DebugData, Offset);
     return StringRef(DebugData.c_str(), DebugData.size());
   };
+
+  using DWOSectionContribution =
+      const DWARFUnitIndex::Entry::SectionContribution;
+  auto getSliceData = [&](const DWARFUnitIndex::Entry *DWOEntry,
+                          StringRef OutData, DWARFSectionKind Sec,
+                          uint32_t &DWPOffset) -> StringRef {
+    if (DWOEntry) {
+      DWOSectionContribution *DWOContrubution = DWOEntry->getContribution(Sec);
+      DWPOffset = DWOContrubution->Offset;
+      OutData = OutData.substr(DWPOffset, DWOContrubution->Length);
+    }
+    return OutData;
+  };
+
+  // Setup DWP code once.
+  DWARFContext *DWOCtx = BC.getDWOContext();
+  const DWARFUnitIndex *CUIndex = nullptr;
+  bool IsDWP = false;
+  if (DWOCtx) {
+    CUIndex = &DWOCtx->getCUIndex();
+    IsDWP = !CUIndex->getRows().empty();
+  }
 
   for (const std::unique_ptr<DWARFUnit> &CU : BC.DwCtx->compile_units()) {
     Optional<uint64_t> DWOId = CU->getDWOId();
@@ -859,6 +882,10 @@ void DWARFRewriter::writeOutDWOFiles(
     std::unique_ptr<MCStreamer> Streamer = TmpBC->createStreamer(TempOut->os());
     const MCObjectFileInfo &MCOFI = *Streamer->getContext().getObjectFileInfo();
 
+    const DWARFUnitIndex::Entry *DWOEntry = nullptr;
+    if (IsDWP)
+      DWOEntry = CUIndex->getFromHash(*DWOId);
+
     const StringMap<MCSection *> KnownSections = {
         {".debug_info.dwo", MCOFI.getDwarfInfoDWOSection()},
         {".debug_types.dwo", MCOFI.getDwarfTypesDWOSection()},
@@ -879,7 +906,28 @@ void DWARFRewriter::writeOutDWOFiles(
       assert(Contents && "Invalid contents.");
       StringRef OutData(*Contents);
       std::unique_ptr<LocBufferVector> Data;
-      if (SectionName->equals(".debug_loc.dwo")) {
+      uint32_t DWPOffset = 0;
+
+      if (SectionName->equals(".debug_info.dwo")) {
+        OutData = getSliceData(DWOEntry, OutData,
+                               DWARFSectionKind::DW_SECT_INFO, DWPOffset);
+        SimpleBinaryPatcher *Patcher = getBinaryDWODebugInfoPatcher(*DWOId);
+        OutData = applyPatch(Patcher, OutData, DWPOffset);
+      } else if (SectionName->equals(".debug_types.dwo")) {
+        OutData = getSliceData(DWOEntry, OutData,
+                               DWARFSectionKind::DW_SECT_EXT_TYPES, DWPOffset);
+      } else if (SectionName->equals(".debug_str.dwo")) {
+        OutData = (*DWOCU)->getStringSection();
+      } else if (SectionName->equals(".debug_str_offsets.dwo")) {
+        OutData =
+            getSliceData(DWOEntry, OutData,
+                         DWARFSectionKind::DW_SECT_STR_OFFSETS, DWPOffset);
+      } else if (SectionName->equals(".debug_abbrev.dwo")) {
+        OutData = getSliceData(DWOEntry, OutData,
+                               DWARFSectionKind::DW_SECT_ABBREV, DWPOffset);
+        DebugAbbrevPatcher *Patcher = getBinaryDWOAbbrevPatcher(*DWOId);
+        OutData = applyPatch(Patcher, OutData, DWPOffset);
+      } else if (SectionName->equals(".debug_loc.dwo")) {
         DebugLocWriter *LocWriter = LocListWritersByCU[*DWOId].get();
         Data = LocWriter->finalize();
         // Creating explicit with creating of StringRef here, otherwise
@@ -887,12 +935,12 @@ void DWARFRewriter::writeOutDWOFiles(
         // string.
         OutData = StringRef(reinterpret_cast<const char *>(Data->data()),
                             Data->size());
-      } else if (SectionName->equals(".debug_info.dwo")) {
-        SimpleBinaryPatcher *Patcher = getBinaryDWODebugInfoPatcher(*DWOId);
-        OutData = ApplyPatch(Patcher, OutData);
-      } else if (SectionName->equals(".debug_abbrev.dwo")) {
-        DebugAbbrevPatcher *Patcher = getBinaryDWOAbbrevPatcher(*DWOId);
-        OutData = ApplyPatch(Patcher, OutData);
+      } else if (SectionName->equals(".debug_line.dwo")) {
+        OutData = getSliceData(DWOEntry, OutData,
+                               DWARFSectionKind::DW_SECT_LINE, DWPOffset);
+      } else {
+        errs() << "BOLT-WARNING: Unsupported Debug section: " << *SectionName
+               << "\n";
       }
 
       Streamer->emitBytes(OutData);

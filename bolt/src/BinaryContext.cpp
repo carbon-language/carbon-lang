@@ -1460,6 +1460,12 @@ Optional<DWARFUnit *> BinaryContext::getDWOCU(uint64_t DWOId) {
   return Iter->second;
 }
 
+DWARFContext *BinaryContext::getDWOContext() {
+  if (DWOCUs.empty())
+    return nullptr;
+  return &DWOCUs.begin()->second->getContext();
+}
+
 /// Handles DWO sections that can either be in .o, .dwo or .dwp files.
 void BinaryContext::preprocessDWODebugInfo() {
   for (const std::unique_ptr<DWARFUnit> &CU : DwCtx->compile_units()) {

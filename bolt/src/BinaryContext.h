@@ -212,8 +212,11 @@ public:
   createBinaryContext(const ObjectFile *File, bool IsPIC,
                       std::unique_ptr<DWARFContext> DwCtx);
 
-  /// Given DWOId returns CU if it existss in DWOCUs.
+  /// Given DWOId returns CU if it exists in DWOCUs.
   Optional<DWARFUnit *> getDWOCU(uint64_t DWOId);
+
+  /// Returns DWOContext if it exists.
+  DWARFContext *getDWOContext();
 
   /// Get Number of DWOCUs in a map.
   uint32_t getNumDWOCUs() { return DWOCUs.size(); }

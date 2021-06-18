@@ -371,9 +371,10 @@ void SimpleBinaryPatcher::addLE32Patch(uint32_t Offset, uint32_t NewValue) {
   addLEPatch(Offset, NewValue, 4);
 }
 
-void SimpleBinaryPatcher::patchBinary(std::string &BinaryContents) {
+void SimpleBinaryPatcher::patchBinary(std::string &BinaryContents,
+                                      uint32_t DWPOffset = 0) {
   for (const auto &Patch : Patches) {
-    uint32_t Offset = Patch.first;
+    uint32_t Offset = Patch.first - DWPOffset;
     const std::string &ByteSequence = Patch.second;
     assert(Offset + ByteSequence.size() <= BinaryContents.size() &&
         "Applied patch runs over binary size.");
@@ -396,7 +397,8 @@ void DebugAbbrevPatcher::addAttributePatch(
         AbbrevAttrPatch{Abbrev, AttrTag, NewAttrTag, NewAttrForm});
 }
 
-void DebugAbbrevPatcher::patchBinary(std::string &Contents) {
+void DebugAbbrevPatcher::patchBinary(std::string &Contents,
+                                     uint32_t DWPOffset = 0) {
   SimpleBinaryPatcher Patcher;
 
   for (const AbbrevAttrPatch &Patch : AbbrevPatches) {
@@ -404,9 +406,9 @@ void DebugAbbrevPatcher::patchBinary(std::string &Contents) {
         Patch.Abbrev->findAttribute(Patch.Attr);
     assert(Attribute && "Specified attribute doesn't occur in abbreviation.");
 
-    Patcher.addBytePatch(Attribute->AttrOffset,
+    Patcher.addBytePatch(Attribute->AttrOffset - DWPOffset,
                          static_cast<uint8_t>(Patch.NewAttr));
-    Patcher.addBytePatch(Attribute->FormOffset, Patch.NewForm);
+    Patcher.addBytePatch(Attribute->FormOffset - DWPOffset, Patch.NewForm);
   }
   Patcher.patchBinary(Contents);
 
