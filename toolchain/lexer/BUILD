@@ -148,6 +148,7 @@ cc_test(
     deps = [
         ":tokenized_buffer",
         ":tokenized_buffer_test_helpers",
+        "//toolchain/common:yaml_test_helpers",
         "//toolchain/diagnostics:diagnostic_emitter",
         "//toolchain/diagnostics:mocks",
         "@llvm-project//llvm:Support",
