@@ -191,41 +191,42 @@ TEST(DriverTest, DumpParseTree) {
 
   EXPECT_THAT(
       Yaml::Value::FromText(tokenized_text),
-      ElementsAre(Yaml::Sequence(ElementsAre(
-          Yaml::Mapping(ElementsAre(
-              Pair("node_index", "6"), Pair("kind", "VariableDeclaration"),
-              Pair("text", "var"), Pair("subtree_size", "7"),
-              Pair("children",
-                   Yaml::Sequence(ElementsAre(
-                       Yaml::Mapping(ElementsAre(
-                           Pair("node_index", "2"),
-                           Pair("kind", "PatternBinding"), Pair("text", ":"),
-                           Pair("subtree_size", "3"),
-                           Pair("children",
-                                Yaml::Sequence(ElementsAre(
-                                    Yaml::Mapping(ElementsAre(
-                                        Pair("node_index", "0"),
-                                        Pair("kind", "DeclaredName"),
-                                        Pair("text", "v"))),
-                                    Yaml::Mapping(ElementsAre(
-                                        Pair("node_index", "1"),
-                                        Pair("kind", "NameReference"),
-                                        Pair("text", "Int")))))))),
-                       Yaml::Mapping(ElementsAre(
-                           Pair("node_index", "4"),
-                           Pair("kind", "VariableInitializer"),
-                           Pair("text", "="), Pair("subtree_size", "2"),
-                           Pair("children",
-                                Yaml::Sequence(ElementsAre(Yaml::Mapping(
-                                    ElementsAre(Pair("node_index", "3"),
-                                                Pair("kind", "Literal"),
-                                                Pair("text", "42")))))))),
-                       Yaml::Mapping(ElementsAre(Pair("node_index", "5"),
-                                                 Pair("kind", "DeclarationEnd"),
-                                                 Pair("text", ";")))))))),
-          Yaml::Mapping(ElementsAre(Pair("node_index", "7"),
-                                    Pair("kind", "FileEnd"),
-                                    Pair("text", "")))))));
+      ElementsAre(Yaml::SequenceValue{
+          Yaml::MappingValue{
+              {"node_index", "6"},
+              {"kind", "VariableDeclaration"},
+              {"text", "var"},
+              {"subtree_size", "7"},
+              {"children",
+               Yaml::SequenceValue{
+                   Yaml::MappingValue{
+                       {"node_index", "2"},
+                       {"kind", "PatternBinding"},
+                       {"text", ":"},
+                       {"subtree_size", "3"},
+                       {"children",
+                        Yaml::SequenceValue{
+                            Yaml::MappingValue{{"node_index", "0"},
+                                               {"kind", "DeclaredName"},
+                                               {"text", "v"}},
+                            Yaml::MappingValue{{"node_index", "1"},
+                                               {"kind", "NameReference"},
+                                               {"text", "Int"}}}}},
+                   Yaml::MappingValue{{"node_index", "4"},
+                                      {"kind", "VariableInitializer"},
+                                      {"text", "="},
+                                      {"subtree_size", "2"},
+                                      {"children",  //
+                                       Yaml::SequenceValue{Yaml::MappingValue{
+                                           {"node_index", "3"},
+                                           {"kind", "Literal"},
+                                           {"text", "42"}}}}},
+                   Yaml::MappingValue{{"node_index", "5"},
+                                      {"kind", "DeclarationEnd"},
+                                      {"text", ";"}}}}},
+          Yaml::MappingValue{{"node_index", "7"},  //
+                             {"kind", "FileEnd"},
+                             {"text", ""}}}));
 
   // Check that the subcommand dispatch works.
   EXPECT_TRUE(driver.RunFullCommand({"dump-parse-tree", test_file_path}));
