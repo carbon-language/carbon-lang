@@ -74,27 +74,6 @@ void InstrumentationRuntimeLibrary::adjustCommandLineOptions(
 
 void InstrumentationRuntimeLibrary::emitBinary(BinaryContext &BC,
                                                MCStreamer &Streamer) {
-  const BinaryFunction *StartFunction =
-      BC.getBinaryFunctionAtAddress(*BC.StartFunctionAddress);
-  assert(!StartFunction->isFragment() && "expected main function fragment");
-  if (!StartFunction) {
-    errs() << "BOLT-ERROR: failed to locate function at binary start address\n";
-    exit(1);
-  }
-
-  const BinaryFunction *FiniFunction =
-      BC.FiniFunctionAddress
-          ? BC.getBinaryFunctionAtAddress(*BC.FiniFunctionAddress)
-          : nullptr;
-  if (BC.isELF()) {
-    assert(!FiniFunction->isFragment() && "expected main function fragment");
-    if (!FiniFunction) {
-      errs()
-          << "BOLT-ERROR: failed to locate function at binary fini address\n";
-      exit(1);
-    }
-  }
-
   MCSection *Section = BC.isELF()
                            ? static_cast<MCSection *>(BC.Ctx->getELFSection(
                                  ".bolt.instr.counters", ELF::SHT_PROGBITS,
@@ -200,12 +179,6 @@ void InstrumentationRuntimeLibrary::emitBinary(BinaryContext &BC,
   emitIntValue("__bolt_instr_num_funcs", Summary->FunctionDescriptions.size());
   emitString("__bolt_instr_filename", opts::InstrumentationFilename);
   emitIntValue("__bolt_instr_use_pid", !!opts::InstrumentationFileAppendPID, 1);
-  emitValue(BC.Ctx->getOrCreateSymbol("__bolt_instr_init_ptr"),
-            MCSymbolRefExpr::create(StartFunction->getSymbol(), *BC.Ctx));
-  if (FiniFunction) {
-    emitValue(BC.Ctx->getOrCreateSymbol("__bolt_instr_fini_ptr"),
-              MCSymbolRefExpr::create(FiniFunction->getSymbol(), *BC.Ctx));
-  }
 
   if (BC.isMachO()) {
     MCSection *TablesSection = BC.Ctx->getMachOSection(

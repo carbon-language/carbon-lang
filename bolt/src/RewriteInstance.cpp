@@ -567,7 +567,8 @@ void RewriteInstance::discoverStorage() {
   ELF64LE::PhdrRange PHs =
       cantFail(Obj.program_headers(), "program_headers() failed");
   for (const ELF64LE::Phdr &Phdr : PHs) {
-    if (Phdr.p_type == ELF::PT_LOAD) {
+    switch (Phdr.p_type) {
+    case ELF::PT_LOAD:
       BC->FirstAllocAddress = std::min(BC->FirstAllocAddress,
                                        static_cast<uint64_t>(Phdr.p_vaddr));
       NextAvailableAddress = std::max(NextAvailableAddress,
@@ -580,6 +581,10 @@ void RewriteInstance::discoverStorage() {
                                                      Phdr.p_offset,
                                                      Phdr.p_filesz,
                                                      Phdr.p_align};
+      break;
+    case ELF::PT_INTERP:
+      BC->HasInterpHeader = true;
+      break;
     }
   }
 
@@ -5015,6 +5020,15 @@ void RewriteInstance::patchELFDynamic(ELFObjectFile<ELFT> *File) {
           }
         }
       }
+      if (Dyn.getTag() == ELF::DT_INIT && !BC->HasInterpHeader) {
+        if (auto *RtLibrary = BC->getRuntimeLibrary()) {
+          if (auto Addr = RtLibrary->getRuntimeStartAddress()) {
+            LLVM_DEBUG(dbgs() << "BOLT-DEBUG: Set DT_INIT to 0x"
+                              << Twine::utohexstr(Addr) << '\n');
+            NewDE.d_un.d_ptr = Addr;
+          }
+        }
+      }
       break;
     case ELF::DT_FLAGS:
       if (BC->RequiresZNow) {
@@ -5074,6 +5088,12 @@ void RewriteInstance::readELFDynamic(ELFObjectFile<ELFT> *File) {
 
   for (const Elf_Dyn &Dyn : DynamicEntries) {
     switch (Dyn.d_tag) {
+    case ELF::DT_INIT:
+      if (!BC->HasInterpHeader) {
+        LLVM_DEBUG(dbgs() << "BOLT-DEBUG: Set start function address\n");
+        BC->StartFunctionAddress = Dyn.getPtr();
+      }
+      break;
     case ELF::DT_FINI:
       BC->FiniFunctionAddress = Dyn.getPtr();
       break;

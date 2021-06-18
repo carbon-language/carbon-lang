@@ -3309,6 +3309,13 @@ public:
     return Insts;
   }
 
+  std::vector<MCInst> createSymbolTrampoline(const MCSymbol *TgtSym,
+                                             MCContext *Ctx) const override {
+    std::vector<MCInst> Insts(1);
+    createUncondBranch(Insts[0], TgtSym, Ctx);
+    return Insts;
+  }
+
   BlocksVectorTy indirectCallPromotion(
     const MCInst &CallInst,
     const std::vector<std::pair<MCSymbol *, uint64_t>> &Targets,

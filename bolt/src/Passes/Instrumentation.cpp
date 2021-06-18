@@ -632,6 +632,27 @@ void Instrumentation::createAuxiliaryFunctions(BinaryContext &BC) {
                        BC.MIB->createInstrTablesGetter(BC.Ctx.get()));
   createSimpleFunction("__bolt_instr_num_funcs_getter",
                        BC.MIB->createInstrNumFuncsGetter(BC.Ctx.get()));
+
+  if (BC.isELF()) {
+    if (BC.StartFunctionAddress) {
+      BinaryFunction *Start =
+          BC.getBinaryFunctionAtAddress(*BC.StartFunctionAddress);
+      assert(Start && "Entry point function not found");
+      const MCSymbol *StartSym = Start->getSymbol();
+      createSimpleFunction(
+          "__bolt_start_trampoline",
+          BC.MIB->createSymbolTrampoline(StartSym, BC.Ctx.get()));
+    }
+    if (BC.FiniFunctionAddress) {
+      BinaryFunction *Fini =
+          BC.getBinaryFunctionAtAddress(*BC.FiniFunctionAddress);
+      assert(Fini && "Finalization function not found");
+      const MCSymbol *FiniSym = Fini->getSymbol();
+      createSimpleFunction(
+          "__bolt_fini_trampoline",
+          BC.MIB->createSymbolTrampoline(FiniSym, BC.Ctx.get()));
+    }
+  }
 }
 
 void Instrumentation::setupRuntimeLibrary(BinaryContext &BC) {

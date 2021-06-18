@@ -535,6 +535,9 @@ public:
   /// linked.
   bool IsStaticExecutable{false};
 
+  /// Set to true if the binary contains PT_INTERP header.
+  bool HasInterpHeader{false};
+
   /// Indicates if any of local symbols used for functions or data objects
   /// have an origin file name available.
   bool HasSymbolsWithFileName{false};

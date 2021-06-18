@@ -102,10 +102,10 @@ extern bool __bolt_instr_use_pid;
 // TODO: We need better linking support to make that happen.
 extern void (*__bolt_trampoline_ind_call)();
 extern void (*__bolt_trampoline_ind_tailcall)();
-// Function pointers to init/fini routines in the binary, so we can resume
-// regular execution of these functions that we hooked
-extern void (*__bolt_instr_init_ptr)();
-extern void (*__bolt_instr_fini_ptr)();
+// Function pointers to init/fini trampoline routines in the binary, so we can
+// resume regular execution of these functions that we hooked
+extern void (*__bolt_start_trampoline)();
+extern void (*__bolt_fini_trampoline)();
 
 #endif
 
@@ -1366,7 +1366,8 @@ extern "C" void __bolt_instr_clear_counters() {
 ///    call this function directly to get your profile written to disk
 ///    on demand.
 ///
-extern "C" void __bolt_instr_data_dump() {
+extern "C" void __attribute((force_align_arg_pointer))
+__bolt_instr_data_dump() {
   // Already dumping
   if (!GlobalWriteProfileMutex->acquire())
     return;
@@ -1451,7 +1452,7 @@ extern "C" void __bolt_instr_indirect_call();
 extern "C" void __bolt_instr_indirect_tailcall();
 
 /// Initialization code
-extern "C" void __bolt_instr_setup() {
+extern "C" void __attribute((force_align_arg_pointer)) __bolt_instr_setup() {
   const uint64_t CountersStart =
       reinterpret_cast<uint64_t>(&__bolt_instr_locations[0]);
   const uint64_t CountersEnd = alignTo(
@@ -1526,13 +1527,16 @@ extern "C" __attribute((naked)) void __bolt_instr_start()
   __asm__ __volatile__(SAVE_ALL
                        "call __bolt_instr_setup\n"
                        RESTORE_ALL
-                       "jmp *__bolt_instr_init_ptr(%%rip)\n"
+                       "jmp __bolt_start_trampoline\n"
                        :::);
 }
 
 /// This is hooking into ELF's DT_FINI
 extern "C" void __bolt_instr_fini() {
-  __bolt_instr_fini_ptr();
+  // Currently using assembly inline for trampoline function call
+  // due to issues with function pointer dereferencing in case of
+  // C function call.
+  __asm__ __volatile__("call __bolt_fini_trampoline\n" :::);
   if (__bolt_instr_sleep_time == 0)
     __bolt_instr_data_dump();
   DEBUG(report("Finished.\n"));
