@@ -14,8 +14,8 @@
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/Twine.h"
 #include "llvm/Support/SourceMgr.h"
-#include "llvm/Support/YAMLParser.h"
 #include "llvm/Support/raw_ostream.h"
+#include "toolchain/common/yaml_test_helpers.h"
 #include "toolchain/diagnostics/diagnostic_emitter.h"
 #include "toolchain/diagnostics/mocks.h"
 #include "toolchain/lexer/tokenized_buffer_test_helpers.h"
@@ -27,11 +27,12 @@ using ::Carbon::Testing::DiagnosticAt;
 using ::Carbon::Testing::DiagnosticMessage;
 using ::Carbon::Testing::ExpectedToken;
 using ::Carbon::Testing::HasTokens;
-using ::Carbon::Testing::IsKeyValueScalars;
+using ::testing::ElementsAre;
 using ::testing::Eq;
 using ::testing::HasSubstr;
 using ::testing::NotNull;
 using ::testing::StrEq;
+namespace Yaml = Carbon::Testing::Yaml;
 
 struct LexerTest : ::testing::Test {
   llvm::SmallVector<SourceBuffer, 16> source_storage;
@@ -962,116 +963,35 @@ TEST_F(LexerTest, PrintingAsYaml) {
   buffer.Print(print_stream);
   print_stream.flush();
 
-  // Parse the output into a YAML stream. This will print errors to stderr.
-  llvm::SourceMgr source_manager;
-  llvm::yaml::Stream yaml_stream(print_output, source_manager);
-  auto yaml_it = yaml_stream.begin();
-  auto* root_node = llvm::dyn_cast<llvm::yaml::MappingNode>(yaml_it->getRoot());
-  ASSERT_THAT(root_node, NotNull());
-
-  // Walk the top-level mapping of tokens, dig out the sub-mapping of data for
-  // each taken, and then verify those entries.
-  auto mapping_it = llvm::cast<llvm::yaml::MappingNode>(root_node)->begin();
-  auto* token_node = llvm::dyn_cast<llvm::yaml::KeyValueNode>(&*mapping_it);
-  ASSERT_THAT(token_node, NotNull());
-  auto* token_key_node =
-      llvm::dyn_cast<llvm::yaml::ScalarNode>(token_node->getKey());
-  ASSERT_THAT(token_key_node, NotNull());
-  EXPECT_THAT(token_key_node->getRawValue(), StrEq("token"));
-  auto* token_value_node =
-      llvm::dyn_cast<llvm::yaml::MappingNode>(token_node->getValue());
-  ASSERT_THAT(token_value_node, NotNull());
-  auto token_it = token_value_node->begin();
-  EXPECT_THAT(&*token_it, IsKeyValueScalars("index", "0"));
-  ++token_it;
-  EXPECT_THAT(&*token_it, IsKeyValueScalars("kind", "Semi"));
-  ++token_it;
-  EXPECT_THAT(&*token_it, IsKeyValueScalars("line", "2"));
-  ++token_it;
-  EXPECT_THAT(&*token_it, IsKeyValueScalars("column", "2"));
-  ++token_it;
-  EXPECT_THAT(&*token_it, IsKeyValueScalars("indent", "2"));
-  ++token_it;
-  EXPECT_THAT(&*token_it, IsKeyValueScalars("spelling", ";"));
-  ++token_it;
-  EXPECT_THAT(&*token_it, IsKeyValueScalars("has_trailing_space", "true"));
-  EXPECT_THAT(++token_it, Eq(token_value_node->end()));
-
-  ++mapping_it;
-  token_node = llvm::dyn_cast<llvm::yaml::KeyValueNode>(&*mapping_it);
-  ASSERT_THAT(token_node, NotNull());
-  token_key_node = llvm::dyn_cast<llvm::yaml::ScalarNode>(token_node->getKey());
-  ASSERT_THAT(token_key_node, NotNull());
-  EXPECT_THAT(token_key_node->getRawValue(), StrEq("token"));
-  token_value_node =
-      llvm::dyn_cast<llvm::yaml::MappingNode>(token_node->getValue());
-  ASSERT_THAT(token_value_node, NotNull());
-  token_it = token_value_node->begin();
-  EXPECT_THAT(&*token_it, IsKeyValueScalars("index", "1"));
-  ++token_it;
-  EXPECT_THAT(&*token_it, IsKeyValueScalars("kind", "Semi"));
-  ++token_it;
-  EXPECT_THAT(&*token_it, IsKeyValueScalars("line", "5"));
-  ++token_it;
-  EXPECT_THAT(&*token_it, IsKeyValueScalars("column", "1"));
-  ++token_it;
-  EXPECT_THAT(&*token_it, IsKeyValueScalars("indent", "1"));
-  ++token_it;
-  EXPECT_THAT(&*token_it, IsKeyValueScalars("spelling", ";"));
-  ++token_it;
-  EXPECT_THAT(&*token_it, IsKeyValueScalars("has_trailing_space", "true"));
-  EXPECT_THAT(++token_it, Eq(token_value_node->end()));
-
-  ++mapping_it;
-  token_node = llvm::dyn_cast<llvm::yaml::KeyValueNode>(&*mapping_it);
-  ASSERT_THAT(token_node, NotNull());
-  token_key_node = llvm::dyn_cast<llvm::yaml::ScalarNode>(token_node->getKey());
-  ASSERT_THAT(token_key_node, NotNull());
-  EXPECT_THAT(token_key_node->getRawValue(), StrEq("token"));
-  token_value_node =
-      llvm::dyn_cast<llvm::yaml::MappingNode>(token_node->getValue());
-  ASSERT_THAT(token_value_node, NotNull());
-  token_it = token_value_node->begin();
-  EXPECT_THAT(&*token_it, IsKeyValueScalars("index", "2"));
-  ++token_it;
-  EXPECT_THAT(&*token_it, IsKeyValueScalars("kind", "Semi"));
-  ++token_it;
-  EXPECT_THAT(&*token_it, IsKeyValueScalars("line", "5"));
-  ++token_it;
-  EXPECT_THAT(&*token_it, IsKeyValueScalars("column", "3"));
-  ++token_it;
-  EXPECT_THAT(&*token_it, IsKeyValueScalars("indent", "1"));
-  ++token_it;
-  EXPECT_THAT(&*token_it, IsKeyValueScalars("spelling", ";"));
-  ++token_it;
-  EXPECT_THAT(&*token_it, IsKeyValueScalars("has_trailing_space", "true"));
-  EXPECT_THAT(++token_it, Eq(token_value_node->end()));
-
-  ++mapping_it;
-  token_node = llvm::dyn_cast<llvm::yaml::KeyValueNode>(&*mapping_it);
-  ASSERT_THAT(token_node, NotNull());
-  token_key_node = llvm::dyn_cast<llvm::yaml::ScalarNode>(token_node->getKey());
-  ASSERT_THAT(token_key_node, NotNull());
-  EXPECT_THAT(token_key_node->getRawValue(), StrEq("token"));
-  token_value_node =
-      llvm::dyn_cast<llvm::yaml::MappingNode>(token_node->getValue());
-  ASSERT_THAT(token_value_node, NotNull());
-  token_it = token_value_node->begin();
-  EXPECT_THAT(&*token_it, IsKeyValueScalars("index", "3"));
-  ++token_it;
-  EXPECT_THAT(&*token_it, IsKeyValueScalars("kind", "EndOfFile"));
-  ++token_it;
-  EXPECT_THAT(&*token_it, IsKeyValueScalars("line", "15"));
-  ++token_it;
-  EXPECT_THAT(&*token_it, IsKeyValueScalars("column", "1"));
-  ++token_it;
-  EXPECT_THAT(&*token_it, IsKeyValueScalars("indent", "1"));
-  ++token_it;
-  EXPECT_THAT(&*token_it, IsKeyValueScalars("spelling", ""));
-  EXPECT_THAT(++token_it, Eq(token_value_node->end()));
-
-  ASSERT_THAT(++mapping_it, Eq(root_node->end()));
-  ASSERT_THAT(++yaml_it, Eq(yaml_stream.end()));
+  EXPECT_THAT(Yaml::Value::FromText(print_output),
+              ElementsAre(Yaml::MappingValue{
+                  {"token", Yaml::MappingValue{{"index", "0"},
+                                               {"kind", "Semi"},
+                                               {"line", "2"},
+                                               {"column", "2"},
+                                               {"indent", "2"},
+                                               {"spelling", ";"},
+                                               {"has_trailing_space", "true"}}},
+                  {"token", Yaml::MappingValue{{"index", "1"},
+                                               {"kind", "Semi"},
+                                               {"line", "5"},
+                                               {"column", "1"},
+                                               {"indent", "1"},
+                                               {"spelling", ";"},
+                                               {"has_trailing_space", "true"}}},
+                  {"token", Yaml::MappingValue{{"index", "2"},
+                                               {"kind", "Semi"},
+                                               {"line", "5"},
+                                               {"column", "3"},
+                                               {"indent", "1"},
+                                               {"spelling", ";"},
+                                               {"has_trailing_space", "true"}}},
+                  {"token", Yaml::MappingValue{{"index", "3"},
+                                               {"kind", "EndOfFile"},
+                                               {"line", "15"},
+                                               {"column", "1"},
+                                               {"indent", "1"},
+                                               {"spelling", ""}}}}));
 }
 
 }  // namespace

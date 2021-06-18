@@ -25,6 +25,7 @@ cc_test(
     srcs = ["driver_test.cpp"],
     deps = [
         ":driver",
+        "//toolchain/common:yaml_test_helpers",
         "//toolchain/lexer:tokenized_buffer_test_helpers",
         "@llvm-project//llvm:Support",
         "@llvm-project//llvm:gmock",
