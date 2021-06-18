@@ -15,6 +15,7 @@ cc_library(
     deps = [
         "//toolchain/diagnostics:diagnostic_emitter",
         "//toolchain/lexer:tokenized_buffer",
+        "//toolchain/parser:parse_tree",
         "//toolchain/source:source_buffer",
         "@llvm-project//llvm:Support",
     ],
