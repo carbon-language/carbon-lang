@@ -3316,6 +3316,12 @@ public:
     return Insts;
   }
 
+  std::vector<MCInst> createDummyReturnFunction(MCContext *Ctx) const override {
+    std::vector<MCInst> Insts(1);
+    createReturn(Insts[0]);
+    return Insts;
+  }
+
   BlocksVectorTy indirectCallPromotion(
     const MCInst &CallInst,
     const std::vector<std::pair<MCSymbol *, uint64_t>> &Targets,

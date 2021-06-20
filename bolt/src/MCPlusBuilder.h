@@ -1771,6 +1771,11 @@ public:
     return std::vector<MCInst>();
   }
 
+  virtual std::vector<MCInst> createDummyReturnFunction(MCContext *Ctx) const {
+    llvm_unreachable("not implemented");
+    return std::vector<MCInst>();
+  }
+
   /// This method takes an indirect call instruction and splits it up into an
   /// equivalent set of instructions that use direct calls for target
   /// symbols/addresses that are contained in the Targets vector.  This is done

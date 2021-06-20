@@ -651,6 +651,12 @@ void Instrumentation::createAuxiliaryFunctions(BinaryContext &BC) {
       createSimpleFunction(
           "__bolt_fini_trampoline",
           BC.MIB->createSymbolTrampoline(FiniSym, BC.Ctx.get()));
+    } else {
+      // Create dummy return function for trampoline to avoid issues
+      // with unknown symbol in runtime library. E.g. for static PIE
+      // executable
+      createSimpleFunction("__bolt_fini_trampoline",
+                           BC.MIB->createDummyReturnFunction(BC.Ctx.get()));
     }
   }
 }
