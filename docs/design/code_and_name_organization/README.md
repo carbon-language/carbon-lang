@@ -434,7 +434,7 @@ package Checksums library "Sha" api;
 
 namespaces Sha256;
 
-api fn Sha256.HexDigest(Bytes: data) -> String { ... }
+api fn Sha256.HexDigest(Bytes data) -> String { ... }
 ```
 
 Calling code may look like:
@@ -444,9 +444,9 @@ package Caller api;
 
 import Checksums library "Sha";
 
-fn Process(Bytes: data) {
+fn Process(Bytes data) {
   ...
-  var String: digest = Checksums.Sha256.HexDigest(data);
+  var String digest = Checksums.Sha256.HexDigest(data);
   ...
 }
 ```
@@ -514,7 +514,7 @@ package Geometry api;
 import Geometry library "Shapes";
 
 // Circle must be referenced using the Geometry namespace of the import.
-fn GetArea(Geometry.Circle: c) { ... }
+fn GetArea(Geometry.Circle c) { ... }
 ```
 
 ### Namespaces
@@ -801,7 +801,7 @@ syntax. For example:
 ```carbon
 import Cpp file("myproject/myclass.h");
 
-fn MyCarbonCall(var Cpp.MyProject.MyClass: x);
+fn MyCarbonCall(Cpp.MyProject.MyClass x);
 ```
 
 ### Imports from URLs
@@ -869,7 +869,7 @@ struct Quantiles {
   fn Stats();
   fn Build() {
     ...
-    var Math.Stats: b;
+    var Math.Stats b;
     ...
   }
 }
@@ -1790,7 +1790,7 @@ example:
 import Geometry library "Shapes" names *;
 
 // Triangle was imported as part of "*".
-fn Draw(var Triangle: x) { ... }
+fn Draw(Triangle x) { ... }
 ```
 
 Advantages:

@@ -25,7 +25,7 @@ contributions.
     -   [Bazel and Bazelisk](#bazel-and-bazelisk)
     -   [buildifier](#buildifier)
     -   [Clang and LLVM](#clang-and-llvm)
-    -   [Ninja](#ninja)
+        -   [Manual installations (not recommended)](#manual-installations-not-recommended)
     -   [pre-commit](#pre-commit)
 -   [Optional tools](#optional-tools)
     -   [Carbon-maintained](#carbon-maintained)
@@ -37,11 +37,10 @@ contributions.
     -   [`rs-git-fsmonitor` and Watchman](#rs-git-fsmonitor-and-watchman)
     -   [Vim](#vim)
         -   [vim-prettier](#vim-prettier)
-    -   [Atom](#atom)
+    -   [Visual Studio Code](#visual-studio-code)
     -   [pre-commit enabled tools](#pre-commit-enabled-tools)
         -   [black](#black)
         -   [codespell](#codespell)
-        -   [markdown-toc](#markdown-toc)
         -   [Prettier](#prettier)
 
 <!-- tocstop -->
@@ -82,7 +81,10 @@ instructions will try to rely on a minimum of managers.
 #### Homebrew
 
 [Homebrew](https://brew.sh/) is a package manager, and can help install several
-tools that we recommend. See the [installation instructions](https://brew.sh/).
+tools that we recommend. See the
+
+Our recommended way of installing is to run
+[the canonical install command](https://brew.sh/).
 
 To get the latest version of `brew` packages, it will be necessary to
 periodically run `brew upgrade`.
@@ -96,18 +98,25 @@ We strongly recommend using [pyenv](https://github.com/pyenv/pyenv) to manage
 [Python](python.org) and Python's `pip` package manager. `pip` should typically
 be used for Python package installation rather than other package managers.
 
-These can be installed together through `brew`:
+Our recommended way of installing is:
 
 ```bash
 brew install pyenv
 pyenv install 3.8.5
 pyenv global 3.8.5
-
-# Add 'eval "$(pyenv init -)"' to your shell rc file, for example zshrc.
-echo 'eval "$(pyenv init -)"' >> ~/.zshrc
-# Load the shell rc file changes.
-exec $SHELL
 ```
+
+You will also need to update your rc file to add pyenv to your `PATH`; this
+should look like:
+
+```bash
+export PYENV_ROOT="$HOME/.pyenv"
+export PATH="$PYENV_ROOT/bin:$PATH"
+eval "$(pyenv init --path)"
+```
+
+Restart the shell (for example, `exec $SHELL`) to get `PATH` updates. If there
+are still issues, check instructions using `pyenv init`.
 
 To get the latest version of `pip` packages, it will be necessary to
 periodically run `pip list --outdated`, then `pip install -U <package>` to
@@ -138,8 +147,10 @@ re-run the original `go get ...` command used to install the package.
 #### Cargo (optional)
 
 Rust's [Cargo](https://doc.rust-lang.org/cargo/) package manager is used to
-install a couple tools on Linux. See the
-[installation instructions](https://rustup.rs/).
+install a couple tools on Linux.
+
+Our recommended way of installing is to run
+[the canonical install command](https://rustup.rs/).
 
 To get the latest version of `cargo` packages, it will be necessary to
 periodically re-run the original `cargo install ...` command used.
@@ -184,22 +195,52 @@ Our recommended way of installing is:
 ### Clang and LLVM
 
 [Clang](https://clang.llvm.org/) and [LLVM](https://llvm.org/) are used to
-compile and link Carbon, and are provided through git submodules. A complete
-toolchain will be built and cached as part of standard `bazel` execution. This
-can be very slow on less powerful computers or laptops (30 minutes to an hour).
-However, it should only happen when either Bazel or LLVM's submodule is updated,
-which we try to minimize. If you need to force a rebuild of the toolchain, you
-can use `bazel sync --configure`.
-
-### Ninja
-
-[Ninja](https://ninja-build.org/) is used to build Clang and LLVM.
+compile and link Carbon as part of its build. Their source code are also
+provided through git submodules for incorporation into Carbon or Carbon tools as
+libraries. While the source submodule tracks upstream LLVM, the project expects
+the LLVM 12 release (or newer) to be installed with Clang and other tools in
+your `PATH` for use in building Carbon itself.
 
 Our recommended way of installing is:
 
 ```bash
-brew install ninja
+brew install llvm
 ```
+
+On **MacOS only** (not Linux), `llvm` is keg-only; bear in mind this requires
+updating `PATH` for it because it's not part of the standard Homebrew path. Read
+the output of `brew install` for the necessary path changes, or add something to
+your `PATH` like:
+
+```bash
+export PATH="$(brew --prefix llvm)/bin:${PATH}"
+```
+
+Carbon expects the `PATH` to include the installed tooling. If set, `CC` should
+also point at `clang`. Our build environment will detect the `clang` binary
+using `CC` then `PATH`, and will expect the rest of the LLVM toolchain to be
+available in the same directory as `clang`. However, various scripts and tools
+assume that the LLVM toolchain will be in `PATH`, particularly for tools like
+`clang-format` and `clang-tidy`.
+
+> TODO: We'd like to use `apt`, but standard LLVM Debian packages are not
+> configured correctly for our needs. We are currently aware of two libc++
+> issues, [43604](https://bugs.llvm.org/show_bug.cgi?id=43604) and
+> [46321](https://bugs.llvm.org/show_bug.cgi?id=46321).
+
+#### Manual installations (not recommended)
+
+You can also build and install `LLVM` yourself if you prefer. The essential
+CMake options to pass in order for this to work reliably include:
+
+```
+-DLLVM_ENABLE_PROJECTS=clang;clang-tools-extra;lld
+-DLLVM_ENABLE_RUNTIMES=compiler-rt;libcxx;libcxxabi;libunwind
+-DRUNTIMES_CMAKE_ARGS=-DLLVM_ENABLE_PER_TARGET_RUNTIME_DIR=OFF;-DCMAKE_POSITION_INDEPENDENT_CODE=ON;-DLIBCXX_ENABLE_STATIC_ABI_LIBRARY=ON;-DLIBCXX_STATICALLY_LINK_ABI_IN_SHARED_LIBRARY=OFF;-DLIBCXX_STATICALLY_LINK_ABI_IN_STATIC_LIBRARY=ON;-DLIBCXX_USE_COMPILER_RT=ON;-DLIBCXXABI_USE_COMPILER_RT=ON;-DLIBCXXABI_USE_LLVM_UNWINDER=ON
+```
+
+However, we primarily test against the Homebrew installation, so if building
+LLVM and Clang yourself you may hit some issues.
 
 ### pre-commit
 
@@ -207,8 +248,7 @@ We use [pre-commit](https://pre-commit.com) to run
 [various checks](/.pre-commit-config.yaml). This will automatically run
 important checks, including formatting.
 
-To set up pre-commit, see the
-[installation instructions](https://pre-commit.com/#installation), or:
+Our recommended way of installing is:
 
 ```bash
 pip install pre-commit
@@ -216,6 +256,10 @@ pip install pre-commit
 # From within each carbon-language git repository:
 pre-commit install
 ```
+
+> NOTE: There are other ways of installing listed at
+> [pre-commit.com](https://pre-commit.com/#installation), but `pip` is
+> recommended for reliability.
 
 When you have changes to commit to git, a standard pre-commit workflow can look
 like:
@@ -235,6 +279,9 @@ When modifying or adding pre-commit hooks, please run
 ## Optional tools
 
 ### Carbon-maintained
+
+Carbon-maintained tools are provided by the `carbon-lang` repository, rather
+than a separate install. They are noted here mainly to help findability.
 
 #### new_proposal.py
 
@@ -279,7 +326,7 @@ bazel run //github_tools:pr_comments -- <PR#>
 [The gh CLI](https://github.com/cli/cli) supports some GitHub queries, and is
 used by some scripts.
 
-To install gh, run:
+Our recommended way of installing is:
 
 ```bash
 brew install github/gh/gh
@@ -331,34 +378,45 @@ If you use vim-prettier, the `.prettierrc.yaml` should still apply as long as
 to add additional settings where the `vim-prettier` default diverges from
 `prettier`, as we notice them.
 
-### Atom
+Our recommended way of installing is to use
+[the canonical instructions](https://github.com/prettier/vim-prettier#install).
 
-[Atom](https://atom.io/) is an IDE that's mainly mentioned here for its Markdown
-support. See the page for installation instructions.
+### Visual Studio Code
 
-Some packages that may be helpful are:
+[Visual Studio Code](https://code.visualstudio.com/) is an IDE used by several
+of us. We provide [recommended extensions](/.vscode/extensions.json) to assist
+Carbon development. Some settings changes must be made separately:
 
--   [markdown-preview-enhanced](https://atom.io/packages/markdown-preview-enhanced):
-    An improvement over the default-installed `markdown-preview` package. If
-    using this:
-    -   Disable `markdown-preview`.
-    -   In the package settings, turn off 'Break On Single New Line' -- this is
-        consistent with [carbon-lang.dev](https://carbon-lang.dev) and
-        [Prettier](#prettier).
--   [prettier-atom](https://atom.io/packages/prettier-atom): For
-    [Prettier](#prettier) integration.
--   [python-black](https://atom.io/packages/python-black): For [black](#black)
-    integration.
+-   Python › Formatting: Provider: `black`
+
+Our recommended way of installing is to use
+[the canonical download](https://code.visualstudio.com/Download).
+
+> **WARNING:** Visual Studio Code modifies the `PATH` environment variable,
+> particularly in the terminals it creates. The `PATH` difference can cause
+> `bazel` to detect different startup options, discarding its build cache. As a
+> consequence, it's recommended to use **either** normal terminals **or** Visual
+> Studio Code to run `bazel`, not both in combination. Visual Studio Code can
+> still be used for other purposes, such as editing files, without interfering
+> with `bazel`.
 
 ### pre-commit enabled tools
 
 If you're using pre-commit, it will run these tools. Installing and running them
-manually is optional, but may be helpful.
+manually is _entirely optional_, as they can be run without being installed
+through `pre-commit run`, but install instructions are still noted here for
+direct execution.
 
 #### black
 
 We use [Black](https://github.com/psf/black) to format Python code. Although
 [Prettier](#prettier) is used for most languages, it doesn't support Python.
+
+Our recommended way of installing is:
+
+```bash
+pip install black
+```
 
 #### codespell
 
@@ -366,15 +424,16 @@ We use [codespell](https://github.com/codespell-project/codespell) to spellcheck
 common errors. This won't catch every error; we're trying to balance true and
 false positives.
 
-#### markdown-toc
+Our recommended way of installing is:
 
-We use [markdown-toc](https://github.com/jonschlinkert/markdown-toc) to provide
-GitHub-compatible tables of contents for some documents.
-
-If run manually, specify `--bullets=-` to use Prettier-compatible bullets, or
-always run Prettier after markdown-toc.
+```bash
+pip install codespell
+```
 
 #### Prettier
 
 We use [Prettier](https://prettier.io/) for formatting. There is an
 [rc file](/.prettierrc.yaml) for configuration.
+
+Our recommended way of installing is to use
+[the canonical instructions](https://prettier.io/docs/en/install.html).

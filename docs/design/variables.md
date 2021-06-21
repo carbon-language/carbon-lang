@@ -35,7 +35,7 @@ For example:
 
 ```
 fn Foo() {
-  var Int: x = 42;
+  var Int x = 42;
 }
 ```
 
@@ -52,7 +52,7 @@ Constants will use template-like syntax for declarations. For example, a simple
 integer constant looks like:
 
 ```carbon
-var Int:$$ MyVal = 42;
+var Int$$ MyVal = 42;
 ```
 
 ## Alternatives

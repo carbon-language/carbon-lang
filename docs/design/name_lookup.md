@@ -41,7 +41,7 @@ namespace Foo {
   }
 }
 
-fn F(Foo.Bar.MyInt: x);
+fn F(Foo.Bar.MyInt x);
 ```
 
 Carbon packages are also namespaces so to get to an imported name from the

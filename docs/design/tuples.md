@@ -34,7 +34,7 @@ The primary composite type involves simple aggregation of other types as a tuple
 (called a "product type" in formal type theory):
 
 ```
-fn DoubleBoth(Int: x, Int: y) -> (Int, Int) {
+fn DoubleBoth(Int x, Int y) -> (Int, Int) {
   return (2 * x, 2 * y);
 }
 ```
@@ -50,8 +50,8 @@ of types.
 Element access uses subscript syntax:
 
 ```
-fn Bar(Int: x, Int: y) -> Int {
-  var (Int, Int): t = (x, y);
+fn Bar(Int x, Int y) -> Int {
+  var (Int, Int) t = (x, y);
   return t[0] + t[1];
 }
 ```
@@ -59,9 +59,9 @@ fn Bar(Int: x, Int: y) -> Int {
 Tuples also support multiple indices and slicing to restructure tuple elements:
 
 ```
-fn Baz(Int: x, Int: y, Int: z) -> (Int, Int) {
-  var (Int, Int, Int): t1 = (x, y, z);
-  var (Int, Int, Int): t2 = t1[(2, 1, 0)];
+fn Baz(Int x, Int y, Int z) -> (Int, Int) {
+  var (Int, Int, Int) t1 = (x, y, z);
+  var (Int, Int, Int) t2 = t1[(2, 1, 0)];
   return t2[0 .. 2];
 }
 ```

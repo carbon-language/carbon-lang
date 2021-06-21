@@ -30,7 +30,7 @@ primarily divided up into "functions" (or "procedures", "subroutines", or
 language. Let's look at a simple example to understand how these work:
 
 ```
-fn Sum(Int: a, Int: b) -> Int;
+fn Sum(Int a, Int b) -> Int;
 ```
 
 This declares a function called `Sum` which accepts two `Int` parameters, the
@@ -47,7 +47,7 @@ auto Sum(std::int64_t a, std::int64_t b) -> std::int64_t;
 Let's look at how some specific parts of this work. The function declaration is
 introduced with a keyword `fn` followed by the name of the function `Sum`. This
 declares that name in the surrounding scope and opens up a new scope for this
-function. We declare the first parameter as `Int: a`. The `Int` part is an
+function. We declare the first parameter as `Int a`. The `Int` part is an
 expression (here referring to a constant) that computes the type of the
 parameter. The `:` marks the end of the type expression and introduces the
 identifier for the parameter, `a`. The parameter names are introduced into the

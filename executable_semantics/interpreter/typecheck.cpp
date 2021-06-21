@@ -149,8 +149,8 @@ auto TypeCheckExp(const Expression* e, TypeEnv types, Env values,
       return TCResult(new_e, t, types);
     }
     case ExpressionKind::Index: {
-      auto res = TypeCheckExp(e->GetFieldAccess().aggregate, types, values,
-                              nullptr, TCContext::ValueContext);
+      auto res = TypeCheckExp(e->GetIndex().aggregate, types, values, nullptr,
+                              TCContext::ValueContext);
       auto t = res.type;
       switch (t->tag) {
         case ValKind::TupleV: {
@@ -635,7 +635,7 @@ auto TypeCheckFunDef(const FunctionDefinition* f, TypeEnv types, Env values)
     // TODO: Check that main doesn't have any parameters.
   }
   auto res = TypeCheckStmt(f->body, param_res.types, values, return_type);
-  bool void_return = TypeEqual(return_type, Value::MakeVoidTypeVal());
+  bool void_return = TypeEqual(return_type, Value::MakeUnitTypeVal());
   auto body = CheckOrEnsureReturn(res.stmt, void_return, f->line_num);
   return MakeFunDef(f->line_num, f->name, ReifyType(return_type, f->line_num),
                     f->param_pattern, body);

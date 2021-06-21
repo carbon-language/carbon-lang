@@ -48,10 +48,13 @@ request:
 -   [0301 - Principle: Errors are values](p0301.md)
 -   [0339 - `var` statement](p0339.md)
 -   [0340 - while loops](p0340.md)
+-   [0353 - `for` loops](p0353.md)
 -   [0415 - Syntax: `return`](p0415.md)
 -   [0426 - Governance & evolution revamp](p0426.md)
+-   [0438 - Functions](p0438.md)
 -   [0444 - GitHub Discussions](p0444.md)
 -   [0447 - Generics terminology](p0447.md)
 -   [0524 - Generics overview](p0524.md)
+-   [0538 - `return` with no argument](p0538.md)
 
 <!-- endproposals -->

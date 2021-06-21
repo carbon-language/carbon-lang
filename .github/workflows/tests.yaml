@@ -33,6 +33,10 @@ jobs:
         build_mode: [fastbuild, opt]
     runs-on: ${{ matrix.os }}
     steps:
+      - name: Create environment variables
+        run: |
+          echo "BAZEL_DISK_CACHE_PATH=$HOME/.cache/carbon-lang-build-cache" >> $GITHUB_ENV
+
       - name: Checkout
         uses: actions/checkout@v2
         with:
@@ -53,20 +57,115 @@ jobs:
           go get github.com/bazelbuild/bazelisk
           echo "$(go env GOPATH)/bin" >> $GITHUB_PATH
 
-      # Print the various tool versions to help in debugging.
-      - name: Print tool versions
+      # Setup to the latest LLVM and Clang release on Linux runners.
+      #
+      # Ideally we would use the pre-installed versions in the image, but the
+      # debian packages for LLVM-12 are broken due to several bugs:
+      # https://bugs.llvm.org/show_bug.cgi?id=43604
+      # https://bugs.llvm.org/show_bug.cgi?id=46321
+      #
+      # For now, we rely on Homebrew to manage installing a correctly built
+      # toolchain. We also take some care to be as resilient as possible to
+      # issues fetching and installing the toolchain.
+      - name: Setup LLVM and Clang on Ubuntu
+        if: matrix.os == 'ubuntu-latest'
         run: |
+          brew update
+          brew install --force-bottle --only-dependencies llvm
+          brew install --force-bottle --force --verbose llvm
+          brew info llvm
+          brew config
+          echo "$(brew --prefix llvm)/bin" >> $GITHUB_PATH
+
+      # Just add the Homebrew installed LLVM to the path on macOS, the image has
+      # LLVM-12 pre-installed.
+      - name: Setup LLVM and Clang on macOS
+        if: matrix.os == 'macos-latest'
+        run: |
+          echo "$(brew --prefix llvm)/bin" >> $GITHUB_PATH
+
+      # Print the various tool paths and versions to help in debugging.
+      - name: Print tool debugging info
+        run: |
+          echo $PATH
+          which bazelisk
           bazelisk --version
+          which python
           python --version
+          which clang
+          clang --version
+          which clang++
+          clang++ --version
+          which clang-format
+          clang-format --version
+
+      # Make the date available to subsequent steps.
+      - name: Get date
+        id: date
+        shell: bash
+        run: |
+          echo "::set-output name=date::$(/bin/date -u "+%Y%m%d")"
+
+      # Preserve and restore the Bazel cache across builds.
+      - name: Cache Bazel build data
+        uses: actions/cache@v2
+        with:
+          path: |
+            ${{ env.BAZEL_DISK_CACHE_PATH }}
+          # The `bazel-1` string here and below in the key acts as a counter
+          # that can be incremented to rebase the cache in the event of
+          # persistent corruption or other rare bug. The `-1-` prefix to the
+          # date can be incremented when adding new targets or updating this
+          # configuration and a new cache should be created but there is no
+          # reason to discard prior caches.
+          key: |
+            bazel-1-${{ matrix.os }}-${{ matrix.build_mode }}-1-${{ steps.date.outputs.date }}
+          # When we get a cache miss, try finding the most recent previous day's
+          # cache to start.
+          restore-keys: |
+            bazel-1-${{ matrix.os }}-${{ matrix.build_mode }}-
+
+      # Reset all the access-times for the bazel disk cache to 1984. We really
+      # just need a time far in the past to ensure even with `relatime` or
+      # similar, the filesystem will track how much of the disk cache is
+      # actually still *used* in the course of the build. This lets us GC
+      # anything unused before potentially creating a new cache entry.
+      - name: Reset Bazel disk cache atimes
+        run: |
+          mkdir -p ${{ env.BAZEL_DISK_CACHE_PATH }}
+          find ${{ env.BAZEL_DISK_CACHE_PATH }}/ -type f -exec touch -a -t 198401010000 '{}' '+'
+
+      # Print Bazel diagnostics to make debugging easier.
+      - name: Print Bazel info
+        run: |
+          bazelisk info
 
       # Build all targets first to isolate build failures.
       - name: Build (${{ matrix.build_mode }})
         run: |
           bazelisk build -c ${{ matrix.build_mode }} --verbose_failures \
+            --deleted_packages=migrate_cpp,migrate_cpp/cpp_refactoring \
             //...:all
 
       # Run all test targets.
       - name: Test (${{ matrix.build_mode }})
         run: |
           bazelisk test -c ${{ matrix.build_mode }} --test_output errors \
+            --deleted_packages=migrate_cpp,migrate_cpp/cpp_refactoring \
             --verbose_failures //...:all
+
+      # We manually shut down the Bazel server to make sure the cached files
+      # don't interact with it.
+      - name: Shutdown Bazel
+        run: |
+          bazelisk shutdown
+
+      # Since we reset the `atime`s of the disk cache to ancient history,
+      # everything that ended up accessed by the build and test should have a
+      # recent `atime`. Delete any files whose `atime` is more than 7 days old.
+      # We print some statistics to try to help with any debugging later on.
+      - name: Remove unused disk cache files
+        run: |
+          find ${{ env.BAZEL_DISK_CACHE_PATH }}/ -type f | wc -l
+          find ${{ env.BAZEL_DISK_CACHE_PATH }}/ -type f -atime +7 | wc -l
+          find ${{ env.BAZEL_DISK_CACHE_PATH }}/ -type f -atime +7 -delete

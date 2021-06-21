@@ -9,7 +9,7 @@ py_binary(
     srcs = ["migrate_cpp.py"],
     data = [
         ":clang_tidy.yaml",
-        "@bootstrap_clang_toolchain//:bin/clang-tidy",
+        "//migrate_cpp/cpp_refactoring",
     ],
     python_version = "PY3",
 )
