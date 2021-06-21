@@ -172,7 +172,7 @@ about the
 ### Implementing interfaces
 
 Interfaces themselves only describe functionality by way of method descriptions.
-A `struct` needs to _implement_ an interface to indicate that it supports its
+A type needs to _implement_ an interface to indicate that it supports its
 functionality. A given type may implement an interface at most once.
 
 Consider this interface:
