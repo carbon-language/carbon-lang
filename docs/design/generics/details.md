@@ -104,6 +104,9 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
         -   [Boxed](#boxed)
         -   [DynBoxed](#dynboxed)
         -   [MaybeBoxed](#maybeboxed)
+-   [Compiler-controlled dispatch strategy](#compiler-controlled-dispatch-strategy)
+    -   [No address of generic functions](#no-address-of-generic-functions)
+    -   [Static local variables](#static-local-variables)
 -   [Future work](#future-work)
     -   [Abstract return types](#abstract-return-types)
     -   [Interface defaults](#interface-defaults)
@@ -4591,6 +4594,39 @@ UseBoxed(y);
 // default NotBoxed impl of MaybeBox.
 UseBoxed(DontBox(Bar()));
 ```
+
+## Compiler-controlled dispatch strategy
+
+Generally speaking, the differences between the
+[static and dynamic dispatch strategies](goals.md#dispatch-control) for
+functions with generic parameters should not be visible to end-users. This will
+allow the compiler to change strategies as an implementation detail. For
+example, it would be legal to use dynamic dispatch to compile a generic function
+to reduce code size and build time in development build modes. In a release
+build mode it might default to static dispatch, but could decide to use dynamic
+dispatch for rarely executed functions based on runtime profiles.
+
+### No address of generic functions
+
+Since a function with a generic parameter can have many different addresses, we
+have this rule:
+
+**Rule:** It is illegal to take the address of any function with generic
+parameters (similarly template parameters).
+
+This rule also makes the difference between the compiler generating separate
+static specializations or using a single generated function with runtime dynamic
+dispatch harder to observe, enabling the compiler to switch between those
+strategies without danger of accidentally changing the semantics of the program.
+
+### Static local variables
+
+If we support
+[static local function variables](https://en.wikipedia.org/wiki/Local_variable#Static_local_variables),
+we will need to define how many instances of those variables are created
+independent of how the function is instantiated. If we want more than one
+instance, we will need some way to explicitly define how those instances relate
+to the generic parameters.
 
 ## Future work
 
