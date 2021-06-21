@@ -89,4 +89,4 @@ auto MakeIndirectValue(Args&&... args) -> IndirectValue<T> {
 }
 }  // namespace Carbon
 
-#endif  // COMMON_BOX_H_
+#endif  // COMMON_INDIRECT_VALUE_H_
