@@ -9,7 +9,9 @@
 
 namespace Carbon {
 
-const Variable& Expression::GetVariable() const { return std::get<Variable>(value); }
+const Variable& Expression::GetVariable() const {
+  return std::get<Variable>(value);
+}
 
 const FieldAccess& Expression::GetFieldAccess() const {
   return std::get<FieldAccess>(value);
