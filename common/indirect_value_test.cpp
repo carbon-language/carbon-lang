@@ -11,14 +11,16 @@
 namespace Carbon {
 namespace {
 
-TEST(IndirectValueTest, ConstDereference) {
+TEST(IndirectValueTest, ConstAccess) {
   const auto v = MakeIndirectValue<int>(42);
   EXPECT_EQ(*v, 42);
+  EXPECT_EQ(v.GetPointer(), &*v);
 }
 
-TEST(IndirectValueTest, MutableDereference) {
+TEST(IndirectValueTest, MutableAccess) {
   auto v = MakeIndirectValue<int>(42);
   EXPECT_EQ(*v, 42);
+  EXPECT_EQ(v.GetPointer(), &*v);
   *v = 0;
   EXPECT_EQ(*v, 0);
 }

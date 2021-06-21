@@ -28,7 +28,8 @@ auto MakeIndirectValue(Args&&... args) -> IndirectValue<T>;
 // Instead, an IndirectValue object behaves as much as possible like a T object:
 // the default constructor, copy operations, and move operations all delegate to
 // the corresponding operations on T, and a const IndirectValue object provides
-// only const access to the underlying T object.
+// only const access to the underlying T object. The address of the underlying T
+// object remains the same throughout the lifetime of the IndirectValue.
 //
 // IndirectValue is inspired by the indirect_value library proposed in
 // http://wg21.link/P1950R1, but makes some different design choices (notably,
@@ -36,8 +37,8 @@ auto MakeIndirectValue(Args&&... args) -> IndirectValue<T>;
 template <typename T>
 class IndirectValue {
  public:
-  // TODO: consider using enable_if to disable constructors and assignment
-  // operators when they wouldn't compile, so that traits like
+  // TODO(geoffromer): consider using enable_if to disable constructors and
+  // assignment operators when they wouldn't compile, so that traits like
   // std::is_constructible give correct answers.
   IndirectValue() : value_(std::make_unique<T>()) {}
 
@@ -57,11 +58,19 @@ class IndirectValue {
     return *this;
   }
 
-  T& operator*() { return *value_; }
-  const T& operator*() const { return *value_; }
+  auto operator*() -> T& { return *value_; }
+  auto operator*() const -> const T& { return *value_; }
 
-  T* operator->() { return value_.get(); }
-  const T* operator->() const { return value_.get(); }
+  auto operator->() -> T* { return value_.get(); }
+  auto operator->() const -> const T* { return value_.get(); }
+
+  // Returns the address of the stored value.
+  //
+  // TODO(geoffromer): Consider eliminating this method, which is not
+  // present in comparable types like indirect_value<T> or optional<T>,
+  // once our APIs are less pointer-centric.
+  auto GetPointer() -> T* { return value_.get(); }
+  auto GetPointer() const -> const T* { return value_.get(); }
 
  private:
   template <typename TT, typename... Args>
@@ -71,7 +80,7 @@ class IndirectValue {
   IndirectValue(std::in_place_t, Args&&... args)
       : value_(std::make_unique<T>(std::forward<Args...>(args...))) {}
 
-  std::unique_ptr<T> value_;
+  const std::unique_ptr<T> value_;
 };
 
 template <typename T, typename... Args>
