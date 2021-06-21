@@ -9,6 +9,8 @@
 #include <variant>
 #include <vector>
 
+#include "common/indirect_value.h"
+
 namespace Carbon {
 
 struct Expression;
@@ -59,7 +61,7 @@ struct Variable {
 
 struct FieldAccess {
   static constexpr ExpressionKind Kind = ExpressionKind::GetField;
-  const Expression* aggregate;
+  IndirectValue<Expression> aggregate;
   std::string* field;
 };
 

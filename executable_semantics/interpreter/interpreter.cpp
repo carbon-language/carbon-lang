@@ -630,7 +630,8 @@ void StepLvalue() {
     case ExpressionKind::GetField: {
       //    { {e.f :: C, E, F} :: S, H}
       // -> { e :: [].f :: C, E, F} :: S, H}
-      frame->todo.Push(MakeLvalAct(exp->GetFieldAccess().aggregate));
+      frame->todo.Push(
+          MakeLvalAct(exp->GetFieldAccess().aggregate.GetPointer()));
       act->pos++;
       break;
     }
@@ -706,7 +707,8 @@ void StepExp() {
     case ExpressionKind::GetField: {
       //    { { e.f :: C, E, F} :: S, H}
       // -> { { e :: [].f :: C, E, F} :: S, H}
-      frame->todo.Push(MakeLvalAct(exp->GetFieldAccess().aggregate));
+      frame->todo.Push(
+          MakeLvalAct(exp->GetFieldAccess().aggregate.GetPointer()));
       act->pos++;
       break;
     }

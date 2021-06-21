@@ -219,8 +219,8 @@ auto TypeCheckExp(const Expression* e, TypeEnv types, Env values,
       return TCResult(tuple_e, tuple_t, new_types);
     }
     case ExpressionKind::GetField: {
-      auto res = TypeCheckExp(e->GetFieldAccess().aggregate, types, values,
-                              nullptr, TCContext::ValueContext);
+      auto res = TypeCheckExp(e->GetFieldAccess().aggregate.GetPointer(), types,
+                              values, nullptr, TCContext::ValueContext);
       auto t = res.type;
       switch (t->tag) {
         case ValKind::StructTV:
