@@ -1,4 +1,4 @@
-# Carbon Generics
+# Carbon generics overview
 
 <!--
 Part of the Carbon Language project, under the Apache License v2.0 with LLVM
@@ -10,28 +10,84 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 ## Table of contents
 
--   [What are generics?](#what-are-generics)
 -   [Goals](#goals)
--   [Terminology](#terminology)
--   [Non-type generics](#non-type-generics)
-    -   [Generics foundations](#generics-foundations)
-    -   [No address of a function with generic parameters](#no-address-of-a-function-with-generic-parameters)
-    -   [Generic syntax is a placeholder](#generic-syntax-is-a-placeholder)
-    -   [Implicit parameters](#implicit-parameters)
-    -   [Mixing](#mixing)
-    -   [Local constants](#local-constants)
-    -   [Generic type parameters versus templated type parameters](#generic-type-parameters-versus-templated-type-parameters)
--   [Proposed programming model](#proposed-programming-model)
-    -   [Syntax examples of common use cases](#syntax-examples-of-common-use-cases)
+-   [Summary](#summary)
+-   [What are generics?](#what-are-generics)
+    -   [Interfaces](#interfaces)
+        -   [Defining interfaces](#defining-interfaces)
+        -   [Contrast with templates](#contrast-with-templates)
+    -   [Implementing interfaces](#implementing-interfaces)
+        -   [Qualified and unqualified access](#qualified-and-unqualified-access)
+    -   [Type-of-types](#type-of-types)
+    -   [Generic functions](#generic-functions)
+        -   [Deduced parameters](#deduced-parameters)
+        -   [Generic type parameters](#generic-type-parameters)
+    -   [Requiring or extending another interface](#requiring-or-extending-another-interface)
+    -   [Combining interfaces](#combining-interfaces)
+        -   [Structural interfaces](#structural-interfaces)
+        -   [Type erasure](#type-erasure)
+-   [Future work](#future-work)
 
 <!-- tocstop -->
 
+This document is a high-level description of Carbon's generics design, with
+pointers to other design documents that dive deeper into individual topics.
+
+## Goals
+
+The goal of Carbon generics is to provide an alternative to Carbon (or C++)
+templates. Generics in this form should provide many advantages, including:
+
+-   Function calls and bodies are checked independently against the function
+    signatures
+-   Clearer and earlier error messages
+-   Fast builds, particularly development builds
+-   Support for both static and dynamic dispatch
+
+For more detail, see [the detailed discussion of generics goals](goals.md).
+
+## Summary
+
+Summary of how Carbon generics work:
+
+-   Generics are a mechanism for writing parameterized code that applies
+    generally instead of making near-duplicates for very similar situations.
+-   Interfaces have a name and describe methods, functions, and other items for
+    types to implement.
+-   Types must explicitly _implement_ interfaces to indicate that they support
+    its functionality. A given type may implement an interface at most once.
+-   Implementations may be part of the type's definition, in which case you can
+    directly call the interface's methods on those types. Or, they may be
+    external, in which case the implementation is allowed to be defined in the
+    library defining the interface.
+-   Interfaces may be used as the type of a generic type parameter, acting as a
+    _type-of-type_. Type-of-types in general specify the capabilities and
+    requirements of the type. Types define specific implementations of those
+    capabilities. Inside such a generic function, the API of the type is
+    [erased](terminology.md#type-erasure), except for the names defined in the
+    type-of-type.
+-   _Deduced parameters_ are parameters whose values are determined by the
+    values and (most commonly) the types of the explicit arguments. Generic type
+    parameters are typically deduced.
+-   A function with a generic type parameter can have the same function body as
+    an unparameterized one. Functions can freely mix generic, template, and
+    regular parameters.
+-   Interfaces can require other interfaces be implemented, or
+    [extend](terminology.md#extendingrefining-an-interface) them.
+-   The `&` operation on type-of-types allows you conveniently combine
+    interfaces. It gives you all the names that don't conflict.
+-   You may also declare a new type-of-type directly using
+    ["structural interfaces"](terminology.md#structural-interfaces). Structural
+    interfaces can express requirements that multiple interfaces be implemented,
+    and give you control over how name conflicts are handled.
+-   Alternatively, you may resolve name conflicts by using a qualified syntax to
+    directly call a function from a specific interface.
+
 ## What are generics?
 
-Generics are a mechanism for writing parameterized code that applies more
-generally instead of making near duplicates for very similar situations, much
-like templates. For example, instead of having one function per
-type-you-can-sort:
+Generics are a mechanism for writing parameterized code that applies generally
+instead of making near-duplicates for very similar situations, much like C++
+templates. For example, instead of having one function per type-you-can-sort:
 
 ```
 fn SortInt32Vector(a: Vector(Int32)*) { ... }
@@ -43,311 +99,93 @@ you might have one generic function that could sort any array with comparable
 elements:
 
 ```
-fn SortVector[T:$ Comparable](a: Vector(T)*) { ... }
+fn SortVector(T:$ Comparable, a: Vector(T)*) { ... }
 ```
 
-The `SortVector` function applied to a `Vector(Int32)*` input is semantically
-identical to `SortInt32Vector`, and similarly for `Vector(String)*` input and
-`SortStringVector`.
+The syntax above adds a `$` to indicate that the parameter named `T` is generic.
 
-In `SortVector`, `Comparable` is the name of an _interface_ which describes the
-requirements for the type `T`. These requirements form the contract that allows
-us to have an API boundary encapsulating the implementation of the function,
-unlike templates. That is, given that we know `T` satisfies the requirements, we
-can typecheck the body of the `SortVector` function; similarly, we can typecheck
-that a call to `SortVector` is valid by checking that the type of the member
-elements of the passed-in array satisfy the same requirements, without having to
-look at the body of the `SortVector` function. These are in fact the main
-differences between generics and templates:
+Given an `Int32` vector `iv`, `SortVector(Int32, &iv)` is equivalent to
+`SortInt32Vector(&iv)`. Similarly for a `String` vector `sv`,
+`SortVector(String, &sv)` is equivalent to `SortStringVector(&sv)`. Thus, we can
+sort any vector containing comparable elements using this single `SortVector`
+function.
 
--   We can completely typecheck a generic definition without information from
-    the callsite.
--   We can completely typecheck a call to a generic with just information from
-    the function's signature, not its body.
+This ability to generalize makes `SortVector` a _generic_.
 
-Contrast with a template function, where you may be able to do some checking
-given a function definition, but more checking of the definition is required
-after seeing the call sites (and you know which
-[instantiations](terminology.md#instantiation) are needed).
+**NOTE:** The `$` syntax is a placeholder. The syntax is being decided in
+[issue #565](https://github.com/carbon-language/carbon-lang/issues/565).
 
-[Generics terminology](terminology.md) goes into more detail about the
+### Interfaces
+
+The `SortVector` function requires a definition of `Comparable`, with the goal
+that the compiler can:
+
+-   completely type check a generic definition without information from where
+    it's called.
+-   completely type check a call to a generic with information only from the
+    function's signature, and not from its body.
+
+In this example, then, `Comparable` is an _interface_.
+
+Interfaces describe all the requirements needed for the type `T`. Given that the
+compiler knows `T` satisfies those requirements, it can type check the body of
+the `SortVector` function.
+
+Later, when the compiler comes across a call to `SortVector`, it can still type
+check. Using only the types at the call site, the compiler can check that the
+member elements of the passed-in array satisfy the same requirements without
+having to look at the body of the `SortVector` function, thus satisfying the
+requirements above.
+
+#### Defining interfaces
+
+Interfaces, then, have a name and describe methods, functions, and other items
+for types to implement.
+
+Example:
+
+```
+interface Comparable {
+  // Placeholder method syntax
+  // `Less` is an associated method.
+  method (this: Self) Less(that: Self) -> Bool;
+}
+```
+
+[Question-for-leads issue #494](https://github.com/carbon-language/carbon-lang/issues/494)
+is on method syntax.
+
+Interfaces describe functionality, but not data; no variables may be declared in
+an interface.
+
+#### Contrast with templates
+
+Contrast these generics with a C++ template, where the compiler may be able to
+do some checking given a function definition, but more checking of the
+definition is required after seeing the call sites once all the
+[instantiations](terminology.md#instantiation) are known.
+
+Note: The doc on [Generics terminology](terminology.md) goes into more detail
+about the
 [difference between generics and templates](terminology.md#generic-versus-template-parameters).
 
-## Goals
+### Implementing interfaces
 
-In general we aim to make Carbon Generics into an alternative to templates for
-writing generic code, with improved software engineering properties at the
-expense of some restrictions. See [the detailed discussion of goals](goals.md).
+Interfaces themselves only describe functionality by way of method descriptions.
+A `struct` needs to _implement_ an interface to indicate that it supports its
+functionality. A given type may implement an interface at most once.
 
-## Terminology
-
-Terminology is described in the [generics terminology document](terminology.md)
-
-## Non-type generics
-
-Imagine we had a regular function that printed some number of 'X' characters:
-
-```
-fn PrintXs_Regular(n: Int) {
-  var i: Int = 0;
-  while (i < n) {
-    Print("X");
-    i += 1;
-  }
-}
-
-PrintXs_Regular(1); // Prints: X
-PrintXs_Regular(2); // Prints: XX
-var n: Int = 3;
-PrintXs_Regular(n); // Prints: XXX
-```
-
-### Generics foundations
-
-What would it mean to change the parameter to be a generic parameter?
-
-```
-fn PrintXs_Generic(N:$ Int) {
-  var i: Int = 0;
-  while (i < N) {
-    Print("X");
-    i += 1;
-  }
-}
-
-PrintXs_Generic(1);  // Prints: X
-PrintXs_Generic(2);  // Prints: XX
-var m: Int = 3;
-PrintXs_Generic(m);  // Compile error: value for generic parameter `n`
-                     // unknown at compile time.
-```
-
-For the definition of the function there is only one difference: we added a `$`
-to indicate that the parameter named `N` is generic. The body of the function
-type checks using the same logic as `PrintXs_Regular`. However, callers must be
-able to know the value of the argument at compile time. This allows the compiler
-to adopt a code generation strategy that creates a separate copy of the
-`PrintXs_Generic` function for each combination of values of the generic (and
-template) arguments, called [static specialization](goals.md#dispatch-control).
-In this case, this means that the compiler can generate different binary code
-for the calls passing `1` or `2` for `N`. Knowing the value of `N` at code
-generation time allows the optimizer to unroll the loop, so that the call
-`PrintXs_Generic(2)` could be transformed into:
-
-```
-Print("X");
-Print("X");
-```
-
-Since we know the generic parameter is restricted to values known at compile
-time, we can use the generic parameter in places we would expect a compile-time
-constant value, such as in types.
-
-```
-fn CreateArray(N:$ UInt, value: Int) -> FixedArray(Int, N) {
-  var ret: FixedArray(Int, N);
-  var i: Int = 0;
-  while (i < N) {
-    ret[i] = value;
-    i += 1;
-  }
-  return ret;
-}
-```
-
-**Comparison with other languages:** This feature is part of
-[const generics in Rust](https://blog.rust-lang.org/2021/02/26/const-generics-mvp-beta.html).
-
-### No address of a function with generic parameters
-
-Since a function with a generic parameter can have many different addresses, we
-have this rule:
-
-**Rule:** It is illegal to take the address of any function with generic
-parameters (similarly template parameters).
-
-This rule also makes the difference between the compiler generating separate
-static specializations or using a single generated function with runtime dynamic
-dispatch harder to observe, enabling the compiler to switch between those
-strategies without danger of accidentally changing the semantics of the program.
-
-Generally speaking, we should hide the differences between the
-[static and dynamic dispatch strategies](#dispatch-control). This includes how
-many instances of a
-[static local function variable](https://en.wikipedia.org/wiki/Local_variable#Static_local_variables)
-are created, if we support them.
-
-### Generic syntax is a placeholder
-
-**NOTE:** The `$` syntax is a placeholder. In addition to `:$`, we are
-considering: `:!`, `:@`, `:#`, and `::`. We might use the same character here as
-we decide for metaprogramming constructs.
-
-### Implicit parameters
-
-An [implicit parameter](terminology.md#implicit-parameter) is a value that is
-automatically deduced rather than being passed explicitly to the function.
-Implicit parameters are declared using square brackets before the usual
-parameter list, as in:
-
-```
-fn PrintArraySize[n: Int](array: FixedArray(String, n)*) {
-  Print(n);
-}
-
-var a: FixedArray(String, 3) = ...;
-PrintArraySize(&a);  // Prints: 3
-```
-
-**Open question:** Are regular dynamic parameters like `n` here allowed to be
-used in type expressions like `FixedArray(String, n)`?
-
-What happens here is the type for the `array` parameter is determined from the
-value passed in, and the pattern-matching process used to see if the types match
-finds that it does match if `n` is set to `3`.
-
-Normally you would declare an implicit parameter as a generic or template, not
-as a regular parameter. This avoids overhead from having to support types (like
-the type of `array` inside the `PrintArraySize` function body) that are only
-fully known with dynamic information. For example:
-
-```
-fn PrintStringArray[n:$ Int](array: FixedArray(String, n)*) {
-  var i: Int = 0;
-  while (i < n) {
-    Print(array->get(i));
-    ++i;
-  }
-}
-```
-
-Implicit arguments are always determined from the call and its explicit
-arguments. There is no syntax for specifying implicit arguments directly at the
-call site.
-
-```
-// ERROR: can't determine `n` from explicit parameters
-fn Illegal[n:$ Int](i: Int) -> Bool { return i < n; }
-```
-
-### Mixing
-
--   A function can have a mix of generic, template, and regular parameters.
--   Can pass a template or generic value to a generic or regular parameter.
--   Passing a generic value to a template parameter is future work.
-
-### Local constants
-
-You may also have local generic constants as members of types. Just like generic
-parameters, they have compile-time, not runtime, storage. You may also have
-template constant members, with the difference that template constant members
-can use the actual value of the member in type checking. In both cases, these
-can be initialized with values computed from generic/template parameters, or
-other things that are effectively constant and/or available at compile time.
-
-We also support local generic constants in functions:
-
-```
-fn PrintOddNumbers(N:$ Int) {
-  // last_odd is computed and stored at compile time.
-  var LastOdd:$ Int = 2 * N - 1;
-  var i: Int = 1;
-  while (i <= LastOdd) {
-    Print(i);
-    i += 2;
-  }
-}
-```
-
-Interfaces may include requirements that a type's implementation of that
-interface have local constants with a particular type and name. These are called
-associated constants.
-
-### Generic type parameters versus templated type parameters
-
-We fully check functions with generic parameters at the time they are defined,
-while functions with template parameters can use information from the caller. If
-you have a value of a generic type, you need to provide constraints on that type
-that define what you can do with values of that type. In fact, type constraints
-are the main thing we need to add to support generic type parameters, beyond
-what is described in
-[the "non-type generics" section above](#non-type-generics).
-
-## Proposed programming model
-
-In summary:
-
--   Interfaces have a name and describe methods, functions, and other items for
-    types to implement.
--   Types may implement interfaces at most once.
--   Implementations may be part of the type's definition, in which case you can
-    directly call the interface's methods on those types. Or they may be
-    external, in which case the implementation is allowed to be defined in the
-    library defining the interface. The goal is that methods for interfaces
-    implemented with the type are generally available without qualification, and
-    a function with a generic type parameter can have the same function body as
-    an unparameterized one.
--   Interfaces are usable as type-types, meaning you can define a generic
-    function that has a type parameter satisfying the interface by declaring the
-    type _of the type parameter_ is the interface. Inside such a generic
-    function, the API of the type is [erased](terminology.md#type-erasure),
-    except for the names defined in the interface.
--   You may also declare
-    ["structural interfaces"](terminology.md#structural-interfaces) which are
-    type-types that require multiple interfaces to be implemented, and give you
-    control over how name conflicts are handled.
--   Alternatively, you may use a qualified syntax to directly call a function
-    from a specific interface.
--   The `&` operation on type-types allows you conveniently combine interfaces.
-    It gives you all the names that don't conflict. Names with conflicts can be
-    accessed using the qualified syntax.
--   Interfaces can require other interfaces be implemented, or
-    [extend/refine](terminology.md#extendingrefining-an-interface) them.
-
-Future work:
-
--   A "newtype" mechanism called "adapting types" is provided to create new
-    types that compatible with existing types but with different interface
-    implementations. This can be used to add or replace implementations, or
-    define implementations for reuse.
--   Associated types and interface parameters are two features provided to allow
-    function signatures to vary with the implementing type. The biggest
-    difference between these is that associated types ("output types") may be
-    deduced from a type, and types can implement the same interface multiple
-    times with different interface parameters ("input types").
--   Constraints have not been finalized.
--   Implementations can be parameterized, to apply to multiple types. These
-    implementations can be restricted to various conditions are true for the
-    parameters. When there are two implementations that can apply, there is a
-    specialization rule that picks the more specific one.
--   Support types that vary at runtime.
--   Defaults and other ways to reuse code across implementations.
--   Types can define overloads for operators by implementing standard
-    interfaces.
--   Ability to mark items as `upcoming` or `deprecated` to support evolution.
--   Generic associated and higher-ranked/kinded types.
-
-### Syntax examples of common use cases
-
-Here are some examples of writing an interface definition:
+Consider this interface:
 
 ```
 interface Printable {
-  // `Print` is an associated method.
   method (this: Self) Print();
-  // Method syntax here is a placeholder, should match
-  // whatever syntax is used to define methods in a struct.
-}
-
-interface Media {
-  // `Play` is an associated method that can mutate `this`.
-  method (this: Self*) Play();
 }
 ```
 
 The `interface` keyword is used to define a
 [_nominal interface_](terminology.md#nominal-interfaces). That means that types
-need to explicitly implement them, using an `impl` block:
+need to explicitly implement them, using an `impl` block, such as here:
 
 ```
 struct Song {
@@ -361,59 +199,130 @@ struct Song {
     method (this: Song) Print() { ... }
   }
 }
-// Implement `Media` for `Song` without changing the API of `Song`
-// using an `extend` declaration. This may be defined in either
-// the library defining `Song` or `Media`.
-extend Song {
-  impl Media {
-    // Could use either `Self` or `Song` here.
-    method (this: Self*) Play() { ... }
-  }
-}
 
+// Implement `Comparable` for `Song` without changing the API of `Song`
+// using an `external impl` declaration. This may be defined in either
+// the library defining `Song` or `Comparable`.
+external impl Song as Comparable {
+  // Could use either `Self` or `Song` here.
+  method (this: Self) Less(that: Self) -> Bool { ... }
+}
+```
+
+Implementations may be defined within the struct definition itself or
+externally. External implementations may be defined in the library defining the
+interface.
+
+#### Qualified and unqualified access
+
+The methods of an interface implemented within the struct definition may be
+called with the unqualified syntax. All methods of implemented interfaces may be
+called with the qualified syntax, whether they are defined internally or
+externally.
+
+```
 var song: Song;
 // `song.Print()` is allowed, unlike `song.Play()`.
 song.Print();
-// To call `Play` on `song`, use the qualified syntax:
-song.(Media.Play)();
+// `Less` is defined in `Comparable`, which is implemented
+// externally for `Song`
+song.(Comparable.Less)(song);
 // Can also call `Print` using the qualified syntax:
 song.(Printable.Print)();
 ```
 
-Here are some functions taking a value with type conforming to an interface:
+### Type-of-types
+
+To type check a function, the compiler needs to be able to verify that uses of a
+value match the capabilities of the value's type. In `SortVector`, the parameter
+`T` is a type, but that type is a generic parameter. That means that the
+specific type value assigned to `T` is not known when type checking the
+`SortVector` function. Instead it is the constraints on `T` that let the
+compiler know what operations may be performed on values of type `T`. Those
+constraints are represented by the type of `T`, a
+[**_type-of-type_**](terminology.md#type-constraints).
+
+In general, a type-of-type describes the capabilities of a type, while a type
+defines specific implementations of those capabilities.
+
+An interface, like `Comparable`, may be used as a type-of-type. In that case,
+the constraint on the type is that it must implement the interface `Comparable`.
+A type-of-type also defines a set of names and a mapping to corresponding
+qualified names. You may combine interfaces into new type-of-types using
+[the `&` operator](#combining-interfaces) or
+[structural interfaces](#structural-interfaces).
+
+### Generic functions
+
+We want to be able to call generic functions just like ordinary functions, and
+write generic function bodies like ordinary functions. There are only a few
+differences, like that you can't take the address of generic functions.
+
+#### Deduced parameters
+
+This `SortVector` function is explicitly providing type information that is
+already included in the type of the second argument. To eliminate the argument
+at the call site, use a _deduced parameter_.
 
 ```
-// These definitions are completely equivalent.
-fn PrintIt1(y: (T:$ Printable)*) {
-  y->Print();
-}
-fn PrintIt2[T:$ Printable](y: T*) {
-  y->Print();
-}
-PrintIt1(&song);
-PrintIt2(&song);
+fn SortVectorDeduced[T:$ Comparable](a: Vector(T)*) { ... }
 ```
 
-The `&` operator is the common way of combining interfaces, used here to express
-a function taking a value with type conforming to two different interfaces:
+The `T` parameter is defined in square brackets before the explicit parameter
+list in parenthesis to indicate it should be deduced. This means you may call
+the function without the type argument, just like the ordinary functions
+`SortInt32Vector` or `SortStringVector`:
 
 ```
-fn PrintAndPlay[T:$ Printable & Media](p: T*) {
-  // `T` has all the names of `Printable` and `Media`
-  // that don't conflict.
+SortVectorDeduced(&anIntVector);
+// or
+SortVectorDeduced(&aStringVector);
+```
+
+and the compiler deduces that the `T` argument should be set to `Int32` or
+`String` from the type of the argument.
+
+Deduced arguments are always determined from the call and its explicit
+arguments. There is no syntax for specifying deduced arguments directly at the
+call site.
+
+```
+// ERROR: can't determine `U` from explicit parameters
+fn Illegal[Type:$ T, Type:$ U](x: T) -> U { ... }
+```
+
+#### Generic type parameters
+
+A function with a generic type parameter can have the same function body as an
+unparameterized one.
+
+```
+fn PrintIt[T:$ Printable](p: T*) {
   p->Print();
-  // Can call `Play` here, even though `song.Play()`
-  // isn't allowed since `Media` is external.
-  p->Play();
-  // Qualified syntax works even if there is a name
-  // conflict between Printable and Media.
-  p->(Media.Play)();
 }
-PrintAndPlay(&song);
+
+fn PrintIt(p: Song*) {
+  p->Print();
+}
 ```
 
-The `impl` keyword is also used to express that an interface requires another
-interface to be implemented:
+Inside the function body, you can treat the generic type parameter just like any
+other type. There is no need to refer to or access generic parameters
+differently because they are defined as generic, as long as you only refer to
+the names defined by [type-of-type](#type-of-types) for the type parameter.
+
+You may also refer to any of the methods of interfaces required by the
+type-of-type using the [qualified syntax](#qualified-and-unqualified-access), as
+shown in the following sections.
+
+A function can have a mix of generic, template, and regular parameters.
+Likewise, it's allowed to pass a template or generic value to a generic or
+regular parameter. _However, passing a generic value to a template parameter is
+future work._
+
+### Requiring or extending another interface
+
+Interfaces can require other interfaces be implemented:
 
 ```
 interface Equatable {
@@ -425,32 +334,15 @@ interface Iterable {
   impl Equatable;
   method (this: Self*) Advance();
 }
-
-struct SomeStringsIterator {
-  // ...
-  impl Iterable {
-    method (this: Self*) Advance() { ... }
-  }
-  impl Equatable {
-    method (this: Self) IsEqual(that: Self) -> Bool { ... }
-  }
-  // If the definition of `Equatable` was deleted, you would get
-  // Error: Missing implementation of interface `Equatable`
-  //        required by `Iterable`
-
-}
-var i: SomeStringsIterator = ...;
-i.Advance();
-i.IsEqual(i);
 ```
 
 The `extends` keyword is used to
-[extend/refine](terminology.md#extendingrefining-an-interface) another
-interface. This means the refined interface is both required and all its methods
-are included in the refining interface.
+[extend](terminology.md#extendingrefining-an-interface) another interface. If
+interface `Child` extends interface `Parent`, `Parent`'s interface is both
+required and all its methods are included in `Child`'s interface.
 
 ```
-// `Hashable` refines `Equatable`.
+// `Hashable` extends `Equatable`.
 interface Hashable {
   extends Equatable;
   method (this: Self) Hash() -> UInt64;
@@ -461,7 +353,12 @@ interface Hashable {
   alias IsEqual = Equatable.IsEqual;
   method (this: Self) Hash() -> UInt64;
 }
+```
 
+A type may implement the parent interface implicitly by implementing all the
+methods in the child implementation.
+
+```
 struct Key {
   // ...
   impl Hashable {
@@ -475,114 +372,127 @@ k.Hash();
 k.IsEqual(k);
 ```
 
-TODO: Also include covariant refinement of individual associated types of the
-refined interface.
+### Combining interfaces
 
-A [`structural interface`](terminology.md#structural-interfaces) allows you to
-express a combination of nominal interfaces without introducing a new nominal
-interface. The structural interface is implemented for exactly those types that
-implement the nominal interface requirements.
-
-```
-// `PrintableMedia` has all names from `Printable` and `Media`,
-// which must not conflict. As long as there are no name
-// conflicts, this definition is equivalent to
-// `Printable & Media`.
-structural interface PrintableMedia {
-  extends Printable;
-  extends Media;
-}
-
-// `PrintableMedia2` is exactly equivalent to `PrintableMedia`.
-// `extends` means require the interface be implemented,
-// just like `impl`, and `alias` all of the names.
-structural interface PrintableMedia2 {
-  impl Printable;
-  alias Print = Printable.Print;
-  impl Media;
-  alias Play = Media.Play.
-}
-
-// `PrintAndPlay2` is equivalent to `PrintAndPlay` above.
-fn PrintAndPlay2[T:$ PrintableMedia](p: T*) {
-  p->Print();
-  p->Play();
-  // Qualified syntax also works.
-  p->(Media.Play)();
-}
-
-// Song implements `PrintableMedia` without an explicit
-// declaration. Anything that implements both `Printable`
-// and `Media` implements `PrintableMedia`.
-PrintAndPlay2(&song);
-```
-
-You may implement a structural interface as long as it has aliases for every
-name we need to implement for its required interfaces. Implementing the
-structural interface is equivalent to implementing all the interfaces it
-requires.
-
-```
-// Can implement `PrintableMedia` since it has aliases for all
-// the names in `Printable` and `Media`.
-struct Playlist {
-  // ...
-  impl PrintableMedia {
-    method (this: Self) Print() { ... }
-    method (this: Self*) Play() { ... }
-  }
-}
-
-// The above is equivalent to:
-struct Playlist2 {
-  // ...
-  impl Printable {
-    method (this: Self) Print() { ... }
-  }
-  impl Media {
-    method (this: Self*) Play() { ... }
-  }
-}
-```
-
-Structural interfaces can be used to combine two interfaces even when they have
-name conflicts.
+The `&` operation on type-of-types allows you conveniently combine interfaces.
+It gives you all the names that don't conflict.
 
 ```
 interface Renderable {
-  method (this: Self) Center() -> (Int, Int);
+  method (this: Self) GetCenter() -> (Int, Int);
+  // Draw the object to the screen
   method (this: Self) Draw();
 }
 interface EndOfGame {
-  method (this: Self) Draw();
-  method (this: Self) Winner(player: Int);
+  method (this: Self*) SetWinner(player: Int);
+  // Indicate the game was a draw
+  method (this: Self*) Draw();
 }
 
-// `Combined1` has all names from `Renderable` and `EndOfGame`
-// that do not conflict. Can use qualification, like
-// `x.(Renderable.Draw)()`, to get any names from `Renderable`
-// or `EndOfGame` even if there is a conflict.
-structural interface Combined1 {
-  extends Renderable & EndOfGame;
-  alias Draw_Renderable = Renderable.Draw;
-  alias Draw_EndOfGame = EndOfGame.Draw;
+fn F[T:$ Renderable & EndOfGame](game_state: T*) -> (Int, Int) {
+  game_state->SetWinner(1);
+  return game_state->Center();
 }
-// `Combined2` uses `impl` and so only has names that are
-// mentioned explicitly in its definition.
-// Can use qualification (`x.(Renderable.Center)()`) to access
-// any names from `Renderable` or `EndOfGame` even if they are
-// not mentioned in `Combined2`.
-structural interface Combined2 {
+```
+
+Names with conflicts can be accessed using the
+[qualified syntax](#qualified-and-unqualified-access).
+
+```
+fn BothDraws[T:$ Renderable & EndOfGame](game_state: T*) {
+  game_state->(Renderable.Draw)();
+  game_state->(GameState.Draw)();
+}
+```
+
+#### Structural interfaces
+
+You may also declare a new type-of-type directly using
+["structural interfaces"](terminology.md#structural-interfaces). Structural
+interfaces can express requirements that multiple interfaces be implemented, and
+give you control over how name conflicts are handled.
+
+```
+structural interface Combined {
   impl Renderable;
   impl EndOfGame;
   alias Draw_Renderable = Renderable.Draw;
   alias Draw_EndOfGame = EndOfGame.Draw;
-  alias Winner = EndOfGame.Winner;
+  alias SetWinner = EndOfGame.SetWinner;
 }
 
-// All of these functions accept the same values, namely anything
-// with a type implementing both `Renderable` and `EndOfGame`.
-fn F1[T:$ Combined1](x: T) { ... }
-fn F2[T:$ Combined2](x: T) { ... }
-fn FPlus[T:$ Renderable & EndOfGame](x: T) { ... }
+fn CallItAll[T:$ Combined](game_state: T*, int winner) {
+  if (winner > 0) {
+    game_state->SetWinner(winner);
+  } else {
+    game_state->Draw_EndOfGame();
+  }
+  game_state->Draw_Renderable();
+  // Can still use qualified syntax for names
+  // not defined in the structural interface
+  return game_state->(Renderable.Center)();
+}
 ```
+
+#### Type erasure
+
+Inside a generic function, the API of a type argument is
+[erased](terminology.md#type-erasure) except for the names defined in the
+type-of-type.
+
+For example: If there were a class `CDCover` defined this way:
+
+```
+struct CDCover  {
+  impl Printable {
+    ...
+  }
+}
+```
+
+it can be passed to this `PrintIt` function:
+
+```
+fn PrintIt[T:$ Printable](p: T*) {
+  p->Print();
+}
+```
+
+At that point, two erasures occur:
+
+-   All of `CDCover`'s API _except_ `Printable` is erased during the cast from
+    `CDCover` to `Printable`, which is the [facet](terminology.md#facets) type
+    `CDCover as Printable`.
+-   When you call `PrintIt`, the type connection to `CDCover` is lost. Outside
+    of `PrintIt` you can cast a `CDCover as Printable` value back to `CDCover`.
+    Inside of `PrintIt`, you can't cast `p` or `T` back to `CDCover`.
+
+## Future work
+
+Future work:
+
+-   Be able to have non-type generic parameters like the `UInt` size of an array
+    or tuple.
+-   A "newtype" mechanism called "adapting types" is provided to create new
+    types that are compatible with existing types but with different interface
+    implementations. This can be used to add or replace implementations, or
+    define implementations for reuse.
+-   Associated types and interface parameters will be provided to allow function
+    signatures to vary with the implementing type. The biggest difference
+    between these is that associated types ("output types") may be deduced from
+    a type, and types can implement the same interface multiple times with
+    different interface parameters ("input types").
+-   Other kinds of constraints will be finalized.
+-   Implementations can be parameterized to apply to multiple types. These
+    implementations would be restricted to various conditions are true for the
+    parameters. When there are two implementations that can apply, there is a
+    specialization rule that picks the more specific one.
+-   Support functions that accept types that types that vary at runtime.
+-   You should have the ability to mark items as `upcoming` or `deprecated` to
+    support evolution.
+-   Types should be able to define overloads for operators by implementing
+    standard interfaces.
+-   There should be a way to provide default implementations of methods in
+    interfaces and other ways to reuse code across implementations.
+-   There should be a way to define generic associated and higher-ranked/kinded
+    types.
