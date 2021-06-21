@@ -108,3 +108,70 @@ we need to add to support generic type parameters, beyond what is described in
 ### Calling templated code
 
 See ["Passing generic arguments to template parameter"](generic-to-template.md).
+
+### `auto`
+
+**Aside:** We can define `auto` as syntactic sugar for `(_:$$ Type)`. This
+definition allows you to use `auto` as the type for a local variable whose type
+can be statically determined by the compiler. It also allows you to use `auto`
+as the type of a function parameter, to mean "accepts a value of any type, and
+this function will be instantiated separately for every different type." This is
+consistent with the
+[use of `auto` in the C++20 Abbreviated function template feature](https://en.cppreference.com/w/cpp/language/function_template#Abbreviated_function_template).
+
+### Future work: method constraints
+
+FIXME: skipped for now
+
+Structural interfaces are a reasonable mechanism for describing other structural
+type constraints, which we will likely want for template constraints. For
+example, a method definition in a structural interface would match any type that
+has a method with that name and signature. This is only for templates, not
+generics, since "the method with a given name and signature" can change when
+casting to a facet type. For example:
+
+```
+structural interface ShowPrintable {
+  impl Printable;
+  alias Show = Printable.Print;
+}
+
+structural interface ShowRenderable {
+  impl Renderable;
+  alias Show = Renderable.Draw;
+}
+
+structural interface HasShow {
+  method (this: Self) Show();
+}
+
+// Template, not generic, since this relies on structural typing.
+fn CallShow[T:$$ HasShow](x: T) {
+  x.Show();
+}
+
+fn ViaPrintable[T:$ ShowPrintable](x: T) {
+  // Calls Printable.Print().
+  CallShow(x);
+}
+
+fn ViaRenderable[T:$ ShowRenderable](x: T) {
+  // Calls Renderable.Draw().
+  CallShow(x);
+}
+
+struct Sprite {
+  impl Printable { ... }
+  impl Renderable { ... }
+}
+
+var x: Sprite = ();
+ViaPrintable(x);
+ViaRenderable(x);
+// Not allowed, no method `Show`:
+CallShow(x);
+```
+
+We could similarly support associated constant and
+[instance data field](#field-requirements) requirements. This is future work
+though, as it does not directly impact generics in Carbon.
