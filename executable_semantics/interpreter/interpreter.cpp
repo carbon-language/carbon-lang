@@ -745,11 +745,11 @@ void StepExp() {
       frame->todo.Push(MakeValAct(Value::MakeBoolVal(exp->GetBoolean())));
       break;
     case ExpressionKind::PrimitiveOp:
-      if (exp->GetPrimitiveOperator().arguments->size() > 0) {
+      if (exp->GetPrimitiveOperator().arguments.size() > 0) {
         //    { {op(e :: es) :: C, E, F} :: S, H}
         // -> { e :: op([] :: es) :: C, E, F} :: S, H}
         frame->todo.Push(
-            MakeExpAct(exp->GetPrimitiveOperator().arguments->front()));
+            MakeExpAct(&exp->GetPrimitiveOperator().arguments.front()));
         act->pos++;
       } else {
         //    { {v :: op(]) :: C, E, F} :: S, H}
@@ -1204,11 +1204,11 @@ void HandleValue() {
         }
         case ExpressionKind::PrimitiveOp: {
           if (act->pos !=
-              static_cast<int>(exp->GetPrimitiveOperator().arguments->size())) {
+              static_cast<int>(exp->GetPrimitiveOperator().arguments.size())) {
             //    { {v :: op(vs,[],e,es) :: C, E, F} :: S, H}
             // -> { {e :: op(vs,v,[],es) :: C, E, F} :: S, H}
             const Expression* arg =
-                (*exp->GetPrimitiveOperator().arguments)[act->pos];
+                &exp->GetPrimitiveOperator().arguments[act->pos];
             frame->todo.Pop(1);
             frame->todo.Push(MakeExpAct(arg));
           } else {

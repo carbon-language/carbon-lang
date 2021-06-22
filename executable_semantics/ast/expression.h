@@ -98,7 +98,7 @@ struct Tuple {
 struct PrimitiveOperator {
   static constexpr ExpressionKind Kind = ExpressionKind::PrimitiveOp;
   Operator op;
-  std::vector<const Expression*>* arguments;
+  std::vector<Expression> arguments;
 };
 
 struct Call {

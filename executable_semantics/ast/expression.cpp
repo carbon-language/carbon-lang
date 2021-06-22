@@ -126,7 +126,11 @@ auto Expression::MakeOp(int line_num, enum Operator op,
     -> const Expression* {
   auto* e = new Expression();
   e->line_num = line_num;
-  e->value = PrimitiveOperator({.op = op, .arguments = args});
+  std::vector<Expression> actual_args;
+  for (const Expression* e : *args) {
+    actual_args.push_back(*e);
+  }
+  e->value = PrimitiveOperator({.op = op, .arguments = actual_args});
   return e;
 }
 
@@ -134,8 +138,7 @@ auto Expression::MakeUnOp(int line_num, enum Operator op, const Expression* arg)
     -> const Expression* {
   auto* e = new Expression();
   e->line_num = line_num;
-  e->value = PrimitiveOperator(
-      {.op = op, .arguments = new std::vector<const Expression*>{arg}});
+  e->value = PrimitiveOperator({.op = op, .arguments = {*arg}});
   return e;
 }
 
@@ -144,8 +147,7 @@ auto Expression::MakeBinOp(int line_num, enum Operator op,
     -> const Expression* {
   auto* e = new Expression();
   e->line_num = line_num;
-  e->value = PrimitiveOperator(
-      {.op = op, .arguments = new std::vector<const Expression*>{arg1, arg2}});
+  e->value = PrimitiveOperator({.op = op, .arguments = {*arg1, *arg2}});
   return e;
 }
 
@@ -276,21 +278,21 @@ void PrintExp(const Expression* e) {
     case ExpressionKind::PrimitiveOp: {
       std::cout << "(";
       PrimitiveOperator op = e->GetPrimitiveOperator();
-      if (op.arguments->size() == 0) {
+      if (op.arguments.size() == 0) {
         PrintOp(op.op);
-      } else if (op.arguments->size() == 1) {
+      } else if (op.arguments.size() == 1) {
         PrintOp(op.op);
         std::cout << " ";
-        auto iter = op.arguments->begin();
-        PrintExp(*iter);
-      } else if (op.arguments->size() == 2) {
-        auto iter = op.arguments->begin();
-        PrintExp(*iter);
+        auto iter = op.arguments.begin();
+        PrintExp(&*iter);
+      } else if (op.arguments.size() == 2) {
+        auto iter = op.arguments.begin();
+        PrintExp(&*iter);
         std::cout << " ";
         PrintOp(op.op);
         std::cout << " ";
         ++iter;
-        PrintExp(*iter);
+        PrintExp(&*iter);
       }
       std::cout << ")";
       break;

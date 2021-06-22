@@ -317,8 +317,8 @@ auto TypeCheckExp(const Expression* e, TypeEnv types, Env values,
       auto es = new std::vector<const Expression*>();
       std::vector<const Value*> ts;
       auto new_types = types;
-      for (auto& argument : *e->GetPrimitiveOperator().arguments) {
-        auto res = TypeCheckExp(argument, types, values, nullptr,
+      for (const Expression& argument : e->GetPrimitiveOperator().arguments) {
+        auto res = TypeCheckExp(&argument, types, values, nullptr,
                                 TCContext::ValueContext);
         new_types = res.types;
         es->push_back(res.exp);
