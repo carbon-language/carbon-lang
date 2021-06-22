@@ -9,35 +9,43 @@
 
 namespace Carbon {
 
-const Variable& Expression::GetVariable() const {
+auto Expression::GetVariable() const -> const Variable& {
   return std::get<Variable>(value);
 }
 
-const FieldAccess& Expression::GetFieldAccess() const {
+auto Expression::GetFieldAccess() const -> const FieldAccess& {
   return std::get<FieldAccess>(value);
 }
 
-const Index& Expression::GetIndex() const { return std::get<Index>(value); }
+auto Expression::GetIndex() const -> const Index& {
+  return std::get<Index>(value);
+}
 
-const PatternVariable& Expression::GetPatternVariable() const {
+auto Expression::GetPatternVariable() const -> const PatternVariable& {
   return std::get<PatternVariable>(value);
 }
 
-int Expression::GetInteger() const { return std::get<IntLiteral>(value).value; }
+auto Expression::GetInteger() const -> int {
+  return std::get<IntLiteral>(value).value;
+}
 
-bool Expression::GetBoolean() const {
+auto Expression::GetBoolean() const -> bool {
   return std::get<BoolLiteral>(value).value;
 }
 
-const Tuple& Expression::GetTuple() const { return std::get<Tuple>(value); }
+auto Expression::GetTuple() const -> const Tuple& {
+  return std::get<Tuple>(value);
+}
 
-const PrimitiveOperator& Expression::GetPrimitiveOperator() const {
+auto Expression::GetPrimitiveOperator() const -> const PrimitiveOperator& {
   return std::get<PrimitiveOperator>(value);
 }
 
-const Call& Expression::GetCall() const { return std::get<Call>(value); }
+auto Expression::GetCall() const -> const Call& {
+  return std::get<Call>(value);
+}
 
-const FunctionType& Expression::GetFunctionType() const {
+auto Expression::GetFunctionType() const -> const FunctionType& {
   return std::get<FunctionType>(value);
 }
 
