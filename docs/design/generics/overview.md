@@ -44,7 +44,8 @@ templates. Generics in this form should provide many advantages, including:
 -   Fast builds, particularly development builds
 -   Support for both static and dynamic dispatch
 
-For more detail, see [the detailed discussion of generics goals](goals.md).
+For more detail, see [the detailed discussion of generics goals](goals.md) and
+[generics terminology](terminology.md).
 
 ## Summary
 
@@ -113,7 +114,7 @@ function.
 This ability to generalize makes `SortVector` a _generic_.
 
 **NOTE:** The `$` syntax is a placeholder. The syntax is being decided in
-[issue #565](https://github.com/carbon-language/carbon-lang/issues/565).
+[question-for-leads issue #565](https://github.com/carbon-language/carbon-lang/issues/565).
 
 ### Interfaces
 
@@ -208,6 +209,9 @@ external impl Song as Comparable {
   method (this: Self) Less(that: Self) -> Bool { ... }
 }
 ```
+
+**Note:** The interface implementation syntax is the subject of
+[question-for-leads issue #575](https://github.com/carbon-language/carbon-lang/issues/575).
 
 Implementations may be defined within the struct definition itself or
 externally. External implementations may be defined in the library defining the
