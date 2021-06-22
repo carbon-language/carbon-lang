@@ -16,7 +16,8 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Object types](#object-types)
     -   [Polymorphic types](#polymorphic-types)
     -   [Abstract base classes](#abstract-base-classes)
-    -   [Other cases](#other-cases)
+    -   [Mixins](#mixins)
+    -   [Interop with C++ multiple inheritance](#interop-with-c-multiple-inheritance)
 -   [Background](#background)
 -   [Overview](#overview-1)
 -   [Fields have an order](#fields-have-an-order)
@@ -57,8 +58,11 @@ or assign values to named struct variables.
 
 ## Use cases
 
-The use cases for structs fall under three main categories: data types, object
-types, and polymorphic types.
+The use cases for structs include both cases motivated by C++ interop, and cases
+that we expect to be included in idiomatic Carbon-only code.
+
+This design currently only attempts to address the "data types" use case.
+Addressing the other use cases is future work.
 
 ### Data types
 
@@ -68,43 +72,54 @@ Example: Key and value pair returned from a `SortedMap` or `HashMap`.
 
 Properties:
 
-FIXME
+-   Operations like copy, move, destroy, unformed, and so on are defined
+    field-wise.
+-   Semantics for unnamed structs types and literals.
+
+Expected in idiomatic Carbon-only code.
 
 ### Object types
 
-FIXME
-
 Characterized by: private data fields, non-overridable methods, final.
 
-Examples: strings, containers, iterators, types with invariants like `Date`
+Examples: strings, containers, iterators, types with invariants such as `Date`.
 
-Include:
+Object types include:
 
 -   RAII types that are movable but not copyable like C++'s `std::unique_ptr` or
     a file handle
 -   non-movable types like `Mutex`
 
-Extending this design to support object types is future work.
+We expect two kinds of methods on object types: public methods defining the API
+for accessing and manipulating values of the type, and private helper methods
+used as an implementation detail of the public methods.
 
-FIXME: public API and private helper API
+Object types are expected in idiomatic Carbon-only code. Extending this design
+to support object types is future work.
 
 ### Polymorphic types
 
 Characterized by: inheritance, private data in a base type, overridable/virtual
 methods with dynamic dispatch, accessed through a pointer to "type extending
-base"
+base", virtual destructor, single inheritance.
 
-Excluding complex multiple inheritance schemes, virtual inheritance, etc. One
-base class for purposes of subtyping. Can have other parents as "mixins".
+We exclude complex multiple inheritance schemes, virtual inheritance, and so on
+from this use case, since we don't want direct support for those in Carbon. One
+base class for purposes of subtyping. Can have other parents as long as they are
+[ABC](#abstract-base-classes) or [mixins](#mixins).
 
 FIXME: Talk about the external API versus the APIs for communicating between
 base and derived.
 
-FIXME
-
-Extending this design to support polymorphic types is future work.
+It is an open question whether we expect polymorphic types in idiomatic
+Carbon-only code, but will probably be included for the mid-term. Extending this
+design to support polymorphic types is future work.
 
 ### Abstract base classes
+
+Characterized by: inheritance, no data in base type, overridable/virtual methods
+with dynamic dispatch, accessed through a pointer to "type extending base",
+virtual destructor is optional, possible multiple inheritance
 
 Can we use interfaces as the model for C++ ABCs to support implementing
 multiple? Can we skip supporting derived-to-base conversions in this case?
@@ -114,19 +129,32 @@ How do you pass something implementing this from Carbon to C++?
 Maybe we can say: you can inherit from multiple base classes but only the first
 can have any data?
 
-### Other cases
+Do we want to expose Carbon interfaces to C++ as ABCs?
+
+We expect idiomatic Carbon-only code to use Carbon interfaces instead of
+abstract base classes. Extending this design to support abstract base classes is
+future work.
+
+### Mixins
 
 inheritance without virtual: intrusive linked list, need to be able to get from
 the intrusive linked list type to the main type; type can be part of another
 inheritance hierarchy. Could be handled in Carbon by giving mix-ins the
 capability to go from their pointer to the pointer to the containing object.
 
+Mixins are expected in idiomatic Carbon-only code. Extending this design to
+support mixins is future work.
+
+### Interop with C++ multiple inheritance
+
 iostream, virtual multiple inheritance, and base class has state; some uses of
 streams are ifstream, ofstream; hard cases are the bidirectional ones: fstream,
 stringstream. very few uses of fstream; one quarter are ostringstream, most
 could be.
 
-Do we want to expose Carbon interfaces to C++ as ABCs?
+We do not expect idiomatic Carbon-only code to use multiple inheritance.
+Extending this design to support interopating with C++ types using multiple
+inheritance is future work.
 
 ## Background
 
