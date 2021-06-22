@@ -163,8 +163,8 @@ auto Expression::MakeGetField(int line_num, const Expression* exp,
                               std::string field) -> const Expression* {
   auto* e = new Expression();
   e->line_num = line_num;
-  e->value = FieldAccess({.aggregate = MakeIndirectValue<Expression>(*exp),
-                          .field = new std::string(std::move(field))});
+  e->value = FieldAccess(
+      {.aggregate = *exp, .field = new std::string(std::move(field))});
   return e;
 }
 

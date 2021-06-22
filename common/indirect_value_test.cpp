@@ -12,32 +12,57 @@ namespace Carbon {
 namespace {
 
 TEST(IndirectValueTest, ConstAccess) {
-  const auto v = MakeIndirectValue<int>(42);
+  const IndirectValue<int> v = 42;
   EXPECT_EQ(*v, 42);
   EXPECT_EQ(v.GetPointer(), &*v);
 }
 
 TEST(IndirectValueTest, MutableAccess) {
-  auto v = MakeIndirectValue<int>(42);
+  IndirectValue<int> v = 42;
   EXPECT_EQ(*v, 42);
   EXPECT_EQ(v.GetPointer(), &*v);
   *v = 0;
   EXPECT_EQ(*v, 0);
 }
 
+struct NonMovable {
+  NonMovable(int i) : i(i) {}
+  NonMovable(NonMovable&&) = delete;
+  auto operator=(NonMovable&&) -> NonMovable& = delete;
+
+  int i;
+};
+
+TEST(IndirectValueTest, Create) {
+  IndirectValue<NonMovable> v =
+      CreateIndirectValue([] { return NonMovable(42); });
+  EXPECT_EQ(v->i, 42);
+}
+
+const int& GetIntReference() {
+  static int i = 42;
+  return i;
+}
+
+TEST(IndirectValueTest, CreateWithDecay) {
+  auto v = CreateIndirectValue(GetIntReference);
+  EXPECT_TRUE((std::is_same_v<decltype(v), IndirectValue<int>>));
+  EXPECT_EQ(*v, 42);
+}
+
 // Test double which presents a value-like interface, but tracks which special
 // member function (if any) caused it to reach its present value.
-struct MockValue {
-  MockValue() : state("default constructed") {}
-  MockValue(const MockValue& rhs) : state("copy constructed") {}
-  MockValue(MockValue&& other) : state("move constructed") {
+struct TestValue {
+  TestValue() : state("default constructed") {}
+  TestValue(const TestValue& rhs) : state("copy constructed") {}
+  TestValue(TestValue&& other) : state("move constructed") {
     other.state = "move constructed from";
   }
-  MockValue& operator=(const MockValue&) {
+  TestValue& operator=(const TestValue&) {
     state = "copy assigned";
     return *this;
   }
-  MockValue& operator=(MockValue&& other) {
+  TestValue& operator=(TestValue&& other) {
     state = "move assigned";
     other.state = "move assigned from";
     return *this;
@@ -47,42 +72,42 @@ struct MockValue {
 };
 
 TEST(IndirectValueTest, ConstArrow) {
-  const IndirectValue<MockValue> v;
+  const IndirectValue<TestValue> v;
   EXPECT_EQ(v->state, "default constructed");
 }
 
 TEST(IndirectValueTest, MutableArrow) {
-  IndirectValue<MockValue> v;
+  IndirectValue<TestValue> v;
   EXPECT_EQ(v->state, "default constructed");
   v->state = "explicitly set";
   EXPECT_EQ(v->state, "explicitly set");
 }
 
 TEST(IndirectValueTest, CopyConstruct) {
-  IndirectValue<MockValue> v1;
+  IndirectValue<TestValue> v1;
   auto v2 = v1;
   EXPECT_EQ(v1->state, "default constructed");
   EXPECT_EQ(v2->state, "copy constructed");
 }
 
 TEST(IndirectValueTest, CopyAssign) {
-  IndirectValue<MockValue> v1;
-  IndirectValue<MockValue> v2;
+  IndirectValue<TestValue> v1;
+  IndirectValue<TestValue> v2;
   v2 = v1;
   EXPECT_EQ(v1->state, "default constructed");
   EXPECT_EQ(v2->state, "copy assigned");
 }
 
 TEST(IndirectValueTest, MoveConstruct) {
-  IndirectValue<MockValue> v1;
+  IndirectValue<TestValue> v1;
   auto v2 = std::move(v1);
   EXPECT_EQ(v1->state, "move constructed from");
   EXPECT_EQ(v2->state, "move constructed");
 }
 
 TEST(IndirectValueTest, MoveAssign) {
-  IndirectValue<MockValue> v1;
-  IndirectValue<MockValue> v2;
+  IndirectValue<TestValue> v1;
+  IndirectValue<TestValue> v2;
   v2 = std::move(v1);
   EXPECT_EQ(v1->state, "move assigned from");
   EXPECT_EQ(v2->state, "move assigned");
@@ -93,7 +118,7 @@ TEST(IndirectValueTest, IncompleteType) {
     std::optional<IndirectValue<S>> v;
   };
 
-  S s = {.v = MakeIndirectValue<S>(S{})};
+  S s = {.v = S{}};
 }
 
 }  // namespace

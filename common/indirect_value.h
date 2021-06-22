@@ -6,6 +6,7 @@
 #define COMMON_INDIRECT_VALUE_H_
 
 #include <memory>
+#include <type_traits>
 #include <utility>
 
 namespace Carbon {
@@ -13,14 +14,16 @@ namespace Carbon {
 template <typename T>
 class IndirectValue;
 
-// Creates and returns an IndirectValue<T> with the value T(args...)
-template <typename T, typename... Args>
-auto MakeIndirectValue(Args&&... args) -> IndirectValue<T>;
+// Creates and returns an IndirectValue that holds the value returned by
+// `callable()`.
+template <typename Callable>
+auto CreateIndirectValue(Callable callable)
+    -> IndirectValue<std::decay_t<decltype(callable())>>;
 
 // An IndirectValue<T> object stores a T value, using a layer of indirection
 // that allows us to name the IndirectValue<T> type, and even access the
 // underlying T value, in a context where T is not a complete type. This makes
-// it useful for things like defining recursive types.
+// it useful for things like defining recursive types. T must be an object type.
 //
 // The underlying value is accessed using the * and -> operators, but
 // IndirectValue does not otherwise behave like a pointer: it has no null state,
@@ -40,53 +43,66 @@ class IndirectValue {
   // TODO(geoffromer): consider using enable_if to disable constructors and
   // assignment operators when they wouldn't compile, so that traits like
   // std::is_constructible give correct answers.
-  IndirectValue() : value_(std::make_unique<T>()) {}
+
+  // Initializes the underlying T object as if by `T()`.
+  IndirectValue() : value(std::make_unique<T>()) {}
+
+  // Initializes the underlying T object as if by `T(std::move(value))`.
+  IndirectValue(T value) : value(std::make_unique<T>(std::move(value))) {}
+
+  // TODO(geoffromer): consider defining implicit conversions from
+  // U and IndirectValue<U>, when U is implicitly convertible to T.
 
   IndirectValue(const IndirectValue& other)
-      : value_(std::make_unique<T>(*other)) {}
+      : value(std::make_unique<T>(*other)) {}
 
   IndirectValue(IndirectValue&& other)
-      : value_(std::make_unique<T>(std::move(*other))) {}
+      : value(std::make_unique<T>(std::move(*other))) {}
 
   auto operator=(const IndirectValue& other) -> IndirectValue& {
-    *value_ = *other.value_;
+    *value = *other.value;
     return *this;
   }
 
   auto operator=(IndirectValue&& other) -> IndirectValue& {
-    *value_ = std::move(*other.value_);
+    *value = std::move(*other.value);
     return *this;
   }
 
-  auto operator*() -> T& { return *value_; }
-  auto operator*() const -> const T& { return *value_; }
+  auto operator*() -> T& { return *value; }
+  auto operator*() const -> const T& { return *value; }
 
-  auto operator->() -> T* { return value_.get(); }
-  auto operator->() const -> const T* { return value_.get(); }
+  auto operator->() -> T* { return value.get(); }
+  auto operator->() const -> const T* { return value.get(); }
 
   // Returns the address of the stored value.
   //
   // TODO(geoffromer): Consider eliminating this method, which is not
   // present in comparable types like indirect_value<T> or optional<T>,
   // once our APIs are less pointer-centric.
-  auto GetPointer() -> T* { return value_.get(); }
-  auto GetPointer() const -> const T* { return value_.get(); }
+  auto GetPointer() -> T* { return value.get(); }
+  auto GetPointer() const -> const T* { return value.get(); }
 
  private:
-  template <typename TT, typename... Args>
-  friend auto MakeIndirectValue(Args&&... args) -> IndirectValue<TT>;
+  static_assert(std::is_object_v<T>, "T must be an object type");
+
+  template <typename Callable>
+  friend auto CreateIndirectValue(Callable callable)
+      -> IndirectValue<std::decay_t<decltype(callable())>>;
 
   template <typename... Args>
-  IndirectValue(std::in_place_t, Args&&... args)
-      : value_(std::make_unique<T>(std::forward<Args...>(args...))) {}
+  IndirectValue(std::unique_ptr<T> value) : value(std::move(value)) {}
 
-  const std::unique_ptr<T> value_;
+  const std::unique_ptr<T> value;
 };
 
-template <typename T, typename... Args>
-auto MakeIndirectValue(Args&&... args) -> IndirectValue<T> {
-  return IndirectValue<T>(std::in_place, std::forward<Args...>(args...));
+template <typename Callable>
+auto CreateIndirectValue(Callable callable)
+    -> IndirectValue<std::decay_t<decltype(callable())>> {
+  using T = std::decay_t<decltype(callable())>;
+  return IndirectValue<T>(std::unique_ptr<T>(new T(callable())));
 }
+
 }  // namespace Carbon
 
 #endif  // COMMON_INDIRECT_VALUE_H_
