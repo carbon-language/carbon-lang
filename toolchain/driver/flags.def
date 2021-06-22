@@ -15,5 +15,8 @@ CARBON_SUBCOMMAND(Help, "help",
 CARBON_SUBCOMMAND(
     DumpTokens, "dump-tokens",
     "Dumps the sequence of tokens lexed out of the input source file.")
+CARBON_SUBCOMMAND(
+    DumpParseTree, "dump-parse-tree",
+    "Dumps the parse tree for the input source file.")
 
 #undef CARBON_SUBCOMMAND

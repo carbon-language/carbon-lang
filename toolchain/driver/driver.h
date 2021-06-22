@@ -57,6 +57,16 @@ class Driver {
   // registered error stream (stderr by default).
   auto RunDumpTokensSubcommand(llvm::ArrayRef<llvm::StringRef> args) -> bool;
 
+  // Subcommand that dumps the parse tree for the provided source file.
+  //
+  // Requires exactly one positional parameter to designate the source file to
+  // read. May be `-` to read from stdin.
+  //
+  // Returns true if the operation succeeds. If the operation fails, this
+  // returns false and any information about the failure is printed to the
+  // registered error stream (stderr by default).
+  auto RunDumpParseTreeSubcommand(llvm::ArrayRef<llvm::StringRef> args) -> bool;
+
  private:
   auto ReportExtraArgs(llvm::StringRef subcommand_text,
                        llvm::ArrayRef<llvm::StringRef> args) -> void;

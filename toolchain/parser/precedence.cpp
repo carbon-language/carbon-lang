@@ -12,6 +12,8 @@ namespace {
 enum PrecedenceLevel : int8_t {
   // Sentinel representing the absence of any operator.
   Highest,
+  // Terms.
+  TermPrefix,
   // Numeric.
   NumericPrefix,
   NumericPostfix,
@@ -47,8 +49,9 @@ struct OperatorPriorityTable {
   constexpr OperatorPriorityTable() : table() {
     // Start with a list of <higher precedence>, <lower precedence>
     // relationships.
-    MarkHigherThan({Highest}, {NumericPrefix, BitwisePrefix, LogicalPrefix,
-                               NumericPostfix, TypePostfix});
+    MarkHigherThan({Highest}, {TermPrefix});
+    MarkHigherThan({TermPrefix}, {NumericPrefix, BitwisePrefix, LogicalPrefix,
+                                  NumericPostfix, TypePostfix});
     MarkHigherThan({NumericPrefix, NumericPostfix},
                    {Modulo, Multiplicative, BitShift});
     MarkHigherThan({Multiplicative}, {Additive});
@@ -132,7 +135,7 @@ struct OperatorPriorityTable {
     // Ambiguous would mean it's an error. LeftFirst is meaningless. For now we
     // allow all prefix operators to be repeated.
     for (PrecedenceLevel prefix :
-         {NumericPrefix, BitwisePrefix, LogicalPrefix}) {
+         {TermPrefix, NumericPrefix, BitwisePrefix, LogicalPrefix}) {
       table[prefix][prefix] = OperatorPriority::RightFirst;
     }
 
@@ -193,6 +196,9 @@ auto PrecedenceGroup::ForType() -> PrecedenceGroup {
 auto PrecedenceGroup::ForLeading(TokenKind kind)
     -> llvm::Optional<PrecedenceGroup> {
   switch (kind) {
+    case TokenKind::Star():
+      return PrecedenceGroup(TermPrefix);
+
     case TokenKind::NotKeyword():
       return PrecedenceGroup(LogicalPrefix);
 

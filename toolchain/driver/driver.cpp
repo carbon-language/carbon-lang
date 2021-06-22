@@ -13,6 +13,7 @@
 #include "llvm/Support/Format.h"
 #include "toolchain/diagnostics/diagnostic_emitter.h"
 #include "toolchain/lexer/tokenized_buffer.h"
+#include "toolchain/parser/parse_tree.h"
 #include "toolchain/source/source_buffer.h"
 
 namespace Carbon {
@@ -118,13 +119,40 @@ auto Driver::RunDumpTokensSubcommand(llvm::ArrayRef<llvm::StringRef> args)
   }
   auto tokenized_source =
       TokenizedBuffer::Lex(*source, ConsoleDiagnosticConsumer());
-  if (tokenized_source.HasErrors()) {
-    error_stream << "ERROR: Unable to tokenize source file '" << input_file_name
-                 << "'!\n";
+  tokenized_source.Print(output_stream);
+  return !tokenized_source.HasErrors();
+}
+
+auto Driver::RunDumpParseTreeSubcommand(llvm::ArrayRef<llvm::StringRef> args)
+    -> bool {
+  if (args.empty()) {
+    error_stream << "ERROR: No input file specified.\n";
     return false;
   }
-  tokenized_source.Print(output_stream);
-  return true;
+
+  llvm::StringRef input_file_name = args.front();
+  args = args.drop_front();
+  if (!args.empty()) {
+    ReportExtraArgs("dump-parse-tree", args);
+    return false;
+  }
+
+  auto source = SourceBuffer::CreateFromFile(input_file_name);
+  if (!source) {
+    error_stream << "ERROR: Unable to open input source file: ";
+    llvm::handleAllErrors(source.takeError(),
+                          [&](const llvm::ErrorInfoBase& ei) {
+                            ei.log(error_stream);
+                            error_stream << "\n";
+                          });
+    return false;
+  }
+  auto tokenized_source =
+      TokenizedBuffer::Lex(*source, ConsoleDiagnosticConsumer());
+  auto parse_tree =
+      ParseTree::Parse(tokenized_source, ConsoleDiagnosticConsumer());
+  parse_tree.Print(output_stream);
+  return !tokenized_source.HasErrors() && !parse_tree.HasErrors();
 }
 
 auto Driver::ReportExtraArgs(llvm::StringRef subcommand_text,
