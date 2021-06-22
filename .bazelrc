@@ -36,6 +36,10 @@ build --incompatible_dont_enable_host_nonhost_crosstool_features=false
 # our builds.
 build --dynamic_mode=off
 
+# Always compile PIC code. There are few if any disadvantages on the platforms
+# and architectures we care about and it avoids the need to compile files twice.
+build --force_pic
+
 # Completely disable Bazel's automatic stripping of debug information. Removing
 # that information causes unhelpful backtraces from unittest failures and other
 # crashes. Optimized builds already avoid using debug information by default.
