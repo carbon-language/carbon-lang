@@ -42,11 +42,14 @@ enum class ExpressionKind {
 enum class Operator {
   Add,
   And,
+  Deref,
   Eq,
+  Mul,
   Neg,
   Not,
   Or,
   Sub,
+  Ptr,
 };
 
 struct Expression;
