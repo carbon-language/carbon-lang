@@ -281,6 +281,9 @@ auto EvalPrim(Operator op, const std::vector<const Value*>& args, int line_num)
     case Operator::Sub:
       return Value::MakeIntVal(ValToInt(args[0], line_num) -
                                ValToInt(args[1], line_num));
+    case Operator::Mul:
+      return Value::MakeIntVal(ValToInt(args[0], line_num) *
+                               ValToInt(args[1], line_num));
     case Operator::Not:
       return Value::MakeBoolVal(!ValToBool(args[0], line_num));
     case Operator::And:
@@ -291,6 +294,11 @@ auto EvalPrim(Operator op, const std::vector<const Value*>& args, int line_num)
                                 ValToBool(args[1], line_num));
     case Operator::Eq:
       return Value::MakeBoolVal(ValueEqual(args[0], args[1], line_num));
+    case Operator::Ptr:
+      return Value::MakePtrTypeVal(args[0]);
+    case Operator::Deref:
+      std::cerr << line_num << ": dereference not implemented yet\n";
+      exit(-1);
   }
 }
 

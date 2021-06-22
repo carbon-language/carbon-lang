@@ -30,6 +30,18 @@ void ExpectType(int line_num, const std::string& context, const Value* expected,
   }
 }
 
+void ExpectPointerType(int line_num, const std::string& context,
+                       const Value* actual) {
+  if (actual->tag != ValKind::PointerTV) {
+    std::cerr << line_num << ": type error in " << context << std::endl;
+    std::cerr << "expected a pointer type\n";
+    std::cerr << "actual: ";
+    PrintValue(actual, std::cerr);
+    std::cerr << std::endl;
+    exit(-1);
+  }
+}
+
 void PrintErrorString(const std::string& s) { std::cerr << s; }
 
 void PrintTypeEnv(TypeEnv types, std::ostream& out) {
@@ -71,6 +83,9 @@ auto ReifyType(const Value* t, int line_num) -> const Expression* {
       return Expression::MakeVar(0, *t->GetStructType().name);
     case ValKind::ChoiceTV:
       return Expression::MakeVar(0, *t->GetChoiceType().name);
+    case ValKind::PointerTV:
+      return Expression::MakeUnOp(
+          0, Operator::Ptr, ReifyType(t->GetPointerType().type, line_num));
     default:
       std::cerr << line_num << ": expected a type, not ";
       PrintValue(t, std::cerr);
@@ -317,10 +332,21 @@ auto TypeCheckExp(const Expression* e, TypeEnv types, Env values,
           ExpectType(e->line_num, "negation", Value::MakeIntTypeVal(), ts[0]);
           return TCResult(new_e, Value::MakeIntTypeVal(), new_types);
         case Operator::Add:
+          ExpectType(e->line_num, "addition(1)", Value::MakeIntTypeVal(),
+                     ts[0]);
+          ExpectType(e->line_num, "addition(2)", Value::MakeIntTypeVal(),
+                     ts[1]);
+          return TCResult(new_e, Value::MakeIntTypeVal(), new_types);
         case Operator::Sub:
           ExpectType(e->line_num, "subtraction(1)", Value::MakeIntTypeVal(),
                      ts[0]);
-          ExpectType(e->line_num, "substration(2)", Value::MakeIntTypeVal(),
+          ExpectType(e->line_num, "subtraction(2)", Value::MakeIntTypeVal(),
+                     ts[1]);
+          return TCResult(new_e, Value::MakeIntTypeVal(), new_types);
+        case Operator::Mul:
+          ExpectType(e->line_num, "multiplication(1)", Value::MakeIntTypeVal(),
+                     ts[0]);
+          ExpectType(e->line_num, "multiplication(2)", Value::MakeIntTypeVal(),
                      ts[1]);
           return TCResult(new_e, Value::MakeIntTypeVal(), new_types);
         case Operator::And:
@@ -337,6 +363,12 @@ auto TypeCheckExp(const Expression* e, TypeEnv types, Env values,
         case Operator::Eq:
           ExpectType(e->line_num, "==", ts[0], ts[1]);
           return TCResult(new_e, Value::MakeBoolTypeVal(), new_types);
+        case Operator::Deref:
+          ExpectPointerType(e->line_num, "*", ts[0]);
+          return TCResult(new_e, ts[0]->GetPointerType().type, new_types);
+        case Operator::Ptr:
+          ExpectType(e->line_num, "*", Value::MakeTypeTypeVal(), ts[0]);
+          return TCResult(new_e, Value::MakeTypeTypeVal(), new_types);
       }
       break;
     }

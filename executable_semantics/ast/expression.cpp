@@ -245,14 +245,17 @@ auto Expression::MakeIndex(int line_num, const Expression* exp,
 
 static void PrintOp(Operator op) {
   switch (op) {
-    case Operator::Neg:
-      std::cout << "-";
-      break;
     case Operator::Add:
       std::cout << "+";
       break;
+    case Operator::Neg:
     case Operator::Sub:
       std::cout << "-";
+      break;
+    case Operator::Mul:
+    case Operator::Deref:
+    case Operator::Ptr:
+      std::cout << "*";
       break;
     case Operator::Not:
       std::cout << "not";
