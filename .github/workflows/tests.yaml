@@ -114,12 +114,12 @@ jobs:
             ${{ env.BAZEL_DISK_CACHE_PATH }}
           # The `bazel-1` string here and below in the key acts as a counter
           # that can be incremented to rebase the cache in the event of
-          # persistent corruption or other rare bug. The `-1-` prefix to the
+          # persistent corruption or other rare bug. The `-2-` prefix to the
           # date can be incremented when adding new targets or updating this
           # configuration and a new cache should be created but there is no
           # reason to discard prior caches.
           key: |
-            bazel-1-${{ matrix.os }}-${{ matrix.build_mode }}-1-${{ steps.date.outputs.date }}
+            bazel-1-${{ matrix.os }}-${{ matrix.build_mode }}-2-${{ steps.date.outputs.date }}
           # When we get a cache miss, try finding the most recent previous day's
           # cache to start.
           restore-keys: |
