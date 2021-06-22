@@ -134,7 +134,7 @@ auto TypeCheckExp(const Expression* e, TypeEnv types, Env values,
     PrintExp(e);
     std::cout << std::endl;
   }
-  switch (e->tag) {
+  switch (e->tag()) {
     case ExpressionKind::PatternVariable: {
       if (context != TCContext::PatternContext) {
         std::cerr

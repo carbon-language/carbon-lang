@@ -619,7 +619,7 @@ void StepLvalue() {
     PrintExp(exp);
     std::cout << " --->" << std::endl;
   }
-  switch (exp->tag) {
+  switch (exp->tag()) {
     case ExpressionKind::Variable: {
       //    { {x :: C, E, F} :: S, H}
       // -> { {E(x) :: C, E, F} :: S, H}
@@ -686,7 +686,7 @@ void StepExp() {
     PrintExp(exp);
     std::cout << " --->" << std::endl;
   }
-  switch (exp->tag) {
+  switch (exp->tag()) {
     case ExpressionKind::PatternVariable: {
       frame->todo.Push(MakeExpAct(exp->GetPatternVariable().type));
       act->pos++;
@@ -1076,7 +1076,7 @@ void HandleValue() {
     }
     case ActionKind::LValAction: {
       const Expression* exp = act->u.exp;
-      switch (exp->tag) {
+      switch (exp->tag()) {
         case ExpressionKind::GetField: {
           //    { v :: [].f :: C, E, F} :: S, H}
           // -> { { &v.f :: C, E, F} :: S, H }
@@ -1133,7 +1133,7 @@ void HandleValue() {
     }
     case ActionKind::ExpressionAction: {
       const Expression* exp = act->u.exp;
-      switch (exp->tag) {
+      switch (exp->tag()) {
         case ExpressionKind::PatternVariable: {
           auto v = Value::MakeVarPatVal(*exp->GetPatternVariable().name,
                                         act->results[0]);

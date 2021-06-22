@@ -6,6 +6,7 @@
 #define EXECUTABLE_SEMANTICS_AST_EXPRESSION_H_
 
 #include <string>
+#include <variant>
 #include <vector>
 
 namespace Carbon {
@@ -55,46 +56,84 @@ enum class Operator {
 struct Expression;
 
 struct Variable {
+  static constexpr ExpressionKind Kind = ExpressionKind::Variable;
   std::string* name;
 };
 
 struct FieldAccess {
+  static constexpr ExpressionKind Kind = ExpressionKind::GetField;
   const Expression* aggregate;
   std::string* field;
 };
 
 struct Index {
+  static constexpr ExpressionKind Kind = ExpressionKind::Index;
   const Expression* aggregate;
   const Expression* offset;
 };
 
 struct PatternVariable {
+  static constexpr ExpressionKind Kind = ExpressionKind::PatternVariable;
   std::string* name;
   const Expression* type;
 };
 
+struct IntLiteral {
+  static constexpr ExpressionKind Kind = ExpressionKind::Integer;
+  int value;
+};
+
+struct BoolLiteral {
+  static constexpr ExpressionKind Kind = ExpressionKind::Boolean;
+  bool value;
+};
+
 struct Tuple {
+  static constexpr ExpressionKind Kind = ExpressionKind::Tuple;
   std::vector<FieldInitializer>* fields;
 };
 
 struct PrimitiveOperator {
+  static constexpr ExpressionKind Kind = ExpressionKind::PrimitiveOp;
   Operator op;
   std::vector<const Expression*>* arguments;
 };
 
 struct Call {
+  static constexpr ExpressionKind Kind = ExpressionKind::Call;
   const Expression* function;
   const Expression* argument;
 };
 
 struct FunctionType {
+  static constexpr ExpressionKind Kind = ExpressionKind::FunctionT;
   const Expression* parameter;
   const Expression* return_type;
 };
 
+struct AutoT {
+  static constexpr ExpressionKind Kind = ExpressionKind::AutoT;
+};
+
+struct BoolT {
+  static constexpr ExpressionKind Kind = ExpressionKind::BoolT;
+};
+
+struct IntT {
+  static constexpr ExpressionKind Kind = ExpressionKind::IntT;
+};
+
+struct ContinuationT {
+  static constexpr ExpressionKind Kind = ExpressionKind::ContinuationT;
+};
+
+struct TypeT {
+  static constexpr ExpressionKind Kind = ExpressionKind::TypeT;
+};
+
 struct Expression {
   int line_num;
-  ExpressionKind tag;
+  inline auto tag() const -> ExpressionKind;
 
   static auto MakeVar(int line_num, std::string var) -> const Expression*;
   static auto MakeVarPat(int line_num, std::string var, const Expression* type)
@@ -124,33 +163,38 @@ struct Expression {
   static auto MakeAutoType(int line_num) -> const Expression*;
   static auto MakeContinuationType(int line_num) -> const Expression*;
 
-  Variable GetVariable() const;
-  FieldAccess GetFieldAccess() const;
-  Index GetIndex() const;
-  PatternVariable GetPatternVariable() const;
-  int GetInteger() const;
-  bool GetBoolean() const;
-  Tuple GetTuple() const;
-  PrimitiveOperator GetPrimitiveOperator() const;
-  Call GetCall() const;
-  FunctionType GetFunctionType() const;
+  auto GetVariable() const -> const Variable&;
+  auto GetFieldAccess() const -> const FieldAccess&;
+  auto GetIndex() const -> const Index&;
+  auto GetPatternVariable() const -> const PatternVariable&;
+  auto GetInteger() const -> int;
+  auto GetBoolean() const -> bool;
+  auto GetTuple() const -> const Tuple&;
+  auto GetPrimitiveOperator() const -> const PrimitiveOperator&;
+  auto GetCall() const -> const Call&;
+  auto GetFunctionType() const -> const FunctionType&;
 
  private:
-  union {
-    Variable variable;
-    FieldAccess get_field;
-    Index index;
-    PatternVariable pattern_variable;
-    int integer;
-    bool boolean;
-    Tuple tuple;
-    PrimitiveOperator primitive_op;
-    Call call;
-    FunctionType function_type;
-  } u;
+  std::variant<Variable, FieldAccess, Index, PatternVariable, IntLiteral,
+               BoolLiteral, Tuple, PrimitiveOperator, Call, FunctionType, AutoT,
+               BoolT, IntT, ContinuationT, TypeT>
+      value;
 };
 
 void PrintExp(const Expression* exp);
+
+// Implementation details only beyond this point
+
+struct TagVisitor {
+  template <typename Alternative>
+  auto operator()(const Alternative&) -> ExpressionKind {
+    return Alternative::Kind;
+  }
+};
+
+auto Expression::tag() const -> ExpressionKind {
+  return std::visit(TagVisitor(), value);
+}
 
 }  // namespace Carbon
 
