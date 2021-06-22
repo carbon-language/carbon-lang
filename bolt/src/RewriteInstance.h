@@ -98,6 +98,9 @@ private:
   /// Adjust supplied command-line options based on input data.
   void adjustCommandLineOptions();
 
+  /// Process runtime relocations.
+  void processDynamicRelocations();
+
   /// Process input relocations.
   void processRelocations();
 

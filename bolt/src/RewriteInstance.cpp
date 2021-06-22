@@ -1254,6 +1254,11 @@ void RewriteInstance::discoverFileObjects() {
     PreviousFunction = BF;
   }
 
+  // Read dynamic relocation first as their presence affects the way we process
+  // static relocations. E.g. we will ignore a static relocation at an address
+  // that is a subject to dynamic relocation processing.
+  processDynamicRelocations();
+
   // Process PLT section.
   if (BC->TheTriple->getArch() == Triple::x86_64)
     disassemblePLT();
@@ -1944,19 +1949,18 @@ bool RewriteInstance::analyzeRelocation(const RelocationRef &Rel,
   return true;
 }
 
-void RewriteInstance::processRelocations() {
-  if (!BC->HasRelocations)
-    return;
-
-  // Read dynamic relocation first as their presence affects the way we process
-  // static relocations. E.g. we will ignore a static relocation at an address
-  // that is a subject to dynamic relocation processing.
+void RewriteInstance::processDynamicRelocations() {
   for (const SectionRef &Section : InputFile->sections()) {
     if (Section.relocation_begin() != Section.relocation_end() &&
         BinarySection(*BC, Section).isAllocatable()) {
       readDynamicRelocations(Section);
     }
   }
+}
+
+void RewriteInstance::processRelocations() {
+  if (!BC->HasRelocations)
+    return;
 
   for (const SectionRef &Section : InputFile->sections()) {
     if (cantFail(Section.getRelocatedSection()) != InputFile->section_end() &&
