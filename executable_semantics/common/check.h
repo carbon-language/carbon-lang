@@ -9,10 +9,10 @@
 #include "llvm/Support/Signals.h"
 #include "llvm/Support/raw_ostream.h"
 
-#define CHECK(condition)                                              \
-  if (!(condition)) {                                                 \
-    llvm::sys::PrintStackTrace(llvm::errs());                         \
-    llvm::report_fatal_error("`" #condition "` evaluated to false."); \
+#define CHECK(condition)                                    \
+  if (!(condition)) {                                       \
+    llvm::sys::PrintStackTrace(llvm::errs());               \
+    llvm::report_fatal_error("CHECK failure: " #condition); \
   }
 
 #endif  // EXECUTABLE_SEMANTICS_COMMON_CHECK_H_

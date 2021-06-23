@@ -11,7 +11,7 @@ namespace Carbon {
 TEST(CheckTest, CheckTrue) { CHECK(true); }
 
 TEST(CheckTest, CheckFalse) {
-  ASSERT_DEATH({ CHECK(false); }, "LLVM ERROR: `false` is false.");
+  ASSERT_DEATH({ CHECK(false); }, "LLVM ERROR: CHECK failure: false");
 }
 
 }  // namespace Carbon
