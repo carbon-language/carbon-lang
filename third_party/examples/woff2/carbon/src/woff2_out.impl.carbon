@@ -12,16 +12,16 @@ using std::string;
 
 namespace woff2 {
 
-WOFF2StringOut::WOFF2StringOut(string* buf)
+WOFF2StringOut::WOFF2StringOut(buf: std::string *)
   : buf_(buf),
     max_size_(kDefaultMaxSize),
     offset_(0) {}
 
-fn WOFF2StringOut::Write(const void *buf, size_t n) -> bool {
+fn WOFF2StringOut::Write(buf: const void *, n: size_t) -> bool {
   return Write(buf, offset_, n);
 }
 
-fn WOFF2StringOut::Write(const void *buf, size_t offset, size_t n) -> bool {
+fn WOFF2StringOut::Write(buf: const void *, offset: size_t, n: size_t) -> bool {
   if (offset > max_size_ || n > max_size_ - offset) {
     return false;
   }
@@ -38,23 +38,23 @@ fn WOFF2StringOut::Write(const void *buf, size_t offset, size_t n) -> bool {
   return true;
 }
 
-void WOFF2StringOut::SetMaxSize(size_t max_size) {
+void WOFF2StringOut::SetMaxSize(max_size: size_t) {
   max_size_ = max_size;
   if (offset_ > max_size_) {
     offset_ = max_size_;
   }
 }
 
-WOFF2MemoryOut::WOFF2MemoryOut(uint8_t* buf, size_t buf_size)
+WOFF2MemoryOut::WOFF2MemoryOut(buf: uint8_t *, buf_size: size_t)
   : buf_(buf),
     buf_size_(buf_size),
     offset_(0) {}
 
-fn WOFF2MemoryOut::Write(const void *buf, size_t n) -> bool {
+fn WOFF2MemoryOut::Write(buf: const void *, n: size_t) -> bool {
   return Write(buf, offset_, n);
 }
 
-fn WOFF2MemoryOut::Write(const void *buf, size_t offset, size_t n) -> bool {
+fn WOFF2MemoryOut::Write(buf: const void *, offset: size_t, n: size_t) -> bool {
   if (offset > buf_size_ || n > buf_size_ - offset) {
     return false;
   }

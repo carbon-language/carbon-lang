@@ -4,9 +4,9 @@
 #include <woff2/decode.h>
 
 // Entry point for LibFuzzer.
-extern "C" fn LLVMFuzzerTestOneInput(const uint8_t* data, size_t size) -> int {
-  std::string buf;
-  woff2::WOFF2StringOut out(&buf);
+extern "C" fn LLVMFuzzerTestOneInput(data: const uint8_t *, size: size_t) -> int {
+  var buf: std::string;
+  var out: woff2::WOFF2StringOut;
   out.SetMaxSize(30 * 1024 * 1024);
   woff2::ConvertWOFF2ToTTF(data, size, &out);
   return 0;

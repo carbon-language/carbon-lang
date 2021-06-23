@@ -16,16 +16,16 @@
 
 namespace woff2 {
 
-static const uint32_t kWoff2Signature = 0x774f4632;  // "wOF2"
+var kWoff2Signature: const uint32_t;  // "wOF2"
 
 // Leave the first byte open to store flag_byte
-const unsigned int kWoff2FlagsTransform = 1 << 8;
+var kWoff2FlagsTransform: const unsigned int;
 
 // TrueType Collection ID string: 'ttcf'
-static const uint32_t kTtcFontFlavor = 0x74746366;
+var kTtcFontFlavor: const uint32_t;
 
-static const size_t kSfntHeaderSize = 12;
-static const size_t kSfntEntrySize = 16;
+var kSfntHeaderSize: const size_t;
+var kSfntEntrySize: const size_t;
 
 struct Point {
   int x;
@@ -45,7 +45,7 @@ struct Table {
   uint32_t dst_length;
   const uint8_t* dst_data;
 
-  fn operator<(const Table& other) const -> bool {
+  fn operator<(other: const woff2::Table &) const -> bool {
     return tag < other.tag;
   }
 };
@@ -54,10 +54,10 @@ struct Table {
 // Size of the collection header. 0 if version indicates this isn't a
 // collection. Ref http://www.microsoft.com/typography/otspec/otff.htm,
 // True Type Collections
-fn CollectionHeaderSize(uint32_t header_version, uint32_t num_fonts) -> size_t;
+fn CollectionHeaderSize(header_version: uint32_t, num_fonts: uint32_t) -> size_t;
 
 // Compute checksum over size bytes of buf
-fn ComputeULongSum(const uint8_t* buf, size_t size) -> uint32_t;
+fn ComputeULongSum(buf: const uint8_t *, size: size_t) -> uint32_t;
 
 } // namespace woff2
 
