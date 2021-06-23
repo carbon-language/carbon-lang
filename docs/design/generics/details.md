@@ -80,7 +80,6 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Options](#options)
 -   [Conditional conformance](#conditional-conformance)
 -   [Parameterized impls](#parameterized-impls)
-    -   [Structural conformance](#structural-conformance)
     -   [Bridge for C++ templates](#bridge-for-c-templates)
         -   [Calling C++ template code from Carbon](#calling-c-template-code-from-carbon)
         -   [Moving a C++ template to Carbon](#moving-a-c-template-to-carbon)
@@ -1457,20 +1456,20 @@ interface Comparable {
   method (this: Self) Less(that: Self) -> Bool;
 }
 struct Song {
-  impl Printable { method (this: Self) Print() { ... } }
+  impl as Printable { method (this: Self) Print() { ... } }
 }
 adapter SongByTitle for Song {
-  impl Comparable {
+  impl as Comparable {
     method (this: Self) Less(that: Self) -> Bool { ... }
   }
 }
 adapter FormattedSong for Song {
-  impl Printable { method (this: Self) Print() { Print("EA"); } }
+  impl as Printable { method (this: Self) Print() { Print("EA"); } }
 }
 adapter FormattedSongByTitle for Song {
-  // Open question: Allow "impl Printable = FormattedSong;" here?
-  impl Printable = FormattedSong as Printable;
-  impl Comparable = SongByTitle as Comparable;
+  // Open question: Allow "impl as Printable = FormattedSong;" here?
+  impl as Printable = FormattedSong as Printable;
+  impl as Comparable = SongByTitle as Comparable;
 }
 ```
 
@@ -1507,15 +1506,15 @@ parameterized type. Consider three compatible types, all of which implement
 
 ```
 struct Song {
-  impl Hashable { ... }
-  impl Printable { ... }
+  impl as Hashable { ... }
+  impl as Printable { ... }
 }
 adapter SongHashedByTitle for Song {
-  impl Hashable { ... }
+  impl as Hashable { ... }
 }
 adapter PlayableSong for Song {
-  impl Hashable = Song as Hashable;
-  impl Media { ... }
+  impl as Hashable = Song as Hashable;
+  impl as Media { ... }
 }
 ```
 
@@ -1544,17 +1543,17 @@ instead of `for`:
 
 ```
 struct Song {
-  impl Hashable { ... }
-  impl Printable { ... }
+  impl as Hashable { ... }
+  impl as Printable { ... }
 }
 
 adapter SongByArtist extends Song {
   // Add an implementation of a new interface
-  impl Comparable { ... }
+  impl as Comparable { ... }
 
   // Replace an existing implementation of an interface
   // with an alternative.
-  impl Hashable { ... }
+  impl as Hashable { ... }
 }
 ```
 
@@ -1587,13 +1586,11 @@ import CompareLib;
 import SongLib;
 
 adapter Song extends SongLib.Song {
-  impl CompareLib.Comparable { ... }
+  impl as CompareLib.Comparable { ... }
 }
 // Or, to keep the names from CompareLib.Comparable out of Song's API:
 adapter Song extends SongLib.Song { }
-extend Song {
-  impl CompareLib.Comparable { ... }
-}
+external impl Song as CompareLib.Comparable { ... }
 ```
 
 The caller can either cast `SongLib.Song` values to `Song` when calling
@@ -1625,7 +1622,7 @@ and an adapter to address this use case.
 Let's say we want to provide a possible implementation of an interface for use
 by types for which that implementation would be appropriate. We can do that by
 defining an adapter implementing the interface that is parameterized on the type
-it is adapting. That impl may then be pulled in using the `"impl ... = ...;"`
+it is adapting. That impl may then be pulled in using the `impl as ... = ...;`
 syntax.
 
 ```
@@ -1634,7 +1631,7 @@ interface Comparable {
 }
 adapter ComparableFromDifferenceFn
     (T:$ Type, Difference:$ fnty(T, T)->Int) for T {
-  impl Comparable {
+  impl as Comparable {
     method (this: Self) Less(that: Self) -> Bool {
       return Difference(this, that) < 0;
     }
@@ -1643,7 +1640,7 @@ adapter ComparableFromDifferenceFn
 struct IntWrapper {
   var x: Int;
   fn Difference(this: Self, that: Self) { return that.x - this.x; }
-  impl Comparable = ComparableFromDifferenceFn(IntWrapper, Difference)
+  impl as Comparable = ComparableFromDifferenceFn(IntWrapper, Difference)
       as Comparable;
 }
 ```
@@ -1673,7 +1670,7 @@ for `N`:
 
 ```
 struct Point2D {
-  impl NSpacePoint {
+  impl as NSpacePoint {
     var N:$ Int = 2;
     method (this: Self*) Get(i: Int) -> Float64 { ... }
     method (this: Self*) Set(i: Int, value: Float64) { ... }
@@ -1682,7 +1679,7 @@ struct Point2D {
 }
 
 struct Point3D {
-  impl NSpacePoint {
+  impl as NSpacePoint {
     var N:$ Int = 3;
     method (this: Self*) Get(i: Int) -> Float64 { ... }
     method (this: Self*) Set(i: Int, value: Float64) { ... }
@@ -1726,7 +1723,7 @@ interface DeserializeFromString {
 struct MySerializableType {
   var i: Int;
 
-  impl DeserializeFromString {
+  impl as DeserializeFromString {
     fn Deserialize(serialized: String) -> Self {
       return (.i = StringToInt(serialized));
     }
@@ -1779,7 +1776,7 @@ struct DynamicArray(T:$ Type) {
   method (this: Self*) Insert(pos: IteratorType, value: T);
   method (this: Self*) Remove(pos: IteratorType);
 
-  impl StackAssociatedType {
+  impl as StackAssociatedType {
     var ElementType:$ Type = T;
     // `Self` and `DynamicArray(T)` are still equivalent here.
     method (this: Self*) Push(value: ElementType) {
@@ -1837,7 +1834,7 @@ context:
 struct DynamicArray(T:$ Type) {
   // ...
 
-  impl StackAssociatedType {
+  impl as StackAssociatedType {
     // Not needed: var ElementType:$ Type = T;
     method (this: Self*) Push(value: T) { ... }
     method (this: Self*) Pop() -> T { ... }
@@ -1863,7 +1860,7 @@ interface Has2OverloadsWithDefaults {
 }
 
 struct S {
-  impl Has2OverloadsWithDefaults {
+  impl as Has2OverloadsWithDefaults {
      // Unclear if T == DynamicArray(Int) or
      // T == DynamicArray(DynamicArray(Int)).
      method (this: Self) F(
@@ -1895,7 +1892,7 @@ And we have a type implementing that interface:
 
 ```
 struct S {
-  impl A {
+  impl as A {
     // var T:$ Type = Int;
     method (this: Self) F() -> Int { return 3; }
   }
@@ -1966,7 +1963,7 @@ considered different interfaces, with distinct implementations.
 struct Produce {
   var fruit: DynamicArray(Fruit);
   var veggie: DynamicArray(Veggie);
-  impl StackParameterized(Fruit) {
+  impl as StackParameterized(Fruit) {
     method (this: Self*) Push(value: Fruit) {
       this->fruit.Push(value);
     }
@@ -1977,7 +1974,7 @@ struct Produce {
       return this->fruit.IsEmpty();
     }
   }
-  impl StackParameterized(Veggie) {
+  impl as StackParameterized(Veggie) {
     method (this: Self*) Push(value: Veggie) {
       this->veggie.Push(value);
     }
@@ -2005,8 +2002,8 @@ struct Complex {
   var imag: Float64;
   // Can implement this interface more than once as long as it has different
   // arguments.
-  impl EqualityComparableTo(Complex) { ... }
-  impl EqualityComparableTo(Float64) { ... }
+  impl as EqualityComparableTo(Complex) { ... }
+  impl as EqualityComparableTo(Float64) { ... }
 }
 ```
 
@@ -2029,24 +2026,24 @@ interface Map(FromType:$ Type, ToType:$ Type) {
   method (this: Self*) Map(needle: FromType) -> Optional(ToType);
 }
 struct Bijection(FromType:$ Type, ToType:$ Type) {
-  impl Map(FromType, ToType) { ... }
-  impl Map(ToType, FromType) { ... }
+  impl as Map(FromType, ToType) { ... }
+  impl as Map(ToType, FromType) { ... }
 }
 // Error: Bijection has two impls of interface Map(String, String)
 var oops: Bijection(String, String) = ...;
 ```
 
 In this case, it would be better to have an [adapting type](#adapting-types) to
-contain the impl for the reverse map lookup, instead of implementing the `Map`
+contain the `impl` for the reverse map lookup, instead of implementing the `Map`
 interface twice:
 
 ```
 struct Bijection(FromType:$ Type, ToType:$ Type) {
-  impl Map(FromType, ToType) { ... }
+  impl as Map(FromType, ToType) { ... }
 }
 adapter ReverseLookup(FromType:$ Type, ToType:$ Type)
     for Bijection(FromType, ToType) {
-  impl Map(ToType, FromType) { ... }
+  impl as Map(ToType, FromType) { ... }
 }
 ```
 
@@ -2107,29 +2104,29 @@ Include [this thread](https://forums.swift.org/t/scoped-conformances/37159) as
 an alternative considered.
 
 Let's say you have some interface `I(T, U(V))` being implemented for some type
-`A(B(C(D), E))`. That impl must be defined in the same library that defines the
-interface or one of the names needed by the type. That is, the impl must be
-defined with one of `I`, `T`, `U`, `V`, `A`, `B`, `C`, `D`, or `E`. We further
-require anything looking up this impl to import the _definitions_ of all of
-those names. Seeing a forward declaration of these names is insufficient, since
-you can presumably see forward declarations without seeing an impl with the
-definition. This accomplishes a few goals:
+`A(B(C(D), E))`. That `impl` must be defined in the same library that defines
+the interface or one of the names needed by the type. That is, the `impl` must
+be defined with one of `I`, `T`, `U`, `V`, `A`, `B`, `C`, `D`, or `E`. We
+further require anything looking up this `impl` to import the _definitions_ of
+all of those names. Seeing a forward declaration of these names is insufficient,
+since you can presumably see forward declarations without seeing an `impl` with
+the definition. This accomplishes a few goals:
 
--   The compiler can check that there is only one definition of any impl that is
-    actually used, avoiding
+-   The compiler can check that there is only one definition of any `impl` that
+    is actually used, avoiding
     [One Definition Rule (ODR)](https://en.wikipedia.org/wiki/One_Definition_Rule)
     problems.
--   Every attempt to use an impl will see the exact same impl, making the
+-   Every attempt to use an `impl` will see the exact same `impl`, making the
     interpretation and semantics of code consistent no matter its context, in
     accordance with the FIXME
     [Refactoring principle](https://github.com/josh11b/carbon-lang/blob/principle-refactoring/docs/project/principles/principle-refactoring.md).
--   Allowing the impl to be defined with either the interface or the type
+-   Allowing the `impl` to be defined with either the interface or the type
     addresses the
     [expression problem](https://eli.thegreenplace.net/2016/the-expression-problem-and-its-solutions).
 
 Note that [the rules for specialization](#lookup-resolution-and-specialization)
-do allow there to be more than one impl to be defined for a type, as long as one
-can unambiguously be picked as most specific.
+do allow there to be more than one `impl` to be defined for a type, as long as
+one can unambiguously be picked as most specific.
 
 ### Parameterized structural interfaces
 
@@ -2720,9 +2717,7 @@ TODO: This use case was part of the
 struct Vector(T:$ Type) { ... }
 
 // Parameterized type implements interface only for some arguments.
-extend Vector(String) {
-  impl Printable { ... }
-}
+external impl Vector(String) as Printable { ... }
 
 // Constraint: `T` such that `Vector(T)` implements `Printable`
 fn PrintThree[T:$ Type](a: T, b: T, c: T) where Vector(T) is Printable {
@@ -3432,14 +3427,15 @@ TODO: fold in content from
 ## Conditional conformance
 
 [The problem](terminology.md#conditional-conformance) we are trying to solve
-here is expressing that we have an impl of some interface for some type, but
+here is expressing that we have an `impl` of some interface for some type, but
 only if some additional type restrictions are met. To do this, we leverage
-[external impl](#external-impl):
+[`external impl`](#external-impl):
 
--   We can provide the same impl argument in two places to constrain them to be
-    the same.
--   We can declare the impl argument with a more-restrictive type, to for
-    example say this impl can only be used if that type satisfies an interface.
+-   We can provide the same `impl` argument in two places to constrain them to
+    be the same.
+-   We can declare the `impl` argument with a more-restrictive type, to for
+    example say this `impl` can only be used if that type satisfies an
+    interface.
 
 **Example:** [Interface constraint] Here we implement the `Printable` interface
 for arrays of `N` elements of `Printable` type `T`, generically for `N`.
@@ -3452,19 +3448,17 @@ struct FixedArray(T:$ Type, N:$ Int) { ... }
 
 // By saying "Printable:$ T" instead of "Type:$ T" here, we constrain
 // T to be Printable for this impl.
-extend FixedArray(T:$ Printable, N:$ Int) {
-  impl Printable {
-    method (this: Self*) Print() -> String {
-      var first: Bool = False;
-      var ret: String = "";
-      for (a: auto) in *this {
-        if (!first) {
-          ret += ", ";
-        }
-        ret += a.Print();
+external impl FixedArray(T:$ Printable, N:$ Int) as Printable {
+  method (this: Self*) Print() -> String {
+    var first: Bool = False;
+    var ret: String = "";
+    for (a: auto) in *this {
+      if (!first) {
+        ret += ", ";
       }
-      return ret;
+      ret += a.Print();
     }
+    return ret;
   }
 }
 ```
@@ -3475,22 +3469,19 @@ extend FixedArray(T:$ Printable, N:$ Int) {
 ```
 interface Foo(T:$ Type) { ... }
 struct Pair(T:$ Type, U:$ Type) { ... }
-extend Pair(T:$ Type, T) {
-  impl Foo(T) { ... }
-}
+external impl Pair(T:$ Type, T) as Foo(T) { ... }
+
 // Alternatively:
-extend Pair[T:$ Type](T, T) {
-  impl Foo(T) { ... }
-}
+external impl Pair[T:$ Type](T, T) as Foo(T) { ... }
 ```
 
 **Proposal:** [Other boolean condition constraints] Just like we support
 conditions when pattern matching (for example in overload resolution), we should
-also allow them when defining an impl:
+also allow them when defining an `impl`:
 
 ```
-extend[T:$$ Type] T if (sizeof(T) <= 16) {
-  impl Foo { ... }
+external impl [T:$$ Type] T as Foo if (sizeof(T) <= 16) {
+  ...
 }
 ```
 
@@ -3500,43 +3491,57 @@ interface implemented for this type" undecidable in general.
 This means we will likely need some heuristic like a limit on how many steps of
 recursion are allowed.
 
-**Open question:** We could also have a syntax for defining these impls inline
-in the struct definition, but I haven't found a syntax that works as well as the
-`extend` statement constructs shown above. We have a choice between two
-undesirable properties: either the meaning of the names defined in the outer
-struct change inside the conditional impl, or we end up having to give new names
-to the same values. This was discussed in
-[Carbon meeting Nov 27, 2019 on Generics & Interfaces (TODO)](#broken-links-footnote)<!-- T:Carbon meeting Nov 27, 2019 on Generics & Interfaces --><!-- A:#heading=h.gebr4cdi0y8o -->.
-
-The best idea I've had so far is to include an `extend` statement inside the
-`struct` definition to make it inline:
+To define these `impl`s inline in a `struct` definition, include a more-specific
+type between the `impl` and `as` keywords.
 
 ```
 struct FixedArray(T:$ Type, N:$ Int) {
   // A few different syntax possibilities here:
-  extend FixedArray(P:$ Printable, N2:$ Int) { impl Printable { ... } }
-  extend FixedArray(P:$ Printable, N) { impl Printable { ... } }
-  extend[P:$ Printable] FixedArray(P, N) { impl Printable { ... } }
+  impl FixedArray(P:$ Printable, N2:$ Int) as Printable { ... }
+  impl FixedArray(P:$ Printable, N) as Printable { ... }
+  impl [P:$ Printable] FixedArray(P, N) as Printable { ... }
+  impl FixedArray[P:$ Printable](P, N) as Printable { ... }
 }
 
 struct Pair(T:$ Type, U:$ Type) {
-  extend Pair(T, T) { impl Foo(T) { ... } }
+  impl Pair(T, T) as Foo(T) { ... }
 }
 ```
 
 We would need rules to prevent inconsistent reuse of the names from the outer
 scope. This proposal has the desirable property that the syntax for internal
-versus external conditional conformance matches. This makes it straightforward
-to refactor between those two choices, and is easier to learn.
+versus external conditional conformance is very similar. This makes it
+straightforward to refactor between those two choices (add or remove `external`
+and any type parameters from the context), and is easier to learn.
 
-Some other ideas we have considered lack this consistency:
+FIXME: Add section links
+
+**Rejected alternative:** In conjunction with using the `extend` syntax for
+external implementations, we also used `extend` declarations inside the `struct`
+definition to make it inline:
+
+```
+struct FixedArray(T:$ Type, N:$ Int) {
+  // A few different syntax possibilities here:
+  extend FixedArray(P:$ Printable, N2:$ Int) { impl as Printable { ... } }
+  extend FixedArray(P:$ Printable, N) { impl as Printable { ... } }
+  extend[P:$ Printable] FixedArray(P, N) { impl as Printable { ... } }
+}
+
+struct Pair(T:$ Type, U:$ Type) {
+  extend Pair(T, T) { impl as Foo(T) { ... } }
+}
+```
+
+Some other ideas we have considered lack the consistency between internal and
+external conditional conformance:
 
 -   One approach would be to use implicit arguments in square brackets after the
     `impl` keyword, and an `if` clause to add constraints:
 
 ```
 struct FixedArray(T:$ Type, N:$ Int) {
-  impl[U:$ Printable] Printable if T == U {
+  impl as [U:$ Printable] Printable if T == U {
     // Here `T` and `U` have the same value and so you can freely
     // cast between them. The difference is that you can call the
     // `Print` method on values of type `U`.
@@ -3544,7 +3549,7 @@ struct FixedArray(T:$ Type, N:$ Int) {
 }
 
 struct Pair(T:$ Type, U:$ Type) {
-  impl Foo(T) if T == U {
+  impl as Foo(T) if T == U {
     // Can cast between `Pair(T, U)` and `Pair(T, T)` since `T == U`.
   }
 }
@@ -3556,20 +3561,20 @@ struct Pair(T:$ Type, U:$ Type) {
 ```
 struct FixedArray(T:$ Type, N:$ Int) {
   @if let Printable:$ P = T {
-    impl Printable { ... }
+    impl as Printable { ... }
   }
 }
 
 interface Foo(T:$ Type) { ... }
 struct Pair(T:$ Type, U:$ Type) {
   @if let Pair(P:$ T, T) = Self {
-    impl Foo(T) { ... }
+    impl as Foo(T) { ... }
   }
 }
 ```
 
 We can have this consistency, but lose the property that all unqualified names
-for a type come from its `struct definition:
+for a type come from its `struct` definition:
 
 -   We could keep `extend` statements outside of the struct block to avoid
     sharing names between scopes, but allow them to have an `internal` keyword
@@ -3577,7 +3582,9 @@ for a type come from its `struct definition:
 
 ```
 struct FixedArray(T:$ Type, N:$ Int) { ... }
-extend FixedArray(P:$ Printable, N:$ Int) internal { impl Printable { ... } }
+extend FixedArray(P:$ Printable, N:$ Int) internal {
+  impl as Printable { ... }
+}
 
 struct Pair(T:$ Type, U:$ Type) { ... }
 extend Pair(T:$ Type, T) internal { ... }
@@ -3585,11 +3592,11 @@ extend Pair(T:$ Type, T) internal { ... }
 
 Lastly, we could adopt a "flow sensitive" approach, where the meaning of names
 can change in an inner scope. This would allow the `if` conditions that govern
-when an impl is used to affect the types in that impl's definition:
+when an `impl` is used to affect the types in that `impl`'s definition:
 
 ```
 struct FixedArray(T:$ Type, N:$ Int) {
-  impl Printable if (T implements Printable) {
+  impl as Printable if (T implements Printable) {
     // Inside this scope, `T` has type `Printable` instead of `Type`.
   }
 }
@@ -3601,16 +3608,14 @@ how they affect types.
 **Future work:**
 [Rust uses this mechanism](https://doc.rust-lang.org/book/ch10-02-traits.html#using-trait-bounds-to-conditionally-implement-methods)
 to also allow conditionally defining methods on types, independent of
-interfaces. This is not specific to generics, but we would like to have a syntax
-that is consistent across these two use cases. The above "inline `extend`"
-syntax does naturally generalize to this case:
+interfaces. We will likely instead just use a more specific type in place of
+`Self` in the method declaration, rather than be consistent across these two use
+cases.
 
 ```
 struct FixedArray(T:$ Type, N:$ Int) {
   // ...
-  extend[P:$ Printable] FixedArray(P, N) {
-    method (this: Self*) Print() { ... }
-  }
+  method (this: FixedArray[P:$ Printable](P, N)*) Print() { ... }
 }
 
 // FixedArray(T, N) has a `Print()` method if `T` is `Printable`.
@@ -3638,96 +3643,15 @@ for any type implementing `I`:
 
 Some things going on here:
 
--   Our syntax for `extend` statements already allows you to have a templated
-    type parameter. This can be used to provide a general impl that depends on
-    templated access to the type, even though the interface itself is defined
-    generically.
--   We very likely will want to restrict the impl in some ways.
-    -   Easy case: An impl for a family of parameterized types.
+-   Our syntax for `external impl` statements already allows you to have a
+    templated type parameter. This can be used to provide a general `impl` that
+    depends on templated access to the type, even though the interface itself is
+    defined generically.
+-   We very likely will want to restrict the `impl` in some ways.
+    -   Easy case: An `impl` for a family of parameterized types.
     -   Trickier is "structural conformance": we might want to say "here is an
-        impl for interface `Foo` for any class implementing a method `Bar`".
+        `impl` for interface `Foo` for any class implementing a method `Bar`".
         This is particularly for C++ types.
-
-### Structural conformance
-
-**Question:** How do you say: "restrict this impl to types that have a member
-function with a specific name & signature"?
-
-An important use case is to restrict templated definitions to an appropriate set
-of types.
-
-**Rejected alternative:** We don't want to support the
-[SFINAE rule](https://en.wikipedia.org/wiki/Substitution_failure_is_not_an_error)
-of C++ because it does not let the user clearly express the intent of which
-substitution failures are meant to be constraints and which are bugs.
-Furthermore, the
-[SFINAE rule](https://en.wikipedia.org/wiki/Substitution_failure_is_not_an_error)
-leads to problems where the constraints can change accidentally as part of
-modifications to the body that were not intended to affect the constraints at
-all. As such, constraints should only be in the impl signature rather than be
-determined by anything in the body.
-
-**Rejected alternative:** We don't want anything like `LegalExpression(...)` for
-turning substitution success/failure into True/False at this time, since we
-believe that it introduces a lot of complexity, and we would rather lean on
-conforming to an interface or the reflection APIs. However, we feel less
-strongly about this position than the previous position and we may revisit (say
-because of needing a bridge for C++ users). One nice property of the
-`LegalExpression(...)` paradigm for expressing a constraint is that it would be
-easy for the constraint to mirror code from the body of the function.
-
-**Additional concern:** We want to be able to express "method has a signature"
-in terms of the types involved, without necessarily any legal example values for
-those types. For example, we want to be able to express that "`T` is
-constructible from `U` if it has a `operator create` method that takes a `U`
-value", without any way to write down an particular value for `U` in general:
-
-```
-interface ConstructibleFrom(Args:$ ...) { ... }
-extend[T:$$ Type, U:$$ Type] T if (LegalExpression(T.operator create(???))) {
-  impl ConstructibleFrom(U) { ... }
-}
-```
-
-This is a problem for the `LegalExpression(...)` model, another reason to avoid
-it.
-
-**Answer:** We will use the planned
-[method constraints extension](#future-work-method-constraints) to
-[structural interfaces](#structural-interfaces).
-
-This is similar to the structural interface matching used in the Go language. It
-isn't clear how much we want to encourage it, but it does have some advantages
-with respect to decoupling dependencies, breaking cycles, cleaning up layering.
-Example: two libraries can be combined without knowing about each other as long
-as they use methods with the same names and signatures.
-
-```
-structural interface HasFooAndBar {
-  method (this: Self) Foo(_: Int) -> String;
-  method (this: Self) Bar(_: String) -> Bool;
-}
-
-fn CallsFooAndBar[T:$$ HasFooAndBar]
-    (x: T, y: Int) -> Bool {
-  return x.Bar(x.Foo(y));
-}
-```
-
-One downside of this approach is that it nails down the type of `this`, even
-though multiple options would work in a template. We might need to introduce
-additional option in the syntax only for use with templates:
-
-```
-structural interface HasFooAndBar {
-  method (_: _) Foo(Int) -> String;
-  method (_: _) Bar(String) -> Bool;
-}
-```
-
-Note that this would be awkward for generics to support the dynamic compilation
-strategy, and we don't expect to want to hide the difference between read-only
-and mutable in a generic context.
 
 ### Bridge for C++ templates
 
@@ -3758,10 +3682,8 @@ and once we implement that interface for the C++ type `S`:
 // Note: T has to be a templated argument to be usable with the
 // C++ template `S`. There is no problem passing a template
 // argument `T` to the generic argument of `SInterface`.
-extend C++::S(T:$$ Type) {
-  impl SInterface(T) {
-    method (this: Self*) F(t: T*) { this->F(t); }
-  }
+external impl C++::S(T:$$ Type) as SInterface(T) {
+  method (this: Self*) F(t: T*) { this->F(t); }
 }
 ```
 
@@ -3773,7 +3695,8 @@ fn G[T:$ Type, SType:$ SInterface(T)](s: SType*, t: T*) {
 }
 var x: C++::S(Int);
 var y: Int = 3;
-G(&x, &y);  // C++::S(Int) implements SInterface(Int) by way of templated impl
+// C++::S(Int) implements SInterface(Int) by way of templated impl
+G(&x, &y);
 ```
 
 #### Moving a C++ template to Carbon
@@ -3793,8 +3716,8 @@ for it:
 
 ```
 interface Optional(T:$ Type) { ... }
-extend C++::std::optional(T:$$ Type) {
-  impl Optional(T) { ... }
+external impl C++::std::optional(T:$$ Type) as Optional(T) {
+  ...
 }
 ```
 
@@ -3804,9 +3727,9 @@ Since interfaces with parameters can have multiple implementations for a single
 type, it opens the question of how they work when implementing one interface in
 terms of another.
 
-**Open question:** We could allow templated impls to take each of these multiple
-implementations for one interface and manufacture an impl for another interface,
-as in this example:
+**Open question:** We could allow templated `impl`s to take each of these
+multiple implementations for one interface and manufacture an `impl` for another
+interface, as in this example:
 
 ```
 // Some interfaces with type parameters.
@@ -3816,16 +3739,16 @@ interface EqualityComparableTo(T:$ Type) { ... }
 struct Complex {
   var r: Float64;
   var i: Float64;
-  impl EqualityComparableTo(Complex) { ... }
-  impl EqualityComparableTo(Float64) { ... }
+  impl as EqualityComparableTo(Complex) { ... }
+  impl as EqualityComparableTo(Float64) { ... }
 }
 // Some other interface with a type parameter.
 interface Foo(T:$ Type) { ... }
 // This provides an impl of Foo(T) for U if U is EqualityComparableTo(T).
 // In the case of Complex, this provides two impls, one for T == Complex,
 // and one for T == Float64.
-extend [U:$ EqualityComparableTo(T:$$ Type)] U {
-  impl Foo(T) { ... }
+external impl [U:$ EqualityComparableTo(T:$$ Type)] U as Foo(T) {
+  ...
 }
 ```
 
@@ -3837,7 +3760,7 @@ types that have been imported / have visible definitions.
 
 ### Lookup resolution and specialization
 
-**Rule:** Can have multiple impl definitions that match, as long as there is a
+**Rule:** Can have multiple `impl` definitions that match, as long as there is a
 single best match. Best is defined using the "more specific" partial ordering:
 
 -   Matching a descendant type or descendant interface is more specific and
@@ -3857,10 +3780,10 @@ general is commonly called _[specialization](terminology.md#specialization)_.
 
 TODO: Examples
 
-**Implication:** Can't do impl lookup with generic arguments, even if you can
+**Implication:** Can't do `impl` lookup with generic arguments, even if you can
 see a matching templated definition, since there may be a more-specific match
 and we want to be assured that we always get the same result any time we do an
-impl lookup.
+`impl` lookup.
 
 TODO: Example
 
@@ -3945,8 +3868,8 @@ Used as:
 
 ```
 struct Song { ... }
-adapter SongByArtist for Song { impl Comparable { ... } }
-adapter SongByTitle for Song { impl Comparable { ... } }
+adapter SongByArtist for Song { impl as Comparable { ... } }
+adapter SongByTitle for Song { impl as Comparable { ... } }
 assert(CombinedLess(Song(...), Song(...), SongByArtist, SongByTitle) == True);
 ```
 
@@ -3977,7 +3900,7 @@ combine `CompatibleWith` with [type adaptation](#adapting-types):
 ```
 adapter ThenCompare(T:$ Type,
                     CompareList:$ List(CompatibleWith(T) & Comparable)) for T {
-  impl Comparable {
+  impl as Comparable {
     method (this: Self) Compare(that: Self) -> CompareResult {
       for (U: auto) in CompareList {
         var result: CompareResult = (this as U).Compare(that);
@@ -4037,10 +3960,10 @@ Example:
 
 ```
 interface Foo {
-  impl DefaultConstructible;  // See "interface requiring other interfaces".
+  impl as DefaultConstructible;  // See "interface requiring other interfaces".
 }
 struct Bar {  // Structs are "sized" by default.
-  impl Foo;
+  impl as Foo;
 }
 fn F[T: Foo](x: T*) {  // T is unsized.
   var y: T;  // Illegal: T is unsized.
@@ -4195,11 +4118,11 @@ interface Printable {
 }
 struct AnInt {
   var x: Int;
-  impl Printable { method (this: Self*) Print() { PrintInt(this->x); } }
+  impl as Printable { method (this: Self*) Print() { PrintInt(this->x); } }
 }
 struct AString {
   var x: String;
-  impl Printable { method (this: Self*) Print() { PrintString(this->x); } }
+  impl as Printable { method (this: Self*) Print() { PrintString(this->x); } }
 }
 
 var i: AnInt = (.x = 3);
@@ -4239,12 +4162,12 @@ interface EqualCompare {
 and implementations of this interface for our two types:
 
 ```
-impl EqualCompare for AnInt {
+external impl AnInt as EqualCompare {
   method (this: AnInt*) IsEqual(that: AnInt*) -> Bool {
     return this->x == that->x;
   }
 }
-impl EqualCompare for AString {
+external impl AString as EqualCompare {
   method (this: AString*) IsEqual(that: AString*) -> Bool {
     return this->x == that->x;
   }
@@ -4297,49 +4220,46 @@ TODO
 // Note: InterfaceType is essentially "TypeTypeType".
 struct DynPtr(TT:$$ InterfaceType) {  // TT is any interface
   struct DynPtrImpl {
-    private TT: t;
-    private Void*: p;  // Really t* instead of Void*.
-    impl TT {
+    private t: TT;
+    private p: Void*;  // Really t* instead of Void*.
+    impl as TT {
       // Defined using meta-programming.
       // Forwards this->F(...) to (this->p as (this->t)*)->F(...)
       // or equivalently, this->t.F(this->p as (this->t)*, ...).
     }
   }
   var T:$ TT = (DynPtrImpl as TT);
-  private DynPtrImpl: impl;
-  fn operator->(this: Self*) -> T* { return &this->impl; }
-  fn operator=[U:$ TT](this: Self*, p: U*) { this->impl = (.t = U, .p = p); }
+  private impl_: DynPtrImpl;
+  fn operator->(this: Self*) -> T* { return &this->impl_; }
+  fn operator=[U:$ TT](this: Self*, p: U*) { this->impl_ = (.t = U, .p = p); }
 }
 ```
 
 #### Deref
 
 To make a function work on either regular or dynamic pointers, we define an
-interface `Deref(T)` that both `DynPtr` and `T*` implement:
+interface `Deref` that both `DynPtr` and `T*` implement:
 
 ```
-// Types implementing `Deref(T)` act like a pointer to `T`.
-interface Deref(T:$ Type) {
+// Types implementing `Deref` act like a pointer to associated type `DerefT`.
+interface Deref {
+  var DerefT:$ Type;
   // This is used for the `->` and `*` dereferencing operators.
-  method (this: Self) Deref() -> T*;
-  impl Copyable;
-  impl Movable;
+  method (this: Self) Deref() -> DerefT*;
 }
 
 // Implementation of Deref() for DynPtr(TT).
-extend DynPtr(TT:$$ InterfaceType) {
-  impl Deref(DynPtr(TT).DynPtrImpl as TT) { ... }
-}
-// or equivalently:
-extend DynPtr(TT:$$ InterfaceType) {
-  impl Deref(DynPtr(TT).T) { ... }
+external impl DynPtr(TT:$$ InterfaceType) as Deref {
+  alias DerefT = DynPtr(TT).DynPtrImpl as TT;
+  // or equivalently:
+  alias DerefT = DynPtr(TT).T;
+  ...
 }
 
-// Implementation of Deref(T) for T*.
-extend (T:$ Type)* {
-  impl Deref(T) {
-    method (this: T*) Deref() -> T* { return this; }
-  }
+// Implementation of Deref for T*.
+external impl (T:$ Type)* as Deref {
+  alias DerefT = T;
+  method (this: T*) Deref() -> T* { return this; }
 }
 ```
 
@@ -4349,16 +4269,24 @@ implementing `Printable` or a `DynPtr(Printable)`:
 ```
 // This is equivalent to `fn PrintIt[T:$ Printable](x: T*) ...`,
 // except it also accepts `DynPtr(Printable)` arguments.
-fn PrintIt[T:$ Printable, PtrT:$ Deref(T) & Sized](x: PtrT) {
+fn PrintIt[T:$ Printable, PtrT:$ Deref(.DerefT=T) & Copyable](x: PtrT) {
   x->Print();
 }
-PrintIt(&i); // T == (AnInt as Printable), PtrT == T*
+
+// T == (AnInt as Printable), PtrT == T*
+PrintIt(&i);
 // Prints "3"
-PrintIt(&s); // T == (AString as Printable), PtrT == T*
+
+// T == (AString as Printable), PtrT == T*
+PrintIt(&s);
 // Prints "Hello"
-PrintIt(dynamic[0]);  // T == DynPtr(Printable).T, PtrT == DynPtr(Printable)
+
+// T == DynPtr(Printable).T, PtrT == DynPtr(.DerefT=Printable)
+PrintIt(dynamic[0]);
 // Prints "3"
-PrintIt(dynamic[1]);  // T == DynPtr(Printable).T, PtrT == DynPtr(Printable)
+
+// T == DynPtr(Printable).T, PtrT == DynPtr(.DerefT=Printable)
+PrintIt(dynamic[1]);
 // Prints "Hello"
 ```
 
@@ -4389,17 +4317,19 @@ struct Boxed(T:$ Type,
   private var p: T*;
   private var allocator: AllocatorType;
   operator create(p: T*, allocator: AllocatorType = DefaultAllocator) { ... }
-  impl Movable { ... }
+  impl as Movable { ... }
 }
 
 // TODO: Should these just be constructors defined within Boxed(T)?
 // If T is constructible from X, then Boxed(T) is constructible from X ...
-extend Boxed(T:$ ConstructibleFrom(Args:$$ ...)) {
-  impl ConstructibleFrom(Args) { ... }
+external impl Boxed(T:$ ConstructibleFrom(Args:$$ ...))
+    as ConstructibleFrom(Args) {
+  ...
 }
 // ... and Boxed(X) as well.
-extend Boxed(T:$ ConstructibleFrom(Args:$$ ...)) {
-  impl ConstructibleFrom(Boxed(Args)) { ... }
+external impl Boxed(T:$ ConstructibleFrom(Args:$$ ...))
+    as ConstructibleFrom(Boxed(Args)) {
+  ...
 }
 
 // This allows you to create a Boxed(T) value inferring T so you don't have to
@@ -4431,7 +4361,7 @@ struct DynBoxed(TT:$$ InterfaceType,
   private var allocator: AllocatorType;
   ...  // Constructors, etc.
   // Destructor deallocates this->p.
-  impl Movable { ... }
+  impl as Movable { ... }
 }
 ```
 
@@ -4449,34 +4379,32 @@ We have a few different ways of making types with value semantics:
     movable. Even if `T` is movable, it may be large or expensive to move so you
     rather used `Boxed(T)` instead.
 -   `DynBoxed(TT)`: Can store values of any type satisfying the interface (so
-    definitely unsized). Performs
+    definitely no fixed size). Performs
     [dynamic dispatch](https://en.wikipedia.org/wiki/Dynamic_dispatch).
 -   `T`: Regular values that are sized and movable. The extra
     indirection/pointer and heap allocation for putting `T` into a box would
     introduce too much overhead / cost.
 
 In all cases we end up with a sized, movable value that is not very large. Just
-like we did with <code>[Deref(T) above](#deref)</code>, we can create an
-interface to abstract over the differences, called <code>MaybeBoxed(T)</code>:
+like we did with [`Deref` above](#deref), we can create a structural interface
+to abstract over the differences, called `MaybeBoxed`:
 
 ```
-interface MaybeBoxed(T:$ Type) {
-  fn operator->(this: Self*) -> T*;
-  // plus other smart pointer operators
-  impl Movable;
-  // We require that MaybeBoxed(T) should be sized, to avoid all
+structural interface MaybeBoxed {
+  // Smart pointer operators
+  impl as Deref;
+  impl as Movable;
+  // We require that MaybeBoxed should be sized, to avoid all
   // users having to say so
-  impl Sized;
+  impl as Sized;
 }
 
-extend Boxed(T:$ Type) {
-  impl MaybeBoxed(T {
-    fn operator->(this: Self*) -> T* { return this->p; }
-  }
+external impl Boxed(T:$ Type) as Deref {
+  method (this: Self*) Deref() -> T* { return this->p; }
 }
 
-extend DynBoxed(TT:$$ InterfaceType) {
-  impl MaybeBoxed(DynBoxed(TT).T) {
+external impl DynBoxed(TT:$$ InterfaceType) as Deref {
+  impl as MaybeBoxed(DynBoxed(TT).T) {
     ...  // TODO
   }
 }
@@ -4490,15 +4418,16 @@ supports zero-runtime-cost casting.
 // Can pass a T to a function accepting a MaybeBoxed(T) value without boxing by
 // first casting it to NotBoxed(T), as long as T is sized and movable.
 adapter NotBoxed(T:$ Movable & Sized) for T {  // :$ or :$$ here?
-  impl Movable = T as Movable;
-  impl MaybeBoxed(T) {
-    fn operator->(this: Self*) -> T* { return this as T*; }
+  impl as Movable = T as Movable;
+  impl as Deref {
+    method (this: Self*) Deref() -> T* { return this as T*; }
   }
 }
 // TODO: Should this just be a constructor defined within NotBoxed(T)?
 // Says NotBoxed(T) is constructible from a value of type Args if T is.
-extend NotBoxed(T:$ ConstructibleFrom(Args:$$ ...)) {
-  impl ConstructibleFrom(Args) { ... }
+external impl NotBoxed(T:$ ConstructibleFrom(Args:$$ ...))
+    as ConstructibleFrom(Args) {
+  ...
 }
 
 // This allows you to create a NotBoxed(T) value inferring T so you don't have
@@ -4507,9 +4436,8 @@ extend NotBoxed(T:$ ConstructibleFrom(Args:$$ ...)) {
 fn DontBox[T:$$ Type](x: T) -> NotBoxed(T) inline { return x as NotBoxed(T); }
 // Use NotBoxed as the default implementation of MaybeBoxed for small & movable
 // types. TODO: Not sure how to write a size <= 16 bytes constraint here.
-extend[T:$$ Movable & Sized] T if (sizeof(T) <= 16) {
-  impl MaybBoxed(T) = NotBoxed(T);
-}
+external impl [T:$$ Movable & Sized] T as MaybeBoxed(T)
+    if (sizeof(T) <= 16) = NotBoxed(T);
 ```
 
 This allows us to write a single generic function using that interface and have
@@ -4521,7 +4449,7 @@ interface Foo { method (this: Self*) F(); }
 fn UseBoxed[T:$ Foo, BoxType:$ MaybeBoxed(T)](x: BoxType) {
   x->F();  // Possible indirection is visible
 }
-struct Bar { impl Foo { ... } }
+struct Bar { impl as Foo { ... } }
 var y: DynBoxed(Foo) = new Bar(...);
 UseBoxed(y);
 // DontBox might not be needed, if Bar meets the requirements to use the
@@ -4608,7 +4536,7 @@ interface RandomAccessContainer {
   }
   // Either `impl` or `extends` here, depending if you want
   // `RandomAccessContainer`'s API to include these names.
-  impl OperatorIndex(Int) {
+  impl as OperatorIndex(Int) {
     // Default implementation of interface.
     method (this: Self) Get(i: Int) -> ElementType {
       return (this.Begin() + i).Get();
@@ -4648,7 +4576,7 @@ interface Foo2 {
 }
 
 structural interface Foo {
-  impl Foo2;
+  impl as Foo2;
   alias F = Foo2.F;
 }
 ```
@@ -4691,7 +4619,7 @@ we had a `Song` type with two slightly different `Print` definitions:
 ```
 struct Song {
   // ...
-  impl ConvertibleToString {
+  impl as ConvertibleToString {
     method (me: Self) ToString() -> String { ... }
   }
   method (me: Self) Print() {
@@ -4788,7 +4716,7 @@ fn F(a: A, b: B, ..., T:$ Addable(A, B)) where (A, B) is Addable(A, B) {
 ```
 
 There are a couple of problems with the idea of an interface implemented for the
-`(LeftType, RightType)` tuple. How does the impl get passed in? How do you say
+`(LeftType, RightType)` tuple. How does the `impl` get passed in? How do you say
 that an interface is only for pairs? These problems suggest it is not worth
 trying to do anything special for this edge case. Rust considered this approach
 and instead decided that the left-hand type implements the interface and the
@@ -4805,9 +4733,9 @@ interface Addable(Right:$ Type = Self) {
 
 ### Impls with state
 
-Impls where the impl itself has state. (from @zygoloid). Use case: implementing
-interfaces for a flyweight in a Flyweight pattern where the Impl needs a
-reference to a key -> info map.
+`Impl`s where the `impl` itself has state. (from @zygoloid). Use case:
+implementing interfaces for a flyweight in a Flyweight pattern where the `impl`
+needs a reference to a key -> info map.
 
 ### Generic associated types
 
@@ -5015,7 +4943,7 @@ interchangeable to a degree. This is particularly important for C++ interop.
 These are notes from discussions after this document was first written that have
 not yet been incorporated into the main text above.
 
--   Can use IDE tooling to show all methods including external impl,
+-   Can use IDE tooling to show all methods including `external impl`,
     automatically switching to [qualified member names](#qualified-member-names)
     where needed to get that method.
 -   Address use cases in [the motivation document](motivation.md).

@@ -175,3 +175,85 @@ CallShow(x);
 We could similarly support associated constant and
 [instance data field](#field-requirements) requirements. This is future work
 though, as it does not directly impact generics in Carbon.
+
+### Structural conformance
+
+**Question:** How do you say: "restrict this impl to types that have a member
+function with a specific name & signature"?
+
+An important use case is to restrict templated definitions to an appropriate set
+of types.
+
+**Rejected alternative:** We don't want to support the
+[SFINAE rule](https://en.wikipedia.org/wiki/Substitution_failure_is_not_an_error)
+of C++ because it does not let the user clearly express the intent of which
+substitution failures are meant to be constraints and which are bugs.
+Furthermore, the
+[SFINAE rule](https://en.wikipedia.org/wiki/Substitution_failure_is_not_an_error)
+leads to problems where the constraints can change accidentally as part of
+modifications to the body that were not intended to affect the constraints at
+all. As such, constraints should only be in the impl signature rather than be
+determined by anything in the body.
+
+**Rejected alternative:** We don't want anything like `LegalExpression(...)` for
+turning substitution success/failure into True/False at this time, since we
+believe that it introduces a lot of complexity, and we would rather lean on
+conforming to an interface or the reflection APIs. However, we feel less
+strongly about this position than the previous position and we may revisit (say
+because of needing a bridge for C++ users). One nice property of the
+`LegalExpression(...)` paradigm for expressing a constraint is that it would be
+easy for the constraint to mirror code from the body of the function.
+
+**Additional concern:** We want to be able to express "method has a signature"
+in terms of the types involved, without necessarily any legal example values for
+those types. For example, we want to be able to express that "`T` is
+constructible from `U` if it has a `operator create` method that takes a `U`
+value", without any way to write down an particular value for `U` in general:
+
+```
+interface ConstructibleFrom(Args:$ ...) { ... }
+external impl [T:$$ Type] T as ConstructibleFrom[U:$$ Type](U)
+    if (LegalExpression(T.operator create(???))) {
+  ...
+}
+```
+
+This is a problem for the `LegalExpression(...)` model, another reason to avoid
+it.
+
+**Answer:** We will use the planned
+[method constraints extension](#future-work-method-constraints) to
+[structural interfaces](#structural-interfaces).
+
+This is similar to the structural interface matching used in the Go language. It
+isn't clear how much we want to encourage it, but it does have some advantages
+with respect to decoupling dependencies, breaking cycles, cleaning up layering.
+Example: two libraries can be combined without knowing about each other as long
+as they use methods with the same names and signatures.
+
+```
+structural interface HasFooAndBar {
+  method (this: Self) Foo(_: Int) -> String;
+  method (this: Self) Bar(_: String) -> Bool;
+}
+
+fn CallsFooAndBar[T:$$ HasFooAndBar]
+    (x: T, y: Int) -> Bool {
+  return x.Bar(x.Foo(y));
+}
+```
+
+One downside of this approach is that it nails down the type of `this`, even
+though multiple options would work in a template. We might need to introduce
+additional option in the syntax only for use with templates:
+
+```
+structural interface HasFooAndBar {
+  method (_: _) Foo(Int) -> String;
+  method (_: _) Bar(String) -> Bool;
+}
+```
+
+Note that this would be awkward for generics to support the dynamic compilation
+strategy, and we don't expect to want to hide the difference between read-only
+and mutable in a generic context.
