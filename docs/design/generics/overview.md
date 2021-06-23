@@ -195,7 +195,7 @@ struct Song {
   // Implementing `Printable` for `Song` inside the definition of `Song`
   // means all names of `Printable`, such as `F`, are included as a part
   // of the `Song` API.
-  impl Printable {
+  impl as Printable {
     // Could use `Self` in place of `Song` here.
     method (this: Song) Print() { ... }
   }
@@ -210,7 +210,7 @@ external impl Song as Comparable {
 }
 ```
 
-**Note:** The interface implementation syntax is the subject of
+**Note:** The interface implementation syntax was decided in
 [question-for-leads issue #575](https://github.com/carbon-language/carbon-lang/issues/575).
 
 Implementations may be defined within the struct definition itself or
@@ -335,7 +335,7 @@ interface Equatable {
 
 // `Iterable` requires that `Equatable` is implemented.
 interface Iterable {
-  impl Equatable;
+  impl as Equatable;
   method (this: Self*) Advance();
 }
 ```
@@ -353,7 +353,7 @@ interface Hashable {
 }
 // `Hashable` is equivalent to:
 interface Hashable {
-  impl Equatable;
+  impl as Equatable;
   alias IsEqual = Equatable.IsEqual;
   method (this: Self) Hash() -> UInt64;
 }
@@ -365,7 +365,7 @@ methods in the child implementation.
 ```
 struct Key {
   // ...
-  impl Hashable {
+  impl as Hashable {
     method (this: Key) IsEqual(that: Key) -> Bool { ... }
     method (this: Key) Hash() -> UInt64 { ... }
   }
@@ -418,8 +418,8 @@ give you control over how name conflicts are handled.
 
 ```
 structural interface Combined {
-  impl Renderable;
-  impl EndOfGame;
+  impl as Renderable;
+  impl as EndOfGame;
   alias Draw_Renderable = Renderable.Draw;
   alias Draw_EndOfGame = EndOfGame.Draw;
   alias SetWinner = EndOfGame.SetWinner;
@@ -448,7 +448,7 @@ For example: If there were a class `CDCover` defined this way:
 
 ```
 struct CDCover  {
-  impl Printable {
+  impl as Printable {
     ...
   }
 }
