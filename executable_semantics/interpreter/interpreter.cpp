@@ -4,7 +4,6 @@
 
 #include "executable_semantics/interpreter/interpreter.h"
 
-#include <cassert>
 #include <iostream>
 #include <iterator>
 #include <list>
@@ -15,6 +14,7 @@
 
 #include "executable_semantics/ast/expression.h"
 #include "executable_semantics/ast/function_definition.h"
+#include "executable_semantics/common/check.h"
 #include "executable_semantics/interpreter/stack.h"
 #include "executable_semantics/interpreter/typecheck.h"
 #include "executable_semantics/tracing_flag.h"
@@ -36,7 +36,7 @@ auto Heap::AllocateValue(const Value* v) -> Address {
   // ensures that we don't do anything else in between, which is really bad!
   // Consider whether to include a copy of the input v in this function
   // or to leave it up to the caller.
-  assert(v != nullptr);
+  CHECK(v != nullptr);
   Address a = values_.size();
   values_.push_back(v);
   alive_.push_back(true);
@@ -49,7 +49,7 @@ auto Heap::Read(Address a, int line_num) -> const Value* {
 }
 
 auto Heap::Write(Address a, const Value* v, int line_num) -> void {
-  assert(v != nullptr);
+  CHECK(v != nullptr);
   this->CheckAlive(a, line_num);
   values_[a] = v;
 }
@@ -836,7 +836,7 @@ void StepStmt() {
   Frame* frame = state->stack.Top();
   Action* act = frame->todo.Top();
   const Statement* stmt = act->u.stmt;
-  assert(stmt != nullptr && "null statement!");
+  CHECK(stmt != nullptr && "null statement!");
   if (tracing_output) {
     std::cout << "--- step stmt ";
     PrintStatement(stmt, 1);

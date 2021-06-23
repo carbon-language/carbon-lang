@@ -4,63 +4,64 @@
 
 #include "executable_semantics/ast/statement.h"
 
-#include <cassert>
 #include <iostream>
+
+#include "executable_semantics/common/check.h"
 
 namespace Carbon {
 
 const Expression* Statement::GetExpression() const {
-  assert(tag == StatementKind::ExpressionStatement);
+  CHECK(tag == StatementKind::ExpressionStatement);
   return u.exp;
 }
 
 Assignment Statement::GetAssign() const {
-  assert(tag == StatementKind::Assign);
+  CHECK(tag == StatementKind::Assign);
   return u.assign;
 }
 
 VariableDefinition Statement::GetVariableDefinition() const {
-  assert(tag == StatementKind::VariableDefinition);
+  CHECK(tag == StatementKind::VariableDefinition);
   return u.variable_definition;
 }
 
 IfStatement Statement::GetIf() const {
-  assert(tag == StatementKind::If);
+  CHECK(tag == StatementKind::If);
   return u.if_stmt;
 }
 
 const Expression* Statement::GetReturn() const {
-  assert(tag == StatementKind::Return);
+  CHECK(tag == StatementKind::Return);
   return u.return_stmt;
 }
 
 Sequence Statement::GetSequence() const {
-  assert(tag == StatementKind::Sequence);
+  CHECK(tag == StatementKind::Sequence);
   return u.sequence;
 }
 
 Block Statement::GetBlock() const {
-  assert(tag == StatementKind::Block);
+  CHECK(tag == StatementKind::Block);
   return u.block;
 }
 
 While Statement::GetWhile() const {
-  assert(tag == StatementKind::While);
+  CHECK(tag == StatementKind::While);
   return u.while_stmt;
 }
 
 Match Statement::GetMatch() const {
-  assert(tag == StatementKind::Match);
+  CHECK(tag == StatementKind::Match);
   return u.match_stmt;
 }
 
 Continuation Statement::GetContinuation() const {
-  assert(tag == StatementKind::Continuation);
+  CHECK(tag == StatementKind::Continuation);
   return u.continuation;
 }
 
 Run Statement::GetRun() const {
-  assert(tag == StatementKind::Run);
+  CHECK(tag == StatementKind::Run);
   return u.run;
 }
 

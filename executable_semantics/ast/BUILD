@@ -25,6 +25,9 @@ cc_library(
     name = "expression",
     srcs = ["expression.cpp"],
     hdrs = ["expression.h"],
+    deps = [
+        "//executable_semantics/common:check",
+    ],
 )
 
 cc_library(
@@ -48,7 +51,10 @@ cc_library(
     name = "statement",
     srcs = ["statement.cpp"],
     hdrs = ["statement.h"],
-    deps = [":expression"],
+    deps = [
+        ":expression",
+        "//executable_semantics/common:check",
+    ],
 )
 
 cc_library(
