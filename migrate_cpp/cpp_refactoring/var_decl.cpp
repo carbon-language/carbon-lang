@@ -26,14 +26,14 @@ void VarDecl::run(const cam::MatchFinder::MatchResult& result) {
   auto& sm = *(result.SourceManager);
   auto lang_opts = result.Context->getLangOpts();
 
-  std::string repl;
+  std::string after;
   // Start the replacement with "var" unless it's a parameter.
   if (result.Nodes.getNodeAs<clang::ParmVarDecl>(Label) == nullptr) {
-    repl = "var ";
+    after = "var ";
   }
   // Finish the "type: name" replacement.
-  repl += decl->getNameAsString() + ": " +
-          clang::QualType::getAsString(decl->getType().split(), lang_opts);
+  after += decl->getNameAsString() + ": " +
+           clang::QualType::getAsString(decl->getType().split(), lang_opts);
 
   if (decl->getTypeSourceInfo() == nullptr) {
     // TODO: Need to understand what's happening in this case. Not sure if we
@@ -42,7 +42,8 @@ void VarDecl::run(const cam::MatchFinder::MatchResult& result) {
   }
 
   // This decides the range to replace. Normally the entire decl is replaced,
-  // but for code like `int i, j` we need to detect the comma operator.
+  // but for code like `int i, j` we need to detect the comma operator. That
+  // case currently results in `var i: int, var j: int`.
   auto type_loc = decl->getTypeSourceInfo()->getTypeLoc();
   auto after_type_loc =
       clang::Lexer::getLocForEndOfToken(type_loc.getEndLoc(), 0, sm, lang_opts);
@@ -54,7 +55,7 @@ void VarDecl::run(const cam::MatchFinder::MatchResult& result) {
   clang::CharSourceRange replace_range = clang::CharSourceRange::getTokenRange(
       has_comma ? decl->getLocation() : decl->getBeginLoc(), decl->getEndLoc());
 
-  AddReplacement(sm, replace_range, repl);
+  AddReplacement(sm, replace_range, after);
 }
 
 }  // namespace Carbon
