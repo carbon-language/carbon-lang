@@ -13,12 +13,10 @@ namespace Carbon {
 FnInserter::FnInserter(std::map<std::string, Replacements>& in_replacements,
                        cam::MatchFinder* finder)
     : Matcher(in_replacements) {
-  finder->addMatcher(cam::functionDecl(cam::hasTrailingReturn()).bind(Label),
-                     this);
   finder->addMatcher(
-      cam::functionDecl(cam::returns(cam::asString("void")),
-                        cam::unless(cam::anyOf(cam::hasTrailingReturn(),
-                                               cam::cxxConstructorDecl(),
+      cam::functionDecl(cam::anyOf(cam::hasTrailingReturn(),
+                                   cam::returns(cam::asString("void"))),
+                        cam::unless(cam::anyOf(cam::cxxConstructorDecl(),
                                                cam::cxxDestructorDecl())))
           .bind(Label),
       this);
