@@ -4338,11 +4338,12 @@ copying if `T` does.
 struct Boxed(T:$ Type,
              // May be able to add more constraints on AllocatorType (like
              // sized & movable) so we could make it a generic argument?
-             AllocatorInterface:$$ AllocatorType = DefaultAllocatorType) {
+             AllocatorType:$$ AllocatorInterface = DefaultAllocatorType) {
   private var p: T*;
   private var allocator: AllocatorType;
   operator create(p: T*, allocator: AllocatorType = DefaultAllocator) { ... }
   impl as Movable { ... }
+  impl as Deref { ... }
 }
 
 // TODO: Should these just be constructors defined within Boxed(T)?
@@ -4387,6 +4388,7 @@ struct DynBoxed(TT:$$ InterfaceType,
   ...  // Constructors, etc.
   // Destructor deallocates this->p.
   impl as Movable { ... }
+  impl as Deref { ... }
 }
 ```
 
@@ -4411,28 +4413,23 @@ We have a few different ways of making types with value semantics:
     introduce too much overhead / cost.
 
 In all cases we end up with a sized, movable value that is not very large. Just
-like we did with [`Deref` above](#deref), we can create a structural interface
-to abstract over the differences, called `MaybeBoxed`:
+like we did with [`Deref` above](#deref), we can create an interface to abstract
+over the differences, called `MaybeBoxed`:
 
 ```
-structural interface MaybeBoxed {
+interface MaybeBoxed {
   // Smart pointer operators
   impl as Deref;
+  alias T = Deref.DerefT;
   impl as Movable;
   // We require that MaybeBoxed should be sized, to avoid all
   // users having to say so
   impl as Sized;
 }
 
-external impl Boxed(T:$ Type) as Deref {
-  method (this: Self*) Deref() -> T* { return this->p; }
-}
-
-external impl DynBoxed(TT:$$ InterfaceType) as Deref {
-  impl as MaybeBoxed(DynBoxed(TT).T) {
-    ...  // TODO
-  }
-}
+// Blanket implementations
+external impl Boxed(T:$ Type) as MaybeBoxed { }
+external impl DynBoxed(TT:$$ InterfaceType) as MaybeBoxed { }
 ```
 
 For the case of values that we can efficiently move without boxing, we implement
@@ -4447,6 +4444,7 @@ adapter NotBoxed(T:$ Movable & Sized) for T {  // :$ or :$$ here?
   impl as Deref {
     method (this: Self*) Deref() -> T* { return this as T*; }
   }
+  impl as MaybeBoxed { }
 }
 // TODO: Should this just be a constructor defined within NotBoxed(T)?
 // Says NotBoxed(T) is constructible from a value of type Args if T is.
@@ -4461,7 +4459,7 @@ external impl NotBoxed(T:$ ConstructibleFrom(Args:$$ ...))
 fn DontBox[T:$$ Type](x: T) -> NotBoxed(T) inline { return x as NotBoxed(T); }
 // Use NotBoxed as the default implementation of MaybeBoxed for small & movable
 // types. TODO: Not sure how to write a size <= 16 bytes constraint here.
-external impl [T:$$ Movable & Sized] T as MaybeBoxed(T)
+external impl [T:$$ Movable & Sized] T as MaybeBoxed
     if (sizeof(T) <= 16) = NotBoxed(T);
 ```
 
@@ -4471,7 +4469,7 @@ types being used.
 
 ```
 interface Foo { method (this: Self*) F(); }
-fn UseBoxed[T:$ Foo, BoxType:$ MaybeBoxed(T)](x: BoxType) {
+fn UseBoxed[T:$ Foo, BoxType:$ MaybeBoxed(.T=T)](x: BoxType) {
   x->F();  // Possible indirection is visible
 }
 struct Bar { impl as Foo { ... } }
