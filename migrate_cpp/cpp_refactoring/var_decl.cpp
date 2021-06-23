@@ -42,12 +42,12 @@ void VarDecl::run(const cam::MatchFinder::MatchResult& result) {
   }
 
   // This decides the range to replace. Normally the entire decl is replaced,
-  // but for code like `int i, j` we need to detect the comma operator. That
-  // case currently results in `var i: int, var j: int`.
+  // but for code like `int i, j` we need to detect the comma between the
+  // declared names. That case currently results in `var i: int, var j: int`.
   auto type_loc = decl->getTypeSourceInfo()->getTypeLoc();
   auto after_type_loc =
       clang::Lexer::getLocForEndOfToken(type_loc.getEndLoc(), 0, sm, lang_opts);
-  // If there's a comma operator, this range will be non-empty.
+  // If there's a comma, this range will be non-empty.
   auto comma_source_text = clang::Lexer::getSourceText(
       clang::CharSourceRange::getCharRange(after_type_loc, decl->getLocation()),
       sm, lang_opts);

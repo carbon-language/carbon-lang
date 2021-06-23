@@ -43,7 +43,7 @@ TEST_F(VarDeclTest, Assignment) {
 }
 
 TEST_F(VarDeclTest, Const) {
-  // TODO: Include init.
+  // TODO: Include init, have `const` indicate `let`.
   constexpr char Before[] = "const int i = 0;";
   constexpr char After[] = "var i: const int;";
   ExpectReplacement(Before, After);
