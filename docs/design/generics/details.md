@@ -92,6 +92,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Type facet of another type](#type-facet-of-another-type)
     -   [Sized types and type-types](#sized-types-and-type-types)
         -   [Model](#model-2)
+    -   [`TypeId`](#typeid)
 -   [Dynamic types](#dynamic-types)
     -   [Runtime type parameters](#runtime-type-parameters)
     -   [Runtime type fields](#runtime-type-fields)
@@ -3935,7 +3936,7 @@ What is the size of a type?
     [structs](https://github.com/josh11b/carbon-lang/blob/structs/docs/design/structs.md)).
 -   It could be known generically. This means that it will be known at codegen
     time, but not at type-checking time.
--   It could be dynamic. For example, it could be a
+-   It could be dynamic. For example, it could be a FIXME
     [dynamic type](#dynamic-pointer-type) such as `Dynamic(TT)`, a FIXME
     [variable-sized type](https://github.com/josh11b/carbon-lang/blob/structs/docs/design/structs.md#control-over-allocation),
     or you could dereference a pointer to a base type that could actually point
@@ -3953,8 +3954,8 @@ The type-type `Sized` is defined as follows:
 
 Knowing a type is sized is a precondition to declaring (member/local) variables
 of that type, taking values of that type as parameters, returning values of that
-type, and defining arrays of that type. There will be other requirements as
-well, such as being movable, copyable, or constructible from some types.
+type, and defining arrays of that type. There will generally be additional
+requirements to initialize or move values of that type as needed.
 
 Example:
 
@@ -3986,7 +3987,8 @@ should we only allow `MaybeBox` values to be instantiated locally?
 
 **Open question:** Should the `Sized` type-type expose an associated constant
 with the size? So you could say `T.ByteSize` in the above example to get a
-generic int value with the size of `T`.
+generic int value with the size of `T`. Similarly you might say `T.ByteStride`
+to get the number of bytes used for each element of an array of `T`.
 
 #### Model
 
@@ -3994,6 +3996,29 @@ This requires a special integer field be included in the witness table type to
 hold the size of the type. This field will only be known generically, so if its
 value is used for type checking, we need some way of evaluating those type tests
 symbolically.
+
+### `TypeId`
+
+There are some capabilities every type can provide. For example, every type
+should be able to return its name or identify whether it is equal to another
+type. It is rare, however, for code to need to access these capabilities, so we
+relegate these capabilities to an interface called `TypeId` that all types
+automatically implement. This way generic code can indicate that it needs those
+capabilities by including `TypeId` in the list of requirements. In the case
+where no type capabilities are needed, for example the code is only manipulating
+pointers to the type, you would write `T:$ Type` and get the efficiency of
+`void*` but without giving up type safety.
+
+```
+fn SortByAddress[T:$ Type](v: Vector(T*)*) { ... }
+```
+
+In particular, we should in general avoid monomorphizing to generate multiple
+instantiations of the function in this case.
+
+**Open question:** Should `TypeId` be implemented externally for types to avoid
+name pollution (`.TypeName`, `.TypeHash`, etc.) unless the function specifically
+requests those capabilities?
 
 ## Dynamic types
 
