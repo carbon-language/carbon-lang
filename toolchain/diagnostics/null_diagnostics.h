@@ -15,7 +15,7 @@ inline auto NullDiagnosticLocationTranslator()
   struct Translator : DiagnosticLocationTranslator<LocationT> {
     auto GetLocation(LocationT) -> Diagnostic::Location override { return {}; }
   };
-  static Translator* translator = new Translator;
+  static auto* translator = new Translator;
   return *translator;
 }
 

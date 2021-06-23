@@ -162,7 +162,7 @@ class ErrorTrackingDiagnosticConsumer : public DiagnosticConsumer {
   }
 
   // Returns whether we've seen an error since the last reset.
-  auto SeenError() const -> bool { return seen_error; }
+  [[nodiscard]] auto SeenError() const -> bool { return seen_error; }
 
   // Reset whether we've seen an error.
   auto Reset() -> void { seen_error = false; }
