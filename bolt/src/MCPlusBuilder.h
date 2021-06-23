@@ -413,7 +413,7 @@ public:
   }
 
   virtual bool createDirectCall(MCInst &Inst, const MCSymbol *Target,
-                                MCContext *Ctx) {
+                                MCContext *Ctx, bool IsTailCall) {
     llvm_unreachable("not implemented");
     return false;
   }
@@ -1735,12 +1735,21 @@ public:
     return std::vector<MCInst>();
   }
 
-  virtual std::vector<MCInst> createInstrumentedNoopIndCallHandler() const {
+  virtual std::vector<MCInst> createInstrumentedIndCallHandlerExitBB() const {
     llvm_unreachable("not implemented");
     return std::vector<MCInst>();
   }
 
-  virtual std::vector<MCInst> createInstrumentedNoopIndTailCallHandler() const {
+  virtual std::vector<MCInst>
+  createInstrumentedIndTailCallHandlerExitBB() const {
+    llvm_unreachable("not implemented");
+    return std::vector<MCInst>();
+  }
+
+  virtual std::vector<MCInst>
+  createInstrumentedIndCallHandlerEntryBB(const MCSymbol *InstrTrampoline,
+                                          const MCSymbol *IndCallHandler,
+                                          MCContext *Ctx) {
     llvm_unreachable("not implemented");
     return std::vector<MCInst>();
   }

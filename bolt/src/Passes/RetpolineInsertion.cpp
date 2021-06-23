@@ -106,7 +106,7 @@ BinaryFunction *createNewRetpoline(BinaryContext &BC,
 
   // Build BB0
   MCInst DirectCall;
-  MIB.createDirectCall(DirectCall, BB2.getLabel(), &Ctx);
+  MIB.createDirectCall(DirectCall, BB2.getLabel(), &Ctx, /*IsTailCall*/ false);
   BB0.addInstruction(DirectCall);
 
   // Build BB1
@@ -244,10 +244,8 @@ void createBranchReplacement(BinaryContext &BC,
 
   // Call the retpoline
   MCInst RetpolineCall;
-  if (BrInfo.isJump() || BrInfo.isTailCall())
-    MIB.createTailCall(RetpolineCall, RetpolineSymbol, BC.Ctx.get());
-  else
-    MIB.createDirectCall(RetpolineCall, RetpolineSymbol, BC.Ctx.get());
+  MIB.createDirectCall(RetpolineCall, RetpolineSymbol, BC.Ctx.get(),
+                       BrInfo.isJump() || BrInfo.isTailCall());
 
   Replacement.push_back(RetpolineCall);
 }

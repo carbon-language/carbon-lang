@@ -119,6 +119,10 @@ private:
   uint32_t DirectCallCounters{0};
   uint32_t BranchCounters{0};
   uint32_t LeafNodeCounters{0};
+
+  /// Indirect call instrumentation functions
+  BinaryFunction *IndCallHandlerExitBBFunction;
+  BinaryFunction *IndTailCallHandlerExitBBFunction;
 };
 }
 }

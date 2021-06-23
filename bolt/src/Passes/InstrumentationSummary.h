@@ -104,9 +104,9 @@ struct InstrumentationSummary {
   /// Stores function names, to be emitted to the runtime
   std::string StringTable;
 
-  /// Our runtime indirect call instrumenter function
-  MCSymbol *IndCallHandlerFunc;
-  MCSymbol *IndTailCallHandlerFunc;
+  /// Pointer to runtime instrumentation handlers
+  MCSymbol *IndCallCounterFuncPtr;
+  MCSymbol *IndTailCallCounterFuncPtr;
 
   /// Intra-function control flow and direct calls
   std::vector<FunctionDescription> FunctionDescriptions;
@@ -114,15 +114,6 @@ struct InstrumentationSummary {
   /// Inter-function control flow via indirect calls
   std::vector<IndCallDescription> IndCallDescriptions;
   std::vector<IndCallTargetDescription> IndCallTargetDescriptions;
-
-  /// Our generated initial indirect call handler function that does nothing
-  /// except calling the indirect call target. The target program starts
-  /// using this no-op instrumentation function until our runtime library
-  /// setup runs and installs the correct handler. We need something before
-  /// our setup runs in case dyld starts running init code for other libs when
-  /// we did not have time to set up our indirect call counters yet.
-  BinaryFunction *InitialIndCallHandlerFunction;
-  BinaryFunction *InitialIndTailCallHandlerFunction;
 
   static constexpr uint64_t NUM_SERIALIZED_CONTAINERS = 4;
   static constexpr uint64_t SERIALIZED_CONTAINER_SIZE =

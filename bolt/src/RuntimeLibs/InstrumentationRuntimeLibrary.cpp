@@ -140,7 +140,10 @@ void InstrumentationRuntimeLibrary::emitBinary(BinaryContext &BC,
     const unsigned Psize = BC.AsmInfo->getCodePointerSize();
     emitDataPadding(Psize);
     emitLabel(Symbol);
-    Streamer.emitValue(Value, Psize);
+    if (Value)
+      Streamer.emitValue(Value, Psize);
+    else
+      Streamer.emitFill(Psize, 0);
   };
 
   auto emitIntValue = [&Streamer, emitDataPadding, emitLabelByName](
@@ -172,13 +175,8 @@ void InstrumentationRuntimeLibrary::emitBinary(BinaryContext &BC,
                !!opts::InstrumentationNoCountersClear, 1);
   emitIntValue("__bolt_instr_wait_forks", !!opts::InstrumentationWaitForks, 1);
   emitIntValue("__bolt_num_counters", Summary->Counters.size());
-  emitValue(Summary->IndCallHandlerFunc,
-            MCSymbolRefExpr::create(
-                Summary->InitialIndCallHandlerFunction->getSymbol(), *BC.Ctx));
-  emitValue(
-      Summary->IndTailCallHandlerFunc,
-      MCSymbolRefExpr::create(
-          Summary->InitialIndTailCallHandlerFunction->getSymbol(), *BC.Ctx));
+  emitValue(Summary->IndCallCounterFuncPtr, nullptr);
+  emitValue(Summary->IndTailCallCounterFuncPtr, nullptr);
   emitIntValue("__bolt_instr_num_ind_calls",
                Summary->IndCallDescriptions.size());
   emitIntValue("__bolt_instr_num_ind_targets",

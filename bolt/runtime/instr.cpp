@@ -100,8 +100,8 @@ extern bool __bolt_instr_use_pid;
 // only support resolving dependencies from this file to the output of BOLT,
 // *not* the other way around.
 // TODO: We need better linking support to make that happen.
-extern void (*__bolt_trampoline_ind_call)();
-extern void (*__bolt_trampoline_ind_tailcall)();
+extern void (*__bolt_ind_call_counter_func_pointer)();
+extern void (*__bolt_ind_tailcall_counter_func_pointer)();
 // Function pointers to init/fini trampoline routines in the binary, so we can
 // resume regular execution of these functions that we hooked
 extern void (*__bolt_start_trampoline)();
@@ -1537,8 +1537,8 @@ extern "C" void __attribute((force_align_arg_pointer)) __bolt_instr_setup() {
          0x3 /*PROT_READ|PROT_WRITE*/,
          0x31 /*MAP_ANONYMOUS | MAP_SHARED | MAP_FIXED*/, -1, 0);
 
-  __bolt_trampoline_ind_call = __bolt_instr_indirect_call;
-  __bolt_trampoline_ind_tailcall = __bolt_instr_indirect_tailcall;
+  __bolt_ind_call_counter_func_pointer = __bolt_instr_indirect_call;
+  __bolt_ind_tailcall_counter_func_pointer = __bolt_instr_indirect_tailcall;
   // Conservatively reserve 100MiB shared pages
   GlobalAlloc.setMaxSize(0x6400000);
   GlobalAlloc.setShared(true);
@@ -1558,7 +1558,8 @@ extern "C" void __attribute((force_align_arg_pointer)) __bolt_instr_setup() {
   }
 }
 
-extern "C" void instrumentIndirectCall(uint64_t Target, uint64_t IndCallID) {
+extern "C" __attribute((force_align_arg_pointer)) void
+instrumentIndirectCall(uint64_t Target, uint64_t IndCallID) {
   GlobalIndCallCounters[IndCallID].incrementVal(Target, GlobalAlloc);
 }
 
@@ -1567,27 +1568,22 @@ extern "C" void instrumentIndirectCall(uint64_t Target, uint64_t IndCallID) {
 extern "C" __attribute((naked)) void __bolt_instr_indirect_call()
 {
   __asm__ __volatile__(SAVE_ALL
-                       "mov 0x90(%%rsp), %%rdi\n"
-                       "mov 0x88(%%rsp), %%rsi\n"
+                       "mov 0xa0(%%rsp), %%rdi\n"
+                       "mov 0x98(%%rsp), %%rsi\n"
                        "call instrumentIndirectCall\n"
                        RESTORE_ALL
-                       "pop %%rdi\n"
-                       "add $16, %%rsp\n"
-                       "xchg (%%rsp), %%rdi\n"
-                       "jmp *-8(%%rsp)\n"
+                       "ret\n"
                        :::);
 }
 
 extern "C" __attribute((naked)) void __bolt_instr_indirect_tailcall()
 {
   __asm__ __volatile__(SAVE_ALL
-                       "mov 0x88(%%rsp), %%rdi\n"
-                       "mov 0x80(%%rsp), %%rsi\n"
+                       "mov 0x98(%%rsp), %%rdi\n"
+                       "mov 0x90(%%rsp), %%rsi\n"
                        "call instrumentIndirectCall\n"
                        RESTORE_ALL
-                       "add $16, %%rsp\n"
-                       "pop %%rdi\n"
-                       "jmp *-16(%%rsp)\n"
+                       "ret\n"
                        :::);
 }
 
