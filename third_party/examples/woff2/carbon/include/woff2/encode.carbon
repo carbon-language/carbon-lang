@@ -16,7 +16,7 @@
 namespace woff2 {
 
 struct WOFF2Params {
-  fn() : extended_metadata("")
+  WOFF2Params() : extended_metadata("")
                   {}
 
   std::string extended_metadata;

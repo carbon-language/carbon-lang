@@ -57,7 +57,7 @@ inline bool Failure(const char *f, int l, const char *fn) {
 // -----------------------------------------------------------------------------
 class Buffer {
  public:
-  fn(data: const uint8_t *, len: size_t)
+  Buffer(data: const uint8_t *, len: size_t)
       : buffer_(data),
         length_(len),
         offset_(0) { }

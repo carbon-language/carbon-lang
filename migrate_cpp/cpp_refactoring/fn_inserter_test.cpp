@@ -74,6 +74,17 @@ TEST_F(FnInserterTest, Methods) {
   ExpectReplacement(Before, After);
 }
 
+TEST_F(FnInserterTest, ConstructorDestructor) {
+  constexpr char Before[] = R"cpp(
+    class Shape {
+     public:
+      Shape() {}
+      ~Shape() {}
+    };
+  )cpp";
+  ExpectReplacement(Before, Before);
+}
+
 TEST_F(FnInserterTest, LegacyReturn) {
   // Code should be migrated to trailing returns by clang-tidy, so this is okay
   // to miss.

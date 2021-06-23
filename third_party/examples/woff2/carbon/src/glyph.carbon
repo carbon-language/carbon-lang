@@ -22,7 +22,7 @@ namespace woff2 {
 // is around.
 class Glyph {
  public:
-  fn()  {}
+  Glyph()  {}
 
   // Bounding box.
   int16_t x_min;

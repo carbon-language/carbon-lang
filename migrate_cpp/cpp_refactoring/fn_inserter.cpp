@@ -15,21 +15,19 @@ FnInserter::FnInserter(std::map<std::string, Replacements>& in_replacements,
     : Matcher(in_replacements) {
   finder->addMatcher(cam::functionDecl(cam::hasTrailingReturn()).bind(Label),
                      this);
-  finder->addMatcher(cam::functionDecl(cam::returns(cam::asString("void")),
-                                       cam::unless(cam::hasTrailingReturn()))
-                         .bind(Label),
-                     this);
+  finder->addMatcher(
+      cam::functionDecl(cam::returns(cam::asString("void")),
+                        cam::unless(cam::anyOf(cam::hasTrailingReturn(),
+                                               cam::cxxConstructorDecl(),
+                                               cam::cxxDestructorDecl())))
+          .bind(Label),
+      this);
 }
 
 void FnInserter::run(const cam::MatchFinder::MatchResult& result) {
   const auto* decl = result.Nodes.getNodeAs<clang::FunctionDecl>(Label);
   if (!decl) {
     llvm::report_fatal_error(std::string("getNodeAs failed for ") + Label);
-  }
-  if (decl->getBeginLoc() == decl->getEndLoc()) {
-    // Not a real function declaration. For example, class X {} has an implied
-    // destructor.
-    return;
   }
   auto begin = decl->getBeginLoc();
   // Replace the first token in the range, `auto`.

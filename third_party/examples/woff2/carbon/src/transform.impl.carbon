@@ -53,7 +53,7 @@ fn WriteLong(out: std::vector<uint8_t> *, value: int) {
 // GlyfEncoder.java
 class GlyfEncoder {
  public:
-  fn GlyfEncoder(num_glyphs: int)
+  explicit GlyfEncoder(num_glyphs: int)
       : n_glyphs_(num_glyphs) {
     bbox_bitmap_.resize(((num_glyphs + 31) >> 5) << 2);
   }
