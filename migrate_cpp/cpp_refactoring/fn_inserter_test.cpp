@@ -30,13 +30,12 @@ TEST_F(FnInserterTest, Inline) {
 }
 
 TEST_F(FnInserterTest, Void) {
-  // TODO: void needs to be handled.
   constexpr char Before[] = "void A();";
-  ExpectReplacement(Before, Before);
+  constexpr char After[] = "fn A();";
+  ExpectReplacement(Before, After);
 }
 
 TEST_F(FnInserterTest, Methods) {
-  // TODO: void needs to be handled.
   // TODO: Need to re-lex tokens, this should probably be "fn virtual" for now.
   constexpr char Before[] = R"cpp(
     class Shape {
@@ -58,13 +57,13 @@ TEST_F(FnInserterTest, Methods) {
   constexpr char After[] = R"(
     class Shape {
      public:
-      virtual void Draw() = 0;
+      fn void Draw() = 0;
       fn auto NumSides() -> int = 0;
     };
 
     class Circle : public Shape {
      public:
-      void Draw() override;
+      fn Draw() override;
       fn NumSides() -> int override;
       fn Radius() -> double { return radius_; }
 
