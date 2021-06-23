@@ -17,6 +17,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Implementing multiple interfaces](#implementing-multiple-interfaces)
     -   [External impl](#external-impl)
     -   [Rejected: out-of-line impl](#rejected-out-of-line-impl)
+    -   [Rejected: extend blocks](#rejected-extend-blocks)
     -   [Qualified member names](#qualified-member-names)
 -   [Generics](#generics)
     -   [Model](#model)
@@ -199,8 +200,8 @@ means that types explicitly describe how they implement interfaces. An
 interface is implemented for a type. Every associated item is given a
 definition. Different types satisfying `Vector` can have different definitions
 for `Add` and `Scale`, so we say their definitions are associated with what type
-is implementing `Vector`. The impl defines what is associated with the type for
-that interface.
+is implementing `Vector`. The `impl` defines what is associated with the type
+for that interface.
 
 Impls may be defined inline inside the type definition:
 
@@ -208,7 +209,7 @@ Impls may be defined inline inside the type definition:
 struct Point {
   var x: Double;
   var y: Double;
-  impl Vector {
+  impl as Vector {
     // In this scope, "Self" is an alias for "Point".
     method (a: Self) Add(b: Self) -> Self {
       return Point(.x = a.x + b.x, .y = a.y + b.y);
@@ -231,7 +232,7 @@ Assert(p1.Add(p1) == p2);
 
 ### Facet type
 
-The impl definition defines a [facet type](terminology.md#facet-type):
+The `impl` definition defines a [facet type](terminology.md#facet-type):
 `Point as Vector`. While the API of `Point` includes the two fields `x` and `y`
 along with the `Add` and `Scale` methods, the API of `Point as Vector` _only_
 has the `Add` and `Scale` methods of the `Vector` interface. The facet type
@@ -289,11 +290,11 @@ To implement more than one interface when defining a type, simply include an
 struct Point {
   var x: Double;
   var y: Double;
-  impl Vector {
+  impl as Vector {
     method (a: Self) Add(b: Self) -> Self { ... }
     method (a: Self) Scale(v: Double) -> Self { ... }
   }
-  impl Drawable {
+  impl as Drawable {
     method (a: Self) Draw() { ... }
   }
 }
@@ -305,10 +306,10 @@ in common.
 
 ```
 struct GameBoard {
-  impl Drawable {
+  impl as Drawable {
     method (this: Self) Draw() { ... }
   }
-  impl EndOfGame {
+  impl as EndOfGame {
     // Error: `GameBoard` has two methods named
     // `Draw` with the same signature.
     method (this: Self) Draw() { ... }
@@ -316,6 +317,9 @@ struct GameBoard {
   }
 }
 ```
+
+**Note:** The interface implementation syntax was decided in
+[question-for-leads issue #575](https://github.com/carbon-language/carbon-lang/issues/575).
 
 **Open question:** Should we have some syntax for the case where you want both
 names to be given the same implementation? It seems like that might be a common
@@ -325,11 +329,11 @@ experience.
 ```
 struct Player {
   var name: String;
-  impl Icon {
+  impl as Icon {
     method (this: Self) Name() -> String { return this.name; }
     // ...
   }
-  impl GameUnit {
+  impl as GameUnit {
     // Possible syntax for defining `GameUnit.Name` as
     // the same as `Icon.Name`:
     alias Name = Icon.Name;
@@ -340,8 +344,8 @@ struct Player {
 
 ### External impl
 
-Interfaces may also be implemented for a type externally, by using the `extend`
-construct which takes the name of an existing type:
+Interfaces may also be implemented for a type externally, by using the
+`external impl` construct which takes the name of an existing type:
 
 ```
 struct Point2 {
@@ -349,34 +353,32 @@ struct Point2 {
   var y: Double;
 }
 
-extend Point2 {
+external impl Point2 as Vector {
   // In this scope, "Self" is an alias for "Point2".
-  impl Vector {
-    method (a: Self) Add(b: Self) -> Self {
-      return Point2(.x = a.x + b.x, .y = a.y + b.y);
-    }
-    method (a: Self) Scale(v: Double) -> Self {
-      return Point2(.x = a.x * v, .y = a.y * v);
-    }
+  method (a: Self) Add(b: Self) -> Self {
+    return Point2(.x = a.x + b.x, .y = a.y + b.y);
+  }
+  method (a: Self) Scale(v: Double) -> Self {
+    return Point2(.x = a.x * v, .y = a.y * v);
   }
 }
 ```
 
-The `extend` statement is allowed to be defined in a different library from
-`Point2`, restricted by [the coherence/orphan rules](#impl-lookup) that ensure
-that the implementation of an interface won't change based on imports. In
-particular, the `extend` statement is allowed in the library defining the
+The `external impl` statement is allowed to be defined in a different library
+from `Point2`, restricted by [the coherence/orphan rules](#impl-lookup) that
+ensure that the implementation of an interface won't change based on imports. In
+particular, the `external impl` statement is allowed in the library defining the
 interface (`Vector` in this case) in addition to the library that defines the
 type (`Point2` here). This (at least partially) addresses
 [the expression problem](https://eli.thegreenplace.net/2016/the-expression-problem-and-its-solutions).
 
 We don't want the API of `Point2` to change based on what is imported though. So
-the `extend` statement does not add the interface's methods to the type. It
-would be particularly bad if two different libraries implemented interfaces with
-conflicting names both affected the API of a single type. The result is you can
-find all the names of direct (unqualified) members of a type in the definition
-of that type. The only thing that may be in another library is an `impl` of an
-interface.
+the `external impl` statement does not add the interface's methods to the type.
+It would be particularly bad if two different libraries implemented interfaces
+with conflicting names both affected the API of a single type. The result is you
+can find all the names of direct (unqualified) members of a type in the
+definition of that type. The only thing that may be in another library is an
+`impl` of an interface.
 
 On the other hand, if we cast to the facet type, those methods do become
 visible:
@@ -398,10 +400,10 @@ fn F(c: Point2 as Vector) {
 F(a);
 ```
 
-You might intentionally use `extend` to implement an interface for a type to
-avoid cluttering the API of that type, for example to avoid a name collision. A
-syntax for reusing method implementations allows us to do this selectively when
-needed:
+You might intentionally use `external impl` to implement an interface for a type
+to avoid cluttering the API of that type, for example to avoid a name collision.
+A syntax for reusing method implementations allows us to do this selectively
+when needed:
 
 ```
 struct Point3 {
@@ -412,12 +414,10 @@ struct Point3 {
   }
 }
 
-extend Point3 {
-  impl Vector {
-    alias Add = Point3.Add;  // Syntax TBD
-    method (a: Self) Scale(v: Double) -> Self {
-      return Point3(.x = a.x * v, .y = a.y * v);
-    }
+external Point3 as Vector {
+  alias Add = Point3.Add;  // Syntax TBD
+  method (a: Self) Scale(v: Double) -> Self {
+    return Point3(.x = a.x * v, .y = a.y * v);
   }
 }
 ```
@@ -450,8 +450,8 @@ definition. In Rust, all implementations are external as in
 ### Rejected: out-of-line impl
 
 We considered an out-of-line syntax for declaring and defining interface `impl`
-blocks, to replace both the inline syntax and the `extend` statement. For,
-example:
+blocks, to replace both the inline syntax and the `external impl` statement.
+For, example:
 
 ```
 struct Point { ... }
@@ -460,18 +460,41 @@ impl Vector for Point { ... }
 
 The main advantage of this syntax was that it was uniform across many cases,
 including [conditional conformance](#conditional-conformance). It wasn't ideal
-across a number of dimensions though:
+across a number of dimensions though.
 
--   it was redundant and verbose,
--   it was difficult to read and author, and
--   it could affect the API of the type outside of the type definition.
+-   It repeated the type name which was redundant and verbose
+-   It could affect the API of the type outside of the type definition.
+-   We prefer the type name before the interface name (using `as), instead of
+    this ordering used by Rust.
+
+### Rejected: extend blocks
+
+Instead of the `external impl` statement, we considered putting all external
+implementations in an `extend` block.
+
+```
+struct Point { ... }
+extend Point {
+  impl Vector { ... }
+}
+```
+
+The `extend` approach had some disadvantages:
+
+-   Implementations were indented more than the `external impl` approach.
+-   Extra ceremony in the case of only implementing one type for an interface.
+    This case is expected to be common since external implementations will most
+    often be defined with the interface.
+-   When implementing multiple interfaces in a single `extend` block, the name
+    of the type being extended could be far from the `impl` declaration and hard
+    to find.
 
 ### Qualified member names
 
 Given a value of type `Point2` and an interface `Vector` implemented for that
 type, you can access the methods from that interface using the member's
 _qualified name_, whether or not the implementation is done externally with an
-`extend` statement:
+`external impl` statement:
 
 ```
 var p1: Point2 = (.x = 1.0, .y = 2.0);
@@ -493,9 +516,7 @@ interface Drawable {
   method (Self this) Draw();
 }
 
-extend Points.Point2 {
-  impl Drawable { ... }
-}
+external impl Points.Point2 as Drawable { ... }
 ```
 
 You could access `Draw` with a qualified name:
@@ -563,7 +584,7 @@ AddAndScaleForPoint(a, w, 2.5);
 ```
 
 However, for another type implementing `Vector` but out-of-line using an
-`extend` statement, such as `Point2`, the situation is different:
+`external impl` statement, such as `Point2`, the situation is different:
 
 ```
 fn AddAndScaleForPoint2(a: Point2, b: Point2, s: Double) -> Point2 {
@@ -713,8 +734,8 @@ us to declare the aspects of a type-type directly.
 ```
 structural interface VectorLegoFish {
   // Interface implementation requirements
-  impl Vector;
-  impl LegoFish;
+  impl as Vector;
+  impl as LegoFish;
   // Names
   alias Scale = Vector.Scale;
   alias VAdd = Vector.Add;
@@ -768,13 +789,13 @@ interface I {
 
 (Here, `X` could be something like `method (Self: this) F()`.)
 
-Then a type implementing `I` would have `impl I` with definitions for `X`, `Y`,
-and `Z`, as in:
+Then a type implementing `I` would have `impl as I` with definitions for `X`,
+`Y`, and `Z`, as in:
 
 ```
 struct ImplementsI {
   // ...
-  impl I {
+  impl as I {
     X { ... }
     Y { ... }
     Z { ... }
@@ -820,11 +841,11 @@ interface Printable { method (this: Self) Print(); }
 interface Renderable { method (this: Self) Draw(); }
 
 structural interface PrintAndRender {
-  impl Printable;
-  impl Renderable;
+  impl as Printable;
+  impl as Renderable;
 }
 structural interface JustPrint {
-  impl Printable;
+  impl as Printable;
 }
 
 fn PrintIt[T2:$ JustPrint](x2: T2) {
@@ -860,8 +881,8 @@ interface Renderable {
 
 // `Printable & Renderable` is syntactic sugar for this type-type:
 structural interface {
-  impl Printable;
-  impl Renderable;
+  impl as Printable;
+  impl as Renderable;
   alias Print = Printable.Print;
   alias Center = Renderable.Center;
   alias Draw = Renderable.Draw;
@@ -875,10 +896,10 @@ fn PrintThenDraw[T:$ Printable & Renderable](x: T) {
 
 struct Sprite {
   // ...
-  impl Printable {
+  impl as Printable {
     method (this: Self) Print() { ... }
   }
-  impl Renderable {
+  impl as Renderable {
     method (this: Self) Center() -> (Int, Int) { ... }
     method (this: Self) Draw() { ... }
   }
@@ -902,8 +923,8 @@ interface EndOfGame {
 }
 // `Renderable & EndOfGame` is syntactic sugar for this type-type:
 structural interface {
-  impl Renderable;
-  impl EndOfGame;
+  impl as Renderable;
+  impl as EndOfGame;
   alias Center = Renderable.Center;
   // Open question: `forbidden`, `invalid`, or something else?
   forbidden Draw
@@ -918,8 +939,8 @@ structural interface explicitly and renaming the methods:
 
 ```
 structural interface RenderableAndEndOfGame {
-  impl Renderable;
-  impl EndOfGame;
+  impl as Renderable;
+  impl as EndOfGame;
   alias Center = Renderable.Center;
   alias RenderableDraw = Renderable.Draw;
   alias TieGame = EndOfGame.Draw;
@@ -961,15 +982,15 @@ If we call this operator `[&]`, then `A [&] B` has the names of `A` and
 ```
 // `Printable [&] Renderable` is syntactic sugar for this type-type:
 structural interface {
-  impl Printable;
-  impl Renderable;
+  impl as Printable;
+  impl as Renderable;
   alias Print = Printable.Print;
 }
 
 // `Renderable [&] EndOfGame` is syntactic sugar for this type-type:
 structural interface {
-  impl Renderable;
-  impl EndOfGame;
+  impl as Renderable;
+  impl as EndOfGame;
   alias Center = Renderable.Center;
   alias Draw = Renderable.Draw;
 }
@@ -1010,7 +1031,7 @@ interface Equatable { method (this: Self) Equals(that: Self) -> Bool; }
 
 interface Iterable {
   method (this: Self*) Advance() -> Bool;
-  impl Equatable;
+  impl as Equatable;
 }
 
 def DoAdvanceAndEquals[T:$ Iterable](x: T) {
@@ -1022,8 +1043,8 @@ def DoAdvanceAndEquals[T:$ Iterable](x: T) {
 }
 
 struct Iota {
-  impl Iterable { method (this: Self) Advance() { ... } }
-  impl Equatable { method (this: Self) Equals(that: Self) -> Bool { ... } }
+  impl as Iterable { method (this: Self) Advance() { ... } }
+  impl as Equatable { method (this: Self) Equals(that: Self) -> Bool { ... } }
 }
 var x: Iota;
 DoAdvanceAndEquals(x);
@@ -1036,7 +1057,7 @@ by itself add any names to the interface, but again those can be added with
 ```
 interface Hashable {
   method (this: Self) Hash() -> UInt64;
-  impl Equatable;
+  impl as Equatable;
   alias Equals = Equatable.Equals;
 }
 
@@ -1058,7 +1079,7 @@ as well. In the case of `Hashable` above, this includes all the members of
 
 ```
 struct Song {
-  impl Hashable {
+  impl as Hashable {
     method (this: Self) Hash() -> UInt64 { ... }
     method (this: Self) Equals(that: Self) -> Bool { ... }
   }
@@ -1087,7 +1108,7 @@ interface Hashable {
 }
 // is equivalent to the definition of Hashable from before:
 // interface Hashable {
-//   impl Equatable;
+//   impl as Equatable;
 //   alias Equals = Equatable.Equals;
 //   method (this: Self) Hash() -> UInt64;
 // }
@@ -1098,9 +1119,6 @@ those names are marked as `upcoming` or `deprecated` as in
 [evolution future work](#evolution)). Hopefully this won't be a problem in
 practice, since interface extension is a very closely coupled relationship, but
 this may be something we will have to revisit in the future.
-
-**Concern:** Having both `extends` and [`extend`](#external-impl) with different
-meanings is going to be confusing. One should be renamed.
 
 Examples:
 
@@ -1173,9 +1191,9 @@ This definition of `Combined` is equivalent to requiring both the `Media` and
 ```
 // Equivalent
 structural interface Combined {
-  impl Media;
+  impl as Media;
   alias Play = Media.Play;
-  impl Job;
+  impl as Job;
   alias Run = Job.Run;
 }
 ```
@@ -1186,7 +1204,7 @@ interface:
 
 ```
 struct Song {
-  impl Combined {
+  impl as Combined {
     method (Self this) Play() { ... }
     method (Self this) Run() { ... }
   }
@@ -1197,10 +1215,10 @@ This is equivalent to implementing the required interfaces directly:
 
 ```
 struct Song {
-  impl Media {
+  impl as Media {
     method (Self this) Play() { ... }
   }
-  impl Job {
+  impl as Job {
     method (Self this) Run() { ... }
   }
 }
@@ -1239,8 +1257,8 @@ interface.
 
 ```
 struct MyEdgeListIncidenceGraph {
-  impl IncidenceGraph { ... }
-  impl EdgeListGraph { ... }
+  impl as IncidenceGraph { ... }
+  impl as EdgeListGraph { ... }
 }
 ```
 
@@ -1253,13 +1271,13 @@ though could be defined in the `impl` block of `IncidenceGraph`,
 
 ```
 struct MyEdgeListIncidenceGraph {
-  impl IncidenceGraph {
+  impl as IncidenceGraph {
     method (this: Self) Source(e: EdgeDescriptor) -> VertexDescriptor { ... }
     method (this: Self) Target(e: EdgeDescriptor) -> VertexDescriptor { ... }
     method (this: Self*) OutEdges(u: VertexDescriptor)
         -> (EdgeIterator, EdgeIterator) { ... }
   }
-  impl EdgeListGraph {
+  impl as EdgeListGraph {
     method (this: Self*) Edges() -> (EdgeIterator, EdgeIterator) { ... }
   }
 }
@@ -1270,12 +1288,12 @@ struct MyEdgeListIncidenceGraph {
 
 ```
 struct MyEdgeListIncidenceGraph {
-  impl IncidenceGraph {
+  impl as IncidenceGraph {
     method (this: Self) Source(e: EdgeDescriptor) -> VertexDescriptor { ... }
     method (this: Self*) OutEdges(u: VertexDescriptor)
         -> (EdgeIterator, EdgeIterator) { ... }
   }
-  impl EdgeListGraph {
+  impl as EdgeListGraph {
     method (this: Self) Target(e: EdgeDescriptor) -> VertexDescriptor { ... }
     method (this: Self*) Edges() -> (EdgeIterator, EdgeIterator) { ... }
   }
@@ -1286,12 +1304,12 @@ struct MyEdgeListIncidenceGraph {
 
 ```
 struct MyEdgeListIncidenceGraph {
-  impl Graph {
+  impl as Graph {
     method (this: Self) Source(e: EdgeDescriptor) -> VertexDescriptor { ... }
     method (this: Self) Target(e: EdgeDescriptor) -> VertexDescriptor { ... }
   }
-  impl IncidenceGraph { ... }
-  impl EdgeListGraph { ... }
+  impl as IncidenceGraph { ... }
+  impl as EdgeListGraph { ... }
 }
 ```
 
@@ -1423,7 +1441,7 @@ interfaces."
 ### Conditional conformance
 
 [The problem](terminology.md#conditional-conformance) we are trying to solve
-here is expressing that we have an impl of some interface for some type, but
+here is expressing that we have an `impl` of some interface for some type, but
 only if some additional type restrictions are met.
 
 ### Parameterized impls
@@ -1505,7 +1523,7 @@ implementing an interface for that type.
 
 ### Impls with state
 
-A feature we might consider where an impl itself can have state.
+A feature we might consider where an `impl` itself can have state.
 
 ### Generic associated types and higher-ranked types
 
