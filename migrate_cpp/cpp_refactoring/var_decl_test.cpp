@@ -42,6 +42,13 @@ TEST_F(VarDeclTest, Assignment) {
   ExpectReplacement(Before, After);
 }
 
+TEST_F(VarDeclTest, Auto) {
+  constexpr char Before[] = "auto i = 0;";
+  // TODO: Keep auto.
+  constexpr char After[] = "var i: int;";
+  ExpectReplacement(Before, After);
+}
+
 TEST_F(VarDeclTest, Const) {
   // TODO: Include init, have `const` indicate `let`.
   constexpr char Before[] = "const int i = 0;";
@@ -74,10 +81,10 @@ TEST_F(VarDeclTest, ParamStruct) {
     struct Circle {};
     auto Draw(int times, const Circle& circle) -> bool;
   )cpp";
-  constexpr char After[] = R"cpp(
+  constexpr char After[] = R"(
     struct Circle {};
-    auto Draw(times : int, circle : const Circle&) -> bool;
-  )cpp";
+    auto Draw(times: int, circle: const Circle &) -> bool;
+  )";
   ExpectReplacement(Before, After);
 }
 
@@ -104,13 +111,13 @@ TEST_F(VarDeclTest, RangeFor) {
       }
     }
   )cpp";
-  constexpr char After[] = R"cpp(
+  constexpr char After[] = R"(
     void Foo() {
-      var items : int[1];
-      for (int i var __begin1 : int* var __range1 : int(&)[1]) {
+      var items: int [1];
+      for (int i var __begin1: int * var __range1: int (&)[1]) {
       }
     }
-  )cpp";
+  )";
   ExpectReplacement(Before, After);
 }
 
