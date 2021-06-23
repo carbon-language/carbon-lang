@@ -30,7 +30,7 @@ var kDefaultMaxSize: const size_t;
  */
 class WOFF2Out {
  public:
-  virtual ~WOFF2Out() = default;
+  fn ~WOFF2Out() = default;
 
   // Append n bytes of data from buf.
   // Return true if all written, false otherwise.
@@ -51,13 +51,13 @@ class WOFF2StringOut : public WOFF2Out {
   // Create a writer that writes its data to buf.
   // buf->size() will grow to at most max_size
   // buf may be sized (e.g. using EstimateWOFF2FinalSize) or empty.
-  explicit WOFF2StringOut(buf: std::string *);
+  fn WOFF2StringOut(buf: std::string *);
 
   fn Write(buf: const void *, n: size_t) -> bool override;
   fn Write(buf: const void *, offset: size_t, n: size_t) -> bool override;
   fn Size() -> size_t override { return offset_; }
   fn MaxSize() -> size_t { return max_size_; }
-  void SetMaxSize(max_size: size_t);
+  fn SetMaxSize(max_size: size_t);
  private:
   std::string* buf_;
   size_t max_size_;
@@ -70,7 +70,7 @@ class WOFF2StringOut : public WOFF2Out {
 class WOFF2MemoryOut : public WOFF2Out {
  public:
   // Create a writer that writes its data to buf.
-  WOFF2MemoryOut(buf: uint8_t *, buf_size: size_t);
+  fn(buf: uint8_t *, buf_size: size_t);
 
   fn Write(buf: const void *, n: size_t) -> bool override;
   fn Write(buf: const void *, offset: size_t, n: size_t) -> bool override;

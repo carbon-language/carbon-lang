@@ -31,7 +31,6 @@ void FnInserter::run(const cam::MatchFinder::MatchResult& result) {
     // destructor.
     return;
   }
-  decl->dump();
   auto begin = decl->getBeginLoc();
   // Replace the first token in the range, `auto`.
   auto range = clang::CharSourceRange::getTokenRange(begin, begin);

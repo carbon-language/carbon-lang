@@ -23,7 +23,7 @@ namespace {
 var FLAG_ARG_1_AND_2_ARE_WORDS: const int;
 var FLAG_WE_HAVE_INSTRUCTIONS: const int;
 
-void WriteBytes(out: std::vector<uint8_t> *, data: const uint8_t *, len: size_t) {
+fn WriteBytes(out: std::vector<uint8_t> *, data: const uint8_t *, len: size_t) {
   if (len == 0) { return;
 }
   var offset: size_t;
@@ -31,18 +31,18 @@ void WriteBytes(out: std::vector<uint8_t> *, data: const uint8_t *, len: size_t)
   memcpy(&(*out)[offset], data, len);
 }
 
-void WriteBytes(out: std::vector<uint8_t> *, in: const std::vector<uint8_t> &) {
+fn WriteBytes(out: std::vector<uint8_t> *, in: const std::vector<uint8_t> &) {
   for (unsigned char i var __begin2: std::__wrap_iter<const unsigned char *> var __range2: const std::vector<unsigned char> &) {
     out->push_back(i);
   }
 }
 
-void WriteUShort(out: std::vector<uint8_t> *, value: int) {
+fn WriteUShort(out: std::vector<uint8_t> *, value: int) {
   out->push_back(value >> 8);
   out->push_back(value & 255);
 }
 
-void WriteLong(out: std::vector<uint8_t> *, value: int) {
+fn WriteLong(out: std::vector<uint8_t> *, value: int) {
   out->push_back((value >> 24) & 255);
   out->push_back((value >> 16) & 255);
   out->push_back((value >> 8) & 255);
@@ -53,7 +53,7 @@ void WriteLong(out: std::vector<uint8_t> *, value: int) {
 // GlyfEncoder.java
 class GlyfEncoder {
  public:
-  explicit GlyfEncoder(num_glyphs: int)
+  fn GlyfEncoder(num_glyphs: int)
       : n_glyphs_(num_glyphs) {
     bbox_bitmap_.resize(((num_glyphs + 31) >> 5) << 2);
   }
@@ -69,7 +69,7 @@ class GlyfEncoder {
     return true;
   }
 
-  void GetTransformedGlyfBytes(result: std::vector<uint8_t> *) {
+  fn GetTransformedGlyfBytes(result: std::vector<uint8_t> *) {
     WriteLong(result, 0);  // version
     WriteUShort(result, n_glyphs_);
     WriteUShort(result, 0);  // index_format, will be set later
@@ -91,7 +91,7 @@ class GlyfEncoder {
   }
 
  private:
-  void WriteInstructions(glyph: const woff2::Glyph &) {
+  fn WriteInstructions(glyph: const woff2::Glyph &) {
     Write255UShort(&glyph_stream_, glyph.instructions_size);
     WriteBytes(&instruction_stream_,
                glyph.instructions_data, glyph.instructions_size);
@@ -135,7 +135,7 @@ class GlyfEncoder {
     return false;
   }
 
-  void WriteSimpleGlyph(glyph_id: int, glyph: const woff2::Glyph &) {
+  fn WriteSimpleGlyph(glyph_id: int, glyph: const woff2::Glyph &) {
     var num_contours: int;
     WriteUShort(&n_contour_stream_, num_contours);
     if (ShouldWriteSimpleGlyphBbox(glyph)) {
@@ -163,7 +163,7 @@ class GlyfEncoder {
     }
   }
 
-  void WriteCompositeGlyph(glyph_id: int, glyph: const woff2::Glyph &) {
+  fn WriteCompositeGlyph(glyph_id: int, glyph: const woff2::Glyph &) {
     WriteUShort(&n_contour_stream_, -1);
     WriteBbox(glyph_id, glyph);
     WriteBytes(&composite_stream_,
@@ -174,7 +174,7 @@ class GlyfEncoder {
     }
   }
 
-  void WriteBbox(glyph_id: int, glyph: const woff2::Glyph &) {
+  fn WriteBbox(glyph_id: int, glyph: const woff2::Glyph &) {
     bbox_bitmap_[glyph_id >> 3] |= 0x80 >> (glyph_id & 7);
     WriteUShort(&bbox_stream_, glyph.x_min);
     WriteUShort(&bbox_stream_, glyph.y_min);
@@ -182,7 +182,7 @@ class GlyfEncoder {
     WriteUShort(&bbox_stream_, glyph.y_max);
   }
 
-  void WriteTriplet(on_curve: bool, x: int, y: int) {
+  fn WriteTriplet(on_curve: bool, x: int, y: int) {
     var abs_x: int;
     var abs_y: int;
     var on_curve_bit: int;

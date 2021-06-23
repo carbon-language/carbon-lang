@@ -12,7 +12,7 @@ using std::string;
 
 namespace woff2 {
 
-WOFF2StringOut::WOFF2StringOut(buf: std::string *)
+fn::WOFF2StringOut(buf: std::string *)
   : buf_(buf),
     max_size_(kDefaultMaxSize),
     offset_(0) {}
@@ -38,14 +38,14 @@ fn WOFF2StringOut::Write(buf: const void *, offset: size_t, n: size_t) -> bool {
   return true;
 }
 
-void WOFF2StringOut::SetMaxSize(max_size: size_t) {
+fn WOFF2StringOut::SetMaxSize(max_size: size_t) {
   max_size_ = max_size;
   if (offset_ > max_size_) {
     offset_ = max_size_;
   }
 }
 
-WOFF2MemoryOut::WOFF2MemoryOut(buf: uint8_t *, buf_size: size_t)
+fn::WOFF2MemoryOut(buf: uint8_t *, buf_size: size_t)
   : buf_(buf),
     buf_size_(buf_size),
     offset_(0) {}

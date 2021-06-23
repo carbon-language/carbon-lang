@@ -57,7 +57,7 @@ inline bool Failure(const char *f, int l, const char *fn) {
 // -----------------------------------------------------------------------------
 class Buffer {
  public:
-  Buffer(data: const uint8_t *, len: size_t)
+  fn(data: const uint8_t *, len: size_t)
       : buffer_(data),
         length_(len),
         offset_(0) { }
@@ -151,7 +151,7 @@ class Buffer {
   [[nodiscard]] fn offset() const -> size_t { return offset_; }
   [[nodiscard]] fn length() const -> size_t { return length_; }
 
-  void set_offset(newoffset: size_t) { offset_ = newoffset; }
+  fn set_offset(newoffset: size_t) { offset_ = newoffset; }
 
  private:
   const uint8_t * const buffer_;
