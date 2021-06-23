@@ -34,16 +34,19 @@ class ParseTree::Parser {
   }
 
   // Gets the kind of the next token to be consumed.
-  auto NextTokenKind() const -> TokenKind { return tokens.GetKind(*position); }
+  [[nodiscard]] auto NextTokenKind() const -> TokenKind {
+    return tokens.GetKind(*position);
+  }
 
   // Tests whether the next token to be consumed is of the specified kind.
-  auto NextTokenIs(TokenKind kind) const -> bool {
+  [[nodiscard]] auto NextTokenIs(TokenKind kind) const -> bool {
     return NextTokenKind() == kind;
   }
 
   // Tests whether the next token to be consumed is of any of the specified
   // kinds.
-  auto NextTokenIsOneOf(std::initializer_list<TokenKind> kinds) const -> bool {
+  [[nodiscard]] auto NextTokenIsOneOf(
+      std::initializer_list<TokenKind> kinds) const -> bool {
     return NextTokenKind().IsOneOf(kinds);
   }
 
@@ -191,6 +194,20 @@ class ParseTree::Parser {
   // -   designators
   auto ParsePostfixExpression() -> llvm::Optional<Node>;
 
+  enum class OperatorFixity { Prefix, Infix, Postfix };
+
+  // Determines whether the current token satisfies the lexical validity rules
+  // for an infix operator.
+  auto IsLexicallyValidInfixOperator() -> bool;
+
+  // Diagnoses if the current token is not written properly for the given
+  // fixity, for example because mandatory whitespace is missing.
+  auto DiagnoseOperatorFixity(OperatorFixity fixity) -> void;
+
+  // Determines whether the current trailing operator should be treated as
+  // infix.
+  auto IsTrailingOperatorInfix() -> bool;
+
   // Parses an expression involving operators, in a context with the given
   // precedence.
   auto ParseOperatorExpression(PrecedenceGroup precedence)
@@ -200,7 +217,7 @@ class ParseTree::Parser {
   auto ParseExpression() -> llvm::Optional<Node>;
 
   // Parses a type expression.
-  auto ParseType() -> llvm::Optional<Node> { return ParseExpression(); }
+  auto ParseType() -> llvm::Optional<Node>;
 
   // Parses an expression statement: an expression followed by a semicolon.
   auto ParseExpressionStatement() -> llvm::Optional<Node>;
@@ -227,6 +244,14 @@ class ParseTree::Parser {
 
   // Parses a statement.
   auto ParseStatement() -> llvm::Optional<Node>;
+
+  enum class PatternKind {
+    Parameter,
+    Variable,
+  };
+
+  // Parses a pattern.
+  auto ParsePattern(PatternKind kind) -> llvm::Optional<Node>;
 
   ParseTree& tree;
   TokenizedBuffer& tokens;

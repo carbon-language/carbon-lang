@@ -9,17 +9,17 @@
 #include "llvm/ADT/SmallString.h"
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/SourceMgr.h"
-#include "llvm/Support/YAMLParser.h"
-#include "toolchain/lexer/tokenized_buffer_test_helpers.h"
+#include "toolchain/common/yaml_test_helpers.h"
 
 namespace Carbon {
 namespace {
 
-using Carbon::Testing::IsKeyValueScalars;
+using ::testing::ElementsAre;
 using ::testing::Eq;
 using ::testing::HasSubstr;
 using ::testing::NotNull;
 using ::testing::StrEq;
+namespace Yaml = Carbon::Testing::Yaml;
 
 /// A raw_ostream that makes it easy to repeatedly check streamed output.
 class RawTestOstream : public llvm::raw_ostream {
@@ -130,92 +130,30 @@ TEST(DriverTest, DumpTokens) {
   EXPECT_THAT(test_error_stream.TakeStr(), StrEq(""));
   auto tokenized_text = test_output_stream.TakeStr();
 
-  // Parse the output into a YAML stream. This will print errors to stderr and
-  // is the most stable view of the textual dumping API.
-  llvm::SourceMgr sm;
-  llvm::yaml::Stream yaml_stream(tokenized_text, sm);
-  auto yaml_it = yaml_stream.begin();
-  auto* root_node = llvm::dyn_cast<llvm::yaml::MappingNode>(yaml_it->getRoot());
-  ASSERT_THAT(root_node, NotNull());
-
-  // Walk the top-level mapping of tokens, dig out the sub-mapping of data for
-  // each taken, and then verify those entries.
-  auto mapping_it = llvm::cast<llvm::yaml::MappingNode>(root_node)->begin();
-  auto* token_node = llvm::dyn_cast<llvm::yaml::KeyValueNode>(&*mapping_it);
-  ASSERT_THAT(token_node, NotNull());
-  auto* token_key_node =
-      llvm::dyn_cast<llvm::yaml::ScalarNode>(token_node->getKey());
-  ASSERT_THAT(token_key_node, NotNull());
-  EXPECT_THAT(token_key_node->getRawValue(), StrEq("token"));
-  auto* token_value_node =
-      llvm::dyn_cast<llvm::yaml::MappingNode>(token_node->getValue());
-  ASSERT_THAT(token_value_node, NotNull());
-  auto token_it = token_value_node->begin();
-  EXPECT_THAT(&*token_it, IsKeyValueScalars("index", "0"));
-  ++token_it;
-  EXPECT_THAT(&*token_it, IsKeyValueScalars("kind", "Identifier"));
-  ++token_it;
-  EXPECT_THAT(&*token_it, IsKeyValueScalars("line", "1"));
-  ++token_it;
-  EXPECT_THAT(&*token_it, IsKeyValueScalars("column", "1"));
-  ++token_it;
-  EXPECT_THAT(&*token_it, IsKeyValueScalars("indent", "1"));
-  ++token_it;
-  EXPECT_THAT(&*token_it, IsKeyValueScalars("spelling", "Hello"));
-  ++token_it;
-  EXPECT_THAT(&*token_it, IsKeyValueScalars("identifier", "0"));
-  EXPECT_THAT(++token_it, Eq(token_value_node->end()));
-
-  ++mapping_it;
-  token_node = llvm::dyn_cast<llvm::yaml::KeyValueNode>(&*mapping_it);
-  ASSERT_THAT(token_node, NotNull());
-  token_key_node = llvm::dyn_cast<llvm::yaml::ScalarNode>(token_node->getKey());
-  ASSERT_THAT(token_key_node, NotNull());
-  EXPECT_THAT(token_key_node->getRawValue(), StrEq("token"));
-  token_value_node =
-      llvm::dyn_cast<llvm::yaml::MappingNode>(token_node->getValue());
-  ASSERT_THAT(token_value_node, NotNull());
-  token_it = token_value_node->begin();
-  EXPECT_THAT(&*token_it, IsKeyValueScalars("index", "1"));
-  ++token_it;
-  EXPECT_THAT(&*token_it, IsKeyValueScalars("kind", "Identifier"));
-  ++token_it;
-  EXPECT_THAT(&*token_it, IsKeyValueScalars("line", "1"));
-  ++token_it;
-  EXPECT_THAT(&*token_it, IsKeyValueScalars("column", "7"));
-  ++token_it;
-  EXPECT_THAT(&*token_it, IsKeyValueScalars("indent", "1"));
-  ++token_it;
-  EXPECT_THAT(&*token_it, IsKeyValueScalars("spelling", "World"));
-  ++token_it;
-  EXPECT_THAT(&*token_it, IsKeyValueScalars("identifier", "1"));
-  EXPECT_THAT(++token_it, Eq(token_value_node->end()));
-
-  ++mapping_it;
-  token_node = llvm::dyn_cast<llvm::yaml::KeyValueNode>(&*mapping_it);
-  ASSERT_THAT(token_node, NotNull());
-  token_key_node = llvm::dyn_cast<llvm::yaml::ScalarNode>(token_node->getKey());
-  ASSERT_THAT(token_key_node, NotNull());
-  EXPECT_THAT(token_key_node->getRawValue(), StrEq("token"));
-  token_value_node =
-      llvm::dyn_cast<llvm::yaml::MappingNode>(token_node->getValue());
-  ASSERT_THAT(token_value_node, NotNull());
-  token_it = token_value_node->begin();
-  EXPECT_THAT(&*token_it, IsKeyValueScalars("index", "2"));
-  ++token_it;
-  EXPECT_THAT(&*token_it, IsKeyValueScalars("kind", "EndOfFile"));
-  ++token_it;
-  EXPECT_THAT(&*token_it, IsKeyValueScalars("line", "1"));
-  ++token_it;
-  EXPECT_THAT(&*token_it, IsKeyValueScalars("column", "12"));
-  ++token_it;
-  EXPECT_THAT(&*token_it, IsKeyValueScalars("indent", "1"));
-  ++token_it;
-  EXPECT_THAT(&*token_it, IsKeyValueScalars("spelling", ""));
-  EXPECT_THAT(++token_it, Eq(token_value_node->end()));
-
-  ASSERT_THAT(++mapping_it, Eq(root_node->end()));
-  ASSERT_THAT(++yaml_it, Eq(yaml_stream.end()));
+  EXPECT_THAT(Yaml::Value::FromText(tokenized_text),
+              ElementsAre(Yaml::MappingValue{
+                  {"token", Yaml::MappingValue{{"index", "0"},
+                                               {"kind", "Identifier"},
+                                               {"line", "1"},
+                                               {"column", "1"},
+                                               {"indent", "1"},
+                                               {"spelling", "Hello"},
+                                               {"identifier", "0"},
+                                               {"has_trailing_space", "true"}}},
+                  {"token", Yaml::MappingValue{{"index", "1"},
+                                               {"kind", "Identifier"},
+                                               {"line", "1"},
+                                               {"column", "7"},
+                                               {"indent", "1"},
+                                               {"spelling", "World"},
+                                               {"identifier", "1"},
+                                               {"has_trailing_space", "true"}}},
+                  {"token", Yaml::MappingValue{{"index", "2"},
+                                               {"kind", "EndOfFile"},
+                                               {"line", "1"},
+                                               {"column", "12"},
+                                               {"indent", "1"},
+                                               {"spelling", ""}}}}));
 
   // Check that the subcommand dispatch works.
   EXPECT_TRUE(driver.RunFullCommand({"dump-tokens", test_file_path}));
@@ -239,6 +177,61 @@ TEST(DriverTest, DumpTokenErrors) {
   EXPECT_FALSE(driver.RunDumpTokensSubcommand({"/not/a/real/file/name"}));
   EXPECT_THAT(test_output_stream.TakeStr(), StrEq(""));
   EXPECT_THAT(test_error_stream.TakeStr(), HasSubstr("ERROR"));
+}
+
+TEST(DriverTest, DumpParseTree) {
+  RawTestOstream test_output_stream;
+  RawTestOstream test_error_stream;
+  Driver driver = Driver(test_output_stream, test_error_stream);
+
+  auto test_file_path = CreateTestFile("var v: Int = 42;");
+  EXPECT_TRUE(driver.RunDumpParseTreeSubcommand({test_file_path}));
+  EXPECT_THAT(test_error_stream.TakeStr(), StrEq(""));
+  auto tokenized_text = test_output_stream.TakeStr();
+
+  EXPECT_THAT(
+      Yaml::Value::FromText(tokenized_text),
+      ElementsAre(Yaml::SequenceValue{
+          Yaml::MappingValue{
+              {"node_index", "6"},
+              {"kind", "VariableDeclaration"},
+              {"text", "var"},
+              {"subtree_size", "7"},
+              {"children",
+               Yaml::SequenceValue{
+                   Yaml::MappingValue{
+                       {"node_index", "2"},
+                       {"kind", "PatternBinding"},
+                       {"text", ":"},
+                       {"subtree_size", "3"},
+                       {"children",
+                        Yaml::SequenceValue{
+                            Yaml::MappingValue{{"node_index", "0"},
+                                               {"kind", "DeclaredName"},
+                                               {"text", "v"}},
+                            Yaml::MappingValue{{"node_index", "1"},
+                                               {"kind", "NameReference"},
+                                               {"text", "Int"}}}}},
+                   Yaml::MappingValue{{"node_index", "4"},
+                                      {"kind", "VariableInitializer"},
+                                      {"text", "="},
+                                      {"subtree_size", "2"},
+                                      {"children",  //
+                                       Yaml::SequenceValue{Yaml::MappingValue{
+                                           {"node_index", "3"},
+                                           {"kind", "Literal"},
+                                           {"text", "42"}}}}},
+                   Yaml::MappingValue{{"node_index", "5"},
+                                      {"kind", "DeclarationEnd"},
+                                      {"text", ";"}}}}},
+          Yaml::MappingValue{{"node_index", "7"},  //
+                             {"kind", "FileEnd"},
+                             {"text", ""}}}));
+
+  // Check that the subcommand dispatch works.
+  EXPECT_TRUE(driver.RunFullCommand({"dump-parse-tree", test_file_path}));
+  EXPECT_THAT(test_error_stream.TakeStr(), StrEq(""));
+  EXPECT_THAT(test_output_stream.TakeStr(), StrEq(tokenized_text));
 }
 
 }  // namespace

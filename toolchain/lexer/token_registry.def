@@ -92,6 +92,7 @@ CARBON_SYMBOL_TOKEN(Tilde,               "~")
 // clang-format on
 CARBON_OPENING_GROUP_SYMBOL_TOKEN(OpenParen, "(", CloseParen)
 CARBON_OPENING_GROUP_SYMBOL_TOKEN(OpenCurlyBrace, "{", CloseCurlyBrace)
+CARBON_OPENING_GROUP_SYMBOL_TOKEN(OpenSquareBracket, "[", CloseSquareBracket)
 // clang-format off
 #undef CARBON_OPENING_GROUP_SYMBOL_TOKEN
 
@@ -102,6 +103,7 @@ CARBON_OPENING_GROUP_SYMBOL_TOKEN(OpenCurlyBrace, "{", CloseCurlyBrace)
 // clang-format on
 CARBON_CLOSING_GROUP_SYMBOL_TOKEN(CloseParen, ")", OpenParen)
 CARBON_CLOSING_GROUP_SYMBOL_TOKEN(CloseCurlyBrace, "}", OpenCurlyBrace)
+CARBON_CLOSING_GROUP_SYMBOL_TOKEN(CloseSquareBracket, "]", OpenSquareBracket)
 // clang-format off
 #undef CARBON_CLOSING_GROUP_SYMBOL_TOKEN
 

@@ -151,45 +151,6 @@ MATCHER_P(HasTokens, raw_all_expected, "") {
   return matches;
 }
 
-// NOLINTNEXTLINE: Expands from GoogleTest.
-MATCHER_P2(IsKeyValueScalars, key, value, "") {
-  auto* kv_node = llvm::dyn_cast<llvm::yaml::KeyValueNode>(arg);
-  if (!kv_node) {
-    *result_listener << "this is a `" << arg->getType()
-                     << "` node, not a `KeyValueNode`.";
-    return false;
-  }
-
-  llvm::SmallString<128> storage;
-
-  auto* key_node = llvm::dyn_cast<llvm::yaml::ScalarNode>(kv_node->getKey());
-  if (!key_node) {
-    *result_listener << "the key is a `" << arg->getType()
-                     << "` node, not a `ScalarNode`.";
-    return false;
-  }
-  if (key != key_node->getValue(storage)) {
-    *result_listener << "the key is `" << key_node->getValue(storage).str()
-                     << "`, expected `" << key << "`.";
-    return false;
-  }
-
-  auto* value_node =
-      llvm::dyn_cast<llvm::yaml::ScalarNode>(kv_node->getValue());
-  if (!value_node) {
-    *result_listener << "the value is a `" << arg->getType()
-                     << "` node, not a `ScalarNode`.";
-    return false;
-  }
-  if (value != value_node->getValue(storage)) {
-    *result_listener << "the value is `" << value_node->getValue(storage).str()
-                     << "`, expected `" << value << "`.";
-    return false;
-  }
-
-  return true;
-}
-
 }  // namespace Testing
 }  // namespace Carbon
 

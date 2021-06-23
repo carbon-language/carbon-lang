@@ -18,12 +18,12 @@ namespace Carbon {
 //
 // Alphabetical characters are permitted at the start of identifiers. This
 // currently includes 'A'..'Z' and 'a'..'z'.
-inline bool IsAlpha(char c) { return llvm::isAlpha(c); }
+inline auto IsAlpha(char c) -> bool { return llvm::isAlpha(c); }
 
 // Is this a decimal digit according to Carbon's lexical rules?
 //
 // This currently includes '0'..'9'.
-inline bool IsDecimalDigit(char c) { return llvm::isDigit(c); }
+inline auto IsDecimalDigit(char c) -> bool { return llvm::isDigit(c); }
 
 // Is this an alphanumeric character according to Carbon's lexical rules?
 //
@@ -33,7 +33,7 @@ inline bool IsDecimalDigit(char c) { return llvm::isDigit(c); }
 //
 // Note that '_' is not considered alphanumeric, despite in most circumstances
 // being a valid continuation character of an identifier or numeric literal.
-inline bool IsAlnum(char c) { return llvm::isAlnum(c); }
+inline auto IsAlnum(char c) -> bool { return llvm::isAlnum(c); }
 
 // Is this a hexadecimal digit according to Carbon's lexical rules?
 //
@@ -42,7 +42,7 @@ inline bool IsAlnum(char c) { return llvm::isAlnum(c); }
 //
 // Note that lowercase 'a'..'f' are currently not considered hexadecimal digits
 // in any context.
-inline bool IsUpperHexDigit(char c) {
+inline auto IsUpperHexDigit(char c) -> bool {
   return ('0' <= c && c <= '9') || ('A' <= c && c <= 'F');
 }
 
@@ -50,23 +50,25 @@ inline bool IsUpperHexDigit(char c) {
 //
 // Lowercase letters in numeric literals can be followed by `+` or `-` to
 // extend the literal.
-inline bool IsLower(char c) { return 'a' <= c && c <= 'z'; }
+inline auto IsLower(char c) -> bool { return 'a' <= c && c <= 'z'; }
 
 // Is this character considered to be horizontal whitespace?
 //
 // Such characters can appear in the indentation of a line.
-inline bool IsHorizontalWhitespace(char c) { return c == ' ' || c == '\t'; }
+inline auto IsHorizontalWhitespace(char c) -> bool {
+  return c == ' ' || c == '\t';
+}
 
 // Is this character considered to be vertical whitespace?
 //
 // Such characters are considered to terminate lines.
-inline bool IsVerticalWhitespace(char c) { return c == '\n'; }
+inline auto IsVerticalWhitespace(char c) -> bool { return c == '\n'; }
 
 // Is this character considered to be whitespace?
 //
 // Changes here will need matching changes in
 // `TokenizedBuffer::Lexer::SkipWhitespace`.
-inline bool IsSpace(char c) {
+inline auto IsSpace(char c) -> bool {
   return IsHorizontalWhitespace(c) || IsVerticalWhitespace(c);
 }
 

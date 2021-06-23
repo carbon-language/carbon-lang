@@ -44,6 +44,7 @@ request:
 -   [0198 - Comments](p0198.md)
 -   [0199 - String literals](p0199.md)
 -   [0253 - 2021 Roadmap](p0253.md)
+-   [0257 - Initialization of memory and variables](p0257.md)
 -   [0285 - if/else](p0285.md)
 -   [0301 - Principle: Errors are values](p0301.md)
 -   [0339 - `var` statement](p0339.md)

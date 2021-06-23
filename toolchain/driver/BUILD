@@ -15,6 +15,7 @@ cc_library(
     deps = [
         "//toolchain/diagnostics:diagnostic_emitter",
         "//toolchain/lexer:tokenized_buffer",
+        "//toolchain/parser:parse_tree",
         "//toolchain/source:source_buffer",
         "@llvm-project//llvm:Support",
     ],
@@ -25,6 +26,7 @@ cc_test(
     srcs = ["driver_test.cpp"],
     deps = [
         ":driver",
+        "//toolchain/common:yaml_test_helpers",
         "//toolchain/lexer:tokenized_buffer_test_helpers",
         "@llvm-project//llvm:Support",
         "@llvm-project//llvm:gmock",

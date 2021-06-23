@@ -281,6 +281,9 @@ auto EvalPrim(Operator op, const std::vector<const Value*>& args, int line_num)
     case Operator::Sub:
       return Value::MakeIntVal(ValToInt(args[0], line_num) -
                                ValToInt(args[1], line_num));
+    case Operator::Mul:
+      return Value::MakeIntVal(ValToInt(args[0], line_num) *
+                               ValToInt(args[1], line_num));
     case Operator::Not:
       return Value::MakeBoolVal(!ValToBool(args[0], line_num));
     case Operator::And:
@@ -291,6 +294,11 @@ auto EvalPrim(Operator op, const std::vector<const Value*>& args, int line_num)
                                 ValToBool(args[1], line_num));
     case Operator::Eq:
       return Value::MakeBoolVal(ValueEqual(args[0], args[1], line_num));
+    case Operator::Ptr:
+      return Value::MakePtrTypeVal(args[0]);
+    case Operator::Deref:
+      std::cerr << line_num << ": dereference not implemented yet\n";
+      exit(-1);
   }
 }
 
@@ -611,7 +619,7 @@ void StepLvalue() {
     PrintExp(exp);
     std::cout << " --->" << std::endl;
   }
-  switch (exp->tag) {
+  switch (exp->tag()) {
     case ExpressionKind::Variable: {
       //    { {x :: C, E, F} :: S, H}
       // -> { {E(x) :: C, E, F} :: S, H}
@@ -678,7 +686,7 @@ void StepExp() {
     PrintExp(exp);
     std::cout << " --->" << std::endl;
   }
-  switch (exp->tag) {
+  switch (exp->tag()) {
     case ExpressionKind::PatternVariable: {
       frame->todo.Push(MakeExpAct(exp->GetPatternVariable().type));
       act->pos++;
@@ -1068,7 +1076,7 @@ void HandleValue() {
     }
     case ActionKind::LValAction: {
       const Expression* exp = act->u.exp;
-      switch (exp->tag) {
+      switch (exp->tag()) {
         case ExpressionKind::GetField: {
           //    { v :: [].f :: C, E, F} :: S, H}
           // -> { { &v.f :: C, E, F} :: S, H }
@@ -1125,7 +1133,7 @@ void HandleValue() {
     }
     case ActionKind::ExpressionAction: {
       const Expression* exp = act->u.exp;
-      switch (exp->tag) {
+      switch (exp->tag()) {
         case ExpressionKind::PatternVariable: {
           auto v = Value::MakeVarPatVal(*exp->GetPatternVariable().name,
                                         act->results[0]);

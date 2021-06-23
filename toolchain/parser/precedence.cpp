@@ -12,6 +12,8 @@ namespace {
 enum PrecedenceLevel : int8_t {
   // Sentinel representing the absence of any operator.
   Highest,
+  // Terms.
+  TermPrefix,
   // Numeric.
   NumericPrefix,
   NumericPostfix,
@@ -24,6 +26,10 @@ enum PrecedenceLevel : int8_t {
   BitwiseOr,
   BitwiseXor,
   BitShift,
+  // Type formation.
+  TypePostfix,
+  // Sentinel representing a type context.
+  Type,
   // Logical.
   LogicalPrefix,
   Relational,
@@ -40,18 +46,20 @@ constexpr int8_t NumPrecedenceLevels = Lowest + 1;
 // A precomputed lookup table determining the relative precedence of two
 // precedence groups.
 struct OperatorPriorityTable {
-  constexpr OperatorPriorityTable() : table{} {
+  constexpr OperatorPriorityTable() : table() {
     // Start with a list of <higher precedence>, <lower precedence>
     // relationships.
-    MarkHigherThan({Highest}, {NumericPrefix, BitwisePrefix, LogicalPrefix,
-                               NumericPostfix});
+    MarkHigherThan({Highest}, {TermPrefix});
+    MarkHigherThan({TermPrefix}, {NumericPrefix, BitwisePrefix, LogicalPrefix,
+                                  NumericPostfix, TypePostfix});
     MarkHigherThan({NumericPrefix, NumericPostfix},
                    {Modulo, Multiplicative, BitShift});
     MarkHigherThan({Multiplicative}, {Additive});
     MarkHigherThan({BitwisePrefix},
                    {BitwiseAnd, BitwiseOr, BitwiseXor, BitShift});
+    MarkHigherThan({TypePostfix}, {Type});
     MarkHigherThan(
-        {Modulo, Additive, BitwiseAnd, BitwiseOr, BitwiseXor, BitShift},
+        {Modulo, Additive, BitwiseAnd, BitwiseOr, BitwiseXor, BitShift, Type},
         {SimpleAssignment, CompoundAssignment, Relational});
     MarkHigherThan({Relational, LogicalPrefix}, {LogicalAnd, LogicalOr});
     MarkHigherThan(
@@ -127,12 +135,12 @@ struct OperatorPriorityTable {
     // Ambiguous would mean it's an error. LeftFirst is meaningless. For now we
     // allow all prefix operators to be repeated.
     for (PrecedenceLevel prefix :
-         {NumericPrefix, BitwisePrefix, LogicalPrefix}) {
+         {TermPrefix, NumericPrefix, BitwisePrefix, LogicalPrefix}) {
       table[prefix][prefix] = OperatorPriority::RightFirst;
     }
 
     // Postfix operators are symmetric with prefix operators.
-    for (PrecedenceLevel postfix : {NumericPostfix}) {
+    for (PrecedenceLevel postfix : {NumericPostfix, TypePostfix}) {
       table[postfix][postfix] = OperatorPriority::LeftFirst;
     }
 
@@ -181,9 +189,16 @@ auto PrecedenceGroup::ForTopLevelExpression() -> PrecedenceGroup {
   return PrecedenceGroup(Lowest);
 }
 
+auto PrecedenceGroup::ForType() -> PrecedenceGroup {
+  return PrecedenceGroup(Type);
+}
+
 auto PrecedenceGroup::ForLeading(TokenKind kind)
     -> llvm::Optional<PrecedenceGroup> {
   switch (kind) {
+    case TokenKind::Star():
+      return PrecedenceGroup(TermPrefix);
+
     case TokenKind::NotKeyword():
       return PrecedenceGroup(LogicalPrefix);
 
@@ -200,7 +215,8 @@ auto PrecedenceGroup::ForLeading(TokenKind kind)
   }
 }
 
-auto PrecedenceGroup::ForTrailing(TokenKind kind) -> llvm::Optional<Trailing> {
+auto PrecedenceGroup::ForTrailing(TokenKind kind, bool infix)
+    -> llvm::Optional<Trailing> {
   switch (kind) {
     // Assignment operators.
     case TokenKind::Equal():
@@ -249,11 +265,15 @@ auto PrecedenceGroup::ForTrailing(TokenKind kind) -> llvm::Optional<Trailing> {
       return Trailing{.level = Additive, .is_binary = true};
 
     // Multiplicative operators.
-    case TokenKind::Star():
     case TokenKind::Slash():
       return Trailing{.level = Multiplicative, .is_binary = true};
     case TokenKind::Percent():
       return Trailing{.level = Modulo, .is_binary = true};
+
+    // `*` could be multiplication or pointer type formation.
+    case TokenKind::Star():
+      return infix ? Trailing{.level = Multiplicative, .is_binary = true}
+                   : Trailing{.level = TypePostfix, .is_binary = false};
 
     // Postfix operators.
     case TokenKind::MinusMinus():
@@ -296,8 +316,8 @@ auto PrecedenceGroup::ForTrailing(TokenKind kind) -> llvm::Optional<Trailing> {
 
 auto PrecedenceGroup::GetPriority(PrecedenceGroup left, PrecedenceGroup right)
     -> OperatorPriority {
-  static constexpr OperatorPriorityTable lookup;
-  return lookup.table[left.level][right.level];
+  static constexpr OperatorPriorityTable Lookup;
+  return Lookup.table[left.level][right.level];
 }
 
 }  // namespace Carbon

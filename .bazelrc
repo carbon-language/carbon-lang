@@ -5,6 +5,19 @@
 build --crosstool_top=@bazel_cc_toolchain
 build --host_crosstool_top=@bazel_cc_toolchain
 
+# Default to using a disk cache to minimize re-building LLVM and Clang which we
+# try to avoid updating too frequently to minimize rebuild cost. The location
+# here can be overridden in the user configuration where needed.
+#
+# Note that this cache will grow without bound currently. You should
+# periodically run the `scripts/clean_disk_cache.sh` script or some equivalent.
+# https://github.com/bazelbuild/bazel/issues/5139 tracks fixing this in Bazel.
+build --disk_cache=~/.cache/carbon-lang-build-cache
+
+# Enable some safety when using the build cache, likely to be defaulted in
+# future Bazel releases.
+build --experimental_guard_against_concurrent_changes
+
 # Allow the toolchain to configure itself differently in the host build from
 # the target build. Even when the host and target platforms are ostensibly the
 # same (and use identical toolchains), it is beneficial to be able to configure
@@ -22,6 +35,10 @@ build --incompatible_dont_enable_host_nonhost_crosstool_features=false
 # relatively few such executables, shared objects simply waste too much space in
 # our builds.
 build --dynamic_mode=off
+
+# Always compile PIC code. There are few if any disadvantages on the platforms
+# and architectures we care about and it avoids the need to compile files twice.
+build --force_pic
 
 # Completely disable Bazel's automatic stripping of debug information. Removing
 # that information causes unhelpful backtraces from unittest failures and other
@@ -45,3 +62,7 @@ build --test_env=ASAN_SYMBOLIZER_PATH
 # Linux and macOS this seems strictly better than the Bazel default of just
 # `en_US`.
 build --action_env=LANG=en_US.UTF-8
+
+# Allow users to override any of the flags desired by importing a user-specific
+# RC file here if present.
+try-import %workspace%/user.bazelrc
