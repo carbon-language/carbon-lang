@@ -168,7 +168,7 @@ definition is required after seeing the call sites once all the
 
 Note: The doc on [Generics terminology](terminology.md) goes into more detail
 about the
-[difference between generics and templates](terminology.md#generic-versus-template-parameters).
+[differences between generics and templates](terminology.md#generic-versus-template-parameters).
 
 ### Implementing interfaces
 
