@@ -144,12 +144,14 @@ jobs:
       - name: Build (${{ matrix.build_mode }})
         run: |
           bazelisk build -c ${{ matrix.build_mode }} --verbose_failures \
+            --deleted_packages=migrate_cpp,migrate_cpp/cpp_refactoring \
             //...:all
 
       # Run all test targets.
       - name: Test (${{ matrix.build_mode }})
         run: |
           bazelisk test -c ${{ matrix.build_mode }} --test_output errors \
+            --deleted_packages=migrate_cpp,migrate_cpp/cpp_refactoring \
             --verbose_failures //...:all
 
       # We manually shut down the Bazel server to make sure the cached files
