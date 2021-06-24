@@ -5,10 +5,10 @@
 #ifndef EXECUTABLE_SEMANTICS_INTERPRETER_STACK_H_
 #define EXECUTABLE_SEMANTICS_INTERPRETER_STACK_H_
 
-#include <cassert>
 #include <cstddef>
 #include <iterator>
 
+#include "common/check.h"
 #include "executable_semantics/interpreter/list_node.h"
 
 namespace Carbon {
@@ -73,7 +73,7 @@ struct Stack {
   //
   // - Requires: !this->IsEmpty()
   auto Pop() -> T {
-    assert(!IsEmpty() && "Can't pop from empty stack.");
+    CHECK(!IsEmpty() && "Can't pop from empty stack.");
     auto r = head->curr;
     head = head->next;
     return r;
@@ -83,9 +83,9 @@ struct Stack {
   //
   // - Requires: n >= 0 && n <= Count()
   void Pop(int n) {
-    assert(n >= 0 && "Negative pop count disallowed.");
+    CHECK(n >= 0 && "Negative pop count disallowed.");
     while (n--) {
-      assert(head != nullptr && "Can only pop as many elements as stack has.");
+      CHECK(head != nullptr && "Can only pop as many elements as stack has.");
       head = head->next;
     }
   }
@@ -103,7 +103,7 @@ struct Stack {
   //
   // - Requires: !this->IsEmpty()
   auto Top() const -> T {
-    assert(!IsEmpty() && "Empty stack has no Top().");
+    CHECK(!IsEmpty() && "Empty stack has no Top().");
     return head->curr;
   }
 
