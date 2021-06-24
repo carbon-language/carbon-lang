@@ -85,7 +85,7 @@ auto ReifyType(const Value* t, int line_num) -> const Expression* {
       return Expression::MakeVar(0, *t->GetChoiceType().name);
     case ValKind::PointerTV:
       return Expression::MakeUnOp(
-          0, Operator::Ptr, ReifyType(t->GetPointerType().type, line_num));
+          0, Operator::Ptr, *ReifyType(t->GetPointerType().type, line_num));
     default:
       std::cerr << line_num << ": expected a type, not ";
       PrintValue(t, std::cerr);
@@ -314,14 +314,14 @@ auto TypeCheckExp(const Expression* e, TypeEnv types, Env values,
     case ExpressionKind::Boolean:
       return TCResult(e, Value::MakeBoolTypeVal(), types);
     case ExpressionKind::PrimitiveOp: {
-      auto es = new std::vector<const Expression*>();
+      std::vector<Expression> es;
       std::vector<const Value*> ts;
       auto new_types = types;
       for (const Expression& argument : e->GetPrimitiveOperator().arguments) {
         auto res = TypeCheckExp(&argument, types, values, nullptr,
                                 TCContext::ValueContext);
         new_types = res.types;
-        es->push_back(res.exp);
+        es.push_back(*res.exp);
         ts.push_back(res.type);
       }
       auto new_e =

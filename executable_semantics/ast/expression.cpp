@@ -122,32 +122,27 @@ auto Expression::MakeBool(int line_num, bool b) -> const Expression* {
 }
 
 auto Expression::MakeOp(int line_num, enum Operator op,
-                        std::vector<const Expression*>* args)
-    -> const Expression* {
+                        std::vector<Expression> args) -> const Expression* {
   auto* e = new Expression();
   e->line_num = line_num;
-  std::vector<Expression> actual_args;
-  for (const Expression* e : *args) {
-    actual_args.push_back(*e);
-  }
-  e->value = PrimitiveOperator({.op = op, .arguments = actual_args});
+  e->value = PrimitiveOperator({.op = op, .arguments = std::move(args)});
   return e;
 }
 
-auto Expression::MakeUnOp(int line_num, enum Operator op, const Expression* arg)
+auto Expression::MakeUnOp(int line_num, enum Operator op, Expression arg)
     -> const Expression* {
   auto* e = new Expression();
   e->line_num = line_num;
-  e->value = PrimitiveOperator({.op = op, .arguments = {*arg}});
+  e->value = PrimitiveOperator({.op = op, .arguments = {std::move(arg)}});
   return e;
 }
 
-auto Expression::MakeBinOp(int line_num, enum Operator op,
-                           const Expression* arg1, const Expression* arg2)
-    -> const Expression* {
+auto Expression::MakeBinOp(int line_num, enum Operator op, Expression arg1,
+                           Expression arg2) -> const Expression* {
   auto* e = new Expression();
   e->line_num = line_num;
-  e->value = PrimitiveOperator({.op = op, .arguments = {*arg1, *arg2}});
+  e->value = PrimitiveOperator(
+      {.op = op, .arguments = {std::move(arg1), std::move(arg2)}});
   return e;
 }
 
