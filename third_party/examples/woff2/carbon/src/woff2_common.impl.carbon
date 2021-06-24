@@ -15,12 +15,12 @@
 namespace woff2 {
 
 
-fn ComputeULongSum(const uint8_t* buf, size_t size) -> uint32_t {
-  uint32_t checksum = 0;
-  size_t aligned_size = size & ~3;
-  for (size_t i = 0; i < aligned_size; i += 4) {
+fn ComputeULongSum(buf: const uint8_t *, size: size_t) -> uint32_t {
+  var checksum: uint32_t;
+  var aligned_size: size_t;
+  for (var i: size_t; i < aligned_size; i += 4) {
 #if defined(WOFF_LITTLE_ENDIAN)
-    uint32_t v = *reinterpret_cast<const uint32_t*>(buf + i);
+    var v: uint32_t;
     checksum += (((v & 0xFF) << 24) | ((v & 0xFF00) << 8) |
       ((v & 0xFF0000) >> 8) | ((v & 0xFF000000) >> 24));
 #elif defined(WOFF_BIG_ENDIAN)
@@ -33,8 +33,8 @@ fn ComputeULongSum(const uint8_t* buf, size_t size) -> uint32_t {
 
   // treat size not aligned on 4 as if it were padded to 4 with 0's
   if (size != aligned_size) {
-    uint32_t v = 0;
-    for (size_t i = aligned_size; i < size; ++i) {
+    var v: uint32_t;
+    for (var i: size_t; i < size; ++i) {
       v |= buf[i] << (24 - 8 * (i & 3));
     }
     checksum += v;
@@ -43,8 +43,8 @@ fn ComputeULongSum(const uint8_t* buf, size_t size) -> uint32_t {
   return checksum;
 }
 
-fn CollectionHeaderSize(uint32_t header_version, uint32_t num_fonts) -> size_t {
-  size_t size = 0;
+fn CollectionHeaderSize(header_version: uint32_t, num_fonts: uint32_t) -> size_t {
+  var size: size_t;
   if (header_version == 0x00020000) {
     size += 12;  // ulDsig{Tag,Length,Offset}
   }
