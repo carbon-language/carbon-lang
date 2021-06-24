@@ -57,13 +57,13 @@ struct Expression;
 
 struct Variable {
   static constexpr ExpressionKind Kind = ExpressionKind::Variable;
-  std::string* name;
+  std::string name;
 };
 
 struct FieldAccess {
   static constexpr ExpressionKind Kind = ExpressionKind::GetField;
   const Expression* aggregate;
-  std::string* field;
+  std::string field;
 };
 
 struct Index {
@@ -74,7 +74,7 @@ struct Index {
 
 struct PatternVariable {
   static constexpr ExpressionKind Kind = ExpressionKind::PatternVariable;
-  std::string* name;
+  std::string name;
   const Expression* type;
 };
 
