@@ -151,7 +151,7 @@ class Buffer {
   [[nodiscard]] fn offset() const -> size_t { return offset_; }
   [[nodiscard]] fn length() const -> size_t { return length_; }
 
-  void set_offset(newoffset: size_t) { offset_ = newoffset; }
+  fn set_offset(newoffset: size_t) { offset_ = newoffset; }
 
  private:
   const uint8_t * const buffer_;

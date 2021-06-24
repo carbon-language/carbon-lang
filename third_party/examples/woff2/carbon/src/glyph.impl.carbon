@@ -212,14 +212,14 @@ fn ReadGlyph(data: const uint8_t *, len: size_t, glyph: woff2::Glyph *) -> bool 
 
 namespace {
 
-void StoreBbox(glyph: const woff2::Glyph &, offset: size_t *, dst: uint8_t *) {
+fn StoreBbox(glyph: const woff2::Glyph &, offset: size_t *, dst: uint8_t *) {
   Store16(glyph.x_min, offset, dst);
   Store16(glyph.y_min, offset, dst);
   Store16(glyph.x_max, offset, dst);
   Store16(glyph.y_max, offset, dst);
 }
 
-void StoreInstructions(glyph: const woff2::Glyph &, offset: size_t *, dst: uint8_t *) {
+fn StoreInstructions(glyph: const woff2::Glyph &, offset: size_t *, dst: uint8_t *) {
   Store16(glyph.instructions_size, offset, dst);
   StoreBytes(glyph.instructions_data, glyph.instructions_size, offset, dst);
 }
