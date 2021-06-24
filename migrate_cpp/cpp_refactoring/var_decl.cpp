@@ -31,9 +31,8 @@ void VarDecl::run(const cam::MatchFinder::MatchResult& result) {
   if (result.Nodes.getNodeAs<clang::ParmVarDecl>(Label) == nullptr) {
     after = "var ";
   }
-  // Finish the "type: name" replacement.
-  after += decl->getNameAsString() + ": " +
-           clang::QualType::getAsString(decl->getType().split(), lang_opts);
+  // Add "identifier: " to the replacement.
+  after += decl->getNameAsString() + ": ";
 
   if (decl->getTypeSourceInfo() == nullptr) {
     // TODO: Need to understand what's happening in this case. Not sure if we
@@ -41,12 +40,19 @@ void VarDecl::run(const cam::MatchFinder::MatchResult& result) {
     return;
   }
 
-  // This decides the range to replace. Normally the entire decl is replaced,
-  // but for code like `int i, j` we need to detect the comma between the
-  // declared names. That case currently results in `var i: int, var j: int`.
+  // Locate the type, then use the literal string for the replacement.
   auto type_loc = decl->getTypeSourceInfo()->getTypeLoc();
   auto after_type_loc =
       clang::Lexer::getLocForEndOfToken(type_loc.getEndLoc(), 0, sm, lang_opts);
+  after +=
+      clang::Lexer::getSourceText(clang::CharSourceRange::getCharRange(
+                                      type_loc.getBeginLoc(), after_type_loc),
+                                  sm, lang_opts);
+
+  // This decides the range to replace. Normally the entire decl is replaced,
+  // but for code like `int i, j` we need to detect the comma between the
+  // declared names. That case currently results in `var i: int, var j: int`.
+
   // If there's a comma, this range will be non-empty.
   auto comma_source_text = clang::Lexer::getSourceText(
       clang::CharSourceRange::getCharRange(after_type_loc, decl->getLocation()),
