@@ -57,16 +57,16 @@ inline bool Failure(const char *f, int l, const char *fn) {
 // -----------------------------------------------------------------------------
 class Buffer {
  public:
-  Buffer(const uint8_t *data, size_t len)
+  Buffer(data: const uint8_t *, len: size_t)
       : buffer_(data),
         length_(len),
         offset_(0) { }
 
-  fn Skip(size_t n_bytes) -> bool {
+  fn Skip(n_bytes: size_t) -> bool {
     return Read(nullptr, n_bytes);
   }
 
-  fn Read(uint8_t *data, size_t n_bytes) -> bool {
+  fn Read(data: uint8_t *, n_bytes: size_t) -> bool {
     if (n_bytes > 1024 * 1024 * 1024) {
       return FONT_COMPRESSION_FAILURE();
     }
@@ -81,7 +81,7 @@ class Buffer {
     return true;
   }
 
-  fn auto ReadU8(uint8_t *value) -> bool {
+  fn auto ReadU8(value: uint8_t *) -> bool {
     if (offset_ + 1 > length_) {
       return FONT_COMPRESSION_FAILURE();
     }
@@ -90,7 +90,7 @@ class Buffer {
     return true;
   }
 
-  fn ReadU16(uint16_t *value) -> bool {
+  fn ReadU16(value: uint16_t *) -> bool {
     if (offset_ + 2 > length_) {
       return FONT_COMPRESSION_FAILURE();
     }
@@ -100,11 +100,11 @@ class Buffer {
     return true;
   }
 
-  fn ReadS16(int16_t *value) -> bool {
+  fn ReadS16(value: int16_t *) -> bool {
     return ReadU16(reinterpret_cast<uint16_t*>(value));
   }
 
-  fn ReadU24(uint32_t *value) -> bool {
+  fn ReadU24(value: uint32_t *) -> bool {
     if (offset_ + 3 > length_) {
       return FONT_COMPRESSION_FAILURE();
     }
@@ -115,7 +115,7 @@ class Buffer {
     return true;
   }
 
-  fn ReadU32(uint32_t *value) -> bool {
+  fn ReadU32(value: uint32_t *) -> bool {
     if (offset_ + 4 > length_) {
       return FONT_COMPRESSION_FAILURE();
     }
@@ -125,11 +125,11 @@ class Buffer {
     return true;
   }
 
-  fn ReadS32(int32_t *value) -> bool {
+  fn ReadS32(value: int32_t *) -> bool {
     return ReadU32(reinterpret_cast<uint32_t*>(value));
   }
 
-  fn ReadTag(uint32_t *value) -> bool {
+  fn ReadTag(value: uint32_t *) -> bool {
     if (offset_ + 4 > length_) {
       return FONT_COMPRESSION_FAILURE();
     }
@@ -138,7 +138,7 @@ class Buffer {
     return true;
   }
 
-  fn ReadR64(uint64_t *value) -> bool {
+  fn ReadR64(value: uint64_t *) -> bool {
     if (offset_ + 8 > length_) {
       return FONT_COMPRESSION_FAILURE();
     }
@@ -151,7 +151,7 @@ class Buffer {
   [[nodiscard]] fn offset() const -> size_t { return offset_; }
   [[nodiscard]] fn length() const -> size_t { return length_; }
 
-  void set_offset(size_t newoffset) { offset_ = newoffset; }
+  fn set_offset(newoffset: size_t) { offset_ = newoffset; }
 
  private:
   const uint8_t * const buffer_;

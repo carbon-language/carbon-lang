@@ -38,34 +38,34 @@ using std::vector;
 
 
 // simple glyph flags
-const int kGlyfOnCurve = 1 << 0;
-const int kGlyfXShort = 1 << 1;
-const int kGlyfYShort = 1 << 2;
-const int kGlyfRepeat = 1 << 3;
-const int kGlyfThisXIsSame = 1 << 4;
-const int kGlyfThisYIsSame = 1 << 5;
+var kGlyfOnCurve: const int;
+var kGlyfXShort: const int;
+var kGlyfYShort: const int;
+var kGlyfRepeat: const int;
+var kGlyfThisXIsSame: const int;
+var kGlyfThisYIsSame: const int;
 
 // composite glyph flags
 // See CompositeGlyph.java in sfntly for full definitions
-const int FLAG_ARG_1_AND_2_ARE_WORDS = 1 << 0;
-const int FLAG_WE_HAVE_A_SCALE = 1 << 3;
-const int FLAG_MORE_COMPONENTS = 1 << 5;
-const int FLAG_WE_HAVE_AN_X_AND_Y_SCALE = 1 << 6;
-const int FLAG_WE_HAVE_A_TWO_BY_TWO = 1 << 7;
-const int FLAG_WE_HAVE_INSTRUCTIONS = 1 << 8;
+var FLAG_ARG_1_AND_2_ARE_WORDS: const int;
+var FLAG_WE_HAVE_A_SCALE: const int;
+var FLAG_MORE_COMPONENTS: const int;
+var FLAG_WE_HAVE_AN_X_AND_Y_SCALE: const int;
+var FLAG_WE_HAVE_A_TWO_BY_TWO: const int;
+var FLAG_WE_HAVE_INSTRUCTIONS: const int;
 
-const size_t kCheckSumAdjustmentOffset = 8;
+var kCheckSumAdjustmentOffset: const size_t;
 
-const size_t kEndPtsOfContoursOffset = 10;
-const size_t kCompositeGlyphBegin = 10;
+var kEndPtsOfContoursOffset: const size_t;
+var kCompositeGlyphBegin: const size_t;
 
 // 98% of Google Fonts have no glyph above 5k bytes
 // Largest glyph ever observed was 72k bytes
-const size_t kDefaultGlyphBuf = 5120;
+var kDefaultGlyphBuf: const size_t;
 
 // Over 14k test fonts the max compression ratio seen to date was ~20.
 // >100 suggests you wrote a bad uncompressed size.
-const float kMaxPlausibleCompressionRatio = 100.0;
+var kMaxPlausibleCompressionRatio: const float;
 
 // metadata for a TTC font entry
 struct TtcFont {
@@ -107,12 +107,12 @@ struct RebuildMetadata {
   std::map<std::pair<uint32_t, uint32_t>, uint32_t> checksums;
 };
 
-fn WithSign(int flag, int baseval) -> int {
+fn WithSign(flag: int, baseval: int) -> int {
   // Precondition: 0 <= baseval < 65536 (to avoid integer overflow)
   return (flag & 1) ? baseval : -baseval;
 }
 
-fn _SafeIntAddition(int a, int b, int* result) -> bool {
+fn _SafeIntAddition(a: int, b: int, result: int *) -> bool {
   if (PREDICT_FALSE(
           ((a > 0) && (b > std::numeric_limits<int>::max() - a)) ||
           ((a < 0) && (b < std::numeric_limits<int>::min() - a)))) {
@@ -122,21 +122,21 @@ fn _SafeIntAddition(int a, int b, int* result) -> bool {
   return true;
 }
 
-fn TripletDecode(const uint8_t* flags_in, const uint8_t* in, size_t in_size,
-    unsigned int n_points, Point* result, size_t* in_bytes_consumed) -> bool {
-  int x = 0;
-  int y = 0;
+fn TripletDecode(flags_in: const uint8_t *, in: const uint8_t *, in_size: size_t,
+    n_points: unsigned int, result: woff2::Point *, in_bytes_consumed: size_t *) -> bool {
+  var x: int;
+  var y: int;
 
   if (PREDICT_FALSE(n_points > in_size)) {
     return FONT_COMPRESSION_FAILURE();
   }
-  unsigned int triplet_index = 0;
+  var triplet_index: unsigned int;
 
-  for (unsigned int i = 0; i < n_points; ++i) {
-    uint8_t flag = flags_in[i];
-    bool on_curve = !(flag >> 7);
+  for (var i: unsigned int; i < n_points; ++i) {
+    var flag: uint8_t;
+    var on_curve: bool;
     flag &= 0x7f;
-    unsigned int n_data_bytes;
+    var n_data_bytes: unsigned int;
     if (flag < 84) {
       n_data_bytes = 1;
     } else if (flag < 120) {
@@ -150,7 +150,7 @@ fn TripletDecode(const uint8_t* flags_in, const uint8_t* in, size_t in_size,
         triplet_index + n_data_bytes < triplet_index)) {
       return FONT_COMPRESSION_FAILURE();
     }
-    int dx, dy;
+    var dx: int, var dy: int;
     if (flag < 10) {
       dx = 0;
       dy = WithSign(flag, ((flag & 14) << 7) + in[triplet_index]);
@@ -158,17 +158,17 @@ fn TripletDecode(const uint8_t* flags_in, const uint8_t* in, size_t in_size,
       dx = WithSign(flag, (((flag - 10) & 14) << 7) + in[triplet_index]);
       dy = 0;
     } else if (flag < 84) {
-      int b0 = flag - 20;
-      int b1 = in[triplet_index];
+      var b0: int;
+      var b1: int;
       dx = WithSign(flag, 1 + (b0 & 0x30) + (b1 >> 4));
       dy = WithSign(flag >> 1, 1 + ((b0 & 0x0c) << 2) + (b1 & 0x0f));
     } else if (flag < 120) {
-      int b0 = flag - 84;
+      var b0: int;
       dx = WithSign(flag, 1 + ((b0 / 12) << 8) + in[triplet_index]);
       dy = WithSign(flag >> 1,
                     1 + (((b0 % 12) >> 2) << 8) + in[triplet_index + 1]);
     } else if (flag < 124) {
-      int b2 = in[triplet_index + 1];
+      var b2: int;
       dx = WithSign(flag, (in[triplet_index] << 4) + (b2 >> 4));
       dy = WithSign(flag >> 1, ((b2 & 0x0f) << 8) + in[triplet_index + 2]);
     } else {
@@ -191,25 +191,24 @@ fn TripletDecode(const uint8_t* flags_in, const uint8_t* in, size_t in_size,
 
 // This function stores just the point data. On entry, dst points to the
 // beginning of a simple glyph. Returns true on success.
-fn StorePoints(unsigned int n_points, const Point* points,
-    unsigned int n_contours, unsigned int instruction_length,
-    uint8_t* dst, size_t dst_size, size_t* glyph_size) -> bool {
+fn StorePoints(n_points: unsigned int, points: const woff2::Point *,
+    n_contours: unsigned int, instruction_length: unsigned int,
+    dst: uint8_t *, dst_size: size_t, glyph_size: size_t *) -> bool {
   // I believe that n_contours < 65536, in which case this is safe. However, a
   // comment and/or an assert would be good.
-  unsigned int flag_offset = kEndPtsOfContoursOffset + 2 * n_contours + 2 +
-    instruction_length;
-  int last_flag = -1;
-  int repeat_count = 0;
-  int last_x = 0;
-  int last_y = 0;
-  unsigned int x_bytes = 0;
-  unsigned int y_bytes = 0;
+  var flag_offset: unsigned int;
+  var last_flag: int;
+  var repeat_count: int;
+  var last_x: int;
+  var last_y: int;
+  var x_bytes: unsigned int;
+  var y_bytes: unsigned int;
 
-  for (unsigned int i = 0; i < n_points; ++i) {
-    const Point& point = points[i];
-    int flag = point.on_curve ? kGlyfOnCurve : 0;
-    int dx = point.x - last_x;
-    int dy = point.y - last_y;
+  for (var i: unsigned int; i < n_points; ++i) {
+    var point: const woff2::Point &;
+    var flag: int;
+    var dx: int;
+    var dy: int;
     if (dx == 0) {
       flag |= kGlyfThisXIsSame;
     } else if (dx > -256 && dx < 256) {
@@ -254,19 +253,19 @@ fn StorePoints(unsigned int n_points, const Point* points,
     }
     dst[flag_offset++] = repeat_count;
   }
-  unsigned int xy_bytes = x_bytes + y_bytes;
+  var xy_bytes: unsigned int;
   if (PREDICT_FALSE(xy_bytes < x_bytes ||
       flag_offset + xy_bytes < flag_offset ||
       flag_offset + xy_bytes > dst_size)) {
     return FONT_COMPRESSION_FAILURE();
   }
 
-  int x_offset = flag_offset;
-  int y_offset = flag_offset + x_bytes;
+  var x_offset: int;
+  var y_offset: int;
   last_x = 0;
   last_y = 0;
-  for (unsigned int i = 0; i < n_points; ++i) {
-    int dx = points[i].x - last_x;
+  for (var i: unsigned int; i < n_points; ++i) {
+    var dx: int;
     if (dx == 0) {
       // pass
     } else if (dx > -256 && dx < 256) {
@@ -276,7 +275,7 @@ fn StorePoints(unsigned int n_points, const Point* points,
       x_offset = Store16(dst, x_offset, dx);
     }
     last_x += dx;
-    int dy = points[i].y - last_y;
+    var dy: int;
     if (dy == 0) {
       // pass
     } else if (dy > -256 && dy < 256) {
@@ -293,11 +292,11 @@ fn StorePoints(unsigned int n_points, const Point* points,
 // Compute the bounding box of the coordinates, and store into a glyf buffer.
 // A precondition is that there are at least 10 bytes available.
 // dst should point to the beginning of a 'glyf' record.
-void ComputeBbox(unsigned int n_points, const Point* points, uint8_t* dst) {
-  int x_min = 0;
-  int y_min = 0;
-  int x_max = 0;
-  int y_max = 0;
+fn ComputeBbox(n_points: unsigned int, points: const woff2::Point *, dst: uint8_t *) {
+  var x_min: int;
+  var y_min: int;
+  var x_max: int;
+  var y_max: int;
 
   if (n_points > 0) {
     x_min = points[0].x;
@@ -305,15 +304,15 @@ void ComputeBbox(unsigned int n_points, const Point* points, uint8_t* dst) {
     y_min = points[0].y;
     y_max = points[0].y;
   }
-  for (unsigned int i = 1; i < n_points; ++i) {
-    int x = points[i].x;
-    int y = points[i].y;
+  for (var i: unsigned int; i < n_points; ++i) {
+    var x: int;
+    var y: int;
     x_min = std::min(x, x_min);
     x_max = std::max(x, x_max);
     y_min = std::min(y, y_min);
     y_max = std::max(y, y_max);
   }
-  size_t offset = 2;
+  var offset: size_t;
   offset = Store16(dst, offset, x_min);
   offset = Store16(dst, offset, y_min);
   offset = Store16(dst, offset, x_max);
@@ -321,18 +320,18 @@ void ComputeBbox(unsigned int n_points, const Point* points, uint8_t* dst) {
 }
 
 
-fn SizeOfComposite(Buffer composite_stream, size_t* size,
-                     bool* have_instructions) -> bool {
-  size_t start_offset = composite_stream.offset();
-  bool we_have_instructions = false;
+fn SizeOfComposite(composite_stream: woff2::Buffer, size: size_t *,
+                     have_instructions: bool *) -> bool {
+  var start_offset: size_t;
+  var we_have_instructions: bool;
 
-  uint16_t flags = FLAG_MORE_COMPONENTS;
+  var flags: uint16_t;
   while (flags & FLAG_MORE_COMPONENTS) {
     if (PREDICT_FALSE(!composite_stream.ReadU16(&flags))) {
       return FONT_COMPRESSION_FAILURE();
     }
     we_have_instructions |= (flags & FLAG_WE_HAVE_INSTRUCTIONS) != 0;
-    size_t arg_size = 2;  // glyph index
+    var arg_size: size_t;  // glyph index
     if (flags & FLAG_ARG_1_AND_2_ARE_WORDS) {
       arg_size += 4;
     } else {
@@ -356,12 +355,12 @@ fn SizeOfComposite(Buffer composite_stream, size_t* size,
   return true;
 }
 
-fn Pad4(WOFF2Out* out) -> bool {
-  uint8_t zeroes[] = {0, 0, 0};
+fn Pad4(out: woff2::WOFF2Out *) -> bool {
+  var zeroes: uint8_t [3];
   if (PREDICT_FALSE(out->Size() + 3 < out->Size())) {
     return FONT_COMPRESSION_FAILURE();
   }
-  uint32_t pad_bytes = Round4(out->Size()) - out->Size();
+  var pad_bytes: uint32_t;
   if (pad_bytes > 0) {
     if (PREDICT_FALSE(!out->Write(&zeroes, pad_bytes))) {
       return FONT_COMPRESSION_FAILURE();
@@ -371,19 +370,19 @@ fn Pad4(WOFF2Out* out) -> bool {
 }
 
 // Build TrueType loca table
-fn StoreLoca(const std::vector<uint32_t>& loca_values, int index_format,
-               uint32_t* checksum, WOFF2Out* out) -> bool {
+fn StoreLoca(loca_values: const std::vector<uint32_t> &, index_format: int,
+               checksum: uint32_t *, out: woff2::WOFF2Out *) -> bool {
   // TODO(user) figure out what index format to use based on whether max
   // offset fits into uint16_t or not
-  const uint64_t loca_size = loca_values.size();
-  const uint64_t offset_size = index_format ? 4 : 2;
+  var loca_size: const uint64_t;
+  var offset_size: const uint64_t;
   if (PREDICT_FALSE((loca_size << 2) >> 2 != loca_size)) {
     return FONT_COMPRESSION_FAILURE();
   }
-  std::vector<uint8_t> loca_content(loca_size * offset_size);
-  uint8_t* dst = &loca_content[0];
-  size_t offset = 0;
-  for (unsigned int value : loca_values) {
+  var loca_content: std::vector<uint8_t>;
+  var dst: uint8_t *;
+  var offset: size_t;
+  for (unsigned int value var __begin2: std::__wrap_iter<const unsigned int *> var __range2: const std::vector<unsigned int> &) {
     if (index_format) {
       offset = StoreU32(dst, offset, value);
     } else {
@@ -398,15 +397,15 @@ fn StoreLoca(const std::vector<uint32_t>& loca_values, int index_format,
 }
 
 // Reconstruct entire glyf table based on transformed original
-fn ReconstructGlyf(const uint8_t* data, Table* glyf_table,
-                     uint32_t* glyf_checksum, Table * loca_table,
-                     uint32_t* loca_checksum, WOFF2FontInfo* info,
-                     WOFF2Out* out) -> bool {
-  static const int kNumSubStreams = 7;
-  Buffer file(data, glyf_table->transform_length);
-  uint32_t version;
-  std::vector<std::pair<const uint8_t*, size_t> > substreams(kNumSubStreams);
-  const size_t glyf_start = out->Size();
+fn ReconstructGlyf(data: const uint8_t *, glyf_table: woff2::Table *,
+                     glyf_checksum: uint32_t *, loca_table: woff2::Table *,
+                     loca_checksum: uint32_t *, info: woff2::(anonymous namespace)::WOFF2FontInfo *,
+                     out: woff2::WOFF2Out *) -> bool {
+  var kNumSubStreams: const int;
+  var file: woff2::Buffer;
+  var version: uint32_t;
+  var substreams: std::vector<std::pair<const uint8_t *, size_t>>;
+  var glyf_start: const size_t;
 
   if (PREDICT_FALSE(!file.ReadU32(&version))) {
     return FONT_COMPRESSION_FAILURE();
@@ -418,19 +417,18 @@ fn ReconstructGlyf(const uint8_t* data, Table* glyf_table,
 
   // https://dev.w3.org/webfonts/WOFF2/spec/#conform-mustRejectLoca
   // dst_length here is origLength in the spec
-  uint32_t expected_loca_dst_length = (info->index_format ? 4 : 2)
-    * (static_cast<uint32_t>(info->num_glyphs) + 1);
+  var expected_loca_dst_length: uint32_t;
   if (PREDICT_FALSE(loca_table->dst_length != expected_loca_dst_length)) {
     return FONT_COMPRESSION_FAILURE();
   }
 
-  unsigned int offset = (2 + kNumSubStreams) * 4;
+  var offset: unsigned int;
   if (PREDICT_FALSE(offset > glyf_table->transform_length)) {
     return FONT_COMPRESSION_FAILURE();
   }
   // Invariant from here on: data_size >= offset
-  for (int i = 0; i < kNumSubStreams; ++i) {
-    uint32_t substream_size;
+  for (var i: int; i < kNumSubStreams; ++i) {
+    var substream_size: uint32_t;
     if (PREDICT_FALSE(!file.ReadU32(&substream_size))) {
       return FONT_COMPRESSION_FAILURE();
     }
@@ -440,34 +438,34 @@ fn ReconstructGlyf(const uint8_t* data, Table* glyf_table,
     substreams[i] = std::make_pair(data + offset, substream_size);
     offset += substream_size;
   }
-  Buffer n_contour_stream(substreams[0].first, substreams[0].second);
-  Buffer n_points_stream(substreams[1].first, substreams[1].second);
-  Buffer flag_stream(substreams[2].first, substreams[2].second);
-  Buffer glyph_stream(substreams[3].first, substreams[3].second);
-  Buffer composite_stream(substreams[4].first, substreams[4].second);
-  Buffer bbox_stream(substreams[5].first, substreams[5].second);
-  Buffer instruction_stream(substreams[6].first, substreams[6].second);
+  var n_contour_stream: woff2::Buffer;
+  var n_points_stream: woff2::Buffer;
+  var flag_stream: woff2::Buffer;
+  var glyph_stream: woff2::Buffer;
+  var composite_stream: woff2::Buffer;
+  var bbox_stream: woff2::Buffer;
+  var instruction_stream: woff2::Buffer;
 
-  std::vector<uint32_t> loca_values(info->num_glyphs + 1);
-  std::vector<unsigned int> n_points_vec;
-  std::unique_ptr<Point[]> points;
-  size_t points_size = 0;
-  const uint8_t* bbox_bitmap = bbox_stream.buffer();
+  var loca_values: std::vector<uint32_t>;
+  var n_points_vec: std::vector<unsigned int>;
+  var points: std::unique_ptr<Point []>;
+  var points_size: size_t;
+  var bbox_bitmap: const uint8_t *;
   // Safe because num_glyphs is bounded
-  unsigned int bitmap_length = ((info->num_glyphs + 31) >> 5) << 2;
+  var bitmap_length: unsigned int;
   if (!bbox_stream.Skip(bitmap_length)) {
     return FONT_COMPRESSION_FAILURE();
   }
 
   // Temp buffer for glyph's.
-  size_t glyph_buf_size = kDefaultGlyphBuf;
-  std::unique_ptr<uint8_t[]> glyph_buf(new uint8_t[glyph_buf_size]);
+  var glyph_buf_size: size_t;
+  var glyph_buf: std::unique_ptr<uint8_t []>;
 
   info->x_mins.resize(info->num_glyphs);
-  for (unsigned int i = 0; i < info->num_glyphs; ++i) {
-    size_t glyph_size = 0;
-    uint16_t n_contours = 0;
-    bool have_bbox = false;
+  for (var i: unsigned int; i < info->num_glyphs; ++i) {
+    var glyph_size: size_t;
+    var n_contours: uint16_t;
+    var have_bbox: bool;
     if (bbox_bitmap[i >> 3] & (0x80 >> (i & 7))) {
       have_bbox = true;
     }
@@ -477,14 +475,14 @@ fn ReconstructGlyf(const uint8_t* data, Table* glyf_table,
 
     if (n_contours == 0xffff) {
       // composite glyph
-      bool have_instructions = false;
-      unsigned int instruction_size = 0;
+      var have_instructions: bool;
+      var instruction_size: unsigned int;
       if (PREDICT_FALSE(!have_bbox)) {
         // composite glyphs must have an explicit bbox
         return FONT_COMPRESSION_FAILURE();
       }
 
-      size_t composite_size;
+      var composite_size: size_t;
       if (PREDICT_FALSE(!SizeOfComposite(composite_stream, &composite_size,
                                          &have_instructions))) {
         return FONT_COMPRESSION_FAILURE();
@@ -495,7 +493,7 @@ fn ReconstructGlyf(const uint8_t* data, Table* glyf_table,
         }
       }
 
-      size_t size_needed = 12 + composite_size + instruction_size;
+      var size_needed: size_t;
       if (PREDICT_FALSE(glyph_buf_size < size_needed)) {
         glyph_buf.reset(new uint8_t[size_needed]);
         glyph_buf_size = size_needed;
@@ -523,9 +521,9 @@ fn ReconstructGlyf(const uint8_t* data, Table* glyf_table,
     } else if (n_contours > 0) {
       // simple glyph
       n_points_vec.clear();
-      unsigned int total_n_points = 0;
-      unsigned int n_points_contour;
-      for (unsigned int j = 0; j < n_contours; ++j) {
+      var total_n_points: unsigned int;
+      var n_points_contour: unsigned int;
+      for (var j: unsigned int; j < n_contours; ++j) {
         if (PREDICT_FALSE(
             !Read255UShort(&n_points_stream, &n_points_contour))) {
           return FONT_COMPRESSION_FAILURE();
@@ -536,16 +534,15 @@ fn ReconstructGlyf(const uint8_t* data, Table* glyf_table,
         }
         total_n_points += n_points_contour;
       }
-      unsigned int flag_size = total_n_points;
+      var flag_size: unsigned int;
       if (PREDICT_FALSE(
           flag_size > flag_stream.length() - flag_stream.offset())) {
         return FONT_COMPRESSION_FAILURE();
       }
-      const uint8_t* flags_buf = flag_stream.buffer() + flag_stream.offset();
-      const uint8_t* triplet_buf = glyph_stream.buffer() +
-        glyph_stream.offset();
-      size_t triplet_size = glyph_stream.length() - glyph_stream.offset();
-      size_t triplet_bytes_consumed = 0;
+      var flags_buf: const uint8_t *;
+      var triplet_buf: const uint8_t *;
+      var triplet_size: size_t;
+      var triplet_bytes_consumed: size_t;
       if (points_size < total_n_points) {
         points_size = total_n_points;
         points = std::make_unique<Point[]>(points_size);
@@ -560,7 +557,7 @@ fn ReconstructGlyf(const uint8_t* data, Table* glyf_table,
       if (PREDICT_FALSE(!glyph_stream.Skip(triplet_bytes_consumed))) {
         return FONT_COMPRESSION_FAILURE();
       }
-      unsigned int instruction_size;
+      var instruction_size: unsigned int;
       if (PREDICT_FALSE(!Read255UShort(&glyph_stream, &instruction_size))) {
         return FONT_COMPRESSION_FAILURE();
       }
@@ -569,8 +566,7 @@ fn ReconstructGlyf(const uint8_t* data, Table* glyf_table,
                         || instruction_size >= (1 << 30))) {
         return FONT_COMPRESSION_FAILURE();
       }
-      size_t size_needed = 12 + 2 * n_contours + 5 * total_n_points
-                           + instruction_size;
+      var size_needed: size_t;
       if (PREDICT_FALSE(glyph_buf_size < size_needed)) {
         glyph_buf.reset(new uint8_t[size_needed]);
         glyph_buf_size = size_needed;
@@ -585,8 +581,8 @@ fn ReconstructGlyf(const uint8_t* data, Table* glyf_table,
         ComputeBbox(total_n_points, points.get(), glyph_buf.get());
       }
       glyph_size = kEndPtsOfContoursOffset;
-      int end_point = -1;
-      for (unsigned int contour_ix = 0; contour_ix < n_contours; ++contour_ix) {
+      var end_point: int;
+      for (var contour_ix: unsigned int; contour_ix < n_contours; ++contour_ix) {
         end_point += n_points_vec[contour_ix];
         if (PREDICT_FALSE(end_point >= 65536)) {
           return FONT_COMPRESSION_FAILURE();
@@ -629,7 +625,7 @@ fn ReconstructGlyf(const uint8_t* data, Table* glyf_table,
 
     // We may need x_min to reconstruct 'hmtx'
     if (n_contours > 0) {
-      Buffer x_min_buf(glyph_buf.get() + 2, 2);
+      var x_min_buf: woff2::Buffer;
       if (PREDICT_FALSE(!x_min_buf.ReadS16(&info->x_mins[i]))) {
         return FONT_COMPRESSION_FAILURE();
       }
@@ -650,8 +646,8 @@ fn ReconstructGlyf(const uint8_t* data, Table* glyf_table,
   return true;
 }
 
-fn FindTable(std::vector<Table*>* tables, uint32_t tag) -> Table* {
-  for (Table* table : *tables) {
+fn FindTable(tables: std::vector<Table *> *, tag: uint32_t) -> Table* {
+  for (Table* table var __begin2: std::__wrap_iter<woff2::Table **> var __range2: std::vector<woff2::Table *> &) {
     if (table->tag == tag) {
       return table;
     }
@@ -660,10 +656,10 @@ fn FindTable(std::vector<Table*>* tables, uint32_t tag) -> Table* {
 }
 
 // Get numberOfHMetrics, https://www.microsoft.com/typography/otspec/hhea.htm
-fn ReadNumHMetrics(const uint8_t* data, size_t data_size,
-                     uint16_t* num_hmetrics) -> bool {
+fn ReadNumHMetrics(data: const uint8_t *, data_size: size_t,
+                     num_hmetrics: uint16_t *) -> bool {
   // Skip 34 to reach 'hhea' numberOfHMetrics
-  Buffer buffer(data, data_size);
+  var buffer: woff2::Buffer;
   if (PREDICT_FALSE(!buffer.Skip(34) || !buffer.ReadU16(num_hmetrics))) {
     return FONT_COMPRESSION_FAILURE();
   }
@@ -671,24 +667,24 @@ fn ReadNumHMetrics(const uint8_t* data, size_t data_size,
 }
 
 // http://dev.w3.org/webfonts/WOFF2/spec/Overview.html#hmtx_table_format
-fn ReconstructTransformedHmtx(const uint8_t* transformed_buf,
-                                size_t transformed_size,
-                                uint16_t num_glyphs,
-                                uint16_t num_hmetrics,
-                                const std::vector<int16_t>& x_mins,
-                                uint32_t* checksum,
-                                WOFF2Out* out) -> bool {
-  Buffer hmtx_buff_in(transformed_buf, transformed_size);
+fn ReconstructTransformedHmtx(transformed_buf: const uint8_t *,
+                                transformed_size: size_t,
+                                num_glyphs: uint16_t,
+                                num_hmetrics: uint16_t,
+                                x_mins: const std::vector<int16_t> &,
+                                checksum: uint32_t *,
+                                out: woff2::WOFF2Out *) -> bool {
+  var hmtx_buff_in: woff2::Buffer;
 
-  uint8_t hmtx_flags;
+  var hmtx_flags: uint8_t;
   if (PREDICT_FALSE(!hmtx_buff_in.ReadU8(&hmtx_flags))) {
     return FONT_COMPRESSION_FAILURE();
   }
 
-  std::vector<uint16_t> advance_widths;
-  std::vector<int16_t> lsbs;
-  bool has_proportional_lsbs = (hmtx_flags & 1) == 0;
-  bool has_monospace_lsbs = (hmtx_flags & 2) == 0;
+  var advance_widths: std::vector<uint16_t>;
+  var lsbs: std::vector<int16_t>;
+  var has_proportional_lsbs: bool;
+  var has_monospace_lsbs: bool;
 
   // Bits 2-7 are reserved and MUST be zero.
   if ((hmtx_flags & 0xFC) != 0) {
@@ -716,16 +712,16 @@ fn ReconstructTransformedHmtx(const uint8_t* transformed_buf,
     return FONT_COMPRESSION_FAILURE();
   }
 
-  for (uint16_t i = 0; i < num_hmetrics; i++) {
-    uint16_t advance_width;
+  for (var i: uint16_t; i < num_hmetrics; i++) {
+    var advance_width: uint16_t;
     if (PREDICT_FALSE(!hmtx_buff_in.ReadU16(&advance_width))) {
       return FONT_COMPRESSION_FAILURE();
     }
     advance_widths.push_back(advance_width);
   }
 
-  for (uint16_t i = 0; i < num_hmetrics; i++) {
-    int16_t lsb;
+  for (var i: uint16_t; i < num_hmetrics; i++) {
+    var lsb: int16_t;
     if (has_proportional_lsbs) {
       if (PREDICT_FALSE(!hmtx_buff_in.ReadS16(&lsb))) {
         return FONT_COMPRESSION_FAILURE();
@@ -736,8 +732,8 @@ fn ReconstructTransformedHmtx(const uint8_t* transformed_buf,
     lsbs.push_back(lsb);
   }
 
-  for (uint16_t i = num_hmetrics; i < num_glyphs; i++) {
-    int16_t lsb;
+  for (var i: uint16_t; i < num_glyphs; i++) {
+    var lsb: int16_t;
     if (has_monospace_lsbs) {
       if (PREDICT_FALSE(!hmtx_buff_in.ReadS16(&lsb))) {
         return FONT_COMPRESSION_FAILURE();
@@ -749,11 +745,11 @@ fn ReconstructTransformedHmtx(const uint8_t* transformed_buf,
   }
 
   // bake me a shiny new hmtx table
-  uint32_t hmtx_output_size = 2 * num_glyphs + 2 * num_hmetrics;
-  std::vector<uint8_t> hmtx_table(hmtx_output_size);
-  uint8_t* dst = &hmtx_table[0];
-  size_t dst_offset = 0;
-  for (uint32_t i = 0; i < num_glyphs; i++) {
+  var hmtx_output_size: uint32_t;
+  var hmtx_table: std::vector<uint8_t>;
+  var dst: uint8_t *;
+  var dst_offset: size_t;
+  for (var i: uint32_t; i < num_glyphs; i++) {
     if (i < num_hmetrics) {
       Store16(advance_widths[i], &dst_offset, dst);
     }
@@ -768,11 +764,10 @@ fn ReconstructTransformedHmtx(const uint8_t* transformed_buf,
   return true;
 }
 
-fn Woff2Uncompress(uint8_t* dst_buf, size_t dst_size,
-  const uint8_t* src_buf, size_t src_size) -> bool {
-  size_t uncompressed_size = dst_size;
-  BrotliDecoderResult result = BrotliDecoderDecompress(
-      src_size, src_buf, &uncompressed_size, dst_buf);
+fn Woff2Uncompress(dst_buf: uint8_t *, dst_size: size_t,
+  src_buf: const uint8_t *, src_size: size_t) -> bool {
+  var uncompressed_size: size_t;
+  var result: BrotliDecoderResult;
   if (PREDICT_FALSE(result != BROTLI_DECODER_RESULT_SUCCESS ||
                     uncompressed_size != dst_size)) {
     return FONT_COMPRESSION_FAILURE();
@@ -780,16 +775,16 @@ fn Woff2Uncompress(uint8_t* dst_buf, size_t dst_size,
   return true;
 }
 
-fn ReadTableDirectory(Buffer* file, std::vector<Table>* tables,
-    size_t num_tables) -> bool {
-  uint32_t src_offset = 0;
-  for (size_t i = 0; i < num_tables; ++i) {
-    Table* table = &(*tables)[i];
-    uint8_t flag_byte;
+fn ReadTableDirectory(file: woff2::Buffer *, tables: std::vector<Table> *,
+    num_tables: size_t) -> bool {
+  var src_offset: uint32_t;
+  for (var i: size_t; i < num_tables; ++i) {
+    var table: woff2::Table *;
+    var flag_byte: uint8_t;
     if (PREDICT_FALSE(!file->ReadU8(&flag_byte))) {
       return FONT_COMPRESSION_FAILURE();
     }
-    uint32_t tag;
+    var tag: uint32_t;
     if ((flag_byte & 0x3f) == 0x3f) {
       if (PREDICT_FALSE(!file->ReadU32(&tag))) {
         return FONT_COMPRESSION_FAILURE();
@@ -797,8 +792,8 @@ fn ReadTableDirectory(Buffer* file, std::vector<Table>* tables,
     } else {
       tag = kKnownTags[flag_byte & 0x3f];
     }
-    uint32_t flags = 0;
-    uint8_t xform_version = (flag_byte >> 6) & 0x03;
+    var flags: uint32_t;
+    var xform_version: uint8_t;
 
     // 0 means xform for glyph/loca, non-0 for others
     if (tag == kGlyfTableTag || tag == kLocaTableTag) {
@@ -810,11 +805,11 @@ fn ReadTableDirectory(Buffer* file, std::vector<Table>* tables,
     }
     flags |= xform_version;
 
-    uint32_t dst_length;
+    var dst_length: uint32_t;
     if (PREDICT_FALSE(!ReadBase128(file, &dst_length))) {
       return FONT_COMPRESSION_FAILURE();
     }
-    uint32_t transform_length = dst_length;
+    var transform_length: uint32_t;
     if ((flags & kWoff2FlagsTransform) != 0) {
       if (PREDICT_FALSE(!ReadBase128(file, &transform_length))) {
         return FONT_COMPRESSION_FAILURE();
@@ -839,15 +834,15 @@ fn ReadTableDirectory(Buffer* file, std::vector<Table>* tables,
 }
 
 // Writes a single Offset Table entry
-fn StoreOffsetTable(uint8_t* result, size_t offset, uint32_t flavor,
-                        uint16_t num_tables) -> size_t {
+fn StoreOffsetTable(result: uint8_t *, offset: size_t, flavor: uint32_t,
+                        num_tables: uint16_t) -> size_t {
   offset = StoreU32(result, offset, flavor);  // sfnt version
   offset = Store16(result, offset, num_tables);  // num_tables
-  unsigned max_pow2 = 0;
+  var max_pow2: unsigned int;
   while (1u << (max_pow2 + 1) <= num_tables) {
     max_pow2++;
   }
-  const uint16_t output_search_range = (1u << max_pow2) << 4;
+  var output_search_range: const uint16_t;
   offset = Store16(result, offset, output_search_range);  // searchRange
   offset = Store16(result, offset, max_pow2);  // entrySelector
   // rangeShift
@@ -855,7 +850,7 @@ fn StoreOffsetTable(uint8_t* result, size_t offset, uint32_t flavor,
   return offset;
 }
 
-fn StoreTableEntry(uint8_t* result, uint32_t offset, uint32_t tag) -> size_t {
+fn StoreTableEntry(result: uint8_t *, offset: uint32_t, tag: uint32_t) -> size_t {
   offset = StoreU32(result, offset, tag);
   offset = StoreU32(result, offset, 0);
   offset = StoreU32(result, offset, 0);
@@ -864,27 +859,26 @@ fn StoreTableEntry(uint8_t* result, uint32_t offset, uint32_t tag) -> size_t {
 }
 
 // First table goes after all the headers, table directory, etc
-fn ComputeOffsetToFirstTable(const WOFF2Header& hdr) -> uint64_t {
-  uint64_t offset = kSfntHeaderSize +
-    kSfntEntrySize * static_cast<uint64_t>(hdr.num_tables);
+fn ComputeOffsetToFirstTable(hdr: const woff2::(anonymous namespace)::WOFF2Header &) -> uint64_t {
+  var offset: uint64_t;
   if (hdr.header_version) {
     offset = CollectionHeaderSize(hdr.header_version, hdr.ttc_fonts.size())
       + kSfntHeaderSize * hdr.ttc_fonts.size();
-    for (const auto& ttc_font : hdr.ttc_fonts) {
+    for (const auto& ttc_font var __begin3: std::__wrap_iter<const woff2::(anonymous namespace)::TtcFont *> var __range3: const std::vector<woff2::(anonymous namespace)::TtcFont> &) {
       offset += kSfntEntrySize * ttc_font.table_indices.size();
     }
   }
   return offset;
 }
 
-fn Tables(WOFF2Header* hdr, size_t font_index) -> std::vector<Table*> {
-  std::vector<Table*> tables;
+fn Tables(hdr: woff2::(anonymous namespace)::WOFF2Header *, font_index: size_t) -> std::vector<Table*> {
+  var tables: std::vector<Table *>;
   if (PREDICT_FALSE(hdr->header_version)) {
-    for (auto index : hdr->ttc_fonts[font_index].table_indices) {
+    for (auto index var __begin3: std::__wrap_iter<unsigned short *> var __range3: std::vector<unsigned short> &) {
       tables.push_back(&hdr->tables[index]);
     }
   } else {
-    for (auto& table : hdr->tables) {
+    for (auto& table var __begin3: std::__wrap_iter<woff2::Table *> var __range3: std::vector<woff2::Table> &) {
       tables.push_back(&table);
     }
   }
@@ -893,20 +887,20 @@ fn Tables(WOFF2Header* hdr, size_t font_index) -> std::vector<Table*> {
 
 // Offset tables assumed to have been written in with 0's initially.
 // WOFF2Header isn't const so we can use [] instead of at() (which upsets FF)
-fn ReconstructFont(uint8_t* transformed_buf,
-                     const uint32_t transformed_buf_size,
-                     RebuildMetadata* metadata,
-                     WOFF2Header* hdr,
-                     size_t font_index,
-                     WOFF2Out* out) -> bool {
-  size_t dest_offset = out->Size();
-  uint8_t table_entry[12];
-  WOFF2FontInfo* info = &metadata->font_infos[font_index];
-  std::vector<Table*> tables = Tables(hdr, font_index);
+fn ReconstructFont(transformed_buf: uint8_t *,
+                     transformed_buf_size: const uint32_t,
+                     metadata: woff2::(anonymous namespace)::RebuildMetadata *,
+                     hdr: woff2::(anonymous namespace)::WOFF2Header *,
+                     font_index: size_t,
+                     out: woff2::WOFF2Out *) -> bool {
+  var dest_offset: size_t;
+  var table_entry: uint8_t [12];
+  var info: woff2::(anonymous namespace)::WOFF2FontInfo *;
+  var tables: std::vector<Table *>;
 
   // 'glyf' without 'loca' doesn't make sense
-  const Table* glyf_table = FindTable(&tables, kGlyfTableTag);
-  const Table* loca_table = FindTable(&tables, kLocaTableTag);
+  var glyf_table: const woff2::Table *;
+  var loca_table: const woff2::Table *;
   if (PREDICT_FALSE(static_cast<bool>(glyf_table) !=
                     static_cast<bool>(loca_table))) {
 #ifdef FONT_COMPRESSION_BIN
@@ -925,18 +919,17 @@ fn ReconstructFont(uint8_t* transformed_buf,
     }
   }
 
-  uint32_t font_checksum = metadata->header_checksum;
+  var font_checksum: uint32_t;
   if (hdr->header_version) {
     font_checksum = hdr->ttc_fonts[font_index].header_checksum;
   }
 
-  uint32_t loca_checksum = 0;
-  for (size_t i = 0; i < tables.size(); i++) {
-    Table& table = *tables[i];
+  var loca_checksum: uint32_t;
+  for (var i: size_t; i < tables.size(); i++) {
+    var table: woff2::Table &;
 
-    std::pair<uint32_t, uint32_t> checksum_key = {table.tag, table.src_offset};
-    bool reused = metadata->checksums.find(checksum_key)
-               != metadata->checksums.end();
+    var checksum_key: std::pair<uint32_t, uint32_t>;
+    var reused: bool;
     if (PREDICT_FALSE(font_index == 0 && reused)) {
       return FONT_COMPRESSION_FAILURE();
     }
@@ -955,7 +948,7 @@ fn ReconstructFont(uint8_t* transformed_buf,
       }
     }
 
-    uint32_t checksum = 0;
+    var checksum: uint32_t;
     if (!reused) {
       if ((table.flags & kWoff2FlagsTransform) != kWoff2FlagsTransform) {
         if (table.tag == kHeadTableTag) {
@@ -976,7 +969,7 @@ fn ReconstructFont(uint8_t* transformed_buf,
         if (table.tag == kGlyfTableTag) {
           table.dst_offset = dest_offset;
 
-          Table* loca_table = FindTable(&tables, kLocaTableTag);
+          var loca_table: woff2::Table *;
           if (PREDICT_FALSE(!ReconstructGlyf(transformed_buf + table.src_offset,
               &table, &checksum, loca_table, &loca_checksum, info, out))) {
             return FONT_COMPRESSION_FAILURE();
@@ -1027,12 +1020,12 @@ fn ReconstructFont(uint8_t* transformed_buf,
   }
 
   // Update 'head' checkSumAdjustment. We already set it to 0 and summed font.
-  Table* head_table = FindTable(&tables, kHeadTableTag);
+  var head_table: woff2::Table *;
   if (head_table) {
     if (PREDICT_FALSE(head_table->dst_length < 12)) {
       return FONT_COMPRESSION_FAILURE();
     }
-    uint8_t checksum_adjustment[4];
+    var checksum_adjustment: uint8_t [4];
     StoreU32(checksum_adjustment, 0, 0xB1B0AFBA - font_checksum);
     if (PREDICT_FALSE(!out->Write(checksum_adjustment,
                                   head_table->dst_offset + 8, 4))) {
@@ -1043,10 +1036,10 @@ fn ReconstructFont(uint8_t* transformed_buf,
   return true;
 }
 
-fn ReadWOFF2Header(const uint8_t* data, size_t length, WOFF2Header* hdr) -> bool {
-  Buffer file(data, length);
+fn ReadWOFF2Header(data: const uint8_t *, length: size_t, hdr: woff2::(anonymous namespace)::WOFF2Header *) -> bool {
+  var file: woff2::Buffer;
 
-  uint32_t signature;
+  var signature: uint32_t;
   if (PREDICT_FALSE(!file.ReadU32(&signature) || signature != kWoff2Signature ||
       !file.ReadU32(&hdr->flavor))) {
     return FONT_COMPRESSION_FAILURE();
@@ -1054,7 +1047,7 @@ fn ReadWOFF2Header(const uint8_t* data, size_t length, WOFF2Header* hdr) -> bool
 
   // TODO(user): Should call IsValidVersionTag() here.
 
-  uint32_t reported_length;
+  var reported_length: uint32_t;
   if (PREDICT_FALSE(
       !file.ReadU32(&reported_length) || length != reported_length)) {
     return FONT_COMPRESSION_FAILURE();
@@ -1077,9 +1070,9 @@ fn ReadWOFF2Header(const uint8_t* data, size_t length, WOFF2Header* hdr) -> bool
   if (PREDICT_FALSE(!file.Skip(2 * 2))) {
     return FONT_COMPRESSION_FAILURE();
   }
-  uint32_t meta_offset;
-  uint32_t meta_length;
-  uint32_t meta_length_orig;
+  var meta_offset: uint32_t;
+  var meta_length: uint32_t;
+  var meta_length_orig: uint32_t;
   if (PREDICT_FALSE(!file.ReadU32(&meta_offset) ||
       !file.ReadU32(&meta_length) ||
       !file.ReadU32(&meta_length_orig))) {
@@ -1091,8 +1084,8 @@ fn ReadWOFF2Header(const uint8_t* data, size_t length, WOFF2Header* hdr) -> bool
       return FONT_COMPRESSION_FAILURE();
     }
   }
-  uint32_t priv_offset;
-  uint32_t priv_length;
+  var priv_offset: uint32_t;
+  var priv_length: uint32_t;
   if (PREDICT_FALSE(!file.ReadU32(&priv_offset) ||
       !file.ReadU32(&priv_length))) {
     return FONT_COMPRESSION_FAILURE();
@@ -1110,7 +1103,7 @@ fn ReadWOFF2Header(const uint8_t* data, size_t length, WOFF2Header* hdr) -> bool
   }
 
   // Before we sort for output the last table end is the uncompressed size.
-  Table& last_table = hdr->tables.back();
+  var last_table: woff2::Table &;
   hdr->uncompressed_size = last_table.src_offset + last_table.src_length;
   if (PREDICT_FALSE(hdr->uncompressed_size < last_table.src_offset)) {
     return FONT_COMPRESSION_FAILURE();
@@ -1126,15 +1119,15 @@ fn ReadWOFF2Header(const uint8_t* data, size_t length, WOFF2Header* hdr) -> bool
                    && hdr->header_version != 0x00020000)) {
       return FONT_COMPRESSION_FAILURE();
     }
-    uint32_t num_fonts;
+    var num_fonts: uint32_t;
     if (PREDICT_FALSE(!Read255UShort(&file, &num_fonts) || !num_fonts)) {
       return FONT_COMPRESSION_FAILURE();
     }
     hdr->ttc_fonts.resize(num_fonts);
 
-    for (uint32_t i = 0; i < num_fonts; i++) {
-      TtcFont& ttc_font = hdr->ttc_fonts[i];
-      uint32_t num_tables;
+    for (var i: uint32_t; i < num_fonts; i++) {
+      var ttc_font: woff2::(anonymous namespace)::TtcFont &;
+      var num_tables: uint32_t;
       if (PREDICT_FALSE(!Read255UShort(&file, &num_tables) || !num_tables)) {
         return FONT_COMPRESSION_FAILURE();
       }
@@ -1145,18 +1138,18 @@ fn ReadWOFF2Header(const uint8_t* data, size_t length, WOFF2Header* hdr) -> bool
       ttc_font.table_indices.resize(num_tables);
 
 
-      unsigned int glyf_idx = 0;
-      unsigned int loca_idx = 0;
+      var glyf_idx: unsigned int;
+      var loca_idx: unsigned int;
 
-      for (uint32_t j = 0; j < num_tables; j++) {
-        unsigned int table_idx;
+      for (var j: uint32_t; j < num_tables; j++) {
+        var table_idx: unsigned int;
         if (PREDICT_FALSE(!Read255UShort(&file, &table_idx)) ||
             table_idx >= hdr->tables.size()) {
           return FONT_COMPRESSION_FAILURE();
         }
         ttc_font.table_indices[j] = table_idx;
 
-        const Table& table = hdr->tables[table_idx];
+        var table: const woff2::Table &;
         if (table.tag == kLocaTableTag) {
           loca_idx = table_idx;
         }
@@ -1179,15 +1172,15 @@ fn ReadWOFF2Header(const uint8_t* data, size_t length, WOFF2Header* hdr) -> bool
     }
   }
 
-  const uint64_t first_table_offset = ComputeOffsetToFirstTable(*hdr);
+  var first_table_offset: const uint64_t;
 
   hdr->compressed_offset = file.offset();
   if (PREDICT_FALSE(hdr->compressed_offset >
                     std::numeric_limits<uint32_t>::max())) {
     return FONT_COMPRESSION_FAILURE();
   }
-  uint64_t src_offset = Round4(hdr->compressed_offset + hdr->compressed_length);
-  uint64_t dst_offset = first_table_offset;
+  var src_offset: uint64_t;
+  var dst_offset: uint64_t;
 
 
   if (PREDICT_FALSE(src_offset > length)) {
@@ -1226,21 +1219,21 @@ fn ReadWOFF2Header(const uint8_t* data, size_t length, WOFF2Header* hdr) -> bool
 }
 
 // Write everything before the actual table data
-fn WriteHeaders(RebuildMetadata* metadata,
-                  WOFF2Header* hdr, WOFF2Out* out) -> bool {
-  std::vector<uint8_t> output(ComputeOffsetToFirstTable(*hdr), 0);
+fn WriteHeaders(metadata: woff2::(anonymous namespace)::RebuildMetadata *,
+                  hdr: woff2::(anonymous namespace)::WOFF2Header *, out: woff2::WOFF2Out *) -> bool {
+  var output: std::vector<uint8_t>;
 
   // Re-order tables in output (OTSpec) order
-  std::vector<Table> sorted_tables(hdr->tables);
+  var sorted_tables: std::vector<Table>;
   if (hdr->header_version) {
     // collection; we have to sort the table offset vector in each font
-    for (auto& ttc_font : hdr->ttc_fonts) {
-      std::map<uint32_t, uint16_t> sorted_index_by_tag;
-      for (auto table_index : ttc_font.table_indices) {
+    for (auto& ttc_font var __begin3: std::__wrap_iter<woff2::(anonymous namespace)::TtcFont *> var __range3: std::vector<woff2::(anonymous namespace)::TtcFont> &) {
+      var sorted_index_by_tag: std::map<uint32_t, uint16_t>;
+      for (auto table_index var __begin4: std::__wrap_iter<unsigned short *> var __range4: std::vector<unsigned short> &) {
         sorted_index_by_tag[hdr->tables[table_index].tag] = table_index;
       }
-      uint16_t index = 0;
-      for (auto& i : sorted_index_by_tag) {
+      var index: uint16_t;
+      for (auto& i var __begin4: std::__map_iterator<std::__tree_iterator<std::__value_type<unsigned int, unsigned short>, std::__tree_node<std::__value_type<unsigned int, unsigned short>, void *> *, long>> var __range4: std::map<unsigned int, unsigned short> &) {
         ttc_font.table_indices[index++] = i.second;
       }
     }
@@ -1250,16 +1243,16 @@ fn WriteHeaders(RebuildMetadata* metadata,
   }
 
   // Start building the font
-  uint8_t* result = &output[0];
-  size_t offset = 0;
+  var result: uint8_t *;
+  var offset: size_t;
   if (hdr->header_version) {
     // TTC header
     offset = StoreU32(result, offset, hdr->flavor);  // TAG TTCTag
     offset = StoreU32(result, offset, hdr->header_version);  // FIXED Version
     offset = StoreU32(result, offset, hdr->ttc_fonts.size());  // ULONG numFonts
     // Space for ULONG OffsetTable[numFonts] (zeroed initially)
-    size_t offset_table = offset;  // keep start of offset table for later
-    for (size_t i = 0; i < hdr->ttc_fonts.size(); i++) {
+    var offset_table: size_t;  // keep start of offset table for later
+    for (var i: size_t; i < hdr->ttc_fonts.size(); i++) {
       offset = StoreU32(result, offset, 0);  // will fill real values in later
     }
     // space for DSIG fields for header v2
@@ -1271,8 +1264,8 @@ fn WriteHeaders(RebuildMetadata* metadata,
 
     // write Offset Tables and store the location of each in TTC Header
     metadata->font_infos.resize(hdr->ttc_fonts.size());
-    for (size_t i = 0; i < hdr->ttc_fonts.size(); i++) {
-      TtcFont& ttc_font = hdr->ttc_fonts[i];
+    for (var i: size_t; i < hdr->ttc_fonts.size(); i++) {
+      var ttc_font: woff2::(anonymous namespace)::TtcFont &;
 
       // write Offset Table location into TTC Header
       offset_table = StoreU32(result, offset_table, offset);
@@ -1282,8 +1275,8 @@ fn WriteHeaders(RebuildMetadata* metadata,
       offset = StoreOffsetTable(result, offset, ttc_font.flavor,
                                 ttc_font.table_indices.size());
 
-      for (const auto table_index : ttc_font.table_indices) {
-        uint32_t tag = hdr->tables[table_index].tag;
+      for (const auto table_index var __begin4: std::__wrap_iter<unsigned short *> var __range4: std::vector<unsigned short> &) {
+        var tag: uint32_t;
         metadata->font_infos[i].table_entry_by_tag[tag] = offset;
         offset = StoreTableEntry(result, offset, tag);
       }
@@ -1294,7 +1287,7 @@ fn WriteHeaders(RebuildMetadata* metadata,
   } else {
     metadata->font_infos.resize(1);
     offset = StoreOffsetTable(result, offset, hdr->flavor, hdr->num_tables);
-    for (uint16_t i = 0; i < hdr->num_tables; ++i) {
+    for (var i: uint16_t; i < hdr->num_tables; ++i) {
       metadata->font_infos[0].table_entry_by_tag[sorted_tables[i].tag] = offset;
       offset = StoreTableEntry(result, offset, sorted_tables[i].tag);
     }
@@ -1309,9 +1302,9 @@ fn WriteHeaders(RebuildMetadata* metadata,
 
 }  // namespace
 
-fn ComputeWOFF2FinalSize(const uint8_t* data, size_t length) -> size_t {
-  Buffer file(data, length);
-  uint32_t total_length;
+fn ComputeWOFF2FinalSize(data: const uint8_t *, length: size_t) -> size_t {
+  var file: woff2::Buffer;
+  var total_length: uint32_t;
 
   if (!file.Skip(16) ||
       !file.ReadU32(&total_length)) {
@@ -1320,16 +1313,16 @@ fn ComputeWOFF2FinalSize(const uint8_t* data, size_t length) -> size_t {
   return total_length;
 }
 
-fn ConvertWOFF2ToTTF(uint8_t *result, size_t result_length,
-                       const uint8_t *data, size_t length) -> bool {
-  WOFF2MemoryOut out(result, result_length);
+fn ConvertWOFF2ToTTF(result: uint8_t *, result_length: size_t,
+                       data: const uint8_t *, length: size_t) -> bool {
+  var out: woff2::WOFF2MemoryOut;
   return ConvertWOFF2ToTTF(data, length, &out);
 }
 
-fn ConvertWOFF2ToTTF(const uint8_t* data, size_t length,
-                       WOFF2Out* out) -> bool {
-  RebuildMetadata metadata;
-  WOFF2Header hdr;
+fn ConvertWOFF2ToTTF(data: const uint8_t *, length: size_t,
+                       out: woff2::WOFF2Out *) -> bool {
+  var metadata: woff2::(anonymous namespace)::RebuildMetadata;
+  var hdr: woff2::(anonymous namespace)::WOFF2Header;
   if (!ReadWOFF2Header(data, length, &hdr)) {
     return FONT_COMPRESSION_FAILURE();
   }
@@ -1338,7 +1331,7 @@ fn ConvertWOFF2ToTTF(const uint8_t* data, size_t length,
     return FONT_COMPRESSION_FAILURE();
   }
 
-  const float compression_ratio = static_cast<float>(hdr.uncompressed_size) / length;
+  var compression_ratio: const float;
   if (compression_ratio > kMaxPlausibleCompressionRatio) {
 #ifdef FONT_COMPRESSION_BIN
     fprintf(stderr, "Implausible compression ratio %.01f\n", compression_ratio);
@@ -1346,8 +1339,8 @@ fn ConvertWOFF2ToTTF(const uint8_t* data, size_t length,
     return FONT_COMPRESSION_FAILURE();
   }
 
-  const uint8_t* src_buf = data + hdr.compressed_offset;
-  std::vector<uint8_t> uncompressed_buf(hdr.uncompressed_size);
+  var src_buf: const uint8_t *;
+  var uncompressed_buf: std::vector<uint8_t>;
   if (PREDICT_FALSE(hdr.uncompressed_size < 1)) {
     return FONT_COMPRESSION_FAILURE();
   }
@@ -1357,7 +1350,7 @@ fn ConvertWOFF2ToTTF(const uint8_t* data, size_t length,
     return FONT_COMPRESSION_FAILURE();
   }
 
-  for (size_t i = 0; i < metadata.font_infos.size(); i++) {
+  for (var i: size_t; i < metadata.font_infos.size(); i++) {
     if (PREDICT_FALSE(!ReconstructFont(&uncompressed_buf[0],
                                        hdr.uncompressed_size,
                                        &metadata, &hdr, i, out))) {

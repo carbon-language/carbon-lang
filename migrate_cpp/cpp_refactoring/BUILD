@@ -11,25 +11,8 @@ cc_binary(
     srcs = ["main.cpp"],
     deps = [
         ":fn_inserter",
+        ":var_decl",
         "@llvm-project//clang:tooling",
-    ],
-)
-
-cc_library(
-    name = "fn_inserter",
-    srcs = ["fn_inserter.cpp"],
-    hdrs = ["fn_inserter.h"],
-    deps = [":matcher"],
-)
-
-cc_test(
-    name = "fn_inserter_test",
-    srcs = ["fn_inserter_test.cpp"],
-    deps = [
-        ":fn_inserter",
-        ":matcher_test_base",
-        "@llvm-project//clang:tooling",
-        "@llvm-project//llvm:gtest_main",
     ],
 )
 
@@ -53,5 +36,43 @@ cc_library(
         "@llvm-project//clang:tooling",
         "@llvm-project//llvm:gmock",
         "@llvm-project//llvm:gtest",
+    ],
+)
+
+# Individual matchers
+
+cc_library(
+    name = "fn_inserter",
+    srcs = ["fn_inserter.cpp"],
+    hdrs = ["fn_inserter.h"],
+    deps = [":matcher"],
+)
+
+cc_test(
+    name = "fn_inserter_test",
+    srcs = ["fn_inserter_test.cpp"],
+    deps = [
+        ":fn_inserter",
+        ":matcher_test_base",
+        "@llvm-project//clang:tooling",
+        "@llvm-project//llvm:gtest_main",
+    ],
+)
+
+cc_library(
+    name = "var_decl",
+    srcs = ["var_decl.cpp"],
+    hdrs = ["var_decl.h"],
+    deps = [":matcher"],
+)
+
+cc_test(
+    name = "var_decl_test",
+    srcs = ["var_decl_test.cpp"],
+    deps = [
+        ":matcher_test_base",
+        ":var_decl",
+        "@llvm-project//clang:tooling",
+        "@llvm-project//llvm:gtest_main",
     ],
 )

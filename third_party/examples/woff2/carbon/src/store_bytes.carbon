@@ -18,7 +18,7 @@
 
 namespace woff2 {
 
-fn auto StoreU32(uint8_t* dst, size_t offset, uint32_t x) -> size_t {
+fn auto StoreU32(dst: uint8_t *, offset: size_t, x: uint32_t) -> size_t {
   dst[offset] = x >> 24;
   dst[offset + 1] = x >> 16;
   dst[offset + 2] = x >> 8;
@@ -26,7 +26,7 @@ fn auto StoreU32(uint8_t* dst, size_t offset, uint32_t x) -> size_t {
   return offset + 4;
 }
 
-fn auto Store16(uint8_t* dst, size_t offset, int x) -> size_t {
+fn auto Store16(dst: uint8_t *, offset: size_t, x: int) -> size_t {
 #if defined(WOFF_LITTLE_ENDIAN)
   *reinterpret_cast<uint16_t*>(dst + offset) =
       ((x & 0xFF) << 8) | ((x & 0xFF00) >> 8);
@@ -39,14 +39,14 @@ fn auto Store16(uint8_t* dst, size_t offset, int x) -> size_t {
   return offset + 2;
 }
 
-inline void StoreU32(uint32_t val, size_t* offset, uint8_t* dst) {
+fn void StoreU32(val: uint32_t, offset: size_t *, dst: uint8_t *) {
   dst[(*offset)++] = val >> 24;
   dst[(*offset)++] = val >> 16;
   dst[(*offset)++] = val >> 8;
   dst[(*offset)++] = val;
 }
 
-inline void Store16(int val, size_t* offset, uint8_t* dst) {
+fn void Store16(val: int, offset: size_t *, dst: uint8_t *) {
 #if defined(WOFF_LITTLE_ENDIAN)
   *reinterpret_cast<uint16_t*>(dst + *offset) =
       ((val & 0xFF) << 8) | ((val & 0xFF00) >> 8);
@@ -60,8 +60,8 @@ inline void Store16(int val, size_t* offset, uint8_t* dst) {
 #endif
 }
 
-inline void StoreBytes(const uint8_t* data, size_t len,
-                       size_t* offset, uint8_t* dst) {
+fn void StoreBytes(data: const uint8_t *, len: size_t,
+                       offset: size_t *, dst: uint8_t *) {
   memcpy(&dst[*offset], data, len);
   *offset += len;
 }
