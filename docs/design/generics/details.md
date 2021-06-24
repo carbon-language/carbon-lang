@@ -3955,7 +3955,7 @@ The type-type `Sized` is defined as follows:
 Knowing a type is sized is a precondition to declaring (member/local) variables
 of that type, taking values of that type as parameters, returning values of that
 type, and defining arrays of that type. There will generally be additional
-requirements to initialize or move values of that type as needed.
+requirements to initialize, move, or destroy values of that type as needed.
 
 Example:
 
