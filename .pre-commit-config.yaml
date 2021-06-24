@@ -54,6 +54,16 @@ repos:
           - ''
           - '// '
           - ''
+          - --custom_format
+          - '\.l$'
+          - '/*'
+          - ''
+          - '*/'
+          - --custom_format
+          - '\.y$'
+          - '/*'
+          - ''
+          - '*/'
         exclude: |
           (?x)^(
               .bazelversion|
@@ -61,6 +71,7 @@ repos:
               third_party/examples/.*/compile_flags.carbon.txt|
               website/(firebase/.firebaserc|jekyll/(Gemfile.lock|theme/.*))|
               .*\.def|
+              .*\.svg|
               .*/testdata/.*\.golden
           )$
       - id: check-google-doc-style
