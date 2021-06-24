@@ -38,7 +38,7 @@ fn WOFF2StringOut::Write(buf: const void *, offset: size_t, n: size_t) -> bool {
   return true;
 }
 
-void WOFF2StringOut::SetMaxSize(max_size: size_t) {
+fn WOFF2StringOut::SetMaxSize(max_size: size_t) {
   max_size_ = max_size;
   if (offset_ > max_size_) {
     offset_ = max_size_;

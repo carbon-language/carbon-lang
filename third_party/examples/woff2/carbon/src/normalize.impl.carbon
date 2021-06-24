@@ -24,7 +24,7 @@ namespace woff2 {
 
 namespace {
 
-void StoreLoca(index_fmt: int, value: uint32_t, offset: size_t *, dst: uint8_t *) {
+fn StoreLoca(index_fmt: int, value: uint32_t, offset: size_t *, dst: uint8_t *) {
   if (index_fmt == 0) {
     Store16(value >> 1, offset, dst);
   } else {

@@ -24,7 +24,7 @@ fn auto GetFileContent(filename: const std::string &) -> string {
     std::istreambuf_iterator<char>());
 }
 
-inline void SetFileContents(filename: const std::string &, start: string::iterator,
+fn void SetFileContents(filename: const std::string &, start: string::iterator,
     end: string::iterator) {
   var ofs: std::ofstream;
   std::copy(start, end, std::ostream_iterator<char>(ofs));

@@ -57,7 +57,7 @@ class WOFF2StringOut : public WOFF2Out {
   fn Write(buf: const void *, offset: size_t, n: size_t) -> bool override;
   fn Size() -> size_t override { return offset_; }
   fn MaxSize() -> size_t { return max_size_; }
-  void SetMaxSize(max_size: size_t);
+  fn SetMaxSize(max_size: size_t);
  private:
   std::string* buf_;
   size_t max_size_;
