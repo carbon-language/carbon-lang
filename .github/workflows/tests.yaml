@@ -45,6 +45,7 @@ jobs:
         if: github.event_name != 'pull_request_target'
         uses: actions/checkout@v2
         with:
+          ref: ${{ github.ref }}
           submodules: true
 
       # Setup Python and related tools.
