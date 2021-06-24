@@ -71,7 +71,7 @@ fn KnownTableIndex(tag: uint32_t) -> int {
   return 63;
 }
 
-void StoreTableEntry(table: const woff2::Table &, offset: size_t *, dst: uint8_t *) {
+fn StoreTableEntry(table: const woff2::Table &, offset: size_t *, dst: uint8_t *) {
   var flag_byte: uint8_t;
   dst[(*offset)++] = flag_byte;
   // The index here is treated as a set of flag bytes because

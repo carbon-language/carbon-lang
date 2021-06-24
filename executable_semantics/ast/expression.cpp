@@ -4,7 +4,6 @@
 
 #include "executable_semantics/ast/expression.h"
 
-#include <cassert>
 #include <iostream>
 
 namespace Carbon {
@@ -96,7 +95,7 @@ auto Expression::MakeFunType(int line_num, const Expression* param,
 auto Expression::MakeVar(int line_num, std::string var) -> const Expression* {
   auto* v = new Expression();
   v->line_num = line_num;
-  v->value = Variable({.name = new std::string(std::move(var))});
+  v->value = Variable({.name = std::move(var)});
   return v;
 }
 
@@ -104,8 +103,7 @@ auto Expression::MakeVarPat(int line_num, std::string var,
                             const Expression* type) -> const Expression* {
   auto* v = new Expression();
   v->line_num = line_num;
-  v->value =
-      PatternVariable({.name = new std::string(std::move(var)), .type = type});
+  v->value = PatternVariable({.name = std::move(var), .type = type});
   return v;
 }
 
@@ -163,8 +161,7 @@ auto Expression::MakeGetField(int line_num, const Expression* exp,
                               std::string field) -> const Expression* {
   auto* e = new Expression();
   e->line_num = line_num;
-  e->value = FieldAccess(
-      {.aggregate = exp, .field = new std::string(std::move(field))});
+  e->value = FieldAccess({.aggregate = *exp, .field = std::move(field)});
   return e;
 }
 
@@ -260,9 +257,9 @@ void PrintExp(const Expression* e) {
       std::cout << "]";
       break;
     case ExpressionKind::GetField:
-      PrintExp(e->GetFieldAccess().aggregate);
+      PrintExp(e->GetFieldAccess().aggregate.GetPointer());
       std::cout << ".";
-      std::cout << *e->GetFieldAccess().field;
+      std::cout << e->GetFieldAccess().field;
       break;
     case ExpressionKind::Tuple:
       std::cout << "(";
@@ -299,12 +296,12 @@ void PrintExp(const Expression* e) {
       break;
     }
     case ExpressionKind::Variable:
-      std::cout << *e->GetVariable().name;
+      std::cout << e->GetVariable().name;
       break;
     case ExpressionKind::PatternVariable:
       PrintExp(e->GetPatternVariable().type);
       std::cout << ": ";
-      std::cout << *e->GetPatternVariable().name;
+      std::cout << e->GetPatternVariable().name;
       break;
     case ExpressionKind::Call:
       PrintExp(e->GetCall().function);

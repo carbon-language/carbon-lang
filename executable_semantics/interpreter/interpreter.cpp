@@ -4,7 +4,6 @@
 
 #include "executable_semantics/interpreter/interpreter.h"
 
-#include <cassert>
 #include <iostream>
 #include <iterator>
 #include <list>
@@ -13,6 +12,7 @@
 #include <utility>
 #include <vector>
 
+#include "common/check.h"
 #include "executable_semantics/ast/expression.h"
 #include "executable_semantics/ast/function_definition.h"
 #include "executable_semantics/interpreter/stack.h"
@@ -37,7 +37,7 @@ auto Heap::AllocateValue(const Value* v) -> Address {
   // ensures that we don't do anything else in between, which is really bad!
   // Consider whether to include a copy of the input v in this function
   // or to leave it up to the caller.
-  assert(v != nullptr);
+  CHECK(v != nullptr);
   Address a = values_.size();
   values_.push_back(v);
   alive_.push_back(true);
@@ -50,7 +50,7 @@ auto Heap::Read(Address a, int line_num) -> const Value* {
 }
 
 auto Heap::Write(Address a, const Value* v, int line_num) -> void {
-  assert(v != nullptr);
+  CHECK(v != nullptr);
   this->CheckAlive(a, line_num);
   values_[a] = v;
 }
@@ -625,10 +625,10 @@ void StepLvalue() {
       //    { {x :: C, E, F} :: S, H}
       // -> { {E(x) :: C, E, F} :: S, H}
       std::optional<Address> pointer =
-          CurrentEnv(state).Get(*(exp->GetVariable().name));
+          CurrentEnv(state).Get(exp->GetVariable().name);
       if (!pointer) {
         std::cerr << exp->line_num << ": could not find `"
-                  << *(exp->GetVariable().name) << "`" << std::endl;
+                  << exp->GetVariable().name << "`" << std::endl;
         exit(-1);
       }
       const Value* v = Value::MakePtrVal(*pointer);
@@ -640,14 +640,15 @@ void StepLvalue() {
       if (act->pos == -1) {
         //    { {e.f :: C, E, F} :: S, H}
         // -> { e :: [].f :: C, E, F} :: S, H}
-        frame->todo.Push(MakeLvalAct(exp->GetFieldAccess().aggregate));
+        frame->todo.Push(
+            MakeLvalAct(exp->GetFieldAccess().aggregate.GetPointer()));
         act->pos++;
       } else {
         //    { v :: [].f :: C, E, F} :: S, H}
         // -> { { &v.f :: C, E, F} :: S, H }
         const Value* str = act->results[0];
         Address a = GetMember(ValToPtr(str, exp->line_num),
-                              *exp->GetFieldAccess().field, exp->line_num);
+                              exp->GetFieldAccess().field, exp->line_num);
         frame->todo.Pop(1);
         frame->todo.Push(MakeValAct(Value::MakePtrVal(a)));
       }
@@ -732,7 +733,7 @@ void StepExp() {
         frame->todo.Push(MakeExpAct(exp->GetPatternVariable().type));
         act->pos++;
       } else {
-        auto v = Value::MakeVarPatVal(*exp->GetPatternVariable().name,
+        auto v = Value::MakeVarPatVal(exp->GetPatternVariable().name,
                                       act->results[0]);
         frame->todo.Pop(1);
         frame->todo.Push(MakeValAct(v));
@@ -803,13 +804,14 @@ void StepExp() {
       if (act->pos == -1) {
         //    { { e.f :: C, E, F} :: S, H}
         // -> { { e :: [].f :: C, E, F} :: S, H}
-        frame->todo.Push(MakeLvalAct(exp->GetFieldAccess().aggregate));
+        frame->todo.Push(
+            MakeLvalAct(exp->GetFieldAccess().aggregate.GetPointer()));
         act->pos++;
       } else {
         //    { { v :: [].f :: C, E, F} :: S, H}
         // -> { { v_f :: C, E, F} : S, H}
         auto a = GetMember(ValToPtr(act->results[0], exp->line_num),
-                           *exp->GetFieldAccess().field, exp->line_num);
+                           exp->GetFieldAccess().field, exp->line_num);
         const Value* element = state->heap.Read(a, exp->line_num);
         frame->todo.Pop(1);
         frame->todo.Push(MakeValAct(element));
@@ -820,10 +822,10 @@ void StepExp() {
       assert(act->pos == -1);
       // { {x :: C, E, F} :: S, H} -> { {H(E(x)) :: C, E, F} :: S, H}
       std::optional<Address> pointer =
-          CurrentEnv(state).Get(*(exp->GetVariable().name));
+          CurrentEnv(state).Get(exp->GetVariable().name);
       if (!pointer) {
         std::cerr << exp->line_num << ": could not find `"
-                  << *(exp->GetVariable().name) << "`" << std::endl;
+                  << exp->GetVariable().name << "`" << std::endl;
         exit(-1);
       }
       const Value* pointee = state->heap.Read(*pointer, exp->line_num);
@@ -986,7 +988,7 @@ void StepStmt() {
   Frame* frame = state->stack.Top();
   Action* act = frame->todo.Top();
   const Statement* stmt = act->u.stmt;
-  assert(stmt != nullptr && "null statement!");
+  CHECK(stmt != nullptr && "null statement!");
   if (tracing_output) {
     std::cout << "--- step stmt ";
     PrintStatement(stmt, 1);
