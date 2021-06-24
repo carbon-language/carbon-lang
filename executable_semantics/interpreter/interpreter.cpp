@@ -1381,7 +1381,9 @@ void Step() {
       Action* act = frame->todo.Top();
       act->results.push_back(val_act->u.val);
       // TODO: remove the following as part of changing the numbering
-      // for act->pos to start at 0. -Jeremy
+      // for act->pos to start at 0. I've made one failed attempt
+      // to do so already. Unfortunately, the current state of
+      // affairs is tricky. -Jeremy
       act->pos++;
       break;
     }

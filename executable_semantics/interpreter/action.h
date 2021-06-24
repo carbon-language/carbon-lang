@@ -32,7 +32,7 @@ struct Action {
     const Value* val;  // for finished actions with a value (ValAction)
     Address delete_tmp;
   } u;
-  int pos;  // position or state of the action, starts at 0
+  int pos;  // position or state of the action, starts at -1
   std::vector<const Value*> results;  // results from subexpression
 };
 
