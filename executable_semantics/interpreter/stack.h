@@ -8,7 +8,7 @@
 #include <cstddef>
 #include <iterator>
 
-#include "executable_semantics/common/check.h"
+#include "common/check.h"
 #include "executable_semantics/interpreter/list_node.h"
 
 namespace Carbon {

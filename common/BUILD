@@ -17,6 +17,22 @@ cc_test(
     srcs = ["check_test.cpp"],
     deps = [
         ":check",
+        "@llvm-project//llvm:gtest",
+        "@llvm-project//llvm:gtest_main",
+    ],
+)
+
+cc_library(
+    name = "indirect_value",
+    srcs = ["indirect_value.h"],
+)
+
+cc_test(
+    name = "indirect_value_test",
+    srcs = ["indirect_value_test.cpp"],
+    deps = [
+        ":indirect_value",
+        "@llvm-project//llvm:gtest",
         "@llvm-project//llvm:gtest_main",
     ],
 )

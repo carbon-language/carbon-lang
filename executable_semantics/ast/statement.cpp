@@ -6,7 +6,7 @@
 
 #include <iostream>
 
-#include "executable_semantics/common/check.h"
+#include "common/check.h"
 
 namespace Carbon {
 

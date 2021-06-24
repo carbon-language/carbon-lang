@@ -2,7 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#include "executable_semantics/common/check.h"
+#include "common/check.h"
 
 #include "gtest/gtest.h"
 

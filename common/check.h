@@ -2,8 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#ifndef EXECUTABLE_SEMANTICS_COMMON_CHECK_H_
-#define EXECUTABLE_SEMANTICS_COMMON_CHECK_H_
+#ifndef COMMON_CHECK_H_
+#define COMMON_CHECK_H_
 
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/Signals.h"
@@ -15,4 +15,4 @@
     llvm::report_fatal_error("CHECK failure: " #condition); \
   }
 
-#endif  // EXECUTABLE_SEMANTICS_COMMON_CHECK_H_
+#endif  // COMMON_CHECK_H_

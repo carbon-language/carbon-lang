@@ -7,7 +7,7 @@
 #include <algorithm>
 #include <iostream>
 
-#include "executable_semantics/common/check.h"
+#include "common/check.h"
 #include "executable_semantics/interpreter/interpreter.h"
 
 namespace Carbon {

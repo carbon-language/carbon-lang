@@ -12,9 +12,9 @@
 #include <utility>
 #include <vector>
 
+#include "common/check.h"
 #include "executable_semantics/ast/expression.h"
 #include "executable_semantics/ast/function_definition.h"
-#include "executable_semantics/common/check.h"
 #include "executable_semantics/interpreter/stack.h"
 #include "executable_semantics/interpreter/typecheck.h"
 #include "executable_semantics/tracing_flag.h"
@@ -624,10 +624,10 @@ void StepLvalue() {
       //    { {x :: C, E, F} :: S, H}
       // -> { {E(x) :: C, E, F} :: S, H}
       std::optional<Address> pointer =
-          CurrentEnv(state).Get(*(exp->GetVariable().name));
+          CurrentEnv(state).Get(exp->GetVariable().name);
       if (!pointer) {
         std::cerr << exp->line_num << ": could not find `"
-                  << *(exp->GetVariable().name) << "`" << std::endl;
+                  << exp->GetVariable().name << "`" << std::endl;
         exit(-1);
       }
       const Value* v = Value::MakePtrVal(*pointer);
@@ -638,7 +638,8 @@ void StepLvalue() {
     case ExpressionKind::GetField: {
       //    { {e.f :: C, E, F} :: S, H}
       // -> { e :: [].f :: C, E, F} :: S, H}
-      frame->todo.Push(MakeLvalAct(exp->GetFieldAccess().aggregate));
+      frame->todo.Push(
+          MakeLvalAct(exp->GetFieldAccess().aggregate.GetPointer()));
       act->pos++;
       break;
     }
@@ -714,17 +715,18 @@ void StepExp() {
     case ExpressionKind::GetField: {
       //    { { e.f :: C, E, F} :: S, H}
       // -> { { e :: [].f :: C, E, F} :: S, H}
-      frame->todo.Push(MakeLvalAct(exp->GetFieldAccess().aggregate));
+      frame->todo.Push(
+          MakeLvalAct(exp->GetFieldAccess().aggregate.GetPointer()));
       act->pos++;
       break;
     }
     case ExpressionKind::Variable: {
       // { {x :: C, E, F} :: S, H} -> { {H(E(x)) :: C, E, F} :: S, H}
       std::optional<Address> pointer =
-          CurrentEnv(state).Get(*(exp->GetVariable().name));
+          CurrentEnv(state).Get(exp->GetVariable().name);
       if (!pointer) {
         std::cerr << exp->line_num << ": could not find `"
-                  << *(exp->GetVariable().name) << "`" << std::endl;
+                  << exp->GetVariable().name << "`" << std::endl;
         exit(-1);
       }
       const Value* pointee = state->heap.Read(*pointer, exp->line_num);
@@ -1082,7 +1084,7 @@ void HandleValue() {
           // -> { { &v.f :: C, E, F} :: S, H }
           const Value* str = act->results[0];
           Address a = GetMember(ValToPtr(str, exp->line_num),
-                                *exp->GetFieldAccess().field, exp->line_num);
+                                exp->GetFieldAccess().field, exp->line_num);
           frame->todo.Pop(2);
           frame->todo.Push(MakeValAct(Value::MakePtrVal(a)));
           break;
@@ -1135,7 +1137,7 @@ void HandleValue() {
       const Expression* exp = act->u.exp;
       switch (exp->tag()) {
         case ExpressionKind::PatternVariable: {
-          auto v = Value::MakeVarPatVal(*exp->GetPatternVariable().name,
+          auto v = Value::MakeVarPatVal(exp->GetPatternVariable().name,
                                         act->results[0]);
           frame->todo.Pop(2);
           frame->todo.Push(MakeValAct(v));
@@ -1194,7 +1196,7 @@ void HandleValue() {
           //    { { v :: [].f :: C, E, F} :: S, H}
           // -> { { v_f :: C, E, F} : S, H}
           auto a = GetMember(ValToPtr(act->results[0], exp->line_num),
-                             *exp->GetFieldAccess().field, exp->line_num);
+                             exp->GetFieldAccess().field, exp->line_num);
           const Value* element = state->heap.Read(a, exp->line_num);
           frame->todo.Pop(2);
           frame->todo.Push(MakeValAct(element));
