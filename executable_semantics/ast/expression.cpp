@@ -4,7 +4,6 @@
 
 #include "executable_semantics/ast/expression.h"
 
-#include <cassert>
 #include <iostream>
 
 namespace Carbon {

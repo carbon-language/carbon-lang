@@ -49,7 +49,10 @@ cc_library(
     name = "statement",
     srcs = ["statement.cpp"],
     hdrs = ["statement.h"],
-    deps = [":expression"],
+    deps = [
+        ":expression",
+        "//common:check",
+    ],
 )
 
 cc_library(
