@@ -16,13 +16,13 @@
 namespace woff2 {
 
 fn Size255UShort(value: uint16_t) -> size_t;
-fn Read255UShort(buf: woff2::Buffer *, value: unsigned int *) -> bool;
-fn Write255UShort(out: std::vector<uint8_t> *, value: int);
-fn Store255UShort(val: int, offset: size_t *, dst: uint8_t *);
+fn Read255UShort(buf: Buffer*, value: unsigned int*) -> bool;
+fn Write255UShort(out: vector<uint8_t>std::*, value: int);
+fn Store255UShort(val: int, offset: size_t*, dst: uint8_t*);
 
 fn Base128Size(n: size_t) -> size_t;
-fn ReadBase128(buf: woff2::Buffer *, value: uint32_t *) -> bool;
-fn StoreBase128(len: size_t, offset: size_t *, dst: uint8_t *);
+fn ReadBase128(buf: Buffer*, value: uint32_t*) -> bool;
+fn StoreBase128(len: size_t, offset: size_t*, dst: uint8_t*);
 
 } // namespace woff2
 

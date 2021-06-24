@@ -37,28 +37,31 @@ TEST_F(VarDeclTest, DeclarationComma) {
 
 TEST_F(VarDeclTest, DeclarationCommaArray) {
   // TODO: Maybe replace the comma with a `;`.
+  // TODO: Need to handle j's array.
   constexpr char Before[] = "int i[4], j[4];";
-  constexpr char After[] = "var i: int [4], var j: int [4];";
+  constexpr char After[] = "var i: int[4], j[4];";
   ExpectReplacement(Before, After);
 }
 
 TEST_F(VarDeclTest, DeclarationCommaPointers) {
   // TODO: Maybe replace the comma with a `;`.
+  // TODO: Need to handle j's pointer.
+  // constexpr char After[] = "var i: int *, var j: int *;";
   constexpr char Before[] = "int *i, *j;";
-  constexpr char After[] = "var i: int *, var j: int *;";
+  constexpr char After[] = "var i: int*, *j;";
   ExpectReplacement(Before, After);
 }
 
 TEST_F(VarDeclTest, Assignment) {
   constexpr char Before[] = "int i = 0;";
   // TODO: Include init.
-  constexpr char After[] = "let i: int;";
+  constexpr char After[] = "var i: int;";
   ExpectReplacement(Before, After);
 }
 
 TEST_F(VarDeclTest, Auto) {
   constexpr char Before[] = "auto i = 0;";
-  constexpr char After[] = "let i: auto;";
+  constexpr char After[] = "var i: auto;";
   ExpectReplacement(Before, After);
 }
 
@@ -83,7 +86,7 @@ TEST_F(VarDeclTest, ParamsDefault) {
 
 TEST_F(VarDeclTest, ParamsConst) {
   constexpr char Before[] = "auto Foo(const int i) -> int;";
-  constexpr char After[] = "auto Foo(i: const int) -> int;";
+  constexpr char After[] = "auto Foo(let i: int) -> int;";
   ExpectReplacement(Before, After);
 }
 
@@ -95,7 +98,7 @@ TEST_F(VarDeclTest, ParamStruct) {
   )cpp";
   constexpr char After[] = R"(
     struct Circle {};
-    auto Draw(times: int, circle: const Circle &) -> bool;
+    auto Draw(times: int, circle: Circle&) -> bool;
   )";
   ExpectReplacement(Before, After);
 }
@@ -115,7 +118,8 @@ TEST_F(VarDeclTest, Member) {
 }
 
 TEST_F(VarDeclTest, DISABLED_RangeFor) {
-  // TODO: Handle range based for loops.
+  // TODO: Handle range based for loops. Test shouldn't be enabled without
+  // addressing this because the output is quirky and fragile.
   constexpr char Before[] = R"cpp(
     void Foo() {
       int items[] = {1};

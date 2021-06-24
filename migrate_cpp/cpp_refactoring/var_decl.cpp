@@ -18,16 +18,19 @@ VarDecl::VarDecl(std::map<std::string, Replacements>& in_replacements,
 }
 
 static auto GetTypeStr(clang::TypeLoc type_loc, const clang::SourceManager& sm,
-                       const clang::LangOptions& lang_opts) -> std::string {
+                       const clang::LangOptions& lang_opts)
+    -> std::tuple<std::string, bool> {
   std::string type_str;
+  bool is_const = false;
   while (!type_loc.isNull()) {
+    is_const = type_loc.getType().isConstQualified();
     type_str.insert(
         0, clang::Lexer::getSourceText(clang::CharSourceRange::getTokenRange(
                                            type_loc.getLocalSourceRange()),
                                        sm, lang_opts));
     type_loc = type_loc.getNextTypeLoc();
   }
-  return type_str;
+  return std::make_tuple(type_str, is_const);
 }
 
 void VarDecl::run(const cam::MatchFinder::MatchResult& result) {
@@ -36,28 +39,30 @@ void VarDecl::run(const cam::MatchFinder::MatchResult& result) {
     llvm::report_fatal_error(std::string("getNodeAs failed for ") + Label);
   }
 
-  auto& sm = *(result.SourceManager);
-  auto lang_opts = result.Context->getLangOpts();
-
-  std::string after;
-  if (decl->hasConstantInitialization()) {
-    after = "let ";
-  } else if (result.Nodes.getNodeAs<clang::ParmVarDecl>(Label) == nullptr) {
-    // Start the replacement with "var" unless it's a parameter.
-    after = "var ";
-  }
-  // Add "identifier: " to the replacement.
-  after += decl->getNameAsString() + ": ";
-
   if (decl->getTypeSourceInfo() == nullptr) {
     // TODO: Need to understand what's happening in this case. Not sure if we
     // need to address it.
     return;
   }
 
+  auto& sm = *(result.SourceManager);
+  auto lang_opts = result.Context->getLangOpts();
+
   // Locate the type, then use the literal string for the replacement.
   auto type_loc = decl->getTypeSourceInfo()->getTypeLoc();
-  after += GetTypeStr(type_loc, sm, lang_opts);
+  std::string type_str;
+  bool use_let;
+  std::tie(type_str, use_let) = GetTypeStr(type_loc, sm, lang_opts);
+
+  std::string after;
+  if (decl->getTypeSourceInfo()->getType().isConstQualified()) {
+    after = "let ";
+  } else if (result.Nodes.getNodeAs<clang::ParmVarDecl>(Label) == nullptr) {
+    // Start the replacement with "var" unless it's a parameter.
+    after = "var ";
+  }
+  // Add "identifier: type" to the replacement.
+  after += decl->getNameAsString() + ": " + type_str;
 
   // This decides the range to replace. Normally the entire decl is replaced,
   // but for code like `int i, j` we need to detect the comma between the

@@ -12,7 +12,7 @@
 #include <woff2/encode.h>
 
 
-fn main(argc: int, argv: char **) -> int {
+fn main(argc: int, argv: char**) -> int {
   using std::string;
 
   if (argc != 2) {
@@ -20,18 +20,18 @@ fn main(argc: int, argv: char **) -> int {
     return 1;
   }
 
-  var filename: std::string;
-  var outfilename: std::string;
+  var filename: string;
+  var outfilename: string;
   fprintf(stdout, "Processing %s => %s\n",
     filename.c_str(), outfilename.c_str());
-  var input: std::string;
+  var input: string;
 
-  var input_data: const unsigned char *;
+  var input_data: auto*;
   var output_size: size_t;
-  var output: std::string;
-  var output_data: unsigned char *;
+  var output: string;
+  var output_data: auto*;
 
-  var params: woff2::WOFF2Params;
+  var params: WOFF2Paramswoff2::;
   if (!woff2::ConvertTTFToWOFF2(input_data, input.size(),
                                 output_data, &output_size, params)) {
     fprintf(stderr, "Compression failed.\n");

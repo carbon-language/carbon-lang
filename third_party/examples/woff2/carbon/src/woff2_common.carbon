@@ -16,16 +16,16 @@
 
 namespace woff2 {
 
-var kWoff2Signature: const uint32_t;  // "wOF2"
+let kWoff2Signature: uint32_t;  // "wOF2"
 
 // Leave the first byte open to store flag_byte
-var kWoff2FlagsTransform: const unsigned int;
+let kWoff2FlagsTransform: unsigned int;
 
 // TrueType Collection ID string: 'ttcf'
-var kTtcFontFlavor: const uint32_t;
+let kTtcFontFlavor: uint32_t;
 
-var kSfntHeaderSize: const size_t;
-var kSfntEntrySize: const size_t;
+let kSfntHeaderSize: size_t;
+let kSfntEntrySize: size_t;
 
 struct Point {
   int x;
@@ -45,7 +45,7 @@ struct Table {
   uint32_t dst_length;
   const uint8_t* dst_data;
 
-  fn operator<(other: const woff2::Table &) const -> bool {
+  fn operator<(other: Table&) const -> bool {
     return tag < other.tag;
   }
 };
@@ -57,7 +57,7 @@ struct Table {
 fn CollectionHeaderSize(header_version: uint32_t, num_fonts: uint32_t) -> size_t;
 
 // Compute checksum over size bytes of buf
-fn ComputeULongSum(buf: const uint8_t *, size: size_t) -> uint32_t;
+fn ComputeULongSum(buf: uint8_t*, size: size_t) -> uint32_t;
 
 } // namespace woff2
 

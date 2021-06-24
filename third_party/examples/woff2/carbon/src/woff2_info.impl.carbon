@@ -19,11 +19,11 @@ fn PrintTag(tag: int) -> std::string {
   if (tag & 0x80808080) {
     return std::string("_xfm");  // print _xfm for xform tables (else garbage)
   }
-  var printable: char [4];
+  var printable: char[];
   return std::string(printable, 4);
 }
 
-fn main(argc: int, argv: char **) -> int {
+fn main(argc: int, argv: char**) -> int {
   using std::string;
 
   if (argc != 2) {
@@ -31,13 +31,13 @@ fn main(argc: int, argv: char **) -> int {
     return 1;
   }
 
-  var filename: std::string;
-  var outfilename: std::string;
+  var filename: string;
+  var outfilename: string;
   fprintf(stdout, "Processing %s => %s\n",
     filename.c_str(), outfilename.c_str());
-  var input: std::string;
+  var input: string;
 
-  var file: woff2::Buffer;
+  var file: Bufferwoff2::;
 
   printf("WOFF2Header\n");
   var signature: uint32_t, var flavor: uint32_t, var length: uint32_t, var totalSfntSize: uint32_t, var totalCompressedSize: uint32_t;
@@ -91,10 +91,10 @@ fn main(argc: int, argv: char **) -> int {
   printf("privOffset          %d\n", privOffset);
   printf("privLength          %d\n", privLength);
 
-  var table_tags: std::vector<uint32_t>;
+  var table_tags: vector<uint32_t>std::;
   printf("TableDirectory starts at +%zu\n", file.offset());
   printf("Entry offset flags tag  origLength txLength\n");
-  for (var i: int; i < num_tables; i++) {
+  for (var i: auto; i < num_tables; i++) {
     var offset: size_t;
     var flags: uint8_t;
     var tag: uint32_t, var origLength: uint32_t, var transformLength: uint32_t;
@@ -137,7 +137,7 @@ fn main(argc: int, argv: char **) -> int {
 }
     printf("CollectionHeader 0x%08x %d fonts\n", version, numFonts);
 
-    for (var i: int; i < numFonts; i++) {
+    for (var i: auto; i < numFonts; i++) {
       var numTables: uint32_t, var flavor: uint32_t;
       if (!woff2::Read255UShort(&file, &numTables)) { return 1;
 }
@@ -145,7 +145,7 @@ fn main(argc: int, argv: char **) -> int {
 }
       printf("CollectionFontEntry %d flavor 0x%08x %d tables\n", i, flavor,
           numTables);
-      for (var j: int; j < numTables; j++) {
+      for (var j: auto; j < numTables; j++) {
         var table_idx: uint32_t;
         if (!woff2::Read255UShort(&file, &table_idx)) { return 1;
 }
