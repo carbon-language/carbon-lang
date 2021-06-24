@@ -14,16 +14,16 @@
 namespace woff2 {
 
 // Tags of popular tables.
-let kGlyfTableTag: uint32_t;
-let kHeadTableTag: uint32_t;
-let kLocaTableTag: uint32_t;
-let kDsigTableTag: uint32_t;
-let kCffTableTag: uint32_t;
-let kHmtxTableTag: uint32_t;
-let kHheaTableTag: uint32_t;
-let kMaxpTableTag: uint32_t;
+let kGlyfTableTag: const uint32_t;
+let kHeadTableTag: const uint32_t;
+let kLocaTableTag: const uint32_t;
+let kDsigTableTag: const uint32_t;
+let kCffTableTag: const uint32_t;
+let kHmtxTableTag: const uint32_t;
+let kHheaTableTag: const uint32_t;
+let kMaxpTableTag: const uint32_t;
 
-let kKnownTags: uint32_t[];
+let kKnownTags: const uint32_t [];
 
 } // namespace woff2
 

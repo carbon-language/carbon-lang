@@ -17,15 +17,31 @@ VarDecl::VarDecl(std::map<std::string, Replacements>& in_replacements,
   finder->addMatcher(cam::varDecl().bind(Label), this);
 }
 
-static auto GetTypeStr(clang::TypeLoc type_loc, const clang::SourceManager& sm,
+static auto GetTypeStr(const clang::VarDecl* decl,
+                       const clang::SourceManager& sm,
                        const clang::LangOptions& lang_opts) -> std::string {
-  // Sort type segments as they're written in the file. This avoids needing to
-  // understand TypeLoc traversal.
+  auto type_loc = decl->getTypeSourceInfo()->getTypeLoc();
   std::vector<clang::SourceRange> segments;
   while (!type_loc.isNull()) {
-    segments.push_back(type_loc.getLocalSourceRange());
-    type_loc = type_loc.getNextTypeLoc();
+    switch (type_loc.getTypeLocClass()) {
+      case clang::TypeLoc::LValueReference:
+      case clang::TypeLoc::RValueReference:
+      case clang::TypeLoc::Pointer:
+      case clang::TypeLoc::Auto:
+      case clang::TypeLoc::Qualified:
+        segments.push_back(type_loc.getLocalSourceRange());
+        type_loc = type_loc.getNextTypeLoc();
+        break;
+
+      default:
+        // For non-auto types, use the canonical type, which adds things like
+        // namespace qualifiers.
+        return clang::QualType::getAsString(decl->getType().split(), lang_opts);
+    }
   }
+
+  // Sort type segments as they're written in the file. This avoids needing to
+  // understand TypeLoc traversal ordering.
   std::sort(segments.begin(), segments.end(),
             [](clang::SourceRange a, clang::SourceRange b) {
               return a.getBegin() < b.getBegin();
@@ -54,10 +70,6 @@ void VarDecl::run(const cam::MatchFinder::MatchResult& result) {
   auto& sm = *(result.SourceManager);
   auto lang_opts = result.Context->getLangOpts();
 
-  // Locate the type, then use the literal string for the replacement.
-  auto type_loc = decl->getTypeSourceInfo()->getTypeLoc();
-  std::string type_str = GetTypeStr(type_loc, sm, lang_opts);
-
   std::string after;
   if (decl->getType().isConstQualified()) {
     after = "let ";
@@ -66,12 +78,13 @@ void VarDecl::run(const cam::MatchFinder::MatchResult& result) {
     after = "var ";
   }
   // Add "identifier: type" to the replacement.
-  after += decl->getNameAsString() + ": " + type_str;
+  after += decl->getNameAsString() + ": " + GetTypeStr(decl, sm, lang_opts);
 
   // This decides the range to replace. Normally the entire decl is replaced,
   // but for code like `int i, j` we need to detect the comma between the
   // declared names. That case currently results in `var i: int, var j: int`.
   // If there's a comma, this range will be non-empty.
+  auto type_loc = decl->getTypeSourceInfo()->getTypeLoc();
   auto after_type_loc =
       clang::Lexer::getLocForEndOfToken(type_loc.getEndLoc(), 0, sm, lang_opts);
   auto comma_source_text = clang::Lexer::getSourceText(
