@@ -17,6 +17,7 @@ VarDecl::VarDecl(std::map<std::string, Replacements>& in_replacements,
   finder->addMatcher(cam::varDecl().bind(Label), this);
 }
 
+// Returns a string for the type.
 static auto GetTypeStr(const clang::VarDecl* decl,
                        const clang::SourceManager& sm,
                        const clang::LangOptions& lang_opts) -> std::string {
