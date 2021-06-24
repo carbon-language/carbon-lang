@@ -18,15 +18,15 @@ using std::string;
 
 
 fn auto GetFileContent(filename: string&) -> string {
-  var ifs: ifstreamstd::;
+  var ifs: std::ifstream;
   return string(
     std::istreambuf_iterator<char>(ifs.rdbuf()),
     std::istreambuf_iterator<char>());
 }
 
-fn void SetFileContents(filename: string&, start: iteratorstring::,
-    end: iteratorstring::) {
-  var ofs: ofstreamstd::;
+fn void SetFileContents(filename: string&, start: string::iterator,
+    end: string::iterator) {
+  var ofs: std::ofstream;
   std::copy(start, end, std::ostream_iterator<char>(ofs));
 }
 

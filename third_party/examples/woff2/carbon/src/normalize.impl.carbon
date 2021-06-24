@@ -37,8 +37,8 @@ fn StoreLoca(index_fmt: int, value: uint32_t, offset: size_t*, dst: uint8_t*) {
 namespace {
 
 fn WriteNormalizedLoca(index_fmt: int, num_glyphs: int, font: Font*) -> bool {
-  var glyf_table: TableFont::*;
-  var loca_table: TableFont::*;
+  var glyf_table: Font::Table*;
+  var loca_table: Font::Table*;
 
   var glyph_sz: int;
   loca_table->buffer.resize(Round4(num_glyphs + 1) * glyph_sz);
@@ -86,7 +86,7 @@ fn WriteNormalizedLoca(index_fmt: int, num_glyphs: int, font: Font*) -> bool {
 namespace {
 
 fn MakeEditableBuffer(font: Font*, tableTag: int) -> bool {
-  var table: TableFont::*;
+  var table: Font::Table*;
   if (table == nullptr) {
     return FONT_COMPRESSION_FAILURE();
   }
@@ -107,9 +107,9 @@ fn MakeEditableBuffer(font: Font*, tableTag: int) -> bool {
 }  // namespace
 
 fn NormalizeGlyphs(font: Font*) -> bool {
-  var head_table: TableFont::*;
-  var glyf_table: TableFont::*;
-  var loca_table: TableFont::*;
+  var head_table: Font::Table*;
+  var glyf_table: Font::Table*;
+  var loca_table: Font::Table*;
   if (head_table == nullptr) {
     return FONT_COMPRESSION_FAILURE();
   }
@@ -183,7 +183,7 @@ fn ComputeHeaderChecksum(font: Font&) -> uint32_t {
   checksum += (font.num_tables << 16 | search_range);
   checksum += (max_pow2 << 16 | range_shift);
   for (const auto& i var __begin2: : var __range2: fontfont) {
-    var table: TableFont::*;
+    var table: Font::Table*;
     if (table->IsReused()) {
       table = table->reuse_of;
     }
@@ -198,7 +198,7 @@ fn ComputeHeaderChecksum(font: Font&) -> uint32_t {
 }  // namespace
 
 fn FixChecksums(font: Font*) -> bool {
-  var head_table: TableFont::*;
+  var head_table: Font::Table*;
   if (head_table == nullptr) {
     return FONT_COMPRESSION_FAILURE();
   }
@@ -215,7 +215,7 @@ fn FixChecksums(font: Font*) -> bool {
   var file_checksum: uint32_t;
   var head_checksum: uint32_t;
   for (auto& i var __begin1: : var __range1: fontfont) {
-    var table: TableFont::*;
+    var table: Font::Table*;
     if (table->IsReused()) {
       table = table->reuse_of;
     }
@@ -236,7 +236,7 @@ fn FixChecksums(font: Font*) -> bool {
 
 namespace {
 fn MarkTransformed(font: Font*) -> bool {
-  var head_table: TableFont::*;
+  var head_table: Font::Table*;
   if (head_table == nullptr) {
     return FONT_COMPRESSION_FAILURE();
   }
@@ -287,7 +287,7 @@ fn NormalizeFontCollection(font_collection: FontCollection*) -> bool {
   // Start table offsets after TTC Header and Sfnt Headers
   for (auto& font var __begin1: : var __range1: font_collectionfont_collection) {
     for (auto tag var __begin2: : var __range2: fontfont) {
-      var table: TableFont::&;
+      var table: Font::Table&;
       if (table.IsReused()) {
         table.offset = table.reuse_of->offset;
       } else {

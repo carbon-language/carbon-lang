@@ -17,7 +17,7 @@ namespace woff2 {
 
 fn Size255UShort(value: uint16_t) -> size_t;
 fn Read255UShort(buf: Buffer*, value: unsigned int*) -> bool;
-fn Write255UShort(out: vector<uint8_t>std::*, value: int);
+fn Write255UShort(out: std::vector<uint8_t>*, value: int);
 fn Store255UShort(val: int, offset: size_t*, dst: uint8_t*);
 
 fn Base128Size(n: size_t) -> size_t;

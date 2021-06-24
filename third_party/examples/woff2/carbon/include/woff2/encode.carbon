@@ -27,7 +27,7 @@ struct WOFF2Params {
 // Returns an upper bound on the size of the compressed file.
 fn MaxWOFF2CompressedSize(data: uint8_t*, length: size_t) -> size_t;
 fn MaxWOFF2CompressedSize(data: uint8_t*, length: size_t,
-                              extended_metadata: stringstd::&) -> size_t;
+                              extended_metadata: std::string&) -> size_t;
 
 // Compresses the font into the target buffer. *result_length should be at least
 // the value returned by MaxWOFF2CompressedSize(), upon return, it is set to the

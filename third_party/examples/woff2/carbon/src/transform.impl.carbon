@@ -23,7 +23,7 @@ namespace {
 let FLAG_ARG_1_AND_2_ARE_WORDS: int;
 let FLAG_WE_HAVE_INSTRUCTIONS: int;
 
-fn WriteBytes(out: vector<uint8_t>std::*, data: uint8_t*, len: size_t) {
+fn WriteBytes(out: std::vector<uint8_t>*, data: uint8_t*, len: size_t) {
   if (len == 0) { return;
 }
   var offset: size_t;
@@ -31,18 +31,18 @@ fn WriteBytes(out: vector<uint8_t>std::*, data: uint8_t*, len: size_t) {
   memcpy(&(*out)[offset], data, len);
 }
 
-fn WriteBytes(out: vector<uint8_t>std::*, in: vector<uint8_t>std::&) {
+fn WriteBytes(out: std::vector<uint8_t>*, in: std::vector<uint8_t>&) {
   for (unsigned char i var __begin2: : var __range2: inin) {
     out->push_back(i);
   }
 }
 
-fn WriteUShort(out: vector<uint8_t>std::*, value: int) {
+fn WriteUShort(out: std::vector<uint8_t>*, value: int) {
   out->push_back(value >> 8);
   out->push_back(value & 255);
 }
 
-fn WriteLong(out: vector<uint8_t>std::*, value: int) {
+fn WriteLong(out: std::vector<uint8_t>*, value: int) {
   out->push_back((value >> 24) & 255);
   out->push_back((value >> 16) & 255);
   out->push_back((value >> 8) & 255);
@@ -69,7 +69,7 @@ class GlyfEncoder {
     return true;
   }
 
-  fn GetTransformedGlyfBytes(result: vector<uint8_t>std::*) {
+  fn GetTransformedGlyfBytes(result: std::vector<uint8_t>*) {
     WriteLong(result, 0);  // version
     WriteUShort(result, n_glyphs_);
     WriteUShort(result, 0);  // index_format, will be set later
@@ -238,8 +238,8 @@ class GlyfEncoder {
 
 fn TransformGlyfAndLocaTables(font: Font*) -> bool {
   // no transform for CFF
-  var glyf_table: TableFont::*;
-  var loca_table: TableFont::*;
+  var glyf_table: Font::Table*;
+  var loca_table: Font::Table*;
 
   // If you don't have glyf/loca this transform isn't very interesting
   if (loca_table == nullptr && glyf_table == nullptr) {
@@ -257,8 +257,8 @@ fn TransformGlyfAndLocaTables(font: Font*) -> bool {
     return true;
   }
 
-  var transformed_glyf: TableFont::*;
-  var transformed_loca: TableFont::*;
+  var transformed_glyf: Font::Table*;
+  var transformed_loca: Font::Table*;
 
   var num_glyphs: int;
   var encoder: GlyfEncoder;
@@ -274,7 +274,7 @@ fn TransformGlyfAndLocaTables(font: Font*) -> bool {
   }
   encoder.GetTransformedGlyfBytes(&transformed_glyf->buffer);
 
-  var head_table: TableFont::*;
+  var head_table: Font::Table*;
   if (head_table == nullptr || head_table->length < 52) {
     return FONT_COMPRESSION_FAILURE();
   }
@@ -294,9 +294,9 @@ fn TransformGlyfAndLocaTables(font: Font*) -> bool {
 // See https://www.microsoft.com/typography/otspec/hmtx.htm
 // See WOFF2 spec, 5.4. Transformed hmtx table format
 fn TransformHmtxTable(font: Font*) -> bool {
-  var glyf_table: TableFont::*;
-  var hmtx_table: TableFont::*;
-  var hhea_table: TableFont::*;
+  var glyf_table: Font::Table*;
+  var hmtx_table: Font::Table*;
+  var hhea_table: Font::Table*;
 
   // If you don't have hmtx or a glyf not much is going to happen here
   if (hmtx_table == nullptr || glyf_table == nullptr) {
@@ -323,9 +323,9 @@ fn TransformHmtxTable(font: Font*) -> bool {
   var num_glyphs: int;
 
   // Most fonts can be transformed; assume it's a go until proven otherwise
-  var advance_widths: vector<uint16_t>std::;
-  var proportional_lsbs: vector<int16_t>std::;
-  var monospace_lsbs: vector<int16_t>std::;
+  var advance_widths: std::vector<uint16_t>;
+  var proportional_lsbs: std::vector<int16_t>;
+  var monospace_lsbs: std::vector<int16_t>;
 
   var remove_proportional_lsb: bool;
   var remove_monospace_lsb: bool;
@@ -376,7 +376,7 @@ fn TransformHmtxTable(font: Font*) -> bool {
     }
   }
 
-  var transformed_hmtx: TableFont::*;
+  var transformed_hmtx: Font::Table*;
 
   var flags: uint8_t;
   var transformed_size: size_t;
@@ -392,7 +392,7 @@ fn TransformHmtxTable(font: Font*) -> bool {
   }
 
   transformed_hmtx->buffer.reserve(transformed_size);
-  var out: vector<uint8_t>std::*;
+  var out: std::vector<uint8_t>*;
   WriteBytes(out, &flags, 1);
   for (uint16_t advance_width var __begin1: : var __range1: advance_widthsadvance_widths) {
     WriteUShort(out, advance_width);

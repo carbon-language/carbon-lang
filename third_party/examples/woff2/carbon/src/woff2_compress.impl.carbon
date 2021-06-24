@@ -31,7 +31,7 @@ fn main(argc: int, argv: char**) -> int {
   var output: string;
   var output_data: auto*;
 
-  var params: WOFF2Paramswoff2::;
+  var params: woff2::WOFF2Params;
   if (!woff2::ConvertTTFToWOFF2(input_data, input.size(),
                                 output_data, &output_size, params)) {
     fprintf(stderr, "Compression failed.\n");

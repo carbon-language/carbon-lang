@@ -28,7 +28,7 @@ fn main(argc: int, argv: char**) -> int {
   var input: string;
   var raw_input: auto*;
   var output: string;
-  var out: WOFF2StringOutwoff2::;
+  var out: woff2::WOFF2StringOut;
 
   let ok: bool;
 

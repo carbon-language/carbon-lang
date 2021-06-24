@@ -71,6 +71,29 @@ TEST_F(VarDeclTest, Const) {
   ExpectReplacement(Before, After);
 }
 
+TEST_F(VarDeclTest, ConstPointer) {
+  // TODO: Should be `const int*` because the pointer isn't const.
+  constexpr char Before[] = "const int* i;";
+  constexpr char After[] = "var i: int*;";
+  ExpectReplacement(Before, After);
+}
+
+TEST_F(VarDeclTest, Namespace) {
+  // This is to ensure the 'struct' keyword doesn't get added to the call type.
+  constexpr char Before[] = R"cpp(
+    namespace Foo {
+    typedef int Bar;
+    }
+    Foo::Bar x;
+  )cpp";
+  constexpr char After[] = R"(
+    namespace Foo { typedef int Bar; }
+    var x: Foo::Bar;
+  )";
+  ExpectReplacement(Before, After);
+  ExpectReplacement(Before, After);
+}
+
 TEST_F(VarDeclTest, Params) {
   constexpr char Before[] = "auto Foo(int i) -> int;";
   constexpr char After[] = "auto Foo(i: int) -> int;";

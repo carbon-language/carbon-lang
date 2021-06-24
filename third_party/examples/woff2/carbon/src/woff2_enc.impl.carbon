@@ -97,8 +97,8 @@ fn TableEntrySize(table: Table&) -> size_t {
 }
 
 fn ComputeWoff2Length(font_collection: FontCollection&,
-                          tables: vector<Table>std::&,
-                          index_by_tag_offset: map<std::pair<uint32_t, uint32_t>, uint16_t>std::,
+                          tables: std::vector<Table>&,
+                          index_by_tag_offset: std::map<std::pair<uint32_t, uint32_t>, uint16_t>,
                           compressed_data_length: size_t,
                           extended_metadata_length: size_t) -> size_t {
   var size: size_t;
@@ -117,12 +117,12 @@ fn ComputeWoff2Length(font_collection: FontCollection&,
     for (const auto& font var __begin3: : var __range3: font_collectionfont_collection) {
       size += Size255UShort(font.tables.size());  // 255UInt16 numTables
       for (const auto& entry var __begin4: : var __range4: fontfont) {
-        var table: TableFont::&;
+        var table: Font::Table&;
         // no collection entry for xform table
         if (table.tag & 0x80808080) { continue;
 }
 
-        var tag_offset: pair<uint32_t, uint32_t>std::;
+        var tag_offset: std::pair<uint32_t, uint32_t>;
         var table_index: uint16_t;
         size += Size255UShort(table_index);  // 255UInt16 index entry
       }
@@ -141,7 +141,7 @@ fn ComputeUncompressedLength(font: Font&) -> size_t {
   // sfnt header + offset table
   var size: size_t;
   for (const auto& entry var __begin2: : var __range2: fontfont) {
-    var table: TableFont::&;
+    var table: Font::Table&;
     if (table.tag & 0x80808080) { continue;  // xform tables don't stay
 }
     if (table.IsReused()) { continue;  // don't have to pay twice
@@ -165,7 +165,7 @@ fn ComputeUncompressedLength(font_collection: FontCollection&) -> size_t {
 fn ComputeTotalTransformLength(font: Font&) -> size_t {
   var total: size_t;
   for (const auto& i var __begin2: : var __range2: fontfont) {
-    var table: TableFont::&;
+    var table: Font::Table&;
     if (table.IsReused()) {
       continue;
     }
@@ -237,8 +237,8 @@ fn ConvertTTFToWOFF2(data: uint8_t*, length: size_t,
   } else {
     // glyf/loca use 11 to flag "not transformed"
     for (auto& font var __begin2: : var __range2: font_collectionfont_collection) {
-      var glyf_table: TableFont::*;
-      var loca_table: TableFont::*;
+      var glyf_table: Font::Table*;
+      var loca_table: Font::Table*;
       if (glyf_table) {
         glyf_table->flag_byte |= 0xc0;
       }
@@ -259,20 +259,20 @@ fn ConvertTTFToWOFF2(data: uint8_t*, length: size_t,
     total_transform_length += ComputeTotalTransformLength(font);
   }
   var compression_buffer_size: size_t;
-  var compression_buf: vector<uint8_t>std::;
+  var compression_buf: std::vector<uint8_t>;
   var total_compressed_length: uint32_t;
 
   // Collect all transformed data into one place in output order.
-  var transform_buf: vector<uint8_t>std::;
+  var transform_buf: std::vector<uint8_t>;
   var transform_offset: size_t;
   for (const auto& font var __begin1: : var __range1: font_collectionfont_collection) {
     for (const auto tag var __begin2: : var __range2: fontfont) {
-      var original: TableFont::&;
+      var original: Font::Table&;
       if (original.IsReused()) { continue;
 }
       if (tag & 0x80808080) { continue;
 }
-      var table_to_store: TableFont::*;
+      var table_to_store: Font::Table*;
       if (table_to_store == nullptr) { table_to_store = &original;
 }
 
@@ -300,7 +300,7 @@ fn ConvertTTFToWOFF2(data: uint8_t*, length: size_t,
   // Compress the extended metadata
   // TODO(user): how does this apply to collections
   var compressed_metadata_buf_length: uint32_t;
-  var compressed_metadata_buf: vector<uint8_t>std::;
+  var compressed_metadata_buf: std::vector<uint8_t>;
 
   if (params.extended_metadata.length() > 0) {
     if (!TextCompress(reinterpret_cast<const uint8_t*>(params.extended_metadata.data()),
@@ -317,18 +317,18 @@ fn ConvertTTFToWOFF2(data: uint8_t*, length: size_t,
     compressed_metadata_buf_length = 0;
   }
 
-  var tables: vector<Table>std::;
-  var index_by_tag_offset: map<std::pair<uint32_t, uint32_t>, uint16_t>std::;
+  var tables: std::vector<Table>;
+  var index_by_tag_offset: std::map<std::pair<uint32_t, uint32_t>, uint16_t>;
 
   for (const auto& font var __begin1: : var __range1: font_collectionfont_collection) {
 
     for (const auto tag var __begin2: : var __range2: fontfont) {
-      var src_table: TableFont::&;
+      var src_table: Font::Table&;
       if (src_table.IsReused()) {
         continue;
       }
 
-      var tag_offset: pair<uint32_t, uint32_t>std::;
+      var tag_offset: std::pair<uint32_t, uint32_t>;
       if (index_by_tag_offset.find(tag_offset) == index_by_tag_offset.end()) {
         index_by_tag_offset[tag_offset] = tables.size();
       } else {
@@ -341,7 +341,7 @@ fn ConvertTTFToWOFF2(data: uint8_t*, length: size_t,
       table.src_length = src_table.length;
       table.transform_length = src_table.length;
       var transformed_data: uint8_t*;
-      var transformed_table: TableFont::*;
+      var transformed_table: Font::Table*;
       if (transformed_table != nullptr) {
         table.flags = transformed_table->flag_byte;
         table.flags |= kWoff2FlagsTransform;
@@ -410,7 +410,7 @@ fn ConvertTTFToWOFF2(data: uint8_t*, length: size_t,
 
       var num_tables: uint16_t;
       for (const auto& entry var __begin3: : var __range3: fontfont) {
-        var table: TableFont::&;
+        var table: Font::Table&;
         if (table.tag & 0x80808080) { continue;  // don't write xform tables
 }
         num_tables++;
@@ -419,14 +419,14 @@ fn ConvertTTFToWOFF2(data: uint8_t*, length: size_t,
 
       StoreU32(font.flavor, &offset, result);
       for (const auto& entry var __begin3: : var __range3: fontfont) {
-        var table: TableFont::&;
+        var table: Font::Table&;
         if (table.tag & 0x80808080) { continue;  // don't write xform tables
 }
 
         // for reused tables, only the original has an updated offset
         var table_offset: uint32_t;
         var table_length: uint32_t;
-        var tag_offset: pair<uint32_t, uint32_t>std::;
+        var tag_offset: std::pair<uint32_t, uint32_t>;
         if (index_by_tag_offset.find(tag_offset) == index_by_tag_offset.end()) {
 #ifdef FONT_COMPRESSION_BIN
 fprintf(stderr, "Missing table index for offset 0x%08x\n",

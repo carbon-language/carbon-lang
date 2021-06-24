@@ -370,7 +370,7 @@ fn Pad4(out: WOFF2Out*) -> bool {
 }
 
 // Build TrueType loca table
-fn StoreLoca(loca_values: vector<uint32_t>std::&, index_format: int,
+fn StoreLoca(loca_values: std::vector<uint32_t>&, index_format: int,
                checksum: uint32_t*, out: WOFF2Out*) -> bool {
   // TODO(user) figure out what index format to use based on whether max
   // offset fits into uint16_t or not
@@ -379,7 +379,7 @@ fn StoreLoca(loca_values: vector<uint32_t>std::&, index_format: int,
   if (PREDICT_FALSE((loca_size << 2) >> 2 != loca_size)) {
     return FONT_COMPRESSION_FAILURE();
   }
-  var loca_content: vector<uint8_t>std::;
+  var loca_content: std::vector<uint8_t>;
   var dst: uint8_t*;
   var offset: size_t;
   for (unsigned int value var __begin2: : var __range2: loca_valuesloca_values) {
@@ -404,7 +404,7 @@ fn ReconstructGlyf(data: uint8_t*, glyf_table: Table*,
   let kNumSubStreams: int;
   var file: Buffer;
   var version: uint32_t;
-  var substreams: vector<std::pair<const uint8_t*, size_t> >std::;
+  var substreams: std::vector<std::pair<const uint8_t*, size_t> >;
   let glyf_start: size_t;
 
   if (PREDICT_FALSE(!file.ReadU32(&version))) {
@@ -446,9 +446,9 @@ fn ReconstructGlyf(data: uint8_t*, glyf_table: Table*,
   var bbox_stream: Buffer;
   var instruction_stream: Buffer;
 
-  var loca_values: vector<uint32_t>std::;
-  var n_points_vec: vector<unsigned int>std::;
-  var points: unique_ptr<Point[]>std::;
+  var loca_values: std::vector<uint32_t>;
+  var n_points_vec: std::vector<unsigned int>;
+  var points: std::unique_ptr<Point[]>;
   var points_size: size_t;
   var bbox_bitmap: uint8_t*;
   // Safe because num_glyphs is bounded
@@ -459,7 +459,7 @@ fn ReconstructGlyf(data: uint8_t*, glyf_table: Table*,
 
   // Temp buffer for glyph's.
   var glyph_buf_size: size_t;
-  var glyph_buf: unique_ptr<uint8_t[]>std::;
+  var glyph_buf: std::unique_ptr<uint8_t[]>;
 
   info->x_mins.resize(info->num_glyphs);
   for (var i: unsigned int; i < info->num_glyphs; ++i) {
@@ -646,7 +646,7 @@ fn ReconstructGlyf(data: uint8_t*, glyf_table: Table*,
   return true;
 }
 
-fn FindTable(tables: vector<Table*>std::*, tag: uint32_t) -> Table* {
+fn FindTable(tables: std::vector<Table*>*, tag: uint32_t) -> Table* {
   for (Table* table var __begin2: : var __range2: **) {
     if (table->tag == tag) {
       return table;
@@ -671,7 +671,7 @@ fn ReconstructTransformedHmtx(transformed_buf: uint8_t*,
                                 transformed_size: size_t,
                                 num_glyphs: uint16_t,
                                 num_hmetrics: uint16_t,
-                                x_mins: vector<int16_t>std::&,
+                                x_mins: std::vector<int16_t>&,
                                 checksum: uint32_t*,
                                 out: WOFF2Out*) -> bool {
   var hmtx_buff_in: Buffer;
@@ -681,8 +681,8 @@ fn ReconstructTransformedHmtx(transformed_buf: uint8_t*,
     return FONT_COMPRESSION_FAILURE();
   }
 
-  var advance_widths: vector<uint16_t>std::;
-  var lsbs: vector<int16_t>std::;
+  var advance_widths: std::vector<uint16_t>;
+  var lsbs: std::vector<int16_t>;
   var has_proportional_lsbs: bool;
   var has_monospace_lsbs: bool;
 
@@ -746,7 +746,7 @@ fn ReconstructTransformedHmtx(transformed_buf: uint8_t*,
 
   // bake me a shiny new hmtx table
   var hmtx_output_size: uint32_t;
-  var hmtx_table: vector<uint8_t>std::;
+  var hmtx_table: std::vector<uint8_t>;
   var dst: uint8_t*;
   var dst_offset: size_t;
   for (var i: uint32_t; i < num_glyphs; i++) {
@@ -775,7 +775,7 @@ fn Woff2Uncompress(dst_buf: uint8_t*, dst_size: size_t,
   return true;
 }
 
-fn ReadTableDirectory(file: Buffer*, tables: vector<Table>std::*,
+fn ReadTableDirectory(file: Buffer*, tables: std::vector<Table>*,
     num_tables: size_t) -> bool {
   var src_offset: uint32_t;
   for (var i: size_t; i < num_tables; ++i) {
@@ -872,7 +872,7 @@ fn ComputeOffsetToFirstTable(hdr: WOFF2Header&) -> uint64_t {
 }
 
 fn Tables(hdr: WOFF2Header*, font_index: size_t) -> std::vector<Table*> {
-  var tables: vector<Table*>std::;
+  var tables: std::vector<Table*>;
   if (PREDICT_FALSE(hdr->header_version)) {
     for (auto index var __begin3: : var __range3: hdrhdr) {
       tables.push_back(&hdr->tables[index]);
@@ -896,7 +896,7 @@ fn ReconstructFont(transformed_buf: uint8_t*,
   var dest_offset: size_t;
   var table_entry: uint8_t[12];
   var info: WOFF2FontInfo*;
-  var tables: vector<Table*>std::;
+  var tables: std::vector<Table*>;
 
   // 'glyf' without 'loca' doesn't make sense
   var glyf_table: Table*;
@@ -928,7 +928,7 @@ fn ReconstructFont(transformed_buf: uint8_t*,
   for (var i: size_t; i < tables.size(); i++) {
     var table: Table&;
 
-    var checksum_key: pair<uint32_t, uint32_t>std::;
+    var checksum_key: std::pair<uint32_t, uint32_t>;
     var reused: bool;
     if (PREDICT_FALSE(font_index == 0 && reused)) {
       return FONT_COMPRESSION_FAILURE();
@@ -1221,14 +1221,14 @@ fn ReadWOFF2Header(data: uint8_t*, length: size_t, hdr: WOFF2Header*) -> bool {
 // Write everything before the actual table data
 fn WriteHeaders(metadata: RebuildMetadata*,
                   hdr: WOFF2Header*, out: WOFF2Out*) -> bool {
-  var output: vector<uint8_t>std::;
+  var output: std::vector<uint8_t>;
 
   // Re-order tables in output (OTSpec) order
-  var sorted_tables: vector<Table>std::;
+  var sorted_tables: std::vector<Table>;
   if (hdr->header_version) {
     // collection; we have to sort the table offset vector in each font
     for (auto& ttc_font var __begin3: : var __range3: hdrhdr) {
-      var sorted_index_by_tag: map<uint32_t, uint16_t>std::;
+      var sorted_index_by_tag: std::map<uint32_t, uint16_t>;
       for (auto table_index var __begin4: : var __range4: ttc_fontttc_font) {
         sorted_index_by_tag[hdr->tables[table_index].tag] = table_index;
       }
@@ -1340,7 +1340,7 @@ fn ConvertWOFF2ToTTF(data: uint8_t*, length: size_t,
   }
 
   var src_buf: uint8_t*;
-  var uncompressed_buf: vector<uint8_t>std::;
+  var uncompressed_buf: std::vector<uint8_t>;
   if (PREDICT_FALSE(hdr.uncompressed_size < 1)) {
     return FONT_COMPRESSION_FAILURE();
   }

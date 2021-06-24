@@ -109,7 +109,7 @@ fn ReadGlyph(data: uint8_t*, len: size_t, glyph: Glyph*) -> bool {
     }
 
     // Read the run-length coded flags.
-    var flags: vector<std::vector<uint8_t> >std::;
+    var flags: std::vector<std::vector<uint8_t> >;
     {
       var flag: uint8_t;
       var flag_repeat: uint8_t;

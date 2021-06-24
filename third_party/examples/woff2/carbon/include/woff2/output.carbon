@@ -51,7 +51,7 @@ class WOFF2StringOut : public WOFF2Out {
   // Create a writer that writes its data to buf.
   // buf->size() will grow to at most max_size
   // buf may be sized (e.g. using EstimateWOFF2FinalSize) or empty.
-  explicit WOFF2StringOut(buf: stringstd::*);
+  explicit WOFF2StringOut(buf: std::string*);
 
   fn Write(buf: void*, n: size_t) -> bool override;
   fn Write(buf: void*, offset: size_t, n: size_t) -> bool override;

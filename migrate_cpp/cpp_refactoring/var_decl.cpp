@@ -18,19 +18,25 @@ VarDecl::VarDecl(std::map<std::string, Replacements>& in_replacements,
 }
 
 static auto GetTypeStr(clang::TypeLoc type_loc, const clang::SourceManager& sm,
-                       const clang::LangOptions& lang_opts)
-    -> std::tuple<std::string, bool> {
-  std::string type_str;
-  bool is_const = false;
+                       const clang::LangOptions& lang_opts) -> std::string {
+  // Sort type segments as they're written in the file. This avoids needing to
+  // understand TypeLoc traversal.
+  std::vector<clang::SourceRange> segments;
   while (!type_loc.isNull()) {
-    is_const = type_loc.getType().isConstQualified();
-    type_str.insert(
-        0, clang::Lexer::getSourceText(clang::CharSourceRange::getTokenRange(
-                                           type_loc.getLocalSourceRange()),
-                                       sm, lang_opts));
+    segments.push_back(type_loc.getLocalSourceRange());
     type_loc = type_loc.getNextTypeLoc();
   }
-  return std::make_tuple(type_str, is_const);
+  std::sort(segments.begin(), segments.end(),
+            [](clang::SourceRange a, clang::SourceRange b) {
+              return a.getBegin() < b.getBegin();
+            });
+
+  std::string type_str;
+  for (const auto& segment : segments) {
+    type_str += clang::Lexer::getSourceText(
+        clang::CharSourceRange::getTokenRange(segment), sm, lang_opts);
+  }
+  return type_str;
 }
 
 void VarDecl::run(const cam::MatchFinder::MatchResult& result) {
@@ -50,12 +56,10 @@ void VarDecl::run(const cam::MatchFinder::MatchResult& result) {
 
   // Locate the type, then use the literal string for the replacement.
   auto type_loc = decl->getTypeSourceInfo()->getTypeLoc();
-  std::string type_str;
-  bool use_let;
-  std::tie(type_str, use_let) = GetTypeStr(type_loc, sm, lang_opts);
+  std::string type_str = GetTypeStr(type_loc, sm, lang_opts);
 
   std::string after;
-  if (decl->getTypeSourceInfo()->getType().isConstQualified()) {
+  if (decl->getType().isConstQualified()) {
     after = "let ";
   } else if (result.Nodes.getNodeAs<clang::ParmVarDecl>(Label) == nullptr) {
     // Start the replacement with "var" unless it's a parameter.

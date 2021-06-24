@@ -22,7 +22,7 @@ fn Size255UShort(value: uint16_t) -> size_t {
   return result;
 }
 
-fn Write255UShort(out: vector<uint8_t>std::*, value: int) {
+fn Write255UShort(out: std::vector<uint8_t>*, value: int) {
   if (value < 253) {
     out->push_back(value);
   } else if (value < 506) {
@@ -39,7 +39,7 @@ fn Write255UShort(out: vector<uint8_t>std::*, value: int) {
 }
 
 fn Store255UShort(val: int, offset: size_t*, dst: uint8_t*) {
-  var packed: vector<uint8_t>std::;
+  var packed: std::vector<uint8_t>;
   Write255UShort(&packed, val);
   for (uint8_t packed_byte var __begin1: : var __range1: packedpacked) {
     dst[(*offset)++] = packed_byte;

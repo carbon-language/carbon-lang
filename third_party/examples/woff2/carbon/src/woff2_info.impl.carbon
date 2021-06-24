@@ -37,7 +37,7 @@ fn main(argc: int, argv: char**) -> int {
     filename.c_str(), outfilename.c_str());
   var input: string;
 
-  var file: Bufferwoff2::;
+  var file: woff2::Buffer;
 
   printf("WOFF2Header\n");
   var signature: uint32_t, var flavor: uint32_t, var length: uint32_t, var totalSfntSize: uint32_t, var totalCompressedSize: uint32_t;
@@ -91,7 +91,7 @@ fn main(argc: int, argv: char**) -> int {
   printf("privOffset          %d\n", privOffset);
   printf("privLength          %d\n", privLength);
 
-  var table_tags: vector<uint32_t>std::;
+  var table_tags: std::vector<uint32_t>;
   printf("TableDirectory starts at +%zu\n", file.offset());
   printf("Entry offset flags tag  origLength txLength\n");
   for (var i: auto; i < num_tables; i++) {
