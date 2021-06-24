@@ -157,10 +157,9 @@ auto TypeCheckExp(const Expression* e, TypeEnv types, Env values,
       } else if (expected) {
         ExpectType(e->line_num, "pattern variable", t, expected);
       }
-      auto new_e =
-          Expression::MakeVarPat(e->line_num, *e->GetPatternVariable().name,
-                                 ReifyType(t, e->line_num));
-      types.Set(*e->GetPatternVariable().name, t);
+      auto new_e = Expression::MakeVarPat(
+          e->line_num, e->GetPatternVariable().name, ReifyType(t, e->line_num));
+      types.Set(e->GetPatternVariable().name, t);
       return TCResult(new_e, t, types);
     }
     case ExpressionKind::Index: {
@@ -241,30 +240,30 @@ auto TypeCheckExp(const Expression* e, TypeEnv types, Env values,
         case ValKind::StructTV:
           // Search for a field
           for (auto& field : *t->GetStructType().fields) {
-            if (*e->GetFieldAccess().field == field.first) {
+            if (e->GetFieldAccess().field == field.first) {
               const Expression* new_e = Expression::MakeGetField(
-                  e->line_num, res.exp, *e->GetFieldAccess().field);
+                  e->line_num, res.exp, e->GetFieldAccess().field);
               return TCResult(new_e, field.second, res.types);
             }
           }
           // Search for a method
           for (auto& method : *t->GetStructType().methods) {
-            if (*e->GetFieldAccess().field == method.first) {
+            if (e->GetFieldAccess().field == method.first) {
               const Expression* new_e = Expression::MakeGetField(
-                  e->line_num, res.exp, *e->GetFieldAccess().field);
+                  e->line_num, res.exp, e->GetFieldAccess().field);
               return TCResult(new_e, method.second, res.types);
             }
           }
           std::cerr << e->line_num << ": compilation error, struct "
                     << *t->GetStructType().name
                     << " does not have a field named "
-                    << *e->GetFieldAccess().field << std::endl;
+                    << e->GetFieldAccess().field << std::endl;
           exit(-1);
         case ValKind::TupleV:
           for (const TupleElement& field : *t->GetTuple().elements) {
-            if (*e->GetFieldAccess().field == field.name) {
+            if (e->GetFieldAccess().field == field.name) {
               auto new_e = Expression::MakeGetField(e->line_num, res.exp,
-                                                    *e->GetFieldAccess().field);
+                                                    e->GetFieldAccess().field);
               return TCResult(new_e,
                               state->heap.Read(field.address, e->line_num),
                               res.types);
@@ -273,14 +272,14 @@ auto TypeCheckExp(const Expression* e, TypeEnv types, Env values,
           std::cerr << e->line_num << ": compilation error, struct "
                     << *t->GetStructType().name
                     << " does not have a field named "
-                    << *e->GetFieldAccess().field << std::endl;
+                    << e->GetFieldAccess().field << std::endl;
           exit(-1);
         case ValKind::ChoiceTV:
           for (auto vt = t->GetChoiceType().alternatives->begin();
                vt != t->GetChoiceType().alternatives->end(); ++vt) {
-            if (*e->GetFieldAccess().field == vt->first) {
+            if (e->GetFieldAccess().field == vt->first) {
               const Expression* new_e = Expression::MakeGetField(
-                  e->line_num, res.exp, *e->GetFieldAccess().field);
+                  e->line_num, res.exp, e->GetFieldAccess().field);
               auto fun_ty = Value::MakeFunTypeVal(vt->second, t);
               return TCResult(new_e, fun_ty, res.types);
             }
@@ -288,7 +287,7 @@ auto TypeCheckExp(const Expression* e, TypeEnv types, Env values,
           std::cerr << e->line_num << ": compilation error, struct "
                     << *t->GetStructType().name
                     << " does not have a field named "
-                    << *e->GetFieldAccess().field << std::endl;
+                    << e->GetFieldAccess().field << std::endl;
           exit(-1);
 
         default:
@@ -301,12 +300,12 @@ auto TypeCheckExp(const Expression* e, TypeEnv types, Env values,
       }
     }
     case ExpressionKind::Variable: {
-      std::optional<const Value*> type = types.Get(*(e->GetVariable().name));
+      std::optional<const Value*> type = types.Get(e->GetVariable().name);
       if (type) {
         return TCResult(e, *type, types);
       } else {
         std::cerr << e->line_num << ": could not find `"
-                  << *(e->GetVariable().name) << "`" << std::endl;
+                  << e->GetVariable().name << "`" << std::endl;
         exit(-1);
       }
     }
