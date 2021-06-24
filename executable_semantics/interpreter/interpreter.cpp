@@ -25,7 +25,7 @@ State* state = nullptr;
 
 auto PatternMatch(const Value* pat, const Value* val, Env,
                   std::list<std::string>*, int) -> std::optional<Env>;
-void HandleValue();
+auto Step() -> void;
 auto GetMember(Address a, const std::string& f, int line_num) -> Address;
 
 //
@@ -1350,47 +1350,6 @@ void InsertDelete(Action* del, Stack<Action*>& todo) {
   }
 }
 
-// State transition for handling a value.
-
-void HandleValue() {
-  Frame* frame = state->stack.Top();
-  Action* val_act = frame->todo.Pop();
-  Action* act = frame->todo.Top();
-  act->results.push_back(val_act->u.val);
-  act->pos++;
-
-  if (tracing_output) {
-    std::cout << "--- handle value ";
-    PrintValue(val_act->u.val, std::cout);
-    std::cout << " with ";
-    PrintAct(act, std::cout);
-    std::cout << " --->" << std::endl;
-  }
-  switch (act->tag) {
-    case ActionKind::DeleteTmpAction: {
-      break;
-    }
-    case ActionKind::ExpToLValAction: {
-      break;
-    }
-    case ActionKind::LValAction: {
-      StepLvalue();
-      break;
-    }
-    case ActionKind::ExpressionAction: {
-      StepExp();
-      break;
-    }
-    case ActionKind::StatementAction: {
-      StepStmt();
-      break;
-    }
-    case ActionKind::ValAction:
-      std::cerr << "internal error, ValAction in handle_value" << std::endl;
-      exit(-1);
-  }  // switch act
-}
-
 // State transition.
 void Step() {
   Frame* frame = state->stack.Top();
@@ -1417,9 +1376,15 @@ void Step() {
       frame->todo.Push(MakeValAct(Value::MakePtrVal(a)));
       break;
     }
-    case ActionKind::ValAction:
-      HandleValue();
+    case ActionKind::ValAction: {
+      Action* val_act = frame->todo.Pop();
+      Action* act = frame->todo.Top();
+      act->results.push_back(val_act->u.val);
+      // TODO: remove the following as part of changing the numbering
+      // for act->pos to start at 0. -Jeremy
+      act->pos++;
       break;
+    }
     case ActionKind::LValAction:
       StepLvalue();
       break;
