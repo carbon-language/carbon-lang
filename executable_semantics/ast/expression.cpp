@@ -162,7 +162,7 @@ auto Expression::MakeGetField(int line_num, const Expression* exp,
                               std::string field) -> const Expression* {
   auto* e = new Expression();
   e->line_num = line_num;
-  e->value = FieldAccess({.aggregate = exp, .field = std::move(field)});
+  e->value = FieldAccess({.aggregate = *exp, .field = std::move(field)});
   return e;
 }
 
@@ -258,7 +258,7 @@ void PrintExp(const Expression* e) {
       std::cout << "]";
       break;
     case ExpressionKind::GetField:
-      PrintExp(e->GetFieldAccess().aggregate);
+      PrintExp(e->GetFieldAccess().aggregate.GetPointer());
       std::cout << ".";
       std::cout << e->GetFieldAccess().field;
       break;
