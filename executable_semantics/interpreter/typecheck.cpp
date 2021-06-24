@@ -70,9 +70,9 @@ auto ReifyType(const Value* t, int line_num) -> const Expression* {
           0, ReifyType(t->GetFunctionType().param, line_num),
           ReifyType(t->GetFunctionType().ret, line_num));
     case ValKind::TupleV: {
-      auto args = new std::vector<FieldInitializer>();
+      std::vector<FieldInitializer> args;
       for (const TupleElement& field : *t->GetTuple().elements) {
-        args->push_back(
+        args.push_back(
             {.name = field.name,
              .expression = ReifyType(state->heap.Read(field.address, line_num),
                                      line_num)});
@@ -190,7 +190,7 @@ auto TypeCheckExp(const Expression* e, TypeEnv types, Env values,
       }
     }
     case ExpressionKind::Tuple: {
-      auto new_args = new std::vector<FieldInitializer>();
+      std::vector<FieldInitializer> new_args;
       auto arg_types = new std::vector<TupleElement>();
       auto new_types = types;
       if (expected && expected->tag != ValKind::TupleV) {
@@ -198,7 +198,7 @@ auto TypeCheckExp(const Expression* e, TypeEnv types, Env values,
                   << std::endl;
         exit(-1);
       }
-      if (expected && e->GetTuple().fields->size() !=
+      if (expected && e->GetTuple().fields.size() !=
                           expected->GetTuple().elements->size()) {
         std::cerr << e->line_num
                   << ": compilation error, tuples of different length"
@@ -206,8 +206,8 @@ auto TypeCheckExp(const Expression* e, TypeEnv types, Env values,
         exit(-1);
       }
       int i = 0;
-      for (auto arg = e->GetTuple().fields->begin();
-           arg != e->GetTuple().fields->end(); ++arg, ++i) {
+      for (auto arg = e->GetTuple().fields.begin();
+           arg != e->GetTuple().fields.end(); ++arg, ++i) {
         const Value* arg_expected = nullptr;
         if (expected && expected->tag == ValKind::TupleV) {
           if ((*expected->GetTuple().elements)[i].name != arg->name) {
@@ -223,7 +223,7 @@ auto TypeCheckExp(const Expression* e, TypeEnv types, Env values,
         auto arg_res = TypeCheckExp(arg->expression, new_types, values,
                                     arg_expected, context);
         new_types = arg_res.types;
-        new_args->push_back({.name = arg->name, .expression = arg_res.exp});
+        new_args.push_back({.name = arg->name, .expression = arg_res.exp});
         arg_types->push_back(
             {.name = arg->name,
              .address = state->heap.AllocateValue(arg_res.type)});
@@ -586,7 +586,7 @@ auto CheckOrEnsureReturn(const Statement* stmt, bool void_return, int line_num)
     -> const Statement* {
   if (!stmt) {
     if (void_return) {
-      return Statement::MakeReturn(line_num, Expression::MakeUnit(line_num));
+      return Statement::MakeReturn(line_num, Expression::MakeTuple(line_num, {}));
     } else {
       std::cerr
           << "control-flow reaches end of non-void function without a return"
@@ -643,7 +643,7 @@ auto CheckOrEnsureReturn(const Statement* stmt, bool void_return, int line_num)
         return Statement::MakeSeq(
             stmt->line_num, stmt,
             Statement::MakeReturn(stmt->line_num,
-                                  Expression::MakeUnit(stmt->line_num)));
+                                  Expression::MakeTuple(stmt->line_num, {})));
       } else {
         std::cerr
             << stmt->line_num

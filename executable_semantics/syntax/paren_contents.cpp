@@ -16,8 +16,7 @@ const Expression* ParenContents::AsExpression(int line_number) const {
 }
 
 const Expression* ParenContents::AsTuple(int line_number) const {
-  return Expression::MakeTuple(line_number,
-                               new std::vector<FieldInitializer>(fields_));
+  return Expression::MakeTuple(line_number, fields_);
 }
 
 }  // namespace Carbon

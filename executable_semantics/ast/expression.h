@@ -92,7 +92,7 @@ struct BoolLiteral {
 
 struct Tuple {
   static constexpr ExpressionKind Kind = ExpressionKind::Tuple;
-  std::vector<FieldInitializer>* fields;
+  std::vector<FieldInitializer> fields;
 };
 
 struct PrimitiveOperator {
@@ -152,9 +152,8 @@ struct Expression {
                        const Expression* arg) -> const Expression*;
   static auto MakeGetField(int line_num, const Expression* exp,
                            std::string field) -> const Expression*;
-  static auto MakeTuple(int line_num, std::vector<FieldInitializer>* args)
+  static auto MakeTuple(int line_num, std::vector<FieldInitializer> args)
       -> const Expression*;
-  static auto MakeUnit(int line_num) -> const Expression*;
   static auto MakeIndex(int line_num, const Expression* exp,
                         const Expression* i) -> const Expression*;
   static auto MakeTypeType(int line_num) -> const Expression*;
