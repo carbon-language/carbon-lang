@@ -24,7 +24,7 @@ TEST_F(VarDeclTest, Declaration) {
 
 TEST_F(VarDeclTest, DeclarationArray) {
   constexpr char Before[] = "int i[4];";
-  constexpr char After[] = "var i: int [4];";
+  constexpr char After[] = "var i: int[4];";
   ExpectReplacement(Before, After);
 }
 
@@ -35,24 +35,36 @@ TEST_F(VarDeclTest, DeclarationComma) {
   ExpectReplacement(Before, After);
 }
 
+TEST_F(VarDeclTest, DeclarationCommaArray) {
+  // TODO: Maybe replace the comma with a `;`.
+  constexpr char Before[] = "int i[4], j[4];";
+  constexpr char After[] = "var i: int [4], var j: int [4];";
+  ExpectReplacement(Before, After);
+}
+
+TEST_F(VarDeclTest, DeclarationCommaPointers) {
+  // TODO: Maybe replace the comma with a `;`.
+  constexpr char Before[] = "int *i, *j;";
+  constexpr char After[] = "var i: int *, var j: int *;";
+  ExpectReplacement(Before, After);
+}
+
 TEST_F(VarDeclTest, Assignment) {
   constexpr char Before[] = "int i = 0;";
   // TODO: Include init.
-  constexpr char After[] = "var i: int;";
+  constexpr char After[] = "let i: int;";
   ExpectReplacement(Before, After);
 }
 
 TEST_F(VarDeclTest, Auto) {
   constexpr char Before[] = "auto i = 0;";
-  // TODO: Keep auto.
-  constexpr char After[] = "var i: int;";
+  constexpr char After[] = "let i: auto;";
   ExpectReplacement(Before, After);
 }
 
 TEST_F(VarDeclTest, Const) {
-  // TODO: Include init, have `const` indicate `let`.
   constexpr char Before[] = "const int i = 0;";
-  constexpr char After[] = "var i: const int;";
+  constexpr char After[] = "let i: int;";
   ExpectReplacement(Before, After);
 }
 
@@ -102,7 +114,7 @@ TEST_F(VarDeclTest, Member) {
   ExpectReplacement(Before, Before);
 }
 
-TEST_F(VarDeclTest, RangeFor) {
+TEST_F(VarDeclTest, DISABLED_RangeFor) {
   // TODO: Handle range based for loops.
   constexpr char Before[] = R"cpp(
     void Foo() {
@@ -113,8 +125,8 @@ TEST_F(VarDeclTest, RangeFor) {
   )cpp";
   constexpr char After[] = R"(
     void Foo() {
-      var items: int [1];
-      for (int i var __begin1: int * var __range1: int (&)[1]) {
+      var items: int[] = {1};
+      for (int i : items) {
       }
     }
   )";

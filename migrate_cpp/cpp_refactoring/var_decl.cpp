@@ -17,6 +17,19 @@ VarDecl::VarDecl(std::map<std::string, Replacements>& in_replacements,
   finder->addMatcher(cam::varDecl().bind(Label), this);
 }
 
+static auto GetTypeStr(clang::TypeLoc type_loc, const clang::SourceManager& sm,
+                       const clang::LangOptions& lang_opts) -> std::string {
+  std::string type_str;
+  while (!type_loc.isNull()) {
+    type_str.insert(
+        0, clang::Lexer::getSourceText(clang::CharSourceRange::getTokenRange(
+                                           type_loc.getLocalSourceRange()),
+                                       sm, lang_opts));
+    type_loc = type_loc.getNextTypeLoc();
+  }
+  return type_str;
+}
+
 void VarDecl::run(const cam::MatchFinder::MatchResult& result) {
   const auto* decl = result.Nodes.getNodeAs<clang::VarDecl>(Label);
   if (!decl) {
@@ -27,8 +40,10 @@ void VarDecl::run(const cam::MatchFinder::MatchResult& result) {
   auto lang_opts = result.Context->getLangOpts();
 
   std::string after;
-  // Start the replacement with "var" unless it's a parameter.
-  if (result.Nodes.getNodeAs<clang::ParmVarDecl>(Label) == nullptr) {
+  if (decl->hasConstantInitialization()) {
+    after = "let ";
+  } else if (result.Nodes.getNodeAs<clang::ParmVarDecl>(Label) == nullptr) {
+    // Start the replacement with "var" unless it's a parameter.
     after = "var ";
   }
   // Add "identifier: " to the replacement.
@@ -42,18 +57,14 @@ void VarDecl::run(const cam::MatchFinder::MatchResult& result) {
 
   // Locate the type, then use the literal string for the replacement.
   auto type_loc = decl->getTypeSourceInfo()->getTypeLoc();
-  auto after_type_loc =
-      clang::Lexer::getLocForEndOfToken(type_loc.getEndLoc(), 0, sm, lang_opts);
-  after +=
-      clang::Lexer::getSourceText(clang::CharSourceRange::getCharRange(
-                                      type_loc.getBeginLoc(), after_type_loc),
-                                  sm, lang_opts);
+  after += GetTypeStr(type_loc, sm, lang_opts);
 
   // This decides the range to replace. Normally the entire decl is replaced,
   // but for code like `int i, j` we need to detect the comma between the
   // declared names. That case currently results in `var i: int, var j: int`.
-
   // If there's a comma, this range will be non-empty.
+  auto after_type_loc =
+      clang::Lexer::getLocForEndOfToken(type_loc.getEndLoc(), 0, sm, lang_opts);
   auto comma_source_text = clang::Lexer::getSourceText(
       clang::CharSourceRange::getCharRange(after_type_loc, decl->getLocation()),
       sm, lang_opts);
