@@ -2,8 +2,6 @@
 # Exceptions. See /LICENSE for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-load("//bazel/testing:golden_test.bzl", "golden_test")
-
 package(default_visibility = ["//executable_semantics:__subpackages__"])
 
 cc_library(
