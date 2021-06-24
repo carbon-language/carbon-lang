@@ -230,17 +230,30 @@ We suggest a specific workflow to address this:
     git push
     ```
 
-7.  When the first pull request lands in the main upstream branch, delete the
-    upstream tracking branch for it:
+7.  When the first pull request lands in the main upstream branch, merge those
+    changes from upstream trunk into the stacked branch:
+
+    ```shell
+    # Pick up the first PR's changes from upstream trunk.
+    git checkout trunk
+    git pull --rebase upstream
+
+    # Merge those changes into the stacked PR branch.
+    git checkout next-feature-extension
+    git merge trunk
+    git push
+    ```
+
+    Then update the stacked PR's base branch to be `carbon-language:trunk`
+    rather than the upstream tracking branch. To do this, go to the page for the
+    PR on GitHub, click the "Edit" button to the right of the PR title, and then
+    select `trunk` from the "base" drop-down box below the PR title.
+
+    Once that's done, delete the upstream tracking branch:
 
     ```shell
     git push upstream --delete pull-N-feature-basic
     ```
-
-    The second pull request should automatically switch its baseline to the
-    `trunk` branch of the upstream repository. Merge commits into your fork's
-    branch for the second pull request can now be done directly from your
-    `trunk` branch after pulling upstream.
 
 8.  When landing the second, stacked pull request, it will require actively
     rebasing or squashing due to the complex merge history used while updating.
@@ -252,10 +265,9 @@ Additional notes:
     starting from the prior pull request's branch.
 
 -   If you want to split the two pull requests so they become independent, you
-    can explicitly edit the base branch of a pull request in the GitHub UI.
-    Alternatively you can simply delete the tracking branch as above. The result
-    will be two pull requests with an overlapping initial sequence of commits.
-    You can then restructure each one to make sense independently.
+    can explicitly edit the base branch of a pull request in the GitHub UI. The
+    result will be two pull requests with an overlapping initial sequence of
+    commits. You can then restructure each one to make sense independently.
 
 ### Managing pull requests with multiple commits
 
