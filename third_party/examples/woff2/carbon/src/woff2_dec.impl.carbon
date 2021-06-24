@@ -292,7 +292,7 @@ fn StorePoints(n_points: unsigned int, points: const woff2::Point *,
 // Compute the bounding box of the coordinates, and store into a glyf buffer.
 // A precondition is that there are at least 10 bytes available.
 // dst should point to the beginning of a 'glyf' record.
-void ComputeBbox(n_points: unsigned int, points: const woff2::Point *, dst: uint8_t *) {
+fn ComputeBbox(n_points: unsigned int, points: const woff2::Point *, dst: uint8_t *) {
   var x_min: int;
   var y_min: int;
   var x_max: int;

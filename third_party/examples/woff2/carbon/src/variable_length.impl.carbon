@@ -22,7 +22,7 @@ fn Size255UShort(value: uint16_t) -> size_t {
   return result;
 }
 
-void Write255UShort(out: std::vector<uint8_t> *, value: int) {
+fn Write255UShort(out: std::vector<uint8_t> *, value: int) {
   if (value < 253) {
     out->push_back(value);
   } else if (value < 506) {
@@ -38,7 +38,7 @@ void Write255UShort(out: std::vector<uint8_t> *, value: int) {
   }
 }
 
-void Store255UShort(val: int, offset: size_t *, dst: uint8_t *) {
+fn Store255UShort(val: int, offset: size_t *, dst: uint8_t *) {
   var packed: std::vector<uint8_t>;
   Write255UShort(&packed, val);
   for (uint8_t packed_byte var __begin1: std::__wrap_iter<unsigned char *> var __range1: std::vector<unsigned char> &) {
@@ -115,7 +115,7 @@ fn Base128Size(n: size_t) -> size_t {
   return size;
 }
 
-void StoreBase128(len: size_t, offset: size_t *, dst: uint8_t *) {
+fn StoreBase128(len: size_t, offset: size_t *, dst: uint8_t *) {
   var size: size_t;
   for (var i: size_t; i < size; ++i) {
     var b: int;
