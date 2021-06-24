@@ -153,8 +153,9 @@ void BinarySection::flushPendingRelocations(raw_pwrite_stream &OS,
       Value += Resolver(Reloc.Symbol);
     switch(Reloc.Type) {
     default:
-      llvm_unreachable(
-           "only R_X86_64_32 relocations are supported at the moment");
+      LLVM_DEBUG(dbgs() << Reloc.Type << '\n';);
+      llvm_unreachable("unhandled relocation type");
+    case ELF::R_X86_64_64:
     case ELF::R_X86_64_32: {
       OS.pwrite(reinterpret_cast<const char*>(&Value),
                 Relocation::getSizeForType(Reloc.Type),
