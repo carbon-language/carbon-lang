@@ -51,9 +51,11 @@ For more detail, see [the detailed discussion of generics goals](goals.md) and
 
 Summary of how Carbon generics work:
 
--   _Generics_ are parameterized functions and types that can apply generally. They are used to avoid writing specialized, near-duplicate code for similar situations. 
--   Generics are written using _interfaces_ which have a name and describe methods, functions, and other items for
-    types to implement.
+-   _Generics_ are parameterized functions and types that can apply generally.
+    They are used to avoid writing specialized, near-duplicate code for similar
+    situations.
+-   Generics are written using _interfaces_ which have a name and describe
+    methods, functions, and other items for types to implement.
 -   Types must explicitly _implement_ interfaces to indicate that they support
     its functionality. A given type may implement an interface at most once.
 -   Implementations may be part of the type's definition, in which case you can
