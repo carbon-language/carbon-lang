@@ -364,6 +364,9 @@ external impl Point2 as Vector {
 }
 ```
 
+**Note:** The external interface implementation syntax was decided in
+[question-for-leads issue #575](https://github.com/carbon-language/carbon-lang/issues/575).
+
 The `external impl` statement is allowed to be defined in a different library
 from `Point2`, restricted by [the coherence/orphan rules](#impl-lookup) that
 ensure that the implementation of an interface won't change based on imports. In
@@ -1011,7 +1014,7 @@ interface is enough to be able to use the operator to access the functionality.
 [Carbon: Access to interface methods](https://docs.google.com/document/d/1u_i_s31OMI_apPur7WmVxcYq6MUXsG3oCiKwH893GRI/edit?usp=sharing&resourcekey=0-0lzSNebBMtUBi4lStL825g).
 
 **Comparison with other languages:** This `&` operation on interfaces works very
-similarly to Rust, with the main difference being how you
+similarly to Rust's `+` operation, with the main difference being how you
 [qualify names when there is a conflict](https://doc.rust-lang.org/rust-by-example/trait/disambiguating.html).
 
 ## Interface requiring other interfaces
