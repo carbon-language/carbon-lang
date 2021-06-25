@@ -819,7 +819,7 @@ void StepExp() {
       break;
     }
     case ExpressionKind::Variable: {
-      assert(act->pos == -1);
+      CHECK(act->pos == -1);
       // { {x :: C, E, F} :: S, H} -> { {H(E(x)) :: C, E, F} :: S, H}
       std::optional<Address> pointer =
           CurrentEnv(state).Get(exp->GetVariable().name);
@@ -834,13 +834,13 @@ void StepExp() {
       break;
     }
     case ExpressionKind::Integer:
-      assert(act->pos == -1);
+      CHECK(act->pos == -1);
       // { {n :: C, E, F} :: S, H} -> { {n' :: C, E, F} :: S, H}
       frame->todo.Pop(1);
       frame->todo.Push(MakeValAct(Value::MakeIntVal(exp->GetInteger())));
       break;
     case ExpressionKind::Boolean:
-      assert(act->pos == -1);
+      CHECK(act->pos == -1);
       // { {n :: C, E, F} :: S, H} -> { {n' :: C, E, F} :: S, H}
       frame->todo.Pop(1);
       frame->todo.Push(MakeValAct(Value::MakeBoolVal(exp->GetBoolean())));
@@ -899,28 +899,28 @@ void StepExp() {
       }
       break;
     case ExpressionKind::IntT: {
-      assert(act->pos == -1);
+      CHECK(act->pos == -1);
       const Value* v = Value::MakeIntTypeVal();
       frame->todo.Pop(1);
       frame->todo.Push(MakeValAct(v));
       break;
     }
     case ExpressionKind::BoolT: {
-      assert(act->pos == -1);
+      CHECK(act->pos == -1);
       const Value* v = Value::MakeBoolTypeVal();
       frame->todo.Pop(1);
       frame->todo.Push(MakeValAct(v));
       break;
     }
     case ExpressionKind::AutoT: {
-      assert(act->pos == -1);
+      CHECK(act->pos == -1);
       const Value* v = Value::MakeAutoTypeVal();
       frame->todo.Pop(1);
       frame->todo.Push(MakeValAct(v));
       break;
     }
     case ExpressionKind::TypeT: {
-      assert(act->pos == -1);
+      CHECK(act->pos == -1);
       const Value* v = Value::MakeTypeTypeVal();
       frame->todo.Pop(1);
       frame->todo.Push(MakeValAct(v));
@@ -930,6 +930,10 @@ void StepExp() {
       if (act->pos == -1) {
         frame->todo.Push(MakeExpAct(exp->GetFunctionType().parameter));
         act->pos++;
+      } else if (act->pos == 1) {
+        //    { { pt :: fn [] -> e :: C, E, F} :: S, H}
+        // -> { { e :: fn pt -> []) :: C, E, F} :: S, H}
+        frame->todo.Push(MakeExpAct(exp->GetFunctionType().return_type));
       } else if (act->pos == 2) {
         //    { { rt :: fn pt -> [] :: C, E, F} :: S, H}
         // -> { fn pt -> rt :: {C, E, F} :: S, H}
@@ -937,15 +941,11 @@ void StepExp() {
             Value::MakeFunTypeVal(act->results[0], act->results[1]);
         frame->todo.Pop(1);
         frame->todo.Push(MakeValAct(v));
-      } else {
-        //    { { pt :: fn [] -> e :: C, E, F} :: S, H}
-        // -> { { e :: fn pt -> []) :: C, E, F} :: S, H}
-        frame->todo.Push(MakeExpAct(exp->GetFunctionType().return_type));
       }
       break;
     }
     case ExpressionKind::ContinuationT: {
-      assert(act->pos == -1);
+      CHECK(act->pos == -1);
       const Value* v = Value::MakeContinuationTypeVal();
       frame->todo.Pop(1);
       frame->todo.Push(MakeValAct(v));
@@ -1079,7 +1079,7 @@ void StepStmt() {
       }
       break;
     case StatementKind::Break:
-      assert(act->pos == -1);
+      CHECK(act->pos == -1);
       //    { { break; :: ... :: (while (e) s) :: C, E, F} :: S, H}
       // -> { { C, E', F} :: S, H}
       frame->todo.Pop(1);
@@ -1093,7 +1093,7 @@ void StepStmt() {
       frame->todo.Pop(1);
       break;
     case StatementKind::Continue:
-      assert(act->pos == -1);
+      CHECK(act->pos == -1);
       //    { { continue; :: ... :: (while (e) s) :: C, E, F} :: S, H}
       // -> { { (while (e) s) :: C, E', F} :: S, H}
       frame->todo.Pop(1);
@@ -1217,7 +1217,7 @@ void StepStmt() {
       }
       break;
     case StatementKind::Sequence:
-      assert(act->pos == -1);
+      CHECK(act->pos == -1);
       //    { { (s1,s2) :: C, E, F} :: S, H}
       // -> { { s1 :: s2 :: C, E, F} :: S, H}
       frame->todo.Pop(1);
@@ -1227,7 +1227,7 @@ void StepStmt() {
       frame->todo.Push(MakeStmtAct(stmt->GetSequence().stmt));
       break;
     case StatementKind::Continuation: {
-      assert(act->pos == -1);
+      CHECK(act->pos == -1);
       // Create a continuation object by creating a frame similar the
       // way one is created in a function call.
       Scope* scope = new Scope(CurrentEnv(state), std::list<std::string>());
@@ -1272,7 +1272,7 @@ void StepStmt() {
       }
       break;
     case StatementKind::Await:
-      assert(act->pos == -1);
+      CHECK(act->pos == -1);
       // Pause the current continuation
       frame->todo.Pop();
       std::vector<Frame*> paused;
@@ -1364,13 +1364,13 @@ void Step() {
   Action* act = frame->todo.Top();
   switch (act->tag) {
     case ActionKind::DeleteTmpAction:
-      assert(act->pos == -1);
+      CHECK(act->pos == 0);  // why zero? -Jeremy
       state->heap.Deallocate(act->u.delete_tmp);
       frame->todo.Pop(1);
       frame->todo.Push(MakeValAct(act->results[0]));
       break;
     case ActionKind::ExpToLValAction: {
-      assert(act->pos == -1);
+      CHECK(act->pos == 0);  // why zero? -Jeremy
       Address a = state->heap.AllocateValue(act->results[0]);
       auto del = MakeDeleteAct(a);
       frame->todo.Pop(1);
@@ -1382,10 +1382,7 @@ void Step() {
       Action* val_act = frame->todo.Pop();
       Action* act = frame->todo.Top();
       act->results.push_back(val_act->u.val);
-      // TODO: remove the following as part of changing the numbering
-      // for act->pos to start at 0. I've made one failed attempt
-      // to do so already. Unfortunately, the current state of
-      // affairs is tricky. -Jeremy
+      // TODO: move the following to the Step for that action. -Jeremy
       act->pos++;
       break;
     }

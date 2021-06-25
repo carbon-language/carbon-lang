@@ -33,6 +33,7 @@ struct Action {
     Address delete_tmp;
   } u;
   int pos;  // position or state of the action, starts at -1
+  // TODO: change to start at 0 and not have any gaps. -Jeremy
   std::vector<const Value*> results;  // results from subexpression
 };
 
