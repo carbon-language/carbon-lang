@@ -147,6 +147,17 @@ while a type implementing an interface would store the pointer alongside the
 pointer to the value in a `DynPtr(MyInterface)`. Of course the interface option
 also allows the method table to be passed at compile time.
 
+The methods of an abstract base class will typically be pure virtual, with no
+implementation. This is both because of the main use case is for defining an
+interface without knowledge of how it is implemented, and because you typically
+won't be able to define the implementation without reference to the data fields
+of the object. In some cases, there may be non-abstract methods that are
+implemented in terms of the pure virtual methods. In those cases, the pure
+virtual methods may be
+["protected"](https://en.wikipedia.org/wiki/Access_modifiers) to ensure they are
+only called through the non-abstract API, but can still be implemented in
+descendants.
+
 We expect idiomatic Carbon-only code to use Carbon interfaces instead of
 abstract base classes. Extending this design to support abstract base classes is
 future work.
@@ -172,21 +183,35 @@ The rule is that every type has at most one parent type with data members for
 subtyping purposes. Carbon will support additional parent types as long as they
 are [abstract base classes](#abstract-base-classes) or [mixins](#mixins).
 
-Characterized by: private data in a base type, a mix of concrete and
-overridable/virtual methods with dynamic dispatch, accessed through a pointer to
-"type extending base", virtual destructor.
-
-**Background:** The
-["Nothing is Something" talk by Sandi Metz](https://www.youtube.com/watch?v=OMPfEXIlTVE)
+**Background:**
+[The "Nothing is Something" talk by Sandi Metz](https://www.youtube.com/watch?v=OMPfEXIlTVE)
 and
 [the Composition Over Inheritance Principle](https://python-patterns.guide/gang-of-four/composition-over-inheritance/)
-describe design patterns to use instead of multiple inheritance.
+describe design patterns to use instead of multiple inheritance to support types
+that vary over multiple axes.
 
-FIXME: Talk about the external API versus the APIs for communicating between
-base and derived.
+Polymorphic types support a number of different kinds of methods:
+
+-   Like abstract base classes, they will have virtual methods:
+    -   Polymorphic types will always include virtual destructors.
+    -   Polymorphic types may have pure-virtual methods, but in contrast to ABCs
+        they aren't required.
+    -   It is more common for polymorphic types to have a default implementation
+        of virtual methods or have protected virtual methods intended to be
+        called by methods in the base type but implemented in the descendant.
+-   They may have non-virtual public or private helper methods, like object
+    types. These avoid the overhead of a virtual function call, and are more
+    frequent in polymorphic types than abstract base classes due to the ability
+    to reference some of the data members of the type.
+-   They may have protected helper methods, typically non-virtual, provided by
+    the base type to be called by the descendant.
+
+Note that there are two uses for protected methods: those implemented in the
+base and called in the descendant, and the other way around.
 ["The End Of Object Inheritance & The Beginning Of A New Modularity" talk by Augie Fackler and Nathaniel Manista](https://www.youtube.com/watch?v=3MNVP9-hglc)
 discusses design patterns that split up types to reduce the number of kinds of
-calls between child and parent types.
+calls between child and parent types, and make sure calls only go in one
+direction.
 
 We expect polymorphic types in idiomatic Carbon-only code, at least for the
 medium term. Extending this design to support polymorphic types is future work.
@@ -201,7 +226,7 @@ implementation reuse rather than subtyping, and so don't need to use a vtable.
 
 A mixin might be an implementation detail of a [data type](#data-types),
 [object type](#object-types), or
-[child of a polymorphictype](#polymorphic-types). A mixin might partially
+[child of a polymorphic type](#polymorphic-types). A mixin might partially
 implement an [abstract base class](#abstract-base-classes).
 
 **Examples:**
@@ -226,10 +251,16 @@ in C++, but other languages support them directly.
 
 ### Interop with C++ multiple inheritance
 
-iostream, virtual multiple inheritance, and base class has state; some uses of
-streams are ifstream, ofstream; hard cases are the bidirectional ones: fstream,
-stringstream. very few uses of fstream; one quarter are ostringstream, most
-could be.
+While Carbon won't support all the C++ forms of multiple inheritance, Carbon
+code will still need to interoperate with C++ code that does. Of particular
+concern are the `std::iostream` family of types. Most uses of those types are
+the input and output variations or could be migrated to use those variations,
+not the harder bidirectional cases.
+
+Much of the complexity of this interoperation could be alleviated by adopting
+the restriction that Carbon code can't directly access the fields of a virtual
+base class. In the cases where such access is needed, the workaround is to
+access them through C++ functions.
 
 We do not expect idiomatic Carbon-only code to use multiple inheritance.
 Extending this design to support interopating with C++ types using multiple
