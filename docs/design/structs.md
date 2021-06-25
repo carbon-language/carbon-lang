@@ -14,8 +14,8 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [Use cases](#use-cases)
     -   [Data types](#data-types)
     -   [Object types](#object-types)
-    -   [Polymorphic types](#polymorphic-types)
     -   [Abstract base classes](#abstract-base-classes)
+    -   [Polymorphic types](#polymorphic-types)
     -   [Mixins](#mixins)
     -   [Interop with C++ multiple inheritance](#interop-with-c-multiple-inheritance)
 -   [Background](#background)
@@ -36,6 +36,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Access control](#access-control)
     -   [Operator overloading](#operator-overloading)
     -   [Inheritance](#inheritance)
+    -   [Abstract base classes interoperating with object-safe interfaces](#abstract-base-classes-interoperating-with-object-safe-interfaces)
     -   [Memory layout](#memory-layout)
     -   [No `static` variables](#no-static-variables)
 
@@ -61,26 +62,44 @@ or assign values to named struct variables.
 The use cases for structs include both cases motivated by C++ interop, and cases
 that we expect to be included in idiomatic Carbon-only code.
 
-This design currently only attempts to address the "data types" use case.
+**This design currently only attempts to address the "data types" use case.**
 Addressing the other use cases is future work.
 
 ### Data types
 
-Characterized by: public data fields, few if any methods, final.
+Data types consist of data fields that are publicly accessible and directly read
+and manipulated by client code. They have few if any methods, and generally are
+not involved in inheritance at all.
 
-Example: Key and value pair returned from a `SortedMap` or `HashMap`.
+Examples include:
+
+-   a key and value pair returned from a `SortedMap` or `HashMap`
+-   a 2D point that might be used in a rendering API
 
 Properties:
 
 -   Operations like copy, move, destroy, unformed, and so on are defined
     field-wise.
--   Semantics for unnamed structs types and literals.
+-   Unnamed structs types and literals should match data type semantics.
 
 Expected in idiomatic Carbon-only code.
 
+**Background:** Kotlin has a dedicated concise syntax for defining
+["data classes"](https://kotlinlang.org/docs/data-classes.html) that avoids
+boilerplate. Python has a
+[data class library](https://docs.python.org/3/library/dataclasses.html),
+proposed in [PEP 557](https://www.python.org/dev/peps/pep-0557/), that fills a
+similar role.
+
 ### Object types
 
-Characterized by: private data fields, non-overridable methods, final.
+An object type is a type that has
+[encapsulation](<https://en.wikipedia.org/wiki/Encapsulation_(computer_programming)>).
+That is, its data fields are private and access and modification of values are
+all done through methods defined on the type. An object type does not have a
+[vtable](https://en.wikipedia.org/wiki/Virtual_method_table), and does not
+support being inherited from -- they are
+["final"](<https://en.wikipedia.org/wiki/Inheritance_(object-oriented_programming)#Non-subclassable_classes>).
 
 Examples: strings, containers, iterators, types with invariants such as `Date`.
 
@@ -97,29 +116,34 @@ used as an implementation detail of the public methods.
 Object types are expected in idiomatic Carbon-only code. Extending this design
 to support object types is future work.
 
-### Polymorphic types
-
-Characterized by: inheritance, private data in a base type, overridable/virtual
-methods with dynamic dispatch, accessed through a pointer to "type extending
-base", virtual destructor, single inheritance.
-
-We exclude complex multiple inheritance schemes, virtual inheritance, and so on
-from this use case, since we don't want direct support for those in Carbon. One
-base class for purposes of subtyping. Can have other parents as long as they are
-[ABC](#abstract-base-classes) or [mixins](#mixins).
-
-FIXME: Talk about the external API versus the APIs for communicating between
-base and derived.
-
-It is an open question whether we expect polymorphic types in idiomatic
-Carbon-only code, but will probably be included for the mid-term. Extending this
-design to support polymorphic types is future work.
-
 ### Abstract base classes
 
-Characterized by: inheritance, no data in base type, overridable/virtual methods
-with dynamic dispatch, accessed through a pointer to "type extending base",
-virtual destructor is optional, possible multiple inheritance
+An [abstract base class](https://en.wikipedia.org/wiki/Abstract_type), or "ABC",
+is a base type for use in inheritance with a
+[vtable](https://en.wikipedia.org/wiki/Virtual_method_table) for dynamic
+dispatch. The term "abstract" means that the base type can't be instantiated due
+to methods without implementation, they are said to be "abstract" or "pure
+virtual". Only child types that implement those methods may be instantiated.
+
+Abstract base classes can't have data fields in the base type, which avoids the
+main implementation difficulties and complexity of multiple inheritance. This
+allows a type to inherit from multiple abstract base classes.
+
+Abstract base classes are primarily used for
+[subtyping](https://en.wikipedia.org/wiki/Subtyping). In practice that means
+that if we have a type `Concrete` that is a concrete child of an abstract base
+class named `ABC`, object of type `Concrete` will be accessed through pointers
+of type `ABC*`, which means "a pointer to type inheriting from `ABC`." Such
+types will only be allowed to be deleted by way of that pointer if a virtual
+destructor is included in the abstract base class.
+
+The use cases for abstract base classes almost entirely overlap with the
+object-safe subset of Carbon interfaces.
+
+Characterized by: inheritance, no data in base type, most or all methods are
+overridable/virtual with dynamic dispatch, at least some methods are "pure" or
+"abstract", accessed through a pointer to "type extending base", virtual
+destructor is optional, possible multiple inheritance
 
 Can we use interfaces as the model for C++ ABCs to support implementing
 multiple? Can we skip supporting derived-to-base conversions in this case?
@@ -129,21 +153,88 @@ How do you pass something implementing this from Carbon to C++?
 Maybe we can say: you can inherit from multiple base classes but only the first
 can have any data?
 
-Do we want to expose Carbon interfaces to C++ as ABCs?
+Do we want to expose object-safe (as
+[defined by Rust](https://doc.rust-lang.org/reference/items/traits.html#object-safety))
+Carbon interfaces to C++ as ABCs?
+
+Difference from interfaces is whether the virtual/witness table is stored
 
 We expect idiomatic Carbon-only code to use Carbon interfaces instead of
 abstract base classes. Extending this design to support abstract base classes is
 future work.
 
+**Background:**
+[Java interfaces](<https://en.wikipedia.org/wiki/Interface_(Java)>) model
+abstract base classes.
+
+### Polymorphic types
+
+Polymorphic types support dynamic dispatch using a
+[vtable](https://en.wikipedia.org/wiki/Virtual_method_table), but unlike
+[abstract base classes](#abstract-base-classes) may also include private data in
+a base type. Polymorphic types support traditional
+[object-oriented single inheritance](<https://en.wikipedia.org/wiki/Inheritance_(object-oriented_programming)>),
+a mix of [subtyping](https://en.wikipedia.org/wiki/Subtyping) and
+[implementation and code reuse](<https://en.wikipedia.org/wiki/Inheritance_(object-oriented_programming)#Code_reuse>).
+
+Characterized by: private data in a base type, a mix of concrete and
+overridable/virtual methods with dynamic dispatch, accessed through a pointer to
+"type extending base", virtual destructor.
+
+We exclude complex multiple inheritance schemes, virtual inheritance, and so on
+from this use case. This is to avoid the complexity and overhead they bring,
+particularly since the use of these features is generally discouraged. The rule
+is that every type has at most one parent type with data members for subtyping
+purposes. Carbon will support additional parent types as long as they are
+[abstract base classes](#abstract-base-classes) or [mixins](#mixins).
+
+**Background:** The
+["Nothing is Something" talk by Sandi Metz](https://www.youtube.com/watch?v=OMPfEXIlTVE)
+and
+[the Composition Over Inheritance Principle](https://python-patterns.guide/gang-of-four/composition-over-inheritance/)
+describe design patterns to use instead of multiple inheritance.
+
+FIXME: Talk about the external API versus the APIs for communicating between
+base and derived.
+["The End Of Object Inheritance & The Beginning Of A New Modularity" talk by Augie Fackler and Nathaniel Manista](https://www.youtube.com/watch?v=3MNVP9-hglc)
+discusses design patterns that split up types to reduce the number of kinds of
+calls between child and parent types.
+
+We expect polymorphic types in idiomatic Carbon-only code, at least for the
+medium term. Extending this design to support polymorphic types is future work.
+
 ### Mixins
 
-inheritance without virtual: intrusive linked list, need to be able to get from
-the intrusive linked list type to the main type; type can be part of another
-inheritance hierarchy. Could be handled in Carbon by giving mix-ins the
-capability to go from their pointer to the pointer to the containing object.
+A [mixin](https://en.wikipedia.org/wiki/Mixin) is a declaration of data,
+methods, and interface implementations that can be added to another type, called
+the "main type". The methods of a mixin may also use data, methods, and
+interface implementations provided by the main type. Mixins are designed around
+implementation reuse rather than subtyping, and so don't need to use a vtable.
+
+A mixin might be an implementation detail of a [data type](#data-types),
+[object type](#object-types), or
+[child of a polymorphictype](#polymorphic-types). A mixin might partially
+implement an [abstract base class](#abstract-base-classes).
+
+**Examples:**
+[intrusive linked list](https://www.boost.org/doc/libs/1_63_0/doc/html/intrusive.html),
+intrusive reference count
+
+In both of these examples, the mixin needs the ability to convert between a
+pointer to the mixin's data (like a "next" pointer or reference count) and a
+pointer to the containing object with the main type.
 
 Mixins are expected in idiomatic Carbon-only code. Extending this design to
 support mixins is future work.
+
+**Background:** Mixins are typically implemented using the
+[curiously recurring template pattern](https://en.wikipedia.org/wiki/Curiously_recurring_template_pattern)
+in C++, but other languages support them directly.
+
+-   In Dart, the mixin defines an interface that the destination type ends up
+    implementing, which restores a form of subtyping. See
+    [Dart: What are mixins?](https://medium.com/flutter-community/dart-what-are-mixins-3a72344011f3).
+-   [Proposal to add mixin support to Swift](https://github.com/Anton3/swift-evolution/blob/mixins/proposals/NNNN-mixins.md).
 
 ### Interop with C++ multiple inheritance
 
@@ -313,9 +404,10 @@ FIXME
 
 ### Method syntax
 
-We will need some way of defining methods on structs. The big concern is how we
-designate the different ways the receiver can be passed into the method. This
-question is being tracked in
+We will need some way of defining
+[methods](<https://en.wikipedia.org/wiki/Method_(computer_programming)>) on
+structs. The big concern is how we designate the different ways the receiver can
+be passed into the method. This question is being tracked in
 [question-for-leads issue #494](https://github.com/carbon-language/carbon-lang/issues/494).
 As an example, we need some way to distinguish methods that don't take a
 receiver at all, like
@@ -353,6 +445,19 @@ FIXME: limited multiple inheritance
 
 FIXME:
 [doc with constructor options for inheritance](https://docs.google.com/document/d/1GyrBIFyUbuLJGItmTAYUf9sqSDQjry_kjZKm5INl-84/edit)
+
+### Abstract base classes interoperating with object-safe interfaces
+
+We want four things:
+
+-   Ability to convert an object-safe interface (a type-of-type) into an
+    abstract base class (a base type), maybe using `AsBaseType(MyInterface)`.
+-   Ability to convert an abstract base class (a base type) into an object-safe
+    interface (a type-of-type), maybe using `AsInterface(MyABC)`.
+-   Ability to convert a (thin) pointer to an abstract base class to a `DynPtr`
+    of the corresponding interface.
+-   We should arrange that `DynPtr(MyInterface)` should be a type extending the
+    corresponding abstract base class.
 
 ### Memory layout
 
