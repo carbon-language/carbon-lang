@@ -39,10 +39,10 @@ The goal of Carbon generics is to provide an alternative to Carbon (or C++)
 templates. Generics in this form should provide many advantages, including:
 
 -   Function calls and bodies are checked independently against the function
-    signatures
--   Clearer and earlier error messages
--   Fast builds, particularly development builds
--   Support for both static and dynamic dispatch
+    signatures.
+-   Clearer and earlier error messages.
+-   Fast builds, particularly development builds.
+-   Support for both static and dynamic dispatch.
 
 For more detail, see [the detailed discussion of generics goals](goals.md) and
 [generics terminology](terminology.md).
@@ -51,9 +51,8 @@ For more detail, see [the detailed discussion of generics goals](goals.md) and
 
 Summary of how Carbon generics work:
 
--   Generics are a mechanism for writing parameterized code that applies
-    generally instead of making near-duplicates for very similar situations.
--   Interfaces have a name and describe methods, functions, and other items for
+-   _Generics_ are parameterized functions and types that can apply generally. They are used to avoid writing specialized, near-duplicate code for similar situations. 
+-   Generics are written using _interfaces_ which have a name and describe methods, functions, and other items for
     types to implement.
 -   Types must explicitly _implement_ interfaces to indicate that they support
     its functionality. A given type may implement an interface at most once.
@@ -61,7 +60,7 @@ Summary of how Carbon generics work:
     directly call the interface's methods on those types. Or, they may be
     external, in which case the implementation is allowed to be defined in the
     library defining the interface.
--   Interfaces may be used as the type of a generic type parameter, acting as a
+-   Interfaces are used as the type of a generic type parameter, acting as a
     _type-of-type_. Type-of-types in general specify the capabilities and
     requirements of the type. Types define specific implementations of those
     capabilities. Inside such a generic function, the API of the type is
@@ -96,7 +95,7 @@ fn SortStringVector(a: Vector(String)*) { ... }
 ...
 ```
 
-you might have one generic function that could sort any array with comparable
+You might have one generic function that could sort any array with comparable
 elements:
 
 ```
@@ -472,8 +471,6 @@ At that point, two erasures occur:
     Inside of `PrintIt`, you can't cast `p` or `T` back to `CDCover`.
 
 ## Future work
-
-Future work:
 
 -   Be able to have non-type generic parameters like the `UInt` size of an array
     or tuple.
