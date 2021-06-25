@@ -643,6 +643,7 @@ void StepLvalue() {
         frame->todo.Push(
             MakeLvalAct(exp->GetFieldAccess().aggregate.GetPointer()));
         act->pos++;
+        act->pos++;
       } else {
         //    { v :: [].f :: C, E, F} :: S, H}
         // -> { { &v.f :: C, E, F} :: S, H }
@@ -660,8 +661,10 @@ void StepLvalue() {
         // -> { e :: [][i] :: C, E, F} :: S, H}
         frame->todo.Push(MakeExpAct(exp->GetIndex().aggregate));
         act->pos++;
+        act->pos++;
       } else if (act->pos == 1) {
         frame->todo.Push(MakeExpAct(exp->GetIndex().offset));
+        act->pos++;
       } else if (act->pos == 2) {
         //    { v :: [][i] :: C, E, F} :: S, H}
         // -> { { &v[i] :: C, E, F} :: S, H }
@@ -686,6 +689,7 @@ void StepLvalue() {
         const Expression* e1 = (*exp->GetTuple().fields)[0].expression;
         frame->todo.Push(MakeLvalAct(e1));
         act->pos++;
+        act->pos++;
       } else if (act->pos != static_cast<int>(exp->GetTuple().fields->size())) {
         //    { { vk :: (f1=v1,..., fk=[],fk+1=ek+1,...) :: C, E, F} :: S,
         //    H}
@@ -693,6 +697,7 @@ void StepLvalue() {
         // H}
         const Expression* elt = (*exp->GetTuple().fields)[act->pos].expression;
         frame->todo.Push(MakeLvalAct(elt));
+        act->pos++;
       } else {
         CreateTuple(frame, act, exp);
       }
@@ -732,6 +737,7 @@ void StepExp() {
       if (act->pos == -1) {
         frame->todo.Push(MakeExpAct(exp->GetPatternVariable().type));
         act->pos++;
+        act->pos++;
       } else {
         auto v = Value::MakeVarPatVal(exp->GetPatternVariable().name,
                                       act->results[0]);
@@ -746,8 +752,10 @@ void StepExp() {
         // -> { { e :: [][i] :: C, E, F} :: S, H}
         frame->todo.Push(MakeExpAct(exp->GetIndex().aggregate));
         act->pos++;
+        act->pos++;
       } else if (act->pos == 1) {
         frame->todo.Push(MakeExpAct(exp->GetIndex().offset));
+        act->pos++;
       } else if (act->pos == 2) {
         auto tuple = act->results[0];
         switch (tuple->tag) {
@@ -785,6 +793,7 @@ void StepExp() {
           const Expression* e1 = (*exp->GetTuple().fields)[0].expression;
           frame->todo.Push(MakeExpAct(e1));
           act->pos++;
+          act->pos++;
         } else {
           CreateTuple(frame, act, exp);
         }
@@ -795,6 +804,7 @@ void StepExp() {
         // H}
         const Expression* elt = (*exp->GetTuple().fields)[act->pos].expression;
         frame->todo.Push(MakeExpAct(elt));
+        act->pos++;
       } else {
         CreateTuple(frame, act, exp);
       }
@@ -806,6 +816,7 @@ void StepExp() {
         // -> { { e :: [].f :: C, E, F} :: S, H}
         frame->todo.Push(
             MakeLvalAct(exp->GetFieldAccess().aggregate.GetPointer()));
+        act->pos++;
         act->pos++;
       } else {
         //    { { v :: [].f :: C, E, F} :: S, H}
@@ -853,6 +864,7 @@ void StepExp() {
           frame->todo.Push(
               MakeExpAct(exp->GetPrimitiveOperator().arguments->front()));
           act->pos++;
+          act->pos++;
         } else {
           //    { {op([]) :: C, E, F} :: S, H}
           // -> { {eval_prim(op, ()) :: C, E, F} :: S, H}
@@ -869,6 +881,7 @@ void StepExp() {
         const Expression* arg =
             (*exp->GetPrimitiveOperator().arguments)[act->pos];
         frame->todo.Push(MakeExpAct(arg));
+        act->pos++;
       } else {
         //    { {v :: op(vs,[]) :: C, E, F} :: S, H}
         // -> { {eval_prim(op, (vs,v)) :: C, E, F} :: S, H}
@@ -884,10 +897,12 @@ void StepExp() {
         // -> { {e1 :: [](e2) :: C, E, F} :: S, H}
         frame->todo.Push(MakeExpAct(exp->GetCall().function));
         act->pos++;
+        act->pos++;
       } else if (act->pos == 1) {
         //    { { v :: [](e) :: C, E, F} :: S, H}
         // -> { { e :: v([]) :: C, E, F} :: S, H}
         frame->todo.Push(MakeExpAct(exp->GetCall().argument));
+        act->pos++;
       } else if (act->pos == 2) {
         //    { { v2 :: v1([]) :: C, E, F} :: S, H}
         // -> { {C',E',F'} :: {C, E, F} :: S, H}
@@ -930,10 +945,12 @@ void StepExp() {
       if (act->pos == -1) {
         frame->todo.Push(MakeExpAct(exp->GetFunctionType().parameter));
         act->pos++;
+        act->pos++;
       } else if (act->pos == 1) {
         //    { { pt :: fn [] -> e :: C, E, F} :: S, H}
         // -> { { e :: fn pt -> []) :: C, E, F} :: S, H}
         frame->todo.Push(MakeExpAct(exp->GetFunctionType().return_type));
+        act->pos++;
       } else if (act->pos == 2) {
         //    { { rt :: fn pt -> [] :: C, E, F} :: S, H}
         // -> { fn pt -> rt :: {C, E, F} :: S, H}
@@ -1001,6 +1018,7 @@ void StepStmt() {
         // -> { { e :: (match ([]) ...) :: C, E, F} :: S, H}
         frame->todo.Push(MakeExpAct(stmt->GetMatch().exp));
         act->pos++;
+        act->pos++;
       } else {
         // Regarding act->pos:
         // * odd: start interpreting the pattern of a clause
@@ -1024,6 +1042,7 @@ void StepStmt() {
           //    { {v :: (match ([]) ...) :: C, E, F} :: S, H}
           // -> { {pi :: (match ([]) ...) :: C, E, F} :: S, H}
           frame->todo.Push(MakeExpAct(c->first));
+          act->pos++;
         } else {  // try to match
           auto v = act->results[0];
           auto pat = act->results[clause_num + 1];
@@ -1045,13 +1064,8 @@ void StepStmt() {
             // this case did not match, moving on
             act->pos++;
             clause_num = (act->pos - 1) / 2;
-            if (clause_num <
+            if (clause_num ==
                 static_cast<int>(stmt->GetMatch().clauses->size())) {
-              // interpret the next clause
-              c = stmt->GetMatch().clauses->begin();
-              std::advance(c, clause_num);
-              frame->todo.Push(MakeExpAct(c->first));
-            } else {  // No more clauses in match
               frame->todo.Pop(2);
             }
           }
@@ -1063,6 +1077,7 @@ void StepStmt() {
         //    { { (while (e) s) :: C, E, F} :: S, H}
         // -> { { e :: (while ([]) s) :: C, E, F} :: S, H}
         frame->todo.Push(MakeExpAct(stmt->GetWhile().cond));
+        act->pos++;
         act->pos++;
       } else if (ValToBool(act->results[0], stmt->line_num)) {
         //    { {true :: (while ([]) s) :: C, E, F} :: S, H}
@@ -1112,6 +1127,7 @@ void StepStmt() {
           frame->scopes.Push(scope);
           frame->todo.Push(MakeStmtAct(stmt->GetBlock().stmt));
           act->pos++;
+          act->pos++;
         } else {
           frame->todo.Pop();
         }
@@ -1129,8 +1145,10 @@ void StepStmt() {
         // -> { {e :: (var x = []) :: C, E, F} :: S, H}
         frame->todo.Push(MakeExpAct(stmt->GetVariableDefinition().init));
         act->pos++;
+        act->pos++;
       } else if (act->pos == 1) {
         frame->todo.Push(MakeExpAct(stmt->GetVariableDefinition().pat));
+        act->pos++;
       } else if (act->pos == 2) {
         //    { { v :: (x = []) :: C, E, F} :: S, H}
         // -> { { C, E(x := a), F} :: S, H(a := copy(v))}
@@ -1155,6 +1173,7 @@ void StepStmt() {
         //    { {e :: C, E, F} :: S, H}
         // -> { {e :: C, E, F} :: S, H}
         frame->todo.Push(MakeExpAct(stmt->GetExpression()));
+        act->pos++;
       } else {
         frame->todo.Pop(1);
       }
@@ -1165,10 +1184,12 @@ void StepStmt() {
         // -> { {lv :: ([] = e) :: C, E, F} :: S, H}
         frame->todo.Push(MakeLvalAct(stmt->GetAssign().lhs));
         act->pos++;
+        act->pos++;
       } else if (act->pos == 1) {
         //    { { a :: ([] = e) :: C, E, F} :: S, H}
         // -> { { e :: (a = []) :: C, E, F} :: S, H}
         frame->todo.Push(MakeExpAct(stmt->GetAssign().rhs));
+        act->pos++;
       } else if (act->pos == 2) {
         //    { { v :: (a = []) :: C, E, F} :: S, H}
         // -> { { C, E, F} :: S, H(a := v)}
@@ -1183,6 +1204,7 @@ void StepStmt() {
         //    { {(if (e) then_stmt else else_stmt) :: C, E, F} :: S, H}
         // -> { { e :: (if ([]) then_stmt else else_stmt) :: C, E, F} :: S, H}
         frame->todo.Push(MakeExpAct(stmt->GetIf().cond));
+        act->pos++;
         act->pos++;
       } else if (ValToBool(act->results[0], stmt->line_num)) {
         //    { {true :: if ([]) then_stmt else else_stmt :: C, E, F} ::
@@ -1205,6 +1227,7 @@ void StepStmt() {
         //    { {return e :: C, E, F} :: S, H}
         // -> { {e :: return [] :: C, E, F} :: S, H}
         frame->todo.Push(MakeExpAct(stmt->GetReturn()));
+        act->pos++;
         act->pos++;
       } else {
         //    { {v :: return [] :: C, E, F} :: {C', E', F'} :: S, H}
@@ -1253,6 +1276,7 @@ void StepStmt() {
       if (act->pos == -1) {
         // Evaluate the argument of the run statement.
         frame->todo.Push(MakeExpAct(stmt->GetRun().argument));
+        act->pos++;
         act->pos++;
       } else {
         frame->todo.Pop(1);
@@ -1364,13 +1388,11 @@ void Step() {
   Action* act = frame->todo.Top();
   switch (act->tag) {
     case ActionKind::DeleteTmpAction:
-      CHECK(act->pos == 0);  // why zero? -Jeremy
       state->heap.Deallocate(act->u.delete_tmp);
       frame->todo.Pop(1);
       frame->todo.Push(MakeValAct(act->results[0]));
       break;
     case ActionKind::ExpToLValAction: {
-      CHECK(act->pos == 0);  // why zero? -Jeremy
       Address a = state->heap.AllocateValue(act->results[0]);
       auto del = MakeDeleteAct(a);
       frame->todo.Pop(1);
@@ -1382,8 +1404,6 @@ void Step() {
       Action* val_act = frame->todo.Pop();
       Action* act = frame->todo.Top();
       act->results.push_back(val_act->u.val);
-      // TODO: move the following to the Step for that action. -Jeremy
-      act->pos++;
       break;
     }
     case ActionKind::LValAction:
