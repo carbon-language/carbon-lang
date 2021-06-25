@@ -3652,7 +3652,8 @@ Some things going on here:
     -   Easy case: An `impl` for a family of parameterized types.
     -   Trickier is "structural conformance": we might want to say "here is an
         `impl` for interface `Foo` for any class implementing a method `Bar`".
-        This is particularly for C++ types.
+        This is particularly for C++ types, and for
+        [functions that are transitioning from templates into generics](goals.md#upgrade-path-from-templates).
 
 ### Bridge for C++ templates
 
@@ -3753,6 +3754,9 @@ external impl [U:$ EqualityComparableTo(T:$$ Type)] U as Foo(T) {
 }
 ```
 
+In short, this is saying that deduced parameters in `external impl` declarations
+are treated as meaning "for all" instead of "for some" as in other contexts.
+
 One tricky part of this is that you may not have visibility into all the impls
 of an interface for a type since they may be
 [defined with one of the other types involved](#impl-lookup). Hopefully this
@@ -3782,9 +3786,9 @@ general is commonly called _[specialization](terminology.md#specialization)_.
 TODO: Examples
 
 **Implication:** Can't do `impl` lookup with generic arguments, even if you can
-see a matching templated definition, since there may be a more-specific match
-and we want to be assured that we always get the same result any time we do an
-`impl` lookup.
+see a matching parameterized definition, since there may be a more-specific
+match and we want to be assured that we always get the same result any time we
+do an `impl` lookup.
 
 TODO: Example
 
