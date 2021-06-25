@@ -134,30 +134,18 @@ Abstract base classes are primarily used for
 that if we have a type `Concrete` that is a concrete child of an abstract base
 class named `ABC`, object of type `Concrete` will be accessed through pointers
 of type `ABC*`, which means "a pointer to type inheriting from `ABC`." Such
-types will only be allowed to be deleted by way of that pointer if a virtual
+types should only be allowed to be deleted by way of that pointer if a virtual
 destructor is included in the abstract base class.
 
 The use cases for abstract base classes almost entirely overlap with the
-object-safe subset of Carbon interfaces.
-
-Characterized by: inheritance, no data in base type, most or all methods are
-overridable/virtual with dynamic dispatch, at least some methods are "pure" or
-"abstract", accessed through a pointer to "type extending base", virtual
-destructor is optional, possible multiple inheritance
-
-Can we use interfaces as the model for C++ ABCs to support implementing
-multiple? Can we skip supporting derived-to-base conversions in this case?
-
-How do you pass something implementing this from Carbon to C++?
-
-Maybe we can say: you can inherit from multiple base classes but only the first
-can have any data?
-
-Do we want to expose object-safe (as
+object-safe (as
 [defined by Rust](https://doc.rust-lang.org/reference/items/traits.html#object-safety))
-Carbon interfaces to C++ as ABCs?
-
-Difference from interfaces is whether the virtual/witness table is stored
+subset of [Carbon interfaces](generics/overview.md#interfaces). The main
+difference is the representation in memory. A type extending an abstract base
+class includes a pointer to the table of methods in the object value itself,
+while a type implementing an interface would store the pointer alongside the
+pointer to the value in a `DynPtr(MyInterface)`. Of course the interface option
+also allows the method table to be passed at compile time.
 
 We expect idiomatic Carbon-only code to use Carbon interfaces instead of
 abstract base classes. Extending this design to support abstract base classes is
@@ -177,16 +165,16 @@ a base type. Polymorphic types support traditional
 a mix of [subtyping](https://en.wikipedia.org/wiki/Subtyping) and
 [implementation and code reuse](<https://en.wikipedia.org/wiki/Inheritance_(object-oriented_programming)#Code_reuse>).
 
+We exclude complex multiple inheritance schemes, virtual inheritance, and so on
+from this use case. This is to avoid the complexity and overhead they bring,
+particularly since the use of these features in C++ is generally discouraged.
+The rule is that every type has at most one parent type with data members for
+subtyping purposes. Carbon will support additional parent types as long as they
+are [abstract base classes](#abstract-base-classes) or [mixins](#mixins).
+
 Characterized by: private data in a base type, a mix of concrete and
 overridable/virtual methods with dynamic dispatch, accessed through a pointer to
 "type extending base", virtual destructor.
-
-We exclude complex multiple inheritance schemes, virtual inheritance, and so on
-from this use case. This is to avoid the complexity and overhead they bring,
-particularly since the use of these features is generally discouraged. The rule
-is that every type has at most one parent type with data members for subtyping
-purposes. Carbon will support additional parent types as long as they are
-[abstract base classes](#abstract-base-classes) or [mixins](#mixins).
 
 **Background:** The
 ["Nothing is Something" talk by Sandi Metz](https://www.youtube.com/watch?v=OMPfEXIlTVE)
