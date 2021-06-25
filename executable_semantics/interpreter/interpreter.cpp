@@ -637,12 +637,11 @@ void StepLvalue() {
       break;
     }
     case ExpressionKind::GetField: {
-      if (act->pos == -1) {
+      if (act->pos == 0) {
         //    { {e.f :: C, E, F} :: S, H}
         // -> { e :: [].f :: C, E, F} :: S, H}
         frame->todo.Push(
             MakeLvalAct(exp->GetFieldAccess().aggregate.GetPointer()));
-        act->pos++;
         act->pos++;
       } else {
         //    { v :: [].f :: C, E, F} :: S, H}
@@ -656,11 +655,10 @@ void StepLvalue() {
       break;
     }
     case ExpressionKind::Index: {
-      if (act->pos == -1) {
+      if (act->pos == 0) {
         //    { {e[i] :: C, E, F} :: S, H}
         // -> { e :: [][i] :: C, E, F} :: S, H}
         frame->todo.Push(MakeExpAct(exp->GetIndex().aggregate));
-        act->pos++;
         act->pos++;
       } else if (act->pos == 1) {
         frame->todo.Push(MakeExpAct(exp->GetIndex().offset));
@@ -683,12 +681,11 @@ void StepLvalue() {
       break;
     }
     case ExpressionKind::Tuple: {
-      if (act->pos == -1) {
+      if (act->pos == 0) {
         //    { {(f1=e1,...) :: C, E, F} :: S, H}
         // -> { {e1 :: (f1=[],...) :: C, E, F} :: S, H}
         const Expression* e1 = (*exp->GetTuple().fields)[0].expression;
         frame->todo.Push(MakeLvalAct(e1));
-        act->pos++;
         act->pos++;
       } else if (act->pos != static_cast<int>(exp->GetTuple().fields->size())) {
         //    { { vk :: (f1=v1,..., fk=[],fk+1=ek+1,...) :: C, E, F} :: S,
@@ -734,9 +731,8 @@ void StepExp() {
   }
   switch (exp->tag()) {
     case ExpressionKind::PatternVariable: {
-      if (act->pos == -1) {
+      if (act->pos == 0) {
         frame->todo.Push(MakeExpAct(exp->GetPatternVariable().type));
-        act->pos++;
         act->pos++;
       } else {
         auto v = Value::MakeVarPatVal(exp->GetPatternVariable().name,
@@ -747,11 +743,10 @@ void StepExp() {
       break;
     }
     case ExpressionKind::Index: {
-      if (act->pos == -1) {
+      if (act->pos == 0) {
         //    { { e[i] :: C, E, F} :: S, H}
         // -> { { e :: [][i] :: C, E, F} :: S, H}
         frame->todo.Push(MakeExpAct(exp->GetIndex().aggregate));
-        act->pos++;
         act->pos++;
       } else if (act->pos == 1) {
         frame->todo.Push(MakeExpAct(exp->GetIndex().offset));
@@ -786,13 +781,12 @@ void StepExp() {
       break;
     }
     case ExpressionKind::Tuple: {
-      if (act->pos == -1) {
+      if (act->pos == 0) {
         if (exp->GetTuple().fields->size() > 0) {
           //    { {(f1=e1,...) :: C, E, F} :: S, H}
           // -> { {e1 :: (f1=[],...) :: C, E, F} :: S, H}
           const Expression* e1 = (*exp->GetTuple().fields)[0].expression;
           frame->todo.Push(MakeExpAct(e1));
-          act->pos++;
           act->pos++;
         } else {
           CreateTuple(frame, act, exp);
@@ -811,12 +805,11 @@ void StepExp() {
       break;
     }
     case ExpressionKind::GetField: {
-      if (act->pos == -1) {
+      if (act->pos == 0) {
         //    { { e.f :: C, E, F} :: S, H}
         // -> { { e :: [].f :: C, E, F} :: S, H}
         frame->todo.Push(
             MakeLvalAct(exp->GetFieldAccess().aggregate.GetPointer()));
-        act->pos++;
         act->pos++;
       } else {
         //    { { v :: [].f :: C, E, F} :: S, H}
@@ -830,7 +823,7 @@ void StepExp() {
       break;
     }
     case ExpressionKind::Variable: {
-      CHECK(act->pos == -1);
+      CHECK(act->pos == 0);
       // { {x :: C, E, F} :: S, H} -> { {H(E(x)) :: C, E, F} :: S, H}
       std::optional<Address> pointer =
           CurrentEnv(state).Get(exp->GetVariable().name);
@@ -845,37 +838,20 @@ void StepExp() {
       break;
     }
     case ExpressionKind::Integer:
-      CHECK(act->pos == -1);
+      CHECK(act->pos == 0);
       // { {n :: C, E, F} :: S, H} -> { {n' :: C, E, F} :: S, H}
       frame->todo.Pop(1);
       frame->todo.Push(MakeValAct(Value::MakeIntVal(exp->GetInteger())));
       break;
     case ExpressionKind::Boolean:
-      CHECK(act->pos == -1);
+      CHECK(act->pos == 0);
       // { {n :: C, E, F} :: S, H} -> { {n' :: C, E, F} :: S, H}
       frame->todo.Pop(1);
       frame->todo.Push(MakeValAct(Value::MakeBoolVal(exp->GetBoolean())));
       break;
     case ExpressionKind::PrimitiveOp:
-      if (act->pos == -1) {
-        if (exp->GetPrimitiveOperator().arguments->size() > 0) {
-          //    { {op(e :: es) :: C, E, F} :: S, H}
-          // -> { e :: op([] :: es) :: C, E, F} :: S, H}
-          frame->todo.Push(
-              MakeExpAct(exp->GetPrimitiveOperator().arguments->front()));
-          act->pos++;
-          act->pos++;
-        } else {
-          //    { {op([]) :: C, E, F} :: S, H}
-          // -> { {eval_prim(op, ()) :: C, E, F} :: S, H}
-          const Value* v = EvalPrim(exp->GetPrimitiveOperator().op,
-                                    act->results, exp->line_num);
-          frame->todo.Pop(2);
-          frame->todo.Push(MakeValAct(v));
-        }
-      } else if (act->pos !=
-                 static_cast<int>(
-                     exp->GetPrimitiveOperator().arguments->size())) {
+      if (act->pos !=
+          static_cast<int>(exp->GetPrimitiveOperator().arguments->size())) {
         //    { {v :: op(vs,[],e,es) :: C, E, F} :: S, H}
         // -> { {e :: op(vs,v,[],es) :: C, E, F} :: S, H}
         const Expression* arg =
@@ -892,11 +868,10 @@ void StepExp() {
       }
       break;
     case ExpressionKind::Call:
-      if (act->pos == -1) {
+      if (act->pos == 0) {
         //    { {e1(e2) :: C, E, F} :: S, H}
         // -> { {e1 :: [](e2) :: C, E, F} :: S, H}
         frame->todo.Push(MakeExpAct(exp->GetCall().function));
-        act->pos++;
         act->pos++;
       } else if (act->pos == 1) {
         //    { { v :: [](e) :: C, E, F} :: S, H}
@@ -914,37 +889,36 @@ void StepExp() {
       }
       break;
     case ExpressionKind::IntT: {
-      CHECK(act->pos == -1);
+      CHECK(act->pos == 0);
       const Value* v = Value::MakeIntTypeVal();
       frame->todo.Pop(1);
       frame->todo.Push(MakeValAct(v));
       break;
     }
     case ExpressionKind::BoolT: {
-      CHECK(act->pos == -1);
+      CHECK(act->pos == 0);
       const Value* v = Value::MakeBoolTypeVal();
       frame->todo.Pop(1);
       frame->todo.Push(MakeValAct(v));
       break;
     }
     case ExpressionKind::AutoT: {
-      CHECK(act->pos == -1);
+      CHECK(act->pos == 0);
       const Value* v = Value::MakeAutoTypeVal();
       frame->todo.Pop(1);
       frame->todo.Push(MakeValAct(v));
       break;
     }
     case ExpressionKind::TypeT: {
-      CHECK(act->pos == -1);
+      CHECK(act->pos == 0);
       const Value* v = Value::MakeTypeTypeVal();
       frame->todo.Pop(1);
       frame->todo.Push(MakeValAct(v));
       break;
     }
     case ExpressionKind::FunctionT: {
-      if (act->pos == -1) {
+      if (act->pos == 0) {
         frame->todo.Push(MakeExpAct(exp->GetFunctionType().parameter));
-        act->pos++;
         act->pos++;
       } else if (act->pos == 1) {
         //    { { pt :: fn [] -> e :: C, E, F} :: S, H}
@@ -962,7 +936,7 @@ void StepExp() {
       break;
     }
     case ExpressionKind::ContinuationT: {
-      CHECK(act->pos == -1);
+      CHECK(act->pos == 0);
       const Value* v = Value::MakeContinuationTypeVal();
       frame->todo.Pop(1);
       frame->todo.Push(MakeValAct(v));
@@ -1013,11 +987,10 @@ void StepStmt() {
   }
   switch (stmt->tag) {
     case StatementKind::Match:
-      if (act->pos == -1) {
+      if (act->pos == 0) {
         //    { { (match (e) ...) :: C, E, F} :: S, H}
         // -> { { e :: (match ([]) ...) :: C, E, F} :: S, H}
         frame->todo.Push(MakeExpAct(stmt->GetMatch().exp));
-        act->pos++;
         act->pos++;
       } else {
         // Regarding act->pos:
@@ -1056,7 +1029,7 @@ void StepStmt() {
             const Statement* body_block =
                 Statement::MakeBlock(stmt->line_num, c->second);
             Action* body_act = MakeStmtAct(body_block);
-            body_act->pos = 0;
+            body_act->pos = 1;
             frame->todo.Pop(1);
             frame->todo.Push(body_act);
             frame->todo.Push(MakeStmtAct(c->second));
@@ -1073,28 +1046,27 @@ void StepStmt() {
       }
       break;
     case StatementKind::While:
-      if (act->pos == -1) {
+      if (act->pos == 0) {
         //    { { (while (e) s) :: C, E, F} :: S, H}
         // -> { { e :: (while ([]) s) :: C, E, F} :: S, H}
         frame->todo.Push(MakeExpAct(stmt->GetWhile().cond));
         act->pos++;
-        act->pos++;
       } else if (ValToBool(act->results[0], stmt->line_num)) {
         //    { {true :: (while ([]) s) :: C, E, F} :: S, H}
         // -> { { s :: (while (e) s) :: C, E, F } :: S, H}
-        frame->todo.Top()->pos = -1;
+        frame->todo.Top()->pos = 0;
         frame->todo.Top()->results.clear();
         frame->todo.Push(MakeStmtAct(stmt->GetWhile().body));
       } else {
         //    { {false :: (while ([]) s) :: C, E, F} :: S, H}
         // -> { { C, E, F } :: S, H}
-        frame->todo.Top()->pos = -1;
+        frame->todo.Top()->pos = 0;
         frame->todo.Top()->results.clear();
         frame->todo.Pop(1);
       }
       break;
     case StatementKind::Break:
-      CHECK(act->pos == -1);
+      CHECK(act->pos == 0);
       //    { { break; :: ... :: (while (e) s) :: C, E, F} :: S, H}
       // -> { { C, E', F} :: S, H}
       frame->todo.Pop(1);
@@ -1108,7 +1080,7 @@ void StepStmt() {
       frame->todo.Pop(1);
       break;
     case StatementKind::Continue:
-      CHECK(act->pos == -1);
+      CHECK(act->pos == 0);
       //    { { continue; :: ... :: (while (e) s) :: C, E, F} :: S, H}
       // -> { { (while (e) s) :: C, E', F} :: S, H}
       frame->todo.Pop(1);
@@ -1121,7 +1093,7 @@ void StepStmt() {
       }
       break;
     case StatementKind::Block: {
-      if (act->pos == -1) {
+      if (act->pos == 0) {
         if (stmt->GetBlock().stmt) {
           auto* scope = new Scope(CurrentEnv(state), {});
           frame->scopes.Push(scope);
@@ -1140,11 +1112,10 @@ void StepStmt() {
       break;
     }
     case StatementKind::VariableDefinition:
-      if (act->pos == -1) {
+      if (act->pos == 0) {
         //    { {(var x = e) :: C, E, F} :: S, H}
         // -> { {e :: (var x = []) :: C, E, F} :: S, H}
         frame->todo.Push(MakeExpAct(stmt->GetVariableDefinition().init));
-        act->pos++;
         act->pos++;
       } else if (act->pos == 1) {
         frame->todo.Push(MakeExpAct(stmt->GetVariableDefinition().pat));
@@ -1169,7 +1140,7 @@ void StepStmt() {
       }
       break;
     case StatementKind::ExpressionStatement:
-      if (act->pos == -1) {
+      if (act->pos == 0) {
         //    { {e :: C, E, F} :: S, H}
         // -> { {e :: C, E, F} :: S, H}
         frame->todo.Push(MakeExpAct(stmt->GetExpression()));
@@ -1179,11 +1150,10 @@ void StepStmt() {
       }
       break;
     case StatementKind::Assign:
-      if (act->pos == -1) {
+      if (act->pos == 0) {
         //    { {(lv = e) :: C, E, F} :: S, H}
         // -> { {lv :: ([] = e) :: C, E, F} :: S, H}
         frame->todo.Push(MakeLvalAct(stmt->GetAssign().lhs));
-        act->pos++;
         act->pos++;
       } else if (act->pos == 1) {
         //    { { a :: ([] = e) :: C, E, F} :: S, H}
@@ -1200,11 +1170,10 @@ void StepStmt() {
       }
       break;
     case StatementKind::If:
-      if (act->pos == -1) {
+      if (act->pos == 0) {
         //    { {(if (e) then_stmt else else_stmt) :: C, E, F} :: S, H}
         // -> { { e :: (if ([]) then_stmt else else_stmt) :: C, E, F} :: S, H}
         frame->todo.Push(MakeExpAct(stmt->GetIf().cond));
-        act->pos++;
         act->pos++;
       } else if (ValToBool(act->results[0], stmt->line_num)) {
         //    { {true :: if ([]) then_stmt else else_stmt :: C, E, F} ::
@@ -1223,11 +1192,10 @@ void StepStmt() {
       }
       break;
     case StatementKind::Return:
-      if (act->pos == -1) {
+      if (act->pos == 0) {
         //    { {return e :: C, E, F} :: S, H}
         // -> { {e :: return [] :: C, E, F} :: S, H}
         frame->todo.Push(MakeExpAct(stmt->GetReturn()));
-        act->pos++;
         act->pos++;
       } else {
         //    { {v :: return [] :: C, E, F} :: {C', E', F'} :: S, H}
@@ -1240,7 +1208,7 @@ void StepStmt() {
       }
       break;
     case StatementKind::Sequence:
-      CHECK(act->pos == -1);
+      CHECK(act->pos == 0);
       //    { { (s1,s2) :: C, E, F} :: S, H}
       // -> { { s1 :: s2 :: C, E, F} :: S, H}
       frame->todo.Pop(1);
@@ -1250,7 +1218,7 @@ void StepStmt() {
       frame->todo.Push(MakeStmtAct(stmt->GetSequence().stmt));
       break;
     case StatementKind::Continuation: {
-      CHECK(act->pos == -1);
+      CHECK(act->pos == 0);
       // Create a continuation object by creating a frame similar the
       // way one is created in a function call.
       Scope* scope = new Scope(CurrentEnv(state), std::list<std::string>());
@@ -1273,10 +1241,9 @@ void StepStmt() {
       break;
     }
     case StatementKind::Run:
-      if (act->pos == -1) {
+      if (act->pos == 0) {
         // Evaluate the argument of the run statement.
         frame->todo.Push(MakeExpAct(stmt->GetRun().argument));
-        act->pos++;
         act->pos++;
       } else {
         frame->todo.Pop(1);
@@ -1296,7 +1263,7 @@ void StepStmt() {
       }
       break;
     case StatementKind::Await:
-      CHECK(act->pos == -1);
+      CHECK(act->pos == 0);
       // Pause the current continuation
       frame->todo.Pop();
       std::vector<Frame*> paused;

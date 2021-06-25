@@ -32,8 +32,10 @@ struct Action {
     const Value* val;  // for finished actions with a value (ValAction)
     Address delete_tmp;
   } u;
-  int pos;  // position or state of the action, starts at -1
-  // TODO: change to start at 0 and not have any gaps. -Jeremy
+  int pos;  // position or state of the action, starts at 0 and goes up to
+  // the number of subexpressions.
+  // pos indicates many of the entries in the following`results` vector
+  // are filled in. For each i < pos, results[i] contains a pointer to a Value.
   std::vector<const Value*> results;  // results from subexpression
 };
 
