@@ -149,7 +149,7 @@ struct Value {
   static auto MakePtrTypeVal(const Value* type) -> const Value*;
   static auto MakeStructTypeVal(std::string name, VarValues* fields,
                                 VarValues* methods) -> const Value*;
-  static auto MakeVoidTypeVal() -> const Value*;
+  static auto MakeUnitTypeVal() -> const Value*;
   static auto MakeChoiceTypeVal(std::string name, VarValues* alts)
       -> const Value*;
 

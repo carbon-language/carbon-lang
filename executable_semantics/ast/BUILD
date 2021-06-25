@@ -25,6 +25,7 @@ cc_library(
     name = "expression",
     srcs = ["expression.cpp"],
     hdrs = ["expression.h"],
+    deps = ["//common:indirect_value"],
 )
 
 cc_library(
@@ -48,7 +49,10 @@ cc_library(
     name = "statement",
     srcs = ["statement.cpp"],
     hdrs = ["statement.h"],
-    deps = [":expression"],
+    deps = [
+        ":expression",
+        "//common:check",
+    ],
 )
 
 cc_library(

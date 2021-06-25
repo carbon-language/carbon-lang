@@ -30,6 +30,18 @@ void ExpectType(int line_num, const std::string& context, const Value* expected,
   }
 }
 
+void ExpectPointerType(int line_num, const std::string& context,
+                       const Value* actual) {
+  if (actual->tag != ValKind::PointerTV) {
+    std::cerr << line_num << ": type error in " << context << std::endl;
+    std::cerr << "expected a pointer type\n";
+    std::cerr << "actual: ";
+    PrintValue(actual, std::cerr);
+    std::cerr << std::endl;
+    exit(-1);
+  }
+}
+
 void PrintErrorString(const std::string& s) { std::cerr << s; }
 
 void PrintTypeEnv(TypeEnv types, std::ostream& out) {
@@ -71,6 +83,9 @@ auto ReifyType(const Value* t, int line_num) -> const Expression* {
       return Expression::MakeVar(0, *t->GetStructType().name);
     case ValKind::ChoiceTV:
       return Expression::MakeVar(0, *t->GetChoiceType().name);
+    case ValKind::PointerTV:
+      return Expression::MakeUnOp(
+          0, Operator::Ptr, ReifyType(t->GetPointerType().type, line_num));
     default:
       std::cerr << line_num << ": expected a type, not ";
       PrintValue(t, std::cerr);
@@ -119,7 +134,7 @@ auto TypeCheckExp(const Expression* e, TypeEnv types, Env values,
     PrintExp(e);
     std::cout << std::endl;
   }
-  switch (e->tag) {
+  switch (e->tag()) {
     case ExpressionKind::PatternVariable: {
       if (context != TCContext::PatternContext) {
         std::cerr
@@ -142,15 +157,14 @@ auto TypeCheckExp(const Expression* e, TypeEnv types, Env values,
       } else if (expected) {
         ExpectType(e->line_num, "pattern variable", t, expected);
       }
-      auto new_e =
-          Expression::MakeVarPat(e->line_num, *e->GetPatternVariable().name,
-                                 ReifyType(t, e->line_num));
-      types.Set(*e->GetPatternVariable().name, t);
+      auto new_e = Expression::MakeVarPat(
+          e->line_num, e->GetPatternVariable().name, ReifyType(t, e->line_num));
+      types.Set(e->GetPatternVariable().name, t);
       return TCResult(new_e, t, types);
     }
     case ExpressionKind::Index: {
-      auto res = TypeCheckExp(e->GetFieldAccess().aggregate, types, values,
-                              nullptr, TCContext::ValueContext);
+      auto res = TypeCheckExp(e->GetIndex().aggregate, types, values, nullptr,
+                              TCContext::ValueContext);
       auto t = res.type;
       switch (t->tag) {
         case ValKind::TupleV: {
@@ -219,37 +233,37 @@ auto TypeCheckExp(const Expression* e, TypeEnv types, Env values,
       return TCResult(tuple_e, tuple_t, new_types);
     }
     case ExpressionKind::GetField: {
-      auto res = TypeCheckExp(e->GetFieldAccess().aggregate, types, values,
-                              nullptr, TCContext::ValueContext);
+      auto res = TypeCheckExp(e->GetFieldAccess().aggregate.GetPointer(), types,
+                              values, nullptr, TCContext::ValueContext);
       auto t = res.type;
       switch (t->tag) {
         case ValKind::StructTV:
           // Search for a field
           for (auto& field : *t->GetStructType().fields) {
-            if (*e->GetFieldAccess().field == field.first) {
+            if (e->GetFieldAccess().field == field.first) {
               const Expression* new_e = Expression::MakeGetField(
-                  e->line_num, res.exp, *e->GetFieldAccess().field);
+                  e->line_num, res.exp, e->GetFieldAccess().field);
               return TCResult(new_e, field.second, res.types);
             }
           }
           // Search for a method
           for (auto& method : *t->GetStructType().methods) {
-            if (*e->GetFieldAccess().field == method.first) {
+            if (e->GetFieldAccess().field == method.first) {
               const Expression* new_e = Expression::MakeGetField(
-                  e->line_num, res.exp, *e->GetFieldAccess().field);
+                  e->line_num, res.exp, e->GetFieldAccess().field);
               return TCResult(new_e, method.second, res.types);
             }
           }
           std::cerr << e->line_num << ": compilation error, struct "
                     << *t->GetStructType().name
                     << " does not have a field named "
-                    << *e->GetFieldAccess().field << std::endl;
+                    << e->GetFieldAccess().field << std::endl;
           exit(-1);
         case ValKind::TupleV:
           for (const TupleElement& field : *t->GetTuple().elements) {
-            if (*e->GetFieldAccess().field == field.name) {
+            if (e->GetFieldAccess().field == field.name) {
               auto new_e = Expression::MakeGetField(e->line_num, res.exp,
-                                                    *e->GetFieldAccess().field);
+                                                    e->GetFieldAccess().field);
               return TCResult(new_e,
                               state->heap.Read(field.address, e->line_num),
                               res.types);
@@ -258,14 +272,14 @@ auto TypeCheckExp(const Expression* e, TypeEnv types, Env values,
           std::cerr << e->line_num << ": compilation error, struct "
                     << *t->GetStructType().name
                     << " does not have a field named "
-                    << *e->GetFieldAccess().field << std::endl;
+                    << e->GetFieldAccess().field << std::endl;
           exit(-1);
         case ValKind::ChoiceTV:
           for (auto vt = t->GetChoiceType().alternatives->begin();
                vt != t->GetChoiceType().alternatives->end(); ++vt) {
-            if (*e->GetFieldAccess().field == vt->first) {
+            if (e->GetFieldAccess().field == vt->first) {
               const Expression* new_e = Expression::MakeGetField(
-                  e->line_num, res.exp, *e->GetFieldAccess().field);
+                  e->line_num, res.exp, e->GetFieldAccess().field);
               auto fun_ty = Value::MakeFunTypeVal(vt->second, t);
               return TCResult(new_e, fun_ty, res.types);
             }
@@ -273,7 +287,7 @@ auto TypeCheckExp(const Expression* e, TypeEnv types, Env values,
           std::cerr << e->line_num << ": compilation error, struct "
                     << *t->GetStructType().name
                     << " does not have a field named "
-                    << *e->GetFieldAccess().field << std::endl;
+                    << e->GetFieldAccess().field << std::endl;
           exit(-1);
 
         default:
@@ -286,12 +300,12 @@ auto TypeCheckExp(const Expression* e, TypeEnv types, Env values,
       }
     }
     case ExpressionKind::Variable: {
-      std::optional<const Value*> type = types.Get(*(e->GetVariable().name));
+      std::optional<const Value*> type = types.Get(e->GetVariable().name);
       if (type) {
         return TCResult(e, *type, types);
       } else {
         std::cerr << e->line_num << ": could not find `"
-                  << *(e->GetVariable().name) << "`" << std::endl;
+                  << e->GetVariable().name << "`" << std::endl;
         exit(-1);
       }
     }
@@ -317,10 +331,21 @@ auto TypeCheckExp(const Expression* e, TypeEnv types, Env values,
           ExpectType(e->line_num, "negation", Value::MakeIntTypeVal(), ts[0]);
           return TCResult(new_e, Value::MakeIntTypeVal(), new_types);
         case Operator::Add:
+          ExpectType(e->line_num, "addition(1)", Value::MakeIntTypeVal(),
+                     ts[0]);
+          ExpectType(e->line_num, "addition(2)", Value::MakeIntTypeVal(),
+                     ts[1]);
+          return TCResult(new_e, Value::MakeIntTypeVal(), new_types);
         case Operator::Sub:
           ExpectType(e->line_num, "subtraction(1)", Value::MakeIntTypeVal(),
                      ts[0]);
-          ExpectType(e->line_num, "substration(2)", Value::MakeIntTypeVal(),
+          ExpectType(e->line_num, "subtraction(2)", Value::MakeIntTypeVal(),
+                     ts[1]);
+          return TCResult(new_e, Value::MakeIntTypeVal(), new_types);
+        case Operator::Mul:
+          ExpectType(e->line_num, "multiplication(1)", Value::MakeIntTypeVal(),
+                     ts[0]);
+          ExpectType(e->line_num, "multiplication(2)", Value::MakeIntTypeVal(),
                      ts[1]);
           return TCResult(new_e, Value::MakeIntTypeVal(), new_types);
         case Operator::And:
@@ -337,6 +362,12 @@ auto TypeCheckExp(const Expression* e, TypeEnv types, Env values,
         case Operator::Eq:
           ExpectType(e->line_num, "==", ts[0], ts[1]);
           return TCResult(new_e, Value::MakeBoolTypeVal(), new_types);
+        case Operator::Deref:
+          ExpectPointerType(e->line_num, "*", ts[0]);
+          return TCResult(new_e, ts[0]->GetPointerType().type, new_types);
+        case Operator::Ptr:
+          ExpectType(e->line_num, "*", Value::MakeTypeTypeVal(), ts[0]);
+          return TCResult(new_e, Value::MakeTypeTypeVal(), new_types);
       }
       break;
     }
@@ -635,7 +666,7 @@ auto TypeCheckFunDef(const FunctionDefinition* f, TypeEnv types, Env values)
     // TODO: Check that main doesn't have any parameters.
   }
   auto res = TypeCheckStmt(f->body, param_res.types, values, return_type);
-  bool void_return = TypeEqual(return_type, Value::MakeVoidTypeVal());
+  bool void_return = TypeEqual(return_type, Value::MakeUnitTypeVal());
   auto body = CheckOrEnsureReturn(res.stmt, void_return, f->line_num);
   return MakeFunDef(f->line_num, f->name, ReifyType(return_type, f->line_num),
                     f->param_pattern, body);

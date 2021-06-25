@@ -61,6 +61,7 @@ EXAMPLES = [
     "pattern_init",
     "pattern_variable_fail",
     "record1",
+    "star",
     "struct1",
     "struct2",
     "struct3",
@@ -92,17 +93,12 @@ EXAMPLES = [
     "experimental_continuation9",
 ]
 
-[genrule(
-    name = "%s_out" % e,
-    srcs = ["testdata/%s.carbon" % e],
-    outs = ["testdata/%s.out" % e],
-    # Suppress command errors.
-    cmd = "$(location executable_semantics) $< > $@ 2>&1 || echo EXIT CODE: $$? >> $@",
-    tools = [":executable_semantics"],
-) for e in EXAMPLES]
-
 [golden_test(
     name = "%s_test" % e,
+    cmd = "'$(location executable_semantics) $(location testdata/%s.carbon)'" % e,
+    data = [
+        ":executable_semantics",
+        "testdata/%s.carbon" % e,
+    ],
     golden = "testdata/%s.golden" % e,
-    subject = "testdata/%s.out" % e,
 ) for e in EXAMPLES]

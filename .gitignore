@@ -8,11 +8,14 @@
 # Directories created by python.
 **/__pycache__/
 
-# VSCode creates this directory in ways that are hard to prevent.
-/.vscode/
+# Ignore the user's VSCode settings.
+/.vscode/settings.json
 
 # Directories created by clangd
 /.cache/clangd
+
+# User-specific Bazel configuration.
+/user.bazelrc
 
 # Compilation database used by clangd
 compile_commands.json

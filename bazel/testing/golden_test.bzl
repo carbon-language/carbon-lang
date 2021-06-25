@@ -4,22 +4,27 @@
 
 """Rule for a golden test."""
 
-def golden_test(name, golden, subject, **kwargs):
+def golden_test(name, golden, cmd, data, **kwargs):
     """Compares two files. Passes if they are identical.
 
     Args:
       name: Name of the build rule.
-      subject: The generated file to be compared.
-      golden: The golden file to be compared.
-      **kwargs: Any additional parameters for the generated sh_test.
+      cmd: The command whose output is being tested.
+      golden: The golden file to be compared against the command output.
+      **kwargs: Any additional parameters for the generated py_test.
     """
-    native.sh_test(
+    native.py_test(
         name = name,
-        srcs = ["//bazel/testing:golden_test.sh"],
+        srcs = ["//bazel/testing:golden_test.py"],
+        main = "//bazel/testing:golden_test.py",
         args = [
             "$(location %s)" % golden,
-            "$(location %s)" % subject,
+            cmd,
         ],
-        data = [golden, subject],
+        data = [golden] + data,
+        env = {
+            # TODO(#580): Remove this when leaks are fixed.
+            "ASAN_OPTIONS": "detect_leaks=0",
+        },
         **kwargs
     )

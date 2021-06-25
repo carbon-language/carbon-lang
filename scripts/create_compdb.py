@@ -57,7 +57,7 @@ except FileNotFoundError:
 
 # Prepend the `clang` executable path to the arguments that looks into our
 # downloaded Clang toolchain.
-arguments = [str(Path("bazel-clang-toolchain/bin/clang"))] + arguments
+arguments = ["clang++"] + arguments
 
 print("Building compilation database...")
 

@@ -6,13 +6,13 @@
 // continuation as `k1`.
 
 fn main() -> Int {
-  var Int x = 0;
+  var x: Int = 0;
   __continuation k1 {
     x = x + 1;
     __await;
     x = x + 2;
   }
-  var __Continuation k2 = k1;
+  var k2: __Continuation = k1;
   __run k1;
   __run k2;
   return x;

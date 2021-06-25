@@ -21,18 +21,10 @@ pip_install(
     requirements = "//github_tools:requirements.txt",
 )
 
-# Bootstrap a Clang and LLVM toolchain.
-load("//bazel/cc_toolchains:clang_bootstrap.bzl", "bootstrap_clang_toolchain")
-
-bootstrap_clang_toolchain(name = "bootstrap_clang_toolchain")
-
 # Configure the bootstrapped Clang and LLVM toolchain for Bazel.
 load("//bazel/cc_toolchains:clang_configuration.bzl", "configure_clang_toolchain")
 
-configure_clang_toolchain(
-    name = "bazel_cc_toolchain",
-    clang = "@bootstrap_clang_toolchain//:bin/clang",
-)
+configure_clang_toolchain(name = "bazel_cc_toolchain")
 
 local_repository(
     name = "llvm_bazel",

@@ -5,6 +5,19 @@
 build --crosstool_top=@bazel_cc_toolchain
 build --host_crosstool_top=@bazel_cc_toolchain
 
+# Default to using a disk cache to minimize re-building LLVM and Clang which we
+# try to avoid updating too frequently to minimize rebuild cost. The location
+# here can be overridden in the user configuration where needed.
+#
+# Note that this cache will grow without bound currently. You should
+# periodically run the `scripts/clean_disk_cache.sh` script or some equivalent.
+# https://github.com/bazelbuild/bazel/issues/5139 tracks fixing this in Bazel.
+build --disk_cache=~/.cache/carbon-lang-build-cache
+
+# Enable some safety when using the build cache, likely to be defaulted in
+# future Bazel releases.
+build --experimental_guard_against_concurrent_changes
+
 # Allow the toolchain to configure itself differently in the host build from
 # the target build. Even when the host and target platforms are ostensibly the
 # same (and use identical toolchains), it is beneficial to be able to configure
@@ -16,12 +29,21 @@ build --host_crosstool_top=@bazel_cc_toolchain
 # https://github.com/bazelbuild/bazel/issues/13315
 build --incompatible_dont_enable_host_nonhost_crosstool_features=false
 
+# Default dynamic linking to off. While this can help build performance in some
+# edge cases with very large linked executables and a slow linker, between using
+# fast linkers on all platforms (LLD and the Apple linker), as well as having
+# relatively few such executables, shared objects simply waste too much space in
+# our builds.
+build --dynamic_mode=off
+
+# Always compile PIC code. There are few if any disadvantages on the platforms
+# and architectures we care about and it avoids the need to compile files twice.
+build --force_pic
+
 # Completely disable Bazel's automatic stripping of debug information. Removing
 # that information causes unhelpful backtraces from unittest failures and other
 # crashes. Optimized builds already avoid using debug information by default.
 build --strip=never
-
-build:force_local_bootstrap --repo_env=CARBON_FORCE_LOCAL_BOOTSTRAP_BUILD=1
 
 # Configuration for enabling Address Sanitizer. Note that this is enabled by
 # default for fastbuild. The config is provided to enable ASan even in
@@ -33,10 +55,14 @@ build:fuzzer --features=fuzzer
 
 # Always allow tests to symbolize themselves with whatever `llvm-symbolize` is
 # in the users environment.
-test --test_env=ASAN_SYMBOLIZER_PATH
+build --test_env=ASAN_SYMBOLIZER_PATH
 
 # Force actions to have a UTF-8 language encoding.
 # TODO: Need to investigate what this should be on Windows, but at least for
 # Linux and macOS this seems strictly better than the Bazel default of just
 # `en_US`.
 build --action_env=LANG=en_US.UTF-8
+
+# Allow users to override any of the flags desired by importing a user-specific
+# RC file here if present.
+try-import %workspace%/user.bazelrc

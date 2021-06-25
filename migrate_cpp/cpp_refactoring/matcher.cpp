@@ -12,27 +12,31 @@ void Matcher::AddReplacement(const clang::SourceManager& sm,
                              clang::CharSourceRange range,
                              llvm::StringRef replacement_text) {
   if (!range.isValid()) {
-    llvm::errs() << "Invalid range: " << range.getAsRange().printToString(sm)
-                 << "\n";
+    // Invalid range.
     return;
   }
   if (sm.getDecomposedLoc(range.getBegin()).first !=
       sm.getDecomposedLoc(range.getEnd()).first) {
-    llvm::errs() << "Range spans macro expansions: "
-                 << range.getAsRange().printToString(sm) << "\n";
+    // Range spans macro expansions.
     return;
   }
   if (sm.getFileID(range.getBegin()) != sm.getFileID(range.getEnd())) {
-    llvm::errs() << "Range spans files: "
-                 << range.getAsRange().printToString(sm) << "\n";
+    // Range spans files.
     return;
   }
 
   auto rep = ct::Replacement(sm, sm.getExpansionRange(range), replacement_text);
-  auto err = (*replacements)[std::string(rep.getFilePath())].add(rep);
+  auto entry = replacements->find(std::string(rep.getFilePath()));
+  if (entry == replacements->end()) {
+    // The replacement was in a file which isn't being updated, such as a system
+    // header.
+    return;
+  }
+
+  auto err = entry->second.add(rep);
   if (err) {
-    llvm::report_fatal_error("Error with replacement `" + rep.toString() +
-                             "`: " + llvm::toString(std::move(err)) + "\n");
+    llvm::errs() << "Error with replacement `" << rep.toString()
+                 << "`: " << llvm::toString(std::move(err)) << "\n";
   }
 }
 
