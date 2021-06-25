@@ -6,6 +6,9 @@ Exceptions. See /LICENSE for license information.
 SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -->
 
+This document is a high-level description of Carbon's generics design, with
+pointers to other design documents that dive deeper into individual topics.
+
 <!-- toc -->
 
 ## Table of contents
@@ -29,9 +32,6 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [Future work](#future-work)
 
 <!-- tocstop -->
-
-This document is a high-level description of Carbon's generics design, with
-pointers to other design documents that dive deeper into individual topics.
 
 ## Goals
 
@@ -131,13 +131,15 @@ In this example, then, `Comparable` is an _interface_.
 
 Interfaces describe all the requirements needed for the type `T`. Given that the
 compiler knows `T` satisfies those requirements, it can type check the body of
-the `SortVector` function.
+the `SortVector` function. This includes checking that the `Comparable`
+requirement covers all of the uses of `T` inside the function.
 
-Later, when the compiler comes across a call to `SortVector`, it can still type
-check. Using only the types at the call site, the compiler can check that the
-member elements of the passed-in array satisfy the same requirements without
-having to look at the body of the `SortVector` function, thus satisfying the
-requirements above.
+Later, when the compiler comes across a call to `SortVector`, it can type check
+against the requirements expressed in the function's signature. Using only the
+types at the call site, the compiler can check that the member elements of the
+passed-in array satisfy the function's requirements. There is no need to look at
+the body of the `SortVector` function, since we separately checked that those
+requirements were sufficient.
 
 #### Defining interfaces
 
