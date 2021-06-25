@@ -272,10 +272,22 @@ PrintSDTMarkers("print-sdt",
   cl::Hidden,
   cl::cat(BoltCategory));
 
-static cl::opt<bool>
-    PrintPseudoProbe("print-pseudo-probe",
-                     cl::desc("print pseudo probe related info"),
-                     cl::ZeroOrMore, cl::Hidden, cl::cat(BoltCategory));
+enum PrintPseudoProbesOptions {
+  PPP_None = 0,
+  PPP_Probes_Section_Decode = 0x1,
+  PPP_Probes_Address_Conversion = 0x2,
+  PPP_All = 0xf
+};
+
+cl::opt<PrintPseudoProbesOptions> PrintPseudoProbes(
+    "print-pseudo-probes", cl::desc("print pseudo probe info"),
+    cl::init(PPP_None),
+    cl::values(clEnumValN(PPP_Probes_Section_Decode, "decode",
+                          "decode probes section from binary"),
+               clEnumValN(PPP_Probes_Address_Conversion, "address_conversion",
+                          "update address2ProbesMap with output block address"),
+               clEnumValN(PPP_All, "all", "enable all debugging printout")),
+    cl::ZeroOrMore, cl::Hidden, cl::cat(BoltCategory));
 
 static cl::opt<cl::boolOrDefault>
 RelocationMode("relocs",
@@ -719,11 +731,15 @@ void RewriteInstance::parsePseudoProbe() {
   if (!BC->ProbeDecoder.buildAddress2ProbeMap(
           reinterpret_cast<const uint8_t *>(Contents.data()),
           Contents.size())) {
+    BC->ProbeDecoder.getAddress2ProbesMap().clear();
     errs() << "BOLT-WARNING: fail in building Address2ProbeMap\n";
     return;
   }
 
-  if (opts::PrintPseudoProbe) {
+  if (opts::PrintPseudoProbes == opts::PrintPseudoProbesOptions::PPP_All ||
+      opts::PrintPseudoProbes ==
+          opts::PrintPseudoProbesOptions::PPP_Probes_Section_Decode) {
+    outs() << "Report of decoding input pseudo probe binaries \n";
     BC->ProbeDecoder.printGUID2FuncDescMap(outs());
     BC->ProbeDecoder.printProbesForAllAddresses(outs());
   }
@@ -1643,8 +1659,6 @@ void RewriteInstance::readSpecialSections() {
   }
 
   parseSDTNotes();
-
-  parsePseudoProbe();
 
   // Read .dynamic/PT_DYNAMIC.
   readELFDynamic();
@@ -3149,6 +3163,8 @@ void RewriteInstance::emitAndLink() {
 void RewriteInstance::updateMetadata() {
   updateSDTMarkers();
   updateLKMarkers();
+  parsePseudoProbe();
+  updatePseudoProbes();
 
   if (opts::UpdateDebugSections) {
     NamedRegionTimer T("updateDebugInfo", "update debug info", TimerGroupName,
@@ -3158,6 +3174,82 @@ void RewriteInstance::updateMetadata() {
 
   if (opts::WriteBoltInfoSection) {
     addBoltInfoSection();
+  }
+}
+
+void RewriteInstance::updatePseudoProbes() {
+  // input address converted to output
+  AddressProbesMap &Address2ProbesMap = BC->ProbeDecoder.getAddress2ProbesMap();
+  const GUIDProbeFunctionMap &GUID2Func =
+      BC->ProbeDecoder.getGUID2FuncDescMap();
+  for (auto &AP : Address2ProbesMap) {
+    BinaryFunction *F = BC->getBinaryFunctionContainingAddress(AP.first);
+    // If F is not emitted, eliminate all probes inside it from inline tree
+    // Setting probes' addresses as INT64_MAX means elimination
+    if (!F->isEmitted()) {
+      for (MCDecodedPseudoProbe &Probe : AP.second) {
+        Probe.setAddress(INT64_MAX);
+      }
+      continue;
+    }
+    uint64_t Offset = AP.first - F->getAddress();
+    const BinaryBasicBlock *BB = F->getBasicBlockContainingOffset(Offset);
+    uint64_t BlkOutputAddress = BB->getOutputAddressRange().first;
+    // Check if block output address is defined.
+    // If not, such block is removed from binary. Then remove the probes from
+    // inline tree
+    if (BlkOutputAddress == 0) {
+      for (MCDecodedPseudoProbe &Probe : AP.second) {
+        Probe.setAddress(INT64_MAX);
+      }
+      continue;
+    }
+    for (MCDecodedPseudoProbe &Probe : AP.second) {
+      if (Probe.isBlock())
+        Probe.setAddress(BlkOutputAddress);
+      else if (Probe.isCall()) {
+        const InputOffsetToAddressMapTy &Offset2Addr =
+            F->getInputOffsetToAddressMap();
+        auto CallOutputAddress = Offset2Addr.find(Offset);
+        if (CallOutputAddress == Offset2Addr.end())
+          Probe.setAddress(INT64_MAX);
+        else
+          Probe.setAddress(CallOutputAddress->second);
+      }
+    }
+  }
+
+  if (opts::PrintPseudoProbes == opts::PrintPseudoProbesOptions::PPP_All ||
+      opts::PrintPseudoProbes ==
+          opts::PrintPseudoProbesOptions::PPP_Probes_Address_Conversion) {
+    outs() << "Pseudo Probe Address Conversion results:\n";
+    // table that correlates address to block
+    std::unordered_map<uint64_t, StringRef> Addr2BlockNames;
+    for (auto &F : BC->getBinaryFunctions()) {
+      for (BinaryBasicBlock &BinaryBlock : F.second) {
+        Addr2BlockNames[BinaryBlock.getOutputAddressRange().first] =
+            BinaryBlock.getName();
+      }
+    }
+    // scan all addresses -> correlate probe to block when print out
+    std::vector<uint64_t> Addresses;
+    for (auto &Entry : Address2ProbesMap)
+      Addresses.push_back(Entry.first);
+    std::sort(Addresses.begin(), Addresses.end());
+    for (uint64_t Key : Addresses) {
+      for (MCDecodedPseudoProbe &Probe : Address2ProbesMap[Key]) {
+        if (Probe.getAddress() == INT64_MAX)
+          outs() << "Deleted Probe: ";
+        else
+          outs() << "Address: " << format_hex(Probe.getAddress(), 8) << " ";
+        Probe.print(outs(), GUID2Func, true);
+        // print block name only if the probe is block type and undeleted.
+        if (Probe.isBlock() && Probe.getAddress() != INT64_MAX)
+          outs() << format_hex(Probe.getAddress(), 8) << " Probe is in "
+                 << Addr2BlockNames[Probe.getAddress()] << "\n";
+      }
+    }
+    outs() << "=======================================\n";
   }
 }
 

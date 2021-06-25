@@ -611,7 +611,7 @@ void BinaryBasicBlock::updateOutputValues(const MCAsmLayout &Layout) {
         std::make_pair(OutputOffset, InputFunctionOffset));
 
     // Update reverse (relative to BAT) address lookup table for function.
-    if (getFunction()->hasSDTMarker()) {
+    if (getFunction()->requiresAddressTranslation()) {
       getFunction()->getInputOffsetToAddressMap().emplace(
           std::make_pair(InputFunctionOffset, OutputOffset + BBAddress));
     }

@@ -2938,7 +2938,7 @@ bool BinaryFunction::finalizeCFIState() {
 }
 
 bool BinaryFunction::requiresAddressTranslation() const {
-  return opts::EnableBAT || hasSDTMarker();
+  return opts::EnableBAT || hasSDTMarker() || hasPseudoProbe();
 }
 
 uint64_t BinaryFunction::getInstructionCount() const {

@@ -174,6 +174,9 @@ private:
   /// Update LKMarkers' locations for the output binary.
   void updateLKMarkers();
 
+  /// Update address of MCDecodedPseudoProbe.
+  void updatePseudoProbes();
+
   /// Return the list of code sections in the output order.
   std::vector<BinarySection *> getCodeSections();
 

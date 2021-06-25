@@ -45,6 +45,8 @@ class DWARFUnit;
 
 namespace bolt {
 
+using InputOffsetToAddressMapTy = std::unordered_map<uint64_t, uint64_t>;
+
 /// Types of macro-fusion alignment corrections.
 enum MacroFusionType {
   MFT_NONE,
@@ -303,6 +305,10 @@ private:
 
   /// Indicate that the function body has SDT marker
   bool HasSDTMarker{false};
+
+  /// Indicate that the function body has Pseudo Probe
+  bool HasPseudoProbe{BC.getUniqueSectionByName(".pseudo_probe_desc") &&
+                      BC.getUniqueSectionByName(".pseudo_probe")};
 
   /// True if the original entry point was patched.
   bool IsPatched{false};
@@ -572,7 +578,6 @@ private:
   static uint64_t Count;
 
   /// Map offsets of special instructions to addresses in the output.
-  using InputOffsetToAddressMapTy = std::unordered_map<uint64_t, uint64_t>;
   InputOffsetToAddressMapTy InputOffsetToAddressMap;
 
   /// Register alternative function name.
@@ -1478,6 +1483,9 @@ public:
 
   /// Return true if the function has SDT marker
   bool hasSDTMarker() const { return HasSDTMarker; }
+
+  /// Return true if the function has Pseudo Probe
+  bool hasPseudoProbe() const { return HasPseudoProbe; }
 
   /// Return true if the original entry point was patched.
   bool isPatched() const {
