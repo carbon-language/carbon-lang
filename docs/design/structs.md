@@ -20,17 +20,19 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Interop with C++ multiple inheritance](#interop-with-c-multiple-inheritance)
 -   [Background](#background)
 -   [Overview](#overview-1)
--   [Fields have an order](#fields-have-an-order)
+-   [Members](#members)
+    -   [Data members have an order](#data-members-have-an-order)
 -   [Anonymous structs](#anonymous-structs)
     -   [Literals](#literals)
     -   [Type declarations](#type-declarations)
     -   [Anonymous to named conversion](#anonymous-to-named-conversion)
     -   [Order is ignored on assignment](#order-is-ignored-on-assignment)
 -   [Fields may have defaults](#fields-may-have-defaults)
--   [Member type](#member-type)
--   [Self](#self)
--   [Alias](#alias)
 -   [Future work](#future-work)
+    -   [Named struct types](#named-struct-types)
+    -   [Member type](#member-type)
+    -   [Self](#self)
+    -   [Alias](#alias)
     -   [Method syntax](#method-syntax)
     -   [Destructuring, pattern matching, and extract](#destructuring-pattern-matching-and-extract)
     -   [Access control](#access-control)
@@ -317,40 +319,70 @@ is the primary mechanism for users to extend the Carbon type system and
 fundamentally is deeply rooted in C++ and its history (C and Simula). We simply
 call them `struct`s rather than other terms as it is both familiar to existing
 programmers and accurately captures their essence: they are a mechanism for
-structuring data:
+structuring data.
+
+A `struct` type defines the interpretation of the bytes of a `struct` value,
+including the size, data members, and layout. It defines the operations that may
+be performed on those values, including what methods may be called on a `struct`
+value. A `struct` type may directly have constant members. The type itself is a
+compile-time constant value.
+
+## Members
+
+The members of a `struct` are named, and are accessed with the `.` notation. For
+example:
 
 ```
-struct Widget {
-  var x: Int;
-  var y: Int;
-  var z: Int;
-
-  var payload: String;
-}
+var p: Point2D = ...;
+// Data member access
+p.x = 1;
+p.y = 2;
+// Method call
+Print(p.DistanceFromOrigin());
 ```
 
-The type itself is a compile-time constant value. All name access is done with
-the `.` notation.
+[Tuples](tuples.md) are used for cases where accessing the members positionally
+is more appropriate.
 
-## Fields have an order
+### Data members have an order
 
-FIXME
+The data members of a struct, or "fields", have an order that matches the order
+they are declared in. This affects the layout of those fields in memory, and the
+order that the fields are destroyed when a value goes out of scope or is
+deallocated.
 
 ## Anonymous structs
 
-FIXME
+Anonymous structs are convenient for defining [data types](#data-types) in an
+ad-hoc manner. They would commonly be used:
+
+-   as the return type of a function that returns multiple values and wants
+    those values to have names so a [tuple](tuples.md) is inappropriate
+-   as a parameter to a function holding options with default values
+-   as an initializer for other `struct` variables or values
+-   as a type parameter to a container
+
+**Open question:** We may want to support named [data types](#data-types) as
+well.
 
 ### Literals
 
-FIXME
+Anonymous struct literals are written using this syntax:
 
 ```
-{.key = "the", .value: 27}
+var kvpair: auto = {.key = "the", .value = 27}
 ```
+
+This produces a struct value with two fields:
+
+-   The first field is named "`key`" and has the value `"the"`. The type of the
+    field is set to the type of the value, and so is `String`.
+-   The second field is named "`value`" and has the value `27`. The type of the
+    field is set to the type of the value, and so is `Int`.
 
 ### Type declarations
 
-FIXME
+The type of `kvpair` in the last example would be declared:
 
 ```
 struct {.key: String, .value: Int}
@@ -368,7 +400,33 @@ FIXME
 
 FIXME
 
-## Member type
+## Future work
+
+This includes features that need to be designed, questions to answer, and a
+description of the provisional syntax in use until these decisions have been
+made.
+
+### Named struct types
+
+The declarations for named `struct` types will have a different format.
+Provisionally we have been using something like this:
+
+```
+struct TextLabel {
+  var x: Int;
+  var y: Int;
+
+  var text: String;
+}
+```
+
+It is an open question, though, how we will address the
+[different use cases](#use-cases). For example, will we a different introducer
+keyword like `class` for [polymorphic types](#polymorphic-types)?
+
+### Member type
+
+Additional types may be defined in the scope of a `struct` definition.
 
 ```
 struct StringCounts {
@@ -380,12 +438,14 @@ struct StringCounts {
 }
 ```
 
-The inner type is given the name `StringCounts.Node`.
+The inner type is a member of the type, and is given the name
+`StringCounts.Node`.
 
-## Self
+### Self
 
-Allowed to reference your own name inside a struct, but in limited ways, similar
-to an incomplete type.
+A `struct` definition may provisionally include references to its own name in
+limited ways, similar to an incomplete type. What is allowed and forbidden is an
+open question.
 
 ```
 struct IntListNode {
@@ -415,11 +475,16 @@ struct IntList {
 }
 ```
 
-## Alias
+### Alias
 
-FIXME
+Other type constants can provisionally be defined using an `alias` declaration:
 
-## Future work
+```
+struct MyStruct {
+  alias Pi = 3.141592653589793;
+  alias IndexType = Int;
+}
+```
 
 ### Method syntax
 
