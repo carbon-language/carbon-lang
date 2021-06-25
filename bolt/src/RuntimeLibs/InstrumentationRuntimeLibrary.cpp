@@ -65,11 +65,6 @@ void InstrumentationRuntimeLibrary::adjustCommandLineOptions(
               "DT_FINI to write the profile\n";
     exit(1);
   }
-  if (!BC.HasFixedLoadAddress) {
-    outs() << "BOLT-ERROR: shared object or position-independent executables "
-              "are not allowed in instrumentation mode\n";
-    exit(1);
-  }
 }
 
 void InstrumentationRuntimeLibrary::emitBinary(BinaryContext &BC,
