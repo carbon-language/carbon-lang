@@ -5425,7 +5425,8 @@ bool RewriteInstance::willOverwriteSection(StringRef SectionName) {
 }
 
 bool RewriteInstance::isDebugSection(StringRef SectionName) {
-  if (SectionName.startswith(".debug_") || SectionName == ".gdb_index")
+  if (SectionName.startswith(".debug_") || SectionName == ".gdb_index" ||
+      SectionName == ".stab" || SectionName == ".stabstr")
     return true;
 
   return false;
