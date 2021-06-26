@@ -1114,6 +1114,49 @@ bool BinaryFunction::disassemble() {
                                  Val, ELF::R_AARCH64_ADD_ABS_LO12_NC);
   };
 
+  auto handleExternalReference = [&](MCInst &Instruction, uint64_t Size,
+                                     uint64_t Offset, uint64_t TargetAddress,
+                                     bool &IsCall) -> MCSymbol * {
+    const bool IsCondBranch = MIB->isConditionalBranch(Instruction);
+    const uint64_t AbsoluteInstrAddr = getAddress() + Offset;
+    MCSymbol *TargetSymbol = nullptr;
+    InterproceduralReferences.insert(TargetAddress);
+    if (opts::Verbosity >= 2 && !IsCall && Size == 2 && !BC.HasRelocations) {
+      errs() << "BOLT-WARNING: relaxed tail call detected at 0x"
+             << Twine::utohexstr(AbsoluteInstrAddr) << " in function " << *this
+             << ". Code size will be increased.\n";
+    }
+
+    assert(!MIB->isTailCall(Instruction) &&
+           "synthetic tail call instruction found");
+
+    // This is a call regardless of the opcode.
+    // Assign proper opcode for tail calls, so that they could be
+    // treated as calls.
+    if (!IsCall) {
+      if (!MIB->convertJmpToTailCall(Instruction)) {
+        assert(IsCondBranch && "unknown tail call instruction");
+        if (opts::Verbosity >= 2) {
+          errs() << "BOLT-WARNING: conditional tail call detected in "
+                 << "function " << *this << " at 0x"
+                 << Twine::utohexstr(AbsoluteInstrAddr) << ".\n";
+        }
+      }
+      IsCall = true;
+    }
+
+    TargetSymbol = BC.getOrCreateGlobalSymbol(TargetAddress, "FUNCat");
+    if (opts::Verbosity >= 2 && TargetAddress == 0) {
+      // We actually see calls to address 0 in presence of weak
+      // symbols originating from libraries. This code is never meant
+      // to be executed.
+      outs() << "BOLT-INFO: Function " << *this
+             << " has a call to address zero.\n";
+    }
+
+    return TargetSymbol;
+  };
+
   uint64_t Size = 0;  // instruction size
   for (uint64_t Offset = 0; Offset < getSize(); Offset += Size) {
     MCInst Instruction;
@@ -1289,43 +1332,9 @@ bool BinaryFunction::disassemble() {
               }
               goto add_instruction;
             }
-            InterproceduralReferences.insert(TargetAddress);
-            if (opts::Verbosity >= 2 && !IsCall && Size == 2 &&
-                !BC.HasRelocations) {
-              errs() << "BOLT-WARNING: relaxed tail call detected at 0x"
-                     << Twine::utohexstr(AbsoluteInstrAddr) << " in function "
-                     << *this << ". Code size will be increased.\n";
-            }
-
-            assert(!MIB->isTailCall(Instruction) &&
-                   "synthetic tail call instruction found");
-
-            // This is a call regardless of the opcode.
-            // Assign proper opcode for tail calls, so that they could be
-            // treated as calls.
-            if (!IsCall) {
-              if (!MIB->convertJmpToTailCall(Instruction)) {
-                assert(IsCondBranch && "unknown tail call instruction");
-                if (opts::Verbosity >= 2) {
-                  errs() << "BOLT-WARNING: conditional tail call detected in "
-                         << "function " << *this << " at 0x"
-                         << Twine::utohexstr(AbsoluteInstrAddr) << ".\n";
-                }
-              }
-              IsCall = true;
-            }
-
-            TargetSymbol =
-                BC.getOrCreateGlobalSymbol(TargetAddress, "FUNCat");
-            if (TargetAddress == 0) {
-              // We actually see calls to address 0 in presence of weak
-              // symbols originating from libraries. This code is never meant
-              // to be executed.
-              if (opts::Verbosity >= 2) {
-                outs() << "BOLT-INFO: Function " << *this
-                       << " has a call to address zero.\n";
-              }
-            }
+            // May update Instruction and IsCall
+            TargetSymbol = handleExternalReference(Instruction, Size, Offset,
+                                                   TargetAddress, IsCall);
           }
         }
 
