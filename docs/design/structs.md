@@ -399,6 +399,9 @@ Assert(with_defaults.x == 0);
 Assert(with_defaults.y == 2);
 ```
 
+Note that the type syntax uses an introducer to make it both clear that it is
+introducing names and to distinguish type declarations from struct literals.
+
 ### Option parameters
 
 Consider this function declaration:
@@ -406,7 +409,7 @@ Consider this function declaration:
 ```
 fn SortIntVector(
     v: Vector(Int)*,
-    options: {.stable: Bool = false, .descending: Bool = false} = {});
+    options: struct {.stable: Bool = false, .descending: Bool = false} = {});
 ```
 
 The `options` parameter defaults to `{}` which will result in the default value
