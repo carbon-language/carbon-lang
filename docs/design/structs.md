@@ -25,11 +25,12 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [Anonymous structs](#anonymous-structs)
     -   [Literals](#literals)
     -   [Type declarations](#type-declarations)
-    -   [Anonymous to named conversion](#anonymous-to-named-conversion)
+    -   [Option parameters](#option-parameters)
     -   [Order is ignored on assignment](#order-is-ignored-on-assignment)
--   [Fields may have defaults](#fields-may-have-defaults)
+    -   [Operations performed field-wise](#operations-performed-field-wise)
 -   [Future work](#future-work)
     -   [Named struct types](#named-struct-types)
+    -   [Construction](#construction)
     -   [Member type](#member-type)
     -   [Self](#self)
     -   [Alias](#alias)
@@ -39,6 +40,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Operator overloading](#operator-overloading)
     -   [Inheritance](#inheritance)
     -   [Abstract base classes interoperating with object-safe interfaces](#abstract-base-classes-interoperating-with-object-safe-interfaces)
+    -   [Mixins](#mixins-1)
     -   [Memory layout](#memory-layout)
     -   [No `static` variables](#no-static-variables)
 
@@ -388,17 +390,78 @@ The type of `kvpair` in the last example would be declared:
 struct {.key: String, .value: Int}
 ```
 
-### Anonymous to named conversion
+Anonymous struct may only have data members, so the type declaration is just a
+list of field names, types, and optional defaults.
 
-FIXME
+```
+var with_defaults: struct {.x: Int = 0, .y: Int = 0} = {.y = 2};
+Assert(with_defaults.x == 0);
+Assert(with_defaults.y == 2);
+```
+
+### Option parameters
+
+Consider this function declaration:
+
+```
+fn SortIntVector(
+    v: Vector(Int)*,
+    options: {.stable: Bool = false, .descending: Bool = false} = {});
+```
+
+The `options` parameter defaults to `{}` which will result in the default value
+for every field. So all of these calls are legal:
+
+```
+var v: Vector(Int) = ...;
+// Uses defaults of `.stable` and `.descending` equal to `false`.
+SortIntVector(&v);
+SortIntVector(&v, {});
+// Sets `.stable` option to `true`.
+SortIntVector(&v, {.stable = true});
+// Sets `.descending` option to `true`.
+SortIntVector(&v, {.descending = true});
+// Sets both `.stable` and `.descending` options to `true`.
+SortIntVector(&v, {.stable = true, .descending = true});
+```
 
 ### Order is ignored on assignment
 
-FIXME
+When initializing or assigning a struct variable to an anonymous struct value on
+the right hand side, the order of the fields do not have to match, just the
+names.
 
-## Fields may have defaults
+```
+var different_order: struct {.x: Int, .y: Int} = {.y = 2, .x = 3};
+Assert(with_defaults.x == 3);
+Assert(with_defaults.y == 2);
 
-FIXME
+// Applicable for arguments as well.
+SortIntVector(&v, {.descending = true, .stable = true});
+```
+
+### Operations performed field-wise
+
+Assignment, destruction, and equality comparison is performed field-wise on
+anonymous struct values.
+
+```
+var p: auto = {.x = 2, .y = 3};
+Assert(p == {.x = 2, .y = 3});
+Assert(p != {.x = 2, .y = 4});
+p = {.x = 3, .y = 5};
+```
+
+Similarly, an anonymous struct has an unformed state if all its members do.
+
+**Open question:** Should we define less-than comparison on anonymous struct
+types if all its field types support it? We would have to forbid comparisons
+between values with fields in different orders.
+
+```
+// Illegal
+Assert({.x = 2, .y = 3} < {.y = 4, .x = 5});
+```
 
 ## Future work
 
@@ -423,6 +486,18 @@ struct TextLabel {
 It is an open question, though, how we will address the
 [different use cases](#use-cases). For example, will we a different introducer
 keyword like `class` for [polymorphic types](#polymorphic-types)?
+
+### Construction
+
+There are a variety of options for constructing `struct` values, we might choose
+to support, including initializing from anonymous struct values:
+
+```
+var p1: Point2D = {.x = 1, .y = 2};
+var p2: auto = {.x = 1, .y = 2} as Point2D;
+var p3: auto = Point2D{.x = 1, .y = 2};
+var p4: auto = Point2D(1, 2);
+```
 
 ### Member type
 
@@ -501,7 +576,21 @@ We do not expect to have implicit member access in methods.
 
 ### Destructuring, pattern matching, and extract
 
-FIXME
+It is an open question how we might destructure or match `struct` values.
+
+```
+var (key: String, value: Int) = {.key = "k", .value = 42};
+var (key: String, value: Int) =
+   {.key = "k", .value = 42}.extract(.key, .value);
+```
+
+Some discussion on this topic has occurred in:
+
+-   [question-for-leads issue #505 on named parameters](https://github.com/carbon-language/carbon-lang/issues/505)
+-   labeled params brainstorming docs
+    [1](https://docs.google.com/document/d/1a1wI8SHGh3HYV8SUWPIKhg48ZW2glUlAMIIS3aec5dY/edit),
+    [2](https://docs.google.com/document/d/1u6GORSkcgThMAiYKOqsgALcEviEtcghGb5TTVT-U-N0/edit)
+-   ["match" in syntax choices doc](https://docs.google.com/document/d/1iuytei37LPg_tEd6xe-O6P_bpN7TIbEjNtFMLYW2Nno/edit#heading=h.y566d16ivoy2)
 
 ### Access control
 
@@ -525,14 +614,28 @@ implementing corresponding interfaces, see
 
 ### Inheritance
 
-FIXME: limited multiple inheritance
+Carbon will need ways of saying:
 
-FIXME:
-[doc with constructor options for inheritance](https://docs.google.com/document/d/1GyrBIFyUbuLJGItmTAYUf9sqSDQjry_kjZKm5INl-84/edit)
+-   this `struct` type has a virtual method table
+-   this `struct` type extends a base type
+-   this `struct` type is "final" and may not be extended further
+-   this method is "virtual" and may be overridden in descendents
+-   this method is "pure virtual" or "abstract" and must be overridden in
+    descendants
+-   this method overrides a method declared in a parent
+
+Multiple inheritance will be limited in at least a couple of ways:
+
+-   At most one supertype may define data members.
+-   Carbon types can't access data members of C++ virtual base classes.
+
+There is a
+[document considering the options for constructing objects with inheritance](https://docs.google.com/document/d/1GyrBIFyUbuLJGItmTAYUf9sqSDQjry_kjZKm5INl-84/edit).
 
 ### Abstract base classes interoperating with object-safe interfaces
 
-We want four things:
+We want four things so that Carbon's object-safe interfaces may interoperate
+with C++ abstract base classes:
 
 -   Ability to convert an object-safe interface (a type-of-type) into an
     abstract base class (a base type), maybe using `AsBaseType(MyInterface)`.
@@ -543,10 +646,24 @@ We want four things:
 -   We should arrange that `DynPtr(MyInterface)` should be a type extending the
     corresponding abstract base class.
 
+### Mixins
+
+We will need some way to declare mixins. This syntax will need a way to
+distinguish defining versus requiring member variables. Methods may additionally
+be given a default definition but may be overridden. Interface implementations
+may only be partially provided by a mixin. Mixin methods will need to be able to
+convert between pointers to the mixin type and the main type.
+
+Mixins also complicate how constructors work.
+
 ### Memory layout
 
-FIXME: Order, packing, alignment
+Carbon will need some way for users to specify the memory layout of `struct`
+types, such as controlling the packing and alignment for the whole type or
+individual members.
 
 ### No `static` variables
 
-FIXME: No `static` variables because there are no global variables.
+At the moment, there is no proposal to support
+[`static` member variables](https://en.wikipedia.org/wiki/Class_variable#Static_member_variables_and_static_member_functions),
+in line with avoiding global variables more generally.
