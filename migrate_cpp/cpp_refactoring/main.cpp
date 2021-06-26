@@ -5,6 +5,7 @@
 #include "clang/Tooling/CommonOptionsParser.h"
 #include "clang/Tooling/Refactoring.h"
 #include "migrate_cpp/cpp_refactoring/fn_inserter.h"
+#include "migrate_cpp/cpp_refactoring/var_decl.h"
 
 namespace cam = ::clang::ast_matchers;
 namespace ct = ::clang::tooling;
@@ -32,8 +33,10 @@ auto main(int argc, const char** argv) -> int {
   InitReplacements(&tool);
 
   // Set up AST matcher callbacks.
+  auto& repl = tool.getReplacements();
   cam::MatchFinder finder;
-  Carbon::FnInserter fn_inserter(tool.getReplacements(), &finder);
+  Carbon::FnInserter fn_inserter(repl, &finder);
+  Carbon::VarDecl var_decl(repl, &finder);
 
   return tool.runAndSave(
       clang::tooling::newFrontendActionFactory(&finder).get());

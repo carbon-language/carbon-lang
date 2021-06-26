@@ -10,8 +10,8 @@
 
 namespace woff2 {
 
-fn Size255UShort(uint16_t value) -> size_t {
-  size_t result = 3;
+fn Size255UShort(value: uint16_t) -> size_t {
+  var result: size_t;
   if (value < 253) {
     result = 1;
   } else if (value < 762) {
@@ -22,7 +22,7 @@ fn Size255UShort(uint16_t value) -> size_t {
   return result;
 }
 
-void Write255UShort(std::vector<uint8_t>* out, int value) {
+fn Write255UShort(out: std::vector<uint8_t> *, value: int) {
   if (value < 253) {
     out->push_back(value);
   } else if (value < 506) {
@@ -38,40 +38,40 @@ void Write255UShort(std::vector<uint8_t>* out, int value) {
   }
 }
 
-void Store255UShort(int val, size_t* offset, uint8_t* dst) {
-  std::vector<uint8_t> packed;
+fn Store255UShort(val: int, offset: size_t *, dst: uint8_t *) {
+  var packed: std::vector<uint8_t>;
   Write255UShort(&packed, val);
-  for (uint8_t packed_byte : packed) {
+  for (uint8_t packed_byte var __begin1: std::__wrap_iter<unsigned char *> var __range1: std::vector<unsigned char> &) {
     dst[(*offset)++] = packed_byte;
   }
 }
 
 // Based on section 6.1.1 of MicroType Express draft spec
-fn Read255UShort(Buffer* buf, unsigned int* value) -> bool {
-  static const int kWordCode = 253;
-  static const int kOneMoreByteCode2 = 254;
-  static const int kOneMoreByteCode1 = 255;
-  static const int kLowestUCode = 253;
-  uint8_t code = 0;
+fn Read255UShort(buf: woff2::Buffer *, value: unsigned int *) -> bool {
+  var kWordCode: const int;
+  var kOneMoreByteCode2: const int;
+  var kOneMoreByteCode1: const int;
+  var kLowestUCode: const int;
+  var code: uint8_t;
   if (!buf->ReadU8(&code)) {
     return FONT_COMPRESSION_FAILURE();
   }
   if (code == kWordCode) {
-    uint16_t result = 0;
+    var result: uint16_t;
     if (!buf->ReadU16(&result)) {
       return FONT_COMPRESSION_FAILURE();
     }
     *value = result;
     return true;
   } else if (code == kOneMoreByteCode1) {
-    uint8_t result = 0;
+    var result: uint8_t;
     if (!buf->ReadU8(&result)) {
       return FONT_COMPRESSION_FAILURE();
     }
     *value = result + kLowestUCode;
     return true;
   } else if (code == kOneMoreByteCode2) {
-    uint8_t result = 0;
+    var result: uint8_t;
     if (!buf->ReadU8(&result)) {
       return FONT_COMPRESSION_FAILURE();
     }
@@ -83,10 +83,10 @@ fn Read255UShort(Buffer* buf, unsigned int* value) -> bool {
   }
 }
 
-fn ReadBase128(Buffer* buf, uint32_t* value) -> bool {
-  uint32_t result = 0;
-  for (size_t i = 0; i < 5; ++i) {
-    uint8_t code = 0;
+fn ReadBase128(buf: woff2::Buffer *, value: uint32_t *) -> bool {
+  var result: uint32_t;
+  for (var i: size_t; i < 5; ++i) {
+    var code: uint8_t;
     if (!buf->ReadU8(&code)) {
       return FONT_COMPRESSION_FAILURE();
     }
@@ -108,17 +108,17 @@ fn ReadBase128(Buffer* buf, uint32_t* value) -> bool {
   return FONT_COMPRESSION_FAILURE();
 }
 
-fn Base128Size(size_t n) -> size_t {
-  size_t size = 1;
+fn Base128Size(n: size_t) -> size_t {
+  var size: size_t;
   for (; n >= 128; n >>= 7) { ++size;
 }
   return size;
 }
 
-void StoreBase128(size_t len, size_t* offset, uint8_t* dst) {
-  size_t size = Base128Size(len);
-  for (size_t i = 0; i < size; ++i) {
-    int b = static_cast<int>((len >> (7 * (size - i - 1))) & 0x7f);
+fn StoreBase128(len: size_t, offset: size_t *, dst: uint8_t *) {
+  var size: size_t;
+  for (var i: size_t; i < size; ++i) {
+    var b: int;
     if (i < size - 1) {
       b |= 0x80;
     }

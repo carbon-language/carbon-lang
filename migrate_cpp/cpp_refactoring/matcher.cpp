@@ -12,19 +12,16 @@ void Matcher::AddReplacement(const clang::SourceManager& sm,
                              clang::CharSourceRange range,
                              llvm::StringRef replacement_text) {
   if (!range.isValid()) {
-    llvm::errs() << "Invalid range: " << range.getAsRange().printToString(sm)
-                 << "\n";
+    // Invalid range.
     return;
   }
   if (sm.getDecomposedLoc(range.getBegin()).first !=
       sm.getDecomposedLoc(range.getEnd()).first) {
-    llvm::errs() << "Range spans macro expansions: "
-                 << range.getAsRange().printToString(sm) << "\n";
+    // Range spans macro expansions.
     return;
   }
   if (sm.getFileID(range.getBegin()) != sm.getFileID(range.getEnd())) {
-    llvm::errs() << "Range spans files: "
-                 << range.getAsRange().printToString(sm) << "\n";
+    // Range spans files.
     return;
   }
 
@@ -38,8 +35,8 @@ void Matcher::AddReplacement(const clang::SourceManager& sm,
 
   auto err = entry->second.add(rep);
   if (err) {
-    llvm::report_fatal_error("Error with replacement `" + rep.toString() +
-                             "`: " + llvm::toString(std::move(err)) + "\n");
+    llvm::errs() << "Error with replacement `" << rep.toString()
+                 << "`: " << llvm::toString(std::move(err)) << "\n";
   }
 }
 

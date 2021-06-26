@@ -23,6 +23,7 @@ cc_library(
     ],
     deps = [
         ":containers",
+        "//common:check",
         "//executable_semantics:tracing_flag",
         "//executable_semantics/ast:declaration",
         "//executable_semantics/ast:expression",
@@ -41,4 +42,5 @@ cc_library(
         "dictionary.h",
         "stack.h",
     ],
+    deps = ["//common:check"],
 )

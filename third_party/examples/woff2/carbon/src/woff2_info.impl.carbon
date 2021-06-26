@@ -15,20 +15,15 @@
 #include "./table_tags.h"
 #include "./variable_length.h"
 
-fn PrintTag(int tag) -> std::string {
+fn PrintTag(tag: int) -> std::string {
   if (tag & 0x80808080) {
     return std::string("_xfm");  // print _xfm for xform tables (else garbage)
   }
-  char printable[] = {
-    static_cast<char>((tag >> 24) & 0xFF),
-    static_cast<char>((tag >> 16) & 0xFF),
-    static_cast<char>((tag >> 8) & 0xFF),
-    static_cast<char>(tag & 0xFF)
-  };
+  var printable: char [4];
   return std::string(printable, 4);
 }
 
-fn main(int argc, char **argv) -> int {
+fn main(argc: int, argv: char **) -> int {
   using std::string;
 
   if (argc != 2) {
@@ -36,19 +31,18 @@ fn main(int argc, char **argv) -> int {
     return 1;
   }
 
-  string filename(argv[1]);
-  string outfilename = filename.substr(0, filename.find_last_of('.')) + ".woff2";
+  var filename: std::string;
+  var outfilename: std::string;
   fprintf(stdout, "Processing %s => %s\n",
     filename.c_str(), outfilename.c_str());
-  string input = woff2::GetFileContent(filename);
+  var input: std::string;
 
-  woff2::Buffer file(reinterpret_cast<const uint8_t*>(input.data()),
-    input.size());
+  var file: woff2::Buffer;
 
   printf("WOFF2Header\n");
-  uint32_t signature, flavor, length, totalSfntSize, totalCompressedSize;
-  uint32_t metaOffset, metaLength, metaOrigLength, privOffset, privLength;
-  uint16_t num_tables, reserved, major, minor;
+  var signature: uint32_t, var flavor: uint32_t, var length: uint32_t, var totalSfntSize: uint32_t, var totalCompressedSize: uint32_t;
+  var metaOffset: uint32_t, var metaLength: uint32_t, var metaOrigLength: uint32_t, var privOffset: uint32_t, var privLength: uint32_t;
+  var num_tables: uint16_t, var reserved: uint16_t, var major: uint16_t, var minor: uint16_t;
   if (!file.ReadU32(&signature)) { return 1;
 }
   if (!file.ReadU32(&flavor)) { return 1;
@@ -97,13 +91,13 @@ fn main(int argc, char **argv) -> int {
   printf("privOffset          %d\n", privOffset);
   printf("privLength          %d\n", privLength);
 
-  std::vector<uint32_t> table_tags;
+  var table_tags: std::vector<uint32_t>;
   printf("TableDirectory starts at +%zu\n", file.offset());
   printf("Entry offset flags tag  origLength txLength\n");
-  for (auto i = 0; i < num_tables; i++) {
-    size_t offset = file.offset();
-    uint8_t flags;
-    uint32_t tag, origLength, transformLength;
+  for (var i: int; i < num_tables; i++) {
+    var offset: size_t;
+    var flags: uint8_t;
+    var tag: uint32_t, var origLength: uint32_t, var transformLength: uint32_t;
     if (!file.ReadU8(&flags)) { return 1;
 }
     if ((flags & 0x3f) == 0x3f) {
@@ -119,7 +113,7 @@ fn main(int argc, char **argv) -> int {
     printf("%5d %6zu  0x%02x %s %10d", i, offset, flags,
         PrintTag(tag).c_str(), origLength);
 
-    uint8_t xform_version = (flags >> 6) & 0x3;
+    var xform_version: uint8_t;
     if (tag == woff2::kGlyfTableTag || tag == woff2::kLocaTableTag) {
       if (xform_version == 0) {
         if (!ReadBase128(&file, &transformLength)) { return 1;
@@ -136,23 +130,23 @@ fn main(int argc, char **argv) -> int {
 
   // Collection header
   if (flavor == woff2::kTtcFontFlavor) {
-    uint32_t version, numFonts;
+    var version: uint32_t, var numFonts: uint32_t;
     if (!file.ReadU32(&version)) { return 1;
 }
     if (!woff2::Read255UShort(&file, &numFonts)) { return 1;
 }
     printf("CollectionHeader 0x%08x %d fonts\n", version, numFonts);
 
-    for (auto i = 0; i < numFonts; i++) {
-      uint32_t numTables, flavor;
+    for (var i: int; i < numFonts; i++) {
+      var numTables: uint32_t, var flavor: uint32_t;
       if (!woff2::Read255UShort(&file, &numTables)) { return 1;
 }
       if (!file.ReadU32(&flavor)) { return 1;
 }
       printf("CollectionFontEntry %d flavor 0x%08x %d tables\n", i, flavor,
           numTables);
-      for (auto j = 0; j < numTables; j++) {
-        uint32_t table_idx;
+      for (var j: int; j < numTables; j++) {
+        var table_idx: uint32_t;
         if (!woff2::Read255UShort(&file, &table_idx)) { return 1;
 }
         if (table_idx >= table_tags.size()) { return 1;

@@ -5,85 +5,85 @@
 #include "executable_semantics/interpreter/value.h"
 
 #include <algorithm>
-#include <cassert>
 #include <iostream>
 
+#include "common/check.h"
 #include "executable_semantics/interpreter/interpreter.h"
 
 namespace Carbon {
 
 int Value::GetInteger() const {
-  assert(tag == ValKind::IntV);
+  CHECK(tag == ValKind::IntV);
   return u.integer;
 }
 
 bool Value::GetBoolean() const {
-  assert(tag == ValKind::BoolV);
+  CHECK(tag == ValKind::BoolV);
   return u.boolean;
 }
 
 Function Value::GetFunction() const {
-  assert(tag == ValKind::FunV);
+  CHECK(tag == ValKind::FunV);
   return u.fun;
 }
 
 StructConstructor Value::GetStruct() const {
-  assert(tag == ValKind::StructV);
+  CHECK(tag == ValKind::StructV);
   return u.struct_val;
 }
 
 AlternativeConstructor Value::GetAlternativeConstructor() const {
-  assert(tag == ValKind::AltConsV);
+  CHECK(tag == ValKind::AltConsV);
   return u.alt_cons;
 }
 
 Alternative Value::GetAlternative() const {
-  assert(tag == ValKind::AltV);
+  CHECK(tag == ValKind::AltV);
   return u.alt;
 }
 
 TupleValue Value::GetTuple() const {
-  assert(tag == ValKind::TupleV);
+  CHECK(tag == ValKind::TupleV);
   return u.tuple;
 }
 
 Address Value::GetPointer() const {
-  assert(tag == ValKind::PtrV);
+  CHECK(tag == ValKind::PtrV);
   return u.ptr;
 }
 
 std::string* Value::GetVariableType() const {
-  assert(tag == ValKind::VarTV);
+  CHECK(tag == ValKind::VarTV);
   return u.var_type;
 }
 
 VariablePatternValue Value::GetVariablePattern() const {
-  assert(tag == ValKind::VarPatV);
+  CHECK(tag == ValKind::VarPatV);
   return u.var_pat;
 }
 
 FunctionTypeValue Value::GetFunctionType() const {
-  assert(tag == ValKind::FunctionTV);
+  CHECK(tag == ValKind::FunctionTV);
   return u.fun_type;
 }
 
 PointerType Value::GetPointerType() const {
-  assert(tag == ValKind::PointerTV);
+  CHECK(tag == ValKind::PointerTV);
   return u.ptr_type;
 }
 
 StructType Value::GetStructType() const {
-  assert(tag == ValKind::StructTV);
+  CHECK(tag == ValKind::StructTV);
   return u.struct_type;
 }
 
 ChoiceType Value::GetChoiceType() const {
-  assert(tag == ValKind::ChoiceTV);
+  CHECK(tag == ValKind::ChoiceTV);
   return u.choice_type;
 }
 
 ContinuationValue Value::GetContinuation() const {
-  assert(tag == ValKind::ContinuationV);
+  CHECK(tag == ValKind::ContinuationV);
   return u.continuation;
 }
 
@@ -116,7 +116,7 @@ auto FieldsEqual(VarValues* ts1, VarValues* ts2) -> bool {
 
 auto FindTupleField(const std::string& name, const Value* tuple)
     -> std::optional<Address> {
-  assert(tuple->tag == ValKind::TupleV);
+  CHECK(tuple->tag == ValKind::TupleV);
   for (const TupleElement& element : *tuple->GetTuple().elements) {
     if (element.name == name) {
       return element.address;
