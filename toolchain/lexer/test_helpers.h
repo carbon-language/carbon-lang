@@ -23,7 +23,7 @@ class SingleTokenDiagnosticTranslator
   // Form a translator for a given token. The string provided here must refer
   // to the same character array that we are going to lex.
   explicit SingleTokenDiagnosticTranslator(llvm::StringRef token)
-      : tken(token) {}
+      : token(token) {}
 
   auto GetLocation(const char* pos) -> Diagnostic::Location override {
     assert(llvm::is_sorted(std::array{token.begin(), pos, token.end()}) &&
