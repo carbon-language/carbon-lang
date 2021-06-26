@@ -1157,6 +1157,46 @@ bool BinaryFunction::disassemble() {
     return TargetSymbol;
   };
 
+  auto handleIndirectBranch = [&](MCInst &Instruction, uint64_t Size,
+                                  uint64_t Offset) {
+    uint64_t IndirectTarget = 0;
+    IndirectBranchType Result =
+        processIndirectBranch(Instruction, Size, Offset, IndirectTarget);
+    switch (Result) {
+    default:
+      llvm_unreachable("unexpected result");
+    case IndirectBranchType::POSSIBLE_TAIL_CALL: {
+      bool Result = MIB->convertJmpToTailCall(Instruction);
+      (void)Result;
+      assert(Result);
+      break;
+    }
+    case IndirectBranchType::POSSIBLE_JUMP_TABLE:
+    case IndirectBranchType::POSSIBLE_PIC_JUMP_TABLE:
+      if (opts::JumpTables == JTS_NONE)
+        IsSimple = false;
+      break;
+    case IndirectBranchType::POSSIBLE_FIXED_BRANCH: {
+      if (containsAddress(IndirectTarget)) {
+        const MCSymbol *TargetSymbol = getOrCreateLocalLabel(IndirectTarget);
+        Instruction.clear();
+        MIB->createUncondBranch(Instruction, TargetSymbol, BC.Ctx.get());
+        TakenBranches.emplace_back(Offset, IndirectTarget - getAddress());
+        HasFixedIndirectBranch = true;
+      } else {
+        MIB->convertJmpToTailCall(Instruction);
+        InterproceduralReferences.insert(IndirectTarget);
+      }
+      break;
+    }
+    case IndirectBranchType::UNKNOWN:
+      // Keep processing. We'll do more checks and fixes in
+      // postProcessIndirectBranches().
+      UnknownIndirectBranchOffsets.emplace(Offset);
+      break;
+    }
+  };
+
   uint64_t Size = 0;  // instruction size
   for (uint64_t Offset = 0; Offset < getSize(); Offset += Size) {
     MCInst Instruction;
@@ -1351,45 +1391,8 @@ bool BinaryFunction::disassemble() {
       } else {
         // Could not evaluate branch. Should be an indirect call or an
         // indirect branch. Bail out on the latter case.
-        if (MIB->isIndirectBranch(Instruction)) {
-          uint64_t IndirectTarget = 0;
-          IndirectBranchType Result =
-              processIndirectBranch(Instruction, Size, Offset, IndirectTarget);
-          switch (Result) {
-          default:
-            llvm_unreachable("unexpected result");
-          case IndirectBranchType::POSSIBLE_TAIL_CALL: {
-            bool Result = MIB->convertJmpToTailCall(Instruction);
-            (void)Result;
-            assert(Result);
-            break;
-          }
-          case IndirectBranchType::POSSIBLE_JUMP_TABLE:
-          case IndirectBranchType::POSSIBLE_PIC_JUMP_TABLE:
-            if (opts::JumpTables == JTS_NONE)
-              IsSimple = false;
-            break;
-          case IndirectBranchType::POSSIBLE_FIXED_BRANCH: {
-            if (containsAddress(IndirectTarget)) {
-              const MCSymbol *TargetSymbol =
-                  getOrCreateLocalLabel(IndirectTarget);
-              Instruction.clear();
-              MIB->createUncondBranch(Instruction, TargetSymbol, BC.Ctx.get());
-              TakenBranches.emplace_back(Offset, IndirectTarget - getAddress());
-              HasFixedIndirectBranch = true;
-            } else {
-              MIB->convertJmpToTailCall(Instruction);
-              InterproceduralReferences.insert(IndirectTarget);
-            }
-            break;
-          }
-          case IndirectBranchType::UNKNOWN:
-            // Keep processing. We'll do more checks and fixes in
-            // postProcessIndirectBranches().
-            UnknownIndirectBranchOffsets.emplace(Offset);
-            break;
-          };
-        }
+        if (MIB->isIndirectBranch(Instruction))
+          handleIndirectBranch(Instruction, Size, Offset);
         // Indirect call. We only need to fix it if the operand is RIP-relative.
         if (IsSimple && MIB->hasPCRelOperand(Instruction))
           handlePCRelOperand(Instruction, AbsoluteInstrAddr, Size);
