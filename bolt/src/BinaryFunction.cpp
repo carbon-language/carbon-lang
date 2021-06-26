@@ -1197,6 +1197,27 @@ bool BinaryFunction::disassemble() {
     }
   };
 
+  // Check for linker veneers, which lack relocations and need manual
+  // adjustments.
+  auto handleAArch64IndirectCall = [&](MCInst &Instruction, uint64_t Offset) {
+    const uint64_t AbsoluteInstrAddr = getAddress() + Offset;
+    MCInst *TargetHiBits, *TargetLowBits;
+    uint64_t TargetAddress;
+    if (MIB->matchLinkerVeneer(Instructions.begin(), Instructions.end(),
+                               AbsoluteInstrAddr, Instruction, TargetHiBits,
+                               TargetLowBits, TargetAddress)) {
+      MIB->addAnnotation(Instruction, "AArch64Veneer", true);
+
+      uint8_t Counter = 0;
+      for (auto It = std::prev(Instructions.end()); Counter != 2;
+           --It, ++Counter) {
+        MIB->addAnnotation(It->second, "AArch64Veneer", true);
+      }
+
+      fixStubTarget(*TargetLowBits, *TargetHiBits, TargetAddress);
+    }
+  };
+
   uint64_t Size = 0;  // instruction size
   for (uint64_t Offset = 0; Offset < getSize(); Offset += Size) {
     MCInst Instruction;
@@ -1397,24 +1418,8 @@ bool BinaryFunction::disassemble() {
         if (IsSimple && MIB->hasPCRelOperand(Instruction))
           handlePCRelOperand(Instruction, AbsoluteInstrAddr, Size);
 
-        // AArch64 indirect call - check for linker veneers, which lack
-        // relocations and need manual adjustments
-        MCInst *TargetHiBits, *TargetLowBits;
-        uint64_t TargetAddress;
-        if (BC.isAArch64() &&
-            MIB->matchLinkerVeneer(Instructions.begin(), Instructions.end(),
-                                   AbsoluteInstrAddr, Instruction, TargetHiBits,
-                                   TargetLowBits, TargetAddress)) {
-          MIB->addAnnotation(Instruction, "AArch64Veneer", true);
-
-          uint8_t Counter = 0;
-          for (auto It = std::prev(Instructions.end()); Counter != 2;
-               --It, ++Counter) {
-            MIB->addAnnotation(It->second, "AArch64Veneer", true);
-          }
-
-          fixStubTarget(*TargetLowBits, *TargetHiBits, TargetAddress);
-        }
+        if (BC.isAArch64())
+          handleAArch64IndirectCall(Instruction, Offset);
       }
     } else if (MIB->hasPCRelOperand(Instruction) && !UsedReloc)
       handlePCRelOperand(Instruction, AbsoluteInstrAddr, Size);
