@@ -20,11 +20,6 @@ namespace Carbon::Testing {
 class SingleTokenDiagnosticTranslator
     : public DiagnosticLocationTranslator<const char*> {
  public:
-  // Form a translator for a given token. The string provided here must refer
-  // to the same character array that we are going to lex.
-  explicit SingleTokenDiagnosticTranslator(llvm::StringRef token)
-      : token(token) {}
-
   auto GetLocation(const char* pos) -> Diagnostic::Location override {
     assert(llvm::is_sorted(std::array{token.begin(), pos, token.end()}) &&
            "invalid diagnostic location");
@@ -45,6 +40,11 @@ class SingleTokenDiagnosticTranslator
               .column_number = static_cast<int32_t>(this_line.size() + 1)};
     }
   }
+
+  // Form a translator for a given token. The string provided here must refer
+  // to the same character array that we are going to lex.
+  explicit SingleTokenDiagnosticTranslator(llvm::StringRef token)
+      : token(token) {}
 
  private:
   [[nodiscard]] auto SynthesizeFilename() const -> std::string {
