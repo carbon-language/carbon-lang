@@ -215,6 +215,7 @@ external impl Song as Comparable {
 
 **Note:** The interface implementation syntax was decided in
 [question-for-leads issue #575](https://github.com/carbon-language/carbon-lang/issues/575).
+TODO: move this to details and link.
 
 Implementations may be defined within the struct definition itself or
 externally. External implementations may be defined in the library defining the
