@@ -685,13 +685,6 @@ void BinaryFunction::printRelocations(raw_ostream &OS,
     Sep = ", ";
     ++RI;
   }
-
-  RI = MoveRelocations.lower_bound(Offset);
-  while (RI != MoveRelocations.end() && RI->first < Offset + Size) {
-    OS << Sep << "(M: " << RI->second << ")";
-    Sep = ", ";
-    ++RI;
-  }
 }
 
 namespace {
@@ -1331,32 +1324,6 @@ bool BinaryFunction::disassemble() {
               if (opts::Verbosity >= 2) {
                 outs() << "BOLT-INFO: Function " << *this
                        << " has a call to address zero.\n";
-              }
-            }
-
-            if (BC.HasRelocations) {
-              // Check if we need to create relocation to move this function's
-              // code without re-assembly.
-              size_t RelSize = (Size < 5) ? 1 : 4;
-              uint64_t RelOffset = Offset + Size - RelSize;
-              if (BC.isAArch64()) {
-                RelSize = 0;
-                RelOffset = Offset;
-              }
-              auto RI = MoveRelocations.find(RelOffset);
-              if (RI == MoveRelocations.end()) {
-                uint64_t RelType =
-                    (RelSize == 1) ? ELF::R_X86_64_PC8 : ELF::R_X86_64_PC32;
-                if (BC.isAArch64())
-                  RelType = ELF::R_AARCH64_CALL26;
-                LLVM_DEBUG(dbgs()
-                           << "BOLT-DEBUG: creating relocation for static"
-                           << " function call to " << TargetSymbol->getName()
-                           << " at offset 0x" << Twine::utohexstr(RelOffset)
-                           << " with size " << RelSize << " for function "
-                           << *this << '\n');
-                addRelocation(getAddress() + RelOffset, TargetSymbol, RelType,
-                              -RelSize, 0);
               }
             }
           }

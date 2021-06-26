@@ -530,10 +530,6 @@ private:
   /// List of relocations in this function.
   std::map<uint64_t, Relocation> Relocations;
 
-  /// Map of relocations used for moving the function body as it is.
-  using MoveRelocationsTy = std::map<uint64_t, Relocation>;
-  MoveRelocationsTy MoveRelocations;
-
   /// Information on function constant islands.
   IslandInfo Islands;
 
@@ -709,8 +705,6 @@ private:
     clearList(ColdCallSites);
     clearList(LSDATypeTable);
     clearList(LSDATypeAddressTable);
-
-    clearList(MoveRelocations);
 
     clearList(LabelToBB);
 
@@ -1343,11 +1337,6 @@ public:
     default:
       llvm_unreachable("unexpected relocation type in code");
     }
-
-    // FIXME: if we ever find a use for MoveRelocations, this is the place to
-    // initialize those:
-    //    MoveRelocations[Offset] =
-    //      Relocation{Offset, Symbol, RelType, Addend, Value};
   }
 
   /// Return the name of the section this function originated from.
@@ -1532,10 +1521,6 @@ public:
 
   const ArrayRef<uint8_t> getLSDATypeIndexTable() const {
     return LSDATypeIndexTable;
-  }
-
-  const MoveRelocationsTy &getMoveRelocations() const {
-    return MoveRelocations;
   }
 
   const LabelsMapType &getLabels() const {

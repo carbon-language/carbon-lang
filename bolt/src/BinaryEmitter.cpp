@@ -182,9 +182,6 @@ private:
   /// Emit debug line information for functions that were not emitted.
   void emitDebugLineInfoForOriginalFunctions();
 
-  /// Emit function as a blob with relocations and labels for relocations.
-  void emitFunctionBodyRaw(BinaryFunction &BF) LLVM_ATTRIBUTE_UNUSED;
-
   /// Emit data sections that have code references in them.
   void emitDataSections(StringRef OrgSecPrefix);
 };
@@ -541,13 +538,10 @@ void BinaryEmitter::emitConstantIslands(BinaryFunction &BF, bool EmitColdPart,
       continue;    // Size is zero, nothing to emit
 
     // Emit labels, relocs and data
-    auto RI = BF.getMoveRelocations().lower_bound(FunctionOffset);
-    while ((IS != Islands.Offsets.end() && IS->first < EndOffset) ||
-           (RI != BF.getMoveRelocations().end() && RI->first < EndOffset)) {
+    while (IS != Islands.Offsets.end() && IS->first < EndOffset) {
       auto NextLabelOffset =
         IS == Islands.Offsets.end() ? EndOffset : IS->first;
-      auto NextRelOffset =
-        RI == BF.getMoveRelocations().end() ? EndOffset : RI->first;
+      auto NextRelOffset = EndOffset;
       auto NextStop = std::min(NextLabelOffset, NextRelOffset);
       assert(NextStop <= EndOffset && "internal overflow error");
       if (FunctionOffset < NextStop) {
@@ -589,15 +583,6 @@ void BinaryEmitter::emitConstantIslands(BinaryFunction &BF, bool EmitColdPart,
           }
         }
         ++IS;
-      }
-      if (RI != BF.getMoveRelocations().end() && FunctionOffset == RI->first) {
-        size_t RelocationSize = RI->second.emit(&Streamer);
-        LLVM_DEBUG(dbgs() << "BOLT-DEBUG: emitted relocation for symbol "
-                          << RI->second.Symbol->getName() << " at offset 0x"
-                          << Twine::utohexstr(RI->first) << " with size "
-                          << RelocationSize << '\n');
-        FunctionOffset += RelocationSize;
-        ++RI;
       }
     }
     assert(FunctionOffset <= EndOffset && "overflow error");
@@ -1057,64 +1042,6 @@ void BinaryEmitter::emitDebugLineInfoForOriginalFunctions() {
       LLVM_DEBUG(dbgs() << "BOLT-DEBUG: function " << Function
                         << " has no associated line number information\n");
     }
-  }
-}
-
-void BinaryEmitter::emitFunctionBodyRaw(BinaryFunction &BF) {
-  // #14998851: Fix gold linker's '--emit-relocs'.
-  llvm_unreachable(
-      "cannot emit raw body unless relocation accuracy is guaranteed");
-
-  assert(!BF.isInjected() && "cannot emit raw body of injected function");
-
-  // Raw contents of the function.
-  StringRef SectionContents = BF.getOriginSection()->getContents();
-
-  // Raw contents of the function.
-  StringRef FunctionContents = SectionContents.substr(
-      BF.getAddress() - BF.getOriginSection()->getAddress(), BF.getSize());
-
-  if (opts::Verbosity)
-    outs() << "BOLT-INFO: emitting function " << BF << " in raw ("
-           << BF.getSize() << " bytes)\n";
-
-  // We split the function blob into smaller blocks and output relocations
-  // and/or labels between them.
-  uint64_t FunctionOffset = 0;
-  auto LI = BF.getLabels().begin();
-  auto RI = BF.getMoveRelocations().begin();
-  while (LI != BF.getLabels().end() ||
-         RI != BF.getMoveRelocations().end()) {
-    uint64_t NextLabelOffset =
-      (LI == BF.getLabels().end() ? BF.getSize() : LI->first);
-    uint64_t NextRelocationOffset =
-      (RI == BF.getMoveRelocations().end() ? BF.getSize() : RI->first);
-    uint64_t NextStop = std::min(NextLabelOffset, NextRelocationOffset);
-    assert(NextStop <= BF.getSize() && "internal overflow error");
-    if (FunctionOffset < NextStop) {
-      Streamer.emitBytes(FunctionContents.slice(FunctionOffset, NextStop));
-      FunctionOffset = NextStop;
-    }
-    if (LI != BF.getLabels().end() && FunctionOffset == LI->first) {
-      Streamer.emitLabel(LI->second);
-      LLVM_DEBUG(dbgs() << "BOLT-DEBUG: emitted label " << LI->second->getName()
-                        << " at offset 0x" << Twine::utohexstr(LI->first)
-                        << '\n');
-      ++LI;
-    }
-    if (RI != BF.getMoveRelocations().end() && FunctionOffset == RI->first) {
-      size_t RelocationSize = RI->second.emit(&Streamer);
-      LLVM_DEBUG(dbgs() << "BOLT-DEBUG: emitted relocation for symbol "
-                        << RI->second.Symbol->getName() << " at offset 0x"
-                        << Twine::utohexstr(RI->first) << " with size "
-                        << RelocationSize << '\n');
-      FunctionOffset += RelocationSize;
-      ++RI;
-    }
-  }
-  assert(FunctionOffset <= BF.getSize() && "overflow error");
-  if (FunctionOffset < BF.getSize()) {
-    Streamer.emitBytes(FunctionContents.substr(FunctionOffset));
   }
 }
 
