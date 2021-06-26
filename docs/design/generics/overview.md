@@ -417,7 +417,8 @@ fn BothDraws[T:$ Renderable & EndOfGame](game_state: T*) {
 You may also declare a new type-of-type directly using
 ["structural interfaces"](terminology.md#structural-interfaces). Structural
 interfaces can express requirements that multiple interfaces be implemented, and
-give you control over how name conflicts are handled.
+give you control over how name conflicts are handled. Structural interfaces have
+other applications and capabilities not covered here.
 
 ```
 structural interface Combined {
