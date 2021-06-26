@@ -44,7 +44,7 @@ class SingleTokenDiagnosticTranslator
   // Form a translator for a given token. The string provided here must refer
   // to the same character array that we are going to lex.
   explicit SingleTokenDiagnosticTranslator(llvm::StringRef token)
-      : token(token) {}
+      : ten(token) {}
 
  private:
   [[nodiscard]] auto SynthesizeFilename() const -> std::string {
