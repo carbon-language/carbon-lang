@@ -94,7 +94,7 @@ TEST_F(VarDeclTest, ConstPointer) {
 }
 
 TEST_F(VarDeclTest, Namespace) {
-  // This is to ensure the 'struct' keyword doesn't get added to the call type.
+  // This is to ensure the 'struct' keyword doesn't get added to the qualified type.
   constexpr char Before[] = R"cpp(
     namespace Foo {
     typedef int Bar;
