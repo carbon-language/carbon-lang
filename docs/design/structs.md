@@ -134,13 +134,12 @@ main implementation difficulties and complexity of multiple inheritance. This
 allows a type to inherit from multiple abstract base classes.
 
 Abstract base classes are primarily used for
-
 [subtyping](https://en.wikipedia.org/wiki/Subtyping). In practice that means
-that if we have a type `Concrete` that is a concrete derived type of an abstract
-base class named `ABC`, object of type `Concrete` will be accessed through
-pointers of type `ABC*`, which means "a pointer to type inheriting from `ABC`."
-Such types should only be allowed to be deleted by way of that pointer if a
-virtual destructor is included in the abstract base class.
+that if we have a type `Concrete` that is a concrete type derived from an
+abstract base class named `ABC`, objects of type `Concrete` will be accessed
+through pointers of type `ABC*`, which means "a pointer to type inheriting from
+`ABC`." Such types should only be allowed to be deleted by way of that pointer
+if a virtual destructor is included in the abstract base class.
 
 The use cases for abstract base classes almost entirely overlap with the
 object-safe (as
