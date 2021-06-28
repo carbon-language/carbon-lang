@@ -165,13 +165,13 @@ auto Expression::MakeGetField(int line_num, const Expression* exp,
   return e;
 }
 
-auto Expression::MakeTuple(int line_num, std::vector<FieldInitializer>* args)
+auto Expression::MakeTuple(int line_num, std::vector<FieldInitializer> args)
     -> const Expression* {
   auto* e = new Expression();
   e->line_num = line_num;
   int i = 0;
   bool seen_named_member = false;
-  for (auto& arg : *args) {
+  for (auto& arg : args) {
     if (arg.name == "") {
       if (seen_named_member) {
         std::cerr << line_num
@@ -187,17 +187,6 @@ auto Expression::MakeTuple(int line_num, std::vector<FieldInitializer>* args)
   }
   e->value = Tuple({.fields = args});
   return e;
-}
-
-// Create an AST node for an empty tuple.
-// TODO(geoffromer): remove this and rewrite its callers to use
-// `MakeTuple(line_num, {})`, once that works.
-auto Expression::MakeUnit(int line_num) -> const Expression* {
-  auto* unit = new Expression();
-  unit->line_num = line_num;
-  auto* args = new std::vector<FieldInitializer>();
-  unit->value = Tuple({.fields = args});
-  return unit;
 }
 
 auto Expression::MakeIndex(int line_num, const Expression* exp,
@@ -237,14 +226,14 @@ static void PrintOp(Operator op) {
   }
 }
 
-static void PrintFields(std::vector<FieldInitializer>* fields) {
+static void PrintFields(const std::vector<FieldInitializer>& fields) {
   int i = 0;
-  for (auto iter = fields->begin(); iter != fields->end(); ++iter, ++i) {
+  for (auto iter = fields.begin(); iter != fields.end(); ++iter, ++i) {
     if (i != 0) {
       std::cout << ", ";
     }
     std::cout << iter->name << " = ";
-    PrintExp(iter->expression);
+    PrintExp(iter->expression.GetPointer());
   }
 }
 
