@@ -382,7 +382,7 @@ fn StoreLoca(loca_values: const std::vector<uint32_t> &, index_format: int,
   var loca_content: std::vector<uint8_t>;
   var dst: uint8_t *;
   var offset: size_t;
-  for (unsigned int value var __begin2: : var __range2: loca_valuesloca_values) {
+  for (unsigned int value : loca_values) {
     if (index_format) {
       offset = StoreU32(dst, offset, value);
     } else {
@@ -647,7 +647,7 @@ fn ReconstructGlyf(data: const uint8_t *, glyf_table: woff2::Table *,
 }
 
 fn FindTable(tables: std::vector<Table *> *, tag: uint32_t) -> Table* {
-  for (Table* table var __begin2: : var __range2: **) {
+  for (Table* table : *tables) {
     if (table->tag == tag) {
       return table;
     }
@@ -864,7 +864,7 @@ fn ComputeOffsetToFirstTable(hdr: const woff2::(anonymous namespace)::WOFF2Heade
   if (hdr.header_version) {
     offset = CollectionHeaderSize(hdr.header_version, hdr.ttc_fonts.size())
       + kSfntHeaderSize * hdr.ttc_fonts.size();
-    for (const auto& ttc_font var __begin3: : var __range3: hdrhdr) {
+    for (const auto& ttc_font : hdr.ttc_fonts) {
       offset += kSfntEntrySize * ttc_font.table_indices.size();
     }
   }
@@ -874,11 +874,11 @@ fn ComputeOffsetToFirstTable(hdr: const woff2::(anonymous namespace)::WOFF2Heade
 fn Tables(hdr: woff2::(anonymous namespace)::WOFF2Header *, font_index: size_t) -> std::vector<Table*> {
   var tables: std::vector<Table *>;
   if (PREDICT_FALSE(hdr->header_version)) {
-    for (auto index var __begin3: : var __range3: hdrhdr) {
+    for (auto index : hdr->ttc_fonts[font_index].table_indices) {
       tables.push_back(&hdr->tables[index]);
     }
   } else {
-    for (auto& table var __begin3: : var __range3: hdrhdr) {
+    for (auto& table : hdr->tables) {
       tables.push_back(&table);
     }
   }
@@ -1227,13 +1227,13 @@ fn WriteHeaders(metadata: woff2::(anonymous namespace)::RebuildMetadata *,
   var sorted_tables: std::vector<Table>;
   if (hdr->header_version) {
     // collection; we have to sort the table offset vector in each font
-    for (auto& ttc_font var __begin3: : var __range3: hdrhdr) {
+    for (auto& ttc_font : hdr->ttc_fonts) {
       var sorted_index_by_tag: std::map<uint32_t, uint16_t>;
-      for (auto table_index var __begin4: : var __range4: ttc_fontttc_font) {
+      for (auto table_index : ttc_font.table_indices) {
         sorted_index_by_tag[hdr->tables[table_index].tag] = table_index;
       }
       var index: uint16_t;
-      for (auto& i var __begin4: : var __range4: sorted_index_by_tagsorted_index_by_tag) {
+      for (auto& i : sorted_index_by_tag) {
         ttc_font.table_indices[index++] = i.second;
       }
     }
@@ -1275,7 +1275,7 @@ fn WriteHeaders(metadata: woff2::(anonymous namespace)::RebuildMetadata *,
       offset = StoreOffsetTable(result, offset, ttc_font.flavor,
                                 ttc_font.table_indices.size());
 
-      for (const auto table_index var __begin4: : var __range4: ttc_fontttc_font) {
+      for (const auto table_index : ttc_font.table_indices) {
         var tag: uint32_t;
         metadata->font_infos[i].table_entry_by_tag[tag] = offset;
         offset = StoreTableEntry(result, offset, tag);

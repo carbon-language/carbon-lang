@@ -31,7 +31,7 @@ fn Font::FindTable(tag: uint32_t) const -> const Font::Table* {
 fn Font::OutputOrderedTags() const -> std::vector<uint32_t> {
   var output_order: std::vector<uint32_t>;
 
-  for (const auto& i var __begin1: : var __range1: tablestables) {
+  for (const auto& i : tables) {
     var table: const Font::Table &;
     // This is a transformed table, we will write it together with the
     // original version.
@@ -88,7 +88,7 @@ fn ReadTrueTypeFont(file: woff2::Buffer *, data: const uint8_t *, len: size_t,
 
   // Check that tables are non-overlapping.
   var last_offset: uint32_t;
-  for (const auto& i var __begin1: : var __range1: intervalsintervals) {
+  for (const auto& i : intervals) {
     if (i.first < last_offset || i.first + i.second < i.first) {
       return FONT_COMPRESSION_FAILURE();
     }
@@ -114,7 +114,7 @@ fn ReadCollectionFont(file: woff2::Buffer *, data: const uint8_t *, len: size_t,
     return FONT_COMPRESSION_FAILURE();
   }
 
-  for (auto& entry var __begin1: : var __range1: fontfont) {
+  for (auto& entry : font->tables) {
     var table: Font::Table &;
 
     if (all_tables->find(table.offset) == all_tables->end()) {
@@ -152,7 +152,7 @@ fn ReadTrueTypeCollection(file: woff2::Buffer *, data: const uint8_t *, len: siz
     var font_it: auto;
 
     var all_tables: std::map<uint32_t, Font::Table *>;
-    for (const auto offset var __begin1: : var __range1: offsetsoffsets) {
+    for (const auto offset : offsets) {
       file->set_offset(offset);
       var font: woff2::Font &;
       if (!ReadCollectionFont(file, data, len, &font, &all_tables)) {
@@ -195,7 +195,7 @@ fn ReadFontCollection(data: const uint8_t *, len: size_t,
 
 fn FontFileSize(font: const woff2::Font &) -> size_t {
   var max_offset: size_t;
-  for (const auto& i var __begin1: : var __range1: fontfont) {
+  for (const auto& i : font.tables) {
     var table: const Font::Table &;
     var padding_size: size_t;
     var end_offset: size_t;
@@ -206,7 +206,7 @@ fn FontFileSize(font: const woff2::Font &) -> size_t {
 
 fn FontCollectionFileSize(font_collection: const woff2::FontCollection &) -> size_t {
   var max_offset: size_t;
-  for (auto& font var __begin1: : var __range1: font_collectionfont_collection) {
+  for (auto& font : font_collection.fonts) {
     // font file size actually just finds max offset
     max_offset = std::max(max_offset, FontFileSize(font));
   }
@@ -270,7 +270,7 @@ fn WriteFont(font: const woff2::Font &, offset: size_t *, dst: uint8_t *,
   Store16(max_pow2, offset, dst);
   Store16(range_shift, offset, dst);
 
-  for (const auto& i var __begin1: : var __range1: fontfont) {
+  for (const auto& i : font.tables) {
     if (!WriteTable(i.second, offset, dst, dst_size)) {
       return false;
     }
@@ -306,7 +306,7 @@ fn WriteFontCollection(font_collection: const woff2::FontCollection &, dst: uint
   }
 
   // Write fonts and their offsets.
-  for (const auto & font var __begin1: : var __range1: font_collectionfont_collection) {
+  for (const auto & font : font_collection.fonts) {
     StoreU32(offset, &offset_table, dst);
     if (!WriteFont(font, &offset, dst, dst_size)) {
       return false;
