@@ -436,8 +436,8 @@ names.
 
 ```
 var different_order: struct {.x: Int, .y: Int} = {.y = 2, .x = 3};
-Assert(with_defaults.x == 3);
-Assert(with_defaults.y == 2);
+Assert(different_order.x == 3);
+Assert(different_order.y == 2);
 
 // Applicable for arguments as well.
 SortIntVector(&v, {.descending = true, .stable = true});
