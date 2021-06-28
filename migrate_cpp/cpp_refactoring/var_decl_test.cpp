@@ -87,7 +87,6 @@ TEST_F(VarDeclTest, Const) {
 }
 
 TEST_F(VarDeclTest, ConstPointer) {
-  // TODO: Should be `const int*` because the pointer isn't const.
   constexpr char Before[] = "const int* i;";
   constexpr char After[] = "var i: const int *;";
   ExpectReplacement(Before, After);
