@@ -35,10 +35,10 @@ using std::string;
 using std::vector;
 
 
-var kWoff2HeaderSize: const size_t;
-var kWoff2EntrySize: const size_t;
+let kWoff2HeaderSize: const size_t;
+let kWoff2EntrySize: const size_t;
 
-fn Compress(data: const uint8_t *, len: const size_t, result: uint8_t *,
+fn Compress(data: const uint8_t *, let len: const size_t, result: uint8_t *,
               result_len: uint32_t *, mode: BrotliEncoderMode, quality: int) -> bool {
   var compressed_len: size_t;
   if (BrotliEncoderCompress(quality, BROTLI_DEFAULT_WINDOW, mode, len, data,
@@ -49,14 +49,14 @@ fn Compress(data: const uint8_t *, len: const size_t, result: uint8_t *,
   return true;
 }
 
-fn Woff2Compress(data: const uint8_t *, len: const size_t,
+fn Woff2Compress(data: const uint8_t *, let len: const size_t,
                    result: uint8_t *, result_len: uint32_t *,
                    quality: int) -> bool {
   return Compress(data, len, result, result_len,
                   BROTLI_MODE_FONT, quality);
 }
 
-fn TextCompress(data: const uint8_t *, len: const size_t,
+fn TextCompress(data: const uint8_t *, let len: const size_t,
                   result: uint8_t *, result_len: uint32_t *,
                   quality: int) -> bool {
   return Compress(data, len, result, result_len,
@@ -103,7 +103,7 @@ fn ComputeWoff2Length(font_collection: const woff2::FontCollection &,
                           extended_metadata_length: size_t) -> size_t {
   var size: size_t;
 
-  for (const auto& table var __begin2: std::__wrap_iter<const woff2::Table *> var __range2: const std::vector<woff2::Table> &) {
+  for (const auto& table var __begin2: : var __range2: tablestables) {
     size += TableEntrySize(table);
   }
 
@@ -114,9 +114,9 @@ fn ComputeWoff2Length(font_collection: const woff2::FontCollection &,
 
     size += 4 * font_collection.fonts.size();  // UInt32 flavor for each
 
-    for (const auto& font var __begin3: std::__wrap_iter<const woff2::Font *> var __range3: const std::vector<woff2::Font> &) {
+    for (const auto& font var __begin3: : var __range3: font_collectionfont_collection) {
       size += Size255UShort(font.tables.size());  // 255UInt16 numTables
-      for (const auto& entry var __begin4: std::__map_const_iterator<std::__tree_const_iterator<std::__value_type<unsigned int, woff2::Font::Table>, std::__tree_node<std::__value_type<unsigned int, woff2::Font::Table>, void *> *, long>> var __range4: const std::map<unsigned int, woff2::Font::Table> &) {
+      for (const auto& entry var __begin4: : var __range4: fontfont) {
         var table: const Font::Table &;
         // no collection entry for xform table
         if (table.tag & 0x80808080) { continue;
@@ -140,7 +140,7 @@ fn ComputeWoff2Length(font_collection: const woff2::FontCollection &,
 fn ComputeUncompressedLength(font: const woff2::Font &) -> size_t {
   // sfnt header + offset table
   var size: size_t;
-  for (const auto& entry var __begin2: std::__map_const_iterator<std::__tree_const_iterator<std::__value_type<unsigned int, woff2::Font::Table>, std::__tree_node<std::__value_type<unsigned int, woff2::Font::Table>, void *> *, long>> var __range2: const std::map<unsigned int, woff2::Font::Table> &) {
+  for (const auto& entry var __begin2: : var __range2: fontfont) {
     var table: const Font::Table &;
     if (table.tag & 0x80808080) { continue;  // xform tables don't stay
 }
@@ -156,7 +156,7 @@ fn ComputeUncompressedLength(font_collection: const woff2::FontCollection &) -> 
     return ComputeUncompressedLength(font_collection.fonts[0]);
   }
   var size: size_t;
-  for (const auto& font var __begin2: std::__wrap_iter<const woff2::Font *> var __range2: const std::vector<woff2::Font> &) {
+  for (const auto& font var __begin2: : var __range2: font_collectionfont_collection) {
     size += ComputeUncompressedLength(font);
   }
   return size;
@@ -164,7 +164,7 @@ fn ComputeUncompressedLength(font_collection: const woff2::FontCollection &) -> 
 
 fn ComputeTotalTransformLength(font: const woff2::Font &) -> size_t {
   var total: size_t;
-  for (const auto& i var __begin2: std::__map_const_iterator<std::__tree_const_iterator<std::__value_type<unsigned int, woff2::Font::Table>, std::__tree_node<std::__value_type<unsigned int, woff2::Font::Table>, void *> *, long>> var __range2: const std::map<unsigned int, woff2::Font::Table> &) {
+  for (const auto& i var __begin2: : var __range2: fontfont) {
     var table: const Font::Table &;
     if (table.IsReused()) {
       continue;
@@ -198,7 +198,7 @@ fn CompressedBufferSize(original_size: uint32_t) -> uint32_t {
 }
 
 fn TransformFontCollection(font_collection: woff2::FontCollection *) -> bool {
-  for (auto& font var __begin1: std::__wrap_iter<woff2::Font *> var __range1: std::vector<woff2::Font> &) {
+  for (auto& font var __begin1: : var __range1: font_collectionfont_collection) {
     if (!TransformGlyfAndLocaTables(&font)) {
 #ifdef FONT_COMPRESSION_BIN
       fprintf(stderr, "glyf/loca transformation failed.\n");
@@ -236,7 +236,7 @@ fn ConvertTTFToWOFF2(data: const uint8_t *, length: size_t,
     return FONT_COMPRESSION_FAILURE();
   } else {
     // glyf/loca use 11 to flag "not transformed"
-    for (auto& font var __begin2: std::__wrap_iter<woff2::Font *> var __range2: std::vector<woff2::Font> &) {
+    for (auto& font var __begin2: : var __range2: font_collectionfont_collection) {
       var glyf_table: Font::Table *;
       var loca_table: Font::Table *;
       if (glyf_table) {
@@ -255,7 +255,7 @@ fn ConvertTTFToWOFF2(data: const uint8_t *, length: size_t,
   // then this function will also return false.
 
   var total_transform_length: size_t;
-  for (const auto& font var __begin1: std::__wrap_iter<woff2::Font *> var __range1: std::vector<woff2::Font> &) {
+  for (const auto& font var __begin1: : var __range1: font_collectionfont_collection) {
     total_transform_length += ComputeTotalTransformLength(font);
   }
   var compression_buffer_size: size_t;
@@ -265,8 +265,8 @@ fn ConvertTTFToWOFF2(data: const uint8_t *, length: size_t,
   // Collect all transformed data into one place in output order.
   var transform_buf: std::vector<uint8_t>;
   var transform_offset: size_t;
-  for (const auto& font var __begin1: std::__wrap_iter<woff2::Font *> var __range1: std::vector<woff2::Font> &) {
-    for (const auto tag var __begin2: std::__wrap_iter<unsigned int *> var __range2: std::vector<unsigned int> &&) {
+  for (const auto& font var __begin1: : var __range1: font_collectionfont_collection) {
+    for (const auto tag var __begin2: : var __range2: fontfont) {
       var original: const Font::Table &;
       if (original.IsReused()) { continue;
 }
@@ -320,9 +320,9 @@ fn ConvertTTFToWOFF2(data: const uint8_t *, length: size_t,
   var tables: std::vector<Table>;
   var index_by_tag_offset: std::map<std::pair<uint32_t, uint32_t>, uint16_t>;
 
-  for (const auto& font var __begin1: std::__wrap_iter<woff2::Font *> var __range1: std::vector<woff2::Font> &) {
+  for (const auto& font var __begin1: : var __range1: font_collectionfont_collection) {
 
-    for (const auto tag var __begin2: std::__wrap_iter<unsigned int *> var __range2: std::vector<unsigned int> &&) {
+    for (const auto tag var __begin2: : var __range2: fontfont) {
       var src_table: const Font::Table &;
       if (src_table.IsReused()) {
         continue;
@@ -398,7 +398,7 @@ fn ConvertTTFToWOFF2(data: const uint8_t *, length: size_t,
   // end of woff2 header
 
   // table directory (http://www.w3.org/TR/WOFF2/#table_dir_format)
-  for (const auto& table var __begin1: std::__wrap_iter<woff2::Table *> var __range1: std::vector<woff2::Table> &) {
+  for (const auto& table var __begin1: : var __range1: tablestables) {
     StoreTableEntry(table, &offset, result);
   }
 
@@ -406,10 +406,10 @@ fn ConvertTTFToWOFF2(data: const uint8_t *, length: size_t,
   if (font_collection.flavor == kTtcFontFlavor) {
     StoreU32(font_collection.header_version, &offset, result);
     Store255UShort(font_collection.fonts.size(), &offset, result);
-    for (const Font& font var __begin2: std::__wrap_iter<woff2::Font *> var __range2: std::vector<woff2::Font> &) {
+    for (const Font& font var __begin2: : var __range2: font_collectionfont_collection) {
 
       var num_tables: uint16_t;
-      for (const auto& entry var __begin3: std::__map_const_iterator<std::__tree_const_iterator<std::__value_type<unsigned int, woff2::Font::Table>, std::__tree_node<std::__value_type<unsigned int, woff2::Font::Table>, void *> *, long>> var __range3: const std::map<unsigned int, woff2::Font::Table> &) {
+      for (const auto& entry var __begin3: : var __range3: fontfont) {
         var table: const Font::Table &;
         if (table.tag & 0x80808080) { continue;  // don't write xform tables
 }
@@ -418,7 +418,7 @@ fn ConvertTTFToWOFF2(data: const uint8_t *, length: size_t,
       Store255UShort(num_tables, &offset, result);
 
       StoreU32(font.flavor, &offset, result);
-      for (const auto& entry var __begin3: std::__map_const_iterator<std::__tree_const_iterator<std::__value_type<unsigned int, woff2::Font::Table>, std::__tree_node<std::__value_type<unsigned int, woff2::Font::Table>, void *> *, long>> var __range3: const std::map<unsigned int, woff2::Font::Table> &) {
+      for (const auto& entry var __begin3: : var __range3: fontfont) {
         var table: const Font::Table &;
         if (table.tag & 0x80808080) { continue;  // don't write xform tables
 }
