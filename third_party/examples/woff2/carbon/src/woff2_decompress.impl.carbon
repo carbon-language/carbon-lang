@@ -26,11 +26,11 @@ fn main(argc: int, argv: char **) -> int {
 
   // Note: update woff2_dec_fuzzer_new_entry.cc if this pattern changes.
   var input: std::string;
-  var raw_input: const unsigned char *;
+  var raw_input: auto*;
   var output: std::string;
   var out: woff2::WOFF2StringOut;
 
-  var ok: const bool;
+  let ok: const bool;
 
   if (ok) {
     woff2::SetFileContents(outfilename, output.begin(),

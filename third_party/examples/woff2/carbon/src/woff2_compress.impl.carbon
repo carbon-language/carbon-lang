@@ -26,10 +26,10 @@ fn main(argc: int, argv: char **) -> int {
     filename.c_str(), outfilename.c_str());
   var input: std::string;
 
-  var input_data: const unsigned char *;
+  var input_data: auto*;
   var output_size: size_t;
   var output: std::string;
-  var output_data: unsigned char *;
+  var output_data: auto*;
 
   var params: woff2::WOFF2Params;
   if (!woff2::ConvertTTFToWOFF2(input_data, input.size(),

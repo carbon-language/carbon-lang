@@ -41,17 +41,17 @@ fn Write255UShort(out: std::vector<uint8_t> *, value: int) {
 fn Store255UShort(val: int, offset: size_t *, dst: uint8_t *) {
   var packed: std::vector<uint8_t>;
   Write255UShort(&packed, val);
-  for (uint8_t packed_byte var __begin1: std::__wrap_iter<unsigned char *> var __range1: std::vector<unsigned char> &) {
+  for (uint8_t packed_byte var __begin1: : var __range1: packedpacked) {
     dst[(*offset)++] = packed_byte;
   }
 }
 
 // Based on section 6.1.1 of MicroType Express draft spec
 fn Read255UShort(buf: woff2::Buffer *, value: unsigned int *) -> bool {
-  var kWordCode: const int;
-  var kOneMoreByteCode2: const int;
-  var kOneMoreByteCode1: const int;
-  var kLowestUCode: const int;
+  let kWordCode: const int;
+  let kOneMoreByteCode2: const int;
+  let kOneMoreByteCode1: const int;
+  let kLowestUCode: const int;
   var code: uint8_t;
   if (!buf->ReadU8(&code)) {
     return FONT_COMPRESSION_FAILURE();

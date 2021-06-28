@@ -20,8 +20,8 @@ namespace woff2 {
 
 namespace {
 
-var FLAG_ARG_1_AND_2_ARE_WORDS: const int;
-var FLAG_WE_HAVE_INSTRUCTIONS: const int;
+let FLAG_ARG_1_AND_2_ARE_WORDS: const int;
+let FLAG_WE_HAVE_INSTRUCTIONS: const int;
 
 fn WriteBytes(out: std::vector<uint8_t> *, data: const uint8_t *, len: size_t) {
   if (len == 0) { return;
@@ -32,7 +32,7 @@ fn WriteBytes(out: std::vector<uint8_t> *, data: const uint8_t *, len: size_t) {
 }
 
 fn WriteBytes(out: std::vector<uint8_t> *, in: const std::vector<uint8_t> &) {
-  for (unsigned char i var __begin2: std::__wrap_iter<const unsigned char *> var __range2: const std::vector<unsigned char> &) {
+  for (unsigned char i var __begin2: : var __range2: inin) {
     out->push_back(i);
   }
 }
@@ -106,8 +106,8 @@ class GlyfEncoder {
     var y_min: int16_t;
     var x_max: int16_t;
     var y_max: int16_t;
-    for (const auto& contour var __begin2: std::__wrap_iter<const std::vector<woff2::Glyph::Point> *> var __range2: const std::vector<std::vector<woff2::Glyph::Point>> &) {
-      for (const auto& point var __begin3: std::__wrap_iter<const woff2::Glyph::Point *> var __range3: const std::vector<woff2::Glyph::Point> &) {
+    for (const auto& contour var __begin2: : var __range2: glyphglyph) {
+      for (const auto& point var __begin3: : var __range3: contourcontour) {
         if (point.x < x_min) { x_min = point.x;
 }
         if (point.x > x_max) { x_max = point.x;
@@ -394,17 +394,17 @@ fn TransformHmtxTable(font: woff2::Font *) -> bool {
   transformed_hmtx->buffer.reserve(transformed_size);
   var out: std::vector<uint8_t> *;
   WriteBytes(out, &flags, 1);
-  for (uint16_t advance_width var __begin1: std::__wrap_iter<unsigned short *> var __range1: std::vector<unsigned short> &) {
+  for (uint16_t advance_width var __begin1: : var __range1: advance_widthsadvance_widths) {
     WriteUShort(out, advance_width);
   }
 
   if (!remove_proportional_lsb) {
-    for (int16_t lsb var __begin2: std::__wrap_iter<short *> var __range2: std::vector<short> &) {
+    for (int16_t lsb var __begin2: : var __range2: proportional_lsbsproportional_lsbs) {
       WriteUShort(out, lsb);
     }
   }
   if (!remove_monospace_lsb) {
-    for (int16_t lsb var __begin2: std::__wrap_iter<short *> var __range2: std::vector<short> &) {
+    for (int16_t lsb var __begin2: : var __range2: monospace_lsbsmonospace_lsbs) {
       WriteUShort(out, lsb);
     }
   }
