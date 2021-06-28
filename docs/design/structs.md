@@ -29,7 +29,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Order is ignored on assignment](#order-is-ignored-on-assignment)
     -   [Operations performed field-wise](#operations-performed-field-wise)
 -   [Future work](#future-work)
-    -   [Named struct types](#named-struct-types)
+    -   [Nominal struct types](#nominal-struct-types)
     -   [Construction](#construction)
     -   [Member type](#member-type)
     -   [Self](#self)
@@ -57,9 +57,9 @@ members that are referenced by their names, in contrast to a
 referenced positionally.
 
 Carbon supports both named, or "nominal", and unnamed, or "anonymous", struct
-types. Named struct types are all distinct, but unnamed types are equal if they
-have the same list of members. Unnamed struct literals may be used to initialize
-or assign values to named struct variables.
+types. Nominal struct types are all distinct, but anonymous types are equal if
+they have the same list of members. Anonymous struct literals may be used to
+initialize or assign values to named struct variables.
 
 ## Use cases
 
@@ -84,7 +84,7 @@ Properties:
 
 -   Operations like copy, move, destroy, unformed, and so on are defined
     field-wise.
--   Unnamed structs types and literals should match data type semantics.
+-   Anonymous structs types and literals should match data type semantics.
 
 Expected in idiomatic Carbon-only code.
 
@@ -364,7 +364,7 @@ ad-hoc manner. They would commonly be used:
 -   as an initializer for other `struct` variables or values
 -   as a type parameter to a container
 
-**Open question:** We may want to support named [data types](#data-types) as
+**Open question:** We may want to support nominal [data types](#data-types) as
 well.
 
 ### Literals
@@ -472,9 +472,9 @@ This includes features that need to be designed, questions to answer, and a
 description of the provisional syntax in use until these decisions have been
 made.
 
-### Named struct types
+### Nominal struct types
 
-The declarations for named `struct` types will have a different format.
+The declarations for nominal `struct` types will have a different format.
 Provisionally we have been using something like this:
 
 ```
