@@ -14,7 +14,7 @@ TEST(ParenContentsTest, EmptyAsExpression) {
   const Expression* expression = contents.AsExpression(/*line_num=*/1);
   EXPECT_EQ(expression->line_num, 1);
   ASSERT_EQ(expression->tag(), ExpressionKind::Tuple);
-  EXPECT_EQ(expression->GetTuple().fields->size(), 0);
+  EXPECT_EQ(expression->GetTuple().fields.size(), 0);
 }
 
 TEST(ParenContentsTest, EmptyAsTuple) {
@@ -22,7 +22,7 @@ TEST(ParenContentsTest, EmptyAsTuple) {
   const Expression* tuple = contents.AsTuple(/*line_num=*/1);
   EXPECT_EQ(tuple->line_num, 1);
   ASSERT_EQ(tuple->tag(), ExpressionKind::Tuple);
-  EXPECT_EQ(tuple->GetTuple().fields->size(), 0);
+  EXPECT_EQ(tuple->GetTuple().fields.size(), 0);
 }
 
 TEST(ParenContentsTest, UnaryNoCommaAsExpression) {
@@ -33,7 +33,7 @@ TEST(ParenContentsTest, UnaryNoCommaAsExpression) {
   // )
   // ```
   ParenContents contents(
-      {{.expression = Expression::MakeInt(/*line_num=*/2, 42)}},
+      {{.expression = *Expression::MakeInt(/*line_num=*/2, 42)}},
       ParenContents::HasTrailingComma::No);
 
   const Expression* expression = contents.AsExpression(/*line_num=*/1);
@@ -43,53 +43,53 @@ TEST(ParenContentsTest, UnaryNoCommaAsExpression) {
 
 TEST(ParenContentsTest, UnaryNoCommaAsTuple) {
   ParenContents contents(
-      {{.expression = Expression::MakeInt(/*line_num=*/2, 42)}},
+      {{.expression = *Expression::MakeInt(/*line_num=*/2, 42)}},
       ParenContents::HasTrailingComma::No);
 
   const Expression* tuple = contents.AsTuple(/*line_num=*/1);
   EXPECT_EQ(tuple->line_num, 1);
   ASSERT_EQ(tuple->tag(), ExpressionKind::Tuple);
-  std::vector<FieldInitializer> fields = *tuple->GetTuple().fields;
+  std::vector<FieldInitializer> fields = tuple->GetTuple().fields;
   ASSERT_EQ(fields.size(), 1);
   EXPECT_EQ(fields[0].expression->tag(), ExpressionKind::Integer);
 }
 
 TEST(ParenContentsTest, UnaryWithCommaAsExpression) {
   ParenContents contents(
-      {{.expression = Expression::MakeInt(/*line_num=*/2, 42)}},
+      {{.expression = *Expression::MakeInt(/*line_num=*/2, 42)}},
       ParenContents::HasTrailingComma::Yes);
 
   const Expression* expression = contents.AsExpression(/*line_num=*/1);
   EXPECT_EQ(expression->line_num, 1);
   ASSERT_EQ(expression->tag(), ExpressionKind::Tuple);
-  std::vector<FieldInitializer> fields = *expression->GetTuple().fields;
+  std::vector<FieldInitializer> fields = expression->GetTuple().fields;
   ASSERT_EQ(fields.size(), 1);
   EXPECT_EQ(fields[0].expression->tag(), ExpressionKind::Integer);
 }
 
 TEST(ParenContentsTest, UnaryWithCommaAsTuple) {
   ParenContents contents(
-      {{.expression = Expression::MakeInt(/*line_num=*/2, 42)}},
+      {{.expression = *Expression::MakeInt(/*line_num=*/2, 42)}},
       ParenContents::HasTrailingComma::Yes);
 
   const Expression* tuple = contents.AsTuple(/*line_num=*/1);
   EXPECT_EQ(tuple->line_num, 1);
   ASSERT_EQ(tuple->tag(), ExpressionKind::Tuple);
-  std::vector<FieldInitializer> fields = *tuple->GetTuple().fields;
+  std::vector<FieldInitializer> fields = tuple->GetTuple().fields;
   ASSERT_EQ(fields.size(), 1);
   EXPECT_EQ(fields[0].expression->tag(), ExpressionKind::Integer);
 }
 
 TEST(ParenContentsTest, BinaryAsExpression) {
   ParenContents contents(
-      {{.expression = Expression::MakeInt(/*line_num=*/2, 42)},
-       {.expression = Expression::MakeInt(/*line_num=*/3, 42)}},
+      {{.expression = *Expression::MakeInt(/*line_num=*/2, 42)},
+       {.expression = *Expression::MakeInt(/*line_num=*/3, 42)}},
       ParenContents::HasTrailingComma::Yes);
 
   const Expression* expression = contents.AsExpression(/*line_num=*/1);
   EXPECT_EQ(expression->line_num, 1);
   ASSERT_EQ(expression->tag(), ExpressionKind::Tuple);
-  std::vector<FieldInitializer> fields = *expression->GetTuple().fields;
+  std::vector<FieldInitializer> fields = expression->GetTuple().fields;
   ASSERT_EQ(fields.size(), 2);
   EXPECT_EQ(fields[0].expression->tag(), ExpressionKind::Integer);
   EXPECT_EQ(fields[1].expression->tag(), ExpressionKind::Integer);
@@ -97,14 +97,14 @@ TEST(ParenContentsTest, BinaryAsExpression) {
 
 TEST(ParenContentsTest, BinaryAsTuple) {
   ParenContents contents(
-      {{.expression = Expression::MakeInt(/*line_num=*/2, 42)},
-       {.expression = Expression::MakeInt(/*line_num=*/3, 42)}},
+      {{.expression = *Expression::MakeInt(/*line_num=*/2, 42)},
+       {.expression = *Expression::MakeInt(/*line_num=*/3, 42)}},
       ParenContents::HasTrailingComma::Yes);
 
   const Expression* tuple = contents.AsTuple(/*line_num=*/1);
   EXPECT_EQ(tuple->line_num, 1);
   ASSERT_EQ(tuple->tag(), ExpressionKind::Tuple);
-  std::vector<FieldInitializer> fields = *tuple->GetTuple().fields;
+  std::vector<FieldInitializer> fields = tuple->GetTuple().fields;
   ASSERT_EQ(fields.size(), 2);
   EXPECT_EQ(fields[0].expression->tag(), ExpressionKind::Integer);
   EXPECT_EQ(fields[1].expression->tag(), ExpressionKind::Integer);

@@ -21,7 +21,7 @@ struct FieldInitializer {
   std::string name;
 
   // The expression that initializes the field.
-  const Expression* expression;
+  IndirectValue<Expression> expression;
 };
 
 enum class ExpressionKind {
@@ -92,13 +92,13 @@ struct BoolLiteral {
 
 struct Tuple {
   static constexpr ExpressionKind Kind = ExpressionKind::Tuple;
-  std::vector<FieldInitializer>* fields;
+  std::vector<FieldInitializer> fields;
 };
 
 struct PrimitiveOperator {
   static constexpr ExpressionKind Kind = ExpressionKind::PrimitiveOp;
   Operator op;
-  std::vector<const Expression*>* arguments;
+  std::vector<Expression> arguments;
 };
 
 struct Call {
@@ -142,19 +142,18 @@ struct Expression {
       -> const Expression*;
   static auto MakeInt(int line_num, int i) -> const Expression*;
   static auto MakeBool(int line_num, bool b) -> const Expression*;
-  static auto MakeOp(int line_num, Operator op,
-                     std::vector<const Expression*>* args) -> const Expression*;
-  static auto MakeUnOp(int line_num, enum Operator op, const Expression* arg)
+  static auto MakeOp(int line_num, Operator op, std::vector<Expression> args)
       -> const Expression*;
-  static auto MakeBinOp(int line_num, enum Operator op, const Expression* arg1,
-                        const Expression* arg2) -> const Expression*;
+  static auto MakeUnOp(int line_num, enum Operator op, Expression arg)
+      -> const Expression*;
+  static auto MakeBinOp(int line_num, enum Operator op, Expression arg1,
+                        Expression arg2) -> const Expression*;
   static auto MakeCall(int line_num, Expression fun, Expression arg)
       -> const Expression*;
   static auto MakeGetField(int line_num, const Expression* exp,
                            std::string field) -> const Expression*;
-  static auto MakeTuple(int line_num, std::vector<FieldInitializer>* args)
+  static auto MakeTuple(int line_num, std::vector<FieldInitializer> args)
       -> const Expression*;
-  static auto MakeUnit(int line_num) -> const Expression*;
   static auto MakeIndex(int line_num, Expression exp, Expression i)
       -> const Expression*;
   static auto MakeTypeType(int line_num) -> const Expression*;

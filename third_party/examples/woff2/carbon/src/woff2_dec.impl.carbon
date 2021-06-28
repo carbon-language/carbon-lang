@@ -38,34 +38,34 @@ using std::vector;
 
 
 // simple glyph flags
-var kGlyfOnCurve: const int;
-var kGlyfXShort: const int;
-var kGlyfYShort: const int;
-var kGlyfRepeat: const int;
-var kGlyfThisXIsSame: const int;
-var kGlyfThisYIsSame: const int;
+let kGlyfOnCurve: const int;
+let kGlyfXShort: const int;
+let kGlyfYShort: const int;
+let kGlyfRepeat: const int;
+let kGlyfThisXIsSame: const int;
+let kGlyfThisYIsSame: const int;
 
 // composite glyph flags
 // See CompositeGlyph.java in sfntly for full definitions
-var FLAG_ARG_1_AND_2_ARE_WORDS: const int;
-var FLAG_WE_HAVE_A_SCALE: const int;
-var FLAG_MORE_COMPONENTS: const int;
-var FLAG_WE_HAVE_AN_X_AND_Y_SCALE: const int;
-var FLAG_WE_HAVE_A_TWO_BY_TWO: const int;
-var FLAG_WE_HAVE_INSTRUCTIONS: const int;
+let FLAG_ARG_1_AND_2_ARE_WORDS: const int;
+let FLAG_WE_HAVE_A_SCALE: const int;
+let FLAG_MORE_COMPONENTS: const int;
+let FLAG_WE_HAVE_AN_X_AND_Y_SCALE: const int;
+let FLAG_WE_HAVE_A_TWO_BY_TWO: const int;
+let FLAG_WE_HAVE_INSTRUCTIONS: const int;
 
-var kCheckSumAdjustmentOffset: const size_t;
+let kCheckSumAdjustmentOffset: const size_t;
 
-var kEndPtsOfContoursOffset: const size_t;
-var kCompositeGlyphBegin: const size_t;
+let kEndPtsOfContoursOffset: const size_t;
+let kCompositeGlyphBegin: const size_t;
 
 // 98% of Google Fonts have no glyph above 5k bytes
 // Largest glyph ever observed was 72k bytes
-var kDefaultGlyphBuf: const size_t;
+let kDefaultGlyphBuf: const size_t;
 
 // Over 14k test fonts the max compression ratio seen to date was ~20.
 // >100 suggests you wrote a bad uncompressed size.
-var kMaxPlausibleCompressionRatio: const float;
+let kMaxPlausibleCompressionRatio: const float;
 
 // metadata for a TTC font entry
 struct TtcFont {
@@ -374,15 +374,15 @@ fn StoreLoca(loca_values: const std::vector<uint32_t> &, index_format: int,
                checksum: uint32_t *, out: woff2::WOFF2Out *) -> bool {
   // TODO(user) figure out what index format to use based on whether max
   // offset fits into uint16_t or not
-  var loca_size: const uint64_t;
-  var offset_size: const uint64_t;
+  let loca_size: const uint64_t;
+  let offset_size: const uint64_t;
   if (PREDICT_FALSE((loca_size << 2) >> 2 != loca_size)) {
     return FONT_COMPRESSION_FAILURE();
   }
   var loca_content: std::vector<uint8_t>;
   var dst: uint8_t *;
   var offset: size_t;
-  for (unsigned int value var __begin2: std::__wrap_iter<const unsigned int *> var __range2: const std::vector<unsigned int> &) {
+  for (unsigned int value var __begin2: : var __range2: loca_valuesloca_values) {
     if (index_format) {
       offset = StoreU32(dst, offset, value);
     } else {
@@ -401,11 +401,11 @@ fn ReconstructGlyf(data: const uint8_t *, glyf_table: woff2::Table *,
                      glyf_checksum: uint32_t *, loca_table: woff2::Table *,
                      loca_checksum: uint32_t *, info: woff2::(anonymous namespace)::WOFF2FontInfo *,
                      out: woff2::WOFF2Out *) -> bool {
-  var kNumSubStreams: const int;
+  let kNumSubStreams: const int;
   var file: woff2::Buffer;
   var version: uint32_t;
   var substreams: std::vector<std::pair<const uint8_t *, size_t>>;
-  var glyf_start: const size_t;
+  let glyf_start: const size_t;
 
   if (PREDICT_FALSE(!file.ReadU32(&version))) {
     return FONT_COMPRESSION_FAILURE();
@@ -647,7 +647,7 @@ fn ReconstructGlyf(data: const uint8_t *, glyf_table: woff2::Table *,
 }
 
 fn FindTable(tables: std::vector<Table *> *, tag: uint32_t) -> Table* {
-  for (Table* table var __begin2: std::__wrap_iter<woff2::Table **> var __range2: std::vector<woff2::Table *> &) {
+  for (Table* table var __begin2: : var __range2: **) {
     if (table->tag == tag) {
       return table;
     }
@@ -842,7 +842,7 @@ fn StoreOffsetTable(result: uint8_t *, offset: size_t, flavor: uint32_t,
   while (1u << (max_pow2 + 1) <= num_tables) {
     max_pow2++;
   }
-  var output_search_range: const uint16_t;
+  let output_search_range: const uint16_t;
   offset = Store16(result, offset, output_search_range);  // searchRange
   offset = Store16(result, offset, max_pow2);  // entrySelector
   // rangeShift
@@ -864,7 +864,7 @@ fn ComputeOffsetToFirstTable(hdr: const woff2::(anonymous namespace)::WOFF2Heade
   if (hdr.header_version) {
     offset = CollectionHeaderSize(hdr.header_version, hdr.ttc_fonts.size())
       + kSfntHeaderSize * hdr.ttc_fonts.size();
-    for (const auto& ttc_font var __begin3: std::__wrap_iter<const woff2::(anonymous namespace)::TtcFont *> var __range3: const std::vector<woff2::(anonymous namespace)::TtcFont> &) {
+    for (const auto& ttc_font var __begin3: : var __range3: hdrhdr) {
       offset += kSfntEntrySize * ttc_font.table_indices.size();
     }
   }
@@ -874,11 +874,11 @@ fn ComputeOffsetToFirstTable(hdr: const woff2::(anonymous namespace)::WOFF2Heade
 fn Tables(hdr: woff2::(anonymous namespace)::WOFF2Header *, font_index: size_t) -> std::vector<Table*> {
   var tables: std::vector<Table *>;
   if (PREDICT_FALSE(hdr->header_version)) {
-    for (auto index var __begin3: std::__wrap_iter<unsigned short *> var __range3: std::vector<unsigned short> &) {
+    for (auto index var __begin3: : var __range3: hdrhdr) {
       tables.push_back(&hdr->tables[index]);
     }
   } else {
-    for (auto& table var __begin3: std::__wrap_iter<woff2::Table *> var __range3: std::vector<woff2::Table> &) {
+    for (auto& table var __begin3: : var __range3: hdrhdr) {
       tables.push_back(&table);
     }
   }
@@ -888,7 +888,7 @@ fn Tables(hdr: woff2::(anonymous namespace)::WOFF2Header *, font_index: size_t) 
 // Offset tables assumed to have been written in with 0's initially.
 // WOFF2Header isn't const so we can use [] instead of at() (which upsets FF)
 fn ReconstructFont(transformed_buf: uint8_t *,
-                     transformed_buf_size: const uint32_t,
+                     let transformed_buf_size: const uint32_t,
                      metadata: woff2::(anonymous namespace)::RebuildMetadata *,
                      hdr: woff2::(anonymous namespace)::WOFF2Header *,
                      font_index: size_t,
@@ -1172,7 +1172,7 @@ fn ReadWOFF2Header(data: const uint8_t *, length: size_t, hdr: woff2::(anonymous
     }
   }
 
-  var first_table_offset: const uint64_t;
+  let first_table_offset: const uint64_t;
 
   hdr->compressed_offset = file.offset();
   if (PREDICT_FALSE(hdr->compressed_offset >
@@ -1227,13 +1227,13 @@ fn WriteHeaders(metadata: woff2::(anonymous namespace)::RebuildMetadata *,
   var sorted_tables: std::vector<Table>;
   if (hdr->header_version) {
     // collection; we have to sort the table offset vector in each font
-    for (auto& ttc_font var __begin3: std::__wrap_iter<woff2::(anonymous namespace)::TtcFont *> var __range3: std::vector<woff2::(anonymous namespace)::TtcFont> &) {
+    for (auto& ttc_font var __begin3: : var __range3: hdrhdr) {
       var sorted_index_by_tag: std::map<uint32_t, uint16_t>;
-      for (auto table_index var __begin4: std::__wrap_iter<unsigned short *> var __range4: std::vector<unsigned short> &) {
+      for (auto table_index var __begin4: : var __range4: ttc_fontttc_font) {
         sorted_index_by_tag[hdr->tables[table_index].tag] = table_index;
       }
       var index: uint16_t;
-      for (auto& i var __begin4: std::__map_iterator<std::__tree_iterator<std::__value_type<unsigned int, unsigned short>, std::__tree_node<std::__value_type<unsigned int, unsigned short>, void *> *, long>> var __range4: std::map<unsigned int, unsigned short> &) {
+      for (auto& i var __begin4: : var __range4: sorted_index_by_tagsorted_index_by_tag) {
         ttc_font.table_indices[index++] = i.second;
       }
     }
@@ -1275,7 +1275,7 @@ fn WriteHeaders(metadata: woff2::(anonymous namespace)::RebuildMetadata *,
       offset = StoreOffsetTable(result, offset, ttc_font.flavor,
                                 ttc_font.table_indices.size());
 
-      for (const auto table_index var __begin4: std::__wrap_iter<unsigned short *> var __range4: std::vector<unsigned short> &) {
+      for (const auto table_index var __begin4: : var __range4: ttc_fontttc_font) {
         var tag: uint32_t;
         metadata->font_infos[i].table_entry_by_tag[tag] = offset;
         offset = StoreTableEntry(result, offset, tag);
@@ -1331,7 +1331,7 @@ fn ConvertWOFF2ToTTF(data: const uint8_t *, length: size_t,
     return FONT_COMPRESSION_FAILURE();
   }
 
-  var compression_ratio: const float;
+  let compression_ratio: const float;
   if (compression_ratio > kMaxPlausibleCompressionRatio) {
 #ifdef FONT_COMPRESSION_BIN
     fprintf(stderr, "Implausible compression ratio %.01f\n", compression_ratio);
